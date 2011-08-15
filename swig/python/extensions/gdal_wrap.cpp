@@ -3012,7 +3012,15 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return 0;
     }
-    char *data = PyBytes_AsString( (PyObject *)*buf ); 
+    PyObject* o = (PyObject*) *buf;
+    char *data = PyBytes_AsString(o); 
+    GIntBig nRet = (GIntBig)VSIFReadL( data, nMembSize, nMembCount, fp );
+    if (nRet * nMembSize < buf_size)
+    {
+        _PyBytes_Resize(&o, nRet * nMembSize);
+        *buf = o;
+    }
+    return nRet;
 #else 
     *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
     if (*buf == NULL)
@@ -3020,11 +3028,17 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
         return 0;
     }
-    char *data = PyString_AsString( (PyObject *)*buf ); 
+    PyObject* o = (PyObject*) *buf;
+    char *data = PyString_AsString(o); 
+    GIntBig nRet = (GIntBig)VSIFReadL( data, nMembSize, nMembCount, fp );
+    if (nRet * nMembSize < buf_size)
+    {
+        _PyString_Resize(&o, nRet * nMembSize);
+        *buf = o;
+    }
+    return nRet;
 #endif
-
-    return VSIFReadL( data, nMembSize, nMembCount, fp );
-} 
+}
 
 
 #include <limits.h>
