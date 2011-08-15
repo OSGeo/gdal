@@ -27,6 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+/* This is evil, but we need that for a test in TestInterleavedReading() */
+#define private public
+#include "ogr_feature.h"
+#undef private
+
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include "ogr_api.h"
@@ -39,6 +44,7 @@ int     bVerbose = TRUE;
 
 static void Usage();
 static int TestOGRLayer( OGRDataSource * poDS, OGRLayer * poLayer, int bIsSQLLayer );
+static int TestInterleavedReading( const char* pszDataSource, char** papszLayers );
 
 /************************************************************************/
 /*                                main()                                */
@@ -193,6 +199,13 @@ int main( int nArgc, char ** papszArgv )
                     poLayer->GetName() );
             bRet &= TestOGRLayer( poDS, poLayer, FALSE );
         }
+
+        if (poDS->GetLayerCount() >= 2)
+        {
+            OGRDataSource::DestroyDataSource(poDS);
+            poDS = NULL;
+            bRet &= TestInterleavedReading( pszDataSource, NULL );
+        }
     }
     else
     {
@@ -216,6 +229,13 @@ int main( int nArgc, char ** papszArgv )
             bRet &= TestOGRLayer( poDS, poLayer, FALSE );
             
             papszLayerIter ++;
+        }
+
+        if (CSLCount(papszLayers) >= 2)
+        {
+            OGRDataSource::DestroyDataSource(poDS);
+            poDS = NULL;
+            bRet &= TestInterleavedReading( pszDataSource, papszLayers );
         }
     }
 
@@ -1239,5 +1259,144 @@ static int TestOGRLayer( OGRDataSource* poDS, OGRLayer * poLayer, int bIsSQLLaye
 
     bRet &= TestOGRLayerUTF8( poLayer );
 
+    return bRet;
+}
+
+/************************************************************************/
+/*                        TestInterleavedReading()                      */
+/************************************************************************/
+
+static int TestInterleavedReading( const char* pszDataSource, char** papszLayers )
+{
+    int bRet = TRUE;
+    OGRDataSource* poDS = NULL;
+    OGRDataSource* poDS2 = NULL;
+    OGRLayer* poLayer1 = NULL;
+    OGRLayer* poLayer2 = NULL;
+    OGRFeature* poFeature11_Ref = NULL;
+    OGRFeature* poFeature12_Ref = NULL;
+    OGRFeature* poFeature21_Ref = NULL;
+    OGRFeature* poFeature22_Ref = NULL;
+    OGRFeature* poFeature11 = NULL;
+    OGRFeature* poFeature12 = NULL;
+    OGRFeature* poFeature21 = NULL;
+    OGRFeature* poFeature22 = NULL;
+    OGRFeatureDefn* poSavedFeatureDefn = NULL;
+
+    /* Check that we have 2 layers with at least 2 features */
+    poDS = OGRSFDriverRegistrar::Open( pszDataSource, FALSE, NULL );
+    if (poDS == NULL)
+    {
+        printf( "INFO: Skipping TestInterleavedReading(). Cannot reopen datasource\n" );
+        goto bye;
+    }
+
+    poLayer1 = papszLayers ? poDS->GetLayerByName(papszLayers[0]) : poDS->GetLayer(0);
+    poLayer2 = papszLayers ? poDS->GetLayerByName(papszLayers[1]) : poDS->GetLayer(1);
+    if (poLayer1 == NULL || poLayer2 == NULL ||
+        poLayer1->GetFeatureCount() < 2 || poLayer2->GetFeatureCount() < 2)
+    {
+        printf( "INFO: Skipping TestInterleavedReading(). Test conditions are not met\n" );
+        goto bye;
+    }
+
+    /* Test normal reading */
+    OGRDataSource::DestroyDataSource(poDS);
+    poDS = OGRSFDriverRegistrar::Open( pszDataSource, FALSE, NULL );
+    poDS2 = OGRSFDriverRegistrar::Open( pszDataSource, FALSE, NULL );
+    if (poDS == NULL || poDS2 == NULL)
+    {
+        printf( "INFO: Skipping TestInterleavedReading(). Cannot reopen datasource\n" );
+        goto bye;
+    }
+
+    poLayer1 = papszLayers ? poDS->GetLayerByName(papszLayers[0]) : poDS->GetLayer(0);
+    poLayer2 = papszLayers ? poDS->GetLayerByName(papszLayers[1]) : poDS->GetLayer(1);
+    if (poLayer1 == NULL || poLayer2 == NULL)
+    {
+        printf( "ERROR: Skipping TestInterleavedReading(). Test conditions are not met\n" );
+        bRet = FALSE;
+        goto bye;
+    }
+
+    poFeature11_Ref = poLayer1->GetNextFeature();
+    poFeature12_Ref = poLayer1->GetNextFeature();
+    poFeature21_Ref = poLayer2->GetNextFeature();
+    poFeature22_Ref = poLayer2->GetNextFeature();
+    if (poFeature11_Ref == NULL || poFeature12_Ref == NULL || poFeature21_Ref == NULL || poFeature22_Ref == NULL)
+    {
+        printf( "ERROR: TestInterleavedReading() failed: poFeature11_Ref=%p, poFeature12_Ref=%p, poFeature21_Ref=%p, poFeature22_Ref=%p\n",
+                poFeature11_Ref, poFeature12_Ref, poFeature21_Ref, poFeature22_Ref);
+        bRet = FALSE;
+        goto bye;
+    }
+
+    /* Test interleaved reading */
+    poLayer1 = papszLayers ? poDS2->GetLayerByName(papszLayers[0]) : poDS2->GetLayer(0);
+    poLayer2 = papszLayers ? poDS2->GetLayerByName(papszLayers[1]) : poDS2->GetLayer(1);
+    if (poLayer1 == NULL || poLayer2 == NULL)
+    {
+        printf( "ERROR: Skipping TestInterleavedReading(). Test conditions are not met\n" );
+        bRet = FALSE;
+        goto bye;
+    }
+
+    poFeature11 = poLayer1->GetNextFeature();
+    poFeature21 = poLayer2->GetNextFeature();
+    poFeature12 = poLayer1->GetNextFeature();
+    poFeature22 = poLayer2->GetNextFeature();
+
+    if (poFeature11 == NULL || poFeature21 == NULL || poFeature12 == NULL || poFeature22 == NULL)
+    {
+        printf( "ERROR: TestInterleavedReading() failed: poFeature11=%p, poFeature21=%p, poFeature12=%p, poFeature22=%p\n",
+                poFeature11, poFeature21, poFeature12, poFeature22);
+        bRet = FALSE;
+        goto bye;
+    }
+
+    if (poFeature12->Equal(poFeature11))
+    {
+        printf( "WARN: TestInterleavedReading() failed: poFeature12 == poFeature11. "
+                "The datasource resets the layer reading when interleaved layer reading pattern is detected. Acceptable but could be improved\n" );
+        goto bye;
+    }
+
+    /* Begin evil part */
+    /* We need this because features can only be compared successfully if they have the */
+    /* same feature definition, which is not strictly the case here. But structurally */
+    /* the 2 layer definitions should be the same ! */
+    poSavedFeatureDefn = poFeature12->GetDefnRef();
+    poFeature12->poDefn = poFeature12_Ref->GetDefnRef();
+    /* End evil part */
+
+    if (!poFeature12_Ref->Equal(poFeature12))
+    {
+        printf( "ERROR: TestInterleavedReading() failed: poFeature12_Ref != poFeature12\n" );
+        poFeature12_Ref->DumpReadable(stdout, NULL);
+        poFeature12->DumpReadable(stdout, NULL);
+        bRet = FALSE;
+        goto bye;
+    }
+
+    if( bVerbose )
+    {
+        printf("INFO: TestInterleavedReading() successfull.\n");
+    }
+
+bye:
+    /* Begin evil part */
+    if (poFeature12 && poSavedFeatureDefn) poFeature12->poDefn = poSavedFeatureDefn;
+    /* End evil part */
+
+    OGRFeature::DestroyFeature(poFeature11_Ref);
+    OGRFeature::DestroyFeature(poFeature12_Ref);
+    OGRFeature::DestroyFeature(poFeature21_Ref);
+    OGRFeature::DestroyFeature(poFeature22_Ref);
+    OGRFeature::DestroyFeature(poFeature11);
+    OGRFeature::DestroyFeature(poFeature21);
+    OGRFeature::DestroyFeature(poFeature12);
+    OGRFeature::DestroyFeature(poFeature22);
+    OGRDataSource::DestroyDataSource(poDS);
+    OGRDataSource::DestroyDataSource(poDS2);
     return bRet;
 }
