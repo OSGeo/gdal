@@ -27,11 +27,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-/* This is evil, but we need that for a test in TestInterleavedReading() */
-#define private public
-#include "ogr_feature.h"
-#undef private
-
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include "ogr_api.h"
@@ -1281,7 +1276,6 @@ static int TestInterleavedReading( const char* pszDataSource, char** papszLayers
     OGRFeature* poFeature12 = NULL;
     OGRFeature* poFeature21 = NULL;
     OGRFeature* poFeature22 = NULL;
-    OGRFeatureDefn* poSavedFeatureDefn = NULL;
 
     /* Check that we have 2 layers with at least 2 features */
     poDS = OGRSFDriverRegistrar::Open( pszDataSource, FALSE, NULL );
@@ -1361,15 +1355,9 @@ static int TestInterleavedReading( const char* pszDataSource, char** papszLayers
         goto bye;
     }
 
-    /* Begin evil part */
-    /* We need this because features can only be compared successfully if they have the */
-    /* same feature definition, which is not strictly the case here. But structurally */
-    /* the 2 layer definitions should be the same ! */
-    poSavedFeatureDefn = poFeature12->GetDefnRef();
-    poFeature12->poDefn = poFeature12_Ref->GetDefnRef();
-    /* End evil part */
-
-    if (!poFeature12_Ref->Equal(poFeature12))
+    /* We cannot directly compare the feature as they don't share */
+    /* the same (pointer) layer definition, so just compare FIDs */
+    if (poFeature12_Ref->GetFID() != poFeature12->GetFID())
     {
         printf( "ERROR: TestInterleavedReading() failed: poFeature12_Ref != poFeature12\n" );
         poFeature12_Ref->DumpReadable(stdout, NULL);
@@ -1384,10 +1372,6 @@ static int TestInterleavedReading( const char* pszDataSource, char** papszLayers
     }
 
 bye:
-    /* Begin evil part */
-    if (poFeature12 && poSavedFeatureDefn) poFeature12->poDefn = poSavedFeatureDefn;
-    /* End evil part */
-
     OGRFeature::DestroyFeature(poFeature11_Ref);
     OGRFeature::DestroyFeature(poFeature12_Ref);
     OGRFeature::DestroyFeature(poFeature21_Ref);
