@@ -209,7 +209,7 @@ element will be written in the .gfs file, so that the GML_READ_MODE will be auto
 initialized to MONOBLOCK_LAYERS if not explicitely set by the user.<p>
 
 Starting with OGR 1.9.0, the GML_READ_MODE configuration option can be set to INTERLEAVED_LAYERS to be able
-to read a GML file whose features from different layers are interleaved. In the case, the semantincs of the
+to read a GML file whose features from different layers are interleaved. In the case, the semantics of the
 GetNextFeature() will be slightly altered, in a way where a NULL return does not necessarily mean that
 all features from the current layer have been read, but it could also mean that there is still a feature to read, but that
 belongs to another layer. In that case, the file should be read with code similar to the following one :
