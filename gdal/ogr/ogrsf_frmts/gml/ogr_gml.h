@@ -36,6 +36,13 @@
 
 class OGRGMLDataSource;
 
+typedef enum
+{
+    STANDARD,
+    SEQUENTIAL_LAYERS,
+    INTERLEAVED_LAYERS
+} ReadMode;
+
 /************************************************************************/
 /*                            OGRGMLLayer                               */
 /************************************************************************/
@@ -130,6 +137,10 @@ class OGRGMLDataSource : public OGRDataSource
     int           m_bInvertAxisOrderIfLatLong;
     int           m_bConsiderEPSGAsURN;
 
+    ReadMode            eReadMode;
+    GMLFeature         *poStoredGMLFeature;
+    OGRGMLLayer        *poLastReadLayer;
+
   public:
                         OGRGMLDataSource();
                         ~OGRGMLDataSource();
@@ -164,6 +175,13 @@ class OGRGMLDataSource : public OGRDataSource
 
     int                 GetInvertAxisOrderIfLatLong() { return m_bInvertAxisOrderIfLatLong; }
     int                 GetConsiderEPSGAsURN() { return m_bConsiderEPSGAsURN; }
+
+    ReadMode            GetReadMode() { return eReadMode; }
+    void                SetStoredGMLFeature(GMLFeature* poStoredGMLFeatureIn) { poStoredGMLFeature = poStoredGMLFeatureIn; }
+    GMLFeature*         PeekStoredGMLFeature() { return  poStoredGMLFeature; }
+
+    OGRGMLLayer*        GetLastReadLayer() const { return poLastReadLayer; }
+    void                SetLastReadLayer(OGRGMLLayer* poLayer) { poLastReadLayer = poLayer; }
 };
 
 /************************************************************************/

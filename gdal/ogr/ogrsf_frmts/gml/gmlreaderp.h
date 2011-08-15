@@ -327,6 +327,7 @@ private:
 
     char         *m_pszFilteredClassName;
 
+    int           m_bSequentialLayers;
 
 public:
                 GMLReader(int bExpatReader, int bInvertAxisOrderIfLatLong, int bConsiderEPSGAsURN);
@@ -387,6 +388,8 @@ public:
 
     int         SetFilteredClassName(const char* pszClassName);
     const char* GetFilteredClassName() { return m_pszFilteredClassName; }
+
+    int         IsSequentialLayers() const { return m_bSequentialLayers == TRUE; }
 };
 
 #endif /* _CPL_GMLREADERP_H_INCLUDED */
