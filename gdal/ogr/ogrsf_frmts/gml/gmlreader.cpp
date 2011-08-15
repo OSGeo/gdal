@@ -849,7 +849,7 @@ void GMLReader::PopState()
         {
             if (nFeatureTabLength >= nFeatureTabAlloc)
             {
-                nFeatureTabAlloc = nFeatureTabLength * 1.3 + 16;
+                nFeatureTabAlloc = nFeatureTabLength * 4 / 3 + 16;
                 ppoFeatureTab = (GMLFeature**)
                         CPLRealloc(ppoFeatureTab,
                                     sizeof(GMLFeature*) * (nFeatureTabAlloc));
