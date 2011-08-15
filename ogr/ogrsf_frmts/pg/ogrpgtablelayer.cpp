@@ -263,13 +263,14 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
         osCommand.Printf(
                  "DECLARE mycursor CURSOR for "
                  "SELECT DISTINCT a.attname, t.typname, a.attlen,"
-                 "       format_type(a.atttypid,a.atttypmod) "
+                 "       format_type(a.atttypid,a.atttypmod), a.attnum "
                  "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n "
                  "WHERE c.relname = %s "
                  "AND a.attnum > 0 AND a.attrelid = c.oid "
                  "AND a.atttypid = t.oid "
                  "AND c.relnamespace=n.oid "
-                 "%s",
+                 "%s"
+                 "ORDER BY a.attnum",
                  pszEscapedTableNameSingleQuote, osSchemaClause.c_str());
 
         hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
