@@ -192,6 +192,48 @@ Starting with OGR 1.9.0, when creating a GML2 document, if a field is called
 <i>fid</i>, its content will also be used to write the content of the fid attribute of the
 created feature.<p>
 
+<h2>Performance issues with large multi-layer GML files.</h2>
+
+There is only one GML parser per GML datasource shared among the various layers.
+By default, the GML driver will restart reading from the beginning of the file, each time a layer
+is accessed for the first time, which can lead to poor performance with large GML files.<p>
+
+Starting with OGR 1.9.0, the <b>GML_READ_MODE</b> configuration option can be set to <b>SEQUENTIAL_LAYERS</b>
+if all features belonging to the same layer are written sequentially in the file. The reader will then avoid
+unnecessary resets when layers are read completely one after the other. To get the best performance,
+the layers must be read in the order they appear in the file.<p>
+
+If no .xsd and .gfs files are found, the parser will detect the layout of layers when
+building the .gfs file. If the layers are found to be sequential, a <i>&lt;SequentialLayers&gt;true&lt;/SequentialLayers&gt;</i>
+element will be written in the .gfs file, so that the GML_READ_MODE will be automatically
+initialized to MONOBLOCK_LAYERS if not explicitely set by the user.<p>
+
+Starting with OGR 1.9.0, the GML_READ_MODE configuration option can be set to INTERLEAVED_LAYERS to be able
+to read a GML file whose features from different layers are interleaved. In the case, the semantincs of the
+GetNextFeature() will be slightly altered, in a way where a NULL return does not necessarily mean that
+all features from the current layer have been read, but it could also mean that there is still a feature to read, but that
+belongs to another layer. In that case, the file should be read with code similar to the following one :
+
+<pre>
+    int nLayerCount = poDS->GetLayerCount();
+    int bFoundFeature;
+    do
+    {
+        bFoundFeature = FALSE;
+        for( int iLayer = 0; iLayer &lt; nLayerCount; iLayer++ )
+        {
+            OGRLayer   *poLayer = poDS->GetLayer(iLayer);
+            OGRFeature *poFeature;
+            while((poFeature = poLayer->GetNextFeature()) != NULL)
+            {
+                bFoundFeature = TRUE;
+                poFeature->DumpReadable(stdout, NULL);
+                OGRFeature::DestroyFeature(poFeature);
+            }
+        }
+    } while (bInterleaved &amp;&amp; bFoundFeature);
+</pre>
+
 <h2>Creation Issues</h2>
 
 On export all layers are written to a single GML file all in a single
