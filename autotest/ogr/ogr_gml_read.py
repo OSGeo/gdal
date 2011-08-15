@@ -1199,6 +1199,126 @@ def ogr_gml_30():
 
     return 'success'
 
+###############################################################################
+# Test SEQUENTIAL_LAYERS
+
+def ogr_gml_31():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    gdal.SetConfigOption('GML_READ_MODE', 'SEQUENTIAL_LAYERS')
+    ret = ogr_gml_29()
+    gdal.SetConfigOption('GML_READ_MODE', None)
+
+    if ret != 'success':
+        return ret
+
+    # Test reading second layer and then first layer
+    gdal.SetConfigOption('GML_READ_MODE', 'SEQUENTIAL_LAYERS')
+    ds = ogr.Open('data/testfmegml.gml')
+    gdal.SetConfigOption('GML_READ_MODE', None)
+
+    lyr = ds.GetLayer(1)
+    feat = lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != 1:
+        gdaltest.post_reason('did not get feature when reading directly second layer')
+        return 'fail'
+
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != 1:
+        gdaltest.post_reason('did not get feature when reading back first layer')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test SEQUENTIAL_LAYERS without a .gfs
+
+def ogr_gml_32():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    # Test without .xsd or .gfs
+    f = gdal.VSIFOpenL("data/testfmegml.gml", "rb")
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+
+    f = gdal.VSIFOpenL("/vsimem/ogr_gml_31.gml", "wb")
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+
+    ds = ogr.Open('/vsimem/ogr_gml_31.gml')
+
+    lyr = ds.GetLayer(1)
+    feat = lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != 1:
+        gdaltest.post_reason('did not get feature when reading directly second layer')
+        return 'fail'
+
+    ds = None
+
+    f = gdal.VSIFOpenL("/vsimem/ogr_gml_31.gfs", "rb")
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+
+    data = str(data)
+
+    if data.find("<SequentialLayers>true</SequentialLayers>") == -1:
+        gdaltest.post_reason('did not find <SequentialLayers>true</SequentialLayers> in .gfs')
+        return 'fail'
+
+    gdal.Unlink("/vsimem/ogr_gml_31.gml")
+    gdal.Unlink("/vsimem/ogr_gml_31.gfs")
+
+
+    return 'success'
+
+###############################################################################
+# Test INTERLEAVED_LAYERS
+
+def ogr_gml_33():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    # Test reading second layer and then first layer
+    gdal.SetConfigOption('GML_READ_MODE', 'INTERLEAVED_LAYERS')
+    ds = ogr.Open('data/testfmegml_interleaved.gml')
+    gdal.SetConfigOption('GML_READ_MODE', None)
+
+    read_sequence = [ [0,1],
+                      [0,None],
+                      [1,3],
+                      [2,5],
+                      [2,None],
+                      [0,2],
+                      [1,4],
+                      [1,None],
+                      [2,6],
+                      [2,None],
+                      [0,None],
+                      [1,None],
+                      [2,None] ]
+
+    for i in range(len(read_sequence)):
+        lyr = ds.GetLayer(read_sequence[i][0])
+        feat = lyr.GetNextFeature()
+        if feat is None:
+            fid = None
+        else:
+            fid = feat.GetFID()
+        expected_fid = read_sequence[i][1]
+        if fid != expected_fid:
+            gdaltest.post_reason('failed at step %d' % i)
+            return 'fail'
+
+    return 'success'
 
 ###############################################################################
 #  Cleanup
@@ -1312,6 +1432,9 @@ gdaltest_list = [
     ogr_gml_28,
     ogr_gml_29,
     ogr_gml_30,
+    ogr_gml_31,
+    ogr_gml_32,
+    ogr_gml_33,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':

@@ -104,9 +104,26 @@ OGRGMLLayer::~OGRGMLLayer()
 void OGRGMLLayer::ResetReading()
 
 {
+    if (bWriter)
+        return;
+
+    if (poDS->GetReadMode() == INTERLEAVED_LAYERS ||
+        poDS->GetReadMode() == SEQUENTIAL_LAYERS)
+    {
+        /* Does the last stored feature belong to our layer ? If so, no */
+        /* need to reset the reader */
+        if (iNextGMLId == 0 && poDS->PeekStoredGMLFeature() != NULL &&
+            poDS->PeekStoredGMLFeature()->GetClass() == poFClass)
+            return;
+
+        delete poDS->PeekStoredGMLFeature();
+        poDS->SetStoredGMLFeature(NULL);
+    }
+
     iNextGMLId = 0;
     poDS->GetReader()->ResetReading();
-    if (poFClass && poDS->GetLayerCount() > 1)
+    CPLDebug("GML", "ResetReading()");
+    if (poDS->GetLayerCount() > 1 && poDS->GetReadMode() == STANDARD)
         poDS->GetReader()->SetFilteredClassName(poFClass->GetName());
 }
 
@@ -127,8 +144,12 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         return NULL;
     }
 
-    if( iNextGMLId == 0 )
-        ResetReading();
+    if( poDS->GetLastReadLayer() != this )
+    {
+        if( poDS->GetReadMode() != INTERLEAVED_LAYERS )
+            ResetReading();
+        poDS->SetLastReadLayer(this);
+    }
 
 /* ==================================================================== */
 /*      Loop till we find and translate a feature meeting all our       */
@@ -148,21 +169,37 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             poGeom = NULL;
         }
 
-        poGMLFeature = poDS->GetReader()->NextFeature();
-        if( poGMLFeature == NULL )
-            return NULL;
+        poGMLFeature = poDS->PeekStoredGMLFeature();
+        if (poGMLFeature != NULL)
+            poDS->SetStoredGMLFeature(NULL);
+        else
+        {
+            poGMLFeature = poDS->GetReader()->NextFeature();
+            if( poGMLFeature == NULL )
+                return NULL;
+
+            // We count reading low level GML features as a feature read for
+            // work checking purposes, though at least we didn't necessary
+            // have to turn it into an OGRFeature.
+            m_nFeaturesRead++;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Is it of the proper feature class?                              */
 /* -------------------------------------------------------------------- */
 
-        // We count reading low level GML features as a feature read for
-        // work checking purposes, though at least we didn't necessary
-        // have to turn it into an OGRFeature.
-        m_nFeaturesRead++;
-
         if( poGMLFeature->GetClass() != poFClass )
-            continue;
+        {
+            if( poDS->GetReadMode() == INTERLEAVED_LAYERS ||
+                (poDS->GetReadMode() == SEQUENTIAL_LAYERS && iNextGMLId != 0) )
+            {
+                CPLAssert(poDS->PeekStoredGMLFeature() == NULL);
+                poDS->SetStoredGMLFeature(poGMLFeature);
+                return NULL;
+            }
+            else
+                continue;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Extract the fid:                                                */

@@ -68,6 +68,10 @@ OGRGMLDataSource::OGRGMLDataSource()
 
     poGlobalSRS = NULL;
     bIsWFS = FALSE;
+
+    eReadMode = STANDARD;
+    poStoredGMLFeature = NULL;
+    poLastReadLayer = NULL;
 }
 
 /************************************************************************/
@@ -178,6 +182,8 @@ OGRGMLDataSource::~OGRGMLDataSource()
     }
 
     delete poGlobalSRS;
+
+    delete poStoredGMLFeature;
 }
 
 /************************************************************************/
@@ -348,9 +354,23 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
     VSIFCloseL( fp );
 
-    m_bInvertAxisOrderIfLatLong = CSLTestBoolean(CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES"));
+    const char* pszReadMode = CPLGetConfigOption("GML_READ_MODE", NULL);
+    if (pszReadMode == NULL || EQUAL(pszReadMode, "STANDARD"))
+        eReadMode = STANDARD;
+    else if (EQUAL(pszReadMode, "SEQUENTIAL_LAYERS"))
+        eReadMode = SEQUENTIAL_LAYERS;
+    else if (EQUAL(pszReadMode, "INTERLEAVED_LAYERS"))
+        eReadMode = INTERLEAVED_LAYERS;
+    else
+    {
+        CPLDebug("GML", "Unrecognized value for GML_READ_MODE configuration option.");
+    }
 
-    const char* pszConsiderEPSGAsURN = CPLGetConfigOption("GML_CONSIDER_EPSG_AS_URN", NULL);
+    m_bInvertAxisOrderIfLatLong = CSLTestBoolean(
+        CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES"));
+
+    const char* pszConsiderEPSGAsURN =
+        CPLGetConfigOption("GML_CONSIDER_EPSG_AS_URN", NULL);
     if (pszConsiderEPSGAsURN != NULL)
         m_bConsiderEPSGAsURN = CSLTestBoolean(pszConsiderEPSGAsURN);
     else if (bHintConsiderEPSGAsURN)
@@ -533,6 +553,12 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     {
         // we assume an errors have been reported.
         return FALSE;
+    }
+
+    if (poReader->IsSequentialLayers() && pszReadMode == NULL)
+    {
+        CPLDebug("GML", "Layers are monoblock. Using SEQUENTIAL_LAYERS read mode");
+        eReadMode = SEQUENTIAL_LAYERS;
     }
 
 /* -------------------------------------------------------------------- */
