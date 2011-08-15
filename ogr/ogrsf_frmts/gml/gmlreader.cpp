@@ -160,6 +160,8 @@ GMLReader::GMLReader(int bUseExpatParserPreferably, int bInvertAxisOrderIfLatLon
     m_bCanUseGlobalSRSName = FALSE;
 
     m_pszFilteredClassName = NULL;
+
+    m_bSequentialLayers = -1;
 }
 
 /************************************************************************/
@@ -1117,6 +1119,10 @@ int GMLReader::LoadClasses( const char *pszFile )
         return FALSE;
     }
 
+    const char* pszSequentialLayers = CPLGetXMLValue(psRoot, "SequentialLayers", NULL);
+    if (pszSequentialLayers)
+        m_bSequentialLayers = CSLTestBoolean(pszSequentialLayers);
+
 /* -------------------------------------------------------------------- */
 /*      Extract feature classes for all definitions found.              */
 /* -------------------------------------------------------------------- */
@@ -1168,6 +1174,12 @@ int GMLReader::SaveClasses( const char *pszFile )
     CPLXMLNode *psRoot;
 
     psRoot = CPLCreateXMLNode( NULL, CXT_Element, "GMLFeatureClassList" );
+
+    if (m_bSequentialLayers != -1 && GetClassCount() > 1)
+    {
+        CPLCreateXMLElementAndValue( psRoot, "SequentialLayers",
+                                     m_bSequentialLayers ? "true" : "false" );
+    }
 
     for( int iClass = 0; iClass < GetClassCount(); iClass++ )
     {
@@ -1225,12 +1237,20 @@ int GMLReader::PrescanForSchema( int bGetExtents )
     m_bCanUseGlobalSRSName = TRUE;
 
     std::map<GMLFeatureClass*, int> osMapCountFeatureWithoutGeometry;
+    GMLFeatureClass *poLastClass = NULL;
+
+    m_bSequentialLayers = TRUE;
 
     void* hCacheSRS = GML_BuildOGRGeometryFromList_CreateCache();
 
     while( (poFeature = NextFeature()) != NULL )
     {
         GMLFeatureClass *poClass = poFeature->GetClass();
+
+        if (poLastClass != NULL && poClass != poLastClass &&
+            poClass->GetFeatureCount() != -1)
+            m_bSequentialLayers = FALSE;
+        poLastClass = poClass;
 
         if( poClass->GetFeatureCount() == -1 )
             poClass->SetFeatureCount( 1 );

@@ -248,6 +248,8 @@ public:
 
     virtual int SetFilteredClassName(const char* pszClassName) = 0;
     virtual const char* GetFilteredClassName() = 0;
+
+    virtual int IsSequentialLayers() const { return FALSE; }
 };
 
 IGMLReader *CreateGMLReader(int bUseExpatParserPreferably, int bInvertAxisOrderIfLatLong, int bConsiderEPSGAsURN);
