@@ -76,33 +76,17 @@ FGdbDataSource::~FGdbDataSource()
 
 int FGdbDataSource::Open(Geodatabase* pGeodatabase, const char * pszNewName, int bUpdate )
 {
-    /*
-    if (bUpdate)
-    {
-      // So far: nothings seems required to start editing
-    }
-    */
-
     m_pszName = CPLStrdup( pszNewName );
-    
     m_pGeodatabase = pGeodatabase;
 
-    // Anything will be fetched
-    // we could have something more restrictive that only fetches certain item types
-
     std::vector<std::wstring> typesRequested;
+
 	// We're only interested in Tables, Feature Datasets and Feature Classes
 	typesRequested.push_back(L"Feature Class");
 	typesRequested.push_back(L"Table");
 	typesRequested.push_back(L"Feature Dataset");
 	
-    //if (FAILED(hr = m_pGeodatabase->GetDatasetTypes(typesRequested)))
-    //  return GDBErr(hr, "Failed Opening Workspace Layers");
-
-    //bool ok = LoadLayers(typesRequested, L"\\");
-    bool rv = LoadLayers2(L"\\");
-
-    //std::cout << "m_layers.size() = " << m_layers.size() << std::endl;
+    bool rv = LoadLayers(L"\\");
 
     return rv;
 }
@@ -135,10 +119,10 @@ bool FGdbDataSource::OpenFGDBTables(const std::vector<std::wstring> &layers)
 }
 
 /************************************************************************/
-/*                            LoadLayers2()                             */
+/*                            LoadLayers()                             */
 /************************************************************************/
 
-bool FGdbDataSource::LoadLayers2(const std::wstring &root) 
+bool FGdbDataSource::LoadLayers(const std::wstring &root) 
 {
     std::vector<wstring> tables;
     std::vector<wstring> featureclasses;
@@ -181,12 +165,17 @@ bool FGdbDataSource::LoadLayers2(const std::wstring &root)
     return true;
 }
 
+
+#if 0
 /************************************************************************/
-/*                            LoadLayers()                              */
+/*                            LoadLayersOld()                              */
 /************************************************************************/
 
+/* Old recursive LoadLayers. Removed in favor of simple one that only
+   looks at FeatureClasses and Tables. */
+
 // Flattens out hierarchichal GDB structure
-bool FGdbDataSource::LoadLayers(const std::vector<wstring> & datasetTypes,
+bool FGdbDataSource::LoadLayersOld(const std::vector<wstring> & datasetTypes,
                                 const wstring & parent)
 {
     long hr = S_OK;
@@ -218,7 +207,7 @@ bool FGdbDataSource::LoadLayers(const std::vector<wstring> & datasetTypes,
                 // For now, we just ignore dataset containers and only open the children
                 //std::wcout << datasetTypes[dsTypeIndex] << L" " << childDatasets[childDatasetIndex] << std::endl;
 
-                if (!LoadLayers(datasetTypes, childDatasets[childDatasetIndex]))
+                if (!LoadLayersOld(datasetTypes, childDatasets[childDatasetIndex]))
                     errorsEncountered = true;
             }
         }
@@ -252,6 +241,7 @@ bool FGdbDataSource::LoadLayers(const std::vector<wstring> & datasetTypes,
 
     return !errorsEncountered;
 }
+#endif
 
 
 /************************************************************************/
@@ -266,8 +256,7 @@ OGRErr FGdbDataSource::DeleteLayer( int iLayer )
 
     // Fetch FGDBAPI Table before deleting OGR layer object
 
-    Table* pTable;
-    m_layers[iLayer]->GetTable(&pTable);
+    Table* pTable = m_layers[iLayer]->GetTable();
 
     std::string name = m_layers[iLayer]->GetLayerDefn()->GetName();
 
@@ -304,8 +293,7 @@ int FGdbDataSource::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return TRUE;
 
-    // Have not implemented this yet
-    else if( EQUAL(pszCap,ODsCDeleteLayer) )
+    else if( EQUAL(pszCap,ODsCDeleteLayer) ) /* TBD DeleteLayer() */
         return FALSE;
 
     return FALSE;
