@@ -48,9 +48,7 @@ FGdbLayer::FGdbLayer():
     OGRLayer(), m_pDS(NULL), m_pTable(NULL), m_pFeatureDefn(NULL), 
     m_pSRS(NULL), m_wstrSubfields(L"*"), m_pOGRFilterGeometry(NULL), 
     m_pEnumRows(NULL), m_bFilterDirty(true), 
-    m_supressColumnMappingError(false), m_forceMulti(false),
-    m_xOrigin(-2147483647), m_yOrigin(-2147483647), m_zOrigin(-2147483647), 
-    m_xyScale(1000000000), m_zScale(1000000000)
+    m_supressColumnMappingError(false), m_forceMulti(false)
 {
     m_pEnumRows = new EnumRows;
 }
@@ -93,6 +91,7 @@ FGdbLayer::~FGdbLayer()
         OGRGeometryFactory::destroyGeometry(m_pOGRFilterGeometry);
         m_pOGRFilterGeometry = NULL;
     }
+    
 }
 
 
@@ -376,7 +375,7 @@ CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszOptions)
         /* Dispose of our close */
         delete poSRSClone;
     }
-
+    
     /* Handle Origin/Scale/Tolerance */
     const char* grid[7] = {
       "XOrigin", "YOrigin", "XYScale",
@@ -387,7 +386,7 @@ CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszOptions)
       "-2147483647", "1000000000",
       "0.0001", "0.0001" };
 
-    /* Convert any values available */
+    /* Convert any layer creation options available, use defaults otherwise */
     for( int i = 0; i < 7; i++ )
     {
         if ( CSLFetchNameValue( papszOptions, grid[i] ) != NULL )
@@ -918,47 +917,6 @@ bool FGdbLayer::ParseSpatialReference(CPLXMLNode* psSpatialRefNode,
             *pOutWkt = pszUnescaped;
             CPLFree(pszUnescaped);
         }
-        /* The precision grid parameters are useful for handling the coordinates */
-        else if( psSRItemNode->eType == CXT_Element &&
-                psSRItemNode->psChild != NULL &&
-                EQUAL(psSRItemNode->pszValue,"XOrigin") )
-        {
-            char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
-            m_xOrigin = atof(pszUnescaped);
-            CPLFree(pszUnescaped);
-        }
-        else if( psSRItemNode->eType == CXT_Element &&
-                psSRItemNode->psChild != NULL &&
-                EQUAL(psSRItemNode->pszValue,"YOrigin") )
-        {
-            char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
-            m_yOrigin = atof(pszUnescaped);
-            CPLFree(pszUnescaped);
-        }
-        else if( psSRItemNode->eType == CXT_Element &&
-                psSRItemNode->psChild != NULL &&
-                EQUAL(psSRItemNode->pszValue,"ZOrigin") )
-        {
-            char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
-            m_zOrigin = atof(pszUnescaped);
-            CPLFree(pszUnescaped);
-        }
-        else if( psSRItemNode->eType == CXT_Element &&
-                psSRItemNode->psChild != NULL &&
-                EQUAL(psSRItemNode->pszValue,"XYScale") )
-        {
-            char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
-            m_xyScale = atof(pszUnescaped);
-            CPLFree(pszUnescaped);
-        }
-        else if( psSRItemNode->eType == CXT_Element &&
-                psSRItemNode->psChild != NULL &&
-                EQUAL(psSRItemNode->pszValue,"ZScale") )
-        {
-            char* pszUnescaped = CPLUnescapeString(psSRItemNode->psChild->pszValue, NULL, CPLES_XML);
-            m_zScale = atof(pszUnescaped);
-            CPLFree(pszUnescaped);
-        }
 
     }
     return (*pOutWkt != "" || *pOutWKID != "");
@@ -1125,17 +1083,6 @@ void FGdbLayer::ResetReading()
     m_bFilterDirty = false;
   
 }
-
-/************************************************************************/
-/*                            GetTable()                                */
-/************************************************************************/
-
-long FGdbLayer::GetTable(Table** ppTable)
-{
-    *ppTable = m_pTable;
-    return S_OK;
-}
-
 
 /************************************************************************/
 /*                         SetSpatialFilter()                           */
@@ -1577,6 +1524,38 @@ OGRErr FGdbLayer::GetExtent (OGREnvelope* psExtent, int bForce)
     return OGRERR_NONE;
 }
 
+/* OGRErr FGdbLayer::StartTransaction ()
+{
+    if ( ! m_pTable ) 
+        return OGRERR_FAILURE;
+        
+    m_pTable->LoadOnlyMode(true);
+    m_pTable->SetWriteLock();
+    return OGRERR_NONE;
+    
+} */
+
+
+/* OGRErr FGdbLayer::CommitTransaction ()
+{
+    if ( ! m_pTable ) 
+        return OGRERR_FAILURE;
+    
+    m_pTable->LoadOnlyMode(false);
+    m_pTable->FreeWriteLock();
+    return OGRERR_NONE;
+} */
+
+/* OGRErr FGdbLayer::RollbackTransaction ()
+{
+    if ( ! m_pTable ) 
+        return OGRERR_FAILURE;
+    
+    m_pTable->LoadOnlyMode(false);
+    m_pTable->FreeWriteLock();
+    return OGRERR_NONE;
+} */
+
 
 /************************************************************************/
 /*                           GetLayerXML()                              */
@@ -1602,30 +1581,25 @@ OGRErr FGdbLayer::GetLayerXML (char **ppXml)
 }
 
 /************************************************************************/
-/*                           GetLayerPrecision()                        */
-/* Return precision numbers for this layer, as defined in the FGDB file */
+/*                           GetLayerMetadataXML()                      */
+/* Return XML metadata for the Layer as provided by FGDB. Caller must  */
+/* free result.                                                         */
 /* Not currently used by the driver, but can be used by external code   */
 /* for specific purposes.                                               */
 /************************************************************************/
 
-OGRErr FGdbLayer::GetLayerPrecision (double *xOrigin, double *yOrigin, double *zOrigin,
-                                     double *xyScale, double *zScale)
+OGRErr FGdbLayer::GetLayerMetadataXML (char **ppXml)
 {
-    if ( xOrigin )
-        *xOrigin = m_xOrigin;
+    long hr;
+    std::string xml;
 
-    if ( yOrigin )
-        *yOrigin = m_yOrigin;
+    if ( FAILED(hr = m_pTable->GetDocumentation(xml)) )
+    {
+        GDBErr(hr, "Failed fetching XML table metadata");
+        return OGRERR_FAILURE;
+    }
 
-    if ( zOrigin )
-        *zOrigin = m_zOrigin;
-
-    if ( xyScale )
-        *xyScale = m_xyScale;
-        
-    if ( zScale )
-        *zScale = m_zScale;
-        
+    *ppXml = CPLStrdup(xml.c_str());
     return OGRERR_NONE;
 }
 
@@ -1654,6 +1628,12 @@ int FGdbLayer::TestCapability( const char* pszCap )
     else if (EQUAL(pszCap,OLCSequentialWrite)) /* CreateFeature() */
         return TRUE;
 
+    else if (EQUAL(pszCap,OLCStringsAsUTF8)) /* Native UTF16, converted to UTF8 */
+        return TRUE;
+
+    else if (EQUAL(pszCap,OLCReorderFields)) /* TBD ReorderFields() */
+        return FALSE;
+
     else if (EQUAL(pszCap,OLCDeleteFeature)) /* TBD DeleteFeature() */
         return FALSE;
 
@@ -1662,7 +1642,14 @@ int FGdbLayer::TestCapability( const char* pszCap )
 
     else if (EQUAL(pszCap,OLCDeleteField)) /* TBD DeleteField() */
         return FALSE;
+        
+    else if (EQUAL(pszCap,OLCFastSetNextByIndex)) /* TBD FastSetNextByIndex() */
+        return FALSE;
 
+    else if (EQUAL(pszCap,OLCTransactions)) /* TBD Start/End Transactions() */
+        return FALSE;
+        
     else 
         return FALSE;
 }
+

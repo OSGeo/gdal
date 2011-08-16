@@ -81,7 +81,7 @@ public:
   virtual OGRFeature* GetNextFeature();
   virtual OGRFeature* GetFeature( long nFeatureId );
 
-  long GetTable(Table** ppTable);
+  Table* GetTable() { return m_pTable; }
 
   virtual OGRErr      CreateField( OGRFieldDefn *poField, int bApproxOK );
   virtual OGRErr      CreateFeature( OGRFeature *poFeature );
@@ -90,6 +90,10 @@ public:
   virtual OGRErr      SetAttributeFilter( const char *pszQuery );
   virtual void 	      SetSpatialFilterRect (double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
   virtual void        SetSpatialFilter( OGRGeometry * );
+
+//  virtual OGRErr        StartTransaction( );
+//  virtual OGRErr        CommitTransaction( );
+//  virtual OGRErr        RollbackTransaction( );
 
   OGRFeatureDefn *    GetLayerDefn() { return m_pFeatureDefn; }
 	
@@ -100,8 +104,8 @@ public:
   // Access the XML directly. The 2 following methods are not currently used by the driver, but
   // can be used by external code for specific purposes.
   OGRErr              GetLayerXML ( char **poXml );
-  OGRErr              GetLayerPrecision( double *xOrigin, double *yOrigin, double *zOrigin, double *xyScale, double *zScale );
-
+  OGRErr              GetLayerMetadataXML ( char **poXmlMeta );
+  
 protected:
 
   bool GDBToOGRFields(CPLXMLNode* psFields);  
@@ -140,12 +144,6 @@ protected:
   bool  m_supressColumnMappingError;
   bool  m_forceMulti;
 
-  double m_xOrigin;
-  double m_yOrigin;
-  double m_zOrigin;
-  double m_xyScale;
-  double m_zScale;
-
 };
 
 /************************************************************************/
@@ -180,8 +178,7 @@ public:
   void OpenSpatialTable( const char* pszTableName );
   */
 protected:
-  bool LoadLayers(const std::vector<std::wstring> & typesRequested, const std::wstring & parent);
-  bool LoadLayers2(const std::wstring & parent);
+  bool LoadLayers(const std::wstring & parent);
   bool OpenFGDBTables(const std::vector<std::wstring> &layers);
 
   char* m_pszName;
