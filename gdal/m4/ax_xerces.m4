@@ -116,8 +116,8 @@ AC_DEFUN([AX_LIB_XERCES],
         saved_CPPFLAGS="$CPPFLAGS"
         CPPFLAGS="$CPPFLAGS -I$xerces_include_dir -I$xerces_include_dir2"
 
-        saved_LDFLAGS="$LDFLAGS"
-        LDFLAGS="$LDFLAGS $xerces_lib_flags"
+        saved_LIBS="$LIBS"
+        LIBS="$LIBS $xerces_lib_flags"
 
         dnl
         dnl Check Xerces headers
@@ -180,7 +180,7 @@ XMLPlatformUtils::Initialize();
         fi
 
         CPPFLAGS="$saved_CPPFLAGS"
-        LDFLAGS="$saved_LDFLAGS"
+        LIBS="$saved_LIBS"
     fi
 
     AC_MSG_CHECKING([for Xerces C++ Parser])
