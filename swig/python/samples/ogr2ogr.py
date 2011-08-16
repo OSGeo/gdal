@@ -990,25 +990,30 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
 #/* -------------------------------------------------------------------- */
 #/*      Find the layer.                                                 */
 #/* -------------------------------------------------------------------- */
-    iLayer = -1
-    poDstLayer = None
 
     #/* GetLayerByName() can instanciate layers that would have been */
     #*/ 'hidden' otherwise, for example, non-spatial tables in a */
     #*/ Postgis-enabled database, so this apparently useless command is */
     #/* not useless... (#4012) */
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    poDstDS.GetLayerByName(pszNewLayerName)
+    poDstLayer = poDstDS.GetLayerByName(pszNewLayerName)
     gdal.PopErrorHandler()
     gdal.ErrorReset()
 
-    for iLayer in range(poDstDS.GetLayerCount()):
-        poLayer = poDstDS.GetLayer(iLayer)
+    iLayer = -1
+    if poDstLayer is not None:
+        nLayerCount = poDstDS.GetLayerCount()
+        for iLayer in range(nLayerCount):
+            poLayer = poDstDS.GetLayer(iLayer)
+            # The .cpp version compares on pointers directly, but we cannot
+            # do this with swig object, so just compare the names.
+            if poLayer is not None \
+                and poLayer.GetName() == poDstLayer.GetName():
+                break
 
-        if poLayer is not None \
-            and EQUAL(poLayer.GetLayerDefn().GetName(), pszNewLayerName):
-            poDstLayer = poLayer
-            break
+        if (iLayer == nLayerCount):
+            # /* shouldn't happen with an ideal driver */
+            poDstLayer = None
 
 #/* -------------------------------------------------------------------- */
 #/*      If the user requested overwrite, and we have the layer in       */
