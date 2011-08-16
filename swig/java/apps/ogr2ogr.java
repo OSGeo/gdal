@@ -1164,30 +1164,36 @@ public class ogr2ogr
     /* -------------------------------------------------------------------- */
     /*      Find the layer.                                                 */
     /* -------------------------------------------------------------------- */
-        int iLayer = -1;
-        poDstLayer = null;
 
         /* GetLayerByName() can instanciate layers that would have been */
         /* 'hidden' otherwise, for example, non-spatial tables in a */
         /* Postgis-enabled database, so this apparently useless command is */
         /* not useless... (#4012) */
         gdal.PushErrorHandler("CPLQuietErrorHandler");
-        poDstDS.GetLayerByName(pszNewLayerName);
+        poDstLayer = poDstDS.GetLayerByName(pszNewLayerName);
         gdal.PopErrorHandler();
         gdal.ErrorReset();
 
-        for( iLayer = 0; iLayer < poDstDS.GetLayerCount(); iLayer++ )
+        int iLayer = -1;
+        if( poDstLayer != null )
         {
-            Layer        poLayer = poDstDS.GetLayer(iLayer);
-    
-            if( poLayer != null 
-                && poLayer.GetLayerDefn().GetName().equalsIgnoreCase(pszNewLayerName) )
+            int nLayerCount = poDstDS.GetLayerCount();
+            for( iLayer = 0; iLayer < nLayerCount; iLayer++ )
             {
-                poDstLayer = poLayer;
-                break;
+                Layer        poLayer = poDstDS.GetLayer(iLayer);
+
+                if( poLayer != null
+                    && poLayer.GetName().equals(poDstLayer.GetName()) )
+                {
+                    break;
+                }
             }
+
+            if (iLayer == nLayerCount)
+                /* shouldn't happen with an ideal driver */
+                poDstLayer = null;
         }
-        
+
     /* -------------------------------------------------------------------- */
     /*      If the user requested overwrite, and we have the layer in       */
     /*      question we need to delete it now so it will get recreated      */

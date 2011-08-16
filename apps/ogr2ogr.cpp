@@ -1680,30 +1680,32 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Find the layer.                                                 */
 /* -------------------------------------------------------------------- */
-    int iLayer = -1;
-    poDstLayer = NULL;
 
     /* GetLayerByName() can instanciate layers that would have been */
     /* 'hidden' otherwise, for example, non-spatial tables in a */
     /* Postgis-enabled database, so this apparently useless command is */
     /* not useless... (#4012) */
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    poDstDS->GetLayerByName(pszNewLayerName);
+    poDstLayer = poDstDS->GetLayerByName(pszNewLayerName);
     CPLPopErrorHandler();
     CPLErrorReset();
 
-    for( iLayer = 0; iLayer < poDstDS->GetLayerCount(); iLayer++ )
+    int iLayer = -1;
+    if (poDstLayer != NULL)
     {
-        OGRLayer        *poLayer = poDstDS->GetLayer(iLayer);
-
-        if( poLayer != NULL 
-            && EQUAL(poLayer->GetName(),pszNewLayerName) )
+        int nLayerCount = poDstDS->GetLayerCount();
+        for( iLayer = 0; iLayer < nLayerCount; iLayer++ )
         {
-            poDstLayer = poLayer;
-            break;
+            OGRLayer        *poLayer = poDstDS->GetLayer(iLayer);
+            if (poLayer == poDstLayer)
+                break;
         }
+
+        if (iLayer == nLayerCount)
+            /* shouldn't happen with an ideal driver */
+            poDstLayer = NULL;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      If the user requested overwrite, and we have the layer in       */
 /*      question we need to delete it now so it will get recreated      */
