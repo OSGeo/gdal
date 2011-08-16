@@ -22544,8 +22544,8 @@ fi
         saved_CPPFLAGS="$CPPFLAGS"
         CPPFLAGS="$CPPFLAGS -I$xerces_include_dir -I$xerces_include_dir2"
 
-        saved_LDFLAGS="$LDFLAGS"
-        LDFLAGS="$LDFLAGS $xerces_lib_flags"
+        saved_LIBS="$LIBS"
+        LIBS="$LIBS $xerces_lib_flags"
 
                                 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Xerces C++ Parser headers in $xerces_include_dir and $xerces_include_dir2" >&5
 $as_echo_n "checking for Xerces C++ Parser headers in $xerces_include_dir and $xerces_include_dir2... " >&6; }
@@ -22653,7 +22653,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
         fi
 
         CPPFLAGS="$saved_CPPFLAGS"
-        LDFLAGS="$saved_LDFLAGS"
+        LIBS="$saved_LIBS"
     fi
 
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Xerces C++ Parser" >&5
