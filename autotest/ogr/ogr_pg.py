@@ -64,6 +64,11 @@ def ogr_pg_1():
 
     gdaltest.pg_ds = None
     gdaltest.pg_connection_string='dbname=autotest'
+    #gdaltest.pg_connection_string='dbname=autotest port=5432'
+    #gdaltest.pg_connection_string='dbname=autotest-postgis2.0 port=5432'
+    #gdaltest.pg_connection_string='dbname=autotest host=127.0.0.1 port=5433 user=postgres'
+    #gdaltest.pg_connection_string='dbname=autotest host=127.0.0.1 port=5434 user=postgres'
+    #gdaltest.pg_connection_string='dbname=autotest port=5435 user=postgres'
 
     try:
         gdaltest.pg_dr = ogr.GetDriverByName( 'PostgreSQL' )
@@ -2843,6 +2848,27 @@ def ogr_pg_58():
     return 'success'
 
 ###############################################################################
+# Check that we can use -nln with a layer name that is recognized by GetLayerByName()
+# but which is not the layer name.
+
+def ogr_pg_59():
+    import test_cli_utilities
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -append -f PostgreSQL "' + 'PG:' + gdaltest.pg_connection_string + '" data/poly.shp -nln public.tpoly')
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    lyr = ds.GetLayerByName('tpoly')
+    fc = lyr.GetFeatureCount()
+    ds = None
+
+    if fc != 35:
+        gdaltest.post_reason('did not get expected feature count')
+        return 'fail'
+
+    return 'success'
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -2969,6 +2995,7 @@ gdaltest_list_internal = [
     ogr_pg_56,
     ogr_pg_57,
     ogr_pg_58,
+    ogr_pg_59,
     ogr_pg_cleanup ]
 
 ###############################################################################
