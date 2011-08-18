@@ -396,8 +396,12 @@ void NASHandler::characters(const XMLCh* const chars_in,
     {
         int     nCurFieldLength = strlen(m_pszCurField);
 
-        while( *chars == ' ' || *chars == 10 || *chars == 13 || *chars == '\t')
-            chars++;
+        if (nCurFieldLength == 0)
+        {
+            // Ignore white space
+            while( *chars == ' ' || *chars == 10 || *chars == 13 || *chars == '\t')
+                chars++;
+        }
 
         char *pszTranslated = tr_strdup(chars);
         
@@ -417,9 +421,12 @@ void NASHandler::characters(const XMLCh* const chars_in,
     }
     else if( m_pszGeometry != NULL )
     {
-        // Ignore white space
-        while( *chars == ' ' || *chars == 10 || *chars == 13 || *chars == '\t')
-            chars++;
+        if (m_nGeomLen == 0)
+        {
+            // Ignore white space
+            while( *chars == ' ' || *chars == 10 || *chars == 13 || *chars == '\t')
+                chars++;
+        }
         
         int nCharsLen = tr_strlen(chars);
 
