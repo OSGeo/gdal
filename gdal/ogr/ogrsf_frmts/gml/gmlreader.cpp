@@ -133,6 +133,7 @@ GMLReader::GMLReader(int bUseExpatParserPreferably, int bInvertAxisOrderIfLatLon
     m_poSAXReader = NULL;
     m_poCompleteFeature = NULL;
     m_GMLInputSource = NULL;
+    m_bEOF = FALSE;
 #endif
 #ifdef HAVE_EXPAT
     oParser = NULL;
@@ -409,6 +410,7 @@ void GMLReader::CleanupParser()
     m_GMLInputSource = NULL;
     delete m_poCompleteFeature;
     m_poCompleteFeature = NULL;
+    m_bEOF = FALSE;
 #endif
 
 #ifdef HAVE_EXPAT
@@ -498,6 +500,9 @@ GMLFeature *GMLReader::NextFeatureXerces()
 {
     GMLFeature *poReturn = NULL;
 
+    if (m_bEOF)
+        return NULL;
+
     try
     {
         if( !m_bReadStarted )
@@ -517,6 +522,9 @@ GMLFeature *GMLReader::NextFeatureXerces()
         while( m_poCompleteFeature == NULL 
                && !m_bStopParsing
                && m_poSAXReader->parseNext( m_oToFill ) ) {}
+
+        if (m_poCompleteFeature == NULL)
+            m_bEOF = TRUE;
 
         poReturn = m_poCompleteFeature;
         m_poCompleteFeature = NULL;
