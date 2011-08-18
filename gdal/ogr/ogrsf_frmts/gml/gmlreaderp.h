@@ -289,6 +289,7 @@ private:
     XMLPScanToken m_oToFill;
     GMLFeature   *m_poCompleteFeature;
     GMLInputSource *m_GMLInputSource;
+    int           m_bEOF;
     int           SetupParserXerces();
     GMLFeature   *NextFeatureXerces();
 #endif
