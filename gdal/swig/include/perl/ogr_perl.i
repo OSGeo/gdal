@@ -133,7 +133,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    return _TestCapability($self, $CAPABILITIES{$cap});
 	}
 	sub GetName {
-	  return $Geo::OGR::name_encoding ? $_[0]->_GetName : decode($Geo::OGR::name_encoding, $_[0]->_GetName);
+	  return $Geo::OGR::name_encoding ? decode($Geo::OGR::name_encoding, $_[0]->_GetName) : $_[0]->_GetName;
 	}
 	*Create = *CreateDataSource;
 	*Copy = *CopyDataSource;
@@ -175,7 +175,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    return Geo::OGR::OpenShared(@_);
 	}
 	sub GetName {
-	  return $Geo::OGR::name_encoding ? $_[0]->_GetName : decode($Geo::OGR::name_encoding, $_[0]->_GetName);
+	  return $Geo::OGR::name_encoding ? decode($Geo::OGR::name_encoding, $_[0]->_GetName) : $_[0]->_GetName;
 	}
 	sub Layer {
 	    my($self, $name) = @_;
@@ -303,7 +303,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    return _TestCapability($self, $CAPABILITIES{$cap});
 	}
 	sub GetName {
-	  return $Geo::OGR::name_encoding ? $_[0]->_GetName : decode($Geo::OGR::name_encoding, $_[0]->_GetName);
+	  return $Geo::OGR::name_encoding ? decode($Geo::OGR::name_encoding, $_[0]->_GetName) : $_[0]->_GetName;
 	}
 	sub Schema {
 	    my $self = shift;
@@ -447,7 +447,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    return $self;
 	}
 	sub GetName {
-	  return $Geo::OGR::name_encoding ? $_[0]->_GetName : decode($Geo::OGR::name_encoding, $_[0]->_GetName);
+	  return $Geo::OGR::name_encoding ? decode($Geo::OGR::name_encoding, $_[0]->_GetName) : $_[0]->_GetName;
 	}
 	sub Schema {
 	    my $self = shift;
@@ -489,6 +489,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	use strict;
 	use vars qw /%GEOMETRIES/;
 	use Carp;
+	use Encode;
 	sub FID {
 	    my $self = shift;
 	    $self->SetFID($_[0]) if @_;
@@ -783,7 +784,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    return $self;
 	}
 	sub GetName {
-	  return $Geo::OGR::name_encoding ? $_[0]->_GetName : decode($Geo::OGR::name_encoding, $_[0]->_GetName);
+	  return $Geo::OGR::name_encoding ? decode($Geo::OGR::name_encoding, $_[0]->_GetName) : $_[0]->_GetName;
 	}
 	sub Name {
 	    my $self = shift;
