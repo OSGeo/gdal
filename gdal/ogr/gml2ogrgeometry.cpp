@@ -189,12 +189,12 @@ static int AddPoint( OGRGeometry *poGeometry,
                      double dfX, double dfY, double dfZ, int nDimension )
 
 {
-    if( poGeometry->getGeometryType() == wkbPoint 
-        || poGeometry->getGeometryType() == wkbPoint25D )
+    OGRwkbGeometryType eType = wkbFlatten(poGeometry->getGeometryType());
+    if( eType == wkbPoint )
     {
         OGRPoint *poPoint = (OGRPoint *) poGeometry;
 
-        if( poPoint->getX() != 0.0 || poPoint->getY() != 0.0 )
+        if( !poPoint->IsEmpty() )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "More than one coordinate for <Point> element.");
@@ -209,8 +209,7 @@ static int AddPoint( OGRGeometry *poGeometry,
         return TRUE;
     }
                 
-    else if( poGeometry->getGeometryType() == wkbLineString
-             || poGeometry->getGeometryType() == wkbLineString25D )
+    else if( eType == wkbLineString )
     {
         if( nDimension == 3 )
             ((OGRLineString *) poGeometry)->addPoint( dfX, dfY, dfZ );
@@ -501,10 +500,10 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
 /*      collections.                                                    */
 /************************************************************************/
 
-static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
-                                             int bGetSecondaryGeometryOption,
-                                             int bIgnoreGSG = FALSE,
-                                             int bOrientation = TRUE )
+OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
+                                      int bGetSecondaryGeometryOption,
+                                      int bIgnoreGSG,
+                                      int bOrientation )
 
 {
     const char *pszBaseGeometry = BareGMLElement( psNode->pszValue );

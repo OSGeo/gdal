@@ -39,7 +39,9 @@ GMLFeatureClass::GMLFeatureClass( const char *pszName )
 
 {
     m_pszName = CPLStrdup( pszName );
+    n_nNameLen = strlen( m_pszName );
     m_pszElementName = NULL;
+    n_nElementNameLen = 0;
     m_pszGeometryElement = NULL;
     m_nPropertyCount = 0;
     m_papoProperty = NULL;
@@ -101,6 +103,23 @@ int GMLFeatureClass::GetPropertyIndex( const char *pszName ) const
 }
 
 /************************************************************************/
+/*                        GetPropertyIndexBySrcElement()                */
+/************************************************************************/
+
+int GMLFeatureClass::GetPropertyIndexBySrcElement( const char *pszElement, int nLen ) const
+
+{
+    for( int i = 0; i < m_nPropertyCount; i++ )
+        if( nLen == (int)m_papoProperty[i]->GetSrcElementLen() &&
+            memcmp(pszElement,m_papoProperty[i]->GetSrcElement(), nLen) == 0)
+            return i;
+
+    return -1;
+}
+
+
+
+/************************************************************************/
 /*                            AddProperty()                             */
 /************************************************************************/
 
@@ -133,6 +152,7 @@ void GMLFeatureClass::SetElementName( const char *pszElementName )
 {
     CPLFree( m_pszElementName );
     m_pszElementName = CPLStrdup( pszElementName );
+    n_nElementNameLen = strlen(pszElementName);
 }
 
 /************************************************************************/
@@ -146,6 +166,19 @@ const char *GMLFeatureClass::GetElementName() const
         return m_pszName;
     else
         return m_pszElementName;
+}
+
+/************************************************************************/
+/*                           GetElementName()                           */
+/************************************************************************/
+
+size_t GMLFeatureClass::GetElementNameLen() const
+
+{
+    if( m_pszElementName == NULL )
+        return n_nNameLen;
+    else
+        return n_nElementNameLen;
 }
 
 /************************************************************************/
@@ -313,6 +346,7 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
 /* -------------------------------------------------------------------- */
     CPLFree( m_pszName );
     m_pszName = CPLStrdup( CPLGetXMLValue( psRoot, "Name", NULL ) );
+    n_nNameLen = strlen(m_pszName);
     
     SetElementName( CPLGetXMLValue( psRoot, "ElementPath", m_pszName ) );
 
