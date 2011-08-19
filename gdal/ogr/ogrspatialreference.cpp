@@ -1969,7 +1969,8 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
             return eStatus;
     }
 
-    if( EQUALN(pszDefinition,"urn:ogc:def:crs:",16) 
+    if( EQUALN(pszDefinition,"urn:ogc:def:crs:",16)
+        || EQUALN(pszDefinition,"urn:ogc:def:crs,crs:",20)
         || EQUALN(pszDefinition,"urn:x-ogc:def:crs:",18)
         || EQUALN(pszDefinition,"urn:opengis:def:crs:",20))
         return importFromURN( pszDefinition );
@@ -2218,80 +2219,12 @@ OGRErr OSRImportFromUrl( OGRSpatialReferenceH hSRS, const char *pszUrl )
 }
 
 /************************************************************************/
-/*                           importFromURN()                            */
-/*                                                                      */
-/*      See OGC recommendation paper 06-023r1 or later for details.     */
+/*                         importFromURNPart()                          */
 /************************************************************************/
-
-/**
- * \brief Initialize from OGC URN. 
- *
- * Initializes this spatial reference from a coordinate system defined
- * by an OGC URN prefixed with "urn:ogc:def:crs:" per recommendation 
- * paper 06-023r1.  Currently EPSG and OGC authority values are supported, 
- * including OGC auto codes, but not including CRS1 or CRS88 (NAVD88). 
- *
- * This method is also support through SetFromUserInput() which can
- * normally be used for URNs.
- * 
- * @param pszURN the urn string. 
- *
- * @return OGRERR_NONE on success or an error code.
- */
-
-OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
-
+OGRErr OGRSpatialReference::importFromURNPart(const char* pszAuthority,
+                                              const char* pszCode,
+                                              const char* pszURN)
 {
-    const char *pszCur;
-
-    if( EQUALN(pszURN,"urn:ogc:def:crs:",16) )
-        pszCur = pszURN + 16;
-    else if( EQUALN(pszURN,"urn:x-ogc:def:crs:",18) )
-        pszCur = pszURN + 18;
-    else if( EQUALN(pszURN,"urn:opengis:def:crs:",20) )
-        pszCur = pszURN + 20;
-    else
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "URN %s not a supported format.", pszURN );
-        return OGRERR_FAILURE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Clear any existing definition.                                  */
-/* -------------------------------------------------------------------- */
-    if( GetRoot() != NULL )
-    {
-        delete poRoot;
-        poRoot = NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Find code (ignoring version) out of string like:                */
-/*                                                                      */
-/*      authority:[version]:code                                          */
-/* -------------------------------------------------------------------- */
-    const char *pszAuthority = pszCur;
-
-    // skip authority
-    while( *pszCur != ':' && *pszCur )
-        pszCur++;
-    if( *pszCur == ':' )
-        pszCur++;
-
-    // skip version
-    const char* pszBeforeVersion = pszCur;
-    while( *pszCur != ':' && *pszCur )
-        pszCur++;
-    if( *pszCur == ':' )
-        pszCur++;
-    else
-        /* We come here in the case, the content to parse is authority:code (instead of authority::code) */
-        /* which is probably illegal according to http://www.opengeospatial.org/ogcUrnPolicy */
-        /* but such content is found for example in what is returned by GeoServer */
-        pszCur = pszBeforeVersion;
-
-    const char *pszCode = pszCur;
 
 /* -------------------------------------------------------------------- */
 /*      Is this an EPSG code? Note that we import it with EPSG          */
@@ -2311,8 +2244,8 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
 /* -------------------------------------------------------------------- */
     if( !EQUALN(pszAuthority,"OGC:",4) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "URN %s has unrecognised authority.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "URN %s has unrecognised authority.",
                   pszURN );
         return OGRERR_FAILURE;
     }
@@ -2350,11 +2283,162 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
 /* -------------------------------------------------------------------- */
 /*      Not a recognise OGC item.                                       */
 /* -------------------------------------------------------------------- */
-    CPLError( CE_Failure, CPLE_AppDefined, 
-              "URN %s value not supported.", 
+    CPLError( CE_Failure, CPLE_AppDefined,
+              "URN %s value not supported.",
               pszURN );
 
     return OGRERR_FAILURE;
+}
+
+/************************************************************************/
+/*                           importFromURN()                            */
+/*                                                                      */
+/*      See OGC recommendation paper 06-023r1 or later for details.     */
+/************************************************************************/
+
+/**
+ * \brief Initialize from OGC URN. 
+ *
+ * Initializes this spatial reference from a coordinate system defined
+ * by an OGC URN prefixed with "urn:ogc:def:crs:" per recommendation 
+ * paper 06-023r1.  Currently EPSG and OGC authority values are supported, 
+ * including OGC auto codes, but not including CRS1 or CRS88 (NAVD88). 
+ *
+ * This method is also support through SetFromUserInput() which can
+ * normally be used for URNs.
+ * 
+ * @param pszURN the urn string. 
+ *
+ * @return OGRERR_NONE on success or an error code.
+ */
+
+OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
+
+{
+    const char *pszCur;
+
+    if( EQUALN(pszURN,"urn:ogc:def:crs:",16) )
+        pszCur = pszURN + 16;
+    if( EQUALN(pszURN,"urn:ogc:def:crs,crs:",20) )
+        pszCur = pszURN + 20;
+    else if( EQUALN(pszURN,"urn:x-ogc:def:crs:",18) )
+        pszCur = pszURN + 18;
+    else if( EQUALN(pszURN,"urn:opengis:def:crs:",20) )
+        pszCur = pszURN + 20;
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "URN %s not a supported format.", pszURN );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Clear any existing definition.                                  */
+/* -------------------------------------------------------------------- */
+    if( GetRoot() != NULL )
+    {
+        delete poRoot;
+        poRoot = NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find code (ignoring version) out of string like:                */
+/*                                                                      */
+/*      authority:[version]:code                                        */
+/* -------------------------------------------------------------------- */
+    const char *pszAuthority = pszCur;
+
+    // skip authority
+    while( *pszCur != ':' && *pszCur )
+        pszCur++;
+    if( *pszCur == ':' )
+        pszCur++;
+
+    // skip version
+    const char* pszBeforeVersion = pszCur;
+    while( *pszCur != ':' && *pszCur )
+        pszCur++;
+    if( *pszCur == ':' )
+        pszCur++;
+    else
+        /* We come here in the case, the content to parse is authority:code (instead of authority::code) */
+        /* which is probably illegal according to http://www.opengeospatial.org/ogcUrnPolicy */
+        /* but such content is found for example in what is returned by GeoServer */
+        pszCur = pszBeforeVersion;
+
+    const char *pszCode = pszCur;
+
+    const char* pszComma = strchr(pszCur, ',');
+    if (pszComma == NULL)
+        return importFromURNPart(pszAuthority, pszCode, pszURN);
+
+
+    /* There's a second part with the vertical SRS */
+    pszCur = pszComma + 1;
+    if (strncmp(pszCur, "crs:", 4) != 0)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "URN %s not a supported format.", pszURN );
+        return OGRERR_FAILURE;
+    }
+
+    pszCur += 4;
+
+    char* pszFirstCode = CPLStrdup(pszCode);
+    pszFirstCode[pszComma - pszCode] = '\0';
+    OGRErr eStatus = importFromURNPart(pszAuthority, pszFirstCode, pszURN);
+    CPLFree(pszFirstCode);
+
+    // Do we want to turn this into a compound definition
+    // with a vertical datum?
+    if( eStatus == OGRERR_NONE )
+    {
+        OGRSpatialReference oVertSRS;
+
+    /* -------------------------------------------------------------------- */
+    /*      Find code (ignoring version) out of string like:                */
+    /*                                                                      */
+    /*      authority:[version]:code                                        */
+    /* -------------------------------------------------------------------- */
+        pszAuthority = pszCur;
+
+        // skip authority
+        while( *pszCur != ':' && *pszCur )
+            pszCur++;
+        if( *pszCur == ':' )
+            pszCur++;
+
+        // skip version
+        pszBeforeVersion = pszCur;
+        while( *pszCur != ':' && *pszCur )
+            pszCur++;
+        if( *pszCur == ':' )
+            pszCur++;
+        else
+            pszCur = pszBeforeVersion;
+
+        pszCode = pszCur;
+
+        eStatus = oVertSRS.importFromURNPart(pszAuthority, pszCode, pszURN);
+        if( eStatus == OGRERR_NONE )
+        {
+            OGR_SRSNode *poHorizSRS = GetRoot()->Clone();
+
+            Clear();
+
+            CPLString osName = poHorizSRS->GetChild(0)->GetValue();
+            osName += " + ";
+            osName += oVertSRS.GetRoot()->GetValue();
+
+            SetNode( "COMPD_CS", osName );
+            GetRoot()->AddChild( poHorizSRS );
+            GetRoot()->AddChild( oVertSRS.GetRoot()->Clone() );
+        }
+
+        return eStatus;
+    }
+    else
+        return eStatus;
 }
 
 /************************************************************************/
