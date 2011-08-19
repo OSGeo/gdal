@@ -72,6 +72,10 @@ OGRGMLDataSource::OGRGMLDataSource()
     eReadMode = STANDARD;
     poStoredGMLFeature = NULL;
     poLastReadLayer = NULL;
+
+    m_bInvertAxisOrderIfLatLong = FALSE;
+    m_bConsiderEPSGAsURN = FALSE;
+    m_bGetSecondaryGeometryOption = FALSE;
 }
 
 /************************************************************************/
@@ -382,6 +386,8 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     else
         m_bConsiderEPSGAsURN = FALSE;
 
+    m_bGetSecondaryGeometryOption = CSLTestBoolean(CPLGetConfigOption("GML_GET_SECONDARY_GEOM", "NO"));
+
     /* EXPAT is faster than Xerces, so when it is safe to use it, use it ! */
     /* The only interest of Xerces is for rare encodings that Expat doesn't handle */
     /* but UTF-8 is well handled by Expat */
@@ -397,7 +403,10 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
             bUseExpatParserPreferably = FALSE;
     }
 
-    poReader = CreateGMLReader( bUseExpatParserPreferably, m_bInvertAxisOrderIfLatLong, m_bConsiderEPSGAsURN);
+    poReader = CreateGMLReader( bUseExpatParserPreferably,
+                                m_bInvertAxisOrderIfLatLong,
+                                m_bConsiderEPSGAsURN,
+                                m_bGetSecondaryGeometryOption );
     if( poReader == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 

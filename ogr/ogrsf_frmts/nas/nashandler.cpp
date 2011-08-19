@@ -180,7 +180,7 @@ void NASHandler::startElement(const XMLCh* const    uri,
         m_nDepthFeature = m_nDepth;
         m_nDepth ++;
             
-        m_poReader->SetFeatureProperty( "typeName", m_osLastTypeName );
+        m_poReader->SetFeaturePropertyDirectly( "typeName", CPLStrdup(m_osLastTypeName) );
         return;
     }
 
@@ -296,8 +296,7 @@ void NASHandler::endElement(const   XMLCh* const    uri,
     {
         CPLAssert( poState->m_poFeature != NULL );
         
-        m_poReader->SetFeatureProperty( poState->m_pszPath, m_pszCurField );
-        CPLFree( m_pszCurField );
+        m_poReader->SetFeaturePropertyDirectly( poState->osPath.c_str(), m_pszCurField );
         m_pszCurField = NULL;
     }
 
@@ -326,10 +325,13 @@ void NASHandler::endElement(const   XMLCh* const    uri,
         if( poState->m_nPathLength == m_nGeometryDepth+1 )
         {
             if( poState->m_poFeature != NULL )
-                poState->m_poFeature->SetGeometryDirectly( m_pszGeometry );
-            else
-                CPLFree( m_pszGeometry );
+            {
+                CPLXMLNode* psNode = CPLParseXMLString(m_pszGeometry);
+                if (psNode)
+                    poState->m_poFeature->SetGeometryDirectly( psNode );
+            }
 
+            CPLFree( m_pszGeometry );
             m_pszGeometry = NULL;
             m_nGeomAlloc = m_nGeomLen = 0;
         }
