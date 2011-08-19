@@ -144,6 +144,9 @@ class CPL_DLL OGRSpatialReference
     static int  IsAliasFor( const char *, const char * );
     void        GetNormInfo() const;
 
+    OGRErr      importFromURNPart(const char* pszAuthority,
+                                  const char* pszCode,
+                                  const char* pszURN);
   public:
                 OGRSpatialReference(const OGRSpatialReference&);
                 OGRSpatialReference(const char * = NULL);

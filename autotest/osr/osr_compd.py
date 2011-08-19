@@ -330,6 +330,22 @@ def osr_compd_7():
 
     return 'success'
 
+###############################################################################
+# Test ImportFromURN()
+
+def osr_compd_8():
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput( 'urn:ogc:def:crs,crs:EPSG::27700,crs:EPSG::7405' )
+
+    wkt = srs.ExportToWkt()
+    if wkt.find('COMPD_CS') != 0:
+        gdaltest.post_reason( 'COMPD_CS not recognised as compound.' )
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     osr_compd_1,
     osr_compd_2,
@@ -338,6 +354,7 @@ gdaltest_list = [
     osr_compd_5,
     osr_compd_6,
     osr_compd_7,
+    osr_compd_8,
     None ]
 
 if __name__ == '__main__':
