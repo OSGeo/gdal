@@ -37,8 +37,10 @@
 
 #include "cpl_string.h"
 #include "cpl_conv.h"
+#include "cpl_minixml.h"
 
 #include "ogr_core.h"
+#include "ogr_geometry.h"
 
 #ifdef CPL_MSB 
 #  define OGR_SWAP(x)   (x == wkbNDR)
@@ -118,5 +120,12 @@ OGRErr CPL_DLL OSRGetEllipsoidInfo( int, char **, double *, double *);
 double OGRFastAtof(const char* pszStr);
 
 OGRErr CPL_DLL OGRCheckPermutation(int* panPermutation, int nSize);
+
+/* GML related */
+
+OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
+                                      int bGetSecondaryGeometryOption,
+                                      int bIgnoreGSG = FALSE,
+                                      int bOrientation = TRUE );
 
 #endif /* ndef OGR_P_H_INCLUDED */

@@ -33,6 +33,7 @@
 #include "cpl_port.h"
 #include "cpl_string.h"
 #include "ogr_p.h"
+#include "ogr_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -269,14 +270,15 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 /*      Does it satisfy the spatial query, if there is one?             */
 /* -------------------------------------------------------------------- */
 
-        char** papszGeometryList = poGMLFeature->GetGeometryList();
-        if( papszGeometryList != NULL )
+        const CPLXMLNode* const * papsGeometry = poGMLFeature->GetGeometryList();
+        if (papsGeometry[0] != NULL)
         {
             const char* pszSRSName = poDS->GetGlobalSRSName();
-            poGeom = GML_BuildOGRGeometryFromList(papszGeometryList, TRUE,
+            poGeom = GML_BuildOGRGeometryFromList(papsGeometry, TRUE,
                                                   poDS->GetInvertAxisOrderIfLatLong(),
                                                   pszSRSName,
                                                   poDS->GetConsiderEPSGAsURN(),
+                                                  poDS->GetSecondaryGeometryOption(),
                                                   hCacheSRS);
 
             /* Force single geometry to multigeometry if needed to match layer geometry type */
@@ -308,16 +310,17 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                 poGeom->assignSpatialReference(poSRS);
 
             // We assume the createFromGML() function would have already
-            // reported the error. 
+            // reported the error.
             if( poGeom == NULL )
             {
                 delete poGMLFeature;
                 return NULL;
             }
-            
+
             if( m_poFilterGeom != NULL && !FilterGeometry( poGeom ) )
                 continue;
         }
+
         
 /* -------------------------------------------------------------------- */
 /*      Convert the whole feature into an OGRFeature.                   */
@@ -334,7 +337,8 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             iDstField ++;
         }
 
-        for( iField = 0; iField < poFClass->GetPropertyCount(); iField++, iDstField ++ )
+        int nPropertyCount = poFClass->GetPropertyCount();
+        for( iField = 0; iField < nPropertyCount; iField++, iDstField ++ )
         {
             const GMLProperty *psGMLProperty = poGMLFeature->GetProperty( iField );
             if( psGMLProperty == NULL || psGMLProperty->nSubProperties == 0 )

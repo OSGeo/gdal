@@ -3,7 +3,7 @@
 
 <dbTopoFeatureMembers>
 <poly>
-<gml:TopoSurface>
+<gml:TopoSurface srsName="urn:ogc:def:crs:EPSG::4326">
 <gml:directedFace>
   <gml:Face>
     <gml:directedEdge orientation="-"> 

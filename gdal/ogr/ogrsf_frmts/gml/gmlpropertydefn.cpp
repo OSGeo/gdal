@@ -41,9 +41,15 @@ GMLPropertyDefn::GMLPropertyDefn( const char *pszName,
 {
     m_pszName = CPLStrdup( pszName );
     if( pszSrcElement != NULL )
+    {
+        m_nSrcElementLen = strlen( pszSrcElement );
         m_pszSrcElement = CPLStrdup( pszSrcElement );
+    }
     else
+    {
+        m_nSrcElementLen = 0;
         m_pszSrcElement = NULL;
+    }
     m_eType = GMLPT_Untyped;
     m_nWidth = 0; 
     m_nPrecision = 0;
@@ -70,9 +76,15 @@ void GMLPropertyDefn::SetSrcElement( const char *pszSrcElement )
 {
     CPLFree( m_pszSrcElement );
     if( pszSrcElement != NULL )
+    {
+        m_nSrcElementLen = strlen( pszSrcElement );
         m_pszSrcElement = CPLStrdup( pszSrcElement );
+    }
     else
+    {
+        m_nSrcElementLen = 0;
         m_pszSrcElement = NULL;
+    }
 }
 
 /************************************************************************/

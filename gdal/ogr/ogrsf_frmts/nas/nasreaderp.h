@@ -198,8 +198,8 @@ public:
     void        PushFeature( const char *pszElement, 
                              const Attributes &attrs );
 
-    void        SetFeatureProperty( const char *pszElement,
-                                    const char *pszValue );
+    void        SetFeaturePropertyDirectly( const char *pszElement,
+                                    char *pszValue );
 
     int         HasStoppedParsing() { return FALSE; }
 

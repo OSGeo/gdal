@@ -27,62 +27,51 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
-
 #include "gmlutils.h"
+
+#include "cpl_string.h"
+#include "ogr_api.h"
+#include "ogr_p.h"
 #include <string>
 
 /************************************************************************/
 /*                GML_ExtractSrsNameFromGeometry()                      */
 /************************************************************************/
 
-char* GML_ExtractSrsNameFromGeometry(char** papszGeometryList,
+const char* GML_ExtractSrsNameFromGeometry(const CPLXMLNode* const * papsGeometry,
+                                     std::string& osWork,
                                      int bConsiderEPSGAsURN)
 {
-    if (papszGeometryList != NULL &&
-        *papszGeometryList != NULL &&
-        papszGeometryList[1] == NULL)
+    if (papsGeometry[0] != NULL && papsGeometry[1] == NULL)
     {
-        const char* pszSRSName = strstr(*papszGeometryList, "srsName=\"");
+        const char* pszSRSName = CPLGetXMLValue((CPLXMLNode*)papsGeometry[0], "srsName", NULL);
         if (pszSRSName)
         {
-            pszSRSName += strlen("srsName=\"");
+            int nLen = strlen(pszSRSName);
 
-            const char* pszEndQuote = strchr(pszSRSName, '"');
-            if (pszEndQuote == NULL)
-                return NULL;
-
-            int nLen = pszEndQuote - pszSRSName;
-
-            char* pszRet;
             if (strncmp(pszSRSName, "EPSG:", 5) == 0 &&
                 bConsiderEPSGAsURN)
             {
-                pszRet = (char*) CPLMalloc(22 + nLen-5 + 1);
-                memcpy(pszRet, "urn:ogc:def:crs:EPSG::", 22);
-                memcpy(pszRet + 22, pszSRSName+5, nLen-5);
-                pszRet[22 + nLen-5] = '\0';
+                osWork.reserve(22 + nLen-5);
+                osWork.assign("urn:ogc:def:crs:EPSG::", 22);
+                osWork.append(pszSRSName+5, nLen-5);
+                return osWork.c_str();
             }
             else if (strncmp(pszSRSName, "http://www.opengis.net/gml/srs/epsg.xml#", 40) == 0)
             {
-                pszRet = (char*) CPLMalloc(5 + nLen-40 + 1);
-                memcpy(pszRet, "EPSG:", 5);
-                memcpy(pszRet + 5, pszSRSName+40, nLen-40);
-                pszRet[5 + nLen-40] = '\0';
+                osWork.reserve(5 + nLen-40 );
+                osWork.assign("EPSG:", 5);
+                osWork.append(pszSRSName+40, nLen-40);
+                return osWork.c_str();
             }
             else
             {
-                pszRet = (char*) CPLMalloc(nLen + 1);
-                memcpy(pszRet, pszSRSName, nLen);
-                pszRet[nLen] = '\0';
+                return pszSRSName;
             }
-
-            return pszRet;
         }
     }
     return NULL;
 }
-
 
 /************************************************************************/
 /*                       GML_IsSRSLatLongOrder()                        */
@@ -143,90 +132,90 @@ void GML_BuildOGRGeometryFromList_DestroyCache(void* hCacheSRS)
 /*                 GML_BuildOGRGeometryFromList()                       */
 /************************************************************************/
 
-OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
+OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry,
                                           int bTryToMakeMultipolygons,
                                           int bInvertAxisOrderIfLatLong,
                                           const char* pszDefaultSRSName,
                                           int bConsiderEPSGAsURN,
+                                          int bGetSecondaryGeometryOption,
                                           void* hCacheSRS)
 {
     OGRGeometry* poGeom = NULL;
-    if( papszGeometryList != NULL )
+    int i;
+    OGRGeometryCollection* poCollection = NULL;
+    for(i=0;papsGeometry[i] != NULL;i++)
     {
-        char** papszIter = papszGeometryList;
-        OGRGeometryCollection* poCollection = NULL;
-        while(*papszIter)
+        OGRGeometry* poSubGeom = GML2OGRGeometry_XMLNode( papsGeometry[i],
+                                                          bGetSecondaryGeometryOption );
+        if (poSubGeom)
         {
-            OGRGeometry* poSubGeom = OGRGeometryFactory::createFromGML( *papszIter );
-            if (poSubGeom)
+            if (poGeom == NULL)
+                poGeom = poSubGeom;
+            else
             {
-                if (poGeom == NULL)
-                    poGeom = poSubGeom;
-                else
+                if (poCollection == NULL)
                 {
-                    if (poCollection == NULL)
+                    if (bTryToMakeMultipolygons &&
+                        wkbFlatten(poGeom->getGeometryType()) == wkbPolygon &&
+                        wkbFlatten(poSubGeom->getGeometryType()) == wkbPolygon)
                     {
-                        if (bTryToMakeMultipolygons &&
-                            wkbFlatten(poGeom->getGeometryType()) == wkbPolygon &&
-                            wkbFlatten(poSubGeom->getGeometryType()) == wkbPolygon)
-                        {
-                            OGRGeometryCollection* poGeomColl = new OGRMultiPolygon();
-                            poGeomColl->addGeometryDirectly(poGeom);
-                            poGeomColl->addGeometryDirectly(poSubGeom);
-                            poGeom = poGeomColl;
-                        }
-                        else if (bTryToMakeMultipolygons &&
-                                  wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon &&
-                                 wkbFlatten(poSubGeom->getGeometryType()) == wkbPolygon)
-                        {
-                            OGRGeometryCollection* poGeomColl = (OGRGeometryCollection* )poGeom;
-                            poGeomColl->addGeometryDirectly(poSubGeom);
-                        }
-                        else if (bTryToMakeMultipolygons &&
-                                 wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon &&
-                                 wkbFlatten(poSubGeom->getGeometryType()) == wkbMultiPolygon)
-                        {
-                            OGRGeometryCollection* poGeomColl = (OGRGeometryCollection* )poGeom;
-                            OGRGeometryCollection* poGeomColl2 = (OGRGeometryCollection* )poSubGeom;
-                            int nCount = poGeomColl2->getNumGeometries();
-                            int i;
-                            for(i=0;i<nCount;i++)
-                            {
-                                poGeomColl->addGeometry(poGeomColl2->getGeometryRef(i));
-                            }
-                            delete poSubGeom;
-                        }
-                        else if (bTryToMakeMultipolygons &&
-                                 wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon)
-                        {
-                            delete poGeom;
-                            delete poSubGeom;
-                            return GML_BuildOGRGeometryFromList(papszGeometryList, FALSE,
-                                                                bInvertAxisOrderIfLatLong,
-                                                                pszDefaultSRSName,
-                                                                bConsiderEPSGAsURN,
-                                                                hCacheSRS);
-                        }
-                        else
-                        {
-                            poCollection = new OGRGeometryCollection();
-                            poCollection->addGeometryDirectly(poGeom);
-                            poGeom = poCollection;
-                        }
+                        OGRGeometryCollection* poGeomColl = new OGRMultiPolygon();
+                        poGeomColl->addGeometryDirectly(poGeom);
+                        poGeomColl->addGeometryDirectly(poSubGeom);
+                        poGeom = poGeomColl;
                     }
-                    if (poCollection != NULL)
+                    else if (bTryToMakeMultipolygons &&
+                                wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon &&
+                                wkbFlatten(poSubGeom->getGeometryType()) == wkbPolygon)
                     {
-                        poCollection->addGeometryDirectly(poSubGeom);
+                        OGRGeometryCollection* poGeomColl = (OGRGeometryCollection* )poGeom;
+                        poGeomColl->addGeometryDirectly(poSubGeom);
+                    }
+                    else if (bTryToMakeMultipolygons &&
+                                wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon &&
+                                wkbFlatten(poSubGeom->getGeometryType()) == wkbMultiPolygon)
+                    {
+                        OGRGeometryCollection* poGeomColl = (OGRGeometryCollection* )poGeom;
+                        OGRGeometryCollection* poGeomColl2 = (OGRGeometryCollection* )poSubGeom;
+                        int nCount = poGeomColl2->getNumGeometries();
+                        int i;
+                        for(i=0;i<nCount;i++)
+                        {
+                            poGeomColl->addGeometry(poGeomColl2->getGeometryRef(i));
+                        }
+                        delete poSubGeom;
+                    }
+                    else if (bTryToMakeMultipolygons &&
+                                wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon)
+                    {
+                        delete poGeom;
+                        delete poSubGeom;
+                        return GML_BuildOGRGeometryFromList(papsGeometry, FALSE,
+                                                            bInvertAxisOrderIfLatLong,
+                                                            pszDefaultSRSName,
+                                                            bConsiderEPSGAsURN,
+                                                            bGetSecondaryGeometryOption,
+                                                            hCacheSRS);
+                    }
+                    else
+                    {
+                        poCollection = new OGRGeometryCollection();
+                        poCollection->addGeometryDirectly(poGeom);
+                        poGeom = poCollection;
                     }
                 }
+                if (poCollection != NULL)
+                {
+                    poCollection->addGeometryDirectly(poSubGeom);
+                }
             }
-            papszIter ++;
         }
     }
 
     if ( poGeom != NULL && bInvertAxisOrderIfLatLong )
     {
-        char* pszSRSName = GML_ExtractSrsNameFromGeometry(papszGeometryList,
+        std::string osWork;
+        const char* pszSRSName = GML_ExtractSrsNameFromGeometry(papsGeometry, osWork,
                                                           bConsiderEPSGAsURN);
         const char* pszNameLookup = pszSRSName ? pszSRSName : pszDefaultSRSName;
         if (pszNameLookup != NULL)
@@ -246,12 +235,10 @@ OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
             if (bSwap)
                 poGeom->swapXY();
         }
-        CPLFree(pszSRSName);
     }
-    
+
     return poGeom;
 }
-
 
 /************************************************************************/
 /*                           GML_GetSRSName()                           */

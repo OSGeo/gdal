@@ -382,7 +382,8 @@ void OGRNASDataSource::PopulateRelations()
         for( i = 0; papszOBProperties != NULL && papszOBProperties[i] != NULL;
              i++ )
         {
-            const GMLProperty *psGMLId = poFeature->GetProperty( "gml_id" );
+            int nGMLIdIndex = poFeature->GetClass()->GetPropertyIndex( "gml_id" );
+            const GMLProperty *psGMLId = (nGMLIdIndex >= 0) ? poFeature->GetProperty(nGMLIdIndex ) : NULL;
             char *pszName = NULL;
             const char *pszValue = CPLParseNameValue( papszOBProperties[i], 
                                                       &pszName );

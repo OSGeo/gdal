@@ -30,9 +30,14 @@
 #ifndef _CPL_GMLUTILS_H_INCLUDED
 #define _CPL_GMLUTILS_H_INCLUDED
 
+#include <vector>
+#include <string>
+#include "cpl_minixml.h"
+
 #include "ogr_geometry.h"
 
-char* GML_ExtractSrsNameFromGeometry(char** papszGeometryList,
+const char* GML_ExtractSrsNameFromGeometry(const CPLXMLNode* const * papsGeometry,
+                                     std::string& osWork,
                                      int bConsiderEPSGAsURN);
 
 int GML_IsSRSLatLongOrder(const char* pszSRSName);
@@ -40,11 +45,12 @@ int GML_IsSRSLatLongOrder(const char* pszSRSName);
 void* GML_BuildOGRGeometryFromList_CreateCache();
 void GML_BuildOGRGeometryFromList_DestroyCache(void* hCacheSRS);
 
-OGRGeometry* GML_BuildOGRGeometryFromList(char** papszGeometryList,
+OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry,
                                           int bTryToMakeMultipolygons,
                                           int bInvertAxisOrderIfLatLong,
                                           const char* pszDefaultSRSName,
                                           int bConsiderEPSGAsURN,
+                                          int bGetSecondaryGeometryOption,
                                           void* hCacheSRS);
 
 char* GML_GetSRSName(const OGRSpatialReference* poSRS, int bLongSRS, int *pbCoordSwap);
