@@ -2319,7 +2319,7 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
 
     if( EQUALN(pszURN,"urn:ogc:def:crs:",16) )
         pszCur = pszURN + 16;
-    if( EQUALN(pszURN,"urn:ogc:def:crs,crs:",20) )
+    else if( EQUALN(pszURN,"urn:ogc:def:crs,crs:",20) )
         pszCur = pszURN + 20;
     else if( EQUALN(pszURN,"urn:x-ogc:def:crs:",18) )
         pszCur = pszURN + 18;
