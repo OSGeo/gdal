@@ -134,8 +134,9 @@ class OGRGMLDataSource : public OGRDataSource
 
     OGRSpatialReference* poGlobalSRS;
 
-    int           m_bInvertAxisOrderIfLatLong;
-    int           m_bConsiderEPSGAsURN;
+    int                 m_bInvertAxisOrderIfLatLong;
+    int                 m_bConsiderEPSGAsURN;
+    int                 m_bGetSecondaryGeometryOption;
 
     ReadMode            eReadMode;
     GMLFeature         *poStoredGMLFeature;
@@ -159,26 +160,27 @@ class OGRGMLDataSource : public OGRDataSource
 
     int                 TestCapability( const char * );
 
-    VSILFILE            *GetOutputFP() { return fpOutput; }
-    IGMLReader          *GetReader() { return poReader; }
+    VSILFILE            *GetOutputFP() const { return fpOutput; }
+    IGMLReader          *GetReader() const { return poReader; }
 
     void                GrowExtents( OGREnvelope3D *psGeomBounds, int nCoordDimension );
 
-    int                 ExposeId() { return bExposeGMLId || bExposeFid; }
+    int                 ExposeId() const { return bExposeGMLId || bExposeFid; }
 
     static void         PrintLine(VSILFILE* fp, const char *fmt, ...) CPL_PRINT_FUNC_FORMAT (2, 3);
 
-    int                 IsGML3Output() { return bIsOutputGML3; }
-    int                 IsLongSRSRequired() { return bIsLongSRSRequired; }
-    int                 WriteSpaceIndentation() { return bWriteSpaceIndentation; }
+    int                 IsGML3Output() const { return bIsOutputGML3; }
+    int                 IsLongSRSRequired() const { return bIsLongSRSRequired; }
+    int                 WriteSpaceIndentation() const { return bWriteSpaceIndentation; }
     const char         *GetGlobalSRSName();
 
-    int                 GetInvertAxisOrderIfLatLong() { return m_bInvertAxisOrderIfLatLong; }
-    int                 GetConsiderEPSGAsURN() { return m_bConsiderEPSGAsURN; }
+    int                 GetInvertAxisOrderIfLatLong() const { return m_bInvertAxisOrderIfLatLong; }
+    int                 GetConsiderEPSGAsURN() const { return m_bConsiderEPSGAsURN; }
+    int                 GetSecondaryGeometryOption() const { return m_bGetSecondaryGeometryOption; }
 
-    ReadMode            GetReadMode() { return eReadMode; }
+    ReadMode            GetReadMode() const { return eReadMode; }
     void                SetStoredGMLFeature(GMLFeature* poStoredGMLFeatureIn) { poStoredGMLFeature = poStoredGMLFeatureIn; }
-    GMLFeature*         PeekStoredGMLFeature() { return  poStoredGMLFeature; }
+    GMLFeature*         PeekStoredGMLFeature() const { return  poStoredGMLFeature; }
 
     OGRGMLLayer*        GetLastReadLayer() const { return poLastReadLayer; }
     void                SetLastReadLayer(OGRGMLLayer* poLayer) { poLastReadLayer = poLayer; }

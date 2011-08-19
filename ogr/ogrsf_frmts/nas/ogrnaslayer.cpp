@@ -144,11 +144,10 @@ OGRFeature *OGRNASLayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
 /*      Does it satisfy the spatial query, if there is one?             */
 /* -------------------------------------------------------------------- */
-
-        if( poNASFeature->GetGeometry() != NULL )
+        const CPLXMLNode* const * papsGeometry = poNASFeature->GetGeometryList();
+        if (papsGeometry[0] != NULL)
         {
-            poGeom = (OGRGeometry*) 
-                OGR_G_CreateFromGML( poNASFeature->GetGeometry() );
+            poGeom = (OGRGeometry*) OGR_G_CreateFromGMLTree(papsGeometry[0]);
 
             // We assume the createFromNAS() function would have already
             // reported the error. 

@@ -40,10 +40,7 @@ GMLReadState::GMLReadState()
 {
     m_poFeature = NULL;
     m_poParentState = NULL;
-
-    m_pszPath = CPLStrdup("");
     m_nPathLength = 0;
-    m_papszPathComponents = NULL;
 }
 
 /************************************************************************/
@@ -53,23 +50,49 @@ GMLReadState::GMLReadState()
 GMLReadState::~GMLReadState()
 
 {
-    CPLFree( m_pszPath );
-    for( int i = 0; i < m_nPathLength; i++ )
-        CPLFree( m_papszPathComponents[i] );
-    CPLFree( m_papszPathComponents );
+}
+
+/************************************************************************/
+/*                              Reset()                                 */
+/************************************************************************/
+
+void GMLReadState::Reset()
+{
+    m_poFeature = NULL;
+    m_poParentState = NULL;
+
+    osPath.resize(0);
+    m_nPathLength = 0;
 }
 
 /************************************************************************/
 /*                              PushPath()                              */
 /************************************************************************/
 
-void GMLReadState::PushPath( const char *pszElement )
+void GMLReadState::PushPath( const char *pszElement, int nLen )
 
 {
-    m_nPathLength++;
-    m_papszPathComponents = CSLAddString( m_papszPathComponents, pszElement );
-
-    RebuildPath();
+    if (m_nPathLength > 0)
+        osPath.append(1, '|');
+    if (m_nPathLength < (int)aosPathComponents.size())
+    {
+        if (nLen >= 0)
+        {
+            aosPathComponents[m_nPathLength].assign(pszElement, nLen);
+            osPath.append(pszElement, nLen);
+        }
+        else
+        {
+            aosPathComponents[m_nPathLength].assign(pszElement);
+            osPath.append(pszElement);
+        }
+    }
+    else
+    {
+        aosPathComponents.push_back(pszElement);
+        osPath.append(pszElement);
+    }
+    m_nPathLength ++;
 }
 
 /************************************************************************/
@@ -80,78 +103,7 @@ void GMLReadState::PopPath()
 
 {
     CPLAssert( m_nPathLength > 0 );
-    if( m_nPathLength <= 0 )
-        return;
 
-    CPLFree( m_papszPathComponents[m_nPathLength-1] );
-    m_papszPathComponents[--m_nPathLength] = NULL;
-
-    RebuildPath();
-}
-
-/************************************************************************/
-/*                            RebuildPath()                             */
-/************************************************************************/
-
-void GMLReadState::RebuildPath()
-
-{
-    int   nLength=0, i;
-
-    for( i = 0; i < m_nPathLength; i++ )
-        nLength += strlen(m_papszPathComponents[i]) + 1;
-    
-    m_pszPath = (char *) CPLRealloc(m_pszPath, nLength );
-
-    nLength = 0;
-    for( i = 0; i < m_nPathLength; i++ )
-    {
-        if( i > 0 )
-            m_pszPath[nLength++] = '|';
-
-        strcpy( m_pszPath + nLength, m_papszPathComponents[i] );
-        nLength += strlen(m_papszPathComponents[i]);
-    }
-}
-
-/************************************************************************/
-/*                          GetLastComponent()                          */
-/************************************************************************/
-
-const char *GMLReadState::GetLastComponent() const
-
-{
-    if( m_nPathLength == 0 )
-        return "";
-    else
-        return m_papszPathComponents[m_nPathLength-1];
-}
-
-/************************************************************************/
-/*                             MatchPath()                              */
-/*                                                                      */
-/*      Compare the passed in path to the current one and see if        */
-/*      they match.  It is assumed that the passed in path may          */
-/*      contain one or more elements and must match the tail of the     */
-/*      current path.  However, the passed in path does not need all    */
-/*      the components of the current read state path.                  */
-/*                                                                      */
-/*      Returns TRUE if the paths match.                                */
-/************************************************************************/
-
-int GMLReadState::MatchPath( const char *pszPathIn )
-
-{
-    int iOffset;
-    int nInputLength = strlen(pszPathIn);
-    int nInternalLength = strlen(m_pszPath);
-
-    if( nInputLength > nInternalLength )
-        return FALSE;
-
-    iOffset = nInternalLength - nInputLength;
-    if( iOffset > 0 && m_pszPath[iOffset-1] != '|' )
-        return FALSE;
-
-    return strcmp(pszPathIn,m_pszPath + iOffset) == 0;
+    osPath.resize(osPath.size() - (aosPathComponents[m_nPathLength-1].size() + ((m_nPathLength > 1) ? 1 : 0)));
+    m_nPathLength --;
 }

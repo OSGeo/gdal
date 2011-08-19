@@ -93,6 +93,9 @@ NASReader::~NASReader()
 
     CleanupParser();
 
+    if (CSLTestBoolean(CPLGetConfigOption("NAS_XERCES_TERMINATE", "FALSE")))
+        XMLPlatformUtils::Terminate();
+
     CPLFree( m_pszFilteredClassName );
 }
 
@@ -332,8 +335,7 @@ void NASReader::PushFeature( const char *pszElement,
     if( nFIDIndex != -1 )
     {
         char *pszFID = tr_strdup( attrs.getValue( nFIDIndex ) );
-        SetFeatureProperty( "gml_id", pszFID );
-        CPLFree( pszFID );
+        SetFeaturePropertyDirectly( "gml_id", pszFID );
     }
 
 }
@@ -401,7 +403,7 @@ int NASReader::IsAttributeElement( const char *pszElement )
         osElemPath = pszElement;
     else
     {
-        osElemPath = m_poState->m_pszPath;
+        osElemPath = m_poState->osPath;
         osElemPath += "|";
         osElemPath += pszElement;
     }
@@ -514,12 +516,11 @@ void NASReader::ClearClasses()
 /*                                                                      */
 /*      Set the property value on the current feature, adding the       */
 /*      property name to the GMLFeatureClass if required.               */
-/*      Eventually this function may also "refine" the property         */
-/*      type based on what is encountered.                              */
+/*      The pszValue ownership is passed to this function.              */
 /************************************************************************/
 
-void NASReader::SetFeatureProperty( const char *pszElement, 
-                                    const char *pszValue )
+void NASReader::SetFeaturePropertyDirectly( const char *pszElement,
+                                            char *pszValue )
 
 {
     GMLFeature *poFeature = GetState()->m_poFeature;
@@ -545,6 +546,7 @@ void NASReader::SetFeatureProperty( const char *pszElement,
         if( poClass->IsSchemaLocked() )
         {
             CPLDebug("GML","Encountered property missing from class schema.");
+            CPLFree(pszValue);
             return;
         }
 
@@ -584,10 +586,11 @@ void NASReader::SetFeatureProperty( const char *pszElement,
         {
             CPLString osValue = "00000";
             osValue += pszValue;
-            poFeature->SetProperty( iProperty, osValue + osValue.size() - 5 );
+            poFeature->SetPropertyDirectly( iProperty, CPLStrdup(osValue + osValue.size() - 5) );
+            CPLFree(pszValue);
         }
         else
-            poFeature->SetProperty( iProperty, pszValue );
+            poFeature->SetPropertyDirectly( iProperty, pszValue );
 
         
         if( !poClass->IsSchemaLocked() )
@@ -601,7 +604,7 @@ void NASReader::SetFeatureProperty( const char *pszElement,
 /* -------------------------------------------------------------------- */
 /*      Set the property                                                */
 /* -------------------------------------------------------------------- */
-    poFeature->SetProperty( iProperty, pszValue );
+    poFeature->SetPropertyDirectly( iProperty, pszValue );
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to update the property type?                         */
@@ -811,6 +814,8 @@ int NASReader::PrescanForSchema( int bGetExtents )
     if( !SetupParser() )
         return FALSE;
 
+    std::string osWork;
+
     while( (poFeature = NextFeature()) != NULL )
     {
         GMLFeatureClass *poClass = poFeature->GetClass();
@@ -825,11 +830,10 @@ int NASReader::PrescanForSchema( int bGetExtents )
         {
             OGRGeometry *poGeometry = NULL;
 
-            if( poFeature->GetGeometry() != NULL 
-                && strlen(poFeature->GetGeometry()) != 0 )
+            const CPLXMLNode* const * papsGeometry = poFeature->GetGeometryList();
+            if( papsGeometry[0] != NULL )
             {
-                poGeometry = (OGRGeometry *) OGR_G_CreateFromGML( 
-                    poFeature->GetGeometry() );
+                poGeometry = (OGRGeometry*) OGR_G_CreateFromGMLTree(papsGeometry[0]);
             }
 
             if( poGeometry != NULL )
@@ -840,11 +844,10 @@ int NASReader::PrescanForSchema( int bGetExtents )
                     poClass->GetGeometryType();
 
                 // Merge SRSName into layer.
-                char* pszSRSName = GML_ExtractSrsNameFromGeometry(poFeature->GetGeometryList(), FALSE);
+                const char* pszSRSName = GML_ExtractSrsNameFromGeometry(papsGeometry, osWork, FALSE);
 //                if (pszSRSName != NULL)
 //                    m_bCanUseGlobalSRSName = FALSE;
                 poClass->MergeSRSName(pszSRSName);
-                CPLFree(pszSRSName);
 
                 // Merge geometry type into layer.
                 if( poClass->GetFeatureCount() == 1 && eGType == wkbUnknown )
