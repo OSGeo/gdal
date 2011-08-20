@@ -31,7 +31,8 @@
 import sys
 
 # Must to be launched from pam.py/pam_11()
-if len(sys.argv) == 2 and sys.argv[1] == '-run':
+# Test creating a new proxydb
+if len(sys.argv) == 2 and sys.argv[1] == '-test1':
 
     from osgeo import gdal
     import os
@@ -115,3 +116,39 @@ if len(sys.argv) == 2 and sys.argv[1] == '-run':
     testnonboundtoswig.GDALDestroyDriverManager()
 
     print('success')
+
+    sys.exit(0)
+
+# Must to be launched from pam.py/pam_11()
+# Test loading an existing proxydb
+if len(sys.argv) == 2 and sys.argv[1] == '-test2':
+
+    from osgeo import gdal
+
+    gdal.SetConfigOption('GDAL_PAM_PROXY_DIR', 'tmppamproxydir')
+
+    ds = gdal.Open('tmpdirreadonly/byte.tif')
+    filelist = ds.GetFileList()
+    if len(filelist) != 3:
+        print('did not get find 000000_tmpdirreadonly_byte.tif.aux.xml and/or 000001_tmpdirreadonly_byte.tif.ovr in dataset GetFileList()')
+        print(filelist)
+        sys.exit(1)
+
+    stats = ds.GetRasterBand(1).GetStatistics(False, False)
+    if stats[0] != -9999:
+        print('did not get expected minimum')
+        sys.exit(1)
+
+    nb_ovr = ds.GetRasterBand(1).GetOverviewCount()
+    ds = None
+
+    if nb_ovr != 1:
+        print('did not get expected overview count')
+        sys.exit(1)
+
+    import testnonboundtoswig
+    testnonboundtoswig.GDALDestroyDriverManager()
+
+    print('success')
+
+    sys.exit(0)
