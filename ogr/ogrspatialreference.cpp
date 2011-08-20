@@ -1972,6 +1972,7 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
     if( EQUALN(pszDefinition,"urn:ogc:def:crs:",16)
         || EQUALN(pszDefinition,"urn:ogc:def:crs,crs:",20)
         || EQUALN(pszDefinition,"urn:x-ogc:def:crs:",18)
+        || EQUALN(pszDefinition,"urn:opengis:crs:",16)
         || EQUALN(pszDefinition,"urn:opengis:def:crs:",20))
         return importFromURN( pszDefinition );
 
@@ -2323,6 +2324,8 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
         pszCur = pszURN + 20;
     else if( EQUALN(pszURN,"urn:x-ogc:def:crs:",18) )
         pszCur = pszURN + 18;
+    else if( EQUALN(pszURN,"urn:opengis:crs:",16) )
+        pszCur = pszURN + 16;
     else if( EQUALN(pszURN,"urn:opengis:def:crs:",20) )
         pszCur = pszURN + 20;
     else
