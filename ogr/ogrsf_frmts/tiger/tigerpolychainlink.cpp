@@ -34,7 +34,7 @@ CPL_CVSID("$Id$");
 
 #define FILE_CODE "I"
 
-static TigerFieldInfo rtI_2002_fields[] = {
+static const TigerFieldInfo rtI_2002_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
   { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
@@ -51,14 +51,14 @@ static TigerFieldInfo rtI_2002_fields[] = {
   { "RS_I2",      'L', 'A', OFTString,   108, 117,  10,       1,   1,     1 },
   { "RS_I3",      'L', 'A', OFTString,   118, 127,  10,       1,   1,     1 },
 };
-static TigerRecordInfo rtI_2002_info =
+static const TigerRecordInfo rtI_2002_info =
   {
     rtI_2002_fields,
     sizeof(rtI_2002_fields) / sizeof(TigerFieldInfo),
     127
   };
 
-static TigerFieldInfo rtI_fields[] = {
+static const TigerFieldInfo rtI_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
   { "TLID",       'R', 'N', OFTInteger,    6,  15,  10,       1,   1,     1 },
@@ -71,7 +71,7 @@ static TigerFieldInfo rtI_fields[] = {
   { "CENIDR",     'L', 'A', OFTString,    37,  41,   5,       1,   1,     1 },
   { "POLYIDR",    'R', 'N', OFTInteger,   42,  51,  10,       1,   1,     1 }
 };
-static TigerRecordInfo rtI_info =
+static const TigerRecordInfo rtI_info =
   {
     rtI_fields,
     sizeof(rtI_fields) / sizeof(TigerFieldInfo),
@@ -84,7 +84,7 @@ static TigerRecordInfo rtI_info =
 /************************************************************************/
 
 TigerPolyChainLink::TigerPolyChainLink( OGRTigerDataSource * poDSIn,
-                                  const char * pszPrototypeModule )
+                                  const char * pszPrototypeModule ) : TigerFileBase(NULL, FILE_CODE)
 
 {
     OGRFieldDefn        oField("",OFTInteger);
@@ -95,109 +95,14 @@ TigerPolyChainLink::TigerPolyChainLink( OGRTigerDataSource * poDSIn,
     poFeatureDefn->SetGeomType( wkbNone );
 
     if (poDS->GetVersion() >= TIGER_2002) {
-      psRTIInfo = &rtI_2002_info;
+      psRTInfo = &rtI_2002_info;
     } else {
-      psRTIInfo = &rtI_info;
+      psRTInfo = &rtI_info;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Fields from type I record.                                      */
     /* -------------------------------------------------------------------- */
 
-    AddFieldDefns( psRTIInfo, poFeatureDefn );
-}
-
-/************************************************************************/
-/*                        ~TigerPolyChainLink()                         */
-/************************************************************************/
-
-TigerPolyChainLink::~TigerPolyChainLink()
-
-{
-}
-
-/************************************************************************/
-/*                             SetModule()                              */
-/************************************************************************/
-
-int TigerPolyChainLink::SetModule( const char * pszModule )
-
-{
-    if( !OpenFile( pszModule, FILE_CODE ) )
-        return FALSE;
-
-    EstablishFeatureCount();
-    
-    return TRUE;
-}
-
-/************************************************************************/
-/*                             GetFeature()                             */
-/************************************************************************/
-
-OGRFeature *TigerPolyChainLink::GetFeature( int nRecordId )
-
-{
-    char        achRecord[OGR_TIGER_RECBUF_LEN];
-
-    if( nRecordId < 0 || nRecordId >= nFeatures )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Request for out-of-range feature %d of %sI",
-                  nRecordId, pszModule );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Read the raw record data from the file.                         */
-/* -------------------------------------------------------------------- */
-    if( fpPrimary == NULL )
-        return NULL;
-
-    if( VSIFSeek( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to %d of %sI",
-                  nRecordId * nRecordLength, pszModule );
-        return NULL;
-    }
-
-    if( VSIFRead( achRecord, psRTIInfo->nRecordLength, 1, fpPrimary ) != 1 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read record %d of %sI",
-                  nRecordId, pszModule );
-        return NULL;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Set fields.                                                     */
-    /* -------------------------------------------------------------------- */
-
-    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
-
-    SetFields( psRTIInfo, poFeature, achRecord );
-
-    return poFeature;
-}
-
-/************************************************************************/
-/*                           CreateFeature()                            */
-/************************************************************************/
-
-OGRErr TigerPolyChainLink::CreateFeature( OGRFeature *poFeature )
-
-{
-    char        szRecord[OGR_TIGER_RECBUF_LEN];
-
-    if( !SetWriteModule( FILE_CODE, psRTIInfo->nRecordLength+2, poFeature ) )
-        return OGRERR_FAILURE;
-
-    memset( szRecord, ' ', psRTIInfo->nRecordLength );
-
-    WriteFields( psRTIInfo, poFeature, szRecord );
-
-    WriteRecord( szRecord, psRTIInfo->nRecordLength, FILE_CODE );
-
-    return OGRERR_NONE;
+    AddFieldDefns( psRTInfo, poFeatureDefn );
 }

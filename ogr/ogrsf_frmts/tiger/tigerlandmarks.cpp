@@ -34,7 +34,7 @@ CPL_CVSID("$Id$");
 
 #define FILE_CODE "7"
 
-static TigerFieldInfo rt7_2002_fields[] = {
+static const TigerFieldInfo rt7_2002_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
   { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
@@ -46,14 +46,14 @@ static TigerFieldInfo rt7_2002_fields[] = {
   { "LALAT",      'R', 'N', OFTInteger,   65,  73,   9,       1,   1,     1 },
   { "FILLER",     'L', 'A', OFTString,    74,  74,   1,       1,   1,     1 },
 };
-static TigerRecordInfo rt7_2002_info =
+static const TigerRecordInfo rt7_2002_info =
   {
     rt7_2002_fields,
     sizeof(rt7_2002_fields) / sizeof(TigerFieldInfo),
     74
   };
 
-static TigerFieldInfo rt7_fields[] = {
+static const TigerFieldInfo rt7_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
   { "FILE",       'L', 'N', OFTString,     6,  10,   5,       1,   0,     1 },
@@ -64,7 +64,7 @@ static TigerFieldInfo rt7_fields[] = {
   { "CFCC",       'L', 'A', OFTString,    22,  24,   3,       1,   1,     1 },
   { "LANAME",     'L', 'A', OFTString,    25,  54,  30,       1,   1,     1 }
 };
-static TigerRecordInfo rt7_info =
+static const TigerRecordInfo rt7_info =
   {
     rt7_fields,
     sizeof(rt7_fields) / sizeof(TigerFieldInfo),
@@ -77,7 +77,7 @@ static TigerRecordInfo rt7_info =
 
 TigerLandmarks::TigerLandmarks( OGRTigerDataSource * poDSIn,
                                 const char * pszPrototypeModule )
-  : TigerPoint(FALSE)
+  : TigerPoint(FALSE, NULL, FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "Landmarks" );
@@ -85,27 +85,17 @@ TigerLandmarks::TigerLandmarks( OGRTigerDataSource * poDSIn,
     poFeatureDefn->SetGeomType( wkbPoint );
 
     if (poDS->GetVersion() >= TIGER_2002) {
-        psRT7Info = &rt7_2002_info;
+        psRTInfo = &rt7_2002_info;
     } else {
-        psRT7Info = &rt7_info;
+        psRTInfo = &rt7_info;
     }
 
-    AddFieldDefns( psRT7Info, poFeatureDefn );
-}
-
-TigerLandmarks::~TigerLandmarks()
-{}
-
-
-int TigerLandmarks::SetModule( const char * pszModule )
-{
-  return TigerPoint::SetModule( pszModule, FILE_CODE );
+    AddFieldDefns( psRTInfo, poFeatureDefn );
 }
 
 OGRFeature *TigerLandmarks::GetFeature( int nRecordId )
 {
   return TigerPoint::GetFeature( nRecordId,
-                                 psRT7Info,
                                  55, 64,
                                  65, 73 );
 }
@@ -113,7 +103,5 @@ OGRFeature *TigerLandmarks::GetFeature( int nRecordId )
 OGRErr TigerLandmarks::CreateFeature( OGRFeature *poFeature )
 {
   return TigerPoint::CreateFeature( poFeature, 
-                                    psRT7Info,
-                                    55,
-                                    FILE_CODE );
+                                    55 );
 }

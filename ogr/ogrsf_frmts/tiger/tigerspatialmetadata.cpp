@@ -34,7 +34,7 @@ CPL_CVSID("$Id$");
 
 #define FILE_CODE "M"
 
-static TigerFieldInfo rtM_fields[] = {
+static const TigerFieldInfo rtM_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
   { "TLID",       'R', 'N', OFTInteger,    6,  15,  10,       1,   1,     1 },
@@ -46,7 +46,7 @@ static TigerFieldInfo rtM_fields[] = {
   { "RS-M2",      'L', 'A', OFTString,    66,  67,   2,       1,   1,     1 },
   { "RS-M3",      'L', 'A', OFTString,    68,  90,  23,       1,   1,     1 }
 };
-static TigerRecordInfo rtM_info =
+static const TigerRecordInfo rtM_info =
   {
     rtM_fields,
     sizeof(rtM_fields) / sizeof(TigerFieldInfo),
@@ -58,115 +58,17 @@ static TigerRecordInfo rtM_info =
 /************************************************************************/
 
 TigerSpatialMetadata::TigerSpatialMetadata( OGRTigerDataSource * poDSIn,
-                            const char * pszPrototypeModule )
+                            const char * pszPrototypeModule ) : TigerFileBase(&rtM_info, FILE_CODE)
 
 {
-    OGRFieldDefn        oField("",OFTInteger);
-
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "SpatialMetadata" );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 
-    psRTMInfo = &rtM_info;
-
     /* -------------------------------------------------------------------- */
     /*      Fields from record type H                                       */
     /* -------------------------------------------------------------------- */
 
-    AddFieldDefns(psRTMInfo, poFeatureDefn);
-}
-
-/************************************************************************/
-/*                       ~TigerSpatialMetadata()                        */
-/************************************************************************/
-
-TigerSpatialMetadata::~TigerSpatialMetadata()
-
-{
-}
-
-/************************************************************************/
-/*                             SetModule()                              */
-/************************************************************************/
-
-int TigerSpatialMetadata::SetModule( const char * pszModule )
-
-{
-    if( !OpenFile( pszModule, FILE_CODE ) )
-        return FALSE;
-
-    EstablishFeatureCount();
-    
-    return TRUE;
-}
-
-/************************************************************************/
-/*                             GetFeature()                             */
-/************************************************************************/
-
-OGRFeature *TigerSpatialMetadata::GetFeature( int nRecordId )
-
-{
-    char        achRecord[OGR_TIGER_RECBUF_LEN];
-
-    if( nRecordId < 0 || nRecordId >= nFeatures )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Request for out-of-range feature %d of %sH",
-                  nRecordId, pszModule );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Read the raw record data from the file.                         */
-/* -------------------------------------------------------------------- */
-    if( fpPrimary == NULL )
-        return NULL;
-
-    if( VSIFSeek( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to %d of %sH",
-                  nRecordId * nRecordLength, pszModule );
-        return NULL;
-    }
-
-    if( VSIFRead( achRecord, psRTMInfo->nRecordLength, 1, fpPrimary ) != 1 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read record %d of %sM",
-                  nRecordId, pszModule );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Set fields.                                                     */
-/* -------------------------------------------------------------------- */
-    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
-
-    SetFields( psRTMInfo, poFeature, achRecord );
-
-    return poFeature;
-}
-
-/************************************************************************/
-/*                           CreateFeature()                            */
-/************************************************************************/
-
-OGRErr TigerSpatialMetadata::CreateFeature( OGRFeature *poFeature )
-
-{
-    char        szRecord[OGR_TIGER_RECBUF_LEN];
-
-    if( !SetWriteModule( FILE_CODE, psRTMInfo->nRecordLength+2, poFeature ) )
-        return OGRERR_FAILURE;
-
-    memset( szRecord, ' ', psRTMInfo->nRecordLength );
-
-    WriteFields( psRTMInfo, poFeature, szRecord );
-
-    WriteRecord( szRecord, psRTMInfo->nRecordLength, FILE_CODE );
-
-    return OGRERR_NONE;
+    AddFieldDefns(psRTInfo, poFeatureDefn);
 }
