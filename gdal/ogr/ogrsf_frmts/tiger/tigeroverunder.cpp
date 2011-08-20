@@ -34,7 +34,7 @@ CPL_CVSID("$Id$");
 
 #define FILE_CODE       "U"
 
-static TigerFieldInfo rtU_fields[] = {
+static const TigerFieldInfo rtU_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
   { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
@@ -47,7 +47,7 @@ static TigerFieldInfo rtU_fields[] = {
   { "FRLONG",     'R', 'N', OFTInteger,   62,  71,  10,       1,   1,     1 },
   { "FRLAT",      'R', 'N', OFTInteger,   72,  80,   9,       1,   1,     1 },
 };
-static TigerRecordInfo rtU_info =
+static const TigerRecordInfo rtU_info =
   {
     rtU_fields,
     sizeof(rtU_fields) / sizeof(TigerFieldInfo),
@@ -60,35 +60,20 @@ static TigerRecordInfo rtU_info =
 /************************************************************************/
 
 TigerOverUnder::TigerOverUnder( OGRTigerDataSource * poDSIn,
-                              const char * pszPrototypeModule )
-  : TigerPoint(TRUE)
+                              const char * pszPrototypeModule ) : TigerPoint(TRUE, &rtU_info, FILE_CODE)
 {
-    OGRFieldDefn        oField("",OFTInteger);
-
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "OverUnder" );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 
-    psRTUInfo = &rtU_info;
+    AddFieldDefns( psRTInfo, poFeatureDefn );
 
-    AddFieldDefns( psRTUInfo, poFeatureDefn );
-
-}
-
-/************************************************************************/
-TigerOverUnder::~TigerOverUnder()
-{}
-
-int TigerOverUnder::SetModule( const char * pszModule )
-{
-  return TigerPoint::SetModule( pszModule, FILE_CODE );
 }
 
 OGRFeature *TigerOverUnder::GetFeature( int nRecordId )
 {
   return TigerPoint::GetFeature( nRecordId,
-                                 psRTUInfo,
                                  62, 71,
                                  72, 80 );
 }
@@ -96,7 +81,5 @@ OGRFeature *TigerOverUnder::GetFeature( int nRecordId )
 OGRErr TigerOverUnder::CreateFeature( OGRFeature *poFeature )
 {
   return TigerPoint::CreateFeature( poFeature, 
-                                    psRTUInfo,
-                                    62,
-                                    FILE_CODE );
+                                    62 );
 }

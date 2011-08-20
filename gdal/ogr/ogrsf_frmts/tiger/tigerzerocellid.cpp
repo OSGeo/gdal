@@ -34,7 +34,7 @@ CPL_CVSID("$Id$");
 
 #define FILE_CODE       "T"
 
-static TigerFieldInfo rtT_fields[] = {
+static const TigerFieldInfo rtT_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
   { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
@@ -42,7 +42,7 @@ static TigerFieldInfo rtT_fields[] = {
   { "SOURCE",     'L', 'A', OFTString,    21,  30,  10,       1,   1,     1 },
   { "FTRP",       'L', 'A', OFTString,    31,  47,  17,       1,   1,     1 }
 };
-static TigerRecordInfo rtT_info =
+static const TigerRecordInfo rtT_info =
   {
     rtT_fields,
     sizeof(rtT_fields) / sizeof(TigerFieldInfo),
@@ -54,116 +54,18 @@ static TigerRecordInfo rtT_info =
 /************************************************************************/
 
 TigerZeroCellID::TigerZeroCellID( OGRTigerDataSource * poDSIn,
-                              const char * pszPrototypeModule )
+                              const char * pszPrototypeModule ) : TigerFileBase(&rtT_info, FILE_CODE)
 
 {
-    OGRFieldDefn        oField("",OFTInteger);
-
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "ZeroCellID" );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 
-    psRTTInfo = &rtT_info;
-
 /* -------------------------------------------------------------------- */
 /*      Fields from type T record.                                      */
 /* -------------------------------------------------------------------- */
 
-    AddFieldDefns( psRTTInfo, poFeatureDefn );
+    AddFieldDefns( psRTInfo, poFeatureDefn );
 
-}
-
-/************************************************************************/
-/*                           ~TigerZeroCellID()                           */
-/************************************************************************/
-
-TigerZeroCellID::~TigerZeroCellID()
-
-{
-}
-
-/************************************************************************/
-/*                             SetModule()                              */
-/************************************************************************/
-
-int TigerZeroCellID::SetModule( const char * pszModule )
-
-{
-    if( !OpenFile( pszModule, FILE_CODE ) )
-        return FALSE;
-
-    EstablishFeatureCount();
-    
-    return TRUE;
-}
-
-/************************************************************************/
-/*                             GetFeature()                             */
-/************************************************************************/
-
-OGRFeature *TigerZeroCellID::GetFeature( int nRecordId )
-
-{
-    char        achRecord[OGR_TIGER_RECBUF_LEN];
-
-    if( nRecordId < 0 || nRecordId >= nFeatures )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Request for out-of-range feature %d of %sZ",
-                  nRecordId, pszModule );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Read the raw record data from the file.                         */
-/* -------------------------------------------------------------------- */
-    if( fpPrimary == NULL )
-        return NULL;
-
-    if( VSIFSeek( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to %d of %sZ",
-                  nRecordId * nRecordLength, pszModule );
-        return NULL;
-    }
-
-    if( VSIFRead( achRecord, psRTTInfo->nRecordLength, 1, fpPrimary ) != 1 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read record %d of %sZ",
-                  nRecordId, pszModule );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Set fields.                                                     */
-/* -------------------------------------------------------------------- */
-    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
-
-    SetFields( psRTTInfo, poFeature, achRecord );
-
-    return poFeature;
-}
-
-/************************************************************************/
-/*                           CreateFeature()                            */
-/************************************************************************/
-
-OGRErr TigerZeroCellID::CreateFeature( OGRFeature *poFeature )
-
-{
-    char        szRecord[OGR_TIGER_RECBUF_LEN];
-
-    if( !SetWriteModule( FILE_CODE, psRTTInfo->nRecordLength+2, poFeature ) )
-        return OGRERR_FAILURE;
-
-    memset( szRecord, ' ', psRTTInfo->nRecordLength );
-
-    WriteFields( psRTTInfo, poFeature, szRecord );
-
-    WriteRecord( szRecord, psRTTInfo->nRecordLength, FILE_CODE );
-
-    return OGRERR_NONE;
 }

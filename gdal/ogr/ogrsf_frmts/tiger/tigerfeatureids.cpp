@@ -34,7 +34,7 @@ CPL_CVSID("$Id$");
 
 #define FILE_CODE "5"
 
-static TigerFieldInfo rt5_2002_fields[] = {
+static const TigerFieldInfo rt5_2002_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
   { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
@@ -44,14 +44,14 @@ static TigerFieldInfo rt5_2002_fields[] = {
   { "FETYPE",     'L', 'A', OFTString,    51,  54,   4,       1,   1,     1 },
   { "FEDIRS",     'L', 'A', OFTString,    55,  56,   2,       1,   1,     1 },
 };
-static TigerRecordInfo rt5_2002_info =
+static const TigerRecordInfo rt5_2002_info =
   {
     rt5_2002_fields,
     sizeof(rt5_2002_fields) / sizeof(TigerFieldInfo),
     56
   };
 
-static TigerFieldInfo rt5_fields[] = {
+static const TigerFieldInfo rt5_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
   { "FILE",       'L', 'N', OFTString,     2,   6,   5,       1,   1,     1 },
@@ -64,7 +64,7 @@ static TigerFieldInfo rt5_fields[] = {
   { "FEDIRS",     'L', 'A', OFTString,    51,  52,   2,       1,   1,     1 }
 };
 
-static TigerRecordInfo rt5_info =
+static const TigerRecordInfo rt5_info =
   {
     rt5_fields,
     sizeof(rt5_fields) / sizeof(TigerFieldInfo),
@@ -76,111 +76,19 @@ static TigerRecordInfo rt5_info =
 /************************************************************************/
 
 TigerFeatureIds::TigerFeatureIds( OGRTigerDataSource * poDSIn,
-                                  const char * pszPrototypeModule )
+                                  const char * pszPrototypeModule ) : TigerFileBase(NULL, FILE_CODE)
 
 {
-  OGRFieldDefn        oField("",OFTInteger);
   poDS = poDSIn;
   poFeatureDefn = new OGRFeatureDefn( "FeatureIds" );
     poFeatureDefn->Reference();
   poFeatureDefn->SetGeomType( wkbNone );
 
   if (poDS->GetVersion() >= TIGER_2002) {
-    psRT5Info = &rt5_2002_info;
+    psRTInfo = &rt5_2002_info;
   } else {
-    psRT5Info = &rt5_info;
+    psRTInfo = &rt5_info;
   }
 
-  AddFieldDefns( psRT5Info, poFeatureDefn );
-}
-
-/************************************************************************/
-/*                        ~TigerFeatureIds()                         */
-/************************************************************************/
-
-TigerFeatureIds::~TigerFeatureIds()
-
-{
-}
-
-/************************************************************************/
-/*                             SetModule()                              */
-/************************************************************************/
-
-int TigerFeatureIds::SetModule( const char * pszModule )
-
-{
-    if( !OpenFile( pszModule, FILE_CODE ) )
-        return FALSE;
-
-    EstablishFeatureCount();
-    
-    return TRUE;
-}
-
-/************************************************************************/
-/*                             GetFeature()                             */
-/************************************************************************/
-
-OGRFeature *TigerFeatureIds::GetFeature( int nRecordId )
-
-{
-    char        achRecord[OGR_TIGER_RECBUF_LEN];
-
-    if( nRecordId < 0 || nRecordId >= nFeatures )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Request for out-of-range feature %d of %s5",
-                  nRecordId, pszModule );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Read the raw record data from the file.                         */
-/* -------------------------------------------------------------------- */
-    if( fpPrimary == NULL )
-        return NULL;
-
-    if( VSIFSeek( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to %d of %s5",
-                  nRecordId * nRecordLength, pszModule );
-        return NULL;
-    }
-
-    if( VSIFRead( achRecord, psRT5Info->nRecordLength, 1, fpPrimary ) != 1 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read record %d of %s5",
-                  nRecordId, pszModule );
-        return NULL;
-    }
-
-    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
-
-    SetFields( psRT5Info, poFeature, achRecord );
-
-    return poFeature;
-}
-
-/************************************************************************/
-/*                           CreateFeature()                            */
-/************************************************************************/
-
-OGRErr TigerFeatureIds::CreateFeature( OGRFeature *poFeature )
-
-{
-    char        szRecord[OGR_TIGER_RECBUF_LEN];
-
-    if( !SetWriteModule( FILE_CODE, psRT5Info->nRecordLength+2, poFeature ) )
-        return OGRERR_FAILURE;
-
-    memset( szRecord, ' ', psRT5Info->nRecordLength );
-
-    WriteFields( psRT5Info, poFeature, szRecord);
-
-    WriteRecord( szRecord, psRT5Info->nRecordLength, FILE_CODE );
-
-    return OGRERR_NONE;
+  AddFieldDefns( psRTInfo, poFeatureDefn );
 }

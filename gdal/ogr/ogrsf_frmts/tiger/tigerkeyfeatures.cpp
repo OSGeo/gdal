@@ -34,7 +34,7 @@ CPL_CVSID("$Id$");
 
 #define FILE_CODE "9"
 
-static TigerFieldInfo rt9_fields[] = {
+static const TigerFieldInfo rt9_fields[] = {
   // fieldname    fmt  type  OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
   { "FILE",       'L', 'N', OFTString,     6,  10,   5,       1,   1,     1 },
@@ -51,7 +51,7 @@ static TigerFieldInfo rt9_fields[] = {
   { "FEAT",       'R', 'N', OFTInteger,   80,  87,   8,       1,   1,     1 }
 };
 
-static TigerRecordInfo rt9_info =
+static const TigerRecordInfo rt9_info =
   {
     rt9_fields,
     sizeof(rt9_fields) / sizeof(TigerFieldInfo),
@@ -63,118 +63,18 @@ static TigerRecordInfo rt9_info =
 /************************************************************************/
 
 TigerKeyFeatures::TigerKeyFeatures( OGRTigerDataSource * poDSIn,
-                                  const char * pszPrototypeModule )
+                                  const char * pszPrototypeModule ) : TigerFileBase(&rt9_info, FILE_CODE)
 
 {
-    OGRFieldDefn        oField("",OFTInteger);
-
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "KeyFeatures" );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 
-    psRT9Info = &rt9_info;
-
     /* -------------------------------------------------------------------- */
     /*      Fields from type 9 record.                                      */
     /* -------------------------------------------------------------------- */
 
-    AddFieldDefns( psRT9Info, poFeatureDefn );
+    AddFieldDefns( psRTInfo, poFeatureDefn );
 
-}
-
-/************************************************************************/
-/*                        ~TigerKeyFeatures()                         */
-/************************************************************************/
-
-TigerKeyFeatures::~TigerKeyFeatures()
-
-{
-}
-
-/************************************************************************/
-/*                             SetModule()                              */
-/************************************************************************/
-
-int TigerKeyFeatures::SetModule( const char * pszModule )
-
-{
-    if( !OpenFile( pszModule, FILE_CODE ) )
-        return FALSE;
-
-    EstablishFeatureCount();
-    
-    return TRUE;
-}
-
-/************************************************************************/
-/*                             GetFeature()                             */
-/************************************************************************/
-
-OGRFeature *TigerKeyFeatures::GetFeature( int nRecordId )
-
-{
-    char        achRecord[OGR_TIGER_RECBUF_LEN];
-
-    if( nRecordId < 0 || nRecordId >= nFeatures )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Request for out-of-range feature %d of %s9",
-                  nRecordId, pszModule );
-        return NULL;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Read the raw record data from the file.                         */
-    /* -------------------------------------------------------------------- */
-
-    if( fpPrimary == NULL )
-        return NULL;
-
-    if( VSIFSeek( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to %d of %s9",
-                  nRecordId * nRecordLength, pszModule );
-        return NULL;
-    }
-
-    if( VSIFRead( achRecord, psRT9Info->nRecordLength, 1, fpPrimary ) != 1 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read record %d of %s9",
-                  nRecordId, pszModule );
-        return NULL;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Set fields.                                                     */
-    /* -------------------------------------------------------------------- */
-
-    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
-
-    SetFields( psRT9Info, poFeature, achRecord );
-
-    return poFeature;
-}
-
-/************************************************************************/
-/*                           CreateFeature()                            */
-/************************************************************************/
-
-OGRErr TigerKeyFeatures::CreateFeature( OGRFeature *poFeature )
-
-{
-    char        szRecord[OGR_TIGER_RECBUF_LEN];
-
-    if( !SetWriteModule( FILE_CODE, psRT9Info->nRecordLength+2, poFeature ) )
-        return OGRERR_FAILURE;
-
-    memset( szRecord, ' ', psRT9Info->nRecordLength );
-
-    WriteFields( psRT9Info, poFeature, szRecord );
-
-    WriteRecord( szRecord, psRT9Info->nRecordLength, FILE_CODE );
-
-    return OGRERR_NONE;
 }
