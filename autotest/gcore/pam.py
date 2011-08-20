@@ -401,10 +401,18 @@ def pam_11():
     # This must be run as an external process so we can override GDAL_PAM_PROXY_DIR
     # at the beginning of the process
     import test_py_scripts
-    ret = test_py_scripts.run_py_script_as_external_script('.', 'pamproxydb', '-run')
+    ret = test_py_scripts.run_py_script_as_external_script('.', 'pamproxydb', '-test1')
     #print(ret)
     if ret.find('success') == -1:
-        gdaltest.post_reason('pamproxydb.py failed')
+        gdaltest.post_reason('pamproxydb.py -test1 failed')
+        print(ret)
+        return 'fail'
+
+    # Test loading an existing proxydb
+    ret = test_py_scripts.run_py_script_as_external_script('.', 'pamproxydb', '-test2')
+    #print(ret)
+    if ret.find('success') == -1:
+        gdaltest.post_reason('pamproxydb.py -test2 failed')
         print(ret)
         return 'fail'
 
