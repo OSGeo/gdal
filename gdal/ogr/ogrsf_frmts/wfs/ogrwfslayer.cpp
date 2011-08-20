@@ -27,10 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <vector>
-
+#include "cpl_port.h"
 #include "ogr_wfs.h"
-
 #include "ogr_api.h"
 #include "cpl_minixml.h"
 #include "cpl_http.h"
