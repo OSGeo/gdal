@@ -1,5 +1,6 @@
 #include "memorydatasource.h"
 #include <memory.h>
+#include <string.h>
 
 MemoryDataSource::MemoryDataSource(unsigned char * block, long length)
 : seekPos(0)
