@@ -567,7 +567,7 @@ int GMLParseXSD( const char *pszFile,
         }
 
         /* CanVec .xsd contains weird types that are not used in the related GML */
-        if (strncmp(pszName, "XyZzY", 5) == 0)
+        if (strncmp(pszName, "XyZz", 4) == 0)
             continue;
 
         GMLFeatureClass* poClass =
