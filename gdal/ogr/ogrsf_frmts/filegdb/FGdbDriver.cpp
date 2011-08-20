@@ -122,8 +122,10 @@ OGRDataSource* FGdbDriver::CreateDataSource( const char * conn,
         /* TODO: warning, ignoring options */
     }
 
-    /* Only accept names of form "filename.gdb" */
-    if ( ! EQUAL(CPLGetExtension(conn),"gdb") )
+    /* Only accept names of form "filename.gdb" and */
+    /* also .gdb.zip to be able to return FGDB with MapServer OGR output (#4199) */
+    const char* pszExt = CPLGetExtension(conn);
+    if ( !(EQUAL(pszExt,"gdb") || EQUAL(pszExt, "zip")) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "FGDB data source name must use 'gdb' extension.\n" );
