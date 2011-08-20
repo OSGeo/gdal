@@ -564,7 +564,8 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         return FALSE;
     }
 
-    if (poReader->IsSequentialLayers() && pszReadMode == NULL)
+    if (poReader->GetClassCount() > 1 && poReader->IsSequentialLayers() &&
+        pszReadMode == NULL)
     {
         CPLDebug("GML", "Layers are monoblock. Using SEQUENTIAL_LAYERS read mode");
         eReadMode = SEQUENTIAL_LAYERS;
