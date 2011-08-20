@@ -246,9 +246,6 @@ public:
 
 class TigerAltName : public TigerFileBase
 {
- private:
-  const TigerRecordInfo    *psRT4Info;
-
  public:
                       TigerAltName( OGRTigerDataSource *,
                                           const char * );
