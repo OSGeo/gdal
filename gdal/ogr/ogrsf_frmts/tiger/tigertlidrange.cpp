@@ -34,7 +34,7 @@ CPL_CVSID("$Id$");
 
 #define FILE_CODE "R"
 
-static TigerFieldInfo rtR_2002_fields[] = {
+static const TigerFieldInfo rtR_2002_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
   { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
@@ -47,14 +47,14 @@ static TigerFieldInfo rtR_2002_fields[] = {
   { "TZHIGHID",   'R', 'N', OFTInteger,   66,  75,  10,       1,   1,     1 },
   { "FILLER",     'L', 'A', OFTString,    76,  76,   1,       1,   1,     1 },
 };
-static TigerRecordInfo rtR_2002_info =
+static const TigerRecordInfo rtR_2002_info =
   {
     rtR_2002_fields,
     sizeof(rtR_2002_fields) / sizeof(TigerFieldInfo),
     76
   };
 
-static TigerFieldInfo rtR_fields[] = {
+static const TigerFieldInfo rtR_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
   { "FILE",       'L', 'N', OFTString,     6,  10,   5,       1,   1,     1 },
@@ -66,7 +66,7 @@ static TigerFieldInfo rtR_fields[] = {
   { "HIGHID",     'R', 'N', OFTInteger,   36,  45,  10,       1,   1,     1 }
 };
 
-static TigerRecordInfo rtR_info =
+static const TigerRecordInfo rtR_info =
   {
     rtR_fields,
     sizeof(rtR_fields) / sizeof(TigerFieldInfo),
@@ -78,121 +78,24 @@ static TigerRecordInfo rtR_info =
 /************************************************************************/
 
 TigerTLIDRange::TigerTLIDRange( OGRTigerDataSource * poDSIn,
-                            const char * pszPrototypeModule )
+                            const char * pszPrototypeModule ) : TigerFileBase(NULL, FILE_CODE)
 
 {
-    OGRFieldDefn        oField("",OFTInteger);
-
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "TLIDRange" );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 
     if (poDS->GetVersion() >= TIGER_2002) {
-      psRTRInfo = &rtR_2002_info;
+      psRTInfo = &rtR_2002_info;
     } else {
-      psRTRInfo = &rtR_info;
+      psRTInfo = &rtR_info;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Fields from type R record.                                      */
     /* -------------------------------------------------------------------- */
 
-    AddFieldDefns( psRTRInfo, poFeatureDefn );
+    AddFieldDefns( psRTInfo, poFeatureDefn );
 
-}
-
-/************************************************************************/
-/*                          ~TigerTLIDRange()                           */
-/************************************************************************/
-
-TigerTLIDRange::~TigerTLIDRange()
-
-{
-}
-
-/************************************************************************/
-/*                             SetModule()                              */
-/************************************************************************/
-
-int TigerTLIDRange::SetModule( const char * pszModule )
-
-{
-    if( !OpenFile( pszModule, FILE_CODE ) )
-        return FALSE;
-
-    EstablishFeatureCount();
-    
-    return TRUE;
-}
-
-/************************************************************************/
-/*                             GetFeature()                             */
-/************************************************************************/
-
-OGRFeature *TigerTLIDRange::GetFeature( int nRecordId )
-
-{
-    char        achRecord[OGR_TIGER_RECBUF_LEN];
-
-    if( nRecordId < 0 || nRecordId >= nFeatures )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Request for out-of-range feature %d of %sR",
-                  nRecordId, pszModule );
-        return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Read the raw record data from the file.                         */
-/* -------------------------------------------------------------------- */
-    if( fpPrimary == NULL )
-        return NULL;
-
-    if( VSIFSeek( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to %d of %sR",
-                  nRecordId * nRecordLength, pszModule );
-        return NULL;
-    }
-
-    if( VSIFRead( achRecord, psRTRInfo->nRecordLength, 1, fpPrimary ) != 1 )
-    {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read record %d of %sR",
-                  nRecordId, pszModule );
-        return NULL;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Set fields.                                                     */
-    /* -------------------------------------------------------------------- */
-
-    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
-
-    SetFields( psRTRInfo, poFeature, achRecord );
-
-    return poFeature;
-}
-
-/************************************************************************/
-/*                           CreateFeature()                            */
-/************************************************************************/
-
-OGRErr TigerTLIDRange::CreateFeature( OGRFeature *poFeature )
-
-{
-    char        szRecord[OGR_TIGER_RECBUF_LEN];
-
-    if( !SetWriteModule( FILE_CODE, psRTRInfo->nRecordLength+2, poFeature ) )
-        return OGRERR_FAILURE;
-
-    memset( szRecord, ' ', psRTRInfo->nRecordLength );
-
-    WriteFields( psRTRInfo, poFeature, szRecord );
-
-    WriteRecord( szRecord, psRTRInfo->nRecordLength, FILE_CODE );
-
-    return OGRERR_NONE;
 }

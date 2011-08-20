@@ -34,7 +34,7 @@ CPL_CVSID("$Id$");
 
 #define FILE_CODE "P"
 
-static TigerFieldInfo rtP_2002_fields[] = {
+static const TigerFieldInfo rtP_2002_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
   { "FILE",       'L', 'N', OFTInteger,    6,  10,   5,       1,   1,     1 },
@@ -44,14 +44,14 @@ static TigerFieldInfo rtP_2002_fields[] = {
   { "POLYLAT",    'R', 'N', OFTInteger,   36,  44,   9,       1,   1,     1 },
   { "WATER",      'L', 'N', OFTInteger,   45,  45,   1,       1,   1,     1 },
 };
-static TigerRecordInfo rtP_2002_info =
+static const TigerRecordInfo rtP_2002_info =
   {
     rtP_2002_fields,
     sizeof(rtP_2002_fields) / sizeof(TigerFieldInfo),
     45
   };
 
-static TigerFieldInfo rtP_fields[] = {
+static const TigerFieldInfo rtP_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
   { "MODULE",     ' ', ' ', OFTString,     0,   0,   8,       1,   0,     0 },
   { "FILE",       'L', 'N', OFTString,     6,  10,   5,       1,   1,     1 },
@@ -60,7 +60,7 @@ static TigerFieldInfo rtP_fields[] = {
   { "CENID",      'L', 'A', OFTString,    11,  15,   5,       1,   1,     1 },
   { "POLYID",     'R', 'N', OFTInteger,   16,  25,  10,       1,   1,     1 }
 };
-static TigerRecordInfo rtP_info =
+static const TigerRecordInfo rtP_info =
   {
     rtP_fields,
     sizeof(rtP_fields) / sizeof(TigerFieldInfo),
@@ -74,7 +74,7 @@ static TigerRecordInfo rtP_info =
 
 TigerPIP::TigerPIP( OGRTigerDataSource * poDSIn,
                             const char * pszPrototypeModule ) 
-  : TigerPoint(TRUE)
+  : TigerPoint(TRUE, NULL, FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "PIP" );
@@ -82,25 +82,16 @@ TigerPIP::TigerPIP( OGRTigerDataSource * poDSIn,
     poFeatureDefn->SetGeomType( wkbPoint );
 
     if (poDS->GetVersion() >= TIGER_2002) {
-        psRTPInfo = &rtP_2002_info;
+        psRTInfo = &rtP_2002_info;
     } else {
-        psRTPInfo = &rtP_info;
+        psRTInfo = &rtP_info;
     }
-    AddFieldDefns( psRTPInfo, poFeatureDefn );
-}
-
-TigerPIP::~TigerPIP()
-{}
-
-int TigerPIP::SetModule( const char * pszModule )
-{
-  return TigerPoint::SetModule( pszModule, FILE_CODE );
+    AddFieldDefns( psRTInfo, poFeatureDefn );
 }
 
 OGRFeature *TigerPIP::GetFeature( int nRecordId )
 {
   return TigerPoint::GetFeature( nRecordId,
-                                 psRTPInfo,
                                  26, 35,
                                  36, 44 );
 }
@@ -108,8 +99,6 @@ OGRFeature *TigerPIP::GetFeature( int nRecordId )
 OGRErr TigerPIP::CreateFeature( OGRFeature *poFeature )
 {
   return TigerPoint::CreateFeature( poFeature, 
-                                    psRTPInfo,
-                                    26,
-                                    FILE_CODE );
+                                    26 );
 }
 
