@@ -21,6 +21,20 @@
 #include "myutil.h"
 #include "myassert.h"
 
+/* Android compat */
+#ifndef S_IREAD
+#define S_IREAD S_IRUSR
+#endif
+
+#ifndef S_IWRITE
+#define S_IWRITE S_IWUSR
+#endif
+
+#ifndef S_IEXEC
+#define S_IEXEC S_IXUSR
+#endif
+/* End of Android compat */
+
 #ifdef MEMWATCH
 #include "memwatch.h"
 #endif
