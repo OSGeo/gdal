@@ -779,7 +779,76 @@ def warp_26():
     os.unlink('tmp/warp_25_warp.vrt')
 
     return 'success'
-    
+
+###############################################################################
+# Pure Python reprojection example. Nothing particular, just make use of existing
+# API.
+
+def warp_27_progress_callback(pct, message, user_data):
+    #print(pct)
+    return 1 # 1 to continue, 0 to stop
+
+def warp_27():
+
+    # Open source dataset
+    src_ds = gdal.Open('../gcore/data/byte.tif')
+
+    # Desfine target SRS
+    dst_srs = osr.SpatialReference()
+    dst_srs.ImportFromEPSG(4326)
+    dst_wkt = dst_srs.ExportToWkt()
+
+    error_threshold = 0.125  # error threshold --> use same value as in gdalwarp
+    resampling = gdal.GRA_Bilinear
+
+    # Call AutoCreateWarpedVRT() to fetch default values for target raster dimensions and geotransform
+    tmp_ds = gdal.AutoCreateWarpedVRT( src_ds, \
+                                       None, # src_wkt : left to default value --> will use the one from source \
+                                       dst_wkt, \
+                                       resampling, \
+                                       error_threshold )
+    dst_xsize = tmp_ds.RasterXSize
+    dst_ysize = tmp_ds.RasterYSize
+    dst_gt = tmp_ds.GetGeoTransform()
+    tmp_ds = None
+
+    # Now create the true target dataset
+    dst_ds = gdal.GetDriverByName('GTiff').Create('tmp/warp_27.tif', dst_xsize, dst_ysize,
+                                                  src_ds.RasterCount)
+    dst_ds.SetProjection(dst_wkt)
+    dst_ds.SetGeoTransform(dst_gt)
+
+    # And run the reprojection
+
+    cbk = warp_27_progress_callback
+    cbk_user_data = None # value for last parameter of above warp_27_progress_callback
+
+    gdal.ReprojectImage( src_ds, \
+                         dst_ds, \
+                         None, # src_wkt : left to default value --> will use the one from source \
+                         None, # dst_wkt : left to default value --> will use the one from destination \
+                         resampling, \
+                         0, # WarpMemoryLimit : left to default value \
+                         error_threshold,
+                         cbk, # Progress callback : could be left to None or unspecified for silent progress
+                         cbk_user_data)  # Progress callback user data
+
+    # Done !
+    dst_ds = None
+
+
+    # Check that we have the same result as produced by 'gdalwarp -rb ../gcore/data/byte.tif tmp/warp_27.tif'
+    ds = gdal.Open('tmp/warp_27.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    if cs != 4583:
+        return 'fail'
+
+    gdal.Unlink('tmp/warp_27.tif')
+
+    return 'success'
+
 ###############################################################################
 
 gdaltest_list = [
@@ -813,7 +882,8 @@ gdaltest_list = [
     warp_23,
     warp_24,
     warp_25,
-    warp_26
+    warp_26,
+    warp_27,
     ]
 
 if __name__ == '__main__':
