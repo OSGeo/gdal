@@ -837,7 +837,7 @@ def warp_27():
     dst_ds = None
 
 
-    # Check that we have the same result as produced by 'gdalwarp -rb ../gcore/data/byte.tif tmp/warp_27.tif'
+    # Check that we have the same result as produced by 'gdalwarp -rb -t_srs EPSG:4326 ../gcore/data/byte.tif tmp/warp_27.tif'
     ds = gdal.Open('tmp/warp_27.tif')
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
