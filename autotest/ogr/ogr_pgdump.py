@@ -100,7 +100,7 @@ def ogr_pgdump_1():
        sql.find("""ALTER TABLE "public"."tpoly" ADD COLUMN "area" FLOAT8;""") == -1 or \
        sql.find("""ALTER TABLE "public"."tpoly" ADD COLUMN "eas_id" INTEGER;""") == -1 or \
        sql.find("""ALTER TABLE "public"."tpoly" ADD COLUMN "prfedea" VARCHAR;""") == -1 or \
-       sql.find("""ALTER TABLE "public"."tpoly" ADD COLUMN "shortname" CHAR(8);""") == -1 or \
+       sql.find("""ALTER TABLE "public"."tpoly" ADD COLUMN "shortname" VARCHAR(8);""") == -1 or \
        sql.find("""INSERT INTO "public"."tpoly" ("wkb_geometry" , "area", "eas_id", "prfedea") VALUES ('01030000800100000005000000000000C01A481D4100000080072D5241000000000000000000000060AA461D4100000080FF2C524100000000000000000000006060461D41000000400C2D52410000000000000000000000A0DF471D4100000000142D52410000000000000000000000C01A481D4100000080072D52410000000000000000', 5268.813, 170, '35043413');""") == -1 or \
        sql.find("""COMMIT;""") == -1 :
         print(sql)
@@ -171,7 +171,7 @@ def ogr_pgdump_2():
        sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "area" FLOAT8;""") == -1 or \
        sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "eas_id" INTEGER;""") == -1 or \
        sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "prfedea" VARCHAR;""") == -1 or \
-       sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "shortname" CHAR(8);""") == -1 or \
+       sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "shortname" VARCHAR(8);""") == -1 or \
        sql.find("""COPY "another_schema"."tpoly" ("the_geom", "area", "eas_id", "prfedea", "shortname") FROM STDIN;""") == -1 or \
        sql.find("0103000020E61000000100000005000000000000C01A481D4100000080072D524100000060AA461D4100000080FF2C52410000006060461D41000000400C2D5241000000A0DF471D4100000000142D5241000000C01A481D4100000080072D5241	5268.813	170	35043413	\\N") == -1 or \
        sql.find("""\.""") == -1 or \
@@ -256,7 +256,7 @@ def ogr_pgdump_3():
        sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "area" FLOAT8;""") == -1 or \
        sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "eas_id" INTEGER;""") == -1 or \
        sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "prfedea" VARCHAR;""") == -1 or \
-       sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "shortname" CHAR(8);""") == -1 or \
+       sql.find("""ALTER TABLE "another_schema"."tpoly" ADD COLUMN "shortname" VARCHAR(8);""") == -1 or \
        sql.find("""COPY "another_schema"."tpoly" ("emptychar", "area", "eas_id", "prfedea", "shortname") FROM STDIN;""") == -1 or \
        sql.find("""\\N	215229.266	168	35043411	\\N""") == -1 or \
        sql.find("""	5268.813	170	35043413	\\N""") == -1 or \
