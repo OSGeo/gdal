@@ -1958,10 +1958,10 @@ static CPLString OGRPGTableLayerGetType(OGRFieldDefn& oField,
     }
     else if( oField.GetType() == OFTString )
     {
-	if (oField.GetWidth() > 0 &&  bPreservePrecision )
-	    sprintf( szFieldType, "VARCHAR(%d)",  oField.GetWidth() );
-	else 
-	    strcpy( szFieldType, "VARCHAR");
+        if (oField.GetWidth() > 0 &&  bPreservePrecision )
+            sprintf( szFieldType, "VARCHAR(%d)",  oField.GetWidth() );
+        else
+            strcpy( szFieldType, "VARCHAR");
     }
     else if( oField.GetType() == OFTIntegerList )
     {

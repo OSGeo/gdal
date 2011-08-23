@@ -1028,10 +1028,10 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
     }
     else if( oField.GetType() == OFTString )
     {
-        if( oField.GetWidth() == 0 || !bPreservePrecision )
-            strcpy( szFieldType, "VARCHAR" );
+        if (oField.GetWidth() > 0 &&  bPreservePrecision )
+            sprintf( szFieldType, "VARCHAR(%d)",  oField.GetWidth() );
         else
-            sprintf( szFieldType, "CHAR(%d)", oField.GetWidth() );
+            strcpy( szFieldType, "VARCHAR");
     }
     else if( oField.GetType() == OFTIntegerList )
     {
