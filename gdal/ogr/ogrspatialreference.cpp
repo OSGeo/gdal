@@ -2747,7 +2747,7 @@ double OSRGetSemiMinor( OGRSpatialReferenceH hSRS, OGRErr *pnErr )
  *
  * This method is the same as the C function OSRSetLocalCS(). 
  *
- * This method is will ensure a LOCAL_CS node is created as the root, 
+ * This method will ensure a LOCAL_CS node is created as the root,
  * and set the provided name on it.  It must be used before SetLinearUnits().
  *
  * @param pszName the user visible name to assign.  Not used as a key.
@@ -2801,7 +2801,7 @@ OGRErr OSRSetLocalCS( OGRSpatialReferenceH hSRS, const char * pszName )
  *
  * This method is the same as the C function OSRSetGeocCS(). 
 
- * This method is will ensure a GEOCCS node is created as the root, 
+ * This method will ensure a GEOCCS node is created as the root,
  * and set the provided name on it.  If used on a GEOGCS coordinate system, 
  * the DATUM and PRIMEM nodes from the GEOGCS will be tarnsferred over to 
  * the GEOGCS. 
@@ -2879,7 +2879,7 @@ OGRErr OSRSetGeocCS( OGRSpatialReferenceH hSRS, const char * pszName )
  *
  * This method is the same as the C function OSRSetVertCS(). 
 
- * This method is will ensure a VERT_CS node is created if needed.  If the
+ * This method will ensure a VERT_CS node is created if needed.  If the
  * existing coordinate system is GEOGCS or PROJCS rooted, then it will be
  * turned into a COMPD_CS.
  *
@@ -3079,7 +3079,7 @@ OGRErr OSRSetCompoundCS( OGRSpatialReferenceH hSRS,
  *
  * This method is the same as the C function OSRSetProjCS(). 
  *
- * This method is will ensure a PROJCS node is created as the root, 
+ * This method will ensure a PROJCS node is created as the root,
  * and set the provided name on it.  If used on a GEOGCS coordinate system, 
  * the GEOGCS node will be demoted to be a child of the new PROJCS root.
  *
