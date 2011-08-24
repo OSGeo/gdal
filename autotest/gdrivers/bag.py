@@ -91,10 +91,28 @@ def bag_2():
         gdaltest.post_reason( 'band 1 nodata wrong.' )
         return 'fail'
 
+    b2 = ds.GetRasterBand(2)
+    if abs(b2.GetNoDataValue()-0.0) > 0.1:
+        gdaltest.post_reason( 'band 2 nodata wrong.' )
+        return 'fail'
+
+    b3 = ds.GetRasterBand(3)
+    if abs(b3.GetNoDataValue()-1000000.0) > 0.1:
+        gdaltest.post_reason( 'band 3 nodata wrong.' )
+        return 'fail'
     
     # It would be nice to test srs and geotransform but they are
     # pretty much worthless on this dataset.
-    
+
+
+    # Test the xml:BAG metadata domain
+    xmlBag = ds.GetMetadata('xml:BAG')[0]
+    if xmlBag.find('<?xml') != 0:
+        gdaltest.post_reason( 'did not get xml:BAG metadata' )
+        print(xmlBag)
+        return 'fail'
+
+
     return 'success'
 
 gdaltest_list = [ bag_1,
