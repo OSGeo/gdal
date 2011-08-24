@@ -208,11 +208,19 @@ int HDF5Dataset::Identify( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     static const char achSignature[] = "\211HDF\r\n\032\n";
 
-    if( poOpenInfo->pabyHeader == NULL
-        || memcmp(poOpenInfo->pabyHeader,achSignature,8) != 0 )
-        return FALSE;
+    if( poOpenInfo->pabyHeader )
+    {
+        if( memcmp(poOpenInfo->pabyHeader,achSignature,8) == 0 )
+            return TRUE;
 
-    return TRUE;
+        if( memcmp(poOpenInfo->pabyHeader,"<HDF_UserBlock>",15) == 0)
+        {
+            if( H5Fis_hdf5(poOpenInfo->pszFilename) )
+              return TRUE;
+        }
+    }
+
+    return FALSE;
 }
 
 /************************************************************************/
