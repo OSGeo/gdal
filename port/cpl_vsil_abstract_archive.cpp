@@ -130,6 +130,14 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive
         CPLString osFileName = poReader->GetFileName();
         const char* fileName = osFileName.c_str();
 
+        /* Remove ./ pattern at the beginning of a filename */
+        if (fileName[0] == '.' && fileName[1] == '/')
+        {
+            fileName += 2;
+            if (fileName[0] == '\0')
+                continue;
+        }
+
         char* pszStrippedFileName = CPLStrdup(fileName);
         int bIsDir = strlen(fileName) > 0 &&
                       (fileName[strlen(fileName)-1] == '/' || fileName[strlen(fileName)-1] == '\\');
