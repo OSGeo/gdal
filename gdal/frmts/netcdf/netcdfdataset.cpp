@@ -2450,7 +2450,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         *szGeoTransform = '\0';
         for( i=0; i<6; i++ ) {
-            sprintf( szTemp, "%g ",
+            sprintf( szTemp, "%.16g ",
                      adfGeoTransform[i] );
             strcat( szGeoTransform, szTemp );
         }
@@ -2537,7 +2537,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         *szGeoTransform = '\0';
         for( i=0; i<6; i++ ) {
-            sprintf( szTemp, "%g ",
+            sprintf( szTemp, "%.16g ",
                      adfGeoTransform[i] );
             strcat( szGeoTransform, szTemp );
         }
