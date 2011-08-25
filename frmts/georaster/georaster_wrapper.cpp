@@ -646,14 +646,12 @@ bool GeoRasterWrapper::Create( char* pszDescription,
 
         if( pszInsert )
         {
-            if( ! EQUALN( pszInsert, "VALUES", 6 ) )
-            {
-                sValues = CPLSPrintf( "VALUES %s", pszInsert );
-            }
-            else
-            {
-                sValues = pszInsert;
-            }
+	        sValues = pszInsert;
+
+            if( pszInsert[0] == '(' && sValues.ifind( "VALUES" ) == std::string::npos )
+			{
+				sValues = CPLSPrintf( "VALUES %s", pszInsert );
+			}
         }
         else
         {
