@@ -1417,6 +1417,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszFilename, int* pbGot
         }
         else
         {
+            CPLStringList oFileList;
             *pbGotFileList = TRUE;
             
             while( (c = strchr(iter, '\n')) != NULL)
@@ -1424,12 +1425,14 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszFilename, int* pbGot
                 *c = 0;
                 if (c - iter > 0 && c[-1] == '\r')
                     c[-1] = 0;
-                papszFileList = CSLAddString(papszFileList, iter);
+                oFileList.AddString(iter);
                 if (ENABLE_DEBUG)
                     CPLDebug("VSICURL", "File[%d] = %s", nCount, iter);
                 iter = c + 1;
                 nCount ++;
             }
+
+            papszFileList = oFileList.StealList();
         }
 
         CPLFree(sWriteFuncData.pBuffer);
