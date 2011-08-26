@@ -1449,8 +1449,16 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszFilename, int* pbGot
         CPLString osFilename(pszFilename + strlen("/vsicurl/"));
         osFilename += '/';
 
+    #if LIBCURL_VERSION_NUM < 0x070B00
+        /* Curl 7.10.X doesn't manage to unset the CURLOPT_RANGE that would have been */
+        /* previously set, so we have to reinit the connection handle */
+        GetCurlHandleFor("");
+    #endif
+
         CURL* hCurlHandle = GetCurlHandleFor(osFilename);
         VSICurlSetOptions(hCurlHandle, osFilename.c_str());
+
+        curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
 
         VSICURLInitWriteFuncStruct(&sWriteFuncData);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
