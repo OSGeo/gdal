@@ -258,6 +258,34 @@ def vsicurl_10():
 
     return 'success'
 
+###############################################################################
+# Test ReadDir() after reading a file on the same server
+
+def vsicurl_11():
+    if not gdaltest.run_slow_tests():
+        return 'skip'
+
+    try:
+        drv = gdal.GetDriverByName( 'HTTP' )
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    f = gdal.VSIFOpenL('/vsicurl/http://download.osgeo.org/gdal/data/bmp/Bug2236.bmp', 'rb')
+    if f is None:
+        return 'skip'
+    gdal.VSIFSeekL(f, 1000000, 0)
+    gdal.VSIFReadL(1, 1, f)
+    gdal.VSIFCloseL(f)
+
+    filelist = gdal.ReadDir('/vsicurl/http://download.osgeo.org/gdal/data/gtiff')
+    if filelist is None or len(filelist) == 0:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ vsicurl_1,
                   vsicurl_2,
                   vsicurl_3,
@@ -267,7 +295,8 @@ gdaltest_list = [ vsicurl_1,
                   vsicurl_7,
                   vsicurl_8,
                   vsicurl_9,
-                  vsicurl_10]
+                  vsicurl_10,
+                  vsicurl_11 ]
 
 if __name__ == '__main__':
 
