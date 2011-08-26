@@ -89,9 +89,9 @@ int sprintbuf(struct printbuf *p, const char *msg, ...)
           *pszComma = '.';
   }
   
-  ret = printbuf_memappend(p, t, size); 
-  free(t); 
-  return ret; 
+  ret = printbuf_memappend(p, t, size);
+  CPLFree(t);
+  return ret;
 }
 
 void printbuf_reset(struct printbuf *p)
