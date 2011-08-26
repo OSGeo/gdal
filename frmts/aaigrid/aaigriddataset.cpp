@@ -423,7 +423,7 @@ int AAIGDataset::Identify( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Does this look like an AI grid file?                            */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 100
+    if( poOpenInfo->nHeaderBytes < 40
         || !( EQUALN((const char *) poOpenInfo->pabyHeader,"ncols",5) ||
               EQUALN((const char *) poOpenInfo->pabyHeader,"nrows",5) ||
               EQUALN((const char *) poOpenInfo->pabyHeader,"xllcorner",9)||
@@ -1294,5 +1294,3 @@ void GDALRegister_GRASSASCIIGrid()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
-
