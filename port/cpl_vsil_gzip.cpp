@@ -1611,7 +1611,7 @@ void VSIZipReader::SetInfo()
     brokendowntime.tm_hour = file_info.tmu_date.tm_hour;
     brokendowntime.tm_mday = file_info.tmu_date.tm_mday;
     brokendowntime.tm_mon = file_info.tmu_date.tm_mon;
-    brokendowntime.tm_year = file_info.tmu_date.tm_year;
+    brokendowntime.tm_year = file_info.tmu_date.tm_year - 1900; /* the minizip conventions differs from the Unix one */
     nModifiedTime = CPLYMDHMSToUnixTime(&brokendowntime);
 
     cpl_unzGetFilePos(unzF, &this->file_pos);
