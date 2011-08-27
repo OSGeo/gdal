@@ -1530,8 +1530,9 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
                 if (strcmp(beginFilename, ".") != 0 &&
                     strcmp(beginFilename, "..") != 0)
                 {
-                    CachedFileProp* cachedFileProp = GetCachedFileProp(
-                        CPLFormFilename(pszFilename + strlen("/vsicurl/"), beginFilename, NULL));
+                    CPLString osCachedFilename =
+                        CPLSPrintf("%s/%s", pszFilename + strlen("/vsicurl/"), beginFilename);
+                    CachedFileProp* cachedFileProp = GetCachedFileProp(osCachedFilename);
                     cachedFileProp->eExists = EXIST_YES;
                     cachedFileProp->bIsDirectory = bIsDirectory;
                     cachedFileProp->mTime = mTime;
@@ -1712,6 +1713,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, int* pbGotF
     if (strncmp(pszDirname, "/vsicurl/ftp", strlen("/vsicurl/ftp")) == 0)
     {
         WriteFuncStruct sWriteFuncData;
+        sWriteFuncData.pBuffer = NULL;
 
         CPLString osDirname(pszDirname + strlen("/vsicurl/"));
         osDirname += '/';
@@ -1778,8 +1780,9 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, int* pbGotF
                                                  bIsDirectory, mUnixTime))
                         break;
 
-                    CachedFileProp* cachedFileProp = GetCachedFileProp(
-                        CPLFormFilename(pszDirname + strlen("/vsicurl/"), pszFilename, NULL));
+                    CPLString osCachedFilename =
+                        CPLSPrintf("%s/%s", pszDirname + strlen("/vsicurl/"), pszFilename);
+                    CachedFileProp* cachedFileProp = GetCachedFileProp(osCachedFilename);
                     cachedFileProp->eExists = EXIST_YES;
                     cachedFileProp->bHastComputedFileSize = bSizeValid;
                     cachedFileProp->fileSize = nFileSize;
