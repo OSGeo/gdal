@@ -1648,7 +1648,7 @@ static int VSICurlParseFullFTPLine(char* pszLine,
         bBrokenDownTimeValid = FALSE;
 
     char* pszDay = VSICurlGetToken(pszNextToken, &pszNextToken);
-    if (pszDay == NULL || strlen(pszDay) != 2)
+    if (pszDay == NULL || (strlen(pszDay) != 1 && strlen(pszDay) != 2))
         return FALSE;
     int nDay = atoi(pszDay);
     if (nDay >= 1 && nDay <= 31)
