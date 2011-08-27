@@ -97,7 +97,8 @@ def doit(opts, args):
             # check that the dimensions of each layer are the same
             if DimensionsCheck:
                 if DimensionsCheck!=[myFiles[i].RasterXSize, myFiles[i].RasterYSize]:
-                    print("Error! Dimensions of file %s (%i, %i) are different from file %s (%i, %i).  Cannot proceed")
+                    print("Error! Dimensions of file %s (%i, %i) are different from other files (%i, %i).  Cannot proceed" % \
+                            (myF,myFiles[i].RasterXSize, myFiles[i].RasterYSize,DimensionsCheck[0],DimensionsCheck[1]))
                     return
             else:
                 DimensionsCheck=[myFiles[i].RasterXSize, myFiles[i].RasterYSize]
