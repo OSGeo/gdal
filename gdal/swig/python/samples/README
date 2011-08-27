@@ -80,6 +80,11 @@ hsv_merge.py            Merge greyscale image into rgb image as intensity
 val_at_coord.py         Outputs the value of the raster bands at a given
                         (longitude, latitude) or (X, Y) location.
 
+gdal_ls.py              Display the list of files in a virtual directory,
+                        like /vsicurl or /vsizip
+
+gdal_cp.py              Copy a virtual file
+
 ------------------------------------------------------------------------------
 Ports of .c/.cpp utilities
 ------------------------------------------------------------------------------
