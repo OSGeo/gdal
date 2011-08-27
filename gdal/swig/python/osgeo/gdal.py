@@ -237,6 +237,47 @@ def Rmdir(*args):
 def Rename(*args):
   """Rename(char pszOld, char pszNew) -> int"""
   return _gdal.Rename(*args)
+VSI_STAT_EXISTS_FLAG = _gdal.VSI_STAT_EXISTS_FLAG
+VSI_STAT_NATURE_FLAG = _gdal.VSI_STAT_NATURE_FLAG
+VSI_STAT_SIZE_FLAG = _gdal.VSI_STAT_SIZE_FLAG
+class StatBuf(_object):
+    """Proxy of C++ StatBuf class"""
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, StatBuf, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, StatBuf, name)
+    __repr__ = _swig_repr
+    __swig_getmethods__["mode"] = _gdal.StatBuf_mode_get
+    if _newclass:mode = _swig_property(_gdal.StatBuf_mode_get)
+    __swig_getmethods__["size"] = _gdal.StatBuf_size_get
+    if _newclass:size = _swig_property(_gdal.StatBuf_size_get)
+    __swig_getmethods__["mtime"] = _gdal.StatBuf_mtime_get
+    if _newclass:mtime = _swig_property(_gdal.StatBuf_mtime_get)
+    def __init__(self, *args): 
+        """__init__(self, StatBuf psStatBuf) -> StatBuf"""
+        this = _gdal.new_StatBuf(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _gdal.delete_StatBuf
+    __del__ = lambda self : None;
+    def IsDirectory(self, *args):
+        """IsDirectory(self) -> int"""
+        return _gdal.StatBuf_IsDirectory(self, *args)
+
+StatBuf_swigregister = _gdal.StatBuf_swigregister
+StatBuf_swigregister(StatBuf)
+
+def PushErrorHandler(*args):
+  """
+    PushErrorHandler(char pszCallbackName = None) -> CPLErr
+    PushErrorHandler(CPLErrorHandler arg0)
+    """
+  return _gdal.PushErrorHandler(*args)
+
+
+def VSIStatL(*args):
+  """VSIStatL(char utf8_path, int nFlags = 0) -> int"""
+  return _gdal.VSIStatL(*args)
 
 def VSIFOpenL(*args):
   """VSIFOpenL(char utf8_path, char pszMode) -> VSILFILE"""
@@ -303,13 +344,6 @@ class MajorObject(_object):
 
 MajorObject_swigregister = _gdal.MajorObject_swigregister
 MajorObject_swigregister(MajorObject)
-
-def PushErrorHandler(*args):
-  """
-    PushErrorHandler(char pszCallbackName = None) -> CPLErr
-    PushErrorHandler(CPLErrorHandler arg0)
-    """
-  return _gdal.PushErrorHandler(*args)
 
 class Driver(MajorObject):
     """Proxy of C++ GDALDriverShadow class"""
