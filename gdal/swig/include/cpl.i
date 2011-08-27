@@ -323,6 +323,68 @@ typedef void VSILFILE;
 %apply RETURN_NONE_TRUE_IS_ERROR {RETURN_NONE};
 RETURN_NONE VSIStatL( const char * utf8_path, VSIStatBufL *psStatBuf );
 %clear RETURN_NONE;
+
+#elif defined(SWIGPYTHON)
+
+%{
+typedef struct
+{
+  int     mode;
+  GIntBig size;
+  GIntBig mtime;
+} StatBuf;
+%}
+
+#define VSI_STAT_EXISTS_FLAG    0x1
+#define VSI_STAT_NATURE_FLAG    0x2
+#define VSI_STAT_SIZE_FLAG      0x4
+
+struct StatBuf
+{
+%apply (GIntBig bigint) { GIntBig };
+%immutable;
+  int         mode;
+  GIntBig     size;
+  GIntBig     mtime;
+%mutable;
+%clear (GIntBig bigint);
+
+%extend {
+  StatBuf( StatBuf *psStatBuf ) {
+    StatBuf *self = (StatBuf*) CPLMalloc( sizeof( StatBuf ) );
+    self->mode = psStatBuf->mode;
+    self->size = psStatBuf->size;
+    self->mtime = psStatBuf->mtime;
+    return self;
+  }
+
+  ~StatBuf() {
+    CPLFree(self);
+  }
+
+  int IsDirectory()
+  {
+     return (self->mode & S_IFDIR) != 0;
+  }
+
+} /* extend */
+} /* StatBuf */ ;
+
+%rename (VSIStatL) wrapper_VSIStatL;
+%inline {
+int wrapper_VSIStatL( const char * utf8_path, StatBuf *psStatBufOut, int nFlags = 0 )
+{
+    VSIStatBufL sStat;
+    memset(&sStat, 0, sizeof(sStat));
+    memset(psStatBufOut, 0, sizeof(StatBuf));
+    int nRet = VSIStatExL(utf8_path, &sStat, nFlags);
+    psStatBufOut->mode = sStat.st_mode;
+    psStatBufOut->size = (GIntBig)sStat.st_size;
+    psStatBufOut->mtime = (GIntBig)sStat.st_mtime;
+    return nRet;
+}
+}
+
 #endif
 
 VSILFILE   *VSIFOpenL( const char *utf8_path, const char *pszMode );

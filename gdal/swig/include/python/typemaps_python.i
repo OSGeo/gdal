@@ -1570,3 +1570,21 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
     /* %typemap(freearg) (const char *utf8_path) */
     GDALPythonFreeCStr($1, bToFree$argnum);
 }
+
+/*
+ * Typemap argout of StatBuf * used in VSIStatL( )
+ */
+%typemap(in,numinputs=0) (StatBuf *psStatBufOut) (StatBuf sStatBuf )
+{
+  /* %typemap(in,numinputs=0) (StatBuf *psStatBufOut) (StatBuf sStatBuf ) */
+  $1 = &sStatBuf;
+}
+%typemap(argout) (StatBuf *psStatBufOut)
+{
+  /* %typemap(argout) (StatBuf *psStatBufOut)*/
+  Py_DECREF($result);
+  if (result == 0)
+    $result = SWIG_NewPointerObj((void*)new_StatBuf( $1 ),SWIGTYPE_p_StatBuf,1);
+  else
+    $result = Py_None;
+}
