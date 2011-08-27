@@ -31,6 +31,7 @@
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 #include "cpl_hash_set.h"
+#include "cpl_time.h"
 
 CPL_CVSID("$Id$");
 
@@ -66,6 +67,7 @@ typedef struct
     int             bHastComputedFileSize;
     vsi_l_offset    fileSize;
     int             bIsDirectory;
+    time_t          mTime;
 } CachedFileProp;
 
 typedef struct
@@ -174,7 +176,7 @@ class VSICurlFilesystemHandler : public VSIFilesystemHandler
     CachedRegion  **papsRegions;
     int             nRegions;
 
-    std::map<unsigned long, CachedFileProp*>   cacheFileSize;
+    std::map<CPLString, CachedFileProp*>   cacheFileSize;
     std::map<CPLString, CachedDirList*>        cacheDirList;
 
     int             bUseCacheDisk;
@@ -184,6 +186,9 @@ class VSICurlFilesystemHandler : public VSIFilesystemHandler
 
     char** GetFileList(const char *pszFilename, int* pbGotFileList);
 
+    char**              ParseHTMLFileList(const char* pszFilename,
+                                          char* pszData,
+                                          int* pbGotFileList);
 public:
     VSICurlFilesystemHandler();
     ~VSICurlFilesystemHandler();
@@ -233,6 +238,7 @@ class VSICurlHandle : public VSIVirtualHandle
     int             bHastComputedFileSize;
     ExistStatus     eExists;
     int             bIsDirectory;
+    time_t          mTime;
 
     vsi_l_offset    lastDownloadedOffset;
     int             nBlocksToDownload;
@@ -253,9 +259,11 @@ class VSICurlHandle : public VSIVirtualHandle
     virtual int          Flush();
     virtual int          Close();
 
+    int                  IsKnownFileSize() const { return bHastComputedFileSize; }
     vsi_l_offset         GetFileSize();
     int                  Exists();
-    int                  IsDirectory() { return bIsDirectory; }
+    int                  IsDirectory() const { return bIsDirectory; }
+    time_t               GetMTime() const { return mTime; }
 };
 
 /************************************************************************/
@@ -268,19 +276,13 @@ VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandler* poFS, const char* pszURL)
     this->pszURL = CPLStrdup(pszURL);
 
     curOffset = 0;
-    fileSize = 0;
-    bHastComputedFileSize = FALSE;
-    eExists = EXIST_UNKNOWN;
-    bIsDirectory = FALSE;
 
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
-    if (cachedFileProp)
-    {
-        eExists = cachedFileProp->eExists;
-        fileSize = cachedFileProp->fileSize;
-        bHastComputedFileSize = cachedFileProp->bHastComputedFileSize;
-        bIsDirectory = cachedFileProp->bIsDirectory;
-    }
+    eExists = cachedFileProp->eExists;
+    fileSize = cachedFileProp->fileSize;
+    bHastComputedFileSize = cachedFileProp->bHastComputedFileSize;
+    bIsDirectory = cachedFileProp->bIsDirectory;
+    mTime = cachedFileProp->mTime;
 
     lastDownloadedOffset = -1;
     nBlocksToDownload = 1;
@@ -512,6 +514,8 @@ vsi_l_offset VSICurlHandle::GetFileSize()
 
     double dfSize = 0;
     curl_easy_perform(hCurlHandle);
+
+    eExists = EXIST_UNKNOWN;
 
     if (strncmp(pszURL, "ftp", 3) == 0)
     {
@@ -899,7 +903,7 @@ VSICurlFilesystemHandler::~VSICurlFilesystemHandler()
     }
     CPLFree(papsRegions);
 
-    std::map<unsigned long, CachedFileProp*>::const_iterator iterCacheFileSize;
+    std::map<CPLString, CachedFileProp*>::const_iterator iterCacheFileSize;
 
     for( iterCacheFileSize = cacheFileSize.begin(); iterCacheFileSize != cacheFileSize.end(); iterCacheFileSize++ )
     {
@@ -1155,8 +1159,7 @@ CachedFileProp*  VSICurlFilesystemHandler::GetCachedFileProp(const char* pszURL)
 {
     CPLMutexHolder oHolder( &hMutex );
 
-    unsigned long   pszURLHash = CPLHashSetHashStr(pszURL);
-    CachedFileProp* cachedFileProp = cacheFileSize[pszURLHash];
+    CachedFileProp* cachedFileProp = cacheFileSize[pszURL];
     if (cachedFileProp == NULL)
     {
         cachedFileProp = (CachedFileProp*) CPLMalloc(sizeof(CachedFileProp));
@@ -1164,7 +1167,7 @@ CachedFileProp*  VSICurlFilesystemHandler::GetCachedFileProp(const char* pszURL)
         cachedFileProp->bHastComputedFileSize = FALSE;
         cachedFileProp->fileSize = 0;
         cachedFileProp->bIsDirectory = FALSE;
-        cacheFileSize[pszURLHash] = cachedFileProp;
+        cacheFileSize[pszURL] = cachedFileProp;
     }
 
     return cachedFileProp;
@@ -1237,18 +1240,172 @@ static char *VSICurlParserFindEOL( char *pszData )
         return pszData;
 }
 
+
 /************************************************************************/
-/*                      VSICurlParseHTMLFileList()                      */
+/*                   VSICurlParseHTMLDateTimeFileSize()                 */
+/************************************************************************/
+
+static const char* const apszMonths[] = { "January", "February", "March",
+                                          "April", "May", "June", "July",
+                                          "August", "September", "October",
+                                          "November", "December" };
+
+static int VSICurlParseHTMLDateTimeFileSize(const char* pszStr,
+                                            struct tm& brokendowntime,
+                                            GUIntBig& nFileSize,
+                                            GIntBig& mTime)
+{
+    int iMonth;
+    for(iMonth=0;iMonth<12;iMonth++)
+    {
+        char szMonth[32];
+        szMonth[0] = '-';
+        memcpy(szMonth + 1, apszMonths[iMonth], 3);
+        szMonth[4] = '-';
+        szMonth[5] = '\0';
+        const char* pszMonthFound = strstr(pszStr, szMonth);
+        if (pszMonthFound)
+        {
+            /* Format of Apache, like in http://download.osgeo.org/gdal/data/gtiff/ */
+            /* "17-May-2010 12:26" */
+            if (pszMonthFound - pszStr > 2 && strlen(pszMonthFound) > 15 &&
+                pszMonthFound[-2 + 11] == ' ' && pszMonthFound[-2 + 14] == ':')
+            {
+                pszMonthFound -= 2;
+                int nDay = atoi(pszMonthFound);
+                int nYear = atoi(pszMonthFound + 7);
+                int nHour = atoi(pszMonthFound + 12);
+                int nMin = atoi(pszMonthFound + 15);
+                if (nDay >= 1 && nDay <= 31 && nYear >= 1900 &&
+                    nHour >= 0 && nHour <= 24 && nMin >= 0 && nMin < 60)
+                {
+                    brokendowntime.tm_year = nYear - 1900;
+                    brokendowntime.tm_mon = iMonth;
+                    brokendowntime.tm_mday = nDay;
+                    brokendowntime.tm_hour = nHour;
+                    brokendowntime.tm_min = nMin;
+                    mTime = CPLYMDHMSToUnixTime(&brokendowntime);
+
+                    return TRUE;
+                }
+            }
+            return FALSE;
+        }
+
+        /* Microsoft IIS */
+        szMonth[0] = ' ';
+        strcpy(szMonth + 1, apszMonths[iMonth]);
+        strcat(szMonth, " ");
+        pszMonthFound = strstr(pszStr, szMonth);
+        if (pszMonthFound)
+        {
+            int nLenMonth = strlen(apszMonths[iMonth]);
+            if (pszMonthFound - pszStr > 2 &&
+                pszMonthFound[-1] != ',' &&
+                pszMonthFound[-2] != ' ' &&
+                (int)strlen(pszMonthFound-2) > 2 + 1 + nLenMonth + 1 + 4 + 1 + 5 + 1 + 4)
+            {
+                /* Format of http://ortho.linz.govt.nz/tifs/1994_95/ */
+                /* "        Friday, 21 April 2006 12:05 p.m.     48062343 m35a_fy_94_95.tif" */
+                pszMonthFound -= 2;
+                    int nDay = atoi(pszMonthFound);
+                int nCurOffset = 2 + 1 + nLenMonth + 1;
+                int nYear = atoi(pszMonthFound + nCurOffset);
+                nCurOffset += 4 + 1;
+                int nHour = atoi(pszMonthFound + nCurOffset);
+                if (nHour < 10)
+                    nCurOffset += 1 + 1;
+                else
+                    nCurOffset += 2 + 1;
+                int nMin = atoi(pszMonthFound + nCurOffset);
+                nCurOffset += 2 + 1;
+                if (strncmp(pszMonthFound + nCurOffset, "p.m.", 4) == 0)
+                    nHour += 12;
+                else if (strncmp(pszMonthFound + nCurOffset, "a.m.", 4) != 0)
+                    nHour = -1;
+                nCurOffset += 4;
+
+                const char* pszFilesize = pszMonthFound + nCurOffset;
+                while(*pszFilesize == ' ')
+                    pszFilesize ++;
+                if (*pszFilesize >= '1' && *pszFilesize <= '9')
+                    nFileSize = CPLScanUIntBig(pszFilesize, strlen(pszFilesize));
+
+                if (nDay >= 1 && nDay <= 31 && nYear >= 1900 &&
+                    nHour >= 0 && nHour <= 24 && nMin >= 0 && nMin < 60)
+                {
+                    brokendowntime.tm_year = nYear - 1900;
+                    brokendowntime.tm_mon = iMonth;
+                    brokendowntime.tm_mday = nDay;
+                    brokendowntime.tm_hour = nHour;
+                    brokendowntime.tm_min = nMin;
+                    mTime = CPLYMDHMSToUnixTime(&brokendowntime);
+
+                    return TRUE;
+                }
+                nFileSize = 0;
+            }
+            else if (pszMonthFound - pszStr > 1 &&
+                        pszMonthFound[-1] == ',' &&
+                        (int)strlen(pszMonthFound) > 1 + nLenMonth + 1 + 2 + 1 + 1 + 4 + 1 + 5 + 1 + 2)
+            {
+                /* Format of http://publicfiles.dep.state.fl.us/dear/BWR_GIS/2007NWFLULC/ */
+                /* "        Sunday, June 20, 2010  6:46 PM    233170905 NWF2007LULCForSDE.zip" */
+                pszMonthFound += 1;
+                int nCurOffset = nLenMonth + 1;
+                int nDay = atoi(pszMonthFound + nCurOffset);
+                nCurOffset += 2 + 1 + 1;
+                int nYear = atoi(pszMonthFound + nCurOffset);
+                nCurOffset += 4 + 1;
+                int nHour = atoi(pszMonthFound + nCurOffset);
+                nCurOffset += 2 + 1;
+                int nMin = atoi(pszMonthFound + nCurOffset);
+                nCurOffset += 2 + 1;
+                if (strncmp(pszMonthFound + nCurOffset, "PM", 2) == 0)
+                    nHour += 12;
+                else if (strncmp(pszMonthFound + nCurOffset, "AM", 2) != 0)
+                    nHour = -1;
+                nCurOffset += 2;
+
+                const char* pszFilesize = pszMonthFound + nCurOffset;
+                while(*pszFilesize == ' ')
+                    pszFilesize ++;
+                if (*pszFilesize >= '1' && *pszFilesize <= '9')
+                    nFileSize = CPLScanUIntBig(pszFilesize, strlen(pszFilesize));
+
+                if (nDay >= 1 && nDay <= 31 && nYear >= 1900 &&
+                    nHour >= 0 && nHour <= 24 && nMin >= 0 && nMin < 60)
+                {
+                    brokendowntime.tm_year = nYear - 1900;
+                    brokendowntime.tm_mon = iMonth;
+                    brokendowntime.tm_mday = nDay;
+                    brokendowntime.tm_hour = nHour;
+                    brokendowntime.tm_min = nMin;
+                    mTime = CPLYMDHMSToUnixTime(&brokendowntime);
+
+                    return TRUE;
+                }
+                nFileSize = 0;
+            }
+            return FALSE;
+        }
+    }
+
+    return FALSE;
+}
+
+/************************************************************************/
+/*                          ParseHTMLFileList()                         */
 /*                                                                      */
 /*      Parse a file list document and return all the components.       */
 /************************************************************************/
 
-static char** VSICurlParseHTMLFileList(const char* pszFilename,
+char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
                                        char* pszData,
                                        int* pbGotFileList)
 {
     CPLStringList oFileList;
-    char* iter = pszData;
+    char* pszLine = pszData;
     char* c;
     int nCount = 0;
     int bIsHTMLDirList = FALSE;
@@ -1294,27 +1451,27 @@ static char** VSICurlParseHTMLFileList(const char* pszFilename,
         CPLFree(pszUnescapedDir);
     }
     
-    while( (c = VSICurlParserFindEOL( iter )) != NULL )
+    while( (c = VSICurlParserFindEOL( pszLine )) != NULL )
     {
         *c = 0;
-        if (strstr(iter, osExpectedString.c_str()) ||
-            strstr(iter, osExpectedString2.c_str()) ||
-            strstr(iter, osExpectedString3.c_str()) ||
-            (osExpectedString_unescaped.size() != 0 && strstr(iter, osExpectedString_unescaped.c_str())))
+        if (strstr(pszLine, osExpectedString.c_str()) ||
+            strstr(pszLine, osExpectedString2.c_str()) ||
+            strstr(pszLine, osExpectedString3.c_str()) ||
+            (osExpectedString_unescaped.size() != 0 && strstr(pszLine, osExpectedString_unescaped.c_str())))
         {
             bIsHTMLDirList = TRUE;
             *pbGotFileList = TRUE;
         }
         /* Subversion HTTP listing */
         /* or Microsoft-IIS/6.0 listing (e.g. http://ortho.linz.govt.nz/tifs/2005_06/) */
-        else if (strstr(iter, "<title>"))
+        else if (strstr(pszLine, "<title>"))
         {
             /* Detect something like : <html><head><title>gdal - Revision 20739: /trunk/autotest/gcore/data</title></head> */
             /* The annoying thing is that what is after ': ' is a subpart of what is after http://server/ */
-            char* pszSubDir = strstr(iter, ": ");
+            char* pszSubDir = strstr(pszLine, ": ");
             if (pszSubDir == NULL)
                 /* or <title>ortho.linz.govt.nz - /tifs/2005_06/</title> */
-                pszSubDir = strstr(iter, "- ");
+                pszSubDir = strstr(pszLine, "- ");
             if (pszSubDir)
             {
                 pszSubDir += 2;
@@ -1334,120 +1491,359 @@ static char** VSICurlParseHTMLFileList(const char* pszFilename,
             }
         }
         else if (bIsHTMLDirList &&
-                 (strstr(iter, "<a href=\"") != NULL || strstr(iter, "<A HREF=\"") != NULL) &&
-                 strstr(iter, "<a href=\"http://") == NULL && /* exclude absolute links, like to subversion home */
-                 strstr(iter, "Parent Directory") == NULL /* exclude parent directory */)
+                 (strstr(pszLine, "<a href=\"") != NULL || strstr(pszLine, "<A HREF=\"") != NULL) &&
+                 strstr(pszLine, "<a href=\"http://") == NULL && /* exclude absolute links, like to subversion home */
+                 strstr(pszLine, "Parent Directory") == NULL /* exclude parent directory */)
         {
-            char *beginFilename = strstr(iter, "<a href=\"");
+            char *beginFilename = strstr(pszLine, "<a href=\"");
             if (beginFilename == NULL)
-                beginFilename = strstr(iter, "<A HREF=\"");
+                beginFilename = strstr(pszLine, "<A HREF=\"");
             beginFilename += strlen("<a href=\"");
             char *endQuote = strchr(beginFilename, '"');
             if (endQuote && strncmp(beginFilename, "?C=", 3) != 0)
             {
+                struct tm brokendowntime;
+                memset(&brokendowntime, 0, sizeof(brokendowntime));
+                GUIntBig nFileSize = 0;
+                GIntBig mTime = 0;
+
+                VSICurlParseHTMLDateTimeFileSize(pszLine,
+                                                 brokendowntime,
+                                                 nFileSize,
+                                                 mTime);
+
                 *endQuote = '\0';
-                
+
                 /* Remove trailing slash, that are returned for directories by */
                 /* Apache */
+                int bIsDirectory = FALSE;
                 if (endQuote[-1] == '/')
+                {
+                    bIsDirectory = TRUE;
                     endQuote[-1] = 0;
+                }
                 
                 /* shttpd links include slashes from the root directory. Skip them */
                 while(strchr(beginFilename, '/'))
                     beginFilename = strchr(beginFilename, '/') + 1;
-                oFileList.AddString( beginFilename );
-                if (ENABLE_DEBUG)
-                    CPLDebug("VSICURL", "File[%d] = %s", nCount, beginFilename);
-                nCount ++;
+
+                if (strcmp(beginFilename, ".") != 0 &&
+                    strcmp(beginFilename, "..") != 0)
+                {
+                    CachedFileProp* cachedFileProp = GetCachedFileProp(
+                        CPLFormFilename(pszFilename + strlen("/vsicurl/"), beginFilename, NULL));
+                    cachedFileProp->eExists = EXIST_YES;
+                    cachedFileProp->bIsDirectory = bIsDirectory;
+                    cachedFileProp->mTime = mTime;
+                    cachedFileProp->bHastComputedFileSize = nFileSize > 0;
+                    cachedFileProp->fileSize = nFileSize;
+
+                    oFileList.AddString( beginFilename );
+                    if (ENABLE_DEBUG)
+                        CPLDebug("VSICURL", "File[%d] = %s, is_dir = %d, size = " CPL_FRMT_GUIB ", time = %04d/%02d/%02d %02d:%02d:%02d",
+                                nCount, beginFilename, bIsDirectory, nFileSize,
+                                brokendowntime.tm_year + 1900, brokendowntime.tm_mon + 1, brokendowntime.tm_mday,
+                                brokendowntime.tm_hour, brokendowntime.tm_min, brokendowntime.tm_sec);
+                    nCount ++;
+                }
             }
         }
-        iter = c + 1;
+        pszLine = c + 1;
     }
-    
+
     return oFileList.StealList();
+}
+
+
+/************************************************************************/
+/*                         VSICurlGetToken()                            */
+/************************************************************************/
+
+static char* VSICurlGetToken(char* pszCurPtr, char** ppszNextToken)
+{
+    if (pszCurPtr == NULL)
+        return NULL;
+
+    while((*pszCurPtr) == ' ')
+        pszCurPtr ++;
+    if (*pszCurPtr == '\0')
+        return NULL;
+
+    char* pszToken = pszCurPtr;
+    while((*pszCurPtr) != ' ' && (*pszCurPtr) != '\0')
+        pszCurPtr ++;
+    if (*pszCurPtr == '\0')
+        *ppszNextToken = NULL;
+    else
+    {
+        *pszCurPtr = '\0';
+        pszCurPtr ++;
+        while((*pszCurPtr) == ' ')
+            pszCurPtr ++;
+        *ppszNextToken = pszCurPtr;
+    }
+
+    return pszToken;
+}
+
+/************************************************************************/
+/*                    VSICurlParseFullFTPLine()                         */
+/************************************************************************/
+
+/* Parse lines like the following ones :
+-rw-r--r--    1 10003    100           430 Jul 04  2008 COPYING
+lrwxrwxrwx    1 ftp      ftp            28 Jun 14 14:13 MPlayer -> mirrors/mplayerhq.hu/MPlayer
+-rw-r--r--    1 ftp      ftp      725614592 May 13 20:13 Fedora-15-x86_64-Live-KDE.iso
+drwxr-xr-x  280 1003  1003  6656 Aug 26 04:17 gnu
+*/
+
+static int VSICurlParseFullFTPLine(char* pszLine,
+                                   char*& pszFilename,
+                                   int& bSizeValid,
+                                   GUIntBig& nSize,
+                                   int& bIsDirectory,
+                                   GIntBig& nUnixTime)
+{
+    char* pszNextToken = pszLine;
+    char* pszPermissions = VSICurlGetToken(pszNextToken, &pszNextToken);
+    if (pszPermissions == NULL || strlen(pszPermissions) != 10)
+        return FALSE;
+    bIsDirectory = (pszPermissions[0] == 'd');
+
+    int i;
+    for(i = 0; i < 3; i++)
+    {
+        if (VSICurlGetToken(pszNextToken, &pszNextToken) == NULL)
+            return FALSE;
+    }
+
+    char* pszSize = VSICurlGetToken(pszNextToken, &pszNextToken);
+    if (pszSize == NULL)
+        return FALSE;
+
+    if (pszPermissions[0] == '-')
+    {
+        /* Regular file */
+        bSizeValid = TRUE;
+        nSize = CPLScanUIntBig(pszSize, strlen(pszSize));
+    }
+
+    struct tm brokendowntime;
+    memset(&brokendowntime, 0, sizeof(brokendowntime));
+    int bBrokenDownTimeValid = TRUE;
+
+    char* pszMonth = VSICurlGetToken(pszNextToken, &pszNextToken);
+    if (pszMonth == NULL || strlen(pszMonth) != 3)
+        return FALSE;
+
+    for(i = 0; i < 12; i++)
+    {
+        if (EQUALN(pszMonth, apszMonths[i], 3))
+            break;
+    }
+    if (i < 12)
+        brokendowntime.tm_mon = i;
+    else
+        bBrokenDownTimeValid = FALSE;
+
+    char* pszDay = VSICurlGetToken(pszNextToken, &pszNextToken);
+    if (pszDay == NULL || strlen(pszDay) != 2)
+        return FALSE;
+    int nDay = atoi(pszDay);
+    if (nDay >= 1 && nDay <= 31)
+        brokendowntime.tm_mday = nDay;
+    else
+        bBrokenDownTimeValid = FALSE;
+
+    char* pszHourOrYear = VSICurlGetToken(pszNextToken, &pszNextToken);
+    if (pszHourOrYear == NULL || (strlen(pszHourOrYear) != 4 && strlen(pszHourOrYear) != 5))
+        return FALSE;
+    if (strlen(pszHourOrYear) == 4)
+    {
+        brokendowntime.tm_year = atoi(pszHourOrYear) - 1900;
+    }
+    else
+    {
+        time_t sTime;
+        time(&sTime);
+        struct tm currentBrokendowntime;
+        CPLUnixTimeToYMDHMS((GIntBig)sTime, &currentBrokendowntime);
+        brokendowntime.tm_year = currentBrokendowntime.tm_year;
+        brokendowntime.tm_hour = atoi(pszHourOrYear);
+        brokendowntime.tm_min = atoi(pszHourOrYear + 3);
+    }
+
+    if (bBrokenDownTimeValid)
+        nUnixTime = CPLYMDHMSToUnixTime(&brokendowntime);
+    else
+        nUnixTime = 0;
+
+    if (pszNextToken == NULL)
+        return FALSE;
+
+    pszFilename = pszNextToken;
+
+    char* pszCurPtr = pszFilename;
+    while( *pszCurPtr != '\0')
+    {
+        /* In case of a link, stop before the pointed part of the link */
+        if (pszPermissions[0] == 'l' && strncmp(pszCurPtr, " -> ", 4) == 0)
+        {
+            break;
+        }
+        pszCurPtr ++;
+    }
+    *pszCurPtr = '\0';
+
+    return TRUE;
 }
 
 /************************************************************************/
 /*                          GetFileList()                               */
 /************************************************************************/
 
-char** VSICurlFilesystemHandler::GetFileList(const char *pszFilename, int* pbGotFileList)
+char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, int* pbGotFileList)
 {
     if (ENABLE_DEBUG)
-        CPLDebug("VSICURL", "GetFileList(%s)" , pszFilename);
+        CPLDebug("VSICURL", "GetFileList(%s)" , pszDirname);
 
     *pbGotFileList = FALSE;
 
-    if (strncmp(pszFilename, "/vsicurl/ftp", strlen("/vsicurl/ftp")) == 0)
+    if (strncmp(pszDirname, "/vsicurl/ftp", strlen("/vsicurl/ftp")) == 0)
     {
         WriteFuncStruct sWriteFuncData;
 
-        CPLString osFilename(pszFilename + strlen("/vsicurl/"));
-        osFilename += '/';
-
-        CURL* hCurlHandle = GetCurlHandleFor(osFilename);
-        VSICurlSetOptions(hCurlHandle, osFilename.c_str());
-
-/* 7.16.4 */
-#if LIBCURL_VERSION_NUM <= 0x071004
-        curl_easy_setopt(hCurlHandle, CURLOPT_FTPLISTONLY, 1);
-#elif LIBCURL_VERSION_NUM > 0x071004
-        curl_easy_setopt(hCurlHandle, CURLOPT_DIRLISTONLY, 1);
-#endif
-        VSICURLInitWriteFuncStruct(&sWriteFuncData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
-
-        curl_easy_perform(hCurlHandle);
-
-        if (sWriteFuncData.pBuffer == NULL)
-            return NULL;
+        CPLString osDirname(pszDirname + strlen("/vsicurl/"));
+        osDirname += '/';
 
         char** papszFileList = NULL;
-        char* iter = sWriteFuncData.pBuffer;
-        char* c;
-        int nCount = 0;
-        
-        if (EQUALN(iter, "<!DOCTYPE HTML", strlen("<!DOCTYPE HTML")) ||
-            EQUALN(iter, "<HTML>", 6))
+
+        for(int iTry=0;iTry<2;iTry++)
         {
-            papszFileList = VSICurlParseHTMLFileList(pszFilename,
-                                             sWriteFuncData.pBuffer,
-                                             pbGotFileList);
-        }
-        else
-        {
-            CPLStringList oFileList;
-            *pbGotFileList = TRUE;
-            
-            while( (c = strchr(iter, '\n')) != NULL)
+            CURL* hCurlHandle = GetCurlHandleFor(osDirname);
+            VSICurlSetOptions(hCurlHandle, osDirname.c_str());
+
+            /* On the first pass, we want to try fetching all the possible */
+            /* informations (filename, file/directory, size). If that */
+            /* does not work, then try again with CURLOPT_DIRLISTONLY set */
+            if (iTry == 1)
             {
-                *c = 0;
-                if (c - iter > 0 && c[-1] == '\r')
-                    c[-1] = 0;
-                oFileList.AddString(iter);
-                if (ENABLE_DEBUG)
-                    CPLDebug("VSICURL", "File[%d] = %s", nCount, iter);
-                iter = c + 1;
-                nCount ++;
+        /* 7.16.4 */
+        #if LIBCURL_VERSION_NUM <= 0x071004
+                curl_easy_setopt(hCurlHandle, CURLOPT_FTPLISTONLY, 1);
+        #elif LIBCURL_VERSION_NUM > 0x071004
+                curl_easy_setopt(hCurlHandle, CURLOPT_DIRLISTONLY, 1);
+        #endif
             }
 
-            papszFileList = oFileList.StealList();
+            VSICURLInitWriteFuncStruct(&sWriteFuncData);
+            curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+            curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
+
+            curl_easy_perform(hCurlHandle);
+
+            if (sWriteFuncData.pBuffer == NULL)
+                return NULL;
+
+            char* pszLine = sWriteFuncData.pBuffer;
+            char* c;
+            int nCount = 0;
+
+            if (EQUALN(pszLine, "<!DOCTYPE HTML", strlen("<!DOCTYPE HTML")) ||
+                EQUALN(pszLine, "<HTML>", 6))
+            {
+                papszFileList = ParseHTMLFileList(pszDirname,
+                                                  sWriteFuncData.pBuffer,
+                                                  pbGotFileList);
+                break;
+            }
+            else if (iTry == 0)
+            {
+                CPLStringList oFileList;
+                *pbGotFileList = TRUE;
+
+                while( (c = strchr(pszLine, '\n')) != NULL)
+                {
+                    *c = 0;
+                    if (c - pszLine > 0 && c[-1] == '\r')
+                        c[-1] = 0;
+
+                    char* pszFilename = NULL;
+                    int bSizeValid = FALSE;
+                    GUIntBig nFileSize = 0;
+                    int bIsDirectory = FALSE;
+                    GIntBig mUnixTime = 0;
+                    if (!VSICurlParseFullFTPLine(pszLine, pszFilename,
+                                                 bSizeValid, nFileSize,
+                                                 bIsDirectory, mUnixTime))
+                        break;
+
+                    CachedFileProp* cachedFileProp = GetCachedFileProp(
+                        CPLFormFilename(pszDirname + strlen("/vsicurl/"), pszFilename, NULL));
+                    cachedFileProp->eExists = EXIST_YES;
+                    cachedFileProp->bHastComputedFileSize = bSizeValid;
+                    cachedFileProp->fileSize = nFileSize;
+                    cachedFileProp->bIsDirectory = bIsDirectory;
+                    cachedFileProp->mTime = mUnixTime;
+
+                    oFileList.AddString(pszFilename);
+                    if (ENABLE_DEBUG)
+                    {
+                        struct tm brokendowntime;
+                        CPLUnixTimeToYMDHMS(mUnixTime, &brokendowntime);
+                        CPLDebug("VSICURL", "File[%d] = %s, is_dir = %d, size = " CPL_FRMT_GUIB ", time = %04d/%02d/%02d %02d:%02d:%02d",
+                                 nCount, pszFilename, bIsDirectory, nFileSize,
+                                 brokendowntime.tm_year + 1900, brokendowntime.tm_mon + 1, brokendowntime.tm_mday,
+                                 brokendowntime.tm_hour, brokendowntime.tm_min, brokendowntime.tm_sec);
+                    }
+                    pszLine = c + 1;
+                    nCount ++;
+                }
+
+                if (c == NULL)
+                {
+                    papszFileList = oFileList.StealList();
+                    break;
+                }
+            }
+            else
+            {
+                CPLStringList oFileList;
+                *pbGotFileList = TRUE;
+
+                while( (c = strchr(pszLine, '\n')) != NULL)
+                {
+                    *c = 0;
+                    if (c - pszLine > 0 && c[-1] == '\r')
+                        c[-1] = 0;
+                    oFileList.AddString(pszLine);
+                    if (ENABLE_DEBUG)
+                        CPLDebug("VSICURL", "File[%d] = %s", nCount, pszLine);
+                    pszLine = c + 1;
+                    nCount ++;
+                }
+
+                papszFileList = oFileList.StealList();
+            }
+
+            CPLFree(sWriteFuncData.pBuffer);
+            sWriteFuncData.pBuffer = NULL;
         }
 
         CPLFree(sWriteFuncData.pBuffer);
+
         return papszFileList;
     }
 
     /* Try to recognize HTML pages that list the content of a directory */
     /* Currently this supports what Apache and shttpd can return */
-    else if (strncmp(pszFilename, "/vsicurl/http://", strlen("/vsicurl/http://")) == 0 ||
-             strncmp(pszFilename, "/vsicurl/https://", strlen("/vsicurl/https://")) == 0)
+    else if (strncmp(pszDirname, "/vsicurl/http://", strlen("/vsicurl/http://")) == 0 ||
+             strncmp(pszDirname, "/vsicurl/https://", strlen("/vsicurl/https://")) == 0)
     {
         WriteFuncStruct sWriteFuncData;
 
-        CPLString osFilename(pszFilename + strlen("/vsicurl/"));
-        osFilename += '/';
+        CPLString osDirname(pszDirname + strlen("/vsicurl/"));
+        osDirname += '/';
 
     #if LIBCURL_VERSION_NUM < 0x070B00
         /* Curl 7.10.X doesn't manage to unset the CURLOPT_RANGE that would have been */
@@ -1455,8 +1851,8 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszFilename, int* pbGot
         GetCurlHandleFor("");
     #endif
 
-        CURL* hCurlHandle = GetCurlHandleFor(osFilename);
-        VSICurlSetOptions(hCurlHandle, osFilename.c_str());
+        CURL* hCurlHandle = GetCurlHandleFor(osDirname);
+        VSICurlSetOptions(hCurlHandle, osDirname.c_str());
 
         curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
 
@@ -1469,9 +1865,9 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszFilename, int* pbGot
         if (sWriteFuncData.pBuffer == NULL)
             return NULL;
             
-        char** papszFileList = VSICurlParseHTMLFileList(pszFilename,
-                                                        sWriteFuncData.pBuffer,
-                                                        pbGotFileList);
+        char** papszFileList = ParseHTMLFileList(pszDirname,
+                                                 sWriteFuncData.pBuffer,
+                                                 pbGotFileList);
 
         CPLFree(sWriteFuncData.pBuffer);
         return papszFileList;
@@ -1524,24 +1920,18 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
         {
             return -1;
         }
-        if (bGotFileList && bFound && (nFlags & VSI_STAT_SIZE_FLAG) == 0)
-        {
-            pStatBuf->st_mode = S_IFREG;
-            pStatBuf->st_size = 0;
-            return 0;
-        }
     }
 
     VSICurlHandle oHandle( this, osFilename + strlen("/vsicurl/"));
 
-    pStatBuf->st_mode = S_IFREG;
-    pStatBuf->st_size = (nFlags & VSI_STAT_SIZE_FLAG) ? oHandle.GetFileSize() : 0;
+    if ( oHandle.IsKnownFileSize() ||
+         ((nFlags & VSI_STAT_SIZE_FLAG) && !oHandle.IsDirectory() &&
+           CSLTestBoolean(CPLGetConfigOption("CPL_VSIL_CURL_SLOW_GET_SIZE", "YES"))) )
+        pStatBuf->st_size = oHandle.GetFileSize();
 
     int nRet = (oHandle.Exists()) ? 0 : -1;
-    if (nRet == 0 && oHandle.IsDirectory())
-    {
-        pStatBuf->st_mode = S_IFDIR;
-    }
+    pStatBuf->st_mtime = oHandle.GetMTime();
+    pStatBuf->st_mode = oHandle.IsDirectory() ? S_IFDIR : S_IFREG;
     return nRet;
 }
 
@@ -1603,6 +1993,15 @@ char** VSICurlFilesystemHandler::ReadDir( const char *pszDirname, int* pbGotFile
     }
 
     CPLMutexHolder oHolder( &hMutex );
+
+    /* If we know the file exists and is not a directory, then don't try to list its content */
+    CachedFileProp* cachedFileProp = GetCachedFileProp(osDirname.c_str() + strlen("/vsicurl/"));
+    if (cachedFileProp->eExists == EXIST_YES && !cachedFileProp->bIsDirectory)
+    {
+        if (pbGotFileList)
+            *pbGotFileList = TRUE;
+        return NULL;
+    }
 
     CachedDirList* psCachedDirList = cacheDirList[osDirname];
     if (psCachedDirList == NULL)
