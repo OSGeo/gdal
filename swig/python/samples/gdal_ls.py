@@ -150,7 +150,9 @@ def gdal_ls(argv, fout = sys.stdout):
     if argv is None:
         return -1
 
-    for i in range(1, len(argv)):
+    i = 1
+    argc = len(argv)
+    while i < argc:
         if argv[i] == '-l':
             longformat = True
         elif argv[i] == '-R':
@@ -172,6 +174,8 @@ def gdal_ls(argv, fout = sys.stdout):
         else:
             sys.stderr.write('Unexpected option : %s\n' % argv[i])
             return Usage()
+
+        i = i + 1
 
     if dirname is None:
         return Usage()
