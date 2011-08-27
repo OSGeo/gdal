@@ -1780,27 +1780,33 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, int* pbGotF
                                                  bIsDirectory, mUnixTime))
                         break;
 
-                    CPLString osCachedFilename =
-                        CPLSPrintf("%s/%s", pszDirname + strlen("/vsicurl/"), pszFilename);
-                    CachedFileProp* cachedFileProp = GetCachedFileProp(osCachedFilename);
-                    cachedFileProp->eExists = EXIST_YES;
-                    cachedFileProp->bHastComputedFileSize = bSizeValid;
-                    cachedFileProp->fileSize = nFileSize;
-                    cachedFileProp->bIsDirectory = bIsDirectory;
-                    cachedFileProp->mTime = mUnixTime;
-
-                    oFileList.AddString(pszFilename);
-                    if (ENABLE_DEBUG)
+                    if (strcmp(pszFilename, ".") != 0 &&
+                        strcmp(pszFilename, "..") != 0)
                     {
-                        struct tm brokendowntime;
-                        CPLUnixTimeToYMDHMS(mUnixTime, &brokendowntime);
-                        CPLDebug("VSICURL", "File[%d] = %s, is_dir = %d, size = " CPL_FRMT_GUIB ", time = %04d/%02d/%02d %02d:%02d:%02d",
-                                 nCount, pszFilename, bIsDirectory, nFileSize,
-                                 brokendowntime.tm_year + 1900, brokendowntime.tm_mon + 1, brokendowntime.tm_mday,
-                                 brokendowntime.tm_hour, brokendowntime.tm_min, brokendowntime.tm_sec);
+                        CPLString osCachedFilename =
+                            CPLSPrintf("%s/%s", pszDirname + strlen("/vsicurl/"), pszFilename);
+                        CachedFileProp* cachedFileProp = GetCachedFileProp(osCachedFilename);
+                        cachedFileProp->eExists = EXIST_YES;
+                        cachedFileProp->bHastComputedFileSize = bSizeValid;
+                        cachedFileProp->fileSize = nFileSize;
+                        cachedFileProp->bIsDirectory = bIsDirectory;
+                        cachedFileProp->mTime = mUnixTime;
+
+                        oFileList.AddString(pszFilename);
+                        if (ENABLE_DEBUG)
+                        {
+                            struct tm brokendowntime;
+                            CPLUnixTimeToYMDHMS(mUnixTime, &brokendowntime);
+                            CPLDebug("VSICURL", "File[%d] = %s, is_dir = %d, size = " CPL_FRMT_GUIB ", time = %04d/%02d/%02d %02d:%02d:%02d",
+                                    nCount, pszFilename, bIsDirectory, nFileSize,
+                                    brokendowntime.tm_year + 1900, brokendowntime.tm_mon + 1, brokendowntime.tm_mday,
+                                    brokendowntime.tm_hour, brokendowntime.tm_min, brokendowntime.tm_sec);
+                        }
+
+                        nCount ++;
                     }
+
                     pszLine = c + 1;
-                    nCount ++;
                 }
 
                 if (c == NULL)
@@ -1819,11 +1825,17 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, int* pbGotF
                     *c = 0;
                     if (c - pszLine > 0 && c[-1] == '\r')
                         c[-1] = 0;
-                    oFileList.AddString(pszLine);
-                    if (ENABLE_DEBUG)
-                        CPLDebug("VSICURL", "File[%d] = %s", nCount, pszLine);
+
+                    if (strcmp(pszLine, ".") != 0 &&
+                        strcmp(pszLine, "..") != 0)
+                    {
+                        oFileList.AddString(pszLine);
+                        if (ENABLE_DEBUG)
+                            CPLDebug("VSICURL", "File[%d] = %s", nCount, pszLine);
+                        nCount ++;
+                    }
+
                     pszLine = c + 1;
-                    nCount ++;
                 }
 
                 papszFileList = oFileList.StealList();
