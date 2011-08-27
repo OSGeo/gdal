@@ -162,12 +162,14 @@ def gdal_cp_recurse(srcdir, targetdir, progress, skip_failure):
         os.mkdir(targetdir)
 
     for srcfile in lst:
-        srcfile = srcdir + '/' + srcfile
-        statBuf = gdal.VSIStatL(srcfile, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG)
+        if srcfile == '.' or srcfile == '..':
+            continue
+        fullsrcfile = srcdir + '/' + srcfile
+        statBuf = gdal.VSIStatL(fullsrcfile, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG)
         if statBuf.IsDirectory():
-            ret = gdal_cp_recurse(srcfile, targetdir + '/' + srcfile, progress, skip_failure)
+            ret = gdal_cp_recurse(fullsrcfile, targetdir + '/' + srcfile, progress, skip_failure)
         else:
-            ret = gdal_cp_single(srcfile, targetdir, progress)
+            ret = gdal_cp_single(fullsrcfile, targetdir, progress)
         if ret == -2 or (ret == -1 and not skip_failure):
             return ret
     return 0
