@@ -512,6 +512,10 @@ vsi_l_offset VSICurlHandle::GetFileSize()
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
 
+    char szCurlErrBuf[CURL_ERROR_SIZE+1];
+    szCurlErrBuf[0] = '\0';
+    curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+
     double dfSize = 0;
     curl_easy_perform(hCurlHandle);
 
@@ -640,6 +644,10 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
 
     curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, rangeStr);
 
+    char szCurlErrBuf[CURL_ERROR_SIZE+1];
+    szCurlErrBuf[0] = '\0';
+    curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+
     curl_easy_perform(hCurlHandle);
 
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, NULL);
@@ -656,6 +664,15 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     if ((response_code != 200 && response_code != 206 &&
         response_code != 226 && response_code != 426) || sWriteFuncHeaderData.bError)
     {
+        if (response_code >= 400 && szCurlErrBuf[0] != '\0')
+        {
+            if (strcmp(szCurlErrBuf, "Couldn't use REST") == 0)
+                CPLError(CE_Failure, CPLE_AppDefined, "%d: %s, %s",
+                         (int)response_code, szCurlErrBuf,
+                         "Range downloading not supported by this server !");
+            else
+                CPLError(CE_Failure, CPLE_AppDefined, "%d: %s", (int)response_code, szCurlErrBuf);
+        }
         bHastComputedFileSize = cachedFileProp->bHastComputedFileSize = TRUE;
         cachedFileProp->fileSize = 0;
         cachedFileProp->eExists = EXIST_NO;
@@ -1742,6 +1759,10 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, int* pbGotF
             curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
             curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
 
+            char szCurlErrBuf[CURL_ERROR_SIZE+1];
+            szCurlErrBuf[0] = '\0';
+            curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+
             curl_easy_perform(hCurlHandle);
 
             if (sWriteFuncData.pBuffer == NULL)
@@ -1874,6 +1895,10 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, int* pbGotF
         VSICURLInitWriteFuncStruct(&sWriteFuncData);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
+
+        char szCurlErrBuf[CURL_ERROR_SIZE+1];
+        szCurlErrBuf[0] = '\0';
+        curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
         curl_easy_perform(hCurlHandle);
 
