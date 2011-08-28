@@ -244,6 +244,61 @@ def test_gdal_rasterize_4():
 
     return 'success'
 
+###############################################################################
+# Test point rasterization (#3774)
+
+def test_gdal_rasterize_5():
+
+    if test_cli_utilities.get_gdal_rasterize_path() is None:
+        return 'skip'
+
+    f = open('tmp/test_gdal_rasterize_5.csv', 'wb')
+    f.write("""x,y,Value
+0.5,0.5,1
+0.5,2.5,2
+2.5,2.5,3
+2.5,0.5,4
+1.5,1.5,5""".encode('ascii'))
+    f.close()
+
+    f = open('tmp/test_gdal_rasterize_5.vrt', 'wb')
+    f.write("""<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource relativetoVRT="1">test_gdal_rasterize_5.csv</SrcDataSource>
+        <SrcLayer>test_gdal_rasterize_5</SrcLayer>
+        <GeometryType>wkbPoint</GeometryType>
+        <GeometryField encoding="PointFromColumns" x="x" y="y"/>
+    </OGRVRTLayer>
+</OGRVRTDataSource>""".encode('ascii'))
+    f.close()
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_rasterize_path() + ' -l test tmp/test_gdal_rasterize_5.vrt tmp/test_gdal_rasterize_5.tif -a Value -tr 1 1 -ot Byte')
+
+    ds = gdal.Open('tmp/test_gdal_rasterize_5.tif')
+    if ds.RasterXSize != 3 or ds.RasterYSize != 3:
+        gdaltest.post_reason('did not get expected dimensions')
+        print(ds.RasterXSize)
+        print(ds.RasterYSize)
+        return 'fail'
+
+    gt_ref = [0,1,0,3,0,-1]
+    gt = ds.GetGeoTransform()
+    for i in range(6):
+        if (abs(gt[i]-gt_ref[i])>1e-6):
+            gdaltest.post_reason('did not get expected geotransform')
+            print(gt)
+            print(gt_ref)
+            return 'fail'
+
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 3, 3)
+    if data.decode('iso-8859-1') != '\x02\x00\x03\x00\x05\x00\x01\x00\x04':
+        gdaltest.post_reason('did not get expected values')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
 ###########################################
 def test_gdal_rasterize_cleanup():
 
@@ -258,6 +313,10 @@ def test_gdal_rasterize_cleanup():
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource( 'tmp/n43dt0.shp' )
     gdal.GetDriverByName('GTiff').Delete( 'tmp/n43dt0.tif' )
 
+    gdal.GetDriverByName('GTiff').Delete( 'tmp/test_gdal_rasterize_5.tif' )
+    os.unlink('tmp/test_gdal_rasterize_5.csv')
+    os.unlink('tmp/test_gdal_rasterize_5.vrt')
+
     return 'success'
 
 gdaltest_list = [
@@ -265,6 +324,7 @@ gdaltest_list = [
     test_gdal_rasterize_2,
     test_gdal_rasterize_3,
     test_gdal_rasterize_4,
+    test_gdal_rasterize_5,
     test_gdal_rasterize_cleanup
     ]
 
