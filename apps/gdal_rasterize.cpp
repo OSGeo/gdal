@@ -340,6 +340,18 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
                 exit(2);
             }
 
+            /* When rasterizing point layers and that the bounds have */
+            /* not been explicitely set, voluntary increase the extent by */
+            /* a half-pixel size to avoid missing points on the border */
+            if (wkbFlatten(OGR_L_GetGeomType(hLayer)) == wkbPoint &&
+                !bTargetAlignedPixels && dfXRes != 0 && dfYRes != 0)
+            {
+                sLayerEnvelop.MinX -= dfXRes / 2;
+                sLayerEnvelop.MaxX += dfXRes / 2;
+                sLayerEnvelop.MinY -= dfYRes / 2;
+                sLayerEnvelop.MaxY += dfYRes / 2;
+            }
+
             if (bFirstLayer)
             {
                 sEnvelop.MinX = sLayerEnvelop.MinX;
@@ -372,7 +384,6 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
         }
     }
 
-    double adfProjection[6];
     if (dfXRes == 0 && dfYRes == 0)
     {
         dfXRes = (sEnvelop.MaxX - sEnvelop.MinX) / nXSize;
@@ -386,6 +397,7 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
         sEnvelop.MaxY = ceil(sEnvelop.MaxY / dfYRes) * dfYRes;
     }
 
+    double adfProjection[6];
     adfProjection[0] = sEnvelop.MinX;
     adfProjection[1] = dfXRes;
     adfProjection[2] = 0;
