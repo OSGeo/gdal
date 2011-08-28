@@ -1429,6 +1429,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
     CPLString osExpectedString;
     CPLString osExpectedString2;
     CPLString osExpectedString3;
+    CPLString osExpectedString4;
     CPLString osExpectedString_unescaped;
     
     *pbGotFileList = FALSE;
@@ -1454,6 +1455,10 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
     osExpectedString3 = "FTP Listing of ";
     osExpectedString3 += pszDir;
     osExpectedString3 += "/";
+    /* Apache 1.3.33 */
+    osExpectedString4 = "<TITLE>Index of ";
+    osExpectedString4 += pszDir;
+    osExpectedString4 += "</TITLE>";
 
     /* The listing of http://dds.cr.usgs.gov/srtm/SRTM_image_sample/picture%20examples/ */
     /* has "<title>Index of /srtm/SRTM_image_sample/picture examples</title>" so we must */
@@ -1471,17 +1476,19 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
     while( (c = VSICurlParserFindEOL( pszLine )) != NULL )
     {
         *c = 0;
-        if (strstr(pszLine, osExpectedString.c_str()) ||
-            strstr(pszLine, osExpectedString2.c_str()) ||
-            strstr(pszLine, osExpectedString3.c_str()) ||
-            (osExpectedString_unescaped.size() != 0 && strstr(pszLine, osExpectedString_unescaped.c_str())))
+        if (!bIsHTMLDirList &&
+            (strstr(pszLine, osExpectedString.c_str()) ||
+             strstr(pszLine, osExpectedString2.c_str()) ||
+             strstr(pszLine, osExpectedString3.c_str()) ||
+             strstr(pszLine, osExpectedString4.c_str()) ||
+             (osExpectedString_unescaped.size() != 0 && strstr(pszLine, osExpectedString_unescaped.c_str()))))
         {
             bIsHTMLDirList = TRUE;
             *pbGotFileList = TRUE;
         }
         /* Subversion HTTP listing */
         /* or Microsoft-IIS/6.0 listing (e.g. http://ortho.linz.govt.nz/tifs/2005_06/) */
-        else if (strstr(pszLine, "<title>"))
+        else if (!bIsHTMLDirList && strstr(pszLine, "<title>"))
         {
             /* Detect something like : <html><head><title>gdal - Revision 20739: /trunk/autotest/gcore/data</title></head> */
             /* The annoying thing is that what is after ': ' is a subpart of what is after http://server/ */
@@ -1517,7 +1524,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
                 beginFilename = strstr(pszLine, "<A HREF=\"");
             beginFilename += strlen("<a href=\"");
             char *endQuote = strchr(beginFilename, '"');
-            if (endQuote && strncmp(beginFilename, "?C=", 3) != 0)
+            if (endQuote && strncmp(beginFilename, "?C=", 3) != 0 && strncmp(beginFilename, "?N=", 3) != 0)
             {
                 struct tm brokendowntime;
                 memset(&brokendowntime, 0, sizeof(brokendowntime));
