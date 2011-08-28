@@ -36,7 +36,7 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
-/*				ERSDataset				*/
+/*                              ERSDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -44,6 +44,8 @@ class ERSRasterBand;
 
 class ERSDataset : public RawDataset
 {
+    friend class ERSRasterBand;
+
     VSILFILE	*fpImage;	// image data file.
     GDALDataset *poDepFile;
 
@@ -63,6 +65,9 @@ class ERSDataset : public RawDataset
     char          *pszGCPProjection;
 
     void          ReadGCPs();
+
+    int         bHasNoDataValue;
+    double      dfNoDataValue;
 
   protected:
     virtual int         CloseDependentDatasets();
@@ -91,12 +96,6 @@ class ERSDataset : public RawDataset
 };
 
 /************************************************************************/
-/* ==================================================================== */
-/*				ERSDataset				*/
-/* ==================================================================== */
-/************************************************************************/
-
-/************************************************************************/
 /*                            ERSDataset()                             */
 /************************************************************************/
 
@@ -118,6 +117,9 @@ ERSDataset::ERSDataset()
     nGCPCount = 0;
     pasGCPList = NULL;
     pszGCPProjection = CPLStrdup("");
+
+    bHasNoDataValue = FALSE;
+    dfNoDataValue = 0.0;
 }
 
 /************************************************************************/
@@ -619,6 +621,76 @@ void ERSDataset::ReadGCPs()
 }
 
 /************************************************************************/
+/* ==================================================================== */
+/*                             ERSRasterBand                            */
+/* ==================================================================== */
+/************************************************************************/
+
+class ERSRasterBand : public RawRasterBand
+{
+    public:
+
+                 ERSRasterBand( GDALDataset *poDS, int nBand, void * fpRaw,
+                                vsi_l_offset nImgOffset, int nPixelOffset,
+                                int nLineOffset,
+                                GDALDataType eDataType, int bNativeOrder,
+                                int bIsVSIL = FALSE, int bOwnsFP = FALSE );
+
+    virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual CPLErr SetNoDataValue( double );
+};
+
+/************************************************************************/
+/*                           ERSRasterBand()                            */
+/************************************************************************/
+
+ERSRasterBand::ERSRasterBand( GDALDataset *poDS, int nBand, void * fpRaw,
+                                vsi_l_offset nImgOffset, int nPixelOffset,
+                                int nLineOffset,
+                                GDALDataType eDataType, int bNativeOrder,
+                                int bIsVSIL, int bOwnsFP ) :
+    RawRasterBand(poDS, nBand, fpRaw, nImgOffset, nPixelOffset,
+                  nLineOffset, eDataType, bNativeOrder, bIsVSIL, bOwnsFP)
+{
+}
+
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double ERSRasterBand::GetNoDataValue( int *pbSuccess )
+{
+    ERSDataset* poGDS = (ERSDataset*) poDS;
+    if (poGDS->bHasNoDataValue)
+    {
+        if (pbSuccess)
+            *pbSuccess = TRUE;
+        return poGDS->dfNoDataValue;
+    }
+
+    return RawRasterBand::GetNoDataValue(pbSuccess);
+}
+
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+CPLErr ERSRasterBand::SetNoDataValue( double dfNoDataValue )
+{
+    ERSDataset* poGDS = (ERSDataset*) poDS;
+    if (!poGDS->bHasNoDataValue || poGDS->dfNoDataValue != dfNoDataValue)
+    {
+        poGDS->bHasNoDataValue = TRUE;
+        poGDS->dfNoDataValue = dfNoDataValue;
+
+        poGDS->bHDRDirty = TRUE;
+        poGDS->poHeader->Set( "RasterInfo.NullCellValue",
+                    CPLString().Printf( "%.16g", dfNoDataValue) );
+    }
+    return CE_None;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -819,7 +891,7 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
                 // Assume pixel interleaved.
                 poDS->SetBand( 
                     iBand+1, 
-                    new RawRasterBand( poDS, iBand+1, poDS->fpImage,
+                    new ERSRasterBand( poDS, iBand+1, poDS->fpImage,
                                        nHeaderOffset 
                                        + iWordSize * iBand * poDS->nRasterXSize,
                                        iWordSize,
@@ -945,13 +1017,18 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poHeader->Find( "RasterInfo.NullCellValue", NULL ) )
     {
-        CPLPushErrorHandler( CPLQuietErrorHandler );
+        poDS->bHasNoDataValue = TRUE;
+        poDS->dfNoDataValue = CPLAtofM(poHeader->Find( "RasterInfo.NullCellValue" ));
 
-        for( iBand = 1; iBand <= poDS->nBands; iBand++ )
-            poDS->GetRasterBand(iBand)->SetNoDataValue(
-                CPLAtofM(poHeader->Find( "RasterInfo.NullCellValue" )) );
-        
-        CPLPopErrorHandler();
+        if (poDS->poDepFile != NULL)
+        {
+            CPLPushErrorHandler( CPLQuietErrorHandler );
+
+            for( iBand = 1; iBand <= poDS->nBands; iBand++ )
+                poDS->GetRasterBand(iBand)->SetNoDataValue(poDS->dfNoDataValue);
+
+            CPLPopErrorHandler();
+        }
     }
 
 /* -------------------------------------------------------------------- */

@@ -174,7 +174,37 @@ def ers_8():
     return 'success'
 
 ###############################################################################
-# Create simple copy and check (greyscale) using progressive option.
+# Test NoData support (#4207)
+
+def ers_9():
+
+    drv = gdal.GetDriverByName( 'ERS' )
+    ds = drv.Create('/vsimem/ers_9.ers', 1, 1)
+    ds.GetRasterBand(1).SetNoDataValue(123)
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ers_9.ers.aux.xml', 'rb')
+    if f is not None:
+        gdaltest.post_reason('/vsimem/ers_9.ers.aux.xml should not exist')
+        gdal.VSIFCloseL(f)
+        drv.Delete('/vsimem/ers_9.ers')
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/ers_9.ers')
+    val = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+
+    drv.Delete('/vsimem/ers_9.ers')
+
+    if val != 123:
+        gdaltest.post_reason('did not get expected nodata value')
+        print(val)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Cleanup
 
 def ers_cleanup():
     gdaltest.clean_tmp()
@@ -189,6 +219,7 @@ gdaltest_list = [
     ers_6,
     ers_7,
     ers_8,
+    ers_9,
     ers_cleanup
     ]
   
