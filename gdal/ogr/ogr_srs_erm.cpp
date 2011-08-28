@@ -257,6 +257,9 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
         else if( nEPSGGCSCode == 4275 )
             strcpy( pszDatum, "NTF" );
 
+        else if( nEPSGGCSCode == 4283 )
+            strcpy( pszDatum, "GDA94" );
+
         else if( nEPSGGCSCode == 4284 )
             strcpy( pszDatum, "PULKOVO" );
     }
@@ -284,10 +287,17 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     nZone = GetUTMZone( &bNorth );
     if( nZone > 0 )
     {
-        if( bNorth )
-            sprintf( pszProj, "NUTM%02d", nZone );
+        if( EQUAL(pszDatum,"GDA94") && !bNorth && nZone >= 48 && nZone <= 58)
+        {
+            sprintf( pszProj, "MGA%02d", nZone );
+        }
         else
-            sprintf( pszProj, "SUTM%02d", nZone );
+        {
+            if( bNorth )
+                sprintf( pszProj, "NUTM%02d", nZone );
+            else
+                sprintf( pszProj, "SUTM%02d", nZone );
+        }
     }
 
 /* -------------------------------------------------------------------- */
