@@ -185,7 +185,7 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
 {
     char     szVarName[NC_MAX_NAME];
     char     szMetaName[NC_MAX_NAME];
-    char     szMetaTemp[8192];
+    char     szMetaTemp[MAX_STR_LEN];
     int      nd;
     int      i,j;
     int      Sum  = 1;
@@ -293,7 +293,7 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
                     status =  nc_get_vara_double( poDS->cdfid, nVarID, 
                                                   start,
                                                   count, &dfData);
-                    sprintf( szMetaTemp,"%g", dfData );
+                    sprintf( szMetaTemp,"%.16g", dfData );
                     break;
                 default:
                     break;
@@ -355,7 +355,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
     nc_type  atttype=NC_NAT;
     size_t   attlen;
     int      status;
-    char     szNoValueName[8192];
+    char     szNoValueName[MAX_STR_LEN];
 
 
     this->panBandZPos = NULL;
@@ -1778,10 +1778,10 @@ CPLErr netCDFDataset::ReadAttributes( int cdfid, int var)
                 pfTemp = (float *) CPLCalloc( nAttrLen, sizeof( float ) );
                 nc_get_att_float( cdfid, var, szAttrName, pfTemp );
                 for(m=0; m < nAttrLen-1; m++) {
-                    sprintf( szTemp, "%e, ", pfTemp[m] );
+                    sprintf( szTemp, "%f, ", pfTemp[m] );
                     SafeStrcat(&pszMetaTemp, szTemp, &nMetaTempSize);
                 }
-        	    sprintf( szTemp, "%e", pfTemp[m] );
+        	    sprintf( szTemp, "%f", pfTemp[m] );
         	    SafeStrcat(&pszMetaTemp,szTemp, &nMetaTempSize);
                 CPLFree(pfTemp);
                 break;
@@ -1790,10 +1790,10 @@ CPLErr netCDFDataset::ReadAttributes( int cdfid, int var)
                 pdfTemp = (double *) CPLCalloc(nAttrLen, sizeof(double));
                 nc_get_att_double( cdfid, var, szAttrName, pdfTemp );
                 for(m=0; m < nAttrLen-1; m++) {
-                    sprintf( szTemp, "%g, ", pdfTemp[m] );
+                    sprintf( szTemp, "%.16g, ", pdfTemp[m] );
                     SafeStrcat(&pszMetaTemp, szTemp, &nMetaTempSize);
                 }
-        	    sprintf( szTemp, "%g", pdfTemp[m] );
+        	    sprintf( szTemp, "%.16g", pdfTemp[m] );
         	    SafeStrcat(&pszMetaTemp, szTemp, &nMetaTempSize);
                 CPLFree(pdfTemp);
                 break;
