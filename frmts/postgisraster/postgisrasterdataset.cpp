@@ -606,9 +606,15 @@ GBool PostGISRasterDataset::SetRasterBands() {
         /**
          * If we have more than one record here is because there are several
          * rows, belonging to the same raster coverage, with different band
-         * metadata values. An error must be raised. TODO: Is there any way
-         * to fix this problem?
+         * metadata values. An error must be raised. 
+         *
+         * TODO: Is there any way to fix this problem?
+         *
+         * TODO: Even when the difference between metadata values are only a
+         * few decimal numbers (for example: 3.0000000 and 3.0000001) they're
+         * different tuples. And in that case, they must be the same
          **/
+        /*
         if (nTuples > 1) {
             CPLError(CE_Failure, CPLE_AppDefined, "Error, the \
                     ONE_RASTER_PER_TABLE mode can't be applied if the raster \
@@ -617,6 +623,7 @@ GBool PostGISRasterDataset::SetRasterBands() {
             PQclear(poResult);
             return false;
         }
+        */
 
 
         /* Get metadata and create raster band objects */
