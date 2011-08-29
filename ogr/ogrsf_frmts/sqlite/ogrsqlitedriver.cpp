@@ -119,6 +119,19 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Check that spatialite extensions are loaded if required to      */
+/*      create a spatialite database                                    */
+/* -------------------------------------------------------------------- */
+    int bSpatialiteLoaded = OGRSQLiteInitSpatialite();
+    int bSpatialite = CSLFetchBoolean( papszOptions, "SPATIALITE", FALSE );
+
+    if (bSpatialite && !bSpatialiteLoaded)
+    {
+        CPLError( CE_Warning, CPLE_OpenFailed,
+                  "Creating a Spatialite database, but Spatialite extensions are not loaded." );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the database file.                                       */
 /* -------------------------------------------------------------------- */
     sqlite3             *hDB;
@@ -134,7 +147,6 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
         return NULL;
     }
 
-    int bSpatialite = CSLFetchBoolean( papszOptions, "SPATIALITE", FALSE );
     int bMetadata = CSLFetchBoolean( papszOptions, "METADATA", TRUE );
 
     CPLString osCommand;

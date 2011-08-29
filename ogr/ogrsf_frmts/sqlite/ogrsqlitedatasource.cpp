@@ -41,6 +41,25 @@ static int bSpatialiteLoaded = FALSE;
 CPL_CVSID("$Id$");
 
 /************************************************************************/
+/*                       OGRSQLiteHasSpatialite()                       */
+/************************************************************************/
+
+int OGRSQLiteInitSpatialite()
+{
+/* -------------------------------------------------------------------- */
+/*      Try loading SpatiaLite.                                         */
+/* -------------------------------------------------------------------- */
+#ifdef HAVE_SPATIALITE
+    if (!bSpatialiteLoaded && CSLTestBoolean(CPLGetConfigOption("SPATIALITE_LOAD", "TRUE")))
+    {
+        bSpatialiteLoaded = TRUE;
+        spatialite_init(CSLTestBoolean(CPLGetConfigOption("SPATIALITE_INIT_VERBOSE", "FALSE")));
+    }
+#endif
+    return bSpatialiteLoaded;
+}
+
+/************************************************************************/
 /*                        OGRSQLiteDataSource()                         */
 /************************************************************************/
 
@@ -105,16 +124,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
     pszName = CPLStrdup( pszNewName );
     bUpdate = bUpdateIn;
 
-/* -------------------------------------------------------------------- */
-/*      Try loading SpatiaLite.                                         */
-/* -------------------------------------------------------------------- */
-#ifdef HAVE_SPATIALITE
-    if (!bSpatialiteLoaded && CSLTestBoolean(CPLGetConfigOption("SPATIALITE_LOAD", "TRUE")))
-    {
-        bSpatialiteLoaded = TRUE;
-        spatialite_init(CSLTestBoolean(CPLGetConfigOption("SPATIALITE_INIT_VERBOSE", "FALSE")));
-    }
-#endif
+    OGRSQLiteInitSpatialite();
 
     int bListAllTables = CSLTestBoolean(CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "NO"));
 
@@ -235,10 +245,32 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
 
     if ( rc == SQLITE_OK )
     {
-        CPLDebug("SQLITE", "SpatiaLite-style SQLite DB found !");
         
         bIsSpatiaLite = TRUE;
         bHaveGeometryColumns = TRUE;
+
+        int bSpatialiteReadOnly = TRUE;
+        int iSpatialiteVersion = -1;
+
+#ifdef HAVE_SPATIALITE
+        /* Only enables write-mode if linked against SpatiaLite */
+        if( bSpatialiteLoaded == TRUE )
+        {
+            double v = ( atof( spatialite_version() ) + 0.001 )  * 10.0;
+            iSpatialiteVersion = v;
+            bSpatialiteReadOnly = FALSE;
+        }
+#endif
+
+        if (bSpatialiteReadOnly && bUpdate)
+        {
+            CPLDebug("SQLITE", "SpatiaLite-style SQLite DB found, but updating tables disabled because no linking against spatialite library !");
+        }
+        else
+        {
+            CPLDebug("SQLITE", "SpatiaLite-style SQLite DB found !");
+        }
+
 
         for ( iRow = 0; iRow < nRowCount; iRow++ )
         {
@@ -246,19 +278,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
             OGRwkbGeometryType eGeomType;
             int nSRID = 0;
             int bHasM = FALSE;
-            int bSpatialiteReadOnly = TRUE;
-            int iSpatialiteVersion = -1;
             int bHasSpatialIndex = FALSE;
-			
-#ifdef HAVE_SPATIALITE
-            /* Only enables write-mode if linked against SpatiaLite */
-            if( bSpatialiteLoaded == TRUE )
-            {
-                double v = ( atof( spatialite_version() ) + 0.001 )  * 10.0;
-                iSpatialiteVersion = v;
-                bSpatialiteReadOnly = FALSE;
-            }
-#endif
 
             if (papszRow[0] == NULL ||
                 papszRow[1] == NULL ||
@@ -631,6 +651,18 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
         return NULL;
     }
 
+    if (bIsSpatiaLite && !EQUAL(pszGeomFormat, "SpatiaLite") )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "FORMAT=%s not recommanded on a SpatiaLite enabled database.",
+                  pszGeomFormat );
+    }
+    if (bIsSpatiaLite && !bSpatialiteLoaded)
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Creating layers on a SpatiaLite enabled database, without Spatialite extensions loaded, is not recommanded." );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
 /*      away?                                                           */
@@ -809,6 +841,15 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 /*      We're doing this before we add geometry and record to the table */
 /*      so this may not be exactly the best way to do it.               */
 /* -------------------------------------------------------------------- */
+
+        const char* pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
+        if ( pszSI != NULL && CSLTestBoolean(pszSI) &&
+             (bIsSpatiaLite || EQUAL(pszGeomFormat, "SpatiaLite")) && !bSpatialiteLoaded )
+        {
+            CPLError( CE_Warning, CPLE_OpenFailed,
+                    "Cannot create a spatial index when Spatialite extensions are not loaded." );
+        }
+
 #ifdef HAVE_SPATIALITE
         /* Only if linked against SpatiaLite and the datasource was created as a SpatiaLite DB */
         if ( bIsSpatiaLite && bSpatialiteLoaded )
@@ -816,7 +857,6 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
         if ( 0 )
 #endif
         {
-            const char* pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
             if( pszSI == NULL || CSLTestBoolean(pszSI) )
             {
                 osCommand.Printf("SELECT CreateSpatialIndex('%s', '%s')",
