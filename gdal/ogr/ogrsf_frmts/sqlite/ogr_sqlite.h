@@ -217,6 +217,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     CPLString           osWHERE;
     CPLString           osQuery;
+    int                 bHasCheckedSpatialIndexTable;
 
     char               *pszEscapedTableName;
 
