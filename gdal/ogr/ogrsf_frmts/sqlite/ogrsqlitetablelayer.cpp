@@ -43,8 +43,6 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
 {
     poDS = poDSIn;
 
-    bUpdateAccess = TRUE;
-
     iNextShapeId = 0;
 
     nSRSId = -1;
@@ -441,11 +439,11 @@ int OGRSQLiteTableLayer::TestCapability( const char * pszCap )
     {
         if ( bSpatialiteReadOnly == TRUE)
             return FALSE;
-        return bUpdateAccess;
+        return poDS->GetUpdate();
     }
 
     else if( EQUAL(pszCap,OLCCreateField) )
-        return bUpdateAccess;
+        return poDS->GetUpdate();
 
     else 
         return OGRSQLiteLayer::TestCapability( pszCap );
@@ -518,6 +516,13 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     OGRFieldDefn        oField( poFieldIn );
 
     ResetReading();
+
+    if (!poDS->GetUpdate())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Can't create fields on a read-only layer.");
+        return OGRERR_FAILURE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do we want to "launder" the column names into SQLite            */
@@ -821,6 +826,13 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
     CPLString      osCommand;
     CPLString      osValues;
     int            bNeedComma = FALSE;
+
+    if (bSpatialiteReadOnly || !poDS->GetUpdate())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Can't create feature on a read-only layer.");
+        return OGRERR_FAILURE;
+    }
 
     ResetReading();
 

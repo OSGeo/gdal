@@ -212,7 +212,6 @@ class OGRSQLiteLayer : public OGRLayer
 
 class OGRSQLiteTableLayer : public OGRSQLiteLayer
 {
-    int                 bUpdateAccess;
     int                 bLaunderColumnNames;
 
     CPLString           osWHERE;
@@ -312,6 +311,7 @@ class OGRSQLiteDataSource : public OGRDataSource
     char               *pszName;
 
     sqlite3             *hDB;
+    int                 bUpdate;
 
     int                 nSoftTransactionLevel;
 
@@ -330,7 +330,7 @@ class OGRSQLiteDataSource : public OGRDataSource
                         OGRSQLiteDataSource();
                         ~OGRSQLiteDataSource();
 
-    int                 Open( const char * );
+    int                 Open( const char *, int bUpdateIn );
     int                 OpenTable( const char *pszTableName, 
                                    const char *pszGeomCol = NULL,
                                    OGRwkbGeometryType eGeomType = wkbUnknown,
@@ -371,6 +371,8 @@ class OGRSQLiteDataSource : public OGRDataSource
     char               *LaunderName( const char * );
     int                 FetchSRSId( OGRSpatialReference * poSRS );
     OGRSpatialReference*FetchSRS( int nSRID );
+
+    int                 GetUpdate() const { return bUpdate; }
 };
 
 /************************************************************************/

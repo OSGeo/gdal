@@ -59,6 +59,7 @@ OGRSQLiteDataSource::OGRSQLiteDataSource()
 
     bHaveGeometryColumns = FALSE;
     bIsSpatiaLite = FALSE;
+    bUpdate = FALSE;
 }
 
 /************************************************************************/
@@ -96,12 +97,13 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
 /*      does not already exist.                                         */
 /************************************************************************/
 
-int OGRSQLiteDataSource::Open( const char * pszNewName )
+int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
 
 {
     CPLAssert( nLayers == 0 );
 
     pszName = CPLStrdup( pszNewName );
+    bUpdate = bUpdateIn;
 
 /* -------------------------------------------------------------------- */
 /*      Try loading SpatiaLite.                                         */
@@ -425,9 +427,9 @@ int OGRSQLiteDataSource::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
-        return TRUE;
+        return bUpdate;
     else if( EQUAL(pszCap,ODsCDeleteLayer) )
-        return TRUE;
+        return bUpdate;
     else
         return FALSE;
 }
@@ -588,6 +590,19 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 {
     char                *pszLayerName;
     const char          *pszGeomFormat;
+
+/* -------------------------------------------------------------------- */
+/*      Verify we are in update mode.                                   */
+/* -------------------------------------------------------------------- */
+    if( !bUpdate )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Data source %s opened read-only.\n"
+                  "New layer %s cannot be created.\n",
+                  pszName, pszLayerNameIn );
+
+        return NULL;
+    }
 
     if( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) )
         pszLayerName = LaunderName( pszLayerNameIn );
@@ -893,6 +908,19 @@ void OGRSQLiteDataSource::DeleteLayer( const char *pszLayerName )
 
 {
     int iLayer;
+
+/* -------------------------------------------------------------------- */
+/*      Verify we are in update mode.                                   */
+/* -------------------------------------------------------------------- */
+    if( !bUpdate )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Data source %s opened read-only.\n"
+                  "Layer %s cannot be deleted.\n",
+                  pszName, pszLayerName );
+
+        return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to find layer.                                              */
