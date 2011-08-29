@@ -87,7 +87,7 @@ OGRDataSource *OGRSQLiteDriver::Open( const char * pszFilename,
 
     poDS = new OGRSQLiteDataSource();
 
-    if( !poDS->Open( pszFilename ) )
+    if( !poDS->Open( pszFilename, bUpdate ) )
     {
         delete poDS;
         return NULL;
@@ -282,7 +282,7 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
         OGRSQLiteDataSource     *poDS;
         poDS = new OGRSQLiteDataSource();
 
-        if( !poDS->Open( pszName ) )
+        if( !poDS->Open( pszName, TRUE ) )
         {
             delete poDS;
             return NULL;

@@ -104,7 +104,7 @@ def ogr_sqlite_2():
     # even if no record are written
     
     gdaltest.sl_ds.Destroy()
-    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
+    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName( 'tpoly')
     
     for field_desc in fields:
@@ -497,7 +497,7 @@ def ogr_sqlite_11():
     ######################################################
     # Reopen DB
     gdaltest.sl_ds.Destroy()
-    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
+    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('geomwkb')
 
     feat_read = gdaltest.sl_lyr.GetNextFeature()
@@ -533,7 +533,7 @@ def ogr_sqlite_12():
     ######################################################
     # Reopen DB
     gdaltest.sl_ds.Destroy()
-    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
+    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('geomwkt')
 
     feat_read = gdaltest.sl_lyr.GetNextFeature()
@@ -576,7 +576,7 @@ def ogr_sqlite_13():
     ######################################################
     # Reopen DB
     gdaltest.sl_ds.Destroy()
-    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
+    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('wgs84layer')
 
     if not gdaltest.sl_lyr.GetSpatialRef().IsSame(srs):
@@ -632,7 +632,7 @@ def ogr_sqlite_14():
     ######################################################
     # Reopen DB
     gdaltest.sl_ds.Destroy()
-    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
+    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('testtypes')
 
     # Duplicate the first record
@@ -753,7 +753,7 @@ def ogr_sqlite_16():
     ######################################################
     # Reopen DB
     gdaltest.sl_ds.Destroy()
-    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
+    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1 )
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('fgf_table')
 
     feat = gdaltest.sl_lyr.GetNextFeature()
@@ -881,7 +881,7 @@ def ogr_sqlite_18():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    ds = ogr.Open( 'tmp/spatialite_test.db'  )
+    ds = ogr.Open( 'tmp/spatialite_test.db', update = 1  )
     srs = osr.SpatialReference()
     srs.SetFromUserInput('+proj=vandg')
     lyr = ds.CreateLayer( 'nonepsgsrs', srs = srs )
@@ -1195,7 +1195,7 @@ def ogr_spatialite_2():
     if gdaltest.has_spatialite == False:
         return 'skip'
 
-    ds = ogr.Open( 'tmp/spatialite_test.db'  )
+    ds = ogr.Open( 'tmp/spatialite_test.db', update = 1 )
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:4326')
     lyr = ds.CreateLayer( 'test_spatialfilter', srs = srs)
