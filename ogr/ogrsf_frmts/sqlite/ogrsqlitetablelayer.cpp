@@ -51,6 +51,8 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
 
     poFeatureDefn = NULL;
     pszEscapedTableName = NULL;
+
+    bHasCheckedSpatialIndexTable = FALSE;
 }
 
 /************************************************************************/
@@ -343,11 +345,64 @@ void OGRSQLiteTableLayer::BuildWhere()
         OGREnvelope  sEnvelope;
 
         m_poFilterGeom->getEnvelope( &sEnvelope );
+
+        /* Old and inefficient way ...
         osWHERE.Printf("WHERE MBRIntersects(\"%s\", BuildMBR(%.12f, %.12f, %.12f, %.12f, %d)) ",
                        osGeomColumn.c_str(),
                        sEnvelope.MinX - 1e-11, sEnvelope.MinY - 1e-11,
                        sEnvelope.MaxX + 1e-11, sEnvelope.MaxY + 1e-11,
                        nSRSId);
+        */
+
+        /* We first check that the spatial index table exists */
+        if (!bHasCheckedSpatialIndexTable)
+        {
+            bHasCheckedSpatialIndexTable = TRUE;
+            char **papszResult;
+            int nRowCount, nColCount;
+            char *pszErrMsg = NULL;
+
+            CPLString osSQL;
+            osSQL.Printf("SELECT name FROM sqlite_master "
+                        "WHERE name='idx_%s_%s'",
+                        pszEscapedTableName, osGeomColumn.c_str());
+
+            int  rc = sqlite3_get_table( poDS->GetDB(), osSQL.c_str(),
+                                        &papszResult, &nRowCount,
+                                        &nColCount, &pszErrMsg );
+
+            if( rc != SQLITE_OK )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, "Error: %s",
+                        pszErrMsg );
+                sqlite3_free( pszErrMsg );
+                bHasSpatialIndex = FALSE;
+            }
+            else
+            {
+                if (nRowCount != 1)
+                {
+                    bHasSpatialIndex = FALSE;
+                }
+
+                sqlite3_free_table(papszResult);
+            }
+        }
+
+        if (bHasSpatialIndex)
+        {
+            osWHERE.Printf("WHERE ROWID IN ( SELECT pkid FROM 'idx_%s_%s' WHERE "
+                           "xmax > %.12f AND xmin < %.12f AND ymax > %.12f AND ymin < %.12f) ",
+                            pszEscapedTableName, osGeomColumn.c_str(),
+                            sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
+                            sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
+        }
+        else
+        {
+            CPLDebug("SQLITE", "Count not find idx_%s_%s layer. Disabling spatial index",
+                     pszEscapedTableName, osGeomColumn.c_str());
+        }
+
     }
 
     if( strlen(osQuery) > 0 )
