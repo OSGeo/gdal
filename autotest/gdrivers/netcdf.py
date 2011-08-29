@@ -225,7 +225,7 @@ def netcdf_8():
     ds = gdal.Open( 'data/cf_aea2sp_invf.nc' )
     prj = ds.GetProjection( )
 
-    if prj != 'PROJCS["unnamed",GEOGCS["unknown",DATUM["unknown",SPHEROID["Spheroid",6378140,298.257]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["standard_parallel_1",29.8333],PARAMETER["standard_parallel_2",45.8333],PARAMETER["latitude_of_center",37.5],PARAMETER["longitude_of_center",-96],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]':
+    if prj != 'PROJCS["unnamed",GEOGCS["unknown",DATUM["unknown",SPHEROID["Spheroid",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["standard_parallel_1",29.83333333333334],PARAMETER["standard_parallel_2",45.83333333333334],PARAMETER["latitude_of_center",37.5],PARAMETER["longitude_of_center",-96],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]':
 
         gdaltest.post_reason( 'Projection does not match expected:\n%s' % ( prj ) )
         return 'fail'
