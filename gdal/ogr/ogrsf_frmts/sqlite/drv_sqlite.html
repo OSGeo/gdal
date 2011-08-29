@@ -57,28 +57,18 @@ production environments and read the SQLite
 
 (Starting with GDAL 1.7.0)<p>
 
-The SQLite driver can read and write SpatiaLite databases without needing
-to load the SpatiaLite library. But if you configure GDAL/OGR with explicit linking
-to SpatiaLite library (version >= 2.3), you can take advantage of all the extension
-functions provided by this library, such as spatial indexes, spatial functions, etc...<p>
+The SQLite driver can read and write SpatiaLite databases. Updating a spatialite database requires
+explicit linking against SpatiaLite library (version >= 2.3). Explicit linking against SpatiaLite library also
+provides access to functions provided by this library, such as spatial indexes, spatial functions, etc...<p>
 
 A few examples :
 <pre>
-# Duplicate the sample database provided with SpatiaLite (does not need explicit linking with SpatiaLite)
+# Duplicate the sample database provided with SpatiaLite
 ogr2ogr -f SQLite testspatialite.sqlite test-2.3.sqlite  -dsco SPATIALITE=YES
 
-# Add a spatial index on the geometry column of the Towns table (needs explicit linking with SpatiaLite)
-ogrinfo testspatialite.sqlite -sql "SELECT CreateSpatialIndex('Towns', 'geometry')"
-
-# Make a request with a spatial filter (needs explicit linking with SpatiaLite)
-ogrinfo testspatialite.sqlite \
-     -sql "SELECT Name, asText(geometry) FROM Towns WHERE MBRIntersects(geometry, BuildMBR(754000, 4692000, 770000, 4924000))"
-
-or
-
-# Will work faster with spatial filter and explicit linking with SpatiaLite
+# Make a request with a spatial filter. Will work faster if spatial index has
+# been created and explicit linking against SpatiaLite library.
 ogrinfo testspatialite.sqlite Towns -spat 754000 4692000 770000 4924000
-
 </pre>
 
 <h2>Creation Issues</h2>

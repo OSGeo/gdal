@@ -120,7 +120,7 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
 
     if ( eGeomFormat == OSGF_SpatiaLite &&
          bSpatialiteLoaded == TRUE && 
-         iSpatialiteVersion < 24 )
+         iSpatialiteVersion < 24 && poDS->GetUpdate() )
     {
     // we need to test version required by Spatialite TRIGGERs 
         hColStmt = NULL;

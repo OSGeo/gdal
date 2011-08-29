@@ -397,6 +397,7 @@ class OGRSQLiteDriver : public OGRSFDriver
 };
 
 CPLString OGRSQLiteEscape( const char *pszSrcName );
+int OGRSQLiteInitSpatialite();
 
 #endif /* ndef _OGR_SQLITE_H_INCLUDED */
 
