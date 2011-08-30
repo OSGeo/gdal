@@ -1,6 +1,6 @@
 
 OBJ	=	ogrsqlitedriver.obj ogrsqlitedatasource.obj \
-		ogrsqlitelayer.obj ogrsqlitetablelayer.obj  \
+		ogrsqlitelayer.obj ogrsqlitetablelayer.obj ogrsqliteviewlayer.obj  \
 		ogrsqliteselectlayer.obj ogrsqlitesinglefeaturelayer.obj
 
 GDAL_ROOT	=	..\..\..
