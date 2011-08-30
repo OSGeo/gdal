@@ -1469,16 +1469,20 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
         else
             pszGFldName = "wkb_geometry";
 
-        /* Sometimes there is an old cruft entry in the geometry_columns
-         * table if things were not properly cleaned up before.  We make
-         * an effort to clean out such cruft.
-         */
-        osCommand.Printf(
-                 "DELETE FROM geometry_columns WHERE f_table_name = %s AND f_table_schema = '%s'",
-                 pszEscapedTableNameSingleQuote, pszSchemaName );
+        if (sPostGISVersion.nMajor <= 1)
+        {
+            /* Sometimes there is an old cruft entry in the geometry_columns
+            * table if things were not properly cleaned up before.  We make
+            * an effort to clean out such cruft.
+            * Note: PostGIS 2.0 defines geometry_columns as a view (no clean up is needed)
+            */
+            osCommand.Printf(
+                    "DELETE FROM geometry_columns WHERE f_table_name = %s AND f_table_schema = '%s'",
+                    pszEscapedTableNameSingleQuote, pszSchemaName );
 
-        hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
-        OGRPGClearResult( hResult );
+            hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+            OGRPGClearResult( hResult );
+        }
 
         osCommand.Printf(
                  "SELECT AddGeometryColumn('%s',%s,'%s',%d,'%s',%d)",
