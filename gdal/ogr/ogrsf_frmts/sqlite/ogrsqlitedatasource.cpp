@@ -349,6 +349,41 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
         }
 #endif
 
+/* -------------------------------------------------------------------- */
+/*      Detect spatial views                                            */
+/* -------------------------------------------------------------------- */
+        rc = sqlite3_get_table( hDB,
+                                "SELECT view_name, view_geometry, view_rowid, f_table_name, f_geometry_column FROM views_geometry_columns",
+                                &papszResult, &nRowCount,
+                                &nColCount, &pszErrMsg );
+        if ( rc == SQLITE_OK )
+        {
+            for( iRow = 0; iRow < nRowCount; iRow++ )
+            {
+                char **papszRow = papszResult + iRow * 5 + 5;
+                const char* pszViewName = papszRow[0];
+                const char* pszViewGeometry = papszRow[1];
+                const char* pszViewRowid = papszRow[2];
+                const char* pszTableName = papszRow[3];
+                const char* pszGeometryColumn = papszRow[4];
+
+                if (pszViewName == NULL ||
+                    pszViewGeometry == NULL ||
+                    pszViewRowid == NULL ||
+                    pszTableName == NULL ||
+                    pszGeometryColumn == NULL)
+                    continue;
+
+                OpenView( pszViewName, pszViewGeometry, pszViewRowid,
+                          pszTableName, pszGeometryColumn );
+
+                if (bListAllTables)
+                    CPLHashSetInsert(hSet, CPLStrdup(pszViewName));
+            }
+            sqlite3_free_table(papszResult);
+        }
+
+
         if (bListAllTables)
             goto all_tables;
 
@@ -436,6 +471,41 @@ int OGRSQLiteDataSource::OpenTable( const char *pszNewName,
         CPLRealloc( papoLayers,  sizeof(OGRSQLiteLayer *) * (nLayers+1) );
     papoLayers[nLayers++] = poLayer;
     
+    return TRUE;
+}
+
+/************************************************************************/
+/*                             OpenView()                               */
+/************************************************************************/
+
+int OGRSQLiteDataSource::OpenView( const char *pszViewName,
+                                   const char *pszViewGeometry,
+                                   const char *pszViewRowid,
+                                   const char *pszTableName,
+                                   const char *pszGeometryColumn )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Create the layer object.                                        */
+/* -------------------------------------------------------------------- */
+    OGRSQLiteViewLayer  *poLayer;
+
+    poLayer = new OGRSQLiteViewLayer( this );
+
+    if( poLayer->Initialize( pszViewName, pszViewGeometry,
+                             pszViewRowid, pszTableName, pszGeometryColumn ) != CE_None )
+    {
+        delete poLayer;
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add layer to data source layer list.                            */
+/* -------------------------------------------------------------------- */
+    papoLayers = (OGRSQLiteLayer **)
+        CPLRealloc( papoLayers,  sizeof(OGRSQLiteLayer *) * (nLayers+1) );
+    papoLayers[nLayers++] = poLayer;
+
     return TRUE;
 }
 

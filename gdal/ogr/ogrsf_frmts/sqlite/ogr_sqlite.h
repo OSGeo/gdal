@@ -204,6 +204,10 @@ class OGRSQLiteLayer : public OGRLayer
     virtual OGRErr       StartTransaction();
     virtual OGRErr       CommitTransaction();
     virtual OGRErr       RollbackTransaction();
+
+    virtual int          IsTableLayer() { return FALSE; }
+
+    int                  HasSpatialIndex() const { return bHasSpatialIndex; }
 };
 
 /************************************************************************/
@@ -250,14 +254,54 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
     virtual OGRFeature *GetFeature( long nFeatureId );
-    
-    virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int         TestCapability( const char * );
 
     // follow methods are not base class overrides
     void                SetLaunderFlag( int bFlag ) 
                                 { bLaunderColumnNames = bFlag; }
+
+    virtual int          IsTableLayer() { return TRUE; }
+};
+
+/************************************************************************/
+/*                         OGRSQLiteViewLayer                           */
+/************************************************************************/
+
+class OGRSQLiteViewLayer : public OGRSQLiteLayer
+{
+    CPLString           osWHERE;
+    CPLString           osQuery;
+    int                 bHasCheckedSpatialIndexTable;
+
+    char               *pszEscapedTableName;
+    char               *pszEscapedUnderlyingTableName;
+
+    CPLString           osUnderlyingTableName;
+    CPLString           osUnderlyingGeometryColumn;
+
+    void                BuildWhere(void);
+
+    OGRErr              ResetStatement();
+
+  public:
+                        OGRSQLiteViewLayer( OGRSQLiteDataSource * );
+                        ~OGRSQLiteViewLayer();
+
+    CPLErr              Initialize( const char *pszViewName,
+                                    const char *pszViewGeometry,
+                                    const char *pszViewRowid,
+                                    const char *pszTableName,
+                                    const char *pszGeometryColumn );
+
+    virtual int         GetFeatureCount( int );
+
+    virtual void        SetSpatialFilter( OGRGeometry * );
+    virtual OGRErr      SetAttributeFilter( const char * );
+
+    virtual OGRFeature *GetFeature( long nFeatureId );
+
+    virtual int         TestCapability( const char * );
 };
 
 /************************************************************************/
@@ -342,6 +386,11 @@ class OGRSQLiteDataSource : public OGRDataSource
                                    int bSpatialiteReadOnly = FALSE,
                                    int bSpatialiteLoaded = FALSE,
                                    int iSpatialiteVersion = -1 );
+    int                  OpenView( const char *pszViewName,
+                                   const char *pszViewGeometry,
+                                   const char *pszViewRowid,
+                                   const char *pszTableName,
+                                   const char *pszGeometryColumn );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
