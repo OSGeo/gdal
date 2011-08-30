@@ -492,20 +492,6 @@ int OGRSQLiteTableLayer::GetFeatureCount( int bForce )
 }
 
 /************************************************************************/
-/*                           GetSpatialRef()                            */
-/*                                                                      */
-/*      We override this to try and fetch the table SRID from the       */
-/*      geometry_columns table if the srsid is -2 (meaning we           */
-/*      haven't yet even looked for it).                                */
-/************************************************************************/
-
-OGRSpatialReference *OGRSQLiteTableLayer::GetSpatialRef()
-
-{
-    return OGRSQLiteLayer::GetSpatialRef();
-}
-
-/************************************************************************/
 /*                            CreateField()                             */
 /************************************************************************/
 
