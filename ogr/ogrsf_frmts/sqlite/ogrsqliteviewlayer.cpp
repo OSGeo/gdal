@@ -2,11 +2,11 @@
  * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  Implements OGRSQLiteViewLayer class, access to an existing table.
- * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Purpose:  Implements OGRSQLiteViewLayer class, access to an existing spatialite view.
+ * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  ******************************************************************************
- * Copyright (c) 2004, Frank Warmerdam
+ * Copyright (c) 2011, Even Rouault, <even dot rouault at mines dash paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -74,7 +74,8 @@ CPLErr OGRSQLiteViewLayer::Initialize( const char *pszViewName,
                                        const char *pszViewGeometry,
                                        const char *pszViewRowid,
                                        const char *pszUnderlyingTableName,
-                                       const char *pszUnderlyingGeometryColumn)
+                                       const char *pszUnderlyingGeometryColumn,
+                                       int bSpatialiteLoaded)
 
 {
     int rc;
@@ -122,6 +123,7 @@ CPLErr OGRSQLiteViewLayer::Initialize( const char *pszViewName,
         poSRS->Reference();
 
     this->bHasSpatialIndex = poUnderlyingLayer->HasSpatialIndex();
+    this->bSpatialiteLoaded = bSpatialiteLoaded;
     //this->bHasM = bHasM;
 
     pszEscapedTableName = CPLStrdup(OGRSQLiteEscape(pszViewName));
@@ -317,14 +319,6 @@ void OGRSQLiteViewLayer::BuildWhere()
 
         m_poFilterGeom->getEnvelope( &sEnvelope );
 
-        /* Old and inefficient way ...
-        osWHERE.Printf("WHERE MBRIntersects(\"%s\", BuildMBR(%.12f, %.12f, %.12f, %.12f, %d)) ",
-                       osGeomColumn.c_str(),
-                       sEnvelope.MinX - 1e-11, sEnvelope.MinY - 1e-11,
-                       sEnvelope.MaxX + 1e-11, sEnvelope.MaxY + 1e-11,
-                       nSRSId);
-        */
-
         /* We first check that the spatial index table exists */
         if (!bHasCheckedSpatialIndexTable)
         {
@@ -375,6 +369,19 @@ void OGRSQLiteViewLayer::BuildWhere()
                      pszEscapedUnderlyingTableName, osUnderlyingGeometryColumn.c_str());
         }
 
+    }
+
+    if( m_poFilterGeom != NULL && bSpatialiteLoaded && !bHasSpatialIndex )
+    {
+        OGREnvelope  sEnvelope;
+
+        m_poFilterGeom->getEnvelope( &sEnvelope );
+
+        /* A bit inefficient but still faster than OGR filtering */
+        osWHERE.Printf("WHERE MBRIntersects(\"%s\", BuildMBR(%.12f, %.12f, %.12f, %.12f)) ",
+                       osGeomColumn.c_str(),
+                       sEnvelope.MinX - 1e-11, sEnvelope.MinY - 1e-11,
+                       sEnvelope.MaxX + 1e-11, sEnvelope.MaxY + 1e-11);
     }
 
     if( strlen(osQuery) > 0 )

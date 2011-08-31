@@ -292,7 +292,8 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
                                     const char *pszViewGeometry,
                                     const char *pszViewRowid,
                                     const char *pszTableName,
-                                    const char *pszGeometryColumn );
+                                    const char *pszGeometryColumn,
+                                    int bSpatialiteLoaded);
 
     virtual int         GetFeatureCount( int );
 
@@ -390,7 +391,8 @@ class OGRSQLiteDataSource : public OGRDataSource
                                    const char *pszViewGeometry,
                                    const char *pszViewRowid,
                                    const char *pszTableName,
-                                   const char *pszGeometryColumn );
+                                   const char *pszGeometryColumn,
+                                   int bSpatialiteLoaded);
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
