@@ -375,7 +375,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
                     continue;
 
                 OpenView( pszViewName, pszViewGeometry, pszViewRowid,
-                          pszTableName, pszGeometryColumn );
+                          pszTableName, pszGeometryColumn, bSpatialiteLoaded );
 
                 if (bListAllTables)
                     CPLHashSetInsert(hSet, CPLStrdup(pszViewName));
@@ -482,7 +482,8 @@ int OGRSQLiteDataSource::OpenView( const char *pszViewName,
                                    const char *pszViewGeometry,
                                    const char *pszViewRowid,
                                    const char *pszTableName,
-                                   const char *pszGeometryColumn )
+                                   const char *pszGeometryColumn,
+                                   int bSpatialiteLoaded)
 
 {
 /* -------------------------------------------------------------------- */
@@ -493,7 +494,8 @@ int OGRSQLiteDataSource::OpenView( const char *pszViewName,
     poLayer = new OGRSQLiteViewLayer( this );
 
     if( poLayer->Initialize( pszViewName, pszViewGeometry,
-                             pszViewRowid, pszTableName, pszGeometryColumn ) != CE_None )
+                             pszViewRowid, pszTableName, pszGeometryColumn,
+                             bSpatialiteLoaded ) != CE_None )
     {
         delete poLayer;
         return FALSE;

@@ -344,14 +344,6 @@ void OGRSQLiteTableLayer::BuildWhere()
 
         m_poFilterGeom->getEnvelope( &sEnvelope );
 
-        /* Old and inefficient way ...
-        osWHERE.Printf("WHERE MBRIntersects(\"%s\", BuildMBR(%.12f, %.12f, %.12f, %.12f, %d)) ",
-                       osGeomColumn.c_str(),
-                       sEnvelope.MinX - 1e-11, sEnvelope.MinY - 1e-11,
-                       sEnvelope.MaxX + 1e-11, sEnvelope.MaxY + 1e-11,
-                       nSRSId);
-        */
-
         /* We first check that the spatial index table exists */
         if (!bHasCheckedSpatialIndexTable)
         {
@@ -401,6 +393,20 @@ void OGRSQLiteTableLayer::BuildWhere()
                      pszEscapedTableName, osGeomColumn.c_str());
         }
 
+    }
+
+    if( m_poFilterGeom != NULL && bSpatialiteLoaded && !bHasSpatialIndex)
+    {
+        OGREnvelope  sEnvelope;
+
+        m_poFilterGeom->getEnvelope( &sEnvelope );
+
+        /* A bit inefficient but still faster than OGR filtering */
+        osWHERE.Printf("WHERE MBRIntersects(\"%s\", BuildMBR(%.12f, %.12f, %.12f, %.12f, %d)) ",
+                       osGeomColumn.c_str(),
+                       sEnvelope.MinX - 1e-11, sEnvelope.MinY - 1e-11,
+                       sEnvelope.MaxX + 1e-11, sEnvelope.MaxY + 1e-11,
+                       nSRSId);
     }
 
     if( strlen(osQuery) > 0 )
