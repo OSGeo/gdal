@@ -25,6 +25,20 @@ RFC 24</a> style asynchronous access to ECWP services.<p>
 Starting with GDAL 1.9.0, XMP metadata can be extracted from JPEG2000 files, and will be
 stored as XML raw content in the xml:XMP metadata domain.<p>
 
+<h2>ECW metadata domain / Georeferencing update</h2>
+
+(Starting with GDAL 1.9.0)<p>
+
+The PROJ, DATUM and UNITS found in the ECW header are
+reported in the ECW metadata domain. They can also be set with the SetMetadataItem()
+method, in order to update the header information of an existing ECW file,
+opened in update mode, without modifying the imagery.<p>
+
+The geotransform and projection can also be modified with the SetGeoTransform()
+and SetProjection() methods. If the projection is set with SetProjection() and
+the PROJ, DATUM or UNITS with SetMetadataItem(), the later values will override the values
+built from the projection string.<p>
+
 <h2>Creation Issues</h2>
 
 The ECW 4.x SDK from ERDAS is only free for image decompression.  To 
@@ -56,6 +70,9 @@ Common examples are NUTM11, or GEODETIC.<p>
 
 <li> <b>DATUM=name</b>: Name of the ECW datum string to use. 
 Common examples are WGS84 or NAD83.<p>
+
+<li> <b>UNITS=name</b>: (GDAL >= 1.9.0) Name of the ECW projection units to use :
+METERS (default) or FEET (us-foot).<p>
 
 <li> <b>LARGE_OK=YES</b>: When built with the ECW 3.x SDK this option can be 
 set to allow compressing files larger than 500MB.  It is the users 

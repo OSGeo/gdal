@@ -414,14 +414,56 @@ CPLErr GDALECWCompressor::WriteJP2Box( GDALJP2Box * poBox )
 }
 
 /************************************************************************/
+/*                    ECWTranslateToCellSizeUnits()                     */
+/************************************************************************/
+
+CellSizeUnits ECWTranslateToCellSizeUnits(const char* pszUnits)
+{
+    if (EQUAL(pszUnits, "METERS"))
+        return ECW_CELL_UNITS_METERS;
+    else if (EQUAL(pszUnits, "DEGREES"))
+        return ECW_CELL_UNITS_DEGREES;
+    else if (EQUAL(pszUnits, "FEET"))
+        return ECW_CELL_UNITS_FEET;
+    else if (EQUAL(pszUnits, "UNKNOWN"))
+        return ECW_CELL_UNITS_UNKNOWN;
+    else if (EQUAL(pszUnits, "INVALID"))
+        return ECW_CELL_UNITS_INVALID;
+    else
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "Unrecognized value for UNITS : %s", pszUnits);
+        return ECW_CELL_UNITS_INVALID;
+    }
+}
+
+/************************************************************************/
+/*                     ECWTranslateFromCellSizeUnits()                  */
+/************************************************************************/
+
+const char* ECWTranslateFromCellSizeUnits(CellSizeUnits eUnits)
+{
+    if (eUnits == ECW_CELL_UNITS_METERS)
+        return "METERS";
+    else if (eUnits == ECW_CELL_UNITS_DEGREES)
+        return "DEGREES";
+    else if (eUnits == ECW_CELL_UNITS_FEET)
+        return "FEET";
+    else if (eUnits == ECW_CELL_UNITS_UNKNOWN)
+        return "UNKNOWN";
+    else
+        return "INVALID";
+}
+
+/************************************************************************/
 /*                        ECWTranslateFromWKT()                         */
 /************************************************************************/
 
-static int ECWTranslateFromWKT( const char *pszWKT, 
-                                char *pszProjection,
-                                int nProjectionLen,
-                                char *pszDatum,
-                                int nDatumLen)
+int ECWTranslateFromWKT( const char *pszWKT,
+                         char *pszProjection,
+                         int nProjectionLen,
+                         char *pszDatum,
+                         int nDatumLen,
+                         char *pszUnits)
 
 {
     OGRSpatialReference oSRS;
@@ -429,6 +471,7 @@ static int ECWTranslateFromWKT( const char *pszWKT,
 
     strcpy( pszProjection, "RAW" );
     strcpy( pszDatum, "RAW" );
+    strcpy( pszUnits, "METERS" );
 
     if( pszWKT == NULL || strlen(pszWKT) == 0 )
         return FALSE;
@@ -493,9 +536,8 @@ static int ECWTranslateFromWKT( const char *pszWKT,
 /*      Fallback to translating based on the ecw_cs.wkt file, and       */
 /*      various jiffy rules.                                            */
 /* -------------------------------------------------------------------- */
-    char szUnits[32];
 
-    return oSRS.exportToERM( pszProjection, pszDatum, szUnits ) == OGRERR_NONE;
+    return oSRS.exportToERM( pszProjection, pszDatum, pszUnits ) == OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -815,6 +857,7 @@ CPLErr GDALECWCompressor::Initialize(
 /* -------------------------------------------------------------------- */
     char szProjection[128];
     char szDatum[128];
+    char szUnits[128];
 
     strcpy( szProjection, "RAW" );
     strcpy( szDatum, "RAW" );
@@ -834,16 +877,23 @@ CPLErr GDALECWCompressor::Initialize(
             strcpy( szProjection, "GEODETIC" );
     }
 
+    const char* pszUnits = CSLFetchNameValue(papszOptions, "UNITS");
+    if( pszUnits != NULL )
+    {
+        psClient->eCellSizeUnits = ECWTranslateToCellSizeUnits(pszUnits);
+    }
+
     if( EQUAL(szProjection,"RAW") && pszWKT != NULL )
     {
-        ECWTranslateFromWKT( pszWKT, szProjection, sizeof(szProjection), szDatum, sizeof(szDatum) );
+        ECWTranslateFromWKT( pszWKT, szProjection, sizeof(szProjection), szDatum, sizeof(szDatum), szUnits );
+        psClient->eCellSizeUnits = ECWTranslateToCellSizeUnits(szUnits);
     }
 
     psClient->szDatum = szDatum;
     psClient->szProjection = szProjection;
 
-    CPLDebug( "ECW", "Writing with PROJ=%s, DATUM=%s", 
-              szProjection, szDatum );
+    CPLDebug( "ECW", "Writing with PROJ=%s, DATUM=%s, UNITS=%s", 
+              szProjection, szDatum, ECWTranslateFromCellSizeUnits(psClient->eCellSizeUnits) );
 
 /* -------------------------------------------------------------------- */
 /*      Setup GML and GeoTIFF information.                              */

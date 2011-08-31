@@ -1560,13 +1560,13 @@ else
   AC_MSG_CHECKING([for libNCSEcw.so or libecwj2])
   ECW_SETTING=yes
   if test -r $with_ecw/lib/libNCSCnet.so -o -r $with_ecw/lib/libNCSCnet.dylib ; then
-    LIBS="-L$with_ecw/lib -lNCSEcw -lNCSCnet -lNCSUtil $LIBS"
+    LIBS="-L$with_ecw/lib -lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil $LIBS"
     AC_MSG_RESULT([found in $with_ecw/lib.])
   elif test -r $with_ecw/lib/libNCSCNet.so -o -r $with_ecw/lib/libNCSCNet.dylib ; then
-    LIBS="-L$with_ecw/lib -lNCSEcw -lNCSCNet -lNCSUtil $LIBS"
+    LIBS="-L$with_ecw/lib -lNCSEcw -lNCSEcwC -lNCSCNet -lNCSUtil $LIBS"
     AC_MSG_RESULT([found in $with_ecw/lib.])
   elif test -r $with_ecw/bin/libNCSEcw.so -o -r $with_ecw/bin/libNCSEcw.dylib ; then
-    LIBS="-L$with_ecw/bin -lNCSEcw -lNCSCnet -lNCSUtil $LIBS"
+    LIBS="-L$with_ecw/bin -lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil $LIBS"
     AC_MSG_RESULT([found in $with_ecw/bin.])
   elif test -r $with_ecw/lib/libecwj2.dylib ; then
     LIBS="-L$with_ecw/lib -lecwj2 $CARBON_FRAMEWORK $LIBS"
