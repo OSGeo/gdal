@@ -462,6 +462,7 @@ CPLErr ECWRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
 ECWDataset::ECWDataset(int bIsJPEG2000)
 
 {
+    this->bIsJPEG2000 = bIsJPEG2000;
     bUsingCustomStream = FALSE;
     pszProjection = NULL;
     poFileView = NULL;
@@ -479,6 +480,13 @@ ECWDataset::ECWDataset(int bIsJPEG2000)
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+
+    bHdrDirty = FALSE;
+    bGeoTransformChanged = FALSE;
+    bProjectionChanged = FALSE;
+    bProjCodeChanged = FALSE;
+    bDatumCodeChanged = FALSE;
+    bUnitsCodeChanged = FALSE;
     
     poDriver = (GDALDriver*) GDALGetDriverByName( bIsJPEG2000 ? "JP2ECW" : "ECW" );
 }
@@ -492,6 +500,10 @@ ECWDataset::~ECWDataset()
 {
     FlushCache();
     CleanupWindow();
+
+    if( bHdrDirty )
+        WriteHeader();
+
     CPLFree( pszProjection );
     CSLDestroy( papszGMLMetadata );
 
@@ -526,6 +538,186 @@ ECWDataset::~ECWDataset()
                 delete poUnderlyingIOStream;
         }
     }
+}
+
+/************************************************************************/
+/*                             AdviseRead()                             */
+/************************************************************************/
+
+CPLErr ECWDataset::SetGeoTransform( double * padfGeoTransform )
+{
+    if ( bIsJPEG2000 || eAccess == GA_ReadOnly )
+        return GDALPamDataset::SetGeoTransform(padfGeoTransform);
+
+    if ( !bGeoTransformValid ||
+        adfGeoTransform[0] != padfGeoTransform[0] ||
+        adfGeoTransform[1] != padfGeoTransform[1] ||
+        adfGeoTransform[2] != padfGeoTransform[2] ||
+        adfGeoTransform[3] != padfGeoTransform[3] ||
+        adfGeoTransform[4] != padfGeoTransform[4] ||
+        adfGeoTransform[5] != padfGeoTransform[5] )
+    {
+        memcpy(adfGeoTransform, padfGeoTransform, 6 * sizeof(double));
+        bGeoTransformValid = TRUE;
+        bHdrDirty = TRUE;
+        bGeoTransformChanged = TRUE;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            SetProjection()                           */
+/************************************************************************/
+
+CPLErr ECWDataset::SetProjection( const char* pszProjectionIn )
+{
+    if ( bIsJPEG2000 || eAccess == GA_ReadOnly )
+        return GDALPamDataset::SetProjection(pszProjectionIn);
+
+    if ( !( (pszProjection == NULL && pszProjectionIn == NULL) ||
+            (pszProjection != NULL && pszProjectionIn != NULL &&
+             strcmp(pszProjection, pszProjectionIn) == 0) ) )
+    {
+        CPLFree(pszProjection);
+        pszProjection = pszProjectionIn ? CPLStrdup(pszProjectionIn) : NULL;
+        bHdrDirty = TRUE;
+        bProjectionChanged = TRUE;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            SetMetadataItem()                         */
+/************************************************************************/
+
+CPLErr ECWDataset::SetMetadataItem( const char * pszName,
+                                    const char * pszValue,
+                                    const char * pszDomain )
+{
+    if ( !bIsJPEG2000 && eAccess == GA_Update &&
+         (pszDomain == NULL || EQUAL(pszDomain, "") ||
+          (pszDomain != NULL && EQUAL(pszDomain, "ECW"))) &&
+         pszName != NULL &&
+         (strcmp(pszName, "PROJ") == 0 || strcmp( pszName, "DATUM") == 0 ||
+          strcmp( pszName, "UNITS") == 0 ) )
+    {
+        CPLString osNewVal = pszValue ? pszValue : "";
+        if (osNewVal.size() > 31)
+            osNewVal.resize(31);
+        if (strcmp(pszName, "PROJ") == 0)
+        {
+            bHdrDirty |= (osNewVal == m_osProjCode);
+            m_osProjCode = osNewVal;
+            bHdrDirty = TRUE;
+            bProjCodeChanged = TRUE;
+        }
+        else if (strcmp( pszName, "DATUM") == 0)
+        {
+            bHdrDirty |= (osNewVal == m_osDatumCode);
+            m_osDatumCode = osNewVal;
+            bHdrDirty = TRUE;
+            bDatumCodeChanged = TRUE;
+        }
+        else 
+        {
+            bHdrDirty |= (osNewVal == m_osUnitsCode);
+            m_osUnitsCode = osNewVal;
+            bHdrDirty = TRUE;
+            bUnitsCodeChanged = TRUE;
+        }
+        return CE_None;
+    }
+    else
+        return GDALPamDataset::SetMetadataItem(pszName, pszValue, pszDomain);
+}
+
+/************************************************************************/
+/*                             WriteHeader()                            */
+/************************************************************************/
+
+void ECWDataset::WriteHeader()
+{
+    if (!bHdrDirty)
+        return;
+
+    CPLAssert(eAccess == GA_Update);
+    CPLAssert(!bIsJPEG2000);
+
+    bHdrDirty = FALSE;
+
+    NCSEcwEditInfo *psEditInfo = NULL;
+    NCSError eErr;
+
+    /* Load original header info */
+    eErr = NCSEcwEditReadInfo((char*) GetDescription(), &psEditInfo);
+    if (eErr != NCS_SUCCESS)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "NCSEcwEditReadInfo() failed");
+        return;
+    }
+
+    /* To avoid potential cross-heap issues, we keep the original */
+    /* strings, and restore them before freeing the structure */
+    char* pszOriginalCode = psEditInfo->szDatum;
+    char* pszOriginalProj = psEditInfo->szProjection;
+
+    /* Alter the structure with user modified information */
+    char szProjCode[32], szDatumCode[32], szUnits[32];
+    if (bProjectionChanged)
+    {
+        if (ECWTranslateFromWKT( pszProjection, szProjCode, sizeof(szProjCode),
+                                 szDatumCode, sizeof(szDatumCode), szUnits ) )
+        {
+            psEditInfo->szDatum = szDatumCode;
+            psEditInfo->szProjection = szProjCode;
+            psEditInfo->eCellSizeUnits = ECWTranslateToCellSizeUnits(szUnits);
+            CPLDebug("ECW", "Rewrite DATUM : %s", psEditInfo->szDatum);
+            CPLDebug("ECW", "Rewrite PROJ : %s", psEditInfo->szProjection);
+            CPLDebug("ECW", "Rewrite UNITS : %s",
+                     ECWTranslateFromCellSizeUnits(psEditInfo->eCellSizeUnits));
+        }
+    }
+
+    if (bDatumCodeChanged)
+    {
+        psEditInfo->szDatum = (char*) ((m_osDatumCode.size()) ? m_osDatumCode.c_str() : "RAW");
+        CPLDebug("ECW", "Rewrite DATUM : %s", psEditInfo->szDatum);
+    }
+    if (bProjCodeChanged)
+    {
+        psEditInfo->szProjection = (char*) ((m_osProjCode.size()) ? m_osProjCode.c_str() : "RAW");
+        CPLDebug("ECW", "Rewrite PROJ : %s", psEditInfo->szProjection);
+    }
+    if (bUnitsCodeChanged)
+    {
+        psEditInfo->eCellSizeUnits = ECWTranslateToCellSizeUnits(m_osUnitsCode.c_str());
+        CPLDebug("ECW", "Rewrite UNITS : %s",
+                 ECWTranslateFromCellSizeUnits(psEditInfo->eCellSizeUnits));
+    }
+
+    if (bGeoTransformChanged)
+    {
+        psEditInfo->fOriginX = adfGeoTransform[0];
+        psEditInfo->fCellIncrementX = adfGeoTransform[1];
+        psEditInfo->fOriginY = adfGeoTransform[3];
+        psEditInfo->fCellIncrementY = adfGeoTransform[5];
+        CPLDebug("ECW", "Rewrite Geotransform");
+    }
+
+    /* Write modified header info */
+    eErr = NCSEcwEditWriteInfo((char*) GetDescription(), psEditInfo, NULL, NULL, NULL);
+    if (eErr != NCS_SUCCESS)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "NCSEcwEditWriteInfo() failed");
+    }
+
+    /* Restore original pointers before free'ing */
+    psEditInfo->szDatum = pszOriginalCode;
+    psEditInfo->szProjection = pszOriginalProj;
+
+    NCSEcwEditFreeInfo(psEditInfo);
 }
 
 /************************************************************************/
@@ -1154,18 +1346,6 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
     poFileView = OpenFileView( osFilename, false, bUsingCustomStream );
     if( poFileView == NULL )
         return NULL;
-    
-/* -------------------------------------------------------------------- */
-/*      Confirm that update access was not requested.                   */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->eAccess == GA_Update )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "The ECW driver does not support update access to existing"
-                  " datasets.\n" );
-        delete poFileView;
-        return NULL;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -1174,6 +1354,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 
     poDS = new ECWDataset(bIsJPEG2000);
     poDS->poFileView = poFileView;
+    poDS->eAccess = poOpenInfo->eAccess;
 
     // Disable .aux.xml writing for subfiles and such.  Unfortunately
     // this will also disable it in some cases where it might be 
@@ -1390,13 +1571,40 @@ CPLErr ECWDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
+/*                           GetMetadataItem()                          */
+/************************************************************************/
+
+const char *ECWDataset::GetMetadataItem( const char * pszName,
+                                         const char * pszDomain )
+{
+    if (!bIsJPEG2000 && pszDomain != NULL && EQUAL(pszDomain, "ECW") && pszName != NULL)
+    {
+        if (EQUAL(pszName, "PROJ"))
+            return m_osProjCode.size() ? m_osProjCode.c_str() : "RAW";
+        if (EQUAL(pszName, "DATUM"))
+            return m_osDatumCode.size() ? m_osDatumCode.c_str() : "RAW";
+        if (EQUAL(pszName, "UNITS"))
+            return m_osUnitsCode.size() ? m_osUnitsCode.c_str() : "METERS";
+    }
+    return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
+}
+
+/************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
 
 char **ECWDataset::GetMetadata( const char *pszDomain )
 
 {
-    if( pszDomain == NULL || !EQUAL(pszDomain,"GML") )
+    if( !bIsJPEG2000 && pszDomain != NULL && EQUAL(pszDomain, "ECW") )
+    {
+        oECWMetadataList.Clear();
+        oECWMetadataList.AddString(CPLSPrintf("%s=%s", "PROJ", GetMetadataItem("PROJ", "ECW")));
+        oECWMetadataList.AddString(CPLSPrintf("%s=%s", "DATUM", GetMetadataItem("DATUM", "ECW")));
+        oECWMetadataList.AddString(CPLSPrintf("%s=%s", "UNITS", GetMetadataItem("UNITS", "ECW")));
+        return oECWMetadataList.List();
+    }
+    else if( pszDomain == NULL || !EQUAL(pszDomain,"GML") )
         return GDALPamDataset::GetMetadata( pszDomain );
     else
         return papszGMLMetadata;
@@ -1449,8 +1657,11 @@ void ECWDataset::ECW2WKTProjection()
 /* -------------------------------------------------------------------- */
 /*      do we have projection and datum?                                */
 /* -------------------------------------------------------------------- */
-    CPLDebug( "ECW", "projection=%s, datum=%s",
-              psFileInfo->szProjection, psFileInfo->szDatum );
+    CPLString osUnits = ECWTranslateFromCellSizeUnits(psFileInfo->eCellSizeUnits);
+
+    CPLDebug( "ECW", "projection=%s, datum=%s, units=%s",
+              psFileInfo->szProjection, psFileInfo->szDatum,
+              osUnits.c_str());
 
     if( EQUAL(psFileInfo->szProjection,"RAW") )
         return;
@@ -1459,11 +1670,16 @@ void ECWDataset::ECW2WKTProjection()
 /*      Set projection if we have it.                                   */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
-    CPLString osUnits = "METERS";
 
-    if( psFileInfo->eCellSizeUnits == ECW_CELL_UNITS_FEET )
-        osUnits = "FEET";
+    /* For backward-compatible with previous behaviour. Should we only */
+    /* restrict to those 2 values ? */
+    if (psFileInfo->eCellSizeUnits != ECW_CELL_UNITS_METERS &&
+        psFileInfo->eCellSizeUnits != ECW_CELL_UNITS_FEET)
+        osUnits = ECWTranslateFromCellSizeUnits(ECW_CELL_UNITS_METERS);
 
+    m_osDatumCode = psFileInfo->szDatum;
+    m_osProjCode = psFileInfo->szProjection;
+    m_osUnitsCode = osUnits;
     if( oSRS.importFromERM( psFileInfo->szProjection, 
                             psFileInfo->szDatum, 
                             osUnits ) != OGRERR_NONE )
@@ -1737,6 +1953,10 @@ void GDALRegister_JP2ECW()
 "   <Option name='TARGET' type='float' description='Compression Percentage' />"
 "   <Option name='PROJ' type='string' description='ECW Projection Name'/>"
 "   <Option name='DATUM' type='string' description='ECW Datum Name' />"
+"   <Option name='UNITS' type='string-select' description='ECW Projection Units'>"
+"       <Value>METERS</Value>"
+"       <Value>FEET</Value>"
+"   </Option>"
 
 #if ECWSDK_VERSION < 40
 "   <Option name='LARGE_OK' type='boolean' description='Enable compressing 500+MB files'/>"
