@@ -104,8 +104,6 @@ def ogr_ogdi_1():
         print(feat.GetGeometryRef().ExportToWkt())
         return 'fail'
 
-    ds.Destroy()
-
     return 'success'
 
 ###############################################################################
@@ -131,6 +129,54 @@ def ogr_ogdi_2():
     return 'success'
 
 ###############################################################################
+# Test GetFeature()
+
+def ogr_ogdi_3():
+
+    if ogrtest.ogdi_ds is None:
+        return 'skip'
+
+    lyr0 = ogrtest.ogdi_ds.GetLayer(0)
+    lyr0.ResetReading()
+    feat00_ref = lyr0.GetNextFeature()
+    feat01_ref = lyr0.GetNextFeature()
+    feat02_ref = lyr0.GetNextFeature()
+
+    lyr1 = ogrtest.ogdi_ds.GetLayer(1)
+    lyr1.ResetReading()
+    feat10_ref = lyr1.GetNextFeature()
+    feat11_ref = lyr1.GetNextFeature()
+
+    feat02 = lyr0.GetFeature(2)
+    feat00 = lyr0.GetFeature(0)
+    feat01 = lyr0.GetFeature(1)
+    feat10 = lyr1.GetFeature(0)
+    feat11 = lyr1.GetFeature(1)
+
+    if not feat00.Equal(feat00_ref):
+        gdaltest.post_reason('features not equal')
+        return 'fail'
+
+    if not feat01.Equal(feat01_ref):
+        gdaltest.post_reason('features not equal')
+        return 'fail'
+
+    if not feat02.Equal(feat02_ref):
+        gdaltest.post_reason('features not equal')
+        return 'fail'
+
+    if not feat10.Equal(feat10_ref):
+        gdaltest.post_reason('features not equal')
+        return 'fail'
+
+    if not feat11.Equal(feat11_ref):
+        gdaltest.post_reason('features not equal')
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 
 def ogr_ogdi_cleanup():
 
@@ -144,6 +190,7 @@ def ogr_ogdi_cleanup():
 gdaltest_list = [
     ogr_ogdi_1,
     ogr_ogdi_2,
+    ogr_ogdi_3,
     ogr_ogdi_cleanup]
 
 if __name__ == '__main__':
