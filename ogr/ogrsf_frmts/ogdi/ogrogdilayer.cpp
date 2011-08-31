@@ -381,7 +381,14 @@ OGRFeature *OGROGDILayer::GetFeature( long nFeatureId )
     if (m_nTotalShapeCount != -1 && nFeatureId > m_nTotalShapeCount)
         return NULL;
 
-    if (m_iNextShapeId > nFeatureId )
+    /* Reset reading if we are not the current layer */
+    /* WARNING : this does not allow interleaved reading of layers */
+    if( m_poODS->GetCurrentLayer() != this )
+    {
+        m_poODS->SetCurrentLayer(this);
+        ResetReading();
+    }
+    else if ( nFeatureId < m_iNextShapeId )
         ResetReading();
 
     while(m_iNextShapeId != nFeatureId)
