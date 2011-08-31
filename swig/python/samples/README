@@ -85,6 +85,9 @@ gdal_ls.py              Display the list of files in a virtual directory,
 
 gdal_cp.py              Copy a virtual file
 
+gdal_edit.py            Edit in place various information of an existing GDAL dataset
+                        (projection, geotransform, nodata, metadata)
+
 ------------------------------------------------------------------------------
 Ports of .c/.cpp utilities
 ------------------------------------------------------------------------------
