@@ -417,6 +417,8 @@ class CPL_DLL ECWDataset : public GDALPamDataset
     virtual CPLErr SetMetadataItem( const char * pszName,
                                  const char * pszValue,
                                  const char * pszDomain = "" );
+    virtual CPLErr SetMetadata( char ** papszMetadata,
+                             const char * pszDomain = "" );
 
     virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize, 

@@ -608,29 +608,64 @@ CPLErr ECWDataset::SetMetadataItem( const char * pszName,
             osNewVal.resize(31);
         if (strcmp(pszName, "PROJ") == 0)
         {
-            bHdrDirty |= (osNewVal == m_osProjCode);
+            bProjCodeChanged = (osNewVal != m_osProjCode);
             m_osProjCode = osNewVal;
-            bHdrDirty = TRUE;
-            bProjCodeChanged = TRUE;
+            bHdrDirty |= bProjCodeChanged;
         }
         else if (strcmp( pszName, "DATUM") == 0)
         {
-            bHdrDirty |= (osNewVal == m_osDatumCode);
+            bDatumCodeChanged |= (osNewVal != m_osDatumCode);
             m_osDatumCode = osNewVal;
-            bHdrDirty = TRUE;
-            bDatumCodeChanged = TRUE;
+            bHdrDirty |= bDatumCodeChanged;
         }
         else 
         {
-            bHdrDirty |= (osNewVal == m_osUnitsCode);
+            bUnitsCodeChanged |= (osNewVal != m_osUnitsCode);
             m_osUnitsCode = osNewVal;
-            bHdrDirty = TRUE;
-            bUnitsCodeChanged = TRUE;
+            bHdrDirty |= bUnitsCodeChanged;
         }
         return CE_None;
     }
     else
         return GDALPamDataset::SetMetadataItem(pszName, pszValue, pszDomain);
+}
+
+/************************************************************************/
+/*                              SetMetadata()                           */
+/************************************************************************/
+
+CPLErr ECWDataset::SetMetadata( char ** papszMetadata,
+                                const char * pszDomain )
+{
+    if ( (pszDomain == NULL || EQUAL(pszDomain, "") || EQUAL(pszDomain, "ECW")) &&
+          (CSLFetchNameValue(papszMetadata, "PROJ") != NULL ||
+           CSLFetchNameValue(papszMetadata, "DATUM") != NULL ||
+           CSLFetchNameValue(papszMetadata, "UNITS") != NULL) )
+    {
+        CPLStringList osNewMetadata;
+        char** papszIter = papszMetadata;
+        while(*papszIter)
+        {
+            if (strncmp(*papszIter, "PROJ=", 5) == 0 ||
+                strncmp(*papszIter, "DATUM=", 6) == 0 ||
+                strncmp(*papszIter, "UNITS=", 6) == 0)
+            {
+                char* pszKey = NULL;
+                const char* pszValue = CPLParseNameValue(*papszIter, &pszKey );
+                SetMetadataItem(pszKey, pszValue, pszDomain);
+                CPLFree(pszKey);
+            }
+            else
+                osNewMetadata.AddString(*papszIter);
+            papszIter ++;
+        }
+        if (osNewMetadata.size() != 0)
+            return GDALPamDataset::SetMetadata(osNewMetadata.List(), pszDomain);
+        else
+            return CE_None;
+    }
+    else
+        return GDALPamDataset::SetMetadata(papszMetadata, pszDomain);
 }
 
 /************************************************************************/
