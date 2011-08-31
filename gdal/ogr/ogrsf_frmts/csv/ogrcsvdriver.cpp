@@ -82,6 +82,9 @@ OGRDataSource *OGRCSVDriver::CreateDataSource( const char * pszName,
 /* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;
 
+    if (strcmp(pszName, "/dev/stdout") == 0)
+        pszName = "/vsistdout/";
+
     if( VSIStatL( pszName, &sStatBuf ) == 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
