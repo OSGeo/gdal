@@ -34,6 +34,7 @@ import string
 import array
 import shutil
 from osgeo import gdal
+from osgeo import osr
 
 sys.path.append( '../pymod' )
 
@@ -685,10 +686,6 @@ def ecw_23():
 
     shutil.copyfile( 'data/spif83.ecw', 'tmp/spif83.ecw' )
     shutil.copyfile( 'data/spif83_hidden.ecw.aux.xml', 'tmp/spif83.ecw.aux.xml')
-    
-
-    if gdaltest.ecw_drv is None:
-        return 'skip'
 
     ds = gdal.Open( 'tmp/spif83.ecw' )
 
@@ -713,6 +710,180 @@ def ecw_23():
     except:
         pass
     
+    return 'success'
+
+###############################################################################
+# Test that we can alter geotransform on existing ECW
+
+def ecw_24():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    shutil.copyfile( 'data/spif83.ecw', 'tmp/spif83.ecw' )
+    try:
+        os.remove( 'tmp/spif83.ecw.aux.xml' )
+    except:
+        pass
+
+    ds = gdal.Open( 'tmp/spif83.ecw', gdal.GA_Update )
+    gt = [1,2,0,3,0,-4]
+    ds.SetGeoTransform(gt)
+    ds = None
+
+    try:
+        os.stat( 'tmp/spif83.ecw.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
+    ds = gdal.Open( 'tmp/spif83.ecw')
+    got_gt = ds.GetGeoTransform()
+    ds = None
+
+    for i in range(6):
+        if abs(gt[i] - got_gt[i]) > 1e-5:
+            gdaltest.post_reason('fail')
+            print(got_gt)
+            return 'fail'
+
+    try:
+        os.remove( 'tmp/spif83.ecw' )
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Test that we can alter projection info on existing ECW (through SetProjection())
+
+def ecw_25():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    shutil.copyfile( 'data/spif83.ecw', 'tmp/spif83.ecw' )
+    try:
+        os.remove( 'tmp/spif83.ecw.aux.xml' )
+    except:
+        pass
+
+    proj = 'NUTM31'
+    datum = 'WGS84'
+    units = 'FEET'
+
+    ds = gdal.Open( 'tmp/spif83.ecw', gdal.GA_Update )
+    sr = osr.SpatialReference()
+    sr.ImportFromERM(proj, datum, units)
+    wkt = sr.ExportToWkt()
+    ds.SetProjection(wkt)
+    ds = None
+
+    try:
+        os.stat( 'tmp/spif83.ecw.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
+    ds = gdal.Open( 'tmp/spif83.ecw')
+    got_proj = ds.GetMetadataItem("PROJ", "ECW")
+    got_datum = ds.GetMetadataItem("DATUM", "ECW")
+    got_units = ds.GetMetadataItem("UNITS", "ECW")
+    got_wkt = ds.GetProjectionRef()
+    ds = None
+
+    if got_proj != proj:
+        gdaltest.post_reason('fail')
+        print(proj)
+        return 'fail'
+    if got_datum != datum:
+        gdaltest.post_reason('fail')
+        print(datum)
+        return 'fail'
+    if got_units != units:
+        gdaltest.post_reason('fail')
+        print(units)
+        return 'fail'
+
+    if wkt != got_wkt:
+        gdaltest.post_reason('fail')
+        print(got_wkt)
+        return 'fail'
+
+    try:
+        os.remove( 'tmp/spif83.ecw' )
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
+# Test that we can alter projection info on existing ECW (through SetMetadataItem())
+
+def ecw_26():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    shutil.copyfile( 'data/spif83.ecw', 'tmp/spif83.ecw' )
+    try:
+        os.remove( 'tmp/spif83.ecw.aux.xml' )
+    except:
+        pass
+
+    proj = 'NUTM31'
+    datum = 'WGS84'
+    units = 'FEET'
+
+    ds = gdal.Open( 'tmp/spif83.ecw', gdal.GA_Update )
+    ds.SetMetadataItem("PROJ", proj, "ECW")
+    ds.SetMetadataItem("DATUM", datum, "ECW")
+    ds.SetMetadataItem("UNITS", units, "ECW")
+    ds = None
+
+    try:
+        os.stat( 'tmp/spif83.ecw.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
+    ds = gdal.Open( 'tmp/spif83.ecw')
+    got_proj = ds.GetMetadataItem("PROJ", "ECW")
+    got_datum = ds.GetMetadataItem("DATUM", "ECW")
+    got_units = ds.GetMetadataItem("UNITS", "ECW")
+    got_wkt = ds.GetProjectionRef()
+    ds = None
+
+    if got_proj != proj:
+        gdaltest.post_reason('fail')
+        print(proj)
+        return 'fail'
+    if got_datum != datum:
+        gdaltest.post_reason('fail')
+        print(datum)
+        return 'fail'
+    if got_units != units:
+        gdaltest.post_reason('fail')
+        print(units)
+        return 'fail'
+
+    sr = osr.SpatialReference()
+    sr.ImportFromERM(proj, datum, units)
+    wkt = sr.ExportToWkt()
+
+    if wkt != got_wkt:
+        gdaltest.post_reason('fail')
+        print(got_wkt)
+        return 'fail'
+
+    try:
+        os.remove( 'tmp/spif83.ecw' )
+    except:
+        pass
+
     return 'success'
 
 ###############################################################################
@@ -904,6 +1075,43 @@ def ecw_cleanup():
 
     #gdaltest.clean_tmp()
 
+    try:
+        os.remove( 'tmp/jrc_out.ecw' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/ecw_5.jp2' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/ecw_5.jp2.aux.xml' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/ecw_7.ntf' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/ecw9.jp2' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/test_11.ntf' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/rgb_gcp.jp2' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/spif83.ecw' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/spif83.ecw.aux.xml' )
+    except:
+        pass
+
     gdaltest.reregister_all_jpeg2000_drivers()
     
     return 'success'
@@ -932,6 +1140,9 @@ gdaltest_list = [
     ecw_21,
     ecw_22,
     ecw_23,
+    ecw_24,
+    ecw_25,
+    ecw_26,
     ecw_online_1,
     ecw_online_2,
     ecw_online_3,

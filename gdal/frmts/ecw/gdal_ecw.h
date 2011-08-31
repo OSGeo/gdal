@@ -335,6 +335,8 @@ class CPL_DLL ECWDataset : public GDALPamDataset
     friend class ECWRasterBand;
     friend class ECWAsyncReader;
 
+    int         bIsJPEG2000;
+
     CNCSJP2FileView *poFileView;
     NCSFileViewFileInfoEx *psFileInfo;
 
@@ -371,6 +373,20 @@ class CPL_DLL ECWDataset : public GDALPamDataset
     static CNCSJP2FileView    *OpenFileView( const char *pszDatasetName,
                                              bool bProgressive,
                                              int &bUsingCustomStream );
+
+    int         bHdrDirty;
+    CPLString   m_osDatumCode;
+    CPLString   m_osProjCode;
+    CPLString   m_osUnitsCode;
+    int         bGeoTransformChanged;
+    int         bProjectionChanged;
+    int         bProjCodeChanged;
+    int         bDatumCodeChanged;
+    int         bUnitsCodeChanged;
+    void        WriteHeader();
+
+    CPLStringList oECWMetadataList;
+
   public:
 		ECWDataset(int bIsJPEG2000);
 		~ECWDataset();
@@ -392,7 +408,15 @@ class CPL_DLL ECWDataset : public GDALPamDataset
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
 
+    virtual const char *GetMetadataItem( const char * pszName,
+                                     const char * pszDomain = "" );
     virtual char      **GetMetadata( const char * pszDomain = "" );
+
+    virtual CPLErr SetGeoTransform( double * padfGeoTransform );
+    virtual CPLErr SetProjection( const char* pszProjection );
+    virtual CPLErr SetMetadataItem( const char * pszName,
+                                 const char * pszValue,
+                                 const char * pszDomain = "" );
 
     virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize, 
@@ -457,6 +481,15 @@ class ECWRasterBand : public GDALPamRasterBand
                                GDALDataType eDT, char **papszOptions );
 };
 
+int ECWTranslateFromWKT( const char *pszWKT,
+                         char *pszProjection,
+                         int nProjectionLen,
+                         char *pszDatum,
+                         int nDatumLen,
+                         char *pszUnits);
+
+CellSizeUnits ECWTranslateToCellSizeUnits(const char* pszUnits);
+const char* ECWTranslateFromCellSizeUnits(CellSizeUnits eUnits);
 
 #endif /* def FRMT_ecw */
 
