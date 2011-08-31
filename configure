@@ -21597,15 +21597,15 @@ else
 $as_echo_n "checking for libNCSEcw.so or libecwj2... " >&6; }
   ECW_SETTING=yes
   if test -r $with_ecw/lib/libNCSCnet.so -o -r $with_ecw/lib/libNCSCnet.dylib ; then
-    LIBS="-L$with_ecw/lib -lNCSEcw -lNCSCnet -lNCSUtil $LIBS"
+    LIBS="-L$with_ecw/lib -lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil $LIBS"
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: found in $with_ecw/lib." >&5
 $as_echo "found in $with_ecw/lib." >&6; }
   elif test -r $with_ecw/lib/libNCSCNet.so -o -r $with_ecw/lib/libNCSCNet.dylib ; then
-    LIBS="-L$with_ecw/lib -lNCSEcw -lNCSCNet -lNCSUtil $LIBS"
+    LIBS="-L$with_ecw/lib -lNCSEcw -lNCSEcwC -lNCSCNet -lNCSUtil $LIBS"
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: found in $with_ecw/lib." >&5
 $as_echo "found in $with_ecw/lib." >&6; }
   elif test -r $with_ecw/bin/libNCSEcw.so -o -r $with_ecw/bin/libNCSEcw.dylib ; then
-    LIBS="-L$with_ecw/bin -lNCSEcw -lNCSCnet -lNCSUtil $LIBS"
+    LIBS="-L$with_ecw/bin -lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil $LIBS"
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: found in $with_ecw/bin." >&5
 $as_echo "found in $with_ecw/bin." >&6; }
   elif test -r $with_ecw/lib/libecwj2.dylib ; then
