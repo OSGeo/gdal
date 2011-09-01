@@ -71,6 +71,7 @@
 #  include <NCSJP2File.h>
 #else
 #  include <ECWJP2BuildNumber.h>
+#  include <HeaderEditor.h>
 #  define NCS_FASTCALL
 #endif
 
