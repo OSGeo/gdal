@@ -1725,6 +1725,133 @@ void ECWDataset::ECW2WKTProjection()
     oSRS.exportToWkt( &pszProjection );
 }
 
+/************************************************************************/
+/*                        ECWTranslateFromWKT()                         */
+/************************************************************************/
+
+int ECWTranslateFromWKT( const char *pszWKT,
+                         char *pszProjection,
+                         int nProjectionLen,
+                         char *pszDatum,
+                         int nDatumLen,
+                         char *pszUnits)
+
+{
+    OGRSpatialReference oSRS;
+    char *pszWKTIn = (char *) pszWKT;
+
+    strcpy( pszProjection, "RAW" );
+    strcpy( pszDatum, "RAW" );
+    strcpy( pszUnits, "METERS" );
+
+    if( pszWKT == NULL || strlen(pszWKT) == 0 )
+        return FALSE;
+    
+    oSRS.importFromWkt( &pszWKTIn );
+    
+    if( oSRS.IsLocal() )
+        return TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Do we have an overall EPSG number for this coordinate system?   */
+/* -------------------------------------------------------------------- */
+    const char *pszAuthorityCode = NULL;
+    const char *pszAuthorityName = NULL;
+    UINT32 nEPSGCode = 0;
+
+    if( oSRS.IsProjected() )
+    {
+        pszAuthorityCode =  oSRS.GetAuthorityCode( "PROJCS" );
+        pszAuthorityName =  oSRS.GetAuthorityName( "PROJCS" );
+    }
+    else if( oSRS.IsGeographic() )
+    {
+        pszAuthorityCode =  oSRS.GetAuthorityCode( "GEOGCS" );
+        pszAuthorityName =  oSRS.GetAuthorityName( "GEOGCS" );
+    }
+
+    if( pszAuthorityName != NULL && EQUAL(pszAuthorityName,"EPSG") 
+        && pszAuthorityCode != NULL && atoi(pszAuthorityCode) > 0 )
+        nEPSGCode = (UINT32) atoi(pszAuthorityCode);
+
+    if( nEPSGCode != 0 )
+    {
+        char *pszEPSGProj = NULL, *pszEPSGDatum = NULL;
+        CNCSError oErr;
+
+        oErr = 
+            CNCSJP2FileView::GetProjectionAndDatum( atoi(pszAuthorityCode), 
+                                                 &pszEPSGProj, &pszEPSGDatum );
+
+        CPLDebug( "ECW", "GetGDTProjDat(%d) = %s/%s", 
+                  atoi(pszAuthorityCode), pszEPSGProj, pszEPSGDatum );
+
+        if( oErr.GetErrorNumber() == NCS_SUCCESS
+            && pszEPSGProj != NULL && pszEPSGDatum != NULL )
+        {
+            strncpy( pszProjection, pszEPSGProj, nProjectionLen );
+            strncpy( pszDatum, pszEPSGDatum, nDatumLen );
+            pszProjection[nProjectionLen - 1] = 0;
+            pszDatum[nDatumLen - 1] = 0;
+            NCSFree( pszEPSGProj );
+            NCSFree( pszEPSGDatum );
+            return TRUE;
+        }
+
+        NCSFree( pszEPSGProj );
+        NCSFree( pszEPSGDatum );
+
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Fallback to translating based on the ecw_cs.wkt file, and       */
+/*      various jiffy rules.                                            */
+/* -------------------------------------------------------------------- */
+
+    return oSRS.exportToERM( pszProjection, pszDatum, pszUnits ) == OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                    ECWTranslateToCellSizeUnits()                     */
+/************************************************************************/
+
+CellSizeUnits ECWTranslateToCellSizeUnits(const char* pszUnits)
+{
+    if (EQUAL(pszUnits, "METERS"))
+        return ECW_CELL_UNITS_METERS;
+    else if (EQUAL(pszUnits, "DEGREES"))
+        return ECW_CELL_UNITS_DEGREES;
+    else if (EQUAL(pszUnits, "FEET"))
+        return ECW_CELL_UNITS_FEET;
+    else if (EQUAL(pszUnits, "UNKNOWN"))
+        return ECW_CELL_UNITS_UNKNOWN;
+    else if (EQUAL(pszUnits, "INVALID"))
+        return ECW_CELL_UNITS_INVALID;
+    else
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "Unrecognized value for UNITS : %s", pszUnits);
+        return ECW_CELL_UNITS_INVALID;
+    }
+}
+
+/************************************************************************/
+/*                     ECWTranslateFromCellSizeUnits()                  */
+/************************************************************************/
+
+const char* ECWTranslateFromCellSizeUnits(CellSizeUnits eUnits)
+{
+    if (eUnits == ECW_CELL_UNITS_METERS)
+        return "METERS";
+    else if (eUnits == ECW_CELL_UNITS_DEGREES)
+        return "DEGREES";
+    else if (eUnits == ECW_CELL_UNITS_FEET)
+        return "FEET";
+    else if (eUnits == ECW_CELL_UNITS_UNKNOWN)
+        return "UNKNOWN";
+    else
+        return "INVALID";
+}
+
 #endif /* def FRMT_ecw */
 
 /************************************************************************/
