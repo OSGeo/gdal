@@ -248,6 +248,9 @@ int OGRGeoJSONDataSource::Create( const char* pszName, char** papszOptions )
 
     CPLAssert( NULL == fpOut_ );
 
+    if (strcmp(pszName, "/dev/stdout") == 0)
+        pszName = "/vsistdout/";
+
 /* -------------------------------------------------------------------- */
 /*     File overwrite not supported.                                    */
 /* -------------------------------------------------------------------- */
@@ -262,11 +265,7 @@ int OGRGeoJSONDataSource::Create( const char* pszName, char** papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
-    if( EQUAL( pszName, "stdout" ) )
-        fpOut_ = VSIFOpenL( "/vsistdout/", "w" );
-    else
-        fpOut_ = VSIFOpenL( pszName, "w" );
-
+    fpOut_ = VSIFOpenL( pszName, "w" );
     if( NULL == fpOut_)
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 

@@ -159,8 +159,8 @@ def copy_shape_to_geojson(gjname, compress = None):
             dst_name = os.path.join('/vsigzip/', 'tmp', gjname + '.geojson' + '.gz')
         elif compress[0:4] == '/vsiz':
             dst_name = os.path.join('/vsizip/', 'tmp', gjname + '.geojson' + '.zip')
-        elif compress == '/vsistdout/' or compress == 'stdout':
-            dst_name = 'stdout'
+        elif compress == '/vsistdout/':
+            dst_name = compress
         else:
             return False
     else:
@@ -617,7 +617,7 @@ def ogr_geojson_13():
 
     test = ['gjpoint', [ 1 ], [ 'Point 1' ] ]
 
-    rc = copy_shape_to_geojson(test[0], 'stdout')
+    rc = copy_shape_to_geojson(test[0], '/vsistdout/')
     if rc is False:
         gdaltest.post_reason('Failed making copy of ' + test[0] +'.shp')
         return 'fail'

@@ -72,6 +72,9 @@ OGRDataSource *OGRPGDumpDriver::CreateDataSource( const char * pszName,
 {
     OGRPGDumpDataSource     *poDS;
 
+    if (strcmp(pszName, "/dev/stdout") == 0)
+        pszName = "/vsistdout/";
+
     poDS = new OGRPGDumpDataSource(pszName, papszOptions);
 
     return poDS;

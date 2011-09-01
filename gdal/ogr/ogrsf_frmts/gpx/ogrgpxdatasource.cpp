@@ -431,6 +431,9 @@ int OGRGPXDataSource::Create( const char *pszFilename,
         return FALSE;
     }
 
+    if (strcmp(pszFilename, "/dev/stdout") == 0)
+        pszFilename = "/vsistdout/";
+
 /* -------------------------------------------------------------------- */
 /*     Do not override exiting file.                                    */
 /* -------------------------------------------------------------------- */
@@ -447,12 +450,13 @@ int OGRGPXDataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
+
     pszName = CPLStrdup( pszFilename );
 
-    if( EQUAL(pszFilename,"stdout") || EQUAL(pszFilename,"/vsistdout/"))
+    if( strcmp(pszName, "/vsistdout/") == 0 )
     {
         bIsBackSeekable = FALSE;
-        fpOutput = VSIFOpenL( "/vsistdout/", "w" );
+        fpOutput = VSIFOpenL( pszFilename, "w" );
     }
     else
         fpOutput = VSIFOpenL( pszFilename, "w+" );
