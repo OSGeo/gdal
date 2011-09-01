@@ -278,6 +278,9 @@ int OGRBNADataSource::Create( const char *pszFilename,
         return FALSE;
     }
 
+    if( strcmp(pszFilename,"/dev/stdout") == 0 )
+        pszFilename = "/vsistdout/";
+
 /* -------------------------------------------------------------------- */
 /*     Do not override exiting file.                                    */
 /* -------------------------------------------------------------------- */
@@ -291,10 +294,7 @@ int OGRBNADataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
     pszName = CPLStrdup( pszFilename );
 
-    if( EQUAL(pszFilename,"stdout") )
-        fpOutput = VSIFOpenL( "/vsistdout/", "wb" );
-    else
-        fpOutput = VSIFOpenL( pszFilename, "wb" );
+    fpOutput = VSIFOpenL( pszFilename, "wb" );
     if( fpOutput == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 

@@ -18,9 +18,6 @@ This driver is very similar to the PostGIS shp2pgsql utility.<p>
 
 Most creation options are shared with the regular PostgreSQL driver.<p>
 
-The driver opens the output file through the VSIF Large API, so it is possible
-to specify /vsistdout/ as output file to output on the standard output.<p>
-
 <h2>Creation options</h2>
 
 <h3>Dataset Creation Options</h3>
@@ -82,6 +79,15 @@ as the separator between the schema and the table name. Defaults to YES.<p>
 <li><b>PG_USE_COPY</b>: This may be "YES" for using COPY for inserting data to Postgresql.
 COPY is less robust than INSERT, but significantly faster.</li><p>
 </ul>
+
+<h3>VSI Virtual File System API support</h3>
+
+(Some features below might require OGR >= 1.9.0)<p>
+
+The driver supports rwriting to files managed by VSI Virtual File System API, which include
+"regular" files, as well as files in the /vsizip/, /vsigzip/ domains.<p>
+
+Writing to /dev/stdout or /vsistdout/ is also supported.<p>
 
 <h3>Example</h3>
 

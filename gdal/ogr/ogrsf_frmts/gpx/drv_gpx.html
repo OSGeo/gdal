@@ -205,6 +205,15 @@ Starting with GDAL 1.7.0, there is a more convenient way to select all fields an
 
 </ul>
 
+<h2>VSI Virtual File System API support</h2>
+
+(Some features below might require OGR >= 1.9.0)<p>
+
+The driver supports reading and writing to files managed by VSI Virtual File System API, which include
+"regular" files, as well as files in the /vsizip/ (read-write) , /vsigzip/ (read-write) , /vsicurl/ (read-only) domains.<p>
+
+Writing to /dev/stdout or /vsistdout/ is also supported.<p>
+
 <h2>Example</h2>
 
 <li>The ogrinfo utility can be used to dump the content of a GPX datafile :

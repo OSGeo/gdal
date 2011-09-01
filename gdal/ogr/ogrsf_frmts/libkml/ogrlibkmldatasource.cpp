@@ -1441,12 +1441,17 @@ int OGRLIBKMLDataSource::Create (
 
     int bResult = FALSE;
 
+    if (strcmp(pszFilename, "/dev/stdout") == 0)
+        pszFilename = "/vsistdout/";
+
     pszName = CPLStrdup ( pszFilename );
     bUpdate = TRUE;
 
     /***** kml *****/
 
-    if ( EQUAL ( CPLGetExtension ( pszFilename ), "kml" ) )
+    if ( strcmp(pszFilename, "/vsistdout/") == 0 ||
+         strncmp(pszFilename, "/vsigzip/", 9) == 0 ||
+         EQUAL ( CPLGetExtension ( pszFilename ), "kml" ) )
         bResult = CreateKml ( pszFilename, papszOptions );
 
     /***** kmz *****/

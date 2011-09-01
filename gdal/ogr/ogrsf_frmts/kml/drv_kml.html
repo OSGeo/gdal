@@ -84,6 +84,17 @@ for further information.
 <pre>ogr2ogr -f KML output.kml input.shp -dsco AltitudeMode=absolute</pre>
 </li>  
 </ul>
+
+
+<h2>VSI Virtual File System API support</h2>
+
+(Some features below might require OGR >= 1.9.0)<p>
+
+The driver supports reading and writing to files managed by VSI Virtual File System API, which include
+"regular" files, as well as files in the /vsizip/ (read-write) , /vsigzip/ (read-write) , /vsicurl/ (read-only) domains.<p>
+
+Writing to /dev/stdout or /vsistdout/ is also supported.<p>
+
 <h2>Example</h2>
 The ogr2ogr utility can be used to dump the results of a PostGIS query to
 KML:

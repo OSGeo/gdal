@@ -269,6 +269,17 @@ for more readability, but at the expense of file size.<p>
 
 </ul>
 
+<h2>VSI Virtual File System API support</h2>
+
+(Some features below might require OGR >= 1.9.0)<p>
+
+The driver supports reading and writing to files managed by VSI Virtual File System API, which include
+"regular" files, as well as files in the /vsizip/ (read-write) , /vsigzip/ (read-write) , /vsicurl/ (read-only) domains.<p>
+
+Writing to /dev/stdout or /vsistdout/ is also supported. Note that in that case, only the content of the GML file
+will be written to the standard output (and not the .xsd). The &lt;boundedBy&gt; element will not be written. This is also
+the case if writing in /vsigzip/<p>
+
 <h2>Syntax of .gfs file by example</h2>
 
 Let's consider the following test.gml file :
