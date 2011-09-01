@@ -501,18 +501,6 @@ ECWDataset::~ECWDataset()
     FlushCache();
     CleanupWindow();
 
-    if( bHdrDirty )
-        WriteHeader();
-
-    CPLFree( pszProjection );
-    CSLDestroy( papszGMLMetadata );
-
-    if( nGCPCount > 0 )
-    {
-        GDALDeinitGCPs( nGCPCount, pasGCPList );
-        CPLFree( pasGCPList );
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Release / dereference iostream.                                 */
 /* -------------------------------------------------------------------- */
@@ -537,6 +525,20 @@ ECWDataset::~ECWDataset()
             if( --poUnderlyingIOStream->nFileViewCount == 0 )
                 delete poUnderlyingIOStream;
         }
+    }
+
+    /* WriteHeader() must be called after closing the file handle to work */
+    /* on Windows */
+    if( bHdrDirty )
+        WriteHeader();
+
+    CPLFree( pszProjection );
+    CSLDestroy( papszGMLMetadata );
+
+    if( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
     }
 }
 
