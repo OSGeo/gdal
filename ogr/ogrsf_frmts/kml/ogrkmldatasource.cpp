@@ -279,10 +279,11 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
-    pszName_ = CPLStrdup( pszName );
 
-    if( EQUAL(pszName, "stdout") || EQUAL(pszName, "/vsistdout/") )
+    if (strcmp(pszName, "/dev/stdout") == 0)
         pszName = "/vsistdout/";
+
+    pszName_ = CPLStrdup( pszName );
 
     fpOutput_ = VSIFOpenL( pszName, "wb" );
     if( fpOutput_ == NULL )
@@ -296,8 +297,6 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
 /*      Write out "standard" header.                                    */
 /* -------------------------------------------------------------------- */
     VSIFPrintfL( fpOutput_, "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" );	
-
-    nSchemaInsertLocation_ = (int) VSIFTellL( fpOutput_ );
     
     VSIFPrintfL( fpOutput_, "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n<Document>" );
 

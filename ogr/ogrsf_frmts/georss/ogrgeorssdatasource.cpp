@@ -346,6 +346,9 @@ int OGRGeoRSSDataSource::Create( const char *pszFilename,
         return FALSE;
     }
 
+    if (strcmp(pszFilename, "/dev/stdout") == 0)
+        pszFilename = "/vsistdout/";
+
 /* -------------------------------------------------------------------- */
 /*     Do not override exiting file.                                    */
 /* -------------------------------------------------------------------- */
@@ -364,10 +367,7 @@ int OGRGeoRSSDataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
     pszName = CPLStrdup( pszFilename );
 
-    if( EQUAL(pszFilename,"stdout") )
-        fpOutput = VSIFOpenL( "/vsistdout/", "w" );
-    else
-        fpOutput = VSIFOpenL( pszFilename, "w" );
+    fpOutput = VSIFOpenL( pszFilename, "w" );
     if( fpOutput == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 

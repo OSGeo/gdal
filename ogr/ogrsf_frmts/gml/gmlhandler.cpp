@@ -529,6 +529,7 @@ OGRErr GMLHandler::startElement(const char *pszName, int nLenName, void* attr)
         case STATE_IGNORED_FEATURE:     eRet = OGRERR_NONE; break;
         case STATE_BOUNDED_BY:          eRet = startElementBoundedBy(pszName, nLenName, attr); break;
         case STATE_CITYGML_ATTRIBUTE:   eRet = startElementCityGMLGenericAttr(pszName, nLenName, attr); break;
+        default:                        eRet = OGRERR_NONE; break;
     }
     m_nDepth++;
     return eRet;
@@ -551,6 +552,7 @@ OGRErr GMLHandler::endElement()
         case STATE_IGNORED_FEATURE:     return endElementIgnoredFeature(); break;
         case STATE_BOUNDED_BY:          return endElementBoundedBy(); break;
         case STATE_CITYGML_ATTRIBUTE:   return endElementCityGMLGenericAttr(); break;
+        default:                        return OGRERR_NONE; break;
     }
 }
 
@@ -570,6 +572,7 @@ OGRErr GMLHandler::dataHandler(const char *data, int nLen)
         case STATE_IGNORED_FEATURE:     return OGRERR_NONE; break;
         case STATE_BOUNDED_BY:          return OGRERR_NONE; break;
         case STATE_CITYGML_ATTRIBUTE:   return dataHandlerAttribute(data, nLen); break;
+        default:                        return OGRERR_NONE; break;
     }
 }
 
