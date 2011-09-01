@@ -156,7 +156,6 @@ private:
     VSILFILE* fpOutput_;
 
     OGREnvelope oEnvelope_;
-    int nSchemaInsertLocation_;
 	
 	//Have we issued a coordinate transformation already for this datasource
 	bool bIssuedCTError_;		

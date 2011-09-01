@@ -744,24 +744,22 @@ int OGRGMLDataSource::Create( const char *pszFilename,
         return FALSE;
     }
 
+    if( strcmp(pszFilename,"/dev/stdout") == 0 )
+        pszFilename = "/vsistdout/";
+
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
     pszName = CPLStrdup( pszFilename );
 
-    if( EQUAL(pszFilename,"stdout") || EQUAL(pszFilename,"/vsistdout/"))
-    {
-        fpOutput = VSIFOpenL("/vsistdout/", "wb");
-        bFpOutputIsNonSeekable = TRUE;
-        bFpOutputSingleFile = TRUE;
-    }
-    else if ( EQUALN(pszFilename,"/vsigzip/", 9) )
+    if( strcmp(pszFilename,"/vsistdout/") == 0 ||
+        strncmp(pszFilename,"/vsigzip/", 9) == 0 )
     {
         fpOutput = VSIFOpenL(pszFilename, "wb");
         bFpOutputIsNonSeekable = TRUE;
         bFpOutputSingleFile = TRUE;
     }
-    else if ( EQUALN(pszFilename,"/vsizip/", 8) )
+    else if ( strncmp(pszFilename,"/vsizip/", 8) == 0)
     {
         if (EQUAL(CPLGetExtension(pszFilename), "zip"))
         {

@@ -155,6 +155,15 @@ to describe the type of each column of the layer and its optional width and prec
 </ul>
 </p>
 
+<h2>VSI Virtual File System API support</h2>
+
+(Some features below might require OGR >= 1.9.0)<p>
+
+The driver supports reading and writing to files managed by VSI Virtual File System API, which include
+"regular" files, as well as files in the /vsizip/ (read-write) , /vsigzip/ (read-only) , /vsicurl/ (read-only) domains.<p>
+
+Writing to /dev/stdout or /vsistdout/ is also supported.<p>
+
 <h3>Examples</h3>
 
 <ul>
