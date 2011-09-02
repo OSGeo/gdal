@@ -221,8 +221,8 @@
 ## @class Geo::OGR::Driver
 # @isa (Geo::OGR)
 
-## @ignore DISOWN
-## @ignore ACQUIRE
+## @ignore Register
+## @ignore Deregister
 
 ## @attr name
 # scalar (access as $driver->{name})
@@ -241,6 +241,8 @@
 # @param cap A capability string.
 # @return boolean value.
 
+## @ignore CreateDataSource
+
 ## @method Geo::OGR::DataSource Create($name, \%options = undef )
 # Create an OGR data source object.
 # \note aka CreateDataSource
@@ -253,9 +255,11 @@
 # \endcode
 # @return a new Geo::OGR::DataSource object.
 
+## @ignore CopyDataSource
+
 ## @method Geo::OGR::DataSource Copy($ds, $name, \@options = undef)
 # Copy an OGR data source object.
-# \note CopyDataSource
+# \note aka CopyDataSource
 # @param ds The Geo::OGR::DataSource object to be copied.
 # @param name The name for the new data source.
 # @param options Driver specific options.
@@ -266,6 +270,8 @@
 # @param name The name of data source.
 # @param update Whether to open the data source in update mode.
 # @return a new Geo::OGR::DataSource object
+
+## @ignore DeleteDataSource
 
 ## @method Delete($name)
 # Delete an OGR data source.
@@ -279,9 +285,7 @@
 ## @class Geo::OGR::DataSource
 # @isa (Geo::OGR)
 
-## @ignore DISOWN
-## @ignore ACQUIRE
-## @ignore DESTROY
+## @ignore SyncToDisk
 
 ## @attr name
 # string (access as $datasource->{name})
@@ -372,18 +376,13 @@
 # @param name A string.
 # @return a new Geo::OGR::Layer object.
 
-## @ignore $GetRefCount()
-# @return integer
+## @ignore GetRefCount
 
-## @ignore $GetSummaryRefCount()
-# @return integer
+## @ignore GetSummaryRefCount
 
 
 ## @class Geo::OGR::Layer
 # @isa (Geo::OGR)
-
-## @ignore DISOWN
-## @ignore ACQUIRE
 
 ## @cmethod @Capabilities()
 # @return a list of capabilities. The class method returns a list of
@@ -527,10 +526,6 @@
 
 ## @class Geo::OGR::Feature
 # @isa (Geo::OGR)
-
-## @ignore DISOWN
-## @ignore ACQUIRE
-## @ignore DESTROY
 
 ## @cmethod Geo::OGR::Feature new($feature_def)
 # @param feature_def a Geo::OGR::FeatureDefn object
@@ -677,10 +672,6 @@
 ## @class Geo::OGR::FeatureDefn
 # @isa (Geo::OGR)
 
-## @ignore DISOWN
-## @ignore ACQUIRE
-## @ignore DESTROY
-
 ## @cmethod Geo::OGR::FeatureDefn new($name = undef)
 # @param name
 # @return a Geo::OGR::FeatureDefn object
@@ -743,10 +734,6 @@
 
 ## @class Geo::OGR::FieldDefn
 # @isa (Geo::OGR)
-
-## @ignore DISOWN
-## @ignore ACQUIRE
-## @ignore DESTROY
 
 ## @cmethod Geo::OGR::FieldDefn new($name = "unnamed", $field_type = $Geo::OGR::OFTString)
 # @deprecated use Geo::OGR::FieldDefn::create, which accepts type as a string
@@ -851,10 +838,6 @@
 
 ## @class Geo::OGR::Geometry
 # @isa (Geo::OGR)
-
-## @ignore DISOWN
-## @ignore ACQUIRE
-## @ignore DESTROY
 
 ## @cmethod Geo::OGR::Geometry new($type = $Geo::OGR::wkbUnknown, $WKT = undef, $WKB = undef, $GML = undef)
 # @deprecated use Geo::OGR::Geometry::create, which accepts type as a string
@@ -1042,8 +1025,14 @@
 ## @method $GeometryType()
 # @return the geometry type
 
-## @method $GetArea()
-# @return a number
+## @method $Length()
+# @return the length of the linestring
+
+## @ignore GetArea
+
+## @method $Area()
+# @note aka GetArea
+# @return the area of the polygon or multipolygon
 
 ## @method $GetGeometryCount()
 # @return an integer
@@ -1098,7 +1087,7 @@
 
 ## @method Geo::OGR::Geometry ForceToCollection(@geometries)
 # Create a geometrycollection from the geometry.
-# @param polygons [optional] More geometries to add to the collection.
+# @param geometries [optional] More geometries to add to the collection.
 # @return a new Geo::OGR::Geometry object of type geometrycollection.
 
 ## @method Geo::OGR::Geometry Buffer($distance, $quadsecs = 30)

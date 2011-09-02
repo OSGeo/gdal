@@ -10,6 +10,7 @@
 ## @ignore STORE
 ## @ignore this
 ## @ignore UseExceptions
+## @ignore DontUseExceptions
 ## @ignore PushErrorHandler
 ## @ignore PopErrorHandler
 ## @ignore Debug
@@ -18,6 +19,21 @@
 ## @ignore GetLastErrorNo
 ## @ignore GetLastErrorType
 ## @ignore GetLastErrorMsg
+## @ignore ApplyGeoTransform
+## @ignore ContourGenerate
+## @ignore EscapeString
+## @ignore FileFromMemBuffer
+## @ignore FillNodata
+## @ignore GDALDestroyDriverManager
+## @ignore HasThreadSupport
+## @ignore InvGeoTransform
+## @ignore Mkdir
+## @ignore Rename
+## @ignore Rmdir
+## @ignore TermProgress
+## @ignore TermProgress_nocb
+## @ignore Unlink
+## @ignore callback_d_cp_vp 
 
 ## @fn @ReadDir($dir)
 # @return Contents of the directory.
@@ -393,11 +409,17 @@
 # @return
 
 
+## @class Geo::GDAL::AsyncReader
+# @isa (Geo::GDAL)
+# This class has not been tested in GDAL Perl wrappers
+
+## @ignore GetNextUpdatedRegion
+## @ignore LockBuffer
+## @ignore UnlockBuffer
+
+
 ## @class Geo::GDAL::MajorObject
 # @isa (Geo::GDAL)
-
-## @ignore DISOWN
-## @ignore ACQUIRE
 
 ## @attr DOMAINS
 # a class specific list, well known metadata domains
@@ -415,16 +437,22 @@
 ## @method SetDescription($NewDesc)
 # @param NewDesc
 
+## @ignore SetMetadataItem
+
+## @ignore GetMetadataItem
+
 ## @method \%Metadata(\%metadata = undef, $domain = '')
 # @param metadata
 # @param domain
 # @return the metadata in a non-void context.
 
 ## @method \%GetMetadata($domain = "")
+# @note see Metadata
 # @param domain
 # @return
 
 ## @method SetMetadata(\%metadata, $domain = "")
+# @note see Metadata
 # @param metadata
 # @param domain
 
@@ -432,12 +460,11 @@
 ## @class Geo::GDAL::Driver
 # @isa (Geo::GDAL::MajorObject Geo::GDAL)
 
-## @ignore DISOWN
-## @ignore ACQUIRE
+## @ignore Register
 
-## @ignore Register()
+## @ignore Deregister
 
-## @ignore Deregister()
+## @ignore CopyFiles
 
 ## @attr ShortName
 # $driver->{ShortName}
@@ -503,9 +530,11 @@
 # \endcode
 # @return a new Geo::GDAL::Dataset object
 
+## @ignore CreateCopy
+
 ## @method Geo::GDAL::Dataset Copy($name, $src, $strict = 1, \%options = undef)
 # Copy a GDAL dataset.
-# \note aka CopyDataset
+# \note aka CreateCopy
 # @brief Create a new Geo::GDAL::Dataset as a copy of an existing dataset.
 # @param name
 # @param src A Geo::GDAL::Dataset object.
@@ -519,10 +548,6 @@
 
 ## @class Geo::GDAL::GCP
 # @isa (Geo::GDAL)
-
-## @ignore DISOWN
-## @ignore ACQUIRE
-## @ignore DESTROY
 
 ## @cmethod $new($x = 0.0, $y = 0.0, $z = 0.0, $pixel = 0.0, $line = 0.0, $info = "", $id = "")
 # @param x
@@ -560,10 +585,6 @@
 
 ## @class Geo::GDAL::Dataset
 # @isa (Geo::GDAL::MajorObject Geo::GDAL)
-
-## @ignore DISOWN
-## @ignore ACQUIRE
-## @ignore DESTROY
 
 ## @attr RasterXSize
 # scalar (access as $dataset->{RasterXSize})
@@ -612,8 +633,7 @@
 ## @method $GetProjection()
 # @return the projection as WKT
 
-## @ignore $GetProjectionRef()
-# @return the projection as WKT
+## @ignore GetProjectionRef
 
 ## @method $SetProjection($proj)
 # @param proj projection as WKT
@@ -703,14 +723,14 @@
 ## @class Geo::GDAL::Band
 # @isa ( Geo::GDAL::MajorObject Geo::GDAL )
 
-## @ignore DISOWN
-## @ignore ACQUIRE
-
 ## @attr XSize
 # scalar (access as $band->{XSize})
 
 ## @attr YSize
 # scalar (access as $band->{YSize})
+
+## @method $GetBand()
+# @return the band number of this band.
 
 ## @method $DataType()
 # @return a data type string (Byte, UInt16, Int16, UInt32, Int32, Float32,
@@ -767,6 +787,11 @@
 # Units value = (raw value * scale) + offset
 # \endcode
 # @return scale or undef.
+
+## @method @ComputeStatistics($approx_ok)
+# @param approx_ok Whether it is allowed to compute the statistics
+# based on overviews or similar.
+# @return a list ($min, $max, $mean, $stddev).
 
 ## @method @GetStatistics($approx_ok, $force)
 # @param approx_ok Whether it is allowed to compute the statistics
@@ -856,8 +881,8 @@
 # - \a Min the lower bound, default is -0.5
 # - \a Max the upper bound, default is 255.5
 # - \a Buckets the number of buckets in the histogram, default is 256
-# - \a IncludeOutOfRange whether to use $histogram[0] and
-# $histogram[$#histogram] for out of range values, default is false;
+# - \a IncludeOutOfRange whether to use the first and last values in the returned list
+# for out of range values, default is false;
 # the bucket size is (Max-Min) / Buckets if this is false and
 # (Max-Min) / (Buckets-2) if this is true
 # - \a ApproxOK if histogram can be computed from overviews, default is false
@@ -874,10 +899,16 @@
 # @param ColorTable [optional] a Geo::GDAL::ColorTable object
 # @return a new Geo::GDAL::ColorTable object in a non-void context.
 
-## @method Geo::GDAL::ColorTable GetRasterColorTable()
+## @ignore GetRasterColorTable
+
+## @method Geo::GDAL::ColorTable GetColorTable()
+# @note aka GetRasterColorTable, see also ColorTable
 # @return a color table object.
 
-## @method SetRasterColorTable($ColorTable)
+## @ignore SetRasterColorTable
+
+## @method SetColorTable($ColorTable)
+# @note aka SetRasterColorTable, see also ColorTable
 # @param ColorTable A color table object.
 
 ## @method CreateMaskBand()
@@ -890,10 +921,16 @@
 # @param names [optional]
 # @return
 
+## @ignore GetCategoryNames
+
 ## @method $GetRasterCategoryNames()
-# @return
+# @note aka GetCategoryNames, see also CategoryNames
+# @return names
+
+## @ignore SetCategoryNames
 
 ## @method SetRasterCategoryNames($names)
+# @note aka SetCategoryNames, see also CategoryNames
 # @param names
 
 ## @method Geo::GDAL::RasterAttributeTable AttributeTable($AttributeTable)
@@ -910,8 +947,11 @@
 ## @method SetDefaultRAT($AttributeTable)
 # @param AttributeTable a Geo::GDAL::RasterAttributeTable object
 
+## @ignore ContourGenerate
+
 ## @method Geo::OGR::Layer Contours($DataSource, \%LayerConstructor, $ContourInterval, $ContourBase, \@FixedLevels, $NoDataValue, $IDField, $ElevField, $callback, $callback_data)
 # Generate contours for this raster band. This method can also be used with named parameters.
+# @note This method is a wrapper for ContourGenerate.
 # @param DataSource a Geo::OGR::DataSource object, default is a Memory data source
 # @param LayerConstructor data for Geo::OGR::DataSource::CreateLayer, default is {Name => 'contours'}
 # @param ContourInterval default is 100
@@ -926,11 +966,12 @@
 # @return
 
 ## @method FillNodata($mask, $max_search_dist = 10, $smoothing_iterations = 0, $options = {}, $callback, $callback_data)
+# @note This is a wrapper for Geo::GDAL::FillNodata.
 # @param mask a mask band indicating pixels to be interpolated (zero valued)
 # @param max_search_dist [optional] the maximum number of pixels to
 # search in all directions to find values to interpolate from.
 # @param smoothing_iterations [optional] the number of 3x3 smoothing filter passes to run (0 or more).
-# @param options [optional] A reference to an anonymous hash. No options have been defined so far.
+# @param options [optional] A reference to a hash. No options have been defined so far for this algorithm.
 # @param callback [optional] a reference to a subroutine, which will
 # be called with parameters (number progress, string msg, callback_data)
 # @param callback_data [optional]
@@ -946,10 +987,6 @@
 
 ## @class Geo::GDAL::ColorTable
 # @isa ( Geo::GDAL::MajorObject Geo::GDAL )
-
-## @ignore DISOWN
-## @ignore ACQUIRE
-## @ignore DESTROY
 
 ## @cmethod Geo::GDAL::ColorTable new($GDALPaletteInterp = $Geo::GDAL::Const::GPI_RGB)
 # @deprecated use Geo::GDAL::ColorTable::create, which uses string constants
@@ -1004,10 +1041,6 @@
 
 ## @class Geo::GDAL::RasterAttributeTable
 # @isa = ( Geo::GDAL::MajorObject Geo::GDAL )
-
-## @ignore DISOWN
-## @ignore ACQUIRE
-## @ignore DESTROY
 
 ## @cmethod Geo::GDAL::RasterAttributeTable new()
 # @return a new Geo::GDAL::RasterAttributeTable object
@@ -1095,3 +1128,9 @@
 # @param row
 # @param column
 # @param value
+
+## @class Geo::GDAL::SavedEnv
+# This class is not yet documented for the GDAL Perl bindings.
+
+## @class Geo::GDAL::Transformer
+# This class is not yet documented for the GDAL Perl bindings.
