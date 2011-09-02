@@ -91,6 +91,31 @@ bool GDBErr(long int hr, std::string desc)
 }
 
 /*************************************************************************/
+/*                            GDBDebug()                                 */
+/*************************************************************************/
+
+bool GDBDebug(long int hr, std::string desc)
+{
+    std::wstring fgdb_error_desc_w;
+    fgdbError er;
+    er = FileGDBAPI::ErrorInfo::GetErrorDescription(hr, fgdb_error_desc_w);
+    if ( er == S_OK )
+    {
+        std::string fgdb_error_desc = WStringToString(fgdb_error_desc_w);
+        CPLDebug("FGDB", "%s (%s)", desc.c_str(), fgdb_error_desc.c_str());
+    }
+    else
+    {
+        CPLDebug("FGDB", "%s", desc.c_str());
+    }
+    // FIXME? EvenR: not sure if ClearErrors() is really necessary, but as it, it causes crashes in case of
+    // repeated errors
+    //FileGDBAPI::ErrorInfo::ClearErrors();
+
+    return false;
+}
+
+/*************************************************************************/
 /*                            GDBToOGRGeometry()                         */
 /*************************************************************************/
 

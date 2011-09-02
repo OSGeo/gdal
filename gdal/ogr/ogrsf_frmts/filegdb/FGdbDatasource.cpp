@@ -104,7 +104,8 @@ bool FGdbDataSource::OpenFGDBTables(const std::vector<std::wstring> &layers)
         if (FAILED(hr = m_pGeodatabase->OpenTable(layers[i], *pTable)))
         {
             delete pTable;
-            return GDBErr(hr, "Error opening " + WStringToString(layers[i]));
+            GDBDebug(hr, "Error opening " + WStringToString(layers[i]) + ". Skipping it");
+            continue;
         }
         FGdbLayer* pLayer = new FGdbLayer;
         if (!pLayer->Initialize(this, pTable, layers[i]))
