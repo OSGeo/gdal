@@ -208,13 +208,36 @@ def ogr_fgdb_4():
     return 'success'
 
 ###############################################################################
+# Test DeleteDataSource()
+
+def ogr_fgdb_5():
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+    if ogrtest.fgdb_drv.DeleteDataSource("tmp/test.gdb") != 0:
+        gdaltest.post_reason('DeleteDataSource() failed')
+        return 'fail'
+
+    try:
+        os.stat("tmp/test.gdb")
+        gdaltest.post_reason("tmp/test.gdb still existing")
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_fgdb_cleanup():
     if ogrtest.fgdb_drv is None:
         return 'skip'
 
-    shutil.rmtree("tmp/test.gdb")
+    try:
+        shutil.rmtree("tmp/test.gdb")
+    except:
+        pass
 
     try:
         shutil.rmtree("tmp/poly.gdb")
@@ -229,6 +252,7 @@ gdaltest_list = [
     ogr_fgdb_2,
     ogr_fgdb_3,
     ogr_fgdb_4,
+    ogr_fgdb_5,
     ogr_fgdb_cleanup,
     ]
 
