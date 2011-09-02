@@ -258,6 +258,12 @@ char *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
     nDstBufSize = nSrcLen * 4 + 1;
     pszResult = (char *) CPLMalloc(nDstBufSize); // nearly worst case.
 
+    if (nSrcLen == 0)
+    {
+        pszResult[0] = '\0';
+        return pszResult;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Convert, and confirm we had enough space.                       */
 /* -------------------------------------------------------------------- */
