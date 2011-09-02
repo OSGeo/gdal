@@ -72,6 +72,7 @@ bool GDBFieldTypeToWidthPrecision(std::string &gdbType, int *width, int *precisi
 // GDBAPI error to OGR
 //
 bool GDBErr(long hr, std::string desc);
+bool GDBDebug(long hr, std::string desc);
 
 //
 // Utility for adding attributes to CPL nodes
