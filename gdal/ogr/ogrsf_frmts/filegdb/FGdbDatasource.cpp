@@ -95,7 +95,8 @@ int FGdbDataSource::Open(Geodatabase* pGeodatabase, const char * pszNewName, int
 /*                          OpenFGDBTables()                            */
 /************************************************************************/
 
-bool FGdbDataSource::OpenFGDBTables(const std::vector<std::wstring> &layers)
+bool FGdbDataSource::OpenFGDBTables(const std::wstring &type,
+                                    const std::vector<std::wstring> &layers)
 {
     fgdbError hr;
     for ( unsigned int i = 0; i < layers.size(); i++ )
@@ -108,7 +109,7 @@ bool FGdbDataSource::OpenFGDBTables(const std::vector<std::wstring> &layers)
             continue;
         }
         FGdbLayer* pLayer = new FGdbLayer;
-        if (!pLayer->Initialize(this, pTable, layers[i]))
+        if (!pLayer->Initialize(this, pTable, layers[i], type))
         {
             delete pLayer;
             return GDBErr(hr, "Error initializing OGRLayer for " + WStringToString(layers[i]));
@@ -136,7 +137,7 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
         return GDBErr(hr, "Error reading Tables in " + WStringToString(root));
     }
     /* Open the tables we found */
-    if ( tables.size() > 0 && ! OpenFGDBTables(tables) )
+    if ( tables.size() > 0 && ! OpenFGDBTables(L"Table", tables) )
         return false;
 
     /* Find all the Feature Classes in the root */
@@ -145,7 +146,7 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
         return GDBErr(hr, "Error reading Feature Classes in " + WStringToString(root));
     }
     /* Open the tables we found */
-    if ( featureclasses.size() > 0 && ! OpenFGDBTables(featureclasses) )
+    if ( featureclasses.size() > 0 && ! OpenFGDBTables(L"Feature Class", featureclasses) )
         return false;
 
     /* Find all the Feature Datasets in the root */
@@ -160,7 +161,7 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
         {
             return GDBErr(hr, "Error reading Feature Classes in " + WStringToString(featuredatasets[i]));
         }
-        if ( featureclasses.size() > 0 && ! OpenFGDBTables(featureclasses) )
+        if ( featureclasses.size() > 0 && ! OpenFGDBTables(L"Feature Class", featureclasses) )
             return false;
     }
     return true;
@@ -247,7 +248,6 @@ bool FGdbDataSource::LoadLayersOld(const std::vector<wstring> & datasetTypes,
 
 /************************************************************************/
 /*                            DeleteLayer()                             */
-/* Not implemented                                                      */
 /************************************************************************/
 
 OGRErr FGdbDataSource::DeleteLayer( int iLayer )
@@ -260,6 +260,8 @@ OGRErr FGdbDataSource::DeleteLayer( int iLayer )
     Table* pTable = m_layers[iLayer]->GetTable();
 
     std::string name = m_layers[iLayer]->GetLayerDefn()->GetName();
+    std::wstring strPath = m_layers[iLayer]->GetTablePath();
+    std::wstring strType = m_layers[iLayer]->GetType();
 
     // delete OGR layer
     delete m_layers[iLayer];
@@ -268,21 +270,17 @@ OGRErr FGdbDataSource::DeleteLayer( int iLayer )
 
     m_layers.erase(m_layers.begin() + iLayer);
 
-  // TODO: the FileGDB requires the type - need to converve that and call Delete on the
-  // parent GDB
-
-  //long hr;
+    long hr;
   
-  //if (FAILED(hr = ipDataset->Delete()))
-  //{
-    CPLError( CE_Warning, CPLE_AppDefined,
-              "%s was not deleted however it has been closed", name.c_str());
-  //  GDBErr(hr, "Failed deleting dataset");
+    if (FAILED(hr = m_pGeodatabase->Delete(strPath, strType)))
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                 "%s was not deleted however it has been closed", name.c_str());
+        GDBErr(hr, "Failed deleting dataset");
+        return OGRERR_FAILURE;
+    }
 
-    return OGRERR_FAILURE;
-  //}
-  //else
-  //  return OGRERR_NONE;
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -294,8 +292,8 @@ int FGdbDataSource::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return TRUE;
 
-    else if( EQUAL(pszCap,ODsCDeleteLayer) ) /* TBD DeleteLayer() */
-        return FALSE;
+    else if( EQUAL(pszCap,ODsCDeleteLayer) )
+        return TRUE;
 
     return FALSE;
 }
