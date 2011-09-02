@@ -196,20 +196,33 @@ void FGdbDriver::OpenGeodatabase(std::string conn, Geodatabase** ppGeodatabase)
 
 int FGdbDriver::TestCapability( const char * pszCap )
 {
-    /*
-    if (EQUAL(pszCap, ODsCCreateLayer) )
-        return FALSE;
-        */
-    if (EQUAL(pszCap, ODsCDeleteLayer) )
-        return TRUE;
-
     if (EQUAL(pszCap, ODrCCreateDataSource) )
         return TRUE;
 
+    else if (EQUAL(pszCap, ODrCDeleteDataSource) )
+        return TRUE;
 
     return FALSE;
 }
+/************************************************************************/
+/*                          DeleteDataSource()                          */
+/************************************************************************/
 
+OGRErr FGdbDriver::DeleteDataSource( const char *pszDataSource )
+{
+
+    std::wstring wstr = StringToWString(pszDataSource);
+
+    long hr;
+
+    if (S_OK != (hr = ::DeleteGeodatabase(wstr)))
+    {
+        GDBErr(hr, "Failed to delete Geodatabase");
+        return OGRERR_FAILURE;
+    }
+
+    return OGRERR_NONE;
+}
 
 /***********************************************************************/
 /*                       RegisterOGRFileGDB()                          */
