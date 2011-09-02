@@ -203,10 +203,11 @@ public:
   FGdbDriver();
   virtual ~FGdbDriver();
 
-  const char *GetName();
+  virtual const char *GetName();
   virtual OGRDataSource *Open( const char *, int );
-  int TestCapability( const char * );
+  virtual int TestCapability( const char * );
   virtual OGRDataSource *CreateDataSource( const char *pszName, char ** = NULL);
+  virtual OGRErr DeleteDataSource( const char *pszDataSource );
 
   void OpenGeodatabase(std::string, Geodatabase** ppGeodatabase);
 
