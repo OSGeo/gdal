@@ -167,6 +167,47 @@ def ogr_fgdb_3():
     return 'success'
 
 ###############################################################################
+# Test delete layer
+
+def ogr_fgdb_4():
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+    for j in range(2):
+
+        # Create a layer
+        ds = ogr.Open("tmp/test.gdb", update = 1)
+        srs = osr.SpatialReference()
+        srs.SetFromUserInput("WGS84")
+        lyr = ds.CreateLayer("layer_to_remove", geom_type = ogr.wkbPoint, srs = srs)
+        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2 49)'))
+        feat.SetField("str", "foo")
+        feat = None
+        lyr = None
+
+        if j == 1:
+            ds = None
+            ds = ogr.Open("tmp/test.gdb", update = 1)
+
+        # Delete it
+        for i in range(ds.GetLayerCount()):
+            if ds.GetLayer(i).GetName() == 'layer_to_remove':
+                ds.DeleteLayer(i)
+                break
+
+        # Check it no longer exists
+        lyr = ds.GetLayerByName('layer_to_remove')
+        ds = None
+
+        if lyr is not None:
+            gdaltest.post_reason('failed at iteration %d' % j)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_fgdb_cleanup():
@@ -187,6 +228,7 @@ gdaltest_list = [
     ogr_fgdb_1,
     ogr_fgdb_2,
     ogr_fgdb_3,
+    ogr_fgdb_4,
     ogr_fgdb_cleanup,
     ]
 
