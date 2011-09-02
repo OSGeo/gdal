@@ -69,7 +69,7 @@ public:
   virtual ~FGdbLayer();
 
   // Internal used by FGDB driver */
-  bool Initialize(FGdbDataSource* pParentDataSource, Table* pTable, std::wstring wstrTablePath);
+  bool Initialize(FGdbDataSource* pParentDataSource, Table* pTable, std::wstring wstrTablePath, std::wstring wstrType);
   bool Create(FGdbDataSource* pParentDataSource, const char * pszLayerName, OGRSpatialReference *poSRS, OGRwkbGeometryType eType, char ** papszOptions);
   bool CreateFeatureDataset(FGdbDataSource* pParentDataSource, std::string feature_dataset_name, OGRSpatialReference* poSRS, char** papszOptions );
 
@@ -82,6 +82,9 @@ public:
   virtual OGRFeature* GetFeature( long nFeatureId );
 
   Table* GetTable() { return m_pTable; }
+
+  std::wstring GetTablePath() const { return m_wstrTablePath; }
+  std::wstring GetType() const { return m_wstrType; }
 
   virtual OGRErr      CreateField( OGRFieldDefn *poField, int bApproxOK );
   virtual OGRErr      CreateFeature( OGRFeature *poFeature );
@@ -125,6 +128,7 @@ protected:
   std::string m_strShapeFieldName;
 
   std::wstring m_wstrTablePath;
+  std::wstring m_wstrType; // the type: "Table" or "Feature Class"
 
   std::wstring m_wstrSubfields;
   std::wstring m_wstrWhereClause;
@@ -179,7 +183,8 @@ public:
   */
 protected:
   bool LoadLayers(const std::wstring & parent);
-  bool OpenFGDBTables(const std::vector<std::wstring> &layers);
+  bool OpenFGDBTables(const std::wstring &type,
+                      const std::vector<std::wstring> &layers);
 
   char* m_pszName;
   std::vector <FGdbLayer*> m_layers;

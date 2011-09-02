@@ -674,7 +674,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     }
 
     /* Store the new FGDB Table pointer and set up the OGRFeatureDefn */
-    return FGdbLayer::Initialize(pParentDataSource, table, wtable_path);
+    return FGdbLayer::Initialize(pParentDataSource, table, wtable_path, L"Table");
 }
 
 /*************************************************************************/
@@ -683,7 +683,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
 /************************************************************************/
 
 bool FGdbLayer::Initialize(FGdbDataSource* pParentDataSource, Table* pTable,
-                           std::wstring wstrTablePath)
+                           std::wstring wstrTablePath, std::wstring wstrType)
 {
     long hr;
 
@@ -692,6 +692,7 @@ bool FGdbLayer::Initialize(FGdbDataSource* pParentDataSource, Table* pTable,
     m_pTable = pTable;
 
     m_wstrTablePath = wstrTablePath;
+    m_wstrType = wstrType;
 
     wstring wstrQueryName;
     if (FAILED(hr = pParentDataSource->GetGDB()->GetQueryName(wstrTablePath, wstrQueryName)))
