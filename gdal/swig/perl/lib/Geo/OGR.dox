@@ -176,50 +176,87 @@
 # @deprecated use string 'NDR' instead
 
 ## @attr OLCRandomRead
-# @deprecated use string 'RandomRead' instead
+# Layer capability
+# @deprecated use string 'RandomRead', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
 
 ## @attr OLCSequentialWrite
-# @deprecated use string 'SequentialWrite' instead
+# Layer capability
+# @deprecated use string 'SequentialWrite', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
 
 ## @attr OLCRandomWrite
-# @deprecated use string 'RandomWrite' instead
+# Layer capability
+# @deprecated use string 'RandomWrite', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
 
 ## @attr OLCFastSpatialFilter
-# @deprecated use string 'FastSpatialFilter' instead
+# Layer capability
+# @deprecated use string 'FastSpatialFilter', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
 
 ## @attr OLCFastFeatureCount
-# @deprecated use string 'FastFeatureCount' instead
+# Layer capability
+# @deprecated use string 'FastFeatureCount', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
 
 ## @attr OLCFastGetExtent
-# @deprecated use string 'FastGetExtent' instead
+# Layer capability
+# @deprecated use string 'FastGetExtent', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
 
 ## @attr OLCCreateField
-# @deprecated use string 'CreateField' instead
+# Layer capability
+# @deprecated use string 'CreateField', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
 
 ## @attr OLCTransactions
-# @deprecated use string 'Transactions' instead
+# Layer capability
+# @deprecated use string 'Transactions', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
 
 ## @attr OLCDeleteFeature
-# @deprecated use string 'DeleteFeature' instead
+# Layer capability
+# @deprecated use string 'DeleteFeature', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
 
 ## @attr OLCFastSetNextByIndex
-# @deprecated use string 'FastSetNextByIndex' instead
+# Layer capability
+# @deprecated use string 'FastSetNextByIndex', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
+
+## @attr OLCAlterFieldDefn
+# Layer capability
+# @deprecated use string 'AlterFieldDefn', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
+
+## @attr OLCDeleteField
+# Layer capability
+# @deprecated use string 'DeleteField', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
+
+## @attr OLCIgnoreFields
+# Layer capability
+# @deprecated use string 'IgnoreFields', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
+
+## @attr OLCReorderFields
+# Layer capability
+# @deprecated use string 'ReorderFields', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
+
+## @attr OLCStringsAsUTF8
+# Layer capability
+# @deprecated use string 'OLCStringsAsUTF8', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
 
 ## @attr ODsCCreateLayer
-# @deprecated use string 'CreateLayer' instead
+# Data source capability
+# @deprecated use string 'CreateLayer', which is listed in Geo::OGR::DataSource::CAPABILITIES, instead
 
 ## @attr ODsCDeleteLayer
-# @deprecated use string 'DeleteLayer' instead
+# Data source capability
+# @deprecated use string 'DeleteLayer', which is listed in Geo::OGR::DataSource::CAPABILITIES, instead
 
 ## @attr ODrCCreateDataSource
-# @deprecated use string 'CreateDataSource' instead
+# Driver capability
+# @deprecated use string 'CreateDataSource', which is listed in Geo::OGR::Driver::CAPABILITIES, instead
 
 ## @attr ODrCDeleteDataSource
-# @deprecated use string 'DeleteDataSource' instead
+# Driver capability
+# @deprecated use string 'DeleteDataSource', which is listed in Geo::OGR::Driver::CAPABILITIES, instead
 
 
 ## @class Geo::OGR::Driver
 # @isa (Geo::OGR)
+
+## @attr list CAPABILITIES
+# Driver capabilities known to GDAL
 
 ## @ignore Register
 ## @ignore Deregister
@@ -285,6 +322,9 @@
 ## @class Geo::OGR::DataSource
 # @isa (Geo::OGR)
 
+## @attr list CAPABILITIES
+# Data source capabilities known to GDAL
+
 ## @ignore SyncToDisk
 
 ## @attr name
@@ -334,12 +374,12 @@
 
 ## @method Geo::OGR::Layer CreateLayer($Name, $SRS = undef, $GeometryType = 'Unknown', \%Options = undef, \%Schema = undef)
 # \note This method can also be used with named parameters: $ds->CreateLayer({parameter=>value, ...}).
-# @param Name A name for the new layer.
+# @param Name name for the new layer.
 # @param SRS a Geo::OSR::SpatialReference object.
-# @param GeometryType One of geometry types (a string: Point, LineString, or some else)
+# @param GeometryType one of \@Geo::OGR::Geometry::GEOMETRY_TYPES
 # @param Options A ref to a hash of format specific options.
-# @param Schema Forwarded to Layer::Schema, which is called if this parameter exists.
-# @return a new Geo::OGR::Layer object.
+# @param Schema forwarded to Layer::Schema, which is called if this parameter exists
+# @return a new Geo::OGR::Layer object
 
 ## @method Geo::OGR::Layer CopyLayer($layer, $name, \%options = undef)
 # @param layer A Geo::OGR::Layer object to be copied.
@@ -383,6 +423,9 @@
 
 ## @class Geo::OGR::Layer
 # @isa (Geo::OGR)
+
+## @attr list CAPABILITIES
+# Layer capabilities known to GDAL
 
 ## @cmethod @Capabilities()
 # @return a list of capabilities. The class method returns a list of
@@ -520,8 +563,37 @@
 ## @method Geo::OSR::SpatialReference GetSpatialRef()
 # @return a new Geo::OSR::SpatialReference object
 
-## @method $GetRefCount()
-# @return integer
+## @ignore GetRefCount
+
+## @method AlterFieldDefn($field, $definition, $flags)
+# Alter the definition of an existing field on a layer.
+# @param field index of the field whose definition is altered
+# @param definition a Geo::OGR::FieldDefn object
+# @param flags 1 to alter the name, 2 to alter the type, 4 to alter
+# the width, use combinations 3, 5, 6 or 7 to alter two or more
+# properties
+# @todo Perlify: support field names and string flags
+
+## @method DeleteField($field)
+# Delete an existing field from a layer.
+# @param field index of the field which is deleted
+
+## @method $GetFIDColumn()
+# @return the name of the underlying database column being used as the FID column, or "" if not supported.
+
+## @method $GetGeometryColumn()
+# @return the name of the underlying database column being used as the geometry column, or "" if not supported
+
+## @ignore GetGeomType
+
+## @method $GeometryType()
+# @return the geometry type of the layer, one of \@Geo::OGR::Geometry::GEOMETRY_TYPES
+
+## @ignore ReorderField
+## @ignore ReorderFields
+
+## @method SetIgnoredFields(@fields)
+# @param fields a list of field names
 
 
 ## @class Geo::OGR::Feature
@@ -599,6 +671,11 @@
 # @param param the index or the name of the field
 # @return a new Geo::OGR::FieldDefn object
 
+## @ignore GetFieldAsDateTime
+## @ignore GetFieldAsDoubleList
+## @ignore GetFieldAsIntegerList
+## @ignore GetFieldAsStringList
+
 ## @method @GetField($field)
 # @param field the index or the name of the field
 # @return the value of the field, which may be a scalar or a list,
@@ -626,6 +703,10 @@
 
 ## @method UnsetField($field)
 # @param field the index or the name of the field
+
+## @ignore SetFieldAsDoubleList
+## @ignore SetFieldAsIntegerList
+## @ignore SetFieldAsStringList
 
 ## @method SetField($field, @value)
 # @param field the index or the name of the field
@@ -716,9 +797,10 @@
 # @param defn a Geo::OGR::FieldDefn object
 
 ## @method $GeometryType($geometry_type)
-# Get or set the geometry type. Alternative name: GeomType.
-# @param geometry_type [optional] one of geometry types
-# @return the geometry types
+# Get or set the geometry type.
+# @note aka GeomType
+# @param geometry_type [optional] one of \@Geo::OGR::Geometry::GEOMETRY_TYPES
+# @return the geometry type, one of \@Geo::OGR::Geometry::GEOMETRY_TYPES
 
 ## @method $GetGeomType()
 # @deprecated use Geo::OGR::FeatureDefn::GeometryType, which returns a string
@@ -734,6 +816,12 @@
 
 ## @class Geo::OGR::FieldDefn
 # @isa (Geo::OGR)
+
+## @attr list FIELD_TYPES
+# Field types supported by GDAL
+
+## @attr list JUSTIFY_TYPES
+# Justify types supported by GDAL
 
 ## @cmethod Geo::OGR::FieldDefn new($name = "unnamed", $field_type = $Geo::OGR::OFTString)
 # @deprecated use Geo::OGR::FieldDefn::create, which accepts type as a string
@@ -838,6 +926,12 @@
 
 ## @class Geo::OGR::Geometry
 # @isa (Geo::OGR)
+
+## @attr list GEOMETRY_TYPES
+# Geometry types supported by GDAL
+
+## @attr list BYTE_ORDER_TYPES
+# Byte order strings
 
 ## @cmethod Geo::OGR::Geometry new($type = $Geo::OGR::wkbUnknown, $WKT = undef, $WKB = undef, $GML = undef)
 # @deprecated use Geo::OGR::Geometry::create, which accepts type as a string

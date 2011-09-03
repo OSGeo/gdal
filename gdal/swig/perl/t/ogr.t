@@ -177,9 +177,11 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
     ok(is_deeply(\@cap, ['CreateLayer','DeleteLayer']), "data source capabilities");
     
     my $layer = $datasource->CreateLayer('a', undef, 'Point');
-    @cap = $layer->Capabilities;
-    ok(is_deeply(\@cap, [qw/RandomRead SequentialWrite RandomWrite 
-	  FastFeatureCount CreateField DeleteFeature FastSetNextByIndex/]), "layer capabilities");
+    my %cap = map { $_ => 1 } $layer->Capabilities;
+    for (qw/RandomRead SequentialWrite RandomWrite	
+	  FastFeatureCount CreateField DeleteFeature FastSetNextByIndex/) {
+	ok($cap{$_}, "layer has capability: $_");
+    }
     $datasource->CreateLayer('b', undef, 'Point');
     $datasource->CreateLayer('c', undef, 'Point');
     my @layers = $datasource->Layers;
