@@ -265,7 +265,9 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	use Encode;
         @CAPABILITIES = qw/RandomRead SequentialWrite RandomWrite 
 		   FastSpatialFilter FastFeatureCount FastGetExtent 
-		   CreateField Transactions DeleteFeature FastSetNextByIndex/;
+		   CreateField DeleteField ReorderFields AlterFieldDefn
+                   Transactions DeleteFeature FastSetNextByIndex
+                   StringsAsUTF8 IgnoreFields/;
 	for my $s (@CAPABILITIES) {
 	    my $cap = eval "\$Geo::OGR::OLC$s";
 	    $CAPABILITIES{$s} = $cap;
@@ -422,6 +424,10 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		$f->Tuple(@tuple);
 	    }
 	    $self->CreateFeature($f);
+	}
+	sub GeometryType {
+	    my $self = shift;
+	    return $Geo::OGR::Geometry::TYPE_INT2STRING{GetGeomType($self)};
 	}
 
 	package Geo::OGR::FeatureDefn;
