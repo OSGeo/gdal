@@ -69,6 +69,15 @@ class ERSDataset : public RawDataset
     int         bHasNoDataValue;
     double      dfNoDataValue;
 
+    CPLString      osProj;
+    CPLString      osDatum;
+    CPLString      osUnits;
+    void           WriteProjectionInfo(const char* pszProj,
+                                       const char* pszDatum,
+                                       const char* pszUnits);
+
+    CPLStringList oERSMetadataList;
+
   protected:
     virtual int         CloseDependentDatasets();
 
@@ -88,6 +97,10 @@ class ERSDataset : public RawDataset
     virtual const GDAL_GCP *GetGCPs();
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
                             const char *pszGCPProjection );
+
+    virtual const char *GetMetadataItem( const char * pszName,
+                                     const char * pszDomain = "" );
+    virtual char      **GetMetadata( const char * pszDomain = "" );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -205,6 +218,47 @@ void ERSDataset::FlushCache()
 }
 
 /************************************************************************/
+/*                           GetMetadataItem()                          */
+/************************************************************************/
+
+const char *ERSDataset::GetMetadataItem( const char * pszName,
+                                         const char * pszDomain )
+{
+    if (pszDomain != NULL && EQUAL(pszDomain, "ERS") && pszName != NULL)
+    {
+        if (EQUAL(pszName, "PROJ"))
+            return osProj.size() ? osProj.c_str() : NULL;
+        if (EQUAL(pszName, "DATUM"))
+            return osDatum.size() ? osDatum.c_str() : NULL;
+        if (EQUAL(pszName, "UNITS"))
+            return osUnits.size() ? osUnits.c_str() : NULL;
+    }
+    return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char **ERSDataset::GetMetadata( const char *pszDomain )
+
+{
+    if( pszDomain != NULL && EQUAL(pszDomain, "ERS") )
+    {
+        oERSMetadataList.Clear();
+        if (osProj.size())
+            oERSMetadataList.AddString(CPLSPrintf("%s=%s", "PROJ", osProj.c_str()));
+        if (osDatum.size())
+            oERSMetadataList.AddString(CPLSPrintf("%s=%s", "DATUM", osDatum.c_str()));
+        if (osUnits.size())
+            oERSMetadataList.AddString(CPLSPrintf("%s=%s", "UNITS", osUnits.c_str()));
+        return oERSMetadataList.List();
+    }
+    else
+        return GDALPamDataset::GetMetadata( pszDomain );
+}
+
+/************************************************************************/
 /*                            GetGCPCount()                             */
 /************************************************************************/
 
@@ -283,15 +337,21 @@ CPLErr ERSDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
     char szERSProj[32], szERSDatum[32], szERSUnits[32];
 
     oSRS.exportToERM( szERSProj, szERSDatum, szERSUnits );
-    
+
+    /* Write the above computed values, unless they have been overriden by */
+    /* the creation options PROJ, DATUM or UNITS */
+
     poHeader->Set( "RasterInfo.WarpControl.CoordinateSpace.Datum", 
-                   CPLString().Printf( "\"%s\"", szERSDatum ) );
+                   CPLString().Printf( "\"%s\"",
+                        (osDatum.size()) ? osDatum.c_str() : szERSDatum ) );
     poHeader->Set( "RasterInfo.WarpControl.CoordinateSpace.Projection", 
-                   CPLString().Printf( "\"%s\"", szERSProj ) );
+                   CPLString().Printf( "\"%s\"",
+                        (osProj.size()) ? osProj.c_str() : szERSProj ) );
     poHeader->Set( "RasterInfo.WarpControl.CoordinateSpace.CoordinateType", 
                    CPLString().Printf( "EN" ) );
     poHeader->Set( "RasterInfo.WarpControl.CoordinateSpace.Units", 
-                   CPLString().Printf( "\"%s\"", szERSUnits ) );
+                   CPLString().Printf( "\"%s\"",
+                        (osUnits.size()) ? osUnits.c_str() : szERSUnits ) );
     poHeader->Set( "RasterInfo.WarpControl.CoordinateSpace.Rotation", 
                    "0:0:0.0" );
 
@@ -360,16 +420,33 @@ CPLErr ERSDataset::SetProjection( const char *pszSRS )
     char szERSProj[32], szERSDatum[32], szERSUnits[32];
 
     oSRS.exportToERM( szERSProj, szERSDatum, szERSUnits );
-    
+
+    /* Write the above computed values, unless they have been overriden by */
+    /* the creation options PROJ, DATUM or UNITS */
+    WriteProjectionInfo( (osProj.size()) ? osProj.c_str() : szERSProj,
+                         (osDatum.size()) ? osDatum.c_str() : szERSDatum,
+                         (osUnits.size()) ? osUnits.c_str() : szERSUnits );
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                         WriteProjectionInfo()                        */
+/************************************************************************/
+
+void ERSDataset::WriteProjectionInfo(const char* pszProj,
+                                     const char* pszDatum,
+                                     const char* pszUnits)
+{
     bHDRDirty = TRUE;
     poHeader->Set( "CoordinateSpace.Datum", 
-                   CPLString().Printf( "\"%s\"", szERSDatum ) );
+                   CPLString().Printf( "\"%s\"", pszDatum ) );
     poHeader->Set( "CoordinateSpace.Projection", 
-                   CPLString().Printf( "\"%s\"", szERSProj ) );
+                   CPLString().Printf( "\"%s\"", pszProj ) );
     poHeader->Set( "CoordinateSpace.CoordinateType", 
                    CPLString().Printf( "EN" ) );
     poHeader->Set( "CoordinateSpace.Units", 
-                   CPLString().Printf( "\"%s\"", szERSUnits ) );
+                   CPLString().Printf( "\"%s\"", pszUnits ) );
     poHeader->Set( "CoordinateSpace.Rotation", 
                    "0:0:0.0" );
 
@@ -412,8 +489,6 @@ CPLErr ERSDataset::SetProjection( const char *pszSRS )
             poHeader->papszItemValue[i-1] = pszTemp;
         }
     }
-    
-    return CE_None;
 }
 
 /************************************************************************/
@@ -607,14 +682,13 @@ void ERSDataset::ReadGCPs()
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
 
-    CPLString osProjection = poHeader->Find( 
-        "RasterInfo.WarpControl.CoordinateSpace.Projection", "RAW" );
-    CPLString osDatum = poHeader->Find( 
-        "RasterInfo.WarpControl.CoordinateSpace.Datum", "WGS84" );
-    CPLString osUnits = poHeader->Find( 
-        "RasterInfo.WarpControl.CoordinateSpace.Units", "METERS" );
+    osProj = poHeader->Find( "RasterInfo.WarpControl.CoordinateSpace.Projection", "" );
+    osDatum = poHeader->Find( "RasterInfo.WarpControl.CoordinateSpace.Datum", "" );
+    osUnits = poHeader->Find( "RasterInfo.WarpControl.CoordinateSpace.Units", "" );
 
-    oSRS.importFromERM( osProjection, osDatum, osUnits );
+    oSRS.importFromERM( osProj.size() ? osProj : "RAW",
+                        osDatum.size() ? osDatum : "WGS84",
+                        osUnits.size() ? osUnits : "METERS" );
 
     CPLFree( pszGCPProjection );
     oSRS.exportToWkt( &pszGCPProjection );
@@ -953,12 +1027,13 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
 
-    CPLString osProjection = poHeader->Find( "CoordinateSpace.Projection", 
-                                             "RAW" );
-    CPLString osDatum = poHeader->Find( "CoordinateSpace.Datum", "WGS84" );
-    CPLString osUnits = poHeader->Find( "CoordinateSpace.Units", "METERS" );
+    poDS->osProj = poHeader->Find( "CoordinateSpace.Projection", "" );
+    poDS->osDatum = poHeader->Find( "CoordinateSpace.Datum", "" );
+    poDS->osUnits = poHeader->Find( "CoordinateSpace.Units", "" );
 
-    oSRS.importFromERM( osProjection, osDatum, osUnits );
+    oSRS.importFromERM( poDS->osProj.size() ? poDS->osProj : "RAW",
+                        poDS->osDatum.size() ? poDS->osDatum : "WGS84",
+                        poDS->osUnits.size() ? poDS->osUnits : "METERS" );
 
     CPLFree( poDS->pszProjection );
     oSRS.exportToWkt( &(poDS->pszProjection) );
@@ -1279,7 +1354,32 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Reopen.                                                         */
 /* -------------------------------------------------------------------- */
-    return (GDALDataset *) GDALOpen( osErsFile, GA_Update );
+    GDALOpenInfo oOpenInfo( osErsFile, GA_Update );
+    ERSDataset* poDS = (ERSDataset*) Open( &oOpenInfo );
+    if (poDS == NULL)
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch DATUM, PROJ and UNITS creation option                     */
+/* -------------------------------------------------------------------- */
+    const char *pszDatum = CSLFetchNameValue( papszOptions, "DATUM" );
+    if (pszDatum)
+        poDS->osDatum = pszDatum;
+    const char *pszProj = CSLFetchNameValue( papszOptions, "PROJ" );
+    if (pszProj)
+        poDS->osProj = pszProj;
+    const char *pszUnits = CSLFetchNameValue( papszOptions, "UNITS" );
+    if (pszUnits)
+        poDS->osUnits = pszUnits;
+
+    if (pszDatum || pszProj || pszUnits)
+    {
+        poDS->WriteProjectionInfo(pszProj ? pszProj : "RAW",
+                                  pszDatum ? pszDatum : "RAW",
+                                  pszUnits ? pszUnits : "METERS");
+    }
+    
+    return poDS;
 }
 
 /************************************************************************/
@@ -1306,6 +1406,12 @@ void GDALRegister_ERS()
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>"
 "   <Option name='PIXELTYPE' type='string' description='By setting this to SIGNEDBYTE, a new Byte file can be forced to be written as signed byte'/>"
+"   <Option name='PROJ' type='string' description='ERS Projection Name'/>"
+"   <Option name='DATUM' type='string' description='ERS Datum Name' />"
+"   <Option name='UNITS' type='string-select' description='ERS Projection Units'>"
+"       <Value>METERS</Value>"
+"       <Value>FEET</Value>"
+"   </Option>"
 "</CreationOptionList>" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
