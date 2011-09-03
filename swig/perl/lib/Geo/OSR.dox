@@ -36,27 +36,192 @@
 # @brief <a href="http://www.gdal.org/ogr/classOGRSpatialReference.html">Documentation
 # of the underlying C++ class at www.gdal.org</a>
 
+## @attr list PROJECTIONS
+# Projections known to GDAL
+
+## @attr list PARAMETERS
+# Some projection parameters known to GDAL
+
 ## @cmethod Geo::OSR::SpatialReference new($wkt = undef)
 # @param wkt well known text
 # @return a new Geo::OSR::SpatialReference object
 
+## @ignore ImportFromEPSGA
+## @ignore ImportFromERM
+## @ignore ImportFromMICoordSys
+## @ignore ImportFromWkt
+## @ignore ImportFromProj4
+## @ignore ImportFromESRI
+## @ignore ImportFromEPSG
+## @ignore ImportFromPCI
+## @ignore ImportFromUSGS
+## @ignore ImportFromXML
+## @ignore ImportFromUrl
+
 ## @cmethod Geo::OSR::SpatialReference create(%params)
-# Create a new spatial reference object using named parameters. This
-# constructor recognizes the following named parameters: WKT, Text,
-# Proj4, ESRI, EPSG, PCI, USGS, XML.
+# Create a new spatial reference object using a named parameter. This
+# constructor recognizes the following key words (alternative in
+# parenthesis): WKT (Text), Proj4, ESRI, EPSG, EPSGA, PCI, USGS, GML
+# (XML), URL, ERMapper (ERM), MapInfoCS (MICoordSys). The value
+# depends on the key.
+# - WKT: Well Known Text string
+# - Proj4: PROJ.4 string
+# - ESRI: reference to a list of strings (contents of ESRI .prj file)
+# - EPSG: EPSG code number
+# - EPSGA: EPSG code number (the resulting CS will have EPSG preferred axis ordering)
+# - PCI: listref: [PCI_projection_string, Grid_units_code, [17 cs parameters]]
+# - USGS: listref: [Projection_system_code, Zone, [15 cs parameters], Datum_code, Format_flag]
+# - GML: GML string
+# - URL: URL for downloading the spatial reference from
+# - ERMapper: listref: [Projection, Datum, Units]
+# - MapInfoCS: MapInfo style co-ordinate system definition
+#
+# For more information, consult the import methods in <a href="http://www.gdal.org/ogr/classOGRSpatialReference.html">OGR documentation</a>.
+#
+# @note ImportFrom* methods also exist but are not documented here.
 #
 # Usage:
 # \code
-# $sr = Geo::OSR::SpatialReference->create(...arguments...);
+# $sr = Geo::OSR::SpatialReference->create( key => value );
 # \endcode
 # @return a new Geo::OSR::SpatialReference object
 
-## @method $IsSame($rhs)
-# @param rhs a Geo::OSR::SpatialReference object
+## @method Geo::OSR::SpatialReference Clone()
+# Make a duplicate of this SpatialReference object.
+# @return a new Geo::OSR::SpatialReference object
+
+## @method Geo::OSR::SpatialReference CloneGeogCS()
+# Make a duplicate of the GEOGCS node of this SpatialReference object.
+# @return a new Geo::OSR::SpatialReference object
+
+## @ignore AsText
+## @ignore ExportToPrettyWkt
+## @ignore ExportToProj4
+## @ignore ExportToPCI
+## @ignore ExportToUSGS
+## @ignore ExportToXML
+## @ignore ExportToMICoordSys
+## @ignore ExportToWkt
+
+## @method Export($format)
+# Export the spatial reference to a selected format.
+# @note aka As.
+# @param format One of the following. The return value is explained
+# after the format. Other arguments are explained in parenthesis.
+# - WKT (Text): Well Known Text string
+# - PrettyWKT: Well Known Text string nicely formatted (simplify)
+# - Proj4: PROJ.4 string
+# - PCI: a list: ($proj_string, $units, [$parms1, ...])
+# - USGS: a list: ($code, $zone, [$parms1, ...], $datum)
+# - GML (XML): GML based string (dialect)
+# - MapInfoCS (MICoordSys): MapInfo style co-ordinate system definition
+#
+# @note The named parameter syntax also works and is needed is those
+# cases when other arguments need or may be given. The format should
+# be given using key as, 'to' or 'format'.
+#
+# @note ExportTo* and AsText methods also exist but are not documented here.
+#
+# @return a scalar or a list depending on the export format
+
+## @ignore SetACEA
+## @ignore SetAE
+## @ignore SetAngularUnits
+## @ignore SetAttrValue
+## @ignore SetBonne
+## @ignore SetCS
+## @ignore SetCompoundCS
+## @ignore SetEC
+## @ignore SetEckertIV
+## @ignore SetEckertVI
+## @ignore SetEquirectangular
+## @ignore SetEquirectangular2
+## @ignore SetFromUserInput
+## @ignore SetGS
+## @ignore SetGaussSchreiberTMercator
+## @ignore SetGeocCS
+## @ignore SetIGH
+## @ignore SetLinearUnits
+## @ignore SetLinearUnitsAndUpdateParameters
+## @ignore SetNormProjParm
+## @ignore SetProjParm
+## @ignore SetProjection
+## @ignore SetStatePlane
+## @ignore SetTargetLinearUnits
+## @ignore SetUTM
+## @ignore SetVertCS
+## @ignore SetWellKnownGeogCS
+## @ignore SetAuthority
+## @ignore SetCEA
+## @ignore SetGEOS
+## @ignore SetGH
+## @ignore SetGnomonic
+## @ignore SetHOM
+## @ignore SetHOM2PNO
+## @ignore SetKrovak
+## @ignore SetLAEA
+## @ignore SetLCC
+## @ignore SetLCC1SP
+## @ignore SetLCCB
+## @ignore SetLocalCS
+## @ignore SetMC
+## @ignore SetMercator
+## @ignore SetMollweide
+## @ignore SetNZMG
+## @ignore SetOS
+## @ignore SetOrthographic
+## @ignore SetPS
+## @ignore SetPolyconic
+## @ignore SetRobinson
+## @ignore SetSOC
+## @ignore SetSinusoidal
+## @ignore SetStereographic
+## @ignore SetTM
+## @ignore SetTMG
+## @ignore SetTMSO
+## @ignore SetTMVariant
+## @ignore SetVDG
+## @ignore SetTOWGS84
+## @ignore SetGeogCS
+## @ignore SetProjCS
+
+## @method Set(%params)
+# Set a parameter or parameters in the spatial reference object.
+# @param params Named parameters. Recognized keys and respective
+# values are the following.
+# - Authority: authority name
+# - Node: partial or complete path to the target node
+# - AngularUnits: angular units for the geographic coordinate system
+# - LinearUnits: linear units for the target node or the object
+# - CoordinateSystem: 'UTM', 'State Plane', 'WGS' or a user visible name 
+# - Zone: zone for setting up UTM or State Plane coordinate systems (State Plane zone in USGS numbering scheme)
+# - Projection: one from \@Geo::OSR::PROJECTIONS
+# - Parameter: one from \@Geo::OSR::PARAMETERS
+# - Code: code for value with an authority
+# - Value: value to be assigned to a node, the projection or the object
+# - Normalized: set to true to indicate that the Value argument is in "normalized" form
+# - Parameters: a reference to a list containing the projection parameters
+# - Name: Transverse Mercator variant name or a well known name (e.g. WGS84)
+# - GuessFrom: tries to guess from given text
+# - North: set false for southern hemisphere
+# - NAD83: set false if the NAD27 zone definition should be used instead of NAD83
+# - UnitName: to override the legal definition for a zone
+# - UnitConversionFactor: to override the legal definition for a zone
+# - LOCAL_CS: local cs name
+# - Datum: a known (OGC or EPSG) name
+# - Spheroid: user visible name
+# - GeocentricCS: Geocentric coorinate system name
+# - HorizontalCS: Horizontal coordinate system name
+# - VerticalCS: Vertical coordinate system name (setting requires Datum)
+#
+# @note Numerous Set* methods also exist but are not documented here.
+
+## @method $IsSame($rs)
+# @param rs a Geo::OSR::SpatialReference object
 # @return boolean
 
-## @method $IsSameGeogCS($rhs)
-# @param rhs a Geo::OSR::SpatialReference object
+## @method $IsSameGeogCS($rs)
+# @param rs a Geo::OSR::SpatialReference object
 # @return boolean
 
 ## @method $IsGeographic()
@@ -68,25 +233,26 @@
 ## @method $IsLocal()
 # @return boolean
 
+## @method $IsCompound()
+# @return boolean
+
+## @method $IsGeocentric()
+# @return boolean
+
+## @method $IsVertical()
+# @return boolean
+
+## @method $IsSameVertCS($rs)
+# @param rs a Geo::OSR::SpatialReference object
+# @return boolean
+
 ## @method $GetAttrValue($name, $child = 0)
 # @param name
 # @param child
 # @return string
 
-## @method SetAttrValue($name, $value)
-# @param name
-# @param value
-
-## @method SetAngularUnits($name, $to_radians)
-# @param name
-# @param to_radians
-
 ## @method $GetAngularUnits()
 # @return a number
-
-## @method SetLinearUnits($name, $to_meters)
-# @param name
-# @param to_meters
 
 ## @method $GetLinearUnits()
 # @return a number
@@ -102,116 +268,40 @@
 # @param target_key
 # @return string
 
-## @method SetUTM($zone, $north = 1)
-# @param zone
-# @param north
-
-## @method SetStatePlane($zone, $is_nad83 = 1, $unitsname = "", $units = 0.0)
-# @param zone
-# @param is_nad83
-# @param unitsname
-# @param units
-
-## @method AutoIdentifyEPSG()
-
-## @method SetProjection($arg)
-# @param arg
-
-## @method SetProjParm($name, $val)
-# @param name
-# @param val
-
 ## @method $GetProjParm($name, $default_val = 0.0)
 # @param name
 # @param default_val
 # @return a number
-
-## @method SetNormProjParm($name, $val)
-# @param name
-# @param val
 
 ## @method $GetNormProjParm($name, $default_val = 0.0)
 # @param name
 # @param default_val
 # @return a number
 
-## @method SetACEA($stdp1, $stdp2, $clat, $clong, $fe, $fn)
-
-## @method SetAE($clat, $clon, $fe, $fn)
-
-## @method SetCS($clat, $clon, $fe, $fn)
-
-## @method SetBonne($clat, $clon, $fe, $fn)
-
-## @method SetEC($stdp1, $stdp2, $clat, $clong, $fe, $fn)
-
-## @method SetEckertIV($cm, $fe, $fn)
-
-## @method SetEckertVI($cm, $fe, $fn)
-
-## @method SetEquirectangular($clat, $clong, $fe, $fn)
-
-## @method SetGS($cm, $fe, $fn)
-
-## @method SetWellKnownGeogCS($name)
-
-## @method SetFromUserInput($name)
-
 ## @method CopyGeogCSFrom($rhs)
 # @param rhs Geo::OSR::SpatialReference
-
-## @method SetTOWGS84($p1, $p2, $p3, $p4 = 0.0, $p5 = 0.0, $p6 = 0.0, $p7 = 0.0)
 
 ## @method GetTOWGS84()
 # @return array = ($p1, $p2, $p3, $p4, $p5, $p6, $p7)
 
-## @method SetGeogCS($GeogName, $DatumName, $EllipsoidName, $SemiMajor, $InvFlattening, $PMName = "Greenwich", $PMOffset = 0.0, $Units = "degree", $ConvertToRadians =  0.0174532925199433)
+## @method GetInvFlattening()
 
-## @method SetProjCS($name = "unnamed")
+## @method GetSemiMinor()
 
-## @method ImportFromWkt($wkt)
+## @method GetSemiMajor() 
 
-## @method ImportFromProj4($proj4)
+## @method GetUTMZone()
+# Get UTM zone information. 
+# @return The UTM zone (integer). In scalar context the returned value
+# is negative for southern hemisphere zones. In list context returns
+# two values ($zone, $north), where $zone is always non-negative and
+# $north is true or false.
 
-## @method ImportFromESRI($esri)
+## @method AutoIdentifyEPSG()
+# Set EPSG authority info if possible.
 
-## @method ImportFromEPSG($epsg_number)
-
-## @method ImportFromPCI($proj, $units = "METRE", \@argin = undef)
-# @param proj
-# @param units
-# @param argin = array of 17 numbers
-
-## @method ImportFromUSGS($proj_code, $zone = 0, \@argin[15] = undef,  $datum_code = 0)
-# @param proj_code
-# @param zone
-# @param argin = array of 15 numbers
-# @param datum_code
-
-## @method ImportFromXML($xml_string)
-
-## @method $AsText()
-# Return a well known text representation of this spatial reference
-# system.  An alternative name: ExportToWkt.
-# @return WKT string
-
-## @method $ExportToPrettyWkt($simplify = 0)
-# @return WKT string
-
-## @method $ExportToProj4()
-# @return proj4 string
-
-## @method @ExportToPCI()
-# @return ($proj_string, $units, [$parms1, ...])
-
-## @method @ExportToUSGS()
-# @return ($code, $zone, [$parms1, ...], $datum)
-
-## @method $ExportToXML($dialect = "")
-# @return XML string
-
-## @method Geo::OSR::SpatialReference CloneGeogCS()
-# @return a new Geo::OSR::SpatialReference object
+## @method EPSGTreatsAsLatLong()
+# Returns TRUE if EPSG feels this geographic coordinate system should be treated as having lat/long coordinate ordering.
 
 ## @method Validate()
 
@@ -225,67 +315,6 @@
 
 ## @method MorphFromESRI()
 
-## @method ImportFromUrl()
-
-## @method SetAuthority()
-
-## @method SetCEA()
-
-## @method SetGEOS()
-
-## @method SetGH()
-
-## @method SetGnomonic()
-
-## @method SetHOM()
-
-## @method SetHOM2PNO()
-
-## @method SetKrovak()
-
-## @method SetLAEA()
-
-## @method SetLCC()
-
-## @method SetLCC1SP()
-
-## @method SetLCCB()
-
-## @method SetLocalCS()
-
-## @method SetMC()
-
-## @method SetMercator()
-
-## @method SetMollweide()
-
-## @method SetNZMG()
-
-## @method SetOS()
-
-## @method SetOrthographic()
-
-## @method SetPS()
-
-## @method SetPolyconic()
-
-## @method SetRobinson()
-
-## @method SetSOC()
-
-## @method SetSinusoidal()
-
-## @method SetStereographic()
-
-## @method SetTM()
-
-## @method SetTMG()
-
-## @method SetTMSO()
-
-## @method SetTMVariant()
-
-## @method SetVDG()
 
 ## @class Geo::OSR::CoordinateTransformation
 
