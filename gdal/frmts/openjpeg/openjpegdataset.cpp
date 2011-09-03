@@ -121,12 +121,12 @@ static GDAL_OPENJPEG_BOOL JP2OpenJPEGDataset_Seek(OPJ_SIZE_T nBytes, void * pUse
 
 static OPJ_SIZE_T JP2OpenJPEGDataset_Skip(OPJ_SIZE_T nBytes, void * pUserData)
 {
-    int nOffset = VSIFTellL((VSILFILE*)pUserData) + nBytes;
+    vsi_l_offset nOffset = VSIFTellL((VSILFILE*)pUserData);
+    nOffset += nBytes;
 #ifdef DEBUG
-    CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Skip(%d -> %d)", nBytes, nOffset);
+    CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Skip(%d -> " CPL_FRMT_GUIB ")",
+             nBytes, (GUIntBig)nOffset);
 #endif
-    if (nOffset < 0)
-        return -1;
     VSIFSeekL((VSILFILE*)pUserData, nOffset, SEEK_SET);
     return nBytes;
 }
@@ -231,7 +231,7 @@ static CPL_INLINE GByte CLAMP_0_255(int val)
     else if (val > 255)
         return 255;
     else
-        return val;
+        return (GByte)val;
 }
 
 static void CopySrcToDst(int nWidthToRead, int nHeightToRead,
@@ -252,11 +252,11 @@ static void CopySrcToDst(int nWidthToRead, int nHeightToRead,
                 int Cb = pSrc[nHeightToRead * nWidthToRead + ((j/2) * (nWidthToRead/2) + i/2) ];
                 int Cr = pSrc[5 * nHeightToRead * nWidthToRead / 4 + ((j/2) * (nWidthToRead/2) + i/2) ];
                 if (nBand == 1)
-                    pDst[j * nBlockXSize + i] = CLAMP_0_255(Y + 1.402 * (Cr - 128));
+                    pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y + 1.402 * (Cr - 128)));
                 else if (nBand == 2)
-                    pDst[j * nBlockXSize + i] = CLAMP_0_255(Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128));
+                    pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128)));
                 else
-                    pDst[j * nBlockXSize + i] = CLAMP_0_255(Y + 1.772 * (Cb - 128));
+                    pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y + 1.772 * (Cb - 128)));
             }
         }
     }
@@ -1049,7 +1049,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         parameters.csty |= 0x04;
     parameters.cp_disto_alloc = 1;
     parameters.tcp_numlayers = 1;
-    parameters.tcp_rates[0] = dfRate;
+    parameters.tcp_rates[0] = (float) dfRate;
     parameters.cp_tx0 = 0;
     parameters.cp_ty0 = 0;
     parameters.tile_size_on = TRUE;
@@ -1221,12 +1221,12 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                             int R = pTempBuffer[j*nWidthToRead+i];
                             int G = pTempBuffer[nHeightToRead*nWidthToRead + j*nWidthToRead+i];
                             int B = pTempBuffer[2*nHeightToRead*nWidthToRead + j*nWidthToRead+i];
-                            int Y = 0.299 * R + 0.587 * G + 0.114 * B;
-                            int Cb = CLAMP_0_255(-0.1687 * R - 0.3313 * G + 0.5 * B  + 128);
-                            int Cr = CLAMP_0_255(0.5 * R - 0.4187 * G - 0.0813 * B  + 128);
-                            pYUV420Buffer[j*nWidthToRead+i] = Y;
-                            pYUV420Buffer[nHeightToRead * nWidthToRead + ((j/2) * ((nWidthToRead)/2) + i/2) ] = Cb;
-                            pYUV420Buffer[5 * nHeightToRead * nWidthToRead / 4 + ((j/2) * ((nWidthToRead)/2) + i/2) ] = Cr;
+                            int Y = (int) (0.299 * R + 0.587 * G + 0.114 * B);
+                            int Cb = CLAMP_0_255((int) (-0.1687 * R - 0.3313 * G + 0.5 * B  + 128));
+                            int Cr = CLAMP_0_255((int) (0.5 * R - 0.4187 * G - 0.0813 * B  + 128));
+                            pYUV420Buffer[j*nWidthToRead+i] = (GByte) Y;
+                            pYUV420Buffer[nHeightToRead * nWidthToRead + ((j/2) * ((nWidthToRead)/2) + i/2) ] = (GByte) Cb;
+                            pYUV420Buffer[5 * nHeightToRead * nWidthToRead / 4 + ((j/2) * ((nWidthToRead)/2) + i/2) ] = (GByte) Cr;
                         }
                     }
 
