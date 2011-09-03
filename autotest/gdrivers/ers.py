@@ -30,7 +30,8 @@
 
 import os
 import sys
-import gdal
+from osgeo import gdal
+from osgeo import osr
 
 sys.path.append( '../pymod' )
 
@@ -204,6 +205,65 @@ def ers_9():
     return 'success'
 
 ###############################################################################
+# Test PROJ, DATUM, UNITS support (#4229)
+
+def ers_10():
+
+    drv = gdal.GetDriverByName( 'ERS' )
+    ds = drv.Create('/vsimem/ers_10.ers', 1, 1, options = ['DATUM=GDA94', 'PROJ=MGA55', 'UNITS=METERS'])
+
+    # This should be overriden by the above values
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.SetProjection(sr.ExportToWkt())
+
+    ds = None
+
+    f = gdal.VSIFOpenL('/vsimem/ers_10.ers.aux.xml', 'rb')
+    if f is not None:
+        gdaltest.post_reason('/vsimem/ers_10.ers.aux.xml should not exist')
+        gdal.VSIFCloseL(f)
+        drv.Delete('/vsimem/ers_10.ers')
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/ers_10.ers')
+    wkt = ds.GetProjectionRef()
+    proj = ds.GetMetadataItem("PROJ", "ERS")
+    datum = ds.GetMetadataItem("DATUM", "ERS")
+    units = ds.GetMetadataItem("UNITS", "ERS")
+    md_ers = ds.GetMetadata("ERS")
+    ds = None
+
+    drv.Delete('/vsimem/ers_10.ers')
+
+    if proj != 'MGA55':
+        gdaltest.post_reason('did not get expected PROJ')
+        print(proj)
+        return 'fail'
+
+    if datum != 'GDA94':
+        gdaltest.post_reason('did not get expected DATUM')
+        print(datum)
+        return 'fail'
+
+    if units != 'METERS':
+        gdaltest.post_reason('did not get expected UNITS')
+        print(units)
+        return 'fail'
+
+    if md_ers["PROJ"] != proj or md_ers["DATUM"] != datum or md_ers["UNITS"] != units:
+        gdaltest.post_reason('GetMetadata() not consistant with GetMetadataItem()')
+        print(md_ers)
+        return 'fail'
+
+    if wkt.find("""PROJCS["MGA55""") != 0:
+        gdaltest.post_reason('did not get expected projection')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 # Cleanup
 
 def ers_cleanup():
@@ -220,6 +280,7 @@ gdaltest_list = [
     ers_7,
     ers_8,
     ers_9,
+    ers_10,
     ers_cleanup
     ]
   
