@@ -929,23 +929,23 @@ GDALDataset *LANDataset::Create( const char * pszFilename,
     // Pixel Area
     float f32Val;
 
-    f32Val = 0.0;
+    f32Val = 0.0f;
     memcpy( abyHeader + 108, &f32Val, 4 );
 
     // Upper Left X
-    f32Val = 0.5;
+    f32Val = 0.5f;
     memcpy( abyHeader + 112, &f32Val, 4 );
     
     // Upper Left Y
-    f32Val = (float) nYSize - 0.5;
+    f32Val = (float) (nYSize - 0.5);
     memcpy( abyHeader + 116, &f32Val, 4 );
     
     // width of pixel
-    f32Val = (float) 1.0;
+    f32Val = 1.0f;
     memcpy( abyHeader + 120, &f32Val, 4 );
     
     // height of pixel
-    f32Val = (float) 1.0;
+    f32Val = 1.0f;
     memcpy( abyHeader + 124, &f32Val, 4 );
 
     VSIFWriteL( abyHeader, sizeof(abyHeader), 1, fp );
@@ -966,7 +966,7 @@ GDALDataset *LANDataset::Create( const char * pszFilename,
     {
         vsi_l_offset nWriteThisTime = MIN(nImageBytes,sizeof(abyHeader));
         
-        if( VSIFWriteL( abyHeader, 1, nWriteThisTime, fp ) 
+        if( VSIFWriteL( abyHeader, 1, (size_t)nWriteThisTime, fp ) 
             != nWriteThisTime )
         {
             VSIFCloseL( fp );

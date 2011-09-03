@@ -97,7 +97,7 @@ void GDALWMSMiniDriver_VirtualEarth::TiledImageRequest(CPLString *url,
         int row = (y & 1);
         int col = (x & 1);
 
-        szTileNumber[z-1-i] = '0' + (col | (row << 1));
+        szTileNumber[z-1-i] = (char) ('0' + (col | (row << 1)));
 
         x = x >> 1;
         y = y >> 1;

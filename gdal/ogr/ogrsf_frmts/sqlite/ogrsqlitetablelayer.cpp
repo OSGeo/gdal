@@ -1048,7 +1048,7 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
     const sqlite_int64 nFID = sqlite3_last_insert_rowid( hDB );
     if(nFID > 0)
     {
-        poFeature->SetFID( nFID );
+        poFeature->SetFID( (long)nFID ); /* Possible truncation if nFID is 64bit */
     }
 
     sqlite3_finalize( hInsertStmt );

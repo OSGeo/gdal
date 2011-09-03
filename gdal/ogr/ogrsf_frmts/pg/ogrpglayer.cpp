@@ -270,18 +270,18 @@ OGRPGGetStrFromBinaryNumeric(NumericVar *var)
                                 dig -= d1 * 1000;
                                 putit |= (d1 > 0);
                                 if (putit)
-                                        *cp++ = d1 + '0';
+                                        *cp++ = (char)(d1 + '0');
                                 d1 = dig / 100;
                                 dig -= d1 * 100;
                                 putit |= (d1 > 0);
                                 if (putit)
-                                        *cp++ = d1 + '0';
+                                        *cp++ = (char)(d1 + '0');
                                 d1 = dig / 10;
                                 dig -= d1 * 10;
                                 putit |= (d1 > 0);
                                 if (putit)
-                                        *cp++ = d1 + '0';
-                                *cp++ = dig + '0';
+                                        *cp++ = (char)(d1 + '0');
+                                *cp++ = (char)(dig + '0');
                         }
                 }
         }
@@ -301,14 +301,14 @@ OGRPGGetStrFromBinaryNumeric(NumericVar *var)
                         CPL_MSBPTR16(&dig);
                         d1 = dig / 1000;
                         dig -= d1 * 1000;
-                        *cp++ = d1 + '0';
+                        *cp++ = (char)(d1 + '0');
                         d1 = dig / 100;
                         dig -= d1 * 100;
-                        *cp++ = d1 + '0';
+                        *cp++ = (char)(d1 + '0');
                         d1 = dig / 10;
                         dig -= d1 * 10;
-                        *cp++ = d1 + '0';
-                        *cp++ = dig + '0';
+                        *cp++ = (char)(d1 + '0');
+                        *cp++ = (char)(dig + '0');
                 }
                 cp = endcp;
         }
@@ -380,7 +380,7 @@ OGRPGdt2timeInt8(GIntBig jd, int *hour, int *min, int *sec, double *fsec)
 	*min = (int) (time / USECS_PER_MIN);
 	time -=  (GIntBig) (*min) * USECS_PER_MIN;
 	*sec = (int)time / USECS_PER_SEC;
-	*fsec = time - *sec * USECS_PER_SEC;
+	*fsec = (double)(time - *sec * USECS_PER_SEC);
 }	/* dt2time() */
 
 static

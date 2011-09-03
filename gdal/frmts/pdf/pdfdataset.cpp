@@ -841,8 +841,8 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
 
     double dfPixelPerPt = poDS->dfDPI / 72;
-    poDS->nRasterXSize = (dfX2 - dfX1) * dfPixelPerPt;
-    poDS->nRasterYSize = (dfY2 - dfY1) * dfPixelPerPt;
+    poDS->nRasterXSize = (int) ((dfX2 - dfX1) * dfPixelPerPt);
+    poDS->nRasterYSize = (int) ((dfY2 - dfY1) * dfPixelPerPt);
 
 #ifdef USE_POPPLER
     double dfRotation = poDoc->getPageRotate(iPage);

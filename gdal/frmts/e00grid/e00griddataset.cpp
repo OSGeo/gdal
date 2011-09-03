@@ -80,7 +80,7 @@ class E00GRIDDataset : public GDALPamDataset
 
     E00ReadPtr  e00ReadPtr;
     VSILFILE   *fp;
-    int         nDataStart;
+    vsi_l_offset nDataStart;
     int         nBytesEOL;
 
     vsi_l_offset  nPosBeforeReadLine;
@@ -229,7 +229,7 @@ CPLErr E00GRIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             }
             if (eDataType == GDT_Float32)
             {
-                pafImage[i] = atof(pszLine + (i%VALS_PER_LINE) * E00_FLOAT_SIZE);
+                pafImage[i] = (float) atof(pszLine + (i%VALS_PER_LINE) * E00_FLOAT_SIZE);
                 /* Workaround single vs double precision problems */
                 if (fNoData != 0 && fabs((pafImage[i] - fNoData)/fNoData) < 1e-6)
                     pafImage[i] = fNoData;
@@ -258,7 +258,7 @@ CPLErr E00GRIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         if (eDataType == GDT_Float32)
         {
-            pafImage[i] = atof(szVal);
+            pafImage[i] = (float) atof(szVal);
             /* Workaround single vs double precision problems */
             if (fNoData != 0 && fabs((pafImage[i] - fNoData)/fNoData) < 1e-6)
                 pafImage[i] = fNoData;

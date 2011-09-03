@@ -277,7 +277,7 @@ retry:
     }
     else
     {
-        char* pachData = (char*)VSIMalloc(psSegInfo->nSegmentSize);
+        char* pachData = (char*)VSIMalloc((size_t)psSegInfo->nSegmentSize);
         if (pachData == NULL )
         {
             CPLDebug("NITF", "Cannot allocate " CPL_FRMT_GUIB " bytes DES data",
@@ -285,7 +285,7 @@ retry:
         }
         else if( VSIFSeekL( psFile->fp, psSegInfo->nSegmentStart,
                     SEEK_SET ) != 0
-            || VSIFReadL( pachData, 1, psSegInfo->nSegmentSize,
+            || VSIFReadL( pachData, 1, (size_t)psSegInfo->nSegmentSize,
                         psFile->fp ) != psSegInfo->nSegmentSize )
         {
             CPLDebug("NITF",

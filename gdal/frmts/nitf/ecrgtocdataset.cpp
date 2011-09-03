@@ -334,8 +334,8 @@ int GetExtent(const char* pszFrameName, int nScale, int nZone,
     GIntBig nFrameNumber = GetFromBase34(pszFrameName, 10);
 
     /*  MIL-PRF-32283 - A.2.6.1 */
-    int nY = nFrameNumber / nCols;
-    int nX = nFrameNumber % nCols;
+    GIntBig nY = nFrameNumber / nCols;
+    GIntBig nX = nFrameNumber % nCols;
 
 /************************************************************************/
 /*  Compute extent of the frame                                         */
