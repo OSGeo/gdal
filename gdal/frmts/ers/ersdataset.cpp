@@ -103,6 +103,7 @@ class ERSDataset : public RawDataset
     virtual char      **GetMetadata( const char * pszDomain = "" );
 
     static GDALDataset *Open( GDALOpenInfo * );
+    static int Identify( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
@@ -765,10 +766,10 @@ CPLErr ERSRasterBand::SetNoDataValue( double dfNoDataValue )
 }
 
 /************************************************************************/
-/*                                Open()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
-GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
+int ERSDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
 /* -------------------------------------------------------------------- */
@@ -777,17 +778,30 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes > 15
         && EQUALN((const char *) poOpenInfo->pabyHeader,"Algorithm Begin",15) )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "%s appears to be an algorithm ERS file, which is not currently supported.", 
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "%s appears to be an algorithm ERS file, which is not currently supported.",
                   poOpenInfo->pszFilename );
-        return NULL;
+        return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
 /*      We assume the user selects the .ers file.                       */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 15 
+    if( poOpenInfo->nHeaderBytes < 15
         || !EQUALN((const char *) poOpenInfo->pabyHeader,"DatasetHeader ",14) )
+        return FALSE;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
+
+{
+    if( !Identify( poOpenInfo ) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -1417,6 +1431,7 @@ void GDALRegister_ERS()
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = ERSDataset::Open;
+        poDriver->pfnIdentify = ERSDataset::Identify;
         poDriver->pfnCreate = ERSDataset::Create;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
