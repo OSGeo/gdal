@@ -1081,6 +1081,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
 /* -------------------------------------------------------------------- */
     int            bHasRPC00 = FALSE;
     NITFRPC00BInfo sRPCInfo;
+    memset(&sRPCInfo, 0, sizeof(sRPCInfo)); /* To avoid warnings from not clever compilers */
 
     if( psImage && NITFReadRPC00B( psImage, &sRPCInfo ) && sRPCInfo.SUCCESS )
         bHasRPC00 = TRUE;

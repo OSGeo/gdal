@@ -1505,8 +1505,6 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     for(int i=0;i<nBands;i++)
         poPNG_DS->SetBand( i+1, new PNGRasterBand( poPNG_DS, i+1) );
     return poPNG_DS;
-
-    return poDS;
 }
 
 /************************************************************************/

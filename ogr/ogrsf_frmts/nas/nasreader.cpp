@@ -915,10 +915,6 @@ void NASReader::CheckForFID( const Attributes &attrs,
                              char **ppszCurField )
 
 {
-    GMLFeature *poFeature = GetState()->m_poFeature;
-
-    CPLAssert( poFeature  != NULL );
-
     int nIndex;
     XMLCh  Name[100];
 

@@ -174,7 +174,7 @@ BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize,
                 dfRatio = 0.5 + (dfDist / dfBlendDist) * 0.5;
             }                
 
-            pafValidityMask[iX + iY * nXSize] *= dfRatio;
+            pafValidityMask[iX + iY * nXSize] *= (float)dfRatio;
         }
     }
 
