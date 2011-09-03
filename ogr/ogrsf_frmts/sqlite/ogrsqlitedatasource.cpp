@@ -257,7 +257,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
         if( bSpatialiteLoaded == TRUE )
         {
             double v = ( atof( spatialite_version() ) + 0.001 )  * 10.0;
-            iSpatialiteVersion = v;
+            iSpatialiteVersion = (int)v;
             bSpatialiteReadOnly = FALSE;
         }
 #endif

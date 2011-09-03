@@ -2015,7 +2015,7 @@ static char** NITFGenericMetadataReadTREInternal(char **papszMD,
                                      nLength, pszMDItemName );
                 if (*pnMDSize + 1 >= *pnMDAlloc)
                 {
-                    *pnMDAlloc = *pnMDAlloc * 1.3 + 32;
+                    *pnMDAlloc = (*pnMDAlloc * 4 / 3) + 32;
                     papszMD = (char**)CPLRealloc(papszMD, *pnMDAlloc * sizeof(char**));
                 }
                 papszMD[*pnMDSize] = papszTmp[0];

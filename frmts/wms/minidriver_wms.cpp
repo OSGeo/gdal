@@ -114,7 +114,7 @@ CPLErr GDALWMSMiniDriver_WMS::Initialize(CPLXMLNode *config) {
         // the transparent flag needs to be "TRUE" or "FALSE" in upper case according to the WMS spec so force upper case
         for(int i=0; i<(int)m_transparent.size();i++)
         {
-            m_transparent[i] = toupper(m_transparent[i]);
+            m_transparent[i] = (char) toupper(m_transparent[i]);
         }
     }
 
