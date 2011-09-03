@@ -1205,9 +1205,9 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
         }
         VSIStatBufL sBuf;
         VSIStatL(osFileInZipTmpFileName.c_str(), &sBuf);
-        pabyData = (char*) CPLMalloc(sBuf.st_size + 1);
+        pabyData = (char*) CPLMalloc((size_t)(sBuf.st_size + 1));
         pabyData[sBuf.st_size] = 0;
-        VSIFReadL(pabyData, 1, sBuf.st_size, fp);
+        VSIFReadL(pabyData, 1, (size_t)sBuf.st_size, fp);
         VSIFCloseL(fp);
 
         CSLDestroy(papszDirContent);
