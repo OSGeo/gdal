@@ -588,7 +588,7 @@ int RasterliteDataset::CloseDependentDatasets()
 {
     int bRet = GDALPamDataset::CloseDependentDatasets();
 
-    if (poMainDS == NULL)
+    if (poMainDS == NULL && !bMustFree)
     {
         CSLDestroy(papszMetadata);
         papszMetadata = NULL;
@@ -603,7 +603,14 @@ int RasterliteDataset::CloseDependentDatasets()
         {
             int i;
             for(i=1;i<nResolutions;i++)
+            {
+                if (papoOverviews[i-1] != NULL &&
+                    papoOverviews[i-1]->bMustFree)
+                {
+                    papoOverviews[i-1]->poMainDS = NULL;
+                }
                 delete papoOverviews[i-1];
+            }
             CPLFree(papoOverviews);
             papoOverviews = NULL;
             nResolutions = 0;
@@ -621,11 +628,11 @@ int RasterliteDataset::CloseDependentDatasets()
         delete poCT;
         poCT = NULL;
     }
-    else if (bMustFree)
+    else if (poMainDS != NULL && bMustFree)
     {
         poMainDS->papoOverviews[nLevel-1] = NULL;
         delete poMainDS;
-        bMustFree = FALSE;
+        poMainDS = NULL;
         bRet = TRUE;
     }
 
