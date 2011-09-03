@@ -1015,7 +1015,7 @@ int CPLVASPrintf( char **buf, const char *fmt, va_list ap )
     osWork.vPrintf( fmt, ap );
 
     if( buf )
-        *buf = strdup(osWork.c_str());
+        *buf = CPLStrdup(osWork.c_str());
 
     return strlen(osWork);
 }
