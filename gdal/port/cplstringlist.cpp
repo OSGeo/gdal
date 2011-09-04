@@ -49,7 +49,7 @@ CPLStringList::CPLStringList()
 /**
  * CPLStringList constructor.
  *
- * @param papszList the NULL terminated list of strings to consume.
+ * @param papszListIn the NULL terminated list of strings to consume.
  * @param bTakeOwnership TRUE if the CPLStringList should take ownership
  * of the list of strings which implies responsibility to free them.
  */
@@ -564,7 +564,6 @@ int CPLStringList::FindName( const char *pszKey ) const
  * if the key appears in the list it will be considered TRUE.  If the key
  * doesn't appear at all, the indicated default value will be returned. 
  * 
- * @param papszStrList the string list to search.
  * @param pszKey the key value to look for (case insensitive).
  * @param bDefault the value to return if the key isn't found at all. 
  * 
