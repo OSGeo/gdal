@@ -10,26 +10,27 @@
 ## @ignore STORE
 ## @ignore this
 
-## @ignore UseExceptions()
+## @ignore BuildPolygonFromEdges
+## @ignore ForceToMultiLineString
+## @ignore ForceToMultiPoint
+## @ignore ForceToMultiPolygon
+## @ignore ForceToPolygon
 
+## @ignore GeneralCmdLineProcessor
+## @ignore GeometryTypeToName
+## @ignore GetFieldTypeName
+
+## @ignore UseExceptions()
 ## @ignore DontUseExceptions()
 
 ## @fn @GeometryTypes()
 # @return a list of all geometry types.
 
-## @fn Geo::OGR::Geometry CreateGeometryFromWkb($WKB, $srs = undef)
-# @param WKB Buffer containing well known binary.
-# @param srs A Geo::OSR::SpatialReference object.
-# @return a new Geo::OGR::Geometry object.
-
-## @fn Geo::OGR::Geometry CreateGeometryFromWkt($WKT, $srs = undef)
-# @param WKT String containing well known text.
-# @param srs A Geo::OSR::SpatialReference object.
-# @return a new Geo::OGR::Geometry object.
-
-## @fn Geo::OGR::Geometry CreateGeometryFromGML($GML)
-# @param GML String containing GML.
-# @return a new Geo::OGR::Geometry object.
+## @ignore CreateGeometryFromWkb
+## @ignore CreateGeometryFromWkt
+## @ignore CreateGeometryFromGML
+## @ignore CreateGeometryFromJson
+## @ignore ApproximateArcAngles
 
 ## @fn @Drivers()
 # @return a list of Geo::OGR::Driver objects, one for each OGR format.
@@ -66,191 +67,66 @@
 
 ## @fn Geo::OGR::Driver Driver($driver) 
 # Create a driver object for the internal OGR driver.
-# @note aka GetDriver
+# @note a.k.a. GetDriver
 # @param driver the index or the name of the driver
 # @return a new Geo::OGR::Driver object
 
-## @attr wkb25Bit
-# @deprecated
-
-## @attr wkbUnknown
-# @deprecated
-
-## @attr wkbPoint
-# @deprecated use string 'Point' instead
-
-## @attr wkbLineString
-# @deprecated use string 'LineString' instead
-
-## @attr wkbPolygon
-# @deprecated use string 'Polygon' instead
-
-## @attr wkbMultiPoint
-# @deprecated use string 'MultiPoint' instead
-
-## @attr wkbMultiLineString
-# @deprecated use string 'MultiLineString' instead
-
-## @attr wkbMultiPolygon
-# @deprecated use string 'MultiPolygon' instead
-
-## @attr wkbGeometryCollection
-# @deprecated use string 'GeometryCollection' instead
-
-## @attr wkbNone
-# @deprecated
-
-## @attr wkbLinearRing
-# @deprecated use string 'LinearRing' instead
-
-## @attr wkbPoint25D
-# @deprecated use string 'Point25D' instead
-
-## @attr wkbLineString25D
-# @deprecated use string 'LineString25D' instead
-
-## @attr wkbPolygon25D
-# @deprecated use string 'Polygon25D' instead
-
-## @attr wkbMultiPoint25D
-# @deprecated use string 'MultiPoint25D' instead
-
-## @attr wkbMultiLineString25D
-# @deprecated use string 'MultiLineString25D' instead
-
-## @attr wkbMultiPolygon25D
-# @deprecated use string 'MultiPolygon25D' instead
-
-## @attr wkbGeometryCollection25D
-# @deprecated use string 'GeometryCollection25D' instead
-
-## @attr OFTInteger
-# @deprecated use string 'Integer' instead
-
-## @attr OFTIntegerList
-# @deprecated use string 'IntegerList' instead
-
-## @attr OFTReal
-# @deprecated use string 'Real' instead
-
-## @attr OFTRealList
-# @deprecated use string 'RealList' instead
-
-## @attr OFTString
-# @deprecated use string 'String' instead
-
-## @attr OFTStringList
-# @deprecated use string 'StringList' instead
-
-## @attr OFTWideString
-# @deprecated use string 'WideString' instead
-
-## @attr OFTWideStringList
-# @deprecated use string 'WideStringList' instead
-
-## @attr OFTBinary
-# @deprecated use string 'Binary' instead
-
-## @attr OFTDate
-# @deprecated use string 'Date' instead
-
-## @attr OFTTime
-# @deprecated use string 'Time' instead
-
-## @attr OFTDateTime
-# @deprecated use string 'DateTime' instead
-
-## @attr OJUndefined
-# @deprecated use string 'Undefined' instead
-
-## @attr OJLeft
-# @deprecated use string 'Left' instead
-
-## @attr OJRight
-# @deprecated use string 'Right' instead
-
-## @attr wkbXDR
-# @deprecated use string 'XDR' instead
-
-## @attr wkbNDR
-# @deprecated use string 'NDR' instead
-
-## @attr OLCRandomRead
-# Layer capability
-# @deprecated use string 'RandomRead', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
-
-## @attr OLCSequentialWrite
-# Layer capability
-# @deprecated use string 'SequentialWrite', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
-
-## @attr OLCRandomWrite
-# Layer capability
-# @deprecated use string 'RandomWrite', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
-
-## @attr OLCFastSpatialFilter
-# Layer capability
-# @deprecated use string 'FastSpatialFilter', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
-
-## @attr OLCFastFeatureCount
-# Layer capability
-# @deprecated use string 'FastFeatureCount', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
-
-## @attr OLCFastGetExtent
-# Layer capability
-# @deprecated use string 'FastGetExtent', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
-
-## @attr OLCCreateField
-# Layer capability
-# @deprecated use string 'CreateField', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
-
-## @attr OLCTransactions
-# Layer capability
-# @deprecated use string 'Transactions', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
-
-## @attr OLCDeleteFeature
-# Layer capability
-# @deprecated use string 'DeleteFeature', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
-
-## @attr OLCFastSetNextByIndex
-# Layer capability
-# @deprecated use string 'FastSetNextByIndex', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
-
-## @attr OLCAlterFieldDefn
-# Layer capability
-# @deprecated use string 'AlterFieldDefn', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
-
-## @attr OLCDeleteField
-# Layer capability
-# @deprecated use string 'DeleteField', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
-
-## @attr OLCIgnoreFields
-# Layer capability
-# @deprecated use string 'IgnoreFields', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
-
-## @attr OLCReorderFields
-# Layer capability
-# @deprecated use string 'ReorderFields', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
-
-## @attr OLCStringsAsUTF8
-# Layer capability
-# @deprecated use string 'OLCStringsAsUTF8', which is listed in Geo::OGR::Layer::CAPABILITIES, instead
-
-## @attr ODsCCreateLayer
-# Data source capability
-# @deprecated use string 'CreateLayer', which is listed in Geo::OGR::DataSource::CAPABILITIES, instead
-
-## @attr ODsCDeleteLayer
-# Data source capability
-# @deprecated use string 'DeleteLayer', which is listed in Geo::OGR::DataSource::CAPABILITIES, instead
-
-## @attr ODrCCreateDataSource
-# Driver capability
-# @deprecated use string 'CreateDataSource', which is listed in Geo::OGR::Driver::CAPABILITIES, instead
-
-## @attr ODrCDeleteDataSource
-# Driver capability
-# @deprecated use string 'DeleteDataSource', which is listed in Geo::OGR::Driver::CAPABILITIES, instead
-
+## @ignore NullFID
+## @ignore wkb25Bit
+## @ignore wkb25DBit
+## @ignore wkbUnknown
+## @ignore wkbPoint
+## @ignore wkbLineString
+## @ignore wkbPolygon
+## @ignore wkbMultiPoint
+## @ignore wkbMultiLineString
+## @ignore wkbMultiPolygon
+## @ignore wkbGeometryCollection
+## @ignore wkbNone
+## @ignore wkbLinearRing
+## @ignore wkbPoint25D
+## @ignore wkbLineString25D
+## @ignore wkbPolygon25D
+## @ignore wkbMultiPoint25D
+## @ignore wkbMultiLineString25D
+## @ignore wkbMultiPolygon25D
+## @ignore wkbGeometryCollection25D
+## @ignore OFTInteger
+## @ignore OFTIntegerList
+## @ignore OFTReal
+## @ignore OFTRealList
+## @ignore OFTString
+## @ignore OFTStringList
+## @ignore OFTWideString
+## @ignore OFTWideStringList
+## @ignore OFTBinary
+## @ignore OFTDate
+## @ignore OFTTime
+## @ignore OFTDateTime
+## @ignore OJUndefined
+## @ignore OJLeft
+## @ignore OJRight
+## @ignore wkbXDR
+## @ignore wkbNDR
+## @ignore OLCRandomRead
+## @ignore OLCSequentialWrite
+## @ignore OLCRandomWrite
+## @ignore OLCFastSpatialFilter
+## @ignore OLCFastFeatureCount
+## @ignore OLCFastGetExtent
+## @ignore OLCCreateField
+## @ignore OLCTransactions
+## @ignore OLCDeleteFeature
+## @ignore OLCFastSetNextByIndex
+## @ignore OLCAlterFieldDefn
+## @ignore OLCDeleteField
+## @ignore OLCIgnoreFields
+## @ignore OLCReorderFields
+## @ignore OLCStringsAsUTF8
+## @ignore ODsCCreateLayer
+## @ignore ODsCDeleteLayer
+## @ignore ODrCCreateDataSource
+## @ignore ODrCDeleteDataSource
 
 ## @class Geo::OGR::Driver
 # @isa (Geo::OGR)
@@ -282,7 +158,7 @@
 
 ## @method Geo::OGR::DataSource Create($name, \%options = undef )
 # Create an OGR data source object.
-# \note aka CreateDataSource
+# \note a.k.a. CreateDataSource
 # @param name The data source name.
 # @param options Driver specific options.
 #
@@ -296,7 +172,7 @@
 
 ## @method Geo::OGR::DataSource Copy($ds, $name, \@options = undef)
 # Copy an OGR data source object.
-# \note aka CopyDataSource
+# \note a.k.a. CopyDataSource
 # @param ds The Geo::OGR::DataSource object to be copied.
 # @param name The name for the new data source.
 # @param options Driver specific options.
@@ -312,7 +188,7 @@
 
 ## @method Delete($name)
 # Delete an OGR data source.
-# \note aka DeleteDataSource
+# \note a.k.a. DeleteDataSource
 # @param name The name of data source.
 
 ## @method $GetName()
@@ -546,7 +422,14 @@
 # @param force
 # @return integer
 
-## @method \@GetExtent($force = 1)
+## @method @GetExtent($force = 1)
+# @param force compute the extent even if it is expensive
+# @note In scalar context returns a reference to an anonymous array
+# containing the extent.
+# @note The order of values is different from those returned by
+# Geo::OGR::Geometry::GetEnvelope.
+# @return the extent ($minx, $miny, $maxx, $maxy)
+
 # @param force
 # @return the extent = ($minx, $miny, $maxx, $maxy) as a listref
 
@@ -639,23 +522,30 @@
 ## @method Geo::OGR::FeatureDefn GetDefnRef()
 # @return a new Geo::OGR::FeatureDefn object
 
+## @ignore SetGeometry
+
 ## @method $Geometry($geometry)
-# Get a copy of the geometry or copy the geometry into the feature.
-# @param geometry [optional]
+# Get a copy of the geometry as a new Geo::OGR::Geometry object and/or
+# copy the geometry into the feature.
+# @note a.k.a. SetGeometry (only copy into)
+# @param geometry [optional] a Geo::OGR::Geometry object
+# @return a new Geo::OGR::Geometry object in a non-void context
 
-## @method SetGeometry($geometry)
-# The geometry is copied into the feature.
-# @param geometry a Geo::OGR::Geometry object
+## @ignore SetGeometryDirectly
+## @ignore GetGeometry
+## @ignore GetGeometryRef
 
-## @method SetGeometryDirectly($geometry)
-# This feature is not destroyed while the Geo::OGR::Geometry object exists.
-# @param geometry a Geo::OGR::Geometry object
-
-## @method Geo::OGR::Geometry GetGeometry()
-# Creates a new Geo::OGR::Geometry object, whose data is owned by the
-# feature. The underlying OGR feature is not destroyed while the
-# geometry object exists.
-# @return a new Geo::OGR::Geometry object
+## @method $ReferenceGeometry($geometry)
+# Create a new Geo::OGR::Geometry object, which references the
+# geometry within the feature and/or create a reference to the
+# argument geometry within the feature. This method maintains a link
+# between the two objects and will not let the feature object be
+# destroyed while the geometry object exists. Use with caution.
+# @note a.k.a. SetGeometryDirectly (only reference in), GetGeometry
+# (only create with a reference), GetGeometryRef (only create with a
+# reference and do not create the link between the objects).
+# @param geometry [optional] a Geo::OGR::Geometry object
+# @return a new Geo::OGR::Geometry object in a non-void context
 
 ## @method Geo::OGR::Feature Clone()
 # @return a new Geo::OGR::Feature object
@@ -671,12 +561,16 @@
 # @param param the index or the name of the field
 # @return a new Geo::OGR::FieldDefn object
 
+## @ignore GetFieldAsString
+## @ignore GetFieldAsInteger
+## @ignore GetFieldAsDouble
 ## @ignore GetFieldAsDateTime
 ## @ignore GetFieldAsDoubleList
 ## @ignore GetFieldAsIntegerList
 ## @ignore GetFieldAsStringList
 
 ## @method @GetField($field)
+# @note A number of GetFieldAs* methods exist but they are not documented.
 # @param field the index or the name of the field
 # @return the value of the field, which may be a scalar or a list,
 # depending on the field type.
@@ -704,9 +598,9 @@
 ## @method UnsetField($field)
 # @param field the index or the name of the field
 
-## @ignore SetFieldAsDoubleList
-## @ignore SetFieldAsIntegerList
-## @ignore SetFieldAsStringList
+## @ignore SetFieldDoubleList
+## @ignore SetFieldIntegerList
+## @ignore SetFieldStringList
 
 ## @method SetField($field, @value)
 # @param field the index or the name of the field
@@ -715,9 +609,15 @@
 # day, hour, minute, second, tzflag), or a list of integers, doubles,
 # or strings.
 
-## @method SetFrom($other, $forgiving = 1)
+## @ignore SetFromWithMap
+
+## @method SetFrom($other, $forgiving = 1, \%map)
 # @param other a Geo::OGR::Feature object
-# @param forgiving
+# @param forgiving [optional] set to false if the operation should not
+# continue if output fields do not match some of the source fields
+# @param map [optional] a mapping from output field indexes to source
+# fields, include into the hash all field indexes of this feature
+# which should be set
 
 ## @method $StyleString($string)
 # @param string [optional]
@@ -733,22 +633,6 @@
 # @param field the index or the name of the field
 # @return one of field types
 
-## @method $GetFieldAsString($field)
-# @deprecated use Geo::OGR::Feature::GetField
-
-## @method $GetFieldAsInteger($field)
-# @deprecated use Geo::OGR::Feature::GetField
-
-## @method $GetFieldAsDouble($field)
-# @deprecated use Geo::OGR::Feature::GetField
-
-## @method Geo::OGR::Geometry GetGeometryRef()
-# Creates a new Geo::OGR::Geometry object, whose data is still owned
-# by the feature. This link is not recorded.
-# @deprecated use Geo::OGR::Feature::GetGeometry unless you know what
-# you are doing.
-# @return a new Geo::OGR::Geometry object
-
 
 ## @class Geo::OGR::FeatureDefn
 # @isa (Geo::OGR)
@@ -760,8 +644,10 @@
 ## @cmethod Geo::OGR::FeatureDefn create(%schema)
 # Example usage:
 # \code
-# $fd = Geo::OGR::FeatureDefn->create( Name => "name", GeometryType =>
-# "Polygon", Fields => [{Name => 'field1', Type => 'String'}] );
+# $fd = Geo::OGR::FeatureDefn->create( 
+#     Name => "name", 
+#     GeometryType => "Polygon",
+#     Fields => [{ Name => 'field1', Type => 'String' }] );
 # \endcode
 # @param schema The schema for the new feature definition, as in
 # Geo::OGR::FeatureDefn::Schema.
@@ -780,6 +666,7 @@
 # @return
 
 ## @method $GetName()
+# @note a.k.a. Name
 # @return a string
 
 ## @method $GetFieldCount()
@@ -796,22 +683,35 @@
 ## @method AddFieldDefn($defn)
 # @param defn a Geo::OGR::FieldDefn object
 
+## @ignore GetGeomType
+## @ignore SetGeomType
+
 ## @method $GeometryType($geometry_type)
 # Get or set the geometry type.
-# @note aka GeomType
+# @note a.k.a. GeomType, GetGeomType (deprecated, returns an integer),
+# SetGeomType (deprecated, requires an integer)
 # @param geometry_type [optional] one of \@Geo::OGR::Geometry::GEOMETRY_TYPES
 # @return the geometry type, one of \@Geo::OGR::Geometry::GEOMETRY_TYPES
 
-## @method $GetGeomType()
-# @deprecated use Geo::OGR::FeatureDefn::GeometryType, which returns a string
-# @return geometry type as integer
+## @ignore GetReferenceCount
 
-## @method SetGeomType($type)
-# @deprecated use Geo::OGR::FeatureDefn::GeomType, which accepts a string
-# @param type as integer
+## @ignore IsGeometryIgnored
+## @ignore SetGeometryIgnored
 
-## @method $GetReferenceCount()
-# @return integer
+## @method $GeometryIgnored($IgnoreState)
+# @note a.k.a. GetGeometryIgnored (only get), SetGeometryIgnored (only set)
+# Get or set the ignore status of geometry when fetching features.
+# @return the ignore status of geometry
+# @since 1.9.0
+
+## @ignore IsStyleIgnored
+## @ignore SetStyleIgnored
+
+## @method $StyleIgnored($IgnoreState)
+# @note a.k.a. GetStyleIgnored (only get), SetStyleIgnored (only set)
+# Get or set the ignore status of style information when fetching features.
+# @return the ignore status of style information
+# @since 1.9.0
 
 
 ## @class Geo::OGR::FieldDefn
@@ -856,76 +756,70 @@
 # @return a reference to a hash whose keys are Name, Type, Justify,
 # Width, and Precision
 
+## @ignore GetName
+## @ignore GetNameRef
+## @ignore SetName
+
 ## @method $Name($name)
-# Get and/or set the name
+# Get and/or set the name of the field.
+# @note a.k.a. GetName, GetNameRef, SetName
 # @param name [optional]
 # @return the name in non-void context
 
+## @ignore GetFieldTypeName
+## @ignore GetTypeName
+## @ignore GetType
+## @ignore SetType
+
 ## @method $Type($type)
+# @note a.k.a. GetFieldTypeName, GetTypeName, GetType, SetType
 # @param type [optional] one of field types: Integer, IntegerList, Real,
 # RealList, String, StringList, WideString, WideStringList, Binary, Date,
 # Time, or DateTime (wide strings are not really supported yet)
 # @return one of field types in non-void context
 
+## @ignore GetJustify
+## @ignore SetJustify
+
 ## @method $Justify($justify)
-# Get and/or set the justification
+# Get and/or set the justification of this field.
+# @note a.k.a. GetJustify, SetJustify
 # @param justify [optional] as string: Undefined, Left, or Right
 # @return one of Undefined Left Right in non-void context
 
+## @ignore GetWidth
+## @ignore SetWidth
+
 ## @method $Width($width)
-# Get and/or set the field width
+# Get and/or set the field width.
+# @note a.k.a. GetWidth, SetWidth
 # @param width [optional]
 # @return integer in non-void context
 
+## @ignore GetPrecision
+## @ignore SetPrecision
+
 ## @method $Precision($precision)
-# Get and/or set the precision
+# Get and/or set the precision of this field.
+# @note a.k.a. GetPrecision, SetPrecision
 # @param precision [optional]
 # @return integer in non-void context
 
-## @method $GetName()
-# @return
+## @ignore IsIgnored
+## @ignore SetIgnored
 
-## @method $GetNameRef()
-# Same as GetName.
-# @return
-
-## @method SetName($name)
-# @param name
-
-## @method $GetPrecision()
-# @return
-
-## @method SetPrecision($precision)
-# @param precision
-
-## @method $GetWidth()
-# return
-
-## @method SetWidth($width)
-# @param width
-
-## @method $GetFieldTypeName()
-# @deprecated use string type names
-
-## @method $GetType()
-# @deprecated use Geo::OGR::FieldDefn::Type, which returns a string
-# @return type as integer
-
-## @method SetType($type)
-# @deprecated use Geo::OGR::FieldDefn::Type, which accepts a string
-# @param type
-
-## @method $GetJustify()
-# @deprecated use Geo::OGR::FieldDefn::Justify, which returns a string
-# @return justify as an integer
-
-## @method SetJustify($justify)
-# @deprecated use Geo::OGR::FieldDefn::Justify, which accepts a string
-# @param justify as an integer
-
+## @method $Ignored($ignore)
+# Get and/or set the ignore status (whether this field should be
+# omitted when fetching features) of this field.
+# @note a.k.a. IsIgnored, SetIgnored
+# @param ignore [optional]
+# @return the ignore status in non-void context
+# @since 1.9.0
 
 ## @class Geo::OGR::Geometry
 # @isa (Geo::OGR)
+# @note Most spatial analysis methods require <a
+# href="http://geos.osgeo.org/doxygen/">GEOS</a> to work rigorously.
 
 ## @attr list GEOMETRY_TYPES
 # Geometry types supported by GDAL
@@ -958,6 +852,8 @@
 #    PrimaryRadius, SecondaryRadius, Rotation, StartAngle, EndAngle,
 #    MaxAngleStepSizeDegrees]
 #
+# @note uses CreateGeometryFrom* functions from Geo::OGR
+#
 # Usage:
 # \code
 # $g = Geo::OGR::Geometry->create(...arguments...);
@@ -979,22 +875,39 @@
 ## @method $GetDimension()
 # @return 0, 1, or 2
 
+## @ignore ExportToWkt
+
 ## @method $AsText()
-# This geometric object in Well-known text. Alternative name: ExportToWkt.
+# This geometric object in Well Known Text.
+# @note a.k.a. ExportToWkt
 # @return a WKT string
 
 ## @method $AsBinary($byte_order = 'XDR')
-# This geometric object as a Well-known binary string. Alternative name: ExportToWkb.
+# This geometric object as a Well-known binary string.
+# @note a.k.a. ExportToWkb
 # @param byte_order XDR or NDR
 # @return a WKB binary string
 
-## @method $ExportToGML()
-# This geometric object as a GML string. Alternative name: AsGML.
+## @ignore ExportToGML
+
+## @method $AsGML()
+# This geometric object as a GML string.
+# @note a.k.a. ExportToGML
 # @return a GML string
 
-## @method $ExportToKML()
-# This geometric object as a KML string. Alternative name: AsKML.
+## @ignore ExportToKML
+
+## @method $AsKML()
+# This geometric object as a KML string.
+# @note a.k.a. ExportToKML
 # @return KML string
+
+## @ignore ExportToJson
+
+## @method $AsJSON()
+# This geometric object as a JSON string.
+# @note a.k.a. ExportToJson
+# @return JSON string
 
 ## @method AddPoint($x, $y, $z)
 # Set the data of a point or add a point to a line string. Consider
@@ -1125,7 +1038,7 @@
 ## @ignore GetArea
 
 ## @method $Area()
-# @note aka GetArea
+# @note a.k.a. GetArea
 # @return the area of the polygon or multipolygon
 
 ## @method $GetGeometryCount()
@@ -1135,9 +1048,6 @@
 # @param index
 # @return a new Geo::OGR::Geometry object whose data is a part of the
 # parent geometry
-
-## @method Geo::OGR::Geometry GetBoundary()
-# @return a new Geo::OGR::Geometry object
 
 ## @method Geo::OGR::Geometry ConvexHull()
 # @return a new Geo::OGR::Geometry object
@@ -1197,49 +1107,80 @@
 # @param other a Geo::OGR::Geometry object
 # @return a new Geo::OGR::Geometry object
 
+## @method Geo::OGR::Geometry UnionCascaded()
+# @return a new Geo::OGR::Geometry object
+# @since 1.8.0
+
 ## @method Geo::OGR::Geometry Difference($other)
 # @param other a Geo::OGR::Geometry object
 # @return a new Geo::OGR::Geometry object
 
-## @method Geo::OGR::Geometry SymmetricDifference($other)
+## @ignore SymmetricDifference
+
+## @method Geo::OGR::Geometry SymDifference($other)
+# Compute symmetric difference. 
+# @note a.k.a. SymmetricDifference
 # @param other a Geo::OGR::Geometry object
 # @return a new Geo::OGR::Geometry object
+# @since 1.8.0
+
+## @ignore GetBoundary
+
+## @method Geo::OGR::Geometry Boundary()
+# @note a.k.a. GetBoundary
+# @return the boundary of this geometry as a geometry
+# @since 1.8.0
 
 ## @method $Distance($other)
 # @param other a Geo::OGR::Geometry object
-# @return
+# @return the distance to the other geometry
 
-## @method $Intersect($other)
-# @param other a Geo::OGR::Geometry object
-# @return boolean
+## @ignore Intersect
 
-## @method $Equal($other)
+## @method $Intersects($other)
+# @note a.k.a. Intersect (deprecated)
 # @param other a Geo::OGR::Geometry object
-# @return boolean
+# @return true if this geometry intersects with the other geometry, false otherwise
+
+## @ignore Equal
+
+## @method $Equals($other)
+# @note a.k.a. Equal (deprecated)
+# @param other a Geo::OGR::Geometry object
+# @return true if this geometry is equivalent to the other geometry, false otherwise
 
 ## @method $Disjoint($other)
 # @param other a Geo::OGR::Geometry object
-# @return boolean
+# @return true if this geometry is disjoint from the other geometry, false otherwise
 
 ## @method $Touches($other)
 # @param other a Geo::OGR::Geometry object
-# @return boolean
+# @return true if this geometry touches the other geometry, false otherwise
 
 ## @method $Crosses($other)
 # @param other a Geo::OGR::Geometry object
-# @return boolean
+# @return true if this geometry crosses the other geometry, false otherwise
 
 ## @method $Within($other)
 # @param other a Geo::OGR::Geometry object
-# @return boolean
+# @return true if this geometry is within the other geometry, false otherwise
 
 ## @method $Contains($other)
 # @param other a Geo::OGR::Geometry object
-# @return boolean
+# @return true if this geometry contains the other geometry, false otherwise
 
 ## @method $Overlaps($other)
 # @param other a Geo::OGR::Geometry object
-# @return boolean
+# @return true if this geometry overlaps the other geometry, false otherwise
+
+## @method Segmentize($MaxLength)
+# Modify the geometry such it has no segment longer than the given length.
+# @param MaxLength the given length
+
+## @method Simplify($Tolerance)
+# Simplify the geometry.
+# @param Tolerance the length tolerance for the simplification
+# @since 1.8.0
 
 ## @method TransformTo($srs)
 # @param srs a Geo::OSR::SpatialReference object
@@ -1255,11 +1196,22 @@
 
 ## @method CloseRings()
 
-## @method \@GetEnvelope()
-# @return arrayref = [$minx, $maxx, $miny, $maxy]
+## @method @GetEnvelope()
+# @note In scalar context returns a reference to an anonymous array
+# containing the envelope.
+# @note The order of values is different from those returned by
+# Geo::OGR::Layer::GetExtent.
+# @return the envelope ($minx, $maxx, $miny, $maxy)
+
+## @method @GetEnvelope3D()
+# @note In scalar context returns a reference to an anonymous array
+# containing the envelope.
+# @return the 3-D envelope ($minx, $maxx, $miny, $maxy, $minz, $maxz)
+# @since 1.9.0
 
 ## @method Geo::OGR::Geometry Centroid()
 # @return a new Geo::OGR::Geometry object
+# @since 1.8.0
 
 ## @method $WkbSize()
 # @return an integer

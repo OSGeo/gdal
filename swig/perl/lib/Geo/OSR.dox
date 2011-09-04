@@ -105,7 +105,7 @@
 
 ## @method Export($format)
 # Export the spatial reference to a selected format.
-# @note aka As.
+# @note a.k.a. As
 # @param format One of the following. The return value is explained
 # after the format. Other arguments are explained in parenthesis.
 # - WKT (Text): Well Known Text string
