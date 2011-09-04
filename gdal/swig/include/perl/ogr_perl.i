@@ -343,11 +343,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    for my $fn (keys %row) {
 		next if $fn eq 'FID';
 		next if $fn eq 'Geometry';
-		if (defined $row{$fn}) {
-		    $f->SetField($fn, $row{$fn});
-		} else {
-		    $f->UnsetField($fn);
-		}
+		$f->SetField($fn, $row{$fn});
 		$changed = 1;
 	    }
 	    $self->SetFeature($f) if $changed;
@@ -388,7 +384,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		for my $field (@{$s->{Fields}}) {
 		    my $v = shift;
 		    my $n = $field->{Name};
-		    defined $v ? $f->SetField($n, $v) : $f->UnsetField($n);
+		    $f->SetField($n, $v);
 		}
 		$changed = 1;
 	    }
@@ -552,11 +548,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    for my $fn (keys %row) {
 		next if $fn eq 'FID';
 		next if $fn eq 'Geometry';
-		if (defined $row{$fn}) {
-		    $self->SetField($fn, $row{$fn});
-		} else {
-		    $self->UnsetField($fn);
-		}
+		$self->SetField($fn, $row{$fn});
 	    }
 	    return unless defined wantarray;
 	    %row = ();
@@ -592,7 +584,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		for my $field (@{$s->{Fields}}) {
 		    my $v = shift;
 		    my $n = $field->{Name};
-		    defined $v ? $self->SetField($n, $v) : $self->UnsetField($n);
+		    $self->SetField($n, $v);
 		}
 	    }
 	    return unless defined wantarray;
