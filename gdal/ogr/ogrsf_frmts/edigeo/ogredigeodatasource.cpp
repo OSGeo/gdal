@@ -1361,18 +1361,11 @@ int OGREDIGEODataSource::Open( const char * pszFilename, int bUpdateIn)
     pszName = CPLStrdup( pszFilename );
 
 /* -------------------------------------------------------------------- */
-/*      Determine what sort of object this is.                          */
-/* -------------------------------------------------------------------- */
-    VSIStatBufL sStatBuf;
-
-    if( VSIStatL( pszFilename, &sStatBuf ) != 0 ||
-        !VSI_ISREG(sStatBuf.st_mode) ||
-        !EQUAL(CPLGetExtension(pszFilename), "thf") )
-        return FALSE;
-    
-/* -------------------------------------------------------------------- */
 /*      Does this appear to be a .THF file?                             */
 /* -------------------------------------------------------------------- */
+    if( !EQUAL(CPLGetExtension(pszFilename), "thf") )
+        return FALSE;
+
     fpTHF = VSIFOpenL(pszFilename, "rb");
     if (fpTHF == NULL)
         return FALSE;
