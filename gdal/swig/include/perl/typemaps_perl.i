@@ -275,8 +275,19 @@ CreateArrayFromStringArray( char **first ) {
 %typemap(argout,fragment="CreateArrayFromDoubleArray") ( double argout[ANY])
 {
   /* %typemap(argout) (double argout[ANY]) */
-  $result = CreateArrayFromDoubleArray( $1, $dim0 );
-  argvi++;
+  if (GIMME_V == G_ARRAY) {
+    /* return a list */
+    int i;
+    SP -= items;
+    EXTEND(SP, $dim0);
+    for (i = 0; i < $dim0; i++)
+      mPUSHn($1[i]);
+    PUTBACK;
+    return;
+  } else {
+    $result = CreateArrayFromDoubleArray( $1, $dim0 );
+    argvi++;
+  }  
 }
 
 %typemap(in,numinputs=0) ( double *argout[ANY]) (double *argout)
