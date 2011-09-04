@@ -64,6 +64,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 
   %rename (_UnsetField) UnsetField;
   %rename (_SetField) SetField;
+  %rename (_SetFrom) SetFrom;
 
 }
 
@@ -455,6 +456,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	sub GetName {
 	  return $Geo::OGR::name_encoding ? decode($Geo::OGR::name_encoding, $_[0]->_GetName) : $_[0]->_GetName;
 	}
+	*Name = *GetName;
 	sub Schema {
 	    my $self = shift;
 	    my %schema;
@@ -490,6 +492,16 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    return $Geo::OGR::Geometry::TYPE_INT2STRING{GetGeomType($self)} if defined wantarray;
 	}
 	*GeometryType = *GeomType;
+	sub GeometryIgnored {
+	    my $self = shift;
+	    SetGeometryIgnored($self, $_[0]) if @_;
+	    IsGeometryIgnored($self) if defined wantarray;
+	}
+	sub StyleIgnored {
+	    my $self = shift;
+	    SetStyleIgnored($self, $_[0]) if @_;
+	    IsStyleIgnored($self) if defined wantarray;
+	}
 
 	package Geo::OGR::Feature;
 	use strict;
@@ -711,7 +723,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		_SetField($self, $field, @$list[0..6]);
 	    } 
 	    else {
-		carp "unknown/unsupported field type: $type";
+		carp "unknown or unsupported field type: $type";
 	    }
 	}
 	sub Field {
@@ -735,6 +747,26 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my $geom = GetGeometryRef($self);
 	    $GEOMETRIES{tied(%$geom)} = $self if $geom;
 	    return $geom;
+	}
+	sub ReferenceGeometry {
+	    my $self = shift;
+	    SetGeometryDirectly($self, $_[0]) if @_;
+	    if (defined wantarray) {
+		my $geometry = GetGeometry($self);
+		return $geometry->Clone() if $geometry;
+	    }
+	}
+	sub SetFrom {
+	    my($self, $other) = @_;
+	    _SetFrom($self, $other), return if @_ <= 2;
+	    my $forgiving = $_[2];
+	    _SetFrom($self, $other, $forgiving), return if @_ <= 3;	    
+	    my $map = $_[3];
+	    my @list;
+	    for my $i (1..GetFieldCount($self)) {
+		push @list, ($map->{$i} || -1);
+	    }
+	    SetFromWithMap($self, $other, 1, \@list);
 	}
 
 	package Geo::OGR::FieldDefn;
@@ -822,6 +854,11 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my $self = shift;
 	    SetPrecision($self, $_[0]) if @_;
 	    GetPrecision($self) if defined wantarray;
+	}
+	sub Ignored {
+	    my $self = shift;
+	    SetIgnored($self, $_[0]) if @_;
+	    IsIgnored($self) if defined wantarray;
 	}
 	sub Schema {
 	    my $self = shift;
@@ -1137,6 +1174,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	*AsBinary = *ExportToWkb;
 	*AsGML = *ExportToGML;
 	*AsKML = *ExportToKML;
+	*AsJSON = *ExportToJson;
 	*BuildPolygonFromEdges = *Geo::OGR::BuildPolygonFromEdges;
 	*ForceToPolygon = *Geo::OGR::ForceToPolygon;
 	
