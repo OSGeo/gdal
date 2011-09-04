@@ -435,7 +435,7 @@ GBool OGRStyleMgr::AddStyle(const char *pszStyleName,
 /************************************************************************/
 
 /**
- * Add a style to the current style table.
+ * \brief Add a style to the current style table.
  *
  * This function is the same as the C++ method OGRStyleMgr::AddStyle().
  *
@@ -461,6 +461,19 @@ int OGR_SM_AddStyle(OGRStyleMgrH hSM, const char *pszStyleName,
 /*            const char *OGRStyleMgr::GetStyleString(OGRFeature *)         */
 /*                                                                          */
 /****************************************************************************/
+
+/**
+ * \brief Get the style string from the style manager.
+ *
+ * @param poFeature feature object from which to read the style or NULL to
+ *                  get the style string stored in the manager.
+ *
+ * @return the style string stored in the feature or the style string stored
+ *          in the style manager if poFeature is NULL
+ *
+ * NOTE: this method will call OGRStyleMgr::InitFromFeature() if poFeature is
+ *       not NULL and replace the style string stored in the style manager
+ */
 
 const char *OGRStyleMgr::GetStyleString(OGRFeature *poFeature)
 {
