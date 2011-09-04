@@ -392,8 +392,8 @@ void kml2featurestyle (
             kml2stylestring ( poKmlStyle, poOgrSM );
 
             /***** add the style to the feature *****/
-
-            poOgrSM->SetFeatureStyleString ( poOgrFeat );
+            
+            poOgrFeat->SetStyleString(poOgrSM->GetStyleString(NULL));
 
             delete poOgrSM;
         }
