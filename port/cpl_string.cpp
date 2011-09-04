@@ -342,7 +342,7 @@ char **CSLLoad2(const char *pszFname, int nMaxLines, int nMaxCols, char** papszO
         {
             /* Unable to open file */
             CPLError( CE_Failure, CPLE_OpenFailed,
-                    "CSLLoad2(\"%s\") failed: unable to open output file.",
+                    "CSLLoad2(\"%s\") failed: unable to open file.",
                     pszFname );
         }
     }
