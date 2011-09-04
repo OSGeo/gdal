@@ -677,92 +677,92 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
         }
         if( H5Tequal( H5T_NATIVE_CHAR, hAttrNativeType ) ){
             for( i=0; i < nAttrElmts; i++ ) {
-            sprintf( szData, "%c ", ((char *) buf)[i]);
-            if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
+                sprintf( szData, "%c ", ((char *) buf)[i]);
+                if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
-                CPLError( CE_Warning, CPLE_OutOfMemory,
-                      "Header data too long. Truncated\n");
+                    CPLError( CE_Warning, CPLE_OutOfMemory,
+                              "Header data too long. Truncated\n");
             }
         }
         else if( H5Tequal( H5T_NATIVE_UCHAR,  hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-            sprintf( szData, "%c", ((char *) buf)[i] );
-            if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
+                sprintf( szData, "%c", ((char *) buf)[i] );
+                if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
-                CPLError( CE_Warning, CPLE_OutOfMemory,
-                      "Header data too long. Truncated\n");
+                    CPLError( CE_Warning, CPLE_OutOfMemory,
+                              "Header data too long. Truncated\n");
             }
         }
         else if( H5Tequal( H5T_NATIVE_SHORT,  hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-            sprintf( szData, "%d ", ((short *) buf)[i] );
-            if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
+                sprintf( szData, "%d ", ((short *) buf)[i] );
+                if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
-                CPLError( CE_Warning, CPLE_OutOfMemory,
-                      "Header data too long. Truncated\n");
+                    CPLError( CE_Warning, CPLE_OutOfMemory,
+                              "Header data too long. Truncated\n");
             }
         }
         else if( H5Tequal( H5T_NATIVE_USHORT, hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-            sprintf( szData, "%ud ", ((unsigned short *) buf)[i] );
-            if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
+                sprintf( szData, "%ud ", ((unsigned short *) buf)[i] );
+                if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
-                CPLError( CE_Warning, CPLE_OutOfMemory,
-                      "Header data too long. Truncated\n");
+                    CPLError( CE_Warning, CPLE_OutOfMemory,
+                              "Header data too long. Truncated\n");
             }
         }
         else if( H5Tequal( H5T_NATIVE_INT,    hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-            sprintf( szData, "%d ", ((int *) buf)[i] );
-            if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
+                sprintf( szData, "%d ", ((int *) buf)[i] );
+                if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
-                CPLError( CE_Warning, CPLE_OutOfMemory,
-                      "Header data too long. Truncated\n");
+                    CPLError( CE_Warning, CPLE_OutOfMemory,
+                              "Header data too long. Truncated\n");
             }
         }
         else if( H5Tequal( H5T_NATIVE_UINT,   hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-            sprintf( szData, "%ud ", ((unsigned int *) buf)[i] );
-            if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
+                sprintf( szData, "%ud ", ((unsigned int *) buf)[i] );
+                if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
-                CPLError( CE_Warning, CPLE_OutOfMemory,
-                      "Header data too long. Truncated\n");
+                    CPLError( CE_Warning, CPLE_OutOfMemory,
+                              "Header data too long. Truncated\n");
             }
         }
         else if( H5Tequal( H5T_NATIVE_LONG,   hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-            sprintf( szData, "%ld ", ((long *)buf)[i] );
-            if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
+                sprintf( szData, "%ld ", ((long *)buf)[i] );
+                if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
-                CPLError( CE_Warning, CPLE_OutOfMemory,
-                      "Header data too long. Truncated\n");
+                    CPLError( CE_Warning, CPLE_OutOfMemory,
+                              "Header data too long. Truncated\n");
             }
         }
         else if( H5Tequal( H5T_NATIVE_ULONG,  hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-            sprintf( szData, "%ld ", ((unsigned long *)buf)[i] );
-            if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
+                sprintf( szData, "%ld ", ((unsigned long *)buf)[i] );
+                if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
-                CPLError( CE_Warning, CPLE_OutOfMemory,
-                      "Header data too long. Truncated\n");
+                    CPLError( CE_Warning, CPLE_OutOfMemory,
+                              "Header data too long. Truncated\n");
             }
         }
         else if( H5Tequal( H5T_NATIVE_FLOAT,  hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-            sprintf( szData, "%.8g ",  ((float *)buf)[i] );
-            if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
+                sprintf( szData, "%.8g ",  ((float *)buf)[i] );
+                if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
-                CPLError( CE_Warning, CPLE_OutOfMemory,
-                      "Header data too long. Truncated\n");
+                    CPLError( CE_Warning, CPLE_OutOfMemory,
+                              "Header data too long. Truncated\n");
             }
         }
         else if( H5Tequal( H5T_NATIVE_DOUBLE, hAttrNativeType ) ) {
             for( i=0; i < nAttrElmts; i++ ) {
-            sprintf( szData, "%.15g ",  ((double *)buf)[i] );
-            if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
+                sprintf( szData, "%.15g ",  ((double *)buf)[i] );
+                if( CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
                                                             MAX_METADATA_LEN )
-                CPLError( CE_Warning, CPLE_OutOfMemory,
-                      "Header data too long. Truncated\n");
+                    CPLError( CE_Warning, CPLE_OutOfMemory,
+                              "Header data too long. Truncated\n");
             }
         }
         CPLFree( buf );
