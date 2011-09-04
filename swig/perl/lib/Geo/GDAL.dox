@@ -62,8 +62,7 @@
 # Clear the set of support file search paths.
 
 ## @fn $FindFile($class, $basename)
-#
-# \brief Search for GDAL support files.
+# Search for GDAL support files.
 #
 # An example:
 # \code
@@ -220,7 +219,7 @@
 # @return a new Geo::GDAL::Driver object
 
 ## @fn ComputeMedianCutPCT($red, $green, $blue, $num_colors, $colors, $callback, $callback_data)
-# \brief Compute an "optimal" color table for a three band image.
+# Compute an "optimal" color table for a three band image.
 # @param red a Geo::GDAL::Band object
 # @param green a Geo::GDAL::Band object
 # @param blue a Geo::GDAL::Band object
@@ -233,7 +232,7 @@
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
 
 ## @fn DitherRGB2PCT($red, $green, $blue, $target, $colors, $callback, $callback_data)
-# \brief Dither a three band image into one band using a color table.
+# Dither a three band image into one band using a color table.
 # @param red a Geo::GDAL::Band object
 # @param green a Geo::GDAL::Band object
 # @param blue a Geo::GDAL::Band object
@@ -411,7 +410,7 @@
 
 ## @class Geo::GDAL::AsyncReader
 # @isa (Geo::GDAL)
-# This class has not been tested in GDAL Perl wrappers
+# This class is not yet documented not tested in the GDAL Perl wrappers
 
 ## @ignore GetNextUpdatedRegion
 ## @ignore LockBuffer
@@ -516,7 +515,7 @@
 ## @method Geo::GDAL::Dataset Create($name, $xsize, $ysize, $bands =1, $type = 'Byte', \%options = undef)
 # Create a GDAL dataset using this driver.
 # \note a.k.a. CreateDataset
-# @brief Create a new Geo::GDAL::Dataset
+# Create a new Geo::GDAL::Dataset
 # @param name
 # @param xsize
 # @param ysize
@@ -533,9 +532,8 @@
 ## @ignore CreateCopy
 
 ## @method Geo::GDAL::Dataset Copy($name, $src, $strict = 1, \%options = undef)
-# Copy a GDAL dataset.
-# \note a.k.a. CreateCopy
-# @brief Create a new Geo::GDAL::Dataset as a copy of an existing dataset.
+# Create a new Geo::GDAL::Dataset as a copy of an existing dataset.
+# @note a.k.a. CreateCopy 
 # @param name
 # @param src A Geo::GDAL::Dataset object.
 # @param strict
@@ -609,6 +607,9 @@
 # @param name
 # @param access Either ReadOnly or Update.
 # @return a new Geo::GDAL::Dataset object.
+
+## @method @GetFileList()
+# @return list of files GDAL believes to be part of this dataset.
 
 ## @method @Size()
 # @return (width, height)
@@ -723,14 +724,19 @@
 ## @class Geo::GDAL::Band
 # @isa ( Geo::GDAL::MajorObject Geo::GDAL )
 
+## @attr list COLOR_INTERPRETATIONS
+
 ## @attr XSize
 # scalar (access as $band->{XSize})
 
 ## @attr YSize
 # scalar (access as $band->{YSize})
 
-## @method $GetBand()
-# @return the band number of this band.
+## @ignore GetBand
+
+## @method $GetBandNumber()
+# @note a.k.a. GetBand
+# @return the number of this band.
 
 ## @method $DataType()
 # @return a data type string (Byte, UInt16, Int16, UInt32, Int32, Float32,
@@ -743,26 +749,51 @@
 # @return the size of a preferred i/o raster blocks as a list (width,
 # height).
 
+## @ignore GetRasterColorInterpretation
+## @ignore SetRasterColorInterpretation
+## @ignore GetColorInterpretation
+## @ignore SetColorInterpretation
+
 ## @method $ColorInterpretation($color_interpretation)
-# Color interpretation is currently one of Undefined GrayIndex
-# PaletteIndex RedBand GreenBand BlueBand AlphaBand HueBand
-# SaturationBand LightnessBand CyanBand MagentaBand YellowBand
-# BlackBand
-# @param color_interpretation [optional] new color interpretation
-# @return color interpretation
+# @note a.k.a. GetRasterColorInterpretation and GetColorInterpretation
+# (get only and returns an integer), SetRasterColorInterpretation and
+# SetColorInterpretation (set only and requires an integer)
+# @param color_interpretation [optional] new color interpretation, one
+# of \@Geo::GDAL::Band::COLOR_INTERPRETATIONS
+# @return color interpretation, one of \@Geo::GDAL::Band::COLOR_INTERPRETATIONS
+
+## @ignore GetNoDataValue
+## @ignore SetNoDataValue
 
 ## @method $NoDataValue($NoDataValue)
+# @note a.k.a. GetNoDataValue (get only), SetNoDataValue (set only)
 # @param NoDataValue [optional]
 # Get or set the no data value.
 # @note There does not exist a good way to clear the no data
 # value. $band->NoDataValue(undef) does not do what you want.
 # @return the nodata value.
 
-## @method $GetNoDataValue()
-# @return number (the "no data" value) or undef (there is no "no data" value).
+## @ignore GetUnitType
+## @ignore SetUnitType
 
-## @method SetNoDataValue($NoDataValue)
-# @param NoDataValue A number. undef does not do what it should do.
+## @method Unit($type)
+# @param [optional] the unit (a string).
+# @return the unit (a string).
+# @since version 1.9 of the bindings.
+
+## @ignore GetScale
+## @ignore SetScale
+## @ignore GetOffset
+## @ignore SetOffset
+
+## @method ScaleAndOffset($scale, $offset)
+# Scale and offset are used to transform raw pixel values into the
+# units returned by GetUnits(). The conversion function is:
+# \code
+# Units value = (raw value * scale) + offset
+# \endcode
+# @return ($scale, $offset)
+# @since version 1.9 of the bindings.
 
 ## @method $GetMinimum()
 # @return statistical minimum of the band or undef if statistics are
@@ -771,22 +802,6 @@
 ## @method $GetMaximum()
 # @return statistical minimum of the band or undef if statistics are
 # not kept or computed.
-
-## @method $GetOffset()
-# Scale and offset used to store data values in transformed form. The
-# conversion function is:
-# \code
-# Units value = (raw value * scale) + offset
-# \endcode
-# @return offset or undef.
-
-## @method $GetScale()
-# Scale and offset are used to store data values in transformed form. The
-# conversion function is:
-# \code
-# Units value = (raw value * scale) + offset
-# \endcode
-# @return scale or undef.
 
 ## @method @ComputeStatistics($approx_ok)
 # @param approx_ok Whether it is allowed to compute the statistics
@@ -813,6 +828,9 @@
 ## @method Geo::GDAL::Band GetOverview($band)
 # @param band 0..GetOverviewCount-1
 # @return a new Geo::GDAL::Band object.
+
+## @method HasArbitraryOverviews()
+# @return true or false.
 
 ## @method $Checksum($xoff = 0, $yoff = 0, $xsize = undef, $ysize = undef)
 # Computes a checksum from the raster or a part of it.
@@ -889,6 +907,18 @@
 # - \a Progress an optional progress function, the default is undef
 # - \a ProgressData data for the progress function, the default is undef
 # @return a list which contains the count of values in each bucket
+
+## @method @GetDefaultHistogram($force = 1, $callback = undef, $callback_data = undef)
+# @param force true to force the computation
+# @param callback [optional] a reference to a subroutine, which will
+# be called with parameters (number progress, string msg, callback_data)
+# @param callback_data [optional]
+# @return a list: ($min, $max, arrayref histogram).
+
+## @method @SetDefaultHistogram($min, $max, $histogram)
+# @param min
+# @param max
+# @param histogram reference to an array containing the histogram
 
 ## @method FlushCache()
 # Write cached data to disk. There is usually no need to call this
@@ -977,12 +1007,6 @@
 # @param callback_data [optional]
 #
 # <a href="http://www.gdal.org/gdal__alg_8h.html">Documentation for GDAL algorithms</a>
-
-## @method $GetRasterColorInterpretation()
-# @deprecated use Geo::GDAL::Band::ColorInterpretation, which understands strings
-
-## @method SetRasterColorInterpretation()
-# @deprecated use Geo::GDAL::Band::ColorInterpretation, which understands strings
 
 
 ## @class Geo::GDAL::ColorTable
@@ -1129,8 +1153,14 @@
 # @param column
 # @param value
 
-## @class Geo::GDAL::SavedEnv
-# This class is not yet documented for the GDAL Perl bindings.
+## @ignore GetLinearBinning
+## @ignore SetLinearBinning
+
+## @method LinearBinning($Row0MinIn, $BinSizeIn)
+# @param Row0MinIn [optional] the lower bound (pixel value) of the first category.
+# @param BinSizeIn [optional] the width of each category (in pixel value units).
+# @return ($Row0MinIn, $BinSizeIn) or an empty list if LinearBinning is not set.
+
 
 ## @class Geo::GDAL::Transformer
 # This class is not yet documented for the GDAL Perl bindings.
