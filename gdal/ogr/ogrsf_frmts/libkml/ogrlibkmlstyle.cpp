@@ -271,9 +271,10 @@ void addstylestring2kml (
 
                 /***** scale *****/
 
-                double dfScale = poStyleLabel->Size ( nullcheck );
+                double dfScale = poStyleLabel->Stretch ( nullcheck );
 
                 if ( !nullcheck ) {
+                    dfScale /= 100.0;
                     poKmlLabelStyle->set_scale ( dfScale );
                 }
                 
@@ -578,6 +579,13 @@ OGRStyleLabel *kml2label (
         poOgrStyleLabel->SetForColor ( szColor );
     }
 
+    if ( poKmlLabelStyle->has_scale (  ) ) {
+        double dfScale = poKmlLabelStyle->get_scale (  );
+        dfScale *= 100.0;
+
+        poOgrStyleLabel->SetStretch(dfScale);
+    }
+    
     return poOgrStyleLabel;
 }
 
