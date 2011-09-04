@@ -652,26 +652,51 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
     hAttrSpace       = H5Aget_space( hAttrID );
     nAttrDims        = H5Sget_simple_extent_dims( hAttrSpace, nSize, NULL );
 
-    if( H5Tget_class( hAttrNativeType ) == H5T_STRING ) {
-        nAttrSize = H5Aget_storage_size( hAttrID );
-        szData = (char*) CPLMalloc((size_t) (nAttrSize+1));
-        szValue = (char*) CPLMalloc((size_t) (nAttrSize+1));
-        H5Aread( hAttrID, hAttrNativeType, szData  );
-        szData[nAttrSize]='\0';
-        sprintf( szValue, "%s", szData );
+    nAttrElmts = 1;
+    for( i=0; i < nAttrDims; i++ ) {
+        nAttrElmts *= (int) nSize[i];
+    }
+    CPLDebug( "HDF5", "nAttrElmts: %d", nAttrElmts );
 
+    if( H5Tget_class( hAttrNativeType ) == H5T_STRING )
+    {
+        if ( H5Tis_variable_str(hAttrNativeType) )
+        {
+            char** papszStrings;
+            papszStrings = (char**) CPLMalloc( nAttrElmts * sizeof(char*) );
+
+            // Read the values
+            H5Aread( hAttrID, hAttrNativeType, papszStrings );
+
+            // Concatenate all values as one string (separated by a space)
+            CPLString osVal = papszStrings[0];
+            for( i=1; i < nAttrElmts; i++ ) {
+                osVal += " ";
+                osVal += papszStrings[i];
+            }
+
+            szValue = (char*) CPLMalloc(osVal.length() + 1);
+            strcpy( szValue, osVal.c_str() );
+
+            for (unsigned i = 0; i < nAttrElmts; ++i)
+                CPLFree( papszStrings[i] );
+            CPLFree( papszStrings );
+        }
+        else
+        {
+            nAttrSize = H5Aget_storage_size( hAttrID );
+            szValue = (char*) CPLMalloc((size_t) (nAttrSize+1));
+            H5Aread( hAttrID, hAttrNativeType, szValue );
+            szValue[nAttrSize] = '\0';
+        }
     }
     else {
-        nAttrElmts = 1;
-        for( i=0; i < nAttrDims; i++ ) {
-            nAttrElmts *= (int) nSize[i];
-        }
         if( nAttrElmts > 0 ) {
             buf = (void *) CPLMalloc( nAttrElmts*
                           H5Tget_size( hAttrNativeType ));
             szData = (char*) CPLMalloc( 8192 );
             szValue = (char*) CPLMalloc( MAX_METADATA_LEN );
-            szData[0]='\0';
+            szData[0] = '\0';
             szValue[0] ='\0';
             H5Aread( hAttrID, hAttrNativeType, buf );
         }
