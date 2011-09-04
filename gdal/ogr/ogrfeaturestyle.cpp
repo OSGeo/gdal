@@ -483,6 +483,19 @@ const char *OGRStyleMgr::GetStyleString(OGRFeature *poFeature)
       return InitFromFeature(poFeature);
 }
 
+/****************************************************************************/
+/*            GBool OGRStyleMgr::AddPart(const char *pszPart)               */
+/*            Add a new part in the current style                           */
+/****************************************************************************/
+
+/**
+ * \brief Add a part (style string) to the current style.
+ *
+ * @param pszPart the style string defining the part to add.
+ *
+ * @return TRUE on success, FALSE on errors. 
+ */
+
 GBool OGRStyleMgr::AddPart(const char *pszPart)
 {
     char *pszTmp; 
