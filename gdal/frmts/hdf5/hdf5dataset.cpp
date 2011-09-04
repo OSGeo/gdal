@@ -678,15 +678,8 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
             szValue = (char*) CPLMalloc(osVal.length() + 1);
             strcpy( szValue, osVal.c_str() );
 
-            for (unsigned i = 0; i < nAttrElmts; ++i)
-            {
-                /* FIXME ? Use appropriate free() method if it exists */
-                /* Can potentially be an issue on Windows if HDF5 lib is compiled with a different C runtime than GDAL */
-                /* How can we specify a custom memory allocator */
-#ifndef WIN32
-                free( papszStrings[i] );
-#endif
-            }
+            H5Dvlen_reclaim( hAttrNativeType, hAttrSpace, H5P_DEFAULT,
+                             papszStrings );
             CPLFree( papszStrings );
         }
         else
