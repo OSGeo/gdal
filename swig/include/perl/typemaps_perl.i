@@ -48,9 +48,8 @@
 	if ($1) {
 	    int i;
 	    for (i = 0; $1[i]; i++) {
-		if (i>items-1) EXTEND(SP, 1);
-		ST(argvi) = sv_2mortal(newSVpv($1[i], 0));
-		argvi++;
+		if (argvi > items-1) EXTEND(SP, 1);
+		ST(argvi++) = sv_2mortal(newSVpv($1[i], 0));
 	    }
 	    CSLDestroy($1);
 	}
@@ -233,8 +232,16 @@ CreateArrayFromStringArray( char **first ) {
 %typemap(argout,fragment="CreateArrayFromIntArray") (int len, int *output)
 {
   /* %typemap(argout) (int len, int *output) */
-  $result = CreateArrayFromIntArray( $2, $1 );
-  argvi++;
+  if (GIMME_V == G_ARRAY) {
+    /* return a list */
+    int i;
+    EXTEND(SP, argvi+$1-items+1);
+    for (i = 0; i < $1; i++)
+      ST(argvi++) = sv_2mortal(newSVnv($2[i]));
+  } else {
+    $result = CreateArrayFromIntArray( $2, $1 );
+    argvi++;
+  }
 }
 %typemap(freearg) (int len, int *output)
 {
@@ -278,12 +285,9 @@ CreateArrayFromStringArray( char **first ) {
   if (GIMME_V == G_ARRAY) {
     /* return a list */
     int i;
-    SP -= items;
-    EXTEND(SP, $dim0);
+    EXTEND(SP, argvi+$dim0-items+1);
     for (i = 0; i < $dim0; i++)
-      mPUSHn($1[i]);
-    PUTBACK;
-    return;
+      ST(argvi++) = sv_2mortal(newSVnv($1[i]));
   } else {
     $result = CreateArrayFromDoubleArray( $1, $dim0 );
     argvi++;
@@ -979,7 +983,8 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
 {
     SavedEnv saved_env;
     saved_env.fct = NULL;
-    saved_env.data = NULL;
+    saved_env.data = &PL_sv_undef;
+    $1 = (void *)(&saved_env);
 }
 
 %typemap(in) (GDALProgressFunc callback = NULL)
@@ -1004,8 +1009,6 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
     /* %typemap(in) (void* callback_data=NULL) */
     if (SvOK($input))
 	saved_env.data = (SV *)$input;
-    if (saved_env.fct)
-	$1 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
 }
 
 /*
