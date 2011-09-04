@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for HDF5 driver.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2008, Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -76,7 +76,7 @@ def hdf5_2():
         print(sds_list)
         gdaltest.post_reason( 'did not get expected subdatasets.' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -94,7 +94,7 @@ def hdf5_3():
     if cs != 135:
         gdaltest.post_reason( 'did not get expected checksum' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -111,7 +111,7 @@ def hdf5_4():
     if cs != 135:
         gdaltest.post_reason( 'did not get expected checksum' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -128,7 +128,7 @@ def hdf5_5():
     if cs != 18:
         gdaltest.post_reason( 'did not get expected checksum' )
         return 'fail'
-    
+
     return 'success'
 
 ###############################################################################
@@ -140,11 +140,11 @@ def hdf5_6():
         return 'skip'
 
     shutil.copyfile( 'data/groups.h5', 'tmp/groups.h5' )
-    
+
     ds = gdal.Open( 'HDF5:"tmp/groups.h5"://MyGroup/dset1' )
     ds.BuildOverviews( overviewlist = [2] )
     ds = None
-    
+
     ds = gdal.Open( 'HDF5:"tmp/groups.h5"://MyGroup/dset1' )
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
         gdaltest.post_reason( 'failed to find overview' )
@@ -152,7 +152,7 @@ def hdf5_6():
     ds = None
 
     # confirm that it works with a different path. (#3290)
-    
+
     ds = gdal.Open( 'HDF5:"data/../tmp/groups.h5"://MyGroup/dset1' )
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
         gdaltest.post_reason( 'failed to find overview with alternate path' )
@@ -166,7 +166,7 @@ def hdf5_6():
 
 
     gdaltest.clean_tmp()
-    
+
     return 'success'
 
 ###############################################################################
@@ -263,7 +263,42 @@ def hdf5_8():
     return 'success'
 
 ###############################################################################
-# 
+# Variable length string metadata check (regression test for #4228).
+
+def hdf5_9():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/vlstr_metadata.h5' )
+    metadata = ds.GetRasterBand(1).GetMetadata()
+    ds = None
+
+    ref_metadata = {
+        'TEST_BANDNAMES': 'SAA',
+        'TEST_CODING': '0.6666666667 0.0000000000 TRUE',
+        'TEST_FLAGS': '255=noValue',
+        'TEST_MAPPING': 'Geographic Lat/Lon 0.5000000000 0.5000000000 27.3154761905 -5.0833333333 0.0029761905 0.0029761905 WGS84 Degrees',
+        'TEST_NOVALUE': '255',
+        'TEST_RANGE': '0 255 0 255',
+    }
+
+    if len(metadata) != len(ref_metadata):
+        print
+        print 'metadata', metadata
+        print
+        gdaltest.post_reason( 'incorrect number of metadata' )
+        return 'fail'
+
+    for key in metadata:
+        if metadata[key] != ref_metadata[key]:
+            gdaltest.post_reason( 'unable to fing "%s" key' % key )
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+#
 class TestHDF5:
     def __init__( self, downloadURL, fileName, subdatasetname, checksum, download_size ):
         self.downloadURL = downloadURL
@@ -289,14 +324,17 @@ class TestHDF5:
 
 
 
-gdaltest_list = [ hdf5_1,
-                  hdf5_2,
-                  hdf5_3,
-                  hdf5_4,
-                  hdf5_5,
-                  hdf5_6,
-                  hdf5_7,
-                  hdf5_8 ]
+gdaltest_list = [
+    hdf5_1,
+    hdf5_2,
+    hdf5_3,
+    hdf5_4,
+    hdf5_5,
+    hdf5_6,
+    hdf5_7,
+    hdf5_8,
+    hdf5_9,
+]
 
 hdf5_list = [ ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',
                                      'HDF4_PALGROUP/HDF4_PALETTE_2', 7488, -1),
