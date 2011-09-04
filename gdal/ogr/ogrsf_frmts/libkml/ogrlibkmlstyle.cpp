@@ -353,28 +353,32 @@ void addstylestring2kml (
 ******************************************************************************/
 
 OGRStylePen *kml2pen (
-    LineStylePtr poKmlLineStyle );
+    LineStylePtr poKmlLineStyle,
+    OGRStylePen *poOgrStylePen);
 
 /******************************************************************************
  kml2brush
 ******************************************************************************/
 
 OGRStyleBrush *kml2brush (
-    PolyStylePtr poKmlPolyStyle );
+    PolyStylePtr poKmlPolyStyle,
+    OGRStyleBrush *poOgrStyleBrush);
 
 /******************************************************************************
- kml2brush
+ kml2symbol
 ******************************************************************************/
 
 OGRStyleSymbol *kml2symbol (
-    IconStylePtr poKmlIconStyle );
+    IconStylePtr poKmlIconStyle,
+    OGRStyleSymbol *poOgrStyleSymbol);
 
 /******************************************************************************
  kml2label
 ******************************************************************************/
 
 OGRStyleLabel *kml2label (
-    LabelStylePtr poKmlLabelStyle );
+    LabelStylePtr poKmlLabelStyle,
+    OGRStyleLabel *poOgrStyleLabel);
 
 /******************************************************************************
  kml2stylemgr
@@ -383,54 +387,146 @@ OGRStyleLabel *kml2label (
 void kml2stylestring (
     StylePtr poKmlStyle,
     OGRStyleMgr * poOgrSM )
+
 {
 
+    OGRStyleMgr * poOgrNewSM ;
+    OGRStyleTool *poOgrST = NULL;
+    OGRStyleTool *poOgrTmpST = NULL;
+    int i;
+
+    poOgrNewSM = new OGRStyleMgr( NULL );
+    
     /***** linestyle / pen *****/
 
     if ( poKmlStyle->has_linestyle (  ) ) {
+
+        poOgrNewSM->InitStyleString ( NULL );
+        
         LineStylePtr poKmlLineStyle = poKmlStyle->get_linestyle (  );
 
-        OGRStylePen *poOgrStylePen = kml2pen ( poKmlLineStyle );
+        poOgrTmpST = NULL;
+        for ( i = 0; i < poOgrSM->GetPartCount ( NULL ); i++ ) {
+            poOgrST = poOgrSM->GetPart ( i, NULL );
 
-        poOgrSM->AddPart ( poOgrStylePen );
+            if ( !poOgrST )
+                continue;
+        
+            if ( poOgrST->GetType ( ) == OGRSTCPen ) {
+                poOgrTmpST = poOgrST;
+            }
+            else {
+                poOgrNewSM->AddPart ( poOgrST );
+            }
+        }
+        
+        OGRStylePen *poOgrStylePen = kml2pen ( poKmlLineStyle,
+                                               ( OGRStylePen *) poOgrTmpST);
+        
+        poOgrNewSM->AddPart ( poOgrStylePen );
 
         delete poOgrStylePen;
+        poOgrSM->InitStyleString ( poOgrNewSM->GetStyleString(NULL) );
+        
     }
 
     /***** polystyle / brush *****/
 
     if ( poKmlStyle->has_polystyle (  ) ) {
+
+        poOgrNewSM->InitStyleString ( NULL );
+
         PolyStylePtr poKmlPolyStyle = poKmlStyle->get_polystyle (  );
 
-        OGRStyleBrush *poOgrStyleBrush = kml2brush ( poKmlPolyStyle );
+        poOgrTmpST = NULL;
+        for ( i = 0; i < poOgrSM->GetPartCount ( NULL ); i++ ) {
+            poOgrST = poOgrSM->GetPart ( i, NULL );
 
-        poOgrSM->AddPart ( poOgrStyleBrush );
+            if ( !poOgrST )
+                continue;
+        
+            if ( poOgrST->GetType ( ) == OGRSTCBrush ) {
+                poOgrTmpST = poOgrST;
+            }
+            else {
+                poOgrNewSM->AddPart ( poOgrST );
+            }
+        }
+
+        OGRStyleBrush *poOgrStyleBrush = kml2brush ( poKmlPolyStyle,
+                                                     ( OGRStyleBrush *) poOgrTmpST );
+
+        poOgrNewSM->AddPart ( poOgrStyleBrush );
 
         delete poOgrStyleBrush;
+        poOgrSM->InitStyleString ( poOgrNewSM->GetStyleString(NULL) );
+
     }
 
     /***** iconstyle / symbol *****/
 
     if ( poKmlStyle->has_iconstyle (  ) ) {
+        
+        poOgrNewSM->InitStyleString ( NULL );
+
         IconStylePtr poKmlIconStyle = poKmlStyle->get_iconstyle (  );
 
-        OGRStyleSymbol *poOgrStyleSymbol = kml2symbol ( poKmlIconStyle );
+        poOgrTmpST = NULL;
+        for ( i = 0; i < poOgrSM->GetPartCount ( NULL ); i++ ) {
+            poOgrST = poOgrSM->GetPart ( i, NULL );
 
-        poOgrSM->AddPart ( poOgrStyleSymbol );
+            if ( !poOgrST )
+                continue;
+        
+            if ( poOgrST->GetType ( ) == OGRSTCSymbol ) {
+                poOgrTmpST = poOgrST;
+            }
+            else {
+                poOgrNewSM->AddPart ( poOgrST );
+            }
+        }
+
+        OGRStyleSymbol *poOgrStyleSymbol = kml2symbol ( poKmlIconStyle,
+                                                     ( OGRStyleSymbol *) poOgrTmpST );
+
+        poOgrNewSM->AddPart ( poOgrStyleSymbol );
 
         delete poOgrStyleSymbol;
+        poOgrSM->InitStyleString ( poOgrNewSM->GetStyleString(NULL) );
+
     }
 
     /***** labelstyle / label *****/
 
     if ( poKmlStyle->has_labelstyle (  ) ) {
+        
+        poOgrNewSM->InitStyleString ( NULL );
+
         LabelStylePtr poKmlLabelStyle = poKmlStyle->get_labelstyle (  );
 
-        OGRStyleLabel *poOgrStyleLabel = kml2label ( poKmlLabelStyle );
+        poOgrTmpST = NULL;
+        for ( i = 0; i < poOgrSM->GetPartCount ( NULL ); i++ ) {
+            poOgrST = poOgrSM->GetPart ( i, NULL );
 
-        poOgrSM->AddPart ( poOgrStyleLabel );
+            if ( !poOgrST )
+                continue;
+        
+            if ( poOgrST->GetType ( ) == OGRSTCLabel ) {
+                poOgrTmpST = poOgrST;
+            }
+            else {
+                poOgrNewSM->AddPart ( poOgrST );
+            }
+        }
+
+        OGRStyleLabel *poOgrStyleLabel = kml2label ( poKmlLabelStyle,
+                                                     ( OGRStyleLabel *) poOgrTmpST );
+
+        poOgrNewSM->AddPart ( poOgrStyleLabel );
 
         delete poOgrStyleLabel;
+        poOgrSM->InitStyleString ( poOgrNewSM->GetStyleString(NULL) );
+
     }
 
 }
@@ -442,10 +538,12 @@ void kml2stylestring (
 ******************************************************************************/
 
 OGRStylePen *kml2pen (
-    LineStylePtr poKmlLineStyle )
+    LineStylePtr poKmlLineStyle,
+    OGRStylePen *poOgrStylePen)
 {
 
-    OGRStylePen *poOgrStylePen = new OGRStylePen (  );
+    if (!poOgrStylePen)
+        poOgrStylePen = new OGRStylePen (  );
 
     /***** <LineStyle> should always have a width in pixels *****/
     
@@ -476,10 +574,12 @@ OGRStylePen *kml2pen (
 ******************************************************************************/
 
 OGRStyleBrush *kml2brush (
-    PolyStylePtr poKmlPolyStyle )
+    PolyStylePtr poKmlPolyStyle,
+    OGRStyleBrush *poOgrStyleBrush)
 {
 
-    OGRStyleBrush *poOgrStyleBrush = new OGRStyleBrush (  );
+    if (!poOgrStyleBrush)
+        poOgrStyleBrush = new OGRStyleBrush (  );
 
     /***** color *****/
 
@@ -501,10 +601,12 @@ OGRStyleBrush *kml2brush (
 ******************************************************************************/
 
 OGRStyleSymbol *kml2symbol (
-    IconStylePtr poKmlIconStyle )
+    IconStylePtr poKmlIconStyle,
+    OGRStyleSymbol *poOgrStyleSymbol)
 {
 
-    OGRStyleSymbol *poOgrStyleSymbol = new OGRStyleSymbol (  );
+    if (!poOgrStyleSymbol)
+        poOgrStyleSymbol = new OGRStyleSymbol (  );
 
     /***** id (kml icon) *****/
 
@@ -562,10 +664,12 @@ OGRStyleSymbol *kml2symbol (
 ******************************************************************************/
 
 OGRStyleLabel *kml2label (
-    LabelStylePtr poKmlLabelStyle )
+    LabelStylePtr poKmlLabelStyle,
+    OGRStyleLabel *poOgrStyleLabel)
 {
 
-    OGRStyleLabel *poOgrStyleLabel = new OGRStyleLabel (  );
+    if (!poOgrStyleLabel)
+        poOgrStyleLabel = new OGRStyleLabel (  );
 
     /***** color *****/
 
