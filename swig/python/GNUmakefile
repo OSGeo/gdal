@@ -67,11 +67,11 @@ egg:
 	
 install:
 
-ifeq ($(PY_HAVE_SETUPTOOLS),1)
-	$(PYTHON) setup.py install 
-else
+#ifeq ($(PY_HAVE_SETUPTOOLS),1)
+#	$(PYTHON) setup.py install 
+#else
 	$(PYTHON) setup.py install --prefix=$(DESTDIR)$(prefix)
-endif
+#endif
 
 	for f in $(SCRIPTS) ; do $(INSTALL) ./scripts/$$f $(DESTDIR)$(INST_BIN) ; done
 
