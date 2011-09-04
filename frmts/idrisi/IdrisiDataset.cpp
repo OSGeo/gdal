@@ -35,6 +35,7 @@
 #include "gdal_pam.h"
 #include "gdal_alg.h"
 #include "gdal_rat.h"
+#include "idrisi.h"
 
 CPL_CVSID( "$Id$" );
 
@@ -274,10 +275,6 @@ private:
     char *pszProjection;
     char **papszCategories;
     char *pszUnitType;
-
-    CPLErr GeoReference2Wkt( const char *pszRefSystem,
-        const char *pszRefUnits,
-        char **pszProjString );
 
     CPLErr Wkt2GeoReference( const char *pszProjString,
         char **pszRefSystem, 
@@ -1203,7 +1200,7 @@ const char *IdrisiDataset::GetProjectionRef( void )
         const char *pszRefUnit = CSLFetchNameValue( papszRDC, rdcREF_UNITS );
 
         if (pszRefSystem != NULL && pszRefUnit != NULL)
-            GeoReference2Wkt( pszRefSystem, pszRefUnit, &pszProjection );
+            IdrisiGeoReference2Wkt( pszFilename, pszRefSystem, pszRefUnit, &pszProjection );
         else
             pszProjection = CPLStrdup("");
     }
@@ -2085,7 +2082,7 @@ const GDALRasterAttributeTable *IdrisiRasterBand::GetDefaultRAT()
 }
 
 /************************************************************************/
-/*                       GeoReference2Wkt()                             */
+/*                       IdrisiGeoReference2Wkt()                       */
 /************************************************************************/
 
 /***
@@ -2095,7 +2092,7 @@ const GDALRasterAttributeTable *IdrisiRasterBand::GetDefaultRAT()
 * geographic reference, RefSystem and RefUnit. 
 * 
 * RefSystem can contains the world "plane" or the name of a georeference 
-* file <refsystem>.ref that details the geographic reference  
+* file <refsystem>.ref that details the geographic reference
 * system( coordinate system and projection parameters ). RefUnits 
 * indicates the unit of the image bounds. 
 * 
@@ -2116,11 +2113,14 @@ const GDALRasterAttributeTable *IdrisiRasterBand::GetDefaultRAT()
 * need to be read then the projection string will result as unknown. 
 ***/
 
-CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
-                                        const char *pszRefUnits,
-                                        char **pszProjString )
+CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
+                               const char *pszRefSystem,
+                               const char *pszRefUnits,
+                               char **ppszProjString )
 {
     OGRSpatialReference oSRS;
+
+    *ppszProjString = NULL;
 
     // ---------------------------------------------------------
     //  Plane 
@@ -2136,7 +2136,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
             oSRS.SetLinearUnits( aoLinearUnitsConv[nDeft].pszName,
                 aoLinearUnitsConv[nDeft].dfConv );
         }
-        oSRS.exportToWkt( pszProjString );
+        oSRS.exportToWkt( ppszProjString );
         return CE_None;
     }
 
@@ -2148,7 +2148,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
         EQUAL( pszRefSystem, rstLATLONG2 ) )
     {
         oSRS.SetWellKnownGeogCS( "WGS84" );
-        oSRS.exportToWkt( pszProjString );
+        oSRS.exportToWkt( ppszProjString );
         return CE_None;
     }
 
@@ -2171,7 +2171,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
         sscanf( pszRefSystemLower, rstUTM, &nZone, &cNorth );
         oSRS.SetWellKnownGeogCS( "WGS84" );
         oSRS.SetUTM( nZone,( cNorth == 'n' ) );
-        oSRS.exportToWkt( pszProjString );
+        oSRS.exportToWkt( ppszProjString );
         CPLFree( pszRefSystemLower );
         return CE_None;
     }
@@ -2193,7 +2193,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
 
             if( oSRS.SetStatePlane( nZone, ( nNAD == 83 ) ) != OGRERR_FAILURE )
             {
-                oSRS.exportToWkt( pszProjString );
+                oSRS.exportToWkt( ppszProjString );
                 CPLFree( pszRefSystemLower );
                 return CE_None;
             }
@@ -2252,7 +2252,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
                     aoLinearUnitsConv[nDeft].dfConv );
             }
         }
-        oSRS.exportToWkt( pszProjString );
+        oSRS.exportToWkt( ppszProjString );
         return CE_Failure;
     }
 
@@ -2370,7 +2370,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
 
     if( EQUAL( pszProjName, "none" ) )
     {
-        oSRS.exportToWkt( pszProjString );
+        oSRS.exportToWkt( ppszProjString );
         
         CPLFree( pszGeorefName );
         CPLFree( pszProjName );
@@ -2468,7 +2468,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
             "[\"%s\" in georeference file \"%s\"]",
             pszProjName, pszFName );
         oSRS.Clear();
-        oSRS.exportToWkt( pszProjString );
+        oSRS.exportToWkt( ppszProjString );
         
         CPLFree( pszGeorefName );
         CPLFree( pszProjName );
@@ -2500,7 +2500,7 @@ CPLErr IdrisiDataset::GeoReference2Wkt( const char *pszRefSystem,
 
     oSRS.SetProjCS( pszGeorefName );
 
-    oSRS.exportToWkt( pszProjString );
+    oSRS.exportToWkt( ppszProjString );
         
     CPLFree( pszGeorefName );
     CPLFree( pszProjName );
@@ -2991,6 +2991,7 @@ int  SaveAsCRLF(char **papszStrList, const char *pszFname)
 /************************************************************************/
 /*                        GDALRegister_IDRISI()                         */
 /************************************************************************/
+
 void GDALRegister_IDRISI()
 {
     GDALDriver  *poDriver;

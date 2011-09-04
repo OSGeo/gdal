@@ -222,4 +222,7 @@ void OGRRegisterAll()
 #ifdef COUCHDB_ENABLED
     RegisterOGRCouchDB();
 #endif
+#ifdef IDRISI_ENABLED
+    RegisterOGRIdrisi();
+#endif
 } /* OGRRegisterAll */
