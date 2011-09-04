@@ -236,8 +236,8 @@ JPEG12_SUPPORTED = 1
 #ECWDIR  = 	"c:/Program Files/ERDAS/ERDAS ECW JPEG2000 Read SDK"
 #ECWFLAGS =	-DECWSDK_VERSION=41 \
 #		-I$(ECWDIR)\include \
-#		-I$(ECWDIR)\include/ecw/api -I$(ECWDIR)\include/ecw/jp2 \
-#		-I$(ECWDIR)\include/ecw/ecw
+#		-I$(ECWDIR)\include/NCSECW/api -I$(ECWDIR)\include/NCSECW/jp2 \
+#		-I$(ECWDIR)\include/NCSECW/ecw
 #ECWLIB  = 	$(ECWDIR)\lib\vc90\win32\NCSEcw4_RO.lib \
 #		$(ECWDIR)\lib\vc90\win32\NCSUtil4.lib \
 #		$(ECWDIR)\lib\vc90\win32\NCScnet4.lib
