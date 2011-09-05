@@ -356,8 +356,8 @@ void kml2featurestyle (
                 }
             }
 
-            CPLFree ( pszUrl );
         }
+        CPLFree ( pszUrl );
 
     }
 
