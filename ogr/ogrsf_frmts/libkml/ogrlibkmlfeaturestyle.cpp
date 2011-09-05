@@ -242,7 +242,7 @@ void kml2featurestyle (
 
                 *pszUrl = '@';
 
-                poOgrFeat->SetStyleStringDirectly ( pszUrl );
+                poOgrFeat->SetStyleString( pszUrl );
 
             }
 
