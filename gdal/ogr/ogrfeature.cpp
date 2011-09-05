@@ -763,7 +763,6 @@ void OGRFeature::UnsetField( int iField )
 {
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL || !IsFieldSet(iField) )
         return;
     
@@ -898,7 +897,6 @@ int OGRFeature::GetFieldAsInteger( int iField )
     
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
     
-    CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
         return 0;
     
@@ -989,7 +987,6 @@ double OGRFeature::GetFieldAsDouble( int iField )
     
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
     
-    CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
         return 0.0;
 
@@ -1114,7 +1111,6 @@ const char *OGRFeature::GetFieldAsString( int iField )
     
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
     
-    CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
         return "";
     
@@ -1375,7 +1371,6 @@ const int *OGRFeature::GetFieldAsIntegerList( int iField, int *pnCount )
 {
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn != NULL && IsFieldSet(iField) &&
         poFDefn->GetType() == OFTIntegerList )
     {
@@ -1447,7 +1442,6 @@ const double *OGRFeature::GetFieldAsDoubleList( int iField, int *pnCount )
 {
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn != NULL && IsFieldSet(iField) &&
         poFDefn->GetType() == OFTRealList )
     {
@@ -1520,7 +1514,6 @@ char **OGRFeature::GetFieldAsStringList( int iField ) const
 {
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
         return NULL;
     
@@ -1592,7 +1585,6 @@ GByte *OGRFeature::GetFieldAsBinary( int iField, int *pnBytes )
 
     *pnBytes = 0;
 
-    CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
         return NULL;
     
@@ -1670,7 +1662,6 @@ int OGRFeature::GetFieldAsDateTime( int iField,
 {
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
         return FALSE;
     
@@ -1767,7 +1758,6 @@ void OGRFeature::SetField( int iField, int nValue )
 {
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
         return;
     
@@ -1845,7 +1835,6 @@ void OGRFeature::SetField( int iField, double dfValue )
 {
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
         return;
     
@@ -1922,7 +1911,6 @@ void OGRFeature::SetField( int iField, const char * pszValue )
 {
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
         return;
     
@@ -2039,7 +2027,6 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
 {
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
         return;
     
@@ -2102,7 +2089,6 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
 {
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
         return;
     
@@ -2164,7 +2150,6 @@ void OGRFeature::SetField( int iField, char ** papszValues )
 {
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
         return;
     
@@ -2226,7 +2211,6 @@ void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
 {
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
         return;
     
@@ -2297,7 +2281,6 @@ void OGRFeature::SetField( int iField, int nYear, int nMonth, int nDay,
 {
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
         return;
     
@@ -2372,7 +2355,6 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
 {
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
 
-    CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
         return;
     
