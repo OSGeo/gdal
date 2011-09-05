@@ -417,6 +417,7 @@ void kml2stylestring (
             }
             else {
                 poOgrNewSM->AddPart ( poOgrST );
+                delete poOgrST;
             }
         }
         
@@ -450,6 +451,7 @@ void kml2stylestring (
             }
             else {
                 poOgrNewSM->AddPart ( poOgrST );
+                delete poOgrST;
             }
         }
 
@@ -483,6 +485,7 @@ void kml2stylestring (
             }
             else {
                 poOgrNewSM->AddPart ( poOgrST );
+                delete poOgrST;
             }
         }
 
@@ -516,6 +519,7 @@ void kml2stylestring (
             }
             else {
                 poOgrNewSM->AddPart ( poOgrST );
+                delete poOgrST;
             }
         }
 
@@ -528,6 +532,8 @@ void kml2stylestring (
         poOgrSM->InitStyleString ( poOgrNewSM->GetStyleString(NULL) );
 
     }
+
+    delete poOgrNewSM;
 
 }
 
