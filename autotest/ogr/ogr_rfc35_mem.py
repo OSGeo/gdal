@@ -37,6 +37,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 import ogrtest
 import ogr
+import gdal
 
 ###############################################################################
 # Initiate the test file
@@ -45,6 +46,8 @@ def ogr_rfc35_mem_1():
 
     gdaltest.rfc35_mem_ds = ogr.GetDriverByName('Memory').CreateDataSource('rfc35_test')
     lyr = gdaltest.rfc35_mem_ds.CreateLayer('rfc35_test')
+
+    lyr.ReorderFields([])
 
     fd = ogr.FieldDefn('foo5', ogr.OFTString)
     fd.SetWidth(5)
@@ -196,6 +199,12 @@ def ogr_rfc35_mem_2():
     if ret != 'success':
         return ret
 
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.ReorderFields([0,0,0,0])
+    gdal.PopErrorHandler()
+    if ret == 0:
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -209,6 +218,19 @@ def ogr_rfc35_mem_3():
     fd.SetWidth(25)
 
     lyr_defn = lyr.GetLayerDefn()
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.AlterFieldDefn(-1, fd, ogr.ALTER_ALL_FLAG)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        return 'fail'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.AlterFieldDefn(lyr_defn.GetFieldCount(), fd, ogr.ALTER_ALL_FLAG)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        return 'fail'
+
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz15"), fd, ogr.ALTER_ALL_FLAG)
 
     expected_values = [
@@ -362,6 +384,18 @@ def ogr_rfc35_mem_5():
     lyr_defn = lyr.GetLayerDefn()
 
     if lyr.TestCapability(ogr.OLCDeleteField) != 1:
+        return 'fail'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.DeleteField(-1)
+    gdal.PopErrorHandler()
+    if ret == 0:
+        return 'fail'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.DeleteField(lyr.GetLayerDefn().GetFieldCount())
+    gdal.PopErrorHandler()
+    if ret == 0:
         return 'fail'
 
     if lyr.DeleteField(0) != 0:
