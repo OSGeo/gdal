@@ -133,7 +133,7 @@ OGRErr OGRMemLayer::SetNextByIndex( long nIndex )
     if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
         return OGRLayer::SetNextByIndex( nIndex );
         
-    if (iNextReadFID < 0 || iNextReadFID >= nMaxFeatureCount)
+    if (nIndex < 0 || nIndex >= nMaxFeatureCount)
         return OGRERR_FAILURE;
 
     iNextReadFID = nIndex;
