@@ -508,6 +508,11 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
       dataset->SetDescription( poOpenInfo->pszFilename );
       dataset->TryLoadXML();
 
+/* -------------------------------------------------------------------- */
+/*      Check for external overviews.                                   */
+/* -------------------------------------------------------------------- */
+      dataset->oOvManager.Initialize( dataset, poOpenInfo->pszFilename, poOpenInfo->papszSiblingFiles );
+
       return dataset;
   }
 }
