@@ -21540,7 +21540,7 @@ fi
 
 
   if test "$ECW_SETTING" = "yes" ; then
-    LIBS="-lNCSEcw -lNCSCnet -lNCSUtil $LIBS"
+    LIBS="-lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil $LIBS"
   fi
 
   if test "$ECW_SETTING" = "no" ; then
