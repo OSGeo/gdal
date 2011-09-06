@@ -1545,7 +1545,7 @@ elif test "$with_ecw" = "yes" -o "$with_ecw" = "" ; then
   AC_CHECK_LIB(NCSEcw,NCScbmOpenFileView,ECW_SETTING=yes,ECW_SETTING=no,-lNCSCnet -lNCSUtil)
 
   if test "$ECW_SETTING" = "yes" ; then   
-    LIBS="-lNCSEcw -lNCSCnet -lNCSUtil $LIBS"
+    LIBS="-lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil $LIBS"
   fi
 
   if test "$ECW_SETTING" = "no" ; then
