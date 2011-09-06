@@ -284,15 +284,20 @@ def hdf5_9():
     }
 
     if len(metadata) != len(ref_metadata):
-        print
-        print 'metadata', metadata
-        print
-        gdaltest.post_reason( 'incorrect number of metadata' )
+        gdaltest.post_reason( 'incorrect number of metadata: '
+                              'expected %d, got %d' % (len(ref_metadata),
+                                                       len(metadata)) )
         return 'fail'
 
     for key in metadata:
+        if key not in ref_metadata:
+            gdaltest.post_reason( 'unexpected metadata key "%s"' % key )
+            return 'fail'
+
         if metadata[key] != ref_metadata[key]:
-            gdaltest.post_reason( 'unable to fing "%s" key' % key )
+            gdaltest.post_reason( 'incorrect metadata value for key "%s": '
+                                  'expected "%s", got "%s" '%
+                                    (key, ref_metadata[key], metadata[key]) )
             return 'fail'
 
     return 'success'
