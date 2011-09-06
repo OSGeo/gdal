@@ -102,7 +102,7 @@ HDF5Dataset::~HDF5Dataset()
     if( hGroupID > 0 )
         H5Gclose( hGroupID );
     CSLDestroy( papszSubDatasets );
-    if( poH5RootGroup != NULL ){
+    if( poH5RootGroup != NULL ) {
         DestroyH5Objects( poH5RootGroup );
         CPLFree( poH5RootGroup->pszName );
         CPLFree( poH5RootGroup->pszPath );
@@ -253,7 +253,7 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     poDS->hGroupID = H5Gopen( poDS->hHDF5, "/" );
-    if( poDS->hGroupID < 0 ){
+    if( poDS->hGroupID < 0 ) {
         poDS->bIsHDFEOS=false;
         delete poDS;
         return NULL;
@@ -520,8 +520,8 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
             if( nbObjs > 0 ) {
                 poHchild->poHchild =( HDF5GroupObjects * )
                 CPLCalloc( (int)nbObjs, sizeof( HDF5GroupObjects ) );
-                memset( poHchild->poHchild,0,
-                (size_t) (sizeof( HDF5GroupObjects ) * nbObjs) );
+                memset( poHchild->poHchild, 0,
+                        (size_t) (sizeof( HDF5GroupObjects ) * nbObjs) );
             }
             else
                 poHchild->poHchild = NULL;
@@ -656,7 +656,6 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
     for( i=0; i < nAttrDims; i++ ) {
         nAttrElmts *= (int) nSize[i];
     }
-    CPLDebug( "HDF5", "nAttrElmts: %d", nAttrElmts );
 
     if( H5Tget_class( hAttrNativeType ) == H5T_STRING )
     {

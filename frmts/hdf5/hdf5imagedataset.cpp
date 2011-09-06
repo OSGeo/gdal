@@ -608,8 +608,8 @@ CPLErr HDF5ImageDataset::CreateProjections()
             Longitude );
 
         oSRS.SetWellKnownGeogCS( "WGS84" );
-            CPLFree(pszProjection);
-            CPLFree(pszGCPProjection);
+        CPLFree(pszProjection);
+        CPLFree(pszGCPProjection);
         oSRS.exportToWkt( &pszProjection );
         oSRS.exportToWkt( &pszGCPProjection );
 
