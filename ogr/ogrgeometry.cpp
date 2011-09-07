@@ -656,8 +656,8 @@ int OGR_G_GetDimension( OGRGeometryH hGeom )
  *
  * This method is the same as the C function OGR_G_GetCoordinateDimension().
  *
- * @return in practice this always returns 2 indicating that coordinates are
- * specified within a two dimensional space.
+ * @return in practice this will return 2 or 3. It can also return 0 in the
+ * case of an empty point.
  */
 
 int OGRGeometry::getCoordinateDimension() const
@@ -680,8 +680,9 @@ int OGRGeometry::getCoordinateDimension() const
  *
  * @param hGeom handle on the geometry to get the dimension of the 
  * coordinates from.
- * @return in practice this always returns 2 indicating that coordinates are
- * specified within a two dimensional space.
+ *
+ * @return in practice this will return 2 or 3. It can also return 0 in the
+ * case of an empty point.
  */
 
 int OGR_G_GetCoordinateDimension( OGRGeometryH hGeom )
