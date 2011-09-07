@@ -475,7 +475,7 @@ CPLErr GDALDataset::AddBand( GDALDataType eType, char ** papszOptions )
     (void) eType;
     (void) papszOptions;
 
-    CPLError( CE_Failure, CPLE_NotSupported, 
+    ReportError( CE_Failure, CPLE_NotSupported,
               "Dataset does not support the AddBand() method." );
 
     return CE_Failure;
@@ -526,7 +526,7 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
                            MAX(nNewBand,nBands));
         if (papoNewBands == NULL)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory,
+            ReportError(CE_Failure, CPLE_OutOfMemory,
                      "Cannot allocate band array");
             return;
         }
@@ -543,7 +543,7 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 /* -------------------------------------------------------------------- */
     if( papoBands[nNewBand-1] != NULL )
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
+        ReportError(CE_Failure, CPLE_NotSupported,
                  "Cannot set band %d as it is already set", nNewBand);
         return;
     }
@@ -663,7 +663,7 @@ GDALRasterBand * GDALDataset::GetRasterBand( int nBandId )
     {
         if( nBandId < 1 || nBandId > nBands )
         {
-            CPLError( CE_Failure, CPLE_IllegalArg,
+            ReportError( CE_Failure, CPLE_IllegalArg,
                       "GDALDataset::GetRasterBand(%d) - Illegal band #\n",
                       nBandId );
             return NULL;
@@ -796,7 +796,7 @@ CPLErr GDALDataset::SetProjection( const char * )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        ReportError( CE_Failure, CPLE_NotSupported,
                   "Dataset does not support the SetProjection() method." );
     return CE_Failure;
 }
@@ -912,7 +912,7 @@ CPLErr GDALDataset::SetGeoTransform( double * )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
-        CPLError( CE_Failure, CPLE_NotSupported,
+        ReportError( CE_Failure, CPLE_NotSupported,
                   "SetGeoTransform() not supported for this dataset." );
     
     return( CE_Failure );
@@ -1138,7 +1138,7 @@ void GDALDataset::MarkAsShared()
     if(CPLHashSetLookup(phSharedDatasetSet, psStruct) != NULL)
     {
         CPLFree(psStruct);
-        CPLError(CE_Failure, CPLE_AppDefined,
+        ReportError(CE_Failure, CPLE_AppDefined,
                  "An existing shared dataset has already this description. This should not happen");
     }
     else
@@ -1304,7 +1304,7 @@ CPLErr GDALDataset::SetGCPs( int nGCPCount,
     (void) pszGCPProjection;
 
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
-        CPLError( CE_Failure, CPLE_NotSupported, 
+        ReportError( CE_Failure, CPLE_NotSupported,
                   "Dataset does not support the SetGCPs() method." );
 
     return CE_Failure;
@@ -1445,7 +1445,7 @@ CPLErr GDALDataset::IBuildOverviews( const char *pszResampling,
                                           pfnProgress, pProgressData );
     else
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
+        ReportError( CE_Failure, CPLE_NotSupported,
                   "BuildOverviews() not supported for this dataset." );
         
         return( CE_Failure );
@@ -1598,7 +1598,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
 
     if( NULL == pData )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        ReportError( CE_Failure, CPLE_AppDefined,
                   "The buffer into which the data should be read is null" );
             return CE_Failure;
     }
@@ -1630,7 +1630,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
     {
         if (nPixelSpace > INT_MAX / nBufXSize)
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            ReportError( CE_Failure, CPLE_AppDefined,
                       "Int overflow : %d x %d", nPixelSpace, nBufXSize );
             return CE_Failure;
         }
@@ -1644,7 +1644,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
     {
         if (nLineSpace > INT_MAX / nBufYSize)
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            ReportError( CE_Failure, CPLE_AppDefined,
                       "Int overflow : %d x %d", nLineSpace, nBufYSize );
             return CE_Failure;
         }
@@ -1655,7 +1655,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
     {
         if (nBandCount > GetRasterCount())
         {
-            CPLError( CE_Failure, CPLE_IllegalArg, 
+            ReportError( CE_Failure, CPLE_IllegalArg,
                       "nBandCount cannot be greater than %d",
                       GetRasterCount() );
             return CE_Failure;
@@ -1663,7 +1663,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
         panBandMap = (int *) VSIMalloc2(sizeof(int), nBandCount);
         if (panBandMap == NULL)
         {
-            CPLError( CE_Failure, CPLE_OutOfMemory, 
+            ReportError( CE_Failure, CPLE_OutOfMemory,
                       "Out of memory while allocating band map array" );
             return CE_Failure;
         }
@@ -1679,7 +1679,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
     if( nXOff < 0 || nXOff > INT_MAX - nXSize || nXOff + nXSize > nRasterXSize
         || nYOff < 0 || nYOff > INT_MAX - nYSize || nYOff + nYSize > nRasterYSize )
     {
-        CPLError( CE_Failure, CPLE_IllegalArg,
+        ReportError( CE_Failure, CPLE_IllegalArg,
                   "Access window out of range in RasterIO().  Requested\n"
                   "(%d,%d) of size %dx%d on raster of %dx%d.",
                   nXOff, nYOff, nXSize, nYSize, nRasterXSize, nRasterYSize );
@@ -1688,7 +1688,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
 
     if( eRWFlag != GF_Read && eRWFlag != GF_Write )
     {
-        CPLError( CE_Failure, CPLE_IllegalArg,
+        ReportError( CE_Failure, CPLE_IllegalArg,
                   "eRWFlag = %d, only GF_Read (0) and GF_Write (1) are legal.",
                   eRWFlag );
         eErr = CE_Failure;
@@ -1698,7 +1698,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
     {
         if( panBandMap[i] < 1 || panBandMap[i] > GetRasterCount() )
         {
-            CPLError( CE_Failure, CPLE_IllegalArg, 
+            ReportError( CE_Failure, CPLE_IllegalArg,
                       "panBandMap[%d] = %d, this band does not exist on dataset.",
                       i, panBandMap[i] );
             eErr = CE_Failure;
@@ -1706,7 +1706,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
 
         if( eErr == CE_None && GetRasterBand( panBandMap[i] ) == NULL )
         {
-            CPLError( CE_Failure, CPLE_IllegalArg, 
+            ReportError( CE_Failure, CPLE_IllegalArg,
                       "panBandMap[%d]=%d, this band should exist but is NULL!",
                       i, panBandMap[i] );
             eErr = CE_Failure;
@@ -2129,7 +2129,7 @@ CPLErr GDALDataset::CreateMaskBand( int nFlags )
         return CE_None;
     }
 
-    CPLError( CE_Failure, CPLE_NotSupported,
+    ReportError( CE_Failure, CPLE_NotSupported,
               "CreateMaskBand() not supported for this dataset." );
     
     return( CE_Failure );
