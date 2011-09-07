@@ -1291,6 +1291,13 @@ OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
 /*                           exportToProj4()                            */
 /************************************************************************/
 
+#define SAFE_PROJ4_STRCAT(szNewStr)  do { \
+    if(CPLStrlcat(szProj4, szNewStr, sizeof(szProj4)) >= sizeof(szProj4)) { \
+        CPLError(CE_Failure, CPLE_AppDefined, "String overflow when formatting proj.4 string"); \
+        *ppszProj4 = CPLStrdup(""); \
+        return OGRERR_FAILURE; \
+    } } while(0);
+
 /**
  * \brief Export coordinate system in PROJ.4 format.
  *
@@ -1308,13 +1315,6 @@ OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
  *
  * @return OGRERR_NONE on success or an error code on failure. 
  */
-
-#define SAFE_PROJ4_STRCAT(szNewStr)  do { \
-    if(CPLStrlcat(szProj4, szNewStr, sizeof(szProj4)) >= sizeof(szProj4)) { \
-        CPLError(CE_Failure, CPLE_AppDefined, "String overflow when formatting proj.4 string"); \
-        *ppszProj4 = CPLStrdup(""); \
-        return OGRERR_FAILURE; \
-    } } while(0);
 
 OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
