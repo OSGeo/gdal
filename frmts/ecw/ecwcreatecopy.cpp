@@ -348,7 +348,7 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox( const char *pszWKT,
     poAssoc->m_OwnedBoxes.push_back( poLabel );
 
     poGMLData = new JP2UserBox();
-    poGMLData->m_nTBox = 'xml ';
+    poGMLData->m_nTBox = 'xml '; /* Is it correct on a big-endian host ? Does ECW work on big-endian hosts ;-) */
     poGMLData->SetData( strlen( szDoc ), (unsigned char *) szDoc );
     poAssoc->m_OtherBoxes.push_back( poGMLData );
     poAssoc->m_OwnedBoxes.push_back( poGMLData );
@@ -367,7 +367,7 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox( const char *pszWKT,
         poAssoc->m_OwnedBoxes.push_back( poLabel );
 
         poGMLData = new JP2UserBox();
-        poGMLData->m_nTBox = 'xml ';
+        poGMLData->m_nTBox = 'xml '; /* Is it correct on a big-endian host ? Does ECW work on big-endian hosts ;-) */
         poGMLData->SetData( strlen(pszDictBox), 
                             (unsigned char *) pszDictBox );
         poAssoc->m_OtherBoxes.push_back( poGMLData );
@@ -397,6 +397,7 @@ CPLErr GDALECWCompressor::WriteJP2Box( GDALJP2Box * poBox )
 
     poECWBox = new JP2UserBox();
     memcpy( &(poECWBox->m_nTBox), poBox->GetType(), 4 );
+    CPL_MSBPTR32( &(poECWBox->m_nTBox) );
 
     poECWBox->SetData( (int) poBox->GetDataLength(), 
                        poBox->GetWritableData() );

@@ -1945,6 +1945,7 @@ static void JP2KAKWriteBox( jp2_target *jp2_out, GDALJP2Box *poBox )
         return;
 
     memcpy( &nBoxType, poBox->GetType(), 4 );
+    CPL_MSBPTR32( &nBoxType );
     
 /* -------------------------------------------------------------------- */
 /*      Write to a box on the JP2 file.                                 */
