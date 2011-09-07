@@ -2695,3 +2695,47 @@ int GDALDataset::CloseDependentDatasets()
 {
     return oOvManager.CloseDependentDatasets();
 }
+
+/************************************************************************/
+/*                            ReportError()                             */
+/************************************************************************/
+
+/**
+ * \brief Emits an error related to a dataset.
+ *
+ * This function is a wrapper for regular CPLError(). The only difference
+ * with CPLError() is that it prepends the error message with the dataset
+ * name.
+ *
+ * @param eErrClass one of CE_Warning, CE_Failure or CE_Fatal.
+ * @param err_no the error number (CPLE_*) from cpl_error.h.
+ * @param fmt a printf() style format string.  Any additional arguments
+ * will be treated as arguments to fill in this format in a manner
+ * similar to printf().
+ *
+ * @since GDAL 1.9.0
+ */
+
+void GDALDataset::ReportError(CPLErr eErrClass, int err_no, const char *fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+
+    char szNewFmt[256];
+    const char* pszDSName = GetDescription();
+    if (strlen(fmt) + strlen(pszDSName) + 3 >= sizeof(szNewFmt) - 1)
+        pszDSName = CPLGetFilename(pszDSName);
+    if (pszDSName[0] != '\0' &&
+        strlen(fmt) + strlen(pszDSName) + 3 < sizeof(szNewFmt) - 1)
+    {
+        snprintf(szNewFmt, sizeof(szNewFmt), "%s: %s",
+                 pszDSName, fmt);
+        CPLErrorV( eErrClass, err_no, szNewFmt, args );
+    }
+    else
+    {
+        CPLErrorV( eErrClass, err_no, fmt, args );
+    }
+    va_end(args);
+}
