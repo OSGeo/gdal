@@ -93,12 +93,14 @@
 #define GDALNBDIM  2
 
 /* netcdf file types, as in libcdi/cdo */
-#define NCDF_FILETYPE_NONE            0
+#define NCDF_FILETYPE_NONE            0   /* Not a netCDF file */
 #define NCDF_FILETYPE_NC              1   /* File type netCDF                     */
 #define NCDF_FILETYPE_NC2             2   /* File type netCDF version 2 (64-bit)  */
 #define NCDF_FILETYPE_NC4             3   /* File type netCDF version 4           */
-#define NCDF_FILETYPE_NC4C            4   /* File type netCDF version 4 (classic) */
-#define NCDF_FILETYPE_UNKNOWN         10
+#define NCDF_FILETYPE_NC4C            4   /* File type netCDF version 4 (classic) - not used yet */
+/* File type HDF5, not supported here (lack of netCDF-4 support or extension is not .nc or .nc4 */
+#define NCDF_FILETYPE_HDF5            5   
+#define NCDF_FILETYPE_UNKNOWN         10  /* Filetype not determined (yet) */
 
 typedef struct {
     const char *netCDFSRS;
@@ -175,6 +177,8 @@ class netCDFDataset : public GDALPamDataset
 
     char **      FetchStandardParallels( const char *pszGridMappingValue );
 
+    static int IdentifyFileType( GDALOpenInfo * );
+
   public:
     int           cdfid;
     char         **papszMetadata;
@@ -183,7 +187,7 @@ class netCDFDataset : public GDALPamDataset
     size_t        xdim, ydim;
     int           nDimXid, nDimYid;
     bool          bBottomUp;
-    int           nFiletype;
+    int           nFileType;
 
     netCDFDataset( );
     ~netCDFDataset( );
