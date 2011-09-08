@@ -418,6 +418,8 @@ def netcdf_16():
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
+
+    ifile = 'data/trmm-nc4.nc'
     
     #check if netcdf library has nc4 support
     #this should be done at configure time by gdal like in cdo
@@ -432,16 +434,23 @@ def netcdf_16():
             gdaltest.netcdf_drv_has_nc4 = True
             
     if gdaltest.netcdf_drv_has_nc4:
-        ds = gdal.Open( 'data/trmm-nc4.nc' )
+
+        # test with Open()
+        ds = gdal.Open( ifile )
         if ds is None:
             return 'fail'
         else:
             name = ds.GetDriver().GetDescription()
             ds = None
-        #return fail if did not open with the netCDF driver (i.e. HDF5Image)
+            #return fail if did not open with the netCDF driver (i.e. HDF5Image)
             if name != 'netCDF':
                 return 'fail'
-            return 'success'
+
+        # test with Identify()
+        name = gdal.IdentifyDriver( ifile ).GetDescription()
+        if name != 'netCDF':
+            return 'fail'
+
     else:
         return 'skip'
 
@@ -454,13 +463,17 @@ def netcdf_17():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
+    ifile = 'data/u8be.h5'
+
     #skip test if Hdf5 is not enabled
     if gdal.GetDriverByName( 'HDF5' ) is None and \
             gdal.GetDriverByName( 'HDF5Image' ) is None:
         return 'skip'
     
     if gdaltest.netcdf_drv_has_nc4:
-        ds = gdal.Open( 'data/u8be.h5' )
+
+        #test with Open()
+        ds = gdal.Open( ifile )
         if ds is None:
             return 'fail'
         else:
@@ -469,7 +482,12 @@ def netcdf_17():
                 #return fail if opened with the netCDF driver
             if name == 'netCDF':
                 return 'fail'
-            return 'success'
+
+        # test with Identify()
+        name = gdal.IdentifyDriver( ifile ).GetDescription()
+        if name == 'netCDF':
+            return 'fail'
+
     else:
         return 'skip'
     
