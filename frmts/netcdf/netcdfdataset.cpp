@@ -661,8 +661,9 @@ netCDFDataset::netCDFDataset()
     papszSubDatasets = NULL;
     bGotGeoTransform = FALSE;
     pszProjection    = NULL;
-    cdfid             = 0;
+    cdfid            = 0;
     bBottomUp        = FALSE;
+    nFileType        = NCDF_FILETYPE_NONE;
 }
 
 
@@ -1919,30 +1920,63 @@ void netCDFDataset::CreateSubDatasetList( )
 }
     
 /************************************************************************/
-/*                              Identify()                              */
+/*                              IdentifyFileType()                      */
 /************************************************************************/
 
-int netCDFDataset::Identify( GDALOpenInfo * poOpenInfo )
+int netCDFDataset::IdentifyFileType( GDALOpenInfo * poOpenInfo )
 
 {
 /* -------------------------------------------------------------------- */
 /*      Does this appear to be a netcdf file?                           */
 /*      Note: proper care should be done at configure to detect which   */
 /*        netcdf versions are supported (nc, nc2, nc4), as does CDO     */
+/*      http://www.unidata.ucar.edu/software/netcdf/docs/faq.html#fv1_5 */
 /* -------------------------------------------------------------------- */
+    /* This should be extended to detect filetype with NETCDF: syntax */
+    if( EQUALN(poOpenInfo->pszFilename,"NETCDF:",7) )
+        return NCDF_FILETYPE_UNKNOWN;
     if ( poOpenInfo->nHeaderBytes < 4 )
         return NCDF_FILETYPE_NONE;
     if ( EQUALN((char*)poOpenInfo->pabyHeader,"CDF\001",4) )
         return NCDF_FILETYPE_NC;
     else if ( EQUALN((char*)poOpenInfo->pabyHeader,"CDF\002",4) )
         return NCDF_FILETYPE_NC2;
-    else if ( EQUALN((char*)poOpenInfo->pabyHeader+1,"HDF",3) ) {
-        /* requires netcdf v4, should also test for netCDF-4 support compiled in */
-        if ( nc_inq_libvers()[0]=='4' )
+    else if ( EQUALN((char*)poOpenInfo->pabyHeader,"\211HDF\r\n\032\n",8) ) {
+        /* Make sure this driver only opens netCDF-4 files and not other HDF5 files */
+        /* This check should be relaxed, but there is no clear way to make a difference */
+        /* If user really wants to open with this driver, use NETCDF:file.nc:var format */
+        const char* pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
+        if ( ! ( EQUAL( pszExtension, "nc")  || EQUAL( pszExtension, "nc4") ) )
+                return NCDF_FILETYPE_HDF5;
+        /* Requires netcdf v4, should also test for netCDF-4 support compiled in */
+        /* This test could be done at configure like in CDO */
+        /* Anyway, if support is not built-in the file will not open, and should fall-back to HDF5 */
+        if ( nc_inq_libvers()[0]=='4' ) 
             return NCDF_FILETYPE_NC4;
+        else
+            return NCDF_FILETYPE_HDF5; 
     }
-    
+
     return NCDF_FILETYPE_NONE;
+} 
+
+/************************************************************************/
+/*                              IdentifyFileType()                      */
+/************************************************************************/
+
+int netCDFDataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+    if( EQUALN(poOpenInfo->pszFilename,"NETCDF:",7) ) {
+        return TRUE;
+    }
+    int nTmpFileType = IdentifyFileType( poOpenInfo );
+    if( NCDF_FILETYPE_NONE == nTmpFileType ||
+        NCDF_FILETYPE_HDF5 == nTmpFileType ||
+        NCDF_FILETYPE_UNKNOWN == nTmpFileType )
+        return FALSE;
+    else
+        return TRUE;
 } 
 
 /************************************************************************/
@@ -1966,7 +2000,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     int          ndims, nvars, ngatts, unlimdimid;
     int          nCount=0;
     int          nVarID=-1;
-    int          nTmpFiletype=NCDF_FILETYPE_NONE;
+    int          nTmpFileType=NCDF_FILETYPE_NONE;
 
 /* -------------------------------------------------------------------- */
 /*      Does this appear to be a netcdf file?                           */
@@ -1977,26 +2011,29 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     //     return NULL;
 
     if( ! EQUALN(poOpenInfo->pszFilename,"NETCDF:",7) ) {
-        nTmpFiletype = Identify( poOpenInfo );
-        if ( nTmpFiletype == NCDF_FILETYPE_NONE ||
-             nTmpFiletype == NCDF_FILETYPE_UNKNOWN ) 
-            return NULL;
-        const char* pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
-        /* if HDF5 (NC4), make sure this driver only opens netcdf files ans not all HDF5 files */
-        if ( nTmpFiletype == NCDF_FILETYPE_NC4 &&
-             ! ( EQUAL( pszExtension, "nc")  || EQUAL( pszExtension, "nc4") ) ) 
+        nTmpFileType = IdentifyFileType( poOpenInfo );
+        /* Note: not calling Identify() directly, because I want to have the file type */
+        /* Duplicating the hdf5 test (also in Identify()) */
+        if( NCDF_FILETYPE_NONE == nTmpFileType ||
+            NCDF_FILETYPE_HDF5 == nTmpFileType ||
+            NCDF_FILETYPE_UNKNOWN == nTmpFileType )
             return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*       Check if filename start with NETCDF: tag                       */
-/* -------------------------------------------------------------------- */
     netCDFDataset 	*poDS;
     poDS = new netCDFDataset();
     poDS->SetDescription( poOpenInfo->pszFilename );
     
+/* -------------------------------------------------------------------- */
+/*       Check if filename start with NETCDF: tag                       */
+/* -------------------------------------------------------------------- */
     if( EQUALN( poOpenInfo->pszFilename,"NETCDF:",7) )
     {
+        /* should really try to identify filetype in IdentifyFileType() */ 
+        nTmpFileType = IdentifyFileType( poOpenInfo );
+        if( NCDF_FILETYPE_NONE == nTmpFileType )
+            return NULL;
+        poDS->nFileType = nTmpFileType;
         char **papszName =
             CSLTokenizeString2( poOpenInfo->pszFilename,
                                 ":", CSLT_HONOURSTRINGS|CSLT_PRESERVEESCAPES );
@@ -2030,14 +2067,12 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
                       "Failed to parse NETCDF: prefix string into expected three fields." );
             return NULL;
         }
-        /* should try to identify filetype */ 
-        poDS->nFiletype = NCDF_FILETYPE_UNKNOWN;
     }
     else 
     {
         poDS->osFilename = poOpenInfo->pszFilename;
         poDS->bTreatAsSubdataset = FALSE;
-        poDS->nFiletype = nTmpFiletype;
+        poDS->nFileType = nTmpFileType;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3037,7 +3072,7 @@ void GDALRegister_netCDF()
 
         poDriver->pfnOpen = netCDFDataset::Open;
         poDriver->pfnCreateCopy = NCDFCreateCopy;
-
+        poDriver->pfnIdentify = netCDFDataset::Identify;
 
         GetGDALDriverManager( )->RegisterDriver( poDriver );
     }
