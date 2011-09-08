@@ -92,6 +92,13 @@
 
 #define GDALNBDIM  2
 
+/* netcdf file types, as in libcdi/cdo */
+#define NCDF_FILETYPE_NONE            0
+#define NCDF_FILETYPE_NC              1   /* File type netCDF                     */
+#define NCDF_FILETYPE_NC2             2   /* File type netCDF version 2 (64-bit)  */
+#define NCDF_FILETYPE_NC4             3   /* File type netCDF version 4           */
+#define NCDF_FILETYPE_NC4C            4   /* File type netCDF version 4 (classic) */
+#define NCDF_FILETYPE_UNKNOWN         10
 
 typedef struct {
     const char *netCDFSRS;
@@ -176,10 +183,12 @@ class netCDFDataset : public GDALPamDataset
     size_t        xdim, ydim;
     int           nDimXid, nDimYid;
     bool          bBottomUp;
+    int           nFiletype;
 
-		netCDFDataset( );
-		~netCDFDataset( );
+    netCDFDataset( );
+    ~netCDFDataset( );
     
+    static int Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
 
     CPLErr      SafeStrcat(char**, char*, size_t*);

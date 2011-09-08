@@ -1919,11 +1919,38 @@ void netCDFDataset::CreateSubDatasetList( )
 }
     
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int netCDFDataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Does this appear to be a netcdf file?                           */
+/*      Note: proper care should be done at configure to detect which   */
+/*        netcdf versions are supported (nc, nc2, nc4), as does CDO     */
+/* -------------------------------------------------------------------- */
+    if ( poOpenInfo->nHeaderBytes < 4 )
+        return NCDF_FILETYPE_NONE;
+    if ( EQUALN((char*)poOpenInfo->pabyHeader,"CDF\001",4) )
+        return NCDF_FILETYPE_NC;
+    else if ( EQUALN((char*)poOpenInfo->pabyHeader,"CDF\002",4) )
+        return NCDF_FILETYPE_NC2;
+    else if ( EQUALN((char*)poOpenInfo->pabyHeader+1,"HDF",3) ) {
+        /* requires netcdf v4, should also test for netCDF-4 support compiled in */
+        if ( nc_inq_libvers()[0]=='4' )
+            return NCDF_FILETYPE_NC4;
+    }
+    
+    return NCDF_FILETYPE_NONE;
+} 
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
-
+    
 {
     int          j;
     unsigned int k;
@@ -1939,14 +1966,27 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     int          ndims, nvars, ngatts, unlimdimid;
     int          nCount=0;
     int          nVarID=-1;
+    int          nTmpFiletype=NCDF_FILETYPE_NONE;
 
 /* -------------------------------------------------------------------- */
 /*      Does this appear to be a netcdf file?                           */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(poOpenInfo->pszFilename,"NETCDF:",7)
-        && ( poOpenInfo->nHeaderBytes < 5 
-             || !EQUALN((const char *) (poOpenInfo->pabyHeader),"CDF\001",5)))
-        return NULL;
+    // if( !EQUALN(poOpenInfo->pszFilename,"NETCDF:",7)
+    //     && ( poOpenInfo->nHeaderBytes < 5 
+    //          || !EQUALN((const char *) (poOpenInfo->pabyHeader),"CDF\001",5)))
+    //     return NULL;
+
+    if( ! EQUALN(poOpenInfo->pszFilename,"NETCDF:",7) ) {
+        nTmpFiletype = Identify( poOpenInfo );
+        if ( nTmpFiletype == NCDF_FILETYPE_NONE ||
+             nTmpFiletype == NCDF_FILETYPE_UNKNOWN ) 
+            return NULL;
+        const char* pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
+        /* if HDF5 (NC4), make sure this driver only opens netcdf files ans not all HDF5 files */
+        if ( nTmpFiletype == NCDF_FILETYPE_NC4 &&
+             ! ( EQUAL( pszExtension, "nc")  || EQUAL( pszExtension, "nc4") ) ) 
+            return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*       Check if filename start with NETCDF: tag                       */
@@ -1954,7 +1994,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     netCDFDataset 	*poDS;
     poDS = new netCDFDataset();
     poDS->SetDescription( poOpenInfo->pszFilename );
-
+    
     if( EQUALN( poOpenInfo->pszFilename,"NETCDF:",7) )
     {
         char **papszName =
@@ -1990,11 +2030,14 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
                       "Failed to parse NETCDF: prefix string into expected three fields." );
             return NULL;
         }
+        /* should try to identify filetype */ 
+        poDS->nFiletype = NCDF_FILETYPE_UNKNOWN;
     }
     else 
     {
         poDS->osFilename = poOpenInfo->pszFilename;
         poDS->bTreatAsSubdataset = FALSE;
+        poDS->nFiletype = nTmpFiletype;
     }
 
 /* -------------------------------------------------------------------- */
