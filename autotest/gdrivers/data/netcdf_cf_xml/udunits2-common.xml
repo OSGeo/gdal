@@ -1,0 +1,1612 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!--
+Copyright 2008, 2009 University Corporation for Atmospheric Research
+
+This file is part of the UDUNITS-2 package.  See the file LICENSE
+in the top-level source-directory of the package for copying and
+redistribution conditions.
+
+Units not accepted for use with the SI.  NB: <name> and <symbol>
+elements appear only within <aliases>.
+-->
+<unit-system>
+    <!-- Synonyms for SI Units -->
+        <unit>
+            <def>s</def>
+            <aliases> <name> <singular>sec</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>A</def>
+            <aliases> <name> <singular>amp</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>K</def>
+            <aliases>
+                <symbol>&#xB0;K</symbol>        <!-- DEGREE SIGN -->
+                <name>
+                    <singular>degree_kelvin</singular>
+                    <plural>degrees_kelvin</plural>
+                </name>
+                <name>
+                    <singular>degree_K</singular>
+                    <plural>degrees_K</plural>
+                </name>
+                <name>
+                    <singular>degreeK</singular>
+                    <plural>degreesK</plural>
+                </name>
+                <name>
+                    <singular>deg_K</singular>
+                    <plural>degs_K</plural>
+                </name>
+                <name>
+                    <singular>degK</singular>
+                    <plural>degsK</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>cd</def>
+            <aliases> <name> <singular>candle</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>mole</def>
+            <aliases> <name> <singular>einstein</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>Hz</def>
+            <aliases>
+                <name> <singular>baud</singular> </name>
+                <symbol>Bd</symbol>
+                <symbol>bps</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>degree_Celsius</def>
+            <aliases>
+                <symbol>&#x2103;</symbol>       <!-- DEGREE CELSIUS -->
+                <name> <singular>celsius</singular> </name>
+                <name>
+                    <singular>degree_C</singular>
+                    <plural>degrees_C</plural>
+                </name>
+                <name>
+                    <singular>degreeC</singular>
+                    <plural>degreesC</plural>
+                </name>
+                <name>
+                    <singular>deg_C</singular>
+                    <plural>degs_C</plural>
+                </name>
+                <name>
+                    <singular>degC</singular>
+                    <plural>degsC</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>knot</def>
+            <aliases>
+                <symbol>kt</symbol>
+                <symbol>kts</symbol>
+            </aliases>
+        </unit>
+
+    <!-- Constants -->
+        <unit>
+            <def>6.02214179e23/mol</def>
+            <aliases>
+                <name><singular>avogadro_constant</singular></name>
+                <noplural/>
+            </aliases>
+        </unit>
+        <unit>
+            <def>0.01</def>
+            <aliases>
+                <name><singular>percent</singular></name>
+                <noplural/>
+                <symbol>%</symbol>
+            </aliases>
+        </unit>
+
+    <!-- Plane Angle -->
+        <unit>
+            <def>0.9 arc_degree</def>
+            <aliases> <name><singular>grade</singular></name> </aliases>
+        </unit>
+        <unit>
+            <def>2 pi rad</def>
+            <aliases>
+                <name><singular>circle</singular></name>
+                <name><singular>cycle</singular></name>
+                <name><singular>turn</singular></name>
+                <name><singular>revolution</singular></name>
+                <name><singular>rotation</singular></name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>arc_degree</def>
+            <aliases>
+                <name>
+                    <singular>degree_north</singular>
+                    <plural>degrees_north</plural>
+                </name>
+                <name>
+                    <singular>degree_N</singular>
+                    <plural>degrees_N</plural>
+                </name>
+                <name>
+                    <singular>degreeN</singular>
+                    <plural>degreesN</plural>
+                </name>
+                <name>
+                    <singular>degree_east</singular>
+                    <plural>degrees_east</plural>
+                </name>
+                <name>
+                    <singular>degree_E</singular>
+                    <plural>degrees_E</plural>
+                </name>
+                <name>
+                    <singular>degreeE</singular>
+                    <plural>degreesE</plural>
+                </name>
+                <name>
+                    <singular>degree_true</singular>
+                    <plural>degrees_true</plural>
+                </name>
+                <name>
+                    <singular>degree_T</singular>
+                    <plural>degrees_T</plural>
+                </name>
+                <name>
+                    <singular>degreeT</singular>
+                    <plural>degreesT</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>-1 degree_east</def>
+            <aliases>
+                <name>
+                    <singular>degree_west</singular>
+                    <plural>degrees_west</plural>
+                </name>
+                <name>
+                    <singular>degree_W</singular>
+                    <plural>degrees_W</plural>
+                </name>
+                <name>
+                    <singular>degreeW</singular>
+                    <plural>degreesW</plural>
+                </name>
+            </aliases>
+        </unit>
+
+    <!-- Mass -->
+        <unit>
+            <def>2.916667e-2 kg</def>
+            <aliases>
+                <name> <singular>assay_ton</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>2.834952e-2 kg</def>
+            <aliases>
+                <name> <singular>avoirdupois_ounce</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>4.5359237e-1 kg</def>
+            <aliases>
+                <name> <singular>avoirdupois_pound</singular> </name>
+                <name> <singular>pound</singular> </name>
+                <symbol>lb</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>2e-4 kg</def>
+            <aliases>
+                <name> <singular>carat</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>6.479891e-5 kg</def>
+            <aliases>
+                <name> <singular>grain</singular> </name>
+                <symbol>gr</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>5.080235e1 kg</def>
+            <aliases>
+                <name> <singular>long_hundredweight</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1.555174e-3 kg</def>
+            <aliases>
+                <name> <singular>pennyweight</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>4.535924e1 kg</def>
+            <aliases>
+                <name> <singular>short_hundredweight</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>14.59390 kg</def>
+            <aliases>
+                <name> <singular>slug</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>3.110348e-2 kg</def>
+            <aliases>
+                <name> <singular>troy_ounce</singular> </name>
+                <name> <singular>apothecary_ounce</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>3.732417e-1 kg</def>
+            <aliases>
+                <name> <singular>troy_pound</singular> </name>
+                <name> <singular>apothecary_pound</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>20 grain</def>
+            <aliases> <name> <singular>scruple</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>60 grain</def>
+            <aliases> <name> <singular>apdram</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>480 grain</def>
+            <aliases> <name> <singular>apounce</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>5760 grain</def>
+            <aliases> <name> <singular>appound</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>94 pound</def>
+            <aliases> <name> <singular>bag</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>2000 pound</def>
+            <aliases>
+                <name> <singular>short_ton</singular> </name>
+                <name> <singular>ton</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>2240 pound</def>
+            <aliases>
+                <name> <singular>long_ton</singular> </name>
+            </aliases>
+        </unit>
+
+    <!-- Length -->
+        <unit>
+            <def>1e-15 m</def>
+            <aliases>
+                <name> <singular>fermi</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>9.46073e15 m</def>
+            <aliases>
+                <name> <singular>light_year</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1e-6 m</def>
+            <aliases>
+                <name> <singular>micron</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>2.54e-5 m</def>
+            <aliases>
+                <name> <singular>mil</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>3.085678e16 m</def>
+            <aliases>
+                <name> <singular>parsec</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>3.514598e-4 m</def>
+            <aliases>
+                <name> <singular>printers_point</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>2.011684e1 m</def>
+            <aliases>
+                <name> <singular>chain</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>12 printers_point</def>
+            <aliases>
+                <name> <singular>printers_pica</singular> </name>
+                <name> <singular>pica</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>nautical_mile</def>
+            <aliases>
+                <name> <singular>nmile</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>(1200/3937) m</def>
+            <aliases>
+                <name>
+                    <singular>US_survey_foot</singular>
+                    <plural>US_survey_feet</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>3 US_survey_feet</def>
+            <aliases>
+                <name> <singular>US_survey_yard</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>5280 US_survey_feet</def>
+            <aliases>
+                <name> <singular>US_survey_mile</singular> </name>
+                <name> <singular>US_statute_mile</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>16.5 US_survey_feet</def>
+            <aliases>
+                <name> <singular>rod</singular> </name>
+                <name> <singular>pole</singular> </name>
+                <name> <singular>perch</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>660 US_survey_feet</def>
+            <aliases> <name> <singular>furlong</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>6 US_survey_feet</def>
+            <aliases> <name> <singular>fathom</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>2.54 cm</def>
+            <aliases>
+                <name> <singular>international_inch</singular> </name>
+                <name> <singular>inch</singular> </name>
+                <symbol>in</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>12 international_inches</def>
+            <aliases>
+                <name>
+                    <singular>international_foot</singular>
+                    <plural>international_feet</plural>
+                </name>
+                <name>
+                    <singular>foot</singular>
+                    <plural>feet</plural>
+                </name>
+                <symbol>ft</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>3 international_feet</def>
+            <aliases>
+                <name> <singular>international_yard</singular> </name>
+                <name> <singular>yard</singular> </name>
+                <symbol>yd</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>5280 international_feet</def>
+            <aliases>
+                <name> <singular>international_mile</singular> </name>
+                <name> <singular>mile</singular> </name>
+                <symbol>mi</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>inch/72</def>
+            <aliases>
+                <name> <singular>big_point</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>inch/3</def>
+            <aliases>
+                <name> <singular>barleycorn</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>191.835 foot</def>
+            <aliases>
+                <name> <singular>arpentlin</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>(2.69e20/avogadro_constant)/m2</def>
+            <aliases>
+                <name> <singular>dobson</singular> </name>
+                <symbol>DU</symbol>
+            </aliases>
+        </unit>
+
+    <!-- Angular Velocity -->
+        <unit>
+            <def>rotation/second</def>		<!-- exact -->
+            <aliases>
+                <name>
+                    <singular>rotation_per_second</singular>
+                    <plural>rotations_per_second</plural>
+                </name>
+                <symbol>rps</symbol>
+                <symbol>cps</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>rotation/minute</def>		<!-- exact -->
+            <aliases> <symbol>rpm</symbol> </aliases>
+        </unit>
+
+    <!-- Lineic Mass -->
+        <unit>
+            <def>1.111111e-7 kg/m</def>
+            <aliases>
+                <name> <singular>denier</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1e-6 kg/m</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>tex</singular> </name>
+            </aliases>
+        </unit>
+
+    <!-- Mass per unit time (includes flow) -->
+        <unit>
+            <def>5.72135e-11 kg/(Pa.s.m^2)</def>
+            <aliases>
+                <name>
+                    <singular>perm_0C</singular>
+                    <plural>perms_0C</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>5.74525e-11 kg/(Pa.s.m^2)</def>
+            <aliases>
+                <name>
+                    <singular>perm_23C</singular>
+                    <plural>perms_23C</plural>
+                </name>
+            </aliases>
+        </unit>
+
+    <!-- Area -->
+        <unit>
+            <def>5.067075e-10 m^2</def>
+            <aliases>
+                <name> <singular>circular_mil</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>9.869233e-13 m^2</def> <!-- porous solid permeability -->
+            <aliases> <name> <singular>darcy</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>160 rod^2</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>acre</singular> </name>
+            </aliases>
+        </unit>
+
+    <!-- Volume -->
+        <unit>
+            <def>1.233489e3 m^3</def>
+            <!-- An "acre.foot", however, is 1233.4867714897 m^3.  Odd. -->
+            <aliases>
+                <name>
+                    <singular>acre_foot</singular>
+                    <plural>acre_feet</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>2.359737e-3 m^3</def>
+            <aliases>
+                <name>
+                    <singular>board_foot</singular>
+                    <plural>board_feet</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>3.523907e-2 m^3</def>
+            <aliases>
+                <name> <singular>bushel</singular> </name>
+                <symbol>bu</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>bushel/4</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>peck</singular> </name>
+                <symbol>pk</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>4.546090e-3 m^3</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>Canadian_liquid_gallon</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>4.404884e-3 m^3</def>
+            <aliases>
+                <name> <singular>US_dry_gallon</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>cm^3</def>				<!-- exact -->
+            <aliases> <symbol>cc</symbol> </aliases>
+        </unit>
+        <unit>
+            <def>1 m^3</def>				<!-- exact -->
+            <aliases>
+                <name> <singular>stere</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>2.831685 m^3</def>
+            <aliases>
+                <name> <singular>register_ton</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>US_dry_gallon/4</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>US_dry_quart</singular> </name>
+                <name> <singular>dry_quart</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>US_dry_gallon/8</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>US_dry_pint</singular> </name>
+                <name> <singular>dry_pint</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>3.785412e-3 m^3</def>
+            <aliases>
+                <name> <singular>US_liquid_gallon</singular> </name>
+                <name> <singular>liquid_gallon</singular> </name>
+                <name> <singular>gallon</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <!-- The following is the definition of the petroleum industry
+            -->
+            <def>42 US_liquid_gallon</def>
+            <aliases>
+                <name> <singular>barrel</singular> </name>
+                <symbol>bbl</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <!-- The following is exact regardless of the definition of
+            "barrel" -->
+            <def>barrel/4</def>
+            <aliases>
+                <name> <singular>firkin</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>US_liquid_gallon/4</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>US_liquid_quart</singular> </name>
+                <name> <singular>liquid_quart</singular> </name>
+                <name> <singular>quart</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>US_liquid_gallon/8</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>US_liquid_pint</singular> </name>
+                <name> <singular>liquid_pint</singular> </name>
+                <name> <singular>pint</singular> </name>
+                <symbol>pt</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>US_liquid_gallon/16</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>US_liquid_cup</singular> </name>
+                <name> <singular>liquid_cup</singular> </name>
+                <name> <singular>cup</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>US_liquid_gallon/32</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>US_liquid_gill</singular> </name>
+                <name> <singular>liquid_gill</singular> </name>
+                <name> <singular>gill</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>US_liquid_gallon/128</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>US_fluid_ounce</singular> </name>
+                <name> <singular>US_liquid_ounce</singular> </name>
+                <name> <singular>fluid_ounce</singular> </name>
+                <name> <singular>liquid_ounce</singular> </name>
+                <symbol>oz</symbol>
+                <symbol>floz</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>US_fluid_ounce/2</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>tablespoon</singular> </name>
+                <symbol>Tbl</symbol>
+                <symbol>Tbsp</symbol>
+                <symbol>tbsp</symbol>
+                <symbol>Tblsp</symbol>
+                <symbol>tblsp</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>US_fluid_ounce/8</def>		<!-- exact -->
+            <aliases> <symbol>fldr</symbol> </aliases>
+        </unit>
+        <unit>
+            <def>US_fluid_ounce/16</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>dram</singular> </name>
+                <symbol>dr</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>tablespoon/3</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>teaspoon</singular> </name>
+                <symbol>tsp</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>4.546090e-3 m^3</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>UK_liquid_gallon</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>UK_liquid_gallon/4</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>UK_liquid_quart</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>UK_liquid_gallon/8</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>UK_liquid_pint</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>UK_liquid_gallon/16</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>UK_liquid_cup</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>UK_liquid_gallon/32</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>UK_liquid_gill</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>UK_liquid_gallon/160</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>UK_fluid_ounce</singular> </name>
+                <name> <singular>UK_liquid_ounce</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>lg(re (1e-6 m)^3)</def>
+            <aliases> <symbol>BZ</symbol> </aliases>
+        </unit>
+
+    <!-- Time -->
+        <unit>
+            <def>1e-8 s</def>
+            <aliases> <name> <singular>shake</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>8.616409e4 s</def>
+            <aliases>
+                <name> <singular>sidereal_day</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>3.590170e3 s</def>
+            <aliases>
+                <name> <singular>sidereal_hour</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>5.983617e1 s</def>
+            <aliases>
+                <name> <singular>sidereal_minute</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>0.9972696 s</def>
+            <aliases>
+                <name> <singular>sidereal_second</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>3.155815e7 s</def>
+            <aliases>
+                <name> <singular>sidereal_year</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <!--
+                Interval between 2 successive passages of sun
+                through vernal equinox (365.242198781 days.  See
+                <http://www.ast.cam.ac.uk/pubinfo/leaflets/>,
+                <http://aa.usno.navy.mil/AA/>, and
+                <http://adswww.colorado.edu/adswww/astro_coord.html>):
+            -->
+            <def>3.15569259747e7 s</def>
+            <aliases>
+                <name> <singular>tropical_year</singular> </name>
+                <name> <singular>year</singular> </name>
+                <!-- The following is commented-out because "a" already
+                     maps to "are"
+                <symbol>a</symbol>
+                -->
+                <symbol>yr</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>29.530589 day</def>
+            <aliases>
+                <name> <singular>lunar_month</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>365 day</def>
+            <aliases>
+                <name> <singular>common_year</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>366 day</def>
+            <aliases>
+                <name> <singular>leap_year</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>365.25 day</def>
+            <aliases>
+                <name> <singular>Julian_year</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>365.2425 day</def>
+            <aliases>
+                <name> <singular>Gregorian_year</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>27.321661 day</def>
+            <aliases>
+                <name> <singular>sidereal_month</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>27.321582 day</def>
+            <aliases>
+                <name> <singular>tropical_month</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>14 day</def>
+            <aliases>
+                <name> <singular>fortnight</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>7 day</def>
+            <aliases> <name> <singular>week</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>0.01 s</def>
+            <aliases> <name> <singular>jiffy</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>1e9 year</def>
+            <aliases> <name> <singular>eon</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>year/12</def>
+            <aliases> <name> <singular>month</singular> </name> </aliases>
+        </unit>
+
+    <!-- Volume per time -->
+        <unit>
+            <def>1e6 m^3/s</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>sverdrup</singular> </name>
+                <!-- The following is commented-out because "Sv" means
+                     "sievert" in the SI unit-system.
+                <symbol>Sv</symbol>
+                -->
+            </aliases>
+        </unit>
+
+    <!-- Acceleration -->
+        <unit>
+            <def>9.806650 m/s^2</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>standard_free_fall</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>standard_free_fall</def>		<!-- should be local -->
+            <aliases> <name> <singular>gravity</singular> </name> </aliases>
+        </unit>
+
+    <!-- Some "units" that make subsequent definitions easier -->
+        <unit>
+            <def>gravity 1000 kg/m^3</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>conventional_water</singular> </name>
+                <name> <singular>water</singular> </name>
+                <symbol>H2O</symbol>
+                <symbol>h2o</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>gravity 999.972 kg/m^3</def>
+            <aliases>
+                <name>
+                    <singular>water_4C</singular>
+                    <plural>waters_4C</plural>
+                </name>
+                <name>
+                    <singular>water_39F</singular>	<!-- act. 39.2 F -->
+                    <plural>waters_39F</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>gravity 999.001 kg/m^3</def>
+            <aliases>
+                <name>
+                    <singular>water_60F</singular>
+                    <plural>waters_60F</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>gravity 13595.10 kg/m^3</def>
+            <aliases>
+                <name>
+                    <singular>mercury_0C</singular>
+                    <plural>mercuries_0C</plural>
+                </name>
+                <name>
+                    <singular>mercury_32F</singular>
+                    <plural>mercuries_32F</plural>
+                </name>
+                <name>
+                    <singular>conventional_mercury</singular>
+                    <plural>conventional_mercuries</plural>
+                </name>
+                <symbol>Hg</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>gravity 13556.8 kg/m^3</def>
+            <aliases>
+                <name>
+                    <singular>mercury_60F</singular>
+                    <plural>mercuries_60F</plural>
+                </name>
+            </aliases>
+        </unit>
+
+    <!-- Force -->
+        <unit>
+            <def>standard_free_fall</def>
+            <aliases> <name> <singular>force</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>1e-5 N</def>			<!-- exact -->
+            <aliases> <name> <singular>dyne</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>9.806650e-3 N</def>		<!-- exact -->
+            <aliases> <name> <singular>pond</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>9.806650 N</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>force_kilogram</singular> </name>
+                <name>
+                    <singular>kilogram_force</singular>
+                    <plural>kilograms_force</plural>
+                </name>
+                <symbol>kgf</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>2.780139e-1 N</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>force_ounce</singular> </name>
+                <name>
+                    <singular>ounce_force</singular>
+                    <plural>ounces_force</plural>
+                </name>
+                <symbol>ozf</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>4.4482216152605 N</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>force_pound</singular> </name>
+                <name>
+                    <singular>pound_force</singular>
+                    <plural>pounds_force</plural>
+                </name>
+                <symbol>lbf</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1.382550e-1 N</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>poundal</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>gram force</def>			<!-- exact -->
+            <aliases>
+                <name>
+                    <singular>gram_force</singular>
+                    <plural>grams_force</plural>
+                </name>
+                <name>
+                    <singular>force_gram</singular>
+                </name>
+                <symbol>gf</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>2000 force_pound</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>force_ton</singular> </name>
+                <name>
+                    <singular>ton_force</singular>
+                    <plural>tons_force</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1000 lbf</def>			<!-- exact -->
+            <aliases> <name><singular>kip</singular></name> </aliases>
+        </unit>
+
+    <!-- Pressure, Stress -->
+        <unit>
+            <def>1.01325e5 Pa</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>standard_atmosphere</singular> </name>
+                <name> <singular>atmosphere</singular> </name>
+                <symbol>atm</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1 kg gravity/cm2</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>technical_atmosphere</singular> </name>
+                <symbol>at</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>cm H2O</def>
+            <aliases>
+                <symbol>cm_H2O</symbol>
+                <symbol>cmH2O</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>inch water_39F</def>		<!-- exact -->
+            <aliases>
+                <name>
+                    <singular>inch_H2O_39F</singular>
+                    <plural>inches_H2O_39F</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>inch water_60F</def>		<!-- exact -->
+            <aliases>
+                <name>
+                    <singular>inch_H2O_60F</singular>
+                    <plural>inches_H2O_60F</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>foot water</def>
+            <aliases>
+                <name>
+                    <singular>foot_water</singular>
+                    <plural>feet_water</plural>
+                </name>
+                <name>
+                    <singular>foot_H2O</singular>
+                    <plural>feet_H2O</plural>
+                </name>
+                <name>
+                    <singular>footH2O</singular>
+                    <plural>feetH2O</plural>
+                </name>
+                <symbol>ftH2O</symbol>
+                <symbol>fth2o</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>cm Hg</def>
+            <aliases>
+                <symbol>cm_Hg</symbol>
+                <symbol>cmHg</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>mm mercury_0C</def>		<!-- exact -->
+            <aliases>
+                <name>
+                    <singular>millimeter_Hg_0C</singular>
+                    <plural>millimeters_Hg_0C</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>inch mercury_32F</def>		<!-- exact -->
+            <aliases>
+                <name>
+                    <singular>inch_Hg_32F</singular>
+                    <plural>inches_Hg_32F</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>inch mercury_60F</def>		<!-- exact -->
+            <aliases>
+                <name>
+                    <singular>inch_Hg_60F</singular>
+                    <plural>inches_Hg_60F</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>mm Hg</def>
+            <aliases>
+                <name>
+                    <singular>millimeter_Hg</singular>
+                    <plural>millimeters_Hg</plural>
+                </name>
+                <name> <singular>torr</singular> </name>
+                <symbol>mm_Hg</symbol>
+                <symbol>mm_hg</symbol>
+                <symbol>mmHg</symbol>
+                <symbol>mmhg</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>inch Hg</def>
+            <aliases>
+                <name>
+                    <singular>inch_Hg</singular>
+                    <plural>inches_Hg</plural>
+                </name>
+                <symbol>in_Hg</symbol>
+                <symbol>inHg</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1 pound gravity/in^2</def>		<!-- exact -->
+            <aliases> <symbol>psi</symbol> </aliases>
+        </unit>
+        <unit>
+            <def>kip/in^2</def>			<!-- exact -->
+            <aliases> <symbol>ksi</symbol> </aliases>
+        </unit>
+        <unit>
+            <def>0.1 N/m^2</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>barie</singular> </name>
+                <name> <singular>barye</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>lg(re 20e-6 Pa)</def>      <!-- sound pressure level -->
+            <aliases> <symbol>B_SPL</symbol> </aliases>
+        </unit>
+
+    <!-- Viscosity -->
+        <unit>
+            <def>1e-1 Pa.s</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>poise</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1e-4 m^2/s</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>stokes</singular> </name>
+                <symbol>St</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>10/(Pa.s)</def>			<!-- exact -->
+            <aliases> <name> <singular>rhe</singular> </name> </aliases>
+        </unit>
+
+    <!-- Energy, Work, Quantity of Heat -->
+        <unit>
+            <def>1e-7 J</def>			<!-- exact -->
+            <aliases> <name> <singular>erg</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>1.05505585262e3 J</def>		<!-- exact -->
+            <aliases>
+                <name>
+                    <singular>IT_Btu</singular>
+                    <plural>IT_Btus</plural>
+                </name>
+                <name>
+                    <singular>Btu</singular>
+                    <plural>Btus</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1.05506e8 J</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>EC_therm</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>4.184000 J</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>thermochemical_calorie</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>4.1868 J</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>IT_calorie</singular> </name>
+                <name> <singular>calorie</singular> </name>
+                <symbol>cal</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>4.184 MJ/kg</def>			<!-- by definition -->
+            <aliases>
+                <name> <singular>TNT</singular><noplural/></name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>4.184e9 J</def>			<!-- by definition -->
+            <aliases>
+                <name>
+                    <singular>ton_TNT</singular>
+                    <plural>tons_TNT</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1.054804e8 J</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>US_therm</singular> </name>
+                <name> <singular>therm</singular> </name>
+                <symbol>thm</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>watt.hour</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>watthour</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1e9 eV</def>			<!-- exact -->
+            <aliases> <symbol>bev</symbol> </aliases>
+        </unit>
+
+    <!-- Power, Radiant Flux -->
+        <unit>
+            <def>V.A</def>				<!-- exact -->
+            <aliases>
+                <name> <singular>voltampere</singular> </name>
+                <symbol>VA</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>9.80950e3 W</def>
+            <aliases>
+                <name> <singular>boiler_horsepower</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>7.456999e2 W</def>
+            <aliases>
+                <name> <singular>shaft_horsepower</singular> </name>
+                <name> <singular>horsepower</singular> </name>
+                <symbol>hp</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>7.35499e2 W</def>
+            <aliases>
+                <name> <singular>metric_horsepower</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>7.460000e2 W</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>electric_horsepower</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>7.46043e2 W</def>
+            <aliases>
+                <name> <singular>water_horsepower</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>7.4570e2 W</def>
+            <aliases>
+                <name> <singular>UK_horsepower</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>12000 Btu/hr</def>
+            <aliases>
+                <name> <singular>refrigeration_ton</singular> </name>
+                <name>
+                    <singular>ton_of_refrigeration</singular>
+                    <plural>tons_of_refrigeration</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>lg(re 1 W)</def>
+            <aliases> <symbol>BW</symbol> </aliases>
+        </unit>
+        <unit>
+            <def>lg(re 1 mW)</def>
+            <aliases> <symbol>Bm</symbol> </aliases>
+        </unit>
+
+    <!-- Heat -->
+        <unit>
+            <def>1.55e-1 K.m^2/W</def>
+            <aliases> <name> <singular>clo</singular> </name> </aliases>
+        </unit>
+
+    <!-- Electricity and Magnetism -->
+        <unit>
+            <def>10 A</def>
+            <aliases> <name><singular>abampere</singular></name> </aliases>
+        </unit>
+        <unit>
+            <def>7.957747e-1 A</def>
+            <aliases> <name><singular>gilbert</singular></name> </aliases>
+        </unit>
+        <unit>
+            <def>3.335640e-10 A</def>
+            <aliases>
+                <name><singular>statampere</singular></name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>10 A</def>
+            <aliases> <name><singular>biot</singular></name> </aliases>
+        </unit>
+        <unit>
+            <def>1e9 F</def>			<!-- exact -->
+            <aliases> <name> <singular>abfarad</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>1e-9 H</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>abhenry</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1e9 S</def>			<!-- exact -->
+            <aliases> <name> <singular>abmho</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>1e-9 ohm</def>			<!-- exact -->
+            <aliases> <name> <singular>abohm</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>1e-8 V</def>			<!-- exact -->
+            <aliases> <name> <singular>abvolt</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>1.602176487e-19 C</def>
+            <aliases> <symbol>e</symbol> </aliases>
+        </unit>
+        <unit>
+            <def>9.64957e4 C</def>
+            <aliases>
+                <name> <singular>chemical_faraday</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>9.65219e4 C</def>
+            <aliases>
+                <name> <singular>physical_faraday</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>9.648531e4 C</def>
+            <aliases>
+                <name> <singular>C12_faraday</singular> </name>
+                <name> <singular>faraday</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1e-9 T</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>gamma</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1e-4 T</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>gauss</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1e-8 Wb</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>maxwell</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>7.957747e1 A/m</def>
+            <aliases>
+                <name> <singular>oersted</singular> </name>
+                <symbol>Oe</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>3.335640e-10 C</def>
+            <aliases>
+                <name> <singular>statcoulomb</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1.112650e-12 F</def>
+            <aliases>
+                <name> <singular>statfarad</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>8.987554e11 H</def>
+            <aliases>
+                <name> <singular>stathenry</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1.112650e-12 S</def>
+            <aliases>
+                <name> <singular>statmho</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>8.987554e11 ohm</def>
+            <aliases>
+                <name> <singular>statohm</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>2.997925e2 V</def>
+            <aliases>
+                <name> <singular>statvolt</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1.256637e-7 Wb</def>
+            <aliases>
+                <name> <singular>unit_pole</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>lg(re 1 V)</def>
+            <aliases> <symbol>BV</symbol> </aliases>
+        </unit>
+        <unit>
+            <def>lg(re 0.775 V)</def>       <!-- rms voltage -->
+            <aliases> <symbol>Bv</symbol> </aliases>
+        </unit>
+        <unit>
+            <def>lg(re 1e-6 V)</def>
+            <aliases> <symbol>B&#xB5;V</symbol> </aliases>
+                                            <!-- uses MICRO SIGN -->
+        </unit>
+
+    <!-- Thermodynamic Temperature -->
+        <unit>
+            <def>K/1.8</def>
+            <aliases>
+                <symbol>&#xB0;R</symbol>    <!-- DEGREE SIGN -->
+                <name>
+                    <singular>degree_rankine</singular>
+                    <plural>degrees_rankine</plural>
+                </name>
+                <name>
+                    <singular>degreeR</singular>
+                    <plural>degreesR</plural>
+                </name>
+                <name>
+                    <singular>degree_R</singular>
+                    <plural>degrees_R</plural>
+                </name>
+                <name>
+                    <singular>degR</singular>
+                    <plural>degsR</plural>
+                </name>
+                <name>
+                    <singular>deg_R</singular>
+                    <plural>degs_R</plural>
+                </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>&#xB0;R @ 459.67</def>     <!-- DEGREE SIGN -->
+            <aliases>
+                <symbol>&#xB0;F</symbol>    <!-- DEGREE SIGN -->
+                <symbol>&#x2109;</symbol>   <!-- DEGREE FAHRENHEIT -->
+                <name> <singular>fahrenheit</singular> </name>
+                <name>
+                    <singular>degree_fahrenheit</singular>
+                    <plural>degrees_fahrenheit</plural>
+                </name>
+                <name>
+                    <singular>degreeF</singular>
+                    <plural>degreesF</plural>
+                </name>
+                <name>
+                    <singular>degree_F</singular>
+                    <plural>degrees_F</plural>
+                </name>
+                <name>
+                    <singular>degF</singular>
+                    <plural>degsF</plural>
+                </name>
+                <name>
+                    <singular>deg_F</singular>
+                    <plural>degs_F</plural>
+                </name>
+            </aliases>
+        </unit>
+
+    <!-- Illumination -->
+        <unit>
+            <def>1.076391e-1 lx</def>
+            <aliases>
+                <name> <singular>footcandle</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>3.426259 cd/m^2</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>footlambert</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>(1e4/pi) cd/m^2</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>lambert</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1e4 cd/m^2</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>stilb</singular> </name>
+                <symbol>sb</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1e4 lm/m^2</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>phot</singular> </name>
+                <symbol>ph</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1 cd/m^2</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>nit</singular> </name>
+                <symbol>nt</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>4.184000e4 J/m^2</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>langley</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>cd/(pi m^2)</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>blondel</singular> </name>
+                <name> <singular>apostilb</singular> </name>
+            </aliases>
+        </unit>
+
+    <!-- Miscellaneous -->
+        <unit>
+            <def>100/m</def>			<!-- exact -->
+            <aliases> <name> <singular>kayser</singular> </name> </aliases>
+        </unit>
+        <unit>
+            <def>gravity</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>geopotential</singular> </name>
+                <name> <singular>dynamic</singular> </name>
+                <symbol>gp</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>2056 hours</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>work_year</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>work_year/12</def>			<!-- exact -->
+            <aliases>
+                <name> <singular>work_month</singular> </name>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1e-6 m^2 s^-1 K kg^-1</def>		<!-- exact -->
+            <aliases>
+                <name> <singular>potential_vorticity_unit</singular> </name>
+                <symbol>PVU</symbol>
+            </aliases>
+        </unit>
+        <unit>
+            <def>1</def>
+            <aliases>
+                <name> <singular>count</singular> </name>
+            </aliases>
+        </unit>
+</unit-system>
