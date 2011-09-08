@@ -37,6 +37,9 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 
+#for nc versions tests
+import subprocess
+
 ###############################################################################
 # Perform simple read test.
 
@@ -377,7 +380,101 @@ def netcdf_14():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+#check support for netcdf-2 (64 bit)
+def netcdf_15():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    #check if netcdf library has nc2 (64-bit) support
+    #this should be done at configure time by gdal like in cdo
+    gdaltest.netcdf_drv_has_nc2 = False
+    try:
+        proc = subprocess.check_output( [ 'nc-config', '--has-nc2' ] )
+    except (OSError, ValueError):
+        gdaltest.netcdf_drv_has_nc2 = False
+    else:
+        #should test this on windows
+        if proc.rstrip() == 'yes':
+            gdaltest.netcdf_drv_has_nc2 = True
+
+    if gdaltest.netcdf_drv_has_nc2:
+        ds = gdal.Open( 'data/trmm-nc2.nc' )
+        if ds is None:
+            return 'fail'
+        else:
+            ds = None
+            return 'success'
+    else:
+        return 'skip'
+
+    return 'success'
         
+###############################################################################
+#check support for netcdf-4
+def netcdf_16():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+    
+    #check if netcdf library has nc4 support
+    #this should be done at configure time by gdal like in cdo
+    gdaltest.netcdf_drv_has_nc4 = False
+    try:
+        proc = subprocess.check_output( [ 'nc-config', '--has-nc4' ] )
+    except (OSError, ValueError):
+        gdaltest.netcdf_drv_has_nc4 = False
+    else:
+        #should test this on windows
+        if proc.rstrip() == 'yes':
+            gdaltest.netcdf_drv_has_nc4 = True
+            
+    if gdaltest.netcdf_drv_has_nc4:
+        ds = gdal.Open( 'data/trmm-nc4.nc' )
+        if ds is None:
+            return 'fail'
+        else:
+            name = ds.GetDriver().GetDescription()
+            ds = None
+        #return fail if did not open with the netCDF driver (i.e. HDF5Image)
+            if name != 'netCDF':
+                return 'fail'
+            return 'success'
+    else:
+        return 'skip'
+
+    return 'success'
+
+###############################################################################
+#check support for netcdf-4 - make sure hdf5 is not read by netcdf driver
+def netcdf_17():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    #skip test if Hdf5 is not enabled
+    if gdal.GetDriverByName( 'HDF5' ) is None and \
+            gdal.GetDriverByName( 'HDF5Image' ) is None:
+        return 'skip'
+    
+    if gdaltest.netcdf_drv_has_nc4:
+        ds = gdal.Open( 'data/u8be.h5' )
+        if ds is None:
+            return 'fail'
+        else:
+            name = ds.GetDriver().GetDescription()
+            ds = None
+                #return fail if opened with the netCDF driver
+            if name == 'netCDF':
+                return 'fail'
+            return 'success'
+    else:
+        return 'skip'
+    
+    return 'success'
+       
 ###############################################################################
 
 gdaltest_list = [
@@ -394,7 +491,10 @@ gdaltest_list = [
     netcdf_11,
     netcdf_12,
     netcdf_13,
-    netcdf_14 ]
+    netcdf_14,
+    netcdf_15,
+    netcdf_16,
+    netcdf_17 ]
 
 
 if __name__ == '__main__':
