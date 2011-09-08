@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<area_type_table xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="area-type-table-1.1.xsd">
+  <title>Area Type Table</title>
+  <version_number>1</version_number>
+  <date>5 December 2008</date>
+  <institution>Program for Climate Model Diagnosis and Intercomparison</institution>
+  <contact>webmaster@pcmdi.llnl.gov</contact>
+
+  <entry id="bare_ground">
+    <description></description>
+  </entry>
+  <entry id="all_area_types">
+    <description></description>
+  </entry>
+  <entry id="clear_sky">
+    <description></description>
+  </entry>
+  <entry id="cloud">
+    <description></description>
+  </entry>
+  <entry id="floating_ice">
+    <description>All ice floating on water including lake-ice, sea-ice, ice-shelves and icebergs.</description>
+  </entry>
+  <entry id="ice_free_sea">
+    <description></description>
+  </entry>
+  <entry id="lake_ice_or_sea_ice">
+    <description>Floating ice excluding ice-shelves and icebergs.</description>
+  </entry>
+  <entry id="land">
+    <description></description>
+  </entry>
+  <entry id="land_ice">
+    <description></description>
+  </entry>
+  <entry id="sea">
+    <description></description>
+  </entry>
+  <entry id="sea_ice">
+    <description></description>
+  </entry>
+  <entry id="snow">
+    <description></description>
+  </entry>
+  <entry id="vegetation">
+    <description></description>
+  </entry>
+
+</area_type_table>
