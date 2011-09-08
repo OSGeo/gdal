@@ -1923,7 +1923,7 @@ void netCDFDataset::CreateSubDatasetList( )
 /*                              IdentifyFileType()                      */
 /************************************************************************/
 
-int netCDFDataset::IdentifyFileType( GDALOpenInfo * poOpenInfo )
+int netCDFDataset::IdentifyFileType( GDALOpenInfo * poOpenInfo, bool bCheckHDF5 = TRUE )
 
 {
 /* -------------------------------------------------------------------- */
@@ -1945,9 +1945,11 @@ int netCDFDataset::IdentifyFileType( GDALOpenInfo * poOpenInfo )
         /* Make sure this driver only opens netCDF-4 files and not other HDF5 files */
         /* This check should be relaxed, but there is no clear way to make a difference */
         /* If user really wants to open with this driver, use NETCDF:file.nc:var format */
-        const char* pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
-        if ( ! ( EQUAL( pszExtension, "nc")  || EQUAL( pszExtension, "nc4") ) )
+        if ( TRUE == bCheckHDF5 ) { /* Only check if asked for */
+            const char* pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
+            if ( ! ( EQUAL( pszExtension, "nc")  || EQUAL( pszExtension, "nc4") ) )
                 return NCDF_FILETYPE_HDF5;
+        }
         /* Requires netcdf v4, should also test for netCDF-4 support compiled in */
         /* This test could be done at configure like in CDO */
         /* Anyway, if support is not built-in the file will not open, and should fall-back to HDF5 */
@@ -2005,11 +2007,6 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Does this appear to be a netcdf file?                           */
 /* -------------------------------------------------------------------- */
-    // if( !EQUALN(poOpenInfo->pszFilename,"NETCDF:",7)
-    //     && ( poOpenInfo->nHeaderBytes < 5 
-    //          || !EQUALN((const char *) (poOpenInfo->pabyHeader),"CDF\001",5)))
-    //     return NULL;
-
     if( ! EQUALN(poOpenInfo->pszFilename,"NETCDF:",7) ) {
         nTmpFileType = IdentifyFileType( poOpenInfo );
         /* Note: not calling Identify() directly, because I want to have the file type */
@@ -2029,15 +2026,10 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( EQUALN( poOpenInfo->pszFilename,"NETCDF:",7) )
     {
-        /* should really try to identify filetype in IdentifyFileType() */ 
-        nTmpFileType = IdentifyFileType( poOpenInfo );
-        if( NCDF_FILETYPE_NONE == nTmpFileType )
-            return NULL;
-        poDS->nFileType = nTmpFileType;
         char **papszName =
             CSLTokenizeString2( poOpenInfo->pszFilename,
                                 ":", CSLT_HONOURSTRINGS|CSLT_PRESERVEESCAPES );
-                   
+        
         /* -------------------------------------------------------------------- */
         /*    Check for drive name in windows NETCDF:"D:\...                    */
         /* -------------------------------------------------------------------- */
@@ -2067,6 +2059,15 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
                       "Failed to parse NETCDF: prefix string into expected three fields." );
             return NULL;
         }
+        /* Identify filetype from real file, with bCheckHDF5=FALSE */ 
+        GDALOpenInfo* poOpenInfo2 = new GDALOpenInfo(poDS->osFilename.c_str(), GA_ReadOnly );
+        poDS->nFileType = IdentifyFileType( poOpenInfo2, FALSE );
+        delete poOpenInfo2;
+        if( NCDF_FILETYPE_NONE == poDS->nFileType ||
+            NCDF_FILETYPE_UNKNOWN == poDS->nFileType ) {
+            delete poDS;
+            return NULL;
+        }        
     }
     else 
     {
@@ -2082,6 +2083,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }
+
 /* -------------------------------------------------------------------- */
 /*      Is this a real netCDF file?                                     */
 /* -------------------------------------------------------------------- */

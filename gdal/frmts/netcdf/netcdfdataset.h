@@ -177,7 +177,7 @@ class netCDFDataset : public GDALPamDataset
 
     char **      FetchStandardParallels( const char *pszGridMappingValue );
 
-    static int IdentifyFileType( GDALOpenInfo * );
+    static int IdentifyFileType( GDALOpenInfo *, bool );
 
   public:
     int           cdfid;
