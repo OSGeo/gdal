@@ -1961,7 +1961,7 @@ int netCDFDataset::IdentifyFileType( GDALOpenInfo * poOpenInfo )
 } 
 
 /************************************************************************/
-/*                              IdentifyFileType()                      */
+/*                              Identify()                              */
 /************************************************************************/
 
 int netCDFDataset::Identify( GDALOpenInfo * poOpenInfo )
