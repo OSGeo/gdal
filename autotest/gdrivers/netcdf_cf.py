@@ -37,7 +37,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 #for cf compliance checks
-import shlex, subprocess, imp
+import imp
 import osr
 
 ###############################################################################
@@ -112,11 +112,10 @@ def netcdf_cf_get_command(ifile, version='auto'):
 #    print 'method: '+method
     if method is not None:
         if method is 'local':
-            command = ['./netcdf_cfchecks.py', \
-                       '-a', gdaltest.netcdf_cf_files['a'], \
-                       '-s', gdaltest.netcdf_cf_files['s'], \
-                       '-u', gdaltest.netcdf_cf_files['u'], \
-                           '-v', version, ifile]
+            command = './netcdf_cfchecks.py -a ' + gdaltest.netcdf_cf_files['a'] \
+                + ' -s ' + gdaltest.netcdf_cf_files['s'] \
+                + ' -u ' + gdaltest.netcdf_cf_files['u'] \
+                + ' -v ' + version +' ' + ifile 
 
     return command
         
@@ -141,14 +140,13 @@ def netcdf_cf_check_file(ifile,version='auto'):
         return 'skip'
 
     try:
-#        print command
-        proc = subprocess.Popen( command, \
-                                     stderr=subprocess.PIPE, stdout=subprocess.PIPE )
-    except (OSError, ValueError):
-        print 'ERROR with command - ' + ' '.join(command)
+ #       print command
+        (ret, err) = gdaltest.runexternal_out_and_err(command)
+    except :
+        print 'ERROR with command - ' + command
         return 'fail'
         
-    output_all = proc.stdout.read()
+    output_all = ret
     output_err = ''
     output_warn = ''
 
@@ -164,9 +162,9 @@ def netcdf_cf_check_file(ifile,version='auto'):
     result = 'success'
     if output_err is not '':
         result = 'fail'
-        print '\n=> ERRORS for file ' + ifile + ' : ' + output_err + '\n'
+        print '=> ERRORS for file ' + ifile + ' : ' + output_err 
     if output_warn is not '':
-        print '\n=> WARNINGS for file ' + ifile + ' : ' + output_warn + '\n'
+        print 'WARNINGS for file ' + ifile + ' : ' + output_warn 
 
     return result
 
