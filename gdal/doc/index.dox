@@ -4,7 +4,7 @@
 
 /*! \mainpage GDAL - Geospatial Data Abstraction Library
 
-<center><b>Select language</b>: [English]<a href="index_ru.html">[Russian]</a><a href="index_br.html">[Portuguese]</a><a href="http://georezo.net/wiki/main:logiciels:gdal_ogr">[French/Francais]</a></center>
+<center><b>Select language</b>: [English]<a href="index_ru.html">[Russian]</a><a href="index_br.html">[Portuguese]</a><a href="http://gdal.gloobe.org/">[French/Francais]</a></center>
 
 \htmlonly<img src="gdalicon.png" alt="GDAL">\endhtmlonly \latexonly GDAL \endlatexonly
 is a translator library for raster geospatial data formats
