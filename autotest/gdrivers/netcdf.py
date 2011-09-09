@@ -37,9 +37,6 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 
-#for nc versions tests
-import subprocess
-
 ###############################################################################
 # Perform simple read test.
 
@@ -381,6 +378,68 @@ def netcdf_14():
 
     return 'success'
 
+def netcdf_check_config():
+
+    gdaltest.netcdf_drv_version = None
+    gdaltest.netcdf_drv_has_nc2 = False
+    gdaltest.netcdf_drv_has_nc4 = False
+
+    #ugly hack to get netcdf version with 'ncdump' which is available in netcdf-3 and netcdf-4
+    #netcdf library version "3.6.3" of Dec 22 2009 06:10:17 $
+    #netcdf library version 4.1.1 of Mar  4 2011 12:52:19 $
+    try:
+        (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
+#        (ret, err) = gdaltest.runexternal_out_and_err('LD_LIBRARY_PATH=/data/tmp/ncdf/usr/lib:$LD_LIBRARY_PATH /data/tmp/ncdf/usr/bin/ncdump -h')
+    except:
+        #nothing is supported
+        return
+    
+    i = err.find('netcdf library version ')
+    #version not found
+    if i == -1:
+        return
+
+    v = err[ i+23 : ]
+    v = v[ 0 : v.find(' ') ]
+#    print 'netcdf version= ['+v+']'
+    if v[0] != '4':
+        v = v[ 1 : -1 ]
+
+    gdaltest.netcdf_drv_version = v
+
+    #for version 3, assume nc2 supported and nc4 unsupported
+    if v[0] == '3':
+        gdaltest.netcdf_drv_has_nc2 = True
+        gdaltest.netcdf_drv_has_nc4 = False
+
+    # for version 4, use nc-config to test
+    elif v[0] == '4':
+    
+        #check if netcdf library has nc2 (64-bit) support
+        #this should be done at configure time by gdal like in cdo
+        try:
+            ret = gdaltest.runexternal('nc-config --has-nc2')
+        except:
+            gdaltest.netcdf_drv_has_nc2 = False
+        else:
+            #should test this on windows
+            if ret.rstrip() == 'yes':
+                gdaltest.netcdf_drv_has_nc2 = True
+                    
+        #check if netcdf library has nc4 support
+        #this should be done at configure time by gdal like in cdo
+        try:
+            ret = gdaltest.runexternal('nc-config --has-nc4')
+        except:
+            gdaltest.netcdf_drv_has_nc4 = False
+        else:
+            #should test this on windows
+            if ret.rstrip() == 'yes':
+                gdaltest.netcdf_drv_has_nc4 = True
+
+#    print 'report: ' + gdaltest.netcdf_drv_version+' '+str(gdaltest.netcdf_drv_has_nc2)+' '+str(gdaltest.netcdf_drv_has_nc4)
+ 
+    return
 ###############################################################################
 #check support for netcdf-2 (64 bit)
 def netcdf_15():
@@ -388,18 +447,8 @@ def netcdf_15():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    #check if netcdf library has nc2 (64-bit) support
-    #this should be done at configure time by gdal like in cdo
-    gdaltest.netcdf_drv_has_nc2 = False
-    try:
-        proc = subprocess.check_output( [ 'nc-config', '--has-nc2' ] )
-    except (OSError, ValueError):
-        gdaltest.netcdf_drv_has_nc2 = False
-    else:
-        #should test this on windows
-        if proc.rstrip() == 'yes':
-            gdaltest.netcdf_drv_has_nc2 = True
-
+    netcdf_check_config()
+    
     if gdaltest.netcdf_drv_has_nc2:
         ds = gdal.Open( 'data/trmm-nc2.nc' )
         if ds is None:
@@ -420,19 +469,7 @@ def netcdf_16():
         return 'skip'
 
     ifile = 'data/trmm-nc4.nc'
-    
-    #check if netcdf library has nc4 support
-    #this should be done at configure time by gdal like in cdo
-    gdaltest.netcdf_drv_has_nc4 = False
-    try:
-        proc = subprocess.check_output( [ 'nc-config', '--has-nc4' ] )
-    except (OSError, ValueError):
-        gdaltest.netcdf_drv_has_nc4 = False
-    else:
-        #should test this on windows
-        if proc.rstrip() == 'yes':
-            gdaltest.netcdf_drv_has_nc4 = True
-            
+                
     if gdaltest.netcdf_drv_has_nc4:
 
         # test with Open()
