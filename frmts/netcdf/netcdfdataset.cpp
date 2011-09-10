@@ -2019,6 +2019,13 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     netCDFDataset 	*poDS;
     poDS = new netCDFDataset();
+
+/* -------------------------------------------------------------------- */
+/*      Disable PAM, at least temporarily. See bug #4244                */
+/* -------------------------------------------------------------------- */
+    poDS->nPamFlags |= GPF_DISABLED;
+
+
     poDS->SetDescription( poOpenInfo->pszFilename );
     
 /* -------------------------------------------------------------------- */
