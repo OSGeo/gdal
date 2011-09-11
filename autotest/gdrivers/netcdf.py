@@ -37,12 +37,275 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 
+import imp # for netcdf_cf_setup()
+
+
+###############################################################################
+# Netcdf Functions
+###############################################################################
+
+###############################################################################
+# Get netcdf version and test for supported files
+
+def netcdf_setup():
+
+    gdaltest.netcdf_drv_version = None
+    gdaltest.netcdf_drv_has_nc2 = False
+    gdaltest.netcdf_drv_has_nc4 = False
+    gdaltest.netcdf_drv = gdal.GetDriverByName( 'NETCDF' )
+
+    if gdaltest.netcdf_drv is None:
+        print 'NOTICE: netcdf not supported, skipping checks'
+        return 'skip'
+
+    #ugly hack to get netcdf version with 'ncdump', available in netcdf v3 avnd v4
+    try:
+        (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
+#        (ret, err) = gdaltest.runexternal_out_and_err('LD_LIBRARY_PATH=/home/src/netcdf-test/usr/lib:$LD_LIBRARY_PATH /home/src/netcdf-test/usr/bin/ncdump -h')
+    except:
+        #nothing is supported as ncdump not found
+        print 'NOTICE: netcdf version not found'
+        return 'success'
+    
+    i = err.find('netcdf library version ')
+    #version not found
+    if i == -1:
+        print 'NOTICE: netcdf version not found'
+        return 'success'
+
+    #netcdf library version "3.6.3" of Dec 22 2009 06:10:17 $
+    #netcdf library version 4.1.1 of Mar  4 2011 12:52:19 $
+    v = err[ i+23 : ]
+    v = v[ 0 : v.find(' ') ]
+    v = v.strip('"');
+
+    gdaltest.netcdf_drv_version = v
+
+    #for version 3, assume nc2 supported and nc4 unsupported
+    if v[0] == '3':
+        gdaltest.netcdf_drv_has_nc2 = True
+        gdaltest.netcdf_drv_has_nc4 = False
+
+    # for version 4, use nc-config to test
+    elif v[0] == '4':
+    
+        #check if netcdf library has nc2 (64-bit) support
+        #this should be done at configure time by gdal like in cdo
+        try:
+            ret = gdaltest.runexternal('nc-config --has-nc2')
+        except:
+            gdaltest.netcdf_drv_has_nc2 = False
+        else:
+            #should test this on windows
+            if ret.rstrip() == 'yes':
+                gdaltest.netcdf_drv_has_nc2 = True
+                    
+        #check if netcdf library has nc4 support
+        #this should be done at configure time by gdal like in cdo
+        try:
+            ret = gdaltest.runexternal('nc-config --has-nc4')
+        except:
+            gdaltest.netcdf_drv_has_nc4 = False
+        else:
+            #should test this on windows
+            if ret.rstrip() == 'yes':
+                gdaltest.netcdf_drv_has_nc4 = True
+
+    print 'NOTICE: using netcdf version ' + gdaltest.netcdf_drv_version+'  has_nc2: '+str(gdaltest.netcdf_drv_has_nc2)+'  has_nc4: '+str(gdaltest.netcdf_drv_has_nc4)
+ 
+    return 'success'
+
+###############################################################################
+#test integrity of file copy
+
+def netcdf_test_file_copy( ifile, tmpfile, driver_name ):
+
+    #print 'netcdf_test_file_copy( '+ifile+', '+tmpfile+', '+driver_name+' )'
+
+    #load driver(s)
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+    driver = gdal.GetDriverByName( driver_name )
+    if driver is None:
+        return 'skip'
+
+    #create copy
+    src_ds = gdal.Open( ifile )
+    if src_ds is None:
+        gdaltest.post_reason( 'Failed to open file '+ifile )
+        return 'fail'
+    dst_ds = driver.CreateCopy( tmpfile, src_ds )
+    if dst_ds is None:
+        gdaltest.post_reason( 'Failed to create file '+tmpfile )
+        return 'fail'
+    dst_ds = None
+    dst_ds = gdal.Open( tmpfile )
+
+    #do some tests
+    if src_ds.GetGeoTransform() != dst_ds.GetGeoTransform():
+        gdaltest.post_reason( 'Incorrect geotransform, got '+str(dst_ds.GetGeoTransform())+' for '+tmpfile )
+        return 'fail'
+    
+    if src_ds.GetProjection() != dst_ds.GetProjection():
+        gdaltest.post_reason( 'Incorrect projection, got '+dst_ds.GetProjection()+' for '+tmpfile )
+        return 'fail'
+
+    if src_ds.GetRasterBand(1).Checksum() != dst_ds.GetRasterBand(1).Checksum():
+        gdaltest.post_reason( 'Incorrect checksum, got'+dst_ds.GetRasterBand(1).Checksum()+' for '+tmpfile )
+        return 'fail'
+
+    src_ds = None
+    dst_ds = None
+    #don't cleanup as we could use the tmpfile later, cleanup after all tests finished
+    #gdaltest.clean_tmp()
+
+    return 'success'
+
+###############################################################################
+# Netcdf CF compliance Functions
+###############################################################################
+
+###############################################################################
+#check for necessary files and software
+def netcdf_cf_setup():
+
+    #global vars
+    gdaltest.netcdf_cf_method = None
+    gdaltest.netcdf_cf_files = None
+
+    #if netcdf is not supported, skip detection
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    #try local method
+    try:
+        imp.find_module( 'cdms2' )
+    except ImportError:
+        #print 'NOTICE: cdms2 not installed!'
+        #print '        see installation notes at http://pypi.python.org/pypi/cfchecker'
+        pass
+    else:
+        xml_dir = './data/netcdf_cf_xml'
+        tmp_dir = './tmp/cache'
+        files = dict()
+        files['a'] = xml_dir+'/area-type-table.xml'
+        files['s'] = tmp_dir+'/cf-standard-name-table-v18.xml'
+        #either find udunits path in UDUNITS_PATH, or based on location of udunits app, or copy all .xml files to data
+        #opt_u = '/home/soft/share/udunits/udunits2.xml'
+        files['u'] = xml_dir+'/udunits2.xml'
+        #look for xml files
+        if not ( os.path.exists(files['a']) and os.path.exists(files['s']) and os.path.exists(files['u']) ):
+            print 'NOTICE: cdms2 installed, but necessary xml files are not found!'
+            print '        the following files must exist:'
+            print '        '+xml_dir+'/area-type-table.xml from http://cf-pcmdi.llnl.gov/documents/cf-standard-names/area-type-table/1/area-type-table.xml'
+            print '        '+tmp_dir+'/cf-standard-name-table-v18.xml - http://cf-pcmdi.llnl.gov/documents/cf-standard-names/standard-name-table/18/cf-standard-name-table.xml'
+            print '        '+xml_dir+'/udunits2*.xml from a UDUNITS2 install'
+            #try to get cf-standard-name-table
+            if not os.path.exists(files['s']):
+                #print '        downloading cf-standard-name-table.xml (v18) from http://cf-pcmdi.llnl.gov ...'
+                if not gdaltest.download_file('http://cf-pcmdi.llnl.gov/documents/cf-standard-names/standard-name-table/18/cf-standard-name-table.xml',
+                                              'cf-standard-name-table-v18.xml'):
+                    print '        Failed to download, please get it and try again.'
+
+        if os.path.exists(files['a']) and os.path.exists(files['s']) and os.path.exists(files['u']):
+            gdaltest.netcdf_cf_method = 'local'
+            gdaltest.netcdf_cf_files = files
+            print 'NOTICE: netcdf CF compliance ckecks: using local checker script'
+            return 'success'
+
+    #http method with curl, should use python module but easier for now
+    #dont use this for now...
+    #try:
+    #    bla = subprocess.Popen( ['curl'],stdout=None, stderr=None )
+    #except (OSError, ValueError):
+    #    command = None
+    #else:
+    #    method = 'http'
+    #    command = shlex.split( 'curl --form cfversion="1.5" --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"' )
+
+    if gdaltest.netcdf_cf_method is None:
+        print 'NOTICE: skipping netcdf CF compliance checks'
+    return 'success' 
+
+###############################################################################
+#build a command used to check ifile
+
+def netcdf_cf_get_command(ifile, version='auto'):
+
+    command = ''
+    #fetch method obtained previously
+    method = gdaltest.netcdf_cf_method
+    if method is not None:
+        if method is 'local':
+            command = './netcdf_cfchecks.py -a ' + gdaltest.netcdf_cf_files['a'] \
+                + ' -s ' + gdaltest.netcdf_cf_files['s'] \
+                + ' -u ' + gdaltest.netcdf_cf_files['u'] \
+                + ' -v ' + version +' ' + ifile 
+
+    return command
+        
+
+###############################################################################
+# Check a file fo CF compliance
+
+def netcdf_cf_check_file(ifile,version='auto', silent=True):
+
+    #if not silent:
+    #    print 'checking file ' + ifile
+
+    if ( not os.path.exists(ifile) ):
+        return 'skip'
+
+    output_all = ''
+
+    command = netcdf_cf_get_command(ifile, version='auto')
+    if command is None:
+        print 'no suitable method found, skipping'
+        return 'skip'
+
+    try:
+        (ret, err) = gdaltest.runexternal_out_and_err(command)
+    except :
+        print 'ERROR with command - ' + command
+        return 'fail'
+        
+    output_all = ret
+    output_err = ''
+    output_warn = ''
+
+    for line in output_all.splitlines( ):
+        #optimize this with regex
+        if 'ERROR' in line and not 'ERRORS' in line:
+            output_err = output_err + '\n' + line
+        elif 'WARNING' in line and not 'WARNINGS' in line:
+            output_warn = output_warn + '\n' + line
+
+    result = 'success'
+
+    if output_err is not '':
+        result = 'fail'
+    if not silent and output_err != '':
+        print '=> CF check ERRORS for file ' + ifile + ' : ' + output_err 
+
+    if not silent:
+        if output_warn is not '':
+            print 'CF check WARNINGS for file ' + ifile + ' : ' + output_warn 
+
+    return result
+
+
+###############################################################################
+# Netcdf Tests
+###############################################################################
+
 ###############################################################################
 # Perform simple read test.
 
 def netcdf_1():
 
-    gdaltest.netcdf_drv = gdal.GetDriverByName( 'NETCDF' )
+    #setup netcdf and netcdf_cf environment
+    netcdf_setup()
+    netcdf_cf_setup() 
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -378,68 +641,6 @@ def netcdf_14():
 
     return 'success'
 
-def netcdf_check_config():
-
-    gdaltest.netcdf_drv_version = None
-    gdaltest.netcdf_drv_has_nc2 = False
-    gdaltest.netcdf_drv_has_nc4 = False
-
-    #ugly hack to get netcdf version with 'ncdump' which is available in netcdf-3 and netcdf-4
-    #netcdf library version "3.6.3" of Dec 22 2009 06:10:17 $
-    #netcdf library version 4.1.1 of Mar  4 2011 12:52:19 $
-    try:
-        (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
-#        (ret, err) = gdaltest.runexternal_out_and_err('LD_LIBRARY_PATH=/data/tmp/ncdf/usr/lib:$LD_LIBRARY_PATH /data/tmp/ncdf/usr/bin/ncdump -h')
-    except:
-        #nothing is supported
-        return
-    
-    i = err.find('netcdf library version ')
-    #version not found
-    if i == -1:
-        return
-
-    v = err[ i+23 : ]
-    v = v[ 0 : v.find(' ') ]
-#    print 'netcdf version= ['+v+']'
-    if v[0] != '4':
-        v = v[ 1 : -1 ]
-
-    gdaltest.netcdf_drv_version = v
-
-    #for version 3, assume nc2 supported and nc4 unsupported
-    if v[0] == '3':
-        gdaltest.netcdf_drv_has_nc2 = True
-        gdaltest.netcdf_drv_has_nc4 = False
-
-    # for version 4, use nc-config to test
-    elif v[0] == '4':
-    
-        #check if netcdf library has nc2 (64-bit) support
-        #this should be done at configure time by gdal like in cdo
-        try:
-            ret = gdaltest.runexternal('nc-config --has-nc2')
-        except:
-            gdaltest.netcdf_drv_has_nc2 = False
-        else:
-            #should test this on windows
-            if ret.rstrip() == 'yes':
-                gdaltest.netcdf_drv_has_nc2 = True
-                    
-        #check if netcdf library has nc4 support
-        #this should be done at configure time by gdal like in cdo
-        try:
-            ret = gdaltest.runexternal('nc-config --has-nc4')
-        except:
-            gdaltest.netcdf_drv_has_nc4 = False
-        else:
-            #should test this on windows
-            if ret.rstrip() == 'yes':
-                gdaltest.netcdf_drv_has_nc4 = True
-
-#    print 'report: ' + gdaltest.netcdf_drv_version+' '+str(gdaltest.netcdf_drv_has_nc2)+' '+str(gdaltest.netcdf_drv_has_nc4)
- 
-    return
 ###############################################################################
 #check support for netcdf-2 (64 bit)
 def netcdf_15():
@@ -447,8 +648,6 @@ def netcdf_15():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    netcdf_check_config()
-    
     if gdaltest.netcdf_drv_has_nc2:
         ds = gdal.Open( 'data/trmm-nc2.nc' )
         if ds is None:
@@ -529,7 +728,71 @@ def netcdf_17():
         return 'skip'
     
     return 'success'
-       
+
+###############################################################################
+#test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, tif->nc->tif
+def netcdf_18():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    result = netcdf_test_file_copy( 'data/trmm.tif', 'tmp/netcdf_18.nc', 'NETCDF' )
+    if result != 'fail':
+        result = netcdf_test_file_copy( 'tmp/netcdf_18.nc', 'tmp/netcdf_18.tif', 'GTIFF' )
+
+    result_cf = 'success'
+    if gdaltest.netcdf_cf_method is not None:
+        result_cf = netcdf_cf_check_file( 'tmp/netcdf_18.nc','auto',False )
+
+    if result != 'fail' and result_cf != 'fail':
+        return 'success'
+    else:
+        return 'fail'
+
+
+###############################################################################
+#test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, nc->nc
+def netcdf_19():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    result = netcdf_test_file_copy( 'data/trmm.nc', 'tmp/netcdf_19.nc', 'NETCDF' )
+
+    result_cf = 'success'
+    if gdaltest.netcdf_cf_method is not None:
+        result_cf = netcdf_cf_check_file( 'tmp/netcdf_19.nc','auto',False )
+
+    if result != 'fail' and result_cf != 'fail':
+        return 'success'
+    else:
+        return 'fail'
+
+
+###############################################################################
+#test copy and CF compliance for lat/lon (W*S84) file, tif->nc->tif
+def netcdf_20():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    result = 'success'
+    result_cf = 'success'
+
+    result = netcdf_test_file_copy( 'data/trmm-wgs84.tif', 'tmp/netcdf_20.nc', 'NETCDF' )
+
+    if result == 'success':
+        result = netcdf_test_file_copy( 'tmp/netcdf_20.nc', 'tmp/netcdf_20.tif', 'GTIFF' )
+
+    result_cf = 'success'
+    if gdaltest.netcdf_cf_method is not None:
+        result_cf = netcdf_cf_check_file( 'tmp/netcdf_20.nc','auto',False )
+
+    if result != 'fail' and result_cf != 'fail':
+        return 'success'
+    else:
+        return 'fail'
+     
 ###############################################################################
 
 gdaltest_list = [
@@ -549,14 +812,19 @@ gdaltest_list = [
     netcdf_14,
     netcdf_15,
     netcdf_16,
-    netcdf_17 ]
-
+    netcdf_17,
+    netcdf_18,
+    netcdf_19,
+    netcdf_20 ]
 
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'netcdf' )
 
     gdaltest.run_tests( gdaltest_list )
+
+    #make sure we cleanup
+    gdaltest.clean_tmp()
 
     gdaltest.summarize()
 
