@@ -142,12 +142,30 @@ def netcdf_test_file_copy( ifile, tmpfile, driver_name ):
     dst_ds = gdal.Open( tmpfile )
 
     #do some tests
+    #print str(src_ds.GetGeoTransform())+'-'+str(dst_ds.GetGeoTransform())
     if src_ds.GetGeoTransform() != dst_ds.GetGeoTransform():
         gdaltest.post_reason( 'Incorrect geotransform, got '+str(dst_ds.GetGeoTransform())+' for '+tmpfile )
         return 'fail'
     
-    if src_ds.GetProjection() != dst_ds.GetProjection():
-        gdaltest.post_reason( 'Incorrect projection, got '+dst_ds.GetProjection()+' for '+tmpfile )
+    #get projection in PROJ.4 and WKT format
+    srs = osr.SpatialReference()
+    src_wkt = src_ds.GetProjection()
+    srs.ImportFromWkt(src_wkt)
+    src_proj4 = srs.ExportToProj4()
+    dst_wkt = dst_ds.GetProjection()
+    srs.ImportFromWkt(src_wkt)
+    dst_proj4 = srs.ExportToProj4()
+
+    #check projection in WKT format - don't cause test to fail, as it can be too stringent
+    #print src_wkt+'-'+dst_wkt
+    if src_wkt != dst_wkt:
+        print 'WARNING: Possibly incorrect projection in file '+tmpfile+', got '+dst_wkt+' - will also check PROJ.4 string'
+        #return 'fail'
+
+    #check projection in PROJ.4 format - allow this test to fail
+    #print src_proj4+'-'+dst_proj4
+    if src_proj4 != dst_proj4:
+        gdaltest.post_reason( 'Incorrect projection, got '+dst_proj4+' for '+tmpfile )
         return 'fail'
 
     if src_ds.GetRasterBand(1).Checksum() != dst_ds.GetRasterBand(1).Checksum():
@@ -246,7 +264,7 @@ def netcdf_cf_get_command(ifile, version='auto'):
         
 
 ###############################################################################
-# Check a file fo CF compliance
+# Check a file for CF compliance
 
 def netcdf_cf_check_file(ifile,version='auto', silent=True):
 
