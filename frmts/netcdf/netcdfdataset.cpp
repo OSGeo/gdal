@@ -331,7 +331,56 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
         Taken += result * Sum;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Get all other metadata                                          */
+/* -------------------------------------------------------------------- */
 
+    int nAtt=0;
+    nc_type  atttype=NC_NAT;
+    size_t   attlen;
+    float fval;
+    double dval;
+    int ival;
+
+    nc_inq_varnatts( poDS->cdfid, nZId, &nAtt );
+    for( i=0; i < nAtt ; i++ ) {
+    	status = nc_inq_attname( poDS->cdfid, nZId, 
+    				 i, szTemp);
+    	status = nc_inq_att( poDS->cdfid, nZId, 
+    			     szTemp, &atttype, &attlen);
+    	if(strcmp(szTemp,_FillValue) ==0) continue;
+    	sprintf( szMetaTemp,"%s",szTemp);
+    	switch( atttype ) {
+    	case NC_CHAR:
+    	    char *fillc;
+    	    fillc = (char *) CPLCalloc( attlen+1, sizeof(char) );
+    	    status=nc_get_att_text( poDS->cdfid, nZId,
+    				    szTemp, fillc );
+    	    SetMetadataItem( szMetaTemp, fillc );
+    	    CPLFree(fillc);
+    	    break;
+    	case NC_INT:
+    	    status = nc_get_att_int( poDS->cdfid, nZId,
+    				     szTemp, &ival );
+    	    sprintf( szTemp,"%d",ival);
+    	    SetMetadataItem( szMetaTemp, szTemp );
+    	    break;
+    	case NC_FLOAT:
+    	    status = nc_get_att_float( poDS->cdfid, nZId,
+    				       szTemp, &fval );
+    	    sprintf( szTemp,"%f",fval);
+    	    SetMetadataItem( szMetaTemp, szTemp );
+    	    break;
+    	case NC_DOUBLE:
+    	    status = nc_get_att_double( poDS->cdfid, nZId,
+    					szTemp, &dval );
+    	    sprintf( szTemp,"%.16g",dval);
+    	    SetMetadataItem( szMetaTemp, szTemp );
+    	    break;
+    	default:
+    	    break;
+    	}
+    }
 
     return CE_None;
 }
@@ -485,8 +534,8 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
             case NC_BYTE:
                 /* don't do default fill-values for bytes, too risky */
                 dfNoData = 0.0;
-                /* print a warning as users might not be expecting this */
-                CPLError(CE_Warning, 1,"GDAL netCDF driver is setting default NoData value to 0.0 for NC_BYTE data\n");
+                /* should print a warning as users might not be expecting this */
+                /* CPLError(CE_Warning, 1,"GDAL netCDF driver is setting default NoData value to 0.0 for NC_BYTE data\n"); */
                break;
             case NC_CHAR:
                 dfNoData = NC_FILL_CHAR;
@@ -829,7 +878,8 @@ void netCDFDataset::SetProjection( int var )
 
     nc_inq_varname(  cdfid, var, szVarName );
     strcpy(szTemp,szVarName);
-    strcat(szTemp,"#grid_mapping");
+    strcat(szTemp,"#");
+    strcat(szTemp,GRD_MAPPING);
     pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
     if( pszValue ) {
         strcpy(szGridMappingName,szTemp);
@@ -855,7 +905,7 @@ void netCDFDataset::SetProjection( int var )
     szDimNameY[3] = '\0';
 
 /* -------------------------------------------------------------------- */
-/*      Read grid_mappinginformation and set projections               */
+/*      Read grid_mapping information and set projections               */
 /* -------------------------------------------------------------------- */
 
     if( !( EQUAL(szGridMappingName,"" ) ) ) {
@@ -2372,13 +2422,80 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
     const char *pszField;
     char       szMetaName[ MAX_STR_LEN ];
     char       szMetaValue[ MAX_STR_LEN ];
+    char       szTemp[ MAX_STR_LEN ];
     int        nDataLength;
     int        nItems;
+    int        bCopyItem;
 
-/* -------------------------------------------------------------------- */
-/*      Global metadata are set with NC_GLOBAL as the varid             */
-/* -------------------------------------------------------------------- */
+    if( CDFVarID == NC_GLOBAL ) {
+        papszMetadata = GDALGetMetadata( (GDALDataset *) poDS,"");
+    } else {
+        papszMetadata = GDALGetMetadata( (GDALRasterBandH) poDS, NULL );
+    }
+
+    nItems = CSLCount( papszMetadata );             
     
+    for(int k=0; k < nItems; k++ ) {
+        bCopyItem = TRUE;
+        pszField = CSLGetField( papszMetadata, k );
+        papszFieldData = CSLTokenizeString2 (pszField, "=", 
+                                             CSLT_HONOURSTRINGS );
+        if( papszFieldData[1] != NULL ) {
+            strcpy( szMetaName,  papszFieldData[ 0 ] );
+            strcpy( szMetaValue, papszFieldData[ 1 ] );
+
+            /* Fix various fixes with metadata translation */ 
+            if( CDFVarID == NC_GLOBAL ) {
+                /* Remove NC_GLOBAL prefix for netcdf global Metadata */ 
+                if( strncmp( szMetaName, "NC_GLOBAL#", 10 ) == 0 ) {
+                    strcpy( szTemp, szMetaName+10 );
+                    strcpy( szMetaName, szTemp );
+                } 
+                /* GDAL Metadata renamed as GDAL-[meta] */
+                else if ( strstr( szMetaName, "#" ) == NULL ) {
+                    strcpy( szTemp, "GDAL_" );
+                    strcat( szTemp, szMetaName );
+                    strcpy( szMetaName, szTemp );
+                }
+                /* Keep time, lev and depth information for safe-keeping */
+                /* Time and vertical coordinate handling need improvements */
+                else if( strncmp( szMetaName, "time#", 5 ) == 0 ) {
+                    szMetaName[4] = '-';
+                }
+                else if( strncmp( szMetaName, "lev#", 4 ) == 0 ) {
+                    szMetaName[3] = '-';
+                }
+                else if( strncmp( szMetaName, "depth#", 6 ) == 0 ) {
+                    szMetaName[5] = '-';
+                }
+                /* Only copy data without # (previously all data was copied)  */
+                if (  strstr( szMetaName, "#" ) != NULL ) {   
+                    bCopyItem = FALSE;
+                }
+                /* netCDF attributes do not like the '#' character. */
+                // for( unsigned int h=0; h < strlen( szMetaName ) -1 ; h++ ) {
+                //     if( szMetaName[h] == '#' ) szMetaName[h] = '-'; 
+                // }
+            }
+            else {
+                if ( strncmp( szMetaName, "NETCDF_VARNAME", 14) == 0 ) 
+                    bCopyItem = FALSE;
+            }
+
+            if ( bCopyItem ) {
+                nDataLength = strlen( szMetaValue );
+                nc_put_att_text( fpImage, 
+                                 CDFVarID, 
+                                 szMetaName,
+                                 nDataLength,
+                                 szMetaValue );                
+            }
+	    
+        }
+        CSLDestroy( papszFieldData );
+    }
+
+    /* Add Conventions and GDAL info at the end */
     if( CDFVarID == NC_GLOBAL ) {
 
         papszMetadata = GDALGetMetadata( (GDALDataset *) poDS,"");
@@ -2388,42 +2505,15 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
                          "Conventions", 
                          6,
                          "CF-1.2" ); 
-    } else {
 
-        papszMetadata = GDALGetMetadata( (GDALRasterBandH) poDS, NULL );
-
+        pszField = GDALVersionInfo("--version");
+        nc_put_att_text( fpImage, 
+                         NC_GLOBAL, 
+                         "GDAL", 
+                         strlen(pszField),
+                         pszField ); 
     }
 
-    nItems = CSLCount( papszMetadata );             
-    
-    for(int k=0; k < nItems; k++ ) {
-        pszField = CSLGetField( papszMetadata, k );
-        papszFieldData = CSLTokenizeString2 (pszField, "=", 
-                                             CSLT_HONOURSTRINGS );
-        if( papszFieldData[1] != NULL ) {
-            strcpy( szMetaName,  papszFieldData[ 0 ] );
-            strcpy( szMetaValue, papszFieldData[ 1 ] );
-
-/* -------------------------------------------------------------------- */
-/*      netCDF attributes do not like the '#' character.                */
-/* -------------------------------------------------------------------- */
-
-            for( unsigned int h=0; h < strlen( szMetaName ) -1 ; h++ ) {
-                if( szMetaName[h] == '#' ) szMetaName[h] = '-'; 
-            }
-	    
-            nDataLength = strlen( szMetaValue );
-            nc_put_att_text( fpImage, 
-                             CDFVarID, 
-                             szMetaName,
-                             nDataLength,
-                             szMetaValue );
-
-	    
-        }
-        CSLDestroy( papszFieldData );
-
-    }
 }
 
 /************************************************************************/
@@ -2886,19 +2976,40 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         int       NCDFVarID;
         size_t    start[ GDALNBDIM ];
         size_t    count[ GDALNBDIM ];
-        size_t    nBandNameLen;
         double    dfNoDataValue;
         unsigned char      cNoDataValue;
         float     fNoDataValue;
         int       nlNoDataValue;
         short     nsNoDataValue;
         GDALRasterBandH	hBand;
+        const char *tmpMetadata;
+        char      szLongName[ NC_MAX_NAME ];
 
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( i );
         hBand = GDALGetRasterBand( poSrcDS, i );
 
-        sprintf( szBandName, "Band%d", i );
+        /* Get var name from NETCDF_VARNAME */
+        tmpMetadata = poSrcBand->GetMetadataItem("NETCDF_VARNAME");
+       	if( tmpMetadata != NULL) {
+            if(nBands>1) sprintf(szBandName,"%s%d",tmpMetadata,i);
+            else strcpy( szBandName, tmpMetadata );
+            // poSrcBand->SetMetadataItem("NETCDF_VARNAME","");
+        }
+        else 
+            sprintf( szBandName, "Band%d", i );
 
+        /* Get long_name from <var>#long_name */
+        sprintf(szLongName,"%s#long_name",poSrcBand->GetMetadataItem("NETCDF_VARNAME"));
+        tmpMetadata = poSrcDS->GetMetadataItem(szLongName);
+        if( tmpMetadata != NULL) 
+            strcpy( szLongName, tmpMetadata);
+        else 
+            sprintf( szLongName, "GDAL Band Number %d", i); 
+
+/* -------------------------------------------------------------------- */
+/*      Get Data type                                                   */
+/* -------------------------------------------------------------------- */
+ 
         eDT = poSrcDS->GetRasterBand(i)->GetRasterDataType();
         anBandDims[0] = nYDimID;
         anBandDims[1] = nXDimID;
@@ -3155,13 +3266,15 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                              pszNetcdfProjection );
         }
 
-        sprintf( szBandName, "GDAL Band Number %d", i);
-        nBandNameLen = strlen( szBandName );
+/* -------------------------------------------------------------------- */
+/*      Copy Metadata for band                                          */
+/* -------------------------------------------------------------------- */
+
         nc_put_att_text( fpImage, 
                          NCDFVarID, 
                          "long_name", 
-                         nBandNameLen,
-                         szBandName );
+                         strlen( szLongName ),
+                         szLongName );
 
         CopyMetadata( (void *) hBand, fpImage, NCDFVarID );
     }
