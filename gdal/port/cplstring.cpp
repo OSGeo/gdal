@@ -396,7 +396,8 @@ CPLString CPLURLAddKVP(const char* pszURL, const char* pszKey,
         const char* pszNext = strchr(pszURL + nKeyPos, '&');
         if (pszNext)
         {
-            if (osNewURL[osNewURL.size()-1] == '&')
+            if (osNewURL[osNewURL.size()-1] == '&'
+                || osNewURL[osNewURL.size()-1] == '?' )
                 osNewURL += pszNext + 1;
             else
                 osNewURL += pszNext;
