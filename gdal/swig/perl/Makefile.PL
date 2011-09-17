@@ -21,7 +21,8 @@ if (-f "../../GDALmake.opt") {
     print "found gdal-config in /usr/bin/\n";
     $fh = "/usr/bin/gdal-config";
 } else {
-    die "can't find gdal-config";
+    die "Can't find gdal-config, which means you probably do not have GDAL.\n".
+	"You can find one at http://trac.osgeo.org/gdal/wiki/DownloadSource\n";
 }
 open $fh, $fh or die "$fh not found!";
 $LIB .= " -lgdal ";
@@ -47,7 +48,14 @@ if ($fh) {
     for (@config) {
 	($pm_version) = /(\d+\.\d+\.\d+)/ if /GDAL_VERSION/;
     }
-    die "GDAL version ($gdal_version) and module version ($pm_version) do not match" 
+    die "=======================================================\n".
+	"PLEASE NOTE!\n".
+	"The GDAL that you try to build against has version\n".
+	"$gdal_version and this module was released from version\n".
+	"$pm_version. These do not match. Building against newer\n".
+	"version may work but you need to remove this check first.\n".
+	"Thank you.\n".
+	"=======================================================\n"
 	unless $gdal_version eq $pm_version;
 }
 
