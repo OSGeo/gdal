@@ -37,7 +37,9 @@ Process :
 
 3.1) Update ./swig/python/setup.py version information. 
 
-3.2) Update ./swig/include/perl/gdal_perl.i $VERSION string to current version.
+3.2) Update ./swig/include/perl/gdal_perl.i $VERSION and $GDAL_VERSION
+strings to current version. Kick Perl module maintainer to make a CPAN
+release.
 
 3.3) For major releases update the VERSION macro in nmake.opt (for 1.6, 1.7etc)
 

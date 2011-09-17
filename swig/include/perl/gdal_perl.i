@@ -138,7 +138,11 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     use Geo::GDAL::Const;
     use Geo::OGR;
     use Geo::OSR;
-    our $VERSION = '0.23';
+    # The three first numbers of the module version and the library
+    # version should match. GDAL version is available in runtime but
+    # it is needed here for the build time when it is compared against
+    # the version of GDAL against which we build.
+    our $VERSION = '1.90';
     our $GDAL_VERSION = '1.9.0';
     use vars qw/
 	%TYPE_STRING2INT %TYPE_INT2STRING
