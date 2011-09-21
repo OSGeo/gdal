@@ -44,9 +44,11 @@
 #define RASTER_HEADER_SIZE              61
 #define RASTER_BAND_HEADER_FIXED_SIZE   1  
 
+#define BAND_SIZE(nodatasize, datasize) \
+        (RASTER_BAND_HEADER_FIXED_SIZE + nodatasize + datasize)
+
 #define GET_BAND_DATA(raster, nband, nodatasize, datasize) \
-    (raster + RASTER_HEADER_SIZE + ((RASTER_BAND_HEADER_FIXED_SIZE + nodatasize)\
-     * nband) + ((nband - 1) * datasize))
+    (raster + RASTER_HEADER_SIZE + nband * BAND_SIZE(nodatasize, datasize) - datasize)
 
 
 /* Working modes */
@@ -94,6 +96,7 @@ private:
     int nMode;
     int nBlockXSize;
     int nBlockYSize;
+    GBool bBlocksCached;
     GBool SetRasterProperties(const char *);
     GBool BrowseDatabase(const char *, char *);
     GBool SetRasterBands();
@@ -108,6 +111,9 @@ public:
     CPLErr SetProjection(const char*);
     CPLErr SetGeoTransform(double *);
     CPLErr GetGeoTransform(double *);
+
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+        void *, int, int, GDALDataType, int, int *, int, int, int );
 };
 
 /******************************************************************************
