@@ -810,6 +810,20 @@ CPLErr PostGISRasterDataset::IRasterIO(GDALRWFlag eRWFlag,
                 "PostGIS Raster does not support writing");
         return CE_Failure;
     }
+    
+    /**
+     * TODO: Data decimation / replication needed 
+     */
+    if (nBufXSize != nXSize || nBufYSize != nYSize) 
+    {
+        /**
+         * This will cause individual IReadBlock calls
+         *             
+         */
+        return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                pData, nBufXSize, nBufYSize, eBufType, nBandCount,
+                panBandMap, nPixelSpace, nLineSpace, nBandSpace);
+    }
 
     /**************************************************************************
      * In the first call, we fetch the data from database and store it as
