@@ -129,7 +129,9 @@ def gdal_edit(argv):
         ds.SetGeoTransform(gt)
 
     if yres is not None:
-        gt = ds.GetGeoTransform(gt)
+        gt = ds.GetGeoTransform()
+        # Doh ! why is gt a tuple and not an array...
+        gt = [ gt[i] for i in range(6) ]
         gt[1] = xres
         gt[5] = yres
         ds.SetGeoTransform(gt)
