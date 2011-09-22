@@ -264,11 +264,13 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
         char **papszResult;
         int iDim = -1;
 
-        oDimCmd.Append( "SELECT a." );
-        oDimCmd.Append( pszGeomName  );
-        oDimCmd.Append( ".GET_DIMS() DIM FROM " );
-        oDimCmd.Append( osTableName );
-        oDimCmd.Append( " a WHERE ROWNUM = 1" );
+		oDimCmd.Append( "SELECT COUNT(*) FROM ALL_SDO_GEOM_METADATA u," );
+		oDimCmd.Append( "  TABLE(u.diminfo) t" );
+		oDimCmd.Append( "  WHERE u.table_name = '" );
+		oDimCmd.Append( osTableName );
+		oDimCmd.Append( "' AND u.column_name = '" );
+		oDimCmd.Append( pszGeomName  );
+		oDimCmd.Append( "'" );
 
         oDimStatement.Execute( oDimCmd.GetString() );
 
