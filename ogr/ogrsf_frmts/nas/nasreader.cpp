@@ -618,6 +618,12 @@ void NASReader::SetFeaturePropertyDirectly( const char *pszElement,
             poClass->GetProperty(iProperty)->SetWidth( 15 );
             poClass->GetProperty(iProperty)->SetType( GMLPT_String );
         }
+        // Special handling for artDerFlurstuecksgrenze per http://trac.osgeo.org/gdal/ticket/4255
+        else if( strcmp(poClass->GetProperty(iProperty)->GetName(),
+                   "artDerFlurstuecksgrenze") == 0)
+        {
+            poClass->GetProperty(iProperty)->SetType( GMLPT_IntegerList );
+        }
         else
             poClass->GetProperty(iProperty)->AnalysePropertyValue(
                 poFeature->GetProperty(iProperty));
