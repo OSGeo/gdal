@@ -55,7 +55,7 @@ def netcdf_setup():
     gdaltest.netcdf_drv = gdal.GetDriverByName( 'NETCDF' )
 
     if gdaltest.netcdf_drv is None:
-        print 'NOTICE: netcdf not supported, skipping checks'
+        print('NOTICE: netcdf not supported, skipping checks')
         return 'skip'
 
     #ugly hack to get netcdf version with 'ncdump', available in netcdf v3 avnd v4
@@ -64,13 +64,13 @@ def netcdf_setup():
 #        (ret, err) = gdaltest.runexternal_out_and_err('LD_LIBRARY_PATH=/home/src/netcdf-test/usr/lib:$LD_LIBRARY_PATH /home/src/netcdf-test/usr/bin/ncdump -h')
     except:
         #nothing is supported as ncdump not found
-        print 'NOTICE: netcdf version not found'
+        print('NOTICE: netcdf version not found')
         return 'success'
     
     i = err.find('netcdf library version ')
     #version not found
     if i == -1:
-        print 'NOTICE: netcdf version not found'
+        print('NOTICE: netcdf version not found')
         return 'success'
 
     #netcdf library version "3.6.3" of Dec 22 2009 06:10:17 $
@@ -111,7 +111,7 @@ def netcdf_setup():
             if ret.rstrip() == 'yes':
                 gdaltest.netcdf_drv_has_nc4 = True
 
-    print 'NOTICE: using netcdf version ' + gdaltest.netcdf_drv_version+'  has_nc2: '+str(gdaltest.netcdf_drv_has_nc2)+'  has_nc4: '+str(gdaltest.netcdf_drv_has_nc4)
+    print('NOTICE: using netcdf version ' + gdaltest.netcdf_drv_version+'  has_nc2: '+str(gdaltest.netcdf_drv_has_nc2)+'  has_nc4: '+str(gdaltest.netcdf_drv_has_nc4))
  
     return 'success'
 
@@ -159,7 +159,7 @@ def netcdf_test_file_copy( ifile, tmpfile, driver_name ):
     #check projection in WKT format - don't cause test to fail, as it can be too stringent
     #print src_wkt+'-'+dst_wkt
     if src_wkt != dst_wkt:
-        print 'WARNING: Possibly incorrect projection in file '+tmpfile+', got '+dst_wkt+' - will also check PROJ.4 string'
+        print('WARNING: Possibly incorrect projection in file '+tmpfile+', got '+dst_wkt+' - will also check PROJ.4 string')
         #return 'fail'
 
     #check projection in PROJ.4 format - allow this test to fail
@@ -213,22 +213,22 @@ def netcdf_cf_setup():
         files['u'] = xml_dir+'/udunits2.xml'
         #look for xml files
         if not ( os.path.exists(files['a']) and os.path.exists(files['s']) and os.path.exists(files['u']) ):
-            print 'NOTICE: cdms2 installed, but necessary xml files are not found!'
-            print '        the following files must exist:'
-            print '        '+xml_dir+'/area-type-table.xml from http://cf-pcmdi.llnl.gov/documents/cf-standard-names/area-type-table/1/area-type-table.xml'
-            print '        '+tmp_dir+'/cf-standard-name-table-v18.xml - http://cf-pcmdi.llnl.gov/documents/cf-standard-names/standard-name-table/18/cf-standard-name-table.xml'
-            print '        '+xml_dir+'/udunits2*.xml from a UDUNITS2 install'
+            print('NOTICE: cdms2 installed, but necessary xml files are not found!')
+            print('        the following files must exist:')
+            print('        '+xml_dir+'/area-type-table.xml from http://cf-pcmdi.llnl.gov/documents/cf-standard-names/area-type-table/1/area-type-table.xml')
+            print('        '+tmp_dir+'/cf-standard-name-table-v18.xml - http://cf-pcmdi.llnl.gov/documents/cf-standard-names/standard-name-table/18/cf-standard-name-table.xml')
+            print('        '+xml_dir+'/udunits2*.xml from a UDUNITS2 install')
             #try to get cf-standard-name-table
             if not os.path.exists(files['s']):
                 #print '        downloading cf-standard-name-table.xml (v18) from http://cf-pcmdi.llnl.gov ...'
                 if not gdaltest.download_file('http://cf-pcmdi.llnl.gov/documents/cf-standard-names/standard-name-table/18/cf-standard-name-table.xml',
                                               'cf-standard-name-table-v18.xml'):
-                    print '        Failed to download, please get it and try again.'
+                    print('        Failed to download, please get it and try again.')
 
         if os.path.exists(files['a']) and os.path.exists(files['s']) and os.path.exists(files['u']):
             gdaltest.netcdf_cf_method = 'local'
             gdaltest.netcdf_cf_files = files
-            print 'NOTICE: netcdf CF compliance ckecks: using local checker script'
+            print('NOTICE: netcdf CF compliance ckecks: using local checker script')
             return 'success'
 
     #http method with curl, should use python module but easier for now
@@ -242,7 +242,7 @@ def netcdf_cf_setup():
     #    command = shlex.split( 'curl --form cfversion="1.5" --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"' )
 
     if gdaltest.netcdf_cf_method is None:
-        print 'NOTICE: skipping netcdf CF compliance checks'
+        print('NOTICE: skipping netcdf CF compliance checks')
     return 'success' 
 
 ###############################################################################
@@ -278,13 +278,13 @@ def netcdf_cf_check_file(ifile,version='auto', silent=True):
 
     command = netcdf_cf_get_command(ifile, version='auto')
     if command is None:
-        print 'no suitable method found, skipping'
+        gdaltest.post_reason('no suitable method found, skipping')
         return 'skip'
 
     try:
         (ret, err) = gdaltest.runexternal_out_and_err(command)
     except :
-        print 'ERROR with command - ' + command
+        gdaltest.post_reason('ERROR with command - ' + command)
         return 'fail'
         
     output_all = ret
@@ -303,11 +303,11 @@ def netcdf_cf_check_file(ifile,version='auto', silent=True):
     if output_err is not '':
         result = 'fail'
     if not silent and output_err != '':
-        print '=> CF check ERRORS for file ' + ifile + ' : ' + output_err 
+        print('=> CF check ERRORS for file ' + ifile + ' : ' + output_err)
 
     if not silent:
         if output_warn is not '':
-            print 'CF check WARNINGS for file ' + ifile + ' : ' + output_warn 
+            print('CF check WARNINGS for file ' + ifile + ' : ' + output_warn)
 
     return result
 
