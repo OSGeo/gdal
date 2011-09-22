@@ -583,7 +583,8 @@ CPLString WFS_AddKVToURL(const char* pszURL, const char* pszKey, const char* psz
         const char* pszNext = strchr(pszExistingKey, '&');
         if (pszNext)
         {
-            if (osNewURL[osNewURL.size()-1] == '&')
+            if (osNewURL[osNewURL.size()-1] == '&'
+                || osNewURL[osNewURL.size()-1] == '?' )
                 osNewURL += pszNext + 1;
             else
                 osNewURL += pszNext;
