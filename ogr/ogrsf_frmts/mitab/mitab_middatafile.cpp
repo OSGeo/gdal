@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_middatafile.cpp,v 1.14 2006-01-27 13:54:06 fwarmerdam Exp $
+ * $Id: mitab_middatafile.cpp,v 1.15 2010-10-12 19:02:40 aboudreault Exp $
  *
  * Name:     mitab_datfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_middatafile.cpp,v $
+ * Revision 1.15  2010-10-12 19:02:40  aboudreault
+ * Fixed incomplet patch to handle differently indented lines in mif files (gdal #3694)
+ *
  * Revision 1.14  2006-01-27 13:54:06  fwarmerdam
  * fixed memory leak
  *

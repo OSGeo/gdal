@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.99 2010-10-08 19:36:44 aboudreault Exp $
+ * $Id: mitab_feature.cpp,v 1.100 2010-10-12 19:55:32 aboudreault Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.100  2010-10-12 19:55:32  aboudreault
+ * Fixed style string ID parameter to use the proper delimiter as per OGR Feature Style Specification
+ *
  * Revision 1.99  2010-10-08 19:36:44  aboudreault
  * Fixed memory leak (GDAL bug #3045)
  *
