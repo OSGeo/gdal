@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.55 2010-10-08 18:50:52 aboudreault Exp $
+ * $Id: mitab_miffile.cpp,v 1.58 2011-09-22 21:57:46 dmorissette Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,15 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.58  2011-09-22 21:57:46  dmorissette
+ *  Fixed problem with tab delimiter used in MIF files (GDAL #4257)
+ *
+ * Revision 1.57  2010-10-15 12:06:44  aboudreault
+ * Fixed crash when trying to get the same mitab mif feature twice (GDAL #3765)
+ *
+ * Revision 1.56  2010-10-12 19:02:40  aboudreault
+ * Fixed incomplet patch to handle differently indented lines in mif files (gdal #3694)
+ *
  * Revision 1.55  2010-10-08 18:50:52  aboudreault
  * Fixed handle differently indented lines in mif files. (GDAL bug #3694)
  *
@@ -877,7 +886,7 @@ void MIFFile::PreParseFile()
         }
 
         CSLDestroy(papszToken);
-        papszToken = CSLTokenizeString(pszLine);
+        papszToken = CSLTokenizeString2(pszLine, " \t", CSLT_HONOURSTRINGS);
 
         if (EQUALN(pszLine,"POINT",5))
         {
@@ -1331,7 +1340,7 @@ TABFeature *MIFFile::GetFeatureRef(int nFeatureId)
         {
             // Special case, we need to know two lines to decide the type
             char **papszToken;
-            papszToken = CSLTokenizeString(pszLine);
+            papszToken = CSLTokenizeString2(pszLine, " \t", CSLT_HONOURSTRINGS);
             
             if (CSLCount(papszToken) !=3)
             {
