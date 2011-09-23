@@ -180,7 +180,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdate )
 /* -------------------------------------------------------------------- */
     if( osRegion.length() > 0 )
     {
-        char **papszTokens = CSLTokenizeStringComplex( osRegion.c_str() + 1,
+        char **papszTokens = CSLTokenizeStringComplex( osRegion.c_str(),
                                                        "/", FALSE, FALSE );
         
         if( CSLCount(papszTokens) == 4 )
