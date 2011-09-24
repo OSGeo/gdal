@@ -238,7 +238,13 @@ int main( int nArgc, char ** papszArgv )
         if( poResultSet != NULL )
         {
             if( pszWHERE != NULL )
-                poResultSet->SetAttributeFilter( pszWHERE );
+            {
+                if (poResultSet->SetAttributeFilter( pszWHERE ) != OGRERR_NONE )
+                {
+                    printf( "FAILURE: SetAttributeFilter(%s) failed.\n", pszWHERE );
+                    exit(1);
+                }
+            }
 
             ReportOnLayer( poResultSet, NULL, NULL );
             poDS->ReleaseResultSet( poResultSet );
@@ -357,7 +363,13 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
 /*      Set filters if provided.                                        */
 /* -------------------------------------------------------------------- */
     if( pszWHERE != NULL )
-        poLayer->SetAttributeFilter( pszWHERE );
+    {
+        if (poLayer->SetAttributeFilter( pszWHERE ) != OGRERR_NONE )
+        {
+            printf( "FAILURE: SetAttributeFilter(%s) failed.\n", pszWHERE );
+            exit(1);
+        }
+    }
 
     if( poSpatialFilter != NULL )
         poLayer->SetSpatialFilter( poSpatialFilter );
