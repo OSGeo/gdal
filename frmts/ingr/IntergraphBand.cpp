@@ -194,6 +194,13 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
     SetMetadataItem( "ORIENTATION", 
         INGR_GetOrientation( hHeaderOne.ScanlineOrientation ),
         "IMAGE_STRUCTURE" );
+
+    if( eFormat == PackedBinary ||
+        eFormat == RunLengthEncoded ||
+        eFormat == CCITTGroup4 )
+    {
+        SetMetadataItem( "NBITS", "1", "IMAGE_STRUCTURE" );
+    }
 }
 
 //  ----------------------------------------------------------------------------
