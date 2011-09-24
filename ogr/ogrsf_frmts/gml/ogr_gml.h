@@ -65,6 +65,8 @@ class OGRGMLLayer : public OGRLayer
 
     void                *hCacheSRS;
 
+    int                 bUseOldFIDFormat;
+
   public:
                         OGRGMLLayer( const char * pszName, 
                                      OGRSpatialReference *poSRS, 
