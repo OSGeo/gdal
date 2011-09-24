@@ -78,6 +78,10 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
         poFClass = NULL;
 
     hCacheSRS = GML_BuildOGRGeometryFromList_CreateCache();
+
+    /* Compatibility option. Not advertized, because hopefully won't be needed */
+    /* Just put here in provision... */
+    bUseOldFIDFormat = CSLTestBoolean(CPLGetConfigOption("GML_USE_OLD_FID_FORMAT", "FALSE"));
 }
 
 /************************************************************************/
@@ -507,14 +511,25 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
     else
     {
         nGMLIdIndex = poFeatureDefn->GetFieldIndex("fid");
-        if (nGMLIdIndex >= 0 && poFeature->IsFieldSet( nGMLIdIndex ) )
+        if (bUseOldFIDFormat)
+        {
+            poDS->PrintLine( fp, "<ogr:%s fid=\"F%ld\">",
+                                poFeatureDefn->GetName(),
+                                poFeature->GetFID() );
+        }
+        else if (nGMLIdIndex >= 0 && poFeature->IsFieldSet( nGMLIdIndex ) )
+        {
             poDS->PrintLine( fp, "<ogr:%s fid=\"%s\">",
                 poFeatureDefn->GetName(),
                 poFeature->GetFieldAsString(nGMLIdIndex) );
+        }
         else
-            poDS->PrintLine( fp, "<ogr:%s fid=\"F%ld\">",
+        {
+            poDS->PrintLine( fp, "<ogr:%s fid=\"%s.%ld\">",
+                    poFeatureDefn->GetName(),
                     poFeatureDefn->GetName(),
                     poFeature->GetFID() );
+        }
     }
 
     // Write out Geometry - for now it isn't indented properly.
