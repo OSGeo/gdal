@@ -134,7 +134,7 @@ def http_4():
     if drv is None:
         return 'skip'
 
-    ds = gdal.Open('/vsicurl/ftp://ftp.remotesensing.org/gdal/data/ehdr/elggll.bil')
+    ds = gdal.Open('/vsicurl/ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif/MCR2010_01.tif')
     if ds is None:
 
         # Workaround unexplained failure on Tamas test machine. The test works fine with his
@@ -143,7 +143,7 @@ def http_4():
         if "GDAL_DATA" in os.environ and os.environ["GDAL_DATA"].find("E:\\builds\\..\\sdk\\") == 0:
             return 'skip'
 
-        conn = gdaltest.gdalurlopen('http://download.osgeo.org/gdal/data/ehdr/elggll.bil')
+        conn = gdaltest.gdalurlopen('ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif/MCR2010_01.tif')
         if conn is None:
             print('cannot open URL')
             return 'skip'
@@ -152,7 +152,7 @@ def http_4():
         return 'fail'
         
     filelist = ds.GetFileList()
-    if filelist[1] != '/vsicurl/ftp://ftp.remotesensing.org/gdal/data/ehdr/elggll.hdr':
+    if filelist[0] != '/vsicurl/ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif/MCR2010_01.tif':
         print(filelist)
         return 'fail'
 
