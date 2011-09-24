@@ -161,7 +161,8 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
 
         oSmoothPolyline.Close();
 
-        poGC->addGeometryDirectly( oSmoothPolyline.Tesselate() );
+        OGRLineString *poLS = (OGRLineString *) oSmoothPolyline.Tesselate();
+        poGC->addGeometryDirectly( poLS );
 
         return OGRERR_NONE;
     }
@@ -190,15 +191,28 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
         {
             OdGeCircArc2d* poCircArc = (OdGeCircArc2d*) poEdge;
             OdGePoint2d oCenter = poCircArc->center();
+            double dfStartAngle = poCircArc->endAng() * 180 / PI;
+            double dfEndAngle = poCircArc->startAng() * 180 / PI;
             
-            poGC->addGeometryDirectly(
+            if( !poCircArc->isClockWise() )
+            {
+                dfStartAngle *= -1;
+                dfEndAngle *= -1;
+//                double dfTemp = dfStartAngle;
+//                dfStartAngle = dfEndAngle;
+//                dfEndAngle = dfTemp;
+            }
+
+            if( dfStartAngle > dfEndAngle )
+                dfEndAngle += 360.0;
+
+            OGRLineString *poLS = (OGRLineString *) 
                 OGRGeometryFactory::approximateArcAngles( 
                     oCenter.x, oCenter.y, 0.0,
                     poCircArc->radius(), poCircArc->radius(), 0.0,
-                    -1 * poCircArc->endAng() * 180 / PI,
-                    -1 * poCircArc->startAng() * 180 / PI,
-                    0.0 ) );
-            // do we need pArc->isClockWise()?
+                    dfStartAngle, dfEndAngle, 0.0 );
+
+            poGC->addGeometryDirectly( poLS );
         }
         else if( poEdge->type() == OdGe::kEllipArc2d )
         {
@@ -214,14 +228,14 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
             dfStartAng = -1 * poArc->endAng()*180/PI;
             dfEndAng = -1 * poArc->startAng()*180/PI;
 
-            poGC->addGeometryDirectly(
+            OGRLineString *poLS = (OGRLineString *) 
                 OGRGeometryFactory::approximateArcAngles( 
                     oCenter.x, oCenter.y, 0.0,
                     poArc->majorRadius(), poArc->minorRadius(), dfRotation,
                     OGRDWGLayer::AngleCorrect(dfStartAng,dfRatio),
                     OGRDWGLayer::AngleCorrect(dfEndAng,dfRatio),
-                    0.0 ) );
-            // do we need pCircArc->isClockWise()?
+                    0.0 );
+            poGC->addGeometryDirectly( poLS );
         }
         else
             CPLDebug( "DWG", "Unsupported edge type (%d) in hatch loop.",
