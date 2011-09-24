@@ -111,7 +111,7 @@ void *CPLMalloc( size_t nSize )
     if( nSize == 0 )
         return NULL;
 
-    if( nSize < 0 )
+    if( long(nSize) < 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "CPLMalloc(%ld): Silly size requested.\n",
@@ -175,7 +175,7 @@ void * CPLRealloc( void * pData, size_t nNewSize )
         return NULL;
     }
 
-    if( nNewSize < 0 )
+    if( long(nNewSize) < 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "CPLRealloc(%ld): Silly size requested.\n",
@@ -2263,7 +2263,7 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
 /* -------------------------------------------------------------------- */
     do { 
         nBytesRead = VSIFReadL( pabyBuffer, 1, nBufferSize, fpOld );
-        if( nBytesRead < 0 )
+        if( long(nBytesRead) < 0 )
             nRet = -1;
 
         if( nRet == 0
