@@ -1784,7 +1784,19 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 
     pszInterleave = CSLFetchNameValue(poDS->papszHeader,"interleave");
 
-    
+    /* In case, there is no interleave keyword, we try to derive it from the */
+    /* file extension, if it matches one of the expected interleaving mode */
+    if( pszInterleave == NULL )
+    {
+        const char* pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
+        if ( EQUAL(pszExtension, "BSQ") ||
+             EQUAL(pszExtension, "BIP") ||
+             EQUAL(pszExtension, "BIL") )
+        {
+            pszInterleave = pszExtension;
+        }
+    }
+
     if (!GDALCheckDatasetDimensions(nSamples, nLines) || !GDALCheckBandCount(nBands, FALSE) ||
         pszInterleave == NULL )
     {
