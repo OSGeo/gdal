@@ -1285,7 +1285,14 @@ int main( int nArgc, char ** papszArgv )
                 continue;
 
             if( pszWHERE != NULL )
-                poLayer->SetAttributeFilter( pszWHERE );
+            {
+                if( poLayer->SetAttributeFilter( pszWHERE ) != OGRERR_NONE )
+                {
+                    fprintf( stderr, "FAILURE: SetAttributeFilter(%s) failed.\n", pszWHERE );
+                    if (!bSkipFailures)
+                        exit( 1 );
+                }
+            }
 
             if( poSpatialFilter != NULL )
                 poLayer->SetSpatialFilter( poSpatialFilter );
