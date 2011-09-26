@@ -717,8 +717,8 @@ void GRIBDataset::SetGribMetaData(grib_MetaData* meta)
         rMinX = meta->gds.lon1; // longitude in degrees, to be transformed to meters (or degrees in case of latlon)
         rMaxY = meta->gds.lat1; // latitude in degrees, to be transformed to meters 
 
-        if (meta->gds.scan == GRIB2BIT_2) // Y is minY, GDAL wants maxY
-            rMaxY += (meta->gds.Ny - 1) * meta->gds.Dy; // -1 because we GDAL needs the coordinates of the centre of the pixel
+        if (meta->gds.lat2 > rMaxY)
+          rMaxY = meta->gds.lat2;
         rPixelSizeX = meta->gds.Dx;
         rPixelSizeY = meta->gds.Dy;
     }
