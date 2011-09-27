@@ -374,7 +374,7 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
         for( int i = 0; i < (int) osExpr.size(); i++ )
         {
             char ch = osExpr[i];
-            if (!isalnum((int)ch))
+            if (!(isalnum((int)ch) || ch == '_'))
             {
                 Quote( osExpr, chColumnQuote );
                 return CPLStrdup(osExpr.c_str());

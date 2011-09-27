@@ -979,7 +979,9 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
 /* -------------------------------------------------------------------- */
     if( psSelectInfo->where_expr != NULL )
     {
-        if (m_poDriver && EQUAL(m_poDriver->GetName(), "PostgreSQL") )
+        if (m_poDriver && (
+                EQUAL(m_poDriver->GetName(), "PostgreSQL") ||
+                EQUAL(m_poDriver->GetName(), "FileGDB" )) )
             pszWHERE = psSelectInfo->where_expr->Unparse( &sFieldList, '"' );
         else
             pszWHERE = psSelectInfo->where_expr->Unparse( &sFieldList, '\'' );
