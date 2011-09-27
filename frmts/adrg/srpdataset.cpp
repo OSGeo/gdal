@@ -644,7 +644,7 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
                 {
                     return FALSE;
                 }
-                while(c ==' ' || c== '^')
+                while( c != 30 )
                 {
                     offsetInIMG ++;
                     if (VSIFReadL(&c, 1, 1, fdIMG) != 1)
