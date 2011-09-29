@@ -337,24 +337,19 @@ OGRBoolean OGRGeometry::Intersects( OGRGeometry *poOtherGeom ) const
     hThisGeosGeom = exportToGEOS();
     hOtherGeosGeom = poOtherGeom->exportToGEOS();
     
+    OGRBoolean bResult = FALSE;
     if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
     {
-        OGRBoolean bResult;
-        
         if( GEOSIntersects( hThisGeosGeom, hOtherGeosGeom ) != 0 )
             bResult = TRUE;
         else
             bResult = FALSE;
-        
-        GEOSGeom_destroy( hThisGeosGeom );
-        GEOSGeom_destroy( hOtherGeosGeom );
+    }
 
-        return bResult;
-    }
-    else
-    {
-        return TRUE;
-    }
+    GEOSGeom_destroy( hThisGeosGeom );
+    GEOSGeom_destroy( hOtherGeosGeom );
+
+    return bResult;
 #endif /* HAVE_GEOS */
 }
 
@@ -2409,8 +2404,6 @@ OGRGeometry *OGRGeometry::Intersection( const OGRGeometry *poOtherGeom ) const
     if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
     {
         hGeosProduct = GEOSIntersection( hThisGeosGeom, hOtherGeosGeom );
-        GEOSGeom_destroy( hThisGeosGeom );
-        GEOSGeom_destroy( hOtherGeosGeom );
 
         if( hGeosProduct != NULL )
         {
@@ -2418,6 +2411,8 @@ OGRGeometry *OGRGeometry::Intersection( const OGRGeometry *poOtherGeom ) const
             GEOSGeom_destroy( hGeosProduct );
         }
     }
+    GEOSGeom_destroy( hThisGeosGeom );
+    GEOSGeom_destroy( hOtherGeosGeom );
 
     return poOGRProduct;
 
@@ -2501,8 +2496,6 @@ OGRGeometry *OGRGeometry::Union( const OGRGeometry *poOtherGeom ) const
     if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
     {
         hGeosProduct = GEOSUnion( hThisGeosGeom, hOtherGeosGeom );
-        GEOSGeom_destroy( hThisGeosGeom );
-        GEOSGeom_destroy( hOtherGeosGeom );
 
         if( hGeosProduct != NULL )
         {
@@ -2510,6 +2503,8 @@ OGRGeometry *OGRGeometry::Union( const OGRGeometry *poOtherGeom ) const
             GEOSGeom_destroy( hGeosProduct );
         }
     }
+    GEOSGeom_destroy( hThisGeosGeom );
+    GEOSGeom_destroy( hOtherGeosGeom );
 
     return poOGRProduct;
 
@@ -2677,8 +2672,6 @@ OGRGeometry *OGRGeometry::Difference( const OGRGeometry *poOtherGeom ) const
     if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
     {
         hGeosProduct = GEOSDifference( hThisGeosGeom, hOtherGeosGeom );
-        GEOSGeom_destroy( hThisGeosGeom );
-        GEOSGeom_destroy( hOtherGeosGeom );
 
         if( hGeosProduct != NULL )
         {
@@ -2686,6 +2679,8 @@ OGRGeometry *OGRGeometry::Difference( const OGRGeometry *poOtherGeom ) const
             GEOSGeom_destroy( hGeosProduct );
         }
     }
+    GEOSGeom_destroy( hThisGeosGeom );
+    GEOSGeom_destroy( hOtherGeosGeom );
 
     return poOGRProduct;
 
@@ -2772,8 +2767,6 @@ OGRGeometry::SymDifference( const OGRGeometry *poOtherGeom ) const
     if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
     {
         hGeosProduct = GEOSSymDifference( hThisGeosGeom, hOtherGeosGeom );
-        GEOSGeom_destroy( hThisGeosGeom );
-        GEOSGeom_destroy( hOtherGeosGeom );
 
         if( hGeosProduct != NULL )
         {
@@ -2781,6 +2774,8 @@ OGRGeometry::SymDifference( const OGRGeometry *poOtherGeom ) const
             GEOSGeom_destroy( hGeosProduct );
         }
     }
+    GEOSGeom_destroy( hThisGeosGeom );
+    GEOSGeom_destroy( hOtherGeosGeom );
 
     return poOGRProduct;
 
@@ -2895,9 +2890,9 @@ OGRGeometry::Disjoint( const OGRGeometry *poOtherGeom ) const
     if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
     {
         bResult = GEOSDisjoint( hThisGeosGeom, hOtherGeosGeom );
-        GEOSGeom_destroy( hThisGeosGeom );
-        GEOSGeom_destroy( hOtherGeosGeom );
     }
+    GEOSGeom_destroy( hThisGeosGeom );
+    GEOSGeom_destroy( hOtherGeosGeom );
 
     return bResult;
 
@@ -2976,9 +2971,9 @@ OGRGeometry::Touches( const OGRGeometry *poOtherGeom ) const
     if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
     {
         bResult = GEOSTouches( hThisGeosGeom, hOtherGeosGeom );
-        GEOSGeom_destroy( hThisGeosGeom );
-        GEOSGeom_destroy( hOtherGeosGeom );
     }
+    GEOSGeom_destroy( hThisGeosGeom );
+    GEOSGeom_destroy( hOtherGeosGeom );
 
     return bResult;
 
@@ -3057,9 +3052,9 @@ OGRGeometry::Crosses( const OGRGeometry *poOtherGeom ) const
     if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
     {
         bResult = GEOSCrosses( hThisGeosGeom, hOtherGeosGeom );
-        GEOSGeom_destroy( hThisGeosGeom );
-        GEOSGeom_destroy( hOtherGeosGeom );
     }
+    GEOSGeom_destroy( hThisGeosGeom );
+    GEOSGeom_destroy( hOtherGeosGeom );
 
     return bResult;
 
@@ -3137,9 +3132,9 @@ OGRGeometry::Within( const OGRGeometry *poOtherGeom ) const
     if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
     {
         bResult = GEOSWithin( hThisGeosGeom, hOtherGeosGeom );
-        GEOSGeom_destroy( hThisGeosGeom );
-        GEOSGeom_destroy( hOtherGeosGeom );
     }
+    GEOSGeom_destroy( hThisGeosGeom );
+    GEOSGeom_destroy( hOtherGeosGeom );
 
     return bResult;
 
@@ -3217,9 +3212,9 @@ OGRGeometry::Contains( const OGRGeometry *poOtherGeom ) const
     if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
     {
         bResult = GEOSContains( hThisGeosGeom, hOtherGeosGeom );
-        GEOSGeom_destroy( hThisGeosGeom );
-        GEOSGeom_destroy( hOtherGeosGeom );
     }
+    GEOSGeom_destroy( hThisGeosGeom );
+    GEOSGeom_destroy( hOtherGeosGeom );
 
     return bResult;
 
@@ -3298,9 +3293,9 @@ OGRGeometry::Overlaps( const OGRGeometry *poOtherGeom ) const
     if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
     {
         bResult = GEOSOverlaps( hThisGeosGeom, hOtherGeosGeom );
-        GEOSGeom_destroy( hThisGeosGeom );
-        GEOSGeom_destroy( hOtherGeosGeom );
     }
+    GEOSGeom_destroy( hThisGeosGeom );
+    GEOSGeom_destroy( hOtherGeosGeom );
 
     return bResult;
 
@@ -3549,13 +3544,13 @@ OGRGeometry *OGRGeometry::Simplify(double dTolerance) const
     hThisGeosGeom = exportToGEOS();
     if( hThisGeosGeom != NULL ) 
     {
-	hGeosProduct = GEOSSimplify( hThisGeosGeom, dTolerance );
-	GEOSGeom_destroy( hThisGeosGeom );
-	if( hGeosProduct != NULL )
-	{
-	    poOGRProduct = OGRGeometryFactory::createFromGEOS( hGeosProduct );
+        hGeosProduct = GEOSSimplify( hThisGeosGeom, dTolerance );
+        GEOSGeom_destroy( hThisGeosGeom );
+        if( hGeosProduct != NULL )
+        {
+            poOGRProduct = OGRGeometryFactory::createFromGEOS( hGeosProduct );
             GEOSGeom_destroy( hGeosProduct );
-	}
+        }
     }
     return poOGRProduct;
 
