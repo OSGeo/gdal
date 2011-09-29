@@ -57,8 +57,8 @@ production environments and read the SQLite
 
 (Starting with GDAL 1.7.0)<p>
 
-The SQLite driver can read and write SpatiaLite databases. Updating a spatialite database requires
-explicit linking against SpatiaLite library (version >= 2.3). Explicit linking against SpatiaLite library also
+The SQLite driver can read and write SpatiaLite databases. Creating or updating a spatialite database requires
+explicit linking against SpatiaLite library (version >= 2.3.1). Explicit linking against SpatiaLite library also
 provides access to functions provided by this library, such as spatial indexes, spatial functions, etc...<p>
 
 A few examples :
@@ -129,12 +129,16 @@ are simply able to support 2D [XY] dimensions.
 </ul>
 
 
-<h2>Other Notes</h2>
+<h2>Credits</h2>
 <ul>
 <li>Development of the OGR SQLite driver was supported by 
 <a href="http://www.dmsolutions.ca/">DM Solutions Group</a> and 
 <a href="http://www.gomoos.org/">GoMOOS</a>.</li>
 <li>Full support for SpatiaLite was contributed by A.Furieri, with funding from <a href="http://www.regione.toscana.it/">Regione Toscana<a>
+</ul>
+
+<h2>Links</h2>
+<ul>
 <li><a href="http://www.sqlite.org/">http://www.sqlite.org</a>: Main SQLite page.
 <li> <a href="http://www.gaia-gis.it/spatialite/">http://www.gaia-gis.it/spatialite/</a>: SpatiaLite extension to SQLite.
 <li> <A href="http://trac.osgeo.org/fdo/wiki/FDORfc16">FDO RFC 16</a>: FDO Provider for SQLite</li>
