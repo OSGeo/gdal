@@ -133,39 +133,33 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
 /*      Check that spatialite extensions are loaded if required to      */
 /*      create a spatialite database                                    */
 /* -------------------------------------------------------------------- */
-    int bSpatialiteLoaded = OGRSQLiteInitSpatialite();
     int bSpatialite = CSLFetchBoolean( papszOptions, "SPATIALITE", FALSE );
 
-    if (bSpatialite && !bSpatialiteLoaded)
-    {
-        CPLError( CE_Warning, CPLE_OpenFailed,
-                  "Creating a Spatialite database, but Spatialite extensions are not loaded." );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Create the database file.                                       */
-/* -------------------------------------------------------------------- */
-    sqlite3             *hDB;
-    int rc;
-	
     if (bSpatialite == TRUE)
     {
 #ifdef HAVE_SPATIALITE
-        /* 
-        / Try initializing SpatiaLite unconditionally
-        / it's absolutelu harmless if already initialized
-        */
-        spatialite_init( CSLTestBoolean(CPLGetConfigOption(
-                             "SPATIALITE_INIT_VERBOSE", "FALSE")));
+        int bSpatialiteLoaded = OGRSQLiteInitSpatialite();
+        if (!bSpatialiteLoaded)
+        {
+            CPLError( CE_Failure, CPLE_NotSupported,
+                    "Creating a Spatialite database, but Spatialite extensions are not loaded." );
+            return NULL;
+        }
 #else
-        CPLError( CE_Failure, CPLE_AppDefined, 
-            "OGR was built setting the option: --with-spatialite=no\n" 
+        CPLError( CE_Failure, CPLE_NotSupported, 
+            "OGR was built without libspatialite support\n"
             "... sorry, creating/writing any SpatiaLite DB is unsupported\n" );
  
         return NULL;
 #endif
 	}
 
+/* -------------------------------------------------------------------- */
+/*      Create the database file.                                       */
+/* -------------------------------------------------------------------- */
+    sqlite3             *hDB;
+    int rc;
+    
     hDB = NULL;
     rc = sqlite3_open( pszName, &hDB );
     if( rc != SQLITE_OK )
@@ -329,11 +323,7 @@ int OGRSQLiteDriver::InitWithEPSG(sqlite3* hDB, int bSpatialite)
         / if v.2.4.0 (or any subsequent) InitWithEPSG make no sense at all
         / because the EPSG dataset is already self-initialized at DB creation
         */
-        double v = 0.0;
-#ifdef HAVE_SPATIALITE
-        v = ( atof( spatialite_version() ) + 0.001 )  * 10.0;
-#endif
-        int iSpatialiteVersion = v;
+        int iSpatialiteVersion = OGRSQLiteGetSpatialiteVersionNumber();
         if ( iSpatialiteVersion >= 24 )
             return TRUE;
     }
