@@ -186,7 +186,7 @@ char* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
 %clear (int len, char *bin_string);
 #endif
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
 /* We don't want errors to be cleared or thrown by this */
 /* call */
 %exception CPLGetLastErrorNo
@@ -196,7 +196,7 @@ char* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
 #endif
 int CPLGetLastErrorNo();
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
 /* We don't want errors to be cleared or thrown by this */
 /* call */
 %exception CPLGetLastErrorType
@@ -208,7 +208,7 @@ int CPLGetLastErrorType();
 CPLErr CPLGetLastErrorType();
 #endif
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
 /* We don't want errors to be cleared or thrown by this */
 /* call */
 %exception CPLGetLastErrorMsg
