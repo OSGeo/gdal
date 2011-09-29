@@ -42,6 +42,8 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
 
 {
     poDS = poDSIn;
+	
+    bSpatialite2D = FALSE;
 
     iNextShapeId = 0;
 
@@ -949,9 +951,10 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
             int     nBLOBLen;
             GByte   *pabySLBLOB;
 
-            ExportSpatiaLiteGeometry( poGeom, nSRSId, wkbNDR, bHasM,
-                                      &pabySLBLOB, &nBLOBLen );
-            rc = sqlite3_bind_blob( hInsertStmt, nBindField++, pabySLBLOB, nBLOBLen, CPLFree );
+            ExportSpatiaLiteGeometry( poGeom, nSRSId, wkbNDR, bHasM, 
+                                      bSpatialite2D, &pabySLBLOB, &nBLOBLen );
+            rc = sqlite3_bind_blob( hInsertStmt, nBindField++, pabySLBLOB,
+                                    nBLOBLen, CPLFree );
         }
         else
         {

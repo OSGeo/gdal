@@ -6,6 +6,13 @@
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
+ *
+ * Contributor: Alessandro Furieri, a.furieri@lqt.it
+ * Portions of this module properly supporting SpatiaLite Table/Geom creation
+ * Developed for Faunalia ( http://www.faunalia.it) with funding from 
+ * Regione Toscana - Settore SISTEMA INFORMATIVO TERRITORIALE ED AMBIENTALE
+ *
+ ******************************************************************************
  * Copyright (c) 2003, Frank Warmerdam <warmerdam@pobox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -681,6 +688,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 
 {
     char                *pszLayerName;
+    int                  bForce2D = FALSE;
     const char          *pszGeomFormat;
 
 /* -------------------------------------------------------------------- */
@@ -799,11 +807,30 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
         else
         {
             pszGeomCol = "GEOMETRY";
-            osCommand.Printf(
-                "CREATE TABLE '%s' ( "
-                "  OGC_FID INTEGER PRIMARY KEY,"
-                "  %s BLOB )", 
-                pszEscapedLayerName, pszGeomCol );
+
+            /* Only if was created as a SpatiaLite DB */
+            if ( bIsSpatiaLite )
+            {
+                /* 
+                / SpatiaLite full support: we must create the 
+                / Geometry in a second time using AddGeometryColumn()
+                /
+                / IMPORTANT NOTICE: on SpatiaLite any attempt aimed
+                / to directly creating some Geometry column 
+                / [by-passing AddGeometryColumn() as absolutely required]
+                / will severely [and irremediably] corrupt the DB !!!
+                */
+                osCommand.Printf( "CREATE TABLE '%s' ( "
+                                  "  OGC_FID INTEGER PRIMARY KEY)",
+                                  pszLayerName);
+            }
+            else
+            {
+                osCommand.Printf( "CREATE TABLE '%s' ( "
+                                  "  OGC_FID INTEGER PRIMARY KEY,"
+                                  "  %s BLOB )", 
+                                  pszLayerName, pszGeomCol );
+            }
         }
     }
 
@@ -853,18 +880,83 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
             nCoordDim = 2;
         else
             nCoordDim = 3;
+        
+        if ( bIsSpatiaLite )
+        {            
+        /* 
+        / SpatiaLite full support: calling AddGeometryColumn() 
+        /
+        / IMPORTANT NOTICE: on SpatiaLite any attempt aimed
+        / to directly INSERT a row into GEOMETRY_COLUMNS 
+        / [by-passing AddGeometryColumn() as absolutely required]
+        / will severely [and irremediably] corrupt the DB !!!
+        */
+            const char *type = "GEOMETRY";
+            switch ( wkbFlatten( eType ) )
+            {
+                case wkbPoint:
+                    type = "POINT";
+                    break;
+                case wkbMultiPoint:
+                    type = "MULTIPOINT";
+                    break;
+                case wkbLineString:
+                    type = "LINESTRING";
+                    break;
+                case wkbMultiLineString:
+                    type = "MULTILINESTRING";
+                    break;
+                case wkbPolygon:
+                    type = "POLYGON";
+                    break;
+                case wkbMultiPolygon:
+                    type = "MULTIPOLYGON";
+                    break;
+                case wkbGeometryCollection:
+                    type = "GEOMETRYCOLLECTION";
+                    break;
+                default:
+                    type = "GEOMETRY";
+                    break;
+            } 
 
-        if( nSRSId > 0 )
-        {
-            if ( bIsSpatiaLite )
-                osCommand.Printf(
-                    "INSERT INTO geometry_columns "
-                    "(f_table_name, f_geometry_column, type, "
-                    "coord_dimension, srid, spatial_index_enabled) "
-                    "VALUES ('%s','%s', '%s', '%s', %d, 0)",
-                    pszEscapedLayerName, pszGeomCol, OGRToOGCGeomType(eType),
-                    nCoordDim == 3 ? "XYZ" : "2" /* FIXME ? */, nSRSId );
+            /*
+            / SpatiaLite v.2.4.0 (or any subsequent) is required
+            / to support 2.5D: is an obsolete version of the library
+            / is found we'll unconditionally activate 2D casting mode
+            */
+            double v = 0.0;
+#ifdef HAVE_SPATIALITE
+            v = ( atof( spatialite_version() ) + 0.001 )  * 10.0;
+#endif
+            int iSpatialiteVersion = v;
+            if ( iSpatialiteVersion < 24)
+            {
+                nCoordDim = 2;
+                bForce2D = TRUE;
+            }
             else
+            {
+                const char* pszSI = CSLFetchNameValue( papszOptions, "FORCE_2D" );
+                if( pszSI != NULL)
+                {
+                    if ( CSLTestBoolean(pszSI) )
+                    {
+                        nCoordDim = 2;
+                        bForce2D = TRUE;
+                    }
+                }
+            }
+
+            osCommand.Printf( "SELECT AddGeometryColumn("
+                              "'%s', '%s', %d, '%s', %d)",
+                              pszLayerName, pszGeomCol, nSRSId,
+                              type, nCoordDim );
+        }
+        else
+        {
+            if( nSRSId > 0 )
+            {
                 osCommand.Printf(
                     "INSERT INTO geometry_columns "
                     "(f_table_name, f_geometry_column, geometry_format, "
@@ -872,18 +964,9 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
                     "('%s','%s','%s', %d, %d, %d)", 
                     pszEscapedLayerName, pszGeomCol, pszGeomFormat,
                     (int) wkbFlatten(eType), nCoordDim, nSRSId );
-        }
-        else
-        {
-            if ( bIsSpatiaLite )
-                osCommand.Printf(
-                    "INSERT INTO geometry_columns "
-                    "(f_table_name, f_geometry_column, type, "
-                    "coord_dimension, spatial_index_enabled) "
-                    "VALUES ('%s','%s', '%s', %d, 0)", 
-                    pszEscapedLayerName, pszGeomCol, OGRToOGCGeomType(eType),
-                    nCoordDim );
-            else
+            }
+			else
+			{
                 osCommand.Printf(
                     "INSERT INTO geometry_columns "
                     "(f_table_name, f_geometry_column, geometry_format, "
@@ -891,6 +974,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
                     "('%s','%s','%s', %d, %d)", 
                     pszEscapedLayerName, pszGeomCol, pszGeomFormat,
                     (int) wkbFlatten(eType), nCoordDim );
+			}
         }
 
 #ifdef DEBUG
@@ -962,6 +1046,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
     }
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
+    poLayer->SetSpatialite2D ( bForce2D );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */

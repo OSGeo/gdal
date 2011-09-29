@@ -87,10 +87,17 @@ these metadata tables are created when a new database is created.
 
 <li> <b>SPATIALITE=yes/no</b>: (Starting with GDAL 1.7.0) Create the SpatiaLite flavour of the metadata
 tables, which are a bit differ from the metadata used by this OGR driver and
-from OGC specifications. Implies <b>METADATA=yes</b>.
+from OGC specifications. Implies <b>METADATA=yes</b>.<br>
+Please note: (Starting with GDAL 1.9.0) OGR must be linked against <i>libspatialite</i> in order to support
+insert/write on SpatiaLite; if not, <i>read-only</i> mode is enforced.<br>
+Attempting to perform any insert/write on SpatiaLite skipping the appropriate library support simply produces broken (corrupted) DB-files.
 
 <li> <b>INIT_WITH_EPSG=yes/no</b>: (Starting with GDAL 1.8.0) Insert the content of the EPSG CSV files
-into the spatial_ref_sys table. Defaults to no</b>.
+into the spatial_ref_sys table. Defaults to no</b>.<br>
+Please note: if <b>SPATIALITE=yes</b> and the underlaying <i>libspatialite</i> is v.2.4 (or any subsequent 
+version) <b>INIT_WITH_EPSG</b> is ignored anyway;
+any recent version of this library will unconditionally load the EPSG 
+dataset into the spatial_ref_sys table when creating a new DB (<i>self-initialization</i>).
 </ul>
 
 <h3>Layer Creation Options</h3>
@@ -113,6 +120,12 @@ case and some special characters will be changed to underscores.
 of the SpatiaLite flavour, and if OGR is linked against libspatialite, this option
 can be used to control if a spatial index must be created. Default to yes.
 
+<li> <b>FORCE_2D=yes/no</b>: (Starting with GDAL 1.9.0) If the database is
+of the SpatiaLite flavour, and if OGR is linked against libspatialite, this option
+can be used to control if any Geometry must be casted to 2D [XY]. Default to no.<br>
+Please note: when the underlaying <i>libspatialite</i> is v.2.3.1 (or any previous 
+version) <b>FORCE_2D=yes</b> is assumed anyway, because earlier versions of this library
+are simply able to support 2D [XY] dimensions.
 </ul>
 
 
@@ -121,6 +134,7 @@ can be used to control if a spatial index must be created. Default to yes.
 <li>Development of the OGR SQLite driver was supported by 
 <a href="http://www.dmsolutions.ca/">DM Solutions Group</a> and 
 <a href="http://www.gomoos.org/">GoMOOS</a>.</li>
+<li>Full support for SpatiaLite was contributed by A.Furieri, with funding from <a href="http://www.regione.toscana.it/">Regione Toscana<a>
 <li><a href="http://www.sqlite.org/">http://www.sqlite.org</a>: Main SQLite page.
 <li> <a href="http://www.gaia-gis.it/spatialite/">http://www.gaia-gis.it/spatialite/</a>: SpatiaLite extension to SQLite.
 <li> <A href="http://trac.osgeo.org/fdo/wiki/FDORfc16">FDO RFC 16</a>: FDO Provider for SQLite</li>
