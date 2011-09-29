@@ -1068,6 +1068,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
         VSIStatBufL  sStat;
         if (EQUAL(poDriver->GetName(), "ESRI Shapefile") &&
+            pszSQLStatement == NULL &&
             (CSLCount(papszLayers) > 1 ||
              (CSLCount(papszLayers) == 0 && poDS->GetLayerCount() > 1)) &&
             pszNewLayerName == NULL &&
