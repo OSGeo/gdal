@@ -216,7 +216,9 @@ def main(argv = None):
 
         if poResultSet is not None:
             if pszWHERE is not None:
-                poResultSet.SetAttributeFilter( pszWHERE )
+                if poResultSet.SetAttributeFilter( pszWHERE ) != 0:
+                    print("FAILURE: SetAttributeFilter(%s) failed." % pszWHERE)
+                    return 1
 
             ReportOnLayer( poResultSet, None, None, options )
             poDS.ReleaseResultSet( poResultSet )
@@ -296,7 +298,9 @@ def ReportOnLayer( poLayer, pszWHERE, poSpatialFilter, options ):
 #/*      Set filters if provided.                                        */
 #/* -------------------------------------------------------------------- */
     if pszWHERE is not None:
-        poLayer.SetAttributeFilter( pszWHERE )
+        if poLayer.SetAttributeFilter( pszWHERE ) != 0:
+            print("FAILURE: SetAttributeFilter(%s) failed." % pszWHERE)
+            return
 
     if poSpatialFilter is not None:
         poLayer.SetSpatialFilter( poSpatialFilter )

@@ -801,7 +801,14 @@ public class ogr2ogr
                 Layer        poLayer = papoLayers[iLayer];
 
                 if( pszWHERE != null )
-                    poLayer.SetAttributeFilter( pszWHERE );
+                {
+                    if( poLayer.SetAttributeFilter( pszWHERE ) != ogr.OGRERR_NONE )
+                    {
+                        System.err.println("FAILURE: SetAttributeFilter(" + pszWHERE + ") failed.");
+                        if (!bSkipFailures)
+                            System.exit( 1 );
+                    }
+                }
 
                 if( poSpatialFilter != null )
                     poLayer.SetSpatialFilter( poSpatialFilter );

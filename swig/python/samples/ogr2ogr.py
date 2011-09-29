@@ -702,7 +702,10 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
             poLayer = papoLayers[iLayer]
 
             if pszWHERE is not None:
-                poLayer.SetAttributeFilter( pszWHERE )
+                if poLayer.SetAttributeFilter( pszWHERE ) != 0:
+                    print("FAILURE: SetAttributeFilter(%s) failed." % pszWHERE)
+                    if not bSkipFailures:
+                        return False
 
             if poSpatialFilter is not None:
                 poLayer.SetSpatialFilter( poSpatialFilter )
