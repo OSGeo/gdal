@@ -7,6 +7,8 @@ coord_sys_code,coord_axis_name_code,coord_axis_orientation,coord_axis_abbreviati
 1026,9907,South along 180°E,N,9001,2
 1027,9906,North along 90°E,E,9001,1
 1027,9907,North along 0°E,N,9001,2
+1028,9906,east,E,9037,1
+1028,9907,north,N,9037,2
 4400,9906,east,E,9001,1
 4400,9907,north,N,9001,2
 4401,9906,east,E,9062,1
