@@ -67,6 +67,19 @@ int OGRSQLiteInitSpatialite()
 }
 
 /************************************************************************/
+/*               OGRSQLiteGetSpatialiteVersionNumber()                  */
+/************************************************************************/
+
+int OGRSQLiteGetSpatialiteVersionNumber()
+{
+    double v = 0.0;
+#ifdef HAVE_SPATIALITE
+    v = ( atof( spatialite_version() ) + 0.001 )  * 10.0;
+#endif
+    return (int)v;
+}
+
+/************************************************************************/
 /*                        OGRSQLiteDataSource()                         */
 /************************************************************************/
 
@@ -259,15 +272,12 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
         int bSpatialiteReadOnly = TRUE;
         int iSpatialiteVersion = -1;
 
-#ifdef HAVE_SPATIALITE
         /* Only enables write-mode if linked against SpatiaLite */
         if( bSpatialiteLoaded == TRUE )
         {
-            double v = ( atof( spatialite_version() ) + 0.001 )  * 10.0;
-            iSpatialiteVersion = (int)v;
+            iSpatialiteVersion = OGRSQLiteGetSpatialiteVersionNumber();
             bSpatialiteReadOnly = FALSE;
         }
-#endif
 
         if (bSpatialiteReadOnly && bUpdate)
         {
@@ -882,54 +892,25 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
             nCoordDim = 3;
         
         if ( bIsSpatiaLite )
-        {            
-        /* 
-        / SpatiaLite full support: calling AddGeometryColumn() 
-        /
-        / IMPORTANT NOTICE: on SpatiaLite any attempt aimed
-        / to directly INSERT a row into GEOMETRY_COLUMNS 
-        / [by-passing AddGeometryColumn() as absolutely required]
-        / will severely [and irremediably] corrupt the DB !!!
-        */
-            const char *type = "GEOMETRY";
-            switch ( wkbFlatten( eType ) )
-            {
-                case wkbPoint:
-                    type = "POINT";
-                    break;
-                case wkbMultiPoint:
-                    type = "MULTIPOINT";
-                    break;
-                case wkbLineString:
-                    type = "LINESTRING";
-                    break;
-                case wkbMultiLineString:
-                    type = "MULTILINESTRING";
-                    break;
-                case wkbPolygon:
-                    type = "POLYGON";
-                    break;
-                case wkbMultiPolygon:
-                    type = "MULTIPOLYGON";
-                    break;
-                case wkbGeometryCollection:
-                    type = "GEOMETRYCOLLECTION";
-                    break;
-                default:
-                    type = "GEOMETRY";
-                    break;
-            } 
+        {
+            /*
+            / SpatiaLite full support: calling AddGeometryColumn()
+            /
+            / IMPORTANT NOTICE: on SpatiaLite any attempt aimed
+            / to directly INSERT a row into GEOMETRY_COLUMNS
+            / [by-passing AddGeometryColumn() as absolutely required]
+            / will severely [and irremediably] corrupt the DB !!!
+            */
+            const char *pszType = OGRToOGCGeomType(eType);
+            if (pszType[0] == '\0')
+                pszType = "GEOMETRY";
 
             /*
             / SpatiaLite v.2.4.0 (or any subsequent) is required
             / to support 2.5D: is an obsolete version of the library
             / is found we'll unconditionally activate 2D casting mode
             */
-            double v = 0.0;
-#ifdef HAVE_SPATIALITE
-            v = ( atof( spatialite_version() ) + 0.001 )  * 10.0;
-#endif
-            int iSpatialiteVersion = v;
+            int iSpatialiteVersion = OGRSQLiteGetSpatialiteVersionNumber();
             if ( iSpatialiteVersion < 24)
             {
                 nCoordDim = 2;
@@ -937,10 +918,10 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
             }
             else
             {
-                const char* pszSI = CSLFetchNameValue( papszOptions, "FORCE_2D" );
-                if( pszSI != NULL)
+                const char* pszForce2D = CSLFetchNameValue( papszOptions, "FORCE_2D" );
+                if( pszForce2D != NULL)
                 {
-                    if ( CSLTestBoolean(pszSI) )
+                    if ( CSLTestBoolean(pszForce2D) )
                     {
                         nCoordDim = 2;
                         bForce2D = TRUE;
@@ -951,7 +932,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
             osCommand.Printf( "SELECT AddGeometryColumn("
                               "'%s', '%s', %d, '%s', %d)",
                               pszLayerName, pszGeomCol, nSRSId,
-                              type, nCoordDim );
+                              pszType, nCoordDim );
         }
         else
         {
@@ -965,16 +946,16 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
                     pszEscapedLayerName, pszGeomCol, pszGeomFormat,
                     (int) wkbFlatten(eType), nCoordDim, nSRSId );
             }
-			else
-			{
+            else
+            {
                 osCommand.Printf(
                     "INSERT INTO geometry_columns "
                     "(f_table_name, f_geometry_column, geometry_format, "
                     "geometry_type, coord_dimension) VALUES "
-                    "('%s','%s','%s', %d, %d)", 
+                    "('%s','%s','%s', %d, %d)",
                     pszEscapedLayerName, pszGeomCol, pszGeomFormat,
                     (int) wkbFlatten(eType), nCoordDim );
-			}
+            }
         }
 
 #ifdef DEBUG
