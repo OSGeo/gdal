@@ -33,10 +33,25 @@
 #include "ogrsf_frmts.h"
 #include "cpl_error.h"
 
-/* When used with Spatialite amalgamation, there might be no sqlite3 headers */
-/* in other places than /include/spatialite/ subdir. */
-#if defined(HAVE_SPATIALITE) && defined(SPATIALITE_AMALGAMATION)
-#include <spatialite/sqlite3.h>
+#ifdef HAVE_SPATIALITE
+  #ifdef SPATIALITE_AMALGAMATION
+    /*
+    / using an AMALGAMATED version of SpatiaLite
+    / a private internal copy of SQLite is included:
+    / so we are required including the SpatiaLite's 
+    / own header 
+    /
+    / IMPORTANT NOTICE: using AMALAGATION is only
+    / useful on Windows (to skip DLL hell related oddities)
+    */
+    #include <spatialite/sqlite3.h>
+  #else
+    /*
+    / You MUST NOT use AMALGAMATION on Linux or any
+    / other "sane" operating system !!!!
+    */
+    #include "sqlite3.h"
+  #endif
 #else
 #include "sqlite3.h"
 #endif
@@ -138,10 +153,10 @@ class OGRSQLiteLayer : public OGRLayer
                                                      int* pnBytesConsumed);
 
     static int          ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
-                                                      int bHasM );
+                                                      int bHasM, int bSpatialite2D );
     static int          ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeometry,
                                                         OGRwkbByteOrder eByteOrder,
-                                                        int bHasM,
+                                                        int bHasM, int bSpatialite2D,
                                                         GByte* pabyData );
 
   protected:
@@ -180,7 +195,7 @@ class OGRSQLiteLayer : public OGRLayer
                                                   OGRGeometry ** );
     static OGRErr       ExportSpatiaLiteGeometry( const OGRGeometry *,
                                                   GInt32, OGRwkbByteOrder,
-                                                  int, GByte **, int * );
+                                                  int, int, GByte **, int * );
 
   public:
                         OGRSQLiteLayer();
@@ -217,6 +232,7 @@ class OGRSQLiteLayer : public OGRLayer
 class OGRSQLiteTableLayer : public OGRSQLiteLayer
 {
     int                 bLaunderColumnNames;
+    int                 bSpatialite2D;
 
     CPLString           osWHERE;
     CPLString           osQuery;
@@ -260,6 +276,8 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     // follow methods are not base class overrides
     void                SetLaunderFlag( int bFlag ) 
                                 { bLaunderColumnNames = bFlag; }
+    void                SetSpatialite2D( int bFlag ) 
+                                { bSpatialite2D = bFlag; }
 
     virtual int          IsTableLayer() { return TRUE; }
 };

@@ -6,6 +6,13 @@
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
+ *
+ * Contributor: Alessandro Furieri, a.furieri@lqt.it
+ * Portions of this module properly supporting SpatiaLite DB creation
+ * Developed for Faunalia ( http://www.faunalia.it) with funding from 
+ * Regione Toscana - Settore SISTEMA INFORMATIVO TERRITORIALE ED AMBIENTALE
+ *
+ ******************************************************************************
  * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -30,6 +37,10 @@
 #include "ogr_sqlite.h"
 #include "cpl_conv.h"
 #include "cpl_csv.h"
+
+#ifdef HAVE_SPATIALITE
+#include "spatialite.h"
+#endif
 
 CPL_CVSID("$Id$");
 
@@ -136,6 +147,24 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
 /* -------------------------------------------------------------------- */
     sqlite3             *hDB;
     int rc;
+	
+    if (bSpatialite == TRUE)
+    {
+#ifdef HAVE_SPATIALITE
+        /* 
+        / Try initializing SpatiaLite unconditionally
+        / it's absolutelu harmless if already initialized
+        */
+        spatialite_init( CSLTestBoolean(CPLGetConfigOption(
+                             "SPATIALITE_INIT_VERBOSE", "FALSE")));
+#else
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "OGR was built setting the option: --with-spatialite=no\n" 
+            "... sorry, creating/writing any SpatiaLite DB is unsupported\n" );
+ 
+        return NULL;
+#endif
+	}
 
     hDB = NULL;
     rc = sqlite3_open( pszName, &hDB );
@@ -186,57 +215,21 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
 /* -------------------------------------------------------------------- */
     if ( bSpatialite )
     {
-        osCommand = 
-            "CREATE TABLE geometry_columns ("
-            "     f_table_name VARCHAR NOT NULL, "
-            "     f_geometry_column VARCHAR NOT NULL, "
-            "     type VARCHAR NOT NULL, "
-            "     coord_dimension INTEGER NOT NULL, "
-            "     srid INTEGER,"
-            "     spatial_index_enabled INTEGER NOT NULL)";
+        /* 
+        / SpatiaLite full support: calling InitSpatialMetadata() 
+        /
+        / IMPORTANT NOTICE: on SpatiaLite any attempt aimed
+        / to directly CREATE "geometry_columns" and "spatial_ref_sys" 
+        / [by-passing InitSpatialMetadata() as absolutely required]
+        / will severely [and irremediably] corrupt the DB !!!
+        */
+        osCommand =  "SELECT InitSpatialMetadata()";
         rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
         if( rc != SQLITE_OK )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Unable to create table geometry_columns: %s",
-                      pszErrMsg );
-            sqlite3_free( pszErrMsg );
-            sqlite3_close( hDB );
-            return NULL;
-        }
-
-        osCommand = 
-            "CREATE TABLE spatial_ref_sys        ("
-            "     srid INTEGER NOT NULL PRIMARY KEY,"
-            "     auth_name VARCHAR NOT NULL,"
-            "     auth_srid INTEGER NOT NULL,"
-            "     ref_sys_name VARCHAR,"
-            "     proj4text VARCHAR NOT NULL,"
-            "     srs_wkt VARCHAR)";
-        rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
-        if( rc != SQLITE_OK )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Unable to create table spatial_ref_sys: %s",
-                      pszErrMsg );
-            sqlite3_free( pszErrMsg );
-            sqlite3_close( hDB );
-            return NULL;
-        }
-
-        osCommand = 
-            "CREATE VIEW geom_cols_ref_sys AS"
-            "   SELECT f_table_name, f_geometry_column, type,"
-            "          coord_dimension, spatial_ref_sys.srid AS srid,"
-            "          auth_name, auth_srid, ref_sys_name, proj4text"
-            "   FROM geometry_columns, spatial_ref_sys"
-            "   WHERE geometry_columns.srid = spatial_ref_sys.srid";
-        rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
-        if( rc != SQLITE_OK )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Unable to create view geom_cols_ref_sys: %s",
-                      pszErrMsg );
+                "Unable to Initialize SpatiaLite Metadata: %s",
+                    pszErrMsg );
             sqlite3_free( pszErrMsg );
             sqlite3_close( hDB );
             return NULL;
@@ -330,6 +323,21 @@ int OGRSQLiteDriver::InitWithEPSG(sqlite3* hDB, int bSpatialite)
     CPLString osCommand;
     char* pszErrMsg = NULL;
 
+    if ( bSpatialite )
+    {
+        /* 
+        / if v.2.4.0 (or any subsequent) InitWithEPSG make no sense at all
+        / because the EPSG dataset is already self-initialized at DB creation
+        */
+        double v = 0.0;
+#ifdef HAVE_SPATIALITE
+        v = ( atof( spatialite_version() ) + 0.001 )  * 10.0;
+#endif
+        int iSpatialiteVersion = v;
+        if ( iSpatialiteVersion >= 24 )
+            return TRUE;
+    }
+	
     int rc = sqlite3_exec( hDB, "BEGIN", NULL, NULL, &pszErrMsg );
     if( rc != SQLITE_OK )
     {
@@ -389,19 +397,60 @@ int OGRSQLiteDriver::InitWithEPSG(sqlite3* hDB, int bSpatialite)
                     const char  *pszProjCS = oSRS.GetAttrValue("PROJCS");
                     if (pszProjCS == NULL)
                         pszProjCS = oSRS.GetAttrValue("GEOGCS");
+					
+                    int bHasSrsWkt = FALSE; 
+					
+                /* testing for SRS_WKT column presence */
+                    char **papszResult;
+                    int nRowCount, nColCount;
+                    rc = sqlite3_get_table( hDB, "PRAGMA table_info(spatial_ref_sys)", 
+                                            &papszResult, &nRowCount, &nColCount,
+                                            &pszErrMsg );
+        
+                    if( rc == SQLITE_OK )
+                    {
+                        int iRow;
+                        for (iRow = 1; iRow <= nRowCount; iRow++)
+                        {
+                            if (strcasecmp("srs_wkt", 
+                                papszResult[(iRow * nColCount) + 1]) == 0)
+                            bHasSrsWkt = TRUE;
+                        }
+                        sqlite3_free_table(papszResult);
+                    }
 
-                    if ( pszProjCS )
-                        osCommand.Printf(
-                            "INSERT INTO spatial_ref_sys "
-                            "(srid, auth_name, auth_srid, ref_sys_name, proj4text, srs_wkt) "
-                            "VALUES (%d, 'EPSG', '%d', ?, ?, ?)",
-                            nSRSId, nSRSId);
+                    if (bHasSrsWkt == TRUE)
+                    {
+                    /* the SPATIAL_REF_SYS table supports a SRS_WKT column */
+                        if ( pszProjCS )
+                            osCommand.Printf(
+                                "INSERT INTO spatial_ref_sys "
+                                "(srid, auth_name, auth_srid, ref_sys_name, proj4text, srs_wkt) "
+                                "VALUES (%d, 'EPSG', '%d', ?, ?, ?)",
+                                nSRSId, nSRSId);
+                        else
+                            osCommand.Printf(
+                                "INSERT INTO spatial_ref_sys "
+                                "(srid, auth_name, auth_srid, proj4text, srs_wkt) "
+                                "VALUES (%d, 'EPSG', '%d', ?, ?)",
+                                nSRSId, nSRSId);
+                    }
                     else
-                        osCommand.Printf(
-                            "INSERT INTO spatial_ref_sys "
-                            "(srid, auth_name, auth_srid, proj4text, srs_wkt) "
-                            "VALUES (%d, 'EPSG', '%d', ?, ?)",
-                            nSRSId, nSRSId);
+                    {
+                    /* the SPATIAL_REF_SYS table does not support a SRS_WKT column */
+                        if ( pszProjCS )
+                            osCommand.Printf(
+                                "INSERT INTO spatial_ref_sys "
+                                "(srid, auth_name, auth_srid, ref_sys_name, proj4text) "
+                                "VALUES (%d, 'EPSG', '%d', ?, ?)",
+                                nSRSId, nSRSId);
+                        else
+                            osCommand.Printf(
+                                "INSERT INTO spatial_ref_sys "
+                                "(srid, auth_name, auth_srid, proj4text) "
+                                "VALUES (%d, 'EPSG', '%d', ?)",
+                                nSRSId, nSRSId);
+                    }
 
                     sqlite3_stmt *hInsertStmt = NULL;
                     rc = sqlite3_prepare( hDB, osCommand, -1, &hInsertStmt, NULL );
@@ -412,15 +461,23 @@ int OGRSQLiteDriver::InitWithEPSG(sqlite3* hDB, int bSpatialite)
                             rc = sqlite3_bind_text( hInsertStmt, 1, pszProjCS, -1, SQLITE_STATIC );
                         if( rc == SQLITE_OK)
                             rc = sqlite3_bind_text( hInsertStmt, 2, pszProj4, -1, SQLITE_STATIC );
-                        if( rc == SQLITE_OK && pszWKT != NULL)
-                            rc = sqlite3_bind_text( hInsertStmt, 3, pszWKT, -1, SQLITE_STATIC );
+                        if (bHasSrsWkt == TRUE)
+                        {
+                        /* the SPATIAL_REF_SYS table supports a SRS_WKT column */
+                            if( rc == SQLITE_OK && pszWKT != NULL)
+                                rc = sqlite3_bind_text( hInsertStmt, 3, pszWKT, -1, SQLITE_STATIC );
+                        }
                     }
                     else
                     {
                         if( rc == SQLITE_OK)
                             rc = sqlite3_bind_text( hInsertStmt, 1, pszProj4, -1, SQLITE_STATIC );
-                        if( rc == SQLITE_OK && pszWKT != NULL)
-                            rc = sqlite3_bind_text( hInsertStmt, 2, pszWKT, -1, SQLITE_STATIC );
+                        if (bHasSrsWkt == TRUE)
+                        {
+                        /* the SPATIAL_REF_SYS table supports a SRS_WKT column */
+                            if( rc == SQLITE_OK && pszWKT != NULL)
+                                rc = sqlite3_bind_text( hInsertStmt, 2, pszWKT, -1, SQLITE_STATIC );
+                        }
                     }
 
                     if( rc == SQLITE_OK)
