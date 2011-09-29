@@ -60,6 +60,8 @@ public class ogrinfo
         String pszSQLStatement = null;
         String pszDialect = null;
 
+        ogr.DontUseExceptions();
+
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
 /* -------------------------------------------------------------------- */
@@ -205,7 +207,13 @@ public class ogrinfo
             if( poResultSet != null )
             {
                 if( pszWHERE != null )
-                    poResultSet.SetAttributeFilter( pszWHERE );
+                {
+                    if( poResultSet.SetAttributeFilter( pszWHERE ) != ogr.OGRERR_NONE )
+                    {
+                        System.err.println("FAILURE: SetAttributeFilter(" + pszWHERE + ") failed.");
+                        return;
+                    }
+                }
     
                 ReportOnLayer( poResultSet, null, null );
                 poDS.ReleaseResultSet( poResultSet );
@@ -306,7 +314,13 @@ public class ogrinfo
 /*      Set filters if provided.                                        */
 /* -------------------------------------------------------------------- */
         if( pszWHERE != null )
-            poLayer.SetAttributeFilter( pszWHERE );
+        {
+            if( poLayer.SetAttributeFilter( pszWHERE ) != ogr.OGRERR_NONE )
+            {
+                System.err.println("FAILURE: SetAttributeFilter(" + pszWHERE + ") failed.");
+                return;
+            }
+        }
     
         if( poSpatialFilter != null )
             poLayer.SetSpatialFilter( poSpatialFilter );
