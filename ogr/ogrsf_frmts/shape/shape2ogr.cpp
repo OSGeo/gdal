@@ -1054,12 +1054,18 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
           {
               OGRField sFld;
               const char* pszDateValue = 
-                  DBFReadStringAttribute(hDBF,iShape,iField); 
+                  DBFReadStringAttribute(hDBF,iShape,iField);
+
+              /* Some DBF files have fields filled with spaces */
+              /* (trimmed by DBFReadStringAttribute) to indicate null */
+              /* values for dates (#4265) */
+              if (pszDateValue[0] == '\0')
+                  continue;
 
               memset( &sFld, 0, sizeof(sFld) );
 
-              if( pszDateValue[2] == '/' && pszDateValue[5] == '/' 
-                  && strlen(pszDateValue) >= 10 )
+              if( strlen(pszDateValue) >= 10 &&
+                  pszDateValue[2] == '/' && pszDateValue[5] == '/' )
               {
                   sFld.Date.Month = (GByte)atoi(pszDateValue+0);
                   sFld.Date.Day   = (GByte)atoi(pszDateValue+3);
