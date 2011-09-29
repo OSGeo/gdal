@@ -1250,6 +1250,44 @@ def test_ogr2ogr_py_38():
 
     return 'success'
 
+###############################################################################
+# Test 'ogr2ogr someDirThatDoesNotExist.shp dataSourceWithMultipleLayer -sql "select * from alayer"' (#4268)
+
+def test_ogr2ogr_py_39():
+
+    script_path = test_py_scripts.get_py_script('ogr2ogr')
+    if script_path is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/test_ogr2ogr_39_dir.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_39.shp')
+    except:
+        pass
+
+    try:
+        os.mkdir('tmp/test_ogr2ogr_39_src')
+    except:
+        pass
+    shutil.copy('../ogr/data/poly.shp', 'tmp/test_ogr2ogr_39_src')
+    shutil.copy('../ogr/data/poly.shx', 'tmp/test_ogr2ogr_39_src')
+    shutil.copy('../ogr/data/poly.dbf', 'tmp/test_ogr2ogr_39_src')
+    shutil.copy('../ogr/data/testpoly.shp', 'tmp/test_ogr2ogr_39_src')
+    shutil.copy('../ogr/data/testpoly.shx', 'tmp/test_ogr2ogr_39_src')
+    shutil.copy('../ogr/data/testpoly.dbf', 'tmp/test_ogr2ogr_39_src')
+
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_39.shp tmp/test_ogr2ogr_39_src -sql "select * from poly"')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_39.shp')
+    if ds is None or ds.GetLayerCount() != 1:
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_39_src')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_39.shp')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_py_1,
     test_ogr2ogr_py_2,
@@ -1285,7 +1323,8 @@ gdaltest_list = [
     test_ogr2ogr_py_35,
     test_ogr2ogr_py_36,
     test_ogr2ogr_py_37,
-    test_ogr2ogr_py_38 ]
+    test_ogr2ogr_py_38,
+    test_ogr2ogr_py_39 ]
     
 if __name__ == '__main__':
 

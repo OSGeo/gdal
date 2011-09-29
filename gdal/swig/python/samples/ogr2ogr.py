@@ -556,6 +556,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
 #/*      a directory instead.                                            */
 #/* -------------------------------------------------------------------- */
         if EQUAL(poDriver.GetName(), "ESRI Shapefile") and \
+           pszSQLStatement is None and \
            (len(papszLayers) > 1 or \
             (len(papszLayers) == 0 and poDS.GetLayerCount() > 1)) and \
             pszNewLayerName is None and \

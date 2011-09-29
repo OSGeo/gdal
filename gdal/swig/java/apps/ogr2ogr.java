@@ -597,6 +597,7 @@ public class ogr2ogr
     /*      a directory instead.                                            */
     /* -------------------------------------------------------------------- */
             if (poDriver.GetName().equalsIgnoreCase("ESRI Shapefile") &&
+                pszSQLStatement == null &&
                 (papszLayers.size() > 1 ||
                  (papszLayers.size() == 0 && poDS.GetLayerCount() > 1)) &&
                 pszNewLayerName == null &&
