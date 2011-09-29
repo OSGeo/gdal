@@ -2459,8 +2459,8 @@ void ParseLevelName (unsigned short int center, unsigned short int subcenter,
                      char **longLevelName)
 {
    int f_reserved;
-   char valBuff[20];
-   char sndBuff[20];
+   char valBuff[512];
+   char sndBuff[512];
    GRIB2SurfTable surf = Table45Index (surfType, &f_reserved, center,
                                        subcenter);
 
