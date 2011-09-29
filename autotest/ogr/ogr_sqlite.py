@@ -823,6 +823,9 @@ def ogr_sqlite_17():
     if gdaltest.sl_ds is None:
         return 'skip'
 
+    if gdaltest.has_spatialite == False:
+        return 'skip'
+
     ######################################################
     # Create dataset with SPATIALITE geometry
 
@@ -849,25 +852,12 @@ def ogr_sqlite_17():
         return 'fail'
     feat_read.Destroy()
 
-    sql_lyr = ds.ExecuteSQL( "select * from spatial_ref_sys" )
-    feat = sql_lyr.GetNextFeature()
-    # Check that the SRS has been correctly identified as EPSG:4326 (#3506)
-    if feat.GetFieldAsInteger('srid') != 4326:
-        feat.DumpReadable()
+    srs = lyr.GetSpatialRef()
+    wkt = srs.ExportToWkt()
+    if wkt.find('4326') == -1:
+        gdaltest.post_reason('did not identify correctly SRS')
+        print(wkt)
         return 'fail'
-    if feat.GetFieldAsString('auth_name') != 'EPSG':
-        feat.DumpReadable()
-        return 'fail'
-    if feat.GetFieldAsString('auth_srid') != '4326':
-        feat.DumpReadable()
-        return 'fail'
-    if feat.GetFieldAsString('ref_sys_name') != 'WGS 84':
-        feat.DumpReadable()
-        return 'fail'
-    if feat.GetFieldAsString('proj4text').find('+proj=longlat +datum=WGS84 +no_defs') == -1:
-        feat.DumpReadable()
-        return 'fail'
-    ds.ReleaseResultSet( sql_lyr )
 
     ds.Destroy()
 
@@ -881,6 +871,9 @@ def ogr_sqlite_18():
     if gdaltest.sl_ds is None:
         return 'skip'
 
+    if gdaltest.has_spatialite == False:
+        return 'skip'
+
     ds = ogr.Open( 'tmp/spatialite_test.db', update = 1  )
     srs = osr.SpatialReference()
     srs.SetFromUserInput('+proj=vandg')
@@ -891,21 +884,13 @@ def ogr_sqlite_18():
     ds.Destroy()
     ds = ogr.Open( 'tmp/spatialite_test.db'  )
 
-    sql_lyr = ds.ExecuteSQL( "select * from spatial_ref_sys where srid = 4327" )
-    feat = sql_lyr.GetNextFeature()
-    if feat.GetFieldAsInteger('srid') != 4327:
-        feat.DumpReadable()
+    lyr =ds.GetLayerByName('nonepsgsrs')
+    srs = lyr.GetSpatialRef()
+    wkt = srs.ExportToWkt()
+    if wkt.find('VanDerGrinten') == -1:
+        gdaltest.post_reason('did not identify correctly SRS')
+        print(wkt)
         return 'fail'
-    if feat.GetFieldAsString('auth_name') != 'OGR':
-        feat.DumpReadable()
-        return 'fail'
-    if feat.GetFieldAsString('auth_srid') != '4327':
-        feat.DumpReadable()
-        return 'fail'
-    if feat.GetFieldAsString('proj4text').find('+proj=vandg +lon_0=0 +x_0=0 +y_0=0 +R_A +ellps=WGS84 +units=m +no_defs') == -1:
-        feat.DumpReadable()
-        return 'fail'
-    ds.ReleaseResultSet( sql_lyr )
 
     ds.Destroy()
 
@@ -920,6 +905,12 @@ def ogr_sqlite_19():
         return 'skip'
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 1800:
+        return 'skip'
+
+    if gdaltest.has_spatialite == False:
+        return 'skip'
+
+    if gdaltest.spatialite_version != '2.3.1':
         return 'skip'
 
     ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( 'tmp/spatialite_test_with_epsg.db', options = ['SPATIALITE=YES', 'INIT_WITH_EPSG=YES'] )
@@ -1172,7 +1163,7 @@ def ogr_spatialite_1():
 
     ds = ogr.Open( 'tmp/spatialite_test.db'  )
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    sql_lyr = ds.ExecuteSQL("SELECT spatialite_version()")
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT spatialite_version()")
     gdal.PopErrorHandler()
     if sql_lyr is None:
         res = 'skip'
@@ -1181,9 +1172,8 @@ def ogr_spatialite_1():
         print('Spatialite : %s' % feat.GetFieldAsString(0))
         gdaltest.spatialite_version = feat.GetFieldAsString(0)
         gdaltest.has_spatialite = True
-        ds.ReleaseResultSet(sql_lyr)
+        gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
         res = 'success'
-    ds.Destroy()
 
     return res
 
@@ -1499,25 +1489,18 @@ gdaltest_list = [
     ogr_sqlite_14,
     ogr_sqlite_15,
     ogr_sqlite_16,
-    ogr_sqlite_17,
-    ogr_sqlite_18,
-    ogr_sqlite_19,
     ogr_sqlite_20,
     ogr_sqlite_21,
     ogr_sqlite_22,
     ogr_sqlite_23,
     ogr_sqlite_24,
     ogr_spatialite_1,
+    ogr_sqlite_17,
+    ogr_sqlite_18,
+    ogr_sqlite_19,
     ogr_spatialite_2,
     ogr_spatialite_3,
     ogr_spatialite_4,
-    ogr_spatialite_5,
-    ogr_sqlite_cleanup ]
-
-small_gdaltest_list = [
-    ogr_sqlite_1,
-    ogr_sqlite_17,
-    ogr_spatialite_1,
     ogr_spatialite_5,
     ogr_sqlite_cleanup ]
 
