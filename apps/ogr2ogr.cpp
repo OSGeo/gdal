@@ -994,10 +994,43 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     OGRDataSource       *poODS = NULL;
     OGRSFDriver          *poDriver = NULL;
+    int                  bCloseODS = TRUE;
 
     if( bUpdate )
     {
-        poODS = OGRSFDriverRegistrar::Open( pszDestDataSource, TRUE, &poDriver );
+        /* Special case for FileGDB that doesn't like updating if the same */
+        /* GDB is opened twice. It stalls at datasource closing. So use just */
+        /* one single connection. This could also TRUE for other drivers. */
+        if (EQUAL(poDS->GetDriver()->GetName(), "FileGDB") &&
+            strcmp(pszDestDataSource, pszDataSource) == 0)
+        {
+            poODS = poDS;
+            poDriver = poODS->GetDriver();
+            bCloseODS = FALSE;
+            if (bOverwrite || bAppend)
+            {
+                /* Various tests to avoid overwriting the source layer(s) */
+                /* or to avoid appending a layer to itself */
+                int bError = FALSE;
+                if (pszNewLayerName == NULL)
+                    bError = TRUE;
+                else if (CSLCount(papszLayers) == 1)
+                    bError = strcmp(pszNewLayerName, papszLayers[0]) == 0;
+                else if (pszSQLStatement == NULL)
+                    bError = TRUE;
+                if (bError)
+                {
+                    fprintf( stderr,
+                             "ERROR: -nln name must be specified combined with "
+                             "a single source layer name,\nor a -sql statement, and "
+                             "name must be different from an existing layer.\n");
+                    exit(1);
+                }
+            }
+        }
+        else
+            poODS = OGRSFDriverRegistrar::Open( pszDestDataSource, TRUE, &poDriver );
+
         if( poODS == NULL )
         {
             if (bOverwrite || bAppend)
@@ -1407,7 +1440,8 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     OGRSpatialReference::DestroySpatialReference(poOutputSRS);
     OGRSpatialReference::DestroySpatialReference(poSourceSRS);
-    OGRDataSource::DestroyDataSource(poODS);
+    if (bCloseODS)
+        OGRDataSource::DestroyDataSource(poODS);
     OGRDataSource::DestroyDataSource(poDS);
     OGRGeometryFactory::destroyGeometry(poSpatialFilter);
     OGRGeometryFactory::destroyGeometry(poClipSrc);
