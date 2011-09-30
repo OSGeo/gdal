@@ -387,9 +387,9 @@ int OGRSQLiteDriver::InitWithEPSG(sqlite3* hDB, int bSpatialite)
                     const char  *pszProjCS = oSRS.GetAttrValue("PROJCS");
                     if (pszProjCS == NULL)
                         pszProjCS = oSRS.GetAttrValue("GEOGCS");
-					
-                    int bHasSrsWkt = FALSE; 
-					
+
+                    int bHasSrsWkt = FALSE;
+
                 /* testing for SRS_WKT column presence */
                     char **papszResult;
                     int nRowCount, nColCount;
@@ -402,9 +402,9 @@ int OGRSQLiteDriver::InitWithEPSG(sqlite3* hDB, int bSpatialite)
                         int iRow;
                         for (iRow = 1; iRow <= nRowCount; iRow++)
                         {
-                            if (strcasecmp("srs_wkt", 
-                                papszResult[(iRow * nColCount) + 1]) == 0)
-                            bHasSrsWkt = TRUE;
+                            if (EQUAL("srs_wkt", 
+                                      papszResult[(iRow * nColCount) + 1]))
+                                bHasSrsWkt = TRUE;
                         }
                         sqlite3_free_table(papszResult);
                     }
