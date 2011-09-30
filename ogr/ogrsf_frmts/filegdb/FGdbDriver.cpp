@@ -72,7 +72,9 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
 
 {
     // First check if we have to do any work.
-    if (!EQUAL(CPLGetExtension(pszFilename), "gdb"))
+    int nLen = strlen(pszFilename);
+    if(! ((nLen >= 4 && EQUAL(pszFilename + nLen - 4, ".gdb")) ||
+          (nLen >= 5 && EQUAL(pszFilename + nLen - 5, ".gdb/"))) )
         return NULL;
 
     long hr;
