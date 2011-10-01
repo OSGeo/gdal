@@ -735,7 +735,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
         && !EQUAL(pszGeomFormat,"WKB")
         && !EQUAL(pszGeomFormat, "SpatiaLite") )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_NotSupported, 
                   "FORMAT=%s not recognised or supported.", 
                   pszGeomFormat );
         return NULL;
@@ -743,14 +743,17 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 
     if (bIsSpatiaLite && !EQUAL(pszGeomFormat, "SpatiaLite") )
     {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "FORMAT=%s not recommanded on a SpatiaLite enabled database.",
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "FORMAT=%s not support on a SpatiaLite enabled database.",
                   pszGeomFormat );
+        return NULL;
     }
     if (bIsSpatiaLite && !bSpatialiteLoaded)
     {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Creating layers on a SpatiaLite enabled database, without Spatialite extensions loaded, is not recommanded." );
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Creating layers on a SpatiaLite enabled database, "
+                  "without Spatialite extensions loaded, is not supported." );
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
