@@ -15,9 +15,7 @@ toolkit:
 
 lists information about an OGR supported data source
 
-\if man
-\section synopsis SYNOPSIS
-\endif
+\section ogrinfo_synopsis SYNOPSIS
 
 \htmlonly
 Usage:
@@ -32,9 +30,7 @@ ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]
 
 \endverbatim
 
-\if man
-\section description DESCRIPTION
-\endif
+\section ogrinfo_description DESCRIPTION
 
 The ogrinfo program lists various information about an OGR supported data
 source to stdout (the terminal). 
@@ -83,9 +79,7 @@ If no query parameters are provided, all features are reported.
 
 Geometries are reported in OGC WKT format.
 
-\if man
-\section example EXAMPLE
-\endif
+\section ogrinfo_example EXAMPLE
 
 Example reporting all layers in an NTF file:
 \verbatim
@@ -156,7 +150,7 @@ OGRFeature(BL2000_LINK):2
 \endverbatim
 
 \if man
-\section author AUTHORS
+\section ogrinfo_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 \endif
 */
@@ -165,9 +159,7 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 
 converts simple features data between file formats
 
-\if man
-\section synopsis SYNOPSIS
-\endif
+\section ogr2ogr_synopsis SYNOPSIS
 
 \htmlonly
 Usage:
@@ -199,9 +191,7 @@ Advanced options :
 
 \endverbatim
 
-\if man
-\section description DESCRIPTION
-\endif
+\section ogr2ogr_description DESCRIPTION
 
 This program can be used to convert simple features data between file formats
 performing various operations during the process such as spatial or attribute
@@ -288,9 +278,7 @@ This is an alternate way to using the CAST operator of OGR SQL, that may avoid t
 <dt> <b>-zfield</b> <em>field_name</em>:</dt><dd>(starting with GDAL 1.8.0) Uses the specified field to fill the Z coordinate of geometries</dd>
 </dl>
 
-\if man
-\section example EXAMPLE
-\endif
+\section ogr2ogr_example EXAMPLE
 
 Example appending to an existing layer (both flags need to be used):
 
@@ -307,7 +295,7 @@ Example reprojecting from ETRS_1989_LAEA_52N_10E to EPSG:4326 and clipping to a 
 More examples are given in the individual format pages.
 
 \if man
-\section author AUTHOR
+\section ogr2ogr_author AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 \endif
 */
@@ -316,9 +304,7 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 
 creates a tileindex
 
-\if man
-\section synopsis SYNOPSIS
-\endif
+\section ogrtindex_synopsis SYNOPSIS
 
 \htmlonly
 Usage:
@@ -330,9 +316,7 @@ ogrtindex [-lnum n]... [-lname name]... [-f output_format]
                  output_dataset src_dataset...
 \endverbatim
 
-\if man
-\section description DESCRIPTION
-\endif
+\section ogrtindex_description DESCRIPTION
 
 The ogrtindex program can be used to create a tileindex - a file containing
 a list of the identities of a bunch of other files along with there spatial
@@ -365,9 +349,7 @@ It is a flaw of the current ogrtindex program that no attempt is made to
 copy the coordinate system definition from the source datasets to the tile
 index (as is expected by MapServer when PROJECTION AUTO is in use).   
 
-\if man
-\section example EXAMPLE
-\endif
+\section ogrtindex_example EXAMPLE
 
 This example would create a shapefile (tindex.shp) containing a tile index
 of the BL2000_LINK layers in all the NTF files in the wrk directory:
@@ -376,7 +358,7 @@ of the BL2000_LINK layers in all the NTF files in the wrk directory:
 \endverbatim
 
 \if man
-\section author AUTHORS
+\section ogrtindex_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 
 \endif

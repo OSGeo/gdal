@@ -64,7 +64,7 @@ static int             bVRT = FALSE;
 
 image reprojection and warping utility
 
-\section wsynopsis SYNOPSIS
+\section gdalwarp_synopsis SYNOPSIS
 
 \htmlonly
 Usage: 
@@ -85,7 +85,7 @@ gdalwarp [--help-general] [--formats]
     srcfile* dstfile
 \endverbatim
 
-\section wdescription DESCRIPTION
+\section gdalwarp_description DESCRIPTION
 
 <p>
 The gdalwarp utility is an image mosaicing, reprojection and warping
@@ -199,7 +199,7 @@ its extent will be the one of the original raster unless -te or -crop_to_cutline
 specified.
 
 <p>
-\section wexample EXAMPLE
+\section gdalwarp_example EXAMPLE
 
 For instance, an eight bit spot scene stored in GeoTIFF with
 control points mapping the corners to lat/long could be warped to a UTM
@@ -218,7 +218,7 @@ gdalwarp HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 pg-PR1B0000-20020
 \endverbatim
 
 \if man
-\section wauthor AUTHORS
+\section gdalwarp_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 \endif
 */
