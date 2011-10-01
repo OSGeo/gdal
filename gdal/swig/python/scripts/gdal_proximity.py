@@ -160,7 +160,7 @@ if dst_ds is None:
     drv = gdal.GetDriverByName(format)
     dst_ds = drv.Create( dst_filename,
                          src_ds.RasterXSize, src_ds.RasterYSize, 1,
-                         gdal.GetDataTypeByName(creation_type) )
+                         gdal.GetDataTypeByName(creation_type), creation_options )
 
     dst_ds.SetGeoTransform( src_ds.GetGeoTransform() )
     dst_ds.SetProjection( src_ds.GetProjectionRef() )
