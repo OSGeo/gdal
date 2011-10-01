@@ -40,7 +40,7 @@ CPL_CVSID("$Id$");
 
 raster query tool
 
-\section wsynopsis SYNOPSIS
+\section gdallocationinfo_synopsis SYNOPSIS
 
 \htmlonly
 Usage: 
@@ -52,7 +52,7 @@ Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] [-valonly]
                         srcfile [x y]
 \endverbatim
 
-\section wdescription DESCRIPTION
+\section gdallocationinfo_description DESCRIPTION
 
 <p>
 The gdallocationinfo utility provide a mechanism to query information about
@@ -124,7 +124,7 @@ It is anticipated that additional reporting capabilities will be added to
 gdallocationinfo in the future. 
 
 <p>
-\section wexample EXAMPLE
+\section gdallocationinfo_example EXAMPLE
 
 Simple example reporting on pixel (256,256) on the file utm.tif.
 
@@ -151,7 +151,7 @@ $ gdallocationinfo -xml -wgs84 utm.vrt -117.5 33.75
 \endverbatim
 
 \if man
-\section wauthor AUTHORS
+\section gdallocationinfo_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>
 \endif
 */
