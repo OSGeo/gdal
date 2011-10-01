@@ -664,6 +664,7 @@ SQLITE3_LDFLAGS
 SQLITE3_CFLAGS
 SQLITE3_VERSION
 SPATIALITE_AMALGAMATION
+SPATIALITE_INC
 HAVE_SPATIALITE
 CURL_LIB
 CURL_INC
@@ -24240,13 +24241,36 @@ $as_echo "enabled" >&6; }
         HAVE_SPATIALITE=yes
         SPATIALITE_AMALGAMATION=yes
 
-        # SpatiaLite availability implies SQLite availability
+        # SpatiaLite amalgamation availability implies SQLite availability
         # Caution : don't include the include/spatialite subdir in the include dir
         # as there's a spatialite.h file in it, which we don't want to include.
         # We want to include include/spatialite.h instead !
         SQLITE3_CFLAGS="-I$with_spatialite/include"
         LIBS="$LIBS -L$with_spatialite/lib -lspatialite"
         HAVE_SQLITE3=yes
+
+    elif test -f "$with_spatialite/include/spatialite.h" -a \
+        "$SPATIALITE_INIT_FOUND" = "yes"; then
+        for ac_header in sqlite3.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sqlite3.h" "ac_cv_header_sqlite3_h" "$ac_includes_default"
+if test "x$ac_cv_header_sqlite3_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SQLITE3_H 1
+_ACEOF
+
+fi
+
+done
+
+        if test "$ac_cv_header_sqlite3_h" = "yes"; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
+$as_echo "enabled" >&6; }
+            SPATIALITE_INC="-I$with_spatialite/include"
+            HAVE_SPATIALITE=yes
+            LIBS="$LIBS -L$with_spatialite/lib -lspatialite"
+            HAVE_SQLITE3=yes
+        fi
     else
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
 $as_echo "disabled" >&6; }
@@ -24254,6 +24278,8 @@ $as_echo "disabled" >&6; }
 fi
 
 HAVE_SPATIALITE=$HAVE_SPATIALITE
+
+SPATIALITE_INC=$SPATIALITE_INC
 
 SPATIALITE_AMALGAMATION=$SPATIALITE_AMALGAMATION
 
