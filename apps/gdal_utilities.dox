@@ -176,7 +176,7 @@ $Id$
 
 lists information about a raster dataset
 
-\section synopsis SYNOPSIS
+\section gdalinfo_synopsis SYNOPSIS
 
 \verbatim
 gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]
@@ -184,7 +184,7 @@ gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]
 	 [-sd subdataset] datasetname
 \endverbatim
 
-\section description DESCRIPTION
+\section gdalinfo_description DESCRIPTION
 
 The gdalinfo program lists various information about a GDAL supported
 raster dataset. 
@@ -233,7 +233,7 @@ the full geotransform (but not GCPs).
 <li> Band pseudo-color tables. 
 </ul>
 
-\section example EXAMPLE
+\section gdalinfo_example EXAMPLE
 
 \verbatim
 gdalinfo ~/openev/utm.tif 
@@ -265,7 +265,7 @@ Band 1 Block=512x16 Type=Byte, ColorInterp=Gray
 \endverbatim
 
 \if man
-\section author AUTHORS
+\section gdalinfo_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 \endif
 */
@@ -275,7 +275,7 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 
 converts raster data between different formats
 
-\section tsynopsis SYNOPSIS
+\section gdal_translate_synopsis SYNOPSIS
 
 \verbatim
 gdal_translate [--help-general]
@@ -292,7 +292,7 @@ gdal_translate [--help-general]
        src_dataset dst_dataset
 \endverbatim
 
-\section tdescription DESCRIPTION
+\section gdal_translate_description DESCRIPTION
 
 The gdal_translate utility can be used to convert raster data between 
 different formats, potentially performing some operations like subsettings, 
@@ -369,7 +369,7 @@ file name, URL of data source or subdataset name for multi-dataset files.</dd>
 <dt> <i>dst_dataset</i>:</dt><dd> The destination file name.</dd>
 </dl>
 
-\section texample EXAMPLE
+\section gdal_translate_example EXAMPLE
 
 \verbatim
 gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
@@ -386,7 +386,7 @@ gdal_translate withmask.tif rgba.tif -b 1 -b 2 -b 3 -b mask
 \endverbatim
 
 \if man
-\section tauthor AUTHORS
+\section gdal_translate_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 \endif
 */
@@ -396,14 +396,14 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 
 builds or rebuilds overview images
 
-\section asynopsis SYNOPSIS
+\section gdaladdo_synopsis SYNOPSIS
 
 \verbatim
 gdaladdo [-r {nearest,average,gauss,cubic,average_mp,average_magphase,mode}]
          [-ro] [-clean] [--help-general] filename levels
 \endverbatim
 
-\section adescription DESCRIPTION
+\section gdaladdo_description DESCRIPTION
 
 The gdaladdo utility can be used to build or rebuild overview images for
 most supported file formats with one over several downsampling algorithms. 
@@ -450,7 +450,7 @@ format.  To trigger this use the USE_RRD=YES configuration option.  This will
 place the overviews in an associated .aux file suitable for direct use with 
 Imagine or ArcGIS as well as GDAL applications.  (eg --config USE_RRD YES)
 
-\section externalgtiffoverviews External overviews in GeoTIFF format
+\section gdaladdo_externalgtiffoverviews External overviews in GeoTIFF format
 
 External overviews created in TIFF format may be compressed using the COMPRESS_OVERVIEW 
 configuration option.  All compression methods, supported by the GeoTIFF 
@@ -483,7 +483,7 @@ documented in the GeoTIFF driver documentation.
 
 See the documentation of the GeoTIFF driver for further explanations on all those options.
 
-\section aexample EXAMPLE
+\section gdaladdo_example EXAMPLE
 
 \htmlonly
 Example:
@@ -517,7 +517,7 @@ gdaladdo --config USE_RRD YES airphoto.jpg 3 9 27 81
 \endverbatim
 
 \if man
-\section aauthor AUTHORS
+\section gdaladdo_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 \endif
 */
@@ -527,13 +527,13 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 
 builds a shapefile as a raster tileindex
 
-\section isynopsis SYNOPSIS
+\section gdaltindex_synopsis SYNOPSIS
 
 \verbatim
 gdaltindex [-tileindex field_name] [-write_absolute_path] [-skip_different_projection] index_file [gdal_file]*
 \endverbatim
 
-\section idescription DESCRIPTION
+\section gdaltindex_description DESCRIPTION
 
 This program builds a shapefile with a record for each input raster file, 
 an attribute containing the filename, and a polygon geometry outlining the
@@ -552,7 +552,7 @@ as files already inserted in the tileindex will be inserted.
 coordinate system as the rasters.
 </ul>
 
-\section iexample EXAMPLE
+\section gdaltindex_example EXAMPLE
 
 \htmlonly
 Example:
@@ -563,7 +563,7 @@ gdaltindex doq_index.shp doq/*.tif
 \endverbatim
 
 \if man
-\section wauthor AUTHOR
+\section gdaltindex_author AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
 \endif
 */
@@ -787,7 +787,7 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 
 burns vector geometries into a raster
 
-\section zsynopsis SYNOPSIS
+\section gdal_rasterize_synopsis SYNOPSIS
 
 \verbatim
 Usage: gdal_rasterize [-b band]* [-i] [-at]
@@ -801,7 +801,7 @@ Usage: gdal_rasterize [-b band]* [-i] [-at]
        <src_datasource> <dst_filename>
 \endverbatim
 
-\section zdescription DESCRIPTION
+\section gdal_rasterize_description DESCRIPTION
 
 This program burns vector geometries (points, lines and polygons) into the 
 raster band(s) of a raster image.  Vectors are read from OGR supported vector 
@@ -908,7 +908,7 @@ Before GDAL 1.8.0, gdal_rasterize could not create new output files.</dd>
 
 </dl>
 
-\section zexample EXAMPLE
+\section gdal_rasterize_example EXAMPLE
 
 The following would burn all polygons from mask.shp into the RGB TIFF
 file work.tif with the color red (RGB = 255,0,0).  
@@ -925,7 +925,7 @@ gdal_rasterize -a ROOF_H -where 'class="A"' -l footprints footprints.shp city_de
 \endverbatim
 
 \if man
-\section zauthor AUTHORS
+\section gdal_rasterize_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>
 \endif
 */
@@ -935,13 +935,13 @@ Frank Warmerdam <warmerdam@pobox.com>
 
 Convert a 24bit RGB image to 8bit paletted
 
-\section rsynopsis SYNOPSIS
+\section rgb2pct_synopsis SYNOPSIS
 
 \verbatim
 rgb2pct.py [-n colors | -pct palette_file] [-of format] source_file dest_file
 \endverbatim
 
-\section rdescription DESCRIPTION
+\section rgb2pct_description DESCRIPTION
 
 This utility will compute an optimal pseudo-color table for a given RGB image
 using a median cut algorithm on a downsampled RGB histogram.   Then it 
@@ -967,7 +967,7 @@ created.</dd>
 NOTE: rgb2pct.py is a Python script, and will only work if GDAL was built
 with Python support.  
 
-\section example EXAMPLE
+\section rgb2pct_example EXAMPLE
 
 If it is desired to hand create the palette, likely the simpliest text format
 is the GDAL VRT format.  In the following example a VRT was created in a 
@@ -991,7 +991,7 @@ text editor with a small 4 color palette with the RGBA colors 238/238/238/255,
 \endverbatim
 
 \if man
-\section iauthor AUTHOR
+\section rgb2pct_author AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
 \endif
 */
@@ -1001,7 +1001,7 @@ Frank Warmerdam <warmerdam@pobox.com>
 
 Convert an 8bit paletted image to 24bit RGB
 
-\section psynopsis SYNOPSIS
+\section pct2rgb_synopsis SYNOPSIS
 
 \htmlonly
 Usage: 
@@ -1011,7 +1011,7 @@ Usage:
 pct2rgb.py [-of format] [-b band] [-rgba] source_file dest_file
 \endverbatim
 
-\section pdescription DESCRIPTION
+\section pct2rgb_description DESCRIPTION
 
 This utility will convert a pseudocolor band on the input file into an output
 RGB file of the desired format. 
@@ -1032,7 +1032,7 @@ with Python support.
 The new '-expand rgb|rgba' option of gdal_translate obsoletes that utility.
 
 \if man
-\section pauthor AUTHORS
+\section pct2rgb_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 \endif
 */
@@ -1042,7 +1042,7 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 	
 transforms coordinates 
 
-\section fsynopsis SYNOPSIS
+\section gdaltransform_synopsis SYNOPSIS
 
 \verbatim
 gdaltransform [--help-general]
@@ -1052,7 +1052,7 @@ gdaltransform [--help-general]
     [srcfile [dstfile]]
 \endverbatim
 
-\section fdescription DESCRIPTION
+\section gdaltransform_description DESCRIPTION
 
 The gdaltransform utility reprojects a list of coordinates into any supported
 projection,including  GCP-based transformations.
@@ -1096,7 +1096,7 @@ If an input image file is provided, input is in pixel/line coordinates on that
 image.  If an output file is provided, output is in pixel/line coordinates
 on that image.  
 
-\section fexample Reprojection Example
+\section gdaltransform_example Reprojection Example
 
 Simple reprojection from one projected coordinate system to another:
 
@@ -1112,7 +1112,7 @@ Produces the following output in meters in the "Belge 1972 / Belgian Lambert
 244510.77404604 166154.532871342 -1046.79270555763
 \endverbatim
 
-\section gexample Image RPC Example
+\section gdaltransform_example Image RPC Example
 
 The following command requests an RPC based transformation using the RPC
 model associated with the named file.  Because the -i (inverse) flag is
@@ -1130,7 +1130,7 @@ Produces this output measured in pixels and lines on the image:
 \endverbatim
 
 \if man
-\section fauthor AUTHORS
+\section gdaltransform_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>, Jan Hartmann <j.l.h.hartmann@uva.nl>
 \endif
 */
@@ -1139,14 +1139,14 @@ Frank Warmerdam <warmerdam@pobox.com>, Jan Hartmann <j.l.h.hartmann@uva.nl>
 
 convert nearly black/white borders to black
 
-\section msynopsis SYNOPSIS
+\section nearblack_synopsis SYNOPSIS
 
 \verbatim
 nearblack [-of format] [-white | [-color c1,c2,c3...cn]*] [-near dist] [-nb non_black_pixels]
           [-setalpha] [-setmask] [-o outfile] [-q]  [-co "NAME=VALUE"]* infile
 \endverbatim
 
-\section mdescription DESCRIPTION
+\section nearblack_description DESCRIPTION
 
 This utility will scan an image and try to set all pixels that are nearly or exactly
 black, white or one or more custom colors around the collar to black or white.  This
@@ -1165,7 +1165,7 @@ specific documentation for legal creation options for each format. Only valid wh
 <dt> <b>-white</b>:</dt><dd> 
 Search for nearly white (255) pixels instead of nearly black pixels.
 </dd>
-<dt> <b>-color</b> <i>c1,c2,c3...cn</i>:</b>:</dt><dd> (GDAL >= 1.9.0)
+<dt> <b>-color</b> <i>c1,c2,c3...cn</i>:</dt><dd> (GDAL >= 1.9.0)
 Search for pixels near the specified color. May be specified multiple times.
 When -color is specified, the pixels that are considered as the collar are set to 0.
 </dd>
@@ -1207,7 +1207,7 @@ If the output file is omitted, the processed results will be written back
 to the input file - which must support update. 
 
 \if man
-\section mauthor AUTHORS
+\section nearblack_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>
 \endif
 */
@@ -1217,7 +1217,7 @@ Frank Warmerdam <warmerdam@pobox.com>
 
 mosaics a set of images
 
-\section gsynopsis SYNOPSIS
+\section gdal_merge_synopsis SYNOPSIS
 
 \verbatim
 gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*
@@ -1226,7 +1226,7 @@ gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*
               [-ot datatype] [-createonly] input_files
 \endverbatim
 
-\section gdescription DESCRIPTION
+\section gdal_merge_description DESCRIPTION
 
 This utility will automatically mosaic a set of images.  All the images must
 be in the same coordinate system and have a matching number of bands, but 
@@ -1285,7 +1285,7 @@ image data is copied into it.
 NOTE: gdal_merge.py is a Python script, and will only work if GDAL was built
 with Python support.
 
-\section example EXAMPLE
+\section gdal_merge_example EXAMPLE
 
 Create an image with the pixels in all bands initialized to 255.
 
@@ -1301,7 +1301,7 @@ will be initialized to 0 and the third band will be initalized to 255.
 \endverbatim
 
 \if man
-\section gauthor AUTHORS
+\section gdal_merge_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 \endif
 */
@@ -1368,7 +1368,7 @@ Klokan Petr Pridal <klokan@klokan.cz> as a Google SoC 2007 Project.
 
 determines various information about a GDAL installation
 
-\section csynopsis SYNOPSIS
+\section gdal_config_synopsis SYNOPSIS
 
 \verbatim
 gdal-config [OPTIONS]
@@ -1381,7 +1381,7 @@ Options:
         [--formats]
 \endverbatim
 
-\section cdescription DESCRIPTION
+\section gdal_config_description DESCRIPTION
 
 This utility script (available on Unix systems) can be used to determine
 various information about a GDAL installation.  It is normally just used
@@ -1988,7 +1988,7 @@ The following specifics options are available :
 <dt> <b>-nearest_color_entry</b> :</dt><dd></dd>use the RGBA quadruplet corresponding to the closest entry in the color configuration file.</dd>
 </dl>
 
-The color-relief mode is the only mode that supports VRT as output format. In that case, it will translate the color configuration file into appropriate <LUT> elements. Note that elevations specified as percentage will be translated as absolute values, which must be taken into account when the statistics of the source raster differ from the one that was used when building the VRT.
+The color-relief mode is the only mode that supports VRT as output format. In that case, it will translate the color configuration file into appropriate LUT elements. Note that elevations specified as percentage will be translated as absolute values, which must be taken into account when the statistics of the source raster differ from the one that was used when building the VRT.
 
 The text-based color configuration file generally contains 4 columns per line : the elevation value and the
 corresponding Red, Green, Blue component (between 0 and 255).
