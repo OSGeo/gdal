@@ -3,14 +3,14 @@
 
 removes small raster polygons
 
-\section synopsis SYNOPSIS
+\section gdal_sieve_synopsis SYNOPSIS
 
 \verbatim
 gdal_sieve.py [-q] [-st threshold] [-4] [-8] [-o name=value]
            srcfile [-nomask] [-mask filename] [-of format] [dstfile]
 \endverbatim
 
-\section description DESCRIPTION
+\section gdal_sieve_description DESCRIPTION
 
 The gdal_sieve.py script removes raster polygons smaller than a provided
 threshold size (in pixels) and replaces replaces them with the pixel value 
@@ -63,7 +63,7 @@ non-zero is valid).
 </dl>
 
 \if man
-\section author AUTHORS
+\section gdal_sieve_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>
 \endif
 */

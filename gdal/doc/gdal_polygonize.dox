@@ -3,14 +3,14 @@
 
 produces a polygon feature layer from a raster 
 
-\section synopsis SYNOPSIS
+\section gdal_polygonize_synopsis SYNOPSIS
 
 \verbatim
 gdal_polygonize.py [-o name=value] [-nomask] [-mask filename] raster_file [-b band]
                 [-q] [-f ogr_format] out_file [layer] [fieldname]
 \endverbatim
 
-\section description DESCRIPTION
+\section gdal_polygonize_description DESCRIPTION
 
 This utility creates vector polygons for all connected regions of pixels in
 the raster sharing a common pixel value.  Each polygon is created with an 
@@ -70,7 +70,7 @@ messages are not displayed.
 </dl>
 
 \if man
-\section author AUTHORS
+\section gdal_polygonize_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>
 \endif
 */
