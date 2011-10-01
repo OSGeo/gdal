@@ -1024,7 +1024,8 @@ static CPLString InsertCenterLong( GDALDatasetH hDS, CPLString osWKT )
  * </ul>
  * 
  * @param hSrcDS source dataset, or NULL.
- * @param hDstDS destination dataset (or NULL). 
+ * @param hDstDS destination dataset (or NULL).
+ * @param papszOptions NULL-terminated list of string options (or NULL).
  * 
  * @return handle suitable for use GDALGenImgProjTransform(), and to be
  * deallocated with GDALDestroyGenImgProjTransformer() or NULL on failure.
@@ -1304,8 +1305,10 @@ void GDALRefreshGenImgProjTransformer(void* hTransformArg)
  * GDALGCPTransform().  This stage is skipped if hDstDS is NULL when the
  * transformation is created. 
  *
- * @param hSrcDS source dataset, or NULL.
- * @param hDstDS destination dataset (or NULL). 
+ * @param pszSrcWKT source WKT (or NULL).
+ * @param padfSrcGeoTransform source geotransform (or NULL).
+ * @param pszDstWKT destination WKT (or NULL).
+ * @param padfDstGeoTransform destination geotransform (or NULL).
  * 
  * @return handle suitable for use GDALGenImgProjTransform(), and to be
  * deallocated with GDALDestroyGenImgProjTransformer() or NULL on failure.
@@ -2044,13 +2047,13 @@ void *GDALCreateReprojectionTransformer( const char *pszSrcWKT,
  * GDALCreateReprojectionTransformer().
  */
 
-void GDALDestroyReprojectionTransformer( void *pTransformAlg )
+void GDALDestroyReprojectionTransformer( void *pTransformArg )
 
 {
-    VALIDATE_POINTER0( pTransformAlg, "GDALDestroyReprojectionTransformer" );
+    VALIDATE_POINTER0( pTransformArg, "GDALDestroyReprojectionTransformer" );
 
     GDALReprojectionTransformInfo *psInfo = 
-        (GDALReprojectionTransformInfo *) pTransformAlg;		
+        (GDALReprojectionTransformInfo *) pTransformArg;		
 
     if( psInfo->poForwardTransform )
         delete psInfo->poForwardTransform;

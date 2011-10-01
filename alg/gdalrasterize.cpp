@@ -450,7 +450,7 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
  * @param pfnTransformer transformation to apply to geometries to put into 
  * pixel/line coordinates on raster.  If NULL a geotransform based one will
  * be created internally.
- * @param pTransformerArg callback data for transformer.
+ * @param pTransformArg callback data for transformer.
  * @param padfGeomBurnValue the array of values to burn into the raster.  
  * There should be nBandCount values for each geometry. 
  * @param papszOptions special options controlling rasterization
@@ -649,10 +649,10 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
  * @param pfnTransformer transformation to apply to geometries to put into 
  * pixel/line coordinates on raster.  If NULL a geotransform based one will
  * be created internally.
- * @param pTransformerArg callback data for transformer.
+ * @param pTransformArg callback data for transformer.
  * @param padfLayerBurnValues the array of values to burn into the raster.  
  * There should be nBandCount values for each layer. 
- * @param papszOption special options controlling rasterization:
+ * @param papszOptions special options controlling rasterization:
  * <dl>
  * <dt>"ATTRIBUTE":</dt> <dd>Identifies an attribute field on the features to be
  * used for a burn in value. The value will be burned into all output
@@ -1021,11 +1021,11 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
  * pixel/line coordinates on raster.  If NULL a geotransform based one will
  * be created internally.
  *
- * @param pTransformerArg callback data for transformer.
+ * @param pTransformArg callback data for transformer.
  *
  * @param dfBurnValue the value to burn into the raster.  
  *
- * @param papszOption special options controlling rasterization:
+ * @param papszOptions special options controlling rasterization:
  * <dl>
  * <dt>"ATTRIBUTE":</dt> <dd>Identifies an attribute field on the features to be
  * used for a burn in value. The value will be burned into all output

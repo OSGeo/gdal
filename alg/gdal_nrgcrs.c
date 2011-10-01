@@ -77,6 +77,7 @@ typedef struct
  * @param nGCPCount the number of GCPs in pasGCPList.
  * @param pasGCPList an array of GCPs to be used as input.
  * @param nReqOrder the requested polynomial order.  It should be 1, 2 or 3.
+ * @param bReversed set it to TRUE to compute the reversed transformation.
  * 
  * @return the transform argument or NULL if creation fails. 
  */
