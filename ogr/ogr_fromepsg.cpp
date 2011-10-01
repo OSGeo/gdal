@@ -761,6 +761,7 @@ OSRGetEllipsoidInfo( int nCode, char ** ppszName,
     return OGRERR_NONE;
 }
 
+#define CoLatConeAxis        1036 /* see #4223 */
 #define NatOriginLat         8801
 #define NatOriginLong        8802
 #define NatOriginScaleFactor 8805
@@ -1575,8 +1576,12 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
           if( dfCenterLong == 0.0 ) // See ticket #2559
               dfCenterLong = OGR_FP( PolarLongOrigin );
 
+          double dfAzimuth = OGR_FP( CoLatConeAxis ); // See ticket #4223
+          if( dfAzimuth == 0.0 ) 
+              dfAzimuth = OGR_FP( Azimuth );
+
           poSRS->SetKrovak( OGR_FP( ProjCenterLat ), dfCenterLong,
-                            OGR_FP( Azimuth ), 
+                            dfAzimuth, 
                             OGR_FP( PseudoStdParallelLat ),
                             OGR_FP( PseudoStdParallelScaleFactor ),
                             OGR_FP( ProjCenterEasting ), 
