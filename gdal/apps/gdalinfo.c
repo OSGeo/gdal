@@ -361,7 +361,10 @@ int main( int argc, char ** argv )
             printf( "Metadata (%s):\n", papszExtraMDDomains[iMDD]);
             for( i = 0; papszMetadata[i] != NULL; i++ )
             {
-                printf( "  %s\n", papszMetadata[i] );
+                if (EQUALN(papszExtraMDDomains[iMDD], "xml:", 4))
+                    printf( "%s\n", papszMetadata[i] );
+                else
+                    printf( "  %s\n", papszMetadata[i] );
             }
         }
     }
