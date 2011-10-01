@@ -225,4 +225,7 @@ void OGRRegisterAll()
 #ifdef IDRISI_ENABLED
     RegisterOGRIdrisi();
 #endif
+#ifdef ARCGEN_ENABLED
+    RegisterOGRARCGEN();
+#endif
 } /* OGRRegisterAll */
