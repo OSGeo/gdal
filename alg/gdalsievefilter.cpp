@@ -169,7 +169,7 @@ static inline void CompareNeighbour( int nPolyId1, int nPolyId2,
  * @param nConnectedness either 4 indicating that diagonal pixels are not
  * considered directly adjacent for polygon membership purposes or 8
  * indicating they are. 
- * @param papszOption algorithm options in name=value list form.  None currently
+ * @param papszOptions algorithm options in name=value list form.  None currently
  * supported.
  * @param pfnProgress callback for reporting algorithm progress matching the
  * GDALProgressFunc() semantics.  May be NULL.

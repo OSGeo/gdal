@@ -792,7 +792,7 @@ const char * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH hDS )
  * @return CE_Failure if an error occurs, otherwise CE_None.
  */
 
-CPLErr GDALDataset::SetProjection( const char * )
+CPLErr GDALDataset::SetProjection( const char * pszProjection )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -908,7 +908,7 @@ CPLErr CPL_STDCALL GDALGetGeoTransform( GDALDatasetH hDS, double * padfTransform
  * written.
  */
 
-CPLErr GDALDataset::SetGeoTransform( double * )
+CPLErr GDALDataset::SetGeoTransform( double * padfTransform )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -1348,7 +1348,7 @@ CPLErr CPL_STDCALL GDALSetGCPs( GDALDatasetH hDS, int nGCPCount,
  * "AVERAGE_MAGPHASE" or "NONE" controlling the downsampling method applied.
  * @param nOverviews number of overviews to build. 
  * @param panOverviewList the list of overview decimation factors to build. 
- * @param nBand number of bands to build overviews for in panBandList.  Build
+ * @param nListBands number of bands to build overviews for in panBandList.  Build
  * for all bands if this is 0. 
  * @param panBandList list of band numbers. 
  * @param pfnProgress a function to call to report progress, or NULL.
@@ -1912,7 +1912,7 @@ int CPL_STDCALL GDALGetAccess( GDALDatasetH hDS )
 
 CPLErr GDALDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                 int nBufXSize, int nBufYSize, 
-                                GDALDataType eDT, 
+                                GDALDataType eBufType, 
                                 int nBandCount, int *panBandMap,
                                 char **papszOptions )
 
@@ -1930,7 +1930,7 @@ CPLErr GDALDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
             poBand = GetRasterBand(panBandMap[iBand]);
 
         eErr = poBand->AdviseRead( nXOff, nYOff, nXSize, nYSize,
-                                   nBufXSize, nBufYSize, eDT, papszOptions );
+                                   nBufXSize, nBufYSize, eBufType, papszOptions );
 
         if( eErr != CE_None )
             return eErr;

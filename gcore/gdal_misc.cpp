@@ -208,7 +208,7 @@ GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
  *
  * Returns the size of a a GDT_* type in bits, <b>not bytes</b>!
  *
- * @param data type, such as GDT_Byte. 
+ * @param eDataType type, such as GDT_Byte.
  * @return the number of bits or zero if it is not recognised.
  */
 
@@ -2326,7 +2326,8 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
  *        exit( -argc );
  *
  * @param nArgc number of values in the argument list.
- * @param Pointer to the argument list array (will be updated in place). 
+ * @param ppapszArgv pointer to the argument list array (will be updated in place).
+ * @param nOptions unused for now.
  *
  * @return updated nArgc argument count.  Return of 0 requests terminate 
  * without error, return of -1 requests exit with error code.

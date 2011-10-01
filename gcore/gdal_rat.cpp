@@ -1262,7 +1262,7 @@ CPLErr CPL_STDCALL GDALRATCreateColumn( GDALRasterAttributeTableH hRAT,
  *
  * @param poTable the color table to copy from.
  *
- * @param CE_None on success or CE_Failure if something goes wrong.
+ * @return CE_None on success or CE_Failure if something goes wrong.
  */
 
 CPLErr GDALRasterAttributeTable::InitializeFromColorTable( 

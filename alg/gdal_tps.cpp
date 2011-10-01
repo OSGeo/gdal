@@ -81,7 +81,7 @@ typedef struct
  *
  * @param nGCPCount the number of GCPs in pasGCPList.
  * @param pasGCPList an array of GCPs to be used as input.
- * @Param bReversed 
+ * @param bReversed set it to TRUE to compute the reversed transformation.
  * 
  * @return the transform argument or NULL if creation fails. 
  */

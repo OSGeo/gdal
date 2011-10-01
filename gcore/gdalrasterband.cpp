@@ -1102,7 +1102,7 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff, int bWriteDir
  * caller release this lock (with GDALRasterBlock::DropLock()) or else
  * severe problems may result.
  *
- * @param nBlockXOff the horizontal block offset, with zero indicating
+ * @param nXBlockOff the horizontal block offset, with zero indicating
  * the left most block, 1 the next block and so forth. 
  *
  * @param nYBlockOff the vertical block offset, with zero indicating
@@ -1199,7 +1199,7 @@ GDALRasterBlock *GDALRasterBand::TryGetLockedBlockRef( int nXBlockOff,
  * Note that calling GetLockedBlockRef() on a previously uncached band will
  * enable caching.
  * 
- * @param nBlockXOff the horizontal block offset, with zero indicating
+ * @param nXBlockOff the horizontal block offset, with zero indicating
  * the left most block, 1 the next block and so forth. 
  *
  * @param nYBlockOff the vertical block offset, with zero indicating
@@ -1317,7 +1317,7 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
  * second argument allows the imaginary component of a complex
  * constant value to be specified.
  * 
- * @param dfRealvalue Real component of fill value
+ * @param dfRealValue Real component of fill value
  * @param dfImaginaryValue Imaginary component of fill value, defaults to zero
  * 
  * @return CE_Failure if the write fails, otherwise CE_None
@@ -1515,7 +1515,7 @@ char ** CPL_STDCALL GDALGetRasterCategoryNames( GDALRasterBandH hBand )
  * by the driver CE_Failure is returned, but no error message is reported.
  */
 
-CPLErr GDALRasterBand::SetCategoryNames( char ** )
+CPLErr GDALRasterBand::SetCategoryNames( char ** papszNames )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -1613,7 +1613,7 @@ GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
  * been emitted.
  */
 
-CPLErr GDALRasterBand::SetNoDataValue( double )
+CPLErr GDALRasterBand::SetNoDataValue( double dfNoData )
 
 {
     if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
@@ -3288,7 +3288,7 @@ CPLErr CPL_STDCALL GDALGetDefaultHistogram( GDALRasterBandH hBand,
 
 CPLErr GDALRasterBand::AdviseRead( 
     int nXOff, int nYOff, int nXSize, int nYSize,
-    int nBufXSize, int nBufYSize, GDALDataType eDT, char **papszOptions )
+    int nBufXSize, int nBufYSize, GDALDataType eBufType, char **papszOptions )
 
 {
     return CE_None;
@@ -4765,7 +4765,7 @@ CPLErr CPL_STDCALL GDALCreateMaskBand( GDALRasterBandH hBand, int nFlags )
  * @param poReferenceBand the raster band
  * @param pTranslationTable an already allocated translation table (at least 256 bytes),
  *                          or NULL to let the method allocate it
- * @param poApproximateMatching a pointer to a flag that is set if the matching
+ * @param pApproximateMatching a pointer to a flag that is set if the matching
  *                              is approximate. May be NULL.
  *
  * @return a translation table if the two bands are palette index and that they do

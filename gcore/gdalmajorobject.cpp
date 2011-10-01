@@ -192,7 +192,7 @@ GDALGetMetadata( GDALMajorObjectH hObject, const char * pszDomain )
  *
  * The C function GDALSetMetadata() does the same thing as this method.
  *
- * @param papszMetadata the metadata in name=value string list format to 
+ * @param papszMetadataIn the metadata in name=value string list format to
  * apply.  
  * @param pszDomain the domain of interest.  Use "" or NULL for the default
  * domain. 
