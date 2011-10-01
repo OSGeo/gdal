@@ -2336,7 +2336,7 @@ OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry( const OGRGeometry *poGeometry,
     *ppabyData =  (GByte *) CPLMalloc( nDataLen );
 
     (*ppabyData)[0] = 0x00;
-    (*ppabyData)[1] = eByteOrder;
+    (*ppabyData)[1] = (GByte) eByteOrder;
 
     // Write out SRID
     memcpy( *ppabyData + 2, &nSRID, 4 );
