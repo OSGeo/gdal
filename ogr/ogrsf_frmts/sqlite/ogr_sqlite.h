@@ -389,6 +389,8 @@ class OGRSQLiteDataSource : public OGRDataSource
     
     virtual void        DeleteLayer( const char *pszLayer );
 
+    int                 DetectSRSWktColumn();
+
   public:
                         OGRSQLiteDataSource();
                         ~OGRSQLiteDataSource();

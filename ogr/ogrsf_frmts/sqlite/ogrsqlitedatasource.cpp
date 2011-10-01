@@ -1329,6 +1329,41 @@ OGRErr OGRSQLiteDataSource::FlushSoftTransaction()
 }
 
 /************************************************************************/
+/*                            DetectSRSWktColumn()                            */
+/************************************************************************/
+
+int OGRSQLiteDataSource::DetectSRSWktColumn()
+{
+    int bHasSrsWkt = FALSE;
+
+/* testing for SRS_WKT column presence */
+    char **papszResult;
+    int nRowCount, nColCount;
+    char *pszErrMsg = NULL;
+    int rc = sqlite3_get_table( hDB, "PRAGMA table_info(spatial_ref_sys)",
+                            &papszResult, &nRowCount, &nColCount,
+                            &pszErrMsg );
+
+    if( rc == SQLITE_OK )
+    {
+        int iRow;
+        for (iRow = 1; iRow <= nRowCount; iRow++)
+        {
+            if (EQUAL("srs_wkt",
+                        papszResult[(iRow * nColCount) + 1]))
+                bHasSrsWkt = TRUE;
+        }
+        sqlite3_free_table(papszResult);
+    }
+    else
+    {
+        sqlite3_free( pszErrMsg );
+    }
+
+    return bHasSrsWkt;
+}
+
+/************************************************************************/
 /*                             FetchSRSId()                             */
 /*                                                                      */
 /*      Fetch the id corresponding to an SRS, and if not found, add     */
@@ -1447,25 +1482,25 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /*      Search for existing record using either WKT definition or       */
 /*      PROJ.4 string (SpatiaLite variant).                             */
 /* -------------------------------------------------------------------- */
-    CPLString   osSRS;
+    CPLString   osWKT, osProj4;
 
-    if ( !bIsSpatiaLite )
-    {
 /* -------------------------------------------------------------------- */
 /*      Translate SRS to WKT.                                           */
 /* -------------------------------------------------------------------- */
-        char    *pszWKT = NULL;
+    char    *pszWKT = NULL;
 
-        if( oSRS.exportToWkt( &pszWKT ) != OGRERR_NONE )
-        {
-            CPLFree(pszWKT);
-            return -1;
-        }
+    if( oSRS.exportToWkt( &pszWKT ) != OGRERR_NONE )
+    {
+        CPLFree(pszWKT);
+        return -1;
+    }
 
-        osSRS = pszWKT;
-        CPLFree( pszWKT );
-        pszWKT = NULL;
+    osWKT = pszWKT;
+    CPLFree( pszWKT );
+    pszWKT = NULL;
 
+    if ( !bIsSpatiaLite )
+    {
 /* -------------------------------------------------------------------- */
 /*      Try to find based on the WKT match.                             */
 /* -------------------------------------------------------------------- */
@@ -1488,7 +1523,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
             return -1;
         }
 
-        osSRS = pszProj4;
+        osProj4 = pszProj4;
         CPLFree( pszProj4 );
         pszProj4 = NULL;
 
@@ -1503,7 +1538,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     rc = sqlite3_prepare( hDB, osCommand, -1, &hSelectStmt, NULL );
 
     if( rc == SQLITE_OK)
-        rc = sqlite3_bind_text( hSelectStmt, 1, osSRS.c_str(), -1, SQLITE_STATIC );
+        rc = sqlite3_bind_text( hSelectStmt, 1, ( !bIsSpatiaLite ) ? osWKT.c_str() : osProj4.c_str(), -1, SQLITE_STATIC );
 
     if( rc == SQLITE_OK)
         rc = sqlite3_step( hSelectStmt );
@@ -1586,7 +1621,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /*      Try adding the SRS to the SRS table.                            */
 /* -------------------------------------------------------------------- */
 
-    const char* apszToInsert[] = { NULL, NULL, NULL, NULL, NULL };
+    const char* apszToInsert[] = { NULL, NULL, NULL, NULL, NULL, NULL };
 
     if ( !bIsSpatiaLite )
     {
@@ -1596,7 +1631,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
                 "INSERT INTO spatial_ref_sys (srid,srtext,auth_name,auth_srid) "
                 "                     VALUES (%d, ?, ?, ?)",
                 nSRSId );
-            apszToInsert[0] = osSRS.c_str();
+            apszToInsert[0] = osWKT.c_str();
             apszToInsert[1] = pszAuthorityName;
             apszToInsert[2] = pszAuthorityCode;
         }
@@ -1606,11 +1641,13 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
                 "INSERT INTO spatial_ref_sys (srid,srtext) "
                 "                     VALUES (%d, ?)",
                 nSRSId );
-            apszToInsert[0] = osSRS.c_str();
+            apszToInsert[0] = osWKT.c_str();
         }
     }
     else
     {
+        int bHasSrsWkt = DetectSRSWktColumn();
+
         const char  *pszProjCS = oSRS.GetAttrValue("PROJCS");
         if (pszProjCS == NULL)
             pszProjCS = oSRS.GetAttrValue("GEOGCS");
@@ -1621,24 +1658,30 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
             {
                 osCommand.Printf(
                     "INSERT INTO spatial_ref_sys "
-                    "(srid, auth_name, auth_srid, ref_sys_name, proj4text) "
-                    "VALUES (%d, ?, ?, ?, ?)",
-                    nSRSId );
+                    "(srid, auth_name, auth_srid, ref_sys_name, proj4text%s) "
+                    "VALUES (%d, ?, ?, ?, ?%s)",
+                    bHasSrsWkt ? ", srs_wkt" : "",
+                    nSRSId,
+                    bHasSrsWkt ? ", ?" : "");
                 apszToInsert[0] = pszAuthorityName;
                 apszToInsert[1] = pszAuthorityCode;
                 apszToInsert[2] = pszProjCS;
-                apszToInsert[3] = osSRS.c_str();
+                apszToInsert[3] = osProj4.c_str();
+                apszToInsert[4] = bHasSrsWkt ? osWKT.c_str() : NULL;
             }
             else
             {
                 osCommand.Printf(
                     "INSERT INTO spatial_ref_sys "
-                    "(srid, auth_name, auth_srid, proj4text) "
-                    "VALUES (%d, ?, ?, ?)",
-                    nSRSId );
+                    "(srid, auth_name, auth_srid, proj4text%s) "
+                    "VALUES (%d, ?, ?, ?%s)",
+                    bHasSrsWkt ? ", srs_wkt" : "",
+                    nSRSId,
+                    bHasSrsWkt ? ", ?" : "");
                 apszToInsert[0] = pszAuthorityName;
                 apszToInsert[1] = pszAuthorityCode;
-                apszToInsert[2] = osSRS.c_str();
+                apszToInsert[2] = osProj4.c_str();
+                apszToInsert[3] = bHasSrsWkt ? osWKT.c_str() : NULL;
             }
         }
         else
@@ -1649,18 +1692,24 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
             {
                 osCommand.Printf(
                     "INSERT INTO spatial_ref_sys "
-                    "(srid, auth_name, auth_srid, ref_sys_name, proj4text) VALUES (%d, 'OGR', %d, ?, ?)",
-                    nSRSId, nSRSId );
+                    "(srid, auth_name, auth_srid, ref_sys_name, proj4text%s) VALUES (%d, 'OGR', %d, ?, ?%s)",
+                    bHasSrsWkt ? ", srs_wkt" : "",
+                    nSRSId, nSRSId,
+                    bHasSrsWkt ? ", ?" : "");
                 apszToInsert[0] = pszProjCS;
-                apszToInsert[1] = osSRS.c_str();
+                apszToInsert[1] = osProj4.c_str();
+                apszToInsert[2] = bHasSrsWkt ? osWKT.c_str() : NULL;
             }
             else
             {
                 osCommand.Printf(
                     "INSERT INTO spatial_ref_sys "
-                    "(srid, auth_name, auth_srid, proj4text) VALUES (%d, 'OGR', %d, ?)",
-                    nSRSId, nSRSId );
-                apszToInsert[0] = osSRS.c_str();
+                    "(srid, auth_name, auth_srid, proj4text%s) VALUES (%d, 'OGR', %d, ?%s)",
+                    bHasSrsWkt ? ", srs_wkt" : "",
+                    nSRSId, nSRSId,
+                    bHasSrsWkt ? ", ?" : "");
+                apszToInsert[0] = osProj4.c_str();
+                apszToInsert[1] = bHasSrsWkt ? osWKT.c_str() : NULL;
             }
         }
     }
@@ -1764,15 +1813,19 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
 
 /* -------------------------------------------------------------------- */
 /*      Next try SpatiaLite flavour. SpatiaLite uses PROJ.4 strings     */
-/*      in 'proj4text' column instead of WKT in 'srtext'.               */
+/*      in 'proj4text' column instead of WKT in 'srtext'. Note: recent  */
+/*      versions of spatialite have a srs_wkt column too                */
 /* -------------------------------------------------------------------- */
     else
     {
         sqlite3_free( pszErrMsg );
         pszErrMsg = NULL;
 
+        int bHasSrsWkt = DetectSRSWktColumn();
+
         osCommand.Printf(
-            "SELECT proj4text, auth_name, auth_srid FROM spatial_ref_sys WHERE srid = %d", nId );
+            "SELECT proj4text, auth_name, auth_srid%s FROM spatial_ref_sys WHERE srid = %d",
+            bHasSrsWkt ? ", srs_wkt" : "", nId );
         rc = sqlite3_get_table( hDB, osCommand, 
                                 &papszResult, &nRowCount,
                                 &nColCount, &pszErrMsg );
@@ -1790,26 +1843,35 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
             char** papszRow = papszResult + nColCount;
 
             const char* pszProj4Text = papszRow[0];
-            if (pszProj4Text != NULL)
+            const char* pszAuthName = papszRow[1];
+            int nAuthSRID = (papszRow[2] != NULL) ? atoi(papszRow[2]) : 0;
+            char* pszWKT = (bHasSrsWkt) ? (char*) papszRow[3] : NULL;
+
+            poSRS = new OGRSpatialReference();
+
+            /* Try first from EPSG code */
+            if (pszAuthName != NULL &&
+                EQUAL(pszAuthName, "EPSG") &&
+                poSRS->importFromEPSG( nAuthSRID ) == OGRERR_NONE)
             {
-                const char* pszAuthName = papszRow[1];
-                int nAuthSRID = (papszRow[2] != NULL) ? atoi(papszRow[2]) : 0;
-
-                poSRS = new OGRSpatialReference();
-
-                /* Try first from EPSG code */
-                if (pszAuthName != NULL &&
-                    EQUAL(pszAuthName, "EPSG") &&
-                    poSRS->importFromEPSG( nAuthSRID ) == OGRERR_NONE)
-                {
-                    /* Do nothing */
-                }
-                /* Then from Proj4 string */
-                else if( poSRS->importFromProj4( pszProj4Text ) != OGRERR_NONE )
-                {
-                    delete poSRS;
-                    poSRS = NULL;
-                }
+                /* Do nothing */
+            }
+            /* Then from WKT string */
+            else if( pszWKT != NULL &&
+                     poSRS->importFromWkt( &pszWKT ) == OGRERR_NONE )
+            {
+                /* Do nothing */
+            }
+            /* Finally from Proj4 string */
+            else if( pszProj4Text != NULL &&
+                     poSRS->importFromProj4( pszProj4Text ) == OGRERR_NONE )
+            {
+                /* Do nothing */
+            }
+            else
+            {
+                delete poSRS;
+                poSRS = NULL;
             }
 
             sqlite3_free_table(papszResult);
