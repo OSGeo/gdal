@@ -745,12 +745,6 @@ int main( int argc, char ** argv )
         fprintf( stderr, "Missing source or destination.\n\n" );
         Usage();
     }
-    
-    if( pszSQL == NULL && papszLayers == NULL )
-    {
-        fprintf( stderr, "At least one of -l or -sql required.\n\n" );
-        Usage();
-    }
 
     if( adfBurnValues.size() == 0 && pszBurnAttribute == NULL && !b3D )
     {
@@ -813,6 +807,19 @@ int main( int argc, char ** argv )
         fprintf( stderr, "Failed to open feature source: %s\n", 
                  pszSrcFilename);
         exit( 1 );
+    }
+
+    if( pszSQL == NULL && papszLayers == NULL )
+    {
+        if( OGR_DS_GetLayerCount(hSrcDS) == 1 )
+        {
+            papszLayers = CSLAddString(NULL, OGR_L_GetName(OGR_DS_GetLayer(hSrcDS, 0)));
+        }
+        else
+        {
+            fprintf( stderr, "At least one of -l or -sql required.\n\n" );
+            Usage();
+        }
     }
 
 /* -------------------------------------------------------------------- */
