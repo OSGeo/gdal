@@ -47,7 +47,7 @@ def Usage():
     print("""
 gdal_fillnodata [-q] [-md max_distance] [-si smooth_iterations]
                 [-o name=value] [-b band]
-                srcfile [-nomask] [-mask filename] [-of format] [dstfile]
+                srcfile [-nomask] [-mask filename] [-of format] [-co name=value]* [dstfile]
 """)
     sys.exit(1)
     
@@ -64,6 +64,7 @@ src_band = 1
 
 dst_filename = None
 format = 'GTiff'
+creation_options = []
 
 mask = 'default'
 
@@ -80,6 +81,10 @@ while i < len(argv):
     if arg == '-of':
         i = i + 1
         format = argv[i]
+
+    elif arg == '-co':
+        i = i + 1
+        creation_options.append(argv[i])
 
     elif arg == '-q' or arg == '-quiet':
         quiet_flag = 1
@@ -167,7 +172,7 @@ if dst_filename is not None:
 
     drv = gdal.GetDriverByName(format)
     dst_ds = drv.Create( dst_filename,src_ds.RasterXSize, src_ds.RasterYSize,1,
-                         srcband.DataType )
+                         srcband.DataType, creation_options )
     wkt = src_ds.GetProjection()
     if wkt != '':
         dst_ds.SetProjection( wkt )
