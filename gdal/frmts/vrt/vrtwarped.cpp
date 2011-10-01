@@ -76,7 +76,7 @@ CPL_CVSID("$Id$");
  * @param dfMaxError Maximum error measured in input pixels that is allowed in 
  * approximating the transformation (0.0 for exact calculations).
  *
- * @param psOptions Additional warp options, normally NULL.
+ * @param psOptionsIn Additional warp options, normally NULL.
  *
  * @return NULL on failure, or a new virtual dataset handle on success.
  */
