@@ -723,6 +723,50 @@ CPLXMLNode* OGRWFSDataSource::LoadFromFile( const char * pszFilename )
 }
 
 /************************************************************************/
+/*                          SendGetCapabilities()                       */
+/************************************************************************/
+
+CPLHTTPResult* OGRWFSDataSource::SendGetCapabilities(const char* pszBaseURL,
+                                                     CPLString& osTypeName)
+{
+    CPLString osURL(pszBaseURL);
+    osURL = CPLURLAddKVP(osURL, "SERVICE", "WFS");
+    osURL = CPLURLAddKVP(osURL, "REQUEST", "GetCapabilities");
+    osTypeName = CPLURLGetValue(osURL, "TYPENAME");
+    osURL = CPLURLAddKVP(osURL, "TYPENAME", NULL);
+    osURL = CPLURLAddKVP(osURL, "FILTER", NULL);
+    osURL = CPLURLAddKVP(osURL, "PROPERTYNAME", NULL);
+    osURL = CPLURLAddKVP(osURL, "MAXFEATURES", NULL);
+    osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", NULL);
+
+    /* Don't accept WFS 2.0.0 for now, unless explicitely specified */
+    if (CPLURLGetValue(osURL, "ACCEPTVERSIONS").size() == 0 &&
+        CPLURLGetValue(osURL, "VERSION").size() == 0)
+        osURL = CPLURLAddKVP(osURL, "ACCEPTVERSIONS", "1.1.0,1.0.0");
+
+    CPLDebug("WFS", "%s", osURL.c_str());
+
+    CPLHTTPResult* psResult = HTTPFetch( osURL, NULL);
+    if (psResult == NULL)
+    {
+        return NULL;
+    }
+
+    if (strstr((const char*)psResult->pabyData,
+                                    "<ServiceExceptionReport") != NULL ||
+        strstr((const char*)psResult->pabyData,
+                                    "<ows:ExceptionReport") != NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
+                psResult->pabyData);
+        CPLHTTPDestroyResult(psResult);
+        return NULL;
+    }
+
+    return psResult;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -756,36 +800,10 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
             strncmp(pszBaseURL, "https://", 8) != 0)
             return FALSE;
 
-        CPLString osURL(pszBaseURL);
-        osURL = CPLURLAddKVP(osURL, "SERVICE", "WFS");
-        osURL = CPLURLAddKVP(osURL, "REQUEST", "GetCapabilities");
-        osTypeName = CPLURLGetValue(osURL, "TYPENAME");
-        osURL = CPLURLAddKVP(osURL, "TYPENAME", NULL);
-        osURL = CPLURLAddKVP(osURL, "FILTER", NULL);
-        osURL = CPLURLAddKVP(osURL, "PROPERTYNAME", NULL);
-        osURL = CPLURLAddKVP(osURL, "MAXFEATURES", NULL);
-        osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", NULL);
-
-        /* Don't accept WFS 2.0.0 for now, unless explicitely specified */
-        if (CPLURLGetValue(osURL, "ACCEPTVERSIONS").size() == 0)
-            osURL = CPLURLAddKVP(osURL, "ACCEPTVERSIONS", "1.1.0,1.0.0");
-
-        CPLDebug("WFS", "%s", osURL.c_str());
-
-        CPLHTTPResult* psResult = HTTPFetch( osURL, NULL);
+        CPLHTTPResult* psResult = SendGetCapabilities(pszBaseURL,
+                                                      osTypeName);
         if (psResult == NULL)
         {
-            return FALSE;
-        }
-
-        if (strstr((const char*)psResult->pabyData,
-                                        "<ServiceExceptionReport") != NULL ||
-            strstr((const char*)psResult->pabyData,
-                                        "<ows:ExceptionReport") != NULL)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
-                    psResult->pabyData);
-            CPLHTTPDestroyResult(psResult);
             return FALSE;
         }
 
@@ -884,18 +902,8 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         psWFSCapabilities = WFSFindNode( psRoot, "WFS_Capabilities" );
         if (psWFSCapabilities == NULL)
         {
-            CPLString osURL(pszBaseURL);
-            osURL = CPLURLAddKVP(osURL, "SERVICE", "WFS");
-            osURL = CPLURLAddKVP(osURL, "REQUEST", "GetCapabilities");
-            osTypeName = CPLURLGetValue(osURL, "TYPENAME");
-            osURL = CPLURLAddKVP(osURL, "TYPENAME", NULL);
-            osURL = CPLURLAddKVP(osURL, "FILTER", NULL);
-            osURL = CPLURLAddKVP(osURL, "PROPERTYNAME", NULL);
-            osURL = CPLURLAddKVP(osURL, "MAXFEATURES", NULL);
-
-            CPLDebug("WFS", "%s", osURL.c_str());
-
-            CPLHTTPResult* psResult = HTTPFetch( osURL, NULL);
+            CPLHTTPResult* psResult = SendGetCapabilities(pszBaseURL,
+                                                          osTypeName);
             if (psResult == NULL)
             {
                 CPLDestroyXMLNode( psXML );
