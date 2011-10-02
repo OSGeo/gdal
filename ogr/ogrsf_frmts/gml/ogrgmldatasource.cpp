@@ -54,6 +54,7 @@ OGRGMLDataSource::OGRGMLDataSource()
     bFpOutputIsNonSeekable = FALSE;
     bFpOutputSingleFile = FALSE;
     bIsOutputGML3 = FALSE;
+    bIsOutputGML3Deegree = FALSE;
     bIsLongSRSRequired = FALSE;
     bWriteSpaceIndentation = TRUE;
 
@@ -842,7 +843,8 @@ int OGRGMLDataSource::Create( const char *pszFilename,
         nBoundedByLocation = -1;
 
     const char* pszFormat = CSLFetchNameValue(papszCreateOptions, "FORMAT");
-    bIsOutputGML3 = pszFormat && EQUAL(pszFormat, "GML3");
+    bIsOutputGML3 = pszFormat && (EQUAL(pszFormat, "GML3") || EQUAL(pszFormat, "GML3Deegree"));
+    bIsOutputGML3Deegree = pszFormat && EQUAL(pszFormat, "GML3Deegree");
 
     bIsLongSRSRequired =
         CSLTestBoolean(CSLFetchNameValueDef(papszCreateOptions, "GML3_LONGSRS", "YES"));
@@ -1044,30 +1046,39 @@ void OGRGMLDataSource::InsertHeader()
                    "    xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"");
         PrintLine( fpSchema,
                    "    xmlns:gml=\"http://www.opengis.net/gml\"");
-        PrintLine( fpSchema,
-                   "    xmlns:gmlsf=\"http://www.opengis.net/gmlsf\"");
+        if (!IsGML3DeegreeOutput())
+        {
+            PrintLine( fpSchema,
+                    "    xmlns:gmlsf=\"http://www.opengis.net/gmlsf\"");
+        }
         PrintLine( fpSchema,
                    "    elementFormDefault=\"qualified\"");
         PrintLine( fpSchema,
                    "    version=\"1.0\">");
 
-        PrintLine( fpSchema,
-                   "<xs:annotation>");
-        PrintLine( fpSchema,
-                   "  <xs:appinfo source=\"http://schemas.opengis.net/gml/3.1.1/profiles/gmlsfProfile/1.0.0/gmlsfLevels.xsd\">");
-        PrintLine( fpSchema,
-                   "    <gmlsf:ComplianceLevel>0</gmlsf:ComplianceLevel>");
-        PrintLine( fpSchema,
-                   "    <gmlsf:GMLProfileSchema>http://schemas.opengis.net/gml/3.1.1/profiles/gmlsfProfile/1.0.0/gmlsf.xsd</gmlsf:GMLProfileSchema>");
-        PrintLine( fpSchema,
-                   "  </xs:appinfo>");
-        PrintLine( fpSchema,
-                   "</xs:annotation>");
+        if (!IsGML3DeegreeOutput())
+        {
+            PrintLine( fpSchema,
+                    "<xs:annotation>");
+            PrintLine( fpSchema,
+                    "  <xs:appinfo source=\"http://schemas.opengis.net/gml/3.1.1/profiles/gmlsfProfile/1.0.0/gmlsfLevels.xsd\">");
+            PrintLine( fpSchema,
+                    "    <gmlsf:ComplianceLevel>0</gmlsf:ComplianceLevel>");
+            PrintLine( fpSchema,
+                    "    <gmlsf:GMLProfileSchema>http://schemas.opengis.net/gml/3.1.1/profiles/gmlsfProfile/1.0.0/gmlsf.xsd</gmlsf:GMLProfileSchema>");
+            PrintLine( fpSchema,
+                    "  </xs:appinfo>");
+            PrintLine( fpSchema,
+                    "</xs:annotation>");
+        }
 
         PrintLine( fpSchema,
                     "<xs:import namespace=\"http://www.opengis.net/gml\" schemaLocation=\"http://schemas.opengis.net/gml/3.1.1/base/gml.xsd\"/>" );
-        PrintLine( fpSchema,
-                    "<xs:import namespace=\"http://www.opengis.net/gmlsf\" schemaLocation=\"http://schemas.opengis.net/gml/3.1.1/profiles/gmlsfProfile/1.0.0/gmlsfLevels.xsd\"/>" );
+        if (!IsGML3DeegreeOutput())
+        {
+            PrintLine( fpSchema,
+                        "<xs:import namespace=\"http://www.opengis.net/gmlsf\" schemaLocation=\"http://schemas.opengis.net/gml/3.1.1/profiles/gmlsfProfile/1.0.0/gmlsfLevels.xsd\"/>" );
+        }
     }
     else
     {
@@ -1084,15 +1095,33 @@ void OGRGMLDataSource::InsertHeader()
 /* -------------------------------------------------------------------- */
     if (IsGML3Output())
     {
-        PrintLine( fpSchema,
-                    "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:_GML\"/>",
-                    pszPrefix );
+        if (IsGML3DeegreeOutput())
+        {
+            PrintLine( fpSchema,
+                        "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:_FeatureCollection\"/>",
+                        pszPrefix );
+        }
+        else
+        {
+            PrintLine( fpSchema,
+                        "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:_GML\"/>",
+                        pszPrefix );
+        }
 
         PrintLine( fpSchema, "<xs:complexType name=\"FeatureCollectionType\">");
         PrintLine( fpSchema, "  <xs:complexContent>" );
-        PrintLine( fpSchema, "    <xs:extension base=\"gml:AbstractFeatureType\">" );
-        PrintLine( fpSchema, "      <xs:sequence minOccurs=\"0\" maxOccurs=\"unbounded\">" );
-        PrintLine( fpSchema, "        <xs:element name=\"featureMember\">" );
+        if (IsGML3DeegreeOutput())
+        {
+            PrintLine( fpSchema, "    <xs:extension base=\"gml:AbstractFeatureCollectionType\">" );
+            PrintLine( fpSchema, "      <xs:sequence>" );
+            PrintLine( fpSchema, "        <xs:element name=\"featureMember\" minOccurs=\"0\" maxOccurs=\"unbounded\">" );
+        }
+        else
+        {
+            PrintLine( fpSchema, "    <xs:extension base=\"gml:AbstractFeatureType\">" );
+            PrintLine( fpSchema, "      <xs:sequence minOccurs=\"0\" maxOccurs=\"unbounded\">" );
+            PrintLine( fpSchema, "        <xs:element name=\"featureMember\">" );
+        }
         PrintLine( fpSchema, "          <xs:complexType>" );
         PrintLine( fpSchema, "            <xs:sequence>" );
         PrintLine( fpSchema, "              <xs:element ref=\"gml:_Feature\"/>" );

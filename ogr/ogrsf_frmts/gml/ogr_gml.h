@@ -121,6 +121,7 @@ class OGRGMLDataSource : public OGRDataSource
     
     int                 nSchemaInsertLocation;
     int                 bIsOutputGML3;
+    int                 bIsOutputGML3Deegree; /* if TRUE, then bIsOutputGML3 is also TRUE */
     int                 bIsLongSRSRequired;
     int                 bWriteSpaceIndentation;
 
@@ -172,6 +173,7 @@ class OGRGMLDataSource : public OGRDataSource
     static void         PrintLine(VSILFILE* fp, const char *fmt, ...) CPL_PRINT_FUNC_FORMAT (2, 3);
 
     int                 IsGML3Output() const { return bIsOutputGML3; }
+    int                 IsGML3DeegreeOutput() const { return bIsOutputGML3Deegree; }
     int                 IsLongSRSRequired() const { return bIsLongSRSRequired; }
     int                 WriteSpaceIndentation() const { return bWriteSpaceIndentation; }
     const char         *GetGlobalSRSName();
