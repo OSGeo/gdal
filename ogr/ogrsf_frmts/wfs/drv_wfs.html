@@ -125,7 +125,7 @@ Currently, any other SQL command will be processed by the generic layer, meaning
 Server side spatial and attribute filtering must be done through the SetSpatialFilter() and SetAttributeFilter()
 interfaces.<p>
 
-<h2>Layer metadata</h2>
+<h2>Special layer : WFSLayerMetadata</h2>
 
 <p>(OGR >= 1.9.0)</p>
 
@@ -134,6 +134,14 @@ interfaces.<p>
 <p>Each record contains a "layer_name", "title" and "abstract" field, from the document returned by GetCapabilities.</p>
 
 <p>That layer is returned through GetLayerByName("WFSLayerMetadata").</p>
+
+<h2>Special layer : WFSGetCapabilities</h2>
+
+<p>(OGR >= 1.9.0)</p>
+
+<p>A "hidden" layer called "WFSGetCapabilities" is filled with the raw XML result of the GetCapabilities request.</p>
+
+<p>That layer is returned through GetLayerByName("WFSGetCapabilities").</p>
 
 <h2>Examples</h2>
 
