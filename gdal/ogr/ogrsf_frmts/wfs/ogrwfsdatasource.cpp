@@ -156,6 +156,9 @@ OGRWFSDataSource::OGRWFSDataSource()
     poLayerMetadataDS = NULL;
     poLayerMetadataLayer = NULL;
 
+    poLayerGetCapabilitiesDS = NULL;
+    poLayerGetCapabilitiesLayer = NULL;
+
     bKeepLayerNamePrefix = FALSE;
 }
 
@@ -182,6 +185,7 @@ OGRWFSDataSource::~OGRWFSDataSource()
     if (osLayerMetadataTmpFileName.size() != 0)
         VSIUnlink(osLayerMetadataTmpFileName);
     delete poLayerMetadataDS;
+    delete poLayerGetCapabilitiesDS;
 
     CPLFree( pszName );
     CSLDestroy( papszIdGenMethods );
@@ -239,6 +243,29 @@ OGRLayer* OGRWFSDataSource::GetLayerByName(const char* pszName)
         if (poLayerMetadataDS)
             poLayerMetadataLayer = poLayerMetadataDS->GetLayer(0);
         return poLayerMetadataLayer;
+    }
+    else if (EQUAL(pszName, "WFSGetCapabilities"))
+    {
+        if (poLayerGetCapabilitiesLayer != NULL)
+            return poLayerGetCapabilitiesLayer;
+
+        OGRSFDriver* poMEMDrv = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
+        if (poMEMDrv == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot load 'Memory' driver");
+            return NULL;
+        }
+
+        poLayerGetCapabilitiesDS = poMEMDrv->CreateDataSource("WFSGetCapabilities", NULL);
+        poLayerGetCapabilitiesLayer = poLayerGetCapabilitiesDS->CreateLayer("WFSGetCapabilities", NULL, wkbNone, NULL);
+        OGRFieldDefn oFDefn("content", OFTString);
+        poLayerGetCapabilitiesLayer->CreateField(&oFDefn);
+        OGRFeature* poFeature = new OGRFeature(poLayerGetCapabilitiesLayer->GetLayerDefn());
+        poFeature->SetField(0, osGetCapabilities);
+        poLayerGetCapabilitiesLayer->CreateFeature(poFeature);
+        delete poFeature;
+
+        return poLayerGetCapabilitiesLayer;
     }
 
     /* first a case sensitive check */
@@ -780,6 +807,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
             CPLHTTPDestroyResult(psResult);
             return FALSE;
         }
+        osGetCapabilities = (const char*) psResult->pabyData;
 
         CPLHTTPDestroyResult(psResult);
     }
@@ -787,6 +815,9 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
               WFSFindNode( psXML, "WFS_Capabilities" ) != NULL )
     {
         /* This is directly the Capabilities document */
+        char* pszXML = CPLSerializeXMLTree(WFSFindNode( psXML, "WFS_Capabilities" ));
+        osGetCapabilities = pszXML;
+        CPLFree(pszXML);
     }
     else
     {
@@ -908,6 +939,14 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         else
         {
             psFileXML = psXML;
+
+            /* To avoid to have nodes after WFSCapabilities */
+            CPLXMLNode* psAfterWFSCapabilities = psWFSCapabilities->psNext;
+            psWFSCapabilities->psNext = NULL;
+            char* pszXML = CPLSerializeXMLTree(psWFSCapabilities);
+            psWFSCapabilities->psNext = psAfterWFSCapabilities;
+            osGetCapabilities = pszXML;
+            CPLFree(pszXML);
         }
     }
 
