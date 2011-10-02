@@ -1157,6 +1157,8 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                         CPLGetXMLValue(psChildIter, "DefaultSRS", NULL);
                 if (pszDefaultSRS == NULL)
                     pszDefaultSRS = CPLGetXMLValue(psChildIter, "SRS", NULL);
+                if (pszDefaultSRS == NULL)
+                    pszDefaultSRS = CPLGetXMLValue(psChildIter, "DefaultCRS", NULL); /* WFS 2.0.0 */
 
                 OGRSpatialReference* poSRS = NULL;
                 int bAxisOrderAlreadyInverted = FALSE;
@@ -1269,9 +1271,11 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                         /* See http://trac.osgeo.org/gdal/ticket/4041 */
                         /* For now, we restrict to GEOSERVER as apparently the order is always longitude,latitude */
                         /* other servers might also qualify, so this should be relaxed */
-                        if (bIsGEOSERVER &&
+                        /* Also accept when <wfs:DefaultCRS>urn:ogc:def:crs:OGC:1.3:CRS84</wfs:DefaultCRS> */
+                        if ((bIsGEOSERVER &&
                             (strcmp(pszProj4, "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ") == 0 ||
-                             strcmp(pszProj4, "+proj=longlat +datum=WGS84 +no_defs ") == 0))
+                             strcmp(pszProj4, "+proj=longlat +datum=WGS84 +no_defs ") == 0)) ||
+                            strcmp(pszDefaultSRS, "urn:ogc:def:crs:OGC:1.3:CRS84") == 0)
                         {
                             poLayer->SetExtents(dfMinX, dfMinY, dfMaxX, dfMaxY);
                         }
