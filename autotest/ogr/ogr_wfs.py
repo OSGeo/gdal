@@ -732,7 +732,6 @@ def ogr_wfs_xmldescriptionfile():
     feature_defn = lyr.GetLayerDefn()
     index = feature_defn.GetFieldIndex('name')
     sr = lyr.GetSpatialRef()
-    ds = None
 
     if index != 1:
         print(index)
@@ -742,6 +741,24 @@ def ogr_wfs_xmldescriptionfile():
     if wkt.find('WGS 84') == -1:
         print(wkt)
         return 'fail'
+
+    layermetadata = ds.GetLayerByName('WFSLayerMetadata')
+    count_layers = layermetadata.GetFeatureCount()
+    if count_layers != ds.GetLayerCount():
+        gdaltest.post_reason('count_layers != ds.GetLayerCount()')
+        print(count_layers)
+        print(ds.GetLayerCount())
+        return 'fail'
+
+    getcapabilitieslayer = ds.GetLayerByName('WFSGetCapabilities')
+    getcapabilitieslayer_feat = getcapabilitieslayer.GetNextFeature()
+    getcapabilitieslayer_content = getcapabilitieslayer_feat.GetFieldAsString(0)
+    if getcapabilitieslayer_content.find('<WFS_Capabilities') != 0:
+        gdaltest.post_reason('did not get expected result')
+        print(getcapabilitieslayer_content)
+        return 'fail'
+
+    ds = None
 
     return 'success'
 
