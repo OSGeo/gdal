@@ -165,6 +165,7 @@ CPLString OGRWFSLayer::GetDescribeFeatureTypeURL(int bWithNS)
     osURL = CPLURLAddKVP(osURL, "TYPENAME", pszName);
     osURL = CPLURLAddKVP(osURL, "PROPERTYNAME", NULL);
     osURL = CPLURLAddKVP(osURL, "MAXFEATURES", NULL);
+    osURL = CPLURLAddKVP(osURL, "COUNT", NULL);
     osURL = CPLURLAddKVP(osURL, "FILTER", NULL);
     osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", poDS->GetRequiredOutputFormat());
 
@@ -371,7 +372,9 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
 
     if (nMaxFeatures)
     {
-        osURL = CPLURLAddKVP(osURL, "MAXFEATURES", CPLSPrintf("%d", nMaxFeatures));
+        osURL = CPLURLAddKVP(osURL,
+                             atoi(poDS->GetVersion()) >= 2 ? "COUNT" : "MAXFEATURES",
+                             CPLSPrintf("%d", nMaxFeatures));
     }
     if (pszNS && poDS->GetNeedNAMESPACE())
     {
@@ -398,14 +401,20 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
         poFetchedFilterGeom = m_poFilterGeom->clone();
 
         osGeomFilter = "<BBOX>";
-        osGeomFilter += "<PropertyName>";
+        if (atoi(poDS->GetVersion()) >= 2)
+            osGeomFilter += "<ValueReference>";
+        else
+            osGeomFilter += "<PropertyName>";
         if (pszNS)
         {
             osGeomFilter += pszNS;
             osGeomFilter += ":";
         }
         osGeomFilter += osGeometryColumnName;
-        osGeomFilter += "</PropertyName>";
+        if (atoi(poDS->GetVersion()) >= 2)
+            osGeomFilter += "</ValueReference>";
+        else
+            osGeomFilter += "</PropertyName>";
         if ( poDS->RequiresEnvelopeSpatialFilter() )
         {
             osGeomFilter += "<Envelope xmlns=\"http://www.opengis.net/gml\">";
@@ -445,7 +454,11 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
 
     if (osGeomFilter.size() != 0 || osWFSWhere.size() != 0)
     {
-        CPLString osFilter = "<Filter xmlns=\"http://www.opengis.net/ogc\"";
+        CPLString osFilter;
+        if (atoi(poDS->GetVersion()) >= 2)
+            osFilter = "<Filter xmlns=\"http://www.opengis.net/fes/2.0\"";
+        else
+            osFilter = "<Filter xmlns=\"http://www.opengis.net/ogc\"";
         if (pszNS)
         {
             osFilter += " xmlns:";
@@ -1073,7 +1086,8 @@ OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
     if (poDS->HasMinOperators() && pszFilter != NULL)
     {
         int bNeedsNullCheck = FALSE;
-        int nVersion = (strcmp(poDS->GetVersion(),"1.0.0") == 0) ? 100 : 110;
+        int nVersion = (strcmp(poDS->GetVersion(),"1.0.0") == 0) ? 100 :
+                       (atoi(poDS->GetVersion()) >= 2) ? 200 : 110;
         osWFSWhere = WFS_TurnSQLFilterToOGCFilter(pszFilter,
                                               nVersion,
                                               poDS->PropertyIsNotEqualToSupported(),
@@ -1257,6 +1271,8 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
 
     const char* pszValue = CPLGetXMLValue(psRoot, "numberOfFeatures", NULL);
     if (pszValue == NULL)
+        pszValue = CPLGetXMLValue(psRoot, "numberMatched", NULL); /* WFS 2.0.0 */
+    if (pszValue == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find numberOfFeatures");
         CPLDestroyXMLNode( psXML );
@@ -1270,7 +1286,7 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
     int nFeatures = atoi(pszValue);
     /* Hum, http://deegree3-testing.deegree.org:80/deegree-inspire-node/services?MAXFEATURES=10&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=ad:Address&OUTPUTFORMAT=text/xml;%20subtype=gml/3.2.1&RESULTTYPE=hits */
     /* returns more than MAXFEATURES features... So truncate to MAXFEATURES */
-    CPLString osMaxFeatures = CPLURLGetValue(osURL, "MAXFEATURES");
+    CPLString osMaxFeatures = CPLURLGetValue(osURL, atoi(poDS->GetVersion()) >= 2 ? "COUNT" : "MAXFEATURES");
     if (osMaxFeatures.size() != 0)
     {
         int nMaxFeatures = atoi(osMaxFeatures);
@@ -1738,6 +1754,8 @@ OGRErr OGRWFSLayer::SetFeature( OGRFeature *poFeature )
     osPost += "    <ogc:Filter>\n";
     if (poDS->UseFeatureId() || bUseFeatureIdAtLayerLevel)
         osPost += "      <ogc:FeatureId fid=\"";
+    else if (atoi(poDS->GetVersion()) >= 2)
+        osPost += "      <ogc:ResourceId rid=\"";
     else
         osPost += "      <ogc:GmlObjectId gml:id=\"";
     osPost += poFeature->GetFieldAsString(0); osPost += "\"/>\n";

@@ -755,11 +755,11 @@ def ogr_wfs_deegree_gml321():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    if gdaltest.gdalurlopen('http://deegree3-testing.deegree.org:80/deegree-inspire-node/services') is None:
+    if gdaltest.gdalurlopen('http://deegree3-demo.deegree.org:80/deegree-inspire-node/services') is None:
         print('cannot open URL')
         return 'skip'
 
-    ds = ogr.Open('WFS:http://deegree3-testing.deegree.org:80/deegree-inspire-node/services?MAXFEATURES=10')
+    ds = ogr.Open('WFS:http://deegree3-demo.deegree.org:80/deegree-inspire-node/services?MAXFEATURES=10')
     if ds is None:
         if gdal.GetLastErrorMsg().find("Unable to determine the subcontroller for request type 'GetCapabilities' and service type 'WFS'") != -1:
             return 'skip'
@@ -775,6 +775,63 @@ def ogr_wfs_deegree_gml321():
     count = lyr.GetFeatureCount()
     if count != 0:
         print(count)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test WFS 2.0.0 support
+
+def ogr_wfs_deegree_wfs200():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.Open('WFS:http://deegree3-testing.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=2.0.0')
+    if ds is None:
+        if gdaltest.gdalurlopen('WFS:http://deegree3-testing.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=2.0.0') is None:
+            print('cannot open URL')
+            return 'skip'
+        return 'fail'
+
+    lyr = ds.GetLayerByName("app:SGID024_Municipalities2004_edited")
+    lyr.SetAttributeFilter('OBJECTID = 5')
+    count = lyr.GetFeatureCount()
+    if count != 1:
+        gdaltest.post_reason("OBJECTID = 5 filter failed")
+        print(count)
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsInteger('OBJECTID') != 5:
+        gdaltest.post_reason("OBJECTID = 5 filter failed")
+        feat.DumpReadable()
+        return 'fail'
+
+    lyr.SetAttributeFilter("gml_id = 'SGID024_MUNICIPALITIES2004_EDITED_5'")
+    count = lyr.GetFeatureCount()
+    if count != 1:
+        gdaltest.post_reason("gml_id = 'SGID024_MUNICIPALITIES2004_EDITED_5' filter failed")
+        print(count)
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsInteger('OBJECTID') != 6:
+        gdaltest.post_reason("gml_id = 'SGID024_MUNICIPALITIES2004_EDITED_5' filter failed")
+        feat.DumpReadable()
+        return 'fail'
+
+    lyr.SetAttributeFilter(None)
+    lyr.SetSpatialFilterRect(-1e8,-1e8,1e8,1e8)
+    spatialfiltercount = lyr.GetFeatureCount()
+    lyr.SetSpatialFilter(None)
+    allcount = lyr.GetFeatureCount()
+    if allcount != spatialfiltercount or allcount == 0:
+        gdaltest.post_reason('spatialfiltercount != allcount')
+        print(spatialfiltercount)
+        print(allcount)
         return 'fail'
 
     return 'success'
@@ -851,6 +908,7 @@ gdaltest_list = [
     ogr_wfs_ionic_sql,
     ogr_wfs_xmldescriptionfile,
     ogr_wfs_deegree_gml321,
+    ogr_wfs_deegree_wfs200,
     ogr_wfs_esri,
     ogr_wfs_esri_2,
     ogr_wfs_cubewerx,

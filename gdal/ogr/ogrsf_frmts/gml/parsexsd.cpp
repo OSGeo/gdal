@@ -524,7 +524,8 @@ int GMLParseXSD( const char *pszFile,
         if( EQUAL(pszSubGroup, "_FeatureCollection") )
             continue;
 
-        if( !EQUAL(pszSubGroup, "_Feature") )
+        if( !EQUAL(pszSubGroup, "_Feature") &&
+            !EQUAL(pszSubGroup, "AbstractFeature") /* AbstractFeature used by GML 3.2 */ )
         {
             continue;
         }

@@ -64,7 +64,8 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 return
 
-            if self.path == '/fakewfs?SERVICE=WFS&REQUEST=GetCapabilities':
+            if self.path == '/fakewfs?SERVICE=WFS&REQUEST=GetCapabilities' or \
+               self.path == '/fakewfs?SERVICE=WFS&REQUEST=GetCapabilities&ACCEPTVERSIONS=1.1.0,1.0.0':
                 self.send_response(200)
                 self.send_header('Content-type', 'application/xml')
                 self.end_headers()
