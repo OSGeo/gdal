@@ -240,6 +240,13 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             psAttrDef != NULL;
             psAttrDef = psAttrDef->psNext )
     {
+        if( strcmp(psAttrDef->pszValue,"group") == 0 )
+        {
+            /* Too complex schema for us. Aborts parsing */
+            delete poClass;
+            return NULL;
+        }
+
         if( !EQUAL(psAttrDef->pszValue,"element") )
             continue;
 
