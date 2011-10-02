@@ -607,6 +607,12 @@ static int FindComparisonOperator(CPLXMLNode* psNode, const char* pszVal)
         {
             if (strcmp(CPLGetXMLValue(psChild, NULL, ""), pszVal) == 0)
                 return TRUE;
+
+            /* For WFS 2.0.0 */
+            const char* pszName = CPLGetXMLValue(psChild, "name", NULL);
+            if (pszName != NULL && strncmp(pszName, "PropertyIs", 10) == 0 &&
+                strcmp(pszName + 10, pszVal) == 0)
+                return TRUE;
         }
         psChild = psChild->psNext;
     }
@@ -732,6 +738,10 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         osURL = CPLURLAddKVP(osURL, "PROPERTYNAME", NULL);
         osURL = CPLURLAddKVP(osURL, "MAXFEATURES", NULL);
         osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", NULL);
+
+        /* Don't accept WFS 2.0.0 for now, unless explicitely specified */
+        if (CPLURLGetValue(osURL, "ACCEPTVERSIONS").size() == 0)
+            osURL = CPLURLAddKVP(osURL, "ACCEPTVERSIONS", "1.1.0,1.0.0");
 
         CPLDebug("WFS", "%s", osURL.c_str());
 
@@ -946,7 +956,10 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
     {
         /* Some servers happen to support RESULTTYPE=hits in 1.0.0, but there */
         /* is no way to advertisze this */
-        bGetFeatureSupportHits = DetectIfGetFeatureSupportHits(psWFSCapabilities);
+        if (atoi(osVersion) >= 2)
+            bGetFeatureSupportHits = TRUE;  /* WFS >= 2.0.0 supports hits */
+        else
+            bGetFeatureSupportHits = DetectIfGetFeatureSupportHits(psWFSCapabilities);
         osRequiredOutputFormat = DetectRequiredOutputFormat(psWFSCapabilities);
         bRequiresEnvelopeSpatialFilter = DetectRequiresEnvelopeSpatialFilter(psWFSCapabilities);
     }
@@ -999,8 +1012,16 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
             {
                 bHasMinOperators &= FindComparisonOperator(psFilterCap, "LessThan");
                 bHasMinOperators &= FindComparisonOperator(psFilterCap, "GreaterThan");
-                bHasMinOperators &= FindComparisonOperator(psFilterCap, "LessThanEqualTo");
-                bHasMinOperators &= FindComparisonOperator(psFilterCap, "GreaterThanEqualTo");
+                if (atoi(osVersion) >= 2)
+                {
+                    bHasMinOperators &= FindComparisonOperator(psFilterCap, "LessThanOrEqualTo");
+                    bHasMinOperators &= FindComparisonOperator(psFilterCap, "GreaterThanOrEqualTo");
+                }
+                else
+                {
+                    bHasMinOperators &= FindComparisonOperator(psFilterCap, "LessThanEqualTo");
+                    bHasMinOperators &= FindComparisonOperator(psFilterCap, "GreaterThanEqualTo");
+                }
                 bHasMinOperators &= FindComparisonOperator(psFilterCap, "EqualTo");
                 bHasMinOperators &= FindComparisonOperator(psFilterCap, "NotEqualTo");
                 bHasMinOperators &= FindComparisonOperator(psFilterCap, "Like");
@@ -1011,6 +1032,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                                     CPLGetXMLNode(psFilterCap, "Like") != NULL;
             }
             bHasNullCheck = FindComparisonOperator(psFilterCap, "NullCheck") ||
+                            FindComparisonOperator(psFilterCap, "Null") || /* WFS 2.0.0 */
                             CPLGetXMLNode(psFilterCap, "NullCheck") != NULL;
         }
         else

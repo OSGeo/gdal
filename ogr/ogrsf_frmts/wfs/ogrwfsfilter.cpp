@@ -213,7 +213,8 @@ static void WFS_ExprDump(FILE* fp, const Expr* expr)
 static int WFS_ExprDumpGmlObjectIdFilter(CPLString& osFilter,
                                          const Expr* expr,
                                          int bUseFeatureId,
-                                         int bGmlObjectIdNeedsGMLPrefix)
+                                         int bGmlObjectIdNeedsGMLPrefix,
+                                         int nVersion)
 {
     if (expr->eType == TOKEN_EQUAL &&
         expr->expr1->eType == TOKEN_VAR_NAME &&
@@ -222,6 +223,8 @@ static int WFS_ExprDumpGmlObjectIdFilter(CPLString& osFilter,
     {
         if (bUseFeatureId)
             osFilter += "<FeatureId fid=\"";
+        else if (nVersion >= 200)
+            osFilter += "<ResourceId rid=\"";
         else if (!bGmlObjectIdNeedsGMLPrefix)
             osFilter += "<GmlObjectId id=\"";
         else
@@ -240,9 +243,9 @@ static int WFS_ExprDumpGmlObjectIdFilter(CPLString& osFilter,
     else if (expr->eType == TOKEN_OR)
     {
         return WFS_ExprDumpGmlObjectIdFilter(osFilter, expr->expr1,
-                                             bUseFeatureId, bGmlObjectIdNeedsGMLPrefix) &&
+                                             bUseFeatureId, bGmlObjectIdNeedsGMLPrefix, nVersion) &&
                WFS_ExprDumpGmlObjectIdFilter(osFilter, expr->expr2,
-                                             bUseFeatureId, bGmlObjectIdNeedsGMLPrefix);
+                                             bUseFeatureId, bGmlObjectIdNeedsGMLPrefix, nVersion);
     }
     return FALSE;
 }
@@ -278,7 +281,10 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
                 EQUAL(expr->pszVal, "OGR_STYLE"))
                 return FALSE;
 
-            osFilter += "<PropertyName>";
+            if (psOptions->nVersion >= 200)
+                osFilter += "<ValueReference>";
+            else
+                osFilter += "<PropertyName>";
             if (expr->pszVal[0] == '\'' || expr->pszVal[0] == '"')
             {
                 CPLString osVal(expr->pszVal + 1);
@@ -287,7 +293,10 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
             }
             else
                 osFilter += expr->pszVal;
-            osFilter += "</PropertyName>";
+            if (psOptions->nVersion >= 200)
+                osFilter += "</ValueReference>";
+            else
+                osFilter += "</PropertyName>";
             break;
 
         case TOKEN_LITERAL:
@@ -808,7 +817,7 @@ CPLString WFS_TurnSQLFilterToOGCFilter( const char * pszFilter,
     /* If the filter is only made of querying one or several gml_id */
     /* (with OR operator), we turn this to <GmlObjectId> list */
     if (!WFS_ExprDumpGmlObjectIdFilter(osFilter, expr, bUseFeatureId,
-                                       bGmlObjectIdNeedsGMLPrefix))
+                                       bGmlObjectIdNeedsGMLPrefix, nVersion))
     {
         ExprDumpFilterOptions sOptions;
         sOptions.nVersion = nVersion;
