@@ -275,6 +275,22 @@ def gdal_cp(argv, progress = None):
         srcfile = '/vsicurl/' + srcfile
 
     if recurse:
+        # Make sure that 'gdal_cp.py -r [srcdir/]lastsubdir targetdir' creates
+        # targetdir/lastsubdir if targetdir already exists (like cp -r does).
+        if srcfile[-1] == '/':
+            srcfile = srcfile[0:len(srcfile)-1]
+        statBufSrc = gdal.VSIStatL(srcfile, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG)
+        statBufDst = gdal.VSIStatL(targetfile, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG)
+        if statBufSrc is not None and statBufSrc.IsDirectory() and statBufDst is not None and statBufDst.IsDirectory():
+            if targetfile[-1] != '/':
+                if srcfile.rfind('/') != -1:
+                    targetfile = targetfile + srcfile[srcfile.rfind('/'):]
+                else:
+                    targetfile = targetfile + '/' + srcfile
+                try:
+                    os.stat(targetfile)
+                except:
+                    os.mkdir(targetfile)
         return gdal_cp_recurse(srcfile, targetfile, progress, skip_failure)
 
     (srcdir, pattern) = os.path.split(srcfile)
