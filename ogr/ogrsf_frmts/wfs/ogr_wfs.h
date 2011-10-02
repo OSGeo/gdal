@@ -227,6 +227,8 @@ class OGRWFSDataSource : public OGRDataSource
 
     int                 bKeepLayerNamePrefix;
 
+    CPLHTTPResult*      SendGetCapabilities(const char* pszBaseURL,
+                                            CPLString& osTypeName);
   public:
                         OGRWFSDataSource();
                         ~OGRWFSDataSource();
