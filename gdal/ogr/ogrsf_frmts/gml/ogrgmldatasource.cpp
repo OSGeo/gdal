@@ -319,10 +319,23 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
             const char* pszNumberOfFeatures = strstr(szPtr, "numberOfFeatures=");
             if (pszNumberOfFeatures)
             {
-                char ch = pszNumberOfFeatures[17];
-                if ((ch == '\'' || ch == '"') && strchr(pszNumberOfFeatures + 17 + 1, ch) != NULL)
+                pszNumberOfFeatures += 17;
+                char ch = pszNumberOfFeatures[0];
+                if ((ch == '\'' || ch == '"') && strchr(pszNumberOfFeatures + 1, ch) != NULL)
                 {
-                    nNumberOfFeatures = atoi(pszNumberOfFeatures + 17 + 1);
+                    nNumberOfFeatures = atoi(pszNumberOfFeatures + 1);
+                }
+            }
+            else if ((pszNumberOfFeatures = strstr(szPtr, "numberReturned=")) != NULL) /* WFS 2.0.0 */
+            {
+                pszNumberOfFeatures += 15;
+                char ch = pszNumberOfFeatures[0];
+                if ((ch == '\'' || ch == '"') && strchr(pszNumberOfFeatures + 1, ch) != NULL)
+                {
+                    /* 'unknown' might be a valid value in a corrected version of WFS 2.0 */
+                    /* but it will also evaluate to 0, that is considered as unknown, so nothing */
+                    /* particular to do */
+                    nNumberOfFeatures = atoi(pszNumberOfFeatures + 1);
                 }
             }
         }
