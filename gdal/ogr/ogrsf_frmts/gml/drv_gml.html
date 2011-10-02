@@ -255,8 +255,11 @@ EXTERNAL.  This writes a GML application schema file to a corresponding .xsd fil
 file, but this is experimental and almost certainly not valid XML.
 OFF disables schema generation (and is implicit if XSISCHEMAURI is used).<p>
 
-<li> <b>FORMAT</b>: (OGR >= 1.8.0) This can be set to GML3 in order
-to write GML files that follow GML3 SF-0 profile. Otherwise GML2 will be used.<p>
+<li> <b>FORMAT</b>: (OGR >= 1.8.0) This can be set to <i>GML3</i> in order
+to write GML files that follow GML3 SF-0 profile. Starting with OGR 1.9.0,
+this can also be set to <i>GML3Deegree</i>, in order to produce a GML 3.1.1 .XSD schema,
+with a few variations with respect to what is recommanded by GML3 SF-0 profile,
+but that will be better accepted by some software (such as Deegree 3). If not specified, GML2 will be used.<p>
 
 <li> <b>GML3_LONGSRS</b>=YES/NO. (OGR >= 1.8.0, only valid when FORMAT=GML3) Default to YES. If YES, SRS with EPSG authority will
 be written with the "urn:ogc:def:crs:EPSG::" prefix.
@@ -375,7 +378,7 @@ ogr2ogr -f GML output.gml PG:'host=myserver dbname=warmerda' -sql "SELECT pop_19
 
 <ul>
 <li> <a href="http://www.opengeospatial.org/standards/gml">GML Specifications</a><p>
-<li> <a href="http://portal.opengeospatial.org/files/?artifact_id=15201">GML 3.1.1 simple features profile</a><p>
+<li> <a href="http://portal.opengeospatial.org/files/?artifact_id=15201">GML 3.1.1 simple features profile - OGC(R) 06-049r1</a><p>
 <li> <a href="http://xml.apache.org/xerces2-j/index.html">Xerces</a><p>
 <li> <a href="drv_nas.html">NAS/ALKIS : specialized GML driver for cadastral data in Germany</a><p>
 </ul>

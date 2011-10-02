@@ -801,7 +801,7 @@ def ogr_gml_20():
 ###############################################################################
 # Test writing GML3
 
-def ogr_gml_21():
+def ogr_gml_21(format = 'GML3'):
 
     if not gdaltest.have_gml_reader:
         return 'skip'
@@ -810,7 +810,13 @@ def ogr_gml_21():
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
 
-    ds = ogr.GetDriverByName('GML').CreateDataSource('tmp/gml_21.gml', options = ['FORMAT=GML3'] )
+    for filename in ['tmp/gml_21.gml', 'tmp/gml_21.xsd', 'tmp/gml_21.gfs']:
+        try:
+            os.remove(filename)
+        except:
+            pass
+
+    ds = ogr.GetDriverByName('GML').CreateDataSource('tmp/gml_21.gml', options = ['FORMAT=' + format] )
     lyr = ds.CreateLayer('firstlayer', srs = sr)
     lyr.CreateField(ogr.FieldDefn('string_field', ogr.OFTString))
 
@@ -854,7 +860,10 @@ def ogr_gml_21():
     f2.close()
 
     f1 = open('tmp/gml_21.xsd', 'rt')
-    f2 = open('data/expected_gml_21.xsd', 'rt')
+    if format == 'GML3':
+        f2 = open('data/expected_gml_21.xsd', 'rt')
+    else:
+        f2 = open('data/expected_gml_21_deegree3.xsd', 'rt')
     line1 = f1.readline()
     line2 = f2.readline()
     while line1 != '':
@@ -870,6 +879,9 @@ def ogr_gml_21():
     f2.close()
 
     return 'success'
+
+def ogr_gml_21_deegree3():
+    return ogr_gml_21('GML3Deegree')
 
 ###############################################################################
 # Read a OpenLS DetermineRouteResponse document
@@ -1423,6 +1435,7 @@ gdaltest_list = [
     ogr_gml_19,
     ogr_gml_20,
     ogr_gml_21,
+    ogr_gml_21_deegree3,
     ogr_gml_22,
     ogr_gml_23,
     ogr_gml_24,
