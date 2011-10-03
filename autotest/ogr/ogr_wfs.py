@@ -808,7 +808,7 @@ def ogr_wfs_deegree_wfs200():
 
     ds = ogr.Open('WFS:http://deegree3-testing.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=2.0.0')
     if ds is None:
-        if gdaltest.gdalurlopen('WFS:http://deegree3-testing.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=2.0.0') is None:
+        if gdaltest.gdalurlopen('http://deegree3-testing.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=2.0.0') is None:
             print('cannot open URL')
             return 'skip'
         return 'fail'
