@@ -1888,11 +1888,27 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue(poDS->papszHeader,"file_type" ) != NULL )
     {
+        // when the file type is one of these we return an invalid file type err
+            //'envi meta file'
+            //'envi virtual mosaic'
+            //'envi spectral library'
+            //'envi fft result'
+
+        // when the file type is one of these we open it 
+            //'envi standard'
+            //'envi classification' 
+
+        // when the file type is anything else we attempt to open it as a raster.
+
         const char * pszEnviFileType;
         pszEnviFileType = CSLFetchNameValue(poDS->papszHeader,"file_type");
-        if(!EQUAL(pszEnviFileType, "ENVI Standard") &&
-           !EQUAL(pszEnviFileType, "ENVI") &&
-           !EQUAL(pszEnviFileType, "ENVI Classification"))
+
+        // envi gdal does not support any of these
+        // all others we will attempt to open
+        if(EQUAL(pszEnviFileType, "envi meta file") ||
+           EQUAL(pszEnviFileType, "envi virtual mosaic") ||
+           EQUAL(pszEnviFileType, "envi spectral library") ||
+           EQUAL(pszEnviFileType, "envi fft result"))
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
                       "File %s contains an invalid file type in the ENVI .hdr\n"
