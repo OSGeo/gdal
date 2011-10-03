@@ -327,8 +327,40 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
          psPos != NULL;
          psPos = psPos->psNext )
     {
-        if( psPos->eType != CXT_Element 
-            || !EQUAL(BareGMLElement(psPos->pszValue),"pos") )
+        if( psPos->eType != CXT_Element  )
+            continue;
+
+        const char* pszSubElement = BareGMLElement(psPos->pszValue);
+
+        if( EQUAL(pszSubElement, "pointProperty") )
+        {
+            const CPLXMLNode *psPointPropertyIter;
+            for( psPointPropertyIter = psPos->psChild;
+                 psPointPropertyIter != NULL;
+                 psPointPropertyIter = psPointPropertyIter->psNext )
+            {
+                if( psPointPropertyIter->eType != CXT_Element  )
+                    continue;
+
+                if (EQUAL(BareGMLElement(psPointPropertyIter->pszValue),"Point") )
+                {
+                    OGRPoint oPoint;
+                    if( ParseGMLCoordinates( psPointPropertyIter, &oPoint ) )
+                    {
+                        int bSuccess = AddPoint( poGeometry, oPoint.getX(),
+                                                 oPoint.getY(), oPoint.getZ(),
+                                                 oPoint.getCoordinateDimension() );
+                        if (bSuccess)
+                            bHasFoundPosElement = TRUE;
+                        else
+                            return FALSE;
+                    }
+                }
+            }
+            continue;
+        }
+
+        if( !EQUAL(pszSubElement,"pos") )
             continue;
 
         const char* pszPos = GetElementText( psPos );
