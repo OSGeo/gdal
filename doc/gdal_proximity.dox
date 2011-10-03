@@ -3,7 +3,7 @@
 
 produces a raster proximity map
 
-\section synopsis SYNOPSIS
+\section gdal_proximity_synopsis SYNOPSIS
 
 \verbatim
 gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n] 
@@ -13,7 +13,7 @@ gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n]
                   [-maxdist n] [-nodata n] [-fixed-buf-val n]
 \endverbatim
 
-\section description DESCRIPTION
+\section gdal_proximity_description DESCRIPTION
 
 The gdal_proximity.py script generates a raster proximity map indicating
 the distance from the center of each pixel to the center of the nearest 
@@ -66,7 +66,7 @@ Specify a value to be applied to all pixels that are within the -maxdist of targ
 </dl>
 
 \if man
-\section author AUTHORS
+\section gdal_proximity_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>
 \endif
 */
