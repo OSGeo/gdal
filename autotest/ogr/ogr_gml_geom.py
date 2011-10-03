@@ -414,6 +414,33 @@ def gml_Curve():
     return 'success'
 
 ###############################################################################
+# Test GML Curve with pointProperty elements
+
+def gml_Curve_with_pointProperty():
+
+    gml = """<gml:Curve xmlns:gml="http://www.opengis.net/gml" srsName="foo">
+    <gml:segments>
+        <gml:LineStringSegment>
+            <gml:pos>1 2</gml:pos>
+            <gml:pointProperty>
+                <gml:Point>
+                    <gml:pos>3 4</gml:pos>
+                </gml:Point>
+            </gml:pointProperty>
+        </gml:LineStringSegment>
+    </gml:segments>
+</gml:Curve>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'LINESTRING (1 2,3 4)':
+        gdaltest.post_reason( '<gml:Curve> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 # Test GML MultiCurve
 
 def gml_MultiCurve():
@@ -1061,6 +1088,7 @@ gdaltest_list.append( gml_out_multipolygon_srs )
 gdaltest_list.append( gml_out_geometrycollection_srs )
 gdaltest_list.append( gml_Box )
 gdaltest_list.append( gml_Curve )
+gdaltest_list.append( gml_Curve_with_pointProperty )
 gdaltest_list.append( gml_MultiCurve )
 gdaltest_list.append( gml_MultiSurface )
 gdaltest_list.append( gml_MultiSurface_surfaceMembers )
@@ -1077,7 +1105,6 @@ gdaltest_list.append( gml_Circle )
 gdaltest_list.append( gml_invalid_geoms )
 gdaltest_list.append( gml_write_gml3_geometries )
 gdaltest_list.append( gml_write_gml3_srs )
-
 
 if __name__ == '__main__':
 
