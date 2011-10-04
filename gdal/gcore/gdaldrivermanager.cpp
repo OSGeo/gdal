@@ -545,7 +545,7 @@ void GDALDriverManager::SetHome( const char * pszNewHome )
  * \brief This method unload undesirable drivers.
  *
  * All drivers specified in the space delimited list in the GDAL_SKIP 
- * environmentvariable) will be deregistered and destroyed.  This method 
+ * environment variable) will be deregistered and destroyed.  This method 
  * should normally be called after registration of standard drivers to allow 
  * the user a way of unloading undesired drivers.  The GDALAllRegister()
  * function already invokes AutoSkipDrivers() at the end, so if that functions
