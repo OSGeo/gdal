@@ -888,10 +888,10 @@ CPLErr PostGISRasterDataset::IRasterIO(GDALRWFlag eRWFlag,
         {
             osCommand.Printf("SELECT rid, %s FROM %s.%s WHERE "
                 "ST_Intersects(%s, ST_PolygonFromText('POLYGON((%f %f, %f %f, %f %f"
-                ", %f %f, %f %f))', %d))", pszColumn, pszSchema, pszTable, pszColumn, 
-                adfProjWin[0], adfProjWin[1], adfProjWin[2], adfProjWin[3], 
-                adfProjWin[4], adfProjWin[5], adfProjWin[6], adfProjWin[7], 
-                adfProjWin[0], adfProjWin[1], nSrid);
+                ", %f %f, %f %f))', %d)) ORDER BY rid", pszColumn, pszSchema, 
+                pszTable, pszColumn, adfProjWin[0], adfProjWin[1], adfProjWin[2], 
+                adfProjWin[3], adfProjWin[4], adfProjWin[5], adfProjWin[6], 
+                adfProjWin[7], adfProjWin[0], adfProjWin[1], nSrid);
         }
 
 
@@ -899,7 +899,7 @@ CPLErr PostGISRasterDataset::IRasterIO(GDALRWFlag eRWFlag,
         {
             osCommand.Printf("SELECT rid, %s FROM %s.%s WHERE %s AND "
                 "ST_Intersects(%s, ST_PolygonFromText('POLYGON((%f %f, %f %f, %f %f"
-                ", %f %f, %f %f))', %d))", pszColumn, pszSchema, pszTable,
+                ", %f %f, %f %f))', %d)) ORDER BY rid", pszColumn, pszSchema, pszTable,
                 pszWhere, pszColumn, adfProjWin[0], adfProjWin[1], adfProjWin[2], 
                 adfProjWin[3], adfProjWin[4], adfProjWin[5], adfProjWin[6], 
                 adfProjWin[7], adfProjWin[0], adfProjWin[1], nSrid);
@@ -989,8 +989,7 @@ CPLErr PostGISRasterDataset::IRasterIO(GDALRWFlag eRWFlag,
                             1), &nWKBLength);                
     
                     pBandData = (char *)GET_BAND_DATA(pbyData, poBand->nBand, 
-                            nBandDataSize,
-                    nBandDataLength);
+                            nBandDataSize, nBandDataLength);
                     
                     CPLDebug("PostGIS_Raster", "PostGISRasterDataset::IRasterIO(): "
                         "Block data length for band %d: %d", poBand->nBand,
