@@ -39,7 +39,6 @@ import gdaltest
 
 import imp # for netcdf_cf_setup()
 
-
 ###############################################################################
 # Netcdf Functions
 ###############################################################################
@@ -231,15 +230,27 @@ def netcdf_cf_setup():
             print('NOTICE: netcdf CF compliance ckecks: using local checker script')
             return 'success'
 
+
     #http method with curl, should use python module but easier for now
-    #dont use this for now...
-    #try:
-    #    bla = subprocess.Popen( ['curl'],stdout=None, stderr=None )
-    #except (OSError, ValueError):
-    #    command = None
-    #else:
-    #    method = 'http'
-    #    command = shlex.split( 'curl --form cfversion="1.5" --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"' )
+    code = -1
+    try:
+        (ret, err) = gdaltest.runexternal_out_and_err('curl')
+    except :
+        print 'no curl executable'
+        command = None
+    else:
+        #make sure script is responding
+        import urllib
+        try:
+            code = urllib.urlopen("http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl").getcode()
+        except :
+            print 'script not responding'
+            command = None
+            code = -1
+    if code == 200:
+        gdaltest.netcdf_cf_method = 'http'
+        print 'NOTICE: netcdf CF compliance ckecks: using remote http checker script, consider installing cdms2 locally'
+        return 'success'
 
     if gdaltest.netcdf_cf_method is None:
         print('NOTICE: skipping netcdf CF compliance checks')
@@ -259,6 +270,12 @@ def netcdf_cf_get_command(ifile, version='auto'):
                 + ' -s ' + gdaltest.netcdf_cf_files['s'] \
                 + ' -u ' + gdaltest.netcdf_cf_files['u'] \
                 + ' -v ' + version +' ' + ifile 
+        elif method is 'http':
+            #command = shlex.split( 'curl --form cfversion="1.5" --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"' )
+            #for now use CF-1.2 (which is what the driver uses)
+            #switch to 1.5 when the driver is updated, and auto when it becomes available
+            version = '1.2'
+            command = 'curl --form cfversion=' + version + ' --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"'
 
     return command
         
@@ -282,6 +299,8 @@ def netcdf_cf_check_file(ifile,version='auto', silent=True):
         return 'skip'
 
     try:
+        if gdaltest.netcdf_cf_method == 'http':
+            print 'calling ',command
         (ret, err) = gdaltest.runexternal_out_and_err(command)
     except :
         gdaltest.post_reason('ERROR with command - ' + command)
@@ -290,6 +309,9 @@ def netcdf_cf_check_file(ifile,version='auto', silent=True):
     output_all = ret
     output_err = ''
     output_warn = ''
+
+#    print output_all
+#    silent = False
 
     for line in output_all.splitlines( ):
         #optimize this with regex
