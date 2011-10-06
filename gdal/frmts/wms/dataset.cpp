@@ -52,12 +52,14 @@ GDALWMSDataset::GDALWMSDataset() {
     m_default_tile_count_x = 1;
     m_default_tile_count_y = 1;
     m_default_overview_count = -1;
+    m_zeroblock_on_serverexceptions = 0;
 }
 
 GDALWMSDataset::~GDALWMSDataset() {
     if (m_mini_driver) delete m_mini_driver;
     if (m_cache) delete m_cache;
 }
+
 CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     CPLErr ret = CE_None;
 
@@ -293,10 +295,44 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     const char *pszUserAgent = CPLGetXMLValue(config, "UserAgent", "");
     if (pszUserAgent[0] != '\0')
         m_osUserAgent = pszUserAgent;
-
+    
     const char *pszReferer = CPLGetXMLValue(config, "Referer", "");
     if (pszReferer[0] != '\0')
         m_osReferer = pszReferer;
+    
+    if (ret == CE_None) {
+        const char *pszHttpZeroBlockCodes = CPLGetXMLValue(config, "ZeroBlockHttpCodes", "");
+        if(pszHttpZeroBlockCodes == '\0') {
+            m_http_zeroblock_codes.push_back(204);
+        } else {
+            char **kv = CSLTokenizeString2(pszHttpZeroBlockCodes,",",CSLT_HONOURSTRINGS);
+            int nCount = CSLCount(kv);
+            for(int i=0; i<nCount; i++) {
+                int code = atoi(kv[i]);
+                if(code <= 0) {
+                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of ZeroBlockHttpCodes \"%s\", comma separated HTTP response codes expected.",
+                            kv[i]);
+                    ret = CE_Failure;
+                    break;
+                }
+                m_http_zeroblock_codes.push_back(code);
+            }
+            CSLDestroy(kv);
+        }
+    }
+
+
+    if (ret == CE_None) {
+        const char *pszZeroExceptions = CPLGetXMLValue(config, "ZeroBlockOnServerException", "");
+        if(pszZeroExceptions[0] != '\0') {
+            m_zeroblock_on_serverexceptions = StrToBool(pszZeroExceptions);
+            if (m_zeroblock_on_serverexceptions == -1) {
+                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of ZeroBlockOnServerException \"%s\", true/false expected.",
+                     pszZeroExceptions);
+                ret = CE_Failure;
+            }
+        }
+    }
 
     if (ret == CE_None) {
         const char *max_conn = CPLGetXMLValue(config, "MaxConnections", "");

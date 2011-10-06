@@ -207,6 +207,14 @@
             <td class="desc">HTTP Referer string. Some servers might require it (optional). Added in GDAL 1.9.0</td>
         </tr>
 		<tr>
+			<td class="xml">    &lt;ZeroBlockHttpCodes&gt;<span class="value">204,404</span>&lt;/ZeroBlockHttpCodes&gt;</td>
+			<td class="desc">Comma separated list of HTTP response codes that will be interpreted as a 0 filled image (i.e. black for 3 bands, and transparent for 4 bands) instead of aborting the request. Added in GDAL 1.9.0. (optional, defaults to 204)</td>
+		</tr>
+		<tr>
+			<td class="xml">    &lt;ZeroBlockOnServerException&gt;<span class="value">true</span>&lt;/ZeroBlockOnServerException&gt;</td>
+			<td class="desc">Wether to treat a Service Exception returned by the server as a 0 filled image instead of aborting the request. Added in 1.9.0. (optional, defaults to false)</td>
+		</tr>
+		<tr>
 			<td class="xml">&lt;/GDAL_WMS&gt;</td>
 			<td class="desc"></td>
 		</tr>
