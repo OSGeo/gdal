@@ -166,6 +166,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
             if ((download_requests[i].nStatus == 200) && (download_requests[i].pabyData != NULL) && (download_requests[i].nDataLen > 0)) {
                 CPLString file_name(BufferToVSIFile(download_requests[i].pabyData, download_requests[i].nDataLen));
                 if (file_name.size() > 0) {
+                    bool wms_exception = false;
                     /* check for error xml */
                     if (download_requests[i].nDataLen >= 20) {
                         const char *download_data = reinterpret_cast<char *>(download_requests[i].pabyData);
@@ -175,6 +176,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                             if (ReportWMSException(file_name.c_str()) != CE_None) {
                                 CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: The server returned unknown exception.");
                             }
+                            wms_exception = true;
                             ret = CE_Failure;
                         }
                     }
@@ -196,23 +198,38 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                                 ret = CE_Failure;
                             }
                         }
+                    } else if( wms_exception && m_parent_dataset->m_zeroblock_on_serverexceptions ) {
+                         void *p = 0;
+                         if ((download_blocks[i].x == x) && (download_blocks[i].y == y)) p = buffer;
+                         if (ZeroBlock(download_blocks[i].x, download_blocks[i].y, nBand, p) != CE_None) {
+                             CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: ZeroBlock failed.");
+                         } else {
+                             ret = CE_None;
+                         }
+
                     }
                     VSIUnlink(file_name.c_str());
                 }
-            } else if (download_requests[i].nStatus == 204) {
-                if (!advise_read) {
-                    void *p = 0;
-                    if ((download_blocks[i].x == x) && (download_blocks[i].y == y)) p = buffer;
-                    if (ZeroBlock(download_blocks[i].x, download_blocks[i].y, nBand, p) != CE_None) {
-                        CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: ZeroBlock failed.");
-                        ret = CE_Failure;
-                    }
-                }
             } else {
-                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Unable to download block %d, %d.\n  URL: %s\n  HTTP status code: %d, error: %s.",
-                    download_blocks[i].x, download_blocks[i].y, download_requests[i].pszURL, download_requests[i].nStatus, 
+               std::vector<int>::iterator zero_it = std::find(
+                     m_parent_dataset->m_http_zeroblock_codes.begin(),
+                     m_parent_dataset->m_http_zeroblock_codes.end(),
+                     download_requests[i].nStatus);
+               if ( zero_it != m_parent_dataset->m_http_zeroblock_codes.end() ) {
+                    if (!advise_read) {
+                        void *p = 0;
+                        if ((download_blocks[i].x == x) && (download_blocks[i].y == y)) p = buffer;
+                        if (ZeroBlock(download_blocks[i].x, download_blocks[i].y, nBand, p) != CE_None) {
+                            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: ZeroBlock failed.");
+                            ret = CE_Failure;
+                        }
+                    }
+                } else {
+                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Unable to download block %d, %d.\n  URL: %s\n  HTTP status code: %d, error: %s.",
+                        download_blocks[i].x, download_blocks[i].y, download_requests[i].pszURL, download_requests[i].nStatus, 
 		    download_requests[i].pszError ? download_requests[i].pszError : "(null)");
-                ret = CE_Failure;
+                    ret = CE_Failure;
+                }
             }
         }
         CPLHTTPCleanupRequest(&download_requests[i]);

@@ -255,6 +255,8 @@ protected:
     int m_http_timeout;
     int m_clamp_requests;
     int m_unsafeSsl;
+    std::vector<int> m_http_zeroblock_codes;
+    int m_zeroblock_on_serverexceptions;
     CPLString m_osUserAgent;
     CPLString m_osReferer;
 
