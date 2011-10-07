@@ -37,8 +37,6 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 
-import imp # for netcdf_cf_setup()
-
 ###############################################################################
 # Netcdf Functions
 ###############################################################################
@@ -179,162 +177,6 @@ def netcdf_test_file_copy( ifile, tmpfile, driver_name ):
     return 'success'
 
 ###############################################################################
-# Netcdf CF compliance Functions
-###############################################################################
-
-###############################################################################
-#check for necessary files and software
-def netcdf_cf_setup():
-
-    #global vars
-    gdaltest.netcdf_cf_method = None
-    gdaltest.netcdf_cf_files = None
-
-    #if netcdf is not supported, skip detection
-    if gdaltest.netcdf_drv is None:
-        return 'skip'
-
-    #try local method
-    try:
-        imp.find_module( 'cdms2' )
-    except ImportError:
-        #print 'NOTICE: cdms2 not installed!'
-        #print '        see installation notes at http://pypi.python.org/pypi/cfchecker'
-        pass
-    else:
-        xml_dir = './data/netcdf_cf_xml'
-        tmp_dir = './tmp/cache'
-        files = dict()
-        files['a'] = xml_dir+'/area-type-table.xml'
-        files['s'] = tmp_dir+'/cf-standard-name-table-v18.xml'
-        #either find udunits path in UDUNITS_PATH, or based on location of udunits app, or copy all .xml files to data
-        #opt_u = '/home/soft/share/udunits/udunits2.xml'
-        files['u'] = xml_dir+'/udunits2.xml'
-        #look for xml files
-        if not ( os.path.exists(files['a']) and os.path.exists(files['s']) and os.path.exists(files['u']) ):
-            print('NOTICE: cdms2 installed, but necessary xml files are not found!')
-            print('        the following files must exist:')
-            print('        '+xml_dir+'/area-type-table.xml from http://cf-pcmdi.llnl.gov/documents/cf-standard-names/area-type-table/1/area-type-table.xml')
-            print('        '+tmp_dir+'/cf-standard-name-table-v18.xml - http://cf-pcmdi.llnl.gov/documents/cf-standard-names/standard-name-table/18/cf-standard-name-table.xml')
-            print('        '+xml_dir+'/udunits2*.xml from a UDUNITS2 install')
-            #try to get cf-standard-name-table
-            if not os.path.exists(files['s']):
-                #print '        downloading cf-standard-name-table.xml (v18) from http://cf-pcmdi.llnl.gov ...'
-                if not gdaltest.download_file('http://cf-pcmdi.llnl.gov/documents/cf-standard-names/standard-name-table/18/cf-standard-name-table.xml',
-                                              'cf-standard-name-table-v18.xml'):
-                    print('        Failed to download, please get it and try again.')
-
-        if os.path.exists(files['a']) and os.path.exists(files['s']) and os.path.exists(files['u']):
-            gdaltest.netcdf_cf_method = 'local'
-            gdaltest.netcdf_cf_files = files
-            print('NOTICE: netcdf CF compliance ckecks: using local checker script')
-            return 'success'
-
-
-    #http method with curl, should use python module but easier for now
-    code = -1
-    try:
-        (ret, err) = gdaltest.runexternal_out_and_err('curl')
-    except :
-        print 'no curl executable'
-        command = None
-    else:
-        #make sure script is responding
-        import urllib
-        try:
-            code = urllib.urlopen("http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl").getcode()
-        except :
-            print 'script not responding'
-            command = None
-            code = -1
-    if code == 200:
-        gdaltest.netcdf_cf_method = 'http'
-        print 'NOTICE: netcdf CF compliance ckecks: using remote http checker script, consider installing cdms2 locally'
-        return 'success'
-
-    if gdaltest.netcdf_cf_method is None:
-        print('NOTICE: skipping netcdf CF compliance checks')
-    return 'success' 
-
-###############################################################################
-#build a command used to check ifile
-
-def netcdf_cf_get_command(ifile, version='auto'):
-
-    command = ''
-    #fetch method obtained previously
-    method = gdaltest.netcdf_cf_method
-    if method is not None:
-        if method is 'local':
-            command = './netcdf_cfchecks.py -a ' + gdaltest.netcdf_cf_files['a'] \
-                + ' -s ' + gdaltest.netcdf_cf_files['s'] \
-                + ' -u ' + gdaltest.netcdf_cf_files['u'] \
-                + ' -v ' + version +' ' + ifile 
-        elif method is 'http':
-            #command = shlex.split( 'curl --form cfversion="1.5" --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"' )
-            #for now use CF-1.2 (which is what the driver uses)
-            #switch to 1.5 when the driver is updated, and auto when it becomes available
-            version = '1.2'
-            command = 'curl --form cfversion=' + version + ' --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"'
-
-    return command
-        
-
-###############################################################################
-# Check a file for CF compliance
-
-def netcdf_cf_check_file(ifile,version='auto', silent=True):
-
-    #if not silent:
-    #    print 'checking file ' + ifile
-
-    if ( not os.path.exists(ifile) ):
-        return 'skip'
-
-    output_all = ''
-
-    command = netcdf_cf_get_command(ifile, version='auto')
-    if command is None:
-        gdaltest.post_reason('no suitable method found, skipping')
-        return 'skip'
-
-    try:
-        if gdaltest.netcdf_cf_method == 'http':
-            print 'calling ',command
-        (ret, err) = gdaltest.runexternal_out_and_err(command)
-    except :
-        gdaltest.post_reason('ERROR with command - ' + command)
-        return 'fail'
-        
-    output_all = ret
-    output_err = ''
-    output_warn = ''
-
-#    print output_all
-#    silent = False
-
-    for line in output_all.splitlines( ):
-        #optimize this with regex
-        if 'ERROR' in line and not 'ERRORS' in line:
-            output_err = output_err + '\n' + line
-        elif 'WARNING' in line and not 'WARNINGS' in line:
-            output_warn = output_warn + '\n' + line
-
-    result = 'success'
-
-    if output_err is not '':
-        result = 'fail'
-    if not silent and output_err != '':
-        print('=> CF check ERRORS for file ' + ifile + ' : ' + output_err)
-
-    if not silent:
-        if output_warn is not '':
-            print('CF check WARNINGS for file ' + ifile + ' : ' + output_warn)
-
-    return result
-
-
-###############################################################################
 # Netcdf Tests
 ###############################################################################
 
@@ -343,9 +185,8 @@ def netcdf_cf_check_file(ifile,version='auto', silent=True):
 
 def netcdf_1():
 
-    #setup netcdf and netcdf_cf environment
+    #setup netcdf environment
     netcdf_setup()
-    netcdf_cf_setup() 
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
@@ -769,69 +610,6 @@ def netcdf_17():
     
     return 'success'
 
-###############################################################################
-#test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, tif->nc->tif
-def netcdf_18():
-
-    if gdaltest.netcdf_drv is None:
-        return 'skip'
-
-    result = netcdf_test_file_copy( 'data/trmm.tif', 'tmp/netcdf_18.nc', 'NETCDF' )
-    if result != 'fail':
-        result = netcdf_test_file_copy( 'tmp/netcdf_18.nc', 'tmp/netcdf_18.tif', 'GTIFF' )
-
-    result_cf = 'success'
-    if gdaltest.netcdf_cf_method is not None:
-        result_cf = netcdf_cf_check_file( 'tmp/netcdf_18.nc','auto',False )
-
-    if result != 'fail' and result_cf != 'fail':
-        return 'success'
-    else:
-        return 'fail'
-
-
-###############################################################################
-#test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, nc->nc
-def netcdf_19():
-
-    if gdaltest.netcdf_drv is None:
-        return 'skip'
-
-    result = netcdf_test_file_copy( 'data/trmm.nc', 'tmp/netcdf_19.nc', 'NETCDF' )
-
-    result_cf = 'success'
-    if gdaltest.netcdf_cf_method is not None:
-        result_cf = netcdf_cf_check_file( 'tmp/netcdf_19.nc','auto',False )
-
-    if result != 'fail' and result_cf != 'fail':
-        return 'success'
-    else:
-        return 'fail'
-
-
-###############################################################################
-#test copy and CF compliance for lat/lon (W*S84) file, tif->nc->tif
-def netcdf_20():
-
-    if gdaltest.netcdf_drv is None:
-        return 'skip'
-
-    result = 'success'
-    result_cf = 'success'
-
-    result = netcdf_test_file_copy( 'data/trmm-wgs84.tif', 'tmp/netcdf_20.nc', 'NETCDF' )
-
-    if result == 'success':
-        result = netcdf_test_file_copy( 'tmp/netcdf_20.nc', 'tmp/netcdf_20.tif', 'GTIFF' )
-
-    result_cf = 'success'
-    if gdaltest.netcdf_cf_method is not None:
-        result_cf = netcdf_cf_check_file( 'tmp/netcdf_20.nc','auto',False )
-
-    if result != 'fail' and result_cf != 'fail':
-        return 'success'
-    else:
-        return 'fail'
      
 ###############################################################################
 
@@ -852,10 +630,8 @@ gdaltest_list = [
     netcdf_14,
     netcdf_15,
     netcdf_16,
-    netcdf_17,
-    netcdf_18,
-    netcdf_19,
-    netcdf_20 ]
+    netcdf_17
+ ]
 
 if __name__ == '__main__':
 
