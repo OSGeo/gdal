@@ -783,6 +783,462 @@ OGRErr OGRDataSource::ProcessSQLDropTable( const char *pszSQLCommand )
 }
 
 /************************************************************************/
+/*                    OGRDataSourceParseSQLType()                       */
+/************************************************************************/
+
+/* All arguments will be altered */
+static OGRFieldType OGRDataSourceParseSQLType(char* pszType, int& nWidth, int &nPrecision)
+{
+    char* pszParenthesis = strchr(pszType, '(');
+    if (pszParenthesis)
+    {
+        nWidth = atoi(pszParenthesis + 1);
+        *pszParenthesis = '\0';
+        char* pszComma = strchr(pszParenthesis + 1, ',');
+        if (pszComma)
+            nPrecision = atoi(pszComma + 1);
+    }
+
+    OGRFieldType eType = OFTString;
+    if (EQUAL(pszType, "INTEGER"))
+        eType = OFTInteger;
+    else if (EQUAL(pszType, "INTEGER[]"))
+        eType = OFTIntegerList;
+    else if (EQUAL(pszType, "FLOAT") ||
+             EQUAL(pszType, "NUMERIC") ||
+             EQUAL(pszType, "DOUBLE") /* unofficial alias */ ||
+             EQUAL(pszType, "REAL") /* unofficial alias */)
+        eType = OFTReal;
+    else if (EQUAL(pszType, "FLOAT[]") ||
+             EQUAL(pszType, "NUMERIC[]") ||
+             EQUAL(pszType, "DOUBLE[]") /* unofficial alias */ ||
+             EQUAL(pszType, "REAL[]") /* unofficial alias */)
+        eType = OFTRealList;
+    else if (EQUAL(pszType, "CHARACTER") ||
+             EQUAL(pszType, "TEXT") /* unofficial alias */ ||
+             EQUAL(pszType, "STRING") /* unofficial alias */ ||
+             EQUAL(pszType, "VARCHAR") /* unofficial alias */)
+        eType = OFTString;
+    else if (EQUAL(pszType, "TEXT[]") ||
+             EQUAL(pszType, "STRING[]") /* unofficial alias */||
+             EQUAL(pszType, "VARCHAR[]") /* unofficial alias */)
+        eType = OFTStringList;
+    else if (EQUAL(pszType, "DATE"))
+        eType = OFTDate;
+    else if (EQUAL(pszType, "TIME"))
+        eType = OFTTime;
+    else if (EQUAL(pszType, "TIMESTAMP") ||
+             EQUAL(pszType, "DATETIME") /* unofficial alias */ )
+        eType = OFTDateTime;
+    else
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Unsupported column type '%s'. Defaulting to VARCHAR",
+                 pszType);
+    }
+    return eType;
+}
+
+/************************************************************************/
+/*                    ProcessSQLAlterTableAddColumn()                   */
+/*                                                                      */
+/*      The correct syntax for adding a column in the OGR SQL           */
+/*      dialect is:                                                     */
+/*                                                                      */
+/*          ALTER TABLE <layername> ADD [COLUMN] <columnname> <columntype>*/
+/************************************************************************/
+
+OGRErr OGRDataSource::ProcessSQLAlterTableAddColumn( const char *pszSQLCommand )
+
+{
+    char **papszTokens = CSLTokenizeString( pszSQLCommand );
+
+/* -------------------------------------------------------------------- */
+/*      Do some general syntax checking.                                */
+/* -------------------------------------------------------------------- */
+    const char* pszLayerName = NULL;
+    const char* pszColumnName = NULL;
+    char* pszType = NULL;
+    int iTypeIndex = 0;
+    int nTokens = CSLCount(papszTokens);
+
+    if( nTokens >= 7
+        && EQUAL(papszTokens[0],"ALTER")
+        && EQUAL(papszTokens[1],"TABLE")
+        && EQUAL(papszTokens[3],"ADD")
+        && EQUAL(papszTokens[4],"COLUMN"))
+    {
+        pszLayerName = papszTokens[2];
+        pszColumnName = papszTokens[5];
+        iTypeIndex = 6;
+    }
+    else if( nTokens >= 6
+             && EQUAL(papszTokens[0],"ALTER")
+             && EQUAL(papszTokens[1],"TABLE")
+             && EQUAL(papszTokens[3],"ADD"))
+    {
+        pszLayerName = papszTokens[2];
+        pszColumnName = papszTokens[4];
+        iTypeIndex = 5;
+    }
+    else
+    {
+        CSLDestroy( papszTokens );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Syntax error in ALTER TABLE ADD COLUMN command.\n"
+                  "Was '%s'\n"
+                  "Should be of form 'ALTER TABLE <layername> ADD [COLUMN] <columnname> <columntype>'",
+                  pszSQLCommand );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Merge type components into a single string if there were split  */
+/*      with spaces                                                     */
+/* -------------------------------------------------------------------- */
+    CPLString osType;
+    for(int i=iTypeIndex;i<nTokens;i++)
+    {
+        osType += papszTokens[i];
+        CPLFree(papszTokens[i]);
+    }
+    pszType = papszTokens[iTypeIndex] = CPLStrdup(osType);
+    papszTokens[iTypeIndex + 1] = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Find the named layer.                                           */
+/* -------------------------------------------------------------------- */
+    OGRLayer *poLayer = GetLayerByName(pszLayerName);
+    if( poLayer == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s failed, no such layer as `%s'.",
+                  pszSQLCommand,
+                  pszLayerName );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add column.                                                     */
+/* -------------------------------------------------------------------- */
+
+    int nWidth = 0, nPrecision = 0;
+    OGRFieldType eType = OGRDataSourceParseSQLType(pszType, nWidth, nPrecision);
+    OGRFieldDefn oFieldDefn(pszColumnName, eType);
+    oFieldDefn.SetWidth(nWidth);
+    oFieldDefn.SetPrecision(nPrecision);
+
+    CSLDestroy( papszTokens );
+
+    return poLayer->CreateField( &oFieldDefn );
+}
+
+/************************************************************************/
+/*                    ProcessSQLAlterTableDropColumn()                  */
+/*                                                                      */
+/*      The correct syntax for droping a column in the OGR SQL          */
+/*      dialect is:                                                     */
+/*                                                                      */
+/*          ALTER TABLE <layername> DROP [COLUMN] <columnname>          */
+/************************************************************************/
+
+OGRErr OGRDataSource::ProcessSQLAlterTableDropColumn( const char *pszSQLCommand )
+
+{
+    char **papszTokens = CSLTokenizeString( pszSQLCommand );
+
+/* -------------------------------------------------------------------- */
+/*      Do some general syntax checking.                                */
+/* -------------------------------------------------------------------- */
+    const char* pszLayerName = NULL;
+    const char* pszColumnName = NULL;
+    if( CSLCount(papszTokens) == 6
+        && EQUAL(papszTokens[0],"ALTER")
+        && EQUAL(papszTokens[1],"TABLE")
+        && EQUAL(papszTokens[3],"DROP")
+        && EQUAL(papszTokens[4],"COLUMN"))
+    {
+        pszLayerName = papszTokens[2];
+        pszColumnName = papszTokens[5];
+    }
+    else if( CSLCount(papszTokens) == 5
+             && EQUAL(papszTokens[0],"ALTER")
+             && EQUAL(papszTokens[1],"TABLE")
+             && EQUAL(papszTokens[3],"DROP"))
+    {
+        pszLayerName = papszTokens[2];
+        pszColumnName = papszTokens[4];
+    }
+    else
+    {
+        CSLDestroy( papszTokens );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Syntax error in ALTER TABLE DROP COLUMN command.\n"
+                  "Was '%s'\n"
+                  "Should be of form 'ALTER TABLE <layername> DROP [COLUMN] <columnname>'",
+                  pszSQLCommand );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the named layer.                                           */
+/* -------------------------------------------------------------------- */
+    OGRLayer *poLayer = GetLayerByName(pszLayerName);
+    if( poLayer == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s failed, no such layer as `%s'.",
+                  pszSQLCommand,
+                  pszLayerName );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the field.                                                 */
+/* -------------------------------------------------------------------- */
+
+    int nFieldIndex = poLayer->GetLayerDefn()->GetFieldIndex(pszColumnName);
+    if( nFieldIndex < 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s failed, no such field as `%s'.",
+                  pszSQLCommand,
+                  pszColumnName );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+
+/* -------------------------------------------------------------------- */
+/*      Remove it.                                                      */
+/* -------------------------------------------------------------------- */
+
+    CSLDestroy( papszTokens );
+
+    return poLayer->DeleteField( nFieldIndex );
+}
+
+/************************************************************************/
+/*                 ProcessSQLAlterTableRenameColumn()                   */
+/*                                                                      */
+/*      The correct syntax for renaming a column in the OGR SQL         */
+/*      dialect is:                                                     */
+/*                                                                      */
+/*       ALTER TABLE <layername> RENAME [COLUMN] <oldname> TO <newname> */
+/************************************************************************/
+
+OGRErr OGRDataSource::ProcessSQLAlterTableRenameColumn( const char *pszSQLCommand )
+
+{
+    char **papszTokens = CSLTokenizeString( pszSQLCommand );
+
+/* -------------------------------------------------------------------- */
+/*      Do some general syntax checking.                                */
+/* -------------------------------------------------------------------- */
+    const char* pszLayerName = NULL;
+    const char* pszOldColName = NULL;
+    const char* pszNewColName = NULL;
+    if( CSLCount(papszTokens) == 8
+        && EQUAL(papszTokens[0],"ALTER")
+        && EQUAL(papszTokens[1],"TABLE")
+        && EQUAL(papszTokens[3],"RENAME")
+        && EQUAL(papszTokens[4],"COLUMN")
+        && EQUAL(papszTokens[6],"TO"))
+    {
+        pszLayerName = papszTokens[2];
+        pszOldColName = papszTokens[5];
+        pszNewColName = papszTokens[7];
+    }
+    else if( CSLCount(papszTokens) == 7
+             && EQUAL(papszTokens[0],"ALTER")
+             && EQUAL(papszTokens[1],"TABLE")
+             && EQUAL(papszTokens[3],"RENAME")
+             && EQUAL(papszTokens[5],"TO"))
+    {
+        pszLayerName = papszTokens[2];
+        pszOldColName = papszTokens[4];
+        pszNewColName = papszTokens[6];
+    }
+    else
+    {
+        CSLDestroy( papszTokens );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Syntax error in ALTER TABLE RENAME COLUMN command.\n"
+                  "Was '%s'\n"
+                  "Should be of form 'ALTER TABLE <layername> RENAME [COLUMN] <columnname> <columntype>'",
+                  pszSQLCommand );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the named layer.                                           */
+/* -------------------------------------------------------------------- */
+    OGRLayer *poLayer = GetLayerByName(pszLayerName);
+    if( poLayer == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s failed, no such layer as `%s'.",
+                  pszSQLCommand,
+                  pszLayerName );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the field.                                                 */
+/* -------------------------------------------------------------------- */
+
+    int nFieldIndex = poLayer->GetLayerDefn()->GetFieldIndex(pszOldColName);
+    if( nFieldIndex < 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s failed, no such field as `%s'.",
+                  pszSQLCommand,
+                  pszOldColName );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Rename column.                                                  */
+/* -------------------------------------------------------------------- */
+    OGRFieldDefn* poOldFieldDefn = poLayer->GetLayerDefn()->GetFieldDefn(nFieldIndex);
+    OGRFieldDefn oNewFieldDefn(poOldFieldDefn);
+    oNewFieldDefn.SetName(pszNewColName);
+
+    CSLDestroy( papszTokens );
+
+    return poLayer->AlterFieldDefn( nFieldIndex, &oNewFieldDefn, ALTER_NAME_FLAG );
+}
+
+/************************************************************************/
+/*                 ProcessSQLAlterTableAlterColumn()                    */
+/*                                                                      */
+/*      The correct syntax for altering the type of a column in the     */
+/*      OGR SQL dialect is:                                             */
+/*                                                                      */
+/*   ALTER TABLE <layername> ALTER [COLUMN] <columnname> TYPE <newtype> */
+/************************************************************************/
+
+OGRErr OGRDataSource::ProcessSQLAlterTableAlterColumn( const char *pszSQLCommand )
+
+{
+    char **papszTokens = CSLTokenizeString( pszSQLCommand );
+
+/* -------------------------------------------------------------------- */
+/*      Do some general syntax checking.                                */
+/* -------------------------------------------------------------------- */
+    const char* pszLayerName = NULL;
+    const char* pszColumnName = NULL;
+    char* pszType = NULL;
+    int iTypeIndex = 0;
+    int nTokens = CSLCount(papszTokens);
+
+    if( nTokens >= 8
+        && EQUAL(papszTokens[0],"ALTER")
+        && EQUAL(papszTokens[1],"TABLE")
+        && EQUAL(papszTokens[3],"ALTER")
+        && EQUAL(papszTokens[4],"COLUMN")
+        && EQUAL(papszTokens[6],"TYPE"))
+    {
+        pszLayerName = papszTokens[2];
+        pszColumnName = papszTokens[5];
+        iTypeIndex = 7;
+    }
+    else if( nTokens >= 7
+             && EQUAL(papszTokens[0],"ALTER")
+             && EQUAL(papszTokens[1],"TABLE")
+             && EQUAL(papszTokens[3],"ALTER")
+             && EQUAL(papszTokens[5],"TYPE"))
+    {
+        pszLayerName = papszTokens[2];
+        pszColumnName = papszTokens[4];
+        iTypeIndex = 6;
+    }
+    else
+    {
+        CSLDestroy( papszTokens );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Syntax error in ALTER TABLE ALTER COLUMN command.\n"
+                  "Was '%s'\n"
+                  "Should be of form 'ALTER TABLE <layername> ALTER [COLUMN] <columnname> TYPE <columntype>'",
+                  pszSQLCommand );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Merge type components into a single string if there were split  */
+/*      with spaces                                                     */
+/* -------------------------------------------------------------------- */
+    CPLString osType;
+    for(int i=iTypeIndex;i<nTokens;i++)
+    {
+        osType += papszTokens[i];
+        CPLFree(papszTokens[i]);
+    }
+    pszType = papszTokens[iTypeIndex] = CPLStrdup(osType);
+    papszTokens[iTypeIndex + 1] = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Find the named layer.                                           */
+/* -------------------------------------------------------------------- */
+    OGRLayer *poLayer = GetLayerByName(pszLayerName);
+    if( poLayer == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s failed, no such layer as `%s'.",
+                  pszSQLCommand,
+                  pszLayerName );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find the field.                                                 */
+/* -------------------------------------------------------------------- */
+
+    int nFieldIndex = poLayer->GetLayerDefn()->GetFieldIndex(pszColumnName);
+    if( nFieldIndex < 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s failed, no such field as `%s'.",
+                  pszSQLCommand,
+                  pszColumnName );
+        CSLDestroy( papszTokens );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Alter column.                                                   */
+/* -------------------------------------------------------------------- */
+
+    OGRFieldDefn* poOldFieldDefn = poLayer->GetLayerDefn()->GetFieldDefn(nFieldIndex);
+    OGRFieldDefn oNewFieldDefn(poOldFieldDefn);
+
+    int nWidth = 0, nPrecision = 0;
+    OGRFieldType eType = OGRDataSourceParseSQLType(pszType, nWidth, nPrecision);
+    oNewFieldDefn.SetType(eType);
+    oNewFieldDefn.SetWidth(nWidth);
+    oNewFieldDefn.SetPrecision(nPrecision);
+
+    int nFlags = 0;
+    if (poOldFieldDefn->GetType() != oNewFieldDefn.GetType())
+        nFlags |= ALTER_TYPE_FLAG;
+    if (poOldFieldDefn->GetWidth() != oNewFieldDefn.GetWidth() ||
+        poOldFieldDefn->GetPrecision() != oNewFieldDefn.GetPrecision())
+        nFlags |= ALTER_WIDTH_PRECISION_FLAG;
+
+    CSLDestroy( papszTokens );
+
+    if (nFlags == 0)
+        return OGRERR_NONE;
+    else
+        return poLayer->AlterFieldDefn( nFieldIndex, &oNewFieldDefn, nFlags );
+}
+
+/************************************************************************/
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
@@ -827,6 +1283,50 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
     {
         ProcessSQLDropTable( pszStatement );
         return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle ALTER TABLE statements specially.                        */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszStatement,"ALTER TABLE",11) )
+    {
+        char **papszTokens = CSLTokenizeString( pszStatement );
+        if( CSLCount(papszTokens) >= 4 &&
+            EQUAL(papszTokens[3],"ADD") )
+        {
+            ProcessSQLAlterTableAddColumn( pszStatement );
+            CSLDestroy(papszTokens);
+            return NULL;
+        }
+        else if( CSLCount(papszTokens) >= 4 &&
+                 EQUAL(papszTokens[3],"DROP") )
+        {
+            ProcessSQLAlterTableDropColumn( pszStatement );
+            CSLDestroy(papszTokens);
+            return NULL;
+        }
+        else if( CSLCount(papszTokens) >= 4 &&
+                 EQUAL(papszTokens[3],"RENAME") )
+        {
+            ProcessSQLAlterTableRenameColumn( pszStatement );
+            CSLDestroy(papszTokens);
+            return NULL;
+        }
+        else if( CSLCount(papszTokens) >= 4 &&
+                 EQUAL(papszTokens[3],"ALTER") )
+        {
+            ProcessSQLAlterTableAlterColumn( pszStatement );
+            CSLDestroy(papszTokens);
+            return NULL;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Unsupported ALTER TABLE command : %s",
+                      pszStatement );
+            CSLDestroy(papszTokens);
+            return NULL;
+        }
     }
     
 /* -------------------------------------------------------------------- */
