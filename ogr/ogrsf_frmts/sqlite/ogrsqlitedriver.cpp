@@ -552,6 +552,18 @@ int OGRSQLiteDriver::InitWithEPSG(sqlite3* hDB, int bSpatialite)
 }
 
 /************************************************************************/
+/*                         DeleteDataSource()                           */
+/************************************************************************/
+
+OGRErr OGRSQLiteDriver::DeleteDataSource( const char *pszName )
+{
+    if (VSIUnlink( pszName ) == 0)
+        return OGRERR_NONE;
+    else
+        return OGRERR_FAILURE;
+}
+
+/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
@@ -559,6 +571,8 @@ int OGRSQLiteDriver::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODrCCreateDataSource) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODrCDeleteDataSource) )
         return TRUE;
     else
         return FALSE;
