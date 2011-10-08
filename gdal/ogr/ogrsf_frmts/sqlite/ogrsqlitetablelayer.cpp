@@ -672,7 +672,7 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
             continue;
 
         sprintf( pszOldFieldList+strlen(pszOldFieldList), 
-                 ", '%s'", poFldDefn->GetNameRef() );
+                 ", \"%s\"", poFldDefn->GetNameRef() );
 
         sprintf( pszNewFieldList+strlen(pszNewFieldList), 
                  ", '%s' %s", poFldDefn->GetNameRef(),
