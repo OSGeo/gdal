@@ -30,6 +30,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_sqlite.h"
+#include "ogr_p.h"
 #include <string>
 
 CPL_CVSID("$Id$");
@@ -453,6 +454,15 @@ int OGRSQLiteTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCCreateField) )
         return poDS->GetUpdate();
 
+    else if( EQUAL(pszCap,OLCDeleteField) )
+        return poDS->GetUpdate();
+
+    else if( EQUAL(pszCap,OLCAlterFieldDefn) )
+        return poDS->GetUpdate();
+
+    else if( EQUAL(pszCap,OLCReorderFields) )
+        return poDS->GetUpdate();
+
     else 
         return OGRSQLiteLayer::TestCapability( pszCap );
 }
@@ -614,6 +624,45 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     return OGRERR_NONE;
 }
 
+/************************************************************************/
+/*                     InitFieldListForRecrerate()                      */
+/************************************************************************/
+
+void OGRSQLiteTableLayer::InitFieldListForRecrerate(char* & pszNewFieldList,
+                                                    char* & pszFieldListForSelect,
+                                                    int nExtraSpace)
+{
+    int iField, nFieldListLen = 100 + nExtraSpace;
+
+    for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    {
+        nFieldListLen +=
+            strlen(poFeatureDefn->GetFieldDefn(iField)->GetNameRef()) + 50;
+    }
+
+    pszFieldListForSelect = (char *) CPLCalloc(1,nFieldListLen);
+    pszNewFieldList = (char *) CPLCalloc(1,nFieldListLen);
+
+/* -------------------------------------------------------------------- */
+/*      Build list of old fields, and the list of new fields.           */
+/* -------------------------------------------------------------------- */
+    sprintf( pszFieldListForSelect, "%s", pszFIDColumn ? pszFIDColumn : "OGC_FID" );
+    sprintf( pszNewFieldList, "%s INTEGER PRIMARY KEY",pszFIDColumn ? pszFIDColumn : "OGC_FID" );
+
+    if( poFeatureDefn->GetGeomType() != wkbNone )
+    {
+        strcat( pszFieldListForSelect, "," );
+        strcat( pszNewFieldList, "," );
+
+        strcat( pszFieldListForSelect, osGeomColumn );
+        strcat( pszNewFieldList, osGeomColumn );
+
+        if ( eGeomFormat == OSGF_WKT )
+            strcat( pszNewFieldList, " VARCHAR" );
+        else
+            strcat( pszNewFieldList, " BLOB" );
+    }
+}
 
 /************************************************************************/
 /*                       AddColumnAncientMethod()                       */
@@ -625,41 +674,20 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
 /* -------------------------------------------------------------------- */
 /*      How much space do we need for the list of fields.               */
 /* -------------------------------------------------------------------- */
-    int iField, nFieldListLen = 100;
+    int iField;
     char *pszOldFieldList, *pszNewFieldList;
 
-    for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
-    {
-        nFieldListLen += 
-            strlen(poFeatureDefn->GetFieldDefn(iField)->GetNameRef()) + 50;
-    }
-
-    nFieldListLen += strlen( oField.GetNameRef() );
-
-    pszOldFieldList = (char *) CPLCalloc(1,nFieldListLen);
-    pszNewFieldList = (char *) CPLCalloc(1,nFieldListLen);
+    InitFieldListForRecrerate(pszNewFieldList, pszOldFieldList,
+                              strlen( oField.GetNameRef() ));
 
 /* -------------------------------------------------------------------- */
 /*      Build list of old fields, and the list of new fields.           */
 /* -------------------------------------------------------------------- */
-    sprintf( pszOldFieldList, "%s", "OGC_FID" );
-    sprintf( pszNewFieldList, "%s", "OGC_FID INTEGER PRIMARY KEY" );
-    
+
     int iNextOrdinal = 3; /* _rowid_ is 1, OGC_FID is 2 */
 
     if( poFeatureDefn->GetGeomType() != wkbNone )
     {
-        strcat( pszOldFieldList, "," );
-        strcat( pszNewFieldList, "," );
-
-        strcat( pszOldFieldList, osGeomColumn );
-        strcat( pszNewFieldList, osGeomColumn );
-
-        if ( eGeomFormat == OSGF_WKT )
-            strcat( pszNewFieldList, " VARCHAR" );
-        else
-            strcat( pszNewFieldList, " BLOB" );
-
         iNextOrdinal++;
     }
 
@@ -668,7 +696,7 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
         OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(iField);
 
         // we already added OGC_FID so don't do it again
-        if( EQUAL(poFldDefn->GetNameRef(),"OGC_FID") )
+        if( EQUAL(poFldDefn->GetNameRef(),pszFIDColumn ? pszFIDColumn : "OGC_FID") )
             continue;
 
         sprintf( pszOldFieldList+strlen(pszOldFieldList), 
@@ -819,6 +847,356 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
     }
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           RecreateTable()                            */
+/************************************************************************/
+
+OGRErr OGRSQLiteTableLayer::RecreateTable(const char* pszFieldListForSelect,
+                                          const char* pszNewFieldList,
+                                          const char* pszGenericErrorMessage)
+{
+/* -------------------------------------------------------------------- */
+/*      Do this all in a transaction.                                   */
+/* -------------------------------------------------------------------- */
+    poDS->SoftStartTransaction();
+
+/* -------------------------------------------------------------------- */
+/*      Save existing related triggers and index                        */
+/* -------------------------------------------------------------------- */
+    int rc;
+    char *pszErrMsg = NULL;
+    sqlite3 *hDB = poDS->GetDB();
+    CPLString osSQL;
+
+    osSQL.Printf( "SELECT sql FROM sqlite_master WHERE type IN ('trigger','index') AND tbl_name='%s'",
+                   pszEscapedTableName );
+
+    int nRowTriggerIndexCount, nColTriggerIndexCount;
+    char **papszTriggerIndexResult = NULL;
+    rc = sqlite3_get_table( hDB, osSQL.c_str(), &papszTriggerIndexResult,
+                            &nRowTriggerIndexCount, &nColTriggerIndexCount, &pszErrMsg );
+
+/* -------------------------------------------------------------------- */
+/*      Make a backup of the table.                                     */
+/* -------------------------------------------------------------------- */
+
+    if( rc == SQLITE_OK )
+        rc = sqlite3_exec( hDB,
+                       CPLSPrintf( "CREATE TABLE t1_back(%s)",
+                                   pszNewFieldList ),
+                       NULL, NULL, &pszErrMsg );
+
+    if( rc == SQLITE_OK )
+        rc = sqlite3_exec( hDB,
+                           CPLSPrintf( "INSERT INTO t1_back SELECT %s FROM '%s'",
+                                       pszFieldListForSelect,
+                                       pszEscapedTableName ),
+                           NULL, NULL, &pszErrMsg );
+
+
+/* -------------------------------------------------------------------- */
+/*      Drop the original table                                         */
+/* -------------------------------------------------------------------- */
+    if( rc == SQLITE_OK )
+        rc = sqlite3_exec( hDB,
+                           CPLSPrintf( "DROP TABLE '%s'",
+                                       pszEscapedTableName ),
+                           NULL, NULL, &pszErrMsg );
+
+/* -------------------------------------------------------------------- */
+/*      Rename backup table as new table                                */
+/* -------------------------------------------------------------------- */
+    if( rc == SQLITE_OK )
+    {
+        const char *pszCmd =
+            CPLSPrintf( "ALTER TABLE t1_back RENAME TO '%s'",
+                        pszEscapedTableName);
+        rc = sqlite3_exec( hDB, pszCmd,
+                           NULL, NULL, &pszErrMsg );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Recreate existing related tables, triggers and index            */
+/* -------------------------------------------------------------------- */
+
+    if( rc == SQLITE_OK )
+    {
+        int i;
+
+        for(i = 1; i <= nRowTriggerIndexCount && nColTriggerIndexCount == 1 && rc == SQLITE_OK; i++)
+        {
+            if (papszTriggerIndexResult[i] != NULL && papszTriggerIndexResult[i][0] != '\0')
+                rc = sqlite3_exec( hDB,
+                            papszTriggerIndexResult[i],
+                            NULL, NULL, &pszErrMsg );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      COMMIT on success or ROLLBACK on failuire.                      */
+/* -------------------------------------------------------------------- */
+
+    sqlite3_free_table( papszTriggerIndexResult );
+
+    if( rc == SQLITE_OK )
+    {
+        poDS->SoftCommit();
+
+        return OGRERR_NONE;
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s:\n %s",
+                  pszGenericErrorMessage,
+                  pszErrMsg );
+        sqlite3_free( pszErrMsg );
+
+        poDS->SoftRollback();
+
+        return OGRERR_FAILURE;
+    }
+}
+
+/************************************************************************/
+/*                             DeleteField()                            */
+/************************************************************************/
+
+OGRErr OGRSQLiteTableLayer::DeleteField( int iFieldToDelete )
+{
+    if (!poDS->GetUpdate())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Can't delete fields on a read-only layer.");
+        return OGRERR_FAILURE;
+    }
+
+    if (iFieldToDelete < 0 || iFieldToDelete >= poFeatureDefn->GetFieldCount())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Invalid field index");
+        return OGRERR_FAILURE;
+    }
+
+    ResetReading();
+
+/* -------------------------------------------------------------------- */
+/*      Build list of old fields, and the list of new fields.           */
+/* -------------------------------------------------------------------- */
+    int iField;
+    char *pszNewFieldList, *pszFieldListForSelect;
+    InitFieldListForRecrerate(pszNewFieldList, pszFieldListForSelect);
+
+    for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    {
+        OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(iField);
+
+        if (iField == iFieldToDelete)
+            continue;
+
+        sprintf( pszFieldListForSelect+strlen(pszFieldListForSelect),
+                 ", \"%s\"", poFldDefn->GetNameRef() );
+
+        sprintf( pszNewFieldList+strlen(pszNewFieldList),
+                 ", '%s' %s", poFldDefn->GetNameRef(),
+                 OGRFieldTypeToSQliteType(poFldDefn->GetType()) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Recreate table.                                                 */
+/* -------------------------------------------------------------------- */
+    CPLString osErrorMsg;
+    osErrorMsg.Printf("Failed to remove field %s from table %s",
+                  poFeatureDefn->GetFieldDefn(iFieldToDelete)->GetNameRef(),
+                  poFeatureDefn->GetName());
+
+    OGRErr eErr = RecreateTable(pszFieldListForSelect,
+                                pszNewFieldList,
+                                osErrorMsg.c_str());
+
+    CPLFree( pszFieldListForSelect );
+    CPLFree( pszNewFieldList );
+
+    if (eErr != OGRERR_NONE)
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Finish                                                          */
+/* -------------------------------------------------------------------- */
+    int iNextOrdinal = 3; /* _rowid_ is 1, OGC_FID is 2 */
+
+    if( poFeatureDefn->GetGeomType() != wkbNone )
+    {
+        iNextOrdinal++;
+    }
+
+    int iNewField = 0;
+    for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    {
+        if (iField == iFieldToDelete)
+            continue;
+
+        panFieldOrdinals[iNewField ++] = iNextOrdinal++;
+    }
+
+    return poFeatureDefn->DeleteFieldDefn( iFieldToDelete );
+}
+
+/************************************************************************/
+/*                           AlterFieldDefn()                           */
+/************************************************************************/
+
+OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poNewFieldDefn, int nFlags )
+{
+    if (!poDS->GetUpdate())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Can't alter field definition on a read-only layer.");
+        return OGRERR_FAILURE;
+    }
+
+    if (iFieldToAlter < 0 || iFieldToAlter >= poFeatureDefn->GetFieldCount())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Invalid field index");
+        return OGRERR_FAILURE;
+    }
+
+    ResetReading();
+
+/* -------------------------------------------------------------------- */
+/*      Build list of old fields, and the list of new fields.           */
+/* -------------------------------------------------------------------- */
+    int iField;
+    char *pszNewFieldList, *pszFieldListForSelect;
+    InitFieldListForRecrerate(pszNewFieldList, pszFieldListForSelect,
+                              strlen(poNewFieldDefn->GetNameRef()));
+
+    for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    {
+        OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(iField);
+
+        sprintf( pszFieldListForSelect+strlen(pszFieldListForSelect),
+                 ", \"%s\"", poFldDefn->GetNameRef() );
+
+        if (iField == iFieldToAlter)
+        {
+            sprintf( pszNewFieldList+strlen(pszNewFieldList),
+                    ", '%s' %s",
+                    (nFlags & ALTER_NAME_FLAG) ? poNewFieldDefn->GetNameRef() :
+                                                 poFldDefn->GetNameRef(),
+                    OGRFieldTypeToSQliteType((nFlags & ALTER_TYPE_FLAG) ?
+                            poNewFieldDefn->GetType() : poFldDefn->GetType()) );
+        }
+        else
+        {
+            sprintf( pszNewFieldList+strlen(pszNewFieldList),
+                    ", '%s' %s", poFldDefn->GetNameRef(),
+                    OGRFieldTypeToSQliteType(poFldDefn->GetType()) );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Recreate table.                                                 */
+/* -------------------------------------------------------------------- */
+    CPLString osErrorMsg;
+    osErrorMsg.Printf("Failed to alter field %s from table %s",
+                  poFeatureDefn->GetFieldDefn(iFieldToAlter)->GetNameRef(),
+                  poFeatureDefn->GetName());
+
+    OGRErr eErr = RecreateTable(pszFieldListForSelect,
+                                pszNewFieldList,
+                                osErrorMsg.c_str());
+
+    CPLFree( pszFieldListForSelect );
+    CPLFree( pszNewFieldList );
+
+    if (eErr != OGRERR_NONE)
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Finish                                                          */
+/* -------------------------------------------------------------------- */
+
+    OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(iFieldToAlter);
+
+    if (nFlags & ALTER_TYPE_FLAG)
+        poFieldDefn->SetType(poNewFieldDefn->GetType());
+    if (nFlags & ALTER_NAME_FLAG)
+        poFieldDefn->SetName(poNewFieldDefn->GetNameRef());
+    if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
+    {
+        poFieldDefn->SetWidth(poNewFieldDefn->GetWidth());
+        poFieldDefn->SetPrecision(poNewFieldDefn->GetPrecision());
+    }
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           ReorderFields()                            */
+/************************************************************************/
+
+OGRErr OGRSQLiteTableLayer::ReorderFields( int* panMap )
+{
+    if (!poDS->GetUpdate())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Can't reorder fields on a read-only layer.");
+        return OGRERR_FAILURE;
+    }
+
+    if (poFeatureDefn->GetFieldCount() == 0)
+        return OGRERR_NONE;
+
+    OGRErr eErr = OGRCheckPermutation(panMap, poFeatureDefn->GetFieldCount());
+    if (eErr != OGRERR_NONE)
+        return eErr;
+
+    ResetReading();
+
+/* -------------------------------------------------------------------- */
+/*      Build list of old fields, and the list of new fields.           */
+/* -------------------------------------------------------------------- */
+    int iField;
+    char *pszNewFieldList, *pszFieldListForSelect;
+    InitFieldListForRecrerate(pszNewFieldList, pszFieldListForSelect);
+
+    for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    {
+        OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(panMap[iField]);
+
+        sprintf( pszFieldListForSelect+strlen(pszFieldListForSelect),
+                 ", \"%s\"", poFldDefn->GetNameRef() );
+
+        sprintf( pszNewFieldList+strlen(pszNewFieldList),
+                ", '%s' %s", poFldDefn->GetNameRef(),
+                OGRFieldTypeToSQliteType(poFldDefn->GetType()) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Recreate table.                                                 */
+/* -------------------------------------------------------------------- */
+    CPLString osErrorMsg;
+    osErrorMsg.Printf("Failed to reorder fields from table %s",
+                  poFeatureDefn->GetName());
+
+    eErr = RecreateTable(pszFieldListForSelect,
+                                pszNewFieldList,
+                                osErrorMsg.c_str());
+
+    CPLFree( pszFieldListForSelect );
+    CPLFree( pszNewFieldList );
+
+    if (eErr != OGRERR_NONE)
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Finish                                                          */
+/* -------------------------------------------------------------------- */
+
+    return poFeatureDefn->ReorderFieldDefns( panMap );
 }
 
 /************************************************************************/
