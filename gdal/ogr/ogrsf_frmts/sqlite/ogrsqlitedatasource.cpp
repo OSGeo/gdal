@@ -1138,6 +1138,7 @@ OGRErr OGRSQLiteDataSource::DeleteLayer(int iLayer)
     }
 
     CPLString osLayerName = GetLayer(iLayer)->GetName();
+    CPLString osGeometryColumn = GetLayer(iLayer)->GetGeometryColumn();
 
 /* -------------------------------------------------------------------- */
 /*      Blow away our OGR structures related to the layer.  This is     */
@@ -1158,6 +1159,7 @@ OGRErr OGRSQLiteDataSource::DeleteLayer(int iLayer)
 
     CPLString osEscapedLayerName = OGRSQLiteEscape(osLayerName);
     const char* pszEscapedLayerName = osEscapedLayerName.c_str();
+    const char* pszGeometryColumn = osGeometryColumn.size() ? osGeometryColumn.c_str() : NULL;
 
     rc = sqlite3_exec( hDB, CPLSPrintf( "DROP TABLE '%s'", pszEscapedLayerName ),
                        NULL, NULL, &pszErrMsg );
@@ -1189,6 +1191,28 @@ OGRErr OGRSQLiteDataSource::DeleteLayer(int iLayer)
                       osCommand.c_str(), pszErrMsg );
             sqlite3_free( pszErrMsg );
             return OGRERR_FAILURE;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Drop spatialite spatial index tables                            */
+/* -------------------------------------------------------------------- */
+        if( bIsSpatiaLite && pszGeometryColumn )
+        {
+            osCommand.Printf( "DROP TABLE idx_%s_%s", pszEscapedLayerName,
+                              pszGeometryColumn);
+            rc = sqlite3_exec( hDB, osCommand, NULL, NULL, NULL );
+
+            osCommand.Printf( "DROP TABLE idx_%s_%s_node", pszEscapedLayerName,
+                              pszGeometryColumn);
+            rc = sqlite3_exec( hDB, osCommand, NULL, NULL, NULL );
+
+            osCommand.Printf( "DROP TABLE idx_%s_%s_parent", pszEscapedLayerName,
+                              pszGeometryColumn);
+            rc = sqlite3_exec( hDB, osCommand, NULL, NULL, NULL );
+
+            osCommand.Printf( "DROP TABLE idx_%s_%s_rowid", pszEscapedLayerName,
+                              pszGeometryColumn);
+            rc = sqlite3_exec( hDB, osCommand, NULL, NULL, NULL );
         }
     }
     return OGRERR_NONE;
