@@ -97,24 +97,21 @@ def netcdf_cf_setup():
 
 
     #http method with curl, should use python module but easier for now
-    code = -1
+    success = False
     try:
         (ret, err) = gdaltest.runexternal_out_and_err('curl')
     except :
-        print 'no curl executable'
-        command = None
+        print('no curl executable')
     else:
         #make sure script is responding
-        import urllib
-        try:
-            code = urllib.urlopen("http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl").getcode()
-        except :
-            print 'script not responding'
-            command = None
-            code = -1
-    if code == 200:
+        handle = gdaltest.gdalurlopen("http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl")
+        if handle is not None:
+            success = True
+        else:
+            print('script not responding')
+    if success:
         gdaltest.netcdf_cf_method = 'http'
-        print 'NOTICE: netcdf CF compliance ckecks: using remote http checker script, consider installing cdms2 locally'
+        print('NOTICE: netcdf CF compliance ckecks: using remote http checker script, consider installing cdms2 locally')
         return 'success'
 
     if gdaltest.netcdf_cf_method is None:
@@ -165,7 +162,7 @@ def netcdf_cf_check_file(ifile,version='auto', silent=True):
 
     try:
         if gdaltest.netcdf_cf_method == 'http':
-            print 'calling ',command
+            print('calling ' + command)
         (ret, err) = gdaltest.runexternal_out_and_err(command)
     except :
         gdaltest.post_reason('ERROR with command - ' + command)
@@ -314,6 +311,21 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, inPath, outPath, resFilename):
     :arg: resFilename - results filename to write to.
 
     """
+
+    # Test if ncdump is available
+    try:
+        (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
+    except:
+        #nothing is supported as ncdump not found
+        print('NOTICE: netcdf version not found')
+        return 'skip'
+
+    i = err.find('netcdf library version ')
+    #version not found
+    if i == -1:
+        print('NOTICE: netcdf version not found')
+        return 'skip'
+
     if not os.path.exists(outPath):
         os.makedirs(outPath)
     resFile = open(os.path.join(outPath, resFilename), "w")
@@ -337,10 +349,10 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, inPath, outPath, resFilename):
     for proj in projTuples:
         # Our little results data structures
         if not silent:
-            print "Testing %s (%s) translation:" % (proj[0], proj[1])
+            print("Testing %s (%s) translation:" % (proj[0], proj[1]))
 
         if not silent:
-            print "About to create GeoTiff in chosen SRS"
+            print("About to create GeoTiff in chosen SRS")
         projVrt = os.path.join(outPath, "%s_%s.vrt" % \
             (origTiff.rstrip('.tif'), proj[0] ))
         projTiff = os.path.join(outPath, "%s_%s.tif" % \
@@ -351,13 +363,13 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, inPath, outPath, resFilename):
         srs.SetFromUserInput(proj[2])
         t_srs_wkt = srs.ExportToWkt()
         if not silent:
-            print "going to warp", s_srs_wkt,"-",t_srs_wkt
+            print("going to warp" + s_srs_wkt + "-" + t_srs_wkt)
         dswarp = gdal.AutoCreateWarpedVRT( dsTiff, s_srs_wkt, t_srs_wkt, GRA_NearestNeighbour, 0 );
         drv_gtiff = gdal.GetDriverByName("GTiff");
         drv_netcdf = gdal.GetDriverByName("netcdf");
         dsw = drv_gtiff.CreateCopy(projTiff, dswarp, 0) #[ 'WRITEGDALTAGS=YES' ])
         if not silent:
-            print "Warped %s to %s" % (proj[0], projTiff)
+            print("Warped %s to %s" % (proj[0], projTiff))
 
         projNc = os.path.join(outPath, "%s_%s.nc" % \
             (origTiff.rstrip('.tif'), proj[0] ))
@@ -366,10 +378,10 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, inPath, outPath, resFilename):
 #        cmd = " ".join(['gdal_translate', "-of netCDF", ncCoOpts, projTiff,
 #            projNc])
         if not silent:
-            print "About to translate to NetCDF"
+            print("About to translate to NetCDF")
         dst = drv_netcdf.CreateCopy(projNc, dsw, 0, [ 'WRITEGDALTAGS=YES' ])
         if not silent:
-            print "Translated to %s" % (projNc)
+            print("Translated to %s" % (projNc))
         
         transWorked, resDetails = netcdf_cfproj_test_cf(proj, projNc)
         resPerProj[proj[0]] = resDetails
@@ -394,16 +406,16 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, inPath, outPath, resFilename):
     resFile.close()
 
     if not silent:
-        print "\n" + "*" * 80
-        print "Saved results to file %s" % (os.path.join(outPath, resFilename))
+        print("\n" + "*" * 80)
+        print("Saved results to file %s" % (os.path.join(outPath, resFilename)))
 
     result = 'success'
     resFile = open(os.path.join(outPath, resFilename), "r")
     resStr = resFile.read()
     if resStr.find('BAD') != -1:
-        print '\nCF projection tests failed, here is the output (stored in file %s)\n' % \
-             (os.path.join(outPath, resFilename))
-        print resStr             
+        print('\nCF projection tests failed, here is the output (stored in file %s)\n' % \
+             (os.path.join(outPath, resFilename)))
+        print(resStr)
         result = 'fail'
 
     return result
@@ -420,7 +432,7 @@ def netcdf_cfproj_test_cf(proj, projNc):
     command = 'ncdump -h ' + projNc
     (ret, err) = gdaltest.runexternal_out_and_err(command)
     if err != '':
-        print err
+        print(err)
     dumpStr = ret
     
     resDetails = {}
