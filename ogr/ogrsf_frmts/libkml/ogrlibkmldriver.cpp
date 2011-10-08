@@ -186,7 +186,7 @@ int OGRLIBKMLDriver::TestCapability (
         return TRUE;
 
     else if ( EQUAL ( pszCap, ODrCDeleteDataSource ) )
-        return bUpdate;
+        return TRUE;
 
     return FALSE;
 }
