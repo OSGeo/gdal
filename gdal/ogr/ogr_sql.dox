@@ -502,6 +502,39 @@ DROP INDEX ON nation USING nation_id
 DROP INDEX ON nation
 \endcode
 
+\section ogr_sql_alter_table ALTER TABLE
+
+(OGR >= 1.9.0)
+
+The following OGR SQL ALTER TABLE commands can be used.
+
+<ol>
+<li>"ALTER TABLE tablename ADD [COLUMN] columnname columntype" to add a new field. Supported if the layer declares the OLCCreateField capability.
+<li>"ALTER TABLE tablename RENAME [COLUMN] oldcolumnname TO newcolumnname" to rename an existing field. Supported if the layer declares the OLCAlterFieldDefn capability.
+<li>"ALTER TABLE tablename ALTER [COLUMN] columnname TYPE columntype" to change the type of an existing field. Supported if the layer declares the OLCAlterFieldDefn capability.
+<li>"ALTER TABLE tablename DROP [COLUMN] columnname" to delete an existing field. Supported if the layer declares the OLCDeleteField capability.
+</ol>
+
+The columntype value follows the syntax of the types supported by the CAST operator descrived above.
+
+\code
+ALTER TABLE nation ADD COLUMN myfield integer
+ALTER TABLE nation RENAME COLUMN myfield TO myfield2
+ALTER TABLE nation ALTER COLUMN myfield2 TYPE character(15)
+ALTER TABLE nation DROP COLUMN myfield2
+\endcode
+
+\section ogr_sql_drop_table DROP TABLE
+
+(OGR >= 1.9.0)
+
+The OGR SQL DROP TABLE command can be used to delete a table. This is only
+supported on datasources that declare the ODsCDeleteLayer capability.
+
+\code
+DROP TABLE nation
+\endcode
+
 \section ogr_sql_exec_sql ExecuteSQL()
 
 SQL is executed against an OGRDataSource, not against a specific layer.  The

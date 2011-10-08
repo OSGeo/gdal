@@ -941,6 +941,54 @@ def ogr_sql_32():
     else:
         return 'fail'
 
+###############################################################################
+# Check ALTER TABLE commands
+
+def ogr_sql_33():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+    lyr = ds.CreateLayer( "my_layer")
+
+    # We support with and without COLUMN keyword
+    for extrakeyword in ('COLUMN ', ''):
+        sql = 'ALTER TABLE my_layer ADD %smyfield NUMERIC(20, 8)' % extrakeyword
+        ds.ExecuteSQL(sql)
+        if lyr.GetLayerDefn().GetFieldIndex('myfield') == -1 or \
+        lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield')).GetType() != ogr.OFTReal or \
+        lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield')).GetWidth() != 20 or \
+        lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield')).GetPrecision() != 8:
+            gdaltest.post_reason('%s failed' % sql)
+            return 'fail'
+
+        sql = 'ALTER TABLE my_layer RENAME %smyfield TO "myfield 2"' % extrakeyword
+        ds.ExecuteSQL(sql)
+        if lyr.GetLayerDefn().GetFieldIndex('myfield') != -1 or \
+        lyr.GetLayerDefn().GetFieldIndex('myfield 2') == -1:
+            gdaltest.post_reason('%s failed' % sql)
+            return 'fail'
+
+        sql = 'ALTER TABLE my_layer ALTER %s"myfield 2" TYPE CHARACTER' % extrakeyword
+        ds.ExecuteSQL(sql)
+        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield 2')).GetType() != ogr.OFTString:
+            gdaltest.post_reason('%s failed' % sql)
+            return 'fail'
+
+        sql = 'ALTER TABLE my_layer ALTER %s"myfield 2" TYPE CHARACTER(15)' % extrakeyword
+        ds.ExecuteSQL(sql)
+        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('myfield 2')).GetWidth() != 15:
+            gdaltest.post_reason('%s failed' % sql)
+            return 'fail'
+
+        sql = 'ALTER TABLE my_layer DROP %s"myfield 2"' % extrakeyword
+        ds.ExecuteSQL(sql)
+        if lyr.GetLayerDefn().GetFieldIndex('myfield 2') != -1:
+            gdaltest.post_reason('%s failed' % sql)
+            return 'fail'
+
+    ds = None
+
+    return 'success'
+
 def ogr_sql_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -982,6 +1030,7 @@ gdaltest_list = [
     ogr_sql_30,
     ogr_sql_31,
     ogr_sql_32,
+    ogr_sql_33,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
