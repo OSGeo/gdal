@@ -500,6 +500,22 @@ int OGRSQLiteTableLayer::GetFeatureCount( int bForce )
 }
 
 /************************************************************************/
+/*                      OGRFieldTypeToSQliteType()                      */
+/************************************************************************/
+
+static const char* OGRFieldTypeToSQliteType( OGRFieldType eType )
+{
+    if( eType == OFTInteger )
+        return "INTEGER";
+    else if( eType == OFTReal )
+        return "FLOAT";
+    else if( eType == OFTBinary )
+        return "BLOB";
+    else
+        return "VARCHAR";
+}
+
+/************************************************************************/
 /*                            CreateField()                             */
 /************************************************************************/
 
@@ -530,6 +546,82 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         CPLFree( pszSafeName );
     }
 
+    /* ADD COLUMN only avaliable since sqlite 3.1.3 */
+    if (CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_USE_ADD_COLUMN", "YES")) &&
+        sqlite3_libversion_number() > 3 * 1000000 + 1 * 1000 + 3)
+    {
+        int rc;
+        char *pszErrMsg = NULL;
+        sqlite3 *hDB = poDS->GetDB();
+        CPLString osCommand;
+
+        osCommand.Printf("ALTER TABLE '%s' ADD COLUMN '%s' %s",
+                        pszEscapedTableName,
+                        oField.GetNameRef(),
+                        OGRFieldTypeToSQliteType(oField.GetType()));
+
+    #ifdef DEBUG
+        CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
+    #endif
+
+        rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Failed to add field %s to table %s:\n %s",
+                      oField.GetNameRef(), poFeatureDefn->GetName(), 
+                      pszErrMsg );
+            sqlite3_free( pszErrMsg );
+            return OGRERR_FAILURE;
+        }
+    }
+    else
+    {
+        OGRErr eErr = AddColumnAncientMethod(oField);
+        if (eErr != OGRERR_NONE)
+            return eErr;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add the field to the OGRFeatureDefn.                            */
+/* -------------------------------------------------------------------- */
+    int iNewField;
+    int iNextOrdinal = 3; /* _rowid_ is 1, OGC_FID is 2 */
+
+    if( poFeatureDefn->GetGeomType() != wkbNone )
+    {
+        iNextOrdinal++;
+    }
+
+    for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    {
+        OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(iField);
+
+        // we already added OGC_FID so don't do it again
+        if( EQUAL(poFldDefn->GetNameRef(),"OGC_FID") )
+            continue;
+
+        iNextOrdinal++;
+    }
+
+    poFeatureDefn->AddFieldDefn( &oField );
+
+    iNewField = poFeatureDefn->GetFieldCount() - 1;
+    panFieldOrdinals = (int *)
+        CPLRealloc(panFieldOrdinals, (iNewField+1) * sizeof(int) );
+    panFieldOrdinals[iNewField] = iNextOrdinal;
+
+    return OGRERR_NONE;
+}
+
+
+/************************************************************************/
+/*                       AddColumnAncientMethod()                       */
+/************************************************************************/
+
+OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
+{
+    
 /* -------------------------------------------------------------------- */
 /*      How much space do we need for the list of fields.               */
 /* -------------------------------------------------------------------- */
@@ -550,7 +642,6 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 /* -------------------------------------------------------------------- */
 /*      Build list of old fields, and the list of new fields.           */
 /* -------------------------------------------------------------------- */
-    const char *pszType;
     sprintf( pszOldFieldList, "%s", "OGC_FID" );
     sprintf( pszNewFieldList, "%s", "OGC_FID INTEGER PRIMARY KEY" );
     
@@ -580,20 +671,12 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         if( EQUAL(poFldDefn->GetNameRef(),"OGC_FID") )
             continue;
 
-        if( poFldDefn->GetType() == OFTInteger )
-            pszType = "INTEGER";
-        else if( poFldDefn->GetType() == OFTReal )
-            pszType = "FLOAT";
-        else if( poFldDefn->GetType() == OFTBinary )
-            pszType = "BLOB";
-        else
-            pszType = "VARCHAR";
-        
         sprintf( pszOldFieldList+strlen(pszOldFieldList), 
                  ", '%s'", poFldDefn->GetNameRef() );
 
         sprintf( pszNewFieldList+strlen(pszNewFieldList), 
-                 ", '%s' %s", poFldDefn->GetNameRef(), pszType );
+                 ", '%s' %s", poFldDefn->GetNameRef(),
+                 OGRFieldTypeToSQliteType(poFldDefn->GetType()) );
 
         iNextOrdinal++;
     }
@@ -601,17 +684,10 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 /* -------------------------------------------------------------------- */
 /*      Add the new field.                                              */
 /* -------------------------------------------------------------------- */
-    if( oField.GetType() == OFTInteger )
-        pszType = "INTEGER";
-    else if( oField.GetType() == OFTReal )
-        pszType = "FLOAT";
-    else if( oField.GetType() == OFTBinary )
-        pszType = "BLOB";
-    else
-        pszType = "VARCHAR";
-    
+
     sprintf( pszNewFieldList+strlen(pszNewFieldList), 
-             ", '%s' %s", oField.GetNameRef(), pszType );
+             ", '%s' %s", oField.GetNameRef(),
+             OGRFieldTypeToSQliteType(oField.GetType()) );
 
 /* ==================================================================== */
 /*      Backup, destroy, recreate and repopulate the table.  SQLite     */
@@ -741,18 +817,6 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 
         return OGRERR_FAILURE;
     }
-
-/* -------------------------------------------------------------------- */
-/*      Add the field to the OGRFeatureDefn.                            */
-/* -------------------------------------------------------------------- */
-    int iNewField;
-
-    poFeatureDefn->AddFieldDefn( &oField );
-
-    iNewField = poFeatureDefn->GetFieldCount() - 1;
-    panFieldOrdinals = (int *) 
-        CPLRealloc(panFieldOrdinals, (iNewField+1) * sizeof(int) );
-    panFieldOrdinals[iNewField] = iNextOrdinal;
 
     return OGRERR_NONE;
 }
