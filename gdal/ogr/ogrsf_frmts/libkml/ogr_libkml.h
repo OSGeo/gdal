@@ -283,7 +283,6 @@ class OGRLIBKMLDataSource:public OGRDataSource
 
 class OGRLIBKMLDriver:public OGRSFDriver
 {
-    int bUpdate;
     KmlFactory               *m_poKmlFactory;
     
   public:
