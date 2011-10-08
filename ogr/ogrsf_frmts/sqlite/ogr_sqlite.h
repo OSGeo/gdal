@@ -244,6 +244,8 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     OGRErr              ResetStatement();
 
+    OGRErr              AddColumnAncientMethod( OGRFieldDefn& oField);
+
   public:
                         OGRSQLiteTableLayer( OGRSQLiteDataSource * );
                         ~OGRSQLiteTableLayer();
