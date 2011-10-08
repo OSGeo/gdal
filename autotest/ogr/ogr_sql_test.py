@@ -989,6 +989,24 @@ def ogr_sql_33():
 
     return 'success'
 
+###############################################################################
+# Test implicit conversion from string to numeric (#4259)
+
+def ogr_sql_34():
+
+    sql_lyr = gdaltest.ds.ExecuteSQL( "select count(*) from poly where eas_id in ('165')" )
+
+    feat = sql_lyr.GetNextFeature()
+    val = feat.GetField(0)
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    if val == 1:
+        return 'success'
+    else:
+        print(val)
+        return 'fail'
+
 def ogr_sql_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -1031,6 +1049,7 @@ gdaltest_list = [
     ogr_sql_31,
     ogr_sql_32,
     ogr_sql_33,
+    ogr_sql_34,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
