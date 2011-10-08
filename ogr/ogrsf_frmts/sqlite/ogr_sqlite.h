@@ -246,6 +246,12 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     OGRErr              AddColumnAncientMethod( OGRFieldDefn& oField);
 
+    void                InitFieldListForRecrerate(char* & pszNewFieldList,
+                                                  char* & pszFieldListForSelect,
+                                                  int nExtraSpace = 0);
+    OGRErr              RecreateTable(const char* pszFieldListForSelect,
+                                      const char* pszNewFieldList,
+                                      const char* pszGenericErrorMessage);
   public:
                         OGRSQLiteTableLayer( OGRSQLiteDataSource * );
                         ~OGRSQLiteTableLayer();
@@ -271,6 +277,10 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
+    virtual OGRErr      DeleteField( int iField );
+    virtual OGRErr      ReorderFields( int* panMap );
+    virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
+
     virtual OGRFeature *GetFeature( long nFeatureId );
 
     virtual int         TestCapability( const char * );
@@ -465,6 +475,7 @@ class OGRSQLiteDriver : public OGRSFDriver
 
     virtual OGRDataSource *CreateDataSource( const char *pszName,
                                              char ** = NULL );
+    virtual OGRErr      DeleteDataSource( const char *pszName );
     
     int                 TestCapability( const char * );
 };
