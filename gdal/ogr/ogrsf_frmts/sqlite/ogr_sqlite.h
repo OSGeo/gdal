@@ -252,6 +252,9 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     OGRErr              RecreateTable(const char* pszFieldListForSelect,
                                       const char* pszNewFieldList,
                                       const char* pszGenericErrorMessage);
+    OGRErr              BindValues( OGRFeature *poFeature,
+                                        sqlite3_stmt* hStmt,
+                                        int bBindNullValues );
   public:
                         OGRSQLiteTableLayer( OGRSQLiteDataSource * );
                         ~OGRSQLiteTableLayer();
