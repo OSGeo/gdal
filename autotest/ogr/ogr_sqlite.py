@@ -1420,6 +1420,106 @@ def ogr_spatialite_5():
     return 'success'
 
 ###############################################################################
+# Test spatialite spatial views
+
+def ogr_spatialite_6():
+
+    if gdaltest.has_spatialite == False:
+        return 'skip'
+
+    if gdaltest.spatialite_version.find('2.3') == 0:
+        return 'skip'
+
+    try:
+        os.remove('tmp/ogr_spatialite_6.sqlite')
+    except:
+        pass
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_spatialite_6.sqlite', options = ['SPATIALITE=YES'])
+
+    # Create regular layer
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 4326 )
+    lyr = ds.CreateLayer('regular_layer', geom_type = ogr.wkbPoint, srs = srs)
+    lyr.CreateField(ogr.FieldDefn("intcol", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("realcol", ogr.OFTReal))
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 12)
+    feat.SetField(1, 34.56)
+    geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
+    feat.SetGeometryDirectly(geom)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 12)
+    feat.SetField(1, 34.56)
+    geom = ogr.CreateGeometryFromWkt('POINT(3 50)')
+    feat.SetGeometryDirectly(geom)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 34)
+    feat.SetField(1, 56.78)
+    geom = ogr.CreateGeometryFromWkt('POINT(3 50)')
+    feat.SetGeometryDirectly(geom)
+    lyr.CreateFeature(feat)
+
+    # Create spatial view
+    ds.ExecuteSQL('CREATE VIEW view_of_regular_layer AS SELECT OGC_FID AS pk_id, GEOMETRY AS the_geom, intcol, realcol FROM regular_layer')
+    ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column) VALUES " + \
+                  "('view_of_regular_layer', 'the_geom', 'pk_id', 'regular_layer', 'GEOMETRY')")
+
+    ds = None
+
+    # Test spatial view
+    ds = ogr.Open('tmp/ogr_spatialite_6.sqlite')
+    lyr = ds.GetLayerByName('regular_layer')
+    view_lyr = ds.GetLayerByName('view_of_regular_layer')
+    if view_lyr.GetGeomType() != lyr.GetGeomType():
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if view_lyr.GetFeatureCount() != lyr.GetFeatureCount():
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if view_lyr.GetSpatialRef().IsSame(lyr.GetSpatialRef()) != 1:
+        gdaltest.post_reason('failed')
+        return 'fail'
+    feat = view_lyr.GetFeature(3)
+    if feat.GetFieldAsDouble(1) != 56.78:
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+    view_lyr.SetAttributeFilter('intcol = 34')
+    view_lyr.SetSpatialFilterRect(2.5,49.5,3.5,50.5)
+    feat = view_lyr.GetNextFeature()
+    if feat.GetFID() != 3:
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+    ds = None
+
+    # Remove spatial index
+    ds = ogr.Open('tmp/ogr_spatialite_6.sqlite', update = 1)
+    sql_lyr = ds.ExecuteSQL("SELECT DisableSpatialIndex('regular_layer', 'GEOMETRY')")
+    ds.ReleaseResultSet(sql_lyr)
+    ds.ExecuteSQL("DROP TABLE idx_regular_layer_GEOMETRY")
+    ds = None
+
+    # Test spatial view again
+    ds = ogr.Open('tmp/ogr_spatialite_6.sqlite')
+    view_lyr = ds.GetLayerByName('view_of_regular_layer')
+    view_lyr.SetAttributeFilter('intcol = 34')
+    view_lyr.SetSpatialFilterRect(2.5,49.5,3.5,50.5)
+    feat = view_lyr.GetNextFeature()
+    if feat.GetFID() != 3:
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -1470,6 +1570,11 @@ def ogr_sqlite_cleanup():
     except:
         pass
 
+    try:
+        os.remove( 'tmp/ogr_spatialite_6.sqlite' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [ 
@@ -1502,6 +1607,7 @@ gdaltest_list = [
     ogr_spatialite_3,
     ogr_spatialite_4,
     ogr_spatialite_5,
+    ogr_spatialite_6,
     ogr_sqlite_cleanup ]
 
 if __name__ == '__main__':
