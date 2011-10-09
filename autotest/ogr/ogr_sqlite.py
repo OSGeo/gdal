@@ -1460,9 +1460,12 @@ def ogr_spatialite_6():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(0, 34)
     feat.SetField(1, 56.78)
-    geom = ogr.CreateGeometryFromWkt('POINT(3 50)')
+    geom = ogr.CreateGeometryFromWkt('POINT(-30000 -50000)')
     feat.SetGeometryDirectly(geom)
     lyr.CreateFeature(feat)
+    geom = ogr.CreateGeometryFromWkt('POINT(3 50)')
+    feat.SetGeometryDirectly(geom)
+    lyr.SetFeature(feat)
 
     # Create spatial view
     ds.ExecuteSQL('CREATE VIEW view_of_regular_layer AS SELECT OGC_FID AS pk_id, GEOMETRY AS the_geom, intcol, realcol FROM regular_layer')
@@ -1493,6 +1496,10 @@ def ogr_spatialite_6():
     view_lyr.SetSpatialFilterRect(2.5,49.5,3.5,50.5)
     feat = view_lyr.GetNextFeature()
     if feat.GetFID() != 3:
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (3 50)':
         gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'

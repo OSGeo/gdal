@@ -1200,6 +1200,144 @@ OGRErr OGRSQLiteTableLayer::ReorderFields( int* panMap )
 }
 
 /************************************************************************/
+/*                             BindValues()                             */
+/************************************************************************/
+
+/* the bBindNullValues is set to TRUE by SetFeature() for UPDATE statements, */
+/* and to FALSE by CreateFeature() for INSERT statements; */
+
+OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
+                                        sqlite3_stmt* hStmt,
+                                        int bBindNullValues )
+{
+    int rc;
+    sqlite3 *hDB = poDS->GetDB();
+
+/* -------------------------------------------------------------------- */
+/*      Bind the geometry                                               */
+/* -------------------------------------------------------------------- */
+    int nBindField = 1;
+
+    if( osGeomColumn.size() != 0 &&
+        eGeomFormat != OSGF_FGF )
+    {
+        OGRGeometry* poGeom = poFeature->GetGeometryRef();
+        if ( poGeom != NULL )
+        {
+            if ( eGeomFormat == OSGF_WKT )
+            {
+                char *pszWKT = NULL;
+                poGeom->exportToWkt( &pszWKT );
+                rc = sqlite3_bind_text( hStmt, nBindField++, pszWKT, -1, CPLFree );
+            }
+            else if( eGeomFormat == OSGF_WKB )
+            {
+                int nWKBLen = poGeom->WkbSize();
+                GByte *pabyWKB = (GByte *) CPLMalloc(nWKBLen + 1);
+
+                poGeom->exportToWkb( wkbNDR, pabyWKB );
+                rc = sqlite3_bind_blob( hStmt, nBindField++, pabyWKB, nWKBLen, CPLFree );
+            }
+            else if ( eGeomFormat == OSGF_SpatiaLite )
+            {
+                int     nBLOBLen;
+                GByte   *pabySLBLOB;
+
+                ExportSpatiaLiteGeometry( poGeom, nSRSId, wkbNDR, bHasM,
+                                        bSpatialite2D, &pabySLBLOB, &nBLOBLen );
+                rc = sqlite3_bind_blob( hStmt, nBindField++, pabySLBLOB,
+                                        nBLOBLen, CPLFree );
+            }
+            else
+            {
+                CPLAssert(0);
+            }
+        }
+        else
+        {
+            if (bBindNullValues)
+                rc = sqlite3_bind_null( hStmt, nBindField++ );
+            else
+                rc = SQLITE_OK;
+        }
+
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "sqlite3_bind_blob/text() failed:\n  %s",
+                      sqlite3_errmsg(hDB) );
+            return OGRERR_FAILURE;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Bind field values.                                              */
+/* -------------------------------------------------------------------- */
+    int iField;
+    int nFieldCount = poFeatureDefn->GetFieldCount();
+    for( iField = 0; iField < nFieldCount; iField++ )
+    {
+        const char *pszRawValue;
+
+        if( !poFeature->IsFieldSet( iField ) )
+        {
+            if (bBindNullValues)
+                rc = sqlite3_bind_null( hStmt, nBindField++ );
+            else
+                rc = SQLITE_OK;
+        }
+        else
+        {
+            switch( poFeatureDefn->GetFieldDefn(iField)->GetType() )
+            {
+                case OFTInteger:
+                {
+                    int nFieldVal = poFeature->GetFieldAsInteger( iField );
+                    rc = sqlite3_bind_int(hStmt, nBindField++, nFieldVal);
+                    break;
+                }
+
+                case OFTReal:
+                {
+                    double dfFieldVal = poFeature->GetFieldAsDouble( iField );
+                    rc = sqlite3_bind_double(hStmt, nBindField++, dfFieldVal);
+                    break;
+                }
+
+                case OFTBinary:
+                {
+                    int nDataLength = 0;
+                    GByte* pabyData =
+                        poFeature->GetFieldAsBinary( iField, &nDataLength );
+                    rc = sqlite3_bind_blob(hStmt, nBindField++,
+                                        pabyData, nDataLength, SQLITE_TRANSIENT);
+                    break;
+                }
+
+                default:
+                {
+                    pszRawValue = poFeature->GetFieldAsString( iField );
+                    rc = sqlite3_bind_text(hStmt, nBindField++,
+                                        pszRawValue, -1, SQLITE_TRANSIENT);
+                    break;
+                }
+            }
+        }
+
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "sqlite3_bind_() for column %s failed:\n  %s",
+                      poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
+                      sqlite3_errmsg(hDB) );
+            return OGRERR_FAILURE;
+        }
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                             SetFeature()                             */
 /************************************************************************/
 
@@ -1219,36 +1357,114 @@ OGRErr OGRSQLiteTableLayer::SetFeature( OGRFeature *poFeature )
                   "SetFeature() with unset FID fails." );
         return OGRERR_FAILURE;
     }
-/* -------------------------------------------------------------------- */
-/*      Drop the record with this FID.                                  */
-/* -------------------------------------------------------------------- */
-    int rc;
-    char *pszErrMsg = NULL;
-    const char *pszSQL;
 
-    pszSQL =
-        CPLSPrintf( "DELETE FROM '%s' WHERE \"%s\" = %ld", 
-                    pszEscapedTableName, 
-                    pszFIDColumn,
-                    poFeature->GetFID() );
-
-    CPLDebug( "OGR_SQLITE", "exec(%s)", pszSQL );
-    
-    rc = sqlite3_exec( poDS->GetDB(), pszSQL,
-                       NULL, NULL, &pszErrMsg );
-    
-    if( rc != SQLITE_OK )
+    if (bSpatialiteReadOnly || !poDS->GetUpdate())
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Attempt to delete old feature with FID %d failed.\n%s", 
-                  (int) poFeature->GetFID(), pszErrMsg );
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Can't update feature on a read-only layer.");
         return OGRERR_FAILURE;
     }
-    
+
+    sqlite3 *hDB = poDS->GetDB();
+    CPLString      osCommand;
+    int            bNeedComma = FALSE;
+
+    ResetReading();
+
 /* -------------------------------------------------------------------- */
-/*      Recreate the feature.                                           */
+/*      Form the UPDATE command.                                        */
 /* -------------------------------------------------------------------- */
-    return CreateFeature( poFeature );
+    osCommand += CPLSPrintf( "UPDATE '%s' SET ", pszEscapedTableName );
+
+/* -------------------------------------------------------------------- */
+/*      Add geometry field name.                                        */
+/* -------------------------------------------------------------------- */
+    if( osGeomColumn.size() != 0 &&
+        eGeomFormat != OSGF_FGF )
+    {
+        osCommand += "\"";
+        osCommand += osGeomColumn;
+        osCommand += "\" = ?";
+
+        bNeedComma = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add field names.                                                */
+/* -------------------------------------------------------------------- */
+    int iField;
+    int nFieldCount = poFeatureDefn->GetFieldCount();
+
+    for( iField = 0; iField < nFieldCount; iField++ )
+    {
+        if( bNeedComma )
+            osCommand += ",";
+
+        osCommand += "\"";
+        osCommand +=poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
+        osCommand += "\" = ?";
+
+        bNeedComma = TRUE;
+    }
+
+    if (!bNeedComma)
+        return OGRERR_NONE;
+
+/* -------------------------------------------------------------------- */
+/*      Merge final command.                                            */
+/* -------------------------------------------------------------------- */
+    osCommand += " WHERE \"";
+    osCommand += pszFIDColumn;
+    osCommand += CPLSPrintf("\" = %ld", poFeature->GetFID());
+
+/* -------------------------------------------------------------------- */
+/*      Prepare the statement.                                          */
+/* -------------------------------------------------------------------- */
+    int rc;
+    sqlite3_stmt *hUpdateStmt;
+
+#ifdef DEBUG
+    CPLDebug( "OGR_SQLITE", "prepare(%s)", osCommand.c_str() );
+#endif
+
+    rc = sqlite3_prepare( hDB, osCommand, -1, &hUpdateStmt, NULL );
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "In SetFeature(): sqlite3_prepare(%s):\n  %s",
+                  osCommand.c_str(), sqlite3_errmsg(hDB) );
+
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Bind values.                                                   */
+/* -------------------------------------------------------------------- */
+    OGRErr eErr = BindValues( poFeature, hUpdateStmt, TRUE );
+    if (eErr != OGRERR_NONE)
+    {
+        sqlite3_finalize( hUpdateStmt );
+        return eErr;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Execute the update.                                             */
+/* -------------------------------------------------------------------- */
+    rc = sqlite3_step( hUpdateStmt );
+
+    if( rc != SQLITE_OK && rc != SQLITE_DONE )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "sqlite3_step() failed:\n  %s",
+                  sqlite3_errmsg(hDB) );
+
+        sqlite3_finalize( hUpdateStmt );
+        return OGRERR_FAILURE;
+    }
+
+    sqlite3_finalize( hUpdateStmt );
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -1283,7 +1499,9 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
     if( pszFIDColumn != NULL // && !EQUAL(pszFIDColumn,"OGC_FID") 
         && poFeature->GetFID() != OGRNullFID )
     {
+        osCommand += "\"";
         osCommand += pszFIDColumn;
+        osCommand += "\"";
 
         osValues += CPLSPrintf( "%ld", poFeature->GetFID() );
         bNeedComma = TRUE;
@@ -1305,7 +1523,9 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
             osValues += ",";
         }
 
+        osCommand += "\"";
         osCommand += osGeomColumn;
+        osCommand += "\"";
 
         osValues += "?";
 
@@ -1329,9 +1549,9 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
             osValues += ",";
         }
 
-        osCommand += "'";
+        osCommand += "\"";
         osCommand +=poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
-        osCommand += "'";
+        osCommand += "\"";
 
         osValues += "?";
 
@@ -1366,110 +1586,13 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Bind the geometry                                               */
+/*      Bind values.                                                   */
 /* -------------------------------------------------------------------- */
-    int nBindField = 1;
-
-    if( osGeomColumn.size() != 0 &&
-        poGeom != NULL &&
-        eGeomFormat != OSGF_FGF )
+    OGRErr eErr = BindValues( poFeature, hInsertStmt, FALSE );
+    if (eErr != OGRERR_NONE)
     {
-        if ( eGeomFormat == OSGF_WKT )
-        {
-            char *pszWKT = NULL;
-            poGeom->exportToWkt( &pszWKT );
-            rc = sqlite3_bind_text( hInsertStmt, nBindField++, pszWKT, -1, CPLFree );
-        }
-        else if( eGeomFormat == OSGF_WKB )
-        {
-            int nWKBLen = poGeom->WkbSize();
-            GByte *pabyWKB = (GByte *) CPLMalloc(nWKBLen + 1);
-
-            poGeom->exportToWkb( wkbNDR, pabyWKB );
-            rc = sqlite3_bind_blob( hInsertStmt, nBindField++, pabyWKB, nWKBLen, CPLFree );
-        }
-        else if ( eGeomFormat == OSGF_SpatiaLite )
-        {
-            int     nBLOBLen;
-            GByte   *pabySLBLOB;
-
-            ExportSpatiaLiteGeometry( poGeom, nSRSId, wkbNDR, bHasM, 
-                                      bSpatialite2D, &pabySLBLOB, &nBLOBLen );
-            rc = sqlite3_bind_blob( hInsertStmt, nBindField++, pabySLBLOB,
-                                    nBLOBLen, CPLFree );
-        }
-        else
-        {
-            CPLAssert(0);
-        }
-
-        if( rc != SQLITE_OK )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "sqlite3_bind_blob/text() failed:\n  %s", 
-                      sqlite3_errmsg(hDB) );
-            
-            sqlite3_finalize( hInsertStmt );
-            return OGRERR_FAILURE;
-        }
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      Bind field values.                                              */
-/* -------------------------------------------------------------------- */
-    
-    for( iField = 0; iField < nFieldCount; iField++ )
-    {
-        const char *pszRawValue;
-
-        if( !poFeature->IsFieldSet( iField ) )
-            continue;
-
-        switch( poFeatureDefn->GetFieldDefn(iField)->GetType() )
-        {
-            case OFTInteger:
-            {
-                int nFieldVal = poFeature->GetFieldAsInteger( iField );
-                rc = sqlite3_bind_int(hInsertStmt, nBindField++, nFieldVal);
-                break;
-            }
-            
-            case OFTReal:
-            {
-                double dfFieldVal = poFeature->GetFieldAsDouble( iField );
-                rc = sqlite3_bind_double(hInsertStmt, nBindField++, dfFieldVal);
-                break;
-            }
-            
-            case OFTBinary:
-            {
-                int nDataLength = 0;
-                GByte* pabyData =
-                    poFeature->GetFieldAsBinary( iField, &nDataLength );
-                rc = sqlite3_bind_blob(hInsertStmt, nBindField++,
-                                       pabyData, nDataLength, SQLITE_TRANSIENT);
-                break;
-            }
-            
-            default:
-            {
-                pszRawValue = poFeature->GetFieldAsString( iField );
-                rc = sqlite3_bind_text(hInsertStmt, nBindField++,
-                                       pszRawValue, -1, SQLITE_TRANSIENT);
-                break;
-            }
-        }
-        
-        if( rc != SQLITE_OK )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "sqlite3_bind_() for column %s failed:\n  %s", 
-                      poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
-                      sqlite3_errmsg(hDB) );
-            
-            sqlite3_finalize( hInsertStmt );
-            return OGRERR_FAILURE;
-        }
+        sqlite3_finalize( hInsertStmt );
+        return eErr;
     }
 
 /* -------------------------------------------------------------------- */
