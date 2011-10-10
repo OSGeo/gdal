@@ -154,7 +154,7 @@ be influenced by other configuration options.
 Control what debugging messages are emitted.  A value of <i>ON</i> will
 enable all debug messages.  A value of <i>OFF</i> will disable all debug
 messages.  Another value will select only debug messages containing that
-string in the debug prefix code. 
+string in the debug prefix code.  
 </dd>
 
 <dt> <b>--help-general</b></dt><dd>
@@ -180,7 +180,7 @@ lists information about a raster dataset
 
 \verbatim
 gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]
-         [-noct] [-nofl] [-checksum] [-mdd domain]*
+         [-noct] [-nofl] [-checksum] [-proj4] [-mdd domain]*
 	 [-sd subdataset] datasetname
 \endverbatim
 
@@ -200,6 +200,7 @@ which contain thousands of them.</dd>
 of metadata strings.</dd>
 <dt> <b>-noct</b></dt><dd> Suppress printing of color table.</dd>
 <dt> <b>-checksum</b></dt><dd> Force computation of the checksum for each band in the dataset.</dd>
+<dt> <b>-proj4</b></dt><dd> Report a PROJ.4 string corresponding to the file's coordinate system.</dd>
 <dt> <b>-mdd domain</b></dt><dd> Report metadata for the specified domain</dd>
 <dt> <b>-nofl</b></dt><dd> (GDAL >= 1.9.0) Only display the first file of the
 file list.</dd>
