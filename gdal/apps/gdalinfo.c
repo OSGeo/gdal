@@ -50,7 +50,7 @@ void Usage()
 
 {
     printf( "Usage: gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n"
-            "                [-norat] [-noct] [-nofl] [-checksum] [-mdd domain]*\n"
+            "                [-norat] [-noct] [-nofl] [-checksum] [-proj4] [-mdd domain]*\n"
             "                [-sd subdataset] datasetname\n" );
     exit( 1 );
 }
@@ -59,7 +59,7 @@ void Usage()
 /*                                main()                                */
 /************************************************************************/
 
-int main( int argc, char ** argv )
+int main( int argc, char ** argv ) 
 
 {
     GDALDatasetH	hDataset;
@@ -73,6 +73,7 @@ int main( int argc, char ** argv )
     int                 bStats = FALSE, bApproxStats = TRUE, iMDD;
     int                 bShowColorTable = TRUE, bComputeChecksum = FALSE;
     int                 bReportHistograms = FALSE;
+    int                 bReportProj4 = FALSE;
     int                 nSubdataset = -1;
     const char          *pszFilename = NULL;
     char              **papszExtraMDDomains = NULL, **papszFileList;
@@ -124,6 +125,8 @@ int main( int argc, char ** argv )
             bComputeMinMax = TRUE;
         else if( EQUAL(argv[i], "-hist") )
             bReportHistograms = TRUE;
+        else if( EQUAL(argv[i], "-proj4") )
+            bReportProj4 = TRUE;
         else if( EQUAL(argv[i], "-stats") )
         {
             bStats = TRUE;
@@ -269,6 +272,14 @@ int main( int argc, char ** argv )
         else
             printf( "Coordinate System is `%s'\n",
                     GDALGetProjectionRef( hDataset ) );
+
+        if ( bReportProj4 ) 
+        {
+            char *pszProj4 = NULL;
+            OSRExportToProj4( hSRS, &pszProj4 );
+            printf("PROJ.4 string is:\n\'%s\'\n",pszProj4);
+            CPLFree( pszProj4 );
+        }
 
         OSRDestroySpatialReference( hSRS );
     }
