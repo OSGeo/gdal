@@ -78,10 +78,11 @@ PostGISRasterDataset::PostGISRasterDataset() {
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0; /* Y Pixel Size */
     bBlocksCached = false;
-    bRegularBlocking = true;
+    bRegularBlocking = false;
+    bAllTilesSnapToSameGrid = false;
 
     /**
-     * TODO: Parametrize the regular blocking argument. It controls if all the
+     * TODO: Parametrize bAllTilesSnapToSameGrid. It controls if all the
      * raster rows, in ONE_RASTER_PER_TABLE mode, must be checked to test if
      * they snap to the same grid and have the same srid. It can be the user
      * decission, if he/she's sure all the rows pass the test and want more
@@ -363,6 +364,10 @@ GBool PostGISRasterDataset::SetRasterProperties
     double dfTmpScaleY = 0.0;
     double dfTmpSkewX = 0.0;
     double dfTmpSkewY = 0.0;
+    int nWidth = 0;
+    int nHeight = 0;
+    int nTmpWidth = 0;
+    int nTmpHeight = 0;
 
 
     /* Execute the query to fetch raster data from db */
@@ -424,6 +429,7 @@ GBool PostGISRasterDataset::SetRasterProperties
                  **/
 
             case ONE_RASTER_PER_ROW:
+                {
 
                 for (i = 0; i < nTuples; i++) {
                     nSrid = atoi(PQgetvalue(poResult, i, 10));
@@ -444,12 +450,15 @@ GBool PostGISRasterDataset::SetRasterProperties
                 nRasterYSize = 0;
 
                 bRetValue = true;
+
+                }
                 break;
 
                 /************************************************************
                  * All rows form a whole raster coverage
                 ************************************************************/
             case ONE_RASTER_PER_TABLE:
+                {
 
                 /**
                  * Get the rest of raster properties from this object
@@ -463,23 +472,55 @@ GBool PostGISRasterDataset::SetRasterProperties
                 adfGeoTransform[3] = atof(PQgetvalue(poResult, 0, 1)); //upperleft y
                 adfGeoTransform[4] = atof(PQgetvalue(poResult, 0, 7)); //skew y
                 adfGeoTransform[5] = atof(PQgetvalue(poResult, 0, 5)); //pixelsize y
-
+                nWidth = atoi(PQgetvalue(poResult, 0, 2));
+                nHeight = atoi(PQgetvalue(poResult, 0, 3));
 
                 /**
-                 * Every single raster row will be considered as 'block'. So,
-                 * the block size for bands is the size of any of the rows
-                 * TODO: Only valid in case of regular blocking. Extend to all
-                 * possible cases
+                 * Now check if all tiles have the same dimensions.
+                 *
+                 * NOTE: If bRegularBlocking is 'true', this is not checked.
+                 * It's user responsibility
+                 *
+                 * TODO: Find a good block size, that works in any situation.
                  **/
-                nBlockXSize = atoi(PQgetvalue(poResult, 0, 2));
-                nBlockYSize = atoi(PQgetvalue(poResult, 0, 3));
+                if (!bRegularBlocking) 
+                {
+                    for(i = 1; i < nTuples; i++)
+                    {
+                        nTmpWidth = atoi(PQgetvalue(poResult, i, 2));
+                        nTmpHeight = atoi(PQgetvalue(poResult, i, 3));
 
+                        if (nWidth != nTmpWidth || nHeight != nTmpHeight)
+                        {
+                            // Not supported until the above TODO is implemented
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                "Error, the table %s.%s contains tiles with "
+                                "different size, and irregular blocking is "
+                                "not supported yet", pszSchema, pszTable);
+
+                            PQclear(poResult);
+                            return false;                             
+                        }
+                    }
+
+                    // Now, we can ensure this
+                    bRegularBlocking = true;
+                    nBlockXSize = nWidth;
+                    nBlockYSize = nHeight;
+                }
+
+                // The user ensures this...
+                else
+                {                                        
+                    nBlockXSize = nWidth;
+                    nBlockYSize = nHeight;
+                }
 
                 /**
                  * Check all the raster tiles have the same srid and snap to the
                  * same grid. If not, return an error
                  *
-                 * NOTE: If the snap checking attribute is 'false', this is not
+                 * NOTE: If bAllTilesSnapToSameGrid is 'true', this is not
                  * checked. It's user responsibility.
                  *
                  * TODO: Work even if this requisites are  not complained. For
@@ -491,7 +532,7 @@ GBool PostGISRasterDataset::SetRasterProperties
                  *    pixelsize (x and y pixel sizes are equal and both skew are
                  *    0).
                  **/
-                if (bRegularBlocking)
+                if (!bAllTilesSnapToSameGrid)
                 {
                     for(i = 1; i < nTuples; i++)
                     {
@@ -507,6 +548,10 @@ GBool PostGISRasterDataset::SetRasterProperties
                                 FLT_NEQ(dfTmpSkewX, adfGeoTransform[2]) ||
                                 FLT_NEQ(dfTmpSkewY, adfGeoTransform[4]))
                         {
+                            /**
+                             * In this mode, it is not allowed this situation,
+                             * unless while the above TODO is not implemented
+                             **/
                             CPLError(CE_Failure, CPLE_AppDefined,
                                 "Error, the table %s.%s contains tiles with "
                                 "different SRID or snapping to different grids",
@@ -516,7 +561,17 @@ GBool PostGISRasterDataset::SetRasterProperties
                             return false;
                         }
                     }
+
+                    // Now, we can ensure this
+                    bAllTilesSnapToSameGrid = true;
                 }
+
+                /**
+                 * Now, if there's irregular blocking and/or the blocks don't
+                 * snap to the same grid or don't have the same srid, we should
+                 * fix these situations. Assuming that we don't return an error
+                 * in that cases, of course.
+                 **/
 
 
 
@@ -606,14 +661,18 @@ GBool PostGISRasterDataset::SetRasterProperties
                 PQclear(poResult2);
 
                 bRetValue = true;
+
+                }
                 break;
 
                 /* TODO: take into account more cases, if applies */
             default:
+                {
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "Error, incorrect working mode");
 
                 bRetValue = false;
+                }
         }
     }
 
@@ -858,6 +917,7 @@ CPLErr PostGISRasterDataset::IRasterIO(GDALRWFlag eRWFlag,
     int nBlocksPerRow, nBlocksPerColumn;
     char orderByY[4];
     char orderByX[3];
+    int rid;
 
 
     /**
@@ -883,6 +943,10 @@ CPLErr PostGISRasterDataset::IRasterIO(GDALRWFlag eRWFlag,
                 pData, nBufXSize, nBufYSize, eBufType, nBandCount,
                 panBandMap, nPixelSpace, nLineSpace, nBandSpace);
     }
+        
+    CPLDebug("PostGIS_Raster", "PostGISRasterDataset::IRasterIO: "
+            "nBandSpace = %d, nLineSpace = %d, nPixelSpace = %d",
+            nBandSpace, nLineSpace, nPixelSpace);
 
     /**************************************************************************
      * In the first call, we fetch the data from database and store it as
@@ -1019,6 +1083,8 @@ CPLErr PostGISRasterDataset::IRasterIO(GDALRWFlag eRWFlag,
 
         CPLDebug("PostGIS_Raster", "PostGISRasterDataset::IRasterIO(): "
             "Raster size = (%d, %d)", nRasterXSize, nRasterYSize);
+
+
 
         /**************************************************************************
          * This is the simplest case: all the rows have the same dimensions
