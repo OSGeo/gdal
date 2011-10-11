@@ -440,9 +440,9 @@ CPLErr PostGISRasterRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void*
      **/
     if (poPostGISRasterDS->pszWhere != NULL)
     {
-        osCommand.Printf("select rid, %s from %s.%s where %s ~"
-                "st_setsrid(st_makebox2d(st_point(%f, %f), st_point(%f, %f)),%d)"
-                " and %s", pszColumn, pszSchema, pszTable, pszColumn, 
+        osCommand.Printf("select rid, %s from %s.%s where %s ~ "
+                "st_setsrid(st_makebox2d(st_point(%f, %f), st_point(%f,"
+                "%f)),%d) and %s", pszColumn, pszSchema, pszTable, pszColumn, 
                 dfProjLowerLeftX, dfProjLowerLeftY, dfProjUpperRightX,
                 dfProjUpperRightY, poPostGISRasterDS->nSrid, pszWhere);
     }
@@ -450,11 +450,14 @@ CPLErr PostGISRasterRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void*
     else
     {
         osCommand.Printf("select rid, %s from %s.%s where %s ~ "
-                "st_setsrid(st_makebox2d(st_point(%f, %f), st_point(%f, %f)),%d)",
-                pszColumn, pszSchema, pszTable, pszColumn, dfProjLowerLeftX, 
-                dfProjLowerLeftY, dfProjUpperRightX, dfProjUpperRightY, 
-                poPostGISRasterDS->nSrid);
+                "st_setsrid(st_makebox2d(st_point(%f, %f), st_point(%f,"
+                "%f)),%d)", pszColumn, pszSchema, pszTable, pszColumn, 
+                dfProjLowerLeftX, dfProjLowerLeftY, dfProjUpperRightX, 
+                dfProjUpperRightY, poPostGISRasterDS->nSrid);
     }
+
+    CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IReadBlock: "
+            "The query = %s", osCommand.c_str());
 
     poResult = PQexec(poPostGISRasterDS->poConn, osCommand.c_str());
     if (poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK ||
@@ -514,8 +517,8 @@ CPLErr PostGISRasterRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void*
     else
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                "Overlapping raster data. Feature under development, not available"
-                "yet");
+                "Overlapping raster data. Feature under development, not "
+                "available yet");
         if (poResult)
             PQclear(poResult);
 
