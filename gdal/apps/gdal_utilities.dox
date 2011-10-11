@@ -200,7 +200,6 @@ which contain thousands of them.</dd>
 of metadata strings.</dd>
 <dt> <b>-noct</b></dt><dd> Suppress printing of color table.</dd>
 <dt> <b>-checksum</b></dt><dd> Force computation of the checksum for each band in the dataset.</dd>
-<dt> <b>-proj4</b></dt><dd> Report a PROJ.4 string corresponding to the file's coordinate system.</dd>
 <dt> <b>-mdd domain</b></dt><dd> Report metadata for the specified domain</dd>
 <dt> <b>-nofl</b></dt><dd> (GDAL >= 1.9.0) Only display the first file of the
 file list.</dd>
@@ -208,6 +207,7 @@ file list.</dd>
 dataset contains several subdatasets read and display a subdataset with
 specified number (starting from 1). This is an alternative of giving the full
 subdataset name.</dd>
+<dt> <b>-proj4</b></dt><dd> (GDAL >= 1.9.0) Report a PROJ.4 string corresponding to the file's coordinate system.</dd>
 </dl>
 
 The gdalinfo will report all of the following (if known):
