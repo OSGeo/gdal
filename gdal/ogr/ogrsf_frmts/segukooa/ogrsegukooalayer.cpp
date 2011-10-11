@@ -383,7 +383,7 @@ OGRFeature *OGRUKOOAP190Layer::GetNextRawFeature()
             poFeature->SetField(FIELD_DEPTH, dfDepth);
         }
 
-        int nDayOfYear;
+        int nDayOfYear = 0;
         if (nLineLen >= 73)
         {
             char szDayOfYear[3+1];
