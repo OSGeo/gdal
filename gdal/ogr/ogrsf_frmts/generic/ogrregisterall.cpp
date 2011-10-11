@@ -228,4 +228,7 @@ void OGRRegisterAll()
 #ifdef ARCGEN_ENABLED
     RegisterOGRARCGEN();
 #endif
+#ifdef SEGUKOOA_ENABLED
+    RegisterOGRSEGUKOOA();
+#endif
 } /* OGRRegisterAll */
