@@ -45,6 +45,7 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
     poDS = poDSIn;
 	
     bSpatialite2D = FALSE;
+    bLaunderColumnNames = TRUE;
 
     iNextShapeId = 0;
 
