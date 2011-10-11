@@ -90,6 +90,7 @@ private:
     int nSrid;
     PGconn* poConn;
     GBool bRegularBlocking;
+    GBool bAllTilesSnapToSameGrid;
     GBool bRegisteredInRasterColumns;
     char* pszSchema;
     char* pszTable;
