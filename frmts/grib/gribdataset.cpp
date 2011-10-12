@@ -330,6 +330,9 @@ void GRIBRasterBand::ReadGribData( DataSource & fp, sInt4 start, int subgNum, do
 
     IS_Init (&is);
 
+    const char* pszGribNormalizeUnits = CPLGetConfigOption("GRIB_NORMALIZE_UNITS", NULL);
+    if ( pszGribNormalizeUnits != NULL && ( STRCASECMP(pszGribNormalizeUnits,"NO")==0 ) )
+        f_unit = 0; /* do not normalize units to metric */
 
     /* Read GRIB message from file position "start". */
     fp.DataSourceFseek(start, SEEK_SET);
