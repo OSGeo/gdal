@@ -49,6 +49,17 @@ as metadata like this:
     GRIB_PDS_TEMPLATE_NUMBERS=3 5 2 0 105 0 0 0 1 0 0 0 1 100 0 0 1 134 160 255 0 0 0 0 0
 </pre>
 
+<h2>Configuration options</h2>
+
+<p>
+
+This paragraph lists the configuration options that can be set to alter the default behaviour of the GRIB driver.
+
+<ul>
+<li>GRIB_NORMALIZE_UNITS : (GDAL >= 1.9.0) Can be set to NO to avoid gdal to normalize units to metric.</li>
+</ul>
+</p>
+
 <h2>Known issues:</h2>
 
 The library that GDAL uses to read GRIB files is known to be not thread-safe, so you should avoid
