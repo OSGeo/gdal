@@ -233,6 +233,7 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
     char* pDelimit = NULL;
     char* pStr = psCitation;
     char name[512];
+    int nameSet = FALSE;
     int nameLen = strlen(psCitation);
     OGRBoolean nameFound = FALSE;
     while((pStr-psCitation+1)< nameLen)
@@ -242,11 +243,13 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
             strncpy( name, pStr, pDelimit-pStr );
             name[pDelimit-pStr] = '\0';
             pStr = pDelimit+1;
+            nameSet = TRUE;
         }
         else
         {
             strcpy (name, pStr);
             pStr += strlen(pStr);
+            nameSet = TRUE;
         }
         if( strstr(name, "PCS Name = ") )
         {
@@ -289,7 +292,7 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
             nameFound = TRUE;
         }
     }
-    if( !nameFound && keyID == GeogCitationGeoKey )
+    if( !nameFound && keyID == GeogCitationGeoKey && nameSet )
     {
         ret[CitGcsName] = CPLStrdup(name);
         nameFound = TRUE;
