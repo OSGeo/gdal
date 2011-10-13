@@ -288,6 +288,15 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
             CPLDebug("SQLITE", "SpatiaLite-style SQLite DB found !");
         }
 
+        /*
+        / SpatiaLite v.2.4.0 (or any subsequent) is required
+        / to support 2.5D: if an obsolete version of the library
+        / is found we'll unconditionally activate 2D casting mode
+        */
+        int bForce2D = FALSE;
+        iSpatialiteVersion = OGRSQLiteGetSpatialiteVersionNumber();
+        if ( iSpatialiteVersion < 24)
+            bForce2D = TRUE;
 
         for ( iRow = 0; iRow < nRowCount; iRow++ )
         {
@@ -325,7 +334,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
             OpenTable( papszRow[0], papszRow[1], eGeomType, "SpatiaLite",
                        FetchSRS( nSRID ), nSRID, bHasSpatialIndex, bHasM, 
                        bSpatialiteReadOnly, bSpatialiteLoaded,
-                       iSpatialiteVersion );
+                       iSpatialiteVersion, bForce2D );
                        
             if (bListAllTables)
                 CPLHashSetInsert(hSet, CPLStrdup(papszRow[0]));
@@ -460,7 +469,8 @@ int OGRSQLiteDataSource::OpenTable( const char *pszNewName,
                                     int bHasSpatialIndex, int bHasM, 
                                     int bSpatialiteReadOnly,
                                     int bSpatialiteLoaded,
-                                    int iSpatialiteVersion )
+                                    int iSpatialiteVersion,
+                                    int bForce2D )
 
 {
 /* -------------------------------------------------------------------- */
@@ -480,6 +490,7 @@ int OGRSQLiteDataSource::OpenTable( const char *pszNewName,
         delete poLayer;
         return FALSE;
     }
+    poLayer->SetSpatialite2D ( bForce2D );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -910,26 +921,15 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 
             /*
             / SpatiaLite v.2.4.0 (or any subsequent) is required
-            / to support 2.5D: is an obsolete version of the library
+            / to support 2.5D: if an obsolete version of the library
             / is found we'll unconditionally activate 2D casting mode
             */
             int iSpatialiteVersion = OGRSQLiteGetSpatialiteVersionNumber();
-            if ( iSpatialiteVersion < 24)
+            if ( iSpatialiteVersion < 24 && nCoordDim == 3 )
             {
+                CPLDebug("SQLITE", "Spatialite < 2.4.0 --> 2.5D geometry not supported. Casting to 2D");
                 nCoordDim = 2;
                 bForce2D = TRUE;
-            }
-            else
-            {
-                const char* pszForce2D = CSLFetchNameValue( papszOptions, "FORCE_2D" );
-                if( pszForce2D != NULL)
-                {
-                    if ( CSLTestBoolean(pszForce2D) )
-                    {
-                        nCoordDim = 2;
-                        bForce2D = TRUE;
-                    }
-                }
             }
 
             osCommand.Printf( "SELECT AddGeometryColumn("
