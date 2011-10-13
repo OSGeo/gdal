@@ -588,7 +588,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     if(!pszGeogName || strlen(pszGeogName) == 0)
     {
         CPLFree(pszGeogName);
-        pszGeogName = CPLStrdup( pszDatumName );
+        pszGeogName = CPLStrdup( pszDatumName ? pszDatumName : "unknown" );
     }
 
     if(aUnitGot)
