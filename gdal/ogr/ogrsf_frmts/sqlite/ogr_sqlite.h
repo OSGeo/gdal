@@ -421,7 +421,8 @@ class OGRSQLiteDataSource : public OGRDataSource
                                    int bHasM = FALSE,
                                    int bSpatialiteReadOnly = FALSE,
                                    int bSpatialiteLoaded = FALSE,
-                                   int iSpatialiteVersion = -1 );
+                                   int iSpatialiteVersion = -1,
+                                   int bForce2D = FALSE );
     int                  OpenView( const char *pszViewName,
                                    const char *pszViewGeometry,
                                    const char *pszViewRowid,
