@@ -1472,10 +1472,25 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
         osExpectedString_unescaped += "</title>";
         CPLFree(pszUnescapedDir);
     }
+
+    int nCountTable = 0;
     
     while( (c = VSICurlParserFindEOL( pszLine )) != NULL )
     {
         *c = 0;
+
+        /* To avoid false positive on pages such as http://www.ngs.noaa.gov/PC_PROD/USGG2009BETA */
+        /* This is a heuristics, but normal HTML listing of files have not more than one table */
+        if (strstr(pszLine, "<table"))
+        {
+            nCountTable ++;
+            if (nCountTable == 2)
+            {
+                *pbGotFileList = FALSE;
+                return NULL;
+            }
+        }
+
         if (!bIsHTMLDirList &&
             (strstr(pszLine, osExpectedString.c_str()) ||
              strstr(pszLine, osExpectedString2.c_str()) ||
