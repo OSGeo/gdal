@@ -576,6 +576,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
     /* -------------------------------------------------------------------- */
     double dfOff = 0.0; 
     double dfScale = 1.0; 
+
     if ( nc_inq_attid ( poDS->cdfid, nZId, NCDF_ADD_OFFSET, NULL) == NC_NOERR ) { 
         status = nc_get_att_double( poDS->cdfid, nZId, NCDF_ADD_OFFSET, &dfOff );
     }
