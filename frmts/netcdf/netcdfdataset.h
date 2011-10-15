@@ -102,6 +102,9 @@
 #define NCDF_FILETYPE_HDF5            5   
 #define NCDF_FILETYPE_UNKNOWN         10  /* Filetype not determined (yet) */
 
+#define NCDF_ADD_OFFSET         "add_offset"
+#define NCDF_SCALE_FACTOR       "scale_factor"
+
 typedef struct {
     const char *netCDFSRS;
     const char *SRS; }

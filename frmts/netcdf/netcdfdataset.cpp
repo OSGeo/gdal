@@ -341,9 +341,11 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
     float fval;
     double dval;
     int ival;
+    int bValidMeta;
 
     nc_inq_varnatts( poDS->cdfid, nZId, &nAtt );
     for( i=0; i < nAtt ; i++ ) {
+        bValidMeta = TRUE;
     	status = nc_inq_attname( poDS->cdfid, nZId, 
     				 i, szTemp);
     	status = nc_inq_att( poDS->cdfid, nZId, 
@@ -356,30 +358,37 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
     	    fillc = (char *) CPLCalloc( attlen+1, sizeof(char) );
     	    status=nc_get_att_text( poDS->cdfid, nZId,
     				    szTemp, fillc );
-    	    SetMetadataItem( szMetaTemp, fillc );
+    	    // SetMetadataItem( szMetaTemp, fillc );
+    	    sprintf( szTemp,"%s",fillc);
     	    CPLFree(fillc);
     	    break;
     	case NC_INT:
     	    status = nc_get_att_int( poDS->cdfid, nZId,
     				     szTemp, &ival );
     	    sprintf( szTemp,"%d",ival);
-    	    SetMetadataItem( szMetaTemp, szTemp );
+    	    // SetMetadataItem( szMetaTemp, szTemp );
     	    break;
     	case NC_FLOAT:
     	    status = nc_get_att_float( poDS->cdfid, nZId,
     				       szTemp, &fval );
     	    sprintf( szTemp,"%f",fval);
-    	    SetMetadataItem( szMetaTemp, szTemp );
+    	    // SetMetadataItem( szMetaTemp, szTemp );
     	    break;
     	case NC_DOUBLE:
     	    status = nc_get_att_double( poDS->cdfid, nZId,
     					szTemp, &dval );
     	    sprintf( szTemp,"%.16g",dval);
-    	    SetMetadataItem( szMetaTemp, szTemp );
+    	    // SetMetadataItem( szMetaTemp, szTemp );
     	    break;
     	default:
+            bValidMeta = FALSE;
     	    break;
     	}
+
+        if ( bValidMeta ) {
+            SetMetadataItem( szMetaTemp, szTemp );
+        }
+        
     }
 
     return CE_None;
@@ -567,12 +576,12 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
     /* -------------------------------------------------------------------- */
     double dfOff = 0.0; 
     double dfScale = 1.0; 
-    if ( nc_inq_attid ( poDS->cdfid, nZId, "add_offset", NULL) == NC_NOERR ) { 
-        nc_get_att_double( poDS->cdfid, nZId, "add_offset", &dfOff );
+    if ( nc_inq_attid ( poDS->cdfid, nZId, NCDF_ADD_OFFSET, NULL) == NC_NOERR ) { 
+        status = nc_get_att_double( poDS->cdfid, nZId, NCDF_ADD_OFFSET, &dfOff );
     }
     if ( nc_inq_attid ( poDS->cdfid, nZId, 
-			"scale_factor", NULL) == NC_NOERR ) { 
-	nc_get_att_double( poDS->cdfid, nZId, "scale_factor", &dfScale ); 
+                        NCDF_SCALE_FACTOR, NULL) == NC_NOERR ) { 
+        status = nc_get_att_double( poDS->cdfid, nZId, NCDF_SCALE_FACTOR, &dfScale ); 
     }
     SetOffset( dfOff ); 
     SetScale( dfScale ); 
@@ -2412,20 +2421,21 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
 
-/* -------------------------------------------------------------------- */
-/*      Add CF-1.x Conventions Global attribute                         */
-/*      Use CF-1.2 for now                                              */
-/*      grid_mapping_name = "latitude_longitude" introduced in 1.2      */ 
-/* -------------------------------------------------------------------- */
     char       **papszMetadata;
     char       **papszFieldData;
     const char *pszField;
     char       szMetaName[ MAX_STR_LEN ];
     char       szMetaValue[ MAX_STR_LEN ];
     char       szTemp[ MAX_STR_LEN ];
-    int        nDataLength;
     int        nItems;
     int        bCopyItem;
+
+    /* These values for the detection of data type */
+    nc_type    nMetaType;
+    int        nMetaValue;
+    float      fMetaValue;
+    double     dfMetaValue;
+    char       *pszTemp;
 
     if( CDFVarID == NC_GLOBAL ) {
         papszMetadata = GDALGetMetadata( (GDALDataset *) poDS,"");
@@ -2478,19 +2488,71 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
                 // }
             }
             else {
+                /* for variables, don't copy varname */
                 if ( strncmp( szMetaName, "NETCDF_VARNAME", 14) == 0 ) 
+                    bCopyItem = FALSE;
+                /* Remove add_offset and scale_factor, but set them later from band data */
+                else if ( strcmp( szMetaName, NCDF_ADD_OFFSET ) == 0 ) 
+                    bCopyItem = FALSE;
+                else if ( strcmp( szMetaName, NCDF_SCALE_FACTOR ) == 0 ) 
                     bCopyItem = FALSE;
             }
 
             if ( bCopyItem ) {
-                nDataLength = strlen( szMetaValue );
-                nc_put_att_text( fpImage, 
-                                 CDFVarID, 
-                                 szMetaName,
-                                 nDataLength,
-                                 szMetaValue );                
+
+                /* By default write NC_CHAR, but detect for int/float/double */
+                /* http://stackoverflow.com/questions/78474/determine-if-a-string-is-an-integer-or-a-float-in-ansi-c */
+                nMetaType = NC_CHAR;
+
+                errno = 0;
+                nMetaValue = strtol( szMetaValue, &pszTemp, 10 );
+                if ( (errno == 0) && (szMetaValue != pszTemp) && (*pszTemp == 0) ) {
+                    nMetaType = NC_INT;
+                }
+                
+                errno = 0;
+                fMetaValue = strtof( szMetaValue, &pszTemp );
+                if ( (errno == 0) && (szMetaValue != pszTemp) && (*pszTemp == 0) ) {
+                    if ( nMetaType != NC_INT ) nMetaType = NC_FLOAT;
+                }
+                
+                errno = 0;
+                dfMetaValue = strtod( szMetaValue, &pszTemp );
+                if ( (errno == 0) && (szMetaValue != pszTemp) && (*pszTemp == 0) ) {
+                    if ( (nMetaType != NC_INT && nMetaType != NC_FLOAT) 
+                         || ! CPLIsEqual( fMetaValue, dfMetaValue ) )
+                        nMetaType = NC_DOUBLE;                   
+                }
+                
+                /* now write the data */
+                switch( nMetaType ) {
+                    case  NC_INT:
+                        nc_put_att_int( fpImage, CDFVarID, 
+                                        szMetaName,
+                                        NC_INT, 1,
+                                        &nMetaValue );
+                        break;
+                    case  NC_FLOAT:
+                        nc_put_att_float( fpImage, CDFVarID, 
+                                          szMetaName,
+                                          NC_FLOAT, 1,
+                                          &fMetaValue );
+                        break;
+                    case  NC_DOUBLE:
+                        nc_put_att_double( fpImage, CDFVarID, 
+                                           szMetaName,
+                                           NC_DOUBLE, 1,
+                                           &dfMetaValue );
+                        break;
+                    default:
+                        nc_put_att_text( fpImage, CDFVarID, 
+                                         szMetaName,
+                                         strlen( szMetaValue ),
+                                         szMetaValue );          
+                        break;
+                }
             }
-	    
+            
         }
         CSLDestroy( papszFieldData );
     }
@@ -2506,12 +2568,30 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
                          6,
                          "CF-1.2" ); 
 
-        pszField = GDALVersionInfo("--version");
-        nc_put_att_text( fpImage, 
-                         NC_GLOBAL, 
-                         "GDAL", 
-                         strlen(pszField),
-                         pszField ); 
+        // pszField = GDALVersionInfo("--version");
+        // nc_put_att_text( fpImage, 
+        //                  NC_GLOBAL, 
+        //                  "GDAL", 
+        //                  strlen(pszField),
+        //                  pszField ); 
+    }
+    /* Set add_offset and scale_factor here if needed */
+    else {
+        int bGotAddOffset, bGotScale;
+        double dfAddOffset = GDALGetRasterOffset( (GDALRasterBandH) poDS, &bGotAddOffset );
+        double dfScale = GDALGetRasterScale( (GDALRasterBandH) poDS, &bGotScale );
+        if ( bGotAddOffset && dfAddOffset != 0.0 && bGotScale && dfScale != 1.0 ) {
+            nc_put_att_double( fpImage, CDFVarID, 
+                               NCDF_ADD_OFFSET,
+                               NC_DOUBLE,
+                               1,
+                               &dfAddOffset );
+            nc_put_att_double( fpImage, CDFVarID, 
+                               NCDF_SCALE_FACTOR,
+                               NC_DOUBLE,
+                               1,
+                               &dfScale );
+        }
     }
 
 }
