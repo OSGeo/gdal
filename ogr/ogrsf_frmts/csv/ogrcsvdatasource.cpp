@@ -179,7 +179,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
 /* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;
 
-    if( VSIStatL( osFilename, &sStatBuf ) != 0 )
+    if( VSIStatExL( osFilename, &sStatBuf, VSI_STAT_NATURE_FLAG ) != 0 )
         return FALSE;
 
 /* -------------------------------------------------------------------- */

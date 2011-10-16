@@ -1280,7 +1280,7 @@ int OGRLIBKMLDataSource::Open (
     /***** dir *****/
 
     VSIStatBufL sStatBuf = { };
-    if ( !VSIStatL ( pszFilename, &sStatBuf ) &&
+    if ( !VSIStatExL ( pszFilename, &sStatBuf, VSI_STAT_NATURE_FLAG ) &&
          VSI_ISDIR ( sStatBuf.st_mode ) )
         return OpenDir ( pszFilename, bUpdate );
 
