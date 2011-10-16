@@ -163,7 +163,7 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
 /* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;
 
-    if( VSIStatL( pszFilename, &sStatBuf ) != 0 )
+    if( VSIStatExL( pszFilename, &sStatBuf, VSI_STAT_NATURE_FLAG ) != 0 )
         return FALSE;
     
 // -------------------------------------------------------------------- 
