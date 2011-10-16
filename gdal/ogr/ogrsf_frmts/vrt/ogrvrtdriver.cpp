@@ -83,12 +83,6 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
         VSILFILE *fp;
         char achHeader[18];
 
-        VSIStatBufL sStatBuf;
-        if (VSIStatL( pszFilename, &sStatBuf ) != 0 ||
-            VSI_ISDIR(sStatBuf.st_mode) ||
-            sStatBuf.st_size > 1024 * 1024 )
-            return FALSE;
-
         fp = VSIFOpenL( pszFilename, "rb" );
 
         if( fp == NULL )
@@ -101,6 +95,14 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
         }
 
         if( !EQUALN(achHeader,"<OGRVRTDataSource>",18) )
+        {
+            VSIFCloseL( fp );
+            return NULL;
+        }
+
+        VSIStatBufL sStatBuf;
+        if ( VSIStatL( pszFilename, &sStatBuf ) != 0 ||
+             sStatBuf.st_size > 1024 * 1024 )
         {
             VSIFCloseL( fp );
             return NULL;
