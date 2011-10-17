@@ -10,7 +10,7 @@ DEP_LIBS	=	$(EXE_DEP_LIBS) $(XTRAOBJ)
 BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
 			gdalwarp$(EXE) nearblack$(EXE) gdalmanage$(EXE) \
 			gdalenhance$(EXE) gdaltransform$(EXE) gdaldem$(EXE) \
-			gdallocationinfo$(EXE)
+			gdallocationinfo$(EXE) gdalsrsinfo$(EXE) 
 
 ifeq ($(OGR_ENABLED),yes)
 BIN_LIST += 	gdal_contour$(EXE) \
@@ -78,7 +78,7 @@ gdalenhance$(EXE):	gdalenhance.$(OBJ_EXT) commonutils.$(OBJ_EXT) $(DEP_LIBS)
 
 gdaldem$(EXE): gdaldem.$(OBJ_EXT) commonutils.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< commonutils.$(OBJ_EXT) $(XTRAOBJ) $(CONFIG_LIBS) -o $@
-	
+
 gdal_grid$(EXE):	gdal_grid.$(OBJ_EXT) commonutils.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< commonutils.$(OBJ_EXT) $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
@@ -89,6 +89,9 @@ gdaltransform$(EXE): gdaltransform.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 gdallocationinfo$(EXE): gdallocationinfo.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+
+gdalsrsinfo$(EXE):	gdalsrsinfo.$(OBJ_EXT)  $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 gdalflattenmask$(EXE): gdalflattenmask.$(OBJ_EXT) $(DEP_LIBS)

@@ -278,7 +278,7 @@ int main( int argc, char ** argv )
             char *pszProj4 = NULL;
             OSRExportToProj4( hSRS, &pszProj4 );
             printf("PROJ.4 string is:\n\'%s\'\n",pszProj4);
-            CPLFree( pszProj4 );
+            CPLFree( pszProj4 ); 
         }
 
         OSRDestroySpatialReference( hSRS );
