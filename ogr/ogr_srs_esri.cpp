@@ -999,12 +999,12 @@ OGRErr OGRSpatialReference::morphToESRI()
     }
 
 /* -------------------------------------------------------------------- */
-/*      OBLIQUE_STEREOGRAPHIC maps to ESRI Stereographic                */
+/*      OBLIQUE_STEREOGRAPHIC maps to ESRI Double_Stereographic         */
 /* -------------------------------------------------------------------- */
     if( pszProjection != NULL
         && ( EQUAL(pszProjection,SRS_PT_OBLIQUE_STEREOGRAPHIC) ))
     {
-        SetNode( "PROJCS|PROJECTION", "Stereographic" );
+        SetNode( "PROJCS|PROJECTION", "Double_Stereographic" );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1538,6 +1538,16 @@ OGRErr OGRSpatialReference::morphFromESRI()
         && EQUALN(pszProjection+strlen(pszProjection)-5,"_Pole",5) )
     {
         SetNode( "PROJCS|PROJECTION", SRS_PT_POLAR_STEREOGRAPHIC );
+        pszProjection = GetAttrValue("PROJECTION");
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Remap Double_Stereographic to Oblique_Stereographic.            */
+/* -------------------------------------------------------------------- */
+    if( pszProjection != NULL
+        && EQUAL(pszProjection,"Double_Stereographic") )
+    {
+        SetNode( "PROJCS|PROJECTION", SRS_PT_OBLIQUE_STEREOGRAPHIC );
         pszProjection = GetAttrValue("PROJECTION");
     }
 
