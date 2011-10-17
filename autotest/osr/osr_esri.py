@@ -626,6 +626,121 @@ def osr_esri_19():
 
     return 'success'
 
+###############################################################################
+# Test esri->ogc, esri->proj / ogc->esri, ogc->proj / proj->esri, proj->ogc
+def osr_ersi_test( wkt_esri, wkt_ogc, proj4 ):
+
+    silent = True
+    #silent = False
+
+    result = 'success'
+    srs_esri = osr.SpatialReference()
+    srs_ogc = osr.SpatialReference()
+
+    if not silent:
+        print( 'osr_esri_test( ) \nwkt_esri='+wkt_esri+'\nwkt_ogc= '+wkt_ogc+'\nproj4='+proj4 )
+
+    #esri->ogc, esri->proj
+    if not silent:
+        print( '\nesri->ogc, esri->proj\n' )
+    srs_esri.SetFromUserInput( wkt_esri )
+    srs_esri.MorphFromESRI()
+    srs_esri.SetAttrValue( 'PROJCS|GEOGCS|DATUM','unknown' )
+    srs_ogc.SetFromUserInput( wkt_ogc )
+    srs_ogc.SetAttrValue( 'PROJCS|GEOGCS|DATUM','unknown' )
+    wkt_esri_to_ogc = srs_esri.ExportToWkt()
+    wkt_esri_to_proj4 = srs_esri.ExportToProj4()
+    if not silent:
+        print( 'wkt_esri_to_ogc: '+wkt_esri_to_ogc )
+        print( 'wkt_esri_to_proj4: '+wkt_esri_to_proj4 )
+
+    if not srs_esri.IsSame(srs_ogc):
+        print( 'wkt_esri_to_ogc failed for '+proj4 )
+        result = 'fail'
+    if wkt_esri_to_proj4 != proj4:
+        print( 'wkt_esri_to_proj4 failed for '+proj4 )
+        result = 'fail'
+
+    #ogc->esri, ogc->proj
+    if not silent:
+        print( '\nogc->esri, ogc->proj\n' )
+    srs_esri.SetFromUserInput( wkt_esri )
+    srs_esri.SetAttrValue( 'PROJCS|GEOGCS|DATUM','unknown' )
+    srs_ogc.SetFromUserInput( wkt_ogc )
+    srs_ogc.SetAttrValue( 'PROJCS|GEOGCS|DATUM','unknown' )
+    wkt_ogc_to_proj4 = srs_ogc.ExportToProj4()
+    srs_ogc.MorphToESRI()
+    srs_ogc.SetAttrValue( 'PROJCS|GEOGCS|DATUM','unknown' )
+    wkt_ogc_to_esri = srs_ogc.ExportToWkt()
+    if not silent:
+        print( 'wkt_ogc_to_esri: '+wkt_ogc_to_esri )
+        print( 'wkt_ogc_to_proj4: '+wkt_ogc_to_proj4 )
+
+    if not srs_esri.IsSame(srs_ogc):
+        print( 'wkt_ogc_to_esri failed for '+proj4 )
+        result = 'fail'
+    if wkt_ogc_to_proj4 != proj4:
+        print( 'wkt_ogc_to_proj4 failed for '+proj4 )
+        result = 'fail'
+
+    #proj->esri, proj->ogc
+    if not silent:
+        print( '\nproj->esri, proj->ogc\n' )
+    srs_esri.SetFromUserInput( proj4 )
+    srs_esri.MorphFromESRI()
+    srs_esri.SetAttrValue( 'PROJCS|GEOGCS|DATUM','unknown' )
+    proj4_to_esri = srs_esri.ExportToProj4()
+    srs_ogc.SetFromUserInput( proj4 )
+    srs_ogc.SetAttrValue( 'PROJCS|GEOGCS|DATUM','unknown' )
+    proj4_to_ogc = srs_ogc.ExportToProj4()
+    
+    if proj4_to_ogc != proj4:
+        print( 'proj4_to_ogc failed: proj4='+proj4+', proj4_to_ogc='+proj4_to_ogc  )
+        result = 'fail'
+
+    if proj4_to_esri != proj4:
+        print( 'proj4_to_esri failed: proj4='+proj4+', proj4_to_esri='+proj4_to_esri  )
+        result = 'fail'
+
+    return result
+
+###############################################################################
+# Test for various stereographic projection remappings (ESRI / OGC / PROJ.4)
+# Stereographic
+# Double_Stereographic / Oblique_Stereographic (#1428 and #4267)
+# Stereographic_North_Pole / Polar_Stereographic
+
+def osr_esri_20():
+    
+    result = 'success'
+
+    # Stereographic / Stereographic / +proj=stere +lat_0=0 +lon_0=0 ...
+    #modified definitions from ESRI 'Stereographic (world).prj'
+    stere_esri='PROJCS["World_Stereographic",GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Stereographic"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Scale_Factor",1.0],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]'
+    stere_ogc='PROJCS["World_Stereographic",GEOGCS["GCS_WGS_1984",DATUM["WGS_84",SPHEROID["WGS_84",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Stereographic"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Scale_Factor",1.0],PARAMETER["Latitude_Of_Origin",0.0],UNIT["Meter",1.0]]'
+    stere_proj4='+proj=stere +lat_0=0 +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs '
+    #result1 = 'success'
+    result1 = osr_ersi_test(stere_esri, stere_ogc, stere_proj4)
+
+    # Double_Stereographic / Oblique_Stereographic / +proj=sterea +lat_0=46 +lon_0=25 ...
+    #modified definitions from ESRI 'Stereo 1970.prj'
+    sterea_esri='PROJCS["Stereo_70",GEOGCS["GCS_Dealul_Piscului_1970",DATUM["D_Dealul_Piscului_1970",SPHEROID["Krasovsky_1940",6378245.0,298.3]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Double_Stereographic"],PARAMETER["False_Easting",500000.0],PARAMETER["False_Northing",500000.0],PARAMETER["Central_Meridian",25.0],PARAMETER["Scale_Factor",0.99975],PARAMETER["Latitude_Of_Origin",46.0],UNIT["Meter",1.0]]'
+    sterea_ogc='PROJCS["Stereo_70",GEOGCS["GCS_Dealul_Piscului_1970",DATUM["Dealul_Piscului_1970",SPHEROID["Krasovsky_1940",6378245.0,298.3]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Oblique_Stereographic"],PARAMETER["False_Easting",500000.0],PARAMETER["False_Northing",500000.0],PARAMETER["Central_Meridian",25.0],PARAMETER["Scale_Factor",0.99975],PARAMETER["Latitude_Of_Origin",46.0],UNIT["Meter",1.0]]'
+    sterea_proj4='+proj=sterea +lat_0=46 +lon_0=25 +k=0.99975 +x_0=500000 +y_0=500000 +ellps=krass +units=m +no_defs '
+    result2 = osr_ersi_test(sterea_esri, sterea_ogc, sterea_proj4)
+
+    # Stereographic_North_Pole / Polar_Stereographic / +proj=stere +lat_0=90 +lat_ts=70 ...
+    #modified definitions from ESRI 'WGS 1984 NSIDC Sea Ice Polar Stereographic North.prj'
+    sterep_esri='PROJCS["WGS_1984_NSIDC_Sea_Ice_Polar_Stereographic_North",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Stereographic_North_Pole"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-45.0],PARAMETER["Standard_Parallel_1",70.0],UNIT["Meter",1.0]]'
+    sterep_ogc='PROJCS["WGS_1984_NSIDC_Sea_Ice_Polar_Stereographic_North",GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_84",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Polar_Stereographic"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",-45.0],PARAMETER["latitude_of_origin",70.0],UNIT["Meter",1.0]]'
+    sterep_proj4='+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs '
+    result3 = osr_ersi_test(sterep_esri, sterep_ogc, sterep_proj4)
+
+    if ( result1 != 'success' or result2 != 'success' or result3 != 'success'):
+        result = 'fail'
+
+    return result
+
 
 ###############################################################################
 
@@ -649,6 +764,7 @@ gdaltest_list = [
     osr_esri_17,
     osr_esri_18,
     osr_esri_19,
+    osr_esri_20,
     None ]
 
 if __name__ == '__main__':
