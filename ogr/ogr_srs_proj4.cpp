@@ -556,8 +556,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
-    else if( EQUALN(pszProj,"stere",5) /* mostly sterea */
-             && CSLFetchNameValue(papszNV,"k") != NULL )
+    else if( EQUAL(pszProj,"sterea") )
     {
         SetOS( OSR_GDV( papszNV, "lat_0", 0.0 ), 
                OSR_GDV( papszNV, "lon_0", 0.0 ), 
@@ -570,7 +569,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     {
         SetStereographic( OSR_GDV( papszNV, "lat_0", 0.0 ), 
                           OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                          1.0, 
+                          OSR_GDV( papszNV, "k", 1.0 ),  
                           OSR_GDV( papszNV, "x_0", 0.0 ), 
                           OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
