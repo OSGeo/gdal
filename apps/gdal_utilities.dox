@@ -30,6 +30,7 @@ The following utility programs are distributed with GDAL.
 <li> \ref gdal_sieve - Raster Sieve filter.
 <li> \ref gdal_fillnodata - Interpolate in nodata regions.
 <li> \ref gdallocationinfo - Query raster at a location.
+<li> \ref gdalsrsinfo - Report a given CRS in different formats.  (GDAL >= 1.9.0)
 <li> \ref gdal-config - Get options required to build software using GDAL.
 </ul>
 
@@ -2064,4 +2065,105 @@ http://grass.osgeo.org/grass64/manuals/html64_user/r.shaded.relief.html
 
 http://grass.osgeo.org/grass64/manuals/html64_user/r.colors.html
 
+*/
+
+
+*******************************************************************************
+/*! \page gdalsrsinfo gdalsrsinfo
+	
+lists info about a given CRS in number of formats (WKT, PROJ.4, etc.)
+
+\section gdalsrsinfo_synopsis SYNOPSIS
+
+\verbatim
+gdalsrsinfo [options] srs_def
+
+srs_def may be the filename of a dataset supported by GDAL/OGR from which to extract SRS information
+OR any of the usual GDAL/OGR forms (complete WKT, PROJ.4, EPSG:n or a file containing the SRS)
+
+Options: 
+   [--help-general] [-h]  Show help and exit
+   [-p]                   Pretty-print where applicable (e.g. WKT)
+   [-v]                   Validate SRS
+   [-o out_type]          Output type, default all
+                          {all,proj4,wkt,wkt_simple,wkt_old,esri,mapinfo,xml}
+\endverbatim
+
+\section gdalsrsinfo_description DESCRIPTION
+
+The gdalsrsinfo utility reports information about a given SRS from one of the following:
+
+- the filename of a dataset supported by GDAL/OGR which contains SRS information
+- any of the usual GDAL/OGR forms (complete WKT, PROJ.4, EPSG:n or a file containing the SRS)
+
+\section gdal_grid_example EXAMPLE
+
+
+\verbatim
+$ gdalsrsinfo  -o wkt -p  "EPSG:32722"
+
+PROJCS["WGS 84 / UTM zone 22S",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",-51],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",10000000],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["Easting",EAST],
+    AXIS["Northing",NORTH],
+    AUTHORITY["EPSG","32722"]]
+\endverbatim
+
+
+\verbatim
+$ gdalsrsinfo  -o all  "EPSG:4326"
+
+PROJ.4 : '+proj=longlat +datum=WGS84 +no_defs '
+
+OGC WKT :
+GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9122"]],
+    AUTHORITY["EPSG","4326"]]
+
+ESRI WKT :
+GEOGCS["GCS_WGS_1984",
+    DATUM["D_WGS_1984",
+        SPHEROID["WGS_1984",6378137,298.257223563]],
+    PRIMEM["Greenwich",0],
+    UNIT["Degree",0.017453292519943295]]
+
+MAPINFO : 'Earth Projection 1, 104'
+\endverbatim
+
+
+\verbatim
+$ gdalsrsinfo -o proj4 landsat.tif
+
+PROJ.4 : '+proj=utm +zone=19 +south +datum=WGS84 +units=m +no_defs '
+\endverbatim
+
+
+\if man
+\section gdalsrsinfo_author AUTHORS
+Frank Warmerdam <warmerdam@pobox.com>, Etienne Tourigny <etourigny.dev-at-gmail-dot-com>
+\endif
 */
