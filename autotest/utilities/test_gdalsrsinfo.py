@@ -209,10 +209,17 @@ def test_gdalsrsinfo_10():
         return 'skip'
     
     wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
-    ret = gdaltest.runexternal( test_cli_utilities.get_gdalsrsinfo_path() + \
+    if sys.platform == 'win32':
+        # Win32 shell quoting oddities
+        wkt = wkt.replace('"', '\\"')
+        ret = gdaltest.runexternal( test_cli_utilities.get_gdalsrsinfo_path() + \
+                                   " -V -o proj4 \"" + wkt + "\"" )
+    else:
+        ret = gdaltest.runexternal( test_cli_utilities.get_gdalsrsinfo_path() + \
                                    " -V -o proj4 '" + wkt + "'" )
 
     if ret.find('Validate Succeeds') == -1:
+        print(ret)
         return 'fail'
 
     return 'success'
@@ -225,7 +232,13 @@ def test_gdalsrsinfo_11():
         return 'skip'
     
     wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],BADAUTHORITY["EPSG","4326"]]'
-    ret = gdaltest.runexternal( test_cli_utilities.get_gdalsrsinfo_path() + \
+    if sys.platform == 'win32':
+        # Win32 shell quoting oddities
+        wkt = wkt.replace('"', '\\"')
+        ret = gdaltest.runexternal( test_cli_utilities.get_gdalsrsinfo_path() + \
+                                   " -V -o proj4 \"" + wkt + "\"" )
+    else:
+        ret = gdaltest.runexternal( test_cli_utilities.get_gdalsrsinfo_path() + \
                                    " -V -o proj4 '" + wkt + "'" )
 
     if ret.find('Validate Fails') == -1:
