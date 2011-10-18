@@ -393,7 +393,7 @@ class GDALTest:
 
     def testCreateCopy(self, check_minmax = 1, check_gt = 0, check_srs = None,
                        vsimem = 0, new_filename = None, strict_in = 0,
-                       skip_preclose_test = 0 ):
+                       skip_preclose_test = 0, delete_copy = 1, gt_epsilon = None ):
 
         if self.testDriver() == 'fail':
             return 'skip'
@@ -473,7 +473,10 @@ class GDALTest:
 
         # Do we need to check the geotransform?
         if check_gt:
-            eps = 0.00000001
+            if gt_epsilon is None: 
+                eps = 0.00000001
+            else:
+                eps = gt_epsilon
             new_gt = new_ds.GetGeoTransform()
             if abs(new_gt[0] - src_gt[0]) > eps \
                or abs(new_gt[1] - src_gt[1]) > eps \
@@ -505,7 +508,7 @@ class GDALTest:
         new_ds = None
         src_ds = None
 
-        if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
+        if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON' and delete_copy == 1 :
             self.driver.Delete( new_filename )
 
         return 'success'
