@@ -2076,7 +2076,7 @@ lists info about a given CRS in number of formats (WKT, PROJ.4, etc.)
 \section gdalsrsinfo_synopsis SYNOPSIS
 
 \verbatim
-gdalsrsinfo [options] srs_def
+Usage: gdalsrsinfo [options] srs_def
 
 srs_def may be the filename of a dataset supported by GDAL/OGR from which to extract SRS information
 OR any of the usual GDAL/OGR forms (complete WKT, PROJ.4, EPSG:n or a file containing the SRS)
@@ -2084,9 +2084,9 @@ OR any of the usual GDAL/OGR forms (complete WKT, PROJ.4, EPSG:n or a file conta
 Options: 
    [--help-general] [-h]  Show help and exit
    [-p]                   Pretty-print where applicable (e.g. WKT)
-   [-v]                   Validate SRS
+   [-V]                   Validate SRS
    [-o out_type]          Output type, default all
-                          {all,proj4,wkt,wkt_simple,wkt_old,esri,mapinfo,xml}
+                          {all,proj4,wkt,wkt_simple,wkt_old,wkt_esri,mapinfo,xml}
 \endverbatim
 
 \section gdalsrsinfo_description DESCRIPTION
@@ -2144,6 +2144,13 @@ GEOGCS["WGS 84",
         AUTHORITY["EPSG","9122"]],
     AUTHORITY["EPSG","4326"]]
 
+OGC WKT (simple) :
+GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563]],
+    PRIMEM["Greenwich",0],
+    UNIT["degree",0.0174532925199433]]
+
 ESRI WKT :
 GEOGCS["GCS_WGS_1984",
     DATUM["D_WGS_1984",
@@ -2151,7 +2158,12 @@ GEOGCS["GCS_WGS_1984",
     PRIMEM["Greenwich",0],
     UNIT["Degree",0.017453292519943295]]
 
-MAPINFO : 'Earth Projection 1, 104'
+\endverbatim
+
+\verbatim
+$ gdalsrsinfo -o proj4 ../osr/data/lcc_esri.prj
+
+'+proj=lcc +lat_1=34.33333333333334 +lat_2=36.16666666666666 +lat_0=33.75 +lon_0=-79 +x_0=609601.22 +y_0=0 +datum=NAD83 +units=m +no_defs '
 \endverbatim
 
 
