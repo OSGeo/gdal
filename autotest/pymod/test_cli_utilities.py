@@ -180,3 +180,8 @@ def get_test_ogrsf_path():
 #
 def get_gdallocationinfo_path():
     return get_cli_utility_path('gdallocationinfo')
+
+###############################################################################
+#
+def get_gdalsrsinfo_path():
+    return get_cli_utility_path('gdalsrsinfo')
