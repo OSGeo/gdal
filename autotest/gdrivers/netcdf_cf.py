@@ -40,7 +40,7 @@ import gdaltest
 
 import imp # for netcdf_cf_setup()
 import netcdf
-from netcdf import netcdf_setup, netcdf_test_file_copy
+from netcdf import netcdf_setup
 
 ###############################################################################
 # Netcdf CF compliance Functions
@@ -172,9 +172,6 @@ def netcdf_cf_check_file(ifile,version='auto', silent=True):
     output_err = ''
     output_warn = ''
 
-#    print output_all
-#    silent = False
-
     for line in output_all.splitlines( ):
         #optimize this with regex
         if 'ERROR' in line and not 'ERRORS' in line:
@@ -204,6 +201,14 @@ def netcdf_cf_check_file(ifile,version='auto', silent=True):
 
 ###############################################################################
 # Definitions to test projections that are supported by CF
+
+# Tuple structure:
+#  0: Short code (eg AEA) - (no GDAL significance, just for filenames etc)
+#  1: official name from CF-1 conventions
+#  2: EPSG code, or WKT, to tell GDAL to do reprojection
+#  3: Actual attribute official name of grid mapping
+#  4: List of required attributes to define projection
+#  5: List of required coordinate variable standard name attributes
 
 netcdf_cfproj_tuples = [
     ("AEA", "Albers Equal Area", "EPSG:3577", "albers_conical_equal_area",
@@ -241,7 +246,6 @@ netcdf_cfproj_tuples = [
     # 2 entries for Mercator, since attribs different for 1SP or 2SP
     ("M-1SP", "Mercator",
         "+proj=merc +lon_0=145 +k_0=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
-        
         "mercator",
         ['longitude_of_projection_origin',
          'scale_factor_at_projection_origin',
@@ -250,14 +254,12 @@ netcdf_cfproj_tuples = [
     # Commented out as it seems GDAL itself's support of Mercator with 2SP
     #  is a bit dodgy
     ("M-2SP", "Mercator",
-        #"ESPG:3388", # As suggested by http://trac.osgeo.org/gdal/ticket/2744
-        #GDAL Doesn't seem to recognise proj4 string properly for 2SP
-        "+proj=merc +lat_ts=-45 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
+        "+proj=merc +lat_ts=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
         # Trying with full WKT:
-        #"""PROJCS["unnamed", GEOGCS["WGS 84", DATUM["WGS_1984", SPHEROID["WGS 84",6378137,298.257223563, AUTHORITY["EPSG","7030"]], AUTHORITY["EPSG","6326"]], PRIMEM["Greenwich",0], UNIT["degree",0.0174532925199433], AUTHORITY["EPSG","4326"]], PROJECTION["Mercator_2SP"], PARAMETER["central_meridian",146], PARAMETER["standard_parallel_1",-45], PARAMETER["latitude_of_origin",0], PARAMETER["false_easting",0], PARAMETER["false_northing",0], UNIT["metre",1, AUTHORITY["EPSG","9001"]]]""",
+        #"""PROJCS["unnamed", GEOGCS["WGS 84", DATUM["WGS_1984", SPHEROID["WGS 84",6378137,298.257223563, AUTHORITY["EPSG","7030"]], AUTHORITY["EPSG","6326"]], PRIMEM["Greenwich",0], UNIT["degree",0.0174532925199433], AUTHORITY["EPSG","4326"]], PROJECTION["Mercator_2SP"], PARAMETER["central_meridian",146], PARAMETER["standard_parallel_1",-37], PARAMETER["latitude_of_origin",0], PARAMETER["false_easting",0], PARAMETER["false_northing",0], UNIT["metre",1, AUTHORITY["EPSG","9001"]]]""",
         "mercator",
         ['longitude_of_projection_origin',
-         'standard_parallel',   #2 values?
+         'standard_parallel',
          'false_easting', 'false_northing'],
          ['projection_x_coordinate','projection_y_coordinate']),
     ("Ortho", "Orthographic",
@@ -278,8 +280,8 @@ netcdf_cfproj_tuples = [
          'false_easting', 'false_northing'],
          ['projection_x_coordinate', 'projection_y_coordinate']),
     ("St", "Stereographic",
-        #"+proj=stere +lat_0=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
-        'PROJCS["unnamed", GEOGCS["WGS 84", DATUM["WGS_1984", SPHEROID["WGS 84",6378137,298.257223563, AUTHORITY["EPSG","7030"]], AUTHORITY["EPSG","6326"]], PRIMEM["Greenwich",0], UNIT["degree",0.0174532925199433], AUTHORITY["EPSG","4326"]], PROJECTION["Stereographic"], PARAMETER["latitude_of_origin",-37.5], PARAMETER["central_meridian",145], PARAMETER["scale_factor",1], PARAMETER["false_easting",0], PARAMETER["false_northing",0], UNIT["metre",1, AUTHORITY["EPSG","9001"]]]',
+        "+proj=stere +lat_0=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
+        #'PROJCS["unnamed", GEOGCS["WGS 84", DATUM["WGS_1984", SPHEROID["WGS 84",6378137,298.257223563, AUTHORITY["EPSG","7030"]], AUTHORITY["EPSG","6326"]], PRIMEM["Greenwich",0], UNIT["degree",0.0174532925199433], AUTHORITY["EPSG","4326"]], PROJECTION["Stereographic"], PARAMETER["latitude_of_origin",-37.5], PARAMETER["central_meridian",145], PARAMETER["scale_factor",1], PARAMETER["false_easting",0], PARAMETER["false_northing",0], UNIT["metre",1, AUTHORITY["EPSG","9001"]]]',
         "stereographic",
         ['longitude_of_projection_origin',
         'latitude_of_projection_origin',
@@ -297,20 +299,46 @@ netcdf_cfproj_tuples = [
          ['projection_x_coordinate','projection_y_coordinate'])
     ]
 
+#By default, we will use GeoTiff as the 'intermediate' raster format
+# for gdalwarp'ing into before gdal_translate to NetCDF.
+# But since GeoTiff can't act as a storage format for certain projections
+# (eg Mercator-2SP), we will choose other intermediate formats for certain
+#  projection.
+#  The following array maps projection short code, to driver format to use
+ 
+netcdf_cfproj_def_int_format = "GTiff"
+
+netcdf_cfproj_int_fmt_maps = {
+    "M-2SP":'HFA'
+    }
+
+netcdf_cfproj_format_fnames = {"HFA":"img", "GTiff":"tif", "NITF":"nitf",
+    "ERS":"ers"}
+
 ###############################################################################
 # Check support for given projection tuple definitions 
 # For each projection, warp the original file and then create a netcdf
 
-def netcdf_cfproj_testcopy(projTuples, origTiff, inPath, outPath, resFilename):
-    silent = True
+def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
+        resFilename):
+ 
     """Test a Geotiff file can be converted to NetCDF, and projection in 
     CF-1 conventions can be successfully maintained. Save results to file.
     
     :arg: projTuples - list of tuples
+    :arg: interFormats - dict of intermediate format overrides
     :arg: outPath - path to save output
     :arg: resFilename - results filename to write to.
-
     """
+
+    silent = True
+    gdaltest.netcdf_drv_silent = True
+    bWriteGdalTags="YES"
+    #silent = False
+    gdaltest.netcdf_drv_silent = False
+#    bWriteGdalTags="NO"
+
+    result = 'success'
 
     # Test if ncdump is available
     try:
@@ -346,43 +374,62 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, inPath, outPath, resFilename):
     dsTiff =  gdal.Open( os.path.join(inPath, origTiff), GA_ReadOnly );
     s_srs_wkt = dsTiff.GetProjection()
 
+    #objects to hold the various tests
+    i_t = 0
+    tst = {}
+    tst_res = {}
+
     for proj in projTuples:
+        try:
+            intFmt = interFormats[proj[0]]
+        except KeyError:
+            intFmt = netcdf_cfproj_def_int_format
+
+        intExt = netcdf_cfproj_format_fnames[intFmt]
+
         # Our little results data structures
         if not silent:
+            print("")
             print("Testing %s (%s) translation:" % (proj[0], proj[1]))
 
         if not silent:
-            print("About to create GeoTiff in chosen SRS")
+            print("About to create raster in chosen SRS")
         projVrt = os.path.join(outPath, "%s_%s.vrt" % \
             (origTiff.rstrip('.tif'), proj[0] ))
-        projTiff = os.path.join(outPath, "%s_%s.tif" % \
-            (origTiff.rstrip('.tif'), proj[0] ))
+        projRaster = os.path.join(outPath, "%s_%s.%s" % \
+            (origTiff.rstrip('.tif'), proj[0], intExt ))
 #        projOpts = "-t_srs '%s'" % (proj[2])
-#        cmd = " ".join(['gdalwarp', projOpts, origTiff, projTiff])
+#        cmd = " ".join(['gdalwarp', projOpts, origTiff, projRaster])
         srs = osr.SpatialReference()
         srs.SetFromUserInput(proj[2])
         t_srs_wkt = srs.ExportToWkt()
         if not silent:
-            print("going to warp" + s_srs_wkt + "-" + t_srs_wkt)
+            print("going to warp file "+origTiff+"\n" + s_srs_wkt + "\ninto file "+projRaster + "\n" + t_srs_wkt)
         dswarp = gdal.AutoCreateWarpedVRT( dsTiff, s_srs_wkt, t_srs_wkt, GRA_NearestNeighbour, 0 );
-        drv_gtiff = gdal.GetDriverByName("GTiff");
+        drv_inter = gdal.GetDriverByName(intFmt);
         drv_netcdf = gdal.GetDriverByName("netcdf");
-        dsw = drv_gtiff.CreateCopy(projTiff, dswarp, 0) #[ 'WRITEGDALTAGS=YES' ])
+        dsw = drv_inter.CreateCopy(projRaster, dswarp, 0)
         if not silent:
-            print("Warped %s to %s" % (proj[0], projTiff))
+            print("Warped %s to %s" % (proj[0], projRaster))
 
         projNc = os.path.join(outPath, "%s_%s.nc" % \
             (origTiff.rstrip('.tif'), proj[0] ))
         #Force GDAL tags to be written to make testing easier, with preserved datum etc
-        ncCoOpts = "-co WRITEGDALTAGS=yes"
-#        cmd = " ".join(['gdal_translate', "-of netCDF", ncCoOpts, projTiff,
+        ncCoOpts = "-co WRITE_GDAL_TAGS=yes"
+#        cmd = " ".join(['gdal_translate', "-of netCDF", ncCoOpts, projRaster,
 #            projNc])
         if not silent:
             print("About to translate to NetCDF")
-        dst = drv_netcdf.CreateCopy(projNc, dsw, 0, [ 'WRITEGDALTAGS=YES' ])
+        dst = drv_netcdf.CreateCopy(projNc, dsw, 0, [ 'WRITE_GDAL_TAGS='+bWriteGdalTags ])
+        #For drivers like HFA, line below ESSENTIAL so that all info is 
+        # saved to new raster file - which we'll reopen later and want
+        # to be fully updated.
+        dsw = None
+        dst = None
         if not silent:
             print("Translated to %s" % (projNc))
         
+
         transWorked, resDetails = netcdf_cfproj_test_cf(proj, projNc)
         resPerProj[proj[0]] = resDetails
 
@@ -403,13 +450,29 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, inPath, outPath, resFilename):
                 resFile.write("\tFailed cf check: %s\n" % \
                     (resPerProj[proj[0]]['cfcheck_error']))
 
+        # test file copy
+        # We now copy to a new file, just to be safe
+        projNc2 = projNc.rstrip('.nc') + '2.nc'
+        projRaster2 = os.path.join(outPath, "%s_%s2.%s" % \
+            (origTiff.rstrip('.tif'), proj[0], intExt ))
+
+        tst[i_t+1] = gdaltest.GDALTest( 'NETCDF', '../'+projRaster, 1, None)
+        tst_res[i_t+1] = tst[i_t+1].testCreateCopy(check_gt=1, check_srs=1, new_filename=projNc2, delete_copy = 0,check_minmax = 0, gt_epsilon=pow(10,-8))
+        tst[i_t+2] = gdaltest.GDALTest( intFmt, '../'+projNc2, 1, None )
+        tst_res[i_t+2] = tst[i_t+2].testCreateCopy(check_gt=1, check_srs=1, new_filename=projRaster2, delete_copy = 0,check_minmax = 0, gt_epsilon=pow(10,-8))
+
+        if  tst_res[i_t+1] == 'fail' or tst_res[i_t+2] == 'fail':
+            result = 'fail'
+
+        i_t = i_t + 2
+
     resFile.close()
 
     if not silent:
         print("\n" + "*" * 80)
         print("Saved results to file %s" % (os.path.join(outPath, resFilename)))
 
-    result = 'success'
+    #result = 'success'
     resFile = open(os.path.join(outPath, resFilename), "r")
     resStr = resFile.read()
     if resStr.find('BAD') != -1:
@@ -481,9 +544,11 @@ def netcdf_cf_1():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    result = netcdf_test_file_copy( 'data/trmm.tif', 'tmp/netcdf_18.nc', 'NETCDF' )
+    tst1 = gdaltest.GDALTest( 'NETCDF', 'trmm.tif', 1, 14 )
+    result = tst1.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_1.nc', delete_copy = 0)
     if result != 'fail':
-        result = netcdf_test_file_copy( 'tmp/netcdf_18.nc', 'tmp/netcdf_18.tif', 'GTIFF' )
+        tst2 = gdaltest.GDALTest( 'GTIFF', '../tmp/netcdf_cf_1.nc', 1, 14 )       
+        result = tst2.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_1.tiff', delete_copy = 0)
 
     result_cf = 'success'
     if gdaltest.netcdf_cf_method is not None:
@@ -502,11 +567,12 @@ def netcdf_cf_2():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    result = netcdf_test_file_copy( 'data/trmm.nc', 'tmp/netcdf_19.nc', 'NETCDF' )
+    tst = gdaltest.GDALTest( 'NETCDF', 'trmm.nc', 1, 14 )
+    result = tst.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_2.nc', delete_copy = 0)
 
     result_cf = 'success'
     if gdaltest.netcdf_cf_method is not None:
-        result_cf = netcdf_cf_check_file( 'tmp/netcdf_19.nc','auto',False )
+        result_cf = netcdf_cf_check_file( 'tmp/netcdf_cf_2.nc','auto',False )
 
     if result != 'fail' and result_cf != 'fail':
         return 'success'
@@ -516,6 +582,7 @@ def netcdf_cf_2():
 
 ###############################################################################
 #test copy and CF compliance for lat/lon (W*S84) file, tif->nc->tif
+# note: this test fails in trunk (before r23246) 
 def netcdf_cf_3():
 
     if gdaltest.netcdf_drv is None:
@@ -524,14 +591,16 @@ def netcdf_cf_3():
     result = 'success'
     result_cf = 'success'
 
-    result = netcdf_test_file_copy( 'data/trmm-wgs84.tif', 'tmp/netcdf_20.nc', 'NETCDF' )
+    tst = gdaltest.GDALTest( 'NETCDF', 'trmm-wgs84.tif', 1, 14 )
+    result = tst.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_3.nc', delete_copy = 0)
 
     if result == 'success':
-        result = netcdf_test_file_copy( 'tmp/netcdf_20.nc', 'tmp/netcdf_20.tif', 'GTIFF' )
+        tst = gdaltest.GDALTest( 'GTIFF', '../tmp/netcdf_cf_3.nc', 1, 14 )
+        result = tst.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_3.tif', delete_copy = 0)
 
     result_cf = 'success'
     if gdaltest.netcdf_cf_method is not None:
-        result_cf = netcdf_cf_check_file( 'tmp/netcdf_20.nc','auto',False )
+        result_cf = netcdf_cf_check_file( 'tmp/netcdf_cf_3.nc','auto',False )
 
     if result != 'fail' and result_cf != 'fail':
         return 'success'
@@ -542,8 +611,11 @@ def netcdf_cf_3():
 #test support for various CF projections
 def netcdf_cf_4():
 
-    result = netcdf_cfproj_testcopy(netcdf_cfproj_tuples, 'melb-small.tif', \
+    result = netcdf_cfproj_testcopy(netcdf_cfproj_tuples, 'melb-small.tif', 
+                                    netcdf_cfproj_int_fmt_maps,
                                     'data', 'tmp', 'translate_results.txt')
+#    result = netcdf_cfproj_testcopy(netcdf_cfproj_tuples1, 'melb-small.tif', \
+#                                    'data', 'tmp', 'translate_results.txt')
 
     return result
      
@@ -553,7 +625,8 @@ gdaltest_list = [
     netcdf_cf_1,
     netcdf_cf_2,
     netcdf_cf_3,
-    netcdf_cf_4 ]
+    netcdf_cf_4,
+    None ]
 
 if __name__ == '__main__':
 
