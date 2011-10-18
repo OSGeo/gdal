@@ -81,25 +81,27 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd,
             memset( pabyInsert, nBurnValue, nXEnd - nXStart + 1 );
         }
     }
-    else
+    else if( psInfo->eType == GDT_Float64 )
     {
         for( iBand = 0; iBand < psInfo->nBands; iBand++ )
         {
             int	nPixels = nXEnd - nXStart + 1;
-            float   *pafInsert;
-            float   fBurnValue = (float)
+            double   *padfInsert;
+            double   dfBurnValue = 
                 ( psInfo->padfBurnValue[iBand] +
                   ( (psInfo->eBurnValueSource == GBV_UserBurnValue)?
                              0 : dfVariant ) );
             
-            pafInsert = ((float *) psInfo->pabyChunkBuf) 
+            padfInsert = ((double *) psInfo->pabyChunkBuf)
                 + iBand * psInfo->nXSize * psInfo->nYSize
                 + nY * psInfo->nXSize + nXStart;
 
             while( nPixels-- > 0 )
-                *(pafInsert++) = fBurnValue;
+                *(padfInsert++) = dfBurnValue;
         }
     }
+    else
+        CPLAssert(0);
 }
 
 /************************************************************************/
@@ -128,19 +130,21 @@ void gvBurnPoint( void *pCBData, int nY, int nX, double dfVariant )
                              0 : dfVariant ) );
         }
     }
-    else
+    else if( psInfo->eType == GDT_Float64 )
     {
         for( iBand = 0; iBand < psInfo->nBands; iBand++ )
         {
-            float   *pfInsert = ((float *) psInfo->pabyChunkBuf) 
+            double   *pdfInsert = ((double *) psInfo->pabyChunkBuf)
                                 + iBand * psInfo->nXSize * psInfo->nYSize
                                 + nY * psInfo->nXSize + nX;
 
-            *pfInsert = (float)( psInfo->padfBurnValue[iBand] +
+            *pdfInsert = ( psInfo->padfBurnValue[iBand] +
                          ( (psInfo->eBurnValueSource == GBV_UserBurnValue)?
                             0 : dfVariant ) );
         }
     }
+    else
+        CPLAssert(0);
 }
 
 /************************************************************************/
@@ -540,7 +544,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
     if( poBand->GetRasterDataType() == GDT_Byte )
         eType = GDT_Byte;
     else
-        eType = GDT_Float32;
+        eType = GDT_Float64;
 
     nScanlineBytes = nBandCount * poDS->GetRasterXSize()
         * (GDALGetDataTypeSize(eType)/8);
@@ -735,7 +739,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     if( poBand->GetRasterDataType() == GDT_Byte )
         eType = GDT_Byte;
     else
-        eType = GDT_Float32;
+        eType = GDT_Float64;
 
     nScanlineBytes = nBandCount * poDS->GetRasterXSize()
         * (GDALGetDataTypeSize(eType)/8);
