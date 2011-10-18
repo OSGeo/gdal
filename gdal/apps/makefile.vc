@@ -17,7 +17,7 @@ OGR_PROGRAMS =	gdal_contour.exe gdaltindex.exe gdal_rasterize.exe \
 
 default:	gdal_translate.exe gdalinfo.exe gdaladdo.exe gdalwarp.exe \
 		nearblack.exe gdalmanage.exe gdalenhance.exe gdaltransform.exe\
-		gdaldem.exe gdallocationinfo.exe $(OGR_PROGRAMS)
+		gdaldem.exe gdallocationinfo.exe gdalsrsinfo.exe $(OGR_PROGRAMS)
 
 all:	default multireadtest.exe \
 			dumpoverviews.exe gdalwarpsimple.exe gdalflattenmask.exe \
@@ -50,6 +50,11 @@ gdaltransform.exe:	gdaltransform.cpp $(GDALLIB) $(XTRAOBJ)
 	
 gdallocationinfo.exe:	gdallocationinfo.cpp $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdallocationinfo.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+	
+gdalsrsinfo.exe:	gdalsrsinfo.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalsrsinfo.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
