@@ -1576,7 +1576,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
                 pszOutput[iOut++] = 't';
                 pszOutput[iOut++] = ';';
             }
-            else if( pszInput[iIn] < 0x20 
+            else if( ((GByte*)pszInput)[iIn] < 0x20 
                      && pszInput[iIn] != 0x9
                      && pszInput[iIn] != 0xA 
                      && pszInput[iIn] != 0xD ) 
