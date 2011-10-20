@@ -1333,6 +1333,37 @@ def ogr_gml_33():
     return 'success'
 
 ###############################################################################
+# Test writing non-ASCII UTF-8 content (#4117, #4299)
+
+def ogr_gml_34():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    drv = ogr.GetDriverByName('GML')
+    ds = drv.CreateDataSource( '/vsimem/ogr_gml_34.gml' )
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn("name", ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0,  '\xc4\x80liamanu<&')
+    lyr.CreateFeature(feat)
+    feat = None
+    ds = None
+
+    ds = ogr.Open( '/vsimem/ogr_gml_34.gml' )
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsString('name') != '\xc4\x80liamanu<&':
+        print(feat.GetFieldAsString('name'))
+        return 'fail'
+    ds = None
+
+    gdal.Unlink( '/vsimem/ogr_gml_34.gml' )
+    gdal.Unlink( '/vsimem/ogr_gml_34.gfs' )
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -1448,6 +1479,7 @@ gdaltest_list = [
     ogr_gml_31,
     ogr_gml_32,
     ogr_gml_33,
+    ogr_gml_34,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
