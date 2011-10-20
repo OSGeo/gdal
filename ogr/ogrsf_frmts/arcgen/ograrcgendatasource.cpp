@@ -111,6 +111,7 @@ int OGRARCGENDataSource::Open( const char * pszFilename, int bUpdateIn)
     CPLPushErrorHandler(CPLQuietErrorHandler);
     pszLine = CPLReadLine2L(fp,256,NULL);
     CPLPopErrorHandler();
+    CPLErrorReset();
     if (pszLine == NULL)
     {
         VSIFCloseL(fp);
