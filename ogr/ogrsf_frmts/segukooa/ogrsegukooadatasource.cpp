@@ -105,6 +105,7 @@ int OGRSEGUKOOADataSource::Open( const char * pszFilename, int bUpdateIn)
     CPLPushErrorHandler(CPLQuietErrorHandler);
     pszLine = CPLReadLine2L(fp,81,NULL);
     CPLPopErrorHandler();
+    CPLErrorReset();
 
     /* Both UKOOA P1/90 and SEG-P1 begins by a H character */
     if (pszLine == NULL || pszLine[0] != 'H')
@@ -160,6 +161,7 @@ int OGRSEGUKOOADataSource::Open( const char * pszFilename, int bUpdateIn)
         CPLPushErrorHandler(CPLQuietErrorHandler);
         pszLine = CPLReadLine2L(fp,81,NULL);
         CPLPopErrorHandler();
+        CPLErrorReset();
         if (pszLine == NULL)
         {
             VSIFCloseL(fp);
