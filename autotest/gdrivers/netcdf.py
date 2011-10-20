@@ -302,6 +302,7 @@ def netcdf_7():
 ###############################################################################
 #check for cf convention read of albers equal area
 # Previous version compared entire wkt, which varies slightly among driver versions
+
 # now just look for PROJECTION=Albers_Conic_Equal_Area and some parameters
 def netcdf_8():
 
@@ -322,13 +323,12 @@ def netcdf_8():
     if param != 37.5:
         gdaltest.post_reason( 'Got wrong parameter value (%g)' % param )
         return 'fail'
-    
+   
     param = srs.GetProjParm('longitude_of_center')
     if param != -96:
         gdaltest.post_reason( 'Got wrong parameter value (%g)' % param )
         return 'fail'
-    
-
+ 
     ds = None
 
     return 'success'
@@ -479,7 +479,7 @@ def netcdf_14():
 
 ###############################################################################
 #check support for netcdf-2 (64 bit)
-# This test fails in 1.8.0, because the driver does not support it
+# This test fails in 1.8.0, because the driver does not support it (bug #3890)
 def netcdf_15():
 
     if gdaltest.netcdf_drv is None:
@@ -536,7 +536,7 @@ def netcdf_17():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    ifile = 'data/u8be.h5'
+    ifile = 'data/groups.h5'
 
     #skip test if Hdf5 is not enabled
     if gdal.GetDriverByName( 'HDF5' ) is None and \
@@ -566,6 +566,38 @@ def netcdf_17():
     
     return 'success'
 
+###############################################################################
+#check support for netcdf-4 classic (NC4C)
+def netcdf_18():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ifile = 'data/trmm-nc4c.nc'
+                
+    if gdaltest.netcdf_drv_has_nc4:
+
+        # test with Open()
+        ds = gdal.Open( ifile )
+        if ds is None:
+            return 'fail'
+        else:
+            name = ds.GetDriver().GetDescription()
+            ds = None
+            #return fail if did not open with the netCDF driver (i.e. HDF5Image)
+            if name != 'netCDF':
+                return 'fail'
+
+        # test with Identify()
+        name = gdal.IdentifyDriver( ifile ).GetDescription()
+        if name != 'netCDF':
+            return 'fail'
+
+    else:
+        return 'skip'
+
+    return 'success'
+
      
 ###############################################################################
 
@@ -586,7 +618,8 @@ gdaltest_list = [
     netcdf_14,
     netcdf_15,
     netcdf_16,
-    netcdf_17
+    netcdf_17,
+    netcdf_18
  ]
 
 if __name__ == '__main__':
