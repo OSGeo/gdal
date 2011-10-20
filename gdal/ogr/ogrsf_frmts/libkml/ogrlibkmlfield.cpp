@@ -220,6 +220,37 @@ void ogr2tessellate_rec (
     }
 }
 
+
+/************************************************************************/
+/*                 OGRLIBKMLSanitizeUTF8String()                        */
+/************************************************************************/
+
+static char* OGRLIBKMLSanitizeUTF8String(const char* pszString)
+{
+    if (!CPLIsUTF8(pszString, -1) &&
+         CSLTestBoolean(CPLGetConfigOption("OGR_FORCE_ASCII", "YES")))
+    {
+        static int bFirstTime = TRUE;
+        if (bFirstTime)
+        {
+            bFirstTime = FALSE;
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "%s is not a valid UTF-8 string. Forcing it to ASCII.\n"
+                    "If you still want the original string and change the XML file encoding\n"
+                    "afterwards, you can define OGR_FORCE_ASCII=NO as configuration option.\n"
+                    "This warning won't be issued anymore", pszString);
+        }
+        else
+        {
+            CPLDebug("OGR", "%s is not a valid UTF-8 string. Forcing it to ASCII",
+                    pszString);
+        }
+        return CPLForceToASCII(pszString, -1, '?');
+    }
+    else
+        return CPLStrdup(pszString);
+}
+
 /******************************************************************************
  function to output ogr fields in kml
 
@@ -319,28 +350,28 @@ void field2kml (
 
         case OFTString:        //     String of ASCII chars
             {
-
+                char* pszUTF8String = OGRLIBKMLSanitizeUTF8String(
+                                        poOgrFeat->GetFieldAsString ( i ));
                 /***** name *****/
 
                 if ( EQUAL ( name, namefield ) ) {
-                    poKmlPlacemark->set_name ( poOgrFeat->
-                                               GetFieldAsString ( i ) );
+                    poKmlPlacemark->set_name ( pszUTF8String );
+                    CPLFree( pszUTF8String );
                     continue;
                 }
 
                 /***** description *****/
 
                 else if ( EQUAL ( name, descfield ) ) {
-                    poKmlPlacemark->set_description ( poOgrFeat->
-                                                      GetFieldAsString ( i ) );
+                    poKmlPlacemark->set_description ( pszUTF8String );
+                    CPLFree( pszUTF8String );
                     continue;
                 }
 
                 /***** altitudemode *****/
 
                 else if ( EQUAL ( name, altitudeModefield ) ) {
-                    const char *pszAltitudeMode =
-                        poOgrFeat->GetFieldAsString ( i );
+                    const char *pszAltitudeMode = pszUTF8String ;
 
                     int isGX = FALSE;
                     int iAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
@@ -376,6 +407,8 @@ void field2kml (
 
                     }
 
+                    CPLFree( pszUTF8String );
+
                     continue;
                 }
                 
@@ -385,8 +418,10 @@ void field2kml (
 
                     TimeStampPtr poKmlTimeStamp =
                         poKmlFactory->CreateTimeStamp (  );
-                    poKmlTimeStamp->set_when ( poOgrFeat->GetFieldAsString ( i )  );
+                    poKmlTimeStamp->set_when ( pszUTF8String  );
                     poKmlPlacemark->set_timeprimitive ( poKmlTimeStamp );
+
+                    CPLFree( pszUTF8String );
 
                     continue;
                 }
@@ -400,7 +435,9 @@ void field2kml (
                         poKmlPlacemark->set_timeprimitive ( poKmlTimeSpan );
                     }
 
-                    poKmlTimeSpan->set_begin ( poOgrFeat->GetFieldAsString ( i ) );
+                    poKmlTimeSpan->set_begin ( pszUTF8String );
+
+                    CPLFree( pszUTF8String );
 
                     continue;
 
@@ -415,7 +452,9 @@ void field2kml (
                         poKmlPlacemark->set_timeprimitive ( poKmlTimeSpan );
                     }
 
-                    poKmlTimeSpan->set_end ( poOgrFeat->GetFieldAsString ( i ) );
+                    poKmlTimeSpan->set_end ( pszUTF8String );
+
+                    CPLFree( pszUTF8String );
 
                     continue;
                 }
@@ -424,8 +463,9 @@ void field2kml (
 
                 poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
                 poKmlSimpleData->set_name ( name );
-                poKmlSimpleData->set_text ( poOgrFeat->
-                                            GetFieldAsString ( i ) );
+                poKmlSimpleData->set_text ( pszUTF8String );
+
+                CPLFree( pszUTF8String );
 
                 break;
             }
