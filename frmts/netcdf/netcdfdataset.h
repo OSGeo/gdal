@@ -255,6 +255,8 @@ class netCDFDataset : public GDALPamDataset
     int           nDimXid, nDimYid;
     bool          bBottomUp;
     int           nFileType;
+    int           bIsGdalFile; /* was this file created by GDAL? */
+    int           bIsGdalCfFile; /* was this file created by the (new) CF-compliant driver? */
 
     netCDFDataset( );
     ~netCDFDataset( );
