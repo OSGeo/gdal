@@ -33,6 +33,10 @@ CPL_CVSID("$Id$");
 
 int NCDFIsGDALVersionGTE(const char* pszVersion, int nTarget);
 
+void NCDFAddGDALHistory( int fpImage, const char * pszFilename, const char *pszOldHist );
+
+void NCDFAddHistory(int fpImage, const char *pszAddHist, const char *pszOldHist);
+
 /************************************************************************/
 /* ==================================================================== */
 /*                         netCDFRasterBand                             */
@@ -41,10 +45,10 @@ int NCDFIsGDALVersionGTE(const char* pszVersion, int nTarget);
 
 class netCDFRasterBand : public GDALPamRasterBand
 {
-    nc_type nc_datatype;
+    nc_type     nc_datatype;
     int         nZId;
     int         nZDim;
-    int		nLevel;
+    int         nLevel;
     int         nBandXPos;
     int         nBandYPos;
     int         *panBandZPos;
@@ -181,6 +185,7 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
     netCDFDataset *poDS;
 
     poDS = (netCDFDataset *) this->poDS;
+
 /* -------------------------------------------------------------------- */
 /*      Compute all dimensions from Band number and save in Metadata    */
 /* -------------------------------------------------------------------- */
@@ -273,13 +278,18 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
                                                   count, &dfData);
                     sprintf( szMetaTemp,"%.15g", dfData );
                     break;
-                default:
+                default: 
+                    CPLDebug( "GDAL_netCDF", "invalid dim %s, type=%d", 
+                              szMetaTemp, nVarType);
                     break;
             }
         }
         else
             sprintf( szMetaTemp,"%d", result+1);
 	
+        CPLDebug( "GDAL_netCDF", "setting dimension metadata %s=%s", 
+                  szMetaName, szMetaTemp );
+
         SetMetadataItem( szMetaName, szMetaTemp );
 
 /* -------------------------------------------------------------------- */
@@ -318,6 +328,7 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
     size_t   attlen;
     float fval;
     double dval;
+    short sval;
     int ival;
     int bValidMeta;
 
@@ -329,7 +340,8 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
     	status = nc_inq_att( poDS->cdfid, nZId, 
     			     szTemp, &atttype, &attlen);
     	if(strcmp(szTemp,_FillValue) ==0) continue;
-    	sprintf( szMetaTemp,"%s",szTemp);
+    	sprintf( szMetaTemp,"%s",szTemp);       
+
     	switch( atttype ) {
     	case NC_CHAR:
     	    char *fillc;
@@ -339,6 +351,12 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
     	    // SetMetadataItem( szMetaTemp, fillc );
     	    sprintf( szTemp,"%s",fillc);
     	    CPLFree(fillc);
+    	    break;
+    	case NC_SHORT:
+    	    status = nc_get_att_short( poDS->cdfid, nZId,
+    				     szTemp, &sval );
+    	    sprintf( szTemp,"%d",sval);
+    	    // SetMetadataItem( szMetaTemp, szTemp );
     	    break;
     	case NC_INT:
     	    status = nc_get_att_int( poDS->cdfid, nZId,
@@ -354,9 +372,9 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
     	    break;
     	case NC_DOUBLE:
     	    status = nc_get_att_double( poDS->cdfid, nZId,
-    					szTemp, &dval );
+                                        szTemp, &dval );
     	    sprintf( szTemp,"%.15g",dval);
-    	    // SetMetadataItem( szMetaTemp, szTemp );
+            // SetMetadataItem( szMetaTemp, szTemp );
     	    break;
     	default:
             bValidMeta = FALSE;
@@ -364,7 +382,13 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
     	}
 
         if ( bValidMeta ) {
-            SetMetadataItem( szMetaTemp, szTemp );
+            CPLDebug( "GDAL_netCDF", "setting metadata %s=%s, type=%d, len=%lu", 
+                      szMetaTemp, szTemp, atttype, attlen );
+           SetMetadataItem( szMetaTemp, szTemp );
+        }
+        else {
+            CPLDebug( "GDAL_netCDF", "invalid metadata %s, type=%d, len=%lu", 
+                      szMetaTemp, atttype, attlen );
         }
         
     }
@@ -437,6 +461,10 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
 
     if( (nc_datatype == NC_BYTE) ) 
         eDataType = GDT_Byte;
+    else if( (nc_datatype == NC_UBYTE) ) 
+        eDataType = GDT_Byte;
+    else if( (nc_datatype == NC_CHAR) ) 
+        eDataType = GDT_Byte;        
     else if( nc_datatype == NC_SHORT )
         eDataType = GDT_Int16;
     else if( nc_datatype == NC_INT )
@@ -562,13 +590,15 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
     /* -------------------------------------------------------------------- */
     double dfOff = 0.0; 
     double dfScale = 1.0; 
-
+    
     if ( nc_inq_attid ( poDS->cdfid, nZId, CF_ADD_OFFSET, NULL) == NC_NOERR ) { 
         status = nc_get_att_double( poDS->cdfid, nZId, CF_ADD_OFFSET, &dfOff );
+        CPLDebug( "GDAL_netCDF", "got add_offset=%.15g, status=%d", dfOff, status );
     }
     if ( nc_inq_attid ( poDS->cdfid, nZId, 
                         CF_SCALE_FACTOR, NULL) == NC_NOERR ) { 
         status = nc_get_att_double( poDS->cdfid, nZId, CF_SCALE_FACTOR, &dfScale ); 
+        CPLDebug( "GDAL_netCDF", "got scale_factor=%.15g, status=%d", dfScale, status );
     }
     SetOffset( dfOff ); 
     SetScale( dfScale ); 
@@ -905,7 +935,7 @@ void netCDFDataset::SetProjection( int var )
     strcpy( szGridMappingValue, "" );
     strcpy( szGridMappingName, "" );
 
-    nc_inq_varname(  cdfid, var, szVarName );
+    nc_inq_varname( cdfid, var, szVarName );
     strcpy(szTemp,szVarName);
     strcat(szTemp,"#");
     strcat(szTemp,CF_GRD_MAPPING);
@@ -2073,7 +2103,7 @@ CPLErr netCDFDataset::ReadAttributes( int cdfid, int var)
         strcpy( szVarName,"NC_GLOBAL" );
     }
     else {
-        nc_inq_varname(  cdfid, var, szVarName );
+        nc_inq_varname( cdfid, var, szVarName );
     }
 
     for( int l=0; l < nbAttr; l++) {
@@ -2229,9 +2259,9 @@ void netCDFDataset::CreateSubDatasetList( )
                 default:
                     break;
             }
-            nc_inq_varname  ( cdfid, nVar, szName);
-            nc_inq_att( cdfid, nVar, "standard_name", &nAttype, &nAttlen);
-            if( nc_get_att_text ( cdfid, nVar, "standard_name", 
+            nc_inq_varname( cdfid, nVar, szName);
+            nc_inq_att( cdfid, nVar, CF_STD_NAME, &nAttype, &nAttlen);
+            if( nc_get_att_text ( cdfid, nVar, CF_STD_NAME, 
                                   szVarStdName ) == NC_NOERR ) {
                 szVarStdName[nAttlen] = '\0';
             }
@@ -2433,6 +2463,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    CPLDebug( "GDAL_netCDF", "\n=====\nOpen() file=%s\n", poDS->osFilename.c_str() );
+
 /* -------------------------------------------------------------------- */
 /*      Is this a real netCDF file?                                     */
 /* -------------------------------------------------------------------- */
@@ -2441,6 +2473,30 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return NULL;
     }   
+
+/* -------------------------------------------------------------------- */
+/*      Get file type from netcdf                                       */
+/* -------------------------------------------------------------------- */
+    status = nc_inq_format (cdfid, &nTmpFileType);
+    if ( status != NC_NOERR ) 
+        NCDF_ERR( status );
+    else {
+        CPLDebug( "GDAL_netCDF", 
+                  "driver detected file type=%d, libnetcdf detected type=%d",
+                  poDS->nFileType, nTmpFileType );
+        if ( nTmpFileType != poDS->nFileType ) {
+            if ( nTmpFileType != NCDF_FILETYPE_NC4C ) {
+                CPLError( CE_Warning, CPLE_AppDefined, 
+                          "NetCDF driver detected file type=%d, but libnetcdf detected type=%d",
+                          poDS->nFileType, nTmpFileType );
+            }
+            else {
+            }          
+            CPLDebug( "GDAL_netCDF", "seting file type to %d, was %d", 
+                      nTmpFileType, poDS->nFileType );
+            poDS->nFileType = nTmpFileType;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
@@ -2484,7 +2540,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    CPLDebug( "GDAL_netCDF", "dim_count = %d\n", dim_count );
+    CPLDebug( "GDAL_netCDF", "dim_count = %d", dim_count );
 
     if( (status = nc_get_att_text( cdfid, NC_GLOBAL, "Conventions",
                                    attname )) != NC_NOERR ) {
@@ -2503,7 +2559,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }    
     
-    CPLDebug( "GDAL_netCDF", "var_count = %d\n", var_count );
+    CPLDebug( "GDAL_netCDF", "var_count = %d", var_count );
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -2735,7 +2791,7 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
             strcpy( szMetaName,  papszFieldData[ 0 ] );
             strcpy( szMetaValue, papszFieldData[ 1 ] );
 
-            /* Fix various fixes with metadata translation */ 
+            /* Fix various issues with metadata translation */ 
             if( CDFVarID == NC_GLOBAL ) {
                 /* Remove NC_GLOBAL prefix for netcdf global Metadata */ 
                 if( strncmp( szMetaName, "NC_GLOBAL#", 10 ) == 0 ) {
@@ -2760,7 +2816,7 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
                     szMetaName[5] = '-';
                 }
                 /* Only copy data without # (previously all data was copied)  */
-                if (  strstr( szMetaName, "#" ) != NULL ) {   
+                if ( strstr( szMetaName, "#" ) != NULL ) {   
                     bCopyItem = FALSE;
                 }
                 /* netCDF attributes do not like the '#' character. */
@@ -2782,7 +2838,6 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
             if ( bCopyItem ) {
 
                 /* By default write NC_CHAR, but detect for int/float/double */
-                /* http://stackoverflow.com/questions/78474/determine-if-a-string-is-an-integer-or-a-float-in-ansi-c */
                 nMetaType = NC_CHAR;
                 nMetaValue = fMetaValue = dfMetaValue = 0;
 
@@ -2810,26 +2865,19 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
                 /* now write the data */
                 switch( nMetaType ) {
                     case  NC_INT:
-                        nc_put_att_int( fpImage, CDFVarID, 
-                                        szMetaName,
-                                        NC_INT, 1,
-                                        &nMetaValue );
+                        nc_put_att_int( fpImage, CDFVarID, szMetaName,
+                                        NC_INT, 1, &nMetaValue );
                         break;
                     case  NC_FLOAT:
-                        nc_put_att_float( fpImage, CDFVarID, 
-                                          szMetaName,
-                                          NC_FLOAT, 1,
-                                          &fMetaValue );
+                        nc_put_att_float( fpImage, CDFVarID, szMetaName,
+                                          NC_FLOAT, 1, &fMetaValue );
                         break;
                     case  NC_DOUBLE:
-                        nc_put_att_double( fpImage, CDFVarID, 
-                                           szMetaName,
-                                           NC_DOUBLE, 1,
-                                           &dfMetaValue );
+                        nc_put_att_double( fpImage, CDFVarID,  szMetaName,
+                                           NC_DOUBLE, 1, &dfMetaValue );
                         break;
                     default:
-                        nc_put_att_text( fpImage, CDFVarID, 
-                                         szMetaName,
+                        nc_put_att_text( fpImage, CDFVarID, szMetaName,
                                          strlen( szMetaValue ),
                                          szMetaValue );          
                         break;
@@ -2840,22 +2888,8 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
         CSLDestroy( papszFieldData );
     }
 
-    /* Add Conventions and GDAL info at the end */
-    if( CDFVarID == NC_GLOBAL ) {
-
-        papszMetadata = GDALGetMetadata( (GDALDataset *) poDS,"");
-
-        nc_put_att_text( fpImage, NC_GLOBAL, "Conventions", 
-                         strlen(NCDF_CONVENTIONS_CF),
-                         NCDF_CONVENTIONS_CF ); 
-
-        nc_put_att_text( fpImage, NC_GLOBAL, "GDAL", 
-                         strlen(NCDF_GDAL), NCDF_GDAL ); 
-
-    }
-
-    /* Set add_offset and scale_factor here if needed */
-    else {
+    /* Set add_offset and scale_factor here if present */
+    if( CDFVarID != NC_GLOBAL ) {
 
         int bGotAddOffset, bGotScale;
         double dfAddOffset = GDALGetRasterOffset( (GDALRasterBandH) poDS, &bGotAddOffset );
@@ -2976,6 +3010,10 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     CPLDebug( "GDAL_netCDF", "nYSize = %d\n", nYSize );
     
     CopyMetadata((void *) poSrcDS, fpImage, NC_GLOBAL );
+
+    /* Add Conventions, GDAL version and history */
+    NCDFAddGDALHistory( fpImage, pszFilename,
+                        poSrcDS->GetMetadataItem("NC_GLOBAL#history","") );
 
     // if( oSRS.IsGeographic() ) {
     /* If not Projected assume Geographic to catch grids without Datum */
@@ -3655,6 +3693,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     return poDS;
 }
 
+
 /************************************************************************/
 /*                          GDALRegister_netCDF()                       */
 /************************************************************************/
@@ -3686,7 +3725,9 @@ void GDALRegister_netCDF()
     }
 }
 
-
+/************************************************************************/
+/*                          New functions                               */
+/************************************************************************/
 
 /* Test for GDAL version string >= target */
 int NCDFIsGDALVersionGTE(const char* pszVersion, int nTarget)
@@ -3717,6 +3758,84 @@ int NCDFIsGDALVersionGTE(const char* pszVersion, int nTarget)
     CSLDestroy( papszTokens );
     return nTarget <= nVersion;
 }
+
+/* Add Conventions, GDAL version and history  */ 
+void NCDFAddGDALHistory( int fpImage, const char * pszFilename, const char *pszOldHist )
+{
+    char     szTemp[NC_MAX_NAME];
+
+    nc_put_att_text( fpImage, NC_GLOBAL, "Conventions", 
+                     strlen(NCDF_CONVENTIONS_CF),
+                     NCDF_CONVENTIONS_CF ); 
+    
+    nc_put_att_text( fpImage, NC_GLOBAL, "GDAL", 
+                     strlen(NCDF_GDAL), NCDF_GDAL ); 
+
+    /* Add history */
+#ifdef GDAL_SET_CMD_LINE_DEFINED
+    if ( ! EQUAL(GDALGetCmdLine(), "" ) )
+        strcpy( szTemp, GDALGetCmdLine() );
+    else
+        sprintf( szTemp, "GDAL NCDFCreateCopy( %s, ... )",pszFilename );
+#else
+    sprintf( szTemp, "GDAL NCDFCreateCopy( %s, ... )",pszFilename );
+#endif
+    
+    NCDFAddHistory( fpImage, szTemp, pszOldHist );
+
+}
+
+/* code taken from cdo and libcdi, used for writing the history attribute */
+//void cdoDefHistory(int fileID, char *histstring)
+void NCDFAddHistory(int fpImage, const char *pszAddHist, const char *pszOldHist)
+{
+    char strtime[32];
+    time_t tp;
+    struct tm *ltime;
+
+    char *pszNewHist = NULL;
+    size_t nNewHistSize = 0;
+    int disableHistory = FALSE;
+    int status;
+
+    /* Check pszOldHist - as if there was no previous history, it will be
+       a null pointer - if so set as empty. */
+    if (NULL == pszOldHist) {
+        pszOldHist = "";
+    }
+
+    tp = time(NULL);
+    if ( tp != -1 )
+    {
+        ltime = localtime(&tp);
+        (void) strftime(strtime, sizeof(strtime), "%a %b %d %H:%M:%S %Y: ", ltime);
+    }
+
+    // status = nc_get_att_text( fpImage, NC_GLOBAL, 
+    //                           "history", pszOldHist );
+    // printf("status: %d pszOldHist: [%s]\n",status,pszOldHist);
+    
+    nNewHistSize = strlen(pszOldHist)+strlen(strtime)+strlen(pszAddHist)+1;
+    pszNewHist = (char *) CPLMalloc(nNewHistSize * sizeof(char));
+    
+    strcpy(pszNewHist, strtime);
+    strcat(pszNewHist, pszAddHist);
+
+    if ( disableHistory == FALSE && pszNewHist )
+    {
+        if ( ! EQUAL(pszOldHist,"") )
+            strcat(pszNewHist, "\n");
+        strcat(pszNewHist, pszOldHist);
+    }
+
+    status = nc_put_att_text( fpImage, NC_GLOBAL, 
+                              "history", nNewHistSize,
+                              pszNewHist ); 
+    NCDF_ERR(status);
+
+    CPLFree(pszNewHist);
+}
+
 
     
 
