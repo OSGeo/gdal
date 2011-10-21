@@ -114,29 +114,6 @@ CPLErr netCDFRasterBand::SetScale( double dfNewScale )
 } 
 
 /************************************************************************/
-/*                            GetMetadata()                             */
-/************************************************************************/
-char **netCDFDataset::GetMetadata( const char *pszDomain )
-{
-    if( pszDomain != NULL && EQUALN( pszDomain, "SUBDATASETS", 11 ) )
-        return papszSubDatasets;
-    else
-        return GDALDataset::GetMetadata( pszDomain );
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char * netCDFDataset::GetProjectionRef()
-{
-    if( bGotGeoTransform )
-        return pszProjection;
-    else
-        return GDALPamDataset::GetProjectionRef();
-}
-
-/************************************************************************/
 /*                           GetNoDataValue()                           */
 /************************************************************************/
 
@@ -185,7 +162,7 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
 {
     char     szVarName[NC_MAX_NAME];
     char     szMetaName[NC_MAX_NAME];
-    char     szMetaTemp[MAX_STR_LEN];
+    char     szMetaTemp[NCDF_MAX_STR_LEN];
     int      nd;
     int      i,j;
     int      Sum  = 1;
@@ -413,7 +390,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
     nc_type  atttype=NC_NAT;
     size_t   attlen;
     int      status;
-    char     szNoValueName[MAX_STR_LEN];
+    char     szNoValueName[NCDF_MAX_STR_LEN];
 
 
     this->panBandZPos = NULL;
@@ -585,12 +562,12 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
     double dfOff = 0.0; 
     double dfScale = 1.0; 
 
-    if ( nc_inq_attid ( poDS->cdfid, nZId, NCDF_ADD_OFFSET, NULL) == NC_NOERR ) { 
-        status = nc_get_att_double( poDS->cdfid, nZId, NCDF_ADD_OFFSET, &dfOff );
+    if ( nc_inq_attid ( poDS->cdfid, nZId, CF_ADD_OFFSET, NULL) == NC_NOERR ) { 
+        status = nc_get_att_double( poDS->cdfid, nZId, CF_ADD_OFFSET, &dfOff );
     }
     if ( nc_inq_attid ( poDS->cdfid, nZId, 
-                        NCDF_SCALE_FACTOR, NULL) == NC_NOERR ) { 
-        status = nc_get_att_double( poDS->cdfid, nZId, NCDF_SCALE_FACTOR, &dfScale ); 
+                        CF_SCALE_FACTOR, NULL) == NC_NOERR ) { 
+        status = nc_get_att_double( poDS->cdfid, nZId, CF_SCALE_FACTOR, &dfScale ); 
     }
     SetOffset( dfOff ); 
     SetScale( dfScale ); 
@@ -608,7 +585,7 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int    cdfid = ( ( netCDFDataset * ) poDS )->cdfid;
     size_t start[ MAX_NC_DIMS ];
     size_t edge[ MAX_NC_DIMS ];
-    char   pszName[ MAX_STR_LEN ];
+    char   pszName[ NCDF_MAX_STR_LEN ];
     int    i,j;
     int    Sum=-1;
     int    Taken=-1;
@@ -755,6 +732,29 @@ netCDFDataset::~netCDFDataset()
 }
 
 /************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+char **netCDFDataset::GetMetadata( const char *pszDomain )
+{
+    if( pszDomain != NULL && EQUALN( pszDomain, "SUBDATASETS", 11 ) )
+        return papszSubDatasets;
+    else
+        return GDALDataset::GetMetadata( pszDomain );
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char * netCDFDataset::GetProjectionRef()
+{
+    if( bGotGeoTransform )
+        return pszProjection;
+    else
+        return GDALPamDataset::GetProjectionRef();
+}
+
+/************************************************************************/
 /*                           FetchCopyParm()                            */
 /************************************************************************/
 
@@ -790,7 +790,7 @@ char** netCDFDataset::FetchStandardParallels( const char *pszGridMappingValue )
     //cf-1.0 tags
     strcpy( szTemp,pszGridMappingValue );
     strcat( szTemp, "#" );
-    strcat( szTemp, STD_PARALLEL );
+    strcat( szTemp, CF_PP_STD_PARALLEL );
     pszValue = CSLFetchNameValue( papszMetadata, szTemp );
     if( pszValue != NULL )
         papszValues = CSLTokenizeString2( pszValue, ",", CSLT_STRIPLEADSPACES |
@@ -800,7 +800,7 @@ char** netCDFDataset::FetchStandardParallels( const char *pszGridMappingValue )
     {
         strcpy( szTemp, pszGridMappingValue );
         strcat( szTemp, "#" );
-        strcat( szTemp, STD_PARALLEL_1 );
+        strcat( szTemp, CF_PP_STD_PARALLEL_1 );
 
         pszValue = CSLFetchNameValue( papszMetadata, szTemp );
 	
@@ -809,7 +809,7 @@ char** netCDFDataset::FetchStandardParallels( const char *pszGridMappingValue )
 				    
         strcpy( szTemp,pszGridMappingValue );
         strcat( szTemp, "#" );
-        strcat( szTemp, STD_PARALLEL_2 );
+        strcat( szTemp, CF_PP_STD_PARALLEL_2 );
 
         pszValue = CSLFetchNameValue( papszMetadata, szTemp );
 	
@@ -897,7 +897,7 @@ void netCDFDataset::SetProjection( int var )
     nc_inq_varname(  cdfid, var, szVarName );
     strcpy(szTemp,szVarName);
     strcat(szTemp,"#");
-    strcat(szTemp,GRD_MAPPING);
+    strcat(szTemp,CF_GRD_MAPPING);
     pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
     if( pszValue ) {
         strcpy(szGridMappingName,szTemp);
@@ -932,7 +932,7 @@ void netCDFDataset::SetProjection( int var )
     
         strcpy( szTemp, szGridMappingValue );
         strcat( szTemp, "#" );
-        strcat( szTemp, GRD_MAPPING_NAME );
+        strcat( szTemp, CF_GRD_MAPPING_NAME );
         pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
 
         if( pszValue != NULL ) {
@@ -942,27 +942,27 @@ void netCDFDataset::SetProjection( int var )
 /* -------------------------------------------------------------------- */
             dfEarthRadius = 
                 poDS->FetchCopyParm( szGridMappingValue, 
-                                     EARTH_RADIUS, 
+                                     CF_PP_EARTH_RADIUS, 
                                      -1.0 );
 
             dfLonPrimeMeridian = 
                 poDS->FetchCopyParm( szGridMappingValue,
-                                     LONG_PRIME_MERIDIAN, 
+                                     CF_PP_LONG_PRIME_MERIDIAN, 
                                      0.0 );
 
             dfInverseFlattening = 
                 poDS->FetchCopyParm( szGridMappingValue, 
-                                     INVERSE_FLATTENING, 
+                                     CF_PP_INVERSE_FLATTENING, 
                                      -1.0 );
 	    
             dfSemiMajorAxis = 
                 poDS->FetchCopyParm( szGridMappingValue, 
-                                     SEMI_MAJOR_AXIS, 
+                                     CF_PP_SEMI_MAJOR_AXIS, 
                                      -1.0 );
 	    
             dfSemiMinorAxis = 
                 poDS->FetchCopyParm( szGridMappingValue, 
-                                     SEMI_MINOR_AXIS, 
+                                     CF_PP_SEMI_MINOR_AXIS, 
                                      -1.0 );
 
             //see if semi-major exists if radius doesn't
@@ -972,7 +972,7 @@ void netCDFDataset::SetProjection( int var )
             //if still no radius, check old tag
             if( dfEarthRadius < 0.0 )
                 dfEarthRadius = poDS->FetchCopyParm( szGridMappingValue, 
-                                                     "spherical_earth_radius_meters",
+                                                     CF_PP_EARTH_RADIUS_OLD,
                                                      -1.0 );
 
             //has radius value
@@ -1020,27 +1020,27 @@ void netCDFDataset::SetProjection( int var )
 /*      Transverse Mercator                                             */
 /* -------------------------------------------------------------------- */
 
-            if( EQUAL( pszValue, TM ) ) {
+            if( EQUAL( pszValue, CF_PT_TM ) ) {
 
                 dfScale = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         SCALE_FACTOR_ORIGIN, 1.0 );
+                                         CF_PP_SCALE_FACTOR_ORIGIN, 1.0 );
 
                 dfCenterLon = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LONG_CENTRAL_MERIDIAN, 0.0 );
+                                         CF_PP_LONG_CENTRAL_MERIDIAN, 0.0 );
 
                 dfCenterLat = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LAT_PROJ_ORIGIN, 0.0 );
+                                         CF_PP_LAT_PROJ_ORIGIN, 0.0 );
 
                 dfFalseEasting = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_EASTING, 0.0 );
+                                         CF_PP_FALSE_EASTING, 0.0 );
 
                 dfFalseNorthing = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_NORTHING, 0.0 );
+                                         CF_PP_FALSE_NORTHING, 0.0 );
 
                 oSRS.SetTM( dfCenterLat, 
                             dfCenterLon,
@@ -1056,16 +1056,16 @@ void netCDFDataset::SetProjection( int var )
 /*      Albers Equal Area                                               */
 /* -------------------------------------------------------------------- */
 
-            if( EQUAL( pszValue, AEA ) ) {
+            if( EQUAL( pszValue, CF_PT_AEA ) ) {
                 char **papszStdParallels = NULL;
 		
                 dfCenterLon = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LONG_CENTRAL_MERIDIAN, 0.0 );
+                                         CF_PP_LONG_CENTRAL_MERIDIAN, 0.0 );
 
                 dfCenterLat = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LAT_PROJ_ORIGIN, 0.0 );
+                                         CF_PP_LAT_PROJ_ORIGIN, 0.0 );
 
                 dfScale = 
                     poDS->FetchCopyParm( szGridMappingValue, 
@@ -1073,11 +1073,11 @@ void netCDFDataset::SetProjection( int var )
 
                 dfFalseEasting = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_EASTING, 0.0 );
+                                         CF_PP_FALSE_EASTING, 0.0 );
 
                 dfFalseNorthing = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_NORTHING, 0.0 );
+                                         CF_PP_FALSE_NORTHING, 0.0 );
 		
                 papszStdParallels = 
                     FetchStandardParallels( szGridMappingValue );
@@ -1098,11 +1098,11 @@ void netCDFDataset::SetProjection( int var )
                 else {
                     dfStdP1 = 
                         poDS->FetchCopyParm( szGridMappingValue, 
-                                             STD_PARALLEL_1, 0.0 );
+                                             CF_PP_STD_PARALLEL_1, 0.0 );
 
                     dfStdP2 = 
                         poDS->FetchCopyParm( szGridMappingValue, 
-                                             STD_PARALLEL_2, 0.0 );
+                                             CF_PP_STD_PARALLEL_2, 0.0 );
                 }
                 oSRS.SetACEA( dfStdP1, dfStdP2, dfCenterLat, dfCenterLon,
                               dfFalseEasting, dfFalseNorthing );
@@ -1117,21 +1117,21 @@ void netCDFDataset::SetProjection( int var )
 /*      Cylindrical Equal Area                                          */
 /* -------------------------------------------------------------------- */
 
-            else if( EQUAL( pszValue, CEA ) || EQUAL( pszValue, LCEA ) ) {
+            else if( EQUAL( pszValue, CF_PT_CEA ) || EQUAL( pszValue, CF_PT_LCEA ) ) {
                 dfStdP1 = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         STD_PARALLEL_1, 0.0 );
+                                         CF_PP_STD_PARALLEL_1, 0.0 );
                 dfCentralMeridian = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LONG_CENTRAL_MERIDIAN, 0.0 );
+                                         CF_PP_LONG_CENTRAL_MERIDIAN, 0.0 );
 
                 dfFalseEasting = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_EASTING, 0.0 );
+                                         CF_PP_FALSE_EASTING, 0.0 );
 
                 dfFalseNorthing = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_NORTHING, 0.0 );
+                                         CF_PP_FALSE_NORTHING, 0.0 );
 		
                 oSRS.SetCEA( dfStdP1, dfCentralMeridian,
                              dfFalseEasting, dfFalseNorthing );
@@ -1144,31 +1144,31 @@ void netCDFDataset::SetProjection( int var )
 /* -------------------------------------------------------------------- */
 /*      lambert_azimuthal_equal_area                                    */
 /* -------------------------------------------------------------------- */
-            else if( EQUAL( pszValue, LAEA ) ) {
+            else if( EQUAL( pszValue, CF_PT_LAEA ) ) {
                 dfCenterLon = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LON_PROJ_ORIGIN, 0.0 );
+                                         CF_PP_LON_PROJ_ORIGIN, 0.0 );
 
                 dfCenterLat = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LAT_PROJ_ORIGIN, 0.0 );
+                                         CF_PP_LAT_PROJ_ORIGIN, 0.0 );
 
                 dfFalseEasting = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_EASTING, 0.0 );
+                                         CF_PP_FALSE_EASTING, 0.0 );
 
                 dfFalseNorthing = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_NORTHING, 0.0 );
+                                         CF_PP_FALSE_NORTHING, 0.0 );
 
                 /*
                   dfLonOrig =
                   poDS->FetchCopyParm( szGridMappingValue, 
-                  LON_PROJ_ORIGIN, 0.0 );
+                  CF_PP_LON_PROJ_ORIGIN, 0.0 );
 
                   dfLatOrig =
                   poDS->FetchCopyParm( szGridMappingValue, 
-                  LAT_PROJ_ORIGIN, 0.0 );
+                  CF_PP_LAT_PROJ_ORIGIN, 0.0 );
 
                   dfScaleFactorOrig = 
                   poDS->FetchCopyParm( szGridMappingValue,
@@ -1184,11 +1184,11 @@ void netCDFDataset::SetProjection( int var )
 
                   dfFalseEasting = 
                   poDS->FetchCopyParm( szGridMappingValue, 
-                  FALSE_EASTING, 0.0 );
+                  CF_PP_FALSE_EASTING, 0.0 );
 
                   dfFalseNorthing = 
                   poDS->FetchCopyParm( szGridMappingValue, 
-                  FALSE_NORTHING, 0.0 );
+                  CF_PP_FALSE_NORTHING, 0.0 );
                 */
                 oSRS.SetProjCS( "LAEA (WGS84) " );
 		
@@ -1203,22 +1203,22 @@ void netCDFDataset::SetProjection( int var )
 /* -------------------------------------------------------------------- */
 /*      Azimuthal Equidistant                                           */
 /* -------------------------------------------------------------------- */
-            else if( EQUAL( pszValue, AE ) ) {
+            else if( EQUAL( pszValue, CF_PT_AE ) ) {
                 dfCenterLon = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LON_PROJ_ORIGIN, 0.0 );
+                                         CF_PP_LON_PROJ_ORIGIN, 0.0 );
 
                 dfCenterLat = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LAT_PROJ_ORIGIN, 0.0 );
+                                         CF_PP_LAT_PROJ_ORIGIN, 0.0 );
 
                 dfFalseEasting = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_EASTING, 0.0 );
+                                         CF_PP_FALSE_EASTING, 0.0 );
 
                 dfFalseNorthing = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_NORTHING, 0.0 );
+                                         CF_PP_FALSE_NORTHING, 0.0 );
 
                 oSRS.SetAE( dfCenterLat, dfCenterLon,
                             dfFalseEasting, dfFalseNorthing );
@@ -1231,17 +1231,17 @@ void netCDFDataset::SetProjection( int var )
 /* -------------------------------------------------------------------- */
 /*      Lambert conformal conic                                         */
 /* -------------------------------------------------------------------- */
-            else if( EQUAL( pszValue, L_C_CONIC ) ) {
+            else if( EQUAL( pszValue, CF_PT_LCC ) ) {
 		
                 char **papszStdParallels = NULL;
 		
                 dfCenterLon = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LONG_CENTRAL_MERIDIAN, 0.0 );
+                                         CF_PP_LONG_CENTRAL_MERIDIAN, 0.0 );
 
                 dfCenterLat = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LAT_PROJ_ORIGIN, 0.0 );
+                                         CF_PP_LAT_PROJ_ORIGIN, 0.0 );
 
                 dfScale = 
                     poDS->FetchCopyParm( szGridMappingValue, 
@@ -1249,11 +1249,11 @@ void netCDFDataset::SetProjection( int var )
 
                 dfFalseEasting = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_EASTING, 0.0 );
+                                         CF_PP_FALSE_EASTING, 0.0 );
 
                 dfFalseNorthing = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_NORTHING, 0.0 );
+                                         CF_PP_FALSE_NORTHING, 0.0 );
 		
                 papszStdParallels = 
                     FetchStandardParallels( szGridMappingValue );
@@ -1278,11 +1278,11 @@ void netCDFDataset::SetProjection( int var )
                 else {
                     dfStdP1 = 
                         poDS->FetchCopyParm( szGridMappingValue, 
-                                             STD_PARALLEL_1, 0.0 );
+                                             CF_PP_STD_PARALLEL_1, 0.0 );
 
                     dfStdP2 = 
                         poDS->FetchCopyParm( szGridMappingValue, 
-                                             STD_PARALLEL_2, 0.0 );
+                                             CF_PP_STD_PARALLEL_2, 0.0 );
 
                     oSRS.SetLCC( dfStdP1, dfStdP2, dfCenterLat, dfCenterLon,
                                  dfFalseEasting, dfFalseNorthing );
@@ -1298,7 +1298,7 @@ void netCDFDataset::SetProjection( int var )
 /*      Is this Latitude/Longitude Grid explicitly                      */
 /* -------------------------------------------------------------------- */
 	    
-            else if ( EQUAL ( pszValue, LATITUDE_LONGITUDE ) ) {
+            else if ( EQUAL ( pszValue, CF_PT_LATITUDE_LONGITUDE ) ) {
                 if( !bGotGeogCS )
                     oSRS.SetWellKnownGeogCS( "WGS84" );
             }
@@ -1306,27 +1306,27 @@ void netCDFDataset::SetProjection( int var )
 /*      Mercator                                                        */
 /* -------------------------------------------------------------------- */
 		  
-            else if ( EQUAL ( pszValue, MERCATOR ) ) {
+            else if ( EQUAL ( pszValue, CF_PT_MERCATOR ) ) {
                 dfCenterLon = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LON_PROJ_ORIGIN, 0.0 );
+                                         CF_PP_LON_PROJ_ORIGIN, 0.0 );
 	      
                 dfCenterLat = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LAT_PROJ_ORIGIN, 0.0 );
+                                         CF_PP_LAT_PROJ_ORIGIN, 0.0 );
 
                 dfScale = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         SCALE_FACTOR_ORIGIN,
+                                         CF_PP_SCALE_FACTOR_ORIGIN,
                                          1.0 );
 
                 dfFalseEasting = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_EASTING, 0.0 );
+                                         CF_PP_FALSE_EASTING, 0.0 );
 
                 dfFalseNorthing = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_NORTHING, 0.0 );
+                                         CF_PP_FALSE_NORTHING, 0.0 );
 
                 oSRS.SetMercator( dfCenterLat, dfCenterLon, dfScale, 
                                   dfFalseEasting, dfFalseNorthing );
@@ -1339,22 +1339,22 @@ void netCDFDataset::SetProjection( int var )
 /*      Orthographic                                                    */
 /* -------------------------------------------------------------------- */
 		  
-            else if ( EQUAL ( pszValue, ORTHOGRAPHIC ) ) {
+            else if ( EQUAL ( pszValue, CF_PT_ORTHOGRAPHIC ) ) {
                 dfCenterLon = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LON_PROJ_ORIGIN, 0.0 );
+                                         CF_PP_LON_PROJ_ORIGIN, 0.0 );
 	      
                 dfCenterLat = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LAT_PROJ_ORIGIN, 0.0 );
+                                         CF_PP_LAT_PROJ_ORIGIN, 0.0 );
 
                 dfFalseEasting = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_EASTING, 0.0 );
+                                         CF_PP_FALSE_EASTING, 0.0 );
 
                 dfFalseNorthing = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_NORTHING, 0.0 );
+                                         CF_PP_FALSE_NORTHING, 0.0 );
 
                 oSRS.SetOrthographic( dfCenterLat, dfCenterLon, 
                                       dfFalseEasting, dfFalseNorthing );
@@ -1367,28 +1367,28 @@ void netCDFDataset::SetProjection( int var )
 /*      Polar Stereographic                                             */
 /* -------------------------------------------------------------------- */
 		  
-            else if ( EQUAL ( pszValue, POLAR_STEREO ) ) {
+            else if ( EQUAL ( pszValue, CF_PT_POLAR_STEREO ) ) {
 
                 dfCenterLon = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LON_PROJ_ORIGIN, 0.0 );
+                                         CF_PP_LON_PROJ_ORIGIN, 0.0 );
 
                 dfCenterLat = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LAT_PROJ_ORIGIN, 0.0 );
+                                         CF_PP_LAT_PROJ_ORIGIN, 0.0 );
 		
                 dfScale = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         SCALE_FACTOR_ORIGIN, 
+                                         CF_PP_SCALE_FACTOR_ORIGIN, 
                                          1.0 );
 
                 dfFalseEasting = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_EASTING, 0.0 );
+                                         CF_PP_FALSE_EASTING, 0.0 );
 
                 dfFalseNorthing = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_NORTHING, 0.0 );
+                                         CF_PP_FALSE_NORTHING, 0.0 );
 
                 oSRS.SetPS( dfCenterLat, dfCenterLon, dfScale, 
                             dfFalseEasting, dfFalseNorthing );
@@ -1401,28 +1401,28 @@ void netCDFDataset::SetProjection( int var )
 /*      Stereographic                                                   */
 /* -------------------------------------------------------------------- */
 		  
-            else if ( EQUAL ( pszValue, STEREO ) ) {
+            else if ( EQUAL ( pszValue, CF_PT_STEREO ) ) {
 	        
                 dfCenterLon = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LON_PROJ_ORIGIN, 0.0 );
+                                         CF_PP_LON_PROJ_ORIGIN, 0.0 );
 	      
                 dfCenterLat = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         LAT_PROJ_ORIGIN, 0.0 );
+                                         CF_PP_LAT_PROJ_ORIGIN, 0.0 );
 
                 dfScale = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         SCALE_FACTOR_ORIGIN,
+                                         CF_PP_SCALE_FACTOR_ORIGIN,
                                          1.0 );
 
                 dfFalseEasting = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_EASTING, 0.0 );
+                                         CF_PP_FALSE_EASTING, 0.0 );
 
                 dfFalseNorthing = 
                     poDS->FetchCopyParm( szGridMappingValue, 
-                                         FALSE_NORTHING, 0.0 );
+                                         CF_PP_FALSE_NORTHING, 0.0 );
 
                 oSRS.SetStereographic( dfCenterLat, dfCenterLon, dfScale, 
                                        dfFalseEasting, dfFalseNorthing );
@@ -1635,7 +1635,7 @@ void netCDFDataset::SetProjection( int var )
     if( !EQUAL( szGridMappingValue, "" )  ) {
         strcpy( szTemp,szGridMappingValue);
         strcat( szTemp, "#" );
-        strcat( szTemp, "spatial_ref");
+        strcat( szTemp, NCDF_SPATIAL_REF);
         pszWKT = CSLFetchNameValue(poDS->papszMetadata, szTemp);
 	
         if( pszWKT != NULL ) {
@@ -1644,7 +1644,7 @@ void netCDFDataset::SetProjection( int var )
 	    
             strcpy(szTemp,szGridMappingValue);
             strcat( szTemp, "#" );
-            strcat( szTemp, "GeoTransform");
+            strcat( szTemp, NCDF_GEOTRANSFORM);
 	    
             pszGeoTransform = CSLFetchNameValue(poDS->papszMetadata, szTemp);
 	    
@@ -1794,7 +1794,7 @@ CPLErr netCDFDataset::ReadAttributes( int cdfid, int var)
     nc_type nAttrType;
     size_t  nAttrLen, m;
     int     nbAttr;
-    char    szTemp[ MAX_STR_LEN ];
+    char    szTemp[ NCDF_MAX_STR_LEN ];
 
     nc_inq_varnatts( cdfid, var, &nbAttr );
     if( var == NC_GLOBAL ) {
@@ -2433,9 +2433,9 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
     char       **papszMetadata;
     char       **papszFieldData;
     const char *pszField;
-    char       szMetaName[ MAX_STR_LEN ];
-    char       szMetaValue[ MAX_STR_LEN ];
-    char       szTemp[ MAX_STR_LEN ];
+    char       szMetaName[ NCDF_MAX_STR_LEN ];
+    char       szMetaValue[ NCDF_MAX_STR_LEN ];
+    char       szTemp[ NCDF_MAX_STR_LEN ];
     int        nItems;
     int        bCopyItem;
 
@@ -2501,9 +2501,9 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
                 if ( strncmp( szMetaName, "NETCDF_VARNAME", 14) == 0 ) 
                     bCopyItem = FALSE;
                 /* Remove add_offset and scale_factor, but set them later from band data */
-                else if ( strcmp( szMetaName, NCDF_ADD_OFFSET ) == 0 ) 
+                else if ( strcmp( szMetaName, CF_ADD_OFFSET ) == 0 ) 
                     bCopyItem = FALSE;
-                else if ( strcmp( szMetaName, NCDF_SCALE_FACTOR ) == 0 ) 
+                else if ( strcmp( szMetaName, CF_SCALE_FACTOR ) == 0 ) 
                     bCopyItem = FALSE;
             }
 
@@ -2573,35 +2573,25 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
 
         papszMetadata = GDALGetMetadata( (GDALDataset *) poDS,"");
 
-        nc_put_att_text( fpImage, 
-                         NC_GLOBAL, 
-                         "Conventions", 
-                         6,
-                         "CF-1.2" ); 
+        nc_put_att_text( fpImage, NC_GLOBAL, "Conventions", 
+                         strlen(NCDF_CONVENTIONS_CF),
+                         NCDF_CONVENTIONS_CF ); 
 
-        // pszField = GDALVersionInfo("--version");
-        // nc_put_att_text( fpImage, 
-        //                  NC_GLOBAL, 
-        //                  "GDAL", 
-        //                  strlen(pszField),
-        //                  pszField ); 
+        nc_put_att_text( fpImage, NC_GLOBAL, "GDAL", 
+                         strlen(NCDF_GDAL), NCDF_GDAL ); 
     }
+
     /* Set add_offset and scale_factor here if needed */
     else {
         int bGotAddOffset, bGotScale;
         double dfAddOffset = GDALGetRasterOffset( (GDALRasterBandH) poDS, &bGotAddOffset );
         double dfScale = GDALGetRasterScale( (GDALRasterBandH) poDS, &bGotScale );
+
         if ( bGotAddOffset && dfAddOffset != 0.0 && bGotScale && dfScale != 1.0 ) {
-            nc_put_att_double( fpImage, CDFVarID, 
-                               NCDF_ADD_OFFSET,
-                               NC_DOUBLE,
-                               1,
-                               &dfAddOffset );
-            nc_put_att_double( fpImage, CDFVarID, 
-                               NCDF_SCALE_FACTOR,
-                               NC_DOUBLE,
-                               1,
-                               &dfScale );
+            nc_put_att_double( fpImage, CDFVarID, CF_ADD_OFFSET,
+                               NC_DOUBLE, 1, &dfAddOffset );
+            nc_put_att_double( fpImage, CDFVarID, CF_SCALE_FACTOR,
+                               NC_DOUBLE, 1, &dfScale );
         }
     }
 
@@ -2629,8 +2619,8 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int    bWriteGeoTransform = FALSE;
     char  pszNetcdfProjection[ NC_MAX_NAME ];
 
-    char   pszXDimName[ MAX_STR_LEN ];
-    char   pszYDimName[ MAX_STR_LEN ];
+    char   pszXDimName[ NCDF_MAX_STR_LEN ];
+    char   pszYDimName[ NCDF_MAX_STR_LEN ];
 
     if (nBands == 0)
     {
@@ -2722,8 +2712,8 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         
         double dfNN, dfSN=0.0, dfEE=0.0, dfWE=0.0;
         double adfGeoTransform[6];
-        char   szGeoTransform[ MAX_STR_LEN ];
-        char   szTemp[ MAX_STR_LEN ];
+        char   szGeoTransform[ NCDF_MAX_STR_LEN ];
+        char   szTemp[ NCDF_MAX_STR_LEN ];
         
         double dfX0=0.0, dfDX=0.0, dfY0=0.0, dfDY=0.0;
         double dfTemp=0.0;
@@ -2775,7 +2765,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                         0, NULL, &NCDFVarID );
             nc_put_att_text( fpImage, 
                              NCDFVarID, 
-                             GRD_MAPPING_NAME,
+                             CF_GRD_MAPPING_NAME,
                              strlen("latitude_longitude"),
                              "latitude_longitude" );
             dfTemp = oSRS.GetPrimeMeridian();
@@ -2922,8 +2912,8 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         double dfEE=0.0;
         double dfWE=0.0;
         double adfGeoTransform[6];
-        char   szGeoTransform[ MAX_STR_LEN ];
-        char   szTemp[ MAX_STR_LEN ];
+        char   szGeoTransform[ NCDF_MAX_STR_LEN ];
+        char   szTemp[ NCDF_MAX_STR_LEN ];
 
         /* netcdf standard is bottom-up, but leave it top first for now */
         bBottomUp = FALSE;
@@ -2999,7 +2989,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                          szGeoTransform );
         nc_put_att_text( fpImage, 
                          NCDFVarID, 
-                         GRD_MAPPING_NAME,
+                         CF_GRD_MAPPING_NAME,
                          strlen( pszNetcdfProjection ),
                          pszNetcdfProjection );
 
@@ -3065,8 +3055,8 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         float     *pafScanline  = NULL;
         double    *padScanline  = NULL;
         int       NCDFVarID;
-        size_t    start[ GDALNBDIM ];
-        size_t    count[ GDALNBDIM ];
+        size_t    start[ NCDF_NBDIM ];
+        size_t    count[ NCDF_NBDIM ];
         double    dfNoDataValue;
         unsigned char      cNoDataValue;
         float     fNoDataValue;
@@ -3112,7 +3102,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CPLDebug( "GDAL_netCDF", "%s = GDT_Byte ", szBandName );
 
             status = nc_def_var( fpImage, szBandName, NC_BYTE, 
-                                 GDALNBDIM, anBandDims, &NCDFVarID );
+                                 NCDF_NBDIM, anBandDims, &NCDFVarID );
 
 
 /* -------------------------------------------------------------------- */
@@ -3172,7 +3162,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         } else if( ( eDT == GDT_UInt16 ) || ( eDT == GDT_Int16 ) ) {
             CPLDebug( "GDAL_netCDF", "%s = GDT_Int16 ",szBandName );
             status = nc_def_var( fpImage, szBandName, NC_SHORT, 
-                                 GDALNBDIM, anBandDims, &NCDFVarID );
+                                 NCDF_NBDIM, anBandDims, &NCDFVarID );
 
             pasScanline = (GInt16 *) CPLMalloc( nBands * nXSize *
                                                 sizeof( GInt16 ) );
@@ -3214,7 +3204,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         } else if( (eDT == GDT_UInt32) || (eDT == GDT_Int32) ) {
             CPLDebug( "GDAL_netCDF", "%s = GDT_Int32 ",szBandName );
             status = nc_def_var( fpImage, szBandName, NC_INT, 
-                                 GDALNBDIM, anBandDims, &NCDFVarID );
+                                 NCDF_NBDIM, anBandDims, &NCDFVarID );
 
             panScanline = (GInt32 *) CPLMalloc( nBands * nXSize *
                                                 sizeof( GInt32 ) );
@@ -3258,7 +3248,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         } else if( (eDT == GDT_Float32) ) {
             CPLDebug( "GDAL_netCDF", "%s = GDT_Float32 ",szBandName );
             status = nc_def_var( fpImage, szBandName, NC_FLOAT, 
-                                 GDALNBDIM, anBandDims, &NCDFVarID );
+                                 NCDF_NBDIM, anBandDims, &NCDFVarID );
 
             pafScanline = (float *) CPLMalloc( nBands * nXSize *
                                                sizeof( float ) );
@@ -3302,7 +3292,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         } else if( (eDT == GDT_Float64) ) {
             CPLDebug( "GDAL_netCDF", "%s = GDT_Float64 ",szBandName );
             status = nc_def_var( fpImage, szBandName, NC_DOUBLE, 
-                                 GDALNBDIM, anBandDims, &NCDFVarID );
+                                 NCDF_NBDIM, anBandDims, &NCDFVarID );
 
             padScanline = (double *) CPLMalloc( nBands * nXSize *
                                                 sizeof( double ) );
@@ -3347,12 +3337,12 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
         if( bWriteGeoTransform == TRUE ) {
             /*	    nc_put_att_text( fpImage, NCDFVarID, 
-                    COORDINATES,
+                    CF_COORDINATES,
                     7,
                     LONLAT );
             */
             nc_put_att_text( fpImage, NCDFVarID, 
-                             GRD_MAPPING,
+                             CF_GRD_MAPPING,
                              strlen( pszNetcdfProjection ),
                              pszNetcdfProjection );
         }
@@ -3420,169 +3410,4 @@ void GDALRegister_netCDF()
         GetGDALDriverManager( )->RegisterDriver( poDriver );
     }
 }
-
-
-
-/* -------------------------------------------------------------------- */
-/*      Set Lambert Conformal Conic Projection                          */
-/* -------------------------------------------------------------------- */
-
-
-    
-//Albers equal area
-//
-//grid_mapping_name = albers_conical_equal_area
-//
-//Map parameters:
-//
-//    * standard_parallel - There may be 1 or 2 values.
-//    * longitude_of_central_meridian
-//    * latitude_of_projection_origin
-//    * false_easting
-//    * false_northing
-//Azimuthal equidistant
-//
-//grid_mapping_name = azimuthal_equidistant
-//
-//Map parameters:
-//
-//    * longitude_of_projection_origin
-//    * latitude_of_projection_origin
-//    * false_easting
-//    * false_northing
-//Lambert azimuthal equal area
-//
-//grid_mapping_name = lambert_azimuthal_equal_area
-//
-//Map parameters:
-//
-//    * longitude_of_projection_origin
-//    * latitude_of_projection_origin
-//    * false_easting
-//    * false_northing
-//Lambert conformal
-//
-//grid_mapping_name = lambert_conformal_conic
-//
-//Map parameters:
-//
-//    * standard_parallel - There may be 1 or 2 values.
-//    * longitude_of_central_meridian
-//    * latitude_of_projection_origin
-//    * false_easting
-//    * false_northing
-//Lambert Cylindrical Equal Area
-//
-//grid_mapping_name = lambert_cylindrical_equal_area
-//
-//Map parameters:
-//
-//    * longitude_of_central_meridian
-//    * either standard_parallel or scale_factor_at_projection_origin
-//    * false_easting
-//    * false_northing
-//Latitude-Longitude
-//
-//grid_mapping_name = latitude_longitude
-//
-//Map parameters:
-//
-//    * None
-//Mercator
-//
-//grid_mapping_name = mercator
-//
-//Map parameters:
-//
-//    * longitude_of_projection_origin
-//    * either standard_parallel or scale_factor_at_projection_origin
-//    * false_easting
-//    * false_northing
-//Orthographic
-//
-//grid_mapping_name = orthographic
-//
-//Map parameters:
-//
-//    * longitude_of_projection_origin
-//    * latitude_of_projection_origin
-//    * false_easting
-//    * false_northing
-//Polar stereographic
-//
-//grid_mapping_name = polar_stereographic
-//
-//Map parameters:
-//
-//    * straight_vertical_longitude_from_pole
-//    * latitude_of_projection_origin - Either +90. or -90.
-//    * Either standard_parallel or scale_factor_at_projection_origin
-//    * false_easting
-//    * false_northing
-//Rotated pole
-//
-//grid_mapping_name = rotated_latitude_longitude
-//
-//Map parameters:
-//
-//    * grid_north_pole_latitude
-//    * grid_north_pole_longitude
-//    * north_pole_grid_longitude - This parameter is optional (default is 0.).
-//Stereographic
-//
-//grid_mapping_name = stereographic
-//
-//Map parameters:
-//
-//    * longitude_of_projection_origin
-//    * latitude_of_projection_origin
-//    * scale_factor_at_projection_origin
-//    * false_easting
-//    * false_northing
-//Transverse Mercator
-//
-//grid_mapping_name = transverse_mercator
-//
-//Map parameters:
-//
-//    * scale_factor_at_central_meridian
-//    * longitude_of_central_meridian
-//    * latitude_of_projection_origin
-//    * false_easting
-//    * false_northing
-//Vertical perspective
-//
-//grid_mapping_name = vertical_perspective
-//
-//Map parameters:
-//
-//    * latitude_of_projection_origin
-//    * longitude_of_projection_origin
-//    * perspective_point_height
-//    * false_easting
-//    * false_northing
-//
-//
-//Grid mapping attributes
-//
-//earth_radius
-//false_easting 	
-//false_northing 	
-//grid_mapping_name 	
-//grid_north_pole_latitude
-//grid_north_pole_longitude
-//inverse_flattening
-//latitude_of_projection_origin 
-//longitude_of_central_meridian 
-//longitude_of_prime_meridian
-//longitude_of_projection_origin
-//north_pole_grid_longitude 
-//perspective_point_height	
-//scale_factor_at_central_meridian 
-//scale_factor_at_projection_origin 
-//semi_major_axis
-//semi_minor_axis
-//standard_parallel 	
-//straight_vertical_longitude_from_pole 	
-
 
