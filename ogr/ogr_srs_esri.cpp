@@ -738,6 +738,14 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
                 OSR_GDV( papszPrj, "PARAM_6", 0.0 ) );
     }
 
+    else if( EQUAL(osProj,"LAMBERT_AZIMUTHAL") )
+    {
+        SetLAEA( OSR_GDV( papszPrj, "PARAM_2", 0.0 ),
+                 OSR_GDV( papszPrj, "PARAM_1", 0.0 ),
+                 OSR_GDV( papszPrj, "PARAM_3", 0.0 ),
+                 OSR_GDV( papszPrj, "PARAM_4", 0.0 ) );
+    }
+
     else if( EQUAL(osProj,"EQUIDISTANT_CONIC") )
     {
         int     nStdPCount = (int) OSR_GDV( papszPrj, "PARAM_1", 0.0 );
