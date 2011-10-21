@@ -208,7 +208,7 @@ void kml2featurestyle (
 
     /***** does the placemark have a style url? *****/
 
-    if (    poKmlPlacemark->has_styleselector (  ) ) {
+    if (    poKmlPlacemark->has_styleurl (  ) ) {
 
         const string poKmlStyleUrl = poKmlPlacemark->get_styleurl (  );
 
