@@ -506,8 +506,10 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
 
     if( (nc_datatype == NC_BYTE) ) 
         eDataType = GDT_Byte;
+    #ifdef NC_NETCDF4
     else if( (nc_datatype == NC_UBYTE) ) 
         eDataType = GDT_Byte;
+    #endif    
     else if( (nc_datatype == NC_CHAR) ) 
         eDataType = GDT_Byte;        
     else if( nc_datatype == NC_SHORT )
@@ -3666,7 +3668,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         const char *tmpMetadata;
         char      szLongName[ NC_MAX_NAME ];
 
-        int nDataType = NC_NAT;
+        nc_type nDataType = NC_NAT;
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( i );
         hBand = GDALGetRasterBand( poSrcDS, i );
 
