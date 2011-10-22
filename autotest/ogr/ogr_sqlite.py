@@ -688,6 +688,7 @@ def ogr_sqlite_15():
     
     for geom in geoms:
         dst_feat = ogr.Feature( feature_def = gdaltest.sl_lyr.GetLayerDefn() )
+        #print(geom)
         dst_feat.SetGeometry( geom )
         gdaltest.sl_lyr.CreateFeature( dst_feat )
         dst_feat.Destroy()
@@ -1354,7 +1355,7 @@ def ogr_spatialite_4():
 ###############################################################################
 # Test writing and reading back spatialite geometries (#4092)
 
-def ogr_spatialite_5():
+def ogr_spatialite_5(bUseComprGeom = False):
 
     if gdaltest.has_spatialite == False:
         return 'skip'
@@ -1363,24 +1364,41 @@ def ogr_spatialite_5():
         os.remove('tmp/ogr_spatialite_5.sqlite')
     except:
         pass
-    ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_spatialite_5.sqlite', options = ['SPATIALITE=YES'])
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_spatialite_5.sqlite', options = ['SPATIALITE=YES'] )
 
     geometries = [
+        #'POINT EMPTY',
         'POINT (1 2)',
         'POINT (1 2 3)',
+        'LINESTRING EMPTY',
+        'LINESTRING (1 2)',
         'LINESTRING (1 2,3 4)',
+        'LINESTRING (1 2,3 4,5 6)',
         'LINESTRING (1 2 3,4 5 6)',
+        'LINESTRING (1 2 3,4 5 6,7 8 9)',
+        'POLYGON EMPTY',
         'POLYGON ((1 2,1 3,2 3,2 2,1 2))',
         'POLYGON ((1 2 10,1 3 -10,2 3 20,2 2 -20,1 2 10))',
         'POLYGON ((1 2,1 3,2 3,2 2,1 2),(1.25 2.25,1.25 2.75,1.75 2.75,1.75 2.25,1.25 2.25))',
         'POLYGON ((1 2 10,1 3 -10,2 3 20,2 2 -20,1 2 10))',
+        'MULTIPOINT EMPTY',
         'MULTIPOINT (1 2,3 4)',
         'MULTIPOINT (1 2 3,4 5 6)',
+        'MULTILINESTRING EMPTY',
         'MULTILINESTRING ((1 2,3 4),(5 6,7 8))',
         'MULTILINESTRING ((1 2 3,4 5 6),(7 8 9,10 11 12))',
+        'MULTIPOLYGON EMPTY',
         'MULTIPOLYGON (((1 2,1 3,2 3,2 2,1 2)),((-1 -2,-1 -3,-2 -3,-2 -2,-1 -2)))',
         'MULTIPOLYGON (((1 2,1 3,2 3,2 2,1 2),(1.25 2.25,1.25 2.75,1.75 2.75,1.75 2.25,1.25 2.25)),((-1 -2,-1 -3,-2 -3,-2 -2,-1 -2)))',
         'MULTIPOLYGON (((1 2 -4,1 3 -3,2 3 -3,2 2 -3,1 2 -6)),((-1 -2 0,-1 -3 0,-2 -3 0,-2 -2 0,-1 -2 0)))',
+        'GEOMETRYCOLLECTION EMPTY',
+        #'GEOMETRYCOLLECTION (GEOMETRYCOLLECTION EMPTY)',
+        'GEOMETRYCOLLECTION (POINT (1 2))',
+        'GEOMETRYCOLLECTION (POINT (1 2 3))',
+        'GEOMETRYCOLLECTION (LINESTRING (1 2,3 4))',
+        'GEOMETRYCOLLECTION (LINESTRING (1 2 3,4 5 6))',
+        'GEOMETRYCOLLECTION (POLYGON ((1 2,1 3,2 3,2 2,1 2)))',
+        'GEOMETRYCOLLECTION (POLYGON ((1 2 10,1 3 -10,2 3 20,2 2 -20,1 2 10)))',
         'GEOMETRYCOLLECTION (POINT (1 2),LINESTRING (1 2,3 4),POLYGON ((1 2,1 3,2 3,2 2,1 2)))',
         'GEOMETRYCOLLECTION (POINT (1 2 3),LINESTRING (1 2 3,4 5 6),POLYGON ((1 2 10,1 3 -10,2 3 20,2 2 -20,1 2 10)))',
     ]
@@ -1393,8 +1411,13 @@ def ogr_spatialite_5():
         geom = ogr.CreateGeometryFromWkt(wkt)
         if gdaltest.spatialite_version == '2.3.1' and (geom.GetGeometryType() & ogr.wkb25DBit) != 0:
             continue
-        lyr = ds.CreateLayer('test%d' % num_layer, geom_type = geom.GetGeometryType(), srs = srs)
+        if bUseComprGeom:
+            options = ['COMPRESS_GEOM=YES']
+        else:
+            options = []
+        lyr = ds.CreateLayer('test%d' % num_layer, geom_type = geom.GetGeometryType(), srs = srs, options = options)
         feat = ogr.Feature(lyr.GetLayerDefn())
+        #print(geom)
         feat.SetGeometry(geom)
         lyr.CreateFeature(feat)
         num_layer = num_layer + 1
@@ -1415,9 +1438,48 @@ def ogr_spatialite_5():
             return 'fail'
 
         num_layer = num_layer + 1
+
+    if bUseComprGeom:
+        num_layer = 0
+        for wkt in geometries:
+            if wkt.find('EMPTY') == -1 and wkt.find('POINT') == -1:
+                sql_lyr = ds.ExecuteSQL("SELECT GEOMETRY == CompressGeometry(GEOMETRY) FROM test%d" % num_layer)
+                feat = sql_lyr.GetNextFeature()
+                val = feat.GetFieldAsInteger(0)
+                if wkt != 'LINESTRING (1 2)':
+                    if val != 1:
+                        gdaltest.post_reason('did not get expected compressed geometry')
+                        print(wkt)
+                        print(val)
+                        ds.ReleaseResultSet(sql_lyr)
+                        return 'fail'
+                else:
+                    if val != 0:
+                        print(wkt)
+                        print(val)
+                        ds.ReleaseResultSet(sql_lyr)
+                        return 'fail'
+                feat = None
+                ds.ReleaseResultSet(sql_lyr)
+            num_layer = num_layer + 1
+
     ds = None
 
     return 'success'
+
+
+###############################################################################
+# Test writing and reading back spatialite geometries in compressed form
+
+def ogr_spatialite_compressed_geom_5():
+
+    if gdaltest.has_spatialite == False:
+        return 'skip'
+
+    if gdaltest.spatialite_version == '2.3.1':
+        return 'skip'
+
+    return ogr_spatialite_5(bUseComprGeom = True)
 
 ###############################################################################
 # Test spatialite spatial views
@@ -1614,6 +1676,7 @@ gdaltest_list = [
     ogr_spatialite_3,
     ogr_spatialite_4,
     ogr_spatialite_5,
+    ogr_spatialite_compressed_geom_5,
     ogr_spatialite_6,
     ogr_sqlite_cleanup ]
 

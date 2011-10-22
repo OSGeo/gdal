@@ -1245,7 +1245,7 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
                 GByte   *pabySLBLOB;
 
                 ExportSpatiaLiteGeometry( poGeom, nSRSId, wkbNDR, bHasM,
-                                        bSpatialite2D, &pabySLBLOB, &nBLOBLen );
+                                        bSpatialite2D, bUseComprGeom, &pabySLBLOB, &nBLOBLen );
                 rc = sqlite3_bind_blob( hStmt, nBindField++, pabySLBLOB,
                                         nBLOBLen, CPLFree );
             }

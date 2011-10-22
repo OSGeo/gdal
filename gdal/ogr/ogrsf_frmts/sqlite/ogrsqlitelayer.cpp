@@ -71,6 +71,8 @@ OGRSQLiteLayer::OGRSQLiteLayer()
     bSpatialiteReadOnly = FALSE;
     bSpatialiteLoaded = FALSE;
     iSpatialiteVersion = -1;
+
+    bUseComprGeom = CSLTestBoolean(CPLGetConfigOption("COMPRESS_GEOM", "FALSE"));
 }
 
 /************************************************************************/
@@ -1076,7 +1078,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nPointCount );
 
-        compressedSize = 32 * 2;                   // first and last Points 
+        compressedSize = 32 * 2;                   // first and last Points
+        /* Note 20 is not an error : x,y,z are float and the m is a double */
         compressedSize += 20 * (nPointCount - 2);  // intermediate Points
         if( nPointCount < 0 || nPointCount > INT_MAX / compressedSize)
             return OGRERR_CORRUPT_DATA;
@@ -1768,6 +1771,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
                 CPL_SWAP32PTR( &nPointCount );
 
             compressedSize = 32 * 2;                   // first and last Points
+            /* Note 20 is not an error : x,y,z are float and the m is a double */
             compressedSize += 20 * (nPointCount - 2);  // intermediate Points
             if( nPointCount < 0 || nPointCount > INT_MAX / compressedSize)
                 return OGRERR_CORRUPT_DATA;
@@ -1995,12 +1999,67 @@ OGRErr OGRSQLiteLayer::ImportSpatiaLiteGeometry( const GByte *pabyData,
                                         nBytes - 39, eByteOrder, NULL);
 }
 
+
+/************************************************************************/
+/*                CanBeCompressedSpatialiteGeometry()                   */
+/************************************************************************/
+
+int OGRSQLiteLayer::CanBeCompressedSpatialiteGeometry(const OGRGeometry *poGeometry)
+{
+    switch (wkbFlatten(poGeometry->getGeometryType()))
+    {
+        case wkbLineString:
+        case wkbLinearRing:
+        {
+            int nPoints = ((OGRLineString*)poGeometry)->getNumPoints();
+            return nPoints >= 2;
+        }
+
+        case wkbPolygon:
+        {
+            OGRPolygon* poPoly = (OGRPolygon*) poGeometry;
+            if (poPoly->getExteriorRing() != NULL)
+            {
+                if (!CanBeCompressedSpatialiteGeometry(poPoly->getExteriorRing()))
+                    return FALSE;
+
+                int nInteriorRingCount = poPoly->getNumInteriorRings();
+                for(int i=0;i<nInteriorRingCount;i++)
+                {
+                    if (!CanBeCompressedSpatialiteGeometry(poPoly->getInteriorRing(i)))
+                        return FALSE;
+                }
+            }
+            return TRUE;
+        }
+
+        case wkbMultiPoint:
+        case wkbMultiLineString:
+        case wkbMultiPolygon:
+        case wkbGeometryCollection:
+        {
+            OGRGeometryCollection* poGeomCollection = (OGRGeometryCollection*) poGeometry;
+            int nParts = poGeomCollection->getNumGeometries();
+            for(int i=0;i<nParts;i++)
+            {
+                if (!CanBeCompressedSpatialiteGeometry(poGeomCollection->getGeometryRef(i)))
+                    return FALSE;
+            }
+            return TRUE;
+        }
+
+        default:
+            return FALSE;
+    }
+}
+
 /************************************************************************/
 /*                  ComputeSpatiaLiteGeometrySize()                     */
 /************************************************************************/
 
 int OGRSQLiteLayer::ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
-                                                  int bHasM, int bSpatialite2D )
+                                                  int bHasM, int bSpatialite2D,
+                                                  int bUseComprGeom)
 {
     switch (wkbFlatten(poGeometry->getGeometryType()))
     {
@@ -2024,36 +2083,42 @@ int OGRSQLiteLayer::ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
 
         case wkbLineString:
         case wkbLinearRing:
+        {
+            int nPoints = ((OGRLineString*)poGeometry)->getNumPoints();
+            int nDimension;
+            int nPointsDouble = nPoints;
+            int nPointsFloat = 0;
             if ( bSpatialite2D == TRUE )
-                return 4 + 16 * ((OGRLineString*)poGeometry)->getNumPoints();
-            else if (poGeometry->getCoordinateDimension() == 3)
             {
-                if (bHasM == TRUE)
-                    return 4 + 32 * ((OGRLineString*)poGeometry)->getNumPoints();
-                else
-                    return 4 + 24 * ((OGRLineString*)poGeometry)->getNumPoints();
+                nDimension = 2;
+                bHasM = FALSE;
             }
             else
             {
-                if (bHasM == TRUE)				
-                    return 4 + 24 * ((OGRLineString*)poGeometry)->getNumPoints();
-                else
-                    return 4 + 16 * ((OGRLineString*)poGeometry)->getNumPoints();
+                if ( bUseComprGeom && nPoints >= 2 )
+                {
+                    nPointsDouble = 2;
+                    nPointsFloat = nPoints - 2;
+                }
+                nDimension = poGeometry->getCoordinateDimension();
             }
+            return 4 + nDimension * (8 * nPointsDouble + 4 * nPointsFloat) + ((bHasM) ? nPoints * 8 : 0);
+        }
 
         case wkbPolygon:
         {
             int nSize = 4;
             OGRPolygon* poPoly = (OGRPolygon*) poGeometry;
+            bUseComprGeom = bUseComprGeom && !bSpatialite2D && CanBeCompressedSpatialiteGeometry(poGeometry);
             if (poPoly->getExteriorRing() != NULL)
             {
                 nSize += ComputeSpatiaLiteGeometrySize(poPoly->getExteriorRing(),
-                                                       bHasM, bSpatialite2D );
+                                                       bHasM, bSpatialite2D, bUseComprGeom);
 
                 int nInteriorRingCount = poPoly->getNumInteriorRings();
                 for(int i=0;i<nInteriorRingCount;i++)
                     nSize += ComputeSpatiaLiteGeometrySize(poPoly->getInteriorRing(i),
-                                                           bHasM, bSpatialite2D );
+                                                           bHasM, bSpatialite2D, bUseComprGeom );
             }
             return nSize;
         }
@@ -2068,9 +2133,174 @@ int OGRSQLiteLayer::ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
             int nParts = poGeomCollection->getNumGeometries();
             for(int i=0;i<nParts;i++)
                 nSize += 5 + ComputeSpatiaLiteGeometrySize(poGeomCollection->getGeometryRef(i),
-                                                           bHasM, bSpatialite2D );
+                                                           bHasM, bSpatialite2D, bUseComprGeom );
             return nSize;
         }
+
+        default:
+            CPLError(CE_Failure, CPLE_AppDefined, "Unexpected geometry type");
+            return 0;
+    }
+}
+
+/************************************************************************/
+/*                    GetSpatialiteGeometryCode()                       */
+/************************************************************************/
+
+int OGRSQLiteLayer::GetSpatialiteGeometryCode(const OGRGeometry *poGeometry,
+                                              int bHasM, int bSpatialite2D,
+                                              int bUseComprGeom,
+                                              int bAcceptMultiGeom)
+{
+    OGRwkbGeometryType eType = wkbFlatten(poGeometry->getGeometryType());
+    switch (eType)
+    {
+        case wkbPoint:
+            if ( bSpatialite2D == TRUE )
+                return OGRSplitePointXY;
+            else if (poGeometry->getCoordinateDimension() == 3)
+            {
+                if (bHasM == TRUE)
+                    return OGRSplitePointXYZM;
+                else
+                    return OGRSplitePointXYZ;
+             }
+             else
+             {
+                if (bHasM == TRUE)
+                    return OGRSplitePointXYM;
+                else
+                    return OGRSplitePointXY;
+            }
+            break;
+
+        case wkbLineString:
+        case wkbLinearRing:
+            if ( bSpatialite2D == TRUE )
+                return OGRSpliteLineStringXY;
+            else if (poGeometry->getCoordinateDimension() == 3)
+            {
+                if (bHasM == TRUE)
+                    return (bUseComprGeom) ? OGRSpliteComprLineStringXYZM : OGRSpliteLineStringXYZM;
+                else
+                    return (bUseComprGeom) ? OGRSpliteComprLineStringXYZ : OGRSpliteLineStringXYZ;
+            }
+            else
+            {
+                if (bHasM == TRUE)
+                    return (bUseComprGeom) ? OGRSpliteComprLineStringXYM : OGRSpliteLineStringXYM;
+                else
+                    return (bUseComprGeom) ? OGRSpliteComprLineStringXY : OGRSpliteLineStringXY;
+            }
+            break;
+
+        case wkbPolygon:
+            if ( bSpatialite2D == TRUE )
+                return OGRSplitePolygonXY;
+            else if (poGeometry->getCoordinateDimension() == 3)
+            {
+                if (bHasM == TRUE)
+                    return (bUseComprGeom) ? OGRSpliteComprPolygonXYZM : OGRSplitePolygonXYZM;
+                else
+                    return (bUseComprGeom) ? OGRSpliteComprPolygonXYZ : OGRSplitePolygonXYZ;
+            }
+            else
+            {
+                if (bHasM == TRUE)
+                    return (bUseComprGeom) ? OGRSpliteComprPolygonXYM : OGRSplitePolygonXYM;
+                else
+                    return (bUseComprGeom) ? OGRSpliteComprPolygonXY : OGRSplitePolygonXY;
+            }
+            break;
+
+        default:
+            break;
+    }
+
+    if (!bAcceptMultiGeom)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unexpected geometry type");
+        return 0;
+    }
+
+    switch (eType)
+    {
+        case wkbMultiPoint:
+            if ( bSpatialite2D == TRUE )
+                return OGRSpliteMultiPointXY;
+            else if (poGeometry->getCoordinateDimension() == 3)
+            {
+                if (bHasM == TRUE)
+                    return OGRSpliteMultiPointXYZM;
+                else
+                    return OGRSpliteMultiPointXYZ;
+            }
+            else
+            {
+                if (bHasM == TRUE)
+                    return OGRSpliteMultiPointXYM;
+                else
+                    return OGRSpliteMultiPointXY;
+            }
+            break;
+
+        case wkbMultiLineString:
+            if ( bSpatialite2D == TRUE )
+                return OGRSpliteMultiLineStringXY;
+            else if (poGeometry->getCoordinateDimension() == 3)
+            {
+                if (bHasM == TRUE)
+                    return /*(bUseComprGeom) ? OGRSpliteComprMultiLineStringXYZM :*/ OGRSpliteMultiLineStringXYZM;
+                else
+                    return /*(bUseComprGeom) ? OGRSpliteComprMultiLineStringXYZ :*/ OGRSpliteMultiLineStringXYZ;
+            }
+            else
+            {
+                if (bHasM == TRUE)
+                    return /*(bUseComprGeom) ? OGRSpliteComprMultiLineStringXYM :*/ OGRSpliteMultiLineStringXYM;
+                else
+                    return /*(bUseComprGeom) ? OGRSpliteComprMultiLineStringXY :*/ OGRSpliteMultiLineStringXY;
+            }
+            break;
+
+        case wkbMultiPolygon:
+            if ( bSpatialite2D == TRUE )
+                return OGRSpliteMultiPolygonXY;
+            else if (poGeometry->getCoordinateDimension() == 3)
+            {
+                if (bHasM == TRUE)
+                    return /*(bUseComprGeom) ? OGRSpliteComprMultiPolygonXYZM :*/ OGRSpliteMultiPolygonXYZM;
+                else
+                    return /*(bUseComprGeom) ? OGRSpliteComprMultiPolygonXYZ :*/ OGRSpliteMultiPolygonXYZ;
+            }
+            else
+            {
+                if (bHasM == TRUE)
+                    return /*(bUseComprGeom) ? OGRSpliteComprMultiPolygonXYM :*/ OGRSpliteMultiPolygonXYM;
+                else
+                    return /*(bUseComprGeom) ? OGRSpliteComprMultiPolygonXY :*/ OGRSpliteMultiPolygonXY;
+            }
+            break;
+
+
+        case wkbGeometryCollection:
+            if ( bSpatialite2D == TRUE )
+                return OGRSpliteGeometryCollectionXY;
+            else if (poGeometry->getCoordinateDimension() == 3)
+            {
+                if (bHasM == TRUE)
+                    return /*(bUseComprGeom) ? OGRSpliteComprGeometryCollectionXYZM :*/ OGRSpliteGeometryCollectionXYZM;
+                else
+                    return /*(bUseComprGeom) ? OGRSpliteComprGeometryCollectionXYZ :*/ OGRSpliteGeometryCollectionXYZ;
+            }
+            else
+            {
+                if (bHasM == TRUE)
+                    return /*(bUseComprGeom) ? OGRSpliteComprGeometryCollectionXYM :*/ OGRSpliteGeometryCollectionXYM;
+                else
+                    return /*(bUseComprGeom) ? OGRSpliteComprGeometryCollectionXY :*/ OGRSpliteGeometryCollectionXY;
+            }
+            break;
 
         default:
             CPLError(CE_Failure, CPLE_AppDefined, "Unexpected geometry type");
@@ -2085,6 +2315,7 @@ int OGRSQLiteLayer::ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
 int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeometry,
                                                      OGRwkbByteOrder eByteOrder,
                                                      int bHasM, int bSpatialite2D,
+                                                     int bUseComprGeom,
                                                      GByte* pabyData )
 {
     switch (wkbFlatten(poGeometry->getGeometryType()))
@@ -2144,48 +2375,94 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
             memcpy(pabyData, &nPointCount, 4);
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR( pabyData );
+
             for(int i=0;i<nPointCount;i++)
             {
                 double x = poLineString->getX(i);
                 double y = poLineString->getY(i);
-                memcpy(pabyData + nTotalSize, &x, 8);
-                memcpy(pabyData + nTotalSize + 8, &y, 8);
-                if (NEED_SWAP_SPATIALITE())
+
+                if (!bUseComprGeom || i == 0 || i == nPointCount - 1)
                 {
-                    CPL_SWAP64PTR( pabyData + nTotalSize );
-                    CPL_SWAP64PTR( pabyData + nTotalSize + 8 );
-                }
-                if ( bSpatialite2D == TRUE )
-                    nTotalSize += 16;
-                else if (poGeometry->getCoordinateDimension() == 3)
-                {
-                    double z = poLineString->getZ(i);
-                    memcpy(pabyData + nTotalSize + 16, &z, 8);
+                    memcpy(pabyData + nTotalSize, &x, 8);
+                    memcpy(pabyData + nTotalSize + 8, &y, 8);
                     if (NEED_SWAP_SPATIALITE())
-                        CPL_SWAP64PTR( pabyData + nTotalSize + 16 );
-                    if (bHasM == TRUE)
                     {
-                        double m = 0.0;
-                        memcpy(pabyData + nTotalSize + 24, &m, 8);
-                        if (NEED_SWAP_SPATIALITE())
-                            CPL_SWAP64PTR( pabyData + nTotalSize + 24 );
-                        nTotalSize += 32;
+                        CPL_SWAP64PTR( pabyData + nTotalSize );
+                        CPL_SWAP64PTR( pabyData + nTotalSize + 8 );
                     }
-                    else
-                        nTotalSize += 24;
-                }
-                else
-                {
-                    if (bHasM == TRUE)
+                    if (poGeometry->getCoordinateDimension() == 3)
                     {
-                        double m = 0.0;
-                        memcpy(pabyData + nTotalSize + 16, &m, 8);
+                        double z = poLineString->getZ(i);
+                        memcpy(pabyData + nTotalSize + 16, &z, 8);
                         if (NEED_SWAP_SPATIALITE())
                             CPL_SWAP64PTR( pabyData + nTotalSize + 16 );
-                        nTotalSize += 24;
+                        if (bHasM == TRUE)
+                        {
+                            double m = 0.0;
+                            memcpy(pabyData + nTotalSize + 24, &m, 8);
+                            if (NEED_SWAP_SPATIALITE())
+                                CPL_SWAP64PTR( pabyData + nTotalSize + 24 );
+                            nTotalSize += 32;
+                        }
+                        else
+                            nTotalSize += 24;
                     }
                     else
-                        nTotalSize += 16;
+                    {
+                        if (bHasM == TRUE)
+                        {
+                            double m = 0.0;
+                            memcpy(pabyData + nTotalSize + 16, &m, 8);
+                            if (NEED_SWAP_SPATIALITE())
+                                CPL_SWAP64PTR( pabyData + nTotalSize + 16 );
+                            nTotalSize += 24;
+                        }
+                        else
+                            nTotalSize += 16;
+                    }
+                }
+                else /* Compressed intermediate points */
+                {
+                    float deltax = (float)(x - poLineString->getX(i-1));
+                    float deltay = (float)(y - poLineString->getY(i-1));
+                    memcpy(pabyData + nTotalSize, &deltax, 4);
+                    memcpy(pabyData + nTotalSize + 4, &deltay, 4);
+                    if (NEED_SWAP_SPATIALITE())
+                    {
+                        CPL_SWAP32PTR( pabyData + nTotalSize );
+                        CPL_SWAP32PTR( pabyData + nTotalSize + 4 );
+                    }
+                    if (poGeometry->getCoordinateDimension() == 3)
+                    {
+                        double z = poLineString->getZ(i);
+                        float deltaz = (float)(z - poLineString->getZ(i-1));
+                        memcpy(pabyData + nTotalSize + 8, &deltaz, 4);
+                        if (NEED_SWAP_SPATIALITE())
+                            CPL_SWAP32PTR( pabyData + nTotalSize + 8 );
+                        if (bHasM == TRUE)
+                        {
+                            double m = 0.0;
+                            memcpy(pabyData + nTotalSize + 12, &m, 8);
+                            if (NEED_SWAP_SPATIALITE())
+                                CPL_SWAP64PTR( pabyData + nTotalSize + 12 );
+                            nTotalSize += 20;
+                        }
+                        else
+                            nTotalSize += 12;
+                    }
+                    else
+                    {
+                        if (bHasM == TRUE)
+                        {
+                            double m = 0.0;
+                            memcpy(pabyData + nTotalSize + 8, &m, 8);
+                            if (NEED_SWAP_SPATIALITE())
+                                CPL_SWAP64PTR( pabyData + nTotalSize + 8 );
+                            nTotalSize += 16;
+                        }
+                        else
+                            nTotalSize += 8;
+                    }
                 }
             }
             return nTotalSize;
@@ -2207,6 +2484,7 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
                 nTotalSize += ExportSpatiaLiteGeometryInternal(poPoly->getExteriorRing(),
                                                               eByteOrder,
                                                               bHasM, bSpatialite2D,
+                                                              bUseComprGeom,
                                                               pabyData + nTotalSize);
 
                 for(int i=0;i<nInteriorRingCount;i++)
@@ -2214,6 +2492,7 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
                     nTotalSize += ExportSpatiaLiteGeometryInternal(poPoly->getInteriorRing(i),
                                                                    eByteOrder,
                                                                    bHasM, bSpatialite2D,
+                                                                   bUseComprGeom,
                                                                    pabyData + nTotalSize);
                 }
             }
@@ -2240,68 +2519,11 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
             {
                 pabyData[nTotalSize] = 0x69;
                 nTotalSize ++;
-                int nCode;
-                switch (wkbFlatten(poGeomCollection->getGeometryRef(i)->getGeometryType()))
-                {
-                    case wkbPoint:
-                        if ( bSpatialite2D == TRUE )
-                            nCode = OGRSplitePointXY;
-                        else if (poGeometry->getCoordinateDimension() == 3)
-                        {
-                            if (bHasM == TRUE)
-                                nCode = OGRSplitePointXYZM;
-                            else
-                                nCode = OGRSplitePointXYZ;
-                        }
-                        else
-                        {
-                            if (bHasM == TRUE)
-                                nCode = OGRSplitePointXYM;
-                            else
-                                nCode = OGRSplitePointXY; 
-                        }
-                        break;
-                    case wkbLineString:
-                         if ( bSpatialite2D == TRUE )
-                             nCode = OGRSpliteLineStringXY;
-                        else if (poGeometry->getCoordinateDimension() == 3)
-                        {
-                            if (bHasM == TRUE)
-                                nCode = OGRSpliteLineStringXYZM;
-                            else
-                                nCode = OGRSpliteLineStringXYZ;
-                        }
-                        else
-                        {
-                            if (bHasM == TRUE)
-                                nCode = OGRSpliteLineStringXYM;
-                            else
-                                nCode = OGRSpliteLineStringXY;
-                        }
-                        break;
-                    case wkbPolygon:  
-                        if ( bSpatialite2D == TRUE )
-                            nCode = OGRSplitePolygonXY;
-                        else if (poGeometry->getCoordinateDimension() == 3)
-                        {
-                            if (bHasM == TRUE)
-                                nCode = OGRSplitePolygonXYZM;
-                            else
-                                nCode = OGRSplitePolygonXYZ;
-                        }
-                        else
-                        {
-                            if (bHasM == TRUE)
-                                nCode = OGRSplitePolygonXYM;
-                            else
-                                nCode = OGRSplitePolygonXY;
-                        }
-                        break;
-                    default: 
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Unexpected geometry type"); 
-                        return 0;
-                }
+                int nCode = GetSpatialiteGeometryCode(poGeomCollection->getGeometryRef(i),
+                                                      bHasM, bSpatialite2D,
+                                                      bUseComprGeom, FALSE);
+                if (nCode == 0)
+                    return 0;
                 memcpy(pabyData + nTotalSize, &nCode, 4);
                 if (NEED_SWAP_SPATIALITE())
                     CPL_SWAP32PTR( pabyData + nTotalSize );
@@ -2309,6 +2531,7 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
                 nTotalSize += ExportSpatiaLiteGeometryInternal(poGeomCollection->getGeometryRef(i),
                                                                eByteOrder,
                                                                bHasM, bSpatialite2D,
+                                                               bUseComprGeom,
                                                                pabyData + nTotalSize);
             }
             return nTotalSize;
@@ -2324,13 +2547,18 @@ OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry( const OGRGeometry *poGeometry,
                                                  GInt32 nSRID,
                                                  OGRwkbByteOrder eByteOrder,
                                                  int bHasM, int bSpatialite2D,
+                                                 int bUseComprGeom,
                                                  GByte **ppabyData,
                                                  int *pnDataLenght )
 
 {
+
+    bUseComprGeom = bUseComprGeom && !bSpatialite2D && CanBeCompressedSpatialiteGeometry(poGeometry);
+
     int     nDataLen = 44 + ComputeSpatiaLiteGeometrySize( poGeometry,
                                                            bHasM, 
-                                                           bSpatialite2D );
+                                                           bSpatialite2D,
+                                                           bUseComprGeom );
     OGREnvelope sEnvelope;
 
     *ppabyData =  (GByte *) CPLMalloc( nDataLen );
@@ -2350,156 +2578,22 @@ OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry( const OGRGeometry *poGeometry,
 
     (*ppabyData)[38] = 0x7C;
 
-    int nCode = 0;
-    switch (wkbFlatten(poGeometry->getGeometryType()))
+    int nCode = GetSpatialiteGeometryCode(poGeometry,
+                                          bHasM, bSpatialite2D,
+                                          bUseComprGeom, TRUE);
+    if (nCode == 0)
     {
-        case wkbPoint:
-            if ( bSpatialite2D == TRUE )
-                nCode = OGRSplitePointXY;
-            else if (poGeometry->getCoordinateDimension() == 3)
-            {
-                if (bHasM == TRUE)
-                    nCode = OGRSplitePointXYZM;
-                else
-                    nCode = OGRSplitePointXYZ;
-             }
-             else
-             {
-                if (bHasM == TRUE)
-                    nCode = OGRSplitePointXYM;
-                else
-                    nCode = OGRSplitePointXY;
-            }
-            break;
-
-        case wkbLineString:
-        case wkbLinearRing:
-            if ( bSpatialite2D == TRUE )
-                nCode = OGRSpliteLineStringXY;
-            else if (poGeometry->getCoordinateDimension() == 3)
-            {
-                if (bHasM == TRUE)
-                    nCode = OGRSpliteLineStringXYZM;
-                else
-                    nCode = OGRSpliteLineStringXYZ;
-            }
-            else
-            {
-                if (bHasM == TRUE)
-                    nCode = OGRSpliteLineStringXYM;
-                else
-                    nCode = OGRSpliteLineStringXY;
-            }
-            break;
-
-        case wkbPolygon:
-            if ( bSpatialite2D == TRUE )
-                nCode = OGRSplitePolygonXY;
-            else if (poGeometry->getCoordinateDimension() == 3)
-            {
-                if (bHasM == TRUE)
-                    nCode = OGRSplitePolygonXYZM;
-                else
-                    nCode = OGRSplitePolygonXYZ;
-            }
-            else
-            {
-                if (bHasM == TRUE)
-                    nCode = OGRSplitePolygonXYM;
-                else
-                    nCode = OGRSplitePolygonXY;
-            }
-            break;
-
-        case wkbMultiPoint:
-            if ( bSpatialite2D == TRUE )
-                nCode = OGRSpliteMultiPointXY;
-            else if (poGeometry->getCoordinateDimension() == 3)
-            {
-                if (bHasM == TRUE)
-                    nCode = OGRSpliteMultiPointXYZM;
-                else
-                    nCode = OGRSpliteMultiPointXYZ;
-            }
-            else
-            {
-                if (bHasM == TRUE)
-                    nCode = OGRSpliteMultiPointXYM;
-                else
-                    nCode = OGRSpliteMultiPointXY;
-            }
-            break;
-
-        case wkbMultiLineString:
-            if ( bSpatialite2D == TRUE )
-                nCode = OGRSpliteMultiLineStringXY;
-            else if (poGeometry->getCoordinateDimension() == 3)
-            {
-                if (bHasM == TRUE)
-                    nCode = OGRSpliteMultiLineStringXYZM;
-                else
-                    nCode = OGRSpliteMultiLineStringXYZ;
-            }
-            else
-            {
-                if (bHasM == TRUE)
-                    nCode = OGRSpliteMultiLineStringXYM;
-                else
-                    nCode = OGRSpliteMultiLineStringXY;
-            }
-            break;
-
-        case wkbMultiPolygon:
-            if ( bSpatialite2D == TRUE )
-                nCode = OGRSpliteMultiPolygonXY;
-            else if (poGeometry->getCoordinateDimension() == 3)
-            {
-                if (bHasM == TRUE)
-                    nCode = OGRSpliteMultiPolygonXYZM;
-                else
-                    nCode = OGRSpliteMultiPolygonXYZ;
-            }
-            else
-            {
-                if (bHasM == TRUE)
-                    nCode = OGRSpliteMultiPolygonXYM;
-                else
-                    nCode = OGRSpliteMultiPolygonXY;
-            }
-            break;
-
-
-        case wkbGeometryCollection:
-            if ( bSpatialite2D == TRUE )
-                nCode = OGRSpliteGeometryCollectionXY;
-            else if (poGeometry->getCoordinateDimension() == 3)
-            {
-                if (bHasM == TRUE)
-                    nCode = OGRSpliteGeometryCollectionXYZM;
-                else
-                    nCode = OGRSpliteGeometryCollectionXYZ;
-            }
-            else
-            {
-                if (bHasM == TRUE)
-                    nCode = OGRSpliteGeometryCollectionXYM;
-                else
-                    nCode = OGRSpliteGeometryCollectionXY;
-            }
-            break;
-
-        default:
-            CPLError(CE_Failure, CPLE_AppDefined, "Unexpected geometry type");
-            CPLFree(*ppabyData);
-            *ppabyData = NULL;
-            *pnDataLenght = 0;
-            return CE_Failure;
+        CPLFree(*ppabyData);
+        *ppabyData = NULL;
+        *pnDataLenght = 0;
+        return CE_Failure;
     }
     memcpy( *ppabyData + 39, &nCode, 4 );
 
     int nWritten = ExportSpatiaLiteGeometryInternal(poGeometry, 
                                                     eByteOrder, 
                                                     bHasM, bSpatialite2D,
+                                                    bUseComprGeom,
                                                     *ppabyData + 43);
     if (nWritten == 0)
     {
