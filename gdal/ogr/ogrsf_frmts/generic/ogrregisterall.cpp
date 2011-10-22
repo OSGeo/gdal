@@ -231,4 +231,7 @@ void OGRRegisterAll()
 #ifdef SEGUKOOA_ENABLED
     RegisterOGRSEGUKOOA();
 #endif
+#ifdef SEGY_ENABLED
+    RegisterOGRSEGY();
+#endif
 } /* OGRRegisterAll */
