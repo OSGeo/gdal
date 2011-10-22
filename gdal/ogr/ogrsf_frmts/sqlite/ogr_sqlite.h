@@ -152,11 +152,21 @@ class OGRSQLiteLayer : public OGRLayer
                                                      OGRwkbByteOrder eByteOrder,
                                                      int* pnBytesConsumed);
 
+    static int          CanBeCompressedSpatialiteGeometry(const OGRGeometry *poGeometry);
+
     static int          ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
-                                                      int bHasM, int bSpatialite2D );
+                                                      int bHasM, int bSpatialite2D,
+                                                      int bUseComprGeom );
+
+    static int          GetSpatialiteGeometryCode(const OGRGeometry *poGeometry,
+                                                  int bHasM, int bSpatialite2D,
+                                                  int bUseComprGeom,
+                                                  int bAcceptMultiGeom);
+
     static int          ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeometry,
                                                         OGRwkbByteOrder eByteOrder,
                                                         int bHasM, int bSpatialite2D,
+                                                        int bUseComprGeom,
                                                         GByte* pabyData );
 
   protected:
@@ -195,7 +205,9 @@ class OGRSQLiteLayer : public OGRLayer
                                                   OGRGeometry ** );
     static OGRErr       ExportSpatiaLiteGeometry( const OGRGeometry *,
                                                   GInt32, OGRwkbByteOrder,
-                                                  int, int, GByte **, int * );
+                                                  int, int, int bUseComprGeom, GByte **, int * );
+
+    int                 bUseComprGeom;
 
   public:
                         OGRSQLiteLayer();
@@ -293,6 +305,8 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                 { bLaunderColumnNames = bFlag; }
     void                SetSpatialite2D( int bFlag ) 
                                 { bSpatialite2D = bFlag; }
+    void                SetUseCompressGeom( int bFlag )
+                                { bUseComprGeom = bFlag; }
 
     virtual int          IsTableLayer() { return TRUE; }
 };
