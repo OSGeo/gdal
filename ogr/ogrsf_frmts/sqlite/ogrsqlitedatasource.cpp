@@ -1030,6 +1030,8 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
     }
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
+    if ( CSLFetchBoolean(papszOptions,"COMPRESS_GEOM",FALSE) )
+        poLayer->SetUseCompressGeom( TRUE );
     poLayer->SetSpatialite2D ( bForce2D );
 
 /* -------------------------------------------------------------------- */
