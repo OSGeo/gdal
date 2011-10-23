@@ -955,7 +955,7 @@ void netCDFDataset::SetProjection( int var )
     int          nSpacingBegin;
     int          nSpacingMiddle;
     int          nSpacingLast;
-    char         *pszUnits = NULL;
+    const char  *pszUnits = NULL;
 
     /* These values from GDAL metadata */
     const char *pszWKT = NULL;
@@ -1812,7 +1812,7 @@ void netCDFDataset::SetProjection( int var )
                     pszValue = CSLFetchNameValue( poDS->papszMetadata, 
                                                   szTemp );
                     if( pszValue != NULL ) {
-                        pszUnits = CPLStrdup( pszValue );
+                        pszUnits = pszValue;
                         if( EQUAL( pszValue, "km" ) ) {
                             xMinMax[0] = xMinMax[0] * 1000;
                             xMinMax[1] = xMinMax[1] * 1000;
@@ -1913,12 +1913,13 @@ void netCDFDataset::SetProjection( int var )
             /* Set the CRS to the one written by GDAL */
             if ( ! bGotCfSRS || poDS->pszProjection == NULL || ! bIsGdalCfFile ) {   
                 bGotGdalSRS = TRUE;
+                CPLFree(poDS->pszProjection);
                 poDS->pszProjection = CPLStrdup( pszWKT ); 
                 CPLDebug( "GDAL_netCDF", "set WKT from GDAL [%s]\n", poDS->pszProjection );
                 // CPLDebug( "GDAL_netCDF", "set WKT from GDAL" );
             }
             else { /* use the SRS from GDAL if it doesn't conflict with the one from CF */
-                char *pszProjectionGDAL = CPLStrdup( pszWKT );
+                char *pszProjectionGDAL = (char*) pszWKT ;
                 OGRSpatialReference oSRSGDAL;
                 oSRSGDAL.importFromWkt( &pszProjectionGDAL );
                 /* set datum to unknown or else datums will not match, see bug #4281 */
@@ -1927,6 +1928,7 @@ void netCDFDataset::SetProjection( int var )
                 if ( oSRS.IsSame(&oSRSGDAL) ) {
                     // printf("ARE SAME, using GDAL WKT\n");
                     bGotGdalSRS = TRUE;
+                    CPLFree(poDS->pszProjection);
                     poDS->pszProjection = CPLStrdup( pszWKT );
                     CPLDebug( "GDAL_netCDF", "set WKT from GDAL [%s]\n", poDS->pszProjection );
                     // CPLDebug( "GDAL_netCDF", "set WKT from GDAL" );
@@ -2076,6 +2078,8 @@ void netCDFDataset::SetProjection( int var )
             oSRSTmp.exportToPrettyWkt( &pszWKGCS );
             if ( oSRS.IsSameGeogCS(&oSRSTmp) ) {
                 oSRS.SetWellKnownGeogCS( pszWKGCSList[i] );
+                CPLFree(poDS->pszProjection);
+                poDS->pszProjection = NULL;
                 oSRS.exportToWkt( &(poDS->pszProjection) );
             }
         }
