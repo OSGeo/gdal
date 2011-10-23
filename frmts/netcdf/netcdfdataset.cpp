@@ -388,6 +388,7 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
     	sprintf( szMetaTemp,"%s",szTemp);       
 
     	switch( atttype ) {
+            /* TODO support NC_BYTE */
     	case NC_CHAR:
     	    char *fillc;
     	    fillc = (char *) CPLCalloc( attlen+1, sizeof(char) );
@@ -506,10 +507,10 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
 
     if( (nc_datatype == NC_BYTE) ) 
         eDataType = GDT_Byte;
-    #ifdef NC_NETCDF4
+#ifdef NETCDF_HAS_NC4
     else if( (nc_datatype == NC_UBYTE) ) 
         eDataType = GDT_Byte;
-    #endif    
+#endif    
     else if( (nc_datatype == NC_CHAR) ) 
         eDataType = GDT_Byte;        
     else if( nc_datatype == NC_SHORT )
@@ -556,6 +557,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
     if( status == NC_NOERR ) {
         switch( atttype ) {
             status = -1;
+            /* TODO support NC_BYTE */
             case NC_CHAR:
                 char *fillc;
                 fillc = (char *) CPLCalloc( attlen+1, sizeof(char) );
@@ -600,6 +602,9 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
     if ( ! bNoDataSet ) { 
         switch( vartype ) {
             case NC_BYTE:
+#ifdef NETCDF_HAS_NC4
+            case NC_UBYTE:
+#endif    
                 /* don't do default fill-values for bytes, too risky */
                 dfNoData = 0.0;
                 /* should print a warning as users might not be expecting this */
@@ -788,7 +793,7 @@ netCDFDataset::netCDFDataset()
     cdfid            = 0;
     // bBottomUp        = FALSE;
     bBottomUp        = TRUE;
-    nFileType        = NCDF_FILETYPE_NONE;
+    nFormat          = NCDF_FORMAT_NONE;
     bIsGdalFile      = FALSE;
     bIsGdalCfFile    = FALSE;
 }
@@ -2165,6 +2170,7 @@ CPLErr netCDFDataset::ReadAttributes( int cdfid, int var)
         *pszMetaTemp = '\0';
 	
         switch (nAttrType) {
+            /* TODO support NC_BYTE */
             case NC_CHAR:
                 nc_get_att_text( cdfid, var, szAttrName, pszMetaTemp );
                 pszMetaTemp[nAttrLen]='\0';
@@ -2286,6 +2292,9 @@ void netCDFDataset::CreateSubDatasetList( )
             switch( nVarType ) {
 		
                 case NC_BYTE:
+#ifdef NETCDF_HAS_NC4
+                case NC_UBYTE:
+#endif    
                 case NC_CHAR:
                     strcpy(szType, "8-bit character");
                     break;
@@ -2339,46 +2348,80 @@ void netCDFDataset::CreateSubDatasetList( )
 }
     
 /************************************************************************/
-/*                              IdentifyFileType()                      */
+/*                              IdentifyFormat()                      */
 /************************************************************************/
 
-int netCDFDataset::IdentifyFileType( GDALOpenInfo * poOpenInfo, bool bCheckHDF5 = TRUE )
+int netCDFDataset::IdentifyFormat( GDALOpenInfo * poOpenInfo, bool bCheckExt = TRUE )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Does this appear to be a netcdf file?                           */
-/*      Note: proper care should be done at configure to detect which   */
-/*        netcdf versions are supported (nc, nc2, nc4), as does CDO     */
+/*      Does this appear to be a netcdf file? If so, which format?      */
 /*      http://www.unidata.ucar.edu/software/netcdf/docs/faq.html#fv1_5 */
 /* -------------------------------------------------------------------- */
-    /* This should be extended to detect filetype with NETCDF: syntax */
+    // CPLDebug( "GDAL_netCDF", "netCDFDataset::IdentifyFormat() nHeaderBytes=%d, header=[%s]",
+    //           poOpenInfo->nHeaderBytes, (char*)poOpenInfo->pabyHeader );
+    // #undef HAVE_HDF5
+    // #undef HAVE_HDF4
+
     if( EQUALN(poOpenInfo->pszFilename,"NETCDF:",7) )
-        return NCDF_FILETYPE_UNKNOWN;
+        return NCDF_FORMAT_UNKNOWN;
     if ( poOpenInfo->nHeaderBytes < 4 )
-        return NCDF_FILETYPE_NONE;
+        return NCDF_FORMAT_NONE;
     if ( EQUALN((char*)poOpenInfo->pabyHeader,"CDF\001",4) )
-        return NCDF_FILETYPE_NC;
+        return NCDF_FORMAT_NC;
     else if ( EQUALN((char*)poOpenInfo->pabyHeader,"CDF\002",4) )
-        return NCDF_FILETYPE_NC2;
+        return NCDF_FORMAT_NC2;
     else if ( EQUALN((char*)poOpenInfo->pabyHeader,"\211HDF\r\n\032\n",8) ) {
-        /* Make sure this driver only opens netCDF-4 files and not other HDF5 files */
-        /* This check should be relaxed, but there is no clear way to make a difference */
-        /* If user really wants to open with this driver, use NETCDF:file.nc:var format */
-        if ( TRUE == bCheckHDF5 ) { /* Only check if asked for */
+        // CPLDebug( "GDAL_netCDF", "netCDFDataset::IdentifyFormat() detected HDF5/netcdf file" );
+        /* Requires netCDF-4/HDF5 support in libnetcdf (not just libnetcdf-v4).
+           If HDF5 is not supported in GDAL, this driver will try to open the file 
+           Else, make sure this driver does not try to open HDF5 files 
+           If user really wants to open with this driver, use NETCDF:file.h5 format. 
+           This check should be relaxed, but there is no clear way to make a difference. 
+        */
+
+        /* Check for HDF5 support in GDAL */
+#ifdef HAVE_HDF5
+        if ( bCheckExt ) { /* Check by default */
             const char* pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
-            if ( ! ( EQUAL( pszExtension, "nc")  || EQUAL( pszExtension, "nc4") ) )
-                return NCDF_FILETYPE_HDF5;
+            if ( ! ( EQUAL( pszExtension, "nc")  || EQUAL( pszExtension, "cdf") 
+                     || EQUAL( pszExtension, "nc2") || EQUAL( pszExtension, "nc4") ) )
+                return NCDF_FORMAT_HDF5;
         }
-        /* Requires netcdf v4, should also test for netCDF-4 support compiled in */
-        /* This test could be done at configure like in CDO */
-        /* Anyway, if support is not built-in the file will not open, and should fall-back to HDF5 */
-        if ( nc_inq_libvers()[0]=='4' ) 
-            return NCDF_FILETYPE_NC4;
-        else
-            return NCDF_FILETYPE_HDF5; 
+#endif
+
+        /* Check for netcdf-4 support in libnetcdf */
+#ifdef NETCDF_HAS_NC4
+        return NCDF_FORMAT_NC4;
+#else
+        return NCDF_FORMAT_HDF5;
+#endif
+
+    }
+    else if ( EQUALN((char*)poOpenInfo->pabyHeader,"\016\003\023\001",4) ) {
+        // CPLDebug( "GDAL_netCDF", "netCDFDataset::IdentifyFormat() detected HDF4 file" );
+        /* Requires HDF4 support in libnetcdf, but if HF4 is supported by GDAL don't try to open. */
+        /* If user really wants to open with this driver, use NETCDF:file.hdf syntax. */
+
+        /* Check for HDF4 support in GDAL */
+#ifdef HAVE_HDF4
+        if ( bCheckExt ) { /* Check by default */
+            /* Always treat as HDF4 file */
+            return NCDF_FORMAT_HDF4;
+        }
+#endif
+
+        /* Check for HDF4 support in libnetcdf */
+#ifdef NETCDF_HAS_HDF4
+        return NCDF_FORMAT_NC4; 
+#else
+        return NCDF_FORMAT_HDF4;
+#endif
     }
 
-    return NCDF_FILETYPE_NONE;
+    // CPLDebug( "GDAL_netCDF", "netCDFDataset::IdentifyFormat() did not detect a netcdf file" );
+
+    return NCDF_FORMAT_NONE;
 } 
 
 /************************************************************************/
@@ -2391,13 +2434,15 @@ int netCDFDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( EQUALN(poOpenInfo->pszFilename,"NETCDF:",7) ) {
         return TRUE;
     }
-    int nTmpFileType = IdentifyFileType( poOpenInfo );
-    if( NCDF_FILETYPE_NONE == nTmpFileType ||
-        NCDF_FILETYPE_HDF5 == nTmpFileType ||
-        NCDF_FILETYPE_UNKNOWN == nTmpFileType )
-        return FALSE;
-    else
+    int nTmpFormat = IdentifyFormat( poOpenInfo );
+    // CPLDebug( "GDAL_netCDF", "netCDFDataset::Identify(), detected format %d", nTmpFormat );
+    if( NCDF_FORMAT_NC  == nTmpFormat ||
+        NCDF_FORMAT_NC2  == nTmpFormat ||
+        NCDF_FORMAT_NC4  == nTmpFormat ||
+        NCDF_FORMAT_NC4C  == nTmpFormat )
         return TRUE;
+    else
+        return FALSE;
 } 
 
 /************************************************************************/
@@ -2421,18 +2466,20 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     int          ndims, nvars, ngatts, unlimdimid;
     int          nCount=0;
     int          nVarID=-1;
-    int          nTmpFileType=NCDF_FILETYPE_NONE;
+    int          nTmpFormat=NCDF_FORMAT_NONE;
 
 /* -------------------------------------------------------------------- */
 /*      Does this appear to be a netcdf file?                           */
 /* -------------------------------------------------------------------- */
     if( ! EQUALN(poOpenInfo->pszFilename,"NETCDF:",7) ) {
-        nTmpFileType = IdentifyFileType( poOpenInfo );
-        /* Note: not calling Identify() directly, because I want to have the file type */
-        /* Duplicating the hdf5 test (also in Identify()) */
-        if( NCDF_FILETYPE_NONE == nTmpFileType ||
-            NCDF_FILETYPE_HDF5 == nTmpFileType ||
-            NCDF_FILETYPE_UNKNOWN == nTmpFileType )
+        nTmpFormat = IdentifyFormat( poOpenInfo );
+        // CPLDebug( "GDAL_netCDF", "netCDFDataset::Open(), detected format %d", nTmpFormat );
+        /* Note: not calling Identify() directly, because we want the file type */
+        /* Only support NCDF_FORMAT* formats */
+        if( ! ( NCDF_FORMAT_NC  == nTmpFormat ||
+                NCDF_FORMAT_NC2  == nTmpFormat ||
+                NCDF_FORMAT_NC4  == nTmpFormat ||
+                NCDF_FORMAT_NC4C  == nTmpFormat ) )
             return NULL;
     }
 
@@ -2477,20 +2524,27 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->bTreatAsSubdataset = TRUE;
             CSLDestroy( papszName );
     	}
+        else if( CSLCount(papszName) == 2 )
+        {
+            poDS->osFilename = papszName[1];
+            poDS->osSubdatasetName = "";
+            poDS->bTreatAsSubdataset = FALSE;
+            CSLDestroy( papszName );
+    	}
         else
         {
             CSLDestroy( papszName );
             delete poDS;
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Failed to parse NETCDF: prefix string into expected three fields." );
+                      "Failed to parse NETCDF: prefix string into expected 2, 3 or 4 fields." );
             return NULL;
         }
-        /* Identify filetype from real file, with bCheckHDF5=FALSE */ 
+        /* Identify Format from real file, with bCheckExt=FALSE */ 
         GDALOpenInfo* poOpenInfo2 = new GDALOpenInfo(poDS->osFilename.c_str(), GA_ReadOnly );
-        poDS->nFileType = IdentifyFileType( poOpenInfo2, FALSE );
+        poDS->nFormat = IdentifyFormat( poOpenInfo2, FALSE );
         delete poOpenInfo2;
-        if( NCDF_FILETYPE_NONE == poDS->nFileType ||
-            NCDF_FILETYPE_UNKNOWN == poDS->nFileType ) {
+        if( NCDF_FORMAT_NONE == poDS->nFormat ||
+            NCDF_FORMAT_UNKNOWN == poDS->nFormat ) {
             delete poDS;
             return NULL;
         }        
@@ -2499,7 +2553,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->osFilename = poOpenInfo->pszFilename;
         poDS->bTreatAsSubdataset = FALSE;
-        poDS->nFileType = nTmpFileType;
+        poDS->nFormat = nTmpFormat;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2524,24 +2578,24 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Get file type from netcdf                                       */
 /* -------------------------------------------------------------------- */
-    status = nc_inq_format (cdfid, &nTmpFileType);
+    status = nc_inq_format (cdfid, &nTmpFormat);
     if ( status != NC_NOERR ) 
-        NCDF_ERR( status );
+        NCDFErr( status );
     else {
         CPLDebug( "GDAL_netCDF", 
                   "driver detected file type=%d, libnetcdf detected type=%d",
-                  poDS->nFileType, nTmpFileType );
-        if ( nTmpFileType != poDS->nFileType ) {
-            if ( nTmpFileType != NCDF_FILETYPE_NC4C ) {
+                  poDS->nFormat, nTmpFormat );
+        if ( nTmpFormat != poDS->nFormat ) {
+            /* warn if file detection conflicts with that from libnetcdf */
+            /* except for NC4C, which we have no way of detecting initially */
+            if ( nTmpFormat != NCDF_FORMAT_NC4C ) {
                 CPLError( CE_Warning, CPLE_AppDefined, 
                           "NetCDF driver detected file type=%d, but libnetcdf detected type=%d",
-                          poDS->nFileType, nTmpFileType );
+                          poDS->nFormat, nTmpFormat );
             }
-            else {
-            }          
             CPLDebug( "GDAL_netCDF", "seting file type to %d, was %d", 
-                      nTmpFileType, poDS->nFileType );
-            poDS->nFileType = nTmpFileType;
+                      nTmpFormat, poDS->nFormat );
+            poDS->nFormat = nTmpFormat;
         }
     }
 
@@ -2964,6 +3018,7 @@ WRITE_LONLAT=YES/NO/IF_NEEDED (default: YES for geographic, IF_NEEDED for projec
 TYPE_LONLAT=float/double (default: double for geographic, float for projected)
 WRITE_GDAL_TAGS=YES/NO/IF_NEEDED (default: YES)
 WRITE_BOTTOMUP=YES/NO (default: YES)
+FORMAT=NC/NC2/NC4/NC4C
 
 Config Options:
 
@@ -3030,6 +3085,9 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     OGRSpatialReference oSRS;
     char *pszWKT = NULL;
 
+    int nFormat = NCDF_FORMAT_UNKNOWN;
+    int nCreateMode = NC_CLOBBER;
+
     CPLDebug( "GDAL_netCDF", "\n=====\nNCDFCreateCopy( %s, ... )\n", pszFilename );
  
 /* -------------------------------------------------------------------- */
@@ -3092,6 +3150,31 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Process options.                                                */
 /* -------------------------------------------------------------------- */
+    /* File format */
+    nFormat = NCDF_FORMAT_NC;
+    pszValue = CSLFetchNameValue( papszOptions, "FORMAT" );
+    if ( pszValue != NULL ) {
+        if ( EQUAL( pszValue, "NC" ) ) {
+            nFormat = NCDF_FORMAT_NC;
+        }
+#ifdef NETCDF_HAS_NC2
+        else if ( EQUAL( pszValue, "NC2" ) ) {
+            nFormat = NCDF_FORMAT_NC2;
+        }
+#endif
+#ifdef NETCDF_HAS_NC4
+        else if ( EQUAL( pszValue, "NC4" ) ) {
+            nFormat = NCDF_FORMAT_NC4;
+        }    
+        else if ( EQUAL( pszValue, "NC4C" ) ) {
+            nFormat = NCDF_FORMAT_NC4C;
+        }    
+#endif
+        else {
+            CPLError( CE_Failure, CPLE_NotSupported,
+                      "FORMAT=%s in not supported, using the default NC format.", pszValue );        
+        }
+    }
 
     /* netcdf standard is bottom-up */
     /* overriden by config option GDAL_NETCDF_BOTTOMUP and -co option WRITE_BOTTOMUP */
@@ -3177,7 +3260,28 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int nLonDimID = 0;
     int nLatDimID = 0;
     
-    status = nc_create( pszFilename, NC_CLOBBER,  &fpImage );
+    // status = nc_create( pszFilename, NC_CLOBBER,  &fpImage );
+    switch ( nFormat ) {        
+#ifdef NETCDF_HAS_NC2
+        case NCDF_FORMAT_NC2:
+            nCreateMode = NC_CLOBBER|NC_64BIT_OFFSET;
+            break;
+#endif
+#ifdef NETCDF_HAS_NC4
+        case NCDF_FORMAT_NC4:
+            nCreateMode = NC_CLOBBER|NC_NETCDF4;
+            break;
+        case NCDF_FORMAT_NC4C:
+            nCreateMode = NC_CLOBBER|NC_NETCDF4|NC_CLASSIC_MODEL;
+            break;
+#endif
+        case NCDF_FORMAT_NC:
+        default:
+            nCreateMode = NC_CLOBBER;
+            break;
+    }
+
+    status = nc_create( pszFilename, nCreateMode,  &fpImage );
 
     if( status != NC_NOERR )
     {
@@ -3712,8 +3816,15 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Define variable and attributes                                  */
 /* -------------------------------------------------------------------- */
-            
-            nDataType = NC_BYTE;
+            /* Byte can be of different type according to file version */
+            /* PDS: don't use NC_UBYTE if NC4 Classic, since
+               need to stick to classic NC3 datatypes in that case */
+#ifdef NETCDF_HAS_NC4
+            if ( nFormat == NCDF_FORMAT_NC4 )
+                nDataType = NC_UBYTE;
+            else 
+#endif
+                nDataType = NC_BYTE;
 
             status = nc_def_var( fpImage, szBandName, nDataType, 
                                  NCDF_NBDIM, anBandDims, &NCDFVarID );
@@ -3722,6 +3833,19 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             cNoDataValue=(signed char) dfNoDataValue;
             nc_put_att_schar( fpImage, NCDFVarID, _FillValue,
                               nDataType, 1, &cNoDataValue );            
+
+            /* For NC_BYTE, add valid_range and _Unsigned = "true" to specify unsigned byte
+               http://www.unidata.ucar.edu/software/netcdf/docs/BestPractices.html#Unsigned
+               http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.5/cf-conventions.html#id2859230
+               http://www.unidata.ucar.edu/software/netcdf/docs/netcdf.html#Attribute-Conventions
+            */
+            if ( nDataType == NC_BYTE ) {
+                short int nValidRange[] = {0,255};
+                status=nc_put_att_short( fpImage, NCDFVarID, "valid_range",
+                                         NC_SHORT, 2, nValidRange );
+                status = nc_put_att_text( fpImage, NCDFVarID, 
+                                          "_Unsigned", 4, "true" );
+            }
 
 /* -------------------------------------------------------------------- */
 /*      Read and write data from band i                                 */
@@ -4140,7 +4264,7 @@ void NCDFAddHistory(int fpImage, const char *pszAddHist, const char *pszOldHist)
     status = nc_put_att_text( fpImage, NC_GLOBAL, 
                               "history", nNewHistSize,
                               pszNewHist ); 
-    NCDF_ERR(status);
+    NCDFErr(status);
 
     CPLFree(pszNewHist);
 }
@@ -4160,7 +4284,6 @@ int NCDFIsCfProjection( const char* pszProjection )
     }
     return FALSE;
 }
-
 
 /* Write any needed projection attributes *
  * poPROJCS: ptr to proj crd system
