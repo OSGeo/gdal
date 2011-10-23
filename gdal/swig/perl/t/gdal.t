@@ -223,14 +223,10 @@ ok(is_deeply($a, $b), "xml parsing");
 
 my @tmp = sort keys %available_driver;
 
-if (@fails) {
-    print STDERR "\nUnexpected failures:\n",@fails;
-    print STDERR "\nAvailable drivers were ",join(', ',@tmp),"\n";
-    print STDERR "Drivers used in tests were: ",join(', ',@tested_drivers),"\n";
-} else {
-    print STDERR "\nAvailable drivers were ",join(', ',@tmp),"\n";
-    print STDERR "Drivers used in tests were: ",join(', ',@tested_drivers),"\n";
-}
+print STDERR "\nGDAL version: ",Geo::GDAL::VersionInfo,"\n";
+print STDERR "Unexpected failures:\n",@fails,"\n" if @fails;
+print STDERR "Available drivers were ",join(', ',@tmp),"\n";
+print STDERR "Drivers used in tests were: ",join(', ',@tested_drivers),"\n";
 
 system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 
