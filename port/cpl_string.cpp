@@ -1446,8 +1446,8 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
  * The backslash, quote, '\\0' and newline characters are all escaped in 
  * the usual C style. 
  *
- * CPLES_XML(1): This scheme converts the '<', '<' and '&' characters into
- * their XML/HTML equivelent (&gt;, &lt; and &amp;) making a string safe
+ * CPLES_XML(1): This scheme converts the '<', '>', '"' and '&' characters into
+ * their XML/HTML equivelent (&lt;, &gt;, &quot; and &amp;) making a string safe
  * to embed as CDATA within an XML element.  The '\\0' is not escaped and 
  * should not be included in the input.
  *
@@ -1679,14 +1679,19 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
     char *pszOutput;
     int iOut=0, iIn;
 
-    pszOutput = (char *) CPLMalloc(strlen(pszInput)+1);
+    pszOutput = (char *) CPLMalloc(4 * strlen(pszInput)+1);
     pszOutput[0] = '\0';
 
     if( nScheme == CPLES_XML )
     {
-        for( iIn = 0; pszInput[iIn] != '\0'; iIn++ )
+        char ch;
+        for( iIn = 0; (ch = pszInput[iIn]) != '\0'; iIn++ )
         {
-            if( EQUALN(pszInput+iIn,"&lt;",4) )
+            if( ch != '&' )
+            {
+                pszOutput[iOut++] = ch;
+            }
+            else if( EQUALN(pszInput+iIn,"&lt;",4) )
             {
                 pszOutput[iOut++] = '<';
                 iIn += 3;
@@ -1701,14 +1706,71 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
                 pszOutput[iOut++] = '&';
                 iIn += 4;
             }
+            else if( EQUALN(pszInput+iIn,"&apos;",6) )
+            {
+                pszOutput[iOut++] = '\'';
+                iIn += 5;
+            }
             else if( EQUALN(pszInput+iIn,"&quot;",6) )
             {
                 pszOutput[iOut++] = '"';
                 iIn += 5;
             }
+            else if( EQUALN(pszInput+iIn,"&#x",3) )
+            {
+                wchar_t anVal[2] = {0 , 0};
+                iIn += 3;
+
+                while(TRUE)
+                {
+                    ch = pszInput[iIn ++];
+                    if (ch >= 'a' && ch <= 'f')
+                        anVal[0] = anVal[0] * 16 + ch - 'a' + 10;
+                    else if (ch >= 'A' && ch <= 'A')
+                        anVal[0] = anVal[0] * 16 + ch - 'A' + 10;
+                    else if (ch >= '0' && ch <= '9')
+                        anVal[0] = anVal[0] * 16 + ch - '0';
+                    else
+                        break;
+                }
+                if (ch != ';')
+                    break;
+                iIn --;
+
+                char * pszUTF8 = CPLRecodeFromWChar( anVal, "WCHAR_T", CPL_ENC_UTF8);
+                int nLen = strlen(pszUTF8);
+                memcpy(pszOutput + iOut, pszUTF8, nLen);
+                CPLFree(pszUTF8);
+                iOut += nLen;
+            }
+            else if( EQUALN(pszInput+iIn,"&#",2) )
+            {
+                char ch;
+                wchar_t anVal[2] = {0 , 0};
+                iIn += 2;
+
+                while(TRUE)
+                {
+                    ch = pszInput[iIn ++];
+                    if (ch >= '0' && ch <= '9')
+                        anVal[0] = anVal[0] * 10 + ch - '0';
+                    else
+                        break;
+                }
+                if (ch != ';')
+                    break;
+                iIn --;
+
+                char * pszUTF8 = CPLRecodeFromWChar( anVal, "WCHAR_T", CPL_ENC_UTF8);
+                int nLen = strlen(pszUTF8);
+                memcpy(pszOutput + iOut, pszUTF8, nLen);
+                CPLFree(pszUTF8);
+                iOut += nLen;
+            }
             else
             {
-                pszOutput[iOut++] = pszInput[iIn];
+                /* illegal escape sequence */
+                break;
             }
         }
     }
