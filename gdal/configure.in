@@ -660,51 +660,6 @@ if test "$PCRASTER_SETTING" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
-dnl Check if netcdf library is available.
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH([netcdf],[  --with-netcdf[=ARG]     Include netCDF support (ARG=no or netCDF tree prefix)],,)
-
-if test "$with_netcdf" = "no" ; then
-
-  NETCDF_SETTING=no
-
-  echo "netCDF support disabled."
-
-elif test "$with_netcdf" = "yes" -o "$with_netcdf" = "" ; then
-
-  AC_CHECK_LIB([netcdf], [nc_open], [NETCDF_SETTING=yes], [NETCDF_SETTING=no],)
-
-  if test "$NETCDF_SETTING" = "yes" ; then   
-    LIBS="-lnetcdf $LIBS"
-    echo "using pre-installed libnetcdf."
-  else
-    echo "libnetcdf not found - netCDF support disabled"
-  fi
-
-dnl Fedora has netcdf headers in /usr/include/netcdf
-  if test "$NETCDF_SETTING" = "yes" -a -d /usr/include/netcdf ; then
-    EXTRA_INCLUDES="-I/usr/include/netcdf $EXTRA_INCLUDES"
-dnl RHEL 5 has netcdf headers in /usr/include/netcdf-3
-  elif test "$NETCDF_SETTING" = "yes" -a -d /usr/include/netcdf-3 ; then
-    EXTRA_INCLUDES="-I/usr/include/netcdf-3 $EXTRA_INCLUDES"
-  fi
-else
-
-  NETCDF_SETTING=yes
-  LIBS="-L$with_netcdf -L$with_netcdf/lib -lnetcdf $LIBS"
-  EXTRA_INCLUDES="-I$with_netcdf -I$with_netcdf/include $EXTRA_INCLUDES"
-
-  echo "using libnetcdf from $with_netcdf."
-fi
-
-AC_SUBST([NETCDF_SETTING], [$NETCDF_SETTING])
-
-if test "$NETCDF_SETTING" != "no" ; then
-  OPT_GDAL_FORMATS="netcdf $OPT_GDAL_FORMATS"
-fi
-
-dnl ---------------------------------------------------------------------------
 dnl Select a PNG Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
@@ -1374,6 +1329,112 @@ AC_SUBST(HDF5_INCLUDE,$HDF5_INCLUDE)
 if test "$HAVE_HDF5" != "no" ; then
   OPT_GDAL_FORMATS="hdf5 $OPT_GDAL_FORMATS"
 fi
+
+dnl ---------------------------------------------------------------------------
+dnl Check if netcdf library is available.
+dnl ---------------------------------------------------------------------------
+
+NETCDF_SETTING=
+NETCDF_ROOT=
+NETCDF_HAS_NC4=
+NETCDF_HAS_HDF4=
+
+AC_ARG_WITH([netcdf],[  --with-netcdf[=ARG]     Include netCDF support (ARG=no or netCDF tree prefix)],,)
+
+if test "$with_netcdf" = "no" ; then
+
+  NETCDF_SETTING=no
+
+  echo "netCDF support disabled."
+
+elif test "$with_netcdf" = "yes" -o "$with_netcdf" = "" ; then
+
+  AC_CHECK_LIB([netcdf], [nc_open], [NETCDF_SETTING=yes], [NETCDF_SETTING=no],)
+
+  if test "$NETCDF_SETTING" = "yes" ; then   
+    LIBS="-lnetcdf $LIBS"
+    echo "using pre-installed libnetcdf."
+  else
+    echo "libnetcdf not found - netCDF support disabled"
+  fi
+
+dnl Fedora has netcdf headers in /usr/include/netcdf
+  if test "$NETCDF_SETTING" = "yes" -a -d /usr/include/netcdf ; then
+    EXTRA_INCLUDES="-I/usr/include/netcdf $EXTRA_INCLUDES"
+    NETCDF_ROOT="/usr"
+dnl RHEL 5 has netcdf headers in /usr/include/netcdf-3
+  elif test "$NETCDF_SETTING" = "yes" -a -d /usr/include/netcdf-3 ; then
+    EXTRA_INCLUDES="-I/usr/include/netcdf-3 $EXTRA_INCLUDES"
+    NETCDF_ROOT="/usr"
+  fi
+else
+
+  NETCDF_SETTING=yes
+  LIBS="-L$with_netcdf -L$with_netcdf/lib -lnetcdf $LIBS"
+  EXTRA_INCLUDES="-I$with_netcdf -I$with_netcdf/include $EXTRA_INCLUDES"
+  NETCDF_ROOT="$with_netcdf"
+
+  echo "using libnetcdf from $with_netcdf"
+fi
+
+dnl start new test
+
+dnl test for NC4 and HDF4 support
+  if test "$NETCDF_SETTING" = "yes" ; then
+
+    ncdump=$NETCDF_ROOT"/bin/ncdump" 
+    nc_config=""
+
+    dnl test for libnetcdf v4
+    if { test -x "$ncdump"; }; then
+      AC_MSG_CHECKING([libnetcdf version with $ncdump]) 
+      netcdf_version=`$ncdump 2>&1 | grep "netcdf library version" | awk '{gsub(/"/,"");print $4}'`
+      AC_MSG_RESULT([got $netcdf_version])
+      if test "$netcdf_version" != "" -a "${netcdf_version:0:1}" == "4" ; then
+          nc_config=$NETCDF_ROOT"/bin/nc-config"
+      fi
+    fi
+
+    dnl if nc-config is found (only for libnetcdf-4), test for netcdf-4 and HDF4 support 
+    if { test -x "$nc_config"; }; then
+      echo "checking libnetcdf config with $nc_config"
+
+      AC_MSG_CHECKING([for netcdf-4 (and HDF5) support in libnetcdf])
+        if test "x$($nc_config --has-nc4)" = "xyes"; then :
+          AC_MSG_RESULT([yes])
+          NETCDF_HAS_NC4=yes
+        else
+          AC_MSG_RESULT([no])
+          NETCDF_HAS_NC4=no
+        fi
+
+      AC_MSG_CHECKING([for HDF4 support in libnetcdf])
+        if test "x$($nc_config --has-hdf4)" = "xyes"; then :
+          AC_MSG_RESULT([yes])
+          NETCDF_HAS_HDF4=yes
+        else
+          AC_MSG_RESULT([no])
+          NETCDF_HAS_HDF4=no
+        fi
+
+    else
+      AC_MSG_RESULT([ncdump and/or nc-config not found, skipping netcdf-4 tests])
+      NETCDF_HAS_NC4=no
+      NETCDF_HAS_HDF4=no
+    fi
+fi
+
+dnl end new test
+
+AC_SUBST([NETCDF_SETTING], [$NETCDF_SETTING])
+AC_SUBST([NETCDF_ROOT], [$NETCDF_ROOT])
+AC_SUBST([NETCDF_HAS_NC4], [$NETCDF_HAS_NC4])
+AC_SUBST([NETCDF_HAS_HDF4], [$NETCDF_HAS_HDF4])
+
+if test "$NETCDF_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="netcdf $OPT_GDAL_FORMATS"
+fi
+
 
 dnl ---------------------------------------------------------------------------
 dnl Select a JasPer Library to use, or disable driver.
@@ -3326,7 +3387,6 @@ LOC_MSG([  LIBLZMA support:           ${LIBLZMA_SETTING}])
 LOC_MSG([  GRASS support:             ${GRASS_SETTING}])
 LOC_MSG([  CFITSIO support:           ${FITS_SETTING}])
 LOC_MSG([  PCRaster support:          ${PCRASTER_SETTING}])
-LOC_MSG([  NetCDF support:            ${NETCDF_SETTING}])
 LOC_MSG([  LIBPNG support:            ${PNG_SETTING}])
 LOC_MSG([  LIBTIFF support:           ${TIFF_SETTING} (BigTIFF=${HAVE_BIGTIFF})])
 LOC_MSG([  LIBGEOTIFF support:        ${GEOTIFF_SETTING}])
@@ -3336,6 +3396,7 @@ LOC_MSG([  LIBGIF support:            ${GIF_SETTING}])
 LOC_MSG([  OGDI support:              ${HAVE_OGDI}])
 LOC_MSG([  HDF4 support:              ${HAVE_HDF4}])
 LOC_MSG([  HDF5 support:              ${HAVE_HDF5}])
+LOC_MSG([  NetCDF support:            ${NETCDF_SETTING}])
 LOC_MSG([  Kakadu support:            ${HAVE_KAKADU}])
 if test "x$HAVE_JASPER_UUID" != "x" ; then
   LOC_MSG([  JasPer support:            ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})])
