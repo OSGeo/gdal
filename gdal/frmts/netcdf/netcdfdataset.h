@@ -49,7 +49,7 @@
 /*      Driver-specific defines                                         */
 /* -------------------------------------------------------------------- */
 
-/* GDAL or NETCDF driver defs */
+/* NETCDF driver defs */
 #define NCDF_MAX_STR_LEN     8192
 #define NCDF_CONVENTIONS_CF  "CF-1.5"
 #define NCDF_GDAL             GDALVersionInfo("--version")
@@ -63,14 +63,16 @@
 #define NCDF_LONLAT          "lon lat"
 
 /* netcdf file types, as in libcdi/cdo and compat w/netcdf.h */
-#define NCDF_FILETYPE_NONE            0   /* Not a netCDF file */
-#define NCDF_FILETYPE_NC              1   /* File type netCDF */
-#define NCDF_FILETYPE_NC2             2   /* File type netCDF version 2 (64-bit)  */
-#define NCDF_FILETYPE_NC4             3   /* File type netCDF version 4           */
-#define NCDF_FILETYPE_NC4C            4   /* File type netCDF version 4 (classic) - not used yet */
-/* File type HDF5, not supported here (lack of netCDF-4 support or extension is not .nc or .nc4 */
-#define NCDF_FILETYPE_HDF5            5   
-#define NCDF_FILETYPE_UNKNOWN         10  /* Filetype not determined (yet) */
+#define NCDF_FORMAT_NONE            0   /* Not a netCDF file */
+#define NCDF_FORMAT_NC              1   /* netCDF classic format */
+#define NCDF_FORMAT_NC2             2   /* netCDF version 2 (64-bit)  */
+#define NCDF_FORMAT_NC4             3   /* netCDF version 4 */
+#define NCDF_FORMAT_NC4C            4   /* netCDF version 4 (classic) */
+#define NCDF_FORMAT_UNKNOWN         10  /* Format not determined (yet) */
+/* HDF files (HDF5 or HDF4) not supported because of lack of support */
+/* in libnetcdf installation or conflict with other drivers */
+#define NCDF_FORMAT_HDF5            5   /* HDF4 file, not supported */
+#define NCDF_FORMAT_HDF4            6   /* HDF4 file, not supported */
 
 /* compression parameters */
 #define NCDF_COMPRESS_NONE            0   
@@ -85,10 +87,16 @@
 /* how can we make this a multi-line define ? */
 //#define NCDF_ERR(status)  ( if ( status != NC_NOERR ) 
 //{ CPLError( CE_Failure, CPLE_AppDefined, "netcdf error #%d : %s .\n", status, nc_strerror(status) ); } ) 
-void NCDF_ERR(int status)  { if ( status != NC_NOERR ) { 
+void NCDFErr(int status)  { if ( status != NC_NOERR ) { 
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "netcdf error #%d : %s .\n", 
                   status, nc_strerror(status) ); } } 
+
+#ifndef NETCDF_HAS_NC2
+#ifdef NC_64BIT_OFFSET
+#define NETCDF_HAS_NC2 1
+#endif
+#endif
 
 /* -------------------------------------------------------------------- */
 /*       CF or NUG (NetCDF User's Guide) defs                           */
@@ -591,7 +599,7 @@ class netCDFDataset : public GDALPamDataset
 
     char **      FetchStandardParallels( const char *pszGridMappingValue );
 
-    static int IdentifyFileType( GDALOpenInfo *, bool );
+    static int IdentifyFormat( GDALOpenInfo *, bool );
 
   public:
     int           cdfid;
@@ -601,7 +609,7 @@ class netCDFDataset : public GDALPamDataset
     size_t        xdim, ydim;
     int           nDimXid, nDimYid;
     bool          bBottomUp;
-    int           nFileType;
+    int           nFormat;
     int           bIsGdalFile; /* was this file created by GDAL? */
     int           bIsGdalCfFile; /* was this file created by the (new) CF-compliant driver? */
 

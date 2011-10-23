@@ -302,7 +302,6 @@ def netcdf_7():
 ###############################################################################
 #check for cf convention read of albers equal area
 # Previous version compared entire wkt, which varies slightly among driver versions
-
 # now just look for PROJECTION=Albers_Conic_Equal_Area and some parameters
 def netcdf_8():
 
