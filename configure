@@ -716,14 +716,14 @@ FGDB_ENABLED
 HAVE_OPENJPEG
 JASPER_FLAGS
 HAVE_JASPER
+NETCDF_HAS_HDF4
+NETCDF_HAS_NC4
+NETCDF_ROOT
+NETCDF_SETTING
 HDF5_INCLUDE
 HAVE_HDF5
 HDF4_INCLUDE
 HAVE_HDF4
-NETCDF_SETTING
-NETCDF_ROOT
-NETCDF_HAS_NC4
-NETCDF_HAS_HDF4
 X_FME_HOME
 OGDI_INCLUDE
 HAVE_OGDI
@@ -871,7 +871,6 @@ with_grass
 with_libgrass
 with_cfitsio
 with_pcraster
-with_netcdf
 with_png
 with_pcidsk
 with_libtiff
@@ -883,6 +882,7 @@ with_ogdi
 with_fme
 with_hdf4
 with_hdf5
+with_netcdf
 with_jasper
 with_openjpeg
 with_fgdb
@@ -1606,7 +1606,6 @@ Optional Packages:
   --with-libgrass=ARG   Include GRASS support based on libgrass (GRASS 5.0+)
   --with-cfitsio=ARG    Include FITS support (ARG=no or libcfitsio path)
   --with-pcraster=ARG   Include PCRaster (libcsf) support (ARG=internal, no or path)
-  --with-netcdf=ARG     Include netCDF support (ARG=no or netCDF tree prefix)
   --with-png=ARG        Include PNG support (ARG=internal, no or path)
   --with-pcidsk=ARG     Path to external PCIDSK SDK, or internal (default), or old
   --with-libtiff=ARG    Libtiff library to use (ARG=internal, yes or path)
@@ -1618,6 +1617,7 @@ Optional Packages:
   --with-fme=ARG        Include FMEObjects support (ARG=FME_HOME path)
   --with-hdf4=ARG       Include HDF4 support (ARG=path)
   --with-hdf5=ARG       Include HDF5 support (ARG=path)
+  --with-netcdf=ARG     Include netCDF support (ARG=no or netCDF tree prefix)
   --with-jasper=ARG     Include JPEG-2000 support via JasPer library (ARG=path)
   --with-openjpeg=ARG     Include JPEG-2000 support via OpenJPEG v2 library (ARG=path)
   --with-fgdb=ARG        Include ESRI File Geodatabase support (ARG=FGDP API Path, yes or no)
@@ -21009,60 +21009,63 @@ else
   echo "using libnetcdf from $with_netcdf"
 fi
 
-#test for NC4 and HDF4 support
   if test "$NETCDF_SETTING" = "yes" ; then
 
-    ncdump=$NETCDF_ROOT"/bin/ncdump" 
+    ncdump=$NETCDF_ROOT"/bin/ncdump"
     nc_config=""
 
-    # test for libnetcdf v4
-    if { test -x "$ncdump"; }; then
-      $as_echo_n "checking libnetcdf version with $ncdump "
+        if { test -x "$ncdump"; }; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking libnetcdf version with $ncdump" >&5
+$as_echo_n "checking libnetcdf version with $ncdump... " >&6; }
       netcdf_version=`$ncdump 2>&1 | grep "netcdf library version" | awk '{gsub(/"/,"");print $4}'`
-      $as_echo "- got $netcdf_version"
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: got $netcdf_version" >&5
+$as_echo "got $netcdf_version" >&6; }
       if test "$netcdf_version" != "" -a "${netcdf_version:0:1}" == "4" ; then
           nc_config=$NETCDF_ROOT"/bin/nc-config"
       fi
     fi
 
-    #if we have libnetcdf v4, test for netcdf-4 and HDF4 support 
-    if { test -x "$nc_config"; }; then
-      $as_echo "checking libnetcdf config with $nc_config"
+        if { test -x "$nc_config"; }; then
+      echo "checking libnetcdf config with $nc_config"
 
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking for netcdf-4 (and HDF5) support in libnetcdf" >&5
-$as_echo_n "checking for netcdf-4 support in libnetcdf... " >&6; }
+$as_echo_n "checking for netcdf-4 (and HDF5) support in libnetcdf... " >&6; }
         if test "x$($nc_config --has-nc4)" = "xyes"; then :
-          NETCDF_HAS_NC4=yes
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+          NETCDF_HAS_NC4=yes
         else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-      NETCDF_HAS_NC4=no
+          NETCDF_HAS_NC4=no
         fi
 
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking for HDF4 support in libnetcdf" >&5
 $as_echo_n "checking for HDF4 support in libnetcdf... " >&6; }
         if test "x$($nc_config --has-hdf4)" = "xyes"; then :
-          NETCDF_HAS_HDF4=yes
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+          NETCDF_HAS_HDF4=yes
         else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-      NETCDF_HAS_HDF4=no
+          NETCDF_HAS_HDF4=no
         fi
 
     else
-      $as_echo "ncdump and/or nc-config not found, skipping netcdf-4 tests"
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: ncdump and/or nc-config not found, skipping netcdf-4 tests" >&5
+$as_echo "ncdump and/or nc-config not found, skipping netcdf-4 tests" >&6; }
       NETCDF_HAS_NC4=no
       NETCDF_HAS_HDF4=no
     fi
 fi
 
 NETCDF_SETTING=$NETCDF_SETTING
+
 NETCDF_ROOT=$NETCDF_ROOT
+
 NETCDF_HAS_NC4=$NETCDF_HAS_NC4
+
 NETCDF_HAS_HDF4=$NETCDF_HAS_HDF4
 
 if test "$NETCDF_SETTING" != "no" ; then
