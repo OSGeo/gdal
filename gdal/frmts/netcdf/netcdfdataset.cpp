@@ -4254,7 +4254,7 @@ void NCDFAddHistory(int fpImage, const char *pszAddHist, const char *pszOldHist)
     //                           "history", pszOldHist );
     // printf("status: %d pszOldHist: [%s]\n",status,pszOldHist);
     
-    nNewHistSize = strlen(pszOldHist)+strlen(strtime)+strlen(pszAddHist)+1;
+    nNewHistSize = strlen(pszOldHist)+strlen(strtime)+strlen(pszAddHist)+1+1;
     pszNewHist = (char *) CPLMalloc(nNewHistSize * sizeof(char));
     
     strcpy(pszNewHist, strtime);
