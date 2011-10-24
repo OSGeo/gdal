@@ -455,7 +455,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
                                     int nBand)
 
 {
-    double   dfNoData;
+    double   dfNoData = 0.0;
     int      bNoDataSet = FALSE;
     nc_type  vartype=NC_NAT;
     nc_type  atttype=NC_NAT;
@@ -556,7 +556,6 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
 
     if( status == NC_NOERR ) {
         switch( atttype ) {
-            status = -1;
             /* TODO support NC_BYTE */
             case NC_CHAR:
                 char *fillc;
@@ -589,6 +588,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
                                             szNoValueName, &dfNoData );
                 break;
             default:
+                status = -1;
                 break;
         }
         // status = nc_get_att_double( poDS->cdfid, nZId, 
@@ -1052,7 +1052,7 @@ void netCDFDataset::SetProjection( int var )
 /* -------------------------------------------------------------------- */
     pszValue = CPLGetConfigOption( "GDAL_NETCDF_BOTTOMUP", NULL );
     if ( pszValue ) {
-        poDS->bBottomUp = CSLTestBoolean( pszValue );
+        poDS->bBottomUp = CSLTestBoolean( pszValue ) != FALSE;
     }
     else {
         if ( bIsGdalFile && ! bIsGdalCfFile ) 
@@ -2944,7 +2944,9 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
 
                 /* By default write NC_CHAR, but detect for int/float/double */
                 nMetaType = NC_CHAR;
-                nMetaValue = fMetaValue = dfMetaValue = 0;
+                nMetaValue = 0;
+                fMetaValue = 0.0f;
+                dfMetaValue = 0.0;
 
                 errno = 0;
                 nMetaValue = strtol( szMetaValue, &pszTemp, 10 );
@@ -3763,7 +3765,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         GInt32    *panScanline  = NULL;
         float     *pafScanline  = NULL;
         double    *padScanline  = NULL;
-        int       NCDFVarID;
+        int       NCDFVarID = 0;
         size_t    start[ NCDF_NBDIM ];
         size_t    count[ NCDF_NBDIM ];
         double    dfNoDataValue;
