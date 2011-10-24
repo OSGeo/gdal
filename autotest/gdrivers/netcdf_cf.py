@@ -59,12 +59,18 @@ def netcdf_cf_setup():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
+    #skip if on windows
+    print( os.name )
+    if os.name != 'posix':
+        print('NOTICE: will skip CF checks because OS is not posix!')
+        return 'skip'
+
     #try local method
     try:
         imp.find_module( 'cdms2' )
     except ImportError:
-        #print 'NOTICE: cdms2 not installed!'
-        #print '        see installation notes at http://pypi.python.org/pypi/cfchecker'
+        print 'NOTICE: cdms2 not installed!'
+        print '        see installation notes at http://pypi.python.org/pypi/cfchecker'
         pass
     else:
         xml_dir = './data/netcdf_cf_xml'
@@ -95,6 +101,11 @@ def netcdf_cf_setup():
             print('NOTICE: netcdf CF compliance ckecks: using local checker script')
             return 'success'
 
+    #skip http method if 'GDAL_DOWNLOAD_TEST_DATA' os not defined
+    if not 'GDAL_DOWNLOAD_TEST_DATA' in os.environ: 
+        print('NOTICE: skipping netcdf CF compliance checks')
+        print('to enable remote http checker script, define GDAL_DOWNLOAD_TEST_DATA')
+    return 'success' 
 
     #http method with curl, should use python module but easier for now
     success = False
@@ -116,6 +127,7 @@ def netcdf_cf_setup():
 
     if gdaltest.netcdf_cf_method is None:
         print('NOTICE: skipping netcdf CF compliance checks')
+
     return 'success' 
 
 ###############################################################################
