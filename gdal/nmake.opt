@@ -382,6 +382,11 @@ GRIB_SETTING=yes
 #NETCDF_SETTING=yes
 #NETCDF_LIB=C:\Software\netcdf\lib\netcdf.lib
 #NETCDF_INC_DIR=C:\Software\netcdf\include
+
+# Uncomment the following to add NC4 and HDF4 support
+#NETCDF_HAS_NC4 = yes
+#NETCDF_HAS_HDF4 = yes
+
 # PROJ.4 stuff
 # Uncomment the following lines to link PROJ.4 library statically. Otherwise
 # it will be linked dynamically during runtime.
