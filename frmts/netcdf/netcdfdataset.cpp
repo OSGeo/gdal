@@ -4268,7 +4268,7 @@ void NCDFAddHistory(int fpImage, const char *pszAddHist, const char *pszOldHist)
     }
 
     status = nc_put_att_text( fpImage, NC_GLOBAL, 
-                              "history", nNewHistSize,
+                              "history", strlen(pszNewHist),
                               pszNewHist ); 
     NCDFErr(status);
 
