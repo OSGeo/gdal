@@ -1886,7 +1886,7 @@ void ECWInitialize()
     const char *pszEcwCacheSize = 
         CPLGetConfigOption("GDAL_ECW_CACHE_MAXMEM",NULL);
     if( pszEcwCacheSize == NULL )
-        CPLGetConfigOption("ECW_CACHE_MAXMEM",NULL);
+        pszEcwCacheSize = CPLGetConfigOption("ECW_CACHE_MAXMEM",NULL);
 
     if( pszEcwCacheSize != NULL )
         NCSecwSetConfig(NCSCFG_CACHE_MAXMEM, (UINT32) atoi(pszEcwCacheSize) );
@@ -1940,12 +1940,12 @@ void ECWInitialize()
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_CACHE_MAXOPEN, (UINT32) atoi(pszOpt) );
 
+#if ECWSDK_VERSION >= 40
     pszOpt = CPLGetConfigOption( "ECW_AUTOGEN_J2I", NULL );
     if( pszOpt )
-        NCSecwSetConfig( NCSCFG_FORCE_FILE_REOPEN, 
+        NCSecwSetConfig( NCSCFG_JP2_AUTOGEN_J2I, 
                          (BOOLEAN) CSLTestBoolean( pszOpt ) );
 
-#if ECWSDK_VERSION >= 40
     pszOpt = CPLGetConfigOption( "ECW_OPTIMIZE_USE_NEAREST_NEIGHBOUR", NULL );
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_OPTIMIZE_USE_NEAREST_NEIGHBOUR, 
