@@ -192,7 +192,7 @@ public:
     //
     // OGRGeoJSONDriver Interface
     //
-    // NOTE: New version of Open() based on Andrey's RCF 10.
+    // NOTE: New version of Open() based on Andrey's RFC 10.
     OGRDataSource* Open( const char* pszName, int bUpdate,
                          char** papszOptions );
 

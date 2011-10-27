@@ -281,7 +281,7 @@ static void ProcessLayer(
 /* -------------------------------------------------------------------- */
 /*      If we are in inverse mode, we add one extra ring around the     */
 /*      whole dataset to invert the concept of insideness and then      */
-/*      merge everything into one geomtry collection.                   */
+/*      merge everything into one geometry collection.                  */
 /* -------------------------------------------------------------------- */
     if( bInverse )
     {
