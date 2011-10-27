@@ -483,9 +483,10 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
         nShapeType = SHPT_MULTIPOINTZ;
         eType = wkbMultiPoint25D;
     }
-    else if( EQUAL(pszOverride,"NONE") )
+    else if( EQUAL(pszOverride,"NONE") || EQUAL(pszOverride,"NULL") )
     {
         nShapeType = SHPT_NULL;
+        eType = wkbNone;
     }
     else
     {
