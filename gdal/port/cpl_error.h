@@ -61,6 +61,7 @@ void CPL_DLL CPL_STDCALL CPLErrorReset( void );
 int CPL_DLL CPL_STDCALL CPLGetLastErrorNo( void );
 CPLErr CPL_DLL CPL_STDCALL CPLGetLastErrorType( void );
 const char CPL_DLL * CPL_STDCALL CPLGetLastErrorMsg( void );
+void* CPL_STDCALL CPLGetErrorHandlerUserData(void);
 
 typedef void (CPL_STDCALL *CPLErrorHandler)(CPLErr, int, const char*);
 
@@ -70,7 +71,9 @@ void CPL_DLL CPL_STDCALL CPLQuietErrorHandler( CPLErr, int, const char * );
 void CPLTurnFailureIntoWarning(int bOn );
 
 CPLErrorHandler CPL_DLL CPL_STDCALL CPLSetErrorHandler(CPLErrorHandler);
+CPLErrorHandler CPL_DLL CPL_STDCALL CPLSetErrorHandlerEx(CPLErrorHandler, void*);
 void CPL_DLL CPL_STDCALL CPLPushErrorHandler( CPLErrorHandler );
+void CPL_DLL CPL_STDCALL CPLPushErrorHandlerEx( CPLErrorHandler, void* );
 void CPL_DLL CPL_STDCALL CPLPopErrorHandler(void);
 
 void CPL_DLL CPL_STDCALL CPLDebug( const char *, const char *, ... )  CPL_PRINT_FUNC_FORMAT (2, 3);
