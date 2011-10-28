@@ -43,6 +43,7 @@
 CPL_CVSID("$Id$");
 
 static void *hErrorMutex = NULL;
+static void *pErrorHandlerUserData = NULL; 
 static CPLErrorHandler pfnErrorHandler = CPLDefaultErrorHandler;
 
 #if !defined(HAVE_VSNPRINTF)
@@ -54,6 +55,7 @@ static CPLErrorHandler pfnErrorHandler = CPLDefaultErrorHandler;
 typedef struct errHandler
 {
     struct errHandler   *psNext;
+    void                *pUserData;
     CPLErrorHandler     pfnHandler;
 } CPLErrorHandlerNode;
 
@@ -88,6 +90,28 @@ static CPLErrorContext *CPLGetErrorContext()
     return psCtx;
 }
 
+/************************************************************************/
+/*                         CPLGetErrorHandlerUserData()                 */
+/************************************************************************/
+
+/**
+ * Fetch the user data for the error context
+ *
+ * Fetches the user data for the current error context.  You can 
+ * set the user data for the error context when you add your handler by 
+ * issuing CPLSetErrorHandlerEx() and CPLPushErrorHandlerEx().  Note that 
+ * user data is primarily intended for providing context within error handlers
+ * themselves, but they could potentially be abused in other useful ways with the usual 
+ * caveat emptor understanding.
+ *
+ * @return the user data pointer for the error context
+ */
+
+void* CPL_STDCALL CPLGetErrorHandlerUserData(void)
+{
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+    return (void*) psCtx->psHandlerStack ? psCtx->psHandlerStack->pUserData : pErrorHandlerUserData;
+}
 
 /**********************************************************************
  *                          CPLError()
@@ -653,7 +677,54 @@ void CPLTurnFailureIntoWarning(int bOn )
 }
 
 /**********************************************************************
- *                          CPLSetErrorHandler()
+ *                          CPLSetErrorHandlerEx()                    *
+ **********************************************************************/
+
+/**
+ * Install custom error handle with user's data. This method is 
+ * essentially CPLSetErrorHandler with an added pointer to pUserData.  
+ * The pUserData is not returned in the CPLErrorHandler, however, and 
+ * must be fetched via CPLGetLastErrorUserData
+ *
+ * @param pfnErrorHandlerNew new error handler function.
+ * @param pUserData User data to carry along with the error context.
+ * @return returns the previously installed error handler.
+ */ 
+
+CPLErrorHandler CPL_STDCALL 
+CPLSetErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew, 
+                      void* pUserData )
+{
+    CPLErrorHandler     pfnOldHandler = pfnErrorHandler;
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+
+    if( psCtx->psHandlerStack != NULL )
+    {
+        CPLDebug( "CPL", 
+                  "CPLSetErrorHandler() called with an error handler on\n"
+                  "the local stack.  New error handler will not be used immediately.\n" );
+    }
+
+
+    {
+        CPLMutexHolderD( &hErrorMutex );
+
+        pfnOldHandler = pfnErrorHandler;
+        
+        if( pfnErrorHandler == NULL )
+            pfnErrorHandler = CPLDefaultErrorHandler;
+        else
+            pfnErrorHandler = pfnErrorHandlerNew;
+            
+        pErrorHandlerUserData = pUserData;
+    }
+
+    return pfnOldHandler;
+}
+
+
+/**********************************************************************
+ *                          CPLSetErrorHandler()                      *
  **********************************************************************/
 
 /**
@@ -694,33 +765,10 @@ void CPLTurnFailureIntoWarning(int bOn )
  * @param pfnErrorHandlerNew new error handler function.
  * @return returns the previously installed error handler.
  */ 
-
 CPLErrorHandler CPL_STDCALL 
 CPLSetErrorHandler( CPLErrorHandler pfnErrorHandlerNew )
 {
-    CPLErrorHandler     pfnOldHandler = pfnErrorHandler;
-    CPLErrorContext *psCtx = CPLGetErrorContext();
-
-    if( psCtx->psHandlerStack != NULL )
-    {
-        CPLDebug( "CPL", 
-                  "CPLSetErrorHandler() called with an error handler on\n"
-                  "the local stack.  New error handler will not be used immediately.\n" );
-    }
-
-
-    {
-        CPLMutexHolderD( &hErrorMutex );
-
-        pfnOldHandler = pfnErrorHandler;
-        
-        if( pfnErrorHandler == NULL )
-            pfnErrorHandler = CPLDefaultErrorHandler;
-        else
-            pfnErrorHandler = pfnErrorHandlerNew;
-    }
-
-    return pfnOldHandler;
+    return CPLSetErrorHandlerEx(pfnErrorHandler, NULL);
 }
 
 /************************************************************************/
@@ -731,7 +779,7 @@ CPLSetErrorHandler( CPLErrorHandler pfnErrorHandlerNew )
  * Push a new CPLError handler.
  *
  * This pushes a new error handler on the thread-local error handler
- * stack.  This handler will be used untill removed with CPLPopErrorHandler().
+ * stack.  This handler will be used until removed with CPLPopErrorHandler().
  *
  * The CPLSetErrorHandler() docs have further information on how 
  * CPLError handlers work.
@@ -742,13 +790,38 @@ CPLSetErrorHandler( CPLErrorHandler pfnErrorHandlerNew )
 void CPL_STDCALL CPLPushErrorHandler( CPLErrorHandler pfnErrorHandlerNew )
 
 {
+    CPLPushErrorHandlerEx(pfnErrorHandlerNew, NULL);
+}
+
+
+/************************************************************************/
+/*                        CPLPushErrorHandlerEx()                       */
+/************************************************************************/
+
+/**
+ * Push a new CPLError handler with user data on the error context.
+ *
+ * This pushes a new error handler on the thread-local error handler
+ * stack.  This handler will be used until removed with CPLPopErrorHandler(). 
+ * Obtain the user data back by using CPLGetErrorContext().
+ *
+ * The CPLSetErrorHandler() docs have further information on how 
+ * CPLError handlers work.
+ *
+ * @param pfnErrorHandlerNew new error handler function.
+ * @param pUserData User data to put on the error context. 
+ */
+void CPL_STDCALL CPLPushErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew, 
+                                        void* pUserData )
+
+{
     CPLErrorContext *psCtx = CPLGetErrorContext();
     CPLErrorHandlerNode         *psNode;
 
     psNode = (CPLErrorHandlerNode *) VSIMalloc(sizeof(CPLErrorHandlerNode));
     psNode->psNext = psCtx->psHandlerStack;
     psNode->pfnHandler = pfnErrorHandlerNew;
-
+    psNode->pUserData = pUserData;
     psCtx->psHandlerStack = psNode;
 }
 
