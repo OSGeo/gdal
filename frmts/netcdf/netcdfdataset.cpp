@@ -3023,13 +3023,13 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
 /*
 Driver options:
 
-WRITE_LONLAT=YES/NO/IF_NEEDED (default: YES for geographic, NO for projected)
-TYPE_LONLAT=float/double (default: double for geographic, float for projected)
-WRITE_GDAL_TAGS=YES/NO (default: YES)
-WRITE_BOTTOMUP=YES/NO (default: NO)
 FORMAT=NC/NC2/NC4/NC4C (COMPRESS=DEFLATE sets FORMAT=NC4C)
 COMPRESS=NONE/DEFLATE/PACKED (default: NONE)
 ZLEVEL=[1-9] (default: 6)
+WRITE_BOTTOMUP=YES/NO (default: NO)
+WRITE_GDAL_TAGS=YES/NO (default: YES)
+WRITE_LONLAT=YES/NO/IF_NEEDED (default: YES for geographic, NO for projected)
+TYPE_LONLAT=float/double (default: double for geographic, float for projected)
 
 Config Options:
 
@@ -3260,8 +3260,8 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     /* netcdf standard is bottom-up */
     /* overriden by config option GDAL_NETCDF_BOTTOMUP and -co option WRITE_BOTTOMUP */
-    bBottomUp = CSLTestBoolean( CPLGetConfigOption( "GDAL_NETCDF_BOTTOMUP", "YES" ) );
-    // bBottomUp = CSLTestBoolean( CPLGetConfigOption( "GDAL_NETCDF_BOTTOMUP", "NO" ) );
+    // bBottomUp = CSLTestBoolean( CPLGetConfigOption( "GDAL_NETCDF_BOTTOMUP", "YES" ) );
+    bBottomUp = CSLTestBoolean( CPLGetConfigOption( "GDAL_NETCDF_BOTTOMUP", "NO" ) );
     bBottomUp = CSLFetchBoolean( papszOptions, "WRITE_BOTTOMUP", bBottomUp );       
 
     /* TODO could add a config option GDAL_NETCDF_PREF=GDAL/CF  */
@@ -3314,6 +3314,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 bWriteGdalTags = TRUE; //not desireable if no geotransform
             pszLonDimName = NCDF_DIMNAME_X;
             pszLatDimName = NCDF_DIMNAME_Y;
+            // bBottomUp = FALSE; 
         }
         nLonSize = nXSize;
         nLatSize = nYSize;     
@@ -4215,9 +4216,48 @@ void GDALRegister_netCDF()
     if( GDALGetDriverByName( "netCDF" ) == NULL )
     {
         GDALDriver	*poDriver;
+        char szCreateOptions[3072];
 
         poDriver = new GDALDriver( );
 
+/* -------------------------------------------------------------------- */
+/*      Build full creation option list.                                */
+/* -------------------------------------------------------------------- */
+    sprintf( szCreateOptions, "%s", 
+"<CreationOptionList>"
+"   <Option name='FORMAT' type='string-select' default='NC'>"
+"     <Value>NC</Value>"
+#ifdef NETCDF_HAS_NC2
+"     <Value>NC2</Value>"
+#endif
+#ifdef NETCDF_HAS_NC4
+"     <Value>NC4</Value>"
+"     <Value>NC4C</Value>"
+#endif
+"   </Option>"
+#ifdef NETCDF_HAS_NC4
+"   <Option name='COMPRESS' type='string-select' default='NONE'>"
+"     <Value>NONE</Value>"
+"     <Value>DEFLATE</Value>"
+"   </Option>"
+"   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='1'/>"
+"   <Option name='WRITE_BOTTOMUP' type='boolean' default='NO'>"
+"   </Option>"
+"   <Option name='WRITE_GDAL_TAGS' type='boolean' default='YES'>"
+"   </Option>"
+"   <Option name='WRITE_LONLAT' type='string-select'>"
+"     <Value>YES</Value>"
+"     <Value>NO</Value>"
+"     <Value>IF_NEEDED</Value>"
+"   </Option>"
+"   <Option name='TYPE_LONLAT' type='string-select'>"
+"     <Value>float</Value>"
+"     <Value>double</Value>"
+"   </Option>"
+#endif
+"</CreationOptionList>" );
+
+        
 /* -------------------------------------------------------------------- */
 /*      Set the driver details.                                         */
 /* -------------------------------------------------------------------- */
@@ -4227,6 +4267,8 @@ void GDALRegister_netCDF()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_netcdf.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "nc" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+                                   szCreateOptions );
 
         /* make driver config and capabilities available */
         poDriver->SetMetadataItem( "NETCDF_VERSION", nc_inq_libvers() );
