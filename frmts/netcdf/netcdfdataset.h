@@ -83,15 +83,17 @@
 #define NCDF_DEFLATE_LEVEL            1  /* best time/size ratio */  
 #define NCDF_COMPRESS_SZIP            3  /* no support for writting */ 
 
-/* helper inline function for libnetcdf errors */
-/* how can we make this a multi-line define ? */
-//#define NCDF_ERR(status)  ( if ( status != NC_NOERR ) 
-//{ CPLError( CE_Failure, CPLE_AppDefined, "netcdf error #%d : %s .\n", status, nc_strerror(status) ); } ) 
-void NCDFErr(int status)  { if ( status != NC_NOERR ) { 
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "netcdf error #%d : %s .\n", 
-                  status, nc_strerror(status) ); } } 
+/* helper for libnetcdf errors */
+#define NCDF_ERR(status) if ( status != NC_NOERR ){ \
+CPLError( CE_Failure,CPLE_AppDefined, \
+"netcdf error #%d : %s .\n",status, nc_strerror(status) ); }
+/* void NCDFErr(int status)  { if ( status != NC_NOERR ) {  */
+/*      CPLError( CE_Failure, CPLE_AppDefined,  */
+/*                "netcdf error #%d : %s .\n",  */
+/*                status, nc_strerror(status) ); } }  */
 
+/* check for NC2 support in case it wasn't enabled at compile time */
+/* NC4 has to be detected at compile as it requires a special build of netcdf-4 */
 #ifndef NETCDF_HAS_NC2
 #ifdef NC_64BIT_OFFSET
 #define NETCDF_HAS_NC2 1
