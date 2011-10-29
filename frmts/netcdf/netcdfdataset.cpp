@@ -634,6 +634,8 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
     
     if ( bNoDataSet ) 
         SetNoDataValue( dfNoData );
+    else 
+        CPLDebug( "GDAL_netCDF", "did not get nodata value for variable #%d", nZId );
 
     /* -------------------------------------------------------------------- */
     /* Attempt to fetch the scale_factor and add_offset attributes for the  */
@@ -1896,7 +1898,7 @@ void netCDFDataset::SetProjection( int var )
         // CPLDebug( "GDAL_netCDF", "set WKT from CF" );
     }
     else if ( bGotGeogCS || bGotCfSRS ) {
-        CPLError(CE_Warning, 1,"WARNING: got SRS but no geotransform from CF!");
+        CPLError(CE_Warning, 1,"got SRS but no geotransform from CF!");
     }
 /* -------------------------------------------------------------------- */
 /*      Process custom GDAL values (spatial_ref, GeoTransform)          */
@@ -2032,7 +2034,7 @@ void netCDFDataset::SetProjection( int var )
 
             /* Issue a warning if we did not get a geotransform from GDAL */
             if ( !bGotGeoTransform ) {
-                CPLError(CE_Warning, 1,"WARNING: got SRS but not geotransform from GDAL!");
+                CPLError(CE_Warning, 1,"got SRS but not geotransform from GDAL!");
             }
             } // (!bGotGeoTransform)
         }
@@ -4140,15 +4142,18 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 void GDALRegister_netCDF()
 
 {
-    GDALDriver	*poDriver;
-
     if (! GDAL_CHECK_VERSION("netCDF driver"))
         return;
 
     if( GDALGetDriverByName( "netCDF" ) == NULL )
     {
+        GDALDriver	*poDriver;
+
         poDriver = new GDALDriver( );
         
+/* -------------------------------------------------------------------- */
+/*      Set the driver details.                                         */
+/* -------------------------------------------------------------------- */
         poDriver->SetDescription( "netCDF" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Network Common Data Format" );
@@ -4156,6 +4161,26 @@ void GDALRegister_netCDF()
                                    "frmt_netcdf.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "nc" );
 
+        /* make driver config and capabilities available */
+        poDriver->SetMetadataItem( "NETCDF_VERSION", nc_inq_libvers() );
+        poDriver->SetMetadataItem( "NETCDF_CONVENTIONS", NCDF_CONVENTIONS_CF );
+#ifdef NETCDF_HAS_NC2
+        poDriver->SetMetadataItem( "NETCDF_HAS_NC2", "YES" );
+#endif
+#ifdef NETCDF_HAS_NC4
+        poDriver->SetMetadataItem( "NETCDF_HAS_NC4", "YES" );
+#endif
+#ifdef NETCDF_HAS_HDF4
+        poDriver->SetMetadataItem( "NETCDF_HAS_HDF4", "YES" );
+#endif
+#ifdef HAVE_HDF4
+        poDriver->SetMetadataItem( "GDAL_HAS_HDF4", "YES" );
+#endif
+#ifdef HAVE_HDF5
+        poDriver->SetMetadataItem( "GDAL_HAS_HDF5", "YES" );
+#endif
+ 
+        /* set pfns and register driver */
         poDriver->pfnOpen = netCDFDataset::Open;
         poDriver->pfnCreateCopy = NCDFCreateCopy;
         poDriver->pfnIdentify = netCDFDataset::Identify;
@@ -4291,6 +4316,7 @@ int NCDFIsCfProjection( const char* pszProjection )
     return FALSE;
 }
 
+
 /* Write any needed projection attributes *
  * poPROJCS: ptr to proj crd system
  * pszProjection: name of projection system in GDAL WKT
@@ -4329,8 +4355,6 @@ void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
     //results to write
     std::vector< std::pair<std::string,double> > oOutList;
  
-    // pszProjection="None"; //for testing
-
     /* Find the appropriate mapping */
     for (int iMap = 0; poNetcdfSRS_PT[iMap].WKT_SRS != NULL; iMap++ ) {
         // printf("now at %d, proj=%s\n",i, poNetcdfSRS_PT[i].GDAL_SRS);
@@ -4346,28 +4370,21 @@ void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
     //ET TODO if projection name is not found, should we do something special?
     if ( nMapIndex == -1 ) {
         CPLError( CE_Warning, CPLE_AppDefined, 
-                  "WARNING! projection name %s not found in the lookup tables!!!",
+                  "projection name %s not found in the lookup tables!!!",
                   pszProjection);
     }
     /* if no mapping was found or assigned, set the generic one */
     if ( !poMap ) {
         CPLError( CE_Warning, CPLE_AppDefined, 
-                  "WARNING! projection name %s in not part of the CF standard, will not be supported by CF!",
+                  "projection name %s in not part of the CF standard, will not be supported by CF!",
                   pszProjection);
         poMap = poGenericMappings;
     }
-
-    // for (int i = 0; poMap[i].GDAL_ATT != NULL; i++ ) {
-    //     CPLDebug( "GDAL_netCDF","attribute map: %s %s\n",
-    //               poMap[i].NCDF_ATT,poMap[i].GDAL_ATT);
-    // }
 
     /* initialize local map objects */
     for ( int iMap = 0; poMap[iMap].WKT_ATT != NULL; iMap++ ) {
         oAttMap[poMap[iMap].WKT_ATT] = poMap[iMap].CF_ATT;
     }
-    // for ( oAttIter = oAttMap.begin(); oAttIter != oAttMap.end(); oAttIter++ )
-    //     printf ("GDAL ATT=[%s] NCDF ATT=[%s]\n",(oAttIter->first).c_str(),(oAttIter->second).c_str());
 
     for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ ) {
 
@@ -4382,8 +4399,6 @@ void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
 
         oValMap[pszParamStr] = atof(pszParamVal);
     }
-    // for ( oValIter = oValMap.begin(); oValIter != oValMap.end(); oValIter++ )
-    //     printf ("GDAL ATT=[%s] value=[%f]\n",(oValIter->first).c_str(),(oValIter->second));
 
     /* Lookup mappings and fill output vector */
     if ( poMap != poGenericMappings ) { /* specific mapping, loop over mapping values */
