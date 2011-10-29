@@ -37,6 +37,9 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 
+import test_cli_utilities
+from multiprocessing import Process
+
 ###############################################################################
 # Netcdf Functions
 ###############################################################################
@@ -87,6 +90,87 @@ def netcdf_setup():
                '  has_nc2: '+str(gdaltest.netcdf_drv_has_nc2)+'  has_nc4: ' + \
                str(gdaltest.netcdf_drv_has_nc4) )
     
+    return 'success'
+
+###############################################################################
+# test file copy
+# helper function needed so we can call Process() on it from netcdf_test_copy_timeout()
+def netcdf_test_copy( ifile, band, checksum, ofile, opts=[], driver='NETCDF' ):
+    test = gdaltest.GDALTest( 'NETCDF', '../'+ifile, band, checksum, options=opts )
+    return test.testCreateCopy(check_gt=0, check_srs=0, new_filename=ofile, delete_copy = 0, check_minmax = 0)
+
+###############################################################################
+#test file copy, optional timeout arg
+def netcdf_test_copy_timeout( ifile, band, checksum, ofile, opts=[], driver='NETCDF', timeout=None ):
+
+    result = 'success'
+
+    drv = gdal.GetDriverByName( driver )
+
+    if os.path.exists( ofile ):
+        drv.Delete( ofile )
+
+    if timeout is None:
+        result = netcdf_test_copy( ifile, band, checksum, ofile, opts, driver )
+
+    else:
+        sys.stdout.write('.')
+        sys.stdout.flush()
+
+        proc = Process( target=netcdf_test_copy, args=(ifile, band, checksum, ofile, opts ) )
+        proc.start()
+        proc.join( timeout )
+
+        # if proc is alive after timeout we must terminate it, and return fail
+        # valgrind detects memory leaks when this occurs (although it should never happen)
+        if proc.is_alive():
+            proc.terminate()
+            if os.path.exists( ofile ):
+                drv.Delete( ofile )
+            print('testCreateCopy() for file %s has reached timeout limit of %d seconds' % (ofile, timeout) )
+            result = 'fail'
+            
+    return result
+
+
+###############################################################################
+#check support for DEFLATE compression, requires HDF5 and zlib
+def netcdf_test_deflate( ifile, checksum, zlevel=1, timeout=None ):
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    ofile1 = 'tmp/' + os.path.basename(ifile) + '-1.nc'
+    ofile1_opts = [ 'FILETYPE=NC4C', 'COMPRESS=NONE']
+    ofile2 = 'tmp/' + os.path.basename(ifile) + '-2.nc'
+    ofile2_opts = [ 'FILETYPE=NC4C', 'COMPRESS=DEFLATE', 'ZLEVEL='+str(zlevel) ]
+
+    if not os.path.exists( ifile ):
+        gdaltest.post_reason( 'ifile %s does not exist' % ifile )
+        return 'fail'
+ 
+    result1 = netcdf_test_copy_timeout( ifile, 1, checksum, ofile1, ofile1_opts, 'NETCDF', timeout )
+
+    result2 = netcdf_test_copy_timeout( ifile, 1, checksum, ofile2, ofile2_opts, 'NETCDF', timeout )
+
+    if result1 == 'fail' or result2 == 'fail':
+        return 'fail'
+
+    # make sure compressed file is smaller than uncompressed files
+    try:
+        size1 = os.path.getsize( ofile1 )
+        size2 = os.path.getsize( ofile2 )
+    except:
+        gdaltest.post_reason( 'Error getting file sizes.' )
+        return 'fail'
+
+    if  size2 >= size1:
+        gdaltest.post_reason( 'Compressed file is not smaller than reference, check your netcdf-4, HDF5 and zlib installation' )
+        return 'fail'
+
     return 'success'
 
 
@@ -573,7 +657,83 @@ def netcdf_18():
 
     return 'success'
 
+###############################################################################
+#check support for reading with DEFLATE compression, requires NC4
+def netcdf_19():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    tst =  gdaltest.GDALTest( 'NetCDF', 'data/trmm-nc4z.nc', 1, 50235,
+                              filename_absolute = 1 )
+
+    result = tst.testOpen(skip_checksum = True)
+
+    return result
+
+###############################################################################
+#check support for writing with DEFLATE compression, requires NC4
+def netcdf_20():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    #simple test with tiny file
+    return netcdf_test_deflate( 'data/utm.tif', 50235 )
+
+
+###############################################################################
+#check support for writing large file with DEFLATE compression
+#if chunking is not defined properly within the netcdf driver, this test can take 1h
+def netcdf_21():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    if not gdaltest.run_slow_tests():
+        return 'skip'
+
+    bigfile = 'tmp/cache/utm-big.tif'
+
+    sys.stdout.write('.')
+    sys.stdout.flush()
+
+    #look for large gtiff in cache
+    if not os.path.exists( bigfile ):
+
+        #create large gtiff
+        if test_cli_utilities.get_gdalwarp_path() is None:
+            gdaltest.post_reason('gdalwarp failed')
+            return 'fail'
+    
+        warp_cmd = test_cli_utilities.get_gdalwarp_path() +\
+            ' -q -overwrite -r bilinear -ts 7680 7680 -of gtiff ' +\
+            'data/utm.tif ' + bigfile
+
+        try:
+            (ret, err) = gdaltest.runexternal_out_and_err( warp_cmd )
+        except:
+            gdaltest.post_reason('gdalwarp failed')
+            return 'fail'
+        
+        if ( err != '' or ret != '' ):
+            gdaltest.post_reason('gdalwarp failed')
+        #print(ret)
+            return 'fail'
+
+    # test compression of the file, with a conservative timeout of 60 seconds
+    return netcdf_test_deflate( bigfile, 26695, 6, 60 )
      
+
 ###############################################################################
 
 gdaltest_list = [
@@ -594,7 +754,10 @@ gdaltest_list = [
     netcdf_15,
     netcdf_16,
     netcdf_17,
-    netcdf_18
+    netcdf_18,
+    netcdf_19,
+    netcdf_20,
+    netcdf_21,
  ]
 
 if __name__ == '__main__':
