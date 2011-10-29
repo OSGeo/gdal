@@ -40,7 +40,7 @@ import gdaltest
 
 import imp # for netcdf_cf_setup()
 import netcdf
-from netcdf import netcdf_setup
+from netcdf import netcdf_setup, netcdf_test_copy
 
 ###############################################################################
 # Netcdf CF compliance Functions
@@ -60,19 +60,20 @@ def netcdf_cf_setup():
         return 'skip'
 
     #skip if on windows
-    print( os.name )
     if os.name != 'posix':
         print('NOTICE: will skip CF checks because OS is not posix!')
         return 'skip'
 
     #try local method
+    cdms2_installed = False
     try:
         imp.find_module( 'cdms2' )
+        cdms2_installed = True
     except ImportError:
-        print 'NOTICE: cdms2 not installed!'
-        print '        see installation notes at http://pypi.python.org/pypi/cfchecker'
+        print( 'NOTICE: cdms2 not installed!' )
+        print( '        see installation notes at http://pypi.python.org/pypi/cfchecker' )
         pass
-    else:
+    if cdms2_installed:
         xml_dir = './data/netcdf_cf_xml'
         tmp_dir = './tmp/cache'
         files = dict()
@@ -98,14 +99,18 @@ def netcdf_cf_setup():
         if os.path.exists(files['a']) and os.path.exists(files['s']) and os.path.exists(files['u']):
             gdaltest.netcdf_cf_method = 'local'
             gdaltest.netcdf_cf_files = files
-            print('NOTICE: netcdf CF compliance ckecks: using local checker script')
+            print('NOTICE: netcdf CF compliance checks: using local checker script')
             return 'success'
 
-    #skip http method if 'GDAL_DOWNLOAD_TEST_DATA' os not defined
+    #skip http method if GDAL_DOWNLOAD_TEST_DATA and GDAL_RUN_SLOW_TESTS are not defined
     if not 'GDAL_DOWNLOAD_TEST_DATA' in os.environ: 
         print('NOTICE: skipping netcdf CF compliance checks')
         print('to enable remote http checker script, define GDAL_DOWNLOAD_TEST_DATA')
-    return 'success' 
+        return 'success' 
+
+    if not gdaltest.run_slow_tests(): 
+        print('NOTICE: skipping netcdf CF compliance checks')
+        return 'success' 
 
     #http method with curl, should use python module but easier for now
     success = False
@@ -146,9 +151,8 @@ def netcdf_cf_get_command(ifile, version='auto'):
                 + ' -v ' + version +' ' + ifile 
         elif method is 'http':
             #command = shlex.split( 'curl --form cfversion="1.5" --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"' )
-            #for now use CF-1.2 (which is what the driver uses)
-            #switch to 1.5 when the driver is updated, and auto when it becomes available
-            version = '1.2'
+            #switch to 1.5 as driver now supports, and auto when it becomes available
+            version = '1.5'
             command = 'curl --form cfversion=' + version + ' --form upload=@' + ifile + ' --form submit=\"Check file\" "http://puma.nerc.ac.uk/cgi-bin/cf-checker.pl"'
 
     return command
@@ -168,7 +172,7 @@ def netcdf_cf_check_file(ifile,version='auto', silent=True):
     output_all = ''
 
     command = netcdf_cf_get_command(ifile, version='auto')
-    if command is None:
+    if command is None or command=='':
         gdaltest.post_reason('no suitable method found, skipping')
         return 'skip'
 
@@ -410,8 +414,6 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
             (origTiff.rstrip('.tif'), proj[0] ))
         projRaster = os.path.join(outPath, "%s_%s.%s" % \
             (origTiff.rstrip('.tif'), proj[0], intExt ))
-#        projOpts = "-t_srs '%s'" % (proj[2])
-#        cmd = " ".join(['gdalwarp', projOpts, origTiff, projRaster])
         srs = osr.SpatialReference()
         srs.SetFromUserInput(proj[2])
         t_srs_wkt = srs.ExportToWkt()
@@ -428,8 +430,6 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
             (origTiff.rstrip('.tif'), proj[0] ))
         #Force GDAL tags to be written to make testing easier, with preserved datum etc
         ncCoOpts = "-co WRITE_GDAL_TAGS=yes"
-#        cmd = " ".join(['gdal_translate', "-of netCDF", ncCoOpts, projRaster,
-#            projNc])
         if not silent:
             print("About to translate to NetCDF")
         dst = drv_netcdf.CreateCopy(projNc, dsw, 0, [ 'WRITE_GDAL_TAGS='+bWriteGdalTags ])
@@ -468,10 +468,8 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         projRaster2 = os.path.join(outPath, "%s_%s2.%s" % \
             (origTiff.rstrip('.tif'), proj[0], intExt ))
 
-        tst[i_t+1] = gdaltest.GDALTest( 'NETCDF', '../'+projRaster, 1, None)
-        tst_res[i_t+1] = tst[i_t+1].testCreateCopy(check_gt=1, check_srs=1, new_filename=projNc2, delete_copy = 0,check_minmax = 0, gt_epsilon=pow(10,-8))
-        tst[i_t+2] = gdaltest.GDALTest( intFmt, '../'+projNc2, 1, None )
-        tst_res[i_t+2] = tst[i_t+2].testCreateCopy(check_gt=1, check_srs=1, new_filename=projRaster2, delete_copy = 0,check_minmax = 0, gt_epsilon=pow(10,-8))
+        tst_res[i_t+1] = netcdf_test_copy( projRaster, 1, None, projNc2, [], 'NETCDF' )
+        tst_res[i_t+2] = netcdf_test_copy( projNc2, 1, None, projRaster2, [], intFmt )
 
         if  tst_res[i_t+1] == 'fail' or tst_res[i_t+2] == 'fail':
             result = 'fail'
@@ -556,11 +554,13 @@ def netcdf_cf_1():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    tst1 = gdaltest.GDALTest( 'NETCDF', 'trmm.tif', 1, 14 )
-    result = tst1.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_1.nc', delete_copy = 0)
+    #tst1 = gdaltest.GDALTest( 'NETCDF', 'trmm.tif', 1, 14 )
+    #result = tst1.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_1.nc', delete_copy = 0)
+    result = netcdf_test_copy( 'data/trmm.nc', 1, 14, 'tmp/netcdf_cf_1.nc' )
     if result != 'fail':
-        tst2 = gdaltest.GDALTest( 'GTIFF', '../tmp/netcdf_cf_1.nc', 1, 14 )       
-        result = tst2.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_1.tiff', delete_copy = 0)
+        #tst2 = gdaltest.GDALTest( 'GTIFF', '../tmp/netcdf_cf_1.nc', 1, 14 )       
+        #result = tst2.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_1.tiff', delete_copy = 0)
+        result = netcdf_test_copy( 'tmp/netcdf_cf_1.nc', 1, 14, 'tmp/netcdf_cf_1.tif', [], 'GTIFF' )
 
     result_cf = 'success'
     if gdaltest.netcdf_cf_method is not None:
@@ -579,8 +579,7 @@ def netcdf_cf_2():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'NETCDF', 'trmm.nc', 1, 14 )
-    result = tst.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_2.nc', delete_copy = 0)
+    result = netcdf_test_copy( 'data/trmm.nc', 1, 14, 'tmp/netcdf_cf_2.nc' )
 
     result_cf = 'success'
     if gdaltest.netcdf_cf_method is not None:
@@ -603,12 +602,12 @@ def netcdf_cf_3():
     result = 'success'
     result_cf = 'success'
 
-    tst = gdaltest.GDALTest( 'NETCDF', 'trmm-wgs84.tif', 1, 14 )
-    result = tst.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_3.nc', delete_copy = 0)
+    result = netcdf_test_copy( 'data/trmm-wgs84.tif', 1, 14, 'tmp/netcdf_cf_3.nc' )
 
     if result == 'success':
-        tst = gdaltest.GDALTest( 'GTIFF', '../tmp/netcdf_cf_3.nc', 1, 14 )
-        result = tst.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_3.tif', delete_copy = 0)
+        #tst = gdaltest.GDALTest( 'GTIFF', '../tmp/netcdf_cf_3.nc', 1, 14 )
+        #result = tst.testCreateCopy(check_gt=1, check_srs=1, new_filename='tmp/netcdf_cf_3.tif', delete_copy = 0)
+        result = netcdf_test_copy( 'tmp/netcdf_cf_3.nc', 1, 14, 'tmp/netcdf_cf_3.tif', [], 'GTIFF' )
 
     result_cf = 'success'
     if gdaltest.netcdf_cf_method is not None:
