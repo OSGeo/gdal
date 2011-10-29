@@ -46,71 +46,47 @@ import gdaltest
 
 def netcdf_setup():
 
-    gdaltest.netcdf_drv_version = None
+    gdaltest.netcdf_drv_version = 'unknown'
     gdaltest.netcdf_drv_has_nc2 = False
     gdaltest.netcdf_drv_has_nc4 = False
-    gdaltest.netcdf_drv = gdal.GetDriverByName( 'NETCDF' )
+    gdaltest.netcdf_drv_has_hdf4 = False
     gdaltest.netcdf_drv_silent = False;
+
+    gdaltest.netcdf_drv = gdal.GetDriverByName( 'NETCDF' )
 
     if gdaltest.netcdf_drv is None:
         print('NOTICE: netcdf not supported, skipping checks')
         return 'skip'
 
-    #ugly hack to get netcdf version with 'ncdump', available in netcdf v3 avnd v4
-    try:
-        (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
-#        (ret, err) = gdaltest.runexternal_out_and_err('LD_LIBRARY_PATH=/home/src/netcdf-test/usr/lib:$LD_LIBRARY_PATH /home/src/netcdf-test/usr/bin/ncdump -h')
-    except:
-        #nothing is supported as ncdump not found
-        print('NOTICE: netcdf version not found')
-        return 'success'
-    
-    i = err.find('netcdf library version ')
-    #version not found
-    if i == -1:
-        print('NOTICE: netcdf version not found')
-        return 'success'
+    #get capabilities from driver
+    metadata = gdaltest.netcdf_drv.GetMetadata()
+    if metadata is None:
+        print('NOTICE: netcdf metadata not found, skipping checks')
+        return 'skip'
 
     #netcdf library version "3.6.3" of Dec 22 2009 06:10:17 $
     #netcdf library version 4.1.1 of Mar  4 2011 12:52:19 $
-    v = err[ i+23 : ]
-    v = v[ 0 : v.find(' ') ]
-    v = v.strip('"');
+    if 'NETCDF_VERSION' in metadata:
+        v = metadata['NETCDF_VERSION']
+        v = v[ 0 : v.find(' ') ].strip('"');
+        gdaltest.netcdf_drv_version = v
 
-    gdaltest.netcdf_drv_version = v
-
-    #for version 3, assume nc2 supported and nc4 unsupported
-    if v[0] == '3':
+    if 'NETCDF_HAS_NC2' in metadata \
+       and metadata['NETCDF_HAS_NC2'] == 'YES':
         gdaltest.netcdf_drv_has_nc2 = True
-        gdaltest.netcdf_drv_has_nc4 = False
 
-    # for version 4, use nc-config to test
-    elif v[0] == '4':
+    if 'NETCDF_HAS_NC4' in metadata \
+       and metadata['NETCDF_HAS_NC4'] == 'YES':
+        gdaltest.netcdf_drv_has_nc4 = True
+
+    if 'NETCDF_HAS_HDF4' in metadata \
+       and metadata['NETCDF_HAS_HDF4'] == 'YES':
+        gdaltest.netcdf_drv_has_hdf4 = True
+
+    print( 'NOTICE: using netcdf version ' + gdaltest.netcdf_drv_version + \
+               '  has_nc2: '+str(gdaltest.netcdf_drv_has_nc2)+'  has_nc4: ' + \
+               str(gdaltest.netcdf_drv_has_nc4) )
     
-        #check if netcdf library has nc2 (64-bit) support
-        #this should be done at configure time by gdal like in cdo
-        try:
-            ret = gdaltest.runexternal('nc-config --has-nc2')
-        except:
-            gdaltest.netcdf_drv_has_nc2 = False
-        else:
-            #should test this on windows
-            if ret.rstrip() == 'yes':
-                gdaltest.netcdf_drv_has_nc2 = True
-                    
-        #check if netcdf library has nc4 support
-        #this should be done at configure time by gdal like in cdo
-        try:
-            ret = gdaltest.runexternal('nc-config --has-nc4')
-        except:
-            gdaltest.netcdf_drv_has_nc4 = False
-        else:
-            #should test this on windows
-            if ret.rstrip() == 'yes':
-                gdaltest.netcdf_drv_has_nc4 = True
-
-    print('NOTICE: using netcdf version ' + gdaltest.netcdf_drv_version+'  has_nc2: '+str(gdaltest.netcdf_drv_has_nc2)+'  has_nc4: '+str(gdaltest.netcdf_drv_has_nc4))
- 
     return 'success'
 
 
@@ -478,7 +454,7 @@ def netcdf_14():
 
 ###############################################################################
 #check support for netcdf-2 (64 bit)
-# This test fails in 1.8.0, because the driver does not support it (bug #3890)
+# This test fails in 1.8.1, because the driver does not support NC2 (bug #3890)
 def netcdf_15():
 
     if gdaltest.netcdf_drv is None:
