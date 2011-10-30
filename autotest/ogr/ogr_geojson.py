@@ -871,6 +871,49 @@ def ogr_geojson_19():
 
     return 'success'
 
+############################################################################### 
+# Test reading files with no extension (#4314)
+
+def ogr_geojson_20(): 
+
+    if gdaltest.geojson_drv is None: 
+        return 'skip' 
+        
+    from glob import glob 
+
+    geojson_files = glob('data/*.json') 
+    geojson_files.extend(glob('data/*.geojson')) 
+
+    for gj in geojson_files: 
+        # create tmp file with no file extension
+        f = open(gj, 'rb')
+        data = f.read()
+        #print(gj)
+        #print(data.decode('LATIN1'))
+        f.close()
+        
+        f = gdal.VSIFOpenL('/vsimem/testgj', 'wb')
+        gdal.VSIFWriteL(data, 1, len(data), f)
+        gdal.VSIFCloseL(f)
+
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        ds = ogr.Open('/vsimem/testgj')
+        gdal.PopErrorHandler()
+        if ds is None: 
+            print(gj)
+            print(data.decode('LATIN1'))
+            gdaltest.post_reason('Failed to open datasource') 
+            return 'fail' 
+
+        lyr = ds.GetLayerByName('OGRGeoJSON') 
+        if lyr is None: 
+            gdaltest.post_reason('Missing layer called OGRGeoJSON') 
+            return 'fail' 
+            
+        gdal.Unlink('/vsimem/testgj')
+
+    return 'success' 
+
 ###############################################################################
 
 def ogr_geojson_cleanup():
@@ -922,6 +965,7 @@ gdaltest_list = [
     ogr_geojson_17,
     ogr_geojson_18,
     ogr_geojson_19,
+    ogr_geojson_20,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
