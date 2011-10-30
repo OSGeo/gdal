@@ -3848,7 +3848,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         double    *padScanline  = NULL;
         int       NCDFVarID = 0;
         size_t    start[ NCDF_NBDIM ];
-        size_t    starty[ nYSize ];
+        size_t    *startY = NULL;
         size_t    count[ NCDF_NBDIM ];
         double    dfNoDataValue;
         /* unsigned char not supported by netcdf-3 */
@@ -3891,11 +3891,13 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         count[0]=1;
         count[1]=nXSize;
         start[1]=0;
+        startY = (size_t *) CPLMalloc( nYSize * sizeof( size_t ) );
+
         for( int iLine = 0; iLine < nYSize ; iLine++ )  {
             if ( ! bBottomUp )
-                starty[iLine] = iLine;
+                startY[iLine] = iLine;
             else /* invert latitude values */
-                starty[iLine] = nYSize - iLine - 1;
+                startY[iLine] = nYSize - iLine - 1;
         }
 
         CPLDebug("GDAL_netCDF", "Writing Band #%d - %s", i, szLongName );
@@ -3964,7 +3966,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                             pabScanline, nXSize, 1, GDT_Byte,
                                             0,0);
                 
-                start[0]=starty[iLine];          
+                start[0]=startY[iLine];          
                 status = nc_put_vara_uchar (fpImage, NCDFVarID, start,
                                             count, pabScanline);
                 NCDF_ERR(status);
@@ -4009,7 +4011,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                             pasScanline, nXSize, 1, GDT_Int16,
                                             0,0);
 
-                start[0]=starty[iLine];          
+                start[0]=startY[iLine];          
                 status = nc_put_vara_short( fpImage, NCDFVarID, start,
                                             count, pasScanline);
             }
@@ -4052,7 +4054,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                             panScanline, nXSize, 1, GDT_Int32,
                                             0,0);
 
-                start[0]=starty[iLine];          
+                start[0]=startY[iLine];          
                 status = nc_put_vara_int( fpImage, NCDFVarID, start,
                                           count, panScanline);
             }
@@ -4094,7 +4096,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                             pafScanline, nXSize, 1, GDT_Float32, 
                                             0,0);
 
-                start[0]=starty[iLine];          
+                start[0]=startY[iLine];          
                 status = nc_put_vara_float( fpImage, NCDFVarID, start,
                                             count, pafScanline);
             }
@@ -4136,7 +4138,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                             GDT_Float64,
                                             0,0);
 
-                start[0]=starty[iLine];          
+                start[0]=startY[iLine];          
                 status = nc_put_vara_double( fpImage, NCDFVarID, start,
                                              count, padScanline);
             }
@@ -4152,6 +4154,8 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                       eDT );
         }
         
+        CPLFree( startY );
+
 /* -------------------------------------------------------------------- */
 /*      Copy Metadata for band                                          */
 /* -------------------------------------------------------------------- */
@@ -4241,6 +4245,7 @@ void GDALRegister_netCDF()
 "     <Value>DEFLATE</Value>"
 "   </Option>"
 "   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='1'/>"
+#endif
 "   <Option name='WRITE_BOTTOMUP' type='boolean' default='NO'>"
 "   </Option>"
 "   <Option name='WRITE_GDAL_TAGS' type='boolean' default='YES'>"
@@ -4254,7 +4259,6 @@ void GDALRegister_netCDF()
 "     <Value>float</Value>"
 "     <Value>double</Value>"
 "   </Option>"
-#endif
 "</CreationOptionList>" );
 
         
