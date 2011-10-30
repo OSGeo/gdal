@@ -352,7 +352,7 @@ static float GetIBMFloat(const GByte* pabyData)
         return fVal;
     }
 
-    return (double)nSign * nMant * pow(2.0, 4 * (nExp - 64) - 24);
+    return (float)((double)nSign * nMant * pow(2.0, 4 * (nExp - 64) - 24));
 }
 /************************************************************************/
 /*                         GetNextRawFeature()                          */
