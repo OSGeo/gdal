@@ -54,6 +54,65 @@ int GeoJSONIsObject( const char* pszText )
 }
 
 /************************************************************************/
+/*                           GeoJSONFileIsObject()                      */
+/************************************************************************/
+
+int GeoJSONFileIsObject( const char* pszSource ) 
+{ 
+    CPLAssert( NULL != pszSource ); 
+ 
+    VSILFILE* fp = NULL; 
+    fp = VSIFOpenL( pszSource, "rb" ); 
+    if( NULL == fp ) 
+    { 
+        return FALSE; 
+    } 
+    
+    // by default read first 6000 bytes 
+    // 6000 was chosen as enough bytes to  
+    // enable all current tests to pass 
+    vsi_l_offset nToReadLen = 6000; 
+    vsi_l_offset nDataLen = 0; 
+
+    char* pszGeoData = (char*)VSIMalloc((size_t)(nToReadLen + 1)); 
+    if( NULL == pszGeoData ) 
+    { 
+        VSIFCloseL(fp); 
+        return FALSE; 
+    } 
+
+    nDataLen = VSIFReadL( pszGeoData, 1, (size_t)nToReadLen, fp );
+    pszGeoData[nDataLen] = '\0'; 
+    if( nDataLen == 0 ) 
+    { 
+        VSIFCloseL( fp ); 
+        CPLFree( pszGeoData ); 
+        return FALSE; 
+    } 
+    VSIFCloseL( fp ); 
+    
+    char* pszIter = pszGeoData;
+    while( *pszIter != '\0' && isspace( (unsigned char)*pszIter ) )
+        pszIter++;
+
+    if( *pszIter != '{' )
+    {
+        CPLFree( pszGeoData ); 
+        return FALSE;
+    }
+
+    int bRet = FALSE; 
+
+    if ((strstr(pszGeoData, "\"type\"") != NULL && strstr(pszGeoData, "\"coordinates\"") != NULL) 
+        || strstr(pszGeoData, "\"FeatureCollection\"") != NULL
+        || (strstr(pszGeoData, "\"geometryType\"") != NULL && strstr(pszGeoData, "\"esriGeometry") != NULL)) 
+        bRet = TRUE; 
+     
+    CPLFree( pszGeoData ); 
+    return bRet; 
+} 
+
+/************************************************************************/
 /*                           GeoJSONGetSourceType()                     */
 /************************************************************************/
 
@@ -76,10 +135,13 @@ GeoJSONSourceType GeoJSONGetSourceType( const char* pszSource )
     {
         srcType = eGeoJSONSourceFile;
     }
-    else
+    else if( GeoJSONIsObject( pszSource ) )
     {
-        if( GeoJSONIsObject( pszSource ) )
-            srcType = eGeoJSONSourceText;
+        srcType = eGeoJSONSourceText;
+    }
+    else if( GeoJSONFileIsObject( pszSource ) )
+    {
+        srcType = eGeoJSONSourceFile;
     }
 
     return srcType;
