@@ -536,6 +536,17 @@ int AAIGDataset::ParseHeader(const char* pszHeader, const char* pszDataType)
         i + 1 < nTokens && j + 1 < nTokens)
     {
         adfGeoTransform[0] = CPLAtofM( papszTokens[i + 1] );
+       
+        /* Small hack to compensate from insufficient precision in cellsize */
+        /* parameter in datasets of http://ccafs-climate.org/data/A2a_2020s/hccpr_hadcm3 */
+        if ((nRasterXSize % 360) == 0 &&
+            fabs(adfGeoTransform[0] - (-180.0)) < 1e-12 &&
+            dfCellDX == dfCellDY &&
+            fabs(dfCellDX - (360.0 / nRasterXSize)) < 1e-9)
+        {
+            dfCellDX = dfCellDY = 360.0 / nRasterXSize;
+        }
+            
         adfGeoTransform[1] = dfCellDX;
         adfGeoTransform[2] = 0.0;
         adfGeoTransform[3] = CPLAtofM( papszTokens[j + 1] )
