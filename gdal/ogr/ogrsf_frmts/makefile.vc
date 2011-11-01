@@ -10,7 +10,7 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
 			$(SDE_DIR) $(IDB_DIR) $(NAS_DIR) $(DODSDIR) \
 			$(PCIDSK_DIR) $(LIBKMLDIR) $(WFSDIR) $(SOSIDIR) $(GFTDIR) \
-			$(COUCHDBDIR)
+			$(COUCHDBDIR) $(FGDB_DIR)
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
@@ -64,8 +64,10 @@ SDE_OBJ = sde\*.obj
 !ENDIF
 
 !IFDEF FGDB_LIB
+!IF "$(FGDB_PLUGIN)" != "YES"
 FGDB_DIR = filegdb
 FGDB_OBJ = filegdb\*.obj
+!ENDIF
 !ENDIF
 
 
