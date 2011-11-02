@@ -735,6 +735,12 @@ void GRIBDataset::SetGribMetaData(grib_MetaData* meta)
         rPixelSizeY = (rMaxY - rMinY) / meta->gds.Ny;
     }
 
+    // http://gdal.org/gdal_datamodel.html :
+    //   we need the top left corner of the top left pixel.
+    //   At the moment we have the center of the pixel.
+    rMinX-=rPixelSizeX/2;
+    rMaxY+=rPixelSizeY/2;
+
     adfGeoTransform[0] = rMinX;
     adfGeoTransform[3] = rMaxY;
     adfGeoTransform[1] = rPixelSizeX;
