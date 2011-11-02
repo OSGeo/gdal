@@ -728,11 +728,20 @@ void GRIBDataset::SetGribMetaData(grib_MetaData* meta)
         }
 
         if (meta->gds.lon1 > meta->gds.lon2)
-          rPixelSizeX = (360.0 - (meta->gds.lon1 - meta->gds.lon2)) / meta->gds.Nx;
+          rPixelSizeX = (360.0 - (meta->gds.lon1 - meta->gds.lon2)) / (meta->gds.Nx - 1);
         else
-          rPixelSizeX = (meta->gds.lon2 - meta->gds.lon1) / meta->gds.Nx;
+          rPixelSizeX = (meta->gds.lon2 - meta->gds.lon1) / (meta->gds.Nx - 1);
 
-        rPixelSizeY = (rMaxY - rMinY) / meta->gds.Ny;
+        rPixelSizeY = (rMaxY - rMinY) / (meta->gds.Ny - 1);
+
+        // Do some sanity checks for cases that can't be handled by the above
+        // pixel size corrections. GRIB1 has a minimum precision of 0.001
+        // for latitudes and longitudes, so we'll allow a bit higher than that.
+        if (rPixelSizeX < 0 || fabs(rPixelSizeX - meta->gds.Dx) > 0.002)
+          rPixelSizeX = meta->gds.Dx;
+
+        if (rPixelSizeY < 0 || fabs(rPixelSizeY - meta->gds.Dy) > 0.002)
+          rPixelSizeY = meta->gds.Dy;
     }
 
     // http://gdal.org/gdal_datamodel.html :
