@@ -277,6 +277,47 @@ def ogr_join_12():
     ds.ReleaseResultSet( sql_lyr )
 
     return 'success'
+    
+###############################################################################
+# Test joining a float column with a string column (#4321)
+
+def ogr_join_13():
+
+    expect = ['_168_','_179_','_171_',None, None,None,'_166_','_158_','_165_','_170_']
+    
+    sql_lyr = gdaltest.ds.ExecuteSQL( 	\
+        'SELECT * FROM poly ' \
+        + 'LEFT JOIN idlink2 ON poly.eas_id = idlink2.eas_id' )
+
+    tr = ogrtest.check_features_against_list( sql_lyr, 'name', expect )
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    if tr:
+        return 'success'
+    else:
+        return 'fail'
+    
+###############################################################################
+# Test joining a string column with a float column (#4321, actually addressed by #4259)
+
+def ogr_join_14():
+
+    expect = [168,179,171,170,165,158,166]
+    
+    sql_lyr = gdaltest.ds.ExecuteSQL( 	\
+        'SELECT * FROM idlink2 ' \
+        + 'LEFT JOIN poly ON idlink2.eas_id = poly.eas_id' )
+
+    tr = ogrtest.check_features_against_list( sql_lyr, 'poly.EAS_ID', expect )
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    if tr:
+        return 'success'
+    else:
+        return 'fail'
+
 ###############################################################################
 
 def ogr_join_cleanup():
@@ -299,6 +340,8 @@ gdaltest_list = [
     ogr_join_10,
     ogr_join_11,
     ogr_join_12,
+    ogr_join_13,
+    ogr_join_14,
     ogr_join_cleanup ]
 
 if __name__ == '__main__':
