@@ -881,6 +881,26 @@ def ogr_sql_34():
         print(val)
         return 'fail'
 
+###############################################################################
+# Test huge SQL queries (#4262)
+
+def ogr_sql_35():
+
+    cols = "area"
+    for i in range(10):
+        cols = cols + "," + cols
+    sql_lyr = gdaltest.ds.ExecuteSQL( "select %s from poly" % cols )
+
+    count_cols = sql_lyr.GetLayerDefn().GetFieldCount()
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    if count_cols == 1024:
+        return 'success'
+    else:
+        print(val)
+        return 'fail'
+
 def ogr_sql_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -920,6 +940,7 @@ gdaltest_list = [
     ogr_sql_28,
     ogr_sql_29,
     ogr_sql_34,
+    ogr_sql_35,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
