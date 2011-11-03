@@ -721,17 +721,31 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
             apoFeatures.push_back( NULL );
             continue;
         }
+        
+        OGRFieldDefn* poSecondaryFieldDefn =
+            poJoinLayer->GetLayerDefn()->GetFieldDefn( 
+                     psJoinInfo->secondary_field );
+        OGRFieldType ePrimaryFieldType = poSrcLayer->GetLayerDefn()->
+                    GetFieldDefn(psJoinInfo->primary_field )->GetType();
+        OGRFieldType eSecondaryFieldType = poSecondaryFieldDefn->GetType();
 
         // Prepare attribute query to express fetching on the joined variable
-        osFilter.Printf("%s = ", 
-                 poJoinLayer->GetLayerDefn()->GetFieldDefn( 
-                     psJoinInfo->secondary_field )->GetNameRef() );
+        
+        // If joining a (primary) numeric column with a (secondary) string column
+        // then add implicit casting of the secondary column to numeric. This behaviour
+        // worked in GDAL < 1.8, and it is consistant with how sqlite behaves too. See #4321
+        // For the reverse case, joining a string column with a numeric column, the
+        // string constant will be cast to float by SWQAutoConvertStringToNumeric (#4259)
+        if( eSecondaryFieldType == OFTString &&
+            (ePrimaryFieldType == OFTInteger || ePrimaryFieldType == OFTReal) )
+            osFilter.Printf("CAST(%s AS FLOAT) = ", poSecondaryFieldDefn->GetNameRef() );
+        else
+            osFilter.Printf("%s = ", poSecondaryFieldDefn->GetNameRef() );
 
         OGRField *psSrcField = 
             poSrcFeat->GetRawFieldRef(psJoinInfo->primary_field);
 
-        switch( poSrcLayer->GetLayerDefn()->GetFieldDefn( 
-                    psJoinInfo->primary_field )->GetType() )
+        switch( ePrimaryFieldType )
         {
           case OFTInteger:
             osFilter += CPLString().Printf("%d", psSrcField->Integer );
