@@ -312,6 +312,13 @@ def ogr_index_10():
         gdaltest.post_reason('failed')
         return 'fail'
 
+    lyr.SetAttributeFilter('intfield = 1')
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
     lyr.SetAttributeFilter('intfield IN (2)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -320,6 +327,13 @@ def ogr_index_10():
         return 'fail'
 
     lyr.SetAttributeFilter('intfield IN (1.0)')
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    lyr.SetAttributeFilter('intfield = 1.0')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is None:
@@ -348,6 +362,13 @@ def ogr_index_10():
         gdaltest.post_reason('failed')
         return 'fail'
 
+    lyr.SetAttributeFilter('realfield = 1.0')
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
     lyr.SetAttributeFilter('realfield IN (1.1)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -356,6 +377,13 @@ def ogr_index_10():
         return 'fail'
 
     lyr.SetAttributeFilter('realfield IN (1)')
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    lyr.SetAttributeFilter('realfield = 1')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is None:
@@ -378,6 +406,13 @@ def ogr_index_10():
 
 
     lyr.SetAttributeFilter("strfield IN ('foo')")
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    lyr.SetAttributeFilter("strfield = 'foo'")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat is None:
