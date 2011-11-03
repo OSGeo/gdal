@@ -329,7 +329,10 @@ long *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer,
     switch( poFieldDefn->GetType() )
     {
       case OFTInteger:
-        sValue.Integer = poValue->int_value;
+        if (poValue->field_type == SWQ_FLOAT)
+            sValue.Integer = (int) poValue->float_value;
+        else
+            sValue.Integer = poValue->int_value;
         break;
         
       case OFTReal:
