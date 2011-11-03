@@ -1249,7 +1249,7 @@ static int NITFWriteTREsFromOptions(
         }
         
         pszTREName = CPLStrdup(papszOptions[iOption]+nTREPrefixLen);
-        pszTREName[pszSpace - (papszOptions[iOption]+nTREPrefixLen)] = '\0';
+        pszTREName[MIN(6, pszSpace - (papszOptions[iOption]+nTREPrefixLen))] = '\0';
         pszEscapedContents = pszSpace + 1;
 
         pszUnescapedContents = 
