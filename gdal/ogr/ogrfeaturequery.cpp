@@ -293,7 +293,10 @@ long *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer,
             switch( poFieldDefn->GetType() )
             {
               case OFTInteger:
-                sValue.Integer = psExpr->papoSubExpr[iIN]->int_value;
+                if (psExpr->papoSubExpr[iIN]->field_type == SWQ_FLOAT)
+                    sValue.Integer = (int) psExpr->papoSubExpr[iIN]->float_value;
+                else
+                    sValue.Integer = psExpr->papoSubExpr[iIN]->int_value;
                 break;
 
               case OFTReal:

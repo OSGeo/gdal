@@ -287,6 +287,115 @@ def ogr_index_9():
     return 'success'
 
 ###############################################################################
+# Test fix for #4326
+
+def ogr_index_10():
+
+    ds = ogr.GetDriverByName( 'ESRI Shapefile' ).CreateDataSource('tmp/ogr_index_10.shp')
+    lyr = ds.CreateLayer('ogr_index_10')
+    lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('realfield', ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn('strfield', ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 1)
+    feat.SetField(1, 1)
+    feat.SetField(2, "foo")
+    lyr.CreateFeature(feat)
+    feat = None
+    ds.ExecuteSQL('create index on ogr_index_10 using intfield')
+    ds.ExecuteSQL('create index on ogr_index_10 using realfield')
+
+    lyr.SetAttributeFilter('intfield IN (1)')
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    lyr.SetAttributeFilter('intfield IN (2)')
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    lyr.SetAttributeFilter('intfield IN (1.0)')
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    lyr.SetAttributeFilter('intfield IN (1.1)')
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+        
+    lyr.SetAttributeFilter("intfield IN ('1')")
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+
+    lyr.SetAttributeFilter('realfield IN (1.0)')
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    lyr.SetAttributeFilter('realfield IN (1.1)')
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    lyr.SetAttributeFilter('realfield IN (1)')
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    lyr.SetAttributeFilter('realfield IN (2)')
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    lyr.SetAttributeFilter("realfield IN ('1')")
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+
+    lyr.SetAttributeFilter("strfield IN ('foo')")
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    lyr.SetAttributeFilter("strfield IN ('bar')")
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 
 def ogr_index_cleanup():
     try:
@@ -311,6 +420,8 @@ def ogr_index_cleanup():
         except:
             pass
 
+    ogr.GetDriverByName( 'ESRI Shapefile' ).DeleteDataSource( 'tmp/ogr_index_10.shp' )
+
     return 'success'
 
 gdaltest_list = [ 
@@ -323,6 +434,7 @@ gdaltest_list = [
     ogr_index_7,
     ogr_index_8,
     ogr_index_9,
+    ogr_index_10,
     ogr_index_cleanup ]
 
 if __name__ == '__main__':
