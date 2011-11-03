@@ -790,6 +790,9 @@ def warp_27_progress_callback(pct, message, user_data):
 
 def warp_27():
 
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
     # Open source dataset
     src_ds = gdal.Open('../gcore/data/byte.tif')
 
@@ -836,16 +839,21 @@ def warp_27():
     # Done !
     dst_ds = None
 
-
     # Check that we have the same result as produced by 'gdalwarp -rb -t_srs EPSG:4326 ../gcore/data/byte.tif tmp/warp_27.tif'
     ds = gdal.Open('tmp/warp_27.tif')
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    if cs != 4583:
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -rb -t_srs EPSG:4326 ../gcore/data/byte.tif tmp/warp_27_ref.tif')
+    ds = gdal.Open('tmp/warp_27_ref.tif')
+    ref_cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    if cs != ref_cs:
         return 'fail'
 
     gdal.Unlink('tmp/warp_27.tif')
+    gdal.Unlink('tmp/warp_27_ref.tif')
 
     return 'success'
 
