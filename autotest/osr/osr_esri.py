@@ -651,6 +651,7 @@ def osr_ersi_test( wkt_esri, wkt_ogc, proj4 ):
     wkt_esri_to_ogc = srs_esri.ExportToWkt()
     wkt_esri_to_proj4 = srs_esri.ExportToProj4()
     if not silent:
+        print( 'wkt_ogc: '+srs_ogc.ExportToWkt() )
         print( 'wkt_esri_to_ogc: '+wkt_esri_to_ogc )
         print( 'wkt_esri_to_proj4: '+wkt_esri_to_proj4 )
 
@@ -709,6 +710,7 @@ def osr_ersi_test( wkt_esri, wkt_ogc, proj4 ):
 # Stereographic
 # Double_Stereographic / Oblique_Stereographic (#1428 and #4267)
 # Stereographic_North_Pole / Polar_Stereographic
+# Orthographics (#4249)
 
 def osr_esri_20():
     
@@ -736,7 +738,13 @@ def osr_esri_20():
     sterep_proj4='+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs '
     result3 = osr_ersi_test(sterep_esri, sterep_ogc, sterep_proj4)
 
-    if ( result1 != 'success' or result2 != 'success' or result3 != 'success'):
+    # Orthographic (#4249)
+    ortho_esri='PROJCS["unnamed",GEOGCS["GCS_WGS_1984",DATUM["unknown",SPHEROID["WGS84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Orthographic"],PARAMETER["Latitude_Of_Center",-37],PARAMETER["Longitude_Of_Center",145],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]'
+    ortho_ogc='PROJCS["unnamed",GEOGCS["WGS 84",DATUM["unknown",SPHEROID["WGS84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Orthographic"],PARAMETER["latitude_of_origin",-37],PARAMETER["central_meridian",145],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]'
+    ortho_proj4='+proj=ortho +lat_0=-37 +lon_0=145 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs '
+    result4 = osr_ersi_test(ortho_esri, ortho_ogc, ortho_proj4)
+
+    if ( result1 != 'success' or result2 != 'success' or result3 != 'success' or result4 != 'success'):
         result = 'fail'
 
     return result
