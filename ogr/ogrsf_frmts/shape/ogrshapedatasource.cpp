@@ -31,6 +31,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#define MAX_SIMULTANEOUSLY_OPENED_LAYERS    100
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -44,6 +46,10 @@ OGRShapeDataSource::OGRShapeDataSource()
     papoLayers = NULL;
     nLayers = 0;
     bSingleFileDataSource = FALSE;
+
+    poMRULayer = NULL;
+    poLRULayer = NULL;
+    nMRUListSize = 0;
 }
 
 /************************************************************************/
@@ -61,6 +67,10 @@ OGRShapeDataSource::~OGRShapeDataSource()
 
         delete papoLayers[i];
     }
+
+    CPLAssert( poMRULayer == NULL );
+    CPLAssert( poLRULayer == NULL );
+    CPLAssert( nMRUListSize == 0 );
     
     CPLFree( papoLayers );
 }
@@ -342,7 +352,7 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     OGRShapeLayer       *poLayer;
 
-    poLayer = new OGRShapeLayer( pszNewName, hSHP, hDBF, NULL, FALSE, bUpdate,
+    poLayer = new OGRShapeLayer( this, pszNewName, hSHP, hDBF, NULL, FALSE, bUpdate,
                                  wkbNone );
 
 
@@ -351,11 +361,32 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
 /* -------------------------------------------------------------------- */
+    AddLayer(poLayer);
+
+    return TRUE;
+}
+
+
+/************************************************************************/
+/*                             AddLayer()                               */
+/************************************************************************/
+
+void OGRShapeDataSource::AddLayer(OGRShapeLayer* poLayer)
+{
     papoLayers = (OGRShapeLayer **)
         CPLRealloc( papoLayers,  sizeof(OGRShapeLayer *) * (nLayers+1) );
     papoLayers[nLayers++] = poLayer;
-    
-    return TRUE;
+
+    /* If we reach the limit, then register all the already opened layers */
+    /* Technically this code would not be necessary if there was not the */
+    /* following initial test in SetLastUsedLayer() : */
+    /*      if (nLayers < MAX_SIMULTANEOUSLY_OPENED_LAYERS) */
+    /*         return; */
+    if (nLayers == MAX_SIMULTANEOUSLY_OPENED_LAYERS && nMRUListSize == 0)
+    {
+        for(int i=0;i<nLayers;i++)
+            SetLastUsedLayer(papoLayers[i]);
+    }
 }
 
 /************************************************************************/
@@ -621,7 +652,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     OGRShapeLayer       *poLayer;
 
-    poLayer = new OGRShapeLayer( pszBasename, hSHP, hDBF, poSRS, TRUE, TRUE,
+    poLayer = new OGRShapeLayer( this, pszBasename, hSHP, hDBF, poSRS, TRUE, TRUE,
                                  eType );
     
     poLayer->InitializeIndexSupport( pszBasename );
@@ -631,10 +662,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
 /* -------------------------------------------------------------------- */
-    papoLayers = (OGRShapeLayer **)
-        CPLRealloc( papoLayers,  sizeof(OGRShapeLayer *) * (nLayers+1) );
-    
-    papoLayers[nLayers++] = poLayer;
+    AddLayer(poLayer);
 
     return poLayer;
 }
@@ -828,9 +856,11 @@ OGRErr OGRShapeDataSource::DeleteLayer( int iLayer )
         return OGRERR_FAILURE;
     }
 
-    pszFilename = CPLStrdup(((OGRShapeLayer*) papoLayers[iLayer])->GetFullName());
+    OGRShapeLayer* poLayerToDelete = (OGRShapeLayer*) papoLayers[iLayer];
 
-    delete papoLayers[iLayer];
+    pszFilename = CPLStrdup(poLayerToDelete->GetFullName());
+
+    delete poLayerToDelete;
 
     while( iLayer < nLayers - 1 )
     {
@@ -849,4 +879,98 @@ OGRErr OGRShapeDataSource::DeleteLayer( int iLayer )
     CPLFree( pszFilename );
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          SetLastUsedLayer()                          */
+/************************************************************************/
+
+void OGRShapeDataSource::SetLastUsedLayer( OGRShapeLayer* poLayer )
+{
+    /* We could remove that check and things would still work in */
+    /* 99.99% cases */
+    /* The only rationale for that test is to avoid breaking applications */
+    /* that would deal with layers of the same datasource in different */
+    /* threads. In GDAL < 1.9.0, this would work in most cases I can */
+    /* imagine as shapefile layers are pretty much independant from each */
+    /* others (although it has never been guaranteed to be a valid use case, */
+    /* and the shape driver is likely more the exception than the rule in */
+    /* permitting accessing layers from different threads !) */
+    /* Anyway the LRU list mechanism leaves the door open to concurrent accesses to it */
+    /* so when the datasource has not many layers, we don't try to build the */
+    /* LRU list to avoid concurrency issues. I haven't bothered making the analysis */
+    /* of how a mutex could be used to protect that (my intuition is that it would */
+    /* need to be placed at the beginning of OGRShapeLayer::TouchLayer() ) */
+    if (nLayers < MAX_SIMULTANEOUSLY_OPENED_LAYERS)
+        return;
+
+    /* If we are already the MRU layer, nothing to do */
+    if (poLayer == poMRULayer)
+        return;
+
+    //CPLDebug("SHAPE", "SetLastUsedLayer(%s)", poLayer->GetName());
+
+    if (poLayer->poPrevLayer != NULL || poLayer->poNextLayer != NULL)
+    {
+        /* Remove current layer from its current place in the list */
+        UnchainLayer(poLayer);
+    }
+    else if (nMRUListSize == MAX_SIMULTANEOUSLY_OPENED_LAYERS)
+    {
+        /* If we have reached the maximum allowed number of layers */
+        /* simultaneously opened, then close the LRU one that */
+        /* was still active until now */
+        CPLAssert(poLRULayer != NULL);
+
+        poLRULayer->CloseFileDescriptors();
+        UnchainLayer(poLRULayer);
+    }
+
+    /* Put current layer on top of MRU list */
+    CPLAssert(poLayer->poPrevLayer == NULL);
+    CPLAssert(poLayer->poNextLayer == NULL);
+    poLayer->poNextLayer = poMRULayer;
+    if (poMRULayer != NULL)
+    {
+        CPLAssert(poMRULayer->poPrevLayer == NULL);
+        poMRULayer->poPrevLayer = poLayer;
+    }
+    poMRULayer = poLayer;
+    if (poLRULayer == NULL)
+        poLRULayer = poLayer;
+    nMRUListSize ++;
+}
+
+
+/************************************************************************/
+/*                            UnchainLayer()                            */
+/*                                                                      */
+/* Remove the layer from the MRU list                                   */
+/************************************************************************/
+
+void OGRShapeDataSource::UnchainLayer( OGRShapeLayer* poLayer )
+{
+    //CPLDebug("SHAPE", "UnchainLayer(%s)", poLayer->GetName());
+
+    OGRShapeLayer* poPrevLayer = poLayer->poPrevLayer;
+    OGRShapeLayer* poNextLayer = poLayer->poNextLayer;
+
+    if (poPrevLayer != NULL)
+        CPLAssert(poPrevLayer->poNextLayer == poLayer);
+    if (poNextLayer != NULL)
+        CPLAssert(poNextLayer->poPrevLayer == poLayer);
+
+    if (poPrevLayer != NULL || poNextLayer != NULL || poLayer == poMRULayer)
+        nMRUListSize --;
+
+    if (poLayer == poMRULayer)
+        poMRULayer = poNextLayer;
+    if (poLayer == poLRULayer)
+        poLRULayer = poPrevLayer;
+    if (poPrevLayer != NULL)
+        poPrevLayer->poNextLayer = poNextLayer;
+    if (poNextLayer != NULL)
+        poNextLayer->poPrevLayer = poPrevLayer;
+    poLayer->poPrevLayer = NULL;
+    poLayer->poNextLayer = NULL;
 }
