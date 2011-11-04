@@ -299,6 +299,14 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                     psIter ++;
                 }
 
+                if (psIter->pszName == NULL)
+                {
+                    /* Can be a non geometry gml type */
+                    /* Too complex schema for us. Aborts parsing */
+                    delete poClass;
+                    return NULL;
+                }
+
                 if (poClass->GetGeometryAttributeIndex() == -1)
                     bGotUnrecognizedType = TRUE;
 
@@ -357,6 +365,12 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 {
                     bGotUnrecognizedType = TRUE;
                     //CPLDebug("GML", "Unknown type (%s).", pszType);
+                }
+                else
+                {
+                    /* Too complex schema for us. Aborts parsing */
+                    delete poClass;
+                    return NULL;
                 }
             }
 
@@ -422,11 +436,25 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                     psIter ++;
                 }
 
+                if (psIter->pszName == NULL)
+                {
+                    /* Can be a non geometry gml type */
+                    /* Too complex schema for us. Aborts parsing */
+                    delete poClass;
+                    return NULL;
+                }
+
                 if (poClass->GetGeometryAttributeIndex() == -1)
                     bGotUnrecognizedType = TRUE;
-            }
 
-            continue;
+                continue;
+            }
+            else
+            {
+                /* Too complex schema for us. Aborts parsing */
+                delete poClass;
+                return NULL;
+            }
         }
 
         if (pszElementName == NULL)
