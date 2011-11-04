@@ -45,7 +45,7 @@ endif
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
 clean:
-	$(RM) *.o $(LIB)
+	$(RM) *.o $(O_OBJ)
 
 install:
 	for f in *.h ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done
