@@ -120,6 +120,29 @@ static const char *GetElementText( const CPLXMLNode *psElement )
 }
 
 /************************************************************************/
+/*                           GetChildElement()                          */
+/************************************************************************/
+
+static const CPLXMLNode *GetChildElement( const CPLXMLNode *psElement )
+
+{
+    if( psElement == NULL )
+        return NULL;
+
+    const CPLXMLNode *psChild = psElement->psChild;
+
+    while( psChild != NULL )
+    {
+        if( psChild->eType == CXT_Element )
+            return psChild;
+
+        psChild = psChild->psNext;
+    }
+
+    return NULL;
+}
+
+/************************************************************************/
 /*                    GetElementOrientation()                           */
 /*     Returns true for positive orientation.                           */
 /************************************************************************/
@@ -605,10 +628,11 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
             if( psChild->eType == CXT_Element
                 && EQUAL(BareGMLElement(psChild->pszValue),"curveMember") )
             {
+                const CPLXMLNode* psCurveChild = GetChildElement(psChild);
                 OGRLineString *poLS;
-                if (psChild->psChild)
+                if (psCurveChild != NULL)
                     poLS = (OGRLineString *) 
-                        GML2OGRGeometry_XMLNode( psChild->psChild );
+                        GML2OGRGeometry_XMLNode( psCurveChild );
                 else
                     poLS = NULL;
 
@@ -818,11 +842,12 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                 && (EQUAL(BareGMLElement(psChild->pszValue),"polygonMember") ||
                     EQUAL(BareGMLElement(psChild->pszValue),"surfaceMember")) )
             {
+                const CPLXMLNode* psSurfaceChild = GetChildElement(psChild);
                 OGRPolygon *poPolygon;
 
-                if (psChild->psChild != NULL)
+                if (psSurfaceChild != NULL)
                     poPolygon = (OGRPolygon *) 
-                        GML2OGRGeometry_XMLNode( psChild->psChild );
+                        GML2OGRGeometry_XMLNode( psSurfaceChild );
                 else
                     poPolygon = NULL;
 
@@ -915,11 +940,12 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
             if( psChild->eType == CXT_Element
                 && EQUAL(BareGMLElement(psChild->pszValue),"pointMember") )
             {
+                const CPLXMLNode* psPointChild = GetChildElement(psChild);
                 OGRPoint *poPoint;
 
-                if (psChild->psChild != NULL)
+                if (psPointChild != NULL)
                     poPoint = (OGRPoint *) 
-                        GML2OGRGeometry_XMLNode( psChild->psChild );
+                        GML2OGRGeometry_XMLNode( psPointChild );
                 else
                     poPoint = NULL;
                 if( poPoint == NULL 
@@ -992,10 +1018,11 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
             if( psChild->eType == CXT_Element
                 && EQUAL(BareGMLElement(psChild->pszValue),"lineStringMember") )
             {
+                const CPLXMLNode* psLineStringChild = GetChildElement(psChild);
                 OGRGeometry *poGeom;
 
-                if (psChild->psChild != NULL)
-                    poGeom = GML2OGRGeometry_XMLNode( psChild->psChild );
+                if (psLineStringChild != NULL)
+                    poGeom = GML2OGRGeometry_XMLNode( psLineStringChild );
                 else
                     poGeom = NULL;
                 if( poGeom == NULL 
@@ -1194,10 +1221,11 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
             if( psChild->eType == CXT_Element
                 && EQUAL(BareGMLElement(psChild->pszValue),"geometryMember") )
             {
+                const CPLXMLNode* psGeometryChild = GetChildElement(psChild);
                 OGRGeometry *poGeom;
 
-                if (psChild->psChild != NULL)
-                    poGeom = GML2OGRGeometry_XMLNode( psChild->psChild );
+                if (psGeometryChild != NULL)
+                    poGeom = GML2OGRGeometry_XMLNode( psGeometryChild );
                 else
                     poGeom = NULL;
                 if( poGeom == NULL )

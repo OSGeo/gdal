@@ -446,8 +446,8 @@ def gml_MultiCurve():
 def gml_MultiSurface():
 
     gml = """<gml:MultiSurface xmlns:gml="http://www.opengis.net/gml" srsName="foo">
-    <gml:surfaceMember>
-        <gml:Surface>
+    <gml:surfaceMember xlink:role="main">
+        <gml:Surface gml:id="id1">
             <gml:patches>
                 <gml:PolygonPatch interpolation="planar">
                     <gml:exterior>
