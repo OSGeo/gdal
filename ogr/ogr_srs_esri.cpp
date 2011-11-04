@@ -93,6 +93,11 @@ static const char *apszPolarStereographicMapping[] = {
     SRS_PP_STANDARD_PARALLEL_1, SRS_PP_LATITUDE_OF_ORIGIN,
     NULL, NULL };
 
+static const char *apszOrthographicMapping[] = {
+    "Longitude_Of_Center", SRS_PP_CENTRAL_MERIDIAN,
+    "Latitude_Of_Center", SRS_PP_LATITUDE_OF_ORIGIN,
+    NULL, NULL };
+
 static char **papszDatumMapping = NULL;
  
 static const char *apszDefaultDatumMapping[] = {
@@ -1529,6 +1534,11 @@ OGRErr OGRSpatialReference::morphFromESRI()
             "PARAMETER",
             (char **)apszMercatorMapping + 0,
             (char **)apszMercatorMapping + 1, 2 );
+
+    if( pszProjection != NULL && EQUAL(pszProjection,"Orthographic") )
+        GetRoot()->applyRemapper( 
+            "PARAMETER", (char **)apszOrthographicMapping + 0,
+            (char **)apszOrthographicMapping + 1, 2 );
 
     if( pszProjection != NULL 
         && EQUALN(pszProjection,"Stereographic_",14) 
