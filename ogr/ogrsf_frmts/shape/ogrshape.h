@@ -52,8 +52,11 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 /*                            OGRShapeLayer                             */
 /************************************************************************/
 
+class OGRShapeDataSource;
+
 class OGRShapeLayer : public OGRLayer
 {
+    OGRShapeDataSource  *poDS;
     OGRSpatialReference *poSRS; /* lazy loaded --> use GetSpatialRef() */
     int                 bSRSSet;
     OGRFeatureDefn     *poFeatureDefn;
@@ -87,6 +90,16 @@ class OGRShapeLayer : public OGRLayer
     CPLString           ConvertCodePage( const char * );
     CPLString           osEncoding;
 
+    int                 bHSHPWasNonNULL; /* to know if we must try to reopen a .shp */
+    int                 bHDBFWasNonNULL; /* to know if we must try to reopen a .dbf */
+    int                 eFileDescriptorsState; /* current state of opening of file descriptor to .shp and .dbf */
+    int                 TouchLayer();
+    int                 ReopenFileDescriptors();
+
+/* WARNING: each of the below public methods should start with a call to */
+/* TouchLayer() and test its return value, so as to make sure that */
+/* the layer is properly re-opened if necessary */
+
   public:
     OGRErr              CreateSpatialIndex( int nMaxDepth );
     OGRErr              DropSpatialIndex();
@@ -95,8 +108,16 @@ class OGRShapeLayer : public OGRLayer
 
     const char         *GetFullName() { return pszFullName; }
 
+    void                CloseFileDescriptors();
+
+    /* The 2 following members should not be used by OGRShapeLayer, except */
+    /* in its constructor */
+    OGRShapeLayer      *poPrevLayer; /* Chain to a layer that was used more recently */
+    OGRShapeLayer      *poNextLayer; /* Chain to a layer that was used less recently */
+
   public:
-                        OGRShapeLayer( const char * pszName,
+                        OGRShapeLayer( OGRShapeDataSource* poDSIn,
+                                       const char * pszName,
                                        SHPHandle hSHP, DBFHandle hDBF,
                                        OGRSpatialReference *poSRS, int bSRSSet,
                                        int bUpdate, 
@@ -128,6 +149,7 @@ class OGRShapeLayer : public OGRLayer
     virtual OGRSpatialReference *GetSpatialRef();
     
     int                 TestCapability( const char * );
+
 };
 
 /************************************************************************/
@@ -144,6 +166,12 @@ class OGRShapeDataSource : public OGRDataSource
     int                 bDSUpdate;
 
     int                 bSingleFileDataSource;
+
+    OGRShapeLayer      *poMRULayer; /* the most recently used layer */
+    OGRShapeLayer      *poLRULayer; /* the least recently used layer (still opened) */
+    int                 nMRUListSize; /* the size of the list */
+
+    void                AddLayer(OGRShapeLayer* poLayer);
 
   public:
                         OGRShapeDataSource();
@@ -168,6 +196,9 @@ class OGRShapeDataSource : public OGRDataSource
 
     virtual int          TestCapability( const char * );
     virtual OGRErr       DeleteLayer( int iLayer );
+
+    void                 SetLastUsedLayer( OGRShapeLayer* poLayer );
+    void                 UnchainLayer( OGRShapeLayer* poLayer );
 };
 
 /************************************************************************/

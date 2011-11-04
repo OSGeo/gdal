@@ -36,19 +36,25 @@
 #  include <wce_errno.h>
 #endif
 
+#define FD_OPENED           0
+#define FD_CLOSED           1
+#define FD_CANNOT_REOPEN    2
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           OGRShapeLayer()                            */
 /************************************************************************/
 
-OGRShapeLayer::OGRShapeLayer( const char * pszName,
+OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
+                              const char * pszName,
                               SHPHandle hSHPIn, DBFHandle hDBFIn, 
                               OGRSpatialReference *poSRSIn, int bSRSSetIn,
                               int bUpdate,
                               OGRwkbGeometryType eReqType )
 
 {
+    poDS = poDSIn;
     poSRS = poSRSIn;
     bSRSSet = bSRSSetIn;
 
@@ -94,6 +100,13 @@ OGRShapeLayer::OGRShapeLayer( const char * pszName,
     poFeatureDefn = SHPReadOGRFeatureDefn( CPLGetBasename(pszName),
                                            hSHP, hDBF, osEncoding );
 
+    /* Init info for the LRU layer mechanism */
+    poPrevLayer = NULL;
+    poNextLayer = NULL;
+    bHSHPWasNonNULL = hSHPIn != NULL;
+    bHDBFWasNonNULL = hDBFIn != NULL;
+    eFileDescriptorsState = FD_OPENED;
+    TouchLayer();
 }
 
 /************************************************************************/
@@ -103,6 +116,9 @@ OGRShapeLayer::OGRShapeLayer( const char * pszName,
 OGRShapeLayer::~OGRShapeLayer()
 
 {
+    /* Remove us from the list of LRU layers if necessary */
+    poDS->UnchainLayer(this);
+
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "Shape", "%d features read on layer '%s'.",
@@ -369,6 +385,9 @@ int OGRShapeLayer::ScanIndices()
 void OGRShapeLayer::ResetReading()
 
 {
+    if (!TouchLayer())
+        return;
+
 /* -------------------------------------------------------------------- */
 /*      Clear previous index search result, if any.                     */
 /* -------------------------------------------------------------------- */
@@ -392,6 +411,9 @@ void OGRShapeLayer::ResetReading()
 OGRErr OGRShapeLayer::SetNextByIndex( long nIndex )
 
 {
+    if (!TouchLayer())
+        return OGRERR_FAILURE;
+
     // Eventually we should try to use panMatchingFIDs list 
     // if available and appropriate. 
     if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
@@ -412,6 +434,9 @@ OGRErr OGRShapeLayer::SetNextByIndex( long nIndex )
 OGRFeature *OGRShapeLayer::FetchShape(int iShapeId)
 
 {
+    if (!TouchLayer())
+        return NULL;
+
     OGRFeature *poFeature;
 
     if (m_poFilterGeom != NULL && hSHP != NULL ) 
@@ -458,6 +483,9 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId)
 OGRFeature *OGRShapeLayer::GetNextFeature()
 
 {
+    if (!TouchLayer())
+        return NULL;
+
     OGRFeature  *poFeature = NULL;
 
 /* -------------------------------------------------------------------- */
@@ -539,6 +567,9 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
 OGRFeature *OGRShapeLayer::GetFeature( long nFeatureId )
 
 {
+    if (!TouchLayer())
+        return NULL;
+
     OGRFeature *poFeature = NULL;
     poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, nFeatureId, NULL,
                                    osEncoding );
@@ -565,23 +596,26 @@ OGRFeature *OGRShapeLayer::GetFeature( long nFeatureId )
 /*                             SetFeature()                             */
 /************************************************************************/
 
-    OGRErr OGRShapeLayer::SetFeature( OGRFeature *poFeature )
+OGRErr OGRShapeLayer::SetFeature( OGRFeature *poFeature )
 
+{
+    if (!TouchLayer())
+        return OGRERR_FAILURE;
+
+    if( !bUpdateAccess )
     {
-        if( !bUpdateAccess )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "The SetFeature() operation is not permitted on a read-only shapefile." );
-            return OGRERR_FAILURE;
-        }
-
-        bHeaderDirty = TRUE;
-        if( CheckForQIX() )
-            DropSpatialIndex();
-
-        return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature,
-                                   osEncoding );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "The SetFeature() operation is not permitted on a read-only shapefile." );
+        return OGRERR_FAILURE;
     }
+
+    bHeaderDirty = TRUE;
+    if( CheckForQIX() )
+        DropSpatialIndex();
+
+    return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature,
+                                osEncoding );
+}
 
 /************************************************************************/
 /*                           DeleteFeature()                            */
@@ -590,6 +624,9 @@ OGRFeature *OGRShapeLayer::GetFeature( long nFeatureId )
 OGRErr OGRShapeLayer::DeleteFeature( long nFID )
 
 {
+    if (!TouchLayer())
+        return OGRERR_FAILURE;
+
     if( !bUpdateAccess )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -642,6 +679,9 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
 
 {
     OGRErr eErr;
+
+    if (!TouchLayer())
+        return OGRERR_FAILURE;
 
     if( !bUpdateAccess )
     {
@@ -743,6 +783,9 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
 int OGRShapeLayer::GetFeatureCount( int bForce )
 
 {
+    if (!TouchLayer())
+        return 0;
+
     if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
         return OGRLayer::GetFeatureCount( bForce );
     else
@@ -763,6 +806,9 @@ OGRErr OGRShapeLayer::GetExtent (OGREnvelope *psExtent, int bForce)
 
 {
     UNREFERENCED_PARAM( bForce );
+
+    if (!TouchLayer())
+        return OGRERR_FAILURE;
 
     double adMin[4], adMax[4];
 
@@ -786,6 +832,9 @@ OGRErr OGRShapeLayer::GetExtent (OGREnvelope *psExtent, int bForce)
 int OGRShapeLayer::TestCapability( const char * pszCap )
 
 {
+    if (!TouchLayer())
+        return FALSE;
+
     if( EQUAL(pszCap,OLCRandomRead) )
         return TRUE;
 
@@ -837,6 +886,9 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
 OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
 {
+    if (!TouchLayer())
+        return OGRERR_FAILURE;
+
     CPLAssert( NULL != poFieldDefn );
     
     int         iNewField;
@@ -1019,6 +1071,9 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
 OGRErr OGRShapeLayer::DeleteField( int iField )
 {
+    if (!TouchLayer())
+        return OGRERR_FAILURE;
+
     if( !bUpdateAccess )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -1047,6 +1102,9 @@ OGRErr OGRShapeLayer::DeleteField( int iField )
 
 OGRErr OGRShapeLayer::ReorderFields( int* panMap )
 {
+    if (!TouchLayer())
+        return OGRERR_FAILURE;
+
     if( !bUpdateAccess )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -1075,6 +1133,9 @@ OGRErr OGRShapeLayer::ReorderFields( int* panMap )
 
 OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
 {
+    if (!TouchLayer())
+        return OGRERR_FAILURE;
+
     if( !bUpdateAccess )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -1262,6 +1323,9 @@ int OGRShapeLayer::ResetGeomType( int nNewGeomType )
 OGRErr OGRShapeLayer::SyncToDisk()
 
 {
+    if (!TouchLayer())
+        return OGRERR_FAILURE;
+
     if( bHeaderDirty )
     {
         if( hSHP != NULL )
@@ -1293,6 +1357,9 @@ OGRErr OGRShapeLayer::SyncToDisk()
 OGRErr OGRShapeLayer::DropSpatialIndex()
 
 {
+    if (!TouchLayer())
+        return OGRERR_FAILURE;
+
     if( !CheckForQIX() )
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
@@ -1348,6 +1415,9 @@ OGRErr OGRShapeLayer::DropSpatialIndex()
 OGRErr OGRShapeLayer::CreateSpatialIndex( int nMaxDepth )
 
 {
+    if (!TouchLayer())
+        return OGRERR_FAILURE;
+
 /* -------------------------------------------------------------------- */
 /*      If we have an existing spatial index, blow it away first.       */
 /* -------------------------------------------------------------------- */
@@ -1412,6 +1482,9 @@ OGRErr OGRShapeLayer::CreateSpatialIndex( int nMaxDepth )
 OGRErr OGRShapeLayer::Repack()
 
 {
+    if (!TouchLayer())
+        return OGRERR_FAILURE;
+
     if( !bUpdateAccess )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1694,6 +1767,9 @@ OGRErr OGRShapeLayer::Repack()
 
 OGRErr OGRShapeLayer::RecomputeExtent()
 {
+    if (!TouchLayer())
+        return OGRERR_FAILURE;
+
     if( !bUpdateAccess )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1759,4 +1835,90 @@ OGRErr OGRShapeLayer::RecomputeExtent()
     }
     
     return OGRERR_NONE;
+}
+
+
+/************************************************************************/
+/*                              TouchLayer()                            */
+/************************************************************************/
+
+int OGRShapeLayer::TouchLayer()
+{
+    poDS->SetLastUsedLayer(this);
+
+    if (eFileDescriptorsState == FD_OPENED)
+        return TRUE;
+    else if (eFileDescriptorsState == FD_CANNOT_REOPEN)
+        return FALSE;
+    else
+        return ReopenFileDescriptors();
+}
+
+/************************************************************************/
+/*                        ReopenFileDescriptors()                       */
+/************************************************************************/
+
+int OGRShapeLayer::ReopenFileDescriptors()
+{
+    CPLDebug("SHAPE", "ReopenFileDescriptors(%s)", pszFullName);
+
+    if( bHSHPWasNonNULL )
+    {
+        if( bUpdateAccess )
+            hSHP = SHPOpen( pszFullName, "r+" );
+        else
+            hSHP = SHPOpen( pszFullName, "r" );
+
+        if (hSHP == NULL)
+        {
+            eFileDescriptorsState = FD_CANNOT_REOPEN;
+            return FALSE;
+        }
+    }
+
+    if( bHDBFWasNonNULL )
+    {
+        if( bUpdateAccess )
+            hDBF = DBFOpen( pszFullName, "r+" );
+        else
+            hDBF = DBFOpen( pszFullName, "r" );
+
+        if (hDBF == NULL)
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "Cannot reopen %s", CPLResetExtension(pszFullName, "dbf"));
+            eFileDescriptorsState = FD_CANNOT_REOPEN;
+            return FALSE;
+        }
+    }
+
+    eFileDescriptorsState = FD_OPENED;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                        CloseFileDescriptors()                        */
+/************************************************************************/
+
+void OGRShapeLayer::CloseFileDescriptors()
+{
+    CPLDebug("SHAPE", "CloseFileDescriptors(%s)", pszFullName);
+
+    if( hDBF != NULL )
+        DBFClose( hDBF );
+    hDBF = NULL;
+
+    if( hSHP != NULL )
+        SHPClose( hSHP );
+    hSHP = NULL;
+
+    /* We close QIX and reset the check flag, so that CheckForQIX() */
+    /* will retry opening it if necessary when the layer is active again */
+    if( fpQIX != NULL )
+        VSIFClose( fpQIX );
+    fpQIX = NULL;
+    bCheckedForQIX = FALSE;
+
+    eFileDescriptorsState = FD_CLOSED;
 }
