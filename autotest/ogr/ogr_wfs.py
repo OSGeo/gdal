@@ -865,6 +865,9 @@ def ogr_wfs_get_multiple_layer_defn(url):
 
     ds = ogr.Open('WFS:' + url)
     if ds is None:
+        if gdaltest.gdalurlopen(url) is None:
+            print('cannot open URL')
+            return 'skip'
         return 'fail'
 
     # This should be slow only for the first layer
@@ -926,7 +929,7 @@ gdaltest_list = [
     ogr_wfs_xmldescriptionfile,
     ogr_wfs_deegree_gml321,
     ogr_wfs_deegree_wfs200,
-    ogr_wfs_esri,
+    #ogr_wfs_esri,
     ogr_wfs_esri_2,
     ogr_wfs_cubewerx,
     ogr_wfs_tinyows,
