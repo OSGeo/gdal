@@ -2400,6 +2400,165 @@ def ogr_shape_53():
     return 'success'
 
 ###############################################################################
+# Test accessing a shape datasource with hundreds of layers (#4306)
+
+def ogr_shape_54_create_layer(ds, layer_index):
+    lyr = ds.CreateLayer('layer%03d' % layer_index)
+    lyr.CreateField(ogr.FieldDefn('strfield', ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 'val%d' % layer_index)
+    if (layer_index % 2) == 0:
+        feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (%d %d)' % (layer_index, layer_index+1)))
+    lyr.CreateFeature(feat)
+    feat = None
+    return
+
+def ogr_shape_54_test_layer(ds, layer_index):
+    lyr = ds.GetLayerByName('layer%03d' % layer_index)
+    if lyr is None:
+        gdaltest.post_reason('failed for layer %d' % layer_index)
+        return 'fail'
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        gdaltest.post_reason('failed for layer %d' % layer_index)
+        return 'fail'
+    if feat.GetField(0) != 'val%d' % layer_index:
+        gdaltest.post_reason('failed for layer %d' % layer_index)
+        return 'fail'
+    if (layer_index % 2) == 0:
+        if feat.GetGeometryRef() is None or \
+           feat.GetGeometryRef().ExportToWkt() != 'POINT (%d %d)' % (layer_index, layer_index+1):
+            gdaltest.post_reason('failed for layer %d' % layer_index)
+            return 'fail'
+
+    return 'success'
+
+def ogr_shape_54():
+
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds_name = '/vsimem/ogr_shape_54'
+    #ds_name = 'tmp/ogr_shape_54'
+    N = 500
+    LRUListSize = 100
+
+    # Test creating N layers
+    ds = shape_drv.CreateDataSource( ds_name )
+    for i in range(N):
+        ogr_shape_54_create_layer(ds, i)
+
+    ds = None
+
+    # Test access to the N layers in sequence
+    ds = ogr.Open( ds_name )
+    for i in range(N):
+        ret = ogr_shape_54_test_layer(ds, i)
+        if ret != 'success':
+            return ret
+
+    # Now some 'random' access
+    ret = ogr_shape_54_test_layer(ds, N - 1 - LRUListSize)
+    if ret != 'success':
+        return ret
+    ret = ogr_shape_54_test_layer(ds, N - LRUListSize / 2)
+    if ret != 'success':
+        return ret
+    ret = ogr_shape_54_test_layer(ds, N - LRUListSize / 4)
+    if ret != 'success':
+        return ret
+    ret = ogr_shape_54_test_layer(ds, 0)
+    if ret != 'success':
+        return ret
+    ret = ogr_shape_54_test_layer(ds, 0)
+    if ret != 'success':
+        return ret
+    ret = ogr_shape_54_test_layer(ds, 2)
+    if ret != 'success':
+        return ret
+    ret = ogr_shape_54_test_layer(ds, 1)
+    if ret != 'success':
+        return ret
+    ds = None
+
+    # Test adding a new layer
+    ds = ogr.Open( ds_name, update = 1 )
+    ogr_shape_54_create_layer(ds, N)
+    ds = None
+
+    # Test accessing the new layer
+    ds = ogr.Open( ds_name )
+    ret = ogr_shape_54_test_layer(ds, N)
+    if ret != 'success':
+        return ret
+    ds = None
+
+    # Test deleting layers
+    ds = ogr.Open( ds_name, update = 1 )
+    for i in range(N):
+        ret = ogr_shape_54_test_layer(ds, i)
+        if ret != 'success':
+            return ret
+    for i in range(N - LRUListSize + 1,N):
+        ds.ExecuteSQL('DROP TABLE layer%03d' % i)
+    ret = ogr_shape_54_test_layer(ds, N - LRUListSize)
+    if ret != 'success':
+        return ret
+    ogr_shape_54_create_layer(ds, N + 2)
+    for i in range(0,N - LRUListSize + 1):
+        ds.ExecuteSQL('DROP TABLE layer%03d' % i)
+    ret = ogr_shape_54_test_layer(ds, N)
+    if ret != 'success':
+        return ret
+    ret = ogr_shape_54_test_layer(ds, N + 2)
+    if ret != 'success':
+        return ret
+    ds = None
+
+    # Destroy and recreate datasource
+    shape_drv.DeleteDataSource( ds_name )
+    ds = shape_drv.CreateDataSource( ds_name )
+    for i in range(N):
+        ogr_shape_54_create_layer(ds, i)
+    ds = None
+
+    # Reopen in read-only so as to be able to delete files */
+    # if testing on a real filesystem.
+    ds = ogr.Open( ds_name )
+
+    # Test corner case where we cannot reopen a closed layer
+    ideletedlayer = 0
+    gdal.Unlink( ds_name + '/' + 'layer%03d.shp' % ideletedlayer)
+    lyr = ds.GetLayerByName('layer%03d' % ideletedlayer)
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+    gdal.ErrorReset()
+
+    ideletedlayer = 1
+    gdal.Unlink( ds_name + '/' + 'layer%03d.dbf' % ideletedlayer)
+    lyr = ds.GetLayerByName('layer%03d' % ideletedlayer)
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('failed')
+        return 'fail'
+    gdal.ErrorReset()
+
+
+    ds = None
+
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -2419,6 +2578,7 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( '/vsimem/this_one_i_care_46.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_52.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_53.shp' )
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_54' )
     
     return 'success'
 
@@ -2477,6 +2637,7 @@ gdaltest_list = [
     ogr_shape_51,
     ogr_shape_52,
     ogr_shape_53,
+    ogr_shape_54,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
