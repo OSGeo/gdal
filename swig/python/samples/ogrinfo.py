@@ -317,7 +317,7 @@ def ReportOnLayer( poLayer, pszWHERE, poSpatialFilter, options ):
         
         print( "Feature Count: %d" % poLayer.GetFeatureCount() )
         
-        oExt = poLayer.GetExtent(True)
+        oExt = poLayer.GetExtent(True, can_return_null = True)
         if oExt is not None:
             print("Extent: (%f, %f) - (%f, %f)" % (oExt[0], oExt[1], oExt[2], oExt[3]))
 
