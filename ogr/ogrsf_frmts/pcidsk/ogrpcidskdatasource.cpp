@@ -127,6 +127,10 @@ int OGRPCIDSKDataSource::Open( const char * pszFilename, int bUpdateIn )
         {
             apoLayers.push_back( new OGRPCIDSKLayer( segobj, bUpdate ) );
         }
+
+        /* Check if this is a raster-only PCIDSK file */
+        if ( !bUpdate && apoLayers.size() == 0 && poFile->GetChannels() != 0 )
+            return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -145,10 +149,6 @@ int OGRPCIDSKDataSource::Open( const char * pszFilename, int bUpdateIn )
         return FALSE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      We presume that this is indeed intended to be a PCIDSK          */
-/*      datasource if over half the files were .csv files.              */
-/* -------------------------------------------------------------------- */
     return TRUE;
 }
 
