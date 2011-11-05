@@ -207,6 +207,14 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
 
         poLine = (OGRLineString *) poLines->getGeometryRef(iEdge);
 
+        panEdgeConsumed[iEdge] = TRUE;
+        nRemainingEdges--;
+
+        if (poLine->getNumPoints() < 2)
+        {
+            continue;
+        }
+
 /* -------------------------------------------------------------------- */
 /*      Start a new ring, copying in the current line directly          */
 /* -------------------------------------------------------------------- */
@@ -214,9 +222,6 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
         
         AddEdgeToRing( poRing, poLine, FALSE );
 
-        panEdgeConsumed[iEdge] = TRUE;
-        nRemainingEdges--;
-        
 /* ==================================================================== */
 /*      Loop adding edges to this ring until we make a whole pass       */
 /*      within finding anything to add.                                 */
@@ -245,7 +250,9 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
                     continue;
 
                 poLine = (OGRLineString *) poLines->getGeometryRef(iEdge);
-                
+                if (poLine->getNumPoints() < 2)
+                    continue;
+
                 if( CheckPoints(poLine,0,poRing,poRing->getNumPoints()-1,
                                 &dfBestDist) )
                 {
