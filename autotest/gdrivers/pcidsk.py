@@ -31,6 +31,7 @@
 import os
 import sys
 import gdal
+import ogr
 
 sys.path.append( '../pymod' )
 
@@ -231,7 +232,34 @@ def pcidsk_8():
                              options = ['INTERLEAVING=FILE'] )
 
     return tst.testCreate()
-    
+
+###############################################################################
+# Test that we cannot open a vector only pcidsk
+
+def pcidsk_9():
+
+    if gdaltest.pcidsk_new == 0:
+        return 'skip'
+
+    ogr_drv = ogr.GetDriverByName('PCIDSK')
+    if ogr_drv is None:
+        return 'skip'
+
+    ds = ogr_drv.CreateDataSource('/vsimem/pcidsk_9.pix')
+    ds.CreateLayer('foo')
+    ds = None
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.Open('/vsimem/pcidsk_9.pix')
+    gdal.PopErrorHandler()
+    if ds is not None:
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/pcidsk_9.pix')
+
+    return 'success'
+
 ###############################################################################
 # Check various items from a modern irvine.pix
 
@@ -291,6 +319,7 @@ gdaltest_list = [
     pcidsk_6,
     pcidsk_7,
     pcidsk_8,
+    pcidsk_9,
     pcidsk_online_1,
     pcidsk_cleanup ]
 
