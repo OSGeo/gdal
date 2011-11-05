@@ -214,39 +214,63 @@ int NGSGEOIDDataset::GetHeaderInfo( const GByte* pBuffer,
 
     memcpy(&dfSLAT, pBuffer, 8);
     if (*pbIsLittleEndian)
+    {
         CPL_LSBPTR64(&dfSLAT);
+    }
     else
+    {
         CPL_MSBPTR64(&dfSLAT);
+    }
     pBuffer += 8;
     memcpy(&dfWLON, pBuffer, 8);
     if (*pbIsLittleEndian)
+    {
         CPL_LSBPTR64(&dfWLON);
+    }
     else
+    {
         CPL_MSBPTR64(&dfWLON);
+    }
     pBuffer += 8;
     memcpy(&dfDLAT, pBuffer, 8);
     if (*pbIsLittleEndian)
+    {
         CPL_LSBPTR64(&dfDLAT);
+    }
     else
+    {
         CPL_MSBPTR64(&dfDLAT);
+    }
     pBuffer += 8;
     memcpy(&dfDLON, pBuffer, 8);
     if (*pbIsLittleEndian)
+    {
         CPL_LSBPTR64(&dfDLON);
+    }
     else
+    {
         CPL_MSBPTR64(&dfDLON);
+    }
     pBuffer += 8;
     memcpy(&nNLAT, pBuffer, 4);
     if (*pbIsLittleEndian)
+    {
         CPL_LSBPTR32(&nNLAT);
+    }
     else
+    {
         CPL_MSBPTR32(&nNLAT);
+    }
     pBuffer += 4;
     memcpy(&nNLON, pBuffer, 4);
     if (*pbIsLittleEndian)
+    {
         CPL_LSBPTR32(&nNLON);
+    }
     else
+    {
         CPL_MSBPTR32(&nNLON);
+    }
     pBuffer += 4;
 
     /*CPLDebug("NGSGEOID", "SLAT=%f, WLON=%f, DLAT=%f, DLON=%f, NLAT=%d, NLON=%d, IKIND=%d",
