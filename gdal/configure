@@ -20926,6 +20926,10 @@ if test "$HAVE_HDF5" != "no" ; then
 fi
 
 
+NETCDF_SETTING=
+NETCDF_ROOT=
+NETCDF_HAS_NC4=
+NETCDF_HAS_HDF4=
 
 
 # Check whether --with-netcdf was given.
@@ -20986,7 +20990,7 @@ fi
 
 
   if test "$NETCDF_SETTING" = "yes" ; then
-    LIBS="-lnetcdf $LIBS"
+    LIBS="$LIBS -lnetcdf"
     echo "using pre-installed libnetcdf."
   else
     echo "libnetcdf not found - netCDF support disabled"
@@ -21008,6 +21012,7 @@ else
 
   echo "using libnetcdf from $with_netcdf"
 fi
+
 
   if test "$NETCDF_SETTING" = "yes" ; then
 
@@ -21060,6 +21065,7 @@ $as_echo "ncdump and/or nc-config not found, skipping netcdf-4 tests" >&6; }
     fi
 fi
 
+
 NETCDF_SETTING=$NETCDF_SETTING
 
 NETCDF_ROOT=$NETCDF_ROOT
@@ -21068,9 +21074,11 @@ NETCDF_HAS_NC4=$NETCDF_HAS_NC4
 
 NETCDF_HAS_HDF4=$NETCDF_HAS_HDF4
 
+
 if test "$NETCDF_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="netcdf $OPT_GDAL_FORMATS"
 fi
+
 
 
 
@@ -25757,6 +25765,7 @@ PAM_SETTING=$PAM_SETTING
 
 
 
+
 # Check whether --with-poppler was given.
 if test "${with_poppler+set}" = set; then :
   withval=$with_poppler;
@@ -29487,9 +29496,6 @@ echo "  CFITSIO support:           ${FITS_SETTING}"
 echo "  PCRaster support:          ${PCRASTER_SETTING}"
 
 
-echo "  NetCDF support:            ${NETCDF_SETTING}"
-
-
 echo "  LIBPNG support:            ${PNG_SETTING}"
 
 
@@ -29515,6 +29521,9 @@ echo "  HDF4 support:              ${HAVE_HDF4}"
 
 
 echo "  HDF5 support:              ${HAVE_HDF5}"
+
+
+echo "  NetCDF support:            ${NETCDF_SETTING}"
 
 
 echo "  Kakadu support:            ${HAVE_KAKADU}"

@@ -1352,7 +1352,7 @@ elif test "$with_netcdf" = "yes" -o "$with_netcdf" = "" ; then
   AC_CHECK_LIB([netcdf], [nc_open], [NETCDF_SETTING=yes], [NETCDF_SETTING=no],)
 
   if test "$NETCDF_SETTING" = "yes" ; then   
-    LIBS="-lnetcdf $LIBS"
+    LIBS="$LIBS -lnetcdf"
     echo "using pre-installed libnetcdf."
   else
     echo "libnetcdf not found - netCDF support disabled"
