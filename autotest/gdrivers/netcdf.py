@@ -38,7 +38,6 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 import test_cli_utilities
-from multiprocessing import Process
 
 ###############################################################################
 # Netcdf Functions
@@ -103,6 +102,8 @@ def netcdf_test_copy( ifile, band, checksum, ofile, opts=[], driver='NETCDF' ):
 #test file copy, optional timeout arg
 def netcdf_test_copy_timeout( ifile, band, checksum, ofile, opts=[], driver='NETCDF', timeout=None ):
 
+    from multiprocessing import Process
+
     result = 'success'
 
     drv = gdal.GetDriverByName( driver )
@@ -136,6 +137,12 @@ def netcdf_test_copy_timeout( ifile, band, checksum, ofile, opts=[], driver='NET
 ###############################################################################
 #check support for DEFLATE compression, requires HDF5 and zlib
 def netcdf_test_deflate( ifile, checksum, zlevel=1, timeout=None ):
+
+    try:
+        from multiprocessing import Process
+    except:
+        print('from multiprocessing import Process failed')
+        return 'skip'
 
     if gdaltest.netcdf_drv is None:
         return 'skip'
