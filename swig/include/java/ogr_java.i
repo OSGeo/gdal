@@ -129,8 +129,8 @@ import org.gdal.osr.SpatialReference;
       double[] argout = new double[4];
       try
       {
-          GetExtent(argout, (force) ? 1 : 0);
-          return argout;
+          int ret = GetExtent(argout, (force) ? 1 : 0);
+          return (ret == 0) ? argout : null;
       }
       catch(RuntimeException e)
       {
