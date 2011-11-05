@@ -255,26 +255,30 @@ EXTERNAL.  This writes a GML application schema file to a corresponding .xsd fil
 file, but this is experimental and almost certainly not valid XML.
 OFF disables schema generation (and is implicit if XSISCHEMAURI is used).<p>
 
-<li> <b>FORMAT</b>: (OGR >= 1.8.0) This can be set to <i>GML3</i> in order
-to write GML files that follow GML3 SF-0 profile. Starting with OGR 1.9.0,
-this can also be set to <i>GML3Deegree</i>, in order to produce a GML 3.1.1 .XSD schema,
+<li> <b>FORMAT</b>: (OGR &gt;= 1.8.0) This can be set to :
+<ul>
+<li><i>GML3</i> in order to write GML files that follow GML 3.1.1 SF-0 profile.</li>
+<li><i>GML3Deegree</i> (OGR &gt;= 1.9.0) in order to produce a GML 3.1.1 .XSD schema,
 with a few variations with respect to what is recommanded by GML3 SF-0 profile,
-but that will be better accepted by some software (such as Deegree 3). If not specified, GML2 will be used.<p>
+but that will be better accepted by some software (such as Deegree 3).</li>
+<li><i>GML3.2</i>(OGR &gt;= 1.9.0) in order to write GML files that follow GML 3.2.1 SF-0 profile.</li>
+</ul><br>
+If not specified, GML2 will be used.<p>
 
-<li> <b>GML3_LONGSRS</b>=YES/NO. (OGR >= 1.8.0, only valid when FORMAT=GML3) Default to YES. If YES, SRS with EPSG authority will
+<li> <b>GML3_LONGSRS</b>=YES/NO. (OGR &gt;= 1.8.0, only valid when FORMAT=GML3/GML3Degree/GML3.2) Default to YES. If YES, SRS with EPSG authority will
 be written with the "urn:ogc:def:crs:EPSG::" prefix.
 In the case, if the SRS is a geographic SRS without explicit AXIS order, but that the same SRS authority code
 imported with ImportFromEPSGA() should be treated as lat/long, then the function will take care of coordinate order swapping.
 If set to NO, SRS with EPSG authority will be written with the "EPSG:" prefix, even if they are in lat/long order.<p>
 
-<li> <b>SPACE_INDENTATION</b>=YES/NO. (OGR >= 1.8.0) Default to YES. If YES, the output will be indented with spaces
+<li> <b>SPACE_INDENTATION</b>=YES/NO. (OGR &gt;= 1.8.0) Default to YES. If YES, the output will be indented with spaces
 for more readability, but at the expense of file size.<p>
 
 </ul>
 
 <h2>VSI Virtual File System API support</h2>
 
-(Some features below might require OGR >= 1.9.0)<p>
+(Some features below might require OGR &gt;= 1.9.0)<p>
 
 The driver supports reading and writing to files managed by VSI Virtual File System API, which include
 "regular" files, as well as files in the /vsizip/ (read-write) , /vsigzip/ (read-write) , /vsicurl/ (read-only) domains.<p>

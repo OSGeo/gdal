@@ -122,6 +122,7 @@ class OGRGMLDataSource : public OGRDataSource
     int                 nSchemaInsertLocation;
     int                 bIsOutputGML3;
     int                 bIsOutputGML3Deegree; /* if TRUE, then bIsOutputGML3 is also TRUE */
+    int                 bIsOutputGML32; /* if TRUE, then bIsOutputGML3 is also TRUE */
     int                 bIsLongSRSRequired;
     int                 bWriteSpaceIndentation;
 
@@ -174,6 +175,7 @@ class OGRGMLDataSource : public OGRDataSource
 
     int                 IsGML3Output() const { return bIsOutputGML3; }
     int                 IsGML3DeegreeOutput() const { return bIsOutputGML3Deegree; }
+    int                 IsGML32Output() const { return bIsOutputGML32; }
     int                 IsLongSRSRequired() const { return bIsLongSRSRequired; }
     int                 WriteSpaceIndentation() const { return bWriteSpaceIndentation; }
     const char         *GetGlobalSRSName();
