@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <vector>
 #include "ogr_geometry.h"
 #include "ogr_api.h"
 #include "cpl_conv.h"
@@ -178,7 +179,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
 
     int         bSuccess = TRUE;
     OGRGeometryCollection *poLines = (OGRGeometryCollection *) hLines;
-    OGRPolygon  *poPolygon = new OGRPolygon();
+    std::vector<OGRLinearRing*> aoRings;
 
     (void) bBestEffort;
 
@@ -288,7 +289,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
             CPLDebug( "OGR", 
                       "Failed to close ring %d.\n"
                       "End Points are: (%.8f,%.7f) and (%.7f,%.7f)\n",
-                      poPolygon->getNumInteriorRings()+1,
+                      (int)aoRings.size(),
                       poRing->getX(0), poRing->getY(0), 
                       poRing->getX(poRing->getNumPoints()-1), 
                       poRing->getY(poRing->getNumPoints()-1) );
@@ -307,7 +308,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
                               poRing->getZ(0));
         }
 
-        poPolygon->addRingDirectly( poRing );
+        aoRings.push_back(poRing);
     } /* next ring */
 
 /* -------------------------------------------------------------------- */
@@ -318,40 +319,33 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
 /* -------------------------------------------------------------------- */
 /*      Identify exterior ring - it will be the largest.  #3610         */
 /* -------------------------------------------------------------------- */
-    double maxarea, tarea;
-    int maxring = -1, rn, rcount;
+    double maxarea = 0.0;
+    int maxring = -1, rn;
     OGREnvelope tenv;
-    OGRLinearRing *tring;
 
-    tring = poPolygon->getExteriorRing();
-    if (tring) tring->getEnvelope(&tenv);
-    maxarea = (tenv.MaxX - tenv.MinX) * (tenv.MaxY - tenv.MinY);
-
-    rcount = poPolygon->getNumInteriorRings();
-    for (rn = 0; rn < rcount; ++rn) {
-        tring = poPolygon->getInteriorRing(rn);
-        tring->getEnvelope(&tenv);
-        tarea = (tenv.MaxX - tenv.MinX) * (tenv.MaxY - tenv.MinY);
-        if (tarea > maxarea) {
+    for (rn = 0; rn < (int)aoRings.size(); ++rn)
+    {
+        aoRings[rn]->getEnvelope(&tenv);
+        double tarea = (tenv.MaxX - tenv.MinX) * (tenv.MaxY - tenv.MinY);
+        if (tarea > maxarea)
+        {
             maxarea = tarea;
             maxring = rn;
         }
     }
 
-    if (maxring != -1) {
-        OGRPolygon  *poNewPoly = new OGRPolygon();
+    OGRPolygon  *poPolygon = new OGRPolygon();
 
-        poNewPoly->addRing(poPolygon->getInteriorRing(maxring));
-        poNewPoly->addRing(poPolygon->getExteriorRing());
-        for (rn = 0; rn < rcount; ++rn) {
+    if (maxring != -1)
+    {
+        poPolygon->addRingDirectly(aoRings[maxring]);
+        for (rn = 0; rn < (int)aoRings.size(); ++rn)
+        {
             if (rn == maxring) continue;
-            poNewPoly->addRing(poPolygon->getInteriorRing(rn));
+            poPolygon->addRingDirectly(aoRings[rn]);
         }
+    }
 
-        delete poPolygon;
-        poPolygon = poNewPoly;
-    } 
-      
     if( peErr != NULL )
     {
         if( bSuccess )

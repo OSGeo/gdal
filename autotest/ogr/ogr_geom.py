@@ -391,7 +391,48 @@ def ogr_geom_build_from_edges_3():
         pass
 
     return 'success'
-    
+
+###############################################################################
+# Test OGRBuildPolygonFromEdges() and identify exterior ring (#3610)
+
+def ogr_geom_build_from_edges_4():
+
+    if gdaltest.have_geos == 0:
+        return 'skip'
+
+    link_coll = ogr.Geometry( type = ogr.wkbGeometryCollection )
+
+    wkt_array = [
+      'LINESTRING (1 1,1 2)',
+      'LINESTRING (1 2,2 2)',
+      'LINESTRING (2 2,2 1)',
+      'LINESTRING (2 1,1 1)',
+      'LINESTRING (0 0,0 10)',
+      'LINESTRING (0 10,10 10)',
+      'LINESTRING (10 10,10 0)',
+      'LINESTRING (10 0,0 0)'
+    ]
+
+    for wkt in wkt_array:
+        geom = ogr.CreateGeometryFromWkt( wkt )
+        #print "geom is",geom
+        link_coll.AddGeometry( geom )
+        geom.Destroy()
+
+    try:
+        poly = ogr.BuildPolygonFromEdges( link_coll )
+        if poly is None:
+            return 'fail'
+        wkt = poly.ExportToWkt()
+        if wkt != 'POLYGON ((0 0,0 10,10 10,10 0,0 0),(1 1,1 2,2 2,2 1,1 1))':
+            print(wkt)
+            return 'fail'
+        poly.Destroy()
+    except:
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Test GetArea() on empty linear ring (#2792)
 
@@ -866,6 +907,7 @@ gdaltest_list = [
     ogr_geom_build_from_edges_1,
     ogr_geom_build_from_edges_2,
     ogr_geom_build_from_edges_3,
+    ogr_geom_build_from_edges_4,
     ogr_geom_area_empty_linearring,
     ogr_geom_transform_to,
     ogr_geom_transform,
