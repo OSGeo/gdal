@@ -1733,6 +1733,13 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
 
+        /* Check if this is a vector-only PCIDSK file */
+        if( poFile->GetChannels() == 0 &&
+            poFile->GetSegment( PCIDSK::SEG_VEC, "" ) != NULL )
+        {
+            return NULL;
+        }
+
         return LLOpen( poOpenInfo->pszFilename, poFile, poOpenInfo->eAccess );
     }
 /* -------------------------------------------------------------------- */
