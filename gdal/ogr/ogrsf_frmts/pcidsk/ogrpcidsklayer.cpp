@@ -177,7 +177,8 @@ OGRPCIDSKLayer::~OGRPCIDSKLayer()
 
     poFeatureDefn->Release();
 
-    delete poSRS;
+    if (poSRS)
+        poSRS->Release();
 }
 
 /************************************************************************/
@@ -326,10 +327,13 @@ OGRFeature *OGRPCIDSKLayer::GetFeature( long nFID )
         {
             if( aoVertices.size() == 1 )
             {
-                poFeature->SetGeometryDirectly(
-                    new OGRPoint( aoVertices[0].x, 
+                OGRPoint* poPoint =
+                    new OGRPoint( aoVertices[0].x,
                                   aoVertices[0].y, 
-                                  aoVertices[0].z ) );
+                                  aoVertices[0].z );
+                if (poSRS)
+                    poPoint->assignSpatialReference(poSRS);
+                poFeature->SetGeometryDirectly(poPoint);
             }
             else
             {
@@ -357,6 +361,8 @@ OGRFeature *OGRPCIDSKLayer::GetFeature( long nFID )
                                     aoVertices[i].x, 
                                     aoVertices[i].y, 
                                     aoVertices[i].z );
+                if (poSRS)
+                    poLS->assignSpatialReference(poSRS);
 
                 poFeature->SetGeometryDirectly( poLS );
             }
@@ -408,6 +414,9 @@ OGRFeature *OGRPCIDSKLayer::GetFeature( long nFID )
 
                 poPoly->addRingDirectly( poRing );
             }
+
+            if (poSRS)
+                poPoly->assignSpatialReference(poSRS);
 
             poFeature->SetGeometryDirectly( poPoly );
         }    
