@@ -1737,6 +1737,7 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
         if( poFile->GetChannels() == 0 &&
             poFile->GetSegment( PCIDSK::SEG_VEC, "" ) != NULL )
         {
+            delete poFile;
             return NULL;
         }
 
