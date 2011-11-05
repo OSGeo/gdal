@@ -62,6 +62,7 @@ OGRCouchDBTableLayer::OGRCouchDBTableLayer(OGRCouchDBDataSource* poDS,
     bMustRunSpatialFilter = FALSE;
     bServerSideSpatialFilteringWorks = TRUE;
     bHasOGRSpatial = -1;
+    bHasGeocouchUtilsMinimalSpatialView = FALSE;
 
     bServerSideAttributeFilteringWorks = TRUE;
     bHasInstalledAttributeFilter = FALSE;
@@ -176,12 +177,30 @@ int OGRCouchDBTableLayer::RunSpatialFilterQueryIfNecessary()
             json_object_is_type(poAnswerObj, json_type_object) &&
             json_object_object_get(poAnswerObj, "spatial") != NULL);
         json_object_put(poAnswerObj);
+
         if (!bHasOGRSpatial)
         {
-            CPLDebug("CouchDB",
-                        "Geocouch not working --> client-side spatial filtering");
-            bServerSideSpatialFilteringWorks = FALSE;
-            return FALSE;
+            /* Test if we have the 'minimal' spatial view provided by https://github.com/maxogden/geocouch-utils */
+            osURI = "/";
+            osURI += osEscapedName;
+            osURI += "/_design/geo";
+
+            json_object* poSpatialObj;
+            poAnswerObj = poDS->GET(osURI);
+            bHasGeocouchUtilsMinimalSpatialView = (poAnswerObj != NULL &&
+                json_object_is_type(poAnswerObj, json_type_object) &&
+                (poSpatialObj = json_object_object_get(poAnswerObj, "spatial")) != NULL &&
+                json_object_is_type(poSpatialObj, json_type_object) &&
+                json_object_object_get(poSpatialObj, "minimal") != NULL);
+            json_object_put(poAnswerObj);
+
+            if (!bHasGeocouchUtilsMinimalSpatialView)
+            {
+                CPLDebug("CouchDB",
+                            "Geocouch not working --> client-side spatial filtering");
+                bServerSideSpatialFilteringWorks = FALSE;
+                return FALSE;
+            }
         }
     }
 
@@ -190,6 +209,8 @@ int OGRCouchDBTableLayer::RunSpatialFilterQueryIfNecessary()
 
     if (bHasOGRSpatial)
         pszSpatialFilter = "_design/ogr_spatial/_spatial/spatial";
+    else if (bHasGeocouchUtilsMinimalSpatialView)
+        pszSpatialFilter = "_design/geo/_spatial/minimal";
 
     CPLString osURI("/");
     osURI += osEscapedName;

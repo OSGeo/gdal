@@ -125,6 +125,7 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     virtual int               FetchNextRows();
 
     int                       bHasOGRSpatial;
+    int                       bHasGeocouchUtilsMinimalSpatialView;
     int                       bServerSideSpatialFilteringWorks;
     int                       bMustRunSpatialFilter;
     std::vector<CPLString>    aosIdsToFetch;
