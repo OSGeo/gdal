@@ -1369,7 +1369,7 @@ class Layer(_object):
 
     def GetExtent(self, *args, **kwargs):
         """
-        GetExtent(self, int force = 1) -> OGRErr
+        GetExtent(self, int force = 1, int can_return_null = 0)
 
         OGRErr OGR_L_GetExtent(OGRLayerH
         hLayer, OGREnvelope *psExtent, int bForce)

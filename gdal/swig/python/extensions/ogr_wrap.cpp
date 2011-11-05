@@ -3442,26 +3442,13 @@ SWIGINTERN OGRFeatureDefnShadow *OGRLayerShadow_GetLayerDefn(OGRLayerShadow *sel
 SWIGINTERN int OGRLayerShadow_GetFeatureCount(OGRLayerShadow *self,int force=1){
     return OGR_L_GetFeatureCount(self, force);
   }
-
-#define t_output_helper SWIG_Python_AppendOutput
-
-
-static PyObject *
-CreateTupleFromDoubleArray( double *first, unsigned int size ) {
-  PyObject *out = PyTuple_New( size );
-  for( unsigned int i=0; i<size; i++ ) {
-    PyObject *val = PyFloat_FromDouble( *first );
-    ++first;
-    PyTuple_SetItem( out, i, val );
-  }
-  return out;
-}
-
-SWIGINTERN OGRErr OGRLayerShadow_GetExtent(OGRLayerShadow *self,double argout[4],int force=1){
-
-
-
-    return OGR_L_GetExtent(self, (OGREnvelope*)argout, force);
+SWIGINTERN void OGRLayerShadow_GetExtent(OGRLayerShadow *self,double argout[4],int *isvalid=NULL,int force=1,int can_return_null=0){
+    OGRErr eErr = OGR_L_GetExtent(self, (OGREnvelope*)argout, force);
+    if (can_return_null)
+        *isvalid = (eErr == OGRERR_NONE);
+    else
+        *isvalid = TRUE;
+    return;
   }
 SWIGINTERN bool OGRLayerShadow_TestCapability(OGRLayerShadow *self,char const *cap){
     return (OGR_L_TestCapability(self, cap) > 0);
@@ -3965,6 +3952,9 @@ SWIGINTERN OGRGeometryShadow *new_OGRGeometryShadow(OGRwkbGeometryType type=wkbU
         return NULL;}
 
   }
+
+#define t_output_helper SWIG_Python_AppendOutput
+
 SWIGINTERN OGRErr OGRGeometryShadow_ExportToWkt(OGRGeometryShadow *self,char **argout){
     return OGR_G_ExportToWkt(self, argout);
   }
@@ -4047,6 +4037,18 @@ SWIGINTERN double OGRGeometryShadow_GetY(OGRGeometryShadow *self,int point=0){
 SWIGINTERN double OGRGeometryShadow_GetZ(OGRGeometryShadow *self,int point=0){
     return OGR_G_GetZ(self, point);
   }
+
+static PyObject *
+CreateTupleFromDoubleArray( double *first, unsigned int size ) {
+  PyObject *out = PyTuple_New( size );
+  for( unsigned int i=0; i<size; i++ ) {
+    PyObject *val = PyFloat_FromDouble( *first );
+    ++first;
+    PyTuple_SetItem( out, i, val );
+  }
+  return out;
+}
+
 SWIGINTERN void OGRGeometryShadow_GetPoint(OGRGeometryShadow *self,int iPoint=0,double argout[3]=NULL){
 
     OGR_G_GetPoint( self, iPoint, argout+0, argout+1, argout+2 );
@@ -6532,41 +6534,54 @@ SWIGINTERN PyObject *_wrap_Layer_GetExtent(PyObject *SWIGUNUSEDPARM(self), PyObj
   PyObject *resultobj = 0;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   double *arg2 ;
-  int arg3 = (int) 1 ;
+  int *arg3 = (int *) NULL ;
+  int arg4 = (int) 1 ;
+  int arg5 = (int) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  double argout2[4] ;
-  int val3 ;
-  int ecode3 = 0 ;
+  double argout2[6] ;
+  int isvalid2 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  int val5 ;
+  int ecode5 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
   char *  kwnames[] = {
-    (char *) "self",(char *) "force", NULL 
+    (char *) "self",(char *) "force",(char *) "can_return_null", NULL 
   };
-  OGRErr result;
   
   {
-    /* %typemap(in,numinputs=0) (double argout2[ANY]) */
+    /* %typemap(in) (double argout2[4], int* isvalid2) */
     arg2 = argout2;
+    arg3 = &isvalid2;
   }
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|O:Layer_GetExtent",kwnames,&obj0,&obj1)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"O|OO:Layer_GetExtent",kwnames,&obj0,&obj1,&obj2)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetExtent" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
   if (obj1) {
-    ecode3 = SWIG_AsVal_int(obj1, &val3);
-    if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Layer_GetExtent" "', argument " "3"" of type '" "int""'");
+    ecode4 = SWIG_AsVal_int(obj1, &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Layer_GetExtent" "', argument " "4"" of type '" "int""'");
     } 
-    arg3 = static_cast< int >(val3);
+    arg4 = static_cast< int >(val4);
+  }
+  if (obj2) {
+    ecode5 = SWIG_AsVal_int(obj2, &val5);
+    if (!SWIG_IsOK(ecode5)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "Layer_GetExtent" "', argument " "5"" of type '" "int""'");
+    } 
+    arg5 = static_cast< int >(val5);
   }
   {
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_GetExtent(arg1,arg2,arg3);
+    OGRLayerShadow_GetExtent(arg1,arg2,arg3,arg4,arg5);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -6574,27 +6589,18 @@ SWIGINTERN PyObject *_wrap_Layer_GetExtent(PyObject *SWIGUNUSEDPARM(self), PyObj
       }
     }
   }
+  resultobj = SWIG_Py_Void();
   {
-    /* %typemap(out) OGRErr */
-    if ( result != 0 && bUseExceptions) {
-      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
-      SWIG_fail;
+    /* %typemap(argout) (double argout[4], int* isvalid)  */
+    PyObject *r;
+    if ( !*arg3 ) {
+      Py_INCREF(Py_None);
+      r = Py_None;
     }
-  }
-  {
-    /* %typemap(argout) (double argout[ANY]) */
-    PyObject *out = CreateTupleFromDoubleArray( arg2, 4 );
-    resultobj = t_output_helper(resultobj,out);
-  }
-  {
-    /* %typemap(ret) OGRErr */
-    if (resultobj == Py_None ) {
-      Py_DECREF(resultobj);
-      resultobj = 0;
+    else {
+      r = CreateTupleFromDoubleArray(arg2, 4);
     }
-    if (resultobj == 0) {
-      resultobj = PyInt_FromLong( result );
-    }
+    resultobj = t_output_helper(resultobj,r);
   }
   return resultobj;
 fail:
@@ -17025,7 +17031,7 @@ static PyMethodDef SwigMethods[] = {
 		"feature count, -1 if count not known. \n"
 		""},
 	 { (char *)"Layer_GetExtent", (PyCFunction) _wrap_Layer_GetExtent, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
-		"Layer_GetExtent(Layer self, int force = 1) -> OGRErr\n"
+		"Layer_GetExtent(Layer self, int force = 1, int can_return_null = 0)\n"
 		"\n"
 		"OGRErr OGR_L_GetExtent(OGRLayerH\n"
 		"hLayer, OGREnvelope *psExtent, int bForce)\n"
