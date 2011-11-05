@@ -403,7 +403,9 @@ def ogr_geom_build_from_edges_4():
     link_coll = ogr.Geometry( type = ogr.wkbGeometryCollection )
 
     wkt_array = [
+      'LINESTRING EMPTY',
       'LINESTRING (1 1,1 2)',
+      'LINESTRING EMPTY',
       'LINESTRING (1 2,2 2)',
       'LINESTRING (2 2,2 1)',
       'LINESTRING (2 1,1 1)',
