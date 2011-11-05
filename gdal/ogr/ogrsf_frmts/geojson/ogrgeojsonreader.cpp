@@ -40,7 +40,8 @@
 OGRGeoJSONReader::OGRGeoJSONReader()
     : poGJObject_( NULL ), poLayer_( NULL ),
         bGeometryPreserve_( true ),
-        bAttributesSkip_( false )
+        bAttributesSkip_( false ),
+        bFlattenGeocouchSpatiallistFormat (-1), bFoundId (false), bFoundRev(false), bFoundTypeFeature(false), bIsGeocouchSpatiallistFormat(false)
 {
     // Take a deep breath and get to work.
 }
@@ -425,6 +426,16 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( json_object* poObj )
     if( NULL != poObjProps &&
         json_object_get_type(poObjProps) == json_type_object )
     {
+        if (bIsGeocouchSpatiallistFormat)
+        {
+            poObjProps = json_object_object_get(poObjProps, "properties");
+            if( NULL == poObjProps ||
+                json_object_get_type(poObjProps) != json_type_object )
+            {
+                return true;
+            }
+        }
+
         json_object_iter it;
         it.key = NULL;
         it.val = NULL;
@@ -434,6 +445,30 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( json_object* poObj )
             int nFldIndex = poDefn->GetFieldIndex( it.key );
             if( -1 == nFldIndex )
             {
+                /* Detect the special kind of GeoJSON output by a spatiallist of GeoCouch */
+                /* such as http://gd.iriscouch.com/cphosm/_design/geo/_rewrite/data?bbox=12.53%2C55.73%2C12.54%2C55.73 */
+                if (strcmp(it.key, "_id") == 0)
+                    bFoundId = true;
+                else if (bFoundId && strcmp(it.key, "_rev") == 0)
+                    bFoundRev = true;
+                else if (bFoundRev && strcmp(it.key, "type") == 0 &&
+                         it.val != NULL && json_object_get_type(it.val) == json_type_string &&
+                         strcmp(json_object_get_string(it.val), "Feature") == 0)
+                    bFoundTypeFeature = true;
+                else if (bFoundTypeFeature && strcmp(it.key, "properties") == 0 &&
+                         it.val != NULL && json_object_get_type(it.val) == json_type_object)
+                {
+                    if (bFlattenGeocouchSpatiallistFormat < 0)
+                        bFlattenGeocouchSpatiallistFormat = CSLTestBoolean(
+                            CPLGetConfigOption("GEOJSON_FLATTEN_GEOCOUCH", "TRUE"));
+                    if (bFlattenGeocouchSpatiallistFormat)
+                    {
+                        poDefn->DeleteFieldDefn(poDefn->GetFieldIndex("type"));
+                        bIsGeocouchSpatiallistFormat = true;
+                        return GenerateFeatureDefn(poObj);
+                    }
+                }
+
                 OGRFieldDefn fldDefn( it.key,
                     GeoJSONPropertyToFieldType( it.val ) );
                 poDefn->AddFieldDefn( &fldDefn );
@@ -446,7 +481,7 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( json_object* poObj )
                 {
                     OGRFieldType eNewType = GeoJSONPropertyToFieldType( it.val );
                     if( eNewType == OFTReal )
-                        poFDefn->SetType(OFTReal);
+                        poFDefn->SetType(eNewType);
                 }
             }
         }
@@ -558,6 +593,24 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( json_object* poObj )
     if( !bAttributesSkip_ && NULL != poObjProps &&
         json_object_get_type(poObjProps) == json_type_object )
     {
+        if (bIsGeocouchSpatiallistFormat)
+        {
+            json_object* poId = json_object_object_get(poObjProps, "_id");
+            if (poId != NULL && json_object_get_type(poId) == json_type_string)
+                poFeature->SetField( "_id", json_object_get_string(poId) );
+
+            json_object* poRev = json_object_object_get(poObjProps, "_rev");
+            if (poRev != NULL && json_object_get_type(poRev) == json_type_string)
+                poFeature->SetField( "_rev", json_object_get_string(poRev) );
+
+            poObjProps = json_object_object_get(poObjProps, "properties");
+            if( NULL == poObjProps ||
+                json_object_get_type(poObjProps) != json_type_object )
+            {
+                return poFeature;
+            }
+        }
+
         int nField = -1;
         OGRFieldDefn* poFieldDefn = NULL;
         json_object_iter it;

@@ -915,6 +915,86 @@ def ogr_geojson_20():
     return 'success' 
 
 ###############################################################################
+# Test reading outpout of geocouch spatiallist
+
+def ogr_geojson_21():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
+{"type": "Feature",
+ "geometry": {"type":"Point","coordinates":[1,2]},
+ "properties": {"_id":"aid", "_rev":"arev", "type":"Feature",
+                "properties":{"intvalue" : 2, "floatvalue" : 3.2, "strvalue" : "foo"}}}]}""")
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('OGRGeoJSON')
+
+    feature = lyr.GetNextFeature()
+    ref_geom = ogr.CreateGeometryFromWkt('POINT (1 2)')
+    if feature.GetFieldAsString("_id") != 'aid' or \
+       feature.GetFieldAsString("_rev") != 'arev' or \
+       feature.GetFieldAsInteger("intvalue") != 2 or \
+       ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+        feature.DumpReadable()
+        return 'fail'
+
+    lyr = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Same as ogr_geojson_21 with several features
+
+def ogr_geojson_22():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
+{"type": "Feature",
+ "geometry": {"type":"Point","coordinates":[1,2]},
+ "properties": {"_id":"aid", "_rev":"arev", "type":"Feature",
+                "properties":{"intvalue" : 2, "floatvalue" : 3.2, "strvalue" : "foo"}}},
+{"type": "Feature",
+ "geometry": {"type":"Point","coordinates":[3,4]},
+ "properties": {"_id":"aid2", "_rev":"arev2", "type":"Feature",
+                "properties":{"intvalue" : 3.5, "str2value" : "bar"}}}]}""")
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('OGRGeoJSON')
+
+    feature = lyr.GetNextFeature()
+    ref_geom = ogr.CreateGeometryFromWkt('POINT (1 2)')
+    if feature.GetFieldAsString("_id") != 'aid' or \
+       feature.GetFieldAsString("_rev") != 'arev' or \
+       feature.GetFieldAsDouble("intvalue") != 2 or \
+       ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+        feature.DumpReadable()
+        return 'fail'
+
+    feature = lyr.GetNextFeature()
+    ref_geom = ogr.CreateGeometryFromWkt('POINT (3 4)')
+    if feature.GetFieldAsString("_id") != 'aid2' or \
+       feature.GetFieldAsString("_rev") != 'arev2' or \
+       feature.GetFieldAsDouble("intvalue") != 3.5 or \
+       feature.GetFieldAsString("str2value") != 'bar' or \
+       ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+        feature.DumpReadable()
+        return 'fail'
+
+    lyr = None
+    ds = None
+
+    return 'success'
+
+###############################################################################
 
 def ogr_geojson_cleanup():
 
@@ -966,6 +1046,8 @@ gdaltest_list = [
     ogr_geojson_18,
     ogr_geojson_19,
     ogr_geojson_20,
+    ogr_geojson_21,
+    ogr_geojson_22,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':

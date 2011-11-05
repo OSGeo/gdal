@@ -103,6 +103,9 @@ private:
     bool bGeometryPreserve_;
     bool bAttributesSkip_;
 
+    int bFlattenGeocouchSpatiallistFormat;
+    bool bFoundId, bFoundRev, bFoundTypeFeature, bIsGeocouchSpatiallistFormat;
+
     //
     // Copy operations not supported.
     //
