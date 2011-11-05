@@ -844,7 +844,10 @@ def ogr_gml_21(format = 'GML3'):
 
     # Test that .gml and .xsd are identical to what is expected
     f1 = open('tmp/gml_21.gml', 'rt')
-    f2 = open('data/expected_gml_21.gml', 'rt')
+    if format == 'GML3.2':
+        f2 = open('data/expected_gml_gml32.gml', 'rt')
+    else:
+        f2 = open('data/expected_gml_21.gml', 'rt')
     line1 = f1.readline()
     line2 = f2.readline()
     while line1 != '':
@@ -862,6 +865,8 @@ def ogr_gml_21(format = 'GML3'):
     f1 = open('tmp/gml_21.xsd', 'rt')
     if format == 'GML3':
         f2 = open('data/expected_gml_21.xsd', 'rt')
+    elif format == 'GML3.2':
+        f2 = open('data/expected_gml_gml32.xsd', 'rt')
     else:
         f2 = open('data/expected_gml_21_deegree3.xsd', 'rt')
     line1 = f1.readline()
@@ -882,6 +887,9 @@ def ogr_gml_21(format = 'GML3'):
 
 def ogr_gml_21_deegree3():
     return ogr_gml_21('GML3Deegree')
+
+def ogr_gml_21_gml32():
+    return ogr_gml_21('GML3.2')
 
 ###############################################################################
 # Read a OpenLS DetermineRouteResponse document
@@ -1467,6 +1475,7 @@ gdaltest_list = [
     ogr_gml_20,
     ogr_gml_21,
     ogr_gml_21_deegree3,
+    ogr_gml_21_gml32,
     ogr_gml_22,
     ogr_gml_23,
     ogr_gml_24,
