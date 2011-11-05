@@ -1719,10 +1719,12 @@ void ECWDataset::ECW2WKTProjection()
     m_osUnitsCode = osUnits;
     if( oSRS.importFromERM( psFileInfo->szProjection, 
                             psFileInfo->szDatum, 
-                            osUnits ) != OGRERR_NONE )
-        return;
+                            osUnits ) == OGRERR_NONE )
+    {
+        oSRS.exportToWkt( &pszProjection );
+    }
 
-    oSRS.exportToWkt( &pszProjection );
+    CPLErrorReset(); /* see #4187 */
 }
 
 /************************************************************************/
