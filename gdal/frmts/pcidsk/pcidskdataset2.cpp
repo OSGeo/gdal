@@ -1589,10 +1589,13 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s", ex.what() );
+            CPLFree( panNewOverviewList );
             return CE_Failure;
         }
     }
 
+    CPLFree( panNewOverviewList );
+    panNewOverviewList = NULL;
 
     int iBand;
     for( iBand = 0; iBand < nListBands; iBand++ )
@@ -1654,6 +1657,8 @@ CPLErr PCIDSK2Dataset::IBuildOverviews( const char *pszResampling,
                                                         true );
         }
     }
+
+    CPLFree(papoOverviewBands);
 
     return eErr;
 }
