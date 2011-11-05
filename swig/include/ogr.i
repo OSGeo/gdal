@@ -632,6 +632,16 @@ public:
   OGRErr GetExtent(OGREnvelope* extent, int force=1) {
     return OGR_L_GetExtent(self, extent, force);
   }
+#elif defined(SWIGPYTHON)
+  %feature( "kwargs" ) GetExtent;
+  void GetExtent(double argout[4], int* isvalid = NULL, int force = 1, int can_return_null = 0 ) {
+    OGRErr eErr = OGR_L_GetExtent(self, (OGREnvelope*)argout, force);
+    if (can_return_null)
+        *isvalid = (eErr == OGRERR_NONE);
+    else
+        *isvalid = TRUE;
+    return;
+  }
 #else
 #ifndef SWIGJAVA
   %feature( "kwargs" ) GetExtent;
