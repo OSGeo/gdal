@@ -45,6 +45,7 @@ import gdal
 def ogr_rfc35_sqlite_1():
 
     gdaltest.rfc35_sqlite_ds = None
+    gdaltest.rfc35_sqlite_ds_name = None
     try:
         sqlite_dr = ogr.GetDriverByName( 'SQLite' )
         if sqlite_dr is None:
@@ -62,7 +63,13 @@ def ogr_rfc35_sqlite_1():
     # w.r.t system/OS crashes, unless you know what you are doing.
     gdal.SetConfigOption('OGR_SQLITE_SYNCHRONOUS', 'OFF')
 
-    gdaltest.rfc35_sqlite_ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/rfc35_test.sqlite')
+    gdaltest.rfc35_sqlite_ds_name = '/vsimem/rfc35_test.sqlite'
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    gdaltest.rfc35_sqlite_ds = ogr.GetDriverByName('SQLite').CreateDataSource(gdaltest.rfc35_sqlite_ds_name)
+    gdal.PopErrorHandler()
+    if gdaltest.rfc35_sqlite_ds is None:
+        gdaltest.rfc35_sqlite_ds_name = 'tmp/rfc35_test.sqlite'
+        gdaltest.rfc35_sqlite_ds = ogr.GetDriverByName('SQLite').CreateDataSource(gdaltest.rfc35_sqlite_ds_name)
     lyr = gdaltest.rfc35_sqlite_ds.CreateLayer('rfc35_test')
 
     lyr.ReorderFields([])
@@ -510,11 +517,11 @@ def ogr_rfc35_sqlite_5():
 
 def ogr_rfc35_sqlite_cleanup():
 
-    if gdaltest.rfc35_sqlite_ds is None:
+    if gdaltest.rfc35_sqlite_ds_name is None:
         return 'skip'
 
     gdaltest.rfc35_sqlite_ds = None
-    ogr.GetDriverByName('SQLite').DeleteDataSource('tmp/rfc35_test.sqlite')
+    ogr.GetDriverByName('SQLite').DeleteDataSource(gdaltest.rfc35_sqlite_ds_name)
 
     return 'success'
 

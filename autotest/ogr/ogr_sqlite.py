@@ -1160,6 +1160,43 @@ def ogr_sqlite_24():
     return 'success'
 
 ###############################################################################
+# Test opening a /vsicurl/ DB
+
+def ogr_sqlite_25():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    try:
+        drv = gdal.GetDriverByName( 'HTTP' )
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT sqlite_version()")
+    feat = sql_lyr.GetNextFeature()
+    print('SQLite version : %s' % feat.GetFieldAsString(0))
+    feat = None
+    gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
+
+    # Check that we have SQLite VFS support
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_sqlite_25.db')
+    gdal.PopErrorHandler()
+    if ds is None:
+        return 'skip'
+    ds = None
+    gdal.Unlink('/vsimem/ogr_sqlite_25.db')
+
+    ds = ogr.Open('/vsicurl/http://download.osgeo.org/gdal/data/sqlite3/polygon.db')
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test if SpatiaLite is available
 
 def ogr_spatialite_1():
@@ -1672,6 +1709,7 @@ gdaltest_list = [
     ogr_sqlite_22,
     ogr_sqlite_23,
     ogr_sqlite_24,
+    ogr_sqlite_25,
     ogr_spatialite_1,
     ogr_sqlite_17,
     ogr_sqlite_18,

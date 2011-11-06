@@ -75,17 +75,29 @@ OGRDataSource *OGRSQLiteDriver::Open( const char * pszFilename,
 /*      Verify that the target is a real file, and has an               */
 /*      appropriate magic string at the beginning.                      */
 /* -------------------------------------------------------------------- */
-    FILE *fpDB;
     char szHeader[16];
-    
-    fpDB = VSIFOpen( pszFilename, "rb" );
+
+#ifdef HAVE_SQLITE_VFS
+    VSILFILE *fpDB;
+    fpDB = VSIFOpenL( pszFilename, "rb" );
     if( fpDB == NULL )
         return NULL;
     
-    if( VSIFRead( szHeader, 1, 16, fpDB ) != 16 )
+    if( VSIFReadL( szHeader, 1, 16, fpDB ) != 16 )
         memset( szHeader, 0, 16 );
     
+    VSIFCloseL( fpDB );
+#else
+    FILE *fpDB;
+    fpDB = VSIFOpen( pszFilename, "rb" );
+    if( fpDB == NULL )
+        return NULL;
+
+    if( VSIFRead( szHeader, 1, 16, fpDB ) != 16 )
+        memset( szHeader, 0, 16 );
+
     VSIFClose( fpDB );
+#endif
     
     if( strncmp( szHeader, "SQLite format 3", 15 ) != 0 )
         return NULL;
@@ -118,9 +130,9 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      First, ensure there isn't any such file yet.                    */
 /* -------------------------------------------------------------------- */
-    VSIStatBuf sStatBuf;
+    VSIStatBufL sStatBuf;
 
-    if( VSIStat( pszName, &sStatBuf ) == 0 )
+    if( VSIStatL( pszName, &sStatBuf ) == 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "It seems a file system object called '%s' already exists.",
@@ -159,14 +171,31 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
 /* -------------------------------------------------------------------- */
     sqlite3             *hDB;
     int rc;
-    
+
     hDB = NULL;
+#ifdef HAVE_SQLITE_VFS
+    sqlite3_vfs* pMyVFS = NULL;
+    int bUseOGRVFS = CSLTestBoolean(CPLGetConfigOption("SQLITE_USE_OGR_VFS", "NO"));
+    if (bUseOGRVFS || strncmp(pszName, "/vsi", 4) == 0)
+    {
+        pMyVFS = OGRSQLiteCreateVFS();
+        sqlite3_vfs_register(pMyVFS, 0);
+        rc = sqlite3_open_v2( pszName, &hDB, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, pMyVFS->zName );
+    }
+    else
+        rc = sqlite3_open_v2( pszName, &hDB, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL );
+#else
     rc = sqlite3_open( pszName, &hDB );
+#endif
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "sqlite3_open(%s) failed: %s", 
                   pszName, sqlite3_errmsg( hDB ) );
+#ifdef HAVE_SQLITE_VFS
+        if (pMyVFS) sqlite3_vfs_unregister(pMyVFS);
+        CPLFree(pMyVFS);
+#endif
         return NULL;
     }
 
@@ -200,6 +229,10 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
                       pszErrMsg );
             sqlite3_free( pszErrMsg );
             sqlite3_close( hDB );
+#ifdef HAVE_SQLITE_VFS
+            if (pMyVFS) sqlite3_vfs_unregister(pMyVFS);
+            CPLFree(pMyVFS);
+#endif
             return NULL;
         }
     }
@@ -226,6 +259,10 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
                     pszErrMsg );
             sqlite3_free( pszErrMsg );
             sqlite3_close( hDB );
+#ifdef HAVE_SQLITE_VFS
+            if (pMyVFS) sqlite3_vfs_unregister(pMyVFS);
+            CPLFree(pMyVFS);
+#endif
             return NULL;
         }
     }
@@ -251,6 +288,10 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
                       pszErrMsg );
             sqlite3_free( pszErrMsg );
             sqlite3_close( hDB );
+#ifdef HAVE_SQLITE_VFS
+            if (pMyVFS) sqlite3_vfs_unregister(pMyVFS);
+            CPLFree(pMyVFS);
+#endif
             return NULL;
         }
 
@@ -268,6 +309,10 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
                       pszErrMsg );
             sqlite3_free( pszErrMsg );
             sqlite3_close( hDB );
+#ifdef HAVE_SQLITE_VFS
+            if (pMyVFS) sqlite3_vfs_unregister(pMyVFS);
+            CPLFree(pMyVFS);
+#endif
             return NULL;
         }
     }
@@ -277,6 +322,10 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
 /*      Close the DB file so we can reopen it normally.                 */
 /* -------------------------------------------------------------------- */
         sqlite3_close( hDB );
+#ifdef HAVE_SQLITE_VFS
+        if (pMyVFS) sqlite3_vfs_unregister(pMyVFS);
+        CPLFree(pMyVFS);
+#endif
 
         OGRSQLiteDataSource     *poDS;
         poDS = new OGRSQLiteDataSource();
@@ -304,6 +353,11 @@ OGRDataSource *OGRSQLiteDriver::CreateDataSource( const char * pszName,
 /*      Close the DB file so we can reopen it normally.                 */
 /* -------------------------------------------------------------------- */
     sqlite3_close( hDB );
+
+#ifdef HAVE_SQLITE_VFS
+    if (pMyVFS) sqlite3_vfs_unregister(pMyVFS);
+    CPLFree(pMyVFS);
+#endif
 
     return Open( pszName, TRUE );
 }

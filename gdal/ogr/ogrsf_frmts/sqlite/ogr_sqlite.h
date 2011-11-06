@@ -56,6 +56,10 @@
 #include "sqlite3.h"
 #endif
 
+#if SQLITE_VERSION_NUMBER >= 3006000
+#define HAVE_SQLITE_VFS
+#endif
+
 /************************************************************************/
 /*      Format used to store geometry data in the database.             */
 /************************************************************************/
@@ -420,6 +424,10 @@ class OGRSQLiteDataSource : public OGRDataSource
 
     int                 DetectSRSWktColumn();
 
+#ifdef HAVE_SQLITE_VFS
+    sqlite3_vfs*        pMyVFS;
+#endif
+
   public:
                         OGRSQLiteDataSource();
                         ~OGRSQLiteDataSource();
@@ -501,6 +509,9 @@ class OGRSQLiteDriver : public OGRSFDriver
 CPLString OGRSQLiteEscape( const char *pszSrcName );
 int OGRSQLiteInitSpatialite();
 int OGRSQLiteGetSpatialiteVersionNumber();
+#ifdef HAVE_SQLITE_VFS
+sqlite3_vfs* OGRSQLiteCreateVFS();
+#endif
 
 #endif /* ndef _OGR_SQLITE_H_INCLUDED */
 
