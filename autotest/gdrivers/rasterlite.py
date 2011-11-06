@@ -262,13 +262,16 @@ def rasterlite_6():
         return 'skip'
         
     # Test first if spatialite is available
-    ogr_ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( 'tmp/spatialite_test.db', options = ['SPATIALITE=YES'] )
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    sql_lyr = ogr_ds.ExecuteSQL("SELECT AsText(GeomFromText('POINT(0 1)'))")
+    ogr_ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( 'tmp/spatialite_test.db', options = ['SPATIALITE=YES'] )
+    if ogr_ds is not None:
+        sql_lyr = ogr_ds.ExecuteSQL("SELECT AsText(GeomFromText('POINT(0 1)'))")
+    else:
+        sql_lyr = None
     gdal.PopErrorHandler()
     if sql_lyr is None:
         gdaltest.has_spatialite = False
-        ogr_ds.Destroy()
+        ogr_ds = None
         return 'skip'
 
     gdaltest.has_spatialite = True
