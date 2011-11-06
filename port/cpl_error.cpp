@@ -768,7 +768,7 @@ CPLSetErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew,
 CPLErrorHandler CPL_STDCALL 
 CPLSetErrorHandler( CPLErrorHandler pfnErrorHandlerNew )
 {
-    return CPLSetErrorHandlerEx(pfnErrorHandler, NULL);
+    return CPLSetErrorHandlerEx(pfnErrorHandlerNew, NULL);
 }
 
 /************************************************************************/
