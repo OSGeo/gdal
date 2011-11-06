@@ -295,6 +295,10 @@ def VSIFTellL(*args):
   """VSIFTellL(VSILFILE arg0) -> long"""
   return _gdal.VSIFTellL(*args)
 
+def VSIFTruncateL(*args):
+  """VSIFTruncateL(VSILFILE arg0, long arg1) -> int"""
+  return _gdal.VSIFTruncateL(*args)
+
 def VSIFWriteL(*args):
   """VSIFWriteL(int nLen, int size, int memb, VSILFILE f) -> int"""
   return _gdal.VSIFWriteL(*args)
