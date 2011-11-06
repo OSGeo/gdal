@@ -143,6 +143,7 @@ void CPL_DLL    VSIRewindL( VSILFILE * );
 size_t CPL_DLL  VSIFReadL( void *, size_t, size_t, VSILFILE * );
 size_t CPL_DLL  VSIFWriteL( const void *, size_t, size_t, VSILFILE * );
 int CPL_DLL     VSIFEofL( VSILFILE * );
+int CPL_DLL     VSIFTruncateL( VSILFILE *, vsi_l_offset );
 int CPL_DLL     VSIFFlushL( VSILFILE * );
 int CPL_DLL     VSIFPrintfL( VSILFILE *, const char *, ... ) CPL_PRINT_FUNC_FORMAT(2, 3);
 int CPL_DLL     VSIFPutcL( int, VSILFILE * );

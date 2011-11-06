@@ -115,6 +115,7 @@ class VSIMemHandle : public VSIVirtualHandle
     virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
     virtual int       Eof();
     virtual int       Close();
+    virtual int       Truncate( vsi_l_offset nNewSize );
 };
 
 /************************************************************************/
@@ -361,6 +362,22 @@ int VSIMemHandle::Eof()
 
 {
     return nOffset == poFile->nLength;
+}
+
+/************************************************************************/
+/*                             Truncate()                               */
+/************************************************************************/
+
+int VSIMemHandle::Truncate( vsi_l_offset nNewSize )
+{
+    if( !bUpdate )
+    {
+        errno = EACCES;
+        return -1;
+    }
+
+    poFile->SetLength( nNewSize );
+    return 0;
 }
 
 /************************************************************************/

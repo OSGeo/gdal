@@ -129,6 +129,7 @@ class VSIUnixStdioHandle : public VSIVirtualHandle
     virtual int       Eof();
     virtual int       Flush();
     virtual int       Close();
+    virtual int       Truncate( vsi_l_offset nNewSize );
 };
 
 /************************************************************************/
@@ -335,6 +336,16 @@ int VSIUnixStdioHandle::Eof()
     else
         return 0;
 }
+
+/************************************************************************/
+/*                             Truncate()                               */
+/************************************************************************/
+
+int VSIUnixStdioHandle::Truncate( vsi_l_offset nNewSize )
+{
+    return ftruncate(fileno(fp), nNewSize);
+}
+
 
 /************************************************************************/
 /* ==================================================================== */

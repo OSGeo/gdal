@@ -59,6 +59,7 @@ class CPL_DLL VSIVirtualHandle {
     virtual int       Eof() = 0;
     virtual int       Flush() {return 0;}
     virtual int       Close() = 0;
+    virtual int       Truncate( vsi_l_offset nNewSize ) { return -1; }
     virtual           ~VSIVirtualHandle() { }
 };
 
