@@ -771,6 +771,42 @@ def ogr_csv_18():
     return 'success'
 
 ###############################################################################
+# Verify handling of non-numeric values in numeric columns
+
+def ogr_csv_19():
+
+    if gdaltest.csv_ds is None:
+        return 'skip'
+
+    gdaltest.csv_ds.Destroy()
+    gdaltest.csv_ds = None
+    gdaltest.csv_ds = ogr.Open( 'data/testnull.csv' )
+
+    if gdaltest.csv_ds is None:
+        return 'fail'
+
+    lyr = gdaltest.csv_ds.GetLayerByName( 'testnull' )
+
+    lyr.ResetReading()
+    if not ogrtest.check_features_against_list( lyr,'INTCOL',[12] ):
+        return 'fail'
+    lyr.ResetReading()
+    if not ogrtest.check_features_against_list( lyr,'REALCOL',[5.7] ):
+        return 'fail'
+    lyr.ResetReading()
+    if not ogrtest.check_features_against_list( lyr,'INTCOL2',[None] ):
+        return 'fail'
+    lyr.ResetReading()
+    if not ogrtest.check_features_against_list( lyr,'REALCOL2',[None] ):
+        return 'fail'
+    lyr.ResetReading()
+    if not ogrtest.check_features_against_list( lyr,'STRINGCOL',['foo']):
+        return 'fail'
+
+    return 'pass'
+
+
+###############################################################################
 # 
 
 def ogr_csv_cleanup():
@@ -818,6 +854,7 @@ gdaltest_list = [
     ogr_csv_16,
     ogr_csv_17,
     ogr_csv_18,
+    ogr_csv_19,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':

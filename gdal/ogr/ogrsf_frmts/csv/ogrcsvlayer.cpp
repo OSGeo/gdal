@@ -577,6 +577,7 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
     int         iAttr;
     int         nAttrCount = MIN(CSLCount(papszTokens),
                                  poFeatureDefn->GetFieldCount() );
+    CPLValueType eType;
     
     for( iAttr = 0; iAttr < nAttrCount; iAttr++)
     {
@@ -590,9 +591,13 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
                 poFeature->SetGeometryDirectly( poGeom );
         }
 
-        if (poFeatureDefn->GetFieldDefn(iAttr)->GetType() == OFTReal)
+        if ( (poFeatureDefn->GetFieldDefn(iAttr)->GetType() == OFTReal) ||
+             (poFeatureDefn->GetFieldDefn(iAttr)->GetType() == OFTInteger) )
         {
-            if (papszTokens[iAttr][0] != '\0')
+            eType = CPLGetValueType(papszTokens[iAttr]);
+            if ( (papszTokens[iAttr][0] != '\0') &&
+                 ( eType == CPL_VALUE_INTEGER ||
+                   eType == CPL_VALUE_REAL ) )
                 poFeature->SetField( iAttr, CPLAtof(papszTokens[iAttr]) );
         }
         else if (poFeatureDefn->GetFieldDefn(iAttr)->GetType() != OFTString)
