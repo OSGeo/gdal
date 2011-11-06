@@ -67,6 +67,9 @@ CPL_CVSID("$Id$");
 #ifndef VSI_STAT64_T
 #define VSI_STAT64_T stat64
 #endif
+#ifndef VSI_FTRUNCATE64
+#define VSI_FTRUNCATE64 ftruncate64
+#endif
 
 #else /* not UNIX_STDIO_64 */
 
@@ -84,6 +87,9 @@ CPL_CVSID("$Id$");
 #endif
 #ifndef VSI_STAT64_T
 #define VSI_STAT64_T stat
+#endif
+#ifndef VSI_FTRUNCATE64
+#define VSI_FTRUNCATE64 ftruncate
 #endif
 
 #endif /* ndef UNIX_STDIO_64 */
@@ -344,7 +350,7 @@ int VSIUnixStdioHandle::Eof()
 int VSIUnixStdioHandle::Truncate( vsi_l_offset nNewSize )
 {
     fflush(fp);
-    int nRet = ftruncate(fileno(fp), nNewSize);
+    int nRet = VSI_FTRUNCATE64(fileno(fp), nNewSize);
     bAtEOF = FALSE;
     return nRet;
 }
