@@ -6730,11 +6730,9 @@ fail:
 SWIGINTERN PyObject *_wrap_VSIFSeekL(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   VSILFILE *arg1 = (VSILFILE *) 0 ;
-  long arg2 ;
+  GIntBig arg2 ;
   int arg3 ;
   int res1 ;
-  long val2 ;
-  int ecode2 = 0 ;
   int val3 ;
   int ecode3 = 0 ;
   PyObject * obj0 = 0 ;
@@ -6747,11 +6745,14 @@ SWIGINTERN PyObject *_wrap_VSIFSeekL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VSIFSeekL" "', argument " "1"" of type '" "VSILFILE *""'"); 
   }
-  ecode2 = SWIG_AsVal_long(obj1, &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VSIFSeekL" "', argument " "2"" of type '" "long""'");
-  } 
-  arg2 = static_cast< long >(val2);
+  {
+    PY_LONG_LONG val;
+    if ( !PyArg_Parse(obj1,"L",&val) ) {
+      PyErr_SetString(PyExc_TypeError, "not an integer");
+      SWIG_fail;
+    }
+    arg2 = (GIntBig)val;
+  }
   ecode3 = SWIG_AsVal_int(obj2, &val3);
   if (!SWIG_IsOK(ecode3)) {
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "VSIFSeekL" "', argument " "3"" of type '" "int""'");
@@ -6781,7 +6782,7 @@ SWIGINTERN PyObject *_wrap_VSIFTellL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
   VSILFILE *arg1 = (VSILFILE *) 0 ;
   int res1 ;
   PyObject * obj0 = 0 ;
-  long result;
+  GIntBig result;
   
   if (!PyArg_ParseTuple(args,(char *)"O:VSIFTellL",&obj0)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0,SWIG_as_voidptrptr(&arg1), 0, 0);
@@ -6792,7 +6793,7 @@ SWIGINTERN PyObject *_wrap_VSIFTellL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (long)VSIFTellL(arg1);
+    result = VSIFTellL(arg1);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -6800,7 +6801,15 @@ SWIGINTERN PyObject *_wrap_VSIFTellL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
       }
     }
   }
-  resultobj = SWIG_From_long(static_cast< long >(result));
+  {
+    char szTmp[32];
+    sprintf(szTmp, CPL_FRMT_GIB, result);
+#if PY_VERSION_HEX>=0x03000000
+    resultobj = PyLong_FromString(szTmp, NULL, 10);
+#else
+    resultobj = PyInt_FromString(szTmp, NULL, 10);
+#endif
+  }
   return resultobj;
 fail:
   return NULL;
@@ -6810,10 +6819,8 @@ fail:
 SWIGINTERN PyObject *_wrap_VSIFTruncateL(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   VSILFILE *arg1 = (VSILFILE *) 0 ;
-  long arg2 ;
+  GIntBig arg2 ;
   int res1 ;
-  long val2 ;
-  int ecode2 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   int result;
@@ -6823,11 +6830,14 @@ SWIGINTERN PyObject *_wrap_VSIFTruncateL(PyObject *SWIGUNUSEDPARM(self), PyObjec
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VSIFTruncateL" "', argument " "1"" of type '" "VSILFILE *""'"); 
   }
-  ecode2 = SWIG_AsVal_long(obj1, &val2);
-  if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VSIFTruncateL" "', argument " "2"" of type '" "long""'");
-  } 
-  arg2 = static_cast< long >(val2);
+  {
+    PY_LONG_LONG val;
+    if ( !PyArg_Parse(obj1,"L",&val) ) {
+      PyErr_SetString(PyExc_TypeError, "not an integer");
+      SWIG_fail;
+    }
+    arg2 = (GIntBig)val;
+  }
   {
     if ( bUseExceptions ) {
       CPLErrorReset();
@@ -20951,9 +20961,9 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"VSIStatL", _wrap_VSIStatL, METH_VARARGS, (char *)"VSIStatL(char utf8_path, int nFlags = 0) -> int"},
 	 { (char *)"VSIFOpenL", _wrap_VSIFOpenL, METH_VARARGS, (char *)"VSIFOpenL(char utf8_path, char pszMode) -> VSILFILE"},
 	 { (char *)"VSIFCloseL", _wrap_VSIFCloseL, METH_VARARGS, (char *)"VSIFCloseL(VSILFILE arg0)"},
-	 { (char *)"VSIFSeekL", _wrap_VSIFSeekL, METH_VARARGS, (char *)"VSIFSeekL(VSILFILE arg0, long arg1, int arg2) -> int"},
-	 { (char *)"VSIFTellL", _wrap_VSIFTellL, METH_VARARGS, (char *)"VSIFTellL(VSILFILE arg0) -> long"},
-	 { (char *)"VSIFTruncateL", _wrap_VSIFTruncateL, METH_VARARGS, (char *)"VSIFTruncateL(VSILFILE arg0, long arg1) -> int"},
+	 { (char *)"VSIFSeekL", _wrap_VSIFSeekL, METH_VARARGS, (char *)"VSIFSeekL(VSILFILE arg0, GIntBig arg1, int arg2) -> int"},
+	 { (char *)"VSIFTellL", _wrap_VSIFTellL, METH_VARARGS, (char *)"VSIFTellL(VSILFILE arg0) -> GIntBig"},
+	 { (char *)"VSIFTruncateL", _wrap_VSIFTruncateL, METH_VARARGS, (char *)"VSIFTruncateL(VSILFILE arg0, GIntBig arg1) -> int"},
 	 { (char *)"VSIFWriteL", _wrap_VSIFWriteL, METH_VARARGS, (char *)"VSIFWriteL(int nLen, int size, int memb, VSILFILE f) -> int"},
 	 { (char *)"MajorObject_GetDescription", _wrap_MajorObject_GetDescription, METH_VARARGS, (char *)"MajorObject_GetDescription(MajorObject self) -> char"},
 	 { (char *)"MajorObject_SetDescription", _wrap_MajorObject_SetDescription, METH_VARARGS, (char *)"MajorObject_SetDescription(MajorObject self, char pszNewDesc)"},
