@@ -343,7 +343,10 @@ int VSIUnixStdioHandle::Eof()
 
 int VSIUnixStdioHandle::Truncate( vsi_l_offset nNewSize )
 {
-    return ftruncate(fileno(fp), nNewSize);
+    fflush(fp);
+    int nRet = ftruncate(fileno(fp), nNewSize);
+    bAtEOF = FALSE;
+    return nRet;
 }
 
 
