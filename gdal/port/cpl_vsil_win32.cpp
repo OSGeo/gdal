@@ -91,6 +91,7 @@ class VSIWin32Handle : public VSIVirtualHandle
     virtual int       Eof();
     virtual int       Flush();
     virtual int       Close();
+    virtual int       Truncate( vsi_l_offset nNewSize );
 };
 
 /************************************************************************/
@@ -333,6 +334,23 @@ int VSIWin32Handle::Eof()
     Seek( nCur, SEEK_SET );
 
     return (nCur == nEnd);
+}
+
+/************************************************************************/
+/*                             Truncate()                               */
+/************************************************************************/
+
+int VSIWin32Handle::Truncate( vsi_l_offset nNewSize )
+{
+    vsi_l_offset nCur = Tell();
+    Seek( nNewSize, SEEK_SET );
+    BOOL bRes = SetEndOfFile( hFile );
+    Seek( nCur, SEEK_SET );
+
+    if (bRes)
+        return 0;
+    else
+        return -1;
 }
 
 /************************************************************************/

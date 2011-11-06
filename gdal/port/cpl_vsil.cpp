@@ -579,6 +579,33 @@ int VSIFEofL( VSILFILE * fp )
 }
 
 /************************************************************************/
+/*                            VSIFTruncateL()                           */
+/************************************************************************/
+
+/**
+ * \brief Truncate/expand the file to the specified size
+
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX ftruncate() call.
+ *
+ * @param fp file handle opened with VSIFOpenL().
+ * @param nNewSize new size in bytes.
+ *
+ * @return 0 on success
+ * @since GDAL 1.9.0
+ */
+
+int VSIFTruncateL( VSILFILE * fp, vsi_l_offset nNewSize )
+
+{
+    VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
+
+    return poFileHandle->Truncate(nNewSize);
+}
+
+/************************************************************************/
 /*                            VSIFPrintfL()                             */
 /************************************************************************/
 
