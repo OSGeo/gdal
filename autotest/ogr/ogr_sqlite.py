@@ -734,6 +734,11 @@ def ogr_sqlite_16():
     if gdaltest.sl_ds is None:
         return 'skip'
 
+    ######################################################
+    # Reopen DB in update
+    gdaltest.sl_ds.Destroy()
+    gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db', update = 1  )
+
     # Hand create a table with FGF geometry
     gdaltest.sl_ds.ExecuteSQL( "INSERT INTO geometry_columns (f_table_name, f_geometry_column, geometry_type, coord_dimension, geometry_format) VALUES ('fgf_table', 'GEOMETRY', 0, 2, 'FGF')" )
     gdaltest.sl_ds.ExecuteSQL( "CREATE TABLE fgf_table (OGC_FID INTEGER PRIMARY KEY, GEOMETRY BLOB)")
@@ -1162,7 +1167,6 @@ def ogr_spatialite_1():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    ds = ogr.Open( 'tmp/spatialite_test.db'  )
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT spatialite_version()")
     gdal.PopErrorHandler()
@@ -1212,7 +1216,7 @@ def ogr_spatialite_2():
     ds.Destroy()
 
     # Test OLCFastFeatureCount with spatial index (created by default)
-    ds = ogr.Open( 'tmp/spatialite_test.db'  )
+    ds = ogr.Open( 'tmp/spatialite_test.db', update = 1 )
     lyr = ds.GetLayerByName('test_spatialfilter')
 
     geom = ogr.CreateGeometryFromWkt( \
@@ -1245,7 +1249,7 @@ def ogr_spatialite_2():
     ds.Destroy()
 
     # Test OLCFastFeatureCount without spatial index
-    ds = ogr.Open( 'tmp/spatialite_test.db'  )
+    ds = ogr.Open( 'tmp/spatialite_test.db' )
     lyr = ds.GetLayerByName('test_spatialfilter')
 
     geom = ogr.CreateGeometryFromWkt( \
@@ -1274,7 +1278,7 @@ def ogr_spatialite_3():
     if gdaltest.has_spatialite == False:
         return 'skip'
 
-    ds = ogr.Open( 'tmp/spatialite_test.db'  )
+    ds = ogr.Open( 'tmp/spatialite_test.db', update = 1 )
     ds.ExecuteSQL( 'CREATE VIRTUAL TABLE testpoly USING VirtualShape(data/testpoly, CP1252, -1)')
     ds.Destroy()
 
