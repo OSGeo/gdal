@@ -37,23 +37,34 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 ###############################################################################
-#
+# Generic test
 
-def vsifile_1():
+def vsifile_generic(filename):
 
-    fp = gdal.VSIFOpenL('/vsimem/vsifile_1.bin', 'wb+')
+    fp = gdal.VSIFOpenL(filename, 'wb+')
     gdal.VSIFWriteL('0123456789', 1, 10, fp)
     gdal.VSIFTruncateL(fp, 5)
-    gdal.VSIFSeekL(fp, 0, 2)
-    gdal.VSIFWriteL('XX', 1, 2, fp)
-    gdal.VSIFCloseL(fp)
 
-    statBuf = gdal.VSIStatL('/vsimem/vsifile_1.bin', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
-    if statBuf.size != 7:
+    if gdal.VSIFTellL(fp) != 10:
         gdaltest.post_reason('failure')
         return 'fail'
 
-    fp = gdal.VSIFOpenL('/vsimem/vsifile_1.bin', 'rb')
+    gdal.VSIFSeekL(fp, 0, 2)
+
+    if gdal.VSIFTellL(fp) != 5:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    gdal.VSIFWriteL('XX', 1, 2, fp)
+    gdal.VSIFCloseL(fp)
+
+    statBuf = gdal.VSIStatL(filename, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    if statBuf.size != 7:
+        gdaltest.post_reason('failure')
+        print(statBuf.size)
+        return 'fail'
+
+    fp = gdal.VSIFOpenL(filename, 'rb')
     buf = gdal.VSIFReadL(1, 7, fp)
     gdal.VSIFCloseL(fp)
 
@@ -61,16 +72,28 @@ def vsifile_1():
         gdaltest.post_reason('failure')
         return 'fail'
 
-    gdal.Unlink('/vsimem/vsifile_1.bin')
+    gdal.Unlink(filename)
 
-    statBuf = gdal.VSIStatL('/vsimem/vsifile_1.bin', gdal.VSI_STAT_EXISTS_FLAG)
+    statBuf = gdal.VSIStatL(filename, gdal.VSI_STAT_EXISTS_FLAG)
     if statBuf is not None:
         gdaltest.post_reason('failure')
         return 'fail'
 
     return 'success'
 
-gdaltest_list = [ vsifile_1 ]
+###############################################################################
+# Test /vsimem
+
+def vsifile_1():
+    return vsifile_generic('/vsimem/vsifile_1.bin')
+
+###############################################################################
+# Test regular file system
+
+def vsifile_2():
+    return vsifile_generic('tmp/vsifile_2.bin')
+    
+gdaltest_list = [ vsifile_1, vsifile_2 ]
 
 if __name__ == '__main__':
 
