@@ -391,6 +391,7 @@ VSILFILE   *VSIFOpenL( const char *utf8_path, const char *pszMode );
 void    VSIFCloseL( VSILFILE * );
 int     VSIFSeekL( VSILFILE *, long, int );
 long    VSIFTellL( VSILFILE * );
+int     VSIFTruncateL( VSILFILE *, long );
 
 #if defined(SWIGPYTHON)
 %rename (VSIFWriteL) wrapper_VSIFWriteL;
