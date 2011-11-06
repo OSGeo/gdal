@@ -21002,7 +21002,7 @@ fi
 
 
   if test "$NETCDF_SETTING" = "yes" ; then
-    LIBS="$LIBS -lnetcdf"
+    LIBS="-lnetcdf $LIBS"
     echo "using pre-installed libnetcdf."
   else
     echo "libnetcdf not found - netCDF support disabled"
