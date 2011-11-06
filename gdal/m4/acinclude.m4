@@ -173,16 +173,18 @@ AC_DEFUN([AC_UNIX_STDIO_64],
 
     AC_CHECK_FUNC(stat64, VSI_STAT64=stat64 VSI_STAT64_T=stat64, VSI_STAT64=stat VSI_STAT64_T=stat)
     AC_CHECK_FUNC(fopen64, VSI_FOPEN64=fopen64, VSI_FOPEN64=fopen)
+    AC_CHECK_FUNC(ftruncate64, VSI_FTRUNCATE64=ftruncate64, VSI_FTRUNCATE64=ftruncate)
 
     AC_DEFINE(UNIX_STDIO_64, 1, [Define to 1 if you have fseek64, ftell64])
     AC_DEFINE(VSI_LARGE_API_SUPPORTED, 1, [Define to 1, if you have 64 bit STDIO API])
 
-    export VSI_FTELL64 VSI_FSEEK64 VSI_STAT64 VSI_STAT64_T VSI_OPEN64
+    export VSI_FTELL64 VSI_FSEEK64 VSI_STAT64 VSI_STAT64_T VSI_OPEN64 VSI_FTRUNCATE64
     AC_DEFINE_UNQUOTED(VSI_FTELL64,$VSI_FTELL64, [Define to name of 64bit ftell func])
     AC_DEFINE_UNQUOTED(VSI_FSEEK64,$VSI_FSEEK64, [Define to name of 64bit fseek func])
     AC_DEFINE_UNQUOTED(VSI_STAT64,$VSI_STAT64, [Define to name of 64bit stat function])
     AC_DEFINE_UNQUOTED(VSI_STAT64_T,$VSI_STAT64_T, [Define to name of 64bit stat structure])
     AC_DEFINE_UNQUOTED(VSI_FOPEN64,$VSI_FOPEN64, [Define to name of 64bit fopen function])
+    AC_DEFINE_UNQUOTED(VSI_FTRUNCATE64,$VSI_FTRUNCATE64, [Define to name of 64bit ftruncate function])
   else
     AC_MSG_RESULT([no])
   fi

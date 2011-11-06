@@ -92,8 +92,53 @@ def vsifile_1():
 
 def vsifile_2():
     return vsifile_generic('tmp/vsifile_2.bin')
-    
-gdaltest_list = [ vsifile_1, vsifile_2 ]
+
+
+###############################################################################
+# Test ftruncate >= 32 bit
+
+def vsifile_3():
+
+    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+        return 'skip'
+
+    filename = 'tmp/vsifile_3'
+
+    fp = gdal.VSIFOpenL(filename, 'wb+')
+    gdal.VSIFTruncateL(fp, 10 * 1024 * 1024 * 1024)
+    gdal.VSIFSeekL(fp, 0, 2)
+    pos = gdal.VSIFTellL(fp)
+    if pos != 10 * 1024 * 1024 * 1024:
+        gdaltest.post_reason('failure')
+        gdal.VSIFCloseL(fp)
+        gdal.Unlink(filename)
+        print(pos)
+        return 'fail'
+    gdal.VSIFSeekL(fp, 0, 0)
+    gdal.VSIFSeekL(fp, pos, 0)
+    pos = gdal.VSIFTellL(fp)
+    if pos != 10 * 1024 * 1024 * 1024:
+        gdaltest.post_reason('failure')
+        gdal.VSIFCloseL(fp)
+        gdal.Unlink(filename)
+        print(pos)
+        return 'fail'
+
+    gdal.VSIFCloseL(fp)
+
+    statBuf = gdal.VSIStatL(filename, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    gdal.Unlink(filename)
+
+    if statBuf.size != 10 * 1024 * 1024 * 1024:
+        gdaltest.post_reason('failure')
+        print(statBuf.size)
+        return 'fail'
+
+    return 'success'
+
+gdaltest_list = [ vsifile_1,
+                  vsifile_2,
+                  vsifile_3 ]
 
 if __name__ == '__main__':
 

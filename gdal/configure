@@ -16810,6 +16810,13 @@ else
   VSI_FOPEN64=fopen
 fi
 
+    ac_fn_c_check_func "$LINENO" "ftruncate64" "ac_cv_func_ftruncate64"
+if test "x$ac_cv_func_ftruncate64" = xyes; then :
+  VSI_FTRUNCATE64=ftruncate64
+else
+  VSI_FTRUNCATE64=ftruncate
+fi
+
 
 
 $as_echo "#define UNIX_STDIO_64 1" >>confdefs.h
@@ -16818,7 +16825,7 @@ $as_echo "#define UNIX_STDIO_64 1" >>confdefs.h
 $as_echo "#define VSI_LARGE_API_SUPPORTED 1" >>confdefs.h
 
 
-    export VSI_FTELL64 VSI_FSEEK64 VSI_STAT64 VSI_STAT64_T VSI_OPEN64
+    export VSI_FTELL64 VSI_FSEEK64 VSI_STAT64 VSI_STAT64_T VSI_OPEN64 VSI_FTRUNCATE64
 
 cat >>confdefs.h <<_ACEOF
 #define VSI_FTELL64 $VSI_FTELL64
@@ -16842,6 +16849,11 @@ _ACEOF
 
 cat >>confdefs.h <<_ACEOF
 #define VSI_FOPEN64 $VSI_FOPEN64
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define VSI_FTRUNCATE64 $VSI_FTRUNCATE64
 _ACEOF
 
   else
