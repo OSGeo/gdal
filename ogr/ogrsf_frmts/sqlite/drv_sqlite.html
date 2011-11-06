@@ -53,6 +53,16 @@ at the expense of data safety w.r.t system/OS crashes. So use it carefully in
 production environments and read the SQLite
 <a href="http://www.sqlite.org/pragma.html#pragma_synchronous">related documentation</a>.</p>
 
+<h2>VSI Virtual File System API support</h2>
+
+(Require OGR &gt;= 1.9.0 and SQLite &gt;= 3.6.0)<p>
+
+The driver supports reading and writing to files managed by VSI Virtual File System API, which include
+"regular" files, as well as files in the /vsimem/ (read-write), /vsizip/ (read-only), /vsigzip/ (read-only), /vsicurl/ (read-only) domains.<p>
+
+Note: for regular files, the standard I/O operations provided by SQLite are used, in order to benefit
+from its integrity guarantees.<p>
+
 <h2>Using the SpatiaLite library (Spatial extension for SQLite)</h2>
 
 (Starting with GDAL 1.7.0)<p>
