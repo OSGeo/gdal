@@ -31,6 +31,8 @@
 
 CPL_CVSID("$Id$");
 
+//#define DEBUG_IO 1
+
 #ifdef HAVE_SQLITE_VFS
 
 typedef struct
@@ -277,6 +279,12 @@ static int OGRSQLiteVFSFullPathname (sqlite3_vfs* pVFS, const char *zName, int n
 #ifdef DEBUG_IO
     CPLDebug("SQLITE", "OGRSQLiteVFSFullPathname(%s)", zName);
 #endif
+    if (zName[0] == '/')
+    {
+        strncpy(zOut, zName, nOut);
+        zOut[nOut-1] = '\0';
+        return SQLITE_OK;
+    }
     return pUnderlyingVFS->xFullPathname(pUnderlyingVFS, zName, nOut, zOut);
 }
 
