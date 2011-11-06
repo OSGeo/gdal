@@ -107,27 +107,34 @@ int OGRARCGENDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     /* Check that the first line is compatible with a generate file */
     /* and in particular contain >= 32 && <= 127 bytes */
-    const char* pszLine;
-    CPLPushErrorHandler(CPLQuietErrorHandler);
-    pszLine = CPLReadLine2L(fp,256,NULL);
-    CPLPopErrorHandler();
-    CPLErrorReset();
-    if (pszLine == NULL)
+    char szFirstLine[256+1];
+    int nRet = VSIFReadL(szFirstLine, 1, 256, fp);
+    szFirstLine[nRet] = '\0';
+
+    int i;
+    int bFoundEOL = FALSE;
+    for(i=0;szFirstLine[i] != '\0';i++)
     {
-        VSIFCloseL(fp);
-        return FALSE;
-    }
-    const char* szPtr = pszLine;
-    for(;*szPtr != '\0';szPtr++)
-    {
-        if (*szPtr < 32)
+        if (szFirstLine[i] == '\n' || szFirstLine[i] == '\r')
+        {
+            bFoundEOL = TRUE;
+            szFirstLine[i] = '\0';
+            break;
+        }
+        if (szFirstLine[i] < 32)
         {
             VSIFCloseL(fp);
             return FALSE;
         }
     }
 
-    char** papszTokens = CSLTokenizeString2( pszLine, " ,", 0 );
+    if (!bFoundEOL)
+    {
+        VSIFCloseL(fp);
+        return FALSE;
+    }
+
+    char** papszTokens = CSLTokenizeString2( szFirstLine, " ,", 0 );
     int nTokens = CSLCount(papszTokens);
     CSLDestroy(papszTokens);
     if (nTokens != 1 && nTokens != 3 && nTokens != 4)
@@ -154,7 +161,7 @@ int OGRARCGENDataSource::Open( const char * pszFilename, int bUpdateIn)
     VSIFSeekL( fp, 0, SEEK_SET );
 
     OGRwkbGeometryType eType;
-    szPtr = szBuffer;
+    const char* szPtr = szBuffer;
     const char* szEnd = strstr(szPtr, "END");
     if (szEnd == NULL) szEnd = strstr(szPtr, "end");
     if (szEnd == NULL)
@@ -167,7 +174,7 @@ int OGRARCGENDataSource::Open( const char * pszFilename, int bUpdateIn)
     if (szEnd == NULL) szEnd = strstr(szPtr, "end");
     if (szEnd == NULL)
     {
-        pszLine = CPLReadLine2L(fp,256,NULL);
+        const char* pszLine = CPLReadLine2L(fp,256,NULL);
         if (pszLine == NULL)
         {
             VSIFCloseL(fp);
@@ -194,6 +201,7 @@ int OGRARCGENDataSource::Open( const char * pszFilename, int bUpdateIn)
         CPLString osFirstX, osFirstY;
         CPLString osLastX, osLastY;
         int bIs3D = FALSE;
+        const char* pszLine;
         while((pszLine = CPLReadLine2L(fp,256,NULL)) != NULL)
         {
             nLineNumber ++;
