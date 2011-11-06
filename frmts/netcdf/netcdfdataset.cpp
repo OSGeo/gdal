@@ -2441,7 +2441,7 @@ int netCDFDataset::Identify( GDALOpenInfo * poOpenInfo )
         return TRUE;
     }
     int nTmpFormat = IdentifyFormat( poOpenInfo );
-    // CPLDebug( "GDAL_netCDF", "netCDFDataset::Identify(), detected format %d", nTmpFormat );
+    CPLDebug( "GDAL_netCDF", "netCDFDataset::Identify(), detected format %d", nTmpFormat );
     if( NCDF_FORMAT_NC  == nTmpFormat ||
         NCDF_FORMAT_NC2  == nTmpFormat ||
         NCDF_FORMAT_NC4  == nTmpFormat ||
@@ -2479,7 +2479,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( ! EQUALN(poOpenInfo->pszFilename,"NETCDF:",7) ) {
         nTmpFormat = IdentifyFormat( poOpenInfo );
-        // CPLDebug( "GDAL_netCDF", "netCDFDataset::Open(), detected format %d", nTmpFormat );
+        CPLDebug( "GDAL_netCDF", "netCDFDataset::Open(), detected format %d", nTmpFormat );
         /* Note: not calling Identify() directly, because we want the file type */
         /* Only support NCDF_FORMAT* formats */
         if( ! ( NCDF_FORMAT_NC  == nTmpFormat ||
@@ -2565,12 +2565,12 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
+    CPLDebug( "GDAL_netCDF", "\n=====\ncalling nc_open( %s )\n", poDS->osFilename.c_str() );
     if( nc_open( poDS->osFilename, NC_NOWRITE, &cdfid ) != NC_NOERR ) {
         delete poDS;
         return NULL;
     }
 
-    CPLDebug( "GDAL_netCDF", "\n=====\nOpen() file=%s\n", poDS->osFilename.c_str() );
 
 /* -------------------------------------------------------------------- */
 /*      Is this a real netCDF file?                                     */
