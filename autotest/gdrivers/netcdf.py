@@ -577,17 +577,20 @@ def netcdf_16():
         # test with Open()
         ds = gdal.Open( ifile )
         if ds is None:
+            gdaltest.post_reason('GDAL did not open file')
             return 'fail'
         else:
             name = ds.GetDriver().GetDescription()
             ds = None
             #return fail if did not open with the netCDF driver (i.e. HDF5Image)
             if name != 'netCDF':
+                gdaltest.post_reason('netcdf driver did not open file')
                 return 'fail'
 
         # test with Identify()
         name = gdal.IdentifyDriver( ifile ).GetDescription()
         if name != 'netCDF':
+            gdaltest.post_reason('netcdf driver did not identify file')
             return 'fail'
 
     else:
@@ -614,17 +617,20 @@ def netcdf_17():
         #test with Open()
         ds = gdal.Open( ifile )
         if ds is None:
+            gdaltest.post_reason('GDAL did not open hdf5 file')
             return 'fail'
         else:
             name = ds.GetDriver().GetDescription()
             ds = None
                 #return fail if opened with the netCDF driver
             if name == 'netCDF':
+                gdaltest.post_reason('netcdf driver opened hdf5 file')
                 return 'fail'
 
         # test with Identify()
         name = gdal.IdentifyDriver( ifile ).GetDescription()
         if name == 'netCDF':
+            gdaltest.post_reason('netcdf driver was identified for hdf5 file')
             return 'fail'
 
     else:
@@ -742,6 +748,69 @@ def netcdf_21():
      
 
 ###############################################################################
+#check support for hdf4
+def netcdf_22():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_hdf4:
+        return 'skip'
+
+    ifile = 'data/hdifftst2.hdf'
+
+    #suppress warning
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+
+    ds = gdal.Open( 'NETCDF:' + ifile )
+
+    if ds is None:
+        gdaltest.post_reason('netcdf driver did not open hdf4 file')
+        return 'fail'
+    else:
+        ds = None
+
+    return 'success'
+
+###############################################################################
+#check support for hdf4 - make sure  hdf4 file is not read by netcdf driver
+def netcdf_23():
+
+    #don't skip if netcdf is not enabled in GDAL
+    #if gdaltest.netcdf_drv is None:
+    #    return 'skip'
+    #if not gdaltest.netcdf_drv_has_hdf4:
+    #    return 'skip'
+
+    #skip test if Hdf4 is not enabled in GDAL
+    if gdal.GetDriverByName( 'HDF4' ) is None and \
+            gdal.GetDriverByName( 'HDF4Image' ) is None:
+        return 'skip'
+
+    ifile = 'data/hdifftst2.hdf'
+
+    #test with Open()
+    ds = gdal.Open( ifile )
+    if ds is None:
+        gdaltest.post_reason('GDAL did not open hdf4 file')
+        return 'fail'
+    else:
+        name = ds.GetDriver().GetDescription()
+        ds = None
+        #return fail if opened with the netCDF driver
+        if name == 'netCDF':
+            gdaltest.post_reason('netcdf driver opened hdf4 file')
+            return 'fail'
+
+    # test with Identify()
+    name = gdal.IdentifyDriver( ifile ).GetDescription()
+    if name == 'netCDF':
+        gdaltest.post_reason('netcdf driver was identified for hdf4 file')
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     netcdf_1,
@@ -765,6 +834,8 @@ gdaltest_list = [
     netcdf_19,
     netcdf_20,
     netcdf_21,
+    netcdf_22,
+    netcdf_23,
  ]
 
 if __name__ == '__main__':
