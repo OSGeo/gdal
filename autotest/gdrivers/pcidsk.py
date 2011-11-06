@@ -118,6 +118,9 @@ def pcidsk_5():
         print(mddef)
         gdaltest.post_reason( 'file default domain metadata broken. ')
 
+    if gdaltest.pcidsk_ds.GetMetadataItem('GHI') != 'JKL':
+        gdaltest.post_reason( 'GetMetadataItem() in default domain metadata broken. ')
+
     mdalt = gdaltest.pcidsk_ds.GetMetadata('AltDomain')
     if mdalt['XYZ'] != '123':
         print(mdalt)
@@ -261,6 +264,122 @@ def pcidsk_9():
     return 'success'
 
 ###############################################################################
+# Test overview creation.
+
+def pcidsk_10():
+    if gdaltest.pcidsk_new == 0:
+        return 'skip'
+
+    src_ds = gdal.Open( 'data/byte.tif' )
+    ds = gdal.GetDriverByName('PCIDSK').CreateCopy( '/vsimem/pcidsk_10.pix', src_ds )
+    src_ds = None
+
+    #ds = None
+    #ds = gdal.Open( '/vsimem/pcidsk_10.pix', gdal.GA_Update )
+
+    band = ds.GetRasterBand(1)
+    ds.BuildOverviews('NEAR', [2])
+
+    if band.GetOverviewCount() != 1:
+        gdaltest.post_reason( 'did not get expected overview count' )
+        return 'fail'
+
+    cs = band.GetOverview(0).Checksum()
+    if cs != 1087:
+        gdaltest.post_reason( 'wrong overview checksum (%d)' % cs )
+        return 'fail'
+
+    ds = None
+
+    gdal.GetDriverByName('PCIDSK').Delete( '/vsimem/pcidsk_10.pix' )
+
+    return 'success'
+
+###############################################################################
+# Test INTERLEAVING=TILED interleaving.
+
+def pcidsk_11():
+    if gdaltest.pcidsk_new == 0:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'PCIDSK', 'rgba16.png', 2, 2042,
+                             options = ['INTERLEAVING=TILED', 'TILESIZE=32'] )
+
+    return tst.testCreate()
+
+###############################################################################
+# Test INTERLEAVING=TILED interleaving and COMPRESSION=RLE
+
+def pcidsk_12():
+    if gdaltest.pcidsk_new == 0:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'PCIDSK', 'rgba16.png', 2, 2042,
+                             options = ['INTERLEAVING=TILED', 'TILESIZE=32', 'COMPRESSION=RLE'] )
+
+    return tst.testCreate()
+
+###############################################################################
+# Test INTERLEAVING=TILED interleaving and COMPRESSION=JPEG
+
+def pcidsk_13():
+    if gdaltest.pcidsk_new == 0:
+        return 'skip'
+
+    if gdal.GetDriverByName('JPEG') is None:
+        return 'skip'
+
+    src_ds = gdal.Open( 'data/byte.tif' )
+    ds = gdal.GetDriverByName('PCIDSK').CreateCopy( '/vsimem/pcidsk_13.pix', src_ds, options = ['INTERLEAVING=TILED', 'COMPRESSION=JPEG'] )
+    src_ds = None
+
+    gdal.Unlink( '/vsimem/pcidsk_13.pix.aux.xml' )
+
+    ds = None
+    ds = gdal.Open( '/vsimem/pcidsk_13.pix' )
+    band = ds.GetRasterBand(1)
+    desc = band.GetDescription()
+    cs = band.Checksum()
+    ds = None
+
+    gdal.GetDriverByName('PCIDSK').Delete( '/vsimem/pcidsk_13.pix' )
+
+    if cs != 4645:
+        gdaltest.post_reason('bad checksum')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test SetDescription()
+
+def pcidsk_14():
+    if gdaltest.pcidsk_new == 0:
+        return 'skip'
+
+    ds = gdal.GetDriverByName('PCIDSK').Create( '/vsimem/pcidsk_14.pix', 1, 1 )
+    band = ds.GetRasterBand(1).SetDescription('mydescription')
+    src_ds = None
+
+    gdal.Unlink( '/vsimem/pcidsk_14.pix.aux.xml' )
+
+    ds = None
+    ds = gdal.Open( '/vsimem/pcidsk_14.pix' )
+    band = ds.GetRasterBand(1)
+    desc = band.GetDescription()
+    ds = None
+
+    gdal.GetDriverByName('PCIDSK').Delete( '/vsimem/pcidsk_14.pix' )
+
+    if desc != 'mydescription':
+        gdaltest.post_reason('bad description')
+        print(desc)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Check various items from a modern irvine.pix
 
 def pcidsk_online_1():
@@ -320,6 +439,11 @@ gdaltest_list = [
     pcidsk_7,
     pcidsk_8,
     pcidsk_9,
+    pcidsk_10,
+    pcidsk_11,
+    pcidsk_12,
+    pcidsk_13,
+    pcidsk_14,
     pcidsk_online_1,
     pcidsk_cleanup ]
 
