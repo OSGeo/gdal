@@ -99,6 +99,10 @@ OGRSQLiteDataSource::OGRSQLiteDataSource()
     bHaveGeometryColumns = FALSE;
     bIsSpatiaLite = FALSE;
     bUpdate = FALSE;
+
+#ifdef HAVE_SQLITE_VFS
+    pMyVFS = NULL;
+#endif
 }
 
 /************************************************************************/
@@ -127,6 +131,14 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
 
     if( hDB != NULL )
         sqlite3_close( hDB );
+
+#ifdef HAVE_SQLITE_VFS
+    if (pMyVFS)
+    {
+        sqlite3_vfs_unregister(pMyVFS);
+        CPLFree(pMyVFS);
+    }
+#endif
 }
 
 /************************************************************************/
@@ -154,13 +166,26 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
     int rc;
 
     hDB = NULL;
+    
+#ifdef HAVE_SQLITE_VFS
+    int bUseOGRVFS = CSLTestBoolean(CPLGetConfigOption("SQLITE_USE_OGR_VFS", "NO"));
+    if (bUseOGRVFS || strncmp(pszName, "/vsi", 4) == 0)
+    {
+        pMyVFS = OGRSQLiteCreateVFS();
+        sqlite3_vfs_register(pMyVFS, 0);
+        rc = sqlite3_open_v2( pszNewName, &hDB, (bUpdateIn) ? SQLITE_OPEN_READWRITE : SQLITE_OPEN_READONLY, pMyVFS->zName );
+    }
+    else
+        rc = sqlite3_open_v2( pszNewName, &hDB, (bUpdateIn) ? SQLITE_OPEN_READWRITE : SQLITE_OPEN_READONLY, NULL );
+#else
     rc = sqlite3_open( pszNewName, &hDB );
+#endif
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "sqlite3_open(%s) failed: %s", 
                   pszNewName, sqlite3_errmsg( hDB ) );
-                  
+
         return FALSE;
     }
 
