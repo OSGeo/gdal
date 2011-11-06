@@ -389,9 +389,18 @@ int wrapper_VSIStatL( const char * utf8_path, StatBuf *psStatBufOut, int nFlags 
 
 VSILFILE   *VSIFOpenL( const char *utf8_path, const char *pszMode );
 void    VSIFCloseL( VSILFILE * );
+
+#if defined(SWIGPYTHON)
+%apply (GIntBig bigint) { GIntBig };
+int     VSIFSeekL( VSILFILE *, GIntBig, int );
+GIntBig    VSIFTellL( VSILFILE * );
+int     VSIFTruncateL( VSILFILE *, GIntBig );
+%clear (GIntBig bigint);
+#else
 int     VSIFSeekL( VSILFILE *, long, int );
 long    VSIFTellL( VSILFILE * );
 int     VSIFTruncateL( VSILFILE *, long );
+#endif
 
 #if defined(SWIGPYTHON)
 %rename (VSIFWriteL) wrapper_VSIFWriteL;

@@ -288,15 +288,15 @@ def VSIFCloseL(*args):
   return _gdal.VSIFCloseL(*args)
 
 def VSIFSeekL(*args):
-  """VSIFSeekL(VSILFILE arg0, long arg1, int arg2) -> int"""
+  """VSIFSeekL(VSILFILE arg0, GIntBig arg1, int arg2) -> int"""
   return _gdal.VSIFSeekL(*args)
 
 def VSIFTellL(*args):
-  """VSIFTellL(VSILFILE arg0) -> long"""
+  """VSIFTellL(VSILFILE arg0) -> GIntBig"""
   return _gdal.VSIFTellL(*args)
 
 def VSIFTruncateL(*args):
-  """VSIFTruncateL(VSILFILE arg0, long arg1) -> int"""
+  """VSIFTruncateL(VSILFILE arg0, GIntBig arg1) -> int"""
   return _gdal.VSIFTruncateL(*args)
 
 def VSIFWriteL(*args):
