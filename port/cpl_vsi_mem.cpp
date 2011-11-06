@@ -376,8 +376,10 @@ int VSIMemHandle::Truncate( vsi_l_offset nNewSize )
         return -1;
     }
 
-    poFile->SetLength( nNewSize );
-    return 0;
+    if (poFile->SetLength( nNewSize ))
+        return 0;
+    else
+        return -1;
 }
 
 /************************************************************************/
