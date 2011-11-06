@@ -264,6 +264,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 /* -------------------------------------------------------------------- */
     char **papszTokens = NULL;
     int nFieldCount=0, iField;
+    CPLValueType eType;
 
     if( !bNew )
     {
@@ -276,21 +277,11 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 
     for( iField = 0; iField < nFieldCount && bHasFieldNames; iField++ )
     {
-        const char *pszToken = papszTokens[iField];
-        int bAllNumeric = TRUE;
-
-        if (*pszToken != '\0')
-        {
-            while( *pszToken != '\0' && bAllNumeric )
-            {
-                if( *pszToken != '.' && *pszToken != '-'
-                    && (*pszToken < '0' || *pszToken > '9') )
-                    bAllNumeric = FALSE;
-                pszToken++;
-            }
-
-            if( bAllNumeric )
-                bHasFieldNames = FALSE;
+        eType = CPLGetValueType(papszTokens[iField]);
+        if ( eType == CPL_VALUE_INTEGER ||
+             eType == CPL_VALUE_REAL ) {
+            /* we have a numeric field, therefore do not consider the first line as field names */
+            bHasFieldNames = FALSE;
         }
     }
 

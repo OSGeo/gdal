@@ -807,6 +807,61 @@ def ogr_csv_19():
 
 
 ###############################################################################
+# Verify handling of column names with numbers
+
+def ogr_csv_20():
+
+    if gdaltest.csv_ds is None:
+        return 'skip'
+
+    gdaltest.csv_ds.Destroy()
+    gdaltest.csv_ds = None
+
+    gdaltest.csv_ds = ogr.Open( 'data/testnumheader1.csv' )
+    if gdaltest.csv_ds is None:
+        return 'fail'
+
+    lyr = gdaltest.csv_ds.GetLayerByName( 'testnumheader1' )
+    if lyr is None:
+        return 'fail'
+    lyr.ResetReading()
+
+    expect = ['1 - 2', '2-3']
+    got = [lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef(),\
+                 lyr.GetLayerDefn().GetFieldDefn(1).GetNameRef()]
+    if  got[0]!= expect[0]:
+        print('column 0 got name %s expected %s' % (str(got[0]), str(expect[0])) )
+        return 'fail'
+    if  got[1]!= expect[1]:
+        print('column 1 got name %s expected %s' % (str(got[1]), str(expect[1])) )
+        return 'fail'
+
+    gdaltest.csv_ds.Destroy()
+    gdaltest.csv_ds = None
+
+    gdaltest.csv_ds = ogr.Open( 'data/testnumheader2.csv' )
+    if gdaltest.csv_ds is None:
+        return 'fail'
+
+    lyr = gdaltest.csv_ds.GetLayerByName( 'testnumheader2' )
+    if lyr is None:
+        return 'fail'
+    lyr.ResetReading()
+
+    expect = ['field_1', 'field_2']
+    got = [lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef(),\
+                 lyr.GetLayerDefn().GetFieldDefn(1).GetNameRef()]
+    if  got[0]!= expect[0]:
+        print('column 0 got name %s expected %s' % (str(got[0]), str(expect[0])) )
+        return 'fail'
+    if  got[1]!= expect[1]:
+        print('column 1 got name %s expected %s' % (str(got[1]), str(expect[1])) )
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # 
 
 def ogr_csv_cleanup():
@@ -855,6 +910,7 @@ gdaltest_list = [
     ogr_csv_17,
     ogr_csv_18,
     ogr_csv_19,
+    ogr_csv_20,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':
