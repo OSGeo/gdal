@@ -803,7 +803,7 @@ def ogr_csv_19():
     if not ogrtest.check_features_against_list( lyr,'STRINGCOL',['foo']):
         return 'fail'
 
-    return 'pass'
+    return 'success'
 
 
 ###############################################################################
