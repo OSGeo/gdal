@@ -38,6 +38,30 @@ automatically translated to RGB.  Paletted images are also supported.<P>
 Starting with GDAL 1.9.0, XMP metadata can be extracted from JPEG2000 files, and will be
 stored as XML raw content in the xml:XMP metadata domain.<p>
 
+<h2>Configuration Options</h2>
+
+The JP2KAK driver supports the following 
+<a href="http://trac.osgeo.org/gdal/ConfigOptions">Config Options</a>.
+These runtime options can be used to alter the behavior of the driver.
+
+<ul>
+<li> <b>JP2KAK_THREADS</b>=n: By default an effort is made to take advantage of
+multi-threading on multi-core computers using default rules from the Kakadu 
+library.  This option may be set to a value of zero to avoid using additional
+threads or to a specific count to create the requested number of worker threads.<p>
+
+<li> <b>JP2KAK_FUSSY</b>=YES/NO: This can be set to YES to turn on fussy reporting
+of problems with the JPEG2000 data stream.  Defaults to NO.<p>
+
+<li> <b>JP2KAK_RESILIENT</b>=YES/NO: This can be set to YES to force Kakadu to
+maximimize resilience with incorrectly created JPEG2000 data files, likely at
+some cost in performance.  This is likely to be necessary if, amoung other reasons,
+you get an error message about "Expected to find EPH marker following packet header"
+or error reports indicating the need to run with the resilient and sequential flags
+on.  Defaults to NO.<p>
+
+</ul>
+
 <h2>Creation Issues</h2>
 
 JPEG2000 files can only be created using the CreateCopy mechanism to

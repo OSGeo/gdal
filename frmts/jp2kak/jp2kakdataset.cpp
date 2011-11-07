@@ -1015,11 +1015,14 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !Identify( poOpenInfo ) )
         return NULL;
 
+    int bResilient = CSLTestBoolean(
+        CPLGetConfigOption( "JP2KAK_RESILIENT", "NO" ) );
+
 /* -------------------------------------------------------------------- */
 /*      Handle setting up datasource for JPIP.                          */
 /* -------------------------------------------------------------------- */
     KakaduInitialize();
-        
+
     pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
     if( poOpenInfo->nHeaderBytes < 16 )
     {
@@ -1037,7 +1040,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             try
             {
                 poRawInput = new subfile_source;
-                poRawInput->open( poOpenInfo->pszFilename );
+                poRawInput->open( poOpenInfo->pszFilename, bResilient );
                 poRawInput->seek( 0 );
 
                 poRawInput->read( abySubfileHeader, 16 );
@@ -1061,17 +1064,18 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we think this should be access via vsil, then open it        */
-/*      accordingly.                                                    */
+/*      If we think this should be access via vsil, then open it using  */
+/*      subfile_source.  We do this if it does not seem to open normally*/
+/*      or if we want to operate in resilient (sequential) mode.        */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->fp == NULL
-        && poRawInput == NULL
-        && !bIsJPIP )
+    if( poRawInput == NULL
+        && !bIsJPIP
+        && (bResilient || poOpenInfo->fp == NULL) )
     {
         try
         {
             poRawInput = new subfile_source;
-            poRawInput->open( poOpenInfo->pszFilename );
+            poRawInput->open( poOpenInfo->pszFilename, bResilient );
             poRawInput->seek( 0 );
         }
         catch( ... )
@@ -1216,8 +1220,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->oCodeStream.create( poInput );
         poDS->oCodeStream.set_persistent();
 
-        poDS->bResilient = CSLTestBoolean(
-            CPLGetConfigOption( "JP2KAK_RESILIENT", "NO" ) );
+        poDS->bResilient = bResilient;
         poDS->bFussy = CSLTestBoolean(
             CPLGetConfigOption( "JP2KAK_FUSSY", "NO" ) );
 
@@ -1296,8 +1299,8 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
         siz_params *siz = poDS->oCodeStream.access_siz();
         kdu_params *cod = siz->access_cluster(COD_params);
-        bool use_precincts; 
-        
+        bool use_precincts;
+
         cod->get(Cuse_precincts,0,0,use_precincts);
 
         const char *pszPersist = CPLGetConfigOption( "JP2KAK_PERSIST", "AUTO");
@@ -1308,7 +1311,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
                 > 100000000.0 )
                 poDS->bPreferNPReads = true;
         }
-        else 
+        else
             poDS->bPreferNPReads = !CSLTestBoolean(pszPersist);
 
         CPLDebug( "JP2KAK", "Cuse_precincts=%d, PreferNonPersistentReads=%d", 
@@ -1568,8 +1571,8 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
 
     if( bPreferNPReads )
     {
-        subfile_src.open( GetDescription() );
-        
+        subfile_src.open( GetDescription(), bResilient );
+
         if( family != NULL )
         {
             wrk_family.open( &subfile_src );
