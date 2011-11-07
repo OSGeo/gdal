@@ -45,7 +45,7 @@ class subfile_source : public kdu_compressed_source {
 
     bool operator!() { return (file == NULL); }
 
-    void open(const char *fname )
+    void open(const char *fname, int bSequential )
       {
           const char *real_filename;
           close();
@@ -61,7 +61,7 @@ class subfile_source : public kdu_compressed_source {
               else
               {
                   kdu_error e;
-                  
+
                   e << "Corrupt subfile definition:" << fname;
                   return;
               }
@@ -75,7 +75,7 @@ class subfile_source : public kdu_compressed_source {
               else
               {
                   kdu_error e;
-              
+
                   e << "Could not find filename in subfile definition." << fname;
                   return;
               }
@@ -96,7 +96,10 @@ class subfile_source : public kdu_compressed_source {
               return;
           }
 
-          capabilities = KDU_SOURCE_CAP_SEQUENTIAL | KDU_SOURCE_CAP_SEEKABLE;
+          if( bSequential ) 
+            capabilities = KDU_SOURCE_CAP_SEQUENTIAL;
+          else
+            capabilities = KDU_SOURCE_CAP_SEQUENTIAL | KDU_SOURCE_CAP_SEEKABLE;
 
           seek_origin = subfile_offset;
           seek( 0 );
@@ -163,4 +166,3 @@ class subfile_source : public kdu_compressed_source {
     
     VSILFILE *file;
   };
-
