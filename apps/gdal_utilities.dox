@@ -1338,22 +1338,52 @@ World files and embedded georeference is used during tile generation, but you
 can publish a picture without proper georeference too. 
 
 <dl>
-<dt> <b>-title</b> <i>"Title"</i>:</dt>
-  <dd>Title used for generated metadata, web viewers and KML files.</dd>
-<dt> <b>-publishurl</b> <i>http://yourserver/dir/</i>:</dt>
-  <dd>Address of a directory into which you are going to upload the result. It should end with slash.</dd>
-<dt> <b>-nogooglemaps</b>:</dt>
-  <dd>Do not generate Google Maps based html page.</dd>
-<dt> <b>-noopenlayers</b>:</dt>
-  <dd>Do not generate OpenLayers based html page.</dd>
-<dt> <b>-nokml</b>:</dt>
-  <dd>Do not generate KML files for Google Earth.</dd>
-<dt> <b>-googlemapskey</b> <i>KEY</i>:</dt>
-  <dd>Key for your domain generated on Google Maps API web page (http://www.google.com/apis/maps/signup.html).</dd>
-<dt> <b>-forcekml</b></dt>
-  <dd>Force generating of KML files. Input file must use EPSG:4326 coordinates!</dd>
-<dt> <b>-v</b></dt>
-  <dd> Generate verbose output of tile generation.</dd>
+<dt> <b>-p</b> <i>PROFILE</i>, --profile=<i>PROFILE</i>:</dt>
+  <dd>Tile cutting profile (mercator,geodetic,raster) - default 'mercator' (Google Maps compatible).</dd>
+<dt> <b>-r</b> <i>RESAMPLING</i>, --resampling=<i>RESAMPLING</i>:</dt>
+  <dd>Resampling method (average,near,bilinear,cubic,cubicspline,lanczos,antialias) - default 'average'.</dd>
+<dt> <b>-s</b> <i>SRS</i>, --s_srs=<i>SRS</i>:</dt>
+  <dd>The spatial reference system used for the source input data.</dd>
+<dt> <b>-z</b> <i>ZOOM</i>, --zoom=<i>ZOOM</i>:</dt>
+  <dd>Zoom levels to render (format:'2-5' or '10').</dd>
+<dt> <b>-e</b>, --resume:</dt>
+  <dd>Resume mode. Generate only missing files.</dd>
+<dt> <b>-a</b> <i>NODATA</i>, --srcnodata=<i>NODATA</i>:</dt>
+  <dd>NODATA transparency value to assign to the input data.</dd>
+<dt> <b>-v, --verbose</b></dt>
+  <dd>Generate verbose output of tile generation.</dd>
+<dt> <b>-h, --help</b></dt>
+  <dd>Show help message and exit.</dd>
+<dt> <b>--version</b></dt>
+  <dd>Show program's version number and exit.</dd>
+</dl>
+
+<b>KML (Google Earth) options:</b>
+
+Options for generated Google Earth SuperOverlay metadata
+<dl>
+<dt> <b>-k, --force-kml</b></dt>
+  <dd>Generate KML for Google Earth - default for 'geodetic' profile and 'raster' in EPSG:4326. For a dataset with different projection use with caution!</dd>
+<dt> <b>-n, --no-kml</b>:</dt>
+  <dd>Avoid automatic generation of KML files for EPSG:4326.</dd>
+<dt> <b>-u</b> <i>URL</i>, --url=<i>URL</i>:</dt>
+  <dd>URL address where the generated tiles are going to be published.</dd>
+</dl>
+
+<b>Web viewer options:</b>
+
+Options for generated HTML viewers a la Google Maps
+<dl>
+<dt> <b>-w</b> <i>WEBVIEWER</i>, --webviewer=<i>WEBVIEWER</i>:</dt>
+  <dd>Web viewer to generate (all,google,openlayers,none) - default 'all'.</dd>
+<dt> <b>-t</b> <i>TITLE</i>, --title=<i>TITLE</i>:</dt>
+  <dd>Title of the map.</dd>
+<dt> <b>-c</b> <i>COPYRIGHT</i>, --copyright=<i>COPYRIGHT</i>:</dt>
+  <dd>Copyright for the map.</dd>
+<dt> <b>-g</b> <i>GOOGLEKEY</i>, --googlekey=<i>GOOGLEKEY</i>:</dt>
+  <dd>Google Maps API key from http://code.google.com/apis/maps/signup.html.</dd>
+<dt> <b>-y</b> <i>YAHOOKEY</i>, --yahookey=<i>YAHOOKEY</i>:</dt>
+  <dd>Yahoo Application ID from http://developer.yahoo.com/wsregapp/.</dd>
 </dl>
 
 
