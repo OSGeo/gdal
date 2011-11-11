@@ -23995,7 +23995,7 @@ else
     DODS_INC="-I$with_dods_root/include -I$with_dods_root/include/libdap -I$with_dods_root/include/dap"
     DODS_BIN=$with_dods_root/bin
 
-rm -f islibdappre310.*
+rm -f islibdappost310.*
 echo '#include "Connect.h"' > islibdappost310.cpp
 echo 'int main(int argc, char** argv) { return 0; } ' >> islibdappost310.cpp
 if test -z "`${CXX} islibdappost310.cpp -c ${DODS_INC} 2>&1`" ; then
@@ -24022,7 +24022,7 @@ $as_echo "libdap >= 3.9" >&6; }
     rm -f islibdappre39.*
 
 fi
-rm -f islibdappre310.*
+rm -f islibdappost310.*
 
 
         if test -x $DODS_BIN/opendap-config ; then
