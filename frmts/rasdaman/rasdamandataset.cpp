@@ -69,8 +69,6 @@ class RasdamanDataset : public GDALPamDataset
     
     static GDALDataset *Open( GDALOpenInfo * );
 
-    CPLErr 	GetGeoTransform( double * padfTransform );
-
 private:
   void getTypes(const r_Base_Type* baseType, int &counter, int pos);
   void createBands(const char* queryString);
@@ -216,22 +214,6 @@ CPLErr RasdamanRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 RasdamanDataset::~RasdamanDataset()
 {
   FlushCache();
-}
-
-/************************************************************************/
-/*                          GetGeoTransform()                           */
-/************************************************************************/
-
-CPLErr RasdamanDataset::GetGeoTransform( double * padfTransform )
-
-{
-    padfTransform[0] = 0.0;
-    padfTransform[1] = 1.0;
-    padfTransform[2] = 0.0;
-    padfTransform[3] = 0.0;
-    padfTransform[4] = 0.0;
-    padfTransform[5] = 1.0;
-    return CE_None;
 }
 
 /************************************************************************/
