@@ -650,6 +650,17 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Does the output dataset already exist?                          */
 /* -------------------------------------------------------------------- */
+
+    /* FIXME ? source filename=target filename and -overwrite is definitely */
+    /* an error. But I can't imagine of a valid case (without -overwrite), */
+    /* where it would make sense. In doubt, let's keep that dubious possibility... */
+    if ( CSLCount(papszSrcFiles) == 1 &&
+         strcmp(papszSrcFiles[0], pszDstFilename) == 0 && bOverwrite)
+    {
+        fprintf(stderr, "Source and destination datasets must be different.\n");
+        exit( 1 );
+    }
+
     CPLPushErrorHandler( CPLQuietErrorHandler );
     hDstDS = GDALOpen( pszDstFilename, GA_Update );
     CPLPopErrorHandler();
