@@ -2168,7 +2168,7 @@ else
 
 dnl Test if we have libdap >= 3.10
 dnl From libdap 3.10, AISConnect.h has been renamed as Connect.h
-rm -f islibdappre310.*
+rm -f islibdappost310.*
 echo '#include "Connect.h"' > islibdappost310.cpp
 echo 'int main(int argc, char** argv) { return 0; } ' >> islibdappost310.cpp
 if test -z "`${CXX} islibdappost310.cpp -c ${DODS_INC} 2>&1`" ; then
@@ -2196,7 +2196,7 @@ else
     rm -f islibdappre39.*
 
 fi
-rm -f islibdappre310.*
+rm -f islibdappost310.*
 
 
     dnl Add the DODS libraries to LIBS
