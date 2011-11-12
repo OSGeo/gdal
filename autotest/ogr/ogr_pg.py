@@ -1657,6 +1657,7 @@ def ogr_pg_36():
         return 'fail'
     if gdaltest.pg_has_postgis and lyr.GetGeomType() != ogr.wkbPoint:
         gdaltest.post_reason( 'wrong geometry type for layer table36_inherited2' )
+        print(lyr.GetGeomType())
         return 'fail'
 
     lyr = ds.GetLayerByName( 'AutoTest-schema.table36_inherited2' )
@@ -1845,7 +1846,11 @@ def ogr_pg_39():
         return 'success'
 
     gdaltest.pg_ds.ExecuteSQL( "CREATE VIEW testview AS SELECT * FROM table37_inherited" )
-    gdaltest.pg_ds.ExecuteSQL( "INSERT INTO geometry_columns VALUES ( '', 'public', 'testview', 'wkb_geometry', 2, -1, 'POINT') ")
+    if gdaltest.pg_has_postgis_2:
+        sql_lyr = gdaltest.pg_ds.ExecuteSQL( "SELECT AddGeometryColumn('public','testview','wkb_geometry',-1,'POINT',2)" )
+        gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+    else:
+        gdaltest.pg_ds.ExecuteSQL( "INSERT INTO geometry_columns VALUES ( '', 'public', 'testview', 'wkb_geometry', 2, -1, 'POINT') ")
     gdaltest.pg_ds.ExecuteSQL( "INSERT INTO table37_inherited (col1, col2, wkb_geometry) VALUES ( 'a', 'b', GeomFromEWKT('POINT (0 1)') )" )
 
     # Check for the layer
@@ -1880,7 +1885,11 @@ def ogr_pg_39():
     ds.Destroy()
 
     # Test another geometry column
-    gdaltest.pg_ds.ExecuteSQL( "INSERT INTO geometry_columns VALUES ( '', 'public', 'testview', 'point25D', 3, -1, 'POINT') ")
+    if gdaltest.pg_has_postgis_2:
+        sql_lyr = gdaltest.pg_ds.ExecuteSQL( "SELECT AddGeometryColumn('public','testview','point25D',-1,'POINT',3)" )
+        gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+    else:
+        gdaltest.pg_ds.ExecuteSQL( "INSERT INTO geometry_columns VALUES ( '', 'public', 'testview', 'point25D', 3, -1, 'POINT') ")
     gdaltest.pg_ds.ExecuteSQL( "UPDATE table37_inherited SET \"point25D\" = GeomFromEWKT('POINT (0 1 2)') " )
 
     # Check for the layer
@@ -2249,7 +2258,15 @@ def ogr_pg_47():
         return 'skip'
 
     # Create table with geography column
-    lyr = gdaltest.pg_ds.CreateLayer('test_geog', options = [ 'GEOM_TYPE=geography', 'GEOMETRY_NAME=my_geog' ] )
+    gdaltest.pg_ds.ExecuteSQL("DELETE FROM spatial_ref_sys")
+    gdaltest.pg_ds.ExecuteSQL("""INSERT INTO "spatial_ref_sys" ("srid","auth_name","auth_srid","srtext","proj4text") VALUES (4326,'EPSG',4326,'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]','+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ')""")
+
+    gdaltest.pg_ds = None
+    gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 4326 )
+    lyr = gdaltest.pg_ds.CreateLayer('test_geog', srs = srs, options = [ 'GEOM_TYPE=geography', 'GEOMETRY_NAME=my_geog' ] )
     field_defn = ogr.FieldDefn("test_string", ogr.OFTString)
     lyr.CreateField(field_defn)
     field_defn.Destroy()
@@ -2832,6 +2849,7 @@ def ogr_pg_58():
     if feat.GetField('anotherstrcolumn') != '12345':
         gdaltest.post_reason('failed (2)')
         return 'fail'
+    feat = None
 
     if lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex('anotherstrcolumn')) != 0:
         gdaltest.post_reason('failed (3)')
