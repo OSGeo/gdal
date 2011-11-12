@@ -75,6 +75,8 @@ CPLString OGRPGEscapeString(PGconn *hPGConn,
                             const char* pszFieldName);
 CPLString OGRPGEscapeColumnName(const char* pszColumnName);
 
+#define UNDETERMINED_SRID       -2 /* Special value when we haven't yet looked for SRID */
+
 /************************************************************************/
 /*                            OGRPGLayer                                */
 /************************************************************************/
@@ -222,7 +224,7 @@ public:
                                          const char * pszGeomColumnIn,
                                          int bUpdate,
                                          int bAdvertizeGeomColumn,
-                                         int nSRSId = -2 );
+                                         int nSRSId = UNDETERMINED_SRID );
                         ~OGRPGTableLayer();
 
     void                SetGeometryInformation(const char* pszGeomType,

@@ -225,7 +225,7 @@ static void OGRPGTableEntryAddGeomColumn(PGTableEntry* psTableEntry,
                                          const char* pszName,
                                          const char* pszGeomType = NULL,
                                          int nCoordDimension = 0,
-                                         int nSRID = 0,
+                                         int nSRID = UNDETERMINED_SRID,
                                          PostgisType ePostgisType = GEOM_TYPE_UNKNOWN)
 {
     psTableEntry->pasGeomColumns = (PGGeomColumnDesc*)

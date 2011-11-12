@@ -361,13 +361,13 @@ int OGRPGResultLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCFastFeatureCount) ||
         EQUAL(pszCap,OLCFastSetNextByIndex) )
         return (m_poFilterGeom == NULL || 
-                ((bHasPostGISGeometry || bHasPostGISGeography) && nSRSId != -2)) && m_poAttrQuery == NULL;
+                ((bHasPostGISGeometry || bHasPostGISGeography) && nSRSId != UNDETERMINED_SRID)) && m_poAttrQuery == NULL;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
-        return ((bHasPostGISGeometry || bHasPostGISGeography) && nSRSId != -2) && m_poAttrQuery == NULL;
+        return ((bHasPostGISGeometry || bHasPostGISGeography) && nSRSId != UNDETERMINED_SRID) && m_poAttrQuery == NULL;
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
-        return (bHasPostGISGeometry && nSRSId != -2) && m_poAttrQuery == NULL;
+        return (bHasPostGISGeometry && nSRSId != UNDETERMINED_SRID) && m_poAttrQuery == NULL;
         
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
         return TRUE;
@@ -394,7 +394,7 @@ OGRFeature *OGRPGResultLayer::GetNextFeature()
             return NULL;
 
         if( (m_poFilterGeom == NULL
-            || ((bHasPostGISGeometry || bHasPostGISGeography) && nSRSId != -2)
+            || ((bHasPostGISGeometry || bHasPostGISGeography) && nSRSId != UNDETERMINED_SRID)
             || FilterGeometry( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
@@ -413,7 +413,7 @@ void OGRPGResultLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 {
     if( InstallFilter( poGeomIn ) )
     {
-        if ((bHasPostGISGeometry || bHasPostGISGeography) && nSRSId != -2)
+        if ((bHasPostGISGeometry || bHasPostGISGeography) && nSRSId != UNDETERMINED_SRID)
         {
             if( m_poFilterGeom != NULL)
             {
