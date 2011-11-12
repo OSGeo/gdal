@@ -106,7 +106,7 @@ OGRPGLayer::OGRPGLayer()
     nCoordDimension = 2; // initialize in case PostGIS is not available
 
     poSRS = NULL;
-    nSRSId = -2; // we haven't even queried the database for it yet.
+    nSRSId = UNDETERMINED_SRID; // we haven't even queried the database for it yet.
 
     pszCursorName = CPLStrdup(CPLSPrintf("OGRPGLayerReader%p", this));
     
@@ -1874,7 +1874,7 @@ OGRErr OGRPGLayer::RollbackTransaction()
 OGRSpatialReference *OGRPGLayer::GetSpatialRef()
 
 {
-    if (nSRSId == -2)
+    if (nSRSId == UNDETERMINED_SRID)
         GetLayerDefn();
 
     if( poSRS == NULL && nSRSId > -1 )
