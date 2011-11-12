@@ -142,7 +142,7 @@ void  OGRPGTableLayer::SetGeometryInformation(const char* pszType,
                                                int nSRID,
                                                PostgisType ePostgisType)
 {
-    if (pszType == NULL || nCoordDimension == 0 ||
+    if (pszType == NULL || nCoordDimension == 0 || nSRID == UNDETERMINED_SRID ||
         ePostgisType == GEOM_TYPE_UNKNOWN)
         return;
 
@@ -151,8 +151,7 @@ void  OGRPGTableLayer::SetGeometryInformation(const char* pszType,
     nGeomType = OGRFromOGCGeomType(pszType);
 
     this->nCoordDimension = nCoordDimension;
-    if (nSRID != 0)
-        this->nSRSId = nSRID;
+    this->nSRSId = nSRID;
 
     if( nCoordDimension == 3 && nGeomType != wkbUnknown )
         nGeomType = (OGRwkbGeometryType) (nGeomType | wkb25DBit);
@@ -492,7 +491,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
       {
         osCommand.Printf(
             "SELECT type, coord_dimension%s FROM %s WHERE f_table_name='%s'",
-            (nSRSId == -2) ? ", srid" : "",
+            (nSRSId == UNDETERMINED_SRID) ? ", srid" : "",
             (bHasPostGISGeometry) ? "geometry_columns" : "geography_columns",
             (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName);
         if (pszGeomColumn)
@@ -514,7 +513,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
 
             nCoordDimension = MAX(2,MIN(3,atoi(PQgetvalue(hResult,0,1))));
 
-            if (nSRSId == -2)
+            if (nSRSId == UNDETERMINED_SRID)
                 nSRSId = atoi(PQgetvalue(hResult,0,2));
 
             SetGeometryInformation(pszType, nCoordDimension, nSRSId,
@@ -562,7 +561,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
         OGRPGClearResult( hResult );
       }
 
-      if (nSRSId == -2)
+      if (nSRSId == UNDETERMINED_SRID)
           nSRSId = -1;
     }
     else if (pszGeomColumn == NULL)
@@ -2410,14 +2409,14 @@ int OGRPGTableLayer::GetFeatureCount( int bForce )
 /*                           GetSpatialRef()                            */
 /*                                                                      */
 /*      We override this to try and fetch the table SRID from the       */
-/*      geometry_columns table if the srsid is -2 (meaning we           */
-/*      haven't yet even looked for it).                                */
+/*      geometry_columns table if the srsid is UNDETERMINED_SRID        */
+/*      (meaning we haven't yet even looked for it).                    */
 /************************************************************************/
 
 OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
 
 {
-    if( nSRSId == -2 )
+    if( nSRSId == UNDETERMINED_SRID )
     {
         PGconn      *hPGConn = poDS->GetPGConn();
         PGresult    *hResult = NULL;
