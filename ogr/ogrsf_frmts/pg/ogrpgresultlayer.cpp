@@ -456,18 +456,24 @@ OGRErr OGRPGResultLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 {
     CPLString   osCommand;
 
+    const char* pszExtentFct;
+    if (poDS->sPostGISVersion.nMajor >= 2)
+        pszExtentFct = "ST_Extent";
+    else
+        pszExtentFct = "Extent";
+
     if ( TestCapability(OLCFastGetExtent) )
     {
         /* Do not take the spatial filter into account */
-        osCommand.Printf( "SELECT Extent(%s) FROM (%s) AS ogrpgextent",
-                          OGRPGEscapeColumnName(pszGeomColumn).c_str(),
+        osCommand.Printf( "SELECT %s(%s) FROM (%s) AS ogrpgextent",
+                          pszExtentFct, OGRPGEscapeColumnName(pszGeomColumn).c_str(),
                           pszRawStatement );
     }
     else if ( bHasPostGISGeography )
     {
         /* Probably not very efficient, but more efficient than client-side implementation */
-        osCommand.Printf( "SELECT Extent(ST_GeomFromWKB(ST_AsBinary(%s))) FROM (%s) AS ogrpgextent",
-                          OGRPGEscapeColumnName(pszGeomColumn).c_str(),
+        osCommand.Printf( "SELECT %s(ST_GeomFromWKB(ST_AsBinary(%s))) FROM (%s) AS ogrpgextent",
+                          pszExtentFct, OGRPGEscapeColumnName(pszGeomColumn).c_str(),
                           pszRawStatement );
     }
     
