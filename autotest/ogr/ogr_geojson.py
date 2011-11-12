@@ -995,6 +995,43 @@ def ogr_geojson_22():
     return 'success'
 
 ###############################################################################
+# Write GeoJSON with bbox
+
+def ogr_geojson_23():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = gdaltest.geojson_drv.CreateDataSource('/vsimem/ogr_geojson_23.json')
+    lyr = ds.CreateLayer('foo', options = ['WRITE_BBOX=YES'])
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 10)'))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2 20)'))
+    lyr.CreateFeature(feat)
+    lyr = None
+    ds = None
+
+    fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_23.json', 'rb')
+    data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink('/vsimem/ogr_geojson_23.json')
+
+    if data.find('"bbox": [ 1.0, 10.0, 2.0, 20.0 ]') == -1:
+        gdaltest.post_reason('did not find global bbox')
+        print(data)
+        return 'fail'
+
+    if data.find('"bbox": [ 1.0, 10.0, 1.0, 10.0 ]') == -1:
+        gdaltest.post_reason('did not find first feature bbox')
+        print(data)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 def ogr_geojson_cleanup():
 
@@ -1048,6 +1085,7 @@ gdaltest_list = [
     ogr_geojson_20,
     ogr_geojson_21,
     ogr_geojson_22,
+    ogr_geojson_23,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':

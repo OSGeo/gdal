@@ -43,7 +43,9 @@ OGRGeoJSONDataSource::OGRGeoJSONDataSource()
     : pszName_(NULL), pszGeoData_(NULL),
         papoLayers_(NULL), nLayers_(0), fpOut_(NULL),
         flTransGeom_( OGRGeoJSONDataSource::eGeometryPreserve ),
-        flTransAttrs_( OGRGeoJSONDataSource::eAtributesPreserve )
+        flTransAttrs_( OGRGeoJSONDataSource::eAtributesPreserve ),
+        bFpOutputIsSeekable_( FALSE ),
+        nBBOXInsertLocation_(0)
 {
     // I've got constructed. Lunch time!
 }
@@ -222,7 +224,19 @@ OGRLayer* OGRGeoJSONDataSource::CreateLayer( const char* pszName_,
 
     if( NULL != fpOut_ )
     {
-        VSIFPrintfL( fpOut_, "{\n\"type\": \"FeatureCollection\",\n\"features\": [\n" );
+        VSIFPrintfL( fpOut_, "{\n\"type\": \"FeatureCollection\",\n" );
+
+        if (bFpOutputIsSeekable_)
+        {
+            nBBOXInsertLocation_ = (int) VSIFTellL( fpOut_ );
+
+            char szSpaceForBBOX[SPACE_FOR_BBOX+1];
+            memset(szSpaceForBBOX, ' ', SPACE_FOR_BBOX);
+            szSpaceForBBOX[SPACE_FOR_BBOX] = '\0';
+            VSIFPrintfL( fpOut_, "%s\n", szSpaceForBBOX);
+        }
+
+        VSIFPrintfL( fpOut_, "\"features\": [\n" );
     }
 
     return poLayer;
@@ -250,6 +264,10 @@ int OGRGeoJSONDataSource::Create( const char* pszName, char** papszOptions )
 
     if (strcmp(pszName, "/dev/stdout") == 0)
         pszName = "/vsistdout/";
+
+    bFpOutputIsSeekable_ =  !(strcmp(pszName,"/vsistdout/") == 0 ||
+                              strncmp(pszName,"/vsigzip/", 9) == 0 ||
+                              strncmp(pszName,"/vsizip/", 8) == 0);
 
 /* -------------------------------------------------------------------- */
 /*     File overwrite not supported.                                    */
