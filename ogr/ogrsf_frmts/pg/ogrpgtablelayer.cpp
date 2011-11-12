@@ -142,7 +142,7 @@ void  OGRPGTableLayer::SetGeometryInformation(const char* pszType,
                                                int nSRID,
                                                PostgisType ePostgisType)
 {
-    if (pszType == NULL || nCoordDimension == 0 || nSRID == 0 ||
+    if (pszType == NULL || nCoordDimension == 0 ||
         ePostgisType == GEOM_TYPE_UNKNOWN)
         return;
 
@@ -151,7 +151,8 @@ void  OGRPGTableLayer::SetGeometryInformation(const char* pszType,
     nGeomType = OGRFromOGCGeomType(pszType);
 
     this->nCoordDimension = nCoordDimension;
-    this->nSRSId = nSRID;
+    if (nSRID != 0)
+        this->nSRSId = nSRID;
 
     if( nCoordDimension == 3 && nGeomType != wkbUnknown )
         nGeomType = (OGRwkbGeometryType) (nGeomType | wkb25DBit);
@@ -2471,15 +2472,22 @@ OGRErr OGRPGTableLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 
     GetLayerDefn();
 
+    const char* pszExtentFct;
+    if (poDS->sPostGISVersion.nMajor >= 2)
+        pszExtentFct = "ST_Extent";
+    else
+        pszExtentFct = "Extent";
+
     if ( TestCapability(OLCFastGetExtent) )
     {
-        osCommand.Printf( "SELECT Extent(%s) FROM %s",
+        osCommand.Printf( "SELECT %s(%s) FROM %s", pszExtentFct,
                           OGRPGEscapeColumnName(pszGeomColumn).c_str(), pszSqlTableName );
     }
     else if ( bHasPostGISGeography )
     {
         /* Probably not very efficient, but more efficient than client-side implementation */
-        osCommand.Printf( "SELECT Extent(ST_GeomFromWKB(ST_AsBinary(%s))) FROM %s",
+        osCommand.Printf( "SELECT %s(ST_GeomFromWKB(ST_AsBinary(%s))) FROM %s",
+                          pszExtentFct,
                           OGRPGEscapeColumnName(pszGeomColumn).c_str(), pszSqlTableName );
     }
 
