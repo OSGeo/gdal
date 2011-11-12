@@ -33,6 +33,8 @@
 #include <cstdio>
 #include <vector> // used by OGRGeoJSONLayer
 
+#define SPACE_FOR_BBOX  80
+
 class OGRGeoJSONDataSource;
 
 /************************************************************************/
@@ -142,6 +144,9 @@ public:
 
     void SetAttributesTranslation( AttributesTranslation type );
 
+    int  GetFpOutputIsSeekable() const { return bFpOutputIsSeekable_; }
+    int  GetBBOXInsertLocation() const { return nBBOXInsertLocation_; }
+
 private:
 
     //
@@ -158,6 +163,9 @@ private:
     // 
     GeometryTranslation flTransGeom_;
     AttributesTranslation flTransAttrs_;
+
+    int bFpOutputIsSeekable_;
+    int nBBOXInsertLocation_;
 
     //
     // Priavte utility functions

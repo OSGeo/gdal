@@ -101,7 +101,18 @@ OGRGeoJSONLayer::~OGRGeoJSONLayer()
                 json_object_array_add(poObjBBOX,
                             json_object_new_double_with_precision(sEnvelopeLayer.MaxZ, nCoordPrecision));
 
-            VSIFPrintfL( fp, ",\n\"bbox\" : %s", json_object_to_json_string( poObjBBOX ) );
+            const char* pszBBOX = json_object_to_json_string( poObjBBOX );
+            if( poDS_->GetFpOutputIsSeekable() )
+            {
+                VSIFSeekL(fp, poDS_->GetBBOXInsertLocation(), SEEK_SET);
+                if (strlen(pszBBOX) + 9 < SPACE_FOR_BBOX)
+                    VSIFPrintfL( fp, "\"bbox\": %s,", pszBBOX );
+                VSIFSeekL(fp, 0, SEEK_END);
+            }
+            else
+            {
+                VSIFPrintfL( fp, ",\n\"bbox\": %s", pszBBOX );
+            }
 
             json_object_put( poObjBBOX );
         }
