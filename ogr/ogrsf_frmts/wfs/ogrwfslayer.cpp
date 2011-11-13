@@ -485,7 +485,8 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
     }
 
     /* If no PROPERTYNAME is specified, build one if there are ignored fields */
-    const char* pszPropertyName = CPLURLGetValue(osURL, "PROPERTYNAME");
+    CPLString osPropertyName = CPLURLGetValue(osURL, "PROPERTYNAME");
+    const char* pszPropertyName = osPropertyName.c_str();
     if (pszPropertyName[0] == 0 && poFeatureDefn != NULL)
     {
         int bHasIgnoredField = FALSE;
@@ -853,7 +854,8 @@ OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn* poSrcFDefn)
         bGotApproximateLayerDefn = TRUE;
     }
 
-    const char* pszPropertyName = CPLURLGetValue(pszBaseURL, "PROPERTYNAME");
+    CPLString osPropertyName = CPLURLGetValue(pszBaseURL, "PROPERTYNAME");
+    const char* pszPropertyName = osPropertyName.c_str();
 
     int i;
     poFeatureDefn->SetGeomType(poSrcFDefn->GetGeomType());
