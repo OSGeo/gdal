@@ -196,7 +196,8 @@ XMLPlatformUtils::Initialize();
             AC_SUBST([XERCES_LDFLAGS])
 
             HAVE_XERCES="yes"
-        else 
+        else
+            XERCES_CFLAGS=""
             HAVE_XERCES="no"
         fi
 
