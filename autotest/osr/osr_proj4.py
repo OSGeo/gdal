@@ -59,13 +59,13 @@ def have_proj480():
         return have_proj480_flag
 
     handle = None
-    for name in ["libproj.so", "proj.dll", "libproj.dylib"]:
+    for name in ["libproj.so", "proj.dll",  "libproj-0.dll", "libproj.dylib"]:
         try:
             handle = ctypes.cdll.LoadLibrary(name)
         except:
             pass
     if handle is None:
-        print('cannot load libproj.so, proj.dll or libproj.dylib')
+        print('cannot load libproj.so, proj.dll, libproj-0.dll or libproj.dylib')
         have_proj480_flag = False
         return have_proj480_flag
 
