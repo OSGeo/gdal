@@ -1115,8 +1115,8 @@ int ISIS2Dataset::WriteLabel(
     nWritingBytes += ISIS2Dataset::WriteFormatting( fpLabel, "/* File identification and structure */");
     nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "RECORD_TYPE", "FIXED_LENGTH" );
     nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "RECORD_BYTES", CPLString().Printf("%d",RECORD_SIZE));
-    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "FILE_RECORDS", CPLString().Printf("%lu",(long unsigned int)(iRecords)));
-    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "LABEL_RECORDS", CPLString().Printf("%llu", iLabelRecords));
+    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "FILE_RECORDS", CPLString().Printf(CPL_FRMT_GUIB,iRecords));
+    nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "LABEL_RECORDS", CPLString().Printf(CPL_FRMT_GUIB,iLabelRecords));
     if(!bAttachedLabel){
         nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, "FILE_NAME", CPLGetFilename(osRasterFile));
     }
@@ -1125,7 +1125,7 @@ int ISIS2Dataset::WriteLabel(
     nWritingBytes += ISIS2Dataset::WriteFormatting( fpLabel, "/* Pointers to Data Objects */");
 
     if(bAttachedLabel){
-        nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, CPLString().Printf("^%s",sObjectTag.c_str()), CPLString().Printf("%llu",iLabelRecords+1));
+        nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, CPLString().Printf("^%s",sObjectTag.c_str()), CPLString().Printf(CPL_FRMT_GUIB,iLabelRecords+1));
     }else{
         nWritingBytes += ISIS2Dataset::WriteKeyword( fpLabel, iLevel, CPLString().Printf("^%s",sObjectTag.c_str()), CPLString().Printf("(\"%s\",1)",CPLGetFilename(osRasterFile)));
     }
