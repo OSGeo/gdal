@@ -16725,6 +16725,22 @@ fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for 64bit file io" >&5
 $as_echo_n "checking for 64bit file io... " >&6; }
 
+    case "${host_os}" in
+    *mingw*)
+        with_unix_stdio_64=no
+
+cat >>confdefs.h <<_ACEOF
+#define VSI_STAT64 _stat64
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define VSI_STAT64_T __stat64
+_ACEOF
+
+        ;;
+  esac
+
   if test x"$with_unix_stdio_64" = x"yes" ; then
     VSI_FTELL64=ftell64
     VSI_FSEEK64=fseek64
@@ -22751,6 +22767,7 @@ $as_echo_n "checking for Xerces C++ Parser... " >&6; }
 
             HAVE_XERCES="yes"
         else
+            XERCES_CFLAGS=""
             HAVE_XERCES="no"
         fi
 
@@ -25675,6 +25692,10 @@ else
   HAVE_GEOS="no"
 fi
 
+
+      if test x"$HAVE_GEOS" = "xno"; then
+          GEOS_CFLAGS=""
+      fi
 
       CFLAGS="${ax_save_CFLAGS}"
       LIBS="${ax_save_LIBS}"
