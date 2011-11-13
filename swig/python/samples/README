@@ -18,7 +18,7 @@ gdal2grd.py		Script to write out ASCII GRD rasters (used in Golden
 
 gdal_vrtmerge.py	Similar to gdal_merge.py, but produces a VRT file. 
 
-gdalcopyproj.py		Duplicate the geotransform and projection metadata from
+gdalcopyproj.py		Duplicate the geotransform, projection and/or GCPs from
 			one raster dataset to another, which can be useful after
 			performing image manipulations with other software that
 			ignores or discards georeferencing metadata.
