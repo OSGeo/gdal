@@ -137,6 +137,10 @@ AC_DEFUN([GEOS_INIT],[
         []
       )
 
+      if test x"$HAVE_GEOS" = "xno"; then
+          GEOS_CFLAGS=""
+      fi
+
       CFLAGS="${ax_save_CFLAGS}"
       LIBS="${ax_save_LIBS}"
 

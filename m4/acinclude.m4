@@ -95,6 +95,15 @@ AC_DEFUN([AC_UNIX_STDIO_64],
 
   AC_MSG_CHECKING([for 64bit file io])
 
+  dnl Special case when using mingw cross compiler.
+  case "${host_os}" in
+    *mingw*)
+        with_unix_stdio_64=no
+        AC_DEFINE_UNQUOTED(VSI_STAT64,_stat64, [Define to name of 64bit stat function])
+        AC_DEFINE_UNQUOTED(VSI_STAT64_T,__stat64, [Define to name of 64bit stat structure])
+        ;;
+  esac
+
   if test x"$with_unix_stdio_64" = x"yes" ; then
     VSI_FTELL64=ftell64
     VSI_FSEEK64=fseek64
