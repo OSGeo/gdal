@@ -575,7 +575,7 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
         if (bIsGML3Output && !poDS->IsLongSRSRequired())
             papszOptions = CSLAddString(papszOptions, "GML3_LONGSRS=NO");
         if (poDS->IsGML32Output())
-            papszOptions = CSLAddString(papszOptions, CPLSPrintf("GMLID=%s.geom.%d", poFeatureDefn->GetName(), poFeature->GetFID()));
+            papszOptions = CSLAddString(papszOptions, CPLSPrintf("GMLID=%s.geom.%ld", poFeatureDefn->GetName(), poFeature->GetFID()));
         pszGeometry = poGeom->exportToGML(papszOptions);
         CSLDestroy(papszOptions);
         if (bWriteSpaceIndentation)
