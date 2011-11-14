@@ -526,6 +526,16 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         else
         {
             bHaveSchema = poReader->LoadClasses( pszGFSFilename );
+            if (bHaveSchema)
+            {
+                const char *pszXSDFilename;
+                pszXSDFilename = CPLResetExtension( pszNewName, "xsd" );
+                if( VSIStatExL( pszXSDFilename, &sGMLStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
+                {
+                    CPLDebug("GML", "Using %s file, ignoring %s",
+                             pszGFSFilename, pszXSDFilename);
+                }
+            }
         }
     }
 
@@ -536,12 +546,15 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /*      just hopes it is in the same director with the same name.       */
 /* -------------------------------------------------------------------- */
     const char *pszXSDFilename;
+    int bHasFoundXSD = FALSE;
 
     if( !bHaveSchema )
     {
         pszXSDFilename = CPLResetExtension( pszNewName, "xsd" );
         if( VSIStatL( pszXSDFilename, &sGMLStatBuf ) == 0 )
         {
+            bHasFoundXSD = TRUE;
+
             std::vector<GMLFeatureClass*> aosClasses;
             bHaveSchema = GMLParseXSD( pszXSDFilename, aosClasses );
             if (bHaveSchema)
@@ -573,10 +586,19 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /*      will have mechanisms for remembering the schema and related     */
 /*      information.                                                    */
 /* -------------------------------------------------------------------- */
-    if( !bHaveSchema && !poReader->PrescanForSchema( TRUE ) )
+    if( !bHaveSchema )
     {
-        // we assume an errors have been reported.
-        return FALSE;
+        if( !poReader->PrescanForSchema( TRUE ) )
+        {
+            // we assume an errors have been reported.
+            return FALSE;
+        }
+
+        if( bHasFoundXSD )
+        {
+            CPLDebug("GML", "Generating %s file, ignoring %s",
+                     pszGFSFilename, pszXSDFilename);
+        }
     }
 
     if (poReader->GetClassCount() > 1 && poReader->IsSequentialLayers() &&
