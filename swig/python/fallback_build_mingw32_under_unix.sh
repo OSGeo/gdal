@@ -17,18 +17,19 @@ else
     HAS_NUMPY=no
 fi
 
-INCFLAGS="-D__MSVCRT_VERSION__=0x0601 -I${PYTHONHOME}/include -I../../port -I../../gcore -I../../alg -I../../ogr/"
+INCFLAGS="-I${PYTHONHOME}/include -I../../port -I../../gcore -I../../alg -I../../ogr/"
 LINKFLAGS="-L../../.libs -lgdal -L${PYTHONHOME}/libs -l${PYTHONLIB}"
+CFLAGS="-O2 -D__MSVCRT_VERSION__=0x0601"
 
 # Run native python
 wine ${PYTHONHOME}/python setup.py build
 
 # Build extensions
-${CXX} extensions/gdal_wrap.cpp -shared -o ${OUTDIR}/_gdal.pyd ${INCFLAGS} ${LINKFLAGS}
-${CXX} extensions/ogr_wrap.cpp -shared -o ${OUTDIR}/_ogr.pyd ${INCFLAGS} ${LINKFLAGS}
-${CXX} extensions/osr_wrap.cpp -shared -o ${OUTDIR}/_osr.pyd ${INCFLAGS} ${LINKFLAGS}
-${CXX} extensions/gdalconst_wrap.c -shared -o ${OUTDIR}/_gdalconst.pyd ${INCFLAGS} ${LINKFLAGS}
+${CXX} ${CFLAGS} extensions/gdal_wrap.cpp -shared -o ${OUTDIR}/_gdal.pyd ${INCFLAGS} ${LINKFLAGS}
+${CXX} ${CFLAGS} extensions/ogr_wrap.cpp -shared -o ${OUTDIR}/_ogr.pyd ${INCFLAGS} ${LINKFLAGS}
+${CXX} ${CFLAGS} extensions/osr_wrap.cpp -shared -o ${OUTDIR}/_osr.pyd ${INCFLAGS} ${LINKFLAGS}
+${CXX} ${CFLAGS} extensions/gdalconst_wrap.c -shared -o ${OUTDIR}/_gdalconst.pyd ${INCFLAGS} ${LINKFLAGS}
 
 if test x${HAS_NUMPY} = "xyes"; then
-    ${CXX} extensions/gdal_array_wrap.cpp -shared -o ${OUTDIR}/_gdal_array.pyd ${INCFLAGS} -I${PYTHONHOME}/Lib/site-packages/numpy/core/include ${LINKFLAGS}
+    ${CXX} ${CFLAGS} extensions/gdal_array_wrap.cpp -shared -o ${OUTDIR}/_gdal_array.pyd ${INCFLAGS} -I${PYTHONHOME}/Lib/site-packages/numpy/core/include ${LINKFLAGS}
 fi
