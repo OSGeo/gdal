@@ -374,7 +374,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
         if (bSpatialiteLoaded)
         {
             rc = sqlite3_get_table( hDB,
-                                "SELECT name FROM sqlite_master WHERE sql LIKE 'CREATE VIRTUAL TABLE % USING %VirtualShape%'",
+                                "SELECT name, sql FROM sqlite_master WHERE sql LIKE 'CREATE VIRTUAL TABLE %'",
                                 &papszResult, &nRowCount, 
                                 &nColCount, &pszErrMsg );
 
@@ -382,10 +382,19 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
             {
                 for( iRow = 0; iRow < nRowCount; iRow++ )
                 {
-                    OpenTable( papszResult[iRow+1] );
-                    
-                    if (bListAllTables)
-                        CPLHashSetInsert(hSet, CPLStrdup(papszResult[iRow+1]));
+                    char **papszRow = papszResult + iRow * 2 + 2;
+                    const char *pszName = papszRow[0];
+                    const char *pszSQL = papszRow[1];
+                    if( pszName == NULL || pszSQL == NULL )
+                        continue;
+
+                    if( strstr(pszSQL, "VirtualShape") || strstr(pszSQL, "VirtualXL") )
+                    {
+                        OpenTable( pszName );
+
+                        if (bListAllTables)
+                            CPLHashSetInsert(hSet, CPLStrdup(pszName));
+                    }
                 }
             }
             else
