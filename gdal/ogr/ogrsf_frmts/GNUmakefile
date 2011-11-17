@@ -31,6 +31,7 @@ SUBDIRS-$(CURL_SETTING) += wfs
 SUBDIRS-$(MDB_ENABLED)  += mdb
 SUBDIRS-$(CURL_SETTING) += gft
 SUBDIRS-$(CURL_SETTING) += couchdb
+SUBDIRS-$(HAVE_FREEXL)  += xls
 
 ifeq ($(PCIDSK_SETTING),internal)
 SUBDIRS-yes  += pcidsk
