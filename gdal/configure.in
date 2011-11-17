@@ -2675,6 +2675,44 @@ AC_MSG_RESULT([$OPENCL_SETTING])
 AC_SUBST(OPENCL_FLAGS,  $OPENCL_FLAGS)
 AC_SUBST(OPENCL_LIB,    $OPENCL_LIB)
 
+
+dnl ---------------------------------------------------------------------------
+dnl Check if FreeXL library is available.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(freexl,[  --with-freexl[=ARG]    Include freexl support (ARG=no, yes (default) or libfreexl install path)],,)
+
+AC_MSG_CHECKING([for FreeXL support])
+
+HAVE_FREEXL=no
+FREEXL_INCLUDE=
+
+if test "$with_freexl" = "" -o "$with_freexl" = "yes" ; then
+  AC_CHECK_LIB(freexl,freexl_open,HAVE_FREEXL=yes,HAVE_FREEXL=no,)
+  AC_CHECK_HEADERS(freexl.h)
+
+  if test "$HAVE_FREEXL" = "yes" -a "$ac_cv_header_freexl_h" = "no" ; then
+    LIBS="-lfreexl $LIBS"
+  else
+    echo "libfreexl not found - FreeXL support disabled"
+  fi
+
+elif test "$with_freexl" != "no"; then
+
+  AC_CHECK_LIB(freexl,freexl_open,HAVE_FREEXL=yes,HAVE_FREEXL=no,-L$with_freexl/lib -lfreexl)
+
+  if test "$HAVE_FREEXL" = "yes" -a -f "$with_freexl/include/freexl.h" ; then
+    LIBS="-L$with_freexl/lib -lfreexl $LIBS"
+    FREEXL_INCLUDE="-I$with_freexl/include"
+  else
+    echo "libfreexl not found - FreeXL support disabled"
+  fi
+
+fi
+
+AC_SUBST(HAVE_FREEXL,  $HAVE_FREEXL)
+AC_SUBST(FREEXL_INCLUDE,  $FREEXL_INCLUDE)
+
 dnl ---------------------------------------------------------------------------
 dnl Check if we must enable PAM
 dnl ---------------------------------------------------------------------------
@@ -3439,6 +3477,7 @@ LOC_MSG([  Poppler support:           ${HAVE_POPPLER}])
 LOC_MSG([  Podofo support:            ${HAVE_PODOFO}])
 LOC_MSG([  OpenCL support:            ${OPENCL_SETTING}])
 LOC_MSG([  Armadillo support:         ${HAVE_ARMADILLO}])
+LOC_MSG([  FreeXL support:            ${HAVE_FREEXL}])
 LOC_MSG()
 if test ! -z "`uname | grep Darwin`" ; then
   LOC_MSG([  Mac OS X Framework :       ${MACOSX_FRAMEWORK}])
