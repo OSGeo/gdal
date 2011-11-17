@@ -1,6 +1,6 @@
 
 OBJ	=	ogrxlsdriver.obj ogrxlsdatasource.obj ogrxlslayer.obj
-EXTRAFLAGS =	-I.. -I..\..
+EXTRAFLAGS =	-I.. -I..\.. $(FREEXL_CFLAGS)
 
 GDAL_ROOT	=	..\..\..
 
