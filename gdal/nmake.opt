@@ -486,6 +486,16 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #WEBP_CFLAGS = -IE:/libwebp-0.1-windows/dev/Include
 #WEBP_LIBS = e:/libwebp-0.1-windows/dev/lib/libwebp_a.lib
 
+# Uncomment for freexl support
+#
+# Note: Currently there is no MSVC makefile to build freexl.
+# Here's the procedure I've followed (from root of freexl source tree)
+# cl /c src/freexl.c /Iheaders /IE:\release-1500-dev\release-1500\include /DDLL_EXPORT
+# link /dll E:\release-1500-dev\release-1500\lib\iconv.lib freexl.obj /out:freexl.dll /implib:freexl_i.lib
+#
+#FREEXL_CFLAGS = -Ie:/freexl-1.0.0a/headers
+#FREEXL_LIBS = e:/freexl-1.0.0a/freexl_i.lib
+
 # Any extra libraries needed on this platform?
 ADD_LIBS	= 
 
@@ -614,7 +624,7 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(KAKLIB) $(PCIDSK_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(POPPLER_LIBS) $(PODOFO_LIBS) $(LZMA_LIBS) \
-	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(FGDB_LIB_LINK)
+	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS)
 		
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
