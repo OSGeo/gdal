@@ -431,6 +431,13 @@ MDB_ENABLED =   @MDB_ENABLED@
 HAVE_ARMADILLO = @HAVE_ARMADILLO@
 
 #
+# freexl stuff
+#
+
+HAVE_FREEXL = @HAVE_FREEXL@
+FREEXL_INCLUDE = @FREEXL_INCLUDE@
+
+#
 #	Note these codes have to exactly match the format directory names, 
 #	and their uppercase form should be the format portion of the
 #	format registration entry point.  eg. gdb -> GDALRegister_GDB().

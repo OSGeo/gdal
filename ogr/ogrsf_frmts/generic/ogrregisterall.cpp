@@ -234,4 +234,7 @@ void OGRRegisterAll()
 #ifdef SEGY_ENABLED
     RegisterOGRSEGY();
 #endif
+#ifdef FREEXL_ENABLED
+    RegisterOGRXLS();
+#endif
 } /* OGRRegisterAll */
