@@ -642,6 +642,8 @@ POPPLER_BASE_STREAM_HAS_TWO_ARGS
 POPPLER_HAS_OPTCONTENT
 HAVE_POPPLER
 PAM_SETTING
+FREEXL_INCLUDE
+HAVE_FREEXL
 OPENCL_LIB
 OPENCL_FLAGS
 GEOS_CONFIG
@@ -925,6 +927,7 @@ with_geos
 with_opencl
 with_opencl_include
 with_opencl_lib
+with_freexl
 with_pam
 with_poppler
 with_podofo
@@ -1669,6 +1672,7 @@ Optional Packages:
   --with-opencl=ARG       Include OpenCL (GPU) support
   --with-opencl-include=ARG OpenCL Include directory (with a CL subdirectory)
   --with-opencl-lib=ARG   OpenCL Link Flags (ie. -L/xxx -lOpenCL)
+  --with-freexl=ARG    Include freexl support (ARG=no, yes (default) or libfreexl install path)
   --without-pam         Disable PAM (.aux.xml) support
   --with-poppler=ARG    Include poppler(for PDF) support (ARG=no(default), yes or poppler install path)
   --with-podofo=ARG    Include podofo(for PDF) support (ARG=no(default), yes or podofo install path)
@@ -25773,6 +25777,142 @@ OPENCL_LIB=$OPENCL_LIB
 
 
 
+
+
+# Check whether --with-freexl was given.
+if test "${with_freexl+set}" = set; then :
+  withval=$with_freexl;
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for FreeXL support" >&5
+$as_echo_n "checking for FreeXL support... " >&6; }
+
+HAVE_FREEXL=no
+FREEXL_INCLUDE=
+
+if test "$with_freexl" = "" -o "$with_freexl" = "yes" ; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for freexl_open in -lfreexl" >&5
+$as_echo_n "checking for freexl_open in -lfreexl... " >&6; }
+if ${ac_cv_lib_freexl_freexl_open+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lfreexl  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char freexl_open ();
+int
+main ()
+{
+return freexl_open ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_freexl_freexl_open=yes
+else
+  ac_cv_lib_freexl_freexl_open=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_freexl_freexl_open" >&5
+$as_echo "$ac_cv_lib_freexl_freexl_open" >&6; }
+if test "x$ac_cv_lib_freexl_freexl_open" = xyes; then :
+  HAVE_FREEXL=yes
+else
+  HAVE_FREEXL=no
+fi
+
+  for ac_header in freexl.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "freexl.h" "ac_cv_header_freexl_h" "$ac_includes_default"
+if test "x$ac_cv_header_freexl_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_FREEXL_H 1
+_ACEOF
+
+fi
+
+done
+
+
+  if test "$HAVE_FREEXL" = "yes" -a "$ac_cv_header_freexl_h" = "no" ; then
+    LIBS="-lfreexl $LIBS"
+  else
+    echo "libfreexl not found - FreeXL support disabled"
+  fi
+
+elif test "$with_freexl" != "no"; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for freexl_open in -lfreexl" >&5
+$as_echo_n "checking for freexl_open in -lfreexl... " >&6; }
+if ${ac_cv_lib_freexl_freexl_open+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lfreexl -L$with_freexl/lib -lfreexl $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char freexl_open ();
+int
+main ()
+{
+return freexl_open ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_freexl_freexl_open=yes
+else
+  ac_cv_lib_freexl_freexl_open=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_freexl_freexl_open" >&5
+$as_echo "$ac_cv_lib_freexl_freexl_open" >&6; }
+if test "x$ac_cv_lib_freexl_freexl_open" = xyes; then :
+  HAVE_FREEXL=yes
+else
+  HAVE_FREEXL=no
+fi
+
+
+  if test "$HAVE_FREEXL" = "yes" -a -f "$with_freexl/include/freexl.h" ; then
+    LIBS="-L$with_freexl/lib -lfreexl $LIBS"
+    FREEXL_INCLUDE="-I$with_freexl/include"
+  else
+    echo "libfreexl not found - FreeXL support disabled"
+  fi
+
+fi
+
+HAVE_FREEXL=$HAVE_FREEXL
+
+FREEXL_INCLUDE=$FREEXL_INCLUDE
+
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable PAM" >&5
 $as_echo_n "checking whether to enable PAM... " >&6; }
 
@@ -29677,6 +29817,9 @@ echo "  OpenCL support:            ${OPENCL_SETTING}"
 
 
 echo "  Armadillo support:         ${HAVE_ARMADILLO}"
+
+
+echo "  FreeXL support:            ${HAVE_FREEXL}"
 
 
 echo ""
