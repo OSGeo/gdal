@@ -65,6 +65,7 @@ OGRPGDataSource::OGRPGDataSource()
     papoSRS = NULL;
 
     poLayerInCopyMode = NULL;
+    nUndefinedSRID = -1; /* actual value will be autotected if PostGIS >= 2.0 detected */
 }
 
 /************************************************************************/
@@ -734,6 +735,26 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         OGRPGClearResult( hResult );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Find out "unknown SRID" value                                   */
+/* -------------------------------------------------------------------- */
+
+    if (sPostGISVersion.nMajor >= 2)
+    {
+        hResult = OGRPG_PQexec(hPGConn,
+                        "SELECT ST_Srid('POINT EMPTY'::GEOMETRY)" );
+
+        if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
+            && PQntuples(hResult) > 0)
+        {
+            nUndefinedSRID = atoi(PQgetvalue(hResult,0,0));
+        }
+
+        OGRPGClearResult( hResult );
+    }
+    else
+        nUndefinedSRID = -1;
+
     hResult = OGRPG_PQexec(hPGConn, "COMMIT");
     OGRPGClearResult( hResult );
 
@@ -1370,7 +1391,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
 /*      Try to get the SRS Id of this spatial reference system,         */
 /*      adding tot the srs table if needed.                             */
 /* -------------------------------------------------------------------- */
-    int nSRSId = -1;
+    int nSRSId = nUndefinedSRID;
 
     if( poSRS != NULL )
         nSRSId = FetchSRSId( poSRS );
@@ -1800,11 +1821,11 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     PGresult            *hResult = NULL;
     CPLString           osCommand;
     char                *pszWKT = NULL;
-    int                 nSRSId = -1;
+    int                 nSRSId = nUndefinedSRID;
     const char*         pszAuthorityName;
 
     if( poSRS == NULL )
-        return -1;
+        return nUndefinedSRID;
 
     OGRSpatialReference oSRS(*poSRS);
     poSRS = NULL;
@@ -1869,7 +1890,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     if( oSRS.exportToWkt( &pszWKT ) != OGRERR_NONE )
     {
         CPLFree(pszWKT);
-        return -1;
+        return nUndefinedSRID;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1919,7 +1940,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     if( bTableMissing )
     {
         if( InitializeMetadataTables() != OGRERR_NONE )
-            return -1;
+            return nUndefinedSRID;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1947,7 +1968,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     if( oSRS.exportToProj4( &pszProj4 ) != OGRERR_NONE )
     {
         CPLFree( pszProj4 );
-        return -1;
+        return nUndefinedSRID;
     }
 
     CPLString osProj4 = OGRPGEscapeString(hPGConn, pszProj4, -1, "proj4text");
