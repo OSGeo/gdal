@@ -351,12 +351,16 @@ class OGRPGDataSource : public OGRDataSource
 
     CPLString           GetCurrentSchema();
 
+    int                 nUndefinedSRID;
+
   public:
     PGver               sPostgreSQLVersion;
     PGver               sPostGISVersion;
 
     int                 bUseBinaryCursor;
     int                 bBinaryTimeFormatIsInt8;
+
+    int                GetUndefinedSRID() const { return nUndefinedSRID; }
 
   public:
                         OGRPGDataSource();
