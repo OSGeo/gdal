@@ -63,6 +63,9 @@ void GenerateTiles(std::string filename,
    
     GByte* pafScanline = new GByte[dxsize];
     bool* hadnoData = new bool[dxsize];
+
+    if (isJpegDriver && bands == 4)
+        bands = 3;
    
     poTmpDataset = poMemDriver->Create("", dxsize, dysize, bands, GDT_Byte, NULL);
    
@@ -723,6 +726,7 @@ GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALD
         tileysize = (int)dtileysize;
         tilexsize = (int)( (double)(dtileysize * xsize) / ysize );
     }
+    maxzoom = 0;
 
     std::vector<double> zoomxpixels;
     std::vector<double> zoomypixels;
@@ -734,7 +738,6 @@ GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALD
     }
 
     std::string tmpFileName; 
-    std::vector<std::string> dirVector;
     std::vector<std::string> fileVector;
     int nRet;
     if (isKmz)
@@ -788,17 +791,13 @@ GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALD
                 ixStr << ix;
                 iyStr << iy;
 
-                std::string zoomDir = outDir + "/" + zoomStr.str();
+                std::string zoomDir = outDir;
+                zoomDir+= "/" + zoomStr.str();
                 VSIMkdir(zoomDir.c_str(), 0775);
         
 
                 zoomDir = zoomDir + "/" + ixStr.str();
                 VSIMkdir(zoomDir.c_str(), 0775);
-
-                if (isKmz)
-                {
-                    dirVector.push_back(zoomDir);
-                }
 
                 std::string fileExt = ".jpg";
                 if (isJpegDriver == false)
