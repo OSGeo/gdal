@@ -355,10 +355,10 @@ int  GenerateChildKml(std::string filename,
     VSIFPrintfL(fp, "\t\t\t</Icon>\n");
     VSIFPrintfL(fp, "\t\t\t<gx:LatLonQuad>\n");
     VSIFPrintfL(fp, "\t\t\t\t<coordinates>\n");
-    VSIFPrintfL(fp, "\t\t\t\t\t%f, %f, 0\n", lowerleftT, leftbottomT);
-    VSIFPrintfL(fp, "\t\t\t\t\t%f, %f, 0\n", lowerrightT, rightbottomT);
-    VSIFPrintfL(fp, "\t\t\t\t\t%f, %f, 0\n", upperrightT, righttopT);
-    VSIFPrintfL(fp, "\t\t\t\t\t%f, %f, 0\n", upperleftT, lefttopT);
+    VSIFPrintfL(fp, "\t\t\t\t\t%f,%f,0\n", lowerleftT, leftbottomT);
+    VSIFPrintfL(fp, "\t\t\t\t\t%f,%f,0\n", lowerrightT, rightbottomT);
+    VSIFPrintfL(fp, "\t\t\t\t\t%f,%f,0\n", upperrightT, righttopT);
+    VSIFPrintfL(fp, "\t\t\t\t\t%f,%f,0\n", upperleftT, lefttopT);
     VSIFPrintfL(fp, "\t\t\t\t</coordinates>\n");
     VSIFPrintfL(fp, "\t\t\t</gx:LatLonQuad>\n");
     VSIFPrintfL(fp, "\t\t</GroundOverlay>\n");
