@@ -154,7 +154,8 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         {
             if (EQUAL(pszDeclType, "INTEGER"))
                 nColType = SQLITE_INTEGER;
-            else if (EQUAL(pszDeclType, "FLOAT"))
+            else if (EQUAL(pszDeclType, "FLOAT") ||
+                     EQUAL(pszDeclType, "DECIMAL"))
                 nColType = SQLITE_FLOAT;
             else if (EQUAL(pszDeclType, "BLOB"))
                 nColType = SQLITE_BLOB;
