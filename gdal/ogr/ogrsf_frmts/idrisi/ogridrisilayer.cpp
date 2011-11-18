@@ -143,7 +143,7 @@ int OGRIdrisiLayer::TestCapability( const char * pszCap )
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
-        return nTotalFeatures >= 0 && m_poFilterGeom == NULL && m_poAttrQuery == NULL;
+        return m_poFilterGeom == NULL && m_poAttrQuery == NULL;
 
     if (EQUAL(pszCap, OLCFastGetExtent))
         return bExtentValid;
