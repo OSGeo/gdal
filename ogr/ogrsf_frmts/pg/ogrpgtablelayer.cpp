@@ -562,7 +562,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
       }
 
       if (nSRSId == UNDETERMINED_SRID)
-          nSRSId = -1;
+          nSRSId = poDS->GetUndefinedSRID();
     }
     else if (pszGeomColumn == NULL)
     {
@@ -2422,7 +2422,7 @@ OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
         PGresult    *hResult = NULL;
         CPLString    osCommand;
 
-        nSRSId = -1;
+        nSRSId = poDS->GetUndefinedSRID();
 
         poDS->SoftStartTransaction();
 
