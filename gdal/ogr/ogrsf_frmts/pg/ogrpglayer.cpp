@@ -1599,7 +1599,7 @@ char *OGRPGLayer::GeometryToHex( OGRGeometry * poGeometry, int nSRSId )
     memcpy( &geomType, pabyWKB+1, 4 );
 
     /* Now add the SRID flag if an SRID is provided */
-    if (nSRSId != -1)
+    if (nSRSId <= 0)
     {
         /* Change the flag to wkbNDR (little) endianess */
         GUInt32 nGSrsFlag = CPL_LSBWORD32( WKBSRIDFLAG );
@@ -1614,7 +1614,7 @@ char *OGRPGLayer::GeometryToHex( OGRGeometry * poGeometry, int nSRSId )
     pszTextBufCurrent += 8;
 
     /* Now include SRID if provided */
-    if (nSRSId != -1)
+    if (nSRSId <= 0)
     {
         /* Force the srsid to wkbNDR (little) endianess */
         GUInt32 nGSRSId = CPL_LSBWORD32( nSRSId );
@@ -1877,7 +1877,7 @@ OGRSpatialReference *OGRPGLayer::GetSpatialRef()
     if (nSRSId == UNDETERMINED_SRID)
         GetLayerDefn();
 
-    if( poSRS == NULL && nSRSId > -1 )
+    if( poSRS == NULL && nSRSId > 0 )
     {
         poSRS = poDS->FetchSRS( nSRSId );
         if( poSRS != NULL )
