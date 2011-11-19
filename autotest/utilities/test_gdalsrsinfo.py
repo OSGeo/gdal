@@ -49,10 +49,6 @@ def test_gdalsrsinfo_1():
         return 'fail'
     if ret.find('OGC WKT :') == -1:
         return 'fail'
-    if ret.find('OGC WKT (simple) :') == -1:
-        return 'fail'
-    if ret.find('ESRI WKT :') == -1:
-        return 'fail'
 
     return 'success'
  
