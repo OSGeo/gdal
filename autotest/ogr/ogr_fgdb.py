@@ -228,6 +228,28 @@ def ogr_fgdb_5():
     return 'success'
 
 ###############################################################################
+# Test adding a layer to an existing feature dataset
+
+def ogr_fgdb_6():
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84")
+
+    ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
+    lyr = ds.CreateLayer('layer1', srs = srs, geom_type = ogr.wkbPoint, options = ['FEATURE_DATASET=featuredataset'])
+    lyr = ds.CreateLayer('layer2', srs = srs, geom_type = ogr.wkbPoint, options = ['FEATURE_DATASET=featuredataset'])
+    ds = None
+
+    ds = ogr.Open('tmp/test.gdb')
+    if ds.GetLayerCount() != 2:
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_fgdb_cleanup():
@@ -253,6 +275,7 @@ gdaltest_list = [
     ogr_fgdb_3,
     ogr_fgdb_4,
     ogr_fgdb_5,
+    ogr_fgdb_6,
     ogr_fgdb_cleanup,
     ]
 

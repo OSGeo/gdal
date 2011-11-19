@@ -102,6 +102,7 @@ bool FGdbDataSource::OpenFGDBTables(const std::wstring &type,
     for ( unsigned int i = 0; i < layers.size(); i++ )
     {
         Table* pTable = new Table;
+        //CPLDebug("FGDB", "Opening %s", WStringToString(layers[i]).c_str());
         if (FAILED(hr = m_pGeodatabase->OpenTable(layers[i], *pTable)))
         {
             delete pTable;
