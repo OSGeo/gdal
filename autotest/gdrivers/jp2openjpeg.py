@@ -205,7 +205,7 @@ def jp2openjpeg_online_1():
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
 
-    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jp2openjpeg/7sisters200.j2k', '7sisters200.j2k'):
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/7sisters200.j2k', '7sisters200.j2k'):
         return 'skip'
 
     # Checksum = 32669 on my PC
@@ -226,7 +226,7 @@ def jp2openjpeg_online_2():
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
 
-    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jp2openjpeg/gcp.jp2', 'gcp.jp2'):
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/jpeg2000/gcp.jp2', 'gcp.jp2'):
         return 'skip'
 
     # Checksum = 15621 on my PC
