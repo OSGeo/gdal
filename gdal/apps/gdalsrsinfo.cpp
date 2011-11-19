@@ -55,9 +55,198 @@ void Usage()
             "   [--help-general] [-h]  Show help and exit\n"
             "   [-p]                   Pretty-print where applicable (e.g. WKT)\n"
             "   [-V]                   Validate SRS\n"
-            "   [-o out_type]          Output type, default all\n"
-            "                          {all,proj4,wkt,wkt_simple,wkt_old,wkt_esri,mapinfo,xml}\n\n" ); 
+            "   [-o out_type]          Output type { default, all, wkt_all, proj4,\n"
+            "                                        wkt, wkt_simple, wkt_noct, wkt_esri,\n"
+            "                                        mapinfo, xml }\n\n" ); 
     exit( 1 );
+}
+
+
+/* Search for SRS from pszInput, update oSRS */
+int FindSRS( const char *pszInput, OGRSpatialReference &oSRS, int bDebug )
+
+{
+    int            bGotSRS = FALSE;
+    VSILFILE      *fp = NULL;
+    GDALDataset	  *poGDALDS = NULL; 
+    OGRDataSource *poOGRDS = NULL;
+    OGRLayer      *poLayer = NULL;
+    char           *pszProjection = NULL;
+    CPLErrorHandler oErrorHandler = NULL;
+    int bIsFile = FALSE;
+    OGRErr eErr = CE_None;
+      
+    /* temporarily supress error messages we may get from xOpen() */
+    if ( ! bDebug )
+        oErrorHandler = CPLSetErrorHandler ( CPLQuietErrorHandler );
+
+    /* If argument is a file, try to open it with GDAL and OGROpen() */
+    fp = VSIFOpenL( pszInput, "r" );
+    if ( fp )  {
+        
+        bIsFile = TRUE;
+        VSIFCloseL( fp );
+        
+        /* try to open with GDAL */
+        CPLDebug( "gdalsrsinfo", "trying to open with GDAL" );
+        poGDALDS = (GDALDataset *) GDALOpen( pszInput, GA_ReadOnly );
+        if ( poGDALDS != NULL && poGDALDS->GetProjectionRef( ) != NULL ) {
+            pszProjection = (char *) poGDALDS->GetProjectionRef( );
+            if( oSRS.importFromWkt( &pszProjection ) == CE_None ) {
+                CPLDebug( "gdalsrsinfo", "got SRS from GDAL" );
+                bGotSRS = TRUE;
+            }
+            GDALClose( (GDALDatasetH) poGDALDS );
+        }
+        if ( ! bGotSRS ) 
+            CPLDebug( "gdalsrsinfo", "did not open with GDAL" );
+        
+        /* if unsuccessful, try to open with OGR */
+        if ( ! bGotSRS ) {
+            CPLDebug( "gdalsrsinfo", "trying to open with OGR" );
+            poOGRDS = OGRSFDriverRegistrar::Open( pszInput, FALSE, NULL );
+            if( poOGRDS != NULL ) {
+                poLayer = poOGRDS->GetLayer( 0 );
+                if ( poLayer != NULL ) {
+                    OGRSpatialReference *poSRS = poLayer->GetSpatialRef( );
+                    if ( poSRS != NULL ) {
+                        CPLDebug( "gdalsrsinfo", "got SRS from OGR" );
+                        bGotSRS = TRUE;
+                        OGRSpatialReference* poSRSClone = poSRS->Clone();
+                        oSRS = *poSRSClone;
+                        OGRSpatialReference::DestroySpatialReference( poSRSClone );
+                    }
+                }
+                OGRDataSource::DestroyDataSource( poOGRDS );
+                poOGRDS = NULL;
+            } 
+            if ( ! bGotSRS ) 
+                CPLDebug( "gdalsrsinfo", "did not open with OGR" );
+         }
+        
+    }
+ 
+    /* Last resort, try OSRSetFromUserInput() */
+    if ( ! bGotSRS ) {
+        CPLDebug( "gdalsrsinfo", 
+                  "trying to get SRS from user input [%s]", pszInput );
+
+        eErr = oSRS.SetFromUserInput( pszInput );
+ 
+       if(  eErr != OGRERR_NONE ) {
+            CPLDebug( "gdalsrsinfo", "did not get SRS from user input" );
+        }
+        else {
+            CPLDebug( "gdalsrsinfo", "got SRS from user input" );
+            bGotSRS = TRUE;
+        }
+    }
+    
+  /* restore error messages */
+    if ( ! bDebug )
+        CPLSetErrorHandler ( oErrorHandler );	
+
+
+    return bGotSRS;
+}
+
+
+/* Print spatial reference in specified format */
+CPLErr PrintSRS( const OGRSpatialReference &oSRS, 
+                 const char * pszOutputType, 
+                 int bPretty, int bPrintSep )
+
+{
+    if ( ! pszOutputType || EQUAL(pszOutputType,""))
+        return CE_None;
+
+    CPLDebug( "gdalsrsinfo", "PrintSRS( oSRS, %s, %d, %d )\n",
+              pszOutputType, bPretty, bPrintSep );
+    
+    char *pszOutput = NULL;
+
+    if ( EQUAL("proj4", pszOutputType ) ) {
+        if ( bPrintSep ) printf( "PROJ.4 : ");
+        oSRS.exportToProj4( &pszOutput );
+        printf( "\'%s\'\n", pszOutput );
+    }
+
+    else if ( EQUAL("wkt", pszOutputType ) ) {
+        if ( bPrintSep ) printf("OGC WKT :\n");
+        if ( bPretty ) 
+            oSRS.exportToPrettyWkt( &pszOutput, FALSE );
+        else
+            oSRS.exportToWkt( &pszOutput );
+        printf("%s\n",pszOutput);
+    }
+        
+    else if (  EQUAL("wkt_simple", pszOutputType ) ) {
+        if ( bPrintSep ) printf("OGC WKT (simple) :\n");
+        oSRS.exportToPrettyWkt( &pszOutput, TRUE );
+        printf("%s\n",pszOutput);
+    }
+        
+    else if ( EQUAL("wkt_noct", pszOutputType ) ) {
+        if (  bPrintSep ) printf("OGC WKT (no CT) :\n");
+        OGRSpatialReference *poSRS = oSRS.Clone();
+        poSRS->StripCTParms( );
+        if ( bPretty ) 
+            poSRS->exportToPrettyWkt( &pszOutput, FALSE );
+        else
+            poSRS->exportToWkt( &pszOutput );
+        OGRSpatialReference::DestroySpatialReference( poSRS );
+        printf("%s\n",pszOutput);
+    }
+        
+    else if ( EQUAL("wkt_esri", pszOutputType ) ) {
+        if ( bPrintSep ) printf("ESRI WKT :\n");
+        OGRSpatialReference *poSRS = oSRS.Clone();
+        poSRS->morphToESRI( );
+        if ( bPretty ) 
+            poSRS->exportToPrettyWkt( &pszOutput, FALSE );
+        else
+            poSRS->exportToWkt( &pszOutput );
+        OGRSpatialReference::DestroySpatialReference( poSRS );
+        printf("%s\n",pszOutput);
+    }
+        
+    else if ( EQUAL("mapinfo", pszOutputType ) ) {
+        if ( bPrintSep ) printf("MAPINFO : ");
+        oSRS.exportToMICoordSys( &pszOutput );
+        printf("\'%s\'\n",pszOutput);
+    }
+        
+    else if ( EQUAL("xml", pszOutputType ) ) {
+        if ( bPrintSep ) printf("XML :\n");
+        oSRS.exportToXML( &pszOutput, NULL );
+        printf("%s\n",pszOutput);
+    }
+
+    else {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "ERROR - %s output not supported",
+                  pszOutputType );
+        return CE_Failure;
+    }
+
+    CPLFree( pszOutput );
+    
+    return CE_None;
+}
+
+void PrintSRSOutputTypes( const OGRSpatialReference &oSRS, 
+                          const char ** papszOutputTypes )
+    
+{
+    printf( "\n" );        
+    /* define which are printed when "-o default" (the default) */
+            // int nOutputTypes=4;
+            // const char* papszOutputTypes[] = { "proj4", "wkt", "wkt_simple", "wkt_esri" };
+    int nOutputTypes = CSLCount((char**)papszOutputTypes);
+    for ( int i=0; i<nOutputTypes; i++ ) {
+        PrintSRS( oSRS, papszOutputTypes[i], TRUE, TRUE );
+        printf( "\n" );        
+    }
 }
 
 /************************************************************************/
@@ -70,23 +259,11 @@ int main( int argc, char ** argv )
     int            i;
     int            bGotSRS = FALSE;
     int            bPretty = FALSE;
-    int            bOutputAll = FALSE;
     int            bValidate = FALSE;
-
-    const char     *pszInput = NULL;
-    const char     *pszOutputType = "all";
-    char           *pszOutput = NULL;
-
-    OGRSpatialReference  oSRS;
-
-    VSILFILE      *fp = NULL;
-    GDALDataset	  *poGDALDS = NULL; 
-    OGRDataSource *poOGRDS = NULL;
-    OGRLayer      *poLayer = NULL;
-    char           *pszProjection = NULL;
     int            bDebug = FALSE;
-    CPLErrorHandler oErrorHandler = NULL;
-    int bIsFile = FALSE;
+    const char     *pszInput = NULL;
+    const char     *pszOutputType = "default";
+    OGRSpatialReference  oSRS;
 
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(argv[0]))
@@ -149,81 +326,12 @@ int main( int argc, char ** argv )
     OGRRegisterAll();
 
     /* Search for SRS */
-      
-    /* temporarily supress error messages we may get from xOpen() */
-    bDebug = CSLTestBoolean(CPLGetConfigOption("CPL_DEBUG", "OFF"));
-    if ( ! bDebug )
-        oErrorHandler = CPLSetErrorHandler ( CPLQuietErrorHandler );
-    
-    /* If argument is a file, try to open it with GDALOpen() and get the projection */
-    fp = VSIFOpenL( pszInput, "r" );
-    if ( fp )  {
-        
-        bIsFile = TRUE;
-        VSIFCloseL( fp );
-        
-        /* try to open with GDAL */
-        CPLDebug( "gdalsrsinfo", "trying to open with GDAL" );
-        poGDALDS =  (GDALDataset *) GDALOpen( pszInput, GA_ReadOnly );
-        if ( poGDALDS != NULL && poGDALDS->GetProjectionRef( ) != NULL ) {
-            pszProjection = (char *) poGDALDS->GetProjectionRef( );
-            if( oSRS.importFromWkt( &pszProjection ) == CE_None ) {
-                CPLDebug( "gdalsrsinfo", "got SRS from GDAL" );
-                bGotSRS = TRUE;
-            }
-            GDALClose( (GDALDatasetH) poGDALDS );
-        }
-        if ( ! bGotSRS ) 
-            CPLDebug( "gdalsrsinfo", "did not open with GDAL" );
-        
-        /* if unsuccessful, try to open with OGR */
-        if ( ! bGotSRS ) {
-            CPLDebug( "gdalsrsinfo", "trying to open with OGR" );
-            poOGRDS = OGRSFDriverRegistrar::Open( pszInput, FALSE, NULL );
-            if( poOGRDS != NULL ) {
-                poLayer = poOGRDS->GetLayer( 0 );
-                if ( poLayer != NULL ) {
-                    OGRSpatialReference *poSRS = poLayer->GetSpatialRef( );
-                    if ( poSRS != NULL ) {
-                        CPLDebug( "gdalsrsinfo", "got SRS from OGR" );
-                        bGotSRS = TRUE;
-                        OGRSpatialReference* poSRSClone = poSRS->Clone();
-                        oSRS = *poSRSClone;
-                        OGRSpatialReference::DestroySpatialReference( poSRSClone );
-                    }
-                }
-                OGRDataSource::DestroyDataSource( poOGRDS );
-                poOGRDS = NULL;
-            } 
-            if ( ! bGotSRS ) 
-                CPLDebug( "gdalsrsinfo", "did not open with OGR" );
-            
-            /* OGR_DS_Destroy( hOGRDS ); */
-        }
-        
-    }
-    
-    /* If didn't get the projection from the file, try OSRSetFromUserInput() */
-    /* File might not be a dataset, but contain projection info (e.g. .prf files) */
-    if ( ! bGotSRS ) {
-        CPLDebug( "gdalsrsinfo", 
-                  "trying to get SRS from user input [%s]", pszInput );
-        if( oSRS.SetFromUserInput( pszInput ) != OGRERR_NONE ) {
-            CPLDebug( "gdalsrsinfo", "did not get SRS from user input" );
-        }
-        else {
-            CPLDebug( "gdalsrsinfo", "got SRS from user input" );
-            bGotSRS = TRUE;
-        }
-    }
-    
-    /* restore error messages */
-    if ( ! bDebug )
-        CPLSetErrorHandler ( oErrorHandler );	
+    bGotSRS = FindSRS( pszInput, oSRS, bDebug );
 
     CPLDebug( "gdalsrsinfo", 
               "bGotSRS: %d bValidate: %d pszOutputType: %s bPretty: %d",
               bGotSRS, bValidate, pszOutputType, bPretty  );
+      
 
     /* Make sure we got a SRS */
     if ( ! bGotSRS ) {
@@ -250,74 +358,28 @@ int main( int argc, char ** argv )
         }
         
         /* Output */
-        if ( EQUAL("all", pszOutputType ) ) {
-            bOutputAll = TRUE;
-            bPretty = TRUE;
+        if ( EQUAL("default", pszOutputType ) ) {
+            /* does this work in MSVC? */
+            const char* papszOutputTypes[] = 
+                { "proj4", "wkt", NULL };
+            PrintSRSOutputTypes( oSRS, papszOutputTypes );
         }
-        
-        printf("\n");
-        
-        if ( bOutputAll || EQUAL("proj4", pszOutputType ) ) {
-            if ( bOutputAll ) printf("PROJ.4 : ");
-            oSRS.exportToProj4( &pszOutput );
-            printf("\'%s\'\n\n",pszOutput);
-            CPLFree( pszOutput );
+        else if ( EQUAL("all", pszOutputType ) ) {
+            const char* papszOutputTypes[] = 
+                {"proj4","wkt","wkt_simple","wkt_noct","wkt_esri","mapinfo","xml",NULL};
+            PrintSRSOutputTypes( oSRS, papszOutputTypes );
         }
-        
-        if ( bOutputAll || EQUAL("wkt", pszOutputType ) ) {
-            if ( bOutputAll ) printf("OGC WKT :\n");
-            if ( bPretty ) 
-                oSRS.exportToPrettyWkt( &pszOutput, FALSE );
-            else
-                oSRS.exportToWkt( &pszOutput );
-            printf("%s\n\n",pszOutput);
-            CPLFree( pszOutput );
+        else if ( EQUAL("wkt_all", pszOutputType ) ) {
+            const char* papszOutputTypes[] = 
+                { "wkt", "wkt_simple", "wkt_noct", "wkt_esri", NULL };
+            PrintSRSOutputTypes( oSRS, papszOutputTypes );
         }
-        
-        if ( bOutputAll || EQUAL("wkt_simple", pszOutputType ) ) {
-            if ( bOutputAll ) printf("OGC WKT (simple) :\n");
-            oSRS.exportToPrettyWkt( &pszOutput, TRUE );
-            printf("%s\n\n",pszOutput);
-            CPLFree( pszOutput );
-        }
-        
-        if ( EQUAL("wkt_old", pszOutputType ) ) {
-            if (  bOutputAll ) printf("OGC WKT (old) :\n");
-            oSRS.StripCTParms( );
-            if ( bPretty ) 
-                oSRS.exportToPrettyWkt( &pszOutput, FALSE );
-            else
-                oSRS.exportToWkt( &pszOutput );
-            printf("%s\n\n",pszOutput);
-            CPLFree( pszOutput );
-        }
-        
-        if ( bOutputAll || EQUAL("wkt_esri", pszOutputType ) ) {
-            if ( bOutputAll ) printf("ESRI WKT :\n");
-            OGRSpatialReference *poSRS = oSRS.Clone();
-            poSRS->morphToESRI( );
-            if ( bPretty ) 
-                poSRS->exportToPrettyWkt( &pszOutput, FALSE );
-            else
-                poSRS->exportToWkt( &pszOutput );
-            printf("%s\n\n",pszOutput);
-            CPLFree( pszOutput );
-            OGRSpatialReference::DestroySpatialReference( poSRS );
-        }
-        
-        /* mapinfo and xml are not output with "all" */
-        if ( EQUAL("mapinfo", pszOutputType ) ) {
-            if ( bOutputAll ) printf("MAPINFO : ");
-            oSRS.exportToMICoordSys( &pszOutput );
-            printf("\'%s\'\n\n",pszOutput);
-            CPLFree( pszOutput );
-        }
-        
-        if ( EQUAL("xml", pszOutputType ) ) {
-            if ( bOutputAll ) printf("XML :\n");
-            oSRS.exportToXML( &pszOutput, NULL );
-            printf("%s\n\n",pszOutput);
-            CPLFree( pszOutput );
+        else {
+            if ( bPretty )
+                printf( "\n" );
+            PrintSRS( oSRS, pszOutputType, bPretty, FALSE );
+            if ( bPretty )
+                printf( "\n" );        
         }
 
     }
@@ -328,5 +390,4 @@ int main( int argc, char ** argv )
     CSLDestroy( argv );
 
     return 0;
-
 }
