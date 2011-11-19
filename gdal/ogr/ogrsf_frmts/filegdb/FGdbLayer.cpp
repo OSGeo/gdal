@@ -512,9 +512,29 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     if (  CSLFetchNameValue( papszOptions, "FEATURE_DATASET") != NULL )
     {
         std::string feature_dataset = CSLFetchNameValue( papszOptions, "FEATURE_DATASET");
-        bool rv = CreateFeatureDataset(pParentDataSource, feature_dataset, poSRS, papszOptions);
-        if ( ! rv )
-            return rv;
+
+        /* Check if FEATURE_DATASET exists. Otherwise create it */
+        std::vector<wstring> featuredatasets;
+        Geodatabase *gdb = pParentDataSource->GetGDB();
+        int bFeatureDataSetExists = FALSE;
+        fgdbError hr;
+        if ( !FAILED(hr = gdb->GetChildDatasets(L"\\", L"Feature Dataset", featuredatasets)) )
+        {
+            std::wstring feature_dataset_with_slash = L"\\" + StringToWString(feature_dataset);
+            for ( unsigned int i = 0; i < featuredatasets.size(); i++ )
+            {
+                if (featuredatasets[i] == feature_dataset_with_slash)
+                    bFeatureDataSetExists = TRUE;
+            }
+        }
+
+        if (!bFeatureDataSetExists)
+        {
+            bool rv = CreateFeatureDataset(pParentDataSource, feature_dataset, poSRS, papszOptions);
+            if ( ! rv )
+                return rv;
+        }
+
         table_path = "\\" + feature_dataset + table_path;
         parent_path = "\\" + feature_dataset;
     }
