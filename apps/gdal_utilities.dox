@@ -30,7 +30,7 @@ The following utility programs are distributed with GDAL.
 <li> \ref gdal_sieve - Raster Sieve filter.
 <li> \ref gdal_fillnodata - Interpolate in nodata regions.
 <li> \ref gdallocationinfo - Query raster at a location.
-<li> \ref gdalsrsinfo - Report a given CRS in different formats.  (GDAL >= 1.9.0)
+<li> \ref gdalsrsinfo - Report a given SRS in different formats.  (GDAL >= 1.9.0)
 <li> \ref gdal-config - Get options required to build software using GDAL.
 </ul>
 
@@ -2101,7 +2101,7 @@ http://grass.osgeo.org/grass64/manuals/html64_user/r.colors.html
 *******************************************************************************
 /*! \page gdalsrsinfo gdalsrsinfo
 	
-lists info about a given CRS in number of formats (WKT, PROJ.4, etc.)
+lists info about a given SRS in number of formats (WKT, PROJ.4, etc.)
 
 \section gdalsrsinfo_synopsis SYNOPSIS
 
@@ -2115,20 +2115,67 @@ Options:
    [--help-general] [-h]  Show help and exit
    [-p]                   Pretty-print where applicable (e.g. WKT)
    [-V]                   Validate SRS
-   [-o out_type]          Output type, default all
-                          {all,proj4,wkt,wkt_simple,wkt_old,wkt_esri,mapinfo,xml}
+   [-o out_type]          Output type { default, all, wkt_all, proj4,
+                                        wkt, wkt_simple, wkt_noct, wkt_esri,
+                                        mapinfo, xml }
+
 \endverbatim
 
 \section gdalsrsinfo_description DESCRIPTION
 
 The gdalsrsinfo utility reports information about a given SRS from one of the following:
 
-- the filename of a dataset supported by GDAL/OGR which contains SRS information
-- any of the usual GDAL/OGR forms (complete WKT, PROJ.4, EPSG:n or a file containing the SRS)
+- The filename of a dataset supported by GDAL/OGR which contains SRS information
+- Any of the usual GDAL/OGR forms (complete WKT, PROJ.4, EPSG:n or a file containing the SRS)
 
+Output types:
+
+- <b>default</b>&nbsp;&nbsp;&nbsp;proj4 and wkt (default option)
+- <b>all</b>&nbsp;&nbsp;&nbsp;all options available
+- <b>wkt_all</b>&nbsp;&nbsp;&nbsp;all wkt options available
+- <b>proj4</b>&nbsp;&nbsp;&nbsp;PROJ.4 string
+- <b>wkt</b>&nbsp;&nbsp;&nbsp;OGC WKT format (full)
+- <b>wkt_simple</b>&nbsp;&nbsp;&nbsp;OGC WKT (simplified)
+- <b>wkt_noct</b>&nbsp;&nbsp;&nbsp;OGC WKT (without OGC CT params)
+- <b>wkt_esri</b>&nbsp;&nbsp;&nbsp;ESRI WKT format
+- <b>mapinfo</b>&nbsp;&nbsp;&nbsp;Mapinfo style CoordSys format
+- <b>xml</b>&nbsp;&nbsp;&nbsp;XML format (GML based)
+
+\n
 \section gdal_grid_example EXAMPLE
 
+\verbatim
+$  gdalsrsinfo   "EPSG:4326"
 
+PROJ.4 : '+proj=longlat +datum=WGS84 +no_defs '
+
+OGC WKT :
+GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9122"]],
+    AUTHORITY["EPSG","4326"]]
+
+\endverbatim
+
+\n
+\verbatim
+$ gdalsrsinfo -o proj4 osr/data/lcc_esri.prj
+'+proj=lcc +lat_1=34.33333333333334 +lat_2=36.16666666666666 +lat_0=33.75 +lon_0=-79 +x_0=609601.22 +y_0=0 +datum=NAD83 +units=m +no_defs '
+\endverbatim
+
+\n
+\verbatim
+$ gdalsrsinfo -o proj4 landsat.tif
+PROJ.4 : '+proj=utm +zone=19 +south +datum=WGS84 +units=m +no_defs '
+\endverbatim
+
+\n
 \verbatim
 $ gdalsrsinfo  -o wkt -p  "EPSG:32722"
 
@@ -2156,51 +2203,44 @@ PROJCS["WGS 84 / UTM zone 22S",
     AUTHORITY["EPSG","32722"]]
 \endverbatim
 
-
+\n
 \verbatim
-$ gdalsrsinfo  -o all  "EPSG:4326"
-
-PROJ.4 : '+proj=longlat +datum=WGS84 +no_defs '
+$ gdalsrsinfo  -o wkt_all  "EPSG:4618"
 
 OGC WKT :
-GEOGCS["WGS 84",
-    DATUM["WGS_1984",
-        SPHEROID["WGS 84",6378137,298.257223563,
-            AUTHORITY["EPSG","7030"]],
-        AUTHORITY["EPSG","6326"]],
+GEOGCS["SAD69",
+    DATUM["South_American_Datum_1969",
+        SPHEROID["GRS 1967 Modified",6378160,298.25,
+            AUTHORITY["EPSG","7050"]],
+        TOWGS84[-57,1,-41,0,0,0,0],
+        AUTHORITY["EPSG","6618"]],
     PRIMEM["Greenwich",0,
         AUTHORITY["EPSG","8901"]],
     UNIT["degree",0.0174532925199433,
         AUTHORITY["EPSG","9122"]],
-    AUTHORITY["EPSG","4326"]]
+    AUTHORITY["EPSG","4618"]]
 
 OGC WKT (simple) :
-GEOGCS["WGS 84",
-    DATUM["WGS_1984",
-        SPHEROID["WGS 84",6378137,298.257223563]],
+GEOGCS["SAD69",
+    DATUM["South_American_Datum_1969",
+        SPHEROID["GRS 1967 Modified",6378160,298.25],
+        TOWGS84[-57,1,-41,0,0,0,0]],
+    PRIMEM["Greenwich",0],
+    UNIT["degree",0.0174532925199433]]
+
+OGC WKT (no CT) :
+GEOGCS["SAD69",
+    DATUM["South_American_Datum_1969",
+        SPHEROID["GRS 1967 Modified",6378160,298.25]],
     PRIMEM["Greenwich",0],
     UNIT["degree",0.0174532925199433]]
 
 ESRI WKT :
-GEOGCS["GCS_WGS_1984",
-    DATUM["D_WGS_1984",
-        SPHEROID["WGS_1984",6378137,298.257223563]],
+GEOGCS["SAD69",
+    DATUM["D_South_American_1969",
+        SPHEROID["GRS_1967_Truncated",6378160,298.25]],
     PRIMEM["Greenwich",0],
     UNIT["Degree",0.017453292519943295]]
-
-\endverbatim
-
-\verbatim
-$ gdalsrsinfo -o proj4 ../osr/data/lcc_esri.prj
-
-'+proj=lcc +lat_1=34.33333333333334 +lat_2=36.16666666666666 +lat_0=33.75 +lon_0=-79 +x_0=609601.22 +y_0=0 +datum=NAD83 +units=m +no_defs '
-\endverbatim
-
-
-\verbatim
-$ gdalsrsinfo -o proj4 landsat.tif
-
-PROJ.4 : '+proj=utm +zone=19 +south +datum=WGS84 +units=m +no_defs '
 \endverbatim
 
 
