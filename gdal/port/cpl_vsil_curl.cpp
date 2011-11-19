@@ -673,9 +673,12 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
             else
                 CPLError(CE_Failure, CPLE_AppDefined, "%d: %s", (int)response_code, szCurlErrBuf);
         }
-        bHastComputedFileSize = cachedFileProp->bHastComputedFileSize = TRUE;
-        cachedFileProp->fileSize = 0;
-        cachedFileProp->eExists = EXIST_NO;
+        if (!bHastComputedFileSize && startOffset == 0)
+        {
+            cachedFileProp->bHastComputedFileSize = bHastComputedFileSize = TRUE;
+            cachedFileProp->fileSize = fileSize = 0;
+            cachedFileProp->eExists = eExists = EXIST_NO;
+        }
         CPLFree(sWriteFuncData.pBuffer);
         CPLFree(sWriteFuncHeaderData.pBuffer);
         return FALSE;
