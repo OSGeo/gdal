@@ -411,6 +411,7 @@ OGRLayerH OGR_DS_CopyLayer( OGRDataSourceH hDS,
 {
     VALIDATE_POINTER1( hDS, "OGR_DS_CopyLayer", NULL );
     VALIDATE_POINTER1( hSrcLayer, "OGR_DS_CopyLayer", NULL );
+    VALIDATE_POINTER1( pszNewName, "OGR_DS_CopyLayer", NULL );
 
     return (OGRLayerH) 
         ((OGRDataSource *) hDS)->CopyLayer( (OGRLayer *) hSrcLayer, 
