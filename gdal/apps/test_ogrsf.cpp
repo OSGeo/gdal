@@ -715,6 +715,12 @@ static int TestOGRLayerRandomWrite( OGRLayer *poLayer )
 /*      Now re-read feature 2 to verify the effect stuck.               */
 /* -------------------------------------------------------------------- */
     poFeature = poLayer->GetFeature( nFID5 );
+    if(poFeature == NULL)
+    {
+        bRet = FALSE;
+        printf( "ERROR: Attempt to GetFeature( nFID5 ) failed.\n" );
+        goto end;
+    }
     if( !poFeature->Equal(papoFeatures[1]) )
     {
         bRet = FALSE;
