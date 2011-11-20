@@ -381,12 +381,12 @@ def wms_10():
     if gdaltest.wms_drv is None:
         return 'skip'
 
+    if not gdaltest.wms_srv1_ok:
+        return 'skip'
+
     name = "WMS:http://sedac.ciesin.columbia.edu/mapserver/map/GPWv3?"
     ds = gdal.Open( name )
     if ds is None:
-        srv = 'http://sedac.ciesin.columbia.edu/mapserver/map/GPWv3?'
-        if gdaltest.gdalurlopen(srv) is None:
-            return 'skip'
         gdaltest.post_reason( 'open of %s failed.' % name)
         return 'fail'
 
