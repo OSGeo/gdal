@@ -1197,6 +1197,30 @@ def ogr_sqlite_25():
     return 'success'
 
 ###############################################################################
+# Test creating a :memory: DB
+
+def ogr_sqlite_26():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource(':memory:')
+    sql_lyr = ds.ExecuteSQL('select count(*) from geometry_columns')
+    if sql_lyr is None:
+        gdaltest.post_reason('expected existing geometry_columns')
+        return 'fail'
+
+    count = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    if count != 1:
+        gdaltest.post_reason('expected existing geometry_columns')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test if SpatiaLite is available
 
 def ogr_spatialite_1():
@@ -1710,6 +1734,7 @@ gdaltest_list = [
     ogr_sqlite_23,
     ogr_sqlite_24,
     ogr_sqlite_25,
+    ogr_sqlite_26,
     ogr_spatialite_1,
     ogr_sqlite_17,
     ogr_sqlite_18,
