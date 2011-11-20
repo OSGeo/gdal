@@ -1040,3 +1040,42 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
   PUSHs(sv_2mortal(newSVuv(sStatBuf2.st_size)));
   argvi++;
 }
+
+/*
+ * Typemaps for VSIFReadL
+ */
+%typemap(in,numinputs=1) (void *pBuffer, size_t nSize, size_t nCount)
+{
+  /* %typemap(in,numinputs=1) (void *pBuffer, size_t nSize, size_t nCount) */
+  size_t len = SvIV($input);
+  $1 = malloc(len);
+  $2 = 1;
+  $3 = len;
+}
+%typemap(argout) (void *pBuffer, size_t nSize, size_t nCount)
+{
+  /* %typemap(argout) (void *pBuffer, size_t nSize, size_t nCount) */
+  if (result) {
+    $result = newSVpvn((char*)$1, result);
+    sv_2mortal($result);
+  } else {
+    $result = &PL_sv_undef;
+  }
+  argvi++;
+}
+%typemap(out) (size_t VSIFReadL)
+{
+  /* %typemap(out) (size_t VSIFReadL) */
+}
+
+/*
+ * Typemaps for VSIFWriteL
+ */
+%typemap(in,numinputs=1) (const void *pBuffer, size_t nSize, size_t nCount)
+{
+  /* %typemap(in,numinputs=1) (const void *pBuffer, size_t nSize, size_t nCount) */
+  size_t len;
+  $1 = SvPV($input, len);
+  $2 = 1;
+  $3 = len;
+}

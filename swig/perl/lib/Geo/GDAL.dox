@@ -44,6 +44,28 @@
 # for a socket, b for a block special file, and c for a character
 # special file.
 
+## @fn Unlink($filename)
+# @param filename The file to delete.
+# @return 0 on success and -1 on an error.
+
+## @fn $VSIFOpenL($filename, $mode)
+# @param filename Name of the file to open. For example "/vsimem/x".
+# @param mode Access mode. 'r', 'r+', 'w', etc.
+# @return A file handle on success.
+
+## @fn VSIFCloseL($file)
+# @param file The file handle.
+
+## @fn $VSIFWriteL($scalar, $file)
+# @param scalar The byte string to write to the file.
+# @param file The file handle.
+# @return Number of bytes written into the file.
+
+## @fn $VSIFReadL($count, $file)
+# @param count The number of bytes to read from the file.
+# @param file The file handle.
+# @return A byte string.
+
 ## @fn $VersionInfo($request = 'VERSION_NUM')
 # @param request A string specifying the request. Currently either
 # "VERSION_NUM", "RELEASE_DATE", "RELEASE_NAME", or

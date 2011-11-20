@@ -415,10 +415,15 @@ int wrapper_VSIFWriteL( int nLen, char *pBuf, int size, int memb, VSILFILE * f)
     return VSIFWriteL(pBuf, size, memb, f);
 }
 }
+#elif defined(SWIGPERL)
+size_t VSIFWriteL(const void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp);
 #else
 int     VSIFWriteL( const char *, int, int, VSILFILE * );
 #endif
 
+#if defined(SWIGPERL)
+size_t VSIFReadL(void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp);
+#endif
 /* VSIFReadL() handled specially in python/gdal_python.i */
 
 #endif
