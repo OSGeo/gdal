@@ -424,6 +424,10 @@ class OGRSQLiteDataSource : public OGRDataSource
 
     int                 DetectSRSWktColumn();
 
+    int                 OpenOrCreateDB(int flags);
+    int                 InitWithEPSG();
+    int                 SetSynchronous();
+
 #ifdef HAVE_SQLITE_VFS
     sqlite3_vfs*        pMyVFS;
 #endif
@@ -433,6 +437,8 @@ class OGRSQLiteDataSource : public OGRDataSource
                         ~OGRSQLiteDataSource();
 
     int                 Open( const char *, int bUpdateIn );
+    int                 Create( const char *, char **papszOptions );
+
     int                 OpenTable( const char *pszTableName, 
                                    const char *pszGeomCol = NULL,
                                    OGRwkbGeometryType eGeomType = wkbUnknown,
@@ -490,9 +496,6 @@ class OGRSQLiteDataSource : public OGRDataSource
 
 class OGRSQLiteDriver : public OGRSFDriver
 {
-  private:
-    static int          InitWithEPSG(sqlite3* hDB, int bSpatialite);
-
   public:
                 ~OGRSQLiteDriver();
                 
@@ -507,7 +510,6 @@ class OGRSQLiteDriver : public OGRSFDriver
 };
 
 CPLString OGRSQLiteEscape( const char *pszSrcName );
-int OGRSQLiteInitSpatialite();
 int OGRSQLiteGetSpatialiteVersionNumber();
 #ifdef HAVE_SQLITE_VFS
 sqlite3_vfs* OGRSQLiteCreateVFS();
