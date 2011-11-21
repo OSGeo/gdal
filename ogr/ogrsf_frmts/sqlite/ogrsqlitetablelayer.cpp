@@ -82,7 +82,8 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
                                         int bHasM, 
                                         int bSpatialiteReadOnly,
                                         int bSpatialiteLoaded,
-                                        int iSpatialiteVersion )
+                                        int iSpatialiteVersion,
+                                        int bIsVirtualShapeIn )
 
 {
     int rc;
@@ -115,6 +116,7 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
     this->bSpatialiteReadOnly = bSpatialiteReadOnly;
     this->bSpatialiteLoaded = bSpatialiteLoaded;
     this->iSpatialiteVersion = iSpatialiteVersion;
+    this->bIsVirtualShape = bIsVirtualShapeIn;
 
     pszEscapedTableName = CPLStrdup(OGRSQLiteEscape(pszTableName));
 
