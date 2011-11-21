@@ -3345,6 +3345,7 @@ if test "$with_rasdaman" = "yes" ; then
 
   if test -n "$RASDAMAN_ENABLED" ; then
       RASDAMAN_LIB="-lrasodmg -lclientcomm -lcompression -lnetwork -lraslib"
+      OPT_GDAL_FORMATS="rasdaman $OPT_GDAL_FORMATS"
       AC_MSG_RESULT([        using rasdaman from system libs.])
   else
       AC_MSG_WARN([        rasdaman not found in system libs... use --with-rasdaman=DIR.])
