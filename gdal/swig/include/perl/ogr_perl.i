@@ -100,22 +100,18 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 %rename (_ExportToWkb) ExportToWkb;
 %rename (_GetDriver) GetDriver;
 %rename (_TestCapability) TestCapability;
-%rename (_GetName) GetName;
 
 %perlcode %{
     use strict;
     use Carp;
     {
         package Geo::OGR;
-	use vars qw /$name_encoding/;
-	$name_encoding = 'UTF-8';
     }
     {
         package Geo::OGR::Driver;
 	use strict;
 	use vars qw /@CAPABILITIES %CAPABILITIES/;
-	use Encode;
-        @CAPABILITIES = qw/CreateDataSource DeleteDataSource/; 
+	@CAPABILITIES = qw/CreateDataSource DeleteDataSource/; 
 	for my $s (@CAPABILITIES) {
 	    my $cap = eval "\$Geo::OGR::ODrC$s";
 	    $CAPABILITIES{$s} = $cap;
@@ -133,9 +129,6 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my($self, $cap) = @_;
 	    return _TestCapability($self, $CAPABILITIES{$cap});
 	}
-	sub GetName {
-	  return $Geo::OGR::name_encoding ? decode($Geo::OGR::name_encoding, $_[0]->_GetName) : $_[0]->_GetName;
-	}
 	*Create = *CreateDataSource;
 	*Copy = *CopyDataSource;
 	*OpenDataSource = *Open;
@@ -145,8 +138,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	use Carp;
 	use strict;
 	use vars qw /@CAPABILITIES %CAPABILITIES %LAYERS/;
-	use Encode;
-        @CAPABILITIES = qw/CreateLayer DeleteLayer/;
+	@CAPABILITIES = qw/CreateLayer DeleteLayer/;
 	for my $s (@CAPABILITIES) {
 	    my $cap = eval "\$Geo::OGR::ODsC$s";
 	    $CAPABILITIES{$s} = $cap;
@@ -174,9 +166,6 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub OpenShared {
 	    return Geo::OGR::OpenShared(@_);
-	}
-	sub GetName {
-	  return $Geo::OGR::name_encoding ? decode($Geo::OGR::name_encoding, $_[0]->_GetName) : $_[0]->_GetName;
 	}
 	sub Layer {
 	    my($self, $name) = @_;
@@ -263,8 +252,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	package Geo::OGR::Layer;
 	use strict;
 	use vars qw /@CAPABILITIES %CAPABILITIES/;
-	use Encode;
-        @CAPABILITIES = qw/RandomRead SequentialWrite RandomWrite 
+	@CAPABILITIES = qw/RandomRead SequentialWrite RandomWrite 
 		   FastSpatialFilter FastFeatureCount FastGetExtent 
 		   CreateField DeleteField ReorderFields AlterFieldDefn
                    Transactions DeleteFeature FastSetNextByIndex
@@ -304,9 +292,6 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	sub TestCapability {
 	    my($self, $cap) = @_;
 	    return _TestCapability($self, $CAPABILITIES{$cap});
-	}
-	sub GetName {
-	  return $Geo::OGR::name_encoding ? decode($Geo::OGR::name_encoding, $_[0]->_GetName) : $_[0]->_GetName;
 	}
 	sub Schema {
 	    my $self = shift;
@@ -448,9 +433,6 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		AddFieldDefn($self, $fd);
 	    }
 	    return $self;
-	}
-	sub GetName {
-	  return $Geo::OGR::name_encoding ? decode($Geo::OGR::name_encoding, $_[0]->_GetName) : $_[0]->_GetName;
 	}
 	*Name = *GetName;
 	sub Schema {
@@ -683,10 +665,10 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    }
 	    my $list = ref($_[0]) ? $_[0] : [@_];
 	    my $type = _GetFieldType($self, $field);
-	    if ($type == $Geo::OGR::OFTInteger or 
-		$type == $Geo::OGR::OFTReal or 
+	    if ($type == $Geo::OGR::OFTInteger or
+		$type == $Geo::OGR::OFTReal or
 		$type == $Geo::OGR::OFTString or
-		$type == $Geo::OGR::OFTBinary) 
+		$type == $Geo::OGR::OFTBinary)
 	    {
 		_SetField($self, $field, $_[0]);
 	    } 
@@ -812,9 +794,6 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		$self->Precision($param{Precision}) if exists $param{Precision};
 	    }
 	    return $self;
-	}
-	sub GetName {
-	  return $Geo::OGR::name_encoding ? decode($Geo::OGR::name_encoding, $_[0]->_GetName) : $_[0]->_GetName;
 	}
 	sub Name {
 	    my $self = shift;
