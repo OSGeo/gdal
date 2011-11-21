@@ -81,6 +81,16 @@ ogr2ogr -f SQLite testspatialite.sqlite test-2.3.sqlite  -dsco SPATIALITE=YES
 ogrinfo testspatialite.sqlite Towns -spat 754000 4692000 770000 4924000
 </pre>
 
+<h2>Opening with 'VirtualShape:'</h2>
+
+(Require OGR &gt;= 1.9.0 and Spatialite support)<p>
+
+It is possible to open on-the-fly a shapefile as a VirtualShape with Spatialite. The syntax to use for the
+datasource is "VirtualShape:/path/to/shapefile.shp" (the shapefile must be a "real" file).<p>
+
+This gives the capability to use the spatial operations of Spatialite (note that spatial indexes on virtual
+tables are not available).<p>
+
 <h2>Creation Issues</h2>
 
 <p>The SQLite driver supports creating new SQLite database files, or adding

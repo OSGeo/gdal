@@ -72,6 +72,8 @@ OGRSQLiteLayer::OGRSQLiteLayer()
     bSpatialiteLoaded = FALSE;
     iSpatialiteVersion = -1;
 
+    bIsVirtualShape = FALSE;
+
     bUseComprGeom = CSLTestBoolean(CPLGetConfigOption("COMPRESS_GEOM", "FALSE"));
 }
 
@@ -128,7 +130,7 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
 
     for( int iCol = 0; iCol < nRawColumns; iCol++ )
     {
-        OGRFieldDefn    oField( sqlite3_column_name( hStmt, iCol ), 
+        OGRFieldDefn    oField( sqlite3_column_name( hStmt, iCol ),
                                 OFTString );
 
         // In some cases, particularly when there is a real name for
@@ -136,6 +138,14 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         // primary key column appearing twice.  Ignore any repeated names.
         if( poFeatureDefn->GetFieldIndex( oField.GetNameRef() ) != -1 )
             continue;
+
+        /* In the case of Spatialite VirtualShape, the PKUID */
+        /* should be considered as a primary key */
+        if( bIsVirtualShape && EQUAL(oField.GetNameRef(), "PKUID") )
+        {
+            CPLFree(pszFIDColumn);
+            pszFIDColumn = CPLStrdup(oField.GetNameRef());
+        }
 
         if( pszFIDColumn != NULL && EQUAL(pszFIDColumn, oField.GetNameRef()))
             continue;
@@ -168,7 +178,8 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         if( (EQUAL(oField.GetNameRef(),"wkt_geometry") 
              || EQUAL(oField.GetNameRef(),"geometry")
              || EQUALN(oField.GetNameRef(), "asbinary(", 9)
-             || EQUALN(oField.GetNameRef(), "astext(", 7))
+             || EQUALN(oField.GetNameRef(), "astext(", 7)
+             || (EQUALN(oField.GetNameRef(), "st_", 3) && nColType == SQLITE_BLOB ) )
             && osGeomColumn.size() == 0 )
         {
             if( nColType == SQLITE_BLOB )

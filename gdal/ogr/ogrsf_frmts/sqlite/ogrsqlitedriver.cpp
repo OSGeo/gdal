@@ -66,6 +66,52 @@ OGRDataSource *OGRSQLiteDriver::Open( const char * pszFilename,
                                      int bUpdate )
 
 {
+
+/* -------------------------------------------------------------------- */
+/*      Check VirtualShape:xxx.shp syntax                               */
+/* -------------------------------------------------------------------- */
+    int nLen = (int) strlen(pszFilename);
+    if (EQUALN(pszFilename, "VirtualShape:", strlen( "VirtualShape:" )) &&
+        nLen > 4 && EQUAL(pszFilename + nLen - 4, ".SHP"))
+    {
+        OGRSQLiteDataSource     *poDS;
+
+        poDS = new OGRSQLiteDataSource();
+
+        char** papszOptions = CSLAddString(NULL, "SPATIALITE=YES");
+        int nRet = poDS->Create( ":memory:", papszOptions );
+        poDS->SetName(pszFilename);
+        CSLDestroy(papszOptions);
+        if (!nRet)
+        {
+            delete poDS;
+            return NULL;
+        }
+
+        char* pszShapeFilename = CPLStrdup(pszFilename + strlen( "VirtualShape:" ));
+        OGRDataSource* poShapeDS = OGRSFDriverRegistrar::Open(pszShapeFilename);
+        if (poShapeDS == NULL)
+        {
+            CPLFree(pszShapeFilename);
+            delete poDS;
+            return NULL;
+        }
+        delete poShapeDS;
+
+        char* pszLastDot = strrchr(pszShapeFilename, '.');
+        if (pszLastDot)
+            *pszLastDot = '\0';
+
+        const char* pszTableName = CPLGetBasename(pszShapeFilename);
+
+        char* pszSQL = CPLStrdup(CPLSPrintf("CREATE VIRTUAL TABLE %s USING VirtualShape(%s, CP1252, -1)",
+                                            pszTableName, pszShapeFilename));
+        poDS->ExecuteSQL(pszSQL, NULL, NULL);
+        CPLFree(pszSQL);
+        CPLFree(pszShapeFilename);
+        return poDS;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Verify that the target is a real file, and has an               */
 /*      appropriate magic string at the beginning.                      */

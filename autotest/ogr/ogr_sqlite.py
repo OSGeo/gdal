@@ -32,6 +32,11 @@ import os
 import sys
 import string
 
+# Make sure we run from the directory of the script
+if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
+    if os.path.dirname(sys.argv[0]) != '':
+        os.chdir(os.path.dirname(sys.argv[0]))
+
 sys.path.append( '../pymod' )
 
 import gdaltest
@@ -1654,6 +1659,26 @@ def ogr_spatialite_6():
     return 'success'
 
 ###############################################################################
+# Test VirtualShape:xxx.shp
+
+def ogr_spatialite_7():
+
+    if gdaltest.has_spatialite == False:
+        return 'skip'
+
+    ds = ogr.Open('VirtualShape:data/poly.shp')
+    if ds is None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('poly')
+    if lyr is None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -1745,6 +1770,7 @@ gdaltest_list = [
     ogr_spatialite_5,
     ogr_spatialite_compressed_geom_5,
     ogr_spatialite_6,
+    ogr_spatialite_7,
     ogr_sqlite_cleanup ]
 
 if __name__ == '__main__':

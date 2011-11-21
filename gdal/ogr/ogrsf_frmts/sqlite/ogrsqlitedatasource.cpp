@@ -785,7 +785,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
 
                     if( strstr(pszSQL, "VirtualShape") || strstr(pszSQL, "VirtualXL") )
                     {
-                        OpenTable( pszName );
+                        OpenVirtualTable(pszName, pszSQL);
 
                         if (bListAllTables)
                             CPLHashSetInsert(hSet, CPLStrdup(pszName));
@@ -887,6 +887,50 @@ all_tables:
 }
 
 /************************************************************************/
+/*                          OpenVirtualTable()                          */
+/************************************************************************/
+
+int OGRSQLiteDataSource::OpenVirtualTable(const char* pszName, const char* pszSQL)
+{
+    int nSRID = -1;
+    const char* pszVirtualShape = strstr(pszSQL, "VirtualShape");
+    if (pszVirtualShape != NULL)
+    {
+        const char* pszParenthesis = strchr(pszVirtualShape, '(');
+        if (pszParenthesis)
+        {
+            /* CREATE VIRTUAL TABLE table_name VirtualShape(shapename, codepage, srid) */
+            /* Extract 3rd parameter */
+            char** papszTokens = CSLTokenizeString2( pszParenthesis + 1, ",", CSLT_HONOURSTRINGS );
+            if (CSLCount(papszTokens) == 3)
+            {
+                nSRID = atoi(papszTokens[2]);
+            }
+            CSLDestroy(papszTokens);
+        }
+    }
+
+    if (OpenTable(pszName, NULL, wkbUnknown, NULL,
+                 (nSRID > 0) ? FetchSRS( nSRID ) : NULL, nSRID,
+                  FALSE, FALSE, TRUE, FALSE, -1, FALSE,
+                  pszVirtualShape != NULL))
+    {
+        OGRSQLiteLayer* poLayer = papoLayers[nLayers-1];
+        OGRFeature* poFeature = poLayer->GetNextFeature();
+        if (poFeature)
+        {
+            OGRGeometry* poGeom = poFeature->GetGeometryRef();
+            if (poGeom)
+                poLayer->GetLayerDefn()->SetGeomType(poGeom->getGeometryType());
+            delete poFeature;
+        }
+        poLayer->ResetReading();
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/************************************************************************/
 /*                             OpenTable()                              */
 /************************************************************************/
 
@@ -899,7 +943,8 @@ int OGRSQLiteDataSource::OpenTable( const char *pszNewName,
                                     int bSpatialiteReadOnly,
                                     int bSpatialiteLoaded,
                                     int iSpatialiteVersion,
-                                    int bForce2D )
+                                    int bForce2D,
+                                    int bIsVirtualShapeIn )
 
 {
 /* -------------------------------------------------------------------- */
@@ -914,7 +959,8 @@ int OGRSQLiteDataSource::OpenTable( const char *pszNewName,
                              poSRS, nSRID, bHasSpatialIndex, 
                              bHasM, bSpatialiteReadOnly,
                              bSpatialiteLoaded,
-                             iSpatialiteVersion ) != CE_None )
+                             iSpatialiteVersion,
+                             bIsVirtualShapeIn) != CE_None )
     {
         delete poLayer;
         return FALSE;
@@ -1070,6 +1116,19 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
                   "In ExecuteSQL(): sqlite3_step(%s):\n  %s", 
                   pszSQLCommand, sqlite3_errmsg(GetDB()) );
         }
+
+        if( EQUALN(pszSQLCommand, "CREATE ", 7) )
+        {
+            char **papszTokens = CSLTokenizeString( pszSQLCommand );
+            if ( CSLCount(papszTokens) >= 4 &&
+                 EQUAL(papszTokens[1], "VIRTUAL") &&
+                 EQUAL(papszTokens[2], "TABLE") )
+            {
+                OpenVirtualTable(papszTokens[3], pszSQLCommand);
+            }
+            CSLDestroy(papszTokens);
+        }
+
         sqlite3_finalize( hSQLStmt );
         return NULL;
     }
@@ -2355,4 +2414,14 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
     nKnownSRID++;
 
     return poSRS;
+}
+
+/************************************************************************/
+/*                              SetName()                               */
+/************************************************************************/
+
+void OGRSQLiteDataSource::SetName(const char* pszNameIn)
+{
+    CPLFree(pszName);
+    pszName = CPLStrdup(pszNameIn);
 }
