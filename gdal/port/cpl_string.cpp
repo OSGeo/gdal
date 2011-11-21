@@ -1770,6 +1770,8 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
             else
             {
                 /* illegal escape sequence */
+                CPLDebug( "CPL",
+                          "Error unescaping CPLES_XML text, '&' character followed by unhandled escape sequence." );
                 break;
             }
         }
