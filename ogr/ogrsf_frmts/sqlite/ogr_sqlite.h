@@ -199,6 +199,8 @@ class OGRSQLiteLayer : public OGRLayer
     int                 bSpatialiteLoaded;
     int                 iSpatialiteVersion;
 
+    int                 bIsVirtualShape;
+
     CPLErr              BuildFeatureDefn( const char *pszLayerName, 
                                           sqlite3_stmt *hStmt );
 
@@ -285,7 +287,8 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                     int bHasM = FALSE,
                                     int bSpatialiteReadOnly = FALSE,
                                     int bSpatialiteLoaded = FALSE,
-                                    int iSpatialiteVersion = -1 );
+                                    int iSpatialiteVersion = -1,
+                                    int bIsVirtualShapeIn = FALSE);
 
     virtual int         GetFeatureCount( int );
 
@@ -428,6 +431,8 @@ class OGRSQLiteDataSource : public OGRDataSource
     int                 InitWithEPSG();
     int                 SetSynchronous();
 
+    int                 OpenVirtualTable(const char* pszName, const char* pszSQL);
+
 #ifdef HAVE_SQLITE_VFS
     sqlite3_vfs*        pMyVFS;
 #endif
@@ -450,7 +455,8 @@ class OGRSQLiteDataSource : public OGRDataSource
                                    int bSpatialiteReadOnly = FALSE,
                                    int bSpatialiteLoaded = FALSE,
                                    int iSpatialiteVersion = -1,
-                                   int bForce2D = FALSE );
+                                   int bForce2D = FALSE,
+                                   int bIsVirtualShapeIn = FALSE );
     int                  OpenView( const char *pszViewName,
                                    const char *pszViewGeometry,
                                    const char *pszViewRowid,
@@ -488,6 +494,8 @@ class OGRSQLiteDataSource : public OGRDataSource
     OGRSpatialReference*FetchSRS( int nSRID );
 
     int                 GetUpdate() const { return bUpdate; }
+
+    void                SetName(const char* pszNameIn);
 };
 
 /************************************************************************/
