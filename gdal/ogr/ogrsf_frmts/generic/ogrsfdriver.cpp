@@ -193,7 +193,14 @@ OGRDataSource *OGRSFDriver::CopyDataSource( OGRDataSource *poSrcDS,
         poODS->CopyLayer( poLayer, poLayer->GetLayerDefn()->GetName(), 
                           papszOptions );
     }
-    
+
+    /* Make sure that the driver is attached to the created datasource */
+    /* It is also done in OGR_Dr_CopyDataSource() C method, in case */
+    /* another C++ implementation forgets to do it. Currently (Nov 2011), */
+    /* this implementation is the only one in the OGR source tree */
+    if( poODS != NULL && poODS->GetDriver() == NULL )
+        poODS->SetDriver( this );
+
     return poODS;
 }
 
@@ -209,9 +216,18 @@ OGRDataSourceH OGR_Dr_CopyDataSource( OGRSFDriverH hDriver,
 {
     VALIDATE_POINTER1( hDriver, "OGR_Dr_CopyDataSource", NULL );
     VALIDATE_POINTER1( hSrcDS, "OGR_Dr_CopyDataSource", NULL );
+    VALIDATE_POINTER1( pszNewName, "OGR_Dr_CopyDataSource", NULL );
 
-    return (OGRDataSourceH)
+    OGRDataSource* poDS =
         ((OGRSFDriver *) hDriver)->CopyDataSource( 
             (OGRDataSource *) hSrcDS, pszNewName, papszOptions );
+
+    /* Make sure that the driver is attached to the created datasource */
+    /* if not already done by the implementation of the CopyDataSource() */
+    /* method */
+    if( poDS != NULL && poDS->GetDriver() == NULL )
+        poDS->SetDriver( (OGRSFDriver *)hDriver );
+
+    return (OGRDataSourceH)poDS;
 }
 
