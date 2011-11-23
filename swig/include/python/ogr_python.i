@@ -215,9 +215,9 @@ layer[0:4] would return a list of the first four features."""
     # This has some risk of name collisions.
     def __setattr__(self, key, value):
         """Set the values of fields by the given name"""
-        try:
+        if key != 'this' and key != 'thisown' and self.GetFieldIndex(key) != -1:
             return self.SetField2(key,value)
-        except:
+        else:
             self.__dict__[key] = value
 
     # This makes it possible to fetch fields in the form "feature['area']". 
