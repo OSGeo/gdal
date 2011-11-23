@@ -1970,7 +1970,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
             std::vector<double> adfValues;
 
             for( i=0; i < nCount; i++ )
-                adfValues.push_back( atoi(papszValueList[i+1]) );
+                adfValues.push_back( atof(papszValueList[i+1]) );
             SetField( iField, nCount, &(adfValues[0]) );
         }
 
