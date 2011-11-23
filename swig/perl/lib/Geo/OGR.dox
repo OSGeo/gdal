@@ -486,6 +486,10 @@
 # @param feature_def a Geo::OGR::FeatureDefn object
 # @return a new Geo::OGR::Feature object
 
+## @cmethod Geo::OGR::Feature create(%schema)
+# @param schema as in Schema
+# @return a new Geo::OGR::Feature object
+
 ## @method \%Schema(%schema)
 # Get or set the schema. The schema is a hash (Name => name,
 # GeometryType => geometry_type, Fields => [list of
@@ -522,6 +526,14 @@
 ## @method Geo::OGR::FeatureDefn GetDefnRef()
 # @return a new Geo::OGR::FeatureDefn object
 
+## @method Geo::OGR::FieldDefn GetFieldDefnRef($param)
+# @param param the index (0..count-1) or the name of the field
+# @return a new Geo::OGR::FieldDefn object
+
+## @method $GetFieldType($field)
+# @param field the index (0..count-1) or the name of the field
+# @return one of field types
+
 ## @ignore SetGeometry
 
 ## @method $Geometry($geometry)
@@ -554,12 +566,12 @@
 # @param feature a Geo::OGR::Feature object for comparison
 # @return boolean
 
+## @method $GetFieldIndex($name)
+# @param name the name of the field
+# @return integer the index of the field (0..Count-1)
+
 ## @method $GetFieldCount()
 # @return an integer
-
-## @method Geo::OGR::FieldDefn GetFieldDefnRef($param)
-# @param param the index or the name of the field
-# @return a new Geo::OGR::FieldDefn object
 
 ## @ignore GetFieldAsString
 ## @ignore GetFieldAsInteger
@@ -570,42 +582,21 @@
 ## @ignore GetFieldAsStringList
 
 ## @method @GetField($field)
-# @note A number of GetFieldAs* methods exist but they are not documented.
-# @param field the index or the name of the field
+# @note A number of GetFieldAs* methods exist but they are not
+# documented. Syntax $feature->{field} can be used to access the
+# field (v1.9.0)
+# @param field the index (0..Count-1) or the name of the field
 # @return the value of the field, which may be a scalar or a list,
 # depending on the field type.
-
-## @method $IsFieldSet($field)
-# @param field the index or the name of the field
-# @return boolean
-
-## @method $GetFieldIndex($name)
-# @param name the name of the field
-# @return integer the index of the field
-
-## @method $FID($fid)
-# @param fid [optional]
-# @return integer the feature id
-
-## @method $GetFID()
-# @return integer the feature id
-
-## @method SetFID($fid)
-# @param fid the feature id
-
-## @method DumpReadable()
-
-## @method UnsetField($field)
-# @note Field value can be unset by calling SetField without
-# parameters or with an undefined argument.
-# @param field the index or the name of the field
 
 ## @ignore SetFieldDoubleList
 ## @ignore SetFieldIntegerList
 ## @ignore SetFieldStringList
 
 ## @method SetField($field, @value)
-# @param field the index or the name of the field
+# @note Syntax $feature->{field} can be used to access the
+# field (v1.9.0)
+# @param field the index (0..Count-1) or the name of the field
 # @param value is a string, integer, double, a list (year, month,
 # day), a list (hour, minute, second, tzflag), a list (year, month,
 # day, hour, minute, second, tzflag), or a list of integers, doubles,
@@ -622,6 +613,27 @@
 # fields, include into the hash all field indexes of this feature
 # which should be set
 
+## @method $IsFieldSet($field)
+# @param field the index (0..Count-1) or the name of the field
+# @return boolean
+
+## @method UnsetField($field)
+# @note Field value can be unset by calling SetField without
+# parameters or with an undefined argument.
+# @param field the index (0..Count-1) or the name of the field
+
+## @method $FID($fid)
+# @param fid [optional] the id to set for this feature
+# @return integer the id of this feature
+
+## @method $GetFID()
+# @return integer the feature id
+
+## @method SetFID($fid)
+# @param fid the feature id
+
+## @method DumpReadable()
+
 ## @method $StyleString($string)
 # @param string [optional]
 # @return
@@ -631,10 +643,6 @@
 
 ## @method SetStyleString($string)
 # @param string
-
-## @method $GetFieldType($field)
-# @param field the index or the name of the field
-# @return one of field types
 
 
 ## @class Geo::OGR::FeatureDefn
@@ -721,10 +729,12 @@
 # @isa (Geo::OGR)
 
 ## @attr list FIELD_TYPES
-# Field types supported by GDAL
+# Field types supported by GDAL, one of: Integer IntegerList Real
+# RealList String StringList WideString WideStringList Binary Date
+# Time DateTime
 
 ## @attr list JUSTIFY_TYPES
-# Justify types supported by GDAL
+# Justify types supported by GDAL, one of: Undefined Left Right
 
 ## @cmethod Geo::OGR::FieldDefn new($name = "unnamed", $field_type = $Geo::OGR::OFTString)
 # @deprecated use Geo::OGR::FieldDefn::create, which accepts type as a string
@@ -778,7 +788,7 @@
 # @note a.k.a. GetFieldTypeName, GetTypeName, GetType, SetType
 # @param type [optional] one of field types: Integer, IntegerList, Real,
 # RealList, String, StringList, WideString, WideStringList, Binary, Date,
-# Time, or DateTime (wide strings are not really supported yet)
+# Time, or DateTime (wide strings are not really supported yet?)
 # @return one of field types in non-void context
 
 ## @ignore GetJustify
@@ -825,10 +835,13 @@
 # href="http://geos.osgeo.org/doxygen/">GEOS</a> to work rigorously.
 
 ## @attr list GEOMETRY_TYPES
-# Geometry types supported by GDAL
+# Geometry types supported by GDAL, one of: Unknown Point LineString
+# Polygon MultiPoint MultiLineString MultiPolygon GeometryCollection
+# None LinearRingPoint25D LineString25D Polygon25D MultiPoint25D
+# MultiLineString25D MultiPolygon25D GeometryCollection25D
 
 ## @attr list BYTE_ORDER_TYPES
-# Byte order strings
+# Byte order strings, one of: XDR NDR
 
 ## @cmethod Geo::OGR::Geometry new($type = $Geo::OGR::wkbUnknown, $WKT = undef, $WKB = undef, $GML = undef)
 # @deprecated use Geo::OGR::Geometry::create, which accepts type as a string
