@@ -202,12 +202,33 @@ layer[0:4] would return a list of the first four features."""
     def __copy__(self):
         return self.Clone()
 
-    def __getattr__(self, name):
+    # This makes it possible to fetch fields in the form "feature.area". 
+    # This has some risk of name collisions.
+    def __getattr__(self, key):
         """Returns the values of fields by the given name"""
         try:
-            return self.GetField(name)
+            return self.GetField(key)
         except:
-            raise AttributeError(name)
+            raise AttributeError(key)
+
+    # This makes it possible to set fields in the form "feature.area". 
+    # This has some risk of name collisions.
+    def __setattr__(self, key, value):
+        """Set the values of fields by the given name"""
+        try:
+            return self.SetField2(key,value)
+        except:
+            self.__dict__[key] = value
+
+    # This makes it possible to fetch fields in the form "feature['area']". 
+    def __getitem__(self, key):
+        """Returns the values of fields by the given name / field_index"""
+        return self.GetField(key)
+
+    # This makes it possible to set fields in the form "feature['area'] = 123". 
+    def __setitem__(self, key, value):
+        """Returns the value of a field by field name / index"""
+        self.SetField2( key, value )    
 
     def GetField(self, fld_index):
         import types
@@ -222,11 +243,47 @@ layer[0:4] would return a list of the first four features."""
             return self.GetFieldAsInteger(fld_index)
         if fld_type == OFTReal:
             return self.GetFieldAsDouble(fld_index)
+        if fld_type == OFTStringList:
+            return self.GetFieldAsStringList(fld_index)
+        if fld_type == OFTIntegerList:
+            return self.GetFieldAsIntegerList(fld_index)
+        if fld_type == OFTRealList:
+            return self.GetFieldAsDoubleList(fld_index)
         ## if fld_type == OFTDateTime or fld_type == OFTDate or fld_type == OFTTime:
         #     return self.GetFieldAsDate(fld_index)
         # default to returning as a string.  Should we add more types?
         return self.GetFieldAsString(fld_index)
-    
+
+    def SetField2(self, fld_index, value):
+        if isinstance(fld_index, str):
+            fld_index = self.GetFieldIndex(fld_index)
+
+        if value is None:
+            self.UnsetField( fld_index )
+            return
+
+        if isinstance(value,list):
+            if len(value) == 0:
+                self.UnsetField( fld_index )
+                return
+            if isinstance(value[0],int):
+                self.SetFieldIntegerList(fld_index,value)
+                return
+            elif isinstance(value[0],float):
+                self.SetFieldDoubleList(fld_index,value)
+                return
+            elif isinstance(value[0],str):
+                self.SetFieldStringList(fld_index,value)
+                return
+            else:
+                raise TypeError( 'Unsupported type of list in SetField2()' )
+
+        try:
+            self.SetField( fld_index, value )
+        except:
+            self.SetField( fld_index, str(value) )
+        return
+
     def keys(self):
         names = []
         for i in range(self.GetFieldCount()):
