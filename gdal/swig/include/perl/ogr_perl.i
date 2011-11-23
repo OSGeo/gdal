@@ -172,11 +172,11 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my $layer;
 	    if (defined $name) {
 		$layer = _GetLayerByName($self, "$name");
+		$layer = _GetLayerByIndex($self, $name) unless $layer;
 	    } else {
-		$name = 0;
+		$layer = _GetLayerByIndex($self, 0);
 	    }
-	    $layer = _GetLayerByIndex($self, $name) if !$layer and $name =~ /^\d+$/;
-	    return unless $layer;
+	    croak "No such layer: $name\n" unless $layer;
 	    $LAYERS{tied(%$layer)} = $self;
 	    return $layer;
 	}
@@ -193,14 +193,14 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my($self, $index) = @_;
 	    $index = 0 unless defined $index;
 	    my $layer = _GetLayerByIndex($self, $index+0);
-	    return unless $layer;
+	    croak "No such layer: $index\n" unless $layer;
 	    $LAYERS{tied(%$layer)} = $self;
 	    return $layer;
 	}
 	sub GetLayerByName {
 	    my($self, $name) = @_;
-	    my $layer = _GetLayerByName($self, $name);
-	    return unless $layer;
+	    my $layer = _GetLayerByName($self, "$name");
+	    croak "No such layer: $name\n" unless $layer;
 	    $LAYERS{tied(%$layer)} = $self;
 	    return $layer;
 	}
@@ -458,7 +458,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		$s->{Index} = $i;
 		push @{$schema{Fields}}, $s;
 	    }
-	    return \%schema;
+	    return wantarray ? %schema : \%schema;
 	}
 	sub GeomType {
 	    my($self, $type) = @_;
@@ -486,6 +486,18 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	use vars qw /%GEOMETRIES/;
 	use Carp;
 	use Encode;
+	sub create {
+	    my $pkg = shift;
+	    $pkg->new(Geo::OGR::FeatureDefn->create(@_));
+	}
+	sub FETCH {
+	    my($self, $index) = @_;
+	    $self->GetField($index);
+	}
+	sub STORE {
+	    my $self = shift;
+	    $self->SetField(@_);
+	}
 	sub FID {
 	    my $self = shift;
 	    $self->SetFID($_[0]) if @_;
@@ -583,13 +595,16 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub GetFieldType {
 	    my($self, $field) = @_;
+	    my $index = GetFieldIndex($self, "$field");
+	    $field = $index unless $index == -1;
+	    croak "No such field: $field" if $field < 0 or $field >= GetFieldCount($self);
 	    return $Geo::OGR::FieldDefn::TYPE_INT2STRING{_GetFieldType($self, $field)};
 	}
 	sub FieldIsList {
 	    my($self, $field) = @_;
-	    my $count = GetFieldCount($self);
-	    $field = GetFieldIndex($self, $field) unless $field =~ /^\d+$/;
-	    croak("no such field: $_[1]") if $field < 0 or $field >= $count;
+	    my $index = GetFieldIndex($self, "$field");
+	    $field = $index unless $index == -1;
+	    croak "No such field: $field" if $field < 0 or $field >= GetFieldCount($self);
 	    my $type = _GetFieldType($self, $field);
 	    return 1 if ($type == $Geo::OGR::OFTIntegerList or
 			 $type == $Geo::OGR::OFTRealList or
@@ -601,9 +616,9 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub GetField {
 	    my($self, $field) = @_;
-	    my $count = GetFieldCount($self);
-	    $field = GetFieldIndex($self, $field) unless $field =~ /^\d+$/;
-	    croak("no such field: $_[1]") if $field < 0 or $field >= $count;
+	    my $index = GetFieldIndex($self, "$field");
+	    $field = $index unless $index == -1;
+	    croak "No such field: $field" if $field < 0 or $field >= GetFieldCount($self);
 	    return undef unless IsFieldSet($self, $field);
 	    my $type = _GetFieldType($self, $field);
 	    if ($type == $Geo::OGR::OFTInteger) {
@@ -617,15 +632,15 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    }
 	    if ($type == $Geo::OGR::OFTIntegerList) {
 		my $ret = GetFieldAsIntegerList($self, $field);
-		return @$ret;
+		return wantarray ? @$ret : $ret;
 	    } 
 	    if ($type == $Geo::OGR::OFTRealList) {
 		my $ret = GetFieldAsDoubleList($self, $field);
-		return @$ret;
+		return wantarray ? @$ret : $ret;
 	    }
 	    if ($type == $Geo::OGR::OFTStringList) {
 		my $ret = GetFieldAsStringList($self, $field);
-		return @$ret;
+		return wantarray ? @$ret : $ret;
 	    }
 	    if ($type == $Geo::OGR::OFTBinary) {
 		return GetFieldAsString($self, $field);
@@ -633,11 +648,11 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    if ($type == $Geo::OGR::OFTDate) {
 		my @ret = GetFieldAsDateTime($self, $field);
 		# year, month, day, hour, minute, second, timezone
-		return @ret[0..2];
+		return wantarray ? @ret[0..2] : [@ret[0..2]];
 	    }
 	    if ($type == $Geo::OGR::OFTTime) {
 		my @ret = GetFieldAsDateTime($self, $field);
-		return @ret[3..6];
+		return wantarray ? @ret[3..6] : [@ret[3..6]];
 	    }
 	    if ($type == $Geo::OGR::OFTDateTime) {
 		return GetFieldAsDateTime($self, $field);
@@ -646,18 +661,17 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub UnsetField {
 	    my($self, $field) = @_;
-	    my $type = _GetFieldType($self, $field);
-	    my $count = GetFieldCount($self);
-	    $field = GetFieldIndex($self, $field) unless $field =~ /^\d+$/;
-	    croak("no such field: $_[1]") if $field < 0 or $field >= $count;
+	    my $index = GetFieldIndex($self, "$field");
+	    $field = $index unless $index == -1;
+	    croak "No such field: $field" if $field < 0 or $field >= GetFieldCount($self);
 	    _UnsetField($self, $field);
 	}
 	sub SetField {
 	    my $self = shift;
 	    my $field = $_[0];
-	    my $count = GetFieldCount($self);
-	    $field = GetFieldIndex($self, $field) unless $field =~ /^\d+$/;
-	    croak("no such field: $_[0]") if $field < 0 or $field >= $count;
+	    my $index = GetFieldIndex($self, "$field");
+	    $field = $index unless $index == -1;
+	    croak "No such field: $field" if $field < 0 or $field >= GetFieldCount($self);
 	    shift;
 	    if (@_ == 0 or !defined($_[0])) {
 		_UnsetField($self, $field);
@@ -842,11 +856,12 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		$self->Precision($param{Precision}) if exists $param{Precision};
 	    }
 	    return unless defined wantarray;
-	    return { Name => $self->Name, 
-		     Type  => $self->Type,
-		     Justify  => $self->Justify,
-		     Width  => $self->Width,
-		     Precision => $self->Precision };
+	    my %schema = ( Name => $self->Name, 
+			   Type  => $self->Type,
+			   Justify  => $self->Justify,
+			   Width  => $self->Width,
+			   Precision => $self->Precision );
+	    return wantarray ? %schema : \%schema;
 	}
 
 	package Geo::OGR::Geometry;
@@ -1175,9 +1190,11 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	return @drivers;
     }
     sub GetDriver {
-	my($name_or_number) = @_;
-	return _GetDriver($name_or_number) if $name_or_number =~ /^\d/;
-	return GetDriverByName("$name_or_number");
+	my($name) = @_;
+	my $driver = GetDriverByName("$name");
+	$driver = _GetDriver($name) unless $driver;
+	croak "No such OGR driver: $name\n" unless $driver;
+	return $driver;
     }
     *Driver = *GetDriver;
 %}
