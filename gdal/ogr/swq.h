@@ -248,7 +248,7 @@ typedef struct {
 typedef struct {
     int         count;
     
-    char        **distinct_list;
+    char        **distinct_list; /* items of the list can be NULL */
     double      sum;
     double      min;
     double      max;

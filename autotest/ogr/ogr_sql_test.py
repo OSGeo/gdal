@@ -1027,6 +1027,60 @@ def ogr_sql_35():
         print(val)
         return 'fail'
 
+###############################################################################
+# Test select distinct on null values (#4353)
+
+def ogr_sql_36():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('ogr_sql_36')
+    lyr = ds.CreateLayer('layer')
+    lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('floatfield', ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn('strfield', ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 1)
+    feat.SetField(1, 2.3)
+    feat.SetField(2, "456")
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(feat)
+    feat = None
+
+    for fieldname in ['intfield', 'floatfield', 'strfield']:
+        sql_lyr = ds.ExecuteSQL( "select distinct %s from layer order by %s asc" % (fieldname, fieldname))
+        feat = sql_lyr.GetNextFeature()
+        if feat.IsFieldSet(0) != 0:
+            gdaltest.post_reason('fail')
+            print('field %s' % fieldname)
+            feat.DumpReadable()
+            return 'fail'
+        feat = sql_lyr.GetNextFeature()
+        if feat.IsFieldSet(0) == 0:
+            gdaltest.post_reason('fail')
+            print('field %s' % fieldname)
+            feat.DumpReadable()
+            return 'fail'
+        ds.ReleaseResultSet( sql_lyr )
+
+    for fieldname in ['intfield', 'floatfield', 'strfield']:
+        sql_lyr = ds.ExecuteSQL( "select distinct %s from layer order by %s desc" % (fieldname, fieldname))
+        feat = sql_lyr.GetNextFeature()
+        if feat.IsFieldSet(0) == 0:
+            gdaltest.post_reason('fail')
+            print('field %s' % fieldname)
+            feat.DumpReadable()
+            return 'fail'
+        feat = sql_lyr.GetNextFeature()
+        if feat.IsFieldSet(0) != 0:
+            gdaltest.post_reason('fail')
+            print('field %s' % fieldname)
+            feat.DumpReadable()
+            return 'fail'
+        ds.ReleaseResultSet( sql_lyr )
+        
+    return 'success'
+
+
 def ogr_sql_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -1071,6 +1125,7 @@ gdaltest_list = [
     ogr_sql_33,
     ogr_sql_34,
     ogr_sql_35,
+    ogr_sql_36,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
