@@ -605,9 +605,13 @@ int OGRGenSQLResultsLayer::PrepareSummary()
                 /* psColDef->field_index can be -1 in the case of a COUNT(*) */
                 pszError = swq_select_summarize( psSelectInfo, iField, "" );
             else
-                pszError = swq_select_summarize( psSelectInfo, iField, 
-                                          poSrcFeature->GetFieldAsString( 
-                                              psColDef->field_index ) );
+            {
+                const char* pszVal = NULL;
+                if (poSrcFeature->IsFieldSet(psColDef->field_index))
+                    pszVal = poSrcFeature->GetFieldAsString(
+                                                psColDef->field_index );
+                pszError = swq_select_summarize( psSelectInfo, iField, pszVal );
+            }
             
             if( pszError != NULL )
             {
@@ -1060,7 +1064,10 @@ OGRFeature *OGRGenSQLResultsLayer::GetFeature( long nFID )
         if( nFID < 0 || nFID >= psSummary->count )
             return NULL;
 
-        poSummaryFeature->SetField( 0, psSummary->distinct_list[nFID] );
+        if( psSummary->distinct_list[nFID] != NULL )
+            poSummaryFeature->SetField( 0, psSummary->distinct_list[nFID] );
+        else
+            poSummaryFeature->UnsetField( 0 );
         poSummaryFeature->SetFID( nFID );
 
         return poSummaryFeature->Clone();
