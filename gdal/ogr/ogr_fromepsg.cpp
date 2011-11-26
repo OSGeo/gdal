@@ -2031,7 +2031,10 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
 /*      close to standard OGC format as possible, so we fixup the       */
 /*      ordering.                                                       */
 /* -------------------------------------------------------------------- */
-    eErr = FixupOrdering();
+    if( eErr == OGRERR_NONE )
+    {
+        eErr = FixupOrdering();
+    }
 
     return eErr;
 }
