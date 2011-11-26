@@ -530,7 +530,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
         stream.next_in = inbuf;
         if (whence == SEEK_CUR)
         {
-            if (out + offset < 0 || out + offset > compressed_size)
+            if (out + offset > compressed_size)
             {
                 CPL_VSIL_GZ_RETURN_MINUS_ONE();
                 return -1L;
@@ -540,7 +540,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
         }
         else if (whence == SEEK_SET)
         {
-            if (offset < 0 || offset > compressed_size)
+            if (offset > compressed_size)
             {
                 CPL_VSIL_GZ_RETURN_MINUS_ONE();
                 return -1L;
@@ -612,10 +612,6 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
     /* compute absolute position */
     if (whence == SEEK_CUR) {
         offset += out;
-    }
-    if (offset < 0) {
-        CPL_VSIL_GZ_RETURN_MINUS_ONE();
-        return -1L;
     }
 
     /* For a negative seek, rewind and use positive seek */
@@ -799,7 +795,7 @@ size_t VSIGZipHandle::Read( void *buf, size_t nSize, size_t nMemb )
         {
             vsi_l_offset uncompressed_pos = VSIFTellL((VSILFILE*)poBaseHandle);
             GZipSnapshot* snapshot = &snapshots[(uncompressed_pos - startOff) / snapshot_byte_interval];
-            if (uncompressed_pos >= 0 && snapshot->uncompressed_pos == 0)
+            if (snapshot->uncompressed_pos == 0)
             {
                 snapshot->crc = crc32 (crc, pStart, (uInt) (stream.next_out - pStart));
                 if (ENABLE_DEBUG)

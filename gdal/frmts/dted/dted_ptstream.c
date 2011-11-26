@@ -563,7 +563,7 @@ void DTEDPtStreamSetMetadata( void *hStream, DTEDMetaDataCode eCode,
 {
     DTEDPtStream *psStream = (DTEDPtStream *) hStream;
 
-    if( eCode >= 0 && eCode < DTEDMD_MAX+1 )
+    if( (int)eCode >= 0 && eCode < DTEDMD_MAX+1 )
     {
         CPLFree( psStream->apszMetadata[eCode] );
         psStream->apszMetadata[eCode] = CPLStrdup( pszValue );

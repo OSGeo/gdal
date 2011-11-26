@@ -265,12 +265,6 @@ int VSIMemHandle::Seek( vsi_l_offset nOffset, int nWhence )
         return -1;
     }
 
-    if( this->nOffset < 0 )
-    {
-        this->nOffset = 0;
-        return -1;
-    }
-    
     if( this->nOffset > poFile->nLength )
     {
         if( !bUpdate ) // Read-only files cannot be extended by seek.
