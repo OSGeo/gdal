@@ -28,6 +28,11 @@ with libraries such as some versions of Kerberos.  No particular
 need to worry about whether the system supplies an MD5 library, as
 this file is only about 3k of object code.  */
 
+/* Modified by E. Rouault, to fix :
+   warning: argument to 'sizeof' in 'memset' call is the same expression as the destination; did you mean to dereference it? [-Wsizeof-pointer-memaccess]
+        memset(ctx, 0, sizeof(ctx)); */   /* In case it's sensitive */
+/* at the end of cvs_MD5Final */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -172,7 +177,7 @@ struct cvs_MD5Context *ctx)
     putu32(ctx->buf[1], digest + 4);
     putu32(ctx->buf[2], digest + 8);
     putu32(ctx->buf[3], digest + 12);
-    memset(ctx, 0, sizeof(ctx));	/* In case it's sensitive */
+    memset(ctx, 0, sizeof(*ctx));	/* In case it's sensitive */
 }
 
 #ifndef ASM_MD5
