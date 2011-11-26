@@ -505,13 +505,13 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
         return;
     }
 
-    if( (nc_datatype == NC_BYTE) ) 
+    if( nc_datatype == NC_BYTE )
         eDataType = GDT_Byte;
 #ifdef NETCDF_HAS_NC4
-    else if( (nc_datatype == NC_UBYTE) ) 
+    else if( nc_datatype == NC_UBYTE )
         eDataType = GDT_Byte;
 #endif    
-    else if( (nc_datatype == NC_CHAR) ) 
+    else if( nc_datatype == NC_CHAR )
         eDataType = GDT_Byte;        
     else if( nc_datatype == NC_SHORT )
         eDataType = GDT_Int16;
@@ -909,9 +909,9 @@ char** netCDFDataset::FetchStandardParallels( const char *pszGridMappingValue )
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                      SetProjectionFromVar()                          */
 /************************************************************************/
-void netCDFDataset::SetProjection( int var )
+void netCDFDataset::SetProjectionFromVar( int var )
 {
 /* -------------------------------------------------------------------- */
 /*      Set Projection                                                  */
@@ -967,7 +967,7 @@ void netCDFDataset::SetProjection( int var )
     netCDFDataset * poDS;
     poDS = this;
 
-    CPLDebug( "GDAL_netCDF", "\n=====\nSetProjection( %d )\n", var );
+    CPLDebug( "GDAL_netCDF", "\n=====\nSetProjectionFromVar( %d )\n", var );
 
 /* -------------------------------------------------------------------- */
 /*      Get x/y range information.                                      */
@@ -2795,7 +2795,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
-    poDS->SetProjection( var );
+    poDS->SetProjectionFromVar( var );
     poDS->SetMetadata( poDS->papszMetadata );
 
 /* -------------------------------------------------------------------- */
@@ -4066,7 +4066,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      float                                                           */
 /* -------------------------------------------------------------------- */
-        } else if( (eDT == GDT_Float32) ) {
+        } else if( eDT == GDT_Float32 ) {
             CPLDebug( "GDAL_netCDF", "%s = GDT_Float32 ",szBandName );
 
 /* -------------------------------------------------------------------- */
@@ -4108,7 +4108,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      double                                                          */
 /* -------------------------------------------------------------------- */
-        } else if( (eDT == GDT_Float64) ) {
+        } else if( eDT == GDT_Float64 ) {
             CPLDebug( "GDAL_netCDF", "%s = GDT_Float64 ",szBandName );
 
 /* -------------------------------------------------------------------- */

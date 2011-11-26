@@ -74,7 +74,7 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 
     void        ClearFilters();
 
-    void        SetIgnoredFields();
+    void        FindAndSetIgnoredFields();
     void        ExploreExprForIgnoredFields(swq_expr_node* expr, CPLHashSet* hSet);
     void        AddFieldDefnToSet(int iTable, int iColumn, CPLHashSet* hSet);
     
