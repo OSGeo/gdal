@@ -543,7 +543,7 @@ void MFFDataset::ScanForProjectionInfo()
     if (pszOriginLong != NULL)
         oLL.SetProjParm(SRS_PP_LONGITUDE_OF_ORIGIN,atof(pszOriginLong));
 
-    if ((pszSpheroidName == NULL))
+    if (pszSpheroidName == NULL)
     {
         CPLError(CE_Warning,CPLE_AppDefined,
             "Warning- unspecified ellipsoid.  Using wgs-84 parameters.\n");

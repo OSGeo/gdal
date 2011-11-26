@@ -834,18 +834,16 @@ CPLErr GDALRasterBand::AdoptBlock( int nXBlockOff, int nYBlockOff,
 
     if( papoBlocks[nSubBlock] == NULL )
     {
-        int nSubGridSize = 
+        const int nSubGridSize = 
             sizeof(GDALRasterBlock*) * SUBBLOCK_SIZE * SUBBLOCK_SIZE;
 
-        papoBlocks[nSubBlock] = (GDALRasterBlock *) VSIMalloc(nSubGridSize);
+        papoBlocks[nSubBlock] = (GDALRasterBlock *) VSICalloc(1, nSubGridSize);
         if( papoBlocks[nSubBlock] == NULL )
         {
             ReportError( CE_Failure, CPLE_OutOfMemory,
                       "Out of memory in AdoptBlock()." );
             return CE_Failure;
         }
-
-        memset( papoBlocks[nSubBlock], 0, nSubGridSize );
     }
 
 /* -------------------------------------------------------------------- */
