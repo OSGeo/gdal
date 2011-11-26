@@ -632,7 +632,7 @@ class netCDFDataset : public GDALPamDataset
 
     void  CreateSubDatasetList( );
 
-    void  SetProjection( int );
+    void  SetProjectionFromVar( int );
 
 };
 
