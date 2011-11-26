@@ -190,7 +190,7 @@ class OGREDIGEODataSource : public OGRDataSource
 
     std::map<CPLString, OGREDIGEOLayer*> mapLayer;
 
-    int                 CreateLayer(const OGREDIGEOObjectDescriptor& objDesc);
+    int                 CreateLayerFromObjectDesc(const OGREDIGEOObjectDescriptor& objDesc);
 
     std::map< CPLString, xyPairType >                 mapPNO; /* Map Noeud_X to (x,y) */
     std::map< CPLString, xyPairListType >             mapPAR; /* Map Arc_X to ((x1,y1),...(xn,yn)) */

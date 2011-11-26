@@ -301,12 +301,14 @@ class TigerPoint : public TigerFileBase
  int                  bRequireGeom;
 
  public:
-  virtual OGRFeature *GetFeature( int              nRecordId,
+  virtual OGRFeature *GetFeature( int nFID) { return TigerFileBase::GetFeature(nFID); } /* to avoid -Woverloaded-virtual warnings */
+  OGRFeature *GetFeature( int              nRecordId,
                                   int nX0, int nX1,
                                   int nY0, int nY1 );
 
 
-  virtual OGRErr CreateFeature( OGRFeature      *poFeature,
+  virtual OGRErr CreateFeature( OGRFeature      *poFeature) { return TigerFileBase::CreateFeature(poFeature); } /* to avoid -Woverloaded-virtual warnings */
+  OGRErr CreateFeature( OGRFeature      *poFeature,
                                 int nIndex );
 
 };

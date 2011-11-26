@@ -135,7 +135,7 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
     papoLayers = (OGRVFKLayer **) CPLCalloc(sizeof(OGRVFKLayer *), poReader->GetDataBlockCount());
     
     for (int iLayer = 0; iLayer < poReader->GetDataBlockCount(); iLayer++) {
-        papoLayers[iLayer] = CreateLayer(poReader->GetDataBlock(iLayer));
+        papoLayers[iLayer] = CreateLayerFromBlock(poReader->GetDataBlock(iLayer));
 	nLayers++;
     }
     
@@ -179,7 +179,7 @@ int OGRVFKDataSource::TestCapability(const char * pszCap)
   \return poiter to OGRVFKLayer instance
   \return NULL on error
 */
-OGRVFKLayer *OGRVFKDataSource::CreateLayer(const VFKDataBlock *poDataBlock)
+OGRVFKLayer *OGRVFKDataSource::CreateLayerFromBlock(const VFKDataBlock *poDataBlock)
 {
     OGRVFKLayer *poLayer;
 
