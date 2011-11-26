@@ -100,7 +100,7 @@ private:
     IVFKReader    *poReader;
 
     /* private methods */
-    OGRVFKLayer   *CreateLayer(const VFKDataBlock *);
+    OGRVFKLayer   *CreateLayerFromBlock(const VFKDataBlock *);
 
 public:
     OGRVFKDataSource();
