@@ -545,10 +545,10 @@ int OGREDIGEODataSource::ReadQAL()
 }
 
 /************************************************************************/
-/*                           CreateLayer()                              */
+/*                       CreateLayerFromObjectDesc()                    */
 /************************************************************************/
 
-int OGREDIGEODataSource::CreateLayer(const OGREDIGEOObjectDescriptor& objDesc)
+int OGREDIGEODataSource::CreateLayerFromObjectDesc(const OGREDIGEOObjectDescriptor& objDesc)
 {
     OGRwkbGeometryType eType = wkbUnknown;
     if (objDesc.osKND == "ARE")
@@ -1453,7 +1453,7 @@ void OGREDIGEODataSource::ReadEDIGEO()
     int i;
     for(i=0;i<(int)aoObjList.size();i++)
     {
-        CreateLayer(aoObjList[i]);
+        CreateLayerFromObjectDesc(aoObjList[i]);
     }
 
 /* -------------------------------------------------------------------- */
