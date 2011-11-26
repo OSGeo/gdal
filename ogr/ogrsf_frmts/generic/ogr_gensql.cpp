@@ -311,7 +311,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
 
     ResetReading();
 
-    SetIgnoredFields();
+    FindAndSetIgnoredFields();
 
     if( !bForwardWhereToSourceLayer )
         SetAttributeFilter( pszWHERE );
@@ -1473,10 +1473,10 @@ void OGRGenSQLResultsLayer::ExploreExprForIgnoredFields(swq_expr_node* expr,
 }
 
 /************************************************************************/
-/*                       SetIgnoredFields()                             */
+/*                     FindAndSetIgnoredFields()                        */
 /************************************************************************/
 
-void OGRGenSQLResultsLayer::SetIgnoredFields()
+void OGRGenSQLResultsLayer::FindAndSetIgnoredFields()
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
     CPLHashSet* hSet = CPLHashSetNew(CPLHashSetHashPointer,
