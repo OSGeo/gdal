@@ -178,7 +178,7 @@ def ogr_shape_5():
     if gdaltest.shape_ds is None:
         return 'skip'
 
-    expect = [ 179, 173, 172, 171, 170, 169, 168, 166, 165, 158, 0 ]
+    expect = [ 179, 173, 172, 171, 170, 169, 168, 166, 165, 158, None ]
     
     sql_lyr = gdaltest.shape_ds.ExecuteSQL( 'select distinct eas_id from tpoly order by eas_id desc' )
 
