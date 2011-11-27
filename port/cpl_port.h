@@ -529,4 +529,11 @@ static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
 #define CPL_PRINT_FUNC_FORMAT( format_idx, arg_idx )
 #endif
 
+#if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP)
+#define CPL_WARN_UNUSED_RESULT                        __attribute__((warn_unused_result))
+#else
+#define CPL_WARN_UNUSED_RESULT
+#endif
+
+
 #endif /* ndef CPL_BASE_H_INCLUDED */
