@@ -16054,7 +16054,8 @@ fi
 	if test -z "`${CC-cc} $CFLAGS -fPIC -c conftest.c 2>&1`"; then
 	  CFLAGS="$CFLAGS -fPIC"
 	fi
-	if test -z "`${CXX-g++} $CXXFLAGS -fPIC -c conftest.c 2>&1`"; then
+	echo 'void f(){}' > conftest.cpp
+	if test -z "`${CXX-g++} $CXXFLAGS -fPIC -c conftest.cpp 2>&1`"; then
 	  CXXFLAGS="$CXXFLAGS -fPIC"
 	fi
 	rm -f conftest*
