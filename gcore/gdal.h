@@ -221,16 +221,16 @@ void CPL_DLL CPL_STDCALL GDALAllRegister( void );
 
 GDALDatasetH CPL_DLL CPL_STDCALL GDALCreate( GDALDriverH hDriver,
                                  const char *, int, int, int, GDALDataType,
-                                 char ** );
+                                 char ** ) CPL_WARN_UNUSED_RESULT;
 GDALDatasetH CPL_DLL CPL_STDCALL
 GDALCreateCopy( GDALDriverH, const char *, GDALDatasetH,
-                int, char **, GDALProgressFunc, void * );
+                int, char **, GDALProgressFunc, void * ) CPL_WARN_UNUSED_RESULT;
 
 GDALDriverH CPL_DLL CPL_STDCALL GDALIdentifyDriver( const char * pszFilename,
                                             char ** papszFileList );
 GDALDatasetH CPL_DLL CPL_STDCALL
-GDALOpen( const char *pszFilename, GDALAccess eAccess );
-GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess );
+GDALOpen( const char *pszFilename, GDALAccess eAccess ) CPL_WARN_UNUSED_RESULT;
+GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_WARN_UNUSED_RESULT;
 int          CPL_DLL CPL_STDCALL GDALDumpOpenDatasets( FILE * );
 
 GDALDriverH CPL_DLL CPL_STDCALL GDALGetDriverByName( const char * );

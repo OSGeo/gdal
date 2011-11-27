@@ -224,7 +224,7 @@ OGRLayer *OGRDGNDataSource::CreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Parse out various creation options.                             */
 /* -------------------------------------------------------------------- */
-    CSLInsertStrings( papszOptions, 0, papszExtraOptions );
+    papszOptions = CSLInsertStrings( papszOptions, 0, papszExtraOptions );
 
     b3DRequested = CSLFetchBoolean( papszOptions, "3D", 
                                     (((int) eGeomType) & wkb25DBit) );

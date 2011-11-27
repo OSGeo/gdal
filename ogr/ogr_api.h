@@ -229,7 +229,7 @@ typedef void *OGRStyleTableH;
 
 /* OGRFieldDefn */
 
-OGRFieldDefnH CPL_DLL OGR_Fld_Create( const char *, OGRFieldType );
+OGRFieldDefnH CPL_DLL OGR_Fld_Create( const char *, OGRFieldType ) CPL_WARN_UNUSED_RESULT;
 void   CPL_DLL OGR_Fld_Destroy( OGRFieldDefnH );
 
 void   CPL_DLL OGR_Fld_SetName( OGRFieldDefnH, const char * );
@@ -251,7 +251,7 @@ const char CPL_DLL *OGR_GetFieldTypeName( OGRFieldType );
 
 /* OGRFeatureDefn */
 
-OGRFeatureDefnH CPL_DLL OGR_FD_Create( const char * );
+OGRFeatureDefnH CPL_DLL OGR_FD_Create( const char * ) CPL_WARN_UNUSED_RESULT;
 void   CPL_DLL OGR_FD_Destroy( OGRFeatureDefnH );
 void   CPL_DLL OGR_FD_Release( OGRFeatureDefnH );
 const char CPL_DLL *OGR_FD_GetName( OGRFeatureDefnH );
@@ -273,7 +273,7 @@ int    CPL_DLL OGR_FD_GetReferenceCount( OGRFeatureDefnH );
 
 /* OGRFeature */
 
-OGRFeatureH CPL_DLL OGR_F_Create( OGRFeatureDefnH );
+OGRFeatureH CPL_DLL OGR_F_Create( OGRFeatureDefnH ) CPL_WARN_UNUSED_RESULT;
 void   CPL_DLL OGR_F_Destroy( OGRFeatureH );
 OGRFeatureDefnH CPL_DLL OGR_F_GetDefnRef( OGRFeatureH );
 
@@ -411,18 +411,18 @@ void   CPL_DLL OGR_DS_SetStyleTable( OGRDataSourceH, OGRStyleTableH );
 /* OGRSFDriver */
 
 const char CPL_DLL *OGR_Dr_GetName( OGRSFDriverH );
-OGRDataSourceH CPL_DLL OGR_Dr_Open( OGRSFDriverH, const char *, int );
+OGRDataSourceH CPL_DLL OGR_Dr_Open( OGRSFDriverH, const char *, int ) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL OGR_Dr_TestCapability( OGRSFDriverH, const char * );
 OGRDataSourceH CPL_DLL OGR_Dr_CreateDataSource( OGRSFDriverH, const char *,
-                                                char ** );
+                                                char ** ) CPL_WARN_UNUSED_RESULT;
 OGRDataSourceH CPL_DLL OGR_Dr_CopyDataSource( OGRSFDriverH,  OGRDataSourceH, 
-                                              const char *, char ** );
+                                              const char *, char ** ) CPL_WARN_UNUSED_RESULT;
 OGRErr CPL_DLL OGR_Dr_DeleteDataSource( OGRSFDriverH, const char * );
 
 /* OGRSFDriverRegistrar */
 
-OGRDataSourceH CPL_DLL OGROpen( const char *, int, OGRSFDriverH * );
-OGRDataSourceH CPL_DLL OGROpenShared( const char *, int, OGRSFDriverH * );
+OGRDataSourceH CPL_DLL OGROpen( const char *, int, OGRSFDriverH * ) CPL_WARN_UNUSED_RESULT;
+OGRDataSourceH CPL_DLL OGROpenShared( const char *, int, OGRSFDriverH * ) CPL_WARN_UNUSED_RESULT;
 OGRErr  CPL_DLL OGRReleaseDataSource( OGRDataSourceH );
 void    CPL_DLL OGRRegisterDriver( OGRSFDriverH );
 void    CPL_DLL OGRDeregisterDriver( OGRSFDriverH );
@@ -451,7 +451,7 @@ typedef void *OGRStyleToolH;
 
 /* OGRStyleMgr */
 
-OGRStyleMgrH CPL_DLL OGR_SM_Create(OGRStyleTableH hStyleTable);
+OGRStyleMgrH CPL_DLL OGR_SM_Create(OGRStyleTableH hStyleTable) CPL_WARN_UNUSED_RESULT;
 void    CPL_DLL OGR_SM_Destroy(OGRStyleMgrH hSM);
 
 const char CPL_DLL *OGR_SM_InitFromFeature(OGRStyleMgrH hSM, 
@@ -468,7 +468,7 @@ int     CPL_DLL OGR_SM_AddStyle(OGRStyleMgrH hSM, const char *pszStyleName,
 
 /* OGRStyleTool */
 
-OGRStyleToolH CPL_DLL OGR_ST_Create(OGRSTClassId eClassId);
+OGRStyleToolH CPL_DLL OGR_ST_Create(OGRSTClassId eClassId) CPL_WARN_UNUSED_RESULT;
 void    CPL_DLL OGR_ST_Destroy(OGRStyleToolH hST);
 
 OGRSTClassId CPL_DLL OGR_ST_GetType(OGRStyleToolH hST);
@@ -491,7 +491,7 @@ int CPL_DLL OGR_ST_GetRGBFromString(OGRStyleToolH hST, const char *pszColor,
 
 /* OGRStyleTable */
 
-OGRStyleTableH  CPL_DLL OGR_STBL_Create( void );
+OGRStyleTableH  CPL_DLL OGR_STBL_Create( void ) CPL_WARN_UNUSED_RESULT;
 void    CPL_DLL OGR_STBL_Destroy( OGRStyleTableH hSTBL ); 
 int     CPL_DLL OGR_STBL_SaveStyleTable( OGRStyleTableH hStyleTable,
                                          const char *pszFilename );
