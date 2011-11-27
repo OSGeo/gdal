@@ -684,7 +684,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
 /* -------------------------------------------------------------------- */
     GDALDataset         *Create( const char * pszName,
                                  int nXSize, int nYSize, int nBands,
-                                 GDALDataType eType, char ** papszOptions );
+                                 GDALDataType eType, char ** papszOptions ) CPL_WARN_UNUSED_RESULT;
 
     CPLErr              Delete( const char * pszName );
     CPLErr              Rename( const char * pszNewName,
@@ -695,7 +695,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     GDALDataset         *CreateCopy( const char *, GDALDataset *, 
                                      int, char **,
                                      GDALProgressFunc pfnProgress, 
-                                     void * pProgressData );
+                                     void * pProgressData ) CPL_WARN_UNUSED_RESULT;
     
 /* -------------------------------------------------------------------- */
 /*      The following are semiprivate, not intended to be accessed      */
@@ -733,7 +733,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     GDALDataset         *DefaultCreateCopy( const char *, GDALDataset *, 
                                             int, char **,
                                             GDALProgressFunc pfnProgress, 
-                                            void * pProgressData );
+                                            void * pProgressData ) CPL_WARN_UNUSED_RESULT;
     static CPLErr        DefaultCopyMasks( GDALDataset *poSrcDS, 
                                            GDALDataset *poDstDS, 
                                            int bStrict );
