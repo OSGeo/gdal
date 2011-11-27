@@ -59,20 +59,20 @@
 
 CPL_C_START
 
-char CPL_DLL **CSLAddString(char **papszStrList, const char *pszNewString);
+char CPL_DLL **CSLAddString(char **papszStrList, const char *pszNewString) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL CSLCount(char **papszStrList);
 const char CPL_DLL *CSLGetField( char **, int );
 void CPL_DLL CPL_STDCALL CSLDestroy(char **papszStrList);
-char CPL_DLL **CSLDuplicate(char **papszStrList);
-char CPL_DLL **CSLMerge( char **papszOrig, char **papszOverride );
+char CPL_DLL **CSLDuplicate(char **papszStrList) CPL_WARN_UNUSED_RESULT;
+char CPL_DLL **CSLMerge( char **papszOrig, char **papszOverride ) CPL_WARN_UNUSED_RESULT;
 
-char CPL_DLL **CSLTokenizeString(const char *pszString );
+char CPL_DLL **CSLTokenizeString(const char *pszString ) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL **CSLTokenizeStringComplex(const char *pszString,
                                    const char *pszDelimiter,
-                                   int bHonourStrings, int bAllowEmptyTokens );
+                                   int bHonourStrings, int bAllowEmptyTokens ) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL **CSLTokenizeString2( const char *pszString, 
                                    const char *pszDelimeter, 
-                                   int nCSLTFlags );
+                                   int nCSLTFlags ) CPL_WARN_UNUSED_RESULT;
 
 #define CSLT_HONOURSTRINGS      0x0001
 #define CSLT_ALLOWEMPTYTOKENS   0x0002
@@ -82,16 +82,16 @@ char CPL_DLL **CSLTokenizeString2( const char *pszString,
 #define CSLT_STRIPENDSPACES     0x0020
 
 int CPL_DLL CSLPrint(char **papszStrList, FILE *fpOut);
-char CPL_DLL **CSLLoad(const char *pszFname);
-char CPL_DLL **CSLLoad2(const char *pszFname, int nMaxLines, int nMaxCols, char** papszOptions);
+char CPL_DLL **CSLLoad(const char *pszFname) CPL_WARN_UNUSED_RESULT;
+char CPL_DLL **CSLLoad2(const char *pszFname, int nMaxLines, int nMaxCols, char** papszOptions) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL CSLSave(char **papszStrList, const char *pszFname);
 
 char CPL_DLL **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo, 
-                         char **papszNewLines);
+                         char **papszNewLines) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL **CSLInsertString(char **papszStrList, int nInsertAtLineNo, 
-                               const char *pszNewLine);
+                               const char *pszNewLine) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
-                         int nNumToRemove, char ***ppapszRetStrings);
+                         int nNumToRemove, char ***ppapszRetStrings) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL CSLFindString( char **, const char * );
 int CPL_DLL CSLPartialFindString( char **papszHaystack, 
 	const char * pszNeedle );
@@ -101,7 +101,7 @@ int CPL_DLL CSLFetchBoolean( char **papszStrList, const char *pszKey,
                              int bDefault );
 
 const char CPL_DLL *CPLSPrintf(const char *fmt, ...) CPL_PRINT_FUNC_FORMAT(1, 2);
-char CPL_DLL **CSLAppendPrintf(char **papszStrList, const char *fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3);
+char CPL_DLL **CSLAppendPrintf(char **papszStrList, const char *fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL CPLVASPrintf(char **buf, const char *fmt, va_list args );
 
 const char CPL_DLL *
@@ -115,10 +115,10 @@ char CPL_DLL **
       CSLFetchNameValueMultiple(char **papszStrList, const char *pszName);
 char CPL_DLL **
       CSLAddNameValue(char **papszStrList, 
-                      const char *pszName, const char *pszValue);
+                      const char *pszName, const char *pszValue) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL **
       CSLSetNameValue(char **papszStrList, 
-                      const char *pszName, const char *pszValue);
+                      const char *pszName, const char *pszValue) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL CSLSetNameValueSeparator( char ** papszStrList, 
                                        const char *pszSeparator );
 
@@ -129,14 +129,14 @@ void CPL_DLL CSLSetNameValueSeparator( char ** papszStrList,
 #define CPLES_CSV               4
 
 char CPL_DLL *CPLEscapeString( const char *pszString, int nLength, 
-                               int nScheme );
+                               int nScheme ) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL *CPLUnescapeString( const char *pszString, int *pnLength,
-                                 int nScheme );
+                                 int nScheme ) CPL_WARN_UNUSED_RESULT;
 
-char CPL_DLL *CPLBinaryToHex( int nBytes, const GByte *pabyData );
-GByte CPL_DLL *CPLHexToBinary( const char *pszHex, int *pnBytes );
+char CPL_DLL *CPLBinaryToHex( int nBytes, const GByte *pabyData ) CPL_WARN_UNUSED_RESULT;
+GByte CPL_DLL *CPLHexToBinary( const char *pszHex, int *pnBytes ) CPL_WARN_UNUSED_RESULT;
 
-char CPL_DLL *CPLBase64Encode( int nBytes, const GByte *pabyData );
+char CPL_DLL *CPLBase64Encode( int nBytes, const GByte *pabyData ) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL CPLBase64DecodeInPlace(GByte* pszBase64);
 
 typedef enum
@@ -166,15 +166,15 @@ size_t CPL_DLL CPLStrnlen (const char *pszStr, size_t nMaxLen);
 int CPL_DLL  CPLEncodingCharSize( const char *pszEncoding );
 char CPL_DLL *CPLRecode( const char *pszSource, 
                          const char *pszSrcEncoding, 
-                         const char *pszDstEncoding );
+                         const char *pszDstEncoding ) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL *CPLRecodeFromWChar( const wchar_t *pwszSource, 
                                   const char *pszSrcEncoding, 
-                                  const char *pszDstEncoding );
+                                  const char *pszDstEncoding ) CPL_WARN_UNUSED_RESULT;
 wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
                                    const char *pszSrcEncoding, 
-                                   const char *pszDstEncoding );
+                                   const char *pszDstEncoding ) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL CPLIsUTF8(const char* pabyData, int nLen);
-char CPL_DLL *CPLForceToASCII(const char* pabyData, int nLen, char chReplacementChar);
+char CPL_DLL *CPLForceToASCII(const char* pabyData, int nLen, char chReplacementChar) CPL_WARN_UNUSED_RESULT;
 
 CPL_C_END
 

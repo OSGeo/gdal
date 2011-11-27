@@ -977,13 +977,18 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
     }
     else
     {
-        CSLSetNameValue( poDS->papszRDC, rdcMIN_X, CPLSPrintf( "%.1f", -0.5 ));
-        CSLSetNameValue( poDS->papszRDC, rdcMAX_X, CPLSPrintf( "%.1f", 
+        poDS->papszRDC =
+            CSLSetNameValue( poDS->papszRDC, rdcMIN_X, CPLSPrintf( "%.1f", -0.5 ));
+        poDS->papszRDC =
+            CSLSetNameValue( poDS->papszRDC, rdcMAX_X, CPLSPrintf( "%.1f",
             poSrcDS->GetRasterXSize() - 0.5 ) );
-        CSLSetNameValue( poDS->papszRDC, rdcMIN_Y, CPLSPrintf( "%.1f", 
+        poDS->papszRDC =
+            CSLSetNameValue( poDS->papszRDC, rdcMIN_Y, CPLSPrintf( "%.1f",
             poSrcDS->GetRasterYSize() + 0.5 ) );
-        CSLSetNameValue( poDS->papszRDC, rdcMAX_Y, CPLSPrintf( "%.1f", 0.5 ));
-        CSLSetNameValue( poDS->papszRDC, rdcRESOLUTION, "1" );
+        poDS->papszRDC =
+            CSLSetNameValue( poDS->papszRDC, rdcMAX_Y, CPLSPrintf( "%.1f", 0.5 ));
+        poDS->papszRDC =
+            CSLSetNameValue( poDS->papszRDC, rdcRESOLUTION, "1" );
     }
 
     // --------------------------------------------------------------------
@@ -1168,11 +1173,11 @@ CPLErr  IdrisiDataset::SetGeoTransform( double * padfTransform )
         dfMinY   = padfTransform[3];
     }
 
-    CSLSetNameValue( papszRDC, rdcMIN_X,      CPLSPrintf( "%.7f", dfMinX ) );
-    CSLSetNameValue( papszRDC, rdcMAX_X,      CPLSPrintf( "%.7f", dfMaxX ) );
-    CSLSetNameValue( papszRDC, rdcMIN_Y,      CPLSPrintf( "%.7f", dfMinY ) );
-    CSLSetNameValue( papszRDC, rdcMAX_Y,      CPLSPrintf( "%.7f", dfMaxY ) );
-    CSLSetNameValue( papszRDC, rdcRESOLUTION, CPLSPrintf( "%.7f", fabs( dfYPixSz ) ) );
+    papszRDC = CSLSetNameValue( papszRDC, rdcMIN_X,      CPLSPrintf( "%.7f", dfMinX ) );
+    papszRDC = CSLSetNameValue( papszRDC, rdcMAX_X,      CPLSPrintf( "%.7f", dfMaxX ) );
+    papszRDC = CSLSetNameValue( papszRDC, rdcMIN_Y,      CPLSPrintf( "%.7f", dfMinY ) );
+    papszRDC = CSLSetNameValue( papszRDC, rdcMAX_Y,      CPLSPrintf( "%.7f", dfMaxY ) );
+    papszRDC = CSLSetNameValue( papszRDC, rdcRESOLUTION, CPLSPrintf( "%.7f", fabs( dfYPixSz ) ) );
 
     // --------------------------------------------------------------------
     // Update the Dataset attribute
@@ -1222,8 +1227,8 @@ CPLErr IdrisiDataset::SetProjection( const char *pszProjString )
 
     eResult = Wkt2GeoReference( pszProjString, &pszRefSystem, &pszRefUnit );
 
-    CSLSetNameValue( papszRDC, rdcREF_SYSTEM, pszRefSystem );
-    CSLSetNameValue( papszRDC, rdcREF_UNITS,  pszRefUnit );
+    papszRDC = CSLSetNameValue( papszRDC, rdcREF_SYSTEM, pszRefSystem );
+    papszRDC = CSLSetNameValue( papszRDC, rdcREF_UNITS,  pszRefUnit );
 
     CPLFree( pszRefSystem );
     CPLFree( pszRefUnit );
@@ -1633,7 +1638,7 @@ CPLErr IdrisiRasterBand::SetCategoryNames( char **papszCategoryNames )
         }
     }
 
-    CSLSetNameValue( poGDS->papszRDC, rdcLEGEND_CATS, CPLSPrintf( "%d", nCount ) );
+    poGDS->papszRDC = CSLSetNameValue( poGDS->papszRDC, rdcLEGEND_CATS, CPLSPrintf( "%d", nCount ) );
 
     return CE_None;
 }
