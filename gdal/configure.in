@@ -61,7 +61,20 @@ AC_ARG_WITH(libtool, [  --without-libtool     Don't use libtool to build the lib
 
 if test "$with_libtool" = "no"; then
 AC_PROG_RANLIB
-AC_COMPILER_PIC
+
+dnl AC_COMPILER_PIC as expanded by autoconf-2.68 doesn't work for the C++ part with clang++ 3.0 that doesn't like compiling .c programs
+dnl so we inline the expanded code and fix it at hand.
+dnl AC_COMPILER_PIC
+	echo 'void f(){}' > conftest.c
+	if test -z "`${CC-cc} $CFLAGS -fPIC -c conftest.c 2>&1`"; then
+	  CFLAGS="$CFLAGS -fPIC"
+	fi
+	echo 'void f(){}' > conftest.cpp
+	if test -z "`${CXX-g++} $CXXFLAGS -fPIC -c conftest.cpp 2>&1`"; then
+	  CXXFLAGS="$CXXFLAGS -fPIC"
+	fi
+	rm -f conftest*
+
 AC_LD_SHARED
 else
 with_libtool=yes
