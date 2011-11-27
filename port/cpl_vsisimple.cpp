@@ -508,9 +508,10 @@ void * VSIRealloc( void * pData, size_t nNewSize )
         return NULL;
 #endif
 
-    ptr = (char*) realloc(ptr, nNewSize + 2 * sizeof(void*));
-    if (ptr == NULL)
+    void* newptr = realloc(ptr, nNewSize + 2 * sizeof(void*));
+    if (newptr == NULL)
         return NULL;
+    ptr = (char*) newptr;
     memcpy(ptr + sizeof(void*), &nNewSize, sizeof(void*));
 
 #if defined(DEBUG_VSIMALLOC_STATS) || defined(DEBUG_VSIMALLOC_VERBOSE)
