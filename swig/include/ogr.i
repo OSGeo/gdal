@@ -374,6 +374,14 @@ public:
   OGRDataSourceShadow *Open( const char* utf8_path, 
                         int update=0 ) {
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*) OGR_Dr_Open(self, utf8_path, update);
+    if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
+    {
+        CPLDebug( "SWIG",
+          "OGR_Dr_Open() succeeded, but an error is posted, so we destroy"
+          " the datasource and fail at swig level." );
+        OGRReleaseDataSource(ds);
+        ds = NULL;
+    }
     return ds;
   }
 
