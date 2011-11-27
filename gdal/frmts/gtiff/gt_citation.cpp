@@ -484,7 +484,7 @@ OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
         {
             const char* pszProjCS = poSRS->GetAttrValue( "PROJCS" );
             if((!(pszProjCS && strlen(pszProjCS) > 0) && !strstr(szCTString, "Projected Coordinates"))
-               || strstr(pszProjCS, "unnamed"))
+               ||(pszProjCS && strstr(pszProjCS, "unnamed")))
                 poSRS->SetNode( "PROJCS", szCTString );
             ret = TRUE;
         }
