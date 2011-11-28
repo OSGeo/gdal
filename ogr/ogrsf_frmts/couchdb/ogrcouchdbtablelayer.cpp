@@ -1747,6 +1747,16 @@ OGRSpatialReference* OGRCouchDBTableLayer::GetSpatialRef()
 }
 
 /************************************************************************/
+/*                     OGRCouchDBIsNumericObject()                      */
+/************************************************************************/
+
+static int OGRCouchDBIsNumericObject(json_object* poObj)
+{
+    int iType = json_object_get_type(poObj);
+    return iType == json_type_int || iType == json_type_double;
+}
+
+/************************************************************************/
 /*                          LoadMetadata()                              */
 /************************************************************************/
 
@@ -1852,10 +1862,10 @@ void OGRCouchDBTableLayer::LoadMetadata()
                 if (poUpdateSeq && poBbox &&
                     json_object_get_type(poBbox) == json_type_array &&
                     json_object_array_length(poBbox) == 4 &&
-                    json_object_get_type(json_object_array_get_idx(poBbox, 0)) == json_type_double &&
-                    json_object_get_type(json_object_array_get_idx(poBbox, 1)) == json_type_double &&
-                    json_object_get_type(json_object_array_get_idx(poBbox, 2)) == json_type_double &&
-                    json_object_get_type(json_object_array_get_idx(poBbox, 3)) == json_type_double)
+                    OGRCouchDBIsNumericObject(json_object_array_get_idx(poBbox, 0)) &&
+                    OGRCouchDBIsNumericObject(json_object_array_get_idx(poBbox, 1)) &&
+                    OGRCouchDBIsNumericObject(json_object_array_get_idx(poBbox, 2)) &&
+                    OGRCouchDBIsNumericObject(json_object_array_get_idx(poBbox, 3)))
                 {
                     dfMinX = json_object_get_double(json_object_array_get_idx(poBbox, 0));
                     dfMinY = json_object_get_double(json_object_array_get_idx(poBbox, 1));
