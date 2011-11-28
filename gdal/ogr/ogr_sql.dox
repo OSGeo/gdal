@@ -93,15 +93,24 @@ SELECT MIN(prop_value), MAX(prop_value), AVG(prop_value), SUM(prop_value),
        COUNT(prop_value) FROM polylayer WHERE prov_name = "Ontario"
 \endcode
 
-As a special case, the COUNT() operator can be given a "*" argument instead
-of a field name which is a short form for count all the records though it
-would get the same result as giving it any of the column names.   It is
-also possible to apply the COUNT() operator to a DISTINCT SELECT to get
+It is also possible to apply the COUNT() operator to a DISTINCT SELECT to get
 a count of distinct values, for instance:
 
 \code
 SELECT COUNT(DISTINCT areacode) FROM polylayer
 \endcode
+
+Note: prior to OGR 1.9.0, null values were counted in COUNT(column_name) or
+COUNT(DISTINCT column_name), which was not conformant with the SQL standard. Since
+OGR 1.9.0, only non-null values are counted.
+
+As a special case, the COUNT() operator can be given a "*" argument instead
+of a field name which is a short form for count all the records.
+
+\code
+SELECT COUNT(*) FROM polylayer
+\endcode
+
 
 Field names can also be prefixed by a table name though this is only 
 really meaningful when performing joins.  It is further demonstrated in 
