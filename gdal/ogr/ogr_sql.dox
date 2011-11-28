@@ -121,6 +121,25 @@ or
 SELECT CONCAT(owner_first_name,' ',owner_last_name) from properties
 \endcode
 
+\subsubsection ogr_sql_functions Functions
+
+Starting with OGR 1.8.2, the SUBSTR function can be used to extract a substring from a string.
+Its syntax is the following one : SUBSTR(string_expr, start_offset [, length]). It extracts a substring of string_expr,
+starting at offset start_offset (1 being the first character of string_expr, 2 the second one, etc...).
+If start_offset is a negative value, the substring is extracted from the end of the string (-1 is the
+last character of the string, -2 the character before the last character, ...).
+If length is specified, up to length characters are extracted from the string. Otherwise the
+remainder of the string is extracted.
+
+Note: for the time being, the character as considered to be equivalent to bytes, which may not be
+appropriate for multi-byte encodings like UTF-8.
+
+\code
+SELECT SUBSTR('abcdef',1,2) FROM xxx   --> 'ab'
+SELECT SUBSTR('abcdef',4)   FROM xxx   --> 'def'
+SELECT SUBSTR('abcdef',-2)  FROM xxx   --> 'ef'
+\endcode
+
 \subsubsection ogr_sql_fname_alias Using the field name alias
 
 OGR SQL supports renaming the fields following the SQL92 specification by

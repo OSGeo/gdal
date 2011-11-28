@@ -257,7 +257,7 @@ def ogr_rfc28_12():
 # Test SUBSTR operator in the context of a WHERE clause.
 
 def ogr_rfc28_13():
-    gdaltest.lyr.SetAttributeFilter( "SUBSTR(PRFEDEA,4,4) = '3423'" )
+    gdaltest.lyr.SetAttributeFilter( "SUBSTR(PRFEDEA,5,4) = '3423'" )
 
     count = gdaltest.lyr.GetFeatureCount()
     if count != 1:
@@ -271,7 +271,7 @@ def ogr_rfc28_13():
 # test selecting fixed string fields.
 
 def ogr_rfc28_14():
-    lyr = gdaltest.ds.ExecuteSQL( "SELECT SUBSTR(PRFEDEA,3,5) from poly where eas_id in (168,179)" )
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT SUBSTR(PRFEDEA,4,5) from poly where eas_id in (168,179)" )
 
     expect = [ '43411', '43423' ]
     tr = ogrtest.check_features_against_list( lyr, 'prfedea', expect )
@@ -490,7 +490,23 @@ def ogr_rfc28_23():
         return 'fail'
 
     return 'success'
-    
+
+###############################################################################
+# Test SUBSTR with negative offsets
+
+def ogr_rfc28_26():
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT SUBSTR(PRFEDEA,-2) from poly where eas_id in (168,179)" )
+
+    expect = [ '11', '23' ]
+    tr = ogrtest.check_features_against_list( lyr, 'prfedea', expect )
+
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    if tr:
+        return 'success'
+    else:
+        return 'fail'    
+
 ###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
@@ -524,6 +540,7 @@ gdaltest_list = [
     ogr_rfc28_21,
     ogr_rfc28_22,
     ogr_rfc28_23,
+    ogr_rfc28_26,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':

@@ -450,7 +450,23 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
                   nSize = 0;
 
               int nSrcStrLen = (int)strlen(pszSrcStr);
-              if( nOffset < 0 || nSize < 0 || nOffset > nSrcStrLen )
+
+
+              /* In SQL, the first character is at offset 1 */
+              /* And 0 is considered as 1 */
+              if (nOffset > 0)
+                  nOffset --;
+              /* Some implementations allow negative offsets, to start */
+              /* from the end of the string */
+              else if( nOffset < 0 )
+              {
+                  if( nSrcStrLen + nOffset >= 0 )
+                      nOffset = nSrcStrLen + nOffset;
+                  else
+                      nOffset = 0;
+              }
+
+              if( nSize < 0 || nOffset > nSrcStrLen )
               {
                   nOffset = 0;
                   nSize = 0;
