@@ -265,7 +265,7 @@ swq_select_summarize( swq_select *select_info,
 /*      Create the summary information if this is the first row         */
 /*      being processed.                                                */
 /* -------------------------------------------------------------------- */
-    if( select_info->column_summary == NULL )
+    if( select_info->column_summary == NULL && value != NULL )
     {
         int i;
 

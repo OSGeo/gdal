@@ -575,13 +575,13 @@ int OGRGenSQLResultsLayer::PrepareSummary()
     poSrcLayer->ResetReading();
 
 /* -------------------------------------------------------------------- */
-/*      We treat COUNT(*) (or COUNT of anything without distinct) as    */
-/*      a special case, and fill with GetFeatureCount().                */
+/*      We treat COUNT(*) as a special case, and fill with              */
+/*      GetFeatureCount().                                              */
 /* -------------------------------------------------------------------- */
 
     if( psSelectInfo->result_columns == 1 
         && psSelectInfo->column_defs[0].col_func == SWQCF_COUNT
-        && !psSelectInfo->column_defs[0].distinct_flag )
+        && psSelectInfo->column_defs[0].field_index < 0 )
     {
         poSummaryFeature->SetField( 0, poSrcLayer->GetFeatureCount( TRUE ) );
         return TRUE;
@@ -601,9 +601,17 @@ int OGRGenSQLResultsLayer::PrepareSummary()
         {
             swq_col_def *psColDef = psSelectInfo->column_defs + iField;
 
-            if (psColDef->col_func == SWQCF_COUNT && !psColDef->distinct_flag)
+            if (psColDef->col_func == SWQCF_COUNT)
+            {
                 /* psColDef->field_index can be -1 in the case of a COUNT(*) */
-                pszError = swq_select_summarize( psSelectInfo, iField, "" );
+                if (psColDef->field_index < 0)
+                    pszError = swq_select_summarize( psSelectInfo, iField, "" );
+                else if (poSrcFeature->IsFieldSet(psColDef->field_index))
+                    pszError = swq_select_summarize( psSelectInfo, iField, poSrcFeature->GetFieldAsString(
+                                                psColDef->field_index ) );
+                else
+                    pszError = NULL;
+            }
             else
             {
                 const char* pszVal = NULL;
@@ -648,25 +656,29 @@ int OGRGenSQLResultsLayer::PrepareSummary()
 /*      Now apply the values to the summary feature.  If we are in      */
 /*      DISTINCT_LIST mode we don't do this step.                       */
 /* -------------------------------------------------------------------- */
-    if( psSelectInfo->query_mode == SWQM_SUMMARY_RECORD 
-        && psSelectInfo->column_summary != NULL )
+    if( psSelectInfo->query_mode == SWQM_SUMMARY_RECORD )
     {
         for( iField = 0; iField < psSelectInfo->result_columns; iField++ )
         {
             swq_col_def *psColDef = psSelectInfo->column_defs + iField;
-            swq_summary *psSummary = psSelectInfo->column_summary + iField;
+            if (psSelectInfo->column_summary != NULL)
+            {
+                swq_summary *psSummary = psSelectInfo->column_summary + iField;
 
-            if( psColDef->col_func == SWQCF_AVG )
-                poSummaryFeature->SetField( iField, 
-                                        psSummary->sum / psSummary->count );
-            else if( psColDef->col_func == SWQCF_MIN )
-                poSummaryFeature->SetField( iField, psSummary->min );
-            else if( psColDef->col_func == SWQCF_MAX )
-                poSummaryFeature->SetField( iField, psSummary->max );
-            else if( psColDef->col_func == SWQCF_COUNT )
-                poSummaryFeature->SetField( iField, psSummary->count );
-            else if( psColDef->col_func == SWQCF_SUM )
-                poSummaryFeature->SetField( iField, psSummary->sum );
+                if( psColDef->col_func == SWQCF_AVG )
+                    poSummaryFeature->SetField( iField,
+                                            psSummary->sum / psSummary->count );
+                else if( psColDef->col_func == SWQCF_MIN )
+                    poSummaryFeature->SetField( iField, psSummary->min );
+                else if( psColDef->col_func == SWQCF_MAX )
+                    poSummaryFeature->SetField( iField, psSummary->max );
+                else if( psColDef->col_func == SWQCF_COUNT )
+                    poSummaryFeature->SetField( iField, psSummary->count );
+                else if( psColDef->col_func == SWQCF_SUM )
+                    poSummaryFeature->SetField( iField, psSummary->sum );
+            }
+            else if ( psColDef->col_func == SWQCF_COUNT )
+                poSummaryFeature->SetField( iField, 0 );
         }
     }
 
