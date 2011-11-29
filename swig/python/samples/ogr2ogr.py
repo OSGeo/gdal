@@ -140,7 +140,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
     pszWHERE = None
     poSpatialFilter = None
     pszSelect = None
-    papszSelFields = []
+    papszSelFields = None
     pszSQLStatement = None
     eGType = -2
     dfMaxSegmentLength = 0
@@ -305,6 +305,8 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                 papszSelFields = pszSelect.split(',')
             else:
                 papszSelFields = pszSelect.split(' ')
+            if papszSelFields[0] == '':
+                papszSelFields = []
 
         elif EQUAL(args[iArg],"-segmentize") and iArg < nArgc-1:
             iArg = iArg + 1
@@ -1048,7 +1050,8 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                     eGType = ogr.wkbPolygon | n25DBit
                 elif wkbFlatten(eGType) == ogr.wkbGeometryCollection:
                     eGType = ogr.wkbUnknown | n25DBit
-            elif pszZField is not None:
+
+            if pszZField is not None:
                 eGType = eGType | ogr.wkb25DBit
 
         if poDstDS.TestCapability( ogr.ODsCCreateLayer ) == False:
@@ -1090,7 +1093,7 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
 
     poDstFDefn = poDstLayer.GetLayerDefn()
 
-    if len(papszSelFields) > 0 and not bAppend:
+    if papszSelFields is not None and not bAppend:
 
         nDstFieldCount = 0
         if poDstFDefn is not None:
@@ -1153,6 +1156,9 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                     if pszFieldName == papszSelFields[iField]:
                         bFieldRequested = True
                         break
+
+                if pszZField is not None and pszFieldName == pszZField:
+                    bFieldRequested = True
 
                 #/* If source field not requested, add it to ignored files list */
                 if not bFieldRequested:

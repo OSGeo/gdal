@@ -103,7 +103,7 @@ public class ogr2ogr
         String pszWHERE = null;
         Geometry poSpatialFilter = null;
         String pszSelect;
-        Vector papszSelFields = new Vector();
+        Vector papszSelFields = null;
         String pszSQLStatement = null;
         int    eGType = -2;
         double dfMaxSegmentLength = 0;
@@ -278,6 +278,7 @@ public class ogr2ogr
             {
                 pszSelect = args[++iArg];
                 StringTokenizer tokenizer = new StringTokenizer(pszSelect, " ,");
+                papszSelFields = new Vector();
                 while(tokenizer.hasMoreElements())
                     papszSelFields.addElement(tokenizer.nextToken());
             }
@@ -1247,7 +1248,8 @@ public class ogr2ogr
                         eGType = ogr.wkbUnknown | n25DBit;
                     }
                 }
-                else if ( pszZField != null )
+
+                if ( pszZField != null )
                     eGType |= ogr.wkb25DBit;
             }
     
@@ -1303,7 +1305,7 @@ public class ogr2ogr
 
         FeatureDefn poDstFDefn = poDstLayer.GetLayerDefn();
 
-        if (papszSelFields.size() > 0 && !bAppend )
+        if (papszSelFields != null && !bAppend )
         {
             int  nDstFieldCount = 0;
             if (poDstFDefn != null)
@@ -1387,6 +1389,10 @@ public class ogr2ogr
                             break;
                         }
                     }
+
+                    if (pszZField != null && pszFieldName.equals(pszZField))
+                        bFieldRequested = true;
+
                     /* If source field not requested, add it to ignored files list */
                     if (!bFieldRequested)
                         papszIgnoredFields.addElement(pszFieldName);
