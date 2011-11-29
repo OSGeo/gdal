@@ -1794,7 +1794,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                     eGType = wkbUnknown | n25DBit;
                 }
             }
-            else if ( pszZField )
+
+            if ( pszZField )
                 eGType |= wkb25DBit;
         }
 
@@ -1964,6 +1965,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                     }
                 }
                 bFieldRequested |= CSLFindString(papszWHEREUsedFields, pszFieldName) >= 0;
+                bFieldRequested |= (pszZField != NULL && strcmp(pszFieldName, pszZField) == 0);
 
                 /* If source field not requested, add it to ignored files list */
                 if (!bFieldRequested)
