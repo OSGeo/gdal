@@ -2051,7 +2051,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 /* -------------------------------------------------------------------- */
     OGRFeature  *poFeature;
     int         nFeaturesInTransaction = 0;
-    long        nCount = 0;
+    GIntBig      nCount = 0; /* written + failed */
+    GIntBig      nFeaturesWritten = 0;
 
     int iSrcZField = -1;
     if (pszZField != NULL)
@@ -2235,8 +2236,11 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             }
 
             CPLErrorReset();
-            if( poDstLayer->CreateFeature( poDstFeature ) != OGRERR_NONE
-                && !bSkipFailures )
+            if( poDstLayer->CreateFeature( poDstFeature ) == OGRERR_NONE )
+            {
+                nFeaturesWritten ++;
+            }
+            else if( !bSkipFailures )
             {
                 if( nGroupTransactions )
                     poDstLayer->RollbackTransaction();
@@ -2262,6 +2266,9 @@ end_loop:
 
     if( nGroupTransactions )
         poDstLayer->CommitTransaction();
+
+    CPLDebug("OGR2OGR", CPL_FRMT_GIB " features written in layer '%s'",
+             nFeaturesWritten, pszNewLayerName);
 
 /* -------------------------------------------------------------------- */
 /*      Cleaning                                                        */
