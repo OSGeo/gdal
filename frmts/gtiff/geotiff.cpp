@@ -584,6 +584,8 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
 /* -------------------------------------------------------------------- */
 /*      Try to work out band color interpretation.                      */
 /* -------------------------------------------------------------------- */
+    int bLookForExtraSamples = FALSE;
+
     if( poDS->poColorTable != NULL && nBand == 1 ) 
         eBandInterp = GCI_PaletteIndex;
     else if( poDS->nPhotometric == PHOTOMETRIC_RGB 
@@ -599,20 +601,7 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
         else if( nBand == 3 )
             eBandInterp = GCI_BlueBand;
         else
-        {
-            uint16 *v;
-            uint16 count = 0;
-
-            if( TIFFGetField( poDS->hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v) )
-            {
-                if( nBand - 3 <= count && v[nBand-4] == EXTRASAMPLE_ASSOCALPHA )
-                    eBandInterp = GCI_AlphaBand;
-                else
-                    eBandInterp = GCI_Undefined;
-            }
-            else
-                eBandInterp = GCI_Undefined;
-        }
+            bLookForExtraSamples = TRUE;
     }
     else if( poDS->nPhotometric == PHOTOMETRIC_YCBCR )
     {
@@ -623,20 +612,7 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
         else if( nBand == 3 )
             eBandInterp = GCI_YCbCr_CrBand;
         else
-        {
-            uint16 *v;
-            uint16 count = 0;
-
-            if( TIFFGetField( poDS->hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v) )
-            {
-                if( nBand - 3 <= count && v[nBand-4] == EXTRASAMPLE_ASSOCALPHA )
-                    eBandInterp = GCI_AlphaBand;
-                else
-                    eBandInterp = GCI_Undefined;
-            }
-            else
-                eBandInterp = GCI_Undefined;
-        }
+            bLookForExtraSamples = TRUE;
     }
     else if( poDS->nPhotometric == PHOTOMETRIC_SEPARATED )
     {
@@ -646,12 +622,17 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
             eBandInterp = GCI_MagentaBand;
         else if( nBand == 3 )
             eBandInterp = GCI_YellowBand;
-        else
+        else if( nBand == 4 )
             eBandInterp = GCI_BlackBand;
+        else
+            bLookForExtraSamples = TRUE;
     }
     else if( poDS->nPhotometric == PHOTOMETRIC_MINISBLACK && nBand == 1 )
         eBandInterp = GCI_GrayIndex;
     else
+        bLookForExtraSamples = TRUE;
+        
+    if( bLookForExtraSamples )
     {
         uint16 *v;
         uint16 count = 0;
