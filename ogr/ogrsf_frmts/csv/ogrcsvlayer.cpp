@@ -844,8 +844,7 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
                 CPLError( CE_Failure, CPLE_OpenFailed,
                         "Failed to create %s:\n%s",
                         pszFilename, VSIStrerror( errno ) );
-
-                return NULL;
+                return OGRERR_FAILURE;
             }
         }
 
