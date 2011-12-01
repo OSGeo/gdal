@@ -860,6 +860,54 @@ def ogr_csv_20():
 
     return 'success'
 
+###############################################################################
+# Verify handling of numeric column names with quotes (bug #4361)
+
+def ogr_csv_21():
+
+    if gdaltest.csv_ds is None:
+        return 'skip'
+
+    gdaltest.csv_ds.Destroy()
+    gdaltest.csv_ds = None
+
+    gdaltest.csv_ds = ogr.Open( 'data/testquoteheader1.csv' )
+    if gdaltest.csv_ds is None:
+        return 'fail'
+
+    lyr = gdaltest.csv_ds.GetLayerByName( 'testquoteheader1' )
+    if lyr is None:
+        return 'fail'
+    lyr.ResetReading()
+
+    expect = ['test', '2000', '2000.12']
+    for i in range(0,3):
+        got = lyr.GetLayerDefn().GetFieldDefn(i).GetNameRef()
+        if  got!= expect[i]:
+            print('column %d got name %s expected %s' % (i,str(got), str(expect[i])) )
+            return 'fail'
+
+    gdaltest.csv_ds.Destroy()
+    gdaltest.csv_ds = None
+
+    gdaltest.csv_ds = ogr.Open( 'data/testquoteheader2.csv' )
+    if gdaltest.csv_ds is None:
+        return 'fail'
+
+    lyr = gdaltest.csv_ds.GetLayerByName( 'testquoteheader2' )
+    if lyr is None:
+        return 'fail'
+    lyr.ResetReading()
+
+    expect = ['field_1', 'field_2', 'field_3']
+    for i in range(0,3):
+        got = lyr.GetLayerDefn().GetFieldDefn(i).GetNameRef()
+        if  got!= expect[i]:
+            print('column %d got name %s expected %s' % (i,str(got), str(expect[i])) )
+            return 'fail'
+
+    return 'success'
+
 
 ###############################################################################
 # 
@@ -911,6 +959,7 @@ gdaltest_list = [
     ogr_csv_18,
     ogr_csv_19,
     ogr_csv_20,
+    ogr_csv_21,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':
