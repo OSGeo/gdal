@@ -1276,10 +1276,10 @@ void GeoRasterWrapper::GetRasterInfo( void )
     //  -------------------------------------------------------------------
 
     anULTCoordinate[0] = atoi(CPLGetXMLValue( 
-            phMetadata, "rasterInfo.ULTCoordinate.row", "0"));
+            phMetadata, "rasterInfo.ULTCoordinate.column", "0"));
 
     anULTCoordinate[1] = atoi(CPLGetXMLValue( 
-            phMetadata, "rasterInfo.ULTCoordinate.column", "0"));
+            phMetadata, "rasterInfo.ULTCoordinate.row", "0"));
 
     anULTCoordinate[2] = atoi(CPLGetXMLValue( 
             phMetadata, "rasterInfo.ULTCoordinate.band", "0"));
