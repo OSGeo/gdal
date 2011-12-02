@@ -263,7 +263,6 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 /*      values are strictly numeric.                                    */
 /* -------------------------------------------------------------------- */
     char **papszTokens = NULL;
-    char **papszTokensQuotes = NULL;
     int nFieldCount=0, iField;
     CPLValueType eType;
 
@@ -272,29 +271,33 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
         const char *pszLine = NULL;
         char szDelimiter[2];
         szDelimiter[0] = chDelimiter; szDelimiter[1] = '\0';
+
         pszLine = CPLReadLineL( fpCSV );
         if ( pszLine != NULL )
         {
-            /* tokenize without quotes to get the actual values */
-            papszTokens = CSLTokenizeString2( pszLine, szDelimiter, 
-                                              CSLT_HONOURSTRINGS);
             /* tokenize the strings and preserve quotes, so we can separate string from numeric */
             /* this is only used in the test for bHasFeldNames (bug #4361) */
-            papszTokensQuotes = CSLTokenizeString2( pszLine, szDelimiter, 
-                                                    CSLT_HONOURSTRINGS | CSLT_PRESERVEQUOTES );
-        }
-        // papszTokens = OGRCSVReadParseLineL( fpCSV, chDelimiter, FALSE );    
-        nFieldCount = CSLCount( papszTokens );
-        bHasFieldNames = TRUE;
+            papszTokens = CSLTokenizeString2( pszLine, szDelimiter, 
+                                              CSLT_HONOURSTRINGS | CSLT_PRESERVEQUOTES );
+            nFieldCount = CSLCount( papszTokens );
+            bHasFieldNames = TRUE;
 
-        for( iField = 0; iField < nFieldCount && bHasFieldNames; iField++ )
-        {
-            eType = CPLGetValueType(papszTokensQuotes[iField]);
-            if ( (eType == CPL_VALUE_INTEGER ||
-                  eType == CPL_VALUE_REAL) ) {
-                /* we have a numeric field, therefore do not consider the first line as field names */
-                bHasFieldNames = FALSE;
+            for( iField = 0; iField < nFieldCount && bHasFieldNames; iField++ )
+            {
+                eType = CPLGetValueType(papszTokens[iField]);
+                if ( (eType == CPL_VALUE_INTEGER ||
+                      eType == CPL_VALUE_REAL) ) {
+                    /* we have a numeric field, therefore do not consider the first line as field names */
+                    bHasFieldNames = FALSE;
+                }
             }
+
+            /* tokenize without quotes to get the actual values */
+            CSLDestroy( papszTokens );
+            // papszTokens = OGRCSVReadParseLineL( fpCSV, chDelimiter, FALSE );   
+            papszTokens = CSLTokenizeString2( pszLine, szDelimiter, 
+                                              CSLT_HONOURSTRINGS);
+            nFieldCount = CSLCount( papszTokens );
         }
     }
     else
