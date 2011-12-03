@@ -1568,7 +1568,7 @@ void netCDFDataset::SetProjectionFromVar( int var )
             else if ( EQUAL ( pszValue, CF_PT_POLAR_STEREO ) ) {
                 /* Note: reversing our current mapping on export, from
                    'latitude_of_origin' in OGC WKT to 'standard_parallel' in CF-1
-                   TODO: this could do with further verification */
+                   See comments in netcdfdataset.h for this projection.  */
                 char **papszStdParallels = NULL;
 
                 papszStdParallels = 
@@ -4527,7 +4527,8 @@ void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
                 dfValue = oValIter->second;
                 oOutList.push_back( std::make_pair( *pszNCDFAtt, dfValue ) );
                 
-                /* special case for PS grid */
+                /* special case for PS (Polar Stereographic) grid
+                   See comments in netcdfdataset.h for this projection. */
                 if ( EQUAL( SRS_PP_LATITUDE_OF_ORIGIN, pszGDALAtt->c_str() ) &&
                      EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC) ) {
                     double dfLatPole = 0.0;
