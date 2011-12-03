@@ -157,8 +157,6 @@ CPLError( CE_Failure,CPLE_AppDefined, \
 #define CF_PP_EARTH_SHAPE_CODE       "GRIB_earth_shape_code"
 /* scale_factor is not CF, there are two possible translations  */
 /* for WKT scale_factor : SCALE_FACTOR_MERIDIAN and SCALE_FACTOR_ORIGIN */
-/* TODO add both in generic mapping, remove CF_PP_SCALE_FACTOR */
-#define SCALE_FACTOR           "scale_factor" /* TODO: this has to go */
 #define CF_PP_SCALE_FACTOR_MERIDIAN  "scale_factor_at_central_meridian"
 #define CF_PP_SCALE_FACTOR_ORIGIN    "scale_factor_at_projection_origin"
 #define CF_PP_VERT_LONG_FROM_POLE    "straight_vertical_longitude_from_pole"
@@ -201,10 +199,7 @@ typedef struct {
 */ 
 
 static const oNetcdfSRS_PP poGenericMappings[] = {
-    /* SRS_PP_SCALE_FACTOR is handled as a special case, write 2 values */
-    /* {CF_PP_SCALE_FACTOR, SRS_PP_SCALE_FACTOR },     */
-    /* {CF_PP_SCALE_FACTOR_MERIDIAN, SRS_PP_SCALE_FACTOR },     */
-    /* {CF_PP_SCALE_FACTOR_ORIGIN, SRS_PP_SCALE_FACTOR },     */
+    /* scale_factor is handled as a special case, write 2 values */
     {CF_PP_STD_PARALLEL_1, SRS_PP_STANDARD_PARALLEL_1 }, 
     {CF_PP_STD_PARALLEL_2, SRS_PP_STANDARD_PARALLEL_2 }, 
     {CF_PP_LONG_CENTRAL_MERIDIAN, SRS_PP_CENTRAL_MERIDIAN }, 
@@ -298,10 +293,16 @@ static const oNetcdfSRS_PP poLAEAMappings[] = {
 // See http://www.remotesensing.org/geotiff/proj_list/lambert_conic_conformal_1sp.html 
 
 // Lambert conformal conic - 1SP
+/* NOTE: exporting SCALE_FACTOR_ORIGIN is not a CF-1 standard for LCC,
+   but until CF-1 projection params clarified, feel this is safest behaviour so as to
+   not lose projection information.
+*/
+/* ET to PDS: are you sure it should be SCALE_FACTOR_ORIGIN and not SCALE_FACTOR_MERIDIAN? */
 static const oNetcdfSRS_PP poLCC1SPMappings[] = {
     {CF_PP_STD_PARALLEL_1, SRS_PP_STANDARD_PARALLEL_1},
     {CF_PP_LAT_PROJ_ORIGIN, SRS_PP_LATITUDE_OF_ORIGIN},
     {CF_PP_LONG_CENTRAL_MERIDIAN, SRS_PP_CENTRAL_MERIDIAN},
+    {CF_PP_SCALE_FACTOR_ORIGIN, SRS_PP_SCALE_FACTOR},
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },  
     {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },
     {NULL, NULL}
