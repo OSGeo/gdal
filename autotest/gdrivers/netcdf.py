@@ -133,7 +133,6 @@ def netcdf_test_copy_timeout( ifile, band, checksum, ofile, opts=[], driver='NET
             
     return result
 
-
 ###############################################################################
 #check support for DEFLATE compression, requires HDF5 and zlib
 def netcdf_test_deflate( ifile, checksum, zlevel=1, timeout=None ):
@@ -177,6 +176,60 @@ def netcdf_test_deflate( ifile, checksum, zlevel=1, timeout=None ):
     if  size2 >= size1:
         gdaltest.post_reason( 'Compressed file is not smaller than reference, check your netcdf-4, HDF5 and zlib installation' )
         return 'fail'
+
+    return 'success'
+
+###############################################################################
+# check support for reading attributes (single values and array values)
+def netcdf_check_vars( ifile, vals_global, vals_band ):
+
+    src_ds = gdal.Open( ifile )
+
+    if src_ds is None:
+        gdaltest.post_reason( 'could not open dataset ' + ifile )
+        return 'fail'
+
+    metadata_global = src_ds.GetMetadata()
+    if metadata_global is None:
+        gdaltest.post_reason( 'could not get global metadata from ' + ifile )
+        return 'fail'
+
+    missval = src_ds.GetRasterBand(1).GetNoDataValue()
+    if missval != 1:
+        gdaltest.post_reason( 'got invalid nodata value %s for Band' % str(missval) )
+        return 'fail'
+
+    metadata_band = src_ds.GetRasterBand(1).GetMetadata()
+    if metadata_band is None:
+        gdaltest.post_reason( 'could not get Band metadata' )
+        return 'fail'
+
+    
+    metadata = metadata_global
+    vals = vals_global
+    for k, v in vals.iteritems():
+        if not k in metadata:
+            gdaltest.post_reason("missing metadata [%s]" % (str(k)))
+            return 'fail'
+        # strip { and } as new driver uses these for array values
+        mk = metadata[k].lstrip('{ ').rstrip('} ')
+        if mk != v:
+            gdaltest.post_reason("invalid value [%s] for metadata [%s]=[%s]" \
+                                     % (str(mk),str(k),str(v)))
+            return 'fail'
+
+    metadata = metadata_band
+    vals = vals_band
+    for k, v in vals.iteritems():
+        if not k in metadata:
+            gdaltest.post_reason("missing metadata [%s]" % (str(k)))
+            return 'fail'
+        # strip { and } as new driver uses these for array values
+        mk = metadata[k].lstrip('{ ').rstrip('} ')
+        if mk != v:
+            gdaltest.post_reason("invalid value [%s] for metadata [%s]=[%s]" \
+                                     % (str(mk),str(k),str(v)))
+            return 'fail'
 
     return 'success'
 
@@ -811,6 +864,42 @@ def netcdf_23():
     return 'success'
 
 ###############################################################################
+# check support for reading attributes (single values and array values)
+def netcdf_24():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    vals_global = {'NC_GLOBAL#test' : 'testval', 'NC_GLOBAL#valid_range_i': '0, 255',\
+                       'NC_GLOBAL#valid_min' : '10.1' }
+    vals_band = { '_Unsigned' : 'true', 'valid_min' : '10.1', 'valid_range_b' : '1, 10', \
+                      'valid_range_d' : '0.1111112222222, 255.555555555556', \
+                      'valid_range_f' : '0.1111111, 255.5556', \
+                      'valid_range_s' : '0, 255' }
+
+    return netcdf_check_vars( 'data/nc_vars.nc', vals_global, vals_band )
+
+###############################################################################
+# check support for writing attributes (single values and array values)
+def netcdf_25():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    result = netcdf_test_copy( 'data/nc_vars.nc', 1, None, 'tmp/netcdf_23.nc' ) 
+    if result != 'success':
+        return result
+
+    vals_global = {'NC_GLOBAL#test' : 'testval', 'NC_GLOBAL#valid_range_i': '0, 255',\
+                       'NC_GLOBAL#valid_min' : '10.1' }
+    vals_band = { '_Unsigned' : 'true', 'valid_min' : '10.1', 'valid_range_b' : '1, 10', \
+                      'valid_range_d' : '0.1111112222222, 255.555555555556', \
+                      'valid_range_f' : '0.1111111, 255.5556', \
+                      'valid_range_s' : '0, 255' }
+
+    return netcdf_check_vars( 'tmp/netcdf_23.nc', vals_global, vals_band )
+
+###############################################################################
 
 gdaltest_list = [
     netcdf_1,
@@ -836,6 +925,8 @@ gdaltest_list = [
     netcdf_21,
     netcdf_22,
     netcdf_23,
+    netcdf_24,
+    netcdf_25,
  ]
 
 if __name__ == '__main__':
