@@ -621,7 +621,6 @@ class netCDFDataset : public GDALPamDataset
     static int Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
 
-    CPLErr      SafeStrcat(char**, char*, size_t*);
     CPLErr      ReadAttributes( int, int );
 
     CPLErr 	GetGeoTransform( double * );    
