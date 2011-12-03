@@ -513,7 +513,7 @@ class GDALTest:
 
         return 'success'
 
-    def testCreate(self, vsimem = 0, new_filename = None, out_bands = 3,
+    def testCreate(self, vsimem = 0, new_filename = None, out_bands = 1,
                    check_minmax = 1 ):
         if self.testDriver() == 'fail':
             return 'skip'
@@ -578,7 +578,9 @@ class GDALTest:
         for band in range(1,out_bands+1):
             if self.chksum is not None \
                and new_ds.GetRasterBand(band).Checksum() != self.chksum:
-                post_reason( 'Did not get expected checksum on reopened file.' )
+                post_reason( 'Did not get expected checksum on reopened file.' \
+                    '    Got %d instead of %d.' \
+                    % (new_ds.GetRasterBand(band).Checksum(),self.chksum))
                 return 'fail'
             
             if new_ds.GetRasterBand(band).ComputeRasterMinMax() != minmax and check_minmax:
@@ -736,6 +738,11 @@ class GDALTest:
             return 'fail'
 
         md_dict = new_ds.GetMetadata()
+
+        if (not 'TEST_KEY' in md_dict):
+            post_reason( 'Metadata item TEST_KEY does not exist.')
+            return 'fail'
+
         if md_dict['TEST_KEY'] != 'TestValue':
             post_reason( 'Did not get expected metadata item.' )
             return 'fail'

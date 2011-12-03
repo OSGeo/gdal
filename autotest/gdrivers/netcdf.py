@@ -901,6 +901,9 @@ def netcdf_25():
 
 ###############################################################################
 
+###############################################################################
+# main tests list
+
 gdaltest_list = [
     netcdf_1,
     netcdf_2,
@@ -929,11 +932,43 @@ gdaltest_list = [
     netcdf_25,
  ]
 
+###############################################################################
+# secondary tests list (for file creation)
+
+gdaltest_list2 = [ ]
+
+init_list = [ \
+    ('byte.tif', 1, 4672, None),
+    ('int16.tif', 1, 4672, None),
+    ('int32.tif', 1, 4672, None),
+    ('float32.tif', 1, 4672, None),
+    ('float64.tif', 1, 4672, None)
+]
+
+# Some tests we don't need to do for each type.
+item = init_list[0]
+ut = gdaltest.GDALTest( 'netcdf', item[0], item[1], item[2] )
+gdaltest_list2.append( (ut.testSetGeoTransform, item[0]) )
+gdaltest_list2.append( (ut.testSetProjection, item[0]) )
+#SetMetadata() not supported 
+#gdaltest_list.append( (ut.testSetMetadata, item[0]) )
+
+# Others we do for each pixel type. 
+for item in init_list:
+    ut = gdaltest.GDALTest( 'netcdf', item[0], item[1], item[2] )
+    if ut is None:
+        print( 'GTiff tests skipped' )
+    gdaltest_list2.append( (ut.testCreateCopy, item[0]) )
+    gdaltest_list2.append( (ut.testCreate, item[0]) )
+    gdaltest_list2.append( (ut.testSetNoDataValue, item[0]) )
+
+
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'netcdf' )
 
     gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests( gdaltest_list2 )
 
     #make sure we cleanup
     gdaltest.clean_tmp()
