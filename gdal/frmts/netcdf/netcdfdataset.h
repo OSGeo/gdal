@@ -86,11 +86,8 @@
 /* helper for libnetcdf errors */
 #define NCDF_ERR(status) if ( status != NC_NOERR ){ \
 CPLError( CE_Failure,CPLE_AppDefined, \
-"netcdf error #%d : %s .\n",status, nc_strerror(status) ); }
-/* void NCDFErr(int status)  { if ( status != NC_NOERR ) {  */
-/*      CPLError( CE_Failure, CPLE_AppDefined,  */
-/*                "netcdf error #%d : %s .\n",  */
-/*                status, nc_strerror(status) ); } }  */
+"netcdf error #%d : %s .\nat (%s,%s,%d)\n",status, nc_strerror(status), \
+__FILE__, __FUNCTION__, __LINE__ ); }
 
 /* check for NC2 support in case it wasn't enabled at compile time */
 /* NC4 has to be detected at compile as it requires a special build of netcdf-4 */
@@ -583,17 +580,41 @@ class netCDFRasterBand;
 
 class netCDFDataset : public GDALPamDataset
 {
-    CPLString    osSubdatasetName;
-    int          bTreatAsSubdataset;
+    friend class netCDFRasterBand; //TMP
 
-    double      adfGeoTransform[6];
-    char        **papszSubDatasets;
-    char        **papszGeolocation;
-    CPLString    osFilename;
-    int          *panBandDimPos;         // X, Y, Z postion in array
-    int          *panBandZLev;
+    /* basic dataset vars */
+    CPLString     osFilename;
+    int           cdfid;
+    char          **papszSubDatasets;
+    char          **papszMetadata;
+    CPLStringList papszDimName;
+    bool          bBottomUp;
+    int           nFormat;
+    int           bIsGdalFile; /* was this file created by GDAL? */
+    int           bIsGdalCfFile; /* was this file created by the (new) CF-compliant driver? */
+
+    /* projection/GT */
+    double       adfGeoTransform[6];
     char         *pszProjection;
-    int          bGotGeoTransform;
+    int          nXDimID;
+    int          nYDimID;
+    int          bIsProjected;
+    int          bIsGeographic;
+
+    /* state vars */
+    int          status;
+    int          bDefineMode;
+    int          bSetProjection; 
+    int          bSetGeoTransform;
+    int          bAddedProjectionVars;
+
+    /* create vars */
+    char         **papszCreationOptions;
+    int          nCompress;
+    int          nZLevel;
+    int          nCreateMode;
+    int          bSignedData;
+
     double       rint( double );
 
     double       FetchCopyParm( const char *pszGridMappingValue, 
@@ -601,38 +622,53 @@ class netCDFDataset : public GDALPamDataset
 
     char **      FetchStandardParallels( const char *pszGridMappingValue );
 
-    static int IdentifyFormat( GDALOpenInfo *, bool );
-
-  public:
-    int           cdfid;
-    char         **papszMetadata;
-    char          papszDimName[NC_MAX_NAME][1024];
-    int          *paDimIds;
-    size_t        xdim, ydim;
-    int           nDimXid, nDimYid;
-    bool          bBottomUp;
-    int           nFormat;
-    int           bIsGdalFile; /* was this file created by GDAL? */
-    int           bIsGdalCfFile; /* was this file created by the (new) CF-compliant driver? */
-
-    netCDFDataset( );
-    ~netCDFDataset( );
     
-    static int Identify( GDALOpenInfo * );
-    static GDALDataset *Open( GDALOpenInfo * );
+    /* new */
+    void ProcessCreationOptions( );
+    int DefVarDeflate( int nVarId, int bChunking=TRUE );
+    CPLErr AddProjectionVars( GDALProgressFunc pfnProgress=GDALDummyProgress, 
+                              void * pProgressData=NULL );
+
+    int GetDefineMode() { return bDefineMode; }
+    int SetDefineMode( int bNewDefineMode );
 
     CPLErr      ReadAttributes( int, int );
-
-    CPLErr 	GetGeoTransform( double * );    
-
-    const char * GetProjectionRef();
-
-    char ** GetMetadata( const char * );
 
     void  CreateSubDatasetList( );
 
     void  SetProjectionFromVar( int );
 
+  public:
+
+    netCDFDataset( );
+    ~netCDFDataset( );
+    
+    /* Projection/GT */
+    CPLErr 	GetGeoTransform( double * );    
+    CPLErr 	SetGeoTransform (double *);
+    const char * GetProjectionRef();
+    CPLErr 	SetProjection (const char *);
+
+    char ** GetMetadata( const char * );
+
+    int GetCDFID() { return cdfid; }
+
+    /* static functions */
+    static int Identify( GDALOpenInfo * );
+    static int IdentifyFormat( GDALOpenInfo *, bool );
+    static GDALDataset *Open( GDALOpenInfo * );
+
+    static netCDFDataset *CreateLL( const char * pszFilename,
+                                    int nXSize, int nYSize, int nBands,
+                                    char ** papszOptions );
+    static GDALDataset *Create( const char * pszFilename,
+                                int nXSize, int nYSize, int nBands,
+                                GDALDataType eType,
+                                char ** papszOptions );
+    static GDALDataset* CreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+                                    int bStrict, char ** papszOptions, 
+                                    GDALProgressFunc pfnProgress, void * pProgressData );
+        
 };
 
 #endif
