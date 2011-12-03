@@ -704,7 +704,7 @@ void  netCDFRasterBand::CheckValidData ( void * pImage, int bCheckIsNan )
 
         for( i=0; i<nBlockXSize; i++ ) {         
             /* check for nodata and nan */
-            if ( CPLIsEqual( ((T *)pImage)[i], (T) dfNoDataValue ) )
+            if ( CPLIsEqual( (double) ((T *)pImage)[i], dfNoDataValue ) )
                 continue;
             if( bCheckIsNan && CPLIsNan( ( (T *) pImage)[i] ) ) {
                 ( (T *)pImage )[i] = (T)dfNoDataValue;
