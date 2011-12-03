@@ -1416,10 +1416,12 @@ void netCDFDataset::SetProjectionFromVar( int var )
                 if( papszStdParallels != NULL ) {
 		  
                    if ( CSLCount( papszStdParallels ) == 1 ) {
-                       /* TODO - this is not CF!!! */
+                       /* NOTE: this is not CF. However, if this file was exported by GDAL
+                          it will contain a scale factor to preserve information.
+                          See comments in netcdfdataset.h for this projection. */
                        dfScale = 
                            poDS->FetchCopyParm( szGridMappingValue, 
-                                               SCALE_FACTOR, 1.0 );
+                                                CF_PP_SCALE_FACTOR_ORIGIN, 1.0 );
                        dfStdP1 = CPLAtofM( papszStdParallels[0] );
                        dfStdP2 = dfStdP1;
                         /* should use dfStdP1 and dfStdP2 instead of dfScale */ 
