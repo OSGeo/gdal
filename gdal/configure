@@ -25848,7 +25848,7 @@ fi
 done
 
 
-  if test "$HAVE_FREEXL" = "yes" -a "$ac_cv_header_freexl_h" = "no" ; then
+  if test "$HAVE_FREEXL" = "yes" -a "$ac_cv_header_freexl_h" = "yes" ; then
     LIBS="-lfreexl $LIBS"
   else
     echo "libfreexl not found - FreeXL support disabled"
