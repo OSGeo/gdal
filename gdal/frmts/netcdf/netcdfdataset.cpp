@@ -79,6 +79,10 @@ bUnsigned = TRUE;
 printf("Is unsigned\n");
 }
 
+ET: - fix valid_range metadata value in gdalinfo, looks like junk 
+      -> must make generic function which returns char*
+- make sure status variable is used for all nc_, rename to nc_err/nc_status
+-see where can use templates/functions to shorten code
 */
 
 
@@ -100,9 +104,14 @@ class netCDFRasterBand : public GDALPamRasterBand
     int         *panBandZLev;
     int         bNoDataSet;
     double      dfNoDataValue;
+    double      adfValidRange[2];
     double      dfScale;
     double      dfOffset;
+    int         bSignedData;
+
     CPLErr	    CreateBandMetadata( ); 
+    template <class T> void  CheckValidData ( void * pImage, 
+                                              int bCheckIsNan=FALSE ) ;
     
   public:
 
@@ -114,15 +123,351 @@ class netCDFRasterBand : public GDALPamRasterBand
 		      int *panBandPos, 
 		      int nBand );
     ~netCDFRasterBand( );
-    virtual double          GetNoDataValue( int * );
-    virtual CPLErr          SetNoDataValue( double );
-    virtual double          GetOffset( int * );
-    virtual CPLErr          SetOffset( double );
-    virtual double          GetScale( int * );
-    virtual CPLErr          SetScale( double );
+
+    virtual double GetNoDataValue( int * );
+    virtual CPLErr SetNoDataValue( double );
+    virtual double GetOffset( int * );
+    virtual CPLErr SetOffset( double );
+    virtual double GetScale( int * );
+    virtual CPLErr SetScale( double );
     virtual CPLErr IReadBlock( int, int, void * );
 
 };
+
+/************************************************************************/
+/*                          netCDFRasterBand()                          */
+/************************************************************************/
+
+netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS, 
+                                    int nZId, 
+                                    int nZDim,
+                                    int nLevel, 
+                                    int *panBandZLev, 
+                                    int *panBandDimPos, 
+                                    int nBand)
+
+{
+    double   dfNoData = 0.0;
+    int      bNoDataSet = FALSE;
+    nc_type  vartype=NC_NAT;
+    nc_type  atttype=NC_NAT;
+    size_t   attlen;
+    int      status;
+    char     szNoValueName[NCDF_MAX_STR_LEN];
+
+    this->panBandZPos = NULL;
+    this->panBandZLev = NULL;
+    this->poDS = poDS;
+    this->nBand = nBand;
+    this->nZId = nZId;
+    this->nZDim = nZDim;
+    this->nLevel = nLevel;
+    this->nBandXPos = panBandDimPos[0];
+    this->nBandYPos = panBandDimPos[1];
+    this->bSignedData = TRUE; //default signed, except for Byte 
+
+/* -------------------------------------------------------------------- */
+/*      Take care of all other dimmensions                              */
+/* ------------------------------------------------------------------ */
+    if( nZDim > 2 ) {
+        this->panBandZPos = 
+            (int *) CPLCalloc( nZDim-1, sizeof( int ) );
+        this->panBandZLev = 
+            (int *) CPLCalloc( nZDim-1, sizeof( int ) );
+
+        for ( int i=0; i < nZDim - 2; i++ ){
+            this->panBandZPos[i] = panBandDimPos[i+2];
+            this->panBandZLev[i] = panBandZLev[i];
+        }
+    }
+    bNoDataSet    = FALSE;
+    dfNoDataValue = -9999.0;
+
+    nBlockXSize   = poDS->GetRasterXSize( );
+    nBlockYSize   = 1;
+
+/* -------------------------------------------------------------------- */
+/*      Get the type of the "z" variable, our target raster array.      */
+/* -------------------------------------------------------------------- */
+    if( nc_inq_var( poDS->cdfid, nZId, NULL, &nc_datatype, NULL, NULL,
+                    NULL ) != NC_NOERR ){
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Error in nc_var_inq() on 'z'." );
+        return;
+    }
+
+    if( nc_datatype == NC_BYTE )
+        eDataType = GDT_Byte;
+#ifdef NETCDF_HAS_NC4
+    /* NC_UBYTE (unsigned byte) is only available for NC4 */
+    else if( nc_datatype == NC_UBYTE )
+        eDataType = GDT_Byte;
+#endif    
+    else if( nc_datatype == NC_CHAR )
+        eDataType = GDT_Byte;        
+    else if( nc_datatype == NC_SHORT )
+        eDataType = GDT_Int16;
+    else if( nc_datatype == NC_INT )
+        eDataType = GDT_Int32;
+    else if( nc_datatype == NC_FLOAT )
+        eDataType = GDT_Float32;
+    else if( nc_datatype == NC_DOUBLE )
+        eDataType = GDT_Float64;
+    else
+    {
+        if( nBand == 1 )
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Unsupported netCDF datatype (%d), treat as Float32.", 
+                      (int) nc_datatype );
+        eDataType = GDT_Float32;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find out what is No Data for this variable                      */
+/* -------------------------------------------------------------------- */
+
+    status = nc_inq_att( poDS->cdfid, nZId, 
+                         _FillValue, &atttype, &attlen);
+
+/* -------------------------------------------------------------------- */
+/*      Look for either Missing_Value or _FillValue attributes          */
+/* -------------------------------------------------------------------- */
+
+    if( status == NC_NOERR ) {
+        strcpy(szNoValueName, _FillValue );
+    }
+    else {
+        status = nc_inq_att( poDS->cdfid, nZId, 
+                             "missing_value", &atttype, &attlen );
+        if( status == NC_NOERR ) {
+            strcpy( szNoValueName, "missing_value" );
+        }
+    }
+
+    nc_inq_vartype( poDS->cdfid, nZId, &vartype );
+
+    if( status == NC_NOERR ) {
+        switch( atttype ) {
+            /* TODO support NC_BYTE */
+            case NC_CHAR:
+                char *fillc;
+                fillc = (char *) CPLCalloc( attlen+1, sizeof(char) );
+                status=nc_get_att_text( poDS->cdfid, nZId,
+                                        szNoValueName, fillc );
+                dfNoData = atof( fillc );
+                CPLFree(fillc);
+                break;
+            case NC_SHORT:
+                short sNoData;
+                status = nc_get_att_short( poDS->cdfid, nZId,
+                                           szNoValueName, &sNoData );
+                dfNoData = (double) sNoData;
+                break;
+            case NC_INT:
+                int nNoData;
+                status = nc_get_att_int( poDS->cdfid, nZId,
+                                         szNoValueName, &nNoData );
+                dfNoData = (double) nNoData;
+                break;
+            case NC_FLOAT:
+                float fNoData;
+                status = nc_get_att_float( poDS->cdfid, nZId,
+                                           szNoValueName, &fNoData );
+                dfNoData = (double) fNoData;
+                break;
+            case NC_DOUBLE:
+                status = nc_get_att_double( poDS->cdfid, nZId,
+                                            szNoValueName, &dfNoData );
+                break;
+            default:
+                status = -1;
+                break;
+        }
+        // status = nc_get_att_double( poDS->cdfid, nZId, 
+        //                             szNoValueName, &dfNoData );
+
+        if ( status == NC_NOERR )
+            bNoDataSet = TRUE;
+	
+    }
+    /* if not found NoData, set the default one */
+    if ( ! bNoDataSet ) { 
+        switch( vartype ) {
+            case NC_BYTE:
+#ifdef NETCDF_HAS_NC4
+            case NC_UBYTE:
+#endif    
+                /* don't do default fill-values for bytes, too risky */
+                dfNoData = 0.0;
+                /* should print a warning as users might not be expecting this */
+                /* CPLError(CE_Warning, 1,"GDAL netCDF driver is setting default NoData value to 0.0 for NC_BYTE data\n"); */
+               break;
+            case NC_CHAR:
+                dfNoData = NC_FILL_CHAR;
+                break;
+            case NC_SHORT:
+                dfNoData = NC_FILL_SHORT;
+                break;
+            case NC_INT:
+                dfNoData = NC_FILL_INT;
+                break;
+            case NC_FLOAT:
+                dfNoData = NC_FILL_FLOAT;
+                break;
+            case NC_DOUBLE:
+                dfNoData = NC_FILL_DOUBLE;
+                break;
+            default:
+                dfNoData = 0.0;
+                break;
+        }
+	    bNoDataSet = TRUE;
+    } 
+    
+    if ( bNoDataSet ) 
+        SetNoDataValue( dfNoData );
+    else 
+        CPLDebug( "GDAL_netCDF", "did not get nodata value for variable #%d", nZId );
+
+/* -------------------------------------------------------------------- */
+/*  Look for valid_range or valid_min/valid_max                         */
+/* -------------------------------------------------------------------- */
+    /* set valid_range to nodata, then check for actual values */
+    adfValidRange[0] = dfNoData;
+    adfValidRange[1] = dfNoData;
+    /* first look for valid_range */
+    int bGotValidRange = FALSE;
+    status = nc_inq_att( poDS->cdfid, nZId, 
+                         "valid_range", &atttype, &attlen);
+    if( (status == NC_NOERR) && (attlen == 2)) {
+        int vrange[2];
+        int vmin, vmax;
+        status = nc_get_att_int( poDS->cdfid, nZId,
+                                 "valid_range", vrange ); 
+        if( status == NC_NOERR ) {
+            bGotValidRange = TRUE;
+            adfValidRange[0] = vrange[0];
+            adfValidRange[1] = vrange[1];
+        }
+        /* if not found look for valid_min and valid_max */
+        else {
+            status = nc_get_att_int( poDS->cdfid, nZId,
+                                     "valid_min", &vmin );
+            if( status == NC_NOERR ) {
+                adfValidRange[0] = vmin;
+                status = nc_get_att_int( poDS->cdfid, nZId,
+                                         "valid_max", &vmax );
+                if( status == NC_NOERR ) {
+                    adfValidRange[1] = vmax;
+                    bGotValidRange = TRUE;
+                }
+            }
+        }
+    }
+
+    CPLDebug( "GDAL_netCDF", "got valid_range={%f,%f}",
+              adfValidRange[0], adfValidRange[1] );
+
+/* -------------------------------------------------------------------- */
+/*  Special For Byte Bands: check for signed/unsigned byte              */
+/* -------------------------------------------------------------------- */
+    if ( nc_datatype == NC_BYTE ) {
+
+        /* netcdf uses signed byte by default, but GDAL uses unsigned by default */
+        /* This may cause unexpected results, but is needed for back-compat */
+        if ( poDS->bIsGdalFile )
+            this->bSignedData = FALSE;
+        else 
+            this->bSignedData = TRUE;
+
+        /* For NC4 format NC_BYTE is signed, NC_UBYTE is unsigned */
+        if ( poDS->nFormat == NCDF_FORMAT_NC4 ) {
+            this->bSignedData = TRUE;
+        }   
+        else  {
+            /* if we got valid_range, test for signed/unsigned range */
+            /* http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/Attribute-Conventions.html */
+            if ( bGotValidRange == TRUE ) {
+                /* If we got valid_range={0,255}, treat as unsigned */
+                if ( (adfValidRange[0] == 0) && (adfValidRange[1] == 255) ) {
+                    bSignedData = FALSE;
+                    /* reset valid_range */
+                    adfValidRange[0] = dfNoData;
+                    adfValidRange[1] = dfNoData;
+                }
+                /* If we got valid_range={-128,127}, treat as signed */
+                else if ( (adfValidRange[0] == -128) && (adfValidRange[1] == 127) ) {
+                    bSignedData = TRUE;
+                    /* reset valid_range */
+                    adfValidRange[0] = dfNoData;
+                    adfValidRange[1] = dfNoData;
+                }
+            }
+            /* else test for _Unsigned */
+            /* http://www.unidata.ucar.edu/software/netcdf/docs/BestPractices.html */
+            else {
+                status = nc_inq_att( poDS->cdfid, nZId, 
+                                     "_Unsigned", &atttype, &attlen);
+                if( status == NC_NOERR ) {
+                    char *pszTemp;
+                    pszTemp = (char *) CPLCalloc( attlen+1, sizeof(char) );
+                    status = nc_get_att_text( poDS->cdfid, nZId, 
+                                              "_Unsigned", pszTemp );
+                    if( status == NC_NOERR ) {
+                        if ( EQUAL(pszTemp,"true"))
+                            bSignedData = FALSE;
+                        else if ( EQUAL(pszTemp,"false"))
+                            bSignedData = TRUE;
+                    }
+                }
+            }
+        }
+
+        if ( bSignedData )
+            CPLDebug( "GDAL_netCDF", "got signed Byte" );
+        else 
+            CPLDebug( "GDAL_netCDF", "got unsigned Byte" );
+
+    }
+
+
+/* -------------------------------------------------------------------- */
+/*      Create Band Metadata                                            */
+/* -------------------------------------------------------------------- */
+    CreateBandMetadata();
+
+/* -------------------------------------------------------------------- */
+/* Attempt to fetch the scale_factor and add_offset attributes for the  */
+/* variable and set them.  If these values are not available, set       */
+/* offset to 0 and scale to 1                                           */
+/* -------------------------------------------------------------------- */
+    double dfOff = 0.0; 
+    double dfScale = 1.0; 
+    
+    if ( nc_inq_attid ( poDS->cdfid, nZId, CF_ADD_OFFSET, NULL) == NC_NOERR ) { 
+        status = nc_get_att_double( poDS->cdfid, nZId, CF_ADD_OFFSET, &dfOff );
+        CPLDebug( "GDAL_netCDF", "got add_offset=%.15g, status=%d", dfOff, status );
+    }
+    if ( nc_inq_attid ( poDS->cdfid, nZId, 
+                        CF_SCALE_FACTOR, NULL) == NC_NOERR ) { 
+        status = nc_get_att_double( poDS->cdfid, nZId, CF_SCALE_FACTOR, &dfScale ); 
+        CPLDebug( "GDAL_netCDF", "got scale_factor=%.15g, status=%d", dfScale, status );
+    }
+    SetOffset( dfOff ); 
+    SetScale( dfScale ); 
+}
+
+/************************************************************************/
+/*                         ~netCDFRasterBand()                          */
+/************************************************************************/
+
+netCDFRasterBand::~netCDFRasterBand()
+{
+    if( panBandZPos ) 
+        CPLFree( panBandZPos );
+    if( panBandZLev )
+        CPLFree( panBandZLev );
+}
 
 /************************************************************************/ 
 /*                             GetOffset()                              */ 
@@ -193,18 +538,6 @@ CPLErr netCDFRasterBand::SetNoDataValue( double dfNoData )
 }
 
 /************************************************************************/
-/*                         ~netCDFRasterBand()                          */
-/************************************************************************/
-
-netCDFRasterBand::~netCDFRasterBand()
-{
-    if( panBandZPos ) 
-        CPLFree( panBandZPos );
-    if( panBandZLev )
-        CPLFree( panBandZLev );
-}
-
-/************************************************************************/
 /*                         CreateBandMetadata()                         */
 /************************************************************************/
 
@@ -213,6 +546,9 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
     char     szVarName[NC_MAX_NAME];
     char     szMetaName[NC_MAX_NAME];
     char     szMetaTemp[NCDF_MAX_STR_LEN];
+    char     szTemp[NC_MAX_NAME];
+    const char *pszValue;
+
     int      nd;
     int      i,j;
     int      Sum  = 1;
@@ -223,14 +559,19 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
     int      nDims;
     size_t   start[1];
     size_t   count[1];
-    char     szTemp[NC_MAX_NAME];
-    const char *pszValue;
 
-    nc_type nVarType;
-    netCDFDataset *poDS;
+    nc_type  nVarType = NC_NAT;
+    int      nAtt=0;
+    nc_type  atttype = NC_NAT;
+    size_t   attlen;
+    float    fval;
+    double   dval;
+    short    sval;
+    int      ival;
+    int      bValidMeta;
 
-    poDS = (netCDFDataset *) this->poDS;
-
+    netCDFDataset *poDS = (netCDFDataset *) this->poDS;
+  
 /* -------------------------------------------------------------------- */
 /*      Compute all dimensions from Band number and save in Metadata    */
 /* -------------------------------------------------------------------- */
@@ -365,18 +706,16 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
     }
 
 /* -------------------------------------------------------------------- */
+/*  Special for signed Byte bands: set PIXELTYPE=SIGNEDBYTE             */
+/*  See http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure            */
+/* -------------------------------------------------------------------- */
+    if ( nc_datatype == NC_BYTE && bSignedData) {
+        SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE" );      
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Get all other metadata                                          */
 /* -------------------------------------------------------------------- */
-
-    int nAtt=0;
-    nc_type  atttype=NC_NAT;
-    size_t   attlen;
-    float fval;
-    double dval;
-    short sval;
-    int ival;
-    int bValidMeta;
-
     nc_inq_varnatts( poDS->cdfid, nZId, &nAtt );
     for( i=0; i < nAtt ; i++ ) {
         bValidMeta = TRUE;
@@ -394,7 +733,6 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
     	    fillc = (char *) CPLCalloc( attlen+1, sizeof(char) );
     	    status=nc_get_att_text( poDS->cdfid, nZId,
     				    szTemp, fillc );
-    	    // SetMetadataItem( szMetaTemp, fillc );
     	    sprintf( szTemp,"%s",fillc);
     	    CPLFree(fillc);
     	    break;
@@ -402,25 +740,21 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
     	    status = nc_get_att_short( poDS->cdfid, nZId,
     				     szTemp, &sval );
     	    sprintf( szTemp,"%d",sval);
-    	    // SetMetadataItem( szMetaTemp, szTemp );
     	    break;
     	case NC_INT:
     	    status = nc_get_att_int( poDS->cdfid, nZId,
     				     szTemp, &ival );
     	    sprintf( szTemp,"%d",ival);
-    	    // SetMetadataItem( szMetaTemp, szTemp );
     	    break;
     	case NC_FLOAT:
     	    status = nc_get_att_float( poDS->cdfid, nZId,
     				       szTemp, &fval );
     	    sprintf( szTemp,"%.7g",fval);
-    	    // SetMetadataItem( szMetaTemp, szTemp );
     	    break;
     	case NC_DOUBLE:
     	    status = nc_get_att_double( poDS->cdfid, nZId,
                                         szTemp, &dval );
     	    sprintf( szTemp,"%.15g",dval);
-            // SetMetadataItem( szMetaTemp, szTemp );
     	    break;
     	default:
             bValidMeta = FALSE;
@@ -443,219 +777,39 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
 }
 
 /************************************************************************/
-/*                          netCDFRasterBand()                          */
+/*                             CheckValidData()                         */
 /************************************************************************/
-
-netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS, 
-                                    int nZId, 
-                                    int nZDim,
-                                    int nLevel, 
-                                    int *panBandZLev, 
-                                    int *panBandDimPos, 
-                                    int nBand)
-
+template <class T>
+void  netCDFRasterBand::CheckValidData ( void * pImage, int bCheckIsNan ) 
 {
-    double   dfNoData = 0.0;
-    int      bNoDataSet = FALSE;
-    nc_type  vartype=NC_NAT;
-    nc_type  atttype=NC_NAT;
-    size_t   attlen;
-    int      status;
-    char     szNoValueName[NCDF_MAX_STR_LEN];
+    int i;
+    CPLAssert( pImage != NULL );
 
+    /* check if needed or requested */
+    if (  (adfValidRange[0] != dfNoDataValue) || 
+          (adfValidRange[1] != dfNoDataValue) ||
+          bCheckIsNan ) {
 
-    this->panBandZPos = NULL;
-    this->panBandZLev = NULL;
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->nZId = nZId;
-    this->nZDim = nZDim;
-    this->nLevel = nLevel;
-    this->nBandXPos = panBandDimPos[0];
-    this->nBandYPos = panBandDimPos[1];
-
-/* -------------------------------------------------------------------- */
-/*      Take care of all other dimmensions                              */
-/* ------------------------------------------------------------------ */
-    if( nZDim > 2 ) {
-        this->panBandZPos = 
-            (int *) CPLCalloc( nZDim-1, sizeof( int ) );
-        this->panBandZLev = 
-            (int *) CPLCalloc( nZDim-1, sizeof( int ) );
-
-        for ( int i=0; i < nZDim - 2; i++ ){
-            this->panBandZPos[i] = panBandDimPos[i+2];
-            this->panBandZLev[i] = panBandZLev[i];
+        for( i=0; i<nBlockXSize; i++ ) {         
+            /* check for nodata and nan */
+            if ( CPLIsEqual( ((T *)pImage)[i], (T) dfNoDataValue ) )
+                continue;
+            if( bCheckIsNan && CPLIsNan( ( (T *) pImage)[i] ) ) {
+                ( (T *)pImage )[i] = (T)dfNoDataValue;
+                continue;
+            }
+            /* check for valid_range */
+            if ( ( ( adfValidRange[0] != dfNoDataValue ) && 
+                   ( ((T *)pImage)[i] < (T)adfValidRange[0] ) ) 
+                 || 
+                 ( ( adfValidRange[1] != dfNoDataValue ) && 
+                   ( ((T *)pImage)[i] > (T)adfValidRange[1] ) ) ) {
+                ( (T *)pImage )[i] = (T)dfNoDataValue;
+            }
         }
-    }
-    CreateBandMetadata();
-    bNoDataSet    = FALSE;
-    dfNoDataValue = -9999.0;
-
-    nBlockXSize   = poDS->GetRasterXSize( );
-    nBlockYSize   = 1;
-
-/* -------------------------------------------------------------------- */
-/*      Get the type of the "z" variable, our target raster array.      */
-/* -------------------------------------------------------------------- */
-    if( nc_inq_var( poDS->cdfid, nZId, NULL, &nc_datatype, NULL, NULL,
-                    NULL ) != NC_NOERR ){
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Error in nc_var_inq() on 'z'." );
-        return;
+        
     }
 
-    if( nc_datatype == NC_BYTE )
-        eDataType = GDT_Byte;
-#ifdef NETCDF_HAS_NC4
-    else if( nc_datatype == NC_UBYTE )
-        eDataType = GDT_Byte;
-#endif    
-    else if( nc_datatype == NC_CHAR )
-        eDataType = GDT_Byte;        
-    else if( nc_datatype == NC_SHORT )
-        eDataType = GDT_Int16;
-    else if( nc_datatype == NC_INT )
-        eDataType = GDT_Int32;
-    else if( nc_datatype == NC_FLOAT )
-        eDataType = GDT_Float32;
-    else if( nc_datatype == NC_DOUBLE )
-        eDataType = GDT_Float64;
-    else
-    {
-        if( nBand == 1 )
-            CPLError( CE_Warning, CPLE_AppDefined, 
-                      "Unsupported netCDF datatype (%d), treat as Float32.", 
-                      (int) nc_datatype );
-        eDataType = GDT_Float32;
-    }
-/* -------------------------------------------------------------------- */
-/*      Find out what is No Data for this variable                      */
-/* -------------------------------------------------------------------- */
-
-    status = nc_inq_att( poDS->cdfid, nZId, 
-                         _FillValue, &atttype, &attlen);
-
-/* -------------------------------------------------------------------- */
-/*      Look for either Missing_Value or _FillValue attributes          */
-/* -------------------------------------------------------------------- */
-
-    if( status == NC_NOERR ) {
-        strcpy(szNoValueName, _FillValue );
-    }
-    else {
-        status = nc_inq_att( poDS->cdfid, nZId, 
-                             "missing_value", &atttype, &attlen );
-        if( status == NC_NOERR ) {
-
-            strcpy( szNoValueName, "missing_value" );
-        }
-    }
-
-    nc_inq_vartype( poDS->cdfid, nZId, &vartype );
-
-    if( status == NC_NOERR ) {
-        switch( atttype ) {
-            /* TODO support NC_BYTE */
-            case NC_CHAR:
-                char *fillc;
-                fillc = (char *) CPLCalloc( attlen+1, sizeof(char) );
-                status=nc_get_att_text( poDS->cdfid, nZId,
-                                        szNoValueName, fillc );
-                dfNoData = atof( fillc );
-                CPLFree(fillc);
-                break;
-            case NC_SHORT:
-                short sNoData;
-                status = nc_get_att_short( poDS->cdfid, nZId,
-                                           szNoValueName, &sNoData );
-                dfNoData = (double) sNoData;
-                break;
-            case NC_INT:
-                int nNoData;
-                status = nc_get_att_int( poDS->cdfid, nZId,
-                                         szNoValueName, &nNoData );
-                dfNoData = (double) nNoData;
-                break;
-            case NC_FLOAT:
-                float fNoData;
-                status = nc_get_att_float( poDS->cdfid, nZId,
-                                           szNoValueName, &fNoData );
-                dfNoData = (double) fNoData;
-                break;
-            case NC_DOUBLE:
-                status = nc_get_att_double( poDS->cdfid, nZId,
-                                            szNoValueName, &dfNoData );
-                break;
-            default:
-                status = -1;
-                break;
-        }
-        // status = nc_get_att_double( poDS->cdfid, nZId, 
-        //                             szNoValueName, &dfNoData );
-
-        if ( status == NC_NOERR )
-            bNoDataSet = TRUE;
-	
-    }
-    /* if not found NoData, set the default one */
-    if ( ! bNoDataSet ) { 
-        switch( vartype ) {
-            case NC_BYTE:
-#ifdef NETCDF_HAS_NC4
-            case NC_UBYTE:
-#endif    
-                /* don't do default fill-values for bytes, too risky */
-                dfNoData = 0.0;
-                /* should print a warning as users might not be expecting this */
-                /* CPLError(CE_Warning, 1,"GDAL netCDF driver is setting default NoData value to 0.0 for NC_BYTE data\n"); */
-               break;
-            case NC_CHAR:
-                dfNoData = NC_FILL_CHAR;
-                break;
-            case NC_SHORT:
-                dfNoData = NC_FILL_SHORT;
-                break;
-            case NC_INT:
-                dfNoData = NC_FILL_INT;
-                break;
-            case NC_FLOAT:
-                dfNoData = NC_FILL_FLOAT;
-                break;
-            case NC_DOUBLE:
-                dfNoData = NC_FILL_DOUBLE;
-                break;
-            default:
-                dfNoData = 0.0;
-                break;
-        }
-	    bNoDataSet = TRUE;
-    } 
-    
-    if ( bNoDataSet ) 
-        SetNoDataValue( dfNoData );
-    else 
-        CPLDebug( "GDAL_netCDF", "did not get nodata value for variable #%d", nZId );
-
-    /* -------------------------------------------------------------------- */
-    /* Attempt to fetch the scale_factor and add_offset attributes for the  */
-    /* variable and set them.  If these values are not available, set       */
-    /* offset to 0 and scale to 1                                           */
-    /* -------------------------------------------------------------------- */
-    double dfOff = 0.0; 
-    double dfScale = 1.0; 
-    
-    if ( nc_inq_attid ( poDS->cdfid, nZId, CF_ADD_OFFSET, NULL) == NC_NOERR ) { 
-        status = nc_get_att_double( poDS->cdfid, nZId, CF_ADD_OFFSET, &dfOff );
-        CPLDebug( "GDAL_netCDF", "got add_offset=%.15g, status=%d", dfOff, status );
-    }
-    if ( nc_inq_attid ( poDS->cdfid, nZId, 
-                        CF_SCALE_FACTOR, NULL) == NC_NOERR ) { 
-        status = nc_get_att_double( poDS->cdfid, nZId, CF_SCALE_FACTOR, &dfScale ); 
-        CPLDebug( "GDAL_netCDF", "got scale_factor=%.15g, status=%d", dfScale, status );
-    }
-    SetOffset( dfOff ); 
-    SetScale( dfScale ); 
 }
 
 /************************************************************************/
@@ -731,37 +885,52 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
     }
 
-    if( eDataType == GDT_Byte )
-        nErr = nc_get_vara_uchar( cdfid, nZId, start, edge, 
-                                  (unsigned char *) pImage );
+    if( eDataType == GDT_Byte ) 
+    {
+        if (this->bSignedData) 
+        {
+            nErr = nc_get_vara_schar( cdfid, nZId, start, edge, 
+                                      (signed char *) pImage );
+            if ( nErr == NC_NOERR ) CheckValidData<signed char>( pImage );
+        }
+        else {
+            nErr = nc_get_vara_uchar( cdfid, nZId, start, edge, 
+                                      (unsigned char *) pImage );
+            if ( nErr == NC_NOERR ) CheckValidData<unsigned char>( pImage );
+        }
+    }
     else if( eDataType == GDT_Int16 )
+    {
         nErr = nc_get_vara_short( cdfid, nZId, start, edge, 
                                   (short int *) pImage );
+        if ( nErr == NC_NOERR ) CheckValidData<short int>( pImage );
+    }
     else if( eDataType == GDT_Int32 )
     {
         if( sizeof(long) == 4 )
+        {
             nErr = nc_get_vara_long( cdfid, nZId, start, edge, 
                                      (long *) pImage );
+            if ( nErr == NC_NOERR ) CheckValidData<long>( pImage );
+        }
         else
+        {
             nErr = nc_get_vara_int( cdfid, nZId, start, edge, 
                                     (int *) pImage );
+            if ( nErr == NC_NOERR ) CheckValidData<int>( pImage );
+        }
     }
-    else if( eDataType == GDT_Float32 ){
+    else if( eDataType == GDT_Float32 )
+    {
         nErr = nc_get_vara_float( cdfid, nZId, start, edge, 
                                   (float *) pImage );
-        for( i=0; i<nBlockXSize; i++ ){
-            if( CPLIsNan( ( (float *) pImage )[i] ) )
-                ( (float *)pImage )[i] = (float) dfNoDataValue;
-        }
+        if ( nErr == NC_NOERR ) CheckValidData<float>( pImage, TRUE );
     }
-    else if( eDataType == GDT_Float64 ){
+    else if( eDataType == GDT_Float64 )
+    {
         nErr = nc_get_vara_double( cdfid, nZId, start, edge, 
-                                   (double *) pImage );
-        for( i=0; i<nBlockXSize; i++ ){
-            if( CPLIsNan( ( (double *) pImage)[i] ) ) 
-                ( (double *)pImage )[i] = dfNoDataValue;
-        }
-
+                                   (double *) pImage ); 
+        if ( nErr == NC_NOERR ) CheckValidData<double>( pImage, TRUE );
     }
 
     if( nErr != NC_NOERR )
@@ -2573,7 +2742,6 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Is this a real netCDF file?                                     */
 /* -------------------------------------------------------------------- */
@@ -2938,10 +3106,18 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
                 /* for variables, don't copy varname */
                 if ( strncmp( szMetaName, "NETCDF_VARNAME", 14) == 0 ) 
                     bCopyItem = FALSE;
-                /* Remove add_offset and scale_factor, but set them later from band data */
+                /* Don't copy band statistics */
+                else if ( strncmp( szMetaName, "STATISTICS_", 11) == 0 ) 
+                    bCopyItem = FALSE;
+                /* Remove add_offset, scale_factor, valid_range and _Unsigned */
+                /* but set them later from band data */
                 else if ( strcmp( szMetaName, CF_ADD_OFFSET ) == 0 ) 
                     bCopyItem = FALSE;
                 else if ( strcmp( szMetaName, CF_SCALE_FACTOR ) == 0 ) 
+                    bCopyItem = FALSE;
+                else if ( strcmp( szMetaName, "valid_range" ) == 0 ) 
+                    bCopyItem = FALSE;
+                else if ( strcmp( szMetaName, "_Unsigned" ) == 0 ) 
                     bCopyItem = FALSE;
             }
 
@@ -3855,6 +4031,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         double    dfNoDataValue;
         /* unsigned char not supported by netcdf-3 */
         signed char cNoDataValue; 
+        unsigned char ucNoDataValue;
         float     fNoDataValue;
         int       nlNoDataValue;
         short     nsNoDataValue;
@@ -3923,37 +4100,66 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Define variable and attributes                                  */
 /* -------------------------------------------------------------------- */
-            /* Byte can be of different type according to file version */
-#ifdef NETCDF_HAS_NC4
-            /* NC4 supports NC_UBYTE, but should it always be ubyte? */
-            if ( nFormat == NCDF_FORMAT_NC4 )
-                nDataType = NC_UBYTE; 
-            else 
-#endif
-                nDataType = NC_BYTE;
+            nDataType = NC_BYTE;
 
+            /* GDAL defaults to unsigned bytes, but check if metadata says its
+               signed, as NetCDF can support this for certain formats. */
+            int nSignedByte = FALSE;
+            tmpMetadata = poSrcBand->GetMetadataItem("PIXELTYPE",
+                                                     "IMAGE_STRUCTURE");
+            if ( tmpMetadata && EQUAL(tmpMetadata,"SIGNEDBYTE") ) {
+                nSignedByte = TRUE;
+                printf("TMP ET got SIGNEDBYTE\n");
+            }
+            else {
+                /* No unsigned byte datatype in pre NC4, and NC4-Classic 
+                   Rely on valid_range and _Unsigned convention below 
+                   For NC4, just set type to NC_UBYTE */
+#ifdef NETCDF_HAS_NC4
+                if ( nFormat == NCDF_FORMAT_NC4 )
+                    nDataType = NC_UBYTE; 
+#endif
+            }
+            
             status = nc_def_var( fpImage, szBandName, nDataType, 
                                  NCDF_NBDIM, anBandDims, &NCDFVarID );
             NCDF_ERR(status);
-
+            
             NCDF_DEF_VAR_DEFLATE;
-
+            
             /* Fill Value */
-            cNoDataValue=(unsigned char) dfNoDataValue;
-            nc_put_att_schar( fpImage, NCDFVarID, _FillValue,
-                              nDataType, 1, &cNoDataValue );            
-            NCDF_ERR(status);
-
-            /* For NC_BYTE, add valid_range and _Unsigned = "true" */
-            /* to specify unsigned byte ( defined in CF-1 and NUG ) */
-            if ( nDataType == NC_BYTE ) {
-                short int nValidRange[] = {0,255};
+            if ( nSignedByte ) {
+                cNoDataValue = (signed char) dfNoDataValue;
+                status = nc_put_att_schar( fpImage, NCDFVarID, _FillValue,
+                                           nDataType, 1, &cNoDataValue );            
+            }
+            else {
+                ucNoDataValue = (unsigned char) dfNoDataValue;
+                status = nc_put_att_uchar( fpImage, NCDFVarID, _FillValue,
+                                           nDataType, 1, &ucNoDataValue );            
+                NCDF_ERR(status);
+            }
+            
+            /* For unsigned NC_BYTE (except NC4 format) */
+            /* add valid_range and _Unsigned ( defined in CF-1 and NUG ) */
+            if ( (nDataType == NC_BYTE) && (nFormat != NCDF_FORMAT_NC4) ) {
+                short int nValidRange[2]; 
+                if  ( nSignedByte ) {
+                    nValidRange[0] = -128;
+                    nValidRange[1] = 127;
+                    status = nc_put_att_text( fpImage, NCDFVarID, 
+                                              "_Unsigned", 5, "false" );
+                }
+                else {
+                    nValidRange[0] = 0;
+                    nValidRange[1] = 255;
+                    status = nc_put_att_text( fpImage, NCDFVarID, 
+                                              "_Unsigned", 4, "true" );
+                }
                 status=nc_put_att_short( fpImage, NCDFVarID, "valid_range",
                                          NC_SHORT, 2, nValidRange );
-                status = nc_put_att_text( fpImage, NCDFVarID, 
-                                          "_Unsigned", 4, "true" );
             }
-
+            
 /* -------------------------------------------------------------------- */
 /*      Read and write data from band i                                 */
 /* -------------------------------------------------------------------- */
@@ -3968,9 +4174,13 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                             pabScanline, nXSize, 1, GDT_Byte,
                                             0,0);
                 
-                start[0]=startY[iLine];          
-                status = nc_put_vara_uchar (fpImage, NCDFVarID, start,
-                                            count, pabScanline);
+                start[0]=startY[iLine];
+                if ( nSignedByte ) 
+                    status = nc_put_vara_schar (fpImage, NCDFVarID, start,
+                                                count, (const signed char*)pabScanline);
+                else
+                    status = nc_put_vara_uchar (fpImage, NCDFVarID, start,
+                                                count, pabScanline);
                 NCDF_ERR(status);
             }
 
@@ -4013,7 +4223,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                             pasScanline, nXSize, 1, GDT_Int16,
                                             0,0);
 
-                start[0]=startY[iLine];          
+                start[0]=startY[iLine];
                 status = nc_put_vara_short( fpImage, NCDFVarID, start,
                                             count, pasScanline);
             }
@@ -4056,7 +4266,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                             panScanline, nXSize, 1, GDT_Int32,
                                             0,0);
 
-                start[0]=startY[iLine];          
+                start[0]=startY[iLine];
                 status = nc_put_vara_int( fpImage, NCDFVarID, start,
                                           count, panScanline);
             }
@@ -4098,7 +4308,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                             pafScanline, nXSize, 1, GDT_Float32, 
                                             0,0);
 
-                start[0]=startY[iLine];          
+                start[0]=startY[iLine];
                 status = nc_put_vara_float( fpImage, NCDFVarID, start,
                                             count, pafScanline);
             }
@@ -4140,7 +4350,7 @@ NCDFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                             GDT_Float64,
                                             0,0);
 
-                start[0]=startY[iLine];          
+                start[0]=startY[iLine];
                 status = nc_put_vara_double( fpImage, NCDFVarID, start,
                                              count, padScanline);
             }
