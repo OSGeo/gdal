@@ -25849,8 +25849,22 @@ done
 
 
   if test "$HAVE_FREEXL" = "yes" -a "$ac_cv_header_freexl_h" = "yes" ; then
-    LIBS="-lfreexl $LIBS"
+
+    # Check that freexl is recent enough
+    rm -f testrlist.*
+    echo '#include <freexl.h>' > testfreexl.c
+    echo 'int main(int argc, char** argv) { FreeXL_CellValue s; freexl_get_cell_value (0,0,0,&s); return 0; } ' >> testfreexl.c
+    if test -z "`${CC} testfreexl.c -c 2>&1`" ; then
+        LIBS="-lfreexl $LIBS"
+    else
+        HAVE_FREEXL=no
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: freexl too old. Needs freexl >= 1.0" >&5
+$as_echo "freexl too old. Needs freexl >= 1.0" >&6; }
+    fi
+    rm -f testfreexl.*
+
   else
+    HAVE_FREEXL=no
     echo "libfreexl not found - FreeXL support disabled"
   fi
 
@@ -25900,9 +25914,23 @@ fi
 
 
   if test "$HAVE_FREEXL" = "yes" -a -f "$with_freexl/include/freexl.h" ; then
-    LIBS="-L$with_freexl/lib -lfreexl $LIBS"
-    FREEXL_INCLUDE="-I$with_freexl/include"
+
+    # Check that freexl is recent enough
+    rm -f testrlist.*
+    echo '#include <freexl.h>' > testfreexl.c
+    echo 'int main(int argc, char** argv) { FreeXL_CellValue s; freexl_get_cell_value (0,0,0,&s); return 0; } ' >> testfreexl.c
+    if test -z "`${CC} -I$with_freexl/include testfreexl.c -c 2>&1`" ; then
+        LIBS="-L$with_freexl/lib -lfreexl $LIBS"
+        FREEXL_INCLUDE="-I$with_freexl/include"
+    else
+        HAVE_FREEXL=no
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: freexl too old. Needs freexl >= 1.0" >&5
+$as_echo "freexl too old. Needs freexl >= 1.0" >&6; }
+    fi
+    rm -f testfreexl.*
+
   else
+    HAVE_FREEXL=no
     echo "libfreexl not found - FreeXL support disabled"
   fi
 
