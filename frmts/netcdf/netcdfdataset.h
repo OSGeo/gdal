@@ -421,19 +421,18 @@ static const oNetcdfSRS_PP poOrthoMappings[] = {
 //    * false_northing
 
 /* 
-  (http://www.remotesensing.org/geotiff/proj_list/polar_stereographic.html)
+   (http://www.remotesensing.org/geotiff/proj_list/polar_stereographic.html)
 
-   TODO: am not entirely sure how CF-1 latitude_of_projection_origin,
-   that must either be +90 or -90, maps to OGC WKT.
-   Working assumption:
-     'latitude_of_origin' in WKT (latitude of natural origin) -> 'standard_parallel' in CF-1.
-     Then in CF-1 always set 'latitude_of_projection_origin' to +90 or -90, based on sign of WKT
-     'latitude_of_origin'.
-  TODO: Similarly not sure how to handle 'standard_parallel' vs 'scale_factor_at_projection_origin'
-    CF-1 alternatives.
-  Having a clear reference, or sample test data, for CF-1 in this projection would help resolve.
-
-  we don't have an alternative calculation based on scale factor
+   Note: Projection parameters for this projection are quite different in CF-1 from
+     OGC WKT/GeoTiff (for the latter, see above).
+   From our best understanding, this projection requires more than a straight mapping:
+     - As defined below, 'latitude_of_origin' (WKT) -> 'standard_parallel' (CF-1)
+       and 'central_meridian' (WKT) -> 'straight_vertical_longitude_from_pole' (CF-1)
+     - Then the 'latitude_of_projection_origin' in CF-1 must be set to either +90 or -90,
+       depending on the sign of 'latitude_of_origin' in WKT.
+   Current support for this approach is provided by one existing NetCDF user of this projection.
+   TODO: On import from CF-1, not sure how to handle a version with
+     'scale_factor_at_projection_origin' defined, but not 'standard_parallel'.
 */
 static const oNetcdfSRS_PP poPSmappings[] = {
     {CF_PP_STD_PARALLEL_1, SRS_PP_LATITUDE_OF_ORIGIN},
