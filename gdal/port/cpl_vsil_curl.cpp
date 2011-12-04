@@ -491,6 +491,48 @@ vsi_l_offset VSICurlHandle::GetFileSize()
 
     bHastComputedFileSize = TRUE;
 
+    /* Consider that only the files whose extension ends up with one that is */
+    /* listed in CPL_VSIL_CURL_ALLOWED_EXTENSIONS exist on the server */
+    /* This can speeds up dramatically open experience, in case the server */
+    /* cannot return a file list */
+    /* For example : */
+    /* gdalinfo --config CPL_VSIL_CURL_ALLOWED_EXTENSIONS ".tif" /vsicurl/http://igskmncngs506.cr.usgs.gov/gmted/Global_tiles_GMTED/075darcsec/bln/W030/30N030W_20101117_gmted_bln075.tif */
+    const char* pszAllowedExtensions =
+        CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", NULL);
+    if (pszAllowedExtensions)
+    {
+        char** papszExtensions = CSLTokenizeString2( pszAllowedExtensions, ", ", 0 );
+        int nURLLen = strlen(pszURL);
+        int bFound = FALSE;
+        for(int i=0;papszExtensions[i] != NULL;i++)
+        {
+            int nExtensionLen = strlen(papszExtensions[i]);
+            if (nURLLen > nExtensionLen &&
+                EQUAL(pszURL + nURLLen - nExtensionLen, papszExtensions[i]))
+            {
+                bFound = TRUE;
+                break;
+            }
+        }
+
+        if (!bFound)
+        {
+            eExists = EXIST_NO;
+            fileSize = 0;
+
+            CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
+            cachedFileProp->bHastComputedFileSize = TRUE;
+            cachedFileProp->fileSize = fileSize;
+            cachedFileProp->eExists = eExists;
+
+            CSLDestroy(papszExtensions);
+
+            return 0;
+        }
+
+        CSLDestroy(papszExtensions);
+    }
+
 #if LIBCURL_VERSION_NUM < 0x070B00
     /* Curl 7.10.X doesn't manage to unset the CURLOPT_RANGE that would have been */
     /* previously set, so we have to reinit the connection handle */
