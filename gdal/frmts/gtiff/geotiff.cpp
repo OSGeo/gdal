@@ -367,6 +367,8 @@ class GTiffDataset : public GDALPamDataset
 
     CPLString     osWldFilename;
 
+    int           bDirectIO;
+
   protected:
     virtual int         CloseDependentDatasets();
 
@@ -467,6 +469,12 @@ class GTiffRasterBand : public GDALPamRasterBand
     double             dfOffset;
     double             dfScale;
     CPLString          osUnitType;
+
+    CPLErr DirectIO( GDALRWFlag eRWFlag,
+                                  int nXOff, int nYOff, int nXSize, int nYSize,
+                                  void * pData, int nBufXSize, int nBufYSize,
+                                  GDALDataType eBufType,
+                                  int nPixelSpace, int nLineSpace );
 
 protected:
     GTiffDataset       *poGDS;
@@ -663,6 +671,167 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
 }
 
 /************************************************************************/
+/*                           DirectIO()                                 */
+/************************************************************************/
+
+/* Reads directly bytes from the file using ReadMultiRange(), and by-pass */
+/* block reading. Restricted to simple TIFF configurations (single-band, un-tiled, */
+/* uncompressed data, standard data types). Particularly usefull to extract */
+/* sub-windows of data on a large /vsicurl dataset). */
+
+CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
+                                  int nXOff, int nYOff, int nXSize, int nYSize,
+                                  void * pData, int nBufXSize, int nBufYSize,
+                                  GDALDataType eBufType,
+                                  int nPixelSpace, int nLineSpace )
+{
+    if( !(eRWFlag == GF_Read && poGDS->nBands == 1 &&
+          poGDS->nCompression == COMPRESSION_NONE &&
+          (poGDS->nBitsPerSample == 8 || (poGDS->nBitsPerSample == 16) ||
+           poGDS->nBitsPerSample == 32 || poGDS->nBitsPerSample == 64) &&
+          poGDS->nBitsPerSample == GDALGetDataTypeSize(eDataType) &&
+          !TIFFIsTiled( poGDS->hTIFF )) )
+    {
+        return CE_Failure;
+    }
+
+/* ==================================================================== */
+/*      Do we have overviews that would be appropriate to satisfy       */
+/*      this request?                                                   */
+/* ==================================================================== */
+    if( (nBufXSize < nXSize || nBufYSize < nYSize)
+        && GetOverviewCount() > 0 && eRWFlag == GF_Read )
+    {
+        int         nOverview;
+
+        nOverview =
+            GDALBandGetBestOverviewLevel(this, nXOff, nYOff, nXSize, nYSize,
+                                        nBufXSize, nBufYSize);
+        if (nOverview >= 0)
+        {
+            GDALRasterBand* poOverviewBand = GetOverview(nOverview);
+            if (poOverviewBand == NULL)
+                return CE_Failure;
+
+            return poOverviewBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                            pData, nBufXSize, nBufYSize, eBufType,
+                                            nPixelSpace, nLineSpace );
+        }
+    }
+
+    /* Make sure that TIFFTAG_STRIPOFFSETS is up-to-date */
+    if (poGDS->GetAccess() == GA_Update)
+        poGDS->FlushCache();
+
+    /* Get strip offsets */
+    toff_t *panTIFFOffsets = NULL;
+    if ( !TIFFGetField( poGDS->hTIFF, TIFFTAG_STRIPOFFSETS, &panTIFFOffsets ) ||
+         panTIFFOffsets == NULL )
+    {
+        return CE_Failure;
+    }
+
+    int iLine;
+    int nReqXSize = nXSize; /* sub-sampling or over-sampling can only be done at last stage */
+    int nReqYSize = MIN(nBufYSize, nYSize); /* we can do sub-sampling at the extraction stage */
+    void** ppData = (void**) VSIMalloc(nReqYSize * sizeof(void*));
+    vsi_l_offset* panOffsets = (vsi_l_offset*)
+                            VSIMalloc(nReqYSize * sizeof(vsi_l_offset));
+    size_t* panSizes = (size_t*) VSIMalloc(nReqYSize * sizeof(size_t));
+    int eDTSize = GDALGetDataTypeSize(eDataType) / 8;
+    void* pTmpBuffer = NULL;
+    CPLErr eErr = CE_None;
+
+    if (ppData == NULL || panOffsets == NULL || panSizes == NULL)
+        eErr = CE_Failure;
+    else if (nXSize != nBufXSize || nYSize != nBufYSize ||
+             eBufType != eDataType ||
+             nPixelSpace != GDALGetDataTypeSize(eBufType) / 8)
+    {
+        /* We need a temporary buffer for over-sampling/sub-sampling */
+        /* and/or data type conversion */
+        pTmpBuffer = VSIMalloc(nReqXSize * nReqYSize * eDTSize);
+        if (pTmpBuffer == NULL)
+            eErr = CE_Failure;
+    }
+
+    /* Prepare data extraction */
+    for(iLine=0;eErr == CE_None && iLine<nReqYSize;iLine++)
+    {
+        if (pTmpBuffer == NULL)
+            ppData[iLine] = ((GByte*)pData) + iLine * nLineSpace;
+        else
+            ppData[iLine] = ((GByte*)pTmpBuffer) + iLine * nReqXSize * eDTSize;
+        int nSrcLine;
+        if (nBufYSize < nYSize) /* Sub-sampling in y */
+            nSrcLine = nYOff + (int)((iLine + 0.5) * nYSize / nBufYSize);
+        else
+            nSrcLine = nYOff + iLine;
+        panOffsets[iLine] = panTIFFOffsets[nSrcLine / nBlockYSize];
+        if (panOffsets[iLine] == 0) /* We don't support sparse files */
+            eErr = CE_Failure;
+
+        panOffsets[iLine] += (nXOff + (nSrcLine % nBlockYSize) * nBlockXSize) * eDTSize;
+        panSizes[iLine] = nReqXSize * eDTSize;
+    }
+
+    /* Extract data from the file */
+    if (eErr == CE_None)
+    {
+        VSILFILE* fp = (VSILFILE*) TIFFClientdata( poGDS->hTIFF );
+        int nRet = VSIFReadMultiRangeL(nReqYSize, ppData, panOffsets, panSizes, fp);
+        if (nRet != 0)
+            eErr = CE_Failure;
+    }
+
+    /* Byte-swap if necessary */
+    if (eErr == CE_None && TIFFIsByteSwapped(poGDS->hTIFF))
+    {
+        for(iLine=0;iLine<nReqYSize;iLine++)
+        {
+            GDALSwapWords( ppData[iLine], eDTSize, nReqXSize, eDTSize);
+        }
+    }
+
+    /* Over-sampling/sub-sampling and/or data type conversion */
+    if (eErr == CE_None && pTmpBuffer != NULL)
+    {
+        for(int iY=0;iY<nBufYSize;iY++)
+        {
+            int iSrcY = (nBufYSize <= nYSize) ? iY :
+                            (int)((iY + 0.5) * nYSize / nBufYSize);
+            if (nBufXSize == nXSize)
+            {
+                GDALCopyWords( ppData[iSrcY], eDataType, eDTSize,
+                                ((GByte*)pData) + iY * nLineSpace,
+                                eBufType, nPixelSpace,
+                                nReqXSize);
+            }
+            else
+            {
+                for(int iX=0;iX<nBufXSize;iX++)
+                {
+                    int iSrcX = (nBufXSize == nXSize) ? iX :
+                                    (int)((iX+0.5) * nXSize / nBufXSize);
+                    GDALCopyWords( ((GByte*)ppData[iSrcY]) + iSrcX * eDTSize,
+                                    eDataType, 0,
+                                    ((GByte*)pData) + iX * nPixelSpace + iY * nLineSpace,
+                                    eBufType, 0, 1);
+                }
+            }
+        }
+    }
+
+    /* Cleanup */
+    CPLFree(pTmpBuffer);
+    CPLFree(ppData);
+    CPLFree(panOffsets);
+    CPLFree(panSizes);
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                            IRasterIO()                               */
 /************************************************************************/
 
@@ -673,6 +842,19 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                   int nPixelSpace, int nLineSpace )
 {
     CPLErr eErr;
+
+    //CPLDebug("GTiff", "RasterIO(%d, %d, %d, %d, %d, %d)",
+    //         nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize);
+
+    if (poGDS->bDirectIO)
+    {
+        eErr = DirectIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                        pData, nBufXSize, nBufYSize, eBufType,
+                        nPixelSpace, nLineSpace);
+
+        if (eErr == CE_None)
+            return eErr;
+    }
 
     if (poGDS->nBands != 1 &&
         poGDS->nPlanarConfig == PLANARCONFIG_CONTIG &&
@@ -2830,6 +3012,8 @@ GTiffDataset::GTiffDataset()
     bHasSearchedIMD = FALSE;
 
     bScanDeferred = TRUE;
+
+    bDirectIO = CSLTestBoolean(CPLGetConfigOption("GTIFF_DIRECT_IO", "NO"));
 }
 
 /************************************************************************/
