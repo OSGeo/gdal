@@ -254,6 +254,8 @@ class VSICurlHandle : public VSIVirtualHandle
     virtual int          Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
     virtual size_t       Read( void *pBuffer, size_t nSize, size_t nMemb );
+    virtual int          ReadMultiRange( int nRanges, void ** ppData,
+                                         const vsi_l_offset* panOffsets, const size_t* panSizes );
     virtual size_t       Write( const void *pBuffer, size_t nSize, size_t nMemb );
     virtual int          Eof();
     virtual int          Flush();
@@ -389,6 +391,7 @@ typedef struct
     size_t          nSize;
     int             bIsHTTP;
     int             bIsInHeader;
+    int             bMultiRange;
     vsi_l_offset    nStartOffset;
     vsi_l_offset    nEndOffset;
     int             nHTTPCode;
@@ -407,6 +410,7 @@ static void VSICURLInitWriteFuncStruct(WriteFuncStruct* psStruct)
     psStruct->nSize = 0;
     psStruct->bIsHTTP = FALSE;
     psStruct->bIsInHeader = TRUE;
+    psStruct->bMultiRange = FALSE;
     psStruct->nStartOffset = 0;
     psStruct->nEndOffset = 0;
     psStruct->nHTTPCode = 0;
@@ -457,6 +461,7 @@ static int VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb, void
 
                 /* Detect servers that don't support range downloading */
                 if (psStruct->nHTTPCode == 200 &&
+                    !psStruct->bMultiRange &&
                     !psStruct->bFoundContentRange &&
                     (psStruct->nStartOffset != 0 || psStruct->nContentLength > 10 *
                         (psStruct->nEndOffset - psStruct->nStartOffset + 1)))
@@ -900,6 +905,324 @@ size_t VSICurlHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
     curOffset = iterOffset;
 
     return ret;
+}
+
+
+/************************************************************************/
+/*                           ReadMultiRange()                           */
+/************************************************************************/
+
+int VSICurlHandle::ReadMultiRange( int nRanges, void ** ppData,
+                                   const vsi_l_offset* panOffsets,
+                                   const size_t* panSizes )
+{
+    WriteFuncStruct sWriteFuncData;
+    WriteFuncStruct sWriteFuncHeaderData;
+
+    CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
+    if (cachedFileProp->eExists == EXIST_NO)
+        return -1;
+
+    CPLString osRanges, osFirstRange, osLastRange;
+    int i;
+    int nMergedRanges = 0;
+    vsi_l_offset nTotalReqSize = 0;
+    for(i=0;i<nRanges;i++)
+    {
+        CPLString osCurRange;
+        if (i != 0)
+            osRanges.append(",");
+        osCurRange = CPLSPrintf(CPL_FRMT_GUIB "-", panOffsets[i]);
+        while (i + 1 < nRanges && panOffsets[i] + panSizes[i] == panOffsets[i+1])
+        {
+            nTotalReqSize += panSizes[i];
+            i ++;
+        }
+        nTotalReqSize += panSizes[i];
+        osCurRange.append(CPLSPrintf(CPL_FRMT_GUIB, panOffsets[i] + panSizes[i]-1));
+        nMergedRanges ++;
+
+        osRanges += osCurRange;
+
+        if (nMergedRanges == 1)
+            osFirstRange = osCurRange;
+        osLastRange = osCurRange;
+    }
+
+    const char* pszMaxRanges = CPLGetConfigOption("CPL_VSIL_CURL_MAX_RANGES", "250");
+    int nMaxRanges = atoi(pszMaxRanges);
+    if (nMaxRanges <= 0)
+        nMaxRanges = 250;
+    if (nMergedRanges > nMaxRanges)
+    {
+        int nHalf = nRanges / 2;
+        int nRet = ReadMultiRange(nHalf, ppData, panOffsets, panSizes);
+        if (nRet != 0)
+            return nRet;
+        return ReadMultiRange(nRanges - nHalf, ppData + nHalf, panOffsets + nHalf, panSizes + nHalf);
+    }
+
+    CURL* hCurlHandle = poFS->GetCurlHandleFor(pszURL);
+    VSICurlSetOptions(hCurlHandle, pszURL);
+
+    VSICURLInitWriteFuncStruct(&sWriteFuncData);
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
+
+    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, VSICurlHandleWriteFunc);
+    sWriteFuncHeaderData.bIsHTTP = strncmp(pszURL, "http", 4) == 0;
+    sWriteFuncHeaderData.bMultiRange = nMergedRanges > 1;
+    if (nMergedRanges == 1)
+    {
+        sWriteFuncHeaderData.nStartOffset = panOffsets[0];
+        sWriteFuncHeaderData.nEndOffset = panOffsets[0] + nTotalReqSize-1;
+    }
+
+    if (ENABLE_DEBUG)
+    {
+        if (nMergedRanges == 1)
+            CPLDebug("VSICURL", "Downloading %s (%s)...", osRanges.c_str(), pszURL);
+        else
+            CPLDebug("VSICURL", "Downloading %s, ..., %s (" CPL_FRMT_GUIB " bytes, %s)...",
+                     osFirstRange.c_str(), osLastRange.c_str(), (GUIntBig)nTotalReqSize, pszURL);
+    }
+
+    curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, osRanges.c_str());
+
+    char szCurlErrBuf[CURL_ERROR_SIZE+1];
+    szCurlErrBuf[0] = '\0';
+    curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
+
+    curl_easy_perform(hCurlHandle);
+
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, NULL);
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, NULL);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, NULL);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, NULL);
+
+    long response_code = 0;
+    curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
+
+    char *content_type = 0;
+    curl_easy_getinfo(hCurlHandle, CURLINFO_CONTENT_TYPE, &content_type);
+
+    if ((response_code != 200 && response_code != 206 &&
+         response_code != 225 && response_code != 226 && response_code != 426) || sWriteFuncHeaderData.bError)
+    {
+        if (response_code >= 400 && szCurlErrBuf[0] != '\0')
+        {
+            if (strcmp(szCurlErrBuf, "Couldn't use REST") == 0)
+                CPLError(CE_Failure, CPLE_AppDefined, "%d: %s, %s",
+                         (int)response_code, szCurlErrBuf,
+                         "Range downloading not supported by this server !");
+            else
+                CPLError(CE_Failure, CPLE_AppDefined, "%d: %s", (int)response_code, szCurlErrBuf);
+        }
+        /*
+        if (!bHastComputedFileSize && startOffset == 0)
+        {
+            cachedFileProp->bHastComputedFileSize = bHastComputedFileSize = TRUE;
+            cachedFileProp->fileSize = fileSize = 0;
+            cachedFileProp->eExists = eExists = EXIST_NO;
+        }
+        */
+        CPLFree(sWriteFuncData.pBuffer);
+        CPLFree(sWriteFuncHeaderData.pBuffer);
+        return -1;
+    }
+
+    char* pBuffer = sWriteFuncData.pBuffer;
+    int nSize = sWriteFuncData.nSize;
+
+    int nRet = -1;
+    char* pszBoundary;
+    CPLString osBoundary;
+    char *pszNext;
+    int iRange = 0;
+    int iPart = 0;
+    char* pszEOL;
+
+    if (nMergedRanges == 1)
+    {
+        int nAccSize = 0;
+        if ((vsi_l_offset)nSize < nTotalReqSize)
+            goto end;
+
+        for(i=0;i<nRanges;i++)
+        {
+            memcpy(ppData[i], pBuffer + nAccSize, panSizes[i]);
+            nAccSize += panSizes[i];
+        }
+
+        nRet = 0;
+        goto end;
+    }
+
+    pszBoundary = strstr(sWriteFuncHeaderData.pBuffer, "Content-Type: multipart/byteranges; boundary=");
+    if( pszBoundary == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Could not find '%s'",
+                  "Content-Type: multipart/byteranges; boundary=" );
+        goto end;
+    }
+
+    pszEOL = strchr(pszBoundary, '\r');
+    if (pszEOL)
+        *pszEOL = 0;
+    pszEOL = strchr(pszBoundary, '\n');
+    if (pszEOL)
+        *pszEOL = 0;
+
+    osBoundary = "--";
+    osBoundary += pszBoundary + strlen( "Content-Type: multipart/byteranges; boundary=" );
+
+/* -------------------------------------------------------------------- */
+/*      Find the start of the first chunk.                              */
+/* -------------------------------------------------------------------- */
+    pszNext = strstr(pBuffer,osBoundary.c_str());
+    if( pszNext == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "No parts found." );
+        goto end;
+    }
+
+    pszNext += strlen(osBoundary);
+    while( *pszNext != '\n' && *pszNext != '\r' && *pszNext != '\0' )
+        pszNext++;
+    if( *pszNext == '\r' )
+        pszNext++;
+    if( *pszNext == '\n' )
+        pszNext++;
+
+/* -------------------------------------------------------------------- */
+/*      Loop over parts...                                              */
+/* -------------------------------------------------------------------- */
+    while( iPart < nRanges )
+    {
+/* -------------------------------------------------------------------- */
+/*      Collect headers.                                                */
+/* -------------------------------------------------------------------- */
+        int bExpectedRange = FALSE;
+
+        while( *pszNext != '\n' && *pszNext != '\r' && *pszNext != '\0' )
+        {
+            char *pszEOL = strstr(pszNext,"\n");
+
+            if( pszEOL == NULL )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Error while parsing multipart content (at line %d)", __LINE__);
+                goto end;
+            }
+
+            *pszEOL = '\0';
+            int bRestoreAntislashR = FALSE;
+            if (pszEOL - pszNext > 1 && pszEOL[-1] == '\r')
+            {
+                bRestoreAntislashR = TRUE;
+                pszEOL[-1] = '\0';
+            }
+
+            if (EQUALN(pszNext, "Content-Range: bytes ", strlen("Content-Range: bytes ")))
+            {
+                bExpectedRange = TRUE; /* FIXME */
+            }
+
+            if (bRestoreAntislashR)
+                pszEOL[-1] = '\r';
+            *pszEOL = '\n';
+
+            pszNext = pszEOL + 1;
+        }
+
+        if (!bExpectedRange)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "Error while parsing multipart content (at line %d)", __LINE__);
+            goto end;
+        }
+
+        if( *pszNext == '\r' )
+            pszNext++;
+        if( *pszNext == '\n' )
+            pszNext++;
+
+/* -------------------------------------------------------------------- */
+/*      Work out the data block size.                                   */
+/* -------------------------------------------------------------------- */
+        size_t nBytesAvail = nSize - (pszNext - pBuffer);
+
+        while(TRUE)
+        {
+            if (nBytesAvail < panSizes[iRange])
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                            "Error while parsing multipart content (at line %d)", __LINE__);
+                goto end;
+            }
+
+            memcpy(ppData[iRange], pszNext, panSizes[iRange]);
+            pszNext += panSizes[iRange];
+            nBytesAvail -= panSizes[iRange];
+            if( iRange + 1 < nRanges &&
+                panOffsets[iRange] + panSizes[iRange] == panOffsets[iRange + 1] )
+            {
+                iRange++;
+            }
+            else
+                break;
+        }
+
+        iPart ++;
+        iRange ++;
+
+        while( nBytesAvail > 0
+               && (*pszNext != '-'
+                   || strncmp(pszNext,osBoundary,strlen(osBoundary)) != 0) )
+        {
+            pszNext++;
+            nBytesAvail--;
+        }
+
+        if( nBytesAvail == 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "Error while parsing multipart content (at line %d)", __LINE__);
+            goto end;
+        }
+
+        pszNext += strlen(osBoundary);
+        if( strncmp(pszNext,"--",2) == 0 )
+        {
+            /* End of multipart */
+            break;
+        }
+
+        if( *pszNext == '\r' )
+            pszNext++;
+        if( *pszNext == '\n' )
+            pszNext++;
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "Error while parsing multipart content (at line %d)", __LINE__);
+            goto end;
+        }
+    }
+
+    if (iPart == nMergedRanges)
+        nRet = 0;
+    else
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Got only %d parts, where %d were expected", iPart, nMergedRanges);
+
+end:
+    CPLFree(sWriteFuncData.pBuffer);
+    CPLFree(sWriteFuncHeaderData.pBuffer);
+
+    return nRet;
 }
 
 /************************************************************************/

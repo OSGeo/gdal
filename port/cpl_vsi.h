@@ -141,6 +141,7 @@ int CPL_DLL     VSIFSeekL( VSILFILE *, vsi_l_offset, int );
 vsi_l_offset CPL_DLL VSIFTellL( VSILFILE * );
 void CPL_DLL    VSIRewindL( VSILFILE * );
 size_t CPL_DLL  VSIFReadL( void *, size_t, size_t, VSILFILE * );
+int CPL_DLL     VSIFReadMultiRangeL( int nRanges, void ** ppData, const vsi_l_offset* panOffsets, const size_t* panSizes, VSILFILE * );
 size_t CPL_DLL  VSIFWriteL( const void *, size_t, size_t, VSILFILE * );
 int CPL_DLL     VSIFEofL( VSILFILE * );
 int CPL_DLL     VSIFTruncateL( VSILFILE *, vsi_l_offset );
