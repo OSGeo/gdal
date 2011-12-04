@@ -244,6 +244,44 @@ def vrt_read_5():
 
     return 'success'
 
+###############################################################################
+# Test GetMinimum() and GetMaximum()
+
+def vrt_read_6():
+
+    src_ds = gdal.Open('data/byte.tif')
+    mem_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrt_read_6.tif', src_ds)
+    vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrt_read_6.vrt', mem_ds)
+
+    if vrt_ds.GetRasterBand(1).GetMinimum() is not None:
+        gdaltest.post_reason('got bad minimum value')
+        print(vrt_ds.GetRasterBand(1).GetMinimum())
+        return 'fail'
+    if vrt_ds.GetRasterBand(1).GetMaximum() is not None:
+        gdaltest.post_reason('got bad maximum value')
+        print(vrt_ds.GetRasterBand(1).GetMaximum())
+        return 'fail'
+
+    # Now compute source statistics
+    mem_ds.GetRasterBand(1).ComputeStatistics(False)
+
+    if vrt_ds.GetRasterBand(1).GetMinimum() != 74:
+        gdaltest.post_reason('got bad minimum value')
+        print(vrt_ds.GetRasterBand(1).GetMinimum())
+        return 'fail'
+    if vrt_ds.GetRasterBand(1).GetMaximum() != 255:
+        gdaltest.post_reason('got bad maximum value')
+        print(vrt_ds.GetRasterBand(1).GetMaximum())
+        return 'fail'
+
+    mem_ds = None
+    vrt_ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/vrt_read_6.tif')
+    gdal.GetDriverByName('VRT').Delete('/vsimem/vrt_read_6.vrt')
+
+    return 'success'
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
     if ut is None:
@@ -256,6 +294,7 @@ gdaltest_list.append( vrt_read_2 )
 gdaltest_list.append( vrt_read_3 )
 gdaltest_list.append( vrt_read_4 )
 gdaltest_list.append( vrt_read_5 )
+gdaltest_list.append( vrt_read_6 )
 
 if __name__ == '__main__':
 
