@@ -518,6 +518,40 @@ size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, VSILFILE * fp )
     return poFileHandle->Read( pBuffer, nSize, nCount );
 }
 
+
+/************************************************************************/
+/*                       VSIFReadMultiRangeL()                          */
+/************************************************************************/
+
+/**
+ * \brief Read several ranges of bytes from file.
+ *
+ * Reads nRanges objects of panSizes[i] bytes from the indicated file at the
+ * offset panOffsets[i] into the buffer ppData[i].
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory or /vsicurl/.
+ *
+ * @param nRanges number of ranges to read.
+ * @param ppData array of nRanges buffer into which the data should be read
+ *               (ppData[i] must be at list panSizes[i] bytes).
+ * @param panOffsets array of nRanges offsets at which the data should be read.
+ * @param panSizes array of nRanges sizes of objects to read (in bytes).
+ * @param fp file handle opened with VSIFOpenL().
+ *
+ * @return 0 in case of success, -1 otherwise.
+ * @since GDAL 1.9.0
+ */
+
+int VSIFReadMultiRangeL( int nRanges, void ** ppData,
+                         const vsi_l_offset* panOffsets,
+                         const size_t* panSizes, VSILFILE * fp )
+{
+    VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
+
+    return poFileHandle->ReadMultiRange( nRanges, ppData, panOffsets, panSizes );
+}
+
 /************************************************************************/
 /*                             VSIFWriteL()                             */
 /************************************************************************/
@@ -784,4 +818,35 @@ void VSICleanupFileManager()
         delete poManager;
         poManager = NULL;
     }
+}
+
+/************************************************************************/
+/*                           ReadMultiRange()                           */
+/************************************************************************/
+
+int VSIVirtualHandle::ReadMultiRange( int nRanges, void ** ppData,
+                                      const vsi_l_offset* panOffsets,
+                                      const size_t* panSizes )
+{
+    int nRet = 0;
+    vsi_l_offset nCurOffset = Tell();
+    for(int i=0;i<nRanges;i++)
+    {
+        if (Seek(panOffsets[i], SEEK_SET) < 0)
+        {
+            nRet = -1;
+            break;
+        }
+
+        size_t nRead = Read(ppData[i], 1, panSizes[i]);
+        if (panSizes[i] != nRead)
+        {
+            nRet = -1;
+            break;
+        }
+    }
+
+    Seek(nCurOffset, SEEK_SET);
+
+    return nRet;
 }
