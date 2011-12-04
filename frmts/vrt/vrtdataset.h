@@ -81,6 +81,9 @@ public:
                               GDALDataType eBufType, 
                               int nPixelSpace, int nLineSpace ) = 0;
 
+    virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess ) = 0;
+    virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess ) = 0;
+
     virtual CPLErr  XMLInit( CPLXMLNode *psTree, const char * ) = 0;
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath ) = 0;
     
@@ -368,6 +371,9 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
     virtual CPLErr         XMLInit( CPLXMLNode *, const char * );
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath );
 
+    virtual double GetMinimum( int *pbSuccess = NULL );
+    virtual double GetMaximum(int *pbSuccess = NULL );
+
     CPLErr         AddSource( VRTSource * );
     CPLErr         AddSimpleSource( GDALRasterBand *poSrcBand, 
                                     int nSrcXOff=-1, int nSrcYOff=-1, 
@@ -571,6 +577,9 @@ public:
                               GDALDataType eBufType, 
                               int nPixelSpace, int nLineSpace );
 
+    virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
+    virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );
+
     void            DstToSrc( double dfX, double dfY,
                               double &dfXOut, double &dfYOut );
     void            SrcToDst( double dfX, double dfY,
@@ -604,6 +613,10 @@ public:
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType, 
                               int nPixelSpace, int nLineSpace );
+
+    virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
+    virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );
+
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath );
     virtual const char* GetType() { return "AveragedSource"; }
 };
@@ -622,6 +635,10 @@ public:
                              void *pData, int nBufXSize, int nBufYSize, 
                              GDALDataType eBufType, 
                              int nPixelSpace, int nLineSpace );
+
+    virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
+    virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );
+
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath );
     virtual CPLErr XMLInit( CPLXMLNode *, const char * );
     virtual const char* GetType() { return "ComplexSource"; }
@@ -725,6 +742,9 @@ public:
                               void *pData, int nBufXSize, int nBufYSize, 
                               GDALDataType eBufType, 
                               int nPixelSpace, int nLineSpace );
+
+    virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
+    virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );
 
     VRTImageReadFunc    pfnReadFunc;
     void               *pCBData;

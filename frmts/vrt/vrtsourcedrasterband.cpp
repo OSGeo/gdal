@@ -248,6 +248,76 @@ CPLErr VRTSourcedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                       nPixelSize, nPixelSize * nBlockXSize );
 }
 
+
+/************************************************************************/
+/*                             GetMinimum()                             */
+/************************************************************************/
+
+double VRTSourcedRasterBand::GetMinimum( int *pbSuccess )
+{
+    const char *pszValue = NULL;
+
+    if( (pszValue = GetMetadataItem("STATISTICS_MINIMUM")) != NULL )
+    {
+        if( pbSuccess != NULL )
+            *pbSuccess = TRUE;
+
+        return CPLAtofM(pszValue);
+    }
+
+    double dfMin = 0;
+    for( int iSource = 0; iSource < nSources; iSource++ )
+    {
+        int bSuccess = FALSE;
+        double dfSourceMin = papoSources[iSource]->GetMinimum(GetXSize(), GetYSize(), &bSuccess);
+        if (!bSuccess)
+            return GDALRasterBand::GetMinimum(pbSuccess);
+
+        if (iSource == 0 || dfSourceMin < dfMin)
+            dfMin = dfSourceMin;
+    }
+
+    if( pbSuccess != NULL )
+        *pbSuccess = TRUE;
+
+    return dfMin;
+}
+
+/************************************************************************/
+/*                             GetMaximum()                             */
+/************************************************************************/
+
+double VRTSourcedRasterBand::GetMaximum(int *pbSuccess )
+{
+    const char *pszValue = NULL;
+
+    if( (pszValue = GetMetadataItem("STATISTICS_MAXIMUM")) != NULL )
+    {
+        if( pbSuccess != NULL )
+            *pbSuccess = TRUE;
+
+        return CPLAtofM(pszValue);
+    }
+
+    double dfMax = 0;
+    for( int iSource = 0; iSource < nSources; iSource++ )
+    {
+        int bSuccess = FALSE;
+        double dfSourceMax = papoSources[iSource]->GetMaximum(GetXSize(), GetYSize(), &bSuccess);
+        if (!bSuccess)
+            return GDALRasterBand::GetMaximum(pbSuccess);
+
+        if (iSource == 0 || dfSourceMax > dfMax)
+            dfMax = dfSourceMax;
+    }
+
+    if( pbSuccess != NULL )
+        *pbSuccess = TRUE;
+
+    return dfMax;
+}
+
+
 /************************************************************************/
 /*                             AddSource()                              */
 /************************************************************************/
