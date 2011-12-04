@@ -44,6 +44,8 @@ endif
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
+$(OBJ): cpl_vsi_virtual.h
+
 clean:
 	$(RM) *.o $(O_OBJ)
 
