@@ -404,7 +404,12 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         }
 
         if ( bSignedData )
-            CPLDebug( "GDAL_netCDF", "got signed Byte" );
+        {
+            /* set PIXELTYPE=SIGNEDBYTE */
+            /* See http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure */
+            SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE" );    
+            CPLDebug( "GDAL_netCDF", "got signed Byte" );        
+        }
         else 
             CPLDebug( "GDAL_netCDF", "got unsigned Byte" );
 
@@ -579,7 +584,11 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             }
             status=nc_put_att_short( cdfid,nZId, "valid_range",
                                      NC_SHORT, 2, adfValidRange );
-        }
+        }         
+        /* for unsigned byte set PIXELTYPE=SIGNEDBYTE */
+        /* See http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure */
+        if  ( bSignedData ) 
+            SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE" );    
 
     }
 
@@ -935,14 +944,6 @@ CPLErr netCDFRasterBand::CreateBandMetadata( int *paDimIds )
             }
         }
         Taken += result * Sum;
-    }
-
-/* -------------------------------------------------------------------- */
-/*  Special for signed Byte bands: set PIXELTYPE=SIGNEDBYTE             */
-/*  See http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure            */
-/* -------------------------------------------------------------------- */
-    if ( nc_datatype == NC_BYTE && bSignedData) {
-        SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE" );      
     }
 
 /* -------------------------------------------------------------------- */
@@ -4304,7 +4305,7 @@ netCDFDataset::Create( const char * pszFilename,
         pszValue = "";
     if( eType == GDT_Byte && ( ! EQUAL(pszValue,"SIGNEDBYTE") ) )
         poDS->bSignedData = FALSE;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Add Conventions, GDAL info and history                          */
 /* -------------------------------------------------------------------- */
@@ -4359,7 +4360,7 @@ CPLErr  NCDFCopyBand( GDALRasterBand *poSrcBand, GDALRasterBand *poBand,
 
 
 /************************************************************************/
-/*                            Create()                                  */
+/*                            CreateCopy()                              */
 /************************************************************************/
 
 GDALDataset*

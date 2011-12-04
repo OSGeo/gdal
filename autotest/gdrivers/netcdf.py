@@ -899,6 +899,7 @@ def netcdf_25():
 
     return netcdf_check_vars( 'tmp/netcdf_23.nc', vals_global, vals_band )
 
+ 
 ###############################################################################
 
 ###############################################################################
@@ -936,16 +937,17 @@ gdaltest_list = [
 #  file creation tests
 
 init_list = [ \
-    ('byte.tif', 1, 4672, None),
-    ('int16.tif', 1, 4672, None),
-    ('int32.tif', 1, 4672, None),
-    ('float32.tif', 1, 4672, None),
-    ('float64.tif', 1, 4672, None)
+    ('byte.tif', 1, 4672, None, []),
+    ('byte_signed.tif', 1, 4672, None, ['PIXELTYPE=SIGNEDBYTE']),
+    ('int16.tif', 1, 4672, None, []),
+    ('int32.tif', 1, 4672, None, []),
+    ('float32.tif', 1, 4672, None, []),
+    ('float64.tif', 1, 4672, None, [])
 ]
 
 # Some tests we don't need to do for each type.
 item = init_list[0]
-ut = gdaltest.GDALTest( 'netcdf', item[0], item[1], item[2] )
+ut = gdaltest.GDALTest( 'netcdf', item[0], item[1], item[2], options=item[4] )
 gdaltest_list.append( (ut.testSetGeoTransform, item[0]) )
 gdaltest_list.append( (ut.testSetProjection, item[0]) )
 #SetMetadata() not supported 
@@ -953,7 +955,7 @@ gdaltest_list.append( (ut.testSetProjection, item[0]) )
 
 # Others we do for each pixel type. 
 for item in init_list:
-    ut = gdaltest.GDALTest( 'netcdf', item[0], item[1], item[2] )
+    ut = gdaltest.GDALTest( 'netcdf', item[0], item[1], item[2], options=item[4] )
     if ut is None:
         print( 'GTiff tests skipped' )
     gdaltest_list.append( (ut.testCreateCopy, item[0]) )
