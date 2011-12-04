@@ -807,6 +807,61 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 }
 
 /************************************************************************/
+/*                             GetMinimum()                             */
+/************************************************************************/
+
+double VRTSimpleSource::GetMinimum( int nXSize, int nYSize, int *pbSuccess )
+{
+    // The window we will actually request from the source raster band.
+    int nReqXOff, nReqYOff, nReqXSize, nReqYSize;
+
+    // The window we will actual set _within_ the pData buffer.
+    int nOutXOff, nOutYOff, nOutXSize, nOutYSize;
+
+    if( !GetSrcDstWindow( 0, 0, nXSize, nYSize,
+                          nXSize, nYSize,
+                          &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
+                          &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) ||
+        nReqXOff != 0 || nReqYOff != 0 ||
+        nReqXSize != poRasterBand->GetXSize() ||
+        nReqYSize != poRasterBand->GetYSize())
+    {
+        *pbSuccess = FALSE;
+        return 0;
+    }
+
+    return poRasterBand->GetMinimum(pbSuccess);
+}
+
+/************************************************************************/
+/*                             GetMaximum()                             */
+/************************************************************************/
+
+double VRTSimpleSource::GetMaximum( int nXSize, int nYSize, int *pbSuccess )
+{
+    // The window we will actually request from the source raster band.
+    int nReqXOff, nReqYOff, nReqXSize, nReqYSize;
+
+    // The window we will actual set _within_ the pData buffer.
+    int nOutXOff, nOutYOff, nOutXSize, nOutYSize;
+
+    if( !GetSrcDstWindow( 0, 0, nXSize, nYSize,
+                          nXSize, nYSize,
+                          &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
+                          &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) ||
+        nReqXOff != 0 || nReqYOff != 0 ||
+        nReqXSize != poRasterBand->GetXSize() ||
+        nReqYSize != poRasterBand->GetYSize())
+    {
+        *pbSuccess = FALSE;
+        return 0;
+    }
+
+    return poRasterBand->GetMaximum(pbSuccess);
+}
+
+
+/************************************************************************/
 /*                          DatasetRasterIO()                           */
 /************************************************************************/
 
@@ -1040,6 +1095,26 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     VSIFree( pafSrc );
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                             GetMinimum()                             */
+/************************************************************************/
+
+double VRTAveragedSource::GetMinimum( int nXSize, int nYSize, int *pbSuccess )
+{
+    *pbSuccess = FALSE;
+    return 0;
+}
+
+/************************************************************************/
+/*                             GetMaximum()                             */
+/************************************************************************/
+
+double VRTAveragedSource::GetMaximum( int nXSize, int nYSize, int *pbSuccess )
+{
+    *pbSuccess = FALSE;
+    return 0;
 }
 
 /************************************************************************/
@@ -1436,6 +1511,38 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 }
 
 /************************************************************************/
+/*                             GetMinimum()                             */
+/************************************************************************/
+
+double VRTComplexSource::GetMinimum( int nXSize, int nYSize, int *pbSuccess )
+{
+    if (dfScaleOff == 0.0 && dfScaleRatio == 1.0 &&
+        nLUTItemCount == 0 && nColorTableComponent == 0)
+    {
+        return VRTSimpleSource::GetMinimum(nXSize, nYSize, pbSuccess);
+    }
+
+    *pbSuccess = FALSE;
+    return 0;
+}
+
+/************************************************************************/
+/*                             GetMaximum()                             */
+/************************************************************************/
+
+double VRTComplexSource::GetMaximum( int nXSize, int nYSize, int *pbSuccess )
+{
+    if (dfScaleOff == 0.0 && dfScaleRatio == 1.0 &&
+        nLUTItemCount == 0 && nColorTableComponent == 0)
+    {
+        return VRTSimpleSource::GetMaximum(nXSize, nYSize, pbSuccess);
+    }
+
+    *pbSuccess = FALSE;
+    return 0;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                          VRTFuncSource                               */
 /* ==================================================================== */
@@ -1505,6 +1612,26 @@ VRTFuncSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                   "VRTFuncSource::RasterIO() - Irregular request." );
         return CE_Failure;
     }
+}
+
+/************************************************************************/
+/*                             GetMinimum()                             */
+/************************************************************************/
+
+double VRTFuncSource::GetMinimum( int nXSize, int nYSize, int *pbSuccess )
+{
+    *pbSuccess = FALSE;
+    return 0;
+}
+
+/************************************************************************/
+/*                             GetMaximum()                             */
+/************************************************************************/
+
+double VRTFuncSource::GetMaximum( int nXSize, int nYSize, int *pbSuccess )
+{
+    *pbSuccess = FALSE;
+    return 0;
 }
 
 /************************************************************************/
