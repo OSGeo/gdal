@@ -563,7 +563,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         CPLDebug( "GDAL_netCDF", "adding valid_range attributes for Byte Band" );
         /* For unsigned NC_BYTE (except NC4 format) */
         /* add valid_range and _Unsigned ( defined in CF-1 and NUG ) */
-        if ( (eDataType == NC_BYTE) && (poNCDFDS->nFormat != NCDF_FORMAT_NC4) ) {
+        if ( (nc_datatype == NC_BYTE) && (poNCDFDS->nFormat != NCDF_FORMAT_NC4) ) {
             short int adfValidRange[2]; 
             if  ( bSignedData ) {
                 adfValidRange[0] = -128;
@@ -1523,7 +1523,7 @@ void netCDFDataset::SetProjectionFromVar( int var )
     double      adfTempGeoTransform[6];
     char        *pszTempProjection;
 
-    int bGotGeoTransform;
+    int bGotGeoTransform = FALSE;
 
     CPLDebug( "GDAL_netCDF", "\n=====\nSetProjectionFromVar( %d )\n", var );
 
