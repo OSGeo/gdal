@@ -3572,10 +3572,6 @@ int netCDFDataset::IdentifyFormat( GDALOpenInfo * poOpenInfo, bool bCheckExt = T
 /*      Does this appear to be a netcdf file? If so, which format?      */
 /*      http://www.unidata.ucar.edu/software/netcdf/docs/faq.html#fv1_5 */
 /* -------------------------------------------------------------------- */
-    // CPLDebug( "GDAL_netCDF", "netCDFDataset::IdentifyFormat() nHeaderBytes=%d, header=[%s]",
-    //           poOpenInfo->nHeaderBytes, (char*)poOpenInfo->pabyHeader );
-    // #undef HAVE_HDF5
-    // #undef HAVE_HDF4
 
     if( EQUALN(poOpenInfo->pszFilename,"NETCDF:",7) )
         return NCDF_FORMAT_UNKNOWN;
@@ -3586,7 +3582,6 @@ int netCDFDataset::IdentifyFormat( GDALOpenInfo * poOpenInfo, bool bCheckExt = T
     else if ( EQUALN((char*)poOpenInfo->pabyHeader,"CDF\002",4) )
         return NCDF_FORMAT_NC2;
     else if ( EQUALN((char*)poOpenInfo->pabyHeader,"\211HDF\r\n\032\n",8) ) {
-        // CPLDebug( "GDAL_netCDF", "netCDFDataset::IdentifyFormat() detected HDF5/netcdf file" );
         /* Requires netCDF-4/HDF5 support in libnetcdf (not just libnetcdf-v4).
            If HDF5 is not supported in GDAL, this driver will try to open the file 
            Else, make sure this driver does not try to open HDF5 files 
@@ -3613,7 +3608,6 @@ int netCDFDataset::IdentifyFormat( GDALOpenInfo * poOpenInfo, bool bCheckExt = T
 
     }
     else if ( EQUALN((char*)poOpenInfo->pabyHeader,"\016\003\023\001",4) ) {
-        // CPLDebug( "GDAL_netCDF", "netCDFDataset::IdentifyFormat() detected HDF4 file" );
         /* Requires HDF4 support in libnetcdf, but if HF4 is supported by GDAL don't try to open. */
         /* If user really wants to open with this driver, use NETCDF:file.hdf syntax. */
 
@@ -3633,8 +3627,6 @@ int netCDFDataset::IdentifyFormat( GDALOpenInfo * poOpenInfo, bool bCheckExt = T
 #endif
     }
 
-    // CPLDebug( "GDAL_netCDF", "netCDFDataset::IdentifyFormat() did not detect a netcdf file" );
-
     return NCDF_FORMAT_NONE;
 } 
 
@@ -3649,7 +3641,6 @@ int netCDFDataset::Identify( GDALOpenInfo * poOpenInfo )
         return TRUE;
     }
     int nTmpFormat = IdentifyFormat( poOpenInfo );
-    CPLDebug( "GDAL_netCDF", "netCDFDataset::Identify(), detected format %d", nTmpFormat );
     if( NCDF_FORMAT_NC  == nTmpFormat ||
         NCDF_FORMAT_NC2  == nTmpFormat ||
         NCDF_FORMAT_NC4  == nTmpFormat ||
@@ -3696,7 +3687,6 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( ! EQUALN(poOpenInfo->pszFilename,"NETCDF:",7) ) {
         nTmpFormat = IdentifyFormat( poOpenInfo );
-        CPLDebug( "GDAL_netCDF", "netCDFDataset::Open(), detected format %d", nTmpFormat );
         /* Note: not calling Identify() directly, because we want the file type */
         /* Only support NCDF_FORMAT* formats */
         if( ! ( NCDF_FORMAT_NC  == nTmpFormat ||
@@ -4218,8 +4208,8 @@ GDAL_NETCDF_BOTTOMUP=YES/NO (default:YES) -> this sets the default of WRITE_BOTT
 
 netCDFDataset *
 netCDFDataset::CreateLL( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
-                                char ** papszOptions )
+                         int nXSize, int nYSize, int nBands,
+                         char ** papszOptions )
 {
     int status = NC_NOERR;
     netCDFDataset *poDS;
@@ -4424,6 +4414,9 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poDS = netCDFDataset::CreateLL( pszFilename,
                                     nXSize, nYSize, nBands,
                                     papszOptions );
+    if ( ! poDS ) 
+        return NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Copy global metadata                                            */
 /*      Add Conventions, GDAL info and history                          */
@@ -4432,7 +4425,6 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     NCDFAddGDALHistory( poDS->cdfid, pszFilename,
                         poSrcDS->GetMetadataItem("NC_GLOBAL#history",""),
                         "CreateCopy" );
-
 
     pfnProgress( 0.1, NULL, pProgressData );
 
@@ -4835,8 +4827,6 @@ void GDALRegister_netCDF()
  
         /* set pfns and register driver */
         poDriver->pfnOpen = netCDFDataset::Open;
-        // poDriver->pfnCreateCopy = NCDFCreateCopy;
-        // poDriver->pfnCreateCopy = NCDFCreateCopy3;
         poDriver->pfnCreateCopy = netCDFDataset::CreateCopy;
         poDriver->pfnCreate = netCDFDataset::Create;
         poDriver->pfnIdentify = netCDFDataset::Identify;
