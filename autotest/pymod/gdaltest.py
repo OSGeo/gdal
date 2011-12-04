@@ -133,17 +133,22 @@ def run_tests( test_list ):
 
 ###############################################################################
 
-def get_lineno_2framesback():
+def get_lineno_2framesback( frames ):
     try:
         import inspect
-        return inspect.currentframe().f_back.f_back.f_lineno
+        frame = inspect.currentframe()
+        while frames > 0:
+            frame = frame.f_back
+            frames = frames-1
+
+        return frame.f_lineno
     except:
         return -1
 
 ###############################################################################
 
-def post_reason( msg ):
-    lineno = get_lineno_2framesback()
+def post_reason( msg, frames=2 ):
+    lineno = get_lineno_2framesback( frames )
     global reason
 
     if lineno >= 0:
