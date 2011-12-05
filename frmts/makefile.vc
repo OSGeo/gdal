@@ -164,6 +164,10 @@ EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_pdf
 EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_webp
 !ENDIF
 
+!IFDEF GTA_CFLAGS
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_gta
+!ENDIF
+
 default:	o\gdalallregister.obj subdirs
 
 list:

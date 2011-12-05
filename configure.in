@@ -724,6 +724,44 @@ if test "$PNG_SETTING" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Check if GTA library is available.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH([gta],[  --with-gta[=ARG]        Include GTA support (ARG=no or libgta tree prefix)],,)
+
+if test "$with_gta" = "no" ; then
+
+  GTA_SETTING=no
+
+  echo "GTA support disabled."
+
+elif test "$with_gta" = "yes" -o "$with_gta" = "" ; then
+
+  AC_CHECK_LIB([gta], [gta_version], [GTA_SETTING=yes], [GTA_SETTING=no],)
+
+  if test "$GTA_SETTING" = "yes" ; then
+    LIBS="-lgta $LIBS"
+    echo "using pre-installed libgta."
+  else
+    echo "libgta not found - GTA support disabled"
+  fi
+
+else
+
+  GTA_SETTING=yes
+  LIBS="-L$with_gta -L$with_gta/lib -lgta $LIBS"
+  EXTRA_INCLUDES="-I$with_gta -I$with_gta/include $EXTRA_INCLUDES"
+
+  echo "using libgta from $with_gta."
+fi
+
+AC_SUBST([GTA_SETTING], [$GTA_SETTING])
+
+if test "$GTA_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="gta $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl Select PCIDSK options.
 dnl ---------------------------------------------------------------------------
 
@@ -3466,6 +3504,7 @@ LOC_MSG([  GRASS support:             ${GRASS_SETTING}])
 LOC_MSG([  CFITSIO support:           ${FITS_SETTING}])
 LOC_MSG([  PCRaster support:          ${PCRASTER_SETTING}])
 LOC_MSG([  LIBPNG support:            ${PNG_SETTING}])
+LOC_MSG([  GTA support:               ${GTA_SETTING}]) 
 LOC_MSG([  LIBTIFF support:           ${TIFF_SETTING} (BigTIFF=${HAVE_BIGTIFF})])
 LOC_MSG([  LIBGEOTIFF support:        ${GEOTIFF_SETTING}])
 LOC_MSG([  LIBJPEG support:           ${JPEG_SETTING}])
