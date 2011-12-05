@@ -61,7 +61,7 @@ def ogr_xls_1():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if ds.GetLayerCount() != 3:
+    if ds.GetLayerCount() != 1:
         gdaltest.post_reason('bad layer count')
         return 'fail'
 
