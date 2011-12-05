@@ -317,6 +317,10 @@ GTARasterBand::GTARasterBand( GTADataset *poDS, int nBand )
     // Data type
     switch( poDS->oHeader.component_type( nBand-1 ) )
     {
+    case gta::int8:
+        eDataType = GDT_Byte;
+        SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
+        break;
     case gta::uint8:
         eDataType = GDT_Byte;
         break;
@@ -1081,6 +1085,7 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
     for( int iBand = 0; iBand < poDS->nBands; iBand++ )
     {
         if( poDS->oHeader.component_type(iBand) != gta::uint8
+                && poDS->oHeader.component_type(iBand) != gta::int8
                 && poDS->oHeader.component_type(iBand) != gta::uint16
                 && poDS->oHeader.component_type(iBand) != gta::int16
                 && poDS->oHeader.component_type(iBand) != gta::uint32
@@ -1327,8 +1332,14 @@ GTACreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         switch( eDT )
         {
         case GDT_Byte:
-            peGTATypes[i] = gta::uint8;
+        {
+            const char *pszPixelType = poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+            if (pszPixelType && EQUAL(pszPixelType, "SIGNEDBYTE"))
+                peGTATypes[i] = gta::int8;
+            else
+                peGTATypes[i] = gta::uint8;
             break;
+        }
         case GDT_UInt16:
             peGTATypes[i] = gta::uint16;
             break;
