@@ -129,6 +129,10 @@ int OGRXLSDataSource::Open( const char * pszFilename, int bUpdateIn)
         if (freexl_worksheet_dimensions(xlshandle, &nRows, &nCols) != FREEXL_OK)
             return FALSE;
 
+        /* Skip empty sheets */
+        if (nRows == 0)
+            continue;
+
         papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
         papoLayers[nLayers ++] = new OGRXLSLayer(this, pszSheetname, i, (int)nRows, nCols);
     }
