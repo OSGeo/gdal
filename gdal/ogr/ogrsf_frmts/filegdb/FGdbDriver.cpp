@@ -79,6 +79,15 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
 
     long hr;
 
+    /* Check that the filename is really a directory, to avoid confusion with */
+    /* Garmin MapSource - gdb format which can be a problem when the FileGDB */
+    /* driver is loaded as a plugin, and loaded before the GPSBabel driver */
+    /* (http://trac.osgeo.org/osgeo4w/ticket/245) */
+    VSIStatBuf stat;
+    if( CPLStat( pszFilename, &stat ) != 0 || !VSI_ISDIR(stat.st_mode) )
+    {
+        return NULL;
+    }
 
     Geodatabase* pGeoDatabase = new Geodatabase;
 
