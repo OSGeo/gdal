@@ -41,6 +41,7 @@ gdaltest_list = []
 
 init_list = [ \
     ('byte.tif', 1, 4672, []),
+    ('byte_signed.tif', 1, 4672, []),
     ('int16.tif', 1, 4672, []),
     ('uint16.tif', 1, 4672, []),
     ('int32.tif', 1, 4672, []),
@@ -260,7 +261,11 @@ def gta_5():
     return 'success'
 
 for item in init_list:
-    ut = gdaltest.GDALTest( 'GTA', '../../gcore/data/' + item[0], item[1], item[2], options = item[3] )
+    if item[0] == 'byte_signed.tif':
+        filename = item[0]
+    else:
+        filename = '../../gcore/data/' + item[0]
+    ut = gdaltest.GDALTest( 'GTA', filename, item[1], item[2], options = item[3] )
     if ut is None:
         print( 'GTA tests skipped' )
         sys.exit()
