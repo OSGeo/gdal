@@ -600,16 +600,22 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
                 poFeature->SetGeometryDirectly( poGeom );
         }
 
-        if ( (poFeatureDefn->GetFieldDefn(iAttr)->GetType() == OFTReal) ||
-             (poFeatureDefn->GetFieldDefn(iAttr)->GetType() == OFTInteger) )
+        OGRFieldType eFieldType = poFeatureDefn->GetFieldDefn(iAttr)->GetType();
+        if ( eFieldType == OFTReal || eFieldType == OFTInteger )
         {
+            if (chDelimiter == ';' && eFieldType == OFTReal)
+            {
+                char* chComma = strchr(papszTokens[iAttr], ',');
+                if (chComma)
+                    *chComma = '.';
+            }
             eType = CPLGetValueType(papszTokens[iAttr]);
             if ( (papszTokens[iAttr][0] != '\0') &&
                  ( eType == CPL_VALUE_INTEGER ||
                    eType == CPL_VALUE_REAL ) )
                 poFeature->SetField( iAttr, CPLAtof(papszTokens[iAttr]) );
         }
-        else if (poFeatureDefn->GetFieldDefn(iAttr)->GetType() != OFTString)
+        else if (eFieldType != OFTString)
         {
             if (papszTokens[iAttr][0] != '\0')
                 poFeature->SetField( iAttr, papszTokens[iAttr] );
