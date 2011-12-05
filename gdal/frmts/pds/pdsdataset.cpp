@@ -885,9 +885,9 @@ int PDSDataset::ParseImage( CPLString osPrefix )
     else if( EQUAL(szLayout,"BSQ") )
     {
         nPixelOffset = nItemSize;
-        nBandOffset = nLineOffset * nRows;
         nLineOffset = ((nPixelOffset * nCols + record_bytes - 1)/record_bytes)
             * record_bytes;
+        nBandOffset = nLineOffset * nRows;
     }
     else /* assume BIL */
     {
