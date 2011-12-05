@@ -1044,6 +1044,10 @@ int VSICurlHandle::ReadMultiRange( int nRanges, void ** ppData,
     int iPart = 0;
     char* pszEOL;
 
+/* -------------------------------------------------------------------- */
+/*      No multipart if a single range has been requested               */
+/* -------------------------------------------------------------------- */
+
     if (nMergedRanges == 1)
     {
         int nAccSize = 0;
@@ -1060,13 +1064,20 @@ int VSICurlHandle::ReadMultiRange( int nRanges, void ** ppData,
         goto end;
     }
 
-    pszBoundary = strstr(sWriteFuncHeaderData.pBuffer, "Content-Type: multipart/byteranges; boundary=");
+/* -------------------------------------------------------------------- */
+/*      Extract boundary name                                           */
+/* -------------------------------------------------------------------- */
+
+    pszBoundary = strstr(sWriteFuncHeaderData.pBuffer,
+                         "Content-Type: multipart/byteranges; boundary=");
     if( pszBoundary == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Could not find '%s'",
                   "Content-Type: multipart/byteranges; boundary=" );
         goto end;
     }
+    
+    pszBoundary += strlen( "Content-Type: multipart/byteranges; boundary=" );
 
     pszEOL = strchr(pszBoundary, '\r');
     if (pszEOL)
@@ -1075,8 +1086,17 @@ int VSICurlHandle::ReadMultiRange( int nRanges, void ** ppData,
     if (pszEOL)
         *pszEOL = 0;
 
+    /* Remove optional double-quote character around boundary name */
+    if (pszBoundary[0] == '"')
+    {
+        pszBoundary ++;
+        char* pszLastDoubleQuote = strrchr(pszBoundary, '"');
+        if (pszLastDoubleQuote)
+            *pszLastDoubleQuote = 0;
+    }
+
     osBoundary = "--";
-    osBoundary += pszBoundary + strlen( "Content-Type: multipart/byteranges; boundary=" );
+    osBoundary += pszBoundary;
 
 /* -------------------------------------------------------------------- */
 /*      Find the start of the first chunk.                              */
