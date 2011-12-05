@@ -529,6 +529,9 @@ size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, VSILFILE * fp )
  * Reads nRanges objects of panSizes[i] bytes from the indicated file at the
  * offset panOffsets[i] into the buffer ppData[i].
  *
+ * Ranges must be sorted in ascending start offset, and must not overlap each
+ * other.
+ *
  * This method goes through the VSIFileHandler virtualization and may
  * work on unusual filesystems such as in memory or /vsicurl/.
  *
