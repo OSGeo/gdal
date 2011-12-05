@@ -739,6 +739,7 @@ TIFF_SETTING
 PCIDSK_INCLUDE
 PCIDSK_LIB
 PCIDSK_SETTING
+GTA_SETTING
 PNG_SETTING
 PCRASTER_SETTING
 FITS_SETTING
@@ -874,6 +875,7 @@ with_libgrass
 with_cfitsio
 with_pcraster
 with_png
+with_gta
 with_pcidsk
 with_libtiff
 with_geotiff
@@ -1610,6 +1612,7 @@ Optional Packages:
   --with-cfitsio=ARG    Include FITS support (ARG=no or libcfitsio path)
   --with-pcraster=ARG   Include PCRaster (libcsf) support (ARG=internal, no or path)
   --with-png=ARG        Include PNG support (ARG=internal, no or path)
+  --with-gta=ARG        Include GTA support (ARG=no or libgta tree prefix)
   --with-pcidsk=ARG     Path to external PCIDSK SDK, or internal (default), or old
   --with-libtiff=ARG    Libtiff library to use (ARG=internal, yes or path)
   --with-geotiff=ARG    Libgeotiff library to use (ARG=internal, yes or path)
@@ -19494,6 +19497,88 @@ fi
 
 
 
+# Check whether --with-gta was given.
+if test "${with_gta+set}" = set; then :
+  withval=$with_gta;
+fi
+
+
+if test "$with_gta" = "no" ; then
+
+  GTA_SETTING=no
+
+  echo "GTA support disabled."
+
+elif test "$with_gta" = "yes" -o "$with_gta" = "" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gta_version in -lgta" >&5
+$as_echo_n "checking for gta_version in -lgta... " >&6; }
+if ${ac_cv_lib_gta_gta_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgta  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gta_version ();
+int
+main ()
+{
+return gta_version ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_gta_gta_version=yes
+else
+  ac_cv_lib_gta_gta_version=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gta_gta_version" >&5
+$as_echo "$ac_cv_lib_gta_gta_version" >&6; }
+if test "x$ac_cv_lib_gta_gta_version" = xyes; then :
+  GTA_SETTING=yes
+else
+  GTA_SETTING=no
+fi
+
+
+  if test "$GTA_SETTING" = "yes" ; then
+    LIBS="-lgta $LIBS"
+    echo "using pre-installed libgta."
+  else
+    echo "libgta not found - GTA support disabled"
+  fi
+
+else
+
+  GTA_SETTING=yes
+  LIBS="-L$with_gta -L$with_gta/lib -lgta $LIBS"
+  EXTRA_INCLUDES="-I$with_gta -I$with_gta/include $EXTRA_INCLUDES"
+
+  echo "using libgta from $with_gta."
+fi
+
+GTA_SETTING=$GTA_SETTING
+
+
+if test "$GTA_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="gta $OPT_GDAL_FORMATS"
+fi
+
+
+
 # Check whether --with-pcidsk was given.
 if test "${with_pcidsk+set}" = set; then :
   withval=$with_pcidsk;
@@ -29700,6 +29785,9 @@ echo "  PCRaster support:          ${PCRASTER_SETTING}"
 
 
 echo "  LIBPNG support:            ${PNG_SETTING}"
+
+
+echo "  GTA support:               ${GTA_SETTING}"
 
 
 echo "  LIBTIFF support:           ${TIFF_SETTING} (BigTIFF=${HAVE_BIGTIFF})"

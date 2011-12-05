@@ -143,6 +143,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_PNG();
 #endif
 
+#ifdef FRMT_gta
+    GDALRegister_GTA();
+#endif
+
 #ifdef FRMT_jpeg
     GDALRegister_JPEG();
 #endif
