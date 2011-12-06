@@ -931,6 +931,43 @@ def tiff_read_online_1():
 
     return 'success'
 
+###############################################################################
+# Use GTIFF_DIRECT_IO=YES option combined with /vsicurl to test for multi-range
+# support
+
+def tiff_read_online_2():
+
+    if gdal.GetDriverByName('HTTP') is None:
+        return 'skip'
+
+    gdal.SetConfigOption('GTIFF_DIRECT_IO', 'YES')
+    gdal.SetConfigOption('CPL_VSIL_CURL_ALLOWED_EXTENSIONS', '.tif')
+    gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', 'EMPTY_DIR')
+    ds = gdal.Open('/vsicurl/http://download.osgeo.org/gdal/data/gtiff/utm.tif')
+    gdal.SetConfigOption('GTIFF_DIRECT_IO', None)
+    gdal.SetConfigOption('CPL_VSIL_CURL_ALLOWED_EXTENSIONS', None)
+    gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', None)
+
+    if ds is None:
+        gdaltest.post_reason('could not open dataset')
+        return 'fail'
+
+    # Read subsampled data
+    subsampled_data = ds.ReadRaster(0, 0, 512, 512, 128, 128)
+    ds = None
+
+    ds = gdal.GetDriverByName('MEM').Create('', 128,128)
+    ds.WriteRaster(0, 0, 128, 128, subsampled_data)
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    if cs != 54935:
+        gdaltest.post_reason('wrong checksum')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################################
 
 for item in init_list:
@@ -973,6 +1010,7 @@ gdaltest_list.append( (tiff_read_tag_without_null_byte) )
 gdaltest_list.append( (tiff_read_buggy_packbits) )
 gdaltest_list.append( (tiff_read_rpc_txt) )
 gdaltest_list.append( (tiff_read_online_1) )
+gdaltest_list.append( (tiff_read_online_2) )
 
 if __name__ == '__main__':
 
