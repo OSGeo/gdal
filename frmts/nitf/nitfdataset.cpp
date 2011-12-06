@@ -4505,9 +4505,9 @@ static void NITFPatchImageLength( const char *pszFilename,
     VSIFWriteL( (void *) osLen.c_str(), 1, 10, fpVSIL );
 
 /* -------------------------------------------------------------------- */
-/*      Update COMRAT, the compression rate variable.  It is a bit      */
-/*      hard to know right here whether we have an IGEOLO segment,      */
-/*      so the COMRAT will either be at offset 778 or 838.              */
+/*      Update COMRAT, the compression rate variable.  We have to       */
+/*      take into account the presence of graphic and text segments,    */
+/*      the optional presence of IGEOLO and ICOM to find its position.  */
 /* -------------------------------------------------------------------- */
     char szICBuf[2];
     char achNUM[4]; // buffer for segment size.  3 digits plus null character
@@ -4539,12 +4539,12 @@ static void NITFPatchImageLength( const char *pszFilename,
     if (chICORDS != ' ')
         VSIFSeekL( fpVSIL, 60, SEEK_CUR); /* skip IGEOLO */
 
-    /* Read ICOM */
-    char achICOM[2];
-    VSIFReadL( achICOM, 1, 1, fpVSIL );
-    achICOM[1] = 0;
-    int nICOM = atoi(achICOM);
-    VSIFSeekL( fpVSIL, nICOM * 80, SEEK_CUR); /* skip comments */
+    /* Read NICOM */
+    char achNICOM[2];
+    VSIFReadL( achNICOM, 1, 1, fpVSIL );
+    achNICOM[1] = 0;
+    int nNICOM = atoi(achNICOM);
+    VSIFSeekL( fpVSIL, nNICOM * 80, SEEK_CUR); /* skip comments */
 
     /* Read IC */
     VSIFReadL( szICBuf, 2, 1, fpVSIL );
