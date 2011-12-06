@@ -4532,18 +4532,23 @@ static void NITFPatchImageLength( const char *pszFilename,
 
     int nAdditionalOffset = nGS * 10 + nTS * 9;
 
-    // 779-2 is the offset for IC without taking into account of the size
-    // changes as the result of additional text and graphics segments.
-    // 839-2 is the offset if IGOLO exist.
+    /* Read ICORDS */
+    VSIFSeekL( fpVSIL, 775 + nAdditionalOffset , SEEK_SET );
+    char chICORDS;
+    VSIFReadL( &chICORDS, 1, 1, fpVSIL );
+    if (chICORDS != ' ')
+        VSIFSeekL( fpVSIL, 60, SEEK_CUR); /* skip IGEOLO */
 
-    VSIFSeekL( fpVSIL, 779 -2 + nAdditionalOffset , SEEK_SET );
+    /* Read ICOM */
+    char achICOM[2];
+    VSIFReadL( achICOM, 1, 1, fpVSIL );
+    achICOM[1] = 0;
+    int nICOM = atoi(achICOM);
+    VSIFSeekL( fpVSIL, nICOM * 80, SEEK_CUR); /* skip comments */
+
+    /* Read IC */
     VSIFReadL( szICBuf, 2, 1, fpVSIL );
-    if( !EQUALN(szICBuf,pszIC,2) )
-    {
-        VSIFSeekL( fpVSIL, 839 -2 + nAdditionalOffset, SEEK_SET );
-        VSIFReadL( szICBuf, 2, 1, fpVSIL );
-    }
-    
+
     /* The following line works around a "feature" of *BSD libc (at least PC-BSD 7.1) */
     /* that makes the position of the file offset unreliable when executing a */
     /* "seek, read and write" sequence. After the read(), the file offset seen by */
