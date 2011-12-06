@@ -500,15 +500,8 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 
 # Uncomment for libgta support
 #
-# Note: Currently there is no MSVC makefile to build libgta.
-# Only mingw builds exist, but they don't include MSVC .lib
-# Here's the procedure I've followed to generate it (from root of libgta source tree)
-# cl /c src/gta_fake.c /Isrc /Isrc/gta /DGTA_BUILD /DDLL_EXPORT
-# link /dll gta_fake.obj /out:libgta-0.dll /implib:gta_i.lib
-# where gta_fake.c is a C file containing a dummy implementation of each of the gta.h public symbols ( {return;} or {return 0;} )
-#
 #GTA_CFLAGS = -IC:/gdal_trunk/libgta-1.0.0-w32/include -IC:/gdal_trunk/libgta-1.0.0-w32/include/gta
-#GTA_LIBS = C:/gdal_trunk/libgta-1.0.0-w32/lib/gta_i.lib
+#GTA_LIBS = C:/gdal_trunk/libgta-1.0.0-w32/lib/libgta.dll.a
 
 # Any extra libraries needed on this platform?
 ADD_LIBS	= 
