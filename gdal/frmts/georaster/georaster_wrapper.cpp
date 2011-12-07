@@ -568,16 +568,6 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
       CPLDebug("GEOR","eModelCoordLocation = MCL_CENTER");
     }
 
-    CPLDebug("GEOR","Binds( %ld, %d, %f, %f, %f, %f, %f, %f )", 
-                  poGRW->nSRID,
-                  poGRW->eModelCoordLocation,
-                  poGRW->dfXCoefficient[0],
-                  poGRW->dfXCoefficient[1],
-                  poGRW->dfXCoefficient[2],
-                  poGRW->dfYCoefficient[0],
-                  poGRW->dfYCoefficient[1],
-                  poGRW->dfYCoefficient[2] );
-
     //  -------------------------------------------------------------------
     //  Apply ULTCoordinate
     //  -------------------------------------------------------------------
@@ -1277,10 +1267,10 @@ void GeoRasterWrapper::GetRasterInfo( void )
     //  -------------------------------------------------------------------
 
     anULTCoordinate[0] = atoi(CPLGetXMLValue( 
-            phMetadata, "rasterInfo.ULTCoordinate.row", "0"));
+            phMetadata, "rasterInfo.ULTCoordinate.column", "0"));
 
     anULTCoordinate[1] = atoi(CPLGetXMLValue( 
-            phMetadata, "rasterInfo.ULTCoordinate.column", "0"));
+            phMetadata, "rasterInfo.ULTCoordinate.row", "0"));
 
     anULTCoordinate[2] = atoi(CPLGetXMLValue( 
             phMetadata, "rasterInfo.ULTCoordinate.band", "0"));
