@@ -273,7 +273,8 @@ public:
     HFAEntry	*GetNext();
     HFAEntry    *GetNamedChild( const char * );
     std::vector<HFAEntry*> FindChildren( const char *pszName, 
-                                         const char *pszType );
+                                         const char *pszType,
+                                         int nRecLevel = 0);
 
     GInt32	GetIntField( const char *, CPLErr * = NULL );
     double	GetDoubleField( const char *, CPLErr * = NULL );
