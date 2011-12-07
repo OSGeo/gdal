@@ -526,6 +526,8 @@ static int TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
     OGRFeature  *papoFeatures[5], *poFeature = NULL;
     int         iFeature;
 
+    memset(papoFeatures, 0, sizeof(papoFeatures));
+
     poLayer->SetSpatialFilter( NULL );
     
     if( poLayer->GetFeatureCount() < 5 )
@@ -546,7 +548,12 @@ static int TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
     for( iFeature = 0; iFeature < 5; iFeature++ )
     {
         papoFeatures[iFeature] = poLayer->GetNextFeature();
-        CPLAssert( papoFeatures[iFeature] != NULL );
+        if( papoFeatures[iFeature] == NULL )
+        {
+            bRet = FALSE;
+            printf( "ERROR: Cannot get feature %d.\n", iFeature );
+            goto end;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -655,8 +662,10 @@ static int TestOGRLayerRandomWrite( OGRLayer *poLayer )
     int         iFeature;
     long        nFID2, nFID5;
 
+    memset(papoFeatures, 0, sizeof(papoFeatures));
+
     poLayer->SetSpatialFilter( NULL );
-    
+
     if( poLayer->GetFeatureCount() < 5 )
     {
         if( bVerbose )
@@ -683,7 +692,12 @@ static int TestOGRLayerRandomWrite( OGRLayer *poLayer )
     for( iFeature = 0; iFeature < 5; iFeature++ )
     {
         papoFeatures[iFeature] = poLayer->GetNextFeature();
-        CPLAssert( papoFeatures[iFeature] != NULL );
+        if( papoFeatures[iFeature] == NULL )
+        {
+            bRet = FALSE;
+            printf( "ERROR: Cannot get feature %d.\n", iFeature );
+            goto end;
+        }
     }
 
 /* -------------------------------------------------------------------- */
