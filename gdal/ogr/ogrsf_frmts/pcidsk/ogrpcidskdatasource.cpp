@@ -34,6 +34,8 @@
 
 CPL_CVSID("$Id: ogrcsvdatasource.cpp 17806 2009-10-13 17:27:54Z rouault $");
 
+const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces(void);
+
 /************************************************************************/
 /*                        OGRPCIDSKDataSource()                         */
 /************************************************************************/
@@ -118,7 +120,8 @@ int OGRPCIDSKDataSource::Open( const char * pszFilename, int bUpdateIn )
         if( bUpdateIn )
             pszAccess = "r+";
 
-        poFile = PCIDSK::Open( pszFilename, pszAccess, NULL );
+        poFile = PCIDSK::Open( pszFilename, pszAccess,
+                               PCIDSK2GetInterfaces() );
 
         for( segobj = poFile->GetSegment( PCIDSK::SEG_VEC, "" );
              segobj != NULL;

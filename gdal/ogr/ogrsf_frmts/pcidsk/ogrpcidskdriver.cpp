@@ -32,6 +32,8 @@
 
 CPL_CVSID("$Id: ogrcsvdriver.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
 
+const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces(void);
+
 /************************************************************************/
 /*                          ~OGRPCIDSKDriver()                          */
 /************************************************************************/
@@ -84,7 +86,8 @@ OGRDataSource *OGRPCIDSKDriver::CreateDataSource( const char * pszName,
         PCIDSK::PCIDSKFile *poFile;
 
         // at some point we should use gdal/frmts/pcidsk io interface.
-        poFile = PCIDSK::Create( pszName, 512, 512, 0, NULL, "BAND", NULL );
+        poFile = PCIDSK::Create( pszName, 512, 512, 0, NULL, "BAND", 
+                                 PCIDSK2GetInterfaces() );
         delete poFile;
 
         // TODO: should we ensure this driver gets used?
