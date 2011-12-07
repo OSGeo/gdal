@@ -38,6 +38,16 @@ static void DumpBand( GDALDatasetH hBaseDS, GDALRasterBandH hBand,
                       const char *pszName );
 
 /************************************************************************/
+/*                               Usage()                                */
+/************************************************************************/
+static void Usage() 
+
+{
+    printf( "Usage: dumpoverviews [-masks] <filename> [overview]*\n" );
+    exit( 1 );
+}
+
+/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -75,16 +85,12 @@ int main( int argc, char ** argv )
         }
         else
         {
-            printf( "Usage: dumpoverviews [-masks] <filename> [overview]*\n" );
-            exit( 1 );
+            Usage();
         }
     }
 
     if( pszSrcFilename == NULL )
-    {
-        printf( "Usage: dumpoverviews <filename> [overview]*\n" );
-        exit( 1 );
-    }
+        Usage();
 
 /* -------------------------------------------------------------------- */
 /*      Open the input file.                                            */
