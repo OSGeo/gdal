@@ -1028,9 +1028,9 @@ int NITFCreate( const char *pszFilename,
 
         if( papszISUBCATTokens != NULL )
         {
-            if (strlen(papszISUBCATTokens[iBand]) > 1)
+            if (strlen(papszISUBCATTokens[iBand]) > 6)
             {
-                papszISUBCATTokens[iBand][1] = '\0';
+                papszISUBCATTokens[iBand][6] = '\0';
                 CPLError(CE_Warning, CPLE_NotSupported,
                          "Truncating ISUBCAT[%d] to '%s'",
                          iBand + 1, papszISUBCATTokens[iBand]);
