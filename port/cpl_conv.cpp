@@ -1897,7 +1897,7 @@ void CPL_DLL CPLStringToComplex( const char *pszString,
     while( *pszString == ' ' )
         pszString++;
 
-    *pdfReal = atof(pszString);
+    *pdfReal = CPLAtof(pszString);
     *pdfImag = 0.0;
 
     for( i = 0; pszString[i] != '\0' && pszString[i] != ' ' && i < 100; i++ )
@@ -1912,7 +1912,7 @@ void CPL_DLL CPLStringToComplex( const char *pszString,
 
     if( iPlus > -1 && iImagEnd > -1 && iPlus < iImagEnd )
     {
-        *pdfImag = atof(pszString + iPlus);
+        *pdfImag = CPLAtof(pszString + iPlus);
     }
 
     return;
