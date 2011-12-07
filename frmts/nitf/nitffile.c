@@ -871,6 +871,30 @@ int NITFCreate( const char *pszFilename,
 /* -------------------------------------------------------------------- */
   for(iIM=0;iIM<nIM;iIM++)
   {
+    char** papszIREPBANDTokens = NULL;
+    char** papszISUBCATTokens = NULL;
+
+    if( CSLFetchNameValue(papszOptions,"IREPBAND") != NULL )
+    {
+        papszIREPBANDTokens = CSLTokenizeStringComplex(
+            CSLFetchNameValue(papszOptions,"IREPBAND"), ",", 0, 0 );
+        if( papszIREPBANDTokens != NULL && CSLCount( papszIREPBANDTokens ) != nBands)
+        {
+            CSLDestroy(  papszIREPBANDTokens );
+            papszIREPBANDTokens = NULL;
+        }
+    }
+    if( CSLFetchNameValue(papszOptions,"ISUBCAT") != NULL )
+    {
+        papszISUBCATTokens = CSLTokenizeStringComplex(
+            CSLFetchNameValue(papszOptions,"ISUBCAT"), ",", 0, 0 );
+        if( papszISUBCATTokens != NULL && CSLCount( papszISUBCATTokens ) != nBands)
+        {
+            CSLDestroy( papszISUBCATTokens );
+            papszISUBCATTokens = NULL;
+        }
+    }
+
     VSIFSeekL(fp, nCur, SEEK_SET);
 
     PLACE (nCur+  0, IM           , "IM"                           );
@@ -968,7 +992,18 @@ int NITFCreate( const char *pszFilename,
     {
         const char *pszIREPBAND = "M";
 
-        if( EQUAL(pszIREP,"RGB/LUT") )
+        if( papszIREPBANDTokens != NULL )
+        {
+            if (strlen(papszIREPBANDTokens[iBand]) > 2)
+            {
+                papszIREPBANDTokens[iBand][2] = '\0';
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "Truncating IREPBAND[%d] to '%s'",
+                         iBand + 1, papszIREPBANDTokens[iBand]);
+            }
+            pszIREPBAND = papszIREPBANDTokens[iBand];
+        }
+        else if( EQUAL(pszIREP,"RGB/LUT") )
             pszIREPBAND = "LU";
         else if( EQUAL(pszIREP,"RGB") )
         {
@@ -990,7 +1025,21 @@ int NITFCreate( const char *pszFilename,
         }
 
         PLACE(nCur+nOffset+ 0, IREPBANDn, pszIREPBAND                 );
-//      PLACE(nCur+nOffset+ 2, ISUBCATn, ""                           );
+
+        if( papszISUBCATTokens != NULL )
+        {
+            if (strlen(papszISUBCATTokens[iBand]) > 1)
+            {
+                papszISUBCATTokens[iBand][1] = '\0';
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "Truncating ISUBCAT[%d] to '%s'",
+                         iBand + 1, papszISUBCATTokens[iBand]);
+            }
+            PLACE(nCur+nOffset+ 2, ISUBCATn, papszISUBCATTokens[iBand] );
+        }
+//      else
+//          PLACE(nCur+nOffset+ 2, ISUBCATn, ""                           );
+
         PLACE(nCur+nOffset+ 8, IFCn  , "N"                            );
 //      PLACE(nCur+nOffset+ 9, IMFLTn, ""                             );
 
@@ -1024,6 +1073,9 @@ int NITFCreate( const char *pszFilename,
             nOffset += 18 + nCount*3;
         }
     }
+
+    CSLDestroy(papszIREPBANDTokens);
+    CSLDestroy(papszISUBCATTokens);
 
 /* -------------------------------------------------------------------- */
 /*      Remainder of image header info.                                 */

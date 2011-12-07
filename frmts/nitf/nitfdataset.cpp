@@ -5489,6 +5489,8 @@ void GDALRegister_NITF()
 "       <Value>NSIF01.00</Value>"
 "   </Option>"
 "   <Option name='IREP' type='string' description='Set to RGB/LUT to reserve space for a color table for each output band. (Only needed for Create() method, not CreateCopy())'/>"
+"   <Option name='IREPBAND' type='string' description='Comma separated list of band IREPBANDs in band order'/>"
+"   <Option name='ISUBCAT' type='string' description='Comma separated list of band ISUBCATs in band order'/>" 
 "   <Option name='LUT_SIZE' type='integer' description='Set to control the size of pseudocolor tables for RGB/LUT bands' default='256'/>"
 "   <Option name='BLOCKXSIZE' type='int' description='Set the block width'/>"
 "   <Option name='BLOCKYSIZE' type='int' description='Set the block height'/>"
