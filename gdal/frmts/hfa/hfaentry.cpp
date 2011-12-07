@@ -102,10 +102,14 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn, GUInt32 nPos,
     if( VSIFReadL( szName, 1, 64, psHFA->fp ) < 1
         || VSIFReadL( szType, 1, 32, psHFA->fp ) < 1 )
     {
+        szName[sizeof(szName)-1] = '\0';
+        szType[sizeof(szType)-1] = '\0';
         CPLError( CE_Failure, CPLE_FileIO,
                   "VSIFReadL() failed in HFAEntry()." );
         return;
     }
+    szName[sizeof(szName)-1] = '\0';
+    szType[sizeof(szType)-1] = '\0';
 }
 
 /************************************************************************/
@@ -578,11 +582,19 @@ void HFAEntry::DumpFieldValues( FILE * fp, const char * pszPrefix )
 /************************************************************************/
 
 std::vector<HFAEntry*> HFAEntry::FindChildren( const char *pszName,
-                                               const char *pszType )
+                                               const char *pszType,
+                                               int nRecLevel )
 
 {
     std::vector<HFAEntry*> apoChildren;
     HFAEntry *poEntry;
+
+    if( nRecLevel == 50 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Bad entry structure: recursion detected !");
+        return apoChildren;
+    }
 
     if( this == NULL )
         return apoChildren;
@@ -596,7 +608,7 @@ std::vector<HFAEntry*> HFAEntry::FindChildren( const char *pszName,
             && (pszType == NULL || EQUAL(poEntry->GetType(),pszType)) )
             apoChildren.push_back( poEntry );
 
-        apoEntryChildren = poEntry->FindChildren( pszName, pszType );
+        apoEntryChildren = poEntry->FindChildren( pszName, pszType, nRecLevel + 1 );
 
         for( i = 0; i < apoEntryChildren.size(); i++ )
             apoChildren.push_back( apoEntryChildren[i] );
