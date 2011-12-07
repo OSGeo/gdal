@@ -718,7 +718,7 @@ def ogr_dxf_16():
         gdaltest.post_reason( 'Did not get expected angle.' )
         return 'fail'
 
-    if feat.GetField('BlockScale') != '(3:1,1,1)':
+    if feat.GetField('BlockScale') != [1.0,1.0,1.0]:
         print(feat.GetField('BlockScale'))
         gdaltest.post_reason( 'Did not get expected BlockScale' )
         return 'fail'
