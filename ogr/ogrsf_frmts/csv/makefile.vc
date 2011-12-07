@@ -1,6 +1,5 @@
 
-OBJ	=	ogrcsvdriver.obj ogrcsvdatasource.obj ogrcsvlayer.obj \
-
+OBJ	=	ogrcsvdriver.obj ogrcsvdatasource.obj ogrcsvlayer.obj
 EXTRAFLAGS =	-I.. -I..\..
 
 GDAL_ROOT	=	..\..\..
