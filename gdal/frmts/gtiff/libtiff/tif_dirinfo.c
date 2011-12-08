@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.112 2011-01-24 21:06:31 olivier Exp $ */
+/* $Id: tif_dirinfo.c,v 1.114 2011-05-17 00:21:17 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -894,75 +894,6 @@ TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], uint32 n)
 	}
 
 	return 0;
-}
-
-const TIFFFieldInfo*
-TIFFFindFieldInfoByName(TIFF* tif, const char *field_name, TIFFDataType dt)
-{
-#if 0
-	TIFFFieldInfo key = {0, 0, 0, TIFF_NOTYPE, 0, 0, 0, 0, 0, 0, NULL, NULL};
-	TIFFFieldInfo* pkey = &key;
-	const TIFFFieldInfo **ret;
-	if (tif->tif_foundfield
-	    && streq(tif->tif_foundfield->field_name, field_name)
-	    && (dt == TIFF_ANY || dt == tif->tif_foundfield->field_type))
-		return (tif->tif_foundfield);
-
-	/* If we are invoked with no field information, then just return. */
-	if ( !tif->tif_fields ) {
-		return NULL;
-	}
-
-	/* NB: use sorted search (e.g. binary search) */
-
-	key.field_name = (char *)field_name;
-	key.field_type = dt;
-
-	ret = (const TIFFFieldInfo **) 
-            td_lfind(&pkey, tif->tif_fields, &tif->tif_nfields,
-                     sizeof(TIFFFieldInfo *), tagNameCompare );
-	return tif->tif_foundfield = (ret ? *ret : NULL);
-#else
-        (void) tif;
-        (void) field_name;
-        (void) dt;
-#endif
-	return NULL;
-}
-
-const TIFFFieldInfo*
-TIFFFindFieldInfo(TIFF* tif, uint32 tag, TIFFDataType dt)
-{
-#if 0
-	TIFFFieldInfo key = {0, 0, 0, TIFF_NOTYPE, 0, 0, 0, 0, 0, 0, NULL, NULL};
-	TIFFFieldInfo* pkey = &key;
-	const TIFFFieldInfo **ret;
-	if (tif->tif_foundfield && tif->tif_foundfield->field_tag == tag &&
-	    (dt == TIFF_ANY || dt == tif->tif_foundfield->field_type))
-		return tif->tif_foundfield;
-
-	/* If we are invoked with no field information, then just return. */
-	if ( !tif->tif_fields ) {
-		return NULL;
-	}
-
-	/* NB: use sorted search (e.g. binary search) */
-
-	key.field_tag = tag;
-	key.field_type = dt;
-
-	ret = (const TIFFFieldInfo **) bsearch(&pkey,
-					       tif->tif_fields,
-					       tif->tif_nfields,
-					       sizeof(TIFFFieldInfo *),
-					       tagCompare);
-	return tif->tif_foundfield = (ret ? *ret : NULL);
-#else
-        (void) tif;
-        (void) tag;
-        (void) dt;
-#endif
-	return NULL;
 }
 
 /* vim: set ts=8 sts=8 sw=8 noet: */

@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.101 2011-02-23 21:58:00 fwarmerdam Exp $ */
+/* $Id: tif_jpeg.c,v 1.104 2011-05-31 17:00:03 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -1351,6 +1351,11 @@ JPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 		unsigned short* tmpbuf = _TIFFmalloc(sizeof(unsigned short) *
 		    sp->cinfo.d.output_width *
 		    sp->cinfo.d.num_components);
+		if(tmpbuf==NULL) {
+                        TIFFErrorExt(tif->tif_clientdata, "JPEGDecodeRaw",
+				     "Out of memory");
+			return 0;
+                }
 #endif
 
 		do {
@@ -1818,6 +1823,7 @@ JPEGEncode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
         {
             line16_count = (sp->bytesperline * 2) / 3;
             line16 = (short *) _TIFFmalloc(sizeof(short) * line16_count);
+	    // FIXME: undiagnosed malloc failure
         }
             
 	while (nrows-- > 0) {
@@ -2184,8 +2190,6 @@ JPEGDefaultTileSize(TIFF* tif, uint32* tw, uint32* th)
 static int JPEGInitializeLibJPEG( TIFF * tif, int decompress )
 {
     JPEGState* sp = JState(tif);
-    uint64* byte_counts = NULL;
-    int     data_is_empty = TRUE;
 
     if(sp->cinfo_initialized)
     {
@@ -2197,24 +2201,6 @@ static int JPEGInitializeLibJPEG( TIFF * tif, int decompress )
             return 1;
 
         sp->cinfo_initialized = 0;
-    }
-
-    /*
-     * Do we have tile data already?  Make sure we initialize the
-     * the state in decompressor mode if we have tile data, even if we
-     * are not in read-only file access mode. 
-     */
-    if( TIFFIsTiled( tif ) 
-        && TIFFGetField( tif, TIFFTAG_TILEBYTECOUNTS, &byte_counts ) 
-        && byte_counts != NULL )
-    {
-        data_is_empty = byte_counts[0] == 0;
-    }
-    if( !TIFFIsTiled( tif ) 
-        && TIFFGetField( tif, TIFFTAG_STRIPBYTECOUNTS, &byte_counts) 
-        && byte_counts != NULL )
-    {
-        data_is_empty = byte_counts[0] == 0;
     }
 
     /*
@@ -2326,6 +2312,7 @@ here hopefully is harmless.
 */
             sp->jpegtables_length = SIZE_OF_JPEGTABLES;
             sp->jpegtables = (void *) _TIFFmalloc(sp->jpegtables_length);
+	    // FIXME: NULL-deref after malloc failure
 	    _TIFFmemset(sp->jpegtables, 0, SIZE_OF_JPEGTABLES);
 #undef SIZE_OF_JPEGTABLES
         }

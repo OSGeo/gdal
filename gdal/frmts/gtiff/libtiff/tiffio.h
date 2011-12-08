@@ -1,4 +1,4 @@
-/* $Id: tiffio.h,v 1.86 2010-03-10 18:56:49 bfriesen Exp $ */
+/* $Id: tiffio.h,v 1.88 2011-05-17 00:21:17 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -530,10 +530,7 @@ typedef	struct {
 } TIFFFieldInfo;
 
 extern int TIFFMergeFieldInfo(TIFF*, const TIFFFieldInfo[], uint32);
-extern const TIFFFieldInfo* TIFFFindFieldInfo(TIFF*, uint32, TIFFDataType);
-extern const TIFFFieldInfo* TIFFFindFieldInfoByName(TIFF* , const char *,
-						    TIFFDataType);
-
+        
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
