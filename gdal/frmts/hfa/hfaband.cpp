@@ -609,9 +609,9 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             }
             else
             {
-                printf( "nNumBits = %d\n", nNumBits );
-                CPLAssert( FALSE );
-                nRawValue = 0;
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Unsupported nNumBits value : %d", nNumBits);
+                return CE_Failure;
             }
 
 /* -------------------------------------------------------------------- */
@@ -829,7 +829,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             
             for( i = 0; i < nRepeatCount; i++ )
             {
-                CPLAssert( nDataValue < 256 );
+                //CPLAssert( nDataValue < 256 );
                 ((GByte *) pabyDest)[nPixelsOutput++] = (GByte)nDataValue;
             }
         }
@@ -848,7 +848,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             
             for( i = 0; i < nRepeatCount; i++ )
             {
-                CPLAssert( nDataValue < 256 );
+                //CPLAssert( nDataValue < 256 );
                 ((GByte *) pabyDest)[nPixelsOutput++] = (GByte)nDataValue;
             }
         }
@@ -894,7 +894,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
         {
             int		i;
 
-            CPLAssert( nDataValue == 0 || nDataValue == 1 );
+            //CPLAssert( nDataValue == 0 || nDataValue == 1 );
             
             if( nDataValue == 1 )
             {
@@ -917,7 +917,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
         {
             int		i;
 
-            CPLAssert( nDataValue >= 0 && nDataValue < 4 );
+            //CPLAssert( nDataValue >= 0 && nDataValue < 4 );
 
             for( i = 0; i < nRepeatCount; i++ )
             {
@@ -936,7 +936,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
         {
             int		i;
 
-            CPLAssert( nDataValue >= 0 && nDataValue < 16 );
+            //CPLAssert( nDataValue >= 0 && nDataValue < 16 );
             
             for( i = 0; i < nRepeatCount; i++ )
             {
@@ -1371,6 +1371,12 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 
         /* create the compressor object */
         HFACompress compress( pData, nInBlockSize, nDataType );
+        if( compress.getCounts() == NULL ||
+            compress.getValues() == NULL)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, "Out of memory");
+            return CE_Failure;
+        }
      
         /* compress the data */
         if( compress.compressBlock() )
