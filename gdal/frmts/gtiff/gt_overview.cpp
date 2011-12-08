@@ -31,6 +31,7 @@
 #include "gdal_priv.h"
 #define CPL_SERV_H_INCLUDED
 
+#include "tifvsi.h"
 #include "xtiffio.h"
 #include "gt_overview.h"
 #include "gtiff.h"
@@ -560,13 +561,13 @@ GTIFFBuildOverviews( const char * pszFilename,
         if( bCreateBigTIFF )
             CPLDebug( "GTiff", "File being created as a BigTIFF." );
 
-        hOTIFF = XTIFFOpen( pszFilename, (bCreateBigTIFF) ? "w+8" : "w+" );
+        hOTIFF = VSI_TIFFOpen( pszFilename, (bCreateBigTIFF) ? "w+8" : "w+" );
         if( hOTIFF == NULL )
         {
             if( CPLGetLastErrorNo() == 0 )
                 CPLError( CE_Failure, CPLE_OpenFailed,
                           "Attempt to create new tiff file `%s'\n"
-                          "failed in XTIFFOpen().\n",
+                          "failed in VSI_TIFFOpen().\n",
                           pszFilename );
 
             return CE_Failure;
@@ -577,13 +578,13 @@ GTIFFBuildOverviews( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     else 
     {
-        hOTIFF = XTIFFOpen( pszFilename, "r+" );
+        hOTIFF = VSI_TIFFOpen( pszFilename, "r+" );
         if( hOTIFF == NULL )
         {
             if( CPLGetLastErrorNo() == 0 )
                 CPLError( CE_Failure, CPLE_OpenFailed,
                           "Attempt to create new tiff file `%s'\n"
-                          "failed in XTIFFOpen().\n",
+                          "failed in VSI_TIFFOpen().\n",
                           pszFilename );
 
             return CE_Failure;
