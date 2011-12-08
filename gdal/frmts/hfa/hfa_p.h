@@ -353,6 +353,8 @@ class HFAField
 
 class HFAType
 {
+    int     bInCompleteDefn;
+
   public:
     int		nBytes;
     
