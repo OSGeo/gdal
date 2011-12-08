@@ -1,4 +1,4 @@
-/* $Id: tif_ojpeg.c,v 1.53 2011-04-02 19:30:20 bfriesen Exp $ */
+/* $Id: tif_ojpeg.c,v 1.54 2011-05-31 17:05:07 bfriesen Exp $ */
 
 /* WARNING: The type of JPEG encapsulation defined by the TIFF Version 6.0
    specification is now totally obsolete and deprecated for new applications and
@@ -1433,12 +1433,15 @@ OJPEGReadHeaderInfoSecStreamDqt(TIFF* tif)
 			nb[sizeof(uint32)+1]=JPEG_MARKER_DQT;
 			nb[sizeof(uint32)+2]=0;
 			nb[sizeof(uint32)+3]=67;
-			if (OJPEGReadBlock(sp,65,&nb[sizeof(uint32)+4])==0)
+			if (OJPEGReadBlock(sp,65,&nb[sizeof(uint32)+4])==0) {
+				_TIFFfree(nb);
 				return(0);
+			}
 			o=nb[sizeof(uint32)+4]&15;
 			if (3<o)
 			{
 				TIFFErrorExt(tif->tif_clientdata,module,"Corrupt DQT marker in JPEG data");
+				_TIFFfree(nb);
 				return(0);
 			}
 			if (sp->qtable[o]!=0)
