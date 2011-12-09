@@ -408,6 +408,9 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
 /*      Fetch readline buffer, and ensure it is the desired size,       */
 /*      reallocating if needed.  Manages TLS (thread local storage)     */
 /*      issues for the buffer.                                          */
+/*      We use a special trick to track the actual size of the buffer   */
+/*      The first 4 bytes are reserved to store it as a int, hence the  */
+/*      -4 / +4 hacks with the size and pointer.                        */
 /************************************************************************/
 static char *CPLReadLineBuffer( int nRequiredSize )
 
@@ -441,15 +444,26 @@ static char *CPLReadLineBuffer( int nRequiredSize )
 /* -------------------------------------------------------------------- */
 /*      If it is too small, grow it bigger.                             */
 /* -------------------------------------------------------------------- */
-    if( (int) *pnAlloc < nRequiredSize+1 )
+    if( ((int) *pnAlloc) -1 < nRequiredSize )
     {
         int nNewSize = nRequiredSize + 4 + 500;
+        if (nNewSize <= 0)
+        {
+            VSIFree( pnAlloc );
+            CPLSetTLS( CTLS_RLBUFFERINFO, NULL, FALSE );
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                      "CPLReadLineBuffer(): Trying to allocate more than 2 GB." );
+            return NULL;
+        }
 
         GUInt32* pnAllocNew = (GUInt32 *) VSIRealloc(pnAlloc,nNewSize);
         if( pnAllocNew == NULL )
         {
             VSIFree( pnAlloc );
             CPLSetTLS( CTLS_RLBUFFERINFO, NULL, FALSE );
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                      "CPLReadLineBuffer(): Out of memory allocating %ld bytes.",
+                      (long) nNewSize );
             return NULL;
         }
         pnAlloc = pnAllocNew;
@@ -605,7 +619,17 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars, char** papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Read a chunk from the input file.                               */
 /* -------------------------------------------------------------------- */
+        if ( nBufLength > INT_MAX - nChunkSize - 1 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Too big line : more than 2 billion characters!." );
+            CPLReadLineBuffer( -1 );
+            return NULL;
+        }
+
         pszRLBuffer = CPLReadLineBuffer( nBufLength + nChunkSize + 1 );
+        if( pszRLBuffer == NULL )
+            return NULL;
 
         if( nChunkBytesRead == nChunkBytesConsumed + 1 )
         {
