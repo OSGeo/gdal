@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.37 2011-04-02 20:54:09 bfriesen Exp $ */
+/* $Id: tif_read.c,v 1.38 2011-12-09 03:29:10 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -52,7 +52,8 @@ TIFFFillStripPartial( TIFF *tif, int strip, tmsize_t read_ahead, int restart )
         tmsize_t cc, to_read;
         tmsize_t bytecountm;
         
-        _TIFFFillStriles( tif );
+        if (!_TIFFFillStriles( tif ) || !tif->tif_dir.td_stripbytecount)
+            return 0;
         
         /*
          * Expand raw data buffer, if needed, to hold data
@@ -199,7 +200,8 @@ TIFFSeek(TIFF* tif, uint32 row, uint16 sample )
          * read it a few lines at a time?
          */
 #if defined(CHUNKY_STRIP_READ_SUPPORT)
-        _TIFFFillStriles( tif );
+        if (!_TIFFFillStriles( tif ) || !tif->tif_dir.td_stripbytecount)
+            return 0;
         whole_strip = tif->tif_dir.td_stripbytecount[strip] < 10
                 || isMapped(tif);
 #else
@@ -360,7 +362,8 @@ TIFFReadRawStrip1(TIFF* tif, uint32 strip, void* buf, tmsize_t size,
 {
 	TIFFDirectory *td = &tif->tif_dir;
 
-        _TIFFFillStriles( tif );
+    if (!_TIFFFillStriles( tif ))
+        return ((tmsize_t)(-1));
         
 	assert((tif->tif_flags&TIFF_NOREADRAW)==0);
 	if (!isMapped(tif)) {
@@ -485,7 +488,8 @@ TIFFFillStrip(TIFF* tif, uint32 strip)
 	static const char module[] = "TIFFFillStrip";
 	TIFFDirectory *td = &tif->tif_dir;
 
-        _TIFFFillStriles( tif );
+    if (!_TIFFFillStriles( tif ) || !tif->tif_dir.td_stripbytecount)
+        return 0;
         
 	if ((tif->tif_flags&TIFF_NOREADRAW)==0)
 	{
@@ -654,7 +658,8 @@ TIFFReadRawTile1(TIFF* tif, uint32 tile, void* buf, tmsize_t size, const char* m
 {
 	TIFFDirectory *td = &tif->tif_dir;
 
-        _TIFFFillStriles( tif );
+    if (!_TIFFFillStriles( tif ))
+        return ((tmsize_t)(-1));
 
 	assert((tif->tif_flags&TIFF_NOREADRAW)==0);
 	if (!isMapped(tif)) {
@@ -770,7 +775,8 @@ TIFFFillTile(TIFF* tif, uint32 tile)
 	static const char module[] = "TIFFFillTile";
 	TIFFDirectory *td = &tif->tif_dir;
 
-        _TIFFFillStriles( tif );
+    if (!_TIFFFillStriles( tif ) || !tif->tif_dir.td_stripbytecount)
+        return 0;
         
 	if ((tif->tif_flags&TIFF_NOREADRAW)==0)
 	{
@@ -915,7 +921,8 @@ TIFFStartStrip(TIFF* tif, uint32 strip)
 {
 	TIFFDirectory *td = &tif->tif_dir;
 
-        _TIFFFillStriles( tif );
+    if (!_TIFFFillStriles( tif ) || !tif->tif_dir.td_stripbytecount)
+        return 0;
 
 	if ((tif->tif_flags & TIFF_CODERSETUP) == 0) {
 		if (!(*tif->tif_setupdecode)(tif))
@@ -949,7 +956,8 @@ TIFFStartTile(TIFF* tif, uint32 tile)
 {
 	TIFFDirectory *td = &tif->tif_dir;
 
-        _TIFFFillStriles( tif );
+    if (!_TIFFFillStriles( tif ) || !tif->tif_dir.td_stripbytecount)
+        return 0;
 
 	if ((tif->tif_flags & TIFF_CODERSETUP) == 0) {
 		if (!(*tif->tif_setupdecode)(tif))
