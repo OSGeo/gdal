@@ -253,6 +253,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
                 bUseCRLF = TRUE;
                 break;
             }
+            nBytesRead ++;
         }
         VSIRewindL( fpCSV );
     }
