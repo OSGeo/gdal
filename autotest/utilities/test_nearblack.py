@@ -161,7 +161,7 @@ def test_nearblack_5():
     if test_cli_utilities.get_nearblack_path() is None:
         return 'skip'
 
-    gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' ../gdrivers/data/rgbsmall.tif -setmask -nb 0 -of GTiff -o tmp/nearblack5.tif -co TILED=YES')
+    gdaltest.runexternal(test_cli_utilities.get_nearblack_path() + ' ../gdrivers/data/rgbsmall.tif --config GDAL_TIFF_INTERNAL_MASK NO -setmask -nb 0 -of GTiff -o tmp/nearblack5.tif -co TILED=YES')
 
     ds = gdal.Open('tmp/nearblack5.tif')
     if ds is None:
