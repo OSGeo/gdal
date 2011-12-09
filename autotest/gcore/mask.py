@@ -540,6 +540,8 @@ def mask_13():
     if gdaltest.have_ng == 0:
         return 'skip'
 
+    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK','NO')
+
     src_ds = gdal.Open('data/byte.tif')
 
     if src_ds is None:
