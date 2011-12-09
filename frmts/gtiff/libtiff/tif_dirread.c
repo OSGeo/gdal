@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.171 2011-12-08 05:48:39 fwarmerdam Exp $ */
+/* $Id: tif_dirread.c,v 1.172 2011-12-09 03:29:10 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -3592,7 +3592,8 @@ TIFFReadDirectory(TIFF* tif)
 	if ((tif->tif_dir.td_compression==COMPRESSION_OJPEG)&&
 	    (tif->tif_dir.td_planarconfig==PLANARCONFIG_SEPARATE))
 	{
-                _TIFFFillStriles(tif);
+        if (!_TIFFFillStriles(tif))
+            goto bad;
 		dp=TIFFReadDirectoryFindEntry(tif,dir,dircount,TIFFTAG_STRIPOFFSETS);
 		if ((dp!=0)&&(dp->tdir_count==1))
 		{
@@ -4269,7 +4270,7 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
 	TIFFDirectory *td = &tif->tif_dir;
 	uint32 strip;
 
-        _TIFFFillStriles( tif );
+    _TIFFFillStriles( tif );
 
 	if (td->td_stripbytecount)
 		_TIFFfree(td->td_stripbytecount);
