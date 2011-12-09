@@ -861,12 +861,20 @@ static int OGR2GML3GeometryAppend( OGRGeometry *poGeometry,
             AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
             AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
 
+            char* pszGMLIdSub = NULL;
+            if (pszGMLId != NULL)
+                pszGMLIdSub = CPLStrdup(CPLSPrintf("%s.%d", pszGMLId, iMember));
+
             if( !OGR2GML3GeometryAppend( poMember, poSRS,
                                         ppszText, pnLength, pnMaxLength,
-                                        TRUE, bLongSRS, bLineStringAsCurve ) )
+                                        TRUE, bLongSRS, bLineStringAsCurve,
+                                         pszGMLIdSub) )
             {
+                CPLFree(pszGMLIdSub);
                 return FALSE;
             }
+
+            CPLFree(pszGMLIdSub);
 
             AppendString( ppszText, pnLength, pnMaxLength, "</gml:" );
             AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
