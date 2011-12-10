@@ -2690,6 +2690,58 @@ def ogr_shape_57():
     return 'success'
 
 ###############################################################################
+# Test creating and reading back all geometry types
+
+def ogr_shape_58():
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds_name = '/vsimem/ogr_shape_58'
+    ds = shape_drv.CreateDataSource( ds_name )
+
+    wkt_list = [ 'POINT (0 1)',
+                 'POINT (0 1 2)',
+                 'MULTIPOINT (0 1,2 3)',
+                 'MULTIPOINT (0 1 2,3 4 5)',
+                 'LINESTRING (0 1,2 3)',
+                 'LINESTRING (0 1 2,3 4 5)',
+                 'MULTILINESTRING ((0 1,2 3),(0 1,2 3))',
+                 'MULTILINESTRING ((0 1 2,3 4 5),(0 1 2,3 4 5))',
+                 'POLYGON ((0 0,0 1,1 1,1 0,0 0))',
+                 'POLYGON ((0 0 2,0 1 2,1 1 2,1 0 2,0 0 2))',
+                 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)),((0 0,0 1,1 1,1 0,0 0)))',
+                 'MULTIPOLYGON (((0 0 2,0 1 2,1 1 2,1 0 2,0 0 2)),((0 0 2,0 1 2,1 1 2,1 0 2,0 0 2)))']
+
+    for wkt in wkt_list:
+        geom = ogr.CreateGeometryFromWkt(wkt)
+        layer_name = geom.GetGeometryName()
+        if geom.GetGeometryType() & ogr.wkb25Bit:
+            layer_name = layer_name + "3D"
+        lyr = ds.CreateLayer(layer_name)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetGeometry(geom)
+        lyr.CreateFeature(feat)
+
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_shape_58')
+
+    for wkt in wkt_list:
+        geom = ogr.CreateGeometryFromWkt(wkt)
+        layer_name = geom.GetGeometryName()
+        if geom.GetGeometryType() & ogr.wkb25Bit:
+            layer_name = layer_name + "3D"
+        lyr = ds.GetLayerByName(layer_name)
+        lyr.ResetReading()
+        feat = lyr.GetNextFeature()
+        geom_read = feat.GetGeometryRef()
+        if geom_read.ExportToWkt() != wkt:
+            gdaltest.post_reason('did not get expectet geom for field %s' % layer_name)
+            print(geom_read.ExportToWkt())
+            return 'fail'
+
+    ds = None
+
+    return 'success'
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -2713,6 +2765,7 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_55' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_56' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_57' )
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_58' )
     
     return 'success'
 
@@ -2775,6 +2828,7 @@ gdaltest_list = [
     ogr_shape_55,
     ogr_shape_56,
     ogr_shape_57,
+    ogr_shape_58,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
