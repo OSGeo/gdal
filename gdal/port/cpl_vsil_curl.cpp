@@ -310,18 +310,16 @@ int VSICurlHandle::Seek( vsi_l_offset nOffset, int nWhence )
     if (nWhence == SEEK_SET)
     {
         curOffset = nOffset;
-        bEOF = FALSE;
     }
     else if (nWhence == SEEK_CUR)
     {
         curOffset = curOffset + nOffset;
-        bEOF = FALSE;
     }
     else
     {
         curOffset = GetFileSize() + nOffset;
-        bEOF = TRUE;
     }
+    bEOF = FALSE;
     return 0;
 }
 

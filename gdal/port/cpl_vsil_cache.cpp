@@ -88,6 +88,8 @@ class VSICachedFile : public VSIVirtualHandle
 
     std::vector<VSICacheChunk*> apoCache;
 
+    int            bEOF;
+
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
     virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
@@ -117,6 +119,7 @@ VSICachedFile::VSICachedFile( VSIVirtualHandle *poBaseHandle )
     nFileSize = poBase->Tell();
 
     nOffset = 0;
+    bEOF = FALSE;
 }
 
 /************************************************************************/
@@ -154,6 +157,8 @@ int VSICachedFile::Close()
 int VSICachedFile::Seek( vsi_l_offset nReqOffset, int nWhence )
 
 {
+    bEOF = FALSE;
+
     if( nWhence == SEEK_SET )
     {
         // use offset directly.
@@ -359,7 +364,10 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
 
 {
     if( nOffset >= nFileSize )
+    {
+        bEOF = TRUE;
         return 0;
+    }
 
 /* ==================================================================== */
 /*      Make sure the cache is loaded for the whole request region.     */
@@ -417,8 +425,11 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
 /* -------------------------------------------------------------------- */
     while( nCacheUsed > nCacheMax )
         FlushLRU();
-        
-    return nAmountCopied / nSize;
+
+    size_t nRet = nAmountCopied / nSize;
+    if (nRet != nCount)
+        bEOF = TRUE;
+    return nRet;
 }
 
 /************************************************************************/
@@ -438,10 +449,7 @@ size_t VSICachedFile::Write( const void * pBuffer, size_t nSize, size_t nCount )
 int VSICachedFile::Eof()
 
 {
-    if( nOffset >= nFileSize )
-        return 1;
-    else
-        return 0;
+    return bEOF;
 }
 
 /************************************************************************/

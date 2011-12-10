@@ -162,9 +162,6 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
     if( nWhence == SEEK_SET && nOffset == this->nOffset )
         return 0;
 
-    if( nWhence == SEEK_END && nOffset == 0 && bAtEOF )
-        return 0;
-
     int     nResult = VSI_FSEEK64( fp, nOffset, nWhence );
     int     nError = errno;
 
@@ -198,22 +195,20 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffset, int nWhence )
         if( nWhence == SEEK_SET )
         {
             this->nOffset = nOffset;
-            bAtEOF = FALSE;
         }
         else if( nWhence == SEEK_END )
         {
             this->nOffset = VSI_FTELL64( fp );
-            bAtEOF = TRUE;
         }
         else if( nWhence == SEEK_CUR )
         {
             this->nOffset += nOffset;
-            bAtEOF = FALSE;
         }
     }
         
     bLastOpWrite = FALSE;
     bLastOpRead = FALSE;
+    bAtEOF = FALSE;
 
     errno = nError;
     return nResult;
@@ -284,6 +279,9 @@ size_t VSIUnixStdioHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
     nOffset += nSize * nResult;
     bLastOpWrite = FALSE;
     bLastOpRead = TRUE;
+
+    if (nResult != nCount)
+        bAtEOF = feof(fp);
     
     return nResult;
 }
@@ -334,9 +332,6 @@ size_t VSIUnixStdioHandle::Write( const void * pBuffer, size_t nSize,
 int VSIUnixStdioHandle::Eof()
 
 {
-    if( !bAtEOF )
-        bAtEOF = feof(fp);
-
     if( bAtEOF )
         return 1;
     else
@@ -351,7 +346,6 @@ int VSIUnixStdioHandle::Truncate( vsi_l_offset nNewSize )
 {
     fflush(fp);
     int nRet = VSI_FTRUNCATE64(fileno(fp), nNewSize);
-    bAtEOF = FALSE;
     return nRet;
 }
 
