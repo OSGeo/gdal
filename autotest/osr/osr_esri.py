@@ -31,6 +31,8 @@
 import os
 import sys
 import string
+import csv
+import gzip
 
 sys.path.append( '../pymod' )
 
@@ -749,6 +751,113 @@ def osr_esri_20():
 
     return result
 
+###############################################################################
+# Test import/export of many ESRI WKT definitions - helper function
+def osr_esri_test_file( ifile, ofile_base ):
+
+    result = 'sucess'
+    check_wkt = False
+    failed_wkt_count = 0
+    failed_srs_count = 0
+    ifile = 'data/'+ifile
+    ofile_srs = 'tmp/'+ofile_base+'_srs.txt'
+    ofile_wkt = 'tmp/'+ofile_base+'_wkt.txt'
+
+    if not os.path.exists( ifile ):
+        gdaltest.post_reason('input file '+ifile+' does not exist')
+        return 'fail'
+    
+    #initialise output files
+    if not os.path.exists('tmp'):
+        os.mkdir('tmp')
+    if os.path.exists(ofile_srs):
+        os.unlink(ofile_srs)
+    of_srs = open(ofile_srs,'w')
+    if os.path.exists(ofile_wkt):
+        os.unlink(ofile_wkt)
+    of_wkt= open(ofile_wkt,'w')
+
+    #open input file 
+    if os.path.splitext(ifile)[1] == '.gz':
+        f = gzip.open(ifile, 'rb')
+    else:
+        f = open(ifile,'rt')
+    csv_reader = csv.DictReader(f,delimiter=';')
+
+    #parse all lines
+    for iline in csv_reader:
+        if iline['WKT'] is None or iline['WKT']=='':
+            continue
+
+        #read wkt and morph from ESRI
+        srs1 = osr.SpatialReference()
+        srs1.ImportFromWkt( iline['WKT'] )
+        wkt1 = srs1.ExportToWkt()
+        srs2 = srs1.Clone()
+        srs2.MorphFromESRI()
+        wkt2 = srs2.ExportToWkt()
+
+        #morph back to ESRI
+        srs3 = srs2.Clone()
+        srs3.MorphToESRI()
+        #manage special cases
+        if srs1.GetAttrValue( 'PROJCS|PROJECTION' ) == 'Gauss_Kruger':
+            srs3.SetAttrValue( 'PROJCS|PROJECTION', 'Gauss_Kruger')
+        wkt3 = srs3.ExportToWkt()
+        
+        #check srs and wkt
+        if not srs1.IsSame(srs3):
+            failed_srs_count = failed_srs_count + 1
+            of_srs.write( 'ERROR: SRS not matching for # '+iline['COORD_REF_SYS_CODE']+'\n' )
+            of_srs.write( wkt1+'\n'+wkt3+'\n' )
+
+        elif wkt1 != wkt3:
+            failed_wkt_count = failed_wkt_count + 1
+            if check_wkt:
+                of_wkt.write( 'WARNING: WKT not matching for # '+iline['COORD_REF_SYS_CODE']+'\n' )
+                of_wkt.write( wkt1+'\n'+wkt3+'\n' )
+                
+    of_srs.close()
+    of_wkt.close()
+
+    if failed_srs_count > 0:
+        gdaltest.post_reason('ERROR: Failed %d SRS tests, see file %s' % (failed_srs_count,ofile_srs) )
+        result='fail'
+    else:
+        os.unlink(ofile_srs)
+
+    if failed_wkt_count > 0 :
+        print('WARNING: Failed %d WKT tests, see file %s' % (failed_wkt_count,ofile_wkt) )
+    else:
+        os.unlink(ofile_wkt)
+
+
+    return result
+
+###############################################################################
+# Test import of GEOGCS defs
+# http://help.arcgis.com/en/arcims/10.0/mainhelp/mergedProjects/ArcXMLGuide/elements/gcs.htm
+
+def osr_esri_21():
+#    if not gdaltest.run_slow_tests():
+#        return 'skip'
+    return osr_esri_test_file('esri_gcs.csv.gz', 'esri_gcs')
+
+###############################################################################
+# Test import of PROJCS defs
+# http://help.arcgis.com/en/arcims/10.0/mainhelp/mergedProjects/ArcXMLGuide/elements/pcs.htm
+# http://help.arcgis.com/en/arcims/10.0/mainhelp/mergedProjects/ArcXMLGuide/elements/dattrans.htm
+
+def osr_esri_22():
+#    if not gdaltest.run_slow_tests():
+#        return 'skip'
+    return osr_esri_test_file('esri_pcs.csv.gz', 'esri_pcs')
+
+###############################################################################
+# Test import of other defs (collected elsewhere)
+
+def osr_esri_23():
+    return osr_esri_test_file('esri_extra.csv', 'esri_extra')
 
 ###############################################################################
 
@@ -773,6 +882,9 @@ gdaltest_list = [
     osr_esri_18,
     osr_esri_19,
     osr_esri_20,
+    osr_esri_21,
+    osr_esri_22,
+    osr_esri_23,
     None ]
 
 if __name__ == '__main__':
