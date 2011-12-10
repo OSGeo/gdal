@@ -148,6 +148,7 @@ class CPL_DLL OGRGeometry
     virtual OGRGeometry *SymDifference( const OGRGeometry * ) const;
     virtual OGRErr       Centroid( OGRPoint * poPoint ) const;
     virtual OGRGeometry *Simplify(double dTolerance) const;
+    OGRGeometry *SimplifyPreserveTopology(double dTolerance) const;
 
     // backward compatibility to non-standard method names. 
     OGRBoolean  Intersect( OGRGeometry * ) const;
