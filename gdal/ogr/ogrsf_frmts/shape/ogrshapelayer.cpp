@@ -81,6 +81,8 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     
     eRequestedGeomType = eReqType;
 
+    bTruncationWarningEmitted = FALSE;
+
     
     if( hDBF != NULL && hDBF->pszCodePage != NULL )
     {
@@ -616,7 +618,7 @@ OGRErr OGRShapeLayer::SetFeature( OGRFeature *poFeature )
         DropSpatialIndex();
 
     return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature,
-                                osEncoding );
+                               osEncoding, &bTruncationWarningEmitted );
 }
 
 /************************************************************************/
@@ -763,7 +765,7 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
     }
     
     eErr = SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature, 
-                               osEncoding );
+                               osEncoding, &bTruncationWarningEmitted );
 
     if( hSHP != NULL )
         nTotalShapeCount = hSHP->nRecords;
@@ -920,6 +922,18 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
         bDBFJustCreated = TRUE;
     }
 
+    if ( poFeatureDefn->GetFieldCount() == 255 )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Creating a 256th field, but some DBF readers might only support 255 fields" );
+    }
+    if ( hDBF->nHeaderLength + 32 > 65535 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Cannot add more fields in DBF file.");
+        return OGRERR_FAILURE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Normalize field name                                            */
 /* -------------------------------------------------------------------- */
@@ -976,77 +990,85 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 /*      Add field to layer                                              */
 /* -------------------------------------------------------------------- */
 
-    if( oModFieldDefn.GetType() == OFTInteger )
+    char chType = 'C';
+    int nWidth = 0;
+    int nDecimals = 0;
+
+    switch( oModFieldDefn.GetType() )
     {
-        if( oModFieldDefn.GetWidth() == 0 )
-            iNewField =
-                DBFAddField( hDBF, oModFieldDefn.GetNameRef(), FTInteger, 10,0);
-        else
-            iNewField = DBFAddField( hDBF, oModFieldDefn.GetNameRef(), FTInteger,
-                                     oModFieldDefn.GetWidth(), 0 );
+        case OFTInteger:
+            chType = 'N';
+            nWidth = oModFieldDefn.GetWidth();
+            if (nWidth == 0) nWidth = 10;
+            break;
 
-        if( iNewField != -1 )
-            poFeatureDefn->AddFieldDefn( &oModFieldDefn );
-    }
-    else if( oModFieldDefn.GetType() == OFTReal )
-    {
-        if( oModFieldDefn.GetWidth() == 0 )
-            iNewField =
-                DBFAddField( hDBF, oModFieldDefn.GetNameRef(), FTDouble, 24, 15 );
-        else
-            iNewField =
-                DBFAddField( hDBF, oModFieldDefn.GetNameRef(), FTDouble,
-                             oModFieldDefn.GetWidth(), oModFieldDefn.GetPrecision() );
+        case FTDouble:
+            chType = 'N';
+            nWidth = oModFieldDefn.GetWidth();
+            nDecimals = oModFieldDefn.GetPrecision();
+            if (nWidth == 0)
+            {
+                nWidth = 24;
+                nDecimals = 15;
+            }
+            break;
 
-        if( iNewField != -1 )
-            poFeatureDefn->AddFieldDefn( &oModFieldDefn );
-    }
-    else if( oModFieldDefn.GetType() == OFTString )
-    {
-        if( oModFieldDefn.GetWidth() < 1 )
-            iNewField =
-                DBFAddField( hDBF, oModFieldDefn.GetNameRef(), FTString, 80, 0 );
-        else
-            iNewField = DBFAddField( hDBF, oModFieldDefn.GetNameRef(), FTString, 
-                                     oModFieldDefn.GetWidth(), 0 );
+        case OFTString:
+            chType = 'C';
+            nWidth = oModFieldDefn.GetWidth();
+            if (nWidth == 0) nWidth = 80;
+            else if (nWidth > 255)
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                        "Field %s of width %d truncated to %d.",
+                        oModFieldDefn.GetNameRef(), nWidth, 255 );
+                nWidth = 255;
+            }
+            break;
 
-        if( iNewField != -1 )
-            poFeatureDefn->AddFieldDefn( &oModFieldDefn );
-    }
-    else if( oModFieldDefn.GetType() == OFTDate )
-    {
-        iNewField =
-            DBFAddNativeFieldType( hDBF, oModFieldDefn.GetNameRef(), 'D', 8, 0 );
+        case OFTDate:
+            chType = 'D';
+            nWidth = 8;
+            break;
 
-        if( iNewField != -1 )
-            poFeatureDefn->AddFieldDefn( &oModFieldDefn );
-    }
-    else if( oModFieldDefn.GetType() == OFTDateTime )
-    {
-        CPLError( CE_Warning, CPLE_NotSupported,
-                  "Field %s create as date field, though DateTime requested.\n",
-                  oModFieldDefn.GetNameRef() );
-
-        iNewField =
-            DBFAddNativeFieldType( hDBF, oModFieldDefn.GetNameRef(), 'D', 8, 0 );
-
-        if( iNewField != -1 )
-        {
+        case OFTDateTime:
+            CPLError( CE_Warning, CPLE_NotSupported,
+                    "Field %s create as date field, though DateTime requested.",
+                    oModFieldDefn.GetNameRef() );
+            chType = 'D';
+            nWidth = 8;
             oModFieldDefn.SetType( OFTDate );
-            poFeatureDefn->AddFieldDefn( &oModFieldDefn );
-        }
+            break;
+
+        default:
+            CPLError( CE_Failure, CPLE_NotSupported,
+                    "Can't create fields of type %s on shapefile layers.",
+                    OGRFieldDefn::GetFieldTypeName(oModFieldDefn.GetType()) );
+
+            return OGRERR_FAILURE;
+            break;
     }
-    else
+
+    oModFieldDefn.SetWidth( nWidth );
+    oModFieldDefn.SetPrecision( nDecimals );
+
+    if ( hDBF->nRecordLength + nWidth > 65535 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't create fields of type %s on shapefile layers.\n",
-                  OGRFieldDefn::GetFieldTypeName(oModFieldDefn.GetType()) );
-
+                  "Can't create field %s in Shape DBF file. "
+                  "Maximum record length reached.",
+                  oModFieldDefn.GetNameRef() );
         return OGRERR_FAILURE;
     }
 
+    iNewField =
+        DBFAddNativeFieldType( hDBF, oModFieldDefn.GetNameRef(),
+                               chType, nWidth, nDecimals );
+
     if( iNewField != -1 )
     {
+        poFeatureDefn->AddFieldDefn( &oModFieldDefn );
+
         if( bDBFJustCreated )
         {
             for(int i=0;i<nTotalShapeCount;i++)
@@ -1060,7 +1082,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
     else        
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Can't create field %s in Shape DBF file, reason unknown.\n",
+                  "Can't create field %s in Shape DBF file, reason unknown.",
                   oModFieldDefn.GetNameRef() );
 
         return OGRERR_FAILURE;

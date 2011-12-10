@@ -2559,6 +2559,137 @@ def ogr_shape_54():
     return 'success'
 
 ###############################################################################
+# Test that we cannot add more fields that the maximum allowed
+
+def ogr_shape_55():
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds_name = '/vsimem/ogr_shape_55'
+    ds = shape_drv.CreateDataSource( ds_name )
+    lyr = ds.CreateLayer('ogr_shape_55')
+
+    max_field_count = int((65535 - 33) / 32) # 2046
+
+    for i in range(max_field_count):
+        if i == 255:
+            gdal.ErrorReset()
+            gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+        ret = lyr.CreateField(ogr.FieldDefn('foo%d' % i, ogr.OFTInteger))
+        if i == 255:
+            gdal.PopErrorHandler()
+            if gdal.GetLastErrorMsg() == '':
+                gdaltest.post_reason('expecting a warning for 256th field added')
+                return 'fail'
+        if ret != 0:
+            gdaltest.post_reason('failed creating field foo%d' % i)
+            return 'fail'
+
+    i = max_field_count
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    ret = lyr.CreateField(ogr.FieldDefn('foo%d' % i, ogr.OFTInteger))
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('should have failed creating field foo%d' % i)
+        return 'fail'
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    for i in range(max_field_count):
+        feat.SetField(i, i)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    for i in range(max_field_count):
+        feat.SetField(i, i)
+    lyr.CreateFeature(feat)
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test that we cannot add more fields that the maximum allowed record length
+
+def ogr_shape_56():
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds_name = '/vsimem/ogr_shape_56'
+    ds = shape_drv.CreateDataSource( ds_name )
+    lyr = ds.CreateLayer('ogr_shape_56')
+
+    max_field_count = int(65535 / 80) # 819
+
+    for i in range(max_field_count):
+        if i == 255:
+            gdal.ErrorReset()
+            gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+        ret = lyr.CreateField(ogr.FieldDefn('foo%d' % i, ogr.OFTString))
+        if i == 255:
+            gdal.PopErrorHandler()
+            if gdal.GetLastErrorMsg() == '':
+                gdaltest.post_reason('expecting a warning for 256th field added')
+                return 'fail'
+        if ret != 0:
+            gdaltest.post_reason('failed creating field foo%d' % i)
+            return 'fail'
+
+    i = max_field_count
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    ret = lyr.CreateField(ogr.FieldDefn('foo%d' % i, ogr.OFTString))
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('should have failed creating field foo%d' % i)
+        return 'fail'
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    for i in range(max_field_count):
+        feat.SetField(i, 'foo%d' % i)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    for i in range(max_field_count):
+        feat.SetField(i, 'foo%d' % i)
+    lyr.CreateFeature(feat)
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test that we emit a warning if the truncation of a field value occurs
+
+def ogr_shape_57():
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds_name = '/vsimem/ogr_shape_57'
+    ds = shape_drv.CreateDataSource( ds_name )
+    lyr = ds.CreateLayer('ogr_shape_57')
+
+    field_defn = ogr.FieldDefn('foo', ogr.OFTString)
+    field_defn.SetWidth(1024)
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    lyr.CreateField(field_defn)
+    gdal.PopErrorHandler()
+    #print(gdal.GetLastErrorMsg())
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('expecting a warning')
+        return 'fail'
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, '0123456789'.join(['' for i in range(27)]))
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    lyr.CreateFeature(feat)
+    gdal.PopErrorHandler()
+    #print(gdal.GetLastErrorMsg())
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('expecting a warning')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -2579,6 +2710,9 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_52.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_53.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_54' )
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_55' )
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_56' )
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_57' )
     
     return 'success'
 
@@ -2638,6 +2772,9 @@ gdaltest_list = [
     ogr_shape_52,
     ogr_shape_53,
     ogr_shape_54,
+    ogr_shape_55,
+    ogr_shape_56,
+    ogr_shape_57,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
