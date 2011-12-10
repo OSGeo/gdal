@@ -1104,7 +1104,8 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            OGRFeatureDefn * poDefn, 
                            OGRFeature * poFeature,
-                           const char *pszSHPEncoding )
+                           const char *pszSHPEncoding,
+                           int* pbTruncationWarningEmitted )
 
 {
 #ifdef notdef
@@ -1187,6 +1188,8 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
             continue;
         }
 
+        int nRet = FALSE;
+
         switch( poDefn->GetFieldDefn(iField)->GetType() )
         {
           case OFTString:
@@ -1196,23 +1199,23 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
               {
                   char *pszEncoded = 
                       CPLRecode( pszStr, CPL_ENC_UTF8, pszSHPEncoding );
-                  DBFWriteStringAttribute( hDBF, poFeature->GetFID(), iField,
+                  nRet = DBFWriteStringAttribute( hDBF, poFeature->GetFID(), iField,
                                            pszEncoded );
                   CPLFree( pszEncoded );
               }
               else
-                  DBFWriteStringAttribute( hDBF, poFeature->GetFID(), iField, 
+                  nRet = DBFWriteStringAttribute( hDBF, poFeature->GetFID(), iField, 
                                            pszStr );
           }
           break;
 
           case OFTInteger:
-            DBFWriteIntegerAttribute( hDBF, poFeature->GetFID(), iField, 
+            nRet = DBFWriteIntegerAttribute( hDBF, poFeature->GetFID(), iField, 
                                       poFeature->GetFieldAsInteger(iField) );
             break;
 
           case OFTReal:
-            DBFWriteDoubleAttribute( hDBF, poFeature->GetFID(), iField, 
+            nRet = DBFWriteDoubleAttribute( hDBF, poFeature->GetFID(), iField, 
                                      poFeature->GetFieldAsDouble(iField) );
             break;
 
@@ -1223,7 +1226,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
               if( poFeature->GetFieldAsDateTime( iField, &nYear, &nMonth, &nDay,
                                                  NULL, NULL, NULL, NULL ) )
               {
-                  DBFWriteIntegerAttribute( hDBF, poFeature->GetFID(), iField, 
+                  nRet = DBFWriteIntegerAttribute( hDBF, poFeature->GetFID(), iField, 
                                             nYear*10000 + nMonth*100 + nDay );
               }
           }
@@ -1234,6 +1237,18 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
               /* Ignore fields of other types */
               break;
           }
+        }
+
+        if (!nRet && !(*pbTruncationWarningEmitted) &&
+            strstr(CPLGetLastErrorMsg(), "Failure writing DBF") == NULL)
+        {
+            *pbTruncationWarningEmitted = TRUE;
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Value '%s' of field %s has been truncated to %d characters.\n"
+                     "This warning will not be emitted any more for that layer.",
+                     poFeature->GetFieldAsString(iField),
+                     poDefn->GetFieldDefn(iField)->GetNameRef(),
+                     poDefn->GetFieldDefn(iField)->GetWidth());
         }
     }
 
