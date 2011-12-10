@@ -1002,7 +1002,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
             if (nWidth == 0) nWidth = 10;
             break;
 
-        case FTDouble:
+        case OFTReal:
             chType = 'N';
             nWidth = oModFieldDefn.GetWidth();
             nDecimals = oModFieldDefn.GetPrecision();
