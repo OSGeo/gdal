@@ -82,6 +82,14 @@ public class ogr2ogr
     static final int OGRNullFID = -1;
     static int nFIDToFetch = OGRNullFID;
 
+    static class GeomOperation
+    {
+        private GeomOperation() {}
+        public static GeomOperation NONE = new GeomOperation();
+        public static GeomOperation SEGMENTIZE = new GeomOperation();
+        public static GeomOperation SIMPLIFY_PRESERVE_TOPOLOGY = new GeomOperation();
+    }
+
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
@@ -106,7 +114,8 @@ public class ogr2ogr
         Vector papszSelFields = null;
         String pszSQLStatement = null;
         int    eGType = -2;
-        double dfMaxSegmentLength = 0;
+        GeomOperation eGeomOp = GeomOperation.NONE;
+        double dfGeomOpParam = 0;
         Vector papszFieldTypesToString = new Vector();
         boolean bDisplayProgress = false;
         ProgressCallback pfnProgress = null;
@@ -282,9 +291,15 @@ public class ogr2ogr
                 while(tokenizer.hasMoreElements())
                     papszSelFields.addElement(tokenizer.nextToken());
             }
+            else if( args[iArg].equalsIgnoreCase("-simplify") && iArg < args.length-1 )
+            {
+                eGeomOp = GeomOperation.SIMPLIFY_PRESERVE_TOPOLOGY;
+                dfGeomOpParam = new Double(args[++iArg]).doubleValue();
+            }
             else if( args[iArg].equalsIgnoreCase("-segmentize") && iArg < args.length-1 )
             {
-                dfMaxSegmentLength = new Double(args[++iArg]).doubleValue();
+                eGeomOp = GeomOperation.SEGMENTIZE;
+                dfGeomOpParam = new Double(args[++iArg]).doubleValue();
             }
             else if( args[iArg].equalsIgnoreCase("-fieldTypeToString") && iArg < args.length-1 )
             {
@@ -707,7 +722,7 @@ public class ogr2ogr
                 if( !TranslateLayer( poDS, poResultSet, poODS, papszLCO, 
                                     pszNewLayerName, bTransform, poOutputSRS,
                                     poSourceSRS, papszSelFields, bAppend, eGType,
-                                    bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
+                                    bOverwrite, eGeomOp, dfGeomOpParam, papszFieldTypesToString,
                                     nCountLayerFeatures, poClipSrc, poClipDst, bExplodeCollections,
                                     pszZField, pszWHERE, pfnProgress ))
                 {
@@ -849,7 +864,7 @@ public class ogr2ogr
                 if( !TranslateLayer( poDS, poLayer, poODS, papszLCO, 
                                     pszNewLayerName, bTransform, poOutputSRS,
                                     poSourceSRS, papszSelFields, bAppend, eGType,
-                                    bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
+                                    bOverwrite, eGeomOp, dfGeomOpParam, papszFieldTypesToString,
                                     panLayerCountFeatures[iLayer], poClipSrc, poClipDst, bExplodeCollections,
                                     pszZField, pszWHERE, pfnProgress) 
                     && !bSkipFailures )
@@ -885,6 +900,7 @@ public class ogr2ogr
                 "               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]\n" +
                 "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n" +
                 "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n" +
+                "               [-simplify tolerance]\n" +
                 // "               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]\n" +
                 "               [-fieldTypeToString All|(type1[,type2]*)] [-explodecollections]\n" +
                 "               dst_datasource_name src_datasource_name\n" +
@@ -911,6 +927,7 @@ public class ogr2ogr
                 " -skipfailures: skip features or layers that fail to convert\n" +
                 " -gt n: group n features per transaction (default 200)\n" +
                 " -spat xmin ymin xmax ymax: spatial query extents\n" +
+                " -simplify tolerance: distance tolerance for simplification.\n" +
                 //" -segmentize max_dist: maximum distance between 2 nodes.\n" +
                 //"                       Used to create intermediate points\n" +
                 " -dsco NAME=VALUE: Dataset creation option (format specific)\n" +
@@ -1095,7 +1112,8 @@ public class ogr2ogr
                             SpatialReference poSourceSRS,
                             Vector papszSelFields,
                             boolean bAppend, int eGType, boolean bOverwrite,
-                            double dfMaxSegmentLength,
+                            GeomOperation eGeomOp,
+                            double dfGeomOpParam,
                             Vector papszFieldTypesToString,
                             long nCountLayerFeatures,
                             Geometry poClipSrc,
@@ -1558,9 +1576,6 @@ public class ogr2ogr
                 if( bPreserveFID )
                     poDstFeature.SetFID( poFeature.GetFID() );
 
-                /*if (poDstFeature.GetGeometryRef() != null && dfMaxSegmentLength > 0)
-                    poDstFeature.GetGeometryRef().segmentize(dfMaxSegmentLength);*/
-
                 Geometry poDstGeometry = poDstFeature.GetGeometryRef();
                 if (poDstGeometry != null)
                 {
@@ -1579,6 +1594,21 @@ public class ogr2ogr
                         Geometry poDupGeometry = poDstGeometry.Clone();
                         poDstFeature.SetGeometryDirectly(poDupGeometry);
                         poDstGeometry = poDupGeometry;
+                    }
+
+                    if (eGeomOp == GeomOperation.SEGMENTIZE)
+                    {
+                /*if (poDstFeature.GetGeometryRef() != null && dfGeomOpParam > 0)
+                    poDstFeature.GetGeometryRef().segmentize(dfGeomOpParam);*/
+                    }
+                    else if (eGeomOp == GeomOperation.SIMPLIFY_PRESERVE_TOPOLOGY && dfGeomOpParam > 0)
+                    {
+                        Geometry poNewGeom = poDstGeometry.SimplifyPreserveTopology(dfGeomOpParam);
+                        if (poNewGeom != null)
+                        {
+                            poDstFeature.SetGeometryDirectly(poNewGeom);
+                            poDstGeometry = poNewGeom;
+                        }
                     }
 
                     if (poClipSrc != null)

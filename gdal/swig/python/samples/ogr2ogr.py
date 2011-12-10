@@ -115,6 +115,14 @@ nGroupTransactions = 200
 bPreserveFID = False
 nFIDToFetch = ogr.NullFID
 
+class Enum(set):
+    def __getattr__(self, name):
+        if name in self:
+            return name
+        raise AttributeError
+
+GeomOperation = Enum(["NONE", "SEGMENTIZE", "SIMPLIFY_PRESERVE_TOPOLOGY"])
+
 def main(args = None, progress_func = TermProgress, progress_data = None):
     
     global bSkipFailures
@@ -143,7 +151,8 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
     papszSelFields = None
     pszSQLStatement = None
     eGType = -2
-    dfMaxSegmentLength = 0
+    eGeomOp = GeomOperation.NONE
+    dfGeomOpParam = 0
     papszFieldTypesToString = []
     bDisplayProgress = False
     pfnProgress = None
@@ -308,9 +317,15 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
             if papszSelFields[0] == '':
                 papszSelFields = []
 
+        elif EQUAL(args[iArg],"-simplify") and iArg < nArgc-1:
+            iArg = iArg + 1
+            eGeomOp = GeomOperation.SIMPLIFY_PRESERVE_TOPOLOGY
+            dfGeomOpParam = float(args[iArg])
+
         elif EQUAL(args[iArg],"-segmentize") and iArg < nArgc-1:
             iArg = iArg + 1
-            dfMaxSegmentLength = float(args[iArg])
+            eGeomOp = GeomOperation.SEGMENTIZE
+            dfGeomOpParam = float(args[iArg])
 
         elif EQUAL(args[iArg],"-fieldTypeToString") and iArg < nArgc-1:
             iArg = iArg + 1
@@ -643,7 +658,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
             if not TranslateLayer( poDS, poResultSet, poODS, papszLCO, \
                                 pszNewLayerName, bTransform, poOutputSRS, \
                                 poSourceSRS, papszSelFields, bAppend, eGType, \
-                                bOverwrite, dfMaxSegmentLength, papszFieldTypesToString, \
+                                bOverwrite, eGeomOp, dfGeomOpParam, papszFieldTypesToString, \
                                 nCountLayerFeatures, poClipSrc, poClipDst, bExplodeCollections, \
                                 pszZField, pszWHERE, pfnProgress, pProgressData ):
                 print(
@@ -750,7 +765,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
             if not TranslateLayer( poDS, poLayer, poODS, papszLCO,  \
                                 pszNewLayerName, bTransform, poOutputSRS, \
                                 poSourceSRS, papszSelFields, bAppend, eGType, \
-                                bOverwrite, dfMaxSegmentLength, papszFieldTypesToString, \
+                                bOverwrite, eGeomOp, dfGeomOpParam, papszFieldTypesToString, \
                                 panLayerCountFeatures[iLayer], poClipSrc, poClipDst, bExplodeCollections, \
                                 pszZField, pszWHERE, pfnProgress, pProgressData)  \
                 and not bSkipFailures:
@@ -782,6 +797,7 @@ def Usage():
             "               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]\n" + \
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n" + \
             "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n" + \
+            "               [-simplify tolerance]\n" + \
             #// "               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]\n" + \
             "               [-fieldTypeToString All|(type1[,type2]*)] [-explodecollections] \n" + \
             "               dst_datasource_name src_datasource_name\n" + \
@@ -806,6 +822,7 @@ def Usage():
             " -skipfailures: skip features or layers that fail to convert\n" + \
             " -gt n: group n features per transaction (default 200)\n" + \
             " -spat xmin ymin xmax ymax: spatial query extents\n" + \
+            " -simplify tolerance: distance tolerance for simplification.\n" + \
             #//" -segmentize max_dist: maximum distance between 2 nodes.\n" + \
             #//"                       Used to create intermediate points\n" + \
             " -dsco NAME=VALUE: Dataset creation option (format specific)\n" + \
@@ -933,7 +950,7 @@ def SetZ (poGeom, dfZ ):
 
 def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                     bTransform,  poOutputSRS, poSourceSRS, papszSelFields, \
-                    bAppend, eGType, bOverwrite, dfMaxSegmentLength, \
+                    bAppend, eGType, bOverwrite, eGeomOp, dfGeomOpParam, \
                     papszFieldTypesToString, nCountLayerFeatures, \
                     poClipSrc, poClipDst, bExplodeCollections, pszZField, pszWHERE, \
                     pfnProgress, pProgressData) :
@@ -1288,9 +1305,6 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
             if bPreserveFID:
                 poDstFeature.SetFID( poFeature.GetFID() )
 
-            #/*if (poDstFeature.GetGeometryRef() is not None and dfMaxSegmentLength > 0)
-            #    poDstFeature.GetGeometryRef().segmentize(dfMaxSegmentLength);*/
-
             poDstGeometry = poDstFeature.GetGeometryRef()
             if poDstGeometry is not None:
 
@@ -1306,6 +1320,16 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                     poDupGeometry = poDstGeometry.Clone()
                     poDstFeature.SetGeometryDirectly(poDupGeometry)
                     poDstGeometry = poDupGeometry
+
+                if eGeomOp == GeomOperation.SEGMENTIZE:
+                    pass
+                    #/*if (poDstFeature.GetGeometryRef() is not None and dfGeomOpParam > 0)
+                    #    poDstFeature.GetGeometryRef().segmentize(dfGeomOpParam);*/
+                elif eGeomOp == GeomOperation.SIMPLIFY_PRESERVE_TOPOLOGY and dfGeomOpParam > 0:
+                    poNewGeom = poDstGeometry.SimplifyPreserveTopology(dfGeomOpParam)
+                    if poNewGeom is not None:
+                        poDstFeature.SetGeometryDirectly(poNewGeom)
+                        poDstGeometry = poNewGeom
 
                 if poClipSrc is not None:
                     poClipped = poDstGeometry.Intersection(poClipSrc)
