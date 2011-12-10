@@ -71,6 +71,22 @@ def georaster_init():
     if gdaltest.oci_ds is None:
         return 'skip'
 
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    rs = gdaltest.oci_ds.ExecuteSQL( 'select owner from all_sdo_geor_sysdata' )
+    gdal.PopErrorHandler()
+    
+    err_msg = gdal.GetLastErrorMsg()
+    
+    if rs is not None:
+        gdaltest.oci_ds.ReleaseResultSet(rs)
+        rs = None
+
+    if err_msg.find( 'table or view does not exist' ):
+        gdaltest.post_reason( 'ALL_SDO_GEOR_SYSDATA inaccesable, likely georaster unavailable.' )
+
+        gdaltest.oci_ds = None
+        return 'skip'
+
     return 'success'
 
 ###############################################################################
