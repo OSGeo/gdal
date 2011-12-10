@@ -769,7 +769,8 @@ OGRErr OGR_SRSNode::applyRemapper( const char *pszNode,
     {
         for( i = 0; papszSrcValues[i] != NULL; i += nStepSize )
         {
-            if( EQUAL(papszSrcValues[i],pszValue) )
+            if( EQUAL(papszSrcValues[i],pszValue) && 
+                ! EQUAL(papszDstValues[i],"") )
             {
                 SetValue( papszDstValues[i] );
                 break;
