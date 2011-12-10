@@ -756,12 +756,14 @@ def osr_esri_20():
 def osr_esri_test_file( ifile, ofile_base ):
 
     result = 'sucess'
-    check_wkt = False
     failed_wkt_count = 0
     failed_srs_count = 0
     ifile = 'data/'+ifile
     ofile_srs = 'tmp/'+ofile_base+'_srs.txt'
     ofile_wkt = 'tmp/'+ofile_base+'_wkt.txt'
+
+    #set this to True to see which WKT do not match
+    check_wkt = False
 
     if not os.path.exists( ifile ):
         gdaltest.post_reason('input file '+ifile+' does not exist')
@@ -775,7 +777,8 @@ def osr_esri_test_file( ifile, ofile_base ):
     of_srs = open(ofile_srs,'w')
     if os.path.exists(ofile_wkt):
         os.unlink(ofile_wkt)
-    of_wkt= open(ofile_wkt,'w')
+    if check_wkt:        
+        of_wkt= open(ofile_wkt,'w')
 
     #open input file 
     if os.path.splitext(ifile)[1] == '.gz':
@@ -818,16 +821,20 @@ def osr_esri_test_file( ifile, ofile_base ):
                 of_wkt.write( wkt1+'\n'+wkt3+'\n' )
                 
     of_srs.close()
-    of_wkt.close()
+    if check_wkt:        
+        of_wkt.close()
 
     if failed_srs_count > 0:
         gdaltest.post_reason('ERROR: Failed %d SRS tests, see file %s' % (failed_srs_count,ofile_srs) )
-        result='fail'
+        result='expected_fail'
     else:
         os.unlink(ofile_srs)
 
     if failed_wkt_count > 0 :
-        print('WARNING: Failed %d WKT tests, see file %s' % (failed_wkt_count,ofile_wkt) )
+        if check_wkt:
+            print('WARNING: Failed %d WKT tests, see file %s' % (failed_wkt_count,ofile_wkt) )
+        else:
+            print('WARNING: Failed %d WKT tests' % (failed_wkt_count) )
     else:
         os.unlink(ofile_wkt)
 
