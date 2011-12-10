@@ -59,7 +59,7 @@ static void RingStartEnd ( SHPObject *psShape, int ring, int *start, int *end )
 /*                        CreateLinearRing                              */
 /*                                                                      */
 /************************************************************************/
-static OGRLinearRing * CreateLinearRing ( SHPObject *psShape, int ring )
+static OGRLinearRing * CreateLinearRing ( SHPObject *psShape, int ring, int bHasZ )
 {
     OGRLinearRing *poRing;
     int nRingStart, nRingEnd, nRingPoints;
@@ -70,8 +70,13 @@ static OGRLinearRing * CreateLinearRing ( SHPObject *psShape, int ring )
 
     nRingPoints = nRingEnd - nRingStart + 1;
 
-    poRing->setPoints( nRingPoints, psShape->padfX + nRingStart, 
-	       psShape->padfY + nRingStart, psShape->padfZ + nRingStart );
+    if (bHasZ)
+        poRing->setPoints( nRingPoints, psShape->padfX + nRingStart, 
+                           psShape->padfY + nRingStart,
+                           psShape->padfZ + nRingStart );
+    else
+        poRing->setPoints( nRingPoints, psShape->padfX + nRingStart,
+                           psShape->padfY + nRingStart );
 
     return ( poRing );
 }
@@ -102,18 +107,15 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 /*      Point.                                                          */
 /* -------------------------------------------------------------------- */
     else if( psShape->nSHPType == SHPT_POINT
-             || psShape->nSHPType == SHPT_POINTM
-             || psShape->nSHPType == SHPT_POINTZ )
+             || psShape->nSHPType == SHPT_POINTM )
+    {
+        poOGR = new OGRPoint( psShape->padfX[0], psShape->padfY[0] );
+    }
+    else if(psShape->nSHPType == SHPT_POINTZ )
     {
         poOGR = new OGRPoint( psShape->padfX[0], psShape->padfY[0],
                               psShape->padfZ[0] );
-
-        if( psShape->nSHPType == SHPT_POINT )
-        {
-            poOGR->setCoordinateDimension( 2 );
-        }
     }
-
 /* -------------------------------------------------------------------- */
 /*      Multipoint.                                                     */
 /* -------------------------------------------------------------------- */
@@ -134,8 +136,11 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
             {
                 OGRPoint    *poPoint;
 
-                poPoint = new OGRPoint( psShape->padfX[i], psShape->padfY[i],
-                                        psShape->padfZ[i] );
+                if( psShape->nSHPType == SHPT_MULTIPOINTZ )
+                    poPoint = new OGRPoint( psShape->padfX[i], psShape->padfY[i],
+                                            psShape->padfZ[i] );
+                else
+                    poPoint = new OGRPoint( psShape->padfX[i], psShape->padfY[i] );
 
                 poOGRMPoint->addGeometry( poPoint );
 
@@ -143,9 +148,6 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
             }
 
             poOGR = poOGRMPoint;
-
-            if( psShape->nSHPType == SHPT_MULTIPOINT )
-                poOGR->setCoordinateDimension( 2 );
         }
     }
 
@@ -166,8 +168,12 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
         {
             OGRLineString *poOGRLine = new OGRLineString();
 
-            poOGRLine->setPoints( psShape->nVertices,
-                                  psShape->padfX, psShape->padfY, psShape->padfZ );
+            if( psShape->nSHPType == SHPT_ARCZ )
+                poOGRLine->setPoints( psShape->nVertices,
+                                    psShape->padfX, psShape->padfY, psShape->padfZ );
+            else
+                poOGRLine->setPoints( psShape->nVertices,
+                                    psShape->padfX, psShape->padfY );
 
             poOGR = poOGRLine;
         }
@@ -202,18 +208,20 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
                             - psShape->panPartStart[iRing];
                     nRingStart = psShape->panPartStart[iRing];
                 }
-            
-                poLine->setPoints( nRingPoints, 
-                                   psShape->padfX + nRingStart,
-                                   psShape->padfY + nRingStart,
-                                   psShape->padfZ + nRingStart );
+
+                if( psShape->nSHPType == SHPT_ARCZ )
+                    poLine->setPoints( nRingPoints,
+                                    psShape->padfX + nRingStart,
+                                    psShape->padfY + nRingStart,
+                                    psShape->padfZ + nRingStart );
+                else
+                    poLine->setPoints( nRingPoints,
+                                    psShape->padfX + nRingStart,
+                                    psShape->padfY + nRingStart );
 
                 poOGRMulti->addGeometryDirectly( poLine );
             }
         }
-
-        if( poOGR != NULL && psShape->nSHPType == SHPT_ARC )
-            poOGR->setCoordinateDimension( 2 );
     }
 
 /* -------------------------------------------------------------------- */
@@ -226,6 +234,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
              || psShape->nSHPType == SHPT_POLYGONZ )
     {
         int iRing;
+        int bHasZ = ( psShape->nSHPType == SHPT_POLYGONZ );
         
         //CPLDebug( "Shape", "Shape type: polygon with nParts=%d \n", psShape->nParts );
 
@@ -240,7 +249,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
             OGRLinearRing *poRing = NULL;
 
             poOGR = poOGRPoly = new OGRPolygon();
-            poRing = CreateLinearRing ( psShape, 0 );
+            poRing = CreateLinearRing ( psShape, 0, bHasZ );
             poOGRPoly->addRingDirectly( poRing );
         }
 
@@ -250,7 +259,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
             for( iRing = 0; iRing < psShape->nParts; iRing++ )
             {
                 tabPolygons[iRing] = new OGRPolygon();
-                tabPolygons[iRing]->addRingDirectly(CreateLinearRing ( psShape, iRing ));
+                tabPolygons[iRing]->addRingDirectly(CreateLinearRing ( psShape, iRing, bHasZ ));
             }
 
             int isValidGeometry;
@@ -267,11 +276,6 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
             }
 
             delete[] tabPolygons;
-        }
-
-        if( poOGR != NULL && psShape->nSHPType == SHPT_POLYGON )
-        {
-            poOGR->setCoordinateDimension( 2 );
         }
     }
 
@@ -399,7 +403,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
                     poLastPoly = new OGRPolygon();
 
                 poLastPoly->addRingDirectly( 
-                    CreateLinearRing( psShape, iPart ) );
+                    CreateLinearRing( psShape, iPart, TRUE ) );
             }
             else
                 CPLDebug( "OGR", "Unrecognised parttype %d, ignored.", 
