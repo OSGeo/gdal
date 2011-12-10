@@ -2588,14 +2588,31 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
         /* If we don't have SG2D, check for SG3D */
         if( poDstSG2D == NULL )
         {
-            poSrcSG2D = poUpdate->FindField( "SG3D" );
             poDstSG2D = poTarget->FindField( "SG3D" );
+            if (poDstSG2D != NULL) 
+            { 
+                poSrcSG2D = poUpdate->FindField("SG3D"); 
+            } 
         }
 
-        if( (poSrcSG2D == NULL && nCCUI != 2) || poDstSG2D == NULL )
+        if( (poSrcSG2D == NULL && nCCUI != 2) 
+            || (poDstSG2D == NULL && nCCUI != 1) )
         {
             CPLAssert( FALSE );
             return FALSE;
+        }
+
+        if (poDstSG2D == NULL) 
+        {
+            poTarget->AddField(poTarget->GetModule()->FindFieldDefn("SG2D"));
+            poDstSG2D = poTarget->FindField("SG2D");
+            if (poDstSG2D == NULL) {
+                CPLAssert( FALSE );
+                return FALSE;
+            }
+
+            // Delete null default data that was created
+            poTarget->SetFieldRaw( poDstSG2D, 0, NULL, 0 );
         }
 
         nCoordSize = poDstSG2D->GetFieldDefn()->GetFixedWidth();
