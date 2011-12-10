@@ -509,6 +509,33 @@ def ogr_geos_simplify_linestring():
 
 ###############################################################################
 
+def ogr_geos_simplifypreservetopology_linestring():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt( 'LINESTRING(0 0,1 0,10 0)' )
+
+    gdal.ErrorReset()
+    simplify = g1.SimplifyPreserveTopology(5)
+
+    g1.Destroy()
+
+    if simplify is None:
+        msg = gdal.GetLastErrorMsg()
+        if msg.find('GEOS >=') != -1:
+            return 'skip'
+
+    if simplify.ExportToWkt() != 'LINESTRING (0 0,10 0)':
+        print('Got: ', simplify.ExportToWkt())
+        return 'fail'
+
+    simplify.Destroy()
+
+    return 'success'
+
+###############################################################################
+
 def ogr_geos_unioncascaded():
 
     if not ogrtest.have_geos():
@@ -684,6 +711,7 @@ gdaltest_list = [
     ogr_geos_centroid_multipolygon,
     ogr_geos_centroid_point_empty,
     ogr_geos_simplify_linestring,
+    ogr_geos_simplifypreservetopology_linestring,
     ogr_geos_unioncascaded,
     ogr_geos_convexhull,
     ogr_geos_distance,
