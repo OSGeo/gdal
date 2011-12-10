@@ -43,6 +43,13 @@ static int nFIDToFetch = OGRNullFID;
 
 static void Usage(int bShort = TRUE);
 
+typedef enum
+{
+    NONE,
+    SEGMENTIZE,
+    SIMPLIFY_PRESERVE_TOPOLOGY,
+} GeomOperation;
+
 static int TranslateLayer( OGRDataSource *poSrcDS, 
                            OGRLayer * poSrcLayer,
                            OGRDataSource *poDstDS,
@@ -55,7 +62,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            char **papszSelFields,
                            int bAppend, int eGType,
                            int bOverwrite,
-                           double dfMaxSegmentLength,
+                           GeomOperation eGeomOp,
+                           double dfGeomOpParam,
                            char** papszFieldTypesToString,
                            long nCountLayerFeatures,
                            int bWrapDateline,
@@ -546,7 +554,8 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszSQLStatement = NULL;
     const char  *pszDialect = NULL;
     int         eGType = -2;
-    double       dfMaxSegmentLength = 0;
+    GeomOperation eGeomOp = NONE;
+    double       dfGeomOpParam = 0;
     char        **papszFieldTypesToString = NULL;
     int          bDisplayProgress = FALSE;
     GDALProgressFunc pfnProgress = NULL;
@@ -730,7 +739,13 @@ int main( int nArgc, char ** papszArgv )
         }
         else if( EQUAL(papszArgv[iArg],"-segmentize") && iArg < nArgc-1 )
         {
-            dfMaxSegmentLength = atof(papszArgv[++iArg]);
+            eGeomOp = SEGMENTIZE;
+            dfGeomOpParam = atof(papszArgv[++iArg]);
+        }
+        else if( EQUAL(papszArgv[iArg],"-simplify") && iArg < nArgc-1 )
+        {
+            eGeomOp = SIMPLIFY_PRESERVE_TOPOLOGY;
+            dfGeomOpParam = atof(papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg],"-fieldTypeToString") && iArg < nArgc-1 )
         {
@@ -1218,7 +1233,7 @@ int main( int nArgc, char ** papszArgv )
             if( !TranslateLayer( poDS, poPassedLayer, poODS, papszLCO, 
                                  pszNewLayerName, bTransform, poOutputSRS, bNullifyOutputSRS,
                                  poSourceSRS, papszSelFields, bAppend, eGType,
-                                 bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
+                                 bOverwrite, eGeomOp, dfGeomOpParam, papszFieldTypesToString,
                                  nCountLayerFeatures, bWrapDateline, poClipSrc, poClipDst,
                                  bExplodeCollections, pszZField, pszWHERE, pfnProgress, pProgressArg))
             {
@@ -1406,7 +1421,7 @@ int main( int nArgc, char ** papszArgv )
             if( !TranslateLayer( poDS, poPassedLayer, poODS, papszLCO, 
                                 pszNewLayerName, bTransform, poOutputSRS, bNullifyOutputSRS,
                                 poSourceSRS, papszSelFields, bAppend, eGType,
-                                bOverwrite, dfMaxSegmentLength, papszFieldTypesToString,
+                                bOverwrite, eGeomOp, dfGeomOpParam, papszFieldTypesToString,
                                 panLayerCountFeatures[iLayer], bWrapDateline, poClipSrc, poClipDst,
                                 bExplodeCollections, pszZField, pszWHERE, pfnProgress, pProgressArg)
                 && !bSkipFailures )
@@ -1493,7 +1508,8 @@ static void Usage(int bShort)
             "               [-clipdstsql sql_statement] [-clipdstlayer layer]\n"
             "               [-clipdstwhere expression]\n"
             "               [-wrapdateline]\n"
-            "               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]\n"
+            "               [[-simplify tolerance] | [-segmentize max_dist]]\n"
+            "               [-fieldTypeToString All|(type1[,type2]*)]\n"
             "               [-splitlistfields] [-maxsubfields val]\n"
             "               [-explodecollections] [-zfield field_name]\n");
 
@@ -1528,6 +1544,7 @@ static void Usage(int bShort)
             " -skipfailures: skip features or layers that fail to convert\n"
             " -gt n: group n features per transaction (default 200)\n"
             " -spat xmin ymin xmax ymax: spatial query extents\n"
+            " -simplify tolerance: distance tolerance for simplification.\n"
             " -segmentize max_dist: maximum distance between 2 nodes.\n"
             "                       Used to create intermediate points\n"
             " -dsco NAME=VALUE: Dataset creation option (format specific)\n"
@@ -1619,7 +1636,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            OGRSpatialReference *poSourceSRS,
                            char **papszSelFields,
                            int bAppend, int eGType, int bOverwrite,
-                           double dfMaxSegmentLength,
+                           GeomOperation eGeomOp,
+                           double dfGeomOpParam,
                            char** papszFieldTypesToString,
                            long nCountLayerFeatures,
                            int bWrapDateline,
@@ -2158,8 +2176,23 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                     poDstGeometry = poDupGeometry;
                 }
 
-                if (dfMaxSegmentLength > 0)
-                    poDstGeometry->segmentize(dfMaxSegmentLength);
+                if (eGeomOp == SEGMENTIZE)
+                {
+                    if (dfGeomOpParam > 0)
+                        poDstGeometry->segmentize(dfGeomOpParam);
+                }
+                else if (eGeomOp == SIMPLIFY_PRESERVE_TOPOLOGY)
+                {
+                    if (dfGeomOpParam > 0)
+                    {
+                        OGRGeometry* poNewGeom = poDstGeometry->SimplifyPreserveTopology(dfGeomOpParam);
+                        if (poNewGeom)
+                        {
+                            poDstFeature->SetGeometryDirectly(poNewGeom);
+                            poDstGeometry = poNewGeom;
+                        }
+                    }
+                }
 
                 if (poClipSrc)
                 {
