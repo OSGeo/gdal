@@ -8674,6 +8674,22 @@ public class Geometry:public void SetPoint(int ipoint, double x, double y)
  */
 public class Geometry:public Geometry Simplify(double dTolerance)
 
+/**
+ * Simplify the geometry while preserving topology.
+ * <p>
+ * This function is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @param dTolerance the distance tolerance for the simplification.
+ *
+ * @return the simplified geometry or null if an error occurs.
+ *
+ * @since OGR 1.9.0
+ */
+public class Geometry:public Geometry SimplifyPreserveTopology(double dTolerance)
+
 
 /**
  * Compute symmetric difference.

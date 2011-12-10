@@ -1,7 +1,7 @@
 %extend OGRDriverShadow {
 // File: ogrsfdriver_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrsfdriver.cpp
-16319 2009-02-13 23:17:58Z rouault $\") ";
+23413 2011-11-22 21:53:32Z rouault $\") ";
 
 %feature("docstring")  CreateDataSource "OGRDataSourceH
 OGR_Dr_CreateDataSource(OGRSFDriverH hDriver, const char *pszName,
