@@ -83,6 +83,7 @@ class VSIWin32Handle : public VSIVirtualHandle
 {
   public:
     HANDLE       hFile;
+    int          bEOF;
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
@@ -200,6 +201,8 @@ int VSIWin32Handle::Seek( vsi_l_offset nOffset, int nWhence )
     GUInt32       nMoveLow;
     LARGE_INTEGER li;
 
+    bEOF = FALSE;
+
     switch(nWhence)
     {
         case SEEK_CUR:
@@ -292,6 +295,9 @@ size_t VSIWin32Handle::Read( void * pBuffer, size_t nSize, size_t nCount )
     else
         nResult = dwSizeRead / nSize;
 
+    if( nResult != nCount )
+        bEOF = TRUE;
+
     return nResult;
 }
 
@@ -326,14 +332,7 @@ size_t VSIWin32Handle::Write( const void *pBuffer, size_t nSize, size_t nCount)
 int VSIWin32Handle::Eof()
 
 {
-    vsi_l_offset       nCur, nEnd;
-
-    nCur = Tell();
-    Seek( 0, SEEK_END );
-    nEnd = Tell();
-    Seek( nCur, SEEK_SET );
-
-    return (nCur == nEnd);
+    return bEOF;
 }
 
 /************************************************************************/
@@ -431,6 +430,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
     VSIWin32Handle *poHandle = new VSIWin32Handle;
     
     poHandle->hFile = hFile;
+    poHandle->bEOF = FALSE;
     
     if (strchr(pszAccess, 'a') != 0)
         poHandle->Seek(0, SEEK_END);
