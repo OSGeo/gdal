@@ -528,6 +528,8 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
             if ( hDBF && DBFIsRecordDeleted( hDBF, iNextShapeId ) ) {
                 poFeature = NULL;
             } else {
+                if (hDBF && VSIFEofL((VSILFILE*)hDBF->fp))
+                    return NULL;
                 // Check the shape object's geometry, and if it matches
                 // any spatial filter, return it.  
                 poFeature = FetchShape(iNextShapeId);
