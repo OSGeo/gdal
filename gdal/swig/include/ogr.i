@@ -1792,6 +1792,12 @@ public:
     return (OGRGeometryShadow*) OGR_G_Simplify(self, tolerance);
   }
 
+  /* OGR >= 1.9.0 */
+  %newobject SimplifyPreserveTopology;
+  OGRGeometryShadow* SimplifyPreserveTopology(double tolerance) {
+    return (OGRGeometryShadow*) OGR_G_SimplifyPreserveTopology(self, tolerance);
+  }
+
   %newobject Boundary;
   OGRGeometryShadow* Boundary() {
     return (OGRGeometryShadow*) OGR_G_Boundary(self);

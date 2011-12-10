@@ -3270,6 +3270,14 @@ SWIG_AsVal_int (PyObject * obj, int *val)
 
 SWIGINTERN OGRDataSourceShadow *OGRDriverShadow_Open(OGRDriverShadow *self,char const *utf8_path,int update=0){
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*) OGR_Dr_Open(self, utf8_path, update);
+    if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
+    {
+        CPLDebug( "SWIG",
+          "OGR_Dr_Open() succeeded, but an error is posted, so we destroy"
+          " the datasource and fail at swig level." );
+        OGRReleaseDataSource(ds);
+        ds = NULL;
+    }
     return ds;
   }
 SWIGINTERN int OGRDriverShadow_DeleteDataSource(OGRDriverShadow *self,char const *utf8_path){
@@ -4071,6 +4079,9 @@ SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_GetGeometryRef(OGRGeometryShadow
   }
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_Simplify(OGRGeometryShadow *self,double tolerance){
     return (OGRGeometryShadow*) OGR_G_Simplify(self, tolerance);
+  }
+SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_SimplifyPreserveTopology(OGRGeometryShadow *self,double tolerance){
+    return (OGRGeometryShadow*) OGR_G_SimplifyPreserveTopology(self, tolerance);
   }
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_Boundary(OGRGeometryShadow *self){
     return (OGRGeometryShadow*) OGR_G_Boundary(self);
@@ -13832,6 +13843,48 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Geometry_SimplifyPreserveTopology(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  double arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  OGRGeometryShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Geometry_SimplifyPreserveTopology",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_SimplifyPreserveTopology" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Geometry_SimplifyPreserveTopology" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (OGRGeometryShadow *)OGRGeometryShadow_SimplifyPreserveTopology(arg1,arg2);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Geometry_Boundary(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -17119,6 +17172,18 @@ static PyMethodDef SwigMethods[] = {
 		"OLCCreateField / \"CreateField\": TRUE if this layer can create new\n"
 		"fields on the current layer using CreateField(), otherwise FALSE.\n"
 		"\n"
+		"OLCDeleteField / \"DeleteField\": TRUE if this layer can delete\n"
+		"existing fields on the current layer using DeleteField(), otherwise\n"
+		"FALSE.\n"
+		"\n"
+		"OLCReorderFields / \"ReorderFields\": TRUE if this layer can reorder\n"
+		"existing fields on the current layer using ReorderField() or\n"
+		"ReorderFields(), otherwise FALSE.\n"
+		"\n"
+		"OLCAlterFieldDefn / \"AlterFieldDefn\": TRUE if this layer can alter\n"
+		"the definition of an existing field on the current layer using\n"
+		"AlterFieldDefn(), otherwise FALSE.\n"
+		"\n"
 		"OLCDeleteFeature / \"DeleteFeature\": TRUE if the DeleteFeature()\n"
 		"method is supported on this layer, otherwise FALSE.\n"
 		"\n"
@@ -17157,6 +17222,16 @@ static PyMethodDef SwigMethods[] = {
 		"Applications should never modify the OGRFeatureDefn used by a layer\n"
 		"directly.\n"
 		"\n"
+		"This function should not be called while there are feature objects in\n"
+		"existance that were obtained or created with the previous layer\n"
+		"definition.\n"
+		"\n"
+		"Not all drivers support this function. You can query a layer to check\n"
+		"if it supports it with the OLCCreateField capability. Some drivers may\n"
+		"only support this method while there are still no features in the\n"
+		"layer. When it is supported, the existings features of the backing\n"
+		"file/database should be updated accordingly.\n"
+		"\n"
 		"This function is the same as the C++ method OGRLayer::CreateField().\n"
 		"\n"
 		"Parameters:\n"
@@ -17171,10 +17246,184 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"OGRERR_NONE on success. \n"
 		""},
-	 { (char *)"Layer_DeleteField", _wrap_Layer_DeleteField, METH_VARARGS, (char *)"Layer_DeleteField(Layer self, int iField) -> OGRErr"},
-	 { (char *)"Layer_ReorderField", _wrap_Layer_ReorderField, METH_VARARGS, (char *)"Layer_ReorderField(Layer self, int iOldFieldPos, int iNewFieldPos) -> OGRErr"},
-	 { (char *)"Layer_ReorderFields", _wrap_Layer_ReorderFields, METH_VARARGS, (char *)"Layer_ReorderFields(Layer self, int nList) -> OGRErr"},
-	 { (char *)"Layer_AlterFieldDefn", _wrap_Layer_AlterFieldDefn, METH_VARARGS, (char *)"Layer_AlterFieldDefn(Layer self, int iField, FieldDefn field_def, int nFlags) -> OGRErr"},
+	 { (char *)"Layer_DeleteField", _wrap_Layer_DeleteField, METH_VARARGS, (char *)"\n"
+		"Layer_DeleteField(Layer self, int iField) -> OGRErr\n"
+		"\n"
+		"OGRErr\n"
+		"OGR_L_DeleteField(OGRLayerH hLayer, int iField)\n"
+		"\n"
+		"Create a new field on a layer.\n"
+		"\n"
+		"You must use this to delete existing fields on a real layer.\n"
+		"Internally the OGRFeatureDefn for the layer will be updated to reflect\n"
+		"the deleted field. Applications should never modify the OGRFeatureDefn\n"
+		"used by a layer directly.\n"
+		"\n"
+		"This function should not be called while there are feature objects in\n"
+		"existance that were obtained or created with the previous layer\n"
+		"definition.\n"
+		"\n"
+		"Not all drivers support this function. You can query a layer to check\n"
+		"if it supports it with the OLCDeleteField capability. Some drivers may\n"
+		"only support this method while there are still no features in the\n"
+		"layer. When it is supported, the existings features of the backing\n"
+		"file/database should be updated accordingly.\n"
+		"\n"
+		"This function is the same as the C++ method OGRLayer::DeleteField().\n"
+		"\n"
+		"Parameters:\n"
+		"-----------\n"
+		"\n"
+		"hLayer:  handle to the layer.\n"
+		"\n"
+		"iField:  index of the field to delete.\n"
+		"\n"
+		"OGRERR_NONE on success.\n"
+		"\n"
+		"OGR 1.9.0 \n"
+		""},
+	 { (char *)"Layer_ReorderField", _wrap_Layer_ReorderField, METH_VARARGS, (char *)"\n"
+		"Layer_ReorderField(Layer self, int iOldFieldPos, int iNewFieldPos) -> OGRErr\n"
+		"\n"
+		"OGRErr\n"
+		"OGR_L_ReorderField(OGRLayerH hLayer, int iOldFieldPos, int\n"
+		"iNewFieldPos)\n"
+		"\n"
+		"Reorder an existing field on a layer.\n"
+		"\n"
+		"This function is a conveniency wrapper of OGR_L_ReorderFields()\n"
+		"dedicated to move a single field.\n"
+		"\n"
+		"You must use this to reorder existing fields on a real layer.\n"
+		"Internally the OGRFeatureDefn for the layer will be updated to reflect\n"
+		"the reordering of the fields. Applications should never modify the\n"
+		"OGRFeatureDefn used by a layer directly.\n"
+		"\n"
+		"This function should not be called while there are feature objects in\n"
+		"existance that were obtained or created with the previous layer\n"
+		"definition.\n"
+		"\n"
+		"The field definition that was at initial position iOldFieldPos will be\n"
+		"moved at position iNewFieldPos, and elements between will be shuffled\n"
+		"accordingly.\n"
+		"\n"
+		"For example, let suppose the fields were \"0\",\"1\",\"2\",\"3\",\"4\"\n"
+		"initially. ReorderField(1, 3) will reorder them as\n"
+		"\"0\",\"2\",\"3\",\"1\",\"4\".\n"
+		"\n"
+		"Not all drivers support this function. You can query a layer to check\n"
+		"if it supports it with the OLCReorderFields capability. Some drivers\n"
+		"may only support this method while there are still no features in the\n"
+		"layer. When it is supported, the existings features of the backing\n"
+		"file/database should be updated accordingly.\n"
+		"\n"
+		"This function is the same as the C++ method OGRLayer::ReorderField().\n"
+		"\n"
+		"Parameters:\n"
+		"-----------\n"
+		"\n"
+		"hLayer:  handle to the layer.\n"
+		"\n"
+		"iOldFieldPos:  previous position of the field to move. Must be in the\n"
+		"range [0,GetFieldCount()-1].\n"
+		"\n"
+		"iNewFieldPos:  new position of the field to move. Must be in the range\n"
+		"[0,GetFieldCount()-1].\n"
+		"\n"
+		"OGRERR_NONE on success.\n"
+		"\n"
+		"OGR 1.9.0 \n"
+		""},
+	 { (char *)"Layer_ReorderFields", _wrap_Layer_ReorderFields, METH_VARARGS, (char *)"\n"
+		"Layer_ReorderFields(Layer self, int nList) -> OGRErr\n"
+		"\n"
+		"OGRErr\n"
+		"OGR_L_ReorderFields(OGRLayerH hLayer, int *panMap)\n"
+		"\n"
+		"Reorder all the fields of a layer.\n"
+		"\n"
+		"You must use this to reorder existing fields on a real layer.\n"
+		"Internally the OGRFeatureDefn for the layer will be updated to reflect\n"
+		"the reordering of the fields. Applications should never modify the\n"
+		"OGRFeatureDefn used by a layer directly.\n"
+		"\n"
+		"This function should not be called while there are feature objects in\n"
+		"existance that were obtained or created with the previous layer\n"
+		"definition.\n"
+		"\n"
+		"panMap is such that,for each field definition at position i after\n"
+		"reordering, its position before reordering was panMap[i].\n"
+		"\n"
+		"For example, let suppose the fields were \"0\",\"1\",\"2\",\"3\",\"4\"\n"
+		"initially. ReorderFields([0,2,3,1,4]) will reorder them as\n"
+		"\"0\",\"2\",\"3\",\"1\",\"4\".\n"
+		"\n"
+		"Not all drivers support this function. You can query a layer to check\n"
+		"if it supports it with the OLCReorderFields capability. Some drivers\n"
+		"may only support this method while there are still no features in the\n"
+		"layer. When it is supported, the existings features of the backing\n"
+		"file/database should be updated accordingly.\n"
+		"\n"
+		"This function is the same as the C++ method OGRLayer::ReorderFields().\n"
+		"\n"
+		"Parameters:\n"
+		"-----------\n"
+		"\n"
+		"hLayer:  handle to the layer.\n"
+		"\n"
+		"panMap:  an array of GetLayerDefn()->GetFieldCount() elements which is\n"
+		"a permutation of [0, GetLayerDefn()->GetFieldCount()-1].\n"
+		"\n"
+		"OGRERR_NONE on success.\n"
+		"\n"
+		"OGR 1.9.0 \n"
+		""},
+	 { (char *)"Layer_AlterFieldDefn", _wrap_Layer_AlterFieldDefn, METH_VARARGS, (char *)"\n"
+		"Layer_AlterFieldDefn(Layer self, int iField, FieldDefn field_def, int nFlags) -> OGRErr\n"
+		"\n"
+		"OGRErr\n"
+		"OGR_L_AlterFieldDefn(OGRLayerH hLayer, int iField, OGRFieldDefnH\n"
+		"hNewFieldDefn, int nFlags)\n"
+		"\n"
+		"Alter the definition of an existing field on a layer.\n"
+		"\n"
+		"You must use this to alter the definition of an existing field of a\n"
+		"real layer. Internally the OGRFeatureDefn for the layer will be\n"
+		"updated to reflect the altered field. Applications should never modify\n"
+		"the OGRFeatureDefn used by a layer directly.\n"
+		"\n"
+		"This function should not be called while there are feature objects in\n"
+		"existance that were obtained or created with the previous layer\n"
+		"definition.\n"
+		"\n"
+		"Not all drivers support this function. You can query a layer to check\n"
+		"if it supports it with the OLCAlterFieldDefn capability. Some drivers\n"
+		"may only support this method while there are still no features in the\n"
+		"layer. When it is supported, the existings features of the backing\n"
+		"file/database should be updated accordingly. Some drivers might also\n"
+		"not support all update flags.\n"
+		"\n"
+		"This function is the same as the C++ method\n"
+		"OGRLayer::AlterFieldDefn().\n"
+		"\n"
+		"Parameters:\n"
+		"-----------\n"
+		"\n"
+		"hLayer:  handle to the layer.\n"
+		"\n"
+		"iField:  index of the field whose definition must be altered.\n"
+		"\n"
+		"hNewFieldDefn:  new field definition\n"
+		"\n"
+		"nFlags:  combination of ALTER_NAME_FLAG, ALTER_TYPE_FLAG and\n"
+		"ALTER_WIDTH_PRECISION_FLAG to indicate which of the name and/or type\n"
+		"and/or width and precision fields from the new field definition must\n"
+		"be taken into account.\n"
+		"\n"
+		"OGRERR_NONE on success.\n"
+		"\n"
+		"OGR 1.9.0 \n"
+		""},
 	 { (char *)"Layer_StartTransaction", _wrap_Layer_StartTransaction, METH_VARARGS, (char *)"\n"
 		"Layer_StartTransaction(Layer self) -> OGRErr\n"
 		"\n"
@@ -18089,12 +18338,15 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"Add a new field definition to the passed feature definition.\n"
 		"\n"
+		"To add a new field definition to a layer definition, do not use this\n"
+		"function directly, but use OGR_L_CreateField() instead.\n"
+		"\n"
 		"This function should only be called while there are no OGRFeature\n"
 		"objects in existance based on this OGRFeatureDefn. The OGRFieldDefn\n"
 		"passed in is copied, and remains the responsibility of the caller.\n"
 		"\n"
 		"This function is the same as the C++ method\n"
-		"OGRFeatureDefn::AddFieldDefn.\n"
+		"OGRFeatureDefn::AddFieldDefn().\n"
 		"\n"
 		"Parameters:\n"
 		"-----------\n"
@@ -18645,6 +18897,33 @@ static PyMethodDef SwigMethods[] = {
 		"the simplified geometry or NULL if an error occurs.\n"
 		"\n"
 		"OGR 1.8.0 \n"
+		""},
+	 { (char *)"Geometry_SimplifyPreserveTopology", _wrap_Geometry_SimplifyPreserveTopology, METH_VARARGS, (char *)"\n"
+		"Geometry_SimplifyPreserveTopology(Geometry self, double tolerance) -> Geometry\n"
+		"\n"
+		"OGRGeometryH\n"
+		"OGR_G_SimplifyPreserveTopology(OGRGeometryH hThis, double dTolerance)\n"
+		"\n"
+		"Compute a simplified geometry.\n"
+		"\n"
+		"This function is the same as the C++ method\n"
+		"OGRGeometry::SimplifyPreserveTopology().\n"
+		"\n"
+		"This function is built on the GEOS library, check it for the\n"
+		"definition of the geometry operation. If OGR is built without the GEOS\n"
+		"library, this function will always fail, issuing a CPLE_NotSupported\n"
+		"error.\n"
+		"\n"
+		"Parameters:\n"
+		"-----------\n"
+		"\n"
+		"hThis:  the geometry.\n"
+		"\n"
+		"dTolerance:  the distance tolerance for the simplification.\n"
+		"\n"
+		"the simplified geometry or NULL if an error occurs.\n"
+		"\n"
+		"OGR 1.9.0 \n"
 		""},
 	 { (char *)"Geometry_Boundary", _wrap_Geometry_Boundary, METH_VARARGS, (char *)"\n"
 		"Geometry_Boundary(Geometry self) -> Geometry\n"
@@ -19425,7 +19704,27 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"psEnvelope:  the structure in which to place the results. \n"
 		""},
-	 { (char *)"Geometry_GetEnvelope3D", _wrap_Geometry_GetEnvelope3D, METH_VARARGS, (char *)"Geometry_GetEnvelope3D(Geometry self)"},
+	 { (char *)"Geometry_GetEnvelope3D", _wrap_Geometry_GetEnvelope3D, METH_VARARGS, (char *)"\n"
+		"Geometry_GetEnvelope3D(Geometry self)\n"
+		"\n"
+		"void\n"
+		"OGR_G_GetEnvelope3D(OGRGeometryH hGeom, OGREnvelope3D *psEnvelope)\n"
+		"\n"
+		"Computes and returns the bounding envelope (3D) for this geometry in\n"
+		"the passed psEnvelope structure.\n"
+		"\n"
+		"This function is the same as the CPP method\n"
+		"OGRGeometry::getEnvelope().\n"
+		"\n"
+		"Parameters:\n"
+		"-----------\n"
+		"\n"
+		"hGeom:  handle of the geometry to get envelope from.\n"
+		"\n"
+		"psEnvelope:  the structure in which to place the results.\n"
+		"\n"
+		"OGR 1.9.0 \n"
+		""},
 	 { (char *)"Geometry_Centroid", _wrap_Geometry_Centroid, METH_VARARGS, (char *)"\n"
 		"Geometry_Centroid(Geometry self) -> Geometry\n"
 		"\n"
@@ -19495,8 +19794,8 @@ static PyMethodDef SwigMethods[] = {
 		"hGeom:  handle on the geometry to get the dimension of the coordinates\n"
 		"from.\n"
 		"\n"
-		"in practice this always returns 2 indicating that coordinates are\n"
-		"specified within a two dimensional space. \n"
+		"in practice this will return 2 or 3. It can also return 0 in the case\n"
+		"of an empty point. \n"
 		""},
 	 { (char *)"Geometry_SetCoordinateDimension", _wrap_Geometry_SetCoordinateDimension, METH_VARARGS, (char *)"\n"
 		"Geometry_SetCoordinateDimension(Geometry self, int dimension)\n"

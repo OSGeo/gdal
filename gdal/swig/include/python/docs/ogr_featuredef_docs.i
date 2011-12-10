@@ -1,7 +1,7 @@
 %extend OGRFeatureDefnShadow {
 // File: ogrfeaturedefn_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrfeaturedefn.cpp
-21018 2010-10-30 11:30:51Z rouault $\") ";
+22900 2011-08-07 20:47:41Z rouault $\") ";
 
 %feature("docstring")  Create "OGRFeatureDefnH OGR_FD_Create(const
 char *pszName)
@@ -105,12 +105,15 @@ OGR_FD_AddFieldDefn(OGRFeatureDefnH hDefn, OGRFieldDefnH hNewField)
 
 Add a new field definition to the passed feature definition.
 
+To add a new field definition to a layer definition, do not use this
+function directly, but use OGR_L_CreateField() instead.
+
 This function should only be called while there are no OGRFeature
 objects in existance based on this OGRFeatureDefn. The OGRFieldDefn
 passed in is copied, and remains the responsibility of the caller.
 
 This function is the same as the C++ method
-OGRFeatureDefn::AddFieldDefn.
+OGRFeatureDefn::AddFieldDefn().
 
 Parameters:
 -----------
@@ -119,6 +122,59 @@ hDefn:  handle to the feature definition to add the field definition
 to.
 
 hNewField:  handle to the new field definition. ";
+
+%feature("docstring")  DeleteFieldDefn "OGRErr
+OGR_FD_DeleteFieldDefn(OGRFeatureDefnH hDefn, int iField)
+
+Delete an existing field definition.
+
+To delete an existing field definition from a layer definition, do not
+use this function directly, but use OGR_L_DeleteField() instead.
+
+This method should only be called while there are no OGRFeature
+objects in existance based on this OGRFeatureDefn.
+
+This method is the same as the C++ method
+OGRFeatureDefn::DeleteFieldDefn().
+
+Parameters:
+-----------
+
+hDefn:  handle to the feature definition.
+
+iField:  the index of the field defintion.
+
+OGRERR_NONE in case of success.
+
+OGR 1.9.0 ";
+
+%feature("docstring")  ReorderFieldDefn "OGRErr
+OGR_FD_ReorderFieldDefn(OGRFeatureDefnH hDefn, int *panMap)
+
+Reorder the field definitions in the array of the feature definition.
+
+To reorder the field definitions in a layer definition, do not use
+this function directly, but use OGR_L_ReorderFields() instead.
+
+This method should only be called while there are no OGRFeature
+objects in existance based on this OGRFeatureDefn.
+
+This method is the same as the C++ method
+OGRFeatureDefn::ReorderFieldDefns().
+
+Parameters:
+-----------
+
+hDefn:  handle to the feature definition.
+
+panMap:  an array of GetFieldCount() elements which is a permutation
+of [0, GetFieldCount()-1]. panMap is such that, for each field
+definition at position i after reordering, its position before
+reordering was panMap[i].
+
+OGRERR_NONE in case of success.
+
+OGR 1.9.0 ";
 
 %feature("docstring")  GetGeomType "OGRwkbGeometryType
 OGR_FD_GetGeomType(OGRFeatureDefnH hDefn)
