@@ -1,7 +1,7 @@
 %extend OGRDataSourceShadow {
 // File: ogrdatasource_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrdatasource.cpp
-20616 2010-09-15 01:20:36Z warmerdam $\") ";
+23403 2011-11-20 21:01:21Z ajolma $\") ";
 
 %feature("docstring")  Destroy "void OGR_DS_Destroy(OGRDataSourceH
 hDS)
@@ -134,6 +134,10 @@ pszLayerName:  Layer the layer name of the layer to fetch.
 
 an handle to the layer, or NULL if the layer is not found or an error
 occurs. ";
+
+%feature("docstring")  OGRDataSourceParseSQLType "static OGRFieldType
+OGRDataSourceParseSQLType(char *pszType, int &nWidth, int &nPrecision)
+";
 
 %feature("docstring")  ExecuteSQL "OGRLayerH
 OGR_DS_ExecuteSQL(OGRDataSourceH hDS, const char *pszStatement,

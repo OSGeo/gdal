@@ -1,7 +1,7 @@
 %extend OGRGeometryShadow {
 // File: ogrgeometry_8cpp.xml
 %feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrgeometry.cpp
-21072 2010-11-06 17:31:02Z rouault $\") ";
+23140 2011-09-29 20:13:09Z rouault $\") ";
 
 %feature("docstring")  DumpReadable "void
 OGR_G_DumpReadable(OGRGeometryH hGeom, FILE *fp, const char
@@ -185,8 +185,8 @@ Parameters:
 hGeom:  handle on the geometry to get the dimension of the coordinates
 from.
 
-in practice this always returns 2 indicating that coordinates are
-specified within a two dimensional space. ";
+in practice this will return 2 or 3. It can also return 0 in the case
+of an empty point. ";
 
 %feature("docstring")  SetCoordinateDimension "void
 OGR_G_SetCoordinateDimension(OGRGeometryH hGeom, int nNewDimension)
@@ -260,6 +260,24 @@ Parameters:
 hGeom:  handle of the geometry to get envelope from.
 
 psEnvelope:  the structure in which to place the results. ";
+
+%feature("docstring")  GetEnvelope3D "void
+OGR_G_GetEnvelope3D(OGRGeometryH hGeom, OGREnvelope3D *psEnvelope)
+
+Computes and returns the bounding envelope (3D) for this geometry in
+the passed psEnvelope structure.
+
+This function is the same as the CPP method
+OGRGeometry::getEnvelope().
+
+Parameters:
+-----------
+
+hGeom:  handle of the geometry to get envelope from.
+
+psEnvelope:  the structure in which to place the results.
+
+OGR 1.9.0 ";
 
 %feature("docstring")  ImportFromWkb "OGRErr
 OGR_G_ImportFromWkb(OGRGeometryH hGeom, unsigned char *pabyData, int
@@ -1030,5 +1048,29 @@ dTolerance:  the distance tolerance for the simplification.
 the simplified geometry or NULL if an error occurs.
 
 OGR 1.8.0 ";
+
+%feature("docstring")  SimplifyPreserveTopology "OGRGeometryH
+OGR_G_SimplifyPreserveTopology(OGRGeometryH hThis, double dTolerance)
+
+Compute a simplified geometry.
+
+This function is the same as the C++ method
+OGRGeometry::SimplifyPreserveTopology().
+
+This function is built on the GEOS library, check it for the
+definition of the geometry operation. If OGR is built without the GEOS
+library, this function will always fail, issuing a CPLE_NotSupported
+error.
+
+Parameters:
+-----------
+
+hThis:  the geometry.
+
+dTolerance:  the distance tolerance for the simplification.
+
+the simplified geometry or NULL if an error occurs.
+
+OGR 1.9.0 ";
 
 }
