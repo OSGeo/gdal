@@ -3592,6 +3592,93 @@ OGRGeometryH OGR_G_Simplify( OGRGeometryH hThis, double dTolerance )
 }
 
 /************************************************************************/
+/*                         SimplifyPreserveTopology()                   */
+/************************************************************************/
+
+/**
+ * \brief Simplify the geometry while preserving topology.
+ *
+ * This function is the same as the C function OGR_G_SimplifyPreserveTopology().
+ *
+ * This function is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @param dTolerance the distance tolerance for the simplification.
+ *
+ * @return the simplified geometry or NULL if an error occurs.
+ *
+ * @since OGR 1.9.0
+ */
+
+OGRGeometry *OGRGeometry::SimplifyPreserveTopology(double dTolerance) const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "GEOS support not enabled." );
+    return NULL;
+
+/* GEOS >= 3.0.0 */
+#elif GEOS_CAPI_VERSION_MAJOR >= 2 || (GEOS_CAPI_VERSION_MAJOR == 1 && GEOS_CAPI_VERSION_MINOR >= 4)
+
+    GEOSGeom hThisGeosGeom = NULL;
+    GEOSGeom hGeosProduct = NULL;
+    OGRGeometry *poOGRProduct = NULL;
+
+    hThisGeosGeom = exportToGEOS();
+    if( hThisGeosGeom != NULL )
+    {
+        hGeosProduct = GEOSTopologyPreserveSimplify( hThisGeosGeom, dTolerance );
+        GEOSGeom_destroy( hThisGeosGeom );
+        if( hGeosProduct != NULL )
+        {
+            poOGRProduct = OGRGeometryFactory::createFromGEOS( hGeosProduct );
+            GEOSGeom_destroy( hGeosProduct );
+        }
+    }
+    return poOGRProduct;
+
+#else
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "GEOS >= 3.0.0 required for SimplifyPreserveTopology() support." );
+    return NULL;
+#endif /* HAVE_GEOS */
+
+}
+
+/************************************************************************/
+/*                     OGR_G_SimplifyPreserveTopology()                 */
+/************************************************************************/
+
+/**
+ * \brief Simplify the geometry while preserving topology.
+ *
+ * This function is the same as the C++ method OGRGeometry::SimplifyPreserveTopology().
+ *
+ * This function is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @param hThis the geometry.
+ * @param dTolerance the distance tolerance for the simplification.
+ *
+ * @return the simplified geometry or NULL if an error occurs.
+ *
+ * @since OGR 1.9.0
+ */
+
+OGRGeometryH OGR_G_SimplifyPreserveTopology( OGRGeometryH hThis, double dTolerance )
+
+{
+    VALIDATE_POINTER1( hThis, "OGR_G_SimplifyPreserveTopology", NULL );
+    return (OGRGeometryH) ((OGRGeometry *) hThis)->SimplifyPreserveTopology( dTolerance );
+}
+
+/************************************************************************/
 /*                               swapXY()                               */
 /************************************************************************/
 
