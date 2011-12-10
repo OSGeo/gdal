@@ -46,7 +46,8 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
                                        const char *pszSHPEncoding );
 OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            OGRFeatureDefn *poFeatureDefn,
-                           OGRFeature *poFeature, const char *pszSHPEncoding );
+                           OGRFeature *poFeature, const char *pszSHPEncoding,
+                           int* pbTruncationWarningEmitted );
 
 /************************************************************************/
 /*                            OGRShapeLayer                             */
@@ -89,6 +90,8 @@ class OGRShapeLayer : public OGRLayer
 
     CPLString           ConvertCodePage( const char * );
     CPLString           osEncoding;
+
+    int                 bTruncationWarningEmitted;
 
     int                 bHSHPWasNonNULL; /* to know if we must try to reopen a .shp */
     int                 bHDBFWasNonNULL; /* to know if we must try to reopen a .dbf */
