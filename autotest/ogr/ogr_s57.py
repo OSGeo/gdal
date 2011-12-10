@@ -31,6 +31,7 @@
 import os
 import sys
 import string
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -273,6 +274,86 @@ def ogr_s57_online_1():
     return 'success'
 
 ###############################################################################
+# Test with ENC 3.0 TDS - tile without updates.
+
+def ogr_s57_online_2():
+    if gdaltest.s57_ds is None:
+        return 'skip'
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/s57/enctds/GB5X01SW.000', 'GB5X01SW.000'):
+        return 'skip'
+
+    gdaltest.clean_tmp()
+    shutil.copy( 'tmp/cache/GB5X01SW.000', 'tmp/GB5X01SW.000' )
+    ds = ogr.Open( 'tmp/GB5X01SW.000' )
+    if ds is None:
+        return 'fail'
+
+    lyr = ds.GetLayerByName('LIGHTS')
+    feat = lyr.GetFeature(542)
+
+    if feat is None:
+        gdaltest.post_reason( 'Did not get expected feature at all.' )
+        return 'fail'
+
+    if feat.rver != 1:
+        gdaltest.post_reason( 'Did not get expected RVER value (%d).' % feat.rver )
+        return 'fail'
+
+    lyr = ds.GetLayerByName('BOYCAR')
+    feat = lyr.GetFeature(975)
+    if feat is not None:
+        gdaltest.post_reason( 'unexpected got feature id 975 before update!' )
+        return 'fail'
+
+    feat = None
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test with ENC 3.0 TDS - tile with updates.
+
+def ogr_s57_online_3():
+    if gdaltest.s57_ds is None:
+        return 'skip'
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/s57/enctds/GB5X01SW.001', 'GB5X01SW.001'):
+        return 'skip'
+
+    shutil.copy( 'tmp/cache/GB5X01SW.001', 'tmp/GB5X01SW.001' )
+    ds = ogr.Open( 'tmp/GB5X01SW.000' )
+    if ds is None:
+        return 'fail'
+
+    lyr = ds.GetLayerByName('LIGHTS')
+    feat = lyr.GetFeature(542)
+
+    if feat is None:
+        gdaltest.post_reason( 'Did not get expected feature at all.' )
+        return 'fail'
+
+    if feat.rver != 2:
+        gdaltest.post_reason( 'Did not get expected RVER value (%d).' % feat.rver )
+        return 'fail'
+
+    lyr = ds.GetLayerByName('BOYCAR')
+    feat = lyr.GetFeature(975)
+    if feat is None:
+        gdaltest.post_reason( 'unexpected dit not get feature id 975 after update!' )
+        return 'fail'
+
+    feat = None
+
+    ds = None
+
+    gdaltest.clean_tmp()
+
+    return 'success'
+
+
+###############################################################################
 #  Cleanup
 
 def ogr_s57_cleanup():
@@ -292,6 +373,8 @@ gdaltest_list = [
     ogr_s57_6,
     ogr_s57_7,
     ogr_s57_online_1,
+    ogr_s57_online_2,
+    ogr_s57_online_3,
     ogr_s57_cleanup ]
 
 if __name__ == '__main__':
