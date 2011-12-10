@@ -594,8 +594,9 @@ size_t VSIFWriteL( const void *pBuffer, size_t nSize, size_t nCount, VSILFILE *f
 /**
  * \brief Test for end of file.
  *
- * Returns TRUE (non-zero) if the file read/write offset is currently at the
- * end of the file. 
+ * Returns TRUE (non-zero) if an end-of-file condition occured during the
+ * previous read operation. The end-of-file flag is cleared by a successfull
+ * VSIFSeekL() call.
  *
  * This method goes through the VSIFileHandler virtualization and may
  * work on unusual filesystems such as in memory.
