@@ -803,9 +803,13 @@ def osr_esri_test_file( ifile, ofile_base ):
         #morph back to ESRI
         srs3 = srs2.Clone()
         srs3.MorphToESRI()
-        #manage special cases
-        if srs1.GetAttrValue( 'PROJCS|PROJECTION' ) == 'Gauss_Kruger':
-            srs3.SetAttrValue( 'PROJCS|PROJECTION', 'Gauss_Kruger')
+        #manage special cases of PROJECTION parameters that have multiple mappings
+        remap_proj=dict([ ['Transverse_Mercator','Gauss_Kruger'], ['Equidistant_Cylindrical', 'Plate_Carree'], \
+                              ['Hotine_Oblique_Mercator_Azimuth_Natural_Origin','Hotine_Oblique_Mercator_Azimuth_Center'] ] )
+        proj1=srs1.GetAttrValue( 'PROJCS|PROJECTION' )
+        proj3=srs3.GetAttrValue( 'PROJCS|PROJECTION' )
+        if proj3 in remap_proj and proj1==remap_proj[proj3]:
+            srs3.SetAttrValue( 'PROJCS|PROJECTION', remap_proj[proj3] )
         wkt3 = srs3.ExportToWkt()
         
         #check srs and wkt
@@ -835,8 +839,6 @@ def osr_esri_test_file( ifile, ofile_base ):
             print('WARNING: Failed %d WKT tests, see file %s' % (failed_wkt_count,ofile_wkt) )
         else:
             print('WARNING: Failed %d WKT tests' % (failed_wkt_count) )
-    else:
-        os.unlink(ofile_wkt)
 
 
     return result
