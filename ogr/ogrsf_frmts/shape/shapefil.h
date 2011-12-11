@@ -146,6 +146,10 @@
 #include <dbmalloc.h>
 #endif
 
+#ifdef USE_CPL
+#include "cpl_conv.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
