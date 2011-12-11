@@ -118,6 +118,9 @@ class OGRShapeLayer : public OGRLayer
     OGRShapeLayer      *poPrevLayer; /* Chain to a layer that was used more recently */
     OGRShapeLayer      *poNextLayer; /* Chain to a layer that was used less recently */
 
+    OGRFeature *        FetchShape(int iShapeId);
+    int                 GetFeatureCountWithSpatialFilterOnly();
+
   public:
                         OGRShapeLayer( OGRShapeDataSource* poDSIn,
                                        const char * pszName,
@@ -128,7 +131,6 @@ class OGRShapeLayer : public OGRLayer
                         ~OGRShapeLayer();
 
     void                ResetReading();
-    OGRFeature *        FetchShape(int iShapeId);
     OGRFeature *        GetNextFeature();
     virtual OGRErr      SetNextByIndex( long nIndex );
 
