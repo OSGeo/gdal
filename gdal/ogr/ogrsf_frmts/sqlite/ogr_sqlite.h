@@ -273,6 +273,9 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     OGRErr              BindValues( OGRFeature *poFeature,
                                         sqlite3_stmt* hStmt,
                                         int bBindNullValues );
+
+    int                 CheckSpatialIndexTable();
+
   public:
                         OGRSQLiteTableLayer( OGRSQLiteDataSource * );
                         ~OGRSQLiteTableLayer();
@@ -291,6 +294,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                     int bIsVirtualShapeIn = FALSE);
 
     virtual int         GetFeatureCount( int );
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce);
 
     virtual void        SetSpatialFilter( OGRGeometry * );
     virtual OGRErr      SetAttributeFilter( const char * );
