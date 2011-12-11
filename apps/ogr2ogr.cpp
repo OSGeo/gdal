@@ -76,6 +76,83 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            void *pProgressArg);
 
 
+/* -------------------------------------------------------------------- */
+/*                  CheckDestDataSourceNameConsistency()                */
+/* -------------------------------------------------------------------- */
+
+static
+void CheckDestDataSourceNameConsistency(const char* pszDestFilename,
+                                        const char* pszDriverName)
+{
+    int i;
+    char* pszDestExtension = CPLStrdup(CPLGetExtension(pszDestFilename));
+
+    /* TODO: Would be good to have driver metadata like for GDAL drivers ! */
+    static const char* apszExtensions[][2] = { { "shp"    , "ESRI Shapefile" },
+                                               { "dbf"    , "ESRI Shapefile" },
+                                               { "sqlite" , "SQLite" },
+                                               { "db"     , "SQLite" },
+                                               { "mif"    , "MapInfo File" },
+                                               { "tab"    , "MapInfo File" },
+                                               { "s57"    , "S57" },
+                                               { "bna"    , "BNA" },
+                                               { "csv"    , "CSV" },
+                                               { "gml"    , "GML" },
+                                               { "kml"    , "KML/LIBKML" },
+                                               { "kmz"    , "LIBKML" },
+                                               { "json"   , "GeoJSON" },
+                                               { "geojson", "GeoJSON" },
+                                               { "dxf"    , "DXF" },
+                                               { "gdb"    , "FileGDB" },
+                                               { "pix"    , "PCIDSK" },
+                                               { "sql"    , "PGDump" },
+                                               { "gtm"    , "GPSTrackMaker" },
+                                               { "gmt"    , "GMT" },
+                                               { NULL, NULL }
+                                              };
+    static const char* apszBeginName[][2] =  { { "PG:"      , "PG" },
+                                               { "MySQL:"   , "MySQL" },
+                                               { "CouchDB:" , "CouchDB" },
+                                               { "GFT:"     , "GFT" },
+                                               { "MSSQL:"   , "MSSQLSpatial" },
+                                               { "ODBC:"    , "ODBC" },
+                                               { "OCI:"     , "OCI" },
+                                               { "SDE:"     , "SDE" },
+                                               { "WFS:"     , "WFS" },
+                                               { NULL, NULL }
+                                             };
+
+    for(i=0; apszExtensions[i][0] != NULL; i++)
+    {
+        if (EQUAL(pszDestExtension, apszExtensions[i][0]) && !EQUAL(pszDriverName, apszExtensions[i][1]))
+        {
+            fprintf(stderr,
+                    "Warning: The target file has a '%s' extension, which is normally used by the %s driver,\n"
+                    "but the requested output driver is %s. Is it really what you want ?\n",
+                    pszDestExtension,
+                    apszExtensions[i][1],
+                    pszDriverName);
+            break;
+        }
+    }
+
+    for(i=0; apszBeginName[i][0] != NULL; i++)
+    {
+        if (EQUALN(pszDestFilename, apszBeginName[i][0], strlen(apszBeginName[i][0])) &&
+            !EQUAL(pszDriverName, apszBeginName[i][1]))
+        {
+            fprintf(stderr,
+                    "Warning: The target file has a name which is normally recognized by the %s driver,\n"
+                    "but the requested output driver is %s. Is it really what you want ?\n",
+                    apszBeginName[i][1],
+                    pszDriverName);
+            break;
+        }
+    }
+
+    CPLFree(pszDestExtension);
+}
+
 /************************************************************************/
 /*                            IsNumber()                               */
 /************************************************************************/
@@ -534,6 +611,8 @@ OGRFeatureDefn* OGRSplitListFieldLayer::GetLayerDefn()
 int main( int nArgc, char ** papszArgv )
 
 {
+    int          bQuiet = FALSE;
+    int          bFormatExplicitelySet = FALSE;
     const char  *pszFormat = "ESRI Shapefile";
     const char  *pszDataSource = NULL;
     const char  *pszDestDataSource = NULL;
@@ -605,8 +684,14 @@ int main( int nArgc, char ** papszArgv )
         {
             Usage(FALSE);
         }
+
+        else if( EQUAL(papszArgv[iArg],"-q") || EQUAL(papszArgv[iArg],"-quiet") )
+        {
+            bQuiet = TRUE;
+        }
         else if( EQUAL(papszArgv[iArg],"-f") && iArg < nArgc-1 )
         {
+            bFormatExplicitelySet = TRUE;
             pszFormat = papszArgv[++iArg];
         }
         else if( EQUAL(papszArgv[iArg],"-dsco") && iArg < nArgc-1 )
@@ -977,7 +1062,7 @@ int main( int nArgc, char ** papszArgv )
             Usage();
         }
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
@@ -1083,6 +1168,9 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     if( !bUpdate )
     {
+        if (!bQuiet && !bFormatExplicitelySet)
+            CheckDestDataSourceNameConsistency(pszDestDataSource, pszFormat);
+
         OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
         int                  iDriver;
 
