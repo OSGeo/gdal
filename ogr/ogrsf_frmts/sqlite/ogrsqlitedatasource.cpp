@@ -183,6 +183,65 @@ int OGRSQLiteDataSource::SetSynchronous()
 }
 
 /************************************************************************/
+/*                              SetCacheSize()                          */
+/************************************************************************/
+
+int OGRSQLiteDataSource::SetCacheSize()
+{
+    int rc;
+    const char* pszSqliteCacheMB = CPLGetConfigOption("OGR_SQLITE_CACHE", NULL);
+    if (pszSqliteCacheMB != NULL)
+    {
+        char* pszErrMsg = NULL;
+        char **papszResult;
+        int nRowCount, nColCount;
+        int iSqliteCachePages;
+        int iSqlitePageSize = -1;
+        int iSqliteCacheBytes = atoi( pszSqliteCacheMB ) * 1024 * 1024;
+
+        /* querying the current PageSize */
+        rc = sqlite3_get_table( hDB, "PRAGMA page_size",
+                                &papszResult, &nRowCount, &nColCount,
+                                &pszErrMsg );
+        if( rc == SQLITE_OK )
+        {
+            int iRow;
+            for (iRow = 1; iRow <= nRowCount; iRow++)
+            {
+                iSqlitePageSize = atoi( papszResult[(iRow * nColCount) + 0] );
+            }
+            sqlite3_free_table(papszResult);
+        }
+        if( iSqlitePageSize < 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Unable to run PRAGMA page_size : %s",
+                      pszErrMsg );
+            sqlite3_free( pszErrMsg );
+            return TRUE;
+        }
+		
+        /* computing the CacheSize as #Pages */
+        iSqliteCachePages = iSqliteCacheBytes / iSqlitePageSize;
+        if( iSqliteCachePages <= 0)
+            return TRUE;
+
+        rc = sqlite3_exec( hDB, CPLSPrintf( "PRAGMA cache_size = %d",
+                                            iSqliteCachePages ),
+                           NULL, NULL, &pszErrMsg );
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Unrecognized value for PRAGMA cache_size : %s",
+                      pszErrMsg );
+            sqlite3_free( pszErrMsg );
+            rc = SQLITE_OK;
+        }
+    }
+    return TRUE;
+}
+
+/************************************************************************/
 /*                            OpenOrCreateDB()                          */
 /************************************************************************/
 
@@ -210,6 +269,9 @@ int OGRSQLiteDataSource::OpenOrCreateDB(int flags)
                   pszName, sqlite3_errmsg( hDB ) );
         return FALSE;
     }
+
+    if (!SetCacheSize())
+        return FALSE;
 
     if (!SetSynchronous())
         return FALSE;
