@@ -82,7 +82,7 @@ class OGRShapeLayer : public OGRLayer
     int                 bHeaderDirty;
 
     int                 bCheckedForQIX;
-    FILE                *fpQIX;
+    VSILFILE           *fpQIX;
 
     int                 CheckForQIX();
 
