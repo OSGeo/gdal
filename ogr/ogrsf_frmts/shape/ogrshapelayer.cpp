@@ -440,9 +440,6 @@ OGRErr OGRShapeLayer::SetNextByIndex( long nIndex )
 OGRFeature *OGRShapeLayer::FetchShape(int iShapeId)
 
 {
-    if (!TouchLayer())
-        return NULL;
-
     OGRFeature *poFeature;
 
     if (m_poFilterGeom != NULL && hSHP != NULL ) 
@@ -535,29 +532,33 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
             {
                 return NULL;
             }
-    
-            if ( hDBF && DBFIsRecordDeleted( hDBF, iNextShapeId ) ) {
-                poFeature = NULL;
-            } else {
-                if (hDBF && VSIFEofL((VSILFILE*)hDBF->fp))
-                    return NULL;
-                // Check the shape object's geometry, and if it matches
-                // any spatial filter, return it.  
-                poFeature = FetchShape(iNextShapeId);
+
+            if( hDBF )
+            {
+                if (DBFIsRecordDeleted( hDBF, iNextShapeId ))
+                    poFeature = NULL;
+                else if( VSIFEofL((VSILFILE*)hDBF->fp) )
+                    return NULL; /* There's an I/O error */
+                else
+                    poFeature = FetchShape(iNextShapeId);
             }
+            else
+                poFeature = FetchShape(iNextShapeId);
+
             iNextShapeId++;
         }
         
         if( poFeature != NULL )
         {
-            if( poFeature->GetGeometryRef() != NULL )
+            OGRGeometry* poGeom = poFeature->GetGeometryRef();
+            if( poGeom != NULL )
             {
-                poFeature->GetGeometryRef()->assignSpatialReference( GetSpatialRef() );
+                poGeom->assignSpatialReference( GetSpatialRef() );
             }
 
             m_nFeaturesRead++;
 
-            if( (m_poFilterGeom == NULL || FilterGeometry( poFeature->GetGeometryRef() ) )
+            if( (m_poFilterGeom == NULL || FilterGeometry( poGeom ) )
                 && (m_poAttrQuery == NULL || m_poAttrQuery->Evaluate( poFeature )) )
             {
                 return poFeature;
@@ -565,12 +566,7 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
 
             delete poFeature;
         }
-    }        
-
-    /*
-     * NEVER SHOULD GET HERE
-     */
-    CPLAssert(!"OGRShapeLayer::GetNextFeature(): Execution never should get here!");
+    }
 }
 
 /************************************************************************/
@@ -785,6 +781,206 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*               GetFeatureCountWithSpatialFilterOnly()                 */
+/*                                                                      */
+/* Specialized implementation of GetFeatureCount() when there is *only* */
+/* a spatial filter and no attribute filter.                            */
+/************************************************************************/
+
+int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Collect a matching list if we have attribute or spatial         */
+/*      indices.  Only do this on the first request for a given pass    */
+/*      of course.                                                      */
+/* -------------------------------------------------------------------- */
+    if( panMatchingFIDs == NULL )
+    {
+        ScanIndices();
+    }
+
+    int nFeatureCount = 0;
+    int iLocalMatchingFID = 0;
+    int iLocalNextShapeId = 0;
+    int bExpectPoints = FALSE;
+
+    if (wkbFlatten(poFeatureDefn->GetGeomType()) == wkbPoint)
+        bExpectPoints = TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Loop till we find a feature matching our criteria.              */
+/* -------------------------------------------------------------------- */
+
+    SHPObject sShape;
+    memset(&sShape, 0, sizeof(sShape));
+
+    VSILFILE* fpSHP = (VSILFILE*) hSHP->fpSHP;
+
+    while( TRUE )
+    {
+        SHPObject* psShape = NULL;
+        int iShape = -1;
+
+        if( panMatchingFIDs != NULL )
+        {
+            iShape = panMatchingFIDs[iLocalMatchingFID];
+            if( iShape == OGRNullFID )
+                break;
+            iLocalMatchingFID++;
+        }
+        else
+        {
+            if( iLocalNextShapeId >= nTotalShapeCount )
+                break;
+            iShape = iLocalNextShapeId ++;
+
+            if( hDBF )
+            {
+                if (DBFIsRecordDeleted( hDBF, iShape ))
+                    continue;
+
+                if (VSIFEofL((VSILFILE*)hDBF->fp))
+                    break;
+            }
+        }
+
+        /* Read full shape for point layers */
+        if (bExpectPoints)
+            psShape = SHPReadObject( hSHP, iShape);
+
+/* -------------------------------------------------------------------- */
+/*      Only read feature type and bounding box for now. In case of     */
+/*      inconclusive tests on bounding box only, we will read the full  */
+/*      shape later.                                                    */
+/* -------------------------------------------------------------------- */
+        else if (iShape < hSHP->nRecords &&
+                    hSHP->panRecSize[iShape] > 4 + 8 * 4 )
+        {
+            GByte abyBuf[4 + 8 * 4];
+            if( VSIFSeekL( fpSHP, hSHP->panRecOffset[iShape] + 8, 0 ) == 0 &&
+                VSIFReadL( abyBuf, sizeof(abyBuf), 1, fpSHP ) == 1 )
+            {
+                memcpy(&(sShape.nSHPType), abyBuf, 4);
+                CPL_LSBPTR32(&(sShape.nSHPType));
+                if ( sShape.nSHPType != SHPT_NULL &&
+                        sShape.nSHPType != SHPT_POINT &&
+                        sShape.nSHPType != SHPT_POINTM &&
+                        sShape.nSHPType != SHPT_POINTZ)
+                {
+                    psShape = &sShape;
+                    memcpy(&(sShape.dfXMin), abyBuf + 4, 8);
+                    memcpy(&(sShape.dfYMin), abyBuf + 12, 8);
+                    memcpy(&(sShape.dfXMax), abyBuf + 20, 8);
+                    memcpy(&(sShape.dfYMax), abyBuf + 28, 8);
+                    CPL_MSBPTR32(&(sShape.dfXMin));
+                    CPL_MSBPTR32(&(sShape.dfYMin));
+                    CPL_MSBPTR32(&(sShape.dfXMax));
+                    CPL_MSBPTR32(&(sShape.dfYMax));
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        if( psShape != NULL && psShape->nSHPType != SHPT_NULL )
+        {
+            OGRGeometry* poGeometry = NULL;
+            OGREnvelope sGeomEnv;
+            /* Test if we have a degenerated bounding box */
+            if (psShape->nSHPType != SHPT_POINT
+                && psShape->nSHPType != SHPT_POINTZ
+                && psShape->nSHPType != SHPT_POINTM
+                && (psShape->dfXMin == psShape->dfXMax
+                    || psShape->dfYMin == psShape->dfYMax))
+            {
+                /* We need to read the full geometry */
+                /* to compute the envelope */
+                if (psShape == &sShape)
+                    psShape = SHPReadObject( hSHP, iShape);
+                if (psShape)
+                {
+                    poGeometry = SHPReadOGRObject( hSHP, iShape, psShape );
+                    poGeometry->getEnvelope( &sGeomEnv );
+                    psShape = NULL;
+                }
+            }
+            else
+            {
+                /* Trust the shape bounding box as the shape envelope */
+                sGeomEnv.MinX = psShape->dfXMin;
+                sGeomEnv.MinY = psShape->dfYMin;
+                sGeomEnv.MaxX = psShape->dfXMax;
+                sGeomEnv.MaxY = psShape->dfYMax;
+            }
+
+/* -------------------------------------------------------------------- */
+/*      If there is no                                                  */
+/*      intersection between the envelopes we are sure not to have      */
+/*      any intersection.                                               */
+/* -------------------------------------------------------------------- */
+            if( sGeomEnv.MaxX < m_sFilterEnvelope.MinX
+                || sGeomEnv.MaxY < m_sFilterEnvelope.MinY
+                || m_sFilterEnvelope.MaxX < sGeomEnv.MinX
+                || m_sFilterEnvelope.MaxY < sGeomEnv.MinY )
+            {
+            }
+/* -------------------------------------------------------------------- */
+/*      If the filter geometry is its own envelope and if the           */
+/*      envelope of the geometry is inside the filter geometry,         */
+/*      the geometry itself is inside the filter geometry               */
+/* -------------------------------------------------------------------- */
+            else if( m_bFilterIsEnvelope &&
+                sGeomEnv.MinX >= m_sFilterEnvelope.MinX &&
+                sGeomEnv.MinY >= m_sFilterEnvelope.MinY &&
+                sGeomEnv.MaxX <= m_sFilterEnvelope.MaxX &&
+                sGeomEnv.MaxY <= m_sFilterEnvelope.MaxY)
+            {
+                nFeatureCount ++;
+            }
+            else
+            {
+/* -------------------------------------------------------------------- */
+/*      Fallback to full intersect test (using GEOS) if we still        */
+/*      don't know for sure.                                            */
+/* -------------------------------------------------------------------- */
+                if( OGRGeometryFactory::haveGEOS() )
+                {
+                    /* We need to read the full geometry */
+                    if (poGeometry == NULL)
+                    {
+                        if (psShape == &sShape)
+                            psShape = SHPReadObject( hSHP, iShape);
+                        if (psShape)
+                        {
+                            poGeometry =
+                                SHPReadOGRObject( hSHP, iShape, psShape );
+                            psShape = NULL;
+                        }
+                    }
+                    if( poGeometry == NULL ||
+                        m_poFilterGeom->Intersects( poGeometry ) )
+                        nFeatureCount ++;
+                }
+                else
+                    nFeatureCount ++;
+            }
+
+            delete poGeometry;
+        }
+        else
+            nFeatureCount ++;
+
+        if (psShape && psShape != &sShape)
+            SHPDestroyObject( psShape );
+    }
+
+    return nFeatureCount;
+}
+
+/************************************************************************/
 /*                          GetFeatureCount()                           */
 /*                                                                      */
 /*      If a spatial filter is in effect, we turn control over to       */
@@ -796,13 +992,19 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
 int OGRShapeLayer::GetFeatureCount( int bForce )
 
 {
+    if( m_poFilterGeom == NULL && m_poAttrQuery == NULL )
+        return nTotalShapeCount;
+
     if (!TouchLayer())
         return 0;
 
-    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
-        return OGRLayer::GetFeatureCount( bForce );
-    else
-        return nTotalShapeCount;
+    /* Spatial filter only */
+    if( m_poAttrQuery == NULL && hSHP != NULL )
+    {
+        return GetFeatureCountWithSpatialFilterOnly();
+    }
+
+    return OGRLayer::GetFeatureCount( bForce );
 }
 
 /************************************************************************/
