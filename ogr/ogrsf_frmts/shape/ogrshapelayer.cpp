@@ -301,6 +301,9 @@ int OGRShapeLayer::ScanIndices()
     if( m_poAttrQuery != NULL )
     {
         CPLAssert( panMatchingFIDs == NULL );
+
+        InitializeIndexSupport( pszFullName );
+
         panMatchingFIDs = m_poAttrQuery->EvaluateAgainstIndices( this,
                                                                  NULL );
     }
