@@ -249,7 +249,8 @@ known definition (ie. EPSG:4326) or a file with a WKT definition.
 Advanced options :
 
 <dl>
-<dt> <b>-gt</b> <em>n</em>:</dt><dd> group <em>n</em> features per transaction (default 200)</dd>
+<dt> <b>-gt</b> <em>n</em>:</dt><dd> group <em>n</em> features per transaction (default 200). Increase the value
+for better performance when writing into DBMS drivers that have transaction support.</dd>
 <dt> <b>-clipsrc</b><em> [xmin ymin xmax ymax]|WKT|datasource|spat_extent</em>:
 </dt><dd> (starting with GDAL 1.7.0) clip geometries to the specified bounding
 box (expressed in source SRS), WKT geometry (POLYGON or MULTIPOLYGON), from a
@@ -280,6 +281,22 @@ This is an alternate way to using the CAST operator of OGR SQL, that may avoid t
 <dt> <b>-explodecollections</b>:</dt><dd>(starting with GDAL 1.8.0) produce one feature for each geometry in any kind of geometry collection in the source file</dd>
 <dt> <b>-zfield</b> <em>field_name</em>:</dt><dd>(starting with GDAL 1.8.0) Uses the specified field to fill the Z coordinate of geometries</dd>
 </dl>
+
+\section ogr2ogr_performance PERFORMANCE HINTS
+
+When writing into transactional DBMS (SQLite/PostgreSQL,MySQL, etc...),
+it might be beneficial to increase the number
+of INSERT statements executed between BEGIN TRANSACTION and COMMIT TRANSACTION statements.
+This number is specified with the -gt option. For example, for SQLite, explicitly defining
+<b>-gt 1024</b> usually ensures a noticeable performance boost;
+defining an even bigger <b>-gt 65536</b> ensures optimal performance while
+populating some table containing many hundredth thousand or million rows. However, note that
+if there are failed insertions, the scope of -skipfailures is a whole transaction.
+
+For PostgreSQL, the PG_USE_COPY config option can be set to YES for significantly insertion
+performance boot. See the PG driver documentation page.
+
+More generally, consult the documentation page of the input and output drivers for performance hints.
 
 \section ogr2ogr_example EXAMPLE
 
