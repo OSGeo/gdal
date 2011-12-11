@@ -430,6 +430,7 @@ class OGRSQLiteDataSource : public OGRDataSource
     int                 OpenOrCreateDB(int flags);
     int                 InitWithEPSG();
     int                 SetSynchronous();
+    int                 SetCacheSize();
 
     int                 OpenVirtualTable(const char* pszName, const char* pszSQL);
 
