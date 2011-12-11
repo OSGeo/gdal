@@ -1215,6 +1215,74 @@ static int TestOGRLayerUTF8 ( OGRLayer *poLayer )
 }
 
 /************************************************************************/
+/*                         TestGetExtent()                              */
+/************************************************************************/
+
+static int TestGetExtent ( OGRLayer *poLayer )
+{
+    int bRet = TRUE;
+
+    poLayer->SetSpatialFilter( NULL );
+    poLayer->SetAttributeFilter( NULL );
+    poLayer->ResetReading();
+
+    OGREnvelope sExtent;
+    OGREnvelope sExtentSlow;
+
+    OGRErr eErr = poLayer->GetExtent(&sExtent, TRUE);
+    OGRErr eErr2 = poLayer->OGRLayer::GetExtent(&sExtentSlow, TRUE);
+
+    if (eErr != eErr2)
+    {
+        if (eErr == OGRERR_NONE && eErr2 != OGRERR_NONE)
+        {
+            /* with the LIBKML driver and test_ogrsf ../autotest/ogr/data/samples.kml "Styles and Markup" */
+            printf("INFO: GetExtent() succeeded but OGRLayer::GetExtent() failed.\n");
+        }
+        else
+        {
+            bRet = FALSE;
+            printf("ERROR: GetExtent() failed but OGRLayer::GetExtent() succeeded.\n");
+        }
+    }
+    else if (eErr == OGRERR_NONE)
+    {
+        if (fabs(sExtentSlow.MinX - sExtent.MinX) < 1e-10 &&
+            fabs(sExtentSlow.MinY - sExtent.MinY) < 1e-10 &&
+            fabs(sExtentSlow.MaxX - sExtent.MaxX) < 1e-10 &&
+            fabs(sExtentSlow.MaxY - sExtent.MaxY) < 1e-10)
+        {
+            printf("INFO: GetExtent() test passed.\n");
+        }
+        else
+        {
+            if (sExtentSlow.Contains(sExtent))
+            {
+                printf("INFO: sExtentSlow.Contains(sExtent)\n");
+            }
+            else if (sExtent.Contains(sExtentSlow))
+            {
+                printf("INFO: sExtent.Contains(sExtentSlow)\n");
+            }
+            else
+            {
+                printf("INFO: unknown relationship between sExtent and sExentSlow.\n");
+            }
+            printf("INFO: sExtentSlow.MinX = %.15f\n", sExtentSlow.MinX);
+            printf("INFO: sExtentSlow.MinY = %.15f\n", sExtentSlow.MinY);
+            printf("INFO: sExtentSlow.MaxX = %.15f\n", sExtentSlow.MaxX);
+            printf("INFO: sExtentSlow.MaxY = %.15f\n", sExtentSlow.MaxY);
+            printf("INFO: sExtent.MinX = %.15f\n", sExtent.MinX);
+            printf("INFO: sExtent.MinY = %.15f\n", sExtent.MinY);
+            printf("INFO: sExtent.MaxX = %.15f\n", sExtent.MaxX);
+            printf("INFO: sExtent.MaxY = %.15f\n", sExtent.MaxY);
+        }
+    }
+
+    return bRet;
+}
+
+/************************************************************************/
 /*                            TestOGRLayer()                            */
 /************************************************************************/
 
@@ -1247,6 +1315,11 @@ static int TestOGRLayer( OGRDataSource* poDS, OGRLayer * poLayer, int bIsSQLLaye
 /*      Test attribute filtering                                        */
 /* -------------------------------------------------------------------- */
     bRet &= TestAttributeFilter( poDS, poLayer );
+
+/* -------------------------------------------------------------------- */
+/*      Test GetExtent()                                                */
+/* -------------------------------------------------------------------- */
+    bRet &= TestGetExtent( poLayer );
 
 /* -------------------------------------------------------------------- */
 /*      Test random reading.                                            */
