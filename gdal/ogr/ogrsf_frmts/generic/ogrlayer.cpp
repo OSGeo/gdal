@@ -995,6 +995,9 @@ OGRErr OGRLayer::InitializeIndexSupport( const char *pszFilename )
 {
     OGRErr eErr;
 
+    if (m_poAttrIndex != NULL)
+        return OGRERR_NONE;
+
     m_poAttrIndex = OGRCreateDefaultLayerIndex();
 
     eErr = m_poAttrIndex->Initialize( pszFilename, this );

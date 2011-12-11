@@ -355,9 +355,6 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
     poLayer = new OGRShapeLayer( this, pszNewName, hSHP, hDBF, NULL, FALSE, bUpdate,
                                  wkbNone );
 
-
-    poLayer->InitializeIndexSupport( pszNewName );
-
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
 /* -------------------------------------------------------------------- */
@@ -654,8 +651,6 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 
     poLayer = new OGRShapeLayer( this, pszBasename, hSHP, hDBF, poSRS, TRUE, TRUE,
                                  eType );
-    
-    poLayer->InitializeIndexSupport( pszBasename );
 
     CPLFree( pszBasename );
 
@@ -773,8 +768,22 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /*      Handle all comands except spatial index creation generically.   */
 /* ==================================================================== */
     if( !EQUALN(pszStatement,"CREATE SPATIAL INDEX ON ",24) )
+    {
+        char **papszTokens = CSLTokenizeString( pszStatement );
+        if( CSLCount(papszTokens) >=4
+            && (EQUAL(papszTokens[0],"CREATE") || EQUAL(papszTokens[0],"DROP"))
+            && EQUAL(papszTokens[1],"INDEX")
+            && EQUAL(papszTokens[2],"ON") )
+        {
+            OGRShapeLayer *poLayer = (OGRShapeLayer *) GetLayerByName(papszTokens[3]);
+            if (poLayer != NULL)
+                poLayer->InitializeIndexSupport( poLayer->GetFullName() );
+        }
+        CSLDestroy( papszTokens );
+
         return OGRDataSource::ExecuteSQL( pszStatement, poSpatialFilter, 
                                           pszDialect );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Parse into keywords.                                            */
