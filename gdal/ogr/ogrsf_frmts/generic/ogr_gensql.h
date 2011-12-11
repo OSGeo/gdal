@@ -77,7 +77,8 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     void        FindAndSetIgnoredFields();
     void        ExploreExprForIgnoredFields(swq_expr_node* expr, CPLHashSet* hSet);
     void        AddFieldDefnToSet(int iTable, int iColumn, CPLHashSet* hSet);
-    
+
+    int         ContainGeomSpecialField(swq_expr_node* expr);
   public:
                 OGRGenSQLResultsLayer( OGRDataSource *poSrcDS, 
                                        void *pSelectInfo, 

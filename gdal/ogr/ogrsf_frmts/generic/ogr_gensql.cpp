@@ -551,6 +551,35 @@ int OGRGenSQLResultsLayer::TestCapability( const char *pszCap )
 }
 
 /************************************************************************/
+/*                        ContainGeomSpecialField()                     */
+/************************************************************************/
+
+int OGRGenSQLResultsLayer::ContainGeomSpecialField(swq_expr_node* expr)
+{
+    if (expr->eNodeType == SNT_COLUMN)
+    {
+        if( expr->table_index != -1 && expr->field_index != -1 )
+        {
+            OGRLayer* poLayer = papoTableLayers[expr->table_index];
+            int nSpecialFieldIdx = expr->field_index -
+                            poLayer->GetLayerDefn()->GetFieldCount();
+            return nSpecialFieldIdx == SPF_OGR_GEOMETRY ||
+                   nSpecialFieldIdx == SPF_OGR_GEOM_WKT ||
+                   nSpecialFieldIdx == SPF_OGR_GEOM_AREA;
+        }
+    }
+    else if (expr->eNodeType == SNT_OPERATION)
+    {
+        for( int i = 0; i < expr->nSubExprCount; i++ )
+        {
+            if (ContainGeomSpecialField(expr->papoSubExpr[i]))
+                return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+/************************************************************************/
 /*                           PrepareSummary()                           */
 /************************************************************************/
 
@@ -575,6 +604,18 @@ int OGRGenSQLResultsLayer::PrepareSummary()
     poSrcLayer->ResetReading();
 
 /* -------------------------------------------------------------------- */
+/*      Ignore geometry reading if no spatial filter in place and that  */
+/*      the where clause doesn't include OGR_GEOMETRY, OGR_GEOM_WKT or  */
+/*      OGR_GEOM_AREA special fields.                                   */
+/* -------------------------------------------------------------------- */
+    int bSaveIsGeomIgnored = poSrcLayer->GetLayerDefn()->IsGeometryIgnored();
+    if ( m_poFilterGeom == NULL && ( psSelectInfo->where_expr == NULL ||
+                !ContainGeomSpecialField(psSelectInfo->where_expr) ) )
+    {
+        poSrcLayer->GetLayerDefn()->SetGeometryIgnored(TRUE);
+    }
+
+/* -------------------------------------------------------------------- */
 /*      We treat COUNT(*) as a special case, and fill with              */
 /*      GetFeatureCount().                                              */
 /* -------------------------------------------------------------------- */
@@ -584,6 +625,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
         && psSelectInfo->column_defs[0].field_index < 0 )
     {
         poSummaryFeature->SetField( 0, poSrcLayer->GetFeatureCount( TRUE ) );
+        poSrcLayer->GetLayerDefn()->SetGeometryIgnored(bSaveIsGeomIgnored);
         return TRUE;
     }
 
@@ -623,8 +665,11 @@ int OGRGenSQLResultsLayer::PrepareSummary()
             
             if( pszError != NULL )
             {
+                delete poSrcFeature;
                 delete poSummaryFeature;
                 poSummaryFeature = NULL;
+
+                poSrcLayer->GetLayerDefn()->SetGeometryIgnored(bSaveIsGeomIgnored);
 
                 CPLError( CE_Failure, CPLE_AppDefined, "%s", pszError );
                 return FALSE;
@@ -633,6 +678,8 @@ int OGRGenSQLResultsLayer::PrepareSummary()
 
         delete poSrcFeature;
     }
+
+    poSrcLayer->GetLayerDefn()->SetGeometryIgnored(bSaveIsGeomIgnored);
 
     pszError = swq_select_finish_summarize( psSelectInfo );
     if( pszError != NULL )
