@@ -333,6 +333,51 @@ void OGRSQLiteTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 }
 
 /************************************************************************/
+/*                        CheckSpatialIndexTable()                      */
+/************************************************************************/
+
+int OGRSQLiteTableLayer::CheckSpatialIndexTable()
+{
+    if (bHasSpatialIndex && !bHasCheckedSpatialIndexTable)
+    {
+        bHasCheckedSpatialIndexTable = TRUE;
+        char **papszResult;
+        int nRowCount, nColCount;
+        char *pszErrMsg = NULL;
+
+        CPLString osSQL;
+        osSQL.Printf("SELECT name FROM sqlite_master "
+                    "WHERE name='idx_%s_%s'",
+                    pszEscapedTableName, osGeomColumn.c_str());
+
+        int  rc = sqlite3_get_table( poDS->GetDB(), osSQL.c_str(),
+                                    &papszResult, &nRowCount,
+                                    &nColCount, &pszErrMsg );
+
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "Error: %s",
+                    pszErrMsg );
+            sqlite3_free( pszErrMsg );
+            bHasSpatialIndex = FALSE;
+        }
+        else
+        {
+            if (nRowCount != 1)
+            {
+                bHasSpatialIndex = FALSE;
+                CPLDebug("SQLITE", "Count not find idx_%s_%s layer. Disabling spatial index",
+                        pszEscapedTableName, osGeomColumn.c_str());
+            }
+
+            sqlite3_free_table(papszResult);
+        }
+    }
+
+    return bHasSpatialIndex;
+}
+
+/************************************************************************/
 /*                             BuildWhere()                             */
 /*                                                                      */
 /*      Build the WHERE statement appropriate to the current set of     */
@@ -344,61 +389,17 @@ void OGRSQLiteTableLayer::BuildWhere()
 {
     osWHERE = "";
 
-    if( m_poFilterGeom != NULL && bHasSpatialIndex )
+    if( m_poFilterGeom != NULL && CheckSpatialIndexTable() )
     {
         OGREnvelope  sEnvelope;
 
         m_poFilterGeom->getEnvelope( &sEnvelope );
 
-        /* We first check that the spatial index table exists */
-        if (!bHasCheckedSpatialIndexTable)
-        {
-            bHasCheckedSpatialIndexTable = TRUE;
-            char **papszResult;
-            int nRowCount, nColCount;
-            char *pszErrMsg = NULL;
-
-            CPLString osSQL;
-            osSQL.Printf("SELECT name FROM sqlite_master "
-                        "WHERE name='idx_%s_%s'",
-                        pszEscapedTableName, osGeomColumn.c_str());
-
-            int  rc = sqlite3_get_table( poDS->GetDB(), osSQL.c_str(),
-                                        &papszResult, &nRowCount,
-                                        &nColCount, &pszErrMsg );
-
-            if( rc != SQLITE_OK )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined, "Error: %s",
-                        pszErrMsg );
-                sqlite3_free( pszErrMsg );
-                bHasSpatialIndex = FALSE;
-            }
-            else
-            {
-                if (nRowCount != 1)
-                {
-                    bHasSpatialIndex = FALSE;
-                }
-
-                sqlite3_free_table(papszResult);
-            }
-        }
-
-        if (bHasSpatialIndex)
-        {
-            osWHERE.Printf("WHERE ROWID IN ( SELECT pkid FROM 'idx_%s_%s' WHERE "
-                           "xmax > %.12f AND xmin < %.12f AND ymax > %.12f AND ymin < %.12f) ",
-                            pszEscapedTableName, osGeomColumn.c_str(),
-                            sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
-                            sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
-        }
-        else
-        {
-            CPLDebug("SQLITE", "Count not find idx_%s_%s layer. Disabling spatial index",
-                     pszEscapedTableName, osGeomColumn.c_str());
-        }
-
+        osWHERE.Printf("WHERE ROWID IN ( SELECT pkid FROM 'idx_%s_%s' WHERE "
+                        "xmax > %.12f AND xmin < %.12f AND ymax > %.12f AND ymin < %.12f) ",
+                        pszEscapedTableName, osGeomColumn.c_str(),
+                        sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
+                        sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
     }
 
     if( m_poFilterGeom != NULL && bSpatialiteLoaded && !bHasSpatialIndex)
@@ -490,8 +491,25 @@ int OGRSQLiteTableLayer::GetFeatureCount( int bForce )
 /* -------------------------------------------------------------------- */
     const char *pszSQL;
 
-    pszSQL = CPLSPrintf( "SELECT count(*) FROM '%s' %s",
-                          pszEscapedTableName, osWHERE.c_str() );
+    if (m_poFilterGeom != NULL && CheckSpatialIndexTable() &&
+        strlen(osQuery) == 0)
+    {
+        OGREnvelope  sEnvelope;
+
+        m_poFilterGeom->getEnvelope( &sEnvelope );
+        pszSQL = CPLSPrintf("SELECT count(*) FROM 'idx_%s_%s' WHERE "
+                            "xmax > %.12f AND xmin < %.12f AND ymax > %.12f AND ymin < %.12f",
+                            pszEscapedTableName, osGeomColumn.c_str(),
+                            sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
+                            sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
+    }
+    else
+    {
+        pszSQL = CPLSPrintf( "SELECT count(*) FROM '%s' %s",
+                            pszEscapedTableName, osWHERE.c_str() );
+    }
+
+    CPLDebug("SQLITE", "Running %s", pszSQL);
 
 /* -------------------------------------------------------------------- */
 /*      Execute.                                                        */
@@ -501,7 +519,7 @@ int OGRSQLiteTableLayer::GetFeatureCount( int bForce )
     int nResult = -1;
 
     if( sqlite3_get_table( poDS->GetDB(), pszSQL, &papszResult, 
-                           &nColCount, &nRowCount, &pszErrMsg ) != SQLITE_OK )
+                           &nRowCount, &nColCount, &pszErrMsg ) != SQLITE_OK )
         return -1;
 
     if( nRowCount == 1 && nColCount == 1 )
@@ -510,6 +528,47 @@ int OGRSQLiteTableLayer::GetFeatureCount( int bForce )
     sqlite3_free_table( papszResult );
 
     return nResult;
+}
+
+/************************************************************************/
+/*                             GetExtent()                              */
+/************************************************************************/
+
+OGRErr OGRSQLiteTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+{
+    if (CheckSpatialIndexTable())
+    {
+        const char* pszSQL;
+
+        pszSQL = CPLSPrintf("SELECT MIN(xmin), MIN(ymin), MAX(xmax), MAX(ymax) FROM 'idx_%s_%s'",
+                            pszEscapedTableName, osGeomColumn.c_str());
+
+        CPLDebug("SQLITE", "Running %s", pszSQL);
+
+/* -------------------------------------------------------------------- */
+/*      Execute.                                                        */
+/* -------------------------------------------------------------------- */
+        char **papszResult, *pszErrMsg;
+        int nRowCount, nColCount;
+
+        if( sqlite3_get_table( poDS->GetDB(), pszSQL, &papszResult,
+                               &nRowCount, &nColCount, &pszErrMsg ) != SQLITE_OK )
+            return OGRSQLiteLayer::GetExtent(psExtent, bForce);
+
+        if( nRowCount == 1 && nColCount == 4 )
+        {
+            psExtent->MinX = atof(papszResult[4+0]);
+            psExtent->MinY = atof(papszResult[4+1]);
+            psExtent->MaxX = atof(papszResult[4+2]);
+            psExtent->MaxY = atof(papszResult[4+3]);
+        }
+
+        sqlite3_free_table( papszResult );
+
+        return OGRERR_NONE;
+    }
+
+    return OGRSQLiteLayer::GetExtent(psExtent, bForce);
 }
 
 /************************************************************************/
