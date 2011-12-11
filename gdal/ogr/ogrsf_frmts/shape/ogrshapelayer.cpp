@@ -31,6 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_p.h"
+#include "vsishptree.h"
 
 #if defined(_WIN32_WCE)
 #  include <wce_errno.h>
@@ -146,7 +147,7 @@ OGRShapeLayer::~OGRShapeLayer()
         SHPClose( hSHP );
 
     if( fpQIX != NULL )
-        VSIFClose( fpQIX );
+        VSIFCloseL( fpQIX );
 }
 
 /************************************************************************/
@@ -276,7 +277,7 @@ int OGRShapeLayer::CheckForQIX()
 
     pszQIXFilename = CPLResetExtension( pszFullName, "qix" );
 
-    fpQIX = VSIFOpen( pszQIXFilename, "rb" );
+    fpQIX = VSIFOpenL( pszQIXFilename, "rb" );
 
     bCheckedForQIX = TRUE;
 
@@ -334,7 +335,7 @@ int OGRShapeLayer::ScanIndices()
         adfBoundsMax[2] = 0.0;
         adfBoundsMax[3] = 0.0;
 
-        panSpatialFIDs = SHPSearchDiskTree( fpQIX, 
+        panSpatialFIDs = VSI_SHPSearchDiskTree( fpQIX,
                                             adfBoundsMin, adfBoundsMax, 
                                             &nSpatialFIDCount );
         CPLDebug( "SHAPE", "Used spatial index, got %d matches.", 
@@ -1400,7 +1401,7 @@ OGRErr OGRShapeLayer::DropSpatialIndex()
         return OGRERR_FAILURE;
     }
 
-    VSIFClose( fpQIX );
+    VSIFCloseL( fpQIX );
     fpQIX = NULL;
     bCheckedForQIX = FALSE;
     
@@ -1464,7 +1465,7 @@ OGRErr OGRShapeLayer::CreateSpatialIndex( int nMaxDepth )
     SHPTree	*psTree;
 
     SyncToDisk();
-    psTree = SHPCreateTree( hSHP, 2, nMaxDepth, NULL, NULL );
+    psTree = VSI_SHPCreateTree( hSHP, 2, nMaxDepth, NULL, NULL );
 
     if( NULL == psTree )
     {
@@ -1479,7 +1480,7 @@ OGRErr OGRShapeLayer::CreateSpatialIndex( int nMaxDepth )
 /* -------------------------------------------------------------------- */
 /*      Trim unused nodes from the tree.                                */
 /* -------------------------------------------------------------------- */
-    SHPTreeTrimExtraNodes( psTree );
+    VSI_SHPTreeTrimExtraNodes( psTree );
 
 /* -------------------------------------------------------------------- */
 /*      Dump tree to .qix file.                                         */
@@ -1490,14 +1491,14 @@ OGRErr OGRShapeLayer::CreateSpatialIndex( int nMaxDepth )
 
     CPLDebug( "SHAPE", "Creating index file %s", pszQIXFilename );
 
-    SHPWriteTree( psTree, pszQIXFilename );
+    VSI_SHPWriteTree( psTree, pszQIXFilename );
     CPLFree( pszQIXFilename );
 
 
 /* -------------------------------------------------------------------- */
 /*      cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    SHPDestroyTree( psTree );
+    VSI_SHPDestroyTree( psTree );
 
     CheckForQIX();
 
@@ -1948,7 +1949,7 @@ void OGRShapeLayer::CloseFileDescriptors()
     /* We close QIX and reset the check flag, so that CheckForQIX() */
     /* will retry opening it if necessary when the layer is active again */
     if( fpQIX != NULL )
-        VSIFClose( fpQIX );
+        VSIFCloseL( fpQIX );
     fpQIX = NULL;
     bCheckedForQIX = FALSE;
 
