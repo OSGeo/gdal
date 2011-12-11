@@ -31,7 +31,6 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_p.h"
-#include "vsishptree.h"
 
 #if defined(_WIN32_WCE)
 #  include <wce_errno.h>
@@ -69,7 +68,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     panMatchingFIDs = NULL;
 
     bCheckedForQIX = FALSE;
-    fpQIX = NULL;
+    hQIX = NULL;
 
     bSbnSbxDeleted = FALSE;
 
@@ -146,8 +145,8 @@ OGRShapeLayer::~OGRShapeLayer()
     if( hSHP != NULL )
         SHPClose( hSHP );
 
-    if( fpQIX != NULL )
-        VSIFCloseL( fpQIX );
+    if( hQIX != NULL )
+        SHPCloseDiskTree( hQIX );
 }
 
 /************************************************************************/
@@ -273,15 +272,15 @@ int OGRShapeLayer::CheckForQIX()
     const char *pszQIXFilename;
 
     if( bCheckedForQIX )
-        return fpQIX != NULL;
+        return hQIX != NULL;
 
     pszQIXFilename = CPLResetExtension( pszFullName, "qix" );
 
-    fpQIX = VSIFOpenL( pszQIXFilename, "rb" );
+    hQIX = SHPOpenDiskTree( pszQIXFilename, NULL ); 
 
     bCheckedForQIX = TRUE;
 
-    return fpQIX != NULL;
+    return hQIX != NULL;
 }
 
 /************************************************************************/
@@ -318,7 +317,7 @@ int OGRShapeLayer::ScanIndices()
 /* -------------------------------------------------------------------- */
 /*      Utilize spatial index if appropriate.                           */
 /* -------------------------------------------------------------------- */
-    if( m_poFilterGeom && fpQIX )
+    if( m_poFilterGeom && hQIX )
     {
         int nSpatialFIDCount, *panSpatialFIDs;
         double adfBoundsMin[4], adfBoundsMax[4];
@@ -335,7 +334,7 @@ int OGRShapeLayer::ScanIndices()
         adfBoundsMax[2] = 0.0;
         adfBoundsMax[3] = 0.0;
 
-        panSpatialFIDs = VSI_SHPSearchDiskTree( fpQIX,
+        panSpatialFIDs = SHPSearchDiskTreeEx( hQIX,
                                             adfBoundsMin, adfBoundsMax, 
                                             &nSpatialFIDCount );
         CPLDebug( "SHAPE", "Used spatial index, got %d matches.", 
@@ -1603,8 +1602,8 @@ OGRErr OGRShapeLayer::DropSpatialIndex()
         return OGRERR_FAILURE;
     }
 
-    VSIFCloseL( fpQIX );
-    fpQIX = NULL;
+    SHPCloseDiskTree( hQIX );
+    hQIX = NULL;
     bCheckedForQIX = FALSE;
     
     const char *pszQIXFilename;
@@ -1667,7 +1666,7 @@ OGRErr OGRShapeLayer::CreateSpatialIndex( int nMaxDepth )
     SHPTree	*psTree;
 
     SyncToDisk();
-    psTree = VSI_SHPCreateTree( hSHP, 2, nMaxDepth, NULL, NULL );
+    psTree = SHPCreateTree( hSHP, 2, nMaxDepth, NULL, NULL );
 
     if( NULL == psTree )
     {
@@ -1682,7 +1681,7 @@ OGRErr OGRShapeLayer::CreateSpatialIndex( int nMaxDepth )
 /* -------------------------------------------------------------------- */
 /*      Trim unused nodes from the tree.                                */
 /* -------------------------------------------------------------------- */
-    VSI_SHPTreeTrimExtraNodes( psTree );
+    SHPTreeTrimExtraNodes( psTree );
 
 /* -------------------------------------------------------------------- */
 /*      Dump tree to .qix file.                                         */
@@ -1693,14 +1692,14 @@ OGRErr OGRShapeLayer::CreateSpatialIndex( int nMaxDepth )
 
     CPLDebug( "SHAPE", "Creating index file %s", pszQIXFilename );
 
-    VSI_SHPWriteTree( psTree, pszQIXFilename );
+    SHPWriteTree( psTree, pszQIXFilename );
     CPLFree( pszQIXFilename );
 
 
 /* -------------------------------------------------------------------- */
 /*      cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    VSI_SHPDestroyTree( psTree );
+    SHPDestroyTree( psTree );
 
     CheckForQIX();
 
@@ -2150,9 +2149,9 @@ void OGRShapeLayer::CloseFileDescriptors()
 
     /* We close QIX and reset the check flag, so that CheckForQIX() */
     /* will retry opening it if necessary when the layer is active again */
-    if( fpQIX != NULL )
-        VSIFCloseL( fpQIX );
-    fpQIX = NULL;
+    if( hQIX != NULL )
+        SHPCloseDiskTree( hQIX ); 
+    hQIX = NULL;
     bCheckedForQIX = FALSE;
 
     eFileDescriptorsState = FD_CLOSED;

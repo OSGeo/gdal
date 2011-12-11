@@ -1,6 +1,6 @@
 
 OBJ     =       shape2ogr.obj shpopen.obj dbfopen.obj ogrshapedriver.obj \
-		ogrshapedatasource.obj ogrshapelayer.obj vsishptree.obj \
+		ogrshapedatasource.obj ogrshapelayer.obj shptree.obj \
 		shp_vsi.obj
 EXTRAFLAGS =	-I.. -I..\.. /DSHAPELIB_DLLEXPORT \
 		-DUSE_CPL -DSAOffset=vsi_l_offset 
