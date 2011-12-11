@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.68 2010-08-27 23:42:52 fwarmerdam Exp $
+ * $Id: shpopen.c,v 1.71 2011-09-15 03:33:58 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,15 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.71  2011-09-15 03:33:58  fwarmerdam
+ * fix missing cast (#2344)
+ *
+ * Revision 1.70  2011-07-24 05:59:25  fwarmerdam
+ * minimize use of CPLError in favor of SAHooks.Error()
+ *
+ * Revision 1.69  2011-07-24 03:24:22  fwarmerdam
+ * fix memory leaks in error cases creating shapefiles (#2061)
+ *
  * Revision 1.68  2010-08-27 23:42:52  fwarmerdam
  * add SHPAPI_CALL attribute in code
  *
@@ -258,7 +267,7 @@
 #include <string.h>
 #include <stdio.h>
 
-SHP_CVSID("$Id: shpopen.c,v 1.68 2010-08-27 23:42:52 fwarmerdam Exp $")
+SHP_CVSID("$Id: shpopen.c,v 1.71 2011-09-15 03:33:58 fwarmerdam Exp $")
 
 typedef unsigned char uchar;
 
@@ -541,15 +550,11 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     
     if( psSHP->fpSHP == NULL )
     {
-#ifdef USE_CPL
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Unable to open %s.shp or %s.SHP.", 
+        char *pszMessage = (char *) malloc(strlen(pszBasename)*2+256);
+        sprintf( pszMessage, "Unable to open %s.shp or %s.SHP.", 
                   pszBasename, pszBasename );
-#endif
-        free( psSHP );
-        free( pszBasename );
-        free( pszFullname );
-        return( NULL );
+        psHooks->Error( pszMessage );
+        free( pszMessage );
     }
 
     sprintf( pszFullname, "%s.shx", pszBasename );
@@ -562,11 +567,12 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     
     if( psSHP->fpSHX == NULL )
     {
-#ifdef USE_CPL
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Unable to open %s.shx or %s.SHX.", 
+        char *pszMessage = (char *) malloc(strlen(pszBasename)*2+256);
+        sprintf( pszMessage, "Unable to open %s.shx or %s.SHX.", 
                   pszBasename, pszBasename );
-#endif
+        psHooks->Error( pszMessage );
+        free( pszMessage );
+
         psSHP->sHooks.FClose( psSHP->fpSHP );
         free( psSHP );
         free( pszBasename );
@@ -840,9 +846,9 @@ SHPHandle SHPAPI_CALL
 SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
 
 {
-    char	*pszBasename, *pszFullname;
+    char	*pszBasename = NULL, *pszFullname = NULL;
     int		i;
-    SAFile	fpSHP, fpSHX;
+    SAFile	fpSHP = NULL, fpSHX = NULL;
     uchar     	abyHeader[100];
     int32	i32;
     double	dValue;
@@ -879,7 +885,7 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
     if( fpSHP == NULL )
     {
         psHooks->Error( "Failed to create file .shp file." );
-        return( NULL );
+        goto error;
     }
 
     sprintf( pszFullname, "%s.shx", pszBasename );
@@ -887,11 +893,11 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
     if( fpSHX == NULL )
     {
         psHooks->Error( "Failed to create file .shx file." );
-        return( NULL );
+        goto error;
     }
 
-    free( pszFullname );
-    free( pszBasename );
+    free( pszFullname ); pszFullname = NULL;
+    free( pszBasename ); pszBasename = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Prepare header block for .shp file.                             */
@@ -926,7 +932,7 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
     if( psHooks->FWrite( abyHeader, 100, 1, fpSHP ) != 1 )
     {
         psHooks->Error( "Failed to write .shp header." );
-        return NULL;
+        goto error;
     }
 
 /* -------------------------------------------------------------------- */
@@ -939,7 +945,7 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
     if( psHooks->FWrite( abyHeader, 100, 1, fpSHX ) != 1 )
     {
         psHooks->Error( "Failed to write .shx header." );
-        return NULL;
+        goto error;
     }
 
 /* -------------------------------------------------------------------- */
@@ -949,6 +955,13 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
     psHooks->FClose( fpSHX );
 
     return( SHPOpenLL( pszLayer, "r+b", psHooks ) );
+
+error:
+    if (pszFullname) free(pszFullname);
+    if (pszBasename) free(pszBasename);
+    if (fpSHP) psHooks->FClose( fpSHP );
+    if (fpSHX) psHooks->FClose( fpSHX );
+    return NULL;
 }
 
 /************************************************************************/
@@ -1572,7 +1585,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             char szError[200];
 
             /* Reallocate previous successfull size for following features */
-            psSHP->pabyRec = malloc(psSHP->nBufSize);
+            psSHP->pabyRec = (uchar *) malloc(psSHP->nBufSize);
 
             sprintf( szError, 
                      "Not enough memory to allocate requested memory (nBufSize=%d). "

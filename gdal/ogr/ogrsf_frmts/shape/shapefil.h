@@ -37,6 +37,12 @@
  ******************************************************************************
  *
  * $Log: shapefil.h,v $
+ * Revision 1.52  2011-12-11 22:26:46  fwarmerdam
+ * upgrade .qix access code to use SAHooks (gdal #3365)
+ *
+ * Revision 1.51  2011-07-24 05:59:25  fwarmerdam
+ * minimize use of CPLError in favor of SAHooks.Error()
+ *
  * Revision 1.50  2011-05-13 17:35:17  fwarmerdam
  * added DBFReorderFields() and DBFAlterFields() functions (from Even)
  *
@@ -138,11 +144,6 @@
 
 #ifdef USE_DBMALLOC
 #include <dbmalloc.h>
-#endif
-
-#ifdef USE_CPL
-#include "cpl_error.h"
-#include "cpl_vsi.h"
 #endif
 
 #ifdef __cplusplus
@@ -459,8 +460,6 @@ int	SHPAPI_CALL
       SHPWriteTree( SHPTree *hTree, const char * pszFilename );
 
 int	SHPAPI_CALL
-      SHPTreeAddObject( SHPTree * hTree, SHPObject * psObject );
-int	SHPAPI_CALL
       SHPTreeAddShapeId( SHPTree * hTree, SHPObject * psObject );
 int	SHPAPI_CALL
       SHPTreeRemoveShapeId( SHPTree * hTree, int nShapeId );
@@ -480,6 +479,24 @@ int SHPAPI_CALL1(*)
 SHPSearchDiskTree( FILE *fp, 
                    double *padfBoundsMin, double *padfBoundsMax,
                    int *pnShapeCount );
+
+
+typedef struct SHPDiskTreeInfo* SHPTreeDiskHandle;
+
+SHPTreeDiskHandle SHPAPI_CALL
+    SHPOpenDiskTree( const char* pszQIXFilename,
+                     SAHooks *psHooks );
+
+void SHPAPI_CALL
+    SHPCloseDiskTree( SHPTreeDiskHandle hDiskTree );
+
+int SHPAPI_CALL1(*) 
+SHPSearchDiskTreeEx( SHPTreeDiskHandle hDiskTree, 
+                   double *padfBoundsMin, double *padfBoundsMax,
+                   int *pnShapeCount );
+
+int SHPAPI_CALL
+    SHPWriteTreeLL(SHPTree *hTree, const char *pszFilename, SAHooks *psHooks );
 
 /************************************************************************/
 /*                             DBF Support.                             */
