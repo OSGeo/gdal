@@ -152,6 +152,29 @@ can be set to produce similar results for appended/overwritten features.
 
 </ul>
 
+<h2>Performance hints</h2>
+SQLite is a Transactional DBMS; while many INSERT statements are executed in close
+sequence, BEGIN TRANSACTION and COMMIT TRANSACTION statements have to be invoked
+appropriately in order to get optimal performance.
+The default OGR behavior is to COMMIT a transaction every 200 inserted rows. This
+value is surely too low for SQLite; and closing too much frequently the current
+transaction causes severe performance degradation.
+The <b>-gt</b> argument allows to explicitly set the number of rows for each transaction.
+Explicitly defining <b>-gt 1024</b> usually ensures a noticeable performance boost;
+defining an even bigger <b>-gt 65536</b> ensures optimal performance while
+populating some table containing many hundredth thousand or million rows.<p>
+
+SQLite usually has a very minimal memory foot-print; just about 20MB of RAM are
+reserved to store the internal Page Cache [merely 2000 pages]. 
+This value too may well be inappropriate under many circumstances, most notably when
+accessing some really huge DB-file containing many tables related to a corresponding
+Spatial Index.
+Explicitly setting a much more generously dimensioned internal Page Cache may often
+help to get a noticeably better performance.
+Starting since GDAL 1.9.0 you can explicitly set the internal Page Cache size using the 
+configuration option <b>OGR_SQLITE_CACHE</b> <i>value</i> [<i>value</i> being measured in MB];
+if your HW has enough available RAM, defining a Cache size as big as 512MB (or even 1024MB) 
+may sometimes help a lot in order to get better performance.
 
 <h2>Credits</h2>
 <ul>
