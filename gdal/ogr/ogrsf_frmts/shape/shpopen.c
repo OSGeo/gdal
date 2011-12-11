@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.71 2011-09-15 03:33:58 fwarmerdam Exp $
+ * $Id: shpopen.c,v 1.72 2011-12-11 22:45:28 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.72  2011-12-11 22:45:28  fwarmerdam
+ * fix failure return from SHPOpenLL.
+ *
  * Revision 1.71  2011-09-15 03:33:58  fwarmerdam
  * fix missing cast (#2344)
  *
@@ -267,7 +270,7 @@
 #include <string.h>
 #include <stdio.h>
 
-SHP_CVSID("$Id: shpopen.c,v 1.71 2011-09-15 03:33:58 fwarmerdam Exp $")
+SHP_CVSID("$Id: shpopen.c,v 1.72 2011-12-11 22:45:28 fwarmerdam Exp $")
 
 typedef unsigned char uchar;
 
@@ -555,6 +558,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
                   pszBasename, pszBasename );
         psHooks->Error( pszMessage );
         free( pszMessage );
+        return NULL;
     }
 
     sprintf( pszFullname, "%s.shx", pszBasename );
