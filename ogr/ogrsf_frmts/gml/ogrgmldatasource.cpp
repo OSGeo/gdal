@@ -25,6 +25,13 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ *
+ ******************************************************************************
+ * Contributor: Alessandro Furieri, a.furieri@lqt.it
+ * Portions of this module implenting GML_SKIP_RESOLVE_ELEMS HUGE
+ * Developed for Faunalia ( http://www.faunalia.it) with funding from 
+ * Regione Toscana - Settore SISTEMA INFORMATIVO TERRITORIALE ED AMBIENTALE
+ *
  ****************************************************************************/
 
 #include "ogr_gml.h"
@@ -442,6 +449,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     char *pszXlinkResolvedFilename = NULL;
     const char *pszOption = CPLGetConfigOption("GML_SAVE_RESOLVED_TO", NULL);
     int bResolve = TRUE;
+    int bHugeFile = FALSE;
     if( pszOption != NULL && EQUALN( pszOption, "SAME", 4 ) )
     {
         // "SAME" will overwrite the existing gml file
@@ -486,54 +494,96 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     char **papszSkip = NULL;
     if( EQUAL( pszSkipOption, "ALL" ) )
         bResolve = FALSE;
+    else if( EQUAL( pszSkipOption, "HUGE" ) )//exactly as NONE, but intended for HUGE files
+        bHugeFile = TRUE;
     else if( !EQUAL( pszSkipOption, "NONE" ) )//use this to resolve everything
         papszSkip = CSLTokenizeString2( pszSkipOption, ",",
                                            CSLT_STRIPLEADSPACES |
                                            CSLT_STRIPENDSPACES );
+    const char *pszGFSFilename;
+    VSIStatBufL sGFSStatBuf, sGMLStatBuf;
+    int         bHaveSchema = FALSE;
+    int         bSchemaDone = FALSE;
+ 
+/* -------------------------------------------------------------------- */
+/*      Is some GML Feature Schema (.gfs) TEMPLATE required ?           */
+/* -------------------------------------------------------------------- */
+    const char *pszGFSTemplateName = 
+                CPLGetConfigOption( "GML_GFS_TEMPLATE", NULL);
+    if( pszGFSTemplateName != NULL )
+    {
+        /* attempting to load the GFS TEMPLATE */
+        bHaveSchema = poReader->LoadClasses( pszGFSTemplateName );
+    }	
 
     if( bResolve )
     {
-        poReader->ResolveXlinks( pszXlinkResolvedFilename,
-                                 &bOutIsTempFile,
-                                 papszSkip );
+        if ( bHugeFile )
+        {
+            bSchemaDone = TRUE;
+            int bSqliteIsTempFile =
+                CSLTestBoolean(CPLGetConfigOption( "GML_HUGE_TEMPFILE", "YES"));
+            int iSqliteCacheMB = atoi(CPLGetConfigOption( "OGR_SQLITE_CACHE", "0"));
+            poReader->HugeFileResolver( pszXlinkResolvedFilename,
+                                        bSqliteIsTempFile, 
+                                        iSqliteCacheMB );
+        }
+        else
+        {
+            poReader->ResolveXlinks( pszXlinkResolvedFilename,
+                                     &bOutIsTempFile,
+                                     papszSkip );
+        }
     }
 
     CPLFree( pszXlinkResolvedFilename );
+    pszXlinkResolvedFilename = NULL;
     CSLDestroy( papszSkip );
+    papszSkip = NULL;
+
+    /* Is a prescan required ? */
+    if( bHaveSchema && !bSchemaDone )
+    {
+        /* We must detect which layers are actually present in the .gml */
+        /* and how many features they have */
+        if( !poReader->PrescanForTemplate() )
+        {
+            // we assume an errors have been reported.
+            return FALSE;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Can we find a GML Feature Schema (.gfs) for the input file?     */
 /* -------------------------------------------------------------------- */
-    const char *pszGFSFilename;
-    VSIStatBufL sGFSStatBuf, sGMLStatBuf;
-    int        bHaveSchema = FALSE;
-
-    pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
-    if (strncmp(pszGFSFilename, "/vsigzip/", strlen("/vsigzip/")) == 0)
-        pszGFSFilename += strlen("/vsigzip/");
-
-    if( VSIStatL( pszGFSFilename, &sGFSStatBuf ) == 0 )
+    if( !bHaveSchema )
     {
-        VSIStatL( pszNewName, &sGMLStatBuf );
-
-        if( sGMLStatBuf.st_mtime > sGFSStatBuf.st_mtime )
+        pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
+        if (strncmp(pszGFSFilename, "/vsigzip/", strlen("/vsigzip/")) == 0)
+            pszGFSFilename += strlen("/vsigzip/");
+        if( VSIStatL( pszGFSFilename, &sGFSStatBuf ) == 0 )
         {
-            CPLDebug( "GML", 
-                      "Found %s but ignoring because it appears\n"
-                      "be older than the associated GML file.", 
-                      pszGFSFilename );
-        }
-        else
-        {
-            bHaveSchema = poReader->LoadClasses( pszGFSFilename );
-            if (bHaveSchema)
+            VSIStatL( pszNewName, &sGMLStatBuf );
+            if( sGMLStatBuf.st_mtime > sGFSStatBuf.st_mtime )
             {
-                const char *pszXSDFilename;
-                pszXSDFilename = CPLResetExtension( pszNewName, "xsd" );
-                if( VSIStatExL( pszXSDFilename, &sGMLStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
+                CPLDebug( "GML", 
+                          "Found %s but ignoring because it appears\n"
+                          "be older than the associated GML file.", 
+                          pszGFSFilename );
+            }
+            else
+            {
+                bHaveSchema = poReader->LoadClasses( pszGFSFilename );
+                if (bHaveSchema)
                 {
-                    CPLDebug("GML", "Using %s file, ignoring %s",
-                             pszGFSFilename, pszXSDFilename);
+                    const char *pszXSDFilename;
+                    pszXSDFilename = CPLResetExtension( pszNewName, "xsd" );
+                    if( VSIStatExL( pszXSDFilename, &sGMLStatBuf,
+                                    VSI_STAT_EXISTS_FLAG ) == 0 )
+                    {
+                        CPLDebug("GML", "Using %s file, ignoring %s",
+                                 pszGFSFilename, pszXSDFilename);
+                    }
                 }
             }
         }
