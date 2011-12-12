@@ -970,6 +970,32 @@ void NASReader::CheckForRelations( const char *pszElement,
 }
 
 /************************************************************************/
+/*                         HugeFileResolver()                           */
+/*      Returns TRUE for success                                        */
+/************************************************************************/
+
+int NASReader::HugeFileResolver( const char *pszFile,
+                              int bSqliteIsTempFile,
+                              int iSqliteCacheMB )
+
+{
+    CPLDebug( "NAS", "HugeFileResolver() not currently implemented for NAS." );
+    return FALSE;
+}
+
+/************************************************************************/
+/*                         PrescanForTemplate()                         */
+/*      Returns TRUE for success                                        */
+/************************************************************************/
+
+int NASReader::PrescanForTemplate( void )
+
+{
+    CPLDebug( "NAS", "PrescanForTemplate() not currently implemented for NAS." );
+    return FALSE;
+}
+
+/************************************************************************/
 /*                           ResolveXlinks()                            */
 /*      Returns TRUE for success                                        */
 /************************************************************************/

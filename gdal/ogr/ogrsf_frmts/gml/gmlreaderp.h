@@ -42,6 +42,32 @@ class GMLReader;
 typedef struct _GeometryNamesStruct GeometryNamesStruct;
 
 /************************************************************************/
+/*                        GFSTemplateList                               */
+/************************************************************************/
+
+class GFSTemplateItem;
+
+class GFSTemplateList
+{
+private:
+    int             m_bSequentialLayers;
+    GFSTemplateItem *pFirst;
+    GFSTemplateItem *pLast;
+    GFSTemplateItem *Insert( const char *pszName );
+public:
+                    GFSTemplateList( void );
+                    ~GFSTemplateList();
+    void            Update( const char *pszName, int bHasGeom );
+    GFSTemplateItem *GetFirst() { return pFirst; }
+    int             HaveSequentialLayers() { return m_bSequentialLayers; }
+    int             GetClassCount();
+};
+
+void gmlUpdateFeatureClasses ( GFSTemplateList *pCC,
+                               GMLReader *pReader,
+                               int *pbSequentialLayers );
+
+/************************************************************************/
 /*                              GMLHandler                              */
 /************************************************************************/
 
@@ -397,6 +423,11 @@ private:
     int           m_bSequentialLayers;
 
     std::string   osElemPath;
+ 
+    int           ParseXMLHugeFile( const char *pszOutputFilename, 
+                                    const int bSqliteIsTempFile,
+                                    const int iSqliteCacheMB );
+                               
 
 public:
                 GMLReader(int bExpatReader, int bInvertAxisOrderIfLatLong,
@@ -426,8 +457,14 @@ public:
                                     int* pbOutIsTempFile,
                                     char **papszSkip = NULL,
                                     const int bStrict = FALSE );
+ 
+    int              HugeFileResolver( const char *pszFile,
+                                       int pbSqliteIsTempFile,
+                                       int iSqliteCacheMB );
 
     int              PrescanForSchema(int bGetExtents = TRUE );
+    int              PrescanForTemplate( void );
+    int              ReArrangeTemplateClasses( GFSTemplateList *pCC );
     void             ResetReading();
 
 // --- 

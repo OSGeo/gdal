@@ -177,6 +177,7 @@ public:
     int              SaveClasses( const char *pszFile = NULL );
 
     int              PrescanForSchema(int bGetExtents = TRUE );
+    int              PrescanForTemplate( void );
     void             ResetReading();
 
     int              ParseXSD( const char *pszFile ) { return FALSE; }
@@ -185,6 +186,10 @@ public:
                                     int* pbOutIsTempFile,
                                     char **papszSkip = NULL,
                                     const int bStrict = FALSE );
+
+    int              HugeFileResolver( const char *pszFile,
+                                       int bSqliteIsTempFile,
+                                       int iSqliteCacheMB );
 
 // --- 
 
