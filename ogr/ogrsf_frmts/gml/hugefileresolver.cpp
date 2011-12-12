@@ -217,7 +217,6 @@ static int gmlHugeResolveEdgeNodes( const CPLXMLNode *psNode,
                                     const char *pszToId )
 {
 /* resolves an Edge definition */
-    const char      *gmlText;
     CPLXMLNode      *psDirNode_1 = NULL;
     CPLXMLNode      *psDirNode_2 = NULL;
     CPLXMLNode      *psOldNode_1 = NULL;
@@ -259,11 +258,12 @@ static int gmlHugeResolveEdgeNodes( const CPLXMLNode *psNode,
             }
             if( psOldNode != NULL )
             {
+                CPLXMLNode *psNewNode = CPLCreateXMLNode(NULL, CXT_Element, "Node");
+                CPLXMLNode *psGMLIdNode = CPLCreateXMLNode(psNewNode, CXT_Attribute, "gml:id");
                 if( cOrientation == '-' )
-                    gmlText = CPLSPrintf( "<Node gml:id=\"%s\"/>", pszFromId );
+                    CPLCreateXMLNode(psGMLIdNode, CXT_Text, pszFromId);
                 else
-                    gmlText = CPLSPrintf( "<Node gml:id=\"%s\"/>", pszToId );
-                CPLXMLNode *psNewNode = CPLParseXMLString( gmlText );
+                    CPLCreateXMLNode(psGMLIdNode, CXT_Text, pszToId);
                 if( iToBeReplaced == 0 )
                 {
                     psDirNode_1 = psChild;
@@ -1368,20 +1368,27 @@ static void gmlHugeFileNodeCoords( struct huge_tag *pItem,
             }
             if( pszGmlId != NULL )
             {
+                CPLString* posNode;
+                if( bIsHref == TRUE )
+                {
+                    if (pszGmlId[0] != '#')
+                    {
+                        CPLError(CE_Warning, CPLE_NotSupported,
+                                 "Only values of xlink:href element starting with '#' are supported, "
+                                 "so %s will not be properly recognized", pszGmlId);
+                    }
+                    posNode = new CPLString(pszGmlId+1);
+                }
+                else
+                    posNode = new CPLString(pszGmlId);
                 if( cOrientation == '-' )
                 {
-                    if( bIsHref == TRUE )
-                        pItem->gmlNodeFrom = new CPLString(pszGmlId+1);
-                    else
-                        pItem->gmlNodeFrom = new CPLString(pszGmlId);
+                     pItem->gmlNodeFrom = posNode;
                     pItem->bIsNodeFromHref = bIsHref;
                 }
                 else
                 {
-                    if( bIsHref == TRUE )
-                        pItem->gmlNodeTo = new CPLString(pszGmlId+1);
-                    else
-                        pItem->gmlNodeTo = new CPLString(pszGmlId);
+                    pItem->gmlNodeTo = posNode;
                     pItem->bIsNodeToHref = bIsHref;
                 }
                 pszGmlId = NULL;
@@ -1500,6 +1507,12 @@ static void gmlHugeFileCheckPendingHrefs( struct huge_helper *helper,
                     {
                         if( pszHref->eType == CXT_Text )
                         {
+                            if (pszHref->pszValue[0] != '#')
+                            {
+                                CPLError(CE_Warning, CPLE_NotSupported,
+                                        "Only values of xlink:href element starting with '#' are supported, "
+                                        "so %s will not be properly recognized", pszHref->pszValue);
+                            }
                             CPLString *gmlId = new CPLString(pszHref->pszValue+1);
                             gmlHugeAddPendingToHelper( helper, gmlId, psParent,
                                                        psNode, TRUE, cOrientation );
@@ -1811,6 +1824,7 @@ static int gmlHugeFileWriteResolved ( struct huge_helper *helper,
         if ( rc == SQLITE_ROW )
         {
             const char *pszGmlId;
+            char* pszEscaped;
             double x;
             double y;
             double z = 0.0;
@@ -1827,16 +1841,22 @@ static int gmlHugeFileWriteResolved ( struct huge_helper *helper,
             /* inserting a node into the resolved GML file */
             pCC->Update( "ResolvedNodes", TRUE );
             VSIFPrintfL ( fp, "    <ResolvedNodes>\n" );
-            VSIFPrintfL ( fp, "      <NodeGmlId>%s</NodeGmlId>\n", pszGmlId );
+            pszEscaped = CPLEscapeString( pszGmlId, -1, CPLES_XML );
+            VSIFPrintfL ( fp, "      <NodeGmlId>%s</NodeGmlId>\n", pszEscaped );
+            CPLFree(pszEscaped);
             VSIFPrintfL ( fp, "      <ResolvedGeometry> \n" );
             if ( helper->nodeSrs == NULL )
                 VSIFPrintfL ( fp, "        <gml:Point srsDimension=\"%d\">",
                               ( bHasZ == TRUE ) ? 3 : 2 );
             else
+            {
+                pszEscaped = CPLEscapeString( helper->nodeSrs->c_str(), -1, CPLES_XML );
                 VSIFPrintfL ( fp, "        <gml:Point srsDimension=\"%d\""
                                   " srsName=\"%s\">",
                                   ( bHasZ == TRUE ) ? 3 : 2,
-                              helper->nodeSrs->c_str() );
+                              pszEscaped );
+                CPLFree(pszEscaped);
+            }
             if ( bHasZ == TRUE )
                 VSIFPrintfL ( fp, "<gml:pos>%1.8f %1.8f %1.8f</gml:pos>"
                                   "</gml:Point>\n",
@@ -1880,8 +1900,8 @@ static int gmlHugeFileWriteResolved ( struct huge_helper *helper,
                 for( int iSub = 0; iSub < poProp->nSubProperties; iSub++ )
                 {
                     char *gmlText = CPLEscapeString( poProp->papszSubProperties[iSub],
-                                    strlen( poProp->papszSubProperties[iSub]),
-                                    CPLES_XML );
+                                                    -1,
+                                                    CPLES_XML );
                     VSIFPrintfL ( fp, "      <%s>%s</%s>\n", 
                                   pszPropName, gmlText, pszPropName ); 
                     CPLFree( gmlText );
@@ -1986,7 +2006,8 @@ int GMLReader::ParseXMLHugeFile( const char *pszOutputFilename,
     int iFeatureUID = 0;
     int rc;
     sqlite3 *hDB = NULL;
-    char *pszSQLiteFilename = NULL;
+    CPLString osSQLiteFilename;
+    const char *pszSQLiteFilename = NULL;
     struct huge_helper helper;
     char *pszErrMsg = NULL;
 
@@ -2005,15 +2026,15 @@ int GMLReader::ParseXMLHugeFile( const char *pszOutputFilename,
 /* -------------------------------------------------------------------- */
 /*      Creating/Opening the SQLite DB file                             */
 /* -------------------------------------------------------------------- */
-    pszSQLiteFilename = CPLStrdup(
-    CPLResetExtension( m_pszFilename, "sqlite" ) );
+    osSQLiteFilename = CPLResetExtension( m_pszFilename, "sqlite" );
+    pszSQLiteFilename = osSQLiteFilename.c_str();
+
     VSIStatBufL statBufL;
     if ( VSIStatExL ( pszSQLiteFilename, &statBufL, VSI_STAT_EXISTS_FLAG) == 0)
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "sqlite3_open(%s) failed:\n\tDB-file already exists", 
                   pszSQLiteFilename );
-        CPLFree( pszSQLiteFilename );
         return FALSE;
     }
 
@@ -2161,7 +2182,6 @@ int GMLReader::ParseXMLHugeFile( const char *pszOutputFilename,
     gmlHugeFileCleanUp ( &helper );
     if ( bSqliteIsTempFile == TRUE )
         VSIUnlink( pszSQLiteFilename );
-    CPLFree( pszSQLiteFilename );
     return TRUE;
 }
 
