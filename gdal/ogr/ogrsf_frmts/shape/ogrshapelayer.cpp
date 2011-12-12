@@ -853,7 +853,7 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
 /*      inconclusive tests on bounding box only, we will read the full  */
 /*      shape later.                                                    */
 /* -------------------------------------------------------------------- */
-        else if (iShape < hSHP->nRecords &&
+        else if (iShape >= 0 && iShape < hSHP->nRecords &&
                     hSHP->panRecSize[iShape] > 4 + 8 * 4 )
         {
             GByte abyBuf[4 + 8 * 4];
