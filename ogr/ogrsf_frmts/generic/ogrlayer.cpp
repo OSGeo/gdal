@@ -31,6 +31,7 @@
 #include "ogr_api.h"
 #include "ogr_p.h"
 #include "ogr_attrind.h"
+#include "swq.h"
 
 CPL_CVSID("$Id$");
 
@@ -303,6 +304,51 @@ OGRErr OGRLayer::SetAttributeFilter( const char *pszQuery )
     ResetReading();
 
     return eErr;
+}
+
+/************************************************************************/
+/*                        ContainGeomSpecialField()                     */
+/************************************************************************/
+
+static int ContainGeomSpecialField(swq_expr_node* expr,
+                                   int nLayerFieldCount)
+{
+    if (expr->eNodeType == SNT_COLUMN)
+    {
+        if( expr->table_index == 0 && expr->field_index != -1 )
+        {
+            int nSpecialFieldIdx = expr->field_index -
+                                    nLayerFieldCount;
+            return nSpecialFieldIdx == SPF_OGR_GEOMETRY ||
+                   nSpecialFieldIdx == SPF_OGR_GEOM_WKT ||
+                   nSpecialFieldIdx == SPF_OGR_GEOM_AREA;
+        }
+    }
+    else if (expr->eNodeType == SNT_OPERATION)
+    {
+        for( int i = 0; i < expr->nSubExprCount; i++ )
+        {
+            if (ContainGeomSpecialField(expr->papoSubExpr[i],
+                                        nLayerFieldCount))
+                return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+/************************************************************************/
+/*                AttributeFilterEvaluationNeedsGeometry()              */
+/************************************************************************/
+
+int OGRLayer::AttributeFilterEvaluationNeedsGeometry()
+{
+    if( !m_poAttrQuery )
+        return FALSE;
+
+    swq_expr_node* expr = (swq_expr_node *) m_poAttrQuery->GetSWGExpr();
+    int nLayerFieldCount = GetLayerDefn()->GetFieldCount();
+
+    return ContainGeomSpecialField(expr, nLayerFieldCount);
 }
 
 /************************************************************************/
