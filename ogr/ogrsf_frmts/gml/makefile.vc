@@ -1,6 +1,6 @@
 
 LL_OBJ	=	gmlpropertydefn.obj gmlfeatureclass.obj gmlfeature.obj \
-		gmlreader.obj parsexsd.obj resolvexlinks.obj gmlutils.obj \
+		gmlreader.obj parsexsd.obj resolvexlinks.obj hugefileresolver.obj gmlutils.obj \
 		gmlreadstate.obj gmlhandler.obj trstring.obj  gfstemplate.obj
 OGR_OBJ	=	ogrgmldriver.obj ogrgmldatasource.obj ogrgmllayer.obj
 
