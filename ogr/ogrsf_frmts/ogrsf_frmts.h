@@ -124,6 +124,8 @@ class CPL_DLL OGRLayer
     /* non virtual : conveniency wrapper for ReorderFields() */
     OGRErr              ReorderField( int iOldFieldPos, int iNewFieldPos );
 
+    int                 AttributeFilterEvaluationNeedsGeometry();
+
     /* consider these private */
     OGRErr               InitializeIndexSupport( const char * );
     OGRLayerAttrIndex   *GetIndex() { return m_poAttrIndex; }
