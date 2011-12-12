@@ -164,6 +164,7 @@ GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
                                          psWO->pTransformerArg, 
                                          dfMaxError );
         psWO->pfnTransformer = GDALApproxTransform;
+        GDALApproxTransformerOwnsSubtransformer(psWO->pTransformerArg, TRUE);
     }
 
 /* -------------------------------------------------------------------- */
