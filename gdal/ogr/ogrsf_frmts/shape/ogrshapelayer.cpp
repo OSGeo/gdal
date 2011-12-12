@@ -981,11 +981,6 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
 
 /************************************************************************/
 /*                          GetFeatureCount()                           */
-/*                                                                      */
-/*      If a spatial filter is in effect, we turn control over to       */
-/*      the generic counter.  Otherwise we return the total count.      */
-/*      Eventually we should consider implementing a more efficient     */
-/*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
 int OGRShapeLayer::GetFeatureCount( int bForce )
@@ -1003,6 +998,20 @@ int OGRShapeLayer::GetFeatureCount( int bForce )
         return GetFeatureCountWithSpatialFilterOnly();
     }
 
+    /* Attribute filter only */
+    if( m_poAttrQuery != NULL )
+    {
+        /* Let's see if we can ignore reading geometries */
+        int bSaveGeometryIgnored = poFeatureDefn->IsGeometryIgnored();
+        if (!AttributeFilterEvaluationNeedsGeometry())
+            poFeatureDefn->SetGeometryIgnored(TRUE);
+
+        int nRet = OGRLayer::GetFeatureCount( bForce );
+
+        poFeatureDefn->SetGeometryIgnored(bSaveGeometryIgnored);
+        return nRet;
+    }
+
     return OGRLayer::GetFeatureCount( bForce );
 }
 
@@ -1010,7 +1019,7 @@ int OGRShapeLayer::GetFeatureCount( int bForce )
 /*                             GetExtent()                              */
 /*                                                                      */
 /*      Fetch extent of the data currently stored in the dataset.       */
-/*      The bForce flag has no effect on SHO files since that value     */
+/*      The bForce flag has no effect on SHP files since that value     */
 /*      is always in the header.                                        */
 /*                                                                      */
 /*      Returns OGRERR_NONE/OGRRERR_FAILURE.                            */
