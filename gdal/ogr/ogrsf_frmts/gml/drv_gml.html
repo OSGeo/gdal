@@ -150,6 +150,37 @@ the configuration option <b>GML_SKIP_RESOLVE_ELEMS</b>.  Set it to <b>ALL</b>
 to skip resolving altogether (default action).  Set it to <b>NONE</b> to
 resolve all the xlinks.<p>
 
+Starting since OGR 1.9.0 an alternative resolution method is available.
+This alternative method will be activated using the configuration option
+<b>GML_SKIP_RESOLVE_ELEMS HUGE</b>. In this case any gml:xlink will be 
+resolved using a temporary SQLite DB so to identify any corresponding
+gml:id relation. At the end of this SQL-based process, a resolved file
+will be generated exactly as in the <b>NONE</b> case but without their limits. 
+The main advantages in using an external (temporary) DBMS so to resolve 
+gml:xlink and gml:id relations are the followings:<ul>
+	<li>no memory size constraints. The <b>NONE</b> method stores the whole
+	   GML node-tree in-memory; and this practically means that no GML
+	   file bigger than 1 GB can be processed at all using a 32-bit
+	   platform, due to memory allocation limits. Using a file-system
+	   based DBMS avoids at all this issue.</li>
+	<li>by far better efficiency, most notably when huge GML files containing
+	   many thousands (or even millions) of xlink:href / gml:id relational 
+	   pairs.</li>
+	<li>using the <b>GML_SKIP_RESOLVE_ELEMS HUGE</b> method realistically allows 
+	   to succesfully resolve some really huge GML file (3GB+) containing many 
+	   millions xlink:href / gml:id in a reasonable time (about an hour or so on).</li>
+	<li>The <b>GML_SKIP_RESOLVE_ELEMS HUGE</b> method supports the followind further
+	   configuration option:<ul>
+		<li>you can use <b>GML_GFS_TEMPLATE</b> <b><i>path_to_template.gfs</i></b>
+		   in order to unconditionally use a predefined GFS file. This option is really useful
+		   when you are planning to import many distinct GML files in subsequent steps [<b>-append</b>] 
+		   and you absolutely want to preserve a fully consistent data layout for the whole GML set.
+		   Please, pay attention not to use the <b>-lco LAUNDER=yes</b> setting when using <b>GML_GFS_TEMPLATE</b>; 
+		   this should break the correct recognition of attribute names between subsequent GML import runs.
+</li>
+	</ul></li>
+</ul>
+
 <h2>Encoding issues</h2>
 
 Expat library supports reading the following built-in encodings :
@@ -385,6 +416,11 @@ ogr2ogr -f GML output.gml PG:'host=myserver dbname=warmerda' -sql "SELECT pop_19
 <li> <a href="http://portal.opengeospatial.org/files/?artifact_id=15201">GML 3.1.1 simple features profile - OGC(R) 06-049r1</a><p>
 <li> <a href="http://xml.apache.org/xerces2-j/index.html">Xerces</a><p>
 <li> <a href="drv_nas.html">NAS/ALKIS : specialized GML driver for cadastral data in Germany</a><p>
+</ul>
+
+<h2>Credits</h2>
+<ul>
+	<li>Implementation for <b>GML_SKIP_RESOLVE_ELEMS HUGE</b> was contributed by A.Furieri, with funding from Regione Toscana</li>
 </ul>
 
 </body>
