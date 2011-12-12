@@ -272,6 +272,24 @@ static const int anUsgsEsriZones[] =
  5400,    0
 };
 
+/* -------------------------------------------------------------------- */
+/*      Datum Mapping functions and definitions                         */
+/* -------------------------------------------------------------------- */
+/* TODO adapt existing code and test */
+#define DM_IDX_EPSG_CODE            0
+#define DM_IDX_ESRI_NAME            1
+#define DM_IDX_EPSG_NAME            2
+#define DM_ELT_SIZE                 3
+
+#define DM_GET_EPSG_CODE(map, i)          map[(i)*DM_ELT_SIZE + DM_IDX_EPSG_CODE]
+#define DM_GET_ESRI_NAME(map, i)          map[(i)*DM_ELT_SIZE + DM_IDX_ESRI_NAME]
+#define DM_GET_EPSG_NAME(map, i)          map[(i)*DM_ELT_SIZE + DM_IDX_EPSG_NAME]
+
+char *DMGetEPSGCode(int i) { return DM_GET_EPSG_CODE(papszDatumMapping, i); }
+char *DMGetESRIName(int i) { return DM_GET_ESRI_NAME(papszDatumMapping, i); }
+char *DMGetEPSGName(int i) { return DM_GET_EPSG_NAME(papszDatumMapping, i); }
+
+
 void OGREPSGDatumNameMassage( char ** ppszDatum );
 
 /************************************************************************/
@@ -1434,15 +1452,27 @@ OGRErr OGRSpatialReference::morphFromESRI()
 
 {
     OGRErr      eErr = OGRERR_NONE;
+    OGR_SRSNode *poDatum;
+    char        *pszDatumOrig = NULL;
 
     if( GetRoot() == NULL )
         return OGRERR_NONE;
 
+    InitDatumMappingTable();
+
+/* -------------------------------------------------------------------- */
+/*      Save original datum name for later                              */
+/* -------------------------------------------------------------------- */
+    poDatum = GetAttrNode( "DATUM" );
+    if( poDatum != NULL ) 
+    {
+        poDatum = poDatum->GetChild(0);
+        pszDatumOrig = CPLStrdup( poDatum->GetValue() );
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Translate DATUM keywords that are oddly named.                  */
 /* -------------------------------------------------------------------- */
-    InitDatumMappingTable();
-
     GetRoot()->applyRemapper( "DATUM", 
                               (char **)papszDatumMapping+1,
                               (char **)papszDatumMapping+2, 3 );
@@ -1450,8 +1480,6 @@ OGRErr OGRSpatialReference::morphFromESRI()
 /* -------------------------------------------------------------------- */
 /*      Try to remove any D_ in front of the datum name.                */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode *poDatum;
-
     poDatum = GetAttrNode( "DATUM" );
     if( poDatum != NULL )
         poDatum = poDatum->GetChild(0);
@@ -1596,6 +1624,162 @@ OGRErr OGRSpatialReference::morphFromESRI()
     GetRoot()->applyRemapper( "DATUM", 
                               (char **)papszDatumMapping+1,
                               (char **)papszDatumMapping+2, 3 );
+
+/* -------------------------------------------------------------------- */
+/*      Fix TOWGS84, DATUM or GEOGCS                                    */
+/* -------------------------------------------------------------------- */
+    /* TODO test more ESRI WKT; also add PROJCS */
+
+    /* Check GDAL_FIX_ESRI_WKT config option (default=NO); if YES, set to DATUM */
+    const char *pszFixWktConfig=CPLGetConfigOption( "GDAL_FIX_ESRI_WKT", "NO" );
+    if ( EQUAL(pszFixWktConfig,"YES") )
+        pszFixWktConfig = "DATUM";
+
+    if( !EQUAL(pszFixWktConfig, "NO") && poDatum != NULL )
+    { 
+        CPLDebug( "OGR_ESRI", 
+                  "morphFromESRI() looking for missing TOWGS84, datum=%s, config=%s",
+                  pszDatumOrig, pszFixWktConfig );
+
+        /* Special case for WGS84 and other common GCS? */
+
+        for( int i = 0; DMGetESRIName(i) != NULL; i++ )
+        {
+            /* we found the ESRI datum name in the map */
+            if( EQUAL(DMGetESRIName(i),pszDatumOrig) )
+            {
+                int nGeogCS;
+                int bDeprecated;
+                const char *pszFilename = NULL;
+                char **papszRecord = NULL;
+                OGR_SRSNode *poNode = NULL;
+                const char *pszThisValue = NULL;
+                char *pszOtherValue = NULL;
+                
+                /* look for GEOGCS corresponding to this datum */
+                pszFilename = CSVFilename("gcs.csv");
+                papszRecord = CSVScanFileByName( pszFilename, "DATUM_CODE",  
+                                                 DMGetEPSGCode(i), CC_Integer );
+                if ( papszRecord != NULL )
+                {
+                    /* make sure we got a valid EPSG code and it is not DEPRECATED */
+                    nGeogCS = atoi( CSLGetField( papszRecord,
+                                                 CSVGetFileFieldId(pszFilename,"COORD_REF_SYS_CODE")) );
+                    bDeprecated = atoi( CSLGetField( papszRecord,
+                                                     CSVGetFileFieldId(pszFilename,"DEPRECATED")) );
+                    
+                    // if ( nGeogCS >= 1 && bDeprecated == 0 )
+                    if ( nGeogCS >= 1 )
+                    {
+                        OGRSpatialReference oSRSTemp;
+                        if ( oSRSTemp.importFromEPSG( nGeogCS ) == OGRERR_NONE )
+                        {                        
+                            /* make clone of GEOGCS and strip CT parms for testing */
+                            OGRSpatialReference *poSRSTemp2 = NULL;
+                            int bIsSame = FALSE;
+                            poSRSTemp2 = oSRSTemp.CloneGeogCS();
+                            poSRSTemp2->StripCTParms();
+                            bIsSame = this->IsSameGeogCS( poSRSTemp2 );
+                            delete poSRSTemp2;
+
+                            /* clone GEOGCS from original if they match and if allowed */
+                            if ( EQUAL(pszFixWktConfig,"GEOGCS")
+                                 && bIsSame )
+                            {
+                                this->CopyGeogCSFrom( &oSRSTemp );
+                                CPLDebug( "OGR_ESRI", 
+                                          "morphFromESRI() cloned GEOGCS from EPSG:%d",
+                                          nGeogCS );
+                                /* exit loop */
+                                break;
+                            }   
+                            /* else try to copy only DATUM or TOWGS84 
+                               we got here either because of config option or 
+                               GEOGCS are not strictly equal */
+                            else if ( EQUAL(pszFixWktConfig,"GEOGCS") || 
+                                      EQUAL(pszFixWktConfig,"DATUM") ||
+                                      EQUAL(pszFixWktConfig,"TOWGS84") )
+                            {
+                                /* test for matching SPHEROID, because there can be 2 datums with same ESRI name 
+                                   but different spheroids (e.g. EPSG:4618 and EPSG:4291) - see bug #4345 */
+                                pszThisValue = pszOtherValue = NULL;                                
+                                pszThisValue = this->GetAttrValue( "DATUM|SPHEROID", 0 );
+                                if ( oSRSTemp.GetAttrValue( "DATUM|SPHEROID", 0 ) )
+                                {                                   
+                                    pszOtherValue = CPLStrdup(oSRSTemp.GetAttrValue( "DATUM|SPHEROID", 0 ) );
+                                    MorphNameToESRI( &pszOtherValue ); /* morph spheroid name to ESRI */
+                                }
+                                if ( EQUAL( pszThisValue, pszOtherValue ) )
+                                    bIsSame = TRUE;
+                                else 
+                                    bIsSame = FALSE;
+                                if (pszOtherValue) CPLFree(pszOtherValue);
+
+                                if ( bIsSame )
+                                {
+                                    /* test for matching PRIMEM, because there can be 2 datums with same ESRI name 
+                                       but different prime meridian (e.g. EPSG:4218 and EPSG:4802)  - see bug #4378 */
+                                    pszThisValue = pszOtherValue = NULL;                                
+                                    pszThisValue = this->GetAttrValue( "PRIMEM", 0 );
+                                    if ( oSRSTemp.GetAttrValue( "PRIMEM", 0 ) )
+                                    {                                   
+                                        pszOtherValue = CPLStrdup(oSRSTemp.GetAttrValue( "PRIMEM", 0 ) );
+                                    }
+                                    if ( EQUAL( pszThisValue, pszOtherValue )  )
+                                        bIsSame = TRUE;
+                                    else 
+                                        bIsSame = FALSE;
+                                    if (pszOtherValue) CPLFree(pszOtherValue);
+                                }
+                
+                                /* found a matching spheroid */ 
+                                if ( bIsSame )
+                                {
+                                    /* clone DATUM */
+                                    if ( EQUAL(pszFixWktConfig,"GEOGCS") || 
+                                         EQUAL(pszFixWktConfig,"DATUM")  )
+                                    {
+                                        OGR_SRSNode *poGeogCS = this->GetAttrNode( "GEOGCS" ); 
+                                        const OGR_SRSNode *poDatumOther = oSRSTemp.GetAttrNode( "DATUM" );  
+                                        if ( poGeogCS && poDatumOther ) 
+                                        {
+                                            /* make sure we preserve the position of the DATUM node */
+                                            int nPos = poGeogCS->FindChild( "DATUM" );
+                                            if ( nPos >= 0 )
+                                            {
+                                                poGeogCS->DestroyChild( nPos );
+                                                poGeogCS->InsertChild( poDatumOther->Clone(), nPos );
+                                                CPLDebug( "OGR_ESRI", 
+                                                          "morphFromESRI() cloned DATUM from EPSG:%d",
+                                                          nGeogCS );
+                                            }
+                                        }
+                                    } 
+                                    /* just copy TOWGS84 */
+                                    else if ( EQUAL(pszFixWktConfig,"TOWGS84") )
+                                    { 
+                                        poNode=oSRSTemp.GetAttrNode( "DATUM|TOWGS84" );
+                                        if ( poNode ) 
+                                        {
+                                            poNode=poNode->Clone();
+                                            GetAttrNode( "DATUM" )->AddChild( poNode );
+                                            CPLDebug( "OGR_ESRI", 
+                                                      "morphFromESRI() found missing TOWGS84 from EPSG:%d",
+                                                      nGeogCS );
+                                        }
+                                    }
+                                    /* exit loop */
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }         
+        }
+    }
+
+    CPLFree( pszDatumOrig );
 
     return eErr;
 }
