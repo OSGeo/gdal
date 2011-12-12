@@ -812,6 +812,8 @@ def osr_esri_test_esri_ogc_esri( ifile, ofile_base ):
         #morph back to ESRI
         srs3 = srs2.Clone()
         srs3.MorphToESRI()
+        wkt3 = srs3.ExportToWkt()
+
         #manage special cases of PROJECTION parameters that have multiple mappings
         remap_proj=dict([ ['Transverse_Mercator','Gauss_Kruger'], ['Equidistant_Cylindrical', 'Plate_Carree'], \
                               ['Hotine_Oblique_Mercator_Azimuth_Natural_Origin','Hotine_Oblique_Mercator_Azimuth_Center'] ] )
@@ -819,13 +821,13 @@ def osr_esri_test_esri_ogc_esri( ifile, ofile_base ):
         proj3=srs3.GetAttrValue( 'PROJCS|PROJECTION' )
         if proj3 in remap_proj and proj1==remap_proj[proj3]:
             srs3.SetAttrValue( 'PROJCS|PROJECTION', remap_proj[proj3] )
-        wkt3 = srs3.ExportToWkt()
+            wkt3 = srs3.ExportToWkt()
         
         #check srs and wkt
         if not srs1.IsSame(srs3):
             failed_srs_count = failed_srs_count + 1
             of_srs.write( 'ERROR: SRS not matching for # '+iline['COORD_REF_SYS_CODE']+'\n' )
-            of_srs.write( wkt1+'\n'+wkt3+'\n' )
+            of_srs.write( 'wkt1: '+wkt1+'\n'+'wkt2: '+wkt2+'\n'+'wkt3:'+wkt3+'\n' )
 
         elif wkt1 != wkt3:
             failed_wkt_count = failed_wkt_count + 1
@@ -936,8 +938,22 @@ def osr_esri_test_ogc_esri_ogc( ifile, ofile_base ):
         #morph back from ESRI        
         srs3 = srs2.Clone()
         srs3.MorphFromESRI()
+        #strip CT - add option for this and make more tests
+        srs3.StripCTParms()
         wkt3 = srs3.ExportToWkt()
-        
+
+        #manage special cases
+        #missing rectified_grid_angle (e.g. EPSG:2057)
+        if srs1.GetProjParm( 'rectified_grid_angle' ) != 0:
+            srs3.SetProjParm( 'rectified_grid_angle', srs1.GetProjParm( 'rectified_grid_angle' ) )
+            wkt3 = srs3.ExportToWkt()
+        #missing scale_factor for Mercator_1SP (e.g. EPSG:2934) and Polar_Stereographic (e.g. EPSG:3031)
+        proj1 = srs1.GetAttrValue( 'PROJCS|PROJECTION' ) 
+        if proj1 == 'Mercator_1SP' or proj1 == 'Polar_Stereographic':
+            if srs1.GetProjParm( 'scale_factor' ) != 0:
+                srs3.SetProjParm( 'scale_factor', srs1.GetProjParm( 'scale_factor' ) )
+                wkt3 = srs3.ExportToWkt()
+
         #check srs and wkt
         if not srs1.IsSame(srs3):
             failed_srs_count = failed_srs_count + 1
@@ -970,6 +986,9 @@ def osr_esri_test_ogc_esri_ogc( ifile, ofile_base ):
 
     return result
 
+###############################################################################
+# Test EPSG->OGC->ESRI->OGC
+
 def osr_esri_22():
 
     result = 'success'
@@ -985,6 +1004,7 @@ def osr_esri_22():
         result = 'expected_fail'
 
     return result
+
 
 ###############################################################################
 #
