@@ -555,17 +555,25 @@ OGRErr OGRSQLiteTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
                                &nRowCount, &nColCount, &pszErrMsg ) != SQLITE_OK )
             return OGRSQLiteLayer::GetExtent(psExtent, bForce);
 
-        if( nRowCount == 1 && nColCount == 4 )
+        OGRErr eErr = OGRERR_FAILURE;
+
+        if( nRowCount == 1 && nColCount == 4 &&
+            papszResult[4+0] != NULL &&
+            papszResult[4+1] != NULL &&
+            papszResult[4+2] != NULL &&
+            papszResult[4+3] != NULL)
         {
             psExtent->MinX = atof(papszResult[4+0]);
             psExtent->MinY = atof(papszResult[4+1]);
             psExtent->MaxX = atof(papszResult[4+2]);
             psExtent->MaxY = atof(papszResult[4+3]);
+            eErr = OGRERR_NONE;
         }
 
         sqlite3_free_table( papszResult );
 
-        return OGRERR_NONE;
+        if (eErr == OGRERR_NONE)
+            return eErr;
     }
 
     return OGRSQLiteLayer::GetExtent(psExtent, bForce);
