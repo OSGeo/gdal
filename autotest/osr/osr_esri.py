@@ -1005,6 +1005,31 @@ def osr_esri_22():
 
     return result
 
+###############################################################################
+# Test EPSG->OGC->ESRI->OGC
+# set GDAL_FIX_ESRI_WKT=DATUM (bugs #4378 and #4345), don't expect to fail
+
+def osr_esri_23():
+
+    result = 'success'
+
+    #set GDAL_FIX_ESRI_WKT=DATUM
+    config_fix=gdal.GetConfigOption('GDAL_FIX_ESRI_WKT')
+    gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', 'DATUM')
+
+    # Test GEOGCSCS defs
+    result1 = osr_esri_test_ogc_esri_ogc(gdal.FindFile('gdal','gcs.csv'), 'epsg_gcs2')
+    if result1 == 'fail':
+        result = 'fail'
+
+    # Test PROJCS defs
+    result2 = osr_esri_test_ogc_esri_ogc(gdal.FindFile('gdal','pcs.csv'), 'epsg_pcs2')
+    if result2 == 'fail':
+        result = 'fail'
+
+    gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', config_fix)
+
+    return result
 
 ###############################################################################
 #
@@ -1032,7 +1057,8 @@ gdaltest_list = [
     osr_esri_20,
     osr_esri_21,
     osr_esri_22,
-    None ]
+    osr_esri_23,
+   None ]
 
 if __name__ == '__main__':
 
