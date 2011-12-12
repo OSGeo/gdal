@@ -75,7 +75,14 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     bHeaderDirty = FALSE;
 
     if( hSHP != NULL )
+    {
         nTotalShapeCount = hSHP->nRecords;
+        if( hDBF != NULL && hDBF->nRecords != nTotalShapeCount )
+        {
+            CPLDebug("Shape", "Inconsistant record number in .shp (%d) and in .dbf (%d)",
+                     hSHP->nRecords, hDBF->nRecords);
+        }
+    }
     else 
         nTotalShapeCount = hDBF->nRecords;
     
@@ -311,6 +318,21 @@ int OGRShapeLayer::ScanIndices()
 /* -------------------------------------------------------------------- */
 /*      Check for spatial index if we have a spatial query.             */
 /* -------------------------------------------------------------------- */
+
+    OGREnvelope oEnvelope;
+    if( m_poFilterGeom != NULL )
+    {
+        m_poFilterGeom->getEnvelope( &oEnvelope );
+
+        OGREnvelope oLayerExtent;
+        if (GetExtent(&oLayerExtent, TRUE) == OGRERR_NONE &&
+            oEnvelope.Contains(oLayerExtent))
+        {
+            // The spatial filter is larger than the layer extent. No use of .qix file for now
+            return TRUE;
+        }
+    }
+
     if( m_poFilterGeom != NULL && !bCheckedForQIX )
         CheckForQIX();
 
@@ -321,9 +343,6 @@ int OGRShapeLayer::ScanIndices()
     {
         int nSpatialFIDCount, *panSpatialFIDs;
         double adfBoundsMin[4], adfBoundsMax[4];
-        OGREnvelope oEnvelope;
-
-        m_poFilterGeom->getEnvelope( &oEnvelope );
 
         adfBoundsMin[0] = oEnvelope.MinX;
         adfBoundsMin[1] = oEnvelope.MinY;
@@ -986,7 +1005,27 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
 int OGRShapeLayer::GetFeatureCount( int bForce )
 
 {
-    if( m_poFilterGeom == NULL && m_poAttrQuery == NULL )
+    /* Check if the spatial filter is non-trivial */
+    int bHasTrivialSpatialFilter;
+    if (m_poFilterGeom != NULL)
+    {
+        OGREnvelope oEnvelope;
+        m_poFilterGeom->getEnvelope( &oEnvelope );
+
+        OGREnvelope oLayerExtent;
+        if (GetExtent(&oLayerExtent, TRUE) == OGRERR_NONE &&
+            oEnvelope.Contains(oLayerExtent))
+        {
+            bHasTrivialSpatialFilter = TRUE;
+        }
+        else
+            bHasTrivialSpatialFilter = FALSE;
+    }
+    else
+        bHasTrivialSpatialFilter = TRUE;
+
+
+    if( bHasTrivialSpatialFilter && m_poAttrQuery == NULL )
         return nTotalShapeCount;
 
     if (!TouchLayer())
