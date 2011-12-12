@@ -244,7 +244,12 @@ public:
                                 char **papszSkip = NULL,
                                 const int bStrict = FALSE ) = 0;
 
+    virtual int  HugeFileResolver( const char *pszFile,
+                                   int pbSqlitIsTempFile,
+                                   int iSqliteCacheMB ) = 0;
+
     virtual int PrescanForSchema( int bGetExtents = TRUE ) = 0;
+    virtual int PrescanForTemplate( void ) = 0;
 
     virtual int HasStoppedParsing() = 0;
 
