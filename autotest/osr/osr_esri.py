@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 ###############################################################################
 # $Id$
@@ -763,27 +764,36 @@ def osr_esri_20():
 # http://help.arcgis.com/en/arcims/10.0/mainhelp/mergedProjects/ArcXMLGuide/elements/pcs.htm
 # http://help.arcgis.com/en/arcims/10.0/mainhelp/mergedProjects/ArcXMLGuide/elements/dattrans.htm
 
-def osr_esri_test_esri_ogc_esri( ifile, ofile_base ):
-
-    result = 'success'
-    failed_wkt_count = 0
-    failed_srs_count = 0
-    ofile_srs = 'tmp/'+ofile_base+'_srs.txt'
-    ofile_wkt = 'tmp/'+ofile_base+'_wkt.txt'
-
-    #set this to True to see which WKT do not match
-    check_wkt = False
+def osr_esri_test_esri_ogc_esri( ifile, ofile_base, fix_config='NO', check_epsg=False ):
 
     if not os.path.exists( ifile ):
         print('input file '+ifile+' does not exist')
         return 'fail'
     
+    result = 'success'
+    check_srs = True
+    check_wkt = False
+    failed_epsg_count = 0
+    failed_srs_count = 0
+    failed_wkt_count = 0
+    ofile_epsg = 'tmp/'+ofile_base+'_epsg.txt'
+    ofile_srs = 'tmp/'+ofile_base+'_srs.txt'
+    ofile_wkt = 'tmp/'+ofile_base+'_wkt.txt'
+
     #initialise output files
     if not os.path.exists('tmp'):
         os.mkdir('tmp')
+    if os.path.exists(ofile_epsg):
+        os.unlink(ofile_epsg)
+    if check_epsg:
+        epsg_ne=''
+        epsg_none=''
+        epsg_other=''
+        of_epsg = open(ofile_epsg,'w')
     if os.path.exists(ofile_srs):
         os.unlink(ofile_srs)
-    of_srs = open(ofile_srs,'w')
+    if check_srs:
+        of_srs = open(ofile_srs,'w')
     if os.path.exists(ofile_wkt):
         os.unlink(ofile_wkt)
     if check_wkt:        
@@ -796,8 +806,19 @@ def osr_esri_test_esri_ogc_esri( ifile, ofile_base ):
         f = open(ifile,'rt')
     csv_reader = csv.DictReader(f,delimiter=';')
 
+    epsg_reader = csv.DictReader(gdal.FindFile('gdal','gcs.csv'), 'epsg_gcs2', 'GEOGCS', True)
+
+    #set GDAL_FIX_ESRI_WKT option
+    fix_config_bak = gdal.GetConfigOption('GDAL_FIX_ESRI_WKT')
+    gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', fix_config)
+
+    #need to be quiet because some codes raise errors
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+
     #parse all lines
     for iline in csv_reader:
+
+        epsg_code = int(iline['COORD_REF_SYS_CODE'])
         if iline['WKT'] is None or iline['WKT']=='':
             continue
 
@@ -823,33 +844,68 @@ def osr_esri_test_esri_ogc_esri( ifile, ofile_base ):
             srs3.SetAttrValue( 'PROJCS|PROJECTION', remap_proj[proj3] )
             wkt3 = srs3.ExportToWkt()
         
-        #check srs and wkt
-        if not srs1.IsSame(srs3):
+        #check epsg
+        if check_epsg:
+            epsg2 = srs2.GetAuthorityCode('GEOGCS')
+            if epsg2 is None or int(epsg2)!=epsg_code:
+                #check why epsg codes conflict
+                srs4 = osr.SpatialReference()
+                #check if EPSG code imports ok 
+                if srs4.ImportFromEPSG( epsg_code ) != 0:
+                    #of_epsg.write( 'ERROR: #'+str(epsg_code)+', EPSG does not exist\n')
+                    epsg_ne = epsg_ne+' '+str(epsg_code)
+                else:
+                    if epsg2 is None:
+                        of_epsg.write( 'ERROR: #'+str(epsg_code)+', did not get EPSG code\n' )
+                        epsg_none = epsg_none+' '+str(epsg_code)
+                    else:
+                        of_epsg.write( 'ERROR: EPSG not matching for # '+str(epsg_code)+', got EPSG:'+str(epsg2)+'\n' )
+                        epsg_other = epsg_other+' '+str(epsg_code)
+                    failed_epsg_count = failed_epsg_count + 1
+                    of_epsg.write( 'wkt1: '+wkt1+'\n'+'wkt3: '+wkt3+'\n' )
+
+        #check srs
+        if check_srs and not srs1.IsSame(srs3):
             failed_srs_count = failed_srs_count + 1
             of_srs.write( 'ERROR: SRS not matching for # '+iline['COORD_REF_SYS_CODE']+'\n' )
-            of_srs.write( 'wkt1: '+wkt1+'\n'+'wkt2: '+wkt2+'\n'+'wkt3:'+wkt3+'\n' )
-
-        elif wkt1 != wkt3:
+            of_srs.write( 'wkt1: '+wkt1+'\n'+'wkt3: '+wkt3+'\n' )
+            
+        #check wkt
+        if check_wkt and wkt1 != wkt3:
             failed_wkt_count = failed_wkt_count + 1
-            if check_wkt:
-                of_wkt.write( 'WARNING: WKT not matching for # '+iline['COORD_REF_SYS_CODE']+'\n' )
-                of_wkt.write( wkt1+'\n'+wkt3+'\n' )
+            of_wkt.write( 'WARNING: WKT not matching for # '+iline['COORD_REF_SYS_CODE']+'\n' )
+            of_wkt.write( 'wkt1: '+wkt1+'\n'+'wkt3: '+wkt3+'\n' )
+            
+    #revert
+    gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', fix_config)
+    gdal.PopErrorHandler()
                 
-    of_srs.close()
+    #close files and report
+    if check_epsg:        
+        of_epsg.close()
+        if failed_epsg_count > 0:
+            print('ERROR: Failed %d EPSG tests, see file %s' % (failed_epsg_count,ofile_epsg) )
+            #print('epsg_ne: '+epsg_ne)
+            #print('epsg_none: '+epsg_none)
+            #print('epsg_other: '+epsg_other)
+            result='fail'
+        else:
+            os.unlink(ofile_epsg)
+
+    if check_srs:        
+        of_srs.close()
+        if failed_srs_count > 0:
+            print('ERROR: Failed %d SRS tests, see file %s' % (failed_srs_count,ofile_srs) )
+            result='fail'
+        else:
+            os.unlink(ofile_srs)
+
     if check_wkt:        
         of_wkt.close()
-
-    if failed_srs_count > 0:
-        print('ERROR: Failed %d SRS tests, see file %s' % (failed_srs_count,ofile_srs) )
-        result='fail'
-    else:
-        os.unlink(ofile_srs)
-
-    if failed_wkt_count > 0 :
-        if check_wkt:
+        if failed_wkt_count > 0 :
             print('WARNING: Failed %d WKT tests, see file %s' % (failed_wkt_count,ofile_wkt) )
         else:
-            print('WARNING: Failed %d WKT tests' % (failed_wkt_count) )
+            os.unlink(ofile_wkt)
 
     return result
 
@@ -864,13 +920,18 @@ def osr_esri_21():
         result = 'fail'
 
     # Test PROJCS defs
-    rresult2 = osr_esri_test_esri_ogc_esri('data/esri_pcs.csv.gz', 'esri_pcs')
-    if result1 == 'fail':
+    result2 = osr_esri_test_esri_ogc_esri('data/esri_pcs.csv.gz', 'esri_pcs')
+    if result2 == 'fail':
         result = 'fail'
 
     # Test other defs (collected elsewhere)
     result3 = osr_esri_test_esri_ogc_esri('data/esri_extra.csv', 'esri_extra')
     if result3 == 'fail':
+        result = 'fail'
+
+    # Test GEOGCSCS defs
+    result4 = osr_esri_test_esri_ogc_esri('data/esri_gcs.csv.gz', 'esri_gcs2', 'GEOGCS', True)
+    if result4 == 'fail':
         result = 'fail'
 
     return result
@@ -882,31 +943,38 @@ def osr_esri_21():
 # ifile must be in csv format and contain a COORD_REF_SYS_CODE 
 # which will be used in ImportFromEPSG()
 
-def osr_esri_test_ogc_esri_ogc( ifile, ofile_base ):
-
-    result = 'success'
-    failed_wkt_count = 0
-    failed_srs_count = 0
-    ofile_srs = 'tmp/'+ofile_base+'_srs.txt'
-    ofile_wkt = 'tmp/'+ofile_base+'_wkt.txt'
-
-    #set this to True to see which WKT do not match
-    check_wkt = False
+def osr_esri_test_ogc_esri_ogc( ifile, ofile_base, fix_config='NO', check_epsg=False ):
 
     if not os.path.exists( ifile ):
         print('input file '+ifile+' does not exist')
         return 'fail'
-    
+
+    result = 'success'
+    check_srs = True
+    check_wkt = False
+    failed_epsg_count = 0
+    failed_srs_count = 0
+    failed_wkt_count = 0
+    ofile_epsg = 'tmp/'+ofile_base+'_epsg.txt'
+    ofile_srs = 'tmp/'+ofile_base+'_srs.txt'
+    ofile_wkt = 'tmp/'+ofile_base+'_wkt.txt'
+
     #initialise output files
     if not os.path.exists('tmp'):
         os.mkdir('tmp')
+    if os.path.exists(ofile_epsg):
+        os.unlink(ofile_epsg)
+    if check_epsg:        
+        epsg_error=''
+        of_epsg = open(ofile_epsg,'w')
     if os.path.exists(ofile_srs):
         os.unlink(ofile_srs)
-    of_srs = open(ofile_srs,'w')
+    if check_srs:
+        of_srs = open(ofile_srs,'w')
     if os.path.exists(ofile_wkt):
         os.unlink(ofile_wkt)
     if check_wkt:        
-        of_wkt= open(ofile_wkt,'w')
+        of_wkt = open(ofile_wkt,'w')
 
     #open input file 
     if os.path.splitext(ifile)[1] == '.gz':
@@ -915,6 +983,10 @@ def osr_esri_test_ogc_esri_ogc( ifile, ofile_base ):
         f = open(ifile,'rt')
     csv_reader = csv.DictReader(f,delimiter=',')
 
+    #set GDAL_FIX_ESRI_WKT option
+    fix_config_bak = gdal.GetConfigOption('GDAL_FIX_ESRI_WKT')
+    gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', fix_config)
+    
     #need to be quiet because some codes raise errors
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
 
@@ -926,8 +998,6 @@ def osr_esri_test_ogc_esri_ogc( ifile, ofile_base ):
         srs1 = osr.SpatialReference()
         if srs1.ImportFromEPSG( epsg_code ) != 0:
             continue
-        #strip CT - add option for this and make more tests
-        srs1.StripCTParms()
         wkt1 = srs1.ExportToWkt()
 
         #morph to ESRI        
@@ -938,8 +1008,6 @@ def osr_esri_test_ogc_esri_ogc( ifile, ofile_base ):
         #morph back from ESRI        
         srs3 = srs2.Clone()
         srs3.MorphFromESRI()
-        #strip CT - add option for this and make more tests
-        srs3.StripCTParms()
         wkt3 = srs3.ExportToWkt()
 
         #manage special cases
@@ -954,35 +1022,62 @@ def osr_esri_test_ogc_esri_ogc( ifile, ofile_base ):
                 srs3.SetProjParm( 'scale_factor', srs1.GetProjParm( 'scale_factor' ) )
                 wkt3 = srs3.ExportToWkt()
 
-        #check srs and wkt
-        if not srs1.IsSame(srs3):
+        #do checks
+
+        #check epsg
+        if check_epsg:
+            epsg3 = srs3.GetAuthorityCode('GEOGCS')
+            if epsg3 is None or int(epsg3)!=epsg_code:
+                failed_epsg_count = failed_epsg_count + 1
+                epsg_error = epsg_error+' '+str(epsg_code)
+                of_epsg.write( 'ERROR: EPSG not matching for EPSG:'+str(epsg_code)+', got EPSG:'+str(epsg3)+'\n' )
+                of_epsg.write( 'wkt1: '+wkt1+'\n'+'wkt3: '+wkt3+'\n' )
+                #of_epsg.write( srs1.ExportToPrettyWkt()+'\n'+srs3.ExportToPrettyWkt()+'\n' )
+
+        #strip CT - add option for this and make more tests
+        srs1.StripCTParms()
+        wkt1 = srs1.ExportToWkt()
+        srs3.StripCTParms()
+        wkt3 = srs3.ExportToWkt()
+
+        #check srs
+        if check_srs and not srs1.IsSame(srs3):
             failed_srs_count = failed_srs_count + 1
-            of_srs.write( 'ERROR: SRS not matching for # '+iline['COORD_REF_SYS_CODE']+'\n' )
-            of_srs.write( wkt1+'\n'+wkt3+'\n' )
+            of_srs.write( 'ERROR: SRS not matching for EPSG:'+str(epsg_code)+'\n' )
+            of_srs.write( 'wkt1: '+wkt1+'\n'+'wkt3: '+wkt3+'\n' )
 
-        elif wkt1 != wkt3:
+        #check wkt
+        if check_wkt and wkt1 != wkt3:
             failed_wkt_count = failed_wkt_count + 1
-            if check_wkt:
-                of_wkt.write( 'WARNING: WKT not matching for # '+iline['COORD_REF_SYS_CODE']+'\n' )
-                of_wkt.write( wkt1+'\n'+wkt3+'\n' )
+            of_wkt.write( 'WARNING: WKT not matching for EPSG:'+str(epsg_code)+'\n' )
+            of_wkt.write( 'wkt1: '+wkt1+'\n'+'wkt3: '+wkt3+'\n' )
 
+    #revert
+    gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', fix_config)
     gdal.PopErrorHandler()
                 
-    of_srs.close()
+    #close files and report
+    if check_epsg:        
+        of_epsg.close()
+        if failed_epsg_count > 0 :
+            print('ERROR: Failed %d EPSG tests, see file %s' % (failed_epsg_count,ofile_epsg) )
+            #print(epsg_error)
+            result = 'fail'
+        else:
+            os.unlink(ofile_epsg)
+    if check_srs:        
+        of_srs.close()
+        if failed_srs_count > 0 :
+            print('ERROR: Failed %d SRS tests, see file %s' % (failed_srs_count,ofile_srs) )
+            result = 'fail'
+        else:
+            os.unlink(ofile_srs)
     if check_wkt:        
         of_wkt.close()
-
-    if failed_srs_count > 0:
-        print('ERROR: Failed %d SRS tests, see file %s' % (failed_srs_count,ofile_srs) )
-        result='fail'
-    else:
-        os.unlink(ofile_srs)
-
-    if failed_wkt_count > 0 :
-        if check_wkt:
+        if failed_wkt_count > 0 :
             print('WARNING: Failed %d WKT tests, see file %s' % (failed_wkt_count,ofile_wkt) )
         else:
-            print('WARNING: Failed %d WKT tests' % (failed_wkt_count) )
+            os.unlink(ofile_wkt)
 
     return result
 
@@ -1013,21 +1108,15 @@ def osr_esri_23():
 
     result = 'success'
 
-    #set GDAL_FIX_ESRI_WKT=DATUM
-    config_fix=gdal.GetConfigOption('GDAL_FIX_ESRI_WKT')
-    gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', 'DATUM')
-
     # Test GEOGCSCS defs
-    result1 = osr_esri_test_ogc_esri_ogc(gdal.FindFile('gdal','gcs.csv'), 'epsg_gcs2')
+    result1 = osr_esri_test_ogc_esri_ogc(gdal.FindFile('gdal','gcs.csv'), 'epsg_gcs2', 'GEOGCS', True)
     if result1 == 'fail':
-        result = 'fail'
+        result = 'expected_fail'
 
     # Test PROJCS defs
-    result2 = osr_esri_test_ogc_esri_ogc(gdal.FindFile('gdal','pcs.csv'), 'epsg_pcs2')
+    result2 = osr_esri_test_ogc_esri_ogc(gdal.FindFile('gdal','pcs.csv'), 'epsg_pcs2', 'DATUM', False)
     if result2 == 'fail':
         result = 'fail'
-
-    gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', config_fix)
 
     return result
 
@@ -1064,6 +1153,8 @@ if __name__ == '__main__':
 
     gdaltest.setup_run( 'osr_esri' )
 
+    #make sure GDAL_FIX_ESRI_WKT does not interfere with tests
+    gdal.SetConfigOption('GDAL_FIX_ESRI_WKT', 'NO')
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
