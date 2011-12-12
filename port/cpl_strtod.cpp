@@ -167,10 +167,10 @@ double CPLAtofM( const char *nptr )
 }
 
 /************************************************************************/
-/*                          CPLStrtodDelim()                            */
+/*                      CPLReplacePointByLocalePoint()                  */
 /************************************************************************/
 
-static void CPLReplacePointByLocalePoint(char* pszNumber, char point)
+static char* CPLReplacePointByLocalePoint(const char* pszNumber, char point)
 {
 #if defined(WIN32CE) || defined(__ANDROID__)
     static char byPoint = 0;
@@ -182,16 +182,12 @@ static void CPLReplacePointByLocalePoint(char* pszNumber, char point)
     }
     if (point != byPoint)
     {
-        int     i = 0;
-
-        while ( pszNumber[i] )
+        const char* pszPoint = strchr(pszNumber, point);
+        if (pszPoint)
         {
-            if ( pszNumber[i] == point )
-            {
-                pszNumber[i] = byPoint;
-                break;
-            }
-            i++;
+            char* pszNew = CPLStrdup(pszNumber);
+            pszNew[pszPoint - pszNumber] = byPoint;
+            return pszNew;
         }
     }
 #else
@@ -200,25 +196,26 @@ static void CPLReplacePointByLocalePoint(char* pszNumber, char point)
          && poLconv->decimal_point
          && strlen(poLconv->decimal_point) > 0 )
     {
-        int     i = 0;
         char    byPoint = poLconv->decimal_point[0];
 
         if (point != byPoint)
         {
-            while ( pszNumber[i] )
+            const char* pszPoint = strchr(pszNumber, point);
+            if (pszPoint)
             {
-                if ( pszNumber[i] == point )
-                {
-                    pszNumber[i] = byPoint;
-                    break;
-                }
-                i++;
+                char* pszNew = CPLStrdup(pszNumber);
+                pszNew[pszPoint - pszNumber] = byPoint;
+                return pszNew;
             }
         }
     }
 #endif
+    return (char*) pszNumber;
 }
 
+/************************************************************************/
+/*                          CPLStrtodDelim()                            */
+/************************************************************************/
 
 /**
  * Converts ASCII string to floating point number using specified delimiter.
@@ -249,11 +246,10 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
 /*  with the one, taken from locale settings and use standard strtod()  */
 /*  on that buffer.                                                     */
 /* -------------------------------------------------------------------- */
-    char        *pszNumber = CPLStrdup( nptr );
     double      dfValue;
     int         nError;
 
-    CPLReplacePointByLocalePoint(pszNumber, point);
+    char*       pszNumber = CPLReplacePointByLocalePoint(nptr, point);
 
     dfValue = strtod( pszNumber, endptr );
     nError = errno;
@@ -261,7 +257,8 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
     if ( endptr )
         *endptr = (char *)nptr + (*endptr - pszNumber);
 
-    CPLFree( pszNumber );
+    if (pszNumber != (char*) nptr)
+        CPLFree( pszNumber );
 
     errno = nError;
     return dfValue;
@@ -324,11 +321,10 @@ float CPLStrtofDelim(const char *nptr, char **endptr, char point)
 /*  on that buffer.                                                     */
 /* -------------------------------------------------------------------- */
 
-    char        *pszNumber = CPLStrdup( nptr );
     double      dfValue;
     int         nError;
 
-    CPLReplacePointByLocalePoint(pszNumber, point);
+    char*       pszNumber = CPLReplacePointByLocalePoint(nptr, point);
 
     dfValue = strtof( pszNumber, endptr );
     nError = errno;
@@ -336,7 +332,8 @@ float CPLStrtofDelim(const char *nptr, char **endptr, char point)
     if ( endptr )
         *endptr = (char *)nptr + (*endptr - pszNumber);
 
-    CPLFree( pszNumber );
+    if (pszNumber != (char*) nptr)
+        CPLFree( pszNumber );
 
     errno = nError;
     return dfValue;
