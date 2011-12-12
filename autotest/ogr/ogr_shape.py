@@ -2043,6 +2043,10 @@ def ogr_shape_50():
 
 def ogr_shape_51():
 
+    if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
+        gdaltest.post_reason('would crash')
+        return 'skip'
+
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_51.shp')
     lyr = ds.CreateLayer('ogr_shape_51')
     feat = ogr.Feature(lyr.GetLayerDefn())

@@ -1014,6 +1014,10 @@ def ogr_gml_25():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
+    if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
+        gdaltest.post_reason('would crash')
+        return 'skip'
+
     try:
         os.remove( 'data/curveProperty.gfs' )
     except:
