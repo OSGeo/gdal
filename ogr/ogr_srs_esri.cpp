@@ -109,6 +109,7 @@ static const char *apszSpheroidMapping[] = {
     "WGS_84", "WGS_1984",
     "WGS_72", "WGS_1972",
     "GRS_1967_Modified", "GRS_1967_Truncated",
+    "Krassowsky_1940", "Krasovsky_1940",
     NULL, NULL }; 
  
 static const char *apszUnitMapping[] = {
@@ -889,7 +890,8 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
                 CopyGeogCSFrom( &oGCS );
             }
             else if( EQUAL(osSpheroid,"KRASOVSKY") 
-                     || EQUAL(osSpheroid,"KRASSOVSKY") )
+                     || EQUAL(osSpheroid,"KRASSOVSKY")
+                     || EQUAL(osSpheroid,"KRASSOWSKY") )
             {
                 OGRSpatialReference oGCS;
                 oGCS.importFromEPSG( 4024 );
