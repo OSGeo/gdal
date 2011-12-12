@@ -173,6 +173,11 @@ def ogr_wfs_geoserver():
 
     feat_count = lyr.GetFeatureCount()
     if feat_count < 14000:
+        if gdal.GetLastErrorMsg().find('The connection attempt failed') != -1:
+            print('server probably in a broken state')
+            # Disable it for wfs-t test
+            gdaltest.geoserver_wfs = False
+            return 'skip'
         gdaltest.post_reason('did not get expected feature count')
         print(feat_count)
         return 'fail'
@@ -181,7 +186,7 @@ def ogr_wfs_geoserver():
         gdaltest.post_reason('did not get OLCFastFeatureCount')
         return 'fail'
 
-    ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points&MAXFEATURES=10')
+    ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=tiger:poi&MAXFEATURES=10')
     if ds is None:
         print('server perhaps overloaded')
         return 'skip'
@@ -198,14 +203,15 @@ def ogr_wfs_geoserver():
     
     geom = feat.GetGeometryRef()
     geom_wkt = geom.ExportToWkt()
-    if feat.GetField('name') != 'Alexander Bay' or \
-       geom_wkt.find("POINT (16.4827778 -28.5947222)") == -1:
+    if feat.GetField('NAME') != 'museam' or \
+       ogrtest.check_feature_geometry(feat,'POINT (-74.0104611 40.70758763)',
+                                      max_error = 0.000001 ) != 0:
         gdaltest.post_reason('did not get expected feature (1)')
         feat.DumpReadable()
         return 'fail'
 
     # Same with VERSION=1.0.0
-    ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points&MAXFEATURES=10&VERSION=1.0.0')
+    ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=tiger:poi&MAXFEATURES=10&VERSION=1.0.0')
     if ds is None:
         print('server perhaps overloaded')
         return 'skip'
@@ -213,41 +219,41 @@ def ogr_wfs_geoserver():
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     geom_wkt = geom.ExportToWkt()
-    if feat.GetField('name') != 'Alexander Bay' or \
-       ogrtest.check_feature_geometry(feat,'POINT (16.4827778 -28.5947222)',
-                                      max_error = 0.000000001 ) != 0:
+    if feat.GetField('NAME') != 'museam' or \
+       ogrtest.check_feature_geometry(feat,'POINT (-74.0104611 40.70758763)',
+                                      max_error = 0.000001 ) != 0:
         gdaltest.post_reason('did not get expected feature (2)')
         feat.DumpReadable()
         return 'fail'
 
     # Test attribute filter
-    ds = ogr.Open("WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points")
+    ds = ogr.Open("WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=tiger:poi")
     if ds is None:
         print('server perhaps overloaded')
         return 'skip'
     lyr = ds.GetLayer(0)
-    lyr.SetAttributeFilter("type is not null and name >= 'W' and type LIKE 'att%%ion'")
+    lyr.SetAttributeFilter("MAINPAGE is not null and NAME >= 'a' and NAME LIKE 'mu%%eam'")
     feat_count = lyr.GetFeatureCount()
     if feat_count != 1:
         gdaltest.post_reason('did not get expected feature count after SetAttributeFilter (1)')
         print(feat_count)
         return 'fail'
     feat = lyr.GetNextFeature()
-    if feat.GetField('gml_id') != 'za_points.2839':
+    if feat.GetField('gml_id') != 'poi.1':
         gdaltest.post_reason('did not get expected feature (3)')
         feat.DumpReadable()
         return 'fail'
 
     if False:
         # This GeoServer version doesn't understand <GmlObjectId>
-        lyr.SetAttributeFilter("gml_id = 'za_points.2839'")
+        lyr.SetAttributeFilter("gml_id = 'poi.1'")
         feat_count = lyr.GetFeatureCount()
         if feat_count != 1:
             gdaltest.post_reason('did not get expected feature count after SetAttributeFilter (2)')
             print(feat_count)
             return 'fail'
         feat = lyr.GetNextFeature()
-        if feat.GetField('gml_id') != 'za_points.2839':
+        if feat.GetField('gml_id') != 'poi.1':
             gdaltest.post_reason('did not get expected feature (4)')
             feat.DumpReadable()
             return 'fail'
@@ -300,8 +306,8 @@ def ogr_wfs_geoserver_json():
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     geom_wkt = geom.ExportToWkt()
-    if feat.GetField('name') != 'Alexander Bay' or \
-       ogrtest.check_feature_geometry(feat,'POINT (16.4827778 -28.5947222)',
+    #if feat.GetField('name') != 'Alexander Bay' or \
+    if ogrtest.check_feature_geometry(feat,'POINT (16.4827778 -28.5947222)',
                                       max_error = 0.000000001 ) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
@@ -356,8 +362,8 @@ def ogr_wfs_geoserver_shapezip():
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     geom_wkt = geom.ExportToWkt()
-    if feat.GetField('name') != 'Alexander Bay' or \
-       ogrtest.check_feature_geometry(feat,'POINT (16.4827778 -28.5947222)',
+    #if feat.GetField('name') != 'Alexander Bay' or \
+    if ogrtest.check_feature_geometry(feat,'POINT (16.4827778 -28.5947222)',
                                       max_error = 0.000000001 ) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
@@ -520,7 +526,7 @@ def ogr_wfs_geoserver_wfst():
     geom = ogr.CreateGeometryFromWkt('POINT(0 89.5)')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(geom)
-    feat.SetField('name', 'name_set_by_ogr_wfs_8_test')
+    #feat.SetField('name', 'name_set_by_ogr_wfs_8_test')
     feat.SetField('type', 'type_set_by_ogr_wfs_8_test')
     if lyr.CreateFeature(feat) != 0:
         gdaltest.post_reason('cannot create feature')
@@ -528,7 +534,7 @@ def ogr_wfs_geoserver_wfst():
 
     print('Feature %d created !' % feat.GetFID())
 
-    feat.SetField('name', 'name_modified_by_ogr_wfs_8_test')
+    feat.SetField('type', 'type_modified_by_ogr_wfs_8_test')
     if lyr.SetFeature(feat) != 0:
         gdaltest.post_reason('cannot update feature')
         return 'fail'
@@ -548,7 +554,7 @@ def ogr_wfs_geoserver_wfst():
     geom = ogr.CreateGeometryFromWkt('POINT(0 89.5)')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(geom)
-    feat.SetField('name', 'name_set_by_ogr_wfs_8_test')
+    #feat.SetField('name', 'name_set_by_ogr_wfs_8_test')
     feat.SetField('type', 'type_set_by_ogr_wfs_8_test')
     if lyr.CreateFeature(feat) != 0:
         gdaltest.post_reason('cannot create feature')
@@ -556,7 +562,7 @@ def ogr_wfs_geoserver_wfst():
     geom = ogr.CreateGeometryFromWkt('POINT(0 89.5)')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(geom)
-    feat.SetField('name', 'name_set_by_ogr_wfs_8_test_2')
+    #feat.SetField('name', 'name_set_by_ogr_wfs_8_test_2')
     feat.SetField('type', 'type_set_by_ogr_wfs_8_test_2')
     if lyr.CreateFeature(feat) != 0:
         gdaltest.post_reason('cannot create feature')
@@ -584,7 +590,7 @@ def ogr_wfs_geoserver_wfst():
 
     # Delete a bunch of features
     print('Deleting created features')
-    sql_lyr = ds.ExecuteSQL("DELETE FROM za:za_points WHERE name = 'name_set_by_ogr_wfs_8_test' OR name = 'name_set_by_ogr_wfs_8_test_2'")
+    sql_lyr = ds.ExecuteSQL("DELETE FROM za:za_points WHERE type = 'type_set_by_ogr_wfs_8_test' OR type = 'type_set_by_ogr_wfs_8_test_2'")
     ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
@@ -744,12 +750,14 @@ def ogr_wfs_deegree_gml321():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    if gdaltest.gdalurlopen('http://deegree3-testing.deegree.org:80/deegree-inspire-node/services') is None:
+    if gdaltest.gdalurlopen('http://deegree3-demo.deegree.org:80/deegree-inspire-node/services') is None:
         print('cannot open URL')
         return 'skip'
 
-    ds = ogr.Open('WFS:http://deegree3-testing.deegree.org:80/deegree-inspire-node/services?MAXFEATURES=10')
+    ds = ogr.Open('WFS:http://deegree3-demo.deegree.org:80/deegree-inspire-node/services?MAXFEATURES=10')
     if ds is None:
+        if gdal.GetLastErrorMsg().find("Unable to determine the subcontroller for request type 'GetCapabilities' and service type 'WFS'") != -1:
+            return 'skip'
         return 'fail'
 
     lyr = ds.GetLayerByName("ad:Address")
