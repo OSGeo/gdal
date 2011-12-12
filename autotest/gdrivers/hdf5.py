@@ -270,6 +270,10 @@ def hdf5_9():
     if gdaltest.hdf5_drv is None:
         return 'skip'
 
+    if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
+        gdaltest.post_reason('would crash')
+        return 'skip'
+
     ds = gdal.Open( 'data/vlstr_metadata.h5' )
     metadata = ds.GetRasterBand(1).GetMetadata()
     ds = None

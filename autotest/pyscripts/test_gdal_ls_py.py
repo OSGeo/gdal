@@ -144,6 +144,10 @@ def test_gdal_ls_py_5():
     if drv is None:
         return 'skip'
 
+    if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
+        gdaltest.post_reason('would stall for a long time')
+        return 'skip'
+
     f = gdal.VSIFOpenL('/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
         return 'skip'
@@ -202,6 +206,10 @@ def test_gdal_ls_py_7():
     if drv is None:
         return 'skip'
 
+    if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
+        gdaltest.post_reason('would stall for a long time')
+        return 'skip'
+
     f = gdal.VSIFOpenL('/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
         return 'skip'
@@ -231,6 +239,10 @@ def test_gdal_ls_py_8():
         drv = None
 
     if drv is None:
+        return 'skip'
+
+    if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
+        gdaltest.post_reason('would stall for a long time')
         return 'skip'
 
     f = gdal.VSIFOpenL('/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip', 'rb')

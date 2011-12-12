@@ -469,8 +469,14 @@ def misc_11():
 
 def misc_12():
 
+    if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
+        gdaltest.post_reason('would crash')
+        return 'skip'
+
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
+        #if drv.ShortName == 'ECW' or drv.ShortName == 'JP2ECW':
+        #    continue
         md = drv.GetMetadata()
         if 'DCAP_CREATECOPY' in md or 'DCAP_CREATE' in md:
 

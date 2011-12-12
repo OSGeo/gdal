@@ -397,6 +397,10 @@ def ogr_geom_build_from_edges_3():
 
 def ogr_geom_build_from_edges_4():
 
+    if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
+        gdaltest.post_reason('would crash')
+        return 'skip'
+
     if gdaltest.have_geos == 0:
         return 'skip'
 
