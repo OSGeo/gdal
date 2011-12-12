@@ -1593,8 +1593,6 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
           if( psChild->eType == CXT_Element
               && EQUAL(BareGMLElement(psChild->pszValue),"directedFace") )
           {
-            OGRLinearRing *poFaceGeom = new OGRLinearRing();
-
             bFaceOrientation = GetElementOrientation(psChild);
 
             // collect next face (psChild->psChild)
@@ -1605,6 +1603,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 
             if( psFaceChild == NULL )
               continue;
+
+            OGRLinearRing *poFaceGeom = new OGRLinearRing();
 
             // collect directed edges of the face
             for( psDirectedEdgeChild = psFaceChild->psChild;
@@ -1627,6 +1627,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                   CPLError( CE_Failure, CPLE_AppDefined, 
                             "Failed to get geometry in directedEdge" );
                   delete poEdgeGeom;
+                  delete poFaceGeom;
+                  delete poTS;
                   return NULL;
                 }
 
