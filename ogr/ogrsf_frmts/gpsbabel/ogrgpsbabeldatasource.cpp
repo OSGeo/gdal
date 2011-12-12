@@ -146,11 +146,6 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName, int bUpdateIn)
 
     if (!EQUALN(pszDatasourceName, "GPSBABEL:", 9))
     {
-        VSIStatBufL sStatBuf;
-        if( VSIStatL( pszDatasourceName, &sStatBuf ) != 0 
-            ||!VSI_ISREG(sStatBuf.st_mode) )
-            return FALSE;
-
         VSILFILE* fp = VSIFOpenL(pszDatasourceName, "rb");
         if (fp == NULL)
             return FALSE;

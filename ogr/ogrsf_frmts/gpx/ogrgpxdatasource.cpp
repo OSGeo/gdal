@@ -280,16 +280,8 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
     pszName = CPLStrdup( pszFilename );
 
 /* -------------------------------------------------------------------- */
-/*      Determine what sort of object this is.                          */
+/*      Try to open the file.                                           */
 /* -------------------------------------------------------------------- */
-    VSIStatBufL sStatBuf;
-
-    if( VSIStatL( pszFilename, &sStatBuf ) != 0 )
-        return FALSE;
-    
-    if( VSI_ISDIR(sStatBuf.st_mode) )
-        return FALSE;
-
     VSILFILE* fp = VSIFOpenL(pszFilename, "r");
     if (fp == NULL)
         return FALSE;
