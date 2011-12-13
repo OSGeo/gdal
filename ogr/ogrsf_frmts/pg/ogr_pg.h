@@ -136,6 +136,11 @@ class OGRPGLayer : public OGRLayer
                                              CPLString osCommand);
     void                CreateMapFromFieldNameToIndex();
 
+    OGRFeatureDefn     *ReadResultDefinition(PGresult *hInitialResultIn);
+
+    OGRFeature         *RecordToFeature( int iRecord );
+    OGRFeature         *GetNextRawFeature();
+
   public:
                         OGRPGLayer();
     virtual             ~OGRPGLayer();
@@ -154,10 +159,6 @@ class OGRPGLayer : public OGRLayer
     virtual const char *GetGeometryColumn();
 
     virtual OGRErr      SetNextByIndex( long nIndex );
-
-    /* custom methods */
-    virtual OGRFeature *RecordToFeature( int iRecord );
-    virtual OGRFeature *GetNextRawFeature();
 };
 
 /************************************************************************/
@@ -287,8 +288,6 @@ class OGRPGResultLayer : public OGRPGLayer
     char                *pszRawStatement;
 
     CPLString           osWHERE;
-
-    OGRFeatureDefn     *ReadResultDefinition(PGresult *hInitialResultIn);
 
   public:
                         OGRPGResultLayer( OGRPGDataSource *,

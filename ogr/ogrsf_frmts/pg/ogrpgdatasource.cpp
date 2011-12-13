@@ -2144,6 +2144,99 @@ OGRErr OGRPGDataSource::FlushSoftTransaction()
     return SoftCommit();
 }
 
+
+/************************************************************************/
+/*                     OGRPGNoResetResultLayer                          */
+/************************************************************************/
+
+class OGRPGNoResetResultLayer : public OGRPGLayer
+{
+  public:
+                        OGRPGNoResetResultLayer(OGRPGDataSource *poDSIn,
+                                                PGresult *hResultIn);
+
+    virtual             ~OGRPGNoResetResultLayer();
+
+    virtual void        ResetReading();
+
+    virtual int         TestCapability( const char * ) { return FALSE; }
+
+    virtual OGRFeature *GetNextFeature();
+};
+
+
+/************************************************************************/
+/*                     OGRPGNoResetResultLayer()                        */
+/************************************************************************/
+
+OGRPGNoResetResultLayer::OGRPGNoResetResultLayer( OGRPGDataSource *poDSIn,
+                                                  PGresult *hResultIn )
+{
+    poDS = poDSIn;
+    poFeatureDefn = ReadResultDefinition(hResultIn);
+    hCursorResult = hResultIn;
+    CreateMapFromFieldNameToIndex();
+}
+
+/************************************************************************/
+/*                   ~OGRPGNoResetResultLayer()                         */
+/************************************************************************/
+
+OGRPGNoResetResultLayer::~OGRPGNoResetResultLayer()
+
+{
+    OGRPGClearResult( hCursorResult );
+    hCursorResult = NULL;
+}
+
+/************************************************************************/
+/*                            ResetReading()                            */
+/************************************************************************/
+
+void OGRPGNoResetResultLayer::ResetReading()
+{
+    iNextShapeId = 0;
+}
+
+/************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
+
+OGRFeature *OGRPGNoResetResultLayer::GetNextFeature()
+
+{
+    if (iNextShapeId == PQntuples(hCursorResult))
+    {
+        return NULL;
+    }
+    return RecordToFeature(iNextShapeId ++);
+}
+
+/************************************************************************/
+/*                      OGRPGMemLayerWrapper                            */
+/************************************************************************/
+
+class OGRPGMemLayerWrapper : public OGRLayer
+{
+  private:
+      OGRDataSource  *poMemDS;
+      OGRLayer       *poMemLayer;
+
+  public:
+                        OGRPGMemLayerWrapper( OGRDataSource  *poMemDSIn )
+                        {
+                            poMemDS = poMemDSIn;
+                            poMemLayer = poMemDS->GetLayer(0);
+                        }
+
+                        ~OGRPGMemLayerWrapper() { delete poMemDS; }
+
+    virtual void        ResetReading() { poMemLayer->ResetReading(); }
+    virtual OGRFeature *GetNextFeature() { return poMemLayer->GetNextFeature(); }
+    virtual OGRFeatureDefn *GetLayerDefn() { return poMemLayer->GetLayerDefn(); }
+    virtual int         TestCapability( const char * ) { return FALSE; }
+};
+
 /************************************************************************/
 /*                             ExecuteSQL()                             */
 /************************************************************************/
@@ -2193,10 +2286,29 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
     if( EQUALN(pszSQLCommand,"VACUUM",6) 
         || SoftStartTransaction() == OGRERR_NONE  )
     {
-        if (EQUALN(pszSQLCommand, "SELECT", 6) == FALSE)
+        if (EQUALN(pszSQLCommand, "SELECT", 6) == FALSE ||
+            (strstr(pszSQLCommand, "from") == NULL && strstr(pszSQLCommand, "FROM") == NULL))
         {
             hResult = OGRPG_PQexec(hPGConn, pszSQLCommand, TRUE /* multiple allowed */ );
-            CPLDebug( "PG", "Command Results Tuples = %d", PQntuples(hResult) );
+            if (hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK)
+            {
+                CPLDebug( "PG", "Command Results Tuples = %d", PQntuples(hResult) );
+                FlushSoftTransaction();
+
+                OGRSFDriver* poMemDriver = OGRSFDriverRegistrar::GetRegistrar()->
+                                GetDriverByName("Memory");
+                if (poMemDriver)
+                {
+                    OGRPGLayer* poResultLayer = new OGRPGNoResetResultLayer( this, hResult );
+                    OGRDataSource* poMemDS = poMemDriver->CreateDataSource("");
+                    poMemDS->CopyLayer(poResultLayer, "sql_statement");
+                    OGRPGMemLayerWrapper* poResLayer = new OGRPGMemLayerWrapper(poMemDS);
+                    delete poResultLayer;
+                    return poResLayer;
+                }
+                else
+                    return NULL;
+            }
         }
         else
         {
@@ -2205,35 +2317,30 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
                                 "executeSQLCursor", pszSQLCommand );
 
             hResult = OGRPG_PQexec(hPGConn, osCommand );
-            if( hResult && (PQresultStatus(hResult) == PGRES_TUPLES_OK ||
-                            PQresultStatus(hResult) == PGRES_COMMAND_OK ))
-            {
-                OGRPGClearResult( hResult );
-
-                osCommand.Printf( "FETCH 0 in %s", "executeSQLCursor" );
-                hResult = OGRPG_PQexec(hPGConn, osCommand );
-            }
-        }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a tuple result? If so, instantiate a results         */
 /*      layer for it.                                                   */
 /* -------------------------------------------------------------------- */
+            if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
+            {
+                OGRPGResultLayer *poLayer = NULL;
 
-    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
-        && (EQUALN(pszSQLCommand, "SELECT", 6) || PQntuples(hResult) > 0) )
-    {
-        OGRPGResultLayer *poLayer = NULL;
+                OGRPGClearResult( hResult );
 
-        poLayer = new OGRPGResultLayer( this, pszSQLCommand, hResult );
+                osCommand.Printf( "FETCH 0 in %s", "executeSQLCursor" );
+                hResult = OGRPG_PQexec(hPGConn, osCommand );
 
-        OGRPGClearResult( hResult );
+                poLayer = new OGRPGResultLayer( this, pszSQLCommand, hResult );
 
-        if( poSpatialFilter != NULL )
-            poLayer->SetSpatialFilter( poSpatialFilter );
+                OGRPGClearResult( hResult );
 
-        return poLayer;
+                if( poSpatialFilter != NULL )
+                    poLayer->SetSpatialFilter( poSpatialFilter );
+
+                return poLayer;
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
