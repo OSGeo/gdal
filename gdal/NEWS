@@ -6,7 +6,7 @@ Established from r21484 up to r23295
 
 * New GDAL drivers: ACE2, CTG, E00GRID, ECRGTOC, GRASSASCIIGrid, NGSGEOID, SNODAS, WebP, ZMap
 * New OGR drivers: ARCGEN, CouchDB, DWG, EDIGEO, FileGDB, Geomedia, GFT, IDRISI, MDB, SEGUKOOA, SEGY, SVG
-* Significantly improved drivers: NetCDF
+* Significantly improved drivers: NetCDF (changes up to r23463)
 * Encoding support for shapefile/dbf (#882)
 * RFC 35: Delete, reorder and alter field definitions of OGR layers
 * RFC 37: Add mechanism to provide user data to CPLErrorHandler (#4295)
@@ -380,17 +380,26 @@ MrSID driver:
  * Handle LTI_COLORSPACE_RGBA
 
 NetCDF driver:
- * CF-1.5 compatible export
- * New driver options
  * Set cylindrical equal area representation to the proper cf-1.x notation (#3425)
- * Fix precision issue in geotransform (#4200)
+ * Fix precision issue in geotransform (#4200) and metadata
  * Add support for netcdf filetypes nc2(64-bit) and nc4 to netCDFDataset (#3890, #2379)
- * Add function IdentifyFileType() (bugs #3890 and #2379)
+ * Add function Identify and IdentifyFileType() (#3890, #2379)
  * Temporarily disabling PAM for netcdf driver (#4244)
  * Make creation of geographic grid CF compliant (#2129)
- * Fixes for netcdf metadata export (int/float/double vs. char*) and add_offset/scale_factor (#4211)
+ * Fixes for netcdf metadata export: duplication, Band metadata, int/float/double vs. char* and add_offset/scale_factor (#4211, #4204), double precision ( 4200)
+ * Fix netcdf metadata import (float and double precision) (#4211)
+ * Improve import of CF projection
+ * Add netcdf history metadata (#4297)
+ * CF-1.5 compatible export of projected grids (optional lon/lat export)
+ * New driver options
+ * Add simple progress indicator
  * Add support for netcdf-4, HDF4 and HDF5 (#4294 and #3166)
  * Add support for deflate compression
+ * Add format support information and CreateOptionList to driver metadata 
+ * Add support for valid_range/valid_min/valid_max
+ * Proper handling of singed/unsigned byte data
+ * Add support for Create() function and significantly refactor code for export (#4221)
+ * Improvements to CF projection support (see wiki:NetCDF_ProjectionTestingStatus)
 
 NGSGEOID driver:
  * New for GDAL/OGR 1.9.0
