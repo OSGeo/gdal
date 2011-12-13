@@ -37,6 +37,8 @@
 #include <string>
 #include <vector>
 
+#define PARSER_BUF_SIZE (10*8192)
+
 class GMLReader;
 
 typedef struct _GeometryNamesStruct GeometryNamesStruct;
@@ -304,7 +306,6 @@ public:
     int         HasStoppedParsing() { return m_bStopParsing; }
 
     void        ResetDataHandlerCounter() { m_nDataHandlerCounter = 0; }
-    int         GetDataHandlerCounter() { return m_nDataHandlerCounter; }
 
     virtual const char* GetFID(void* attr);
     virtual CPLXMLNode* AddAttributes(CPLXMLNode* psNode, void* attr);
