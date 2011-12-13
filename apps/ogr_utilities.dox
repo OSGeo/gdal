@@ -236,6 +236,7 @@ Add "25D" to the name to get 2.5D versions.</dd>
 <dt> <b>-a_srs</b><em> srs_def</em>:</dt><dd> Assign an output SRS</dd>
 <dt> <b>-t_srs</b><em> srs_def</em>:</dt><dd> Reproject/transform to this SRS on output</dd>
 <dt> <b>-s_srs</b><em> srs_def</em>:</dt><dd> Override source SRS</dd>
+<dt> <b>-preserve_fid</b>:</dt><dd>Use the FID of the source features instead of letting the output driver to automatically assign a new one.</dd>
 <dt> <b>-fid</b> <i>fid</i>:</dt><dd> If provided, only the feature with this feature
 id will be reported.  Operates exclusive of the spatial or attribute 
 queries.  Note: if you want to select several features based on their feature id, you can
