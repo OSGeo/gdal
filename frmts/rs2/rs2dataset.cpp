@@ -695,16 +695,20 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         if (*pszFilename == ':')
             pszFilename++;
 
-        osMDFilename = pszFilename;
+        //need to redo the directory check:
+        //the GDALOpenInfo check would have failed because of the calibration string on the filename
+        VSIStatBufL  sStat;
+        if( VSIStatL( pszFilename, &sStat ) == 0 )
+        	poOpenInfo->bIsDirectory = VSI_ISDIR( sStat.st_mode );
     }
 
-    else if( poOpenInfo->bIsDirectory )
+    if( poOpenInfo->bIsDirectory )
     {
         osMDFilename = 
-            CPLFormCIFilename( poOpenInfo->pszFilename, "product.xml", NULL );
+            CPLFormCIFilename( pszFilename, "product.xml", NULL );
     }
     else
-        osMDFilename = poOpenInfo->pszFilename;
+        osMDFilename = pszFilename;
 
 /* -------------------------------------------------------------------- */
 /*      Ingest the Product.xml file.                                    */
