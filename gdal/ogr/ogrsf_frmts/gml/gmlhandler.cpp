@@ -317,7 +317,14 @@ void XMLCALL GMLExpatHandler::dataHandlerCbk(void *pUserData, const char *data, 
         return;
 
     pThis->m_nDataHandlerCounter ++;
-    if (pThis->m_nDataHandlerCounter >= BUFSIZ)
+    /* The size of the buffer that is fetched and that Expat parses is */
+    /* PARSER_BUF_SIZE bytes. If the dataHandlerCbk() callback is called */
+    /* more than PARSER_BUF_SIZE times, this means that one byte in the */
+    /* file expands to more XML text fragments, which is the sign of a */
+    /* likely abuse of <!ENTITY> */
+    /* Note: the counter is zeroed by ResetDataHandlerCounter() before each */
+    /* new XML parsing. */
+    if (pThis->m_nDataHandlerCounter >= PARSER_BUF_SIZE)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "File probably corrupted (million laugh pattern)");
         pThis->m_bStopParsing = TRUE;
