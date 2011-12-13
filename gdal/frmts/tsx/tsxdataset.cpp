@@ -264,8 +264,9 @@ int TSXDataset::Identify( GDALOpenInfo *poOpenInfo )
             CPLString osFilename =
                 CPLFormCIFilename( poOpenInfo->pszFilename, CPLGetFilename( poOpenInfo->pszFilename ), "xml" );
 
-            /* Check if the filename contains TSX1_SAR */
-            if (!EQUALN(CPLGetBasename( osFilename ), "TSX1_SAR", 8))
+            /* Check if the filename contains TSX1_SAR (TerraSAR-X) or TDX1_SAR (TanDEM-X) */
+            if (!(EQUALN(CPLGetBasename( osFilename ), "TSX1_SAR", 8) ||
+                  EQUALN(CPLGetBasename( osFilename ), "TDX1_SAR", 8)))
                 return 0;
 
             VSIStatBufL sStat;
@@ -276,8 +277,9 @@ int TSXDataset::Identify( GDALOpenInfo *poOpenInfo )
         }
     }
 
-    /* Check if the filename contains TSX1_SAR */
-    if (!EQUALN(CPLGetBasename( poOpenInfo->pszFilename ), "TSX1_SAR", 8))
+    /* Check if the filename contains TSX1_SAR (TerraSAR-X) or TDX1_SAR (TanDEM-X) */
+    if (!(EQUALN(CPLGetBasename( poOpenInfo->pszFilename ), "TSX1_SAR", 8) ||
+          EQUALN(CPLGetBasename( poOpenInfo->pszFilename ), "TDX1_SAR", 8)))
         return 0;
 
     /* finally look for the <level1Product tag */
