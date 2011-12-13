@@ -41,8 +41,6 @@
 #  include "ogr_geometry.h"
 #endif
 
-#define PARSER_BUF_SIZE (10*BUFSIZ)
-
 /************************************************************************/
 /*                            ~IGMLReader()                             */
 /************************************************************************/
@@ -583,6 +581,7 @@ GMLFeature *GMLReader::NextFeatureExpat()
     int nDone;
     do
     {
+        /* Reset counter that is used to detect billion laugh attacks */
         ((GMLExpatHandler*)m_poGMLHandler)->ResetDataHandlerCounter();
 
         unsigned int nLen =
