@@ -577,7 +577,8 @@ def ogr_gml_14():
     gdal.SetConfigOption( 'GML_SAVE_RESOLVED_TO', 'tmp/cache/xlink2resolved.gml' )
     gml_ds = ogr.Open( 'tmp/cache/xlink1.gml' )
     gml_ds = None
-    gdal.SetConfigOption( 'GML_SKIP_RESOLVE_ELEMS', 'ALL' )
+    gdal.SetConfigOption( 'GML_SKIP_RESOLVE_ELEMS', None )
+    gdal.SetConfigOption( 'GML_SAVE_RESOLVED_TO', None )
 
     try:
         fp = open( 'tmp/cache/xlink1resolved.gml', 'r' )
@@ -1376,11 +1377,121 @@ def ogr_gml_34():
     return 'success'
 
 ###############################################################################
+# Test GML_SKIP_RESOLVE_ELEMS=HUGE (#4380)
+
+def ogr_gml_35():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    if ogr.GetDriverByName('SQLite') is None:
+        return 'skip'
+
+    try:
+        os.remove( 'tmp/GmlTopo-sample.sqlite' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/GmlTopo-sample.gfs' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/GmlTopo-sample.resolved.gml' )
+    except:
+        pass
+
+    shutil.copy('data/GmlTopo-sample.xml', 'tmp/GmlTopo-sample.xml')
+
+    gdal.SetConfigOption('GML_SKIP_RESOLVE_ELEMS', 'HUGE')
+    ds = ogr.Open('tmp/GmlTopo-sample.xml')
+    gdal.SetConfigOption('GML_SKIP_RESOLVE_ELEMS', None)
+
+    try:
+        os.stat('tmp/GmlTopo-sample.sqlite')
+        gdaltest.post_reason('did not expect tmp/GmlTopo-sample.sqlite')
+        return 'fail'
+    except:
+        pass
+
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('did not expect error')
+        return 'fail'
+    if ds.GetLayerCount() != 3:
+        # We have an extra layer : ResolvedNodes
+        gdaltest.post_reason('expected 3 layers, got %d' % ds.GetLayerCount())
+        return 'fail'
+
+    lyr = ds.GetLayerByName('Suolo')
+    feat = lyr.GetNextFeature()
+    wkt = 'POLYGON ((-0.1 0.6,-0.0 0.7,0.2 0.7,0.2 0.7,0.3 0.6,0.5 0.6,0.5 0.6,0.5 0.8,0.7 0.8,0.8 0.6,0.9 0.6,0.9 0.6,0.9 0.4,0.7 0.3,0.7 0.2,0.7 0.2,0.9 0.1,0.9 -0.1,0.6 -0.2,0.3 -0.2,0.2 -0.2,0.2 -0.2,-0.1 0.0,-0.1 0.1,-0.1 0.2,0.1 0.3,0.1 0.3,0.1 0.4,-0.0 0.4,-0.0 0.4,-0.1 0.5,-0.1 0.6),(0.2 0.2,0.2 0.4,0.2 0.4,0.4 0.4,0.5 0.2,0.5 0.2,0.5 0.1,0.5 0.1,0.5 0.0,0.2 0.0,0.2 0.2),(0.6 0.1,0.8 0.1,0.8 -0.1,0.6 -0.1,0.6 0.1))'
+    if ogrtest.check_feature_geometry( feat, wkt):
+        return 'fail'
+
+    ds = None
+
+    ds = ogr.Open('tmp/GmlTopo-sample.xml')
+    lyr = ds.GetLayerByName('Suolo')
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry( feat, wkt):
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test GML_SKIP_RESOLVE_ELEMS=NONE
+
+def ogr_gml_36():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    try:
+        os.remove( 'tmp/GmlTopo-sample.gfs' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/GmlTopo-sample.resolved.gml' )
+    except:
+        pass
+
+    shutil.copy('data/GmlTopo-sample.xml', 'tmp/GmlTopo-sample.xml')
+
+    gdal.SetConfigOption('GML_SKIP_RESOLVE_ELEMS', 'NONE')
+    ds = ogr.Open('tmp/GmlTopo-sample.xml')
+    gdal.SetConfigOption('GML_SKIP_RESOLVE_ELEMS', None)
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('did not expect error')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('Suolo')
+    feat = lyr.GetNextFeature()
+    wkt = 'POLYGON ((-0.1 0.6,-0.0 0.7,0.2 0.7,0.2 0.7,0.3 0.6,0.5 0.6,0.5 0.6,0.5 0.8,0.7 0.8,0.8 0.6,0.9 0.6,0.9 0.6,0.9 0.4,0.7 0.3,0.7 0.2,0.7 0.2,0.9 0.1,0.9 -0.1,0.6 -0.2,0.3 -0.2,0.2 -0.2,0.2 -0.2,-0.1 0.0,-0.1 0.1,-0.1 0.2,0.1 0.3,0.1 0.3,0.1 0.4,-0.0 0.4,-0.0 0.4,-0.1 0.5,-0.1 0.6),(0.2 0.2,0.2 0.4,0.2 0.4,0.4 0.4,0.5 0.2,0.5 0.2,0.5 0.1,0.5 0.1,0.5 0.0,0.2 0.0,0.2 0.2),(0.6 0.1,0.8 0.1,0.8 -0.1,0.6 -0.1,0.6 0.1))'
+    if ogrtest.check_feature_geometry( feat, wkt):
+        return 'fail'
+
+    ds = None
+
+    ds = ogr.Open('tmp/GmlTopo-sample.xml')
+    lyr = ds.GetLayerByName('Suolo')
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry( feat, wkt):
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
     if not gdaltest.have_gml_reader:
         return 'skip'
+
+    gdal.SetConfigOption( 'GML_SKIP_RESOLVE_ELEMS', None )
+    gdal.SetConfigOption( 'GML_SAVE_RESOLVED_TO', None )
     
     gdaltest.clean_tmp()
     
@@ -1447,7 +1558,22 @@ def ogr_gml_clean_files():
         os.remove( 'tmp/ogr_gml_28.gfs' )
     except:
         pass
-
+    try:
+        os.remove( 'tmp/GmlTopo-sample.sqlite' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/GmlTopo-sample.gfs' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/GmlTopo-sample.resolved.gml' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/GmlTopo-sample.xml' )
+    except:
+        pass
     files = os.listdir('data')
     for filename in files:
         if len(filename) > 13 and filename[-13:] == '.resolved.gml':
@@ -1493,6 +1619,8 @@ gdaltest_list = [
     ogr_gml_32,
     ogr_gml_33,
     ogr_gml_34,
+    ogr_gml_35,
+    ogr_gml_36,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
