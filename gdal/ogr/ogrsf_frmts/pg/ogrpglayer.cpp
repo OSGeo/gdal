@@ -2002,3 +2002,188 @@ OGRFeatureDefn * OGRPGLayer::GetLayerDefn()
 {
     return poFeatureDefn;
 }
+
+/************************************************************************/
+/*                        ReadResultDefinition()                        */
+/*                                                                      */
+/*      Build a schema from the current resultset.                      */
+/************************************************************************/
+
+OGRFeatureDefn *OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
+
+{
+    PGresult            *hResult = hInitialResultIn;
+
+/* -------------------------------------------------------------------- */
+/*      Parse the returned table information.                           */
+/* -------------------------------------------------------------------- */
+    OGRFeatureDefn *poDefn = new OGRFeatureDefn( "sql_statement" );
+    int            iRawField;
+
+    poDefn->Reference();
+
+    for( iRawField = 0; iRawField < PQnfields(hResult); iRawField++ )
+    {
+        OGRFieldDefn    oField( PQfname(hResult,iRawField), OFTString);
+        Oid             nTypeOID;
+
+        nTypeOID = PQftype(hResult,iRawField);
+
+        if( EQUAL(oField.GetNameRef(),"ogc_fid") )
+        {
+            if (bHasFid)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "More than one ogc_fid column was found in the result of the SQL request. Only last one will be used");
+            }
+            bHasFid = TRUE;
+            CPLFree(pszFIDColumn);
+            pszFIDColumn = CPLStrdup(oField.GetNameRef());
+            continue;
+        }
+        else if( nTypeOID == poDS->GetGeometryOID()  ||
+                 nTypeOID == poDS->GetGeographyOID()  ||
+                 EQUAL(oField.GetNameRef(),"ST_AsBinary") ||
+                 EQUAL(oField.GetNameRef(),"BinaryBase64") ||
+                 EQUAL(oField.GetNameRef(),"ST_AsEWKT") ||
+                 EQUAL(oField.GetNameRef(),"ST_AsEWKB") ||
+                 EQUAL(oField.GetNameRef(),"EWKBBase64") ||
+                 EQUAL(oField.GetNameRef(),"ST_AsText") ||
+                 EQUAL(oField.GetNameRef(),"AsBinary") ||
+                 EQUAL(oField.GetNameRef(),"asEWKT") ||
+                 EQUAL(oField.GetNameRef(),"asEWKB") ||
+                 EQUAL(oField.GetNameRef(),"asText") )
+        {
+            if (bHasPostGISGeometry || bHasPostGISGeography )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "More than one geometry column was found in the result of the SQL request. Only last one will be used");
+            }
+            if (nTypeOID == poDS->GetGeographyOID())
+                bHasPostGISGeography = TRUE;
+            else
+                bHasPostGISGeometry = TRUE;
+            CPLFree(pszGeomColumn);
+            pszGeomColumn = CPLStrdup(oField.GetNameRef());
+            continue;
+        }
+        else if( EQUAL(oField.GetNameRef(),"WKB_GEOMETRY") )
+        {
+            bHasWkb = TRUE;
+            if( nTypeOID == OIDOID )
+                bWkbAsOid = TRUE;
+            continue;
+        }
+
+        if( nTypeOID == BYTEAOID )
+        {
+            oField.SetType( OFTBinary );
+        }
+        else if( nTypeOID == CHAROID ||
+                 nTypeOID == TEXTOID ||
+                 nTypeOID == BPCHAROID ||
+                 nTypeOID == VARCHAROID )
+        {
+            oField.SetType( OFTString );
+
+            /* See http://www.mail-archive.com/pgsql-hackers@postgresql.org/msg57726.html */
+            /* nTypmod = width + 4 */
+            int nTypmod = PQfmod(hResult, iRawField);
+            if (nTypmod >= 4 && (nTypeOID == BPCHAROID ||
+                               nTypeOID == VARCHAROID ) )
+            {
+                oField.SetWidth( nTypmod - 4);
+            }
+        }
+        else if( nTypeOID == BOOLOID )
+        {
+            oField.SetType( OFTInteger );
+            oField.SetWidth( 1 );
+        }
+        else if (nTypeOID == INT2OID )
+        {
+            oField.SetType( OFTInteger );
+            oField.SetWidth( 5 );
+        }
+        else if (nTypeOID == INT4OID )
+        {
+            oField.SetType( OFTInteger );
+        }
+        else if ( nTypeOID == INT8OID )
+        {
+            /* FIXME: OFTInteger can not handle 64bit integers */
+            oField.SetType( OFTInteger );
+        }
+        else if( nTypeOID == FLOAT4OID ||
+                 nTypeOID == FLOAT8OID )
+        {
+            oField.SetType( OFTReal );
+        }
+        else if( nTypeOID == NUMERICOID )
+        {
+            /* See http://www.mail-archive.com/pgsql-hackers@postgresql.org/msg57726.html */
+            /* typmod = (width << 16) + precision + 4 */
+            int nTypmod = PQfmod(hResult, iRawField);
+            if (nTypmod >= 4)
+            {
+                int nWidth = (nTypmod - 4) >> 16;
+                int nPrecision = (nTypmod - 4) & 0xFFFF;
+                if (nWidth <= 10 && nPrecision == 0)
+                {
+                    oField.SetType( OFTInteger );
+                    oField.SetWidth( nWidth );
+                }
+                else
+                {
+                    oField.SetType( OFTReal );
+                    oField.SetWidth( nWidth );
+                    oField.SetPrecision( nPrecision );
+                }
+            }
+            else
+                oField.SetType( OFTReal );
+        }
+        else if ( nTypeOID == INT4ARRAYOID )
+        {
+            oField.SetType ( OFTIntegerList );
+        }
+        else if ( nTypeOID == FLOAT4ARRAYOID ||
+                  nTypeOID == FLOAT8ARRAYOID )
+        {
+            oField.SetType ( OFTRealList );
+        }
+        else if ( nTypeOID == TEXTARRAYOID ||
+                  nTypeOID == BPCHARARRAYOID ||
+                  nTypeOID == VARCHARARRAYOID )
+        {
+            oField.SetType ( OFTStringList );
+        }
+        else if ( nTypeOID == DATEOID )
+        {
+            oField.SetType( OFTDate );
+        }
+        else if ( nTypeOID == TIMEOID )
+        {
+            oField.SetType( OFTTime );
+        }
+        else if ( nTypeOID == TIMESTAMPOID ||
+                  nTypeOID == TIMESTAMPTZOID )
+        {
+            /* We can't deserialize properly timestamp with time zone */
+            /* with binary cursors */
+            if (nTypeOID == TIMESTAMPTZOID)
+                bCanUseBinaryCursor = FALSE;
+
+            oField.SetType( OFTDateTime );
+        }
+        else /* unknown type */
+        {
+            CPLDebug("PG", "Unhandled OID (%d) for column %d. Defaulting to String.", nTypeOID, iRawField);
+            oField.SetType( OFTString );
+        }
+
+        poDefn->AddFieldDefn( &oField );
+    }
+
+    return poDefn;
+}
