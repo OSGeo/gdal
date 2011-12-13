@@ -651,7 +651,8 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
             nBaseSamples = poDS->nSamplesPerPixel - count;
 
             if( nBand > nBaseSamples 
-                && v[nBand-nBaseSamples-1] == EXTRASAMPLE_ASSOCALPHA )
+                && (v[nBand-nBaseSamples-1] == EXTRASAMPLE_ASSOCALPHA
+                    || v[nBand-nBaseSamples-1] == EXTRASAMPLE_UNASSALPHA) )
                 eBandInterp = GCI_AlphaBand;
             else
                 eBandInterp = GCI_Undefined;
