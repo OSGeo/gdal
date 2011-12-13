@@ -1756,7 +1756,8 @@ static int gmlHugeResolveEdges( struct huge_helper *helper,
                         CPLXMLNode *psOrientationNode = CPLCreateXMLNode(psNewNode, CXT_Attribute, "orientation");
                         CPLCreateXMLNode(psOrientationNode, CXT_Text, "-");
                     }
-                    CPLCreateXMLNode(psNewNode, CXT_Text, pChild->pItem->gmlText->c_str());
+                    CPLXMLNode *psEdge = CPLParseXMLString(pChild->pItem->gmlText->c_str());
+                    CPLAddXMLChild( psNewNode, psEdge );
                     CPLAddXMLChild( pParent->psParent, psNewNode );
                 }
                 pChild = pChild->pNext;
