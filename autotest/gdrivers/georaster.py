@@ -81,7 +81,7 @@ def georaster_init():
         gdaltest.oci_ds.ReleaseResultSet(rs)
         rs = None
 
-    if err_msg.find( 'table or view does not exist' ):
+    if err_msg != '':
         gdaltest.post_reason( 'ALL_SDO_GEOR_SYSDATA inaccesable, likely georaster unavailable.' )
 
         gdaltest.oci_ds = None
