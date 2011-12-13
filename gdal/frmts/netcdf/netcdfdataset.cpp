@@ -60,37 +60,6 @@ CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName,
 CPLErr NCDFPutAttr( int nCdfId, int nVarId, 
                     const char *pszAttrName, const char *pszValue );
  
-/************************************************************************/
-/*                         MISC Notes                                   */
-/************************************************************************/
-/* Various bugs fixed / new features:
-- bottom-up by default #4284, with config option GDAL_NETCDF_BOTTOMUP to override import and export
-  and create option WRITE_BOTTOMUP
-- fix projected export+import CF
-- added simple progress
-- metadata export fixes + add_offset/scale_factor (bug #4211)
-- added missing	case NC_SHORT: in netCDFRasterBand::CreateBandMetadata( ) 
-
-- latest changes for create():
-  - removed vars that are used temporarily (e.g. panBandZLev)
-  - Set* functions write to netcdf file when in update mode
-  - Create() and CreateCopy() common functionality in CreateLL()
-  - write bands now in IWriteBlock()
-  - bottom-up = FALSE by default
-  - updated all sprintf to (%.8g / %.16g) because of projection parameter precision differences
-*/
-
-/* Various bugs that need fixing:
-- support import of unequally-spaced grids
-- support of lon/lat grids from CF grids which are not supported
-*/
-
-/*
-- can we define dim vars before band vars, without performance hit? nc__enddef??
-- should we set NO_FILL for performance gain? nc_set_fill(ncid, NC_NOFILL, &old_fill_mode);
-- implement setmetadata and setmetadataitem, tricky because other nc attributes are already written to file
-*/
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -4185,9 +4154,9 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
 Driver options:
 
 FORMAT=NC/NC2/NC4/NC4C (COMPRESS=DEFLATE sets FORMAT=NC4C)
-COMPRESS=NONE/DEFLATE/PACKED (default: NONE)
-ZLEVEL=[1-9] (default: 6)
-WRITE_BOTTOMUP=YES/NO (default: NO)
+COMPRESS=NONE/DEFLATE (default: NONE)
+ZLEVEL=[1-9] (default: 1)
+WRITE_BOTTOMUP=NO/YES (default: NO)
 WRITE_GDAL_TAGS=YES/NO (default: YES)
 WRITE_LONLAT=YES/NO/IF_NEEDED (default: YES for geographic, NO for projected)
 TYPE_LONLAT=float/double (default: double for geographic, float for projected)
@@ -4195,7 +4164,8 @@ PIXELTYPE=DEFAULT/SIGNEDBYTE (use SIGNEDBYTE to get a signed Byte Band)
 
 Config Options:
 
-GDAL_NETCDF_BOTTOMUP=YES/NO (default:YES) -> this sets the default of WRITE_BOTTOMUP
+GDAL_NETCDF_BOTTOMUP=YES/NO (default:NO) sets the default of WRITE_BOTTOMUP 
+  and also the default behavior for import
 
 */
 
@@ -4320,6 +4290,9 @@ netCDFDataset::Create( const char * pszFilename,
                                                     poDS->bSignedData ) );
     }
 
+    CPLDebug( "GDAL_netCDF", 
+              "netCDFDataset::Create( %s, ... ) done", 
+              pszFilename );
 /* -------------------------------------------------------------------- */
 /*      Return same dataset                                             */
 /* -------------------------------------------------------------------- */
