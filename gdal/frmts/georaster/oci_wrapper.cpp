@@ -1646,7 +1646,7 @@ const char* OWParseSDO_GEOR_INIT( const char* pszInsert, int nField )
         *pszIn = (char) toupper( *pszIn );
     }
 
-    char* pszStart = strstr( szUpcase, "SDO_GEOR.INIT" ) + strlen("SDO_GEOR.");
+    char* pszStart = strstr( szUpcase, "SDO_GEOR.INIT" );
 
     if( pszStart == NULL )
     {
@@ -1659,6 +1659,8 @@ const char* OWParseSDO_GEOR_INIT( const char* pszInsert, int nField )
     {
         return "";
     }
+
+    pszStart += strlen("SDO_GEOR.");
 
     pszEnd++;
 

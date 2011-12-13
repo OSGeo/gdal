@@ -568,6 +568,16 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
       CPLDebug("GEOR","eModelCoordLocation = MCL_CENTER");
     }
 
+    CPLDebug("GEOR","Binds( %ld, %d, %f, %f, %f, %f, %f, %f )", 
+                  poGRW->nSRID,
+                  poGRW->eModelCoordLocation,
+                  poGRW->dfXCoefficient[0],
+                  poGRW->dfXCoefficient[1],
+                  poGRW->dfXCoefficient[2],
+                  poGRW->dfYCoefficient[0],
+                  poGRW->dfYCoefficient[1],
+                  poGRW->dfYCoefficient[2] );
+
     //  -------------------------------------------------------------------
     //  Apply ULTCoordinate
     //  -------------------------------------------------------------------
@@ -636,13 +646,12 @@ bool GeoRasterWrapper::Create( char* pszDescription,
 
         if( pszInsert )
         {
-            sValues = pszInsert;
+	        sValues = pszInsert;
 
-            if( pszInsert[0] == '(' && 
-                sValues.ifind( "VALUES" ) == std::string::npos ) 
-            {
-                sValues = CPLSPrintf( "VALUES %s", pszInsert );
-            }
+            if( pszInsert[0] == '(' && sValues.ifind( "VALUES" ) == std::string::npos )
+			{
+				sValues = CPLSPrintf( "VALUES %s", pszInsert );
+			}
         }
         else
         {
