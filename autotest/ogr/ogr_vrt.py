@@ -1274,12 +1274,65 @@ def ogr_vrt_22():
     return ret
 
 ###############################################################################
+# Test anti-recursion mechanism
+
+def ogr_vrt_23(shared_ds_flag = ''):
+
+    if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
+        gdaltest.post_reason('would crash')
+        return 'skip'
+
+    rec1 = """<OGRVRTDataSource>
+    <OGRVRTLayer name="rec1">
+        <SrcDataSource%s>/vsimem/rec2.vrt</SrcDataSource>
+        <SrcLayer>rec2</SrcLayer>
+    </OGRVRTLayer>
+</OGRVRTDataSource>""" % shared_ds_flag
+
+    rec2 = """<OGRVRTDataSource>
+    <OGRVRTLayer name="rec2">
+        <SrcDataSource%s>/vsimem/rec1.vrt</SrcDataSource>
+        <SrcLayer>rec1</SrcLayer>
+    </OGRVRTLayer>
+</OGRVRTDataSource>""" % shared_ds_flag
+
+    gdal.FileFromMemBuffer('/vsimem/rec1.vrt', rec1)
+    gdal.FileFromMemBuffer('/vsimem/rec2.vrt', rec2)
+
+    ds = ogr.Open('/vsimem/rec1.vrt')
+    if ds is None:
+        return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds.GetLayer(0).GetLayerDefn()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('error expected !')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/rec1.vrt')
+    gdal.Unlink('/vsimem/rec2.vrt')
+
+    return 'success'
+
+###############################################################################
+# Test anti-recursion mechanism on shared DS
+
+def ogr_vrt_24():
+
+    return ogr_vrt_23(' shared="1"')
+
+###############################################################################
 # 
 
 def ogr_vrt_cleanup():
 
     if gdaltest.vrt_ds is None:
         return 'skip'
+
+    gdal.Unlink('/vsimem/rec1.vrt')
+    gdal.Unlink('/vsimem/rec2.vrt')
 
     gdaltest.vrt_ds.Destroy()
     gdaltest.vrt_ds = None
@@ -1309,6 +1362,8 @@ gdaltest_list = [
     ogr_vrt_20,
     ogr_vrt_21,
     ogr_vrt_22,
+    ogr_vrt_23,
+    ogr_vrt_24,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':

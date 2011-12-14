@@ -35,6 +35,8 @@
 #include "cpl_minixml.h"
 
 #include <vector>
+#include <string>
+#include <set>
 
 typedef enum { 
     VGS_None,
@@ -49,9 +51,13 @@ typedef enum {
 /*                            OGRVRTLayer                                */
 /************************************************************************/
 
+class OGRVRTDataSource;
+
 class OGRVRTLayer : public OGRLayer
 {
   protected:
+    OGRVRTDataSource*   poDS;
+
     int                 bHasFullInitialized;
     CPLString           osName;
     OGRwkbGeometryType  eGeomType;
@@ -104,7 +110,7 @@ class OGRVRTLayer : public OGRLayer
     int                 FullInitialize();
 
   public:
-                        OGRVRTLayer();
+                        OGRVRTLayer(OGRVRTDataSource* poDSIn);
     virtual             ~OGRVRTLayer();
 
     int                FastInitialize( CPLXMLNode *psLTree,
@@ -162,6 +168,10 @@ class OGRVRTDataSource : public OGRDataSource
 
     CPLXMLNode         *psTree;
 
+    int                 nCallLevel;
+
+    std::set<std::string> aosOtherDSNameSet;
+
   public:
                         OGRVRTDataSource();
                         ~OGRVRTDataSource();
@@ -174,6 +184,14 @@ class OGRVRTDataSource : public OGRDataSource
     OGRLayer            *GetLayer( int );
 
     int                 TestCapability( const char * );
+
+    /* Anti-recursion mechanism for standard Open */
+    void                SetCallLevel(int nCallLevelIn) { nCallLevel = nCallLevelIn; }
+    int                 GetCallLevel() { return nCallLevel; }
+
+    /* Anti-recursion mechanism for shared Open */
+    void                AddForbiddenNames(const char* pszOtherDSName);
+    int                 IsInForbiddenNames(const char* pszOtherDSName);
 };
 
 /************************************************************************/
