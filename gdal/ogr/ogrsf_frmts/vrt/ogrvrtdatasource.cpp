@@ -32,6 +32,7 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                          OGRVRTDataSource()                          */
 /************************************************************************/
@@ -43,6 +44,7 @@ OGRVRTDataSource::OGRVRTDataSource()
     papoLayers = NULL;
     nLayers = 0;
     psTree = NULL;
+    nCallLevel = 0;
 }
 
 /************************************************************************/
@@ -101,7 +103,7 @@ int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName,
 /* -------------------------------------------------------------------- */
         OGRVRTLayer  *poLayer;
         
-        poLayer = new OGRVRTLayer();
+        poLayer = new OGRVRTLayer(this);
         
         if( !poLayer->FastInitialize( psLTree, pszVRTDirectory, bUpdate ) )
         {
@@ -143,4 +145,22 @@ OGRLayer *OGRVRTDataSource::GetLayer( int iLayer )
         return NULL;
     else
         return papoLayers[iLayer];
+}
+
+/************************************************************************/
+/*                         AddForbiddenNames()                          */
+/************************************************************************/
+
+void OGRVRTDataSource::AddForbiddenNames(const char* pszOtherDSName)
+{
+    aosOtherDSNameSet.insert(pszOtherDSName);
+}
+
+/************************************************************************/
+/*                         IsInForbiddenNames()                         */
+/************************************************************************/
+
+int OGRVRTDataSource::IsInForbiddenNames(const char* pszOtherDSName)
+{
+    return aosOtherDSNameSet.find(pszOtherDSName) != aosOtherDSNameSet.end();
 }
