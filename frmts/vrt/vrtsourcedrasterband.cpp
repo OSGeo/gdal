@@ -94,7 +94,7 @@ void VRTSourcedRasterBand::Initialize( int nXSize, int nYSize )
     nSources = 0;
     papoSources = NULL;
     bEqualAreas = FALSE;
-    bAlreadyInIRasterIO = FALSE;
+    bAntiRecursionFlag = FALSE;
 }
 
 /************************************************************************/
@@ -131,7 +131,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     /* When using GDALProxyPoolDataset for sources, the recusion will not be */
     /* detected at VRT opening but when doing RasterIO. As the proxy pool will */
     /* return the already opened dataset, we can just test a member variable. */
-    if ( bAlreadyInIRasterIO )
+    if ( bAntiRecursionFlag )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "VRTSourcedRasterBand::IRasterIO() called recursively on the same band. "
@@ -202,7 +202,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             return CE_None;
     }
     
-    bAlreadyInIRasterIO = TRUE;
+    bAntiRecursionFlag = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Overlay each source in turn over top this.                      */
@@ -215,7 +215,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                             eBufType, nPixelSpace, nLineSpace);
     }
     
-    bAlreadyInIRasterIO = FALSE;
+    bAntiRecursionFlag = FALSE;
     
     return eErr;
 }
@@ -248,7 +248,6 @@ CPLErr VRTSourcedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                       nPixelSize, nPixelSize * nBlockXSize );
 }
 
-
 /************************************************************************/
 /*                             GetMinimum()                             */
 /************************************************************************/
@@ -265,17 +264,34 @@ double VRTSourcedRasterBand::GetMinimum( int *pbSuccess )
         return CPLAtofM(pszValue);
     }
 
+    if ( bAntiRecursionFlag )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "VRTSourcedRasterBand::GetMinimum() called recursively on the same band. "
+                  "It looks like the VRT is referencing itself." );
+        if( pbSuccess != NULL )
+            *pbSuccess = FALSE;
+        return 0.0;
+    }
+    bAntiRecursionFlag = TRUE;
+
     double dfMin = 0;
     for( int iSource = 0; iSource < nSources; iSource++ )
     {
         int bSuccess = FALSE;
         double dfSourceMin = papoSources[iSource]->GetMinimum(GetXSize(), GetYSize(), &bSuccess);
         if (!bSuccess)
-            return GDALRasterBand::GetMinimum(pbSuccess);
+        {
+            dfMin = GDALRasterBand::GetMinimum(pbSuccess);
+            bAntiRecursionFlag = FALSE;
+            return dfMin;
+        }
 
         if (iSource == 0 || dfSourceMin < dfMin)
             dfMin = dfSourceMin;
     }
+
+    bAntiRecursionFlag = FALSE;
 
     if( pbSuccess != NULL )
         *pbSuccess = TRUE;
@@ -299,17 +315,34 @@ double VRTSourcedRasterBand::GetMaximum(int *pbSuccess )
         return CPLAtofM(pszValue);
     }
 
+    if ( bAntiRecursionFlag )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "VRTSourcedRasterBand::GetMaximum() called recursively on the same band. "
+                  "It looks like the VRT is referencing itself." );
+        if( pbSuccess != NULL )
+            *pbSuccess = FALSE;
+        return 0.0;
+    }
+    bAntiRecursionFlag = TRUE;
+
     double dfMax = 0;
     for( int iSource = 0; iSource < nSources; iSource++ )
     {
         int bSuccess = FALSE;
         double dfSourceMax = papoSources[iSource]->GetMaximum(GetXSize(), GetYSize(), &bSuccess);
         if (!bSuccess)
-            return GDALRasterBand::GetMaximum(pbSuccess);
+        {
+            dfMax = GDALRasterBand::GetMaximum(pbSuccess);
+            bAntiRecursionFlag = FALSE;
+            return dfMax;
+        }
 
         if (iSource == 0 || dfSourceMax > dfMax)
             dfMax = dfSourceMax;
     }
+
+    bAntiRecursionFlag = FALSE;
 
     if( pbSuccess != NULL )
         *pbSuccess = TRUE;
