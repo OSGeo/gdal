@@ -1452,10 +1452,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         bNeedComma = TRUE;
     }
 
-    /* REMOVE ME ? */
-    /* Hum, this is weird if we create a feature with an already existings */
-    /* FID ! I see this code path is never taken in the coverage analysis of */
-    /* the autotest suite, so we could probably remove it ? */
+    /* Use case of ogr_pg_60 test */
     if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
     {
         if( bNeedComma )
@@ -1560,11 +1557,6 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         bNeedComma = TRUE;
     }
 
-    /* REMOVE ME ? */
-    /* Hum, this is weird if we create a feature with an already existings */
-    /* FID ! I see this code path is never taken in the coverage analysis of */
-    /* the autotest suite, so we could probably remove it ? */
-    /* Set the FID */
     if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
     {
         if( bNeedComma )
