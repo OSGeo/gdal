@@ -2870,6 +2870,10 @@ def ogr_pg_58():
 # but which is not the layer name.
 
 def ogr_pg_59():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -2886,6 +2890,40 @@ def ogr_pg_59():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test that we can insert a feature that has a FID on a table with a
+# non-incrementing PK.
+
+def ogr_pg_60():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL("CREATE TABLE ogr_pg_60(id integer,name varchar(50),primary key (id)) without oids")
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+
+    lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_60')
+    if lyr.GetFIDColumn() != 'id':
+        gdaltest.post_reason('did not get expected name for FID column')
+        print(lyr.GetFIDColumn())
+        return 'fail'
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetFID(100)
+    feat.SetField('name', 'a_name')
+    lyr.CreateFeature(feat)
+    if feat.GetFID() != 100:
+        gdaltest.post_reason('bad FID value')
+        return 'fail'
+
+    feat = lyr.GetFeature(100)
+    if feat is None:
+        gdaltest.post_reason('did not get feature')
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -2923,6 +2961,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_56' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_57' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_58' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_60' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -3014,6 +3053,7 @@ gdaltest_list_internal = [
     ogr_pg_57,
     ogr_pg_58,
     ogr_pg_59,
+    ogr_pg_60,
     ogr_pg_cleanup ]
 
 ###############################################################################
