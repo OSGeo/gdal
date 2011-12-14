@@ -450,6 +450,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     char* pszTableSpec = NULL;
     char* pszGeometryFormat = NULL;
     char* pszConnectionName = CPLStrdup(pszNewName + 6);
+    char* pszDriver = NULL;
     int nCurrent, nNext, nTerm;
     nCurrent = nNext = nTerm = strlen(pszConnectionName);
 
@@ -474,6 +475,10 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
             nCurrent, nNext, nTerm, TRUE))
             continue;
 
+        if (ParseValue(&pszDriver, pszConnectionName, "driver=", 
+            nCurrent, nNext, nTerm, FALSE))
+            continue;
+
         if (ParseValue(&pszGeometryFormat, pszConnectionName, 
             "geometryformat=", nCurrent, nNext, nTerm, TRUE))
         {
@@ -492,6 +497,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
                 CPLFree(pszTableSpec);
                 CPLFree(pszGeometryFormat);
                 CPLFree(pszConnectionName);
+                CPLFree(pszDriver);
                 return FALSE;
             }
 
@@ -511,6 +517,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
         CPLFree(pszTableSpec);
         CPLFree(pszGeometryFormat);
         CPLFree(pszConnectionName);
+        CPLFree(pszDriver);
         return FALSE;
     }
     
@@ -578,9 +585,23 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     CPLFree(pszTableSpec);
 
     /* Initialize the SQL Server connection. */
-    CPLDebug( "OGR_MSSQLSpatial", "EstablishSession(Connection:\"%s\")", pszConnectionName);
+    int nResult;
+    if ( pszDriver != NULL )
+    {
+        /* driver has been specified */
+        CPLDebug( "OGR_MSSQLSpatial", "EstablishSession(Connection:\"%s\")", pszConnectionName);
+        nResult = oSession.EstablishSession( pszConnectionName, "", "" );
+    }
+    else
+    {
+        /* no driver has been specified, defautls to SQL Server */
+        CPLDebug( "OGR_MSSQLSpatial", "EstablishSession(Connection:\"%s\")", pszConnectionName);
+        nResult = oSession.EstablishSession( CPLSPrintf("DRIVER=SQL Server;%s", pszConnectionName), "", "" );
+    }
 
-    if( !oSession.EstablishSession( CPLSPrintf("DRIVER=SQL Server;%s", pszConnectionName), "", "" ) )
+    CPLFree(pszDriver);
+
+    if( !nResult )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Unable to initialize connection to the server for %s,\n"
