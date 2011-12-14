@@ -524,9 +524,13 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
             int bSqliteIsTempFile =
                 CSLTestBoolean(CPLGetConfigOption( "GML_HUGE_TEMPFILE", "YES"));
             int iSqliteCacheMB = atoi(CPLGetConfigOption( "OGR_SQLITE_CACHE", "0"));
-            poReader->HugeFileResolver( pszXlinkResolvedFilename,
-                                        bSqliteIsTempFile, 
-                                        iSqliteCacheMB );
+            if( poReader->HugeFileResolver( pszXlinkResolvedFilename,
+                                            bSqliteIsTempFile, 
+                                            iSqliteCacheMB ) == FALSE )
+            {
+                // we assume an errors have been reported.
+                return FALSE;
+            }
         }
         else
         {
