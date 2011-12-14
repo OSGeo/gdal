@@ -337,7 +337,7 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
 class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
 {
   private:
-    int            bAlreadyInIRasterIO;
+    int            bAntiRecursionFlag;
     CPLString      osLastLocationInfo;
 
     void           Initialize( int nXSize, int nYSize );
