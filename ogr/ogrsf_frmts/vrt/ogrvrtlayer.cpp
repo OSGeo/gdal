@@ -58,9 +58,11 @@ static const OGRGeomTypeName asGeomTypeNames[] = { /* 25D versions are implicit 
 /*                            OGRVRTLayer()                             */
 /************************************************************************/
 
-OGRVRTLayer::OGRVRTLayer()
+OGRVRTLayer::OGRVRTLayer(OGRVRTDataSource* poDSIn)
 
 {
+    poDS = poDSIn;
+
     bHasFullInitialized = FALSE;
     eGeomType = wkbUnknown;
     psLTree = NULL;
@@ -290,13 +292,47 @@ try_again:
     if( EQUAL(pszSrcDSName,"@dummy@") )
     {
         OGRSFDriver *poMemDriver = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
-        poSrcDS = poMemDriver->CreateDataSource( "@dummy@" );
-        poSrcDS->CreateLayer( "@dummy@" );
+        if (poMemDriver != NULL)
+        {
+            poSrcDS = poMemDriver->CreateDataSource( "@dummy@" );
+            poSrcDS->CreateLayer( "@dummy@" );
+        }
     }
     else if( bSrcDSShared )
-        poSrcDS = poReg->OpenShared( pszSrcDSName, bUpdate, NULL );
+    {
+        if (poDS->IsInForbiddenNames(pszSrcDSName))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cyclic VRT opening detected !");
+        }
+        else
+        {
+            poSrcDS = poReg->OpenShared( pszSrcDSName, bUpdate, NULL );
+            /* Is it a VRT datasource ? */
+            if (poSrcDS != NULL && poSrcDS->GetDriver() == poDS->GetDriver())
+            {
+                OGRVRTDataSource* poVRTSrcDS = (OGRVRTDataSource*)poSrcDS;
+                poVRTSrcDS->AddForbiddenNames(poDS->GetName());
+            }
+        }
+    }
     else
-        poSrcDS = poReg->Open( pszSrcDSName, bUpdate, NULL );
+    {
+        if (poDS->GetCallLevel() < 32)
+        {
+            poSrcDS = poReg->Open( pszSrcDSName, bUpdate, NULL );
+            /* Is it a VRT datasource ? */
+            if (poSrcDS != NULL && poSrcDS->GetDriver() == poDS->GetDriver())
+            {
+                OGRVRTDataSource* poVRTSrcDS = (OGRVRTDataSource*)poSrcDS;
+                poVRTSrcDS->SetCallLevel(poDS->GetCallLevel() + 1);
+            }
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Trying to open a VRT from a VRT from a VRT from ... [32 times] a VRT !");
+        }
+    }
 
     if( poSrcDS == NULL ) 
     {
@@ -1429,6 +1465,7 @@ OGRErr OGRVRTLayer::GetExtent( OGREnvelope *psExtent, int bForce )
     {
         if( bNeedReset )
             ResetSourceReading();
+
         return poSrcLayer->GetExtent(psExtent, bForce);
     }
 
@@ -1451,6 +1488,7 @@ int OGRVRTLayer::GetFeatureCount( int bForce )
     {
         if( bNeedReset )
             ResetSourceReading();
+
         return poSrcLayer->GetFeatureCount( bForce );
     }
     else
