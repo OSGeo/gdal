@@ -1786,6 +1786,7 @@ static int gmlHugeFileWriteResolved ( struct huge_helper *helper,
     sqlite3        *hDB = helper->hDB;
     sqlite3_stmt   *hStmtNodes;
     int            bError = FALSE;
+    int            iOutCount = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Opening the resolved GML file                                   */
@@ -1867,6 +1868,7 @@ static int gmlHugeFileWriteResolved ( struct huge_helper *helper,
                               x, y );
             VSIFPrintfL ( fp, "      </ResolvedGeometry> \n" );
             VSIFPrintfL ( fp, "    </ResolvedNodes>\n" );
+            iOutCount++;
         }
         else
         {
@@ -1973,6 +1975,7 @@ static int gmlHugeFileWriteResolved ( struct huge_helper *helper,
         VSIFPrintfL ( fp, "    </%s>\n", poClass->GetElementName() ); 
 
         delete poFeature;
+        iOutCount++;
     }
 
     VSIFPrintfL ( fp, "  </ResolvedTopoFeatureMembers>\n" ); 
@@ -1984,8 +1987,8 @@ static int gmlHugeFileWriteResolved ( struct huge_helper *helper,
     if ( *m_bSequentialLayers == TRUE )
         pReader->ReArrangeTemplateClasses( pCC );
     delete pCC;
-	if( bError == TRUE )
-		return FALSE;
+    if( bError == TRUE || iOutCount == 0 )
+        return FALSE;
     return TRUE;
 }
 
