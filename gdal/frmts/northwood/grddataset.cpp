@@ -90,6 +90,8 @@ class NWT_GRDRasterBand:public GDALPamRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
     virtual double GetNoDataValue( int *pbSuccess );
 
+    /* FIXME. I don't believe it is correct to advertize offset and */
+    /* scale because IReadBlock() already apply them. */
     virtual double GetOffset( int *pbSuccess = NULL );
     virtual CPLErr SetOffset( double dfNewValue );
     virtual double GetScale( int *pbSuccess = NULL );
@@ -136,10 +138,20 @@ NWT_GRDRasterBand::NWT_GRDRasterBand( NWT_GRDDataset * poDS, int nBand )
 
 double NWT_GRDRasterBand::GetNoDataValue( int *pbSuccess )
 {
-    if( pbSuccess != NULL )
-        *pbSuccess = TRUE;
+    if (nBand == 4)
+    {
+        if( pbSuccess != NULL )
+            *pbSuccess = TRUE;
 
-    return 0;                    //Northwood grid 0 is always null
+        return (float)-1.e37;
+    }
+    else
+    {
+        if( pbSuccess != NULL )
+            *pbSuccess = FALSE;
+
+        return 0;
+    }
 }
 
 GDALColorInterp NWT_GRDRasterBand::GetColorInterpretation()
