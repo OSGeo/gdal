@@ -1941,44 +1941,60 @@ void netCDFDataset::SetProjectionFromVar( int var )
                 papszStdParallels = 
                     FetchStandardParallels( szGridMappingValue );
 
-                if( papszStdParallels != NULL ) {
-		  
-                   if ( CSLCount( papszStdParallels ) == 1 ) {
-                       /* NOTE: this is not CF. However, if this file was exported by GDAL
-                          it will contain a scale factor to preserve information.
-                          See comments in netcdfdataset.h for this projection. */
-                       dfScale = 
-                           poDS->FetchCopyParm( szGridMappingValue, 
-                                                CF_PP_SCALE_FACTOR_ORIGIN, 1.0 );
-                       dfStdP1 = CPLAtofM( papszStdParallels[0] );
-                       dfStdP2 = dfStdP1;
-                        /* should use dfStdP1 and dfStdP2 instead of dfScale */ 
-                       CPLError( CE_Warning, CPLE_NotSupported, 
-                                   "NetCDF driver import of LCC-1SP is not tested nor supported, using SetLCC1SP()\n" );
-                       oSRS.SetLCC1SP( dfCenterLat, dfCenterLon, dfScale, 
-                                       dfFalseEasting, dfFalseNorthing );
-                    }
-		
-                    else if( CSLCount( papszStdParallels ) == 2 ) {
-                        dfStdP1 = CPLAtofM( papszStdParallels[0] );
-                        dfStdP2 = CPLAtofM( papszStdParallels[1] );
-                        oSRS.SetLCC( dfStdP1, dfStdP2, dfCenterLat, dfCenterLon,
-                                     dfFalseEasting, dfFalseNorthing );
-                    }
-                }
-                //old default
-                else {
-                    dfStdP1 = 
-                        poDS->FetchCopyParm( szGridMappingValue, 
-                                             CF_PP_STD_PARALLEL_1, 0.0 );
-
-                    dfStdP2 = 
-                        poDS->FetchCopyParm( szGridMappingValue, 
-                                             CF_PP_STD_PARALLEL_2, 0.0 );
-
+                /* 2SP variant */
+                if( CSLCount( papszStdParallels ) == 2 ) {
+                    dfStdP1 = CPLAtofM( papszStdParallels[0] );
+                    dfStdP2 = CPLAtofM( papszStdParallels[1] );
                     oSRS.SetLCC( dfStdP1, dfStdP2, dfCenterLat, dfCenterLon,
                                  dfFalseEasting, dfFalseNorthing );
-                }				
+                }
+                /* 1SP variant (with standard_parallel or center lon) */
+                /* See comments in netcdfdataset.h for this projection. */
+                else {
+
+                    dfScale = 
+                        poDS->FetchCopyParm( szGridMappingValue, 
+                                             CF_PP_SCALE_FACTOR_ORIGIN, -1.0 );
+                    
+                    /* CF definition, without scale factor */
+                    if( CPLIsEqual(dfScale, -1.0) ) {
+
+                        /* with standard_parallel */
+                        if( CSLCount( papszStdParallels ) == 1 )
+                            dfStdP1 = CPLAtofM( papszStdParallels[0] );
+                        /* with center lon instead */
+                        else 
+                            dfStdP1 = dfCenterLat;
+                        dfStdP2 = dfStdP1;
+                        
+                        /* test if we should actually compute scale factor */
+                        if ( ! CPLIsEqual( dfStdP1, dfCenterLat ) ) {
+                            CPLError( CE_Warning, CPLE_NotSupported, 
+                                      "NetCDF driver import of LCC-1SP with standard_parallel1 != latitude_of_projection_origin\n"
+                                      "(which forces a computation of scale_factor) is experimental (bug #3324)\n" );
+                            /* use Snyder eq. 15-4 to compute dfScale from dfStdP1 and dfCenterLat */
+                            /* only tested for dfStdP1=dfCenterLat and (25,26), needs more data for testing */
+                            /* other option: use the 2SP variant - how to compute new standard parallels? */
+                            #define NCDF_PI 3.14159265358979323846
+                            dfScale = ( cos(dfStdP1) * pow( tan(NCDF_PI/4 + dfStdP1/2), sin(dfStdP1) ) ) /
+                                ( cos(dfCenterLat) * pow( tan(NCDF_PI/4 + dfCenterLat/2), sin(dfCenterLat) ) );
+                        }
+                        /* default is 1.0 */
+                        else                    
+                            dfScale = 1.0;
+                        
+                        oSRS.SetLCC1SP( dfCenterLat, dfCenterLon, dfScale, 
+                                        dfFalseEasting, dfFalseNorthing );
+                        /* store dfStdP1 so we can output it to CF later */
+                        oSRS.SetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, dfStdP1 );
+                    }
+                    /* OGC/PROJ.4 definition with scale factor */
+                    else {
+                        oSRS.SetLCC1SP( dfCenterLat, dfCenterLon, dfScale, 
+                                        dfFalseEasting, dfFalseNorthing );
+                    }
+                }
+		
 
                 bGotCfSRS = TRUE;
                 if( !bGotGeogCS )
@@ -2249,7 +2265,7 @@ void netCDFDataset::SetProjectionFromVar( int var )
             nSpacingMiddle  = (int) poDS->rint((pdfYCoord[ydim / 2] - 
                                                 pdfYCoord[(ydim / 2) + 1]) * 
                                                1000);
-	    
+
             nSpacingLast    = (int) poDS->rint((pdfYCoord[ydim - 2] - 
                                                 pdfYCoord[ydim-1]) * 
                                                1000);
@@ -2288,9 +2304,9 @@ void netCDFDataset::SetProjectionFromVar( int var )
                 int	node_offset = 0;
 
                 bGotGeoTransform = TRUE;
-
+                
                 nc_get_att_int (cdfid, NC_GLOBAL, "node_offset", &node_offset);
-
+                
                 if (!nc_get_att_double (cdfid, nVarDimXID, "actual_range", dummy)) {
                     xMinMax[0] = dummy[0];		
                     xMinMax[1] = dummy[1];
@@ -4968,6 +4984,7 @@ void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
     const std::string *pszNCDFAtt, *pszGDALAtt;
     static const oNetcdfSRS_PP *poMap = NULL;
     int nMapIndex = -1;
+    int bWriteVal = FALSE;
 
     //Attribute <GDAL,NCDF> and Value <NCDF,value> mappings
     std::map< std::string, std::string > oAttMap;
@@ -4979,12 +4996,9 @@ void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
  
     /* Find the appropriate mapping */
     for (int iMap = 0; poNetcdfSRS_PT[iMap].WKT_SRS != NULL; iMap++ ) {
-        // printf("now at %d, proj=%s\n",i, poNetcdfSRS_PT[i].GDAL_SRS);
         if ( EQUAL( pszProjection, poNetcdfSRS_PT[iMap].WKT_SRS ) ) {
             nMapIndex = iMap;
             poMap = poNetcdfSRS_PT[iMap].mappings;
-            // CPLDebug( "GDAL_netCDF", 
-            //           "Found mapping{poNetcdfSRS_PT[iMap].NCDF_SRS ,poNetcdfSRS_PT[iMap].GDAL_SRS ,}\n" );
             break;
         }
     }
@@ -5034,7 +5048,7 @@ void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
             if ( oValIter != oValMap.end() ) {
 
                 dfValue = oValIter->second;
-                oOutList.push_back( std::make_pair( *pszNCDFAtt, dfValue ) );
+                bWriteVal = TRUE;
                 
                 /* special case for PS (Polar Stereographic) grid
                    See comments in netcdfdataset.h for this projection. */
@@ -5046,6 +5060,28 @@ void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
                         oOutList.push_back( std::make_pair( CF_PP_LAT_PROJ_ORIGIN, 
                                                             dfLatPole ) );
                 }              
+                /* special case for LCC-1SP
+                   See comments in netcdfdataset.h for this projection. */
+                else if ( EQUAL( SRS_PP_SCALE_FACTOR, pszGDALAtt->c_str() ) &&
+                          EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) ) {
+                    /* default is to not write as it is not CF-1 */
+                    bWriteVal = FALSE;
+                    /* if scale factor != 1.0 and there is no standard_parallel1
+                       write value for GDAL, but this is not supported by CF-1 */
+                    if ( !CPLIsEqual(dfValue,1.0) ) {
+                        if ( oValMap.find( std::string(CF_PP_STD_PARALLEL_1) ) == oValMap.end() ) {
+                            CPLError( CE_Failure, CPLE_NotSupported, 
+                                      "NetCDF driver export of LCC-1SP with scale factor != 1.0 "
+                                      "and no standard_parallel1 is not CF-1 (bug #3324).\n" 
+                                      "Use the 2SP variant which is supported by CF." );   
+                            bWriteVal = TRUE;
+                        } 
+                    }
+                }       
+                
+                if ( bWriteVal )
+                    oOutList.push_back( std::make_pair( *pszNCDFAtt, dfValue ) );
+
             }
             // else printf("NOT FOUND!!!\n");
         }
