@@ -4990,7 +4990,7 @@ void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
     std::map< std::string, std::string > oAttMap;
     std::map< std::string, std::string >::iterator oAttIter;
     std::map< std::string, double > oValMap;
-    std::map< std::string, double >::iterator oValIter;
+    std::map< std::string, double >::iterator oValIter, oValIter2;
     //results to write
     std::vector< std::pair<std::string,double> > oOutList;
  
@@ -5066,19 +5066,31 @@ void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
                           EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) ) {
                     /* default is to not write as it is not CF-1 */
                     bWriteVal = FALSE;
-                    /* if scale factor != 1.0 and there is no standard_parallel1
-                       write value for GDAL, but this is not supported by CF-1 */
-                    if ( !CPLIsEqual(dfValue,1.0) ) {
-                        if ( oValMap.find( std::string(CF_PP_STD_PARALLEL_1) ) == oValMap.end() ) {
+                    /* test if there is no standard_parallel1 */
+                    if ( oValMap.find( std::string(CF_PP_STD_PARALLEL_1) ) == oValMap.end() ) {
+                        /* if scale factor != 1.0  write value for GDAL, but this is not supported by CF-1 */
+                        if ( !CPLIsEqual(dfValue,1.0) ) {
                             CPLError( CE_Failure, CPLE_NotSupported, 
                                       "NetCDF driver export of LCC-1SP with scale factor != 1.0 "
                                       "and no standard_parallel1 is not CF-1 (bug #3324).\n" 
                                       "Use the 2SP variant which is supported by CF." );   
                             bWriteVal = TRUE;
-                        } 
+                        }
+                        /* else copy standard_parallel1 from latitude_of_origin, because scale_factor=1.0 */
+                        else {                      
+                            oValIter2 = oValMap.find( std::string(SRS_PP_LATITUDE_OF_ORIGIN) );
+                            if (oValIter2 != oValMap.end() ) {
+                                oOutList.push_back( std::make_pair( CF_PP_STD_PARALLEL_1, 
+                                                                    oValIter2->second) );
+                            }
+                            else {
+                                CPLError( CE_Failure, CPLE_NotSupported, 
+                                          "NetCDF driver export of LCC-1SP with no standard_parallel1 "
+                                          "and no latitude_of_origin is not suuported (bug #3324).");
+                            }
+                        }                      
                     }
-                }       
-                
+                }
                 if ( bWriteVal )
                     oOutList.push_back( std::make_pair( *pszNCDFAtt, dfValue ) );
 
