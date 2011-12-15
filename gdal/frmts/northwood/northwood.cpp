@@ -294,7 +294,7 @@ int nwt_LoadColors( NWT_RGB * pMap, int mapSize, NWT_GRID * pGrd )
             {
                 // then we must be between i and i-1
                 linearColor( &sColor, &pGrd->stInflection[i - 1],
-                                      &pGrd->stInflection[i], pGrd->fZMin );
+                                      &pGrd->stInflection[i], pGrd->fZMax );
                 index = mapSize - 1;
                 createIP( index, sColor.r, sColor.g, sColor.b, pMap,
                            &nWarkerMark );
