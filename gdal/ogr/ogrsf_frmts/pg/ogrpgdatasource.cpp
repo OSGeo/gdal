@@ -2246,6 +2246,10 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
                                         const char *pszDialect )
 
 {
+    /* Skip leading spaces */
+    while(*pszSQLCommand == ' ')
+        pszSQLCommand ++;
+    
 /* -------------------------------------------------------------------- */
 /*      Use generic implementation for OGRSQL dialect.                  */
 /* -------------------------------------------------------------------- */
