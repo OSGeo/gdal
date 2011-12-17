@@ -1133,6 +1133,7 @@ double OGRCallAtofOnShortString(const char* pszStr)
     while(*p == '+'  ||
           *p == '-'  ||
           (*p >= '0' && *p <= '9') ||
+          *p == '.'  ||
           (*p == 'e' || *p == 'E' || *p == 'd' || *p == 'D'))
     {
         szTemp[nCounter++] = *(p++);
