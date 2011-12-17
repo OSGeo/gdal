@@ -1588,6 +1588,22 @@ OGRErr OGRGeometryFactory::createFromFgf( unsigned char *pabyData,
                                           int *pnBytesConsumed )
 
 {
+    return createFromFgfInternal(pabyData, poSR, ppoReturn, nBytes,
+                                 pnBytesConsumed, 0);
+}
+
+
+/************************************************************************/
+/*                       createFromFgfInternal()                        */
+/************************************************************************/
+
+OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
+                                                  OGRSpatialReference * poSR,
+                                                  OGRGeometry **ppoReturn,
+                                                  int nBytes,
+                                                  int *pnBytesConsumed,
+                                                  int nRecLevel )
+{
     OGRErr       eErr = OGRERR_NONE;
     OGRGeometry *poGeom = NULL;
     GInt32       nGType, nGDim;
@@ -1595,6 +1611,15 @@ OGRErr OGRGeometryFactory::createFromFgf( unsigned char *pabyData,
     int          iOrdinal = 0;
     
     (void) iOrdinal;
+
+    /* Arbitrary value, but certainly large enough for reasonable usages ! */
+    if( nRecLevel == 32 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "Too many recursiong level (%d) while parsing FGF geometry.",
+                    nRecLevel );
+        return OGRERR_CORRUPT_DATA;
+    }
 
     *ppoReturn = NULL;
 
@@ -1837,8 +1862,8 @@ OGRErr OGRGeometryFactory::createFromFgf( unsigned char *pabyData,
             int nThisGeomSize;
             OGRGeometry *poThisGeom = NULL;
          
-            eErr = createFromFgf( pabyData + nBytesUsed, poSR, &poThisGeom,
-                                  nBytes - nBytesUsed, &nThisGeomSize);
+            eErr = createFromFgfInternal( pabyData + nBytesUsed, poSR, &poThisGeom,
+                                  nBytes - nBytesUsed, &nThisGeomSize, nRecLevel + 1);
             if( eErr != OGRERR_NONE )
             {
                 delete poGC;

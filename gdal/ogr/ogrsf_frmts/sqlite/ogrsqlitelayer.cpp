@@ -540,7 +540,8 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
                                                     OGRGeometry **ppoReturn,
                                                     int nBytes,
                                                     OGRwkbByteOrder eByteOrder,
-                                                    int* pnBytesConsumed)
+                                                    int* pnBytesConsumed,
+                                                    int nRecLevel)
 {
     OGRErr      eErr = OGRERR_NONE;
     OGRGeometry *poGeom = NULL;
@@ -548,6 +549,15 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
     GInt32       compressedSize;
 
     *ppoReturn = NULL;
+
+    /* Arbitrary value, but certainly large enough for reasonable usages ! */
+    if( nRecLevel == 32 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "Too many recursiong level (%d) while parsing Spatialite geometry.",
+                    nRecLevel );
+        return OGRERR_CORRUPT_DATA;
+    }
 
     if (nBytes < 4)
         return OGRERR_NOT_ENOUGH_DATA;
@@ -1942,7 +1952,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
 
             eErr = createFromSpatialiteInternal( pabyData + nBytesUsed,
                                                  &poThisGeom, nBytes - nBytesUsed,
-                                                 eByteOrder, &nThisGeomSize);
+                                                 eByteOrder, &nThisGeomSize, nRecLevel + 1);
             if( eErr != OGRERR_NONE )
             {
                 delete poGC;
@@ -2008,7 +2018,7 @@ OGRErr OGRSQLiteLayer::ImportSpatiaLiteGeometry( const GByte *pabyData,
     eByteOrder = (OGRwkbByteOrder) pabyData[1];
 
     return createFromSpatialiteInternal(pabyData + 39, ppoGeometry,
-                                        nBytes - 39, eByteOrder, NULL);
+                                        nBytes - 39, eByteOrder, NULL, 0);
 }
 
 

@@ -1059,6 +1059,39 @@ def gml_write_gml3_srs():
     return 'success'
 
 ###############################################################################
+# Test that importing too nested GML doesn't cause stack overflows
+
+def gml_nested():
+
+    gml = ''
+    for i in range(31):
+        gml = gml + '<gml:MultiGeometry><gml:geometryMember>'
+    gml = gml + '<gml:MultiPolygon></gml:MultiPolygon>'
+    for i in range(31):
+        gml = gml +  '</gml:geometryMember></gml:MultiGeometry>'
+
+    geom = ogr.CreateGeometryFromGML(gml)
+    if geom is None:
+        gdaltest.post_reason('expected a geometry')
+        return 'fail'
+
+    gml = ''
+    for i in range(32):
+        gml = gml + '<gml:MultiGeometry><gml:geometryMember>'
+    gml = gml + '<gml:MultiPolygon></gml:MultiPolygon>'
+    for i in range(32):
+        gml = gml +  '</gml:geometryMember></gml:MultiGeometry>'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    geom = ogr.CreateGeometryFromGML(gml)
+    gdal.PopErrorHandler()
+    if geom is not None:
+        gdaltest.post_reason('expected None')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # When imported build a list of units based on the files available.
 
 #print 'hit enter'
@@ -1105,6 +1138,7 @@ gdaltest_list.append( gml_Circle )
 gdaltest_list.append( gml_invalid_geoms )
 gdaltest_list.append( gml_write_gml3_geometries )
 gdaltest_list.append( gml_write_gml3_srs )
+gdaltest_list.append( gml_nested )
 
 if __name__ == '__main__':
 

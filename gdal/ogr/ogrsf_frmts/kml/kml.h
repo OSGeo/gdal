@@ -76,7 +76,7 @@ public:
 	void parse();
 	void print(unsigned short what = 3);
     std::string getError() const;
-	void classifyNodes();
+	int classifyNodes();
 	void eliminateEmpty();
 	int getNumLayers() const;
     bool selectLayer(int);

@@ -154,7 +154,8 @@ class OGRSQLiteLayer : public OGRLayer
                                                      OGRGeometry **ppoReturn,
                                                      int nBytes,
                                                      OGRwkbByteOrder eByteOrder,
-                                                     int* pnBytesConsumed);
+                                                     int* pnBytesConsumed,
+                                                     int nRecLevel);
 
     static int          CanBeCompressedSpatialiteGeometry(const OGRGeometry *poGeometry);
 
