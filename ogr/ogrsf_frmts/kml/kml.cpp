@@ -213,6 +213,15 @@ void XMLCALL KML::startElement(void* pUserData, const char* pszName, const char*
     if(poKML->poTrunk_ == NULL 
     || (poKML->poCurrent_->getName()).compare("description") != 0)
     {
+        if (poKML->nDepth_ == 1024)
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Too big depth level (%d) while parsing KML.",
+                      poKML->nDepth_ );
+            XML_StopParser(poKML->oCurrentParser, XML_FALSE);
+            return;
+        }
+
         poMynew = new KMLNode();
             poMynew->setName(pszName);
         poMynew->setLevel(poKML->nDepth_);
@@ -463,12 +472,20 @@ void XMLCALL KML::dataHandler(void* pUserData, const char* pszData, int nLen)
         XML_StopParser(poKML->oCurrentParser, XML_FALSE);
     }
 
-    std::string sData(pszData, nLen);
+    try
+    {
+        std::string sData(pszData, nLen);
 
-    if(poKML->poCurrent_->numContent() == 0)
-        poKML->poCurrent_->addContent(sData);
-    else
-        poKML->poCurrent_->appendContent(sData);
+        if(poKML->poCurrent_->numContent() == 0)
+            poKML->poCurrent_->addContent(sData);
+        else
+            poKML->poCurrent_->appendContent(sData);
+    }
+    catch(const std::exception& ex)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "libstdc++ exception : %s", ex.what());
+        XML_StopParser(poKML->oCurrentParser, XML_FALSE);
+    }
 }
 
 bool KML::isValid()
@@ -487,9 +504,9 @@ std::string KML::getError() const
 	return sError_;
 }
 
-void KML::classifyNodes()
+int KML::classifyNodes()
 {
-    poTrunk_->classify(this);
+    return poTrunk_->classify(this);
 }
 
 void KML::eliminateEmpty()
