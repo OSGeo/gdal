@@ -639,10 +639,24 @@ JP2KAKRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             pData, nBufXSize, nBufYSize, eBufType, 
             nPixelSpace, nLineSpace );
     else
+    {
+        int nOverviewDiscard = nDiscardLevels;
+
+        // Adjust request for overview level.
+        while( nOverviewDiscard > 0 )
+        {
+            nXOff  = nXOff * 2;
+            nYOff  = nYOff * 2;
+            nXSize = nXSize * 2;
+            nYSize = nYSize * 2;
+            nOverviewDiscard--;
+        }
+
         return poBaseDS->DirectRasterIO( 
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
             1, &nBand, nPixelSpace, nLineSpace, 0 );
+    }
 }
 
 /************************************************************************/
