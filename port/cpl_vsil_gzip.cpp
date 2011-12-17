@@ -1252,14 +1252,18 @@ void VSIGZipFilesystemHandler::SaveInfo(  VSIGZipHandle* poHandle )
     {
         if (poHandle->GetLastReadOffset() > poHandleLastGZipFile->GetLastReadOffset())
         {
-            delete poHandleLastGZipFile;
+            VSIGZipHandle* poTmp = poHandleLastGZipFile;
+            poHandleLastGZipFile = NULL;
+            delete poTmp;
             poHandleLastGZipFile = poHandle->Duplicate();
             poHandleLastGZipFile->CloseBaseHandle();
         }
     }
     else
     {
-        delete poHandleLastGZipFile;
+        VSIGZipHandle* poTmp = poHandleLastGZipFile;
+        poHandleLastGZipFile = NULL;
+        delete poTmp;
         poHandleLastGZipFile = poHandle->Duplicate();
         poHandleLastGZipFile->CloseBaseHandle();
     }
