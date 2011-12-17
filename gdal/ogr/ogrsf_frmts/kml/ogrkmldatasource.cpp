@@ -134,7 +134,12 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
 /*      Classify the nodes                                              */
 /* -------------------------------------------------------------------- */
-    poKMLFile_->classifyNodes();
+    if( !poKMLFile_->classifyNodes() )
+    {
+        delete poKMLFile_;
+        poKMLFile_ = NULL;
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Eliminate the empty containers                                  */

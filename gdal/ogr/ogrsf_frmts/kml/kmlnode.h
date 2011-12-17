@@ -47,7 +47,7 @@ public:
     ~KMLNode();
 
     void print(unsigned int what = 3);
-    void classify(KML* poKML);
+    int classify(KML* poKML, int nRecLevel = 0);
     void eliminateEmpty(KML* poKML);
     
     void setType(Nodetype type);

@@ -466,6 +466,99 @@ def ogr_wkbwkt_test_import_bad_multipoint_wkb():
     return 'success'
 
 ###############################################################################
+# Test WKT -> WKB -> WKT roundtripping for GEOMETRYCOLLECTION
+
+def ogr_wkbwkt_test_geometrycollection_wktwkb():
+
+    wkt_list = [ 'GEOMETRYCOLLECTION (POINT (0 1))',
+                 'GEOMETRYCOLLECTION (LINESTRING (0 1,2 3))',
+                 'GEOMETRYCOLLECTION (POLYGON ((0 0,0 1,1 1,0 0)))',
+                 'GEOMETRYCOLLECTION (MULTIPOINT (0 1))',
+                 'GEOMETRYCOLLECTION (MULTILINESTRING ((0 1,2 3)))',
+                 'GEOMETRYCOLLECTION (MULTIPOLYGON (((0 0,0 1,1 1,0 0))))',
+                 'GEOMETRYCOLLECTION (GEOMETRYCOLLECTION (POINT (0 1)))',
+               ]
+    for wkt in wkt_list:
+        g = ogr.CreateGeometryFromWkt(wkt)
+        wkb = g.ExportToWkb()
+        g = ogr.CreateGeometryFromWkb(wkb)
+        wkt2 = g.ExportToWkt()
+        if wkt != wkt2:
+            gdaltest.post_reason('fail for %s' % wkt)
+            print(wkt)
+            print(wkt2)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test that importing too nested WKT doesn't cause stack overflows
+
+def ogr_wkbwkt_test_geometrycollection_wkt_recursion():
+
+    wkt = ''
+    for i in range(31):
+        wkt = wkt + 'GEOMETRYCOLLECTION ('
+    wkt = wkt + 'GEOMETRYCOLLECTION EMPTY'
+    for i in range(31):
+        wkt = wkt + ')'
+
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    if geom.ExportToWkt() != wkt:
+        gdaltest.post_reason('expected %s' % wkt)
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    wkt = ''
+    for i in range(32):
+        wkt = wkt + 'GEOMETRYCOLLECTION ('
+    wkt = wkt + 'GEOMETRYCOLLECTION EMPTY'
+    for i in range(32):
+        wkt = wkt + ')'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    gdal.PopErrorHandler()
+    if geom is not None:
+        gdaltest.post_reason('expected None')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test that importing too nested WKB doesn't cause stack overflows
+
+def ogr_wkbwkt_test_geometrycollection_wkb_recursion():
+
+    import struct
+    wkb_repeat = struct.pack('B' * 9, 0, 0, 0, 0, 7, 0, 0, 0, 1 )
+    wkb_end = struct.pack('B' * 9, 0, 0, 0, 0, 7, 0, 0, 0, 0 )
+
+    wkb = struct.pack('B' * 0)
+    for i in range(31):
+        wkb = wkb + wkb_repeat
+    wkb = wkb + wkb_end
+
+    geom = ogr.CreateGeometryFromWkb(wkb)
+    if geom is None:
+        gdaltest.post_reason('expected a geometry')
+        return 'fail'
+
+    wkb = struct.pack('B' * 0)
+    for i in range(32):
+        wkb = wkb + wkb_repeat
+    wkb = wkb + wkb_end
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    geom = ogr.CreateGeometryFromWkb(wkb)
+    gdal.PopErrorHandler()
+    if geom is not None:
+        gdaltest.post_reason('expected None')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # When imported build a list of units based on the files available.
 
 #print 'hit enter'
@@ -483,6 +576,9 @@ gdaltest_list.append( ogr_wkbwkt_geom_bigexponents )
 gdaltest_list.append( ogr_wkbwkt_test_broken_geom )
 gdaltest_list.append( ogr_wkbwkt_test_import_wkt_sf12 )
 gdaltest_list.append( ogr_wkbwkt_test_import_bad_multipoint_wkb )
+gdaltest_list.append( ogr_wkbwkt_test_geometrycollection_wktwkb )
+gdaltest_list.append( ogr_wkbwkt_test_geometrycollection_wkt_recursion )
+gdaltest_list.append( ogr_wkbwkt_test_geometrycollection_wkb_recursion )
 
 if __name__ == '__main__':
 

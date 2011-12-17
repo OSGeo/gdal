@@ -486,6 +486,9 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     int         nGeomCount;
     OGRGeometry **papoGeoms;
 
+    OGRErr      importFromWkbInternal( unsigned char * pabyData, int nSize, int nRecLevel );
+    OGRErr      importFromWktInternal( char **ppszInput, int nRecLevel );
+
   public:
                 OGRGeometryCollection();
     virtual     ~OGRGeometryCollection();
@@ -623,6 +626,12 @@ class CPL_DLL OGRMultiLineString : public OGRGeometryCollection
 
 class CPL_DLL OGRGeometryFactory
 {
+    static OGRErr createFromFgfInternal( unsigned char *pabyData,
+                                         OGRSpatialReference * poSR,
+                                         OGRGeometry **ppoReturn,
+                                         int nBytes,
+                                         int *pnBytesConsumed,
+                                         int nRecLevel );
   public:
     static OGRErr createFromWkb( unsigned char *, OGRSpatialReference *,
                                  OGRGeometry **, int = -1 );
