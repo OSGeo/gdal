@@ -259,6 +259,10 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     char               *pszEscapedTableName;
 
+    sqlite3_stmt       *hInsertStmt;
+    CPLString           osLastInsertStmt;
+    void                ClearInsertStmt();
+
     void                BuildWhere(void);
 
     OGRErr              ResetStatement();
