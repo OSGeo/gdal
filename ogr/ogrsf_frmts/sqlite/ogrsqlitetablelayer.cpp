@@ -55,6 +55,8 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
     pszEscapedTableName = NULL;
 
     bHasCheckedSpatialIndexTable = FALSE;
+
+    hInsertStmt = NULL;
 }
 
 /************************************************************************/
@@ -65,7 +67,22 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
 
 {
     ClearStatement();
+    ClearInsertStmt();
     CPLFree(pszEscapedTableName);
+}
+
+/************************************************************************/
+/*                          ClearInsertStmt()                           */
+/************************************************************************/
+
+void OGRSQLiteTableLayer::ClearInsertStmt()
+{
+    if( hInsertStmt != NULL )
+    {
+        sqlite3_finalize( hInsertStmt );
+        hInsertStmt = NULL;
+    }
+    osLastInsertStmt = "";
 }
 
 /************************************************************************/
@@ -614,6 +631,8 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         return OGRERR_FAILURE;
     }
 
+    ClearInsertStmt();
+
 /* -------------------------------------------------------------------- */
 /*      Do we want to "launder" the column names into SQLite            */
 /*      friendly format?                                                */
@@ -1134,6 +1153,7 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
         return OGRERR_FAILURE;
     }
 
+    ClearInsertStmt();
     ResetReading();
 
 /* -------------------------------------------------------------------- */
@@ -1224,6 +1244,7 @@ OGRErr OGRSQLiteTableLayer::ReorderFields( int* panMap )
     if (eErr != OGRERR_NONE)
         return eErr;
 
+    ClearInsertStmt();
     ResetReading();
 
 /* -------------------------------------------------------------------- */
@@ -1640,20 +1661,27 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 /*      Prepare the statement.                                          */
 /* -------------------------------------------------------------------- */
     int rc;
-    sqlite3_stmt *hInsertStmt;
 
-#ifdef DEBUG
-    CPLDebug( "OGR_SQLITE", "prepare(%s)", osCommand.c_str() );
-#endif
-
-    rc = sqlite3_prepare( hDB, osCommand, -1, &hInsertStmt, NULL );
-    if( rc != SQLITE_OK )
+    if (hInsertStmt == NULL ||
+        osCommand != osLastInsertStmt)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "In CreateFeature(): sqlite3_prepare(%s):\n  %s", 
-                  osCommand.c_str(), sqlite3_errmsg(hDB) );
+    #ifdef DEBUG
+        CPLDebug( "OGR_SQLITE", "prepare(%s)", osCommand.c_str() );
+    #endif
 
-        return OGRERR_FAILURE;
+        ClearInsertStmt();
+        osLastInsertStmt = osCommand;
+
+        rc = sqlite3_prepare_v2( hDB, osCommand, -1, &hInsertStmt, NULL );
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "In CreateFeature(): sqlite3_prepare(%s):\n  %s",
+                    osCommand.c_str(), sqlite3_errmsg(hDB) );
+
+            ClearInsertStmt();
+            return OGRERR_FAILURE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1662,7 +1690,7 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
     OGRErr eErr = BindValues( poFeature, hInsertStmt, FALSE );
     if (eErr != OGRERR_NONE)
     {
-        sqlite3_finalize( hInsertStmt );
+        sqlite3_reset( hInsertStmt );
         return eErr;
     }
 
@@ -1674,10 +1702,9 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
     if( rc != SQLITE_OK && rc != SQLITE_DONE )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "sqlite3_step() failed:\n  %s", 
-                  sqlite3_errmsg(hDB) );
-                  
-        sqlite3_finalize( hInsertStmt );
+                  "sqlite3_step() failed:\n  %s (%d)", 
+                  sqlite3_errmsg(hDB), rc );
+        sqlite3_reset( hInsertStmt );
         return OGRERR_FAILURE;
     }
 
@@ -1690,7 +1717,7 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
         poFeature->SetFID( (long)nFID ); /* Possible truncation if nFID is 64bit */
     }
 
-    sqlite3_finalize( hInsertStmt );
+    sqlite3_reset( hInsertStmt );
 
     return OGRERR_NONE;
 }
