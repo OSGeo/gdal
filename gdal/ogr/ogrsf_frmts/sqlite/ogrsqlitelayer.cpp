@@ -876,10 +876,11 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nPointCount );
 
+        if( nPointCount < 0 || nPointCount - 2 > (INT_MAX - 16 * 2) / 8)
+            return OGRERR_CORRUPT_DATA;
+
         compressedSize = 16 * 2;                  // first and last Points 
         compressedSize += 8 * (nPointCount - 2);  // intermediate Points
-        if( nPointCount < 0 || nPointCount > INT_MAX / compressedSize)
-            return OGRERR_CORRUPT_DATA;
 
         if (nBytes - 8 < compressedSize )
             return OGRERR_NOT_ENOUGH_DATA;
@@ -949,10 +950,11 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nPointCount );
 
-        compressedSize = 24 * 2;                   // first and last Points 
-        compressedSize += 12 * (nPointCount - 2);  // intermediate Points
-        if( nPointCount < 0 || nPointCount > INT_MAX / compressedSize)
+        if( nPointCount < 0 || nPointCount - 2 > (INT_MAX - 24 * 2) / 12)
             return OGRERR_CORRUPT_DATA;
+
+        compressedSize = 24 * 2;                  // first and last Points
+        compressedSize += 12 * (nPointCount - 2);  // intermediate Points
 
         if (nBytes - 8 < compressedSize )
             return OGRERR_NOT_ENOUGH_DATA;
@@ -1027,10 +1029,11 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nPointCount );
 
-        compressedSize = 24 * 2;                   // first and last Points 
-        compressedSize += 16 * (nPointCount - 2);  // intermediate Points
-        if( nPointCount < 0 || nPointCount > INT_MAX / compressedSize)
+        if( nPointCount < 0 || nPointCount - 2 > (INT_MAX - 24 * 2) / 16)
             return OGRERR_CORRUPT_DATA;
+
+        compressedSize = 24 * 2;                  // first and last Points
+        compressedSize += 16 * (nPointCount - 2);  // intermediate Points
 
         if (nBytes - 8 < compressedSize )
             return OGRERR_NOT_ENOUGH_DATA;
@@ -1100,11 +1103,12 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nPointCount );
 
+        if( nPointCount < 0 || nPointCount - 2 > (INT_MAX - 32 * 2) / 20)
+            return OGRERR_CORRUPT_DATA;
+
         compressedSize = 32 * 2;                   // first and last Points
         /* Note 20 is not an error : x,y,z are float and the m is a double */
         compressedSize += 20 * (nPointCount - 2);  // intermediate Points
-        if( nPointCount < 0 || nPointCount > INT_MAX / compressedSize)
-            return OGRERR_CORRUPT_DATA;
 
         if (nBytes - 8 < compressedSize )
             return OGRERR_NOT_ENOUGH_DATA;
@@ -1179,7 +1183,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nRingCount );
 
-        if (nRingCount < 0)
+        if (nRingCount < 0 || nRingCount > INT_MAX / 4)
             return OGRERR_CORRUPT_DATA;
 
         // Each ring has a minimum of 4 bytes 
@@ -1251,7 +1255,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nRingCount );
 
-        if (nRingCount < 0)
+        if (nRingCount < 0 || nRingCount > INT_MAX / 4)
             return OGRERR_CORRUPT_DATA;
 
         // Each ring has a minimum of 4 bytes
@@ -1324,7 +1328,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nRingCount );
 
-        if (nRingCount < 0)
+        if (nRingCount < 0 || nRingCount > INT_MAX / 4)
             return OGRERR_CORRUPT_DATA;
 
         // Each ring has a minimum of 4 bytes 
@@ -1397,7 +1401,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nRingCount );
 
-        if (nRingCount < 0)
+        if (nRingCount < 0 || nRingCount > INT_MAX / 4)
             return OGRERR_CORRUPT_DATA;
 
         // Each ring has a minimum of 4 bytes 
@@ -1473,7 +1477,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nRingCount );
 
-        if (nRingCount < 0)
+        if (nRingCount < 0 || nRingCount > INT_MAX / 4)
             return OGRERR_CORRUPT_DATA;
 
         // Each ring has a minimum of 4 bytes
@@ -1493,10 +1497,11 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR( &nPointCount );
 
+            if( nPointCount < 0 || nPointCount - 2 > (INT_MAX - 16 * 2) / 8)
+                return OGRERR_CORRUPT_DATA;
+
             compressedSize = 16 * 2;                  // first and last Points
             compressedSize += 8 * (nPointCount - 2);  // intermediate Points
-            if( nPointCount < 0 || nPointCount > INT_MAX / compressedSize)
-                return OGRERR_CORRUPT_DATA;
 
             nNextByte += 4;
             adfTupleBase[0] = 0.0;
@@ -1591,10 +1596,11 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR( &nPointCount );
 
+            if( nPointCount < 0 || nPointCount - 2 > (INT_MAX - 24 * 2) / 12)
+                return OGRERR_CORRUPT_DATA;
+
             compressedSize = 24 * 2;                  	// first and last Points
             compressedSize += 12 * (nPointCount - 2);  // intermediate Points
-            if( nPointCount < 0 || nPointCount > INT_MAX / compressedSize)
-                return OGRERR_CORRUPT_DATA;
 
             nNextByte += 4;
             adfTupleBase[0] = 0.0;
@@ -1694,10 +1700,12 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR( &nPointCount );
 
+
+            if( nPointCount < 0 || nPointCount - 2 > (INT_MAX - 24 * 2) / 16)
+                return OGRERR_CORRUPT_DATA;
+
             compressedSize = 24 * 2;                   // first and last Points
             compressedSize += 16 * (nPointCount - 2);  // intermediate Points
-            if( nPointCount < 0 || nPointCount > INT_MAX / compressedSize)
-                return OGRERR_CORRUPT_DATA;
 
             nNextByte += 4;
 			adfTupleBase[0] = 0.0;
@@ -1792,11 +1800,12 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR( &nPointCount );
 
+            if( nPointCount < 0 || nPointCount - 2 > (INT_MAX - 32 * 2) / 20)
+                return OGRERR_CORRUPT_DATA;
+
             compressedSize = 32 * 2;                   // first and last Points
             /* Note 20 is not an error : x,y,z are float and the m is a double */
             compressedSize += 20 * (nPointCount - 2);  // intermediate Points
-            if( nPointCount < 0 || nPointCount > INT_MAX / compressedSize)
-                return OGRERR_CORRUPT_DATA;
 
             nNextByte += 4;
             adfTupleBase[0] = 0.0;
@@ -1928,7 +1937,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nGeomCount );
 
-        if (nGeomCount < 0)
+        if (nGeomCount < 0 || nGeomCount > INT_MAX / 9)
             return OGRERR_CORRUPT_DATA;
 
         // Each sub geometry takes at least 9 bytes
