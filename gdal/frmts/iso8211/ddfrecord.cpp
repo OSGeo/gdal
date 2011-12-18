@@ -32,7 +32,7 @@
 
 CPL_CVSID("$Id$");
 
-static const size_t nLeaderSize = 24;
+static const int nLeaderSize = 24;
 
 /************************************************************************/
 /*                             DDFRecord()                              */
@@ -409,6 +409,15 @@ int DDFRecord::ReadHeader()
                 return FALSE;
             }
 
+            if (_fieldAreaStart + nFieldPos - nLeaderSize < 0 ||
+                nDataSize - (_fieldAreaStart + nFieldPos - nLeaderSize) < nFieldLength)
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Not enough byte to initialize field `%s'.",
+                          szTag );
+                return FALSE;
+            }
+
 /* -------------------------------------------------------------------- */
 /*      Assign info the DDFField.                                       */
 /* -------------------------------------------------------------------- */
@@ -549,6 +558,15 @@ int DDFRecord::ReadHeader()
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Undefined field `%s' encountered in data record.",
+                          szTag );
+                return FALSE;
+            }
+
+            if (_fieldAreaStart + nFieldPos - nLeaderSize < 0 ||
+                nDataSize - (_fieldAreaStart + nFieldPos - nLeaderSize) < nFieldLength)
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Not enough byte to initialize field `%s'.",
                           szTag );
                 return FALSE;
             }
