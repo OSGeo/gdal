@@ -405,6 +405,9 @@ GDALDataset *NWT_GRDDataset::Open( GDALOpenInfo * poOpenInfo )
     VSIFSeekL( poDS->fp, 0, SEEK_SET );
     VSIFReadL( poDS->abyHeader, 1, 1024, poDS->fp );
     poDS->pGrd = (NWT_GRID *) malloc(sizeof(NWT_GRID));
+
+    poDS->pGrd->fp = poDS->fp;
+
     if (!nwt_ParseHeader( poDS->pGrd, (char *) poDS->abyHeader ) ||
         !GDALCheckDatasetDimensions(poDS->pGrd->nXSide, poDS->pGrd->nYSide) )
     {
