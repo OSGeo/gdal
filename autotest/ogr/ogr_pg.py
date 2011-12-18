@@ -539,6 +539,7 @@ def ogr_pg_10():
 
     feat.Destroy()
     gdaltest.post_reason( 'DeleteFeature() seems to have had no effect.' )
+
     return 'fail'
 
 ###############################################################################
@@ -1846,10 +1847,7 @@ def ogr_pg_39():
         return 'success'
 
     gdaltest.pg_ds.ExecuteSQL( "CREATE VIEW testview AS SELECT * FROM table37_inherited" )
-    if gdaltest.pg_has_postgis_2:
-        sql_lyr = gdaltest.pg_ds.ExecuteSQL( "SELECT AddGeometryColumn('public','testview','wkb_geometry',-1,'POINT',2)" )
-        gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
-    else:
+    if not gdaltest.pg_has_postgis_2:
         gdaltest.pg_ds.ExecuteSQL( "INSERT INTO geometry_columns VALUES ( '', 'public', 'testview', 'wkb_geometry', 2, -1, 'POINT') ")
     gdaltest.pg_ds.ExecuteSQL( "INSERT INTO table37_inherited (col1, col2, wkb_geometry) VALUES ( 'a', 'b', GeomFromEWKT('POINT (0 1)') )" )
 
@@ -1885,10 +1883,7 @@ def ogr_pg_39():
     ds.Destroy()
 
     # Test another geometry column
-    if gdaltest.pg_has_postgis_2:
-        sql_lyr = gdaltest.pg_ds.ExecuteSQL( "SELECT AddGeometryColumn('public','testview','point25D',-1,'POINT',3)" )
-        gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
-    else:
+    if not gdaltest.pg_has_postgis_2:
         gdaltest.pg_ds.ExecuteSQL( "INSERT INTO geometry_columns VALUES ( '', 'public', 'testview', 'point25D', 3, -1, 'POINT') ")
     gdaltest.pg_ds.ExecuteSQL( "UPDATE table37_inherited SET \"point25D\" = GeomFromEWKT('POINT (0 1 2)') " )
 
@@ -2949,7 +2944,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:table36_inherited' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:table36_base' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:table37_inherited' )
-    gdaltest.pg_ds.ExecuteSQL( 'DROP TABLE table37_base')
+    gdaltest.pg_ds.ExecuteSQL( 'DROP TABLE table37_base CASCADE')
     gdaltest.pg_ds.ExecuteSQL( 'DROP VIEW testview')
     gdaltest.pg_ds.ExecuteSQL( "DELETE FROM geometry_columns WHERE f_table_name='testview'")
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:select' )
