@@ -358,6 +358,8 @@ int S57Reader::Ingest()
     while( (poRecord = poModule->ReadRecord()) != NULL )
     {
         DDFField        *poKeyField = poRecord->GetField(1);
+        if (poKeyField == NULL)
+            return FALSE;
         
         if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"VRID") )
         {
@@ -383,7 +385,8 @@ int S57Reader::Ingest()
                 break;
 
               default:
-                CPLAssert( FALSE );
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Unhandled value for RCNM ; %d", nRCNM);
                 break;
             }
         }
