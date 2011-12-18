@@ -1439,7 +1439,7 @@ static void gmlHugeFileCheckXrefs( struct huge_helper *helper,
                 gmlHugeFileCheckXrefs( helper, psChild );
             }
         }
-        psChild = psChild->psChild;
+        psChild = psChild->psNext;
     }
 
     /* recursively scanning each GML of the same level */
