@@ -453,6 +453,15 @@ int DDFRecord::ReadHeader()
         int nFieldEntryWidth = _sizeFieldLength + _sizeFieldPos + _sizeFieldTag;
         nFieldCount = 0;
         int i=0;
+
+        if (nFieldEntryWidth == 0)
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                      "Invalid record buffer size : %d.",
+                      nFieldEntryWidth );
+            return FALSE;
+        }
+        
         char *tmpBuf = (char*)VSIMalloc(nFieldEntryWidth);
 
         if( tmpBuf == NULL )
