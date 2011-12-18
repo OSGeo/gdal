@@ -316,6 +316,12 @@ size_t VSIMemHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
     if( nBytesToRead + nOffset > poFile->nLength )
     {
+        if (poFile->nLength < nOffset)
+        {
+            bEOF = TRUE;
+            return 0;
+        }
+
         nBytesToRead = (size_t)(poFile->nLength - nOffset);
         nCount = nBytesToRead / nSize;
         bEOF = TRUE;
