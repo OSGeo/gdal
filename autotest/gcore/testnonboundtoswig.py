@@ -359,7 +359,12 @@ def testnonboundtoswig_VRTDerivedBands():
 
     return 'success'
 
-gdaltest_list = [ testnonboundtoswig_init,
+# Empty because it is not completely reliable, and we
+# can get a ctype handle to a GDAL library which is not
+# the one fetched by the GDAL Python module.
+gdaltest_list = []
+
+manual_gdaltest_list = [ testnonboundtoswig_init,
                   testnonboundtoswig_GDALSimpleImageWarp,
                   testnonboundtoswig_VRTDerivedBands ]
 
@@ -367,7 +372,7 @@ if __name__ == '__main__':
 
     gdaltest.setup_run( 'testnonboundtoswig' )
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests( manual_gdaltest_list )
 
     gdaltest.summarize()
 
