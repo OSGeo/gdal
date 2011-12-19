@@ -330,7 +330,8 @@ static GUIntBig nVSIFrees = 0;
 
 void VSIShowMemStats()
 {
-    if (getenv("CPL_SHOW_MEM_STATS") == NULL)
+    char* pszShowMemStats = getenv("CPL_SHOW_MEM_STATS");
+    if (pszShowMemStats == NULL || pszShowMemStats[0] == '\0' )
         return;
     printf("Current VSI memory usage        : " CPL_FRMT_GUIB " bytes\n",
             (GUIntBig)nCurrentTotalAllocs);
