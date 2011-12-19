@@ -483,12 +483,16 @@ CPLErr GDALECWCompressor::Initialize(
     {
         fTargetCompression = (float) 
             atof(CSLFetchNameValue(papszOptions, "TARGET"));
-        
-        if( fTargetCompression < 0.0 || fTargetCompression > 99.0 )
+
+        /* The max allowed value should be 100 - 100 / 65535 = 99.9984740978 */
+        /* so that nCompressionRate fits on a uint16 (see below) */
+        /* No need to be so pedantic, so we will limit to 99.99 % */
+        /* (compression rate = 10 000) */
+        if( fTargetCompression < 0.0 || fTargetCompression > 99.99 )
         {
             CPLError( CE_Failure, CPLE_NotSupported, 
                       "TARGET compression of %.3f invalid, should be a\n"
-                      "value between 0 and 99 percent.\n", 
+                      "value between 0 and 99.99 percent.\n",
                       (double) fTargetCompression );
             return CE_Failure;
         }
