@@ -1760,7 +1760,7 @@ void OGRFeature::SetField( int iField, int nValue )
 
     if( poFDefn == NULL )
         return;
-    
+
     if( poFDefn->GetType() == OFTInteger )
     {
         pauFields[iField].Integer = nValue;
@@ -1769,6 +1769,15 @@ void OGRFeature::SetField( int iField, int nValue )
     else if( poFDefn->GetType() == OFTReal )
     {
         pauFields[iField].Real = nValue;
+    }
+    else if( poFDefn->GetType() == OFTIntegerList )
+    {
+        SetField( iField, 1, &nValue );
+    }
+    else if( poFDefn->GetType() == OFTRealList )
+    {
+        double dfValue = nValue;
+        SetField( iField, 1, &dfValue );
     }
     else if( poFDefn->GetType() == OFTString )
     {
@@ -1846,6 +1855,15 @@ void OGRFeature::SetField( int iField, double dfValue )
     {
         pauFields[iField].Integer = (int) dfValue;
         pauFields[iField].Set.nMarker2 = 0;
+    }
+    else if( poFDefn->GetType() == OFTRealList )
+    {
+        SetField( iField, 1, &dfValue );
+    }
+    else if( poFDefn->GetType() == OFTIntegerList )
+    {
+        int nValue = (int) dfValue;
+        SetField( iField, 1, &nValue );
     }
     else if( poFDefn->GetType() == OFTString )
     {
@@ -2040,6 +2058,20 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
 
         SetField( iField, &uField );
     }
+    else if( poFDefn->GetType() == OFTRealList )
+    {
+        std::vector<double> adfValues;
+
+        for( int i=0; i < nCount; i++ )
+            adfValues.push_back( (double) panValues[i] );
+
+        SetField( iField, nCount, &adfValues[0] );
+    }
+    else if( (poFDefn->GetType() == OFTInteger || poFDefn->GetType() == OFTReal)
+             && nCount == 1 )
+    {
+        SetField( iField, panValues[0] );
+    }
 }
 
 /************************************************************************/
@@ -2101,6 +2133,20 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
         uField.RealList.paList = padfValues;
         
         SetField( iField, &uField );
+    }
+    else if( poFDefn->GetType() == OFTIntegerList )
+    {
+        std::vector<int> anValues;
+
+        for( int i=0; i < nCount; i++ )
+            anValues.push_back( (int) padfValues[i] );
+
+        SetField( iField, nCount, &anValues[0] );
+    }
+    else if( (poFDefn->GetType() == OFTInteger || poFDefn->GetType() == OFTReal)
+             && nCount == 1 )
+    {
+        SetField( iField, padfValues[0] );
     }
 }
 
@@ -3047,7 +3093,7 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int *panMap ,
 
         if( iDstField < 0 )
             continue;
-            
+
         if( GetFieldCount() <= iDstField )
             return OGRERR_FAILURE;
 
@@ -3070,6 +3116,36 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int *panMap ,
           case OFTString:
             SetField( iDstField, poSrcFeature->GetFieldAsString( iField ) );
             break;
+
+          case OFTIntegerList:
+          {
+              if (GetFieldDefnRef(iDstField)->GetType() == OFTString)
+              {
+                  SetField( iDstField, poSrcFeature->GetFieldAsString(iField) );
+              }
+              else
+              {
+                  int nCount;
+                  const int *panValues = poSrcFeature->GetFieldAsIntegerList( iField, &nCount);
+                  SetField( iDstField, nCount, (int*) panValues );
+              }
+          }
+          break;
+
+          case OFTRealList:
+          {
+              if (GetFieldDefnRef(iDstField)->GetType() == OFTString)
+              {
+                  SetField( iDstField, poSrcFeature->GetFieldAsString(iField) );
+              }
+              else
+              {
+                  int nCount;
+                  const double *padfValues = poSrcFeature->GetFieldAsDoubleList( iField, &nCount);
+                  SetField( iDstField, nCount, (double*) padfValues );
+              }
+          }
+          break;
 
           case OFTDate:
           case OFTDateTime:
