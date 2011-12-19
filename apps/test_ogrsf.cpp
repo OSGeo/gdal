@@ -377,6 +377,8 @@ static int TestOGRLayerFeatureCount( OGRDataSource* poDS, OGRLayer *poLayer, int
                     osSQL.Printf("SELECT COUNT(*) FROM \"%s\"", pszLayerName);
                 CSLDestroy(papszTokens);
             }
+            else if (EQUAL(poDS->GetDriver()->GetName(), "SQLAnywhere"))
+                osSQL.Printf("SELECT COUNT(*) FROM %s", pszLayerName);
             else
                 osSQL.Printf("SELECT COUNT(*) FROM \"%s\"", pszLayerName);
         }
@@ -1282,6 +1284,128 @@ static int TestGetExtent ( OGRLayer *poLayer )
     return bRet;
 }
 
+/*************************************************************************/
+/*             TestOGRLayerDeleteAndCreateFeature()                      */
+/*                                                                       */
+/*      Test delete feature by trying to delete the last feature and     */
+/*      recreate it.                                                     */
+/*************************************************************************/
+
+static int TestOGRLayerDeleteAndCreateFeature( OGRLayer *poLayer )
+
+{
+    int bRet = TRUE;
+    OGRFeature  * poFeature = NULL;
+    OGRFeature  * poFeatureTest = NULL;
+    long        nFID;
+
+    poLayer->SetSpatialFilter( NULL );
+    
+    if( !poLayer->TestCapability( OLCRandomRead ) )
+    {
+        if( bVerbose )
+            printf( "INFO: Skipping delete feature test since this layer "
+                    "doesn't support random read.\n" );
+        return bRet;
+    }
+
+    if( poLayer->GetFeatureCount() == 0 )
+    {
+        if( bVerbose )
+            printf( "INFO: No feature available on layer '%s',"
+                    "skipping delete/create feature test.\n",
+                    poLayer->GetName() );
+        
+        return bRet;
+    }
+/* -------------------------------------------------------------------- */
+/*      Fetch the last feature                                          */
+/* -------------------------------------------------------------------- */
+    poLayer->ResetReading();
+
+    poLayer->SetNextByIndex(poLayer->GetFeatureCount() - 1);
+    poFeature = poLayer->GetNextFeature();
+    if (poFeature == NULL)
+    {
+        bRet = FALSE;
+        printf( "ERROR: Could not get last feature of layer.\n" );
+        goto end;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get the feature ID of the last feature                          */
+/* -------------------------------------------------------------------- */
+    nFID = poFeature->GetFID();
+
+/* -------------------------------------------------------------------- */
+/*      Delete the feature.                                             */
+/* -------------------------------------------------------------------- */
+    if( poLayer->DeleteFeature( nFID ) != OGRERR_NONE )
+    {
+        bRet = FALSE;
+        printf( "ERROR: Attempt to DeleteFeature() failed.\n" );
+        goto end;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Now re-read the feature to verify the delete effect worked.     */
+/* -------------------------------------------------------------------- */
+    CPLPushErrorHandler(CPLQuietErrorHandler); /* silent legitimate error message */
+    poFeatureTest = poLayer->GetFeature( nFID );
+    CPLPopErrorHandler();
+    if( poFeatureTest != NULL)
+    {
+        bRet = FALSE;
+        printf( "ERROR: The feature was not deleted.\n" );
+    }
+    else
+    {
+        printf( "INFO: Delete Feature test passed.\n" );
+    }
+    OGRFeature::DestroyFeature(poFeatureTest);
+
+/* -------------------------------------------------------------------- */
+/*      Re-insert the features to restore to original state             */
+/* -------------------------------------------------------------------- */
+    if( poLayer->CreateFeature( poFeature ) != OGRERR_NONE )
+    {
+        bRet = FALSE;
+        printf( "ERROR: Attempt to restore feature failed.\n" );
+    }
+
+    if( poFeature->GetFID() != nFID )
+    {
+        /* Case of shapefile driver for example that will not try to */
+        /* reuse the existing FID, but will assign a new one */
+        printf( "INFO: Feature was created, but with not its original FID.\n" );
+        nFID = poFeature->GetFID();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Now re-read the feature to verify the create effect worked.     */
+/* -------------------------------------------------------------------- */
+    poFeatureTest = poLayer->GetFeature( nFID );
+    if( poFeatureTest == NULL)
+    {
+        bRet = FALSE;
+        printf( "ERROR: The feature was not created.\n" );
+    }
+    else
+    {
+        printf( "INFO: Create Feature test passed.\n" );
+    }
+    OGRFeature::DestroyFeature(poFeatureTest);
+    
+end:
+/* -------------------------------------------------------------------- */
+/*      Cleanup.                                                        */
+/* -------------------------------------------------------------------- */
+
+    OGRFeature::DestroyFeature(poFeature);
+
+    return bRet;
+}
+
 /************************************************************************/
 /*                            TestOGRLayer()                            */
 /************************************************************************/
@@ -1335,6 +1459,14 @@ static int TestOGRLayer( OGRDataSource* poDS, OGRLayer * poLayer, int bIsSQLLaye
     if( poLayer->TestCapability( OLCFastSetNextByIndex ) )
     {
         bRet &= TestOGRLayerSetNextByIndex( poLayer );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Test delete feature.                                            */
+/* -------------------------------------------------------------------- */
+    if( poLayer->TestCapability( OLCDeleteFeature ) )
+    {
+        bRet &= TestOGRLayerDeleteAndCreateFeature( poLayer );
     }
     
 /* -------------------------------------------------------------------- */
