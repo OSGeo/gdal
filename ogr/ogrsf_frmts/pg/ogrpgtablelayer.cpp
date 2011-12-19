@@ -1892,7 +1892,8 @@ int OGRPGTableLayer::TestCapability( const char * pszCap )
             EQUAL(pszCap,OLCAlterFieldDefn) )
             return TRUE;
 
-        else if( EQUAL(pszCap,OLCRandomWrite) )
+        else if( EQUAL(pszCap,OLCRandomWrite) ||
+                 EQUAL(pszCap,OLCDeleteFeature) )
             return bHasFid;
     }
 
