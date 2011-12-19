@@ -304,6 +304,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     virtual void        SetSpatialFilter( OGRGeometry * );
     virtual OGRErr      SetAttributeFilter( const char * );
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
+    virtual OGRErr      DeleteFeature( long nFID );
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
