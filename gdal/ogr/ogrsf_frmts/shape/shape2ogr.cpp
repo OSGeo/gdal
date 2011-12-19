@@ -106,8 +106,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 /* -------------------------------------------------------------------- */
 /*      Point.                                                          */
 /* -------------------------------------------------------------------- */
-    else if( psShape->nSHPType == SHPT_POINT
-             || psShape->nSHPType == SHPT_POINTM )
+    else if( psShape->nSHPType == SHPT_POINT )
     {
         poOGR = new OGRPoint( psShape->padfX[0], psShape->padfY[0] );
     }
@@ -115,6 +114,12 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
     {
         poOGR = new OGRPoint( psShape->padfX[0], psShape->padfY[0],
                               psShape->padfZ[0] );
+    }
+    else if(psShape->nSHPType == SHPT_POINTM )
+    {
+        // Read XYM as XYZ
+        poOGR = new OGRPoint( psShape->padfX[0], psShape->padfY[0],
+                              psShape->padfM[0] );
     }
 /* -------------------------------------------------------------------- */
 /*      Multipoint.                                                     */
@@ -171,6 +176,10 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
             if( psShape->nSHPType == SHPT_ARCZ )
                 poOGRLine->setPoints( psShape->nVertices,
                                     psShape->padfX, psShape->padfY, psShape->padfZ );
+            else if( psShape->nSHPType == SHPT_ARCM )
+                // Read XYM as XYZ
+                poOGRLine->setPoints( psShape->nVertices,
+                                    psShape->padfX, psShape->padfY, psShape->padfM );
             else
                 poOGRLine->setPoints( psShape->nVertices,
                                     psShape->padfX, psShape->padfY );
@@ -214,6 +223,12 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
                                     psShape->padfX + nRingStart,
                                     psShape->padfY + nRingStart,
                                     psShape->padfZ + nRingStart );
+                else if( psShape->nSHPType == SHPT_ARCM )
+                    // Read XYM as XYZ
+                    poLine->setPoints( nRingPoints,
+                                    psShape->padfX + nRingStart,
+                                    psShape->padfY + nRingStart,
+                                    psShape->padfM + nRingStart );
                 else
                     poLine->setPoints( nRingPoints,
                                     psShape->padfX + nRingStart,
@@ -921,38 +936,38 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
         switch( hSHP->nShapeType )
         {
           case SHPT_POINT:
-          case SHPT_POINTM:
             poDefn->SetGeomType( wkbPoint );
             break;
 
           case SHPT_POINTZ:
+          case SHPT_POINTM:
             poDefn->SetGeomType( wkbPoint25D );
             break;
 
           case SHPT_ARC:
-          case SHPT_ARCM:
             poDefn->SetGeomType( wkbLineString );
             break;
 
           case SHPT_ARCZ:
+          case SHPT_ARCM:
             poDefn->SetGeomType( wkbLineString25D );
             break;
 
           case SHPT_MULTIPOINT:
-          case SHPT_MULTIPOINTM:
             poDefn->SetGeomType( wkbMultiPoint );
             break;
 
           case SHPT_MULTIPOINTZ:
+          case SHPT_MULTIPOINTM:
             poDefn->SetGeomType( wkbMultiPoint25D );
             break;
 
           case SHPT_POLYGON:
-          case SHPT_POLYGONM:
             poDefn->SetGeomType( wkbPolygon );
             break;
 
           case SHPT_POLYGONZ:
+          case SHPT_POLYGONM:
             poDefn->SetGeomType( wkbPolygon25D );
             break;
             

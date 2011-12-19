@@ -26,7 +26,7 @@ The same applies for SHPT_POLYGON shapefiles, reported as layers of type
 wkbPolygon, but depending on the number of parts of each geometry, the
 actual type can be either OGRPolygon or OGRMultiPolygon.</p>
 
-<p>The new ESRI measure values are discarded if encountered.  MultiPatch 
+<p>ESRI measure values (XYM) are read as XYZ geometries. MultiPatch
 files are read and each patch geometry is turned into a multi-polygon 
 representation with one polygon per triangle in triangle fans and meshes.</p>
 

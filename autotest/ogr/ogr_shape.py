@@ -2745,6 +2745,79 @@ def ogr_shape_58():
     ds = None
 
     return 'success'
+
+###############################################################################
+# Test reading a shape with XYM geometries
+
+def ogr_shape_59():
+
+    if gdaltest.shape_ds is None:
+        return 'skip'
+
+    shp_ds = ogr.Open( 'data/testpointm.shp' )
+    if shp_ds is None:
+        return 'skip'
+    shp_lyr = shp_ds.GetLayer(0)
+
+    feat = shp_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+
+    if geom.GetGeometryName() != 'POINT':
+        gdaltest.post_reason( 'Geometry of wrong type.' )
+        return 'fail'
+
+    if geom.GetCoordinateDimension() != 3:
+        gdaltest.post_reason( 'dimension wrong.' )
+        return 'fail'
+
+    if geom.GetPoint(0) != (1.0,2.0,3.0):
+        print(geom.GetPoint(0))
+        gdaltest.post_reason( 'Did not get right point result.' )
+        return 'fail'
+
+    geom = None
+    feat = None
+
+    shp_ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Test reading a shape with XYZM geometries
+
+def ogr_shape_60():
+
+    if gdaltest.shape_ds is None:
+        return 'skip'
+
+    shp_ds = ogr.Open( 'data/testpointzm.shp' )
+    if shp_ds is None:
+        return 'skip'
+    shp_lyr = shp_ds.GetLayer(0)
+
+    feat = shp_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+
+    if geom.GetGeometryName() != 'POINT':
+        gdaltest.post_reason( 'Geometry of wrong type.' )
+        return 'fail'
+
+    if geom.GetCoordinateDimension() != 3:
+        gdaltest.post_reason( 'dimension wrong.' )
+        return 'fail'
+
+    if geom.GetPoint(0) != (1.0,2.0,3.0):
+        print(geom.GetPoint(0))
+        gdaltest.post_reason( 'Did not get right point result.' )
+        return 'fail'
+
+    geom = None
+    feat = None
+
+    shp_ds.Destroy()
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -2833,6 +2906,8 @@ gdaltest_list = [
     ogr_shape_56,
     ogr_shape_57,
     ogr_shape_58,
+    ogr_shape_59,
+    ogr_shape_60,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
