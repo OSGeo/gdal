@@ -286,9 +286,9 @@ OGRFeature *OGRSQLiteTableLayer::GetFeature( long nFeatureId )
 
     iNextShapeId = nFeatureId;
 
-    osSQL.Printf( "SELECT _rowid_, * FROM '%s' WHERE \"%s\" = %d",
+    osSQL.Printf( "SELECT _rowid_, * FROM '%s' WHERE \"%s\" = %ld",
                   pszEscapedTableName, 
-                  pszFIDColumn, (int) nFeatureId );
+                  pszFIDColumn, nFeatureId );
 
     CPLDebug( "OGR_SQLITE", "exec(%s)", osSQL.c_str() );
 
@@ -470,6 +470,13 @@ int OGRSQLiteTableLayer::TestCapability( const char * pszCap )
         if ( bSpatialiteReadOnly == TRUE)
             return FALSE;
         return poDS->GetUpdate();
+    }
+
+    else if( EQUAL(pszCap,OLCDeleteFeature) )
+    {
+        if ( bSpatialiteReadOnly == TRUE)
+            return FALSE;
+        return poDS->GetUpdate() && pszFIDColumn != NULL;
     }
 
     else if( EQUAL(pszCap,OLCCreateField) )
@@ -1722,3 +1729,48 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
     return OGRERR_NONE;
 }
 
+/************************************************************************/
+/*                           DeleteFeature()                            */
+/************************************************************************/
+
+OGRErr OGRSQLiteTableLayer::DeleteFeature( long nFID )
+
+{
+    CPLString      osSQL;
+    int            rc;
+    char          *pszErrMsg = NULL;
+
+    if( pszFIDColumn == NULL )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Can't delete feature on a layer without FID column.");
+        return OGRERR_FAILURE;
+    }
+
+    if (bSpatialiteReadOnly || !poDS->GetUpdate())
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Can't delete feature on a read-only layer.");
+        return OGRERR_FAILURE;
+    }
+
+    ResetReading();
+
+    osSQL.Printf( "DELETE FROM '%s' WHERE \"%s\" = %ld",
+                  pszEscapedTableName,
+                  pszFIDColumn, nFID );
+
+    CPLDebug( "OGR_SQLITE", "exec(%s)", osSQL.c_str() );
+
+    rc = sqlite3_exec( poDS->GetDB(), osSQL, NULL, NULL, &pszErrMsg );
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "In DeleteFeature(): sqlite3_exec(%s):\n  %s",
+                    osSQL.c_str(), pszErrMsg );
+        sqlite3_free( pszErrMsg );
+        return OGRERR_FAILURE;
+    }
+
+    return OGRERR_NONE;
+}
