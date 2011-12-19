@@ -29,6 +29,11 @@
 ###############################################################################
 
 import sys
+import os
+try:
+    os.putenv('CPL_SHOW_MEM_STATS', '')
+except:
+    pass
 
 # Must to be launched from pam.py/pam_11()
 # Test creating a new proxydb
@@ -112,9 +117,6 @@ if len(sys.argv) == 2 and sys.argv[1] == '-test1':
         print('did not get expected overview count')
         sys.exit(1)
 
-    import testnonboundtoswig
-    testnonboundtoswig.GDALDestroyDriverManager()
-
     print('success')
 
     sys.exit(0)
@@ -145,9 +147,6 @@ if len(sys.argv) == 2 and sys.argv[1] == '-test2':
     if nb_ovr != 1:
         print('did not get expected overview count')
         sys.exit(1)
-
-    import testnonboundtoswig
-    testnonboundtoswig.GDALDestroyDriverManager()
 
     print('success')
 
