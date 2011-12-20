@@ -1197,6 +1197,9 @@ def ogr_sqlite_25():
 
     ds = ogr.Open('/vsicurl/http://download.osgeo.org/gdal/data/sqlite3/polygon.db')
     if ds is None:
+        if gdaltest.gdalurlopen('http://download.osgeo.org/gdal/data/sqlite3/polygon.db') is None:
+            print('cannot open URL')
+            return 'skip'
         return 'fail'
 
     return 'success'
@@ -1320,6 +1323,7 @@ def ogr_spatialite_2():
         return 'fail'
 
     if lyr.GetFeatureCount() != 50:
+        gdaltest.post_reason('did not get expected feature count(1)')
         print(lyr.GetFeatureCount())
         return 'fail'
 

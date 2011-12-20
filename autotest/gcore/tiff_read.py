@@ -940,6 +940,10 @@ def tiff_read_online_2():
     if gdal.GetDriverByName('HTTP') is None:
         return 'skip'
 
+    if gdaltest.gdalurlopen('http://download.osgeo.org/gdal/data/gtiff/utm.tif') is None:
+        print('cannot open URL')
+        return 'skip'
+
     gdal.SetConfigOption('GTIFF_DIRECT_IO', 'YES')
     gdal.SetConfigOption('CPL_VSIL_CURL_ALLOWED_EXTENSIONS', '.tif')
     gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', 'EMPTY_DIR')
