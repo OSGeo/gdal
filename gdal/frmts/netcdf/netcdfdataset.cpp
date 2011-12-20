@@ -1251,7 +1251,7 @@ netCDFDataset::netCDFDataset()
     cdfid            = -1;
     papszSubDatasets = NULL;
     papszMetadata    = NULL;	
-    bBottomUp        = FALSE;
+    bBottomUp        = TRUE;
     nFormat          = NCDF_FORMAT_NONE;
     bIsGdalFile      = FALSE;
     bIsGdalCfFile    = FALSE;
@@ -1583,9 +1583,8 @@ void netCDFDataset::SetProjectionFromVar( int var )
         poDS->bBottomUp = CSLTestBoolean( pszValue ) != FALSE;
     }
     else {
-        // if ( bIsGdalFile && ! bIsGdalCfFile )
-        /* new driver is not not bottom by default any more  */
-       if ( bIsGdalFile ) 
+        /* new driver is bottom-up by default */
+        if ( bIsGdalFile && ! bIsGdalCfFile )
             poDS->bBottomUp = FALSE;
         else
             poDS->bBottomUp = TRUE;
@@ -2327,12 +2326,6 @@ void netCDFDataset::SetProjectionFromVar( int var )
                     node_offset = 0;
                 }
 
-                /* for CF-1 conventions, assume bottom first */
-                /* was here, now is higher up in the code */
-                // if( ( EQUAL( szDimNameY, "lat" ) || EQUAL( szDimNameY, "y" ) )
-                //     && pdfYCoord[0] < pdfYCoord[1] )
-                //     poDS->bBottomUp = TRUE;
-
                 /* Check for reverse order of y-coordinate */
                 if ( yMinMax[0] > yMinMax[1] ) {
                     dummy[0] = yMinMax[1];
@@ -2371,11 +2364,6 @@ void netCDFDataset::SetProjectionFromVar( int var )
         CPLFree( pdfXCoord );
         CPLFree( pdfYCoord );
     }// end if (has dims)
-
-    if ( ! bGotGeoTransform ) {
-        poDS->bBottomUp = TRUE;
-        CPLDebug( "GDAL_netCDF", "set bBottomUp = FALSE because did not get geotransform" );
-    }
 
     CPLDebug( "GDAL_netCDF", 
               "bGotGeogCS=%d bGotCfSRS=%d bGotGeoTransform=%d",
@@ -4161,7 +4149,7 @@ Driver options:
 FORMAT=NC/NC2/NC4/NC4C (COMPRESS=DEFLATE sets FORMAT=NC4C)
 COMPRESS=NONE/DEFLATE (default: NONE)
 ZLEVEL=[1-9] (default: 1)
-WRITE_BOTTOMUP=NO/YES (default: NO)
+WRITE_BOTTOMUP=NO/YES (default: YES)
 WRITE_GDAL_TAGS=YES/NO (default: YES)
 WRITE_LONLAT=YES/NO/IF_NEEDED (default: YES for geographic, NO for projected)
 TYPE_LONLAT=float/double (default: double for geographic, float for projected)
@@ -4169,7 +4157,7 @@ PIXELTYPE=DEFAULT/SIGNEDBYTE (use SIGNEDBYTE to get a signed Byte Band)
 
 Config Options:
 
-GDAL_NETCDF_BOTTOMUP=YES/NO (default:NO) sets the default of WRITE_BOTTOMUP 
+GDAL_NETCDF_BOTTOMUP=YES/NO sets the default of WRITE_BOTTOMUP 
   and also the default behavior for import
 
 */
@@ -4490,11 +4478,6 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     }
 
-    if ( ! poDS->bSetGeoTransform ) {
-        CPLDebug( "GDAL_netCDF", "CreateCopy() did not get geotransform,  setting bBottomUp=TRUE" );
-        poDS->bBottomUp = TRUE;
-     }
-
     pfnProgress( 0.5, NULL, pProgressData );
     
 /* -------------------------------------------------------------------- */
@@ -4688,8 +4671,8 @@ netCDFDataset::ProcessCreationOptions( )
 
     /* netcdf standard is bottom-up */
     /* overriden by config option GDAL_NETCDF_BOTTOMUP and -co option WRITE_BOTTOMUP */
-    // bBottomUp = CSLTestBoolean( CPLGetConfigOption( "GDAL_NETCDF_BOTTOMUP", "YES" ) );
-    bBottomUp = CSLTestBoolean( CPLGetConfigOption( "GDAL_NETCDF_BOTTOMUP", "NO" ) );
+    bBottomUp = CSLTestBoolean( CPLGetConfigOption( "GDAL_NETCDF_BOTTOMUP", "YES" ) );
+    // bBottomUp = CSLTestBoolean( CPLGetConfigOption( "GDAL_NETCDF_BOTTOMUP", "NO" ) );
     bBottomUp = CSLFetchBoolean( papszCreationOptions, "WRITE_BOTTOMUP", bBottomUp );       
 
     /* TODO could add a config option GDAL_NETCDF_PREF=GDAL/CF  */
@@ -4760,7 +4743,7 @@ void GDALRegister_netCDF()
 "   </Option>"
 "   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='1'/>"
 #endif
-"   <Option name='WRITE_BOTTOMUP' type='boolean' default='NO'>"
+"   <Option name='WRITE_BOTTOMUP' type='boolean' default='YES'>"
 "   </Option>"
 "   <Option name='WRITE_GDAL_TAGS' type='boolean' default='YES'>"
 "   </Option>"
