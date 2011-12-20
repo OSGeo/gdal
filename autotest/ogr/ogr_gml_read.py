@@ -563,6 +563,9 @@ def ogr_gml_14():
     if gdaltest.wms_drv is None:
         return 'skip'
 
+    if gdaltest.gdalurlopen('http://download.osgeo.org/gdal/data/gml/xlink3.gml') is None:
+        print('cannot open URL')
+        return 'skip'
 
     files = [ 'xlink1.gml', 'xlink2.gml', 'expected1.gml', 'expected2.gml' ]
     for file in files:
