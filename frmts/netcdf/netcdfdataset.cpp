@@ -2789,10 +2789,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                 bWriteLonLat = TRUE;
         }
         else bWriteLonLat = CSLTestBoolean( pszValue );
-        // if ( bWriteLonLat == TRUE ) {
-            // nLonSize = nRasterXSize * nRasterYSize;
-            // nLatSize = nRasterXSize * nRasterYSize;
-        // }
+
         eLonLatType = NC_FLOAT;
         pszValue =  CSLFetchNameValueDef(papszCreationOptions,"TYPE_LONLAT", "FLOAT");
         if ( EQUAL(pszValue, "DOUBLE" ) ) 
@@ -2822,14 +2819,8 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                 bWriteGDALTags = TRUE; //not desireable if no geotransform
                 bWriteGeoTransform = TRUE;
             }
-            // pszLonDimName = NCDF_DIMNAME_X;
-            // pszLatDimName = NCDF_DIMNAME_Y;
-            // bBottomUp = FALSE; 
         }
 
-        // nLonSize = nRasterXSize;
-        // nLatSize = nRasterYSize;     
- 
         eLonLatType = NC_DOUBLE;
         pszValue =  CSLFetchNameValueDef(papszCreationOptions,"TYPE_LONLAT", "DOUBLE");
         if ( EQUAL(pszValue, "FLOAT" ) ) 
@@ -2843,6 +2834,9 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
               "bIsProjected=%d bIsGeographic=%d bWriteGridMapping=%d bWriteGDALTags=%d bWriteLonLat=%d bBottomUp=%d",
               bIsProjected,bIsGeographic,bWriteGridMapping,bWriteGDALTags,bWriteLonLat,bBottomUp );
 
+    /* exit if nothing to do */
+    if ( !bIsProjected && !bWriteLonLat )
+        return CE_None;
 
 /* -------------------------------------------------------------------- */
 /*      Define dimension names                                          */
@@ -2865,58 +2859,57 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         NCDF_ERR(status);
         status = nc_rename_dim(cdfid, nXDimID, NCDF_DIMNAME_LON );
         NCDF_ERR(status);
-        // anBandDims[0] = nLatDimID;
-        // anBandDims[1] = nLonDimID;       
     }
 
 /* -------------------------------------------------------------------- */
 /*      Write projection attributes                                     */
 /* -------------------------------------------------------------------- */
-    if( bIsProjected ) 
+    if( bWriteGridMapping == TRUE ) 
     {
+    
+        if( bIsProjected ) 
+        {
 /* -------------------------------------------------------------------- */
 /*      Write CF-1.5 compliant Projected attributes                     */
 /* -------------------------------------------------------------------- */
  
-       const OGR_SRSNode *poPROJCS = oSRS.GetAttrNode( "PROJCS" );
-        const char  *pszProjName;
-        pszProjName = oSRS.GetAttrValue( "PROJECTION" );
+            const OGR_SRSNode *poPROJCS = oSRS.GetAttrNode( "PROJCS" );
+            const char  *pszProjName;
+            pszProjName = oSRS.GetAttrValue( "PROJECTION" );
 
-        /* Basic Projection info (grid_mapping and datum) */
-        for( int i=0; poNetcdfSRS_PT[i].WKT_SRS != NULL; i++ ) {
-            if( EQUAL( poNetcdfSRS_PT[i].WKT_SRS, pszProjName ) ) {
-                CPLDebug( "GDAL_netCDF", "GDAL PROJECTION = %s , NCDF PROJECTION = %s", 
-                          poNetcdfSRS_PT[i].WKT_SRS, 
-                          poNetcdfSRS_PT[i].CF_SRS);
-                strcpy( szNetcdfProjection, poNetcdfSRS_PT[i].CF_SRS );
-                CPLDebug( "GDAL_netCDF", "nc_def_var(%d,%s,%d)",
-                          cdfid, poNetcdfSRS_PT[i].CF_SRS, NC_CHAR ); 
-                status = nc_def_var( cdfid, 
-                                     poNetcdfSRS_PT[i].CF_SRS,
-                                     NC_CHAR, 
-                                     0, NULL, &NCDFVarID );
-                NCDF_ERR(status);
-                break;
+            /* Basic Projection info (grid_mapping and datum) */
+            for( int i=0; poNetcdfSRS_PT[i].WKT_SRS != NULL; i++ ) {
+                if( EQUAL( poNetcdfSRS_PT[i].WKT_SRS, pszProjName ) ) {
+                    CPLDebug( "GDAL_netCDF", "GDAL PROJECTION = %s , NCDF PROJECTION = %s", 
+                              poNetcdfSRS_PT[i].WKT_SRS, 
+                              poNetcdfSRS_PT[i].CF_SRS);
+                    strcpy( szNetcdfProjection, poNetcdfSRS_PT[i].CF_SRS );
+                    CPLDebug( "GDAL_netCDF", "nc_def_var(%d,%s,%d)",
+                              cdfid, poNetcdfSRS_PT[i].CF_SRS, NC_CHAR ); 
+                    status = nc_def_var( cdfid, 
+                                         poNetcdfSRS_PT[i].CF_SRS,
+                                         NC_CHAR, 
+                                         0, NULL, &NCDFVarID );
+                    NCDF_ERR(status);
+                    break;
+                }
             }
+            nc_put_att_text( cdfid, NCDFVarID, CF_GRD_MAPPING_NAME,
+                             strlen( szNetcdfProjection ),
+                             szNetcdfProjection );
+            
+            /* Various projection attributes */
+            // PDS: keep in synch with SetProjection function
+            NCDFWriteProjAttribs(poPROJCS, pszProjName, cdfid, NCDFVarID);
+            
         }
-        nc_put_att_text( cdfid, NCDFVarID, CF_GRD_MAPPING_NAME,
-                         strlen( szNetcdfProjection ),
-                         szNetcdfProjection );
-
-        /* Various projection attributes */
-        // PDS: keep in synch with SetProjection function
-        NCDFWriteProjAttribs(poPROJCS, pszProjName, cdfid, NCDFVarID);
-        
-    }
-    else 
-    {
+        else 
+        {
 /* -------------------------------------------------------------------- */
 /*      Write CF-1.5 compliant Geographics attributes                   */
 /*      Note: WKT information will not be preserved (e.g. WGS84)        */
 /* -------------------------------------------------------------------- */
-        
-        if( bWriteGridMapping == TRUE ) 
- 	    {
+
             strcpy( szNetcdfProjection, "crs" );
             CPLDebug( "GDAL_netCDF", "nc_def_var(%d,%s,%d)",
                       cdfid, szNetcdfProjection, NC_CHAR );
@@ -2928,56 +2921,53 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                              CF_PT_LATITUDE_LONGITUDE );
         }
         
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Write CF-1.5 compliant common attributes                        */
 /* -------------------------------------------------------------------- */
 
-    /* DATUM information */
-    dfTemp = oSRS.GetPrimeMeridian();
-    nc_put_att_double( cdfid, NCDFVarID, CF_PP_LONG_PRIME_MERIDIAN,
-                       NC_DOUBLE, 1, &dfTemp );
-    dfTemp = oSRS.GetSemiMajor();
-    nc_put_att_double( cdfid, NCDFVarID, CF_PP_SEMI_MAJOR_AXIS,
-                       NC_DOUBLE, 1, &dfTemp );
-    dfTemp = oSRS.GetInvFlattening();
-    nc_put_att_double( cdfid, NCDFVarID, CF_PP_INVERSE_FLATTENING,
-                       NC_DOUBLE, 1, &dfTemp );
+        /* DATUM information */
+        dfTemp = oSRS.GetPrimeMeridian();
+        nc_put_att_double( cdfid, NCDFVarID, CF_PP_LONG_PRIME_MERIDIAN,
+                           NC_DOUBLE, 1, &dfTemp );
+        dfTemp = oSRS.GetSemiMajor();
+        nc_put_att_double( cdfid, NCDFVarID, CF_PP_SEMI_MAJOR_AXIS,
+                           NC_DOUBLE, 1, &dfTemp );
+        dfTemp = oSRS.GetInvFlattening();
+        nc_put_att_double( cdfid, NCDFVarID, CF_PP_INVERSE_FLATTENING,
+                           NC_DOUBLE, 1, &dfTemp );
 
-
-    /*  Optional GDAL custom projection tags */
-    if ( bWriteGDALTags == TRUE ) {
-
-        *szGeoTransform = '\0';
-        for( int i=0; i<6; i++ ) {
-            sprintf( szTemp, "%.16g ",
-                     adfGeoTransform[i] );
-            strcat( szGeoTransform, szTemp );
+        /*  Optional GDAL custom projection tags */
+        if ( bWriteGDALTags == TRUE ) {
+            
+            *szGeoTransform = '\0';
+            for( int i=0; i<6; i++ ) {
+                sprintf( szTemp, "%.16g ",
+                         adfGeoTransform[i] );
+                strcat( szGeoTransform, szTemp );
+            }
+            CPLDebug( "GDAL_netCDF", "szGeoTranform = %s", szGeoTransform );
+            
+            // if ( strlen(pszProj4Defn) > 0 ) {
+            //     nc_put_att_text( cdfid, NCDFVarID, "proj4",
+            //                      strlen( pszProj4Defn ), pszProj4Defn );
+            // }
+            nc_put_att_text( cdfid, NCDFVarID, NCDF_SPATIAL_REF,
+                             strlen( pszProjection ), pszProjection );
+            /* for now write the geotransform for back-compat or else 
+               the old (1.8.1) driver overrides the CF geotransform with 
+               empty values from dfNN, dfSN, dfEE, dfWE; */
+            /* TODO: fix this in 1.8 branch */
+            if ( bWriteGeoTransform && bSetGeoTransform ) {
+                nc_put_att_text( cdfid, NCDFVarID, NCDF_GEOTRANSFORM,
+                                 strlen( szGeoTransform ),
+                                 szGeoTransform );
+            }
         }
-        CPLDebug( "GDAL_netCDF", "szGeoTranform = %s", szGeoTransform );
-
-        // if ( strlen(pszProj4Defn) > 0 ) {
-        //     nc_put_att_text( cdfid, NCDFVarID, "proj4",
-        //                      strlen( pszProj4Defn ), pszProj4Defn );
-        // }
-        nc_put_att_text( cdfid, NCDFVarID, NCDF_SPATIAL_REF,
-                         strlen( pszProjection ), pszProjection );
-        /* for now write the geotransform for back-compat or else 
-           the old (1.8.1) driver overrides the CF geotransform with 
-           empty values from dfNN, dfSN, dfEE, dfWE; */
-        /* TODO: fix this in 1.8 branch */
-        if ( bWriteGeoTransform && bSetGeoTransform ) {
-            nc_put_att_text( cdfid, NCDFVarID, NCDF_GEOTRANSFORM,
-                             strlen( szGeoTransform ),
-                             szGeoTransform );
-        }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Write Projection var in Bands                                   */
 /* -------------------------------------------------------------------- */
-    if( bWriteGridMapping == TRUE ) {   
+
         for( int i=1; i <= nBands; i++ ) {
             netCDFRasterBand *poSrcBand = 
                 (netCDFRasterBand *) GetRasterBand( i );
@@ -2993,7 +2983,8 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                 NCDF_ERR(status);
             }
         }           
-    }
+
+    }  /* end if( bWriteGridMapping ) */
 
     pfnProgress( 0.10, NULL, pProgressData );    
 
@@ -3278,7 +3269,8 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 
     } // projected
 
-    else  {  /* If not Projected assume Geographic to catch grids without Datum */
+    /* If not Projected assume Geographic to catch grids without Datum */
+    else if ( bWriteLonLat == TRUE )  {  
         	
 /* -------------------------------------------------------------------- */
 /*      Get latitude values                                             */
