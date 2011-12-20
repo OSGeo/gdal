@@ -99,11 +99,17 @@ GDALDataset *BLXDataset::Open( GDALOpenInfo * poOpenInfo )
     //      Open BLX file
     // -------------------------------------------------------------------- 
     poDS->blxcontext = blx_create_context();
-    blxopen(poDS->blxcontext, poOpenInfo->pszFilename, "rb");
-
     if(poDS->blxcontext==NULL)
-	return NULL;
-    
+    {
+        delete poDS;
+        return NULL;
+    }
+    if (blxopen(poDS->blxcontext, poOpenInfo->pszFilename, "rb") != 0)
+    {
+        delete poDS;
+        return NULL;
+    }
+
     if ((poDS->blxcontext->cell_xsize % (1 << (1+BLX_OVERVIEWLEVELS))) != 0 ||
         (poDS->blxcontext->cell_ysize % (1 << (1+BLX_OVERVIEWLEVELS))) != 0)
     {
