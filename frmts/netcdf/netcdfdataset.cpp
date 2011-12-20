@@ -2372,6 +2372,11 @@ void netCDFDataset::SetProjectionFromVar( int var )
         CPLFree( pdfYCoord );
     }// end if (has dims)
 
+    if ( ! bGotGeoTransform ) {
+        poDS->bBottomUp = TRUE;
+        CPLDebug( "GDAL_netCDF", "set bBottomUp = FALSE because did not get geotransform" );
+    }
+
     CPLDebug( "GDAL_netCDF", 
               "bGotGeogCS=%d bGotCfSRS=%d bGotGeoTransform=%d",
               bGotGeogCS, bGotCfSRS, bGotGeoTransform );
@@ -4472,25 +4477,32 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Copy GeoTransform and Projection                                */
 /* -------------------------------------------------------------------- */
+    int bGotGeoTransform = FALSE;
     eErr = poSrcDS->GetGeoTransform( adfGeoTransform );
     if ( eErr == CE_None ) {
         poDS->SetGeoTransform( adfGeoTransform );
-        // set this is to disable AddProjectionVars() from being called
+        /* disable AddProjectionVars() from being called */
+        bGotGeoTransform = TRUE;
         poDS->bSetGeoTransform = FALSE;
     }
 
     pszWKT = poSrcDS->GetProjectionRef( );
     if ( pszWKT ) {
         poDS->SetProjection( pszWKT );
-        // now we can call AddProjectionVars() 
-        poDS->bSetGeoTransform = TRUE;
+        /* now we can call AddProjectionVars() directly */
+        poDS->bSetGeoTransform = bGotGeoTransform;
         pScaledProgress = GDALCreateScaledProgress( 0.20, 0.50, pfnProgress, 
                                                     pProgressData );
         poDS->AddProjectionVars( GDALScaledProgress, pScaledProgress );
         GDALDestroyScaledProgress( pScaledProgress );
 
     }
-    
+
+    if ( ! poDS->bSetGeoTransform ) {
+        CPLDebug( "GDAL_netCDF", "CreateCopy() did not get geotransform,  setting bBottomUp=TRUE" );
+        poDS->bBottomUp = TRUE;
+     }
+
     pfnProgress( 0.5, NULL, pProgressData );
     
 /* -------------------------------------------------------------------- */
