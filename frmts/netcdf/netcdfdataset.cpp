@@ -2340,47 +2340,7 @@ void netCDFDataset::SetProjectionFromVar( int var )
                     yMinMax[0] = dummy[0];
                     yMinMax[1] = dummy[1];
                 }
-
-                /* ----------------------------------------------------------*/
-                /*    Many netcdf files are weather files distributed        */
-                /*    in km for the x/y resolution.  This isn't perfect,     */
-                /*    but geotransforms can be terribly off if this isn't    */
-                /*    checked and accounted for.  Maybe one more level of    */
-                /*    checking (grid_mapping_value#GRIB_param_Dx, or         */
-                /*    x#grid_spacing), but those are not cf tags.            */
-                /*    Have to change metadata value if change Create() to    */
-                /*    write cf tags                                          */
-                /* ----------------------------------------------------------*/
                 
-                //check units for x and y, expand to other values 
-                //and conversions.
-                if( oSRS.IsProjected( ) ) {
-                    strcpy( szTemp, "x" );
-                    strcat( szTemp, "#units" );
-                    pszValue = CSLFetchNameValue( poDS->papszMetadata, 
-                                                  szTemp );
-                    if( pszValue != NULL ) {
-                        pszUnits = pszValue;
-                        if( EQUAL( pszValue, "km" ) ) {
-                            xMinMax[0] = xMinMax[0] * 1000;
-                            xMinMax[1] = xMinMax[1] * 1000;
-                        }
-                    }
-                    strcpy( szTemp, "y" );
-                    strcat( szTemp, "#units" );
-                    pszValue = CSLFetchNameValue( poDS->papszMetadata, 
-                                                  szTemp );
-                    if( pszValue != NULL ) {
-                        /* TODO: see how to deal with diff. values */
-                        // if ( ! EQUAL( pszValue, szUnits ) )
-                        //     strcpy( szUnits, "\0" );
-                        if( EQUAL( pszValue, "km" ) ) {
-                            yMinMax[0] = yMinMax[0] * 1000;
-                            yMinMax[1] = yMinMax[1] * 1000;
-                        }
-                    }
-                }
-
                 adfTempGeoTransform[0] = xMinMax[0];
                 adfTempGeoTransform[2] = 0;
                 adfTempGeoTransform[3] = yMinMax[1];
@@ -2421,24 +2381,51 @@ void netCDFDataset::SetProjectionFromVar( int var )
 /* -------------------------------------------------------------------- */
     if ( bGotGeoTransform ) {
         /* Set SRS Units */
-        /* TODO: check for other units */
-        if ( pszUnits != NULL && ! EQUAL(pszUnits,"") ) {
-            if ( EQUAL(pszUnits,"m") ) {
-                oSRS.SetLinearUnits( CF_UNITS_M, 1.0 );
-                oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", 9001 );
-            }
-            else if ( EQUAL(pszUnits,"km") ) {
-                oSRS.SetLinearUnits( CF_UNITS_M, 1000.0 );
-                oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", 9001 );
-            }
-            else if ( EQUALN(pszUnits,"degrees",7) ) {
-                oSRS.SetAngularUnits( CF_UNITS_D, CPLAtof(SRS_UA_DEGREE_CONV) );
-                oSRS.SetAuthority( "GEOGCS|UNIT", "EPSG", 9108 );
-            }
-            // else 
-            //     oSRS.SetLinearUnits(pszUnits, 1.0);
-        }
 
+        /* check units for x and y */
+        if( oSRS.IsProjected( ) ) {
+            const char *pszUnitsX = NULL;
+            const char *pszUnitsY = NULL;
+
+            strcpy( szTemp, "x" );
+            strcat( szTemp, "#units" );
+            pszValue = CSLFetchNameValue( poDS->papszMetadata, 
+                                          szTemp );
+            if( pszValue != NULL ) 
+                pszUnitsX = pszValue;
+
+            strcpy( szTemp, "y" );
+            strcat( szTemp, "#units" );
+            pszValue = CSLFetchNameValue( poDS->papszMetadata, 
+                                          szTemp );
+            if( pszValue != NULL )
+                pszUnitsY = pszValue;
+
+            /* TODO: what to do if units are not equal in X and Y */
+            if ( (pszUnitsX != NULL) && (pszUnitsY != NULL) && 
+                 EQUAL(pszUnitsX,pszUnitsY) )
+                pszUnits = pszUnitsX;
+
+            /* add units to PROJCS */
+            if ( pszUnits != NULL && ! EQUAL(pszUnits,"") ) {
+                if ( EQUAL(pszUnits,"m") ) {
+                    oSRS.SetLinearUnits( CF_UNITS_M, 1.0 );
+                    oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", 9001 );
+                }
+                else if ( EQUAL(pszUnits,"km") ) {
+                    oSRS.SetLinearUnits( CF_UNITS_M, 1000.0 );
+                    oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", 9001 );
+                }
+                /* TODO check for other values */
+                // else 
+                //     oSRS.SetLinearUnits(pszUnits, 1.0);
+            }
+        }
+        else if ( oSRS.IsGeographic() ) {
+            oSRS.SetAngularUnits( CF_UNITS_D, CPLAtof(SRS_UA_DEGREE_CONV) );
+            oSRS.SetAuthority( "GEOGCS|UNIT", "EPSG", 9122 );
+        }
+        
         /* Set GeoTransform */
         SetGeoTransform( adfTempGeoTransform );
         /* Set Projection */
@@ -2738,6 +2725,8 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
     char   szGeoTransform[ NCDF_MAX_STR_LEN ];
     *szGeoTransform = '\0';
     char *pszWKT = NULL;    
+    const char *pszUnits = NULL;
+    char   szUnits[ NCDF_MAX_STR_LEN ];    
 
     int  bWriteGridMapping = FALSE;
     int  bWriteLonLat = FALSE;
@@ -2745,8 +2734,6 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
     int  bWriteGeoTransform = FALSE;
 
     nc_type eLonLatType = NC_NAT;
-    // int nLonSize = nRasterXSize;
-    // int nLatSize = nRasterYSize;
     int nVarLonID=-1, nVarLatID=-1;
     int nVarXID=-1, nVarYID=-1;
 
@@ -3014,6 +3001,12 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 /* -------------------------------------------------------------------- */
     if( bIsProjected )
     {
+        pszUnits = oSRS.GetAttrValue("PROJCS|UNIT",1);
+        if ( pszUnits == NULL || EQUAL(pszUnits,"1") ) 
+            strcpy(szUnits,"m");
+        else if ( EQUAL(pszUnits,"1000") ) 
+            strcpy(szUnits,"km");
+
         /* X */
         int anXDims[1];
         anXDims[0] = nXDimID;
@@ -3029,8 +3022,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         nc_put_att_text( cdfid, NCDFVarID, CF_LNG_NAME,
                          strlen("x coordinate of projection"),
                          "x coordinate of projection" );
-        /* TODO verify this is ok */
-        nc_put_att_text( cdfid, NCDFVarID, CF_UNITS, 1, "m" ); 
+        nc_put_att_text( cdfid, NCDFVarID, CF_UNITS, strlen(szUnits), szUnits ); 
 
         /* Y */
         int anYDims[1];
@@ -3047,7 +3039,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         nc_put_att_text( cdfid, NCDFVarID, CF_LNG_NAME,
                          strlen("y coordinate of projection"),
                          "y coordinate of projection" );
-        nc_put_att_text( cdfid, NCDFVarID, CF_UNITS, 1, "m" ); 
+        nc_put_att_text( cdfid, NCDFVarID, CF_UNITS, strlen(szUnits), szUnits ); 
     }
 
 /* -------------------------------------------------------------------- */
