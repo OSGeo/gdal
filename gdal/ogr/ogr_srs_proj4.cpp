@@ -2063,12 +2063,12 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         pszPROJ4Ellipse = "WGS84";
     }
-    else if( EQUAL(pszDatum,"North_American_Datum_1927") )
+    else if( pszDatum != NULL && EQUAL(pszDatum,"North_American_Datum_1927") )
     {
 //        pszPROJ4Ellipse = "clrk66:+datum=nad27"; /* NAD 27 */
         pszPROJ4Ellipse = "clrk66";
     }
-    else if( EQUAL(pszDatum,"North_American_Datum_1983") )
+    else if( pszDatum != NULL && EQUAL(pszDatum,"North_American_Datum_1983") )
     {
 //        pszPROJ4Ellipse = "GRS80:+datum=nad83";       /* NAD 83 */
         pszPROJ4Ellipse = "GRS80";
