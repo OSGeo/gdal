@@ -151,10 +151,10 @@ def ogr_feature_cp_1():
     if not check( dst_feature, 'field_datetime', None ):
         return 'failure'
 
-    if not check( dst_feature, 'field_integerlist', None ):
+    if not check( dst_feature, 'field_integerlist', 15 ):
         return 'failure'
 
-    if not check( dst_feature, 'field_reallist', None ):
+    if not check( dst_feature, 'field_reallist', 17 ):
         return 'failure'
     
     if not check( dst_feature, 'field_stringlist', None ):
@@ -194,10 +194,10 @@ def ogr_feature_cp_2():
     if not check( dst_feature, 'field_datetime', None ):
         return 'failure'
 
-    if not check( dst_feature, 'field_integerlist', None ):
+    if not check( dst_feature, 'field_integerlist', 15.0 ):
         return 'failure'
 
-    if not check( dst_feature, 'field_reallist', None ):
+    if not check( dst_feature, 'field_reallist', 17.5 ):
         return 'failure'
     
     if not check( dst_feature, 'field_stringlist', None ):
@@ -419,10 +419,10 @@ def ogr_feature_cp_8():
     dst_feature = mk_dst_feature( src_feature, ogr.OFTIntegerList )
     dst_feature.SetFrom( src_feature )
 
-    if not check( dst_feature, 'field_integer', None ):
+    if not check( dst_feature, 'field_integer', [17] ):
         return 'failure'
 
-    if not check( dst_feature, 'field_real', None ):
+    if not check( dst_feature, 'field_real', [18] ):
         return 'failure'
 
     if not check( dst_feature, 'field_string', None ):
@@ -443,7 +443,7 @@ def ogr_feature_cp_8():
     if not check( dst_feature, 'field_integerlist', [10, 20, 30] ):
         return 'failure'
 
-    if not check( dst_feature, 'field_reallist', None ):
+    if not check( dst_feature, 'field_reallist', [123,567] ):
         return 'failure'
     
     if not check( dst_feature, 'field_stringlist', None ):
@@ -460,10 +460,10 @@ def ogr_feature_cp_9():
     dst_feature = mk_dst_feature( src_feature, ogr.OFTRealList )
     dst_feature.SetFrom( src_feature )
 
-    if not check( dst_feature, 'field_integer', None ):
+    if not check( dst_feature, 'field_integer', [17.0] ):
         return 'failure'
 
-    if not check( dst_feature, 'field_real', None ):
+    if not check( dst_feature, 'field_real', [18.4] ):
         return 'failure'
 
     if not check( dst_feature, 'field_string', None ):
@@ -481,7 +481,7 @@ def ogr_feature_cp_9():
     if not check( dst_feature, 'field_datetime', None ):
         return 'failure'
 
-    if not check( dst_feature, 'field_integerlist', None ):
+    if not check( dst_feature, 'field_integerlist', [10.0,20.0,30.0] ):
         return 'failure'
 
     if not check( dst_feature, 'field_reallist', [123.5, 567.0] ):
