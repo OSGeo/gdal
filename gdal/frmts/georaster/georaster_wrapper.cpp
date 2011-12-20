@@ -646,12 +646,12 @@ bool GeoRasterWrapper::Create( char* pszDescription,
 
         if( pszInsert )
         {
-	        sValues = pszInsert;
+            sValues = pszInsert;
 
             if( pszInsert[0] == '(' && sValues.ifind( "VALUES" ) == std::string::npos )
-			{
-				sValues = CPLSPrintf( "VALUES %s", pszInsert );
-			}
+            {
+                sValues = CPLSPrintf( "VALUES %s", pszInsert );
+            }
         }
         else
         {
@@ -2562,14 +2562,14 @@ char* GeoRasterWrapper::GetVAT( int nBand )
 
 bool GeoRasterWrapper::FlushMetadata()
 {
+    if( bFlushBlock )
+    {
+        FlushBlock( nCacheBlockId );
+    }
+
     if( ! bFlushMetadata )
     {
         return true;
-    }
-
-    if( bFlushBlock ) // Flush the block in cache
-    {
-        FlushBlock( nCacheBlockId );
     }
 
     bFlushMetadata = false;
