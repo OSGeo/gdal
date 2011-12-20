@@ -1,6 +1,6 @@
 = *Intermediate* GDAL/OGR 1.9.0 release notes (unreleased version) =
 
-Established from r21484 up to r23295
+Established from r21484 up to r23606
 
 == In a nutshell... ==
 
@@ -641,6 +641,7 @@ Core:
  * Fix parsing of WKT geometries mixing 2D and 3D parts
  * OGR_Dr_CopyDataSource() and OGRSFDriver::CopyDataSource() : make sure
    that the driver is attached to the created datasource (#4350)
+ * OGRFeature::SetFrom() supports more conversions between field types. 
 
 OGRSpatialReference:
  * Update to EPSG 7.9 database
@@ -956,6 +957,7 @@ Shapefile driver:
  * Recognize blank values for Date fields as null values (#4265)
  * Recognize 'NULL' as a valid value for SHPT creation option as documented
  * Check that we are not trying to add too many fields.
+ * Support reading measure values as Z coordinate.
 
 SQLite/Spatialite driver:
  * Spatialite: major write support improvements (creation/update of Spatialite DB now limited
@@ -971,6 +973,7 @@ SQLite/Spatialite driver:
    shapefile as a VirtualShape with 'VirtualShape:shapefile.shp' syntax as a datasource
  * Implement RFC35 (DeleteField, AlterFieldDefn, ReorderFields)
  * Implement DeleteDataSource()
+ * Implement DeleteFeature()
  * Implement SetFeature() by using UPDATE instead of DELETE / INSERT
  * Add capability to use VSI Virtual File API when needed (if SQLite >= 3.6.0)
  * Make CreateDataSource(':memory:') work
@@ -982,6 +985,7 @@ SQLite/Spatialite driver:
    but filled with the column names, and not their values
  * Map 'DECIMAL' columns to OGR real type (#4346)
  * Add OGR_SQLITE_CACHE configuration option for performance enhancements
+ * Try to reuse INSERT statement to speed up bulk loading.
 
 SVG driver:
  * New for GDAL/OGR 1.9.0
