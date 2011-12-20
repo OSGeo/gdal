@@ -490,15 +490,20 @@ def netcdf_10():
 
     gt = ds.GetGeoTransform( )
 
-    if gt != (-1897186.0290038721, 
-               5079.3608398440065, 
-               0.0, 
-               2674684.0244560046, 
-               0.0, 
-               -5079.4721679684635):
+    gt1 = ( -1897186.0290038721, 5079.3608398440065, 
+            0.0,2674684.0244560046, 
+            0.0,-5079.4721679684635 )
+    gt2 = ( -1897.186029003872, 5.079360839844003,
+             0.0, 2674.6840244560044, 
+             0.0,-5.079472167968456 )
 
-        gdaltest.post_reason( 'Incorrect geotransform' )
-        return 'fail'
+    if gt != gt1:
+        sr = osr.SpatialReference()
+        sr.ImportFromWkt( prj )
+        #new driver uses UNIT vattribute instead of scaling values
+        if not (sr.GetAttrValue("PROJCS|UNIT",1)=="1000" and gt == gt2) :
+            gdaltest.post_reason( 'Incorrect geotransform, got '+str(gt) )
+            return 'fail'
 
     ds = None
 
