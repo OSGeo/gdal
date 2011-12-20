@@ -394,7 +394,7 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     nGifErr = DGifSlurp( hGifFile );
 
-    if( nGifErr != GIF_OK )
+    if( nGifErr != GIF_OK || hGifFile->SavedImages == NULL )
     {
         VSIFCloseL( fp );
         DGifCloseFile(hGifFile);
