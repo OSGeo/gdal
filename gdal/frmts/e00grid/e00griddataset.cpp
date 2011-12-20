@@ -534,13 +534,13 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
     const char* pszLine;
     /* read EXP  0 or EXP  1 line */
     pszLine = CPLReadLine2L(fp, 81, NULL);
-    int bCompressed = EQUALN(pszLine, "EXP  1", 6);
     if (pszLine == NULL)
     {
         CPLDebug("E00GRID", "Bad 1st line");
         delete poDS;
         return NULL;
     }
+    int bCompressed = EQUALN(pszLine, "EXP  1", 6);
 
     E00ReadPtr e00ReadPtr = NULL;
     if (bCompressed)
