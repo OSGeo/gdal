@@ -18,6 +18,7 @@ Established from r21484 up to r23606
 == Backward compatibility issues ==
 
  * GTiff: ensure false easting/northing in geotiff geokeys are treated as being in geosys units (#3901)
+ * GRIB: Fix grid vs cell-center convention (#2637)
  * OGR SQL: with DISTINCT, consider null values are such, and not as empty string (#4353)
 
 == GDAL/OGR 1.9.0 - General Changes ==
@@ -251,7 +252,7 @@ GIF driver:
  * Make CreateCopy() more friendly with outputing in /vsistdout/
 
 GRIB driver:
- * Fix grid vs cell-center convention wrong
+ * Fix grid vs cell-center convention (#2637)
  * use /vsi for all jpeg2000 files now
  * Fix to allow GFS data to show up properly (#2550)
  * Added a ConfigOption in GRIB driver to not normalize units to metric when reading the data
