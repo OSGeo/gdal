@@ -587,7 +587,11 @@ int HFAGetBandNoData( HFAHandle hHFA, int nBand, double *pdfNoData )
     HFABand *poBand = hHFA->papoBand[nBand-1];
 
     if( !poBand->bNoDataSet && poBand->nOverviews > 0 )
+    {
       poBand = poBand->papoOverviews[0];
+      if( poBand == NULL )
+          return FALSE;
+    }
 
     *pdfNoData = poBand->dfNoData;
     return poBand->bNoDataSet;
@@ -661,6 +665,10 @@ CPLErr HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int iOverview,
         return CE_Failure;
     }
     poBand = poBand->papoOverviews[iOverview];
+    if( poBand == NULL )
+    {
+        return CE_Failure;
+    }
 
     if( pnXSize != NULL )
         *pnXSize = poBand->nWidth;

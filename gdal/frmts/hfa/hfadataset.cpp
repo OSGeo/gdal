@@ -434,9 +434,13 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
         int nHFADataTypeO;
 
         nOverviews = 0;
-        HFAGetOverviewInfo( hHFA, nBand, iOverview,
-                            &nRasterXSize, &nRasterYSize,
-                            &nBlockXSize, &nBlockYSize, &nHFADataTypeO  );
+        if (HFAGetOverviewInfo( hHFA, nBand, iOverview,
+                                &nRasterXSize, &nRasterYSize,
+                                &nBlockXSize, &nBlockYSize, &nHFADataTypeO ) != CE_None)
+        {
+            nRasterXSize = nRasterYSize = 0;
+            return;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      If we are an 8bit overview of a 1bit layer, we need to mark     */
@@ -932,6 +936,11 @@ void HFARasterBand::EstablishOverviews()
         {
             papoOverviewBands[iOvIndex] =
                 new HFARasterBand( (HFADataset *) poDS, nBand, iOvIndex );
+            if (papoOverviewBands[iOvIndex]->GetXSize() == 0)
+            {
+                delete papoOverviewBands[iOvIndex];
+                papoOverviewBands[iOvIndex] = NULL;
+            }
         }
     }
 }
