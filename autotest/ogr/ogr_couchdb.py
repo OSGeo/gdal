@@ -54,11 +54,14 @@ def ogr_couchdb_init():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ogrtest.couchdb_test_db = 'http://gdalautotest.iriscouch.com'
+    if 'COUCHDB_TEST_SERVER' in os.environ:
+        ogrtest.couchdb_test_server = os.environ['COUCHDB_TEST_SERVER']
+    else:
+        ogrtest.couchdb_test_server = 'http://gdalautotest.iriscouch.com'
     ogrtest.couchdb_test_layer = 'poly'
 
-    if gdaltest.gdalurlopen(ogrtest.couchdb_test_db) is None:
-        print('cannot open %s' % ogrtest.couchdb_test_db)
+    if gdaltest.gdalurlopen(ogrtest.couchdb_test_server) is None:
+        print('cannot open %s' % ogrtest.couchdb_test_server)
         ogrtest.couchdb_drv = None
         return 'skip'
 
@@ -71,7 +74,7 @@ def ogr_couchdb_GetFeatureCount():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_db, ogrtest.couchdb_test_layer))
+    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_server, ogrtest.couchdb_test_layer))
     if ds is None:
         return 'fail'
 
@@ -94,7 +97,7 @@ def ogr_couchdb_GetNextFeature():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_db, ogrtest.couchdb_test_layer))
+    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_server, ogrtest.couchdb_test_layer))
     if ds is None:
         return 'fail'
 
@@ -120,7 +123,7 @@ def ogr_couchdb_GetFeature():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_db, ogrtest.couchdb_test_layer))
+    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_server, ogrtest.couchdb_test_layer))
     if ds is None:
         return 'fail'
 
@@ -146,7 +149,7 @@ def ogr_couchdb_GetSpatialRef():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_db, ogrtest.couchdb_test_layer))
+    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_server, ogrtest.couchdb_test_layer))
     if ds is None:
         return 'fail'
 
@@ -180,7 +183,7 @@ def ogr_couchdb_GetExtent():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_db, ogrtest.couchdb_test_layer))
+    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_server, ogrtest.couchdb_test_layer))
     if ds is None:
         return 'fail'
 
@@ -207,7 +210,10 @@ def ogr_couchdb_SetSpatialFilter():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_db, ogrtest.couchdb_test_layer))
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_server, ogrtest.couchdb_test_layer))
     if ds is None:
         return 'fail'
 
@@ -251,7 +257,7 @@ def ogr_couchdb_SetAttributeFilter():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_db, ogrtest.couchdb_test_layer))
+    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_server, ogrtest.couchdb_test_layer))
     if ds is None:
         return 'fail'
 
@@ -295,7 +301,7 @@ def ogr_couchdb_ExecuteSQLStats():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_db, ogrtest.couchdb_test_layer))
+    ds = ogr.Open('couchdb:%s/%s' % (ogrtest.couchdb_test_server, ogrtest.couchdb_test_layer))
     if ds is None:
         return 'fail'
 
@@ -320,7 +326,7 @@ def ogr_couchdb_RowLayer():
     if ogrtest.couchdb_drv is None:
         return 'skip'
 
-    ds = ogr.Open('couchdb:%s/poly/_design/ogr_filter_EAS_ID/_view/filter?include_docs=true' % ogrtest.couchdb_test_db)
+    ds = ogr.Open('couchdb:%s/poly/_design/ogr_filter_EAS_ID/_view/filter?include_docs=true' % ogrtest.couchdb_test_server)
     if ds is None:
         return 'fail'
 

@@ -124,7 +124,7 @@ def ogr_gft_write():
     ds = ogr.Open('GFT:auth=%s' % ogrtest.gft_auth_key, update = 1)
     if ds is None:
         ogrtest.gft_can_write = False
-        return 'fail'
+        return 'skip'
     ogrtest.gft_can_write = True
 
     import random
