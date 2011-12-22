@@ -150,6 +150,8 @@ class CPL_DLL OGRGeometry
     virtual OGRGeometry *Simplify(double dTolerance) const;
     OGRGeometry *SimplifyPreserveTopology(double dTolerance) const;
 
+    virtual OGRGeometry *Polygonize() const;
+
     // backward compatibility to non-standard method names. 
     OGRBoolean  Intersect( OGRGeometry * ) const;
     OGRBoolean  Equal( OGRGeometry * ) const;

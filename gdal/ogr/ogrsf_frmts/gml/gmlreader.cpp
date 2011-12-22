@@ -172,6 +172,9 @@ GMLReader::GMLReader(int bUseExpatParserPreferably,
     m_pszFilteredClassName = NULL;
 
     m_bSequentialLayers = -1;
+	
+    /* Must be in synced in OGR_G_CreateFromGML(), OGRGMLLayer::OGRGMLLayer() and GMLReader::GMLReader() */
+    m_bFaceHoleNegative = CSLTestBoolean(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO"));
 }
 
 /************************************************************************/
@@ -1280,7 +1283,8 @@ int GMLReader::PrescanForSchema( int bGetExtents )
         {
             OGRGeometry *poGeometry = GML_BuildOGRGeometryFromList(
                 papsGeometry, TRUE, m_bInvertAxisOrderIfLatLong,
-                NULL, m_bConsiderEPSGAsURN, m_bGetSecondaryGeometryOption, hCacheSRS);
+                NULL, m_bConsiderEPSGAsURN, m_bGetSecondaryGeometryOption, 
+                hCacheSRS, m_bFaceHoleNegative );
 
             if( poGeometry != NULL )
             {
