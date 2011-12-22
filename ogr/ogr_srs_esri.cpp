@@ -1445,6 +1445,28 @@ OGRErr OSRMorphToESRI( OGRSpatialReferenceH hSRS )
  * datums to "standard" names, as defined by Adam Gawne-Cain's reference
  * translation of EPSG to WKT for the CT specification.
  *
+ * Starting with GDAL 1.9.0, missing parameters in TOWGS84, DATUM or GEOGCS
+ * nodes can be added to the WKT, comparing existing WKT parameters to GDAL's 
+ * databases.  Note that this optional procedure is very conservative and should
+ * not introduce false information into the WKT defintion (altough caution
+ * should be advised when activating it). Needs the Configuration Option 
+ * GDAL_FIX_ESRI_WKT be set to one of the following values (TOWGS84 is
+ * recommended for proper datum shift calculations):
+ *
+ * <b>GDAL_FIX_ESRI_WKT values</b>
+ * <table border=0>
+ * <tr><td>&nbsp;&nbsp;</td><td><b>TOWGS84</b></td><td>&nbsp;&nbsp;</td><td>
+ * Adds missing TOWGS84 parameters (necessary for datum transformations),
+ * based on named datum and spheroid values.</td></tr>
+ * <tr><td>&nbsp;&nbsp;</td><td><b>DATUM</b></td><td>&nbsp;&nbsp;</td><td>
+ * Adds ESPG AUTHORITY nodes and sets SPHEROID name to OGR spec.</td></tr>
+ * <tr><td>&nbsp;&nbsp;</td><td><b>GEOGCS</b></td><td>&nbsp;&nbsp;</td><td>
+ * Adds ESPG AUTHORITY nodes and sets GEOGCS, DATUM and SPHEROID
+ * names to OGR spec. Effectively replaces GEOGCS node with the result of
+ * importFromEPSG(n), using EPSG code n corresponding to the existing GEOGCS. 
+ * Does not impact PROJCS values.</td></tr>
+ * </table>
+ *
  * This does the same as the C function OSRMorphFromESRI().
  *
  * @return OGRERR_NONE unless something goes badly wrong.
