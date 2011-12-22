@@ -2613,7 +2613,7 @@ void netCDFDataset::SetProjectionFromVar( int var )
               "bGotGeogCS=%d bGotCfSRS=%d bGotCfGT=%d bGotGdalSRS=%d bGotGdalGT=%d",
               bGotGeogCS, bGotCfSRS, bGotCfGT, bGotGdalSRS, bGotGdalGT );
 
-    if ( !bGotCfGT && !bGotGdalGT ) {
+    if ( !bGotCfGT && !bGotGdalGT )
         CPLError(CE_Warning, 1,"did not get geotransform from CF nor GDAL!");      
 
     if ( !bGotGeogCS && !bGotCfSRS && !bGotGdalSRS && !bGotCfGT)
