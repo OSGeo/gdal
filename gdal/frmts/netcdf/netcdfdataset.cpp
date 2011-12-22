@@ -1749,6 +1749,7 @@ void netCDFDataset::SetProjectionFromVar( int var )
 /* -------------------------------------------------------------------- */
 
             if( EQUAL( pszValue, CF_PT_AEA ) ) {
+
                 char **papszStdParallels = NULL;
 		
                 dfCenterLon = 
@@ -1817,6 +1818,7 @@ void netCDFDataset::SetProjectionFromVar( int var )
 /* -------------------------------------------------------------------- */
 
             else if( EQUAL( pszValue, CF_PT_CEA ) || EQUAL( pszValue, CF_PT_LCEA ) ) {
+
                 char **papszStdParallels = NULL;
 
                 papszStdParallels = 
@@ -1852,6 +1854,7 @@ void netCDFDataset::SetProjectionFromVar( int var )
                 if( !bGotGeogCS )
                     oSRS.SetWellKnownGeogCS( "WGS84" );
 		
+                CSLDestroy( papszStdParallels );
             }
 
 /* -------------------------------------------------------------------- */
@@ -1974,7 +1977,6 @@ void netCDFDataset::SetProjectionFromVar( int var )
                             /* use Snyder eq. 15-4 to compute dfScale from dfStdP1 and dfCenterLat */
                             /* only tested for dfStdP1=dfCenterLat and (25,26), needs more data for testing */
                             /* other option: use the 2SP variant - how to compute new standard parallels? */
-                            #define NCDF_PI 3.14159265358979323846
                             dfScale = ( cos(dfStdP1) * pow( tan(NCDF_PI/4 + dfStdP1/2), sin(dfStdP1) ) ) /
                                 ( cos(dfCenterLat) * pow( tan(NCDF_PI/4 + dfCenterLat/2), sin(dfCenterLat) ) );
                         }
@@ -2016,6 +2018,7 @@ void netCDFDataset::SetProjectionFromVar( int var )
 /* -------------------------------------------------------------------- */
 		  
             else if ( EQUAL ( pszValue, CF_PT_MERCATOR ) ) {
+
                 char **papszStdParallels = NULL;
 
                 /* If there is a standard_parallel, know it is Mercator 2SP */
@@ -2073,6 +2076,8 @@ void netCDFDataset::SetProjectionFromVar( int var )
 
                 if( !bGotGeogCS )
                     oSRS.SetWellKnownGeogCS( "WGS84" );
+
+                CSLDestroy( papszStdParallels );
             }
 
 /* -------------------------------------------------------------------- */
@@ -2111,28 +2116,59 @@ void netCDFDataset::SetProjectionFromVar( int var )
 /* -------------------------------------------------------------------- */
 		  
             else if ( EQUAL ( pszValue, CF_PT_POLAR_STEREO ) ) {
-                /* Note: reversing our current mapping on export, from
-                   'latitude_of_origin' in OGC WKT to 'standard_parallel' in CF-1
-                   See comments in netcdfdataset.h for this projection.  */
+
                 char **papszStdParallels = NULL;
 
-                papszStdParallels = 
-                    FetchStandardParallels( szGridMappingValue );
-                
-                if (NULL != papszStdParallels) {
-                    dfCenterLat = CPLAtofM( papszStdParallels[0] );
-                }
-                else {
-                    //TODO: not sure how to handle if CF-1 doesn't include a std_parallel:
-                    dfCenterLat = 0.0; //just to avoid warning at compilation
-                    CPLError( CE_Failure, CPLE_NotSupported, 
-                              "The NetCDF driver does not yet to support import of CF-1 Polar stereographic "
-                              "without a std_parallel attribute.\n" );
-                }
                 dfScale = 
                     poDS->FetchCopyParm( szGridMappingValue, 
                                          CF_PP_SCALE_FACTOR_ORIGIN, 
-                                         1.0 );
+                                         -1.0 );
+                
+                papszStdParallels = 
+                    FetchStandardParallels( szGridMappingValue );
+                
+                /* CF allows the use of standard_parallel (lat_ts) OR scale_factor (k0),
+                   make sure we have standard_parallel, using Snyder eq. 22-7
+                   with k=1 and lat=standard_parallel */
+                if ( papszStdParallels != NULL ) {
+                    dfStdP1 = CPLAtofM( papszStdParallels[0] );
+                    /* compute scale_factor from standard_parallel */
+                    /* this creates WKT that is inconsistent, don't write for now 
+                       also proj4 does not seem to use this parameter */                    
+                    // dfScale = ( 1.0 + fabs( sin( dfStdP1 * NCDF_PI / 180.0 ) ) ) / 2.0;
+                }
+                else {
+                    if ( ! CPLIsEqual(dfScale,-1.0) ) {
+                        /* compute standard_parallel from scale_factor */
+                        dfStdP1 = asin( 2*dfScale - 1 ) * 180.0 / NCDF_PI;
+
+                        /* fetch latitude_of_projection_origin (+90/-90) 
+                           used here for the sign of standard_parallel */
+                        double dfLatProjOrigin = 
+                            poDS->FetchCopyParm( szGridMappingValue, 
+                                                 CF_PP_LAT_PROJ_ORIGIN, 
+                                                 0.0 );
+                        if ( ! CPLIsEqual(dfLatProjOrigin,90.0)  &&
+                             ! CPLIsEqual(dfLatProjOrigin,-90.0) ) {
+                            CPLError( CE_Failure, CPLE_NotSupported, 
+                                      "Polar Stereographic must have a %s parameter equal to +90 or -90\n.",
+                                      CF_PP_LAT_PROJ_ORIGIN );
+                            dfLatProjOrigin = 90.0;
+                        }
+                        if ( CPLIsEqual(dfLatProjOrigin,-90.0) )
+                            dfStdP1 = - dfStdP1;
+                    }
+                    else {
+                        dfStdP1 = 0.0; //just to avoid warning at compilation
+                        CPLError( CE_Failure, CPLE_NotSupported, 
+                                  "The NetCDF driver does not support import of CF-1 Polar stereographic "
+                                  "without standard_parallel and scale_factor_at_projection_origin parameters.\n" );
+                    }
+                }
+
+                /* set scale to default value 1.0 if it was not set */
+                if ( CPLIsEqual(dfScale,-1.0) )
+                    dfScale = 1.0;
 
                 dfCenterLon = 
                     poDS->FetchCopyParm( szGridMappingValue, 
@@ -2147,11 +2183,14 @@ void netCDFDataset::SetProjectionFromVar( int var )
                                          CF_PP_FALSE_NORTHING, 0.0 );
 
                 bGotCfSRS = TRUE;
-                oSRS.SetPS( dfCenterLat, dfCenterLon, dfScale, 
+                /* map CF CF_PP_STD_PARALLEL_1 to WKT SRS_PP_LATITUDE_OF_ORIGIN */
+                oSRS.SetPS( dfStdP1, dfCenterLon, dfScale, 
                             dfFalseEasting, dfFalseNorthing );
 
                 if( !bGotGeogCS )
                     oSRS.SetWellKnownGeogCS( "WGS84" );
+
+                CSLDestroy( papszStdParallels );
             }
 
 /* -------------------------------------------------------------------- */
@@ -5028,7 +5067,7 @@ void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
 
                 dfValue = oValIter->second;
                 bWriteVal = TRUE;
-                
+
                 /* special case for PS (Polar Stereographic) grid
                    See comments in netcdfdataset.h for this projection. */
                 if ( EQUAL( SRS_PP_LATITUDE_OF_ORIGIN, pszGDALAtt->c_str() ) &&
@@ -5039,6 +5078,7 @@ void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
                         oOutList.push_back( std::make_pair( CF_PP_LAT_PROJ_ORIGIN, 
                                                             dfLatPole ) );
                 }              
+
                 /* special case for LCC-1SP
                    See comments in netcdfdataset.h for this projection. */
                 else if ( EQUAL( SRS_PP_SCALE_FACTOR, pszGDALAtt->c_str() ) &&
@@ -5065,7 +5105,7 @@ void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
                             else {
                                 CPLError( CE_Failure, CPLE_NotSupported, 
                                           "NetCDF driver export of LCC-1SP with no standard_parallel1 "
-                                          "and no latitude_of_origin is not suuported (bug #3324).");
+                                          "and no latitude_of_origin is not suported (bug #3324).");
                             }
                         }                      
                     }
