@@ -181,6 +181,46 @@ gml:xlink and gml:id relations are the followings:<ul>
 	</ul></li>
 </ul>
 
+<h2>TopoSurface interpretation rules [polygons and internal holes]</h2>
+
+<p>
+Starting since OGR 1.9.0 the GML driver is able to recognize two different interpretation
+rules for TopoSurface when a polygon contains any internal hole:
+<ul>
+	<li>the previously supported interpretation rule assumed that:<ul>
+		<li>each TopoSurface may be represented as a collection of many Faces</li>
+		<li><i>positive</i> Faces [i.e. declaring <b>orientation="+"</b>] are assumed to
+		    represent the Exterior Ring of some Polygon.</li>
+		<li><i>negative</i> Faces [i.e. declaring <b>orientation="-"</b>] are assumed to
+		    represent an Interior Ring (aka <i>hole</i>) belonging to the latest declared 
+			Exterior Ring.</li>
+		<li>ordering any Edge used to represent each Ring is important: each Edge is expected
+			to be exactly adjacent to the next one.</li>
+	</li></ul>
+	<li>the new interpretation rule now assumes that:<ul>
+		<li>each TopoSurface may be represented as a collection of many Faces</li>
+		<li>the declared <b>orientation</b> for any Face has nothing to deal with Exterior/Interior Rings</li>
+		<li>each Face is now intended to represent a complete Polygon, eventually including any possible Interior 
+			Ring (<i>holes</i>)</li>
+		<li>the relative ordering of any Edge composing the same Face is completely not relevant</li> 
+	</li></ul>
+</ul>
+		
+The newest interpretation seems to fully match GML 3 standard recommendations; so this latest
+is now assumed to be the default interpretation supported by OGR.</p>
+
+<p><b>NOTE</b> : Using the newest interpretation requires GDAL/OGR to be built against the GEOS library.</p>
+
+<p>Using the <b>GML_FACE_HOLE_NEGATIVE</b> configuration option you can anyway select the
+actual interpretation to be applied when parsing GML 3 Topologies:
+<ul>
+	<li>setting <b>GML_FACE_HOLE_NEGATIVE NO</b> (<i>default</i> option) will activate
+	    the newest interpretation rule</li>
+	<li>but explicitly setting <b>GML_FACE_HOLE_NEGATIVE YES</b> still enables to activate
+	    the old interpretation rule</li>
+</ul>
+</p>
+
 <h2>Encoding issues</h2>
 
 Expat library supports reading the following built-in encodings :
