@@ -1,6 +1,6 @@
 = GDAL/OGR 1.9.0 beta1 release notes =
 
-Established from r21484 up to r23606
+Established from r21484 up to r23639
 
 == In a nutshell... ==
 
@@ -10,6 +10,7 @@ Established from r21484 up to r23606
  * Encoding support for shapefile/dbf (#882)
  * RFC 35: Delete, reorder and alter field definitions of OGR layers
  * RFC 37: Add mechanism to provide user data to CPLErrorHandler (#4295)
+ * gdalsrsinfo: new supported utility to report SRS in various form (supercedes testepsg)
 
 == New installed files ==
 
@@ -182,6 +183,7 @@ CTG driver:
  * Read USGS LULC Composite Theme Grid files
 
 DIMAP driver:
+ * Add support for DIMAP2
  * Check underlying raster for SRS. There are cases where HORIZONTAL_CS_CODE is empty and the underlying raster is georeferenced
 
 E00GRID driver:
@@ -247,6 +249,7 @@ GeoRaster driver:
  * change BLOCKING option to OPTIMALPADDING
  * fix 'cannot specify columns on insert create option' (#4206)
  * Fix ULTCoordinate Rows/Columns swapping (#3718)
+ * Fix loading of small images, FlushCache issue (#4363)
 
 GIF driver:
  * Make CreateCopy() more friendly with outputing in /vsistdout/
@@ -269,7 +272,7 @@ GTiff driver:
  * Make GTiff COPY_SRC_OVERVIEWS to deal with unusual source overview sizes (#3905)
  * Fix bug when using -co COPY_SRC_OVERVIEWS=YES on a multiband source with external overviews (#3938)
  * Add logic to fill out partial tiles on write in for jpeg images (#4096)
- * Refresh with libtiff 4.0.0beta7
+ * Updated to libtiff 4.0.0 final
  * Refresh with libgeotiff 1.4.0, to support for GeogTOWGS84GeoKey
  * Add support for Geocentric SRS
  * libtiff: Enable DEFER_STRILE_LOAD
@@ -377,6 +380,9 @@ NetCDF driver:
  * Add netcdf history metadata (#4297)
  * CF-1.5 compatible export of projected grids (optional lon/lat export)
  * Fix LCC-1SP import and export (#3324)
+ * Fix handling of UNITS import and export (#4402 and #3324)
+ * Fix upside-down export and import of grids without projection and geotransform (#2129, #4284)
+ * Support import of polar stereographic variant without standard parallel (#2893)
  * New driver options
  * Add simple progress indicator
  * Add support for netcdf-4, HDF4 and HDF5 (#4294 and #3166)
@@ -575,7 +581,7 @@ OGRSpatialReference:
  * ESRI: fix EPSG:32161 mapping
  * ESRI: fix Stereo/Oblique_Stereo/Double_Stereo (bugs #1428 and #4267)
  * ESRI: fix projection parameter mapping for Orthographic projection (#4249)
- * ESRI: add optional fixing of TOWGS84, DATUM and GEOGCS (#4345 and #4378)
+ * ESRI: add optional fixing of TOWGS84, DATUM and GEOGCS with GDAL_FIX_ESRI_WKT config. option (#4345 and #4378)
  * ESRI: fix add Krassowsky/Krasovsky 1940 spheroid mapping
  * Add EPSG:102113 in the data/esri_extra.wkt file
  * Add Germany zone 1-5 in range 31491-31495 in the data/esri_extra.wkt file
@@ -679,6 +685,8 @@ GML driver:
  * Improve handling of .gml and .xsd produced by FME (in particular for CanVec GML)
  * Be able to open .gz file directly (like OS Mastermap ones), and read/write the .gfs file next to the .gz file
  * Fix segfault when encountering an invalid (or unhandled by OGR) geometry and when the axis order is lat/long (#3935)
+ * GML3: use a new method to interpret Face objects (which requires GEOS support);
+         old method available if GML_FACE_HOLE_NEGATIVE config. option set to YES (#3937)
  * GML3: support Curve as a valid child for curveProperty inside directEdge parsing (#3934)
  * GML3: don't force the linestring to be 3D when inverting its orientation during parsing of directedEdge (#3936)
  * GML3: accept <pointProperty> element in <gml:LineString> or <gml:LineStringSegment>
