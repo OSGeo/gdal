@@ -2759,6 +2759,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
     char *pszWKT = NULL;    
     const char *pszUnits = NULL;
     char   szUnits[ NCDF_MAX_STR_LEN ];    
+    szUnits[0]='\0';
 
     int  bWriteGridMapping = FALSE;
     int  bWriteLonLat = FALSE;
