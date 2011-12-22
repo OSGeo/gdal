@@ -140,6 +140,11 @@ GeoRasterWrapper::~GeoRasterWrapper()
     {
         jpeg_destroy_compress( &sCInfo );
     }
+
+    if( poConnection )
+    {
+        delete poConnection;
+    }
 }
 
 //  ---------------------------------------------------------------------------
