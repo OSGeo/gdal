@@ -2614,10 +2614,10 @@ void netCDFDataset::SetProjectionFromVar( int var )
               bGotGeogCS, bGotCfSRS, bGotCfGT, bGotGdalSRS, bGotGdalGT );
 
     if ( !bGotCfGT && !bGotGdalGT )
-        CPLError(CE_Warning, 1,"did not get geotransform from CF nor GDAL!");      
+        CPLDebug( "GDAL_netCDF", "did not get geotransform from CF nor GDAL!");      
 
     if ( !bGotGeogCS && !bGotCfSRS && !bGotGdalSRS && !bGotCfGT)
-        CPLError(CE_Warning, 1,"did not get projection from CF nor GDAL!");   
+        CPLDebug( "GDAL_netCDF",  "did not get projection from CF nor GDAL!");   
 
 /* -------------------------------------------------------------------- */
 /*     Search for Well-known GeogCS if got only CF WKT                  */
@@ -2787,12 +2787,12 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
               pszProjection,bIsProjected,bIsGeographic );
 
     if ( ! bSetGeoTransform )
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "netCDFDataset::DefineDims() called, but GeoTransform has not yet been defined!" );
+        CPLDebug( "GDAL_netCDF", "netCDFDataset::AddProjectionVars() called, "
+                  "but GeoTransform has not yet been defined!" );
 
     if ( ! bSetProjection )
-        CPLError( CE_Warning, CPLE_AppDefined, 
-                  "netCDFDataset::DefineDims() called, but Projection has not yet been defined!" );
+        CPLDebug( "GDAL_netCDF", "netCDFDataset::AddProjectionVars() called, "
+                  "but Projection has not yet been defined!" );
 
     /* go through ProcessOptions again as defaults depend on projection type */
     // ProcessCreationOptions( );
