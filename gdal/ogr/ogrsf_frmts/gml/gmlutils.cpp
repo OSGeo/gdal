@@ -138,7 +138,8 @@ OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry
                                           const char* pszDefaultSRSName,
                                           int bConsiderEPSGAsURN,
                                           int bGetSecondaryGeometryOption,
-                                          void* hCacheSRS)
+                                          void* hCacheSRS,
+                                          int bFaceHoleNegative)
 {
     OGRGeometry* poGeom = NULL;
     int i;
@@ -146,7 +147,9 @@ OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry
     for(i=0;papsGeometry[i] != NULL;i++)
     {
         OGRGeometry* poSubGeom = GML2OGRGeometry_XMLNode( papsGeometry[i],
-                                                          bGetSecondaryGeometryOption );
+                                                          bGetSecondaryGeometryOption,
+                                                          0, FALSE, TRUE,
+                                                          bFaceHoleNegative );
         if (poSubGeom)
         {
             if (poGeom == NULL)

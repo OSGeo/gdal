@@ -424,7 +424,9 @@ private:
     int           m_bSequentialLayers;
 
     std::string   osElemPath;
- 
+
+    int           m_bFaceHoleNegative;
+
     int           ParseXMLHugeFile( const char *pszOutputFilename, 
                                     const int bSqliteIsTempFile,
                                     const int iSqliteCacheMB );

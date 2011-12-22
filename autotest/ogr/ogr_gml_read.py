@@ -1027,7 +1027,9 @@ def ogr_gml_25():
     except:
         pass
 
+    gdal.SetConfigOption('GML_FACE_HOLE_NEGATIVE', 'YES')
     ds = ogr.Open('data/curveProperty.xml')
+    gdal.SetConfigOption('GML_FACE_HOLE_NEGATIVE', None)
 
     lyr = ds.GetLayer(0)
 
@@ -1390,6 +1392,9 @@ def ogr_gml_35():
     if ogr.GetDriverByName('SQLite') is None:
         return 'skip'
 
+    if not ogrtest.have_geos():
+        return 'skip'
+
     try:
         os.remove( 'tmp/GmlTopo-sample.sqlite' )
     except:
@@ -1426,8 +1431,9 @@ def ogr_gml_35():
 
     lyr = ds.GetLayerByName('Suolo')
     feat = lyr.GetNextFeature()
-    wkt = 'POLYGON ((-0.1 0.6,-0.0 0.7,0.2 0.7,0.2 0.7,0.3 0.6,0.5 0.6,0.5 0.6,0.5 0.8,0.7 0.8,0.8 0.6,0.9 0.6,0.9 0.6,0.9 0.4,0.7 0.3,0.7 0.2,0.7 0.2,0.9 0.1,0.9 -0.1,0.6 -0.2,0.3 -0.2,0.2 -0.2,0.2 -0.2,-0.1 0.0,-0.1 0.1,-0.1 0.2,0.1 0.3,0.1 0.3,0.1 0.4,-0.0 0.4,-0.0 0.4,-0.1 0.5,-0.1 0.6),(0.2 0.2,0.2 0.4,0.2 0.4,0.4 0.4,0.5 0.2,0.5 0.2,0.5 0.1,0.5 0.1,0.5 0.0,0.2 0.0,0.2 0.2),(0.6 0.1,0.8 0.1,0.8 -0.1,0.6 -0.1,0.6 0.1))'
+    wkt = 'MULTIPOLYGON (((-0.1 0.6,-0.0 0.7,0.2 0.7,0.3 0.6,0.5 0.6,0.5 0.8,0.7 0.8,0.8 0.6,0.9 0.6,0.9 0.4,0.7 0.3,0.7 0.2,0.9 0.1,0.9 -0.1,0.6 -0.2,0.3 -0.2,0.2 -0.2,-0.1 0.0,-0.1 0.1,-0.1 0.2,0.1 0.3,0.1 0.4,-0.0 0.4,-0.1 0.5,-0.1 0.6)))'
     if ogrtest.check_feature_geometry( feat, wkt):
+        print(feat.GetGeometryRef())
         return 'fail'
 
     ds = None
@@ -1436,6 +1442,7 @@ def ogr_gml_35():
     lyr = ds.GetLayerByName('Suolo')
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, wkt):
+        print(feat.GetGeometryRef())
         return 'fail'
 
     ds = None
@@ -1443,12 +1450,16 @@ def ogr_gml_35():
     return 'success'
 
 ###############################################################################
-# Test GML_SKIP_RESOLVE_ELEMS=NONE
+# Test GML_SKIP_RESOLVE_ELEMS=NONE (and new GMLTopoSurface interpretation)
 
-def ogr_gml_36():
+def ogr_gml_36(GML_FACE_HOLE_NEGATIVE = 'NO'):
 
     if not gdaltest.have_gml_reader:
         return 'skip'
+
+    if GML_FACE_HOLE_NEGATIVE == 'NO':
+        if not ogrtest.have_geos():
+            return 'skip'
 
     try:
         os.remove( 'tmp/GmlTopo-sample.gfs' )
@@ -1462,29 +1473,108 @@ def ogr_gml_36():
     shutil.copy('data/GmlTopo-sample.xml', 'tmp/GmlTopo-sample.xml')
 
     gdal.SetConfigOption('GML_SKIP_RESOLVE_ELEMS', 'NONE')
+    gdal.SetConfigOption('GML_FACE_HOLE_NEGATIVE', GML_FACE_HOLE_NEGATIVE)
     ds = ogr.Open('tmp/GmlTopo-sample.xml')
     gdal.SetConfigOption('GML_SKIP_RESOLVE_ELEMS', None)
+    gdal.SetConfigOption('GML_FACE_HOLE_NEGATIVE', None)
     if gdal.GetLastErrorMsg() != '':
         gdaltest.post_reason('did not expect error')
         return 'fail'
 
     lyr = ds.GetLayerByName('Suolo')
     feat = lyr.GetNextFeature()
-    wkt = 'POLYGON ((-0.1 0.6,-0.0 0.7,0.2 0.7,0.2 0.7,0.3 0.6,0.5 0.6,0.5 0.6,0.5 0.8,0.7 0.8,0.8 0.6,0.9 0.6,0.9 0.6,0.9 0.4,0.7 0.3,0.7 0.2,0.7 0.2,0.9 0.1,0.9 -0.1,0.6 -0.2,0.3 -0.2,0.2 -0.2,0.2 -0.2,-0.1 0.0,-0.1 0.1,-0.1 0.2,0.1 0.3,0.1 0.3,0.1 0.4,-0.0 0.4,-0.0 0.4,-0.1 0.5,-0.1 0.6),(0.2 0.2,0.2 0.4,0.2 0.4,0.4 0.4,0.5 0.2,0.5 0.2,0.5 0.1,0.5 0.1,0.5 0.0,0.2 0.0,0.2 0.2),(0.6 0.1,0.8 0.1,0.8 -0.1,0.6 -0.1,0.6 0.1))'
+    if GML_FACE_HOLE_NEGATIVE == 'NO':
+        wkt = 'MULTIPOLYGON (((-0.1 0.6,-0.0 0.7,0.2 0.7,0.3 0.6,0.5 0.6,0.5 0.8,0.7 0.8,0.8 0.6,0.9 0.6,0.9 0.4,0.7 0.3,0.7 0.2,0.9 0.1,0.9 -0.1,0.6 -0.2,0.3 -0.2,0.2 -0.2,-0.1 0.0,-0.1 0.1,-0.1 0.2,0.1 0.3,0.1 0.4,-0.0 0.4,-0.1 0.5,-0.1 0.6)))'
+    else:
+        wkt = 'POLYGON ((-0.1 0.6,-0.0 0.7,0.2 0.7,0.2 0.7,0.3 0.6,0.5 0.6,0.5 0.6,0.5 0.8,0.7 0.8,0.8 0.6,0.9 0.6,0.9 0.6,0.9 0.4,0.7 0.3,0.7 0.2,0.7 0.2,0.9 0.1,0.9 -0.1,0.6 -0.2,0.3 -0.2,0.2 -0.2,0.2 -0.2,-0.1 0.0,-0.1 0.1,-0.1 0.2,0.1 0.3,0.1 0.3,0.1 0.4,-0.0 0.4,-0.0 0.4,-0.1 0.5,-0.1 0.6),(0.2 0.2,0.2 0.4,0.2 0.4,0.4 0.4,0.5 0.2,0.5 0.2,0.5 0.1,0.5 0.1,0.5 0.0,0.2 0.0,0.2 0.2),(0.6 0.1,0.8 0.1,0.8 -0.1,0.6 -0.1,0.6 0.1))'
     if ogrtest.check_feature_geometry( feat, wkt):
+        print(feat.GetGeometryRef())
         return 'fail'
 
     ds = None
 
+    gdal.SetConfigOption('GML_FACE_HOLE_NEGATIVE', GML_FACE_HOLE_NEGATIVE)
     ds = ogr.Open('tmp/GmlTopo-sample.xml')
+    gdal.SetConfigOption('GML_FACE_HOLE_NEGATIVE', None)
     lyr = ds.GetLayerByName('Suolo')
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, wkt):
+        print(feat.GetGeometryRef())
         return 'fail'
 
     ds = None
 
     return 'success'
+
+###############################################################################
+# Test GML_SKIP_RESOLVE_ELEMS=NONE with old GMLTopoSurface interpretation
+
+def ogr_gml_37():
+    return ogr_gml_36('YES')
+
+###############################################################################
+# Test new GMLTopoSurface interpretation (#3934) with HUGE xlink resolver
+
+def ogr_gml_38(resolver = 'HUGE'):
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    if resolver == 'HUGE':
+        if ogr.GetDriverByName('SQLite') is None:
+            return 'skip'
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    try:
+        os.remove( 'tmp/sample_gml_face_hole_negative_no.sqlite' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/sample_gml_face_hole_negative_no.gfs' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/sample_gml_face_hole_negative_no.resolved.gml' )
+    except:
+        pass
+
+    shutil.copy('data/sample_gml_face_hole_negative_no.xml', 'tmp/sample_gml_face_hole_negative_no.xml')
+
+    gdal.SetConfigOption('GML_SKIP_RESOLVE_ELEMS', resolver)
+    ds = ogr.Open('tmp/sample_gml_face_hole_negative_no.xml')
+    gdal.SetConfigOption('GML_FACE_HOLE_NEGATIVE', None)
+
+    if resolver == 'HUGE':
+        try:
+            os.stat('tmp/sample_gml_face_hole_negative_no.sqlite')
+            gdaltest.post_reason('did not expect tmp/sample_gml_face_hole_negative_no.sqlite')
+            return 'fail'
+        except:
+            pass
+
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('did not expect error')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('Suolo')
+    feat = lyr.GetNextFeature()
+    wkt = 'MULTIPOLYGON (((0.9 0.6,0.9 0.4,0.7 0.3,0.7 0.2,0.9 0.1,0.9 -0.1,0.6 -0.2,0.3 -0.2,0.2 -0.2,-0.1 0.0,-0.1 0.1,-0.1 0.2,0.1 0.3,0.1 0.4,-0.0 0.4,-0.1 0.5,-0.1 0.6,-0.0 0.7,0.2 0.7,0.3 0.6,0.5 0.6,0.5 0.8,0.7 0.8,0.8 0.6,0.9 0.6),(0.6 0.1,0.6 -0.1,0.8 -0.1,0.8 0.1,0.6 0.1),(0.2 0.4,0.2 0.2,0.2 0.0,0.5 0.0,0.5 0.1,0.5 0.2,0.4 0.4,0.2 0.4)))'
+    if ogrtest.check_feature_geometry( feat, wkt):
+        print(feat.GetGeometryRef())
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test new GMLTopoSurface interpretation (#3934) with standard xlink resolver
+
+def ogr_gml_39():
+    return ogr_gml_38('NONE')
+
 
 ###############################################################################
 #  Cleanup
@@ -1577,6 +1667,23 @@ def ogr_gml_clean_files():
         os.remove( 'tmp/GmlTopo-sample.xml' )
     except:
         pass
+    try:
+        os.remove( 'tmp/sample_gml_face_hole_negative_no.sqlite' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/sample_gml_face_hole_negative_no.gfs' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/sample_gml_face_hole_negative_no.resolved.gml' )
+    except:
+        pass
+    try:
+        os.remove( 'tmp/sample_gml_face_hole_negative_no.xml' )
+    except:
+        pass
+
     files = os.listdir('data')
     for filename in files:
         if len(filename) > 13 and filename[-13:] == '.resolved.gml':
@@ -1624,6 +1731,9 @@ gdaltest_list = [
     ogr_gml_34,
     ogr_gml_35,
     ogr_gml_36,
+    ogr_gml_37,
+    ogr_gml_38,
+    ogr_gml_39,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':

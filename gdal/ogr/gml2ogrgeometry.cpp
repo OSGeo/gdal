@@ -547,6 +547,76 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
     return iCoord > 0.0;
 }
 
+#ifdef HAVE_GEOS
+/************************************************************************/
+/*                         GML2FaceExtRing()                            */
+/*                                                                      */
+/*      Identifies the "good" Polygon whithin the collection returned   */
+/*      by GEOSPolygonize()                                             */
+/*      short rationale: GEOSPolygonize() will possibily return a       */
+/*      collection of many Polygons; only one is the "good" one,        */
+/*      (including both exterior- and interior-rings)                   */
+/*      any other simply represents a single "hole", and should be      */
+/*      consequently ignored at all.                                    */
+/************************************************************************/
+
+static OGRPolygon *GML2FaceExtRing( OGRGeometry *poGeom )
+{
+    OGRPolygon *poPolygon = NULL;
+	int bError = FALSE;
+    OGRGeometryCollection *poColl = (OGRGeometryCollection *)poGeom;
+    int iCount = poColl->getNumGeometries();
+	int iExterior = 0;
+	int iInterior = 0;
+
+    for( int ig = 0; ig < iCount; ig++)
+    {
+        /* a collection of Polygons is expected to be found */
+        OGRGeometry * poChild = (OGRGeometry*)poColl->getGeometryRef(ig);
+        if( poChild == NULL)
+        {
+            bError = TRUE;
+            continue;
+        }
+        if( wkbFlatten( poChild->getGeometryType()) == wkbPolygon )
+        {
+            OGRPolygon *poPg = (OGRPolygon *)poChild;
+            if( poPg->getNumInteriorRings() > 0 )
+                iExterior++;
+            else
+                iInterior++;
+        }
+        else
+            bError = TRUE;
+    }
+
+    if( bError == FALSE && iCount > 0 )
+    {
+       if( iCount == 1 && iExterior == 0 && iInterior == 1)
+        {
+            /* there is a single Polygon within the collection */
+            OGRPolygon * poPg = (OGRPolygon*)poColl->getGeometryRef(0 );
+            poPolygon = (OGRPolygon *)poPg->clone();
+        }
+        else
+        {
+            if( iExterior == 1 && iInterior == iCount - 1 )
+            {
+                /* searching the unique Polygon containing holes */
+                for ( int ig = 0; ig < iCount; ig++)
+                {
+                    OGRPolygon * poPg = (OGRPolygon*)poColl->getGeometryRef(ig);
+                    if( poPg->getNumInteriorRings() > 0 )
+                        poPolygon = (OGRPolygon *)poPg->clone();
+                }
+            }
+        }
+    }
+
+    return poPolygon;
+}
+#endif
+
 /************************************************************************/
 /*                      GML2OGRGeometry_XMLNode()                       */
 /*                                                                      */
@@ -559,7 +629,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                                       int bGetSecondaryGeometryOption,
                                       int nRecLevel,
                                       int bIgnoreGSG,
-                                      int bOrientation )
+                                      int bOrientation,
+                                      int bFaceHoleNegative ) 
 
 {
     const char *pszBaseGeometry = BareGMLElement( psNode->pszValue );
@@ -1606,6 +1677,175 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry,"TopoSurface") )
     {
+        /****************************************************************/
+        /* applying the FaceHoleNegative = FALSE rules                  */
+        /*                                                              */
+        /* - each <TopoSurface> is expected to represent a MultiPolygon */
+        /* - each <Face> is expected to represent a distinct Polygon,   */
+        /*   this including any possible Interior Ring (holes);         */
+        /*   orientation="+/-" plays no role at all to identify "holes" */
+        /* - each <Edge> within a <Face> may indifferently represent    */
+        /*   an element of the Exterior or Interior Boundary; relative  */
+        /*   order of <Egdes> is absolutely irrelevant.                 */
+        /****************************************************************/
+        /* Contributor: Alessandro Furieri, a.furieri@lqt.it            */
+        /* Developed for Faunalia (http://www.faunalia.it)              */
+        /* with funding from Regione Toscana -                          */
+        /* Settore SISTEMA INFORMATIVO TERRITORIALE ED AMBIENTALE       */
+        /****************************************************************/
+        if(bFaceHoleNegative != TRUE)
+        {
+            if( bGetSecondaryGeometry )
+                return NULL;
+
+#ifndef HAVE_GEOS
+            static int bWarningAlreadyEmitted = FALSE;
+            if (!bWarningAlreadyEmitted)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Interpreating that GML TopoSurface geometry requires GDAL to be built with GEOS support.\n"
+                        "As a workaround, you can try defining the GML_FACE_HOLE_NEGATIVE configuration option\n"
+                        "to YES, so that the 'old' interpretation algorithm is used. But be warned that\n"
+                        "the result might be incorrect.\n");
+                bWarningAlreadyEmitted = TRUE;
+            }
+            return NULL;
+#else
+            const CPLXMLNode *psChild, *psFaceChild, *psDirectedEdgeChild;
+            OGRMultiPolygon *poTS = new OGRMultiPolygon();
+
+            // collect directed faces
+            for( psChild = psNode->psChild; 
+                psChild != NULL;
+            psChild = psChild->psNext ) 
+            {
+              if( psChild->eType == CXT_Element
+              && EQUAL(BareGMLElement(psChild->pszValue),"directedFace") )
+              {
+                // collect next face (psChild->psChild)
+                psFaceChild = psChild->psChild;
+	
+                while( psFaceChild != NULL &&
+                       !(psFaceChild->eType == CXT_Element &&
+                         EQUAL(BareGMLElement(psFaceChild->pszValue),"Face")) )
+                        psFaceChild = psFaceChild->psNext;
+
+                if( psFaceChild == NULL )
+                  continue;
+
+                OGRMultiLineString *poCollectedGeom = new OGRMultiLineString();
+
+                // collect directed edges of the face
+                for( psDirectedEdgeChild = psFaceChild->psChild;
+                     psDirectedEdgeChild != NULL;
+                     psDirectedEdgeChild = psDirectedEdgeChild->psNext )
+                {
+                  if( psDirectedEdgeChild->eType == CXT_Element &&
+                      EQUAL(BareGMLElement(psDirectedEdgeChild->pszValue),"directedEdge") )
+                  {
+                    OGRGeometry *poEdgeGeom;
+
+                    poEdgeGeom = GML2OGRGeometry_XMLNode( psDirectedEdgeChild,
+                                                          bGetSecondaryGeometryOption,
+                                                          TRUE );
+
+                    if( poEdgeGeom == NULL ||
+                        wkbFlatten(poEdgeGeom->getGeometryType()) != wkbLineString )
+                    {
+                      CPLError( CE_Failure, CPLE_AppDefined, 
+                                "Failed to get geometry in directedEdge" );
+                      delete poEdgeGeom;
+                      delete poCollectedGeom;
+                      delete poTS;
+                      return NULL;
+                    }
+
+                    poCollectedGeom->addGeometryDirectly( poEdgeGeom );
+                  }
+                }
+
+                OGRGeometry *poFaceCollectionGeom = NULL;
+                OGRPolygon *poFaceGeom = NULL;
+
+//#ifdef HAVE_GEOS
+                poFaceCollectionGeom = poCollectedGeom->Polygonize();
+                if( poFaceCollectionGeom == NULL )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                              "Failed to assemble Edges in Face" );
+                    delete poCollectedGeom;
+                    delete poTS;
+                    return NULL;
+                }
+
+                poFaceGeom = GML2FaceExtRing( poFaceCollectionGeom );
+//#else
+//                poFaceGeom = (OGRPolygon*) OGRBuildPolygonFromEdges(
+//                    (OGRGeometryH) poCollectedGeom,
+//                    FALSE, TRUE, 0, NULL);
+//#endif
+
+                if( poFaceGeom == NULL )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                                "Failed to build Polygon for Face" );
+                    delete poCollectedGeom;
+                    delete poTS;
+                    return NULL;
+                }
+                else
+                {
+                    int iCount = poTS->getNumGeometries();
+                    if( iCount == 0)
+                    {
+                        /* inserting the first Polygon */
+                        poTS->addGeometryDirectly( poFaceGeom );
+                    }
+                    else
+                    {
+                        /* using Union to add the current Polygon */
+                        OGRGeometry *poUnion = poTS->Union( poFaceGeom );
+                        delete poFaceGeom;
+                        delete poTS;
+                        if( poUnion == NULL )
+                        {
+                            CPLError( CE_Failure, CPLE_AppDefined,
+                                        "Failed Union for TopoSurface" );
+                            return NULL;
+                        }
+                        poTS = (OGRMultiPolygon *)poUnion;
+                    }
+                }
+                delete poFaceCollectionGeom;
+                delete poCollectedGeom;
+              }
+            }
+
+            if( wkbFlatten( poTS->getGeometryType()) == wkbPolygon )
+            {
+                /* forcing to be a MultiPolygon */
+                OGRGeometry *poOldTS = poTS;
+                poTS = new OGRMultiPolygon();
+                poTS->addGeometryDirectly(poOldTS);
+            }
+
+            return poTS;
+#endif // HAVE_GEOS
+        }
+
+        /****************************************************************/
+        /* applying the FaceHoleNegative = TRUE rules                   */
+        /*                                                              */
+        /* - each <TopoSurface> is expected to represent a MultiPolygon */
+        /* - any <Face> declaring orientation="+" is expected to        */
+        /*   represent an Exterior Ring (no holes are allowed)          */
+        /* - any <Face> declaring orientation="-" is expected to        */
+        /*   represent an Interior Ring (hole) belonging to the latest  */
+        /*   Exterior Ring.                                             */
+        /* - <Egdes> within the same <Face> are expected to be          */
+        /*   arranged in geometrically adjacent and consecutive         */
+        /*   sequence.                                                  */
+        /****************************************************************/
         if( bGetSecondaryGeometry )
             return NULL;
         const CPLXMLNode *psChild, *psFaceChild, *psDirectedEdgeChild;
@@ -1937,7 +2177,9 @@ OGRGeometryH OGR_G_CreateFromGML( const char *pszGML )
 /* -------------------------------------------------------------------- */
     OGRGeometry *poGeometry;
 
-    poGeometry = GML2OGRGeometry_XMLNode( psGML, -1 );
+    /* Must be in synced in OGR_G_CreateFromGML(), OGRGMLLayer::OGRGMLLayer() and GMLReader::GMLReader() */
+    int bFaceHoleNegative = CSLTestBoolean(CPLGetConfigOption("GML_FACE_HOLE_NEGATIVE", "NO"));
+    poGeometry = GML2OGRGeometry_XMLNode( psGML, -1, 0, FALSE, TRUE, bFaceHoleNegative );
 
     CPLDestroyXMLNode( psGML );
     

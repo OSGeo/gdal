@@ -3679,6 +3679,135 @@ OGRGeometryH OGR_G_SimplifyPreserveTopology( OGRGeometryH hThis, double dToleran
 }
 
 /************************************************************************/
+/*                             Polygonize()                             */
+/************************************************************************/
+/* Contributor: Alessandro Furieri, a.furieri@lqt.it                    */
+/* Developed for Faunalia (http://www.faunalia.it) with funding from    */
+/* Regione Toscana - Settore SISTEMA INFORMATIVO TERRITORIALE ED        */
+/*                   AMBIENTALE                                         */
+/************************************************************************/
+
+/**
+ * \brief Polygonizes a set of sparse edges.
+ *
+ * A new geometry object is created and returned containing a collection
+ * of reassembled Polygons: NULL will be returned if the input collection
+ * doesn't corresponds to a MultiLinestring, or when reassembling Edges
+ * into Polygons is impossible due to topogical inconsistencies.
+ *
+ * This method is the same as the C function OGR_G_Polygonize().
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @return a newly allocated geometry now owned by the caller, or NULL on failure.
+ *
+ * @since OGR 1.9.0
+ */
+
+OGRGeometry *OGRGeometry::Polygonize() const
+
+{
+#ifndef HAVE_GEOS
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return NULL;
+
+#else
+
+    OGRGeometryCollection *poColl = NULL;
+    if( wkbFlatten(getGeometryType()) == wkbGeometryCollection ||
+        wkbFlatten(getGeometryType()) == wkbMultiLineString )
+        poColl = (OGRGeometryCollection *)this;
+    else
+        return NULL;
+
+    int iCount = poColl->getNumGeometries();
+
+    GEOSGeom *hGeosGeomList = NULL;
+    GEOSGeom hGeosPolygs = NULL;
+    OGRGeometry *poPolygsOGRGeom = NULL;
+    int bError = FALSE;
+
+    hGeosGeomList = new GEOSGeom [iCount];
+    for ( int ig = 0; ig < iCount; ig++)
+    {
+        GEOSGeom hGeosGeom = NULL;
+        OGRGeometry * poChild = (OGRGeometry*)poColl->getGeometryRef(ig);
+        if( poChild == NULL ||
+            wkbFlatten(poChild->getGeometryType()) != wkbLineString )
+            bError = TRUE;
+        else
+        {
+            hGeosGeom = poChild->exportToGEOS();
+            if( hGeosGeom == NULL)
+                bError = TRUE;
+        }
+        *(hGeosGeomList + ig) = hGeosGeom;
+    }
+
+    if( bError == FALSE )
+    {
+        hGeosPolygs = GEOSPolygonize( hGeosGeomList, iCount );
+
+        if( hGeosPolygs != NULL )
+        {
+            poPolygsOGRGeom = OGRGeometryFactory::createFromGEOS(hGeosPolygs);
+            GEOSGeom_destroy( hGeosPolygs);
+        }
+    }
+
+    for ( int ig = 0; ig < iCount; ig++)
+    {
+        GEOSGeom hGeosGeom = *(hGeosGeomList + ig);
+        if( hGeosGeom != NULL)
+            GEOSGeom_destroy( hGeosGeom );
+    }
+    delete [] hGeosGeomList;
+
+    return poPolygsOGRGeom;
+
+#endif /* HAVE_GEOS */
+}
+
+/************************************************************************/
+/*                          OGR_G_Polygonize()                          */
+/************************************************************************/
+/**
+ * \brief Polygonizes a set of sparse edges.
+ *
+ * A new geometry object is created and returned containing a collection
+ * of reassembled Polygons: NULL will be returned if the input collection
+ * doesn't corresponds to a MultiLinestring, or when reassembling Edges
+ * into Polygons is impossible due to topogical inconsistencies.  
+ *
+ * This function is the same as the C++ method OGRGeometry::Polygonize().
+ *
+ * This function is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @param hTarget The Geometry to be polygonized.
+ *
+ * @return a handle to a newly allocated geometry now owned by the caller,
+ *         or NULL on failure.
+ *
+ * @since OGR 1.9.0
+ */
+
+OGRGeometryH OGR_G_Polygonize( OGRGeometryH hTarget )
+
+{
+    VALIDATE_POINTER1( hTarget, "OGR_G_Polygonize", NULL );
+
+    return (OGRGeometryH) ((OGRGeometry *) hTarget)->Polygonize();
+}
+
+/************************************************************************/
 /*                               swapXY()                               */
 /************************************************************************/
 
