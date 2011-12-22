@@ -207,7 +207,7 @@ def netcdf_check_vars( ifile, vals_global, vals_band ):
     
     metadata = metadata_global
     vals = vals_global
-    for k, v in vals.iteritems():
+    for k, v in vals.items():
         if not k in metadata:
             gdaltest.post_reason("missing metadata [%s]" % (str(k)))
             return 'fail'
@@ -220,7 +220,7 @@ def netcdf_check_vars( ifile, vals_global, vals_band ):
 
     metadata = metadata_band
     vals = vals_band
-    for k, v in vals.iteritems():
+    for k, v in vals.items():
         if not k in metadata:
             gdaltest.post_reason("missing metadata [%s]" % (str(k)))
             return 'fail'
