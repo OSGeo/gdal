@@ -61,6 +61,7 @@
 #define NCDF_DIMNAME_LON     "lon"
 #define NCDF_DIMNAME_LAT     "lat"
 #define NCDF_LONLAT          "lon lat"
+#define NCDF_PI              3.14159265358979323846
 
 /* netcdf file types, as in libcdi/cdo and compat w/netcdf.h */
 #define NCDF_FORMAT_NONE            0   /* Not a netCDF file */
@@ -430,13 +431,16 @@ static const oNetcdfSRS_PP poOrthoMappings[] = {
        and 'central_meridian' (WKT) -> 'straight_vertical_longitude_from_pole' (CF-1)
      - Then the 'latitude_of_projection_origin' in CF-1 must be set to either +90 or -90,
        depending on the sign of 'latitude_of_origin' in WKT.
-   Current support for this approach is provided by one existing NetCDF user of this projection.
-   TODO: On import from CF-1, not sure how to handle a version with
-     'scale_factor_at_projection_origin' defined, but not 'standard_parallel'.
+   CF allows the use of standard_parallel (lat_ts in proj4) OR scale_factor (k0 in proj4).
+   This is analogous to the B and A variants (resp.) in EPSG guidelines.
+   When importing a CF file with scale_factor, we compute standard_parallel using 
+     Snyder eq. 22-7 with k=1 and lat=standard_parallel.
+   Currently OGR does NOT relate the scale factor with the standard parallel, so we 
+   use the default. It seems that proj4 uses lat_ts (standard_parallel) and not k0.
 */
 static const oNetcdfSRS_PP poPSmappings[] = {
     {CF_PP_STD_PARALLEL_1, SRS_PP_LATITUDE_OF_ORIGIN},
-    {CF_PP_SCALE_FACTOR_ORIGIN, SRS_PP_SCALE_FACTOR},  
+    /* {CF_PP_SCALE_FACTOR_ORIGIN, SRS_PP_SCALE_FACTOR},   */
     {CF_PP_VERT_LONG_FROM_POLE, SRS_PP_CENTRAL_MERIDIAN},
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },  
     {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },

@@ -292,7 +292,7 @@ netcdf_cfproj_tuples = [
         "polar_stereographic",
         ['straight_vertical_longitude_from_pole',
         'latitude_of_projection_origin',
-         'scale_factor_at_projection_origin',
+         'standard_parallel',
          'false_easting', 'false_northing'],
          ['projection_x_coordinate', 'projection_y_coordinate']),
     ("St", "Stereographic",
@@ -631,12 +631,35 @@ def netcdf_cf_4():
     return result
      
 ###############################################################################
+#test support for PS variants (bug #2893)
+def netcdf_cf_5():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ifiles = [ 'NETCDF:data/orog_CRCM1.nc:orog', 'NETCDF:data/orog_CRCM2.nc:orog' ]
+    for ifile in ifiles:
+        ds = gdal.Open( ifile )
+        prj = ds.GetProjection()    
+        sr = osr.SpatialReference( )
+        sr.ImportFromWkt( prj )
+        lat_origin = sr.GetProjParm( 'latitude_of_origin' )
+    
+        if lat_origin != 60:
+            gdaltest.post_reason( 'Latitude of origin in %s does not match expected: %f'
+                                  % (ifile, lat_origin) )
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     netcdf_cf_1,
     netcdf_cf_2,
     netcdf_cf_3,
     netcdf_cf_4,
+    netcdf_cf_5,
     None ]
 
 if __name__ == '__main__':
