@@ -819,8 +819,8 @@ def netcdf_22():
 
     #suppress warning
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-
     ds = gdal.Open( 'NETCDF:' + ifile )
+    gdal.PopErrorHandler()
 
     if ds is None:
         gdaltest.post_reason('netcdf driver did not open hdf4 file')
@@ -953,8 +953,11 @@ init_list = [ \
 # Some tests we don't need to do for each type.
 item = init_list[0]
 ut = gdaltest.GDALTest( 'netcdf', item[0], item[1], item[2], options=item[4] )
+
+#test geotransform and projection
 gdaltest_list.append( (ut.testSetGeoTransform, item[0]) )
 gdaltest_list.append( (ut.testSetProjection, item[0]) )
+
 #SetMetadata() not supported 
 #gdaltest_list.append( (ut.testSetMetadata, item[0]) )
 
@@ -967,6 +970,9 @@ for item in init_list:
     gdaltest_list.append( (ut.testCreate, item[0]) )
     gdaltest_list.append( (ut.testSetNoDataValue, item[0]) )
 
+
+###############################################################################
+#  other tests
 
 if __name__ == '__main__':
 
