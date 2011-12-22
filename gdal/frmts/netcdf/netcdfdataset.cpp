@@ -4724,15 +4724,21 @@ netCDFDataset::ProcessCreationOptions( )
 int netCDFDataset::DefVarDeflate( int nVarId, int bChunking )
 {
 #ifdef NETCDF_HAS_NC4
-    // must set chunk size to avoid huge performace hit                
-    // perhaps another solution it to change the chunk cache?
-    // http://www.unidata.ucar.edu/software/netcdf/docs/netcdf.html#Chunk-Cache   
     if ( nCompress == NCDF_COMPRESS_DEFLATE ) {                         
+        // must set chunk size to avoid huge performace hit (set bChunking=TRUE)             
+        // perhaps another solution it to change the chunk cache?
+        // http://www.unidata.ucar.edu/software/netcdf/docs/netcdf.html#Chunk-Cache   
+        // TODO make sure this is ok
+        CPLDebug( "GDAL_netCDF", 
+                  "DefVarDeflate( %d, %d ) nZlevel=%d",
+                  nVarId, bChunking, nZLevel );
         status = nc_def_var_deflate(cdfid,nVarId,1,1,nZLevel);
         NCDF_ERR(status);
-        if ( status != NC_NOERR && bChunking ) {
-            //TODO make sure this is ok
+        if ( (status == NC_NOERR) && bChunking ) {
             size_t chunksize[] = { 1, nRasterXSize };                   
+            CPLDebug( "GDAL_netCDF", 
+                      "DefVarDeflate() chunksize={%ld, %ld}",
+                      chunksize[0], chunksize[1] );
             status = nc_def_var_chunking( cdfid, nVarId,          
                                           NC_CHUNKED, chunksize );
             NCDF_ERR(status);
