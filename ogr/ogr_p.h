@@ -127,6 +127,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                                       int bGetSecondaryGeometryOption,
                                       int nRecLevel = 0,
                                       int bIgnoreGSG = FALSE,
-                                      int bOrientation = TRUE );
+                                      int bOrientation = TRUE,
+                                      int bFaceHoleNegative = FALSE );
 
 #endif /* ndef OGR_P_H_INCLUDED */

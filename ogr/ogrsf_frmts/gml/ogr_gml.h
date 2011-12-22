@@ -67,6 +67,8 @@ class OGRGMLLayer : public OGRLayer
 
     int                 bUseOldFIDFormat;
 
+    int                 bFaceHoleNegative;
+
   public:
                         OGRGMLLayer( const char * pszName, 
                                      OGRSpatialReference *poSRS, 
