@@ -40,6 +40,7 @@
 #include "gmlreaderp.h"
 #include "gmlutils.h"
 #include "cpl_conv.h"
+#include "ogr_p.h"
 #include "cpl_string.h"
 #include "cpl_http.h"
 
@@ -1046,268 +1047,59 @@ static int gmlHugeFindGmlId( const CPLXMLNode *psNode, CPLString **gmlId )
     return FALSE;
 }
 
-static int gmlHugeParse2DCoords( const char *pszIn, double *x0, double *y0,
-                                 double *x1, double *y1 )
-{
-/* parsing a 2D coord list */
-    double coord;
-    const char *pszC = pszIn;
-    char psBuf[1024];
-    char *pszOut = psBuf;
-    int iPos = 0;
-    int iPt = 0;
-    int bIsX = FALSE;
-    int bIsY = FALSE;
-    while( TRUE )
-    {
-        if( *pszC == ' ' || *pszC == '\0' )
-        {
-            *pszOut = '\0';
-            coord = atof(psBuf);
-            if( iPt == 0 )
-            {
-                if( iPos == 0 )
-                {
-                    *x0 = coord;
-                    bIsX = TRUE;
-                    bIsY = FALSE;
-                    iPos++;
-                }
-                else
-                {
-                    *y0 = coord;
-                    bIsY = TRUE;
-                    iPos = 0;
-                    iPt++;
-                }
-            }
-            else
-            {
-                if( iPos == 0 )
-                {
-                    *x1 = coord;
-                    bIsX = TRUE;
-                    bIsY = FALSE;
-                    iPos++;
-                }
-                else
-                {
-                    *y1 = coord;
-                    bIsY = TRUE;
-                    iPos = 0;
-                    iPt++;
-                }
-            }
-            if( *pszC == '\0' )
-                break;
-            pszOut = psBuf;
-                pszC++;
-            continue;
-        }
-        if( pszOut - psBuf > 1023 )
-            return FALSE;
-        *pszOut++ = *pszC++;
-    }
-    if( iPt < 2 )
-        return FALSE;
-    if( bIsX == FALSE || bIsY == FALSE )
-        return FALSE;
-    return TRUE;
-}
-
-static int gmlHugeParse3DCoords( const char *pszIn, double *x0, double *y0,
-                                 double *z0, double *x1, double *y1,
-                                 double *z1 )
-{
-/* parsing a 3D coord list */
-    double coord;
-    const char *pszC = pszIn;
-    char psBuf[1024];
-    char *pszOut = psBuf;
-    int iPos = 0;
-    int iPt = 0;
-    int bIsX = FALSE;
-    int bIsY = FALSE;
-    int bIsZ = FALSE;
-    while( TRUE )
-    {
-        if( *pszC == ' ' || *pszC == '\0' )
-        {
-            *pszOut = '\0';
-            coord = atof(psBuf);
-            if( iPt == 0 )
-            {
-                if( iPos == 0 )
-                {
-                    *x0 = coord;
-                    bIsX = TRUE;
-                    bIsY = FALSE;
-                    bIsZ = FALSE;
-                    iPos++;
-                }
-                else if( iPos == 1 )
-                {
-                    *y0 = coord;
-                    bIsY = TRUE;
-                }
-                else
-                {
-                    *z0 = coord;
-                    bIsZ = TRUE;
-                    iPos = 0;
-                    iPt++;
-                }
-            }
-            else
-            {
-                if( iPos == 0 )
-                {
-                    *x1 = coord;
-                    bIsX = TRUE;
-                    bIsY = FALSE;
-                    bIsZ = FALSE;
-                    iPos++;
-                }
-                else if( iPos == 1 )
-                {
-                    *y1 = coord;
-                    bIsY = TRUE;
-                }
-                else
-                {
-                    *z1 = coord;
-                    bIsZ = TRUE;
-                    iPos = 0;
-                    iPt++;
-                }
-            }
-            if( *pszC == '\0' )
-                break;
-            pszOut = psBuf;
-                pszC++;
-            continue;
-        }
-        if( pszOut - psBuf > 1023 )
-            return FALSE;
-        *pszOut++ = *pszC++;
-    }
-    if( iPt < 2 )
-        return FALSE;
-    if( bIsX == FALSE || bIsY == FALSE || bIsZ == FALSE )
-        return FALSE;
-    return TRUE;
-}
-
 static void gmlHugeFileNodeCoords( struct huge_tag *pItem,
                                    const CPLXMLNode * psNode,
                                    CPLString **nodeSrs )
 {
 /* 
 / this function attempts to set coordinates for <Node> items
-/ when required (a LINESTRING is expected to be processed)
+/ when required (an <Edge> is expected to be processed)
 */
-    double x0;
-    double y0;
-    double z0;
-    double x1;
-    double y1;
-    double z1;
 
-    /* searching the Linestring sub-tag */
-    const CPLXMLNode *psChild = psNode->psChild;
-    while( psChild != NULL )
+/* attempting to fetch Node coordinates */
+    CPLXMLNode *psTopoCurve = CPLCreateXMLNode(NULL, CXT_Element, "TopoCurve");
+    CPLXMLNode *psDirEdge = CPLCreateXMLNode(psTopoCurve, CXT_Element, "directedEdge");
+    CPLXMLNode *psEdge = CPLCloneXMLTree((CPLXMLNode *)psNode);
+    CPLAddXMLChild( psDirEdge, psEdge );
+    OGRGeometryCollection *poColl = (OGRGeometryCollection *)
+                                    GML2OGRGeometry_XMLNode( psTopoCurve, FALSE );
+    CPLDestroyXMLNode( psTopoCurve );
+    if( poColl != NULL )
     {
-        if( psChild->eType == CXT_Element &&
-            EQUAL( psChild->pszValue, "curveProperty" ) )
+        int iCount = poColl->getNumGeometries();
+        if( iCount == 1 )
         {
-            const CPLXMLNode *psLine = psChild->psChild;
-            if( psLine != NULL)
+            OGRGeometry * poChild = (OGRGeometry*)poColl->getGeometryRef(0);
+            int type = wkbFlatten( poChild->getGeometryType());
+            if( type == wkbLineString )
             {
-                if( psLine->eType == CXT_Element &&
-                    EQUAL( psLine->pszValue, "LineString" ) )
+                OGRLineString *poLine = (OGRLineString *)poChild;
+                int iPoints =  poLine->getNumPoints();
+                if( iPoints >= 2 )
                 {
-                    const CPLXMLNode *psList = psLine->psChild;
-                    while( psList != NULL)
+                    pItem->bHasCoords = TRUE;
+                    pItem->xNodeFrom = poLine->getX( 0 );
+                    pItem->yNodeFrom = poLine->getY( 0 );
+                    pItem->xNodeTo = poLine->getX( iPoints - 1 );
+                    pItem->yNodeTo = poLine->getY( iPoints - 1 );
+                    if( poLine->getCoordinateDimension() == 3 )
                     {
-                        int iDims = -1;
-                        if( psList->eType == CXT_Attribute && 
-                            EQUAL( psList->pszValue, "srsName" ) )
-                        {
-                            /* saving the SRS definition if not already set */
-                            if( *nodeSrs == NULL )
-                            {
-                                const CPLXMLNode *psSrsName = psList->psChild;
-                                if( psSrsName != NULL )
-                                {
-                                    if( psSrsName->eType == CXT_Text )
-                                        *nodeSrs = new CPLString( psSrsName->pszValue);
-                                }
-                            }
-                        }
-                        if( psList->eType == CXT_Element &&
-                            EQUAL( psList->pszValue, "posList" ) )
-                        {
-                            const CPLXMLNode *psSrsDims = psList->psChild;
-                            while( psSrsDims != NULL )
-                            {
-                                if( psSrsDims->eType == CXT_Attribute &&
-                                    EQUAL( psSrsDims->pszValue, "srsDimension" ) )
-                                {
-                                    const CPLXMLNode *psDimValue = 
-                                                     psSrsDims->psChild;
-                                    if( psDimValue != NULL )
-                                    {
-                                        if( psDimValue->eType == CXT_Text )
-                                        {
-                                            iDims = atoi(psDimValue->pszValue);
-                                            break;
-                                        }
-                                    }
-                                }
-                                psSrsDims = psSrsDims->psNext;
-                            }
-                            if( iDims < 2 )
-                                iDims = 2;
-                            const CPLXMLNode *psCoords = psList->psChild;
-                            while( psCoords != NULL )
-                            {
-                                if( psCoords->eType == CXT_Text )
-                                {
-                                    int ret;
-                                    if( iDims == 2 )
-                                        ret = gmlHugeParse2DCoords( psCoords->pszValue,
-                                                                    &x0, &y0,
-                                                                    &x1, &y1 );
-                                    else
-                                        ret = gmlHugeParse3DCoords( psCoords->pszValue,
-                                                                    &x0, &y0,
-                                                                    &z0, &x1,
-                                                                    &y1, &z1 );
-                                    if( ret == TRUE )
-                                    {
-                                        /* assigning coords to each <Node> */
-                                        pItem->bHasCoords = TRUE;
-                                        pItem->bHasZ = TRUE;
-                                        if( iDims == 2 )
-                                            pItem->bHasZ = FALSE;
-                                        pItem->xNodeFrom = x0;
-                                        pItem->yNodeFrom = y0;
-                                        if ( pItem->bHasZ == TRUE )
-                                            pItem->zNodeFrom = z0;
-                                        pItem->xNodeTo = x1;
-                                        pItem->yNodeTo = y1;
-                                        if ( pItem->bHasZ == TRUE )
-                                             pItem->zNodeTo = z1;
-                                    }
-                                }
-                                psCoords = psCoords->psNext;
-                            }
-                        }
-                        psList = psList->psNext;
+                        pItem->zNodeFrom = poLine->getZ( 0 );
+                        pItem->zNodeTo = poLine->getZ( iPoints - 1 );
+                        pItem->bHasZ = TRUE;
                     }
+                    else
+                        pItem->bHasZ = FALSE;
                 }
             }
         }
+        delete poColl;
+    }
+	
+    /* searching the <directedNode> sub-tags */
+    const CPLXMLNode *psChild = psNode->psChild;
+    while( psChild != NULL )
+    {
         if( psChild->eType == CXT_Element &&
             EQUAL( psChild->pszValue, "directedNode" ) )
         {
@@ -1437,6 +1229,30 @@ static void gmlHugeFileCheckXrefs( struct huge_helper *helper,
                 EQUAL(psChild->pszValue, "directedEdge") == TRUE )
             {
                 gmlHugeFileCheckXrefs( helper, psChild );
+            }
+            if( EQUAL(psChild->pszValue, "directedFace") == TRUE )
+            {
+                const CPLXMLNode *psFace = psChild->psChild;
+                if( psFace != NULL )
+                {
+                    if( psFace->eType == CXT_Element &&
+                        EQUAL(psFace->pszValue, "Face") == TRUE)
+                    {
+                        const CPLXMLNode *psDirEdge = psFace->psChild;
+                        while (psDirEdge != NULL)
+                        {
+                            const CPLXMLNode *psEdge = psDirEdge->psChild;
+                            while( psEdge != NULL)
+                            {
+                                if( psEdge->eType == CXT_Element &&
+                                    EQUAL(psEdge->pszValue, "Edge") == TRUE)
+                                    gmlHugeFileCheckXrefs( helper, psEdge );
+                                psEdge = psEdge->psNext;
+                            }
+                            psDirEdge = psDirEdge->psNext;
+                        }
+                    }
+                }
             }
         }
         psChild = psChild->psNext;
