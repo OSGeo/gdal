@@ -891,7 +891,7 @@ def netcdf_25():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    result = netcdf_test_copy( 'data/nc_vars.nc', 1, None, 'tmp/netcdf_23.nc' ) 
+    result = netcdf_test_copy( 'data/nc_vars.nc', 1, None, 'tmp/netcdf_25.nc' ) 
     if result != 'success':
         return result
 
@@ -902,8 +902,68 @@ def netcdf_25():
                       'valid_range_f' : '0.1111111, 255.5556', \
                       'valid_range_s' : '0, 255' }
 
-    return netcdf_check_vars( 'tmp/netcdf_23.nc', vals_global, vals_band )
+    return netcdf_check_vars( 'tmp/netcdf_25.nc', vals_global, vals_band )
+ 
+###############################################################################
+# check support for WRITE_BOTTOMUP file creation option
+# use a dummy file with no lon/lat info to force a different checksum 
+# depending on y-axis order
+def netcdf_26():
 
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    #test default config
+    test = gdaltest.GDALTest( 'NETCDF', '../data/int16-nogeo.nc', 1, 4672 )
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    result = test.testCreateCopy(check_gt=0, check_srs=0, check_minmax = 0)
+    gdal.PopErrorHandler()
+
+    if result != 'success':
+        print('failed create copy without WRITE_BOTTOMUP')
+        return result
+
+    #test WRITE_BOTTOMUP=NO
+    test = gdaltest.GDALTest( 'NETCDF', '../data/int16-nogeo.nc', 1, 4855, 
+                              options=['WRITE_BOTTOMUP=NO'] )
+    result = test.testCreateCopy(check_gt=0, check_srs=0, check_minmax = 0)
+
+    if result != 'success':
+        print('failed create copy with WRITE_BOTTOMUP=NO')
+        return result
+    
+    return 'success'
+ 
+###############################################################################
+# check support for GDAL_NETCDF_BOTTOMUP configuration option
+def netcdf_27():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    #test default config
+    test = gdaltest.GDALTest( 'NETCDF', '../data/int16-nogeo.nc', 1, 4672 )
+    config_bak = gdal.GetConfigOption( 'GDAL_NETCDF_BOTTOMUP' )
+    gdal.SetConfigOption( 'GDAL_NETCDF_BOTTOMUP', None )
+    result = test.testOpen()
+    gdal.SetConfigOption( 'GDAL_NETCDF_BOTTOMUP', config_bak )
+
+    if result != 'success':
+        print('failed open without GDAL_NETCDF_BOTTOMUP')
+        return result
+
+    #test GDAL_NETCDF_BOTTOMUP=NO
+    test = gdaltest.GDALTest( 'NETCDF', '../data/int16-nogeo.nc', 1, 4855 )
+    config_bak = gdal.GetConfigOption( 'GDAL_NETCDF_BOTTOMUP' )
+    gdal.SetConfigOption( 'GDAL_NETCDF_BOTTOMUP', 'NO' )
+    result = test.testOpen()
+    gdal.SetConfigOption( 'GDAL_NETCDF_BOTTOMUP', config_bak )
+
+    if result != 'success':
+        print('failed open with GDAL_NETCDF_BOTTOMUP')
+        return result
+    
+    return 'success'
  
 ###############################################################################
 
@@ -936,10 +996,12 @@ gdaltest_list = [
     netcdf_23,
     netcdf_24,
     netcdf_25,
+    netcdf_26,
+    netcdf_27,
  ]
 
 ###############################################################################
-#  file creation tests
+#  basic file creation tests
 
 init_list = [ \
     ('byte.tif', 1, 4672, None, []),

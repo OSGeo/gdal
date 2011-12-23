@@ -1575,20 +1575,15 @@ void netCDFDataset::SetProjectionFromVar( int var )
 
 /* -------------------------------------------------------------------- */
 /*      Set default bottom-up default value                             */
-/*      Config option GDAL_NETCDF_BOTTOMUP and Y axis dimension variable*/ 
-/*      override the default                                            */
+/*      Y axis dimension and absence of GT can modify this value        */
+/*      Override with Config option GDAL_NETCDF_BOTTOMUP                */ 
 /* -------------------------------------------------------------------- */
-    pszValue = CPLGetConfigOption( "GDAL_NETCDF_BOTTOMUP", NULL );
-    if ( pszValue ) {
-        poDS->bBottomUp = CSLTestBoolean( pszValue ) != FALSE;
-    }
-    else {
-        /* new driver is bottom-up by default */
-        if ( bIsGdalFile && ! bIsGdalCfFile )
-            poDS->bBottomUp = FALSE;
-        else
-            poDS->bBottomUp = TRUE;
-    }
+   /* new driver is bottom-up by default */
+   if ( bIsGdalFile && ! bIsGdalCfFile )
+       poDS->bBottomUp = FALSE;
+   else
+       poDS->bBottomUp = TRUE;
+
     CPLDebug( "GDAL_netCDF", 
               "bIsGdalFile=%d bIsGdalCfFile=%d bBottomUp=%d", 
               bIsGdalFile, bIsGdalCfFile, bBottomUp );
@@ -2273,7 +2268,6 @@ void netCDFDataset::SetProjectionFromVar( int var )
 
         CPLDebug( "GDAL_netCDF", "set bBottomUp = %d from Y axis", poDS->bBottomUp );
 
-
 /* -------------------------------------------------------------------- */
 /*      Is pixel spacing is uniform accross the map?                    */
 /* -------------------------------------------------------------------- */
@@ -2794,10 +2788,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         CPLDebug( "GDAL_netCDF", "netCDFDataset::AddProjectionVars() called, "
                   "but Projection has not yet been defined!" );
 
-    /* go through ProcessOptions again as defaults depend on projection type */
-    // ProcessCreationOptions( );
-
-    /* process options */
+    /* process projection options */
     if( bIsProjected ) 
     {
         int bIsCfProjection = NCDFIsCfProjection( oSRS.GetAttrValue( "PROJECTION" ) );
@@ -2858,6 +2849,10 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
     /* make sure we write grid_mapping if we need to write GDAL tags */
     if ( bWriteGDALTags ) bWriteGridMapping = TRUE;
 
+    /* bottom-up value: new driver is bottom-up by default */
+    /* override with WRITE_BOTTOMUP */
+    bBottomUp = CSLFetchBoolean( papszCreationOptions, "WRITE_BOTTOMUP", TRUE );       
+    
     CPLDebug( "GDAL_netCDF", 
               "bIsProjected=%d bIsGeographic=%d bWriteGridMapping=%d bWriteGDALTags=%d bWriteLonLat=%d bBottomUp=%d",
               bIsProjected,bIsGeographic,bWriteGridMapping,bWriteGDALTags,bWriteLonLat,bBottomUp );
@@ -4007,7 +4002,20 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Set projection info                                             */
+/* -------------------------------------------------------------------- */
     poDS->SetProjectionFromVar( var );
+
+    /* override bottom-up with GDAL_NETCDF_BOTTOMUP config option */
+    const char *pszValue = CPLGetConfigOption( "GDAL_NETCDF_BOTTOMUP", NULL );
+    if ( pszValue ) {
+        poDS->bBottomUp = CSLTestBoolean( pszValue ) != FALSE; 
+        CPLDebug( "GDAL_netCDF", 
+                  "set bBottomUp=%d because GDAL_NETCDF_BOTTOMUP=%s",
+                  poDS->bBottomUp, pszValue );
+    }
+
     poDS->SetMetadata( poDS->papszMetadata );
 
 /* -------------------------------------------------------------------- */
@@ -4189,7 +4197,7 @@ Driver options:
 FORMAT=NC/NC2/NC4/NC4C (COMPRESS=DEFLATE sets FORMAT=NC4C)
 COMPRESS=NONE/DEFLATE (default: NONE)
 ZLEVEL=[1-9] (default: 1)
-WRITE_BOTTOMUP=NO/YES (default: YES)
+WRITE_BOTTOMUP=YES/NO (default: YES)
 WRITE_GDAL_TAGS=YES/NO (default: YES)
 WRITE_LONLAT=YES/NO/IF_NEEDED (default: YES for geographic, NO for projected)
 TYPE_LONLAT=float/double (default: double for geographic, float for projected)
@@ -4197,8 +4205,7 @@ PIXELTYPE=DEFAULT/SIGNEDBYTE (use SIGNEDBYTE to get a signed Byte Band)
 
 Config Options:
 
-GDAL_NETCDF_BOTTOMUP=YES/NO sets the default of WRITE_BOTTOMUP 
-  and also the default behavior for import
+GDAL_NETCDF_BOTTOMUP=YES/NO overrides bottom-up value on import
 
 */
 
@@ -4613,7 +4620,7 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
 
 /* note: some logic depends on bIsProjected and bIsGeoGraphic */
-/* which may not be known when Create() is called */
+/* which may not be known when Create() is called, see AddProjectionVars() */
 void
 netCDFDataset::ProcessCreationOptions( )
 { 
@@ -4708,16 +4715,6 @@ netCDFDataset::ProcessCreationOptions( )
     CPLDebug( "GDAL_netCDF", 
               "file options: format=%d compress=%d zlevel=%d",
               nFormat, nCompress, nZLevel );
-
-    /* netcdf standard is bottom-up */
-    /* overriden by config option GDAL_NETCDF_BOTTOMUP and -co option WRITE_BOTTOMUP */
-    bBottomUp = CSLTestBoolean( CPLGetConfigOption( "GDAL_NETCDF_BOTTOMUP", "YES" ) );
-    // bBottomUp = CSLTestBoolean( CPLGetConfigOption( "GDAL_NETCDF_BOTTOMUP", "NO" ) );
-    bBottomUp = CSLFetchBoolean( papszCreationOptions, "WRITE_BOTTOMUP", bBottomUp );       
-
-    /* TODO could add a config option GDAL_NETCDF_PREF=GDAL/CF  */
-
-    /* moved over projection stuff to setprojection */
 
 }
 
