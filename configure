@@ -21108,19 +21108,32 @@ fi
 
 
   if test "$NETCDF_SETTING" = "yes" ; then
+
+        if test -d /usr/include/netcdf ; then
+      EXTRA_INCLUDES="-I/usr/include/netcdf $EXTRA_INCLUDES"
+      NETCDF_ROOT="/usr"
+        elif test -d /usr/include/netcdf-3 ; then
+      EXTRA_INCLUDES="-I/usr/include/netcdf-3 $EXTRA_INCLUDES"
+      NETCDF_ROOT="/usr"
+        elif test -f /usr/include/netcdf.h ; then
+      NETCDF_ROOT="/usr"
+        elif test -f /usr/local/include/netcdf.h ; then
+      NETCDF_ROOT="/usr/local"
+        else
+      echo "using pre-installed libnetcdf."
+      echo -n "libnetcdf is installed but its location cannot be found, "
+      echo "use --with-netcdf=/path_to_netcdf for proper support"
+    fi
+
     LIBS="-lnetcdf $LIBS"
-    echo "using pre-installed libnetcdf."
+    if test "$NETCDF_ROOT" != "" ; then
+      echo "using pre-installed libnetcdf in "$NETCDF_ROOT
+    fi
+
   else
     echo "libnetcdf not found - netCDF support disabled"
   fi
 
-  if test "$NETCDF_SETTING" = "yes" -a -d /usr/include/netcdf ; then
-    EXTRA_INCLUDES="-I/usr/include/netcdf $EXTRA_INCLUDES"
-    NETCDF_ROOT="/usr"
-  elif test "$NETCDF_SETTING" = "yes" -a -d /usr/include/netcdf-3 ; then
-    EXTRA_INCLUDES="-I/usr/include/netcdf-3 $EXTRA_INCLUDES"
-    NETCDF_ROOT="/usr"
-  fi
 else
 
   NETCDF_SETTING=yes
