@@ -1402,22 +1402,38 @@ elif test "$with_netcdf" = "yes" -o "$with_netcdf" = "" ; then
 
   AC_CHECK_LIB([netcdf], [nc_open], [NETCDF_SETTING=yes], [NETCDF_SETTING=no],)
 
-  if test "$NETCDF_SETTING" = "yes" ; then   
+  if test "$NETCDF_SETTING" = "yes" ; then
+
+    dnl Fedora has netcdf headers in /usr/include/netcdf
+    if test -d /usr/include/netcdf ; then
+      EXTRA_INCLUDES="-I/usr/include/netcdf $EXTRA_INCLUDES"
+      NETCDF_ROOT="/usr"
+    dnl RHEL 5 has netcdf headers in /usr/include/netcdf-3
+    elif test -d /usr/include/netcdf-3 ; then
+      EXTRA_INCLUDES="-I/usr/include/netcdf-3 $EXTRA_INCLUDES"
+      NETCDF_ROOT="/usr"
+    dnl ubuntu and fedora have netcdf headers in /usr/include
+    elif test -f /usr/include/netcdf.h ; then
+      NETCDF_ROOT="/usr"
+    dnl try /usr/local
+    elif test -f /usr/local/include/netcdf.h ; then
+      NETCDF_ROOT="/usr/local"
+    dnl print warning if include cannot be found
+    else
+      echo "using pre-installed libnetcdf."
+      echo -n "libnetcdf is installed but its location cannot be found, "
+      echo "use --with-netcdf=/path_to_netcdf for proper support"
+    fi
+
     LIBS="-lnetcdf $LIBS"
-    echo "using pre-installed libnetcdf."
+    if test "$NETCDF_ROOT" != "" ; then
+      echo "using pre-installed libnetcdf in "$NETCDF_ROOT
+    fi
+
   else
     echo "libnetcdf not found - netCDF support disabled"
   fi
 
-dnl Fedora has netcdf headers in /usr/include/netcdf
-  if test "$NETCDF_SETTING" = "yes" -a -d /usr/include/netcdf ; then
-    EXTRA_INCLUDES="-I/usr/include/netcdf $EXTRA_INCLUDES"
-    NETCDF_ROOT="/usr"
-dnl RHEL 5 has netcdf headers in /usr/include/netcdf-3
-  elif test "$NETCDF_SETTING" = "yes" -a -d /usr/include/netcdf-3 ; then
-    EXTRA_INCLUDES="-I/usr/include/netcdf-3 $EXTRA_INCLUDES"
-    NETCDF_ROOT="/usr"
-  fi
 else
 
   NETCDF_SETTING=yes
