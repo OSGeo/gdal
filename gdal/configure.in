@@ -1436,7 +1436,7 @@ elif test "$with_netcdf" = "yes" -o "$with_netcdf" = "" ; then
 
 else
 
-  AC_CHECK_LIB([netcdf], [nc_open], [NETCDF_SETTING=yes], [NETCDF_SETTING=no],)
+  AC_CHECK_LIB([netcdf], [nc_open], [NETCDF_SETTING=yes], [NETCDF_SETTING=no],-L$with_netcdf -L$with_netcdf/lib)
 
   if test "$NETCDF_SETTING" = "yes" ; then
 
