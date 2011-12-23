@@ -1427,7 +1427,7 @@ elif test "$with_netcdf" = "yes" -o "$with_netcdf" = "" ; then
 
     LIBS="-lnetcdf $LIBS"
     if test "$NETCDF_ROOT" != "" ; then
-      echo "using pre-installed libnetcdf in "$NETCDF_ROOT
+      echo "using pre-installed libnetcdf from "$NETCDF_ROOT
     fi
 
   else
@@ -1436,12 +1436,27 @@ elif test "$with_netcdf" = "yes" -o "$with_netcdf" = "" ; then
 
 else
 
-  NETCDF_SETTING=yes
-  LIBS="-L$with_netcdf -L$with_netcdf/lib -lnetcdf $LIBS"
-  EXTRA_INCLUDES="-I$with_netcdf -I$with_netcdf/include $EXTRA_INCLUDES"
-  NETCDF_ROOT="$with_netcdf"
+  AC_CHECK_LIB([netcdf], [nc_open], [NETCDF_SETTING=yes], [NETCDF_SETTING=no],)
 
-  echo "using libnetcdf from $with_netcdf"
+  if test "$NETCDF_SETTING" = "yes" ; then
+
+    NETCDF_SETTING=yes
+    NETCDF_ROOT="$with_netcdf"
+
+    if test -d $with_netcdf/lib ; then
+      LIBS="-L$with_netcdf/lib -lnetcdf $LIBS"
+      EXTRA_INCLUDES="-I$with_netcdf/include $EXTRA_INCLUDES"
+    else
+      LIBS="-L$with_netcdf -lnetcdf $LIBS"
+      EXTRA_INCLUDES="-I$with_netcdf $EXTRA_INCLUDES"
+    fi
+
+    echo "using libnetcdf from $with_netcdf"
+
+  else
+    echo "libnetcdf not found in "$with_netcdf" - netCDF support disabled"
+  fi
+
 fi
 
 dnl start new test
