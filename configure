@@ -21127,7 +21127,7 @@ fi
 
     LIBS="-lnetcdf $LIBS"
     if test "$NETCDF_ROOT" != "" ; then
-      echo "using pre-installed libnetcdf in "$NETCDF_ROOT
+      echo "using pre-installed libnetcdf from "$NETCDF_ROOT
     fi
 
   else
@@ -21136,12 +21136,68 @@ fi
 
 else
 
-  NETCDF_SETTING=yes
-  LIBS="-L$with_netcdf -L$with_netcdf/lib -lnetcdf $LIBS"
-  EXTRA_INCLUDES="-I$with_netcdf -I$with_netcdf/include $EXTRA_INCLUDES"
-  NETCDF_ROOT="$with_netcdf"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for nc_open in -lnetcdf" >&5
+$as_echo_n "checking for nc_open in -lnetcdf... " >&6; }
+if test "${ac_cv_lib_netcdf_nc_open+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lnetcdf  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
 
-  echo "using libnetcdf from $with_netcdf"
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char nc_open ();
+int
+main ()
+{
+return nc_open ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_netcdf_nc_open=yes
+else
+  ac_cv_lib_netcdf_nc_open=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_netcdf_nc_open" >&5
+$as_echo "$ac_cv_lib_netcdf_nc_open" >&6; }
+if test "x$ac_cv_lib_netcdf_nc_open" = x""yes; then :
+  NETCDF_SETTING=yes
+else
+  NETCDF_SETTING=no
+fi
+
+
+  if test "$NETCDF_SETTING" = "yes" ; then
+
+    NETCDF_SETTING=yes
+    NETCDF_ROOT="$with_netcdf"
+
+    if test -d $with_netcdf/lib ; then
+      LIBS="-L$with_netcdf/lib -lnetcdf $LIBS"
+      EXTRA_INCLUDES="-I$with_netcdf/include $EXTRA_INCLUDES"
+    else
+      LIBS="-L$with_netcdf -lnetcdf $LIBS"
+      EXTRA_INCLUDES="-I$with_netcdf $EXTRA_INCLUDES"
+    fi
+
+    echo "using libnetcdf from $with_netcdf"
+
+  else
+    echo "libnetcdf not found in "$with_netcdf" - netCDF support disabled"
+  fi
+
 fi
 
 
