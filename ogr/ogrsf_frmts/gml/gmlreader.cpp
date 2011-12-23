@@ -705,8 +705,8 @@ int GMLReader::GetFeatureElementIndex( const char *pszElement, int nElementLengt
     const char *pszLast = m_poState->GetLastComponent();
     size_t      nLenLast = m_poState->GetLastComponentLen();
 
-    if( nLenLast >= 6 && (EQUAL(pszLast+nLenLast-6,"member") ||
-                          EQUAL(pszLast+nLenLast-7,"members")) )
+    if( (nLenLast >= 6 && EQUAL(pszLast+nLenLast-6,"member")) ||
+        (nLenLast >= 7 && EQUAL(pszLast+nLenLast-7,"members")) )
     {
         /* Default feature name */
     }
