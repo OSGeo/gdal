@@ -322,7 +322,7 @@ OGRLIBKMLLayer::~OGRLIBKMLLayer (  )
 
     CPLFree ( ( void * )m_pszName );
     CPLFree ( ( void * )m_pszFileName );
-    delete m_poOgrSRS;
+    m_poOgrSRS->Release();
 
     m_poOgrFeatureDefn->Release (  );
 
