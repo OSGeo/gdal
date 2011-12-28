@@ -1810,6 +1810,14 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
 
         for( iBand = 0; iBand < poFile->GetChannels(); iBand++ )
         {
+            PCIDSKChannel* poChannel = poFile->GetChannel( iBand + 1 );
+            if (poChannel->GetBlockWidth() <= 0 ||
+                poChannel->GetBlockHeight() <= 0)
+            {
+                delete poDS;
+                return NULL;
+            }
+
             poDS->SetBand( iBand+1, new PCIDSK2Band( poDS, poFile, iBand+1 ));
         }
 
@@ -1824,6 +1832,12 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
         {
             PCIDSKChannel *poChannel = 
                 dynamic_cast<PCIDSKChannel*>( poBitSeg );
+            if (poChannel->GetBlockWidth() <= 0 ||
+                poChannel->GetBlockHeight() <= 0)
+            {
+                delete poDS;
+                return NULL;
+            }
 
             poDS->SetBand( poDS->GetRasterCount()+1, 
                            new PCIDSK2Band( poChannel ) );
