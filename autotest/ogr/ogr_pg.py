@@ -95,12 +95,15 @@ def ogr_pg_1():
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
     gdaltest.pg_retrieve_fid = False
-    gdaltest.pg_quote_with_E = False
     if version_str[0:11] == "PostgreSQL ":
         if float(version_str[11:14]) >= 8.2:
             gdaltest.pg_retrieve_fid = True
-        if float(version_str[11:14]) >= 9.0:
-            gdaltest.pg_quote_with_E = True
+
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL('SHOW standard_conforming_strings')
+    gdal.PopErrorHandler()
+    gdaltest.pg_quote_with_E = sql_lyr is not None
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT postgis_version()')
