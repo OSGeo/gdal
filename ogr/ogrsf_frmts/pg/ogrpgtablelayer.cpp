@@ -997,6 +997,9 @@ void OGRPGTableLayer::AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
     // Binary formatting
     else if( nOGRFieldType == OFTBinary )
     {
+        if (poDS->sPostgreSQLVersion.nMajor >= 9)
+            osCommand += "E";
+
         osCommand += "'";
 
         int nLen = 0;
@@ -1116,6 +1119,8 @@ OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
 
                 if( pszBytea != NULL )
                 {
+                    if (poDS->sPostgreSQLVersion.nMajor >= 9)
+                        osCommand += "E";
                     osCommand = osCommand + "'" + pszBytea + "'";
                     CPLFree( pszBytea );
                 }
@@ -1535,6 +1540,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
         if( pszBytea != NULL )
         {
+            if (poDS->sPostgreSQLVersion.nMajor >= 9)
+                osCommand += "E";
             osCommand = osCommand + "'" + pszBytea + "'";
             CPLFree( pszBytea );
         }
