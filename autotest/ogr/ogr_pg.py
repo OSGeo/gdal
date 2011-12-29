@@ -68,7 +68,7 @@ def ogr_pg_1():
     #gdaltest.pg_connection_string='dbname=autotest-postgis2.0 port=5432'
     #gdaltest.pg_connection_string='dbname=autotest host=127.0.0.1 port=5433 user=postgres'
     #gdaltest.pg_connection_string='dbname=autotest host=127.0.0.1 port=5434 user=postgres'
-    #gdaltest.pg_connection_string='dbname=autotest port=5435 user=postgres'
+    #gdaltest.pg_connection_string='dbname=autotest port=5435 host=127.0.0.1'
 
     try:
         gdaltest.pg_dr = ogr.GetDriverByName( 'PostgreSQL' )
@@ -95,9 +95,12 @@ def ogr_pg_1():
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
     gdaltest.pg_retrieve_fid = False
+    gdaltest.pg_quote_with_E = False
     if version_str[0:11] == "PostgreSQL ":
         if float(version_str[11:14]) >= 8.2:
             gdaltest.pg_retrieve_fid = True
+        if float(version_str[11:14]) >= 9.0:
+            gdaltest.pg_quote_with_E = True
 
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT postgis_version()')
@@ -1102,6 +1105,8 @@ def ogr_pg_23():
         geom_str = "GeomFromEWKT('POINT(10 20)')"
     else:
         geom_str = "'\\\\001\\\\001\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000\\\\000$@\\\\000\\\\000\\\\000\\\\000\\\\000\\\\0004@'"
+        if gdaltest.pg_quote_with_E:
+            geom_str = "E" + geom_str
     gdaltest.pg_ds.ExecuteSQL( "INSERT INTO datatypetest ( my_numeric5, my_numeric5_3, my_bool, my_int2, my_int4, my_int8, my_float4, my_float8, my_real, my_char, my_varchar, my_varchar10, my_text, my_bytea, my_time, my_date, my_timestamp, my_timestamptz, my_chararray, my_textarray, my_varchararray, my_int4array, my_float4array, my_float8array, wkb_geometry) VALUES ( 12345, 0.123, 'T', 12345, 12345678, 1234567901234, 0.123, 0.12345678, 0.876, 'a', 'ab', 'varchar10 ', 'abc', 'xyz', '12:34:56', '2000-01-01', '2000-01-01 00:00:00', '2000-01-01 00:00:00+00', '{a,b}', '{aa,bb}', '{cc,dd}', '{100,200}', '{100.1,200.1}', '{100.12,200.12}', " + geom_str + " )" )
 
 
