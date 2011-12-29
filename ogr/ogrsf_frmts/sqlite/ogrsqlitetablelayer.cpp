@@ -560,7 +560,8 @@ int OGRSQLiteTableLayer::GetFeatureCount( int bForce )
 
 OGRErr OGRSQLiteTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 {
-    if (CheckSpatialIndexTable())
+    if (CheckSpatialIndexTable() &&
+        !CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_EXACT_EXTENT", "NO")))
     {
         const char* pszSQL;
 
