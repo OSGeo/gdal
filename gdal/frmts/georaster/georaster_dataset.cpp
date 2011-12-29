@@ -503,7 +503,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     }
     else
     {
-        if( EQUAL( poGRW->sCompressionType.c_str(), "NONE" ) &&
+        if( ! EQUAL( poGRW->sCompressionType.c_str(), "NONE" ) &&
           ( nBands == 3 || nBands == 4 ) )
         {
             poGRW->nBandBlockSize = nBands;
@@ -514,6 +514,16 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
       ( poGRW->nBandBlockSize == 3 || poGRW->nBandBlockSize == 4 ) ) 
     {
       poGRW->sInterleaving = "BIP";
+    }
+
+    if( EQUALN( poGRW->sCompressionType.c_str(), "JPEG", 4 ) )
+    {
+        if( ! EQUAL( poGRW->sInterleaving.c_str(), "BIP" ) )
+        {
+            CPLError( CE_Warning, CPLE_IllegalArg, 
+                "compress=JPEG assumes interleave=BIP" );
+            poGRW->sInterleaving = "BIP";
+        }
     }
 
     pszFetched = CSLFetchNameValue( papszOptions, "BLOCKING" );
@@ -620,19 +630,8 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         }
     }
 
-    if( EQUALN( poGRW->sCompressionType.c_str(), "DEFLATE", 4 ) )
+    if( EQUAL( poGRW->sCompressionType.c_str(), "DEFLATE" ) )
     {
-        if( poGRW->nBandBlockSize != 1 && 
-            EQUAL( poGRW->sInterleaving, "BIP" ) == false )
-        {
-            CPLError( CE_Failure, CPLE_IllegalArg, 
-                "(COMPRESS=%s) and BLOCKBSIZE > 1 must select "
-                "INTERLEAVE as PIXEL (BIP).",
-                poGRW->sCompressionType.c_str() );
-            delete poGRD;
-            return NULL;
-        }
-
         if( ( poGRW->nColumnBlockSize * 
               poGRW->nRowBlockSize *
               poGRW->nBandBlockSize *
