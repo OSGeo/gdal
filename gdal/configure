@@ -18690,6 +18690,29 @@ _ACEOF
   fi
 
 
+if test "$am_func_iconv" = "yes"; then
+    rm -f testiconv.*
+    echo '#include <iconv.h>' > testiconv.cpp
+    echo 'int main(int argc, char** argv) { iconv_t cd; return iconv (cd, (const char **) 0, 0, 0, 0); } ' >> testiconv.cpp
+    if test -z "`${CXX} testiconv.cpp -c 2>&1`" ; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: using ICONV_CPP_CONST=\"const\"" >&5
+$as_echo "using ICONV_CPP_CONST=\"const\"" >&6; }
+        ICONV_CPP_CONST="const"
+    else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: using ICONV_CPP_CONST=\"\"" >&5
+$as_echo "using ICONV_CPP_CONST=\"\"" >&6; }
+        ICONV_CPP_CONST=""
+    fi
+    rm -f testiconv.*
+
+
+cat >>confdefs.h <<_ACEOF
+#define ICONV_CPP_CONST $ICONV_CPP_CONST
+_ACEOF
+
+fi
+
+
 
 
 # Check whether --with-liblzma was given.
@@ -21138,11 +21161,11 @@ else
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for nc_open in -lnetcdf" >&5
 $as_echo_n "checking for nc_open in -lnetcdf... " >&6; }
-if test "${ac_cv_lib_netcdf_nc_open+set}" = set; then :
+if ${ac_cv_lib_netcdf_nc_open+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lnetcdf  -L$with_netcdf -L$with_netcdf/lib  $LIBS"
+LIBS="-lnetcdf -L$with_netcdf -L$with_netcdf/lib $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -21172,7 +21195,7 @@ LIBS=$ac_check_lib_save_LIBS
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_netcdf_nc_open" >&5
 $as_echo "$ac_cv_lib_netcdf_nc_open" >&6; }
-if test "x$ac_cv_lib_netcdf_nc_open" = x""yes; then :
+if test "x$ac_cv_lib_netcdf_nc_open" = xyes; then :
   NETCDF_SETTING=yes
 else
   NETCDF_SETTING=no

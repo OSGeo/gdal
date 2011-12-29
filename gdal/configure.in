@@ -423,6 +423,27 @@ dnl http://www.gnu.org/software/gettext/manual/html_node/AM_005fICONV.html
 dnl ---------------------------------------------------------------------------
 AM_ICONV
 
+dnl Extra test needed for GCC 4.5 on Solaris 11, where there is
+dnl a different behaviour if the tests are compiled with gcc or g++.
+dnl So we introduce a ICONV_CPP_CONST that must be used instead of
+dnl ICONV_CONST when used from .cpp files.
+if test "$am_func_iconv" = "yes"; then
+    rm -f testiconv.*
+    echo '#include <iconv.h>' > testiconv.cpp
+    echo 'int main(int argc, char** argv) { iconv_t cd; return iconv (cd, (const char **) 0, 0, 0, 0); } ' >> testiconv.cpp
+    if test -z "`${CXX} testiconv.cpp -c 2>&1`" ; then
+        AC_MSG_RESULT([using ICONV_CPP_CONST="const"])
+        ICONV_CPP_CONST="const"
+    else
+        AC_MSG_RESULT([using ICONV_CPP_CONST=""])
+        ICONV_CPP_CONST=""
+    fi
+    rm -f testiconv.*
+
+    AC_DEFINE_UNQUOTED(ICONV_CPP_CONST,$ICONV_CPP_CONST, [For.cpp files, define as const if the declaration of iconv() needs const.])
+fi
+
+
 dnl ---------------------------------------------------------------------------
 dnl Check if liblzma is available.
 dnl ---------------------------------------------------------------------------

@@ -32,6 +32,10 @@ CPL_CVSID("$Id$");
 #include <iconv.h>
 #include "cpl_string.h"
 
+#ifndef ICONV_CPP_CONST
+#define ICONV_CPP_CONST ICONV_CONST
+#endif
+
 #define CPL_RECODE_DSTBUF_SIZE 32768
 
 /************************************************************************/
@@ -73,9 +77,9 @@ char *CPLRecodeIconv( const char *pszSource,
 /*      XXX: There is a portability issue: iconv() function could be    */
 /*      declared differently on different platforms. The second         */
 /*      argument could be declared as char** (as POSIX defines) or      */
-/*      as a const char**. Handle it with the ICONV_CONST macro here.   */
+/*      as a const char**. Handle it with the ICONV_CPP_CONST macro here.   */
 /* -------------------------------------------------------------------- */
-    ICONV_CONST char *pszSrcBuf = (ICONV_CONST char *)pszSource;
+    ICONV_CPP_CONST char *pszSrcBuf = (ICONV_CPP_CONST char *)pszSource;
     size_t  nSrcLen = strlen( pszSource );
     size_t  nDstCurLen = MAX(CPL_RECODE_DSTBUF_SIZE, nSrcLen + 1);
     size_t  nDstLen = nDstCurLen;
@@ -218,9 +222,9 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
 /*      XXX: There is a portability issue: iconv() function could be    */
 /*      declared differently on different platforms. The second         */
 /*      argument could be declared as char** (as POSIX defines) or      */
-/*      as a const char**. Handle it with the ICONV_CONST macro here.   */
+/*      as a const char**. Handle it with the ICONV_CPP_CONST macro here.   */
 /* -------------------------------------------------------------------- */
-    ICONV_CONST char *pszSrcBuf = (ICONV_CONST char *) pszIconvSrcBuf;
+    ICONV_CPP_CONST char *pszSrcBuf = (ICONV_CPP_CONST char *) pszIconvSrcBuf;
 
     /* iconv expects a number of bytes, not characters */
     nSrcLen *= sizeof(wchar_t);
