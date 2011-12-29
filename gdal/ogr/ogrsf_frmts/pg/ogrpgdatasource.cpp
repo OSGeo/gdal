@@ -56,6 +56,7 @@ OGRPGDataSource::OGRPGDataSource()
     bUseBinaryCursor = FALSE;
     nSoftTransactionLevel = 0;
     bBinaryTimeFormatIsInt8 = FALSE;
+    bUseEscapeStringSyntax = FALSE;
     
     nGeometryOID = (Oid) 0;
     nGeographyOID = (Oid) 0;
@@ -597,6 +598,20 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     }
     OGRPGClearResult(hResult);
     CPLAssert(NULL == hResult); /* Test if safe PQclear has not been broken */
+
+/* -------------------------------------------------------------------- */
+/*      Test if standard_conforming_strings is recognized               */
+/* -------------------------------------------------------------------- */
+
+    hResult = OGRPG_PQexec(hPGConn, "SHOW standard_conforming_strings" );
+    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
+        && PQntuples(hResult) == 1 )
+    {
+        /* Whatever the value is, it means that we can use the E'' */
+        /* syntax */
+        bUseEscapeStringSyntax = TRUE;
+    }
+    OGRPGClearResult(hResult);
 
 /* -------------------------------------------------------------------- */
 /*      Test if time binary format is int8 or float8                    */

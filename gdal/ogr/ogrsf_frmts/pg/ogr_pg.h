@@ -358,6 +358,7 @@ class OGRPGDataSource : public OGRDataSource
 
     int                 bUseBinaryCursor;
     int                 bBinaryTimeFormatIsInt8;
+    int                 bUseEscapeStringSyntax;
 
     int                GetUndefinedSRID() const { return nUndefinedSRID; }
 
