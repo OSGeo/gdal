@@ -827,10 +827,9 @@ json_object* OGRGeoJSONFindMemberByName( json_object* poObj,
     it.key = NULL;
     it.val = NULL;
     it.entry = NULL;
-    if( NULL != json_object_get_object(poTmp) )
+    if( NULL != json_object_get_object(poTmp) &&
+        NULL != json_object_get_object(poTmp)->head )
     {
-        CPLAssert( NULL != json_object_get_object(poTmp)->head );
-
         for( it.entry = json_object_get_object(poTmp)->head;
              ( it.entry ?
                ( it.key = (char*)it.entry->k,
