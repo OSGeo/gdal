@@ -945,7 +945,8 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
         }
     }
 
-    poDS->UnreadValue();
+    if( nCode == 0 )
+        poDS->UnreadValue();
 
     if( bHaveX && bHaveY )
         smoothPolyline.AddPoint(dfX, dfY, dfZ, dfBulge);
