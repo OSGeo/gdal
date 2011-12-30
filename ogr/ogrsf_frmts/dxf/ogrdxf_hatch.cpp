@@ -79,7 +79,8 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
 
               for( iBoundary = 0; iBoundary < nBoundaryPathCount; iBoundary++ )
               {
-                  CollectBoundaryPath( &oGC );
+                  if (CollectBoundaryPath( &oGC ) != OGRERR_NONE)
+                      break;
               }
           }
           break;
@@ -158,7 +159,7 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
 /* -------------------------------------------------------------------- */
     nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf));
     if( nCode != 92 )
-        return NULL;
+        return OGRERR_FAILURE;
 
     int  nBoundaryPathType = atoi(szLineBuf);
 
