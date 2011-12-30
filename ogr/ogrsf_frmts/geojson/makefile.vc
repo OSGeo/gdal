@@ -8,6 +8,7 @@ GEOJSON_OBJ = \
 	ogrgeojsondriver.obj \
 	ogrgeojsondatasource.obj \
 	ogrgeojsonlayer.obj \
+	ogrgeojsonwritelayer.obj \
 	ogrgeojsonutils.obj \
 	ogrgeojsonreader.obj \
 	ogrgeojsonwriter.obj \

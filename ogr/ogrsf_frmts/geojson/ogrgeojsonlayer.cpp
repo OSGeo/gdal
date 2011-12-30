@@ -27,7 +27,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 #include "ogr_geojson.h"
-#include "ogrgeojsonwriter.h"
 #include <jsonc/json.h> // JSON-C
 #include <algorithm> // for_each, find_if
 
@@ -51,13 +50,9 @@ const OGRwkbGeometryType OGRGeoJSONLayer::DefaultGeometryType = wkbUnknown;
 OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
                                   OGRSpatialReference* poSRSIn,
                                   OGRwkbGeometryType eGType,
-                                  char** papszOptions,
                                   OGRGeoJSONDataSource* poDS )
-    : iterCurrent_( seqFeatures_.end() ), poDS_( poDS ), poFeatureDefn_(new OGRFeatureDefn( pszName ) ), poSRS_( NULL ), nOutCounter_( 0 )
+    : iterCurrent_( seqFeatures_.end() ), poDS_( poDS ), poFeatureDefn_(new OGRFeatureDefn( pszName ) ), poSRS_( NULL )
 {
-    bWriteBBOX = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "WRITE_BBOX", "FALSE"));
-    bBBOX3D = FALSE;
-
     CPLAssert( NULL != poDS_ );
     CPLAssert( NULL != poFeatureDefn_ );
     
@@ -68,8 +63,6 @@ OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
     {
         SetSpatialRef( poSRSIn );
     }
-
-    nCoordPrecision = atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"));
 }
 
 /************************************************************************/
@@ -78,48 +71,6 @@ OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
 
 OGRGeoJSONLayer::~OGRGeoJSONLayer()
 {
-    VSILFILE* fp = poDS_->GetOutputFile();
-    if( NULL != fp )
-    {
-        VSIFPrintfL( fp, "\n]" );
-
-        if( bWriteBBOX && sEnvelopeLayer.IsInit() )
-        {
-            json_object* poObjBBOX = json_object_new_array();
-            json_object_array_add(poObjBBOX,
-                            json_object_new_double_with_precision(sEnvelopeLayer.MinX, nCoordPrecision));
-            json_object_array_add(poObjBBOX,
-                            json_object_new_double_with_precision(sEnvelopeLayer.MinY, nCoordPrecision));
-            if( bBBOX3D )
-                json_object_array_add(poObjBBOX,
-                            json_object_new_double_with_precision(sEnvelopeLayer.MinZ, nCoordPrecision));
-            json_object_array_add(poObjBBOX,
-                            json_object_new_double_with_precision(sEnvelopeLayer.MaxX, nCoordPrecision));
-            json_object_array_add(poObjBBOX,
-                            json_object_new_double_with_precision(sEnvelopeLayer.MaxY, nCoordPrecision));
-            if( bBBOX3D )
-                json_object_array_add(poObjBBOX,
-                            json_object_new_double_with_precision(sEnvelopeLayer.MaxZ, nCoordPrecision));
-
-            const char* pszBBOX = json_object_to_json_string( poObjBBOX );
-            if( poDS_->GetFpOutputIsSeekable() )
-            {
-                VSIFSeekL(fp, poDS_->GetBBOXInsertLocation(), SEEK_SET);
-                if (strlen(pszBBOX) + 9 < SPACE_FOR_BBOX)
-                    VSIFPrintfL( fp, "\"bbox\": %s,", pszBBOX );
-                VSIFSeekL(fp, 0, SEEK_END);
-            }
-            else
-            {
-                VSIFPrintfL( fp, ",\n\"bbox\": %s", pszBBOX );
-            }
-
-            json_object_put( poObjBBOX );
-        }
-
-        VSIFPrintfL( fp, "\n}\n" );
-    }
-
     std::for_each(seqFeatures_.begin(), seqFeatures_.end(),
                   OGRFeature::DestroyFeature);
 
@@ -151,6 +102,10 @@ OGRSpatialReference* OGRGeoJSONLayer::GetSpatialRef()
 {
     return poSRS_;
 }
+
+/************************************************************************/
+/*                           SetSpatialRef                              */
+/************************************************************************/
 
 void OGRGeoJSONLayer::SetSpatialRef( OGRSpatialReference* poSRSIn )
 {
@@ -221,90 +176,6 @@ OGRFeature* OGRGeoJSONLayer::GetNextFeature()
     }
 
     return NULL;
-}
-
-/************************************************************************/
-/*                           GetFeature                             */
-/************************************************************************/
-
-OGRFeature* OGRGeoJSONLayer::GetFeature( long nFID )
-{
-	OGRFeature* poFeature = NULL;
-	poFeature = OGRLayer::GetFeature( nFID );
-
-	return poFeature;
-}
-
-/************************************************************************/
-/*                           CreateFeature                              */
-/************************************************************************/
-
-OGRErr OGRGeoJSONLayer::CreateFeature( OGRFeature* poFeature )
-{
-    VSILFILE* fp = poDS_->GetOutputFile();
-    if( NULL == fp )
-    {
-        CPLDebug( "GeoJSON", "Target datasource file is invalid." );
-        return CE_Failure;
-    }
-
-    if( NULL == poFeature )
-    {
-        CPLDebug( "GeoJSON", "Feature is null" );
-        return OGRERR_INVALID_HANDLE;
-    }
-
-    json_object* poObj = OGRGeoJSONWriteFeature( poFeature, bWriteBBOX, nCoordPrecision );
-    CPLAssert( NULL != poObj );
-
-    if( nOutCounter_ > 0 )
-    {
-        /* Separate "Feature" entries in "FeatureCollection" object. */
-        VSIFPrintfL( fp, ",\n" );
-    }
-    VSIFPrintfL( fp, "%s\n", json_object_to_json_string( poObj ) );
-
-    json_object_put( poObj );
-
-    ++nOutCounter_;
-
-    OGRGeometry* poGeometry = poFeature->GetGeometryRef();
-    if ( bWriteBBOX && !poGeometry->IsEmpty() )
-    {
-        OGREnvelope3D sEnvelope;
-        poGeometry->getEnvelope(&sEnvelope);
-
-        if( poGeometry->getCoordinateDimension() == 3 )
-            bBBOX3D = TRUE;
-
-        sEnvelopeLayer.Merge(sEnvelope);
-    }
-
-    return OGRERR_NONE;
-}
-
-OGRErr OGRGeoJSONLayer::CreateField(OGRFieldDefn* poField, int bApproxOK)
-{
-    UNREFERENCED_PARAM(bApproxOK);
-
-    for( int i = 0; i < poFeatureDefn_->GetFieldCount(); ++i )
-    {
-        OGRFieldDefn* poDefn = poFeatureDefn_->GetFieldDefn(i);
-        CPLAssert( NULL != poDefn );
-
-        if( EQUAL( poDefn->GetNameRef(), poField->GetNameRef() ) )
-        {
-            CPLDebug( "GeoJSON", "Field '%s' already present in schema",
-                      poField->GetNameRef() );
-            
-            // TODO - mloskot: Is this return code correct?
-            return OGRERR_NONE;
-        }
-    }
-
-    poFeatureDefn_->AddFieldDefn( poField );
-
-    return OGRERR_NONE;
 }
 
 /************************************************************************/
