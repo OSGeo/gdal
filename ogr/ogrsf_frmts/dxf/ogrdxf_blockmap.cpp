@@ -72,7 +72,8 @@ void OGRDXFDataSource::ReadBlocksSection()
         if( EQUAL(szLineBuf,"ENDBLK") )
             continue;
 
-        UnreadValue();
+        if (nCode >= 0)
+            UnreadValue();
 
         // Now we will process entities till we run out at the ENDBLK code.
         // we aggregate the geometries of the features into a multi-geometry,
