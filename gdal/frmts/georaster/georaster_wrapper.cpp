@@ -1351,6 +1351,11 @@ void GeoRasterWrapper::GetRasterInfo( void )
                             "rasterInfo.compression.quality", "75" ) );
     }
 
+    if( EQUALN( sCompressionType.c_str(), "JPEG", 4 ) )
+    {
+        sInterleaving = "BIP";
+    }
+
     //  -------------------------------------------------------------------
     //  Get default RGB Bands
     //  -------------------------------------------------------------------
