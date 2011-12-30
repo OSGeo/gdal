@@ -427,6 +427,33 @@ void OGRDXFDataSource::ReadHeaderSection()
         oHeaderVariables[osName] = osValue;
     }
 
+    if (nCode != -1)
+    {
+        nCode = ReadValue( szLineBuf, sizeof(szLineBuf) );
+        UnreadValue();
+    }
+
+    /* Unusual DXF files produced by dxflib */
+    /* such as http://www.ribbonsoft.com/library/architecture/plants/decd5.dxf */
+    /* where there is a spurious ENDSEC in the middle of the header variables */
+    if (nCode == 9 && EQUALN(szLineBuf,"$", 1) )
+    {
+        while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > -1
+            && !EQUAL(szLineBuf,"ENDSEC") )
+        {
+            if( nCode != 9 )
+                continue;
+
+            CPLString osName = szLineBuf;
+
+            ReadValue( szLineBuf, sizeof(szLineBuf) );
+
+            CPLString osValue = szLineBuf;
+
+            oHeaderVariables[osName] = osValue;
+        }
+    }
+
     CPLDebug( "DXF", "Read %d header variables.", 
               (int) oHeaderVariables.size() );
 
