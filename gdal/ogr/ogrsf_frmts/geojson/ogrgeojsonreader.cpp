@@ -111,8 +111,8 @@ OGRGeoJSONLayer* OGRGeoJSONReader::ReadLayer( const char* pszName,
     }
         
     poLayer_ = new OGRGeoJSONLayer( pszName, NULL,
-                                   OGRGeoJSONLayer::DefaultGeometryType,
-                                   NULL, poDS );
+                                    OGRGeoJSONLayer::DefaultGeometryType,
+                                    poDS );
 
     if( !GenerateLayerDefn() )
     {
