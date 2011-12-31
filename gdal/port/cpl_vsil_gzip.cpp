@@ -281,7 +281,7 @@ VSIGZipHandle::VSIGZipHandle(VSIVirtualHandle* poBaseHandle,
     this->expected_crc = expected_crc;
     this->pszBaseFileName = (pszBaseFileName) ? CPLStrdup(pszBaseFileName) : NULL;
     this->offset = offset;
-    if (compressed_size)
+    if (compressed_size || transparent)
     {
         this->compressed_size = compressed_size;
     }
@@ -848,8 +848,8 @@ size_t VSIGZipHandle::Read( void *buf, size_t nSize, size_t nMemb )
         z_err = inflate(& (stream), Z_NO_FLUSH);
         in -= stream.avail_in;
         out -= stream.avail_out;
-        
-        if  (z_err == Z_STREAM_END) {
+
+        if  (z_err == Z_STREAM_END && compressed_size != 2 ) {
             /* Check CRC and original size */
             crc = crc32 (crc, pStart, (uInt) (stream.next_out - pStart));
             pStart = stream.next_out;
