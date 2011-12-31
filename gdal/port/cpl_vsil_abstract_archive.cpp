@@ -139,8 +139,15 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive
         }
 
         char* pszStrippedFileName = CPLStrdup(fileName);
+        char* pszIter;
+        for(pszIter = pszStrippedFileName;*pszIter;pszIter++)
+        {
+            if (*pszIter == '\\')
+                *pszIter = '/';
+        }
+
         int bIsDir = strlen(fileName) > 0 &&
-                      (fileName[strlen(fileName)-1] == '/' || fileName[strlen(fileName)-1] == '\\');
+                      fileName[strlen(fileName)-1] == '/';
         if (bIsDir)
         {
             /* Remove trailing slash */
@@ -152,10 +159,9 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive
             oSet.insert(pszStrippedFileName);
 
             /* Add intermediate directory structure */
-            char* pszIter;
             for(pszIter = pszStrippedFileName;*pszIter;pszIter++)
             {
-                if (*pszIter == '/' || *pszIter == '\\')
+                if (*pszIter == '/')
                 {
                     char* pszStrippedFileName2 = CPLStrdup(pszStrippedFileName);
                     pszStrippedFileName2[pszIter - pszStrippedFileName] = 0;
