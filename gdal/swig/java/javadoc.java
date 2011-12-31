@@ -8124,6 +8124,26 @@ public class Geometry:public boolean Equal(Geometry other)
 public class Geometry:public String ExportToGML()
 
 /**
+ * Convert a geometry into GML format.
+ * <p>
+ * The GML geometry is expressed directly in terms of GML basic data
+ * types assuming the this is available in the gml namespace.
+ *
+ * The supported options in OGR 1.8.0 are :
+ * <ul>
+ * <li>FORMAT=GML3. Otherwise it will default to GML 2.1.2 output.</li>
+ * <li>GML3_LINESTRING_ELEMENT=curve. (Only valid for FORMAT=GML3) To use gml:Curve element for linestrings. Otherwise gml:LineString will be used .</li>
+ * <li>GML3_LONGSRS=YES/NO. (Only valid for FORMAT=GML3) Default to YES. If YES, SRS with EPSG authority will be written with the "urn:ogc:def:crs:EPSG::" prefix. In the case, if the SRS is a geographic SRS without explicit AXIS order, but that the same SRS authority code imported with ImportFromEPSGA() should be treated as lat/long, then the function will take care of coordinate order swapping. If set to NO, SRS with EPSG authority will be written with the "EPSG:" prefix, even if they are in lat/long order.</li>
+ * </ul>
+ *
+ * @param options a list of strings.
+ * @return A GML fragment or null in case of error.
+ *
+ * @since OGR 1.8.0
+ */
+public class Geometry:public String ExportToGML(java.util.Vector options)
+
+/**
  * Convert a geometry into KML format.
  *
  * @param altitude_mode string which will be inserted in-between the &lt;altitude_mode&gt; tag.
@@ -8147,6 +8167,18 @@ public class Geometry:public String ExportToKML()
  * @return A GeoJSON fragment or null in case of error.
  */
 public class Geometry:public String ExportToJson()
+
+/**
+ * Convert a geometry into GeoJSON format.
+ *
+ * @param options a list of strings. For now, only COORDINATE_PRECISION=int_number
+ *                where int_number is the maximum number of figures after decimal separator to write in coordinates.
+ * @return A GeoJSON fragment or null in case of error.
+ *
+ * @since OGR 1.9.0
+ */
+public class Geometry:public String ExportToJson(java.util.Vector options)
+
 
 /**
  * Convert a geometry into well known binary format.
@@ -8291,6 +8323,15 @@ public class Geometry:public int GetDimension()
  * @param argout an allocated array of 4 doubles into which to place the result
  */
 public class Geometry:public void GetEnvelope(double[] argout)
+
+/**
+ * Computes and returns the 3D bounding envelope for this geometry.
+ * <p>
+ * @param argout an allocated array of 6 doubles into which to place the result
+ *
+ * @since OGR 1.9.0
+ */
+public class Geometry:public void GetEnvelope3D(double[] argout)
 
 /**
  * Fetch the number of elements in a geometry or number of geometries in
@@ -8487,26 +8528,37 @@ public class Geometry:public double GetZ()
 
 /**
  * Do these features intersect?
+ *
+ * @deprecated
+ *
+ * @see #Intersects(Geometry)
+ */
+public class Geometry:public boolean Intersect(Geometry other)
+
+/**
+ * Do these features intersect?
  * <p>
  * Determines whether two geometries intersect.  If GEOS is enabled, then
  * this is done in rigerous fashion otherwise true is returned if the
- * envelopes (bounding boxes) of the two features overlap. 
+ * envelopes (bounding boxes) of the two features overlap.
  * <p>
  * The geom argument may be safely null, but in this case the method
  * will always return true.   That is, a null geometry is treated as being
- * everywhere. 
+ * everywhere.
  *
- * @param other the other geometry to test against.  
+ * @param other the other geometry to test against.
  *
  * @return true if the geometries intersect, otherwise false.
+ *
+ * @since OGR 1.8.0
  */
-public class Geometry:public boolean Intersect(Geometry other)
+public class Geometry:public boolean Intersects(Geometry other)
 
 /**
  * Compute intersection.
  * <p>
  * Generates a new geometry which is the region of intersection of the
- * two geometries operated on.  The Intersect() method can be used to test if
+ * two geometries operated on.  The Intersects() method can be used to test if
  * two geometries intersect. 
  * <p>
  * This method is built on the GEOS library, check it for the definition
@@ -8517,6 +8569,8 @@ public class Geometry:public boolean Intersect(Geometry other)
  *
  * @return a new geometry representing the intersection or null if there is
  * no intersection or an error occurs.
+ *
+ * @see Intersects(Geometry)
  */
 public class Geometry:public Geometry Intersection(Geometry other)
 
