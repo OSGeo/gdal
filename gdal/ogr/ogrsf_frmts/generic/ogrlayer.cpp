@@ -483,7 +483,7 @@ OGRErr OGR_L_CreateFeature( OGRLayerH hLayer, OGRFeatureH hFeat )
 
 {
     VALIDATE_POINTER1( hLayer, "OGR_L_CreateFeature", OGRERR_INVALID_HANDLE );
-    VALIDATE_POINTER1( hFeat, "OGR_L_SetFeature", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( hFeat, "OGR_L_CreateFeature", OGRERR_INVALID_HANDLE );
 
     return ((OGRLayer *) hLayer)->CreateFeature( (OGRFeature *) hFeat );
 }
