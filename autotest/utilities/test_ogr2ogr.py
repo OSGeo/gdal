@@ -1401,6 +1401,36 @@ def test_ogr2ogr_39():
 
     return 'success'
 
+###############################################################################
+# Test 'ogr2ogr -update asqlite.db asqlite.db layersrc -nln layerdst' (#4270)
+
+def test_ogr2ogr_40():
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    drv = ogr.GetDriverByName('SQLite')
+    if drv is None:
+        return 'skip'
+
+    try:
+        ogr.GetDriverByName('SQLite').DeleteDataSource('tmp/test_ogr2ogr_40.db')
+    except:
+        pass
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f SQlite tmp/test_ogr2ogr_40.db ../ogr/data/poly.shp')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -update tmp/test_ogr2ogr_40.db tmp/test_ogr2ogr_40.db poly -nln poly2')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_40.db')
+    lyr = ds.GetLayerByName('poly2')
+    if lyr.GetFeatureCount() != 10:
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('SQLite').DeleteDataSource('tmp/test_ogr2ogr_40.db')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -1440,7 +1470,9 @@ gdaltest_list = [
     test_ogr2ogr_36,
     test_ogr2ogr_37,
     test_ogr2ogr_38,
-    test_ogr2ogr_39 ]
+    test_ogr2ogr_39,
+    test_ogr2ogr_40,
+    ]
     
 if __name__ == '__main__':
 
