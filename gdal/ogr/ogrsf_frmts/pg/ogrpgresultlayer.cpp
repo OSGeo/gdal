@@ -239,8 +239,10 @@ void OGRPGResultLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
                 snprintf(szBox3D_2, sizeof(szBox3D_2), "%.12f %.12f", sEnvelope.MaxX, sEnvelope.MaxY);
                 while((pszComma = strchr(szBox3D_2, ',')) != NULL)
                     *pszComma = '.';
-                osWHERE.Printf("WHERE %s && SetSRID('BOX3D(%s, %s)'::box3d,%d) ",
-                            OGRPGEscapeColumnName(pszGeomColumn).c_str(), szBox3D_1, szBox3D_2, nSRSId );
+                osWHERE.Printf("WHERE %s && %s('BOX3D(%s, %s)'::box3d,%d) ",
+                               OGRPGEscapeColumnName(pszGeomColumn).c_str(),
+                               (poDS->sPostGISVersion.nMajor >= 2) ? "ST_SetSRID" : "SetSRID",
+                               szBox3D_1, szBox3D_2, nSRSId );
             }
             else
             {
