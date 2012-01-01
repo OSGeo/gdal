@@ -51,6 +51,7 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszDataSource = NULL;
     char** papszLayers = NULL;
     const char  *pszSQLStatement = NULL;
+    const char  *pszDialect = NULL;
     int bRet = TRUE;
 
     /* Must process OGR_SKIP before OGRRegisterAll(), but we can't call */
@@ -96,6 +97,10 @@ int main( int nArgc, char ** papszArgv )
             bVerbose = FALSE;
         else if( EQUAL(papszArgv[iArg],"-sql") && iArg + 1 < nArgc)
             pszSQLStatement = papszArgv[++iArg];
+        else if( EQUAL(papszArgv[iArg],"-dialect") && papszArgv[iArg+1] != NULL )
+        {
+            pszDialect = papszArgv[++iArg];
+        }
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage();
@@ -164,7 +169,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     if (pszSQLStatement != NULL)
     {
-        OGRLayer  *poResultSet = poDS->ExecuteSQL(pszSQLStatement, NULL, NULL);
+        OGRLayer  *poResultSet = poDS->ExecuteSQL(pszSQLStatement, NULL, pszDialect);
         if (poResultSet == NULL)
             exit(1);
             
@@ -258,7 +263,8 @@ int main( int nArgc, char ** papszArgv )
 static void Usage()
 
 {
-    printf( "Usage: test_ogrsf [-ro] [-q] datasource_name [[layer1_name, layer2_name, ...] | [-sql statement]]\n" );
+    printf( "Usage: test_ogrsf [-ro] [-q] datasource_name \n"
+            "                  [[layer1_name, layer2_name, ...] | [-sql statement] [-dialect dialect]]\n" );
     exit( 1 );
 }
 
