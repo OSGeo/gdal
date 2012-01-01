@@ -1067,8 +1067,42 @@ int main( int nArgc, char ** papszArgv )
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
     OGRDataSource       *poDS;
-        
-    poDS = OGRSFDriverRegistrar::Open( pszDataSource, FALSE );
+    OGRDataSource       *poODS = NULL;
+    OGRSFDriver         *poDriver = NULL;
+    int                  bCloseODS = TRUE;
+
+    /* Avoid opening twice the same datasource if it is both the input and output */
+    /* Known to cause problems with at least FGdb and SQlite drivers. See #4270 */
+    if (bUpdate && strcmp(pszDestDataSource, pszDataSource) == 0)
+    {
+        poODS = poDS = OGRSFDriverRegistrar::Open( pszDataSource, TRUE, &poDriver );
+        bCloseODS = FALSE;
+        if (poDS)
+        {
+            if (bOverwrite || bAppend)
+            {
+                /* Various tests to avoid overwriting the source layer(s) */
+                /* or to avoid appending a layer to itself */
+                int bError = FALSE;
+                if (pszNewLayerName == NULL)
+                    bError = TRUE;
+                else if (CSLCount(papszLayers) == 1)
+                    bError = strcmp(pszNewLayerName, papszLayers[0]) == 0;
+                else if (pszSQLStatement == NULL)
+                    bError = TRUE;
+                if (bError)
+                {
+                    fprintf( stderr,
+                             "ERROR: -nln name must be specified combined with "
+                             "a single source layer name,\nor a -sql statement, and "
+                             "name must be different from an existing layer.\n");
+                    exit(1);
+                }
+            }
+        }
+    }
+    else
+        poDS = OGRSFDriverRegistrar::Open( pszDataSource, FALSE );
 
 /* -------------------------------------------------------------------- */
 /*      Report failure                                                  */
@@ -1092,44 +1126,10 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Try opening the output datasource as an existing, writable      */
 /* -------------------------------------------------------------------- */
-    OGRDataSource       *poODS = NULL;
-    OGRSFDriver          *poDriver = NULL;
-    int                  bCloseODS = TRUE;
 
-    if( bUpdate )
+    if( bUpdate && poODS == NULL )
     {
-        /* Special case for FileGDB that doesn't like updating if the same */
-        /* GDB is opened twice. It stalls at datasource closing. So use just */
-        /* one single connection. This could also TRUE for other drivers. */
-        if (EQUAL(poDS->GetDriver()->GetName(), "FileGDB") &&
-            strcmp(pszDestDataSource, pszDataSource) == 0)
-        {
-            poODS = poDS;
-            poDriver = poODS->GetDriver();
-            bCloseODS = FALSE;
-            if (bOverwrite || bAppend)
-            {
-                /* Various tests to avoid overwriting the source layer(s) */
-                /* or to avoid appending a layer to itself */
-                int bError = FALSE;
-                if (pszNewLayerName == NULL)
-                    bError = TRUE;
-                else if (CSLCount(papszLayers) == 1)
-                    bError = strcmp(pszNewLayerName, papszLayers[0]) == 0;
-                else if (pszSQLStatement == NULL)
-                    bError = TRUE;
-                if (bError)
-                {
-                    fprintf( stderr,
-                             "ERROR: -nln name must be specified combined with "
-                             "a single source layer name,\nor a -sql statement, and "
-                             "name must be different from an existing layer.\n");
-                    exit(1);
-                }
-            }
-        }
-        else
-            poODS = OGRSFDriverRegistrar::Open( pszDestDataSource, TRUE, &poDriver );
+        poODS = OGRSFDriverRegistrar::Open( pszDestDataSource, TRUE, &poDriver );
 
         if( poODS == NULL )
         {
