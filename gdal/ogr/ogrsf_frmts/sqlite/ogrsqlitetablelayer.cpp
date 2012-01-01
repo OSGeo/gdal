@@ -1680,7 +1680,11 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
         ClearInsertStmt();
         osLastInsertStmt = osCommand;
 
+#ifdef HAVE_SQLITE3_PREPARE_V2
         rc = sqlite3_prepare_v2( hDB, osCommand, -1, &hInsertStmt, NULL );
+#else
+        rc = sqlite3_prepare( hDB, osCommand, -1, &hInsertStmt, NULL );
+#endif
         if( rc != SQLITE_OK )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
