@@ -1431,6 +1431,47 @@ def test_ogr2ogr_40():
 
     return 'success'
 
+###############################################################################
+# Test 'ogr2ogr -update PG:xxxx PG:xxxx layersrc -nln layerdst' (#4270)
+
+def test_ogr2ogr_41():
+
+    import ogr_pg
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    ogr_pg.ogr_pg_1()
+    if gdaltest.pg_ds is None:
+        return 'skip'
+    gdaltest.pg_ds.Destroy()
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    ds.ExecuteSQL('DELLAYER:test_ogr2ogr_41_src')
+    ds.ExecuteSQL('DELLAYER:test_ogr2ogr_41_target')
+    lyr = ds.CreateLayer('test_ogr2ogr_41_src')
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+    lyr.StartTransaction()
+    for i in range(501):
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat['foo'] = '%d' % i
+        lyr.CreateFeature(feat)
+        feat = None
+    lyr.CommitTransaction()
+    lyr = None
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -update PG:"' + gdaltest.pg_connection_string + '" PG:"' + gdaltest.pg_connection_string + '" test_ogr2ogr_41_src -nln test_ogr2ogr_41_target')
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    lyr = ds.GetLayerByName('test_ogr2ogr_41_target')
+    if lyr.GetFeatureCount() != 501:
+        return 'fail'
+    ds.ExecuteSQL('DELLAYER:test_ogr2ogr_41_src')
+    ds.ExecuteSQL('DELLAYER:test_ogr2ogr_41_target')
+    ds = None
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -1472,6 +1513,7 @@ gdaltest_list = [
     test_ogr2ogr_38,
     test_ogr2ogr_39,
     test_ogr2ogr_40,
+    test_ogr2ogr_41,
     ]
     
 if __name__ == '__main__':

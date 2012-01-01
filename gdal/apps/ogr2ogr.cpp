@@ -1076,7 +1076,15 @@ int main( int nArgc, char ** papszArgv )
     if (bUpdate && strcmp(pszDestDataSource, pszDataSource) == 0)
     {
         poODS = poDS = OGRSFDriverRegistrar::Open( pszDataSource, TRUE, &poDriver );
-        bCloseODS = FALSE;
+        /* Restrict to those 2 drivers. For example it is known to break with */
+        /* the PG driver due to the way it manages transactions... */
+        if (poDS && !(EQUAL(poDriver->GetName(), "FileGDB") ||
+                      EQUAL(poDriver->GetName(), "SQLite")))
+        {
+            poDS = OGRSFDriverRegistrar::Open( pszDataSource, FALSE );
+        }
+        else
+            bCloseODS = FALSE;
         if (poDS)
         {
             if (bOverwrite || bAppend)
