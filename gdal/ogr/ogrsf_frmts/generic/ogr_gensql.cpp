@@ -1234,6 +1234,16 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
     {
         int iKey;
 
+        if (iFeature == nIndexSize)
+        {
+            /* Should not happen theoretically. GetFeatureCount() may sometimes */
+            /* overestimate the number of features, but should *never* under-estimate it */
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GetFeatureCount() reported less features than there are when iterating over the layer. "
+                     "Not all features will be listed.");
+            break;
+        }
+
         for( iKey = 0; iKey < nOrderItems; iKey++ )
         {
             swq_order_def *psKeyDef = psSelectInfo->order_defs + iKey;
@@ -1290,7 +1300,10 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
         iFeature++;
     }
 
-    CPLAssert( nIndexSize == iFeature );
+    /* Adjust the number of features in case GetFeatureCount() has */
+    /* overestimated the number of features, which may be the case */
+    /* for a shapefile with deleted records */
+    nIndexSize = iFeature;
 
 /* -------------------------------------------------------------------- */
 /*      Quick sort the records.                                         */
