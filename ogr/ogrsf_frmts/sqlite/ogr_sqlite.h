@@ -58,6 +58,7 @@
 
 #if SQLITE_VERSION_NUMBER >= 3006000
 #define HAVE_SQLITE_VFS
+#define HAVE_SQLITE3_PREPARE_V2
 #endif
 
 /************************************************************************/
