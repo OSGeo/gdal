@@ -55,6 +55,11 @@ CPL_CVSID("$Id$");
 
 #ifdef HAVE_SQLITE
 #include <sqlite3.h>
+#endif
+
+/* sqlite3_clear_bindings() isn't available in old versions of */
+/* sqlite3 */
+#if defined(HAVE_SQLITE) && SQLITE_VERSION_NUMBER >= 3006000
 
 /* an internal helper struct supporting GML tags <Edge> */
 struct huge_tag
