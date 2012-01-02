@@ -1575,6 +1575,21 @@ def ogr_gml_38(resolver = 'HUGE'):
 def ogr_gml_39():
     return ogr_gml_38('NONE')
 
+###############################################################################
+# Test parsind XSD where simpleTypes not inlined, but defined elsewhere in the .xsd (#4328)
+
+def ogr_gml_40():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.Open('data/testLookForSimpleType.xml')
+    lyr = ds.GetLayer(0)
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('CITYNAME'))
+    if fld_defn.GetWidth() != 26:
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 #  Cleanup
@@ -1734,6 +1749,7 @@ gdaltest_list = [
     ogr_gml_37,
     ogr_gml_38,
     ogr_gml_39,
+    ogr_gml_40,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':

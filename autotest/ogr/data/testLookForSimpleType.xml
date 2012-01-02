@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ogr:FeatureCollection
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://ogr.maptools.org/ testLookForSimpleType.xsd"
+     xmlns:ogr="http://ogr.maptools.org/"
+     xmlns:gml="http://www.opengis.net/gml">
+  <gml:boundedBy>
+    <gml:Box>
+      <gml:coord><gml:X>2</gml:X><gml:Y>49</gml:Y></gml:coord>
+      <gml:coord><gml:X>2</gml:X><gml:Y>49</gml:Y></gml:coord>
+    </gml:Box>
+  </gml:boundedBy>
+                                                                                                                                                              
+  <gml:featureMember>
+    <ogr:foo fid="foo.0">
+      <ogr:geometryProperty><gml:Point><gml:coordinates>2,49</gml:coordinates></gml:Point></ogr:geometryProperty>
+      <ogr:CITYNAME>Eragny</ogr:CITYNAME>
+    </ogr:foo>
+  </gml:featureMember>
+</ogr:FeatureCollection>
