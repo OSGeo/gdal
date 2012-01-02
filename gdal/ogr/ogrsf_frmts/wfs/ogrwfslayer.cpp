@@ -120,6 +120,9 @@ OGRWFSLayer::OGRWFSLayer( OGRWFSDataSource* poDS,
     nPagingStartIndex = 0;
     nFeatureRead = 0;
     nFeatureCountRequested = 0;
+
+    pszRequiredOutputFormat = NULL;
+    pszRequiredOutputFormatURL = NULL;
 }
 
 /************************************************************************/
@@ -150,6 +153,9 @@ OGRWFSLayer::~OGRWFSLayer()
 
     CPLString osTmpDirName = CPLSPrintf("/vsimem/tempwfs_%p", this);
     OGRWFSRecursiveUnlink(osTmpDirName);
+
+    CPLFree(pszRequiredOutputFormat);
+    CPLFree(pszRequiredOutputFormatURL);
 }
 
 /************************************************************************/
@@ -167,7 +173,7 @@ CPLString OGRWFSLayer::GetDescribeFeatureTypeURL(int bWithNS)
     osURL = CPLURLAddKVP(osURL, "MAXFEATURES", NULL);
     osURL = CPLURLAddKVP(osURL, "COUNT", NULL);
     osURL = CPLURLAddKVP(osURL, "FILTER", NULL);
-    osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", poDS->GetRequiredOutputFormat());
+    osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", pszRequiredOutputFormatURL);
 
     if (pszNS && poDS->GetNeedNAMESPACE())
     {
@@ -344,8 +350,8 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
     osURL = CPLURLAddKVP(osURL, "VERSION", poDS->GetVersion());
     osURL = CPLURLAddKVP(osURL, "REQUEST", "GetFeature");
     osURL = CPLURLAddKVP(osURL, "TYPENAME", pszName);
-    if (poDS->GetRequiredOutputFormat())
-        osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", poDS->GetRequiredOutputFormat());
+    if (pszRequiredOutputFormat)
+        osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", pszRequiredOutputFormatURL);
 
     if (poDS->IsPagingAllowed() && !bRequestHits)
     {
@@ -1135,10 +1141,10 @@ int OGRWFSLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
     {
-        if (bHasExtents && m_poFilterGeom == NULL)
+        if (bHasExtents)
             return TRUE;
 
-        return poBaseLayer != NULL && m_poFilterGeom == NULL &&
+        return poBaseLayer != NULL &&
                poBaseLayer->TestCapability(pszCap);
     }
 
@@ -1173,7 +1179,8 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
 {
     char* pabyData = NULL;
     CPLString osURL = MakeGetFeatureURL(0, TRUE);
-    osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", poDS->GetRequiredOutputFormat());
+    if (pszRequiredOutputFormat)
+        osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", pszRequiredOutputFormatURL);
     CPLDebug("WFS", "%s", osURL.c_str());
 
     CPLHTTPResult* psResult = poDS->HTTPFetch( osURL, NULL);
@@ -1350,7 +1357,7 @@ void OGRWFSLayer::SetExtents(double dfMinX, double dfMinY, double dfMaxX, double
 
 OGRErr OGRWFSLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 {
-    if (bHasExtents && m_poFilterGeom == NULL)
+    if (bHasExtents)
     {
         psExtent->MinX = dfMinX;
         psExtent->MinY = dfMinY;
@@ -2267,4 +2274,24 @@ OGRErr OGRWFSLayer::RollbackTransaction()
     nExpectedInserts = 0;
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                    SetRequiredOutputFormat()                         */
+/************************************************************************/
+
+void  OGRWFSLayer::SetRequiredOutputFormat(const char* pszRequiredOutputFormatIn)
+{
+    CPLFree(pszRequiredOutputFormat);
+    CPLFree(pszRequiredOutputFormatURL);
+    if (pszRequiredOutputFormatIn)
+    {
+        pszRequiredOutputFormat = CPLStrdup(pszRequiredOutputFormatIn);
+        pszRequiredOutputFormatURL = CPLEscapeString(pszRequiredOutputFormatIn, -1, CPLES_URL);
+    }
+    else
+    {
+        pszRequiredOutputFormat = NULL;
+        pszRequiredOutputFormatURL = NULL;
+    }
 }
