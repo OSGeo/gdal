@@ -26,8 +26,8 @@ http://demo.deegree.org/deegree-wfs/services
 http://testing.deegree.org/deegree-wfs/services (WFS-T, but permission denied)
 http://lkee-xplanung2.lat-lon.de/xplan-wfs/services (with complex schema that we cannot understand with the XSD parser)
 http://deegree3-testing.deegree.org/deegree-geosciml-demo/services (offline currently)
-http://deegree3-testing.deegree.org:80/deegree-inspire-node/services (GML 3.2.1 output only)
-http://deegree3-demo.deegree.org:80/deegree-utah-demo/services (schema has <complexType> inside <element>)
+http://deegree3-demo.deegree.org:80/inspire-workspace/services (GML 3.2.1 output only)
+http://deegree3-demo.deegree.org:80/utah-workspace/services (WFS 2.0 capable)
 http://inspire.kademo.nl/deegree-wfs/services
 
 TinyOWS:
