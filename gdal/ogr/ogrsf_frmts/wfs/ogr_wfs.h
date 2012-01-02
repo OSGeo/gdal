@@ -113,6 +113,9 @@ class OGRWFSLayer : public OGRLayer
 
     OGRFeatureDefn*     BuildLayerDefnFromFeatureClass(GMLFeatureClass* poClass);
 
+    char                *pszRequiredOutputFormat;
+    char                *pszRequiredOutputFormatURL;
+
   public:
                         OGRWFSLayer(OGRWFSDataSource* poDS,
                                     OGRSpatialReference* poSRS,
@@ -164,6 +167,11 @@ class OGRWFSLayer : public OGRLayer
     const std::vector<CPLString>& GetLastInsertedFIDList() { return aosFIDList; }
 
     const char         *GetShortName();
+
+    void                SetRequiredOutputFormat(const char* pszRequiredOutputFormatIn);
+
+    const char         *GetRequiredOutputFormat() { return pszRequiredOutputFormat; };
+    const char         *GetRequiredOutputFormatURL() { return pszRequiredOutputFormatURL; };
 };
 
 /************************************************************************/
@@ -195,9 +203,6 @@ class OGRWFSDataSource : public OGRDataSource
     int                 bTransactionSupport;
     char**              papszIdGenMethods;
     int                 DetectTransactionSupport(CPLXMLNode* psRoot);
-
-    CPLString           osRequiredOutputFormat;
-    CPLString           DetectRequiredOutputFormat(CPLXMLNode* psRoot);
 
     CPLString           osBaseURL;
     CPLString           osPostTransactionURL;
@@ -275,8 +280,6 @@ class OGRWFSDataSource : public OGRDataSource
 
     int                         IsPagingAllowed() { return bPagingAllowed; }
     int                         GetPageSize() { return nPageSize; }
-
-    const char*                 GetRequiredOutputFormat() { return (osRequiredOutputFormat.size() != 0) ? osRequiredOutputFormat.c_str() : NULL; }
 
     void                        LoadMultipleLayerDefn(const char* pszLayerName,
                                                       char* pszNS, char* pszNSVal);

@@ -772,11 +772,11 @@ def ogr_wfs_deegree_gml321():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    if gdaltest.gdalurlopen('http://deegree3-demo.deegree.org:80/deegree-inspire-node/services') is None:
+    if gdaltest.gdalurlopen('http://deegree3-demo.deegree.org:80/inspire-workspace/services') is None:
         print('cannot open URL')
         return 'skip'
 
-    ds = ogr.Open('WFS:http://deegree3-demo.deegree.org:80/deegree-inspire-node/services?MAXFEATURES=10')
+    ds = ogr.Open('WFS:http://deegree3-demo.deegree.org:80/inspire-workspace/services?MAXFEATURES=10')
     if ds is None:
         if gdal.GetLastErrorMsg().find("Unable to determine the subcontroller for request type 'GetCapabilities' and service type 'WFS'") != -1:
             return 'skip'
@@ -806,9 +806,9 @@ def ogr_wfs_deegree_wfs200():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    ds = ogr.Open('WFS:http://deegree3-testing.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=2.0.0')
+    ds = ogr.Open('WFS:http://deegree3-demo.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=2.0.0')
     if ds is None:
-        if gdaltest.gdalurlopen('http://deegree3-testing.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=2.0.0') is None:
+        if gdaltest.gdalurlopen('http://deegree3-demo.deegree.org:80/utah-workspace/services?ACCEPTVERSIONS=2.0.0') is None:
             print('cannot open URL')
             return 'skip'
         return 'fail'
