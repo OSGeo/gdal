@@ -390,86 +390,6 @@ static int DetectIfGetFeatureSupportHits(CPLXMLNode* psRoot)
 }
 
 /************************************************************************/
-/*                   DetectRequiredOutputFormat()                       */
-/************************************************************************/
-
-CPLString OGRWFSDataSource::DetectRequiredOutputFormat(CPLXMLNode* psRoot)
-{
-    CPLXMLNode* psOperationsMetadata =
-        CPLGetXMLNode(psRoot, "OperationsMetadata");
-    if (!psOperationsMetadata)
-    {
-        return "";
-    }
-
-    CPLXMLNode* psChild = psOperationsMetadata->psChild;
-    while(psChild)
-    {
-        if (psChild->eType == CXT_Element &&
-            strcmp(psChild->pszValue, "Operation") == 0 &&
-            strcmp(CPLGetXMLValue(psChild, "name", ""), "DescribeFeatureType") == 0)
-        {
-            break;
-        }
-        psChild = psChild->psNext;
-    }
-    if (!psChild)
-    {
-        //CPLDebug("WFS", "Could not find <Operation name=\"DescribeFeatureType\">");
-        return "";
-    }
-
-    psChild = psChild->psChild;
-    while(psChild)
-    {
-        if (psChild->eType == CXT_Element &&
-            strcmp(psChild->pszValue, "Parameter") == 0 &&
-            strcmp(CPLGetXMLValue(psChild, "name", ""), "outputFormat") == 0)
-        {
-            break;
-        }
-        psChild = psChild->psNext;
-    }
-   if (!psChild)
-    {
-        //CPLDebug("WFS", "Could not find <Parameter name=\"outputFormat\">");
-        return "";
-    }
-
-    psChild = psChild->psChild;
-    int nCountValue = 0;
-    const char* pszValue = NULL;
-    while(psChild)
-    {
-        if (psChild->eType == CXT_Element &&
-            strcmp(psChild->pszValue, "Value") == 0)
-        {
-            CPLXMLNode* psChild2 = psChild->psChild;
-            while(psChild2)
-            {
-                if (psChild2->eType == CXT_Text)
-                {
-                    pszValue = psChild2->pszValue;
-                    nCountValue ++;
-                }
-                psChild2 = psChild2->psNext;
-            }
-        }
-        psChild = psChild->psNext;
-    }
-
-    /* If there's only one value and it is not GML 3.1.1, then we'll need */
-    /* to specify it explicitely */
-    /* This is the case for http://deegree3-testing.deegree.org/deegree-inspire-node/services */
-    /* which only supports GML 3.2.1 */
-    if (nCountValue == 1 && strcmp(pszValue, "text/xml; subtype=gml/3.1.1") != 0)
-        return pszValue;
-
-    return "";
-}
-
-
-/************************************************************************/
 /*                   DetectRequiresEnvelopeSpatialFilter()              */
 /************************************************************************/
 
@@ -1007,7 +927,6 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
             bGetFeatureSupportHits = TRUE;  /* WFS >= 2.0.0 supports hits */
         else
             bGetFeatureSupportHits = DetectIfGetFeatureSupportHits(psWFSCapabilities);
-        osRequiredOutputFormat = DetectRequiredOutputFormat(psWFSCapabilities);
         bRequiresEnvelopeSpatialFilter = DetectRequiresEnvelopeSpatialFilter(psWFSCapabilities);
     }
 
@@ -1160,6 +1079,43 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                 if (pszDefaultSRS == NULL)
                     pszDefaultSRS = CPLGetXMLValue(psChildIter, "DefaultCRS", NULL); /* WFS 2.0.0 */
 
+                CPLXMLNode* psOutputFormats = CPLGetXMLNode(psChildIter, "OutputFormats");
+                CPLString osOutputFormat;
+                if (psOutputFormats)
+                {
+                    std::vector<CPLString> osFormats;
+                    CPLXMLNode* psOutputFormatIter = psOutputFormats->psChild;
+                    while(psOutputFormatIter)
+                    {
+                        if (psOutputFormatIter->eType == CXT_Element &&
+                            EQUAL(psOutputFormatIter->pszValue, "Format") &&
+                            psOutputFormatIter->psChild != NULL &&
+                            psOutputFormatIter->psChild->eType == CXT_Text)
+                        {
+                            osFormats.push_back(psOutputFormatIter->psChild->pszValue);
+                        }
+                        psOutputFormatIter = psOutputFormatIter->psNext;
+                    }
+
+                    if (strcmp(osVersion.c_str(), "1.1.0") == 0 && osFormats.size() > 0)
+                    {
+                        int bFoundGML31 = FALSE;
+                        for(size_t i=0;i<osFormats.size();i++)
+                        {
+                            if (strstr(osFormats[i].c_str(), "3.1") != NULL)
+                            {
+                                bFoundGML31 = TRUE;
+                                break;
+                            }
+                        }
+
+                        /* If we didn't find any mention to GML 3.1, then arbitrarily */
+                        /* use the first output format */
+                        if (!bFoundGML31)
+                            osOutputFormat = osFormats[0].c_str();
+                    }
+                }
+
                 OGRSpatialReference* poSRS = NULL;
                 int bAxisOrderAlreadyInverted = FALSE;
 
@@ -1262,6 +1218,8 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                 OGRWFSLayer* poLayer = new OGRWFSLayer(
                             this, poSRS, bAxisOrderAlreadyInverted,
                             pszBaseURL, pszName, pszNS, pszNSVal);
+                if (osOutputFormat.size())
+                    poLayer->SetRequiredOutputFormat(osOutputFormat);
 
                 if (poSRS)
                 {
@@ -1392,6 +1350,11 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
     else
         *pszPrefix = 0;
 
+    OGRWFSLayer* poRefLayer = (OGRWFSLayer*)GetLayerByName(pszLayerName);
+    if (poRefLayer == NULL)
+        return;
+    const char* pszRequiredOutputFormatURL = poRefLayer->GetRequiredOutputFormatURL();
+
 #if USE_GET_FOR_DESCRIBE_FEATURE_TYPE == 1
     CPLString osLayerToFetch(pszLayerName);
 #else
@@ -1410,9 +1373,12 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
         {
             /* We must be careful to requests only layers with the same prefix/namespace */
             const char* pszName = papoLayers[i]->GetName();
-            if ((pszPrefix[0] == 0 && strchr(pszName, ':') == NULL) ||
+            if (((pszPrefix[0] == 0 && strchr(pszName, ':') == NULL) ||
                 (pszPrefix[0] != 0 && strncmp(pszName, pszPrefix, strlen(pszPrefix)) == 0 &&
-                 pszName[strlen(pszPrefix)] == ':'))
+                 pszName[strlen(pszPrefix)] == ':')) &&
+                ((pszRequiredOutputFormatURL == NULL && papoLayers[i]->GetRequiredOutputFormatURL() == NULL) ||
+                 (pszRequiredOutputFormatURL != NULL && papoLayers[i]->GetRequiredOutputFormatURL() != NULL &&
+                  strcmp(pszRequiredOutputFormatURL, papoLayers[i]->GetRequiredOutputFormatURL()) == 0)))
             {
                 if (aoSetAlreadyTriedLayers.find(pszName) != aoSetAlreadyTriedLayers.end())
                     continue;
@@ -1448,7 +1414,7 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
     osURL = CPLURLAddKVP(osURL, "PROPERTYNAME", NULL);
     osURL = CPLURLAddKVP(osURL, "MAXFEATURES", NULL);
     osURL = CPLURLAddKVP(osURL, "FILTER", NULL);
-    osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", GetRequiredOutputFormat());
+    osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", pszRequiredOutputFormatURL);
 
     if (pszNS && GetNeedNAMESPACE())
     {
@@ -1482,11 +1448,12 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
     osPost += "                 xsi:schemaLocation=\"http://www.opengis.net/wfs http://schemas.opengis.net/wfs/";
     osPost += GetVersion();
     osPost += "/wfs.xsd\"";
-    if (osRequiredOutputFormat.size())
+    const char* pszRequiredOutputFormat = poRefLayer->GetRequiredOutputFormat();
+    if (pszRequiredOutputFormat)
     {
         osPost += "\n";
         osPost += "                 outputFormat=\"";
-        osPost += osRequiredOutputFormat;
+        osPost += pszRequiredOutputFormat;
         osPost += "\"";
     }
     osPost += ">\n";
