@@ -363,11 +363,6 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 if ( ! LookForSimpleType(psSchemaNode, pszStrippedNSType,
                                          &gmlType, &nWidth, &nPrecision) )
                 {
-                    bGotUnrecognizedType = TRUE;
-                    //CPLDebug("GML", "Unknown type (%s).", pszType);
-                }
-                else
-                {
                     /* Too complex schema for us. Aborts parsing */
                     delete poClass;
                     return NULL;
