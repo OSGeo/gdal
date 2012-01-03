@@ -55,7 +55,7 @@ class OGRXLSLayer : public OGRLayer
 
     void               DetectHeaderLine(const void* xlshandle);
     void               DetectColumnTypes(const void* xlshandle,
-                                         OGRFieldType* paeFieldTypes);
+                                         int* paeFieldTypes);
 
   public:
                         OGRXLSLayer(OGRXLSDataSource* poDSIn,

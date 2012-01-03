@@ -129,7 +129,7 @@ void OGRXLSLayer::DetectHeaderLine(const void* xlshandle)
 /************************************************************************/
 
 void OGRXLSLayer::DetectColumnTypes(const void* xlshandle,
-                                    OGRFieldType* paeFieldTypes)
+                                    int* paeFieldTypes)
 
 {
     int j;
@@ -141,7 +141,7 @@ void OGRXLSLayer::DetectColumnTypes(const void* xlshandle,
         {
             if (freexl_get_cell_value(xlshandle, j, i, &sCellValue) == FREEXL_OK)
             {
-                OGRFieldType eType = paeFieldTypes[i];
+                OGRFieldType eType = (OGRFieldType) paeFieldTypes[i];
                 switch (sCellValue.type)
                 {
                     case FREEXL_CELL_INT:
@@ -169,11 +169,11 @@ void OGRXLSLayer::DetectColumnTypes(const void* xlshandle,
                         break;
                 }
 
-                if ((int)paeFieldTypes[i] < 0)
+                if (paeFieldTypes[i] < 0)
                 {
-                    paeFieldTypes[i] = eType;
+                    paeFieldTypes[i] = (int) eType;
                 }
-                else if (eType != paeFieldTypes[i])
+                else if ((int)eType != paeFieldTypes[i])
                 {
                     if ((paeFieldTypes[i] == OFTDate ||
                          paeFieldTypes[i] == OFTTime ||
@@ -218,11 +218,11 @@ OGRFeatureDefn * OGRXLSLayer::GetLayerDefn()
 
         DetectHeaderLine(xlshandle);
 
-        OGRFieldType* paeFieldTypes = (OGRFieldType* )
-                            CPLMalloc(nCols * sizeof(OGRFieldType));
+        int* paeFieldTypes = (int* )
+                            CPLMalloc(nCols * sizeof(int));
         for(i = 0; i < nCols; i ++)
         {
-            paeFieldTypes[i] = (OGRFieldType) -1;
+            paeFieldTypes[i] = -1;
         }
 
         const char* pszXLSFieldTypes =
@@ -232,8 +232,8 @@ OGRFeatureDefn * OGRXLSLayer::GetLayerDefn()
 
         for(i = 0; i < nCols; i ++)
         {
-            OGRFieldType eType = paeFieldTypes[i];
-            if ((int)eType < 0)
+            OGRFieldType eType = (OGRFieldType) paeFieldTypes[i];
+            if (paeFieldTypes[i] < 0)
                 eType = OFTString;
             if (bFirstLineIsHeaders &&
                 freexl_get_cell_value(xlshandle, 0, i, &sCellValue) == FREEXL_OK &&
