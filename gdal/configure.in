@@ -2791,17 +2791,28 @@ HAVE_FREEXL=no
 FREEXL_INCLUDE=
 
 if test "$with_freexl" = "" -o "$with_freexl" = "yes" ; then
-  AC_CHECK_LIB(freexl,freexl_open,HAVE_FREEXL=yes,HAVE_FREEXL=no,)
   AC_CHECK_HEADERS(freexl.h)
+  AC_CHECK_LIB(freexl,freexl_open,FREEXL_LIBS="-lfreexl",FREEXL_LIBS=missing)
 
-  if test "$HAVE_FREEXL" = "yes" -a "$ac_cv_header_freexl_h" = "yes" ; then
+  if test "$FREEXL_LIBS" = "missing"; then
+    unset ac_cv_lib_freexl_freexl_open
+    AC_CHECK_LIB(freexl,freexl_open,FREEXL_LIBS="-lfreexl -liconv",FREEXL_LIBS=missing,-liconv)
+  fi
+
+  if test "$FREEXL_LIBS" = "missing"; then
+    unset ac_cv_lib_freexl_freexl_open
+    AC_CHECK_LIB(freexl,freexl_open,FREEXL_LIBS="-lfreexl -liconv -lcharset",FREEXL_LIBS=missing,-liconv -lcharset)
+  fi
+
+  if test "$FREEXL_LIBS" != "missing" -a "$ac_cv_header_freexl_h" = "yes" ; then
 
     # Check that freexl is recent enough
     rm -f testrlist.*
     echo '#include <freexl.h>' > testfreexl.c
     echo 'int main(int argc, char** argv) { FreeXL_CellValue s; freexl_get_cell_value (0,0,0,&s); return 0; } ' >> testfreexl.c
     if test -z "`${CC} testfreexl.c -c 2>&1`" ; then
-        LIBS="-lfreexl $LIBS"
+        HAVE_FREEXL=yes
+        LIBS="$FREEXL_LIBS $LIBS"
     else
         HAVE_FREEXL=no
         AC_MSG_RESULT([freexl too old. Needs freexl >= 1.0])
@@ -2815,16 +2826,27 @@ if test "$with_freexl" = "" -o "$with_freexl" = "yes" ; then
 
 elif test "$with_freexl" != "no"; then
 
-  AC_CHECK_LIB(freexl,freexl_open,HAVE_FREEXL=yes,HAVE_FREEXL=no,-L$with_freexl/lib -lfreexl)
+  AC_CHECK_LIB(freexl,freexl_open,FREEXL_LIBS="-L$with_freexl/lib -lfreexl",FREEXL_LIBS=missing,-L$with_freexl/lib)
 
-  if test "$HAVE_FREEXL" = "yes" -a -f "$with_freexl/include/freexl.h" ; then
+  if test "$FREEXL_LIBS" = "missing"; then
+    unset ac_cv_lib_freexl_freexl_open
+    AC_CHECK_LIB(freexl,freexl_open,FREEXL_LIBS="-L$with_freexl/lib -lfreexl -liconv",FREEXL_LIBS=missing,-L$with_freexl/lib -liconv)
+  fi
+
+  if test "$FREEXL_LIBS" = "missing"; then
+    unset ac_cv_lib_freexl_freexl_open
+    AC_CHECK_LIB(freexl,freexl_open,FREEXL_LIBS="-L$with_freexl/lib -lfreexl -liconv -lcharset",FREEXL_LIBS=missing,-L$with_freexl/lib -liconv -lcharset)
+  fi
+
+  if test "FREEXL_LIBS" != "missing" -a -f "$with_freexl/include/freexl.h" ; then
 
     # Check that freexl is recent enough
     rm -f testrlist.*
     echo '#include <freexl.h>' > testfreexl.c
     echo 'int main(int argc, char** argv) { FreeXL_CellValue s; freexl_get_cell_value (0,0,0,&s); return 0; } ' >> testfreexl.c
     if test -z "`${CC} -I$with_freexl/include testfreexl.c -c 2>&1`" ; then
-        LIBS="-L$with_freexl/lib -lfreexl $LIBS"
+        HAVE_FREEXL=yes
+        LIBS="$FREEXL_LIBS $LIBS"
         FREEXL_INCLUDE="-I$with_freexl/include"
     else
         HAVE_FREEXL=no
