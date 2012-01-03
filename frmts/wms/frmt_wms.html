@@ -331,10 +331,10 @@ Access to web-based Virtual Earth tile services. Access is always tile based.<p>
     <li><p>
 	<a href="frmt_wms_onearth_global_mosaic.xml">onearth_global_mosaic.xml</a> - Landsat mosaic from a <a href="http://onearth.jpl.nasa.gov/">OnEarth</a> WMS server<br>
 	<pre>gdal_translate -of JPEG -outsize 500 250 onearth_global_mosaic.xml onearth_global_mosaic.jpg</pre>
-	<img src="http://sydney.freeearthfoundation.com/gdalwms/onearth_global_mosaic.jpg" alt="example output">
 	<pre>gdal_translate -of JPEG -projwin -10 55 30 35 -outsize 500 250 onearth_global_mosaic.xml onearth_global_mosaic2.jpg</pre>
-	<img src="http://sydney.freeearthfoundation.com/gdalwms/onearth_global_mosaic2.jpg" alt="example output">
-    </p></li>
+    </p>
+    <p><i>Note : this particular server does no longer accept regular WMS queries.</i></p>
+    </li>
 
     <li><p>
 	<a href="frmt_wms_metacarta_wmsc.xml">metacarta_wmsc.xml</a> - 
