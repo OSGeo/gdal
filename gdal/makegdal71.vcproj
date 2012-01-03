@@ -16,10 +16,10 @@
 			ConfigurationType="0">
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine=  "cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 DEBUG=1 &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 DEBUG=1 install"
-				ReBuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 DEBUG=1 clean &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 DEBUG=1 &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 DEBUG=1 install"
-				CleanCommandLine=  "cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 DEBUG=1 clean"
-				Output="gdal17.dll"/>
+				BuildCommandLine=  "cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc &amp;&amp; nmake -f makefile.vc install"
+				ReBuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc clean &amp;&amp; nmake -f makefile.vc &amp;&amp; nmake -f makefile.vc install"
+				CleanCommandLine=  "cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc clean"
+				Output="gdal19.dll"/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
@@ -28,10 +28,10 @@
 			ConfigurationType="0">
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine=  "cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 install"
-				ReBuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 clean &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 install"
-				CleanCommandLine=  "cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc MSVC_VER=1310 clean"
-				Output="gdal17.dll"/>
+				BuildCommandLine=  "cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc &amp;&amp; nmake -f makefile.vc install"
+				ReBuildCommandLine="cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc clean &amp;&amp; nmake -f makefile.vc &amp;&amp; nmake -f makefile.vc install"
+				CleanCommandLine=  "cd $(ProjectDir) &amp;&amp; nmake -f makefile.vc clean"
+				Output="gdal19.dll"/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -82,6 +82,9 @@
 				<Filter Name="cosar" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\cosar\makefile.vc" />
 				</Filter>
+				<Filter Name="ctg" Filter="*.vc;*.opt   ">
+					<File RelativePath=".\frmts\ctg\makefile.vc" />
+				</Filter>
 				<Filter Name="dimap" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\dimap\makefile.vc" />
 				</Filter>
@@ -90,6 +93,9 @@
 				</Filter>
 				<Filter Name="dted" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\dted\makefile.vc" />
+				</Filter>
+				<Filter Name="e00grid" Filter="*.vc;*.opt   ">
+					<File RelativePath=".\frmts\e00grid\makefile.vc" />
 				</Filter>
 				<Filter Name="ecw" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\ecw\makefile.vc" />
@@ -139,6 +145,9 @@
 				<Filter Name="gsg" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\gsg\makefile.vc" />
 				</Filter>
+				<Filter Name="gta" Filter="*.vc;*.opt   ">
+					<File RelativePath=".\frmts\gta\makefile.vc" />
+				</Filter>
 				<Filter Name="gtiff" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\gtiff\makefile.vc" />
 					<Filter Name="libgeotiff" Filter="*.vc;*.opt    ">
@@ -159,6 +168,9 @@
 					</Filter>
 				<Filter Name="hdf5" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\hdf5\makefile.vc" />
+				</Filter>
+				<Filter Name="hf2" Filter="*.vc;*.opt   ">
+					<File RelativePath=".\frmts\hf2\makefile.vc" />
 				</Filter>
 				<Filter Name="hfa" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\hfa\makefile.vc" />
@@ -196,6 +208,12 @@
 				<Filter Name="jpeg2000" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\jpeg2000\makefile.vc" />
 				</Filter>
+				<Filter Name="jpipkak" Filter="*.vc;*.opt   ">
+					<File RelativePath=".\frmts\jpipkak\makefile.vc" />
+				</Filter>
+				<Filter Name="kmlsuperoverlay" Filter="*.vc;*.opt   ">
+					<File RelativePath=".\frmts\kmlsuperoverlay\makefile.vc" />
+				</Filter>
 				<Filter Name="l1b" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\l1b\makefile.vc" />
 				</Filter>
@@ -207,6 +225,10 @@
 				</Filter>
 				<Filter Name="mrsid" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\mrsid\makefile.vc" />
+					<File RelativePath=".\frmts\mrsid\nmake.opt" />
+				</Filter>
+				<Filter Name="mrsid_lidar" Filter="*.vc;*.opt   ">
+					<File RelativePath=".\frmts\mrsid_lidar\makefile.vc" />
 				</Filter>
 				<Filter Name="msg" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\msg\makefile.vc" />
@@ -217,6 +239,9 @@
 				<Filter Name="netcdf" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\netcdf\makefile.vc" />
 				</Filter>
+				<Filter Name="ngsgeoid" Filter="*.vc;*.opt   ">
+					<File RelativePath=".\frmts\ngsgeoid\makefile.vc" />
+				</Filter>
 				<Filter Name="nitf" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\nitf\makefile.vc" />
 				</Filter>
@@ -225,6 +250,12 @@
 				</Filter>
 				<Filter Name="ogdi" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\ogdi\makefile.vc" />
+				</Filter>
+				<Filter Name="openjpeg" Filter="*.vc;*.opt   ">
+					<File RelativePath=".\frmts\openjpeg\makefile.vc" />
+				</Filter>
+				<Filter Name="ozi" Filter="*.vc;*.opt   ">
+					<File RelativePath=".\frmts\ozi\makefile.vc" />
 				</Filter>
 				<Filter Name="pcidsk" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\pcidsk\makefile.vc" />
@@ -238,6 +269,9 @@
 						<File RelativePath=".\frmts\pcraster\libcsf\makefile.vc" />
 					</Filter>
 					</Filter>
+				<Filter Name="pdf" Filter="*.vc;*.opt   ">
+					<File RelativePath=".\frmts\pdf\makefile.vc" />
+				</Filter>
 				<Filter Name="pds" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\pds\makefile.vc" />
 				</Filter>
@@ -250,8 +284,14 @@
 						<File RelativePath=".\frmts\png\libpng\makefile.vc" />
 					</Filter>
 					</Filter>
+				<Filter Name="postgisraster" Filter="*.vc;*.opt   ">
+					<File RelativePath=".\frmts\postgisraster\makefile.vc" />
+				</Filter>
 				<Filter Name="r" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\r\makefile.vc" />
+				</Filter>
+				<Filter Name="rasdaman" Filter="*.vc;*.opt   ">
+					<File RelativePath=".\frmts\rasdaman\makefile.vc" />
 				</Filter>
 				<Filter Name="rasterlite" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\rasterlite\makefile.vc" />
@@ -286,9 +326,6 @@
 				<Filter Name="terragen" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\terragen\makefile.vc" />
 				</Filter>
-				<Filter Name="terralib" Filter="*.vc;*.opt   ">
-					<File RelativePath=".\frmts\terralib\makefile.vc" />
-				</Filter>
 				<Filter Name="til" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\til\makefile.vc" />
 				</Filter>
@@ -304,8 +341,8 @@
 				<Filter Name="wcs" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\wcs\makefile.vc" />
 				</Filter>
-				<Filter Name="wktraster" Filter="*.vc;*.opt   ">
-					<File RelativePath=".\frmts\wktraster\makefile.vc" />
+				<Filter Name="webp" Filter="*.vc;*.opt   ">
+					<File RelativePath=".\frmts\webp\makefile.vc" />
 				</Filter>
 				<Filter Name="wms" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\wms\makefile.vc" />
@@ -313,8 +350,14 @@
 				<Filter Name="xpm" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\xpm\makefile.vc" />
 				</Filter>
+				<Filter Name="xyz" Filter="*.vc;*.opt   ">
+					<File RelativePath=".\frmts\xyz\makefile.vc" />
+				</Filter>
 				<Filter Name="zlib" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\frmts\zlib\makefile.vc" />
+				</Filter>
+				<Filter Name="zmap" Filter="*.vc;*.opt   ">
+					<File RelativePath=".\frmts\zmap\makefile.vc" />
 				</Filter>
 				</Filter>
 			<Filter Name="gcore" Filter="*.vc;*.opt  ">
@@ -324,11 +367,23 @@
 				<File RelativePath=".\ogr\makefile.vc" />
 				<Filter Name="ogrsf_frmts" Filter="*.vc;*.opt   ">
 					<File RelativePath=".\ogr\ogrsf_frmts\makefile.vc" />
+					<Filter Name="aeronavfaa" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\aeronavfaa\makefile.vc" />
+					</Filter>
+					<Filter Name="arcgen" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\arcgen\makefile.vc" />
+					</Filter>
+					<Filter Name="arcobjects" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\arcobjects\makefile.vc" />
+					</Filter>
 					<Filter Name="avc" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\avc\makefile.vc" />
 					</Filter>
 					<Filter Name="bna" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\bna\makefile.vc" />
+					</Filter>
+					<Filter Name="couchdb" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\couchdb\makefile.vc" />
 					</Filter>
 					<Filter Name="csv" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\csv\makefile.vc" />
@@ -342,8 +397,17 @@
 					<Filter Name="dods" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\dods\makefile.vc" />
 					</Filter>
+					<Filter Name="dwg" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\dwg\makefile.vc" />
+					</Filter>
 					<Filter Name="dxf" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\dxf\makefile.vc" />
+					</Filter>
+					<Filter Name="edigeo" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\edigeo\makefile.vc" />
+					</Filter>
+					<Filter Name="filegdb" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\filegdb\makefile.vc" />
 					</Filter>
 					<Filter Name="fme" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\fme\makefile.vc" />
@@ -360,8 +424,14 @@
 							<File RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\makefile.vc" />
 						</Filter>
 						</Filter>
+					<Filter Name="geomedia" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\geomedia\makefile.vc" />
+					</Filter>
 					<Filter Name="georss" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\georss\makefile.vc" />
+					</Filter>
+					<Filter Name="gft" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\gft\makefile.vc" />
 					</Filter>
 					<Filter Name="gml" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\gml\makefile.vc" />
@@ -369,14 +439,23 @@
 					<Filter Name="gmt" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\gmt\makefile.vc" />
 					</Filter>
+					<Filter Name="gpsbabel" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\gpsbabel\makefile.vc" />
+					</Filter>
 					<Filter Name="gpx" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\gpx\makefile.vc" />
 					</Filter>
 					<Filter Name="gtm" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\gtm\makefile.vc" />
 					</Filter>
+					<Filter Name="htf" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\htf\makefile.vc" />
+					</Filter>
 					<Filter Name="idb" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\idb\makefile.vc" />
+					</Filter>
+					<Filter Name="idrisi" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\idrisi\makefile.vc" />
 					</Filter>
 					<Filter Name="ili" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\ili\makefile.vc" />
@@ -387,14 +466,23 @@
 					<Filter Name="kml" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\kml\makefile.vc" />
 					</Filter>
+					<Filter Name="libkml" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\libkml\makefile.vc" />
+					</Filter>
 					<Filter Name="mem" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\mem\makefile.vc" />
 					</Filter>
 					<Filter Name="mitab" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\mitab\makefile.vc" />
 					</Filter>
+					<Filter Name="mssqlspatial" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\mssqlspatial\makefile.vc" />
+					</Filter>
 					<Filter Name="mysql" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\mysql\makefile.vc" />
+					</Filter>
+					<Filter Name="nas" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\nas\makefile.vc" />
 					</Filter>
 					<Filter Name="ntf" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\ntf\makefile.vc" />
@@ -408,11 +496,20 @@
 					<Filter Name="ogdi" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\ogdi\makefile.vc" />
 					</Filter>
+					<Filter Name="openair" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\openair\makefile.vc" />
+					</Filter>
 					<Filter Name="pcidsk" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\pcidsk\makefile.vc" />
 					</Filter>
+					<Filter Name="pds" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\pds\makefile.vc" />
+					</Filter>
 					<Filter Name="pg" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\pg\makefile.vc" />
+					</Filter>
+					<Filter Name="pgdump" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\pgdump\makefile.vc" />
 					</Filter>
 					<Filter Name="pgeo" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\pgeo\makefile.vc" />
@@ -429,17 +526,41 @@
 					<Filter Name="sdts" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\sdts\makefile.vc" />
 					</Filter>
+					<Filter Name="segukooa" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\segukooa\makefile.vc" />
+					</Filter>
+					<Filter Name="segy" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\segy\makefile.vc" />
+					</Filter>
 					<Filter Name="shape" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\shape\makefile.vc" />
+					</Filter>
+					<Filter Name="sosi" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\sosi\makefile.vc" />
 					</Filter>
 					<Filter Name="sqlite" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\sqlite\makefile.vc" />
 					</Filter>
+					<Filter Name="sua" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\sua\makefile.vc" />
+					</Filter>
+					<Filter Name="svg" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\svg\makefile.vc" />
+					</Filter>
 					<Filter Name="tiger" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\tiger\makefile.vc" />
 					</Filter>
+					<Filter Name="vfk" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\vfk\makefile.vc" />
+					</Filter>
 					<Filter Name="vrt" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\vrt\makefile.vc" />
+					</Filter>
+					<Filter Name="wfs" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\wfs\makefile.vc" />
+					</Filter>
+					<Filter Name="xls" Filter="*.vc;*.opt    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\xls\makefile.vc" />
 					</Filter>
 					<Filter Name="xplane" Filter="*.vc;*.opt    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\xplane\makefile.vc" />
@@ -458,10 +579,14 @@
 			<Filter Name="alg" Filter="*.h  ">
 				<File RelativePath=".\alg\gdalgrid.h" />
 				<File RelativePath=".\alg\gdalwarper.h" />
+				<File RelativePath=".\alg\gdalwarpkernel_opencl.h" />
 				<File RelativePath=".\alg\gdal_alg.h" />
 				<File RelativePath=".\alg\gdal_alg_priv.h" />
 				<File RelativePath=".\alg\gvgcpfit.h" />
 				<File RelativePath=".\alg\thinplatespline.h" />
+			</Filter>
+			<Filter Name="apps" Filter="*.h  ">
+				<File RelativePath=".\apps\commonutils.h" />
 			</Filter>
 			<Filter Name="bridge" Filter="*.h  ">
 				<File RelativePath=".\bridge\gdalbridge.h" />
@@ -485,12 +610,15 @@
 				<Filter Name="dted" Filter="*.h   ">
 					<File RelativePath=".\frmts\dted\dted_api.h" />
 				</Filter>
+				<Filter Name="e00grid" Filter="*.h   ">
+					<File RelativePath=".\frmts\e00grid\e00compr.h" />
+				</Filter>
 				<Filter Name="ecw" Filter="*.h   ">
-					<File RelativePath=".\frmts\ecw\jp2userbox.h" />
-					<File RelativePath=".\frmts\ecw\vsiiostream.h" />
+					<File RelativePath=".\frmts\ecw\gdal_ecw.h" />
 				</Filter>
 				<Filter Name="envisat" Filter="*.h   ">
 					<File RelativePath=".\frmts\envisat\EnvisatFile.h" />
+					<File RelativePath=".\frmts\envisat\records.h" />
 				</Filter>
 				<Filter Name="ers" Filter="*.h   ">
 					<File RelativePath=".\frmts\ers\ershdrnode.h" />
@@ -505,6 +633,7 @@
 					<File RelativePath=".\frmts\georaster\oci_wrapper.h" />
 				</Filter>
 				<Filter Name="gif" Filter="*.h   ">
+					<File RelativePath=".\frmts\gif\gifabstractdataset.h" />
 					<Filter Name="giflib" Filter="*.h    ">
 						<File RelativePath=".\frmts\gif\giflib\gif_hash.h" />
 						<File RelativePath=".\frmts\gif\giflib\gif_lib.h" />
@@ -544,9 +673,16 @@
 						</Filter>
 						</Filter>
 				<Filter Name="gtiff" Filter="*.h   ">
+					<File RelativePath=".\frmts\gtiff\gtiff.h" />
+					<File RelativePath=".\frmts\gtiff\gt_citation.h" />
 					<File RelativePath=".\frmts\gtiff\gt_overview.h" />
+					<File RelativePath=".\frmts\gtiff\gt_wkt_srs.h" />
+					<File RelativePath=".\frmts\gtiff\gt_wkt_srs_for_gdal.h" />
+					<File RelativePath=".\frmts\gtiff\tifvsi.h" />
+					<File RelativePath=".\frmts\gtiff\tif_float.h" />
 					<Filter Name="libgeotiff" Filter="*.h    ">
 						<File RelativePath=".\frmts\gtiff\libgeotiff\cpl_serv.h" />
+						<File RelativePath=".\frmts\gtiff\libgeotiff\gdal_libgeotiff_symbol_rename.h" />
 						<File RelativePath=".\frmts\gtiff\libgeotiff\geokeys.h" />
 						<File RelativePath=".\frmts\gtiff\libgeotiff\geonames.h" />
 						<File RelativePath=".\frmts\gtiff\libgeotiff\geotiff.h" />
@@ -560,6 +696,7 @@
 						<File RelativePath=".\frmts\gtiff\libgeotiff\xtiffio.h" />
 					</Filter>
 					<Filter Name="libtiff" Filter="*.h    ">
+						<File RelativePath=".\frmts\gtiff\libtiff\gdal_libtiff_symbol_rename.h" />
 						<File RelativePath=".\frmts\gtiff\libtiff\t4.h" />
 						<File RelativePath=".\frmts\gtiff\libtiff\tiff.h" />
 						<File RelativePath=".\frmts\gtiff\libtiff\tiffconf.h" />
@@ -592,6 +729,9 @@
 				<Filter Name="hfa" Filter="*.h   ">
 					<File RelativePath=".\frmts\hfa\hfa.h" />
 					<File RelativePath=".\frmts\hfa\hfa_p.h" />
+				</Filter>
+				<Filter Name="idrisi" Filter="*.h   ">
+					<File RelativePath=".\frmts\idrisi\idrisi.h" />
 				</Filter>
 				<Filter Name="ilwis" Filter="*.h   ">
 					<File RelativePath=".\frmts\ilwis\ilwisdataset.h" />
@@ -641,6 +781,12 @@
 				<Filter Name="jpeg2000" Filter="*.h   ">
 					<File RelativePath=".\frmts\jpeg2000\jpeg2000_vsil_io.h" />
 				</Filter>
+				<Filter Name="jpipkak" Filter="*.h   ">
+					<File RelativePath=".\frmts\jpipkak\jpipkakdataset.h" />
+				</Filter>
+				<Filter Name="kmlsuperoverlay" Filter="*.h   ">
+					<File RelativePath=".\frmts\kmlsuperoverlay\kmlsuperoverlaydataset.h" />
+				</Filter>
 				<Filter Name="mem" Filter="*.h   ">
 					<File RelativePath=".\frmts\mem\memdataset.h" />
 				</Filter>
@@ -663,6 +809,7 @@
 				</Filter>
 				<Filter Name="nitf" Filter="*.h   ">
 					<File RelativePath=".\frmts\nitf\mgrs.h" />
+					<File RelativePath=".\frmts\nitf\nitfdataset.h" />
 					<File RelativePath=".\frmts\nitf\nitflib.h" />
 					<File RelativePath=".\frmts\nitf\rpftoclib.h" />
 				</Filter>
@@ -673,27 +820,41 @@
 					<File RelativePath=".\frmts\pcidsk\gdal_pcidsk.h" />
 					<Filter Name="sdk" Filter="*.h    ">
 						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk.h" />
+						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_ads40.h" />
+						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_airphoto.h" />
+						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_array.h" />
+						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_binary.h" />
 						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_buffer.h" />
 						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_channel.h" />
 						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_config.h" />
+						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_edb.h" />
+						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_ephemeris.h" />
 						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_exception.h" />
 						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_file.h" />
+						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_gcp.h" />
+						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_gcpsegment.h" />
 						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_georef.h" />
 						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_interfaces.h" />
 						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_io.h" />
 						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_mutex.h" />
 						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_pct.h" />
+						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_poly.h" />
+						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_rpc.h" />
 						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_segment.h" />
 						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_shape.h" />
+						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_tex.h" />
+						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_toutin.h" />
 						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_types.h" />
 						<File RelativePath=".\frmts\pcidsk\sdk\pcidsk_vectorsegment.h" />
 						<Filter Name="channel" Filter="*.h     ">
 							<File RelativePath=".\frmts\pcidsk\sdk\channel\cbandinterleavedchannel.h" />
+							<File RelativePath=".\frmts\pcidsk\sdk\channel\cexternalchannel.h" />
 							<File RelativePath=".\frmts\pcidsk\sdk\channel\cpcidskchannel.h" />
 							<File RelativePath=".\frmts\pcidsk\sdk\channel\cpixelinterleavedchannel.h" />
 							<File RelativePath=".\frmts\pcidsk\sdk\channel\ctiledchannel.h" />
 						</Filter>
 						<Filter Name="core" Filter="*.h     ">
+							<File RelativePath=".\frmts\pcidsk\sdk\core\clinksegment.h" />
 							<File RelativePath=".\frmts\pcidsk\sdk\core\cpcidskfile.h" />
 							<File RelativePath=".\frmts\pcidsk\sdk\core\metadataset.h" />
 							<File RelativePath=".\frmts\pcidsk\sdk\core\mutexholder.h" />
@@ -702,16 +863,28 @@
 							<File RelativePath=".\frmts\pcidsk\sdk\core\sysvirtualfile.h" />
 						</Filter>
 						<Filter Name="segment" Filter="*.h     ">
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskads40model.h" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskapmodel.h" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskbinarysegment.h" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskbitmap.h" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskephemerissegment.h" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskgcp2segment.h" />
 							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskgeoref.h" />
 							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskpct.h" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskpolymodel.h" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskrpcmodel.h" />
 							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidsksegment.h" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidsktoutinmodel.h" />
 							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskvectorsegment.h" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidsk_array.h" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidsk_tex.h" />
 							<File RelativePath=".\frmts\pcidsk\sdk\segment\metadatasegment.h" />
-							<File RelativePath=".\frmts\pcidsk\sdk\segment\pcidskgeorefbuilder.h" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\orbitstructures.h" />
 							<File RelativePath=".\frmts\pcidsk\sdk\segment\pcidsksegmentbuilder.h" />
-							<File RelativePath=".\frmts\pcidsk\sdk\segment\segmentfactory.h" />
 							<File RelativePath=".\frmts\pcidsk\sdk\segment\sysblockmap.h" />
-							<File RelativePath=".\frmts\pcidsk\sdk\segment\uuid.h" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\toutinstructures.h" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\vecsegdataindex.h" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\vecsegheader.h" />
 						</Filter>
 						</Filter>
 						</Filter>
@@ -727,6 +900,10 @@
 						<File RelativePath=".\frmts\pcraster\libcsf\pcrtypes.h" />
 					</Filter>
 					</Filter>
+				<Filter Name="pdf" Filter="*.h   ">
+					<File RelativePath=".\frmts\pdf\pdfio.h" />
+					<File RelativePath=".\frmts\pdf\pdfobject.h" />
+				</Filter>
 				<Filter Name="pds" Filter="*.h   ">
 					<File RelativePath=".\frmts\pds\nasakeywordhandler.h" />
 				</Filter>
@@ -739,6 +916,12 @@
 						<File RelativePath=".\frmts\png\libpng\pngconf.h" />
 					</Filter>
 					</Filter>
+				<Filter Name="postgisraster" Filter="*.h   ">
+					<File RelativePath=".\frmts\postgisraster\postgisraster.h" />
+				</Filter>
+				<Filter Name="rasdaman" Filter="*.h   ">
+					<File RelativePath=".\frmts\rasdaman\rasdamandataset.h" />
+				</Filter>
 				<Filter Name="rasterlite" Filter="*.h   ">
 					<File RelativePath=".\frmts\rasterlite\rasterlitedataset.h" />
 				</Filter>
@@ -758,26 +941,22 @@
 				<Filter Name="sdts" Filter="*.h   ">
 					<File RelativePath=".\frmts\sdts\sdts_al.h" />
 				</Filter>
-				<Filter Name="terralib" Filter="*.h   ">
-					<File RelativePath=".\frmts\terralib\TerraLibDataset.h" />
-					<File RelativePath=".\frmts\terralib\TerraLibRasterBand.h" />
-				</Filter>
 				<Filter Name="vrt" Filter="*.h   ">
 					<File RelativePath=".\frmts\vrt\gdal_vrt.h" />
 					<File RelativePath=".\frmts\vrt\vrtdataset.h" />
 				</Filter>
-				<Filter Name="wktraster" Filter="*.h   ">
-					<File RelativePath=".\frmts\wktraster\wktraster.h" />
-				</Filter>
 				<Filter Name="wms" Filter="*.h   ">
 					<File RelativePath=".\frmts\wms\gdalhttp.h" />
 					<File RelativePath=".\frmts\wms\md5.h" />
+					<File RelativePath=".\frmts\wms\minidriver_tiled_wms.h" />
 					<File RelativePath=".\frmts\wms\minidriver_tileservice.h" />
 					<File RelativePath=".\frmts\wms\minidriver_tms.h" />
+					<File RelativePath=".\frmts\wms\minidriver_virtualearth.h" />
 					<File RelativePath=".\frmts\wms\minidriver_wms.h" />
 					<File RelativePath=".\frmts\wms\minidriver_worldwind.h" />
 					<File RelativePath=".\frmts\wms\stdinc.h" />
 					<File RelativePath=".\frmts\wms\wmsdriver.h" />
+					<File RelativePath=".\frmts\wms\wmsmetadataset.h" />
 				</Filter>
 				<Filter Name="zlib" Filter="*.h   ">
 					<File RelativePath=".\frmts\zlib\crc32.h" />
@@ -803,6 +982,8 @@
 				<File RelativePath=".\gcore\gdal_version.h" />
 			</Filter>
 			<Filter Name="ogr" Filter="*.h  ">
+				<File RelativePath=".\ogr\ogrgeomediageometry.h" />
+				<File RelativePath=".\ogr\ogrpgeogeometry.h" />
 				<File RelativePath=".\ogr\ogr_api.h" />
 				<File RelativePath=".\ogr\ogr_core.h" />
 				<File RelativePath=".\ogr\ogr_expat.h" />
@@ -818,6 +999,16 @@
 				<Filter Name="ogrsf_frmts" Filter="*.h   ">
 					<File RelativePath=".\ogr\ogrsf_frmts\ogrsf_frmts.h" />
 					<File RelativePath=".\ogr\ogrsf_frmts\ogr_attrind.h" />
+					<Filter Name="aeronavfaa" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\aeronavfaa\ogr_aeronavfaa.h" />
+					</Filter>
+					<Filter Name="arcgen" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\arcgen\ogr_arcgen.h" />
+					</Filter>
+					<Filter Name="arcobjects" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\arcobjects\aoutils.h" />
+						<File RelativePath=".\ogr\ogrsf_frmts\arcobjects\ogr_ao.h" />
+					</Filter>
 					<Filter Name="avc" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\avc\avc.h" />
 						<File RelativePath=".\ogr\ogrsf_frmts\avc\avc_mbyte.h" />
@@ -827,6 +1018,9 @@
 					<Filter Name="bna" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\bna\ogrbnaparser.h" />
 						<File RelativePath=".\ogr\ogrsf_frmts\bna\ogr_bna.h" />
+					</Filter>
+					<Filter Name="couchdb" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\couchdb\ogr_couchdb.h" />
 					</Filter>
 					<Filter Name="csv" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\csv\ogr_csv.h" />
@@ -842,8 +1036,20 @@
 					<Filter Name="dods" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\dods\ogr_dods.h" />
 					</Filter>
+					<Filter Name="dwg" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\dwg\ogr_dwg.h" />
+					</Filter>
 					<Filter Name="dxf" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\dxf\ogrdxf_polyline_smooth.h" />
+						<File RelativePath=".\ogr\ogrsf_frmts\dxf\ogr_autocad_services.h" />
 						<File RelativePath=".\ogr\ogrsf_frmts\dxf\ogr_dxf.h" />
+					</Filter>
+					<Filter Name="edigeo" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\edigeo\ogr_edigeo.h" />
+					</Filter>
+					<Filter Name="filegdb" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\filegdb\FGdbUtils.h" />
+						<File RelativePath=".\ogr\ogrsf_frmts\filegdb\ogr_fgdb.h" />
 					</Filter>
 					<Filter Name="fme" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\fme\fme2ogr.h" />
@@ -877,16 +1083,27 @@
 							<File RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\printbuf.h" />
 						</Filter>
 						</Filter>
+					<Filter Name="geomedia" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\geomedia\ogr_geomedia.h" />
+					</Filter>
 					<Filter Name="georss" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\georss\ogr_georss.h" />
+					</Filter>
+					<Filter Name="gft" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\gft\ogr_gft.h" />
 					</Filter>
 					<Filter Name="gml" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\gml\gmlreader.h" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gml\gmlreaderp.h" />
+						<File RelativePath=".\ogr\ogrsf_frmts\gml\gmlutils.h" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gml\ogr_gml.h" />
+						<File RelativePath=".\ogr\ogrsf_frmts\gml\parsexsd.h" />
 					</Filter>
 					<Filter Name="gmt" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\gmt\ogr_gmt.h" />
+					</Filter>
+					<Filter Name="gpsbabel" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\gpsbabel\ogr_gpsbabel.h" />
 					</Filter>
 					<Filter Name="gpx" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\gpx\ogr_gpx.h" />
@@ -898,8 +1115,14 @@
 						<File RelativePath=".\ogr\ogrsf_frmts\gtm\gtm.h" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gtm\ogr_gtm.h" />
 					</Filter>
+					<Filter Name="htf" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\htf\ogr_htf.h" />
+					</Filter>
 					<Filter Name="idb" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\idb\ogr_idb.h" />
+					</Filter>
+					<Filter Name="idrisi" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\idrisi\ogr_idrisi.h" />
 					</Filter>
 					<Filter Name="ili" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\ili\ili1reader.h" />
@@ -925,6 +1148,17 @@
 						<File RelativePath=".\ogr\ogrsf_frmts\kml\kmlvector.h" />
 						<File RelativePath=".\ogr\ogrsf_frmts\kml\ogr_kml.h" />
 					</Filter>
+					<Filter Name="libkml" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\libkml\ogrlibkmlfeature.h" />
+						<File RelativePath=".\ogr\ogrsf_frmts\libkml\ogrlibkmlfeaturestyle.h" />
+						<File RelativePath=".\ogr\ogrsf_frmts\libkml\ogrlibkmlfield.h" />
+						<File RelativePath=".\ogr\ogrsf_frmts\libkml\ogrlibkmlgeometry.h" />
+						<File RelativePath=".\ogr\ogrsf_frmts\libkml\ogrlibkmlstyle.h" />
+						<File RelativePath=".\ogr\ogrsf_frmts\libkml\ogr_libkml.h" />
+					</Filter>
+					<Filter Name="mdb" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\mdb\ogr_mdb.h" />
+					</Filter>
 					<Filter Name="mem" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\mem\ogr_mem.h" />
 					</Filter>
@@ -935,8 +1169,15 @@
 						<File RelativePath=".\ogr\ogrsf_frmts\mitab\mitab_priv.h" />
 						<File RelativePath=".\ogr\ogrsf_frmts\mitab\mitab_utils.h" />
 					</Filter>
+					<Filter Name="mssqlspatial" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\mssqlspatial\ogr_mssqlspatial.h" />
+					</Filter>
 					<Filter Name="mysql" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\mysql\ogr_mysql.h" />
+					</Filter>
+					<Filter Name="nas" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\nas\nasreaderp.h" />
+						<File RelativePath=".\ogr\ogrsf_frmts\nas\ogr_nas.h" />
 					</Filter>
 					<Filter Name="ntf" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\ntf\ntf.h" />
@@ -950,12 +1191,21 @@
 					<Filter Name="ogdi" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\ogdi\ogrogdi.h" />
 					</Filter>
+					<Filter Name="openair" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\openair\ogr_openair.h" />
+					</Filter>
 					<Filter Name="pcidsk" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\pcidsk\ogr_pcidsk.h" />
+					</Filter>
+					<Filter Name="pds" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\pds\ogr_pds.h" />
 					</Filter>
 					<Filter Name="pg" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\pg\ogrpgutility.h" />
 						<File RelativePath=".\ogr\ogrsf_frmts\pg\ogr_pg.h" />
+					</Filter>
+					<Filter Name="pgdump" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\pgdump\ogr_pgdump.h" />
 					</Filter>
 					<Filter Name="pgeo" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\pgeo\ogr_pgeo.h" />
@@ -974,18 +1224,44 @@
 					<Filter Name="sdts" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\sdts\ogr_sdts.h" />
 					</Filter>
+					<Filter Name="segukooa" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\segukooa\ogr_segukooa.h" />
+					</Filter>
+					<Filter Name="segy" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\segy\ogr_segy.h" />
+					</Filter>
 					<Filter Name="shape" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\shape\ogrshape.h" />
 						<File RelativePath=".\ogr\ogrsf_frmts\shape\shapefil.h" />
 					</Filter>
+					<Filter Name="sosi" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\sosi\ogr_sosi.h" />
+					</Filter>
 					<Filter Name="sqlite" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\sqlite\ogr_sqlite.h" />
+					</Filter>
+					<Filter Name="sua" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\sua\ogr_sua.h" />
+					</Filter>
+					<Filter Name="svg" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\svg\ogr_svg.h" />
 					</Filter>
 					<Filter Name="tiger" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\tiger\ogr_tiger.h" />
 					</Filter>
+					<Filter Name="vfk" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\vfk\ogr_vfk.h" />
+						<File RelativePath=".\ogr\ogrsf_frmts\vfk\vfkreader.h" />
+						<File RelativePath=".\ogr\ogrsf_frmts\vfk\vfkreaderp.h" />
+					</Filter>
 					<Filter Name="vrt" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\vrt\ogr_vrt.h" />
+					</Filter>
+					<Filter Name="wfs" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\wfs\ogr_wfs.h" />
+					</Filter>
+					<Filter Name="xls" Filter="*.h    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\xls\ogr_xls.h" />
 					</Filter>
 					<Filter Name="xplane" Filter="*.h    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\xplane\ogr_xplane.h" />
@@ -1012,6 +1288,7 @@
 				<File RelativePath=".\port\cpl_minixml.h" />
 				<File RelativePath=".\port\cpl_minizip_ioapi.h" />
 				<File RelativePath=".\port\cpl_minizip_unzip.h" />
+				<File RelativePath=".\port\cpl_minizip_zip.h" />
 				<File RelativePath=".\port\cpl_multiproc.h" />
 				<File RelativePath=".\port\cpl_odbc.h" />
 				<File RelativePath=".\port\cpl_port.h" />
@@ -1022,13 +1299,16 @@
 				<File RelativePath=".\port\cpl_vsi_virtual.h" />
 				<File RelativePath=".\port\cpl_win32ce_api.h" />
 				<File RelativePath=".\port\cpl_wince.h" />
+				<File RelativePath=".\port\gdal_csv.h" />
 			</Filter>
 			</Filter>
 		<Filter Name="Source Files" Filter="*.c;*.cpp ">
 			<Filter Name="alg" Filter="*.c;*.cpp  ">
+				<File RelativePath=".\alg\gdalwarpkernel_opencl.c" />
 				<File RelativePath=".\alg\gdal_crs.c" />
 				<File RelativePath=".\alg\gdal_nrgcrs.c" />
 				<File RelativePath=".\alg\contour.cpp" />
+				<File RelativePath=".\alg\fpolygonize.cpp" />
 				<File RelativePath=".\alg\gdalchecksum.cpp" />
 				<File RelativePath=".\alg\gdalcutline.cpp" />
 				<File RelativePath=".\alg\gdaldither.cpp" />
@@ -1036,6 +1316,7 @@
 				<File RelativePath=".\alg\gdalgrid.cpp" />
 				<File RelativePath=".\alg\gdalmediancut.cpp" />
 				<File RelativePath=".\alg\gdalproximity.cpp" />
+				<File RelativePath=".\alg\gdalrasterfpolygonenumerator.cpp" />
 				<File RelativePath=".\alg\gdalrasterize.cpp" />
 				<File RelativePath=".\alg\gdalrasterpolygonenumerator.cpp" />
 				<File RelativePath=".\alg\gdalsievefilter.cpp" />
@@ -1057,12 +1338,16 @@
 				<File RelativePath=".\apps\gdalinfo.c" />
 				<File RelativePath=".\apps\gdaltindex.c" />
 				<File RelativePath=".\apps\gdalwarpsimple.c" />
+				<File RelativePath=".\apps\commonutils.cpp" />
 				<File RelativePath=".\apps\dumpoverviews.cpp" />
 				<File RelativePath=".\apps\gdaladdo.cpp" />
+				<File RelativePath=".\apps\gdalasyncread.cpp" />
 				<File RelativePath=".\apps\gdalbuildvrt.cpp" />
 				<File RelativePath=".\apps\gdaldem.cpp" />
 				<File RelativePath=".\apps\gdalenhance.cpp" />
+				<File RelativePath=".\apps\gdallocationinfo.cpp" />
 				<File RelativePath=".\apps\gdalmanage.cpp" />
+				<File RelativePath=".\apps\gdalsrsinfo.cpp" />
 				<File RelativePath=".\apps\gdaltorture.cpp" />
 				<File RelativePath=".\apps\gdaltransform.cpp" />
 				<File RelativePath=".\apps\gdalwarp.cpp" />
@@ -1077,6 +1362,7 @@
 				<File RelativePath=".\apps\ogrinfo.cpp" />
 				<File RelativePath=".\apps\ogrtindex.cpp" />
 				<File RelativePath=".\apps\testepsg.cpp" />
+				<File RelativePath=".\apps\testreprojmulti.cpp" />
 				<File RelativePath=".\apps\test_ogrsf.cpp" />
 			</Filter>
 			<Filter Name="bridge" Filter="*.c;*.cpp  ">
@@ -1133,6 +1419,9 @@
 				<Filter Name="cosar" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\cosar\cosar_dataset.cpp" />
 				</Filter>
+				<Filter Name="ctg" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\ctg\ctgdataset.cpp" />
+				</Filter>
 				<Filter Name="dimap" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\dimap\dimapdataset.cpp" />
 				</Filter>
@@ -1146,7 +1435,12 @@
 					<File RelativePath=".\frmts\dted\dted_test.c" />
 					<File RelativePath=".\frmts\dted\dteddataset.cpp" />
 				</Filter>
+				<Filter Name="e00grid" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\e00grid\e00read.c" />
+					<File RelativePath=".\frmts\e00grid\e00griddataset.cpp" />
+				</Filter>
 				<Filter Name="ecw" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\ecw\ecwasyncreader.cpp" />
 					<File RelativePath=".\frmts\ecw\ecwcreatecopy.cpp" />
 					<File RelativePath=".\frmts\ecw\ecwdataset.cpp" />
 					<File RelativePath=".\frmts\ecw\jp2userbox.cpp" />
@@ -1158,6 +1452,7 @@
 					<File RelativePath=".\frmts\envisat\dumpgeo.c" />
 					<File RelativePath=".\frmts\envisat\EnvisatFile.c" />
 					<File RelativePath=".\frmts\envisat\envisat_dump.c" />
+					<File RelativePath=".\frmts\envisat\records.c" />
 					<File RelativePath=".\frmts\envisat\envisatdataset.cpp" />
 				</Filter>
 				<Filter Name="epsilon" Filter="*.c;*.cpp   ">
@@ -1176,7 +1471,6 @@
 				</Filter>
 				<Filter Name="georaster" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\georaster\georaster_dataset.cpp" />
-					<File RelativePath=".\frmts\georaster\georaster_driver.cpp" />
 					<File RelativePath=".\frmts\georaster\georaster_rasterband.cpp" />
 					<File RelativePath=".\frmts\georaster\georaster_wrapper.cpp" />
 					<File RelativePath=".\frmts\georaster\oci_wrapper.cpp" />
@@ -1186,6 +1480,7 @@
 				</Filter>
 				<Filter Name="gif" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\gif\biggifdataset.cpp" />
+					<File RelativePath=".\frmts\gif\gifabstractdataset.cpp" />
 					<File RelativePath=".\frmts\gif\gifdataset.cpp" />
 					<Filter Name="giflib" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\frmts\gif\giflib\dgif_lib.c" />
@@ -1277,6 +1572,9 @@
 					<File RelativePath=".\frmts\gsg\gsagdataset.cpp" />
 					<File RelativePath=".\frmts\gsg\gsbgdataset.cpp" />
 				</Filter>
+				<Filter Name="gta" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\gta\gtadataset.cpp" />
+				</Filter>
 				<Filter Name="gtiff" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\gtiff\tif_float.c" />
 					<File RelativePath=".\frmts\gtiff\geotiff.cpp" />
@@ -1320,6 +1618,7 @@
 						<File RelativePath=".\frmts\gtiff\libtiff\tif_jpeg.c" />
 						<File RelativePath=".\frmts\gtiff\libtiff\tif_jpeg_12.c" />
 						<File RelativePath=".\frmts\gtiff\libtiff\tif_luv.c" />
+						<File RelativePath=".\frmts\gtiff\libtiff\tif_lzma.c" />
 						<File RelativePath=".\frmts\gtiff\libtiff\tif_lzw.c" />
 						<File RelativePath=".\frmts\gtiff\libtiff\tif_next.c" />
 						<File RelativePath=".\frmts\gtiff\libtiff\tif_ojpeg.c" />
@@ -1362,6 +1661,9 @@
 					<File RelativePath=".\frmts\hdf5\hdf5dataset.cpp" />
 					<File RelativePath=".\frmts\hdf5\hdf5imagedataset.cpp" />
 					<File RelativePath=".\frmts\hdf5\iso19115_srs.cpp" />
+				</Filter>
+				<Filter Name="hf2" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\hf2\hf2dataset.cpp" />
 				</Filter>
 				<Filter Name="hfa" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\hfa\hfaband.cpp" />
@@ -1514,6 +1816,15 @@
 					<File RelativePath=".\frmts\jpeg2000\jpeg2000dataset.cpp" />
 					<File RelativePath=".\frmts\jpeg2000\jpeg2000_vsil_io.cpp" />
 				</Filter>
+				<Filter Name="jpegls" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\jpegls\jpeglsdataset.cpp" />
+				</Filter>
+				<Filter Name="jpipkak" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\jpipkak\jpipkakdataset.cpp" />
+				</Filter>
+				<Filter Name="kmlsuperoverlay" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\kmlsuperoverlay\kmlsuperoverlaydataset.cpp" />
+				</Filter>
 				<Filter Name="l1b" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\l1b\l1bdataset.cpp" />
 				</Filter>
@@ -1526,6 +1837,9 @@
 				<Filter Name="mrsid" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\mrsid\mrsiddataset.cpp" />
 					<File RelativePath=".\frmts\mrsid\mrsidstream.cpp" />
+				</Filter>
+				<Filter Name="mrsid_lidar" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\mrsid_lidar\gdal_MG4Lidar.cpp" />
 				</Filter>
 				<Filter Name="msg" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\msg\msgcommand.cpp" />
@@ -1543,16 +1857,23 @@
 					<File RelativePath=".\frmts\netcdf\gmtdataset.cpp" />
 					<File RelativePath=".\frmts\netcdf\netcdfdataset.cpp" />
 				</Filter>
+				<Filter Name="ngsgeoid" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\ngsgeoid\ngsgeoiddataset.cpp" />
+				</Filter>
 				<Filter Name="nitf" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\nitf\mgrs.c" />
+					<File RelativePath=".\frmts\nitf\nitfdes.c" />
 					<File RelativePath=".\frmts\nitf\nitfdump.c" />
 					<File RelativePath=".\frmts\nitf\nitffile.c" />
 					<File RelativePath=".\frmts\nitf\nitfimage.c" />
+					<File RelativePath=".\frmts\nitf\ecrgtocdataset.cpp" />
 					<File RelativePath=".\frmts\nitf\nitfaridpcm.cpp" />
 					<File RelativePath=".\frmts\nitf\nitfbilevel.cpp" />
 					<File RelativePath=".\frmts\nitf\nitfdataset.cpp" />
+					<File RelativePath=".\frmts\nitf\nitfrasterband.cpp" />
 					<File RelativePath=".\frmts\nitf\nitfwritejpeg.cpp" />
 					<File RelativePath=".\frmts\nitf\nitfwritejpeg_12.cpp" />
+					<File RelativePath=".\frmts\nitf\nitf_gcprpc.cpp" />
 					<File RelativePath=".\frmts\nitf\rpftocdataset.cpp" />
 					<File RelativePath=".\frmts\nitf\rpftocfile.cpp" />
 				</Filter>
@@ -1564,7 +1885,14 @@
 				<Filter Name="ogdi" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\ogdi\ogdidataset.cpp" />
 				</Filter>
+				<Filter Name="openjpeg" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\openjpeg\openjpegdataset.cpp" />
+				</Filter>
+				<Filter Name="ozi" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\ozi\ozidataset.cpp" />
+				</Filter>
 				<Filter Name="pcidsk" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\pcidsk\gdal_edb.cpp" />
 					<File RelativePath=".\frmts\pcidsk\pcidskdataset.cpp" />
 					<File RelativePath=".\frmts\pcidsk\pcidskdataset2.cpp" />
 					<File RelativePath=".\frmts\pcidsk\pcidsktiledrasterband.cpp" />
@@ -1572,12 +1900,15 @@
 					<Filter Name="sdk" Filter="*.c;*.cpp    ">
 						<Filter Name="channel" Filter="*.c;*.cpp     ">
 							<File RelativePath=".\frmts\pcidsk\sdk\channel\cbandinterleavedchannel.cpp" />
+							<File RelativePath=".\frmts\pcidsk\sdk\channel\cexternalchannel.cpp" />
 							<File RelativePath=".\frmts\pcidsk\sdk\channel\cpcidskchannel.cpp" />
 							<File RelativePath=".\frmts\pcidsk\sdk\channel\cpixelinterleavedchannel.cpp" />
 							<File RelativePath=".\frmts\pcidsk\sdk\channel\ctiledchannel.cpp" />
 						</Filter>
 						<Filter Name="core" Filter="*.c;*.cpp     ">
+							<File RelativePath=".\frmts\pcidsk\sdk\core\clinksegment.cpp" />
 							<File RelativePath=".\frmts\pcidsk\sdk\core\cpcidskfile.cpp" />
+							<File RelativePath=".\frmts\pcidsk\sdk\core\edb_pcidsk.cpp" />
 							<File RelativePath=".\frmts\pcidsk\sdk\core\libjpeg_io.cpp" />
 							<File RelativePath=".\frmts\pcidsk\sdk\core\metadataset_p.cpp" />
 							<File RelativePath=".\frmts\pcidsk\sdk\core\pcidskbuffer.cpp" />
@@ -1596,14 +1927,25 @@
 							<File RelativePath=".\frmts\pcidsk\sdk\port\win32_mutex.cpp" />
 						</Filter>
 						<Filter Name="segment" Filter="*.c;*.cpp     ">
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskads40model.cpp" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskapmodel.cpp" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskbinarysegment.cpp" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskbitmap.cpp" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskephemerissegment.cpp" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskgcp2segment.cpp" />
 							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskgeoref.cpp" />
 							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskpct.cpp" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskrpcmodel.cpp" />
 							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidsksegment.cpp" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidsktoutinmodel.cpp" />
 							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskvectorsegment.cpp" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidskvectorsegment_consistencycheck.cpp" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidsk_array.cpp" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\cpcidsk_tex.cpp" />
 							<File RelativePath=".\frmts\pcidsk\sdk\segment\metadatasegment_p.cpp" />
-							<File RelativePath=".\frmts\pcidsk\sdk\segment\segmentfactory.cpp" />
-							<File RelativePath=".\frmts\pcidsk\sdk\segment\segment_loader.cpp" />
 							<File RelativePath=".\frmts\pcidsk\sdk\segment\sysblockmap.cpp" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\vecsegdataindex.cpp" />
+							<File RelativePath=".\frmts\pcidsk\sdk\segment\vecsegheader.cpp" />
 						</Filter>
 						</Filter>
 						</Filter>
@@ -1685,6 +2027,11 @@
 						<File RelativePath=".\frmts\pcraster\libcsf\_rputrow.c" />
 					</Filter>
 					</Filter>
+				<Filter Name="pdf" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\pdf\pdfdataset.cpp" />
+					<File RelativePath=".\frmts\pdf\pdfio.cpp" />
+					<File RelativePath=".\frmts\pdf\pdfobject.cpp" />
+				</Filter>
 				<Filter Name="pds" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\pds\isis2dataset.cpp" />
 					<File RelativePath=".\frmts\pds\isis3dataset.cpp" />
@@ -1718,9 +2065,17 @@
 						<File RelativePath=".\frmts\png\libpng\pngwutil.c" />
 					</Filter>
 					</Filter>
+				<Filter Name="postgisraster" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\postgisraster\postgisrasterdataset.cpp" />
+					<File RelativePath=".\frmts\postgisraster\postgisrasterdriver.cpp" />
+					<File RelativePath=".\frmts\postgisraster\postgisrasterrasterband.cpp" />
+				</Filter>
 				<Filter Name="r" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\r\rcreatecopy.cpp" />
 					<File RelativePath=".\frmts\r\rdataset.cpp" />
+				</Filter>
+				<Filter Name="rasdaman" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\rasdaman\rasdamandataset.cpp" />
 				</Filter>
 				<Filter Name="rasterlite" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\rasterlite\rasterlitecreatecopy.cpp" />
@@ -1728,6 +2083,7 @@
 					<File RelativePath=".\frmts\rasterlite\rasterliteoverviews.cpp" />
 				</Filter>
 				<Filter Name="raw" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\raw\ace2dataset.cpp" />
 					<File RelativePath=".\frmts\raw\atlsci_spheroid.cpp" />
 					<File RelativePath=".\frmts\raw\btdataset.cpp" />
 					<File RelativePath=".\frmts\raw\cpgdataset.cpp" />
@@ -1741,21 +2097,26 @@
 					<File RelativePath=".\frmts\raw\fujibasdataset.cpp" />
 					<File RelativePath=".\frmts\raw\genbindataset.cpp" />
 					<File RelativePath=".\frmts\raw\gscdataset.cpp" />
+					<File RelativePath=".\frmts\raw\gtxdataset.cpp" />
 					<File RelativePath=".\frmts\raw\hkvdataset.cpp" />
 					<File RelativePath=".\frmts\raw\idadataset.cpp" />
 					<File RelativePath=".\frmts\raw\landataset.cpp" />
 					<File RelativePath=".\frmts\raw\lcpdataset.cpp" />
+					<File RelativePath=".\frmts\raw\loslasdataset.cpp" />
 					<File RelativePath=".\frmts\raw\mffdataset.cpp" />
 					<File RelativePath=".\frmts\raw\ndfdataset.cpp" />
+					<File RelativePath=".\frmts\raw\ntv2dataset.cpp" />
 					<File RelativePath=".\frmts\raw\pauxdataset.cpp" />
 					<File RelativePath=".\frmts\raw\pnmdataset.cpp" />
 					<File RelativePath=".\frmts\raw\rawdataset.cpp" />
+					<File RelativePath=".\frmts\raw\snodasdataset.cpp" />
 				</Filter>
 				<Filter Name="rik" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\rik\rikdataset.cpp" />
 				</Filter>
 				<Filter Name="rmf" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\rmf\rmfdataset.cpp" />
+					<File RelativePath=".\frmts\rmf\rmfdem.cpp" />
 					<File RelativePath=".\frmts\rmf\rmflzw.cpp" />
 				</Filter>
 				<Filter Name="rs2" Filter="*.c;*.cpp   ">
@@ -1793,10 +2154,6 @@
 				<Filter Name="terragen" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\terragen\terragendataset.cpp" />
 				</Filter>
-				<Filter Name="terralib" Filter="*.c;*.cpp   ">
-					<File RelativePath=".\frmts\terralib\TerraLibDataset.cpp" />
-					<File RelativePath=".\frmts\terralib\TerraLibRasterBand.cpp" />
-				</Filter>
 				<Filter Name="til" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\til\tildataset.cpp" />
 				</Filter>
@@ -1822,10 +2179,8 @@
 					<File RelativePath=".\frmts\wcs\httpdriver.cpp" />
 					<File RelativePath=".\frmts\wcs\wcsdataset.cpp" />
 				</Filter>
-				<Filter Name="wktraster" Filter="*.c;*.cpp   ">
-					<File RelativePath=".\frmts\wktraster\wktrasterdataset.cpp" />
-					<File RelativePath=".\frmts\wktraster\wktrasterrasterband.cpp" />
-					<File RelativePath=".\frmts\wktraster\wktrasterwrapper.cpp" />
+				<Filter Name="webp" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\webp\webpdataset.cpp" />
 				</Filter>
 				<Filter Name="wms" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\wms\cache.cpp" />
@@ -1833,16 +2188,22 @@
 					<File RelativePath=".\frmts\wms\gdalhttp.cpp" />
 					<File RelativePath=".\frmts\wms\md5.cpp" />
 					<File RelativePath=".\frmts\wms\minidriver.cpp" />
+					<File RelativePath=".\frmts\wms\minidriver_tiled_wms.cpp" />
 					<File RelativePath=".\frmts\wms\minidriver_tileservice.cpp" />
 					<File RelativePath=".\frmts\wms\minidriver_tms.cpp" />
+					<File RelativePath=".\frmts\wms\minidriver_virtualearth.cpp" />
 					<File RelativePath=".\frmts\wms\minidriver_wms.cpp" />
 					<File RelativePath=".\frmts\wms\minidriver_worldwind.cpp" />
 					<File RelativePath=".\frmts\wms\rasterband.cpp" />
 					<File RelativePath=".\frmts\wms\stuff.cpp" />
 					<File RelativePath=".\frmts\wms\wmsdriver.cpp" />
+					<File RelativePath=".\frmts\wms\wmsmetadataset.cpp" />
 				</Filter>
 				<Filter Name="xpm" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\xpm\xpmdataset.cpp" />
+				</Filter>
+				<Filter Name="xyz" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\xyz\xyzdataset.cpp" />
 				</Filter>
 				<Filter Name="zlib" Filter="*.c;*.cpp   ">
 					<File RelativePath=".\frmts\zlib\adler32.c" />
@@ -1858,12 +2219,17 @@
 					<File RelativePath=".\frmts\zlib\uncompr.c" />
 					<File RelativePath=".\frmts\zlib\zutil.c" />
 				</Filter>
+				<Filter Name="zmap" Filter="*.c;*.cpp   ">
+					<File RelativePath=".\frmts\zmap\zmapdataset.cpp" />
+				</Filter>
 				</Filter>
 			<Filter Name="gcore" Filter="*.c;*.cpp  ">
 				<File RelativePath=".\gcore\gdalallvalidmaskband.cpp" />
 				<File RelativePath=".\gcore\gdalcolortable.cpp" />
 				<File RelativePath=".\gcore\gdaldataset.cpp" />
+				<File RelativePath=".\gcore\gdaldefaultasync.cpp" />
 				<File RelativePath=".\gcore\gdaldefaultoverviews.cpp" />
+				<File RelativePath=".\gcore\gdaldllmain.cpp" />
 				<File RelativePath=".\gcore\gdaldriver.cpp" />
 				<File RelativePath=".\gcore\gdaldrivermanager.cpp" />
 				<File RelativePath=".\gcore\gdalgmlcoverage.cpp" />
@@ -1889,7 +2255,6 @@
 			</Filter>
 			<Filter Name="ogr" Filter="*.c;*.cpp  ">
 				<File RelativePath=".\ogr\ogr_capi_test.c" />
-				<File RelativePath=".\ogr\swq.c" />
 				<File RelativePath=".\ogr\gml2ogrgeometry.cpp" />
 				<File RelativePath=".\ogr\ogr2gmlgeometry.cpp" />
 				<File RelativePath=".\ogr\ograssemblepolygon.cpp" />
@@ -1900,6 +2265,7 @@
 				<File RelativePath=".\ogr\ogrfeaturequery.cpp" />
 				<File RelativePath=".\ogr\ogrfeaturestyle.cpp" />
 				<File RelativePath=".\ogr\ogrfielddefn.cpp" />
+				<File RelativePath=".\ogr\ogrgeomediageometry.cpp" />
 				<File RelativePath=".\ogr\ogrgeometry.cpp" />
 				<File RelativePath=".\ogr\ogrgeometrycollection.cpp" />
 				<File RelativePath=".\ogr\ogrgeometryfactory.cpp" />
@@ -1908,6 +2274,7 @@
 				<File RelativePath=".\ogr\ogrmultilinestring.cpp" />
 				<File RelativePath=".\ogr\ogrmultipoint.cpp" />
 				<File RelativePath=".\ogr\ogrmultipolygon.cpp" />
+				<File RelativePath=".\ogr\ogrpgeogeometry.cpp" />
 				<File RelativePath=".\ogr\ogrpoint.cpp" />
 				<File RelativePath=".\ogr\ogrpolygon.cpp" />
 				<File RelativePath=".\ogr\ogrspatialreference.cpp" />
@@ -1928,7 +2295,29 @@
 				<File RelativePath=".\ogr\ogr_srs_usgs.cpp" />
 				<File RelativePath=".\ogr\ogr_srs_validate.cpp" />
 				<File RelativePath=".\ogr\ogr_srs_xml.cpp" />
+				<File RelativePath=".\ogr\swq.cpp" />
+				<File RelativePath=".\ogr\swq_expr_node.cpp" />
+				<File RelativePath=".\ogr\swq_op_general.cpp" />
+				<File RelativePath=".\ogr\swq_op_registrar.cpp" />
+				<File RelativePath=".\ogr\swq_parser.cpp" />
+				<File RelativePath=".\ogr\swq_select.cpp" />
 				<Filter Name="ogrsf_frmts" Filter="*.c;*.cpp   ">
+					<Filter Name="aeronavfaa" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\aeronavfaa\ograeronavfaadatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\aeronavfaa\ograeronavfaadriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\aeronavfaa\ograeronavfaalayer.cpp" />
+					</Filter>
+					<Filter Name="arcgen" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\arcgen\ograrcgendatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\arcgen\ograrcgendriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\arcgen\ograrcgenlayer.cpp" />
+					</Filter>
+					<Filter Name="arcobjects" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\arcobjects\aodatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\arcobjects\aodriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\arcobjects\aolayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\arcobjects\aoutils.cpp" />
+					</Filter>
 					<Filter Name="avc" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\avc\avc_bin.c" />
 						<File RelativePath=".\ogr\ogrsf_frmts\avc\avc_binwr.c" />
@@ -1953,6 +2342,13 @@
 						<File RelativePath=".\ogr\ogrsf_frmts\bna\ogrbnadriver.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\bna\ogrbnalayer.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\bna\ogrbnaparser.cpp" />
+					</Filter>
+					<Filter Name="couchdb" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\couchdb\ogrcouchdbdatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\couchdb\ogrcouchdbdriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\couchdb\ogrcouchdblayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\couchdb\ogrcouchdbrowslayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\couchdb\ogrcouchdbtablelayer.cpp" />
 					</Filter>
 					<Filter Name="csv" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\csv\ogrcsvdatasource.cpp" />
@@ -1980,15 +2376,41 @@
 						<File RelativePath=".\ogr\ogrsf_frmts\dods\ogrdodslayer.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\dods\ogrdodssequencelayer.cpp" />
 					</Filter>
+					<Filter Name="dwg" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\dwg\ogrdwgblockslayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\dwg\ogrdwgdatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\dwg\ogrdwgdriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\dwg\ogrdwglayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\dwg\ogrdwg_blockmap.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\dwg\ogrdwg_dimension.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\dwg\ogrdwg_hatch.cpp" />
+					</Filter>
 					<Filter Name="dxf" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\dxf\intronurbs.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\dxf\ogrdxfblockslayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\dxf\ogrdxfblockswriterlayer.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\dxf\ogrdxfdatasource.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\dxf\ogrdxfdriver.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\dxf\ogrdxflayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\dxf\ogrdxfreader.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\dxf\ogrdxfwriterds.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\dxf\ogrdxfwriterlayer.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\dxf\ogrdxf_blockmap.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\dxf\ogrdxf_dimension.cpp" />
-						<File RelativePath=".\ogr\ogrsf_frmts\dxf\ogrdxf_diskio.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\dxf\ogrdxf_hatch.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\dxf\ogrdxf_polyline_smooth.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\dxf\ogr_autocad_services.cpp" />
+					</Filter>
+					<Filter Name="edigeo" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\edigeo\ogredigeodatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\edigeo\ogredigeodriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\edigeo\ogredigeolayer.cpp" />
+					</Filter>
+					<Filter Name="filegdb" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\filegdb\FGdbDatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\filegdb\FGdbDriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\filegdb\FGdbLayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\filegdb\FGdbUtils.cpp" />
 					</Filter>
 					<Filter Name="fme" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\fme\fme2ogr_utils.cpp" />
@@ -2017,6 +2439,7 @@
 						<File RelativePath=".\ogr\ogrsf_frmts\geoconcept\ogrgeoconceptlayer.cpp" />
 					</Filter>
 					<Filter Name="geojson" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\geojson\ogresrijsonreader.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\geojson\ogrgeojsondatasource.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\geojson\ogrgeojsondriver.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\geojson\ogrgeojsonlayer.cpp" />
@@ -2033,29 +2456,52 @@
 							<File RelativePath=".\ogr\ogrsf_frmts\geojson\jsonc\printbuf.c" />
 						</Filter>
 						</Filter>
+					<Filter Name="geomedia" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\geomedia\ogrgeomediadatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\geomedia\ogrgeomediadriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\geomedia\ogrgeomedialayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\geomedia\ogrgeomediaselectlayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\geomedia\ogrgeomediatablelayer.cpp" />
+					</Filter>
 					<Filter Name="georss" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\georss\ogrgeorssdatasource.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\georss\ogrgeorssdriver.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\georss\ogrgeorsslayer.cpp" />
 					</Filter>
+					<Filter Name="gft" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\gft\ogrgftdatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\gft\ogrgftdriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\gft\ogrgftlayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\gft\ogrgftresultlayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\gft\ogrgfttablelayer.cpp" />
+					</Filter>
 					<Filter Name="gml" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\gml\gfstemplate.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gml\gmlfeature.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gml\gmlfeatureclass.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gml\gmlhandler.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gml\gmlpropertydefn.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gml\gmlreader.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gml\gmlreadstate.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\gml\gmlutils.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\gml\hugefileresolver.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gml\ogrgmldatasource.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gml\ogrgmldriver.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gml\ogrgmllayer.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gml\parsexsd.cpp" />
-						<File RelativePath=".\ogr\ogrsf_frmts\gml\trstring.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gml\resolvexlinks.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\gml\trstring.cpp" />
 					</Filter>
 					<Filter Name="gmt" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\gmt\ogrgmtdatasource.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gmt\ogrgmtdriver.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gmt\ogrgmtlayer.cpp" />
+					</Filter>
+					<Filter Name="gpsbabel" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\gpsbabel\ogrgpsbabeldatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\gpsbabel\ogrgpsbabeldriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\gpsbabel\ogrgpsbabelfork.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\gpsbabel\ogrgpsbabelwritedatasource.cpp" />
 					</Filter>
 					<Filter Name="gpx" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\gpx\ogrgpxdatasource.cpp" />
@@ -2075,12 +2521,23 @@
 						<File RelativePath=".\ogr\ogrsf_frmts\gtm\ogrgtmdriver.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\gtm\ogrgtmlayer.cpp" />
 					</Filter>
+					<Filter Name="htf" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\htf\ogrhtfdatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\htf\ogrhtfdriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\htf\ogrhtflayer.cpp" />
+					</Filter>
 					<Filter Name="idb" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\idb\ogridbdatasource.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\idb\ogridbdriver.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\idb\ogridblayer.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\idb\ogridbselectlayer.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\idb\ogridbtablelayer.cpp" />
+					</Filter>
+					<Filter Name="idrisi" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\idrisi\generate_test_files.c" />
+						<File RelativePath=".\ogr\ogrsf_frmts\idrisi\ogridrisidatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\idrisi\ogridrisidriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\idrisi\ogridrisilayer.cpp" />
 					</Filter>
 					<Filter Name="ili" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\ili\ili1reader.cpp" />
@@ -2126,6 +2583,22 @@
 						<File RelativePath=".\ogr\ogrsf_frmts\kml\ogrkmldriver.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\kml\ogrkmllayer.cpp" />
 					</Filter>
+					<Filter Name="libkml" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\libkml\ogrlibkmldatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\libkml\ogrlibkmldriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\libkml\ogrlibkmlfeature.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\libkml\ogrlibkmlfeaturestyle.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\libkml\ogrlibkmlfield.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\libkml\ogrlibkmlgeometry.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\libkml\ogrlibkmllayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\libkml\ogrlibkmlstyle.cpp" />
+					</Filter>
+					<Filter Name="mdb" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\mdb\ogrmdbdatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\mdb\ogrmdbdriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\mdb\ogrmdbjackcess.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\mdb\ogrmdblayer.cpp" />
+					</Filter>
 					<Filter Name="mem" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\mem\ogrmemdatasource.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\mem\ogrmemdriver.cpp" />
@@ -2159,12 +2632,29 @@
 						<File RelativePath=".\ogr\ogrsf_frmts\mitab\mitab_tooldef.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\mitab\mitab_utils.cpp" />
 					</Filter>
+					<Filter Name="mssqlspatial" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\mssqlspatial\ogrmssqlgeometryparser.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\mssqlspatial\ogrmssqlgeometryvalidator.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\mssqlspatial\ogrmssqlspatialdatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\mssqlspatial\ogrmssqlspatialdriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\mssqlspatial\ogrmssqlspatiallayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\mssqlspatial\ogrmssqlspatialselectlayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\mssqlspatial\ogrmssqlspatialtablelayer.cpp" />
+					</Filter>
 					<Filter Name="mysql" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\mysql\ogrmysqldatasource.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\mysql\ogrmysqldriver.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\mysql\ogrmysqllayer.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\mysql\ogrmysqlresultlayer.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\mysql\ogrmysqltablelayer.cpp" />
+					</Filter>
+					<Filter Name="nas" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\nas\nashandler.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\nas\nasreader.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\nas\ogrnasdatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\nas\ogrnasdriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\nas\ogrnaslayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\nas\ogrnasrelationlayer.cpp" />
 					</Filter>
 					<Filter Name="ntf" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\ntf\ntfdump.cpp" />
@@ -2208,18 +2698,34 @@
 						<File RelativePath=".\ogr\ogrsf_frmts\ogdi\ogrogdidriver.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\ogdi\ogrogdilayer.cpp" />
 					</Filter>
+					<Filter Name="openair" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\openair\ogropenairdatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\openair\ogropenairdriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\openair\ogropenairlabellayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\openair\ogropenairlayer.cpp" />
+					</Filter>
 					<Filter Name="pcidsk" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\pcidsk\ogrpcidskdatasource.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\pcidsk\ogrpcidskdriver.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\pcidsk\ogrpcidsklayer.cpp" />
 					</Filter>
+					<Filter Name="pds" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\pds\ogrpdsdatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\pds\ogrpdsdriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\pds\ogrpdslayer.cpp" />
+					</Filter>
 					<Filter Name="pg" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\pg\ogrpgdatasource.cpp" />
-						<File RelativePath=".\ogr\ogrsf_frmts\pg\ogrpgdebug.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\pg\ogrpgdriver.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\pg\ogrpglayer.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\pg\ogrpgresultlayer.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\pg\ogrpgtablelayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\pg\ogrpgutility.cpp" />
+					</Filter>
+					<Filter Name="pgdump" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\pgdump\ogrpgdumpdatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\pgdump\ogrpgdumpdriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\pgdump\ogrpgdumplayer.cpp" />
 					</Filter>
 					<Filter Name="pgeo" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\pgeo\ogrpgeodatasource.cpp" />
@@ -2256,6 +2762,16 @@
 						<File RelativePath=".\ogr\ogrsf_frmts\sdts\ogrsdtsdriver.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\sdts\ogrsdtslayer.cpp" />
 					</Filter>
+					<Filter Name="segukooa" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\segukooa\ogrsegukooadatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\segukooa\ogrsegukooadriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\segukooa\ogrsegukooalayer.cpp" />
+					</Filter>
+					<Filter Name="segy" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\segy\ogrsegydatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\segy\ogrsegydriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\segy\ogrsegylayer.cpp" />
+					</Filter>
 					<Filter Name="shape" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\shape\dbfopen.c" />
 						<File RelativePath=".\ogr\ogrsf_frmts\shape\shpopen.c" />
@@ -2266,12 +2782,31 @@
 						<File RelativePath=".\ogr\ogrsf_frmts\shape\ogrshapelayer.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\shape\shape2ogr.cpp" />
 					</Filter>
+					<Filter Name="sosi" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\sosi\fyba_melding.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\sosi\ogrsosidatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\sosi\ogrsosidriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\sosi\ogrsosilayer.cpp" />
+					</Filter>
 					<Filter Name="sqlite" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\sqlite\ogrsqlitedatasource.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\sqlite\ogrsqlitedriver.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\sqlite\ogrsqlitelayer.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\sqlite\ogrsqliteselectlayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\sqlite\ogrsqlitesinglefeaturelayer.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\sqlite\ogrsqlitetablelayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\sqlite\ogrsqlitevfs.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\sqlite\ogrsqliteviewlayer.cpp" />
+					</Filter>
+					<Filter Name="sua" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\sua\ogrsuadatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\sua\ogrsuadriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\sua\ogrsualayer.cpp" />
+					</Filter>
+					<Filter Name="svg" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\svg\ogrsvgdatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\svg\ogrsvgdriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\svg\ogrsvglayer.cpp" />
 					</Filter>
 					<Filter Name="tiger" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\tiger\ogrtigerdatasource.cpp" />
@@ -2300,10 +2835,31 @@
 						<File RelativePath=".\ogr\ogrsf_frmts\tiger\tigerzipcodes.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\tiger\tigerzipplus4.cpp" />
 					</Filter>
+					<Filter Name="vfk" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\vfk\ogrvfkdatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\vfk\ogrvfkdriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\vfk\ogrvfklayer.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\vfk\vfkdatablock.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\vfk\vfkfeature.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\vfk\vfkproperty.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\vfk\vfkpropertydefn.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\vfk\vfkreader.cpp" />
+					</Filter>
 					<Filter Name="vrt" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\vrt\ogrvrtdatasource.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\vrt\ogrvrtdriver.cpp" />
 						<File RelativePath=".\ogr\ogrsf_frmts\vrt\ogrvrtlayer.cpp" />
+					</Filter>
+					<Filter Name="wfs" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\wfs\ogrwfsdatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\wfs\ogrwfsdriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\wfs\ogrwfsfilter.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\wfs\ogrwfslayer.cpp" />
+					</Filter>
+					<Filter Name="xls" Filter="*.c;*.cpp    ">
+						<File RelativePath=".\ogr\ogrsf_frmts\xls\ogrxlsdatasource.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\xls\ogrxlsdriver.cpp" />
+						<File RelativePath=".\ogr\ogrsf_frmts\xls\ogrxlslayer.cpp" />
 					</Filter>
 					<Filter Name="xplane" Filter="*.c;*.cpp    ">
 						<File RelativePath=".\ogr\ogrsf_frmts\xplane\ogrxplanedatasource.cpp" />
@@ -2327,7 +2883,9 @@
 				<File RelativePath=".\port\cplgetsymbol.cpp" />
 				<File RelativePath=".\port\cplkeywordparser.cpp" />
 				<File RelativePath=".\port\cplstring.cpp" />
+				<File RelativePath=".\port\cplstringlist.cpp" />
 				<File RelativePath=".\port\cpl_atomic_ops.cpp" />
+				<File RelativePath=".\port\cpl_base64.cpp" />
 				<File RelativePath=".\port\cpl_conv.cpp" />
 				<File RelativePath=".\port\cpl_csv.cpp" />
 				<File RelativePath=".\port\cpl_error.cpp" />
@@ -2339,18 +2897,29 @@
 				<File RelativePath=".\port\cpl_minixml.cpp" />
 				<File RelativePath=".\port\cpl_minizip_ioapi.cpp" />
 				<File RelativePath=".\port\cpl_minizip_unzip.cpp" />
+				<File RelativePath=".\port\cpl_minizip_zip.cpp" />
 				<File RelativePath=".\port\cpl_multiproc.cpp" />
 				<File RelativePath=".\port\cpl_odbc.cpp" />
 				<File RelativePath=".\port\cpl_path.cpp" />
 				<File RelativePath=".\port\cpl_quad_tree.cpp" />
+				<File RelativePath=".\port\cpl_recode.cpp" />
+				<File RelativePath=".\port\cpl_recode_iconv.cpp" />
 				<File RelativePath=".\port\cpl_recode_stub.cpp" />
 				<File RelativePath=".\port\cpl_string.cpp" />
 				<File RelativePath=".\port\cpl_strtod.cpp" />
 				<File RelativePath=".\port\cpl_time.cpp" />
 				<File RelativePath=".\port\cpl_vsil.cpp" />
+				<File RelativePath=".\port\cpl_vsil_abstract_archive.cpp" />
+				<File RelativePath=".\port\cpl_vsil_buffered_reader.cpp" />
+				<File RelativePath=".\port\cpl_vsil_cache.cpp" />
+				<File RelativePath=".\port\cpl_vsil_curl.cpp" />
 				<File RelativePath=".\port\cpl_vsil_gzip.cpp" />
 				<File RelativePath=".\port\cpl_vsil_simple.cpp" />
+				<File RelativePath=".\port\cpl_vsil_sparsefile.cpp" />
+				<File RelativePath=".\port\cpl_vsil_stdin.cpp" />
+				<File RelativePath=".\port\cpl_vsil_stdout.cpp" />
 				<File RelativePath=".\port\cpl_vsil_subfile.cpp" />
+				<File RelativePath=".\port\cpl_vsil_tar.cpp" />
 				<File RelativePath=".\port\cpl_vsil_unix_stdio_64.cpp" />
 				<File RelativePath=".\port\cpl_vsil_win32.cpp" />
 				<File RelativePath=".\port\cpl_vsisimple.cpp" />
