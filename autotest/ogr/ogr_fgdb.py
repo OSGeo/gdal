@@ -37,8 +37,9 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
-import ogr
-import osr
+from osgeo import gdal
+from osgeo import ogr
+from osgeo import osr
 
 ###############################################################################
 # Test if driver is available
@@ -250,6 +251,43 @@ def ogr_fgdb_6():
     return 'success'
 
 ###############################################################################
+# Test bulk loading (#4420)
+
+def ogr_fgdb_7():
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+    try:
+        shutil.rmtree("tmp/test.gdb")
+    except:
+        pass
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84")
+
+    ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
+    lyr = ds.CreateLayer('test', srs = srs, geom_type = ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
+    gdal.SetConfigOption('FGDB_BULK_LOAD', 'YES')
+    for i in range(1000):
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetField(0, i)
+        geom = ogr.CreateGeometryFromWkt('POINT(0 1)')
+        feat.SetGeometry(geom)
+        lyr.CreateFeature(feat)
+        feat = None
+
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != 0:
+        return 'fail'
+    ds = None
+
+    gdal.SetConfigOption('FGDB_BULK_LOAD', None)
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_fgdb_cleanup():
@@ -276,6 +314,7 @@ gdaltest_list = [
     ogr_fgdb_4,
     ogr_fgdb_5,
     ogr_fgdb_6,
+    ogr_fgdb_7,
     ogr_fgdb_cleanup,
     ]
 
