@@ -533,7 +533,11 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      WEBP library settings                                           */
 /* -------------------------------------------------------------------- */
 
+#if WEBP_ENCODER_ABI_VERSION >= 0x0002
+    sPicture.colorspace = WEBP_YUV420;
+#else
     sPicture.colorspace = 0;
+#endif
     sPicture.width = nXSize;
     sPicture.height = nYSize;
     sPicture.writer = WEBPDatasetWriter;
