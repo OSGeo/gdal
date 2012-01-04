@@ -890,7 +890,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                      "Unrecognised secondary field %s in JOIN clause..", 
-                     def->primary_field_name );
+                     def->secondary_field_name );
             return CE_Failure;
         }
         
@@ -899,7 +899,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
             CPLError( CE_Failure, CPLE_AppDefined, 
                      "Currently the secondary key must come from the secondary table\n"
                      "listed in the JOIN.  %s is not from table %s..",
-                     def->primary_field_name,
+                     def->secondary_field_name,
                      table_defs[def->secondary_table].table_name);
             return CE_Failure;
         }
@@ -936,4 +936,3 @@ CPLErr swq_select::parse( swq_field_list *field_list,
     
     return CE_None;
 }
-
