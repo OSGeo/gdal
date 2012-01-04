@@ -50,6 +50,8 @@ FGdbLayer::FGdbLayer():
     m_pEnumRows(NULL), m_bFilterDirty(true), 
     m_supressColumnMappingError(false), m_forceMulti(false)
 {
+    m_bBulkLoadAllowed = -1; /* uninitialized */
+    m_bBulkLoadInProgress = FALSE;
     m_pEnumRows = new EnumRows;
 }
 
@@ -59,6 +61,8 @@ FGdbLayer::FGdbLayer():
 
 FGdbLayer::~FGdbLayer()
 {
+    EndBulkLoad();
+
     if (m_pFeatureDefn)
     {
         m_pFeatureDefn->Release();
@@ -107,6 +111,12 @@ OGRErr FGdbLayer::CreateFeature( OGRFeature *poFeature )
     Row fgdb_row;
     fgdbError hr;
     ShapeBuffer shape;
+
+    if (m_bBulkLoadAllowed < 0)
+        m_bBulkLoadAllowed = CSLTestBoolean(CPLGetConfigOption("FGDB_BULK_LOAD", "NO"));
+
+    if (m_bBulkLoadAllowed && !m_bBulkLoadInProgress)
+        StartBulkLoad();
 
     hr = fgdb_table->CreateRowObject(fgdb_row);
 
@@ -1075,6 +1085,8 @@ void FGdbLayer::ResetReading()
 {
     long hr;
 
+    EndBulkLoad();
+
     if (m_pOGRFilterGeometry && !m_pOGRFilterGeometry->IsEmpty())
     {
         // Search spatial
@@ -1388,6 +1400,7 @@ OGRFeature* FGdbLayer::GetNextFeature()
     if (m_bFilterDirty)
         ResetReading();
 
+    EndBulkLoad();
 
     while (1) //want to skip errors
     {
@@ -1440,6 +1453,8 @@ OGRFeature *FGdbLayer::GetFeature( long oid )
     EnumRows       enumRows;
     CPLString      osQuery;
 
+    EndBulkLoad();
+
     osQuery.Printf("%s = %ld", m_strOIDFieldName.c_str(), oid);
 
     if (FAILED(hr = m_pTable->Search(m_wstrSubfields, StringToWString(osQuery.c_str()), true, enumRows)))
@@ -1478,6 +1493,8 @@ int FGdbLayer::GetFeatureCount( int bForce )
 {
     long           hr;
     int32          rowCount = 0;
+
+    EndBulkLoad();
 
     if (m_pOGRFilterGeometry != NULL || m_wstrWhereClause.size() != 0)
         return OGRLayer::GetFeatureCount(bForce);
@@ -1543,6 +1560,41 @@ OGRErr FGdbLayer::GetExtent (OGREnvelope* psExtent, int bForce)
         return OGRERR_FAILURE;
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          StartBulkLoad()                             */
+/************************************************************************/
+
+void FGdbLayer::StartBulkLoad ()
+{
+    if ( ! m_pTable )
+        return;
+
+    if ( m_bBulkLoadInProgress )
+        return;
+
+    m_bBulkLoadInProgress = TRUE;
+    m_pTable->LoadOnlyMode(true);
+    m_pTable->SetWriteLock();
+}
+
+/************************************************************************/
+/*                           EndBulkLoad()                              */
+/************************************************************************/
+
+void FGdbLayer::EndBulkLoad ()
+{
+    if ( ! m_pTable )
+        return;
+
+    if ( ! m_bBulkLoadInProgress )
+        return;
+
+    m_bBulkLoadInProgress = FALSE;
+    m_bBulkLoadAllowed = -1; /* so that the configuration option is read the first time we CreateFeature() again */
+    m_pTable->LoadOnlyMode(false);
+    m_pTable->FreeWriteLock();
 }
 
 /* OGRErr FGdbLayer::StartTransaction ()

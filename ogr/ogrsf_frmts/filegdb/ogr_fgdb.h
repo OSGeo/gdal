@@ -63,6 +63,12 @@ class FGdbDataSource;
 
 class FGdbLayer : public OGRLayer
 {
+  int                 m_bBulkLoadAllowed;
+  int                 m_bBulkLoadInProgress;
+
+  void                StartBulkLoad();
+  void                EndBulkLoad();
+
 public:
 
   FGdbLayer();
