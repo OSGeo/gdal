@@ -1004,7 +1004,7 @@ int OGRSQLiteDataSource::OpenVirtualTable(const char* pszName, const char* pszSQ
 /*                             OpenTable()                              */
 /************************************************************************/
 
-int OGRSQLiteDataSource::OpenTable( const char *pszNewName, 
+int OGRSQLiteDataSource::OpenTable( const char *pszTableName,
                                     const char *pszGeomCol,
                                     OGRwkbGeometryType eGeomType,
                                     const char *pszGeomFormat,
@@ -1024,7 +1024,7 @@ int OGRSQLiteDataSource::OpenTable( const char *pszNewName,
 
     poLayer = new OGRSQLiteTableLayer( this );
 
-    if( poLayer->Initialize( pszNewName, pszGeomCol, 
+    if( poLayer->Initialize( pszTableName, pszGeomCol,
                              eGeomType, pszGeomFormat,
                              poSRS, nSRID, bHasSpatialIndex, 
                              bHasM, bSpatialiteReadOnly,
@@ -1035,6 +1035,18 @@ int OGRSQLiteDataSource::OpenTable( const char *pszNewName,
         delete poLayer;
         return FALSE;
     }
+
+    /* If not a slow file, then establish layer definition immediately */
+    /* to check if the table is valid */
+    /* Note: we could do differed table layer definition for all files */
+    /* but it is only worth doing for slow files. */
+    if ( strncmp(pszName, "/vsicurl/", 9) != 0 &&
+         poLayer->HasLayerDefnError() )
+    {
+        delete poLayer;
+        return FALSE;
+    }
+    
     poLayer->SetSpatialite2D ( bForce2D );
 
 /* -------------------------------------------------------------------- */
