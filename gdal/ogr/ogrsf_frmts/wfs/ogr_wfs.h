@@ -32,6 +32,7 @@
 
 #include <vector>
 #include <set>
+#include <map>
 
 #include "cpl_minixml.h"
 #include "ogrsf_frmts.h"
@@ -116,6 +117,9 @@ class OGRWFSLayer : public OGRLayer
     char                *pszRequiredOutputFormat;
     char                *pszRequiredOutputFormatURL;
 
+    CPLString            osFieldToSort;
+    int                  bAscFlag;
+
   public:
                         OGRWFSLayer(OGRWFSDataSource* poDS,
                                     OGRSpatialReference* poSRS,
@@ -124,7 +128,11 @@ class OGRWFSLayer : public OGRLayer
                                     const char* pszName,
                                     const char* pszNS,
                                     const char* pszNSVal);
+
                         ~OGRWFSLayer();
+
+    OGRWFSLayer*                Clone();
+
 
     const char                 *GetName() { return pszName; }
 
@@ -172,6 +180,9 @@ class OGRWFSLayer : public OGRLayer
 
     const char         *GetRequiredOutputFormat() { return pszRequiredOutputFormat; };
     const char         *GetRequiredOutputFormatURL() { return pszRequiredOutputFormatURL; };
+
+    void                SetOrderBy(const char* pszFieldToSort, int bAscFlag);
+    int                 HasGotApproximateLayerDefn() { GetLayerDefn(); return bGotApproximateLayerDefn; }
 };
 
 /************************************************************************/
@@ -186,6 +197,7 @@ class OGRWFSDataSource : public OGRDataSource
 
     OGRWFSLayer**       papoLayers;
     int                 nLayers;
+    std::map<OGRLayer*, OGRLayer*> oMap;
 
     int                 bUpdate;
 
@@ -234,6 +246,9 @@ class OGRWFSDataSource : public OGRDataSource
 
     CPLHTTPResult*      SendGetCapabilities(const char* pszBaseURL,
                                             CPLString& osTypeName);
+
+    int                 GetLayerIndex(const char* pszName);
+
   public:
                         OGRWFSDataSource();
                         ~OGRWFSDataSource();

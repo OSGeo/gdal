@@ -854,6 +854,39 @@ def ogr_wfs_deegree_wfs200():
     return 'success'
 
 ###############################################################################
+# Test WFS SORTBY support
+
+def ogr_wfs_deegree_sortby():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.Open('WFS:http://deegree3-demo.deegree.org:80/utah-workspace/services?MAXFEATURES=10')
+    if ds is None:
+        if gdaltest.gdalurlopen('http://deegree3-demo.deegree.org:80/utah-workspace/services') is None:
+            print('cannot open URL')
+            return 'skip'
+        return 'fail'
+
+    lyr = ds.ExecuteSQL("SELECT * FROM \"app:SGID024_Municipalities2004_edited\" ORDER BY OBJECTID DESC")
+
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsInteger('OBJECTID') != 240:
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsInteger('OBJECTID') != 239:
+        feat.DumpReadable()
+        return 'fail'
+
+    ds.ReleaseResultSet(lyr)
+
+    return 'success'
+
+###############################################################################
 def ogr_wfs_get_multiple_layer_defn(url):
 
     if gdaltest.wfs_drv is None:
@@ -929,6 +962,7 @@ gdaltest_list = [
     ogr_wfs_xmldescriptionfile,
     ogr_wfs_deegree_gml321,
     ogr_wfs_deegree_wfs200,
+    ogr_wfs_deegree_sortby,
     #ogr_wfs_esri,
     ogr_wfs_esri_2,
     ogr_wfs_cubewerx,

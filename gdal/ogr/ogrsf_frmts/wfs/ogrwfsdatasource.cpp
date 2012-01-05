@@ -34,6 +34,8 @@
 #include "cpl_http.h"
 #include "gmlutils.h"
 #include "parsexsd.h"
+#include "swq.h"
+#include "ogr_p.h"
 
 CPL_CVSID("$Id$");
 
@@ -179,9 +181,11 @@ OGRWFSDataSource::~OGRWFSDataSource()
         CPLDestroyXMLNode(psFileXML);
     }
 
-    for( int i = 0; i < nLayers; i++ )
+    int i;
+    for( i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
+
     if (osLayerMetadataTmpFileName.size() != 0)
         VSIUnlink(osLayerMetadataTmpFileName);
     delete poLayerMetadataDS;
@@ -224,9 +228,6 @@ OGRLayer* OGRWFSDataSource::GetLayerByName(const char* pszName)
     if ( ! pszName )
         return NULL;
 
-    int  i;
-    int  bHasFoundLayerWithColon = FALSE;
-
     if (EQUAL(pszName, "WFSLayerMetadata"))
     {
         if (osLayerMetadataTmpFileName.size() != 0)
@@ -268,13 +269,30 @@ OGRLayer* OGRWFSDataSource::GetLayerByName(const char* pszName)
         return poLayerGetCapabilitiesLayer;
     }
 
+    int nIndex = GetLayerIndex(pszName);
+    if (nIndex < 0)
+        return NULL;
+    else
+        return papoLayers[nIndex];
+}
+
+
+/************************************************************************/
+/*                          GetLayerIndex()                             */
+/************************************************************************/
+
+int OGRWFSDataSource::GetLayerIndex(const char* pszName)
+{
+    int i;
+    int  bHasFoundLayerWithColon = FALSE;
+
     /* first a case sensitive check */
     for( i = 0; i < nLayers; i++ )
     {
         OGRWFSLayer *poLayer = papoLayers[i];
 
         if( strcmp( pszName, poLayer->GetName() ) == 0 )
-            return poLayer;
+            return i;
 
         bHasFoundLayerWithColon |= (strchr( poLayer->GetName(), ':') != NULL);
     }
@@ -285,7 +303,7 @@ OGRLayer* OGRWFSDataSource::GetLayerByName(const char* pszName)
         OGRWFSLayer *poLayer = papoLayers[i];
 
         if( EQUAL( pszName, poLayer->GetName() ) )
-            return poLayer;
+            return i;
     }
 
     /* now try looking after the colon character */
@@ -297,11 +315,11 @@ OGRLayer* OGRWFSDataSource::GetLayerByName(const char* pszName)
 
             const char* pszAfterColon = strchr( poLayer->GetName(), ':');
             if( pszAfterColon && EQUAL( pszName, pszAfterColon + 1 ) )
-                return poLayer;
+                return i;
         }
     }
 
-    return NULL;
+    return -1;
 }
 
 /************************************************************************/
@@ -1809,9 +1827,13 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Use generic implementation for OGRSQL dialect.                  */
 /* -------------------------------------------------------------------- */
     if( pszDialect != NULL && EQUAL(pszDialect,"OGRSQL") )
-        return OGRDataSource::ExecuteSQL( pszSQLCommand,
-                                          poSpatialFilter,
-                                          pszDialect );
+    {
+        OGRLayer* poResLayer = OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                                          poSpatialFilter,
+                                                          pszDialect );
+        oMap[poResLayer] = NULL;
+        return poResLayer;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Deal with "SELECT _LAST_INSERTED_FIDS_ FROM layername" statement */
@@ -1857,7 +1879,9 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
             iter ++;
         }
 
-        return new OGRWFSWrappedResultLayer(poMEMDS, poMEMLayer);
+        OGRLayer* poResLayer = new OGRWFSWrappedResultLayer(poMEMDS, poMEMLayer);
+        oMap[poResLayer] = NULL;
+        return poResLayer;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1926,10 +1950,66 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
         return NULL;
     }
 
-    return OGRDataSource::ExecuteSQL( pszSQLCommand,
-                                      poSpatialFilter,
-                                      pszDialect );
+/* -------------------------------------------------------------------- */
+/*      Deal with "SELECT xxxx ORDER BY" statement                      */
+/* -------------------------------------------------------------------- */
+    if (EQUALN(pszSQLCommand, "SELECT", 6))
+    {
+        swq_select* psSelectInfo = new swq_select();
+        if( psSelectInfo->preparse( pszSQLCommand ) != CPLE_None )
+        {
+            delete psSelectInfo;
+            return NULL;
+        }
+        int iLayer;
+        if( strcmp(GetVersion(),"1.0.0") != 0 &&
+            psSelectInfo->table_count == 1 &&
+            psSelectInfo->table_defs[0].data_source == NULL &&
+            (iLayer = GetLayerIndex( psSelectInfo->table_defs[0].table_name )) >= 0 &&
+            psSelectInfo->join_count == 0 &&
+            psSelectInfo->order_specs == 1 )
+        {
+            OGRWFSLayer* poSrcLayer = papoLayers[iLayer];
+            int nFieldIndex = poSrcLayer->GetLayerDefn()->GetFieldIndex(
+                                        psSelectInfo->order_defs[0].field_name);
+            if (!poSrcLayer->HasGotApproximateLayerDefn() && nFieldIndex >= 0)
+            {
+                OGRWFSLayer* poDupLayer = poSrcLayer->Clone(); 
 
+                /* Make sure to have the right case */
+                const char* pszFieldName = poDupLayer->GetLayerDefn()->
+                    GetFieldDefn(nFieldIndex)->GetNameRef();
+
+                poDupLayer->SetOrderBy(pszFieldName,
+                                       psSelectInfo->order_defs[0].ascending_flag);
+                delete psSelectInfo;
+                psSelectInfo = NULL;
+
+                /* Just set poDupLayer in the papoLayers for the time of the */
+                /* base ExecuteSQL(), so that the OGRGenSQLResultsLayer references */
+                /* that temporary layer */
+                papoLayers[iLayer] = poDupLayer;
+                OGRLayer* poResLayer = OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                                                  poSpatialFilter,
+                                                                  pszDialect );
+                papoLayers[iLayer] = poSrcLayer;
+
+                if (poResLayer != NULL)
+                    oMap[poResLayer] = poDupLayer;
+                else
+                    delete poDupLayer;
+                return poResLayer;
+            }
+        }
+
+        delete psSelectInfo;
+    }
+
+    OGRLayer* poResLayer = OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                                      poSpatialFilter,
+                                                      pszDialect );
+    oMap[poResLayer] = NULL;
+    return poResLayer;
 }
 
 /************************************************************************/
@@ -1938,5 +2018,21 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
 
 void OGRWFSDataSource::ReleaseResultSet( OGRLayer * poResultsSet )
 {
-    delete poResultsSet;
+    if (poResultsSet == NULL)
+        return;
+
+    std::map<OGRLayer*, OGRLayer*>::iterator oIter = oMap.find(poResultsSet);
+    if (oIter != oMap.end())
+    {
+        /* Destroy first the result layer, because it still references */
+        /* the poDupLayer (oIter->second) */
+        delete poResultsSet;
+
+        delete oIter->second;
+        oMap.erase(oIter);
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Trying to destroy an invalid result set !");
+    }
 }

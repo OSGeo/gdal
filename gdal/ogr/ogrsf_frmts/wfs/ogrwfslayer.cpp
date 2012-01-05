@@ -123,6 +123,29 @@ OGRWFSLayer::OGRWFSLayer( OGRWFSDataSource* poDS,
 
     pszRequiredOutputFormat = NULL;
     pszRequiredOutputFormatURL = NULL;
+
+    bAscFlag = TRUE;
+}
+
+/************************************************************************/
+/*                             Clone()                                  */
+/************************************************************************/
+
+OGRWFSLayer* OGRWFSLayer::Clone()
+{
+    OGRWFSLayer* poDupLayer = new OGRWFSLayer(poDS, poSRS, bAxisOrderAlreadyInverted,
+                                              pszBaseURL, pszName, pszNS, pszNSVal);
+    if (poSRS)
+        poSRS->Reference();
+    poDupLayer->poFeatureDefn = GetLayerDefn()->Clone();
+    poDupLayer->poFeatureDefn->Reference();
+    poDupLayer->bGotApproximateLayerDefn = bGotApproximateLayerDefn;
+    poDupLayer->eGeomType = poDupLayer->poFeatureDefn->GetGeomType();
+    poDupLayer->pszRequiredOutputFormat = pszRequiredOutputFormat ? CPLStrdup(pszRequiredOutputFormat) : NULL;
+    poDupLayer->pszRequiredOutputFormatURL = pszRequiredOutputFormatURL ? CPLStrdup(pszRequiredOutputFormatURL) : NULL;
+    poDupLayer->bAscFlag = bAscFlag;
+    
+    return poDupLayer;
 }
 
 /************************************************************************/
@@ -488,6 +511,18 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
     if (bRequestHits)
     {
         osURL = CPLURLAddKVP(osURL, "RESULTTYPE", "hits");
+    }
+    else if (osFieldToSort.size() != 0)
+    {
+        CPLString osSortBy(osFieldToSort);
+        if (!bAscFlag)
+        {
+            if (atoi(poDS->GetVersion()) >= 2)
+                osSortBy += " DESC";
+            else
+                osSortBy += " D";
+        }
+        osURL = CPLURLAddKVP(osURL, "SORTBY", osSortBy.c_str());
     }
 
     /* If no PROPERTYNAME is specified, build one if there are ignored fields */
@@ -2294,4 +2329,14 @@ void  OGRWFSLayer::SetRequiredOutputFormat(const char* pszRequiredOutputFormatIn
         pszRequiredOutputFormat = NULL;
         pszRequiredOutputFormatURL = NULL;
     }
+}
+
+/************************************************************************/
+/*                            SetOrderBy()                              */
+/************************************************************************/
+
+void OGRWFSLayer::SetOrderBy(const char* pszFieldToSort, int bAscFlag)
+{
+    osFieldToSort = pszFieldToSort ? pszFieldToSort : "";
+    this->bAscFlag = bAscFlag;
 }
