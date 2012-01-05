@@ -129,7 +129,6 @@ CPLErr OGRSQLiteViewLayer::Initialize( const char *pszViewName,
     pszEscapedTableName = CPLStrdup(OGRSQLiteEscape(pszViewName));
     pszEscapedUnderlyingTableName = CPLStrdup(OGRSQLiteEscape(pszUnderlyingTableName));
 
-    CPLErr eErr;
     sqlite3_stmt *hColStmt = NULL;
     const char *pszSQL;
 
@@ -162,11 +161,8 @@ CPLErr OGRSQLiteViewLayer::Initialize( const char *pszViewName,
 /* -------------------------------------------------------------------- */
 /*      Collect the rest of the fields.                                 */
 /* -------------------------------------------------------------------- */
-    eErr = BuildFeatureDefn( pszViewName, hColStmt );
+    BuildFeatureDefn( pszViewName, hColStmt );
     sqlite3_finalize( hColStmt );
-
-    if( eErr != CE_None )
-        return eErr;
 
 /* -------------------------------------------------------------------- */
 /*      Set the geometry type if we know it.                            */

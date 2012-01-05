@@ -117,7 +117,7 @@ OGRSQLiteLayer::~OGRSQLiteLayer()
 /*      set on a statement.  Sift out geometry and FID fields.          */
 /************************************************************************/
 
-CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName, 
+void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
                                          sqlite3_stmt *hStmt )
 
 {
@@ -244,8 +244,6 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
     if( osGeomColumn.size() == 0 )
         poFeatureDefn->SetGeomType( wkbNone );
-
-    return CE_None;
 }
 
 /************************************************************************/
