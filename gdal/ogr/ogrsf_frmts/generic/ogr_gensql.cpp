@@ -1236,6 +1236,8 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 
         if (iFeature == nIndexSize)
         {
+            delete poSrcFeat;
+
             /* Should not happen theoretically. GetFeatureCount() may sometimes */
             /* overestimate the number of features, but should *never* under-estimate it */
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1313,8 +1315,13 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 /* -------------------------------------------------------------------- */
 /*      Rework the FID map to map to real FIDs.                         */
 /* -------------------------------------------------------------------- */
+    int bAlreadySorted = TRUE;
     for( i = 0; i < nIndexSize; i++ )
+    {
+        if (panFIDIndex[i] != i)
+            bAlreadySorted = FALSE;
         panFIDIndex[i] = panFIDList[panFIDIndex[i]];
+    }
 
     CPLFree( panFIDList );
 
@@ -1358,6 +1365,19 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
     }
 
     CPLFree( pasIndexFields );
+
+    /* If it is already sorted, then free than panFIDIndex array */
+    /* so that GetNextFeature() can call a sequential GetNextFeature() */
+    /* on the source array. Very usefull for layers where random access */
+    /* is slow. */
+    /* Use case: the GML result of a WFS GetFeature with a SORTBY */
+    if (bAlreadySorted)
+    {
+        CPLFree( panFIDIndex );
+        panFIDIndex = NULL;
+
+        nIndexSize = 0;
+    }
 }
 
 /************************************************************************/

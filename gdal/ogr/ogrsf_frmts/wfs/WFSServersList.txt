@@ -18,6 +18,7 @@ http://map.ns.ec.gc.ca/MapServer/mapserv.exe?map=/mapserver/services/envdat/conf
 http://nsidc.org/cgi-bin/acap.pl
 http://sdmdataaccess.nrcs.usda.gov/Spatial/SDMNAD83Geographic.wfs
 http://demo.mapserver.org/cgi-bin/wfs?
+http://hip.latuviitta.org/cgi-bin/mapserver_wfs 
 
 Deegree:
 http://www.nokis.org/deegree2/ogcwebservice (not responding, requires namespace to be passed)
@@ -34,6 +35,7 @@ TinyOWS:
 http://dev4.mapgears.com/cgi-bin/tinyows (old & buggy version)
 http://www.tinyows.org/cgi-bin/tinyows (WFS-T with write permissions)
 http://gis-lab.info/scripts/tinyows/tinyows.cgi
+http://hip.latuviitta.org/cgi-bin/tinyows
 
 CubeWerx:
 http://ceoware2.ccrs.nrcan.gc.ca/cubewerx/cwwfs/cubeserv.cgi?datastore=CEOWARE2
