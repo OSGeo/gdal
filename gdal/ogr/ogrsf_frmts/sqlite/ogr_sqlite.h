@@ -203,7 +203,7 @@ class OGRSQLiteLayer : public OGRLayer
 
     int                 bIsVirtualShape;
 
-    CPLErr              BuildFeatureDefn( const char *pszLayerName, 
+    void                BuildFeatureDefn( const char *pszLayerName,
                                           sqlite3_stmt *hStmt );
 
     void                ClearStatement();
@@ -227,7 +227,7 @@ class OGRSQLiteLayer : public OGRLayer
 
     virtual OGRFeature *GetFeature( long nFeatureId );
     
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
 
     virtual OGRSpatialReference *GetSpatialRef();
 
@@ -258,7 +258,12 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     CPLString           osQuery;
     int                 bHasCheckedSpatialIndexTable;
 
+    OGRwkbGeometryType  eGeomType;
+
+    char               *pszTableName;
     char               *pszEscapedTableName;
+
+    int                 bLayerDefnError;
 
     sqlite3_stmt       *hInsertStmt;
     CPLString           osLastInsertStmt;
@@ -282,6 +287,8 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     int                 CheckSpatialIndexTable();
 
+    CPLErr              EstablishFeatureDefn();
+
   public:
                         OGRSQLiteTableLayer( OGRSQLiteDataSource * );
                         ~OGRSQLiteTableLayer();
@@ -299,8 +306,14 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                     int iSpatialiteVersion = -1,
                                     int bIsVirtualShapeIn = FALSE);
 
+    virtual const char* GetName() { return pszTableName; }
+    virtual OGRwkbGeometryType GetGeomType() { return (eGeomType != wkbUnknown) ? eGeomType : OGRLayer::GetGeomType(); }
+
     virtual int         GetFeatureCount( int );
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce);
+
+    virtual OGRFeatureDefn *GetLayerDefn();
+    int                 HasLayerDefnError() { GetLayerDefn(); return bLayerDefnError; }
 
     virtual void        SetSpatialFilter( OGRGeometry * );
     virtual OGRErr      SetAttributeFilter( const char * );
