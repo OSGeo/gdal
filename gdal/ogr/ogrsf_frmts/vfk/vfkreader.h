@@ -69,7 +69,7 @@ public:
     VFKProperty(VFKProperty const& other);
     VFKProperty& operator=(VFKProperty const& other);
 
-    bool                    IsNull() const    { return m_bIsNull; }
+    bool                    IsNull()    const { return m_bIsNull; }
     int                     GetValueI() const { return m_nValue; }
     double                  GetValueD() const { return m_dValue; }
     const char             *GetValueS() const { return m_strValue.c_str(); }
@@ -183,9 +183,9 @@ public:
     int                GetFeatureCount(const char *, const char *);
     void               SetFeatureCount(int, int = FALSE);
     VFKFeature        *GetFeatureByIndex(int) const;
-    VFKFeature        *GetFeature(int, int, VFKFeatureList* = NULL);
-    VFKFeatureList     GetFeatures(int, int);
-    VFKFeatureList     GetFeatures(int, int, int);
+    VFKFeature        *GetFeature(int, GUIntBig, VFKFeatureList* = NULL);
+    VFKFeatureList     GetFeatures(int, GUIntBig);
+    VFKFeatureList     GetFeatures(int, int, GUIntBig);
     VFKFeature        *GetFeature(long);
     int                AddFeature(const char *);
 
