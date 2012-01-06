@@ -396,6 +396,7 @@ typedef struct
     vsi_l_offset    nContentLength;
     int             bFoundContentRange;
     int             bError;
+    int             bDownloadHeaderOnly;
 } WriteFuncStruct;
 
 /************************************************************************/
@@ -415,6 +416,7 @@ static void VSICURLInitWriteFuncStruct(WriteFuncStruct* psStruct)
     psStruct->nContentLength = 0;
     psStruct->bFoundContentRange = FALSE;
     psStruct->bError = FALSE;
+    psStruct->bDownloadHeaderOnly = FALSE;
 }
 
 /************************************************************************/
@@ -455,19 +457,28 @@ static int VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb, void
 
             if (pszLine[0] == '\r' || pszLine[0] == '\n')
             {
-                psStruct->bIsInHeader = FALSE;
-
-                /* Detect servers that don't support range downloading */
-                if (psStruct->nHTTPCode == 200 &&
-                    !psStruct->bMultiRange &&
-                    !psStruct->bFoundContentRange &&
-                    (psStruct->nStartOffset != 0 || psStruct->nContentLength > 10 *
-                        (psStruct->nEndOffset - psStruct->nStartOffset + 1)))
+                if (psStruct->bDownloadHeaderOnly)
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Range downloading not supported by this server !");
-                    psStruct->bError = TRUE;
-                    return 0;
+                    /* If moved permanently, go on. Otherwise stop now*/
+                    if (psStruct->nHTTPCode != 301)
+                        return 0;
+                }
+                else
+                {
+                    psStruct->bIsInHeader = FALSE;
+
+                    /* Detect servers that don't support range downloading */
+                    if (psStruct->nHTTPCode == 200 &&
+                        !psStruct->bMultiRange &&
+                        !psStruct->bFoundContentRange &&
+                        (psStruct->nStartOffset != 0 || psStruct->nContentLength > 10 *
+                            (psStruct->nEndOffset - psStruct->nStartOffset + 1)))
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                "Range downloading not supported by this server !");
+                        psStruct->bError = TRUE;
+                        return 0;
+                    }
                 }
             }
         }
@@ -488,6 +499,7 @@ static int VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb, void
 vsi_l_offset VSICurlHandle::GetFileSize()
 {
     WriteFuncStruct sWriteFuncData;
+    WriteFuncStruct sWriteFuncHeaderData;
 
     if (bHastComputedFileSize)
         return fileSize;
@@ -544,9 +556,25 @@ vsi_l_offset VSICurlHandle::GetFileSize()
     CURL* hCurlHandle = poFS->GetCurlHandleFor(pszURL);
 
     VSICurlSetOptions(hCurlHandle, pszURL);
-    curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 1);
-    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPGET, 0); 
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADER, 1);
+
+    /* HACK for mbtiles driver: proper fix would be to auto-detect servers that don't accept HEAD */
+    /* http://a.tiles.mapbox.com/v3/ doesn't accept HEAD, so let's start a GET */
+    /* and interrupt is as soon as the header is found */
+    if (strstr(pszURL, ".tiles.mapbox.com/") != NULL)
+    {
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, VSICurlHandleWriteFunc);
+
+        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData);
+        sWriteFuncHeaderData.bIsHTTP = strncmp(pszURL, "http", 4) == 0;
+        sWriteFuncHeaderData.bDownloadHeaderOnly = TRUE;
+    }
+    else
+    {
+        curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 1);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPGET, 0);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADER, 1);
+    }
 
     /* We need that otherwise OSGEO4W's libcurl issue a dummy range request */
     /* when doing a HEAD when recycling connections */
@@ -624,6 +652,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
     }
 
     CPLFree(sWriteFuncData.pBuffer);
+    CPLFree(sWriteFuncHeaderData.pBuffer);
 
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
     cachedFileProp->bHastComputedFileSize = TRUE;
@@ -2137,6 +2166,10 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, int* pbGotF
         CPLDebug("VSICURL", "GetFileList(%s)" , pszDirname);
 
     *pbGotFileList = FALSE;
+
+    /* HACK (optimization in fact) for MBTiles driver */
+    if (strstr(pszDirname, ".tiles.mapbox.com") != NULL)
+        return NULL;
 
     if (strncmp(pszDirname, "/vsicurl/ftp", strlen("/vsicurl/ftp")) == 0)
     {
