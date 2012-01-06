@@ -99,9 +99,15 @@ def mbtiles_2():
     expected_gt = ( -20037500.0, 78271.484375, 0.0, 20037500.0, 0.0, -78271.484375 )
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1e-15:
+            gdaltest.post_reason('bad gt')
             print(gt)
             print(expected_gt)
             return 'fail'
+
+    md = ds.GetMetadata()
+    if md['bounds'] != '-180.0,-85,180,85':
+        gdaltest.post_reason('bad metadata')
+        return 'fail'
 
     ds = None
 
