@@ -252,7 +252,15 @@ static int OGRSQLiteVFSAccess (sqlite3_vfs* pVFS, const char *zName, int flags, 
     VSIStatBufL sStatBufL;
     int nRet;
     if (flags == SQLITE_ACCESS_EXISTS)
-        nRet = VSIStatExL(zName, &sStatBufL, VSI_STAT_EXISTS_FLAG);
+    {
+        /* Do not try to check the presence of a journal on /vsicurl ! */
+        if ( strncmp(zName, "/vsicurl/", 9) == 0 &&
+             strlen(zName) > strlen("-journal") &&
+             strcmp(zName + strlen(zName) - strlen("-journal"), "-journal") == 0 )
+            nRet = -1;
+        else
+            nRet = VSIStatExL(zName, &sStatBufL, VSI_STAT_EXISTS_FLAG);
+    }
     else if (flags == SQLITE_ACCESS_READ)
     {
         VSILFILE* fp = VSIFOpenL(zName, "rb");
