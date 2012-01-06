@@ -402,6 +402,11 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             }
         }
 
+        /* Assign the geometry before the attribute filter because */
+        /* the attribute filter may use a special field like OGR_GEOMETRY */
+        poOGRFeature->SetGeometryDirectly( poGeom );
+        poGeom = NULL;
+        
 /* -------------------------------------------------------------------- */
 /*      Test against the attribute query.                               */
 /* -------------------------------------------------------------------- */
@@ -416,8 +421,6 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 /*      Wow, we got our desired feature. Return it.                     */
 /* -------------------------------------------------------------------- */
         delete poGMLFeature;
-
-        poOGRFeature->SetGeometryDirectly( poGeom );
 
         return poOGRFeature;
     }
