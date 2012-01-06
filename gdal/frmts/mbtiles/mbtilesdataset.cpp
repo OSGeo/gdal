@@ -204,9 +204,9 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
                     for(i = 0; i < nEntryCount; i++)
                     {
                         const GDALColorEntry* psEntry = GDALGetColorEntry( hCT, i );
-                        abyTranslation[i][0] = psEntry->c1;
-                        abyTranslation[i][1] = psEntry->c2;
-                        abyTranslation[i][2] = psEntry->c3;
+                        abyTranslation[i][0] = (GByte) psEntry->c1;
+                        abyTranslation[i][1] = (GByte) psEntry->c2;
+                        abyTranslation[i][2] = (GByte) psEntry->c3;
                     }
                     for(; i < 256; i++)
                     {
@@ -581,7 +581,7 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         int iBand, nBands, nBlockXSize, nBlockYSize;
         GDALDataType eDataType;
         OGRLayerH hSQLLyr = NULL;
-        int nMinLevel, nMaxLevel, nMinTileRow, nMaxTileRow, nMinTileCol, nMaxTileCol;
+        int nMinLevel, nMaxLevel, nMinTileRow = 0, nMaxTileRow = 0, nMinTileCol = 0, nMaxTileCol = 0;
         GDALDatasetH hDSTile;
         int nDataSize = 0;
         GByte* pabyData = NULL;
