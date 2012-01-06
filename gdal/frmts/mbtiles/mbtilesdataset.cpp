@@ -58,6 +58,9 @@ class MBTilesDataset : public GDALPamDataset
 
     virtual CPLErr GetGeoTransform(double* padfGeoTransform);
     virtual const char* GetProjectionRef();
+    virtual char      **GetMetadata( const char * pszDomain = "" );
+    /*virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );*/
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -80,6 +83,9 @@ class MBTilesDataset : public GDALPamDataset
     MBTilesDataset** papoOverviews;
 
     OGRDataSourceH hDS;
+
+    int bFetchedMetadata;
+    CPLStringList aosList;
 };
 
 /************************************************************************/
@@ -404,6 +410,7 @@ MBTilesDataset::MBTilesDataset()
         CSLAddString(NULL, "INTERLEAVE=PIXEL");
     nMinTileCol = nMinTileRow = 0;
     nMinLevel = 0;
+    bFetchedMetadata = FALSE;
 }
 
 /************************************************************************/
@@ -525,6 +532,52 @@ CPLErr MBTilesDataset::GetGeoTransform(double* padfGeoTransform)
 const char* MBTilesDataset::GetProjectionRef()
 {
     return "PROJCS[\"WGS 84 / Pseudo-Mercator\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Mercator_1SP\"],PARAMETER[\"central_meridian\",0],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"X\",EAST],AXIS[\"Y\",NORTH],EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs\"],AUTHORITY[\"EPSG\",\"3857\"]]";
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char** MBTilesDataset::GetMetadata( const char * pszDomain )
+{
+    if (pszDomain != NULL && !EQUAL(pszDomain, ""))
+        return GDALPamDataset::GetMetadata(pszDomain);
+
+    if (bFetchedMetadata)
+        return aosList.List();
+
+    bFetchedMetadata = TRUE;
+
+    OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(hDS,
+            "SELECT name, value FROM metadata", NULL, NULL);
+    if (hSQLLyr == NULL)
+        return NULL;
+
+    if (OGR_FD_GetFieldCount(OGR_L_GetLayerDefn(hSQLLyr)) != 2)
+    {
+        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        return NULL;
+    }
+
+    OGRFeatureH hFeat;
+    while( (hFeat = OGR_L_GetNextFeature(hSQLLyr)) != NULL )
+    {
+        if (OGR_F_IsFieldSet(hFeat, 0) && OGR_F_IsFieldSet(hFeat, 1))
+        {
+            const char* pszName = OGR_F_GetFieldAsString(hFeat, 0);
+            const char* pszValue = OGR_F_GetFieldAsString(hFeat, 1);
+            if (pszValue[0] != '\0' &&
+                strstr(pszValue, "<p>") == NULL &&
+                strstr(pszValue, "<div") == NULL)
+            {
+                aosList.AddNameValue(pszName, pszValue);
+            }
+        }
+        OGR_F_Destroy(hFeat);
+    }
+    OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+
+    return aosList.List();
 }
 
 /************************************************************************/
