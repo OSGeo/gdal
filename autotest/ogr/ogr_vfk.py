@@ -7,7 +7,7 @@
 # Author:   Martin Landa <landa.martin gmail.com>
 #
 ###############################################################################
-# Copyright (c) 2009, Martin Landa <landa.martin gmail.com>
+# Copyright (c) 2009, 2012 Martin Landa <landa.martin gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -43,15 +43,15 @@ import ogr
 # check number of fields and features
 
 def ogr_vfk_1():
-
+    
     try:
        gdaltest.vfk_drv = ogr.GetDriverByName('VFK')
     except:
        gdaltest.vfk_drv = None
-
+    
     if gdaltest.vfk_drv is None:
        return 'skip'
-
+    
     gdaltest.vfk_ds = ogr.Open('data/bylany.vfk')
     
     if gdaltest.vfk_ds is None:
@@ -87,10 +87,10 @@ def ogr_vfk_1():
 # Read the first feature from layer 'PAR', check envelope
 
 def ogr_vfk_2():
-
+    
     if gdaltest.vfk_drv is None:
        return 'skip'
-
+    
     gdaltest.vfk_layer_par.ResetReading()
     
     feat = gdaltest.vfk_layer_par.GetNextFeature()
@@ -120,10 +120,10 @@ def ogr_vfk_2():
 # Read features from layer 'SOBR', test attribute query
 
 def ogr_vfk_3():
-
+    
     if gdaltest.vfk_drv is None:
        return 'skip'
-
+    
     gdaltest.vfk_layer_sobr = gdaltest.vfk_ds.GetLayer(43)
     
     if gdaltest.vfk_layer_sobr.GetName() != 'SOBR':
@@ -147,6 +147,51 @@ def ogr_vfk_3():
     return 'success'
     
 ###############################################################################
+# Read features from layer 'SBP', test random access, check length
+
+def ogr_vfk_4():
+    
+    if gdaltest.vfk_drv is None:
+       return 'skip'
+    
+    gdaltest.vfk_layer_sbp = gdaltest.vfk_ds.GetLayerByName('SBP')
+    
+    if not gdaltest.vfk_layer_sbp:
+        gdaltest.post_reason('did not get expected layer name "SBP"')
+        return 'fail'
+    
+    feat = gdaltest.vfk_layer_sbp.GetFeature(5)
+    length = int (feat.geometry().Length())
+        
+    if length != 10:
+        gdaltest.post_reason('did not get expected length, got %d' % length)
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
+# Read features from layer 'HP', check geometry type
+
+def ogr_vfk_5():
+    
+    if gdaltest.vfk_drv is None:
+       return 'skip'
+    
+    gdaltest.vfk_layer_hp = gdaltest.vfk_ds.GetLayerByName('HP')
+    
+    if not gdaltest.vfk_layer_hp != 'HP':
+        gdaltest.post_reason('did not get expected layer name "HP"')
+        return 'fail'
+    
+    geom_type = gdaltest.vfk_layer_hp.GetGeomType()
+
+    if geom_type != ogr.wkbLineString:
+        gdaltest.post_reason('did not get expected geometry type, got %d' % geom_type)
+        return 'fail'
+    
+    return 'success'
+ 
+###############################################################################
 # cleanup
 
 def ogr_vfk_cleanup():
@@ -168,6 +213,8 @@ gdaltest_list = [
     ogr_vfk_1,
     ogr_vfk_2,
     ogr_vfk_3,
+    ogr_vfk_4,
+    ogr_vfk_5,
     ogr_vfk_cleanup ]
 
 if __name__ == '__main__':
