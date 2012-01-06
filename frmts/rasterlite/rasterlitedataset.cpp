@@ -869,7 +869,8 @@ end:
 
 int RasterliteDataset::Identify(GDALOpenInfo* poOpenInfo)
 {
-    if (poOpenInfo->nHeaderBytes >= 1024 &&
+    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MBTILES") &&
+        poOpenInfo->nHeaderBytes >= 1024 &&
         EQUALN((const char*)poOpenInfo->pabyHeader, "SQLite Format 3", 15))
     {
         return TRUE;
@@ -895,7 +896,10 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
     double minx = 0, miny = 0, maxx = 0, maxy = 0;
     int bMinXSet = FALSE, bMinYSet = FALSE, bMaxXSet = FALSE, bMaxYSet = FALSE;
     int nReqBands = 0;
-    
+
+    if (!Identify(poOpenInfo))
+        return NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Parse "file name"                                               */
 /* -------------------------------------------------------------------- */
@@ -903,10 +907,6 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
         EQUALN((const char*)poOpenInfo->pabyHeader, "SQLite Format 3", 15))
     {
         osFileName = poOpenInfo->pszFilename;
-    }
-    else if (!EQUALN(poOpenInfo->pszFilename, "RASTERLITE:", 11))
-    {
-        return NULL;
     }
     else
     {

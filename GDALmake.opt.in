@@ -457,7 +457,7 @@ endif
 
 ifeq ($(OGR_ENABLED),yes)
 ifeq ($(HAVE_SQLITE),yes)
-GDAL_FORMATS := $(GDAL_FORMATS) rasterlite
+GDAL_FORMATS := $(GDAL_FORMATS) rasterlite mbtiles
 endif
 endif
 
