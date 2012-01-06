@@ -130,7 +130,7 @@ def ogr_vfk_3():
         gdaltest.post_reason('did not get expected layer name "SOBR"')
         return 'fail'
     
-    gdaltest.vfk_layer_sobr.SetAttributeFilter('CISLO_BODU > 55')
+    gdaltest.vfk_layer_sobr.SetAttributeFilter("CISLO_BODU = '55'")
     
     gdaltest.vfk_layer_sobr.ResetReading()
     
@@ -140,7 +140,7 @@ def ogr_vfk_3():
         feat = gdaltest.vfk_layer_sobr.GetNextFeature()
         count += 1
     
-    if count != 3:
+    if count != 1:
         gdaltest.post_reason('did not get expected number of features, got %d' % count)
         return 'fail'
     
