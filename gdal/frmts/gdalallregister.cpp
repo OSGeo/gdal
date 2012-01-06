@@ -509,6 +509,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_NGSGEOID();
 #endif
 
+#ifdef FRMT_mbtiles
+    GDALRegister_MBTiles();
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Deregister any drivers explicitly marked as supressed by the    */
 /*      GDAL_SKIP environment variable.                                 */

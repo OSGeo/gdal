@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>MBTiles</title>
+</head>
+
+<body>
+
+<h1>MBTiles</h1>
+
+<p>Starting with GDAL 2.0, the MBTiles driver allows to read rasters in the MBTiles format,
+which is a specification for storing tiled map data in SQLite databases.</p>
+
+<p>GDAL/OGR must be compiled with OGR SQLite driver support, and JPEG and PNG drivers.</p>
+
+<p>The SRS is always the Pseudo-Mercator (a.k.a Google Mercator) projection.</p>
+
+<h2>Examples:</h2>
+
+<ul>
+<li>Accessing a remote MBTiles raster :
+<pre>
+$ gdalinfo /vsicurl/http://a.tiles.mapbox.com/v3/kkaefer.iceland.mbtiles
+</pre>
+Output:
+<pre>
+Driver: MBTiles/MBTiles
+Files: /vsicurl/http://a.tiles.mapbox.com/v3/kkaefer.iceland.mbtiles
+Size is 16384, 16384
+Coordinate System is:
+PROJCS["WGS 84 / Pseudo-Mercator",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Mercator_1SP"],
+    PARAMETER["central_meridian",0],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",0],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["X",EAST],
+    AXIS["Y",NORTH],
+    EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs"],
+    AUTHORITY["EPSG","3857"]]
+Origin = (-3757031.250000000000000,11271093.750000000000000)
+Pixel Size = (152.873992919921875,-152.873992919921875)
+Image Structure Metadata:
+  INTERLEAVE=PIXEL
+Corner Coordinates:
+Upper Left  (-3757031.250,11271093.750) ( 33d44'59.95"W, 70d36'45.36"N)
+Lower Left  (-3757031.250, 8766406.250) ( 33d44'59.95"W, 61d36'22.97"N)
+Upper Right (-1252343.750,11271093.750) ( 11d14'59.98"W, 70d36'45.36"N)
+Lower Right (-1252343.750, 8766406.250) ( 11d14'59.98"W, 61d36'22.97"N)
+Center      (-2504687.500,10018750.000) ( 22d29'59.97"W, 66d30'47.68"N)
+Band 1 Block=256x256 Type=Byte, ColorInterp=Red
+  Overviews: 8192x8192, 4096x4096, 2048x2048, 1024x1024, 512x512
+  Mask Flags: PER_DATASET ALPHA
+  Overviews of mask band: 8192x8192, 4096x4096, 2048x2048, 1024x1024, 512x512
+Band 2 Block=256x256 Type=Byte, ColorInterp=Green
+  Overviews: 8192x8192, 4096x4096, 2048x2048, 1024x1024, 512x512
+  Mask Flags: PER_DATASET ALPHA
+  Overviews of mask band: 8192x8192, 4096x4096, 2048x2048, 1024x1024, 512x512
+Band 3 Block=256x256 Type=Byte, ColorInterp=Blue
+  Overviews: 8192x8192, 4096x4096, 2048x2048, 1024x1024, 512x512
+  Mask Flags: PER_DATASET ALPHA
+  Overviews of mask band: 8192x8192, 4096x4096, 2048x2048, 1024x1024, 512x512
+Band 4 Block=256x256 Type=Byte, ColorInterp=Alpha
+  Overviews: 8192x8192, 4096x4096, 2048x2048, 1024x1024, 512x512
+</pre>
+</li>
+
+</ul>
+
+<p>See Also:</p>
+
+<ul>
+<li><a href="https://github.com/mapbox/mbtiles-spec">MBTiles specification</a></li>
+</ul>
+
+</body>
+</html>
