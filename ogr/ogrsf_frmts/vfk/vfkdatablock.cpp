@@ -273,11 +273,11 @@ int VFKDataBlock::AddFeature(const char *poLine)
     
     /* set fid */
     if (EQUAL(m_pszName, "SBP")) {
-	int id;
+	GUIntBig id;
 	const VFKProperty *poVfkProperty;
 	
 	poVfkProperty = poNewFeature->GetProperty("PORADOVE_CISLO_BODU");
-	id = poVfkProperty->GetValueI();
+	id = strtoul(poVfkProperty->GetValueS(), NULL, 0);
 	if (id == 1)
 	    poNewFeature->SetFID(0); /* set next feature */
 	else
@@ -477,16 +477,16 @@ VFKFeature *VFKDataBlock::GetFeatureByIndex(int iIndex) const
   \return pointer to VFKFeature definition
   \return NULL on failure (not found)
 */
-VFKFeature *VFKDataBlock::GetFeature(int idx, int value, VFKFeatureList *poList)
+VFKFeature *VFKDataBlock::GetFeature(int idx, GUIntBig value, VFKFeatureList *poList)
 {
-    int         iPropertyValue;
+    GUIntBig    iPropertyValue;
     VFKFeature *poVfkFeature;
 
     if (poList) {
 	for (VFKFeatureList::iterator i = poList->begin(), e = poList->end();
 	     i != e; ++i) {
 	    poVfkFeature = *i;
-	    iPropertyValue = poVfkFeature->GetProperty(idx)->GetValueI();
+	    iPropertyValue = strtoul(poVfkFeature->GetProperty(idx)->GetValueS(), NULL, 0);
 	    if (iPropertyValue == value) {
 		poList->erase(i); /* ??? */
 		return poVfkFeature;
@@ -496,7 +496,7 @@ VFKFeature *VFKDataBlock::GetFeature(int idx, int value, VFKFeatureList *poList)
     else {
 	for (int i = 0; i < m_nFeatureCount; i++) {
 	    poVfkFeature = GetFeatureByIndex(i);
-	    iPropertyValue = poVfkFeature->GetProperty(idx)->GetValueI();
+	    iPropertyValue = strtoul(poVfkFeature->GetProperty(idx)->GetValueS(), NULL, 0);
 	    if (iPropertyValue == value) {
 		m_iNextFeature = i + 1;
 		return poVfkFeature;
@@ -516,15 +516,15 @@ VFKFeature *VFKDataBlock::GetFeature(int idx, int value, VFKFeatureList *poList)
   \return pointer to VFKFeature definition
   \return NULL on failure (not found)
 */
-std::vector<VFKFeature *> VFKDataBlock::GetFeatures(int idx, int value)
+std::vector<VFKFeature *> VFKDataBlock::GetFeatures(int idx, GUIntBig value)
 {
-    int         iPropertyValue;
+    GUIntBig    iPropertyValue;
     VFKFeature *poVfkFeature;
     std::vector<VFKFeature *> poResult;
 
     for (int i = 0; i < m_nFeatureCount; i++) {
 	poVfkFeature = GetFeatureByIndex(i);
-	iPropertyValue = poVfkFeature->GetProperty(idx)->GetValueI();
+	iPropertyValue = strtoul(poVfkFeature->GetProperty(idx)->GetValueS(), NULL, 0);
 	if (iPropertyValue == value) {
 	    poResult.push_back(poVfkFeature);
 	}
@@ -542,22 +542,22 @@ std::vector<VFKFeature *> VFKDataBlock::GetFeatures(int idx, int value)
   \return pointer to VFKFeature definition
   \return NULL on failure (not found)
 */
-std::vector<VFKFeature *> VFKDataBlock::GetFeatures(int idx1, int idx2, int value)
+std::vector<VFKFeature *> VFKDataBlock::GetFeatures(int idx1, int idx2, GUIntBig value)
 {
-    int         iPropertyValue1, iPropertyValue2;
+    GUIntBig    iPropertyValue1, iPropertyValue2;
     VFKFeature *poVfkFeature;
     std::vector<VFKFeature *> poResult;
-
+    
     for (int i = 0; i < m_nFeatureCount; i++) {
 	poVfkFeature = GetFeatureByIndex(i);
-	iPropertyValue1 = poVfkFeature->GetProperty(idx1)->GetValueI();
+	iPropertyValue1 = strtoul(poVfkFeature->GetProperty(idx1)->GetValueS(), NULL, 0);
 	if (idx2 < 0) {
 	    if (iPropertyValue1 == value) {
 		poResult.push_back(poVfkFeature);
 	    }
 	}
 	else {
-	    iPropertyValue2 = poVfkFeature->GetProperty(idx2)->GetValueI();
+	    iPropertyValue2 = strtoul(poVfkFeature->GetProperty(idx2)->GetValueS(), NULL, 0);
 	    if (iPropertyValue1 == value || iPropertyValue2 == value) {
 		poResult.push_back(poVfkFeature);
 	    }
@@ -692,7 +692,8 @@ long VFKDataBlock::LoadGeometry()
     }
     else if (EQUAL (m_pszName, "SBP")) {
 	/* -> wkbLineString */
-	int id, idxId, idxBp_Id, idxPCB, ipcb;
+	int idxId, idxBp_Id, idxPCB;
+	GUIntBig id, ipcb;
 
 	VFKDataBlock *poDataBlockPoints;
 	VFKFeature   *poPoint, *poLine = NULL;
@@ -713,8 +714,8 @@ long VFKDataBlock::LoadGeometry()
 	for (int j = 0; j < GetFeatureCount(); j++) {
 	    poFeature = GetFeatureByIndex(j);
 	    poFeature->SetGeometry(NULL);
-	    id   = poFeature->GetProperty(idxBp_Id)->GetValueI();
-	    ipcb = poFeature->GetProperty(idxPCB)->GetValueI();
+	    id   = strtoul(poFeature->GetProperty(idxBp_Id)->GetValueS(), NULL, 0);
+	    ipcb = strtoul(poFeature->GetProperty(idxPCB)->GetValueS(), NULL, 0);
 	    if (ipcb == 1) {
 		if (!oOGRLine.IsEmpty()) {
 		    oOGRLine.setCoordinateDimension(2); /* force 2D */
@@ -740,7 +741,8 @@ long VFKDataBlock::LoadGeometry()
     else if (EQUAL (m_pszName, "HP") ||
 	     EQUAL (m_pszName, "DPM")) {
 	/* -> wkbLineString */
-	int           id, idxId, idxMy_Id, idxPCB;
+	int           idxId, idxMy_Id, idxPCB;
+	GUIntBig      id;
 	VFKDataBlock *poDataBlockLines;
 	VFKFeature   *poLine;
 	std::vector<VFKFeature *> poLineList;
@@ -762,7 +764,7 @@ long VFKDataBlock::LoadGeometry()
 	poLineList = poDataBlockLines->GetFeatures(idxPCB, 1); /* reduce to first segment */
 	for (int i = 0; i < GetFeatureCount(); i++) {
 	    poFeature = GetFeatureByIndex(i);
-	    id = poFeature->GetProperty(idxId)->GetValueI();
+	    id = strtoul(poFeature->GetProperty(idxId)->GetValueS(), NULL, 0);
 	    poLine = poDataBlockLines->GetFeature(idxMy_Id, id, &poLineList);
 	    if (!poLine || !poLine->GetGeometry())
 		continue;
@@ -776,7 +778,7 @@ long VFKDataBlock::LoadGeometry()
 	/* -> wkbPolygon */
 	bool bIsPar, bNewRing, bFound;
 	
-	int id, idOb;
+	GUIntBig id, idOb;
 	int idxId, idxPar1 = 0, idxPar2 = 0, idxBud = 0, idxOb = 0, idxIdOb = 0;
 
 	VFKDataBlock *poDataBlockLines1, *poDataBlockLines2;
@@ -821,7 +823,7 @@ long VFKDataBlock::LoadGeometry()
 	
 	for (int i = 0; i < GetFeatureCount(); i++) {
 	    poFeature = GetFeatureByIndex(i);
-	    id = poFeature->GetProperty(idxId)->GetValueI();
+	    id = strtoul(poFeature->GetProperty(idxId)->GetValueS(), NULL, 0);
 	    if (bIsPar) {
 		poLineList = poDataBlockLines1->GetFeatures(idxPar1, idxPar2, id);
 	    }
@@ -832,7 +834,7 @@ long VFKDataBlock::LoadGeometry()
 		for (std::vector<VFKFeature *>::const_iterator iOb = poLineListOb.begin(), eOb = poLineListOb.end();
 		     iOb != eOb; ++iOb) {
 		    poLineOb = (*iOb);
-		    idOb = poLineOb->GetProperty(idxIdOb)->GetValueI();
+		    idOb = strtoul(poLineOb->GetProperty(idxIdOb)->GetValueS(), NULL, 0);
 		    poLineSbp = poDataBlockLines2->GetFeature(idxOb, idOb);
 		    if (poLineSbp)
 			poLineList.push_back(poLineSbp);
@@ -979,5 +981,5 @@ int VFKDataBlock::SetNextFeature(const VFKFeature *poFeature)
 	}
     }
 
-    return NULL;
+    return -1;
 }

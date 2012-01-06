@@ -53,7 +53,17 @@ VFKPropertyDefn::VFKPropertyDefn(const char *pszName, const char *pszType)
     for (nLength = 0; *poChar && *poChar != '.'; nLength++, poChar++)
 	;
 
+    /* width */
+    pszWidth = (char *) CPLMalloc(nLength+1);
+    strncpy(pszWidth, poWidth, nLength);
+    pszWidth[nLength] = '\0';
+    
+    m_nWidth  = atoi(pszWidth);
+    CPLFree(pszWidth);
+    
+    /* precision */
     m_nPrecision = 0;
+    
     /* type */
     if (*m_pszType == 'N') {
 	if (*poChar == '.') {
@@ -61,7 +71,10 @@ VFKPropertyDefn::VFKPropertyDefn(const char *pszName, const char *pszType)
 	    m_nPrecision = atoi(poChar+1);
 	}
 	else {
-	    m_eFType = OFTInteger;
+	    if (m_nWidth < 10)
+		m_eFType = OFTInteger;
+	    else
+		m_eFType = OFTString;
 	}
     }
     else if (*m_pszType == 'T') {
@@ -70,20 +83,13 @@ VFKPropertyDefn::VFKPropertyDefn(const char *pszName, const char *pszType)
     }
     else if (*m_pszType == 'D') {
 	/* date */
-	m_eFType = OFTDateTime;
+	/* m_eFType = OFTDateTime; */
+	m_eFType = OFTString;
     }
     else {
 	/* unknown - string */
 	m_eFType = OFTString;
     }
-
-    /* width */
-    pszWidth = (char *) CPLMalloc(nLength+1);
-    strncpy(pszWidth, poWidth, nLength);
-    pszWidth[nLength] = '\0';
-    
-    m_nWidth  = atoi(pszWidth);
-    CPLFree(pszWidth);
 }
 
 /*!
