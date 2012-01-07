@@ -127,6 +127,7 @@ void CPL_DLL CSLSetNameValueSeparator( char ** papszStrList,
 #define CPLES_URL               2   /* unescape only for now */
 #define CPLES_SQL               3
 #define CPLES_CSV               4
+#define CPLES_XML_BUT_QUOTES    5
 
 char CPL_DLL *CPLEscapeString( const char *pszString, int nLength, 
                                int nScheme ) CPL_WARN_UNUSED_RESULT;
