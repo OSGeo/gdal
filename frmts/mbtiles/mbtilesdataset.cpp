@@ -68,7 +68,11 @@ class MBTilesDataset : public GDALPamDataset
 
     char*               FindKey(int iPixel, int iLine,
                                 int& nTileColumn, int& nTileRow, int& nZoomLevel);
-
+    void                ComputeTileColTileRowZoomLevel( int nBlockXOff,
+                                                        int nBlockYOff,
+                                                        int &nTileColumn,
+                                                        int &nTileRow,
+                                                        int &nZoomLevel );
   protected:
     virtual int         CloseDependentDatasets();
 
@@ -146,14 +150,9 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
     int bGotTile = FALSE;
     CPLAssert(eDataType == GDT_Byte);
 
-    int nMinLevel = (poGDS->poMainDS) ? poGDS->poMainDS->nMinLevel : poGDS->nMinLevel;
-    int nMinTileCol = (poGDS->poMainDS) ? poGDS->poMainDS->nMinTileCol : poGDS->nMinTileCol;
-    int nMinTileRow = (poGDS->poMainDS) ? poGDS->poMainDS->nMinTileRow : poGDS->nMinTileRow;
-    nMinTileCol >>= poGDS->nLevel;
-
-    int nTileColumn = nBlockXOff + nMinTileCol;
-    int nTileRow = (((nRasterYSize / nBlockYSize - 1 - nBlockYOff) << poGDS->nLevel) + nMinTileRow) >> poGDS->nLevel;
-    int nZoomLevel = ((poGDS->poMainDS) ? poGDS->poMainDS->nResolutions : poGDS->nResolutions) - poGDS->nLevel + nMinLevel;
+    int nTileColumn, nTileRow, nZoomLevel;
+    poGDS->ComputeTileColTileRowZoomLevel(nBlockXOff, nBlockYOff,
+                                          nTileColumn, nTileRow, nZoomLevel);
 
     const char* pszSQL = CPLSPrintf("SELECT tile_data FROM tiles WHERE "
                                     "tile_column = %d AND tile_row = %d AND zoom_level=%d",
@@ -419,6 +418,29 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
   }
 }
 
+
+/************************************************************************/
+/*                  ComputeTileColTileRowZoomLevel()                    */
+/************************************************************************/
+
+void MBTilesDataset::ComputeTileColTileRowZoomLevel(int nBlockXOff,
+                                                    int nBlockYOff,
+                                                    int &nTileColumn,
+                                                    int &nTileRow,
+                                                    int &nZoomLevel)
+{
+    const int nBlockYSize = 256;
+
+    int _nMinLevel = (poMainDS) ? poMainDS->nMinLevel : nMinLevel;
+    int _nMinTileCol = (poMainDS) ? poMainDS->nMinTileCol : nMinTileCol;
+    int _nMinTileRow = (poMainDS) ? poMainDS->nMinTileRow : nMinTileRow;
+    _nMinTileCol >>= nLevel;
+
+    nTileColumn = nBlockXOff + _nMinTileCol;
+    nTileRow = (((nRasterYSize / nBlockYSize - 1 - nBlockYOff) << nLevel) + _nMinTileRow) >> nLevel;
+    nZoomLevel = ((poMainDS) ? poMainDS->nResolutions : nResolutions) - nLevel + _nMinLevel;
+}
+
 /************************************************************************/
 /*                             FindKey()                                */
 /************************************************************************/
@@ -426,9 +448,6 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
 char* MBTilesDataset::FindKey(int iPixel, int iLine,
                               int& nTileColumn, int& nTileRow, int& nZoomLevel)
 {
-    if (poMainDS)
-        return NULL;
-
     const int nBlockXSize = 256, nBlockYSize = 256;
     int nBlockXOff = iPixel / nBlockXSize;
     int nBlockYOff = iLine / nBlockYSize;
@@ -436,9 +455,8 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine,
     int nColInBlock = iPixel % nBlockXSize;
     int nRowInBlock = iLine % nBlockXSize;
 
-    nTileColumn = nBlockXOff + (nMinTileCol >> nLevel);
-    nTileRow = (((nRasterYSize / nBlockYSize - 1 - nBlockYOff) << nLevel) + nMinTileRow) >> nLevel;
-    nZoomLevel = nResolutions - nLevel + nMinLevel;
+    ComputeTileColTileRowZoomLevel(nBlockXOff, nBlockYOff,
+                                   nTileColumn, nTileRow, nZoomLevel);
 
     char* pszKey = NULL;
 
@@ -629,9 +647,6 @@ const char *MBTilesBand::GetMetadataItem( const char * pszName,
         && (EQUALN(pszName,"Pixel_",6) || EQUALN(pszName,"GeoPixel_",9)) )
     {
         int iPixel, iLine;
-
-        if (poGDS->poMainDS != NULL)
-            return NULL;
 
         if (OGR_DS_GetLayerByName(poGDS->hDS, "grids") == NULL)
             return NULL;
