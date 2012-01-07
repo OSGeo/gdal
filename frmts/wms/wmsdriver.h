@@ -108,6 +108,11 @@ public:
     virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
     virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
     virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
+    virtual void GetTiledImageInfo(CPLString *url,
+                                              const GDALWMSImageRequestInfo &iri,
+                                              const GDALWMSTiledImageRequestInfo &tiri,
+                                              int nXInBlock,
+                                              int nYInBlock);
 
 /* Return data projection in WKT format, NULL or empty string if unknown */
     virtual const char *GetProjectionInWKT();
@@ -273,6 +278,14 @@ protected:
 class GDALWMSRasterBand : public GDALPamRasterBand {
     friend class GDALWMSDataset;
 
+    char**  BuildHTTPRequestOpts();
+    void    ComputeRequestInfo( GDALWMSImageRequestInfo &iri,
+                                GDALWMSTiledImageRequestInfo &tiri,
+                                int x, int y);
+
+    CPLString osMetadataItem;
+    CPLString osMetadataItemURL;
+
 public:
     GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, double scale);
     virtual ~GDALWMSRasterBand();
@@ -286,6 +299,9 @@ public:
     virtual int HasArbitraryOverviews();
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int n);
+
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
 
 protected:
     CPLErr ReadBlocks(int x, int y, void *buffer, int bx0, int by0, int bx1, int by1, int advise_read);

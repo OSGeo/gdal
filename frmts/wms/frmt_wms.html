@@ -236,6 +236,55 @@
   untiled requests.
 </p>
 
+<p>
+     Starting with GDAL &gt;= 2.0, WMS layers can be queried (through a GetFeatureInfo request) with the gdallocationinfo utility, or
+     with a GetMetadataItem("Pixel_iCol_iLine", "LocationInfo") call on a band object.<p>
+     <pre>gdallocationinfo "WMS:http://demo.opengeo.org/geoserver/gwc/service/wms?SERVICE=WMS&amp;VERSION=1.1.1&amp;
+                            REQUEST=GetMap&amp;LAYERS=og:bugsites&amp;SRS=EPSG:900913&amp;
+                            BBOX=-1.15841845090625E7,5479006.186718751,-1.1505912992109375E7,5557277.703671876&amp;
+                            FORMAT=image/png&amp;TILESIZE=256&amp;OVERVIEWCOUNT=25&amp;MINRESOLUTION=0.0046653459640220&amp;TILED=true"
+                           -geoloc -11547071.455 5528616 -xml -b 1
+    </pre>
+    Output:
+    <pre>
+Report pixel="248595" line="191985"&gt;
+  &lt;BandReport band="1"&gt;
+    &lt;LocationInfo&gt;
+      &lt;wfs:FeatureCollection xmlns="http://www.opengis.net/wfs"
+                                xmlns:wfs="http://www.opengis.net/wfs"
+                                xmlns:gml="http://www.opengis.net/gml"
+                                xmlns:og="http://opengeo.org"
+                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                xsi:schemaLocation="http://opengeo.org http://demo.opengeo.org/geoserver/wfs?service=WFS&amp;version=1.0.0&amp;request=DescribeFeatureType&amp;typeName=og%3Abugsites http://www.opengis.net/wfs http://demo.opengeo.org/geoserver/schemas/wfs/1.0.0/WFS-basic.xsd"&gt;
+        &lt;gml:boundedBy&gt;
+          &lt;gml:Box srsName="http://www.opengis.net/gml/srs/epsg.xml#26713"&gt;
+            &lt;gml:coordinates xmlns:gml="http://www.opengis.net/gml" decimal="." cs="," ts=" "&gt;601228,4917635 601228,4917635&lt;/gml:coordinates&gt;
+          &lt;/gml:Box&gt;
+        &lt;/gml:boundedBy&gt;
+        &lt;gml:featureMember&gt;
+          &lt;og:bugsites fid="bugsites.40946"&gt;
+            &lt;gml:boundedBy&gt;
+              &lt;gml:Box srsName="http://www.opengis.net/gml/srs/epsg.xml#26713"&gt;
+                &lt;gml:coordinates xmlns:gml="http://www.opengis.net/gml" decimal="." cs="," ts=" "&gt;601228,4917635 601228,4917635&lt;/gml:coordinates&gt;
+              &lt;/gml:Box&gt;
+            &lt;/gml:boundedBy&gt;
+            &lt;og:cat&gt;86&lt;/og:cat&gt;
+            &lt;og:str1&gt;Beetle site&lt;/og:str1&gt;
+            &lt;og:the_geom&gt;
+              &lt;gml:Point srsName="http://www.opengis.net/gml/srs/epsg.xml#26713"&gt;
+                &lt;gml:coordinates xmlns:gml="http://www.opengis.net/gml" decimal="." cs="," ts=" "&gt;601228,4917635&lt;/gml:coordinates&gt;
+              &lt;/gml:Point&gt;
+            &lt;/og:the_geom&gt;
+          &lt;/og:bugsites&gt;
+        &lt;/gml:featureMember&gt;
+      &lt;/wfs:FeatureCollection&gt;
+    &lt;/LocationInfo&gt;
+    &lt;Value&gt;255&lt;/Value&gt;
+  &lt;/BandReport&gt;
+&lt;/Report&gt;
+    </pre>
+</p>
+
 <h3>TileService</h3>
 <p>
   Service to support talking to a WorldWind <a href="http://www.worldwindcentral.com/wiki/TileService">TileService</a>. Access is always tile based.
@@ -393,6 +442,7 @@ Access to web-based Virtual Earth tile services. Access is always tile based.<p>
     <li><p>
      <a href="frmt_wms_virtualearth.xml">VirtualEarth Aerial Layer</a> accessed with the VirtualEarth minidriver.
     </p></li>
+
 </ul>
 
 <h2>Open syntax</h2>
