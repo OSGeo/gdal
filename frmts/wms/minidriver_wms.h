@@ -31,6 +31,9 @@
 H_GDALWMSMiniDriverFactory(WMS)
 
 class GDALWMSMiniDriver_WMS : public GDALWMSMiniDriver {
+
+    void    BuildURL(CPLString *url, const GDALWMSImageRequestInfo &iri, const char* pszRequest);
+
 public:
     GDALWMSMiniDriver_WMS();
     virtual ~GDALWMSMiniDriver_WMS();
@@ -40,6 +43,11 @@ public:
     virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
     virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
     virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
+    virtual void GetTiledImageInfo(CPLString *url,
+                                              const GDALWMSImageRequestInfo &iri,
+                                              const GDALWMSTiledImageRequestInfo &tiri,
+                                              int nXInBlock,
+                                              int nYInBlock);
     virtual const char *GetProjectionInWKT();
 
 protected:
