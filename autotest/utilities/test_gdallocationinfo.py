@@ -126,12 +126,40 @@ def test_gdallocationinfo_5():
 
     return 'success'
 
+###############################################################################
+# Test -overview
+
+def test_gdallocationinfo_6():
+    if test_cli_utilities.get_gdallocationinfo_path() is None:
+        return 'skip'
+
+    src_ds = gdal.Open('../gcore/data/byte.tif')
+    ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/test_gdallocationinfo_6.tif', src_ds)
+    ds.BuildOverviews('AVERAGE', overviewlist = [2])
+    ds = None
+    src_ds = None
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' tmp/test_gdallocationinfo_6.tif 10 10 -overview 1')
+
+    gdal.GetDriverByName('GTiff').Delete('tmp/test_gdallocationinfo_6.tif')
+
+    expected_ret = """Report:
+  Location: (10P,10L)
+  Band 1:
+    Value: 130"""
+    if ret.find(expected_ret) != 0:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_gdallocationinfo_1,
     test_gdallocationinfo_2,
     test_gdallocationinfo_3,
     test_gdallocationinfo_4,
-    test_gdallocationinfo_5
+    test_gdallocationinfo_5,
+    test_gdallocationinfo_6,
     ]
 
 
