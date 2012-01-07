@@ -178,6 +178,15 @@ retry:
         {
             CPLString osDir = CPLGetDirname( pszFilename );
             papszSiblingFiles = VSIReadDir( osDir );
+
+            /* Small optimization to avoid unnecessary stat'ing from PAux or ENVI */
+            /* drivers. The MBTiles driver needs no companion file. */
+            if( papszSiblingFiles == NULL &&
+                strncmp(pszFilename, "/vsicurl/", 9) == 0 &&
+                EQUAL(CPLGetExtension( pszFilename ),"mbtiles") )
+            {
+                papszSiblingFiles = CSLAddString( NULL, CPLGetFilename(pszFilename) );
+            }
         }
     }
     else
