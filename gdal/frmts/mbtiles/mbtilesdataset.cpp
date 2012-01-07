@@ -135,7 +135,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
     MBTilesDataset* poGDS = (MBTilesDataset*) poDS;
 
     int bGotTile = FALSE;
-    int nDataTypeSize = GDALGetDataTypeSize(eDataType) / 8;
+    CPLAssert(eDataType == GDT_Byte);
 
     int nMinLevel = (poGDS->poMainDS) ? poGDS->poMainDS->nMinLevel : poGDS->nMinLevel;
     int nMinTileCol = (poGDS->poMainDS) ? poGDS->poMainDS->nMinTileCol : poGDS->nMinTileCol;
@@ -176,7 +176,8 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
             if (GDALGetRasterXSize(hDSTile) == nBlockXSize &&
                 GDALGetRasterYSize(hDSTile) == nBlockYSize &&
                 (nTileBands == poGDS->nBands ||
-                 (nTileBands == 1 && poGDS->nBands == 3)))
+                 (nTileBands == 1 && (poGDS->nBands == 3 || poGDS->nBands == 4)) ||
+                 (nTileBands == 3 && poGDS->nBands == 4)))
             {
                 int iBand;
                 void* pSrcImage = NULL;
@@ -185,24 +186,28 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
                 bGotTile = TRUE;
 
                 GDALColorTableH hCT = GDALGetRasterColorTable(GDALGetRasterBand(hDSTile, 1));
-                if (nTileBands == 1 && poGDS->nBands == 3)
+                if (nTileBands == 1 && (poGDS->nBands == 3 || poGDS->nBands == 4))
                 {
                     if (hCT != NULL)
-                        pSrcImage = CPLMalloc(nBlockXSize * nBlockYSize * nDataTypeSize);
+                        pSrcImage = CPLMalloc(nBlockXSize * nBlockYSize);
                     iBand = 1;
                 }
                 else
                     iBand = nBand;
 
-                GDALRasterIO(GDALGetRasterBand(hDSTile, iBand), GF_Read,
-                             0, 0, nBlockXSize, nBlockYSize,
-                             pImage, nBlockXSize, nBlockYSize, eDataType, 0, 0);
+                if (nTileBands == 3 && poGDS->nBands == 4 && iBand == 4)
+                    memset(pImage, 255, nBlockXSize * nBlockYSize);
+                else
+                {
+                    GDALRasterIO(GDALGetRasterBand(hDSTile, iBand), GF_Read,
+                                0, 0, nBlockXSize, nBlockYSize,
+                                pImage, nBlockXSize, nBlockYSize, eDataType, 0, 0);
+                }
 
                 if (pSrcImage != NULL && hCT != NULL)
                 {
                     int i;
-                    memcpy(pSrcImage, pImage,
-                           nBlockXSize * nBlockYSize * nDataTypeSize);
+                    memcpy(pSrcImage, pImage, nBlockXSize * nBlockYSize);
 
                     int nEntryCount = GDALGetColorEntryCount( hCT );
                     if (nEntryCount > 256)
@@ -255,10 +260,16 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
                         break;
                     }
 
-                    if (nTileBands == 1 && poGDS->nBands == 3)
+                    if (nTileBands == 3 && poGDS->nBands == 4 && iOtherBand == 4)
+                        memset(pabySrcBlock, 255, nBlockXSize * nBlockYSize);
+                    else if (nTileBands == 1 && (poGDS->nBands == 3 || poGDS->nBands == 4))
                     {
                         int i;
-                        if (pSrcImage)
+                        if (iOtherBand == 4)
+                        {
+                            memset(pabySrcBlock, 255, nBlockXSize * nBlockYSize);
+                        }
+                        else if (pSrcImage)
                         {
                             for(i = 0; i < nBlockXSize * nBlockYSize; i++)
                             {
@@ -267,8 +278,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
                             }
                         }
                         else
-                            memcpy(pabySrcBlock, pImage,
-                                    nBlockXSize * nBlockYSize * nDataTypeSize);
+                            memcpy(pabySrcBlock, pImage, nBlockXSize * nBlockYSize);
                     }
                     else
                     {
@@ -300,8 +310,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
 
     if (!bGotTile)
     {
-        memset(pImage, (nBand == 4) ? 0 : 255,
-               nBlockXSize * nBlockYSize * nDataTypeSize);
+        memset(pImage, (nBand == 4) ? 0 : 255, nBlockXSize * nBlockYSize);
 
         for(int iOtherBand=1;iOtherBand<=poGDS->nBands;iOtherBand++)
         {
@@ -323,7 +332,7 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
             }
 
             memset(pabySrcBlock, (iOtherBand == 4) ? 0 : 255,
-                   nBlockXSize * nBlockYSize * nDataTypeSize);
+                   nBlockXSize * nBlockYSize);
 
             poBlock->DropLock();
         }
@@ -567,7 +576,9 @@ char** MBTilesDataset::GetMetadata( const char * pszDomain )
             const char* pszName = OGR_F_GetFieldAsString(hFeat, 0);
             const char* pszValue = OGR_F_GetFieldAsString(hFeat, 1);
             if (pszValue[0] != '\0' &&
+                strncmp(pszValue, "function(",9) != 0 &&
                 strstr(pszValue, "<p>") == NULL &&
+                strstr(pszValue, "</p>") == NULL &&
                 strstr(pszValue, "<div") == NULL)
             {
                 aosList.AddNameValue(pszName, pszValue);
@@ -594,6 +605,227 @@ int MBTilesDataset::Identify(GDALOpenInfo* poOpenInfo)
     }
 
     return FALSE;
+}
+
+/************************************************************************/
+/*                        MBTilesGetMinMaxZoomLevel()                   */
+/************************************************************************/
+
+static
+int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS,
+                                int &nMinLevel, int &nMaxLevel)
+{
+    const char* pszSQL;
+    OGRLayerH hSQLLyr;
+    OGRFeatureH hFeat;
+    int bHasMinMaxLevel = FALSE;
+
+    pszSQL = "SELECT value FROM metadata WHERE name = 'minzoom' UNION ALL "
+             "SELECT value FROM metadata WHERE name = 'maxzoom'";
+    CPLDebug("MBTiles", "%s", pszSQL);
+    hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
+    if (hSQLLyr)
+    {
+        hFeat = OGR_L_GetNextFeature(hSQLLyr);
+        if (hFeat)
+        {
+            int bHasMinLevel = FALSE;
+            if (OGR_F_IsFieldSet(hFeat, 0))
+            {
+                nMinLevel = OGR_F_GetFieldAsInteger(hFeat, 0);
+                bHasMinLevel = TRUE;
+            }
+            OGR_F_Destroy(hFeat);
+
+            if (bHasMinLevel)
+            {
+                hFeat = OGR_L_GetNextFeature(hSQLLyr);
+                if (hFeat)
+                {
+                    if (OGR_F_IsFieldSet(hFeat, 0))
+                    {
+                        nMaxLevel = OGR_F_GetFieldAsInteger(hFeat, 0);
+                        bHasMinMaxLevel = TRUE;
+                    }
+                    OGR_F_Destroy(hFeat);
+                }
+            }
+        }
+
+        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+    }
+
+    if( !bHasMinMaxLevel )
+    {
+#define OPTIMIZED_FOR_VSICURL
+#ifdef  OPTIMIZED_FOR_VSICURL
+        int iLevel;
+        for(iLevel = 0; nMinLevel < 0 && iLevel < 16; iLevel ++)
+        {
+            pszSQL = CPLSPrintf(
+                "SELECT zoom_level FROM tiles WHERE zoom_level = %d LIMIT 1",
+                iLevel);
+            CPLDebug("MBTiles", "%s", pszSQL);
+            hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
+            if (hSQLLyr)
+            {
+                hFeat = OGR_L_GetNextFeature(hSQLLyr);
+                if (hFeat)
+                {
+                    nMinLevel = iLevel;
+                    OGR_F_Destroy(hFeat);
+                }
+                OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+            }
+        }
+
+        if (nMinLevel < 0)
+            return FALSE;
+
+        for(iLevel = 32; nMaxLevel < 0 && iLevel >= nMinLevel; iLevel --)
+        {
+            pszSQL = CPLSPrintf(
+                "SELECT zoom_level FROM tiles WHERE zoom_level = %d LIMIT 1",
+                iLevel);
+            CPLDebug("MBTiles", "%s", pszSQL);
+            hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
+            if (hSQLLyr)
+            {
+                hFeat = OGR_L_GetNextFeature(hSQLLyr);
+                if (hFeat)
+                {
+                    nMaxLevel = iLevel;
+                    bHasMinMaxLevel = TRUE;
+                    OGR_F_Destroy(hFeat);
+                }
+                OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+            }
+        }
+#else
+        pszSQL = "SELECT min(zoom_level), max(zoom_level) FROM tiles";
+        CPLDebug("MBTiles", "%s", pszSQL);
+        hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
+        if (hSQLLyr == NULL)
+        {
+            return FALSE;
+        }
+
+        hFeat = OGR_L_GetNextFeature(hSQLLyr);
+        if (hFeat == NULL)
+        {
+            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+            return FALSE;
+        }
+
+        if (OGR_F_IsFieldSet(hFeat, 0) && OGR_F_IsFieldSet(hFeat, 1))
+        {
+            nMinLevel = OGR_F_GetFieldAsInteger(hFeat, 0);
+            nMaxLevel = OGR_F_GetFieldAsInteger(hFeat, 1);
+            bHasMinMaxLevel = TRUE;
+        }
+
+        OGR_F_Destroy(hFeat);
+        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+#endif
+    }
+
+    return bHasMinMaxLevel;
+}
+
+/************************************************************************/
+/*                           MBTilesGetBounds()                         */
+/************************************************************************/
+
+static
+int MBTilesGetBounds(OGRDataSourceH hDS, int nMinLevel, int nMaxLevel,
+                     int& nMinTileRow, int& nMaxTileRow,
+                     int& nMinTileCol, int &nMaxTileCol)
+{
+    const char* pszSQL;
+    int bHasBounds = FALSE;
+    OGRLayerH hSQLLyr;
+    OGRFeatureH hFeat;
+
+    pszSQL = "SELECT value FROM metadata WHERE name = 'bounds'";
+    CPLDebug("MBTiles", "%s", pszSQL);
+    hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
+    if (hSQLLyr)
+    {
+        hFeat = OGR_L_GetNextFeature(hSQLLyr);
+        if (hFeat != NULL)
+        {
+            const char* pszBounds = OGR_F_GetFieldAsString(hFeat, 0);
+            char** papszTokens = CSLTokenizeString2(pszBounds, ",", 0);
+            if (CSLCount(papszTokens) != 4 ||
+                fabs(atof(papszTokens[0])) > 180 ||
+                fabs(atof(papszTokens[1])) > 86 ||
+                fabs(atof(papszTokens[2])) > 180 ||
+                fabs(atof(papszTokens[3])) > 86 ||
+                atof(papszTokens[0]) > atof(papszTokens[2]) ||
+                atof(papszTokens[1]) > atof(papszTokens[3]))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid value for 'bounds' metadata");
+                CSLDestroy(papszTokens);
+                OGR_F_Destroy(hFeat);
+                OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+                return FALSE;
+            }
+
+            #define FORTPI      0.78539816339744833
+            /* Latitude to Google-mercator northing */
+            #define LAT_TO_NORTHING(lat) \
+                6378137 * log(tan(FORTPI + .5 * (lat) / 180 * (4 * FORTPI)))
+
+            nMinTileCol = (int)(((atof(papszTokens[0]) + 180) / 360) * (1 << nMaxLevel));
+            nMaxTileCol = (int)(((atof(papszTokens[2]) + 180) / 360) * (1 << nMaxLevel));
+            nMinTileRow = (int)(0.5 + ((LAT_TO_NORTHING(atof(papszTokens[1])) + MAX_GM) / (2* MAX_GM)) * (1 << nMaxLevel));
+            nMaxTileRow = (int)(0.5 + ((LAT_TO_NORTHING(atof(papszTokens[3])) + MAX_GM) / (2* MAX_GM)) * (1 << nMaxLevel));
+
+            bHasBounds = TRUE;
+
+            CSLDestroy(papszTokens);
+
+            OGR_F_Destroy(hFeat);
+        }
+        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+    }
+
+    if (!bHasBounds)
+    {
+        pszSQL = CPLSPrintf("SELECT min(tile_column), max(tile_column), "
+                            "min(tile_row), max(tile_row) FROM tiles "
+                            "WHERE zoom_level = %d", nMaxLevel);
+        CPLDebug("MBTiles", "%s", pszSQL);
+        hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
+        if (hSQLLyr == NULL)
+        {
+            return FALSE;
+        }
+
+        hFeat = OGR_L_GetNextFeature(hSQLLyr);
+        if (hFeat == NULL)
+        {
+            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+            return FALSE;
+        }
+
+        if (OGR_F_IsFieldSet(hFeat, 0) &&
+            OGR_F_IsFieldSet(hFeat, 1) &&
+            OGR_F_IsFieldSet(hFeat, 2) &&
+            OGR_F_IsFieldSet(hFeat, 3))
+        {
+            nMinTileCol = OGR_F_GetFieldAsInteger(hFeat, 0);
+            nMaxTileCol = OGR_F_GetFieldAsInteger(hFeat, 1);
+            nMinTileRow = OGR_F_GetFieldAsInteger(hFeat, 2);
+            nMaxTileRow = OGR_F_GetFieldAsInteger(hFeat, 3);
+            bHasBounds = TRUE;
+        }
+
+        OGR_F_Destroy(hFeat);
+        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+    }
+
+    return bHasBounds;
 }
 
 /************************************************************************/
@@ -634,11 +866,13 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         int iBand, nBands, nBlockXSize, nBlockYSize;
         GDALDataType eDataType;
         OGRLayerH hSQLLyr = NULL;
-        int nMinLevel, nMaxLevel, nMinTileRow = 0, nMaxTileRow = 0, nMinTileCol = 0, nMaxTileCol = 0;
+        int nMinLevel = -1, nMaxLevel = -1;
+        int nMinTileRow = 0, nMaxTileRow = 0, nMinTileCol = 0, nMaxTileCol = 0;
         GDALDatasetH hDSTile;
         int nDataSize = 0;
         GByte* pabyData = NULL;
         int bHasBounds = FALSE;
+        int bHasMinMaxLevel = FALSE;
 
         osMetadataTableName = "metadata";
 
@@ -660,142 +894,41 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
 /*      Get minimum and maximum zoom levels                             */
 /* -------------------------------------------------------------------- */
 
-#define OPTIMIZED_FOR_VSICURL
-#ifdef  OPTIMIZED_FOR_VSICURL
+        bHasMinMaxLevel = MBTilesGetMinMaxZoomLevel(hDS,
+                                                    nMinLevel, nMaxLevel);
 
-        nMinLevel = -1;
-        int iLevel;
-        for(iLevel = 0; nMinLevel < 0 && iLevel < 16; iLevel ++)
+        if (bHasMinMaxLevel && (nMinLevel < 0 || nMinLevel > nMaxLevel))
         {
-            osSQL = CPLSPrintf("SELECT zoom_level FROM tiles WHERE zoom_level = %d LIMIT 1",
-                               iLevel);
-            hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
-            if (hSQLLyr)
-            {
-                hFeat = OGR_L_GetNextFeature(hSQLLyr);
-                if (hFeat)
-                {
-                    nMinLevel = iLevel;
-                    OGR_F_Destroy(hFeat);
-                }
-                OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-            }
-        }
-
-        if (nMinLevel < 0)
-            goto end;
-
-        nMaxLevel = -1;
-        for(iLevel = 32; nMaxLevel < 0 && iLevel >= nMinLevel; iLevel --)
-        {
-            osSQL = CPLSPrintf("SELECT zoom_level FROM tiles WHERE zoom_level = %d LIMIT 1",
-                               iLevel);
-            hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
-            if (hSQLLyr)
-            {
-                hFeat = OGR_L_GetNextFeature(hSQLLyr);
-                if (hFeat)
-                {
-                    nMaxLevel = iLevel;
-                    OGR_F_Destroy(hFeat);
-                }
-                OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-            }
-        }
-#else
-        hSQLLyr = OGR_DS_ExecuteSQL(hDS,
-            "SELECT min(zoom_level), max(zoom_level) FROM tiles", NULL, NULL);
-        if (hSQLLyr == NULL)
-        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Inconsistant values : min(zoom_level) = %d, max(zoom_level) = %d",
+                     nMinLevel, nMaxLevel);
             goto end;
         }
 
-        hFeat = OGR_L_GetNextFeature(hSQLLyr);
-        if (hFeat == NULL)
+        if (bHasMinMaxLevel && nMaxLevel > 22)
         {
-            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "zoom_level > 22 not supported");
             goto end;
         }
 
-        nMinLevel = OGR_F_GetFieldAsInteger(hFeat, 0);
-        nMaxLevel = OGR_F_GetFieldAsInteger(hFeat, 1);
-
-        OGR_F_Destroy(hFeat);
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-#endif
+        if (!bHasMinMaxLevel)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot find min and max zoom_level");
+            goto end;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Get bounds                                                      */
 /* -------------------------------------------------------------------- */
 
-        hSQLLyr = OGR_DS_ExecuteSQL(hDS,
-            "SELECT value FROM metadata WHERE name = 'bounds'", NULL, NULL);
-        if (hSQLLyr)
-        {
-            hFeat = OGR_L_GetNextFeature(hSQLLyr);
-            if (hFeat != NULL)
-            {
-                const char* pszBounds = OGR_F_GetFieldAsString(hFeat, 0);
-                char** papszTokens = CSLTokenizeString2(pszBounds, ",", 0);
-                if (CSLCount(papszTokens) != 4 ||
-                    fabs(atof(papszTokens[0])) > 180 ||
-                    fabs(atof(papszTokens[1])) > 86 ||
-                    fabs(atof(papszTokens[2])) > 180 ||
-                    fabs(atof(papszTokens[3])) > 86 ||
-                    atof(papszTokens[0]) > atof(papszTokens[2]) ||
-                    atof(papszTokens[1]) > atof(papszTokens[3]))
-                {
-                    CSLDestroy(papszTokens);
-                    OGR_F_Destroy(hFeat);
-                    OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-                    goto end;
-                }
-
-                #define FORTPI      0.78539816339744833
-                /* Latitude to Google-mercator northing */
-                #define LAT_TO_NORTHING(lat) \
-                    6378137 * log(tan(FORTPI + .5 * (lat) / 180 * (4 * FORTPI)))
-
-                nMinTileCol = (int)(((atof(papszTokens[0]) + 180) / 360) * (1 << nMaxLevel));
-                nMaxTileCol = (int)(((atof(papszTokens[2]) + 180) / 360) * (1 << nMaxLevel));
-                nMinTileRow = (int)(0.5 + ((LAT_TO_NORTHING(atof(papszTokens[1])) + MAX_GM) / (2* MAX_GM)) * (1 << nMaxLevel));
-                nMaxTileRow = (int)(0.5 + ((LAT_TO_NORTHING(atof(papszTokens[3])) + MAX_GM) / (2* MAX_GM)) * (1 << nMaxLevel));
-
-                bHasBounds = TRUE;
-
-                CSLDestroy(papszTokens);
-
-                OGR_F_Destroy(hFeat);
-            }
-            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-        }
-
+        bHasBounds = MBTilesGetBounds(hDS, nMinLevel, nMaxLevel,
+                                      nMinTileRow, nMaxTileRow,
+                                      nMinTileCol, nMaxTileCol);
         if (!bHasBounds)
         {
-            osSQL = CPLSPrintf("SELECT min(tile_column), max(tile_column), "
-                               "min(tile_row), max(tile_row) FROM tiles "
-                               "WHERE zoom_level = %d",
-                               nMaxLevel);
-            hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
-            if (hSQLLyr == NULL)
-            {
-                goto end;
-            }
-
-            hFeat = OGR_L_GetNextFeature(hSQLLyr);
-            if (hFeat == NULL)
-            {
-                OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-                goto end;
-            }
-
-            nMinTileCol = OGR_F_GetFieldAsInteger(hFeat, 0);
-            nMaxTileCol = OGR_F_GetFieldAsInteger(hFeat, 1);
-            nMinTileRow = OGR_F_GetFieldAsInteger(hFeat, 2);
-            nMaxTileRow = OGR_F_GetFieldAsInteger(hFeat, 3);
-
-            OGR_F_Destroy(hFeat);
-            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot find min and max tile numbers");
+            goto end;
         }
 
 /* -------------------------------------------------------------------- */
@@ -806,10 +939,16 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
                            (nMinTileCol  + nMaxTileCol) / 2,
                            (nMinTileRow  + nMaxTileRow) / 2,
                            nMaxLevel);
+        CPLDebug("MBTiles", "%s", osSQL.c_str());
         hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
         if (hSQLLyr == NULL)
         {
-            goto end;
+            osSQL = CPLSPrintf("SELECT tile_data FROM tiles WHERE "
+                               "zoom_level = %d LIMIT 1", nMaxLevel);
+            CPLDebug("MBTiles", "%s", osSQL.c_str());
+            hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+            if (hSQLLyr == NULL)
+                goto end;
         }
 
         hFeat = OGR_L_GetNextFeature(hSQLLyr);
@@ -837,9 +976,14 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
             goto end;
         }
 
-        if (GDALGetRasterXSize(hDSTile) != 256 ||
-            GDALGetRasterYSize(hDSTile) != 256)
+        nBands = GDALGetRasterCount(hDSTile);
+
+        if ((nBands != 1 && nBands != 3 && nBands != 4) ||
+            GDALGetRasterXSize(hDSTile) != 256 ||
+            GDALGetRasterYSize(hDSTile) != 256 ||
+            GDALGetRasterDataType(GDALGetRasterBand(hDSTile, 1)) != GDT_Byte)
         {
+            CPLError(CE_Failure, CPLE_NotSupported, "Unsupported tile characteristics");
             GDALClose(hDSTile);
             VSIUnlink(osMemFileName.c_str());
             OGR_F_Destroy(hFeat);
@@ -847,10 +991,8 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
             goto end;
         }
 
-        nBands = GDALGetRasterCount(hDSTile);
         if (nBands == 1 &&
-            GDALGetRasterColorTable(GDALGetRasterBand(hDSTile, 1)) != NULL &&
-            GDALGetRasterDataType(GDALGetRasterBand(hDSTile, 1)) == GDT_Byte)
+            GDALGetRasterColorTable(GDALGetRasterBand(hDSTile, 1)) != NULL)
         {
             nBands = 3;
         }
