@@ -16,9 +16,14 @@ which is a specification for storing tiled map data in SQLite databases.</p>
 
 <p>The SRS is always the Pseudo-Mercator (a.k.a Google Mercator) projection.</p>
 
+<p>The driver can retrieve pixel attributes encoded according to the UTFGrid specification
+available in some MBTiles files. They can be obtained with the gdallocationinfo utility, or
+with a GetMetadataItem("Pixel_iCol_iLine", "LocationInfo") call on a band object.<p>
+
 <h2>Examples:</h2>
 
 <ul>
+
 <li>Accessing a remote MBTiles raster :
 <pre>
 $ gdalinfo /vsicurl/http://a.tiles.mapbox.com/v3/kkaefer.iceland.mbtiles
@@ -78,12 +83,32 @@ Band 4 Block=256x256 Type=Byte, ColorInterp=Alpha
 </pre>
 </li>
 
+
+<li>Reading pixel attributes encoded according to the UTFGrid specification :
+<pre>
+$ gdallocationinfo /vsicurl/http://a.tiles.mapbox.com/v3/mapbox.geography-class.mbtiles -wgs84 2 49 -b 1 -xml
+</pre>
+Output:
+<pre>
+&lt;Report pixel="33132" line="22506"&gt;
+  &lt;BandReport band="1"&gt;
+    &lt;LocationInfo&gt;
+      &lt;Key&gt;74&lt;/Key&gt;
+      &lt;JSon&gt;{"admin":"France","flag_png":"iVBORw0KGgoAAAANSUhEUgAAAGQAAABDEAIAAAC1uevOAAAACXBIWXMAAABIAAAASABGyWs+AAAABmJLR0T///////8JWPfcAAABPklEQVR42u3cMRLBQBSA4Zc9CgqcALXC4bThBA5gNFyFM+wBVNFqjYTszpfi1Sm++bOv2ETEdNK2pc/T9ny977rCn+fx8rjtc7dMmybnxXy9KncGWGCBBRZYYIEFFlhggQUWWGCBBRZYYIE1/GzSLB0CLLAUCyywwAILLLDAAgsssGyFlcAqnJRiKRZYYIEFFlhggQUWWGDZCsFSLLDAAgsssP4DazQowVIssMACy1ZYG6wP30qxwFIssMACCyywwOr/HAYWWIplKwQLLLDAAgssZyywwAILLLDAqh6We4VgKZatECywFAsssMACCyywwAILLLBshWCBpVhggQUWWGCBBRZYYIFlKwQLLMUCCyywwAILLLBG+T8ZsMBSLFshWIoFFlhg/fp8BhZYigUWWGB9C+t9ggUWWGD5FA44XxBz7mcwZM9VAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDExLTA5LTAyVDIzOjI5OjIxLTA0OjAwcQbBWgAAACV0RVh0ZGF0ZTptb2RpZnkAMjAxMS0wMi0yOFQyMTo0ODozMS0wNTowMJkeu+wAAABSdEVYdHN2ZzpiYXNlLXVyaQBmaWxlOi8vL2hvbWUvYWovQ29kZS90bS1tYXN0ZXIvZXhhbXBsZXMvZ2VvZ3JhcGh5LWNsYXNzL2ZsYWdzL0ZSQS5zdmen2JoeAAAAAElFTkSuQmCC"}&lt;/JSon&gt;
+    &lt;/LocationInfo&gt;
+    &lt;Value&gt;238&lt;/Value&gt;
+  &lt;/BandReport&gt;
+&lt;/Report&gt;
+</pre>
+</li>
+
 </ul>
 
 <p>See Also:</p>
 
 <ul>
 <li><a href="https://github.com/mapbox/mbtiles-spec">MBTiles specification</a></li>
+<li><a href="https://github.com/mapbox/utfgrid-spec/blob/master/1.0/utfgrid.md">UTFGrid specification</a></li>
 </ul>
 
 </body>
