@@ -48,7 +48,8 @@ Usage:
 
 \verbatim
 Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] [-valonly]
-                        [-b band]* [-l_srs srs_def] [-geoloc] [-wgs84]
+                        [-b band]* [-overview overview_level]
+                        [-l_srs srs_def] [-geoloc] [-wgs84]
                         srcfile [x y]
 \endverbatim
 
@@ -75,6 +76,11 @@ the selected bands.</dd>
 <dt> <b>-b</b> <em>band</em>:</dt> 
 <dd>Selects a band to query.  Multiple bands can be listed.  By default all
 bands are queried.</dd>
+
+<dt> <b>-overview</b> <em>overview_level</em>:</dt>
+<dd>Query the (overview_level)th overview (overview_level=1 is the 1st overview),
+instead of the base band. Note that the x,y location (if the coordinate system is
+pixel/line) must still be given with respect to the base band.</dd>
 
 <dt> <b>-l_srs</b> <em>srs def</em>:</dt>
 <dd> The coordinate system of the input x, y location.</dd>
@@ -164,7 +170,8 @@ static void Usage()
 
 {
     printf( "Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] [-valonly]\n"
-            "                        [-b band]* [-l_srs srs_def] [-geoloc] [-wgs84]\n"
+            "                        [-b band]* [-overview overview_level]\n"
+            "                        [-l_srs srs_def] [-geoloc] [-wgs84]\n"
             "                        srcfile x y\n" 
             "\n" );
     exit( 1 );
@@ -211,6 +218,7 @@ int main( int argc, char ** argv )
     std::vector<int>   anBandList;
     bool               bAsXML = false, bLIFOnly = false;
     bool               bQuiet = false, bValOnly = false;
+    int                nOverview = -1;
 
     GDALAllRegister();
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
@@ -233,6 +241,10 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-b") && i < argc-1 )
         {
             anBandList.push_back( atoi(argv[++i]) );
+        }
+        else if( EQUAL(argv[i],"-overview") && i < argc-1 )
+        {
+            nOverview = atoi(argv[++i]) - 1;
         }
         else if( EQUAL(argv[i],"-l_srs") && i < argc-1 )
         {
@@ -402,16 +414,26 @@ int main( int argc, char ** argv )
                 printf( "\nLocation is off this file! No further details to report.\n");
             bPixelReport = FALSE;
         }
-        
+
+        if (nOverview >= 0)
+        {
+            iPixel >>= (nOverview + 1);
+            iLine >>= (nOverview + 1);
+        }
+
     /* -------------------------------------------------------------------- */
     /*      Process each band.                                              */
     /* -------------------------------------------------------------------- */
         for( i = 0; bPixelReport && i < (int) anBandList.size(); i++ )
         {
             GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, anBandList[i] );
+
+            if (nOverview >= 0 && hBand != NULL)
+                hBand = GDALGetOverview(hBand, nOverview);
+
             if (hBand == NULL)
                 continue;
-    
+
             if( bAsXML )
             {
                 osLine.Printf( "<BandReport band=\"%d\">", anBandList[i] );
