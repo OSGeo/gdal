@@ -1,7 +1,7 @@
 
 OBJ	=	mbtilesdataset.obj
 
-EXTRAFLAGS = -I../../ogr
+EXTRAFLAGS = -I../../ogr -I../../ogr/ogrsf_frmts/geojson -I../zlib
 
 GDAL_ROOT	=	..\..
 
