@@ -207,7 +207,7 @@ int main( int argc, char ** argv )
 {
     const char         *pszLocX = NULL, *pszLocY = NULL;
     const char         *pszSrcFilename = NULL;
-    const char         *pszSourceSRS = NULL;
+    char               *pszSourceSRS = NULL;
     std::vector<int>   anBandList;
     bool               bAsXML = false, bLIFOnly = false;
     bool               bQuiet = false, bValOnly = false;
@@ -236,14 +236,17 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-l_srs") && i < argc-1 )
         {
+            CPLFree(pszSourceSRS);
             pszSourceSRS = SanitizeSRS(argv[++i]);
         }
         else if( EQUAL(argv[i],"-geoloc") )
         {
-            pszSourceSRS = "-geoloc";
+            CPLFree(pszSourceSRS);
+            pszSourceSRS = CPLStrdup("-geoloc");
         }
         else if( EQUAL(argv[i],"-wgs84") )
         {
+            CPLFree(pszSourceSRS);
             pszSourceSRS = SanitizeSRS("WGS84");
         }
         else if( EQUAL(argv[i],"-xml") )
@@ -565,6 +568,7 @@ int main( int argc, char ** argv )
 
     GDALDumpOpenDatasets( stderr );
     GDALDestroyDriverManager();
+    CPLFree(pszSourceSRS);
 
     CSLDestroy( argv );
 
