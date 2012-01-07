@@ -557,6 +557,8 @@ vsi_l_offset VSICurlHandle::GetFileSize()
 
     VSICurlSetOptions(hCurlHandle, pszURL);
 
+    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData);
+
     /* HACK for mbtiles driver: proper fix would be to auto-detect servers that don't accept HEAD */
     /* http://a.tiles.mapbox.com/v3/ doesn't accept HEAD, so let's start a GET */
     /* and interrupt is as soon as the header is found */
@@ -565,7 +567,6 @@ vsi_l_offset VSICurlHandle::GetFileSize()
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, VSICurlHandleWriteFunc);
 
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData);
         sWriteFuncHeaderData.bIsHTTP = strncmp(pszURL, "http", 4) == 0;
         sWriteFuncHeaderData.bDownloadHeaderOnly = TRUE;
     }
