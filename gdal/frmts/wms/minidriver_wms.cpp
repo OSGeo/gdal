@@ -148,13 +148,13 @@ void GDALWMSMiniDriver_WMS::GetCapabilities(GDALWMSMiniDriverCapabilities *caps)
     caps->m_max_overview_count = 32;
 }
 
-void GDALWMSMiniDriver_WMS::ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri) {
+void GDALWMSMiniDriver_WMS::BuildURL(CPLString *url, const GDALWMSImageRequestInfo &iri, const char* pszRequest) {
     // http://onearth.jpl.nasa.gov/wms.cgi?request=GetMap&width=1000&height=500&layers=modis,global_mosaic&styles=&srs=EPSG:4326&format=image/jpeg&bbox=-180.000000,-90.000000,180.000000,090.000000
     CPLLocaleC oLocaleEnforcer;
     *url = m_base_url;
     if (m_base_url.ifind( "service=") == std::string::npos)
         URLAppend(url, "&service=WMS");
-    URLAppend(url, "&request=GetMap");
+    URLAppendF(url, "&request=%s", pszRequest);
     URLAppendF(url, "&version=%s", m_version.c_str());
     URLAppendF(url, "&layers=%s", m_layers.c_str());
     URLAppendF(url, "&styles=%s", m_styles.c_str());
@@ -167,12 +167,34 @@ void GDALWMSMiniDriver_WMS::ImageRequest(CPLString *url, const GDALWMSImageReque
     URLAppendF(url, "&bbox=%.8f,%.8f,%.8f,%.8f", 
         GetBBoxCoord(iri, m_bbox_order[0]), GetBBoxCoord(iri, m_bbox_order[1]), 
         GetBBoxCoord(iri, m_bbox_order[2]), GetBBoxCoord(iri, m_bbox_order[3]));
+}
+
+void GDALWMSMiniDriver_WMS::ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri) {
+    BuildURL(url, iri, "GetMap");
     CPLDebug("WMS", "URL = %s", url->c_str());
 }
 
 void GDALWMSMiniDriver_WMS::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
     ImageRequest(url, iri);
 }
+
+
+void GDALWMSMiniDriver_WMS::GetTiledImageInfo(CPLString *url,
+                                              const GDALWMSImageRequestInfo &iri,
+                                              const GDALWMSTiledImageRequestInfo &tiri,
+                                              int nXInBlock,
+                                              int nYInBlock)
+{
+    BuildURL(url, iri, "GetFeatureInfo");
+    URLAppendF(url, "&query_layers=%s", m_layers.c_str());
+    URLAppendF(url, "&x=%d", nXInBlock);
+    URLAppendF(url, "&y=%d", nYInBlock);
+    const char* pszInfoFormat = CPLGetConfigOption("WMS_INFO_FORMAT", "application/vnd.ogc.gml");
+    URLAppendF(url, "&info_format=%s", pszInfoFormat);
+
+    CPLDebug("WMS", "URL = %s", url->c_str());
+}
+
 
 const char *GDALWMSMiniDriver_WMS::GetProjectionInWKT() {
     return m_projection_wkt.c_str();

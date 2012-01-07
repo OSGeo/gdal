@@ -53,6 +53,14 @@ void GDALWMSMiniDriver::ImageRequest(CPLString *url, const GDALWMSImageRequestIn
 void GDALWMSMiniDriver::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
 }
 
+void GDALWMSMiniDriver::GetTiledImageInfo(CPLString *url,
+                                              const GDALWMSImageRequestInfo &iri,
+                                              const GDALWMSTiledImageRequestInfo &tiri,
+                                              int nXInBlock,
+                                              int nYInBlock)
+{
+}
+
 const char *GDALWMSMiniDriver::GetProjectionInWKT() {
     return NULL;
 }

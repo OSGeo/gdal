@@ -638,6 +638,32 @@ def wms_16():
         gdaltest.post_reason( 'open of %s failed.' % name)
         return 'fail'
 
+    # Matches feature of "WFS:http://demo.opengeo.org/geoserver/wfs?SRSNAME=EPSG:900913" og:bugsites
+    # OGRFeature(og:bugsites):40946
+    #   gml_id (String) = bugsites.40946
+    #   cat (Integer) = 86
+    #   str1 (String) = Beetle site
+    #   POINT (-11547071.441861094906926 5528616.082632117904723)
+
+    pixel = "GeoPixel_-11547071.441861094906926_5528616.082632117904723"
+    val = ds.GetRasterBand(1).GetMetadataItem(pixel, "LocationInfo")
+    if val is None or val.find('<og:bugsites fid="bugsites.40946">') == -1:
+        gdaltest.post_reason('expected a value')
+        print(val)
+        return 'fail'
+
+    # Ask again. Should be cached
+    val_again = ds.GetRasterBand(1).GetMetadataItem(pixel, "LocationInfo")
+    if val_again != val:
+        gdaltest.post_reason('expected a value')
+        return 'fail'
+
+    # Ask another band. Should be cached
+    val2 = ds.GetRasterBand(2).GetMetadataItem(pixel, "LocationInfo")
+    if val2 != val:
+        gdaltest.post_reason('expected a value')
+        return 'fail'
+
     ds = None
 
     return 'success'
