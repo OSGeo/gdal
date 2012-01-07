@@ -1539,7 +1539,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
         }
         pszOutput[iOut] = '\0';
     }
-    else if( nScheme == CPLES_XML )
+    else if( nScheme == CPLES_XML || nScheme == CPLES_XML_BUT_QUOTES )
     {
         int iOut = 0, iIn;
 
@@ -1567,7 +1567,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
                 pszOutput[iOut++] = 'p';
                 pszOutput[iOut++] = ';';
             }
-            else if( pszInput[iIn] == '"' )
+            else if( pszInput[iIn] == '"' && nScheme != CPLES_XML_BUT_QUOTES )
             {
                 pszOutput[iOut++] = '&';
                 pszOutput[iOut++] = 'q';
@@ -1682,7 +1682,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
     pszOutput = (char *) CPLMalloc(4 * strlen(pszInput)+1);
     pszOutput[0] = '\0';
 
-    if( nScheme == CPLES_XML )
+    if( nScheme == CPLES_XML || nScheme == CPLES_XML_BUT_QUOTES  )
     {
         char ch;
         for( iIn = 0; (ch = pszInput[iIn]) != '\0'; iIn++ )
