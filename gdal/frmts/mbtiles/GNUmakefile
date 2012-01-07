@@ -3,7 +3,11 @@ include ../../GDALmake.opt
 
 OBJ	=	mbtilesdataset.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) -I../../ogr
+ifeq ($(LIBZ_SETTING),internal)
+  XTRA_OPT :=   $(XTRA_OPT) -I../zlib
+endif
+
+CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(CPPFLAGS) -I../../ogr -I../../ogr/ogrsf_frmts/geojson
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
