@@ -901,7 +901,7 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
 /* -------------------------------------------------------------------- */
     if( psNode->eType == CXT_Text )
     {
-        char *pszEscaped = CPLEscapeString( psNode->pszValue, -1, CPLES_XML );
+        char *pszEscaped = CPLEscapeString( psNode->pszValue, -1, CPLES_XML_BUT_QUOTES );
 
         CPLAssert( psNode->psChild == NULL );
 
@@ -922,8 +922,18 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
                    && psNode->psChild->eType == CXT_Text );
 
         sprintf( *ppszText + *pnLength, " %s=\"", psNode->pszValue );
-        CPLSerializeXMLNode( psNode->psChild, 0, ppszText, 
-                             pnLength, pnMaxLength );
+        *pnLength += strlen(*ppszText + *pnLength);
+
+        char *pszEscaped = CPLEscapeString( psNode->psChild->pszValue, -1, CPLES_XML );
+
+        _GrowBuffer( strlen(pszEscaped) + *pnLength,
+                     ppszText, pnMaxLength );
+        strcat( *ppszText + *pnLength, pszEscaped );
+
+        CPLFree( pszEscaped );
+
+        *pnLength += strlen(*ppszText + *pnLength);
+        _GrowBuffer( 3 + *pnLength, ppszText, pnMaxLength );
         strcat( *ppszText + *pnLength, "\"" );
     }
 
