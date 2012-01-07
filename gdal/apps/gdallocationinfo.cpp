@@ -415,12 +415,6 @@ int main( int argc, char ** argv )
             bPixelReport = FALSE;
         }
 
-        if (nOverview >= 0)
-        {
-            iPixel >>= (nOverview + 1);
-            iLine >>= (nOverview + 1);
-        }
-
     /* -------------------------------------------------------------------- */
     /*      Process each band.                                              */
     /* -------------------------------------------------------------------- */
@@ -428,8 +422,31 @@ int main( int argc, char ** argv )
         {
             GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, anBandList[i] );
 
+            int iPixelToQuery = iPixel;
+            int iLineToQuery = iLine;
+
             if (nOverview >= 0 && hBand != NULL)
-                hBand = GDALGetOverview(hBand, nOverview);
+            {
+                GDALRasterBandH hOvrBand = GDALGetOverview(hBand, nOverview);
+                if (hOvrBand != NULL)
+                {
+                    int nOvrXSize = GDALGetRasterBandXSize(hOvrBand);
+                    int nOvrYSize = GDALGetRasterBandYSize(hOvrBand);
+                    iPixelToQuery = (int)(0.5 + 1.0 * iPixel / GDALGetRasterXSize( hSrcDS ) * nOvrXSize);
+                    iLineToQuery = (int)(0.5 + 1.0 * iLine / GDALGetRasterYSize( hSrcDS ) * nOvrYSize);
+                    if (iPixelToQuery >= nOvrXSize)
+                        iPixelToQuery = nOvrXSize - 1;
+                    if (iLineToQuery >= nOvrYSize)
+                        iLineToQuery = nOvrYSize - 1;
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Cannot get overview %d of band %d",
+                             nOverview + 1, anBandList[i] );
+                }
+                hBand = hOvrBand;
+            }
 
             if (hBand == NULL)
                 continue;
@@ -450,7 +467,7 @@ int main( int argc, char ** argv )
     /* -------------------------------------------------------------------- */
             CPLString osItem;
             
-            osItem.Printf( "Pixel_%d_%d", iPixel, iLine );
+            osItem.Printf( "Pixel_%d_%d", iPixelToQuery, iLineToQuery );
             
             const char *pszLI = GDALGetMetadataItem( hBand, osItem, "LocationInfo");
     
@@ -497,7 +514,7 @@ int main( int argc, char ** argv )
     /* -------------------------------------------------------------------- */
             double adfPixel[2];
     
-            if( GDALRasterIO( hBand, GF_Read, iPixel, iLine, 1, 1, 
+            if( GDALRasterIO( hBand, GF_Read, iPixelToQuery, iLineToQuery, 1, 1, 
                               adfPixel, 1, 1, GDT_CFloat64, 0, 0) == CE_None )
             {
                 CPLString osValue;
