@@ -30,6 +30,9 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_api.h"
+#include "zlib.h"
+#include "jsonc/json.h"
+
 #include <math.h>
 
 extern "C" void GDALRegister_MBTiles();
@@ -59,11 +62,12 @@ class MBTilesDataset : public GDALPamDataset
     virtual CPLErr GetGeoTransform(double* padfGeoTransform);
     virtual const char* GetProjectionRef();
     virtual char      **GetMetadata( const char * pszDomain = "" );
-    /*virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );*/
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
+
+    char*               FindKey(int iPixel, int iLine,
+                                int& nTileColumn, int& nTileRow, int& nZoomLevel);
 
   protected:
     virtual int         CloseDependentDatasets();
@@ -98,6 +102,8 @@ class MBTilesBand: public GDALPamRasterBand
 {
     friend class MBTilesDataset;
 
+    CPLString               osLocationInfo;
+
   public:
                             MBTilesBand( MBTilesDataset* poDS, int nBand,
                                             GDALDataType eDataType,
@@ -109,6 +115,9 @@ class MBTilesBand: public GDALPamRasterBand
     virtual GDALRasterBand* GetOverview(int nLevel);
 
     virtual CPLErr          IReadBlock( int, int, void * );
+
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
 };
 
 /************************************************************************/
@@ -142,13 +151,13 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
     int nMinTileRow = (poGDS->poMainDS) ? poGDS->poMainDS->nMinTileRow : poGDS->nMinTileRow;
     nMinTileCol >>= poGDS->nLevel;
 
-    int nYOff = (((nRasterYSize / nBlockYSize - 1 - nBlockYOff) << poGDS->nLevel) + nMinTileRow) >> poGDS->nLevel;
-
-    int nZoomLevel = ((poGDS->poMainDS) ? poGDS->poMainDS->nResolutions : poGDS->nResolutions) - poGDS->nLevel;
+    int nTileColumn = nBlockXOff + nMinTileCol;
+    int nTileRow = (((nRasterYSize / nBlockYSize - 1 - nBlockYOff) << poGDS->nLevel) + nMinTileRow) >> poGDS->nLevel;
+    int nZoomLevel = ((poGDS->poMainDS) ? poGDS->poMainDS->nResolutions : poGDS->nResolutions) - poGDS->nLevel + nMinLevel;
 
     const char* pszSQL = CPLSPrintf("SELECT tile_data FROM tiles WHERE "
                                     "tile_column = %d AND tile_row = %d AND zoom_level=%d",
-                                    nBlockXOff + nMinTileCol, nYOff, nMinLevel + nZoomLevel);
+                                    nTileColumn, nTileRow, nZoomLevel);
     CPLDebug("MBTILES", "nBand=%d, nBlockXOff=%d, nBlockYOff=%d, %s",
              nBand, nBlockXOff, nBlockYOff, pszSQL);
     OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(poGDS->hDS, pszSQL, NULL, NULL);
@@ -339,6 +348,397 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                           utf8decode()                               */
+/************************************************************************/
+
+static unsigned utf8decode(const char* p, const char* end, int* len)
+{
+  unsigned char c = *(unsigned char*)p;
+  if (c < 0x80) {
+    *len = 1;
+    return c;
+  } else if (c < 0xc2) {
+    goto FAIL;
+  }
+  if (p+1 >= end || (p[1]&0xc0) != 0x80) goto FAIL;
+  if (c < 0xe0) {
+    *len = 2;
+    return
+      ((p[0] & 0x1f) << 6) +
+      ((p[1] & 0x3f));
+  } else if (c == 0xe0) {
+    if (((unsigned char*)p)[1] < 0xa0) goto FAIL;
+    goto UTF8_3;
+#if STRICT_RFC3629
+  } else if (c == 0xed) {
+    // RFC 3629 says surrogate chars are illegal.
+    if (((unsigned char*)p)[1] >= 0xa0) goto FAIL;
+    goto UTF8_3;
+  } else if (c == 0xef) {
+    // 0xfffe and 0xffff are also illegal characters
+    if (((unsigned char*)p)[1]==0xbf &&
+    ((unsigned char*)p)[2]>=0xbe) goto FAIL;
+    goto UTF8_3;
+#endif
+  } else if (c < 0xf0) {
+  UTF8_3:
+    if (p+2 >= end || (p[2]&0xc0) != 0x80) goto FAIL;
+    *len = 3;
+    return
+      ((p[0] & 0x0f) << 12) +
+      ((p[1] & 0x3f) << 6) +
+      ((p[2] & 0x3f));
+  } else if (c == 0xf0) {
+    if (((unsigned char*)p)[1] < 0x90) goto FAIL;
+    goto UTF8_4;
+  } else if (c < 0xf4) {
+  UTF8_4:
+    if (p+3 >= end || (p[2]&0xc0) != 0x80 || (p[3]&0xc0) != 0x80) goto FAIL;
+    *len = 4;
+#if STRICT_RFC3629
+    // RFC 3629 says all codes ending in fffe or ffff are illegal:
+    if ((p[1]&0xf)==0xf &&
+    ((unsigned char*)p)[2] == 0xbf &&
+    ((unsigned char*)p)[3] >= 0xbe) goto FAIL;
+#endif
+    return
+      ((p[0] & 0x07) << 18) +
+      ((p[1] & 0x3f) << 12) +
+      ((p[2] & 0x3f) << 6) +
+      ((p[3] & 0x3f));
+  } else if (c == 0xf4) {
+    if (((unsigned char*)p)[1] > 0x8f) goto FAIL; // after 0x10ffff
+    goto UTF8_4;
+  } else {
+  FAIL:
+    *len = 1;
+    return 0xfffd; // Unicode REPLACEMENT CHARACTER
+  }
+}
+
+/************************************************************************/
+/*                             FindKey()                                */
+/************************************************************************/
+
+char* MBTilesDataset::FindKey(int iPixel, int iLine,
+                              int& nTileColumn, int& nTileRow, int& nZoomLevel)
+{
+    if (poMainDS)
+        return NULL;
+
+    const int nBlockXSize = 256, nBlockYSize = 256;
+    int nBlockXOff = iPixel / nBlockXSize;
+    int nBlockYOff = iLine / nBlockYSize;
+
+    int nColInBlock = iPixel % nBlockXSize;
+    int nRowInBlock = iLine % nBlockXSize;
+
+    nTileColumn = nBlockXOff + (nMinTileCol >> nLevel);
+    nTileRow = (((nRasterYSize / nBlockYSize - 1 - nBlockYOff) << nLevel) + nMinTileRow) >> nLevel;
+    nZoomLevel = nResolutions - nLevel + nMinLevel;
+
+    char* pszKey = NULL;
+
+    OGRLayerH hSQLLyr;
+    OGRFeatureH hFeat;
+    const char* pszSQL;
+    json_object* poGrid = NULL;
+    int i;
+
+    /* See https://github.com/mapbox/utfgrid-spec/blob/master/1.0/utfgrid.md */
+    /* for the explanation of the following processings */
+
+    pszSQL = CPLSPrintf("SELECT grid FROM grids WHERE "
+                        "zoom_level = %d AND tile_column = %d AND tile_row = %d",
+                        nZoomLevel, nTileColumn, nTileRow);
+    CPLDebug("MBTILES", "%s", pszSQL);
+    hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
+    if (hSQLLyr == NULL)
+        return NULL;
+
+    hFeat = OGR_L_GetNextFeature(hSQLLyr);
+    if (hFeat == NULL || !OGR_F_IsFieldSet(hFeat, 0))
+    {
+        OGR_F_Destroy(hFeat);
+        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        return NULL;
+    }
+
+    int nDataSize = 0;
+    GByte* pabyData = OGR_F_GetFieldAsBinary(hFeat, 0, &nDataSize);
+
+    int nUncompressedSize = 256*256;
+    GByte* pabyUncompressed = (GByte*)CPLMalloc(nUncompressedSize + 1);
+
+    z_stream sStream;
+    memset(&sStream, 0, sizeof(sStream));
+    inflateInit(&sStream);
+    sStream.next_in   = pabyData;
+    sStream.avail_in  = nDataSize;
+    sStream.next_out  = pabyUncompressed;
+    sStream.avail_out = nUncompressedSize;
+    int nStatus = inflate(&sStream, Z_FINISH);
+    inflateEnd(&sStream);
+    if (nStatus != Z_OK && nStatus != Z_STREAM_END)
+    {
+        CPLDebug("MBTILES", "Error unzipping grid");
+        nUncompressedSize = 0;
+        pabyUncompressed[nUncompressedSize] = 0;
+    }
+    else
+    {
+        nUncompressedSize -= sStream.avail_out;
+        pabyUncompressed[nUncompressedSize] = 0;
+        //CPLDebug("MBTILES", "Grid size = %d", nUncompressedSize);
+        //CPLDebug("MBTILES", "Grid value = %s", (const char*)pabyUncompressed);
+    }
+
+    struct json_tokener *jstok = NULL;
+    json_object* jsobj = NULL;
+
+    if (nUncompressedSize == 0)
+    {
+        goto end;
+    }
+
+    jstok = json_tokener_new();
+    jsobj = json_tokener_parse_ex(jstok, (const char*)pabyUncompressed, -1);
+    if( jstok->err != json_tokener_success)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "JSON parsing error: %s (at offset %d)",
+                    json_tokener_errors[jstok->err],
+                    jstok->char_offset);
+        json_tokener_free(jstok);
+
+        goto end;
+    }
+
+    json_tokener_free(jstok);
+
+    if (json_object_is_type(jsobj, json_type_object))
+    {
+        poGrid = json_object_object_get(jsobj, "grid");
+    }
+    if (poGrid != NULL && json_object_is_type(poGrid, json_type_array))
+    {
+        int nLines = json_object_array_length(poGrid);
+        int nFactor = 256 / nLines;
+        nRowInBlock /= nFactor;
+        nColInBlock /= nFactor;
+
+        json_object* poRow = json_object_array_get_idx(poGrid, nRowInBlock);
+        char* pszRow = NULL;
+        /* Extract line of interest in grid */
+        if (poRow != NULL && json_object_is_type(poRow, json_type_string))
+        {
+            pszRow = CPLStrdup(json_object_get_string(poRow));
+        }
+
+        if (pszRow == NULL)
+            goto end;
+
+        /* Unapply JSON encoding */
+        for (i = 0; pszRow[i] != '\0'; i++)
+        {
+            unsigned char c = ((GByte*)pszRow)[i];
+            if (c >= 93) c--;
+            if (c >= 35) c--;
+            if (c < 32)
+            {
+                CPLDebug("MBTILES", "Invalid character at byte %d", i);
+                break;
+            }
+            c -= 32;
+            ((GByte*)pszRow)[i] = c;
+        }
+
+        if (pszRow[i] == '\0')
+        {
+            char* pszEnd = pszRow + i;
+
+            int iCol = 0;
+            i = 0;
+            int nKey = -1;
+            while(pszRow + i < pszEnd)
+            {
+                int len = 0;
+                unsigned int res = utf8decode(pszRow + i, pszEnd, &len);
+
+                /* Invalid UTF8 ? */
+                if (res > 127 && len == 1)
+                    break;
+
+                if (iCol == nColInBlock)
+                {
+                    nKey = (int)res;
+                    //CPLDebug("MBTILES", "Key index = %d", nKey);
+                    break;
+                }
+                i += len;
+                iCol ++;
+            }
+
+            /* Find key */
+            json_object* poKeys = json_object_object_get(jsobj, "keys");
+            if (nKey >= 0 && poKeys != NULL &&
+                json_object_is_type(poKeys, json_type_array) &&
+                nKey < json_object_array_length(poKeys))
+            {
+                json_object* poKey = json_object_array_get_idx(poKeys, nKey);
+                if (poKey != NULL && json_object_is_type(poKey, json_type_string))
+                {
+                    pszKey = CPLStrdup(json_object_get_string(poKey));
+                }
+            }
+        }
+
+        CPLFree(pszRow);
+    }
+
+end:
+    if (jsobj)
+        json_object_put(jsobj);
+    if (pabyUncompressed)
+        CPLFree(pabyUncompressed);
+    if (hFeat)
+        OGR_F_Destroy(hFeat);
+    if (hSQLLyr)
+        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+
+    return pszKey;
+}
+
+/************************************************************************/
+/*                         GetMetadataItem()                            */
+/************************************************************************/
+
+const char *MBTilesBand::GetMetadataItem( const char * pszName,
+                                          const char * pszDomain )
+{
+    MBTilesDataset* poGDS = (MBTilesDataset*) poDS;
+
+/* ==================================================================== */
+/*      LocationInfo handling.                                          */
+/* ==================================================================== */
+    if( pszDomain != NULL
+        && EQUAL(pszDomain,"LocationInfo")
+        && (EQUALN(pszName,"Pixel_",6) || EQUALN(pszName,"GeoPixel_",9)) )
+    {
+        int iPixel, iLine;
+
+        if (poGDS->poMainDS != NULL)
+            return NULL;
+
+        if (OGR_DS_GetLayerByName(poGDS->hDS, "grids") == NULL)
+            return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      What pixel are we aiming at?                                    */
+/* -------------------------------------------------------------------- */
+        if( EQUALN(pszName,"Pixel_",6) )
+        {
+            if( sscanf( pszName+6, "%d_%d", &iPixel, &iLine ) != 2 )
+                return NULL;
+        }
+        else if( EQUALN(pszName,"GeoPixel_",9) )
+        {
+            double adfGeoTransform[6];
+            double adfInvGeoTransform[6];
+            double dfGeoX, dfGeoY;
+
+            if( sscanf( pszName+9, "%lf_%lf", &dfGeoX, &dfGeoY ) != 2 )
+                return NULL;
+
+            if( GetDataset() == NULL )
+                return NULL;
+
+            if( GetDataset()->GetGeoTransform( adfGeoTransform ) != CE_None )
+                return NULL;
+
+            if( !GDALInvGeoTransform( adfGeoTransform, adfInvGeoTransform ) )
+                return NULL;
+
+            iPixel = (int) floor(
+                adfInvGeoTransform[0]
+                + adfInvGeoTransform[1] * dfGeoX
+                + adfInvGeoTransform[2] * dfGeoY );
+            iLine = (int) floor(
+                adfInvGeoTransform[3]
+                + adfInvGeoTransform[4] * dfGeoX
+                + adfInvGeoTransform[5] * dfGeoY );
+        }
+        else
+            return NULL;
+
+        if( iPixel < 0 || iLine < 0
+            || iPixel >= GetXSize()
+            || iLine >= GetYSize() )
+            return NULL;
+
+        int nTileColumn = -1, nTileRow = -1, nZoomLevel = -1;
+        char* pszKey = poGDS->FindKey(iPixel, iLine, nTileColumn, nTileRow, nZoomLevel);
+
+        if (pszKey != NULL)
+        {
+            CPLDebug("MBTILES", "Key = %s", pszKey);
+
+            osLocationInfo = "<LocationInfo>";
+            osLocationInfo += "<Key>";
+            char* pszXMLEscaped = CPLEscapeString(pszKey, -1, CPLES_XML_BUT_QUOTES);
+            osLocationInfo += pszXMLEscaped;
+            CPLFree(pszXMLEscaped);
+            osLocationInfo += "</Key>";
+
+            if (OGR_DS_GetLayerByName(poGDS->hDS, "grid_data") != NULL &&
+                strchr(pszKey, '\'') == NULL)
+            {
+                const char* pszSQL;
+                OGRLayerH hSQLLyr;
+                OGRFeatureH hFeat;
+
+                pszSQL = CPLSPrintf("SELECT key_json FROM grid_data WHERE "
+                                    "zoom_level = %d AND tile_column = %d AND tile_row = %d AND key_name = '%s'",
+                                    nZoomLevel, nTileColumn, nTileRow, pszKey);
+                //CPLDebug("MBTILES", "%s", pszSQL);
+                hSQLLyr = OGR_DS_ExecuteSQL(poGDS->hDS, pszSQL, NULL, NULL);
+                if (hSQLLyr)
+                {
+                    hFeat = OGR_L_GetNextFeature(hSQLLyr);
+                    if (hFeat != NULL && OGR_F_IsFieldSet(hFeat, 0))
+                    {
+                        const char* pszJSon = OGR_F_GetFieldAsString(hFeat, 0);
+                        //CPLDebug("MBTILES", "JSon = %s", pszJSon);
+
+                        osLocationInfo += "<JSon>";
+#ifdef CPLES_XML_BUT_QUOTES
+                        pszXMLEscaped = CPLEscapeString(pszJSon, -1, CPLES_XML_BUT_QUOTES);
+#else
+                        pszXMLEscaped = CPLEscapeString(pszJSon, -1, CPLES_XML);
+#endif
+                        osLocationInfo += pszXMLEscaped;
+                        CPLFree(pszXMLEscaped);
+                        osLocationInfo += "</JSon>";
+                    }
+                    OGR_F_Destroy(hFeat);
+                }
+                OGR_DS_ReleaseResultSet(poGDS->hDS, hSQLLyr);
+            }
+
+            osLocationInfo += "</LocationInfo>";
+
+            CPLFree(pszKey);
+
+            return osLocationInfo.c_str();
+        }
+
+        return NULL;
+    }
+    else
+        return GDALPamRasterBand::GetMetadataItem(pszName, pszDomain);
 }
 
 /************************************************************************/
@@ -622,7 +1022,7 @@ int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS,
 
     pszSQL = "SELECT value FROM metadata WHERE name = 'minzoom' UNION ALL "
              "SELECT value FROM metadata WHERE name = 'maxzoom'";
-    CPLDebug("MBTiles", "%s", pszSQL);
+    CPLDebug("MBTILES", "%s", pszSQL);
     hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
     if (hSQLLyr)
     {
@@ -665,7 +1065,7 @@ int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS,
             pszSQL = CPLSPrintf(
                 "SELECT zoom_level FROM tiles WHERE zoom_level = %d LIMIT 1",
                 iLevel);
-            CPLDebug("MBTiles", "%s", pszSQL);
+            CPLDebug("MBTILES", "%s", pszSQL);
             hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
             if (hSQLLyr)
             {
@@ -687,7 +1087,7 @@ int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS,
             pszSQL = CPLSPrintf(
                 "SELECT zoom_level FROM tiles WHERE zoom_level = %d LIMIT 1",
                 iLevel);
-            CPLDebug("MBTiles", "%s", pszSQL);
+            CPLDebug("MBTILES", "%s", pszSQL);
             hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
             if (hSQLLyr)
             {
@@ -703,7 +1103,7 @@ int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS,
         }
 #else
         pszSQL = "SELECT min(zoom_level), max(zoom_level) FROM tiles";
-        CPLDebug("MBTiles", "%s", pszSQL);
+        CPLDebug("MBTILES", "%s", pszSQL);
         hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
         if (hSQLLyr == NULL)
         {
@@ -747,7 +1147,7 @@ int MBTilesGetBounds(OGRDataSourceH hDS, int nMinLevel, int nMaxLevel,
     OGRFeatureH hFeat;
 
     pszSQL = "SELECT value FROM metadata WHERE name = 'bounds'";
-    CPLDebug("MBTiles", "%s", pszSQL);
+    CPLDebug("MBTILES", "%s", pszSQL);
     hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
     if (hSQLLyr)
     {
@@ -795,7 +1195,7 @@ int MBTilesGetBounds(OGRDataSourceH hDS, int nMinLevel, int nMaxLevel,
         pszSQL = CPLSPrintf("SELECT min(tile_column), max(tile_column), "
                             "min(tile_row), max(tile_row) FROM tiles "
                             "WHERE zoom_level = %d", nMaxLevel);
-        CPLDebug("MBTiles", "%s", pszSQL);
+        CPLDebug("MBTILES", "%s", pszSQL);
         hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
         if (hSQLLyr == NULL)
         {
@@ -939,13 +1339,13 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
                            (nMinTileCol  + nMaxTileCol) / 2,
                            (nMinTileRow  + nMaxTileRow) / 2,
                            nMaxLevel);
-        CPLDebug("MBTiles", "%s", osSQL.c_str());
+        CPLDebug("MBTILES", "%s", osSQL.c_str());
         hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
         if (hSQLLyr == NULL)
         {
             osSQL = CPLSPrintf("SELECT tile_data FROM tiles WHERE "
                                "zoom_level = %d LIMIT 1", nMaxLevel);
-            CPLDebug("MBTiles", "%s", osSQL.c_str());
+            CPLDebug("MBTILES", "%s", osSQL.c_str());
             hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
             if (hSQLLyr == NULL)
                 goto end;
@@ -1023,7 +1423,7 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
 /*      Round bounds to the lowest zoom level                           */
 /* -------------------------------------------------------------------- */
 
-        //CPLDebug("MBTiles", "%d %d %d %d", nMinTileCol, nMinTileRow, nMaxTileCol, nMaxTileRow);
+        //CPLDebug("MBTILES", "%d %d %d %d", nMinTileCol, nMinTileRow, nMaxTileCol, nMaxTileRow);
         nMinTileCol = (int)(1.0 * nMinTileCol / (1 << nResolutions)) * (1 << nResolutions);
         nMinTileRow = (int)(1.0 * nMinTileRow / (1 << nResolutions)) * (1 << nResolutions);
         nMaxTileCol = (int)ceil(1.0 * nMaxTileCol / (1 << nResolutions)) * (1 << nResolutions);
