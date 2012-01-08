@@ -327,6 +327,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     virtual OGRErr      ReorderFields( int* panMap );
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
 
+    virtual OGRFeature *GetNextFeature();
     virtual OGRFeature *GetFeature( long nFeatureId );
 
     virtual int         TestCapability( const char * );
