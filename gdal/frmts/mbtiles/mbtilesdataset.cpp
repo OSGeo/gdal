@@ -73,6 +73,8 @@ class MBTilesDataset : public GDALPamDataset
                                                         int &nTileColumn,
                                                         int &nTileRow,
                                                         int &nZoomLevel );
+    int                 HasNonEmptyGrids();
+
   protected:
     virtual int         CloseDependentDatasets();
 
@@ -94,6 +96,8 @@ class MBTilesDataset : public GDALPamDataset
 
     int bFetchedMetadata;
     CPLStringList aosList;
+
+    int bHasNonEmptyGrids;
 };
 
 /************************************************************************/
@@ -463,6 +467,68 @@ void MBTilesDataset::ComputeTileColTileRowZoomLevel(int nBlockXOff,
 }
 
 /************************************************************************/
+/*                          HasNonEmptyGrids()                          */
+/************************************************************************/
+
+int MBTilesDataset::HasNonEmptyGrids()
+{
+    OGRLayerH hSQLLyr;
+    OGRFeatureH hFeat;
+    const char* pszSQL;
+
+    if (poMainDS)
+        return poMainDS->HasNonEmptyGrids();
+
+    if (bHasNonEmptyGrids >= 0)
+        return bHasNonEmptyGrids;
+
+    bHasNonEmptyGrids = FALSE;
+
+    if (OGR_DS_GetLayerByName(hDS, "grids") == NULL)
+        return FALSE;
+
+    pszSQL = "SELECT type FROM sqlite_master WHERE name = 'grids'";
+    CPLDebug("MBTILES", "%s", pszSQL);
+    hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
+    if (hSQLLyr == NULL)
+        return FALSE;
+
+    hFeat = OGR_L_GetNextFeature(hSQLLyr);
+    if (hFeat == NULL || !OGR_F_IsFieldSet(hFeat, 0))
+    {
+        OGR_F_Destroy(hFeat);
+        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        return FALSE;
+    }
+
+    int bGridsIsView = strcmp(OGR_F_GetFieldAsString(hFeat, 0), "view") == 0;
+
+    OGR_F_Destroy(hFeat);
+    OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+
+    bHasNonEmptyGrids = TRUE;
+
+    /* In the case 'grids' is a view (and a join between the 'map' and 'grid_utfgrid' layers */
+    /* the cost of evaluating a join is very long, even if grid_utfgrid is empty */
+    /* so check it is not empty */
+    if (bGridsIsView)
+    {
+        OGRLayerH hGridUTFGridLyr;
+        hGridUTFGridLyr = OGR_DS_GetLayerByName(hDS, "grid_utfgrid");
+        if (hGridUTFGridLyr != NULL)
+        {
+            OGR_L_ResetReading(hGridUTFGridLyr);
+            hFeat = OGR_L_GetNextFeature(hGridUTFGridLyr);
+            OGR_F_Destroy(hFeat);
+
+            bHasNonEmptyGrids = hFeat != NULL;
+        }
+    }
+
+    return bHasNonEmptyGrids;
+}
+
+/************************************************************************/
 /*                             FindKey()                                */
 /************************************************************************/
 
@@ -564,13 +630,21 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine,
     }
     if (poGrid != NULL && json_object_is_type(poGrid, json_type_array))
     {
-        int nLines = json_object_array_length(poGrid);
-        int nFactor = 256 / nLines;
+        int nLines;
+        int nFactor;
+        json_object* poRow;
+        char* pszRow = NULL;
+
+        nLines = json_object_array_length(poGrid);
+        if (nLines == 0)
+            goto end;
+
+        nFactor = 256 / nLines;
         nRowInBlock /= nFactor;
         nColInBlock /= nFactor;
 
-        json_object* poRow = json_object_array_get_idx(poGrid, nRowInBlock);
-        char* pszRow = NULL;
+        poRow = json_object_array_get_idx(poGrid, nRowInBlock);
+
         /* Extract line of interest in grid */
         if (poRow != NULL && json_object_is_type(poRow, json_type_string))
         {
@@ -669,7 +743,7 @@ const char *MBTilesBand::GetMetadataItem( const char * pszName,
     {
         int iPixel, iLine;
 
-        if (OGR_DS_GetLayerByName(poGDS->hDS, "grids") == NULL)
+        if (!poGDS->HasNonEmptyGrids())
             return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -720,7 +794,7 @@ const char *MBTilesBand::GetMetadataItem( const char * pszName,
 
         if (pszKey != NULL)
         {
-            CPLDebug("MBTILES", "Key = %s", pszKey);
+            //CPLDebug("MBTILES", "Key = %s", pszKey);
 
             osLocationInfo = "<LocationInfo>";
             osLocationInfo += "<Key>";
@@ -736,10 +810,10 @@ const char *MBTilesBand::GetMetadataItem( const char * pszName,
                 OGRLayerH hSQLLyr;
                 OGRFeatureH hFeat;
 
-                pszSQL = CPLSPrintf("SELECT key_json FROM grid_data WHERE "
-                                    "zoom_level = %d AND tile_column = %d AND tile_row = %d AND key_name = '%s'",
-                                    nZoomLevel, nTileColumn, nTileRow, pszKey);
-                //CPLDebug("MBTILES", "%s", pszSQL);
+                pszSQL = CPLSPrintf("SELECT key_json FROM keymap WHERE "
+                                    "key_name = '%s'",
+                                    pszKey);
+                CPLDebug("MBTILES", "%s", pszSQL);
                 hSQLLyr = OGR_DS_ExecuteSQL(poGDS->hDS, pszSQL, NULL, NULL);
                 if (hSQLLyr)
                 {
@@ -856,6 +930,7 @@ MBTilesDataset::MBTilesDataset()
     nMinTileCol = nMinTileRow = 0;
     nMinLevel = 0;
     bFetchedMetadata = FALSE;
+    bHasNonEmptyGrids = -1;
 }
 
 /************************************************************************/
@@ -877,6 +952,8 @@ MBTilesDataset::MBTilesDataset(MBTilesDataset* poMainDS, int nLevel)
     nRasterYSize = poMainDS->nRasterYSize / (1 << nLevel);
     nMinTileCol = nMinTileRow = 0;
     nMinLevel = 0;
+    bFetchedMetadata = FALSE;
+    bHasNonEmptyGrids = -1;
 }
 
 /************************************************************************/
