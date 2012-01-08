@@ -300,6 +300,27 @@ CPLErr MBTilesBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
 
                 CPLFree(pSrcImage);
             }
+            else if (GDALGetRasterXSize(hDSTile) == nBlockXSize &&
+                     GDALGetRasterYSize(hDSTile) == nBlockYSize &&
+                     (nTileBands == 3 && poGDS->nBands == 1))
+            {
+                bGotTile = TRUE;
+
+                GByte* pabyRGBImage = (GByte*)CPLMalloc(3 * nBlockXSize * nBlockYSize);
+                GDALDatasetRasterIO(hDSTile, GF_Read,
+                                    0, 0, nBlockXSize, nBlockYSize,
+                                    pabyRGBImage, nBlockXSize, nBlockYSize, eDataType,
+                                    3, NULL, 3, 3 * nBlockXSize, 1);
+                for(int i=0;i<nBlockXSize*nBlockYSize;i++)
+                {
+                    int R = pabyRGBImage[3*i];
+                    int G = pabyRGBImage[3*i+1];
+                    int B = pabyRGBImage[3*i+2];
+                    GByte Y = (GByte)((213 * R + 715 * G + 72 * B) / 1000);
+                    ((GByte*)pImage)[i] = Y;
+                }
+                CPLFree(pabyRGBImage);
+            }
             else
             {
                 CPLDebug("MBTILES", "tile size = %d, tile height = %d, tile bands = %d",
@@ -1245,6 +1266,93 @@ int MBTilesGetBounds(OGRDataSourceH hDS, int nMinLevel, int nMaxLevel,
 }
 
 /************************************************************************/
+/*                        MBTilesGetBandCount()                         */
+/************************************************************************/
+
+static
+int MBTilesGetBandCount(OGRDataSourceH hDS, int nMinLevel, int nMaxLevel,
+                        int nMinTileRow, int nMaxTileRow,
+                        int nMinTileCol, int nMaxTileCol)
+{
+    OGRLayerH hSQLLyr;
+    OGRFeatureH hFeat;
+    const char* pszSQL;
+
+    int nBands = -1;
+
+    pszSQL = CPLSPrintf("SELECT tile_data FROM tiles WHERE "
+                            "tile_column = %d AND tile_row = %d AND zoom_level = %d",
+                            (nMinTileCol  + nMaxTileCol) / 2,
+                            (nMinTileRow  + nMaxTileRow) / 2,
+                            nMaxLevel);
+    CPLDebug("MBTILES", "%s", pszSQL);
+    hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
+    if (hSQLLyr == NULL)
+    {
+        pszSQL = CPLSPrintf("SELECT tile_data FROM tiles WHERE "
+                            "zoom_level = %d LIMIT 1", nMaxLevel);
+        CPLDebug("MBTILES", "%s", pszSQL);
+        hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
+        if (hSQLLyr == NULL)
+            return -1;
+    }
+
+    hFeat = OGR_L_GetNextFeature(hSQLLyr);
+    if (hFeat == NULL)
+    {
+        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        return -1;
+    }
+
+    CPLString osMemFileName;
+    osMemFileName.Printf("/vsimem/%p", hSQLLyr);
+
+    int nDataSize = 0;
+    GByte* pabyData = OGR_F_GetFieldAsBinary(hFeat, 0, &nDataSize);
+
+    VSIFCloseL(VSIFileFromMemBuffer( osMemFileName.c_str(), pabyData,
+                                    nDataSize, FALSE));
+
+    GDALDatasetH hDSTile =
+        GDALOpenInternal(osMemFileName.c_str(), GA_ReadOnly, apszAllowedDrivers);
+    if (hDSTile == NULL)
+    {
+        VSIUnlink(osMemFileName.c_str());
+        OGR_F_Destroy(hFeat);
+        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        return -1;
+    }
+
+    nBands = GDALGetRasterCount(hDSTile);
+
+    if ((nBands != 1 && nBands != 3 && nBands != 4) ||
+        GDALGetRasterXSize(hDSTile) != 256 ||
+        GDALGetRasterYSize(hDSTile) != 256 ||
+        GDALGetRasterDataType(GDALGetRasterBand(hDSTile, 1)) != GDT_Byte)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported tile characteristics");
+        GDALClose(hDSTile);
+        VSIUnlink(osMemFileName.c_str());
+        OGR_F_Destroy(hFeat);
+        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        return -1;
+    }
+
+    if (nBands == 1 &&
+        GDALGetRasterColorTable(GDALGetRasterBand(hDSTile, 1)) != NULL)
+    {
+        nBands = 3;
+    }
+
+    GDALClose(hDSTile);
+    VSIUnlink(osMemFileName.c_str());
+    OGR_F_Destroy(hFeat);
+    OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+
+    return nBands;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -1284,11 +1392,11 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         OGRLayerH hSQLLyr = NULL;
         int nMinLevel = -1, nMaxLevel = -1;
         int nMinTileRow = 0, nMaxTileRow = 0, nMinTileCol = 0, nMaxTileCol = 0;
-        GDALDatasetH hDSTile;
-        int nDataSize = 0;
-        GByte* pabyData = NULL;
         int bHasBounds = FALSE;
         int bHasMinMaxLevel = FALSE;
+
+        const char* pszBandCount = CPLGetConfigOption("MBTILES_BAND_COUNT", "-1");
+        nBands = atoi(pszBandCount);
 
         osMetadataTableName = "metadata";
 
@@ -1372,73 +1480,15 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
 /*      Get number of bands                                             */
 /* -------------------------------------------------------------------- */
-        osSQL = CPLSPrintf("SELECT tile_data FROM tiles WHERE "
-                           "tile_column = %d AND tile_row = %d AND zoom_level = %d",
-                           (nMinTileCol  + nMaxTileCol) / 2,
-                           (nMinTileRow  + nMaxTileRow) / 2,
-                           nMaxLevel);
-        CPLDebug("MBTILES", "%s", osSQL.c_str());
-        hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
-        if (hSQLLyr == NULL)
+
+        if( ! (nBands == 1 || nBands == 3 || nBands == 4) )
         {
-            osSQL = CPLSPrintf("SELECT tile_data FROM tiles WHERE "
-                               "zoom_level = %d LIMIT 1", nMaxLevel);
-            CPLDebug("MBTILES", "%s", osSQL.c_str());
-            hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
-            if (hSQLLyr == NULL)
+            nBands = MBTilesGetBandCount(hDS, nMinLevel, nMaxLevel,
+                                         nMinTileRow, nMaxTileRow,
+                                         nMinTileCol, nMaxTileCol);
+            if (nBands < 0)
                 goto end;
         }
-
-        hFeat = OGR_L_GetNextFeature(hSQLLyr);
-        if (hFeat == NULL)
-        {
-            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-            goto end;
-        }
-
-        CPLString osMemFileName;
-        osMemFileName.Printf("/vsimem/%p", hSQLLyr);
-
-        nDataSize = 0;
-        pabyData = OGR_F_GetFieldAsBinary(hFeat, 0, &nDataSize);
-
-        VSIFCloseL(VSIFileFromMemBuffer( osMemFileName.c_str(), pabyData,
-                                         nDataSize, FALSE));
-
-        hDSTile = GDALOpenInternal(osMemFileName.c_str(), GA_ReadOnly, apszAllowedDrivers);
-        if (hDSTile == NULL)
-        {
-            VSIUnlink(osMemFileName.c_str());
-            OGR_F_Destroy(hFeat);
-            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-            goto end;
-        }
-
-        nBands = GDALGetRasterCount(hDSTile);
-
-        if ((nBands != 1 && nBands != 3 && nBands != 4) ||
-            GDALGetRasterXSize(hDSTile) != 256 ||
-            GDALGetRasterYSize(hDSTile) != 256 ||
-            GDALGetRasterDataType(GDALGetRasterBand(hDSTile, 1)) != GDT_Byte)
-        {
-            CPLError(CE_Failure, CPLE_NotSupported, "Unsupported tile characteristics");
-            GDALClose(hDSTile);
-            VSIUnlink(osMemFileName.c_str());
-            OGR_F_Destroy(hFeat);
-            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-            goto end;
-        }
-
-        if (nBands == 1 &&
-            GDALGetRasterColorTable(GDALGetRasterBand(hDSTile, 1)) != NULL)
-        {
-            nBands = 3;
-        }
-
-        GDALClose(hDSTile);
-        VSIUnlink(osMemFileName.c_str());
-        OGR_F_Destroy(hFeat);
-        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
 
 /* -------------------------------------------------------------------- */
 /*      Set dataset attributes                                          */
