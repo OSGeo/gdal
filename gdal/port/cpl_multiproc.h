@@ -41,6 +41,9 @@
 
 #if defined(WIN32) && !defined(CPL_MULTIPROC_STUB)
 #  define CPL_MULTIPROC_WIN32
+/* MinGW can have pthread support, so disable it to avoid issues */
+/* in cpl_multiproc.cpp */
+#  undef  CPL_MULTIPROC_PTHREAD
 #endif
 
 #if !defined(CPL_MULTIPROC_WIN32) && !defined(CPL_MULTIPROC_PTHREAD) \
