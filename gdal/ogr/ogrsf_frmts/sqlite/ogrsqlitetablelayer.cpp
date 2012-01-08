@@ -306,6 +306,18 @@ OGRErr OGRSQLiteTableLayer::ResetStatement()
     }
 }
 
+/************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
+
+OGRFeature *OGRSQLiteTableLayer::GetNextFeature()
+
+{
+    if (HasLayerDefnError())
+        return NULL;
+
+    return OGRSQLiteLayer::GetNextFeature();
+}
 
 /************************************************************************/
 /*                             GetFeature()                             */
