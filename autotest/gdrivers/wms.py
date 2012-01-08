@@ -647,7 +647,7 @@ def wms_16():
 
     pixel = "GeoPixel_-11547071.441861094906926_5528616.082632117904723"
     val = ds.GetRasterBand(1).GetMetadataItem(pixel, "LocationInfo")
-    if val is None or val.find('<og:bugsites fid="bugsites.40946">') == -1:
+    if val is None or val.find('<og:cat>86</og:cat>') == -1:
         gdaltest.post_reason('expected a value')
         print(val)
         return 'fail'
@@ -660,6 +660,12 @@ def wms_16():
 
     # Ask another band. Should be cached
     val2 = ds.GetRasterBand(2).GetMetadataItem(pixel, "LocationInfo")
+    if val2 != val:
+        gdaltest.post_reason('expected a value')
+        return 'fail'
+
+    # Ask an overview band
+    val2 = ds.GetRasterBand(1).GetOverview(0).GetMetadataItem(pixel, "LocationInfo")
     if val2 != val:
         gdaltest.post_reason('expected a value')
         return 'fail'
@@ -678,15 +684,15 @@ def wms_cleanup():
 
 gdaltest_list = [
     wms_1,
-    wms_2,
-    wms_3,
-    wms_4,
+    #wms_2,
+    #wms_3,
+    #wms_4,
     wms_5,
     wms_6,
     wms_7,
     wms_8,
     wms_9,
-    wms_10,
+    #wms_10,
     wms_11,
     wms_12,
     wms_13,
