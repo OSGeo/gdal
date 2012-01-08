@@ -992,6 +992,7 @@ char** MBTilesDataset::GetMetadata( const char * pszDomain )
             const char* pszValue = OGR_F_GetFieldAsString(hFeat, 1);
             if (pszValue[0] != '\0' &&
                 strncmp(pszValue, "function(",9) != 0 &&
+                strstr(pszValue, "<img ") == NULL &&
                 strstr(pszValue, "<p>") == NULL &&
                 strstr(pszValue, "</p>") == NULL &&
                 strstr(pszValue, "<div") == NULL)
@@ -1027,7 +1028,7 @@ int MBTilesDataset::Identify(GDALOpenInfo* poOpenInfo)
 /************************************************************************/
 
 static
-int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS,
+int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
                                 int &nMinLevel, int &nMaxLevel)
 {
     const char* pszSQL;
@@ -1078,8 +1079,8 @@ int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS,
         for(iLevel = 0; nMinLevel < 0 && iLevel < 16; iLevel ++)
         {
             pszSQL = CPLSPrintf(
-                "SELECT zoom_level FROM tiles WHERE zoom_level = %d LIMIT 1",
-                iLevel);
+                "SELECT zoom_level FROM %s WHERE zoom_level = %d LIMIT 1",
+                (bHasMap) ? "map" : "tiles", iLevel);
             CPLDebug("MBTILES", "%s", pszSQL);
             hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
             if (hSQLLyr)
@@ -1100,8 +1101,8 @@ int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS,
         for(iLevel = 32; nMaxLevel < 0 && iLevel >= nMinLevel; iLevel --)
         {
             pszSQL = CPLSPrintf(
-                "SELECT zoom_level FROM tiles WHERE zoom_level = %d LIMIT 1",
-                iLevel);
+                "SELECT zoom_level FROM %s WHERE zoom_level = %d LIMIT 1",
+                (bHasMap) ? "map" : "tiles", iLevel);
             CPLDebug("MBTILES", "%s", pszSQL);
             hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
             if (hSQLLyr)
@@ -1301,15 +1302,37 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         if (hRasterLyr == NULL)
             goto end;
 
-        /*
-        int bHasMap = OGR_DS_GetLayerByName(hDS, "map") != NULL &&
-                      OGR_DS_GetLayerByName(hDS, "images") != NULL;*/
+        int bHasMap = OGR_DS_GetLayerByName(hDS, "map") != NULL;
+        if (bHasMap)
+        {
+            bHasMap = FALSE;
+
+            hSQLLyr = OGR_DS_ExecuteSQL(hDS, "SELECT type FROM sqlite_master WHERE name = 'tiles'", NULL, NULL);
+            if (hSQLLyr != NULL)
+            {
+                hFeat = OGR_L_GetNextFeature(hSQLLyr);
+                if (hFeat)
+                {
+                    if (OGR_F_IsFieldSet(hFeat, 0))
+                    {
+                        bHasMap = strcmp(OGR_F_GetFieldAsString(hFeat, 0),
+                                         "view") == 0;
+                        if (!bHasMap)
+                        {
+                            CPLDebug("MBTILES", "Weird! 'tiles' is not a view, but 'map' exists");
+                        }
+                    }
+                    OGR_F_Destroy(hFeat);
+                }
+                OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+            }
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Get minimum and maximum zoom levels                             */
 /* -------------------------------------------------------------------- */
 
-        bHasMinMaxLevel = MBTilesGetMinMaxZoomLevel(hDS,
+        bHasMinMaxLevel = MBTilesGetMinMaxZoomLevel(hDS, bHasMap,
                                                     nMinLevel, nMaxLevel);
 
         if (bHasMinMaxLevel && (nMinLevel < 0 || nMinLevel > nMaxLevel))
