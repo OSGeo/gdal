@@ -427,6 +427,14 @@ const char *GDALWMSRasterBand::GetMetadataItem( const char * pszName,
                 adfInvGeoTransform[3]
                 + adfInvGeoTransform[4] * dfGeoX
                 + adfInvGeoTransform[5] * dfGeoY );
+
+            /* The GetDataset() for the WMS driver is always the main overview level, so rescale */
+            /* the values if we are an overview */
+            if (m_overview >= 0)
+            {
+                iPixel = (int) (1.0 * iPixel * GetXSize() / GetDataset()->GetRasterBand(1)->GetXSize());
+                iLine = (int) (1.0 * iLine * GetYSize() / GetDataset()->GetRasterBand(1)->GetYSize());
+            }
         }
         else
             return NULL;
