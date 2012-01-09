@@ -30,6 +30,8 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_api.h"
+#include "cpl_vsil_curl_priv.h"
+
 #include "zlib.h"
 #include "jsonc/json.h"
 
@@ -980,9 +982,10 @@ int MBTilesDataset::CloseDependentDatasets()
         CSLDestroy(papszImageStructure);
         papszImageStructure = NULL;
 
+        int i;
+
         if (papoOverviews)
         {
-            int i;
             for(i=0;i<nResolutions;i++)
             {
                 if (papoOverviews[i] != NULL &&
@@ -1343,19 +1346,150 @@ int MBTilesGetBounds(OGRDataSourceH hDS, int nMinLevel, int nMaxLevel,
 }
 
 /************************************************************************/
+/*                        MBTilesCurlReadCbk()                          */
+/************************************************************************/
+
+/* We spy the data received by CURL for the initial request where we try */
+/* to get a first tile to see its characteristics. We just need the header */
+/* to determine that, so let's make VSICurl stop reading after we have found it */
+
+static int MBTilesCurlReadCbk(VSILFILE* fp,
+                              void *pabyBuffer, size_t nBufferSize,
+                              void* pfnUserData)
+{
+    const GByte abyPNGSig[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, /* PNG signature */
+                                0x00, 0x00, 0x00, 0x0D, /* IHDR length */
+                                0x49, 0x48, 0x44, 0x52  /* IHDR chunk */ };
+
+    /* JPEG SOF0 (Start Of Frame 0) marker */
+    const GByte abyJPEG1CompSig[] = { 0xFF, 0xC0, /* marker */
+                                      0x00, 0x0B, /* data length = 8 + 1 * 3 */
+                                      0x08,       /* depth : 8 bit */
+                                      0x01, 0x00, /* width : 256 */
+                                      0x01, 0x00, /* height : 256 */
+                                      0x01        /* components : 1 */
+                                    };
+    const GByte abyJPEG3CompSig[] = { 0xFF, 0xC0, /* marker */
+                                      0x00, 0x11, /* data length = 8 + 3 * 3 */
+                                      0x08,       /* depth : 8 bit */
+                                      0x01, 0x00, /* width : 256 */
+                                      0x01, 0x00, /* width : 256 */
+                                      0x03        /* components : 3 */
+                                     };
+
+    int i;
+    for(i = 0; i < (int)nBufferSize - (int)sizeof(abyPNGSig); i++)
+    {
+        if (memcmp(((GByte*)pabyBuffer) + i, abyPNGSig, sizeof(abyPNGSig)) == 0 &&
+            i + sizeof(abyPNGSig) + 4 + 4 + 1 + 1 < nBufferSize)
+        {
+            GByte* ptr = ((GByte*)(pabyBuffer)) + i + (int)sizeof(abyPNGSig);
+
+            int nWidth;
+            memcpy(&nWidth, ptr, 4);
+            CPL_MSBPTR32(&nWidth);
+            ptr += 4;
+
+            int nHeight;
+            memcpy(&nHeight, ptr, 4);
+            CPL_MSBPTR32(&nHeight);
+            ptr += 4;
+
+            GByte nDepth = *ptr;
+            ptr += 1;
+
+            GByte nColorType = *ptr;
+            CPLDebug("MBTILES", "PNG: nWidth=%d nHeight=%d depth=%d nColorType=%d",
+                        nWidth, nHeight, nDepth, nColorType);
+
+            int* pnBands = (int*) pfnUserData;
+            *pnBands = -2;
+            if (nWidth == 256 && nHeight == 256 && nDepth == 8)
+            {
+                if (nColorType == 0)
+                    *pnBands = 1; /* Gray */
+                else if (nColorType == 2)
+                    *pnBands = 3; /* RGB */
+                else if (nColorType == 3)
+                    *pnBands = 3; /* palette -> RGB */
+                else if (nColorType == 4)
+                    *pnBands = 2; /* Gray + alpha */
+                else if (nColorType == 6)
+                    *pnBands = 4; /* RGB + alpha */
+            }
+
+            return FALSE;
+        }
+    }
+
+    for(i = 0; i < (int)nBufferSize - (int)sizeof(abyJPEG1CompSig); i++)
+    {
+        if (memcmp(((GByte*)pabyBuffer) + i, abyJPEG1CompSig, sizeof(abyJPEG1CompSig)) == 0)
+        {
+            CPLDebug("MBTILES", "JPEG: nWidth=%d nHeight=%d depth=%d nBands=%d",
+                        256, 256, 8, 1);
+
+            int* pnBands = (int*) pfnUserData;
+            *pnBands = 1;
+
+            return FALSE;
+        }
+        else if (memcmp(((GByte*)pabyBuffer) + i, abyJPEG3CompSig, sizeof(abyJPEG3CompSig)) == 0)
+        {
+            CPLDebug("MBTILES", "JPEG: nWidth=%d nHeight=%d depth=%d nBands=%d",
+                        256, 256, 8, 3);
+
+            int* pnBands = (int*) pfnUserData;
+            *pnBands = 3;
+
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                        MBTilesGetBandCount()                         */
 /************************************************************************/
 
 static
-int MBTilesGetBandCount(OGRDataSourceH hDS, int nMinLevel, int nMaxLevel,
+int MBTilesGetBandCount(OGRDataSourceH &hDS, int nMinLevel, int nMaxLevel,
                         int nMinTileRow, int nMaxTileRow,
                         int nMinTileCol, int nMaxTileCol)
 {
     OGRLayerH hSQLLyr;
     OGRFeatureH hFeat;
     const char* pszSQL;
+    VSILFILE* fpCURLOGR = NULL;
 
     int nBands = -1;
+
+    /* Small trick to get the VSILFILE associated with the OGR SQLite */
+    /* DB */
+    CPLString osDSName(OGR_DS_GetName(hDS));
+    if (strncmp(osDSName.c_str(), "/vsicurl/", 9) == 0)
+    {
+        CPLErrorReset();
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        hSQLLyr = OGR_DS_ExecuteSQL(hDS, "GetVSILFILE()", NULL, NULL);
+        CPLPopErrorHandler();
+        CPLErrorReset();
+        if (hSQLLyr != NULL)
+        {
+            hFeat = OGR_L_GetNextFeature(hSQLLyr);
+            if (hFeat)
+            {
+                if (OGR_F_IsFieldSet(hFeat, 0))
+                {
+                    const char* pszPointer = OGR_F_GetFieldAsString(hFeat, 0);
+                    fpCURLOGR = (VSILFILE* )CPLScanPointer( pszPointer, strlen(pszPointer) );
+                }
+                OGR_F_Destroy(hFeat);
+            }
+            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        }
+    }
 
     pszSQL = CPLSPrintf("SELECT tile_data FROM tiles WHERE "
                             "tile_column = %d AND tile_row = %d AND zoom_level = %d",
@@ -1363,7 +1497,54 @@ int MBTilesGetBandCount(OGRDataSourceH hDS, int nMinLevel, int nMaxLevel,
                             (nMinTileRow  + nMaxTileRow) / 2,
                             nMaxLevel);
     CPLDebug("MBTILES", "%s", pszSQL);
-    hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
+
+    if (fpCURLOGR)
+    {
+        /* Install a spy on the file connexion that will intercept */
+        /* PNG or JPEG headers, to interrupt their downloading */
+        /* once the header is found. Speeds up dataset opening. */
+        VSICurlInstallReadCbk(fpCURLOGR, MBTilesCurlReadCbk, &nBands, TRUE);
+
+        CPLErrorReset();
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
+        CPLPopErrorHandler();
+
+        VSICurlUninstallReadCbk(fpCURLOGR);
+
+        /* Did the spy intercept something interesting ? */
+        if (nBands != -1)
+        {
+            CPLErrorReset();
+
+            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+            hSQLLyr = NULL;
+
+            /* Re-open OGR SQLite DB, because with our spy we have simulated an I/O error */
+            /* that SQLite will have difficulies to recover within the existing connection */
+            /* No worry ! This will be fast because the /vsicurl/ cache has cached the already */
+            /* read blocks */
+            OGRReleaseDataSource(hDS);
+            hDS = OGROpen(osDSName.c_str(), FALSE, NULL);
+            if (hDS == NULL)
+                return -1;
+
+            /* Unrecognized form of PNG. Error out */
+            if (nBands <= 0)
+                return -1;
+
+            return nBands;
+        }
+        else if (CPLGetLastErrorType() == CE_Failure)
+        {
+            CPLError(CE_Failure, CPLGetLastErrorNo(), "%s", CPLGetLastErrorMsg());
+        }
+    }
+    else
+    {
+        hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, NULL, NULL);
+    }
+
     if (hSQLLyr == NULL)
     {
         pszSQL = CPLSPrintf("SELECT tile_data FROM tiles WHERE "
@@ -1471,9 +1652,8 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         int nMinTileRow = 0, nMaxTileRow = 0, nMinTileCol = 0, nMaxTileCol = 0;
         int bHasBounds = FALSE;
         int bHasMinMaxLevel = FALSE;
-
-        const char* pszBandCount = CPLGetConfigOption("MBTILES_BAND_COUNT", "-1");
-        nBands = atoi(pszBandCount);
+        int bHasMap;
+        const char* pszBandCount;
 
         osMetadataTableName = "metadata";
 
@@ -1487,7 +1667,7 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         if (hRasterLyr == NULL)
             goto end;
 
-        int bHasMap = OGR_DS_GetLayerByName(hDS, "map") != NULL;
+        bHasMap = OGR_DS_GetLayerByName(hDS, "map") != NULL;
         if (bHasMap)
         {
             bHasMap = FALSE;
@@ -1557,6 +1737,9 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
 /*      Get number of bands                                             */
 /* -------------------------------------------------------------------- */
+
+        pszBandCount = CPLGetConfigOption("MBTILES_BAND_COUNT", "-1");
+        nBands = atoi(pszBandCount);
 
         if( ! (nBands == 1 || nBands == 3 || nBands == 4) )
         {
@@ -1644,7 +1827,9 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         if ( !EQUALN(poOpenInfo->pszFilename, "/vsicurl/", 9) )
             poDS->TryLoadXML();
         else
+        {
             poDS->SetPamFlags(poDS->GetPamFlags() & ~GPF_DIRTY);
+        }
     }
 
 end:
