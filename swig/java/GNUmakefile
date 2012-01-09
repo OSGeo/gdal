@@ -68,6 +68,7 @@ test:
 	${JAVA_RUN} GDALTestIO
 	${JAVA_RUN} GDALContour -i 1 tmp_test/byte.tif tmp_test/contour.shp
 	${JAVA_RUN} testgetpoints
+	${JAVA_RUN} ogrtindex tmp_test/contour_index.shp tmp_test/contour.shp
 
 $(JAVA_MODULES): lib%jni.$(SO_EXT): %_wrap.$(OBJ_EXT)
 	$(LINK) $(LDFLAGS) $(CONFIG_LIBS) $< -o $@ $(LINK_EXTRAFLAGS)
