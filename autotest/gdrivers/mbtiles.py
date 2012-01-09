@@ -30,8 +30,8 @@
 
 import os
 import sys
-import gdal
-import ogr
+from osgeo import gdal
+from osgeo import ogr
 
 sys.path.append( '../pymod' )
 
@@ -114,6 +114,52 @@ def mbtiles_2():
     return 'success'
 
 ###############################################################################
+# Open a /vsicurl/ DB
+
+def mbtiles_3():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    try:
+        drv = gdal.GetDriverByName( 'HTTP' )
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    # Check that we have SQLite VFS support
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/mbtiles_3.db')
+    gdal.PopErrorHandler()
+    if ds is None:
+        return 'skip'
+    ds = None
+    gdal.Unlink('/vsimem/mbtiles_3.db')
+
+    ds = gdal.Open('/vsicurl/http://a.tiles.mapbox.com/v3/mapbox.geography-class.mbtiles')
+    if ds is None:
+        # Just skip. The service isn't perfectly reliable sometimes
+        return 'skip'
+
+    # long=2,lat=49 in WGS 84 --> x=222638,y=6274861 in Google Mercator
+    locationInfo = ds.GetRasterBand(1).GetMetadataItem('GeoPixel_222638_6274861', 'LocationInfo')
+    if locationInfo is None or locationInfo.find("France") == -1:
+        gdaltest.post_reason('did not get expected LocationInfo')
+        print(locationInfo)
+        return 'fail'
+
+    locationInfo2 = ds.GetRasterBand(1).GetOverview(5).GetMetadataItem('GeoPixel_222638_6274861', 'LocationInfo')
+    if locationInfo2 != locationInfo:
+        gdaltest.post_reason('did not get expected LocationInfo on overview')
+        print(locationInfo2)
+        return 'fail'
+
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def mbtiles_cleanup():
@@ -126,6 +172,7 @@ def mbtiles_cleanup():
 gdaltest_list = [
     mbtiles_1,
     mbtiles_2,
+    mbtiles_3,
     mbtiles_cleanup ]
 
 if __name__ == '__main__':
