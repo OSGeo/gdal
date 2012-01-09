@@ -106,6 +106,8 @@ OGRSQLiteDataSource::OGRSQLiteDataSource()
 #ifdef HAVE_SQLITE_VFS
     pMyVFS = NULL;
 #endif
+
+    fpMainFile = NULL; /* Do not close ! The VFS layer will do it for us */
 }
 
 /************************************************************************/
@@ -139,6 +141,7 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
     if (pMyVFS)
     {
         sqlite3_vfs_unregister(pMyVFS);
+        CPLFree(pMyVFS->pAppData);
         CPLFree(pMyVFS);
     }
 #endif
@@ -242,6 +245,32 @@ int OGRSQLiteDataSource::SetCacheSize()
 }
 
 /************************************************************************/
+/*                 OGRSQLiteDataSourceNotifyFileOpened()                */
+/************************************************************************/
+
+static
+void OGRSQLiteDataSourceNotifyFileOpened (void* pfnUserData,
+                                              const char* pszFilename,
+                                              VSILFILE* fp)
+{
+    ((OGRSQLiteDataSource*)pfnUserData)->NotifyFileOpened(pszFilename, fp);
+}
+
+
+/************************************************************************/
+/*                          NotifyFileOpened()                          */
+/************************************************************************/
+
+void OGRSQLiteDataSource::NotifyFileOpened(const char* pszFilename,
+                                           VSILFILE* fp)
+{
+    if (strcmp(pszFilename, pszName) == 0)
+    {
+        fpMainFile = fp;
+    }
+}
+
+/************************************************************************/
 /*                            OpenOrCreateDB()                          */
 /************************************************************************/
 
@@ -253,7 +282,7 @@ int OGRSQLiteDataSource::OpenOrCreateDB(int flags)
     int bUseOGRVFS = CSLTestBoolean(CPLGetConfigOption("SQLITE_USE_OGR_VFS", "NO"));
     if (bUseOGRVFS || strncmp(pszName, "/vsi", 4) == 0)
     {
-        pMyVFS = OGRSQLiteCreateVFS();
+        pMyVFS = OGRSQLiteCreateVFS(OGRSQLiteDataSourceNotifyFileOpened, this);
         sqlite3_vfs_register(pMyVFS, 0);
         rc = sqlite3_open_v2( pszName, &hDB, flags, pMyVFS->zName );
     }
@@ -268,6 +297,29 @@ int OGRSQLiteDataSource::OpenOrCreateDB(int flags)
                   "sqlite3_open(%s) failed: %s",
                   pszName, sqlite3_errmsg( hDB ) );
         return FALSE;
+    }
+
+    const char* pszSqliteJournal = CPLGetConfigOption("OGR_SQLITE_JOURNAL", NULL);
+    if (pszSqliteJournal != NULL)
+    {
+        char* pszErrMsg = NULL;
+        char **papszResult;
+        int nRowCount, nColCount;
+
+        const char* pszSQL = CPLSPrintf("PRAGMA journal_mode = %s",
+                                        pszSqliteJournal);
+
+        rc = sqlite3_get_table( hDB, pszSQL,
+                                &papszResult, &nRowCount, &nColCount,
+                                &pszErrMsg );
+        if( rc == SQLITE_OK )
+        {
+            sqlite3_free_table(papszResult);
+        }
+        else
+        {
+            sqlite3_free( pszErrMsg );
+        }
     }
 
     if (!SetCacheSize())
@@ -1161,6 +1213,20 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         DeleteLayer( pszLayerName );
         return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Special case GetVSILFILE() command (used by GDAL MBTiles driver)*/
+/* -------------------------------------------------------------------- */
+    if (strcmp(pszSQLCommand, "GetVSILFILE()") == 0)
+    {
+        if (fpMainFile == NULL)
+            return NULL;
+
+        char szVal[64];
+        int nRet = CPLPrintPointer( szVal, fpMainFile, sizeof(szVal)-1 );
+        szVal[nRet] = '\0';
+        return new OGRSQLiteSingleFeatureLayer( "VSILFILE", szVal );
     }
 
 /* -------------------------------------------------------------------- */
