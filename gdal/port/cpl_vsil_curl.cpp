@@ -32,6 +32,7 @@
 #include "cpl_multiproc.h"
 #include "cpl_hash_set.h"
 #include "cpl_time.h"
+#include "cpl_vsil_curl_priv.h"
 
 CPL_CVSID("$Id$");
 
@@ -40,6 +41,28 @@ CPL_CVSID("$Id$");
 void VSIInstallCurlFileHandler(void)
 {
     /* not supported */
+}
+
+/************************************************************************/
+/*                      VSICurlInstallReadCbk()                         */
+/************************************************************************/
+
+int VSICurlInstallReadCbk (VSILFILE* fp,
+                           VSICurlReadCbkFunc pfnReadCbk,
+                           void* pfnUserData,
+                           int bStopOnInterrruptUntilUninstall)
+{
+    return FALSE;
+}
+
+
+/************************************************************************/
+/*                    VSICurlUninstallReadCbk()                         */
+/************************************************************************/
+
+int VSICurlUninstallReadCbk(VSILFILE* fp)
+{
+    return FALSE;
 }
 
 #else
@@ -246,6 +269,11 @@ class VSICurlHandle : public VSIVirtualHandle
 
     int             DownloadRegion(vsi_l_offset startOffset, int nBlocks);
 
+    VSICurlReadCbkFunc  pfnReadCbk;
+    void               *pReadCbkUserData;
+    int                 bStopOnInterrruptUntilUninstall;
+    int                 bInterrupted;
+
   public:
 
     VSICurlHandle(VSICurlFilesystemHandler* poFS, const char* pszURL);
@@ -266,6 +294,11 @@ class VSICurlHandle : public VSIVirtualHandle
     int                  Exists();
     int                  IsDirectory() const { return bIsDirectory; }
     time_t               GetMTime() const { return mTime; }
+
+    int                  InstallReadCbk(VSICurlReadCbkFunc pfnReadCbk,
+                                        void* pfnUserData,
+                                        int bStopOnInterrruptUntilUninstall);
+    int                  UninstallReadCbk();
 };
 
 /************************************************************************/
@@ -289,6 +322,11 @@ VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandler* poFS, const char* pszURL)
     lastDownloadedOffset = -1;
     nBlocksToDownload = 1;
     bEOF = FALSE;
+
+    pfnReadCbk = NULL;
+    pReadCbkUserData = NULL;
+    bStopOnInterrruptUntilUninstall = FALSE;
+    bInterrupted = FALSE;
 }
 
 /************************************************************************/
@@ -300,6 +338,39 @@ VSICurlHandle::~VSICurlHandle()
     CPLFree(pszURL);
 }
 
+/************************************************************************/
+/*                          InstallReadCbk()                            */
+/************************************************************************/
+
+int   VSICurlHandle::InstallReadCbk(VSICurlReadCbkFunc pfnReadCbkIn,
+                                    void* pfnUserDataIn,
+                                    int bStopOnInterrruptUntilUninstallIn)
+{
+    if (pfnReadCbk != NULL)
+        return FALSE;
+
+    pfnReadCbk = pfnReadCbkIn;
+    pReadCbkUserData = pfnUserDataIn;
+    bStopOnInterrruptUntilUninstall = bStopOnInterrruptUntilUninstallIn;
+    bInterrupted = FALSE;
+    return TRUE;
+}
+
+/************************************************************************/
+/*                         UninstallReadCbk()                           */
+/************************************************************************/
+
+int VSICurlHandle::UninstallReadCbk()
+{
+    if (pfnReadCbk == NULL)
+        return FALSE;
+
+    pfnReadCbk = NULL;
+    pReadCbkUserData = NULL;
+    bStopOnInterrruptUntilUninstall = FALSE;
+    bInterrupted = FALSE;
+    return TRUE;
+}
 
 /************************************************************************/
 /*                                Seek()                                */
@@ -397,13 +468,21 @@ typedef struct
     int             bFoundContentRange;
     int             bError;
     int             bDownloadHeaderOnly;
+
+    VSILFILE           *fp; 
+    VSICurlReadCbkFunc  pfnReadCbk;
+    void               *pReadCbkUserData;
+    int                 bInterrupted;
 } WriteFuncStruct;
 
 /************************************************************************/
 /*                    VSICURLInitWriteFuncStruct()                      */
 /************************************************************************/
 
-static void VSICURLInitWriteFuncStruct(WriteFuncStruct* psStruct)
+static void VSICURLInitWriteFuncStruct(WriteFuncStruct   *psStruct,
+                                       VSILFILE          *fp,
+                                       VSICurlReadCbkFunc pfnReadCbk,
+                                       void              *pReadCbkUserData)
 {
     psStruct->pBuffer = NULL;
     psStruct->nSize = 0;
@@ -417,6 +496,11 @@ static void VSICURLInitWriteFuncStruct(WriteFuncStruct* psStruct)
     psStruct->bFoundContentRange = FALSE;
     psStruct->bError = FALSE;
     psStruct->bDownloadHeaderOnly = FALSE;
+
+    psStruct->fp = fp;
+    psStruct->pfnReadCbk = pfnReadCbk;
+    psStruct->pReadCbkUserData = pReadCbkUserData;
+    psStruct->bInterrupted = FALSE;
 }
 
 /************************************************************************/
@@ -479,6 +563,18 @@ static int VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb, void
                         psStruct->bError = TRUE;
                         return 0;
                     }
+                }
+            }
+        }
+        else
+        {
+            if (psStruct->pfnReadCbk)
+            {
+                if ( ! psStruct->pfnReadCbk(psStruct->fp, buffer, nSize,
+                                            psStruct->pReadCbkUserData) )
+                {
+                    psStruct->bInterrupted = TRUE;
+                    return 0;
                 }
             }
         }
@@ -557,7 +653,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
 
     VSICurlSetOptions(hCurlHandle, pszURL);
 
-    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData);
+    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, NULL, NULL, NULL);
 
     /* HACK for mbtiles driver: proper fix would be to auto-detect servers that don't accept HEAD */
     /* http://a.tiles.mapbox.com/v3/ doesn't accept HEAD, so let's start a GET */
@@ -582,7 +678,7 @@ vsi_l_offset VSICurlHandle::GetFileSize()
     curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
 
     /* Bug with older curl versions (<=7.16.4) and FTP. See http://curl.haxx.se/mail/lib-2007-08/0312.html */
-    VSICURLInitWriteFuncStruct(&sWriteFuncData);
+    VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
 
@@ -693,6 +789,9 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     WriteFuncStruct sWriteFuncData;
     WriteFuncStruct sWriteFuncHeaderData;
 
+    if (bInterrupted && bStopOnInterrruptUntilUninstall)
+        return FALSE;
+
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
     if (cachedFileProp->eExists == EXIST_NO)
         return FALSE;
@@ -700,11 +799,11 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     CURL* hCurlHandle = poFS->GetCurlHandleFor(pszURL);
     VSICurlSetOptions(hCurlHandle, pszURL);
 
-    VSICURLInitWriteFuncStruct(&sWriteFuncData);
+    VSICURLInitWriteFuncStruct(&sWriteFuncData, (VSILFILE*)this, pfnReadCbk, pReadCbkUserData);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
 
-    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData);
+    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, NULL, NULL, NULL);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, VSICurlHandleWriteFunc);
     sWriteFuncHeaderData.bIsHTTP = strncmp(pszURL, "http", 4) == 0;
@@ -729,6 +828,16 @@ int VSICurlHandle::DownloadRegion(vsi_l_offset startOffset, int nBlocks)
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, NULL);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, NULL);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, NULL);
+
+    if (sWriteFuncData.bInterrupted)
+    {
+        bInterrupted = TRUE;
+
+        CPLFree(sWriteFuncData.pBuffer);
+        CPLFree(sWriteFuncHeaderData.pBuffer);
+
+        return FALSE;
+    }
 
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
@@ -904,7 +1013,8 @@ size_t VSICurlHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
 
             if (DownloadRegion(nOffsetToDownload, nBlocksToDownload) == FALSE)
             {
-                bEOF = TRUE;
+                if (!bInterrupted)
+                    bEOF = TRUE;
                 return 0;
             }
             psRegion = poFS->GetRegion(pszURL, iterOffset);
@@ -946,6 +1056,9 @@ int VSICurlHandle::ReadMultiRange( int nRanges, void ** ppData,
 {
     WriteFuncStruct sWriteFuncData;
     WriteFuncStruct sWriteFuncHeaderData;
+
+    if (bInterrupted && bStopOnInterrruptUntilUninstall)
+        return FALSE;
 
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
     if (cachedFileProp->eExists == EXIST_NO)
@@ -993,11 +1106,11 @@ int VSICurlHandle::ReadMultiRange( int nRanges, void ** ppData,
     CURL* hCurlHandle = poFS->GetCurlHandleFor(pszURL);
     VSICurlSetOptions(hCurlHandle, pszURL);
 
-    VSICURLInitWriteFuncStruct(&sWriteFuncData);
+    VSICURLInitWriteFuncStruct(&sWriteFuncData, (VSILFILE*)this, pfnReadCbk, pReadCbkUserData);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
 
-    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData);
+    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, NULL, NULL, NULL);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, VSICurlHandleWriteFunc);
     sWriteFuncHeaderData.bIsHTTP = strncmp(pszURL, "http", 4) == 0;
@@ -1030,6 +1143,16 @@ int VSICurlHandle::ReadMultiRange( int nRanges, void ** ppData,
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, NULL);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, NULL);
 
+    if (sWriteFuncData.bInterrupted)
+    {
+        bInterrupted = TRUE;
+
+        CPLFree(sWriteFuncData.pBuffer);
+        CPLFree(sWriteFuncHeaderData.pBuffer);
+
+        return -1;
+    }
+    
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
 
@@ -2200,7 +2323,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, int* pbGotF
         #endif
             }
 
-            VSICURLInitWriteFuncStruct(&sWriteFuncData);
+            VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
             curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
             curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
 
@@ -2337,7 +2460,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname, int* pbGotF
 
         curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
 
-        VSICURLInitWriteFuncStruct(&sWriteFuncData);
+        VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
 
@@ -2551,5 +2674,27 @@ void VSIInstallCurlFileHandler(void)
     VSIFileManager::InstallHandler( "/vsicurl/", new VSICurlFilesystemHandler );
 }
 
+/************************************************************************/
+/*                      VSICurlInstallReadCbk()                         */
+/************************************************************************/
+
+int VSICurlInstallReadCbk (VSILFILE* fp,
+                           VSICurlReadCbkFunc pfnReadCbk,
+                           void* pfnUserData,
+                           int bStopOnInterrruptUntilUninstall)
+{
+    return ((VSICurlHandle*)fp)->InstallReadCbk(pfnReadCbk, pfnUserData,
+                                                bStopOnInterrruptUntilUninstall);
+}
+
+
+/************************************************************************/
+/*                    VSICurlUninstallReadCbk()                         */
+/************************************************************************/
+
+int VSICurlUninstallReadCbk(VSILFILE* fp)
+{
+    return ((VSICurlHandle*)fp)->UninstallReadCbk();
+}
 
 #endif /* HAVE_CURL */
