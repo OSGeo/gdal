@@ -409,12 +409,15 @@ class OGRSQLiteSingleFeatureLayer : public OGRLayer
 {
   private:
     int                 nVal;
+    char               *pszVal;
     OGRFeatureDefn     *poFeatureDefn;
     int                 iNextShapeId;
 
   public:
                         OGRSQLiteSingleFeatureLayer( const char* pszLayerName,
                                                      int nVal );
+                        OGRSQLiteSingleFeatureLayer( const char* pszLayerName,
+                                                     const char *pszVal );
                         ~OGRSQLiteSingleFeatureLayer();
 
     virtual void        ResetReading();
@@ -462,6 +465,9 @@ class OGRSQLiteDataSource : public OGRDataSource
 #ifdef HAVE_SQLITE_VFS
     sqlite3_vfs*        pMyVFS;
 #endif
+
+    VSILFILE*           fpMainFile; /* Set by the VFS layer when it opens the DB */
+                                    /* Must *NOT* be closed by the datasource explicitely. */
 
   public:
                         OGRSQLiteDataSource();
@@ -522,6 +528,9 @@ class OGRSQLiteDataSource : public OGRDataSource
     int                 GetUpdate() const { return bUpdate; }
 
     void                SetName(const char* pszNameIn);
+
+    void                NotifyFileOpened (const char* pszFilename,
+                                          VSILFILE* fp);
 };
 
 /************************************************************************/
@@ -546,7 +555,8 @@ class OGRSQLiteDriver : public OGRSFDriver
 CPLString OGRSQLiteEscape( const char *pszSrcName );
 int OGRSQLiteGetSpatialiteVersionNumber();
 #ifdef HAVE_SQLITE_VFS
-sqlite3_vfs* OGRSQLiteCreateVFS();
+typedef void (*pfnNotifyFileOpenedType)(void* pfnUserData, const char* pszFilename, VSILFILE* fp);
+sqlite3_vfs* OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void* pfnUserData);
 #endif
 
 #endif /* ndef _OGR_SQLITE_H_INCLUDED */
