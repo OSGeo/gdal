@@ -48,6 +48,25 @@ OGRSQLiteSingleFeatureLayer::OGRSQLiteSingleFeatureLayer(
 
     iNextShapeId = 0;
     this->nVal = nVal;
+    pszVal = NULL;
+}
+
+/************************************************************************/
+/*                    OGRSQLiteSingleFeatureLayer()                     */
+/************************************************************************/
+
+OGRSQLiteSingleFeatureLayer::OGRSQLiteSingleFeatureLayer(
+                                                     const char* pszLayerName,
+                                                     const char *pszVal )
+{
+    poFeatureDefn = new OGRFeatureDefn( "SELECT" );
+    poFeatureDefn->Reference();
+    OGRFieldDefn oField( pszLayerName, OFTString );
+    poFeatureDefn->AddFieldDefn( &oField );
+
+    iNextShapeId = 0;
+    nVal = 0;
+    this->pszVal = CPLStrdup(pszVal);
 }
 
 /************************************************************************/
@@ -61,6 +80,7 @@ OGRSQLiteSingleFeatureLayer::~OGRSQLiteSingleFeatureLayer()
         poFeatureDefn->Release();
         poFeatureDefn = NULL;
     }
+    CPLFree(pszVal);
 }
 
 /************************************************************************/
@@ -82,7 +102,10 @@ OGRFeature * OGRSQLiteSingleFeatureLayer::GetNextFeature()
         return NULL;
 
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
-    poFeature->SetField(0, nVal);
+    if (pszVal)
+        poFeature->SetField(0, pszVal);
+    else
+        poFeature->SetField(0, nVal);
     poFeature->SetFID(iNextShapeId ++);
     return poFeature;
 }
