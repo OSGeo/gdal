@@ -58,6 +58,7 @@ test:
 	$(JAVA_RUN) GDALTestIO
 	$(JAVA_RUN) GDALContour -i 1 tmp_test/byte.tif tmp_test/contour.shp
 	$(JAVA_RUN) testgetpoints
+	${JAVA_RUN} ogrtindex tmp_test/contour_index.shp tmp_test/contour.shp
 
 clean:
 	if exist org\nul rmdir /s /q org
