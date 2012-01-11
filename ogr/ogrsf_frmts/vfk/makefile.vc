@@ -1,8 +1,12 @@
-OBJ        = vfkreader.obj vfkreadersqlite.obj \
+CORE_OBJ        = vfkreader.obj vfkreadersqlite.obj \
 	vfkdatablock.obj vfkdatablocksqlite.obj \
 	vfkpropertydefn.obj \
 	vfkfeature.obj vfkfeaturesqlite.obj \
 	vfkproperty.obj
+
+OGR_OBJ = ogrvfkdriver.obj ogrvfkdatasource.obj ogrvfklayer.obj
+
+OBJ = $(CORE_OBJ) $(OGR_OBJ)
 
 EXTRAFLAGS = -I.. -I..\.. $(SQLITE_EXTRAFLAGS)
 
