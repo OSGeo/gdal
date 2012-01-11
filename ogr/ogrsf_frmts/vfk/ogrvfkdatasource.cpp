@@ -120,6 +120,7 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
 		 pszNewName );
         return FALSE;
     }
+
     /* load data (whole file) */
     poReader->SetSourceFile(pszNewName);
     poReader->LoadData();
@@ -179,7 +180,7 @@ int OGRVFKDataSource::TestCapability(const char * pszCap)
   \return poiter to OGRVFKLayer instance
   \return NULL on error
 */
-OGRVFKLayer *OGRVFKDataSource::CreateLayerFromBlock(const VFKDataBlock *poDataBlock)
+OGRVFKLayer *OGRVFKDataSource::CreateLayerFromBlock(const IVFKDataBlock *poDataBlock)
 {
     OGRVFKLayer *poLayer;
 

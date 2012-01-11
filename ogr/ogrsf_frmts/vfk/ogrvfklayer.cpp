@@ -137,7 +137,7 @@ void OGRVFKLayer::ResetReading()
   \return pointer to OGRGeometry
   \return NULL on error
 */
-OGRGeometry *OGRVFKLayer::CreateGeometry(VFKFeature * poVfkFeature)
+OGRGeometry *OGRVFKLayer::CreateGeometry(IVFKFeature * poVfkFeature)
 {
     return poVfkFeature->GetGeometry();
 }
@@ -201,7 +201,7 @@ OGRFeature *OGRVFKLayer::GetNextFeature()
 	    poOGRGeom = NULL;
 	}
 	
-	poVFKFeature = poDataBlock->GetNextFeature();
+	poVFKFeature = (VFKFeature *) poDataBlock->GetNextFeature();
 	if (!poVFKFeature)
 	    return NULL;	
 	
@@ -227,7 +227,7 @@ OGRFeature *OGRVFKLayer::GetNextFeature()
 */
 OGRFeature *OGRVFKLayer::GetFeature(long nFID)
 {
-    VFKFeature *poVFKFeature;
+    IVFKFeature *poVFKFeature;
     
     poVFKFeature = poDataBlock->GetFeature(nFID);
     if (!poVFKFeature)
@@ -244,7 +244,7 @@ OGRFeature *OGRVFKLayer::GetFeature(long nFID)
   \return pointer to OGRFeature
   \return NULL not found
 */
-OGRFeature *OGRVFKLayer::GetFeature(VFKFeature *poVFKFeature)
+OGRFeature *OGRVFKLayer::GetFeature(IVFKFeature *poVFKFeature)
 {
     OGRGeometry *poGeom;
     
@@ -254,9 +254,10 @@ OGRFeature *OGRVFKLayer::GetFeature(VFKFeature *poVFKFeature)
     
     /* get features geometry */
     poGeom = CreateGeometry(poVFKFeature);
+    /* segfault ???
     if (poGeom != NULL)
 	poGeom->assignSpatialReference(poSRS);
-    
+    */
     /* does it satisfy the spatial query, if there is one? */
     if (m_poFilterGeom != NULL && poGeom && !FilterGeometry(poGeom)) {
 	return NULL;
@@ -267,20 +268,7 @@ OGRFeature *OGRVFKLayer::GetFeature(VFKFeature *poVFKFeature)
     poOGRFeature->SetFID(poVFKFeature->GetFID());
     // poOGRFeature->SetFID(++m_iNextFeature);
     
-    for (int iField = 0; iField < poDataBlock->GetPropertyCount(); iField++) {
-	if (poVFKFeature->GetProperty(iField)->IsNull())
-	    continue;
-	OGRFieldType fType = poOGRFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
-	if (fType == OFTInteger) 
-	    poOGRFeature->SetField(iField,
-				   poVFKFeature->GetProperty(iField)->GetValueI());
-	else if (fType == OFTReal)
-	    poOGRFeature->SetField(iField,
-				   poVFKFeature->GetProperty(iField)->GetValueD());
-	else
-	    poOGRFeature->SetField(iField,
-				   poVFKFeature->GetProperty(iField)->GetValueS());
-    }
+    poVFKFeature->LoadProperties(poOGRFeature);
     
     /* test against the attribute query */
     if (m_poAttrQuery != NULL &&
