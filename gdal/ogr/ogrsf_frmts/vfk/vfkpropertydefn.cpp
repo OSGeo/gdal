@@ -6,7 +6,7 @@
  * Author:   Martin Landa, landa.martin gmail.com
  *
  ******************************************************************************
- * Copyright (c) 2009-2010, Martin Landa <landa.martin gmail.com>
+ * Copyright (c) 2009-2010, 2012, Martin Landa <landa.martin gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -73,8 +73,9 @@ VFKPropertyDefn::VFKPropertyDefn(const char *pszName, const char *pszType)
 	else {
 	    if (m_nWidth < 10)
 		m_eFType = OFTInteger;
-	    else
-		m_eFType = OFTString;
+	    else {
+		m_eFType  = OFTString;
+	    }
 	}
     }
     else if (*m_pszType == 'T') {
@@ -99,4 +100,26 @@ VFKPropertyDefn::~VFKPropertyDefn()
 {
     CPLFree(m_pszName);
     CPLFree(m_pszType);
+}
+
+/*!
+  \brief Get SQL data type 
+
+  \return string with data type ("text" by default)
+*/
+CPLString VFKPropertyDefn::GetTypeSQL() const
+{
+    switch(m_eFType) {
+    case OFTInteger:
+	return CPLString("integer");
+    case OFTReal:
+	return CPLString("real");
+    case OFTString:
+	if (m_pszType[0] == 'N')
+	    return CPLString("integer");
+	else
+	    return CPLString("text");
+    default:
+	return CPLString("text");
+    }
 }

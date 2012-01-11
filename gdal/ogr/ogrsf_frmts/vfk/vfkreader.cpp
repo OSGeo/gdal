@@ -55,7 +55,11 @@ IVFKReader::~IVFKReader()
 */
 IVFKReader *CreateVFKReader()
 {
+#ifdef HAVE_SQLITE
+    return new VFKReaderSQLite();
+#else
     return new VFKReader();
+#endif
 }
 
 /*!
@@ -204,7 +208,8 @@ int VFKReader::LoadDataBlocks()
     int           nRow;
     
     VFKDataBlock *poNewDataBlock;
-
+    VFKFeature   *poNewFeature;
+    
     if (m_pszWholeText == NULL)
         return FALSE;
 
@@ -224,7 +229,7 @@ int VFKReader::LoadDataBlocks()
                 if (pszBlockName == NULL)
                     break;
 
-		poNewDataBlock = new VFKDataBlock(pszBlockName, this);
+		poNewDataBlock = (VFKDataBlock *) CreateDataBlock(pszBlockName);
 		CPLFree(pszBlockName);
 		pszBlockName = NULL;
 		poNewDataBlock->SetGeometryType();
@@ -237,7 +242,7 @@ int VFKReader::LoadDataBlocks()
                 if (pszBlockName == NULL)
                     break;
 
-		poNewDataBlock = GetDataBlock(pszBlockName);
+		poNewDataBlock = (VFKDataBlock *) GetDataBlock(pszBlockName);
 		if (poNewDataBlock == NULL) {
 		    if (!EQUAL(pszBlockName, "KATUZE")) {
 			/* ignore KATUZE block */
@@ -245,9 +250,11 @@ int VFKReader::LoadDataBlocks()
 				 "Data block '%s' not found.\n", pszBlockName);
 		    }
 		}
-		else 
-		    poNewDataBlock->AddFeature(pszLine);
-
+		else {
+		    poNewFeature = new VFKFeature(poNewDataBlock);
+		    poNewFeature->SetProperties(pszLine);
+		    AddFeature(poNewDataBlock, poNewFeature);
+		}
 		CPLFree(pszBlockName);
 		pszBlockName = NULL;
 	    }
@@ -268,6 +275,11 @@ int VFKReader::LoadDataBlocks()
     return TRUE;
 }
 
+IVFKDataBlock *VFKReader::CreateDataBlock(const char *pszBlockName)
+{
+  return (IVFKDataBlock *) new VFKDataBlock(pszBlockName, (IVFKReader *) this);
+}
+
 /*!
   \brief Add new data block
 
@@ -275,17 +287,24 @@ int VFKReader::LoadDataBlocks()
 
   \return number of registred data blocks
 */
-int VFKReader::AddDataBlock(VFKDataBlock *poNewDataBlock)
+void VFKReader::AddDataBlock(IVFKDataBlock *poNewDataBlock)
 {
     m_nDataBlockCount++;
     
-    // CPLDebug("OGR_VFK", "VFKReader::AddDataBlock(): i=%d", m_nDataBlockCount);
-
-    m_papoDataBlock = (VFKDataBlock **)
-	CPLRealloc(m_papoDataBlock, sizeof (VFKDataBlock *) * m_nDataBlockCount);
+    m_papoDataBlock = (IVFKDataBlock **)
+	CPLRealloc(m_papoDataBlock, sizeof (IVFKDataBlock *) * m_nDataBlockCount);
     m_papoDataBlock[m_nDataBlockCount-1] = poNewDataBlock;
+}
 
-    return m_nDataBlockCount;
+/*!
+  \brief Add feature
+
+  \param poNewDataBlock pointer to VFKDataBlock instance
+  \param poNewFeature pointer to VFKFeature instance
+*/
+void VFKReader::AddFeature(IVFKDataBlock *poDataBlock, VFKFeature *poFeature)
+{
+    poDataBlock->AddFeature(poFeature);
 }
 
 /*!
@@ -296,7 +315,7 @@ int VFKReader::AddDataBlock(VFKDataBlock *poNewDataBlock)
   \return pointer to VFKDataBlock instance
   \return NULL on failure
 */
-VFKDataBlock *VFKReader::GetDataBlock(int i) const
+IVFKDataBlock *VFKReader::GetDataBlock(int i) const
 {
     if (i < 0 || i >= m_nDataBlockCount)
         return NULL;
@@ -312,7 +331,7 @@ VFKDataBlock *VFKReader::GetDataBlock(int i) const
   \return pointer to VFKDataBlock instance
   \return NULL on failure
 */
-VFKDataBlock *VFKReader::GetDataBlock(const char *pszName) const
+IVFKDataBlock *VFKReader::GetDataBlock(const char *pszName) const
 {
     for (int i = 0; i < m_nDataBlockCount; i++) {
         if (EQUAL(GetDataBlock(i)->GetName(), pszName))
