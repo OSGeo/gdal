@@ -67,6 +67,7 @@ class GRIBDataset : public GDALPamDataset
 
     CPLErr 	GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
+    
 	private:
 		void SetGribMetaData(grib_MetaData* meta);
     VSILFILE	*fp;
@@ -92,9 +93,14 @@ public:
     virtual CPLErr IReadBlock( int, int, void * );
     virtual const char *GetDescription() const;
 
+    virtual double GetNoDataValue( int *pbSuccess = NULL );
+
     void    FindPDSTemplate();
 
 private:
+
+    CPLErr       LoadData();
+
     static void ReadGribData( DataSource &, sInt4, int, double**, grib_MetaData**);
     sInt4 start;
     int subgNum;
@@ -231,11 +237,10 @@ const char * GRIBRasterBand::GetDescription() const
 }
  
 /************************************************************************/
-/*                             IReadBlock()                             */
+/*                             LoadData()                               */
 /************************************************************************/
 
-CPLErr GRIBRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage )
+CPLErr GRIBRasterBand::LoadData()
 
 {
     if( !m_Grib_Data )
@@ -271,6 +276,21 @@ CPLErr GRIBRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
     }
 
+    return CE_None;
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr GRIBRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                   void * pImage )
+
+{
+    CPLErr eErr = LoadData();
+    if (eErr != CE_None)
+        return eErr;
+
 /* -------------------------------------------------------------------- */
 /*      The image as read is always upside down to our normal           */
 /*      orientation so we need to effectively flip it at this           */
@@ -302,6 +322,34 @@ CPLErr GRIBRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         
         return CE_None;
     }
+}
+
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double GRIBRasterBand::GetNoDataValue( int *pbSuccess )
+{
+    CPLErr eErr = LoadData();
+    if (eErr != CE_None ||
+        m_Grib_MetaData == NULL ||
+        m_Grib_MetaData->gridAttrib.f_miss == 0)
+    {
+        if (pbSuccess)
+            *pbSuccess = FALSE;
+        return 0;
+    }
+
+    if (m_Grib_MetaData->gridAttrib.f_miss == 2)
+    {
+        /* what TODO ? */
+        CPLDebug("GRIB", "Secondary missing value also set for band %d : %f",
+                 nBand, m_Grib_MetaData->gridAttrib.missSec);
+    }
+
+    if (pbSuccess)
+        *pbSuccess = TRUE;
+    return m_Grib_MetaData->gridAttrib.missPri;
 }
 
 /************************************************************************/
