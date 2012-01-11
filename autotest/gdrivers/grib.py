@@ -83,10 +83,25 @@ def grib_3():
     
     return result
 
+###############################################################################
+# Check nodata
+
+def grib_4():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/ds.mint.bin')
+    if ds.GetRasterBand(1).GetNoDataValue() != 9999:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     grib_1,
     grib_2,
-    grib_3
+    grib_3,
+    grib_4
     ]
 
 if __name__ == '__main__':
