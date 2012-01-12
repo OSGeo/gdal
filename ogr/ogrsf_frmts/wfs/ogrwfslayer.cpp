@@ -877,6 +877,8 @@ OGRFeatureDefn * OGRWFSLayer::GetLayerDefn()
 
 OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn* poSrcFDefn)
 {
+    int bUnsetWidthPrecision = FALSE;
+
     poFeatureDefn = new OGRFeatureDefn( pszName );
     poFeatureDefn->Reference();
 
@@ -893,6 +895,8 @@ OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn* poSrcFDefn)
         }
         poSrcFDefn = poDS->GetLayer(0)->GetLayerDefn();
         bGotApproximateLayerDefn = TRUE;
+        /* We cannot trust width and precision based on a single feature */
+        bUnsetWidthPrecision = TRUE;
     }
 
     CPLString osPropertyName = CPLURLGetValue(pszBaseURL, "PROPERTYNAME");
@@ -912,7 +916,13 @@ OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn* poSrcFDefn)
         }
         else
         {
-            poFeatureDefn->AddFieldDefn(poSrcFDefn->GetFieldDefn(i));
+            OGRFieldDefn oFieldDefn(poSrcFDefn->GetFieldDefn(i));
+            if (bUnsetWidthPrecision)
+            {
+                oFieldDefn.SetWidth(0);
+                oFieldDefn.SetPrecision(0);
+            }
+            poFeatureDefn->AddFieldDefn(&oFieldDefn);
         }
     }
 
