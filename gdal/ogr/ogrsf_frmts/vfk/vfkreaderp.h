@@ -52,8 +52,7 @@ class VFKReader : public IVFKReader
 private:
     char          *m_pszFilename;
 
-    /* data buffer */
-    char          *m_pszWholeText;
+    FILE          *m_poFD;
     
     /* metadata */
     std::map<std::string, std::string> poInfo;
@@ -72,10 +71,9 @@ public:
     VFKReader();
     virtual ~VFKReader();
 
-    void           SetSourceFile(const char *);
-
-    int            LoadData();
-    int            LoadDataBlocks();
+    OGRErr         OpenFile(const char *);
+    int            ReadDataBlocks();
+    int            ReadDataRecords(IVFKDataBlock *);
     long           LoadGeometry();
     
     int            GetDataBlockCount() const { return m_nDataBlockCount; }
@@ -93,20 +91,23 @@ public:
 class VFKReaderSQLite : public VFKReader 
 {
 private:
-    sqlite3      *m_poDB;
+    sqlite3       *m_poDB;
 
     IVFKDataBlock *CreateDataBlock(const char *);
     void           AddDataBlock(IVFKDataBlock *);
     void           AddFeature(IVFKDataBlock *, VFKFeature *);
+
+    friend class   VFKFeatureSQLite;
 public:
     VFKReaderSQLite();
     virtual ~VFKReaderSQLite();
 
-    int           LoadDataBlocks();
+    int           ReadDataBlocks();
+    int           ReadDataRecords(IVFKDataBlock *);
+
     sqlite3_stmt *PrepareStatement(const char *);
     OGRErr        ExecuteSQL(const char *);
     OGRErr        ExecuteSQL(sqlite3_stmt *);
-    sqlite3      *GetDB() const { return m_poDB; }
 };
 #endif // HAVE_SQLITE
 

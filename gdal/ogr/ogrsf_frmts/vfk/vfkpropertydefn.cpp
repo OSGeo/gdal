@@ -86,6 +86,7 @@ VFKPropertyDefn::VFKPropertyDefn(const char *pszName, const char *pszType)
 	/* date */
 	/* m_eFType = OFTDateTime; */
 	m_eFType = OFTString;
+	m_nWidth = 25;
     }
     else {
 	/* unknown - string */

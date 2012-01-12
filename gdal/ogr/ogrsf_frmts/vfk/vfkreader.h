@@ -127,7 +127,7 @@ private:
 
     void                 SetProperty(int, const char *);
 
-    friend class VFKFeatureSQLite;
+    friend class         VFKFeatureSQLite;
 
     bool                 LoadGeometryPoint();
     bool                 LoadGeometryLineStringSBP();
@@ -226,6 +226,8 @@ protected:
     IVFKReader        *m_poReader;
 
     bool               AppendLineToRing(PointListArray *, const OGRLineString *, bool);
+    int                LoadData();
+    
     virtual long       LoadGeometryPoint() = 0;
     virtual long       LoadGeometryLineStringSBP() = 0;
     virtual long       LoadGeometryLineStringHP() = 0;
@@ -239,7 +241,7 @@ public:
 
     int                GetPropertyCount() const { return m_nPropertyCount; }
     VFKPropertyDefn   *GetProperty(int) const;
-    void               SetProperties(char *);
+    void               SetProperties(const char *);
     int                GetPropertyIndex(const char *) const;
 
     int                GetFeatureCount() const  { return m_nFeatureCount;  }
@@ -258,7 +260,7 @@ public:
     OGRwkbGeometryType SetGeometryType();
     OGRwkbGeometryType GetGeometryType() const;
 
-    long               GetMaxFID() const { return m_nFID; }
+    long               GetMaxFID();
     long               SetMaxFID(long);
 
     long               LoadGeometry();
@@ -324,12 +326,11 @@ protected:
 public:
     virtual ~IVFKReader();
 
-    virtual void           SetSourceFile(const char *) = 0;
-
-    virtual int            LoadData() = 0;
-    virtual int            LoadDataBlocks() = 0;
+    virtual int            OpenFile(const char *) = 0;
+    virtual int            ReadDataBlocks() = 0;
+    virtual int            ReadDataRecords(IVFKDataBlock *) = 0;
     virtual long           LoadGeometry() = 0;
-    
+
     virtual int            GetDataBlockCount() const = 0;
     virtual IVFKDataBlock *GetDataBlock(int) const = 0;
     virtual IVFKDataBlock *GetDataBlock(const char *) const = 0;
