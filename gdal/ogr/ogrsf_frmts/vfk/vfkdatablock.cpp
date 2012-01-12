@@ -49,7 +49,7 @@ IVFKDataBlock::IVFKDataBlock(const char *pszName, const IVFKReader *poReader)
     m_nPropertyCount = 0;
     m_papoProperty   = NULL;
 
-    m_nFeatureCount  = 0;
+    m_nFeatureCount  = -1; /* load data on first request */
     m_papoFeature    = NULL;
 
     m_iNextFeature   = -1;
@@ -58,7 +58,7 @@ IVFKDataBlock::IVFKDataBlock(const char *pszName, const IVFKReader *poReader)
     m_bGeometry         = FALSE;   /* geometry is not loaded by default */
     m_bGeometryPerBlock = TRUE;    /* load geometry per block/feature */
 
-    m_nFID           = 0;
+    m_nFID           = -1; /* load data on first request */
 
     m_poReader       = (IVFKReader *) poReader;
 }
@@ -104,10 +104,10 @@ VFKPropertyDefn *IVFKDataBlock::GetProperty(int iIndex) const
 
   \param poLine pointer to line
 */
-void IVFKDataBlock::SetProperties(char *poLine)
+void IVFKDataBlock::SetProperties(const char *poLine)
 {
-    char *poChar;
-    char *pszName, *poProp, *pszType;
+    const char *poChar, *poProp;
+    char *pszName, *pszType;
     int   nLength;
     
     pszName = pszType = NULL;
@@ -222,6 +222,10 @@ void IVFKDataBlock::ResetReading(int iIdx)
 */
 IVFKFeature *IVFKDataBlock::GetNextFeature()
 {
+    if (m_nFeatureCount < 0) {
+	m_poReader->ReadDataRecords(this);
+    }
+    
     if (m_bGeometryPerBlock && !m_bGeometry) {
 	LoadGeometry();
     }
@@ -243,6 +247,10 @@ IVFKFeature *IVFKDataBlock::GetNextFeature()
 */
 IVFKFeature *IVFKDataBlock::GetPreviousFeature()
 {
+    if (m_nFeatureCount < 0) {
+	m_poReader->ReadDataRecords(this);
+    }
+    
     if (m_bGeometryPerBlock && !m_bGeometry) {
        LoadGeometry();
     }
@@ -264,6 +272,10 @@ IVFKFeature *IVFKDataBlock::GetPreviousFeature()
 */
 IVFKFeature *IVFKDataBlock::GetFirstFeature()
 {
+    if (m_nFeatureCount < 0) {
+	m_poReader->ReadDataRecords(this);
+    }
+	
     if (m_bGeometryPerBlock && !m_bGeometry) {
 	LoadGeometry();
     }
@@ -282,6 +294,10 @@ IVFKFeature *IVFKDataBlock::GetFirstFeature()
 */
 IVFKFeature *IVFKDataBlock::GetLastFeature()
 {
+    if (m_nFeatureCount < 0) {
+	m_poReader->ReadDataRecords(this);
+    }
+    
     if (m_bGeometryPerBlock && !m_bGeometry) {
 	LoadGeometry();
     }
@@ -362,6 +378,232 @@ IVFKFeature *IVFKDataBlock::GetFeatureByIndex(int iIndex) const
         return NULL;
 
     return m_papoFeature[iIndex];
+}
+
+/*!
+  \brief Get feature by FID
+
+  Modifies next feature id.
+  
+  \param nFID feature id
+
+  \return pointer to feature definition
+  \return NULL on failure (not found)
+*/
+IVFKFeature *IVFKDataBlock::GetFeature(long nFID)
+{
+    if (m_nFeatureCount < 0) {
+	m_poReader->ReadDataRecords(this);
+    }
+    
+    if (nFID < 1 || nFID > m_nFeatureCount)
+	return NULL;
+
+    if (m_bGeometryPerBlock && !m_bGeometry) {
+	LoadGeometry();
+    }
+    
+    if (m_nGeometryType == wkbPoint || m_nGeometryType == wkbPolygon) {
+	m_iNextFeature = (int) nFID;
+	return GetFeatureByIndex(int (nFID) - 1); /* zero-based index */
+    }
+    else if (m_nGeometryType == wkbLineString) {
+	/* line string */
+	for (int i = 0; i < m_nFeatureCount; i++) {
+	    if (m_papoFeature[i]->GetFID() == nFID) {
+		m_iNextFeature = i + 1;
+		return m_papoFeature[i];
+	    }
+	}
+    }
+    
+    return NULL;
+}
+
+/*!
+  \brief Get maximum fid in datablock
+
+  \return max fid
+*/
+long IVFKDataBlock::GetMaxFID()
+{
+    if (m_nFeatureCount < 0) {
+	m_nFID = 0;
+	m_poReader->ReadDataRecords(this);
+    }
+    
+    return m_nFID;
+}
+
+/*!
+  \brief Set maximum fid in datablock
+
+  \param nFID fid number
+
+  \return max fid
+*/
+long IVFKDataBlock::SetMaxFID(long nFID)
+{
+    if (m_nFID < nFID)
+	m_nFID = nFID;
+
+    return m_nFID;
+}
+
+    
+/*!
+  \brief Load geometry
+
+  \return number of processed features
+  \return -1 on failure
+*/
+long IVFKDataBlock::LoadGeometry()
+{
+    long          nfeatures;
+    clock_t       start, end;
+    
+    if (m_bGeometry)
+	return 0;
+
+    nfeatures   = 0;
+    m_bGeometry = TRUE;
+    start       = clock();
+
+    if (m_nFeatureCount < 0) {
+	m_poReader->ReadDataRecords(this);
+    }
+
+    if (EQUAL (m_pszName, "SOBR") ||
+	EQUAL (m_pszName, "OBBP") ||
+	EQUAL (m_pszName, "SPOL") ||
+	EQUAL (m_pszName, "OB") ||
+	EQUAL (m_pszName, "OP") ||
+	EQUAL (m_pszName, "OBPEJ")) {
+	/* -> wkbPoint */
+	nfeatures = LoadGeometryPoint();
+    }
+    else if (EQUAL (m_pszName, "SBP")) {
+	/* -> wkbLineString */
+	nfeatures = LoadGeometryLineStringSBP();
+    }
+    else if (EQUAL (m_pszName, "HP") ||
+	     EQUAL (m_pszName, "DPM")) {
+	/* -> wkbLineString */
+	nfeatures = LoadGeometryLineStringHP();
+    }
+    else if (EQUAL (m_pszName, "PAR") ||
+	     EQUAL (m_pszName, "BUD")) {
+	/* -> wkbPolygon */
+	nfeatures = LoadGeometryPolygon();
+    }
+    
+    end = clock();
+    
+    CPLDebug("OGR_VFK", "VFKDataBlock::LoadGeometry(): name=%s nfeatures=%ld sec=%ld",
+	     m_pszName, nfeatures, (long)((end - start) / CLOCKS_PER_SEC));
+
+    return nfeatures;
+}
+
+/*!
+  \brief Add linestring to a ring (private)
+
+  \param[in,out] papoRing list of rings
+  \param poLine pointer to linestring to be added to a ring 
+
+  \return TRUE on success
+  \return FALSE on failure
+*/
+bool IVFKDataBlock::AppendLineToRing(PointListArray *papoRing, const OGRLineString *poLine, bool bNewRing)
+{
+    OGRPoint *poFirst, *poLast;
+    OGRPoint *poFirstNew, *poLastNew;
+
+    OGRPoint  pt;
+    PointList poList;
+
+    /* OGRLineString -> PointList */
+    for (int i = 0; i < poLine->getNumPoints(); i++) {
+	poLine->getPoint(i, &pt);
+	poList.push_back(pt);
+    }
+
+    /* create new ring */
+    if (bNewRing) {
+	papoRing->push_back(new PointList(poList));
+	return TRUE;
+    }
+    
+    poFirstNew = &(poList.front());
+    poLastNew  = &(poList.back());
+    for (PointListArray::const_iterator i = papoRing->begin(), e = papoRing->end();
+	 i != e; ++i) {
+	PointList *ring = (*i);
+	poFirst = &(ring->front());
+	poLast  = &(ring->back());
+	if (!poFirst || !poLast || poLine->getNumPoints() < 2)
+	    return FALSE;
+
+	if (poFirstNew->Equals(poLast)) {
+	    /* forward, skip first point */
+	    ring->insert(ring->end(), poList.begin()+1, poList.end());
+	    return TRUE;
+	}
+	
+	if (poFirstNew->Equals(poFirst)) {
+	    /* backward, skip last point */
+	    ring->insert(ring->begin(), poList.rbegin(), poList.rend()-1);
+	    return TRUE;
+	}
+	
+	if (poLastNew->Equals(poLast)) {
+	    /* backward, skip first point */
+	    ring->insert(ring->end(), poList.rbegin()+1, poList.rend());
+	    return TRUE;
+	}
+	
+	if (poLastNew->Equals(poFirst)) {
+	    /* forward, skip last point */
+	    ring->insert(ring->begin(), poList.begin(), poList.end()-1);
+	    return TRUE;
+	}
+    }
+
+    return FALSE;
+}
+
+/*!
+  \brief Set next feature
+
+  \param poFeature pointer to current feature
+
+  \return index of current feature
+  \return -1 on failure
+*/
+int IVFKDataBlock::SetNextFeature(const IVFKFeature *poFeature)
+{
+    for (int i = 0; i < m_nFeatureCount; i++) {
+	if (m_papoFeature[i] == poFeature) {
+	    m_iNextFeature = i + 1;
+	    return i;
+	}
+    }
+
+    return -1;
+}
+
+/*!
+  \brief Add feature
+
+  \param poNewFeature pointer to VFKFeature instance
+*/
+void IVFKDataBlock::AddFeature(IVFKFeature *poNewFeature)
+{
+    m_nFeatureCount++;
+    
+    m_papoFeature = (IVFKFeature **)
+	CPLRealloc(m_papoFeature, sizeof (IVFKFeature *) * m_nFeatureCount);
+    m_papoFeature[m_nFeatureCount-1] = poNewFeature;
 }
 
 /*!
@@ -465,42 +707,6 @@ VFKFeatureList VFKDataBlock::GetFeatures(int idx1, int idx2, GUIntBig value)
 }
 
 /*!
-  \brief Get feature by FID
-
-  Modifies next feature id.
-  
-  \param nFID feature id
-
-  \return pointer to feature definition
-  \return NULL on failure (not found)
-*/
-IVFKFeature *IVFKDataBlock::GetFeature(long nFID)
-{
-    if (nFID < 1 || nFID > m_nFeatureCount)
-	return NULL;
-
-    if (m_bGeometryPerBlock && !m_bGeometry) {
-	LoadGeometry();
-    }
-    
-    if (m_nGeometryType == wkbPoint || m_nGeometryType == wkbPolygon) {
-	m_iNextFeature = (int) nFID;
-	return GetFeatureByIndex(int (nFID) - 1); /* zero-based index */
-    }
-    else if (m_nGeometryType == wkbLineString) {
-	/* line string */
-	for (int i = 0; i < m_nFeatureCount; i++) {
-	    if (m_papoFeature[i]->GetFID() == nFID) {
-		m_iNextFeature = i + 1;
-		return m_papoFeature[i];
-	    }
-	}
-    }
-    
-    return NULL;
-}
-
-/*!
   \brief Get feature count based on property value
 
   \param pszName property name
@@ -528,21 +734,6 @@ int VFKDataBlock::GetFeatureCount(const char *pszName, const char *pszValue)
     }
 
     return nfeatures;
-}
-
-/*!
-  \brief Set maximum fid in datablock
-
-  \param nFID fid number
-
-  \return max fid
-*/
-long IVFKDataBlock::SetMaxFID(long nFID)
-{
-    if (m_nFID < nFID)
-	m_nFID = nFID;
-
-    return m_nFID;
 }
 
 /*!
@@ -834,155 +1025,4 @@ long VFKDataBlock::LoadGeometryPolygon()
     poDataBlockLines2->ResetReading();
 
     return nfeatures;
-}
-    
-/*!
-  \brief Load geometry
-
-  \return number of processed features
-  \return -1 on failure
-*/
-long IVFKDataBlock::LoadGeometry()
-{
-    long          nfeatures;
-    clock_t       start, end;
-    
-    if (m_bGeometry)
-	return 0;
-
-    nfeatures   = 0;
-    m_bGeometry = TRUE;
-    start       = clock();
-    
-    if (EQUAL (m_pszName, "SOBR") ||
-	EQUAL (m_pszName, "OBBP") ||
-	EQUAL (m_pszName, "SPOL") ||
-	EQUAL (m_pszName, "OB") ||
-	EQUAL (m_pszName, "OP") ||
-	EQUAL (m_pszName, "OBPEJ")) {
-	/* -> wkbPoint */
-	nfeatures = LoadGeometryPoint();
-    }
-    else if (EQUAL (m_pszName, "SBP")) {
-	/* -> wkbLineString */
-	nfeatures = LoadGeometryLineStringSBP();
-    }
-    else if (EQUAL (m_pszName, "HP") ||
-	     EQUAL (m_pszName, "DPM")) {
-	/* -> wkbLineString */
-	nfeatures = LoadGeometryLineStringHP();
-    }
-    else if (EQUAL (m_pszName, "PAR") ||
-	     EQUAL (m_pszName, "BUD")) {
-	/* -> wkbPolygon */
-	nfeatures = LoadGeometryPolygon();
-    }
-    
-    end = clock();
-    
-    CPLDebug("OGR_VFK", "VFKDataBlock::LoadGeometry(): name=%s nfeatures=%ld sec=%ld",
-	     m_pszName, nfeatures, (long)((end - start) / CLOCKS_PER_SEC));
-
-    return nfeatures;
-}
-
-/*!
-  \brief Add linestring to a ring (private)
-
-  \param[in,out] papoRing list of rings
-  \param poLine pointer to linestring to be added to a ring 
-
-  \return TRUE on success
-  \return FALSE on failure
-*/
-bool IVFKDataBlock::AppendLineToRing(PointListArray *papoRing, const OGRLineString *poLine, bool bNewRing)
-{
-    OGRPoint *poFirst, *poLast;
-    OGRPoint *poFirstNew, *poLastNew;
-
-    OGRPoint  pt;
-    PointList poList;
-
-    /* OGRLineString -> PointList */
-    for (int i = 0; i < poLine->getNumPoints(); i++) {
-	poLine->getPoint(i, &pt);
-	poList.push_back(pt);
-    }
-
-    /* create new ring */
-    if (bNewRing) {
-	papoRing->push_back(new PointList(poList));
-	return TRUE;
-    }
-    
-    poFirstNew = &(poList.front());
-    poLastNew  = &(poList.back());
-    for (PointListArray::const_iterator i = papoRing->begin(), e = papoRing->end();
-	 i != e; ++i) {
-	PointList *ring = (*i);
-	poFirst = &(ring->front());
-	poLast  = &(ring->back());
-	if (!poFirst || !poLast || poLine->getNumPoints() < 2)
-	    return FALSE;
-
-	if (poFirstNew->Equals(poLast)) {
-	    /* forward, skip first point */
-	    ring->insert(ring->end(), poList.begin()+1, poList.end());
-	    return TRUE;
-	}
-	
-	if (poFirstNew->Equals(poFirst)) {
-	    /* backward, skip last point */
-	    ring->insert(ring->begin(), poList.rbegin(), poList.rend()-1);
-	    return TRUE;
-	}
-	
-	if (poLastNew->Equals(poLast)) {
-	    /* backward, skip first point */
-	    ring->insert(ring->end(), poList.rbegin()+1, poList.rend());
-	    return TRUE;
-	}
-	
-	if (poLastNew->Equals(poFirst)) {
-	    /* forward, skip last point */
-	    ring->insert(ring->begin(), poList.begin(), poList.end()-1);
-	    return TRUE;
-	}
-    }
-
-    return FALSE;
-}
-
-/*!
-  \brief Set next feature
-
-  \param poFeature pointer to current feature
-
-  \return index of current feature
-  \return -1 on failure
-*/
-int IVFKDataBlock::SetNextFeature(const IVFKFeature *poFeature)
-{
-    for (int i = 0; i < m_nFeatureCount; i++) {
-	if (m_papoFeature[i] == poFeature) {
-	    m_iNextFeature = i + 1;
-	    return i;
-	}
-    }
-
-    return -1;
-}
-
-/*!
-  \brief Add feature
-
-  \param poNewFeature pointer to VFKFeature instance
-*/
-void IVFKDataBlock::AddFeature(IVFKFeature *poNewFeature)
-{
-    m_nFeatureCount++;
-    
-    m_papoFeature = (IVFKFeature **)
-	CPLRealloc(m_papoFeature, sizeof (IVFKFeature *) * m_nFeatureCount);
-    m_papoFeature[m_nFeatureCount-1] = poNewFeature;
 }
