@@ -106,7 +106,8 @@ int GetSimpleTypeProperties(CPLXMLNode *psTypeNode,
     }
 
     /* TODO: Would be nice to have a proper date type */
-    else if( EQUAL(pszBase,"date") )
+    else if( EQUAL(pszBase,"date") ||
+             EQUAL(pszBase,"dateTime") )
     {
         *pGMLType = GMLPT_String;
         return TRUE;
@@ -270,7 +271,8 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 EQUAL(pszStrippedNSType, "Character"))
                 gmlType = GMLPT_String;
             /* TODO: Would be nice to have a proper date type */
-            else if (EQUAL(pszStrippedNSType, "date"))
+            else if (EQUAL(pszStrippedNSType, "date") ||
+                     EQUAL(pszStrippedNSType, "dateTime"))
                 gmlType = GMLPT_String;
             else if (EQUAL(pszStrippedNSType, "real") ||
                      EQUAL(pszStrippedNSType, "double") ||
