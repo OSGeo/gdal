@@ -70,21 +70,117 @@ VFKReaderSQLite::~VFKReaderSQLite()
 }
 
 /*!
+  \brief Load data block definitions (&B)
+
+  Call VFKReader::OpenFile() before this function.
+
+  \return number of data blocks
+  \return -1 on error
+*/
+int VFKReaderSQLite::ReadDataBlocks()
+{
+    int nDataBlocks;
+
+    sqlite3_exec(m_poDB, "BEGIN", 0, 0, 0);
+
+    /* CREATE TABLE ... */
+    nDataBlocks = VFKReader::ReadDataBlocks();
+
+    sqlite3_exec(m_poDB, "COMMIT", 0, 0, 0);
+	
+    return nDataBlocks;
+}
+
+/*!
+  \brief Load data records (&D)
+
+  Call VFKReader::OpenFile() before this function.
+  
+  \return number of data records
+  \return -1 on error
+*/
+int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
+{
+    int         nDataRecords;
+    const char *pszName;
+    CPLString   osSQL;
+
+    sqlite3_exec(m_poDB, "BEGIN", 0, 0, 0);
+
+    /* INSERT ... */
+    nDataRecords = VFKReader::ReadDataRecords(poDataBlock);
+
+    pszName = poDataBlock->GetName();
+    
+    osSQL.Printf("CREATE UNIQUE INDEX idx_%s ON '%s' (_rowid_)",
+		 pszName, pszName);
+    sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
+    if (EQUAL(pszName, "SOBR")) {
+	osSQL.Printf("CREATE UNIQUE INDEX idx2 ON '%s' (ID)",
+		     pszName);
+	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
+    }
+    else if (EQUAL(pszName, "SBP")) {
+	osSQL.Printf("CREATE UNIQUE INDEX idx3 ON '%s' (OB_ID)",
+		     pszName);
+	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
+
+	osSQL.Printf("CREATE UNIQUE INDEX idx4 ON '%s' (HP_ID)",
+		     pszName);
+	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
+	
+	osSQL.Printf("CREATE UNIQUE INDEX idx5 ON '%s' (DPM_ID)",
+		     pszName);
+	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
+	
+	osSQL.Printf("CREATE UNIQUE INDEX idx6 ON '%s' (OB_ID,HP_ID,DPM_ID)",
+		     pszName);
+	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
+	
+	osSQL.Printf("CREATE UNIQUE INDEX idx7 ON '%s' (HP_ID,PORADOVE_CISLO_BODU)",
+		     pszName);
+	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
+	
+	osSQL.Printf("CREATE UNIQUE INDEX idx8 ON '%s' (DPM_ID,PORADOVE_CISLO_BODU)",
+		     pszName);
+	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
+    }
+    else if (EQUAL(pszName, "HP")) {
+	osSQL.Printf("CREATE UNIQUE INDEX idx9 ON '%s' (PAR_ID_1)",
+		     pszName);
+	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
+	
+	osSQL.Printf("CREATE UNIQUE INDEX idx10 ON '%s' (PAR_ID_2)",
+		     pszName);
+	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
+	
+    }
+    else if (EQUAL(pszName, "OP")) {
+	osSQL.Printf("CREATE UNIQUE INDEX idx11 ON '%s' (BUD_ID)",
+		     pszName);
+	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
+	
+    }
+    
+    sqlite3_exec(m_poDB, "COMMIT", 0, 0, 0);
+	
+    return nDataRecords;
+}
+
+/*!
   \brief Get data blocks (&B)
 
-  Call LoadData() before this function.
+  Call VFKReader::OpenFile() before this function.
 
-  \return FALSE on error
-  \return TRUE on success
-*/
+  \return number of data blocks
+  \return -1 on error
+
 int VFKReaderSQLite::LoadDataBlocks()
 {
     int ret;
     CPLString osCommand;
     const char *pszName;
 
-    sqlite3_exec(m_poDB, "BEGIN", 0, 0, 0);
-    
     ret = VFKReader::LoadDataBlocks();
     
     for (int i = 0; i < m_nDataBlockCount; i++) {
@@ -144,7 +240,7 @@ int VFKReaderSQLite::LoadDataBlocks()
 
     return ret;
 }
-
+*/
 IVFKDataBlock *VFKReaderSQLite::CreateDataBlock(const char *pszBlockName)
 {
     return new VFKDataBlockSQLite(pszBlockName, (IVFKReader *) this);

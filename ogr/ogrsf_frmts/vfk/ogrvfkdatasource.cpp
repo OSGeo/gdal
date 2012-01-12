@@ -121,15 +121,11 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
         return FALSE;
     }
 
-    /* load data (whole file) */
-    poReader->SetSourceFile(pszNewName);
-    poReader->LoadData();
-
-    /* get data blocks, i.e. &B */
-    poReader->LoadDataBlocks();
-    /* collect geometry properties
-       load on first request
-    */
+    /* open file for reading */
+    poReader->OpenFile(pszNewName);
+    
+    /* read data blocks, i.e. &B */
+    poReader->ReadDataBlocks();
     /* poReader->LoadGeometry(); */
     
     /* get list of layers */

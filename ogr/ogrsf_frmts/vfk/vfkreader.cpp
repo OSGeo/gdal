@@ -6,7 +6,7 @@
  * Author:   Martin Landa, landa.martin gmail.com
  *
  ******************************************************************************
- * Copyright (c) 2009-2010, Martin Landa <landa.martin gmail.com>
+ * Copyright (c) 2009-2010, 2012, Martin Landa <landa.martin gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -69,7 +69,7 @@ VFKReader::VFKReader()
 {
     m_pszFilename     = NULL;
 
-    m_pszWholeText    = NULL;
+    m_poFD            = NULL;
     
     m_nDataBlockCount = 0;
     m_papoDataBlock   = NULL;
@@ -82,95 +82,38 @@ VFKReader::~VFKReader()
 {
     CPLFree(m_pszFilename);
 
-    VSIFree(m_pszWholeText);
+    if (m_poFD)
+	VSIFClose(m_poFD);
     
     /* clear data blocks */
     for (int i = 0; i < m_nDataBlockCount; i++)
         delete m_papoDataBlock[i];
     CPLFree(m_papoDataBlock);
-
+    
     m_nDataBlockCount = 0;
     m_papoDataBlock = NULL;
 }
 
 /*!
-  \brief Set source file
+  \brief Open data file
 
-  \param pszFilename source filename
+  \return OGRERR_NONE on success
+  \return OGRERR_FAILURE on error
 */
-void VFKReader::SetSourceFile(const char *pszFilename)
+OGRErr VFKReader::OpenFile(const char *pszFilename)
 {
-    CPLFree(m_pszFilename);
+    CPLAssert(NULL == m_pszFilename);
+    
     m_pszFilename = CPLStrdup(pszFilename);
-}
-
-/*!
-  \brief Read the file & load the data
-
-  \param pszFile pointer to a filename
-
-  \return TRUE on success
-  \return FALSE on error
-*/
-int VFKReader::LoadData()
-{
-    FILE *fp;
-    long          nLength;
-
-    if (m_pszFilename == NULL)
-	return FALSE;
-
-    /* load vfk file */
-    fp = VSIFOpen(m_pszFilename, "rb");
-    if (fp == NULL) {
+    
+    m_poFD = VSIFOpen(m_pszFilename, "rb");
+    if (m_poFD == NULL) {
 	CPLError(CE_Failure, CPLE_OpenFailed, 
 		 "Failed to open file %s.", m_pszFilename);
-        return FALSE;
+        return OGRERR_FAILURE;
     }
 
-    /* get file length */
-    VSIFSeek(fp, 0, SEEK_END);
-    nLength = VSIFTell(fp);
-    VSIFSeek(fp, 0, SEEK_SET);
-
-    /* read file - is necessary to read the whole file? */
-    m_pszWholeText = (char *) VSIMalloc(nLength+1);
-    
-    if (m_pszWholeText == NULL) {
-        CPLError(CE_Failure, CPLE_AppDefined, 
-		 "Failed to allocate %ld byte buffer for %s,\n"
-		 "is this really a VFK file?",
-		 nLength, m_pszFilename);
-        VSIFClose(fp);
-        return FALSE;
-    }
-    
-    if (VSIFRead(m_pszWholeText, nLength, 1, fp) != 1) {
-        VSIFree(m_pszWholeText);
-        m_pszWholeText = NULL;
-        VSIFClose(fp);
-        CPLError(CE_Failure, CPLE_AppDefined, 
-		 "Read failed on %s.", m_pszFilename);
-        return FALSE;
-    }
-    
-    m_pszWholeText[nLength] = '\0';
-
-    VSIFClose(fp);
-
-    /* split lines */
-    /* TODO: reduce chars */
-    for (char *poChar = m_pszWholeText; *poChar != '\0'; poChar++) {
-	if (*poChar == '\244' && *(poChar+1) != '\0' && *(poChar+2) != '\0') { 
-	    *(poChar++) = ' '; // \r
-	    *(poChar++) = ' '; // \n
-	    *poChar = ' ';
-	}
-    }
-    
-    CPLDebug("OGR_VFK", "VFKReader::LoadData(): length=%ld", nLength);
-
-    return TRUE;
+    return OGRERR_NONE;
 }
 
 static char *GetDataBlockName(const char *pszLine)
@@ -185,7 +128,7 @@ static char *GetDataBlockName(const char *pszLine)
     if (*pszLineChar == '\0')
         return NULL;
 
-    pszBlockName = (char *) CPLMalloc(n+1);
+    pszBlockName = (char *) CPLMalloc(n + 1);
     strncpy(pszBlockName, pszLine + 2, n);
     pszBlockName[n] = '\0';
 
@@ -193,86 +136,110 @@ static char *GetDataBlockName(const char *pszLine)
 }
 
 /*!
-  \brief Get data blocks (&B)
+  \brief Load data block definitions (&B)
 
-  Call LoadData() before this function.
+  Call VFKReader::OpenFile() before this function.
 
-  \return FALSE on error
-  \return TRUE on success
+  \return number of data blocks
+  \return -1 on error
 */
-int VFKReader::LoadDataBlocks()
-{ 
-    char         *pszChar;
-    char         *pszLine;
-    char         *pszBlockName;
-    int           nRow;
+int VFKReader::ReadDataBlocks()
+{
+    const char *pszLine;
+    char       *pszBlockName;
+
+    IVFKDataBlock *poNewDataBlock;
     
-    VFKDataBlock *poNewDataBlock;
-    VFKFeature   *poNewFeature;
-    
-    if (m_pszWholeText == NULL)
-        return FALSE;
+    CPLAssert(NULL != m_pszFilename);
 
-    poNewDataBlock = NULL;
-    pszBlockName = NULL;
-    nRow = 0;
-
-    /* read lines */
-    pszChar = m_pszWholeText;
-    pszLine = m_pszWholeText;
-    while (*pszChar != '\0') {
-	if (*pszChar == '\r' && *(pszChar+1) == '\n') {
-	    nRow++;
-	    if (*pszLine == '&' && *(pszLine+1) == 'B') {
-		/* add data block */
-		pszBlockName = GetDataBlockName(pszLine);
-                if (pszBlockName == NULL)
-                    break;
-
-		poNewDataBlock = (VFKDataBlock *) CreateDataBlock(pszBlockName);
-		CPLFree(pszBlockName);
-		pszBlockName = NULL;
-		poNewDataBlock->SetGeometryType();
-		poNewDataBlock->SetProperties(pszLine);
-		AddDataBlock(poNewDataBlock);
+    VSIFSeek(m_poFD, 0, SEEK_SET);
+    while ((pszLine = CPLReadLine(m_poFD)) != NULL) {
+        if (strlen(pszLine) < 2 || pszLine[0] != '&')
+	    continue;
+	if (pszLine[1] == 'B') {
+	    pszBlockName = GetDataBlockName(pszLine);
+	    if (pszBlockName == NULL) {	
+		CPLError(CE_Failure, CPLE_NotSupported, 
+			 "Corrupted data - line\n%s\n", pszLine);
+		return -1;
 	    }
-	    else if (*pszLine == '&' && *(pszLine+1) == 'D') {
-		/* data row */
-		pszBlockName = GetDataBlockName(pszLine);
-                if (pszBlockName == NULL)
-                    break;
-
-		poNewDataBlock = (VFKDataBlock *) GetDataBlock(pszBlockName);
-		if (poNewDataBlock == NULL) {
-		    if (!EQUAL(pszBlockName, "KATUZE")) {
-			/* ignore KATUZE block */
-			CPLError(CE_Warning, CPLE_AppDefined, 
-				 "Data block '%s' not found.\n", pszBlockName);
-		    }
-		}
-		else {
-		    poNewFeature = new VFKFeature(poNewDataBlock);
-		    poNewFeature->SetProperties(pszLine);
-		    AddFeature(poNewDataBlock, poNewFeature);
-		}
-		CPLFree(pszBlockName);
-		pszBlockName = NULL;
-	    }
-	    else if (*pszLine == '&' && *(pszLine+1) == 'H') {
-		/* header - metadata */
-		AddInfo(pszLine);
-	    }
-	    else if (*pszLine == '&' && *(pszLine+1) == 'K') {
-		/* end of file */
-		break;
-	    }
-	    pszChar++;
-	    pszLine = pszChar + 1;
+	    poNewDataBlock = (IVFKDataBlock *) CreateDataBlock(pszBlockName);
+	    CPLFree(pszBlockName);
+	    poNewDataBlock->SetGeometryType();
+	    poNewDataBlock->SetProperties(pszLine);
+	    AddDataBlock(poNewDataBlock);
 	}
-	pszChar++;
+	else if (pszLine[1] == 'H') {
+	    /* header - metadata */
+	    AddInfo(pszLine);
+	}
+	else if (pszLine[1] == 'K') {
+	    /* end of file */
+	    break;
+	}
     }
+    
+    return m_nDataBlockCount;
+}
 
-    return TRUE;
+
+/*!
+  \brief Load data records (&D)
+
+  Call VFKReader::OpenFile() before this function.
+  
+  \return number of data records
+  \return -1 on error
+*/
+int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
+{
+    const char *pszRawLine, *pszName, *pszLine;
+    char       *pszBlockName;
+
+    VFKFeature    *poNewFeature;
+    
+    if (poDataBlock->GetFeatureCount() >= 0)
+	return -1;
+
+    poDataBlock->SetFeatureCount(0);
+    pszName = poDataBlock->GetName();
+    
+    VSIFSeek(m_poFD, 0, SEEK_SET);
+    while ((pszRawLine = CPLReadLine(m_poFD)) != NULL) {
+	if (strlen(pszRawLine) < 2)
+	    continue;
+	if (pszRawLine[strlen(pszRawLine) - 1] == '\244') {
+	    CPLString pszLine1;
+	    
+	    /* merge lines */
+	    do {
+		pszLine1 += pszRawLine;
+		pszLine1.erase(pszLine1.size() - 1); /* remove \244 from string */
+	    } while ((pszRawLine = CPLReadLine(m_poFD)) != NULL &&
+		   pszRawLine[strlen(pszRawLine) - 1] == '\244');
+	    pszLine1 += pszRawLine;
+	    pszLine = pszLine1.c_str();
+	}
+	else {
+	    pszLine = pszRawLine;
+	}
+	
+	if (pszLine[1] == 'D') {
+	    pszBlockName = GetDataBlockName(pszLine);
+	    if (pszBlockName && EQUAL(pszBlockName, pszName)) {
+		poNewFeature = new VFKFeature(poDataBlock);
+		poNewFeature->SetProperties(pszLine);
+		AddFeature(poDataBlock, poNewFeature);
+	    }
+	    CPLFree(pszBlockName);
+	}
+	else if (pszLine[1] == 'K') {
+	    /* end of file */
+	    break;
+	}
+    }
+    
+    return poDataBlock->GetFeatureCount();
 }
 
 IVFKDataBlock *VFKReader::CreateDataBlock(const char *pszBlockName)
