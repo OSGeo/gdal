@@ -1294,7 +1294,8 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
         CPLFree( padfY );
         CPLFree( padfZ );
 
-        (*ppoGeom)->setCoordinateDimension( bHasZ ? 3 : 2 );
+        if (*ppoGeom != NULL)
+            (*ppoGeom)->setCoordinateDimension( bHasZ ? 3 : 2 );
 
         return OGRERR_NONE;
     }
