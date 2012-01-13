@@ -254,10 +254,9 @@ OGRFeature *OGRVFKLayer::GetFeature(IVFKFeature *poVFKFeature)
     
     /* get features geometry */
     poGeom = CreateGeometry(poVFKFeature);
-    /* segfault ???
     if (poGeom != NULL)
 	poGeom->assignSpatialReference(poSRS);
-    */
+    
     /* does it satisfy the spatial query, if there is one? */
     if (m_poFilterGeom != NULL && poGeom && !FilterGeometry(poGeom)) {
 	return NULL;
