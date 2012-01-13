@@ -736,7 +736,7 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
         CPLFree( padfY );
         CPLFree( padfZ );
 
-        if( !bHasZ )
+        if( !bHasZ && (*ppoGeom) != NULL )
             (*ppoGeom)->setCoordinateDimension( 2 );
 
         return OGRERR_NONE;
