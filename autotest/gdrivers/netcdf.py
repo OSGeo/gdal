@@ -778,12 +778,16 @@ def netcdf_21():
     sys.stdout.write('.')
     sys.stdout.flush()
 
+    #create cache dir if absent
+    if not os.path.exists( 'tmp/cache' ):
+        os.mkdir( 'tmp/cache' )
+
     #look for large gtiff in cache
     if not os.path.exists( bigfile ):
 
         #create large gtiff
         if test_cli_utilities.get_gdalwarp_path() is None:
-            gdaltest.post_reason('gdalwarp failed')
+            gdaltest.post_reason('gdalwarp not found')
             return 'fail'
     
         warp_cmd = test_cli_utilities.get_gdalwarp_path() +\
@@ -793,12 +797,11 @@ def netcdf_21():
         try:
             (ret, err) = gdaltest.runexternal_out_and_err( warp_cmd )
         except:
-            gdaltest.post_reason('gdalwarp failed')
+            gdaltest.post_reason('gdalwarp execution failed')
             return 'fail'
         
         if ( err != '' or ret != '' ):
-            gdaltest.post_reason('gdalwarp failed')
-        #print(ret)
+            gdaltest.post_reason('gdalwarp returned error\n'+str(ret)+' '+str(err))
             return 'fail'
 
     # test compression of the file, with a conservative timeout of 60 seconds
