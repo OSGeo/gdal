@@ -710,6 +710,8 @@ CPLErr netCDFRasterBand::SetNoDataValue( double dfNoData )
     bNoDataSet = TRUE;
     dfNoDataValue = dfNoData;
 
+    CPLDebug( "GDAL_netCDF", "SetNoDataValue( %.18g )", dfNoData );
+
     /* write value if in update mode */
     if ( poDS->GetAccess() == GA_Update ) {
 
@@ -996,6 +998,10 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int    Taken=-1;
     int    nd;
 
+    if ( (nBlockYOff == 0) || (nBlockYOff == nRasterYSize-1) )
+        CPLDebug( "GDAL_netCDF", "netCDFRasterBand::IReadBlock( %d, %d, ... )",
+                  nBlockXOff, nBlockYOff );
+
     *pszName='\0';
     memset( start, 0, sizeof( start ) );
     memset( edge,  0, sizeof( edge )  );
@@ -1051,6 +1057,10 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
     }
 
+    /* make sure we are in data mode */
+    ( ( netCDFDataset * ) poDS )->SetDefineMode( FALSE );
+
+    /* read data according to type */
     if( eDataType == GDT_Byte ) 
     {
         if (this->bSignedData) 
@@ -1129,6 +1139,10 @@ CPLErr netCDFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     int    Sum=-1;
     int    Taken=-1;
     int    nd;
+
+    if ( (nBlockYOff == 0) || (nBlockYOff == nRasterYSize-1) )
+        CPLDebug( "GDAL_netCDF", "netCDFRasterBand::IReadBlock( %d, %d, ... )",
+                  nBlockXOff, nBlockYOff );
 
     *pszName='\0';
     memset( start, 0, sizeof( start ) );
@@ -1293,7 +1307,7 @@ netCDFDataset::~netCDFDataset()
 
 {
     /* make sure projection is written if GeoTransform OR Projection are missing */
-        if( (GetAccess() == GA_Update) && (! bAddedProjectionVars) ) {
+    if( (GetAccess() == GA_Update) && (! bAddedProjectionVars) ) {
         if ( bSetProjection && ! bSetGeoTransform )
             AddProjectionVars();
         else if ( bSetGeoTransform && ! bSetProjection )
@@ -1319,8 +1333,11 @@ netCDFDataset::~netCDFDataset()
 /************************************************************************/
 int netCDFDataset::SetDefineMode( int bNewDefineMode )
 {
-    /* do nothing, already in same mode */
-    if ( bDefineMode == bNewDefineMode ) return CE_None;
+    /* do nothing if already in new define mode
+       or if dataset is in read-only mode */
+    if ( ( bDefineMode == bNewDefineMode ) || 
+         ( GetAccess() == GA_ReadOnly ) ) 
+        return CE_None;
 
     CPLDebug( "GDAL_netCDF", "SetDefineMode(%d) old=%d",
               bNewDefineMode, bDefineMode );
