@@ -105,6 +105,7 @@ public:
 
     long                 GetFID() const { return m_nFID; }
     void                 SetFID(long);
+    void                 SetGeometryType(OGRwkbGeometryType);
 
     IVFKDataBlock       *GetDataBlock() const { return m_poDataBlock; }
     OGRwkbGeometryType   GetGeometryType() const { return m_nGeometryType; }

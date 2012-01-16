@@ -404,7 +404,7 @@ IVFKFeature *IVFKDataBlock::GetFeature(long nFID)
     }
     
     if (m_nGeometryType == wkbPoint || m_nGeometryType == wkbPolygon) {
-	m_iNextFeature = (int) nFID;
+	// m_iNextFeature = (int) nFID;
 	return GetFeatureByIndex(int (nFID) - 1); /* zero-based index */
     }
     else if (m_nGeometryType == wkbLineString) {
@@ -428,7 +428,6 @@ IVFKFeature *IVFKDataBlock::GetFeature(long nFID)
 long IVFKDataBlock::GetMaxFID()
 {
     if (m_nFeatureCount < 0) {
-	m_nFID = 0;
 	m_poReader->ReadDataRecords(this);
     }
     
@@ -819,13 +818,16 @@ long VFKDataBlock::LoadGeometryLineStringSBP()
 		oOGRLine.empty(); /* restore line */
 	    }
 	    poLine = poFeature;
+	    nfeatures++;
+	}
+	else {
+	    poFeature->SetGeometryType(wkbUnknown);
 	}
 	poPoint = poDataBlockPoints->GetFeature(idxId, id);
 	if (!poPoint)
 	    continue;
 	OGRPoint *pt = (OGRPoint *) poPoint->GetGeometry();
 	oOGRLine.addPoint(pt);
-	nfeatures++;
     }
     /* add last line */
     oOGRLine.setCoordinateDimension(2); /* force 2D */
