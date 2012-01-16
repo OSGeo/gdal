@@ -202,8 +202,9 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
 	return -1;
 
     poDataBlock->SetFeatureCount(0);
+    poDataBlock->SetMaxFID(0);
     pszName = poDataBlock->GetName();
-    
+
     VSIFSeek(m_poFD, 0, SEEK_SET);
     while ((pszRawLine = CPLReadLine(m_poFD)) != NULL) {
 	if (strlen(pszRawLine) < 2)

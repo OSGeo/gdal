@@ -62,6 +62,13 @@ IVFKFeature::~IVFKFeature()
     m_poDataBlock = NULL;
 }
 
+/*!
+  \brief Set feature geometry type
+*/
+void IVFKFeature::SetGeometryType(OGRwkbGeometryType nGeomType)
+{
+    m_nGeometryType = nGeomType;
+}
 
 /*!
   \brief Set feature id

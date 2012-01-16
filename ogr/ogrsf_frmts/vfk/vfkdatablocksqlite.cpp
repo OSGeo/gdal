@@ -132,13 +132,16 @@ long VFKDataBlockSQLite::LoadGeometryLineStringSBP()
 		    oOGRLine.empty(); /* restore line */
 		}
 		poLine = poFeature;
+		nfeatures++;
+	    }
+	    else {
+		poFeature->SetGeometryType(wkbUnknown);
 	    }
 	    poPoint = (VFKFeatureSQLite *) poDataBlockPoints->GetFeature("ID", id);
 	    if (!poPoint)
 		continue;
 	    OGRPoint *pt = (OGRPoint *) poPoint->GetGeometry();
 	    oOGRLine.addPoint(pt);
-	    nfeatures++;
 	}
 	/* add last line */
 	oOGRLine.setCoordinateDimension(2); /* force 2D */
