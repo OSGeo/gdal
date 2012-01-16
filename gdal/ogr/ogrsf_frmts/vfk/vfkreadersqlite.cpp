@@ -380,9 +380,6 @@ void VFKReaderSQLite::AddFeature(IVFKDataBlock *poDataBlock, VFKFeature *poFeatu
     VFKFeatureSQLite  *poNewFeature;
     const VFKProperty *poProperty;
     
-    if (EQUAL(poDataBlock->GetName(), "SBP")) {
-	poNewFeature = NULL;
-    }
     osCommand.Printf("INSERT INTO '%s' VALUES(", poDataBlock->GetName());
     
     for (int i = 0; i < poDataBlock->GetPropertyCount(); i++) {
