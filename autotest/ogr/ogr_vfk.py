@@ -160,7 +160,7 @@ def ogr_vfk_4():
         gdaltest.post_reason('did not get expected layer name "SBP"')
         return 'fail'
     
-    feat = gdaltest.vfk_layer_sbp.GetFeature(4)
+    feat = gdaltest.vfk_layer_sbp.GetFeature(5)
     length = int (feat.geometry().Length())
         
     if length != 10:
