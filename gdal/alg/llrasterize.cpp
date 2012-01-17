@@ -261,8 +261,8 @@ void GDALdllImagePoint( int nRasterXSize, int nRasterYSize,
  
     for ( i = 0; i < nPartCount; i++ )
     {
-        int nX = (int)floor( padfX[i] + 0.5 );
-        int nY = (int)floor( padfY[i] + 0.5 );
+        int nX = (int)floor( padfX[i] );
+        int nY = (int)floor( padfY[i] );
         double dfVariant = 0;
         if( padfVariant != NULL )
             dfVariant = padfVariant[i];
@@ -292,11 +292,11 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
 
         for ( j = 1; j < panPartSize[i]; j++ )
         {
-            int iX = (int)floor( padfX[n + j - 1] + 0.5 );
-            int iY = (int)floor( padfY[n + j - 1] + 0.5 );
+            int iX = (int)floor( padfX[n + j - 1] );
+            int iY = (int)floor( padfY[n + j - 1] );
 
-            const int iX1 = (int)floor( padfX[n + j] + 0.5 );
-            const int iY1 = (int)floor( padfY[n + j] + 0.5 );
+            const int iX1 = (int)floor( padfX[n + j] );
+            const int iY1 = (int)floor( padfY[n + j] );
 
             double dfVariant = 0, dfVariant1 = 0;
             if( padfVariant != NULL && 
