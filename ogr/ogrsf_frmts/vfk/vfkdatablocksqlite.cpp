@@ -261,7 +261,12 @@ long VFKDataBlockSQLite::LoadGeometryPolygon()
 	vrColumn[0] = "PAR_ID_1";
 	vrColumn[1] = "PAR_ID_2";
     }
-    
+    else {
+	vrColumn[0] = "OB_ID";
+	vrColumn[1] = "PORADOVE_CISLO_BODU";
+	vrValue[1]  = 1;
+    }
+
     osSQL.Printf("SELECT ID,_rowid_ FROM '%s'", m_pszName);
     hStmt = poReader->PrepareStatement(osSQL.c_str());
     
@@ -284,7 +289,8 @@ long VFKDataBlockSQLite::LoadGeometryPolygon()
 	    
 	    while(poReader->ExecuteSQL(hStmtOb) == OGRERR_NONE) {
 		idOb = sqlite3_column_double(hStmtOb, 0); 
-		poLineSbp = poDataBlockLines2->GetFeature("OB_ID", idOb);
+		vrValue[0] = idOb;
+		poLineSbp = poDataBlockLines2->GetFeature(vrColumn, vrValue, 2);
 		if (poLineSbp)
 		    poLineList.push_back(poLineSbp);
 	    }
