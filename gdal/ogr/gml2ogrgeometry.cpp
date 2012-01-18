@@ -1192,7 +1192,24 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                 }
                 if( poGeom != NULL )
                 {
-                    poLS->addSubLineString( (OGRLineString *)poGeom );
+                    OGRLineString *poAddLS = (OGRLineString *)poGeom;
+                    if( poLS->getNumPoints() > 0 && poAddLS->getNumPoints() > 0
+                        && fabs(poLS->getX(poLS->getNumPoints()-1)
+                                - poAddLS->getX(0)) < 1e-14
+                        && fabs(poLS->getY(poLS->getNumPoints()-1)
+                                - poAddLS->getY(0)) < 1e-14
+                        && fabs(poLS->getZ(poLS->getNumPoints()-1)
+                                - poAddLS->getZ(0)) < 1e-14) 
+                    {
+                        // Skip the first point of the new linestring to avoid
+                        // invalidate duplicate points (#4451)
+                        poLS->addSubLineString( poAddLS, 1 );
+                    }
+                    else
+                    {
+                        // Add the whole new line string
+                        poLS->addSubLineString( poAddLS );
+                    }
                     delete poGeom;
                 }
             }
