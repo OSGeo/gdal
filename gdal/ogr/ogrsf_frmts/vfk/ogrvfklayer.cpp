@@ -50,27 +50,30 @@ OGRVFKLayer::OGRVFKLayer(const char *pszName,
 {
     /* set spatial reference */
     if( poSRSIn == NULL ) {
-	/* default is S-JTSK */
-	const char *wktString = "PROJCS[\"S-JTSK_Krovak_East_North\","
-	    "GEOGCS[\"GCS_S_JTSK\","
-	    "DATUM[\"Jednotne_Trigonometricke_Site_Katastralni\","
-            "SPHEROID[\"Bessel_1841\",6377397.155,299.1528128]],"
-	    "PRIMEM[\"Greenwich\",0.0],"
-	    "UNIT[\"Degree\",0.0174532925199433]],"
+	/* default is S-JTSK 
+	const char *wktString = "PROJCS[\"Krovak\","
+	    "GEOGCS[\"GCS_Bessel 1841\","
+	    "DATUM[\"D_unknown\","
+	    "SPHEROID[\"bessel\","
+	    "6377397.155,299.1528128]],"
+	    "PRIMEM[\"Greenwich\",0],"
+	    "UNIT[\"Degree\",0.017453292519943295]],"
 	    "PROJECTION[\"Krovak\"],"
-	    "PARAMETER[\"False_Easting\",0.0],"
-	    "PARAMETER[\"False_Northing\",0.0],"
-	    "PARAMETER[\"Pseudo_Standard_Parallel_1\",78.5],"
-	    "PARAMETER[\"Scale_Factor\",0.9999],"
-	    "PARAMETER[\"Azimuth\",30.28813975277778],"
-	    "PARAMETER[\"Longitude_Of_Center\",24.83333333333333],"
-	    "PARAMETER[\"Latitude_Of_Center\",49.5],"
-	    "PARAMETER[\"X_Scale\",-1.0],"
-	    "PARAMETER[\"Y_Scale\",1.0],"
-	    "PARAMETER[\"XY_Plane_Rotation\",90.0],"
-	    "UNIT[\"Meter\",1.0]]";
+	    "PARAMETER[\"latitude_of_center\",49.5],"
+	    "PARAMETER[\"longitude_of_center\",24.83333333333333],"
+	    "PARAMETER[\"azimuth\",0],"
+	    "PARAMETER[\"pseudo_standard_parallel_1\",0],"
+	    "PARAMETER[\"scale_factor\",0.9999],"
+	    "PARAMETER[\"false_easting\",0],"
+	    "PARAMETER[\"false_northing\",0],"
+	    "UNIT[\"Meter\",1]]";
+	*/
+	
         poSRS = new OGRSpatialReference();
+	/*
 	if (poSRS->importFromWkt((char **)&wktString) != OGRERR_NONE) {
+	*/
+	if (poSRS->importFromEPSG(2065) != OGRERR_NONE) {
 	    delete poSRS;
 	    poSRS = NULL;
 	}
