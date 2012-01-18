@@ -832,6 +832,47 @@ def gml_Circle():
     return 'success'
 
 ###############################################################################
+# Test concatenated sections (#4451)
+
+def gml_ConcatenatedDeduplication():
+
+    gml = """<gml:Surface>
+       <gml:patches>
+        <gml:PolygonPatch interpolation="planar">
+         <gml:exterior>
+          <gml:Ring>
+           <gml:curveMember>
+            <gml:Curve>
+             <gml:segments>
+              <gml:LineStringSegment interpolation="linear">
+               <gml:pos>0 -1</gml:pos>
+               <gml:pos>0 1</gml:pos>
+              </gml:LineStringSegment>
+              <gml:Arc interpolation="circularArc3Points" numArc="1">
+               <gml:pos>0 1</gml:pos>
+               <gml:pos>1 0</gml:pos>
+               <gml:pos>0 -1</gml:pos>
+              </gml:Arc>
+             </gml:segments>
+            </gml:Curve>
+           </gml:curveMember>
+          </gml:Ring></gml:exterior>
+         </gml:PolygonPatch>
+        </gml:patches>
+       </gml:Surface>"""
+
+    gdal.SetConfigOption('OGR_ARC_STEPSIZE','45')
+    geom = ogr.CreateGeometryFromGML( gml )
+    gdal.SetConfigOption('OGR_ARC_STEPSIZE',None)
+
+    expected_wkt = 'POLYGON ((0 -1,0 1,0.707106781186548 0.707106781186547,1 0,0.707106781186548 -0.707106781186547,0.0 -1.0))'
+    if ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt)) != 0:
+        print(geom)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test OGRFormatDouble() to check for rounding errors (would also apply for KML output, or ogrinfo output)
 
 def gml_out_precision():
@@ -1134,6 +1175,7 @@ gdaltest_list.append( gml_Rectangle )
 gdaltest_list.append( gml_Tin )
 gdaltest_list.append( gml_Arc )
 gdaltest_list.append( gml_Circle )
+gdaltest_list.append( gml_ConcatenatedDeduplication )
 #gdaltest_list.append( gml_out_precision )
 gdaltest_list.append( gml_invalid_geoms )
 gdaltest_list.append( gml_write_gml3_geometries )
