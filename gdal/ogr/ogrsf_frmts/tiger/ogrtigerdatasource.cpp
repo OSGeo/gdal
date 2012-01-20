@@ -322,7 +322,11 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
         pszPath = CPLStrdup( CPLGetPath(pszFilename) );
 
         strncpy( szModule, CPLGetFilename(pszFilename), sizeof(szModule)-1 );
+        /* Make sure the buffer is 0 terminated */
         szModule[sizeof(szModule)-1] = '\0';
+
+        /* And now remove last character of filename */
+        szModule[strlen(szModule)-1] = '\0';
 
         papszFileList = CSLAddString( papszFileList, szModule );
     }
