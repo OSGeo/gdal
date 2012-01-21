@@ -137,6 +137,38 @@ def ogr_fgdb_1():
     return 'success'
 
 ###############################################################################
+# Test DeleteField()
+
+def ogr_fgdb_DeleteField():
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+    ds = ogr.Open("tmp/test.gdb", update = 1)
+    lyr = ds.GetLayerByIndex(0)
+    if lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex('str')) != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    lyr.CreateField(ogr.FieldDefn("str2", ogr.OFTString))
+    feat = lyr.GetNextFeature()
+    feat.SetField("str2", "foo2_\xc3\xa9")
+    lyr.SetFeature(feat)
+    feat = None
+    ds = None
+
+    ds = ogr.Open("tmp/test.gdb")
+    lyr = ds.GetLayerByIndex(0)
+    if lyr.GetLayerDefn().GetFieldIndex('str') != -1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsString("str2") != "foo2_\xc3\xa9":
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Run test_ogrsf
 
 def ogr_fgdb_2():
@@ -364,6 +396,7 @@ def ogr_fgdb_cleanup():
 gdaltest_list = [
     ogr_fgdb_init,
     ogr_fgdb_1,
+    ogr_fgdb_DeleteField,
     ogr_fgdb_2,
     ogr_fgdb_3,
     ogr_fgdb_4,

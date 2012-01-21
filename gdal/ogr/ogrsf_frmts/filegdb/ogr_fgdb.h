@@ -85,6 +85,11 @@ class FGdbLayer : public OGRLayer
   OGRErr              PopulateRowWithFeature( Row& row, OGRFeature *poFeature );
   OGRErr              GetRow( EnumRows& enumRows, Row& row, long nFID );
 
+  char*               CreateFieldDefn(OGRFieldDefn& oField,
+                                      int bApproxOK,
+                                      std::string& fieldname_clean,
+                                      std::string& gdbFieldType);
+
 public:
 
   FGdbLayer();
@@ -109,9 +114,15 @@ public:
   std::wstring GetType() const { return m_wstrType; }
 
   virtual OGRErr      CreateField( OGRFieldDefn *poField, int bApproxOK );
+  virtual OGRErr      DeleteField( int iFieldToDelete );
+#ifdef AlterFieldDefn_implemented_but_not_working
+  virtual OGRErr      AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poNewFieldDefn, int nFlags );
+#endif
+
   virtual OGRErr      CreateFeature( OGRFeature *poFeature );
   virtual OGRErr      SetFeature( OGRFeature *poFeature );
   virtual OGRErr      DeleteFeature( long nFID );
+
   virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
   virtual int         GetFeatureCount( int bForce );
   virtual OGRErr      SetAttributeFilter( const char *pszQuery );
