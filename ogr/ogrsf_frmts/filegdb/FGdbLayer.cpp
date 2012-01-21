@@ -288,7 +288,6 @@ OGRErr FGdbLayer::CreateFeature( OGRFeature *poFeature )
     Table *fgdb_table = m_pTable;
     Row fgdb_row;
     fgdbError hr;
-    ShapeBuffer shape;
 
     if (m_bBulkLoadAllowed < 0)
         m_bBulkLoadAllowed = CSLTestBoolean(CPLGetConfigOption("FGDB_BULK_LOAD", "NO"));
@@ -304,6 +303,60 @@ OGRErr FGdbLayer::CreateFeature( OGRFeature *poFeature )
         GDBErr(hr, "Failed at creating Row in CreateFeature.");
         return OGRERR_FAILURE;
     }
+
+    /* Populate the row with the feature content */
+    if (PopulateRowWithFeature(fgdb_row, poFeature) != OGRERR_NONE)
+        return OGRERR_FAILURE;
+
+    /* Cannot write to FID field - it is managed by GDB*/
+    //std::wstring wfield_name = StringToWString(m_strOIDFieldName);
+    //hr = fgdb_row.SetInteger(wfield_name, poFeature->GetFID());
+
+    /* Write the row to the table */
+    hr = fgdb_table->Insert(fgdb_row);
+    if (FAILED(hr))
+    {
+        GDBErr(hr, "Failed at writing Row to Table in CreateFeature.");
+        return OGRERR_FAILURE;
+    }
+
+    int32 oid = -1;
+    if (!FAILED(hr = fgdb_row.GetOID(oid)))
+    {
+        poFeature->SetFID(oid);
+    }
+
+#ifdef EXTENT_WORKAROUND
+    /* For WorkAroundExtentProblem() needs */
+    OGRGeometry* poGeom = poFeature->GetGeometryRef();
+    if ( m_bLayerJustCreated && poGeom != NULL && !poGeom->IsEmpty() )
+    {
+        OGREnvelope sFeatureGeomEnvelope;
+        poGeom->getEnvelope(&sFeatureGeomEnvelope);
+        if (!m_bLayerEnvelopeValid)
+        {
+            memcpy(&sLayerEnvelope, &sFeatureGeomEnvelope, sizeof(sLayerEnvelope));
+            m_bLayerEnvelopeValid = true;
+        }
+        else
+        {
+            sLayerEnvelope.Merge(sFeatureGeomEnvelope);
+        }
+    }
+#endif
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                    PopulateRowWithFeature()                          */
+/*                                                                      */
+/************************************************************************/
+
+OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
+{
+    ShapeBuffer shape;
+    fgdbError hr;
 
     OGRFeatureDefn* poFeatureDefn = m_pFeatureDefn;
     int nFieldCount = poFeatureDefn->GetFieldCount();
@@ -413,38 +466,98 @@ OGRErr FGdbLayer::CreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    /* Cannot write to FID field - it is managed by GDB*/
-    //std::wstring wfield_name = StringToWString(m_strOIDFieldName);
-    //hr = fgdb_row.SetInteger(wfield_name, poFeature->GetFID());
+    return OGRERR_NONE;
 
-    /* Write the row to the table */
-    hr = fgdb_table->Insert(fgdb_row);
-    if (FAILED(hr))
+}
+
+/************************************************************************/
+/*                             GetRow()                                 */
+/************************************************************************/
+
+OGRErr FGdbLayer::GetRow( EnumRows& enumRows, Row& row, long nFID )
+{
+    long           hr;
+    CPLString      osQuery;
+
+    osQuery.Printf("%s = %ld", m_strOIDFieldName.c_str(), nFID);
+
+    if (FAILED(hr = m_pTable->Search(m_wstrSubfields, StringToWString(osQuery.c_str()), true, enumRows)))
     {
-        GDBErr(hr, "Failed at writing Row to Table in CreateFeature.");
+        GDBErr(hr, "Failed fetching row ");
         return OGRERR_FAILURE;
     }
 
-#ifdef EXTENT_WORKAROUND
-    /* For WorkAroundExtentProblem() needs */
-    if ( m_bLayerJustCreated && poGeom != NULL && !poGeom->IsEmpty() )
+    if (FAILED(hr = enumRows.Next(row)))
     {
-        OGREnvelope sFeatureGeomEnvelope;
-        poGeom->getEnvelope(&sFeatureGeomEnvelope);
-        if (!m_bLayerEnvelopeValid)
-        {
-            memcpy(&sLayerEnvelope, &sFeatureGeomEnvelope, sizeof(sLayerEnvelope));
-            m_bLayerEnvelopeValid = true;
-        }
-        else
-        {
-            sLayerEnvelope.Merge(sFeatureGeomEnvelope);
-        }
+        GDBErr(hr, "Failed fetching row ");
+        return OGRERR_FAILURE;
     }
-#endif
+
+    if (hr != S_OK)
+        return OGRERR_FAILURE; //none found - but no failure
 
     return OGRERR_NONE;
+}
 
+/************************************************************************/
+/*                           DeleteFeature()                            */
+/************************************************************************/
+
+OGRErr FGdbLayer::DeleteFeature( long nFID )
+
+{
+    long           hr;
+    EnumRows       enumRows;
+    Row            row;
+
+    EndBulkLoad();
+
+    if (GetRow(enumRows, row, nFID) != OGRERR_NONE)
+        return OGRERR_FAILURE;
+
+    if (FAILED(hr = m_pTable->Delete(row)))
+    {
+        GDBErr(hr, "Failed deleting row ");
+        return OGRERR_FAILURE;
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            SetFeature()                              */
+/************************************************************************/
+
+OGRErr FGdbLayer::SetFeature( OGRFeature* poFeature )
+
+{
+    long           hr;
+    EnumRows       enumRows;
+    Row            row;
+
+    if( poFeature->GetFID() == OGRNullFID )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "SetFeature() with unset FID fails." );
+        return OGRERR_FAILURE;
+    }
+
+    EndBulkLoad();
+
+    if (GetRow(enumRows, row, poFeature->GetFID()) != OGRERR_NONE)
+        return OGRERR_FAILURE;
+
+    /* Populate the row with the feature content */
+    if (PopulateRowWithFeature(row, poFeature) != OGRERR_NONE)
+        return OGRERR_FAILURE;
+
+    if (FAILED(hr = m_pTable->Update(row)))
+    {
+        GDBErr(hr, "Failed updating row ");
+        return OGRERR_FAILURE;
+    }
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -1711,37 +1824,19 @@ OGRFeature* FGdbLayer::GetNextFeature()
 OGRFeature *FGdbLayer::GetFeature( long oid )
 {
     // do query to fetch individual row
-
     long           hr;
-    Row            row;
     EnumRows       enumRows;
-    CPLString      osQuery;
+    Row            row;
 
     EndBulkLoad();
 
-    osQuery.Printf("%s = %ld", m_strOIDFieldName.c_str(), oid);
-
-    if (FAILED(hr = m_pTable->Search(m_wstrSubfields, StringToWString(osQuery.c_str()), true, enumRows)))
-    {
-        GDBErr(hr, "Failed fetching row ");
+    if (GetRow(enumRows, row, oid) != OGRERR_NONE)
         return NULL;
-    }
-
-    if (FAILED(hr = enumRows.Next(row)))
-    {
-        GDBErr(hr, "Failed fetching row ");
-        return NULL;
-    }
-
-    if (hr != S_OK)
-        return NULL; //none found - but no failure
-
 
     OGRFeature* pOGRFeature = NULL;
 
     if (!OGRFeatureFromGdbRow(&row,  &pOGRFeature))
     {
-        GDBErr(hr, "Failed translating ArcObjects row to OGR Feature");
         return NULL;
     }
 
@@ -1971,11 +2066,11 @@ int FGdbLayer::TestCapability( const char* pszCap )
     else if (EQUAL(pszCap,OLCReorderFields)) /* TBD ReorderFields() */
         return FALSE;
 
-    else if (EQUAL(pszCap,OLCDeleteFeature)) /* TBD DeleteFeature() */
-        return FALSE;
+    else if (EQUAL(pszCap,OLCDeleteFeature)) /* DeleteFeature() */
+        return TRUE;
 
-    else if (EQUAL(pszCap,OLCRandomWrite)) /* TBD SetFeature() */
-        return FALSE;
+    else if (EQUAL(pszCap,OLCRandomWrite)) /* SetFeature() */
+        return TRUE;
 
     else if (EQUAL(pszCap,OLCDeleteField)) /* TBD DeleteField() */
         return FALSE;
