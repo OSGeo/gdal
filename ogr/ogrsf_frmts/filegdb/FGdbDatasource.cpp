@@ -337,3 +337,120 @@ FGdbDataSource::CreateLayer( const char * pszLayerName,
 
     return pLayer;  
 }
+
+
+/************************************************************************/
+/*                   OGRFGdbSingleFeatureLayer                          */
+/************************************************************************/
+
+class OGRFGdbSingleFeatureLayer : public OGRLayer
+{
+  private:
+    char               *pszVal;
+    OGRFeatureDefn     *poFeatureDefn;
+    int                 iNextShapeId;
+
+  public:
+                        OGRFGdbSingleFeatureLayer( const char* pszLayerName,
+                                                   const char *pszVal );
+                        ~OGRFGdbSingleFeatureLayer();
+
+    virtual void        ResetReading() { iNextShapeId = 0; }
+    virtual OGRFeature *GetNextFeature();
+    virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
+    virtual int         TestCapability( const char * ) { return FALSE; }
+};
+
+/************************************************************************/
+/*                    OGRFGdbSingleFeatureLayer()                       */
+/************************************************************************/
+
+OGRFGdbSingleFeatureLayer::OGRFGdbSingleFeatureLayer(const char* pszLayerName,
+                                                     const char *pszVal )
+{
+    poFeatureDefn = new OGRFeatureDefn( pszLayerName );
+    poFeatureDefn->Reference();
+    OGRFieldDefn oField( "FIELD_1", OFTString );
+    poFeatureDefn->AddFieldDefn( &oField );
+
+    iNextShapeId = 0;
+    this->pszVal = pszVal ? CPLStrdup(pszVal) : NULL;
+}
+
+/************************************************************************/
+/*                   ~OGRFGdbSingleFeatureLayer()                       */
+/************************************************************************/
+
+OGRFGdbSingleFeatureLayer::~OGRFGdbSingleFeatureLayer()
+{
+    if( poFeatureDefn != NULL )
+        poFeatureDefn->Release();
+    CPLFree(pszVal);
+}
+
+
+/************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
+
+OGRFeature * OGRFGdbSingleFeatureLayer::GetNextFeature()
+{
+    if (iNextShapeId != 0)
+        return NULL;
+
+    OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
+    if (pszVal)
+        poFeature->SetField(0, pszVal);
+    poFeature->SetFID(iNextShapeId ++);
+    return poFeature;
+}
+
+/************************************************************************/
+/*                              ExecuteSQL()                            */
+/************************************************************************/
+
+OGRLayer * FGdbDataSource::ExecuteSQL( const char *pszSQLCommand,
+                                       OGRGeometry *poSpatialFilter,
+                                       const char *pszDialect )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Special case GetLayerDefinition                                 */
+/* -------------------------------------------------------------------- */
+    if (EQUALN(pszSQLCommand, "GetLayerDefinition ", strlen("GetLayerDefinition ")))
+    {
+        FGdbLayer* poLayer = (FGdbLayer*) GetLayerByName(pszSQLCommand + strlen("GetLayerDefinition "));
+        if (poLayer)
+        {
+            char* pszVal = NULL;
+            poLayer->GetLayerXML(&pszVal);
+            OGRLayer* poRet = new OGRFGdbSingleFeatureLayer( "LayerDefinition", pszVal );
+            CPLFree(pszVal);
+            return poRet;
+        }
+        else
+            return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Special case GetLayerMetadata                                   */
+/* -------------------------------------------------------------------- */
+    if (EQUALN(pszSQLCommand, "GetLayerMetadata ", strlen("GetLayerMetadata ")))
+    {
+        FGdbLayer* poLayer = (FGdbLayer*) GetLayerByName(pszSQLCommand + strlen("GetLayerMetadata "));
+        if (poLayer)
+        {
+            char* pszVal = NULL;
+            poLayer->GetLayerMetadataXML(&pszVal);
+            OGRLayer* poRet = new OGRFGdbSingleFeatureLayer( "LayerMetadata", pszVal );
+            CPLFree(pszVal);
+            return poRet;
+        }
+        else
+            return NULL;
+    }
+
+    return OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                        poSpatialFilter,
+                                        pszDialect );
+}
