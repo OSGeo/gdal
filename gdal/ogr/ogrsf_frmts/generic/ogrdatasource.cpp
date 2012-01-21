@@ -1068,7 +1068,7 @@ OGRErr OGRDataSource::ProcessSQLAlterTableRenameColumn( const char *pszSQLComman
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Syntax error in ALTER TABLE RENAME COLUMN command.\n"
                   "Was '%s'\n"
-                  "Should be of form 'ALTER TABLE <layername> RENAME [COLUMN] <columnname> <columntype>'",
+                  "Should be of form 'ALTER TABLE <layername> RENAME [COLUMN] <columnname> TO <newname>'",
                   pszSQLCommand );
         return OGRERR_FAILURE;
     }
