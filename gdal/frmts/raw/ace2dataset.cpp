@@ -329,7 +329,7 @@ GDALDataset *ACE2Dataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osFilename = poOpenInfo->pszFilename;
     if ((strstr(poOpenInfo->pszFilename, ".ACE2.gz") ||
          strstr(poOpenInfo->pszFilename, ".ace2.gz")) &&
-        strncmp(poOpenInfo->pszFilename, "/vsigzip/", 10) != 0)
+        strncmp(poOpenInfo->pszFilename, "/vsigzip/", 9) != 0)
         osFilename = "/vsigzip/" + osFilename;
 
     VSILFILE* fpImage = VSIFOpenL( osFilename, "rb+" );
