@@ -151,7 +151,9 @@ int main( int argc, char ** argv )
 
     /* Register drivers */
     GDALAllRegister();
+#ifdef OGR_ENABLED
     OGRRegisterAll();
+#endif
 
     /* Search for SRS */
     bGotSRS = FindSRS( pszInput, oSRS, bDebug );
@@ -237,7 +239,9 @@ int main( int argc, char ** argv )
 
     /* cleanup anything left */
     GDALDestroyDriverManager();
+#ifdef OGR_ENABLED
     OGRCleanupAll();
+#endif
     CSLDestroy( argv );
 
     return 0;
@@ -285,7 +289,8 @@ int FindSRS( const char *pszInput, OGRSpatialReference &oSRS, int bDebug )
         }
         if ( ! bGotSRS ) 
             CPLDebug( "gdalsrsinfo", "did not open with GDAL" );
-        
+
+#ifdef OGR_ENABLED
         /* if unsuccessful, try to open with OGR */
         if ( ! bGotSRS ) {
             CPLDebug( "gdalsrsinfo", "trying to open with OGR" );
@@ -308,7 +313,7 @@ int FindSRS( const char *pszInput, OGRSpatialReference &oSRS, int bDebug )
             if ( ! bGotSRS ) 
                 CPLDebug( "gdalsrsinfo", "did not open with OGR" );
          }
-        
+#endif // OGR_ENABLED
     }
  
     /* Try ESRI file */
