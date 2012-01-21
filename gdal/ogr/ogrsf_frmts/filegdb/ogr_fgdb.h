@@ -82,6 +82,9 @@ class FGdbLayer : public OGRLayer
   bool                UpdateRowWithGeometry(Row& row, OGRGeometry* poGeom);
 #endif
 
+  OGRErr              PopulateRowWithFeature( Row& row, OGRFeature *poFeature );
+  OGRErr              GetRow( EnumRows& enumRows, Row& row, long nFID );
+
 public:
 
   FGdbLayer();
@@ -107,6 +110,8 @@ public:
 
   virtual OGRErr      CreateField( OGRFieldDefn *poField, int bApproxOK );
   virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+  virtual OGRErr      SetFeature( OGRFeature *poFeature );
+  virtual OGRErr      DeleteFeature( long nFID );
   virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
   virtual int         GetFeatureCount( int bForce );
   virtual OGRErr      SetAttributeFilter( const char *pszQuery );
