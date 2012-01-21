@@ -79,4 +79,10 @@ bool GDBDebug(long hr, std::string desc);
 //
 void FGDB_CPLAddXMLAttribute(CPLXMLNode* node, const char* attrname, const char* attrvalue);
 
+//
+// Utility for escaping reserved words and cleaning field names
+//
+std::string FGDBLaunderFieldName(const std::string fieldName);
+std::string FGDBEscapeReservedKeywords(const std::string fieldName);
+
 #endif
