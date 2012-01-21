@@ -91,15 +91,20 @@ def ogr_fgdb_1():
 
     for data in datalist:
         lyr = ds.CreateLayer(data[0], geom_type = data[1], srs = srs)
+        lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
         lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
         lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
         lyr.CreateField(ogr.FieldDefn("real", ogr.OFTReal))
-        feat = ogr.Feature(lyr.GetLayerDefn())
-        feat.SetGeometry(ogr.CreateGeometryFromWkt(data[2]))
-        feat.SetField("str", "foo_\xc3\xa9")
-        feat.SetField("int", 123)
-        feat.SetField("real", 4.56)
-        lyr.CreateFeature(feat)
+
+        # We need at least 5 features so that test_ogrsf can test SetFeature()
+        for i in range(5):
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat.SetGeometry(ogr.CreateGeometryFromWkt(data[2]))
+            feat.SetField("id", i + 1)
+            feat.SetField("str", "foo_\xc3\xa9")
+            feat.SetField("int", 123)
+            feat.SetField("real", 4.56)
+            lyr.CreateFeature(feat)
 
     for data in datalist:
         lyr = ds.GetLayerByName(data[0])
