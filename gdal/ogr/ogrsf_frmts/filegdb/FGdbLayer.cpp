@@ -48,7 +48,7 @@ FGdbLayer::FGdbLayer():
     OGRLayer(), m_pDS(NULL), m_pTable(NULL), m_pFeatureDefn(NULL), 
     m_pSRS(NULL), m_wstrSubfields(L"*"), m_pOGRFilterGeometry(NULL), 
     m_pEnumRows(NULL), m_bFilterDirty(true), 
-    m_supressColumnMappingError(false), m_forceMulti(false)
+    m_supressColumnMappingError(false), m_forceMulti(false), m_bLaunderReservedKeywords(true)
 {
     m_pEnumRows = new EnumRows;
 }
@@ -112,7 +112,10 @@ OGRErr FGdbLayer::CreateFeature( OGRFeature *poFeature )
 
     /* Check the status of the Row create */
     if (FAILED(hr))
-        return GDBErr(hr, "Failed at creating Row in CreateFeature.");
+    {
+        GDBErr(hr, "Failed at creating Row in CreateFeature.");
+        return OGRERR_FAILURE;
+    }
 
     OGRFeatureDefn* poFeatureDefn = m_pFeatureDefn;
     int nFieldCount = poFeatureDefn->GetFieldCount();
@@ -127,7 +130,10 @@ OGRErr FGdbLayer::CreateFeature( OGRFeature *poFeature )
         if( !poFeature->IsFieldSet( i ) )
         {
             if (FAILED(hr = fgdb_row.SetNull(wfield_name)))
-                return GDBErr(hr, "Failed setting field to NULL.");
+            {
+                GDBErr(hr, "Failed setting field to NULL.");
+                return OGRERR_FAILURE;
+            }
             continue;
         }
 
@@ -214,7 +220,10 @@ OGRErr FGdbLayer::CreateFeature( OGRFeature *poFeature )
     /* Write ShapeBuffer into the Row */
     hr = fgdb_row.SetGeometry(shape);
     if (FAILED(hr))
-        return GDBErr(hr, "Failed at writing Geometry to Row in CreateFeature.");
+    {
+        GDBErr(hr, "Failed at writing Geometry to Row in CreateFeature.");
+        return OGRERR_FAILURE;
+    }
 
     /* Cannot write to FID field - it is managed by GDB*/
     //std::wstring wfield_name = StringToWString(m_strOIDFieldName);
@@ -223,7 +232,10 @@ OGRErr FGdbLayer::CreateFeature( OGRFeature *poFeature )
     /* Write the row to the table */
     hr = fgdb_table->Insert(fgdb_row);
     if (FAILED(hr))
-        return GDBErr(hr, "Failed at writing Row to Table in CreateFeature.");
+    {
+        GDBErr(hr, "Failed at writing Row to Table in CreateFeature.");
+        return OGRERR_FAILURE;
+    }
 
     return OGRERR_NONE;
 
@@ -240,7 +252,6 @@ OGRErr FGdbLayer::CreateField(OGRFieldDefn* poField, int bApproxOK)
 {
     OGRFieldDefn oField(poField);
     std::string fieldname = oField.GetNameRef();
-    std::wstring wfieldname = StringToWString(fieldname);
     std::string fidname = std::string(GetFIDColumn());
     std::string nullable = "true";
     Table *fgdb_table = m_pTable;
@@ -261,6 +272,48 @@ OGRErr FGdbLayer::CreateField(OGRFieldDefn* poField, int bApproxOK)
         return OGRERR_FAILURE;
     }
 
+    /* Clean field names */
+    std::string fieldname_clean = FGDBLaunderFieldName(fieldname);
+
+    if (m_bLaunderReservedKeywords)
+        fieldname_clean = FGDBEscapeReservedKeywords(fieldname_clean);
+
+    /* Truncate to 64 characters */
+    if (fieldname_clean.size() > 64)
+        fieldname_clean.resize(64);
+
+    std::string temp_fieldname = fieldname_clean;
+
+    /* Ensures uniqueness of field name */
+    int numRenames = 1;
+    while ((m_pFeatureDefn->GetFieldIndex(temp_fieldname.c_str()) >= 0) && (numRenames < 10))
+    {
+        temp_fieldname = CPLSPrintf("%s_%d", fieldname_clean.substr(0, 62).c_str(), numRenames);
+        numRenames ++;
+    }
+    while ((m_pFeatureDefn->GetFieldIndex(temp_fieldname.c_str()) >= 0) && (numRenames < 100))
+    {
+        temp_fieldname = CPLSPrintf("%s_%d", fieldname_clean.substr(0, 61).c_str(), numRenames);
+        numRenames ++;
+    }
+
+    if (temp_fieldname != fieldname)
+    {
+        if( !bApproxOK || (m_pFeatureDefn->GetFieldIndex(temp_fieldname.c_str()) >= 0) )
+        {
+            CPLError( CE_Failure, CPLE_NotSupported,
+                "Failed to add field named '%s'",
+                fieldname.c_str() );
+            return OGRERR_FAILURE;
+        }
+        CPLError(CE_Warning, CPLE_NotSupported,
+            "Normalized/laundered field name: '%s' to '%s'",
+            fieldname.c_str(), temp_fieldname.c_str());
+
+        fieldname_clean = temp_fieldname;
+        oField.SetName(fieldname_clean.c_str());
+    }
+
     /* Then the Field definition */
     CPLXMLNode *defn_xml = CPLCreateXMLNode(NULL, CXT_Element, "esri:Field");
 
@@ -271,7 +324,7 @@ OGRErr FGdbLayer::CreateField(OGRFieldDefn* poField, int bApproxOK)
     FGDB_CPLAddXMLAttribute(defn_xml, "xsi:type", "esri:Field");
 
     /* Basic field information */
-    CPLCreateXMLElementAndValue(defn_xml, "Name", fieldname.c_str());
+    CPLCreateXMLElementAndValue(defn_xml, "Name", fieldname_clean.c_str());
     CPLCreateXMLElementAndValue(defn_xml, "Type", gdbFieldType.c_str());
     CPLCreateXMLElementAndValue(defn_xml, "IsNullable", nullable.c_str());
 
@@ -291,6 +344,12 @@ OGRErr FGdbLayer::CreateField(OGRFieldDefn* poField, int bApproxOK)
     /* We know nothing about Scale, so zero it out */
     CPLCreateXMLElementAndValue(defn_xml,"Scale", "0");
 
+    /*  Attempt to preserve the original fieldname */
+    if (fieldname != fieldname_clean)
+    {
+        CPLCreateXMLElementAndValue(defn_xml, "AliasName", fieldname.c_str());
+    }
+
     /* Default values are discouraged in OGR API docs */
     /* <DefaultValue xsi:type="xs:string">afternoon</DefaultValue> */
 
@@ -307,12 +366,15 @@ OGRErr FGdbLayer::CreateField(OGRFieldDefn* poField, int bApproxOK)
 
     /* Check the status of the Field add */
     if (FAILED(hr))
-        return GDBErr(hr, "Failed at creating Field for " + fieldname);
+    {
+        GDBErr(hr, "Failed at creating Field for " + fieldname);
+        return OGRERR_FAILURE;
+    }
 
     /* Now add the OGRFieldDefn to the OGRFeatureDefn */
     m_pFeatureDefn->AddFieldDefn(&oField);
 
-    m_vOGRFieldToESRIField.push_back(StringToWString(fieldname));
+    m_vOGRFieldToESRIField.push_back(StringToWString(fieldname_clean));
     m_vOGRFieldToESRIFieldType.push_back( gdbFieldType );
 
     /* All done and happy */
@@ -561,6 +623,8 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
         if ( ! OGRGeometryToGDB(eType, &esri_type, &has_z) )
             return GDBErr(-1, "Unable to map OGR type to ESRI type");
     }
+
+    m_bLaunderReservedKeywords = CSLFetchBoolean( papszOptions, "LAUNDER_RESERVED_KEYWORDS", TRUE) == TRUE;
 
     /* XML node */
     CPLXMLNode *xml_xml = CPLCreateXMLNode(NULL, CXT_Element, "?xml");
@@ -1673,4 +1737,3 @@ int FGdbLayer::TestCapability( const char* pszCap )
     else 
         return FALSE;
 }
-
