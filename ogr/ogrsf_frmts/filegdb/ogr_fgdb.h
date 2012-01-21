@@ -42,6 +42,11 @@
 /* FGDB API headers */
 #include "FileGDBAPI.h"
 
+/* Workaround needed for Linux 64 bit, at least for FileGDB API 1.1 (#4455) */
+#if defined(__linux__) && SIZEOF_VOIDP == 8
+#define EXTENT_WORKAROUND
+#endif
+
 /************************************************************************
 * Default layer creation options
 */
@@ -68,6 +73,14 @@ class FGdbLayer : public OGRLayer
 
   void                StartBulkLoad();
   void                EndBulkLoad();
+
+#ifdef EXTENT_WORKAROUND
+  bool                m_bLayerJustCreated;
+  OGREnvelope         sLayerEnvelope;
+  bool                m_bLayerEnvelopeValid;
+  void                WorkAroundExtentProblem();
+  bool                UpdateRowWithGeometry(Row& row, OGRGeometry* poGeom);
+#endif
 
 public:
 

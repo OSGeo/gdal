@@ -53,6 +53,11 @@ FGdbLayer::FGdbLayer():
     m_bBulkLoadAllowed = -1; /* uninitialized */
     m_bBulkLoadInProgress = FALSE;
     m_pEnumRows = new EnumRows;
+
+#ifdef EXTENT_WORKAROUND
+    m_bLayerEnvelopeValid = false;
+    m_bLayerJustCreated = false;
+#endif
 }
 
 /************************************************************************/
@@ -62,6 +67,10 @@ FGdbLayer::FGdbLayer():
 FGdbLayer::~FGdbLayer()
 {
     EndBulkLoad();
+
+#ifdef EXTENT_WORKAROUND
+    WorkAroundExtentProblem();
+#endif
 
     if (m_pFeatureDefn)
     {
@@ -98,6 +107,175 @@ FGdbLayer::~FGdbLayer()
     
 }
 
+#ifdef EXTENT_WORKAROUND
+
+/************************************************************************/
+/*                     UpdateRowWithGeometry()                          */
+/************************************************************************/
+
+bool FGdbLayer::UpdateRowWithGeometry(Row& row, OGRGeometry* poGeom)
+{
+    ShapeBuffer shape;
+    long hr;
+
+    /* Write geometry to a buffer */
+    GByte *pabyShape = NULL;
+    int nShapeSize = 0;
+    if ( OGRWriteToShapeBin( poGeom, &pabyShape, &nShapeSize ) != OGRERR_NONE )
+        return false;
+
+    /* Copy it into a ShapeBuffer */
+    if ( nShapeSize > 0 )
+    {
+        shape.Allocate(nShapeSize);
+        memcpy(shape.shapeBuffer, pabyShape, nShapeSize);
+        shape.inUseLength = nShapeSize;
+    }
+
+    /* Free the shape buffer */
+    CPLFree(pabyShape);
+
+    /* Write ShapeBuffer into the Row */
+    hr = row.SetGeometry(shape);
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
+    /* Update row */
+    hr = m_pTable->Update(row);
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                    WorkAroundExtentProblem()                         */
+/*                                                                      */
+/* Work-around problem with FileGDB API 1.1 on Linux 64bit. See #4455   */
+/************************************************************************/
+
+void FGdbLayer::WorkAroundExtentProblem()
+{
+    if (!m_bLayerJustCreated || !m_bLayerEnvelopeValid)
+        return;
+
+    OGREnvelope sEnvelope;
+    if (GetExtent(&sEnvelope, TRUE) != OGRERR_NONE)
+        return;
+
+    /* The characteristic of the bug is that the reported extent */
+    /* is the real extent truncated incorrectly to integer values */
+    /* We work around that by temporary updating one feature with a geometry */
+    /* whose coordinates are integer values but ceil'ed and floor'ed */
+    /* such that they include the real layer extent. */
+    if (((double)(int)sEnvelope.MinX == sEnvelope.MinX &&
+         (double)(int)sEnvelope.MinY == sEnvelope.MinY &&
+         (double)(int)sEnvelope.MaxX == sEnvelope.MaxX &&
+         (double)(int)sEnvelope.MaxY == sEnvelope.MaxY) &&
+        (fabs(sEnvelope.MinX - sLayerEnvelope.MinX) > 1e-5 ||
+         fabs(sEnvelope.MinY - sLayerEnvelope.MinY) > 1e-5 ||
+         fabs(sEnvelope.MaxX - sLayerEnvelope.MaxX) > 1e-5 ||
+         fabs(sEnvelope.MaxY - sLayerEnvelope.MaxY) > 1e-5))
+    {
+        long           hr;
+        Row            row;
+        EnumRows       enumRows;
+
+        if (FAILED(hr = m_pTable->Search(StringToWString("*"), StringToWString(""), true, enumRows)))
+            return;
+
+        if (FAILED(hr = enumRows.Next(row)))
+            return;
+
+        if (hr != S_OK)
+            return;
+
+        /* Backup original shape buffer */
+        ShapeBuffer originalGdbGeometry;
+        if (FAILED(hr = row.GetGeometry(originalGdbGeometry)))
+            return;
+
+        OGRGeometry* pOGRGeo = NULL;
+        if ((!GDBGeometryToOGRGeometry(m_forceMulti, &originalGdbGeometry, m_pSRS, &pOGRGeo)) || pOGRGeo == NULL)
+        {
+            delete pOGRGeo;
+            return;
+        }
+
+        OGRwkbGeometryType eType = wkbFlatten(pOGRGeo->getGeometryType());
+
+        delete pOGRGeo;
+        pOGRGeo = NULL;
+
+        OGRPoint oP1(floor(sLayerEnvelope.MinX), floor(sLayerEnvelope.MinY));
+        OGRPoint oP2(ceil(sLayerEnvelope.MaxX), ceil(sLayerEnvelope.MaxY));
+
+        OGRLinearRing oLR;
+        oLR.addPoint(&oP1);
+        oLR.addPoint(&oP2);
+        oLR.addPoint(&oP1);
+
+        if ( eType == wkbPoint )
+        {
+            UpdateRowWithGeometry(row, &oP1);
+            UpdateRowWithGeometry(row, &oP2);
+        }
+        else if ( eType == wkbLineString )
+        {
+            UpdateRowWithGeometry(row, &oLR);
+        }
+        else if ( eType == wkbPolygon )
+        {
+            OGRPolygon oPoly;
+            oPoly.addRing(&oLR);
+
+            UpdateRowWithGeometry(row, &oPoly);
+        }
+        else if ( eType == wkbMultiPoint )
+        {
+            OGRMultiPoint oColl;
+            oColl.addGeometry(&oP1);
+            oColl.addGeometry(&oP2);
+
+            UpdateRowWithGeometry(row, &oColl);
+        }
+        else if ( eType == wkbMultiLineString )
+        {
+            OGRMultiLineString oColl;
+            oColl.addGeometry(&oLR);
+
+            UpdateRowWithGeometry(row, &oColl);
+        }
+        else if ( eType == wkbMultiPolygon )
+        {
+            OGRMultiPolygon oColl;
+            OGRPolygon oPoly;
+            oPoly.addRing(&oLR);
+            oColl.addGeometry(&oPoly);
+
+            UpdateRowWithGeometry(row, &oColl);
+        }
+        else
+            return;
+
+        /* Restore original ShapeBuffer */
+        hr = row.SetGeometry(originalGdbGeometry);
+        if (FAILED(hr))
+            return;
+
+        /* Update Row */
+        hr = m_pTable->Update(row);
+        if (FAILED(hr))
+            return;
+
+        CPLDebug("FGDB", "Workaround extent problem with Linux 64bit FGDB SDK 1.1");
+    }
+}
+#endif // EXTENT_WORKAROUND
 
 /************************************************************************/
 /*                            CreateFeature()                           */
@@ -246,6 +424,24 @@ OGRErr FGdbLayer::CreateFeature( OGRFeature *poFeature )
         GDBErr(hr, "Failed at writing Row to Table in CreateFeature.");
         return OGRERR_FAILURE;
     }
+
+#ifdef EXTENT_WORKAROUND
+    /* For WorkAroundExtentProblem() needs */
+    if ( m_bLayerJustCreated && poGeom != NULL && !poGeom->IsEmpty() )
+    {
+        OGREnvelope sFeatureGeomEnvelope;
+        poGeom->getEnvelope(&sFeatureGeomEnvelope);
+        if (!m_bLayerEnvelopeValid)
+        {
+            memcpy(&sLayerEnvelope, &sFeatureGeomEnvelope, sizeof(sLayerEnvelope));
+            m_bLayerEnvelopeValid = true;
+        }
+        else
+        {
+            sLayerEnvelope.Merge(sFeatureGeomEnvelope);
+        }
+    }
+#endif
 
     return OGRERR_NONE;
 
@@ -579,6 +775,10 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     std::string fid_name = FGDB_OID_NAME;
     std::string esri_type;
     bool has_z = false;
+
+#ifdef EXTENT_WORKAROUND
+    m_bLayerJustCreated = true;
+#endif
 
     /* Handle the FEATURE_DATASET case */
     if (  CSLFetchNameValue( papszOptions, "FEATURE_DATASET") != NULL )
