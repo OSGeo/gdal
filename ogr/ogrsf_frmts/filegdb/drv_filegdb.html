@@ -39,6 +39,10 @@ closed or when a read operation is done.
 	<li><b>OID_NAME</b>: Name of the OID column to create. Defaults to "OBJECTID".<p>
 	<li><b>XORIGIN, YORIGIN, ZORIGIN, XYSCALE, ZSCALE</b>: These parameters control the <a href="http://help.arcgis.com/en/sdk/10.0/java_ao_adf/conceptualhelp/engine/index.html#//00010000037m000000">coordinate precision grid</a>  inside the file geodatabase. The dimensions of the grid are determined by the origin, and the scale. The origin defines the location of a reference grid point in space. The scale is the reciprocal of the resolution. So, to get a grid with an origin at 0 and a resolution of 0.001 on all axes, you would set all the origins to 0 and all the scales to 1000.<p>
 	<li><b>XYTOLERANCE, ZTOLERANCE</b>: These parameters control the snapping tolerance used for advanced ArcGIS features like network and topology rules. They won't effect any OGR operations, but they will by used by ArcGIS. The units of the parameters are the units of the coordinate reference system.<p>
+    <li><b>LAUNDER_RESERVED_KEYWORDS=yes/no</b> (starting with OGR 1.9.1):
+Controls whether field names that are reserved keywords will be laundered for easier use in ArcMap or other software.
+Default to yes. Note: other laundering steps will be done whatever this option is set to,
+to comply with the restrictions of the FileGDB format. Valid field names may only contain letters, numbers or underscores.<p>
 </ul>
 
 <h2>Examples</h2>

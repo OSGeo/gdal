@@ -505,3 +505,59 @@ void FGDB_CPLAddXMLAttribute(CPLXMLNode* node, const char* attrname, const char*
     if ( !node ) return;
     CPLCreateXMLNode( CPLCreateXMLNode( node, CXT_Attribute, attrname ), CXT_Text, attrvalue );
 }
+
+/*************************************************************************/
+/*                          FGDBLaunderFieldName()                       */
+/*************************************************************************/
+
+std::string FGDBLaunderFieldName(const std::string fieldName)
+{
+    std::string newName = fieldName;
+
+    if ( newName[0]>='0' && newName[0]<='9' )
+    {
+        newName = "_" + newName;
+    }
+
+    for(size_t i=0; i < newName.size(); i++)
+    {
+        if ( !( newName[i] == '_' ||
+              ( newName[i]>='0' && newName[i]<='9') ||
+              ( newName[i]>='a' && newName[i]<='z') || 
+              ( newName[i]>='A' && newName[i]<='Z') ))
+        {
+            newName[i] = '_';
+        }
+    }
+
+    return newName;
+}
+
+/*************************************************************************/
+/*                        FGDBEscapeReservedKeywords()                   */
+/*************************************************************************/
+
+std::string FGDBEscapeReservedKeywords(const std::string fieldName)
+{
+    std::string newName = fieldName;
+    // From ESRI docs
+    static const char* RESERVED_WORDS[] = {"ADD", "ALTER", "AND", "AS", "ASC", "BETWEEN",
+                                    "BY", "COLUMN", "CREATE", "DATE", "DELETE", "DESC",
+                                    "DROP", "EXISTS", "FOR", "FROM", "IN", "INSERT", "INTO",
+                                    "IS", "LIKE", "NOT", "NULL", "OR", "ORDER", "SELECT",
+                                    "SET", "TABLE", "UPDATE", "VALUES", "WHERE", NULL};
+
+    // Append an underscore to any FGDB reserved words used as field names
+    // This is the same behaviour ArcCatalog follows.
+    for (int i = 0; RESERVED_WORDS[i] != NULL; i++)
+    {
+        const char* w = RESERVED_WORDS[i];
+        if (newName == w)
+        {
+            newName += '_';
+            break;
+        }
+    }
+
+    return newName;
+}

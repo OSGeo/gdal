@@ -153,6 +153,7 @@ protected:
   
   bool  m_supressColumnMappingError;
   bool  m_forceMulti;
+  bool  m_bLaunderReservedKeywords;
 
 };
 
