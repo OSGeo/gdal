@@ -288,6 +288,44 @@ def ogr_fgdb_7():
     return 'success'
 
 ###############################################################################
+# Test field name laundering (#4458)
+
+def ogr_fgdb_8():
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+    try:
+        shutil.rmtree("tmp/test.gdb")
+    except:
+        pass
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84")
+
+    ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
+    lyr = ds.CreateLayer('test', srs = srs, geom_type = ogr.wkbPoint)
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr.CreateField(ogr.FieldDefn('FROM', ogr.OFTInteger)) # reserved keyword
+    lyr.CreateField(ogr.FieldDefn('1NUMBER', ogr.OFTInteger)) # starting with a number
+    lyr.CreateField(ogr.FieldDefn('WITH SPACE AND !$*!- special characters', ogr.OFTInteger)) # unallowed characters
+    lyr.CreateField(ogr.FieldDefn('A123456789012345678901234567890123456789012345678901234567890123', ogr.OFTInteger)) # 64 characters : ok
+    lyr.CreateField(ogr.FieldDefn('A1234567890123456789012345678901234567890123456789012345678901234', ogr.OFTInteger)) # 65 characters : nok
+    lyr.CreateField(ogr.FieldDefn('A12345678901234567890123456789012345678901234567890123456789012345', ogr.OFTInteger)) # 66 characters : nok
+    gdal.PopErrorHandler()
+
+    lyr_defn = lyr.GetLayerDefn()
+    expected_names = [ 'FROM_', '_1NUMBER', 'WITH_SPACE_AND_______special_characters',
+                       'A123456789012345678901234567890123456789012345678901234567890123',
+                       'A1234567890123456789012345678901234567890123456789012345678901_1',
+                       'A1234567890123456789012345678901234567890123456789012345678901_2']
+    for i in range(5):
+        if lyr_defn.GetFieldIndex(expected_names[i]) != i:
+            gdaltest.post_reason('did not find %s' % expected_names[i])
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_fgdb_cleanup():
@@ -315,6 +353,7 @@ gdaltest_list = [
     ogr_fgdb_5,
     ogr_fgdb_6,
     ogr_fgdb_7,
+    ogr_fgdb_8,
     ogr_fgdb_cleanup,
     ]
 
