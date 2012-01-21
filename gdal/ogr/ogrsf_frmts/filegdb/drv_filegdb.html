@@ -20,12 +20,17 @@
 </p>
 
 <!-- FIXME 1.10 or 2.0 -->
-<h2>Bulk feature loading (OGR > 1.9)</h2>
+<h2>Bulk feature loading (OGR >= 2.0)</h2>
 
 The FGDB_BULK_LOAD configuration option can be set to YES to speed-up feature insertion (or sometimes solve problems
 when inserting a lot of features (see http://trac.osgeo.org/gdal/ticket/4420). The effect of this configuration option
 is to cause a write lock to be taken and a temporary disabling of the indexes. Those are restored when the datasource is
 closed or when a read operation is done.
+
+<h2>Special SQL requests (OGR >= 2.0)</h2>
+
+"GetLayerDefinition a_layer_name" and "GetLayerMetadata a_layer_name" can be used as special SQL requests to get
+respectively the definition and metadata of a FileGDB table as XML content.
 
 <h2>Dataset Creation Options</h2>
 

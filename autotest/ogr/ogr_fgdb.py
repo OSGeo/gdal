@@ -115,6 +115,18 @@ def ogr_fgdb_1():
             feat.DumpReadable()
             return 'fail'
 
+        sql_lyr = ds.ExecuteSQL("GetLayerDefinition %s" % lyr.GetName())
+        if sql_lyr is None:
+            gdaltest.post_reason('failure')
+            return 'fail'
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL("GetLayerMetadata %s" % lyr.GetName())
+        if sql_lyr is None:
+            gdaltest.post_reason('failure')
+            return 'fail'
+        ds.ReleaseResultSet(sql_lyr)
+
     ds = None
 
     return 'success'

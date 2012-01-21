@@ -191,6 +191,10 @@ public:
 
   virtual OGRErr DeleteLayer( int );
 
+  virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
+                                  OGRGeometry *poSpatialFilter,
+                                  const char *pszDialect );
+
   int TestCapability( const char * );
 
   Geodatabase* GetGDB() { return m_pGeodatabase; }
