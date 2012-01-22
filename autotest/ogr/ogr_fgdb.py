@@ -75,7 +75,8 @@ def ogr_fgdb_1():
 
     ds = ogrtest.fgdb_drv.CreateDataSource("tmp/test.gdb")
 
-    datalist = [ [ "point", ogr.wkbPoint, "POINT (1 2)" ],
+    datalist = [ [ "none", ogr.wkbNone, None],
+                 [ "point", ogr.wkbPoint, "POINT (1 2)" ],
                  [ "multipoint", ogr.wkbMultiPoint, "MULTIPOINT (1 2,3 4)" ],
                  [ "linestring", ogr.wkbLineString, "LINESTRING (1 2,3 4)", "MULTILINESTRING ((1 2,3 4))" ],
                  [ "multilinestring", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2,3 4))" ],
@@ -90,7 +91,10 @@ def ogr_fgdb_1():
                ]
 
     for data in datalist:
-        lyr = ds.CreateLayer(data[0], geom_type = data[1], srs = srs)
+        if data[1] == ogr.wkbNone:
+            lyr = ds.CreateLayer(data[0], geom_type = data[1])
+        else:
+            lyr = ds.CreateLayer(data[0], geom_type = data[1], srs = srs)
         lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
         lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
         lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
@@ -99,7 +103,8 @@ def ogr_fgdb_1():
         # We need at least 5 features so that test_ogrsf can test SetFeature()
         for i in range(5):
             feat = ogr.Feature(lyr.GetLayerDefn())
-            feat.SetGeometry(ogr.CreateGeometryFromWkt(data[2]))
+            if data[1] != ogr.wkbNone:
+                feat.SetGeometry(ogr.CreateGeometryFromWkt(data[2]))
             feat.SetField("id", i + 1)
             feat.SetField("str", "foo_\xc3\xa9")
             feat.SetField("int", 123)
@@ -108,17 +113,19 @@ def ogr_fgdb_1():
 
     for data in datalist:
         lyr = ds.GetLayerByName(data[0])
-        if lyr.GetSpatialRef().IsSame(srs) != 1:
-            print(lyr.GetSpatialRef())
-            return 'fail'
+        if data[1] != ogr.wkbNone:
+            if lyr.GetSpatialRef().IsSame(srs) != 1:
+                print(lyr.GetSpatialRef())
+                return 'fail'
         feat = lyr.GetNextFeature()
-        try:
-            expected_wkt = data[3]
-        except:
-            expected_wkt = data[2]
-        if feat.GetGeometryRef().ExportToWkt() != expected_wkt:
-            feat.DumpReadable()
-            return 'fail'
+        if data[1] != ogr.wkbNone:
+            try:
+                expected_wkt = data[3]
+            except:
+                expected_wkt = data[2]
+            if feat.GetGeometryRef().ExportToWkt() != expected_wkt:
+                feat.DumpReadable()
+                return 'fail'
 
         sql_lyr = ds.ExecuteSQL("GetLayerDefinition %s" % lyr.GetName())
         if sql_lyr is None:
