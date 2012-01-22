@@ -543,8 +543,8 @@ static int VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb, void
             {
                 if (psStruct->bDownloadHeaderOnly)
                 {
-                    /* If moved permanently, go on. Otherwise stop now*/
-                    if (psStruct->nHTTPCode != 301)
+                    /* If moved permanently/temporarily, go on. Otherwise stop now*/
+                    if (!(psStruct->nHTTPCode == 301 || psStruct->nHTTPCode == 302))
                         return 0;
                 }
                 else
