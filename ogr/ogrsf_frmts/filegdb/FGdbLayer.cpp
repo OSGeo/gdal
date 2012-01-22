@@ -437,33 +437,36 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
         }
     }
 
-    /* Done with attribute fields, now do geometry */
-    OGRGeometry *poGeom = poFeature->GetGeometryRef();
-
-    /* Write geometry to a buffer */
-    GByte *pabyShape = NULL;
-    int nShapeSize = 0;
-    OGRErr err = OGRWriteToShapeBin( poGeom, &pabyShape, &nShapeSize );
-    if ( err != OGRERR_NONE )
-        return err;
-
-    /* Copy it into a ShapeBuffer */
-    if ( nShapeSize > 0 )
+    if ( m_pFeatureDefn->GetGeomType() != wkbNone )
     {
-        shape.Allocate(nShapeSize);
-        memcpy(shape.shapeBuffer, pabyShape, nShapeSize);
-        shape.inUseLength = nShapeSize;
-    }
+        /* Done with attribute fields, now do geometry */
+        OGRGeometry *poGeom = poFeature->GetGeometryRef();
 
-    /* Free the shape buffer */
-    CPLFree(pabyShape);
+        /* Write geometry to a buffer */
+        GByte *pabyShape = NULL;
+        int nShapeSize = 0;
+        OGRErr err = OGRWriteToShapeBin( poGeom, &pabyShape, &nShapeSize );
+        if ( err != OGRERR_NONE )
+            return err;
 
-    /* Write ShapeBuffer into the Row */
-    hr = fgdb_row.SetGeometry(shape);
-    if (FAILED(hr))
-    {
-        GDBErr(hr, "Failed at writing Geometry to Row in CreateFeature.");
-        return OGRERR_FAILURE;
+        /* Copy it into a ShapeBuffer */
+        if ( nShapeSize > 0 )
+        {
+            shape.Allocate(nShapeSize);
+            memcpy(shape.shapeBuffer, pabyShape, nShapeSize);
+            shape.inUseLength = nShapeSize;
+        }
+
+        /* Free the shape buffer */
+        CPLFree(pabyShape);
+
+        /* Write ShapeBuffer into the Row */
+        hr = fgdb_row.SetGeometry(shape);
+        if (FAILED(hr))
+        {
+            GDBErr(hr, "Failed at writing Geometry to Row in CreateFeature.");
+            return OGRERR_FAILURE;
+        }
     }
 
     return OGRERR_NONE;
