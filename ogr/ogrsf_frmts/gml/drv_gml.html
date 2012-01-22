@@ -241,10 +241,14 @@ encoding mentionned in the file header is.<p>
 If the GML file is not encoded in one of the previous encodings and the only parser available
 is Expat, it will not be parsed by the GML driver. You may convert it into one of the supported
 encodings with the <i>iconv</i> utility for example and change accordingly the <i>encoding</i>
-parameter value in the XML header.<br>
-<p>
+parameter value in the XML header.<p>
 
 When writing a GML file, the driver expects UTF-8 content to be passed in.<p>
+
+Note: The .xsd schema files are parsed with an integrated XML parser which
+does not currently understand XML encodings specified in the XML header. It expects encoding to be always
+UTF-8. If attribute names in the schema file contains non-ascii characters, it is
+better to use <i>iconv</i> utility and convert the .xsd file into UTF-8 encoding first.<p>
 
 <h2>Feature id (fid / gml:id)</h2>
 
