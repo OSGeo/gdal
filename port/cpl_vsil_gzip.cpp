@@ -1760,6 +1760,8 @@ std::vector<CPLString> VSIZipFilesystemHandler::GetExtensions()
     std::vector<CPLString> oList;
     oList.push_back(".zip");
     oList.push_back(".kmz");
+    oList.push_back(".dwf");
+    oList.push_back(".ods");
     return oList;
 }
 

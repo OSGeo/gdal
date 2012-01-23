@@ -237,4 +237,7 @@ void OGRRegisterAll()
 #ifdef FREEXL_ENABLED
     RegisterOGRXLS();
 #endif
+#ifdef ODS_ENABLED
+    RegisterOGRODS();
+#endif
 } /* OGRRegisterAll */
