@@ -1139,6 +1139,7 @@ TIFFFreeDirectory(TIFF* tif)
 	TIFFDirectory *td = &tif->tif_dir;
 	int            i;
 
+    (*tif->tif_cleanup)(tif);
 	_TIFFmemset(td->td_fieldsset, 0, FIELD_SETLONGS);
 	CleanupField(td_sminsamplevalue);
 	CleanupField(td_smaxsamplevalue);

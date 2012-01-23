@@ -51,6 +51,7 @@
 #include "gt_wkt_srs.h"
 #include "tifvsi.h"
 #include "cpl_multiproc.h"
+#include "cplkeywordparser.h"
 
 CPL_CVSID("$Id$");
 
@@ -338,10 +339,13 @@ class GTiffDataset : public GDALPamDataset
     int           FindRPCFile();
     CPLString     osIMDFile;
     int           FindIMDFile();
+    CPLString     osPVLFile;
+    int           FindPVLFile();
     int           bHasSearchedRPC;
     void          LoadRPCRPB();
     int           bHasSearchedIMD;
-    void          LoadIMD();
+    int           bHasSearchedPVL;
+    void          LoadIMDPVL();
 
     int           bHasWarnedDisableAggressiveBandCaching;
 
@@ -3011,6 +3015,7 @@ GTiffDataset::GTiffDataset()
 
     bHasSearchedRPC = FALSE;
     bHasSearchedIMD = FALSE;
+    bHasSearchedPVL = FALSE;
 
     bScanDeferred = TRUE;
 
@@ -8599,7 +8604,7 @@ char **GTiffDataset::GetMetadata( const char * pszDomain )
         LoadRPCRPB();
 
     else if( pszDomain != NULL && EQUAL(pszDomain,"IMD") )
-        LoadIMD();
+        LoadIMDPVL();
     
     else if( pszDomain != NULL && EQUAL(pszDomain,"SUBDATASETS") )
         ScanDirectories();
@@ -8652,7 +8657,7 @@ const char *GTiffDataset::GetMetadataItem( const char * pszName,
         LoadRPCRPB();
 
     else if( pszDomain != NULL && EQUAL(pszDomain,"IMD") )
-        LoadIMD();
+        LoadIMDPVL();
 
     else if( pszDomain != NULL && EQUAL(pszDomain,"SUBDATASETS") )
         ScanDirectories();
@@ -8721,6 +8726,18 @@ int GTiffDataset::FindIMDFile()
                                         oOvManager.GetSiblingFiles(), 0 );
 
     return osIMDFile != "";
+}
+
+/************************************************************************/
+/*                           FindPVLFile()                             */
+/************************************************************************/
+
+int GTiffDataset::FindPVLFile()
+{
+    osPVLFile = GDALFindAssociatedFile( osFilename, "PVL", 
+                                        oOvManager.GetSiblingFiles(), 0 );
+
+    return osPVLFile != "";
 }
 
 /************************************************************************/
@@ -8806,24 +8823,66 @@ void GTiffDataset::LoadRPCRPB()
 }
 
 /************************************************************************/
-/*                              LoadIMD()                               */
+/*                            LoadIMDPVL()                              */
 /************************************************************************/
 
-void GTiffDataset::LoadIMD()
+void GTiffDataset::LoadIMDPVL()
 {
-    if (bHasSearchedIMD)
-        return;
-
-    bHasSearchedIMD = TRUE;
-
-    if (FindIMDFile())
+    if (!bHasSearchedIMD)
     {
-        char **papszIMDMD = GDALLoadIMDFile( osIMDFile.c_str(), NULL );
+        bHasSearchedIMD = TRUE;
 
-        if( papszIMDMD != NULL )
+        if (FindIMDFile())
         {
-            oGTiffMDMD.SetMetadata( papszIMDMD, "IMD" );
-            CSLDestroy( papszIMDMD );
+            char **papszIMDMD = GDALLoadIMDFile( osIMDFile.c_str(), NULL );
+
+            if( papszIMDMD != NULL )
+            {
+                papszIMDMD = CSLSetNameValue( papszIMDMD, 
+                                                "md_type", "imd" );
+                oGTiffMDMD.SetMetadata( papszIMDMD, "IMD" );
+                CSLDestroy( papszIMDMD );
+            }
+        }
+    }
+    //the imd has priority
+    if (!bHasSearchedPVL && osIMDFile.empty())
+    {
+        bHasSearchedPVL = TRUE;
+
+        if (FindPVLFile())
+        {
+            /* -------------------------------------------------------------------- */
+            /*      Read file and parse.                                            */
+            /* -------------------------------------------------------------------- */
+            CPLKeywordParser oParser;
+
+            VSILFILE *fp = VSIFOpenL( osPVLFile.c_str(), "r" );
+
+            if( fp == NULL )
+                return;
+    
+            if( !oParser.Ingest( fp ) )
+            {
+                VSIFCloseL( fp );
+                return;
+            }
+
+            VSIFCloseL( fp );
+
+            /* -------------------------------------------------------------------- */
+            /*      Consider version changing.                                      */
+            /* -------------------------------------------------------------------- */
+            char **papszPVLMD = CSLDuplicate( oParser.GetAllKeywords() );
+ 
+            if( papszPVLMD != NULL )
+            {
+                papszPVLMD = CSLSetNameValue( papszPVLMD, 
+                                                "md_type", "pvl" );
+                
+                oGTiffMDMD.SetMetadata( papszPVLMD, "IMD" );
+                CSLDestroy( papszPVLMD );
+            }
         }
     }
 }
@@ -8838,10 +8897,12 @@ char **GTiffDataset::GetFileList()
     char **papszFileList = GDALPamDataset::GetFileList();
 
     LoadRPCRPB();
-    LoadIMD();
+    LoadIMDPVL();
 
     if (osIMDFile.size() != 0)
         papszFileList = CSLAddString( papszFileList, osIMDFile );
+    if (osPVLFile.size() != 0)
+        papszFileList = CSLAddString( papszFileList, osPVLFile );
     if (osRPBFile.size() != 0)
         papszFileList = CSLAddString( papszFileList, osRPBFile );
     if (osRPCFile.size() != 0)
