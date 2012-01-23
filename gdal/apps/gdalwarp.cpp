@@ -33,6 +33,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_api.h"
 #include "commonutils.h"
+#include <vector>
 
 CPL_CVSID("$Id$");
 
@@ -1303,6 +1304,7 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
     double dfWrkMinX=0, dfWrkMaxX=0, dfWrkMinY=0, dfWrkMaxY=0;
     double dfWrkResX=0, dfWrkResY=0;
     int nDstBandCount = 0;
+    std::vector<GDALColorInterp> apeColorInterpretations;
 
     *phTransformArg = NULL;
     *phSrcDS = NULL;
@@ -1388,6 +1390,12 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
                 if( !bQuiet )
                     printf( "Copying color table from %s to new file.\n", 
                             papszSrcFiles[iSrc] );
+            }
+
+            for(int iBand = 0; iBand < nDstBandCount; iBand++)
+            {
+                apeColorInterpretations.push_back(
+                    GDALGetRasterColorInterpretation(GDALGetRasterBand(hSrcDS,iBand+1)) );
             }
         }
 
@@ -1716,8 +1724,27 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
         GDALSetGenImgProjTransformerDstGeoTransform( *phTransformArg, adfDstGeoTransform);
 
 /* -------------------------------------------------------------------- */
+/*      Try to set color interpretation of source bands to target       */
+/*      dataset.                                                        */
+/*      FIXME? We should likely do that for other drivers than VRT      */
+/*      but it might create spurious .aux.xml files (at least with HFA, */
+/*      and netCDF)                                                     */
+/* -------------------------------------------------------------------- */
+    if( bVRT )
+    {
+        int nBandsToCopy = (int)apeColorInterpretations.size();
+        if ( bEnableSrcAlpha )
+            nBandsToCopy --;
+        for(int iBand = 0; iBand < nBandsToCopy; iBand++)
+        {
+            GDALSetRasterColorInterpretation(
+                GDALGetRasterBand( hDstDS, iBand + 1 ),
+                apeColorInterpretations[iBand] );
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
 /*      Try to set color interpretation of output file alpha band.      */
-/*      TODO: We should likely try to copy the other bands too.         */
 /* -------------------------------------------------------------------- */
     if( bEnableDstAlpha )
     {
