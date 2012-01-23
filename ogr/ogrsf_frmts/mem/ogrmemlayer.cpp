@@ -56,6 +56,9 @@ OGRMemLayer::OGRMemLayer( const char * pszName, OGRSpatialReference *poSRSIn,
     poFeatureDefn = new OGRFeatureDefn( pszName );
     poFeatureDefn->SetGeomType( eReqType );
     poFeatureDefn->Reference();
+
+    bUpdatable = TRUE;
+    bAdvertizeUTF8 = FALSE;
 }
 
 /************************************************************************/
@@ -163,6 +166,9 @@ OGRFeature *OGRMemLayer::GetFeature( long nFeatureId )
 OGRErr OGRMemLayer::SetFeature( OGRFeature *poFeature )
 
 {
+    if (!bUpdatable)
+        return OGRERR_FAILURE;
+
     if( poFeature == NULL )
         return OGRERR_FAILURE;
 
@@ -218,6 +224,9 @@ OGRErr OGRMemLayer::SetFeature( OGRFeature *poFeature )
 OGRErr OGRMemLayer::CreateFeature( OGRFeature *poFeature )
 
 {
+    if (!bUpdatable)
+        return OGRERR_FAILURE;
+
     if( poFeature->GetFID() != OGRNullFID 
         && poFeature->GetFID() >= 0
         && poFeature->GetFID() < nMaxFeatureCount )
@@ -239,6 +248,9 @@ OGRErr OGRMemLayer::CreateFeature( OGRFeature *poFeature )
 OGRErr OGRMemLayer::DeleteFeature( long nFID )
 
 {
+    if (!bUpdatable)
+        return OGRERR_FAILURE;
+
     if( nFID < 0 || nFID >= nMaxFeatureCount 
         || papoFeatures[nFID] == NULL )
     {
@@ -283,7 +295,7 @@ int OGRMemLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCSequentialWrite) 
              || EQUAL(pszCap,OLCRandomWrite) )
-        return TRUE;
+        return bUpdatable;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return m_poFilterGeom == NULL && m_poAttrQuery == NULL;
@@ -292,16 +304,19 @@ int OGRMemLayer::TestCapability( const char * pszCap )
         return FALSE;
 
     else if( EQUAL(pszCap,OLCDeleteFeature) )
-        return TRUE;
+        return bUpdatable;
 
     else if( EQUAL(pszCap,OLCCreateField) ||
              EQUAL(pszCap,OLCDeleteField) ||
              EQUAL(pszCap,OLCReorderFields) ||
              EQUAL(pszCap,OLCAlterFieldDefn) )
-        return TRUE;
+        return bUpdatable;
 
     else if( EQUAL(pszCap,OLCFastSetNextByIndex) )
         return m_poFilterGeom == NULL && m_poAttrQuery == NULL;
+
+    else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+        return bAdvertizeUTF8;
 
     else 
         return FALSE;
@@ -314,6 +329,9 @@ int OGRMemLayer::TestCapability( const char * pszCap )
 OGRErr OGRMemLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
 {
+    if (!bUpdatable)
+        return OGRERR_FAILURE;
+
 /* -------------------------------------------------------------------- */
 /*      simple case, no features exist yet.                             */
 /* -------------------------------------------------------------------- */
@@ -361,6 +379,9 @@ OGRErr OGRMemLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
 OGRErr OGRMemLayer::DeleteField( int iField )
 {
+    if (!bUpdatable)
+        return OGRERR_FAILURE;
+
     if (iField < 0 || iField >= poFeatureDefn->GetFieldCount())
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -403,6 +424,9 @@ OGRErr OGRMemLayer::DeleteField( int iField )
 
 OGRErr OGRMemLayer::ReorderFields( int* panMap )
 {
+    if (!bUpdatable)
+        return OGRERR_FAILURE;
+
     if (poFeatureDefn->GetFieldCount() == 0)
         return OGRERR_NONE;
 
@@ -429,6 +453,9 @@ OGRErr OGRMemLayer::ReorderFields( int* panMap )
 
 OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
 {
+    if (!bUpdatable)
+        return OGRERR_FAILURE;
+
     if (iField < 0 || iField >= poFeatureDefn->GetFieldCount())
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -441,34 +468,65 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, in
     if ((nFlags & ALTER_TYPE_FLAG) &&
         poFieldDefn->GetType() != poNewFieldDefn->GetType())
     {
-        if (poNewFieldDefn->GetType() != OFTString)
+        if ((poNewFieldDefn->GetType() == OFTDate ||
+             poNewFieldDefn->GetType() == OFTTime ||
+             poNewFieldDefn->GetType() == OFTDateTime) &&
+            (poFieldDefn->GetType() == OFTDate ||
+             poFieldDefn->GetType() == OFTTime ||
+             poFieldDefn->GetType() == OFTDateTime))
         {
-            CPLError( CE_Failure, CPLE_NotSupported,
-                      "Can only convert to OFTString");
-            return OGRERR_FAILURE;
+            /* do nothing on features */
         }
-
-/* -------------------------------------------------------------------- */
-/*      Update all the internal features.  Hopefully there aren't any   */
-/*      external features referring to our OGRFeatureDefn!              */
-/* -------------------------------------------------------------------- */
-        for( int i = 0; i < nMaxFeatureCount; i++ )
+        else if (poNewFieldDefn->GetType() == OFTReal &&
+                 poFieldDefn->GetType() == OFTInteger)
         {
-            if( papoFeatures[i] == NULL )
-                continue;
-
-            OGRField* poFieldRaw = papoFeatures[i]->GetRawFieldRef(iField);
-            if( papoFeatures[i]->IsFieldSet(iField) )
+    /* -------------------------------------------------------------------- */
+    /*      Update all the internal features.  Hopefully there aren't any   */
+    /*      external features referring to our OGRFeatureDefn!              */
+    /* -------------------------------------------------------------------- */
+            for( int i = 0; i < nMaxFeatureCount; i++ )
             {
-                char* pszVal = CPLStrdup(papoFeatures[i]->GetFieldAsString(iField));
+                if( papoFeatures[i] == NULL )
+                    continue;
 
-                /* Little trick to unallocate the field */
-                OGRField sField;
-                sField.Set.nMarker1 = OGRUnsetMarker;
-                sField.Set.nMarker2 = OGRUnsetMarker;
-                papoFeatures[i]->SetField(iField, &sField);
+                OGRField* poFieldRaw = papoFeatures[i]->GetRawFieldRef(iField);
+                if( papoFeatures[i]->IsFieldSet(iField) )
+                {
+                    poFieldRaw->Real = poFieldRaw->Integer;
+                }
+            }
+        }
+        else
+        {
+            if (poNewFieldDefn->GetType() != OFTString)
+            {
+                CPLError( CE_Failure, CPLE_NotSupported,
+                        "Can only convert from OFTInteger to OFTReal, or from anything to OFTString");
+                return OGRERR_FAILURE;
+            }
 
-                poFieldRaw->String = pszVal;
+    /* -------------------------------------------------------------------- */
+    /*      Update all the internal features.  Hopefully there aren't any   */
+    /*      external features referring to our OGRFeatureDefn!              */
+    /* -------------------------------------------------------------------- */
+            for( int i = 0; i < nMaxFeatureCount; i++ )
+            {
+                if( papoFeatures[i] == NULL )
+                    continue;
+
+                OGRField* poFieldRaw = papoFeatures[i]->GetRawFieldRef(iField);
+                if( papoFeatures[i]->IsFieldSet(iField) )
+                {
+                    char* pszVal = CPLStrdup(papoFeatures[i]->GetFieldAsString(iField));
+
+                    /* Little trick to unallocate the field */
+                    OGRField sField;
+                    sField.Set.nMarker1 = OGRUnsetMarker;
+                    sField.Set.nMarker2 = OGRUnsetMarker;
+                    papoFeatures[i]->SetField(iField, &sField);
+
+                    poFieldRaw->String = pszVal;
+                }
             }
         }
 
