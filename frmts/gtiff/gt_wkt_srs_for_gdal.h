@@ -43,6 +43,6 @@ CPLErr CPL_DLL GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
                           char **ppszWKT, double *padfGeoTransform,
                           int *pnGCPCount, GDAL_GCP **ppasGCPList );
 
-CPL_C_END
+CPL_C_END;
 
 #endif // GT_WKT_SRS_FOR_GDAL_H_INCLUDED
