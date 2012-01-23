@@ -1,0 +1,20 @@
+
+OBJ	=	ogrodsdriver.obj ogrodsdatasource.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IFDEF EXPAT_DIR
+EXTRAFLAGS =	-I.. -I..\.. -I..\mem $(EXPAT_INCLUDE) -DHAVE_EXPAT=1
+!ELSE
+EXTRAFLAGS =	-I.. -I..\.. -I..\mem
+!ENDIF
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+
+

@@ -50,6 +50,9 @@ class OGRMemLayer : public OGRLayer
 
     OGRwkbGeometryType  eWkbType;
 
+    int                 bUpdatable;
+    int                 bAdvertizeUTF8;
+
   public:
                         OGRMemLayer( const char * pszName,
                                      OGRSpatialReference *poSRS,
@@ -78,6 +81,9 @@ class OGRMemLayer : public OGRLayer
     virtual OGRSpatialReference *GetSpatialRef();
     
     int                 TestCapability( const char * );
+
+    void                SetUpdatable(int bUpdatableIn) { bUpdatable = bUpdatableIn; }
+    void                SetAdvertizeUTF8(int bAdvertizeUTF8In) { bAdvertizeUTF8 = bAdvertizeUTF8In; }
 };
 
 /************************************************************************/
