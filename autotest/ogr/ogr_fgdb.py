@@ -382,6 +382,53 @@ def ogr_fgdb_8():
     return 'success'
 
 ###############################################################################
+# Test layer name laundering (#4466)
+
+def ogr_fgdb_9():
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+    try:
+        shutil.rmtree("tmp/test.gdb")
+    except:
+        pass
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84")
+
+    _160char = ''.join(['A123456789' for i in range(16)])
+
+    in_names = [ 'FROM', # reserved keyword
+                 '1NUMBER', # starting with a number
+                 'WITH SPACE AND !$*!- special characters', # unallowed characters
+                 'sde_foo', # reserved prefixes
+                 _160char, # OK
+                 _160char + 'A', # too long
+                 _160char + 'B', # still too long
+               ]
+
+    ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    for i in range(len(in_names)):
+        lyr = ds.CreateLayer(in_names[i], srs = srs, geom_type = ogr.wkbPoint)
+    gdal.PopErrorHandler()
+
+    lyr_defn = lyr.GetLayerDefn()
+    expected_names = [ 'FROM_',
+                       '_1NUMBER',
+                       'WITH_SPACE_AND_______special_characters',
+                       '_sde_foo',
+                       _160char,
+                       _160char[0:158] + '_1',
+                       _160char[0:158] + '_2' ]
+    for i in range(len(expected_names)):
+        if ds.GetLayerByIndex(i).GetName() != expected_names[i]:
+            gdaltest.post_reason('did not find %s' % expected_names[i])
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_fgdb_cleanup():
@@ -411,6 +458,7 @@ gdaltest_list = [
     ogr_fgdb_6,
     ogr_fgdb_7,
     ogr_fgdb_8,
+    ogr_fgdb_9,
     ogr_fgdb_cleanup,
     ]
 
