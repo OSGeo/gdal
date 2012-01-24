@@ -82,7 +82,8 @@ void FGDB_CPLAddXMLAttribute(CPLXMLNode* node, const char* attrname, const char*
 //
 // Utility for escaping reserved words and cleaning field names
 //
-std::string FGDBLaunderFieldName(const std::string fieldName);
-std::string FGDBEscapeReservedKeywords(const std::string fieldName);
+std::string FGDBLaunderName(const std::string name);
+std::string FGDBEscapeUnsupportedPrefixes(const std::string className);
+std::string FGDBEscapeReservedKeywords(const std::string name);
 
 #endif
