@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.72 2011-12-11 22:45:28 fwarmerdam Exp $
+ * $Id: shpopen.c,v 1.73 2012-01-24 22:33:01 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.73  2012-01-24 22:33:01  fwarmerdam
+ * fix memory leak on failure to open .shp (gdal #4410)
+ *
  * Revision 1.72  2011-12-11 22:45:28  fwarmerdam
  * fix failure return from SHPOpenLL.
  *
@@ -270,7 +273,7 @@
 #include <string.h>
 #include <stdio.h>
 
-SHP_CVSID("$Id: shpopen.c,v 1.72 2011-12-11 22:45:28 fwarmerdam Exp $")
+SHP_CVSID("$Id: shpopen.c,v 1.73 2012-01-24 22:33:01 fwarmerdam Exp $")
 
 typedef unsigned char uchar;
 
@@ -562,6 +565,7 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
         free( psSHP );
         free( pszBasename );
         free( pszFullname );
+
         return NULL;
     }
 
