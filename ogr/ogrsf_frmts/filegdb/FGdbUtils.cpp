@@ -507,12 +507,12 @@ void FGDB_CPLAddXMLAttribute(CPLXMLNode* node, const char* attrname, const char*
 }
 
 /*************************************************************************/
-/*                          FGDBLaunderFieldName()                       */
+/*                          FGDBLaunderName()                            */
 /*************************************************************************/
 
-std::string FGDBLaunderFieldName(const std::string fieldName)
+std::string FGDBLaunderName(const std::string name)
 {
-    std::string newName = fieldName;
+    std::string newName = name;
 
     if ( newName[0]>='0' && newName[0]<='9' )
     {
@@ -534,12 +534,35 @@ std::string FGDBLaunderFieldName(const std::string fieldName)
 }
 
 /*************************************************************************/
+/*                     FGDBEscapeUnsupportedPrefixes()                   */
+/*************************************************************************/
+
+std::string FGDBEscapeUnsupportedPrefixes(const std::string className)
+{
+    std::string newName = className;
+    // From ESRI docs
+    // Feature classes starting with these strings are unsupported.
+    static const char* UNSUPPORTED_PREFIXES[] = {"sde_", "gdb_", "delta_", NULL};
+
+    for (int i = 0; UNSUPPORTED_PREFIXES[i] != NULL; i++)
+    {
+        if (newName.find(UNSUPPORTED_PREFIXES[i]) == 0)
+        {
+            newName = "_" + newName;
+            break;
+        }
+    }
+
+    return newName;
+}
+
+/*************************************************************************/
 /*                        FGDBEscapeReservedKeywords()                   */
 /*************************************************************************/
 
-std::string FGDBEscapeReservedKeywords(const std::string fieldName)
+std::string FGDBEscapeReservedKeywords(const std::string name)
 {
-    std::string newName = fieldName;
+    std::string newName = name;
     // From ESRI docs
     static const char* RESERVED_WORDS[] = {"ADD", "ALTER", "AND", "AS", "ASC", "BETWEEN",
                                     "BY", "COLUMN", "CREATE", "DATE", "DELETE", "DESC",
