@@ -273,7 +273,7 @@ OGRErr FGdbLayer::CreateField(OGRFieldDefn* poField, int bApproxOK)
     }
 
     /* Clean field names */
-    std::string fieldname_clean = FGDBLaunderFieldName(fieldname);
+    std::string fieldname_clean = FGDBLaunderName(fieldname);
 
     if (m_bLaunderReservedKeywords)
         fieldname_clean = FGDBEscapeReservedKeywords(fieldname_clean);
@@ -557,18 +557,49 @@ bool FGdbLayer::CreateFeatureDataset(FGdbDataSource* pParentDataSource,
 /************************************************************************/
 
 bool FGdbLayer::Create(FGdbDataSource* pParentDataSource, 
-                       const char* pszLayerName, 
+                       const char* pszLayerNameIn, 
                        OGRSpatialReference* poSRS, 
                        OGRwkbGeometryType eType, 
                        char** papszOptions)
 {
-    std::string table_path = "\\" + std::string(pszLayerName);
     std::string parent_path = "";
     std::wstring wtable_path, wparent_path;
     std::string geometry_name = FGDB_GEOMETRY_NAME;
     std::string fid_name = FGDB_OID_NAME;
     std::string esri_type;
     bool has_z = false;
+
+    /* Launder the Layer name */
+    std::string layerName = pszLayerNameIn;
+
+    layerName = FGDBLaunderName(pszLayerNameIn);
+    layerName = FGDBEscapeReservedKeywords(layerName);
+    layerName = FGDBEscapeUnsupportedPrefixes(layerName);
+
+    if (layerName.size() > 160)
+        layerName.resize(160);
+
+    /* Ensures uniqueness of layer name */
+    int numRenames = 1;
+    while ((pParentDataSource->GetLayerByName(layerName.c_str()) != NULL) && (numRenames < 10))
+    {
+        layerName = CPLSPrintf("%s_%d", layerName.substr(0, 158).c_str(), numRenames);
+        numRenames ++;
+    }
+    while ((pParentDataSource->GetLayerByName(layerName.c_str()) != NULL) && (numRenames < 100))
+    {
+        layerName = CPLSPrintf("%s_%d", layerName.substr(0, 157).c_str(), numRenames);
+        numRenames ++;
+    }
+
+    if (layerName != pszLayerNameIn)
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                "Normalized/laundered layer name: '%s' to '%s'",
+                pszLayerNameIn, layerName.c_str());
+    }
+
+    std::string table_path = "\\" + std::string(layerName);
 
     /* Handle the FEATURE_DATASET case */
     if (  CSLFetchNameValue( papszOptions, "FEATURE_DATASET") != NULL )
@@ -645,7 +676,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
 
     /* Add in more children */
     CPLCreateXMLElementAndValue(defn_xml,"CatalogPath",table_path.c_str());
-    CPLCreateXMLElementAndValue(defn_xml,"Name", pszLayerName);
+    CPLCreateXMLElementAndValue(defn_xml,"Name", layerName.c_str());
     CPLCreateXMLElementAndValue(defn_xml,"ChildrenExpanded", "false");
 
     /* WKB type of none implies this is a 'Table' otherwise it's a 'Feature Class' */
@@ -705,6 +736,12 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     FGDB_CPLAddXMLAttribute(indexes_xml, "xsi:type", "esri:Indexes");
     CPLXMLNode *indexarray_xml = CPLCreateXMLNode(indexes_xml, CXT_Element, "IndexArray");
     FGDB_CPLAddXMLAttribute(indexarray_xml, "xsi:type", "esri:ArrayOfIndex");
+
+    /* Set the alias for the Feature Class */
+    if (pszLayerNameIn != layerName)
+    {
+        CPLCreateXMLElementAndValue(defn_xml, "AliasName", pszLayerNameIn);
+    }
 
     /* Map from OGR WKB type to ESRI type */
     if ( eType != wkbNone )
