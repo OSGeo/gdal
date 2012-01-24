@@ -1410,6 +1410,7 @@ NETCDF_SETTING=
 NETCDF_ROOT=
 NETCDF_HAS_NC4=
 NETCDF_HAS_HDF4=
+NETCDF_NCCONFIG=
 
 AC_ARG_WITH([netcdf],[  --with-netcdf[=ARG]     Include netCDF support (ARG=no or netCDF tree prefix)],,)
 
@@ -1419,6 +1420,50 @@ if test "$with_netcdf" = "no" ; then
 
   echo "netCDF support disabled."
 
+else
+
+  dnl find nc-config location
+  unset ac_cv_path_NETCDF_NCCONFIG
+  if test "$with_netcdf" = "yes" -o "$with_netcdf" = "" ; then
+    AC_PATH_PROG(NETCDF_NCCONFIG, nc-config, no)
+  else
+    tmp_path="$with_netcdf/bin$PATH_SEPARATOR$with_netcdf"
+    AC_PATH_PROG(NETCDF_NCCONFIG, nc-config, no, $tmp_path)
+  fi
+
+  dnl test nc-config
+  if test "$NETCDF_NCCONFIG" = "no" ; then
+    echo "        did not find nc-config, some features may be missing"
+    echo "        use --with-netcdf=/path/to/netcdf or add nc-config to PATH"
+    NETCDF_NCCONFIG=
+  elif test "`$NETCDF_NCCONFIG --version`" = "" ; then
+    echo "did not get netCDF version from $NETCDF_NCCONFIG ... using fallback"
+    NETCDF_NCCONFIG=
+  fi
+  
+  dnl test linking using flags from nc-config
+  if test "$NETCDF_NCCONFIG" != "" ; then
+
+    AC_MSG_CHECKING([libnetcdf compiler and linker flags with nc-config])
+    NETCDF_VERSION=`$NETCDF_NCCONFIG --version`
+    NETCDF_PREFIX=`$NETCDF_NCCONFIG --prefix`
+    NETCDF_INCLUDEDIR=`$NETCDF_NCCONFIG --includedir`
+    NETCDF_LIBS=`$NETCDF_NCCONFIG --libs` 
+    echo ""
+    AC_MSG_RESULT([ got version="$NETCDF_VERSION", prefix="$NETCDF_PREFIX", 
+ libs="$NETCDF_LIBS", includedir="$NETCDF_INCLUDEDIR"])
+
+    AC_CHECK_LIB([netcdf], [nc_open], [NETCDF_SETTING=yes], [NETCDF_SETTING=no], $NETCDF_LIBS)
+
+    if test "$NETCDF_SETTING" = "yes" ; then
+      EXTRA_INCLUDES="-I$NETCDF_INCLUDEDIR $EXTRA_INCLUDES"
+      NETCDF_ROOT=$NETCDF_PREFIX
+      LIBS="$NETCDF_LIBS $LIBS"
+    fi
+
+dnl previous behaviour without nc-config
+
+dnl test linking using default settings
 elif test "$with_netcdf" = "yes" -o "$with_netcdf" = "" ; then
 
   AC_CHECK_LIB([netcdf], [nc_open], [NETCDF_SETTING=yes], [NETCDF_SETTING=no],)
@@ -1452,9 +1497,10 @@ elif test "$with_netcdf" = "yes" -o "$with_netcdf" = "" ; then
     fi
 
   else
-    echo "libnetcdf not found - netCDF support disabled"
+    echo "libnetcdf not found ... netCDF support disabled"
   fi
 
+dnl test linking using --with_netcdf dir
 else
 
   AC_CHECK_LIB([netcdf], [nc_open], [NETCDF_SETTING=yes], [NETCDF_SETTING=no],-L$with_netcdf -L$with_netcdf/lib)
@@ -1475,35 +1521,18 @@ else
     echo "using libnetcdf from $with_netcdf"
 
   else
-    echo "libnetcdf not found in "$with_netcdf" - netCDF support disabled"
+    echo "libnetcdf not found in "$with_netcdf" ... netCDF support disabled"
   fi
 
 fi
 
-dnl start new test
-
-dnl test for NC4 and HDF4 support
+dnl test for NC4 and HDF4 support with nc-config
   if test "$NETCDF_SETTING" = "yes" ; then
 
-    ncdump=$NETCDF_ROOT"/bin/ncdump" 
-    nc_config=""
-
-    dnl test for libnetcdf v4
-    if { test -x "$ncdump"; }; then
-      AC_MSG_CHECKING([libnetcdf version with $ncdump]) 
-      netcdf_version=`$ncdump 2>&1 | grep "netcdf library version" | awk '{gsub(/"/,"");print $4}'`
-      AC_MSG_RESULT([got $netcdf_version])
-      if test "$netcdf_version" != "" -a "${netcdf_version:0:1}" == "4" ; then
-          nc_config=$NETCDF_ROOT"/bin/nc-config"
-      fi
-    fi
-
-    dnl if nc-config is found (only for libnetcdf-4), test for netcdf-4 and HDF4 support 
-    if { test -x "$nc_config"; }; then
-      echo "checking libnetcdf config with $nc_config"
+    if test "$NETCDF_NCCONFIG" != "" ; then
 
       AC_MSG_CHECKING([for netcdf-4 (and HDF5) support in libnetcdf])
-        if test "x$($nc_config --has-nc4)" = "xyes"; then :
+        if test "x$($NETCDF_NCCONFIG --has-nc4)" = "xyes"; then :
           AC_MSG_RESULT([yes])
           NETCDF_HAS_NC4=yes
         else
@@ -1512,7 +1541,7 @@ dnl test for NC4 and HDF4 support
         fi
 
       AC_MSG_CHECKING([for HDF4 support in libnetcdf])
-        if test "x$($nc_config --has-hdf4)" = "xyes"; then :
+        if test "x$($NETCDF_NCCONFIG --has-hdf4)" = "xyes"; then :
           AC_MSG_RESULT([yes])
           NETCDF_HAS_HDF4=yes
         else
@@ -1521,21 +1550,25 @@ dnl test for NC4 and HDF4 support
         fi
 
     else
-      AC_MSG_RESULT([ncdump and/or nc-config not found, skipping netcdf-4 tests])
       NETCDF_HAS_NC4=no
       NETCDF_HAS_HDF4=no
     fi
 fi
 
-dnl end new test
+fi
+
+dnl export results
 
 AC_SUBST([NETCDF_SETTING], [$NETCDF_SETTING])
-AC_SUBST([NETCDF_ROOT], [$NETCDF_ROOT])
-AC_SUBST([NETCDF_HAS_NC4], [$NETCDF_HAS_NC4])
-AC_SUBST([NETCDF_HAS_HDF4], [$NETCDF_HAS_HDF4])
 
 if test "$NETCDF_SETTING" != "no" ; then
-  OPT_GDAL_FORMATS="netcdf $OPT_GDAL_FORMATS"
+
+   AC_SUBST([NETCDF_ROOT], [$NETCDF_ROOT])
+   AC_SUBST([NETCDF_HAS_NC4], [$NETCDF_HAS_NC4])
+   AC_SUBST([NETCDF_HAS_HDF4], [$NETCDF_HAS_HDF4])
+
+   OPT_GDAL_FORMATS="netcdf $OPT_GDAL_FORMATS"
+
 fi
 
 
