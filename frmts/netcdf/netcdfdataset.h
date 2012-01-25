@@ -644,6 +644,10 @@ class netCDFDataset : public GDALPamDataset
 
     void  SetProjectionFromVar( int );
 
+  protected:
+
+    CPLXMLNode *SerializeToXML( const char *pszVRTPath );
+
   public:
 
     netCDFDataset( );

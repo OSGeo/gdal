@@ -91,6 +91,10 @@ class netCDFRasterBand : public GDALPamRasterBand
     CPLErr	    CreateBandMetadata( int *paDimIds ); 
     template <class T> void  CheckValidData ( void * pImage, 
                                               int bCheckIsNan=FALSE ) ;
+
+  protected:
+
+    CPLXMLNode *SerializeToXML( const char *pszVRTPath );
     
   public:
 
@@ -760,6 +764,76 @@ CPLErr netCDFRasterBand::SetNoDataValue( double dfNoData )
 }
 
 /************************************************************************/
+/*                           SerializeToXML()                           */
+/************************************************************************/
+
+CPLXMLNode *netCDFRasterBand::SerializeToXML( const char *pszUnused )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Overriden from GDALPamDataset to add only band histogram        */
+/*      and statistics. See bug #4244.                                  */
+/* -------------------------------------------------------------------- */
+
+    if( psPam == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Setup root node and attributes.                                 */
+/* -------------------------------------------------------------------- */
+    CPLString oFmt;
+
+    CPLXMLNode *psTree;
+
+    psTree = CPLCreateXMLNode( NULL, CXT_Element, "PAMRasterBand" );
+
+    if( GetBand() > 0 )
+        CPLSetXMLValue( psTree, "#band", oFmt.Printf( "%d", GetBand() ) );
+
+/* -------------------------------------------------------------------- */
+/*      Histograms.                                                     */
+/* -------------------------------------------------------------------- */
+    if( psPam->psSavedHistograms != NULL )
+        CPLAddXMLChild( psTree, CPLCloneXMLTree( psPam->psSavedHistograms ) );
+
+/* -------------------------------------------------------------------- */
+/*      Metadata (statistics only).                                     */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psMD;
+
+    GDALMultiDomainMetadata oMDMDStats; 
+    const char* papszMDStats[] = { "STATISTICS_MINIMUM", "STATISTICS_MAXIMUM",
+                                   "STATISTICS_MEAN", "STATISTICS_STDDEV", 
+                                   NULL }; 
+    for ( int i=0; i<CSLCount((char**)papszMDStats); i++ ) {
+        if ( GetMetadataItem( papszMDStats[i] ) != NULL )
+            oMDMDStats.SetMetadataItem( papszMDStats[i],
+                                       GetMetadataItem(papszMDStats[i]) );
+    }
+    psMD = oMDMDStats.Serialize();
+
+    if( psMD != NULL )
+    {
+        if( psMD->psChild == NULL )
+            CPLDestroyXMLNode( psMD );
+        else 
+            CPLAddXMLChild( psTree, psMD );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We don't want to return anything if we had no metadata to       */
+/*      attach.                                                         */
+/* -------------------------------------------------------------------- */
+    if( psTree->psChild == NULL || psTree->psChild->psNext == NULL )
+    {
+        CPLDestroyXMLNode( psTree );
+        psTree = NULL;
+    }
+
+    return psTree;
+}
+
+/************************************************************************/
 /*                         CreateBandMetadata()                         */
 /************************************************************************/
 
@@ -1374,6 +1448,64 @@ const char * netCDFDataset::GetProjectionRef()
         return pszProjection;
     else
         return GDALPamDataset::GetProjectionRef();
+}
+
+/************************************************************************/
+/*                           SerializeToXML()                           */
+/************************************************************************/
+
+CPLXMLNode *netCDFDataset::SerializeToXML( const char *pszUnused )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Overriden from GDALPamDataset to add only band histogram        */
+/*      and statistics. See bug #4244.                                  */
+/* -------------------------------------------------------------------- */
+
+    CPLString oFmt;
+
+    if( psPam == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Setup root node and attributes.                                 */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psDSTree;
+
+    psDSTree = CPLCreateXMLNode( NULL, CXT_Element, "PAMDataset" );
+
+/* -------------------------------------------------------------------- */
+/*      Process bands.                                                  */
+/* -------------------------------------------------------------------- */
+    int iBand;
+
+    for( iBand = 0; iBand < GetRasterCount(); iBand++ )
+    {
+        CPLXMLNode *psBandTree;
+
+        netCDFRasterBand *poBand = (netCDFRasterBand *) 
+            GetRasterBand(iBand+1);
+
+        if( poBand == NULL || !(poBand->GetMOFlags() & GMO_PAM_CLASS) )
+            continue;
+
+        psBandTree = poBand->SerializeToXML( pszUnused );
+
+        if( psBandTree != NULL )
+            CPLAddXMLChild( psDSTree, psBandTree );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We don't want to return anything if we had no metadata to       */
+/*      attach.                                                         */
+/* -------------------------------------------------------------------- */
+    if( psDSTree->psChild == NULL )
+    {
+        CPLDestroyXMLNode( psDSTree );
+        psDSTree = NULL;
+    }
+
+    return psDSTree;
 }
 
 /************************************************************************/
@@ -3714,12 +3846,6 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     netCDFDataset 	*poDS;
     poDS = new netCDFDataset();
 
-/* -------------------------------------------------------------------- */
-/*      Disable PAM, at least temporarily. See bug #4244                */
-/* -------------------------------------------------------------------- */
-    poDS->nPamFlags |= GPF_DISABLED;
-
-
     poDS->SetDescription( poOpenInfo->pszFilename );
     
 /* -------------------------------------------------------------------- */
@@ -4622,11 +4748,13 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     pfnProgress( 0.95, NULL, pProgressData );
 
 /* -------------------------------------------------------------------- */
-/*      Re-open dataset, and copy any auxilary pam information.         */
-/*      Disable PAM, at least temporarily. See bug #4244                */
+/*      Re-open dataset so we can return it.                            */
 /* -------------------------------------------------------------------- */
     poDS = (netCDFDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 
+/* -------------------------------------------------------------------- */
+/*      PAM cloning is disabled. See bug #4244.                         */
+/* -------------------------------------------------------------------- */
     // if( poDS )
     //     poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
     
