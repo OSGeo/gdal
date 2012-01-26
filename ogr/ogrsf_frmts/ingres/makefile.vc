@@ -1,0 +1,23 @@
+
+OBJ =	ogringresdriver.obj ogringresdatasource.obj ogringreslayer.obj \
+	ogringrestablelayer.obj ogringresresultlayer.obj \
+	ogringresstatement.obj 
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS = -I.. -I..\.. -I$(INGRES_INC_DIR)
+
+default:	$(OBJ)
+
+ogr_Ingres.dll:	$(OBJ)
+	link /dll /out:ogr_Ingres.dll $(OBJ) $(GDALLIB) $(INGRES_LIB)
+	if exist ogr_Ingres.dll.manifest mt -manifest ogr_Ingres.dll.manifest -outputresource:ogr_Ingres.dll;2
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb *.exp
+	-del *.exe
+	-del *.dll
+	-del *.manifest
