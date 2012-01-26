@@ -4130,6 +4130,32 @@ def tiff_write_104():
     return 'success'
 
 ###############################################################################
+# Confirm as best we can that we can write geotiff files with detailed
+# projection parameters with the correct linear units set.  (#3901)
+
+def tiff_write_105():
+
+    shutil.copyfile( 'data/bug4468.tif', 'tmp/bug4468.tif' )
+
+    # Update a pixel and close again.  
+    ds = gdal.Open( 'tmp/bug4468.tif', gdal.GA_Update )
+    data = ds.ReadRaster(0,0,1,1)
+    ds.WriteRaster(0,0,1,1,data)
+    ds = None
+
+    # Now check if the image is still intact.
+    ds = gdal.Open( 'tmp/bug4468.tif' )
+    cs = ds.GetRasterBand(1).Checksum()
+
+    if cs != 2923:
+        gdaltest.post_reason( 'Did not get expected checksum, got %d.' % cs )
+        return 'fail'
+    
+    gdaltest.tiff_drv.Delete( 'tmp/bug4468.tif' )
+
+    return 'success'
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -4246,6 +4272,7 @@ gdaltest_list = [
     tiff_write_102,
     tiff_write_103,
     tiff_write_104,
+    tiff_write_105,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
