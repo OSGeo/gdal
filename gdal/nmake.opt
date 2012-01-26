@@ -355,9 +355,9 @@ PCIDSK_SETTING=INTERNAL
 # INGRES Libraries
 # INGRES_DIR = C:\warmerda\pkg\ingres
 # INGRES_INC_DIR = $(INGRES_DIR)\files
-# INGRES_LIB = $(INGRES_DIR)\iilibapi.lib \
-#	$(INGRES_DIR)\iilibutil.lib \
-#	$(INGRES_DIR)\iilibingres.lib 
+# INGRES_LIB = $(INGRES_DIR)\lib\iilibapi.lib \
+#	$(INGRES_DIR)\lib\iilibutil.lib \
+#	$(INGRES_DIR)\lib\libingres.lib 
 
 # SQLite Libraries
 #SQLITE_INC=-IN:\pkg\sqlite-win32
