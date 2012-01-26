@@ -30,7 +30,6 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_ingres.h"
-#include <geos_c.h> 
 
 CPL_CVSID("$Id$");
 
