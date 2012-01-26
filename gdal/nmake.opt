@@ -352,6 +352,13 @@ PCIDSK_SETTING=INTERNAL
 #MYSQL_INC_DIR = D:\Software\MySQLServer4.1\include
 #MYSQL_LIB = D:\Software\MySQLServer4.1\lib\opt\libmysql.lib advapi32.lib
 
+# INGRES Libraries
+# INGRES_DIR = C:\warmerda\pkg\ingres
+# INGRES_INC_DIR = $(INGRES_DIR)\files
+# INGRES_LIB = $(INGRES_DIR)\iilibapi.lib \
+#	$(INGRES_DIR)\iilibutil.lib \
+#	$(INGRES_DIR)\iilibingres.lib 
+
 # SQLite Libraries
 #SQLITE_INC=-IN:\pkg\sqlite-win32
 #SQLITE_LIB=N:\pkg\sqlite-win32\sqlite3_i.lib
@@ -631,7 +638,8 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(KAKLIB) $(PCIDSK_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(POPPLER_LIBS) $(PODOFO_LIBS) $(LZMA_LIBS) \
-	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS)
+	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
+	$(INGRES_LIB)
 		
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
