@@ -212,7 +212,7 @@ The best way to get familiar with something is by example.
 Here is what a style table that contains all the above styles could look
 like:
 <PRE>    road:      PEN(c:#FF0000,w:5px)
-    lake:      BRUSH(fc:#0000FF);LINE(c:#000000)
+    lake:      BRUSH(fc:#0000FF);PEN(c:#000000)
     campsite:  SYMBOL(c:#00FF00,id:"points.sym-45,ogr-sym-7")
     label:     LABEL(f:"Times New Roman",s:12pt,t:{text_string})</PRE>
 
@@ -900,9 +900,9 @@ This would apply to formats like ArcView Shapes.
     OFS-Version: 1.0
     StyleField: &quot;style&quot;
 
-    DefaultStyle: PEN(C:#000000FF) 
+    DefaultStyle: PEN(C:#000000FF)
     road:      PEN(c:#FF0000,w:5px)
-    lake:      BRUSH(fc:#0000FF);LINE(c:#000000)
+    lake:      BRUSH(fc:#0000FF);PEN(c:#000000)
     campsite:  SYMBOL(c:#00FF00,id:"points.sym-45,ogr-sym-7")
     label:     LABEL(f:"Times New Roman",s:12pt,t:{text_string})</PRE>
 
