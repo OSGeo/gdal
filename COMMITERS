@@ -155,6 +155,9 @@ pramsey       Paul Ramsey                  OGR: FGDB, PostGIS
 etourigny     Etienne Tourigny             netcdf, hdf
               etourigny.dev at gmail dot com
               (old osgeo id etiennesky)
+              
+bishop        Dmitry Bryshnikov            postgis, hdf, geotiff, mitab
+              polimax at mail.ru
 
 ===============
 Past developers
