@@ -202,6 +202,8 @@ The driver supports reading from files managed by VSI Virtual File System API, w
 
 <h3>Examples</h3>
 
+<ul>
+<li>
 <p>A merge of two shapefiles 'file1.shp' and 'file2.shp' into a new file
 'file_merged.shp' is performed like this:</p>
 
@@ -214,7 +216,15 @@ The driver supports reading from files managed by VSI Virtual File System API, w
 find existing layers and append the features being copied.</p>
 
 <p>The -nln option sets the name of the layer to be copied to.</p>
+</li>
 
+<li>Building a spatial index :
+<pre>
+% ogrinfo file1.shp -sql "CREATE SPATIAL INDEX ON file1"
+</pre>
+</li>
+
+</ul>
 
 <h3>See Also</h3>
 
