@@ -269,9 +269,8 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
 
         if( pszCoordString == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "<coordinates> element missing value." );
-            return FALSE;
+            poGeometry->empty();
+            return TRUE;
         }
 
         while( *pszCoordString != '\0' )
@@ -387,6 +386,12 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
             continue;
 
         const char* pszPos = GetElementText( psPos );
+        if (pszPos == NULL)
+        {
+            poGeometry->empty();
+            return TRUE;
+        }
+
         const char* pszCur = pszPos;
         const char* pszX = (pszCur != NULL) ?
                             GMLGetCoordTokenPos(pszCur, &pszCur) : NULL;
@@ -457,11 +462,8 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
         const char* pszPosList = GetElementText( psPosList );
         if (pszPosList == NULL)
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Did not get at least %d values or invalid number of \n"
-                      "set of coordinates <gml:posList>%s</gml:posList>",
-                      nDimension, pszPosList ? pszPosList : "");
-            return FALSE;
+            poGeometry->empty();
+            return TRUE;
         }
 
         const char* pszCur = pszPosList;
@@ -671,10 +673,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 
         if( psChild == NULL || psChild->psChild == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Missing outerBoundaryIs property on %s.", pszBaseGeometry );
-            delete poPolygon;
-            return NULL;
+            /* <gml:Polygon/> is invalid GML2, but valid GML3, so be tolerant */
+            return poPolygon;
         }
 
         // Translate outer ring and add to polygon.
@@ -1968,9 +1968,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 
         if( psChild == NULL || psChild->psChild == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Missing <patches> for Surface." );
-            return NULL;
+            /* <gml:Surface/> and <gml:Surface><gml:patches/></gml:Surface> are valid GML */
+            return new OGRPolygon();
         }
 
         for( psChild = psChild->psChild; 
@@ -2071,9 +2070,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 
         if( psChild == NULL || psChild->psChild == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Missing exterior property on Solid." );
-            return NULL;
+            /* <gml:Solid/> and <gml:Solid><gml:exterior/></gml:Solid> are valid GML */
+            return new OGRPolygon();
         }
 
         // Get the geometry inside <exterior>
