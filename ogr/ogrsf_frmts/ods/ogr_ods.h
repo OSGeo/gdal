@@ -37,6 +37,7 @@
 
 #include <vector>
 #include <string>
+#include <set>
 
 /************************************************************************/
 /*                             OGRODSLayer                              */
@@ -113,8 +114,14 @@ class OGRODSDataSource : public OGRDataSource
     int                 nLayers;
     OGRLayer          **papoLayers;
 
-    VSILFILE*           fpContent;
+    VSILFILE*           fpSettings;
+    std::string         osCurrentConfigTableName;
+    std::string         osConfigName;
+    int                 nFlags;
+    std::set<std::string> osSetLayerHasSplitter;
+    void                AnalyseSettings();
 
+    VSILFILE*           fpContent;
     void                AnalyseFile();
 
     int                 bFirstLineIsHeaders;
@@ -167,6 +174,7 @@ class OGRODSDataSource : public OGRDataSource
 
     int                 Open( const char * pszFilename,
                               VSILFILE* fpContentIn,
+                              VSILFILE* fpSettingsIn,
                               int bUpdatableIn );
     int                 Create( const char * pszName, char **papszOptions );
 
@@ -188,6 +196,10 @@ class OGRODSDataSource : public OGRDataSource
     void startElementCbk(const char *pszName, const char **ppszAttr);
     void endElementCbk(const char *pszName);
     void dataHandlerCbk(const char *data, int nLen);
+
+    void startElementStylesCbk(const char *pszName, const char **ppszAttr);
+    void endElementStylesCbk(const char *pszName);
+    void dataHandlerStylesCbk(const char *data, int nLen);
 
     int                 GetUpdatable() { return bUpdatable; }
     void                SetUpdated() { bUpdated = TRUE; }

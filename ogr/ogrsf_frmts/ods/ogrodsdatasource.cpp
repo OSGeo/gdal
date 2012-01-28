@@ -73,6 +73,7 @@ OGRODSDataSource::OGRODSDataSource()
 {
     pszName = NULL;
     fpContent = NULL;
+    fpSettings = NULL;
     bUpdatable = FALSE;
     bUpdated = FALSE;
     bAnalysedFile = FALSE;
@@ -116,6 +117,8 @@ OGRODSDataSource::~OGRODSDataSource()
 
     if (fpContent)
         VSIFCloseL(fpContent);
+    if (fpSettings)
+        VSIFCloseL(fpSettings);
 
     for(int i=0;i<nLayers;i++)
         delete papoLayers[i];
@@ -168,6 +171,7 @@ int OGRODSDataSource::GetLayerCount()
 
 int OGRODSDataSource::Open( const char * pszFilename,
                             VSILFILE* fpContentIn,
+                            VSILFILE* fpSettingsIn,
                             int bUpdatableIn)
 
 {
@@ -175,6 +179,7 @@ int OGRODSDataSource::Open( const char * pszFilename,
 
     pszName = CPLStrdup( pszFilename );
     fpContent = fpContentIn;
+    fpSettings = fpSettingsIn;
 
     return TRUE;
 }
@@ -447,6 +452,11 @@ void OGRODSDataSource::DetectHeaderLine()
         bFirstLineIsHeaders = TRUE;
     else if (EQUAL(pszODSHeaders, "DISABLE"))
         bFirstLineIsHeaders = FALSE;
+    else if (osSetLayerHasSplitter.find(poCurLayer->GetName()) !=
+             osSetLayerHasSplitter.end())
+    {
+        bFirstLineIsHeaders = TRUE;
+    }
     else if (bHeaderLineCandidate &&
              apoFirstLineTypes.size() != 0 &&
              apoFirstLineTypes.size() == apoCurLineTypes.size() &&
@@ -819,10 +829,18 @@ void OGRODSDataSource::AnalyseFile()
 
     bAnalysedFile = TRUE;
 
+    AnalyseSettings();
+
     oParser = OGRCreateExpatXMLParser();
     XML_SetElementHandler(oParser, ::startElementCbk, ::endElementCbk);
     XML_SetCharacterDataHandler(oParser, ::dataHandlerCbk);
     XML_SetUserData(oParser, this);
+
+    nDepth = 0;
+    nStackDepth = 0;
+    stateStack[0].nBeginDepth = 0;
+    bStopParsing = FALSE;
+    nWithoutEventCounter = 0;
 
     VSIFSeekL( fpContent, 0, SEEK_SET );
 
@@ -860,6 +878,197 @@ void OGRODSDataSource::AnalyseFile()
     fpContent = NULL;
 
     bUpdated = FALSE;
+}
+
+#if 0
+    VSIFPrintfL(fp, "<config:config-item-map-named config:name=\"Tables\">\n");
+    for(i=0;i<nLayers;i++)
+    {
+        OGRLayer* poLayer = GetLayer(i);
+        if (HasHeaderLine(poLayer))
+        {
+            /* Add vertical splitter */
+            char* pszXML = OGRGetXML_UTF8_EscapedString(GetLayer(i)->GetName());
+            VSIFPrintfL(fp, "<config:config-item-map-entry config:name=\"%s\">\n", pszXML);
+            CPLFree(pszXML);
+            VSIFPrintfL(fp, "<config:config-item config:name=\"VerticalSplitMode\" config:type=\"short\">2</config:config-item>\n");
+            VSIFPrintfL(fp, "<config:config-item config:name=\"VerticalSplitPosition\" config:type=\"int\">1</config:config-item>\n");
+            VSIFPrintfL(fp, "<config:config-item config:name=\"ActiveSplitRange\" config:type=\"short\">2</config:config-item>\n");
+            VSIFPrintfL(fp, "<config:config-item config:name=\"PositionTop\" config:type=\"int\">0</config:config-item>\n");
+            VSIFPrintfL(fp, "<config:config-item config:name=\"PositionBottom\" config:type=\"int\">1</config:config-item>\n");
+            VSIFPrintfL(fp, "</config:config-item-map-entry>\n");
+        }
+    }
+    #endif
+
+/************************************************************************/
+/*                        startElementStylesCbk()                       */
+/************************************************************************/
+
+static void XMLCALL startElementStylesCbk(void *pUserData, const char *pszName,
+                                    const char **ppszAttr)
+{
+    ((OGRODSDataSource*)pUserData)->startElementStylesCbk(pszName, ppszAttr);
+}
+
+void OGRODSDataSource::startElementStylesCbk(const char *pszName,
+                                             const char **ppszAttr)
+{
+    if (bStopParsing) return;
+
+    nWithoutEventCounter = 0;
+
+    if (nStackDepth == 0 &&
+        strcmp(pszName, "config:config-item-map-named") == 0 &&
+        strcmp(GetAttributeValue(ppszAttr, "config:name", ""), "Tables") == 0)
+    {
+        stateStack[++nStackDepth].nBeginDepth = nDepth;
+    }
+    else if (nStackDepth == 1 && strcmp(pszName, "config:config-item-map-entry") == 0)
+    {
+        const char* pszTableName = GetAttributeValue(ppszAttr, "config:name", NULL);
+        if (pszTableName)
+        {
+            osCurrentConfigTableName = pszTableName;
+            nFlags = 0;
+            stateStack[++nStackDepth].nBeginDepth = nDepth;
+        }
+    }
+    else if (nStackDepth == 2 && strcmp(pszName, "config:config-item") == 0)
+    {
+        const char* pszConfigName = GetAttributeValue(ppszAttr, "config:name", NULL);
+        if (pszConfigName)
+        {
+            osConfigName = pszConfigName;
+            osValue = "";
+            stateStack[++nStackDepth].nBeginDepth = nDepth;
+        }
+    }
+
+    nDepth++;
+}
+
+/************************************************************************/
+/*                        endElementStylesCbk()                         */
+/************************************************************************/
+
+static void XMLCALL endElementStylesCbk(void *pUserData, const char *pszName)
+{
+    ((OGRODSDataSource*)pUserData)->endElementStylesCbk(pszName);
+}
+
+void OGRODSDataSource::endElementStylesCbk(const char *pszName)
+{
+    if (bStopParsing) return;
+
+    nWithoutEventCounter = 0;
+    nDepth--;
+
+    if (nStackDepth > 0 && stateStack[nStackDepth].nBeginDepth == nDepth)
+    {
+        if (nStackDepth == 2)
+        {
+            if (nFlags == (1 | 2))
+                osSetLayerHasSplitter.insert(osCurrentConfigTableName);
+        }
+        if (nStackDepth == 3)
+        {
+            if (osConfigName == "VerticalSplitMode" && osValue == "2")
+                nFlags |= 1;
+            else if (osConfigName == "VerticalSplitPosition" && osValue == "1")
+                nFlags |= 2;
+        }
+        nStackDepth --;
+    }
+}
+
+/************************************************************************/
+/*                         dataHandlerStylesCbk()                       */
+/************************************************************************/
+
+static void XMLCALL dataHandlerStylesCbk(void *pUserData, const char *data, int nLen)
+{
+    ((OGRODSDataSource*)pUserData)->dataHandlerStylesCbk(data, nLen);
+}
+
+void OGRODSDataSource::dataHandlerStylesCbk(const char *data, int nLen)
+{
+    if (bStopParsing) return;
+
+    nDataHandlerCounter ++;
+    if (nDataHandlerCounter >= BUFSIZ)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "File probably corrupted (million laugh pattern)");
+        XML_StopParser(oParser, XML_FALSE);
+        bStopParsing = TRUE;
+        return;
+    }
+
+    nWithoutEventCounter = 0;
+
+    if (nStackDepth == 3)
+    {
+        osValue.append(data, nLen);
+    }
+}
+
+/************************************************************************/
+/*                           AnalyseSettings()                          */
+/*                                                                      */
+/* We parse settings.xml to see which layers have a vertical splitter   */
+/* on the first line, so as to use it as the header line.               */
+/************************************************************************/
+
+void OGRODSDataSource::AnalyseSettings()
+{
+    if (fpSettings == NULL)
+        return;
+
+    oParser = OGRCreateExpatXMLParser();
+    XML_SetElementHandler(oParser, ::startElementStylesCbk, ::endElementStylesCbk);
+    XML_SetCharacterDataHandler(oParser, ::dataHandlerStylesCbk);
+    XML_SetUserData(oParser, this);
+
+    nDepth = 0;
+    nStackDepth = 0;
+    bStopParsing = FALSE;
+    nWithoutEventCounter = 0;
+
+    VSIFSeekL( fpSettings, 0, SEEK_SET );
+
+    char aBuf[BUFSIZ];
+    int nDone;
+    do
+    {
+        nDataHandlerCounter = 0;
+        unsigned int nLen =
+            (unsigned int)VSIFReadL( aBuf, 1, sizeof(aBuf), fpSettings );
+        nDone = VSIFEofL(fpSettings);
+        if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "XML parsing of styles.xml file failed : %s at line %d, column %d",
+                     XML_ErrorString(XML_GetErrorCode(oParser)),
+                     (int)XML_GetCurrentLineNumber(oParser),
+                     (int)XML_GetCurrentColumnNumber(oParser));
+            bStopParsing = TRUE;
+        }
+        nWithoutEventCounter ++;
+    } while (!nDone && !bStopParsing && nWithoutEventCounter < 10);
+
+    XML_ParserFree(oParser);
+    oParser = NULL;
+
+    if (nWithoutEventCounter == 10)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too much data inside one element. File probably corrupted");
+        bStopParsing = TRUE;
+    }
+
+    VSIFCloseL(fpSettings);
+    fpSettings = NULL;
 }
 
 /************************************************************************/
@@ -1003,6 +1212,25 @@ OGRErr OGRODSDataSource::DeleteLayer(int iLayer)
 }
 
 /************************************************************************/
+/*                           HasHeaderLine()                            */
+/************************************************************************/
+
+static int HasHeaderLine(OGRLayer* poLayer)
+{
+    OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
+    int bHasHeaders = FALSE;
+
+    for(int j=0;j<poFDefn->GetFieldCount();j++)
+    {
+        if (strcmp(poFDefn->GetFieldDefn(j)->GetNameRef(),
+                    CPLSPrintf("Field%d", j+1)) != 0)
+            bHasHeaders = TRUE;
+    }
+
+    return bHasHeaders;
+}
+
+/************************************************************************/
 /*                            WriteLayer()                              */
 /************************************************************************/
 
@@ -1019,7 +1247,7 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
     OGRFeature* poFeature = poLayer->GetNextFeature();
 
     OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
-    int bHasHeaders = FALSE;
+    int bHasHeaders = HasHeaderLine(poLayer);
 
     for(j=0;j<poFDefn->GetFieldCount();j++)
     {
@@ -1029,10 +1257,6 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
         VSIFPrintfL(fp, "<table:table-column table:style-name=\"co%d\" "
                         "table:default-cell-style-name=\"Default\"/>\n",
                     nStyleNumber);
-
-        if (strcmp(poFDefn->GetFieldDefn(j)->GetNameRef(),
-                    CPLSPrintf("Field%d", j+1)) != 0)
-            bHasHeaders = TRUE;
     }
 
     if (bHasHeaders && poFeature != NULL)
@@ -1166,6 +1390,7 @@ OGRErr OGRODSDataSource::SyncToDisk()
     VSILFILE* fpZIP = VSIFOpenL(CPLSPrintf("/vsizip/%s", pszName), "ab");
 
     VSILFILE* fp;
+    int i;
 
     fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/META-INF/manifest.xml", pszName), "wb");
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
@@ -1196,7 +1421,36 @@ OGRErr OGRODSDataSource::SyncToDisk()
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(fp, "<office:document-settings "
                 "xmlns:office=\"urn:oasis:names:tc:opendocument:xmlns:office:1.0\" "
+                "xmlns:config=\"urn:oasis:names:tc:opendocument:xmlns:config:1.0\" "
+                "xmlns:ooo=\"http://openoffice.org/2004/office\" "
                 "office:version=\"1.2\">\n");
+    VSIFPrintfL(fp, "<office:settings>\n");
+    VSIFPrintfL(fp, "<config:config-item-set config:name=\"ooo:view-settings\">\n");
+    VSIFPrintfL(fp, "<config:config-item-map-indexed config:name=\"Views\">\n");
+    VSIFPrintfL(fp, "<config:config-item-map-entry>\n");
+    VSIFPrintfL(fp, "<config:config-item-map-named config:name=\"Tables\">\n");
+    for(i=0;i<nLayers;i++)
+    {
+        OGRLayer* poLayer = GetLayer(i);
+        if (HasHeaderLine(poLayer))
+        {
+            /* Add vertical splitter */
+            char* pszXML = OGRGetXML_UTF8_EscapedString(GetLayer(i)->GetName());
+            VSIFPrintfL(fp, "<config:config-item-map-entry config:name=\"%s\">\n", pszXML);
+            CPLFree(pszXML);
+            VSIFPrintfL(fp, "<config:config-item config:name=\"VerticalSplitMode\" config:type=\"short\">2</config:config-item>\n");
+            VSIFPrintfL(fp, "<config:config-item config:name=\"VerticalSplitPosition\" config:type=\"int\">1</config:config-item>\n");
+            VSIFPrintfL(fp, "<config:config-item config:name=\"ActiveSplitRange\" config:type=\"short\">2</config:config-item>\n");
+            VSIFPrintfL(fp, "<config:config-item config:name=\"PositionTop\" config:type=\"int\">0</config:config-item>\n");
+            VSIFPrintfL(fp, "<config:config-item config:name=\"PositionBottom\" config:type=\"int\">1</config:config-item>\n");
+            VSIFPrintfL(fp, "</config:config-item-map-entry>\n");
+        }
+    }
+    VSIFPrintfL(fp, "</config:config-item-map-named>\n");
+    VSIFPrintfL(fp, "</config:config-item-map-entry>\n");
+    VSIFPrintfL(fp, "</config:config-item-map-indexed>\n");
+    VSIFPrintfL(fp, "</config:config-item-set>\n");
+    VSIFPrintfL(fp, "</office:settings>\n");
     VSIFPrintfL(fp, "</office:document-settings>\n");
     VSIFCloseL(fp);
 
@@ -1282,7 +1536,7 @@ OGRErr OGRODSDataSource::SyncToDisk()
     VSIFPrintfL(fp, "</office:automatic-styles>\n");
     VSIFPrintfL(fp, "<office:body>\n");
     VSIFPrintfL(fp, "<office:spreadsheet>\n");
-    for(int i=0;i<nLayers;i++)
+    for(i=0;i<nLayers;i++)
     {
         WriteLayer(fp, GetLayer(i));
     }
