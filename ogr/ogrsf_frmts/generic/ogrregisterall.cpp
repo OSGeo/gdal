@@ -240,4 +240,7 @@ void OGRRegisterAll()
 #ifdef ODS_ENABLED
     RegisterOGRODS();
 #endif
+#ifdef XLSX_ENABLED
+    RegisterOGRXLSX();
+#endif
 } /* OGRRegisterAll */
