@@ -92,6 +92,12 @@ OGRDataSource *OGRODSDriver::Open( const char * pszFilename, int bUpdate )
 
     if (EQUAL(CPLGetFilename(pszContentFilename), "content.xml"))
     {
+        /* We cannot update the xml file, only the .ods */
+        if (bUpdate)
+        {
+            return NULL;
+        }
+
         fpContent = VSIFOpenL(pszContentFilename, "rb");
         if (fpContent == NULL)
             return NULL;
