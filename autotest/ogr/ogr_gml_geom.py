@@ -862,26 +862,26 @@ def gml_invalid_geoms():
     gml_expected_wkt_list = [
         ('<foo/>', None),
         ('<gml:Point><gml:pos>31 29 16</gml:pos><gml:pos>31 29 16</gml:pos></gml:Point>', None),
-        ('<gml:Point><gml:coordinates/></gml:Point>', None),
-        ('<gml:Point><gml:coordinates>0</gml:Coordinates></gml:Point>', None),
-        ('<gml:Point><gml:coordinates>0 1</gml:Coordinates></gml:Point>', 'POINT (0 1)'), # Support for uncommon formatting of coordinates
-        ('<gml:Point><gml:coordinates>0 1 2</gml:Coordinates></gml:Point>', 'POINT (0 1 2)'), # Support for uncommon formatting of coordinates
-        ('<gml:Point><gml:coordinates>0,1 2,3</gml:Coordinates></gml:Point>', None),
+        ('<gml:Point><gml:coordinates/></gml:Point>', 'POINT EMPTY'), # This is valid GML actually
+        ('<gml:Point><gml:coordinates>0</gml:coordinates></gml:Point>', None),
+        ('<gml:Point><gml:coordinates>0 1</gml:coordinates></gml:Point>', 'POINT (0 1)'), # Support for uncommon formatting of coordinates
+        ('<gml:Point><gml:coordinates>0 1 2</gml:coordinates></gml:Point>', 'POINT (0 1 2)'), # Support for uncommon formatting of coordinates
+        ('<gml:Point><gml:coordinates>0,1 2,3</gml:coordinates></gml:Point>', None),
         ('<gml:Point><gml:pos>0</gml:pos></gml:Point>', None),
-        ('<gml:Point><gml:pos/></gml:Point>', None),
+        ('<gml:Point><gml:pos/></gml:Point>', 'POINT EMPTY'), # This is valid GML actually
         ('<gml:Point/>', None),
         ('<gml:Point><foo/></gml:Point>', None),
         ('<gml:LineString/>', None),
         ('<gml:LineString><foo/></gml:LineString>', None),
-        ('<gml:LineString><gml:posList></gml:posList></gml:LineString>', None),
+        ('<gml:LineString><gml:posList></gml:posList></gml:LineString>', 'LINESTRING EMPTY'), # This is valid GML actually
         ('<gml:LineString><gml:posList>0</gml:posList></gml:LineString>', None),
         ('<gml:LineString><gml:posList srsDimension="4">0 1 2 3</gml:posList></gml:LineString>', None),
         ('<gml:LineString><gml:posList srsDimension="3">0 1 2 3</gml:posList></gml:LineString>', None),
         ('<gml:Point><gml:coord></gml:coord></gml:Point>', None),
         ('<gml:Point><gml:coord><gml:X/><gml:Y/></gml:coord></gml:Point>', None),
         ('<gml:Point><gml:coord><gml:X>0</gml:X></gml:coord></gml:Point>', None),
-        ('<gml:Polygon/>', None),
-        ('<gml:Polygon><gml:outerBoundaryIs/></gml:Polygon>', None),
+        ('<gml:Polygon/>', 'POLYGON EMPTY'), # valid GML3, but invalid GML2. Be tolerant
+        ('<gml:Polygon><gml:outerBoundaryIs/></gml:Polygon>', 'POLYGON EMPTY'), # valid GML2
         ('<gml:Polygon><gml:outerBoundaryIs><foo/></gml:outerBoundaryIs></gml:Polygon>', None),
         ('<gml:Polygon><gml:outerBoundaryIs><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:outerBoundaryIs></gml:Polygon>', None),
         ('<gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:posList>0 1 2 3 4 5 0 1</gml:posList></gml:LinearRing></gml:outerBoundaryIs><gml:innerBoundaryIs/></gml:Polygon>', None),
@@ -894,14 +894,14 @@ def gml_invalid_geoms():
         ('<gml:Ring><gml:curveMember><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:curveMember></gml:Ring>', None),
         ('<gml:Box/>', None),
         ('<gml:Box><gml:pos>31 29 16</gml:pos></gml:Box>', None),
-        ('<gml:MultiPolygon/>', 'MULTIPOLYGON EMPTY'), # Probably illegal GML
-        ('<gml:MultiPolygon><foo/></gml:MultiPolygon>', 'MULTIPOLYGON EMPTY'), # Probably illegal GML
+        ('<gml:MultiPolygon/>', 'MULTIPOLYGON EMPTY'), # valid GML3, but invalid GML2. Be tolerant
+        ('<gml:MultiPolygon><foo/></gml:MultiPolygon>', 'MULTIPOLYGON EMPTY'), # illegal GML, but we are tolerant
         ('<gml:MultiPolygon><gml:polygonMember/></gml:MultiPolygon>', None),
         ('<gml:MultiPolygon><gml:polygonMember><foo/></gml:polygonMember></gml:MultiPolygon>', None),
         ('<gml:MultiPolygon><gml:polygonMember><gml:Point><gml:pos>31 29 16</gml:pos></gml:Point></gml:polygonMember></gml:MultiPolygon>', None),
-        ('<gml:MultiSurface><gml:surfaceMembers/></gml:MultiSurface>', 'MULTIPOLYGON EMPTY'), # Probably illegal GML
-        ('<gml:MultiSurface><gml:surfaceMembers><foo/></gml:surfaceMembers></gml:MultiSurface>', 'MULTIPOLYGON EMPTY'), # Probably illegal GML
-        ('<gml:MultiSurface><gml:surfaceMembers><gml:Polygon/></gml:surfaceMembers></gml:MultiSurface>', None),
+        ('<gml:MultiSurface><gml:surfaceMembers/></gml:MultiSurface>', 'MULTIPOLYGON EMPTY'), # valid GML
+        ('<gml:MultiSurface><gml:surfaceMembers><foo/></gml:surfaceMembers></gml:MultiSurface>', 'MULTIPOLYGON EMPTY'), # illegal GML, but we are tolerant
+        ('<gml:MultiSurface><gml:surfaceMembers><gml:Polygon/></gml:surfaceMembers></gml:MultiSurface>', 'MULTIPOLYGON EMPTY'), # valid GML3
         ('<gml:MultiPoint/>', 'MULTIPOINT EMPTY'),
         ('<gml:MultiPoint><foo/></gml:MultiPoint>', 'MULTIPOINT EMPTY'),
         ('<gml:MultiPoint><gml:pointMember/></gml:MultiPoint>', None),
@@ -939,14 +939,14 @@ def gml_invalid_geoms():
         ('<gml:MultiGeometry><foo/></gml:MultiGeometry>', 'GEOMETRYCOLLECTION EMPTY'),
         ('<gml:MultiGeometry><gml:geometryMember/></gml:MultiGeometry>', None),
         ('<gml:MultiGeometry><gml:geometryMember><foo/></gml:geometryMember></gml:MultiGeometry>', None),
-        ('<gml:Surface/>', None),
-        ('<gml:Surface><foo/></gml:Surface>', None),
-        ('<gml:Surface><gml:patches/></gml:Surface>', None),
+        ('<gml:Surface/>', 'POLYGON EMPTY'), # valid GML3
+        ('<gml:Surface><foo/></gml:Surface>', 'POLYGON EMPTY'), # invalid GML3, but we are tolerant
+        ('<gml:Surface><gml:patches/></gml:Surface>', 'POLYGON EMPTY'), # valid GML3
         ('<gml:Surface><gml:patches><foo/></gml:patches></gml:Surface>', None),
-        ('<gml:Surface><gml:patches><gml:PolygonPatch/></gml:patches></gml:Surface>', None),
-        ('<gml:Solid/>', None),
-        ('<gml:Solid><foo/></gml:Solid>', None),
-        ('<gml:Solid><gml:exterior/></gml:Solid>', None),
+        ('<gml:Surface><gml:patches><gml:PolygonPatch/></gml:patches></gml:Surface>', 'POLYGON EMPTY'), # valid GML3
+        ('<gml:Solid/>', 'POLYGON EMPTY'), # valid GML3
+        ('<gml:Solid><foo/></gml:Solid>', 'POLYGON EMPTY'), # invalid GML3, but we are tolerant
+        ('<gml:Solid><gml:exterior/></gml:Solid>', 'POLYGON EMPTY'), # valid GML3
         ('<gml:Solid><gml:exterior><foo/></gml:exterior></gml:Solid>', None),
         ('<gml:Solid><gml:exterior><Polygon><exterior><LinearRing><posList>0 0 4 0 4 4 0 4 0 0</posList></LinearRing></exterior></Polygon></gml:exterior><gml:interior/></gml:Solid>', 'POLYGON ((0 0,4 0,4 4,0 4,0 0))'),
         ('<gml:OrientableSurface/>', None),
