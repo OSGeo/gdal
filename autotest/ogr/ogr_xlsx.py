@@ -40,22 +40,9 @@ import gdal
 import ogr
 
 ###############################################################################
-# Basic tests
+# Check
 
-def ogr_xlsx_1():
-
-    drv = ogr.GetDriverByName('XLSX')
-    if drv is None:
-        return 'skip'
-
-    if drv.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    ds = ogr.Open('data/test.xlsx')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+def ogr_xlsx_check(ds):
 
     if ds.TestCapability("foo") != 0:
         gdaltest.post_reason('fail')
@@ -136,6 +123,26 @@ def ogr_xlsx_1():
     return 'success'
 
 ###############################################################################
+# Basic tests
+
+def ogr_xlsx_1():
+
+    drv = ogr.GetDriverByName('XLSX')
+    if drv is None:
+        return 'skip'
+
+    if drv.TestCapability("foo") != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = ogr.Open('data/test.xlsx')
+    if ds is None:
+        gdaltest.post_reason('cannot open dataset')
+        return 'fail'
+
+    return ogr_xlsx_check(ds)
+
+###############################################################################
 # Test OGR_XLSX_HEADERS = DISABLE
 
 def ogr_xlsx_2():
@@ -201,12 +208,35 @@ def ogr_xlsx_4():
 
     return 'success'
 
+###############################################################################
+# Test write support
+
+def ogr_xlsx_5():
+
+    drv = ogr.GetDriverByName('XLSX')
+    if drv is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f XLSX tmp/test.xlsx data/test.xlsx')
+
+    ds = ogr.Open('tmp/test.xlsx')
+    ret = ogr_xlsx_check(ds)
+    ds = None
+
+    os.unlink('tmp/test.xlsx')
+
+    return ret
 
 gdaltest_list = [ 
     ogr_xlsx_1,
     ogr_xlsx_2,
     ogr_xlsx_3,
-    ogr_xlsx_4
+    ogr_xlsx_4,
+    ogr_xlsx_5
 ]
 
 if __name__ == '__main__':

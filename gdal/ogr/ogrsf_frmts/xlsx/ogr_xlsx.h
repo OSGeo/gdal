@@ -51,11 +51,16 @@ class OGRXLSXLayer : public OGRMemLayer
     OGRXLSXDataSource* poDS;
     int                nSheetId;
     void               Init();
+    int                bUpdated;
 
     public:
         OGRXLSXLayer( OGRXLSXDataSource* poDSIn,
                       int nSheetIdIn,
-                      const char * pszName );
+                      const char * pszName,
+                      int bUpdateIn = FALSE);
+
+    int                 HasBeenUpdated() { return bUpdated; }
+    void                SetUpdated(int bUpdatedIn = TRUE);
 
     const char         *GetName() { return OGRMemLayer::GetLayerDefn()->GetName(); };
     OGRwkbGeometryType  GetGeomType() { return wkbNone; }
@@ -74,13 +79,13 @@ class OGRXLSXLayer : public OGRMemLayer
     { Init(); return OGRMemLayer::GetFeature(nFeatureId); }
 
     OGRErr              SetFeature( OGRFeature *poFeature )
-    { Init(); return OGRMemLayer::SetFeature(poFeature); }
+    { Init(); SetUpdated(); return OGRMemLayer::SetFeature(poFeature); }
 
     OGRErr              CreateFeature( OGRFeature *poFeature )
-    { Init(); return OGRMemLayer::CreateFeature(poFeature); }
+    { Init(); SetUpdated(); return OGRMemLayer::CreateFeature(poFeature); }
 
     virtual OGRErr      DeleteFeature( long nFID )
-    { Init(); return OGRMemLayer::DeleteFeature(nFID); }
+    { Init(); SetUpdated(); return OGRMemLayer::DeleteFeature(nFID); }
 
     OGRFeatureDefn *    GetLayerDefn()
     { Init(); return OGRMemLayer::GetLayerDefn(); }
@@ -90,16 +95,16 @@ class OGRXLSXLayer : public OGRMemLayer
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE )
-    { Init(); return OGRMemLayer::CreateField(poField, bApproxOK); }
+    { Init(); SetUpdated(); return OGRMemLayer::CreateField(poField, bApproxOK); }
 
     virtual OGRErr      DeleteField( int iField )
-    { Init(); return OGRMemLayer::DeleteField(iField); }
+    { Init(); SetUpdated(); return OGRMemLayer::DeleteField(iField); }
 
     virtual OGRErr      ReorderFields( int* panMap )
-    { Init(); return OGRMemLayer::ReorderFields(panMap); }
+    { Init(); SetUpdated(); return OGRMemLayer::ReorderFields(panMap); }
 
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
-    { Init(); return OGRMemLayer::AlterFieldDefn(iField, poNewFieldDefn, nFlags); }
+    { Init(); SetUpdated(); return OGRMemLayer::AlterFieldDefn(iField, poNewFieldDefn, nFlags); }
 
     int                 TestCapability( const char * pszCap )
     { Init(); return OGRMemLayer::TestCapability(pszCap); }
@@ -133,6 +138,8 @@ typedef struct
 class OGRXLSXDataSource : public OGRDataSource
 {
     char*               pszName;
+    int                 bUpdatable;
+    int                 bUpdated;
 
     int                 nLayers;
     OGRLayer          **papoLayers;
@@ -187,6 +194,8 @@ class OGRXLSXDataSource : public OGRDataSource
     OGRFieldType        GetOGRFieldType(const char* pszValue,
                                         const char* pszValueType);
 
+    void                DeleteLayer( const char *pszLayerName );
+
   public:
                         OGRXLSXDataSource();
                         ~OGRXLSXDataSource();
@@ -196,6 +205,7 @@ class OGRXLSXDataSource : public OGRDataSource
                               VSILFILE* fpSharedStrings,
                               VSILFILE* fpStyles,
                               int bUpdate );
+    int                 Create( const char * pszName, char **papszOptions );
 
     virtual const char*         GetName() { return pszName; }
 
@@ -203,6 +213,14 @@ class OGRXLSXDataSource : public OGRDataSource
     virtual OGRLayer*           GetLayer( int );
 
     virtual int                 TestCapability( const char * );
+
+    virtual OGRLayer* CreateLayer( const char * pszLayerName,
+                                OGRSpatialReference *poSRS,
+                                OGRwkbGeometryType eType,
+                                char ** papszOptions );
+    virtual OGRErr      DeleteLayer(int iLayer);
+
+    virtual OGRErr      SyncToDisk();
 
     void                startElementCbk(const char *pszName, const char **ppszAttr);
     void                endElementCbk(const char *pszName);
@@ -218,6 +236,9 @@ class OGRXLSXDataSource : public OGRDataSource
     void                endElementStylesCbk(const char *pszName);
 
     void                BuildLayer(OGRLayer* poLayer, int nSheetId);
+
+    int                 GetUpdatable() { return bUpdatable; }
+    void                SetUpdated() { bUpdated = TRUE; }
 };
 
 /************************************************************************/
@@ -232,6 +253,11 @@ class OGRXLSXDriver : public OGRSFDriver
     virtual const char*         GetName();
     virtual OGRDataSource*      Open( const char *, int );
     virtual int                 TestCapability( const char * );
+
+    virtual OGRDataSource *CreateDataSource( const char *pszName,
+                                             char ** = NULL );
+    virtual OGRErr      DeleteDataSource( const char *pszName );
+    
 };
 
 

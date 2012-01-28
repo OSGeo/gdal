@@ -40,12 +40,14 @@ CPL_CVSID("$Id$");
 
 OGRXLSXLayer::OGRXLSXLayer( OGRXLSXDataSource* poDSIn,
                             int nSheetIdIn,
-                            const char * pszName) :
+                            const char * pszName,
+                            int bUpdatedIn) :
                                 OGRMemLayer(pszName, NULL, wkbNone)
 {
     bInit = FALSE;
     nSheetId = nSheetIdIn;
     poDS = poDSIn;
+    bUpdated = bUpdatedIn;
 }
 
 /************************************************************************/
@@ -63,13 +65,32 @@ void OGRXLSXLayer::Init()
 }
 
 /************************************************************************/
-/*                          OGRXLSXDataSource()                          */
+/*                             Updated()                                */
+/************************************************************************/
+
+void OGRXLSXLayer::SetUpdated(int bUpdatedIn)
+{
+    if (bUpdatedIn && !bUpdated && poDS->GetUpdatable())
+    {
+        bUpdated = TRUE;
+        poDS->SetUpdated();
+    }
+    else if (bUpdated && !bUpdatedIn)
+    {
+        bUpdated = FALSE;
+    }
+}
+
+/************************************************************************/
+/*                          OGRXLSXDataSource()                         */
 /************************************************************************/
 
 OGRXLSXDataSource::OGRXLSXDataSource()
 
 {
     pszName = NULL;
+    bUpdatable = FALSE;
+    bUpdated = FALSE;
 
     nLayers = 0;
     papoLayers = NULL;
@@ -102,6 +123,8 @@ OGRXLSXDataSource::OGRXLSXDataSource()
 OGRXLSXDataSource::~OGRXLSXDataSource()
 
 {
+    SyncToDisk();
+
     CPLFree( pszName );
 
     for(int i=0;i<nLayers;i++)
@@ -116,7 +139,12 @@ OGRXLSXDataSource::~OGRXLSXDataSource()
 int OGRXLSXDataSource::TestCapability( const char * pszCap )
 
 {
-    return FALSE;
+    if( EQUAL(pszCap,ODsCCreateLayer) )
+        return bUpdatable;
+    else if( EQUAL(pszCap,ODsCDeleteLayer) )
+        return bUpdatable;
+    else
+        return FALSE;
 }
 
 /************************************************************************/
@@ -152,10 +180,7 @@ int OGRXLSXDataSource::Open( const char * pszFilename,
                              int bUpdateIn )
 
 {
-    if (bUpdateIn)
-    {
-        return FALSE;
-    }
+    bUpdatable = bUpdateIn;
 
     pszName = CPLStrdup( pszFilename );
 
@@ -174,6 +199,20 @@ int OGRXLSXDataSource::Open( const char * pszFilename,
         else
             break;
     }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                             Create()                                 */
+/************************************************************************/
+
+int OGRXLSXDataSource::Create( const char * pszFilename, char **papszOptions )
+{
+    bUpdated = TRUE;
+    bUpdatable = TRUE;
+
+    pszName = CPLStrdup( pszFilename );
 
     return TRUE;
 }
@@ -532,8 +571,9 @@ void OGRXLSXDataSource::endElementTable(const char *pszName)
 
         if (poCurLayer)
         {
-            ((OGRMemLayer*)poCurLayer)->SetUpdatable(FALSE);
+            ((OGRMemLayer*)poCurLayer)->SetUpdatable(bUpdatable);
             ((OGRMemLayer*)poCurLayer)->SetAdvertizeUTF8(TRUE);
+            ((OGRXLSXLayer*)poCurLayer)->SetUpdated(FALSE);
         }
 
         poCurLayer = NULL;
@@ -807,6 +847,8 @@ void OGRXLSXDataSource::BuildLayer(OGRLayer* poLayer, int nSheetId)
     if (fp == NULL)
         return;
 
+    int bUpdatedBackup = bUpdated;
+
     oParser = OGRCreateExpatXMLParser();
     XML_SetElementHandler(oParser, ::startElementCbk, ::endElementCbk);
     XML_SetCharacterDataHandler(oParser, ::dataHandlerCbk);
@@ -854,6 +896,8 @@ void OGRXLSXDataSource::BuildLayer(OGRLayer* poLayer, int nSheetId)
     }
 
     VSIFCloseL(fp);
+
+    bUpdated = bUpdatedBackup;
 }
 
 /************************************************************************/
@@ -1240,4 +1284,613 @@ void OGRXLSXDataSource::AnalyseStyles(VSILFILE* fpStyles)
     }
 
     VSIFCloseL(fpStyles);
+}
+
+/************************************************************************/
+/*                            CreateLayer()                             */
+/************************************************************************/
+
+OGRLayer *
+OGRXLSXDataSource::CreateLayer( const char * pszLayerName,
+                                OGRSpatialReference *poSRS,
+                                OGRwkbGeometryType eType,
+                                char ** papszOptions )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Verify we are in update mode.                                   */
+/* -------------------------------------------------------------------- */
+    if( !bUpdatable )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Data source %s opened read-only.\n"
+                  "New layer %s cannot be created.\n",
+                  pszName, pszLayerName );
+
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we already have this layer?  If so, should we blow it        */
+/*      away?                                                           */
+/* -------------------------------------------------------------------- */
+    int iLayer;
+
+    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( EQUAL(pszLayerName,papoLayers[iLayer]->GetName()) )
+        {
+            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
+                && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
+            {
+                DeleteLayer( pszLayerName );
+            }
+            else
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Layer %s already exists, CreateLayer failed.\n"
+                          "Use the layer creation option OVERWRITE=YES to "
+                          "replace it.",
+                          pszLayerName );
+                return NULL;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the layer object.                                        */
+/* -------------------------------------------------------------------- */
+    OGRLayer* poLayer = new OGRXLSXLayer(this, nLayers + 1, pszLayerName, TRUE);
+
+    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
+    papoLayers[nLayers] = poLayer;
+    nLayers ++;
+
+    bUpdated = TRUE;
+
+    return poLayer;
+}
+
+/************************************************************************/
+/*                            DeleteLayer()                             */
+/************************************************************************/
+
+void OGRXLSXDataSource::DeleteLayer( const char *pszLayerName )
+
+{
+    int iLayer;
+
+/* -------------------------------------------------------------------- */
+/*      Verify we are in update mode.                                   */
+/* -------------------------------------------------------------------- */
+    if( !bUpdatable )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Data source %s opened read-only.\n"
+                  "Layer %s cannot be deleted.\n",
+                  pszName, pszLayerName );
+
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to find layer.                                              */
+/* -------------------------------------------------------------------- */
+    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( EQUAL(pszLayerName,papoLayers[iLayer]->GetName()) )
+            break;
+    }
+
+    if( iLayer == nLayers )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to delete layer '%s', but this layer is not known to OGR.",
+                  pszLayerName );
+        return;
+    }
+
+    DeleteLayer(iLayer);
+}
+
+/************************************************************************/
+/*                            DeleteLayer()                             */
+/************************************************************************/
+
+OGRErr OGRXLSXDataSource::DeleteLayer(int iLayer)
+{
+    if( iLayer < 0 || iLayer >= nLayers )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Layer %d not in legal range of 0 to %d.",
+                  iLayer, nLayers-1 );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Blow away our OGR structures related to the layer.  This is     */
+/*      pretty dangerous if anything has a reference to this layer!     */
+/* -------------------------------------------------------------------- */
+
+    delete papoLayers[iLayer];
+    memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
+             sizeof(void *) * (nLayers - iLayer - 1) );
+    nLayers--;
+
+    bUpdated = TRUE;
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            WriteOverride()                           */
+/************************************************************************/
+
+static void WriteOverride(VSILFILE* fp, const char* pszPartName, const char* pszContentType)
+{
+    VSIFPrintfL(fp, "<Override PartName=\"%s\" ContentType=\"%s\"/>\n",
+                pszPartName, pszContentType);
+}
+
+#define XML_HEADER "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+#define MAIN_NS "xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\""
+#define SCHEMA_OD "http://schemas.openxmlformats.org/officeDocument/2006"
+#define SCHEMA_OD_RS "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+#define SCHEMA_PACKAGE "http://schemas.openxmlformats.org/package/2006"
+#define SCHEMA_PACKAGE_RS "http://schemas.openxmlformats.org/package/2006/relationships"
+
+/************************************************************************/
+/*                           WriteContentTypes()                        */
+/************************************************************************/
+
+static void WriteContentTypes(const char* pszName, int nLayers)
+{
+    VSILFILE* fp;
+
+    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/[Content_Types].xml", pszName), "wb");
+    VSIFPrintfL(fp, XML_HEADER);
+    VSIFPrintfL(fp, "<Types xmlns=\"%s/content-types\">\n", SCHEMA_PACKAGE);
+    WriteOverride(fp, "/_rels/.rels", "application/vnd.openxmlformats-package.relationships+xml");
+    WriteOverride(fp, "/docProps/core.xml", "application/vnd.openxmlformats-package.core-properties+xml");
+    WriteOverride(fp, "/docProps/app.xml", "application/vnd.openxmlformats-officedocument.extended-properties+xml");
+    WriteOverride(fp, "/xl/_rels/workbook.xml.rels", "application/vnd.openxmlformats-package.relationships+xml");
+    for(int i=0;i<nLayers;i++)
+    {
+        WriteOverride(fp, CPLSPrintf("/xl/worksheets/sheet%d.xml", i+1),
+                      "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml");
+    }
+    WriteOverride(fp, "/xl/styles.xml","application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml");
+    WriteOverride(fp, "/xl/workbook.xml","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml");
+    WriteOverride(fp, "/xl/sharedStrings.xml","application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml");
+    VSIFPrintfL(fp, "</Types>\n");
+    VSIFCloseL(fp);
+}
+
+/************************************************************************/
+/*                             WriteApp()                               */
+/************************************************************************/
+
+static void WriteApp(const char* pszName)
+{
+    VSILFILE* fp;
+
+    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/docProps/app.xml", pszName), "wb");
+    VSIFPrintfL(fp, XML_HEADER);
+    VSIFPrintfL(fp, "<Properties xmlns=\"%s/extended-properties\" "
+                    "xmlns:vt=\"%s/docPropsVTypes\">\n", SCHEMA_OD, SCHEMA_OD);
+    VSIFPrintfL(fp, "<TotalTime>0</TotalTime>\n");
+    VSIFPrintfL(fp, "</Properties>\n");
+    VSIFCloseL(fp);
+}
+
+/************************************************************************/
+/*                             WriteCore()                              */
+/************************************************************************/
+
+static void WriteCore(const char* pszName)
+{
+    VSILFILE* fp;
+
+    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/docProps/core.xml", pszName), "wb");
+    VSIFPrintfL(fp, XML_HEADER);
+    VSIFPrintfL(fp, "<cp:coreProperties xmlns:cp=\"%s/metadata/core-properties\" "
+                    "xmlns:dc=\"http://purl.org/dc/elements/1.1/\" "
+                    "xmlns:dcmitype=\"http://purl.org/dc/dcmitype/\" "
+                    "xmlns:dcterms=\"http://purl.org/dc/terms/\" "
+                    "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n", SCHEMA_PACKAGE);
+    VSIFPrintfL(fp, "<cp:revision>0</cp:revision>\n");
+    VSIFPrintfL(fp, "</cp:coreProperties>\n");
+    VSIFCloseL(fp);
+}
+
+/************************************************************************/
+/*                            WriteWorkbook()                           */
+/************************************************************************/
+
+static void WriteWorkbook(const char* pszName, OGRDataSource* poDS)
+{
+    VSILFILE* fp;
+
+    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/workbook.xml", pszName), "wb");
+    VSIFPrintfL(fp, XML_HEADER);
+    VSIFPrintfL(fp, "<workbook %s xmlns:r=\"%s\">\n", MAIN_NS, SCHEMA_OD_RS);
+    VSIFPrintfL(fp, "<fileVersion appName=\"Calc\"/>\n");
+    /*
+    VSIFPrintfL(fp, "<workbookPr backupFile=\"false\" showObjects=\"all\" date1904=\"false\"/>\n");
+    VSIFPrintfL(fp, "<workbookProtection/>\n");
+    VSIFPrintfL(fp, "<bookViews>\n");
+    VSIFPrintfL(fp, "<workbookView activeTab=\"0\" firstSheet=\"0\" showHorizontalScroll=\"true\" "
+                    "showSheetTabs=\"true\" showVerticalScroll=\"true\" tabRatio=\"600\" windowHeight=\"8192\" "
+                    "windowWidth=\"16384\" xWindow=\"0\" yWindow=\"0\"/>\n");
+    VSIFPrintfL(fp, "</bookViews>\n");
+    */
+    VSIFPrintfL(fp, "<sheets>\n");
+    for(int i=0;i<poDS->GetLayerCount();i++)
+    {
+        OGRXLSXLayer* poLayer = (OGRXLSXLayer*) poDS->GetLayer(i);
+        const char* pszLayerName = poLayer->GetName();
+        char* pszXML = OGRGetXML_UTF8_EscapedString(pszLayerName);
+        VSIFPrintfL(fp, "<sheet name=\"%s\" sheetId=\"%d\" state=\"visible\" r:id=\"rId%d\"/>\n", pszXML, i+1, i+2);
+        CPLFree(pszXML);
+    }
+    VSIFPrintfL(fp, "</sheets>\n");
+    VSIFPrintfL(fp, "<calcPr iterateCount=\"100\" refMode=\"A1\" iterate=\"false\" iterateDelta=\"0.001\"/>\n");
+    VSIFPrintfL(fp, "</workbook>\n");
+    VSIFCloseL(fp);
+}
+
+/************************************************************************/
+/*                            BuildColString()                          */
+/************************************************************************/
+
+static void BuildColString(char szCol[5], int nCol)
+{
+    int k = 0;
+    szCol[k++] = (nCol % 26) + 'A';
+    while(nCol >= 26)
+    {
+        nCol /= 26;
+        szCol[k++] = (nCol % 26) + 'A';
+    }
+    szCol[k] = 0;
+    for(int l=0;l<k/2;l++)
+    {
+        char chTmp = szCol[k-1-l];
+        szCol[k-1-l] = szCol[l];
+        szCol[l] = chTmp;
+    }
+}
+
+/************************************************************************/
+/*                             WriteLayer()                             */
+/************************************************************************/
+
+static void WriteLayer(const char* pszName, OGRLayer* poLayer, int iLayer,
+                       std::map<std::string,int>& oStringMap,
+                       std::vector<std::string>& oStringList)
+{
+    VSILFILE* fp;
+    int j;
+
+    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/worksheets/sheet%d.xml", pszName, iLayer + 1), "wb");
+    VSIFPrintfL(fp, XML_HEADER);
+    VSIFPrintfL(fp, "<worksheet %s xmlns:r=\"%s\">\n", MAIN_NS, SCHEMA_OD_RS);
+    /*
+    VSIFPrintfL(fp, "<sheetViews>\n");
+    VSIFPrintfL(fp, "<sheetView colorId=\"64\" defaultGridColor=\"true\" rightToLeft=\"false\" showFormulas=\"false\" showGridLines=\"true\" showOutlineSymbols=\"true\" showRowColHeaders=\"true\" showZeros=\"true\" tabSelected=\"%s\" topLeftCell=\"A1\" view=\"normal\" windowProtection=\"false\" workbookViewId=\"0\" zoomScale=\"100\" zoomScaleNormal=\"100\" zoomScalePageLayoutView=\"60\">\n",
+                (i == 0) ? "true" : "false");
+    VSIFPrintfL(fp, "<selection activeCell=\"A1\" activeCellId=\"0\" pane=\"topLeft\" sqref=\"A1\"/>\n");
+    VSIFPrintfL(fp, "</sheetView>\n");
+    VSIFPrintfL(fp, "</sheetViews>\n");*/
+
+    poLayer->ResetReading();
+
+    OGRFeature* poFeature = poLayer->GetNextFeature();
+
+    OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
+    int bHasHeaders = FALSE;
+    int iRow = 1;
+
+    VSIFPrintfL(fp, "<cols>\n");
+    for(j=0;j<poFDefn->GetFieldCount();j++)
+    {
+        int nWidth = 15;
+        if (poFDefn->GetFieldDefn(j)->GetType() == OFTDateTime)
+            nWidth = 25;
+        VSIFPrintfL(fp, "<col min=\"%d\" max=\"%d\" width=\"%d\"/>\n",
+                    j+1, 1024, nWidth);
+
+        if (strcmp(poFDefn->GetFieldDefn(j)->GetNameRef(),
+                    CPLSPrintf("Field%d", j+1)) != 0)
+            bHasHeaders = TRUE;
+    }
+    VSIFPrintfL(fp, "</cols>\n");
+
+    VSIFPrintfL(fp, "<sheetData>\n");
+
+    if (bHasHeaders && poFeature != NULL)
+    {
+        VSIFPrintfL(fp, "<row r=\"%d\">\n", iRow);
+        for(j=0;j<poFDefn->GetFieldCount();j++)
+        {
+            const char* pszVal = poFDefn->GetFieldDefn(j)->GetNameRef();
+            std::map<std::string,int>::iterator oIter = oStringMap.find(pszVal);
+            int nStringIndex;
+            if (oIter != oStringMap.end())
+                nStringIndex = oIter->second;
+            else
+            {
+                nStringIndex = (int)oStringList.size();
+                oStringMap[pszVal] = nStringIndex;
+                oStringList.push_back(pszVal);
+            }
+
+            char szCol[5];
+            BuildColString(szCol, j);
+
+            VSIFPrintfL(fp, "<c r=\"%s%d\" t=\"s\">\n", szCol, iRow);
+            VSIFPrintfL(fp, "<v>%d</v>\n", nStringIndex);
+            VSIFPrintfL(fp, "</c>\n");
+        }
+        VSIFPrintfL(fp, "</row>\n");
+
+        iRow ++;
+    }
+
+    while(poFeature != NULL)
+    {
+        VSIFPrintfL(fp, "<row r=\"%d\">\n", iRow);
+        for(j=0;j<poFeature->GetFieldCount();j++)
+        {
+            if (poFeature->IsFieldSet(j))
+            {
+                char szCol[5];
+                BuildColString(szCol, j);
+
+                OGRFieldType eType = poFDefn->GetFieldDefn(j)->GetType();
+
+                if (eType == OFTReal)
+                {
+                    VSIFPrintfL(fp, "<c r=\"%s%d\">\n", szCol, iRow);
+                    VSIFPrintfL(fp, "<v>%.16f</v>\n", poFeature->GetFieldAsDouble(j));
+                    VSIFPrintfL(fp, "</c>\n");
+                }
+                else if (eType == OFTInteger)
+                {
+                    VSIFPrintfL(fp, "<c r=\"%s%d\">\n", szCol, iRow);
+                    VSIFPrintfL(fp, "<v>%d</v>\n", poFeature->GetFieldAsInteger(j));
+                    VSIFPrintfL(fp, "</c>\n");
+                }
+                else if (eType == OFTDate || eType == OFTDateTime || eType == OFTTime)
+                {
+                    VSIFPrintfL(fp, "<c r=\"%s%d\" s=\"%d\">\n", szCol, iRow,
+                                (eType == OFTDate) ? 1 : (eType == OFTDateTime) ? 2 : 3);
+                    int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag;
+                    poFeature->GetFieldAsDateTime(j, &nYear, &nMonth, &nDay,
+                                                    &nHour, &nMinute, &nSecond, &nTZFlag);
+                    struct tm brokendowntime;
+                    memset(&brokendowntime, 0, sizeof(brokendowntime));
+                    brokendowntime.tm_year = (eType == OFTTime) ? 70 : nYear - 1900;
+                    brokendowntime.tm_mon = (eType == OFTTime) ? 0 : nMonth - 1;
+                    brokendowntime.tm_mday = (eType == OFTTime) ? 1 : nDay;
+                    brokendowntime.tm_hour = nHour;
+                    brokendowntime.tm_min = nMinute;
+                    brokendowntime.tm_sec = nSecond;
+                    GIntBig nUnixTime = CPLYMDHMSToUnixTime(&brokendowntime);
+                    double dfNumberOfDaysSince1900 = (1.0 * nUnixTime / NUMBER_OF_SECONDS_PER_DAY);
+                    if (eType != OFTTime)
+                        dfNumberOfDaysSince1900 += NUMBER_OF_DAYS_BETWEEN_1900_AND_1970;
+                    if (eType == OFTDate)
+                        VSIFPrintfL(fp, "<v>%d</v>\n", (int)(dfNumberOfDaysSince1900 + 0.1));
+                    else
+                        VSIFPrintfL(fp, "<v>%.16f</v>\n", dfNumberOfDaysSince1900);
+                    VSIFPrintfL(fp, "</c>\n");
+                }
+                else
+                {
+                    const char* pszVal = poFeature->GetFieldAsString(j);
+                    std::map<std::string,int>::iterator oIter = oStringMap.find(pszVal);
+                    int nStringIndex;
+                    if (oIter != oStringMap.end())
+                        nStringIndex = oIter->second;
+                    else
+                    {
+                        nStringIndex = (int)oStringList.size();
+                        oStringMap[pszVal] = nStringIndex;
+                        oStringList.push_back(pszVal);
+                    }
+                    VSIFPrintfL(fp, "<c r=\"%s%d\" t=\"s\">\n", szCol, iRow);
+                    VSIFPrintfL(fp, "<v>%d</v>\n", nStringIndex);
+                    VSIFPrintfL(fp, "</c>\n");
+                }
+            }
+        }
+        VSIFPrintfL(fp, "</row>\n");
+
+        iRow ++;
+        delete poFeature;
+        poFeature = poLayer->GetNextFeature();
+    }
+    VSIFPrintfL(fp, "</sheetData>\n");
+    VSIFPrintfL(fp, "</worksheet>\n");
+    VSIFCloseL(fp);
+}
+
+/************************************************************************/
+/*                        WriteSharedStrings()                          */
+/************************************************************************/
+
+static void WriteSharedStrings(const char* pszName,
+                       std::map<std::string,int>& oStringMap,
+                       std::vector<std::string>& oStringList)
+{
+    VSILFILE* fp;
+
+    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/sharedStrings.xml", pszName), "wb");
+    VSIFPrintfL(fp, XML_HEADER);
+    VSIFPrintfL(fp, "<sst %s uniqueCount=\"%d\">\n",
+                MAIN_NS,
+                (int)oStringList.size());
+    for(int i = 0; i < (int)oStringList.size(); i++)
+    {
+        VSIFPrintfL(fp, "<si>\n");
+        char* pszXML = OGRGetXML_UTF8_EscapedString(oStringList[i].c_str());
+        VSIFPrintfL(fp, "<t>%s</t>\n", pszXML);
+        CPLFree(pszXML);
+        VSIFPrintfL(fp, "</si>\n");
+    }
+    VSIFPrintfL(fp, "</sst>\n");
+    VSIFCloseL(fp);
+}
+
+/************************************************************************/
+/*                           WriteStyles()                              */
+/************************************************************************/
+
+static void WriteStyles(const char* pszName)
+{
+    VSILFILE* fp;
+
+    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/styles.xml", pszName), "wb");
+    VSIFPrintfL(fp, XML_HEADER);
+    VSIFPrintfL(fp, "<styleSheet %s>\n", MAIN_NS);
+    VSIFPrintfL(fp, "<numFmts count=\"4\">\n");
+    VSIFPrintfL(fp, "<numFmt formatCode=\"GENERAL\" numFmtId=\"164\"/>\n");
+    VSIFPrintfL(fp, "<numFmt formatCode=\"DD/MM/YY\" numFmtId=\"165\"/>\n");
+    VSIFPrintfL(fp, "<numFmt formatCode=\"DD/MM/YYYY\\ HH:MM:SS\" numFmtId=\"166\"/>\n");
+    VSIFPrintfL(fp, "<numFmt formatCode=\"HH:MM:SS\" numFmtId=\"167\"/>\n");
+    VSIFPrintfL(fp, "</numFmts>\n");
+    VSIFPrintfL(fp, "<fonts count=\"1\">\n");
+    VSIFPrintfL(fp, "<font>\n");
+    VSIFPrintfL(fp, "<name val=\"Arial\"/>\n");
+    VSIFPrintfL(fp, "<family val=\"2\"/>\n");
+    VSIFPrintfL(fp, "<sz val=\"10\"/>\n");
+    VSIFPrintfL(fp, "</font>\n");
+    VSIFPrintfL(fp, "</fonts>\n");
+    VSIFPrintfL(fp, "<fills count=\"1\">\n");
+    VSIFPrintfL(fp, "<fill>\n");
+    VSIFPrintfL(fp, "<patternFill patternType=\"none\"/>\n");
+    VSIFPrintfL(fp, "</fill>\n");
+    VSIFPrintfL(fp, "</fills>\n");
+    VSIFPrintfL(fp, "<borders count=\"1\">\n");
+    VSIFPrintfL(fp, "<border diagonalDown=\"false\" diagonalUp=\"false\">\n");
+    VSIFPrintfL(fp, "<left/>\n");
+    VSIFPrintfL(fp, "<right/>\n");
+    VSIFPrintfL(fp, "<top/>\n");
+    VSIFPrintfL(fp, "<bottom/>\n");
+    VSIFPrintfL(fp, "<diagonal/>\n");
+    VSIFPrintfL(fp, "</border>\n");
+    VSIFPrintfL(fp, "</borders>\n");
+    VSIFPrintfL(fp, "<cellStyleXfs count=\"1\">\n");
+    VSIFPrintfL(fp, "<xf numFmtId=\"164\">\n");
+    VSIFPrintfL(fp, "</xf>\n");
+    VSIFPrintfL(fp, "</cellStyleXfs>\n");
+    VSIFPrintfL(fp, "<cellXfs count=\"4\">\n");
+    VSIFPrintfL(fp, "<xf numFmtId=\"164\" xfId=\"0\"/>\n");
+    VSIFPrintfL(fp, "<xf numFmtId=\"165\" xfId=\"0\"/>\n");
+    VSIFPrintfL(fp, "<xf numFmtId=\"166\" xfId=\"0\"/>\n");
+    VSIFPrintfL(fp, "<xf numFmtId=\"167\" xfId=\"0\"/>\n");
+    VSIFPrintfL(fp, "</cellXfs>\n");
+    VSIFPrintfL(fp, "<cellStyles count=\"1\">\n");
+    VSIFPrintfL(fp, "<cellStyle builtinId=\"0\" customBuiltin=\"false\" name=\"Normal\" xfId=\"0\"/>\n");
+    VSIFPrintfL(fp, "</cellStyles>\n");
+    VSIFPrintfL(fp, "</styleSheet>\n");
+    VSIFCloseL(fp);
+}
+
+/************************************************************************/
+/*                           WriteWorkbookRels()                        */
+/************************************************************************/
+
+static void WriteWorkbookRels(const char* pszName, int nLayers)
+{
+    VSILFILE* fp;
+
+    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/_rels/workbook.xml.rels", pszName), "wb");
+    VSIFPrintfL(fp, XML_HEADER);
+    VSIFPrintfL(fp, "<Relationships xmlns=\"%s\">\n", SCHEMA_PACKAGE_RS);
+    VSIFPrintfL(fp, "<Relationship Id=\"rId1\" Type=\"%s/styles\" Target=\"styles.xml\"/>\n", SCHEMA_OD_RS);
+    for(int i=0;i<nLayers;i++)
+    {
+        VSIFPrintfL(fp, "<Relationship Id=\"rId%d\" Type=\"%s/worksheet\" Target=\"worksheets/sheet%d.xml\"/>\n",
+                    2 + i, SCHEMA_OD_RS, 1 + i);
+    }
+    VSIFPrintfL(fp, "<Relationship Id=\"rId%d\" Type=\"%s/sharedStrings\" Target=\"sharedStrings.xml\"/>\n",
+                2 + nLayers, SCHEMA_OD_RS);
+    VSIFPrintfL(fp, "</Relationships>\n");
+    VSIFCloseL(fp);
+}
+
+/************************************************************************/
+/*                             WriteDotRels()                           */
+/************************************************************************/
+
+static void WriteDotRels(const char* pszName)
+{
+    VSILFILE* fp;
+
+    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/_rels/.rels", pszName), "wb");
+    VSIFPrintfL(fp, XML_HEADER);
+    VSIFPrintfL(fp, "<Relationships xmlns=\"%s\">\n", SCHEMA_PACKAGE_RS);
+    VSIFPrintfL(fp, "<Relationship Id=\"rId1\" Type=\"%s/officeDocument\" Target=\"xl/workbook.xml\"/>\n", SCHEMA_OD_RS);
+    VSIFPrintfL(fp, "<Relationship Id=\"rId2\" Type=\"%s/metadata/core-properties\" Target=\"docProps/core.xml\"/>\n", SCHEMA_PACKAGE_RS);
+    VSIFPrintfL(fp, "<Relationship Id=\"rId3\" Type=\"%s/extended-properties\" Target=\"docProps/app.xml\"/>\n", SCHEMA_OD_RS);
+    VSIFPrintfL(fp, "</Relationships>\n");
+    VSIFCloseL(fp);
+}
+
+/************************************************************************/
+/*                            SyncToDisk()                              */
+/************************************************************************/
+
+OGRErr OGRXLSXDataSource::SyncToDisk()
+{
+    int i;
+
+    if (!bUpdated)
+        return OGRERR_NONE;
+
+    VSIUnlink( pszName );
+
+    /* Maintain new ZIP files opened */
+    VSILFILE* fpZIP = VSIFOpenL(CPLSPrintf("/vsizip/%s", pszName), "wb");
+
+    WriteContentTypes(pszName, nLayers);
+
+    //VSIMkdir(CPLSPrintf("/vsizip/%s/docProps", pszName),0755);
+    WriteApp(pszName);
+    WriteCore(pszName);
+
+    //VSIMkdir(CPLSPrintf("/vsizip/%s/xl", pszName),0755);
+    WriteWorkbook(pszName, this);
+
+    std::map<std::string,int> oStringMap;
+    std::vector<std::string> oStringList;
+
+    //VSIMkdir(CPLSPrintf("/vsizip/%s/xl/worksheets", pszName),0755);
+    for(i=0;i<nLayers;i++)
+    {
+        WriteLayer(pszName, GetLayer(i), i, oStringMap, oStringList);
+    }
+
+    WriteSharedStrings(pszName, oStringMap, oStringList);
+    WriteStyles(pszName);
+
+    //VSIMkdir(CPLSPrintf("/vsizip/%s/xl/_rels", pszName),0755);
+    WriteWorkbookRels(pszName, nLayers);
+
+    //VSIMkdir(CPLSPrintf("/vsizip/%s/_rels", pszName),0755);
+    WriteDotRels(pszName);
+
+    /* Now close ZIP file */
+    VSIFCloseL(fpZIP);
+
+    /* Reset updated flag at datasource and layer level */
+    bUpdated = FALSE;
+    for(int i = 0; i<nLayers; i++)
+    {
+        ((OGRXLSXLayer*)papoLayers[i])->SetUpdated(FALSE);
+    }
+
+    return OGRERR_NONE;
 }
