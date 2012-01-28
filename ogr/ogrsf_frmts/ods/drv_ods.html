@@ -9,13 +9,16 @@
 
 (GDAL/OGR >= 2.0.0)<p>
 
-This driver reads spreadsheets in Open Document Spreadsheet format, used by applications like OpenOffice / LibreOffice / KSpread / etc...<p>
+This driver can read, write and update spreadsheets in Open Document Spreadsheet format, used by applications like OpenOffice / LibreOffice / KSpread / etc...<p>
 
 The driver is only available if GDAL/OGR is compiled against the Expat library.<p>
 
 Each sheet is presented as a OGR layer. No geometry support is available directly (but you may use the OGR VRT capabilities for that).<p>
 
-Note : spreadsheets with passwords are not supported.<p>
+Note 1 : spreadsheets with passwords are not supported.<p>
+
+Note 2 : when updating an existing document, all existing styles and formatting will be lost : the document is re-written from scratch from
+the OGR data model.<p>
 
 <h3>Configuration options</h3>
 

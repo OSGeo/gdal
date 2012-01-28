@@ -1236,9 +1236,11 @@ CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
     if( hZip == NULL )
         return CE_Failure;
 
+    int bCompressed = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "COMPRESSED", "TRUE"));
+
     nErr = cpl_zipOpenNewFileInZip( (zipFile) hZip, pszFilename, NULL, 
                                     NULL, 0, NULL, 0, "", 
-                                    Z_DEFLATED, Z_DEFAULT_COMPRESSION );
+                                    bCompressed ? Z_DEFLATED : 0, bCompressed ? Z_DEFAULT_COMPRESSION : 0 );
     
     if( nErr != ZIP_OK )
         return CE_Failure;
