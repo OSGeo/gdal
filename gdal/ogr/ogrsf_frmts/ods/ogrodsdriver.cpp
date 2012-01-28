@@ -64,11 +64,6 @@ const char *OGRODSDriver::GetName()
 OGRDataSource *OGRODSDriver::Open( const char * pszFilename, int bUpdate )
 
 {
-    if (bUpdate)
-    {
-        return NULL;
-    }
-
     CPLString osContentFilename;
     const char* pszContentFilename = pszFilename;
 
@@ -140,13 +135,74 @@ OGRDataSource *OGRODSDriver::Open( const char * pszFilename, int bUpdate )
 }
 
 /************************************************************************/
+/*                          CreateDataSource()                          */
+/************************************************************************/
+
+OGRDataSource *OGRODSDriver::CreateDataSource( const char * pszName,
+                                                char **papszOptions )
+
+{
+    if (!EQUAL(CPLGetExtension(pszName), "ODS"))
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "File extension should be ODS" );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      First, ensure there isn't any such file yet.                    */
+/* -------------------------------------------------------------------- */
+    VSIStatBufL sStatBuf;
+
+    if( VSIStatL( pszName, &sStatBuf ) == 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "It seems a file system object called '%s' already exists.",
+                  pszName );
+
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to create datasource.                                       */
+/* -------------------------------------------------------------------- */
+    OGRODSDataSource     *poDS;
+
+    poDS = new OGRODSDataSource();
+
+    if( !poDS->Create( pszName, papszOptions ) )
+    {
+        delete poDS;
+        return NULL;
+    }
+    else
+        return poDS;
+}
+
+/************************************************************************/
+/*                         DeleteDataSource()                           */
+/************************************************************************/
+
+OGRErr OGRODSDriver::DeleteDataSource( const char *pszName )
+{
+    if (VSIUnlink( pszName ) == 0)
+        return OGRERR_NONE;
+    else
+        return OGRERR_FAILURE;
+}
+
+/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRODSDriver::TestCapability( const char * pszCap )
 
 {
-    return FALSE;
+    if( EQUAL(pszCap,ODrCCreateDataSource) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODrCDeleteDataSource) )
+        return TRUE;
+    else
+        return FALSE;
 }
 
 /************************************************************************/

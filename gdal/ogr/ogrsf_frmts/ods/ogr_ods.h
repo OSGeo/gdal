@@ -31,11 +31,57 @@
 #define _OGR_ODS_H_INCLUDED
 
 #include "ogrsf_frmts.h"
+#include "ogr_mem.h"
 
 #include "ogr_expat.h"
 
 #include <vector>
 #include <string>
+
+/************************************************************************/
+/*                             OGRODSLayer                              */
+/************************************************************************/
+
+class OGRODSDataSource;
+
+class OGRODSLayer : public OGRMemLayer
+{
+    OGRODSDataSource* poDS;
+    int                bUpdated;
+
+    public:
+        OGRODSLayer( OGRODSDataSource* poDSIn,
+                      const char * pszName,
+                      int bUpdateIn = FALSE);
+
+    void                SetUpdated(int bUpdatedIn = TRUE);
+
+    const char         *GetName() { return OGRMemLayer::GetLayerDefn()->GetName(); };
+    OGRwkbGeometryType  GetGeomType() { return wkbNone; }
+    virtual OGRSpatialReference *GetSpatialRef() { return NULL; }
+
+    OGRErr              SetFeature( OGRFeature *poFeature )
+    { SetUpdated(); return OGRMemLayer::SetFeature(poFeature); }
+
+    OGRErr              CreateFeature( OGRFeature *poFeature )
+    { SetUpdated(); return OGRMemLayer::CreateFeature(poFeature); }
+
+    virtual OGRErr      DeleteFeature( long nFID )
+    { SetUpdated(); return OGRMemLayer::DeleteFeature(nFID); }
+
+    virtual OGRErr      CreateField( OGRFieldDefn *poField,
+                                     int bApproxOK = TRUE )
+    {  SetUpdated(); return OGRMemLayer::CreateField(poField, bApproxOK); }
+
+    virtual OGRErr      DeleteField( int iField )
+    { SetUpdated(); return OGRMemLayer::DeleteField(iField); }
+
+    virtual OGRErr      ReorderFields( int* panMap )
+    { SetUpdated(); return OGRMemLayer::ReorderFields(panMap); }
+
+    virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
+    { SetUpdated(); return OGRMemLayer::AlterFieldDefn(iField, poNewFieldDefn, nFlags); }
+};
 
 /************************************************************************/
 /*                           OGRODSDataSource                           */
@@ -60,6 +106,12 @@ typedef struct
 class OGRODSDataSource : public OGRDataSource
 {
     char*               pszName;
+    int                 bUpdatable;
+    int                 bUpdated;
+    int                 bAnalysedFile;
+
+    int                 nLayers;
+    OGRLayer          **papoLayers;
 
     VSILFILE*           fpContent;
 
@@ -76,8 +128,8 @@ class OGRODSDataSource : public OGRDataSource
     int                 nCurCol;
     int                 nRowsRepeated;
     int                 nCellsRepeated;
+    int                 bEndTableParsing;
 
-    OGRDataSource      *poMemDS;
     OGRLayer           *poCurLayer;
 
     int                 nStackDepth;
@@ -107,13 +159,16 @@ class OGRODSDataSource : public OGRDataSource
     OGRFieldType        GetOGRFieldType(const char* pszValue,
                                         const char* pszValueType);
 
+    void                DeleteLayer( const char *pszLayerName );
+
   public:
                         OGRODSDataSource();
                         ~OGRODSDataSource();
 
     int                 Open( const char * pszFilename,
                               VSILFILE* fpContentIn,
-                              int bUpdate );
+                              int bUpdatableIn );
+    int                 Create( const char * pszName, char **papszOptions );
 
     virtual const char*         GetName() { return pszName; }
 
@@ -122,9 +177,20 @@ class OGRODSDataSource : public OGRDataSource
 
     virtual int                 TestCapability( const char * );
 
+    virtual OGRLayer* CreateLayer( const char * pszLayerName,
+                                OGRSpatialReference *poSRS,
+                                OGRwkbGeometryType eType,
+                                char ** papszOptions );
+    virtual OGRErr      DeleteLayer(int iLayer);
+
+    virtual OGRErr      SyncToDisk();
+
     void startElementCbk(const char *pszName, const char **ppszAttr);
     void endElementCbk(const char *pszName);
     void dataHandlerCbk(const char *data, int nLen);
+
+    int                 GetUpdatable() { return bUpdatable; }
+    void                SetUpdated() { bUpdated = TRUE; }
 };
 
 /************************************************************************/
@@ -139,6 +205,10 @@ class OGRODSDriver : public OGRSFDriver
     virtual const char*         GetName();
     virtual OGRDataSource*      Open( const char *, int );
     virtual int                 TestCapability( const char * );
+
+    virtual OGRDataSource *CreateDataSource( const char *pszName,
+                                             char ** = NULL );
+    virtual OGRErr      DeleteDataSource( const char *pszName );
 };
 
 

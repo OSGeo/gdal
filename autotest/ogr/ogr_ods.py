@@ -40,22 +40,9 @@ import gdal
 import ogr
 
 ###############################################################################
-# Basic tests
+# Check
 
-def ogr_ods_1():
-
-    drv = ogr.GetDriverByName('ODS')
-    if drv is None:
-        return 'skip'
-
-    if drv.TestCapability("foo") != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    ds = ogr.Open('data/test.ods')
-    if ds is None:
-        gdaltest.post_reason('cannot open dataset')
-        return 'fail'
+def ogr_ods_check(ds, variant = False):
 
     if ds.TestCapability("foo") != 0:
         gdaltest.post_reason('fail')
@@ -101,7 +88,7 @@ def ogr_ods_1():
                    ogr.OFTInteger,
                    ogr.OFTReal,
                    ogr.OFTReal,
-                   ogr.OFTDate,
+                   variant and ogr.OFTString or ogr.OFTDate,
                    ogr.OFTDateTime,
                    ogr.OFTReal,
                    ogr.OFTTime,
@@ -114,6 +101,7 @@ def ogr_ods_1():
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
             gdaltest.post_reason('fail')
             print(i)
+            print(lyr.GetLayerDefn().GetFieldDefn(i).GetType())
             return 'fail'
 
     feat = lyr.GetNextFeature()
@@ -134,6 +122,26 @@ def ogr_ods_1():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Basic tests
+
+def ogr_ods_1():
+
+    drv = ogr.GetDriverByName('ODS')
+    if drv is None:
+        return 'skip'
+
+    if drv.TestCapability("foo") != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = ogr.Open('data/test.ods')
+    if ds is None:
+        gdaltest.post_reason('cannot open dataset')
+        return 'fail'
+
+    return ogr_ods_check(ds)
 
 ###############################################################################
 # Basic tests
@@ -298,13 +306,36 @@ def ogr_ods_4():
 
     return 'success'
 
+###############################################################################
+# Test write support
+
+def ogr_ods_5():
+
+    drv = ogr.GetDriverByName('ODS')
+    if drv is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f ODS tmp/test.ods data/test.ods')
+
+    ds = ogr.Open('tmp/test.ods')
+    ret = ogr_ods_check(ds, variant = True)
+    ds = None
+
+    os.unlink('tmp/test.ods')
+
+    return ret
 
 gdaltest_list = [ 
     ogr_ods_1,
     ogr_ods_kspread_1,
     ogr_ods_2,
     ogr_ods_3,
-    ogr_ods_4
+    ogr_ods_4,
+    ogr_ods_5
 ]
 
 if __name__ == '__main__':
