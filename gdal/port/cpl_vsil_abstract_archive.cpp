@@ -350,11 +350,11 @@ char* VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
                     osFileInArchive = "";
 
                 /* Remove trailing slash */
-                if (strlen(osFileInArchive))
+                if (osFileInArchive.size())
                 {
                     char lastC = osFileInArchive[strlen(osFileInArchive) - 1];
                     if (lastC == '\\' || lastC == '/')
-                        osFileInArchive[strlen(osFileInArchive) - 1] = 0;
+                        osFileInArchive.resize(strlen(osFileInArchive) - 1);
                 }
 
                 return archiveFilename;
