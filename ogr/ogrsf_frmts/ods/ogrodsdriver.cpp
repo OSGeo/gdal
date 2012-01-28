@@ -59,8 +59,6 @@ const char *OGRODSDriver::GetName()
 /*                                Open()                                */
 /************************************************************************/
 
-#define ODS_MIMETYPE "application/vnd.oasis.opendocument.spreadsheet"
-
 OGRDataSource *OGRODSDriver::Open( const char * pszFilename, int bUpdate )
 
 {
@@ -80,14 +78,7 @@ OGRDataSource *OGRODSDriver::Open( const char * pszFilename, int bUpdate )
         if (VSIFReadL(szBuffer, sizeof(szBuffer), 1, fp) == 1 &&
             memcmp(szBuffer, "PK", 2) == 0)
         {
-            for(size_t i=0;i< sizeof(szBuffer) - strlen(ODS_MIMETYPE); i++)
-            {
-                if (memcmp(szBuffer + i, ODS_MIMETYPE, strlen(ODS_MIMETYPE)) == 0)
-                {
-                    bOK = TRUE;
-                    break;
-                }
-            }
+            bOK = TRUE;
         }
 
         VSIFCloseL(fp);
