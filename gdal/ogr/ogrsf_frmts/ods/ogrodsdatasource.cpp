@@ -880,27 +880,6 @@ void OGRODSDataSource::AnalyseFile()
     bUpdated = FALSE;
 }
 
-#if 0
-    VSIFPrintfL(fp, "<config:config-item-map-named config:name=\"Tables\">\n");
-    for(i=0;i<nLayers;i++)
-    {
-        OGRLayer* poLayer = GetLayer(i);
-        if (HasHeaderLine(poLayer))
-        {
-            /* Add vertical splitter */
-            char* pszXML = OGRGetXML_UTF8_EscapedString(GetLayer(i)->GetName());
-            VSIFPrintfL(fp, "<config:config-item-map-entry config:name=\"%s\">\n", pszXML);
-            CPLFree(pszXML);
-            VSIFPrintfL(fp, "<config:config-item config:name=\"VerticalSplitMode\" config:type=\"short\">2</config:config-item>\n");
-            VSIFPrintfL(fp, "<config:config-item config:name=\"VerticalSplitPosition\" config:type=\"int\">1</config:config-item>\n");
-            VSIFPrintfL(fp, "<config:config-item config:name=\"ActiveSplitRange\" config:type=\"short\">2</config:config-item>\n");
-            VSIFPrintfL(fp, "<config:config-item config:name=\"PositionTop\" config:type=\"int\">0</config:config-item>\n");
-            VSIFPrintfL(fp, "<config:config-item config:name=\"PositionBottom\" config:type=\"int\">1</config:config-item>\n");
-            VSIFPrintfL(fp, "</config:config-item-map-entry>\n");
-        }
-    }
-    #endif
-
 /************************************************************************/
 /*                        startElementStylesCbk()                       */
 /************************************************************************/
