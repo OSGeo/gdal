@@ -6315,6 +6315,7 @@ public class DataSource:public int SyncToDisk()
  <p>
  <ul>
   <li> <b>ODsCCreateLayer</b>: True if this datasource can create new layers.<p>
+  <li> <b>ODsCDeleteLayer</b>: True if this datasource can delete existing layers.<p>
  </ul>
  <p>
  The constant forms of the capability names should be used in preference
