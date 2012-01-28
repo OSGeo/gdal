@@ -33,6 +33,7 @@ SUBDIRS-$(CURL_SETTING) += gft
 SUBDIRS-$(CURL_SETTING) += couchdb
 SUBDIRS-$(HAVE_FREEXL)  += xls
 SUBDIRS-$(HAVE_EXPAT)   += ods
+SUBDIRS-$(HAVE_EXPAT)   += xlsx
 
 ifeq ($(PCIDSK_SETTING),internal)
 SUBDIRS-yes  += pcidsk
