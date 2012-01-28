@@ -379,6 +379,7 @@ void CPL_DLL RegisterOGRSEGUKOOA();
 void CPL_DLL RegisterOGRSEGY();
 void CPL_DLL RegisterOGRXLS();
 void CPL_DLL RegisterOGRODS();
+void CPL_DLL RegisterOGRXLSX();
 CPL_C_END
 
 
