@@ -66,6 +66,7 @@ OGRDataSource *OGRODSDriver::Open( const char * pszFilename, int bUpdate )
     const char* pszContentFilename = pszFilename;
 
     VSILFILE* fpContent = NULL;
+    VSILFILE* fpSettings = NULL;
 
     if (EQUAL(CPLGetExtension(pszFilename), "ODS"))
     {
@@ -120,9 +121,14 @@ OGRDataSource *OGRODSDriver::Open( const char * pszFilename, int bUpdate )
         return NULL;
     }
 
+    if (EQUAL(CPLGetExtension(pszFilename), "ODS"))
+    {
+        fpSettings = VSIFOpenL(CPLSPrintf("/vsizip/%s/settings.xml", pszFilename), "rb");
+    }
+
     OGRODSDataSource   *poDS = new OGRODSDataSource();
 
-    if( !poDS->Open( pszFilename, fpContent, bUpdate ) )
+    if( !poDS->Open( pszFilename, fpContent, fpSettings, bUpdate ) )
     {
         delete poDS;
         poDS = NULL;
