@@ -35,6 +35,36 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
+/*                            OGRODSLayer()                            */
+/************************************************************************/
+
+OGRODSLayer::OGRODSLayer( OGRODSDataSource* poDSIn,
+                            const char * pszName,
+                            int bUpdatedIn) :
+                                OGRMemLayer(pszName, NULL, wkbNone)
+{
+    poDS = poDSIn;
+    bUpdated = bUpdatedIn;
+}
+
+/************************************************************************/
+/*                             Updated()                                */
+/************************************************************************/
+
+void OGRODSLayer::SetUpdated(int bUpdatedIn)
+{
+    if (bUpdatedIn && !bUpdated && poDS->GetUpdatable())
+    {
+        bUpdated = TRUE;
+        poDS->SetUpdated();
+    }
+    else if (bUpdated && !bUpdatedIn)
+    {
+        bUpdated = FALSE;
+    }
+}
+
+/************************************************************************/
 /*                          OGRODSDataSource()                          */
 /************************************************************************/
 
@@ -43,6 +73,12 @@ OGRODSDataSource::OGRODSDataSource()
 {
     pszName = NULL;
     fpContent = NULL;
+    bUpdatable = FALSE;
+    bUpdated = FALSE;
+    bAnalysedFile = FALSE;
+
+    nLayers = 0;
+    papoLayers = NULL;
 
     bFirstLineIsHeaders = FALSE;
 
@@ -58,8 +94,8 @@ OGRODSDataSource::OGRODSDataSource()
     nCellsRepeated = 0;
     stateStack[0].eVal = STATE_DEFAULT;
     stateStack[0].nBeginDepth = 0;
+    bEndTableParsing = FALSE;
 
-    poMemDS = NULL;
     poCurLayer = NULL;
 
     const char* pszODSFieldTypes =
@@ -74,12 +110,16 @@ OGRODSDataSource::OGRODSDataSource()
 OGRODSDataSource::~OGRODSDataSource()
 
 {
+    SyncToDisk();
+
     CPLFree( pszName );
 
     if (fpContent)
         VSIFCloseL(fpContent);
 
-    delete poMemDS;
+    for(int i=0;i<nLayers;i++)
+        delete papoLayers[i];
+    CPLFree( papoLayers );
 }
 
 /************************************************************************/
@@ -89,8 +129,14 @@ OGRODSDataSource::~OGRODSDataSource()
 int OGRODSDataSource::TestCapability( const char * pszCap )
 
 {
-    return FALSE;
+    if( EQUAL(pszCap,ODsCCreateLayer) )
+        return bUpdatable;
+    else if( EQUAL(pszCap,ODsCDeleteLayer) )
+        return bUpdatable;
+    else
+        return FALSE;
 }
+
 
 /************************************************************************/
 /*                              GetLayer()                              */
@@ -99,9 +145,11 @@ int OGRODSDataSource::TestCapability( const char * pszCap )
 OGRLayer *OGRODSDataSource::GetLayer( int iLayer )
 
 {
-    if (poMemDS == NULL)
-        AnalyseFile();
-    return poMemDS->GetLayer(iLayer);
+    AnalyseFile();
+    if (iLayer < 0 || iLayer >= nLayers)
+        return NULL;
+
+    return papoLayers[iLayer];
 }
 
 /************************************************************************/
@@ -110,9 +158,8 @@ OGRLayer *OGRODSDataSource::GetLayer( int iLayer )
 
 int OGRODSDataSource::GetLayerCount()
 {
-    if (poMemDS == NULL)
-        AnalyseFile();
-    return poMemDS->GetLayerCount();
+    AnalyseFile();
+    return nLayers;
 }
 
 /************************************************************************/
@@ -121,16 +168,28 @@ int OGRODSDataSource::GetLayerCount()
 
 int OGRODSDataSource::Open( const char * pszFilename,
                             VSILFILE* fpContentIn,
-                            int bUpdateIn)
+                            int bUpdatableIn)
 
 {
-    if (bUpdateIn)
-    {
-        return FALSE;
-    }
+    bUpdatable = bUpdatableIn;
 
     pszName = CPLStrdup( pszFilename );
     fpContent = fpContentIn;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                             Create()                                 */
+/************************************************************************/
+
+int OGRODSDataSource::Create( const char * pszFilename, char **papszOptions )
+{
+    bUpdated = TRUE;
+    bUpdatable = TRUE;
+    bAnalysedFile = TRUE;
+
+    pszName = CPLStrdup( pszFilename );
 
     return TRUE;
 }
@@ -339,7 +398,7 @@ static void SetField(OGRFeature* poFeature,
                                  &nHour, &nMinute, &fCur, &nTZ) )
         {
             poFeature->SetField(i, nYear, nMonth, nDay,
-                                nHour, nMinute, fCur, nTZ);
+                                nHour, nMinute, (int)fCur, nTZ);
         }
     }
     else
@@ -412,11 +471,16 @@ void OGRODSDataSource::startElementDefault(const char *pszName,
     {
         const char* pszTableName =
             GetAttributeValue(ppszAttr, "table:name", "unnamed");
-        poCurLayer = poMemDS->CreateLayer(pszTableName, NULL, wkbNone);
+
+        poCurLayer = new OGRODSLayer(this, pszTableName);
+        papoLayers = (OGRLayer**)CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
+        papoLayers[nLayers++] = poCurLayer;
+
         nCurLine = 0;
         apoFirstLineValues.resize(0);
         apoFirstLineTypes.resize(0);
         PushState(STATE_TABLE);
+        bEndTableParsing = FALSE;
     }
 }
 
@@ -427,10 +491,16 @@ void OGRODSDataSource::startElementDefault(const char *pszName,
 void OGRODSDataSource::startElementTable(const char *pszName,
                                          const char **ppszAttr)
 {
-    if (strcmp(pszName, "table:table-row") == 0)
+    if (strcmp(pszName, "table:table-row") == 0 && !bEndTableParsing)
     {
         nRowsRepeated = atoi(
             GetAttributeValue(ppszAttr, "table:number-rows-repeated", "1"));
+        if (nRowsRepeated > 1024)
+        {
+            bEndTableParsing = TRUE;
+            return;
+        }
+
         nCurCol = 0;
 
         apoCurLineValues.resize(0);
@@ -454,7 +524,8 @@ void OGRODSDataSource::endElementTable(const char *pszName)
             (nCurLine == 1 && apoFirstLineValues.size() == 0))
         {
             /* Remove empty sheet */
-            poMemDS->DeleteLayer(poMemDS->GetLayerCount() - 1);
+            delete poCurLayer;
+            nLayers --;
             poCurLayer = NULL;
         }
         else if (nCurLine == 1)
@@ -481,8 +552,9 @@ void OGRODSDataSource::endElementTable(const char *pszName)
 
         if (poCurLayer)
         {
-            ((OGRMemLayer*)poCurLayer)->SetUpdatable(FALSE);
+            ((OGRMemLayer*)poCurLayer)->SetUpdatable(bUpdatable);
             ((OGRMemLayer*)poCurLayer)->SetAdvertizeUTF8(TRUE);
+            ((OGRODSLayer*)poCurLayer)->SetUpdated(FALSE);
         }
 
         poCurLayer = NULL;
@@ -742,7 +814,10 @@ void OGRODSDataSource::dataHandlerTextP(const char *data, int nLen)
 
 void OGRODSDataSource::AnalyseFile()
 {
-    poMemDS = new OGRMemDataSource("", NULL);
+    if (bAnalysedFile)
+        return;
+
+    bAnalysedFile = TRUE;
 
     oParser = OGRCreateExpatXMLParser();
     XML_SetElementHandler(oParser, ::startElementCbk, ::endElementCbk);
@@ -780,4 +855,451 @@ void OGRODSDataSource::AnalyseFile()
                  "Too much data inside one element. File probably corrupted");
         bStopParsing = TRUE;
     }
+
+    VSIFCloseL(fpContent);
+    fpContent = NULL;
+
+    bUpdated = FALSE;
+}
+
+/************************************************************************/
+/*                            CreateLayer()                             */
+/************************************************************************/
+
+OGRLayer *
+OGRODSDataSource::CreateLayer( const char * pszLayerName,
+                                OGRSpatialReference *poSRS,
+                                OGRwkbGeometryType eType,
+                                char ** papszOptions )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Verify we are in update mode.                                   */
+/* -------------------------------------------------------------------- */
+    if( !bUpdatable )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Data source %s opened read-only.\n"
+                  "New layer %s cannot be created.\n",
+                  pszName, pszLayerName );
+
+        return NULL;
+    }
+
+    AnalyseFile();
+
+/* -------------------------------------------------------------------- */
+/*      Do we already have this layer?  If so, should we blow it        */
+/*      away?                                                           */
+/* -------------------------------------------------------------------- */
+    int iLayer;
+
+    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( EQUAL(pszLayerName,papoLayers[iLayer]->GetName()) )
+        {
+            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
+                && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
+            {
+                DeleteLayer( pszLayerName );
+            }
+            else
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Layer %s already exists, CreateLayer failed.\n"
+                          "Use the layer creation option OVERWRITE=YES to "
+                          "replace it.",
+                          pszLayerName );
+                return NULL;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the layer object.                                        */
+/* -------------------------------------------------------------------- */
+    OGRLayer* poLayer = new OGRODSLayer(this, pszLayerName, TRUE);
+
+    papoLayers = (OGRLayer**)CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
+    papoLayers[nLayers] = poLayer;
+    nLayers ++;
+
+    bUpdated = TRUE;
+
+    return poLayer;
+}
+
+/************************************************************************/
+/*                            DeleteLayer()                             */
+/************************************************************************/
+
+void OGRODSDataSource::DeleteLayer( const char *pszLayerName )
+
+{
+    int iLayer;
+
+/* -------------------------------------------------------------------- */
+/*      Verify we are in update mode.                                   */
+/* -------------------------------------------------------------------- */
+    if( !bUpdatable )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Data source %s opened read-only.\n"
+                  "Layer %s cannot be deleted.\n",
+                  pszName, pszLayerName );
+
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to find layer.                                              */
+/* -------------------------------------------------------------------- */
+    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( EQUAL(pszLayerName,papoLayers[iLayer]->GetName()) )
+            break;
+    }
+
+    if( iLayer == nLayers )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to delete layer '%s', but this layer is not known to OGR.",
+                  pszLayerName );
+        return;
+    }
+
+    DeleteLayer(iLayer);
+}
+
+/************************************************************************/
+/*                            DeleteLayer()                             */
+/************************************************************************/
+
+OGRErr OGRODSDataSource::DeleteLayer(int iLayer)
+{
+    AnalyseFile();
+
+    if( iLayer < 0 || iLayer >= nLayers )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Layer %d not in legal range of 0 to %d.",
+                  iLayer, nLayers-1 );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Blow away our OGR structures related to the layer.  This is     */
+/*      pretty dangerous if anything has a reference to this layer!     */
+/* -------------------------------------------------------------------- */
+
+    delete papoLayers[iLayer];
+    memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
+             sizeof(void *) * (nLayers - iLayer - 1) );
+    nLayers--;
+
+    bUpdated = TRUE;
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            WriteLayer()                              */
+/************************************************************************/
+
+static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
+{
+    int j;
+    const char* pszLayerName = poLayer->GetName();
+    char* pszXML = OGRGetXML_UTF8_EscapedString(pszLayerName);
+    VSIFPrintfL(fp, "<table:table table:name=\"%s\">\n", pszXML);
+    CPLFree(pszXML);
+    
+    poLayer->ResetReading();
+
+    OGRFeature* poFeature = poLayer->GetNextFeature();
+
+    OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
+    int bHasHeaders = FALSE;
+
+    for(j=0;j<poFDefn->GetFieldCount();j++)
+    {
+        int nStyleNumber = 1;
+        if (poFDefn->GetFieldDefn(j)->GetType() == OFTDateTime)
+            nStyleNumber = 2;
+        VSIFPrintfL(fp, "<table:table-column table:style-name=\"co%d\" "
+                        "table:default-cell-style-name=\"Default\"/>\n",
+                    nStyleNumber);
+
+        if (strcmp(poFDefn->GetFieldDefn(j)->GetNameRef(),
+                    CPLSPrintf("Field%d", j+1)) != 0)
+            bHasHeaders = TRUE;
+    }
+
+    if (bHasHeaders && poFeature != NULL)
+    {
+        VSIFPrintfL(fp, "<table:table-row>\n");
+        for(j=0;j<poFDefn->GetFieldCount();j++)
+        {
+            const char* pszVal = poFDefn->GetFieldDefn(j)->GetNameRef();
+
+            VSIFPrintfL(fp, "<table:table-cell office:value-type=\"string\">\n");
+            pszXML = OGRGetXML_UTF8_EscapedString(pszVal);
+            VSIFPrintfL(fp, "<text:p>%s</text:p>\n", pszXML);
+            CPLFree(pszXML);
+            VSIFPrintfL(fp, "</table:table-cell>\n");
+        }
+        VSIFPrintfL(fp, "</table:table-row>\n");
+    }
+
+    while(poFeature != NULL)
+    {
+        VSIFPrintfL(fp, "<table:table-row>\n");
+        for(j=0;j<poFeature->GetFieldCount();j++)
+        {
+            if (poFeature->IsFieldSet(j))
+            {
+                OGRFieldType eType = poFDefn->GetFieldDefn(j)->GetType();
+
+                if (eType == OFTReal)
+                {
+                    VSIFPrintfL(fp, "<table:table-cell office:value-type=\"float\" "
+                                "office:value=\"%.16f\"/>\n",
+                                poFeature->GetFieldAsDouble(j));
+                }
+                else if (eType == OFTInteger)
+                {
+                    VSIFPrintfL(fp, "<table:table-cell office:value-type=\"float\" "
+                                "office:value=\"%d\"/>\n",
+                                poFeature->GetFieldAsInteger(j));
+                }
+                else if (eType == OFTDateTime)
+                {
+                    int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag;
+                    poFeature->GetFieldAsDateTime(j, &nYear, &nMonth, &nDay,
+                                                    &nHour, &nMinute, &nSecond, &nTZFlag);
+                    VSIFPrintfL(fp, "<table:table-cell table:style-name=\"stDateTime\" "
+                                "office:value-type=\"date\" "
+                                "office:date-value=\"%04d-%02d-%02dT%02d:%02d:%02d\">\n",
+                                nYear, nMonth, nDay, nHour, nMinute, nSecond);
+                    VSIFPrintfL(fp, "<text:p>%02d/%02d/%04d %02d:%02d:%02d</text:p>\n",
+                                nDay, nMonth, nYear, nHour, nMinute, nSecond);
+                    VSIFPrintfL(fp, "</table:table-cell>\n");
+                }
+                else if (eType == OFTDateTime)
+                {
+                    int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag;
+                    poFeature->GetFieldAsDateTime(j, &nYear, &nMonth, &nDay,
+                                                    &nHour, &nMinute, &nSecond, &nTZFlag);
+                    VSIFPrintfL(fp, "<table:table-cell table:style-name=\"stDate\" "
+                                "office:value-type=\"date\" "
+                                "office:date-value=\"%04d-%02d-%02dT\">\n",
+                                nYear, nMonth, nDay);
+                    VSIFPrintfL(fp, "<text:p>%02d/%02d/%04d</text:p>\n",
+                                nDay, nMonth, nYear);
+                    VSIFPrintfL(fp, "</table:table-cell>\n");
+                }
+                else if (eType == OFTTime)
+                {
+                    int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag;
+                    poFeature->GetFieldAsDateTime(j, &nYear, &nMonth, &nDay,
+                                                    &nHour, &nMinute, &nSecond, &nTZFlag);
+                    VSIFPrintfL(fp, "<table:table-cell table:style-name=\"stTime\" "
+                                "office:value-type=\"time\" "
+                                "office:time-value=\"PT%02dH%02dM%02dS\">\n",
+                                nHour, nMinute, nSecond);
+                    VSIFPrintfL(fp, "<text:p>%02d:%02d:%02d</text:p>\n",
+                                nHour, nMinute, nSecond);
+                    VSIFPrintfL(fp, "</table:table-cell>\n");
+                }
+                else
+                {
+                    const char* pszVal = poFeature->GetFieldAsString(j);
+
+                    VSIFPrintfL(fp, "<table:table-cell office:value-type=\"string\">\n");
+                    pszXML = OGRGetXML_UTF8_EscapedString(pszVal);
+                    VSIFPrintfL(fp, "<text:p>%s</text:p>\n", pszXML);
+                    CPLFree(pszXML);
+                    VSIFPrintfL(fp, "</table:table-cell>\n");
+                }
+            }
+            else
+            {
+                VSIFPrintfL(fp, "<table:table-cell/>\n");
+            }
+        }
+        VSIFPrintfL(fp, "</table:table-row>\n");
+
+        delete poFeature;
+        poFeature = poLayer->GetNextFeature();
+    }
+
+    VSIFPrintfL(fp, "</table:table>\n");
+}
+
+/************************************************************************/
+/*                            SyncToDisk()                              */
+/************************************************************************/
+
+OGRErr OGRODSDataSource::SyncToDisk()
+{
+    if (!bUpdated)
+        return OGRERR_NONE;
+
+    VSIUnlink( pszName );
+
+    /* Maintain new ZIP files opened */
+    void *hZIP = CPLCreateZip(pszName, NULL);
+
+    /* Write uncopressed mimetype */
+    char** papszOptions = CSLAddString(NULL, "COMPRESSED=NO");
+    CPLCreateFileInZip(hZIP, "mimetype", papszOptions );
+    CPLWriteFileInZip(hZIP, "application/vnd.oasis.opendocument.spreadsheet",
+                      strlen("application/vnd.oasis.opendocument.spreadsheet"));
+    CPLCloseFileInZip(hZIP);
+    CSLDestroy(papszOptions);
+
+    /* Now close ZIP file */
+    CPLCloseZip(hZIP);
+    hZIP = NULL;
+
+    /* Re-open with VSILFILE */
+    VSILFILE* fpZIP = VSIFOpenL(CPLSPrintf("/vsizip/%s", pszName), "ab");
+
+    VSILFILE* fp;
+
+    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/META-INF/manifest.xml", pszName), "wb");
+    VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    VSIFPrintfL(fp, "<manifest:manifest xmlns:manifest=\"urn:oasis:names:tc:opendocument:xmlns:manifest:1.0\">\n");
+    VSIFPrintfL(fp, "<manifest:file-entry "
+                "manifest:media-type=\"application/vnd.oasis.opendocument.spreadsheet\" "
+                "manifest:version=\"1.2\" manifest:full-path=\"/\"/>\n");
+    VSIFPrintfL(fp, "<manifest:file-entry manifest:media-type=\"text/xml\" "
+                    "manifest:full-path=\"content.xml\"/>\n");
+    VSIFPrintfL(fp, "<manifest:file-entry manifest:media-type=\"text/xml\" "
+                    "manifest:full-path=\"styles.xml\"/>\n");
+    VSIFPrintfL(fp, "<manifest:file-entry manifest:media-type=\"text/xml\" "
+                    "manifest:full-path=\"meta.xml\"/>\n");
+    VSIFPrintfL(fp, "<manifest:file-entry manifest:media-type=\"text/xml\" "
+                    "manifest:full-path=\"settings.xml\"/>\n");
+    VSIFPrintfL(fp, "</manifest:manifest>\n");
+    VSIFCloseL(fp);
+
+    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/meta.xml", pszName), "wb");
+    VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    VSIFPrintfL(fp, "<office:document-meta "
+                "xmlns:office=\"urn:oasis:names:tc:opendocument:xmlns:office:1.0\" "
+                "office:version=\"1.2\">\n");
+    VSIFPrintfL(fp, "</office:document-meta>\n");
+    VSIFCloseL(fp);
+
+    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/settings.xml", pszName), "wb");
+    VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    VSIFPrintfL(fp, "<office:document-settings "
+                "xmlns:office=\"urn:oasis:names:tc:opendocument:xmlns:office:1.0\" "
+                "office:version=\"1.2\">\n");
+    VSIFPrintfL(fp, "</office:document-settings>\n");
+    VSIFCloseL(fp);
+
+    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/styles.xml", pszName), "wb");
+    VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    VSIFPrintfL(fp, "<office:document-styles "
+                "xmlns:office=\"urn:oasis:names:tc:opendocument:xmlns:office:1.0\" "
+                "xmlns:style=\"urn:oasis:names:tc:opendocument:xmlns:style:1.0\" "
+                "office:version=\"1.2\">\n");
+    VSIFPrintfL(fp, "<office:styles>\n");
+    VSIFPrintfL(fp, "<style:style style:name=\"Default\" "
+                    "style:family=\"table-cell\">\n");
+    VSIFPrintfL(fp, "</style:style>\n");
+    VSIFPrintfL(fp, "</office:styles>\n");
+    VSIFPrintfL(fp, "</office:document-styles>\n");
+    VSIFCloseL(fp);
+
+    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/content.xml", pszName), "wb");
+    VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    VSIFPrintfL(fp, "<office:document-content "
+                "xmlns:office=\"urn:oasis:names:tc:opendocument:xmlns:office:1.0\" "
+                "xmlns:style=\"urn:oasis:names:tc:opendocument:xmlns:style:1.0\" "
+                "xmlns:text=\"urn:oasis:names:tc:opendocument:xmlns:text:1.0\" "
+                "xmlns:table=\"urn:oasis:names:tc:opendocument:xmlns:table:1.0\" "
+                "xmlns:number=\"urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0\" "
+                "xmlns:fo=\"urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0\" "
+                "office:version=\"1.2\">\n");
+    VSIFPrintfL(fp, "<office:scripts/>\n");
+    VSIFPrintfL(fp, "<office:automatic-styles>\n");
+    VSIFPrintfL(fp, "<style:style style:name=\"co1\" "
+                    "style:family=\"table-column\">\n");
+    VSIFPrintfL(fp, "<style:table-column-properties "
+                    "fo:break-before=\"auto\" "
+                    "style:column-width=\"2.5cm\"/>\n");
+    VSIFPrintfL(fp, "</style:style>\n");
+    VSIFPrintfL(fp, "<style:style style:name=\"co2\" "
+                    "style:family=\"table-column\">\n");
+    VSIFPrintfL(fp, "<style:table-column-properties "
+                    "fo:break-before=\"auto\" "
+                    "style:column-width=\"5cm\"/>\n");
+    VSIFPrintfL(fp, "</style:style>\n");
+    VSIFPrintfL(fp, "<number:date-style style:name=\"nDate\" "
+                    "number:automatic-order=\"true\">\n");
+    VSIFPrintfL(fp, "<number:day number:style=\"long\"/>\n");
+    VSIFPrintfL(fp, "<number:text>/</number:text>\n");
+    VSIFPrintfL(fp, "<number:month number:style=\"long\"/>\n");
+    VSIFPrintfL(fp, "<number:text>/</number:text>\n");
+    VSIFPrintfL(fp, "<number:year/>\n");
+    VSIFPrintfL(fp, "</number:date-style>\n");
+    VSIFPrintfL(fp, "<number:time-style style:name=\"nTime\">\n");
+    VSIFPrintfL(fp, "<number:hours number:style=\"long\"/>\n");
+    VSIFPrintfL(fp, "<number:text>:</number:text>\n");
+    VSIFPrintfL(fp, "<number:minutes number:style=\"long\"/>\n");
+    VSIFPrintfL(fp, "<number:text>:</number:text>\n");
+    VSIFPrintfL(fp, "<number:seconds number:style=\"long\"/>\n");
+    VSIFPrintfL(fp, "</number:time-style>\n");
+    VSIFPrintfL(fp, "<number:date-style style:name=\"nDateTime\" "
+                    "number:automatic-order=\"true\">\n");
+    VSIFPrintfL(fp, "<number:day number:style=\"long\"/>\n");
+    VSIFPrintfL(fp, "<number:text>/</number:text>\n");
+    VSIFPrintfL(fp, "<number:month number:style=\"long\"/>\n");
+    VSIFPrintfL(fp, "<number:text>/</number:text>\n");
+    VSIFPrintfL(fp, "<number:year number:style=\"long\"/>\n");
+    VSIFPrintfL(fp, "<number:text> </number:text>\n");
+    VSIFPrintfL(fp, "<number:hours number:style=\"long\"/>\n");
+    VSIFPrintfL(fp, "<number:text>:</number:text>\n");
+    VSIFPrintfL(fp, "<number:minutes number:style=\"long\"/>\n");
+    VSIFPrintfL(fp, "<number:text>:</number:text>\n");
+    VSIFPrintfL(fp, "<number:seconds number:style=\"long\"/>\n");
+    VSIFPrintfL(fp, "</number:date-style>\n");
+    VSIFPrintfL(fp, "<style:style style:name=\"stDate\" "
+                    "style:family=\"table-cell\" "
+                    "style:parent-style-name=\"Default\" "
+                    "style:data-style-name=\"nDate\"/>\n");
+    VSIFPrintfL(fp, "<style:style style:name=\"stTime\" "
+                    "style:family=\"table-cell\" "
+                    "style:parent-style-name=\"Default\" "
+                    "style:data-style-name=\"nTime\"/>\n");
+    VSIFPrintfL(fp, "<style:style style:name=\"stDateTime\" "
+                    "style:family=\"table-cell\" "
+                    "style:parent-style-name=\"Default\" "
+                    "style:data-style-name=\"nDateTime\"/>\n");
+    VSIFPrintfL(fp, "</office:automatic-styles>\n");
+    VSIFPrintfL(fp, "<office:body>\n");
+    VSIFPrintfL(fp, "<office:spreadsheet>\n");
+    for(int i=0;i<nLayers;i++)
+    {
+        WriteLayer(fp, GetLayer(i));
+    }
+    VSIFPrintfL(fp, "</office:spreadsheet>\n");
+    VSIFPrintfL(fp, "</office:body>\n");
+    VSIFPrintfL(fp, "</office:document-content>\n");
+    VSIFCloseL(fp);
+
+    /* Now close ZIP file */
+    VSIFCloseL(fpZIP);
+
+    /* Reset updated flag at datasource and layer level */
+    bUpdated = FALSE;
+    for(int i = 0; i<nLayers; i++)
+    {
+        ((OGRODSLayer*)papoLayers[i])->SetUpdated(FALSE);
+    }
+
+    return OGRERR_NONE;
 }
