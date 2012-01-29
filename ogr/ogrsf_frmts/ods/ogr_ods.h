@@ -82,6 +82,8 @@ class OGRODSLayer : public OGRMemLayer
 
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags )
     { SetUpdated(); return OGRMemLayer::AlterFieldDefn(iField, poNewFieldDefn, nFlags); }
+
+    virtual OGRErr      SyncToDisk();
 };
 
 /************************************************************************/
@@ -132,8 +134,9 @@ class OGRODSDataSource : public OGRDataSource
     int                 nWithoutEventCounter;
     int                 nDataHandlerCounter;
     int                 nCurLine;
-    int                 nCurCol;
+    int                 nEmptyRowsAccumulated;
     int                 nRowsRepeated;
+    int                 nCurCol;
     int                 nCellsRepeated;
     int                 bEndTableParsing;
 
@@ -145,6 +148,7 @@ class OGRODSDataSource : public OGRDataSource
 
     CPLString           osValueType;
     CPLString           osValue;
+    std::string         osFormula;
 
     std::vector<std::string>  apoFirstLineValues;
     std::vector<std::string>  apoFirstLineTypes;
