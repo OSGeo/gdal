@@ -602,7 +602,8 @@ int OGRMSSQLSpatialTableLayer::TestCapability( const char * pszCap )
 {
     if ( bUpdateAccess )
     {
-        if( EQUAL(pszCap,OLCSequentialWrite) || EQUAL(pszCap,OLCCreateField) )
+        if( EQUAL(pszCap,OLCSequentialWrite) || EQUAL(pszCap,OLCCreateField)
+            || EQUAL(pszCap,OLCDeleteFeature) )
             return TRUE;
 
         else if( EQUAL(pszCap,OLCRandomWrite) )
