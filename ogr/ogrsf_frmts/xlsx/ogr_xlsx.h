@@ -108,6 +108,8 @@ class OGRXLSXLayer : public OGRMemLayer
 
     int                 TestCapability( const char * pszCap )
     { Init(); return OGRMemLayer::TestCapability(pszCap); }
+
+    virtual OGRErr      SyncToDisk();
 };
 
 /************************************************************************/
