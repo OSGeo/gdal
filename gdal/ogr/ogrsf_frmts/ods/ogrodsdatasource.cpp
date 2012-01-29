@@ -65,6 +65,15 @@ void OGRODSLayer::SetUpdated(int bUpdatedIn)
 }
 
 /************************************************************************/
+/*                           SyncToDisk()                               */
+/************************************************************************/
+
+OGRErr OGRODSLayer::SyncToDisk()
+{
+    return poDS->SyncToDisk();
+}
+
+/************************************************************************/
 /*                          OGRODSDataSource()                          */
 /************************************************************************/
 
@@ -90,6 +99,7 @@ OGRODSDataSource::OGRODSDataSource()
     nStackDepth = 0;
     nDepth = 0;
     nCurLine = 0;
+    nEmptyRowsAccumulated = 0;
     nCurCol = 0;
     nRowsRepeated = 0;
     nCellsRepeated = 0;
@@ -487,6 +497,7 @@ void OGRODSDataSource::startElementDefault(const char *pszName,
         papoLayers[nLayers++] = poCurLayer;
 
         nCurLine = 0;
+        nEmptyRowsAccumulated = 0;
         apoFirstLineValues.resize(0);
         apoFirstLineTypes.resize(0);
         PushState(STATE_TABLE);
@@ -505,7 +516,7 @@ void OGRODSDataSource::startElementTable(const char *pszName,
     {
         nRowsRepeated = atoi(
             GetAttributeValue(ppszAttr, "table:number-rows-repeated", "1"));
-        if (nRowsRepeated > 1024)
+        if (nRowsRepeated > 65536)
         {
             bEndTableParsing = TRUE;
             return;
@@ -597,6 +608,16 @@ void OGRODSDataSource::startElementRow(const char *pszName,
                 osValue = GetAttributeValue(ppszAttr, "office:time-value", "");
         }
 
+        const char* pszFormula = GetAttributeValue(ppszAttr, "table:formula", NULL);
+        if (pszFormula && strncmp(pszFormula, "of:=", 4) == 0)
+        {
+            osFormula = pszFormula;
+            if (osValueType.size() == 0)
+                osValueType = "formula";
+        }
+        else
+            osFormula = "";
+
         nCellsRepeated = atoi(
             GetAttributeValue(ppszAttr, "table:number-columns-repeated", "1"));
     }
@@ -636,6 +657,25 @@ void OGRODSDataSource::endElementRow(const char *pszName)
             }
             else
                 break;
+        }
+
+        /* Do not add immediately empty rows. Wait until there is another non */
+        /* empty row */
+        if (nCurLine >= 2 && apoCurLineTypes.size() == 0)
+        {
+            nEmptyRowsAccumulated += nRowsRepeated;
+            return;
+        }
+        else if (nEmptyRowsAccumulated > 0)
+        {
+            for(i = 0; i < (size_t)nEmptyRowsAccumulated; i++)
+            {
+                poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
+                poCurLayer->CreateFeature(poFeature);
+                delete poFeature;
+            }
+            nCurLine += nEmptyRowsAccumulated;
+            nEmptyRowsAccumulated = 0;
         }
 
         /* Backup first line values and types in special arrays */
@@ -801,7 +841,7 @@ void OGRODSDataSource::endElementCell(const char *pszName)
 
         for(int i = 0; i < nCellsRepeated; i++)
         {
-            apoCurLineValues.push_back(osValue);
+            apoCurLineValues.push_back(osValue.size() ? osValue : osFormula);
             apoCurLineTypes.push_back(osValueType);
         }
 
@@ -1317,12 +1357,18 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
                 else
                 {
                     const char* pszVal = poFeature->GetFieldAsString(j);
-
-                    VSIFPrintfL(fp, "<table:table-cell office:value-type=\"string\">\n");
                     pszXML = OGRGetXML_UTF8_EscapedString(pszVal);
-                    VSIFPrintfL(fp, "<text:p>%s</text:p>\n", pszXML);
+                    if (strncmp(pszVal, "of:=", 4) == 0)
+                    {
+                        VSIFPrintfL(fp, "<table:table-cell table:formula=\"%s\"/>\n", pszXML);
+                    }
+                    else
+                    {
+                        VSIFPrintfL(fp, "<table:table-cell office:value-type=\"string\">\n");
+                        VSIFPrintfL(fp, "<text:p>%s</text:p>\n", pszXML);
+                        VSIFPrintfL(fp, "</table:table-cell>\n");
+                    }
                     CPLFree(pszXML);
-                    VSIFPrintfL(fp, "</table:table-cell>\n");
                 }
             }
             else
@@ -1348,10 +1394,28 @@ OGRErr OGRODSDataSource::SyncToDisk()
     if (!bUpdated)
         return OGRERR_NONE;
 
-    VSIUnlink( pszName );
+    CPLAssert(fpSettings == NULL);
+    CPLAssert(fpContent == NULL);
+
+    VSIStatBufL sStat;
+    if (VSIStatL(pszName, &sStat) == 0)
+    {
+        if (VSIUnlink( pszName ) != 0)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                    "Cannot delete %s", pszName);
+            return OGRERR_FAILURE;
+        }
+    }
 
     /* Maintain new ZIP files opened */
     void *hZIP = CPLCreateZip(pszName, NULL);
+    if (hZIP == NULL)
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Cannot create %s", pszName);
+        return OGRERR_FAILURE;
+    }
 
     /* Write uncopressed mimetype */
     char** papszOptions = CSLAddString(NULL, "COMPRESSED=NO");
@@ -1367,6 +1431,8 @@ OGRErr OGRODSDataSource::SyncToDisk()
 
     /* Re-open with VSILFILE */
     VSILFILE* fpZIP = VSIFOpenL(CPLSPrintf("/vsizip/%s", pszName), "ab");
+    if (fpZIP == NULL)
+        return OGRERR_FAILURE;
 
     VSILFILE* fp;
     int i;
@@ -1456,6 +1522,7 @@ OGRErr OGRODSDataSource::SyncToDisk()
                 "xmlns:table=\"urn:oasis:names:tc:opendocument:xmlns:table:1.0\" "
                 "xmlns:number=\"urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0\" "
                 "xmlns:fo=\"urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0\" "
+                "xmlns:of=\"urn:oasis:names:tc:opendocument:xmlns:of:1.2\" "
                 "office:version=\"1.2\">\n");
     VSIFPrintfL(fp, "<office:scripts/>\n");
     VSIFPrintfL(fp, "<office:automatic-styles>\n");
