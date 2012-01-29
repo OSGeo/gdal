@@ -82,6 +82,15 @@ void OGRXLSXLayer::SetUpdated(int bUpdatedIn)
 }
 
 /************************************************************************/
+/*                           SyncToDisk()                               */
+/************************************************************************/
+
+OGRErr OGRXLSXLayer::SyncToDisk()
+{
+    return poDS->SyncToDisk();
+}
+
+/************************************************************************/
 /*                          OGRXLSXDataSource()                         */
 /************************************************************************/
 
@@ -1850,10 +1859,25 @@ OGRErr OGRXLSXDataSource::SyncToDisk()
     if (!bUpdated)
         return OGRERR_NONE;
 
-    VSIUnlink( pszName );
+    VSIStatBufL sStat;
+    if (VSIStatL(pszName, &sStat) == 0)
+    {
+        if (VSIUnlink( pszName ) != 0)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                    "Cannot delete %s", pszName);
+            return OGRERR_FAILURE;
+        }
+    }
 
     /* Maintain new ZIP files opened */
     VSILFILE* fpZIP = VSIFOpenL(CPLSPrintf("/vsizip/%s", pszName), "wb");
+    if (fpZIP == NULL)
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Cannot create %s", pszName);
+        return OGRERR_FAILURE;
+    }
 
     WriteContentTypes(pszName, nLayers);
 
