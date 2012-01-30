@@ -105,6 +105,11 @@ OGRDataSource *OGRCSVDriver::CreateDataSource( const char * pszName,
         osDirName = CPLGetPath(pszName);
         if( osDirName == "" )
             osDirName = ".";
+
+        /* HACK: CPLGetPath("/vsimem/foo.csv") = "/vsimem", but this is not */
+        /* recognized afterwards as a valid directory name */
+        if( osDirName == "/vsimem" )
+            osDirName = "/vsimem/";
     }
     else
     {
