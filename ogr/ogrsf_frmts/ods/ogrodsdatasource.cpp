@@ -31,8 +31,30 @@
 #include "ogr_mem.h"
 #include "ogr_p.h"
 #include "cpl_conv.h"
+#include "ods_formula.h"
+#include <set>
 
 CPL_CVSID("$Id$");
+
+
+/************************************************************************/
+/*                          ODSCellEvaluator                            */
+/************************************************************************/
+
+class ODSCellEvaluator : public IODSCellEvaluator
+{
+private:
+        OGRMemLayer* poLayer;
+        std::set<std::pair<int,int> > oVisisitedCells;
+
+public:
+        ODSCellEvaluator(OGRMemLayer* poLayerIn) : poLayer(poLayerIn) {}
+
+        int EvaluateRange(int nRow1, int nCol1, int nRow2, int nCol2,
+                          std::vector<ods_formula_node>& aoOutValues);
+
+        int Evaluate(int nRow, int nCol);
+};
 
 /************************************************************************/
 /*                            OGRODSLayer()                            */
@@ -573,6 +595,38 @@ void OGRODSDataSource::endElementTable(const char *pszName)
 
         if (poCurLayer)
         {
+            OGRFeature* poFeature;
+
+            if (CSLTestBoolean(CPLGetConfigOption("ODS_RESOLVE_FORMULAS", "YES")))
+            {
+                poCurLayer->ResetReading();
+
+                int nRow = 0;
+                poFeature = poCurLayer->GetNextFeature();
+                while (poFeature)
+                {
+                    for(int i=0;i<poFeature->GetFieldCount();i++)
+                    {
+                        if (poFeature->IsFieldSet(i) &&
+                            poFeature->GetFieldDefnRef(i)->GetType() == OFTString)
+                        {
+                            const char* pszVal = poFeature->GetFieldAsString(i);
+                            if (strncmp(pszVal, "of:=", 4) == 0)
+                            {
+                                ODSCellEvaluator oCellEvaluator((OGRMemLayer*)poCurLayer);
+                                oCellEvaluator.Evaluate(nRow, i);
+                            }
+                        }
+                    }
+                    delete poFeature;
+
+                    poFeature = poCurLayer->GetNextFeature();
+                    nRow ++;
+                }
+            }
+
+            poCurLayer->ResetReading();
+
             ((OGRMemLayer*)poCurLayer)->SetUpdatable(bUpdatable);
             ((OGRMemLayer*)poCurLayer)->SetAdvertizeUTF8(TRUE);
             ((OGRODSLayer*)poCurLayer)->SetUpdated(FALSE);
@@ -1602,4 +1656,197 @@ OGRErr OGRODSDataSource::SyncToDisk()
     }
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          EvaluateRange()                             */
+/************************************************************************/
+
+int ODSCellEvaluator::EvaluateRange(int nRow1, int nCol1, int nRow2, int nCol2,
+                                    std::vector<ods_formula_node>& aoOutValues)
+{
+    if (nRow1 < 0 || nRow1 >= poLayer->GetFeatureCount(FALSE) ||
+        nCol1 < 0 || nCol1 >= poLayer->GetLayerDefn()->GetFieldCount())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Invalid cell (row=%d, col=%d)", nRow1 + 1, nCol1 + 1);
+        return FALSE;
+    }
+
+    if (nRow2 < 0 || nRow2 >= poLayer->GetFeatureCount(FALSE) ||
+        nCol2 < 0 || nCol2 >= poLayer->GetLayerDefn()->GetFieldCount())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Invalid cell (row=%d, col=%d)", nRow2 + 1, nCol2 + 1);
+        return FALSE;
+    }
+
+    int nCurFID = poLayer->GetNextReadFID();
+
+    if (poLayer->SetNextByIndex(nRow1) != OGRERR_NONE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Cannot fetch feature for row = %d", nRow1);
+        return FALSE;
+    }
+
+    for(int nRow = nRow1; nRow <= nRow2; nRow ++)
+    {
+        OGRFeature* poFeature = poLayer->GetNextFeature();
+
+        if (poFeature == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot fetch feature for for row = %d", nRow);
+            poLayer->SetNextByIndex(nCurFID);
+            return FALSE;
+        }
+
+        for(int nCol = nCol1; nCol <= nCol2; nCol++)
+        {
+            if (!poFeature->IsFieldSet(nCol))
+            {
+                aoOutValues.push_back(ods_formula_node());
+            }
+            else if (poFeature->GetFieldDefnRef(nCol)->GetType() == OFTInteger)
+            {
+                aoOutValues.push_back(ods_formula_node(poFeature->GetFieldAsInteger(nCol)));
+            }
+            else if (poFeature->GetFieldDefnRef(nCol)->GetType() == OFTReal)
+            {
+                aoOutValues.push_back(ods_formula_node(poFeature->GetFieldAsDouble(nCol)));
+            }
+            else
+            {
+                std::string osVal(poFeature->GetFieldAsString(nCol));
+                if (strncmp(osVal.c_str(), "of:=", 4) == 0)
+                {
+                    delete poFeature;
+                    poFeature = NULL;
+
+                    if (!Evaluate(nRow, nCol))
+                    {
+                        /*CPLError(CE_Warning, CPLE_AppDefined,
+                                "Formula at cell (%d, %d) has not yet been resolved",
+                                nRow + 1, nCol + 1);*/
+                        poLayer->SetNextByIndex(nCurFID);
+                        return FALSE;
+                    }
+
+                    poLayer->SetNextByIndex(nRow);
+                    poFeature = poLayer->GetNextFeature();
+
+                    if (!poFeature->IsFieldSet(nCol))
+                    {
+                        aoOutValues.push_back(ods_formula_node());
+                    }
+                    else if (poFeature->GetFieldDefnRef(nCol)->GetType() == OFTInteger)
+                    {
+                        aoOutValues.push_back(ods_formula_node(poFeature->GetFieldAsInteger(nCol)));
+                    }
+                    else if (poFeature->GetFieldDefnRef(nCol)->GetType() == OFTReal)
+                    {
+                        aoOutValues.push_back(ods_formula_node(poFeature->GetFieldAsDouble(nCol)));
+                    }
+                    else
+                    {
+                        osVal = poFeature->GetFieldAsString(nCol);
+                        if (strncmp(osVal.c_str(), "of:=", 4) != 0)
+                        {
+                            CPLValueType eType = CPLGetValueType(osVal.c_str());
+                            /* Try to convert into numeric value if possible */
+                            if (eType != CPL_VALUE_STRING)
+                                aoOutValues.push_back(ods_formula_node(CPLAtofM(osVal.c_str())));
+                            else
+                                aoOutValues.push_back(ods_formula_node(osVal.c_str()));
+                        }
+                    }
+                }
+                else
+                {
+                    CPLValueType eType = CPLGetValueType(osVal.c_str());
+                    /* Try to convert into numeric value if possible */
+                    if (eType != CPL_VALUE_STRING)
+                        aoOutValues.push_back(ods_formula_node(CPLAtofM(osVal.c_str())));
+                    else
+                        aoOutValues.push_back(ods_formula_node(osVal.c_str()));
+                }
+            }
+        }
+
+        delete poFeature;
+    }
+
+    poLayer->SetNextByIndex(nCurFID);
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                            Evaluate()                                */
+/************************************************************************/
+
+int ODSCellEvaluator::Evaluate(int nRow, int nCol)
+{
+    if (oVisisitedCells.find(std::pair<int,int>(nRow, nCol)) != oVisisitedCells.end())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Circular dependency with (row=%d, col=%d)", nRow + 1, nCol + 1);
+        return FALSE;
+    }
+
+    oVisisitedCells.insert(std::pair<int,int>(nRow, nCol));
+
+    if (poLayer->SetNextByIndex(nRow) != OGRERR_NONE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Cannot fetch feature for row = %d", nRow);
+        return FALSE;
+    }
+
+    OGRFeature* poFeature = poLayer->GetNextFeature();
+    if (poFeature->IsFieldSet(nCol) &&
+        poFeature->GetFieldDefnRef(nCol)->GetType() == OFTString)
+    {
+        const char* pszVal = poFeature->GetFieldAsString(nCol);
+        if (strncmp(pszVal, "of:=", 4) == 0)
+        {
+            ods_formula_node* expr_out = ods_formula_compile( pszVal + 4 );
+            if (expr_out &&
+                expr_out->Evaluate(this) &&
+                expr_out->eNodeType == SNT_CONSTANT)
+            {
+                /* Refetch feature in case Evaluate() modified another cell in this row */
+                delete poFeature;
+                poLayer->SetNextByIndex(nRow);
+                poFeature = poLayer->GetNextFeature();
+
+                if (expr_out->field_type == ODS_FIELD_TYPE_EMPTY)
+                {
+                    poFeature->UnsetField(nCol);
+                    poLayer->SetFeature(poFeature);
+                }
+                else if (expr_out->field_type == ODS_FIELD_TYPE_INTEGER)
+                {
+                    poFeature->SetField(nCol, expr_out->int_value);
+                    poLayer->SetFeature(poFeature);
+                }
+                else if (expr_out->field_type == ODS_FIELD_TYPE_FLOAT)
+                {
+                    poFeature->SetField(nCol, expr_out->float_value);
+                    poLayer->SetFeature(poFeature);
+                }
+                else if (expr_out->field_type == ODS_FIELD_TYPE_STRING)
+                {
+                    poFeature->SetField(nCol, expr_out->string_value);
+                    poLayer->SetFeature(poFeature);
+                }
+            }
+            delete expr_out;
+        }
+    }
+
+    delete poFeature;
+
+    return TRUE;
 }
