@@ -84,6 +84,8 @@ class OGRMemLayer : public OGRLayer
 
     void                SetUpdatable(int bUpdatableIn) { bUpdatable = bUpdatableIn; }
     void                SetAdvertizeUTF8(int bAdvertizeUTF8In) { bAdvertizeUTF8 = bAdvertizeUTF8In; }
+
+    int                 GetNextReadFID() { return iNextReadFID; }
 };
 
 /************************************************************************/

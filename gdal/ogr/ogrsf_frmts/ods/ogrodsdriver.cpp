@@ -95,8 +95,12 @@ OGRDataSource *OGRODSDriver::Open( const char * pszFilename, int bUpdate )
         return NULL;
     }
 
-    if (EQUAL(CPLGetFilename(pszContentFilename), "content.xml"))
+    if (EQUALN(pszContentFilename, "ODS:", 4) ||
+        EQUAL(CPLGetFilename(pszContentFilename), "content.xml"))
     {
+        if (EQUALN(pszContentFilename, "ODS:", 4))
+            pszContentFilename += 4;
+
         fpContent = VSIFOpenL(pszContentFilename, "rb");
         if (fpContent == NULL)
             return NULL;
