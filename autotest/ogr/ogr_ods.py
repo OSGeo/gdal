@@ -329,13 +329,56 @@ def ogr_ods_5():
 
     return ret
 
+###############################################################################
+# Test formula evaluation
+
+def ogr_ods_6():
+
+    drv = ogr.GetDriverByName('ODS')
+    if drv is None:
+        return 'skip'
+
+    src_ds = ogr.Open('ODS:data/content_formulas.xml')
+    out_ds = ogr.GetDriverByName('CSV').CopyDataSource(src_ds, '/vsimem/content_formulas.csv')
+    out_ds = None
+    src_ds = None
+
+    fp = gdal.VSIFOpenL('/vsimem/content_formulas.csv', 'rb')
+    res = gdal.VSIFReadL(1,10000,fp)
+    gdal.VSIFCloseL(fp)
+
+    gdal.Unlink('/vsimem/content_formulas.csv')
+
+    res = res.split()
+
+    expected_res = """Field1,Field2,Field3,Field4,Field5,Field6,Field7,Field8,Field9,Field10,Field11,Field12,Field13,Field14,Field15,Field16,Field17,Field18,Field19,Field20,Field21,Field22,Field23,Field24,Field25,Field26,Field27,Field28,Field29,Field30,Field31,Field32
+of:=[.B1],of:=[.C1],of:=[.A1],,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+1,1,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+ab,ab,ab,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+1,a,,3.5,MIN,1,MIN,3.5,SUM,4.5,AVERAGE,2.25,COUNT,2,COUNTA,3,,,,,,,,,,,,,,,,
+abcdef,6,,a,abcdef,,f,abcdef,"of:=MID([.A5];0;1)",,a,abcdef,,a,ef,ef,,,,,,,,,,,,,,,,
+1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+AB,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+2,2,0,3,1,0,0,1,1,1,0,0,0,1,1,0,,,,,,,,,,,,,,,,
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+""".split()
+
+    if res != expected_res:
+        gdaltest.post_reason('did not get expected result')
+        print(res)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_ods_1,
     ogr_ods_kspread_1,
     ogr_ods_2,
     ogr_ods_3,
     ogr_ods_4,
-    ogr_ods_5
+    ogr_ods_5,
+    ogr_ods_6,
 ]
 
 if __name__ == '__main__':
