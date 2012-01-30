@@ -1,5 +1,5 @@
 
-OBJ	=	ogrodsdriver.obj ogrodsdatasource.obj
+OBJ	=	ogrodsdriver.obj ogrodsdatasource.obj ods_formula.obj ods_formula_parser.obj ods_formula_node.obj
 
 GDAL_ROOT	=	..\..\..
 
