@@ -243,4 +243,7 @@ void OGRRegisterAll()
 #ifdef XLSX_ENABLED
     RegisterOGRXLSX();
 #endif
+#ifdef ELASTIC_ENABLED
+    RegisterOGRElastic();
+#endif
 } /* OGRRegisterAll */

@@ -380,6 +380,7 @@ void CPL_DLL RegisterOGRSEGY();
 void CPL_DLL RegisterOGRXLS();
 void CPL_DLL RegisterOGRODS();
 void CPL_DLL RegisterOGRXLSX();
+void CPL_DLL RegisterOGRElastic();
 CPL_C_END
 
 
