@@ -2122,7 +2122,9 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     const char *pszVersion = CPLGetXMLValue( psService, "Version", "1.0.0" );
     int nVersion;
 
-    if( EQUAL(pszVersion,"1.1.1") )
+    if (EQUAL(pszVersion, "1.1.2") )
+        nVersion = 112;
+    else if( EQUAL(pszVersion,"1.1.1") )
         nVersion = 111;
     else if( EQUAL(pszVersion,"1.1.0") )
         nVersion = 110;
