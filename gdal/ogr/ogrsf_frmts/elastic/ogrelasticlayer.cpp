@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id $
+ * $Id$
  *
  * Project:  ElasticSearch Translator
  * Purpose:
@@ -34,9 +34,10 @@
 #include "ogr_p.h"
 #include <jsonc/json.h> // JSON-C
 
-/************************************************************************/
-/*                            OGRElasticLayer()                          */
+CPL_CVSID("$Id$");
 
+/************************************************************************/
+/*                           OGRElasticLayer()                          */
 /************************************************************************/
 
 OGRElasticLayer::OGRElasticLayer(const char* pszFilename,
@@ -74,12 +75,14 @@ OGRElasticLayer::OGRElasticLayer(const char* pszFilename,
 }
 
 /************************************************************************/
-/*                            ~OGRElasticLayer()                            */
-
+/*                         ~OGRElasticLayer()                           */
 /************************************************************************/
 
 OGRElasticLayer::~OGRElasticLayer() {
     PushIndex();
+
+    CPLFree(pszLayerName);
+
     poFeatureDefn->Release();
 
     if (poSRS != NULL)
@@ -89,7 +92,6 @@ OGRElasticLayer::~OGRElasticLayer() {
 
 /************************************************************************/
 /*                            GetLayerDefn()                            */
-
 /************************************************************************/
 
 OGRFeatureDefn * OGRElasticLayer::GetLayerDefn() {
@@ -98,7 +100,6 @@ OGRFeatureDefn * OGRElasticLayer::GetLayerDefn() {
 
 /************************************************************************/
 /*                            ResetReading()                            */
-
 /************************************************************************/
 
 void OGRElasticLayer::ResetReading() {
@@ -107,7 +108,6 @@ void OGRElasticLayer::ResetReading() {
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
-
 /************************************************************************/
 
 OGRFeature *OGRElasticLayer::GetNextFeature() {
@@ -118,7 +118,6 @@ OGRFeature *OGRElasticLayer::GetNextFeature() {
 
 /************************************************************************/
 /*                           GetSpatialRef()                            */
-
 /************************************************************************/
 
 OGRSpatialReference *OGRElasticLayer::GetSpatialRef() {
@@ -126,8 +125,7 @@ OGRSpatialReference *OGRElasticLayer::GetSpatialRef() {
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
-
+/*                            AppendGroup()                             */
 /************************************************************************/
 
 json_object *AppendGroup(json_object *parent, const CPLString &name) {
@@ -138,6 +136,10 @@ json_object *AppendGroup(json_object *parent, const CPLString &name) {
     return properties;
 }
 
+/************************************************************************/
+/*                           AddPropertyMap()                           */
+/************************************************************************/
+
 json_object *AddPropertyMap(const CPLString &type, const CPLString &format = "") {
     json_object *obj = json_object_new_object();
     json_object_object_add(obj, "store", json_object_new_string("yes"));
@@ -147,6 +149,10 @@ json_object *AddPropertyMap(const CPLString &type, const CPLString &format = "")
     }
     return obj;
 }
+
+/************************************************************************/
+/*                             BuildMap()                               */
+/************************************************************************/
 
 CPLString OGRElasticLayer::BuildMap() {
     json_object *map = json_object_new_object();
@@ -171,6 +177,10 @@ CPLString OGRElasticLayer::BuildMap() {
 
     return jsonMap;
 }
+
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
 
 OGRErr OGRElasticLayer::CreateFeature(OGRFeature *poFeature) {
 
@@ -263,6 +273,10 @@ OGRErr OGRElasticLayer::CreateFeature(OGRFeature *poFeature) {
     return OGRERR_NONE;
 }
 
+/************************************************************************/
+/*                             PushIndex()                              */
+/************************************************************************/
+
 void OGRElasticLayer::PushIndex() {
     if (sIndex.empty()) {
         return;
@@ -274,7 +288,6 @@ void OGRElasticLayer::PushIndex() {
 
 /************************************************************************/
 /*                            CreateField()                             */
-
 /************************************************************************/
 
 OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn, int bApproxOK) {
@@ -318,7 +331,6 @@ OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn, int bApproxOK) {
 
 /************************************************************************/
 /*                           TestCapability()                           */
-
 /************************************************************************/
 
 int OGRElasticLayer::TestCapability(const char * pszCap) {
@@ -336,7 +348,6 @@ int OGRElasticLayer::TestCapability(const char * pszCap) {
 
 /************************************************************************/
 /*                          GetFeatureCount()                           */
-
 /************************************************************************/
 
 int OGRElasticLayer::GetFeatureCount(int bForce) {

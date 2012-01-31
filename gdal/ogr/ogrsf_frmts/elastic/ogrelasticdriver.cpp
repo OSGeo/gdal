@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id $
+ * $Id$
  *
  * Project:  ElasticSearch Translator
  * Purpose:
@@ -30,9 +30,10 @@
 #include "ogr_elastic.h"
 #include "cpl_conv.h"
 
-/************************************************************************/
-/*                           ~OGRElasticDriver()                            */
+CPL_CVSID("$Id$");
 
+/************************************************************************/
+/*                         ~OGRElasticDriver()                          */
 /************************************************************************/
 
 OGRElasticDriver::~OGRElasticDriver() {
@@ -40,7 +41,6 @@ OGRElasticDriver::~OGRElasticDriver() {
 
 /************************************************************************/
 /*                              GetName()                               */
-
 /************************************************************************/
 
 const char *OGRElasticDriver::GetName() {
@@ -49,7 +49,6 @@ const char *OGRElasticDriver::GetName() {
 
 /************************************************************************/
 /*                                Open()                                */
-
 /************************************************************************/
 
 OGRDataSource *OGRElasticDriver::Open(const char * pszFilename, int bUpdate) {
@@ -58,7 +57,6 @@ OGRDataSource *OGRElasticDriver::Open(const char * pszFilename, int bUpdate) {
 
 /************************************************************************/
 /*                          CreateDataSource()                          */
-
 /************************************************************************/
 
 OGRDataSource *OGRElasticDriver::CreateDataSource(const char * pszName,
@@ -75,7 +73,6 @@ OGRDataSource *OGRElasticDriver::CreateDataSource(const char * pszName,
 
 /************************************************************************/
 /*                           TestCapability()                           */
-
 /************************************************************************/
 
 int OGRElasticDriver::TestCapability(const char * pszCap) {
@@ -86,8 +83,7 @@ int OGRElasticDriver::TestCapability(const char * pszCap) {
 }
 
 /************************************************************************/
-/*                           RegisterOGRElastic()                           */
-
+/*                          RegisterOGRElastic()                        */
 /************************************************************************/
 
 void RegisterOGRElastic() {
