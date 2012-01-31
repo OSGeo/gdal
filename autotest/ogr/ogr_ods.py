@@ -349,7 +349,7 @@ def ogr_ods_6():
 
     gdal.Unlink('/vsimem/content_formulas.csv')
 
-    res = res.split()
+    res = res.decode('ascii').split()
 
     expected_res = """Field1,Field2,Field3,Field4,Field5,Field6,Field7,Field8,Field9,Field10,Field11,Field12,Field13,Field14,Field15,Field16,Field17,Field18,Field19,Field20,Field21,Field22,Field23,Field24,Field25,Field26,Field27,Field28,Field29,Field30,Field31,Field32
 of:=[.B1],of:=[.C1],of:=[.A1],,,,,,,,,,,,,,,,,,,,,,,,,,,,,
