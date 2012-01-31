@@ -438,6 +438,11 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
         CPLXMLNode *psNext = psHist->psNext;
         psHist->psNext = NULL;
 
+        if (psPam->psSavedHistograms != NULL)
+        {
+            CPLDestroyXMLNode (psPam->psSavedHistograms );
+            psPam->psSavedHistograms = NULL;
+        }
         psPam->psSavedHistograms = CPLCloneXMLTree( psHist );
         psHist->psNext = psNext;
     }
@@ -448,6 +453,11 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
     CPLXMLNode *psRAT = CPLGetXMLNode( psTree, "GDALRasterAttributeTable" );
     if( psRAT != NULL )
     {
+        if( psPam->poDefaultRAT != NULL )
+        {
+            delete psPam->poDefaultRAT;
+            psPam->poDefaultRAT = NULL;
+        }
         psPam->poDefaultRAT = new GDALRasterAttributeTable();
         psPam->poDefaultRAT->XMLInit( psRAT, "" );
     }
