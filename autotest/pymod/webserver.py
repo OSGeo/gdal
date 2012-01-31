@@ -40,15 +40,44 @@ import sys
 import gdaltest
 from sys import version_info
 
+do_log = False
+
 class GDAL_Handler(BaseHTTPRequestHandler):
 
     def log_request(self, code='-', size='-'):
         return
 
+    def do_DELETE(self):
+        if do_log:
+            f = open('/tmp/log.txt', 'a')
+            f.write('DELETE %s\n' % self.path)
+            f.close()
+
+        if self.path.find('/fakeelasticsearch') != -1:
+            self.send_response(200)
+            self.end_headers()
+
+        return
+
+    def do_POST(self):
+        if do_log:
+            f = open('/tmp/log.txt', 'a')
+            f.write('POST %s\n' % self.path)
+            f.close()
+
+        if self.path.find('/fakeelasticsearch') != -1:
+            self.send_response(200)
+            self.end_headers()
+
+        return
+
     def do_GET(self):
 
         try:
-            #print(self.path)
+            if do_log:
+                f = open('/tmp/log.txt', 'a')
+                f.write('GET %s\n' % self.path)
+                f.close()
 
             if self.path == '/shutdown':
                 self.send_response(200)
@@ -64,36 +93,51 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 return
 
-            if self.path == '/fakewfs?SERVICE=WFS&REQUEST=GetCapabilities' or \
-               self.path == '/fakewfs?SERVICE=WFS&REQUEST=GetCapabilities&ACCEPTVERSIONS=1.1.0,1.0.0':
-                self.send_response(200)
-                self.send_header('Content-type', 'application/xml')
-                self.end_headers()
-                f = open('data/get_capabilities.xml', 'rb')
-                content = f.read()
-                f.close()
-                self.wfile.write(content)
-                return
 
-            if self.path == '/fakewfs?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=rijkswegen':
-                self.send_response(200)
-                self.send_header('Content-type', 'application/xml')
-                self.end_headers()
-                f = open('data/describe_feature_type.xml', 'rb')
-                content = f.read()
-                f.close()
-                self.wfile.write(content)
-                return
+            # Below is for ElasticSearch
+            if self.path.find('/fakeelasticsearch') != -1:
+                if self.path == '/fakeelasticsearch/_status':
+                    self.send_response(200)
+                    self.end_headers()
+                    self.elastic_search = True
+                    return
+                else:
+                    self.send_error(404,'File Not Found: %s' % self.path)
+                    return
 
-            if self.path == '/fakewfs?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=rijkswegen':
-                self.send_response(200)
-                self.send_header('Content-type', 'application/xml')
-                self.end_headers()
-                f = open('data/get_feature.xml', 'rb')
-                content = f.read()
-                f.close()
-                self.wfile.write(content)
-                return
+            # Below is for WFS
+            elif self.path.find('/fakewfs') != -1:
+
+                if self.path == '/fakewfs?SERVICE=WFS&REQUEST=GetCapabilities' or \
+                self.path == '/fakewfs?SERVICE=WFS&REQUEST=GetCapabilities&ACCEPTVERSIONS=1.1.0,1.0.0':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    f = open('data/get_capabilities.xml', 'rb')
+                    content = f.read()
+                    f.close()
+                    self.wfile.write(content)
+                    return
+
+                if self.path == '/fakewfs?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=rijkswegen':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    f = open('data/describe_feature_type.xml', 'rb')
+                    content = f.read()
+                    f.close()
+                    self.wfile.write(content)
+                    return
+
+                if self.path == '/fakewfs?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=rijkswegen':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    f = open('data/get_feature.xml', 'rb')
+                    content = f.read()
+                    f.close()
+                    self.wfile.write(content)
+                    return
 
             return
         except IOError:
