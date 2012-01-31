@@ -737,6 +737,18 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     CPLXMLNode *indexarray_xml = CPLCreateXMLNode(indexes_xml, CXT_Element, "IndexArray");
     FGDB_CPLAddXMLAttribute(indexarray_xml, "xsi:type", "esri:ArrayOfIndex");
 
+    /* CLSID http://forums.arcgis.com/threads/34536?p=118484#post118484 */
+    if ( eType == wkbNone )
+    {
+        CPLCreateXMLElementAndValue(defn_xml, "CLSID", "{7A566981-C114-11D2-8A28-006097AFF44E}");
+        CPLCreateXMLElementAndValue(defn_xml, "EXTCLSID", "");
+    }
+    else
+    {
+        CPLCreateXMLElementAndValue(defn_xml, "CLSID", "{52353152-891A-11D0-BEC6-00805F7C4268}");
+        CPLCreateXMLElementAndValue(defn_xml, "EXTCLSID", "");
+    }
+
     /* Set the alias for the Feature Class */
     if (pszLayerNameIn != layerName)
     {
@@ -757,6 +769,10 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
 
         /* TODO: Handle spatial indexes (layer creation option?) */
         CPLCreateXMLElementAndValue(defn_xml,"HasSpatialIndex", "false");
+
+        /* These field are required for Arcmap to display aliases correctly */
+        CPLCreateXMLNode(defn_xml, CXT_Element, "AreaFieldName");
+        CPLCreateXMLNode(defn_xml, CXT_Element, "LengthFieldName");
 
         /* We can't know the extent at this point <Extent xsi:nil='true'/> */
         CPLXMLNode *extn_xml = CPLCreateXMLNode(defn_xml, CXT_Element, "Extent");
