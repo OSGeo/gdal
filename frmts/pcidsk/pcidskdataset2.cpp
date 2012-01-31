@@ -764,6 +764,8 @@ CPLErr PCIDSK2Band::SetMetadataItem( const char *pszName,
 
     try
     {
+        if( !pszValue )
+          pszValue = "";
         poChannel->SetMetadataValue( pszName, pszValue );
         return CE_None;
     }
