@@ -58,8 +58,8 @@ OGRElasticDataSource::~OGRElasticDataSource() {
         delete papoLayers[i];
     CPLFree(papoLayers);
     CPLFree(pszName);
-	CPLFree(pszMapping);
-	CPLFree(pszWriteMap);
+    CPLFree(pszMapping);
+    CPLFree(pszWriteMap);
 }
 
 /************************************************************************/
@@ -147,17 +147,21 @@ void OGRElasticDataSource::UploadFile(const CPLString &url, const CPLString &dat
 
 int OGRElasticDataSource::Create(const char *pszFilename,
         char **papszOptions) {
-    
-	this->pszName = CPLStrdup(pszFilename);
 
-	const char* pszMetaFile = CPLGetConfigOption("ES_META", NULL);
-	const char* pszWriteMap = CPLGetConfigOption("ES_WRITEMAP", NULL);;
-    this->bOverwrite = (int) CPLAtof(CPLGetConfigOption("ES_OVERWRITE", "0"));
+    this->pszName = CPLStrdup(pszFilename);
+
+    const char* pszMetaFile = CPLGetConfigOption("ES_META", NULL);
+    const char* pszWriteMap = CPLGetConfigOption("ES_WRITEMAP", NULL);;
+    this->bOverwrite = CSLTestBoolean(CPLGetConfigOption("ES_OVERWRITE", "0"));
     this->nBulkUpload = (int) CPLAtof(CPLGetConfigOption("ES_BULK", "0"));
 
-    // Read in the meta file from disk
     if (pszWriteMap != NULL) {
-		this->pszWriteMap = CPLStrdup(pszWriteMap);
+        this->pszWriteMap = CPLStrdup(pszWriteMap);
+    }
+
+    // Read in the meta file from disk
+    if (pszMetaFile != NULL)
+    {
         int fsize;
         char *fdata;
         FILE *fp;
@@ -173,7 +177,7 @@ int OGRElasticDataSource::Create(const char *pszFilename,
             fread(fdata, fsize, 1, fp);
             fdata[fsize] = 0;
             this->pszMapping = fdata;
-			fclose(fp);
+            fclose(fp);
         }
     }
 
