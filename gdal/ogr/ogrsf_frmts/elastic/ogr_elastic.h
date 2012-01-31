@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id $
+ * $Id$
  *
  * Project:  ElasticSearch Translator
  * Purpose:
@@ -37,8 +37,7 @@
 class OGRElasticDataSource;
 
 /************************************************************************/
-/*                             OGRElasticLayer                              */
-
+/*                          OGRElasticLayer                             */
 /************************************************************************/
 
 class OGRElasticLayer : public OGRLayer {
@@ -76,8 +75,7 @@ public:
 };
 
 /************************************************************************/
-/*                           OGRElasticDataSource                           */
-
+/*                         OGRElasticDataSource                         */
 /************************************************************************/
 
 class OGRElasticDataSource : public OGRDataSource {
@@ -123,8 +121,7 @@ public:
 };
 
 /************************************************************************/
-/*                             OGRElasticDriver                             */
-
+/*                            OGRElasticDriver                          */
 /************************************************************************/
 
 class OGRElasticDriver : public OGRSFDriver {
