@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id $
+ * $Id$
  *
  * Project:  ElasticSearch Translator
  * Purpose:
@@ -35,20 +35,22 @@
 #include "cpl_csv.h"
 #include "cpl_http.h"
 
-/************************************************************************/
-/*                          OGRElasticDataSource()                          */
+CPL_CVSID("$Id$");
 
+/************************************************************************/
+/*                        OGRElasticDataSource()                        */
 /************************************************************************/
 
 OGRElasticDataSource::OGRElasticDataSource() {
     papoLayers = NULL;
     nLayers = 0;
     pszName = NULL;
+    pszMapping = NULL;
+    pszWriteMap = NULL;
 }
 
 /************************************************************************/
-/*                         ~OGRElasticDataSource()                          */
-
+/*                       ~OGRElasticDataSource()                        */
 /************************************************************************/
 
 OGRElasticDataSource::~OGRElasticDataSource() {
@@ -62,7 +64,6 @@ OGRElasticDataSource::~OGRElasticDataSource() {
 
 /************************************************************************/
 /*                           TestCapability()                           */
-
 /************************************************************************/
 
 int OGRElasticDataSource::TestCapability(const char * pszCap) {
@@ -74,7 +75,6 @@ int OGRElasticDataSource::TestCapability(const char * pszCap) {
 
 /************************************************************************/
 /*                              GetLayer()                              */
-
 /************************************************************************/
 
 OGRLayer *OGRElasticDataSource::GetLayer(int iLayer) {
@@ -86,7 +86,6 @@ OGRLayer *OGRElasticDataSource::GetLayer(int iLayer) {
 
 /************************************************************************/
 /*                            CreateLayer()                             */
-
 /************************************************************************/
 
 OGRLayer * OGRElasticDataSource::CreateLayer(const char * pszLayerName,
@@ -102,7 +101,6 @@ OGRLayer * OGRElasticDataSource::CreateLayer(const char * pszLayerName,
 
 /************************************************************************/
 /*                                Open()                                */
-
 /************************************************************************/
 
 int OGRElasticDataSource::Open(const char * pszFilename, int bUpdateIn) {
@@ -113,8 +111,7 @@ int OGRElasticDataSource::Open(const char * pszFilename, int bUpdateIn) {
 
 
 /************************************************************************/
-/*                               Create()                               */
-
+/*                             DeleteIndex()                            */
 /************************************************************************/
 
 void OGRElasticDataSource::DeleteIndex(const CPLString &url) {
@@ -126,6 +123,10 @@ void OGRElasticDataSource::DeleteIndex(const CPLString &url) {
         CPLHTTPDestroyResult(psResult);
     }
 }
+
+/************************************************************************/
+/*                            UploadFile()                              */
+/************************************************************************/
 
 void OGRElasticDataSource::UploadFile(const CPLString &url, const CPLString &data) {
     char** papszOptions = NULL;
@@ -140,11 +141,13 @@ void OGRElasticDataSource::UploadFile(const CPLString &url, const CPLString &dat
     }
 }
 
+/************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
+
 int OGRElasticDataSource::Create(const char *pszFilename,
         char **papszOptions) {
     
-	this->pszMapping = NULL;
-	this->pszWriteMap = NULL;
 	this->pszName = CPLStrdup(pszFilename);
 
 	const char* pszMetaFile = CPLGetConfigOption("ES_META", NULL);
@@ -176,13 +179,14 @@ int OGRElasticDataSource::Create(const char *pszFilename,
 
     // Do a status check to ensure that the server is valid
     CPLHTTPResult* psResult = CPLHTTPFetch(CPLSPrintf("%s/_status", pszFilename), NULL);
-    if (psResult) {
-        CPLHTTPDestroyResult(psResult);
-    } else {
+    int bOK = (psResult != NULL && psResult->pszErrBuf == NULL);
+    if (!bOK)
+    {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
                 "Could not connect to server");
-        return FALSE;
     }
 
-    return TRUE;
+    CPLHTTPDestroyResult(psResult);
+
+    return bOK;
 }
