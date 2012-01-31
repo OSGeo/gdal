@@ -171,6 +171,10 @@ ifeq ($(HAVE_EXPAT),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DXLSX_ENABLED
 endif
 
+ifeq ($(CURL_SETTING),yes)
+CXXFLAGS :=	$(CXXFLAGS) -DELASTIC_ENABLED
+endif
+
 CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
