@@ -42,8 +42,8 @@
 /* FGDB API headers */
 #include "FileGDBAPI.h"
 
-/* Workaround needed for Linux 64 bit, at least for FileGDB API 1.1 (#4455) */
-#if defined(__linux__) && SIZEOF_VOIDP == 8
+/* Workaround needed for Linux, at least for FileGDB API 1.1 (#4455) */
+#if defined(__linux__)
 #define EXTENT_WORKAROUND
 #endif
 
