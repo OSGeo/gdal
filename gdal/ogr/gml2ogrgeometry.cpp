@@ -885,6 +885,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 
         dfStep *= nSign;
 
+        
         for(alpha = alpha0; (alpha - alpha1) * nSign < 0; alpha += dfStep)
         {
             poLine->addPoint(cx + R * cos(alpha), cy + R * sin(alpha));
@@ -905,6 +906,14 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
         else
         {
             poLine->addPoint(cx + R * cos(alpha2), cy + R * sin(alpha2));
+
+            // For arcs we reset the first and last point to avoid 
+            // approximations that don't match the source values. 
+            if( poLine->getNumPoints() >= 2 )
+            {
+                poLine->setPoint(0,x0,y0);
+                poLine->setPoint(poLine->getNumPoints()-1,x2,y2);
+            }
         }
 
         return poLine;
