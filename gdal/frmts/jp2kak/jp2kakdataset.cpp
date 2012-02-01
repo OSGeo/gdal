@@ -294,6 +294,10 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
 
     this->nRasterXSize = band_dims.size.x;
     this->nRasterYSize = band_dims.size.y;
+
+/* -------------------------------------------------------------------- */
+/*      Capture some useful metadata.                                   */
+/* -------------------------------------------------------------------- */
     if( oCodeStream.get_bit_depth(nBand-1) % 8 != 0 )
     {
         
@@ -1339,17 +1343,34 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         cod->get(Corder,0,0,order);
         
         if( order == Corder_LRCP )
+        {
             CPLDebug( "JP2KAK", "order=LRCP" );
+            poDS->SetMetadataItem("Corder","LRCP");
+        }
         else if( order == Corder_RLCP )
+        {
             CPLDebug( "JP2KAK", "order=RLCP" );
+            poDS->SetMetadataItem("Corder","RLCP");
+        }
         else if( order == Corder_RPCL )
+        {
             CPLDebug( "JP2KAK", "order=RPCL" );
+            poDS->SetMetadataItem("Corder","RPCL");
+        }
         else if( order == Corder_PCRL )
+        {
             CPLDebug( "JP2KAK", "order=PCRL" );
+            poDS->SetMetadataItem("Corder","PCRL");
+        }
         else if( order == Corder_CPRL )
+        {
             CPLDebug( "JP2KAK", "order=CPRL" );
+            poDS->SetMetadataItem("Corder","CPRL");
+        }
         else
+        {
             CPLDebug( "JP2KAK", "order=%d, not recognized.", order );
+        }
 
         poDS->bUseYCC = false;
         cod->get(Cycc,0,0,poDS->bUseYCC);
