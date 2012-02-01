@@ -43,10 +43,10 @@ respectively the definition and metadata of a FileGDB table as XML content.
 	<li><b>GEOMETRY_NAME</b>: Set name of geometry column in new layer. Defaults to "SHAPE".</li>
 	<li><b>OID_NAME</b>: Name of the OID column to create. Defaults to "OBJECTID".</li>
 	<li><b>XYTOLERANCE, ZTOLERANCE</b>: These parameters control the snapping tolerance used for advanced ArcGIS features like network and topology rules. They won't effect any 	OGR operations, but they will by used by ArcGIS. The units of the parameters are the units of the coordinate reference system.
-		<p>ArcMap 10.0 defaults for XYTOLERANCE are 0.001m (or equivalent) for projected coordinate systems, and 0.000000008983153&deg; for geographic coordinate systems.</p></li>
+		<p>ArcMap 10.0 and OGR defaults for XYTOLERANCE are 0.001m (or equivalent) for projected coordinate systems, and 0.000000008983153&deg; for geographic coordinate systems.</p></li>
 	<li><b>XORIGIN, YORIGIN, ZORIGIN, XYSCALE, ZSCALE</b>: These parameters control the <a href="http://help.arcgis.com/en/sdk/10.0/java_ao_adf/conceptualhelp/engine/index.html#//00010000037m000000">coordinate precision grid</a>  inside the file geodatabase. The dimensions of the grid are determined by the origin, and the scale. The origin defines the location of a reference grid point in space. The scale is the reciprocal of the resolution. So, to get a grid with an origin at 0 and a resolution of 0.001 on all axes, you would set all the origins to 0 and all the scales to 1000.
 		<p><em>Important</em>: The domain specified by <code>(xmin=XORIGIN, ymin=YORIGIN, xmax=(XORIGIN + 9E+15 / XYSCALE), ymax=(YORIGIN + 9E+15 / XYSCALE))</code> needs to encompass every possible coordinate value for the feature class. If features are added with coordinates that fall outside the domain, errors will occur in ArcGIS with spatial indexing, feature selection, and exporting data.</p>
-		<p>Defaults from ArcMap 10.0:<ul>
+		<p>ArcMap 10.0 and OGR defaults:<ul>
 			<li>For geographic coordinate systems: XORIGIN=-400, YORIGIN=-400, XYSCALE=1000000000</li>
 			<li>For projected coordinate systems: XYSCALE=10000 for the default XYTOLERANCE of 0.001m. XORIGIN and YORIGIN change based on the coordinate system, but the OGR default of -2147483647 is suitable with the default XYSCALE for all coordinate systems.</li></ul></p>
 </ul>
