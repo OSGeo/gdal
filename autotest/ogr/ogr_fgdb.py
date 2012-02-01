@@ -214,6 +214,12 @@ def ogr_fgdb_3():
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f filegdb tmp/poly.gdb data/poly.shp -nlt MULTIPOLYGON -a_srs None')
 
+    ds = ogr.Open('tmp/poly.gdb')
+    if ds is None or ds.GetLayerCount() == 0:
+        gdaltest.post_reason('ogr2ogr failed')
+        return 'fail'
+    ds = None
+
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly.gdb')
     #print ret
 
