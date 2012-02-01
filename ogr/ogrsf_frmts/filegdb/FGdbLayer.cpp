@@ -883,10 +883,29 @@ CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszOptions)
       "XOrigin", "YOrigin", "XYScale",
       "ZOrigin", "ZScale",
       "XYTolerance", "ZTolerance" };
-    const char* gridvalues[7] = {
-      "-2147483647", "-2147483647", "1000000000",
-      "-2147483647", "1000000000",
-      "0.0001", "0.0001" };
+    const char* gridvalues[7];
+
+    /* Need different default paramters for geographic and projected coordinate systems */
+    if ( poSRS == NULL || poSRS->IsProjected() )
+    {
+        gridvalues[0] = "-2147483647";
+        gridvalues[1] = "-2147483647";
+        gridvalues[2] = "1000000000";
+        gridvalues[3] = "-2147483647";
+        gridvalues[4] = "1000000000";
+        gridvalues[5] = "0.0001";
+        gridvalues[6] = "0.0001";
+    }
+    else
+    {
+        gridvalues[0] = "-400";
+        gridvalues[1] = "-400";
+        gridvalues[2] = "1000000000";
+        gridvalues[3] = "-2147483647";
+        gridvalues[4] = "1000000000";
+        gridvalues[5] = "0.000000008983153";
+        gridvalues[6] = "0.0001";
+    }
 
     /* Convert any layer creation options available, use defaults otherwise */
     for( int i = 0; i < 7; i++ )
