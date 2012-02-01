@@ -26,9 +26,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#include "ogr_geojson.h"
-#include <jsonc/json.h> // JSON-C
 #include <algorithm> // for_each, find_if
+#include <jsonc/json.h> // JSON-C
+#include "ogr_geojson.h"
 
 /* Remove annoying warnings Microsoft Visual C++ */
 #if defined(_MSC_VER)
