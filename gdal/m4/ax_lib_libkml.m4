@@ -102,9 +102,9 @@ AC_DEFUN([AX_LIB_LIBKML],
         libkml_include_dir2="$libkml_prefix/include/kml"
         libkml_include_dir3="$libkml_prefix/include/kml/third_party/boost_1_34_1"
         if test "$libkml_prefix" = "/usr"; then
-            libkml_lib_flags="-lkmlengine -lkmldom -lkmlbase -lkmlconvenience -lminizip -luriparser"
+            libkml_lib_flags="-lkmldom -lkmlbase -lkmlengine -lkmlconvenience -lminizip -luriparser"
         else
-            libkml_lib_flags="-L$libkml_prefix/lib -lkmlengine -lkmldom -lkmlbase -lkmlconvenience -lminizip -luriparser"
+            libkml_lib_flags="-L$libkml_prefix/lib -lkmldom -lkmlbase -lkmlengine -lkmlconvenience -lminizip -luriparser"
         fi
         run_libkml_test="yes"
     elif test "$libkml_requested" = "yes"; then
