@@ -78,6 +78,8 @@ ILI1Reader::~ILI1Reader() {
  for(i=0;i<nLayers;i++)
      delete papoLayers[i];
  CPLFree(papoLayers);
+
+ delete metaLayer;
 }
 
 void ILI1Reader::SetArcDegrees(double arcDegrees) {
@@ -109,6 +111,7 @@ int ILI1Reader::HasMultiplePointGeom(const char* layername) {
             if(EQUAL(layername, metaFeature->GetFieldAsString(0))) {
               i++;
             }
+            delete metaFeature;
         }
         return i;
     } else {
@@ -538,8 +541,10 @@ int ILI1Reader::ReadTable(const char *layername) {
         if(EQUAL(layername, metaFeature->GetFieldAsString(0))) {
           const char *geomlayername = metaFeature->GetFieldAsString(2);
           curLayer = GetLayerByName(geomlayername);
+          delete metaFeature;
           break;
         }
+        delete metaFeature;
       }
     }
 
@@ -555,6 +560,7 @@ int ILI1Reader::ReadTable(const char *layername) {
         if(EQUAL(curLayer->GetLayerDefn()->GetName(), metaFeature->GetFieldAsString(2))) {
           geomIdx = metaFeature->GetFieldAsInteger(1);
         }
+        delete metaFeature;
       }
     }
 
@@ -681,6 +687,7 @@ int ILI1Reader::ReadTable(const char *layername) {
                 curLayerTmp->AddFeature(tmpFeature);
               }
             }
+            delete metaFeature;
           }
         }
         CSLDestroy(tokens);
