@@ -204,6 +204,9 @@ OGRLineString *ILI2Reader::getArc(DOMElement *elem) {
   ptEnd->flattenTo2D();
   ptOnArc->flattenTo2D();
   interpolateArc(ls, ptStart, ptOnArc, ptEnd, arcIncr);
+  delete ptStart;
+  delete ptOnArc;
+  delete ptEnd;
   return ls;
 }
 
@@ -215,7 +218,11 @@ OGRLineString *getLineString(DOMElement *elem) {
   while (lineElem != NULL) {
     char* pszTagName = XMLString::transcode(lineElem->getTagName());
     if (cmpStr(ILI2_COORD, pszTagName) == 0)
-      ls->addPoint(getPoint(lineElem));
+    {
+      OGRPoint* poPoint = getPoint(lineElem);
+      ls->addPoint(poPoint);
+      delete poPoint;
+    }
     else if (cmpStr(ILI2_ARC, pszTagName) == 0) {
       // end point
       OGRPoint *ptEnd = new OGRPoint();
@@ -252,6 +259,10 @@ OGRLineString *getLineString(DOMElement *elem) {
       ptOnArc->flattenTo2D();
       OGRPoint *ptStart = getPoint((DOMElement *)lineElem->getPreviousSibling()); // COORD or ARC
       interpolateArc(ls, ptStart, ptOnArc, ptEnd, PI/180);
+
+      delete ptStart;
+      delete ptEnd;
+      delete ptOnArc;
     } /* else { // FIXME StructureValue in Polyline not yet supported
     } */
     XMLString::release(&pszTagName);
@@ -286,7 +297,7 @@ OGRPolygon *getPolygon(DOMElement *elem) {
   while (boundaryElem != NULL) {
     char* pszTagName = XMLString::transcode(boundaryElem->getTagName());
     if (cmpStr(ILI2_BOUNDARY, pszTagName) == 0)
-      pg->addRing((OGRLinearRing *)getBoundary(boundaryElem));
+      pg->addRingDirectly((OGRLinearRing *)getBoundary(boundaryElem));
     XMLString::release(&pszTagName);
     boundaryElem = (DOMElement *)boundaryElem->getNextSibling(); // inner boundaries
   }
