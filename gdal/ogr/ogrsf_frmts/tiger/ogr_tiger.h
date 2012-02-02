@@ -132,7 +132,7 @@ protected:
 
   char                *pszModule;
   char                *pszShortModule;
-  FILE                *fpPrimary;
+  VSILFILE            *fpPrimary;
 
   OGRFeatureDefn      *poFeatureDefn;
 
@@ -142,7 +142,7 @@ protected:
   int                 OpenFile( const char *, const char * );
   void                EstablishFeatureCount();
 
-  static int          EstablishRecordLength( FILE * );
+  static int          EstablishRecordLength( VSILFILE * );
 
   void                SetupVersion();
 
@@ -172,7 +172,7 @@ public:
   int                 WriteField( OGRFeature *, const char *, char *,
                                   int, int, char, char );
   int                 WriteRecord( char *pachRecord, int nRecLen,
-                                   const char *pszType, FILE *fp = NULL );
+                                   const char *pszType, VSILFILE *fp = NULL );
   int                 WritePoint( char *pachRecord, int nStart,
                                   double dfX, double dfY );
 
@@ -204,10 +204,10 @@ public:
 
 class TigerCompleteChain : public TigerFileBase
 {
-  FILE               *fpShape;
+  VSILFILE           *fpShape;
   int                *panShapeRecordId;
 
-  FILE               *fpRT3;
+  VSILFILE               *fpRT3;
   int                 bUsingRT3;
   int                 nRT1RecOffset;
 
@@ -357,7 +357,7 @@ class TigerPolygon : public TigerFileBase
   const TigerRecordInfo    *psRTAInfo;
   const TigerRecordInfo    *psRTSInfo;
 
-  FILE               *fpRTS;
+  VSILFILE               *fpRTS;
   int                 bUsingRTS;
   int                 nRTSRecLen;
 

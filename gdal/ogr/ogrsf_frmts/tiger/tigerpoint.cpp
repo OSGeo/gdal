@@ -64,14 +64,14 @@ OGRFeature *TigerPoint::GetFeature( int nRecordId,
     if( fpPrimary == NULL )
         return NULL;
 
-    if( VSIFSeek( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 ) {
+    if( VSIFSeekL( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 ) {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to %d of %sP",
                   nRecordId * nRecordLength, pszModule );
         return NULL;
     }
 
-    if( VSIFRead( achRecord, psRTInfo->nRecordLength, 1, fpPrimary ) != 1 ) {
+    if( VSIFReadL( achRecord, psRTInfo->nRecordLength, 1, fpPrimary ) != 1 ) {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %sP",
                   nRecordId, pszModule );
