@@ -110,9 +110,27 @@ def mrsid_1():
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]"""
     
-    return tst.testOpen( check_gt = gt, check_prj = prj, \
+    ret = tst.testOpen( check_gt = gt, \
         check_stat = (0.0, 255.0, 103.319, 55.153), \
         check_approx_stat = (2.0, 243.0, 103.131, 43.978) )
+
+    if ret != 'success':
+        return ret
+
+    ds = gdal.Open( 'data/mercator.sid' )
+    got_prj = ds.GetProjectionRef()
+    ds = None
+
+    if prj.find('North_American_Datum_1927') == -1 or \
+       prj.find('Mercator_1SP') == -1 :
+           gdaltest.post_reason('did not get expected projection')
+           print(got_prj)
+           return 'fail'
+
+    if got_prj != prj:
+        print('Warning: did not get exactly expected projection. Got %s' % got_prj)
+
+    return 'success'
 
 ###############################################################################
 # Do a direct IO to read the image at a resolution for which there is no
