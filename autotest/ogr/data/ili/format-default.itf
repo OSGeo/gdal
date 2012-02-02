@@ -1,0 +1,12 @@
+SCNT
+FormatDefault Transfer-File
+////
+MTID FormatDefault
+MODL FormatDefault
+TOPI FormatTests
+TABL FormatTests
+OBJE 0 aa_bb cc^dd 1
+ETAB
+ETOP
+EMOD
+ENDE
