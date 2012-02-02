@@ -1588,9 +1588,9 @@ char** netCDFDataset::FetchStandardParallels( const char *pszGridMappingValue )
 void netCDFDataset::SetProjectionFromVar( int var )
 {
     size_t       start[2], edge[2];
-    unsigned int i;
-    const char   *pszValue;
-    int          nVarProjectionID;
+    unsigned int i=0;
+    const char   *pszValue = NULL;
+    int          nVarProjectionID = -1;
     char         szVarName[ MAX_NC_NAME ];
     char         szTemp[ MAX_NC_NAME ];
     char         szGridMappingName[ MAX_NC_NAME ];
@@ -1598,17 +1598,18 @@ void netCDFDataset::SetProjectionFromVar( int var )
 
     double       dfStdP1=0.0;
     double       dfStdP2=0.0;
-    double       dfCenterLat;
-    double       dfCenterLon;
-    double       dfScale;
-    double       dfFalseEasting;
-    double       dfFalseNorthing;
-    double       dfCentralMeridian;
-    double       dfEarthRadius;
-    double       dfInverseFlattening;
-    double       dfLonPrimeMeridian;
-    double       dfSemiMajorAxis;
-    double       dfSemiMinorAxis;
+    double       dfCenterLat=0.0;
+    double       dfCenterLon=0.0;
+    double       dfScale=1.0;
+    double       dfFalseEasting=0.0;
+    double       dfFalseNorthing=0.0;
+    double       dfCentralMeridian=0.0;
+    double       dfEarthRadius=0.0;
+    double       dfInverseFlattening=0.0;
+    double       dfLonPrimeMeridian=0.0;
+    const char   *pszPMName=NULL;
+    double       dfSemiMajorAxis=0.0;
+    double       dfSemiMinorAxis=0.0;
     
     int          bGotGeogCS = FALSE;
     int          bGotCfSRS = FALSE;
@@ -1621,13 +1622,13 @@ void netCDFDataset::SetProjectionFromVar( int var )
     OGRSpatialReference oSRS;
     int          nVarDimXID = -1;
     int          nVarDimYID = -1;
-    double       *pdfXCoord;
-    double       *pdfYCoord;
+    double       *pdfXCoord = NULL;
+    double       *pdfYCoord = NULL;
     char         szDimNameX[ MAX_NC_NAME ];
     char         szDimNameY[ MAX_NC_NAME ];
-    int          nSpacingBegin;
-    int          nSpacingMiddle;
-    int          nSpacingLast;
+    int          nSpacingBegin=0;
+    int          nSpacingMiddle=0;
+    int          nSpacingLast=0;
     size_t       xdim = nRasterXSize;
     size_t       ydim = nRasterYSize;
 
@@ -1780,6 +1781,9 @@ void netCDFDataset::SetProjectionFromVar( int var )
                 poDS->FetchCopyParm( szGridMappingValue,
                                      CF_PP_LONG_PRIME_MERIDIAN, 
                                      0.0 );
+            // should try to find PM name from its value if not Greenwich
+            if ( ! CPLIsEqual(dfLonPrimeMeridian,0.0) )
+                pszPMName = "unknown";
 
             dfInverseFlattening = 
                 poDS->FetchCopyParm( szGridMappingValue, 
@@ -1816,7 +1820,8 @@ void netCDFDataset::SetProjectionFromVar( int var )
                         oSRS.SetGeogCS( "unknown", 
                                         NULL, 
                                         "Sphere", 
-                                        dfEarthRadius, 0.0 );
+                                        dfEarthRadius, 0.0,
+                                        pszPMName, dfLonPrimeMeridian );
                         bGotGeogCS = TRUE;
                     }
                     else {
@@ -1828,7 +1833,8 @@ void netCDFDataset::SetProjectionFromVar( int var )
                         oSRS.SetGeogCS( "unknown", 
                                         NULL, 
                                         "Spheroid", 
-                                        dfEarthRadius, dfInverseFlattening );
+                                        dfEarthRadius, dfInverseFlattening,
+                                        pszPMName, dfLonPrimeMeridian );
                         bGotGeogCS = TRUE;
                     }
                 }
@@ -1836,7 +1842,8 @@ void netCDFDataset::SetProjectionFromVar( int var )
                     oSRS.SetGeogCS( "unknown", 
                                     NULL, 
                                     "Spheroid", 
-                                    dfEarthRadius, dfInverseFlattening );
+                                    dfEarthRadius, dfInverseFlattening,
+                                        pszPMName, dfLonPrimeMeridian );
                     bGotGeogCS = TRUE;
                 }  
 
@@ -4182,14 +4189,10 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     i=0;
 
     for ( unsigned int lev = 0; lev < nTotLevCount ; lev++ ) {
-        char ** papszToken;
-        papszToken=NULL;
-
         netCDFRasterBand *poBand =
             new netCDFRasterBand(poDS, var, nDim, lev,
                                  panBandZLev, panBandDimPos, 
                                  paDimIds, i+1 );
-
         poDS->SetBand( i+1, poBand );
         i++;
     } 
@@ -4689,14 +4692,11 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand );
 
-        /* new */
         GDALDataType eDT;
-        CPLErr eErr = CE_None;
 
         CPLDebug( "GDAL_netCDF", "copying band data # %d/%d ",
                   iBand,nBands );
 
-        // hBand = GDALGetRasterBand( poSrcDS, i );
         GDALRasterBand *poBand = poDS->GetRasterBand( iBand );
         eDT = poSrcBand->GetRasterDataType();
         eErr = CE_None;
@@ -5521,6 +5521,7 @@ CPLErr NCDFPutAttr( int nCdfId, int nVarId,
         nTmpAttrType = NC_CHAR;
         errno = 0;
         nValue = strtol( papszValues[i], &pszTemp, 10 );
+        dfValue = (double) nValue;
         /* test for int */
         /* TODO test for Byte and short - can this be done safely? */
         if ( (errno == 0) && (papszValues[i] != pszTemp) && (*pszTemp == 0) ) {
