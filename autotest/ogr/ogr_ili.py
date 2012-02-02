@@ -101,11 +101,12 @@ def ogr_interlis1_2():
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
 
-    if feat.GetFieldCount() != 4:
+    field_values = [20, 1, 168.27, 170.85, 'POINT (168.27 170.85)']
+
+    if feat.GetFieldCount() != len(field_values)-1:
         gdaltest.post_reason( 'field count wrong.' )
         return 'fail'
 
-    field_values = [20, 1, 168.27, 170.85, 'POINT (168.27 170.85)']
     for i in range(feat.GetFieldCount()):
         if feat.GetFieldAsString(i) != str(field_values[i]):
           feat.DumpReadable()
@@ -121,6 +122,125 @@ def ogr_interlis1_2():
     if geom.GetGeometryName() != 'POINT':
         gdaltest.post_reason( 'Geometry of wrong type.' )
         return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Ili1 FORMAT DEFAULT test.
+
+def ogr_interlis1_3():
+
+    if not gdaltest.have_ili_reader:
+        return 'skip'
+
+    ds = ogr.Open( 'data/ili/format-default.itf,data/ili/format-default.ili' )
+
+    layers = ['FormatTests__FormatTests']
+    if ds.GetLayerCount() != len(layers):
+        gdaltest.post_reason( 'layer count wrong.' )
+        return 'fail'
+
+    for i in range(ds.GetLayerCount()):
+      if not ds.GetLayer(i).GetName() in layers:
+          gdaltest.post_reason( 'Did not get right layers' )
+          return 'fail'
+
+    lyr = ds.GetLayerByName('FormatTests__FormatTests')
+
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'feature count wrong.' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    field_values = [0, 'aa bb', 'cc^dd', '', 1]
+
+    if feat.GetFieldCount() != len(field_values):
+        gdaltest.post_reason( 'field count wrong.' )
+        return 'fail'
+
+    for i in range(feat.GetFieldCount()):
+        if feat.GetFieldAsString(i) != str(field_values[i]):
+          feat.DumpReadable()
+          print feat.GetFieldAsString(i)
+          gdaltest.post_reason( 'field value wrong.' )
+          return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Ili1 FORMAT test.
+
+def ogr_interlis1_4():
+
+    if not gdaltest.have_ili_reader:
+        return 'skip'
+
+    ds = ogr.Open( 'data/ili/format-test.itf,data/ili/format-test.ili' )
+
+    layers = ['FormatTests__FormatTests']
+    if ds.GetLayerCount() != len(layers):
+        gdaltest.post_reason( 'layer count wrong.' )
+        return 'fail'
+
+    for i in range(ds.GetLayerCount()):
+      if not ds.GetLayer(i).GetName() in layers:
+          gdaltest.post_reason( 'Did not get right layers' )
+          return 'fail'
+
+    lyr = ds.GetLayerByName('FormatTests__FormatTests')
+
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'feature count wrong.' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    field_values = [0, 'aa_bb', 'cc dd', '', 1]
+
+    if feat.GetFieldCount() != len(field_values):
+        gdaltest.post_reason( 'field count wrong.' )
+        return 'fail'
+
+    for i in range(feat.GetFieldCount()):
+        if feat.GetFieldAsString(i) != str(field_values[i]):
+          feat.DumpReadable()
+          print feat.GetFieldAsString(i)
+          gdaltest.post_reason( 'field value wrong.' )
+          return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Write Ili1 transfer file.
+
+def ogr_interlis1_5():
+
+    if not gdaltest.have_ili_reader:
+        return 'skip'
+
+    ds = ogr.Open( 'data/ili/format-default.itf,data/ili/format-default.ili' )
+    lyr = ds.GetLayerByName('FormatTests__FormatTests')
+    feat = lyr.GetNextFeature()
+
+    driver = ogr.GetDriverByName( 'Interlis 1' )
+    dst_ds = driver.CreateDataSource( 'out.itf' )
+
+    dst_lyr = dst_ds.CreateLayer( 'test' )
+
+    layer_defn = lyr.GetLayerDefn()
+    for i in range( layer_defn.GetFieldCount() ):
+        dst_lyr.CreateField( layer_defn.GetFieldDefn( i ) )
+    dst_feat = ogr.Feature( feature_def = dst_lyr.GetLayerDefn() )
+    dst_feat.SetFrom( feat )
+    dst_lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
 
     ds.Destroy()
 
@@ -176,8 +296,6 @@ def ogr_interlis2_2():
     if ds is None:
         return 'fail'
 
-    print "ds.GetLayerCount()"
-    print ds.GetLayerCount()
     if ds.GetLayerCount() != 4:
         gdaltest.post_reason( 'layer count wrong.' )
         return 'fail'
@@ -209,6 +327,9 @@ def ogr_interlis_cleanup():
 gdaltest_list = [ 
     ogr_interlis1_1,
     ogr_interlis1_2,
+    ogr_interlis1_3,
+    ogr_interlis1_4,
+    ogr_interlis1_5,
     ogr_interlis2_1,
     #ogr_interlis2_2,
     ogr_interlis_cleanup ]

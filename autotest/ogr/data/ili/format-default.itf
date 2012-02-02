@@ -5,7 +5,8 @@ MTID FormatDefault
 MODL FormatDefault
 TOPI FormatTests
 TABL FormatTests
-OBJE 0 aa_bb cc^dd 1
+OBJE 0 aa_bb \
+CONT cc^dd @ 1
 ETAB
 ETOP
 EMOD
