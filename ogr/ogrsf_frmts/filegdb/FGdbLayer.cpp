@@ -894,8 +894,7 @@ CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszOptions)
     // default scale is 10x the tolerance
     long zscale = 1 / ztol * 10;
 
-    char s_zscale[50], s_ztol[50];
-    snprintf(s_ztol, 50, "%f", ztol);
+    char s_xyscale[50], s_zscale[50];
     snprintf(s_zscale, 50, "%ld", zscale);
     
     if ( poSRS == NULL || poSRS->IsProjected() )
@@ -905,8 +904,6 @@ CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszOptions)
         // default scale is 10x the tolerance
         long xyscale = 1 / xytol * 10;
 
-        char s_xyscale[50], s_xytol[50];
-        snprintf(s_xytol, 50, "%f", xytol);
         snprintf(s_xyscale, 50, "%ld", xyscale);
 
         // Ideally we would use the same X/Y origins as ArcGIS, but we need the algorithm they use.
