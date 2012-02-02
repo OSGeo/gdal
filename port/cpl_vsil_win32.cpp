@@ -378,6 +378,8 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
 
     if( strstr(pszAccess, "w") != NULL )
         dwCreationDisposition = CREATE_ALWAYS;
+    else if( strstr(pszAccess, "a") != NULL )
+        dwCreationDisposition = OPEN_ALWAYS;
     else
         dwCreationDisposition = OPEN_EXISTING;
 
