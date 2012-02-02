@@ -88,6 +88,7 @@ string ltrim(string tmpstr) {
 }
 
 string rtrim(string tmpstr) {
+  if (tmpstr.length() == 0) return tmpstr;
   unsigned int i = tmpstr.length() - 1;
   while (i >= 0 && (tmpstr[i] == ' ' || tmpstr[i] == '\t' || tmpstr[i] == '\r' || tmpstr[i] == '\n')) --i;
   return i < tmpstr.length() - 1 ? tmpstr.substr(0, i+1) : tmpstr;
