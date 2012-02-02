@@ -110,7 +110,7 @@ def ogr_interlis1_2():
     for i in range(feat.GetFieldCount()):
         if feat.GetFieldAsString(i) != str(field_values[i]):
           feat.DumpReadable()
-          print feat.GetFieldAsString(i)
+          print(feat.GetFieldAsString(i))
           gdaltest.post_reason( 'field value wrong.' )
           return 'fail'
 
@@ -164,7 +164,7 @@ def ogr_interlis1_3():
     for i in range(feat.GetFieldCount()):
         if feat.GetFieldAsString(i) != str(field_values[i]):
           feat.DumpReadable()
-          print feat.GetFieldAsString(i)
+          print(feat.GetFieldAsString(i))
           gdaltest.post_reason( 'field value wrong.' )
           return 'fail'
 
@@ -209,7 +209,7 @@ def ogr_interlis1_4():
     for i in range(feat.GetFieldCount()):
         if feat.GetFieldAsString(i) != str(field_values[i]):
           feat.DumpReadable()
-          print feat.GetFieldAsString(i)
+          print(feat.GetFieldAsString(i))
           gdaltest.post_reason( 'field value wrong.' )
           return 'fail'
 
