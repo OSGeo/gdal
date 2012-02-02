@@ -90,6 +90,26 @@ def mrsid_1():
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]"""
     
+    #
+    # MrSID SDK getWKT() method - DSDK 8 and newer?
+    # 
+    prj = """PROJCS["MER         E000|",
+    GEOGCS["NAD27",
+        DATUM["North_American_Datum_1927",
+            SPHEROID["Clarke 1866",6378206.4,294.9786982139006,
+                AUTHORITY["EPSG","7008"]],
+            AUTHORITY["EPSG","6267"]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433],
+        AUTHORITY["EPSG","4267"]],
+    PROJECTION["Mercator_1SP"],
+    PARAMETER["central_meridian",0],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",0],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]]]"""
+    
     return tst.testOpen( check_gt = gt, check_prj = prj, \
         check_stat = (0.0, 255.0, 103.319, 55.153), \
         check_approx_stat = (2.0, 243.0, 103.131, 43.978) )
