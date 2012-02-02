@@ -49,7 +49,10 @@ def ogr_tiger_1():
         os.stat('tmp/cache/TGR01001/TGR01001.MET')
     except:
         try:
-            os.mkdir('tmp/cache/TGR01001')
+            try:
+                os.stat('tmp/cache/TGR01001')
+            except:
+                os.mkdir('tmp/cache/TGR01001')
             gdaltest.unzip( 'tmp/cache/TGR01001', 'tmp/cache/TGR01001.ZIP')
             try:
                 os.stat('tmp/cache/TGR01001/TGR01001.MET')
@@ -224,7 +227,7 @@ def ogr_tiger_4():
         if file[0] == '.':
             continue
 
-        gdal.Unlink( 'tmp/cache/TGR01001/'+file )
+        gdal.Unlink( '/vsimem/tigertest/'+file )
 
     return 'success'
 
