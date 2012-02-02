@@ -998,6 +998,9 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
         
         if( !bHasNonAttributeChildren )
         {
+            _GrowBuffer( *pnLength + 40,
+                         ppszText, pnMaxLength );
+
             if( psNode->pszValue[0] == '?' )
                 strcat( *ppszText + *pnLength, "?>\n" );
             else
