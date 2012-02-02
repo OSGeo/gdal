@@ -1,0 +1,26 @@
+TRANSFER FormatDefault;
+
+  DOMAIN
+    LKoord = COORD2 100.00 100.00
+                    300.00 300.00;
+
+MODEL FormatDefault
+
+  TOPIC FormatTests =
+
+    TABLE FormatTests =
+      Text1: TEXT*20;
+      Text2: TEXT*6;
+      Number: [0..99];
+    NO IDENT
+    END FormatTests;
+
+  END FormatTests.
+
+END FormatDefault.
+
+FORMAT FREE;
+CODE BLANK = DEFAULT, UNDEFINED = DEFAULT, CONTINUE = DEFAULT; !! BLANK = _ UNDEFINED = @ CONTINUE = \
+TID = ANY;
+
+END.
