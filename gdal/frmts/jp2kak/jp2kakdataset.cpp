@@ -1465,7 +1465,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
             if( oJP2Geo.papszMetadata != NULL )
             {
-                char **papszMD = poDS->GDALPamDataset::GetMetadata();
+                char **papszMD = CSLDuplicate(poDS->GDALPamDataset::GetMetadata());
 
                 papszMD = CSLMerge( papszMD, oJP2Geo.papszMetadata );
                 poDS->GDALPamDataset::SetMetadata( papszMD );
