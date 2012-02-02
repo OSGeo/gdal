@@ -3996,7 +3996,7 @@ interleave = bsq
 byte order = 0
 map info = {UTM, 1, 1, 440720.000000, 3751320.000000, 60.000000, 60.000000, 11, North}
 band names = {
-Band 1}""")
+Band 1}""".encode('ascii'))
     f.close()
 
     src_ds = gdal.Open('tmp/tiff_write_101.bin')
