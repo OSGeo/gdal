@@ -4150,7 +4150,9 @@ def tiff_write_105():
     if cs != 2923:
         gdaltest.post_reason( 'Did not get expected checksum, got %d.' % cs )
         return 'fail'
-    
+
+    ds = None
+
     gdaltest.tiff_drv.Delete( 'tmp/bug4468.tif' )
 
     return 'success'
