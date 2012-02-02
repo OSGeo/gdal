@@ -156,7 +156,7 @@ TigerVersion OGRTigerDataSource::TigerCheckVersion( TigerVersion nOldVersion,
         return nOldVersion;
 
     char *pszRTCFilename = BuildFilename( pszFilename, "C" );
-    FILE *fp = VSIFOpen( pszRTCFilename, "rb" );
+    VSILFILE *fp = VSIFOpenL( pszRTCFilename, "rb" );
     CPLFree( pszRTCFilename );
 
     if( fp == NULL )
@@ -164,13 +164,13 @@ TigerVersion OGRTigerDataSource::TigerCheckVersion( TigerVersion nOldVersion,
     
     char        szHeader[115];
 
-    if( VSIFRead( szHeader, sizeof(szHeader)-1, 1, fp ) < 1 )
+    if( VSIFReadL( szHeader, sizeof(szHeader)-1, 1, fp ) < 1 )
     {
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         return nOldVersion;
     }
 
-    VSIFClose( fp );
+    VSIFCloseL( fp );
     
 /* -------------------------------------------------------------------- */
 /*      Is the record length 112?  If so, it is an older version        */
@@ -292,7 +292,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                               char ** papszLimitedFileList )
 
 {
-    VSIStatBuf      stat;
+    VSIStatBufL     stat;
     char            **papszFileList = NULL;
     int             i;
 
@@ -301,7 +301,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 /* -------------------------------------------------------------------- */
 /*      Is the given path a directory or a regular file?                */
 /* -------------------------------------------------------------------- */
-    if( CPLStat( pszFilename, &stat ) != 0 
+    if( VSIStatL( pszFilename, &stat ) != 0 
         || (!VSI_ISDIR(stat.st_mode) && !VSI_ISREG(stat.st_mode)) )
     {
         if( !bTestOpen )
@@ -393,26 +393,26 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
         if( bTestOpen || i == 0 )
         {
             char        szHeader[500];
-            FILE        *fp;
+            VSILFILE    *fp;
             char        *pszRecStart = NULL;
             int         bIsGDT = FALSE;
             char       *pszFilename;
 
             pszFilename = BuildFilename( papszFileList[i], "1" );
 
-            fp = VSIFOpen( pszFilename, "rb" );
+            fp = VSIFOpenL( pszFilename, "rb" );
             CPLFree( pszFilename );
 
             if( fp == NULL )
                 continue;
             
-            if( VSIFRead( szHeader, sizeof(szHeader)-1, 1, fp ) < 1 )
+            if( VSIFReadL( szHeader, sizeof(szHeader)-1, 1, fp ) < 1 )
             {
-                VSIFClose( fp );
+                VSIFCloseL( fp );
                 continue;
             }
 
-            VSIFClose( fp );
+            VSIFCloseL( fp );
 
             pszRecStart = szHeader;
             szHeader[sizeof(szHeader)-1] = '\0';
@@ -766,17 +766,17 @@ int OGRTigerDataSource::TestCapability( const char *pszCap )
 int OGRTigerDataSource::Create( const char *pszNameIn, char **papszOptions )
 
 {
-    VSIStatBuf      stat;
+    VSIStatBufL      stat;
     
 /* -------------------------------------------------------------------- */
 /*      Try to create directory if it doesn't already exist.            */
 /* -------------------------------------------------------------------- */
-    if( CPLStat( pszNameIn, &stat ) != 0 )
+    if( VSIStatL( pszNameIn, &stat ) != 0 )
     {
         VSIMkdir( pszNameIn, 0755 );
     }
 
-    if( CPLStat( pszNameIn, &stat ) != 0 || !VSI_ISDIR(stat.st_mode) )
+    if( VSIStatL( pszNameIn, &stat ) != 0 || !VSI_ISDIR(stat.st_mode) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s is not a directory, nor can be directly created as one.",
