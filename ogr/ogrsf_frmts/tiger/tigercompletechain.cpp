@@ -272,10 +272,10 @@ TigerCompleteChain::~TigerCompleteChain()
     CPLFree( panShapeRecordId );
 
     if( fpRT3 != NULL )
-        VSIFClose( fpRT3 );
+        VSIFCloseL( fpRT3 );
 
     if( fpShape != NULL )
-        VSIFClose( fpShape );
+        VSIFCloseL( fpShape );
 }
 
 /************************************************************************/
@@ -300,8 +300,8 @@ int TigerCompleteChain::SetModule( const char * pszModule )
     {
         char achHeader[10];
         
-        VSIFSeek( fpPrimary, 0, SEEK_SET );
-        VSIFRead( achHeader, sizeof(achHeader), 1, fpPrimary );
+        VSIFSeekL( fpPrimary, 0, SEEK_SET );
+        VSIFReadL( achHeader, sizeof(achHeader), 1, fpPrimary );
         
         if( EQUALN(achHeader,"Copyright",8) )
         {
@@ -317,7 +317,7 @@ int TigerCompleteChain::SetModule( const char * pszModule )
     {
         if( fpRT3 != NULL )
         {
-            VSIFClose( fpRT3 );
+            VSIFCloseL( fpRT3 );
             fpRT3 = NULL;
         }
 
@@ -327,7 +327,7 @@ int TigerCompleteChain::SetModule( const char * pszModule )
         
             pszFilename = poDS->BuildFilename( pszModule, "3" );
 
-            fpRT3 = VSIFOpen( pszFilename, "rb" );
+            fpRT3 = VSIFOpenL( pszFilename, "rb" );
 
             CPLFree( pszFilename );
         }
@@ -339,7 +339,7 @@ int TigerCompleteChain::SetModule( const char * pszModule )
 /* -------------------------------------------------------------------- */
     if( fpShape != NULL )
     {
-        VSIFClose( fpShape );
+        VSIFCloseL( fpShape );
         fpShape = NULL;
     }
     
@@ -355,7 +355,7 @@ int TigerCompleteChain::SetModule( const char * pszModule )
 
         pszFilename = poDS->BuildFilename( pszModule, "2" );
 
-        fpShape = VSIFOpen( pszFilename, "rb" );
+        fpShape = VSIFOpenL( pszFilename, "rb" );
         
         if( fpShape == NULL )
         {
@@ -396,7 +396,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
     if( fpPrimary == NULL )
         return NULL;
 
-    if( VSIFSeek( fpPrimary, (nRecordId+nRT1RecOffset) * nRecordLength, 
+    if( VSIFSeekL( fpPrimary, (nRecordId+nRT1RecOffset) * nRecordLength, 
                   SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -405,7 +405,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
         return NULL;
     }
 
-    if( VSIFRead( achRecord, psRT1Info->nRecordLength, 1, fpPrimary ) != 1 )
+    if( VSIFReadL( achRecord, psRT1Info->nRecordLength, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read %d bytes of record %d of %s1 at offset %d",
@@ -431,7 +431,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
         char    achRT3Rec[OGR_TIGER_RECBUF_LEN];
         int     nRT3RecLen = psRT3Info->nRecordLength + nRecordLength - psRT1Info->nRecordLength;
 
-        if( VSIFSeek( fpRT3, nRecordId * nRT3RecLen, SEEK_SET ) != 0 )
+        if( VSIFSeekL( fpRT3, nRecordId * nRT3RecLen, SEEK_SET ) != 0 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to seek to %d of %s3",
@@ -439,7 +439,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
             return NULL;
         }
 
-        if( VSIFRead( achRT3Rec, psRT3Info->nRecordLength, 1, fpRT3 ) != 1 )
+        if( VSIFReadL( achRT3Rec, psRT3Info->nRecordLength, 1, fpRT3 ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to read record %d of %s3",
@@ -508,7 +508,7 @@ int TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
     {
         int  nBytesRead = 0;
 
-        if( VSIFSeek( fpShape, (nShapeRecId-1) * nShapeRecLen,
+        if( VSIFSeekL( fpShape, (nShapeRecId-1) * nShapeRecLen,
                       SEEK_SET ) != 0 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
@@ -517,15 +517,15 @@ int TigerCompleteChain::AddShapePoints( int nTLID, int nRecordId,
             return FALSE;
         }
 
-        nBytesRead = VSIFRead( achShapeRec, 1, psRT2Info->nRecordLength, 
-                               fpShape );
+        nBytesRead = VSIFReadL( achShapeRec, 1, psRT2Info->nRecordLength, 
+                                fpShape );
 
         /* 
         ** Handle case where the last record in the file is full.  We will
         ** try to read another record but not find it.  We require that we
         ** have found at least one shape record for this case though. 
         */
-        if( nBytesRead <= 0 && VSIFEof( fpShape ) 
+        if( nBytesRead <= 0 && VSIFEofL( fpShape ) 
             && poLine->getNumPoints() > 0 )
             break;
 
@@ -629,7 +629,7 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
 
     while( nChainsRead < nMaxChainToRead )
     {
-        if( VSIFSeek( fpShape, (nWorkingRecId-1) * nShapeRecLen,
+        if( VSIFSeekL( fpShape, (nWorkingRecId-1) * nShapeRecLen,
                       SEEK_SET ) != 0 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
@@ -638,9 +638,9 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
             return -2;
         }
 
-        if( VSIFRead( achShapeRec, psRT2Info->nRecordLength, 1, fpShape ) != 1 )
+        if( VSIFReadL( achShapeRec, psRT2Info->nRecordLength, 1, fpShape ) != 1 )
         {
-            if( !VSIFEof( fpShape ) )
+            if( !VSIFEofL( fpShape ) )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Failed to read record %d of %s2",
@@ -691,7 +691,7 @@ int TigerCompleteChain::SetWriteModule( const char *pszFileCode, int nRecLen,
     {
         if( fpRT3 != NULL )
         {
-            VSIFClose( fpRT3 );
+            VSIFCloseL( fpRT3 );
             fpRT3 = NULL;
         }
 
@@ -701,7 +701,7 @@ int TigerCompleteChain::SetWriteModule( const char *pszFileCode, int nRecLen,
         
             pszFilename = poDS->BuildFilename( pszModule, "3" );
 
-            fpRT3 = VSIFOpen( pszFilename, "ab" );
+            fpRT3 = VSIFOpenL( pszFilename, "ab" );
 
             CPLFree( pszFilename );
         }
@@ -713,7 +713,7 @@ int TigerCompleteChain::SetWriteModule( const char *pszFileCode, int nRecLen,
 /* -------------------------------------------------------------------- */
     if( fpShape != NULL )
     {
-        VSIFClose( fpShape );
+        VSIFCloseL( fpShape );
         fpShape = NULL;
     }
     
@@ -723,7 +723,7 @@ int TigerCompleteChain::SetWriteModule( const char *pszFileCode, int nRecLen,
         
         pszFilename = poDS->BuildFilename( pszModule, "2" );
         
-        fpShape = VSIFOpen( pszFilename, "ab" );
+        fpShape = VSIFOpenL( pszFilename, "ab" );
         
         CPLFree( pszFilename );
     }
