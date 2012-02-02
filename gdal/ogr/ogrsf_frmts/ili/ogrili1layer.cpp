@@ -304,7 +304,7 @@ OGRErr OGRILI1Layer::CreateFeature( OGRFeature *poFeature ) {
     static long tid = -1; //system generated TID (must be unique within table)
     VSIFPrintf( poDS->GetTransferFile(), "OBJE" );
 
-    if ( !EQUAL(poFeatureDefn->GetFieldDefn(0)->GetNameRef(), "TID") )
+    if ( poFeatureDefn->GetFieldCount() && !EQUAL(poFeatureDefn->GetFieldDefn(0)->GetNameRef(), "TID") )
     {
         //Input is not generated from an Interlis 1 source
         if (poFeature->GetFID() != OGRNullFID)
@@ -344,7 +344,17 @@ OGRErr OGRILI1Layer::CreateFeature( OGRFeature *poFeature ) {
           if ( poFeature->IsFieldSet( iField ) )
           {
               const char *pszRaw = poFeature->GetFieldAsString( iField );
-              VSIFPrintf( poDS->GetTransferFile(), " %s", pszRaw );
+              if (poFeatureDefn->GetFieldDefn( iField )->GetType() == OFTString) {
+                  //Replace spaces
+                  char* pszString = CPLStrdup(pszRaw);
+                  for(size_t i=0; i<strlen(pszString); i++ ) {
+                      if (pszString[i] == ' ') pszString[i] = '_';
+                  }
+                  VSIFPrintf( poDS->GetTransferFile(), " %s", pszString );
+                  CPLFree( pszString );
+              } else {
+                  VSIFPrintf( poDS->GetTransferFile(), " %s", pszRaw );
+              }
           }
           else
           {

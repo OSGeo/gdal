@@ -9,8 +9,9 @@ MODEL FormatDefault
   TOPIC FormatTests =
 
     TABLE FormatTests =
-      Text1: TEXT*20;
+      Text1: TEXT*6;
       Text2: TEXT*6;
+      Text3: TEXT*6;
       Number: [0..99];
     NO IDENT
     END FormatTests;
