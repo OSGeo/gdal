@@ -2208,7 +2208,8 @@ void JPGDataset::ErrorExit(j_common_ptr cinfo)
 #  pragma warning(disable:4701)
 #endif
 
-static void JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask )
+static CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
+                             GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
     int nXSize = poMask->GetXSize();
@@ -2247,6 +2248,14 @@ static void JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask )
                 pabyBitBuf[iBit>>3] |= (0x1 << (iBit&7));
 
             iBit++;
+        }
+
+        if( eErr == CE_None
+            && !pfnProgress( (iY + 1) / (double) nYSize, NULL, pProgressData ) )
+        {
+            eErr = CE_Failure;
+            CPLError( CE_Failure, CPLE_UserInterrupt,
+                      "User terminated JPGAppendMask()" );
         }
     }
     
@@ -2331,6 +2340,8 @@ static void JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask )
 
     CPLFree( pabyBitBuf );
     CPLFree( pabyCMask );
+
+    return eErr;
 }
 
 /************************************************************************/
@@ -2507,6 +2518,14 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     jpeg_start_compress( &sCInfo, TRUE );
 
 /* -------------------------------------------------------------------- */
+/*      Does the source have a mask?  If so, we will append it to the   */
+/*      jpeg file after the imagery.                                    */
+/* -------------------------------------------------------------------- */
+    int nMaskFlags = poSrcDS->GetRasterBand(1)->GetMaskFlags();
+    int bAppendMask =( !(nMaskFlags & GMF_ALL_VALID)
+        && (nBands == 1 || (nMaskFlags & GMF_PER_DATASET)) );
+
+/* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
     GByte 	*pabyScanline;
@@ -2553,7 +2572,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             jpeg_write_scanlines( &sCInfo, &ppSamples, 1 );
 
         if( eErr == CE_None 
-            && !pfnProgress( (iLine+1) / (double) nYSize,
+            && !pfnProgress( (iLine+1) / ((bAppendMask ? 2 : 1) * (double) nYSize),
                              NULL, pProgressData ) )
         {
             eErr = CE_Failure;
@@ -2580,15 +2599,23 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Does the source have a mask?  If so, append it to the jpeg file.*/
+/*      Append masks to the jpeg file if necessary.                     */
 /* -------------------------------------------------------------------- */
-    int nMaskFlags = poSrcDS->GetRasterBand(1)->GetMaskFlags();
-    if( !(nMaskFlags & GMF_ALL_VALID) 
-        && (nBands == 1 || (nMaskFlags & GMF_PER_DATASET)) )
+    if( bAppendMask )
     {
-        CPLDebug( "JPEG", "Appending Mask Bitmap" ); 
-        JPGAppendMask( pszFilename, poSrcDS->GetRasterBand(1)->GetMaskBand() );
+        CPLDebug( "JPEG", "Appending Mask Bitmap" );
+
+        void* pScaledData = GDALCreateScaledProgress( 0.5, 1, pfnProgress, pProgressData );
+        eErr = JPGAppendMask( pszFilename, poSrcDS->GetRasterBand(1)->GetMaskBand(),
+                              GDALScaledProgress, pScaledData );
+        GDALDestroyScaledProgress( pScaledData );
         nCloneFlags &= (~GCIF_MASK);
+
+        if( eErr != CE_None )
+        {
+            VSIUnlink( pszFilename );
+            return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
