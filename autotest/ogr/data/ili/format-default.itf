@@ -4,7 +4,7 @@ FormatDefault Transfer-File
 MTID FormatDefault
 MODL FormatDefault
 TOPI FormatTests
-TABL FormatTests
+TABL FormatTable
 OBJE 0 aa_bb \
 CONT cc^dd @ 1
 ETAB
