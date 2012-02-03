@@ -137,7 +137,7 @@ def ogr_interlis1_3():
 
     ds = ogr.Open( 'data/ili/format-default.itf,data/ili/format-default.ili' )
 
-    layers = ['FormatTests__FormatTests']
+    layers = ['FormatTests__FormatTable']
     if ds.GetLayerCount() != len(layers):
         gdaltest.post_reason( 'layer count wrong.' )
         return 'fail'
@@ -147,7 +147,7 @@ def ogr_interlis1_3():
           gdaltest.post_reason( 'Did not get right layers' )
           return 'fail'
 
-    lyr = ds.GetLayerByName('FormatTests__FormatTests')
+    lyr = ds.GetLayerByName('FormatTests__FormatTable')
 
     if lyr.GetFeatureCount() != 1:
         gdaltest.post_reason( 'feature count wrong.' )
@@ -182,7 +182,7 @@ def ogr_interlis1_4():
 
     ds = ogr.Open( 'data/ili/format-test.itf,data/ili/format-test.ili' )
 
-    layers = ['FormatTests__FormatTests']
+    layers = ['FormatTests__FormatTable']
     if ds.GetLayerCount() != len(layers):
         gdaltest.post_reason( 'layer count wrong.' )
         return 'fail'
@@ -192,7 +192,7 @@ def ogr_interlis1_4():
           gdaltest.post_reason( 'Did not get right layers' )
           return 'fail'
 
-    lyr = ds.GetLayerByName('FormatTests__FormatTests')
+    lyr = ds.GetLayerByName('FormatTests__FormatTable')
 
     if lyr.GetFeatureCount() != 1:
         gdaltest.post_reason( 'feature count wrong.' )
@@ -226,11 +226,40 @@ def ogr_interlis1_5():
         return 'skip'
 
     ds = ogr.Open( 'data/ili/format-default.itf,data/ili/format-default.ili' )
-    lyr = ds.GetLayerByName('FormatTests__FormatTests')
+    lyr = ds.GetLayerByName('FormatTests__FormatTable')
     feat = lyr.GetNextFeature()
 
     driver = ogr.GetDriverByName( 'Interlis 1' )
-    dst_ds = driver.CreateDataSource( 'out.itf' )
+    dst_ds = driver.CreateDataSource( 'tmp/interlis1_5.itf' )
+
+    dst_lyr = dst_ds.CreateLayer( 'FormatTests__FormatTable' )
+
+    layer_defn = lyr.GetLayerDefn()
+    for i in range( layer_defn.GetFieldCount() ):
+        dst_lyr.CreateField( layer_defn.GetFieldDefn( i ) )
+    dst_feat = ogr.Feature( feature_def = dst_lyr.GetLayerDefn() )
+    dst_feat.SetFrom( feat )
+    dst_lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Write Ili1 transfer file using a model.
+
+def ogr_interlis1_6():
+
+    if not gdaltest.have_ili_reader:
+        return 'skip'
+
+    ds = ogr.Open( 'data/ili/format-default.itf,data/ili/format-default.ili' )
+    lyr = ds.GetLayerByName('FormatTests__FormatTable')
+    feat = lyr.GetNextFeature()
+
+    driver = ogr.GetDriverByName( 'Interlis 1' )
+    dst_ds = driver.CreateDataSource( 'tmp/interlis1_6.itf,data/ili/format-default.ili' )
 
     dst_lyr = dst_ds.CreateLayer( 'test' )
 
@@ -330,6 +359,7 @@ gdaltest_list = [
     ogr_interlis1_3,
     ogr_interlis1_4,
     ogr_interlis1_5,
+    ogr_interlis1_6,
     ogr_interlis2_1,
     #ogr_interlis2_2,
     ogr_interlis_cleanup ]

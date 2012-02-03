@@ -225,17 +225,21 @@ int OGRILI1DataSource::Create( const char *pszFilename,
 
     IOM_BASKET model = 0;
     if( osModelFilename.length() != 0 ) {
-    // compile ili model
-    char *iliFiles[1] = {(char *)osModelFilename.c_str()};
-    model=iom_compileIli(1,iliFiles);
-    if(!model){
+      // compile ili model
+      char *iliFiles[1] = {(char *)osModelFilename.c_str()};
+      model=iom_compileIli(1,iliFiles);
+      if(!model){
         CPLError( CE_Warning, CPLE_OpenFailed,
                   "iom_compileIli %s, %s.",
                   pszName, VSIStrerror( errno ) );
         iom_end();
         return FALSE;
+      }
     }
-    }
+
+    pszTopic = CPLStrdup(model ?
+                         GetAttrObjName(model, "iom04.metamodel.Topic") :
+                         CPLGetBasename(osBasename.c_str()));
 
 /* -------------------------------------------------------------------- */
 /*      Write headers                                                   */
@@ -244,7 +248,9 @@ int OGRILI1DataSource::Create( const char *pszFilename,
     VSIFPrintf( fpTransfer, "OGR/GDAL %s, INTERLIS Driver\n", GDAL_RELEASE_NAME );
     VSIFPrintf( fpTransfer, "////\n" );
     VSIFPrintf( fpTransfer, "MTID INTERLIS1\n" );
-    const char* modelname = model ? GetAttrObjName(model, "iom04.metamodel.DataModel") : osBasename.c_str(); //TODO: remove file extension (= table name)
+    const char* modelname = model ?
+                            GetAttrObjName(model, "iom04.metamodel.DataModel") :
+                            CPLGetBasename(osBasename.c_str());
     VSIFPrintf( fpTransfer, "MODL %s\n", modelname );
 
     return TRUE;
@@ -270,7 +276,7 @@ OGRILI1DataSource::CreateLayer( const char * pszLayerName,
 {
     const char *table = pszLayerName;
     char * topic = ExtractTopic(pszLayerName);
-    if (pszTopic) VSIFPrintf( fpTransfer, "ETAB\n" );
+    if (nLayers) VSIFPrintf( fpTransfer, "ETAB\n" );
     if (topic)
     {
       table = pszLayerName+strlen(topic)+2; //after "__"
@@ -289,9 +295,9 @@ OGRILI1DataSource::CreateLayer( const char * pszLayerName,
         CPLFree(topic);
       }
     }
-    else if (pszTopic == NULL)
+    else
     {
-      pszTopic = CPLStrdup("Topic"); //TODO: From model?
+      if (pszTopic == NULL) pszTopic = CPLStrdup("Unknown");
       VSIFPrintf( fpTransfer, "TOPI %s\n", pszTopic );
     }
     VSIFPrintf( fpTransfer, "TABL %s\n", table );
