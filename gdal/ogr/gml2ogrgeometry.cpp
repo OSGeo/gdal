@@ -885,11 +885,16 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 
         dfStep *= nSign;
 
-        for(alpha = alpha0; (alpha - alpha1) * nSign < 0; alpha += dfStep)
+        poLine->addPoint(x0, y0);
+
+        for(alpha = alpha0 + dfStep; (alpha - alpha1) * nSign < 0; alpha += dfStep)
         {
             poLine->addPoint(cx + R * cos(alpha), cy + R * sin(alpha));
         }
-        for(alpha = alpha1; (alpha - alpha2) * nSign < 0; alpha += dfStep)
+
+        poLine->addPoint(x1, y1);
+
+        for(alpha = alpha1 + dfStep; (alpha - alpha2) * nSign < 0; alpha += dfStep)
         {
             poLine->addPoint(cx + R * cos(alpha), cy + R * sin(alpha));
         }
@@ -900,11 +905,11 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
             {
                 poLine->addPoint(cx + R * cos(alpha), cy + R * sin(alpha));
             }
-            poLine->addPoint(cx + R * cos(alpha3), cy + R * sin(alpha3));
+            poLine->addPoint(x0, y0);
         }
         else
         {
-            poLine->addPoint(cx + R * cos(alpha2), cy + R * sin(alpha2));
+            poLine->addPoint(x2, y2);
         }
 
         return poLine;
