@@ -55,6 +55,8 @@ OGRILI2Layer::OGRILI2Layer( const char * pszName,
     poFeatureDefn->SetGeomType( eReqType );
 
     bWriter = bWriterIn;
+
+    listFeatureIt = listFeature.begin();
 }
 
 /************************************************************************/

@@ -210,9 +210,13 @@ OGRLineString *ILI2Reader::getArc(DOMElement *elem) {
   return ls;
 }
 
-OGRLineString *getLineString(DOMElement *elem) {
+OGRLineString *getLineString(DOMElement *elem, int bAsLinearRing) {
   // elem -> POLYLINE
-  OGRLineString *ls = new OGRLineString();
+  OGRLineString *ls;
+  if (bAsLinearRing)
+      ls = new OGRLinearRing();
+  else
+      ls = new OGRLineString();
 
   DOMElement *lineElem = (DOMElement *)elem->getFirstChild();
   while (lineElem != NULL) {
@@ -273,7 +277,7 @@ OGRLineString *getLineString(DOMElement *elem) {
   return ls;
 }
 
-OGRLineString *getBoundary(DOMElement *elem) {
+OGRLinearRing *getBoundary(DOMElement *elem) {
 
   DOMElement *lineElem = (DOMElement *)elem->getFirstChild();
   if (lineElem != NULL)
@@ -282,12 +286,12 @@ OGRLineString *getBoundary(DOMElement *elem) {
     if (cmpStr(ILI2_POLYLINE, pszTagName) == 0)
     {
       XMLString::release(&pszTagName);
-      return getLineString(lineElem);
+      return (OGRLinearRing*) getLineString(lineElem, TRUE);
     }
     XMLString::release(&pszTagName);
   }
 
-  return new OGRLineString;
+  return new OGRLinearRing();
 }
 
 OGRPolygon *getPolygon(DOMElement *elem) {
@@ -297,7 +301,7 @@ OGRPolygon *getPolygon(DOMElement *elem) {
   while (boundaryElem != NULL) {
     char* pszTagName = XMLString::transcode(boundaryElem->getTagName());
     if (cmpStr(ILI2_BOUNDARY, pszTagName) == 0)
-      pg->addRingDirectly((OGRLinearRing *)getBoundary(boundaryElem));
+      pg->addRingDirectly(getBoundary(boundaryElem));
     XMLString::release(&pszTagName);
     boundaryElem = (DOMElement *)boundaryElem->getNextSibling(); // inner boundaries
   }
@@ -334,7 +338,7 @@ OGRGeometry *ILI2Reader::getGeometry(DOMElement *elem, int type) {
         {
           delete gm;
           XMLString::release(&pszTagName);
-          return getLineString(childElem);
+          return getLineString(childElem, FALSE);
         }
         break;
       case ILI2_BOUNDARY_TYPE :
@@ -342,7 +346,7 @@ OGRGeometry *ILI2Reader::getGeometry(DOMElement *elem, int type) {
         {
           delete gm;
           XMLString::release(&pszTagName);
-          return getLineString(childElem);
+          return getLineString(childElem, FALSE);
         }
         break;
       case ILI2_AREA_TYPE :

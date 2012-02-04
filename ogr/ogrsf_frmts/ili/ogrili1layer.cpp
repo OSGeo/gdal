@@ -167,7 +167,8 @@ OGRFeature *OGRILI1Layer::GetFeatureRef( long nFID )
 
 int OGRILI1Layer::GetFeatureCount( int bForce )
 {
-    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL)
+    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL &&
+        poAreaLineLayer == NULL)
     {
         return nFeatures;
     }
@@ -542,7 +543,8 @@ void OGRILI1Layer::PolygonizeAreaLayer()
         {
             if (ahInGeoms[i] && GEOSWithin(point, ahInGeoms[i]))
             {
-                OGRFeature* areaFeature = feature->Clone();
+                OGRFeature* areaFeature = new OGRFeature(poFeatureDefn);
+                areaFeature->SetFrom(feature);
                 areaFeature->SetGeometry( polys->getGeometryRef(i) );
                 AddFeature(areaFeature);
                 break;
@@ -561,4 +563,5 @@ void OGRILI1Layer::PolygonizeAreaLayer()
 #endif
     poAreaReferenceLayer = 0;
     poAreaLineLayer = 0;
+    delete polys;
 }
