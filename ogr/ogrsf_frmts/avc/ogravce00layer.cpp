@@ -524,6 +524,9 @@ int OGRAVCE00Layer::AppendTableFields( OGRFeature *poFeature )
 
 int OGRAVCE00Layer::GetFeatureCount(int bForce)
 {
+    if (m_poAttrQuery != NULL || m_poFilterGeom != NULL)
+        return OGRAVCLayer::GetFeatureCount(bForce);
+
     if (bForce && nFeatureCount < 0)
     {
         if (psSection->nFeatureCount < 0)
