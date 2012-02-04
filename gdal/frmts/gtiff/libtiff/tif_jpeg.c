@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.104 2011-05-31 17:00:03 bfriesen Exp $ */
+/* $Id: tif_jpeg.c,v 1.105 2012-02-01 01:51:00 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -1999,10 +1999,12 @@ JPEGCleanup(TIFF* tif)
 	tif->tif_tagmethods.vsetfield = sp->vsetparent;
 	tif->tif_tagmethods.printdir = sp->printdir;
 
-	if( sp->cinfo_initialized )
-	    TIFFjpeg_destroy(sp);	/* release libjpeg resources */
-	if (sp->jpegtables)		/* tag value */
-		_TIFFfree(sp->jpegtables);
+	if( sp != NULL ) {
+		if( sp->cinfo_initialized )
+		    TIFFjpeg_destroy(sp);	/* release libjpeg resources */
+		if (sp->jpegtables)		/* tag value */
+			_TIFFfree(sp->jpegtables);
+	}
 	_TIFFfree(tif->tif_data);	/* release local state */
 	tif->tif_data = NULL;
 
@@ -2133,13 +2135,15 @@ JPEGPrintDir(TIFF* tif, FILE* fd, long flags)
 	JPEGState* sp = JState(tif);
 
 	assert(sp != NULL);
-
 	(void) flags;
-	if (TIFFFieldSet(tif,FIELD_JPEGTABLES))
-		fprintf(fd, "  JPEG Tables: (%lu bytes)\n",
-			(unsigned long) sp->jpegtables_length);
-	if (sp->printdir)
-		(*sp->printdir)(tif, fd, flags);
+
+        if( sp != NULL ) {
+		if (TIFFFieldSet(tif,FIELD_JPEGTABLES))
+			fprintf(fd, "  JPEG Tables: (%lu bytes)\n",
+				(unsigned long) sp->jpegtables_length);
+		if (sp->printdir)
+			(*sp->printdir)(tif, fd, flags);
+	}
 }
 
 static uint32

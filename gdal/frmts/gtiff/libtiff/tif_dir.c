@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.107 2011-02-18 20:53:04 fwarmerdam Exp $ */
+/* $Id: tif_dir.c,v 1.108 2012-02-01 01:51:00 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -652,7 +652,9 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 	}
 	}
 	if (status) {
-		TIFFSetFieldBit(tif, TIFFFieldWithTag(tif, tag)->field_bit);
+		const TIFFField* fip=TIFFFieldWithTag(tif,tag);
+		if (fip)                
+			TIFFSetFieldBit(tif, fip->field_bit);
 		tif->tif_flags |= TIFF_DIRTYDIRECT;
 	}
 
@@ -660,18 +662,24 @@ end:
 	va_end(ap);
 	return (status);
 badvalue:
-	TIFFErrorExt(tif->tif_clientdata, module,
+        {
+		const TIFFField* fip=TIFFFieldWithTag(tif,tag);
+		TIFFErrorExt(tif->tif_clientdata, module,
 		     "%s: Bad value %u for \"%s\" tag",
 		     tif->tif_name, v,
-		     TIFFFieldWithTag(tif, tag)->field_name);
-	va_end(ap);
+		     fip ? fip->field_name : "Unknown");
+		va_end(ap);
+        }
 	return (0);
 badvalue32:
-	TIFFErrorExt(tif->tif_clientdata, module,
+        {
+		const TIFFField* fip=TIFFFieldWithTag(tif,tag);
+		TIFFErrorExt(tif->tif_clientdata, module,
 		     "%s: Bad value %u for \"%s\" tag",
 		     tif->tif_name, v32,
-		     TIFFFieldWithTag(tif, tag)->field_name);
-	va_end(ap);
+		     fip ? fip->field_name : "Unknown");
+		va_end(ap);
+        }
 	return (0);
 }
 
