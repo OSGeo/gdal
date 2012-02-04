@@ -72,6 +72,8 @@ void OGRIngresStatement::Close()
 {
     IIAPI_WAITPARM  waitParm = { -1 };
 
+    ClearDynamicColumns();
+
     if( hStmt != NULL )
     {
         IIAPI_CLOSEPARM closeParm;
@@ -104,8 +106,6 @@ void OGRIngresStatement::Close()
         hTransaction = NULL;
     }
 
-    ClearDynamicColumns();
- 
     // Set the descriptorCount to zero to avoid attempting to refree it
     // in another Close call.
     getDescrParm.gd_descriptorCount = 0;
