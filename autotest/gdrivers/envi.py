@@ -205,6 +205,30 @@ def envi_9():
     tst = gdaltest.GDALTest( 'envi', 'aea_compressed.dat', 1, 14823 )
     return tst.testCreateCopy( check_gt = 1 )
 
+###############################################################################
+# Test RPC reading and writing
+
+def envi_10():
+
+    src_ds = gdal.Open('data/envirpc.img')
+    out_ds = gdal.GetDriverByName('ENVI').CreateCopy('/vsimem/envirpc.img', src_ds)
+    src_ds = None
+    out_ds = None
+
+    gdal.Unlink('/vsimem/envirpc.img.aux.xml')
+
+    ds = gdal.Open('/vsimem/envirpc.img')
+    md = ds.GetMetadata('RPC')
+    ds = None
+
+    gdal.GetDriverByName('ENVI').Delete('/vsimem/envirpc.img')
+
+    if md['HEIGHT_OFF'] != '3355':
+        print(md)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     envi_1,
     envi_2,
@@ -214,7 +238,8 @@ gdaltest_list = [
     envi_6,
     envi_7,
     envi_8,
-    envi_9
+    envi_9,
+    envi_10
     ]
   
 
