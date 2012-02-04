@@ -248,6 +248,9 @@ class ENVIDataset : public RawDataset
     void        SetENVIDatum( OGRSpatialReference *, const char * );
     void        SetENVIEllipse( OGRSpatialReference *, char ** );
     void        WriteProjectionInfo();
+    int         ParseRpcCoeffsMetaDataString(const char *psName, char *papszVal[], int& idx);
+    int         WriteRpcInfo();
+    int         WritePseudoGcpInfo();
     
     char        **SplitList( const char * );
 
@@ -263,7 +266,15 @@ class ENVIDataset : public RawDataset
     virtual CPLErr  SetGeoTransform( double * );
     virtual const char *GetProjectionRef(void);
     virtual CPLErr  SetProjection( const char * );
-    virtual char  **GetFileList(void); 
+    virtual char  **GetFileList(void);
+
+    virtual CPLErr      SetMetadata( char ** papszMetadata,
+                                     const char * pszDomain = "" );
+    virtual CPLErr      SetMetadataItem( const char * pszName,
+                                         const char * pszValue,
+                                         const char * pszDomain = "" );
+    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                            const char *pszGCPProjection );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -431,7 +442,18 @@ void ENVIDataset::FlushCache()
 /* -------------------------------------------------------------------- */
 /*      Write the rest of header.                                       */
 /* -------------------------------------------------------------------- */
-    WriteProjectionInfo();
+    
+    // only one map info type should be set
+    //     - rpc
+    //     - pseudo/gcp 
+    //     - standard
+    if ( !WriteRpcInfo() ) // are rpcs in the metadata
+    {
+        if ( !WritePseudoGcpInfo() ) // are gcps in the metadata
+        {
+            WriteProjectionInfo(); // standard - affine xform/coord sys str
+        }
+    }
 
 
     VSIFPrintfL( fp, "band names = {\n" );
@@ -849,6 +871,153 @@ void ENVIDataset::WriteProjectionInfo()
     }
 }
 
+/************************************************************************/
+/*                ParseRpcCoeffsMetaDataString()                        */
+/************************************************************************/
+
+int ENVIDataset::ParseRpcCoeffsMetaDataString(const char *psName, char **papszVal,
+                                              int& idx)
+{
+    // separate one string with 20 coefficients into an array of 20 strings.
+    const char *psz20Vals = GetMetadataItem(psName, "RPC");
+    if (!psz20Vals)
+        return FALSE;
+
+    char** papszArr = CSLTokenizeString2(psz20Vals, " ", 0);
+    if (!papszArr)
+        return FALSE;
+
+    int x = 0;
+    while ((papszArr[x] != NULL) && (x < 20))
+    {
+        papszVal[idx++] = CPLStrdup(papszArr[x]);
+        x++;
+    }
+
+    CSLDestroy(papszArr);
+
+    return (x == 20);
+}
+
+#define CPLStrdupIfNotNull(x) ((x) ? CPLStrdup(x) : NULL)
+
+/************************************************************************/
+/*                          WriteRpcInfo()                              */
+/************************************************************************/
+
+int ENVIDataset::WriteRpcInfo()
+{
+    // write out 90 rpc coeffs into the envi header plus 3 envi specific rpc values
+    // returns 0 if the coeffs are not present or not valid
+    int bRet = FALSE;
+    int x, idx = 0;
+    char* papszVal[93];
+
+    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("LINE_OFF", "RPC"));
+    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("SAMP_OFF", "RPC"));
+    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("LAT_OFF", "RPC"));
+    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("LONG_OFF", "RPC"));
+    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("HEIGHT_OFF", "RPC"));
+    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("LINE_SCALE", "RPC"));
+    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("SAMP_SCALE", "RPC"));
+    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("LAT_SCALE", "RPC"));
+    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("LONG_SCALE", "RPC"));
+    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("HEIGHT_SCALE", "RPC"));
+
+    for (x=0; x<10; x++) // if we do not have 10 values we return 0
+    {
+        if (!papszVal[x])
+            goto end;
+    }
+
+    if (!ParseRpcCoeffsMetaDataString("LINE_NUM_COEFF", papszVal, idx))
+        goto end;
+
+    if (!ParseRpcCoeffsMetaDataString("LINE_DEN_COEFF", papszVal, idx))
+        goto end;
+
+    if (!ParseRpcCoeffsMetaDataString("SAMP_NUM_COEFF", papszVal, idx))
+        goto end;
+
+    if (!ParseRpcCoeffsMetaDataString("SAMP_DEN_COEFF", papszVal, idx))
+        goto end;
+
+    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("TILE_ROW_OFFSET", "RPC"));
+    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("TILE_COL_OFFSET", "RPC"));
+    papszVal[idx++] = CPLStrdupIfNotNull(GetMetadataItem("ENVI_RPC_EMULATION", "RPC"));
+    CPLAssert(idx == 93);
+    for (x=90; x<93; x++)
+    {
+        if (!papszVal[x])
+            goto end;
+    }
+
+    // ok all the needed 93 values are present so write the rpcs into the envi header
+    x = 1;
+    VSIFPrintfL(fp, "rpc info = {\n");
+    for (int iR=0; iR<93; iR++)
+    {
+      if (papszVal[iR][0] == '-')
+        VSIFPrintfL(fp, " %s", papszVal[iR]);
+      else
+        VSIFPrintfL(fp, "  %s", papszVal[iR]);
+      
+      if (iR<92)
+        VSIFPrintfL(fp, ",");
+
+      if ((x % 4) == 0)
+          VSIFPrintfL(fp, "\n");
+     
+      x++;
+      if (x > 4) 
+        x = 1;
+    }
+
+    VSIFPrintfL(fp, "}\n" );
+
+    bRet = TRUE;
+
+end:
+    for (x=0;x<idx;x++)
+        CPLFree(papszVal[x]);
+
+    return bRet;
+}
+
+/************************************************************************/
+/*                        WritePseudoGcpInfo()                          */
+/************************************************************************/
+
+int ENVIDataset::WritePseudoGcpInfo()
+{
+    // write out gcps into the envi header
+    // returns 0 if the gcps are not present
+
+    int iNum = GetGCPCount();
+    if (iNum == 0)
+      return FALSE;
+
+    const GDAL_GCP *pGcpStructs = GetGCPs();
+
+    //    double      dfGCPPixel; /** Pixel (x) location of GCP on raster */
+    //    double      dfGCPLine;  /** Line (y) location of GCP on raster */
+    //    double      dfGCPX;     /** X position of GCP in georeferenced space */
+    //    double      dfGCPY;     /** Y position of GCP in georeferenced space */
+
+    VSIFPrintfL(fp, "geo points = {\n");
+    for (int iR=0; iR<iNum; iR++)
+    {
+      VSIFPrintfL(fp, " %#0.4f, %#0.4f, %#0.8f, %#0.8f",
+                  pGcpStructs[iR].dfGCPPixel, pGcpStructs[iR].dfGCPLine,
+                  pGcpStructs[iR].dfGCPY, pGcpStructs[iR].dfGCPX);
+      if (iR<iNum-1)
+        VSIFPrintfL(fp, ",\n");
+    }
+
+    VSIFPrintfL(fp, "}\n" );
+
+    return TRUE;
+}
 
 /************************************************************************/
 /*                          GetProjectionRef()                          */
@@ -902,6 +1071,45 @@ CPLErr ENVIDataset::SetGeoTransform( double * padfTransform )
     bFoundMapinfo = TRUE;
     
     return CE_None;
+}
+
+/************************************************************************/
+/*                             SetMetadata()                            */
+/************************************************************************/
+
+CPLErr ENVIDataset::SetMetadata( char ** papszMetadata,
+                                 const char * pszDomain )
+{
+    if (pszDomain && EQUAL(pszDomain, "RPC"))
+        bHeaderDirty = TRUE;
+
+    return RawDataset::SetMetadata(papszMetadata, pszDomain);
+}
+
+/************************************************************************/
+/*                             SetMetadataItem()                        */
+/************************************************************************/
+
+CPLErr ENVIDataset::SetMetadataItem( const char * pszName,
+                                     const char * pszValue,
+                                     const char * pszDomain )
+{
+    if (pszDomain && EQUAL(pszDomain, "RPC"))
+        bHeaderDirty = TRUE;
+
+    return RawDataset::SetMetadataItem(pszName, pszValue, pszDomain);
+}
+
+/************************************************************************/
+/*                               SetGCPs()                              */
+/************************************************************************/
+
+CPLErr ENVIDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                             const char *pszGCPProjection )
+{
+    bHeaderDirty = TRUE;
+
+    return RawDataset::SetGCPs(nGCPCount, pasGCPList, pszGCPProjection);
 }
 
 /************************************************************************/
@@ -1374,10 +1582,17 @@ void ENVIDataset::ProcessRPCinfo( const char *pszRPCinfo,
         atof(papszFields[2]) + atof(papszFields[7]));
     SetMetadataItem("MAX_LAT",sVal,"RPC");
 
+    if (nCount == 93)
+    {
+        SetMetadataItem("TILE_ROW_OFFSET",papszFields[90],"RPC");
+        SetMetadataItem("TILE_COL_OFFSET",papszFields[91],"RPC");
+        SetMetadataItem("ENVI_RPC_EMULATION",papszFields[92],"RPC");
+    }
+
     /*   Handle the chipping case where the image is a subset. */
     double rowOffset, colOffset;
-    rowOffset = atof(papszFields[90]);
-    colOffset = atof(papszFields[91]);
+    rowOffset = (nCount == 93) ? atof(papszFields[90]) : 0;
+    colOffset = (nCount == 93) ? atof(papszFields[91]) : 0;
     if (rowOffset || colOffset)
     {
         SetMetadataItem("ICHIP_SCALE_FACTOR", "1");
