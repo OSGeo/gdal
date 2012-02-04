@@ -238,11 +238,13 @@ class ENVIDataset : public RawDataset
 
     char        **papszHeader;
 
+    CPLString   osStaFilename;
+
     int         ReadHeader( VSILFILE * );
     int         ProcessMapinfo( const char * );
     void        ProcessRPCinfo( const char * ,int ,int);
     void        ProcessStatsFile();
-    long        byteSwapLong(long);
+    int         byteSwapInt(int);
     float       byteSwapFloat(float);
     double      byteSwapDouble(double);
     void        SetENVIDatum( OGRSpatialReference *, const char * );
@@ -483,7 +485,11 @@ char **ENVIDataset::GetFileList()
     papszFileList = GDALPamDataset::GetFileList(); 
     
     // Header file. 
-    papszFileList = CSLAddString( papszFileList, pszHDRFilename ); 
+    papszFileList = CSLAddString( papszFileList, pszHDRFilename );
+
+    // Statistics file
+    if (osStaFilename.size() != 0)
+        papszFileList = CSLAddString( papszFileList, osStaFilename );
     
     return papszFileList; 
 }
@@ -1628,49 +1634,52 @@ void ENVIDataset::ProcessRPCinfo( const char *pszRPCinfo,
 
 void ENVIDataset::ProcessStatsFile()
 {
-    CPLString   osStaFilename;
     VSILFILE	*fpStaFile;
 
     osStaFilename = CPLResetExtension( pszHDRFilename, "sta" );
     fpStaFile = VSIFOpenL( osStaFilename, "rb" );
 
     if (!fpStaFile)
+    {
+        osStaFilename = "";
         return;
+    }
 
-    long lTestHeader[10],lOffset;
+    int lTestHeader[10],lOffset;
 
-    if( VSIFReadL( lTestHeader, sizeof(long), 10, fpStaFile ) != 10 )
+    if( VSIFReadL( lTestHeader, sizeof(int), 10, fpStaFile ) != 10 )
     {
         VSIFCloseL( fpStaFile );
+        osStaFilename = "";
         return;
     }
 
     int isFloat;
-    isFloat = (byteSwapLong(lTestHeader[0]) == 1111838282);
+    isFloat = (byteSwapInt(lTestHeader[0]) == 1111838282);
 
-    unsigned long nb,i;
+    int nb,i;
     float * fStats;
     double * dStats, dMin, dMax, dMean, dStd;
         
-    nb=byteSwapLong(lTestHeader[3]);
+    nb=byteSwapInt(lTestHeader[3]);
     
-    if (nb > (unsigned long)nBands)
+    if (nb < 0 || nb > nBands)
     {
-        CPLDebug("ENVI", ".sta file has statistics for %ld bands, "
+        CPLDebug("ENVI", ".sta file has statistics for %d bands, "
                          "whereas the dataset has only %d bands", nb, nBands);
         nb = nBands;
     }
     
     VSIFSeekL(fpStaFile,40+(nb+1)*4,SEEK_SET);
 
-    if (VSIFReadL(&lOffset,sizeof(long),1,fpStaFile) == 1)
+    if (VSIFReadL(&lOffset,sizeof(int),1,fpStaFile) == 1)
     {
-        VSIFSeekL(fpStaFile,40+(nb+1)*8+byteSwapLong(lOffset)+nb,SEEK_SET);
+        VSIFSeekL(fpStaFile,40+(nb+1)*8+byteSwapInt(lOffset)+nb,SEEK_SET);
         // This should be the beginning of the statistics
         if (isFloat)
         {
             fStats = (float*)CPLCalloc(nb*4,4);
-            if (VSIFReadL(fStats,4,nb*4,fpStaFile) == nb*4)
+            if ((int)VSIFReadL(fStats,4,nb*4,fpStaFile) == nb*4)
             {
                 for (i=0;i<nb;i++)
                 {
@@ -1686,7 +1695,7 @@ void ENVIDataset::ProcessStatsFile()
         else
         {
             dStats = (double*)CPLCalloc(nb*4,8);
-            if (VSIFReadL(dStats,8,nb*4,fpStaFile) == nb*4)
+            if ((int)VSIFReadL(dStats,8,nb*4,fpStaFile) == nb*4)
             {
                 for (i=0;i<nb;i++)
                 {
@@ -1703,46 +1712,23 @@ void ENVIDataset::ProcessStatsFile()
     }
     VSIFCloseL( fpStaFile );
 }
-long ENVIDataset::byteSwapLong(long swapMe)
+
+int ENVIDataset::byteSwapInt(int swapMe)
 {
-#ifndef CPL_LSB
+    CPL_MSBPTR32(&swapMe);
     return swapMe;
-#endif
-  return ((swapMe&0xFF)<<24)+((swapMe&(0xFF00))<<8)+
-    ((swapMe&(0xFF0000))>>8)+((swapMe&(0xFF000000))>>24);
 }
 
 float ENVIDataset::byteSwapFloat(float swapMe)
 {
-#ifndef CPL_LSB
+    CPL_MSBPTR32(&swapMe);
     return swapMe;
-#endif
-  long foo,bar;
-  float retval;
-  memmove(&foo, &swapMe,4);
-  bar = byteSwapLong(foo);
-  memmove(&retval, &bar,4);
-
-  return retval;
 }
 
 double ENVIDataset::byteSwapDouble(double swapMe)
 {
-#ifndef CPL_LSB
+    CPL_MSBPTR64(&swapMe);
     return swapMe;
-#endif
-
-  char dblArrSrc[8],dblArrDest[8];
-  double retval;
-  int i;
-
-  memmove(dblArrSrc, &swapMe, 8);
-
-  for (i=0;i<8;i++)
-    dblArrDest[i]=dblArrSrc[7-i];
-
-  memmove(&retval,dblArrDest, 8);
-  return retval;
 }
 
 
