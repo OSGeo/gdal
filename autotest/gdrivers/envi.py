@@ -229,6 +229,22 @@ def envi_10():
 
     return 'success'
 
+###############################################################################
+# Check .sta reading
+
+def envi_11():
+
+    ds = gdal.Open('data/envistat')
+    val = ds.GetRasterBand(1).GetStatistics(0, 0)
+    ds = None
+
+    if val != [1.0, 3.0, 2.0, 0.5]:
+        gdaltest.post_reason('bad stats')
+        print(val)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     envi_1,
     envi_2,
@@ -239,7 +255,8 @@ gdaltest_list = [
     envi_7,
     envi_8,
     envi_9,
-    envi_10
+    envi_10,
+    envi_11,
     ]
   
 
