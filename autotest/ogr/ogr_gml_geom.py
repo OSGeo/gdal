@@ -870,7 +870,7 @@ def gml_ConcatenatedDeduplication():
         print(geom)
         return 'fail'
 
-    if not geom.IsValid():
+    if ogrtest.have_geos() and not geom.IsValid():
         gdaltest.post_reason( 'geometry not valid' )
         return 'fail'
 
