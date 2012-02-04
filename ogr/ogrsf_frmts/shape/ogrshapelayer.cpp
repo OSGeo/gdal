@@ -891,10 +891,10 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
                     memcpy(&(sShape.dfYMin), abyBuf + 12, 8);
                     memcpy(&(sShape.dfXMax), abyBuf + 20, 8);
                     memcpy(&(sShape.dfYMax), abyBuf + 28, 8);
-                    CPL_MSBPTR32(&(sShape.dfXMin));
-                    CPL_MSBPTR32(&(sShape.dfYMin));
-                    CPL_MSBPTR32(&(sShape.dfXMax));
-                    CPL_MSBPTR32(&(sShape.dfYMax));
+                    CPL_LSBPTR64(&(sShape.dfXMin));
+                    CPL_LSBPTR64(&(sShape.dfYMin));
+                    CPL_LSBPTR64(&(sShape.dfXMax));
+                    CPL_LSBPTR64(&(sShape.dfYMax));
                 }
             }
             else
