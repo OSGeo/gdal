@@ -245,6 +245,42 @@ def envi_11():
 
     return 'success'
 
+###############################################################################
+# Test category names reading and writing
+
+def envi_12():
+
+    src_ds = gdal.Open('data/testenviclasses')
+    out_ds = gdal.GetDriverByName('ENVI').CreateCopy('/vsimem/testenviclasses', src_ds)
+    src_ds = None
+    out_ds = None
+
+    gdal.Unlink('/vsimem/testenviclasses.aux.xml')
+
+    ds = gdal.Open('/vsimem/testenviclasses')
+    category = ds.GetRasterBand(1).GetCategoryNames()
+    ct = ds.GetRasterBand(1).GetColorTable()
+
+    if category != ['Black', 'White']:
+        gdaltest.post_reason('bad category names')
+        print(category)
+        return 'fail'
+
+    if ct.GetCount() != 2:
+        gdaltest.post_reason('bad color entry count')
+        print(ct.GetCount())
+        return 'fail'
+
+    if ct.GetColorEntry(0) != (0,0,0,255):
+        gdaltest.post_reason('bad color entry')
+        print(ct.GetColorEntry(0))
+        return 'fail'
+
+    ds = None
+    gdal.GetDriverByName('ENVI').Delete('/vsimem/testenviclasses')
+
+    return 'success'
+
 gdaltest_list = [
     envi_1,
     envi_2,
@@ -257,6 +293,7 @@ gdaltest_list = [
     envi_9,
     envi_10,
     envi_11,
+    envi_12
     ]
   
 
