@@ -335,7 +335,7 @@ void ENVIDataset::FlushCache()
 {
     RawDataset::FlushCache();
 
-    if ( !bHeaderDirty)
+    if ( !(bHeaderDirty || GetRasterBand(1)->GetCategoryNames() != NULL) )
         return;
 
     CPLLocaleC  oLocaleEnforcer;
