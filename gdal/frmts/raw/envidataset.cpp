@@ -1986,25 +1986,27 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     pszInterleave = CSLFetchNameValue(poDS->papszHeader,"interleave");
 
     /* In case, there is no interleave keyword, we try to derive it from the */
-    /* file extension, if it matches one of the expected interleaving mode */
+    /* file extension. */
     if( pszInterleave == NULL )
     {
         const char* pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
-        if ( EQUAL(pszExtension, "BSQ") ||
-             EQUAL(pszExtension, "BIP") ||
-             EQUAL(pszExtension, "BIL") )
-        {
-            pszInterleave = pszExtension;
-        }
+        pszInterleave = pszExtension;
     }
 
-    if (!GDALCheckDatasetDimensions(nSamples, nLines) || !GDALCheckBandCount(nBands, FALSE) ||
-        pszInterleave == NULL )
+    if ( !EQUALN(pszInterleave, "BSQ",3) &&
+         !EQUALN(pszInterleave, "BIP",3) &&
+         !EQUALN(pszInterleave, "BIL",3) )
+    {
+        CPLDebug("ENVI", "Unset or unknown value for 'interleave' keyword --> assuming BSQ interleaving");
+        pszInterleave = "bsq";
+    }
+
+    if (!GDALCheckDatasetDimensions(nSamples, nLines) || !GDALCheckBandCount(nBands, FALSE))
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "The file appears to have an associated ENVI header, but\n"
-                  "one or more of the samples, lines, bands and interleave\n"
+                  "one or more of the samples, lines and bands\n"
                   "keywords appears to be missing or invalid." );
         return NULL;
     }
@@ -2177,16 +2179,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     vsi_l_offset nBandOffset;
     int bIntOverflow = FALSE;
     
-    if( EQUALN(pszInterleave, "bsq", 3) )
-    {
-        poDS->interleave = BSQ;
-        poDS->SetMetadataItem( "INTERLEAVE", "BAND", "IMAGE_STRUCTURE" );
-        if (nSamples > INT_MAX / nDataSize) bIntOverflow = TRUE;
-        nLineOffset = nDataSize * nSamples;
-        nPixelOffset = nDataSize;
-        nBandOffset = (vsi_l_offset)nLineOffset * nLines;
-    }
-    else if( EQUALN(pszInterleave, "bil", 3) )
+    if( EQUALN(pszInterleave, "bil", 3) )
     {
         poDS->interleave = BIL;
         poDS->SetMetadataItem( "INTERLEAVE", "LINE", "IMAGE_STRUCTURE" );
@@ -2204,13 +2197,14 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         nPixelOffset = nDataSize * nBands;
         nBandOffset = nDataSize;
     }
-    else
+    else /* bsq */
     {
-        delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "The interleaving type of the file (%s) is not supported.",
-                  pszInterleave );
-        return NULL;
+        poDS->interleave = BSQ;
+        poDS->SetMetadataItem( "INTERLEAVE", "BAND", "IMAGE_STRUCTURE" );
+        if (nSamples > INT_MAX / nDataSize) bIntOverflow = TRUE;
+        nLineOffset = nDataSize * nSamples;
+        nPixelOffset = nDataSize;
+        nBandOffset = (vsi_l_offset)nLineOffset * nLines;
     }
 
     if (bIntOverflow)
