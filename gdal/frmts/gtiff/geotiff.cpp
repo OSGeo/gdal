@@ -690,7 +690,7 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
                                   GDALDataType eBufType,
                                   int nPixelSpace, int nLineSpace )
 {
-    if( !(eRWFlag == GF_Read && poGDS->nBands == 1 &&
+    if( !(eRWFlag == GF_Read &&
           poGDS->nCompression == COMPRESSION_NONE &&
           (poGDS->nBitsPerSample == 8 || (poGDS->nBitsPerSample == 16) ||
            poGDS->nBitsPerSample == 32 || poGDS->nBitsPerSample == 64) &&
@@ -699,6 +699,10 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
     {
         return CE_Failure;
     }
+
+    /*CPLDebug("GTiff", "DirectIO(%d,%d,%d,%d -> %dx%d)",
+             nXOff, nYOff, nXSize, nYSize,
+             nBufXSize, nBufYSize);*/
 
 /* ==================================================================== */
 /*      Do we have overviews that would be appropriate to satisfy       */
@@ -746,16 +750,19 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
     int eDTSize = GDALGetDataTypeSize(eDataType) / 8;
     void* pTmpBuffer = NULL;
     CPLErr eErr = CE_None;
+    int nContigBands = ((poGDS->nPlanarConfig == PLANARCONFIG_CONTIG) ? poGDS->nBands : 1);
+    int ePixelSize = eDTSize * nContigBands;
 
     if (ppData == NULL || panOffsets == NULL || panSizes == NULL)
         eErr = CE_Failure;
     else if (nXSize != nBufXSize || nYSize != nBufYSize ||
              eBufType != eDataType ||
-             nPixelSpace != GDALGetDataTypeSize(eBufType) / 8)
+             nPixelSpace != GDALGetDataTypeSize(eBufType) / 8 ||
+             nContigBands > 1)
     {
         /* We need a temporary buffer for over-sampling/sub-sampling */
         /* and/or data type conversion */
-        pTmpBuffer = VSIMalloc(nReqXSize * nReqYSize * eDTSize);
+        pTmpBuffer = VSIMalloc(nReqXSize * nReqYSize * ePixelSize);
         if (pTmpBuffer == NULL)
             eErr = CE_Failure;
     }
@@ -766,18 +773,29 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
         if (pTmpBuffer == NULL)
             ppData[iLine] = ((GByte*)pData) + iLine * nLineSpace;
         else
-            ppData[iLine] = ((GByte*)pTmpBuffer) + iLine * nReqXSize * eDTSize;
+            ppData[iLine] = ((GByte*)pTmpBuffer) + iLine * nReqXSize * ePixelSize;
         int nSrcLine;
         if (nBufYSize < nYSize) /* Sub-sampling in y */
             nSrcLine = nYOff + (int)((iLine + 0.5) * nYSize / nBufYSize);
         else
             nSrcLine = nYOff + iLine;
-        panOffsets[iLine] = panTIFFOffsets[nSrcLine / nBlockYSize];
+
+        int nBlockXOff = 0;
+        int nBlockYOff = nSrcLine / nBlockYSize;
+        int nYOffsetInBlock = nSrcLine % nBlockYSize;
+        int nBlocksPerRow = (nRasterXSize + nBlockXSize - 1) / nBlockXSize;
+        int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+        if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
+        {
+            nBlockId += (nBand-1) * poGDS->nBlocksPerBand;
+        }
+
+        panOffsets[iLine] = panTIFFOffsets[nBlockId];
         if (panOffsets[iLine] == 0) /* We don't support sparse files */
             eErr = CE_Failure;
 
-        panOffsets[iLine] += (nXOff + (nSrcLine % nBlockYSize) * nBlockXSize) * eDTSize;
-        panSizes[iLine] = nReqXSize * eDTSize;
+        panOffsets[iLine] += (nXOff + nYOffsetInBlock * nBlockXSize) * ePixelSize;
+        panSizes[iLine] = nReqXSize * ePixelSize;
     }
 
     /* Extract data from the file */
@@ -794,7 +812,7 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
     {
         for(iLine=0;iLine<nReqYSize;iLine++)
         {
-            GDALSwapWords( ppData[iLine], eDTSize, nReqXSize, eDTSize);
+            GDALSwapWords( ppData[iLine], eDTSize, nReqXSize * nContigBands, eDTSize);
         }
     }
 
@@ -805,7 +823,7 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
         {
             int iSrcY = (nBufYSize <= nYSize) ? iY :
                             (int)((iY + 0.5) * nYSize / nBufYSize);
-            if (nBufXSize == nXSize)
+            if (nBufXSize == nXSize && nContigBands == 1)
             {
                 GDALCopyWords( ppData[iSrcY], eDataType, eDTSize,
                                 ((GByte*)pData) + iY * nLineSpace,
@@ -814,14 +832,17 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
             }
             else
             {
+                GByte* pabySrcData = ((GByte*)ppData[iSrcY]) +
+                            ((nContigBands > 1) ? (nBand-1) : 0) * eDTSize;
+                GByte* pabyDstData = ((GByte*)pData) + iY * nLineSpace;
                 for(int iX=0;iX<nBufXSize;iX++)
                 {
                     int iSrcX = (nBufXSize == nXSize) ? iX :
                                     (int)((iX+0.5) * nXSize / nBufXSize);
-                    GDALCopyWords( ((GByte*)ppData[iSrcY]) + iSrcX * eDTSize,
-                                    eDataType, 0,
-                                    ((GByte*)pData) + iX * nPixelSpace + iY * nLineSpace,
-                                    eBufType, 0, 1);
+                    GDALCopyWords( pabySrcData + iSrcX * ePixelSize,
+                                   eDataType, 0,
+                                   pabyDstData + iX * nPixelSpace,
+                                   eBufType, 0, 1);
                 }
             }
         }
@@ -5964,7 +5985,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         // If the rows per strip is larger than the file we will get
         // confused.  libtiff internally will treat the rowsperstrip as
         // the image height and it is best if we do too. (#4468)
-        if (nRowsPerStrip > nRasterYSize)
+        if (nRowsPerStrip > (uint32)nRasterYSize)
             nRowsPerStrip = nRasterYSize;
 
         nBlockXSize = nRasterXSize;
