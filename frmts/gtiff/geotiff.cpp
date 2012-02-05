@@ -692,6 +692,9 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
 {
     if( !(eRWFlag == GF_Read &&
           poGDS->nCompression == COMPRESSION_NONE &&
+          (poGDS->nPhotometric == PHOTOMETRIC_MINISBLACK ||
+           poGDS->nPhotometric == PHOTOMETRIC_RGB ||
+           poGDS->nPhotometric == PHOTOMETRIC_PALETTE) &&
           (poGDS->nBitsPerSample == 8 || (poGDS->nBitsPerSample == 16) ||
            poGDS->nBitsPerSample == 32 || poGDS->nBitsPerSample == 64) &&
           poGDS->nBitsPerSample == GDALGetDataTypeSize(eDataType) &&
