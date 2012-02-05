@@ -680,7 +680,7 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
 /************************************************************************/
 
 /* Reads directly bytes from the file using ReadMultiRange(), and by-pass */
-/* block reading. Restricted to simple TIFF configurations (single-band, un-tiled, */
+/* block reading. Restricted to simple TIFF configurations (un-tiled, */
 /* uncompressed data, standard data types). Particularly usefull to extract */
 /* sub-windows of data on a large /vsicurl dataset). */
 
