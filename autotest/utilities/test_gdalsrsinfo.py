@@ -341,8 +341,30 @@ def test_gdalsrsinfo_15():
 
     return 'success'
 
+###############################################################################
+# Test DRIVER:file syntax (bug #4493) -  similar test should be done with OGR
 
+def test_gdalsrsinfo_16():
+    if test_cli_utilities.get_gdalsrsinfo_path() is None:
+        return 'skip'
 
+    cmd = test_cli_utilities.get_gdalsrsinfo_path() +\
+        ' GTIFF_RAW:../gcore/data/byte.tif'
+
+    try:
+        (ret, err) = gdaltest.runexternal_out_and_err( cmd )
+    except:
+        gdaltest.post_reason('gdalsrsinfo execution failed')
+        return 'fail'
+
+    if err != '':
+        return 'fail'
+
+    return 'success'
+ 
+
+###############################################################################
+#
 
 gdaltest_list = [
     test_gdalsrsinfo_1,
@@ -360,6 +382,7 @@ gdaltest_list = [
     test_gdalsrsinfo_13,
     test_gdalsrsinfo_14,
     test_gdalsrsinfo_15,
+    test_gdalsrsinfo_16,
     None
     ]
 
