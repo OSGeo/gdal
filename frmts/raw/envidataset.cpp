@@ -335,7 +335,9 @@ void ENVIDataset::FlushCache()
 {
     RawDataset::FlushCache();
 
-    if ( !(bHeaderDirty || GetRasterBand(1)->GetCategoryNames() != NULL) )
+    GDALRasterBand* band = (GetRasterCount() > 0) ? GetRasterBand(1) : NULL;
+
+    if ( band == NULL || !(bHeaderDirty || band->GetCategoryNames() != NULL) )
         return;
 
     CPLLocaleC  oLocaleEnforcer;
@@ -361,7 +363,6 @@ void ENVIDataset::FlushCache()
     VSIFPrintfL( fp, "samples = %d\nlines   = %d\nbands   = %d\n",
 		nRasterXSize, nRasterYSize, nBands );
 
-    GDALRasterBand* band = GetRasterBand(1);
     catNames = band->GetCategoryNames();
 
     VSIFPrintfL( fp, "header offset = 0\n");
