@@ -346,8 +346,9 @@ OGRErr OGRILI1Layer::CreateFeature( OGRFeature *poFeature ) {
           {
               const char *pszRaw = poFeature->GetFieldAsString( iField );
               if (poFeatureDefn->GetFieldDefn( iField )->GetType() == OFTString) {
+                  //Interlis 1 encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
+                  char* pszString  = CPLRecode(pszRaw, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
                   //Replace spaces
-                  char* pszString = CPLStrdup(pszRaw);
                   for(size_t i=0; i<strlen(pszString); i++ ) {
                       if (pszString[i] == ' ') pszString[i] = '_';
                   }

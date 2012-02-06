@@ -276,6 +276,67 @@ def ogr_interlis1_6():
     return 'success'
 
 ###############################################################################
+# Ili1 character encding test.
+
+def ogr_interlis1_7():
+
+    if not gdaltest.have_ili_reader:
+        return 'skip'
+
+    ds = ogr.Open( 'data/ili/encoding-test.itf,data/ili/format-default.ili' )
+
+    layers = ['FormatTests__FormatTable']
+    if ds.GetLayerCount() != len(layers):
+        gdaltest.post_reason( 'layer count wrong.' )
+        return 'fail'
+
+    for i in range(ds.GetLayerCount()):
+      if not ds.GetLayer(i).GetName() in layers:
+          gdaltest.post_reason( 'Did not get right layers' )
+          return 'fail'
+
+    lyr = ds.GetLayerByName('FormatTests__FormatTable')
+
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'feature count wrong.' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    #Interlis 1 Encoding is ISO 8859-1 (Latin1)
+    #Pyton source code is UTF-8 encoded
+    field_values = [0, 'äöü', 'ÄÖÜ', '', 1]
+
+    if feat.GetFieldCount() != len(field_values):
+        gdaltest.post_reason( 'field count wrong.' )
+        return 'fail'
+
+    for i in range(feat.GetFieldCount()):
+        if feat.GetFieldAsString(i) != str(field_values[i]):
+          feat.DumpReadable()
+          print(feat.GetFieldAsString(i))
+          gdaltest.post_reason( 'field value wrong.' )
+          return 'fail'
+
+    #Write back
+    driver = ogr.GetDriverByName( 'Interlis 1' )
+    dst_ds = driver.CreateDataSource( 'tmp/interlis1_7.itf' )
+
+    dst_lyr = dst_ds.CreateLayer( 'FormatTests__FormatTable' )
+
+    layer_defn = lyr.GetLayerDefn()
+    for i in range( layer_defn.GetFieldCount() ):
+        dst_lyr.CreateField( layer_defn.GetFieldDefn( i ) )
+    dst_feat = ogr.Feature( feature_def = dst_lyr.GetLayerDefn() )
+    dst_feat.SetFrom( feat )
+    dst_lyr.CreateFeature( dst_feat )
+    dst_feat.Destroy()
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
 # Reading Ili2 without model
 
 def ogr_interlis2_1():
@@ -360,6 +421,7 @@ gdaltest_list = [
     ogr_interlis1_4,
     ogr_interlis1_5,
     ogr_interlis1_6,
+    ogr_interlis1_7,
     ogr_interlis2_1,
     #ogr_interlis2_2,
     ogr_interlis_cleanup ]
