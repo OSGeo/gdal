@@ -270,55 +270,55 @@ int FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
     if ( ! bDebug )
         oErrorHandler = CPLSetErrorHandler ( CPLQuietErrorHandler );
 
-    /* If argument is a file, try to open it with GDAL and OGROpen() */
+    /* Test if argument is a file */
     fp = VSIFOpenL( pszInput, "r" );
     if ( fp )  {
-        
         bIsFile = TRUE;
         VSIFCloseL( fp );
-        
-        /* try to open with GDAL */
-        CPLDebug( "gdalsrsinfo", "trying to open with GDAL" );
-        poGDALDS = (GDALDataset *) GDALOpen( pszInput, GA_ReadOnly );
-        if ( poGDALDS != NULL && poGDALDS->GetProjectionRef( ) != NULL ) {
-            pszProjection = (char *) poGDALDS->GetProjectionRef( );
-            if( oSRS.importFromWkt( &pszProjection ) == CE_None ) {
-                CPLDebug( "gdalsrsinfo", "got SRS from GDAL" );
-                bGotSRS = TRUE;
-            }
-            GDALClose( (GDALDatasetH) poGDALDS );
+        CPLDebug( "gdalsrsinfo", "argument is a file" );
+    } 
+       
+    /* try to open with GDAL */
+    CPLDebug( "gdalsrsinfo", "trying to open with GDAL" );
+    poGDALDS = (GDALDataset *) GDALOpen( pszInput, GA_ReadOnly );
+    if ( poGDALDS != NULL && poGDALDS->GetProjectionRef( ) != NULL ) {
+        pszProjection = (char *) poGDALDS->GetProjectionRef( );
+        if( oSRS.importFromWkt( &pszProjection ) == CE_None ) {
+            CPLDebug( "gdalsrsinfo", "got SRS from GDAL" );
+            bGotSRS = TRUE;
         }
+        GDALClose( (GDALDatasetH) poGDALDS );
         if ( ! bGotSRS ) 
             CPLDebug( "gdalsrsinfo", "did not open with GDAL" );
-
+    }    
+    
 #ifdef OGR_ENABLED
-        /* if unsuccessful, try to open with OGR */
-        if ( ! bGotSRS ) {
-            CPLDebug( "gdalsrsinfo", "trying to open with OGR" );
-            poOGRDS = OGRSFDriverRegistrar::Open( pszInput, FALSE, NULL );
-            if( poOGRDS != NULL ) {
-                poLayer = poOGRDS->GetLayer( 0 );
-                if ( poLayer != NULL ) {
-                    OGRSpatialReference *poSRS = poLayer->GetSpatialRef( );
-                    if ( poSRS != NULL ) {
-                        CPLDebug( "gdalsrsinfo", "got SRS from OGR" );
-                        bGotSRS = TRUE;
-                        OGRSpatialReference* poSRSClone = poSRS->Clone();
-                        oSRS = *poSRSClone;
-                        OGRSpatialReference::DestroySpatialReference( poSRSClone );
-                    }
+    /* if unsuccessful, try to open with OGR */
+    if ( ! bGotSRS ) {
+        CPLDebug( "gdalsrsinfo", "trying to open with OGR" );
+        poOGRDS = OGRSFDriverRegistrar::Open( pszInput, FALSE, NULL );
+        if( poOGRDS != NULL ) {
+            poLayer = poOGRDS->GetLayer( 0 );
+            if ( poLayer != NULL ) {
+                OGRSpatialReference *poSRS = poLayer->GetSpatialRef( );
+                if ( poSRS != NULL ) {
+                    CPLDebug( "gdalsrsinfo", "got SRS from OGR" );
+                    bGotSRS = TRUE;
+                    OGRSpatialReference* poSRSClone = poSRS->Clone();
+                    oSRS = *poSRSClone;
+                    OGRSpatialReference::DestroySpatialReference( poSRSClone );
                 }
-                OGRDataSource::DestroyDataSource( poOGRDS );
-                poOGRDS = NULL;
-            } 
-            if ( ! bGotSRS ) 
-                CPLDebug( "gdalsrsinfo", "did not open with OGR" );
-         }
-#endif // OGR_ENABLED
+            }
+            OGRDataSource::DestroyDataSource( poOGRDS );
+            poOGRDS = NULL;
+        } 
+        if ( ! bGotSRS ) 
+            CPLDebug( "gdalsrsinfo", "did not open with OGR" );
     }
- 
+#endif // OGR_ENABLED
+    
     /* Try ESRI file */
-    if ( ! bGotSRS && (strstr(pszInput,".prj") != NULL) ) {
+    if ( ! bGotSRS && bIsFile && (strstr(pszInput,".prj") != NULL) ) {
         CPLDebug( "gdalsrsinfo", 
                   "trying to get SRS from ESRI .prj file [%s]", pszInput );
 
@@ -360,7 +360,7 @@ int FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
         }
     }
     
-  /* restore error messages */
+    /* restore error messages */
     if ( ! bDebug )
         CPLSetErrorHandler ( oErrorHandler );	
 
