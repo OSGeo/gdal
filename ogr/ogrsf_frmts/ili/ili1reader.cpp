@@ -606,15 +606,19 @@ int ILI1Reader::ReadTable(const char *layername) {
           for (fIndex=1; fIndex<CSLCount(tokens) && fieldno < featureDef->GetFieldCount(); fIndex++, fieldno++)
           {
             if (!(tokens[fIndex][0] == codeUndefined && tokens[fIndex][1] == '\0')) {
-              //CPLDebug( "READ TABLE OGR_ILI", "Setting Field %d: %s", fieldno, tokens[fIndex]);
+              //CPLDebug( "READ TABLE OGR_ILI", "Setting Field %d (Type %d): %s", fieldno, featureDef->GetFieldDefn(fieldno)->GetType(), tokens[fIndex]);
               if (featureDef->GetFieldDefn(fieldno)->GetType() == OFTString) {
+                  //Interlis 1 encoding is ISO 8859-1 (Latin1) -> Recode to UTF-8
+                  char* pszRecoded = CPLRecode(tokens[fIndex], CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
                   //Replace space marks
-                  for(char* pszString = tokens[fIndex] ; *pszString != '\0'; pszString++ ) {
+                  for(char* pszString = pszRecoded; *pszString != '\0'; pszString++ ) {
                       if (*pszString == codeBlank) *pszString = ' ';
                   }
+                  feature->SetField(fieldno, pszRecoded);
+                  CPLFree(pszRecoded);
+              } else {
+                feature->SetField(fieldno, tokens[fIndex]);
               }
-              CPLDebug( "READ TABLE OGR_ILI", "Setting Field %d (Type %d): %s", fieldno, featureDef->GetFieldDefn(fieldno)->GetType(), tokens[fIndex]);
-              feature->SetField(fieldno, tokens[fIndex]);
               if (featureDef->GetFieldDefn(fieldno)->GetType() == OFTReal
                   && fieldno > 0
                   && featureDef->GetFieldDefn(fieldno-1)->GetType() == OFTReal
