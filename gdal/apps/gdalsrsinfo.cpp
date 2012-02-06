@@ -37,7 +37,7 @@
 
 CPL_CVSID("$Id$");
 
-int FindSRS( const char *pszInput, OGRSpatialReference &oSRS, int bDebug );
+int FindSRS( const char *pszInput, OGRSpatialReference &oSRS );
 CPLErr PrintSRS( const OGRSpatialReference &oSRS, 
                  const char * pszOutputType, 
                  int bPretty, int bPrintSep );
@@ -84,7 +84,6 @@ int main( int argc, char ** argv )
     int            bGotSRS = FALSE;
     int            bPretty = FALSE;
     int            bValidate = FALSE;
-    int            bDebug = FALSE;
     int            bFindEPSG = FALSE;
     int            nEPSGCode = -1;
     const char     *pszInput = NULL;
@@ -156,7 +155,7 @@ int main( int argc, char ** argv )
 #endif
 
     /* Search for SRS */
-    bGotSRS = FindSRS( pszInput, oSRS, bDebug );
+    bGotSRS = FindSRS( pszInput, oSRS );
 
     CPLDebug( "gdalsrsinfo", 
               "bGotSRS: %d bValidate: %d pszOutputType: %s bPretty: %d",
@@ -252,7 +251,7 @@ int main( int argc, char ** argv )
 /*                                                                      */
 /*      Search for SRS from pszInput, update oSRS.                      */
 /************************************************************************/
-int FindSRS( const char *pszInput, OGRSpatialReference &oSRS, int bDebug )
+int FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
 
 {
     int            bGotSRS = FALSE;
@@ -264,8 +263,10 @@ int FindSRS( const char *pszInput, OGRSpatialReference &oSRS, int bDebug )
     CPLErrorHandler oErrorHandler = NULL;
     int bIsFile = FALSE;
     OGRErr eErr = CE_None;
-      
+    int bDebug  = FALSE;
+
     /* temporarily supress error messages we may get from xOpen() */
+    bDebug = CSLTestBoolean(CPLGetConfigOption("CPL_DEBUG", "OFF"));
     if ( ! bDebug )
         oErrorHandler = CPLSetErrorHandler ( CPLQuietErrorHandler );
 
