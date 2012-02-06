@@ -63,7 +63,7 @@ def http_1():
     tst = gdaltest.GDALTest( 'GIF','http://home.gdal.org/~warmerda/frank.gif',
                              1, 35415, filename_absolute = 1 )
     ret = tst.testOpen()
-    if ret == 'failure':
+    if ret == 'fail':
         conn = gdaltest.gdalurlopen('http://home.gdal.org/~warmerda/frank.gif')
         if conn is None:
             print('cannot open URL')
@@ -88,7 +88,7 @@ def http_2():
     tst = gdaltest.GDALTest( 'GTiff','/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/gcore/data/byte.tif',
                              1, 4672, filename_absolute = 1 )
     ret = tst.testOpen()
-    if ret == 'failure':
+    if ret == 'fail':
         conn = gdaltest.gdalurlopen('http://svn.osgeo.org/gdal/trunk/autotest/gcore/data/byte.tif')
         if conn is None:
             print('cannot open URL')

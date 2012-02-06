@@ -151,7 +151,10 @@ def test_gdal_ls_py_5():
     f = gdal.VSIFOpenL('/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
         return 'skip'
+    d = gdal.VSIFReadL(1,1,f)
     gdal.VSIFCloseL(f)
+    if len(d) == 0:
+        return 'skip'
 
     (ret, ret_str) = run_gdal_ls(['', '-R', 'http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/'])
 
@@ -180,7 +183,10 @@ def test_gdal_ls_py_6():
     f = gdal.VSIFOpenL('/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
         return 'skip'
+    d = gdal.VSIFReadL(1,1,f)
     gdal.VSIFCloseL(f)
+    if len(d) == 0:
+        return 'skip'
 
     (ret, ret_str) = run_gdal_ls(['', '-l', '/vsizip/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip'])
 
@@ -213,7 +219,10 @@ def test_gdal_ls_py_7():
     f = gdal.VSIFOpenL('/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
         return 'skip'
+    d = gdal.VSIFReadL(1,1,f)
     gdal.VSIFCloseL(f)
+    if len(d) == 0:
+        return 'skip'
 
     (ret, ret_str) = run_gdal_ls(['', '-R', '-Rzip', 'http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/'])
 
@@ -248,7 +257,10 @@ def test_gdal_ls_py_8():
     f = gdal.VSIFOpenL('/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
         return 'skip'
+    d = gdal.VSIFReadL(1,1,f)
     gdal.VSIFCloseL(f)
+    if len(d) == 0:
+        return 'skip'
 
     (ret, ret_str) = run_gdal_ls(['', '-l', '-R', '-Rzip', 'ftp://ftp.remotesensing.org/gdal/data/aig'])
 
