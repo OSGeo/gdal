@@ -2928,6 +2928,53 @@ def ogr_pg_60():
     return 'success'
 
 ###############################################################################
+# Test insertion of features with FID set in COPY mode (#4495)
+
+def ogr_pg_61():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    gdaltest.pg_ds.ExecuteSQL('CREATE TABLE ogr_pg_61 ( id integer NOT NULL PRIMARY KEY, bar varchar )')
+
+    gdal.SetConfigOption( 'PG_USE_COPY', 'YES' )
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    lyr = ds.GetLayerByName('ogr_pg_61')
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetFID(10)
+    lyr.CreateFeature(feat)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetFID(20)
+    feat.SetField(0, 'baz')
+    lyr.CreateFeature(feat)
+
+    gdal.SetConfigOption( 'PG_USE_COPY', None )
+
+    ds = None
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    lyr = ds.GetLayerByName('ogr_pg_61')
+
+    feat = lyr.GetFeature(10)
+    if feat.IsFieldSet(0):
+        gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetFeature(20)
+    if feat.GetField(0) != 'baz':
+        gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
+        feat.DumpReadable()
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -2965,6 +3012,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_57' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_58' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_60' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_61' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -3057,6 +3105,7 @@ gdaltest_list_internal = [
     ogr_pg_58,
     ogr_pg_59,
     ogr_pg_60,
+    ogr_pg_61,
     ogr_pg_cleanup ]
 
 ###############################################################################
