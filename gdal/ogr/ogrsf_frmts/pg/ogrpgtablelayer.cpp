@@ -70,6 +70,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     bPreservePrecision = TRUE;
     bCopyActive = FALSE;
     bUseCopy = USE_COPY_UNSET;  // unknown
+    bFIDColumnInCopyFields = FALSE;
 
     pszTableName = CPLStrdup( pszTableNameIn );
     if (pszGeomColumnIn)
@@ -1275,7 +1276,13 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
     else
     {
         if ( !bCopyActive )
-            StartCopy();
+        {
+            /* This is a heuristics. If the first feature to be copied has a */
+            /* FID set (and that a FID column has been identified), then we will */
+            /* try to copy FID values from features. Otherwise, we will not */
+            /* do and assume that the FID column is an autoincremented column. */
+            StartCopy(poFeature->GetFID() != OGRNullFID);
+        }
 
         return CreateFeatureViaCopy( poFeature );
     }
@@ -1682,11 +1689,14 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     }
 
     /* Next process the field id column */
-    if( bHasFid && poFeatureDefn->GetFieldIndex( pszFIDColumn ) != -1 )
+    int nFIDIndex = -1;
+    if( bFIDColumnInCopyFields )
     {
         if (osCommand.size() > 0)
             osCommand += "\t";
-            
+
+        nFIDIndex = poFeatureDefn->GetFieldIndex( pszFIDColumn );
+
         /* Set the FID */
         if( poFeature->GetFID() != OGRNullFID )
         {
@@ -1702,14 +1712,20 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     /* Now process the remaining fields */
 
     int nFieldCount = poFeatureDefn->GetFieldCount();
+    int bAddTab = osCommand.size() > 0;
+
     for( int i = 0; i < nFieldCount;  i++ )
     {
+        if (i == nFIDIndex)
+            continue;
+
         const char *pszStrValue = poFeature->GetFieldAsString(i);
         char *pszNeedToFree = NULL;
 
-        if (i > 0 || osCommand.size() > 0)
+        if (bAddTab)
             osCommand += "\t";
-            
+        bAddTab = TRUE;
+
         if( !poFeature->IsFieldSet( i ) )
         {
             osCommand += "\\N" ;
@@ -2498,7 +2514,7 @@ OGRErr OGRPGTableLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 /*                             StartCopy()                              */
 /************************************************************************/
 
-OGRErr OGRPGTableLayer::StartCopy()
+OGRErr OGRPGTableLayer::StartCopy(int bSetFID)
 
 {
     OGRErr result = OGRERR_NONE;
@@ -2506,7 +2522,7 @@ OGRErr OGRPGTableLayer::StartCopy()
     /* Tell the datasource we are now planning to copy data */
     poDS->StartCopy( this ); 
 
-    CPLString osFields = BuildCopyFields();
+    CPLString osFields = BuildCopyFields(bSetFID);
 
     int size = strlen(osFields) +  strlen(pszSqlTableName) + 100;
     char *pszCommand = (char *) CPLMalloc(size);
@@ -2602,29 +2618,36 @@ OGRErr OGRPGTableLayer::EndCopy()
 /*                          BuildCopyFields()                           */
 /************************************************************************/
 
-CPLString OGRPGTableLayer::BuildCopyFields()
+CPLString OGRPGTableLayer::BuildCopyFields(int bSetFID)
 {
     int     i = 0;
+    int     nFIDIndex = -1;
     CPLString osFieldList;
 
-    if( bHasFid && poFeatureDefn->GetFieldIndex( pszFIDColumn ) != -1 )
+    if( pszGeomColumn != NULL )
     {
-        osFieldList += OGRPGEscapeColumnName(pszFIDColumn);
+        osFieldList = OGRPGEscapeColumnName(pszGeomColumn);
     }
 
-    if( pszGeomColumn )
+    bFIDColumnInCopyFields = (pszFIDColumn != NULL && bSetFID);
+    if( bFIDColumnInCopyFields )
     {
-        if( strlen(osFieldList) > 0 )
+        if( osFieldList.size() > 0 )
             osFieldList += ", ";
 
-        osFieldList += OGRPGEscapeColumnName(pszGeomColumn);
+        nFIDIndex = poFeatureDefn->GetFieldIndex( pszFIDColumn );
+
+        osFieldList += OGRPGEscapeColumnName(pszFIDColumn);
     }
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
+        if (i == nFIDIndex)
+            continue;
+
         const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
 
-        if( strlen(osFieldList) > 0 )
+        if( osFieldList.size() > 0 )
             osFieldList += ", ";
 
         osFieldList += OGRPGEscapeColumnName(pszName);

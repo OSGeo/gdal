@@ -203,10 +203,11 @@ class OGRPGTableLayer : public OGRPGLayer
     int                 bPreservePrecision;
     int                 bUseCopy;
     int                 bCopyActive;
+    int                 bFIDColumnInCopyFields;
 
     OGRErr		CreateFeatureViaCopy( OGRFeature *poFeature );
     OGRErr		CreateFeatureViaInsert( OGRFeature *poFeature );
-    CPLString           BuildCopyFields(void);
+    CPLString           BuildCopyFields(int bSetFID);
 
     void                AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
                                          OGRFeature* poFeature, int i);
@@ -271,7 +272,7 @@ public:
     void                SetPrecisionFlag( int bFlag )
                                 { bPreservePrecision = bFlag; }
 
-    virtual OGRErr      StartCopy();
+    virtual OGRErr      StartCopy(int bSetFID);
     virtual OGRErr      EndCopy();
 
     OGRFeatureDefn     *GetLayerDefnCanReturnNULL();
