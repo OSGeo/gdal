@@ -35,27 +35,6 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*  Correspondence between Ozi and EPSG datum codes.                    */
-/************************************************************************/
-
-typedef struct 
-{
-    const char  *pszOziDatum;
-    int         nEPSGCode;
-} OZIDatums;
-
-static const OZIDatums aoDatums[] =
-{
-    { "WGS 72", 4322 },             // WGS, 1972
-    { "WGS 84", 4326 },             // WGS, 1984
-    { "Pulkovo 1942 (1)", 4284 },   // Pulkovo 1942
-    { "Pulkovo 1942 (2)", 4284 },   // Pulkovo 1942, XXX: What is a difference
-                                    // with the previous one?
-    { "Potsdam Rauenberg DHDN", 31467 }, // Gauss-Krueger GK3 Central_Meridian 9 deg
-    { NULL, 0 }
-};
-
-/************************************************************************/
 /*                          OSRImportFromOzi()                          */
 /************************************************************************/
 
@@ -178,27 +157,99 @@ OGRErr OGRSpatialReference::importFromOzi( const char *pszDatum,
         
     if ( !IsLocal() )
     {
-        const OZIDatums   *paoDatum = aoDatums;
 
-        // Search for matching datum
-        while ( paoDatum->pszOziDatum )
+/* -------------------------------------------------------------------- */
+/*      Verify that we can find the CSV file containing the datums      */
+/* -------------------------------------------------------------------- */
+        if( CSVScanFileByName( CSVFilename( "ozi_datum.csv" ),
+                            "EPSG_DATUM_CODE",
+                            "4326", CC_Integer ) == NULL )
         {
-            if ( EQUAL( papszDatum[0], paoDatum->pszOziDatum ) )
-            {
-                OGRSpatialReference oGCS;
-                oGCS.importFromEPSG( paoDatum->nEPSGCode );
-                CopyGeogCSFrom( &oGCS );
-                break;
-            }
-            paoDatum++;
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                    "Unable to open OZI support file %s.\n"
+                    "Try setting the GDAL_DATA environment variable to point\n"
+                    "to the directory containing OZI csv files.",
+                    CSVFilename( "ozi_datum.csv" ) );
+            goto other_error;
         }
 
-        if ( !paoDatum->pszOziDatum )
+/* -------------------------------------------------------------------- */
+/*      Search for matching datum                                       */
+/* -------------------------------------------------------------------- */
+        const char *pszOziDatum = CSVFilename( "ozi_datum.csv" );
+        CPLString osDName = CSVGetField( pszOziDatum, "NAME", papszDatum[0],
+                                    CC_ApproxString, "NAME" );
+        if( strlen(osDName) == 0 )
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Wrong datum name \"%s\". Setting WGS84 as a fallback.",
-                      papszDatum[0] );
-            SetWellKnownGeogCS( "WGS84" );
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Failed to find datum %s in ozi_datum.csv.",
+                    papszDatum[0] );
+            goto other_error;
+        }
+
+        int nDatumCode = atoi( CSVGetField( pszOziDatum, "NAME", papszDatum[0],
+                                            CC_ApproxString, "EPSG_DATUM_CODE" ) );
+
+        if ( nDatumCode > 0 ) // There is a matching EPSG code
+        {
+            OGRSpatialReference oGCS;
+            oGCS.importFromEPSG( nDatumCode );
+            CopyGeogCSFrom( &oGCS );
+        }
+        else // We use the parameters from the CSV files
+        {
+            CPLString osEllipseCode = CSVGetField( pszOziDatum, "NAME", papszDatum[0],
+                                                CC_ApproxString, "ELLIPSOID_CODE" );
+            double dfDeltaX = CPLAtof(CSVGetField( pszOziDatum, "NAME", papszDatum[0],
+                                                CC_ApproxString, "DELTAX" ) );
+            double dfDeltaY = CPLAtof(CSVGetField( pszOziDatum, "NAME", papszDatum[0],
+                                                CC_ApproxString, "DELTAY" ) );
+            double dfDeltaZ = CPLAtof(CSVGetField( pszOziDatum, "NAME", papszDatum[0],
+                                                CC_ApproxString, "DELTAZ" ) );
+
+
+    /* -------------------------------------------------------------------- */
+    /*      Verify that we can find the CSV file containing the ellipsoids  */
+    /* -------------------------------------------------------------------- */
+            if( CSVScanFileByName( CSVFilename( "ozi_ellips.csv" ),
+                                "ELLIPSOID_CODE",
+                                "20", CC_Integer ) == NULL )
+            {
+                CPLError( CE_Failure, CPLE_OpenFailed,
+                    "Unable to open OZI support file %s.\n"
+                    "Try setting the GDAL_DATA environment variable to point\n"
+                    "to the directory containing OZI csv files.",
+                    CSVFilename( "ozi_ellips.csv" ) );
+                goto other_error;
+            }
+
+    /* -------------------------------------------------------------------- */
+    /*      Lookup the ellipse code.                                        */
+    /* -------------------------------------------------------------------- */
+            const char *pszOziEllipse = CSVFilename( "ozi_ellips.csv" );
+
+            CPLString osEName = CSVGetField( pszOziEllipse, "ELLIPSOID_CODE", osEllipseCode,
+                                        CC_ApproxString, "NAME" );
+            if( strlen(osEName) == 0 )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "Failed to find ellipsoid %s in ozi_ellips.csv.",
+                        osEllipseCode.c_str() );
+                goto other_error;
+            }
+
+            double dfA = CPLAtof(CSVGetField( pszOziEllipse, "ELLIPSOID_CODE", osEllipseCode,
+                                        CC_ApproxString, "A" ));
+            double dfInvF = CPLAtof(CSVGetField( pszOziEllipse, "ELLIPSOID_CODE", osEllipseCode,
+                                            CC_ApproxString, "INVF" ));
+
+    /* -------------------------------------------------------------------- */
+    /*      Create geographic coordinate system.                            */
+    /* -------------------------------------------------------------------- */
+
+            SetGeogCS( osDName, osDName, osEName, dfA, dfInvF );
+            SetTOWGS84( dfDeltaX, dfDeltaY, dfDeltaZ );
+
         }
     }
 
@@ -209,19 +260,26 @@ OGRErr OGRSpatialReference::importFromOzi( const char *pszDatum,
         SetLinearUnits( SRS_UL_METER, 1.0 );
 
     FixupOrdering();
-    
+
     CSLDestroy(papszProj);
     CSLDestroy(papszProjParms);
     CSLDestroy(papszDatum);
 
     return OGRERR_NONE;
-    
+
 not_enough_data:
 
     CSLDestroy(papszProj);
     CSLDestroy(papszProjParms);
     CSLDestroy(papszDatum);
-    
-    return OGRERR_NOT_ENOUGH_DATA;
-}
 
+    return OGRERR_NOT_ENOUGH_DATA;
+
+other_error:
+
+    CSLDestroy(papszProj);
+    CSLDestroy(papszProjParms);
+    CSLDestroy(papszDatum);
+
+    return OGRERR_FAILURE;
+}

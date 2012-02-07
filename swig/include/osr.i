@@ -804,6 +804,13 @@ public:
     return OSRImportFromMICoordSys( self, pszCoordSys );
   }
 
+%apply Pointer NONNULL {char const *projParms};
+  OGRErr ImportFromOzi( char const *datum,
+                        char const *proj,
+                        char const *projParms ) {
+    return OSRImportFromOzi( self, datum, proj, projParms );
+  }
+
   OGRErr ExportToWkt( char **argout ) {
     return OSRExportToWkt( self, argout );
   }
