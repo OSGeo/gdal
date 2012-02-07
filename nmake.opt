@@ -353,11 +353,17 @@ PCIDSK_SETTING=INTERNAL
 #MYSQL_LIB = D:\Software\MySQLServer4.1\lib\opt\libmysql.lib advapi32.lib
 
 # INGRES Libraries
-# INGRES_DIR = C:\warmerda\pkg\ingres
-# INGRES_INC_DIR = $(INGRES_DIR)\files
-# INGRES_LIB = $(INGRES_DIR)\lib\iilibapi.lib \
-#	$(INGRES_DIR)\lib\iilibutil.lib \
-#	$(INGRES_DIR)\lib\libingres.lib 
+# Uncomment the following to enable Ingres format.
+# INGRES_HOME = $(II_SYSTEM)\ingres
+# Uncomment the following if you prefer to build Ingres support as a plugin.
+# INGRES_PLUGIN = YES
+!IFDEF INGRES_HOME
+INGRES_INC_DIR = "$(INGRES_HOME)\files"
+INGRES_LIB = "$(INGRES_HOME)\lib\iilibapi.lib" \
+	"$(INGRES_HOME)\lib\iilibutil.lib" \
+	"$(INGRES_HOME)\lib\libingres.lib"
+!ENDIF
+
 
 # SQLite Libraries
 #SQLITE_INC=-IN:\pkg\sqlite-win32
