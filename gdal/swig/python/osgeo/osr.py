@@ -662,6 +662,10 @@ class SpatialReference(_object):
         """ImportFromMICoordSys(self, char pszCoordSys) -> OGRErr"""
         return _osr.SpatialReference_ImportFromMICoordSys(self, *args)
 
+    def ImportFromOzi(self, *args):
+        """ImportFromOzi(self, char datum, char proj, char projParms) -> OGRErr"""
+        return _osr.SpatialReference_ImportFromOzi(self, *args)
+
     def ExportToWkt(self, *args):
         """ExportToWkt(self) -> OGRErr"""
         return _osr.SpatialReference_ExportToWkt(self, *args)
