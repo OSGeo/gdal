@@ -894,7 +894,8 @@ CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszOptions)
     // default scale is 10x the tolerance
     long zscale = 1 / ztol * 10;
 
-    char s_xyscale[50], s_zscale[50];
+    char s_xyscale[50], s_xytol[50], s_zscale[50], s_ztol[50];
+    snprintf(s_ztol, 50, "%f", ztol);
     snprintf(s_zscale, 50, "%ld", zscale);
     
     if ( poSRS == NULL || poSRS->IsProjected() )
@@ -904,16 +905,17 @@ CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszOptions)
         // default scale is 10x the tolerance
         long xyscale = 1 / xytol * 10;
 
+        snprintf(s_xytol, 50, "%f", xytol);
         snprintf(s_xyscale, 50, "%ld", xyscale);
 
         // Ideally we would use the same X/Y origins as ArcGIS, but we need the algorithm they use.
         gridvalues[0] = "-2147483647";
         gridvalues[1] = "-2147483647";
-        gridvalues[2] = "10000";
+        gridvalues[2] = s_xyscale;
         gridvalues[3] = "-100000";
-        gridvalues[4] = "10000";
-        gridvalues[5] = s_xyscale;
-        gridvalues[6] = s_zscale;
+        gridvalues[4] = s_zscale;
+        gridvalues[5] = s_xytol;
+        gridvalues[6] = s_ztol;
     }
     else
     {
@@ -921,9 +923,9 @@ CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszOptions)
         gridvalues[1] = "-400";
         gridvalues[2] = "1000000000";
         gridvalues[3] = "-100000";
-        gridvalues[4] = "1000000000";
+        gridvalues[4] = s_zscale;
         gridvalues[5] = "0.000000008983153";
-        gridvalues[6] = s_zscale;
+        gridvalues[6] = s_ztol;
     }
 
     /* Convert any layer creation options available, use defaults otherwise */
