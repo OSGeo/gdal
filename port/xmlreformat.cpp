@@ -56,6 +56,12 @@ int main( int argc, char **argv )
     }
 
     nLen = fread( szXML, 1, sizeof(szXML), fp );
+    if( nLen >= (int) sizeof(szXML)-2 ) {
+        fprintf( stderr, 
+                 "xmlreformat fixed sized buffer (%d bytes) exceeded.\n",
+                 (int) sizeof(szXML) );
+        exit(1);
+    }
 
     if( fp != stdin )
         fclose( fp );
@@ -73,4 +79,3 @@ int main( int argc, char **argv )
 
     return 0;
 }
-
