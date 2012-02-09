@@ -1401,14 +1401,14 @@ public class ogr2ogr
                     boolean bFieldRequested = false;
                     for( iField=0; iField < papszSelFields.size(); iField++)
                     {
-                        if (pszFieldName.equals((String)papszSelFields.get(iField)))
+                        if (pszFieldName.equalsIgnoreCase((String)papszSelFields.get(iField)))
                         {
                             bFieldRequested = true;
                             break;
                         }
                     }
 
-                    if (pszZField != null && pszFieldName.equals(pszZField))
+                    if (pszZField != null && pszFieldName.equalsIgnoreCase(pszZField))
                         bFieldRequested = true;
 
                     /* If source field not requested, add it to ignored files list */
