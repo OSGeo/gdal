@@ -531,7 +531,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
      
     /***********   Grab scaleFactor ************/
     scaleFactor = 
-        atof(poDS->GetKeyword( "IsisCube.Mapping.scaleFactor"));
+        atof(poDS->GetKeyword( "IsisCube.Mapping.scaleFactor", "1.0"));
      
     /*** grab      LatitudeType = Planetographic ****/
     // Need to further study how ocentric/ographic will effect the gdal library
