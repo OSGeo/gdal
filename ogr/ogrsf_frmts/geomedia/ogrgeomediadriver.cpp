@@ -66,6 +66,9 @@ OGRDataSource *OGRGeomediaDriver::Open( const char * pszFilename,
         && !EQUAL(CPLGetExtension(pszFilename),"mdb") )
         return NULL;
 
+    /* Disabling the attempt to guess if a MDB file is a Geomedia database */
+    /* or not. See similar fix in PGeo driver for rationale. */
+#if 0
     if( !EQUALN(pszFilename,"GEOMEDIA:",9) &&
         EQUAL(CPLGetExtension(pszFilename),"mdb") )
     {
@@ -91,6 +94,7 @@ OGRDataSource *OGRGeomediaDriver::Open( const char * pszFilename,
         if (!bFound)
             return NULL;
     }
+#endif
 
 #ifndef WIN32
     // Try to register MDB Tools driver
