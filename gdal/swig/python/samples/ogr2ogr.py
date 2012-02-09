@@ -1170,11 +1170,11 @@ def TranslateLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                 pszFieldName = poSrcFDefn.GetFieldDefn(iSrcField).GetNameRef()
                 bFieldRequested = False
                 for iField in range(len(papszSelFields)):
-                    if pszFieldName == papszSelFields[iField]:
+                    if EQUAL(pszFieldName, papszSelFields[iField]):
                         bFieldRequested = True
                         break
 
-                if pszZField is not None and pszFieldName == pszZField:
+                if pszZField is not None and EQUAL(pszFieldName, pszZField):
                     bFieldRequested = True
 
                 #/* If source field not requested, add it to ignored files list */
