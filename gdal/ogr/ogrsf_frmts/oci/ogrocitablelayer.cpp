@@ -1998,6 +1998,80 @@ OGRErr OGROCITableLayer::SyncToDisk()
 
     UpdateLayerExtents();
 
+    CreateSpatialIndex();
+
     return eErr;
 }
 
+/*************************************************************************/
+/*                         CreateSpatialIndex()                          */
+/*************************************************************************/
+
+void OGROCITableLayer::CreateSpatialIndex()
+
+{
+/* -------------------------------------------------------------------- */
+/*      For new layers we try to create a spatial index.                */
+/* -------------------------------------------------------------------- */
+    if( bNewLayer && sExtent.IsInit() )
+    {
+/* -------------------------------------------------------------------- */
+/*      If the user has disabled INDEX support then don't create the    */
+/*      index.                                                          */
+/* -------------------------------------------------------------------- */
+        if( !CSLFetchBoolean( papszOptions, "INDEX", TRUE ) )
+            return;
+
+/* -------------------------------------------------------------------- */
+/*      Establish an index name.  For some reason Oracle 8.1.7 does     */
+/*      not support spatial index names longer than 18 characters so    */
+/*      we magic up an index name if it would be too long.              */
+/* -------------------------------------------------------------------- */
+        char  szIndexName[20];
+
+        if( strlen(poFeatureDefn->GetName()) < 15 )
+            sprintf( szIndexName, "%s_idx", poFeatureDefn->GetName() );
+        else if( strlen(poFeatureDefn->GetName()) < 17 )
+            sprintf( szIndexName, "%si", poFeatureDefn->GetName() );
+        else
+        {
+            int i, nHash = 0;
+            const char *pszSrcName = poFeatureDefn->GetName();
+
+            for( i = 0; pszSrcName[i] != '\0'; i++ )
+                nHash = (nHash + i * pszSrcName[i]) % 987651;
+
+            sprintf( szIndexName, "OSI_%d", nHash );
+        }
+
+        poDS->GetSession()->CleanName( szIndexName );
+
+/* -------------------------------------------------------------------- */
+/*      Try creating an index on the table now.  Use a simple 5         */
+/*      level quadtree based index.  Would R-tree be a better default?  */
+/* -------------------------------------------------------------------- */
+        OGROCIStringBuf  sIndexCmd;
+        OGROCIStatement oExecStatement( poDS->GetSession() );
+
+
+        sIndexCmd.Appendf( 10000, "CREATE INDEX \"%s\" ON %s(\"%s\") "
+                           "INDEXTYPE IS MDSYS.SPATIAL_INDEX ",
+                           szIndexName,
+                           poFeatureDefn->GetName(),
+                           pszGeomName );
+
+        if( CSLFetchNameValue( papszOptions, "INDEX_PARAMETERS" ) != NULL )
+        {
+            sIndexCmd.Append( " PARAMETERS( '" );
+            sIndexCmd.Append( CSLFetchNameValue(papszOptions,"INDEX_PARAMETERS") );
+            sIndexCmd.Append( "' )" );
+        }
+
+        if( oExecStatement.Execute( sIndexCmd.GetString() ) != CE_None )
+        {
+            CPLString osDropCommand;
+            osDropCommand.Printf( "DROP INDEX \"%s\"", szIndexName );
+            oExecStatement.Execute( osDropCommand );
+        }
+    }
+}
