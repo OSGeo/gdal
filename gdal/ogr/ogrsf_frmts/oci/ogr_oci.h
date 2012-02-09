@@ -412,6 +412,7 @@ class OGROCITableLayer : public OGROCIWritableLayer
 
     void                UpdateLayerExtents();
     void                FinalizeNewLayer();
+    void                CreateSpatialIndex();
 
     void                TestForSpatialIndex( const char * );
 
