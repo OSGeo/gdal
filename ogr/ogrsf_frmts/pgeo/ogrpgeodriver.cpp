@@ -65,6 +65,12 @@ OGRDataSource *OGRPGeoDriver::Open( const char * pszFilename,
         && !EQUAL(CPLGetExtension(pszFilename),"mdb") )
         return NULL;
 
+    /* Disabling the attempt to guess if a MDB file is a PGeo database */
+    /* or not. The mention to GDB_GeomColumns might be quite far in the */
+    /* file, which can cause mis-detection. See http://trac.osgeo.org/gdal/ticket/4498 */
+    /* This was initially meant to know if a MDB should be opened by the PGeo or the */
+    /* Geomedia driver. */
+#if 0
     if( !EQUALN(pszFilename,"PGEO:",5) &&
         EQUAL(CPLGetExtension(pszFilename),"mdb") )
     {
@@ -90,6 +96,7 @@ OGRDataSource *OGRPGeoDriver::Open( const char * pszFilename,
         if (!bFound)
             return NULL;
     }
+#endif
 
 #ifndef WIN32
     // Try to register MDB Tools driver
