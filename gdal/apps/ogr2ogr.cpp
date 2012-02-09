@@ -2064,14 +2064,14 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                 int bFieldRequested = FALSE;
                 for( iField=0; papszSelFields[iField] != NULL; iField++)
                 {
-                    if (strcmp(pszFieldName, papszSelFields[iField]) == 0)
+                    if (EQUAL(pszFieldName, papszSelFields[iField]))
                     {
                         bFieldRequested = TRUE;
                         break;
                     }
                 }
                 bFieldRequested |= CSLFindString(papszWHEREUsedFields, pszFieldName) >= 0;
-                bFieldRequested |= (pszZField != NULL && strcmp(pszFieldName, pszZField) == 0);
+                bFieldRequested |= (pszZField != NULL && EQUAL(pszFieldName, pszZField));
 
                 /* If source field not requested, add it to ignored files list */
                 if (!bFieldRequested)

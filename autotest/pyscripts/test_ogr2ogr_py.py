@@ -323,16 +323,29 @@ def test_ogr2ogr_py_10():
     except:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-select AREA tmp/poly.shp ../ogr/data/poly.shp')
+    # Voluntary don't use the exact case of the source field names (#4502)
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', '-select eas_id,prfedea tmp/poly.shp ../ogr/data/poly.shp')
 
     ds = ogr.Open('tmp/poly.shp')
-    if ds.GetLayer(0).GetLayerDefn().GetFieldCount() != 1:
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldCount() != 2:
         return 'fail'
-    ds.Destroy()
+    feat = lyr.GetNextFeature()
+    ret = 'success'
+    if feat.GetFieldAsDouble('EAS_ID') != 168:
+        gdaltest.post_reason('did not get expected value for EAS_ID')
+        print(feat.GetFieldAsDouble('EAS_ID'))
+        ret = 'fail'
+    elif feat.GetFieldAsString('PRFEDEA') != '35043411':
+        gdaltest.post_reason('did not get expected value for PRFEDEA')
+        print(feat.GetFieldAsString('PRFEDEA'))
+        ret = 'fail'
+    feat = None
+    ds = None
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/poly.shp')
 
-    return 'success'
+    return ret
 
 ###############################################################################
 # Test -lco
