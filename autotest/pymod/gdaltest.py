@@ -1232,6 +1232,25 @@ def isnan(val):
     else:
         return True
 
+###############################################################################
+# Return positive infinity
+
+def posinf():
+    try:
+        # Python >= 2.6
+        return float('inf')
+    except:
+        return 1e400
+ 
+###############################################################################
+# Return negative infinity
+
+def neginf():
+    try:
+        # Python >= 2.6
+        return float('-inf')
+    except:
+        return -1e400
 
 ###############################################################################
 # Has the user requested to run the slow tests
