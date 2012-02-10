@@ -318,6 +318,34 @@ def stats_nodata_inf():
 
     return 'success'
 
+
+###############################################################################
+# Test deserialization of +inf/-inf values written by Linux and Windows
+
+def stats_nodata_check(filename, expected_nodata):
+    ds = gdal.Open(filename)
+    nodata = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+
+    if nodata != expected_nodata:
+        gdaltest.post_reason('did not get expected nodata value')
+        print(nodata)
+        return 'fail'
+
+    return 'success'
+
+def stats_nodata_neginf_linux():
+    return stats_nodata_check('data/stats_nodata_neginf.tif', gdaltest.neginf())
+
+def stats_nodata_neginf_msvc():
+    return stats_nodata_check('data/stats_nodata_neginf_msvc.tif', gdaltest.neginf())
+
+def stats_nodata_posinf_linux():
+    return stats_nodata_check('data/stats_nodata_posinf.tif', gdaltest.posinf())
+
+def stats_nodata_posinf_msvc():
+    return stats_nodata_check('data/stats_nodata_posinf_msvc.tif', gdaltest.posinf())
+
 ###############################################################################
 # Run tests
 
@@ -333,7 +361,11 @@ gdaltest_list = [
     stats_nan_6,
     stats_nan_7,
     stats_nan_8,
-    stats_nodata_inf
+    stats_nodata_inf,
+    stats_nodata_neginf_linux,
+    stats_nodata_neginf_msvc,
+    stats_nodata_posinf_linux,
+    stats_nodata_posinf_msvc
     ]
 
 if __name__ == '__main__':
