@@ -60,6 +60,15 @@ static float CPLNaN(void)
 #  endif
 #endif
 
+#ifndef INFINITY
+    static CPL_INLINE double CPLInfinity(void)
+    {
+        static double ZERO = 0;
+        return 1.0 / ZERO; /* MSVC doesn't like 1.0 / 0.0 */
+    }
+    #define INFINITY CPLInfinity()
+#endif
+
 /************************************************************************/
 /*                            CPLAtofDelim()                            */
 /************************************************************************/
@@ -236,9 +245,27 @@ static char* CPLReplacePointByLocalePoint(const char* pszNumber, char point)
  */
 double CPLStrtodDelim(const char *nptr, char **endptr, char point)
 {
-   if (EQUAL(nptr,"nan") || EQUAL(nptr, "1.#QNAN") ||
-       EQUAL(nptr, "-1.#QNAN") || EQUAL(nptr, "-1.#IND"))
-       return NAN;
+    if (nptr[0] == '-')
+    {
+        if (strcmp(nptr, "-1.#QNAN") == 0 ||
+            strcmp(nptr, "-1.#IND") == 0)
+            return NAN;
+
+        if (strcmp(nptr,"-inf") == 0 ||
+            strcmp(nptr,"-1.#INF") == 0)
+            return -INFINITY;
+    }
+    else if (nptr[0] == '1')
+    {
+        if (strcmp(nptr, "1.#QNAN") == 0)
+            return NAN;
+        if (strcmp (nptr,"1.#INF") == 0)
+            return INFINITY;
+    }
+    else if (nptr[0] == 'i' && strcmp(nptr,"inf") == 0)
+        return INFINITY;
+    else if (nptr[0] == 'n' && strcmp(nptr,"nan") == 0)
+        return NAN;
 
 /* -------------------------------------------------------------------- */
 /*  We are implementing a simple method here: copy the input string     */
