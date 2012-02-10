@@ -294,6 +294,31 @@ def stats_nan_8():
     return 'success'
 
 ###############################################################################
+# Test statistics computation when nodata = +/- inf
+
+def stats_nodata_inf():
+
+    ds = gdal.GetDriverByName('HFA').Create('/vsimem/stats_nodata_inf.img', 3, 1,1, gdal.GDT_Float32)
+    ds.GetRasterBand(1).SetNoDataValue(gdaltest.neginf())
+    import struct
+    ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, struct.pack('f', gdaltest.neginf()), buf_type = gdal.GDT_Float32 )
+    ds.GetRasterBand(1).WriteRaster(1, 0, 1, 1, struct.pack('f', 1), buf_type = gdal.GDT_Float32 )
+    ds.GetRasterBand(1).WriteRaster(2, 0, 1, 1, struct.pack('f', -2), buf_type = gdal.GDT_Float32 )
+
+    cs = ds.GetRasterBand(1).Checksum()
+    stats = ds.GetRasterBand(1).ComputeStatistics(False)
+    ds = None
+    
+    gdal.GetDriverByName('HFA').Delete('/vsimem/stats_nodata_inf.img')
+
+    if stats != [-2.0, 1.0, -0.5, 1.5]:
+        gdaltest.post_reason('did not get expected stats')
+        print(stats)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Run tests
 
 gdaltest_list = [
@@ -307,7 +332,8 @@ gdaltest_list = [
     stats_nan_5,
     stats_nan_6,
     stats_nan_7,
-    stats_nan_8
+    stats_nan_8,
+    stats_nodata_inf
     ]
 
 if __name__ == '__main__':
