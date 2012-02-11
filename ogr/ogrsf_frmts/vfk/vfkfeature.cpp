@@ -109,6 +109,7 @@ void IVFKFeature::SetGeometry(OGRGeometry *poGeom)
     if (!poGeom)
         return;
 
+    delete m_paGeom;
     m_paGeom = (OGRGeometry *) poGeom->clone(); /* make copy */
     
     if (m_nGeometryType == wkbNone && m_paGeom->IsEmpty())
