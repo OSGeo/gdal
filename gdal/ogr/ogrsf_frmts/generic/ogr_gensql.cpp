@@ -81,6 +81,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
     poDefn = NULL;
     poSummaryFeature = NULL;
     panFIDIndex = NULL;
+    bOrderByValid = FALSE;
     nIndexSize = 0;
     nNextIndexFID = 0;
     nExtraDSCount = 0;
@@ -302,13 +303,6 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
 
     poDefn->SetGeomType( poSrcLayer->GetLayerDefn()->GetGeomType() );
 
-/* -------------------------------------------------------------------- */
-/*      If an ORDER BY is in effect, apply it now.                      */
-/* -------------------------------------------------------------------- */
-    if( psSelectInfo->order_specs > 0 
-        && psSelectInfo->query_mode == SWQM_RECORDSET )
-        CreateOrderByIndex();
-
     ResetReading();
 
     FindAndSetIgnoredFields();
@@ -444,6 +438,8 @@ OGRErr OGRGenSQLResultsLayer::SetNextByIndex( long nIndex )
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
 
+    CreateOrderByIndex();
+
     if( psSelectInfo->query_mode == SWQM_SUMMARY_RECORD 
         || psSelectInfo->query_mode == SWQM_DISTINCT_LIST 
         || panFIDIndex != NULL )
@@ -466,6 +462,8 @@ OGRErr OGRGenSQLResultsLayer::GetExtent( OGREnvelope *psExtent,
 
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
+
+    CreateOrderByIndex();
 
     if( psSelectInfo->query_mode == SWQM_RECORDSET )
         return poSrcLayer->GetExtent( psExtent, bForce );
@@ -496,6 +494,8 @@ int OGRGenSQLResultsLayer::GetFeatureCount( int bForce )
 
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
+
+    CreateOrderByIndex();
 
     if( psSelectInfo->query_mode == SWQM_DISTINCT_LIST )
     {
@@ -1047,6 +1047,8 @@ OGRFeature *OGRGenSQLResultsLayer::GetNextFeature()
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
 
+    CreateOrderByIndex();
+
 /* -------------------------------------------------------------------- */
 /*      Handle summary sets.                                            */
 /* -------------------------------------------------------------------- */
@@ -1095,6 +1097,8 @@ OGRFeature *OGRGenSQLResultsLayer::GetFeature( long nFID )
 
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
+
+    CreateOrderByIndex();
 
 /* -------------------------------------------------------------------- */
 /*      Handle request for summary record.                              */
@@ -1206,8 +1210,15 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
     int      i, nOrderItems = psSelectInfo->order_specs;
     long     *panFIDList;
 
-    if( nOrderItems == 0 )
+    if( ! (psSelectInfo->order_specs > 0
+           && psSelectInfo->query_mode == SWQM_RECORDSET
+           && nOrderItems != 0 ) )
         return;
+
+    if( bOrderByValid )
+        return;
+
+    bOrderByValid = TRUE;
 
     ResetReading();
 
@@ -1378,6 +1389,8 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 
         nIndexSize = 0;
     }
+
+    ResetReading();
 }
 
 /************************************************************************/
@@ -1627,4 +1640,37 @@ void OGRGenSQLResultsLayer::FindAndSetIgnoredFields()
     }
 
     CPLHashSetDestroy(hSet);
+}
+
+/************************************************************************/
+/*                       InvalidateOrderByIndex()                       */
+/************************************************************************/
+
+void OGRGenSQLResultsLayer::InvalidateOrderByIndex()
+{
+    CPLFree( panFIDIndex );
+    panFIDIndex = NULL;
+
+    nIndexSize = 0;
+    bOrderByValid = FALSE;
+}
+
+/************************************************************************/
+/*                       SetAttributeFilter()                           */
+/************************************************************************/
+
+OGRErr OGRGenSQLResultsLayer::SetAttributeFilter( const char* pszAttributeFilter )
+{
+    InvalidateOrderByIndex();
+    return OGRLayer::SetAttributeFilter(pszAttributeFilter);
+}
+
+/************************************************************************/
+/*                       SetSpatialFilter()                             */
+/************************************************************************/
+
+void OGRGenSQLResultsLayer::SetSpatialFilter( OGRGeometry * poGeom )
+{
+    InvalidateOrderByIndex();
+    OGRLayer::SetSpatialFilter(poGeom);
 }
