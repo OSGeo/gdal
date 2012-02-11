@@ -55,13 +55,12 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 
     int         nIndexSize;
     long       *panFIDIndex;
+    int         bOrderByValid;
 
     int         nNextIndexFID;
     OGRFeature  *poSummaryFeature;
 
     int         iFIDFieldIndex;
-
-    OGRField    *pasOrderByIndex;
 
     int         nExtraDSCount;
     OGRDataSource **papoExtraDS;
@@ -79,6 +78,9 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     void        AddFieldDefnToSet(int iTable, int iColumn, CPLHashSet* hSet);
 
     int         ContainGeomSpecialField(swq_expr_node* expr);
+
+    void        InvalidateOrderByIndex();
+
   public:
                 OGRGenSQLResultsLayer( OGRDataSource *poSrcDS, 
                                        void *pSelectInfo, 
@@ -102,6 +104,9 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
     virtual int         TestCapability( const char * );
+
+    virtual void        SetSpatialFilter( OGRGeometry * );
+    virtual OGRErr      SetAttributeFilter( const char * );
 };
 
 #endif /* ndef _OGR_GENSQL_H_INCLUDED */
