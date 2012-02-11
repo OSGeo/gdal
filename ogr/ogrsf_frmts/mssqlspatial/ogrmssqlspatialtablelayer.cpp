@@ -479,7 +479,7 @@ CPLODBCStatement* OGRMSSQLSpatialTableLayer::BuildStatement(const char* pszColum
 
     /* Append attribute query if we have it */
     if( pszQuery != NULL )
-        poStatement->Appendf( " where %s", pszQuery );
+        poStatement->Appendf( " where (%s)", pszQuery );
 
     /* If we have a spatial filter, query on it */
     if ( m_poFilterGeom != NULL )
