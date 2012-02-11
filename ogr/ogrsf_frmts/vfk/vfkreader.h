@@ -71,7 +71,7 @@ public:
     explicit VFKProperty(double);
     explicit VFKProperty(const char*);
     explicit VFKProperty(std::string const&);
-    ~VFKProperty();
+    virtual ~VFKProperty();
     
     VFKProperty(VFKProperty const& other);
     VFKProperty& operator=(VFKProperty const& other);
@@ -101,7 +101,7 @@ protected:
 
 public:
     IVFKFeature(IVFKDataBlock *);
-    ~IVFKFeature();
+    virtual ~IVFKFeature();
 
     long                 GetFID() const { return m_nFID; }
     void                 SetFID(long);
@@ -186,7 +186,7 @@ private:
 
 public:
     VFKPropertyDefn(const char*, const char *);
-    ~VFKPropertyDefn();
+    virtual ~VFKPropertyDefn();
 
     const char       *GetName() const  { return m_pszName; }
     int               GetWidth() const { return m_nWidth;  }
@@ -236,7 +236,7 @@ protected:
 
 public:
     IVFKDataBlock(const char *, const IVFKReader *);
-    ~IVFKDataBlock();
+    virtual ~IVFKDataBlock();
 
     const char        *GetName() const { return m_pszName; }
 
