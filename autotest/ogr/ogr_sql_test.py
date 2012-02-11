@@ -1090,6 +1090,8 @@ def ogr_sql_37():
     lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn('floatfield', ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn('strfield', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('strfield2', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('strfield3', ogr.OFTString))
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(0, 1)
     feat.SetField(2, "456")
@@ -1100,6 +1102,7 @@ def ogr_sql_37():
     lyr.CreateFeature(feat)
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(1, 2.3)
+    feat.SetField(3, "foo")
     lyr.CreateFeature(feat)
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(1, 2.3)
@@ -1134,6 +1137,22 @@ def ogr_sql_37():
     if feat.IsFieldSet(0) != 0:
         gdaltest.post_reason('fail')
         feat.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet( sql_lyr )
+
+    # Fix crash when first values is null (#4509)
+    sql_lyr = ds.ExecuteSQL( "select distinct strfield2 from layer")
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetFieldAsString('strfield2') != 'foo':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet( sql_lyr )
+
+    sql_lyr = ds.ExecuteSQL( "select distinct strfield3 from layer")
+    feat = sql_lyr.GetNextFeature()
+    if feat is not None:
+        gdaltest.post_reason('fail')
         return 'fail'
     ds.ReleaseResultSet( sql_lyr )
 
