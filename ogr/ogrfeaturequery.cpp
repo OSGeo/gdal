@@ -389,9 +389,9 @@ char **OGRFeatureQuery::FieldCollector( void *pBareOp,
         const char *pszFieldName;
 
         if( op->field_index >= poTargetDefn->GetFieldCount()
-            && op->field_index < poTargetDefn->GetFieldCount() + SPECIAL_FIELD_COUNT) 
-            pszFieldName = SpecialFieldNames[op->field_index];
-        else if( op->field_index >= 0 
+            && op->field_index < poTargetDefn->GetFieldCount() + SPECIAL_FIELD_COUNT)
+            pszFieldName = SpecialFieldNames[op->field_index - poTargetDefn->GetFieldCount()];
+        else if( op->field_index >= 0
                  && op->field_index < poTargetDefn->GetFieldCount() )
             pszFieldName = 
                 poTargetDefn->GetFieldDefn(op->field_index)->GetNameRef();
