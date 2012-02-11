@@ -32,6 +32,7 @@
 
 #include "ogrsf_frmts.h"
 #include "cpl_error.h"
+#include <map>
 
 #ifdef HAVE_SPATIALITE
   #ifdef SPATIALITE_AMALGAMATION
@@ -291,6 +292,9 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     CPLErr              EstablishFeatureDefn();
 
+    OGREnvelope         oCachedExtent;
+    int                 bCachedExtentIsValid;
+
   public:
                         OGRSQLiteTableLayer( OGRSQLiteDataSource * );
                         ~OGRSQLiteTableLayer();
@@ -427,6 +431,8 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer
     virtual void        SetSpatialFilter( OGRGeometry * );
 
     virtual int         TestCapability( const char * );
+
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce);
 };
 
 /************************************************************************/
@@ -497,6 +503,8 @@ class OGRSQLiteDataSource : public OGRDataSource
     VSILFILE*           fpMainFile; /* Set by the VFS layer when it opens the DB */
                                     /* Must *NOT* be closed by the datasource explicitely. */
 
+    std::map<CPLString, OGREnvelope> oMapSQLEnvelope;
+
   public:
                         OGRSQLiteDataSource();
                         ~OGRSQLiteDataSource();
@@ -559,6 +567,9 @@ class OGRSQLiteDataSource : public OGRDataSource
 
     void                NotifyFileOpened (const char* pszFilename,
                                           VSILFILE* fp);
+
+    const OGREnvelope*  GetEnvelopeFromSQL(const CPLString& osSQL);
+    void                SetEnvelopeForSQL(const CPLString& osSQL, const OGREnvelope& oEnvelope);
 };
 
 /************************************************************************/
