@@ -270,3 +270,51 @@ int OGRSQLiteSelectLayer::TestCapability( const char * pszCap )
     else
         return OGRSQLiteLayer::TestCapability( pszCap );
 }
+
+/************************************************************************/
+/*                             GetExtent()                              */
+/************************************************************************/
+
+OGRErr OGRSQLiteSelectLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+{
+    if (GetGeomType() == wkbNone)
+        return OGRERR_FAILURE;
+
+    /* Caching of extent by SQL string is interesting to speed-up the */
+    /* establishment of the WFS GetCapabilities document for a MapServer mapfile */
+    /* which has several layers, only differing by scale rules */
+    const OGREnvelope* psCachedExtent = poDS->GetEnvelopeFromSQL(osSQLBase);
+    if (psCachedExtent)
+    {
+        memcpy(psExtent, psCachedExtent, sizeof(*psCachedExtent));
+        return OGRERR_NONE;
+    }
+
+    CPLString osSQLCommand = osSQLBase;
+
+    /* ORDER BY are costly to evaluate and are not necessary to establish */
+    /* the layer extent. */
+    size_t nOrderByPos = osSQLCommand.ifind(" ORDER BY ");
+    if( osSQLCommand.ifind("SELECT ") == 0 &&
+        nOrderByPos != std::string::npos &&
+        osSQLCommand.ifind(" LIMIT ") == std::string::npos &&
+        osSQLCommand.ifind(" UNION ") == std::string::npos &&
+        osSQLCommand.ifind(" INTERSECT ") == std::string::npos &&
+        osSQLCommand.ifind(" EXCEPT ") == std::string::npos)
+    {
+        osSQLCommand.resize(nOrderByPos);
+
+        OGRLayer* poTmpLayer = poDS->ExecuteSQL(osSQLCommand.c_str(), NULL, NULL);
+        if (poTmpLayer)
+        {
+            OGRErr eErr = poTmpLayer->GetExtent(psExtent, bForce);
+            poDS->ReleaseResultSet(poTmpLayer);
+            return eErr;
+        }
+    }
+
+    OGRErr eErr = OGRSQLiteLayer::GetExtent(psExtent, bForce);
+    if (eErr == OGRERR_NONE && poDS->GetUpdate() == FALSE)
+        poDS->SetEnvelopeForSQL(osSQLBase, *psExtent);
+    return eErr;
+}
