@@ -281,6 +281,9 @@ swq_select_summarize( swq_select *select_info,
         }
     }
 
+    if( select_info->column_summary == NULL )
+        return NULL;
+
 /* -------------------------------------------------------------------- */
 /*      If distinct processing is on, process that now.                 */
 /* -------------------------------------------------------------------- */
