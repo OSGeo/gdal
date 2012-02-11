@@ -438,7 +438,7 @@ void OGRMySQLTableLayer::BuildWhere()
         if( strlen(pszWHERE) == 0 )
             sprintf( pszWHERE, "WHERE %s ", pszQuery  );
         else
-            sprintf( pszWHERE+strlen(pszWHERE), "&& %s ", pszQuery );
+            sprintf( pszWHERE+strlen(pszWHERE), "&& (%s) ", pszQuery );
     }
 }
 

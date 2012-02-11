@@ -631,8 +631,9 @@ void OGRPGTableLayer::BuildWhere()
         }
         else	
         {
-            osWHERE += "AND ";
+            osWHERE += "AND (";
             osWHERE += osQuery;
+            osWHERE += ")";
         }
     }
 }
