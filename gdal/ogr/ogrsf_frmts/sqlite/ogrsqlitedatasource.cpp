@@ -2577,3 +2577,26 @@ void OGRSQLiteDataSource::SetName(const char* pszNameIn)
     CPLFree(pszName);
     pszName = CPLStrdup(pszNameIn);
 }
+
+/************************************************************************/
+/*                       GetEnvelopeFromSQL()                           */
+/************************************************************************/
+
+const OGREnvelope* OGRSQLiteDataSource::GetEnvelopeFromSQL(const CPLString& osSQL)
+{
+    std::map<CPLString, OGREnvelope>::iterator oIter = oMapSQLEnvelope.find(osSQL);
+    if (oIter != oMapSQLEnvelope.end())
+        return &oIter->second;
+    else
+        return NULL;
+}
+
+/************************************************************************/
+/*                         SetEnvelopeForSQL()                          */
+/************************************************************************/
+
+void OGRSQLiteDataSource::SetEnvelopeForSQL(const CPLString& osSQL,
+                                            const OGREnvelope& oEnvelope)
+{
+    oMapSQLEnvelope[osSQL] = oEnvelope;
+}

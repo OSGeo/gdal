@@ -1316,11 +1316,24 @@ def ogr_spatialite_2():
 
     lyr.CommitTransaction()
 
-    ds.Destroy()
+    ds = None
 
     # Test OLCFastFeatureCount with spatial index (created by default)
-    ds = ogr.Open( 'tmp/spatialite_test.db', update = 1 )
+    ds = ogr.Open( 'tmp/spatialite_test.db', update = 0 )
     lyr = ds.GetLayerByName('test_spatialfilter')
+
+    extent = lyr.GetExtent()
+    if extent != (0.0, 9.0, 0.0, 9.0):
+        gdaltest.post_reason('got bad extent')
+        print(extent)
+        return 'fail'
+
+    # Test caching
+    extent = lyr.GetExtent()
+    if extent != (0.0, 9.0, 0.0, 9.0):
+        gdaltest.post_reason('got bad extent')
+        print(extent)
+        return 'fail'
 
     geom = ogr.CreateGeometryFromWkt( \
         'POLYGON((2 2,2 8,8 8,8 2,2 2))' )
@@ -1340,6 +1353,20 @@ def ogr_spatialite_2():
 
     # Test spatial filter with a SQL result layer without WHERE clause
     sql_lyr = ds.ExecuteSQL("SELECT * FROM 'test_spatialfilter'")
+
+    extent = sql_lyr.GetExtent()
+    if extent != (0.0, 9.0, 0.0, 9.0):
+        gdaltest.post_reason('got bad extent')
+        print(extent)
+        return 'fail'
+
+    # Test caching
+    extent = sql_lyr.GetExtent()
+    if extent != (0.0, 9.0, 0.0, 9.0):
+        gdaltest.post_reason('got bad extent')
+        print(extent)
+        return 'fail'
+
     if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
@@ -1370,6 +1397,20 @@ def ogr_spatialite_2():
 
     # Test spatial filter with a SQL result layer with ORDER BY clause
     sql_lyr = ds.ExecuteSQL('SELECT * FROM test_spatialfilter ORDER BY intcol')
+
+    extent = sql_lyr.GetExtent()
+    if extent != (0.0, 9.0, 0.0, 9.0):
+        gdaltest.post_reason('got bad extent')
+        print(extent)
+        return 'fail'
+
+    # Test caching
+    extent = sql_lyr.GetExtent()
+    if extent != (0.0, 9.0, 0.0, 9.0):
+        gdaltest.post_reason('got bad extent')
+        print(extent)
+        return 'fail'
+
     if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
@@ -1384,6 +1425,8 @@ def ogr_spatialite_2():
     ds.ReleaseResultSet(sql_lyr)
 
     # Remove spatial index
+    ds = None
+    ds = ogr.Open( 'tmp/spatialite_test.db', update = 1 )
     sql_lyr = ds.ExecuteSQL("SELECT DisableSpatialIndex('test_spatialfilter', 'Geometry')")
     sql_lyr.GetFeatureCount()
     feat = sql_lyr.GetNextFeature()
