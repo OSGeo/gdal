@@ -37,7 +37,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
-                                            CPLString osSQL,
+                                            CPLString osSQLIn,
                                             sqlite3_stmt *hStmtIn )
 
 {
@@ -51,7 +51,8 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
 
     sqlite3_finalize( hStmtIn );
 
-    this->osSQL = osSQL;
+    osSQLBase = osSQLIn;
+    osSQLCurrent = osSQLIn;
 }
 
 /************************************************************************/
@@ -76,7 +77,11 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
 
     iNextShapeId = 0;
 
-    rc = sqlite3_prepare( poDS->GetDB(), osSQL, osSQL.size(),
+#ifdef DEBUG
+    CPLDebug( "OGR_SQLITE", "prepare(%s)", osSQLCurrent.c_str() );
+#endif
+
+    rc = sqlite3_prepare( poDS->GetDB(), osSQLCurrent, osSQLCurrent.size(),
                           &hStmt, NULL );
 
     if( rc == SQLITE_OK )
@@ -87,8 +92,181 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "In ResetStatement(): sqlite3_prepare(%s):\n  %s", 
-                  osSQL.c_str(), sqlite3_errmsg(poDS->GetDB()) );
+                  osSQLCurrent.c_str(), sqlite3_errmsg(poDS->GetDB()) );
         hStmt = NULL;
         return OGRERR_FAILURE;
     }
+}
+
+/************************************************************************/
+/*                          SetSpatialFilter()                          */
+/************************************************************************/
+
+void OGRSQLiteSelectLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
+
+{
+    if( InstallFilter( poGeomIn ) )
+    {
+        RebuildSQL();
+
+        ResetReading();
+    }
+}
+
+/************************************************************************/
+/*                            GetBaseLayer()                            */
+/************************************************************************/
+
+OGRSQLiteLayer* OGRSQLiteSelectLayer::GetBaseLayer(size_t& i)
+{
+    char** papszTokens = CSLTokenizeString(osSQLBase.c_str());
+    int bCanInsertSpatialFilter = TRUE;
+    int nCountSelect = 0, nCountFrom = 0, nCountWhere = 0;
+
+    for(int iToken = 0; papszTokens[iToken] != NULL; iToken++)
+    {
+        if (EQUAL(papszTokens[iToken], "SELECT"))
+            nCountSelect ++;
+        else if (EQUAL(papszTokens[iToken], "FROM"))
+            nCountFrom ++;
+        else if (EQUAL(papszTokens[iToken], "WHERE"))
+            nCountWhere ++;
+        else if (EQUAL(papszTokens[iToken], "UNION") ||
+                 EQUAL(papszTokens[iToken], "JOIN") ||
+                 EQUAL(papszTokens[iToken], "INTERSECT") ||
+                 EQUAL(papszTokens[iToken], "EXCEPT"))
+        {
+            bCanInsertSpatialFilter = FALSE;
+        }
+    }
+    CSLDestroy(papszTokens);
+
+    if (!(bCanInsertSpatialFilter && nCountSelect == 1 && nCountFrom == 1 && nCountWhere <= 1))
+    {
+        CPLDebug("SQLITE", "SQL expression too complex to analyse");
+        return NULL;
+    }
+
+    size_t nFromPos = osSQLBase.ifind(" from ");
+    if (nFromPos == std::string::npos)
+    {
+        return NULL;
+    }
+
+    int bInSingleQuotes = (osSQLBase[nFromPos + 6] == '\'');
+    CPLString osBaseLayerName;
+    for( i = nFromPos + 6 + (bInSingleQuotes ? 1 : 0);
+         i < osSQLBase.size(); i++ )
+    {
+        if (osSQLBase[i] == '\'' && i + 1 < osSQLBase.size() &&
+            osSQLBase[i + 1] == '\'' )
+        {
+            osBaseLayerName += osSQLBase[i];
+            i++;
+        }
+        else if (osSQLBase[i] == '\'' && bInSingleQuotes)
+        {
+            i++;
+            break;
+        }
+        else if (osSQLBase[i] == ' ' && !bInSingleQuotes)
+            break;
+        else
+            osBaseLayerName += osSQLBase[i];
+    }
+
+    return (OGRSQLiteLayer*) poDS->GetLayerByName(osBaseLayerName);
+}
+
+/************************************************************************/
+/*                            RebuildSQL()                              */
+/************************************************************************/
+
+void OGRSQLiteSelectLayer::RebuildSQL()
+
+{
+    osSQLCurrent = osSQLBase;
+
+    if (m_poFilterGeom == NULL)
+    {
+        return;
+    }
+
+    size_t i = 0;
+    OGRSQLiteLayer* poBaseLayer = GetBaseLayer(i);
+    if (poBaseLayer == NULL)
+    {
+        CPLDebug("SQLITE", "Cannot find base layer");
+        return;
+    }
+
+    CPLString    osSpatialWhere = poBaseLayer->GetSpatialWhere(m_poFilterGeom);
+    if (osSpatialWhere.size() == 0)
+    {
+        CPLDebug("SQLITE", "Cannot get spatial where clause");
+        return;
+    }
+
+    while (i < osSQLBase.size() && osSQLBase[i] == ' ')
+        i ++;
+
+    if (i < osSQLBase.size() && EQUALN(osSQLBase.c_str() + i, "WHERE ", 6))
+    {
+        osSQLCurrent = osSQLBase.substr(0, i + 6);
+        osSQLCurrent += osSpatialWhere;
+        osSQLCurrent += " AND ";
+        osSQLCurrent += osSQLBase.substr(i + 6);
+    }
+    else if (i < osSQLBase.size() &&
+             (EQUALN(osSQLBase.c_str() + i, "GROUP ", 6) ||
+              EQUALN(osSQLBase.c_str() + i, "ORDER ", 6) ||
+              EQUALN(osSQLBase.c_str() + i, "LIMIT ", 6)))
+    {
+        osSQLCurrent = osSQLBase.substr(0, i);
+        osSQLCurrent += " WHERE ";
+        osSQLCurrent += osSpatialWhere;
+        osSQLCurrent += " ";
+        osSQLCurrent += osSQLBase.substr(i);
+    }
+    else if (i == osSQLBase.size())
+    {
+        osSQLCurrent = osSQLBase.substr(0, i);
+        osSQLCurrent += " WHERE ";
+        osSQLCurrent += osSpatialWhere;
+    }
+    else
+    {
+        CPLDebug("SQLITE", "SQL expression too complex for the driver to insert spatial filter in it");
+    }
+}
+
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int OGRSQLiteSelectLayer::TestCapability( const char * pszCap )
+
+{
+    if (EQUAL(pszCap,OLCFastSpatialFilter))
+    {
+        if (osSQLCurrent != osSQLBase)
+            return TRUE;
+
+        size_t i = 0;
+        OGRSQLiteLayer* poBaseLayer = GetBaseLayer(i);
+        if (poBaseLayer == NULL)
+        {
+            CPLDebug("SQLITE", "Cannot find base layer");
+            return FALSE;
+        }
+
+        OGRPolygon oFakePoly;
+        const char* pszWKT = "POLYGON((0 0,0 1,1 1,1 0,0 0))";
+        oFakePoly.importFromWkt((char**) &pszWKT);
+        CPLString    osSpatialWhere = poBaseLayer->GetSpatialWhere(&oFakePoly);
+
+        return osSpatialWhere.size() != 0;
+    }
+    else
+        return OGRSQLiteLayer::TestCapability( pszCap );
 }
