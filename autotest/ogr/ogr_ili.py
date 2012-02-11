@@ -81,7 +81,8 @@ def ogr_interlis1_2():
               'Bodenbedeckung__BoFlaechen_Form',
               'Bodenbedeckung__BoFlaechen__Areas',
               'Bodenbedeckung__Strasse',
-              'Bodenbedeckung__Gebaeude']
+              'Bodenbedeckung__Gebaeude',
+              'BoFlaechen__Art']
     if ds.GetLayerCount() != len(layers):
         gdaltest.post_reason( 'layer count wrong.' )
         return 'fail'
@@ -337,6 +338,43 @@ def ogr_interlis1_7():
     return 'success'
 
 ###############################################################################
+# Ili1 enumeration test.
+
+def ogr_interlis1_8():
+
+    if not gdaltest.have_ili_reader:
+        return 'skip'
+
+    ds = ogr.Open( 'data/ili/Beispiel.itf,data/ili/Beispiel.ili' )
+
+    lyr = ds.GetLayerByName('BoFlaechen__Art')
+
+    if lyr.GetFeatureCount() != 6:
+        gdaltest.post_reason( 'feature count wrong.' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    while feat and feat.GetFieldAsInteger("id") != 0:
+      feat = lyr.GetNextFeature()
+
+    field_values = [0, 'Gebaeude', -1]
+    if feat.GetFieldCount() != len(field_values)-1:
+        gdaltest.post_reason( 'field count wrong.' )
+        return 'fail'
+
+    for i in range(feat.GetFieldCount()):
+        if feat.GetFieldAsString(i) != str(field_values[i]):
+          feat.DumpReadable()
+          print(feat.GetFieldAsString(i))
+          print str(field_values[i])
+          gdaltest.post_reason( 'field value wrong.' )
+          return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
 # Reading Ili2 without model
 
 def ogr_interlis2_1():
@@ -422,6 +460,7 @@ gdaltest_list = [
     ogr_interlis1_5,
     ogr_interlis1_6,
     ogr_interlis1_7,
+    ogr_interlis1_8,
     ogr_interlis2_1,
     #ogr_interlis2_2,
     ogr_interlis_cleanup ]
