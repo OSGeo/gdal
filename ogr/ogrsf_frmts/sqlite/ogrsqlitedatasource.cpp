@@ -1088,17 +1088,6 @@ int OGRSQLiteDataSource::OpenTable( const char *pszTableName,
         return FALSE;
     }
 
-    /* If not a slow file, then establish layer definition immediately */
-    /* to check if the table is valid */
-    /* Note: we could do differed table layer definition for all files */
-    /* but it is only worth doing for slow files. */
-    if ( strncmp(pszName, "/vsicurl/", 9) != 0 &&
-         poLayer->HasLayerDefnError() )
-    {
-        delete poLayer;
-        return FALSE;
-    }
-    
     poLayer->SetSpatialite2D ( bForce2D );
 
 /* -------------------------------------------------------------------- */
