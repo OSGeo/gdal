@@ -1202,6 +1202,15 @@ def ogr_sqlite_25():
             return 'skip'
         return 'fail'
 
+    lyr = ds.GetLayerByName('polygon')
+    if lyr is None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    if lyr.GetLayerDefn().GetFieldCount() == 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -1287,7 +1296,8 @@ def ogr_spatialite_2():
     srs = osr.SpatialReference()
     srs.SetFromUserInput('EPSG:4326')
     lyr = ds.CreateLayer( 'test_spatialfilter', srs = srs)
-    
+    lyr.CreateField(ogr.FieldDefn('intcol', ogr.OFTInteger))
+
     lyr.StartTransaction()
 
     for i in range(10):
@@ -1315,17 +1325,63 @@ def ogr_spatialite_2():
     geom = ogr.CreateGeometryFromWkt( \
         'POLYGON((2 2,2 8,8 8,8 2,2 2))' )
     lyr.SetSpatialFilter( geom )
-    geom.Destroy()
 
     if lyr.TestCapability(ogr.OLCFastFeatureCount) != True:
+        gdaltest.post_reason('OLCFastFeatureCount failed')
         return 'fail'
     if lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+        gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
 
     if lyr.GetFeatureCount() != 50:
-        gdaltest.post_reason('did not get expected feature count(1)')
+        gdaltest.post_reason('did not get expected feature count')
         print(lyr.GetFeatureCount())
         return 'fail'
+
+    # Test spatial filter with a SQL result layer without WHERE clause
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM 'test_spatialfilter'")
+    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+        gdaltest.post_reason('OLCFastSpatialFilter failed')
+        return 'fail'
+    sql_lyr.SetSpatialFilter( geom )
+    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+        gdaltest.post_reason('OLCFastSpatialFilter failed')
+        return 'fail'
+    if sql_lyr.GetFeatureCount() != 50:
+        gdaltest.post_reason('did not get expected feature count')
+        print(sql_lyr.GetFeatureCount())
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test spatial filter with a SQL result layer with WHERE clause
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM test_spatialfilter WHERE 1=1')
+    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+        gdaltest.post_reason('OLCFastSpatialFilter failed')
+        return 'fail'
+    sql_lyr.SetSpatialFilter( geom )
+    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+        gdaltest.post_reason('OLCFastSpatialFilter failed')
+        return 'fail'
+    if sql_lyr.GetFeatureCount() != 50:
+        gdaltest.post_reason('did not get expected feature count')
+        print(sql_lyr.GetFeatureCount())
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Test spatial filter with a SQL result layer with ORDER BY clause
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM test_spatialfilter ORDER BY intcol')
+    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+        gdaltest.post_reason('OLCFastSpatialFilter failed')
+        return 'fail'
+    sql_lyr.SetSpatialFilter( geom )
+    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+        gdaltest.post_reason('OLCFastSpatialFilter failed')
+        return 'fail'
+    if sql_lyr.GetFeatureCount() != 50:
+        gdaltest.post_reason('did not get expected feature count')
+        print(sql_lyr.GetFeatureCount())
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
 
     # Remove spatial index
     sql_lyr = ds.ExecuteSQL("SELECT DisableSpatialIndex('test_spatialfilter', 'Geometry')")

@@ -455,6 +455,44 @@ int OGRSQLiteTableLayer::CheckSpatialIndexTable()
 }
 
 /************************************************************************/
+/*                           GetSpatialWhere()                          */
+/************************************************************************/
+
+CPLString OGRSQLiteTableLayer::GetSpatialWhere(OGRGeometry* poFilterGeom)
+{
+    CPLString osSpatialWHERE;
+
+    if( poFilterGeom != NULL && CheckSpatialIndexTable() )
+    {
+        OGREnvelope  sEnvelope;
+
+        poFilterGeom->getEnvelope( &sEnvelope );
+
+        osSpatialWHERE.Printf("ROWID IN ( SELECT pkid FROM 'idx_%s_%s' WHERE "
+                        "xmax >= %.12f AND xmin <= %.12f AND ymax >= %.12f AND ymin <= %.12f)",
+                        pszEscapedTableName, osGeomColumn.c_str(),
+                        sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
+                        sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
+    }
+
+    if( poFilterGeom != NULL && bSpatialiteLoaded && !bHasSpatialIndex)
+    {
+        OGREnvelope  sEnvelope;
+
+        poFilterGeom->getEnvelope( &sEnvelope );
+
+        /* A bit inefficient but still faster than OGR filtering */
+        osSpatialWHERE.Printf("MBRIntersects(\"%s\", BuildMBR(%.12f, %.12f, %.12f, %.12f, %d))",
+                       osGeomColumn.c_str(),
+                       sEnvelope.MinX - 1e-11, sEnvelope.MinY - 1e-11,
+                       sEnvelope.MaxX + 1e-11, sEnvelope.MaxY + 1e-11,
+                       nSRSId);
+    }
+
+    return osSpatialWHERE;
+}
+
+/************************************************************************/
 /*                             BuildWhere()                             */
 /*                                                                      */
 /*      Build the WHERE statement appropriate to the current set of     */
@@ -466,42 +504,23 @@ void OGRSQLiteTableLayer::BuildWhere()
 {
     osWHERE = "";
 
-    if( m_poFilterGeom != NULL && CheckSpatialIndexTable() )
+    CPLString osSpatialWHERE = GetSpatialWhere(m_poFilterGeom);
+    if (osSpatialWHERE.size() != 0)
     {
-        OGREnvelope  sEnvelope;
-
-        m_poFilterGeom->getEnvelope( &sEnvelope );
-
-        osWHERE.Printf("WHERE ROWID IN ( SELECT pkid FROM 'idx_%s_%s' WHERE "
-                        "xmax >= %.12f AND xmin <= %.12f AND ymax >= %.12f AND ymin <= %.12f) ",
-                        pszEscapedTableName, osGeomColumn.c_str(),
-                        sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
-                        sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
+        osWHERE = "WHERE ";
+        osWHERE += osSpatialWHERE;
     }
 
-    if( m_poFilterGeom != NULL && bSpatialiteLoaded && !bHasSpatialIndex)
+    if( osQuery.size() > 0 )
     {
-        OGREnvelope  sEnvelope;
-
-        m_poFilterGeom->getEnvelope( &sEnvelope );
-
-        /* A bit inefficient but still faster than OGR filtering */
-        osWHERE.Printf("WHERE MBRIntersects(\"%s\", BuildMBR(%.12f, %.12f, %.12f, %.12f, %d)) ",
-                       osGeomColumn.c_str(),
-                       sEnvelope.MinX - 1e-11, sEnvelope.MinY - 1e-11,
-                       sEnvelope.MaxX + 1e-11, sEnvelope.MaxY + 1e-11,
-                       nSRSId);
-    }
-
-    if( strlen(osQuery) > 0 )
-    {
-        if( strlen(osWHERE) == 0 )
+        if( osWHERE.size() == 0 )
         {
-            osWHERE.Printf( "WHERE %s ", osQuery.c_str()  );
+            osWHERE = "WHERE ";
+            osWHERE += osQuery;
         }
         else	
         {
-            osWHERE += "AND (";
+            osWHERE += " AND (";
             osWHERE += osQuery;
             osWHERE += ")";
         }

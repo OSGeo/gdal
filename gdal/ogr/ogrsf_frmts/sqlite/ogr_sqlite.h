@@ -243,6 +243,8 @@ class OGRSQLiteLayer : public OGRLayer
     virtual int          IsTableLayer() { return FALSE; }
 
     int                  HasSpatialIndex() const { return bHasSpatialIndex; }
+
+    virtual CPLString     GetSpatialWhere(OGRGeometry* poFilterGeom) { return ""; }
 };
 
 /************************************************************************/
@@ -341,6 +343,8 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                 { bUseComprGeom = bFlag; }
 
     virtual int          IsTableLayer() { return TRUE; }
+
+    virtual CPLString    GetSpatialWhere(OGRGeometry* poFilterGeom);
 };
 
 /************************************************************************/
@@ -382,6 +386,8 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
     virtual OGRFeature *GetFeature( long nFeatureId );
 
     virtual int         TestCapability( const char * );
+
+    virtual CPLString    GetSpatialWhere(OGRGeometry* poFilterGeom);
 };
 
 /************************************************************************/
@@ -390,15 +396,23 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
 
 class OGRSQLiteSelectLayer : public OGRSQLiteLayer
 {
-    CPLString           osSQL;
+    CPLString           osSQLBase;
+    CPLString           osSQLCurrent;
 
     OGRErr              ResetStatement();
+
+    OGRSQLiteLayer     *GetBaseLayer(size_t& i);
+    void                RebuildSQL();
 
   public:
                         OGRSQLiteSelectLayer( OGRSQLiteDataSource *, 
                                               CPLString osSQL,
                                               sqlite3_stmt * );
                         ~OGRSQLiteSelectLayer();
+
+    virtual void        SetSpatialFilter( OGRGeometry * );
+
+    virtual int         TestCapability( const char * );
 };
 
 /************************************************************************/
