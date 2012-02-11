@@ -1224,7 +1224,22 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
     int rc;
     sqlite3_stmt *hSQLStmt = NULL;
 
-    rc = sqlite3_prepare( GetDB(), pszSQLCommand, strlen(pszSQLCommand),
+    CPLString osSQLCommand = pszSQLCommand;
+
+    /* This will speed-up layer creation */
+    /* ORDER BY are costly to evaluate and are not necessary to establish */
+    /* the layer definition. */
+    if( osSQLCommand.ifind("SELECT ") == 0 &&
+        osSQLCommand.ifind(" UNION ") == std::string::npos &&
+        osSQLCommand.ifind(" INTERSECT ") == std::string::npos &&
+        osSQLCommand.ifind(" EXCEPT ") == std::string::npos )
+    {
+        size_t nOrderByPos = osSQLCommand.ifind(" ORDER BY ");
+        if( nOrderByPos != std::string::npos )
+            osSQLCommand.resize(nOrderByPos);
+    }
+
+    rc = sqlite3_prepare( GetDB(), osSQLCommand.c_str(), osSQLCommand.size(),
                           &hSQLStmt, NULL );
 
     if( rc != SQLITE_OK )
