@@ -1485,6 +1485,32 @@ def test_ogr2ogr_41():
 
     return 'success'
 
+###############################################################################
+# Test combination of -select and -where FID=xx (#4500)
+
+def test_ogr2ogr_42():
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/test_ogr2ogr_42.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_42.shp')
+    except:
+        pass
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/test_ogr2ogr_42.shp ../ogr/data/poly.shp -select AREA -where "FID = 0"')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_42.shp')
+    lyr = ds.GetLayerByIndex(0)
+    if lyr.GetFeatureCount() != 1:
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_42.shp')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -1527,6 +1553,7 @@ gdaltest_list = [
     test_ogr2ogr_39,
     test_ogr2ogr_40,
     test_ogr2ogr_41,
+    test_ogr2ogr_42,
     ]
     
 if __name__ == '__main__':
