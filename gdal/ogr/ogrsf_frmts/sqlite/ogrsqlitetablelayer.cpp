@@ -61,6 +61,8 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
 
     eGeomType = wkbUnknown;
     bLayerDefnError = FALSE;
+
+    bCachedExtentIsValid = FALSE;
 }
 
 /************************************************************************/
@@ -646,6 +648,15 @@ OGRErr OGRSQLiteTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     if (HasLayerDefnError())
         return OGRERR_FAILURE;
 
+    if (GetGeomType() == wkbNone)
+        return OGRERR_FAILURE;
+
+    if (bCachedExtentIsValid)
+    {
+        memcpy(psExtent, &oCachedExtent, sizeof(oCachedExtent));
+        return OGRERR_NONE;
+    }
+
     if (CheckSpatialIndexTable() &&
         !CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_EXACT_EXTENT", "NO")))
     {
@@ -679,6 +690,9 @@ OGRErr OGRSQLiteTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
             psExtent->MaxX = atof(papszResult[4+2]);
             psExtent->MaxY = atof(papszResult[4+3]);
             eErr = OGRERR_NONE;
+
+            bCachedExtentIsValid = TRUE;
+            memcpy(&oCachedExtent, psExtent, sizeof(oCachedExtent));
         }
 
         sqlite3_free_table( papszResult );
@@ -687,7 +701,13 @@ OGRErr OGRSQLiteTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
             return eErr;
     }
 
-    return OGRSQLiteLayer::GetExtent(psExtent, bForce);
+    OGRErr eErr = OGRSQLiteLayer::GetExtent(psExtent, bForce);
+    if (eErr == OGRERR_NONE)
+    {
+        bCachedExtentIsValid = TRUE;
+        memcpy(&oCachedExtent, psExtent, sizeof(oCachedExtent));
+    }
+    return eErr;
 }
 
 /************************************************************************/
@@ -1570,6 +1590,8 @@ OGRErr OGRSQLiteTableLayer::SetFeature( OGRFeature *poFeature )
     CPLString      osCommand;
     int            bNeedComma = FALSE;
 
+    bCachedExtentIsValid = FALSE;
+
     ResetReading();
 
 /* -------------------------------------------------------------------- */
@@ -1689,6 +1711,8 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
                   "Can't create feature on a read-only layer.");
         return OGRERR_FAILURE;
     }
+
+    bCachedExtentIsValid = FALSE;
 
     ResetReading();
 
@@ -1865,6 +1889,8 @@ OGRErr OGRSQLiteTableLayer::DeleteFeature( long nFID )
                   "Can't delete feature on a read-only layer.");
         return OGRERR_FAILURE;
     }
+
+    bCachedExtentIsValid = FALSE;
 
     ResetReading();
 
