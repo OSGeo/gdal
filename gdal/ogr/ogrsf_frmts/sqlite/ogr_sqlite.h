@@ -357,8 +357,11 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
     CPLString           osQuery;
     int                 bHasCheckedSpatialIndexTable;
 
+    char               *pszViewName;
     char               *pszEscapedTableName;
     char               *pszEscapedUnderlyingTableName;
+
+    int                 bLayerDefnError;
 
     CPLString           osUnderlyingTableName;
     CPLString           osUnderlyingGeometryColumn;
@@ -367,9 +370,14 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
 
     OGRErr              ResetStatement();
 
+    CPLErr              EstablishFeatureDefn();
+
   public:
                         OGRSQLiteViewLayer( OGRSQLiteDataSource * );
                         ~OGRSQLiteViewLayer();
+
+    virtual const char* GetName() { return pszViewName; }
+    virtual OGRwkbGeometryType GetGeomType();
 
     CPLErr              Initialize( const char *pszViewName,
                                     const char *pszViewGeometry,
@@ -378,6 +386,10 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
                                     const char *pszGeometryColumn,
                                     int bSpatialiteLoaded);
 
+    virtual OGRFeatureDefn *GetLayerDefn();
+    int                 HasLayerDefnError() { GetLayerDefn(); return bLayerDefnError; }
+
+    virtual OGRFeature *GetNextFeature();
     virtual int         GetFeatureCount( int );
 
     virtual void        SetSpatialFilter( OGRGeometry * );
@@ -386,6 +398,8 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
     virtual OGRFeature *GetFeature( long nFeatureId );
 
     virtual int         TestCapability( const char * );
+
+    virtual OGRSpatialReference *GetSpatialRef();
 
     virtual CPLString    GetSpatialWhere(OGRGeometry* poFilterGeom);
 };
