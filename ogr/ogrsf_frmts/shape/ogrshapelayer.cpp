@@ -67,6 +67,10 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     iNextShapeId = 0;
     panMatchingFIDs = NULL;
 
+    nSpatialFIDCount = 0;
+    panSpatialFIDs = NULL;
+    m_poFilterGeomLastValid = NULL;
+
     bCheckedForQIX = FALSE;
     hQIX = NULL;
 
@@ -135,8 +139,8 @@ OGRShapeLayer::~OGRShapeLayer()
                   poFeatureDefn->GetName() );
     }
 
-    CPLFree( panMatchingFIDs );
-    panMatchingFIDs = NULL;
+    ClearMatchingFIDs();
+    ClearSpatialFIDs();
 
     CPLFree( pszFullName );
 
@@ -337,11 +341,10 @@ int OGRShapeLayer::ScanIndices()
         CheckForQIX();
 
 /* -------------------------------------------------------------------- */
-/*      Utilize spatial index if appropriate.                           */
+/*      Compute spatial index if appropriate.                           */
 /* -------------------------------------------------------------------- */
-    if( m_poFilterGeom && hQIX )
+    if( m_poFilterGeom != NULL && hQIX != NULL && panSpatialFIDs == NULL )
     {
-        int nSpatialFIDCount, *panSpatialFIDs;
         double adfBoundsMin[4], adfBoundsMax[4];
 
         adfBoundsMin[0] = oEnvelope.MinX;
@@ -359,6 +362,15 @@ int OGRShapeLayer::ScanIndices()
         CPLDebug( "SHAPE", "Used spatial index, got %d matches.", 
                   nSpatialFIDCount );
 
+        delete m_poFilterGeomLastValid;
+        m_poFilterGeomLastValid = m_poFilterGeom->clone();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Use spatial index if appropriate.                               */
+/* -------------------------------------------------------------------- */
+    if( m_poFilterGeom != NULL && panSpatialFIDs != NULL )
+    {
         // Use resulting list as matching FID list (but reallocate and
         // terminate with OGRNullFID).
 
@@ -366,7 +378,7 @@ int OGRShapeLayer::ScanIndices()
         {
             int i;
 
-            panMatchingFIDs = (long *) 
+            panMatchingFIDs = (long *)
                 CPLMalloc(sizeof(long) * (nSpatialFIDCount+1) );
             for( i = 0; i < nSpatialFIDCount; i++ )
                 panMatchingFIDs[i] = (long) panSpatialFIDs[i];
@@ -395,8 +407,10 @@ int OGRShapeLayer::ScanIndices()
             panMatchingFIDs[iWrite] = OGRNullFID;
         }
 
-        if ( panSpatialFIDs )
-            free( panSpatialFIDs );
+        if (nSpatialFIDCount > 100000)
+        {
+            ClearSpatialFIDs();
+        }
     }
 
     return TRUE;
@@ -412,17 +426,86 @@ void OGRShapeLayer::ResetReading()
     if (!TouchLayer())
         return;
 
-/* -------------------------------------------------------------------- */
-/*      Clear previous index search result, if any.                     */
-/* -------------------------------------------------------------------- */
-    CPLFree( panMatchingFIDs );
-    panMatchingFIDs = NULL;
     iMatchingFID = 0;
 
     iNextShapeId = 0;
 
     if( bHeaderDirty && bUpdateAccess )
         SyncToDisk();
+}
+
+/************************************************************************/
+/*                        ClearMatchingFIDs()                           */
+/************************************************************************/
+
+void OGRShapeLayer::ClearMatchingFIDs()
+{
+/* -------------------------------------------------------------------- */
+/*      Clear previous index search result, if any.                     */
+/* -------------------------------------------------------------------- */
+    CPLFree( panMatchingFIDs );
+    panMatchingFIDs = NULL;
+}
+
+/************************************************************************/
+/*                        ClearSpatialFIDs()                           */
+/************************************************************************/
+
+void OGRShapeLayer::ClearSpatialFIDs()
+{
+    if ( panSpatialFIDs != NULL )
+    {
+        CPLDebug("SHAPE", "Clear panSpatialFIDs");
+        free( panSpatialFIDs );
+    }
+    panSpatialFIDs = NULL;
+    nSpatialFIDCount = 0;
+
+    delete m_poFilterGeomLastValid;
+    m_poFilterGeomLastValid = NULL;
+}
+
+/************************************************************************/
+/*                         SetSpatialFilter()                           */
+/************************************************************************/
+
+void OGRShapeLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
+{
+    ClearMatchingFIDs();
+
+    if( poGeomIn == NULL )
+    {
+        /* Do nothing */
+    }
+    else if ( m_poFilterGeomLastValid != NULL &&
+              m_poFilterGeomLastValid->Equals(poGeomIn) )
+    {
+        /* Do nothing */
+    }
+    else if ( panSpatialFIDs != NULL )
+    {
+        /* We clear the spatialFIDs only if we have a new non-NULL */
+        /* spatial filter, otherwise we keep the previous result */
+        /* cached. This can be usefull when several SQL layers */
+        /* rely on the same table layer, and use the same spatial */
+        /* filters. But as there is in the destructor of OGRGenSQLResultsLayer */
+        /* a clearing of the spatial filter of the table layer, we */
+        /* need this trick. */
+        ClearSpatialFIDs();
+    }
+
+    return OGRLayer::SetSpatialFilter(poGeomIn);
+}
+
+/************************************************************************/
+/*                         SetAttributeFilter()                         */
+/************************************************************************/
+
+OGRErr OGRShapeLayer::SetAttributeFilter( const char * pszAttributeFilter )
+{
+    ClearMatchingFIDs();
+
+    return OGRLayer::SetAttributeFilter(pszAttributeFilter);
 }
 
 /************************************************************************/
@@ -455,7 +538,7 @@ OGRErr OGRShapeLayer::SetNextByIndex( long nIndex )
 /*      if the shapeid bbox intersects the geometry.                    */
 /************************************************************************/
 
-OGRFeature *OGRShapeLayer::FetchShape(int iShapeId)
+OGRFeature *OGRShapeLayer::FetchShape(int iShapeId /*, OGREnvelope* psShapeExtent */)
 
 {
     OGRFeature *poFeature;
@@ -489,6 +572,10 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId)
         } 
         else 
         {
+            /*psShapeExtent->MinX = psShape->dfXMin;
+            psShapeExtent->MinY = psShape->dfYMin;
+            psShapeExtent->MaxX = psShape->dfXMax;
+            psShapeExtent->MaxY = psShape->dfYMax;*/
             poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
                                            iShapeId, psShape, osEncoding );
         }                
@@ -530,6 +617,8 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
     while( TRUE )
     {
+        //OGREnvelope oShapeExtent;
+
         if( panMatchingFIDs != NULL )
         {
             if( panMatchingFIDs[iMatchingFID] == OGRNullFID )
@@ -539,7 +628,7 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
             
             // Check the shape object's geometry, and if it matches
             // any spatial filter, return it.  
-            poFeature = FetchShape(panMatchingFIDs[iMatchingFID]);
+            poFeature = FetchShape(panMatchingFIDs[iMatchingFID] /*, &oShapeExtent*/);
             
             iMatchingFID++;
 
@@ -558,10 +647,10 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
                 else if( VSIFEofL((VSILFILE*)hDBF->fp) )
                     return NULL; /* There's an I/O error */
                 else
-                    poFeature = FetchShape(iNextShapeId);
+                    poFeature = FetchShape(iNextShapeId /*, &oShapeExtent */);
             }
             else
-                poFeature = FetchShape(iNextShapeId);
+                poFeature = FetchShape(iNextShapeId /*, &oShapeExtent */);
 
             iNextShapeId++;
         }
@@ -576,7 +665,7 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
 
             m_nFeaturesRead++;
 
-            if( (m_poFilterGeom == NULL || FilterGeometry( poGeom ) )
+            if( (m_poFilterGeom == NULL || FilterGeometry( poGeom /*, &oShapeExtent*/ ) )
                 && (m_poAttrQuery == NULL || m_poAttrQuery->Evaluate( poFeature )) )
             {
                 return poFeature;
@@ -1686,6 +1775,8 @@ OGRErr OGRShapeLayer::DropSpatialIndex()
         }
     }
     bSbnSbxDeleted = TRUE;
+
+    ClearSpatialFIDs();
 
     return OGRERR_NONE;
 }
