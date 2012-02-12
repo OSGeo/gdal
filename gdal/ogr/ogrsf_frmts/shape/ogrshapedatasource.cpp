@@ -30,8 +30,10 @@
 #include "ogrshape.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include <set>
 
 #define MAX_SIMULTANEOUSLY_OPENED_LAYERS    100
+//#define IMMEDIATE_OPENING 1
 
 CPL_CVSID("$Id$");
 
@@ -142,6 +144,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
         char      **papszCandidates = CPLReadDir( pszNewName );
         int       iCan, nCandidateCount = CSLCount( papszCandidates );
         int       bMightBeOldCoverage = FALSE;
+        std::set<CPLString> osLayerNameSet;
 
         for( iCan = 0; iCan < nCandidateCount; iCan++ )
         {
@@ -158,6 +161,8 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
             pszFilename =
                 CPLStrdup(CPLFormFilename(pszNewName, pszCandidate, NULL));
 
+            osLayerNameSet.insert(CPLGetBasename(pszCandidate));
+#ifdef IMMEDIATE_OPENING
             if( !OpenFile( pszFilename, bUpdate, bTestOpen )
                 && !bTestOpen )
             {
@@ -166,9 +171,12 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
                           "It may be corrupt or read-only file accessed in update mode.\n",
                           pszFilename );
                 CPLFree( pszFilename );
+                CSLDestroy( papszCandidates );
                 return FALSE;
             }
-            
+#else
+            oVectorLayerName.push_back(pszFilename);
+#endif
             CPLFree( pszFilename );
         }
 
@@ -178,12 +186,11 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
             char        *pszFilename;
             const char  *pszCandidate = papszCandidates[iCan];
             const char  *pszLayerName;
-            int         iLayer, bGotAlready = FALSE;
 
             // We don't consume .dbf files in a directory that looks like
             // an old style Arc/Info (for PC?) that unless we found at least
             // some shapefiles.  See Bug 493. 
-            if( bMightBeOldCoverage && nLayers == 0 )
+            if( bMightBeOldCoverage && osLayerNameSet.size() == 0 )
                 continue;
 
             if( strlen(pszCandidate) < 4
@@ -191,14 +198,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
                 continue;
 
             pszLayerName = CPLGetBasename(pszCandidate);
-            for( iLayer = 0; iLayer < nLayers; iLayer++ )
-            {
-                if( EQUAL(pszLayerName,
-                          GetLayer(iLayer)->GetLayerDefn()->GetName()) )
-                    bGotAlready = TRUE;
-            }
-            
-            if( bGotAlready )
+            if (osLayerNameSet.find(pszLayerName) != osLayerNameSet.end())
                 continue;
 
             // We don't want to access .dbf files with an associated .tab
@@ -215,10 +215,13 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
 
             if( bFoundTAB )
                 continue;
-            
+
             pszFilename =
                 CPLStrdup(CPLFormFilename(pszNewName, pszCandidate, NULL));
 
+            osLayerNameSet.insert(CPLGetBasename(pszCandidate));
+
+#ifdef IMMEDIATE_OPENING
             if( !OpenFile( pszFilename, bUpdate, bTestOpen )
                 && !bTestOpen )
             {
@@ -227,23 +230,27 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
                           "It may be corrupt or read-only file accessed in update mode.\n",
                           pszFilename );
                 CPLFree( pszFilename );
+                CSLDestroy( papszCandidates );
                 return FALSE;
             }
-            
+#else
+            oVectorLayerName.push_back(pszFilename);
+#endif
             CPLFree( pszFilename );
         }
 
         CSLDestroy( papszCandidates );
-        
-        if( !bTestOpen && nLayers == 0 && !bUpdate )
-        {
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                      "No Shapefiles found in directory %s\n",
-                      pszNewName );
-        }
-    }
 
-    return nLayers > 0 || bUpdate;
+#ifdef IMMEDIATE_OPENING
+        int nDirLayers = nLayers;
+#else
+        int nDirLayers = oVectorLayerName.size();
+#endif
+
+        CPLErrorReset();
+
+        return nDirLayers > 0 || !bTestOpen;
+    }
 }
 
 /************************************************************************/
@@ -402,20 +409,17 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
     int         nShapeType;
     int         iLayer;
 
+    /* To ensure that existing layers are created */
+    GetLayerCount();
+
 /* -------------------------------------------------------------------- */
 /*      Check that the layer doesn't already exist.                     */
 /* -------------------------------------------------------------------- */
-    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    if (GetLayerByName(pszLayerName) != NULL)
     {
-        OGRLayer        *poLayer = papoLayers[iLayer];
-
-        if( poLayer != NULL 
-            && EQUAL(poLayer->GetLayerDefn()->GetName(),pszLayerName) )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, "Layer '%s' already exists",
-                      pszLayerName);
-            return NULL;
-        }
+        CPLError( CE_Failure, CPLE_AppDefined, "Layer '%s' already exists",
+                    pszLayerName);
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -678,16 +682,117 @@ int OGRShapeDataSource::TestCapability( const char * pszCap )
 }
 
 /************************************************************************/
+/*                            GetLayerCount()                           */
+/************************************************************************/
+
+int OGRShapeDataSource::GetLayerCount()
+
+{
+#ifndef IMMEDIATE_OPENING
+    if (oVectorLayerName.size() != 0)
+    {
+        for(size_t i = 0; i < oVectorLayerName.size(); i++)
+        {
+            const char* pszFilename = oVectorLayerName[i].c_str();
+            const char* pszLayerName = CPLGetBasename(pszFilename);
+
+            int j;
+            for(j=0;j<nLayers;j++)
+            {
+                if (strcmp(papoLayers[j]->GetName(), pszLayerName) == 0)
+                    break;
+            }
+            if (j < nLayers)
+                continue;
+
+            if( !OpenFile( pszFilename, bDSUpdate, TRUE ) )
+            {
+                CPLError( CE_Failure, CPLE_OpenFailed,
+                          "Failed to open file %s.\n"
+                          "It may be corrupt or read-only file accessed in update mode.\n",
+                          pszFilename );
+            }
+        }
+        oVectorLayerName.resize(0);
+    }
+#endif
+
+    return nLayers;
+}
+
+/************************************************************************/
 /*                              GetLayer()                              */
 /************************************************************************/
 
 OGRLayer *OGRShapeDataSource::GetLayer( int iLayer )
 
 {
+    /* To ensure that existing layers are created */
+    GetLayerCount();
+
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
     else
         return papoLayers[iLayer];
+}
+
+/************************************************************************/
+/*                           GetLayerByName()                           */
+/************************************************************************/
+
+OGRLayer *OGRShapeDataSource::GetLayerByName(const char * pszLayerNameIn)
+{
+#ifndef IMMEDIATE_OPENING
+    if (oVectorLayerName.size() != 0)
+    {
+        int j;
+        for(j=0;j<nLayers;j++)
+        {
+            if (strcmp(papoLayers[j]->GetName(), pszLayerNameIn) == 0)
+            {
+                return papoLayers[j];
+            }
+        }
+
+        size_t i;
+        for(j = 0; j < 2; j++)
+        {
+            for(i = 0; i < oVectorLayerName.size(); i++)
+            {
+                const char* pszFilename = oVectorLayerName[i].c_str();
+                const char* pszLayerName = CPLGetBasename(pszFilename);
+
+                if (j == 0)
+                {
+                    if (strcmp(pszLayerName, pszLayerNameIn) != 0)
+                        continue;
+                }
+                else
+                {
+                    if ( !EQUAL(pszLayerName, pszLayerNameIn) )
+                        continue;
+                }
+
+                if( !OpenFile( pszFilename, bDSUpdate, TRUE ) )
+                {
+                    CPLError( CE_Failure, CPLE_OpenFailed,
+                            "Failed to open file %s.\n"
+                            "It may be corrupt or read-only file accessed in update mode.\n",
+                            pszFilename );
+                    return NULL;
+                }
+                else
+                {
+                    return papoLayers[nLayers - 1];
+                }
+            }
+        }
+
+        return NULL;
+    }
+#endif
+
+    return OGRDataSource::GetLayerByName(pszLayerNameIn);
 }
 
 /************************************************************************/

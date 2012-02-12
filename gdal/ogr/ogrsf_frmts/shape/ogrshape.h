@@ -33,6 +33,7 @@
 
 #include "ogrsf_frmts.h"
 #include "shapefil.h"
+#include <vector>
 
 /* ==================================================================== */
 /*      Functions from Shape2ogr.cpp.                                   */
@@ -185,6 +186,8 @@ class OGRShapeDataSource : public OGRDataSource
 
     void                AddLayer(OGRShapeLayer* poLayer);
 
+    std::vector<CPLString> oVectorLayerName;
+
   public:
                         OGRShapeDataSource();
                         ~OGRShapeDataSource();
@@ -193,9 +196,11 @@ class OGRShapeDataSource : public OGRDataSource
                               int bForceSingleFileDataSource = FALSE );
     int                 OpenFile( const char *, int bUpdate, int bTestOpen );
 
-    const char          *GetName() { return pszName; }
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer            *GetLayer( int );
+    virtual const char  *GetName() { return pszName; }
+
+    virtual int          GetLayerCount();
+    virtual OGRLayer    *GetLayer( int );
+    virtual OGRLayer    *GetLayerByName(const char *);
 
     virtual OGRLayer    *CreateLayer( const char *, 
                                       OGRSpatialReference * = NULL,

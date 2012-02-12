@@ -2532,15 +2532,18 @@ def ogr_shape_54():
     # Test corner case where we cannot reopen a closed layer
     ideletedlayer = 0
     gdal.Unlink( ds_name + '/' + 'layer%03d.shp' % ideletedlayer)
-    lyr = ds.GetLayerByName('layer%03d' % ideletedlayer)
-    gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    lyr.ResetReading()
-    feat = lyr.GetNextFeature()
+    lyr = ds.GetLayerByName('layer%03d' % ideletedlayer)
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
-        return 'fail'
+    if lyr is not None:
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        lyr.ResetReading()
+        feat = lyr.GetNextFeature()
+        gdal.PopErrorHandler()
+        if gdal.GetLastErrorMsg() == '':
+            gdaltest.post_reason('failed')
+            return 'fail'
     gdal.ErrorReset()
 
     ideletedlayer = 1
@@ -2551,9 +2554,9 @@ def ogr_shape_54():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     gdal.PopErrorHandler()
-    if gdal.GetLastErrorMsg() == '':
-        gdaltest.post_reason('failed')
-        return 'fail'
+    #if gdal.GetLastErrorMsg() == '':
+    #    gdaltest.post_reason('failed')
+    #    return 'fail'
     gdal.ErrorReset()
 
 
