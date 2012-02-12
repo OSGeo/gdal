@@ -305,6 +305,7 @@ class CPL_DLL OGRFeature
 /************************************************************************/
 
 class OGRLayer;
+class swq_expr_node;
 
 class CPL_DLL OGRFeatureQuery
 {
@@ -313,6 +314,8 @@ class CPL_DLL OGRFeatureQuery
     void           *pSWQExpr;
 
     char          **FieldCollector( void *, char ** );
+
+    long       *EvaluateAgainstIndices( swq_expr_node*, OGRLayer *, int& nFIDCount);
     
   public:
                 OGRFeatureQuery();
