@@ -814,7 +814,7 @@ int OGRLIBKMLDataSource::OpenKml (
         catch(std::bad_alloc& e)
         {
             VSIFCloseL(fp);
-            return NULL;
+            return FALSE;
         }
     }
     VSIFCloseL(fp);
@@ -911,7 +911,7 @@ int OGRLIBKMLDataSource::OpenKmz (
         catch(std::bad_alloc& e)
         {
             VSIFCloseL(fp);
-            return NULL;
+            return FALSE;
         }
     }
     VSIFCloseL(fp);
