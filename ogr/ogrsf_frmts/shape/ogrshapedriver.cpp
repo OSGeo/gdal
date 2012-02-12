@@ -64,11 +64,7 @@ OGRDataSource *OGRShapeDriver::Open( const char * pszFilename,
 
     poDS = new OGRShapeDataSource();
 
-    /* If no layer was found, return NULL otherwise how will we allow any other driver */
-    /* that is directory oriented to work? I just don't see how we can know the */
-    /* directory is for shapefiles if there aren't any in it (#2686) */
-    if( !poDS->Open( pszFilename, bUpdate, TRUE )
-        || poDS->GetLayerCount() == 0 )
+    if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
     {
         delete poDS;
         return NULL;
