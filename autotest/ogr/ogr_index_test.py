@@ -431,6 +431,63 @@ def ogr_index_10():
     return 'success'
 
 ###############################################################################
+# Test support for OR and AND expression
+
+def ogr_index_11_check(lyr, expected_fids):
+
+    lyr.ResetReading()
+    for i in range(len(expected_fids)):
+        feat = lyr.GetNextFeature()
+        if feat is None:
+            gdaltest.post_reason('failed')
+            return 'fail'
+        if feat.GetFID() != expected_fids[i]:
+            gdaltest.post_reason('failed')
+            return 'fail'
+
+    return 'success'
+
+def ogr_index_11():
+
+    ds = ogr.GetDriverByName( 'ESRI Shapefile' ).CreateDataSource('tmp/ogr_index_11.dbf')
+    lyr = ds.CreateLayer('ogr_index_11', geom_type = ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('strfield', ogr.OFTString))
+
+    ogrtest.quick_create_feature(lyr, [1, "foo"], None)
+    ogrtest.quick_create_feature(lyr, [1, "bar"], None)
+    ogrtest.quick_create_feature(lyr, [2, "foo"], None)
+    ogrtest.quick_create_feature(lyr, [2, "bar"], None)
+    ogrtest.quick_create_feature(lyr, [3, "bar"], None)
+
+    ds.ExecuteSQL('CREATE INDEX ON ogr_index_11 USING intfield')
+    ds.ExecuteSQL('CREATE INDEX ON ogr_index_11 USING strfield')
+
+    lyr.SetAttributeFilter("intfield = 1 OR strfield = 'bar'")
+    ret = ogr_index_11_check(lyr, [ 0, 1, 3 ])
+    if ret != 'success':
+        return ret
+
+    lyr.SetAttributeFilter("intfield = 1 AND strfield = 'bar'")
+    ret = ogr_index_11_check(lyr, [ 1 ])
+    if ret != 'success':
+        return ret
+
+    lyr.SetAttributeFilter("intfield = 1 AND strfield = 'foo'")
+    ret = ogr_index_11_check(lyr, [ 0 ])
+    if ret != 'success':
+        return ret
+
+    lyr.SetAttributeFilter("intfield = 3 AND strfield = 'foo'")
+    ret = ogr_index_11_check(lyr, [ ])
+    if ret != 'success':
+        return ret
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 
 def ogr_index_cleanup():
     try:
@@ -456,6 +513,7 @@ def ogr_index_cleanup():
             pass
 
     ogr.GetDriverByName( 'ESRI Shapefile' ).DeleteDataSource( 'tmp/ogr_index_10.shp' )
+    ogr.GetDriverByName( 'ESRI Shapefile' ).DeleteDataSource( 'tmp/ogr_index_11.dbf' )
 
     return 'success'
 
@@ -470,6 +528,7 @@ gdaltest_list = [
     ogr_index_8,
     ogr_index_9,
     ogr_index_10,
+    ogr_index_11,
     ogr_index_cleanup ]
 
 if __name__ == '__main__':
