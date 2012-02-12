@@ -486,6 +486,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( unsigned char * pabyData,
         if( eErr != OGRERR_NONE )
         {
             nGeomCount = iGeom;
+            delete poSubGeom;
             return eErr;
         }
 
