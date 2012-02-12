@@ -78,6 +78,12 @@ class OGRShapeLayer : public OGRLayer
 
     long               *panMatchingFIDs;
     int                 iMatchingFID;
+    void                ClearMatchingFIDs();
+
+    OGRGeometry        *m_poFilterGeomLastValid;
+    int                 nSpatialFIDCount;
+    int                *panSpatialFIDs;
+    void                ClearSpatialFIDs();
 
     int                 bHeaderDirty;
 
@@ -153,8 +159,9 @@ class OGRShapeLayer : public OGRLayer
 
     virtual OGRSpatialReference *GetSpatialRef();
     
-    int                 TestCapability( const char * );
-
+    virtual int         TestCapability( const char * );
+    virtual void        SetSpatialFilter( OGRGeometry * );
+    virtual OGRErr      SetAttributeFilter( const char * );
 };
 
 /************************************************************************/
