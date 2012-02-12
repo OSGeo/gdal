@@ -27,7 +27,9 @@
  *****************************************************************************/
 
 using kmldom::KmlFactory;
+using kmldom::StyleSelectorPtr;
 using kmldom::StylePtr;
+using kmldom::StyleMapPtr;
 using kmldom::DocumentPtr;
 using kmldom::ContainerPtr;
 using kmldom::PlacemarkPtr;
@@ -49,6 +51,24 @@ void kml2stylestring(
     StylePtr poKmlStyle,
     OGRStyleMgr *poOgrSM);
 
+
+
+/******************************************************************************
+ functions to follow the kml stylemap if one exists
+******************************************************************************/
+
+StyleSelectorPtr StyleFromStyleSelector(
+    const StyleSelectorPtr& styleselector,
+    OGRStyleTable * poStyleTable);
+
+StyleSelectorPtr StyleFromStyleURL(
+    const string styleurl,
+    OGRStyleTable * poStyleTable);
+
+StyleSelectorPtr StyleFromStyleMap(
+    const StyleMapPtr& stylemap,
+    OGRStyleTable * poStyleTable);
+
 /******************************************************************************
  function to parse a style table out of a document
 ******************************************************************************/
@@ -65,3 +85,4 @@ void styletable2kml (
     OGRStyleTable * poOgrStyleTable,
     KmlFactory * poKmlFactory,
     ContainerPtr poKmlContainer  );
+
