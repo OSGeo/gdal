@@ -214,8 +214,25 @@ void OGRSQLiteSelectLayer::RebuildSQL()
     {
         osSQLCurrent = osSQLBase.substr(0, i + 6);
         osSQLCurrent += osSpatialWhere;
-        osSQLCurrent += " AND ";
-        osSQLCurrent += osSQLBase.substr(i + 6);
+        osSQLCurrent += " AND (";
+
+        size_t nEndOfWhere = osSQLBase.ifind(" GROUP ");
+        if (nEndOfWhere == std::string::npos)
+            nEndOfWhere = osSQLBase.ifind(" ORDER ");
+        if (nEndOfWhere == std::string::npos)
+            nEndOfWhere = osSQLBase.ifind(" LIMIT ");
+
+        if (nEndOfWhere == std::string::npos)
+        {
+            osSQLCurrent += osSQLBase.substr(i + 6);
+            osSQLCurrent += ")";
+        }
+        else
+        {
+            osSQLCurrent += osSQLBase.substr(i + 6, nEndOfWhere - (i + 6));
+            osSQLCurrent += ")";
+            osSQLCurrent += osSQLBase.substr(nEndOfWhere);
+        }
     }
     else if (i < osSQLBase.size() &&
              (EQUALN(osSQLBase.c_str() + i, "GROUP ", 6) ||

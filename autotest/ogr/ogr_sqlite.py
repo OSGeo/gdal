@@ -1424,6 +1424,35 @@ def ogr_spatialite_2():
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
+    # Test spatial filter with a SQL result layer with WHERE and ORDER BY clause
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM test_spatialfilter WHERE 1 = 1 ORDER BY intcol')
+
+    extent = sql_lyr.GetExtent()
+    if extent != (0.0, 9.0, 0.0, 9.0):
+        gdaltest.post_reason('got bad extent')
+        print(extent)
+        return 'fail'
+
+    # Test caching
+    extent = sql_lyr.GetExtent()
+    if extent != (0.0, 9.0, 0.0, 9.0):
+        gdaltest.post_reason('got bad extent')
+        print(extent)
+        return 'fail'
+
+    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+        gdaltest.post_reason('OLCFastSpatialFilter failed')
+        return 'fail'
+    sql_lyr.SetSpatialFilter( geom )
+    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+        gdaltest.post_reason('OLCFastSpatialFilter failed')
+        return 'fail'
+    if sql_lyr.GetFeatureCount() != 50:
+        gdaltest.post_reason('did not get expected feature count')
+        print(sql_lyr.GetFeatureCount())
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
     # Remove spatial index
     ds = None
     ds = ogr.Open( 'tmp/spatialite_test.db', update = 1 )
