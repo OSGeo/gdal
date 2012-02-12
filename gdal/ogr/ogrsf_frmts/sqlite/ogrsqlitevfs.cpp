@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_atomic_ops.h"
 #include "ogr_sqlite.h"
 
 CPL_CVSID("$Id$");
@@ -41,6 +42,7 @@ typedef struct
     sqlite3_vfs               *pDefaultVFS;
     pfnNotifyFileOpenedType    pfn;
     void                      *pfnUserData;
+    int                        nCounter;
 } OGRSQLiteVFSAppDataStruct;
 
 #define GET_UNDERLYING_VFS(pVFS)  ((OGRSQLiteVFSAppDataStruct* )pVFS->pAppData)->pDefaultVFS
@@ -69,11 +71,11 @@ static int OGRSQLiteIOClose(sqlite3_file* pFile)
 static int OGRSQLiteIORead(sqlite3_file* pFile, void* pBuffer, int iAmt, sqlite3_int64 iOfst)
 {
     OGRSQLiteFileStruct* pMyFile = (OGRSQLiteFileStruct*) pFile;
-#ifdef DEBUG_IO
-    CPLDebug("SQLITE", "OGRSQLiteIORead(%p, %d, %d)", pMyFile->fp, iAmt, (int)iOfst);
-#endif
     VSIFSeekL(pMyFile->fp, (vsi_l_offset) iOfst, SEEK_SET);
     int nRead = (int)VSIFReadL(pBuffer, 1, iAmt, pMyFile->fp);
+#ifdef DEBUG_IO
+    CPLDebug("SQLITE", "OGRSQLiteIORead(%p, %d, %d) = %d", pMyFile->fp, iAmt, (int)iOfst, nRead);
+#endif
     if (nRead < iAmt)
     {
         memset(((char*)pBuffer) + nRead, 0, iAmt - nRead);
@@ -85,11 +87,11 @@ static int OGRSQLiteIORead(sqlite3_file* pFile, void* pBuffer, int iAmt, sqlite3
 static int OGRSQLiteIOWrite(sqlite3_file* pFile, const void* pBuffer, int iAmt, sqlite3_int64 iOfst)
 {
     OGRSQLiteFileStruct* pMyFile = (OGRSQLiteFileStruct*) pFile;
-#ifdef DEBUG_IO
-    CPLDebug("SQLITE", "OGRSQLiteIOWrite(%p, %d, %d)", pMyFile->fp, iAmt, (int)iOfst);
-#endif
     VSIFSeekL(pMyFile->fp, (vsi_l_offset) iOfst, SEEK_SET);
     int nWritten = (int)VSIFWriteL(pBuffer, 1, iAmt, pMyFile->fp);
+#ifdef DEBUG_IO
+    CPLDebug("SQLITE", "OGRSQLiteIOWrite(%p, %d, %d) = %d", pMyFile->fp, iAmt, (int)iOfst, nWritten);
+#endif
     if (nWritten < iAmt)
     {
         return SQLITE_IOERR_WRITE;
@@ -211,9 +213,13 @@ static int OGRSQLiteVFSOpen(sqlite3_vfs* pVFS,
     CPLDebug("SQLITE", "OGRSQLiteVFSOpen(%s, %d)", zName ? zName : "(null)", flags);
 #endif
 
+    OGRSQLiteVFSAppDataStruct* pAppData = (OGRSQLiteVFSAppDataStruct* )pVFS->pAppData;
+
     if (zName == NULL)
-        //return SQLITE_IOERR;
-        zName = CPLSPrintf("/vsimem/sqlite/%p", pVFS);
+    {
+        zName = CPLSPrintf("/vsimem/sqlite/%p_%d",
+                           pVFS, CPLAtomicInc(&(pAppData->nCounter)));
+    }
 
     OGRSQLiteFileStruct* pMyFile = (OGRSQLiteFileStruct*) pFile;
     pMyFile->pMethods = NULL;
@@ -235,11 +241,10 @@ static int OGRSQLiteVFSOpen(sqlite3_vfs* pVFS,
     CPLDebug("SQLITE", "OGRSQLiteVFSOpen() = %p", pMyFile->fp);
 #endif
 
-    pfnNotifyFileOpenedType pfn = ((OGRSQLiteVFSAppDataStruct* )pVFS->pAppData)->pfn;
+    pfnNotifyFileOpenedType pfn = pAppData->pfn;
     if (pfn)
     {
-        pfn(((OGRSQLiteVFSAppDataStruct* )pVFS->pAppData)->pfnUserData,
-            zName, pMyFile->fp);
+        pfn(pAppData->pfnUserData, zName, pMyFile->fp);
     }
 
     pMyFile->pMethods = &OGRSQLiteIOMethods;
@@ -380,6 +385,7 @@ sqlite3_vfs* OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void* pfnUserData)
     pVFSAppData->pDefaultVFS = pDefaultVFS;
     pVFSAppData->pfn = pfn;
     pVFSAppData->pfnUserData = pfnUserData;
+    pVFSAppData->nCounter = 0;
 
     pMyVFS->iVersion = 1;
     pMyVFS->szOsFile = sizeof(OGRSQLiteFileStruct);
