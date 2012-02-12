@@ -139,6 +139,7 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
     if (pMyVFS)
     {
         sqlite3_vfs_unregister(pMyVFS);
+        CPLFree(pMyVFS->pAppData);
         CPLFree(pMyVFS);
     }
 #endif
