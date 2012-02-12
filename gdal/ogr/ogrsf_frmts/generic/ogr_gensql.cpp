@@ -1225,36 +1225,53 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 /* -------------------------------------------------------------------- */
 /*      Allocate set of key values, and the output index.               */
 /* -------------------------------------------------------------------- */
-    nIndexSize = poSrcLayer->GetFeatureCount();
+    int nFeaturesAlloc = 100;
 
+    panFIDIndex = NULL;
     pasIndexFields = (OGRField *) 
-        CPLCalloc(sizeof(OGRField), nOrderItems * nIndexSize);
-    panFIDIndex = (long *) CPLCalloc(sizeof(long),nIndexSize);
-    panFIDList = (long *) CPLCalloc(sizeof(long),nIndexSize);
-
-    for( i = 0; i < nIndexSize; i++ )
-        panFIDIndex[i] = i;
+        CPLCalloc(sizeof(OGRField), nOrderItems * nFeaturesAlloc);
+    panFIDList = (long *) CPLMalloc(sizeof(long) * nFeaturesAlloc);
 
 /* -------------------------------------------------------------------- */
 /*      Read in all the key values.                                     */
 /* -------------------------------------------------------------------- */
     OGRFeature *poSrcFeat;
-    int         iFeature = 0;
+    nIndexSize = 0;
 
     while( (poSrcFeat = poSrcLayer->GetNextFeature()) != NULL )
     {
         int iKey;
 
-        if (iFeature == nIndexSize)
+        if (nIndexSize == nFeaturesAlloc)
         {
-            delete poSrcFeat;
+            int nNewFeaturesAlloc = (nFeaturesAlloc * 4) / 3;
+            OGRField* pasNewIndexFields = (OGRField *)
+                VSIRealloc(pasIndexFields,
+                           sizeof(OGRField) * nOrderItems * nNewFeaturesAlloc);
+            if (pasNewIndexFields == NULL)
+            {
+                VSIFree(pasIndexFields);
+                VSIFree(panFIDList);
+                nIndexSize = 0;
+                return;
+            }
+            pasIndexFields = pasNewIndexFields;
 
-            /* Should not happen theoretically. GetFeatureCount() may sometimes */
-            /* overestimate the number of features, but should *never* under-estimate it */
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "GetFeatureCount() reported less features than there are when iterating over the layer. "
-                     "Not all features will be listed.");
-            break;
+            long* panNewFIDList = (long *)
+                VSIRealloc(panFIDList, sizeof(long) *  nNewFeaturesAlloc);
+            if (panNewFIDList == NULL)
+            {
+                VSIFree(pasIndexFields);
+                VSIFree(panFIDList);
+                nIndexSize = 0;
+                return;
+            }
+            panFIDList = panNewFIDList;
+
+            memset(pasIndexFields + nFeaturesAlloc, 0,
+                   sizeof(OGRField) * nOrderItems * (nNewFeaturesAlloc - nFeaturesAlloc));
+
+            nFeaturesAlloc = nNewFeaturesAlloc;
         }
 
         for( iKey = 0; iKey < nOrderItems; iKey++ )
@@ -1263,7 +1280,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             OGRFieldDefn *poFDefn;
             OGRField *psSrcField, *psDstField;
 
-            psDstField = pasIndexFields + iFeature * nOrderItems + iKey;
+            psDstField = pasIndexFields + nIndexSize * nOrderItems + iKey;
 
             if ( psKeyDef->field_index >= iFIDFieldIndex)
             {
@@ -1307,16 +1324,18 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             }
         }
 
-        panFIDList[iFeature] = poSrcFeat->GetFID();
+        panFIDList[nIndexSize] = poSrcFeat->GetFID();
         delete poSrcFeat;
 
-        iFeature++;
+        nIndexSize++;
     }
 
-    /* Adjust the number of features in case GetFeatureCount() has */
-    /* overestimated the number of features, which may be the case */
-    /* for a shapefile with deleted records */
-    nIndexSize = iFeature;
+/* -------------------------------------------------------------------- */
+/*      Initialize panFIDIndex                                          */
+/* -------------------------------------------------------------------- */
+    panFIDIndex = (long *) CPLMalloc(sizeof(long) * nIndexSize);
+    for( i = 0; i < nIndexSize; i++ )
+        panFIDIndex[i] = i;
 
 /* -------------------------------------------------------------------- */
 /*      Quick sort the records.                                         */
