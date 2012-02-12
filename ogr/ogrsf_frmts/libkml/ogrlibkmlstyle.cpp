@@ -1045,6 +1045,7 @@ void ParseStyles (
         char *pszStyleMapId = CPLStrdup ( poKmlStyle->get_id().c_str (  ) );
         poKmlStyle = StyleFromStyleMap(kmldom::AsStyleMap(poKmlStyle), *poStyleTable);
         if (poKmlStyle == NULL) {
+            CPLFree(pszStyleMapId);
             continue;
         }
         char *pszStyleId = CPLStrdup ( poKmlStyle->get_id().c_str (  ) );
