@@ -463,8 +463,6 @@ OGRErr OGRGenSQLResultsLayer::GetExtent( OGREnvelope *psExtent,
 {
     swq_select *psSelectInfo = (swq_select *) pSelectInfo;
 
-    CreateOrderByIndex();
-
     if( psSelectInfo->query_mode == SWQM_RECORDSET )
         return poSrcLayer->GetExtent( psExtent, bForce );
     else
@@ -1329,6 +1327,8 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 
         nIndexSize++;
     }
+
+    //CPLDebug("GenSQL", "CreateOrderByIndex() = %d features", nIndexSize);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize panFIDIndex                                          */
