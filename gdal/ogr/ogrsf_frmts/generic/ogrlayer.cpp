@@ -1006,11 +1006,63 @@ int OGRLayer::FilterGeometry( OGRGeometry *poGeometry )
     else
     {
 /* -------------------------------------------------------------------- */
+/*      If the filter geometry is its own envelope and if the           */
+/*      the geometry (line, or polygon without hole) h has at least one */
+/*      point inside the filter geometry, the geometry itself is inside */
+/*      the filter geometry.                                            */
+/* -------------------------------------------------------------------- */
+        if( m_bFilterIsEnvelope )
+        {
+            OGRLineString* poLS = NULL;
+
+            switch( wkbFlatten(poGeometry->getGeometryType()) )
+            {
+                case wkbPolygon:
+                {
+                    OGRPolygon* poPoly = (OGRPolygon* )poGeometry;
+                    OGRLinearRing* poRing = poPoly->getExteriorRing();
+                    if (poRing != NULL && poPoly->getNumInteriorRings() == 0)
+                    {
+                        poLS = poRing;
+                    }
+                    break;
+                }
+
+                case wkbLineString:
+                    poLS = (OGRLineString* )poGeometry;
+                    break;
+
+                default:
+                    break;
+            }
+
+            if( poLS != NULL )
+            {
+                int nNumPoints = poLS->getNumPoints();
+                for(int i = 0; i < nNumPoints; i++)
+                {
+                    double x = poLS->getX(i);
+                    double y = poLS->getY(i);
+                    if (x >= m_sFilterEnvelope.MinX &&
+                        y >= m_sFilterEnvelope.MinY &&
+                        x <= m_sFilterEnvelope.MaxX &&
+                        y <= m_sFilterEnvelope.MaxY)
+                    {
+                        return TRUE;
+                    }
+                }
+            }
+        }
+
+/* -------------------------------------------------------------------- */
 /*      Fallback to full intersect test (using GEOS) if we still        */
 /*      don't know for sure.                                            */
 /* -------------------------------------------------------------------- */
         if( OGRGeometryFactory::haveGEOS() )
+        {
+            //CPLDebug("OGRLayer", "GEOS intersection");
             return m_poFilterGeom->Intersects( poGeometry );
+        }
         else
             return TRUE;
     }
