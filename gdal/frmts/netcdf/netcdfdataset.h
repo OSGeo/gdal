@@ -46,6 +46,28 @@
 /************************************************************************/
 
 /* -------------------------------------------------------------------- */
+/*      Creation and Configuration Options                              */
+/* -------------------------------------------------------------------- */
+
+/* Creation options
+
+   FORMAT=NC/NC2/NC4/NC4C (COMPRESS=DEFLATE sets FORMAT=NC4C)
+   COMPRESS=NONE/DEFLATE (default: NONE)
+   ZLEVEL=[1-9] (default: 1)
+   WRITE_BOTTOMUP=YES/NO (default: YES)
+   WRITE_GDAL_TAGS=YES/NO (default: YES)
+   WRITE_LONLAT=YES/NO/IF_NEEDED (default: YES for geographic, NO for projected)
+   TYPE_LONLAT=float/double (default: double for geographic, float for projected)
+   PIXELTYPE=DEFAULT/SIGNEDBYTE (use SIGNEDBYTE to get a signed Byte Band)
+*/
+
+/* Config Options
+
+   GDAL_NETCDF_BOTTOMUP=YES/NO overrides bottom-up value on import
+   GDAL_NETCDF_CONVERT_LAT_180=YES/NO convert longitude values from ]180,360] to [-180,180]
+*/
+
+/* -------------------------------------------------------------------- */
 /*      Driver-specific defines                                         */
 /* -------------------------------------------------------------------- */
 
@@ -643,6 +665,8 @@ class netCDFDataset : public GDALPamDataset
     void  CreateSubDatasetList( );
 
     void  SetProjectionFromVar( int );
+
+    int ProcessCFGeolocation( int );
 
   protected:
 
