@@ -2822,6 +2822,141 @@ def ogr_shape_60():
     return 'success'
 
 ###############################################################################
+# Test field auto-growing
+
+def ogr_shape_61():
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds_name = '/vsimem/ogr_shape_61'
+    ds = shape_drv.CreateDataSource( ds_name )
+    lyr = ds.CreateLayer('ogr_shape_61')
+
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+
+    field_defn = ogr.FieldDefn('intfield', ogr.OFTInteger)
+    field_defn.SetWidth(1)
+    lyr.CreateField(field_defn)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, ''.join(['0123456789' for i in range(8)]))
+    feat.SetField(1, 2)
+    lyr.CreateFeature(feat)
+    feat = None
+
+    field_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+    if field_defn.GetWidth() != 80:
+        gdaltest.post_reason('did not get initial field size')
+        print(field_defn.GetWidth())
+        return 'fail'
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, ''.join(['0123456789' for i in range(9)]))
+    feat.SetField(1, 34)
+    lyr.CreateFeature(feat)
+    feat = None
+
+    field_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+    if field_defn.GetWidth() != 90:
+        gdaltest.post_reason('did not extend field')
+        print(field_defn.GetWidth())
+        return 'fail'
+
+    field_defn = lyr.GetLayerDefn().GetFieldDefn(1)
+    if field_defn.GetWidth() != 2:
+        gdaltest.post_reason('did not extend field')
+        print(field_defn.GetWidth())
+        return 'fail'
+
+    ds = None
+
+    ds = ogr.Open(ds_name)
+    lyr = ds.GetLayer(0)
+    field_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+    if field_defn.GetWidth() != 90:
+        gdaltest.post_reason('did not get expected field size')
+        print(field_defn.GetWidth())
+        return 'fail'
+
+    feat = lyr.GetFeature(1)
+    val = feat.GetFieldAsString(0)
+    if val != ''.join(['0123456789' for i in range(9)]):
+        gdaltest.post_reason('did not get expected field value')
+        print(val)
+        return 'fail'
+    val = feat.GetFieldAsInteger(1)
+    if val != 34:
+        gdaltest.post_reason('did not get expected field value')
+        print(val)
+        return 'fail'
+        
+    return 'success'
+
+###############################################################################
+# Test field resizing
+
+def ogr_shape_62():
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds_name = '/vsimem/ogr_shape_62'
+    ds = shape_drv.CreateDataSource( ds_name )
+    lyr = ds.CreateLayer('ogr_shape_62', options = ['RESIZE=YES'] )
+
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('bar', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('baz', ogr.OFTInteger))
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 'hugehugehugehuge')
+    lyr.CreateFeature(feat)
+    feat = None
+
+    lyr.DeleteFeature(0)
+
+    values = [ 'ab', 'deef', 'ghi' ]
+    for value in values:
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetField(0, value)
+        feat.SetField(2, 12)
+        lyr.CreateFeature(feat)
+        feat = None
+
+    ds = None
+
+    # Reopen file
+    ds = ogr.Open(ds_name)
+    lyr = ds.GetLayer(0)
+
+    # Check
+    field_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+    if field_defn.GetWidth() != 4:
+        gdaltest.post_reason('did not get expected field size')
+        print(field_defn.GetWidth())
+        return 'fail'
+
+    # Reopen file
+    ds = ogr.Open(ds_name, update = 1)
+    lyr = ds.GetLayer(0)
+
+    # Should do nothing
+    ds.ExecuteSQL('RESIZE ogr_shape_62')
+
+    # Check
+    lyr.ResetReading()
+    for expected_value in values:
+        feat = lyr.GetNextFeature()
+        got_val = feat.GetFieldAsString(0)
+        if got_val != expected_value:
+            gdaltest.post_reason('did not get expected value')
+            print(got_val)
+            return 'fail'
+        got_val = feat.GetFieldAsInteger(2)
+        if got_val != 12:
+            gdaltest.post_reason('did not get expected value')
+            print(got_val)
+            return 'fail'
+
+    ds = None
+
+    return 'success'
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -2846,6 +2981,8 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_56' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_57' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_58' )
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_61' )
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_62' )
     
     return 'success'
 
@@ -2911,6 +3048,8 @@ gdaltest_list = [
     ogr_shape_58,
     ogr_shape_59,
     ogr_shape_60,
+    ogr_shape_61,
+    ogr_shape_62,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':

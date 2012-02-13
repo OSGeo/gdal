@@ -106,6 +106,10 @@ class OGRShapeLayer : public OGRLayer
     int                 TouchLayer();
     int                 ReopenFileDescriptors();
 
+    int                 bResizeAtClose;
+
+    void                TruncateDBF();
+
 /* WARNING: each of the below public methods should start with a call to */
 /* TouchLayer() and test its return value, so as to make sure that */
 /* the layer is properly re-opened if necessary */
@@ -115,6 +119,9 @@ class OGRShapeLayer : public OGRLayer
     OGRErr              DropSpatialIndex();
     OGRErr              Repack();
     OGRErr              RecomputeExtent();
+    OGRErr              ResizeDBF();
+
+    void                SetResizeAtClose( int bFlag ) { bResizeAtClose = bFlag; }
 
     const char         *GetFullName() { return pszFullName; }
 

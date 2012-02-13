@@ -407,7 +407,6 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
     SHPHandle   hSHP;
     DBFHandle   hDBF;
     int         nShapeType;
-    int         iLayer;
 
     /* To ensure that existing layers are created */
     GetLayerCount();
@@ -658,6 +657,8 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 
     CPLFree( pszBasename );
 
+    poLayer->SetResizeAtClose( CSLFetchBoolean( papszOptions, "RESIZE", FALSE ) );
+
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
 /* -------------------------------------------------------------------- */
@@ -830,7 +831,26 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
         }
         return NULL;
     }
-    
+
+/* ==================================================================== */
+/*      Handle command to shrink columns to their minimum size.         */
+/* ==================================================================== */
+    if( EQUALN(pszStatement, "RESIZE ", 7) )
+    {
+        OGRShapeLayer *poLayer = (OGRShapeLayer *)
+            GetLayerByName( pszStatement + 7 );
+
+        if( poLayer != NULL )
+            poLayer->ResizeDBF();
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "No such layer as '%s' in RESIZE.",
+                      pszStatement + 7 );
+        }
+        return NULL;
+    }
+
 /* ==================================================================== */
 /*      Handle command to recompute extent                             */
 /* ==================================================================== */
@@ -864,7 +884,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "No such layer as '%s' in DROP SPATIAL INDEX.", 
-                      pszStatement + 19 );
+                      pszStatement + 22 );
         }
         return NULL;
     }

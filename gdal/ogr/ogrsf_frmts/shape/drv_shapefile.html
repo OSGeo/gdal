@@ -115,11 +115,8 @@ the <a href="http://trac.osgeo.org/gdal/wiki/FAQVector#HowdoItranslateamixedgeom
 attributes suffer a number of limitations:</p>
 
 <ul>
-<li><p> Attribute names can only be up to 10 characters long.  Longer names will
-be silently truncated.  This may result in non-unique column names, which 
-will definitely cause problems later. </p></li>
-
-<li><p> Starting with version 1.7, the OGR Shapefile driver tries to generate
+<li><p> Attribute names can only be up to 10 characters long. Starting with version 1.7,
+the OGR Shapefile driver tries to generate
 unique field names. Successive duplicate field names, including those created
 by truncation to 10 characters, will be truncated to 8 characters and appended
 with a serial number from 1 to 99. </p><p>For example:</p>
@@ -154,6 +151,17 @@ as well as deleting shapes.  Deleted shapes are marked for deletion in
 the .dbf file, and then ignored by OGR.  To actually remove them permanently
 (resulting in renumbering of FIDs) invoke the SQL 'REPACK &lt;tablename&gt;' via
 the datasource ExecuteSQL() method.</p>
+
+<h2>Field sizes</h2>
+
+<p>Starting with GDAL/OGR 2.0, the driver knows to auto-extend string and integer fields
+(up to the 255 bytes limit imposed by the DBF format) to dynamically accomodate for
+the length of the data to be inserted.</p>
+
+<p>It is also possible to force a resize of the fields to the optimal width by issuing a
+SQL 'RESIZE &lt;tablename&gt;' via the datasource ExecuteSQL() method. This is convenient
+in situations where the default column width (80 characters for a string field) is bigger than
+necessary.</p>
 
 <h2>Spatial extent</h2>
 
@@ -193,6 +201,9 @@ values are not supported, nor are MULTIPATCH files.</li>
 <li> <b>ENCODING=</b><i>value</i>: set the encoding value in the DBF file. The
 default value is "LDID/87".  It is not clear what other values may be
 appropriate.</li>
+
+<li> <b>RESIZE=</b><i>yes/no</i>: (OGR >= 2.0) set the yes to resize fields to their optimal
+size. See above "Field sizes" section. Defaults to no.</li>
 </ul>
 
 <h3>VSI Virtual File System API support</h3>
@@ -223,6 +234,13 @@ find existing layers and append the features being copied.</p>
 % ogrinfo file1.shp -sql "CREATE SPATIAL INDEX ON file1"
 </pre>
 </li>
+
+<li>Resizing columns of a DBF file to their optimal size (OGR >= 2.0) :
+<pre>
+% ogrinfo file1.dbf -sql "RESIZE file1"
+</pre>
+</li>
+
 
 </ul>
 
