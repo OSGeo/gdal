@@ -393,7 +393,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         status = nc_get_att_double( cdfid, nZId, CF_SCALE_FACTOR, &dfScale ); 
         CPLDebug( "GDAL_netCDF", "got scale_factor=%.16g, status=%d", dfScale, status );
     }
-    SetOffset( dfOff ); 
+    SetOffset( dfOff );
     SetScale( dfScale );
 
     /* should we convert longitude values from ]180,360] to [-180,180] ? */
@@ -1031,13 +1031,13 @@ void  netCDFRasterBand::CheckValidData ( void * pImage, int bCheckIsNan )
                  ( ( adfValidRange[1] != dfNoDataValue ) && 
                    ( ((T *)pImage)[i] > (T)adfValidRange[1] ) ) ) {
                 ( (T *)pImage )[i] = (T)dfNoDataValue;
-            } 
+            }
             /* convert ]180,360] longitude values to [-180,180] */
             else if ( bCheckLongitude && ((T *)pImage )[i] > 180
                       && ((T *)pImage )[i] <= 360 ) {
                 ((T *)pImage )[i] -= 360;
-            }  
-        }   
+            }
+        }
     }
 }
 
@@ -1060,7 +1060,7 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if ( (nBlockYOff == 0) || (nBlockYOff == nRasterYSize-1) )
         CPLDebug( "GDAL_netCDF", "netCDFRasterBand::IReadBlock( %d, %d, ... )",
                   nBlockXOff, nBlockYOff );
-
+    
     *pszName='\0';
     memset( start, 0, sizeof( start ) );
     memset( edge,  0, sizeof( edge )  );
@@ -1570,7 +1570,7 @@ char** netCDFDataset::FetchStandardParallels( const char *pszGridMappingValue )
 /************************************************************************/
 /*                      SetProjectionFromVar()                          */
 /************************************************************************/
-void netCDFDataset::SetProjectionFromVar( int var )
+void netCDFDataset::SetProjectionFromVar( int nVarId )
 {
     size_t       start[2], edge[2];
     unsigned int i=0;
@@ -1630,7 +1630,7 @@ void netCDFDataset::SetProjectionFromVar( int var )
     double      adfTempGeoTransform[6];
     char        *pszTempProjection;
 
-    CPLDebug( "GDAL_netCDF", "\n=====\nSetProjectionFromVar( %d )\n", var );
+    CPLDebug( "GDAL_netCDF", "\n=====\nSetProjectionFromVar( %d )\n", nVarId );
 
 /* -------------------------------------------------------------------- */
 /*      Get x/y range information.                                      */
@@ -1651,7 +1651,7 @@ void netCDFDataset::SetProjectionFromVar( int var )
     strcpy( szGridMappingValue, "" );
     strcpy( szGridMappingName, "" );
 
-    nc_inq_varname( cdfid, var, szVarName );
+    nc_inq_varname( cdfid, nVarId, szVarName );
     strcpy(szTemp,szVarName);
     strcat(szTemp,"#");
     strcat(szTemp,CF_GRD_MAPPING);
@@ -2420,7 +2420,7 @@ void netCDFDataset::SetProjectionFromVar( int var )
                     pdfXCoord[i] -= 360;
             }
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Is pixel spacing uniform accross the map?                       */
 /* -------------------------------------------------------------------- */
@@ -2470,7 +2470,7 @@ void netCDFDataset::SetProjectionFromVar( int var )
                     ( abs( nSpacingMiddle ) !=  abs( nSpacingLast )     ) ) {
 		    
                     CPLError(CE_Warning, 1,"Latitude grid not spaced evenly.\nSeting projection for grid spacing is within 0.1 degrees threshold.\n");
-
+                    
                 }
 /* -------------------------------------------------------------------- */
 /*      We have gridded data so we can set the Gereferencing info.      */
@@ -2754,7 +2754,11 @@ void netCDFDataset::SetProjectionFromVar( int var )
     if ( bGotCfGT || bGotGdalGT ) {
         SetGeoTransform( adfTempGeoTransform );
     }
-  
+
+    /* Process geolocation arrays from CF "coordinates" attribute */
+    /* perhaps we should only add if is not a (supported) CF projection (bIsCfProjection */
+    ProcessCFGeolocation( nVarId ); 
+
     /* debuging reports */
     CPLDebug( "GDAL_netCDF", 
               "bGotGeogCS=%d bGotCfSRS=%d bGotCfGT=%d bGotGdalSRS=%d bGotGdalGT=%d",
@@ -2804,9 +2808,73 @@ void netCDFDataset::SetProjectionFromVar( int var )
             }
         }
     }
-
-
 }
+
+
+int netCDFDataset::ProcessCFGeolocation( int nVarId )
+{
+    int bAddGeoloc = FALSE;
+    char *pszTemp = NULL;
+    char **papszTokens = NULL;
+    CPLString osTMP;
+    char szGeolocXName[NC_MAX_NAME];
+    char szGeolocYName[NC_MAX_NAME];
+    szGeolocXName[0] = '\0';
+    szGeolocYName[0] = '\0';
+
+    if ( NCDFGetAttr( cdfid, nVarId, "coordinates", &pszTemp ) == CE_None ) { 
+        /* get X and Y geolocation names from coordinates attribute */
+        papszTokens = CSLTokenizeString2( pszTemp, " ", 0 );
+        if ( CSLCount(papszTokens) >= 2 ) {
+            /* test that each variable is longitude/latitude */
+            for ( int i=0; i<CSLCount(papszTokens); i++ ) {
+                if ( NCDFIsVarLongitude(cdfid, -1, papszTokens[i]) ) 
+                    strcpy( szGeolocXName, papszTokens[i] );
+                else if ( NCDFIsVarLatitude(cdfid, -1, papszTokens[i]) ) 
+                    strcpy( szGeolocYName, papszTokens[i] );  
+            }        
+            /* add GEOLOCATION metadata */
+            if ( !EQUAL(szGeolocXName,"") && !EQUAL(szGeolocYName,"") ) {
+                bAddGeoloc = TRUE;
+                CPLDebug( "GDAL_netCDF", 
+                          "using variables %s and %s for GEOLOCATION",
+                          szGeolocXName, szGeolocYName );
+                
+                SetMetadataItem( "SRS", SRS_WKT_WGS84, "GEOLOCATION" );
+                
+                osTMP.Printf( "NETCDF:\"%s\":%s",
+                              osFilename.c_str(), szGeolocXName );
+                SetMetadataItem( "X_DATASET", osTMP, "GEOLOCATION" );
+                SetMetadataItem( "X_BAND", "1" , "GEOLOCATION" );
+                osTMP.Printf( "NETCDF:\"%s\":%s",
+                              osFilename.c_str(), szGeolocYName );
+                SetMetadataItem( "Y_DATASET", osTMP, "GEOLOCATION" );
+                SetMetadataItem( "Y_BAND", "1" , "GEOLOCATION" );
+                
+                SetMetadataItem( "PIXEL_OFFSET", "0", "GEOLOCATION" );
+                SetMetadataItem( "PIXEL_STEP", "1", "GEOLOCATION" );
+                
+                SetMetadataItem( "LINE_OFFSET", "0", "GEOLOCATION" );
+                SetMetadataItem( "LINE_STEP", "1", "GEOLOCATION" );
+            }
+            else {
+                CPLDebug( "GDAL_netCDF", 
+                          "coordinates attribute [%s] is unsupported",
+                          pszTemp );
+            }                          
+        }
+        else {
+            CPLDebug( "GDAL_netCDF", 
+                      "coordinates attribute [%s] with %d element(s) is unsupported",
+                      pszTemp, CSLCount(papszTokens) );
+        }
+        if (papszTokens) CSLDestroy(papszTokens);
+        CPLFree( pszTemp );
+    }
+    
+    return bAddGeoloc;
+}
+
 
 /************************************************************************/
 /*                          SetProjection()                           */
@@ -2900,6 +2968,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
     double dfTemp = 0.0;
     const char  *pszValue = NULL;
     char       szTemp[ NCDF_MAX_STR_LEN ];
+    CPLErr eErr = CE_None;
 
     char   szGeoTransform[ NCDF_MAX_STR_LEN ];
     *szGeoTransform = '\0';
@@ -2910,6 +2979,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 
     int  bWriteGridMapping = FALSE;
     int  bWriteLonLat = FALSE;
+    int  bHasGeoloc = FALSE;
     int  bWriteGDALTags = FALSE;
     int  bWriteGeoTransform = FALSE;
 
@@ -2919,6 +2989,15 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 
     char szNetcdfProjection[ NC_MAX_NAME ];
     szNetcdfProjection[0]='\0';
+
+    /* For GEOLOCATION information */
+    char ** papszGeolocationInfo = NULL;
+    const char *pszDSName = NULL;
+    GDALDatasetH     hDS_X = NULL;
+    GDALRasterBandH  hBand_X = NULL;
+    GDALDatasetH     hDS_Y = NULL;
+    GDALRasterBandH  hBand_Y = NULL;
+    int nBand;
 
     bAddedProjectionVars = TRUE;
 
@@ -2941,6 +3020,64 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         CPLDebug( "GDAL_netCDF", "netCDFDataset::AddProjectionVars() called, "
                   "but Projection has not yet been defined!" );
 
+    /* check GEOLOCATION information */
+    papszGeolocationInfo = GetMetadata("GEOLOCATION");
+    if ( papszGeolocationInfo != NULL ) {
+
+        /* look for geolocation datasets */
+        pszDSName = CSLFetchNameValue( papszGeolocationInfo, "X_DATASET" );
+        if( pszDSName != NULL )
+            hDS_X = GDALOpenShared( pszDSName, GA_ReadOnly );
+        pszDSName = CSLFetchNameValue( papszGeolocationInfo, "Y_DATASET" );
+        if( pszDSName != NULL )
+            hDS_Y = GDALOpenShared( pszDSName, GA_ReadOnly );
+
+        if ( hDS_X != NULL && hDS_Y != NULL ) {
+            nBand = MAX(1,atoi(CSLFetchNameValue( papszGeolocationInfo, "X_BAND" )));
+            hBand_X = GDALGetRasterBand( hDS_X, nBand );
+            nBand = MAX(1,atoi(CSLFetchNameValue( papszGeolocationInfo, "Y_BAND" )));
+            hBand_Y = GDALGetRasterBand( hDS_Y, nBand );
+            
+            /* if geoloc bands are found do basic vaidation based on their dimensions */
+            if ( hDS_X != NULL && hDS_Y != NULL ) {
+                
+                int nXSize_XBand = GDALGetRasterXSize( hDS_X );
+                int nYSize_XBand = GDALGetRasterYSize( hDS_X );
+                int nXSize_YBand = GDALGetRasterXSize( hDS_Y );
+                int nYSize_YBand = GDALGetRasterYSize( hDS_Y );
+                
+                /* TODO 1D geolocation arrays not implemented */
+                if ( (nYSize_XBand == 1) && (nYSize_YBand == 1) ) {
+                    bHasGeoloc = FALSE;
+                    CPLDebug( "GDAL_netCDF", 
+                              "1D GEOLOCATION arrays not supported yet" );
+                }
+                /* 2D bands must have same sizes as the raster bands */
+                else if ( (nXSize_XBand != nRasterXSize) ||                              
+                          (nYSize_XBand != nRasterYSize) ||
+                          (nXSize_YBand != nRasterXSize) ||
+                          (nYSize_YBand != nRasterYSize) ) {                         
+                    bHasGeoloc = FALSE;
+                    CPLDebug( "GDAL_netCDF", 
+                              "GEOLOCATION array sizes (%dx%d %dx%d) differ from raster (%dx%d), not supported",
+                              nXSize_XBand, nYSize_XBand, nXSize_YBand, nYSize_YBand,
+                              nRasterXSize, nRasterYSize );
+                }
+                /* 2D bands are only supported for projected SRS (see CF 5.6) */
+                else if ( ! bIsProjected ) {                       
+                    bHasGeoloc = FALSE;
+                    CPLDebug( "GDAL_netCDF", 
+                              "2D GEOLOCATION arrays only supported for projected SRS" );
+                }
+                else {                       
+                    bHasGeoloc = TRUE;
+                    CPLDebug( "GDAL_netCDF", 
+                              "dataset has GEOLOCATION information, will try to write it" );
+                }
+            }
+        }
+    }
+
     /* process projection options */
     if( bIsProjected ) 
     {
@@ -2953,14 +3090,20 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         if ( bWriteGDALTags ) 
             bWriteGeoTransform = TRUE;
 
-        pszValue = CSLFetchNameValueDef(papszCreationOptions,"WRITE_LONLAT", "NO");
-        if ( EQUAL( pszValue, "IF_NEEDED" ) ) {
-            if  ( bIsCfProjection )
-                bWriteLonLat = FALSE;
-            else 
-                bWriteLonLat = TRUE;
+        /* write lon/lat : default is NO, except if has geolocation */
+        /* with IF_NEEDED : write if has geoloc or is not CF projection */ 
+        pszValue = CSLFetchNameValue( papszCreationOptions,"WRITE_LONLAT" );
+        if ( pszValue ) {
+            if ( EQUAL( pszValue, "IF_NEEDED" ) ) {
+                if ( bHasGeoloc || ! bIsCfProjection ) 
+                    bWriteLonLat = TRUE;
+                else
+                    bWriteLonLat = FALSE;
+            }
+            else bWriteLonLat = CSLTestBoolean( pszValue );
         }
-        else bWriteLonLat = CSLTestBoolean( pszValue );
+        else
+            bWriteLonLat = bHasGeoloc;
 
         eLonLatType = NC_FLOAT;
         pszValue =  CSLFetchNameValueDef(papszCreationOptions,"TYPE_LONLAT", "FLOAT");
@@ -3007,8 +3150,10 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
     bBottomUp = CSLFetchBoolean( papszCreationOptions, "WRITE_BOTTOMUP", TRUE );       
     
     CPLDebug( "GDAL_netCDF", 
-              "bIsProjected=%d bIsGeographic=%d bWriteGridMapping=%d bWriteGDALTags=%d bWriteLonLat=%d bBottomUp=%d",
-              bIsProjected,bIsGeographic,bWriteGridMapping,bWriteGDALTags,bWriteLonLat,bBottomUp );
+              "bIsProjected=%d bIsGeographic=%d bWriteGridMapping=%d "
+              "bWriteGDALTags=%d bWriteLonLat=%d bBottomUp=%d bHasGeoloc=%d",
+              bIsProjected,bIsGeographic,bWriteGridMapping,
+              bWriteGDALTags,bWriteLonLat,bBottomUp,bHasGeoloc );
 
     /* exit if nothing to do */
     if ( !bIsProjected && !bWriteLonLat )
@@ -3217,31 +3362,49 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 /* -------------------------------------------------------------------- */
 /*      Write lat/lon attributes if needed                              */
 /* -------------------------------------------------------------------- */
-    if ( bWriteLonLat == TRUE ) {
+    if ( bWriteLonLat ) {
+        int *panLatDims=NULL; 
+        int *panLonDims=NULL;
+        int nLatDims=-1;
+        int nLonDims=-1;
 
-        /* latitude attributes */
-        if ( bIsProjected ) {
-            int anLatDims[2];
-            anLatDims[0] =  nYDimID;
-            anLatDims[1] =  nXDimID;
-            CPLDebug( "GDAL_netCDF", "nc_def_var(%d,%s,%d)",
-                      cdfid, NCDF_DIMNAME_LAT, eLonLatType );
-            status = nc_def_var( cdfid, NCDF_DIMNAME_LAT, eLonLatType, 
-                                 2, anLatDims, &NCDFVarID );
-            NCDF_ERR(status);
-            /* compress lon/lat to save space */
-            DefVarDeflate( NCDFVarID );
+        /* get information */
+        if ( bHasGeoloc ) { /* geoloc */
+            nLatDims = 2;
+            panLatDims = (int *) CPLCalloc( nLatDims, sizeof( int ) );
+            panLatDims[0] = nYDimID;
+            panLatDims[1] = nXDimID;
+            nLonDims = 2;
+            panLonDims = (int *) CPLCalloc( nLonDims, sizeof( int ) );
+            panLonDims[0] = nYDimID;
+            panLonDims[1] = nXDimID;
         }
-        else {
-            int anLatDims[1];
-            // anLatDims[0] = nLatDimID;
-            anLatDims[0] =  nYDimID;
-            CPLDebug( "GDAL_netCDF", "nc_def_var(%d,%s,%d)",
-                      cdfid, NCDF_DIMNAME_LAT, eLonLatType );
-            status = nc_def_var( cdfid, NCDF_DIMNAME_LAT, eLonLatType, 
-                                 1, anLatDims, &NCDFVarID );  
-            NCDF_ERR(status);                
+        else if ( bIsProjected ) { /* projected */
+            nLatDims = 2;
+            panLatDims = (int *) CPLCalloc( nLatDims, sizeof( int ) );
+            panLatDims[0] =  nYDimID;
+            panLatDims[1] =  nXDimID;
+            nLonDims = 2;
+            panLonDims = (int *) CPLCalloc( nLonDims, sizeof( int ) );
+            panLonDims[0] =  nYDimID;
+            panLonDims[1] =  nXDimID;
         }
+        else {  /* geographic */
+            nLatDims = 1;
+            panLatDims = (int *) CPLCalloc( nLatDims, sizeof( int ) );
+            panLatDims[0] = nYDimID;
+            nLonDims = 1;
+            panLonDims = (int *) CPLCalloc( nLonDims, sizeof( int ) );
+            panLonDims[0] = nXDimID;
+        }
+        
+        /* def vars and attributes */
+        status = nc_def_var( cdfid, NCDF_DIMNAME_LAT, eLonLatType, 
+                             nLatDims, panLatDims, &NCDFVarID );
+        CPLDebug( "GDAL_netCDF", "nc_def_var(%d,%s,%d,%d,-,-) got id %d",
+                  cdfid, NCDF_DIMNAME_LAT, eLonLatType, nLatDims, NCDFVarID );
+        NCDF_ERR(status);
+        DefVarDeflate( NCDFVarID );
         nVarLatID = NCDFVarID;
         nc_put_att_text( cdfid, NCDFVarID, CF_STD_NAME,
                          8,"latitude" );
@@ -3250,29 +3413,12 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         nc_put_att_text( cdfid, NCDFVarID, CF_UNITS,
                          13, "degrees_north" );
 
-        /* longitude attributes */
-        if ( bIsProjected ) {
-            int anLonDims[2];
-            anLonDims[0] = nYDimID;
-            anLonDims[1] = nXDimID;
-            CPLDebug( "GDAL_netCDF", "nc_def_var(%d,%s,%d)",
-                      cdfid, NCDF_DIMNAME_LON, eLonLatType );
-            status = nc_def_var( cdfid, NCDF_DIMNAME_LON, eLonLatType, 
-                                 2, anLonDims, &NCDFVarID );
-            NCDF_ERR(status);
-            /* compress lon/lat to save space */
-            DefVarDeflate( NCDFVarID );
-        }
-        else {
-            int anLonDims[1];
-            // anLonDims[0] = nLonDimID;
-            anLonDims[0] = nXDimID;
-            CPLDebug( "GDAL_netCDF", "nc_def_var(%d,%s,%d)",
-                      cdfid, NCDF_DIMNAME_LON, eLonLatType );
-            status = nc_def_var( cdfid, NCDF_DIMNAME_LON, eLonLatType, 
-                                 1, anLonDims, &NCDFVarID );
-            NCDF_ERR(status);
-        }
+        status = nc_def_var( cdfid, NCDF_DIMNAME_LON, eLonLatType, 
+                             nLonDims, panLonDims, &NCDFVarID );
+        CPLDebug( "GDAL_netCDF", "nc_def_var(%d,%s,%d,%d,-,-) got id %d",
+                  cdfid, NCDF_DIMNAME_LON, eLonLatType, nLatDims, NCDFVarID );
+        NCDF_ERR(status);
+        DefVarDeflate( NCDFVarID );
         nVarLonID = NCDFVarID;
         nc_put_att_text( cdfid, NCDFVarID, CF_STD_NAME,
                          9, "longitude" );
@@ -3280,6 +3426,10 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                          9, "longitude" );
         nc_put_att_text( cdfid, NCDFVarID, CF_UNITS,
                          12, "degrees_east" );
+        /* free data */
+        CPLFree( panLatDims );
+        CPLFree( panLonDims );
+       
     }
 
     pfnProgress( 0.50, NULL, pProgressData );
@@ -3365,12 +3515,13 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 
         pfnProgress( 0.20, NULL, pProgressData );
 
+
 /* -------------------------------------------------------------------- */
-/*      Transform (X,Y) values to (lon,lat)                             */
+/*      Write lon/lat arrays (CF coordinates) if requested              */
 /* -------------------------------------------------------------------- */
 
-        /* Get OGR transform */
-        if ( bWriteLonLat == TRUE ) {
+        /* Get OGR transform if GEOLOCATION is not available */
+        if ( bWriteLonLat && !bHasGeoloc ) {
             poLatLonSRS = oSRS.CloneGeogCS();
             if ( poLatLonSRS != NULL )
                 poTransform = OGRCreateCoordinateTransformation( &oSRS, poLatLonSRS );
@@ -3382,36 +3533,64 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             }
         }
             
-        if ( bWriteLonLat == TRUE )  {
-
-            CPLDebug("GDAL_netCDF", "Transforming (X,Y)->(lon,lat)" );
-
+        if ( bWriteLonLat )  {
+            
+            if ( ! bHasGeoloc )
+                CPLDebug("GDAL_netCDF", "Transforming (X,Y)->(lon,lat)" );
+            else 
+                CPLDebug("GDAL_netCDF", "writing (lon,lat) from GEOLOCATION arrays" );
+ 
+            int bOK = TRUE;
+            double dfProgress = 0.2;
+            int i,j;
+            
+            size_t start[]={ 0, 0 };
+            size_t count[]={ 1, nRasterXSize };
             padLatVal = (double *) CPLMalloc( nRasterXSize * sizeof( double ) );
             padLonVal = (double *) CPLMalloc( nRasterXSize * sizeof( double ) );
-            size_t start[2], count[2];
-            start[1] = 0; //X
-            count[1] = nRasterXSize; 
-            start[0] = 0; //Y
-            count[0] = 1;
-
-            int bOK = TRUE;
-            double dfTemp;
-            int i,j;
-            dfTemp = 0.2;
 
             for( j = 0; (j < nRasterYSize) && bOK && (status == NC_NOERR); j++ ) {
                 
                 start[0] = j;
-
-                /* fill values to transform */
-                for( i=0; i<nRasterXSize; i++ ) {
-                    padLatVal[i] = padYVal[j];
-                    padLonVal[i] = padXVal[i];
-                }
                 
-                /* do the transform */
-                bOK = poTransform->Transform( nRasterXSize, 
-                                              padLonVal, padLatVal, NULL );
+                /* get values from geotransform */
+                if ( ! bHasGeoloc ) {
+                    /* fill values to transform */
+                    for( i=0; i<nRasterXSize; i++ ) {
+                        padLatVal[i] = padYVal[j];
+                        padLonVal[i] = padXVal[i];
+                    }
+                    
+                    /* do the transform */
+                    bOK = poTransform->Transform( nRasterXSize, 
+                                                  padLonVal, padLatVal, NULL );
+                    if ( ! bOK ) {
+                        CPLError( CE_Failure, CPLE_AppDefined, 
+                                  "Unable to Transform (X,Y) to (lon,lat).\n" );
+                    }
+                }
+                /* get values from geoloc arrays */
+                else {
+                    eErr = GDALRasterIO( hBand_Y, GF_Read, 
+                                         0, j, nRasterXSize, 1,
+                                         padLatVal, nRasterXSize, 1, 
+                                         GDT_Float64, 0, 0 );
+                    if ( eErr == CE_None ) {
+                        eErr = GDALRasterIO( hBand_X, GF_Read, 
+                                             0, j, nRasterXSize, 1,
+                                             padLonVal, nRasterXSize, 1, 
+                                             GDT_Float64, 0, 0 );
+                    }
+                    
+                    if ( eErr == CE_None )
+                        bOK = TRUE;
+                    else {
+                        bOK = FALSE;
+                        CPLError( CE_Failure, CPLE_AppDefined, 
+                                  "Unable to get scanline %d\n",j );
+                    }
+                }
+
                 /* write data */
                 if ( bOK ) {
                     status = nc_put_vara_double( cdfid, nVarLatID, start,
@@ -3421,16 +3600,13 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                                                  count, padLonVal);
                     NCDF_ERR(status);
                 }
-                else 
-                    CPLError( CE_Failure, CPLE_AppDefined, 
-                              "Unable to Transform (X,Y) to (lon,lat).\n" );
 
                 if ( j % (nRasterYSize/10) == 0 ) {
-                    dfTemp += 0.08;
-                    pfnProgress( dfTemp , NULL, pProgressData );
+                    dfProgress += 0.08;
+                    pfnProgress( dfProgress , NULL, pProgressData );
                 }
             }
-
+            
         }
 
         /* Free the srs and transform objects */
@@ -3515,7 +3691,12 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         
     }// not projected 
             
-
+    /* close geoloc datasets */
+    if ( bHasGeoloc ) {
+        GDALClose( hDS_X ); 
+        GDALClose( hDS_Y ); 
+    }        
+ 
     pfnProgress( 1.00, NULL, pProgressData );
 
     return CE_None;
@@ -3631,9 +3812,11 @@ void netCDFDataset::CreateSubDatasetList( )
 
     nSub=1;
     nc_inq_nvars ( cdfid, &nVarCount );
+
     for ( nVar = 0; nVar < nVarCount; nVar++ ) {
 
         nc_inq_varndims ( cdfid, nVar, &nDims );
+
         if( nDims >= 2 ) {
             ponDimIds = (int *) CPLCalloc( nDims, sizeof( int ) );
             nc_inq_vardimid ( cdfid, nVar, ponDimIds );
@@ -3690,14 +3873,14 @@ void netCDFDataset::CreateSubDatasetList( )
                 strcpy( szVarStdName, szName );
             }
     
-            sprintf( szTemp, "SUBDATASET_%d_NAME", nSub) ;
-	    
+            sprintf( szTemp, "SUBDATASET_%d_NAME", nSub);
+            
             poDS->papszSubDatasets =
                 CSLSetNameValue( poDS->papszSubDatasets, szTemp,
                                  CPLSPrintf( "NETCDF:\"%s\":%s",
                                              poDS->osFilename.c_str(),
-                                             szName) ) ;
-	    
+                                             szName)  ) ;
+
             sprintf(  szTemp, "SUBDATASET_%d_DESC", nSub++ );
 
             poDS->papszSubDatasets =
@@ -3706,6 +3889,7 @@ void netCDFDataset::CreateSubDatasetList( )
                                              szDim,
                                              szVarStdName,
                                              szType ) );
+
             CPLFree(ponDimIds);
         }
     }
@@ -4059,7 +4243,6 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !bTreatAsSubdataset ) // nCount must be 1!
     {
         char szVarName[NC_MAX_NAME];
-
         nc_inq_varname( cdfid, nVarID, szVarName);
         osSubdatasetName = szVarName;
     }
@@ -4078,9 +4261,11 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     nc_inq_vardimid( cdfid, var, paDimIds );
 	
 /* -------------------------------------------------------------------- */
-/*      Check fi somebody tried to pass a variable with less than 2D    */
+/*      Check if somebody tried to pass a variable with less than 2D    */
 /* -------------------------------------------------------------------- */
     if ( nd < 2 ) {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Variable has %d dimension(s) - not supported.", nd );
         CPLFree( paDimIds );
         CPLFree( panBandDimPos );
         delete poDS;
@@ -4242,7 +4427,7 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
     /* Remove the following band meta but set them later from band data */
     const char *papszIgnore[] = { CF_ADD_OFFSET, CF_SCALE_FACTOR, 
                                   "valid_range", "_Unsigned", 
-                                  _FillValue, NULL };
+                                  _FillValue, "coordinates", NULL };
 
     if( CDFVarID == NC_GLOBAL ) {
         papszMetadata = GDALGetMetadata( (GDALDataset *) poDS,"");
@@ -4334,23 +4519,6 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
 
 }
 
-/*
-Driver options:
-
-FORMAT=NC/NC2/NC4/NC4C (COMPRESS=DEFLATE sets FORMAT=NC4C)
-COMPRESS=NONE/DEFLATE (default: NONE)
-ZLEVEL=[1-9] (default: 1)
-WRITE_BOTTOMUP=YES/NO (default: YES)
-WRITE_GDAL_TAGS=YES/NO (default: YES)
-WRITE_LONLAT=YES/NO/IF_NEEDED (default: YES for geographic, NO for projected)
-TYPE_LONLAT=float/double (default: double for geographic, float for projected)
-PIXELTYPE=DEFAULT/SIGNEDBYTE (use SIGNEDBYTE to get a signed Byte Band)
-
-Config Options:
-
-GDAL_NETCDF_BOTTOMUP=YES/NO overrides bottom-up value on import
-
-*/
 
 /************************************************************************/
 /*                            CreateLL()                                */
@@ -4413,14 +4581,14 @@ netCDFDataset::CreateLL( const char * pszFilename,
     status = nc_def_dim( poDS->cdfid, NCDF_DIMNAME_X, nXSize, 
                          &(poDS->nXDimID) );
     NCDF_ERR(status);
-    CPLDebug( "GDAL_netCDF", "status nc_def_dim %s = %d, nXDimID = %d", 
-              NCDF_DIMNAME_X, status, poDS->nXDimID );   
+    CPLDebug( "GDAL_netCDF", "status nc_def_dim( %d, %s, %d, -) got id %d", 
+              poDS->cdfid, NCDF_DIMNAME_X, nXSize, poDS->nXDimID );   
 
     status = nc_def_dim( poDS->cdfid, NCDF_DIMNAME_Y, nYSize, 
                          &(poDS->nYDimID) );
     NCDF_ERR(status);
-    CPLDebug( "GDAL_netCDF", "status nc_def_dim %s = %d, nYDimID = %d", 
-              NCDF_DIMNAME_Y, status, poDS->nYDimID );   
+    CPLDebug( "GDAL_netCDF", "status nc_def_dim( %d, %s, %d, -) got id %d", 
+              poDS->cdfid, NCDF_DIMNAME_Y, nYSize, poDS->nYDimID );   
 
     return poDS;
 
@@ -4647,6 +4815,11 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Copy GeoTransform and Projection                                */
 /* -------------------------------------------------------------------- */
+    /* copy geolocation info */
+    if ( poSrcDS->GetMetadata("GEOLOCATION") != NULL )
+        poDS->SetMetadata( poSrcDS->GetMetadata("GEOLOCATION"), "GEOLOCATION" );
+    
+    /* copy geotransform */
     int bGotGeoTransform = FALSE;
     eErr = poSrcDS->GetGeoTransform( adfGeoTransform );
     if ( eErr == CE_None ) {
@@ -4656,6 +4829,7 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         poDS->bSetGeoTransform = FALSE;
     }
 
+    /* copy projection */
     pszWKT = poSrcDS->GetProjectionRef( );
     if ( pszWKT ) {
         poDS->SetProjection( pszWKT );
@@ -5339,7 +5513,7 @@ CPLErr NCDFSafeStrcat(char** ppszDest, char* pszSrc, size_t* nDestSize)
 
 /* helper function for NCDFGetAttr() */
 /* sets pdfValue to first value returned */
-/* and if bSetPszValue=True sets szValue with all values attribute values */
+/* and if bSetPszValue=True sets pszValue with all attribute values */
 /* pszValue is the responsibility of the caller and must be freed */
 CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName, 
                      double *pdfValue, char **pszValue, int bSetPszValue )
@@ -5467,6 +5641,7 @@ CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName,
     return NCDFGetAttr1( nCdfId, nVarId, pszAttrName, pdfValue, NULL, FALSE );
 }
 
+
 /* pszValue is the responsibility of the caller and must be freed */
 CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName, 
                     char **pszValue )
@@ -5507,7 +5682,7 @@ CPLErr NCDFPutAttr( int nCdfId, int nVarId,
     }
     papszValues = CSLTokenizeString2( szTemp, ",", CSLT_STRIPLEADSPACES |
                                       CSLT_STRIPENDSPACES );
-    if ( papszValues == NULL )
+    if ( papszValues == NULL ) 
         return CE_Failure;
 
     nAttrLen = CSLCount(papszValues);
@@ -5686,3 +5861,5 @@ int NCDFIsVarLatitude( int nCdfId, int nVarId, const char * pszVarName )
                                          papszAttribNames, papszAttribXValues,
                                          nVarId, pszVarName );
 }
+
+
