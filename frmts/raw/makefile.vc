@@ -6,7 +6,8 @@ OBJ	=	rawdataset.obj ehdrdataset.obj pauxdataset.obj doq1dataset.obj\
 		btdataset.obj landataset.obj cpgdataset.obj idadataset.obj \
 		ndfdataset.obj dipxdataset.obj genbindataset.obj \
 		lcpdataset.obj eirdataset.obj gtxdataset.obj loslasdataset.obj \
-		ntv2dataset.obj ace2dataset.obj snodasdataset.obj
+		ntv2dataset.obj ace2dataset.obj snodasdataset.obj \
+		ctable2dataset.obj
 
 GDAL_ROOT	=	..\..
 

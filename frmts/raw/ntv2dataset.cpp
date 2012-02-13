@@ -525,8 +525,8 @@ int NTv2Dataset::OpenGrid( char *pachHeader, vsi_l_offset nGridOffset )
         SetBand( iBand+1, poBand );
     }
     
-    GetRasterBand(1)->SetDescription( "Latitude Offset" );
-    GetRasterBand(2)->SetDescription( "Longitude Offset" );
+    GetRasterBand(1)->SetDescription( "Latitude Offset (arc seconds)" );
+    GetRasterBand(2)->SetDescription( "Longitude Offset (arc seconds)" );
     GetRasterBand(3)->SetDescription( "Latitude Error" );
     GetRasterBand(4)->SetDescription( "Longitude Error" );
     
