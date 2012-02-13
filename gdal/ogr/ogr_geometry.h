@@ -319,6 +319,7 @@ class CPL_DLL OGRLineString : public OGRCurve
 
     void        addSubLineString( const OGRLineString *, 
                                   int nStartVertex = 0, int nEndVertex = -1 );
+    void        reversePoints( void );
 
     // non-standard from OGRGeometry
     virtual OGRwkbGeometryType getGeometryType() const;
