@@ -120,6 +120,8 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     bHDBFWasNonNULL = hDBFIn != NULL;
     eFileDescriptorsState = FD_OPENED;
     TouchLayer();
+
+    bResizeAtClose = FALSE;
 }
 
 /************************************************************************/
@@ -129,6 +131,11 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
 OGRShapeLayer::~OGRShapeLayer()
 
 {
+    if( bResizeAtClose && hDBF != NULL )
+    {
+        ResizeDBF();
+    }
+
     /* Remove us from the list of LRU layers if necessary */
     poDS->UnchainLayer(this);
 
@@ -1461,6 +1468,8 @@ OGRErr OGRShapeLayer::DeleteField( int iField )
 
     if ( DBFDeleteField( hDBF, iField ) )
     {
+        TruncateDBF();
+
         return poFeatureDefn->DeleteFieldDefn( iField );
     }
     else
@@ -1571,6 +1580,8 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, 
         {
             poFieldDefn->SetWidth(nWidth);
             poFieldDefn->SetPrecision(nPrecision);
+
+            TruncateDBF();
         }
         return OGRERR_NONE;
     }
@@ -2130,6 +2141,154 @@ OGRErr OGRShapeLayer::Repack()
     nTotalShapeCount = hDBF->nRecords;
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                               ResizeDBF()                            */
+/*                                                                      */
+/*      Autoshrink columns of the DBF file to their minimum             */
+/*      size, according to the existing data.                           */
+/************************************************************************/
+
+OGRErr OGRShapeLayer::ResizeDBF()
+
+{
+    if (!TouchLayer())
+        return OGRERR_FAILURE;
+
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "The RESIZE operation is not permitted on a read-only shapefile." );
+        return OGRERR_FAILURE;
+    }
+
+    if( hDBF == NULL )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Attempt to RESIZE a shapefile with no .dbf file not supported.");
+        return OGRERR_FAILURE;
+    }
+
+    int i, j;
+
+    /* Look which columns must be examined */
+    int* panColMap = (int*) CPLMalloc(poFeatureDefn->GetFieldCount() * sizeof(int));
+    int* panBestWidth = (int*) CPLMalloc(poFeatureDefn->GetFieldCount() * sizeof(int));
+    int nStringCols = 0;
+    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    {
+        if( poFeatureDefn->GetFieldDefn(i)->GetType() == OFTString ||
+            poFeatureDefn->GetFieldDefn(i)->GetType() == OFTInteger )
+        {
+            panColMap[nStringCols] = i;
+            panBestWidth[nStringCols] = 1;
+            nStringCols ++;
+        }
+    }
+
+    if (nStringCols == 0)
+    {
+        /* Nothing to do */
+        CPLFree(panColMap);
+        CPLFree(panBestWidth);
+        return OGRERR_NONE;
+    }
+
+    CPLDebug("SHAPE", "Computing optimal column size...");
+
+    int bAlreadyWarned = FALSE;
+    for( i = 0; i < hDBF->nRecords; i++ )
+    {
+        if( !DBFIsRecordDeleted( hDBF, i ) )
+        {
+            for( j = 0; j < nStringCols; j ++)
+            {
+                if (DBFIsAttributeNULL(hDBF, i, panColMap[j]))
+                    continue;
+
+                const char* pszVal = DBFReadStringAttribute(hDBF, i, panColMap[j]);
+                int nLen = strlen(pszVal);
+                if (nLen > panBestWidth[j])
+                    panBestWidth[j] = nLen;
+            }
+        }
+        else if (!bAlreadyWarned)
+        {
+            bAlreadyWarned = TRUE;
+            CPLDebug("SHAPE",
+                     "DBF file would also need a REPACK due to deleted records");
+        }
+    }
+
+    for( j = 0; j < nStringCols; j ++)
+    {
+        int             iField = panColMap[j];
+        OGRFieldDefn*   poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
+
+        char            szFieldName[20];
+        int             nOriWidth, nPrecision;
+        char            chNativeType;
+        DBFFieldType    eDBFType;
+
+        chNativeType = DBFGetNativeFieldType( hDBF, iField );
+        eDBFType = DBFGetFieldInfo( hDBF, iField, szFieldName,
+                                    &nOriWidth, &nPrecision );
+
+        if (panBestWidth[j] < nOriWidth)
+        {
+            CPLDebug("SHAPE", "Shrinking field %d (%s) from %d to %d characters",
+                        iField, poFieldDefn->GetNameRef(), nOriWidth, panBestWidth[j]);
+
+            if (!DBFAlterFieldDefn( hDBF, iField, szFieldName,
+                                    chNativeType, panBestWidth[j], nPrecision ))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Shrinking field %d (%s) from %d to %d characters failed",
+                        iField, poFieldDefn->GetNameRef(), nOriWidth, panBestWidth[j]);
+
+                CPLFree(panColMap);
+                CPLFree(panBestWidth);
+
+                return OGRERR_FAILURE;
+            }
+            else
+            {
+                poFieldDefn->SetWidth(panBestWidth[j]);
+            }
+        }
+    }
+
+    TruncateDBF();
+
+    CPLFree(panColMap);
+    CPLFree(panBestWidth);
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          TruncateDBF()                               */
+/************************************************************************/
+
+void OGRShapeLayer::TruncateDBF()
+{
+    if (hDBF == NULL)
+        return;
+
+    VSILFILE* fp = (VSILFILE*)(hDBF->fp);
+    VSIFSeekL(fp, 0, SEEK_END);
+    vsi_l_offset nOldSize = VSIFTellL(fp);
+    vsi_l_offset nNewSize = hDBF->nRecordLength * (SAOffset) hDBF->nRecords
+                            + hDBF->nHeaderLength;
+    if (nNewSize < nOldSize)
+    {
+        CPLDebug("SHAPE",
+                 "Truncating DBF file from " CPL_FRMT_GUIB " to " CPL_FRMT_GUIB " bytes",
+                 nOldSize, nNewSize);
+        VSIFTruncateL(fp, nNewSize);
+    }
+    VSIFSeekL(fp, 0, SEEK_SET);
 }
 
 /************************************************************************/
