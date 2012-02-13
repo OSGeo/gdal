@@ -388,6 +388,7 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_GTX();
     GDALRegister_LOSLAS();
     GDALRegister_NTv2();
+    GDALRegister_CTable2();
     GDALRegister_ACE2();
     GDALRegister_SNODAS();
 #endif
