@@ -316,6 +316,24 @@ void KMLNode::eliminateEmpty(KML* poKML)
     }
 }
 
+bool KMLNode::hasOnlyEmpty() const
+{
+    for(kml_nodes_t::size_type z = 0; z < pvpoChildren_->size(); z++)
+    {
+        if((*pvpoChildren_)[z]->eType_ != Empty)
+        {
+            return false;
+        }
+        else
+        {
+            if (!(*pvpoChildren_)[z]->hasOnlyEmpty())
+                return false;
+        }
+    }
+
+    return true;
+}
+
 void KMLNode::setType(Nodetype oNotet)
 {
     eType_ = oNotet;

@@ -45,7 +45,7 @@ public:
     bool isContainer(std::string const& sIn) const;
     bool isLeaf(std::string const& sIn) const;
     bool isRest(std::string const& sIn) const;
-    void findLayers(KMLNode* poNode);
+    void findLayers(KMLNode* poNode, int bKeepEmptyContainers);
 };
 
 #endif /* OGR_KMLVECTOR_H_INCLUDED */

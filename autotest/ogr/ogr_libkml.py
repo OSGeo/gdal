@@ -670,6 +670,53 @@ def ogr_libkml_read_placemark():
     return 'success'
 
 ###############################################################################
+# Test reading KML without any layer
+
+def ogr_libkml_read_empty():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/empty.kml')
+    if ds.GetLayerCount() != 0:
+        gdaltest.post_reason('failed')
+        print(ds.GetLayerCount())
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test reading KML with empty layers
+
+def ogr_libkml_read_emptylayers():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/emptylayers.kml')
+    if ds.GetLayerCount() != 2:
+        gdaltest.post_reason('failed')
+        print(ds.GetLayerCount())
+        return 'fail'
+
+    # --> One difference with the old KML driver
+    if ds.GetLayer(0).GetFeatureCount() != 1:
+        gdaltest.post_reason('failed')
+        print(ds.GetLayer(0).GetFeatureCount())
+        return 'fail'
+
+    if ds.GetLayer(1).GetFeatureCount() != 0:
+        gdaltest.post_reason('failed')
+        print(ds.GetLayer(1).GetFeatureCount())
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -711,6 +758,8 @@ gdaltest_list = [
     ogr_libkml_read_geometries,
     ogr_libkml_test_ogrsf,
     ogr_libkml_read_placemark,
+    ogr_libkml_read_empty,
+    ogr_libkml_read_emptylayers,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':

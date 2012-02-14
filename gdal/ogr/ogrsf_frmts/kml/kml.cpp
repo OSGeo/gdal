@@ -555,10 +555,15 @@ bool KML::isRest(std::string const& elem) const
     return false;
 };
 
-void KML::findLayers(KMLNode* poNode)
+void KML::findLayers(KMLNode* poNode, int bKeepEmptyContainers)
 {
     // idle
 };
+
+bool KML::hasOnlyEmpty() const
+{
+    return poTrunk_->hasOnlyEmpty();
+}
 
 int KML::getNumLayers() const
 {
