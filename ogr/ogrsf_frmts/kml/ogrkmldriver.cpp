@@ -67,14 +67,14 @@ OGRDataSource *OGRKMLDriver::Open( const char * pszName, int bUpdate )
 
     if( poDS->Open( pszName, TRUE ) )
     {
-        if( poDS->GetLayerCount() == 0 )
+        /*if( poDS->GetLayerCount() == 0 )
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
                 "No layers in KML file: %s.", pszName );
 
             delete poDS;
             poDS = NULL;
-        }
+        }*/
     }
     else
     {
