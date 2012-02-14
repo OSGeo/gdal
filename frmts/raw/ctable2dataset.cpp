@@ -175,7 +175,6 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     CPL_LSBPTR64( achHeader + 96 );
     CPL_LSBPTR64( achHeader + 104 );
-    CPL_LSBPTR64( achHeader + 104 );
     CPL_LSBPTR64( achHeader + 112 );
     CPL_LSBPTR64( achHeader + 120 );
     CPL_LSBPTR32( achHeader + 128 );
