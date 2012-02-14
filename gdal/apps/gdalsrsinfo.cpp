@@ -108,6 +108,80 @@ int main( int argc, char ** argv )
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Register standard GDAL and OGR drivers.                         */
+/* -------------------------------------------------------------------- */
+    GDALAllRegister();
+#ifdef OGR_ENABLED
+    OGRRegisterAll();
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Process --formats option.                                       */
+/*      Code copied from gcore/gdal_misc.cpp and ogr/ogrutils.cpp.      */
+/*      This is not ideal, but is best for more descriptive output and  */
+/*      we don't want to call OGRGeneralCmdLineProcessor().             */
+/* -------------------------------------------------------------------- */ 
+   for( i = 1; i < argc; i++ )
+    {        
+        if( EQUAL(argv[i], "--formats") )
+        {
+            int iDr;
+            
+            /* GDAL formats */
+            printf( "Supported Raster Formats:\n" );
+            for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
+            {
+                GDALDriverH hDriver = GDALGetDriver(iDr);
+                const char *pszRWFlag, *pszVirtualIO;
+                
+                if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) )
+                    pszRWFlag = "rw+";
+                else if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, 
+                                              NULL ) )
+                    pszRWFlag = "rw";
+                else
+                    pszRWFlag = "ro";
+                
+                if( GDALGetMetadataItem( hDriver, GDAL_DCAP_VIRTUALIO, NULL) )
+                    pszVirtualIO = "v";
+                else
+                    pszVirtualIO = "";
+                
+                printf( "  %s (%s%s): %s\n",
+                        GDALGetDriverShortName( hDriver ),
+                        pszRWFlag, pszVirtualIO,
+                        GDALGetDriverLongName( hDriver ) );
+            }
+
+            /* OGR formats */
+#ifdef OGR_ENABLED
+            printf( "\nSupported Vector Formats:\n" );
+            
+            OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
+            
+            for( iDr = 0; iDr < poR->GetDriverCount(); iDr++ )
+            {
+                OGRSFDriver *poDriver = poR->GetDriver(iDr);
+                
+                if( poDriver->TestCapability( ODrCCreateDataSource ) )
+                    printf( "  -> \"%s\" (read/write)\n", 
+                            poDriver->GetName() );
+                else
+                    printf( "  -> \"%s\" (readonly)\n", 
+                            poDriver->GetName() );
+            }
+            
+#endif
+            exit(1);
+            
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Register standard GDAL drivers, and process generic GDAL        */
+/*      command options.                                                */
+/* -------------------------------------------------------------------- */
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
     if( argc < 1 )
         exit( -argc );
@@ -148,12 +222,6 @@ int main( int argc, char ** argv )
         CSLDestroy( argv );
         Usage();
     }
-
-    /* Register drivers */
-    GDALAllRegister();
-#ifdef OGR_ENABLED
-    OGRRegisterAll();
-#endif
 
     /* Search for SRS */
     bGotSRS = FindSRS( pszInput, oSRS, bDebug );
