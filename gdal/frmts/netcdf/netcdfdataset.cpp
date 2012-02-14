@@ -396,7 +396,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     SetOffset( dfOff );
     SetScale( dfScale );
 
-    /* should we convert longitude values from ]180,360] to [-180,180] ? */
+    /* should we check for longitude values > 360 ? */
     this->bCheckLongitude = 
         CSLTestBoolean(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180", "YES"))
         && NCDFIsVarLongitude( cdfid, nZId, NULL );
@@ -1012,10 +1012,9 @@ void  netCDFRasterBand::CheckValidData ( void * pImage, int bCheckIsNan )
     CPLAssert( pImage != NULL );
 
     /* check if needed or requested */
-    if (  (adfValidRange[0] != dfNoDataValue) || 
-          (adfValidRange[1] != dfNoDataValue) ||
-          bCheckIsNan || bCheckLongitude ) {
-
+    if ( (adfValidRange[0] != dfNoDataValue) || 
+         (adfValidRange[1] != dfNoDataValue) ||
+         bCheckIsNan ) {   
         for( i=0; i<nBlockXSize; i++ ) {
             /* check for nodata and nan */
             if ( CPLIsEqual( (double) ((T *)pImage)[i], dfNoDataValue ) )
@@ -1032,13 +1031,21 @@ void  netCDFRasterBand::CheckValidData ( void * pImage, int bCheckIsNan )
                    ( ((T *)pImage)[i] > (T)adfValidRange[1] ) ) ) {
                 ( (T *)pImage )[i] = (T)dfNoDataValue;
             }
-            /* convert ]180,360] longitude values to [-180,180] */
-            else if ( bCheckLongitude && ((T *)pImage )[i] > 180
-                      && ((T *)pImage )[i] <= 360 ) {
-                ((T *)pImage )[i] -= 360;
-            }
         }
     }
+
+    /* if mininum longitude is > 180, subtract 360 from all */
+    /* if not, disable checking for further calls (check just once) */
+    /* only check first and last block elements since lon must be monotonic */
+    if ( bCheckLongitude && 
+         MIN( ((T *)pImage)[0], ((T *)pImage)[nBlockXSize-1] ) > 180.0 ) {
+        for( i=0; i<nBlockXSize; i++ ) {
+            ((T *)pImage )[i] -= 360.0;
+        }
+    }
+    else 
+        bCheckLongitude = FALSE;
+
 }
 
 /************************************************************************/
@@ -2415,9 +2422,10 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
 
         if ( NCDFIsVarLongitude( cdfid, nVarDimXID, NULL ) &&
              CSLTestBoolean(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180", "YES")) ) {
-            for ( size_t i=0; i<xdim ; i++ ) {
-                if ( pdfXCoord[i] > 180 && pdfXCoord[i] <= 360 ) 
-                    pdfXCoord[i] -= 360;
+            /* if mininum longitude is > 180, subtract 360 from all */
+            if ( MIN( pdfXCoord[0], pdfXCoord[xdim-1] ) > 180.0 ) {
+                for ( size_t i=0; i<xdim ; i++ )
+                        pdfXCoord[i] -= 360;
             }
         }
 
@@ -2436,7 +2444,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
 	
         nSpacingLast    = (int) poDS->rint((pdfXCoord[xdim - 2] - 
                                             pdfXCoord[xdim-1]) * 1000);
-	
+
         if( ( abs( nSpacingBegin )  ==  abs( nSpacingLast )     )  &&
             ( abs( nSpacingBegin )  ==  abs( nSpacingMiddle )   ) &&
             ( abs( nSpacingMiddle ) ==  abs( nSpacingLast )     ) ) {
@@ -2454,8 +2462,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
             nSpacingLast    = (int) poDS->rint((pdfYCoord[ydim - 2] - 
                                                 pdfYCoord[ydim-1]) * 
                                                1000);
-
-		    
+   
 /* -------------------------------------------------------------------- */
 /*   For Latitude we allow an error of 0.1 degrees for gaussian         */
 /*   gridding                                                           */
@@ -2470,7 +2477,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
                     ( abs( nSpacingMiddle ) !=  abs( nSpacingLast )     ) ) {
 		    
                     CPLError(CE_Warning, 1,"Latitude grid not spaced evenly.\nSeting projection for grid spacing is within 0.1 degrees threshold.\n");
-                    
+
                 }
 /* -------------------------------------------------------------------- */
 /*      We have gridded data so we can set the Gereferencing info.      */
@@ -2874,7 +2881,6 @@ int netCDFDataset::ProcessCFGeolocation( int nVarId )
     
     return bAddGeoloc;
 }
-
 
 /************************************************************************/
 /*                          SetProjection()                           */
@@ -3641,7 +3647,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             else /* invert latitude values */ 
                 padLatVal[i] = dfY0 - (i+0.5)*dfDY ;
         }
-        
+
         size_t startLat[1];
         size_t countLat[1];
         startLat[0] = 0;
@@ -3652,7 +3658,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 /* -------------------------------------------------------------------- */
         dfX0 = adfGeoTransform[0];
         dfDX = adfGeoTransform[1];
-        
+
         padLonVal = (double *) CPLMalloc( nRasterXSize * sizeof( double ) );
         for( int i=0; i<nRasterXSize; i++ ) {
             /* The data point is centered inside the pixel */
