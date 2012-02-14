@@ -2478,6 +2478,11 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
 		    
                     CPLError(CE_Warning, 1,"Latitude grid not spaced evenly.\nSeting projection for grid spacing is within 0.1 degrees threshold.\n");
 
+                    CPLDebug("GDAL_netCDF", 
+                             "Latitude grid not spaced evenly, but within 0.1 degree threshold (probably a Gaussian grid).\n"
+                             "Saving original latitude values in Y_VALUES geolocation metadata" );
+                    Set1DGeolocation( nVarDimYID, "Y" );
+
                 }
 /* -------------------------------------------------------------------- */
 /*      We have gridded data so we can set the Gereferencing info.      */
@@ -2881,6 +2886,119 @@ int netCDFDataset::ProcessCFGeolocation( int nVarId )
     
     return bAddGeoloc;
 }
+
+int netCDFDataset::Set1DGeolocation( int nVarId, const char *szDimName )
+{
+    nc_type nVarType = NC_NAT;
+    size_t  nVarLen = 0;
+    size_t nVarStart = 0;
+    size_t  nVarValueSize;
+    char szTemp[ NCDF_MAX_STR_LEN ];
+    char szFormat[10];
+    char *pszVarValues = NULL;
+    double *pdfVarValues = NULL;
+    int nDimId = -1;
+    
+    /* get var information */
+    status = nc_inq_varndims( cdfid, nVarId, &nDimId );
+    if ( nDimId != 1 ) /* only 1D allowed */
+        return FALSE;
+    status = nc_inq_vardimid( cdfid, nVarId, &nDimId );
+    if ( status != NC_NOERR )
+        return FALSE;
+    status = nc_inq_dimlen( cdfid, nDimId, &nVarLen );
+    if ( nVarLen <= 0 )
+        return FALSE;
+    status = nc_inq_vartype( cdfid, nVarId, &nVarType );
+    if ( nVarType == NC_NAT || nVarType == NC_CHAR )
+        return FALSE;
+
+    /* read values */
+    pdfVarValues = (double *) CPLCalloc( nVarLen, sizeof(double) );
+    status = nc_get_vara_double( cdfid, nVarId, &nVarStart, &nVarLen, pdfVarValues );
+    if ( status != NC_NOERR ) {
+        if ( pdfVarValues ) CPLFree( pdfVarValues );
+        return FALSE;
+    }
+
+    /* Allocate guaranteed minimum size */
+    nVarValueSize = nVarLen + 1;
+    pszVarValues = (char *) CPLCalloc( nVarValueSize, sizeof( char ));
+    *pszVarValues = '\0';
+    
+    /* create output string */
+    if ( nVarLen > 1  && nVarType != NC_CHAR )    
+        NCDFSafeStrcat(&pszVarValues, (char *)"{ ", &nVarValueSize);
+    if ( nVarType == NC_FLOAT )
+        strcpy( szFormat, "%.8g, " );
+    else
+        strcpy( szFormat, "%.16g, " );
+    for ( size_t i=0; i<nVarLen-1; i++ ) {
+        sprintf( szTemp, szFormat, pdfVarValues[i] );
+        NCDFSafeStrcat(&pszVarValues, szTemp, &nVarValueSize);
+    }
+    if ( nVarType == NC_FLOAT )
+        strcpy( szFormat, "%.8g" );
+    else
+        strcpy( szFormat, "%.16g" );
+    sprintf( szTemp, szFormat, pdfVarValues[nVarLen-1] );
+    NCDFSafeStrcat(&pszVarValues, szTemp, &nVarValueSize);
+
+    if ( nVarLen > 1  && nVarType != NC_CHAR )    
+        NCDFSafeStrcat(&pszVarValues, (char *)" }", &nVarValueSize);
+
+    /* write metadata */
+    sprintf( szTemp, "%s_VALUES", szDimName );
+    SetMetadataItem( szTemp, pszVarValues, "GEOLOCATION" );
+
+    CPLFree( pdfVarValues );
+    CPLFree( pszVarValues );
+    
+    return TRUE;
+}
+
+
+double *netCDFDataset::Get1DGeolocation( const char *szDimName, int &nVarLen )
+{
+    const char *pszValue = NULL;
+    char    **papszValues = NULL;
+    char    *pszTemp = NULL;
+    char    szTemp[ NCDF_MAX_STR_LEN ];
+    double *pdfVarValues = NULL;
+
+    nVarLen = 0;
+
+    pszValue = GetMetadataItem( "Y_VALUES", "GEOLOCATION" );
+    if ( !pszValue || EQUAL( pszValue, "" ) )
+        return NULL;
+
+    /* tokenize to find multiple values */
+    strcpy( szTemp,pszValue );
+    int last_char = strlen(pszValue) - 1;
+    if ( ( szTemp[0] == '{' ) && ( szTemp[last_char] == '}' ) ) {
+        szTemp[0] = ' '; 
+        szTemp[last_char] = ' ';
+    }
+    papszValues = CSLTokenizeString2( szTemp, ",", CSLT_STRIPLEADSPACES |
+                                      CSLT_STRIPENDSPACES );
+    if ( papszValues == NULL )
+        return NULL;
+
+    nVarLen = CSLCount(papszValues);
+
+    /* initialize and fill array */
+    pdfVarValues = (double *) CPLCalloc( nVarLen, sizeof( double ) );
+    for(int i=0, j=0; i < nVarLen; i++) { 
+        if ( ! bBottomUp ) j=nVarLen - 1 - i;
+        else j=i; /* invert latitude values */
+        // j=i; /* invert latitude values */
+        pdfVarValues[j] = strtod( papszValues[i], &pszTemp );
+    }
+    CSLDestroy( papszValues );
+
+    return pdfVarValues;
+}
+
 
 /************************************************************************/
 /*                          SetProjection()                           */
@@ -3639,13 +3757,35 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             dfY0 = adfGeoTransform[3] + ( adfGeoTransform[5] * nRasterYSize );
         dfDY = adfGeoTransform[5];
         
-        padLatVal = (double *) CPLMalloc( nRasterYSize * sizeof( double ) );
-        for( int i=0; i<nRasterYSize; i++ ) {
-            /* The data point is centered inside the pixel */
-            if ( ! bBottomUp )
-                padLatVal[i] = dfY0 + (i+0.5)*dfDY ;
-            else /* invert latitude values */ 
-                padLatVal[i] = dfY0 - (i+0.5)*dfDY ;
+        /* override lat values with the ones in GEOLOCATION/Y_VALUES */
+        if ( GetMetadataItem( "Y_VALUES", "GEOLOCATION" ) != NULL ) {
+            int nTemp = 0;
+            padLatVal = Get1DGeolocation( "Y_VALUES", nTemp );
+            /* make sure we got the correct amount, if not fallback to GT */
+            /* could add test fabs( fabs(padLatVal[0]) - fabs(dfY0) ) <= 0.1 ) ) */
+            if ( nTemp == nRasterYSize ) {
+                CPLDebug("GDAL_netCDF", "Using Y_VALUES geolocation metadata for lat values" );
+            }
+            else {
+                CPLDebug("GDAL_netCDF", 
+                         "Got %d elements from Y_VALUES geolocation metadata, need %d",
+                         nTemp, nRasterYSize );
+                if ( padLatVal ) {
+                    CPLFree( padLatVal );
+                    padLatVal = NULL;
+                } 
+            }
+        }
+
+        if ( padLatVal == NULL ) {
+            padLatVal = (double *) CPLMalloc( nRasterYSize * sizeof( double ) );
+            for( int i=0; i<nRasterYSize; i++ ) {
+                /* The data point is centered inside the pixel */
+                if ( ! bBottomUp )
+                    padLatVal[i] = dfY0 + (i+0.5)*dfDY ;
+                else /* invert latitude values */ 
+                    padLatVal[i] = dfY0 - (i+0.5)*dfDY ;
+            }
         }
 
         size_t startLat[1];
@@ -3673,26 +3813,23 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 /* -------------------------------------------------------------------- */
 /*      Write latitude and longitude values                             */
 /* -------------------------------------------------------------------- */
-        /* latitude values */
-        CPLDebug("GDAL_netCDF", "Writing lat values" );
-
         /* make sure we are in data mode */
         SetDefineMode( FALSE );
 
+        /* write values */
+        CPLDebug("GDAL_netCDF", "Writing lat values" );
+    
         status = nc_put_vara_double( cdfid, nVarLatID, startLat,
                                      countLat, padLatVal);
         NCDF_ERR(status);
 
-        /* free values */
-        CPLFree( padLatVal );  
-
-        /* longitude values */
         CPLDebug("GDAL_netCDF", "Writing lon values" );
         status = nc_put_vara_double( cdfid, nVarLonID, startLon,
                                      countLon, padLonVal);
         NCDF_ERR(status);
         
         /* free values */
+        CPLFree( padLatVal );  
         CPLFree( padLonVal );  
         
     }// not projected 
