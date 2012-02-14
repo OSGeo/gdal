@@ -93,7 +93,7 @@ bool KMLVector::isRest(std::string const& sIn) const
     return false;
 }
 
-void KMLVector::findLayers(KMLNode* poNode)
+void KMLVector::findLayers(KMLNode* poNode, int bKeepEmptyContainers)
 {
     bool bEmpty = true;
 
@@ -117,7 +117,7 @@ void KMLVector::findLayers(KMLNode* poNode)
         {
             if( isContainer(poNode->getChild(z)->getName()) )
             {
-                findLayers(poNode->getChild(z));
+                findLayers(poNode->getChild(z), bKeepEmptyContainers);
             }
             else if( isFeatureContainer(poNode->getChild(z)->getName()) )
             {
@@ -125,13 +125,19 @@ void KMLVector::findLayers(KMLNode* poNode)
             }
         }
 
-        if(bEmpty)
+        if( bKeepEmptyContainers && poNode->getName() == "Folder" )
+        {
+            if (!bEmpty)
+                poNode->eliminateEmpty(this);
+        }
+        else if(bEmpty)
         {
             return;
         }
         
         Nodetype nodeType = poNode->getType();
-        if( isFeature(Nodetype2String(nodeType)) ||
+        if( bKeepEmptyContainers ||
+            isFeature(Nodetype2String(nodeType)) ||
             nodeType == Mixed ||
             nodeType == MultiGeometry || nodeType == MultiPoint ||
             nodeType == MultiLineString || nodeType == MultiPolygon)

@@ -71,7 +71,9 @@ public:
 	virtual bool isFeatureContainer(std::string const& elem) const;
 	virtual bool isContainer(std::string const& elem) const;
 	virtual bool isRest(std::string const& elem) const;
-    virtual void findLayers(KMLNode* poNode);
+    virtual void findLayers(KMLNode* poNode, int bKeepEmptyContainers);
+
+    bool hasOnlyEmpty() const;
 
 	void parse();
 	void print(unsigned short what = 3);
