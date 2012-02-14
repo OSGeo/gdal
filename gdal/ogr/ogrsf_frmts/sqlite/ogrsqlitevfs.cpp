@@ -332,7 +332,14 @@ static void OGRSQLiteVFSDlError (sqlite3_vfs* pVFS, int nByte, char *zErrMsg)
     pUnderlyingVFS->xDlError(pUnderlyingVFS, nByte, zErrMsg);
 }
 
+/* xDlSym member signature changed in sqlite 3.6.7 (http://www.sqlite.org/changes.html) */
+/* This was supposed to be done "in a way that is backwards compatible but which might cause compiler warnings" */
+/* Perhaps in C, but definitely not in C++ ( #4515 ) */
+#if SQLITE_VERSION_NUMBER >= 3006007
 static void (*OGRSQLiteVFSDlSym (sqlite3_vfs* pVFS,void* pHandle, const char *zSymbol))(void)
+#else
+static void (*OGRSQLiteVFSDlSym (sqlite3_vfs* pVFS,void* pHandle, const char *zSymbol))
+#endif
 {
     sqlite3_vfs* pUnderlyingVFS = GET_UNDERLYING_VFS(pVFS);
     //CPLDebug("SQLITE", "OGRSQLiteVFSDlSym(%s)", zSymbol);
