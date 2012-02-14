@@ -61,16 +61,6 @@ CPLErr NCDFPutAttr( int nCdfId, int nVarId,
                     const char *pszAttrName, const char *pszValue );
  
 
-int NCDFDoesVarHaveAttribEqual( int nCdfId, 
-                                const char ** papszAttribNames, 
-                                const char ** papszAttribValues,
-                                int nVarId=-1,
-                                const char * pszVarName=NULL );
-
-int NCDFIsVarLongitude(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
-int NCDFIsVarLatitude(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
-
-
 /************************************************************************/
 /* ==================================================================== */
 /*                         netCDFRasterBand                             */
@@ -97,7 +87,6 @@ class netCDFRasterBand : public GDALPamRasterBand
     double      dfOffset;
     int         bSignedData;
     int         status;
-    int         bCheckLongitude;
 
     CPLErr	    CreateBandMetadata( int *paDimIds ); 
     template <class T> void  CheckValidData ( void * pImage, 
@@ -143,7 +132,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                                     int *panBandZLev, 
                                     int *panBandDimPos, 
                                     int *paDimIds,
-                                    int nBand )
+                                    int nBand)
 
 {
     double   dfNoData = 0.0;
@@ -165,7 +154,6 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     this->bSignedData = TRUE; //default signed, except for Byte 
     this->cdfid = poNCDFDS->GetCDFID();
     this->status = NC_NOERR;
-    this->bCheckLongitude = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Take care of all other dimmensions                              */
@@ -419,12 +407,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         CPLDebug( "GDAL_netCDF", "got scale_factor=%.16g, status=%d", dfScale, status );
     }
     SetOffset( dfOff ); 
-    SetScale( dfScale );
-
-    /* should we convert longitude values from ]180,360] to [-180,180] ? */
-    this->bCheckLongitude = 
-        CSLTestBoolean(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180", "YES"))
-        && NCDFIsVarLongitude( cdfid, nZId, NULL );
+    SetScale( dfScale ); 
 }
 
 /* constructor in create mode, assume just 2 dimensions for now */
@@ -455,7 +438,6 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 
     this->status = NC_NOERR;
     this->cdfid = poNCDFDS->GetCDFID();
-    this->bCheckLongitude = FALSE;
 
     bNoDataSet    = FALSE;
     dfNoDataValue = 0.0;
@@ -976,9 +958,9 @@ void  netCDFRasterBand::CheckValidData ( void * pImage, int bCheckIsNan )
     /* check if needed or requested */
     if (  (adfValidRange[0] != dfNoDataValue) || 
           (adfValidRange[1] != dfNoDataValue) ||
-          bCheckIsNan || bCheckLongitude ) {
+          bCheckIsNan ) {
 
-        for( i=0; i<nBlockXSize; i++ ) {
+        for( i=0; i<nBlockXSize; i++ ) {         
             /* check for nodata and nan */
             if ( CPLIsEqual( (double) ((T *)pImage)[i], dfNoDataValue ) )
                 continue;
@@ -993,14 +975,11 @@ void  netCDFRasterBand::CheckValidData ( void * pImage, int bCheckIsNan )
                  ( ( adfValidRange[1] != dfNoDataValue ) && 
                    ( ((T *)pImage)[i] > (T)adfValidRange[1] ) ) ) {
                 ( (T *)pImage )[i] = (T)dfNoDataValue;
-            } 
-            /* convert ]180,360] longitude values to [-180,180] */
-            else if ( bCheckLongitude && ((T *)pImage )[i] > 180
-                      && ((T *)pImage )[i] <= 360 ) {
-                ((T *)pImage )[i] -= 360;
-            }  
-        }   
+            }
+        }
+        
     }
+
 }
 
 /************************************************************************/
@@ -2307,19 +2286,7 @@ void netCDFDataset::SetProjectionFromVar( int var )
         CPLDebug( "GDAL_netCDF", "set bBottomUp = %d from Y axis", poDS->bBottomUp );
 
 /* -------------------------------------------------------------------- */
-/*      convert ]180,360] longitude values to [-180,180]                */
-/* -------------------------------------------------------------------- */
-
-        if ( NCDFIsVarLongitude( cdfid, nVarDimXID, NULL ) &&
-             CSLTestBoolean(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180", "YES")) ) {
-            for ( size_t i=0; i<xdim ; i++ ) {
-                if ( pdfXCoord[i] > 180 && pdfXCoord[i] <= 360 ) 
-                    pdfXCoord[i] -= 360;
-            }
-        }
-        
-/* -------------------------------------------------------------------- */
-/*      Is pixel spacing uniform accross the map?                       */
+/*      Is pixel spacing is uniform accross the map?                    */
 /* -------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------- */
@@ -2354,7 +2321,7 @@ void netCDFDataset::SetProjectionFromVar( int var )
 
 		    
 /* -------------------------------------------------------------------- */
-/*   For Latitude we allow an error of 0.1 degrees for gaussian         */
+/*   For Latitude  we allow an error of 0.1 degrees for gaussian        */
 /*   gridding                                                           */
 /* -------------------------------------------------------------------- */
 
@@ -2370,7 +2337,7 @@ void netCDFDataset::SetProjectionFromVar( int var )
 
                 }
 /* -------------------------------------------------------------------- */
-/*      We have gridded data so we can set the Gereferencing info.      */
+/*      We have gridded data s we can set the Gereferencing info.       */
 /* -------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------- */
@@ -4241,6 +4208,23 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID ) {
 
 }
 
+/*
+Driver options:
+
+FORMAT=NC/NC2/NC4/NC4C (COMPRESS=DEFLATE sets FORMAT=NC4C)
+COMPRESS=NONE/DEFLATE (default: NONE)
+ZLEVEL=[1-9] (default: 1)
+WRITE_BOTTOMUP=YES/NO (default: YES)
+WRITE_GDAL_TAGS=YES/NO (default: YES)
+WRITE_LONLAT=YES/NO/IF_NEEDED (default: YES for geographic, NO for projected)
+TYPE_LONLAT=float/double (default: double for geographic, float for projected)
+PIXELTYPE=DEFAULT/SIGNEDBYTE (use SIGNEDBYTE to get a signed Byte Band)
+
+Config Options:
+
+GDAL_NETCDF_BOTTOMUP=YES/NO overrides bottom-up value on import
+
+*/
 
 /************************************************************************/
 /*                            CreateLL()                                */
@@ -5486,53 +5470,4 @@ CPLErr NCDFPutAttr( int nCdfId, int nVarId,
     if ( papszValues ) CSLDestroy( papszValues );
 
      return CE_None;
-}
-
-
-int NCDFDoesVarContainAttribVal( int nCdfId,
-                                 const char ** papszAttribNames, 
-                                 const char ** papszAttribValues,
-                                 int nVarId,
-                                 const char * pszVarName )
-{
-    char *pszTemp = NULL;
-    int bFound = FALSE;
-
-    if ( (nVarId == -1) && (pszVarName != NULL) )
-        nc_inq_varid( nCdfId, pszVarName, &nVarId );
-    
-    if ( nVarId == -1 ) return FALSE;
-
-    for( int i=0; !bFound && i<CSLCount((char**)papszAttribNames); i++ ) {
-        if ( NCDFGetAttr( nCdfId, nVarId, papszAttribNames[i], &pszTemp ) 
-             == CE_None ) { 
-            if ( EQUAL( pszTemp, papszAttribValues[i] ) )
-                bFound=TRUE;
-            CPLFree( pszTemp );
-        }
-    }
-    return bFound;
-}
-
-
-/* test that a variable is longitude/latitude, following CF 4.1 and 4.2 */
-int NCDFIsVarLongitude( int nCdfId, int nVarId,
-                        const char * pszVarName )
-{
-    const char* papszAttribNames[] = { "units", "standard_name", "axis", NULL };
-    const char* papszAttribXValues[] = { "degrees_east", "longitude", "X", NULL };
-
-    return  NCDFDoesVarContainAttribVal( nCdfId,
-                                         papszAttribNames, papszAttribXValues,
-                                         nVarId, pszVarName );
-}
-
-int NCDFIsVarLatitude( int nCdfId, int nVarId, const char * pszVarName )
-{
-    const char* papszAttribNames[] = { "units", "standard_name", "axis", NULL };
-    const char* papszAttribXValues[] = { "degrees_north", "latitude", "Y", NULL };
-    
-    return  NCDFDoesVarContainAttribVal( nCdfId,
-                                         papszAttribNames, papszAttribXValues,
-                                         nVarId, pszVarName );
 }
