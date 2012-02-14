@@ -4023,6 +4023,10 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString    osSubdatasetName;
     int          bTreatAsSubdataset;
 
+    char **papszIgnoreVars = NULL;
+    char *pszTemp = NULL;
+    int nIgnoredVars = 0;
+
 /* -------------------------------------------------------------------- */
 /*      Does this appear to be a netcdf file?                           */
 /* -------------------------------------------------------------------- */
@@ -4219,16 +4223,49 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->ReadAttributes( cdfid, NC_GLOBAL );	
 
 /* -------------------------------------------------------------------- */
-/*  Verify if only one variable has 2 dimensions                        */
+/*  Identify variables that we should ignore as Raster Bands.           */
+/*  Variables that are identified in other variable's "coordinate" and  */
+/*  "bounds" attribute should not be treated as Raster Bands.           */
+/*  See CF sections 5.2, 5.6 and 7.1                                    */
 /* -------------------------------------------------------------------- */
     for ( j = 0; j < nvars; j++ ) {
+        char **papszTokens = NULL;
+        if ( NCDFGetAttr( cdfid, j, "coordinates", &pszTemp ) == CE_None ) { 
+            papszTokens = CSLTokenizeString2( pszTemp, " ", 0 );
+            for ( i=0; i<CSLCount(papszTokens); i++ ) {
+                papszIgnoreVars = CSLAddString( papszIgnoreVars, papszTokens[i] );
+            }
+            if ( papszTokens) CSLDestroy( papszTokens );
+            CPLFree( pszTemp );
+        }
+        if ( NCDFGetAttr( cdfid, j, "bounds", &pszTemp ) == CE_None ) { 
+            if ( !EQUAL( pszTemp, "" ) )
+                papszIgnoreVars = CSLAddString( papszIgnoreVars, pszTemp );
+            CPLFree( pszTemp );
+        }
+    }
 
+/* -------------------------------------------------------------------- */
+/*  Filter variables (valid 2D raster bands)                            */
+/* -------------------------------------------------------------------- */
+    for ( j = 0; j < nvars; j++ ) {
         nc_inq_varndims ( cdfid, j, &ndims );
-        if( ndims >= 2 ) {
+        /* should we ignore this variable ? */
+        status = nc_inq_varname( cdfid, j, szTemp );
+        if ( status == NC_NOERR && 
+             ( CSLFindString( papszIgnoreVars, szTemp ) != -1 ) ) {
+            nIgnoredVars++;
+            CPLDebug( "GDAL_netCDF", "variable #%d [%s] was ignored",j, szTemp);
+        }
+        /* only accept 2D vars */
+        else if( ndims >= 2 ) {
             nVarID=j;
             nCount++;
         }
     }
+    
+    if ( papszIgnoreVars )
+        CSLDestroy( papszIgnoreVars );
 
 /* -------------------------------------------------------------------- */
 /*      We have more than one variable with 2 dimensions in the         */
@@ -4251,6 +4288,19 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         char szVarName[NC_MAX_NAME];
         nc_inq_varname( cdfid, nVarID, szVarName);
         osSubdatasetName = szVarName;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We have ignored at least one variable, so we should report them */
+/*      as subdatasets for reference.                                   */
+/* -------------------------------------------------------------------- */
+    if( (nIgnoredVars > 0) && !bTreatAsSubdataset )
+    {
+        CPLDebug( "GDAL_netCDF", 
+                  "As %d variables were ignored, creating subdataset list "
+                  "for reference. Variable #%d [%s] is the main variable", 
+                  nIgnoredVars, nVarID, osSubdatasetName.c_str() );
+        poDS->CreateSubDatasetList();
     }
 
 /* -------------------------------------------------------------------- */
