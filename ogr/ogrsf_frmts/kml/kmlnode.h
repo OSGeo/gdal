@@ -49,6 +49,7 @@ public:
     void print(unsigned int what = 3);
     int classify(KML* poKML, int nRecLevel = 0);
     void eliminateEmpty(KML* poKML);
+    bool hasOnlyEmpty() const;
     
     void setType(Nodetype type);
     Nodetype getType() const;
