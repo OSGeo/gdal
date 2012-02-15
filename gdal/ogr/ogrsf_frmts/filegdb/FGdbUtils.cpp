@@ -567,7 +567,7 @@ std::string FGDBEscapeReservedKeywords(const std::string name)
     std::transform(upperName.begin(), upperName.end(), upperName.begin(), ::toupper);
 
     // From ESRI docs
-    static const char* RESERVED_WORDS[] = {"ADD", "ALTER", "AND", "AS", "ASC", "BETWEEN",
+    static const char* RESERVED_WORDS[] = {FGDB_OID_NAME, "ADD", "ALTER", "AND", "AS", "ASC", "BETWEEN",
                                     "BY", "COLUMN", "CREATE", "DATE", "DELETE", "DESC",
                                     "DROP", "EXISTS", "FOR", "FROM", "IN", "INSERT", "INTO",
                                     "IS", "LIKE", "NOT", "NULL", "OR", "ORDER", "SELECT",
