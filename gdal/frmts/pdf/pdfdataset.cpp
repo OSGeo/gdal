@@ -319,10 +319,6 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 #ifdef USE_POPPLER
 
-        /* poppler global variable */
-        if (globalParams == NULL)
-            globalParams = new GlobalParams();
-
         SplashColor sColor;
         sColor[0] = 255;
         sColor[1] = 255;
@@ -571,6 +567,10 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     /* Set custom error handler for poppler errors */
     setErrorFunction(PDFDatasetErrorFunction);
+
+    /* poppler global variable */
+    if (globalParams == NULL)
+        globalParams = new GlobalParams();
 
     PDFDoc* poDoc = NULL;
     ObjectAutoFree oObj;
