@@ -832,6 +832,12 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
         CPLString osFilter;
 
         swq_join_def *psJoinInfo = psSelectInfo->join_defs + iJoin;
+
+        /* OGRMultiFeatureFetcher assumes that the features are pushed in */
+        /* apoFeatures with increasing secondary_table, so make sure */
+        /* we have taken care of this */
+        CPLAssert(psJoinInfo->secondary_table == iJoin + 1);
+
         OGRLayer *poJoinLayer = papoTableLayers[psJoinInfo->secondary_table];
         
         // if source key is null, we can't do join.
