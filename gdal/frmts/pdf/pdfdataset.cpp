@@ -326,7 +326,11 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         SplashOutputDev *poSplashOut;
         poSplashOut = new SplashOutputDev(splashModeRGB8, 4, gFalse, sColor);
         PDFDoc* poDoc = poGDS->poDoc;
+#ifdef POPPLER_0_20_OR_LATER
+        poSplashOut->startDoc(poDoc);
+#else
         poSplashOut->startDoc(poDoc->getXRef());
+#endif
         double dfDPI = poGDS->dfDPI;
 
         /* EVIL: we modify a private member... */
@@ -517,6 +521,21 @@ int PDFDataset::Identify( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 #ifdef USE_POPPLER
+#ifdef POPPLER_0_20_OR_LATER
+static void PDFDatasetErrorFunction(void* userData, ErrorCategory eErrCatagory, int nPos, char *pszMsg)
+{
+    CPLString osError;
+
+    if (nPos >= 0)
+        osError.Printf("Pos = %d, ", nPos);
+    osError += pszMsg;
+
+    if (strcmp(osError.c_str(), "Incorrect password") == 0)
+        return;
+
+    CPLError(CE_Failure, CPLE_AppDefined, "%s", osError.c_str());
+}
+#else
 static void PDFDatasetErrorFunction(int nPos, char *pszMsg, va_list args)
 {
     CPLString osError;
@@ -530,6 +549,7 @@ static void PDFDatasetErrorFunction(int nPos, char *pszMsg, va_list args)
 
     CPLError(CE_Failure, CPLE_AppDefined, "%s", osError.c_str());
 }
+#endif
 #endif
 
 /************************************************************************/
@@ -566,7 +586,11 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     GooString* poUserPwd = NULL;
 
     /* Set custom error handler for poppler errors */
+#ifdef POPPLER_0_20_OR_LATER
+    setErrorCallback(PDFDatasetErrorFunction, NULL);
+#else
     setErrorFunction(PDFDatasetErrorFunction);
+#endif
 
     /* poppler global variable */
     if (globalParams == NULL)
