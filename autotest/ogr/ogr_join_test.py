@@ -319,6 +319,50 @@ def ogr_join_14():
         return 'fail'
 
 ###############################################################################
+# Test multiple joins with expressions (#4521)
+
+def ogr_join_15():
+
+    ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_join_14')
+    lyr = ds.CreateLayer('first')
+    ogrtest.quick_create_layer_def(lyr, [['id']])
+    ogrtest.quick_create_feature(lyr, [ 'key' ], None)
+
+    lyr = ds.CreateLayer('second')
+    ogrtest.quick_create_layer_def(lyr, [['col1_2'],['id'],['col3_2']])
+    ogrtest.quick_create_feature(lyr, [ 'a2', 'key', 'c2' ], None)
+
+    lyr = ds.CreateLayer('third')
+    ogrtest.quick_create_layer_def(lyr, [['col1_3'],['id'],['col3_3']])
+    ogrtest.quick_create_feature(lyr, [ 'a3', 'key', 'c3' ], None)
+
+    sql_lyr = ds.ExecuteSQL("SELECT concat(col3_2, ''), col3_2 FROM first JOIN second ON first.id = second.id JOIN third ON first.id = third.id")
+    feat = sql_lyr.GetNextFeature()
+    val1 = feat.GetFieldAsString(0)
+    val2 = feat.GetFieldAsString(1)
+    ds.ReleaseResultSet(sql_lyr)
+
+    ds = None
+
+    from osgeo import gdal
+    gdal.Unlink('/vsimem/ogr_join_14/first.csv')
+    gdal.Unlink('/vsimem/ogr_join_14/second.csv')
+    gdal.Unlink('/vsimem/ogr_join_14/third.csv')
+    gdal.Unlink('/vsimem/ogr_join_14')
+
+    if val1 != 'c2':
+        gdaltest.post_reason('fail')
+        print(val1)
+        return 'fail'
+
+    if val2 != 'c2':
+        gdaltest.post_reason('fail')
+        print(val2)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 def ogr_join_cleanup():
     gdaltest.lyr = None
@@ -342,6 +386,7 @@ gdaltest_list = [
     ogr_join_12,
     ogr_join_13,
     ogr_join_14,
+    ogr_join_15,
     ogr_join_cleanup ]
 
 if __name__ == '__main__':
