@@ -161,6 +161,24 @@ CPLErr swq_select::preparse( const char *select_statement )
     column_defs = (swq_col_def *) 
         CPLRealloc( column_defs, sizeof(swq_col_def) * result_columns );
 
+/* -------------------------------------------------------------------- */
+/*      Reorder the joins in the order they appear in the SQL string.   */
+/* -------------------------------------------------------------------- */
+    int i;
+    for(i = 0; i < join_count / 2; i++)
+    {
+        swq_join_def sTmp;
+        memcpy(&sTmp, &join_defs[i], sizeof(swq_join_def));
+        memcpy(&join_defs[i], &join_defs[join_count - 1 - i], sizeof(swq_join_def));
+        memcpy(&join_defs[join_count - 1 - i], &sTmp, sizeof(swq_join_def));
+    }
+
+    /* We make that strong assumption in ogr_gensql */
+    for(i = 0; i < join_count; i++)
+    {
+        CPLAssert(join_defs[i].secondary_table == i + 1);
+    }
+
     return CE_None;
 }
 
@@ -890,7 +908,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                      "Unrecognised secondary field %s in JOIN clause..", 
-                     def->primary_field_name );
+                     def->secondary_field_name );
             return CE_Failure;
         }
         
@@ -899,7 +917,7 @@ CPLErr swq_select::parse( swq_field_list *field_list,
             CPLError( CE_Failure, CPLE_AppDefined, 
                      "Currently the secondary key must come from the secondary table\n"
                      "listed in the JOIN.  %s is not from table %s..",
-                     def->primary_field_name,
+                     def->secondary_field_name,
                      table_defs[def->secondary_table].table_name);
             return CE_Failure;
         }
