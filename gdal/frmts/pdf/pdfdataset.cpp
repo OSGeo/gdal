@@ -64,6 +64,161 @@ public:
     ~ObjectAutoFree() { free(); }
 };
 
+
+/************************************************************************/
+/*                         GDALPDFOutputDev                             */
+/************************************************************************/
+
+class GDALPDFOutputDev : public SplashOutputDev
+{
+    private:
+        int bEnableVector;
+        int bEnableText;
+        int bEnableBitmap;
+
+    public:
+        GDALPDFOutputDev(SplashColorMode colorModeA, int bitmapRowPadA,
+                         GBool reverseVideoA, SplashColorPtr paperColorA,
+                         GBool bitmapTopDownA = gTrue,
+                         GBool allowAntialiasA = gTrue) :
+                SplashOutputDev(colorModeA, bitmapRowPadA,
+                                reverseVideoA, paperColorA,
+                                bitmapTopDownA, allowAntialiasA),
+                bEnableVector(TRUE),
+                bEnableText(TRUE),
+                bEnableBitmap(TRUE) {}
+
+        void SetEnableVector(int bFlag) { bEnableVector = bFlag; }
+        void SetEnableText(int bFlag) { bEnableText = bFlag; }
+        void SetEnableBitmap(int bFlag) { bEnableBitmap = bFlag; }
+
+        virtual void startPage(int pageNum, GfxState *state)
+        {
+            SplashOutputDev::startPage(pageNum, state);
+            SplashBitmap* poBitmap = getBitmap();
+            memset(poBitmap->getDataPtr(), 255, poBitmap->getRowSize() * poBitmap->getHeight());
+        }
+
+        virtual void stroke(GfxState * state)
+        {
+            if (bEnableVector)
+                SplashOutputDev::stroke(state);
+        }
+
+        virtual void fill(GfxState * state)
+        {
+            if (bEnableVector)
+                SplashOutputDev::fill(state);
+        }
+
+        virtual void eoFill(GfxState * state)
+        {
+            if (bEnableVector)
+                SplashOutputDev::eoFill(state);
+        }
+
+        virtual void drawChar(GfxState *state, double x, double y,
+                              double dx, double dy,
+                              double originX, double originY,
+                              CharCode code, int nBytes, Unicode *u, int uLen)
+        {
+            if (bEnableText)
+                SplashOutputDev::drawChar(state, x, y, dx, dy,
+                                          originX, originY,
+                                          code, nBytes, u, uLen);
+        }
+
+        virtual void beginTextObject(GfxState *state)
+        {
+            if (bEnableText)
+                SplashOutputDev::beginTextObject(state);
+        }
+
+        virtual GBool deviceHasTextClip(GfxState *state)
+        {
+            if (bEnableText)
+                return SplashOutputDev::deviceHasTextClip(state);
+            return gFalse;
+        }
+
+        virtual void endTextObject(GfxState *state)
+        {
+            if (bEnableText)
+                SplashOutputDev::endTextObject(state);
+        }
+
+        virtual void drawImageMask(GfxState *state, Object *ref, Stream *str,
+                                   int width, int height, GBool invert,
+                                   GBool interpolate, GBool inlineImg)
+        {
+            if (bEnableBitmap)
+                SplashOutputDev::drawImageMask(state, ref, str,
+                                               width, height, invert,
+                                               interpolate, inlineImg);
+        }
+
+#ifdef POPPLER_0_20_OR_LATER
+        virtual void setSoftMaskFromImageMask(GfxState *state,
+                            Object *ref, Stream *str,
+                            int width, int height, GBool invert,
+                            GBool inlineImg)
+        {
+            if (bEnableBitmap)
+                SplashOutputDev::setSoftMaskFromImageMask(state, ref, str,
+                                               width, height, invert,
+                                               inlineImg);
+        }
+
+        virtual void unsetSoftMaskFromImageMask(GfxState *state)
+        {
+            if (bEnableBitmap)
+                SplashOutputDev::unsetSoftMaskFromImageMask(state);
+        }
+#endif
+
+        virtual void drawImage(GfxState *state, Object *ref, Stream *str,
+                               int width, int height, GfxImageColorMap *colorMap,
+                               GBool interpolate, int *maskColors, GBool inlineImg)
+        {
+            if (bEnableBitmap)
+                SplashOutputDev::drawImage(state, ref, str,
+                                           width, height, colorMap,
+                                           interpolate, maskColors, inlineImg);
+        }
+
+        virtual void drawMaskedImage(GfxState *state, Object *ref, Stream *str,
+                                     int width, int height,
+                                     GfxImageColorMap *colorMap,
+                                     GBool interpolate,
+                                     Stream *maskStr, int maskWidth, int maskHeight,
+                                     GBool maskInvert, GBool maskInterpolate)
+        {
+            if (bEnableBitmap)
+                SplashOutputDev::drawMaskedImage(state, ref, str,
+                                                 width, height, colorMap,
+                                                 interpolate,
+                                                 maskStr, maskWidth, maskHeight,
+                                                 maskInvert, maskInterpolate);
+        }
+
+        virtual void drawSoftMaskedImage(GfxState *state, Object *ref, Stream *str,
+                                         int width, int height,
+                                         GfxImageColorMap *colorMap,
+                                         GBool interpolate,
+                                         Stream *maskStr,
+                                         int maskWidth, int maskHeight,
+                                         GfxImageColorMap *maskColorMap,
+                                         GBool maskInterpolate)
+        {
+            if (bEnableBitmap)
+                SplashOutputDev::drawSoftMaskedImage(state, ref, str,
+                                                     width, height, colorMap,
+                                                     interpolate,
+                                                     maskStr, maskWidth, maskHeight,
+                                                     maskColorMap, maskInterpolate);
+        }
+};
+
 #endif
 
 /************************************************************************/
@@ -313,9 +468,11 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if (poGDS->bTried == FALSE)
     {
         poGDS->bTried = TRUE;
-        poGDS->pabyData = (GByte*)VSIMalloc3(3, nRasterXSize, nRasterYSize);
+        poGDS->pabyData = (GByte*)VSIMalloc3(poGDS->nBands, nRasterXSize, nRasterYSize);
         if (poGDS->pabyData == NULL)
             return CE_Failure;
+
+        const char* pszRenderingOptions = CPLGetConfigOption("GDAL_PDF_RENDERING_OPTIONS", NULL);
 
 #ifdef USE_POPPLER
 
@@ -323,8 +480,36 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         sColor[0] = 255;
         sColor[1] = 255;
         sColor[2] = 255;
-        SplashOutputDev *poSplashOut;
-        poSplashOut = new SplashOutputDev(splashModeRGB8, 4, gFalse, sColor);
+        GDALPDFOutputDev *poSplashOut;
+        poSplashOut = new GDALPDFOutputDev((poGDS->nBands == 3) ? splashModeRGB8 : splashModeXBGR8,
+                                           4, gFalse,
+                                           (poGDS->nBands == 3) ? sColor : NULL);
+
+        if (pszRenderingOptions != NULL)
+        {
+            poSplashOut->SetEnableVector(FALSE);
+            poSplashOut->SetEnableText(FALSE);
+            poSplashOut->SetEnableBitmap(FALSE);
+
+            char** papszTokens = CSLTokenizeString2( pszRenderingOptions, " ,", 0 );
+            for(int i=0;papszTokens[i] != NULL;i++)
+            {
+                if (EQUAL(papszTokens[i], "VECTOR"))
+                    poSplashOut->SetEnableVector(TRUE);
+                else if (EQUAL(papszTokens[i], "TEXT"))
+                    poSplashOut->SetEnableText(TRUE);
+                else if (EQUAL(papszTokens[i], "BITMAP"))
+                    poSplashOut->SetEnableBitmap(TRUE);
+                else
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "Value %s is not a valid value for GDAL_PDF_RENDERING_OPTIONS",
+                             papszTokens[i]);
+                }
+            }
+            CSLDestroy(papszTokens);
+        }
+
         PDFDoc* poDoc = poGDS->poDoc;
 #ifdef POPPLER_0_20_OR_LATER
         poSplashOut->startDoc(poDoc);
@@ -344,7 +529,6 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         OCGs* poOldOCGs = poCatalog->optContent;
         poCatalog->optContent = NULL;
 #endif
-
         poGDS->poDoc->displayPageSlice(poSplashOut,
                                        poGDS->iPage,
                                        dfDPI, dfDPI,
@@ -372,24 +556,50 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             return CE_Failure;
         }
 
-        int nRowSize = poBitmap->getRowSize();
-        GByte* pabyBitmap = poBitmap->getDataPtr();
-        int i, j;
         GByte* pabyDataR = poGDS->pabyData;
         GByte* pabyDataG = poGDS->pabyData + nRasterXSize * nRasterYSize;
         GByte* pabyDataB = poGDS->pabyData + 2 * nRasterXSize * nRasterYSize;
+        GByte* pabyDataA = poGDS->pabyData + 3 * nRasterXSize * nRasterYSize;
+        GByte* pabySrc   = poBitmap->getDataPtr();
+        GByte* pabyAlphaSrc  = (GByte*)poBitmap->getAlphaPtr();
+        int i, j;
         for(j=0;j<nRasterYSize;j++)
         {
             for(i=0;i<nRasterXSize;i++)
             {
-                pabyDataR[j * nRasterXSize + i] = pabyBitmap[j * nRowSize + i * 3];
-                pabyDataG[j * nRasterXSize + i] = pabyBitmap[j * nRowSize + i * 3 + 1];
-                pabyDataB[j * nRasterXSize + i] = pabyBitmap[j * nRowSize + i * 3 + 2];
+                if (poGDS->nBands == 3)
+                {
+                    pabyDataR[i] = pabySrc[i * 3 + 0];
+                    pabyDataG[i] = pabySrc[i * 3 + 1];
+                    pabyDataB[i] = pabySrc[i * 3 + 2];
+                }
+                else
+                {
+                    pabyDataR[i] = pabySrc[i * 4 + 2];
+                    pabyDataG[i] = pabySrc[i * 4 + 1];
+                    pabyDataB[i] = pabySrc[i * 4 + 0];
+                    pabyDataA[i] = pabyAlphaSrc[i];
+                }
             }
+            pabyDataR += nRasterXSize;
+            pabyDataG += nRasterXSize;
+            pabyDataB += nRasterXSize;
+            pabyDataA += nRasterXSize;
+            pabyAlphaSrc += poBitmap->getAlphaRowSize();
+            pabySrc += poBitmap->getRowSize();
         }
         delete poSplashOut;
 
 #else
+        CPLAssert(poGDS->nBands == 3);
+
+        if (pszRenderingOptions != NULL)
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "GDAL_PDF_RENDERING_OPTIONS only supported "
+                     "when PDF driver is compiled against Poppler.");
+        }
+
         memset(poGDS->pabyData, 0, ((size_t)3) * nRasterXSize * nRasterYSize);
 
         CPLString osTmpFilenamePrefix = CPLGenerateTempFilename("pdf");
@@ -1053,8 +1263,25 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     delete poDoc;
 #endif
 
+    int nBands = atoi(CPLGetConfigOption("GDAL_PDF_BANDS", "3"));
+    if (nBands != 3 && nBands != 4)
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Invalid value for GDAL_PDF_BANDS. Using 3 as a fallback");
+        nBands = 3;
+    }
+#ifndef USE_POPPLER
+    if (nBands == 4)
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "GDAL_PDF_BANDS=4 only supported when PDF driver is compiled against Poppler. "
+                 "Using 3 as a fallback");
+        nBands = 3;
+    }
+#endif
+
     int iBand;
-    for(iBand = 1; iBand <= 3; iBand ++)
+    for(iBand = 1; iBand <= nBands; iBand ++)
         poDS->SetBand(iBand, new PDFRasterBand(poDS, iBand));
 
 /* -------------------------------------------------------------------- */
