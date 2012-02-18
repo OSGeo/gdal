@@ -384,6 +384,9 @@ class PDFDataset : public GDALPamDataset
     double       adfCTM[6];
     double       adfGeoTransform[6];
     int          bGeoTransformValid;
+    int          nGCPCount;
+    GDAL_GCP    *pasGCPList;
+
 #ifdef USE_POPPLER
     PDFDoc*      poDoc;
 #endif
@@ -407,6 +410,10 @@ class PDFDataset : public GDALPamDataset
 
     virtual const char* GetProjectionRef();
     virtual CPLErr GetGeoTransform( double * );
+
+    virtual int    GetGCPCount();
+    virtual const char *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs();
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -670,6 +677,8 @@ PDFDataset::PDFDataset()
     adfGeoTransform[4] = 0;
     adfGeoTransform[5] = 1;
     bGeoTransformValid = FALSE;
+    nGCPCount = 0;
+    pasGCPList = NULL;
     bTried = FALSE;
     pabyData = NULL;
     iPage = -1;
@@ -705,6 +714,14 @@ PDFDataset::~PDFDataset()
     CPLFree(pabyData);
 
     delete poNeatLine;
+
+    if( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+        pasGCPList = NULL;
+        nGCPCount = 0;
+    }
 
 #ifdef USE_POPPLER
     PDFFreeDoc(poDoc);
@@ -1114,6 +1131,13 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->adfGeoTransform[5] = - poDS->adfCTM[3] / dfPixelPerPt;
             poDS->bGeoTransformValid = TRUE;
             bIsOGCBP = TRUE;
+
+            int i;
+            for(i=0;i<poDS->nGCPCount;i++)
+            {
+                poDS->pasGCPList[i].dfGCPPixel = poDS->pasGCPList[i].dfGCPPixel * dfPixelPerPt;
+                poDS->pasGCPList[i].dfGCPLine = poDS->nRasterYSize - poDS->pasGCPList[i].dfGCPLine * dfPixelPerPt;
+            }
         }
     }
     else if ( (poVP = poPageDict->Get("VP")) != NULL )
@@ -1571,20 +1595,51 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary* poLGIDict)
 /* -------------------------------------------------------------------- */
 /*      Extract Registration attribute                                  */
 /* -------------------------------------------------------------------- */
-    if (!bHasCTM)
+    GDALPDFObject* poRegistration;
+    if ((poRegistration = poLGIDict->Get("Registration")) != NULL &&
+        poRegistration->GetType() == PDFObjectType_Array)
     {
-        GDALPDFObject* poRegistration;
-        if ((poRegistration = poLGIDict->Get("Registration")) != NULL)
+        GDALPDFArray* poRegistrationArray = poRegistration->GetArray();
+        int nLength = poRegistrationArray->GetLength();
+        if (nLength > 4 || (!bHasCTM && nLength >= 2) )
         {
-            /* TODO */
-            CPLDebug("PDF", "Registration unhandled for now");
-            return FALSE;
+            nGCPCount = 0;
+            pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nLength);
+
+            for(i=0;i<nLength;i++)
+            {
+                GDALPDFObject* poGCP = poRegistrationArray->Get(i);
+                if ( poGCP != NULL &&
+                    poGCP->GetType() == PDFObjectType_Array &&
+                    poGCP->GetArray()->GetLength() == 4 )
+                {
+                    double dfUserX = Get(poGCP, 0);
+                    double dfUserY = Get(poGCP, 1);
+                    double dfX = Get(poGCP, 2);
+                    double dfY = Get(poGCP, 3);
+                    CPLDebug("PDF", "GCP[%d].userX = %.16g", i, dfUserX);
+                    CPLDebug("PDF", "GCP[%d].userY = %.16g", i, dfUserY);
+                    CPLDebug("PDF", "GCP[%d].x = %.16g", i, dfX);
+                    CPLDebug("PDF", "GCP[%d].y = %.16g", i, dfY);
+
+                    char    szID[32];
+                    sprintf( szID, "%d", nGCPCount+1 );
+                    pasGCPList[nGCPCount].pszId = CPLStrdup( szID );
+                    pasGCPList[nGCPCount].pszInfo = CPLStrdup("");
+                    pasGCPList[nGCPCount].dfGCPPixel = dfUserX;
+                    pasGCPList[nGCPCount].dfGCPLine = dfUserY;
+                    pasGCPList[nGCPCount].dfGCPX = dfX;
+                    pasGCPList[nGCPCount].dfGCPY = dfY;
+                    nGCPCount ++;
+                }
+            }
         }
-        else
-        {
-            CPLDebug("PDF", "Neither CTM nor Registration found");
-            return FALSE;
-        }
+    }
+
+    if (!bHasCTM && nGCPCount == 0)
+    {
+        CPLDebug("PDF", "Neither CTM nor Registration found");
+        return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2471,6 +2526,35 @@ CPLErr PDFDataset::GetGeoTransform( double * padfTransform )
     memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
 
     return( (bGeoTransformValid) ? CE_None : CE_Failure );
+}
+
+/************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int PDFDataset::GetGCPCount()
+{
+    return nGCPCount;
+}
+
+/************************************************************************/
+/*                          GetGCPProjection()                          */
+/************************************************************************/
+
+const char * PDFDataset::GetGCPProjection()
+{
+    if (pszWKT != NULL && nGCPCount != 0)
+        return pszWKT;
+    return "";
+}
+
+/************************************************************************/
+/*                              GetGCPs()                               */
+/************************************************************************/
+
+const GDAL_GCP * PDFDataset::GetGCPs()
+{
+    return pasGCPList;
 }
 
 /************************************************************************/
