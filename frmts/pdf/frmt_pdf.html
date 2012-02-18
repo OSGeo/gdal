@@ -27,9 +27,6 @@ Successfully tested versions are libpodofo 0.8.4 and 0.9.1.
 The driver supports reading georeferencing encoded in either of the 2 current existing ways : according to the OGC
 encoding best practice, or according to the Adobe Supplement to ISO 32000.
 <p>
-The dimensions of the raster can be controlled by specifying the DPI of the rasterization with the
-<i>GDAL_PDF_DPI</i> configuration option. Its default value is 150.
-<p>
 Multipage documents are exposed as subdatasets, one subdataset par page of the document.
 <p>
 The neatline (for OGC best practice) or the bounding box (Adobe style) will be reported as a NEATLINE metadata item,
@@ -38,6 +35,21 @@ so that it can be later used as a cutline for the warping algorithm.
 Starting with GDAL 1.9.0, XMP metadata can be extracted from the file, and will be
 stored as XML raw content in the xml:XMP metadata domain.
 <p>
+
+<h2>Configuration options</h2>
+
+The dimensions of the raster can be controlled by specifying the DPI of the rasterization with the
+<i>GDAL_PDF_DPI</i> configuration option. Its default value is 150.
+<p>
+Starting with GDAL >= 2.0.0 and when GDAL compiled against libpoppler, the following options are also
+available :
+<ul>
+<li><i>GDAL_PDF_RENDERING_OPTIONS</i> : a string with a combination of VECTOR, BITMAP and TEXT separated
+by comma, to select whether vector, bitmap or text features should be rendered. If the option is not
+specified, all features are rendered.</li>
+<li><i>GDAL_PDF_BANDS</i> = 3 or 4 : whether the PDF should be rendered as a RGB (3) or RGBA (4) image.
+Defaults to 3.</li>
+</ul>
 
 <h2>Restrictions</h2>
 
