@@ -76,6 +76,20 @@ class GDALPDFOutputDev : public SplashOutputDev
         int bEnableText;
         int bEnableBitmap;
 
+        void skipBytes(Stream *str,
+                       int width, int height,
+                       int nComps, int nBits)
+        {
+            int nVals = width * nComps;
+            int nLineSize = (nVals * nBits + 7) >> 3;
+            int nBytes = nLineSize * height;
+            for (int i = 0; i < nBytes; i++)
+            {
+                if( str->getChar() == EOF)
+                    break;
+            }
+        }
+
     public:
         GDALPDFOutputDev(SplashColorMode colorModeA, int bitmapRowPadA,
                          GBool reverseVideoA, SplashColorPtr paperColorA,
@@ -155,6 +169,15 @@ class GDALPDFOutputDev : public SplashOutputDev
                 SplashOutputDev::drawImageMask(state, ref, str,
                                                width, height, invert,
                                                interpolate, inlineImg);
+            else
+            {
+                str->reset();
+                if (inlineImg)
+                {
+                    skipBytes(str, width, height, 1, 1);
+                }
+                str->close();
+            }
         }
 
 #ifdef POPPLER_0_20_OR_LATER
@@ -167,6 +190,8 @@ class GDALPDFOutputDev : public SplashOutputDev
                 SplashOutputDev::setSoftMaskFromImageMask(state, ref, str,
                                                width, height, invert,
                                                inlineImg);
+            else
+                str->close();
         }
 
         virtual void unsetSoftMaskFromImageMask(GfxState *state)
@@ -184,6 +209,17 @@ class GDALPDFOutputDev : public SplashOutputDev
                 SplashOutputDev::drawImage(state, ref, str,
                                            width, height, colorMap,
                                            interpolate, maskColors, inlineImg);
+            else
+            {
+                str->reset();
+                if (inlineImg)
+                {
+                    skipBytes(str, width, height,
+                              colorMap->getNumPixelComps(),
+                              colorMap->getBits());
+                }
+                str->close();
+            }
         }
 
         virtual void drawMaskedImage(GfxState *state, Object *ref, Stream *str,
@@ -199,6 +235,8 @@ class GDALPDFOutputDev : public SplashOutputDev
                                                  interpolate,
                                                  maskStr, maskWidth, maskHeight,
                                                  maskInvert, maskInterpolate);
+            else
+                str->close();
         }
 
         virtual void drawSoftMaskedImage(GfxState *state, Object *ref, Stream *str,
@@ -216,6 +254,8 @@ class GDALPDFOutputDev : public SplashOutputDev
                                                      interpolate,
                                                      maskStr, maskWidth, maskHeight,
                                                      maskColorMap, maskInterpolate);
+            else
+                str->close();
         }
 };
 
