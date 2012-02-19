@@ -1,5 +1,5 @@
 
-OBJ	=	pdfdataset.o pdfio.o pdfobject.o
+OBJ	=	pdfdataset.o pdfio.o pdfobject.o pdfcreatecopy.o
 
 include ../../GDALmake.opt
 

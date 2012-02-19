@@ -42,6 +42,7 @@
 #endif
 
 #include "pdfobject.h"
+#include "pdfcreatecopy.h"
 
 /* g++ -fPIC -g -Wall frmts/pdf/pdfdataset.cpp -shared -o gdal_PDF.so -Iport -Igcore -Iogr -L. -lgdal -lpoppler -I/usr/include/poppler */
 
@@ -862,6 +863,9 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     /* poppler global variable */
     if (globalParams == NULL)
         globalParams = new GlobalParams();
+
+    globalParams->setPrintCommands(CSLTestBoolean(
+        CPLGetConfigOption("GDAL_PDF_PRINT_COMMANDS", "FALSE")));
 
     PDFDoc* poDoc = NULL;
     ObjectAutoFree oObj;
@@ -2412,7 +2416,19 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
     CPLDebug("PDF", "GCS.Type = %s", poGCSType->GetName().c_str());
 
 /* -------------------------------------------------------------------- */
-/*      Extract GCS.WKT attribute                                      */
+/*      Extract EPSG attribute                                          */
+/* -------------------------------------------------------------------- */
+    GDALPDFObject* poEPSG;
+    int nEPSGCode = 0;
+    if( (poEPSG = poGCSDict->Get("EPSG")) != NULL &&
+        poEPSG->GetType() == PDFObjectType_Int )
+    {
+        nEPSGCode = poEPSG->GetInt();
+        CPLDebug("PDF", "GCS.EPSG = %d", nEPSGCode);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Extract GCS.WKT attribute                                       */
 /* -------------------------------------------------------------------- */
     GDALPDFObject* poGCSWKT;
     if( (poGCSWKT = poGCSDict->Get("WKT")) == NULL ||
@@ -2424,19 +2440,32 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
     }
 
     CPLDebug("PDF", "GCS.WKT = %s", poGCSWKT->GetString().c_str());
-    CPLFree(pszWKT);
-    pszWKT = CPLStrdup(poGCSWKT->GetString().c_str());
 
-/* -------------------------------------------------------------------- */
-/*      Compute geotransform                                            */
-/* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
-    char* pszWktTemp = pszWKT;
-    if (oSRS.importFromWkt(&pszWktTemp) != OGRERR_NONE)
+    int bSRSOK = FALSE;
+    if (nEPSGCode != 0 &&
+        oSRS.importFromEPSG(nEPSGCode) == OGRERR_NONE)
     {
+        bSRSOK = TRUE;
         CPLFree(pszWKT);
         pszWKT = NULL;
-        return FALSE;
+        oSRS.exportToWkt(&pszWKT);
+    }
+    else
+    {
+        CPLFree(pszWKT);
+        pszWKT = CPLStrdup(poGCSWKT->GetString().c_str());
+    }
+
+    if (!bSRSOK)
+    {
+        char* pszWktTemp = pszWKT;
+        if (oSRS.importFromWkt(&pszWktTemp) != OGRERR_NONE)
+        {
+            CPLFree(pszWKT);
+            pszWKT = NULL;
+            return FALSE;
+        }
     }
 
     /* For http://www.avenza.com/sites/default/files/spatialpdf/US_County_Populations.pdf */
@@ -2459,6 +2488,9 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Compute geotransform                                            */
+/* -------------------------------------------------------------------- */
     OGRSpatialReference* poSRSGeog = oSRS.CloneGeogCS();
 
     OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation( poSRSGeog, &oSRS);
@@ -2619,13 +2651,30 @@ void GDALRegister_PDF()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "frmt_pdf.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pdf" );
-
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                                   "Byte" );
 #ifdef USE_POPPLER
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 #endif
 
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+"<CreationOptionList>\n"
+"   <Option name='COMPRESS' type='string-select' default='DEFLATE'>\n"
+"     <Value>NONE</Value>\n"
+"     <Value>DEFLATE</Value>\n"
+"     <Value>JPEG</Value>\n"
+"     <Value>JPEG2000</Value>\n"
+"   </Option>\n"
+"   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100' default='75'/>\n"
+"   <Option name='JPEG2000_DRIVER' type='string'/>\n"
+"   <Option name='TILED' type='boolean' description='Switch to tiled format'/>\n"
+"   <Option name='BLOCKXSIZE' type='int' description='Block Width'/>\n"
+"   <Option name='BLOCKYSIZE' type='int' description='Block Height'/>\n"
+"</CreationOptionList>\n" );
+
         poDriver->pfnOpen = PDFDataset::Open;
         poDriver->pfnIdentify = PDFDataset::Identify;
+        poDriver->pfnCreateCopy = GDALPDFCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
