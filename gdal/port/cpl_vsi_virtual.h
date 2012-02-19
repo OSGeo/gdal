@@ -188,5 +188,6 @@ public:
 
 VSIVirtualHandle* VSICreateBufferedReaderHandle(VSIVirtualHandle* poBaseHandle);
 VSIVirtualHandle* VSICreateCachedFile( VSIVirtualHandle* poBaseHandle );
+VSIVirtualHandle* VSICreateGZipWritable( VSIVirtualHandle* poBaseHandle, int bRegularZLibIn, int bAutoCloseBaseHandle );
 
 #endif /* ndef CPL_VSI_VIRTUAL_H_INCLUDED */
