@@ -1,5 +1,5 @@
 
-OBJ	=	pdfdataset.obj pdfio.obj pdfobject.obj
+OBJ	=	pdfdataset.obj pdfio.obj pdfobject.obj pdfcreatecopy.obj
 
 GDAL_ROOT	=	..\..
 

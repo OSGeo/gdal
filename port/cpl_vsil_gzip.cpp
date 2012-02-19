@@ -974,10 +974,12 @@ class VSIGZipWriteHandle : public VSIVirtualHandle
     bool               bCompressActive;
     vsi_l_offset       nCurOffset;
     GUInt32            nCRC;
+    int                bRegularZLib;
+    int                bAutoCloseBaseHandle;
 
   public:
 
-    VSIGZipWriteHandle(VSIVirtualHandle* poBaseHandle);
+    VSIGZipWriteHandle(VSIVirtualHandle* poBaseHandle, int bRegularZLib, int bAutoCloseBaseHandleIn);
 
     ~VSIGZipWriteHandle();
 
@@ -994,12 +996,16 @@ class VSIGZipWriteHandle : public VSIVirtualHandle
 /*                         VSIGZipWriteHandle()                         */
 /************************************************************************/
 
-VSIGZipWriteHandle::VSIGZipWriteHandle( VSIVirtualHandle *poBaseHandle )
+VSIGZipWriteHandle::VSIGZipWriteHandle( VSIVirtualHandle *poBaseHandle,
+                                        int bRegularZLibIn,
+                                        int bAutoCloseBaseHandleIn )
 
 {
     nCurOffset = 0;
 
     this->poBaseHandle = poBaseHandle;
+    bRegularZLib = bRegularZLibIn;
+    bAutoCloseBaseHandle = bAutoCloseBaseHandleIn;
 
     nCRC = crc32(0L, Z_NULL, 0);
     sStream.zalloc = (alloc_func)0;
@@ -1015,22 +1021,36 @@ VSIGZipWriteHandle::VSIGZipWriteHandle( VSIVirtualHandle *poBaseHandle )
     pabyOutBuf = (Byte *) CPLMalloc( Z_BUFSIZE );
 
     if( deflateInit2( &sStream, Z_DEFAULT_COMPRESSION,
-                      Z_DEFLATED, -MAX_WBITS, 8,
+                      Z_DEFLATED, (bRegularZLib) ? MAX_WBITS : -MAX_WBITS, 8,
                       Z_DEFAULT_STRATEGY ) != Z_OK )
         bCompressActive = false;
     else
     {
-        char header[11];
+        if (!bRegularZLib)
+        {
+            char header[11];
 
-        /* Write a very simple .gz header:
-         */
-        sprintf( header, "%c%c%c%c%c%c%c%c%c%c", gz_magic[0], gz_magic[1],
-                 Z_DEFLATED, 0 /*flags*/, 0,0,0,0 /*time*/, 0 /*xflags*/, 
-                 0x03 );
-        poBaseHandle->Write( header, 1, 10 );
+            /* Write a very simple .gz header:
+            */
+            sprintf( header, "%c%c%c%c%c%c%c%c%c%c", gz_magic[0], gz_magic[1],
+                    Z_DEFLATED, 0 /*flags*/, 0,0,0,0 /*time*/, 0 /*xflags*/,
+                    0x03 );
+            poBaseHandle->Write( header, 1, 10 );
+        }
 
         bCompressActive = true;
     }
+}
+
+/************************************************************************/
+/*                       VSICreateGZipWritable()                        */
+/************************************************************************/
+
+VSIVirtualHandle* VSICreateGZipWritable( VSIVirtualHandle* poBaseHandle,
+                                         int bRegularZLibIn,
+                                         int bAutoCloseBaseHandle )
+{
+    return new VSIGZipWriteHandle( poBaseHandle, bRegularZLibIn, bAutoCloseBaseHandle );
 }
 
 /************************************************************************/
@@ -1068,15 +1088,22 @@ int VSIGZipWriteHandle::Close()
 
         deflateEnd( &sStream );
 
-        GUInt32 anTrailer[2];
+        if( !bRegularZLib )
+        {
+            GUInt32 anTrailer[2];
 
-        anTrailer[0] = CPL_LSBWORD32( nCRC );
-        anTrailer[1] = CPL_LSBWORD32( (GUInt32) nCurOffset );
+            anTrailer[0] = CPL_LSBWORD32( nCRC );
+            anTrailer[1] = CPL_LSBWORD32( (GUInt32) nCurOffset );
 
-        poBaseHandle->Write( anTrailer, 1, 8 );
-        poBaseHandle->Close();
+            poBaseHandle->Write( anTrailer, 1, 8 );
+        }
 
-        delete poBaseHandle;
+        if( bAutoCloseBaseHandle )
+        {
+            poBaseHandle->Close();
+
+            delete poBaseHandle;
+        }
 
         bCompressActive = false;
     }
@@ -1302,7 +1329,7 @@ VSIVirtualHandle* VSIGZipFilesystemHandler::Open( const char *pszFilename,
             return NULL;
 
         else
-            return new VSIGZipWriteHandle( poVirtualHandle );
+            return new VSIGZipWriteHandle( poVirtualHandle, strchr(pszAccess, 'z') != NULL, TRUE );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2027,6 +2054,11 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite( const char *pszFilename
         }
 
         poZIPHandle->StopCurrentFile();
+
+        /* Re-add path separator when creating directories */
+        char chLastChar = pszFilename[strlen(pszFilename) - 1];
+        if (chLastChar == '/' || chLastChar == '\\')
+            osZipInFileName += chLastChar;
 
         if (CPLCreateFileInZip(poZIPHandle->GetHandle(),
                                osZipInFileName, NULL) != CE_None)
