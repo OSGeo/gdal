@@ -55,6 +55,31 @@ CPL_C_END
 #ifdef USE_POPPLER
 
 /************************************************************************/
+/*                       GDALPDFPopplerGetUTF8()                        */
+/************************************************************************/
+
+static CPLString GDALPDFPopplerGetUTF8(GooString* poStr)
+{
+    if (!poStr->hasUnicodeMarker())
+        return poStr->getCString();
+
+    GByte* pabySrc = ((GByte*)poStr->getCString()) + 2;
+    int nLen = (poStr->getLength() - 2) / 2;
+    wchar_t *pwszSource = new wchar_t[nLen + 1];
+    for(int i=0; i<nLen; i++)
+    {
+        pwszSource[i] = (pabySrc[2 * i] << 8) + pabySrc[2 * i + 1];
+    }
+    pwszSource[nLen] = 0;
+
+    char* pszUTF8 = CPLRecodeFromWChar( pwszSource, CPL_ENC_UCS2, CPL_ENC_UTF8 );
+    delete[] pwszSource;
+    CPLString osStrUTF8(pszUTF8);
+    CPLFree(pszUTF8);
+    return osStrUTF8;
+}
+
+/************************************************************************/
 /*                          ObjectAutoFree                              */
 /************************************************************************/
 
@@ -1296,27 +1321,27 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         poInfoDict->lookup((char*)"Title", &oTitle);
         if (oCreator.getType() == objString)
         {
-            poDS->SetMetadataItem("CREATOR", oCreator.getString()->getCString());
+            poDS->SetMetadataItem("CREATOR", GDALPDFPopplerGetUTF8(oCreator.getString()).c_str());
         }
         if (oCreationDate.getType() == objString)
         {
-            poDS->SetMetadataItem("CREATION_DATE", oCreationDate.getString()->getCString());
+            poDS->SetMetadataItem("CREATION_DATE", GDALPDFPopplerGetUTF8(oCreationDate.getString()).c_str());
         }
         if (oKeywords.getType() == objString)
         {
-            poDS->SetMetadataItem("KEYWORDS", oKeywords.getString()->getCString());
+            poDS->SetMetadataItem("KEYWORDS", GDALPDFPopplerGetUTF8(oKeywords.getString()).c_str());
         }
         if (oProducer.getType() == objString)
         {
-            poDS->SetMetadataItem("PRODUCER", oProducer.getString()->getCString());
+            poDS->SetMetadataItem("PRODUCER", GDALPDFPopplerGetUTF8(oProducer.getString()).c_str());
         }
         if (oSubject.getType() == objString)
         {
-            poDS->SetMetadataItem("SUBJECT", oSubject.getString()->getCString());
+            poDS->SetMetadataItem("SUBJECT", GDALPDFPopplerGetUTF8(oSubject.getString()).c_str());
         }
         if (oTitle.getType() == objString)
         {
-            poDS->SetMetadataItem("TITLE", oTitle.getString()->getCString());
+            poDS->SetMetadataItem("TITLE", GDALPDFPopplerGetUTF8(oTitle.getString()).c_str());
         }
         oCreator.free();
         oCreationDate.free();
