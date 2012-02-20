@@ -97,7 +97,8 @@ class GDALPDFWriter
                       int nBlockXSize, int nBlockYSize,
                       GDALProgressFunc pfnProgress,
                       void * pProgressData);
-       void SetInfo(char** papszOptions);
+       void SetInfo(GDALDataset* poSrcDS,
+                    char** papszOptions);
        void SetXMP(GDALDataset* poSrcDS,
                    const char* pszXMP);
 };
@@ -788,14 +789,26 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS)
 /*                             SetInfo()                                */
 /************************************************************************/
 
-void GDALPDFWriter::SetInfo(char** papszOptions)
+static const char* GDALPDFGetValueFromDSOrOption(GDALDataset* poSrcDS, char** papszOptions,
+                            const char* pszKey)
 {
-    const char* pszPRODUCER = CSLFetchNameValue(papszOptions, "PRODUCER");
-    const char* pszCREATOR = CSLFetchNameValue(papszOptions, "CREATOR");
-    const char* pszCREATION_DATE = CSLFetchNameValue(papszOptions, "CREATION_DATE");
-    const char* pszSUBJECT = CSLFetchNameValue(papszOptions, "SUBJECT");
-    const char* pszTITLE = CSLFetchNameValue(papszOptions, "TITLE");
-    const char* pszKEYWORDS = CSLFetchNameValue(papszOptions, "KEYWORDS");
+    const char* pszValue = CSLFetchNameValue(papszOptions, pszKey);
+    if (pszValue != NULL && pszValue[0] == '\0')
+        return NULL;
+    if (pszValue != NULL)
+        return pszValue;
+    return poSrcDS->GetMetadataItem(pszKey);
+}
+
+void GDALPDFWriter::SetInfo(GDALDataset* poSrcDS,
+                            char** papszOptions)
+{
+    const char* pszPRODUCER = GDALPDFGetValueFromDSOrOption(poSrcDS, papszOptions, "PRODUCER");
+    const char* pszCREATOR = GDALPDFGetValueFromDSOrOption(poSrcDS, papszOptions, "CREATOR");
+    const char* pszCREATION_DATE = GDALPDFGetValueFromDSOrOption(poSrcDS, papszOptions, "CREATION_DATE");
+    const char* pszSUBJECT = GDALPDFGetValueFromDSOrOption(poSrcDS, papszOptions, "SUBJECT");
+    const char* pszTITLE = GDALPDFGetValueFromDSOrOption(poSrcDS, papszOptions, "TITLE");
+    const char* pszKEYWORDS = GDALPDFGetValueFromDSOrOption(poSrcDS, papszOptions, "KEYWORDS");
 
     if (pszPRODUCER == NULL && pszCREATOR == NULL && pszCREATION_DATE == NULL &&
         pszSUBJECT == NULL && pszTITLE == NULL && pszKEYWORDS == NULL)
@@ -830,6 +843,8 @@ void GDALPDFWriter::SetXMP(GDALDataset* poSrcDS,
                            const char* pszXMP)
 {
     if (pszXMP != NULL && EQUALN(pszXMP, "NO", 2))
+        return;
+    if (pszXMP != NULL && pszXMP[0] == '\0')
         return;
 
     char** papszXMP = poSrcDS->GetMetadata("xml:XMP");
@@ -1584,7 +1599,8 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
 
     GDALPDFWriter oWriter(fp);
 
-    oWriter.SetInfo(papszOptions);
+    if( CSLFetchBoolean(papszOptions, "WRITE_INFO", TRUE) )
+        oWriter.SetInfo(poSrcDS, papszOptions);
     oWriter.SetXMP(poSrcDS, pszXMP);
 
     int bRet = oWriter.WritePage(poSrcDS,
