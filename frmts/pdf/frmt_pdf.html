@@ -7,10 +7,12 @@
 
 <h1>Geospatial PDF</h1>
 
-(Available for GDAL >= 1.8.0)
+(Available for GDAL &gt;= 1.8.0)
 <p>
 GDAL supports reading Geospatial PDF documents, by extracting georeferencing information and rasterizing the data.
 Non-geospatial PDF documents will also be recognized by the driver.
+<p>
+Starting with GDAL &gt;= 2.0.0, PDF documents can be created from other GDAL raster datasets.
 <p>
 GDAL must be compiled with libpoppler support (GPL-licensed), and libpoppler itself must have been configured with
 --enable-xpdf-headers so that the xpdf C++ headers are available. Note: the poppler C++ API isn't
@@ -41,7 +43,7 @@ stored as XML raw content in the xml:XMP metadata domain.
 The dimensions of the raster can be controlled by specifying the DPI of the rasterization with the
 <i>GDAL_PDF_DPI</i> configuration option. Its default value is 150.
 <p>
-Starting with GDAL >= 2.0.0 and when GDAL compiled against libpoppler, the following options are also
+Starting with GDAL &gt;= 2.0.0 and when GDAL compiled against libpoppler, the following options are also
 available :
 <ul>
 <li><i>GDAL_PDF_RENDERING_OPTIONS</i> : a string with a combination of VECTOR, BITMAP and TEXT separated
@@ -65,12 +67,45 @@ extracted from the inset that has the largest area (in term of screen points).
 There is currently no support for selective layer rendering.
 <p>
 
+<h2>Creation Issues (GDAL &gt;= 2.0.0)</h2>
+
+<p>PDF documents can be created from other GDAL raster datasets, that
+have 1 band (graylevel), 3 bands (RGB) or 4 bands (RGBA).</p>
+
+<p>Georeferencing information will be written by default according to
+the ISO32000 specification. It is also possible to write it according to the
+OGC Best Practice conventions (but limited to a few datum and projection types).</p>
+
+<h3>Creation Options</h3>
+
+<ul>
+<li><p><b>COMPRESS=[NONE/DEFLATE/JPEG/JPEG2000]</b>:
+Set the compression to use. DEFLATE is the default.</p></li>
+
+<li><p><b>JPEG_QUALITY=[1-100]</b>:  Set the JPEG quality when using JPEG compression.
+A value of 100 is best quality (least compression), and 1 is worst quality (best compression). The default is 75.</p></li>
+
+<li><p><b>JPEG2000_DRIVER=[JP2KAK/JP2ECW/JP2OpenJPEG/JPEG2000]</b>:
+Set the JPEG2000 driver to use. If not specified, it will be searched in the previous list.</p></li>
+
+<li><p><b>TILED=YES</b>: By default monoblock files are created.  This
+option can be used to force creation of tiled PDF files.</p></li>
+
+<li><p><b>BLOCKXSIZE=n</b>: Sets tile width, defaults to 256.</p></li>
+
+<li><p><b>BLOCKYSIZE=n</b>: Set tile height, defaults to 256.</p></li>
+
+<li><p><b>GEO_ENCODING=[NONE/ISO32000/OGC_BP/BOTH]</b>:
+Set the Geo encoding method to use. ISO32000 is the default.</p></li>
+</ul>
+
 <h2>See also</h2>
 
 <ul>
-<li><a href="http://portal.opengeospatial.org/files/?artifact_id=33332">OGC GeoPDF Encoding Best Practice Version 2.2</a></li>
+<li><a href="http://portal.opengeospatial.org/files/?artifact_id=40537">OGC GeoPDF Encoding Best Practice Version 2.2 (08-139r3)</a></li>
 <li><a href="http://www.adobe.com/devnet/acrobat/pdfs/adobe_supplement_iso32000.pdf">Adobe Supplement to ISO 32000</a></li>
 <li><a href="http://poppler.freedesktop.org/">Poppler homepage</a></li>
+<li><a href="http://podofo.sourceforge.net/">PoDoFo homepage</a></li>
 <li><a href="http://acrobatusers.com/gallery/geospatial">A few Geospatial PDF samples</a></li>
 <li><a href="http://www.agc.army.mil/geopdf_gallery.html">Another set of Geospatial PDF samples</a></li>
 </ul>

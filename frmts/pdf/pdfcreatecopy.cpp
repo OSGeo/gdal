@@ -33,6 +33,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "ogr_srs_api.h"
+#include "ogr_spatialref.h"
 #include <vector>
 
 CPL_CVSID("$Id$");
@@ -44,6 +45,9 @@ typedef enum
     COMPRESS_JPEG,
     COMPRESS_JPEG2000
 } PDFCompressMethod;
+
+#define PIXEL_TO_GEO_X(x,y) adfGeoTransform[0] + x * adfGeoTransform[1] + y * adfGeoTransform[2]
+#define PIXEL_TO_GEO_Y(x,y) adfGeoTransform[3] + x * adfGeoTransform[4] + y * adfGeoTransform[5]
 
 /************************************************************************/
 /*                          GDALPDFWriter                               */
@@ -64,9 +68,8 @@ class GDALPDFWriter
     void    EndObj();
     void    WriteXRefTableAndTrailer();
     void    WritePages();
-    int     WriteSRS(int nWidth, int nHeight,
-                     const char* pszWKT,
-                     double adfGeoTransform[6]);
+    int     WriteSRS_ISO32000(GDALDataset* poSrcDS);
+    int     WriteSRS_OGC_BP(GDALDataset* poSrcDS);
     int     WriteBlock( GDALDataset* poSrcDS,
                         int nXOff, int nYOff, int nReqXSize, int nReqYSize,
                         PDFCompressMethod eCompressMethod,
@@ -86,6 +89,7 @@ class GDALPDFWriter
 
        int  AllocNewObject();
        int  WritePage(GDALDataset* poSrcDS,
+                      const char* pszGEO_ENCODING,
                       PDFCompressMethod eCompressMethod,
                       int nJPEGQuality,
                       const char* pszJPEG2000_DRIVER,
@@ -210,13 +214,19 @@ void GDALPDFWriter::EndObj()
 }
 
 /************************************************************************/
-/*                              WriteSRS()                              */
+/*                         WriteSRS_ISO32000()                          */
 /************************************************************************/
 
-int  GDALPDFWriter::WriteSRS(int nWidth, int nHeight,
-                             const char* pszWKT,
-                             double adfGeoTransform[6])
+int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS)
 {
+    int  nWidth = poSrcDS->GetRasterXSize();
+    int  nHeight = poSrcDS->GetRasterYSize();
+    const char* pszWKT = poSrcDS->GetProjectionRef();
+    double adfGeoTransform[6];
+
+    if( poSrcDS->GetGeoTransform(adfGeoTransform) != CE_None )
+        return 0;
+
     if( pszWKT == NULL || EQUAL(pszWKT, "") )
         return 0;
 
@@ -238,9 +248,6 @@ int  GDALPDFWriter::WriteSRS(int nWidth, int nHeight,
     }
 
     double adfGPTS[8];
-
-    #define PIXEL_TO_GEO_X(x,y) adfGeoTransform[0] + x * adfGeoTransform[1] + y * adfGeoTransform[2]
-    #define PIXEL_TO_GEO_Y(x,y) adfGeoTransform[3] + x * adfGeoTransform[4] + y * adfGeoTransform[5]
 
     int bSuccess = TRUE;
 
@@ -317,7 +324,7 @@ int  GDALPDFWriter::WriteSRS(int nWidth, int nHeight,
                 "  /Type /Measure\n"
                 "  /Subtype /GEO\n"
                 "  /Bounds [0 1 0 0 1 0 1 1 ]\n"
-                "  /GPTS [%.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f]\n"
+                "  /GPTS [%.16g %.16g %.16g %.16g %.16g %.16g %.16g %.16g]\n"
                 "  /LPTS [0 1 0 0 1 0 1 1 ]\n"
                 "  /GCS %d 0 R\n"
                 ">>\n",
@@ -348,6 +355,432 @@ int  GDALPDFWriter::WriteSRS(int nWidth, int nHeight,
 }
 
 /************************************************************************/
+/*                         GDALPDFGeoCoordToNL()                        */
+/************************************************************************/
+
+static int GDALPDFGeoCoordToNL(double adfGeoTransform[6], int nHeight,
+                               double dfPixelPerPt,
+                               double X, double Y,
+                               double* padfNLX, double* padfNLY)
+{
+    double adfGeoTransformInv[6];
+    GDALInvGeoTransform(adfGeoTransform, adfGeoTransformInv);
+    double x = adfGeoTransformInv[0] + X * adfGeoTransformInv[1] + Y * adfGeoTransformInv[2];
+    double y = adfGeoTransformInv[3] + X * adfGeoTransformInv[4] + Y * adfGeoTransformInv[5];
+    *padfNLX = x / dfPixelPerPt;
+    *padfNLY = nHeight - y / dfPixelPerPt;
+    return TRUE;
+}
+/************************************************************************/
+/*                           WriteSRS_OGC_BP()                          */
+/************************************************************************/
+
+int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS)
+{
+    int  nWidth = poSrcDS->GetRasterXSize();
+    int  nHeight = poSrcDS->GetRasterYSize();
+    const char* pszWKT = poSrcDS->GetProjectionRef();
+    double adfGeoTransform[6];
+
+    if( poSrcDS->GetGeoTransform(adfGeoTransform) != CE_None )
+        return 0;
+
+    if( pszWKT == NULL || EQUAL(pszWKT, "") )
+        return 0;
+
+    OGRSpatialReferenceH hSRS = OSRNewSpatialReference(pszWKT);
+    const OGRSpatialReference* poSRS = (const OGRSpatialReference*)hSRS;
+    if( hSRS == NULL )
+        return 0;
+    
+    double adfCTM[6];
+    double dfPixelPerPt = 1;
+    double dfX1 = 0;
+    double dfY2 = nHeight;
+
+    adfCTM[0] = adfGeoTransform[1] * dfPixelPerPt;
+    adfCTM[1] = adfGeoTransform[2] * dfPixelPerPt;
+    adfCTM[2] = - adfGeoTransform[4] * dfPixelPerPt;
+    adfCTM[3] = - adfGeoTransform[5] * dfPixelPerPt;
+    adfCTM[4] = adfGeoTransform[0] - (adfCTM[0] * dfX1 + adfCTM[2] * dfY2);
+    adfCTM[5] = adfGeoTransform[3] - (adfCTM[1] * dfX1 + adfCTM[3] * dfY2);
+    
+    const OGR_SRSNode* poDatumNode = poSRS->GetAttrNode("DATUM");
+    const char* pszDatumDescription = NULL;
+    if (poDatumNode && poDatumNode->GetChildCount() > 0)
+        pszDatumDescription = poDatumNode->GetChild(0)->GetValue();
+
+    const char* pszDatumOGCBP = "(WGE)";
+    CPLString osDatum;
+    if (pszDatumDescription)
+    {
+        double dfSemiMajor = poSRS->GetSemiMajor();
+        double dfInvFlattening = poSRS->GetInvFlattening();
+        int nEPSGDatum = -1;
+        const char *pszAuthority = poSRS->GetAuthorityName( "DATUM" );
+        if( pszAuthority != NULL && EQUAL(pszAuthority,"EPSG") )
+            nEPSGDatum = atoi(poSRS->GetAuthorityCode( "DATUM" ));
+
+        if( EQUAL(pszDatumDescription,SRS_DN_WGS84) || nEPSGDatum == 6326 )
+            pszDatumOGCBP = "(WGE)";
+        else if( EQUAL(pszDatumDescription, SRS_DN_NAD27) || nEPSGDatum == 6267 )
+            pszDatumOGCBP = "(NAS)";
+        else if( EQUAL(pszDatumDescription, SRS_DN_NAD83) || nEPSGDatum == 6269 )
+            pszDatumOGCBP = "(NAR)";
+        else
+        {
+            CPLDebug("PDF",
+                     "Unhandled datum name (%s). Write datum parameters then.",
+                     pszDatumDescription);
+
+            const OGR_SRSNode* poSpheroidNode = poSRS->GetAttrNode("SPHEROID");
+            if (poSpheroidNode && poSpheroidNode->GetChildCount() >= 3)
+            {
+                osDatum.Printf("<<\n"
+                               "         /Description (%s)\n",
+                               pszDatumDescription);
+
+                const char* pszEllipsoidCode = NULL;
+#ifdef disabled_because_terrago_toolbar_does_not_like_it
+                if( ABS(dfSemiMajor-6378249.145) < 0.01
+                    && ABS(dfInvFlattening-293.465) < 0.0001 )
+                {
+                    pszEllipsoidCode = "CD";     /* Clark 1880 */
+                }
+                else if( ABS(dfSemiMajor-6378245.0) < 0.01
+                         && ABS(dfInvFlattening-298.3) < 0.0001 )
+                {
+                    pszEllipsoidCode = "KA";      /* Krassovsky */
+                }
+                else if( ABS(dfSemiMajor-6378388.0) < 0.01
+                         && ABS(dfInvFlattening-297.0) < 0.0001 )
+                {
+                    pszEllipsoidCode = "IN";       /* International 1924 */
+                }
+                else if( ABS(dfSemiMajor-6378160.0) < 0.01
+                         && ABS(dfInvFlattening-298.25) < 0.0001 )
+                {
+                    pszEllipsoidCode = "AN";    /* Australian */
+                }
+                else if( ABS(dfSemiMajor-6377397.155) < 0.01
+                         && ABS(dfInvFlattening-299.1528128) < 0.0001 )
+                {
+                    pszEllipsoidCode = "BR";     /* Bessel 1841 */
+                }
+                else if( ABS(dfSemiMajor-6377483.865) < 0.01
+                         && ABS(dfInvFlattening-299.1528128) < 0.0001 )
+                {
+                    pszEllipsoidCode = "BN";   /* Bessel 1841 (Namibia / Schwarzeck)*/
+                }
+#if 0
+                else if( ABS(dfSemiMajor-6378160.0) < 0.01
+                         && ABS(dfInvFlattening-298.247167427) < 0.0001 )
+                {
+                    pszEllipsoidCode = "GRS67";      /* GRS 1967 */
+                }
+#endif
+                else if( ABS(dfSemiMajor-6378137) < 0.01
+                         && ABS(dfInvFlattening-298.257222101) < 0.000001 )
+                {
+                    pszEllipsoidCode = "RF";      /* GRS 1980 */
+                }
+                else if( ABS(dfSemiMajor-6378206.4) < 0.01
+                         && ABS(dfInvFlattening-294.9786982) < 0.0001 )
+                {
+                    pszEllipsoidCode = "CC";     /* Clarke 1866 */
+                }
+                else if( ABS(dfSemiMajor-6377340.189) < 0.01
+                         && ABS(dfInvFlattening-299.3249646) < 0.0001 )
+                {
+                    pszEllipsoidCode = "AM";   /* Modified Airy */
+                }
+                else if( ABS(dfSemiMajor-6377563.396) < 0.01
+                         && ABS(dfInvFlattening-299.3249646) < 0.0001 )
+                {
+                    pszEllipsoidCode = "AA";       /* Airy */
+                }
+                else if( ABS(dfSemiMajor-6378200) < 0.01
+                         && ABS(dfInvFlattening-298.3) < 0.0001 )
+                {
+                    pszEllipsoidCode = "HE";    /* Helmert 1906 */
+                }
+                else if( ABS(dfSemiMajor-6378155) < 0.01
+                         && ABS(dfInvFlattening-298.3) < 0.0001 )
+                {
+                    pszEllipsoidCode = "FA";   /* Modified Fischer 1960 */
+                }
+#if 0
+                else if( ABS(dfSemiMajor-6377298.556) < 0.01
+                         && ABS(dfInvFlattening-300.8017) < 0.0001 )
+                {
+                    pszEllipsoidCode = "evrstSS";    /* Everest (Sabah & Sarawak) */
+                }
+                else if( ABS(dfSemiMajor-6378165.0) < 0.01
+                         && ABS(dfInvFlattening-298.3) < 0.0001 )
+                {
+                    pszEllipsoidCode = "WGS60";      
+                }
+                else if( ABS(dfSemiMajor-6378145.0) < 0.01
+                         && ABS(dfInvFlattening-298.25) < 0.0001 )
+                {
+                    pszEllipsoidCode = "WGS66";      
+                }
+#endif
+                else if( ABS(dfSemiMajor-6378135.0) < 0.01
+                         && ABS(dfInvFlattening-298.26) < 0.0001 )
+                {
+                    pszEllipsoidCode = "WD";      
+                }
+                else if( ABS(dfSemiMajor-6378137.0) < 0.01
+                         && ABS(dfInvFlattening-298.257223563) < 0.000001 )
+                {
+                    pszEllipsoidCode = "WE";
+                }
+#endif
+
+                if( pszEllipsoidCode != NULL )
+                {
+                    osDatum += CPLString().Printf(
+                        "         /Ellipsoid (%s)\n",
+                        pszEllipsoidCode);
+                }
+                else
+                {
+                    const char* pszEllipsoidDescription =
+                        poSpheroidNode->GetChild(0)->GetValue();
+
+                    CPLDebug("PDF",
+                         "Unhandled ellipsoid name (%s). Write ellipsoid parameters then.",
+                         pszEllipsoidDescription);
+
+                    osDatum += CPLString().Printf(
+                                   "         /Ellipsoid <<\n"
+                                   "            /Description (%s)\n"
+                                   "            /SemiMajorAxis (%.16g)\n"
+                                   "            /InvFlattening (%.16g)\n"
+                                   "         >>\n",
+                                   pszEllipsoidDescription,
+                                   dfSemiMajor,
+                                   dfInvFlattening);
+                }
+
+                const OGR_SRSNode *poTOWGS84 = poSRS->GetAttrNode( "TOWGS84" );
+                if( poTOWGS84 != NULL
+                    && poTOWGS84->GetChildCount() >= 3
+                    && (poTOWGS84->GetChildCount() < 7 
+                    || (EQUAL(poTOWGS84->GetChild(3)->GetValue(),"")
+                        && EQUAL(poTOWGS84->GetChild(4)->GetValue(),"")
+                        && EQUAL(poTOWGS84->GetChild(5)->GetValue(),"")
+                        && EQUAL(poTOWGS84->GetChild(6)->GetValue(),""))) )
+                {
+                    osDatum += CPLString().Printf(
+                        "         /ToWGS84 <<\n"
+                        "           /dx (%s)\n"
+                        "           /dy (%s)\n"
+                        "           /dz (%s)\n"
+                        "         >>\n",
+                        poTOWGS84->GetChild(0)->GetValue(),
+                        poTOWGS84->GetChild(1)->GetValue(),
+                        poTOWGS84->GetChild(2)->GetValue());
+                }
+                else if( poTOWGS84 != NULL && poTOWGS84->GetChildCount() >= 7)
+                {
+                    osDatum += CPLString().Printf(
+                        "         /ToWGS84 <<\n"
+                        "           /dx (%s)\n"
+                        "           /dy (%s)\n"
+                        "           /dz (%s)\n"
+                        "           /rx (%s)\n"
+                        "           /ry (%s)\n"
+                        "           /rz (%s)\n"
+                        "           /sf (%s)\n"
+                        "         >>\n",
+                        poTOWGS84->GetChild(0)->GetValue(),
+                        poTOWGS84->GetChild(1)->GetValue(),
+                        poTOWGS84->GetChild(2)->GetValue(),
+                        poTOWGS84->GetChild(3)->GetValue(),
+                        poTOWGS84->GetChild(4)->GetValue(),
+                        poTOWGS84->GetChild(5)->GetValue(),
+                        poTOWGS84->GetChild(6)->GetValue());
+                }
+
+                osDatum += "      >>";
+                pszDatumOGCBP = osDatum.c_str();
+            }
+        }
+    }
+    else
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "No datum name. Defaulting to WGS84.");
+    }
+
+    const OGR_SRSNode* poNode = poSRS->GetRoot();
+    if( poNode != NULL )
+        poNode = poNode->GetChild(0);
+    const char* pszDescription = NULL;
+    if( poNode != NULL )
+        pszDescription = poNode->GetValue();
+
+    const char* pszProjectionOGCBP = "GEOGRAPHIC";
+    const char *pszProjection = OSRGetAttrValue(hSRS, "PROJECTION", 0);
+
+    CPLString osProjParams;
+
+    if( pszProjection == NULL )
+    {
+        if( OSRIsGeographic(hSRS) )
+            pszProjectionOGCBP = "GEOGRAPHIC";
+        else if( OSRIsLocal(hSRS) )
+            pszProjectionOGCBP = "LOCAL CARTESIAN";
+        else
+        {
+            CPLError(CE_Warning, CPLE_NotSupported, "Unsupported SRS type");
+            OSRDestroySpatialReference(hSRS);
+            return 0;
+        }
+    }
+    else if( EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR) )
+    {
+        int bNorth;
+        int nZone = OSRGetUTMZone( hSRS, &bNorth );
+
+        if( nZone != 0 )
+        {
+            pszProjectionOGCBP = "UT";
+            osProjParams += CPLSPrintf("     /Hemisphere (%s)\n", (bNorth) ? "N" : "S");
+            osProjParams += CPLSPrintf("     /Zone %d\n", nZone);
+        }
+        else
+        {
+            double dfCenterLat = poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,90.L);
+            double dfCenterLong = poSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+            double dfScale = poSRS->GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0);
+            double dfFalseEasting = poSRS->GetNormProjParm(SRS_PP_FALSE_EASTING,0.0);
+            double dfFalseNorthing = poSRS->GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0);
+
+            pszProjectionOGCBP = "TC";
+            osProjParams += CPLSPrintf("     /OriginLatitude (%.16g)\n", dfCenterLat);
+            osProjParams += CPLSPrintf("     /CentralMeridian (%.16g)\n", dfCenterLong);
+            osProjParams += CPLSPrintf("     /ScaleFactor (%.16g)\n", dfScale);
+            osProjParams += CPLSPrintf("     /FalseEasting (%.16g)\n", dfFalseEasting);
+            osProjParams += CPLSPrintf("     /FalseNorthing (%.16g)\n", dfFalseNorthing);
+        }
+    }
+    else if( EQUAL(pszProjection,SRS_PT_POLAR_STEREOGRAPHIC) )
+    {
+        double dfCenterLat = poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        double dfCenterLong = poSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        double dfScale = poSRS->GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0);
+        double dfFalseEasting = poSRS->GetNormProjParm(SRS_PP_FALSE_EASTING,0.0);
+        double dfFalseNorthing = poSRS->GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0);
+
+        if( fabs(dfCenterLat) == 90.0 && dfCenterLong == 0.0 &&
+            dfScale == 0.994 && dfFalseEasting == 200000.0 && dfFalseNorthing == 200000.0)
+        {
+            pszProjectionOGCBP = "UP";
+            osProjParams += CPLSPrintf("     /Hemisphere (%s)\n", (dfCenterLat > 0) ? "N" : "S");
+        }
+        else
+        {
+            pszProjectionOGCBP = "PG";
+            osProjParams += CPLSPrintf("     /LatitudeTrueScale (%.16g)\n", dfCenterLat);
+            osProjParams += CPLSPrintf("     /LongitudeDownFromPole (%.16g)\n", dfCenterLong);
+            osProjParams += CPLSPrintf("     /ScaleFactor (%.16g)\n", dfScale);
+            osProjParams += CPLSPrintf("     /FalseEasting (%.16g)\n", dfFalseEasting);
+            osProjParams += CPLSPrintf("     /FalseNorthing (%.16g)\n", dfFalseNorthing);
+        }
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP))
+    {
+        double dfStdP1 = poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
+        double dfStdP2 = poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
+        double dfCenterLat = poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        double dfCenterLong = poSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        double dfFalseEasting = poSRS->GetNormProjParm(SRS_PP_FALSE_EASTING,0.0);
+        double dfFalseNorthing = poSRS->GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0);
+
+        pszProjectionOGCBP = "LE";
+        osProjParams += CPLSPrintf("     /StandardParallelOne (%.16g)\n", dfStdP1);
+        osProjParams += CPLSPrintf("     /StandardParallelTwo (%.16g)\n", dfStdP2);
+        osProjParams += CPLSPrintf("     /OriginLatitude (%.16g)\n", dfCenterLat);
+        osProjParams += CPLSPrintf("     /CentralMeridian (%.16g)\n", dfCenterLong);
+        osProjParams += CPLSPrintf("     /FalseEasting (%.16g)\n", dfFalseEasting);
+        osProjParams += CPLSPrintf("     /FalseNorthing (%.16g)\n", dfFalseNorthing);
+    }
+    else
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Unhandled projection type (%s) for now", pszProjection);
+    }
+
+    double adfNL[8];
+    GDALPDFGeoCoordToNL(adfGeoTransform, nHeight, dfPixelPerPt,
+                        PIXEL_TO_GEO_X(0, 0), PIXEL_TO_GEO_Y(0, 0),
+                        adfNL + 0, adfNL + 1);
+    GDALPDFGeoCoordToNL(adfGeoTransform, nHeight, dfPixelPerPt,
+                        PIXEL_TO_GEO_X(0, nHeight), PIXEL_TO_GEO_Y(0, nHeight),
+                        adfNL + 2, adfNL + 3);
+    GDALPDFGeoCoordToNL(adfGeoTransform, nHeight, dfPixelPerPt,
+                        PIXEL_TO_GEO_X(nWidth, nHeight), PIXEL_TO_GEO_Y(nWidth, nHeight),
+                        adfNL + 4, adfNL + 5);
+    GDALPDFGeoCoordToNL(adfGeoTransform, nHeight, dfPixelPerPt,
+                        PIXEL_TO_GEO_X(nWidth, 0), PIXEL_TO_GEO_Y(nWidth, 0),
+                        adfNL + 6, adfNL + 7);
+
+    int nLGIDictId = AllocNewObject();
+    StartObj(nLGIDictId);
+    VSIFPrintfL(fp,
+                "<< /Type /LGIDict\n"
+                "   /Version (2.1)\n"
+                "   /CTM [ %.16g %.16g %.16g %.16g %.16g %.16g ]\n"
+                "   /Neatline [ %.16g %.16g %.16g %.16g %.16g %.16g %.16g %.16g ]\n",
+                adfCTM[0], adfCTM[1], adfCTM[2], adfCTM[3], adfCTM[4], adfCTM[5],
+                adfNL[0],adfNL[1],adfNL[2],adfNL[3],adfNL[4],adfNL[5],adfNL[6],adfNL[7]);
+    if( pszDescription )
+    {
+        VSIFPrintfL(fp,
+                    "   /Description (%s)\n",
+                    pszDescription);
+    }
+    VSIFPrintfL(fp,
+                "   /Projection <<\n"
+                "     /Type /Projection\n"
+                "     /Datum %s\n"
+                "     /ProjectionType (%s)\n"
+                "%s",
+                pszDatumOGCBP,
+                pszProjectionOGCBP,
+                osProjParams.c_str()
+                );
+
+    if( poSRS->IsProjected() )
+    {
+        char* pszUnitName = NULL;
+        double dfLinearUnits = poSRS->GetLinearUnits(&pszUnitName);
+        if (dfLinearUnits == 1.0)
+            VSIFPrintfL(fp, "     /Units (M)\n");
+        else if (dfLinearUnits == 0.3048)
+            VSIFPrintfL(fp, "     /Units (FT)\n");
+    }
+
+    /* GDAL extension */
+    if( CSLTestBoolean( CPLGetConfigOption("GDAL_PDF_OGC_BP_WRITE_WKT", "TRUE") ) )
+        VSIFPrintfL(fp, "     /WKT (%s) %%This attribute is a GDAL extension\n", pszWKT);
+
+    VSIFPrintfL(fp, "  >>\n");
+
+    VSIFPrintfL(fp, ">>\n");
+
+    EndObj();
+
+    OSRDestroySpatialReference(hSRS);
+    
+    return nLGIDictId;
+}
+
+/************************************************************************/
 /*                             SetInfo()                                */
 /************************************************************************/
 
@@ -367,6 +800,7 @@ void GDALPDFWriter::SetInfo()
 /************************************************************************/
 
 int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
+                             const char* pszGEO_ENCODING,
                              PDFCompressMethod eCompressMethod,
                              int nJPEGQuality,
                              const char* pszJPEG2000_DRIVER,
@@ -377,9 +811,6 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
     int  nWidth = poSrcDS->GetRasterXSize();
     int  nHeight = poSrcDS->GetRasterYSize();
     int  nBands = poSrcDS->GetRasterCount();
-    const char* pszWKT = poSrcDS->GetProjectionRef();
-    double adfGeoTransform[6];
-    poSrcDS->GetGeoTransform(adfGeoTransform);
 
     int nPageId = AllocNewObject();
     asPageId.push_back(nPageId);
@@ -388,8 +819,18 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
     int nContentLengthId = AllocNewObject();
     int nResourcesId = AllocNewObject();
 
-    int nViewportId = WriteSRS(nWidth, nHeight,
-                               pszWKT, adfGeoTransform);
+    int bISO32000 = EQUAL(pszGEO_ENCODING, "ISO32000") ||
+                    EQUAL(pszGEO_ENCODING, "BOTH");
+    int bOGC_BP   = EQUAL(pszGEO_ENCODING, "OGC_BP") ||
+                    EQUAL(pszGEO_ENCODING, "BOTH");
+
+    int nViewportId = 0;
+    if( bISO32000 )
+        nViewportId = WriteSRS_ISO32000(poSrcDS);
+        
+    int nLGIDictId = 0;
+    if( bOGC_BP )
+        nLGIDictId = WriteSRS_OGC_BP(poSrcDS);
 
     StartObj(nPageId);
     VSIFPrintfL(fp,
@@ -416,6 +857,10 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
         VSIFPrintfL(fp,
                     "   /VP [ %d 0 R ]\n",
                     nViewportId);
+    }
+    if (nLGIDictId)
+    {
+        VSIFPrintfL(fp, "   /LGIDict %d 0 R \n", nLGIDictId);
     }
     VSIFPrintfL(fp, ">>\n");
     EndObj();
@@ -802,10 +1247,8 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
             CPLError(CE_Failure, CPLE_NotSupported,
                      "No %s driver found",
                      ( eCompressMethod == COMPRESS_JPEG ) ? "JPEG" : "JPEG2000");
-            CPLFree(pabyMEMDSBuffer);
-            if( hMemDS != NULL )
-                GDALClose(hMemDS);
-            return 0;
+            eErr = CE_Failure;
+            goto end;
         }
 
         GDALDataset* poJPEGDS = NULL;
@@ -817,10 +1260,8 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
         CSLDestroy(papszOptions);
         if( poJPEGDS == NULL )
         {
-            CPLFree(pabyMEMDSBuffer);
-            if( hMemDS != NULL )
-                GDALClose(hMemDS);
-            return 0;
+            eErr = CE_Failure;
+            goto end;
         }
 
         GDALClose(poJPEGDS);
@@ -876,6 +1317,7 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
         fp = fpBack;
     }
 
+end:
     CPLFree(pabyMEMDSBuffer);
     pabyMEMDSBuffer = NULL;
     if( hMemDS != NULL )
@@ -1055,6 +1497,9 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     int nJPEGQuality = GDALPDFGetJPEGQuality(papszOptions);
 
     const char* pszJPEG2000_DRIVER = CSLFetchNameValue(papszOptions, "JPEG2000_DRIVER");
+    
+    const char* pszGEO_ENCODING =
+        CSLFetchNameValueDef(papszOptions, "GEO_ENCODING", "ISO32000");
 
 /* -------------------------------------------------------------------- */
 /*      Create file.                                                    */
@@ -1073,6 +1518,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
 
     oWriter.SetInfo();
     int bRet = oWriter.WritePage(poSrcDS,
+                                 pszGEO_ENCODING,
                                  eCompressMethod,
                                  nJPEGQuality,
                                  pszJPEG2000_DRIVER,
