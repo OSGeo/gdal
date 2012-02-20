@@ -1907,7 +1907,85 @@ def nitf_68():
     ds = None
 
     return 'success'
-    
+
+###############################################################################
+# Test SetGCPs() support
+
+def nitf_69():
+
+    vrt_txt = """<VRTDataset rasterXSize="20" rasterYSize="20">
+    <GCPList Projection='GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'>
+        <GCP Id="" Pixel="0.5" Line="0.5" X="2" Y="49"/>
+        <GCP Id="" Pixel="0.5" Line="19.5" X="2" Y="48"/>
+        <GCP Id="" Pixel="19.5" Line="0.5" X="3" Y="49.5"/>
+        <GCP Id="" Pixel="19.5" Line="19.5" X="3" Y="48"/>
+    </GCPList>
+    <VRTRasterBand dataType="Byte" band="1">
+        <SimpleSource>
+        <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
+        <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+        <SourceBand>1</SourceBand>
+        </SimpleSource>
+    </VRTRasterBand>
+    </VRTDataset>"""
+
+    # Test CreateCopy()
+    vrt_ds = gdal.Open(vrt_txt)
+    ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_69_src.ntf', vrt_ds)
+    ds = None
+    vrt_ds = None
+
+    # Just in case
+    gdal.Unlink('/vsimem/nitf_69_src.ntf.aux.xml')
+
+    # Test Create() and SetGCPs()
+    src_ds = gdal.Open('/vsimem/nitf_69_src.ntf')
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_69_dest.ntf', 20, 20, 1, options = ['ICORDS=G'])
+    ds.SetGCPs(src_ds.GetGCPs(), src_ds.GetGCPProjection())
+    ds.SetGCPs(src_ds.GetGCPs(), src_ds.GetGCPProjection()) # To check we can call it several times without error
+    ds = None
+    src_ds = None
+
+    # Now open again
+    ds = gdal.Open('/vsimem/nitf_69_dest.ntf')
+    got_gcps = ds.GetGCPs()
+    ds = None
+
+    gdal.Unlink('/vsimem/nitf_69_src.ntf')
+    gdal.Unlink('/vsimem/nitf_69_dest.ntf')
+
+    # Check
+
+    # Upper-left
+    if abs(got_gcps[0].GCPPixel - 0.5) > 1e-5 or abs(got_gcps[0].GCPLine - 0.5) > 1e-5 or \
+       abs(got_gcps[0].GCPX - 2) > 1e-5 or abs(got_gcps[0].GCPY - 49) > 1e-5:
+        gdaltest.post_reason('wrong gcp')
+        print(got_gcps[0])
+        return 'fail'
+
+    # Upper-right
+    if abs(got_gcps[1].GCPPixel - 19.5) > 1e-5 or abs(got_gcps[1].GCPLine - 0.5) > 1e-5 or \
+       abs(got_gcps[1].GCPX - 3) > 1e-5 or abs(got_gcps[1].GCPY - 49.5) > 1e-5:
+        gdaltest.post_reason('wrong gcp')
+        print(got_gcps[1])
+        return 'fail'
+
+    # Lower-right
+    if abs(got_gcps[2].GCPPixel - 19.5) > 1e-5 or abs(got_gcps[2].GCPLine - 19.5) > 1e-5 or \
+       abs(got_gcps[2].GCPX - 3) > 1e-5 or abs(got_gcps[2].GCPY - 48) > 1e-5:
+        gdaltest.post_reason('wrong gcp')
+        print(got_gcps[2])
+        return 'fail'
+
+    # Lower-left
+    if abs(got_gcps[3].GCPPixel - 0.5) > 1e-5 or abs(got_gcps[3].GCPLine - 19.5) > 1e-5 or \
+       abs(got_gcps[3].GCPX - 2) > 1e-5 or abs(got_gcps[3].GCPY - 48) > 1e-5:
+        gdaltest.post_reason('wrong gcp')
+        print(got_gcps[3])
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
@@ -2920,6 +2998,7 @@ gdaltest_list = [
     nitf_66,
     nitf_67,
     nitf_68,
+    nitf_69,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
