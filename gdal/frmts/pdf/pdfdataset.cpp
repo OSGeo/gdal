@@ -1163,7 +1163,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     int bIsOGCBP = FALSE;
     if ( (poLGIDict = poPageDict->Get("LGIDict")) != NULL )
     {
-        /* Cf 08-139r2_GeoPDF_Encoding_Best_Practice_Version_2.2.pdf */
+        /* Cf 08-139r3_GeoPDF_Encoding_Best_Practice_Version_2.2.pdf */
         CPLDebug("PDF", "OGC Encoding Best Practice style detected");
         if (poDS->ParseLGIDictObject(poLGIDict))
         {
@@ -1390,9 +1390,11 @@ int PDFDataset::ParseLGIDictObject(GDALPDFObject* poLGIDict)
             }
 
             int bIsLargestArea = FALSE;
-            ParseLGIDictDictFirstPass(poArrayElt->GetDictionary(), &bIsLargestArea);
-            if (bIsLargestArea)
-                iMax = i;
+            if (ParseLGIDictDictFirstPass(poArrayElt->GetDictionary(), &bIsLargestArea))
+            {
+                if (bIsLargestArea || iMax < 0)
+                    iMax = i;
+            }
         }
 
         if (iMax < 0)
@@ -1535,13 +1537,13 @@ int PDFDataset::ParseLGIDictDictFirstPass(GDALPDFDictionary* poLGIDict,
         return FALSE;
     }
 
-    if ( poVersion->GetType() != PDFObjectType_String )
+    if ( poVersion->GetType() == PDFObjectType_String )
     {
         /* OGC best practice is 2.1 */
         CPLDebug("PDF", "LGIDict Version : %s",
                  poVersion->GetString().c_str());
     }
-    else if (poVersion->GetType() != PDFObjectType_Int)
+    else if (poVersion->GetType() == PDFObjectType_Int)
     {
         /* Old TerraGo is 2 */
         CPLDebug("PDF", "LGIDict Version : %d",
@@ -1588,11 +1590,26 @@ int PDFDataset::ParseLGIDictDictFirstPass(GDALPDFDictionary* poLGIDict,
         delete poNeatLine;
         poNeatLine = new OGRPolygon();
         OGRLinearRing* poRing = new OGRLinearRing();
-        for(i=0;i<nLength;i+=2)
+        if (nLength == 4)
         {
-            double dfX = Get(poNeatline, i);
-            double dfY = Get(poNeatline, i + 1);
-            poRing->addPoint(dfX, dfY);
+            /* 2 points only ? They are the bounding box */
+            double dfX1 = Get(poNeatline, 0);
+            double dfY1 = Get(poNeatline, 1);
+            double dfX2 = Get(poNeatline, 2);
+            double dfY2 = Get(poNeatline, 3);
+            poRing->addPoint(dfX1, dfY1);
+            poRing->addPoint(dfX2, dfY1);
+            poRing->addPoint(dfX2, dfY2);
+            poRing->addPoint(dfX1, dfY2);
+        }
+        else
+        {
+            for(i=0;i<nLength;i+=2)
+            {
+                double dfX = Get(poNeatline, i);
+                double dfY = Get(poNeatline, i + 1);
+                poRing->addPoint(dfX, dfY);
+            }
         }
         poNeatLine->addRingDirectly(poRing);
     }
@@ -1607,6 +1624,16 @@ int PDFDataset::ParseLGIDictDictFirstPass(GDALPDFDictionary* poLGIDict,
 int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary* poLGIDict)
 {
     int i;
+
+/* -------------------------------------------------------------------- */
+/*      Extract Description attribute                                   */
+/* -------------------------------------------------------------------- */
+    GDALPDFObject* poDescription;
+    if ( (poDescription = poLGIDict->Get("Description")) != NULL &&
+         poDescription->GetType() == PDFObjectType_String )
+    {
+        CPLDebug("PDF", "Description = %s", poDescription->GetString().c_str());
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Extract CTM attribute                                           */
@@ -1711,6 +1738,21 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
     OGRSpatialReference oSRS;
 
 /* -------------------------------------------------------------------- */
+/*      Extract WKT attribute (GDAL extension)                          */
+/* -------------------------------------------------------------------- */
+    GDALPDFObject* poWKT;
+    if ( (poWKT = poProjDict->Get("WKT")) != NULL &&
+         poWKT->GetType() == PDFObjectType_String &&
+         CSLTestBoolean( CPLGetConfigOption("GDAL_PDF_OGC_BP_READ_WKT", "TRUE") ) )
+    {
+        CPLDebug("PDF", "Found WKT attribute (GDAL extension). Using it");
+        const char* pszWKTRead = poWKT->GetString().c_str();
+        CPLFree(pszWKT);
+        pszWKT = CPLStrdup(pszWKTRead);
+        return TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Extract Type attribute                                          */
 /* -------------------------------------------------------------------- */
     GDALPDFObject* poType;
@@ -1794,13 +1836,120 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
         }
         else if (poDatum->GetType() == PDFObjectType_Dictionary)
         {
-            /* TODO */
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Datum as dictionary unhandled yet. Defaulting to WGS84...");
-            oSRS.SetGeogCS( "unknown" /*const char * pszGeogName*/,
-                                "unknown" /*const char * pszDatumName */,
+            GDALPDFDictionary* poDatumDict = poDatum->GetDictionary();
+
+            GDALPDFObject* poDatumDescription = poDatumDict->Get("Description");
+            const char* pszDatumDescription = "unknown";
+            if (poDatumDescription != NULL &&
+                poDatumDescription->GetType() == PDFObjectType_String)
+                pszDatumDescription  = poDatumDescription->GetString().c_str();
+            CPLDebug("PDF", "Datum.Description = %s", pszDatumDescription);
+                
+            GDALPDFObject* poEllipsoid = poDatumDict->Get("Ellipsoid");
+            if (poEllipsoid == NULL ||
+                !(poEllipsoid->GetType() == PDFObjectType_String ||
+                  poEllipsoid->GetType() == PDFObjectType_Dictionary))
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Cannot find Ellipsoid in Datum. Defaulting to WGS84...");
+                oSRS.SetGeogCS( "unknown",
+                                pszDatumDescription,
                                 "unknown",
                                 6378137,298.257223563);
+            }
+            else if (poEllipsoid->GetType() == PDFObjectType_String)
+            {
+                const char* pszEllipsoid = poEllipsoid->GetString().c_str();
+                CPLDebug("PDF", "Datum.Ellipsoid = %s", pszEllipsoid);
+                if( EQUAL(pszEllipsoid, "WE") )
+                {
+                    oSRS.SetGeogCS( "unknown",
+                                    pszDatumDescription,
+                                    "WGS 84",
+                                    6378137,298.257223563);
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                            "Unhandled (yet) value for Ellipsoid : %s. Defaulting to WGS84...",
+                            pszEllipsoid);
+                    oSRS.SetGeogCS( "unknown",
+                                    pszDatumDescription,
+                                    pszEllipsoid,
+                                    6378137,298.257223563);
+                }
+            }
+            else// if (poEllipsoid->GetType() == PDFObjectType_Dictionary)
+            {
+                GDALPDFDictionary* poEllipsoidDict = poEllipsoid->GetDictionary();
+
+                GDALPDFObject* poEllipsoidDescription = poEllipsoidDict->Get("Description");
+                const char* pszEllipsoidDescription = "unknown";
+                if (poEllipsoidDescription != NULL &&
+                    poEllipsoidDescription->GetType() == PDFObjectType_String)
+                    pszEllipsoidDescription = poEllipsoidDescription->GetString().c_str();
+                CPLDebug("PDF", "Datum.Ellipsoid.Description = %s", pszEllipsoidDescription);
+                    
+                double dfSemiMajor = Get(poEllipsoidDict, "SemiMajorAxis");
+                CPLDebug("PDF", "Datum.Ellipsoid.SemiMajorAxis = %.16g", dfSemiMajor);
+                double dfInvFlattening = -1.0;
+                
+                if( poEllipsoidDict->Get("InvFlattening") )
+                {
+                    dfInvFlattening = Get(poEllipsoidDict, "InvFlattening");
+                    CPLDebug("PDF", "Datum.Ellipsoid.InvFlattening = %.16g", dfInvFlattening);
+                }
+                else if( poEllipsoidDict->Get("SemiMinorAxis") )
+                {
+                    double dfSemiMinor = Get(poEllipsoidDict, "SemiMinorAxis");
+                    CPLDebug("PDF", "Datum.Ellipsoid.SemiMinorAxis = %.16g", dfSemiMinor);
+                    if( ABS(dfSemiMajor/dfSemiMinor) - 1.0 < 0.0000000000001 )
+                        dfInvFlattening = 0.0;
+                    else
+                        dfInvFlattening = -1.0 / (dfSemiMinor/dfSemiMajor - 1.0);
+                }
+                
+                if( dfSemiMajor != 0.0 && dfInvFlattening != -1.0 )
+                {
+                    oSRS.SetGeogCS( "unknown",
+                                    pszDatumDescription,
+                                    pszEllipsoidDescription,
+                                    dfSemiMajor, dfInvFlattening);
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Invalid Ellipsoid object. Defaulting to WGS84...");
+                    oSRS.SetGeogCS( "unknown",
+                                    pszDatumDescription,
+                                    pszEllipsoidDescription,
+                                    6378137,298.257223563);
+                }
+                
+                
+            }
+            
+            GDALPDFObject* poTOWGS84 = poDatumDict->Get("ToWGS84");
+            if( poTOWGS84 != NULL && poTOWGS84->GetType() == PDFObjectType_Dictionary )
+            {
+                GDALPDFDictionary* poTOWGS84Dict = poTOWGS84->GetDictionary();
+                double dx = Get(poTOWGS84Dict, "dx");
+                double dy = Get(poTOWGS84Dict, "dy");
+                double dz = Get(poTOWGS84Dict, "dz");
+                if (poTOWGS84Dict->Get("rx") && poTOWGS84Dict->Get("ry") &&
+                    poTOWGS84Dict->Get("rz") && poTOWGS84Dict->Get("sf"))
+                {
+                    double rx = Get(poTOWGS84Dict, "rx");
+                    double ry = Get(poTOWGS84Dict, "ry");
+                    double rz = Get(poTOWGS84Dict, "rz");
+                    double sf = Get(poTOWGS84Dict, "sf");
+                    oSRS.SetTOWGS84(dx, dy, dz, rx, ry, rz, sf);
+                }
+                else
+                {
+                    oSRS.SetTOWGS84(dx, dy, dz);
+                }
+            }
         }
     }
 
@@ -2140,8 +2289,10 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
         osUnits = poUnits->GetString();
         CPLDebug("PDF", "Projection.Units = %s", osUnits.c_str());
 
-        if (EQUAL(osUnits, "FT"))
-            oSRS.SetLinearUnits( "Foot", 0.3048 );
+        if (EQUAL(osUnits, "M"))
+            oSRS.SetLinearUnits( "Meter", 1.0 );
+        else if (EQUAL(osUnits, "FT"))
+            oSRS.SetLinearUnits( "foot", 0.3048 );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2664,6 +2815,12 @@ void GDALRegister_PDF()
 "     <Value>DEFLATE</Value>\n"
 "     <Value>JPEG</Value>\n"
 "     <Value>JPEG2000</Value>\n"
+"   </Option>\n"
+"   <Option name='GEO_ENCODING' type='string-select' default='ISO32000'>\n"
+"     <Value>NONE</Value>\n"
+"     <Value>ISO32000</Value>\n"
+"     <Value>OGC_BP</Value>\n"
+"     <Value>BOTH</Value>\n"
 "   </Option>\n"
 "   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100' default='75'/>\n"
 "   <Option name='JPEG2000_DRIVER' type='string'/>\n"

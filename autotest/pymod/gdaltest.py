@@ -398,7 +398,8 @@ class GDALTest:
 
     def testCreateCopy(self, check_minmax = 1, check_gt = 0, check_srs = None,
                        vsimem = 0, new_filename = None, strict_in = 0,
-                       skip_preclose_test = 0, delete_copy = 1, gt_epsilon = None ):
+                       skip_preclose_test = 0, delete_copy = 1, gt_epsilon = None,
+                       check_checksum_not_null = None):
 
         if self.testDriver() == 'fail':
             return 'skip'
@@ -437,7 +438,11 @@ class GDALTest:
 
         if self.band > 0 and skip_preclose_test == 0:
             bnd = new_ds.GetRasterBand(self.band)
-            if self.chksum is not None and bnd.Checksum() != self.chksum:
+            if check_checksum_not_null is not None:
+                if bnd.Checksum() == 0:
+                    post_reason('Got null checksum on still-open file.')
+                    return 'fail'
+            elif self.chksum is not None and bnd.Checksum() != self.chksum:
                 post_reason(
                     'Did not get expected checksum on still-open file.\n' \
                     '    Got %d instead of %d.' % (bnd.Checksum(),self.chksum))
@@ -462,7 +467,11 @@ class GDALTest:
 
         if self.band > 0:
             bnd = new_ds.GetRasterBand(self.band)
-            if self.chksum is not None and bnd.Checksum() != self.chksum:
+            if check_checksum_not_null is not None:
+                if bnd.Checksum() == 0:
+                    post_reason('Got null checksum on reopened file.')
+                    return 'fail'
+            elif self.chksum is not None and bnd.Checksum() != self.chksum:
                 post_reason( 'Did not get expected checksum on reopened file.\n'
                              '    Got %d instead of %d.' \
                              % (bnd.Checksum(), self.chksum) )
