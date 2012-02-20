@@ -1280,6 +1280,53 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         o.free();
     }
+
+    /* Read Info object */
+    Object oInfo;
+    poDoc->getDocInfo(&oInfo);
+    if (oInfo.getType() == objDict)
+    {
+        Dict* poInfoDict = oInfo.getDict();
+        Object oCreator, oCreationDate, oKeywords, oProducer, oSubject, oTitle;
+        poInfoDict->lookup((char*)"Creator", &oCreator);
+        poInfoDict->lookup((char*)"CreationDate", &oCreationDate);
+        poInfoDict->lookup((char*)"Keywords", &oKeywords);
+        poInfoDict->lookup((char*)"Producer", &oProducer);
+        poInfoDict->lookup((char*)"Subject", &oSubject);
+        poInfoDict->lookup((char*)"Title", &oTitle);
+        if (oCreator.getType() == objString)
+        {
+            poDS->SetMetadataItem("CREATOR", oCreator.getString()->getCString());
+        }
+        if (oCreationDate.getType() == objString)
+        {
+            poDS->SetMetadataItem("CREATION_DATE", oCreationDate.getString()->getCString());
+        }
+        if (oKeywords.getType() == objString)
+        {
+            poDS->SetMetadataItem("KEYWORDS", oKeywords.getString()->getCString());
+        }
+        if (oProducer.getType() == objString)
+        {
+            poDS->SetMetadataItem("PRODUCER", oProducer.getString()->getCString());
+        }
+        if (oSubject.getType() == objString)
+        {
+            poDS->SetMetadataItem("SUBJECT", oSubject.getString()->getCString());
+        }
+        if (oTitle.getType() == objString)
+        {
+            poDS->SetMetadataItem("TITLE", oTitle.getString()->getCString());
+        }
+        oCreator.free();
+        oCreationDate.free();
+        oKeywords.free();
+        oProducer.free();
+        oSubject.free();
+        oTitle.free();
+    }
+    oInfo.free();
+
 #else
     PoDoFo::TIVecObjects it = poDoc->GetObjects().begin();
     for( ; it != poDoc->GetObjects().end(); ++it )
@@ -1324,8 +1371,50 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             }
         }
     }
-#endif
 
+    /* Read Info object */
+    PoDoFo::PdfInfo* poInfo = poDoc->GetInfo();
+    if (poInfo != NULL)
+    {
+        const std::string& osCreator = poInfo->GetCreator().GetStringUtf8();
+        //const std::string& osCreationDate = poInfo->GetCreationDate().GetStringUtf8();
+        const std::string& osKeywords = poInfo->GetKeywords().GetStringUtf8();
+        const std::string& osProducer = poInfo->GetProducer().GetStringUtf8();
+        const std::string& osSubject = poInfo->GetSubject().GetStringUtf8();
+        const std::string& osTitle = poInfo->GetTitle().GetStringUtf8();
+
+        if( !(osCreator.size() == 0 && osKeywords.size() == 0 &&
+              osSubject.size() == 0 && osTitle.size() == 0 &&
+              osProducer.compare("PoDoFo - http://podofo.sf.net") == 0) )
+        {
+            if( osCreator.size() )
+            {
+                poDS->SetMetadataItem("CREATOR", osCreator.c_str());
+            }
+            /*if( osCreationDate.size() )
+            {
+                poDS->SetMetadataItem("CREATION_DATE", osCreationDate.c_str());
+            }*/
+            if( osKeywords.size() )
+            {
+                poDS->SetMetadataItem("KEYWORDS", osKeywords.c_str());
+            }
+            if( osProducer.size() )
+            {
+                poDS->SetMetadataItem("PRODUCER", osProducer.c_str());
+            }
+            if( osSubject.size() )
+            {
+                poDS->SetMetadataItem("SUBJECT", osSubject.c_str());
+            }
+            if( osTitle.size() )
+            {
+                poDS->SetMetadataItem("TITLE", osTitle.c_str());
+            }
+        }
+    }
+
+#endif
 
 #ifndef USE_POPPLER
     delete poDoc;
@@ -2827,6 +2916,13 @@ void GDALRegister_PDF()
 "   <Option name='TILED' type='boolean' description='Switch to tiled format'/>\n"
 "   <Option name='BLOCKXSIZE' type='int' description='Block Width'/>\n"
 "   <Option name='BLOCKYSIZE' type='int' description='Block Height'/>\n"
+"   <Option name='XMP' type='string'/>\n"
+"   <Option name='PRODUCER' type='string'/>\n"
+"   <Option name='CREATOR' type='string'/>\n"
+"   <Option name='CREATION_DATE' type='string'/>\n"
+"   <Option name='SUBJECT' type='string'/>\n"
+"   <Option name='TITLE' type='string'/>\n"
+"   <Option name='KEYWORDS' type='string'/>\n"
 "</CreationOptionList>\n" );
 
         poDriver->pfnOpen = PDFDataset::Open;
