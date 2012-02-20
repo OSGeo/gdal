@@ -103,6 +103,15 @@ By default, if the source dataset has data in the 'xml:XMP' metadata domain, thi
 data will be copied to the output PDF, unless this option is set to NONE. The XMP
 xml string can also be directly set to this option.</p></li>
 
+<li><p><b>WRITE_INFO=[YES/NO]</b>:
+By default, the PRODUCER, CREATOR, CREATION_DATE, SUBJECT, TITLE and KEYWORDS information
+will be written into the PDF Info block from the corresponding metadata item from the
+source dataset, or if not set, from the corresponding creation option.
+If this option is set to NO, no information will be written.</p></li>
+
+<li><p><b>PRODUCER</b>, <b>CREATOR</b>, <b>CREATION_DATE</b>, <b>SUBJECT</b>,
+    <b>TITLE</b>, <b>KEYWORDS</b> : metadata that can be written into the PDF Info block.</p></li>
+
 </ul>
 
 <h2>See also</h2>

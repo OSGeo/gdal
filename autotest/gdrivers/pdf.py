@@ -427,7 +427,7 @@ def pdf_xmp():
         return 'skip'
 
     src_ds = gdal.Open( 'data/adobe_style_geospatial_with_xmp.pdf')
-    out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_xmp.pdf', src_ds)
+    out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_xmp.pdf', src_ds, options = ['WRITE_INFO=NO'])
     ref_md = src_ds.GetMetadata('xml:XMP')
     got_md = out_ds.GetMetadata('xml:XMP')
     base_md = out_ds.GetMetadata()
@@ -466,11 +466,14 @@ def pdf_info():
 
     src_ds = gdal.Open( 'data/byte.tif')
     out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_info.pdf', src_ds, options = options)
-    md = out_ds.GetMetadata()
+    out_ds2 = gdaltest.pdf_drv.CreateCopy('tmp/pdf_info_2.pdf', out_ds)
+    md = out_ds2.GetMetadata()
+    out_ds2 = None
     out_ds = None
     src_ds = None
 
     gdal.Unlink('tmp/pdf_info.pdf')
+    gdal.Unlink('tmp/pdf_info_2.pdf')
 
     if md['CREATOR'] != 'creator' or \
        md['KEYWORDS'] != 'keywords' or \
