@@ -2001,6 +2001,93 @@ CPLErr NITFDataset::SetGeoTransform( double *padfGeoTransform )
 }
 
 /************************************************************************/
+/*                               SetGCPs()                              */
+/************************************************************************/
+
+CPLErr NITFDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+                              const char *pszGCPProjectionIn )
+{
+    if( nGCPCountIn != 4 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "NITF only supports writing 4 GCPs.");
+        return CE_Failure;
+    }
+    
+    /* Free previous GCPs */
+    GDALDeinitGCPs( nGCPCount, pasGCPList );
+    CPLFree( pasGCPList );
+    
+    /* Duplicate in GCPs */
+    nGCPCount = nGCPCountIn;
+    pasGCPList = GDALDuplicateGCPs(nGCPCount, pasGCPListIn);
+    
+    CPLFree(pszGCPProjection);
+    pszGCPProjection = CPLStrdup(pszGCPProjectionIn);
+
+    int iUL = -1, iUR = -1, iLR = -1, iLL = -1;
+
+#define EPS_GCP 1e-5
+    for(int i = 0; i < 4; i++ )
+    {
+        if (fabs(pasGCPList[i].dfGCPPixel - 0.5) < EPS_GCP &&
+            fabs(pasGCPList[i].dfGCPLine - 0.5) < EPS_GCP)
+            iUL = i;
+
+        else if (fabs(pasGCPList[i].dfGCPPixel - (nRasterXSize - 0.5)) < EPS_GCP &&
+                 fabs(pasGCPList[i].dfGCPLine - 0.5) < EPS_GCP)
+            iUR = i;
+
+        else if (fabs(pasGCPList[i].dfGCPPixel - (nRasterXSize - 0.5)) < EPS_GCP &&
+                 fabs(pasGCPList[i].dfGCPLine - (nRasterYSize - 0.5)) < EPS_GCP )
+            iLR = i;
+
+        else if (fabs(pasGCPList[i].dfGCPPixel - 0.5) < EPS_GCP &&
+                 fabs(pasGCPList[i].dfGCPLine - (nRasterYSize - 0.5)) < EPS_GCP)
+            iLL = i;
+    }
+
+    if (iUL < 0 || iUR < 0 || iLR < 0 || iLL < 0)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "The 4 GCPs image coordinates must be exactly "
+                 "at the *center* of the 4 corners of the image "
+                 "( (%.1f, %.1f), (%.1f %.1f), (%.1f %.1f), (%.1f %.1f) ).",
+                 0.5, 0.5,
+                 nRasterYSize - 0.5, 0.5,
+                 nRasterXSize - 0.5, nRasterYSize - 0.5,
+                 nRasterXSize - 0.5, 0.5);
+        return CE_Failure;
+    }
+
+    double dfIGEOLOULX = pasGCPList[iUL].dfGCPX;
+    double dfIGEOLOULY = pasGCPList[iUL].dfGCPY;
+    double dfIGEOLOURX = pasGCPList[iUR].dfGCPX;
+    double dfIGEOLOURY = pasGCPList[iUR].dfGCPY;
+    double dfIGEOLOLRX = pasGCPList[iLR].dfGCPX;
+    double dfIGEOLOLRY = pasGCPList[iLR].dfGCPY;
+    double dfIGEOLOLLX = pasGCPList[iLL].dfGCPX;
+    double dfIGEOLOLLY = pasGCPList[iLL].dfGCPY;
+
+    /* To recompute the zone */
+    char* pszProjectionBack = pszProjection ? CPLStrdup(pszProjection) : NULL;
+    CPLErr eErr = SetProjection(pszGCPProjection);
+    CPLFree(pszProjection);
+    pszProjection = pszProjectionBack;
+    
+    if (eErr != CE_None)
+        return eErr;
+    
+    if( NITFWriteIGEOLO( psImage, psImage->chICORDS, 
+                         psImage->nZone, 
+                         dfIGEOLOULX, dfIGEOLOULY, dfIGEOLOURX, dfIGEOLOURY, 
+                         dfIGEOLOLRX, dfIGEOLOLRY, dfIGEOLOLLX, dfIGEOLOLLY ) )
+        return CE_None;
+    else
+        return CE_Failure;
+}
+
+/************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
@@ -4022,9 +4109,12 @@ NITFDataset::NITFCreateCopy(
 /* -------------------------------------------------------------------- */
     double adfGeoTransform[6];
     int    bWriteGeoTransform = FALSE;
+    int    bWriteGCPs = FALSE;
     int    bNorth, nZone = 0;
     OGRSpatialReference oSRS, oSRS_WGS84;
     char *pszWKT = (char *) poSrcDS->GetProjectionRef();
+    if( pszWKT == NULL || pszWKT[0] == '\0' )
+        pszWKT = (char *) poSrcDS->GetGCPProjection();
 
     if( pszWKT != NULL && pszWKT[0] != '\0' )
     {
@@ -4149,8 +4239,10 @@ NITFDataset::NITFCreateCopy(
             }
         }
 
-        if( oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0 
-            && poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+        bWriteGeoTransform = ( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None );
+        bWriteGCPs = ( !bWriteGeoTransform && poSrcDS->GetGCPCount() == 4 );
+
+        if( oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0 )
         {
             if (pszICORDS == NULL)
             {
@@ -4174,11 +4266,9 @@ NITFDataset::NITFCreateCopy(
                 papszFullOptions = 
                     CSLSetNameValue( papszFullOptions, "ICORDS", "G" );
             }
-            bWriteGeoTransform = TRUE;
         }
 
-        else if( oSRS.GetUTMZone( &bNorth ) > 0 
-            && poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+        else if( oSRS.GetUTMZone( &bNorth ) > 0 )
         {
             if( bNorth )
                 papszFullOptions = 
@@ -4188,7 +4278,6 @@ NITFDataset::NITFCreateCopy(
                     CSLSetNameValue( papszFullOptions, "ICORDS", "S" );
 
             nZone = oSRS.GetUTMZone( NULL );
-            bWriteGeoTransform = TRUE;
         }
         else
         {
@@ -4444,6 +4533,13 @@ NITFDataset::NITFCreateCopy(
     {
         poDstDS->psImage->nZone = nZone;
         poDstDS->SetGeoTransform( adfGeoTransform );
+    }
+    else if( bWriteGCPs )
+    {
+        poDstDS->psImage->nZone = nZone;
+        poDstDS->SetGCPs( poSrcDS->GetGCPCount(),
+                          poSrcDS->GetGCPs(),
+                          poSrcDS->GetGCPProjection() );
     }
 
     poDstDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
