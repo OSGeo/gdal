@@ -137,6 +137,8 @@ class NITFDataset : public GDALPamDataset
     virtual CPLErr SetProjection( const char * );
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
+    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                            const char *pszGCPProjection );
 
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
