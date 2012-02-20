@@ -63,6 +63,7 @@ class GDALPDFWriter
     int nPageResourceId;
     int nCatalogId;
     int bInWriteObj;
+    int nXMPId;
 
     void    StartObj(int nObjectId);
     void    EndObj();
@@ -96,7 +97,9 @@ class GDALPDFWriter
                       int nBlockXSize, int nBlockYSize,
                       GDALProgressFunc pfnProgress,
                       void * pProgressData);
-       void SetInfo();
+       void SetInfo(char** papszOptions);
+       void SetXMP(GDALDataset* poSrcDS,
+                   const char* pszXMP);
 };
 
 /************************************************************************/
@@ -114,6 +117,7 @@ GDALPDFWriter::GDALPDFWriter(VSILFILE* fpIn) : fp(fpIn)
     nCatalogId = AllocNewObject();
     bInWriteObj = FALSE;
     nInfoId = 0;
+    nXMPId = 0;
 }
 
 /************************************************************************/
@@ -784,14 +788,74 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS)
 /*                             SetInfo()                                */
 /************************************************************************/
 
-void GDALPDFWriter::SetInfo()
+void GDALPDFWriter::SetInfo(char** papszOptions)
 {
+    const char* pszPRODUCER = CSLFetchNameValue(papszOptions, "PRODUCER");
+    const char* pszCREATOR = CSLFetchNameValue(papszOptions, "CREATOR");
+    const char* pszCREATION_DATE = CSLFetchNameValue(papszOptions, "CREATION_DATE");
+    const char* pszSUBJECT = CSLFetchNameValue(papszOptions, "SUBJECT");
+    const char* pszTITLE = CSLFetchNameValue(papszOptions, "TITLE");
+    const char* pszKEYWORDS = CSLFetchNameValue(papszOptions, "KEYWORDS");
+
+    if (pszPRODUCER == NULL && pszCREATOR == NULL && pszCREATION_DATE == NULL &&
+        pszSUBJECT == NULL && pszTITLE == NULL && pszKEYWORDS == NULL)
+        return;
+
     CPLAssert(nInfoId == 0);
     nInfoId = AllocNewObject();
     StartObj(nInfoId);
+    VSIFPrintfL(fp, "<<\n");
+    if (pszPRODUCER != NULL)
+        VSIFPrintfL(fp, "  /Producer (%s)\n", pszPRODUCER);
+    if (pszCREATOR != NULL)
+        VSIFPrintfL(fp, "  /Creator (%s)\n", pszCREATOR);
+    if (pszCREATION_DATE != NULL)
+        VSIFPrintfL(fp, "  /CreationDate (%s)\n", pszCREATION_DATE);
+    if (pszSUBJECT != NULL)
+        VSIFPrintfL(fp, "  /Subject (%s)\n", pszSUBJECT);
+    if (pszTITLE != NULL)
+        VSIFPrintfL(fp, "  /Title (%s)\n", pszTITLE);
+    if (pszKEYWORDS != NULL)
+        VSIFPrintfL(fp, "  /Keywords (%s)\n", pszKEYWORDS);
+    VSIFPrintfL(fp, ">>\n");
+
+    EndObj();
+}
+
+/************************************************************************/
+/*                             SetInfo()                                */
+/************************************************************************/
+
+void GDALPDFWriter::SetXMP(GDALDataset* poSrcDS,
+                           const char* pszXMP)
+{
+    if (pszXMP != NULL && EQUALN(pszXMP, "NO", 2))
+        return;
+
+    char** papszXMP = poSrcDS->GetMetadata("xml:XMP");
+    if (pszXMP == NULL && papszXMP != NULL && papszXMP[0] != NULL)
+        pszXMP = papszXMP[0];
+
+    if (pszXMP == NULL)
+        return;
+
+    CPLXMLNode* psNode = CPLParseXMLString(pszXMP);
+    if (psNode == NULL)
+        return;
+    CPLDestroyXMLNode(psNode);
+
+    CPLAssert(nXMPId == 0);
+    nXMPId = AllocNewObject();
+    StartObj(nXMPId);
     VSIFPrintfL(fp,
-                 "<< /Producer (GDAL)\n"
-                 ">>\n");
+                "<<\n"
+                "/Type /Metadata\n"
+                "/Subtype /XML\n"
+                "/Length %d\n"
+                ">>\n", (int)strlen(pszXMP));
+    VSIFPrintfL(fp, "stream\n");
+    VSIFPrintfL(fp, "%s\n", pszXMP);
+    VSIFPrintfL(fp, "endstream\n");
     EndObj();
 }
 
@@ -1363,9 +1427,11 @@ void GDALPDFWriter::WritePages()
     StartObj(nCatalogId);
     VSIFPrintfL(fp,
                  "<< /Type /Catalog\n"
-                 "   /Pages %d 0 R\n"
-                 ">>\n",
-                 nPageResourceId);
+                 "   /Pages %d 0 R\n",
+                nPageResourceId);
+    if (nXMPId)
+        VSIFPrintfL(fp,"   /Metadata %d 0 R\n", nXMPId);
+    VSIFPrintfL(fp, ">>\n");
     EndObj();
 }
 
@@ -1501,6 +1567,8 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     const char* pszGEO_ENCODING =
         CSLFetchNameValueDef(papszOptions, "GEO_ENCODING", "ISO32000");
 
+    const char* pszXMP = CSLFetchNameValue(papszOptions, "XMP");
+
 /* -------------------------------------------------------------------- */
 /*      Create file.                                                    */
 /* -------------------------------------------------------------------- */
@@ -1516,7 +1584,9 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
 
     GDALPDFWriter oWriter(fp);
 
-    oWriter.SetInfo();
+    oWriter.SetInfo(papszOptions);
+    oWriter.SetXMP(poSrcDS, pszXMP);
+
     int bRet = oWriter.WritePage(poSrcDS,
                                  pszGEO_ENCODING,
                                  eCompressMethod,

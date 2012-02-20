@@ -356,7 +356,10 @@ def pdf_rgba_default_compression():
     cs1 = out_ds.GetRasterBand(1).Checksum()
     cs2 = out_ds.GetRasterBand(2).Checksum()
     cs3 = out_ds.GetRasterBand(3).Checksum()
-    cs4 = out_ds.GetRasterBand(4).Checksum()
+    if out_ds.RasterCount == 4:
+        cs4 = out_ds.GetRasterBand(4).Checksum()
+    else:
+        cs4 = -1
 
     src_cs1 = src_ds.GetRasterBand(1).Checksum()
     src_cs2 = src_ds.GetRasterBand(2).Checksum()
@@ -367,6 +370,9 @@ def pdf_rgba_default_compression():
     gdal.SetConfigOption('GDAL_PDF_DPI', None)
 
     gdal.Unlink('tmp/rgba.pdf')
+
+    if cs4 < 0:
+        return 'skip'
 
     if cs4 == 0:
         gdaltest.post_reason('wrong checksum')
@@ -389,6 +395,9 @@ def pdf_jpeg_compression_rgba():
     return pdf_jpeg_compression('../../gcore/data/stefan_full_rgba.tif')
 
 
+###############################################################################
+# Test tiling
+
 def pdf_tiled():
 
     if gdaltest.pdf_drv is None:
@@ -408,7 +417,71 @@ def pdf_tiled_128():
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = True)
 
     return ret
-    
+
+###############################################################################
+# Test XMP support
+
+def pdf_xmp():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    src_ds = gdal.Open( 'data/adobe_style_geospatial_with_xmp.pdf')
+    out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_xmp.pdf', src_ds)
+    ref_md = src_ds.GetMetadata('xml:XMP')
+    got_md = out_ds.GetMetadata('xml:XMP')
+    base_md = out_ds.GetMetadata()
+    out_ds = None
+    src_ds = None
+
+    gdal.Unlink('tmp/pdf_xmp.pdf')
+
+    if ref_md[0] != got_md[0]:
+        gdaltest.post_reason('fail')
+        print(got_md[0])
+        return 'fail'
+
+    if len(base_md) != 1:
+        gdaltest.post_reason('fail')
+        print(base_md)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test Info
+
+def pdf_info():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    options = [
+        'CREATOR=creator',
+        'KEYWORDS=keywords',
+        'PRODUCER=producer',
+        'SUBJECT=subject',
+        'TITLE=title'
+    ]
+
+    src_ds = gdal.Open( 'data/byte.tif')
+    out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_info.pdf', src_ds, options = options)
+    md = out_ds.GetMetadata()
+    out_ds = None
+    src_ds = None
+
+    gdal.Unlink('tmp/pdf_info.pdf')
+
+    if md['CREATOR'] != 'creator' or \
+       md['KEYWORDS'] != 'keywords' or \
+       md['PRODUCER'] != 'producer' or \
+       md['SUBJECT'] != 'subject' or \
+       md['TITLE'] != 'title':
+        print(md)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     pdf_init,
     pdf_online_1,
@@ -429,7 +502,9 @@ gdaltest_list = [
     pdf_rgba_default_compression,
     pdf_jpeg_compression_rgba,
     pdf_tiled,
-    pdf_tiled_128
+    pdf_tiled_128,
+    pdf_xmp,
+    pdf_info
 ]
 
 if __name__ == '__main__':
