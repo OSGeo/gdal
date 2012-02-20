@@ -97,6 +97,12 @@ option can be used to force creation of tiled PDF files.</p></li>
 
 <li><p><b>GEO_ENCODING=[NONE/ISO32000/OGC_BP/BOTH]</b>:
 Set the Geo encoding method to use. ISO32000 is the default.</p></li>
+
+<li><p><b>XMP=[NONE/xml_xmp_content]</b>:
+By default, if the source dataset has data in the 'xml:XMP' metadata domain, this
+data will be copied to the output PDF, unless this option is set to NONE. The XMP
+xml string can also be directly set to this option.</p></li>
+
 </ul>
 
 <h2>See also</h2>
