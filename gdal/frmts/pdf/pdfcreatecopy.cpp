@@ -74,6 +74,9 @@ class GDALPDFWriter
                         const char* pszJPEG2000_DRIVER,
                         GDALProgressFunc pfnProgress,
                         void * pProgressData );
+    int     WriteMask(GDALDataset* poSrcDS,
+                      int nXOff, int nYOff, int nReqXSize, int nReqYSize,
+                      PDFCompressMethod eCompressMethod);
 
     public:
         GDALPDFWriter(VSILFILE* fpIn);
@@ -373,6 +376,7 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
 {
     int  nWidth = poSrcDS->GetRasterXSize();
     int  nHeight = poSrcDS->GetRasterYSize();
+    int  nBands = poSrcDS->GetRasterCount();
     const char* pszWKT = poSrcDS->GetProjectionRef();
     double adfGeoTransform[6];
     poSrcDS->GetGeoTransform(adfGeoTransform);
@@ -393,16 +397,20 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
                 "   /Parent %d 0 R\n"
                 "   /MediaBox [ 0 0 %d %d ]\n"
                 "   /Contents %d 0 R\n"
-                "   /Group <<\n"
-                "      /Type /Group\n"
-                "      /S /Transparency\n"
-                "      /CS /DeviceRGB\n"
-                "   >>\n"
                 "   /Resources %d 0 R\n",
                 nPageResourceId,
                 nWidth, nHeight,
                 nContentId,
                 nResourcesId);
+    if (nBands == 4)
+    {
+        VSIFPrintfL(fp,
+                    "   /Group <<\n"
+                    "      /Type /Group\n"
+                    "      /S /Transparency\n"
+                    "      /CS /DeviceRGB\n"
+                    "   >>\n");
+    }
     if (nViewportId)
     {
         VSIFPrintfL(fp,
@@ -497,6 +505,133 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
 }
 
 /************************************************************************/
+/*                             WriteMask()                              */
+/************************************************************************/
+
+int GDALPDFWriter::WriteMask(GDALDataset* poSrcDS,
+                             int nXOff, int nYOff, int nReqXSize, int nReqYSize,
+                             PDFCompressMethod eCompressMethod)
+{
+    int nMaskSize = nReqXSize * nReqYSize;
+    GByte* pabyMask = (GByte*)VSIMalloc(nMaskSize);
+    if (pabyMask == NULL)
+        return 0;
+
+    CPLErr eErr;
+    eErr = poSrcDS->GetRasterBand(4)->RasterIO(
+            GF_Read,
+            nXOff, nYOff,
+            nReqXSize, nReqYSize,
+            pabyMask, nReqXSize, nReqYSize, GDT_Byte,
+            0, 0);
+    if (eErr != CE_None)
+    {
+        VSIFree(pabyMask);
+        return 0;
+    }
+
+    int bOnly0or255 = TRUE;
+    int bOnly255 = TRUE;
+    int bOnly0 = TRUE;
+    int i;
+    for(i=0;i<nReqXSize * nReqYSize;i++)
+    {
+        if (pabyMask[i] == 0)
+            bOnly255 = FALSE;
+        else if (pabyMask[i] == 255)
+            bOnly0 = FALSE;
+        else
+        {
+            bOnly0or255 = FALSE;
+            break;
+        }
+    }
+
+    if (bOnly255)
+    {
+        CPLFree(pabyMask);
+        return 0;
+    }
+
+    if (bOnly0or255)
+    {
+        /* Translate to 1 bit */
+        int nReqXSize1 = (nReqXSize + 7) / 8;
+        GByte* pabyMask1 = (GByte*)VSICalloc(nReqXSize1, nReqYSize);
+        if (pabyMask1 == NULL)
+        {
+            CPLFree(pabyMask);
+            return 0;
+        }
+        for(int y=0;y<nReqYSize;y++)
+        {
+            for(int x=0;x<nReqXSize;x++)
+            {
+                if (pabyMask[y * nReqXSize + x])
+                    pabyMask1[y * nReqXSize1 + x / 8] |= 1 << (7 - (x % 8));
+            }
+        }
+        VSIFree(pabyMask);
+        pabyMask = pabyMask1;
+        nMaskSize = nReqXSize1 * nReqYSize;
+    }
+
+    int nMaskId = AllocNewObject();
+    int nMaskLengthId = AllocNewObject();
+
+    StartObj(nMaskId);
+    VSIFPrintfL(fp, "<< /Length %d 0 R\n",
+                nMaskLengthId);
+    VSIFPrintfL(fp,
+                "   /Type /XObject\n");
+    if( eCompressMethod != COMPRESS_NONE )
+    {
+        VSIFPrintfL(fp, "   /Filter /FlateDecode\n");
+    }
+    VSIFPrintfL(fp,
+                "   /Subtype /Image\n"
+                "   /Width %d\n"
+                "   /Height %d\n"
+                "   /ColorSpace /DeviceGray\n"
+                "   /BitsPerComponent %d\n",
+                nReqXSize, nReqYSize,
+                (bOnly0or255) ? 1 : 8);
+    VSIFPrintfL(fp, ">>\n"
+                "stream\n");
+    vsi_l_offset nStreamStart = VSIFTellL(fp);
+
+    VSILFILE* fpGZip = NULL;
+    VSILFILE* fpBack = fp;
+    if( eCompressMethod != COMPRESS_NONE )
+    {
+        fpGZip = (VSILFILE* )VSICreateGZipWritable( (VSIVirtualHandle*) fp, TRUE, FALSE );
+        fp = fpGZip;
+    }
+
+    VSIFWriteL(pabyMask, nMaskSize, 1, fp);
+    CPLFree(pabyMask);
+
+    if (fpGZip)
+        VSIFCloseL(fpGZip);
+
+    fp = fpBack;
+
+    vsi_l_offset nStreamEnd = VSIFTellL(fp);
+    VSIFPrintfL(fp,
+                "\n"
+                "endstream\n");
+    EndObj();
+
+    StartObj(nMaskLengthId);
+    VSIFPrintfL(fp,
+                "   %ld\n",
+                (long)(nStreamEnd - nStreamStart));
+    EndObj();
+
+    return nMaskId;
+}
+
+/************************************************************************/
 /*                             WriteBlock()                             */
 /************************************************************************/
 
@@ -510,21 +645,30 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
 {
     int  nBands = poSrcDS->GetRasterCount();
 
-    if (nBands == 4 && eCompressMethod != COMPRESS_JPEG2000)
-        nBands = 3; /* TODO: alpha handling */
-
     CPLErr eErr = CE_None;
     GDALDataset* poBlockSrcDS = NULL;
     GDALDatasetH hMemDS = NULL;
     GByte* pabyMEMDSBuffer = NULL;
 
+    int nMaskId = 0;
+    if (nBands == 4)
+    {
+        nMaskId = WriteMask(poSrcDS,
+                            nXOff, nYOff, nReqXSize, nReqYSize,
+                            eCompressMethod);
+    }
+
     if( nReqXSize == poSrcDS->GetRasterXSize() &&
-        nReqYSize == poSrcDS->GetRasterYSize() )
+        nReqYSize == poSrcDS->GetRasterYSize() &&
+        nBands != 4)
     {
         poBlockSrcDS = poSrcDS;
     }
     else
     {
+        if (nBands == 4)
+            nBands = 3;
+
         GDALDriverH hMemDriver = GDALGetDriverByName("MEM");
         if( hMemDriver == NULL )
             return 0;
@@ -601,7 +745,10 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
                 "   /BitsPerComponent 8\n",
                 nReqXSize, nReqYSize,
                 (nBands == 1) ? "DeviceGray" : "DeviceRGB");
-
+    if( nMaskId )
+    {
+        VSIFPrintfL(fp, "  /SMask %d 0 R\n", nMaskId);
+    }
     VSIFPrintfL(fp, ">>\n"
                 "stream\n");
 
