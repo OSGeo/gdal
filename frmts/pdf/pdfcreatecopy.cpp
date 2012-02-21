@@ -180,7 +180,7 @@ void GDALPDFWriter::WriteXRefTableAndTrailer()
                 "trailer\n"
                 "<< /Size %d\n"
                 "   /Root %d 0 R\n",
-                (int)asOffsets.size(),
+                (int)asOffsets.size() + 1,
                 nCatalogId);
     if (nInfoId)
         VSIFPrintfL(fp, "   /Info %d 0 R\n", nInfoId);
@@ -899,6 +899,7 @@ void GDALPDFWriter::SetXMP(GDALDataset* poSrcDS,
     CPLAssert(nXMPId == 0);
     nXMPId = AllocNewObject();
     StartObj(nXMPId);
+#if 1
     VSIFPrintfL(fp,
                 "<<\n"
                 "/Type /Metadata\n"
@@ -909,6 +910,41 @@ void GDALPDFWriter::SetXMP(GDALDataset* poSrcDS,
     VSIFPrintfL(fp, "%s\n", pszXMP);
     VSIFPrintfL(fp, "endstream\n");
     EndObj();
+#else
+    int nLengthId = AllocNewObject();
+    VSIFPrintfL(fp,
+                "<<\n"
+                "/Type /Metadata\n"
+                "/Filter /FlateDecode\n"
+                "/Subtype /XML\n"
+                "/Length %d 0 R\n"
+                ">>\n", nLengthId );
+    VSIFPrintfL(fp, "stream\n");
+
+    vsi_l_offset nStreamStart = VSIFTellL(fp);
+
+    VSILFILE* fpBack = fp;
+    VSILFILE* fpGZip = (VSILFILE* )VSICreateGZipWritable( (VSIVirtualHandle*) fp, TRUE, FALSE );
+    fp = fpGZip;
+
+    VSIFWriteL(pszXMP, strlen(pszXMP), 1, fp);
+
+    VSIFCloseL(fpGZip);
+
+    fp = fpBack;
+
+    vsi_l_offset nStreamEnd = VSIFTellL(fp);
+    VSIFPrintfL(fp,
+                "\n"
+                "endstream\n");
+    EndObj();
+
+    StartObj(nLengthId);
+    VSIFPrintfL(fp,
+                "   %ld\n",
+                (long)(nStreamEnd - nStreamStart));
+    EndObj();
+#endif
 }
 
 /************************************************************************/
