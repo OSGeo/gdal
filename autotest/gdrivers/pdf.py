@@ -456,7 +456,12 @@ def pdf_info():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
+    try:
+        val = '\xc3\xa9'.decode('UTF-8')
+    except:
+        val = '\u00e9'
     options = [
+        'AUTHOR=%s' % val,
         'CREATOR=creator',
         'KEYWORDS=keywords',
         'PRODUCER=producer',
@@ -475,11 +480,13 @@ def pdf_info():
     gdal.Unlink('tmp/pdf_info.pdf')
     gdal.Unlink('tmp/pdf_info_2.pdf')
 
-    if md['CREATOR'] != 'creator' or \
+    if md['AUTHOR'] != val or \
+       md['CREATOR'] != 'creator' or \
        md['KEYWORDS'] != 'keywords' or \
        md['PRODUCER'] != 'producer' or \
        md['SUBJECT'] != 'subject' or \
        md['TITLE'] != 'title':
+        gdaltest.post_reason("metadata doesn't match")
         print(md)
         return 'fail'
 
