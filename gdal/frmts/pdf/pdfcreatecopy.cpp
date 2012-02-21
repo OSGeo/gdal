@@ -800,9 +800,44 @@ static const char* GDALPDFGetValueFromDSOrOption(GDALDataset* poSrcDS, char** pa
     return poSrcDS->GetMetadataItem(pszKey);
 }
 
+static CPLString GDALPDFGetUTF8String(const char* pszStr)
+{
+    GByte* pabyData = (GByte*)pszStr;
+    int i;
+    GByte ch;
+    for(i=0;(ch = pabyData[i]) != '\0';i++)
+    {
+        if (ch < 32 || ch > 127 ||
+            ch == '(' || ch == ')' || ch == '<' || ch == '>' ||
+            ch == '[' || ch == ']' || ch == '{' || ch == '}' ||
+            ch == '/' || ch == '%' || ch == '#')
+            break;
+    }
+    CPLString osStr;
+    if (ch == 0)
+    {
+        osStr = "(";
+        osStr += pszStr;
+        osStr += ")";
+        return osStr;
+    }
+
+    wchar_t* pwszDest = CPLRecodeToWChar( pszStr, CPL_ENC_UTF8, CPL_ENC_UCS2 );
+    osStr = "<FEFF";
+    for(i=0;pwszDest[i] != 0;i++)
+    {
+        osStr += CPLSPrintf("%02X", (pwszDest[i] >> 8) & 0xff);
+        osStr += CPLSPrintf("%02X", (pwszDest[i]) & 0xff);
+    }
+    osStr += ">";
+    CPLFree(pwszDest);
+    return osStr;
+}
+
 void GDALPDFWriter::SetInfo(GDALDataset* poSrcDS,
                             char** papszOptions)
 {
+    const char* pszAUTHOR = GDALPDFGetValueFromDSOrOption(poSrcDS, papszOptions, "AUTHOR");
     const char* pszPRODUCER = GDALPDFGetValueFromDSOrOption(poSrcDS, papszOptions, "PRODUCER");
     const char* pszCREATOR = GDALPDFGetValueFromDSOrOption(poSrcDS, papszOptions, "CREATOR");
     const char* pszCREATION_DATE = GDALPDFGetValueFromDSOrOption(poSrcDS, papszOptions, "CREATION_DATE");
@@ -810,7 +845,7 @@ void GDALPDFWriter::SetInfo(GDALDataset* poSrcDS,
     const char* pszTITLE = GDALPDFGetValueFromDSOrOption(poSrcDS, papszOptions, "TITLE");
     const char* pszKEYWORDS = GDALPDFGetValueFromDSOrOption(poSrcDS, papszOptions, "KEYWORDS");
 
-    if (pszPRODUCER == NULL && pszCREATOR == NULL && pszCREATION_DATE == NULL &&
+    if (pszAUTHOR == NULL && pszPRODUCER == NULL && pszCREATOR == NULL && pszCREATION_DATE == NULL &&
         pszSUBJECT == NULL && pszTITLE == NULL && pszKEYWORDS == NULL)
         return;
 
@@ -818,18 +853,20 @@ void GDALPDFWriter::SetInfo(GDALDataset* poSrcDS,
     nInfoId = AllocNewObject();
     StartObj(nInfoId);
     VSIFPrintfL(fp, "<<\n");
+    if (pszAUTHOR != NULL)
+        VSIFPrintfL(fp, "  /Author %s\n", GDALPDFGetUTF8String(pszAUTHOR).c_str());
     if (pszPRODUCER != NULL)
-        VSIFPrintfL(fp, "  /Producer (%s)\n", pszPRODUCER);
+        VSIFPrintfL(fp, "  /Producer %s\n", GDALPDFGetUTF8String(pszPRODUCER).c_str());
     if (pszCREATOR != NULL)
-        VSIFPrintfL(fp, "  /Creator (%s)\n", pszCREATOR);
+        VSIFPrintfL(fp, "  /Creator %s\n", GDALPDFGetUTF8String(pszCREATOR).c_str());
     if (pszCREATION_DATE != NULL)
-        VSIFPrintfL(fp, "  /CreationDate (%s)\n", pszCREATION_DATE);
+        VSIFPrintfL(fp, "  /CreationDate %s\n", GDALPDFGetUTF8String(pszCREATION_DATE).c_str());
     if (pszSUBJECT != NULL)
-        VSIFPrintfL(fp, "  /Subject (%s)\n", pszSUBJECT);
+        VSIFPrintfL(fp, "  /Subject %s\n",GDALPDFGetUTF8String(pszSUBJECT).c_str());
     if (pszTITLE != NULL)
-        VSIFPrintfL(fp, "  /Title (%s)\n", pszTITLE);
+        VSIFPrintfL(fp, "  /Title %s\n", GDALPDFGetUTF8String(pszTITLE).c_str());
     if (pszKEYWORDS != NULL)
-        VSIFPrintfL(fp, "  /Keywords (%s)\n", pszKEYWORDS);
+        VSIFPrintfL(fp, "  /Keywords %s\n", GDALPDFGetUTF8String(pszKEYWORDS).c_str());
     VSIFPrintfL(fp, ">>\n");
 
     EndObj();
