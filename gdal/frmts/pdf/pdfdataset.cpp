@@ -1312,13 +1312,18 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if (oInfo.getType() == objDict)
     {
         Dict* poInfoDict = oInfo.getDict();
-        Object oCreator, oCreationDate, oKeywords, oProducer, oSubject, oTitle;
+        Object oAuthor, oCreator, oCreationDate, oKeywords, oProducer, oSubject, oTitle;
+        poInfoDict->lookup((char*)"Author", &oAuthor);
         poInfoDict->lookup((char*)"Creator", &oCreator);
         poInfoDict->lookup((char*)"CreationDate", &oCreationDate);
         poInfoDict->lookup((char*)"Keywords", &oKeywords);
         poInfoDict->lookup((char*)"Producer", &oProducer);
         poInfoDict->lookup((char*)"Subject", &oSubject);
         poInfoDict->lookup((char*)"Title", &oTitle);
+        if (oAuthor.getType() == objString)
+        {
+            poDS->SetMetadataItem("AUTHOR", GDALPDFPopplerGetUTF8(oAuthor.getString()).c_str());
+        }
         if (oCreator.getType() == objString)
         {
             poDS->SetMetadataItem("CREATOR", GDALPDFPopplerGetUTF8(oCreator.getString()).c_str());
@@ -1343,6 +1348,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             poDS->SetMetadataItem("TITLE", GDALPDFPopplerGetUTF8(oTitle.getString()).c_str());
         }
+        oAuthor.free();
         oCreator.free();
         oCreationDate.free();
         oKeywords.free();
@@ -1401,6 +1407,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     PoDoFo::PdfInfo* poInfo = poDoc->GetInfo();
     if (poInfo != NULL)
     {
+        const std::string& osAuthor = poInfo->GetAuthor().GetStringUtf8();
         const std::string& osCreator = poInfo->GetCreator().GetStringUtf8();
         //const std::string& osCreationDate = poInfo->GetCreationDate().GetStringUtf8();
         const std::string& osKeywords = poInfo->GetKeywords().GetStringUtf8();
@@ -1408,10 +1415,14 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         const std::string& osSubject = poInfo->GetSubject().GetStringUtf8();
         const std::string& osTitle = poInfo->GetTitle().GetStringUtf8();
 
-        if( !(osCreator.size() == 0 && osKeywords.size() == 0 &&
+        if( !(osAuthor.size() == 0 && osCreator.size() == 0 && osKeywords.size() == 0 &&
               osSubject.size() == 0 && osTitle.size() == 0 &&
               osProducer.compare("PoDoFo - http://podofo.sf.net") == 0) )
         {
+            if( osAuthor.size() )
+            {
+                poDS->SetMetadataItem("AUTHOR", osAuthor.c_str());
+            }
             if( osCreator.size() )
             {
                 poDS->SetMetadataItem("CREATOR", osCreator.c_str());
@@ -2943,12 +2954,13 @@ void GDALRegister_PDF()
 "   <Option name='BLOCKYSIZE' type='int' description='Block Height'/>\n"
 "   <Option name='XMP' type='string' description='xml:XMP metadata'/>\n"
 "   <Option name='WRITE_INFO' type='boolean' description='to control whether a Info block must be written' default='YES'/>\n"
-"   <Option name='PRODUCER' type='string'/>\n"
+"   <Option name='AUTHOR' type='string'/>\n"
 "   <Option name='CREATOR' type='string'/>\n"
 "   <Option name='CREATION_DATE' type='string'/>\n"
+"   <Option name='KEYWORDS' type='string'/>\n"
+"   <Option name='PRODUCER' type='string'/>\n"
 "   <Option name='SUBJECT' type='string'/>\n"
 "   <Option name='TITLE' type='string'/>\n"
-"   <Option name='KEYWORDS' type='string'/>\n"
 "</CreationOptionList>\n" );
 
         poDriver->pfnOpen = PDFDataset::Open;
