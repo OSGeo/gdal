@@ -552,6 +552,7 @@ LINKER_FLAGS = $(MSVC_VLD_LIB) $(LDEBUG)
 
 
 CFLAGS	=	$(OPTFLAGS) $(WARNFLAGS) $(INC) $(EXTRAFLAGS) $(OGR_FLAG) $(MSVC_VLD_FLAGS)
+CPPFLAGS = $(CFLAGS) 
 MAKE	=	nmake /nologo
 
 CC	=	cl
@@ -649,9 +650,3 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
 	$(INGRES_LIB)
 		
-.c.obj:	
-	$(CC) $(CFLAGS) /c $*.c
-
-.cpp.obj:	
-	$(CC) $(CFLAGS) /c $*.cpp
-
