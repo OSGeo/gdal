@@ -69,8 +69,10 @@ class GDALPDFWriter
     void    EndObj();
     void    WriteXRefTableAndTrailer();
     void    WritePages();
-    int     WriteSRS_ISO32000(GDALDataset* poSrcDS);
-    int     WriteSRS_OGC_BP(GDALDataset* poSrcDS);
+    int     WriteSRS_ISO32000(GDALDataset* poSrcDS,
+                              double dfUserUnit);
+    int     WriteSRS_OGC_BP(GDALDataset* poSrcDS,
+                            double dfUserUnit);
     int     WriteBlock( GDALDataset* poSrcDS,
                         int nXOff, int nYOff, int nReqXSize, int nReqYSize,
                         PDFCompressMethod eCompressMethod,
@@ -90,6 +92,7 @@ class GDALPDFWriter
 
        int  AllocNewObject();
        int  WritePage(GDALDataset* poSrcDS,
+                      double dfDPI,
                       const char* pszGEO_ENCODING,
                       PDFCompressMethod eCompressMethod,
                       int nJPEGQuality,
@@ -222,7 +225,8 @@ void GDALPDFWriter::EndObj()
 /*                         WriteSRS_ISO32000()                          */
 /************************************************************************/
 
-int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS)
+int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
+                                      double dfUserUnit)
 {
     int  nWidth = poSrcDS->GetRasterXSize();
     int  nHeight = poSrcDS->GetRasterYSize();
@@ -316,10 +320,11 @@ int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS)
                 "<<\n"
                 "  /Type /Viewport\n"
                 "  /Name (Layer)\n"
-                "  /BBox [ 0 0 %d %d ]\n"
+                "  /BBox [ 0 0 %.16g %.16g ]\n"
                 "  /Measure %d 0 R\n"
                 ">>\n",
-                nWidth, nHeight,
+                nWidth / dfUserUnit,
+                nHeight / dfUserUnit,
                 nMeasureId);
     EndObj();
 
@@ -364,7 +369,7 @@ int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS)
 /************************************************************************/
 
 static int GDALPDFGeoCoordToNL(double adfGeoTransform[6], int nHeight,
-                               double dfPixelPerPt,
+                               double dfUserUnit,
                                double X, double Y,
                                double* padfNLX, double* padfNLY)
 {
@@ -372,15 +377,16 @@ static int GDALPDFGeoCoordToNL(double adfGeoTransform[6], int nHeight,
     GDALInvGeoTransform(adfGeoTransform, adfGeoTransformInv);
     double x = adfGeoTransformInv[0] + X * adfGeoTransformInv[1] + Y * adfGeoTransformInv[2];
     double y = adfGeoTransformInv[3] + X * adfGeoTransformInv[4] + Y * adfGeoTransformInv[5];
-    *padfNLX = x / dfPixelPerPt;
-    *padfNLY = nHeight - y / dfPixelPerPt;
+    *padfNLX = x / dfUserUnit;
+    *padfNLY = nHeight - y / dfUserUnit;
     return TRUE;
 }
 /************************************************************************/
 /*                           WriteSRS_OGC_BP()                          */
 /************************************************************************/
 
-int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS)
+int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
+                                   double dfUserUnit)
 {
     int  nWidth = poSrcDS->GetRasterXSize();
     int  nHeight = poSrcDS->GetRasterYSize();
@@ -399,14 +405,13 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS)
         return 0;
     
     double adfCTM[6];
-    double dfPixelPerPt = 1;
     double dfX1 = 0;
     double dfY2 = nHeight;
 
-    adfCTM[0] = adfGeoTransform[1] * dfPixelPerPt;
-    adfCTM[1] = adfGeoTransform[2] * dfPixelPerPt;
-    adfCTM[2] = - adfGeoTransform[4] * dfPixelPerPt;
-    adfCTM[3] = - adfGeoTransform[5] * dfPixelPerPt;
+    adfCTM[0] = adfGeoTransform[1] * dfUserUnit;
+    adfCTM[1] = adfGeoTransform[2] * dfUserUnit;
+    adfCTM[2] = - adfGeoTransform[4] * dfUserUnit;
+    adfCTM[3] = - adfGeoTransform[5] * dfUserUnit;
     adfCTM[4] = adfGeoTransform[0] - (adfCTM[0] * dfX1 + adfCTM[2] * dfY2);
     adfCTM[5] = adfGeoTransform[3] - (adfCTM[1] * dfX1 + adfCTM[3] * dfY2);
     
@@ -721,16 +726,16 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS)
     }
 
     double adfNL[8];
-    GDALPDFGeoCoordToNL(adfGeoTransform, nHeight, dfPixelPerPt,
+    GDALPDFGeoCoordToNL(adfGeoTransform, nHeight, dfUserUnit,
                         PIXEL_TO_GEO_X(0, 0), PIXEL_TO_GEO_Y(0, 0),
                         adfNL + 0, adfNL + 1);
-    GDALPDFGeoCoordToNL(adfGeoTransform, nHeight, dfPixelPerPt,
+    GDALPDFGeoCoordToNL(adfGeoTransform, nHeight, dfUserUnit,
                         PIXEL_TO_GEO_X(0, nHeight), PIXEL_TO_GEO_Y(0, nHeight),
                         adfNL + 2, adfNL + 3);
-    GDALPDFGeoCoordToNL(adfGeoTransform, nHeight, dfPixelPerPt,
+    GDALPDFGeoCoordToNL(adfGeoTransform, nHeight, dfUserUnit,
                         PIXEL_TO_GEO_X(nWidth, nHeight), PIXEL_TO_GEO_Y(nWidth, nHeight),
                         adfNL + 4, adfNL + 5);
-    GDALPDFGeoCoordToNL(adfGeoTransform, nHeight, dfPixelPerPt,
+    GDALPDFGeoCoordToNL(adfGeoTransform, nHeight, dfUserUnit,
                         PIXEL_TO_GEO_X(nWidth, 0), PIXEL_TO_GEO_Y(nWidth, 0),
                         adfNL + 6, adfNL + 7);
 
@@ -952,6 +957,7 @@ void GDALPDFWriter::SetXMP(GDALDataset* poSrcDS,
 /************************************************************************/
 
 int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
+                             double dfDPI,
                              const char* pszGEO_ENCODING,
                              PDFCompressMethod eCompressMethod,
                              int nJPEGQuality,
@@ -963,6 +969,10 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
     int  nWidth = poSrcDS->GetRasterXSize();
     int  nHeight = poSrcDS->GetRasterYSize();
     int  nBands = poSrcDS->GetRasterCount();
+
+    double dfUserUnit = dfDPI / 72.0;
+    double dfWidthInUserUnit = nWidth / dfUserUnit;
+    double dfHeightInUserUnit = nHeight / dfUserUnit;
 
     int nPageId = AllocNewObject();
     asPageId.push_back(nPageId);
@@ -978,21 +988,24 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
 
     int nViewportId = 0;
     if( bISO32000 )
-        nViewportId = WriteSRS_ISO32000(poSrcDS);
+        nViewportId = WriteSRS_ISO32000(poSrcDS, dfUserUnit);
         
     int nLGIDictId = 0;
     if( bOGC_BP )
-        nLGIDictId = WriteSRS_OGC_BP(poSrcDS);
+        nLGIDictId = WriteSRS_OGC_BP(poSrcDS, dfUserUnit);
 
     StartObj(nPageId);
     VSIFPrintfL(fp,
                 "<< /Type /Page\n"
                 "   /Parent %d 0 R\n"
-                "   /MediaBox [ 0 0 %d %d ]\n"
+                "   /MediaBox [ 0 0 %.16g %.16g ]\n"
+                "   /UserUnit %.16g\n"
                 "   /Contents %d 0 R\n"
                 "   /Resources %d 0 R\n",
                 nPageResourceId,
-                nWidth, nHeight,
+                dfWidthInUserUnit,
+                dfHeightInUserUnit,
+                dfUserUnit,
                 nContentId,
                 nResourcesId);
     if (nBands == 4)
@@ -1068,10 +1081,11 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
             int iImage = nBlockYOff * nXBlocks + nBlockXOff;
 
             VSIFPrintfL(fp, "q\n");
-            VSIFPrintfL(fp, "%d 0 0 %d %d %d cm\n",
-                        nReqWidth, nReqHeight,
-                        nBlockXOff * nBlockXSize,
-                        nHeight - nBlockYOff * nBlockYSize - nReqHeight);
+            VSIFPrintfL(fp, "%.16g 0 0 %.16g %.16g %.16g cm\n",
+                        nReqWidth / dfUserUnit,
+                        nReqHeight / dfUserUnit,
+                        (nBlockXOff * nBlockXSize) / dfUserUnit,
+                        (nHeight - nBlockYOff * nBlockYSize - nReqHeight) / dfUserUnit);
             VSIFPrintfL(fp, "/Image%d Do\n",
                         asImageId[iImage]);
             VSIFPrintfL(fp, "Q\n");
@@ -1657,6 +1671,10 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
 
     const char* pszXMP = CSLFetchNameValue(papszOptions, "XMP");
 
+    double dfDPI = atof(CSLFetchNameValueDef(papszOptions, "DPI", "72"));
+    if (dfDPI < 72.0)
+        dfDPI = 72.0;
+
 /* -------------------------------------------------------------------- */
 /*      Create file.                                                    */
 /* -------------------------------------------------------------------- */
@@ -1677,6 +1695,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     oWriter.SetXMP(poSrcDS, pszXMP);
 
     int bRet = oWriter.WritePage(poSrcDS,
+                                 dfDPI,
                                  pszGEO_ENCODING,
                                  eCompressMethod,
                                  nJPEGQuality,

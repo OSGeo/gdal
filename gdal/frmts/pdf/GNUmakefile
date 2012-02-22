@@ -19,6 +19,8 @@ ifeq ($(POPPLER_0_20_OR_LATER),yes)
 CPPFLAGS +=  -DPOPPLER_0_20_OR_LATER
 endif
 
+$(O_OBJ):       pdfobject.h pdfio.h
+
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(POPPLER_INC) $(PODOFO_INC)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))

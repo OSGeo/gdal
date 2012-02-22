@@ -78,6 +78,7 @@ typedef enum
 
 class GDALPDFDictionary;
 class GDALPDFArray;
+class GDALPDFStream;
 
 class GDALPDFObject
 {
@@ -92,6 +93,7 @@ class GDALPDFObject
         virtual const CPLString&  GetName() = 0;
         virtual GDALPDFDictionary*  GetDictionary() = 0;
         virtual GDALPDFArray*       GetArray() = 0;
+        virtual GDALPDFStream*      GetStream() = 0;
 };
 
 class GDALPDFDictionary
@@ -113,6 +115,14 @@ class GDALPDFArray
         virtual GDALPDFObject* Get(int nIndex) = 0;
 };
 
+class GDALPDFStream
+{
+    public:
+        virtual ~GDALPDFStream();
+
+        virtual int GetLength() = 0;
+        virtual char* GetBytes() = 0;
+};
 
 #ifdef USE_POPPLER
 
@@ -123,10 +133,11 @@ class GDALPDFObjectPoppler : public GDALPDFObject
         int     m_bDestroy;
         GDALPDFDictionary* m_poDict;
         GDALPDFArray* m_poArray;
+        GDALPDFStream* m_poStream;
         CPLString osStr;
 
     public:
-        GDALPDFObjectPoppler(Object* po, int bDestroy) : m_po(po), m_bDestroy(bDestroy), m_poDict(NULL), m_poArray(NULL) {}
+        GDALPDFObjectPoppler(Object* po, int bDestroy) : m_po(po), m_bDestroy(bDestroy), m_poDict(NULL), m_poArray(NULL), m_poStream(NULL) {}
 
         virtual ~GDALPDFObjectPoppler();
 
@@ -138,6 +149,7 @@ class GDALPDFObjectPoppler : public GDALPDFObject
         virtual const CPLString&  GetName();
         virtual GDALPDFDictionary*  GetDictionary();
         virtual GDALPDFArray*       GetArray();
+        virtual GDALPDFStream*      GetStream();
 };
 
 #else
@@ -149,6 +161,7 @@ class GDALPDFObjectPodofo : public GDALPDFObject
         PoDoFo::PdfVecObjects& m_poObjects;
         GDALPDFDictionary* m_poDict;
         GDALPDFArray* m_poArray;
+        GDALPDFStream* m_poStream;
         CPLString osStr;
 
     public:
@@ -164,6 +177,7 @@ class GDALPDFObjectPodofo : public GDALPDFObject
         virtual const CPLString&  GetName();
         virtual GDALPDFDictionary*  GetDictionary();
         virtual GDALPDFArray*       GetArray();
+        virtual GDALPDFStream*      GetStream();
 };
 
 #endif
