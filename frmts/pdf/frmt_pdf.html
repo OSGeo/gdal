@@ -41,7 +41,9 @@ stored as XML raw content in the xml:XMP metadata domain.
 <h2>Configuration options</h2>
 
 The dimensions of the raster can be controlled by specifying the DPI of the rasterization with the
-<i>GDAL_PDF_DPI</i> configuration option. Its default value is 150.
+<i>GDAL_PDF_DPI</i> configuration option. Its default value is 150. Starting with GDAL 2.0, the driver
+will make some effort to guess the DPI value either from a specific metadata item contained in some PDF files, or
+from the raster images inside the PDF (in simple cases).
 <p>
 Starting with GDAL &gt;= 2.0.0 and when GDAL compiled against libpoppler, the following options are also
 available :
@@ -81,6 +83,9 @@ OGC Best Practice conventions (but limited to a few datum and projection types).
 <ul>
 <li><p><b>COMPRESS=[NONE/DEFLATE/JPEG/JPEG2000]</b>:
 Set the compression to use. DEFLATE is the default.</p></li>
+
+<li><p><b>DPI=value</b>:
+Set the DPI to use. Default to 72.</p></li>
 
 <li><p><b>JPEG_QUALITY=[1-100]</b>:  Set the JPEG quality when using JPEG compression.
 A value of 100 is best quality (least compression), and 1 is worst quality (best compression). The default is 75.</p></li>
