@@ -726,7 +726,6 @@ GDALDataset *KmlSuperOverlayDataset::CreateCopy( const char * pszFilename, GDALD
         tileysize = (int)dtileysize;
         tilexsize = (int)( (double)(dtileysize * xsize) / ysize );
     }
-    maxzoom = 0;
 
     std::vector<double> zoomxpixels;
     std::vector<double> zoomypixels;
