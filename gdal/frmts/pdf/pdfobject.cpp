@@ -48,6 +48,10 @@ GDALPDFArray::~GDALPDFArray()
 {
 }
 
+GDALPDFStream::~GDALPDFStream()
+{
+}
+
 #ifdef USE_POPPLER
 
 class GDALPDFDictionaryPoppler: public GDALPDFDictionary
@@ -78,6 +82,20 @@ class GDALPDFArrayPoppler : public GDALPDFArray
         virtual GDALPDFObject* Get(int nIndex);
 };
 
+class GDALPDFStreamPoppler : public GDALPDFStream
+{
+    private:
+        int     m_nLength;
+        Stream* m_poStream;
+
+    public:
+        GDALPDFStreamPoppler(Stream* poStream) : m_nLength(-1), m_poStream(poStream) {}
+        virtual ~GDALPDFStreamPoppler() {}
+
+        virtual int GetLength();
+        virtual char* GetBytes();
+};
+
 GDALPDFObjectPoppler::~GDALPDFObjectPoppler()
 {
     m_po->free();
@@ -85,6 +103,7 @@ GDALPDFObjectPoppler::~GDALPDFObjectPoppler()
         delete m_po;
     delete m_poDict;
     delete m_poArray;
+    delete m_poStream;
 }
 
 GDALPDFObjectType GDALPDFObjectPoppler::GetType()
@@ -123,10 +142,31 @@ double GDALPDFObjectPoppler::GetReal()
         return 0.0;
 }
 
+static CPLString GDALPDFPopplerGetUTF8(GooString* poStr)
+{
+    if (!poStr->hasUnicodeMarker())
+        return poStr->getCString();
+
+    GByte* pabySrc = ((GByte*)poStr->getCString()) + 2;
+    int nLen = (poStr->getLength() - 2) / 2;
+    wchar_t *pwszSource = new wchar_t[nLen + 1];
+    for(int i=0; i<nLen; i++)
+    {
+        pwszSource[i] = (pabySrc[2 * i] << 8) + pabySrc[2 * i + 1];
+    }
+    pwszSource[nLen] = 0;
+
+    char* pszUTF8 = CPLRecodeFromWChar( pwszSource, CPL_ENC_UCS2, CPL_ENC_UTF8 );
+    delete[] pwszSource;
+    CPLString osStrUTF8(pszUTF8);
+    CPLFree(pszUTF8);
+    return osStrUTF8;
+}
+
 const CPLString& GDALPDFObjectPoppler::GetString()
 {
     if (GetType() == PDFObjectType_String)
-        return (osStr = m_po->getString()->getCString());
+        return (osStr = GDALPDFPopplerGetUTF8(m_po->getString()));
     else
         return (osStr = "");
 }
@@ -167,6 +207,17 @@ GDALPDFArray* GDALPDFObjectPoppler::GetArray()
         return NULL;
     m_poArray = new GDALPDFArrayPoppler(poArray);
     return m_poArray;
+}
+
+GDALPDFStream* GDALPDFObjectPoppler::GetStream()
+{
+    if (m_po->getType() != objStream)
+        return NULL;
+
+    if (m_poStream)
+        return m_poStream;
+    m_poStream = new GDALPDFStreamPoppler(m_po->getStream());
+    return m_poStream;
 }
 
 GDALPDFDictionaryPoppler::~GDALPDFDictionaryPoppler()
@@ -253,6 +304,37 @@ GDALPDFObject* GDALPDFArrayPoppler::Get(int nIndex)
     }
 }
 
+int GDALPDFStreamPoppler::GetLength()
+{
+    if (m_nLength >= 0)
+        return m_nLength;
+
+    m_poStream->reset();
+    m_nLength = 0;
+    while(m_poStream->getChar() != EOF)
+        m_nLength ++;
+    return m_nLength;
+}
+
+char* GDALPDFStreamPoppler::GetBytes()
+{
+    int i;
+    int nLength = GetLength();
+    char* pszContent = (char*) VSIMalloc(nLength + 1);
+    if (!pszContent)
+        return NULL;
+    m_poStream->reset();
+    for(i=0;i<nLength;i++)
+    {
+        int nVal = m_poStream->getChar();
+        if (nVal == EOF)
+            break;
+        pszContent[i] = (GByte)nVal;
+    }
+    pszContent[i] = '\0';
+    return pszContent;
+}
+
 #else
 
 class GDALPDFDictionaryPodofo: public GDALPDFDictionary
@@ -285,8 +367,22 @@ class GDALPDFArrayPodofo : public GDALPDFArray
         virtual GDALPDFObject* Get(int nIndex);
 };
 
+class GDALPDFStreamPodofo : public GDALPDFStream
+{
+    private:
+        int     m_nLength;
+        PoDoFo::PdfMemStream* m_pStream;
+
+    public:
+        GDALPDFStreamPodofo(PoDoFo::PdfMemStream* pStream) : m_nLength(-1), m_pStream(pStream) { }
+        virtual ~GDALPDFStreamPodofo() {}
+
+        virtual int GetLength();
+        virtual char* GetBytes();
+};
+
 GDALPDFObjectPodofo::GDALPDFObjectPodofo(PoDoFo::PdfObject* po, PoDoFo::PdfVecObjects& poObjects) :
-        m_po(po), m_poObjects(poObjects), m_poDict(NULL), m_poArray(NULL)
+        m_po(po), m_poObjects(poObjects), m_poDict(NULL), m_poArray(NULL), m_poStream(NULL)
 {
     if (m_po->GetDataType() == PoDoFo::ePdfDataType_Reference)
     {
@@ -300,6 +396,7 @@ GDALPDFObjectPodofo::~GDALPDFObjectPodofo()
 {
     delete m_poDict;
     delete m_poArray;
+    delete m_poStream;
 }
 
 GDALPDFObjectType GDALPDFObjectPodofo::GetType()
@@ -309,6 +406,7 @@ GDALPDFObjectType GDALPDFObjectPodofo::GetType()
         case PoDoFo::ePdfDataType_Bool:       return PDFObjectType_Int;
         case PoDoFo::ePdfDataType_Number:     return PDFObjectType_Int;
         case PoDoFo::ePdfDataType_Real:       return PDFObjectType_Real;
+        case PoDoFo::ePdfDataType_HexString:  return PDFObjectType_String;
         case PoDoFo::ePdfDataType_String:     return PDFObjectType_String;
         case PoDoFo::ePdfDataType_Name:       return PDFObjectType_Name;
         case PoDoFo::ePdfDataType_Array:      return PDFObjectType_Array;
@@ -378,6 +476,33 @@ GDALPDFArray* GDALPDFObjectPodofo::GetArray()
 
     m_poArray = new GDALPDFArrayPodofo(&m_po->GetArray(), m_poObjects);
     return m_poArray;
+}
+
+GDALPDFStream* GDALPDFObjectPodofo::GetStream()
+{
+    if (!m_po->HasStream())
+        return NULL;
+
+    if (m_poStream)
+        return m_poStream;
+    PoDoFo::PdfMemStream* pStream = NULL;
+    try
+    {
+        pStream = dynamic_cast<PoDoFo::PdfMemStream*>(m_po->GetStream());
+        pStream->Uncompress();
+    }
+    catch( const PoDoFo::PdfError & e )
+    {
+        e.PrintErrorMsg();
+        pStream = NULL;
+    }
+    if (pStream)
+    {
+        m_poStream = new GDALPDFStreamPodofo(pStream);
+        return m_poStream;
+    }
+    else
+        return NULL;
 }
 
 GDALPDFDictionaryPodofo::~GDALPDFDictionaryPodofo()
@@ -455,6 +580,22 @@ GDALPDFObject* GDALPDFArrayPodofo::Get(int nIndex)
     GDALPDFObjectPodofo* poObj = new GDALPDFObjectPodofo(&oVal, m_poObjects);
     m_v[nIndex] = poObj;
     return poObj;
+}
+
+int GDALPDFStreamPodofo::GetLength()
+{
+    return (int)m_pStream->GetLength();
+}
+
+char* GDALPDFStreamPodofo::GetBytes()
+{
+    int nLength = GetLength();
+    char* pszContent = (char*) VSIMalloc(nLength + 1);
+    if (!pszContent)
+        return NULL;
+    memcpy(pszContent, m_pStream->Get(), nLength);
+    pszContent[nLength] = '\0';
+    return pszContent;
 }
 
 #endif

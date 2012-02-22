@@ -74,14 +74,15 @@ def pdf_online_1():
     if ds is None:
         return 'fail'
 
-    if ds.RasterXSize != 620:
+    if ds.RasterXSize != 1241:
         gdaltest.post_reason('bad dimensions')
+        print(ds.RasterXSize)
         return 'fail'
 
     gt = ds.GetGeoTransform()
     wkt = ds.GetProjectionRef()
 
-    expected_gt = (-77.112328333299999, 1.8333311999999999e-05, 0.0, 38.897842488372, -0.0, -1.8333311999999999e-05)
+    expected_gt = (-77.112328333299999, 9.1666559999999995e-06, 0.0, 38.897842488372, -0.0, -9.1666559999999995e-06)
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1e-15:
             gdaltest.post_reason('bad geotransform')
@@ -121,7 +122,7 @@ def pdf_online_2():
     gt = ds.GetGeoTransform()
     wkt = ds.GetProjectionRef()
 
-    expected_gt = (-77.112328333299999, 1.8333311999999999e-05, 0.0, 38.897842488372, -0.0, -1.8333311999999999e-05)
+    expected_gt = (-77.112328333299999, 9.1666559999999995e-06, 0.0, 38.897842488372, -0.0, -9.1666559999999995e-06)
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1e-15:
             print(gt)
@@ -192,10 +193,21 @@ def pdf_iso32000():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    gdal.SetConfigOption('GDAL_PDF_DPI', '72')
     tst = gdaltest.GDALTest( 'PDF', 'byte.tif', 1, None )
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = True)
-    gdal.SetConfigOption('GDAL_PDF_DPI', None)
+
+    return ret
+
+###############################################################################
+# Test write support with ISO32000 geo encoding, with DPI=300
+
+def pdf_iso32000_dpi_300():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'PDF', 'byte.tif', 1, None, options = ['DPI=300'] )
+    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = True)
 
     return ret
 
@@ -207,15 +219,28 @@ def pdf_ogcbp():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    gdal.SetConfigOption('GDAL_PDF_DPI', '72')
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', 'FALSE')
     tst = gdaltest.GDALTest( 'PDF', 'byte.tif', 1, None, options = ['GEO_ENCODING=OGC_BP'] )
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = True)
-    gdal.SetConfigOption('GDAL_PDF_DPI', None)
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', None)
 
     return ret
 
+###############################################################################
+# Test write support with OGC_BP geo encoding, with DPI=300
+
+def pdf_ogcbp_dpi_300():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', 'FALSE')
+    tst = gdaltest.GDALTest( 'PDF', 'byte.tif', 1, None, options = ['GEO_ENCODING=OGC_BP', 'DPI=300'] )
+    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = True)
+    gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', None)
+
+    return ret
+    
 def pdf_ogcbp_lcc():
 
     if gdaltest.pdf_drv is None:
@@ -242,12 +267,10 @@ def pdf_ogcbp_lcc():
     src_ds.SetProjection(wkt)
     src_ds.SetGeoTransform([500000,1,0,1000000,0,-1])
 
-    gdal.SetConfigOption('GDAL_PDF_DPI', '72')
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', 'FALSE')
     out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_ogcbp_lcc.pdf', src_ds)
     out_wkt = out_ds.GetProjectionRef()
     out_ds = None
-    gdal.SetConfigOption('GDAL_PDF_DPI', None)
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', None)
 
     src_ds = None
@@ -351,7 +374,6 @@ def pdf_rgba_default_compression():
     out_ds = None
 
     gdal.SetConfigOption('GDAL_PDF_BANDS', '4')
-    gdal.SetConfigOption('GDAL_PDF_DPI', '72')
     out_ds = gdal.Open('tmp/rgba.pdf')
     cs1 = out_ds.GetRasterBand(1).Checksum()
     cs2 = out_ds.GetRasterBand(2).Checksum()
@@ -367,7 +389,6 @@ def pdf_rgba_default_compression():
     src_cs4 = src_ds.GetRasterBand(4).Checksum()
     out_ds = None
     gdal.SetConfigOption('GDAL_PDF_BANDS', None)
-    gdal.SetConfigOption('GDAL_PDF_DPI', None)
 
     gdal.Unlink('tmp/rgba.pdf')
 
@@ -441,7 +462,7 @@ def pdf_xmp():
         print(got_md[0])
         return 'fail'
 
-    if len(base_md) != 1:
+    if len(base_md) != 2: # NEATLINE and DPI
         gdaltest.post_reason('fail')
         print(base_md)
         return 'fail'
@@ -460,6 +481,7 @@ def pdf_info():
         val = '\xc3\xa9'.decode('UTF-8')
     except:
         val = '\u00e9'
+
     options = [
         'AUTHOR=%s' % val,
         'CREATOR=creator',
@@ -498,6 +520,7 @@ gdaltest_list = [
     pdf_online_2,
     pdf_1,
     pdf_iso32000,
+    pdf_iso32000_dpi_300,
     pdf_ogcbp,
     pdf_ogcbp_lcc,
     pdf_no_compression,
