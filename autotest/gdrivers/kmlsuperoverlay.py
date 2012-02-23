@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test write functionality for KMLSUPEROVERLAY driver.
 # Author:   Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2010, Even Rouault <even dot rouault at mines dash paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person oxyzaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -65,16 +65,37 @@ def kmlsuperoverlay_1():
 
 def kmlsuperoverlay_2():
 
-    src_ds = gdal.Open('data/small_world.tif')
+    src_ds = gdal.Open('data/utm.tif')
     ds = gdal.GetDriverByName('KMLSUPEROVERLAY').CreateCopy('tmp/tmp.kml', src_ds)
     ds = None
     src_ds = None
 
-    os.remove('tmp/0/0/0.jpg')
-    os.remove('tmp/0/0/0.kml')
-    os.rmdir('tmp/0/0')
-    os.rmdir('tmp/0')
-    os.remove('tmp/tmp.kml')
+    try:
+        os.remove('tmp/0/0/0.jpg')
+        os.remove('tmp/0/0/0.kml')
+
+        os.remove('tmp/1/0/0.jpg')
+        os.remove('tmp/1/0/0.kml')
+        os.remove('tmp/1/0/1.jpg')
+        os.remove('tmp/1/0/1.kml')
+
+        os.remove('tmp/1/1/0.jpg')
+        os.remove('tmp/1/1/0.kml')
+        os.remove('tmp/1/1/1.jpg')
+        os.remove('tmp/1/1/1.kml')
+
+        os.rmdir('tmp/0/0')
+        os.rmdir('tmp/1/0')
+        os.rmdir('tmp/1/1')
+        os.rmdir('tmp/0')
+        os.rmdir('tmp/1')
+        os.remove('tmp/tmp.kml')
+    except OSError, e:
+        if e.errno == 2:  # no such file or directory
+            gdaltest.post_reason("Missing file: %s" % e.filename)
+            return 'fail'
+        else:
+            raise
 
     return 'success'
 
