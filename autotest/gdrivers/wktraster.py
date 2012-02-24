@@ -3,11 +3,13 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  WKTRaster Testing.
-# Author:   Jorge Arevalo <jorge dot arevalo @ gis4free dot org>
+# Purpose:  PostGISRaster Testing.
+# Author:   Jorge Arevalo <jorge.arevalo@libregis.org>
+#           David Zwarg <dzwarg@azavea.com>
 # 
 ###############################################################################
-# Copyright (c) 2009, Jorge Arevalo <jorge dot arevalo @ gis4free dot org>
+# Copyright (c) 2009, Jorge Arevalo <jorge.arevalo@libregis.org>
+#               2012, David Zwarg <dzwarg@azavea.com>
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -41,15 +43,15 @@ sys.path.append( '../../wktraster/scripts' )
 import gdaltest
 
 #
-# To initialize the required WKTRaster DB instance, run data/load_wktraster_test_data.sh
+# To initialize the required PostGISRaster DB instance, run data/load_wktraster_test_data.sh
 #
 
 ###############################################################################
 # 
 def wktraster_init():
     try:
-        gdaltest.wktrasterDriver = gdal.GetDriverByName('WKTRaster')
-    except:
+        gdaltest.wktrasterDriver = gdal.GetDriverByName('PostGISRaster')
+    except Exception, ex:
         gdaltest.wktrasterDriver = None
 
     if gdaltest.wktrasterDriver is None:
@@ -59,7 +61,7 @@ def wktraster_init():
 
     try:
         ds = gdal.Open( gdaltest.wktraster_connection_string + "table='utm'" )
-    except:
+    except Exception, ex:
         gdaltest.wktrasterDriver = None
 
     if ds is None:
@@ -90,11 +92,12 @@ def wktraster_test_open_error2():
     if gdaltest.wktrasterDriver is None:
         return 'skip'
 
-    ds = gdal.Open(gdaltest.wktraster_connection_string + "table='utm' mode='unexistent'")
+    # removed mode, as it defaults to one raster per row
+    ds = gdal.Open(gdaltest.wktraster_connection_string + "table='utm'")
     if ds is None:
-        return 'success'
+        return 'fail'
     else:
-        return 'fail'        
+        return 'success'        
 
     
 ###############################################################################
@@ -106,7 +109,11 @@ def wktraster_compare_utm():
     src_ds = gdal.Open( 'data/utm.tif' )
     dst_ds = gdal.Open( gdaltest.wktraster_connection_string + "table='utm'" )
     
-    diff = gdaltest.compare_ds(src_ds, dst_ds, verbose = 1)
+    # dataset actually contains many sub-datasets. test the first one
+    dst_ds = gdal.Open( dst_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'] )
+ 
+    
+    diff = gdaltest.compare_ds(src_ds, dst_ds, width=100, height=100, verbose = 1)
     if diff == 0:
         return 'success'
     else:
@@ -120,8 +127,11 @@ def wktraster_compare_small_world():
         
     src_ds = gdal.Open( 'data/small_world.tif' )
     dst_ds = gdal.Open( gdaltest.wktraster_connection_string + "table='small_world'" )
+ 
+    # dataset actually contains many sub-datasets. test the first one
+    dst_ds = gdal.Open( dst_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'] )
     
-    diff = gdaltest.compare_ds(src_ds, dst_ds, verbose = 1)
+    diff = gdaltest.compare_ds(src_ds, dst_ds, width=40, height=20, verbose = 1)
     if diff == 0:
         return 'success'
     else:
@@ -143,10 +153,12 @@ def wktraster_test_utm_open():
     rb = src_ds.GetRasterBand(1)
     st = rb.GetStatistics(0, 1)
     cs = rb.Checksum()
-    
-    # Try to open WKTRaster with the same data than original tif file
-    tst = gdaltest.GDALTest('WKTRaster', gdaltest.wktraster_connection_string + "table='utm'", 1, cs, filename_absolute = 1)
-    return tst.testOpen(check_prj = prj, check_gt = gt)
+
+    main_ds = gdal.Open( gdaltest.wktraster_connection_string + "table='utm'" )
+
+    # Try to open PostGISRaster with the same data than original tif file
+    tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 1, cs, filename_absolute = 1)
+    return tst.testOpen(check_prj = prj, check_gt = gt, skip_checksum = True)
     
     
     
@@ -166,10 +178,12 @@ def wktraster_test_small_world_open_b1():
     st = rb.GetStatistics(0, 1)
     cs = rb.Checksum()
     
-    # Try to open WKTRaster with the same data than original tif file
-    tst = gdaltest.GDALTest('WKTRaster', gdaltest.wktraster_connection_string + "table='small_world'", 1, cs, filename_absolute = 1)    
-    return tst.testOpen(check_prj = prj, check_gt = gt)    
     
+    main_ds = gdal.Open( gdaltest.wktraster_connection_string + "table='small_world'" )
+
+    # Try to open PostGISRaster with the same data than original tif file
+    tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 1, cs, filename_absolute = 1)    
+    return tst.testOpen(check_prj = prj, check_gt = gt, skip_checksum = True)    
     
 ###############################################################################
 # 
@@ -187,10 +201,12 @@ def wktraster_test_small_world_open_b2():
     st = rb.GetStatistics(0, 1)
     cs = rb.Checksum()
     
-    # Try to open WKTRaster with the same data than original tif file
-    tst = gdaltest.GDALTest('WKTRaster', gdaltest.wktraster_connection_string + "table='small_world'", 2, cs, filename_absolute = 1)    
-    return tst.testOpen(check_prj = prj, check_gt = gt)
     
+    main_ds = gdal.Open( gdaltest.wktraster_connection_string + "table='small_world'" )
+
+    # Try to open PostGISRaster with the same data than original tif file
+    tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 2, cs, filename_absolute = 1)    
+    return tst.testOpen(check_prj = prj, check_gt = gt, skip_checksum = True)
     
 ###############################################################################
 # 
@@ -207,12 +223,14 @@ def wktraster_test_small_world_open_b3():
     rb = src_ds.GetRasterBand(3)
     st = rb.GetStatistics(0, 1)
     cs = rb.Checksum()
+
+    main_ds = gdal.Open( gdaltest.wktraster_connection_string + "table='small_world'" )
+
     
     # Checksum for each band can be obtained by gdalinfo -checksum <file>
-    tst = gdaltest.GDALTest('WKTRaster', gdaltest.wktraster_connection_string + "table='small_world'", 3, cs, filename_absolute = 1)
-    
-    return tst.testOpen(check_prj = prj, check_gt = gt)        
+    tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 3, cs, filename_absolute = 1)
 
+    return tst.testOpen(check_prj = prj, check_gt = gt, skip_checksum = True)        
 
 
 gdaltest_list = [
