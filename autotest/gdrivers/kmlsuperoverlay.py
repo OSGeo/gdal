@@ -34,6 +34,7 @@ import string
 import struct
 import gdal
 import osr
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -70,32 +71,26 @@ def kmlsuperoverlay_2():
     ds = None
     src_ds = None
 
-    try:
-        os.remove('tmp/0/0/0.jpg')
-        os.remove('tmp/0/0/0.kml')
-
-        os.remove('tmp/1/0/0.jpg')
-        os.remove('tmp/1/0/0.kml')
-        os.remove('tmp/1/0/1.jpg')
-        os.remove('tmp/1/0/1.kml')
-
-        os.remove('tmp/1/1/0.jpg')
-        os.remove('tmp/1/1/0.kml')
-        os.remove('tmp/1/1/1.jpg')
-        os.remove('tmp/1/1/1.kml')
-
-        os.rmdir('tmp/0/0')
-        os.rmdir('tmp/1/0')
-        os.rmdir('tmp/1/1')
-        os.rmdir('tmp/0')
-        os.rmdir('tmp/1')
-        os.remove('tmp/tmp.kml')
-    except OSError, e:
-        if e.errno == 2:  # no such file or directory
-            gdaltest.post_reason("Missing file: %s" % e.filename)
+    filelist = [ 'tmp/0/0/0.jpg',
+                 'tmp/0/0/0.kml',
+                 'tmp/1/0/0.jpg',
+                 'tmp/1/0/0.kml',
+                 'tmp/1/0/1.jpg',
+                 'tmp/1/0/1.kml',
+                 'tmp/1/1/0.jpg',
+                 'tmp/1/1/0.kml',
+                 'tmp/1/1/1.jpg',
+                 'tmp/1/1/1.kml',
+                 'tmp/tmp.kml' ]
+    for filename in filelist:
+        try:
+            os.remove(filename)
+        except:
+            gdaltest.post_reason("Missing file: %s" % filename)
             return 'fail'
-        else:
-            raise
+
+    shutil.rmtree('tmp/0')
+    shutil.rmtree('tmp/1')
 
     return 'success'
 
