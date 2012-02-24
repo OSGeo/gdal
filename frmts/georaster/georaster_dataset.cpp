@@ -695,6 +695,18 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         poGRD->poGeoRaster->SetGeoReference( atoi( pszFetched ) );
     }
 
+    if( CSLFetchBoolean( papszOptions, "SPATIALEXTENT", FALSE ) )
+    {
+        poGRD->poGeoRaster->bGenSpatialIndex = true;
+    }
+
+    pszFetched = CSLFetchNameValue( papszOptions, "EXTENTSRID" );
+
+    if( pszFetched )
+    {
+        poGRD->poGeoRaster->nExtentSRID = atoi( pszFetched );
+    }
+
     pszFetched = CSLFetchNameValue( papszOptions, "COORDLOCATION" );
 
     if( pszFetched )
@@ -980,7 +992,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
     if( pfnProgress )
     {
-        printf( "Ouput dataset: (geor:%s/%s@%s,%s,%d) on %s%s,%s\n",
+        printf( "Ouput dataset: (georaster:%s/%s@%s,%s,%d) on %s%s,%s\n",
             poDstDS->poGeoRaster->poConnection->GetUser(),
             poDstDS->poGeoRaster->poConnection->GetPassword(),
             poDstDS->poGeoRaster->poConnection->GetServer(),
@@ -1069,7 +1081,7 @@ const char* GeoRasterDataset::GetProjectionRef( void )
         return "";
     }
 
-    if( poGeoRaster->nSRID == UNKNOWN_CRS )
+    if( poGeoRaster->nSRID == UNKNOWN_CRS || poGeoRaster->nSRID == 0 )
     {
         return "";
     }
@@ -1260,7 +1272,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
 
     if( eOGRErr != OGRERR_NONE )
     {
-        CPLDebug( "GEOR", "Not recongnized" );
+        poGeoRaster->SetGeoReference( UNKNOWN_CRS );
 
         return CE_Failure;
     }
@@ -1865,6 +1877,11 @@ void CPL_DLL GDALRegister_GEOR()
 "  <Option name='BLOCKBSIZE'  type='int'    description='Band Block Size' "
                                            "default='1'/>"
 "  <Option name='SRID'        type='int'    description='Overwrite EPSG code' "
+                                           "default='0'/>"
+"  <Option name='SPATIALEXTENT' type='boolean'"
+                                           "description='Generate Spatial Extent' "
+                                           "default='FALSE'/>"
+"  <Option name='EXTENTSRID'  type='int'    description='Spatial ExtentSRID code' "
                                            "default='0'/>"
 "  <Option name='NBITS'       type='int'    description='BITS for sub-byte "
                                            "data types (1,2,4) bits'/>"
