@@ -2803,7 +2803,7 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
     CPLDebug("PDF", "Subtype = %s", poSubtype->GetName().c_str());
 
 /* -------------------------------------------------------------------- */
-/*      Extract Bounds attribute                                       */
+/*      Extract Bounds attribute (optional)                             */
 /* -------------------------------------------------------------------- */
 
     /* http://acrobatusers.com/sites/default/files/gallery_pictures/SEVERODVINSK.pdf */
@@ -2819,24 +2819,25 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
     else if( (poBounds = poMeasureDict->Get("Bounds")) == NULL ||
               poBounds->GetType() != PDFObjectType_Array )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot find Bounds object");
-        return FALSE;
+        poBounds = NULL;
     }
 
-    int nBoundsLength = poBounds->GetArray()->GetLength();
-    if (nBoundsLength != 8)
+    if (poBounds != NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid length for Bounds object");
-        return FALSE;
-    }
+        int nBoundsLength = poBounds->GetArray()->GetLength();
+        if (nBoundsLength == 8)
+        {
+            double adfBounds[8];
+            for(i=0;i<8;i++)
+            {
+                adfBounds[i] = Get(poBounds, i);
+                CPLDebug("PDF", "Bounds[%d] = %f", i, adfBounds[i]);
+            }
 
-    double adfBounds[8];
-    for(i=0;i<8;i++)
-    {
-        adfBounds[i] = Get(poBounds, i);
-        CPLDebug("PDF", "Bounds[%d] = %f", i, adfBounds[i]);
+            // TODO we should use it to restrict the neatline but
+            // I have yet to set a sample where bounds are not the four
+            // corners of the unit square.
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -2946,16 +2947,22 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
 /* -------------------------------------------------------------------- */
 /*      Extract GCS.WKT attribute                                       */
 /* -------------------------------------------------------------------- */
-    GDALPDFObject* poGCSWKT;
-    if( (poGCSWKT = poGCSDict->Get("WKT")) == NULL ||
+    GDALPDFObject* poGCSWKT = poGCSDict->Get("WKT");
+    if( poGCSWKT != NULL &&
         poGCSWKT->GetType() != PDFObjectType_String )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot find GCS.WKT object");
-        return FALSE;
+        poGCSWKT = NULL;
     }
 
-    CPLDebug("PDF", "GCS.WKT = %s", poGCSWKT->GetString().c_str());
+    if (poGCSWKT != NULL)
+        CPLDebug("PDF", "GCS.WKT = %s", poGCSWKT->GetString().c_str());
+
+    if (nEPSGCode <= 0 && poGCSWKT == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot find GCS.WKT or GCS.EPSG objects");
+        return FALSE;
+    }
 
     OGRSpatialReference oSRS;
     int bSRSOK = FALSE;
@@ -2969,6 +2976,13 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
     }
     else
     {
+        if (poGCSWKT == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot resolve EPSG object, and GCS.WKT not found");
+            return FALSE;
+        }
+
         CPLFree(pszWKT);
         pszWKT = CPLStrdup(poGCSWKT->GetString().c_str());
     }
@@ -3009,13 +3023,31 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
 /* -------------------------------------------------------------------- */
     OGRSpatialReference* poSRSGeog = oSRS.CloneGeogCS();
 
-    OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation( poSRSGeog, &oSRS);
-    if (poCT == NULL)
+    /* Files found at http://carto.iict.ch/blog/publications-cartographiques-au-format-geospatial-pdf/ */
+    /* are in a PROJCS. However the coordinates in GPTS array are not in (lat, long) as required by the */
+    /* ISO 32000 supplement spec, but in (northing, easting). Adobe reader is able to understand that, */
+    /* so let's also try to do it with a heuristics. */
+
+    int bReproject = TRUE;
+    if (oSRS.IsProjected() &&
+        (fabs(adfGPTS[0]) > 91 || fabs(adfGPTS[2]) > 91 || fabs(adfGPTS[4]) > 91 || fabs(adfGPTS[6]) > 91 ||
+         fabs(adfGPTS[1]) > 361 || fabs(adfGPTS[3]) > 361 || fabs(adfGPTS[5]) > 361 || fabs(adfGPTS[7]) > 361))
     {
-        delete poSRSGeog;
-        CPLFree(pszWKT);
-        pszWKT = NULL;
-        return FALSE;
+        CPLDebug("PDF", "GPTS coordinates seems to be in (northing, easting), which is non-standard");
+        bReproject = FALSE;
+    }
+
+    OGRCoordinateTransformation* poCT = NULL;
+    if (bReproject)
+    {
+        poCT = OGRCreateCoordinateTransformation( poSRSGeog, &oSRS);
+        if (poCT == NULL)
+        {
+            delete poSRSGeog;
+            CPLFree(pszWKT);
+            pszWKT = NULL;
+            return FALSE;
+        }
     }
 
     GDAL_GCP asGCPS[4];
@@ -3033,15 +3065,18 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
 
         double lat = adfGPTS[2*i], lon = adfGPTS[2*i+1];
         double x = lon, y = lat;
-        if (!poCT->Transform(1, &x, &y, NULL))
+        if (bReproject)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot reproject (%f, %f)", lon, lat);
-            delete poSRSGeog;
-            delete poCT;
-            CPLFree(pszWKT);
-            pszWKT = NULL;
-            return FALSE;
+            if (!poCT->Transform(1, &x, &y, NULL))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Cannot reproject (%f, %f)", lon, lat);
+                delete poSRSGeog;
+                delete poCT;
+                CPLFree(pszWKT);
+                pszWKT = NULL;
+                return FALSE;
+            }
         }
         asGCPS[i].dfGCPX     = x;
         asGCPS[i].dfGCPY     = y;
