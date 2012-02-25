@@ -3188,6 +3188,7 @@ void GDALRegister_PDF()
 "     <Value>BOTH</Value>\n"
 "   </Option>\n"
 "   <Option name='DPI' type='float' description='DPI' default='72'/>\n"
+"   <Option name='PREDICTOR' type='int' description='Predictor Type (for DEFLATE compression)'/>\n"
 "   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100' default='75'/>\n"
 "   <Option name='JPEG2000_DRIVER' type='string'/>\n"
 "   <Option name='TILED' type='boolean' description='Switch to tiled format' default='NO'/>\n"

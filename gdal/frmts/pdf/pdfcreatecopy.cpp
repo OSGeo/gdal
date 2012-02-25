@@ -77,6 +77,7 @@ class GDALPDFWriter
                         int nXOff, int nYOff, int nReqXSize, int nReqYSize,
                         int nColorTableId,
                         PDFCompressMethod eCompressMethod,
+                        int nPredictor,
                         int nJPEGQuality,
                         const char* pszJPEG2000_DRIVER,
                         GDALProgressFunc pfnProgress,
@@ -96,6 +97,7 @@ class GDALPDFWriter
                       double dfDPI,
                       const char* pszGEO_ENCODING,
                       PDFCompressMethod eCompressMethod,
+                      int nPredictor,
                       int nJPEGQuality,
                       const char* pszJPEG2000_DRIVER,
                       int nBlockXSize, int nBlockYSize,
@@ -961,6 +963,7 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
                              double dfDPI,
                              const char* pszGEO_ENCODING,
                              PDFCompressMethod eCompressMethod,
+                             int nPredictor,
                              int nJPEGQuality,
                              const char* pszJPEG2000_DRIVER,
                              int nBlockXSize, int nBlockYSize,
@@ -1088,6 +1091,7 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
                                       nReqWidth, nReqHeight,
                                       nColorTableId,
                                       eCompressMethod,
+                                      nPredictor,
                                       nJPEGQuality,
                                       pszJPEG2000_DRIVER,
                                       GDALScaledProgress,
@@ -1286,6 +1290,7 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
                              int nXOff, int nYOff, int nReqXSize, int nReqYSize,
                              int nColorTableId,
                              PDFCompressMethod eCompressMethod,
+                             int nPredictor,
                              int nJPEGQuality,
                              const char* pszJPEG2000_DRIVER,
                              GDALProgressFunc pfnProgress,
@@ -1379,6 +1384,14 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
     if( eCompressMethod == COMPRESS_DEFLATE )
     {
         VSIFPrintfL(fp, "   /Filter /FlateDecode\n");
+        if( nPredictor == 2 )
+            VSIFPrintfL(fp, "   /DecodeParms << \n"
+                            "     /Predictor 2\n"
+                            "     /Colors %d\n"
+                            "     /Columns %d\n"
+                            "   >>\n",
+                        nBands,
+                        nReqXSize);
     }
     else if( eCompressMethod == COMPRESS_JPEG )
     {
@@ -1498,6 +1511,39 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
                                           nBands, NULL, nBands, 0, 1);
             if( eErr != CE_None )
                 break;
+
+            /* Apply predictor if needed */
+            if( nPredictor == 2 )
+            {
+                if( nBands == 1 )
+                {
+                    int nPrevValue = pabyLine[0];
+                    for(int iPixel = 1; iPixel < nReqXSize; iPixel ++)
+                    {
+                        int nCurValue = pabyLine[iPixel];
+                        pabyLine[iPixel] = (GByte) (nCurValue - nPrevValue);
+                        nPrevValue = nCurValue;
+                    }
+                }
+                else if( nBands == 3 )
+                {
+                    int nPrevValueR = pabyLine[0];
+                    int nPrevValueG = pabyLine[1];
+                    int nPrevValueB = pabyLine[2];
+                    for(int iPixel = 1; iPixel < nReqXSize; iPixel ++)
+                    {
+                        int nCurValueR = pabyLine[3 * iPixel + 0];
+                        int nCurValueG = pabyLine[3 * iPixel + 1];
+                        int nCurValueB = pabyLine[3 * iPixel + 2];
+                        pabyLine[3 * iPixel + 0] = (GByte) (nCurValueR - nPrevValueR);
+                        pabyLine[3 * iPixel + 1] = (GByte) (nCurValueG - nPrevValueG);
+                        pabyLine[3 * iPixel + 2] = (GByte) (nCurValueB - nPrevValueB);
+                        nPrevValueR = nCurValueR;
+                        nPrevValueG = nCurValueG;
+                        nPrevValueB = nCurValueB;
+                    }
+                }
+            }
 
             if( VSIFWriteL(pabyLine, nReqXSize * nBands, 1, fp) != 1 )
             {
@@ -1715,6 +1761,27 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     if (dfDPI < 72.0)
         dfDPI = 72.0;
 
+    const char* pszPredictor = CSLFetchNameValue(papszOptions, "PREDICTOR");
+    int nPredictor = 1;
+    if (pszPredictor)
+    {
+        if (eCompressMethod != COMPRESS_DEFLATE)
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "PREDICTOR option is only taken into account for DEFLATE compression");
+        }
+        else
+        {
+            nPredictor = atoi(pszPredictor);
+            if (nPredictor != 1 && nPredictor != 2)
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                                    "Supported PREDICTOR values are 1 or 2");
+                nPredictor = 1;
+            }
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create file.                                                    */
 /* -------------------------------------------------------------------- */
@@ -1738,6 +1805,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
                                  dfDPI,
                                  pszGEO_ENCODING,
                                  eCompressMethod,
+                                 nPredictor,
                                  nJPEGQuality,
                                  pszJPEG2000_DRIVER,
                                  nBlockXSize, nBlockYSize,
