@@ -530,6 +530,23 @@ def pdf_info():
 
     return 'success'
 
+###############################################################################
+# Switch from poppler to podofo if both are available
+
+def pdf_switch_underlying_lib():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    md = gdaltest.pdf_drv.GetMetadata()
+    if 'HAVE_POPPLER' in md and 'HAVE_PODOFO' in md:
+        gdal.SetConfigOption("GDAL_PDF_LIB", "PODOFO")
+        print('Using podofo now')
+    else:
+        gdaltest.pdf_drv = None
+
+    return 'success'
+
 gdaltest_list = [
     pdf_init,
     pdf_online_1,
@@ -554,7 +571,12 @@ gdaltest_list = [
     pdf_tiled_128,
     pdf_color_table,
     pdf_xmp,
-    pdf_info
+    pdf_info,
+
+    pdf_switch_underlying_lib,
+
+    pdf_iso32000,
+    pdf_ogcbp
 ]
 
 if __name__ == '__main__':

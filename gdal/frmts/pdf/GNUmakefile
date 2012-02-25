@@ -4,7 +4,7 @@ OBJ	=	pdfdataset.o pdfio.o pdfobject.o pdfcreatecopy.o
 include ../../GDALmake.opt
 
 ifeq ($(HAVE_POPPLER),yes)
-CPPFLAGS +=  -DUSE_POPPLER
+CPPFLAGS +=  -DHAVE_POPPLER
 endif
 
 ifeq ($(POPPLER_HAS_OPTCONTENT),yes)
@@ -17,6 +17,10 @@ endif
 
 ifeq ($(POPPLER_0_20_OR_LATER),yes)
 CPPFLAGS +=  -DPOPPLER_0_20_OR_LATER
+endif
+
+ifeq ($(HAVE_PODOFO),yes)
+CPPFLAGS +=  -DHAVE_PODOFO
 endif
 
 $(O_OBJ):       pdfobject.h pdfio.h
