@@ -377,6 +377,12 @@ static void DumpObject(FILE* f, GDALPDFObject* poObj, int nDepth, int nDepthLimi
         default:
             break;
     }
+
+    GDALPDFStream* poStream = poObj->GetStream();
+    if (poStream != NULL)
+    {
+        fprintf(f, "%sHas stream (%d bytes)\n", osIndent.c_str(), poStream->GetLength());
+    }
 }
 
 static void DumpDict(FILE* f, GDALPDFDictionary* poDict, int nDepth, int nDepthLimit)
@@ -1512,21 +1518,16 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( nPages > 1 && !bOpenSubdataset )
     {
         int i;
-        char** papszSubDatasets = NULL;
+        CPLStringList aosList;
         for(i=0;i<nPages;i++)
         {
             char szKey[32];
             sprintf( szKey, "SUBDATASET_%d_NAME", i+1 );
-            papszSubDatasets =
-                CSLSetNameValue( papszSubDatasets, szKey,
-                                 CPLSPrintf("PDF:%d:%s", i+1, poOpenInfo->pszFilename));
+            aosList.AddNameValue(szKey, CPLSPrintf("PDF:%d:%s", i+1, poOpenInfo->pszFilename));
             sprintf( szKey, "SUBDATASET_%d_DESC", i+1 );
-            papszSubDatasets =
-                CSLSetNameValue( papszSubDatasets, szKey,
-                                 CPLSPrintf("Page %d of %s", i+1, poOpenInfo->pszFilename));
+            aosList.AddNameValue(szKey, CPLSPrintf("Page %d of %s", i+1, poOpenInfo->pszFilename));
         }
-        poDS->SetMetadata( papszSubDatasets, "SUBDATASETS" );
-        CSLDestroy(papszSubDatasets);
+        poDS->SetMetadata( aosList.List(), "SUBDATASETS" );
     }
 
 #ifdef USE_POPPLER
@@ -1650,16 +1651,20 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 
 #ifdef USE_POPPLER
-    int nXRefSize = poDoc->getXRef()->getNumObjects();
-    for(int i=0;i<nXRefSize;i++)
-    {
-        Object o;
-        poDoc->getXRef()->fetch(i, 0, &o);
 
-        GDALPDFObjectPoppler oObjPoppler(&o, FALSE);
-        GDALPDFObject* poObj = &oObjPoppler;
-        poDS->FindXMP(poObj);
-        o.free();
+    GooString* poMetadata = poCatalog->readMetadata();
+    if (poMetadata)
+    {
+        char* pszContent = poMetadata->getCString();
+        if (pszContent != NULL &&
+            strncmp(pszContent, "<?xpacket begin=", strlen("<?xpacket begin=")) == 0)
+        {
+            char *apszMDList[2];
+            apszMDList[0] = pszContent;
+            apszMDList[1] = NULL;
+            poDS->SetMetadata(apszMDList, "xml:XMP");
+        }
+        delete poMetadata;
     }
 
     /* Read Info object */
