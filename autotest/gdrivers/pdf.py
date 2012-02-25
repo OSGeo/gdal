@@ -440,6 +440,22 @@ def pdf_tiled_128():
     return ret
 
 ###############################################################################
+# Test raster with color table
+
+def pdf_color_table():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName('GIF') is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'PDF', 'bug407.gif', 1, None )
+    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = True)
+
+    return ret
+
+###############################################################################
 # Test XMP support
 
 def pdf_xmp():
@@ -536,6 +552,7 @@ gdaltest_list = [
     pdf_jpeg_compression_rgba,
     pdf_tiled,
     pdf_tiled_128,
+    pdf_color_table,
     pdf_xmp,
     pdf_info
 ]

@@ -75,6 +75,7 @@ class GDALPDFWriter
                             double dfUserUnit);
     int     WriteBlock( GDALDataset* poSrcDS,
                         int nXOff, int nYOff, int nReqXSize, int nReqYSize,
+                        int nColorTableId,
                         PDFCompressMethod eCompressMethod,
                         int nJPEGQuality,
                         const char* pszJPEG2000_DRIVER,
@@ -1030,6 +1031,40 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
     VSIFPrintfL(fp, ">>\n");
     EndObj();
 
+    /* Does the source image has a color table ? */
+    GDALColorTable* poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
+    int nColorTableId = 0;
+    if (poCT != NULL && poCT->GetColorEntryCount() <= 256)
+    {
+        int nColors = poCT->GetColorEntryCount();
+        nColorTableId = AllocNewObject();
+
+        int nLookupTableId = AllocNewObject();
+
+        /* Index object */
+        StartObj(nColorTableId);
+        VSIFPrintfL(fp, "[ /Indexed [ /DeviceRGB ] %d %d 0 R ]\n",
+                    nColors - 1, nLookupTableId);
+        EndObj();
+
+        /* Lookup table object */
+        StartObj(nLookupTableId);
+        VSIFPrintfL(fp, "<< /Length %d >> %% Lookup table\n", nColors * 3);
+        VSIFPrintfL(fp, "stream\n");
+        GByte pabyLookup[768];
+        for(int i=0;i<nColors;i++)
+        {
+            const GDALColorEntry* poEntry = poCT->GetColorEntry(i);
+            pabyLookup[3 * i + 0] = (GByte)poEntry->c1;
+            pabyLookup[3 * i + 1] = (GByte)poEntry->c2;
+            pabyLookup[3 * i + 2] = (GByte)poEntry->c3;
+        }
+        VSIFWriteL(pabyLookup, 3 * nColors, 1, fp);
+        VSIFPrintfL(fp, "\n");
+        VSIFPrintfL(fp, "endstream\n");
+        EndObj();
+    }
+
     std::vector<int> asImageId;
     int nXBlocks = (nWidth + nBlockXSize - 1) / nBlockXSize;
     int nYBlocks = (nHeight + nBlockYSize - 1) / nBlockYSize;
@@ -1051,6 +1086,7 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
                                       nBlockXOff * nBlockXSize,
                                       nBlockYOff * nBlockYSize,
                                       nReqWidth, nReqHeight,
+                                      nColorTableId,
                                       eCompressMethod,
                                       nJPEGQuality,
                                       pszJPEG2000_DRIVER,
@@ -1248,6 +1284,7 @@ int GDALPDFWriter::WriteMask(GDALDataset* poSrcDS,
 
 int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
                              int nXOff, int nYOff, int nReqXSize, int nReqYSize,
+                             int nColorTableId,
                              PDFCompressMethod eCompressMethod,
                              int nJPEGQuality,
                              const char* pszJPEG2000_DRIVER,
@@ -1331,6 +1368,9 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
     int nImageId = AllocNewObject();
     int nImageLengthId = AllocNewObject();
 
+    char szColorSpaceObjectRef[64];
+    sprintf(szColorSpaceObjectRef, "%d 0 R", nColorTableId);
+
     StartObj(nImageId);
     VSIFPrintfL(fp, "<< /Length %d 0 R\n",
                 nImageLengthId);
@@ -1352,10 +1392,11 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
                 "   /Subtype /Image\n"
                 "   /Width %d\n"
                 "   /Height %d\n"
-                "   /ColorSpace /%s\n"
+                "   /ColorSpace %s\n"
                 "   /BitsPerComponent 8\n",
                 nReqXSize, nReqYSize,
-                (nBands == 1) ? "DeviceGray" : "DeviceRGB");
+                (nColorTableId != 0) ? szColorSpaceObjectRef :
+                            (nBands == 1) ? "/DeviceGray" : "/DeviceRGB");
     if( nMaskId )
     {
         VSIFPrintfL(fp, "  /SMask %d 0 R\n", nMaskId);
@@ -1583,21 +1624,10 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     if( nBands != 1 && nBands != 3 && nBands != 4 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "PDF driver doesn't support %d bands.  Must be 1 (grey), "
+                  "PDF driver doesn't support %d bands.  Must be 1 (grey or with color table), "
                   "3 (RGB) or 4 bands.\n", nBands );
 
         return NULL;
-    }
-
-    if (nBands == 1 &&
-        poSrcDS->GetRasterBand(1)->GetColorTable() != NULL)
-    {
-        CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
-                  "PDF driver ignores color table. "
-                  "The source raster band will be considered as grey level.\n"
-                  "Consider using color table expansion (-expand option in gdal_translate)\n");
-        if (bStrict)
-            return NULL;
     }
 
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
@@ -1637,6 +1667,16 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
                 return NULL;
         }
     }
+
+    if (nBands == 1 &&
+        poSrcDS->GetRasterBand(1)->GetColorTable() != NULL &&
+        (eCompressMethod == COMPRESS_JPEG || eCompressMethod == COMPRESS_JPEG2000))
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "The source raster band has a color table, which is not appropriate with JPEG or JPEG2000 compression.\n"
+                  "You should rather consider using color table expansion (-expand option in gdal_translate)");
+    }
+
 
     int nBlockXSize = nWidth;
     int nBlockYSize = nHeight;
