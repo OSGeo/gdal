@@ -33,7 +33,7 @@
 #include "cpl_string.h"
 #include <map>
 
-#ifdef USE_POPPLER
+#ifdef HAVE_POPPLER
 
 /* begin of poppler xpdf includes */
 #include <poppler/Object.h>
@@ -59,15 +59,17 @@
 #include <poppler/ErrorCodes.h>
 /* end of poppler xpdf includes */
 
-#else
+#endif // HAVE_POPPLER
 
+#ifdef HAVE_PODOFO
 #include "podofo.h"
-
-#endif
+#endif // HAVE_PODOFO
 
 typedef enum
 {
     PDFObjectType_Unknown,
+    PDFObjectType_Null,
+    PDFObjectType_Bool,
     PDFObjectType_Int,
     PDFObjectType_Real,
     PDFObjectType_String,
@@ -82,11 +84,15 @@ class GDALPDFStream;
 
 class GDALPDFObject
 {
+    protected:
+        virtual const char*       GetTypeNameNative() = 0;
+
     public:
         virtual ~GDALPDFObject();
 
         virtual GDALPDFObjectType GetType() = 0;
-        virtual const char*       GetTypeName() = 0;
+        virtual const char*       GetTypeName();
+        virtual int               GetBool() = 0;
         virtual int               GetInt() = 0;
         virtual double            GetReal() = 0;
         virtual const CPLString&  GetString() = 0;
@@ -94,6 +100,8 @@ class GDALPDFObject
         virtual GDALPDFDictionary*  GetDictionary() = 0;
         virtual GDALPDFArray*       GetArray() = 0;
         virtual GDALPDFStream*      GetStream() = 0;
+        virtual int                 GetRefNum() = 0;
+        virtual int                 GetRefGen() = 0;
 };
 
 class GDALPDFDictionary
@@ -124,7 +132,7 @@ class GDALPDFStream
         virtual char* GetBytes() = 0;
 };
 
-#ifdef USE_POPPLER
+#ifdef HAVE_POPPLER
 
 class GDALPDFObjectPoppler : public GDALPDFObject
 {
@@ -135,14 +143,24 @@ class GDALPDFObjectPoppler : public GDALPDFObject
         GDALPDFArray* m_poArray;
         GDALPDFStream* m_poStream;
         CPLString osStr;
+        int m_nRefNum;
+        int m_nRefGen;
+
+    protected:
+        virtual const char*       GetTypeNameNative();
 
     public:
-        GDALPDFObjectPoppler(Object* po, int bDestroy) : m_po(po), m_bDestroy(bDestroy), m_poDict(NULL), m_poArray(NULL), m_poStream(NULL) {}
+        GDALPDFObjectPoppler(Object* po, int bDestroy) :
+                m_po(po), m_bDestroy(bDestroy),
+                m_poDict(NULL), m_poArray(NULL), m_poStream(NULL),
+                m_nRefNum(0), m_nRefGen(0) {}
+
+        void SetRefNumAndGen(int nNum, int nGen);
 
         virtual ~GDALPDFObjectPoppler();
 
         virtual GDALPDFObjectType GetType();
-        virtual const char*       GetTypeName();
+        virtual int               GetBool();
         virtual int               GetInt();
         virtual double            GetReal();
         virtual const CPLString&  GetString();
@@ -150,9 +168,13 @@ class GDALPDFObjectPoppler : public GDALPDFObject
         virtual GDALPDFDictionary*  GetDictionary();
         virtual GDALPDFArray*       GetArray();
         virtual GDALPDFStream*      GetStream();
+        virtual int                 GetRefNum();
+        virtual int                 GetRefGen();
 };
 
-#else
+#endif // HAVE_POPPLER
+
+#ifdef HAVE_PODOFO
 
 class GDALPDFObjectPodofo : public GDALPDFObject
 {
@@ -164,13 +186,16 @@ class GDALPDFObjectPodofo : public GDALPDFObject
         GDALPDFStream* m_poStream;
         CPLString osStr;
 
+    protected:
+        virtual const char*       GetTypeNameNative();
+
     public:
         GDALPDFObjectPodofo(PoDoFo::PdfObject* po, PoDoFo::PdfVecObjects& poObjects);
 
         virtual ~GDALPDFObjectPodofo();
 
         virtual GDALPDFObjectType GetType();
-        virtual const char*       GetTypeName();
+        virtual int               GetBool();
         virtual int               GetInt();
         virtual double            GetReal();
         virtual const CPLString&  GetString();
@@ -178,8 +203,10 @@ class GDALPDFObjectPodofo : public GDALPDFObject
         virtual GDALPDFDictionary*  GetDictionary();
         virtual GDALPDFArray*       GetArray();
         virtual GDALPDFStream*      GetStream();
+        virtual int                 GetRefNum();
+        virtual int                 GetRefGen();
 };
 
-#endif
+#endif // HAVE_PODOFO
 
 #endif // PDFOBJECT_H_INCLUDED

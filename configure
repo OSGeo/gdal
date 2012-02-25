@@ -26624,10 +26624,6 @@ if test "${with_podofo_lib+set}" = set; then :
 fi
 
 
-    if test "$HAVE_POPPLER" = "yes"; then
-        as_fn_error $? "--with-podofo and --with-poppler cannot be specified at the same time" "$LINENO" 5
-    fi
-
     if test "$with_podofo" = "yes" ; then
         TEST_PODOFO_INC="-I/usr/include -I/usr/include/podofo"
         PODOFO_LIB="-lpodofo"
@@ -30430,3 +30426,7 @@ echo "  hide internal symbols:     ${HAVE_HIDE_INTERNAL_SYMBOLS}"
 echo ""
 
 
+if test "$HAVE_PODOFO" = "yes" -a "$HAVE_POPPLER" = "yes" ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-podofo and --with-poppler are both available. This is unusual setup, but will work. Poppler will be used by default..." >&5
+$as_echo "$as_me: WARNING: --with-podofo and --with-poppler are both available. This is unusual setup, but will work. Poppler will be used by default..." >&2;}
+fi

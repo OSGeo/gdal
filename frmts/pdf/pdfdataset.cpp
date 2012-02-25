@@ -37,12 +37,14 @@
 #include "ogr_spatialref.h"
 #include "ogr_geometry.h"
 
-#ifdef USE_POPPLER
+#ifdef HAVE_POPPLER
 #include "pdfio.h"
 #endif
 
 #include "pdfobject.h"
 #include "pdfcreatecopy.h"
+
+#include <set>
 
 /* g++ -fPIC -g -Wall frmts/pdf/pdfdataset.cpp -shared -o gdal_PDF.so -Iport -Igcore -Iogr -L. -lgdal -lpoppler -I/usr/include/poppler */
 
@@ -67,7 +69,7 @@ static double ROUND_TO_INT_IF_CLOSE(double x, double eps = 1e-8)
         return x;
 }
 
-#ifdef USE_POPPLER
+#ifdef HAVE_POPPLER
 
 /************************************************************************/
 /*                          ObjectAutoFree                              */
@@ -281,12 +283,28 @@ class GDALPDFOutputDev : public SplashOutputDev
 /*                         Dump routines                                */
 /************************************************************************/
 
-static void DumpObject(FILE* f, GDALPDFObject* poObj, int nDepth = 0, int nDepthLimit = -1);
-static void DumpDict(FILE* f, GDALPDFDictionary* poDict, int nDepth = 0, int nDepthLimit = -1);
-static void DumpArray(FILE* f, GDALPDFArray* poArray, int nDepth = 0, int nDepthLimit = -1);
-static void DumpObjectSimplified(FILE* f, GDALPDFObject* poObj);
+class GDALPDFDumper
+{
+    private:
+        FILE* f;
+        int   nDepthLimit;
+        std::set< int > aoSetObjectExplored;
+        int   bDumpParent;
 
-static void DumpArray(FILE* f, GDALPDFArray* poArray, int nDepth, int nDepthLimit)
+        void DumpSimplified(GDALPDFObject* poObj);
+
+    public:
+        GDALPDFDumper(FILE* fIn, int nDepthLimitIn = -1) : f(fIn), nDepthLimit(nDepthLimitIn)
+        {
+            bDumpParent = CSLTestBoolean(CPLGetConfigOption("PDF_DUMP_PARENT", "FALSE"));
+        }
+
+        void Dump(GDALPDFObject* poObj, int nDepth = 0);
+        void Dump(GDALPDFDictionary* poDict, int nDepth = 0);
+        void Dump(GDALPDFArray* poArray, int nDepth = 0);
+};
+
+void GDALPDFDumper::Dump(GDALPDFArray* poArray, int nDepth)
 {
     if (nDepthLimit >= 0 && nDepth > nDepthLimit)
         return;
@@ -303,29 +321,39 @@ static void DumpArray(FILE* f, GDALPDFArray* poArray, int nDepth, int nDepthLimi
         if ((poObj = poArray->Get(i)) != NULL)
         {
             if (poObj->GetType() == PDFObjectType_String ||
+                poObj->GetType() == PDFObjectType_Null ||
+                poObj->GetType() == PDFObjectType_Bool ||
                 poObj->GetType() == PDFObjectType_Int ||
                 poObj->GetType() == PDFObjectType_Real ||
                 poObj->GetType() == PDFObjectType_Name)
             {
                 fprintf(f, " ");
-                DumpObjectSimplified(f, poObj);
+                DumpSimplified(poObj);
                 fprintf(f, "\n");
             }
             else
             {
                 fprintf(f, "\n");
-                DumpObject(f, poObj, nDepth+1, nDepthLimit);
+                Dump( poObj, nDepth+1);
             }
         }
     }
 }
 
-static void DumpObjectSimplified(FILE* f, GDALPDFObject* poObj)
+void GDALPDFDumper::DumpSimplified(GDALPDFObject* poObj)
 {
     switch(poObj->GetType())
     {
         case PDFObjectType_String:
             fprintf(f, "%s (string)", poObj->GetString().c_str());
+            break;
+
+        case PDFObjectType_Null:
+            fprintf(f, "null");
+            break;
+
+        case PDFObjectType_Bool:
+            fprintf(f, "%s (bool)", poObj->GetBool() ? "true" : "false");
             break;
 
         case PDFObjectType_Int:
@@ -341,11 +369,12 @@ static void DumpObjectSimplified(FILE* f, GDALPDFObject* poObj)
             break;
 
         default:
+            fprintf(f, "unknown !");
             break;
     }
 }
 
-static void DumpObject(FILE* f, GDALPDFObject* poObj, int nDepth, int nDepthLimit)
+void GDALPDFDumper::Dump(GDALPDFObject* poObj, int nDepth)
 {
     if (nDepthLimit >= 0 && nDepth > nDepthLimit)
         return;
@@ -354,27 +383,45 @@ static void DumpObject(FILE* f, GDALPDFObject* poObj, int nDepth, int nDepthLimi
     CPLString osIndent;
     for(i=0;i<nDepth;i++)
         osIndent += " ";
-    fprintf(f, "%sType = %s\n", osIndent.c_str(), poObj->GetTypeName());
+    fprintf(f, "%sType = %s",
+            osIndent.c_str(), poObj->GetTypeName());
+    int nRefNum = poObj->GetRefNum();
+    if (nRefNum != 0)
+        fprintf(f, ", Num = %d, Gen = %d",
+                nRefNum, poObj->GetRefGen());
+    fprintf(f, "\n");
+
+    if (nRefNum != 0)
+    {
+        if (aoSetObjectExplored.find(nRefNum) != aoSetObjectExplored.end())
+            return;
+        aoSetObjectExplored.insert(nRefNum);
+    }
+
     switch(poObj->GetType())
     {
         case PDFObjectType_Array:
-            DumpArray(f, poObj->GetArray(), nDepth+1, nDepthLimit);
+            Dump(poObj->GetArray(), nDepth+1);
             break;
 
         case PDFObjectType_Dictionary:
-            DumpDict(f, poObj->GetDictionary(), nDepth+1, nDepthLimit);
+            Dump(poObj->GetDictionary(), nDepth+1);
             break;
 
         case PDFObjectType_String:
+        case PDFObjectType_Null:
+        case PDFObjectType_Bool:
         case PDFObjectType_Int:
         case PDFObjectType_Real:
         case PDFObjectType_Name:
             fprintf(f, "%s", osIndent.c_str());
-            DumpObjectSimplified(f, poObj);
+            DumpSimplified(poObj);
             fprintf(f, "\n");
             break;
 
         default:
+            fprintf(f, "%s", osIndent.c_str());
+            fprintf(f, "unknown !\n");
             break;
     }
 
@@ -385,7 +432,7 @@ static void DumpObject(FILE* f, GDALPDFObject* poObj, int nDepth, int nDepthLimi
     }
 }
 
-static void DumpDict(FILE* f, GDALPDFDictionary* poDict, int nDepth, int nDepthLimit)
+void GDALPDFDumper::Dump(GDALPDFDictionary* poDict, int nDepth)
 {
     if (nDepthLimit >= 0 && nDepth > nDepthLimit)
         return;
@@ -401,27 +448,32 @@ static void DumpDict(FILE* f, GDALPDFDictionary* poDict, int nDepth, int nDepthL
     {
         const char* pszKey = oIter->first.c_str();
         fprintf(f, "%sItem[%d] : %s", osIndent.c_str(), i, pszKey);
-        if (strcmp(pszKey, "Parent") == 0)
+        GDALPDFObject* poObj = oIter->second;
+        if (strcmp(pszKey, "Parent") == 0 && !bDumpParent)
         {
+            if (poObj->GetRefNum())
+                fprintf(f, ", Num = %d, Gen = %d",
+                        poObj->GetRefNum(), poObj->GetRefGen());
             fprintf(f, "\n");
             continue;
         }
-        GDALPDFObject* poObj = oIter->second;
         if (poObj != NULL)
         {
             if (poObj->GetType() == PDFObjectType_String ||
+                poObj->GetType() == PDFObjectType_Null ||
+                poObj->GetType() == PDFObjectType_Bool ||
                 poObj->GetType() == PDFObjectType_Int ||
                 poObj->GetType() == PDFObjectType_Real ||
                 poObj->GetType() == PDFObjectType_Name)
             {
                 fprintf(f, " = ");
-                DumpObjectSimplified(f, poObj);
+                DumpSimplified(poObj);
                 fprintf(f, "\n");
             }
             else
             {
                 fprintf(f, "\n");
-                DumpObject(f, poObj, nDepth+1, nDepthLimit);
+                Dump(poObj, nDepth+1);
             }
         }
     }
@@ -449,9 +501,15 @@ class PDFDataset : public GDALPamDataset
     int          nGCPCount;
     GDAL_GCP    *pasGCPList;
 
-#ifdef USE_POPPLER
-    PDFDoc*      poDoc;
+    int          bUsePoppler;
+#ifdef HAVE_POPPLER
+    PDFDoc*      poDocPoppler;
 #endif
+#ifdef HAVE_PODOFO
+    PoDoFo::PdfMemDocument* poDocPodofo;
+#endif
+    GDALPDFObject* poPageObj;
+
     int          iPage;
 
     double       dfMaxArea;
@@ -547,8 +605,9 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         const char* pszRenderingOptions = CPLGetConfigOption("GDAL_PDF_RENDERING_OPTIONS", NULL);
 
-#ifdef USE_POPPLER
-
+#ifdef HAVE_POPPLER
+      if(poGDS->bUsePoppler)
+      {
         SplashColor sColor;
         sColor[0] = 255;
         sColor[1] = 255;
@@ -583,7 +642,7 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             CSLDestroy(papszTokens);
         }
 
-        PDFDoc* poDoc = poGDS->poDoc;
+        PDFDoc* poDoc = poGDS->poDocPoppler;
 #ifdef POPPLER_0_20_OR_LATER
         poSplashOut->startDoc(poDoc);
 #else
@@ -602,7 +661,7 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         OCGs* poOldOCGs = poCatalog->optContent;
         poCatalog->optContent = NULL;
 #endif
-        poGDS->poDoc->displayPageSlice(poSplashOut,
+        poDoc->displayPageSlice(poSplashOut,
                                        poGDS->iPage,
                                        dfDPI, dfDPI,
                                        0,
@@ -662,8 +721,12 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             pabySrc += poBitmap->getRowSize();
         }
         delete poSplashOut;
+      }
+#endif // HAVE_POPPLER
 
-#else
+#ifdef HAVE_PODOFO
+      if (!poGDS->bUsePoppler)
+      {
         CPLAssert(poGDS->nBands == 3);
 
         if (pszRenderingOptions != NULL)
@@ -713,6 +776,7 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             CPLDebug("PDF", "Ret code = %d", nRet);
         }
         VSIUnlink(osTmpFilename);
+      }
 #endif
     }
     if (poGDS->pabyData == NULL)
@@ -731,8 +795,11 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 PDFDataset::PDFDataset()
 {
-#ifdef USE_POPPLER
-    poDoc = NULL;
+#ifdef HAVE_POPPLER
+    poDocPoppler = NULL;
+#endif
+#ifdef HAVE_PODOFO
+    poDocPodofo = NULL;
 #endif
     pszWKT = NULL;
     dfMaxArea = 0;
@@ -755,7 +822,7 @@ PDFDataset::PDFDataset()
 /*                           PDFFreeDoc()                               */
 /************************************************************************/
 
-#ifdef USE_POPPLER
+#ifdef HAVE_POPPLER
 static void PDFFreeDoc(PDFDoc* poDoc)
 {
     if (poDoc)
@@ -789,8 +856,12 @@ PDFDataset::~PDFDataset()
         nGCPCount = 0;
     }
 
-#ifdef USE_POPPLER
-    PDFFreeDoc(poDoc);
+    delete poPageObj;
+#ifdef HAVE_POPPLER
+    PDFFreeDoc(poDocPoppler);
+#endif
+#ifdef HAVE_PODOFO
+    delete poDocPodofo;
 #endif
 }
 
@@ -813,7 +884,7 @@ int PDFDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*                    PDFDatasetErrorFunction()                         */
 /************************************************************************/
 
-#ifdef USE_POPPLER
+#ifdef HAVE_POPPLER
 #ifdef POPPLER_0_20_OR_LATER
 static void PDFDatasetErrorFunction(void* userData, ErrorCategory eErrCatagory, int nPos, char *pszMsg)
 {
@@ -1277,7 +1348,42 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     else
         iPage = 1;
 
-#ifdef USE_POPPLER
+    int bUsePoppler;
+#if defined(HAVE_POPPLER) && !defined(HAVE_PODOFO)
+    bUsePoppler = TRUE;
+#elif !defined(HAVE_POPPLER) && defined(HAVE_PODOFO)
+    bUsePoppler = FALSE;
+#elif defined(HAVE_POPPLER) && defined(HAVE_PODOFO)
+    const char* pszPDFLib = CPLGetConfigOption("GDAL_PDF_LIB", "POPPLER");
+    if (EQUAL(pszPDFLib, "POPPLER"))
+        bUsePoppler = TRUE;
+    else if (EQUAL(pszPDFLib, "PODOFO"))
+        bUsePoppler = FALSE;
+    else
+    {
+        CPLDebug("PDF", "Invalid value for GDAL_PDF_LIB config option");
+        bUsePoppler = TRUE;
+    }
+#else
+    return NULL;
+#endif
+
+    GDALPDFObject* poPageObj = NULL;
+#ifdef HAVE_POPPLER
+    PDFDoc* poDocPoppler = NULL;
+    ObjectAutoFree oObj;
+    Page* poPagePoppler = NULL;
+    Catalog* poCatalogPoppler = NULL;
+#endif
+#ifdef HAVE_PODOFO
+    PoDoFo::PdfMemDocument* poDocPodofo = NULL;
+    PoDoFo::PdfPage* poPagePodofo = NULL;
+#endif
+    int nPages = 0;
+
+#ifdef HAVE_POPPLER
+  if(bUsePoppler)
+  {
     GooString* poUserPwd = NULL;
 
     /* Set custom error handler for poppler errors */
@@ -1294,8 +1400,6 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     globalParams->setPrintCommands(CSLTestBoolean(
         CPLGetConfigOption("GDAL_PDF_PRINT_COMMANDS", "FALSE")));
 
-    PDFDoc* poDoc = NULL;
-    ObjectAutoFree oObj;
     while(TRUE)
     {
         VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
@@ -1308,12 +1412,12 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             poUserPwd = new GooString(pszUserPwd);
 
         oObj.initNull();
-        poDoc = new PDFDoc(new VSIPDFFileStream(fp, pszFilename, 0, gFalse, 0, &oObj), NULL, poUserPwd);
+        poDocPoppler = new PDFDoc(new VSIPDFFileStream(fp, pszFilename, 0, gFalse, 0, &oObj), NULL, poUserPwd);
         delete poUserPwd;
 
-        if ( !poDoc->isOk() || poDoc->getNumPages() == 0 )
+        if ( !poDocPoppler->isOk() || poDocPoppler->getNumPages() == 0 )
         {
-            if (poDoc->getErrorCode() == errEncrypted)
+            if (poDocPoppler->getErrorCode() == errEncrypted)
             {
                 if (pszUserPwd && EQUAL(pszUserPwd, "ASK_INTERACTIVE"))
                 {
@@ -1324,7 +1428,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                     if (sz10)
                         *sz10 = 0;
                     pszUserPwd = szPassword;
-                    PDFFreeDoc(poDoc);
+                    PDFFreeDoc(poDocPoppler);
                     continue;
                 }
                 else if (pszUserPwd == NULL)
@@ -1343,7 +1447,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF");
             }
 
-            PDFFreeDoc(poDoc);
+            PDFFreeDoc(poDocPoppler);
 
             return NULL;
         }
@@ -1351,51 +1455,70 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             break;
     }
 
-    Catalog* poCatalog = poDoc->getCatalog();
-    if ( poCatalog == NULL || !poCatalog->isOk() )
+    poCatalogPoppler = poDocPoppler->getCatalog();
+    if ( poCatalogPoppler == NULL || !poCatalogPoppler->isOk() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : invalid catalog");
-        PDFFreeDoc(poDoc);
+        PDFFreeDoc(poDocPoppler);
         return NULL;
     }
 
-    int nPages = poDoc->getNumPages();
+#ifdef dump_catalog
+    {
+        ObjectAutoFree oCatalog;
+        poDocPoppler->getXRef()->getCatalog(&oCatalog);
+        GDALPDFObjectPoppler oCatalogGDAL(&oCatalog, FALSE);
+        GDALPDFDumper oDumper(stderr);
+        oDumper.Dump(&oCatalogGDAL);
+    }
+#endif
+
+    nPages = poDocPoppler->getNumPages();
     if (iPage < 1 || iPage > nPages)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid page number (%d/%d)",
                  iPage, nPages);
-        PDFFreeDoc(poDoc);
+        PDFFreeDoc(poDocPoppler);
         return NULL;
     }
 
-    Page* poPage = poCatalog->getPage(iPage);
-    if ( poPage == NULL || !poPage->isOk() )
+    poPagePoppler = poCatalogPoppler->getPage(iPage);
+    if ( poPagePoppler == NULL || !poPagePoppler->isOk() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : invalid page");
-        PDFFreeDoc(poDoc);
+        PDFFreeDoc(poDocPoppler);
         return NULL;
     }
 
     /* Here's the dirty part: this is a private member */
     /* so we had to #define private public to get it ! */
-    Object& oPageObj = poPage->pageObj;
+    Object& oPageObj = poPagePoppler->pageObj;
     if ( !oPageObj.isDict() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : !oPageObj.isDict()");
-        PDFFreeDoc(poDoc);
+        PDFFreeDoc(poDocPoppler);
         return NULL;
     }
 
-    GDALPDFObjectPoppler oPageObjPoppler(&oPageObj, FALSE);
-    GDALPDFObject* poPageObj = &oPageObjPoppler;
-#else
+    poPageObj = new GDALPDFObjectPoppler(&oPageObj, FALSE);
+    Ref* poPageRef = poCatalogPoppler->getPageRef(iPage);
+    if (poPageRef != NULL)
+    {
+        ((GDALPDFObjectPoppler*)poPageObj)->SetRefNumAndGen(poPageRef->num, poPageRef->gen);
+    }
+  }
+#endif
+
+#ifdef HAVE_PODOFO
+  if (!bUsePoppler)
+  {
     PoDoFo::PdfError::EnableDebug( false );
     PoDoFo::PdfError::EnableLogging( false );
 
-    PoDoFo::PdfMemDocument* poDoc = new PoDoFo::PdfMemDocument();
+    poDocPodofo = new PoDoFo::PdfMemDocument();
     try
     {
-        poDoc->Load(pszFilename);
+        poDocPodofo->Load(pszFilename);
     }
     catch(PoDoFo::PdfError& oError)
     {
@@ -1416,7 +1539,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
                 try
                 {
-                    poDoc->SetPassword(pszUserPwd);
+                    poDocPodofo->SetPassword(pszUserPwd);
                 }
                 catch(PoDoFo::PdfError& oError)
                 {
@@ -1428,13 +1551,13 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                     {
                         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : %s", oError.what());
                     }
-                    delete poDoc;
+                    delete poDocPodofo;
                     return NULL;
                 }
                 catch(...)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF");
-                    delete poDoc;
+                    delete poDocPodofo;
                     return NULL;
                 }
             }
@@ -1443,54 +1566,55 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLError(CE_Failure, CPLE_AppDefined,
                             "A password is needed. You can specify it through the PDF_USER_PWD "
                             "configuration option (that can be set to ASK_INTERACTIVE)");
-                delete poDoc;
+                delete poDocPodofo;
                 return NULL;
             }
         }
         else
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : %s", oError.what());
-            delete poDoc;
+            delete poDocPodofo;
             return NULL;
         }
     }
     catch(...)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF");
-        delete poDoc;
+        delete poDocPodofo;
         return NULL;
     }
 
-    int nPages = poDoc->GetPageCount();
+    nPages = poDocPodofo->GetPageCount();
     if (iPage < 1 || iPage > nPages)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid page number (%d/%d)",
                  iPage, nPages);
-        delete poDoc;
+        delete poDocPodofo;
         return NULL;
     }
 
-    PoDoFo::PdfPage* poPage = poDoc->GetPage(iPage - 1);
-    if ( poPage == NULL )
+    poPagePodofo = poDocPodofo->GetPage(iPage - 1);
+    if ( poPagePodofo == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : invalid page");
-        delete poDoc;
+        delete poDocPodofo;
         return NULL;
     }
 
-    PoDoFo::PdfObject* pObj = poPage->GetObject();
-    GDALPDFObjectPodofo oPageObjPodofo(pObj, poDoc->GetObjects());
-    GDALPDFObject* poPageObj = &oPageObjPodofo;
+    PoDoFo::PdfObject* pObj = poPagePodofo->GetObject();
+    poPageObj = new GDALPDFObjectPodofo(pObj, poDocPodofo->GetObjects());
+  }
 #endif
 
     GDALPDFDictionary* poPageDict = poPageObj->GetDictionary();
     if ( poPageDict == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : poPageDict == NULL");
-#ifdef USE_POPPLER
-        PDFFreeDoc(poDoc);
-#else
-        delete poDoc;
+#ifdef HAVE_POPPLER
+        PDFFreeDoc(poDocPoppler);
+#endif
+#ifdef HAVE_PODOFO
+        delete poDocPodofo;
 #endif
         return NULL;
     }
@@ -1507,13 +1631,16 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             f = fopen(pszDumpObject, "wt");
         if (f == NULL)
             f = stderr;
-        DumpObject(f, poPageObj, 0 ,20);
+        GDALPDFDumper oDumper(f);
+        oDumper.Dump(poPageObj);
         if (f != stderr)
             fclose(f);
     }
 
     PDFDataset* poDS = new PDFDataset();
+    poDS->bUsePoppler = bUsePoppler;
     poDS->osFilename = pszFilename;
+    poDS->eAccess = poOpenInfo->eAccess;
 
     if ( nPages > 1 && !bOpenSubdataset )
     {
@@ -1530,47 +1657,69 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetMetadata( aosList.List(), "SUBDATASETS" );
     }
 
-#ifdef USE_POPPLER
-    poDS->poDoc = poDoc;
+#ifdef HAVE_POPPLER
+    poDS->poDocPoppler = poDocPoppler;
 #endif
+#ifdef HAVE_PODOFO
+    poDS->poDocPodofo = poDocPodofo;
+#endif
+    poDS->poPageObj = poPageObj;
     poDS->osUserPwd = pszUserPwd ? pszUserPwd : "";
     poDS->iPage = iPage;
     poDS->GuessDPI(poPageDict);
 
-#ifdef USE_POPPLER
-    PDFRectangle* psMediaBox = poPage->getMediaBox();
-    double dfX1 = psMediaBox->x1;
-    double dfY1 = psMediaBox->y1;
-    double dfX2 = psMediaBox->x2;
-    double dfY2 = psMediaBox->y2;
-#else
-    PoDoFo::PdfRect oMediaBox = poPage->GetMediaBox();
-    double dfX1 = oMediaBox.GetLeft();
-    double dfY1 = oMediaBox.GetBottom();
-    double dfX2 = dfX1 + oMediaBox.GetWidth();
-    double dfY2 = dfY1 + oMediaBox.GetHeight();
+    double dfX1 = 0.0, dfY1 = 0.0, dfX2 = 0.0, dfY2 = 0.0;
+
+#ifdef HAVE_POPPLER
+    if (bUsePoppler)
+    {
+        PDFRectangle* psMediaBox = poPagePoppler->getMediaBox();
+        dfX1 = psMediaBox->x1;
+        dfY1 = psMediaBox->y1;
+        dfX2 = psMediaBox->x2;
+        dfY2 = psMediaBox->y2;
+    }
+#endif
+
+#ifdef HAVE_PODOFO
+    if (!bUsePoppler)
+    {
+        PoDoFo::PdfRect oMediaBox = poPagePodofo->GetMediaBox();
+        dfX1 = oMediaBox.GetLeft();
+        dfY1 = oMediaBox.GetBottom();
+        dfX2 = dfX1 + oMediaBox.GetWidth();
+        dfY2 = dfY1 + oMediaBox.GetHeight();
+    }
 #endif
 
     double dfUserUnit = poDS->dfDPI / 72.0;
     poDS->nRasterXSize = (int) ((dfX2 - dfX1) * dfUserUnit);
     poDS->nRasterYSize = (int) ((dfY2 - dfY1) * dfUserUnit);
 
-#ifdef USE_POPPLER
-    double dfRotation = poDoc->getPageRotate(iPage);
-#else
-    double dfRotation = poPage->GetRotation();
+    double dfRotation = 0;
+#ifdef HAVE_POPPLER
+    if (bUsePoppler)
+        dfRotation = poDocPoppler->getPageRotate(iPage);
+#endif
+
+#ifdef HAVE_PODOFO
+    if (!bUsePoppler)
+        dfRotation = poPagePodofo->GetRotation();
 #endif
     if ( dfRotation == 90 ||
          dfRotation == 270 )
     {
 /* FIXME: the non poppler case should be implemented. This needs to rotate */
 /* the output of pdftoppm */
-#ifdef USE_POPPLER
+#ifdef HAVE_POPPLER
+      if (bUsePoppler)
+      {
         /* Wondering how it would work with a georeferenced image */
         /* Has only been tested with ungeoreferenced image */
         int nTmp = poDS->nRasterXSize;
         poDS->nRasterXSize = poDS->nRasterYSize;
         poDS->nRasterYSize = nTmp;
+      }
 #endif
     }
 
@@ -1650,9 +1799,10 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 
-#ifdef USE_POPPLER
-
-    GooString* poMetadata = poCatalog->readMetadata();
+#ifdef HAVE_POPPLER
+  if (bUsePoppler)
+  {
+    GooString* poMetadata = poCatalogPoppler->readMetadata();
     if (poMetadata)
     {
         char* pszContent = poMetadata->getCString();
@@ -1669,31 +1819,31 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     /* Read Info object */
     Object oInfo;
-    poDoc->getDocInfo(&oInfo);
+    poDocPoppler->getDocInfo(&oInfo);
     GDALPDFObjectPoppler oInfoObjPoppler(&oInfo, FALSE);
     poDS->ParseInfo(&oInfoObjPoppler);
     oInfo.free();
+  }
+#endif
 
-#else
-    PoDoFo::TIVecObjects it = poDoc->GetObjects().begin();
-    for( ; it != poDoc->GetObjects().end(); ++it )
+#ifdef HAVE_PODOFO
+  if (!bUsePoppler)
+  {
+    PoDoFo::TIVecObjects it = poDocPodofo->GetObjects().begin();
+    for( ; it != poDocPodofo->GetObjects().end(); ++it )
     {
-        GDALPDFObjectPodofo oObjPodofo((*it), poDoc->GetObjects());
+        GDALPDFObjectPodofo oObjPodofo((*it), poDocPodofo->GetObjects());
         poDS->FindXMP(&oObjPodofo);
     }
 
     /* Read Info object */
-    PoDoFo::PdfInfo* poInfo = poDoc->GetInfo();
+    PoDoFo::PdfInfo* poInfo = poDocPodofo->GetInfo();
     if (poInfo != NULL)
     {
-        GDALPDFObjectPodofo oInfoObjPodofo(poInfo->GetObject(), poDoc->GetObjects());
+        GDALPDFObjectPodofo oInfoObjPodofo(poInfo->GetObject(), poDocPodofo->GetObjects());
         poDS->ParseInfo(&oInfoObjPodofo);
     }
-
-#endif
-
-#ifndef USE_POPPLER
-    delete poDoc;
+  }
 #endif
 
     int nBands = atoi(CPLGetConfigOption("GDAL_PDF_BANDS", "3"));
@@ -1703,8 +1853,8 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                  "Invalid value for GDAL_PDF_BANDS. Using 3 as a fallback");
         nBands = 3;
     }
-#ifndef USE_POPPLER
-    if (nBands == 4)
+#ifdef HAVE_PODOFO
+    if (!bUsePoppler && nBands == 4)
     {
         CPLError(CE_Warning, CPLE_NotSupported,
                  "GDAL_PDF_BANDS=4 only supported when PDF driver is compiled against Poppler. "
@@ -3204,8 +3354,12 @@ void GDALRegister_PDF()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pdf" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                    "Byte" );
-#ifdef USE_POPPLER
+#ifdef HAVE_POPPLER
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+        poDriver->SetMetadataItem( "HAVE_POPPLER", "YES" );
+#endif
+#ifdef HAVE_PODOFO
+        poDriver->SetMetadataItem( "HAVE_PODOFO", "YES" );
 #endif
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
