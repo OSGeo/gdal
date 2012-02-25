@@ -834,8 +834,23 @@ static CPLString GDALPDFGetUTF8String(const char* pszStr)
     osStr = "<FEFF";
     for(i=0;pwszDest[i] != 0;i++)
     {
-        osStr += CPLSPrintf("%02X", (pwszDest[i] >> 8) & 0xff);
-        osStr += CPLSPrintf("%02X", (pwszDest[i]) & 0xff);
+#ifndef _WIN32
+        if (pwszDest[i] >= 0x10000 /* && pwszDest[i] <= 0x10FFFF */)
+        {
+            /* Generate UTF-16 surrogate pairs (on Windows, CPLRecodeToWChar does it for us)  */
+            int nHeadSurrogate = ((pwszDest[i] - 0x10000) >> 10) | 0xd800;
+            int nTrailSurrogate = ((pwszDest[i] - 0x10000) & 0x3ff) | 0xdc00;
+            osStr += CPLSPrintf("%02X", (nHeadSurrogate >> 8) & 0xff);
+            osStr += CPLSPrintf("%02X", (nHeadSurrogate) & 0xff);
+            osStr += CPLSPrintf("%02X", (nTrailSurrogate >> 8) & 0xff);
+            osStr += CPLSPrintf("%02X", (nTrailSurrogate) & 0xff);
+        }
+        else
+#endif
+        {
+            osStr += CPLSPrintf("%02X", (pwszDest[i] >> 8) & 0xff);
+            osStr += CPLSPrintf("%02X", (pwszDest[i]) & 0xff);
+        }
     }
     osStr += ">";
     CPLFree(pwszDest);
