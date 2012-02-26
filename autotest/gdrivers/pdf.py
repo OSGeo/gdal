@@ -547,6 +547,203 @@ def pdf_switch_underlying_lib():
 
     return 'success'
 
+###############################################################################
+# Check SetGeoTransform() / SetProjection()
+
+def pdf_update_gt():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_update_gt.pdf', src_ds)
+    ds = None
+    src_ds = None
+
+    # Alter geotransform
+    ds = gdal.Open('tmp/pdf_update_gt.pdf', gdal.GA_Update)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform([2,1,0,49,0,-1])
+    ds = None
+
+    # Check geotransform
+    ds = gdal.Open('tmp/pdf_update_gt.pdf')
+    gt = ds.GetGeoTransform()
+    ds = None
+
+    expected_gt = [2,1,0,49,0,-1]
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i]) > 1e-8:
+            gdaltest.post_reason('did not get expected gt')
+            print(gt)
+            return 'fail'
+
+    # Clear geotransform
+    ds = gdal.Open('tmp/pdf_update_gt.pdf', gdal.GA_Update)
+    ds.SetProjection("")
+    ds = None
+
+    # Check geotransform
+    ds = gdal.Open('tmp/pdf_update_gt.pdf')
+    gt = ds.GetGeoTransform()
+    ds = None
+
+    expected_gt = [0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i]) > 1e-8:
+            gdaltest.post_reason('did not get expected gt')
+            print(gt)
+            return 'fail'
+
+    # Set geotransform again
+    ds = gdal.Open('tmp/pdf_update_gt.pdf', gdal.GA_Update)
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform([3,1,0,50,0,-1])
+    ds = None
+
+    # Check geotransform
+    ds = gdal.Open('tmp/pdf_update_gt.pdf')
+    gt = ds.GetGeoTransform()
+    ds = None
+
+    expected_gt = [3,1,0,50,0,-1]
+    for i in range(6):
+        if abs(gt[i] - expected_gt[i]) > 1e-8:
+            gdaltest.post_reason('did not get expected gt')
+            print(gt)
+            return 'fail'
+
+    gdaltest.pdf_drv.Delete('tmp/pdf_update_gt.pdf')
+
+    return 'success'
+
+###############################################################################
+# Check SetMetadataItem() for Info
+
+def pdf_update_info():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_update_info.pdf', src_ds)
+    ds = None
+    src_ds = None
+
+    # Add info
+    ds = gdal.Open('tmp/pdf_update_info.pdf', gdal.GA_Update)
+    ds.SetMetadataItem('AUTHOR', 'author')
+    ds = None
+
+    # Check
+    ds = gdal.Open('tmp/pdf_update_info.pdf')
+    author = ds.GetMetadataItem('AUTHOR')
+    ds = None
+
+    if author != 'author':
+        gdaltest.post_reason('did not get expected metadata')
+        print(author)
+        return 'fail'
+
+    # Update info
+    ds = gdal.Open('tmp/pdf_update_info.pdf', gdal.GA_Update)
+    ds.SetMetadataItem('AUTHOR', 'author2')
+    ds = None
+
+    # Check
+    ds = gdal.Open('tmp/pdf_update_info.pdf')
+    author = ds.GetMetadataItem('AUTHOR')
+    ds = None
+
+    if author != 'author2':
+        gdaltest.post_reason('did not get expected metadata')
+        print(author)
+        return 'fail'
+
+    # Clear info
+    ds = gdal.Open('tmp/pdf_update_info.pdf', gdal.GA_Update)
+    ds.SetMetadataItem('AUTHOR', None)
+    ds = None
+
+    # Check
+    ds = gdal.Open('tmp/pdf_update_info.pdf')
+    author = ds.GetMetadataItem('AUTHOR')
+    ds = None
+
+    if author != None:
+        gdaltest.post_reason('did not get expected metadata')
+        print(author)
+        return 'fail'
+
+    gdaltest.pdf_drv.Delete('tmp/pdf_update_info.pdf')
+
+    return 'success'
+
+###############################################################################
+# Check SetMetadataItem() for xml:XMP
+
+def pdf_update_xmp():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_update_xmp.pdf', src_ds)
+    ds = None
+    src_ds = None
+
+    # Add info
+    ds = gdal.Open('tmp/pdf_update_xmp.pdf', gdal.GA_Update)
+    ds.SetMetadata(["<?xpacket begin='a'/><a/>"], "xml:XMP")
+    ds = None
+
+    # Check
+    ds = gdal.Open('tmp/pdf_update_xmp.pdf')
+    xmp = ds.GetMetadata('xml:XMP')[0]
+    ds = None
+
+    if xmp != "<?xpacket begin='a'/><a/>":
+        gdaltest.post_reason('did not get expected metadata')
+        print(xmp)
+        return 'fail'
+
+    # Update info
+    ds = gdal.Open('tmp/pdf_update_xmp.pdf', gdal.GA_Update)
+    ds.SetMetadata(["<?xpacket begin='a'/><a_updated/>"], "xml:XMP")
+    ds = None
+
+    # Check
+    ds = gdal.Open('tmp/pdf_update_xmp.pdf')
+    xmp = ds.GetMetadata('xml:XMP')[0]
+    ds = None
+
+    if xmp != "<?xpacket begin='a'/><a_updated/>":
+        gdaltest.post_reason('did not get expected metadata')
+        print(xmp)
+        return 'fail'
+
+    # Clear info
+    ds = gdal.Open('tmp/pdf_update_xmp.pdf', gdal.GA_Update)
+    ds.SetMetadata(None, "xml:XMP")
+    ds = None
+
+    # Check
+    ds = gdal.Open('tmp/pdf_update_xmp.pdf')
+    xmp = ds.GetMetadata('xml:XMP')
+    ds = None
+
+    if xmp != None:
+        gdaltest.post_reason('did not get expected metadata')
+        print(xmp)
+        return 'fail'
+
+    gdaltest.pdf_drv.Delete('tmp/pdf_update_xmp.pdf')
+
+    return 'success'
+
+
 gdaltest_list = [
     pdf_init,
     pdf_online_1,
@@ -572,11 +769,17 @@ gdaltest_list = [
     pdf_color_table,
     pdf_xmp,
     pdf_info,
+    pdf_update_gt,
+    pdf_update_info,
+    pdf_update_xmp,
 
     pdf_switch_underlying_lib,
 
     pdf_iso32000,
-    pdf_ogcbp
+    pdf_ogcbp,
+    pdf_update_gt,
+    pdf_update_info,
+    pdf_update_xmp,
 ]
 
 if __name__ == '__main__':

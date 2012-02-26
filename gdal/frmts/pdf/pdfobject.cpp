@@ -36,9 +36,88 @@
 
 CPL_CVSID("$Id$");
 
+/************************************************************************/
+/*                        ROUND_TO_INT_IF_CLOSE()                       */
+/************************************************************************/
+
+double ROUND_TO_INT_IF_CLOSE(double x, double eps)
+{
+    int nClosestInt = (int)floor(x + 0.5);
+    if ( fabs(x - nClosestInt) < eps )
+        return nClosestInt;
+    else
+        return x;
+}
+
+/************************************************************************/
+/*                         GDALPDFGetPDFString()                        */
+/************************************************************************/
+
+static CPLString GDALPDFGetPDFString(const char* pszStr)
+{
+    GByte* pabyData = (GByte*)pszStr;
+    int i;
+    GByte ch;
+    for(i=0;(ch = pabyData[i]) != '\0';i++)
+    {
+        if (ch < 32 || ch > 127 ||
+            ch == '(' || ch == ')' ||
+            ch == '/' || ch == '%' || ch == '#')
+            break;
+    }
+    CPLString osStr;
+    if (ch == 0)
+    {
+        osStr = "(";
+        osStr += pszStr;
+        osStr += ")";
+        return osStr;
+    }
+
+    wchar_t* pwszDest = CPLRecodeToWChar( pszStr, CPL_ENC_UTF8, CPL_ENC_UCS2 );
+    osStr = "<FEFF";
+    for(i=0;pwszDest[i] != 0;i++)
+    {
+#ifndef _WIN32
+        if (pwszDest[i] >= 0x10000 /* && pwszDest[i] <= 0x10FFFF */)
+        {
+            /* Generate UTF-16 surrogate pairs (on Windows, CPLRecodeToWChar does it for us)  */
+            int nHeadSurrogate = ((pwszDest[i] - 0x10000) >> 10) | 0xd800;
+            int nTrailSurrogate = ((pwszDest[i] - 0x10000) & 0x3ff) | 0xdc00;
+            osStr += CPLSPrintf("%02X", (nHeadSurrogate >> 8) & 0xff);
+            osStr += CPLSPrintf("%02X", (nHeadSurrogate) & 0xff);
+            osStr += CPLSPrintf("%02X", (nTrailSurrogate >> 8) & 0xff);
+            osStr += CPLSPrintf("%02X", (nTrailSurrogate) & 0xff);
+        }
+        else
+#endif
+        {
+            osStr += CPLSPrintf("%02X", (pwszDest[i] >> 8) & 0xff);
+            osStr += CPLSPrintf("%02X", (pwszDest[i]) & 0xff);
+        }
+    }
+    osStr += ">";
+    CPLFree(pwszDest);
+    return osStr;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                            GDALPDFObject                             */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                            ~GDALPDFObject()                          */
+/************************************************************************/
+
 GDALPDFObject::~GDALPDFObject()
 {
 }
+
+/************************************************************************/
+/*                             GetTypeName()                            */
+/************************************************************************/
 
 const char* GDALPDFObject::GetTypeName()
 {
@@ -57,19 +136,591 @@ const char* GDALPDFObject::GetTypeName()
     }
 }
 
+/************************************************************************/
+/*                             Serialize()                              */
+/************************************************************************/
+
+void GDALPDFObject::Serialize(CPLString& osStr)
+{
+    int nRefNum = GetRefNum();
+    if( nRefNum )
+    {
+        int nRefGen = GetRefGen();
+        osStr.append(CPLSPrintf("%d %d R", nRefNum, nRefGen));
+        return;
+    }
+
+    switch(GetType())
+    {
+        case PDFObjectType_Null: osStr.append("null"); return;
+        case PDFObjectType_Bool: osStr.append(GetBool() ? "true": "false"); return;
+        case PDFObjectType_Int: osStr.append(CPLSPrintf("%d", GetInt())); return;
+        case PDFObjectType_Real:
+        {
+            char szReal[256];
+            double dfReal = ROUND_TO_INT_IF_CLOSE(GetReal());
+            if (dfReal == (double)(int)dfReal)
+                sprintf(szReal, "%d", (int)dfReal);
+            else
+                sprintf(szReal, "%.16f", dfReal);
+            osStr.append(szReal);
+            return;
+        }
+        case PDFObjectType_String: osStr.append(GDALPDFGetPDFString(GetString())); return;
+        case PDFObjectType_Name: osStr.append("/"); osStr.append(GetName()); return;
+        case PDFObjectType_Array: GetArray()->Serialize(osStr); return;
+        case PDFObjectType_Dictionary: GetDictionary()->Serialize(osStr); return;
+        case PDFObjectType_Unknown:
+        default: fprintf(stderr, "Serializing unknown object !\n"); return;
+    }
+}
+
+/************************************************************************/
+/*                               Clone()                                */
+/************************************************************************/
+
+GDALPDFObjectRW* GDALPDFObject::Clone()
+{
+    int nRefNum = GetRefNum();
+    if( nRefNum )
+    {
+        int nRefGen = GetRefGen();
+        return GDALPDFObjectRW::CreateIndirect(nRefNum, nRefGen);
+    }
+
+    switch(GetType())
+    {
+        case PDFObjectType_Null: return GDALPDFObjectRW::CreateNull();
+        case PDFObjectType_Bool: return GDALPDFObjectRW::CreateBool(GetBool());
+        case PDFObjectType_Int: return GDALPDFObjectRW::CreateInt(GetInt());
+        case PDFObjectType_Real: return GDALPDFObjectRW::CreateReal(GetReal());
+        case PDFObjectType_String: return GDALPDFObjectRW::CreateString(GetString());
+        case PDFObjectType_Name: return GDALPDFObjectRW::CreateName(GetName());
+        case PDFObjectType_Array: return GDALPDFObjectRW::CreateArray(GetArray()->Clone());
+        case PDFObjectType_Dictionary: return GDALPDFObjectRW::CreateDictionary(GetDictionary()->Clone());
+        case PDFObjectType_Unknown:
+        default: fprintf(stderr, "Cloning unknown object !\n"); return NULL;
+    }
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                         GDALPDFDictionary                            */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                        ~GDALPDFDictionary()                          */
+/************************************************************************/
+
 GDALPDFDictionary::~GDALPDFDictionary()
 {
 }
+
+/************************************************************************/
+/*                             Serialize()                              */
+/************************************************************************/
+
+void GDALPDFDictionary::Serialize(CPLString& osStr)
+{
+    osStr.append("<< ");
+    std::map<CPLString, GDALPDFObject*>& oMap = GetValues();
+    std::map<CPLString, GDALPDFObject*>::iterator oIter = oMap.begin();
+    std::map<CPLString, GDALPDFObject*>::iterator oEnd = oMap.end();
+    for(;oIter != oEnd;++oIter)
+    {
+        const char* pszKey = oIter->first.c_str();
+        GDALPDFObject* poObj = oIter->second;
+        osStr.append("/");
+        osStr.append(pszKey);
+        osStr.append(" ");
+        poObj->Serialize(osStr);
+        osStr.append(" ");
+    }
+    osStr.append(">>");
+}
+
+/************************************************************************/
+/*                               Clone()                                */
+/************************************************************************/
+
+GDALPDFDictionaryRW* GDALPDFDictionary::Clone()
+{
+    GDALPDFDictionaryRW* poDict = new GDALPDFDictionaryRW();
+    std::map<CPLString, GDALPDFObject*>& oMap = GetValues();
+    std::map<CPLString, GDALPDFObject*>::iterator oIter = oMap.begin();
+    std::map<CPLString, GDALPDFObject*>::iterator oEnd = oMap.end();
+    for(;oIter != oEnd;++oIter)
+    {
+        const char* pszKey = oIter->first.c_str();
+        GDALPDFObject* poObj = oIter->second;
+        poDict->Add(pszKey, poObj->Clone());
+    }
+    return poDict;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                           GDALPDFArray                               */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                           ~GDALPDFArray()                            */
+/************************************************************************/
 
 GDALPDFArray::~GDALPDFArray()
 {
 }
 
+/************************************************************************/
+/*                             Serialize()                              */
+/************************************************************************/
+
+void GDALPDFArray::Serialize(CPLString& osStr)
+{
+    int nLength = GetLength();
+    int i;
+
+    osStr.append("[ ");
+    for(i=0;i<nLength;i++)
+    {
+        Get(i)->Serialize(osStr);
+        osStr.append(" ");
+    }
+    osStr.append("]");
+}
+
+/************************************************************************/
+/*                               Clone()                                */
+/************************************************************************/
+
+GDALPDFArrayRW* GDALPDFArray::Clone()
+{
+    GDALPDFArrayRW* poArray = new GDALPDFArrayRW();
+    int nLength = GetLength();
+    int i;
+    for(i=0;i<nLength;i++)
+    {
+        poArray->Add(Get(i)->Clone());
+    }
+    return poArray;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                           GDALPDFStream                              */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                           ~GDALPDFStream()                           */
+/************************************************************************/
+
 GDALPDFStream::~GDALPDFStream()
 {
 }
 
+/************************************************************************/
+/* ==================================================================== */
+/*                           GDALPDFObjectRW                            */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                           GDALPDFObjectRW()                          */
+/************************************************************************/
+
+GDALPDFObjectRW::GDALPDFObjectRW(GDALPDFObjectType eType)
+{
+    m_eType = eType;
+    m_nVal = 0;
+    m_dfVal = 0.0;
+    //m_osVal;
+    m_poDict = NULL;
+    m_poArray = NULL;
+    m_nNum = 0;
+    m_nGen = 0;
+}
+
+/************************************************************************/
+/*                             ~GDALPDFObjectRW()                       */
+/************************************************************************/
+
+GDALPDFObjectRW::~GDALPDFObjectRW()
+{
+    delete m_poDict;
+    delete m_poArray;
+}
+
+/************************************************************************/
+/*                            CreateIndirect()                          */
+/************************************************************************/
+
+GDALPDFObjectRW* GDALPDFObjectRW::CreateIndirect(int nNum, int nGen)
+{
+    GDALPDFObjectRW* poObj = new GDALPDFObjectRW(PDFObjectType_Unknown);
+    poObj->m_nNum = nNum;
+    poObj->m_nGen = nGen;
+    return poObj;
+}
+
+/************************************************************************/
+/*                             CreateNull()                             */
+/************************************************************************/
+
+GDALPDFObjectRW* GDALPDFObjectRW::CreateNull()
+{
+    return new GDALPDFObjectRW(PDFObjectType_Null);
+}
+
+/************************************************************************/
+/*                             CreateBool()                             */
+/************************************************************************/
+
+GDALPDFObjectRW* GDALPDFObjectRW::CreateBool(int bVal)
+{
+    GDALPDFObjectRW* poObj = new GDALPDFObjectRW(PDFObjectType_Bool);
+    poObj->m_nVal = bVal;
+    return poObj;
+}
+
+/************************************************************************/
+/*                             CreateInt()                              */
+/************************************************************************/
+
+GDALPDFObjectRW* GDALPDFObjectRW::CreateInt(int nVal)
+{
+    GDALPDFObjectRW* poObj = new GDALPDFObjectRW(PDFObjectType_Int);
+    poObj->m_nVal = nVal;
+    return poObj;
+}
+
+/************************************************************************/
+/*                            CreateReal()                              */
+/************************************************************************/
+
+GDALPDFObjectRW* GDALPDFObjectRW::CreateReal(double dfVal)
+{
+    GDALPDFObjectRW* poObj = new GDALPDFObjectRW(PDFObjectType_Real);
+    poObj->m_dfVal = dfVal;
+    return poObj;
+}
+
+/************************************************************************/
+/*                           CreateString()                             */
+/************************************************************************/
+
+GDALPDFObjectRW* GDALPDFObjectRW::CreateString(const char* pszStr)
+{
+    GDALPDFObjectRW* poObj = new GDALPDFObjectRW(PDFObjectType_String);
+    poObj->m_osVal = pszStr;
+    return poObj;
+}
+
+/************************************************************************/
+/*                            CreateName()                              */
+/************************************************************************/
+
+GDALPDFObjectRW* GDALPDFObjectRW::CreateName(const char* pszName)
+{
+    GDALPDFObjectRW* poObj = new GDALPDFObjectRW(PDFObjectType_Name);
+    poObj->m_osVal = pszName;
+    return poObj;
+}
+
+/************************************************************************/
+/*                          CreateDictionary()                          */
+/************************************************************************/
+
+GDALPDFObjectRW* GDALPDFObjectRW::CreateDictionary(GDALPDFDictionaryRW* poDict)
+{
+    CPLAssert(poDict);
+    GDALPDFObjectRW* poObj = new GDALPDFObjectRW(PDFObjectType_Dictionary);
+    poObj->m_poDict = poDict;
+    return poObj;
+}
+
+/************************************************************************/
+/*                            CreateArray()                             */
+/************************************************************************/
+
+GDALPDFObjectRW* GDALPDFObjectRW::CreateArray(GDALPDFArrayRW* poArray)
+{
+    CPLAssert(poArray);
+    GDALPDFObjectRW* poObj = new GDALPDFObjectRW(PDFObjectType_Array);
+    poObj->m_poArray = poArray;
+    return poObj;
+}
+
+/************************************************************************/
+/*                          GetTypeNameNative()                         */
+/************************************************************************/
+
+const char* GDALPDFObjectRW::GetTypeNameNative()
+{
+    fprintf(stderr, "Should not go here");
+    return "";
+}
+
+/************************************************************************/
+/*                             GetType()                                */
+/************************************************************************/
+
+GDALPDFObjectType GDALPDFObjectRW::GetType()
+{
+    return m_eType;
+}
+
+/************************************************************************/
+/*                             GetBool()                                */
+/************************************************************************/
+
+int GDALPDFObjectRW::GetBool()
+{
+    if (m_eType == PDFObjectType_Bool)
+        return m_nVal;
+
+    return FALSE;
+}
+
+/************************************************************************/
+/*                               GetInt()                               */
+/************************************************************************/
+
+int GDALPDFObjectRW::GetInt()
+{
+    if (m_eType == PDFObjectType_Int)
+        return m_nVal;
+
+    return 0;
+}
+
+/************************************************************************/
+/*                              GetReal()                               */
+/************************************************************************/
+
+double GDALPDFObjectRW::GetReal()
+{
+   return m_dfVal;
+}
+
+/************************************************************************/
+/*                             GetString()                              */
+/************************************************************************/
+
+const CPLString& GDALPDFObjectRW::GetString()
+{
+    return m_osVal;
+}
+
+/************************************************************************/
+/*                              GetName()                               */
+/************************************************************************/
+
+const CPLString& GDALPDFObjectRW::GetName()
+{
+    return m_osVal;
+}
+
+/************************************************************************/
+/*                            GetDictionary()                           */
+/************************************************************************/
+
+GDALPDFDictionary* GDALPDFObjectRW::GetDictionary()
+{
+    return m_poDict;
+}
+
+/************************************************************************/
+/*                              GetArray()                              */
+/************************************************************************/
+
+GDALPDFArray* GDALPDFObjectRW::GetArray()
+{
+    return m_poArray;
+}
+
+/************************************************************************/
+/*                              GetStream()                             */
+/************************************************************************/
+
+GDALPDFStream* GDALPDFObjectRW::GetStream()
+{
+    return NULL;
+}
+
+/************************************************************************/
+/*                              GetRefNum()                             */
+/************************************************************************/
+
+int GDALPDFObjectRW::GetRefNum()
+{
+    return m_nNum;
+}
+
+/************************************************************************/
+/*                              GetRefGen()                             */
+/************************************************************************/
+
+int GDALPDFObjectRW::GetRefGen()
+{
+    return m_nGen;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                          GDALPDFDictionaryRW                         */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                           GDALPDFDictionaryRW()                      */
+/************************************************************************/
+
+GDALPDFDictionaryRW::GDALPDFDictionaryRW()
+{
+}
+
+/************************************************************************/
+/*                          ~GDALPDFDictionaryRW()                      */
+/************************************************************************/
+
+GDALPDFDictionaryRW::~GDALPDFDictionaryRW()
+{
+    std::map<CPLString, GDALPDFObject*>::iterator oIter = m_map.begin();
+    std::map<CPLString, GDALPDFObject*>::iterator oEnd = m_map.end();
+    for(; oIter != oEnd; ++oIter)
+        delete oIter->second;
+}
+
+/************************************************************************/
+/*                                   Get()                              */
+/************************************************************************/
+
+GDALPDFObject* GDALPDFDictionaryRW::Get(const char* pszKey)
+{
+    std::map<CPLString, GDALPDFObject*>::iterator oIter = m_map.find(pszKey);
+    if (oIter != m_map.end())
+        return oIter->second;
+    return NULL;
+}
+
+/************************************************************************/
+/*                               GetValues()                            */
+/************************************************************************/
+
+std::map<CPLString, GDALPDFObject*>& GDALPDFDictionaryRW::GetValues()
+{
+    return m_map;
+}
+
+/************************************************************************/
+/*                                 Add()                                */
+/************************************************************************/
+
+GDALPDFDictionaryRW& GDALPDFDictionaryRW::Add(const char* pszKey, GDALPDFObject* poVal)
+{
+    std::map<CPLString, GDALPDFObject*>::iterator oIter = m_map.find(pszKey);
+    if (oIter != m_map.end())
+    {
+        delete oIter->second;
+        oIter->second = poVal;
+    }
+    else
+        m_map[pszKey] = poVal;
+
+    return *this;
+}
+
+/************************************************************************/
+/*                                Remove()                              */
+/************************************************************************/
+
+GDALPDFDictionaryRW& GDALPDFDictionaryRW::Remove(const char* pszKey)
+{
+    std::map<CPLString, GDALPDFObject*>::iterator oIter = m_map.find(pszKey);
+    if (oIter != m_map.end())
+    {
+        delete oIter->second;
+        m_map.erase(pszKey);
+    }
+
+    return *this;
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                            GDALPDFArrayRW                            */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                             GDALPDFArrayRW()                         */
+/************************************************************************/
+
+GDALPDFArrayRW::GDALPDFArrayRW()
+{
+}
+
+/************************************************************************/
+/*                            ~GDALPDFArrayRW()                         */
+/************************************************************************/
+
+GDALPDFArrayRW::~GDALPDFArrayRW()
+{
+    for(int i=0; i < (int)m_array.size(); i++)
+        delete m_array[i];
+}
+
+/************************************************************************/
+/*                               GetLength()                             */
+/************************************************************************/
+
+int GDALPDFArrayRW::GetLength()
+{
+    return (int)m_array.size();
+}
+
+/************************************************************************/
+/*                                  Get()                               */
+/************************************************************************/
+
+GDALPDFObject* GDALPDFArrayRW::Get(int nIndex)
+{
+    if (nIndex < 0 || nIndex >= GetLength())
+        return NULL;
+    return m_array[nIndex];
+}
+
+/************************************************************************/
+/*                                  Add()                               */
+/************************************************************************/
+
+GDALPDFArrayRW& GDALPDFArrayRW::Add(GDALPDFObject* poObj)
+{
+    m_array.push_back(poObj);
+    return *this;
+}
+
+/************************************************************************/
+/*                                  Add()                               */
+/************************************************************************/
+
+GDALPDFArrayRW& GDALPDFArrayRW::Add(double* padfVal, int nCount)
+{
+    for(int i=0;i<nCount;i++)
+        m_array.push_back(GDALPDFObjectRW::CreateReal(padfVal[i]));
+    return *this;
+}
+
 #ifdef HAVE_POPPLER
+
+/************************************************************************/
+/* ==================================================================== */
+/*                         GDALPDFDictionaryPoppler                     */
+/* ==================================================================== */
+/************************************************************************/
 
 class GDALPDFDictionaryPoppler: public GDALPDFDictionary
 {
@@ -85,6 +736,12 @@ class GDALPDFDictionaryPoppler: public GDALPDFDictionary
         virtual std::map<CPLString, GDALPDFObject*>& GetValues();
 };
 
+/************************************************************************/
+/* ==================================================================== */
+/*                           GDALPDFArrayPoppler                        */
+/* ==================================================================== */
+/************************************************************************/
+
 class GDALPDFArrayPoppler : public GDALPDFArray
 {
     private:
@@ -98,6 +755,12 @@ class GDALPDFArrayPoppler : public GDALPDFArray
         virtual int GetLength();
         virtual GDALPDFObject* Get(int nIndex);
 };
+
+/************************************************************************/
+/* ==================================================================== */
+/*                           GDALPDFStreamPoppler                       */
+/* ==================================================================== */
+/************************************************************************/
 
 class GDALPDFStreamPoppler : public GDALPDFStream
 {
@@ -113,6 +776,16 @@ class GDALPDFStreamPoppler : public GDALPDFStream
         virtual char* GetBytes();
 };
 
+/************************************************************************/
+/* ==================================================================== */
+/*                         GDALPDFObjectPoppler                         */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                          ~GDALPDFObjectPoppler()                     */
+/************************************************************************/
+
 GDALPDFObjectPoppler::~GDALPDFObjectPoppler()
 {
     m_po->free();
@@ -122,6 +795,10 @@ GDALPDFObjectPoppler::~GDALPDFObjectPoppler()
     delete m_poArray;
     delete m_poStream;
 }
+
+/************************************************************************/
+/*                              GetType()                               */
+/************************************************************************/
 
 GDALPDFObjectType GDALPDFObjectPoppler::GetType()
 {
@@ -140,10 +817,18 @@ GDALPDFObjectType GDALPDFObjectPoppler::GetType()
     }
 }
 
+/************************************************************************/
+/*                          GetTypeNameNative()                         */
+/************************************************************************/
+
 const char* GDALPDFObjectPoppler::GetTypeNameNative()
 {
     return m_po->getTypeName();
 }
+
+/************************************************************************/
+/*                               GetBool()                              */
+/************************************************************************/
 
 int GDALPDFObjectPoppler::GetBool()
 {
@@ -153,6 +838,10 @@ int GDALPDFObjectPoppler::GetBool()
         return 0;
 }
 
+/************************************************************************/
+/*                               GetInt()                               */
+/************************************************************************/
+
 int GDALPDFObjectPoppler::GetInt()
 {
     if (GetType() == PDFObjectType_Int)
@@ -161,6 +850,10 @@ int GDALPDFObjectPoppler::GetInt()
         return 0;
 }
 
+/************************************************************************/
+/*                               GetReal()                              */
+/************************************************************************/
+
 double GDALPDFObjectPoppler::GetReal()
 {
     if (GetType() == PDFObjectType_Real)
@@ -168,6 +861,10 @@ double GDALPDFObjectPoppler::GetReal()
     else
         return 0.0;
 }
+
+/************************************************************************/
+/*                         GDALPDFPopplerGetUTF8()                      */
+/************************************************************************/
 
 static CPLString GDALPDFPopplerGetUTF8(GooString* poStr)
 {
@@ -207,6 +904,10 @@ static CPLString GDALPDFPopplerGetUTF8(GooString* poStr)
     return osStrUTF8;
 }
 
+/************************************************************************/
+/*                              GetString()                             */
+/************************************************************************/
+
 const CPLString& GDALPDFObjectPoppler::GetString()
 {
     if (GetType() == PDFObjectType_String)
@@ -215,6 +916,10 @@ const CPLString& GDALPDFObjectPoppler::GetString()
         return (osStr = "");
 }
 
+/************************************************************************/
+/*                               GetName()                              */
+/************************************************************************/
+
 const CPLString& GDALPDFObjectPoppler::GetName()
 {
     if (GetType() == PDFObjectType_Name)
@@ -222,6 +927,10 @@ const CPLString& GDALPDFObjectPoppler::GetName()
     else
         return (osStr = "");
 }
+
+/************************************************************************/
+/*                            GetDictionary()                           */
+/************************************************************************/
 
 GDALPDFDictionary* GDALPDFObjectPoppler::GetDictionary()
 {
@@ -238,6 +947,10 @@ GDALPDFDictionary* GDALPDFObjectPoppler::GetDictionary()
     return m_poDict;
 }
 
+/************************************************************************/
+/*                              GetArray()                              */
+/************************************************************************/
+
 GDALPDFArray* GDALPDFObjectPoppler::GetArray()
 {
     if (GetType() != PDFObjectType_Array)
@@ -253,6 +966,10 @@ GDALPDFArray* GDALPDFObjectPoppler::GetArray()
     return m_poArray;
 }
 
+/************************************************************************/
+/*                             GetStream()                              */
+/************************************************************************/
+
 GDALPDFStream* GDALPDFObjectPoppler::GetStream()
 {
     if (m_po->getType() != objStream)
@@ -264,21 +981,43 @@ GDALPDFStream* GDALPDFObjectPoppler::GetStream()
     return m_poStream;
 }
 
+/************************************************************************/
+/*                           SetRefNumAndGen()                          */
+/************************************************************************/
+
 void GDALPDFObjectPoppler::SetRefNumAndGen(int nNum, int nGen)
 {
     m_nRefNum = nNum;
     m_nRefGen = nGen;
 }
 
+/************************************************************************/
+/*                               GetRefNum()                            */
+/************************************************************************/
+
 int GDALPDFObjectPoppler::GetRefNum()
 {
     return m_nRefNum;
 }
 
+/************************************************************************/
+/*                               GetRefGen()                            */
+/************************************************************************/
+
 int GDALPDFObjectPoppler::GetRefGen()
 {
     return m_nRefGen;
 }
+
+/************************************************************************/
+/* ==================================================================== */
+/*                        GDALPDFDictionaryPoppler                      */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                       ~GDALPDFDictionaryPoppler()                    */
+/************************************************************************/
 
 GDALPDFDictionaryPoppler::~GDALPDFDictionaryPoppler()
 {
@@ -287,6 +1026,10 @@ GDALPDFDictionaryPoppler::~GDALPDFDictionaryPoppler()
     for(; oIter != oEnd; ++oIter)
         delete oIter->second;
 }
+
+/************************************************************************/
+/*                                  Get()                               */
+/************************************************************************/
 
 GDALPDFObject* GDALPDFDictionaryPoppler::Get(const char* pszKey)
 {
@@ -323,6 +1066,10 @@ GDALPDFObject* GDALPDFDictionaryPoppler::Get(const char* pszKey)
     }
 }
 
+/************************************************************************/
+/*                                GetValues()                           */
+/************************************************************************/
+
 std::map<CPLString, GDALPDFObject*>& GDALPDFDictionaryPoppler::GetValues()
 {
     int i = 0;
@@ -335,6 +1082,16 @@ std::map<CPLString, GDALPDFObject*>& GDALPDFDictionaryPoppler::GetValues()
     return m_map;
 }
 
+/************************************************************************/
+/* ==================================================================== */
+/*                          GDALPDFArrayPoppler                         */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                           ~GDALPDFArrayPoppler()                     */
+/************************************************************************/
+
 GDALPDFArrayPoppler::~GDALPDFArrayPoppler()
 {
     for(int i=0;i<(int)m_v.size();i++)
@@ -343,10 +1100,18 @@ GDALPDFArrayPoppler::~GDALPDFArrayPoppler()
     }
 }
 
+/************************************************************************/
+/*                               GetLength()                            */
+/************************************************************************/
+
 int GDALPDFArrayPoppler::GetLength()
 {
     return m_poArray->getLength();
 }
+
+/************************************************************************/
+/*                                 Get()                                */
+/************************************************************************/
 
 GDALPDFObject* GDALPDFArrayPoppler::Get(int nIndex)
 {
@@ -395,6 +1160,16 @@ GDALPDFObject* GDALPDFArrayPoppler::Get(int nIndex)
     }
 }
 
+/************************************************************************/
+/* ==================================================================== */
+/*                          GDALPDFStreamPoppler                        */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                               GetLength()                            */
+/************************************************************************/
+
 int GDALPDFStreamPoppler::GetLength()
 {
     if (m_nLength >= 0)
@@ -406,6 +1181,10 @@ int GDALPDFStreamPoppler::GetLength()
         m_nLength ++;
     return m_nLength;
 }
+
+/************************************************************************/
+/*                               GetBytes()                             */
+/************************************************************************/
 
 char* GDALPDFStreamPoppler::GetBytes()
 {
@@ -430,6 +1209,12 @@ char* GDALPDFStreamPoppler::GetBytes()
 
 #ifdef HAVE_PODOFO
 
+/************************************************************************/
+/* ==================================================================== */
+/*                         GDALPDFDictionaryPodofo                      */
+/* ==================================================================== */
+/************************************************************************/
+
 class GDALPDFDictionaryPodofo: public GDALPDFDictionary
 {
     private:
@@ -444,6 +1229,12 @@ class GDALPDFDictionaryPodofo: public GDALPDFDictionary
         virtual GDALPDFObject* Get(const char* pszKey);
         virtual std::map<CPLString, GDALPDFObject*>& GetValues();
 };
+
+/************************************************************************/
+/* ==================================================================== */
+/*                           GDALPDFArrayPodofo                         */
+/* ==================================================================== */
+/************************************************************************/
 
 class GDALPDFArrayPodofo : public GDALPDFArray
 {
@@ -460,6 +1251,12 @@ class GDALPDFArrayPodofo : public GDALPDFArray
         virtual GDALPDFObject* Get(int nIndex);
 };
 
+/************************************************************************/
+/* ==================================================================== */
+/*                          GDALPDFStreamPodofo                         */
+/* ==================================================================== */
+/************************************************************************/
+
 class GDALPDFStreamPodofo : public GDALPDFStream
 {
     private:
@@ -474,16 +1271,37 @@ class GDALPDFStreamPodofo : public GDALPDFStream
         virtual char* GetBytes();
 };
 
+/************************************************************************/
+/* ==================================================================== */
+/*                          GDALPDFObjectPodofo                         */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                          GDALPDFObjectPodofo()                       */
+/************************************************************************/
+
 GDALPDFObjectPodofo::GDALPDFObjectPodofo(PoDoFo::PdfObject* po, PoDoFo::PdfVecObjects& poObjects) :
         m_po(po), m_poObjects(poObjects), m_poDict(NULL), m_poArray(NULL), m_poStream(NULL)
 {
-    if (m_po->GetDataType() == PoDoFo::ePdfDataType_Reference)
+    try
     {
-        PoDoFo::PdfObject* poObj = m_poObjects.GetObject(m_po->GetReference());
-        if (poObj)
-            m_po = poObj;
+        if (m_po->GetDataType() == PoDoFo::ePdfDataType_Reference)
+        {
+            PoDoFo::PdfObject* poObj = m_poObjects.GetObject(m_po->GetReference());
+            if (poObj)
+                m_po = poObj;
+        }
+    }
+    catch(PoDoFo::PdfError& oError)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : %s", oError.what());
     }
 }
+
+/************************************************************************/
+/*                         ~GDALPDFObjectPodofo()                       */
+/************************************************************************/
 
 GDALPDFObjectPodofo::~GDALPDFObjectPodofo()
 {
@@ -492,27 +1310,55 @@ GDALPDFObjectPodofo::~GDALPDFObjectPodofo()
     delete m_poStream;
 }
 
+/************************************************************************/
+/*                               GetType()                              */
+/************************************************************************/
+
 GDALPDFObjectType GDALPDFObjectPodofo::GetType()
 {
-    switch(m_po->GetDataType())
+    try
     {
-        case PoDoFo::ePdfDataType_Null:       return PDFObjectType_Null;
-        case PoDoFo::ePdfDataType_Bool:       return PDFObjectType_Bool;
-        case PoDoFo::ePdfDataType_Number:     return PDFObjectType_Int;
-        case PoDoFo::ePdfDataType_Real:       return PDFObjectType_Real;
-        case PoDoFo::ePdfDataType_HexString:  return PDFObjectType_String;
-        case PoDoFo::ePdfDataType_String:     return PDFObjectType_String;
-        case PoDoFo::ePdfDataType_Name:       return PDFObjectType_Name;
-        case PoDoFo::ePdfDataType_Array:      return PDFObjectType_Array;
-        case PoDoFo::ePdfDataType_Dictionary: return PDFObjectType_Dictionary;
-        default:                              return PDFObjectType_Unknown;
+        switch(m_po->GetDataType())
+        {
+            case PoDoFo::ePdfDataType_Null:       return PDFObjectType_Null;
+            case PoDoFo::ePdfDataType_Bool:       return PDFObjectType_Bool;
+            case PoDoFo::ePdfDataType_Number:     return PDFObjectType_Int;
+            case PoDoFo::ePdfDataType_Real:       return PDFObjectType_Real;
+            case PoDoFo::ePdfDataType_HexString:  return PDFObjectType_String;
+            case PoDoFo::ePdfDataType_String:     return PDFObjectType_String;
+            case PoDoFo::ePdfDataType_Name:       return PDFObjectType_Name;
+            case PoDoFo::ePdfDataType_Array:      return PDFObjectType_Array;
+            case PoDoFo::ePdfDataType_Dictionary: return PDFObjectType_Dictionary;
+            default:                              return PDFObjectType_Unknown;
+        }
+    }
+    catch(PoDoFo::PdfError& oError)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : %s", oError.what());
+        return PDFObjectType_Unknown;
     }
 }
 
+/************************************************************************/
+/*                          GetTypeNameNative()                         */
+/************************************************************************/
+
 const char* GDALPDFObjectPodofo::GetTypeNameNative()
 {
-    return m_po->GetDataTypeString();
+    try
+    {
+        return m_po->GetDataTypeString();
+    }
+    catch(PoDoFo::PdfError& oError)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : %s", oError.what());
+        return "unknown";
+    }
 }
+
+/************************************************************************/
+/*                              GetBool()                               */
+/************************************************************************/
 
 int GDALPDFObjectPodofo::GetBool()
 {
@@ -522,6 +1368,10 @@ int GDALPDFObjectPodofo::GetBool()
         return 0;
 }
 
+/************************************************************************/
+/*                              GetInt()                                */
+/************************************************************************/
+
 int GDALPDFObjectPodofo::GetInt()
 {
     if (m_po->GetDataType() == PoDoFo::ePdfDataType_Number)
@@ -529,6 +1379,10 @@ int GDALPDFObjectPodofo::GetInt()
     else
         return 0;
 }
+
+/************************************************************************/
+/*                              GetReal()                               */
+/************************************************************************/
 
 double GDALPDFObjectPodofo::GetReal()
 {
@@ -538,6 +1392,10 @@ double GDALPDFObjectPodofo::GetReal()
         return 0.0;
 }
 
+/************************************************************************/
+/*                              GetString()                             */
+/************************************************************************/
+
 const CPLString& GDALPDFObjectPodofo::GetString()
 {
     if (GetType() == PDFObjectType_String)
@@ -546,6 +1404,10 @@ const CPLString& GDALPDFObjectPodofo::GetString()
         return (osStr = "");
 }
 
+/************************************************************************/
+/*                              GetName()                               */
+/************************************************************************/
+
 const CPLString&  GDALPDFObjectPodofo::GetName()
 {
     if (GetType() == PDFObjectType_Name)
@@ -553,6 +1415,10 @@ const CPLString&  GDALPDFObjectPodofo::GetName()
     else
         return (osStr = "");
 }
+
+/************************************************************************/
+/*                             GetDictionary()                          */
+/************************************************************************/
 
 GDALPDFDictionary* GDALPDFObjectPodofo::GetDictionary()
 {
@@ -566,6 +1432,10 @@ GDALPDFDictionary* GDALPDFObjectPodofo::GetDictionary()
     return m_poDict;
 }
 
+/************************************************************************/
+/*                                GetArray()                            */
+/************************************************************************/
+
 GDALPDFArray* GDALPDFObjectPodofo::GetArray()
 {
     if (GetType() != PDFObjectType_Array)
@@ -577,6 +1447,10 @@ GDALPDFArray* GDALPDFObjectPodofo::GetArray()
     m_poArray = new GDALPDFArrayPodofo(&m_po->GetArray(), m_poObjects);
     return m_poArray;
 }
+
+/************************************************************************/
+/*                               GetStream()                            */
+/************************************************************************/
 
 GDALPDFStream* GDALPDFObjectPodofo::GetStream()
 {
@@ -605,15 +1479,33 @@ GDALPDFStream* GDALPDFObjectPodofo::GetStream()
         return NULL;
 }
 
+/************************************************************************/
+/*                               GetRefNum()                            */
+/************************************************************************/
+
 int GDALPDFObjectPodofo::GetRefNum()
 {
     return m_po->Reference().ObjectNumber();
 }
 
+/************************************************************************/
+/*                               GetRefGen()                            */
+/************************************************************************/
+
 int GDALPDFObjectPodofo::GetRefGen()
 {
     return m_po->Reference().GenerationNumber();
 }
+
+/************************************************************************/
+/* ==================================================================== */
+/*                         GDALPDFDictionaryPodofo                      */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                         ~GDALPDFDictionaryPodofo()                   */
+/************************************************************************/
 
 GDALPDFDictionaryPodofo::~GDALPDFDictionaryPodofo()
 {
@@ -622,6 +1514,10 @@ GDALPDFDictionaryPodofo::~GDALPDFDictionaryPodofo()
     for(; oIter != oEnd; ++oIter)
         delete oIter->second;
 }
+
+/************************************************************************/
+/*                                  Get()                               */
+/************************************************************************/
 
 GDALPDFObject* GDALPDFDictionaryPodofo::Get(const char* pszKey)
 {
@@ -642,6 +1538,10 @@ GDALPDFObject* GDALPDFDictionaryPodofo::Get(const char* pszKey)
     }
 }
 
+/************************************************************************/
+/*                              GetValues()                             */
+/************************************************************************/
+
 std::map<CPLString, GDALPDFObject*>& GDALPDFDictionaryPodofo::GetValues()
 {
     PoDoFo::TKeyMap::iterator oIter = m_poDict->GetKeys().begin();
@@ -655,6 +1555,12 @@ std::map<CPLString, GDALPDFObject*>& GDALPDFDictionaryPodofo::GetValues()
     return m_map;
 }
 
+/************************************************************************/
+/* ==================================================================== */
+/*                           GDALPDFArrayPodofo                         */
+/* ==================================================================== */
+/************************************************************************/
+
 GDALPDFArrayPodofo::~GDALPDFArrayPodofo()
 {
     for(int i=0;i<(int)m_v.size();i++)
@@ -663,10 +1569,18 @@ GDALPDFArrayPodofo::~GDALPDFArrayPodofo()
     }
 }
 
+/************************************************************************/
+/*                              GetLength()                             */
+/************************************************************************/
+
 int GDALPDFArrayPodofo::GetLength()
 {
     return (int)m_poArray->GetSize();
 }
+
+/************************************************************************/
+/*                                Get()                                 */
+/************************************************************************/
 
 GDALPDFObject* GDALPDFArrayPodofo::Get(int nIndex)
 {
@@ -692,10 +1606,24 @@ GDALPDFObject* GDALPDFArrayPodofo::Get(int nIndex)
     return poObj;
 }
 
+/************************************************************************/
+/* ==================================================================== */
+/*                           GDALPDFStreamPodofo                        */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                              GetLength()                             */
+/************************************************************************/
+
 int GDALPDFStreamPodofo::GetLength()
 {
     return (int)m_pStream->GetLength();
 }
+
+/************************************************************************/
+/*                               GetBytes()                             */
+/************************************************************************/
 
 char* GDALPDFStreamPodofo::GetBytes()
 {
