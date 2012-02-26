@@ -23,7 +23,7 @@ ifeq ($(HAVE_PODOFO),yes)
 CPPFLAGS +=  -DHAVE_PODOFO
 endif
 
-$(O_OBJ):       pdfobject.h pdfio.h
+$(O_OBJ):       pdfobject.h pdfio.h pdfcreatecopy.h
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(POPPLER_INC) $(PODOFO_INC)
 

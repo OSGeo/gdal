@@ -30,7 +30,112 @@
 #ifndef PDFCREATECOPY_H_INCLUDED
 #define PDFCREATECOPY_H_INCLUDED
 
+#include "pdfobject.h"
 #include "gdal_priv.h"
+#include <vector>
+
+typedef enum
+{
+    COMPRESS_NONE,
+    COMPRESS_DEFLATE,
+    COMPRESS_JPEG,
+    COMPRESS_JPEG2000
+} PDFCompressMethod;
+
+/************************************************************************/
+/*                          GDALPDFWriter                               */
+/************************************************************************/
+
+class GDALXRefEntry
+{
+    public:
+        vsi_l_offset    nOffset;
+        int             nGen;
+
+        GDALXRefEntry() : nOffset(0), nGen(0) {}
+        GDALXRefEntry(vsi_l_offset nOffsetIn, int nGenIn = 0) : nOffset(nOffsetIn), nGen(nGen) {}
+        GDALXRefEntry(const GDALXRefEntry& oOther) : nOffset(oOther.nOffset), nGen(oOther.nGen) {}
+        GDALXRefEntry& operator= (const GDALXRefEntry& oOther) { nOffset = oOther.nOffset; nGen = oOther.nGen; return *this; }
+};
+
+class GDALPDFWriter
+{
+    VSILFILE* fp;
+    std::vector<GDALXRefEntry> asXRefEntries;
+    std::vector<int> asPageId;
+
+    int nInfoId;
+    int nInfoGen;
+    int nPageResourceId;
+    int nCatalogId;
+    int nCatalogGen;
+    int nXMPId;
+    int nXMPGen;
+    int bInWriteObj;
+
+    int nLastStartXRef;
+    int nLastXRefSize;
+    int bCanUpdate;
+
+    void    Init();
+
+    void    StartObj(int nObjectId, int nGen = 0);
+    void    EndObj();
+    void    WriteXRefTableAndTrailer();
+    void    WritePages();
+    int     WriteBlock( GDALDataset* poSrcDS,
+                        int nXOff, int nYOff, int nReqXSize, int nReqYSize,
+                        int nColorTableId,
+                        PDFCompressMethod eCompressMethod,
+                        int nPredictor,
+                        int nJPEGQuality,
+                        const char* pszJPEG2000_DRIVER,
+                        GDALProgressFunc pfnProgress,
+                        void * pProgressData );
+    int     WriteMask(GDALDataset* poSrcDS,
+                      int nXOff, int nYOff, int nReqXSize, int nReqYSize,
+                      PDFCompressMethod eCompressMethod);
+
+    int     AllocNewObject();
+
+    public:
+        GDALPDFWriter(VSILFILE* fpIn, int bAppend = FALSE);
+       ~GDALPDFWriter();
+
+       void Close();
+
+       int  GetCatalogNum() { return nCatalogId; }
+       int  GetCatalogGen() { return nCatalogGen; }
+
+       int  ParseTrailerAndXRef();
+       void UpdateProj(GDALDataset* poSrcDS,
+                       double dfDPI,
+                       GDALPDFDictionaryRW* poPageDict,
+                       int nPageNum, int nPageGen);
+       void UpdateInfo(GDALDataset* poSrcDS);
+       void UpdateXMP (GDALDataset* poSrcDS,
+                       GDALPDFDictionaryRW* poCatalogDict);
+
+       int     WriteSRS_ISO32000(GDALDataset* poSrcDS,
+                                double dfUserUnit);
+       int     WriteSRS_OGC_BP(GDALDataset* poSrcDS,
+                                double dfUserUnit);
+
+       int  WritePage(GDALDataset* poSrcDS,
+                      double dfDPI,
+                      const char* pszGEO_ENCODING,
+                      PDFCompressMethod eCompressMethod,
+                      int nPredictor,
+                      int nJPEGQuality,
+                      const char* pszJPEG2000_DRIVER,
+                      int nBlockXSize, int nBlockYSize,
+                      GDALProgressFunc pfnProgress,
+                      void * pProgressData);
+       int  SetInfo(GDALDataset* poSrcDS,
+                    char** papszOptions);
+       int  SetXMP(GDALDataset* poSrcDS,
+                   const char* pszXMP);
+};
 
 GDALDataset         *GDALPDFCreateCopy( const char *, GDALDataset *,
                                         int, char **,

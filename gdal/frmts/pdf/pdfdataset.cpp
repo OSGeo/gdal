@@ -56,19 +56,6 @@ CPL_C_END
 
 static double Get(GDALPDFObject* poObj, int nIndice = -1);
 
-/************************************************************************/
-/*                        ROUND_TO_INT_IF_CLOSE()                       */
-/************************************************************************/
-
-static double ROUND_TO_INT_IF_CLOSE(double x, double eps = 1e-8)
-{
-    int nClosestInt = (int)floor(x + 0.5);
-    if ( fabs(x - nClosestInt) < eps )
-        return nClosestInt;
-    else
-        return x;
-}
-
 #ifdef HAVE_POPPLER
 
 /************************************************************************/
@@ -500,6 +487,11 @@ class PDFDataset : public GDALPamDataset
     int          bGeoTransformValid;
     int          nGCPCount;
     GDAL_GCP    *pasGCPList;
+    int          bProjDirty;
+
+    GDALMultiDomainMetadata oMDMD;
+    int          bInfoDirty;
+    int          bXMPDirty;
 
     int          bUsePoppler;
 #ifdef HAVE_POPPLER
@@ -528,12 +520,26 @@ class PDFDataset : public GDALPamDataset
     void         FindXMP(GDALPDFObject* poObj);
     void         ParseInfo(GDALPDFObject* poObj);
 
+    GDALPDFDictionaryRW* GetCatalogDict();
+
   public:
                  PDFDataset();
     virtual     ~PDFDataset();
 
     virtual const char* GetProjectionRef();
     virtual CPLErr GetGeoTransform( double * );
+
+    virtual CPLErr      SetProjection(const char* pszWKTIn);
+    virtual CPLErr      SetGeoTransform(double* padfGeoTransform);
+
+    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual CPLErr      SetMetadata( char ** papszMetadata,
+                                     const char * pszDomain = "" );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
+    virtual CPLErr      SetMetadataItem( const char * pszName,
+                                         const char * pszValue,
+                                         const char * pszDomain = "" );
 
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
@@ -795,6 +801,7 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 PDFDataset::PDFDataset()
 {
+    bUsePoppler = FALSE;
 #ifdef HAVE_POPPLER
     poDocPoppler = NULL;
 #endif
@@ -812,6 +819,9 @@ PDFDataset::PDFDataset()
     bGeoTransformValid = FALSE;
     nGCPCount = 0;
     pasGCPList = NULL;
+    bProjDirty = FALSE;
+    bInfoDirty = FALSE;
+    bXMPDirty = FALSE;
     bTried = FALSE;
     pabyData = NULL;
     iPage = -1;
@@ -838,15 +848,125 @@ static void PDFFreeDoc(PDFDoc* poDoc)
 #endif
 
 /************************************************************************/
+/*                          GetCatalogDict()                            */
+/************************************************************************/
+
+GDALPDFDictionaryRW* PDFDataset::GetCatalogDict()
+{
+    GDALPDFDictionaryRW* poCatalogDictCopy = NULL;
+
+#ifdef HAVE_POPPLER
+    ObjectAutoFree oCatalog;
+    GDALPDFObject* poCatalogObject = NULL;
+    if (bUsePoppler)
+    {
+        poDocPoppler->getXRef()->getCatalog(&oCatalog);
+        if (!oCatalog.isNull())
+            poCatalogObject = new GDALPDFObjectPoppler(&oCatalog, FALSE);
+    }
+#endif
+
+#ifdef HAVE_PODOFO
+    if (!bUsePoppler)
+    {
+        int nCatalogNum = 0, nCatalogGen = 0;
+        VSILFILE* fp = VSIFOpenL(GetDescription(), "rb");
+        if (fp != NULL)
+        {
+            GDALPDFWriter oWriter(fp, TRUE);
+            if (oWriter.ParseTrailerAndXRef())
+            {
+                nCatalogNum = oWriter.GetCatalogNum();
+                nCatalogGen = oWriter.GetCatalogGen();
+            }
+            oWriter.Close();
+        }
+
+        PoDoFo::PdfObject* poCatalogPodofo =
+            poDocPodofo->GetObjects().GetObject(PoDoFo::PdfReference(nCatalogNum, nCatalogGen));
+        if (poCatalogPodofo)
+            poCatalogObject = new GDALPDFObjectPodofo(poCatalogPodofo, poDocPodofo->GetObjects());
+    }
+#endif
+
+    if (poCatalogObject && poCatalogObject->GetType() == PDFObjectType_Dictionary)
+        poCatalogDictCopy = poCatalogObject->GetDictionary()->Clone();
+    delete poCatalogObject;
+
+    return poCatalogDictCopy;
+}
+
+/************************************************************************/
 /*                            ~PDFDataset()                            */
 /************************************************************************/
 
 PDFDataset::~PDFDataset()
 {
-    CPLFree(pszWKT);
     CPLFree(pabyData);
+    pabyData = NULL;
 
     delete poNeatLine;
+    poNeatLine = NULL;
+
+    /* Collect data necessary to update */
+    int nNum = poPageObj->GetRefNum();
+    int nGen = poPageObj->GetRefGen();
+    GDALPDFDictionaryRW* poPageDictCopy = NULL;
+    GDALPDFDictionaryRW* poCatalogDictCopy = NULL;
+    if (eAccess == GA_Update &&
+        (bProjDirty || bInfoDirty || bXMPDirty) &&
+        nNum != 0 &&
+        poPageObj != NULL &&
+        poPageObj->GetType() == PDFObjectType_Dictionary)
+    {
+        poPageDictCopy = poPageObj->GetDictionary()->Clone();
+
+        if (bXMPDirty)
+        {
+            /* We need the catalog because it points to the XMP Metadata object */
+            poCatalogDictCopy = GetCatalogDict();
+        }
+    }
+
+    /* Close document (and file descriptor) to be able to open it */
+    /* in read-write mode afterwards */
+    delete poPageObj;
+    poPageObj = NULL;
+#ifdef HAVE_POPPLER
+    PDFFreeDoc(poDocPoppler);
+    poDocPoppler = NULL;
+#endif
+#ifdef HAVE_PODOFO
+    delete poDocPodofo;
+    poDocPodofo = NULL;
+#endif
+
+    /* Now do the update */
+    if (poPageDictCopy)
+    {
+        VSILFILE* fp = VSIFOpenL(GetDescription(), "rb+");
+        if (fp != NULL)
+        {
+            GDALPDFWriter oWriter(fp, TRUE);
+            if (oWriter.ParseTrailerAndXRef())
+            {
+                if (bProjDirty && poPageDictCopy != NULL)
+                    oWriter.UpdateProj(this, dfDPI,
+                                        poPageDictCopy, nNum, nGen);
+
+                if (bInfoDirty)
+                    oWriter.UpdateInfo(this);
+
+                if (bXMPDirty && poCatalogDictCopy != NULL)
+                    oWriter.UpdateXMP(this, poCatalogDictCopy);
+            }
+            oWriter.Close();
+        }
+    }
+    delete poPageDictCopy;
+    poPageDictCopy = NULL;
+    delete poCatalogDictCopy;
+    poCatalogDictCopy = NULL;
 
     if( nGCPCount > 0 )
     {
@@ -855,14 +975,8 @@ PDFDataset::~PDFDataset()
         pasGCPList = NULL;
         nGCPCount = 0;
     }
-
-    delete poPageObj;
-#ifdef HAVE_POPPLER
-    PDFFreeDoc(poDocPoppler);
-#endif
-#ifdef HAVE_PODOFO
-    delete poDocPodofo;
-#endif
+    CPLFree(pszWKT);
+    pszWKT = NULL;
 }
 
 /************************************************************************/
@@ -1631,6 +1745,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             f = fopen(pszDumpObject, "wt");
         if (f == NULL)
             f = stderr;
+
         GDALPDFDumper oDumper(f);
         oDumper.Dump(poPageObj);
         if (f != stderr)
@@ -1877,6 +1992,11 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Support overviews.                                              */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+    /* Clear dirty flag */
+    poDS->bInfoDirty = FALSE;
+    poDS->bXMPDirty = FALSE;
+
     return( poDS );
 }
 
@@ -3299,6 +3419,78 @@ CPLErr PDFDataset::GetGeoTransform( double * padfTransform )
     memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
 
     return( (bGeoTransformValid) ? CE_None : CE_Failure );
+}
+
+/************************************************************************/
+/*                            SetProjection()                           */
+/************************************************************************/
+
+CPLErr PDFDataset::SetProjection(const char* pszWKTIn)
+{
+    CPLFree(pszWKT);
+    pszWKT = pszWKTIn ? CPLStrdup(pszWKTIn) : CPLStrdup("");
+    bProjDirty = TRUE;
+    return CE_None;
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr PDFDataset::SetGeoTransform(double* padfGeoTransform)
+{
+    memcpy(adfGeoTransform, padfGeoTransform, 6 * sizeof(double));
+    bGeoTransformValid = TRUE;
+    bProjDirty = TRUE;
+    return CE_None;
+}
+
+/************************************************************************/
+/*                           GetMetadata()                              */
+/************************************************************************/
+
+char      **PDFDataset::GetMetadata( const char * pszDomain )
+{
+    return oMDMD.GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                            SetMetadata()                             */
+/************************************************************************/
+
+CPLErr      PDFDataset::SetMetadata( char ** papszMetadata,
+                                     const char * pszDomain )
+{
+    if (pszDomain == NULL || EQUAL(pszDomain, ""))
+        bInfoDirty = TRUE;
+    if (pszDomain != NULL && EQUAL(pszDomain, "xml:XMP"))
+        bXMPDirty = TRUE;
+    return oMDMD.SetMetadata(papszMetadata, pszDomain);
+}
+
+/************************************************************************/
+/*                          GetMetadataItem()                           */
+/************************************************************************/
+
+const char *PDFDataset::GetMetadataItem( const char * pszName,
+                                         const char * pszDomain )
+{
+    return oMDMD.GetMetadataItem(pszName, pszDomain);
+}
+
+/************************************************************************/
+/*                          SetMetadataItem()                           */
+/************************************************************************/
+
+CPLErr      PDFDataset::SetMetadataItem( const char * pszName,
+                                         const char * pszValue,
+                                         const char * pszDomain )
+{
+    if (pszDomain == NULL || EQUAL(pszDomain, ""))
+        bInfoDirty = TRUE;
+    if (pszDomain != NULL && EQUAL(pszDomain, "xml:XMP"))
+        bXMPDirty = TRUE;
+    return oMDMD.SetMetadataItem(pszName, pszValue, pszDomain);
 }
 
 /************************************************************************/
