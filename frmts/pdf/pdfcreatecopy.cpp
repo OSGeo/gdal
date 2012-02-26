@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+/* hack for PDF driver and poppler >= 0.15.0 that defines incompatible "typedef bool GBool" */
+/* in include/poppler/goo/gtypes.h with the one defined in cpl_port.h */
+#define CPL_GBOOL_DEFINED
+
 #include "pdfcreatecopy.h"
 
 #include "cpl_vsi_virtual.h"
@@ -34,97 +38,49 @@
 #include "cpl_error.h"
 #include "ogr_srs_api.h"
 #include "ogr_spatialref.h"
-#include <vector>
+
+#include "pdfobject.h"
 
 CPL_CVSID("$Id$");
-
-typedef enum
-{
-    COMPRESS_NONE,
-    COMPRESS_DEFLATE,
-    COMPRESS_JPEG,
-    COMPRESS_JPEG2000
-} PDFCompressMethod;
 
 #define PIXEL_TO_GEO_X(x,y) adfGeoTransform[0] + x * adfGeoTransform[1] + y * adfGeoTransform[2]
 #define PIXEL_TO_GEO_Y(x,y) adfGeoTransform[3] + x * adfGeoTransform[4] + y * adfGeoTransform[5]
 
 /************************************************************************/
-/*                          GDALPDFWriter                               */
+/*                             Init()                                   */
 /************************************************************************/
 
-class GDALPDFWriter
+void GDALPDFWriter::Init()
 {
-    VSILFILE* fp;
-    std::vector<vsi_l_offset> asOffsets;
-    std::vector<int> asPageId;
+    nPageResourceId = 0;
+    nCatalogId = nCatalogGen = 0;
+    bInWriteObj = FALSE;
+    nInfoId = nInfoGen = 0;
+    nXMPId = nXMPGen = 0;
 
-    int nInfoId;
-    int nPageResourceId;
-    int nCatalogId;
-    int bInWriteObj;
-    int nXMPId;
-
-    void    StartObj(int nObjectId);
-    void    EndObj();
-    void    WriteXRefTableAndTrailer();
-    void    WritePages();
-    int     WriteSRS_ISO32000(GDALDataset* poSrcDS,
-                              double dfUserUnit);
-    int     WriteSRS_OGC_BP(GDALDataset* poSrcDS,
-                            double dfUserUnit);
-    int     WriteBlock( GDALDataset* poSrcDS,
-                        int nXOff, int nYOff, int nReqXSize, int nReqYSize,
-                        int nColorTableId,
-                        PDFCompressMethod eCompressMethod,
-                        int nPredictor,
-                        int nJPEGQuality,
-                        const char* pszJPEG2000_DRIVER,
-                        GDALProgressFunc pfnProgress,
-                        void * pProgressData );
-    int     WriteMask(GDALDataset* poSrcDS,
-                      int nXOff, int nYOff, int nReqXSize, int nReqYSize,
-                      PDFCompressMethod eCompressMethod);
-
-    public:
-        GDALPDFWriter(VSILFILE* fpIn);
-       ~GDALPDFWriter();
-
-       void Close();
-
-       int  AllocNewObject();
-       int  WritePage(GDALDataset* poSrcDS,
-                      double dfDPI,
-                      const char* pszGEO_ENCODING,
-                      PDFCompressMethod eCompressMethod,
-                      int nPredictor,
-                      int nJPEGQuality,
-                      const char* pszJPEG2000_DRIVER,
-                      int nBlockXSize, int nBlockYSize,
-                      GDALProgressFunc pfnProgress,
-                      void * pProgressData);
-       void SetInfo(GDALDataset* poSrcDS,
-                    char** papszOptions);
-       void SetXMP(GDALDataset* poSrcDS,
-                   const char* pszXMP);
-};
+    nLastStartXRef = 0;
+    nLastXRefSize = 0;
+    bCanUpdate = FALSE;
+}
 
 /************************************************************************/
 /*                         GDALPDFWriter()                              */
 /************************************************************************/
 
-GDALPDFWriter::GDALPDFWriter(VSILFILE* fpIn) : fp(fpIn)
+GDALPDFWriter::GDALPDFWriter(VSILFILE* fpIn, int bAppend) : fp(fpIn)
 {
-    VSIFPrintfL(fp, "%%PDF-1.6\n");
+    Init();
 
-    /* See PDF 1.7 reference, page 92. Write 4 non-ASCII bytes to indicate that the content will be binary */
-    VSIFPrintfL(fp, "%%%c%c%c%c\n", 0xFF, 0xFF, 0xFF, 0xFF);
+    if (!bAppend)
+    {
+        VSIFPrintfL(fp, "%%PDF-1.6\n");
 
-    nPageResourceId = AllocNewObject();
-    nCatalogId = AllocNewObject();
-    bInWriteObj = FALSE;
-    nInfoId = 0;
-    nXMPId = 0;
+        /* See PDF 1.7 reference, page 92. Write 4 non-ASCII bytes to indicate that the content will be binary */
+        VSIFPrintfL(fp, "%%%c%c%c%c\n", 0xFF, 0xFF, 0xFF, 0xFF);
+
+        nPageResourceId = AllocNewObject();
+        nCatalogId = AllocNewObject();
+    }
 }
 
 /************************************************************************/
@@ -137,6 +93,154 @@ GDALPDFWriter::~GDALPDFWriter()
 }
 
 /************************************************************************/
+/*                          ParseIndirectRef()                          */
+/************************************************************************/
+
+static int ParseIndirectRef(const char* pszStr, int& nNum, int &nGen)
+{
+    while(*pszStr == ' ')
+        pszStr ++;
+
+    nNum = atoi(pszStr);
+    while(*pszStr >= '0' && *pszStr <= '9')
+        pszStr ++;
+    if (*pszStr != ' ')
+        return FALSE;
+
+    while(*pszStr == ' ')
+        pszStr ++;
+
+    nGen = atoi(pszStr);
+    while(*pszStr >= '0' && *pszStr <= '9')
+        pszStr ++;
+    if (*pszStr != ' ')
+        return FALSE;
+
+    while(*pszStr == ' ')
+        pszStr ++;
+
+    return *pszStr == 'R';
+}
+
+/************************************************************************/
+/*                       ParseTrailerAndXRef()                          */
+/************************************************************************/
+
+int GDALPDFWriter::ParseTrailerAndXRef()
+{
+    VSIFSeekL(fp, 0, SEEK_END);
+    char szBuf[1024+1];
+    vsi_l_offset nOffset = VSIFTellL(fp);
+
+    if (nOffset > 128)
+        nOffset -= 128;
+    else
+        nOffset = 0;
+
+    /* Find startxref section */
+    VSIFSeekL(fp, nOffset, SEEK_SET);
+    int nRead = VSIFReadL(szBuf, 1, 128, fp);
+    szBuf[nRead] = 0;
+    if (nRead < 9)
+        return FALSE;
+
+    const char* pszStartXRef = NULL;
+    int i;
+    for(i = nRead - 9; i>= 0; i --)
+    {
+        if (strncmp(szBuf + i, "startxref", 9) == 0)
+        {
+            pszStartXRef = szBuf + i;
+            break;
+        }
+    }
+    if (pszStartXRef == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find startxref");
+        return FALSE;
+    }
+    pszStartXRef += 9;
+    while(*pszStartXRef == '\r' || *pszStartXRef == '\n')
+        pszStartXRef ++;
+    if (*pszStartXRef == '\0')
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find startxref");
+        return FALSE;
+    }
+
+    nLastStartXRef = atoi(pszStartXRef);
+
+    /* Skip to beginning of xref section */
+    VSIFSeekL(fp, nLastStartXRef, SEEK_SET);
+
+    /* And skip to trailer */
+    const char* pszLine;
+    while( (pszLine = CPLReadLineL(fp)) != NULL)
+    {
+        if (strncmp(pszLine, "trailer", 7) == 0)
+            break;
+    }
+
+    if( pszLine == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find trailer");
+        return FALSE;
+    }
+
+    /* Read trailer content */
+    nRead = VSIFReadL(szBuf, 1, 1024, fp);
+    szBuf[nRead] = 0;
+
+    /* Find XRef size */
+    const char* pszSize = strstr(szBuf, "/Size");
+    if (pszSize == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find trailer /Size");
+        return FALSE;
+    }
+    pszSize += 5;
+    while(*pszSize == ' ')
+        pszSize ++;
+    nLastXRefSize = atoi(pszSize);
+
+    /* Find Root object */
+    const char* pszRoot = strstr(szBuf, "/Root");
+    if (pszRoot == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find trailer /Root");
+        return FALSE;
+    }
+    pszRoot += 5;
+    while(*pszRoot == ' ')
+        pszRoot ++;
+
+    if (!ParseIndirectRef(pszRoot, nCatalogId, nCatalogGen))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot parse trailer /Root");
+        return FALSE;
+    }
+
+    /* Find Info object */
+    const char* pszInfo = strstr(szBuf, "/Info");
+    if (pszInfo != NULL)
+    {
+        pszInfo += 5;
+        while(*pszInfo == ' ')
+            pszInfo ++;
+
+        if (!ParseIndirectRef(pszInfo, nInfoId, nInfoGen))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot parse trailer /Info");
+            nInfoId = nInfoGen = 0;
+        }
+    }
+
+    VSIFSeekL(fp, 0, SEEK_END);
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                              Close()                                 */
 /************************************************************************/
 
@@ -145,11 +249,122 @@ void GDALPDFWriter::Close()
     if (fp)
     {
         CPLAssert(!bInWriteObj);
-        WritePages();
-        WriteXRefTableAndTrailer();
+        if (nPageResourceId)
+        {
+            WritePages();
+            WriteXRefTableAndTrailer();
+        }
+        else if (bCanUpdate)
+        {
+            WriteXRefTableAndTrailer();
+        }
         VSIFCloseL(fp);
     }
     fp = NULL;
+}
+
+/************************************************************************/
+/*                           UpdateProj()                               */
+/************************************************************************/
+
+void GDALPDFWriter::UpdateProj(GDALDataset* poSrcDS,
+                               double dfDPI,
+                               GDALPDFDictionaryRW* poPageDict,
+                               int nPageNum, int nPageGen)
+{
+    bCanUpdate = TRUE;
+    if ((int)asXRefEntries.size() < nLastXRefSize - 1)
+        asXRefEntries.resize(nLastXRefSize - 1);
+
+    int nViewportId = 0;
+    int nLGIDictId = 0;
+
+    CPLAssert(nPageNum != 0);
+    CPLAssert(poPageDict != NULL);
+
+    const char* pszGEO_ENCODING = CPLGetConfigOption("GDAL_PDF_GEO_ENCODING", "ISO32000");
+    if (EQUAL(pszGEO_ENCODING, "ISO32000") || EQUAL(pszGEO_ENCODING, "BOTH"))
+        nViewportId = WriteSRS_ISO32000(poSrcDS, dfDPI / 72.0);
+    if (EQUAL(pszGEO_ENCODING, "OGC_BP") || EQUAL(pszGEO_ENCODING, "BOTH"))
+        nLGIDictId = WriteSRS_OGC_BP(poSrcDS, dfDPI / 72.0);
+
+    poPageDict->Remove("VP");
+    poPageDict->Remove("LGIDict");
+
+    if (nViewportId)
+    {
+        poPageDict->Add("VP", &((new GDALPDFArrayRW())->
+                Add(nViewportId, 0)));
+    }
+
+    if (nLGIDictId)
+    {
+        poPageDict->Add("LGIDict", nLGIDictId, 0);
+    }
+
+    StartObj(nPageNum, nPageGen);
+    VSIFPrintfL(fp, "%s\n", poPageDict->Serialize().c_str());
+    EndObj();
+}
+
+/************************************************************************/
+/*                           UpdateInfo()                               */
+/************************************************************************/
+
+void GDALPDFWriter::UpdateInfo(GDALDataset* poSrcDS)
+{
+    bCanUpdate = TRUE;
+    if ((int)asXRefEntries.size() < nLastXRefSize - 1)
+        asXRefEntries.resize(nLastXRefSize - 1);
+
+    int nNewInfoId = SetInfo(poSrcDS, NULL);
+    /* Write empty info, because podofo driver will find the dangling info instead */
+    if (nNewInfoId == 0 && nInfoId != 0)
+    {
+        StartObj(nInfoId, nInfoGen);
+        VSIFPrintfL(fp, "<< >>\n");
+        EndObj();
+    }
+}
+
+/************************************************************************/
+/*                           UpdateXMP()                                */
+/************************************************************************/
+
+void GDALPDFWriter::UpdateXMP(GDALDataset* poSrcDS,
+                              GDALPDFDictionaryRW* poCatalogDict)
+{
+    bCanUpdate = TRUE;
+    if ((int)asXRefEntries.size() < nLastXRefSize - 1)
+        asXRefEntries.resize(nLastXRefSize - 1);
+
+    CPLAssert(nCatalogId != 0);
+    CPLAssert(poCatalogDict != NULL);
+
+    GDALPDFObject* poMetadata = poCatalogDict->Get("Metadata");
+    if (poMetadata)
+    {
+        nXMPId = poMetadata->GetRefNum();
+        nXMPGen = poMetadata->GetRefGen();
+    }
+
+    poCatalogDict->Remove("Metadata");
+    int nNewXMPId = SetXMP(poSrcDS, NULL);
+
+    /* Write empty metadata, because podofo driver will find the dangling info instead */
+    if (nNewXMPId == 0 && nXMPId != 0)
+    {
+        StartObj(nXMPId, nXMPGen);
+        VSIFPrintfL(fp, "<< >>\n");
+        EndObj();
+    }
+
+    if (nXMPId)
+        poCatalogDict->Add("Metadata", nXMPId, 0);
+
+    StartObj(nCatalogId, nCatalogGen);
+    VSIFPrintfL(fp, "%s\n", poCatalogDict->Serialize().c_str());
+    EndObj();
 }
 
 /************************************************************************/
@@ -158,8 +373,8 @@ void GDALPDFWriter::Close()
 
 int GDALPDFWriter::AllocNewObject()
 {
-    asOffsets.push_back(0);
-    return (int)asOffsets.size();
+    asXRefEntries.push_back(GDALXRefEntry());
+    return (int)asXRefEntries.size();
 }
 
 /************************************************************************/
@@ -169,28 +384,57 @@ int GDALPDFWriter::AllocNewObject()
 void GDALPDFWriter::WriteXRefTableAndTrailer()
 {
     vsi_l_offset nOffsetXREF = VSIFTellL(fp);
-    VSIFPrintfL(fp,
-                "xref\n"
-                "%d %d\n",
-                0, (int)asOffsets.size() + 1);
+    VSIFPrintfL(fp, "xref\n");
 
-    VSIFPrintfL(fp, "0000000000 65535 f \n");
     char buffer[16];
-    for(size_t i=0;i<asOffsets.size();i++)
+    if (bCanUpdate)
     {
-        snprintf (buffer, sizeof(buffer), "%010ld", (long)asOffsets[i]);
-        VSIFPrintfL(fp, "%s 00000 n \n", buffer);
+        VSIFPrintfL(fp, "0 1\n");
+        VSIFPrintfL(fp, "0000000000 65535 f \n");
+        for(size_t i=0;i<asXRefEntries.size();)
+        {
+            if (asXRefEntries[i].nOffset != 0)
+            {
+                /* Find number of consecutive objects */
+                size_t nCount = 1;
+                while(i + nCount <asXRefEntries.size() && asXRefEntries[i + nCount].nOffset != 0)
+                    nCount ++;
+
+                VSIFPrintfL(fp, "%d %d\n", (int)i + 1, (int)nCount);
+                size_t iEnd = i + nCount;
+                for(; i < iEnd; i++)
+                {
+                    snprintf (buffer, sizeof(buffer), "%010ld", (long)asXRefEntries[i].nOffset);
+                    VSIFPrintfL(fp, "%s %05d n \n", buffer, asXRefEntries[i].nGen);
+                }
+            }
+            else
+            {
+                i++;
+            }
+        }
+    }
+    else
+    {
+        VSIFPrintfL(fp, "%d %d\n",
+                    0, (int)asXRefEntries.size() + 1);
+        VSIFPrintfL(fp, "0000000000 65535 f \n");
+        for(size_t i=0;i<asXRefEntries.size();i++)
+        {
+            snprintf (buffer, sizeof(buffer), "%010ld", (long)asXRefEntries[i].nOffset);
+            VSIFPrintfL(fp, "%s %05d n \n", buffer, asXRefEntries[i].nGen);
+        }
     }
 
-    VSIFPrintfL(fp,
-                "trailer\n"
-                "<< /Size %d\n"
-                "   /Root %d 0 R\n",
-                (int)asOffsets.size() + 1,
-                nCatalogId);
+    VSIFPrintfL(fp, "trailer\n");
+    GDALPDFDictionaryRW oDict;
+    oDict.Add("Size", (int)asXRefEntries.size() + 1)
+         .Add("Root", nCatalogId, nCatalogGen);
     if (nInfoId)
-        VSIFPrintfL(fp, "   /Info %d 0 R\n", nInfoId);
-    VSIFPrintfL(fp, ">>\n");
+        oDict.Add("Info", nInfoId, nInfoGen);
+    if (nLastStartXRef)
+        oDict.Add("Prev", nLastStartXRef);
+    VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
 
     VSIFPrintfL(fp,
                 "startxref\n"
@@ -203,13 +447,14 @@ void GDALPDFWriter::WriteXRefTableAndTrailer()
 /*                              StartObj()                              */
 /************************************************************************/
 
-void GDALPDFWriter::StartObj(int nObjectId)
+void GDALPDFWriter::StartObj(int nObjectId, int nGen)
 {
     CPLAssert(!bInWriteObj);
-    CPLAssert(nObjectId - 1 < (int)asOffsets.size());
-    CPLAssert(asOffsets[nObjectId - 1] == 0);
-    asOffsets[nObjectId - 1] = VSIFTellL(fp);
-    VSIFPrintfL(fp, "%d 0 obj\n", nObjectId);
+    CPLAssert(nObjectId - 1 < (int)asXRefEntries.size());
+    CPLAssert(asXRefEntries[nObjectId - 1].nOffset == 0);
+    asXRefEntries[nObjectId - 1].nOffset = VSIFTellL(fp);
+    asXRefEntries[nObjectId - 1].nGen = nGen;
+    VSIFPrintfL(fp, "%d %d obj\n", nObjectId, nGen);
     bInWriteObj = TRUE;
 }
 
@@ -319,47 +564,49 @@ int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
     int nGCSId = AllocNewObject();
 
     StartObj(nViewportId);
-    VSIFPrintfL(fp,
-                "<<\n"
-                "  /Type /Viewport\n"
-                "  /Name (Layer)\n"
-                "  /BBox [ 0 0 %.16g %.16g ]\n"
-                "  /Measure %d 0 R\n"
-                ">>\n",
-                nWidth / dfUserUnit,
-                nHeight / dfUserUnit,
-                nMeasureId);
+    GDALPDFDictionaryRW oViewPortDict;
+    oViewPortDict.Add("Type", GDALPDFObjectRW::CreateName("Viewport"))
+                 .Add("Name", "Layer")
+                 .Add("BBox", &((new GDALPDFArrayRW())
+                                ->Add(0)
+                                .Add(0)
+                                .Add(nWidth / dfUserUnit)
+                                .Add(nHeight / dfUserUnit)))
+                 .Add("Measure", nMeasureId, 0);
+    VSIFPrintfL(fp, "%s\n", oViewPortDict.Serialize().c_str());
     EndObj();
 
     StartObj(nMeasureId);
-    VSIFPrintfL(fp,
-                "<<\n"
-                "  /Type /Measure\n"
-                "  /Subtype /GEO\n"
-                "  /Bounds [0 1 0 0 1 0 1 1 ]\n"
-                "  /GPTS [%.16g %.16g %.16g %.16g %.16g %.16g %.16g %.16g]\n"
-                "  /LPTS [0 1 0 0 1 0 1 1 ]\n"
-                "  /GCS %d 0 R\n"
-                ">>\n",
-                adfGPTS[1], adfGPTS[0],
-                adfGPTS[3], adfGPTS[2],
-                adfGPTS[5], adfGPTS[4],
-                adfGPTS[7], adfGPTS[6],
-                nGCSId);
+    GDALPDFDictionaryRW oMeasureDict;
+    oMeasureDict .Add("Type", GDALPDFObjectRW::CreateName("Measure"))
+                 .Add("Subtype", GDALPDFObjectRW::CreateName("GEO"))
+                 .Add("Bounds", &((new GDALPDFArrayRW())
+                                ->Add(0).Add(1).
+                                  Add(0).Add(0).
+                                  Add(1).Add(0).
+                                  Add(1).Add(1)))
+                 .Add("GPTS", &((new GDALPDFArrayRW())
+                                ->Add(adfGPTS[1]).Add(adfGPTS[0]).
+                                  Add(adfGPTS[3]).Add(adfGPTS[2]).
+                                  Add(adfGPTS[5]).Add(adfGPTS[4]).
+                                  Add(adfGPTS[7]).Add(adfGPTS[6])))
+                 .Add("LPTS", &((new GDALPDFArrayRW())
+                                ->Add(0).Add(1).
+                                  Add(0).Add(0).
+                                  Add(1).Add(0).
+                                  Add(1).Add(1)))
+                 .Add("GCS", nGCSId, 0);
+    VSIFPrintfL(fp, "%s\n", oMeasureDict.Serialize().c_str());
     EndObj();
 
 
     StartObj(nGCSId);
-    VSIFPrintfL(fp,
-                "<<\n"
-                "  /Type /%s\n"
-                "  /WKT (%s)\n",
-                bIsGeographic ? "GEOGCS" : "PROJCS", pszESRIWKT);
+    GDALPDFDictionaryRW oGCSDict;
+    oGCSDict.Add("Type", GDALPDFObjectRW::CreateName(bIsGeographic ? "GEOGCS" : "PROJCS"))
+            .Add("WKT", pszESRIWKT);
     if (nEPSGCode)
-        VSIFPrintfL(fp,
-                    "  /EPSG %d\n",
-                    nEPSGCode);
-    VSIFPrintfL(fp,">>\n");
+        oGCSDict.Add("EPSG", nEPSGCode);
+    VSIFPrintfL(fp, "%s\n", oGCSDict.Serialize().c_str());
     EndObj();
 
     CPLFree(pszESRIWKT);
@@ -423,8 +670,8 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
     if (poDatumNode && poDatumNode->GetChildCount() > 0)
         pszDatumDescription = poDatumNode->GetChild(0)->GetValue();
 
-    const char* pszDatumOGCBP = "(WGE)";
-    CPLString osDatum;
+    GDALPDFObjectRW* poPDFDatum = NULL;
+
     if (pszDatumDescription)
     {
         double dfSemiMajor = poSRS->GetSemiMajor();
@@ -435,23 +682,24 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
             nEPSGDatum = atoi(poSRS->GetAuthorityCode( "DATUM" ));
 
         if( EQUAL(pszDatumDescription,SRS_DN_WGS84) || nEPSGDatum == 6326 )
-            pszDatumOGCBP = "(WGE)";
+            poPDFDatum = GDALPDFObjectRW::CreateString("WGE");
         else if( EQUAL(pszDatumDescription, SRS_DN_NAD27) || nEPSGDatum == 6267 )
-            pszDatumOGCBP = "(NAS)";
+            poPDFDatum = GDALPDFObjectRW::CreateString("NAS");
         else if( EQUAL(pszDatumDescription, SRS_DN_NAD83) || nEPSGDatum == 6269 )
-            pszDatumOGCBP = "(NAR)";
+            poPDFDatum = GDALPDFObjectRW::CreateString("NAR");
         else
         {
             CPLDebug("PDF",
                      "Unhandled datum name (%s). Write datum parameters then.",
                      pszDatumDescription);
 
+            GDALPDFDictionaryRW* poPDFDatumDict = new GDALPDFDictionaryRW();
+            poPDFDatum = GDALPDFObjectRW::CreateDictionary(poPDFDatumDict);
+
             const OGR_SRSNode* poSpheroidNode = poSRS->GetAttrNode("SPHEROID");
             if (poSpheroidNode && poSpheroidNode->GetChildCount() >= 3)
             {
-                osDatum.Printf("<<\n"
-                               "         /Description (%s)\n",
-                               pszDatumDescription);
+                poPDFDatumDict->Add("Description", pszDatumDescription);
 
                 const char* pszEllipsoidCode = NULL;
 #ifdef disabled_because_terrago_toolbar_does_not_like_it
@@ -553,9 +801,7 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
 
                 if( pszEllipsoidCode != NULL )
                 {
-                    osDatum += CPLString().Printf(
-                        "         /Ellipsoid (%s)\n",
-                        pszEllipsoidCode);
+                    poPDFDatumDict->Add("Ellipsoid", pszEllipsoidCode);
                 }
                 else
                 {
@@ -566,15 +812,11 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
                          "Unhandled ellipsoid name (%s). Write ellipsoid parameters then.",
                          pszEllipsoidDescription);
 
-                    osDatum += CPLString().Printf(
-                                   "         /Ellipsoid <<\n"
-                                   "            /Description (%s)\n"
-                                   "            /SemiMajorAxis (%.16g)\n"
-                                   "            /InvFlattening (%.16g)\n"
-                                   "         >>\n",
-                                   pszEllipsoidDescription,
-                                   dfSemiMajor,
-                                   dfInvFlattening);
+                    poPDFDatumDict->Add("Ellipsoid",
+                        &((new GDALPDFDictionaryRW())
+                        ->Add("Description", pszEllipsoidDescription)
+                         .Add("SemiMajorAxis", dfSemiMajor)
+                         .Add("InvFlattening", dfInvFlattening)));
                 }
 
                 const OGR_SRSNode *poTOWGS84 = poSRS->GetAttrNode( "TOWGS84" );
@@ -586,39 +828,24 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
                         && EQUAL(poTOWGS84->GetChild(5)->GetValue(),"")
                         && EQUAL(poTOWGS84->GetChild(6)->GetValue(),""))) )
                 {
-                    osDatum += CPLString().Printf(
-                        "         /ToWGS84 <<\n"
-                        "           /dx (%s)\n"
-                        "           /dy (%s)\n"
-                        "           /dz (%s)\n"
-                        "         >>\n",
-                        poTOWGS84->GetChild(0)->GetValue(),
-                        poTOWGS84->GetChild(1)->GetValue(),
-                        poTOWGS84->GetChild(2)->GetValue());
+                    poPDFDatumDict->Add("ToWGS84",
+                        &((new GDALPDFDictionaryRW())
+                        ->Add("dx", poTOWGS84->GetChild(0)->GetValue())
+                         .Add("dy", poTOWGS84->GetChild(1)->GetValue())
+                         .Add("dz", poTOWGS84->GetChild(2)->GetValue())));
                 }
                 else if( poTOWGS84 != NULL && poTOWGS84->GetChildCount() >= 7)
                 {
-                    osDatum += CPLString().Printf(
-                        "         /ToWGS84 <<\n"
-                        "           /dx (%s)\n"
-                        "           /dy (%s)\n"
-                        "           /dz (%s)\n"
-                        "           /rx (%s)\n"
-                        "           /ry (%s)\n"
-                        "           /rz (%s)\n"
-                        "           /sf (%s)\n"
-                        "         >>\n",
-                        poTOWGS84->GetChild(0)->GetValue(),
-                        poTOWGS84->GetChild(1)->GetValue(),
-                        poTOWGS84->GetChild(2)->GetValue(),
-                        poTOWGS84->GetChild(3)->GetValue(),
-                        poTOWGS84->GetChild(4)->GetValue(),
-                        poTOWGS84->GetChild(5)->GetValue(),
-                        poTOWGS84->GetChild(6)->GetValue());
+                    poPDFDatumDict->Add("ToWGS84",
+                        &((new GDALPDFDictionaryRW())
+                        ->Add("dx", poTOWGS84->GetChild(0)->GetValue())
+                         .Add("dy", poTOWGS84->GetChild(1)->GetValue())
+                         .Add("dz", poTOWGS84->GetChild(2)->GetValue())
+                         .Add("rx", poTOWGS84->GetChild(3)->GetValue())
+                         .Add("ry", poTOWGS84->GetChild(4)->GetValue())
+                         .Add("rz", poTOWGS84->GetChild(5)->GetValue())
+                         .Add("sf", poTOWGS84->GetChild(6)->GetValue())));
                 }
-
-                osDatum += "      >>";
-                pszDatumOGCBP = osDatum.c_str();
             }
         }
     }
@@ -627,6 +854,9 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
         CPLError(CE_Warning, CPLE_NotSupported,
                  "No datum name. Defaulting to WGS84.");
     }
+
+    if (poPDFDatum == NULL)
+        poPDFDatum = GDALPDFObjectRW::CreateString("WGE");
 
     const OGR_SRSNode* poNode = poSRS->GetRoot();
     if( poNode != NULL )
@@ -640,6 +870,10 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
 
     CPLString osProjParams;
 
+    GDALPDFDictionaryRW* poProjectionDict = new GDALPDFDictionaryRW();
+    poProjectionDict->Add("Type", GDALPDFObjectRW::CreateName("Projection"));
+    poProjectionDict->Add("Datum", poPDFDatum);
+
     if( pszProjection == NULL )
     {
         if( OSRIsGeographic(hSRS) )
@@ -650,6 +884,7 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
         {
             CPLError(CE_Warning, CPLE_NotSupported, "Unsupported SRS type");
             OSRDestroySpatialReference(hSRS);
+            delete poProjectionDict;
             return 0;
         }
     }
@@ -661,8 +896,8 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
         if( nZone != 0 )
         {
             pszProjectionOGCBP = "UT";
-            osProjParams += CPLSPrintf("     /Hemisphere (%s)\n", (bNorth) ? "N" : "S");
-            osProjParams += CPLSPrintf("     /Zone %d\n", nZone);
+            poProjectionDict->Add("Hemisphere", (bNorth) ? "N" : "S");
+            poProjectionDict->Add("Zone", nZone);
         }
         else
         {
@@ -673,11 +908,11 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
             double dfFalseNorthing = poSRS->GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0);
 
             pszProjectionOGCBP = "TC";
-            osProjParams += CPLSPrintf("     /OriginLatitude (%.16g)\n", dfCenterLat);
-            osProjParams += CPLSPrintf("     /CentralMeridian (%.16g)\n", dfCenterLong);
-            osProjParams += CPLSPrintf("     /ScaleFactor (%.16g)\n", dfScale);
-            osProjParams += CPLSPrintf("     /FalseEasting (%.16g)\n", dfFalseEasting);
-            osProjParams += CPLSPrintf("     /FalseNorthing (%.16g)\n", dfFalseNorthing);
+            poProjectionDict->Add("OriginLatitude", dfCenterLat);
+            poProjectionDict->Add("CentralMeridian", dfCenterLong);
+            poProjectionDict->Add("ScaleFactor", dfScale);
+            poProjectionDict->Add("FalseEasting", dfFalseEasting);
+            poProjectionDict->Add("FalseNorthing", dfFalseNorthing);
         }
     }
     else if( EQUAL(pszProjection,SRS_PT_POLAR_STEREOGRAPHIC) )
@@ -692,16 +927,16 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
             dfScale == 0.994 && dfFalseEasting == 200000.0 && dfFalseNorthing == 200000.0)
         {
             pszProjectionOGCBP = "UP";
-            osProjParams += CPLSPrintf("     /Hemisphere (%s)\n", (dfCenterLat > 0) ? "N" : "S");
+            poProjectionDict->Add("Hemisphere", (dfCenterLat > 0) ? "N" : "S");
         }
         else
         {
             pszProjectionOGCBP = "PG";
-            osProjParams += CPLSPrintf("     /LatitudeTrueScale (%.16g)\n", dfCenterLat);
-            osProjParams += CPLSPrintf("     /LongitudeDownFromPole (%.16g)\n", dfCenterLong);
-            osProjParams += CPLSPrintf("     /ScaleFactor (%.16g)\n", dfScale);
-            osProjParams += CPLSPrintf("     /FalseEasting (%.16g)\n", dfFalseEasting);
-            osProjParams += CPLSPrintf("     /FalseNorthing (%.16g)\n", dfFalseNorthing);
+            poProjectionDict->Add("LatitudeTrueScale", dfCenterLat);
+            poProjectionDict->Add("LongitudeDownFromPole", dfCenterLong);
+            poProjectionDict->Add("ScaleFactor", dfScale);
+            poProjectionDict->Add("FalseEasting", dfFalseEasting);
+            poProjectionDict->Add("FalseNorthing", dfFalseNorthing);
         }
     }
 
@@ -715,17 +950,29 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
         double dfFalseNorthing = poSRS->GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0);
 
         pszProjectionOGCBP = "LE";
-        osProjParams += CPLSPrintf("     /StandardParallelOne (%.16g)\n", dfStdP1);
-        osProjParams += CPLSPrintf("     /StandardParallelTwo (%.16g)\n", dfStdP2);
-        osProjParams += CPLSPrintf("     /OriginLatitude (%.16g)\n", dfCenterLat);
-        osProjParams += CPLSPrintf("     /CentralMeridian (%.16g)\n", dfCenterLong);
-        osProjParams += CPLSPrintf("     /FalseEasting (%.16g)\n", dfFalseEasting);
-        osProjParams += CPLSPrintf("     /FalseNorthing (%.16g)\n", dfFalseNorthing);
+        poProjectionDict->Add("StandardParallelOne", dfStdP1);
+        poProjectionDict->Add("StandardParallelOne", dfStdP2);
+        poProjectionDict->Add("OriginLatitude", dfCenterLat);
+        poProjectionDict->Add("CentralMeridian", dfCenterLong);
+        poProjectionDict->Add("FalseEasting", dfFalseEasting);
+        poProjectionDict->Add("FalseNorthing", dfFalseNorthing);
     }
     else
     {
         CPLError(CE_Warning, CPLE_NotSupported,
                  "Unhandled projection type (%s) for now", pszProjection);
+    }
+
+    poProjectionDict->Add("ProjectionType", pszProjectionOGCBP);
+
+    if( poSRS->IsProjected() )
+    {
+        char* pszUnitName = NULL;
+        double dfLinearUnits = poSRS->GetLinearUnits(&pszUnitName);
+        if (dfLinearUnits == 1.0)
+            poProjectionDict->Add("Units", "M");
+        else if (dfLinearUnits == 0.3048)
+            poProjectionDict->Add("Units", "FT");
     }
 
     double adfNL[8];
@@ -744,48 +991,21 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
 
     int nLGIDictId = AllocNewObject();
     StartObj(nLGIDictId);
-    VSIFPrintfL(fp,
-                "<< /Type /LGIDict\n"
-                "   /Version (2.1)\n"
-                "   /CTM [ %.16g %.16g %.16g %.16g %.16g %.16g ]\n"
-                "   /Neatline [ %.16g %.16g %.16g %.16g %.16g %.16g %.16g %.16g ]\n",
-                adfCTM[0], adfCTM[1], adfCTM[2], adfCTM[3], adfCTM[4], adfCTM[5],
-                adfNL[0],adfNL[1],adfNL[2],adfNL[3],adfNL[4],adfNL[5],adfNL[6],adfNL[7]);
+    GDALPDFDictionaryRW oLGIDict;
+    oLGIDict.Add("Type", GDALPDFObjectRW::CreateName("LGIDict"))
+            .Add("Version", "2.1")
+            .Add("CTM", &((new GDALPDFArrayRW())->Add(adfCTM, 6)))
+            .Add("Neatline", &((new GDALPDFArrayRW())->Add(adfNL, 8)));
     if( pszDescription )
     {
-        VSIFPrintfL(fp,
-                    "   /Description (%s)\n",
-                    pszDescription);
+        oLGIDict.Add("Description", pszDescription);
     }
-    VSIFPrintfL(fp,
-                "   /Projection <<\n"
-                "     /Type /Projection\n"
-                "     /Datum %s\n"
-                "     /ProjectionType (%s)\n"
-                "%s",
-                pszDatumOGCBP,
-                pszProjectionOGCBP,
-                osProjParams.c_str()
-                );
-
-    if( poSRS->IsProjected() )
-    {
-        char* pszUnitName = NULL;
-        double dfLinearUnits = poSRS->GetLinearUnits(&pszUnitName);
-        if (dfLinearUnits == 1.0)
-            VSIFPrintfL(fp, "     /Units (M)\n");
-        else if (dfLinearUnits == 0.3048)
-            VSIFPrintfL(fp, "     /Units (FT)\n");
-    }
+    oLGIDict.Add("Projection", poProjectionDict);
 
     /* GDAL extension */
     if( CSLTestBoolean( CPLGetConfigOption("GDAL_PDF_OGC_BP_WRITE_WKT", "TRUE") ) )
-        VSIFPrintfL(fp, "     /WKT (%s) %%This attribute is a GDAL extension\n", pszWKT);
-
-    VSIFPrintfL(fp, "  >>\n");
-
-    VSIFPrintfL(fp, ">>\n");
-
+        oLGIDict.Add("WKT", pszWKT);
+    VSIFPrintfL(fp, "%s\n", oLGIDict.Serialize().c_str());
     EndObj();
 
     OSRDestroySpatialReference(hSRS);
@@ -794,11 +1014,12 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
 }
 
 /************************************************************************/
-/*                             SetInfo()                                */
+/*                     GDALPDFGetValueFromDSOrOption()                  */
 /************************************************************************/
 
-static const char* GDALPDFGetValueFromDSOrOption(GDALDataset* poSrcDS, char** papszOptions,
-                            const char* pszKey)
+static const char* GDALPDFGetValueFromDSOrOption(GDALDataset* poSrcDS,
+                                                 char** papszOptions,
+                                                 const char* pszKey)
 {
     const char* pszValue = CSLFetchNameValue(papszOptions, pszKey);
     if (pszValue != NULL && pszValue[0] == '\0')
@@ -808,57 +1029,12 @@ static const char* GDALPDFGetValueFromDSOrOption(GDALDataset* poSrcDS, char** pa
     return poSrcDS->GetMetadataItem(pszKey);
 }
 
-static CPLString GDALPDFGetUTF8String(const char* pszStr)
-{
-    GByte* pabyData = (GByte*)pszStr;
-    int i;
-    GByte ch;
-    for(i=0;(ch = pabyData[i]) != '\0';i++)
-    {
-        if (ch < 32 || ch > 127 ||
-            ch == '(' || ch == ')' || ch == '<' || ch == '>' ||
-            ch == '[' || ch == ']' || ch == '{' || ch == '}' ||
-            ch == '/' || ch == '%' || ch == '#')
-            break;
-    }
-    CPLString osStr;
-    if (ch == 0)
-    {
-        osStr = "(";
-        osStr += pszStr;
-        osStr += ")";
-        return osStr;
-    }
+/************************************************************************/
+/*                             SetInfo()                                */
+/************************************************************************/
 
-    wchar_t* pwszDest = CPLRecodeToWChar( pszStr, CPL_ENC_UTF8, CPL_ENC_UCS2 );
-    osStr = "<FEFF";
-    for(i=0;pwszDest[i] != 0;i++)
-    {
-#ifndef _WIN32
-        if (pwszDest[i] >= 0x10000 /* && pwszDest[i] <= 0x10FFFF */)
-        {
-            /* Generate UTF-16 surrogate pairs (on Windows, CPLRecodeToWChar does it for us)  */
-            int nHeadSurrogate = ((pwszDest[i] - 0x10000) >> 10) | 0xd800;
-            int nTrailSurrogate = ((pwszDest[i] - 0x10000) & 0x3ff) | 0xdc00;
-            osStr += CPLSPrintf("%02X", (nHeadSurrogate >> 8) & 0xff);
-            osStr += CPLSPrintf("%02X", (nHeadSurrogate) & 0xff);
-            osStr += CPLSPrintf("%02X", (nTrailSurrogate >> 8) & 0xff);
-            osStr += CPLSPrintf("%02X", (nTrailSurrogate) & 0xff);
-        }
-        else
-#endif
-        {
-            osStr += CPLSPrintf("%02X", (pwszDest[i] >> 8) & 0xff);
-            osStr += CPLSPrintf("%02X", (pwszDest[i]) & 0xff);
-        }
-    }
-    osStr += ">";
-    CPLFree(pwszDest);
-    return osStr;
-}
-
-void GDALPDFWriter::SetInfo(GDALDataset* poSrcDS,
-                            char** papszOptions)
+int GDALPDFWriter::SetInfo(GDALDataset* poSrcDS,
+                           char** papszOptions)
 {
     const char* pszAUTHOR = GDALPDFGetValueFromDSOrOption(poSrcDS, papszOptions, "AUTHOR");
     const char* pszPRODUCER = GDALPDFGetValueFromDSOrOption(poSrcDS, papszOptions, "PRODUCER");
@@ -870,104 +1046,69 @@ void GDALPDFWriter::SetInfo(GDALDataset* poSrcDS,
 
     if (pszAUTHOR == NULL && pszPRODUCER == NULL && pszCREATOR == NULL && pszCREATION_DATE == NULL &&
         pszSUBJECT == NULL && pszTITLE == NULL && pszKEYWORDS == NULL)
-        return;
+        return 0;
 
-    CPLAssert(nInfoId == 0);
-    nInfoId = AllocNewObject();
-    StartObj(nInfoId);
-    VSIFPrintfL(fp, "<<\n");
+    if (nInfoId == 0)
+        nInfoId = AllocNewObject();
+    StartObj(nInfoId, nInfoGen);
+    GDALPDFDictionaryRW oDict;
     if (pszAUTHOR != NULL)
-        VSIFPrintfL(fp, "  /Author %s\n", GDALPDFGetUTF8String(pszAUTHOR).c_str());
+        oDict.Add("Author", pszAUTHOR);
     if (pszPRODUCER != NULL)
-        VSIFPrintfL(fp, "  /Producer %s\n", GDALPDFGetUTF8String(pszPRODUCER).c_str());
+        oDict.Add("Producer", pszPRODUCER);
     if (pszCREATOR != NULL)
-        VSIFPrintfL(fp, "  /Creator %s\n", GDALPDFGetUTF8String(pszCREATOR).c_str());
+        oDict.Add("Creator", pszCREATOR);
     if (pszCREATION_DATE != NULL)
-        VSIFPrintfL(fp, "  /CreationDate %s\n", GDALPDFGetUTF8String(pszCREATION_DATE).c_str());
+        oDict.Add("CreationDate", pszCREATION_DATE);
     if (pszSUBJECT != NULL)
-        VSIFPrintfL(fp, "  /Subject %s\n",GDALPDFGetUTF8String(pszSUBJECT).c_str());
+        oDict.Add("Subject", pszSUBJECT);
     if (pszTITLE != NULL)
-        VSIFPrintfL(fp, "  /Title %s\n", GDALPDFGetUTF8String(pszTITLE).c_str());
+        oDict.Add("Title", pszTITLE);
     if (pszKEYWORDS != NULL)
-        VSIFPrintfL(fp, "  /Keywords %s\n", GDALPDFGetUTF8String(pszKEYWORDS).c_str());
-    VSIFPrintfL(fp, ">>\n");
-
+        oDict.Add("Keywords", pszKEYWORDS);
+    VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
     EndObj();
+
+    return nInfoId;
 }
 
 /************************************************************************/
-/*                             SetInfo()                                */
+/*                             SetXMP()                                 */
 /************************************************************************/
 
-void GDALPDFWriter::SetXMP(GDALDataset* poSrcDS,
+int  GDALPDFWriter::SetXMP(GDALDataset* poSrcDS,
                            const char* pszXMP)
 {
     if (pszXMP != NULL && EQUALN(pszXMP, "NO", 2))
-        return;
+        return 0;
     if (pszXMP != NULL && pszXMP[0] == '\0')
-        return;
+        return 0;
 
     char** papszXMP = poSrcDS->GetMetadata("xml:XMP");
     if (pszXMP == NULL && papszXMP != NULL && papszXMP[0] != NULL)
         pszXMP = papszXMP[0];
 
     if (pszXMP == NULL)
-        return;
+        return 0;
 
     CPLXMLNode* psNode = CPLParseXMLString(pszXMP);
     if (psNode == NULL)
-        return;
+        return 0;
     CPLDestroyXMLNode(psNode);
 
-    CPLAssert(nXMPId == 0);
-    nXMPId = AllocNewObject();
-    StartObj(nXMPId);
-#if 1
-    VSIFPrintfL(fp,
-                "<<\n"
-                "/Type /Metadata\n"
-                "/Subtype /XML\n"
-                "/Length %d\n"
-                ">>\n", (int)strlen(pszXMP));
+    if(nXMPId == 0)
+        nXMPId = AllocNewObject();
+    StartObj(nXMPId, nXMPGen);
+    GDALPDFDictionaryRW oDict;
+    oDict.Add("Type", GDALPDFObjectRW::CreateName("Metadata"))
+         .Add("Subtype", GDALPDFObjectRW::CreateName("XML"))
+         .Add("Length", (int)strlen(pszXMP));
+    VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
     VSIFPrintfL(fp, "stream\n");
     VSIFPrintfL(fp, "%s\n", pszXMP);
     VSIFPrintfL(fp, "endstream\n");
     EndObj();
-#else
-    int nLengthId = AllocNewObject();
-    VSIFPrintfL(fp,
-                "<<\n"
-                "/Type /Metadata\n"
-                "/Filter /FlateDecode\n"
-                "/Subtype /XML\n"
-                "/Length %d 0 R\n"
-                ">>\n", nLengthId );
-    VSIFPrintfL(fp, "stream\n");
-
-    vsi_l_offset nStreamStart = VSIFTellL(fp);
-
-    VSILFILE* fpBack = fp;
-    VSILFILE* fpGZip = (VSILFILE* )VSICreateGZipWritable( (VSIVirtualHandle*) fp, TRUE, FALSE );
-    fp = fpGZip;
-
-    VSIFWriteL(pszXMP, strlen(pszXMP), 1, fp);
-
-    VSIFCloseL(fpGZip);
-
-    fp = fpBack;
-
-    vsi_l_offset nStreamEnd = VSIFTellL(fp);
-    VSIFPrintfL(fp,
-                "\n"
-                "endstream\n");
-    EndObj();
-
-    StartObj(nLengthId);
-    VSIFPrintfL(fp,
-                "   %ld\n",
-                (long)(nStreamEnd - nStreamStart));
-    EndObj();
-#endif
+    return nXMPId;
 }
 
 /************************************************************************/
@@ -1014,39 +1155,33 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
         nLGIDictId = WriteSRS_OGC_BP(poSrcDS, dfUserUnit);
 
     StartObj(nPageId);
-    VSIFPrintfL(fp,
-                "<< /Type /Page\n"
-                "   /Parent %d 0 R\n"
-                "   /MediaBox [ 0 0 %.16g %.16g ]\n"
-                "   /UserUnit %.16g\n"
-                "   /Contents %d 0 R\n"
-                "   /Resources %d 0 R\n",
-                nPageResourceId,
-                dfWidthInUserUnit,
-                dfHeightInUserUnit,
-                dfUserUnit,
-                nContentId,
-                nResourcesId);
+    GDALPDFDictionaryRW oDictPage;
+    oDictPage.Add("Type", GDALPDFObjectRW::CreateName("Page"))
+             .Add("Parent", nPageResourceId, 0)
+             .Add("MediaBox", &((new GDALPDFArrayRW())
+                               ->Add(0).Add(0).Add(dfWidthInUserUnit).Add(dfHeightInUserUnit)))
+             .Add("UserUnit", dfUserUnit)
+             .Add("Contents", nContentId, 0)
+             .Add("Resources", nResourcesId, 0);
+
     if (nBands == 4)
     {
-        VSIFPrintfL(fp,
-                    "   /Group <<\n"
-                    "      /Type /Group\n"
-                    "      /S /Transparency\n"
-                    "      /CS /DeviceRGB\n"
-                    "   >>\n");
+        oDictPage.Add("Group",
+                      &((new GDALPDFDictionaryRW())
+                        ->Add("Type", GDALPDFObjectRW::CreateName("Group"))
+                         .Add("S", GDALPDFObjectRW::CreateName("Transparency"))
+                         .Add("CS", GDALPDFObjectRW::CreateName("DeviceRGB"))));
     }
     if (nViewportId)
     {
-        VSIFPrintfL(fp,
-                    "   /VP [ %d 0 R ]\n",
-                    nViewportId);
+        oDictPage.Add("VP", &((new GDALPDFArrayRW())
+                               ->Add(nViewportId, 0)));
     }
     if (nLGIDictId)
     {
-        VSIFPrintfL(fp, "   /LGIDict %d 0 R \n", nLGIDictId);
+        oDictPage.Add("LGIDict", nLGIDictId, 0);
     }
-    VSIFPrintfL(fp, ">>\n");
+    VSIFPrintfL(fp, "%s\n", oDictPage.Serialize().c_str());
     EndObj();
 
     /* Does the source image has a color table ? */
@@ -1061,13 +1196,23 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
 
         /* Index object */
         StartObj(nColorTableId);
-        VSIFPrintfL(fp, "[ /Indexed [ /DeviceRGB ] %d %d 0 R ]\n",
-                    nColors - 1, nLookupTableId);
+        {
+            GDALPDFArrayRW oArray;
+            oArray.Add(GDALPDFObjectRW::CreateName("Indexed"))
+                  .Add(&((new GDALPDFArrayRW())->Add(GDALPDFObjectRW::CreateName("DeviceRGB"))))
+                  .Add(nColors-1)
+                  .Add(nLookupTableId, 0);
+            VSIFPrintfL(fp, "%s\n", oArray.Serialize().c_str());
+        }
         EndObj();
 
         /* Lookup table object */
         StartObj(nLookupTableId);
-        VSIFPrintfL(fp, "<< /Length %d >> %% Lookup table\n", nColors * 3);
+        {
+            GDALPDFDictionaryRW oDict;
+            oDict.Add("Length", nColors * 3);
+            VSIFPrintfL(fp, "%s %% Lookup table\n", oDict.Serialize().c_str());
+        }
         VSIFPrintfL(fp, "stream\n");
         GByte pabyLookup[768];
         for(int i=0;i<nColors;i++)
@@ -1122,8 +1267,11 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
     }
 
     StartObj(nContentId);
-    VSIFPrintfL(fp, "<< /Length %d 0 R\n", nContentLengthId);
-    VSIFPrintfL(fp, ">>\n");
+    {
+        GDALPDFDictionaryRW oDict;
+        oDict.Add("Length", nContentLengthId, 0);
+        VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
+    }
     VSIFPrintfL(fp, "stream\n");
     vsi_l_offset nStreamStart = VSIFTellL(fp);
     for(nBlockYOff = 0; nBlockYOff < nYBlocks; nBlockYOff ++)
@@ -1136,11 +1284,11 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
             int iImage = nBlockYOff * nXBlocks + nBlockXOff;
 
             VSIFPrintfL(fp, "q\n");
-            VSIFPrintfL(fp, "%.16g 0 0 %.16g %.16g %.16g cm\n",
-                        nReqWidth / dfUserUnit,
-                        nReqHeight / dfUserUnit,
-                        (nBlockXOff * nBlockXSize) / dfUserUnit,
-                        (nHeight - nBlockYOff * nBlockYSize - nReqHeight) / dfUserUnit);
+            VSIFPrintfL(fp, "%.16f 0 0 %.16f %.16f %.16f cm\n",
+                        ROUND_TO_INT_IF_CLOSE(nReqWidth / dfUserUnit),
+                        ROUND_TO_INT_IF_CLOSE(nReqHeight / dfUserUnit),
+                        ROUND_TO_INT_IF_CLOSE((nBlockXOff * nBlockXSize) / dfUserUnit),
+                        ROUND_TO_INT_IF_CLOSE((nHeight - nBlockYOff * nBlockYSize - nReqHeight) / dfUserUnit));
             VSIFPrintfL(fp, "/Image%d Do\n",
                         asImageId[iImage]);
             VSIFPrintfL(fp, "Q\n");
@@ -1157,14 +1305,16 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
     EndObj();
 
     StartObj(nResourcesId);
-    VSIFPrintfL(fp, "<< /XObject <<");
-    for(size_t iImage = 0; iImage < asImageId.size(); iImage ++)
     {
-        VSIFPrintfL(fp, "  /Image%d %d 0 R",
-                    asImageId[iImage], asImageId[iImage]);
+        GDALPDFDictionaryRW oDict;
+        GDALPDFDictionaryRW* poDict2 = new GDALPDFDictionaryRW();
+        oDict.Add("XObject", poDict2);
+        for(size_t iImage = 0; iImage < asImageId.size(); iImage ++)
+        {
+            poDict2->Add(CPLSPrintf("Image%d", asImageId[iImage]), asImageId[iImage], 0);
+        }
+        VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
     }
-    VSIFPrintfL(fp, "  >>\n");
-    VSIFPrintfL(fp, ">>\n");
     EndObj();
 
     return TRUE;
@@ -1246,24 +1396,20 @@ int GDALPDFWriter::WriteMask(GDALDataset* poSrcDS,
     int nMaskLengthId = AllocNewObject();
 
     StartObj(nMaskId);
-    VSIFPrintfL(fp, "<< /Length %d 0 R\n",
-                nMaskLengthId);
-    VSIFPrintfL(fp,
-                "   /Type /XObject\n");
+    GDALPDFDictionaryRW oDict;
+    oDict.Add("Length", nMaskLengthId, 0)
+         .Add("Type", GDALPDFObjectRW::CreateName("XObject"));
     if( eCompressMethod != COMPRESS_NONE )
     {
-        VSIFPrintfL(fp, "   /Filter /FlateDecode\n");
+        oDict.Add("Filter", GDALPDFObjectRW::CreateName("FlateDecode"));
     }
-    VSIFPrintfL(fp,
-                "   /Subtype /Image\n"
-                "   /Width %d\n"
-                "   /Height %d\n"
-                "   /ColorSpace /DeviceGray\n"
-                "   /BitsPerComponent %d\n",
-                nReqXSize, nReqYSize,
-                (bOnly0or255) ? 1 : 8);
-    VSIFPrintfL(fp, ">>\n"
-                "stream\n");
+    oDict.Add("Subtype", GDALPDFObjectRW::CreateName("Image"))
+         .Add("Width", nReqXSize)
+         .Add("Height", nReqYSize)
+         .Add("ColorSpace", GDALPDFObjectRW::CreateName("DeviceGray"))
+         .Add("BitsPerComponent", (bOnly0or255) ? 1 : 8);
+    VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
+    VSIFPrintfL(fp, "stream\n");
     vsi_l_offset nStreamStart = VSIFTellL(fp);
 
     VSILFILE* fpGZip = NULL;
@@ -1388,49 +1534,44 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
     int nImageId = AllocNewObject();
     int nImageLengthId = AllocNewObject();
 
-    char szColorSpaceObjectRef[64];
-    sprintf(szColorSpaceObjectRef, "%d 0 R", nColorTableId);
-
     StartObj(nImageId);
-    VSIFPrintfL(fp, "<< /Length %d 0 R\n",
-                nImageLengthId);
-    VSIFPrintfL(fp,
-                "   /Type /XObject\n");
+
+    GDALPDFDictionaryRW oDict;
+    oDict.Add("Length", nImageLengthId, 0)
+         .Add("Type", GDALPDFObjectRW::CreateName("XObject"));
+
     if( eCompressMethod == COMPRESS_DEFLATE )
     {
-        VSIFPrintfL(fp, "   /Filter /FlateDecode\n");
+        oDict.Add("Filter", GDALPDFObjectRW::CreateName("FlateDecode"));
         if( nPredictor == 2 )
-            VSIFPrintfL(fp, "   /DecodeParms << \n"
-                            "     /Predictor 2\n"
-                            "     /Colors %d\n"
-                            "     /Columns %d\n"
-                            "   >>\n",
-                        nBands,
-                        nReqXSize);
+            oDict.Add("Filter", &((new GDALPDFDictionaryRW())
+                                  ->Add("Predictor", 2)
+                                   .Add("Colors", nBands)
+                                   .Add("Columns", nReqXSize)));
     }
     else if( eCompressMethod == COMPRESS_JPEG )
     {
-        VSIFPrintfL(fp, "   /Filter /DCTDecode\n");
+        oDict.Add("Filter", GDALPDFObjectRW::CreateName("DCTDecode"));
     }
     else if( eCompressMethod == COMPRESS_JPEG2000 )
     {
-        VSIFPrintfL(fp, "   /Filter /JPXDecode\n");
+        oDict.Add("Filter", GDALPDFObjectRW::CreateName("JPXDecode"));
     }
-    VSIFPrintfL(fp,
-                "   /Subtype /Image\n"
-                "   /Width %d\n"
-                "   /Height %d\n"
-                "   /ColorSpace %s\n"
-                "   /BitsPerComponent 8\n",
-                nReqXSize, nReqYSize,
-                (nColorTableId != 0) ? szColorSpaceObjectRef :
-                            (nBands == 1) ? "/DeviceGray" : "/DeviceRGB");
+
+    oDict.Add("Subtype", GDALPDFObjectRW::CreateName("Image"))
+         .Add("Width", nReqXSize)
+         .Add("Height", nReqYSize)
+         .Add("ColorSpace",
+              (nColorTableId != 0) ? GDALPDFObjectRW::CreateIndirect(nColorTableId, 0) :
+              (nBands == 1) ?        GDALPDFObjectRW::CreateName("DeviceGray") :
+                                     GDALPDFObjectRW::CreateName("DeviceRGB"))
+         .Add("BitsPerComponent", 8);
     if( nMaskId )
     {
-        VSIFPrintfL(fp, "  /SMask %d 0 R\n", nMaskId);
+        oDict.Add("SMask", nMaskId, 0);
     }
-    VSIFPrintfL(fp, ">>\n"
-                "stream\n");
+    VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
+    VSIFPrintfL(fp, "stream\n");
 
     vsi_l_offset nStreamStart = VSIFTellL(fp);
 
@@ -1616,26 +1757,29 @@ end:
 void GDALPDFWriter::WritePages()
 {
     StartObj(nPageResourceId);
-    VSIFPrintfL(fp,
-                "<< /Type /Pages\n"
-                "   /Kids [ ");
+    {
+        GDALPDFDictionaryRW oDict;
+        GDALPDFArrayRW* poKids = new GDALPDFArrayRW();
+        oDict.Add("Type", GDALPDFObjectRW::CreateName("Pages"))
+             .Add("Count", (int)asPageId.size())
+             .Add("Kids", poKids);
 
-    for(size_t i=0;i<asPageId.size();i++)
-        VSIFPrintfL(fp, "%d 0 R ", asPageId[i]);
+        for(size_t i=0;i<asPageId.size();i++)
+            poKids->Add(asPageId[i], 0);
 
-    VSIFPrintfL(fp, "]\n");
-    VSIFPrintfL(fp, "   /Count %d\n", (int)asPageId.size());
-    VSIFPrintfL(fp, ">>\n");
+        VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
+    }
     EndObj();
 
     StartObj(nCatalogId);
-    VSIFPrintfL(fp,
-                 "<< /Type /Catalog\n"
-                 "   /Pages %d 0 R\n",
-                nPageResourceId);
-    if (nXMPId)
-        VSIFPrintfL(fp,"   /Metadata %d 0 R\n", nXMPId);
-    VSIFPrintfL(fp, ">>\n");
+    {
+        GDALPDFDictionaryRW oDict;
+        oDict.Add("Type", GDALPDFObjectRW::CreateName("Catalog"))
+             .Add("Pages", nPageResourceId, 0);
+        if (nXMPId)
+            oDict.Add("Metadata", nXMPId, 0);
+        VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
+    }
     EndObj();
 }
 
