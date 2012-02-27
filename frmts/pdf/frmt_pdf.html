@@ -40,14 +40,15 @@ stored as XML raw content in the xml:XMP metadata domain.
 
 <h2>Configuration options</h2>
 
-The dimensions of the raster can be controlled by specifying the DPI of the rasterization with the
-<i>GDAL_PDF_DPI</i> configuration option. Its default value is 150. Starting with GDAL 2.0, the driver
+<ul>
+<li><i>GDAL_PDF_DPI</i> : To control the dimensions of the raster by specifying the DPI of the
+rasterization with the Its default value is 150. Starting with GDAL 2.0, the driver
 will make some effort to guess the DPI value either from a specific metadata item contained in some PDF files, or
-from the raster images inside the PDF (in simple cases).
+from the raster images inside the PDF (in simple cases).</li>
 <p>
 Starting with GDAL &gt;= 2.0.0 and when GDAL compiled against libpoppler, the following options are also
 available :
-<ul>
+
 <li><i>GDAL_PDF_RENDERING_OPTIONS</i> : a string with a combination of VECTOR, BITMAP and TEXT separated
 by comma, to select whether vector, bitmap or text features should be rendered. If the option is not
 specified, all features are rendered.</li>
@@ -107,6 +108,9 @@ option can be used to force creation of tiled PDF files.</p></li>
 <li><p><b>GEO_ENCODING=[NONE/ISO32000/OGC_BP/BOTH]</b>:
 Set the Geo encoding method to use. ISO32000 is the default.</p></li>
 
+<li><p><b>NEATLINE=polygon_definition_in_wkt</b>:
+Set the NEATLINE to use.</p></li>
+
 <li><p><b>XMP=[NONE/xml_xmp_content]</b>:
 By default, if the source dataset has data in the 'xml:XMP' metadata domain, this
 data will be copied to the output PDF, unless this option is set to NONE. The XMP
@@ -123,13 +127,46 @@ If this option is set to NO, no information will be written.</p></li>
 
 </ul>
 
+<h2>Update of existing files (GDAL &gt;= 2.0.0)</h2>
+
+Existing PDF files (created or not with GDAL) can be opened in update mode in order to set or
+update the following elements :
+<ul>
+    <li>Geotransform and associated projection (with SetGeoTransform() and SetProjection()) </li>
+    <li>GCPs (with SetGCPs())</li>
+    <li>Neatline (with SetMetadataItem("NEATLINE", polygon_definition_in_wkt))</li>
+    <li>Content of Info object (with SetMetadataItem(key, value) where key is one of AUTHOR, CREATOR, CREATION_DATE, KEYWORDS, PRODUCER, SUBJECT and TITLE)</li>
+    <li>xml:XMP metadata (with SetMetadata(md, "xml:XMP"))</li>
+</ul>
+
+For geotransform or GCPs, the Geo encoding method used by default is ISO32000. OGC_BP can be
+selected by setting the GDAL_PDF_GEO_ENCODING configuration option to OGC_BP.<p>
+
+Updated elements are written at the end of the file, following the incremental update method described in
+the PDF specification.<p>
+
 <h2>See also</h2>
+
+Specifications :
 
 <ul>
 <li><a href="http://portal.opengeospatial.org/files/?artifact_id=40537">OGC GeoPDF Encoding Best Practice Version 2.2 (08-139r3)</a></li>
 <li><a href="http://www.adobe.com/devnet/acrobat/pdfs/adobe_supplement_iso32000.pdf">Adobe Supplement to ISO 32000</a></li>
+<li><a href="http://www.adobe.com/devnet/acrobat/pdfs/pdf_reference_1-7.pdf">PDF Reference, version 1.7</a></li>
+</ul>
+
+<p>
+Librairies :
+
+<ul>
 <li><a href="http://poppler.freedesktop.org/">Poppler homepage</a></li>
 <li><a href="http://podofo.sourceforge.net/">PoDoFo homepage</a></li>
+</ul>
+
+<p>
+Samples :
+
+<ul>
 <li><a href="http://acrobatusers.com/gallery/geospatial">A few Geospatial PDF samples</a></li>
 <li><a href="http://www.agc.army.mil/geopdf_gallery.html">Another set of Geospatial PDF samples</a></li>
 </ul>
