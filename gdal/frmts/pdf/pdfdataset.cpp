@@ -482,12 +482,14 @@ class PDFDataset : public GDALPamDataset
     CPLString    osUserPwd;
     char        *pszWKT;
     double       dfDPI;
+    int          bHasCTM;
     double       adfCTM[6];
     double       adfGeoTransform[6];
     int          bGeoTransformValid;
     int          nGCPCount;
     GDAL_GCP    *pasGCPList;
     int          bProjDirty;
+    int          bNeatLineDirty;
 
     GDALMultiDomainMetadata oMDMD;
     int          bInfoDirty;
@@ -544,6 +546,8 @@ class PDFDataset : public GDALPamDataset
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
+    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                            const char *pszGCPProjection );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -816,10 +820,12 @@ PDFDataset::PDFDataset()
     adfGeoTransform[3] = 0;
     adfGeoTransform[4] = 0;
     adfGeoTransform[5] = 1;
+    bHasCTM = FALSE;
     bGeoTransformValid = FALSE;
     nGCPCount = 0;
     pasGCPList = NULL;
     bProjDirty = FALSE;
+    bNeatLineDirty = FALSE;
     bInfoDirty = FALSE;
     bXMPDirty = FALSE;
     bTried = FALSE;
@@ -914,7 +920,7 @@ PDFDataset::~PDFDataset()
     GDALPDFDictionaryRW* poPageDictCopy = NULL;
     GDALPDFDictionaryRW* poCatalogDictCopy = NULL;
     if (eAccess == GA_Update &&
-        (bProjDirty || bInfoDirty || bXMPDirty) &&
+        (bProjDirty || bNeatLineDirty || bInfoDirty || bXMPDirty) &&
         nNum != 0 &&
         poPageObj != NULL &&
         poPageObj->GetType() == PDFObjectType_Dictionary)
@@ -950,7 +956,7 @@ PDFDataset::~PDFDataset()
             GDALPDFWriter oWriter(fp, TRUE);
             if (oWriter.ParseTrailerAndXRef())
             {
-                if (bProjDirty && poPageDictCopy != NULL)
+                if ((bProjDirty || bNeatLineDirty) && poPageDictCopy != NULL)
                     oWriter.UpdateProj(this, dfDPI,
                                         poPageDictCopy, nNum, nGen);
 
@@ -1847,13 +1853,17 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug("PDF", "OGC Encoding Best Practice style detected");
         if (poDS->ParseLGIDictObject(poLGIDict))
         {
-            poDS->adfGeoTransform[0] = poDS->adfCTM[4] + poDS->adfCTM[0] * dfX1 + poDS->adfCTM[2] * dfY2;
-            poDS->adfGeoTransform[1] = poDS->adfCTM[0] / dfUserUnit;
-            poDS->adfGeoTransform[2] = poDS->adfCTM[1] / dfUserUnit;
-            poDS->adfGeoTransform[3] = poDS->adfCTM[5] + poDS->adfCTM[1] * dfX1 + poDS->adfCTM[3] * dfY2;
-            poDS->adfGeoTransform[4] = - poDS->adfCTM[2] / dfUserUnit;
-            poDS->adfGeoTransform[5] = - poDS->adfCTM[3] / dfUserUnit;
-            poDS->bGeoTransformValid = TRUE;
+            if (poDS->bHasCTM)
+            {
+                poDS->adfGeoTransform[0] = poDS->adfCTM[4] + poDS->adfCTM[0] * dfX1 + poDS->adfCTM[2] * dfY2;
+                poDS->adfGeoTransform[1] = poDS->adfCTM[0] / dfUserUnit;
+                poDS->adfGeoTransform[2] = poDS->adfCTM[1] / dfUserUnit;
+                poDS->adfGeoTransform[3] = poDS->adfCTM[5] + poDS->adfCTM[1] * dfX1 + poDS->adfCTM[3] * dfY2;
+                poDS->adfGeoTransform[4] = - poDS->adfCTM[2] / dfUserUnit;
+                poDS->adfGeoTransform[5] = - poDS->adfCTM[3] / dfUserUnit;
+                poDS->bGeoTransformValid = TRUE;
+            }
+
             bIsOGCBP = TRUE;
 
             int i;
@@ -1880,9 +1890,11 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     /* If pixel size or top left coordinates are very close to an int, round them to the int */
-    poDS->adfGeoTransform[0] = ROUND_TO_INT_IF_CLOSE(poDS->adfGeoTransform[0]);
+    double dfEps = ( fabs(poDS->adfGeoTransform[0]) > 1e5 &&
+                     fabs(poDS->adfGeoTransform[3]) > 1e5 ) ? 1e-5 : 1e-8;
+    poDS->adfGeoTransform[0] = ROUND_TO_INT_IF_CLOSE(poDS->adfGeoTransform[0], dfEps);
     poDS->adfGeoTransform[1] = ROUND_TO_INT_IF_CLOSE(poDS->adfGeoTransform[1]);
-    poDS->adfGeoTransform[3] = ROUND_TO_INT_IF_CLOSE(poDS->adfGeoTransform[3]);
+    poDS->adfGeoTransform[3] = ROUND_TO_INT_IF_CLOSE(poDS->adfGeoTransform[3], dfEps);
     poDS->adfGeoTransform[5] = ROUND_TO_INT_IF_CLOSE(poDS->adfGeoTransform[5]);
 
     if (poDS->poNeatLine)
@@ -1900,9 +1912,9 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
                 double x = poRing->getX(i) * dfUserUnit;
                 double y = poDS->nRasterYSize - poRing->getY(i) * dfUserUnit;
                 double X = poDS->adfGeoTransform[0] + x * poDS->adfGeoTransform[1] +
-                                                    y * poDS->adfGeoTransform[2];
+                                                      y * poDS->adfGeoTransform[2];
                 double Y = poDS->adfGeoTransform[3] + x * poDS->adfGeoTransform[4] +
-                                                    y * poDS->adfGeoTransform[5];
+                                                      y * poDS->adfGeoTransform[5];
                 poRing->setPoint(i, X, Y);
             }
         }
@@ -1994,6 +2006,8 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
     /* Clear dirty flag */
+    poDS->bProjDirty = FALSE;
+    poDS->bNeatLineDirty = FALSE;
     poDS->bInfoDirty = FALSE;
     poDS->bXMPDirty = FALSE;
 
@@ -2274,7 +2288,7 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary* poLGIDict)
 /*      Extract CTM attribute                                           */
 /* -------------------------------------------------------------------- */
     GDALPDFObject* poCTM;
-    int bHasCTM = FALSE;
+    bHasCTM = FALSE;
     if ((poCTM = poLGIDict->Get("CTM")) != NULL &&
         poCTM->GetType() == PDFObjectType_Array)
     {
@@ -3348,6 +3362,10 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
                 return FALSE;
             }
         }
+
+        x = ROUND_TO_INT_IF_CLOSE(x);
+        y = ROUND_TO_INT_IF_CLOSE(y);
+
         asGCPS[i].dfGCPX     = x;
         asGCPS[i].dfGCPY     = y;
 
@@ -3404,7 +3422,7 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
 
 const char* PDFDataset::GetProjectionRef()
 {
-    if (pszWKT)
+    if (pszWKT && bGeoTransformValid)
         return pszWKT;
     return "";
 }
@@ -3442,6 +3460,10 @@ CPLErr PDFDataset::SetGeoTransform(double* padfGeoTransform)
     memcpy(adfGeoTransform, padfGeoTransform, 6 * sizeof(double));
     bGeoTransformValid = TRUE;
     bProjDirty = TRUE;
+
+    /* Reset NEATLINE if not explicitely set by the user */
+    if (!bNeatLineDirty)
+        SetMetadataItem("NEATLINE", NULL);
     return CE_None;
 }
 
@@ -3462,8 +3484,15 @@ CPLErr      PDFDataset::SetMetadata( char ** papszMetadata,
                                      const char * pszDomain )
 {
     if (pszDomain == NULL || EQUAL(pszDomain, ""))
+    {
+        if (CSLFindString(papszMetadata, "NEATLINE") != -1)
+        {
+            bProjDirty = TRUE;
+            bNeatLineDirty = TRUE;
+        }
         bInfoDirty = TRUE;
-    if (pszDomain != NULL && EQUAL(pszDomain, "xml:XMP"))
+    }
+    else if (EQUAL(pszDomain, "xml:XMP"))
         bXMPDirty = TRUE;
     return oMDMD.SetMetadata(papszMetadata, pszDomain);
 }
@@ -3487,8 +3516,16 @@ CPLErr      PDFDataset::SetMetadataItem( const char * pszName,
                                          const char * pszDomain )
 {
     if (pszDomain == NULL || EQUAL(pszDomain, ""))
-        bInfoDirty = TRUE;
-    if (pszDomain != NULL && EQUAL(pszDomain, "xml:XMP"))
+    {
+        if (EQUAL(pszName, "NEATLINE"))
+        {
+            bProjDirty = TRUE;
+            bNeatLineDirty = TRUE;
+        }
+        else
+            bInfoDirty = TRUE;
+    }
+    else if (EQUAL(pszDomain, "xml:XMP"))
         bXMPDirty = TRUE;
     return oMDMD.SetMetadataItem(pszName, pszValue, pszDomain);
 }
@@ -3520,6 +3557,43 @@ const char * PDFDataset::GetGCPProjection()
 const GDAL_GCP * PDFDataset::GetGCPs()
 {
     return pasGCPList;
+}
+
+/************************************************************************/
+/*                               SetGCPs()                              */
+/************************************************************************/
+
+CPLErr PDFDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+                            const char *pszGCPProjectionIn )
+{
+    const char* pszGEO_ENCODING =
+        CPLGetConfigOption("GDAL_PDF_GEO_ENCODING", "ISO32000");
+    if( nGCPCountIn != 4 && EQUAL(pszGEO_ENCODING, "ISO32000"))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "PDF driver only supports writing 4 GCPs when "
+                 "GDAL_PDF_GEO_ENCODING=ISO32000.");
+        return CE_Failure;
+    }
+    
+    /* Free previous GCPs */
+    GDALDeinitGCPs( nGCPCount, pasGCPList );
+    CPLFree( pasGCPList );
+    
+    /* Duplicate in GCPs */
+    nGCPCount = nGCPCountIn;
+    pasGCPList = GDALDuplicateGCPs(nGCPCount, pasGCPListIn);
+    
+    CPLFree(pszWKT);
+    pszWKT = CPLStrdup(pszGCPProjectionIn);
+    
+    bProjDirty = TRUE;
+
+    /* Reset NEATLINE if not explicitely set by the user */
+    if (!bNeatLineDirty)
+        SetMetadataItem("NEATLINE", NULL);
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -3568,6 +3642,7 @@ void GDALRegister_PDF()
 "     <Value>OGC_BP</Value>\n"
 "     <Value>BOTH</Value>\n"
 "   </Option>\n"
+"   <Option name='NEATLINE' type='string' description='Neatline'/>\n"
 "   <Option name='DPI' type='float' description='DPI' default='72'/>\n"
 "   <Option name='PREDICTOR' type='int' description='Predictor Type (for DEFLATE compression)'/>\n"
 "   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100' default='75'/>\n"

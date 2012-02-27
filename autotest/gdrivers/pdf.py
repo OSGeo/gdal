@@ -743,6 +743,316 @@ def pdf_update_xmp():
 
     return 'success'
 
+###############################################################################
+# Check SetGCPs() but with GCPs that resolve to a geotransform
+
+def pdf_update_gcps(dpi = 300):
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+        
+    out_filename = 'tmp/pdf_update_gcps.pdf'
+
+    src_ds = gdal.Open('data/byte.tif')
+    src_wkt = src_ds.GetProjectionRef()
+    src_gt = src_ds.GetGeoTransform()
+    ds = gdaltest.pdf_drv.CreateCopy(out_filename, src_ds, options = ['GEO_ENCODING=NONE', 'DPI=%d' % dpi])
+    ds = None
+    src_ds = None
+
+    gcp = [ [ 2., 8., 0, 0 ],
+            [ 2., 18., 0, 0 ],
+            [ 16., 18., 0, 0 ],
+            [ 16., 8., 0, 0 ] ]
+             
+    for i in range(4):
+        gcp[i][2] = src_gt[0] + gcp[i][0] * src_gt[1] + gcp[i][1] * src_gt[2]
+        gcp[i][3] = src_gt[3] + gcp[i][0] * src_gt[4] + gcp[i][1] * src_gt[5]
+
+    vrt_txt = """<VRTDataset rasterXSize="20" rasterYSize="20">
+<GCPList Projection=''>
+    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
+    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
+    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
+    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
+</GCPList>
+<VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+    <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
+    <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+    <SourceBand>1</SourceBand>
+    </SimpleSource>
+</VRTRasterBand>
+</VRTDataset>""" % (  gcp[0][0], gcp[0][1], gcp[0][2], gcp[0][3],
+                      gcp[1][0], gcp[1][1], gcp[1][2], gcp[1][3],
+                      gcp[2][0], gcp[2][1], gcp[2][2], gcp[2][3],
+                      gcp[3][0], gcp[3][1], gcp[3][2], gcp[3][3] )
+    vrt_ds = gdal.Open(vrt_txt)
+    gcps = vrt_ds.GetGCPs()
+    vrt_ds = None
+
+    # Set GCPs()
+    ds = gdal.Open(out_filename, gdal.GA_Update)
+    ds.SetGCPs(gcps, src_wkt)           
+    ds = None
+
+    # Check
+    ds = gdal.Open(out_filename)
+    got_gt = ds.GetGeoTransform()
+    got_wkt = ds.GetProjectionRef()
+    got_gcp_count = ds.GetGCPCount()
+    got_gcps = ds.GetGCPs()
+    got_gcp_wkt = ds.GetGCPProjection()
+    got_neatline = ds.GetMetadataItem('NEATLINE')
+    ds = None
+    
+    if got_wkt == '':
+        gdaltest.post_reason('did not expect null GetProjectionRef')
+        print(got_wkt)
+        return 'fail'
+    
+    if got_gcp_wkt != '':
+        gdaltest.post_reason('did not expect non null GetGCPProjection')
+        print(got_gcp_wkt)
+        return 'fail'
+
+    for i in range(6):
+        if abs(got_gt[i] - src_gt[i]) > 1e-8:
+            gdaltest.post_reason('did not get expected gt')
+            print(got_gt)
+            return 'fail'
+            
+    if got_gcp_count != 0:
+        gdaltest.post_reason('did not expect GCPs')
+        print(got_gcp_count)
+        return 'fail'
+
+    got_geom = ogr.CreateGeometryFromWkt(got_neatline)
+    expected_lr = ogr.Geometry(ogr.wkbLinearRing)
+    for i in range(4):
+        expected_lr.AddPoint_2D(gcp[i][2], gcp[i][3])
+    expected_lr.AddPoint_2D(gcp[0][2], gcp[0][3])
+    expected_geom = ogr.Geometry(ogr.wkbPolygon)
+    expected_geom.AddGeometry(expected_lr)
+
+    if ogrtest.check_feature_geometry(got_geom, expected_geom) != 0:
+        gdaltest.post_reason('bad neatline')
+        print('got : %s' % got_neatline)
+        print('expected : %s' % expected_wkt)
+        return 'fail'
+
+    gdaltest.pdf_drv.Delete(out_filename)
+
+    return 'success'
+
+def pdf_update_gcps_iso32000():
+    gdal.SetConfigOption('GDAL_PDF_GEO_ENCODING', None)
+    ret = pdf_update_gcps()
+    return ret
+    
+def pdf_update_gcps_ogc_bp():
+    gdal.SetConfigOption('GDAL_PDF_GEO_ENCODING', 'OGC_BP')
+    ret = pdf_update_gcps()
+    gdal.SetConfigOption('GDAL_PDF_GEO_ENCODING', None)
+    return ret
+
+###############################################################################
+# Check SetGCPs() but with GCPs that do *not* resolve to a geotransform
+
+def pdf_set_5_gcps_ogc_bp(dpi = 300):
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+        
+    out_filename = 'tmp/pdf_set_5_gcps_ogc_bp.pdf'
+
+    src_ds = gdal.Open('data/byte.tif')
+    src_wkt = src_ds.GetProjectionRef()
+    src_gt = src_ds.GetGeoTransform()
+    src_ds = None
+
+    gcp = [ [ 2., 8., 0, 0 ],
+            [ 2., 10., 0, 0 ],
+            [ 2., 18., 0, 0 ],
+            [ 16., 18., 0, 0 ],
+            [ 16., 8., 0, 0 ] ]
+             
+    for i in range(len(gcp)):
+        gcp[i][2] = src_gt[0] + gcp[i][0] * src_gt[1] + gcp[i][1] * src_gt[2]
+        gcp[i][3] = src_gt[3] + gcp[i][0] * src_gt[4] + gcp[i][1] * src_gt[5]
+        
+    # That way, GCPs will not resolve to a geotransform
+    gcp[1][2] -= 100
+
+    vrt_txt = """<VRTDataset rasterXSize="20" rasterYSize="20">
+<GCPList Projection='%s'>
+    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
+    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
+    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
+    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
+    <GCP Id="" Pixel="%f" Line="%f" X="%f" Y="%f"/>
+</GCPList>
+<VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+    <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
+    <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+    <SourceBand>1</SourceBand>
+    </SimpleSource>
+</VRTRasterBand>
+</VRTDataset>""" % (  src_wkt,
+                      gcp[0][0], gcp[0][1], gcp[0][2], gcp[0][3],
+                      gcp[1][0], gcp[1][1], gcp[1][2], gcp[1][3],
+                      gcp[2][0], gcp[2][1], gcp[2][2], gcp[2][3],
+                      gcp[3][0], gcp[3][1], gcp[3][2], gcp[3][3],
+                      gcp[4][0], gcp[4][1], gcp[4][2], gcp[4][3])
+    vrt_ds = gdal.Open(vrt_txt)
+    vrt_gcps = vrt_ds.GetGCPs()
+
+    # Create PDF
+    ds = gdaltest.pdf_drv.CreateCopy(out_filename, vrt_ds, options = ['GEO_ENCODING=OGC_BP', 'DPI=%d' % dpi])
+    ds = None
+    
+    vrt_ds = None
+
+    # Check
+    ds = gdal.Open(out_filename)
+    got_gt = ds.GetGeoTransform()
+    got_wkt = ds.GetProjectionRef()
+    got_gcp_count = ds.GetGCPCount()
+    got_gcps = ds.GetGCPs()
+    got_gcp_wkt = ds.GetGCPProjection()
+    got_neatline = ds.GetMetadataItem('NEATLINE')
+    ds = None
+    
+    if got_wkt  != '':
+        gdaltest.post_reason('did not expect non null GetProjectionRef')
+        print(got_wkt)
+        return 'fail'
+    
+    if got_gcp_wkt == '':
+        gdaltest.post_reason('did not expect null GetGCPProjection')
+        print(got_gcp_wkt)
+        return 'fail'
+
+    expected_gt = [0, 1, 0, 0, 0, 1]
+    for i in range(6):
+        if abs(got_gt[i] - expected_gt[i]) > 1e-8:
+            gdaltest.post_reason('did not get expected gt')
+            print(got_gt)
+            return 'fail'
+            
+    if got_gcp_count != len(gcp):
+        gdaltest.post_reason('did not get expected GCP count')
+        print(got_gcp_count)
+        return 'fail'
+        
+    for i in range(got_gcp_count):
+        if abs(got_gcps[i].GCPX - vrt_gcps[i].GCPX) > 1e-5 or \
+           abs(got_gcps[i].GCPY - vrt_gcps[i].GCPY) > 1e-5 or \
+           abs(got_gcps[i].GCPPixel - vrt_gcps[i].GCPPixel) > 1e-5 or \
+           abs(got_gcps[i].GCPLine - vrt_gcps[i].GCPLine) > 1e-5:
+           gdaltest.post_reason('did not get expected GCP (%d)' % i)
+           print(got_gcps[i])
+           print(vrt_gcps[i])
+           return 'fail'
+
+    got_geom = ogr.CreateGeometryFromWkt(got_neatline)
+    # Not sure this is really what we want, but without any geotransform, we cannot
+    # find projected coordinates
+    expected_geom = ogr.CreateGeometryFromWkt('POLYGON ((2 8,2 10,2 18,16 18,16 8,2 8))')
+
+    if ogrtest.check_feature_geometry(got_geom, expected_geom) != 0:
+        gdaltest.post_reason('bad neatline')
+        print('got : %s' % got_neatline)
+        print('expected : %s' % expected_geom.ExportToWkt())
+        return 'fail'
+
+    gdaltest.pdf_drv.Delete(out_filename)
+
+    return 'success'
+
+
+###############################################################################
+# Check NEATLINE support
+
+def pdf_set_neatline(geo_encoding, dpi = 300):
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    out_filename = 'tmp/pdf_set_neatline.pdf'
+
+    if geo_encoding == 'ISO32000':
+        neatline = 'POLYGON ((441720 3751320,441720 3750120,441920 3750120,441920 3751320,441720 3751320))'
+    else:  # For OGC_BP, we can use more than 4 points
+        neatline = 'POLYGON ((441720 3751320,441720 3751000,441720 3750120,441920 3750120,441920 3751320,441720 3751320))'
+
+    # Test CreateCopy() with NEATLINE
+    src_ds = gdal.Open('data/byte.tif')
+    expected_gt = src_ds.GetGeoTransform()
+    ds = gdaltest.pdf_drv.CreateCopy(out_filename, src_ds, options = ['NEATLINE=%s' % neatline, 'GEO_ENCODING=%s' % geo_encoding, 'DPI=%d' % dpi])
+    ds = None
+    src_ds = None
+
+    # Check
+    ds = gdal.Open(out_filename)
+    got_gt = ds.GetGeoTransform()
+    got_neatline = ds.GetMetadataItem('NEATLINE')
+    ds = None
+
+    for i in range(6):
+        if abs(got_gt[i] - expected_gt[i]) > 1e-8:
+            gdaltest.post_reason('did not get expected gt')
+            print(got_gt)
+            return 'fail'
+
+    got_geom = ogr.CreateGeometryFromWkt(got_neatline)
+    expected_geom = ogr.CreateGeometryFromWkt(neatline)
+
+    if ogrtest.check_feature_geometry(got_geom, expected_geom) != 0:
+        gdaltest.post_reason('bad neatline')
+        print('got : %s' % got_neatline)
+        print('expected : %s' % expected_geom.ExportToWkt())
+        return 'fail'
+
+    # Test SetMetadataItem()
+    ds = gdal.Open(out_filename, gdal.GA_Update)
+    neatline = 'POLYGON ((440720 3751320,440720 3750120,441920 3750120,441920 3751320,440720 3751320))'
+    ds.SetMetadataItem('NEATLINE', neatline)
+    ds = None
+
+    # Check
+    gdal.SetConfigOption('GDAL_PDF_GEO_ENCODING', geo_encoding)
+    ds = gdal.Open(out_filename)
+    got_gt = ds.GetGeoTransform()
+    got_neatline = ds.GetMetadataItem('NEATLINE')
+    ds = None
+    gdal.SetConfigOption('GDAL_PDF_GEO_ENCODING', None)
+
+    for i in range(6):
+        if abs(got_gt[i] - expected_gt[i]) > 1e-8:
+            gdaltest.post_reason('did not get expected gt')
+            print(got_gt)
+            return 'fail'
+
+    got_geom = ogr.CreateGeometryFromWkt(got_neatline)
+    expected_geom = ogr.CreateGeometryFromWkt(neatline)
+
+    if ogrtest.check_feature_geometry(got_geom, expected_geom) != 0:
+        gdaltest.post_reason('bad neatline')
+        print('got : %s' % got_neatline)
+        print('expected : %s' % expected_geom.ExportToWkt())
+        return 'fail'
+
+    gdaltest.pdf_drv.Delete(out_filename)
+
+    return 'success'
+
+def pdf_set_neatline_iso32000():
+    return pdf_set_neatline('ISO32000')
+
+def pdf_set_neatline_ogc_bp():
+    return pdf_set_neatline('OGC_BP')
 
 gdaltest_list = [
     pdf_init,
@@ -752,6 +1062,7 @@ gdaltest_list = [
     pdf_iso32000,
     pdf_iso32000_dpi_300,
     pdf_ogcbp,
+    pdf_ogcbp_dpi_300,
     pdf_ogcbp_lcc,
     pdf_no_compression,
     pdf_jpeg_compression,
@@ -772,6 +1083,11 @@ gdaltest_list = [
     pdf_update_gt,
     pdf_update_info,
     pdf_update_xmp,
+    pdf_update_gcps_iso32000,
+    pdf_update_gcps_ogc_bp,
+    pdf_set_5_gcps_ogc_bp,
+    pdf_set_neatline_iso32000,
+    pdf_set_neatline_ogc_bp,
 
     pdf_switch_underlying_lib,
 
