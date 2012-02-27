@@ -1088,6 +1088,39 @@ static GDALPDFDictionaryRW* GDALPDFBuildOGC_BP_Projection(const OGRSpatialRefere
         poProjectionDict->Add("FalseEasting", dfFalseEasting, TRUE);
         poProjectionDict->Add("FalseNorthing", dfFalseNorthing, TRUE);
     }
+
+    else if( EQUAL(pszProjection,SRS_PT_MERCATOR_1SP) )
+    {
+        double dfCenterLong = poSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        double dfCenterLat = poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        double dfScale = poSRS->GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0);
+        double dfFalseEasting = poSRS->GetNormProjParm(SRS_PP_FALSE_EASTING,0.0);
+        double dfFalseNorthing = poSRS->GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0);
+
+        pszProjectionOGCBP = "MC";
+        poProjectionDict->Add("CentralMeridian", dfCenterLong, TRUE);
+        poProjectionDict->Add("OriginLatitude", dfCenterLat, TRUE);
+        poProjectionDict->Add("ScaleFactor", dfScale, TRUE);
+        poProjectionDict->Add("FalseEasting", dfFalseEasting, TRUE);
+        poProjectionDict->Add("FalseNorthing", dfFalseNorthing, TRUE);
+    }
+
+#ifdef not_supported
+    else if( EQUAL(pszProjection,SRS_PT_MERCATOR_2SP) )
+    {
+        double dfStdP1 = poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
+        double dfCenterLong = poSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        double dfFalseEasting = poSRS->GetNormProjParm(SRS_PP_FALSE_EASTING,0.0);
+        double dfFalseNorthing = poSRS->GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0);
+
+        pszProjectionOGCBP = "MC";
+        poProjectionDict->Add("StandardParallelOne", dfStdP1, TRUE);
+        poProjectionDict->Add("CentralMeridian", dfCenterLong, TRUE);
+        poProjectionDict->Add("FalseEasting", dfFalseEasting, TRUE);
+        poProjectionDict->Add("FalseNorthing", dfFalseNorthing, TRUE);
+    }
+#endif
+
     else
     {
         CPLError(CE_Warning, CPLE_NotSupported,
