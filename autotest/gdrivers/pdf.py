@@ -1054,6 +1054,68 @@ def pdf_set_neatline_iso32000():
 def pdf_set_neatline_ogc_bp():
     return pdf_set_neatline('OGC_BP')
 
+###############################################################################
+# Check that we can generate identical file
+
+def pdf_check_identity_iso32000():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    out_filename = 'tmp/pdf_check_identity_iso32000.pdf'
+
+    src_ds = gdal.Open('data/test_pdf.vrt')
+    out_ds = gdaltest.pdf_drv.CreateCopy(out_filename, src_ds)
+    out_ds = None
+    src_ds = None
+
+    f = open('data/test_iso32000.pdf')
+    data_ref = f.read()
+    f.close()
+
+    f = open(out_filename)
+    data_got = f.read()
+    f.close()
+
+    gdaltest.pdf_drv.Delete(out_filename)
+
+    if data_ref != data_got:
+        gdaltest.post_reason('content does not match reference content')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Check that we can generate identical file
+
+def pdf_check_identity_ogc_bp():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    out_filename = 'tmp/pdf_check_identity_ogc_bp.pdf'
+
+    src_ds = gdal.Open('data/test_pdf.vrt')
+    out_ds = gdaltest.pdf_drv.CreateCopy(out_filename, src_ds, options = ['GEO_ENCODING=OGC_BP'])
+    out_ds = None
+    src_ds = None
+
+    f = open('data/test_ogc_bp.pdf')
+    data_ref = f.read()
+    f.close()
+
+    f = open(out_filename)
+    data_got = f.read()
+    f.close()
+
+    gdaltest.pdf_drv.Delete(out_filename)
+
+    if data_ref != data_got:
+        gdaltest.post_reason('content does not match reference content')
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     pdf_init,
     pdf_online_1,
@@ -1088,6 +1150,8 @@ gdaltest_list = [
     pdf_set_5_gcps_ogc_bp,
     pdf_set_neatline_iso32000,
     pdf_set_neatline_ogc_bp,
+    pdf_check_identity_iso32000,
+    pdf_check_identity_ogc_bp,
 
     pdf_switch_underlying_lib,
 
