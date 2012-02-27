@@ -78,6 +78,10 @@ def read_grid_crs_to_crs(filename,shape):
     fd = open(filename)
     grid = numpy.zeros(shape)
 
+    # report the file header defining the transformation
+    for i in range(5):
+      print fd.readline().rstrip()
+
     points_found = 0
 
     ptuple = next_point(fd)
@@ -144,7 +148,7 @@ def write_gdal_grid(filename, grid, griddef ):
     ps_x = (griddef[2] - griddef[0]) / (griddef[4]-1)
     ps_y = (griddef[3] - griddef[1]) / (griddef[5]-1)
     geotransform = (griddef[0] - ps_x*0.5, ps_x, 0.0,
-                    griddef[1] + ps_y*0.5, 0.0, -1 * ps_y)
+                    griddef[1] - ps_y*0.5, 0.0, ps_y)
 
     grid = grid.astype(numpy.float32)
     ds = gdal_array.SaveArray( grid, filename, format='CTable2')
