@@ -1082,7 +1082,7 @@ static GDALPDFDictionaryRW* GDALPDFBuildOGC_BP_Projection(const OGRSpatialRefere
 
         pszProjectionOGCBP = "LE";
         poProjectionDict->Add("StandardParallelOne", dfStdP1, TRUE);
-        poProjectionDict->Add("StandardParallelOne", dfStdP2, TRUE);
+        poProjectionDict->Add("StandardParallelTwo", dfStdP2, TRUE);
         poProjectionDict->Add("OriginLatitude", dfCenterLat, TRUE);
         poProjectionDict->Add("CentralMeridian", dfCenterLong, TRUE);
         poProjectionDict->Add("FalseEasting", dfFalseEasting, TRUE);
