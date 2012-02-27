@@ -42,6 +42,8 @@ CPL_CVSID("$Id$");
 
 double ROUND_TO_INT_IF_CLOSE(double x, double eps)
 {
+    if( eps == 0.0 )
+        eps = fabs(x) < 1 ? 1e-10 : 1e-8;
     int nClosestInt = (int)floor(x + 0.5);
     if ( fabs(x - nClosestInt) < eps )
         return nClosestInt;
@@ -62,7 +64,7 @@ static CPLString GDALPDFGetPDFString(const char* pszStr)
     {
         if (ch < 32 || ch > 127 ||
             ch == '(' || ch == ')' ||
-            ch == '/' || ch == '%' || ch == '#')
+            ch == '\\' || ch == '%' || ch == '#')
             break;
     }
     CPLString osStr;
@@ -158,11 +160,33 @@ void GDALPDFObject::Serialize(CPLString& osStr)
         case PDFObjectType_Real:
         {
             char szReal[256];
-            double dfReal = ROUND_TO_INT_IF_CLOSE(GetReal());
+            double dfRealNonRounded = GetReal();
+            double dfReal = ROUND_TO_INT_IF_CLOSE(dfRealNonRounded);
             if (dfReal == (double)(int)dfReal)
                 sprintf(szReal, "%d", (int)dfReal);
+            else if (CanRepresentRealAsString())
+            {
+                sprintf(szReal, "(%.16g)", dfReal);
+            }
             else
+            {
                 sprintf(szReal, "%.16f", dfReal);
+                
+                /* Remove non significant trailing zeroes */
+                char* pszDot = strchr(szReal, '.');
+                if (pszDot)
+                {
+                    int iDot = (int)(pszDot - szReal);
+                    int nLen = (int)strlen(szReal);
+                    for(int i=nLen-1; i > iDot; i ++)
+                    {
+                        if (szReal[i] == '0')
+                            szReal[i] = '\0';
+                        else
+                            break;
+                    }
+                }
+            }
             osStr.append(szReal);
             return;
         }
@@ -341,6 +365,7 @@ GDALPDFObjectRW::GDALPDFObjectRW(GDALPDFObjectType eType)
     m_poArray = NULL;
     m_nNum = 0;
     m_nGen = 0;
+    m_bCanRepresentRealAsString = FALSE;
 }
 
 /************************************************************************/
@@ -400,10 +425,12 @@ GDALPDFObjectRW* GDALPDFObjectRW::CreateInt(int nVal)
 /*                            CreateReal()                              */
 /************************************************************************/
 
-GDALPDFObjectRW* GDALPDFObjectRW::CreateReal(double dfVal)
+GDALPDFObjectRW* GDALPDFObjectRW::CreateReal(double dfVal,
+                                             int bCanRepresentRealAsString)
 {
     GDALPDFObjectRW* poObj = new GDALPDFObjectRW(PDFObjectType_Real);
     poObj->m_dfVal = dfVal;
+    poObj->m_bCanRepresentRealAsString = bCanRepresentRealAsString;
     return poObj;
 }
 
@@ -707,10 +734,11 @@ GDALPDFArrayRW& GDALPDFArrayRW::Add(GDALPDFObject* poObj)
 /*                                  Add()                               */
 /************************************************************************/
 
-GDALPDFArrayRW& GDALPDFArrayRW::Add(double* padfVal, int nCount)
+GDALPDFArrayRW& GDALPDFArrayRW::Add(double* padfVal, int nCount,
+                                    int bCanRepresentRealAsString)
 {
     for(int i=0;i<nCount;i++)
-        m_array.push_back(GDALPDFObjectRW::CreateReal(padfVal[i]));
+        m_array.push_back(GDALPDFObjectRW::CreateReal(padfVal[i], bCanRepresentRealAsString));
     return *this;
 }
 
