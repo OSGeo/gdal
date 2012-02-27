@@ -88,6 +88,9 @@ gdal_cp.py              Copy a virtual file
 gdal_edit.py            Edit in place various information of an existing GDAL dataset
                         (projection, geotransform, nodata, metadata)
 
+crs2crs2grid.py 	A script to produce PROJ.4 grid shift files from HTDP program.
+			http://trac.osgeo.org/proj/wiki/HTDPGrids
+
 ------------------------------------------------------------------------------
 Ports of .c/.cpp utilities
 ------------------------------------------------------------------------------
