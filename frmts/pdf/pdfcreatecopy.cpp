@@ -815,8 +815,8 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
                     poPDFDatumDict->Add("Ellipsoid",
                         &((new GDALPDFDictionaryRW())
                         ->Add("Description", pszEllipsoidDescription)
-                         .Add("SemiMajorAxis", dfSemiMajor)
-                         .Add("InvFlattening", dfInvFlattening)));
+                         .Add("SemiMajorAxis", dfSemiMajor, TRUE)
+                         .Add("InvFlattening", dfInvFlattening, TRUE)));
                 }
 
                 const OGR_SRSNode *poTOWGS84 = poSRS->GetAttrNode( "TOWGS84" );
@@ -832,7 +832,7 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
                         &((new GDALPDFDictionaryRW())
                         ->Add("dx", poTOWGS84->GetChild(0)->GetValue())
                          .Add("dy", poTOWGS84->GetChild(1)->GetValue())
-                         .Add("dz", poTOWGS84->GetChild(2)->GetValue())));
+                         .Add("dz", poTOWGS84->GetChild(2)->GetValue())) );
                 }
                 else if( poTOWGS84 != NULL && poTOWGS84->GetChildCount() >= 7)
                 {
@@ -844,7 +844,7 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
                          .Add("rx", poTOWGS84->GetChild(3)->GetValue())
                          .Add("ry", poTOWGS84->GetChild(4)->GetValue())
                          .Add("rz", poTOWGS84->GetChild(5)->GetValue())
-                         .Add("sf", poTOWGS84->GetChild(6)->GetValue())));
+                         .Add("sf", poTOWGS84->GetChild(6)->GetValue())) );
                 }
             }
         }
@@ -907,12 +907,15 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
             double dfFalseEasting = poSRS->GetNormProjParm(SRS_PP_FALSE_EASTING,0.0);
             double dfFalseNorthing = poSRS->GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0);
 
+            /* OGC_BP supports representing numbers as strings for better precision */
+            /* so use it */
+
             pszProjectionOGCBP = "TC";
-            poProjectionDict->Add("OriginLatitude", dfCenterLat);
-            poProjectionDict->Add("CentralMeridian", dfCenterLong);
-            poProjectionDict->Add("ScaleFactor", dfScale);
-            poProjectionDict->Add("FalseEasting", dfFalseEasting);
-            poProjectionDict->Add("FalseNorthing", dfFalseNorthing);
+            poProjectionDict->Add("OriginLatitude", dfCenterLat, TRUE);
+            poProjectionDict->Add("CentralMeridian", dfCenterLong, TRUE);
+            poProjectionDict->Add("ScaleFactor", dfScale, TRUE);
+            poProjectionDict->Add("FalseEasting", dfFalseEasting, TRUE);
+            poProjectionDict->Add("FalseNorthing", dfFalseNorthing, TRUE);
         }
     }
     else if( EQUAL(pszProjection,SRS_PT_POLAR_STEREOGRAPHIC) )
@@ -932,11 +935,11 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
         else
         {
             pszProjectionOGCBP = "PG";
-            poProjectionDict->Add("LatitudeTrueScale", dfCenterLat);
-            poProjectionDict->Add("LongitudeDownFromPole", dfCenterLong);
-            poProjectionDict->Add("ScaleFactor", dfScale);
-            poProjectionDict->Add("FalseEasting", dfFalseEasting);
-            poProjectionDict->Add("FalseNorthing", dfFalseNorthing);
+            poProjectionDict->Add("LatitudeTrueScale", dfCenterLat, TRUE);
+            poProjectionDict->Add("LongitudeDownFromPole", dfCenterLong, TRUE);
+            poProjectionDict->Add("ScaleFactor", dfScale, TRUE);
+            poProjectionDict->Add("FalseEasting", dfFalseEasting, TRUE);
+            poProjectionDict->Add("FalseNorthing", dfFalseNorthing, TRUE);
         }
     }
 
@@ -950,12 +953,12 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
         double dfFalseNorthing = poSRS->GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0);
 
         pszProjectionOGCBP = "LE";
-        poProjectionDict->Add("StandardParallelOne", dfStdP1);
-        poProjectionDict->Add("StandardParallelOne", dfStdP2);
-        poProjectionDict->Add("OriginLatitude", dfCenterLat);
-        poProjectionDict->Add("CentralMeridian", dfCenterLong);
-        poProjectionDict->Add("FalseEasting", dfFalseEasting);
-        poProjectionDict->Add("FalseNorthing", dfFalseNorthing);
+        poProjectionDict->Add("StandardParallelOne", dfStdP1, TRUE);
+        poProjectionDict->Add("StandardParallelOne", dfStdP2, TRUE);
+        poProjectionDict->Add("OriginLatitude", dfCenterLat, TRUE);
+        poProjectionDict->Add("CentralMeridian", dfCenterLong, TRUE);
+        poProjectionDict->Add("FalseEasting", dfFalseEasting, TRUE);
+        poProjectionDict->Add("FalseNorthing", dfFalseNorthing, TRUE);
     }
     else
     {
@@ -994,8 +997,8 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
     GDALPDFDictionaryRW oLGIDict;
     oLGIDict.Add("Type", GDALPDFObjectRW::CreateName("LGIDict"))
             .Add("Version", "2.1")
-            .Add("CTM", &((new GDALPDFArrayRW())->Add(adfCTM, 6)))
-            .Add("Neatline", &((new GDALPDFArrayRW())->Add(adfNL, 8)));
+            .Add("CTM", &((new GDALPDFArrayRW())->Add(adfCTM, 6, TRUE)))
+            .Add("Neatline", &((new GDALPDFArrayRW())->Add(adfNL, 8, TRUE)));
     if( pszDescription )
     {
         oLGIDict.Add("Description", pszDescription);
@@ -1284,11 +1287,19 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
             int iImage = nBlockYOff * nXBlocks + nBlockXOff;
 
             VSIFPrintfL(fp, "q\n");
-            VSIFPrintfL(fp, "%.16f 0 0 %.16f %.16f %.16f cm\n",
-                        ROUND_TO_INT_IF_CLOSE(nReqWidth / dfUserUnit),
-                        ROUND_TO_INT_IF_CLOSE(nReqHeight / dfUserUnit),
-                        ROUND_TO_INT_IF_CLOSE((nBlockXOff * nBlockXSize) / dfUserUnit),
-                        ROUND_TO_INT_IF_CLOSE((nHeight - nBlockYOff * nBlockYSize - nReqHeight) / dfUserUnit));
+            GDALPDFObjectRW* poXSize = GDALPDFObjectRW::CreateReal(nReqWidth / dfUserUnit);
+            GDALPDFObjectRW* poYSize = GDALPDFObjectRW::CreateReal(nReqHeight / dfUserUnit);
+            GDALPDFObjectRW* poXOff = GDALPDFObjectRW::CreateReal((nBlockXOff * nBlockXSize) / dfUserUnit);
+            GDALPDFObjectRW* poYOff = GDALPDFObjectRW::CreateReal((nHeight - nBlockYOff * nBlockYSize - nReqHeight) / dfUserUnit);
+            VSIFPrintfL(fp, "%s 0 0 %s %s %s cm\n",
+                        poXSize->Serialize().c_str(),
+                        poYSize->Serialize().c_str(),
+                        poXOff->Serialize().c_str(),
+                        poYOff->Serialize().c_str());
+            delete poXSize;
+            delete poYSize;
+            delete poXOff;
+            delete poYOff;
             VSIFPrintfL(fp, "/Image%d Do\n",
                         asImageId[iImage]);
             VSIFPrintfL(fp, "Q\n");

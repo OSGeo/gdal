@@ -67,7 +67,7 @@
 #endif // HAVE_PODOFO
 
 
-double ROUND_TO_INT_IF_CLOSE(double x, double eps = 1e-8);
+double ROUND_TO_INT_IF_CLOSE(double x, double eps = 0);
 
 typedef enum
 {
@@ -103,6 +103,7 @@ class GDALPDFObject
         virtual int               GetBool() = 0;
         virtual int               GetInt() = 0;
         virtual double            GetReal() = 0;
+        virtual int               CanRepresentRealAsString() { return FALSE; }
         virtual const CPLString&  GetString() = 0;
         virtual const CPLString&  GetName() = 0;
         virtual GDALPDFDictionary*  GetDictionary() = 0;
@@ -162,6 +163,7 @@ class GDALPDFObjectRW : public GDALPDFObject
         GDALPDFArrayRW       *m_poArray;
         int                   m_nNum;
         int                   m_nGen;
+        int                   m_bCanRepresentRealAsString;
 
                               GDALPDFObjectRW(GDALPDFObjectType eType);
 
@@ -174,7 +176,7 @@ class GDALPDFObjectRW : public GDALPDFObject
         static GDALPDFObjectRW* CreateNull();
         static GDALPDFObjectRW* CreateBool(int bVal);
         static GDALPDFObjectRW* CreateInt(int nVal);
-        static GDALPDFObjectRW* CreateReal(double dfVal);
+        static GDALPDFObjectRW* CreateReal(double dfVal, int bCanRepresentRealAsString = FALSE);
         static GDALPDFObjectRW* CreateString(const char* pszStr);
         static GDALPDFObjectRW* CreateName(const char* pszName);
         static GDALPDFObjectRW* CreateDictionary(GDALPDFDictionaryRW* poDict);
@@ -185,6 +187,7 @@ class GDALPDFObjectRW : public GDALPDFObject
         virtual int               GetBool();
         virtual int               GetInt();
         virtual double            GetReal();
+        virtual int               CanRepresentRealAsString() { return m_bCanRepresentRealAsString; }
         virtual const CPLString&  GetString();
         virtual const CPLString&  GetName();
         virtual GDALPDFDictionary*  GetDictionary();
@@ -213,7 +216,7 @@ class GDALPDFDictionaryRW : public GDALPDFDictionary
         GDALPDFDictionaryRW&   Add(const char* pszKey, GDALPDFDictionaryRW* poDict) { return Add(pszKey, GDALPDFObjectRW::CreateDictionary(poDict)); }
         GDALPDFDictionaryRW&   Add(const char* pszKey, const char* pszVal) { return Add(pszKey, GDALPDFObjectRW::CreateString(pszVal)); }
         GDALPDFDictionaryRW&   Add(const char* pszKey, int nVal) { return Add(pszKey, GDALPDFObjectRW::CreateInt(nVal)); }
-        GDALPDFDictionaryRW&   Add(const char* pszKey, double dfVal) { return Add(pszKey, GDALPDFObjectRW::CreateReal(dfVal)); }
+        GDALPDFDictionaryRW&   Add(const char* pszKey, double dfVal, int bCanRepresentRealAsString = FALSE) { return Add(pszKey, GDALPDFObjectRW::CreateReal(dfVal, bCanRepresentRealAsString)); }
         GDALPDFDictionaryRW&   Add(const char* pszKey, int nNum, int nGen) { return Add(pszKey, GDALPDFObjectRW::CreateIndirect(nNum, nGen)); }
 };
 
@@ -235,8 +238,8 @@ class GDALPDFArrayRW : public GDALPDFArray
         GDALPDFArrayRW&        Add(GDALPDFDictionaryRW* poDict) { return Add(GDALPDFObjectRW::CreateDictionary(poDict)); }
         GDALPDFArrayRW&        Add(const char* pszVal) { return Add(GDALPDFObjectRW::CreateString(pszVal)); }
         GDALPDFArrayRW&        Add(int nVal) { return Add(GDALPDFObjectRW::CreateInt(nVal)); }
-        GDALPDFArrayRW&        Add(double dfVal) { return Add(GDALPDFObjectRW::CreateReal(dfVal)); }
-        GDALPDFArrayRW&        Add(double* padfVal, int nCount);
+        GDALPDFArrayRW&        Add(double dfVal, int bCanRepresentRealAsString = FALSE) { return Add(GDALPDFObjectRW::CreateReal(dfVal, bCanRepresentRealAsString)); }
+        GDALPDFArrayRW&        Add(double* padfVal, int nCount, int bCanRepresentRealAsString = FALSE);
         GDALPDFArrayRW&        Add(int nNum, int nGen) { return Add(GDALPDFObjectRW::CreateIndirect(nNum, nGen)); }
 };
 
