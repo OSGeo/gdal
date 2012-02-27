@@ -1096,8 +1096,10 @@ def pdf_check_identity_ogc_bp():
     out_filename = 'tmp/pdf_check_identity_ogc_bp.pdf'
 
     src_ds = gdal.Open('data/test_pdf.vrt')
+    gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', 'NO')
     out_ds = gdaltest.pdf_drv.CreateCopy(out_filename, src_ds, options = ['GEO_ENCODING=OGC_BP'])
     out_ds = None
+    gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', None)
     src_ds = None
 
     f = open('data/test_ogc_bp.pdf', 'rb')
