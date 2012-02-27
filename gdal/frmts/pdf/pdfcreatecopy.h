@@ -51,11 +51,12 @@ class GDALXRefEntry
     public:
         vsi_l_offset    nOffset;
         int             nGen;
+        int             bFree;
 
-        GDALXRefEntry() : nOffset(0), nGen(0) {}
-        GDALXRefEntry(vsi_l_offset nOffsetIn, int nGenIn = 0) : nOffset(nOffsetIn), nGen(nGen) {}
-        GDALXRefEntry(const GDALXRefEntry& oOther) : nOffset(oOther.nOffset), nGen(oOther.nGen) {}
-        GDALXRefEntry& operator= (const GDALXRefEntry& oOther) { nOffset = oOther.nOffset; nGen = oOther.nGen; return *this; }
+        GDALXRefEntry() : nOffset(0), nGen(0), bFree(FALSE) {}
+        GDALXRefEntry(vsi_l_offset nOffsetIn, int nGenIn = 0) : nOffset(nOffsetIn), nGen(nGen), bFree(FALSE) {}
+        GDALXRefEntry(const GDALXRefEntry& oOther) : nOffset(oOther.nOffset), nGen(oOther.nGen), bFree(oOther.bFree) {}
+        GDALXRefEntry& operator= (const GDALXRefEntry& oOther) { nOffset = oOther.nOffset; nGen = oOther.nGen; bFree = oOther.bFree; return *this; }
 };
 
 class GDALPDFWriter
@@ -117,13 +118,16 @@ class GDALPDFWriter
                        GDALPDFDictionaryRW* poCatalogDict);
 
        int     WriteSRS_ISO32000(GDALDataset* poSrcDS,
-                                double dfUserUnit);
+                                double dfUserUnit,
+                                const char* pszNEATLINE);
        int     WriteSRS_OGC_BP(GDALDataset* poSrcDS,
-                                double dfUserUnit);
+                                double dfUserUnit,
+                                const char* pszNEATLINE);
 
        int  WritePage(GDALDataset* poSrcDS,
                       double dfDPI,
                       const char* pszGEO_ENCODING,
+                      const char* pszNEATLINE,
                       PDFCompressMethod eCompressMethod,
                       int nPredictor,
                       int nJPEGQuality,
