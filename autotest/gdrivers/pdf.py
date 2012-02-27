@@ -1069,11 +1069,11 @@ def pdf_check_identity_iso32000():
     out_ds = None
     src_ds = None
 
-    f = open('data/test_iso32000.pdf')
+    f = open('data/test_iso32000.pdf', 'rb')
     data_ref = f.read()
     f.close()
 
-    f = open(out_filename)
+    f = open(out_filename, 'rb')
     data_got = f.read()
     f.close()
 
@@ -1100,11 +1100,11 @@ def pdf_check_identity_ogc_bp():
     out_ds = None
     src_ds = None
 
-    f = open('data/test_ogc_bp.pdf')
+    f = open('data/test_ogc_bp.pdf', 'rb')
     data_ref = f.read()
     f.close()
 
-    f = open(out_filename)
+    f = open(out_filename, 'rb')
     data_got = f.read()
     f.close()
 
