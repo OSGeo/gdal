@@ -1301,7 +1301,8 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
 
     /* GDAL extension */
     if( CSLTestBoolean( CPLGetConfigOption("GDAL_PDF_OGC_BP_WRITE_WKT", "TRUE") ) )
-        oLGIDict.Add("WKT", pszWKT);
+        poProjectionDict->Add("WKT", pszWKT);
+
     VSIFPrintfL(fp, "%s\n", oLGIDict.Serialize().c_str());
     EndObj();
 
