@@ -518,7 +518,7 @@ class PDFDataset : public GDALPamDataset
 
     OGRPolygon*  poNeatLine;
 
-    void         GuessDPI(GDALPDFDictionary* poPageDict);
+    void         GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands);
     void         FindXMP(GDALPDFObject* poObj);
     void         ParseInfo(GDALPDFObject* poObj);
 
@@ -594,7 +594,11 @@ PDFRasterBand::PDFRasterBand( PDFDataset *poDS, int nBand )
 
 GDALColorInterp PDFRasterBand::GetColorInterpretation()
 {
-    return (GDALColorInterp)(GCI_RedBand + (nBand - 1));
+    PDFDataset *poGDS = (PDFDataset *) poDS;
+    if (poGDS->nBands == 1)
+        return GCI_GrayIndex;
+    else
+        return (GDALColorInterp)(GCI_RedBand + (nBand - 1));
 }
 
 /************************************************************************/
@@ -609,7 +613,7 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if (poGDS->bTried == FALSE)
     {
         poGDS->bTried = TRUE;
-        poGDS->pabyData = (GByte*)VSIMalloc3(poGDS->nBands, nRasterXSize, nRasterYSize);
+        poGDS->pabyData = (GByte*)VSIMalloc3(MAX(3, poGDS->nBands), nRasterXSize, nRasterYSize);
         if (poGDS->pabyData == NULL)
             return CE_Failure;
 
@@ -623,9 +627,9 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         sColor[1] = 255;
         sColor[2] = 255;
         GDALPDFOutputDev *poSplashOut;
-        poSplashOut = new GDALPDFOutputDev((poGDS->nBands == 3) ? splashModeRGB8 : splashModeXBGR8,
+        poSplashOut = new GDALPDFOutputDev((poGDS->nBands < 4) ? splashModeRGB8 : splashModeXBGR8,
                                            4, gFalse,
-                                           (poGDS->nBands == 3) ? sColor : NULL);
+                                           (poGDS->nBands < 4) ? sColor : NULL);
 
         if (pszRenderingOptions != NULL)
         {
@@ -709,7 +713,7 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             for(i=0;i<nRasterXSize;i++)
             {
-                if (poGDS->nBands == 3)
+                if (poGDS->nBands < 4)
                 {
                     pabyDataR[i] = pabySrc[i * 3 + 0];
                     pabyDataG[i] = pabySrc[i * 3 + 1];
@@ -737,7 +741,7 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 #ifdef HAVE_PODOFO
       if (!poGDS->bUsePoppler)
       {
-        CPLAssert(poGDS->nBands == 3);
+        CPLAssert(poGDS->nBands != 4);
 
         if (pszRenderingOptions != NULL)
         {
@@ -1117,7 +1121,8 @@ static
 int GDALPDFParseStreamContent(const char* pszContent,
                               GDALPDFDictionary* poXObjectDict,
                               double* pdfDPI,
-                              int* pbDPISet)
+                              int* pbDPISet,
+                              int* pnBands)
 {
     CPLString osToken;
     char ch;
@@ -1194,6 +1199,15 @@ int GDALPDFParseStreamContent(const char* pszContent,
                             GDALPDFDictionary* poImageDict = poImage->GetDictionary();
                             GDALPDFObject* poWidth = poImageDict->Get("Width");
                             GDALPDFObject* poHeight = poImageDict->Get("Height");
+                            GDALPDFObject* poColorSpace = poImageDict->Get("ColorSpace");
+                            if (poColorSpace && poColorSpace->GetType() == PDFObjectType_Name)
+                            {
+                                if (poColorSpace->GetName() == "DeviceRGB" && *pnBands < 3)
+                                    *pnBands = 3;
+                                else if (poColorSpace->GetName() == "DeviceGray")
+                                    *pnBands = 1;
+                            }
+
                             if (poWidth && poHeight && adfVals[1] == 0.0 && adfVals[2] == 0.0)
                             {
                                 double dfWidth = Get(poWidth);
@@ -1230,7 +1244,7 @@ int GDALPDFParseStreamContent(const char* pszContent,
 /*                              GuessDPI()                              */
 /************************************************************************/
 
-void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict)
+void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
 {
     const char* pszDPI = CPLGetConfigOption("GDAL_PDF_DPI", NULL);
     if (pszDPI != NULL)
@@ -1319,7 +1333,8 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict)
                         GDALPDFParseStreamContent(pszContent,
                                                   poXObjectDict,
                                                   &(dfDPI),
-                                                  &bDPISet);
+                                                  &bDPISet,
+                                                  pnBands);
                         CPLFree(pszContent);
                         if (bDPISet)
                         {
@@ -1787,7 +1802,9 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->poPageObj = poPageObj;
     poDS->osUserPwd = pszUserPwd ? pszUserPwd : "";
     poDS->iPage = iPage;
-    poDS->GuessDPI(poPageDict);
+
+    int nBandsGuessed = 0;
+    poDS->GuessDPI(poPageDict, &nBandsGuessed);
 
     double dfX1 = 0.0, dfY1 = 0.0, dfX2 = 0.0, dfY2 = 0.0;
 
@@ -1973,7 +1990,12 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
   }
 #endif
 
-    int nBands = atoi(CPLGetConfigOption("GDAL_PDF_BANDS", "3"));
+    int nBands = 3;
+    /*if( nBandsGuessed )
+        nBands = nBandsGuessed;*/
+    const char* pszPDFBands = CPLGetConfigOption("GDAL_PDF_BANDS", NULL);
+    if( pszPDFBands )
+        nBands = atoi(pszPDFBands);
     if (nBands != 3 && nBands != 4)
     {
         CPLError(CE_Warning, CPLE_NotSupported,
@@ -2768,6 +2790,10 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
 
     else if (EQUAL(osProjectionType, "MC")) /* Mercator */
     {
+#ifdef not_supported
+        if (poProjDict->Get("StandardParallelOne") == NULL)
+        {
+#endif
         double dfCenterLat = Get(poProjDict, "OriginLatitude");
         double dfCenterLong = Get(poProjDict, "CentralMeridian");
         double dfScale = Get(poProjDict, "ScaleFactor");
@@ -2776,6 +2802,20 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary* poProjDict)
         oSRS.SetMercator( dfCenterLat, dfCenterLong,
                           dfScale,
                           dfFalseEasting, dfFalseNorthing );
+#ifdef not_supported
+        }
+        else
+        {
+            double dfStdP1 = Get(poProjDict, "StandardParallelOne");
+            double dfCenterLat = poProjDict->Get("OriginLatitude") ? Get(poProjDict, "OriginLatitude") : 0;
+            double dfCenterLong = Get(poProjDict, "CentralMeridian");
+            double dfFalseEasting = Get(poProjDict, "FalseEasting");
+            double dfFalseNorthing = Get(poProjDict, "FalseNorthing");
+            oSRS.SetMercator2SP( dfStdP1,
+                                 dfCenterLat, dfCenterLong,
+                                 dfFalseEasting, dfFalseNorthing );
+        }
+#endif
     }
 
     else if (EQUAL(osProjectionType, "MH")) /* Miller Cylindrical */
