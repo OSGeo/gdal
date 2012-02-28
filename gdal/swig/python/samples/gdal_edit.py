@@ -35,10 +35,22 @@ from osgeo import osr
 def Usage():
     print('Usage: gdal_edit [--help-general] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]')
     print('                 [-tr xres yres] [-unsetgt] [-a_nodata value] ')
+    print('                 [-gcp pixel line easting northing [elevation]]*')
     print('                 [-mo "META-TAG=VALUE"]*  datasetname')
     print('')
     print('Edit in place various information of an existing GDAL dataset.')
     return -1
+
+
+def ArgIsNumeric(s):
+    i = 0
+
+    while i < len(s):
+        if ( s[i] < '0' or s[i] > '9') and s[i] != '.' and s[i] != 'e' and s[i] != '+' and s[i] != '-':
+            return False
+        i = i + 1
+
+    return True
 
 def gdal_edit(argv):
 
@@ -57,6 +69,7 @@ def gdal_edit(argv):
     yres = None
     unsetgt = False
     molist = []
+    gcp_list = []
 
     i = 1
     argc = len(argv)
@@ -84,6 +97,22 @@ def gdal_edit(argv):
         elif argv[i] == '-mo' and i < len(argv)-1:
             molist.append(argv[i+1])
             i = i + 1
+        elif argv[i] == '-gcp' and i + 4 < len(argv):
+            pixel = float(argv[i+1])
+            i = i + 1
+            line = float(argv[i+1])
+            i = i + 1
+            x = float(argv[i+1])
+            i = i + 1
+            y = float(argv[i+1])
+            i = i + 1
+            if i + 1 < len(argv) and ArgIsNumeric(argv[i+1]):
+                z = float(argv[i+1])
+                i = i + 1
+            else:
+                z = 0
+            gcp = gdal.GCP(x,y,z,pixel,line)
+            gcp_list.append(gcp)
         elif argv[i] == '-unsetgt' :
             unsetgt = True
         elif argv[i][0] == '-':
@@ -121,13 +150,15 @@ def gdal_edit(argv):
     if ds is None:
         return -1
 
+    wkt = None
     if srs is not None:
         sr = osr.SpatialReference()
         if sr.SetFromUserInput(srs) != 0:
             print('Failed to process SRS definition: %s' % srs)
             return -1
         wkt = sr.ExportToWkt()
-        ds.SetProjection(wkt)
+        if len(gcp_list) == 0:
+            ds.SetProjection(wkt)
 
     if lry is not None:
         gt = [ ulx, (lrx - ulx) / ds.RasterXSize, 0,
@@ -144,6 +175,13 @@ def gdal_edit(argv):
 
     if unsetgt:
         ds.SetGeoTransform([0,1,0,0,0,1])
+
+    if len(gcp_list) > 0:
+        if wkt is None:
+            wkt = ds.GetGCPProjection()
+        if wkt is None:
+            wkt = ''
+        ds.SetGCPs(gcp_list, wkt)
 
     if nodata is not None:
         for i in range(ds.RasterCount):
