@@ -30,6 +30,7 @@
 
 import sys
 from osgeo import gdal
+from osgeo import osr
 
 def Usage():
     print('Usage: gdal_edit [--help-general] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]')
@@ -121,7 +122,12 @@ def gdal_edit(argv):
         return -1
 
     if srs is not None:
-        ds.SetProjection(srs)
+        sr = osr.SpatialReference()
+        if sr.SetFromUserInput(srs) != 0:
+            print('Failed to process SRS definition: %s' % srs)
+            return -1
+        wkt = sr.ExportToWkt()
+        ds.SetProjection(wkt)
 
     if lry is not None:
         gt = [ ulx, (lrx - ulx) / ds.RasterXSize, 0,
