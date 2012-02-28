@@ -440,7 +440,7 @@ def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height,tileName,
     if MemDriver is None:
         t_fh = Driver.Create( tileName, width, height, bands,bt,CreateOptions)
     else:
-        t_fh = MemDriver.Create( tileName, width, height, bands,bt,CreateOptions)
+        t_fh = MemDriver.Create( tileName, width, height, bands,bt)
 
     if t_fh is None:
         print('Creation failed, terminating gdal_tile.')
@@ -511,7 +511,7 @@ def createTile( minfo, offsetX,offsetY,width,height, tilename,OGRDS):
     if MemDriver is None:
         t_fh = Driver.Create( tilename, width, height, bands,bt,CreateOptions)
     else:
-        t_fh = MemDriver.Create( tilename, width, height, bands,bt,CreateOptions)
+        t_fh = MemDriver.Create( tilename, width, height, bands,bt)
 
     if t_fh is None:
         print('Creation failed, terminating gdal_tile.')
