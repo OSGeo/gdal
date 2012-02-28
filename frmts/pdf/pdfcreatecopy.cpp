@@ -1353,11 +1353,12 @@ static const char* GDALPDFGetValueFromDSOrOption(GDALDataset* poSrcDS,
                                                  const char* pszKey)
 {
     const char* pszValue = CSLFetchNameValue(papszOptions, pszKey);
+    if (pszValue == NULL)
+        pszValue = poSrcDS->GetMetadataItem(pszKey);
     if (pszValue != NULL && pszValue[0] == '\0')
         return NULL;
-    if (pszValue != NULL)
+    else
         return pszValue;
-    return poSrcDS->GetMetadataItem(pszKey);
 }
 
 /************************************************************************/

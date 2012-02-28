@@ -3563,7 +3563,11 @@ CPLErr      PDFDataset::SetMetadataItem( const char * pszName,
             bNeatLineDirty = TRUE;
         }
         else
+        {
+            if (pszValue == NULL)
+                pszValue = "";
             bInfoDirty = TRUE;
+        }
     }
     else if (EQUAL(pszDomain, "xml:XMP"))
         bXMPDirty = TRUE;
