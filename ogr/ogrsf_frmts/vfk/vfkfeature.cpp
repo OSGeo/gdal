@@ -218,7 +218,7 @@ void VFKFeature::SetProperties(const char *poLine)
     if (poChar == '\0')
 	return;
 
-    poChar++;
+    poChar++; /* skip ';' */
     
     poProp = poChar;
     iIndex = 0;
@@ -254,7 +254,11 @@ void VFKFeature::SetProperties(const char *poLine)
 	    nLength++;
 	}
     }
+
     /* append last property */
+    if (inString) {
+	nLength--; /* ignore '"' */
+    }
     pszProp = (char *) CPLRealloc(pszProp, nLength + 1);
     if (nLength > 0)
 	strncpy(pszProp, poProp, nLength);
