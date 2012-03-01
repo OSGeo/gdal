@@ -1568,10 +1568,10 @@ gdal2tiles temp.vrt""" % self.input )
 				url = ""
 				
 		s = """<?xml version="1.0" encoding="utf-8"?>
-	<kml xmlns="http://earth.google.com/kml/2.1">
+	<kml xmlns="http://www.opengis.net/kml/2.2">
 	  <Document>
-	    <Name>%(title)s</Name>
-	    <Description></Description>
+	    <name>%(title)s</name>
+	    <description></description>
 	    <Style>
 	      <ListStyle id="hideChildren">
 	        <listItemType>checkHideChildren</listItemType>
@@ -1580,16 +1580,16 @@ gdal2tiles temp.vrt""" % self.input )
 		if tilekml:
 			s += """
 	    <Region>
-	      <Lod>
-	        <minLodPixels>%(minlodpixels)d</minLodPixels>
-	        <maxLodPixels>%(maxlodpixels)d</maxLodPixels>
-	      </Lod>
 	      <LatLonAltBox>
 	        <north>%(north).14f</north>
 	        <south>%(south).14f</south>
 	        <east>%(east).14f</east>
 	        <west>%(west).14f</west>
 	      </LatLonAltBox>
+	      <Lod>
+	        <minLodPixels>%(minlodpixels)d</minLodPixels>
+	        <maxLodPixels>%(maxlodpixels)d</maxLodPixels>
+	      </Lod>
 	    </Region>
 	    <GroundOverlay>
 	      <drawOrder>%(drawOrder)d</drawOrder>
@@ -1611,16 +1611,16 @@ gdal2tiles temp.vrt""" % self.input )
 	    <NetworkLink>
 	      <name>%d/%d/%d.%s</name>
 	      <Region>
-	        <Lod>
-	          <minLodPixels>%d</minLodPixels>
-	          <maxLodPixels>-1</maxLodPixels>
-	        </Lod>
 	        <LatLonAltBox>
 	          <north>%.14f</north>
 	          <south>%.14f</south>
 	          <east>%.14f</east>
 	          <west>%.14f</west>
 	        </LatLonAltBox>
+	        <Lod>
+	          <minLodPixels>%d</minLodPixels>
+	          <maxLodPixels>-1</maxLodPixels>
+	        </Lod>
 	      </Region>
 	      <Link>
 	        <href>%s%d/%d/%d.kml</href>
@@ -1628,7 +1628,7 @@ gdal2tiles temp.vrt""" % self.input )
 	        <viewFormat/>
 	      </Link>
 	    </NetworkLink>
-	""" % (cz, cx, cy, args['tileformat'], args['minlodpixels'], cnorth, csouth, ceast, cwest, url, cz, cx, cy)
+	""" % (cz, cx, cy, args['tileformat'], cnorth, csouth, ceast, cwest, args['minlodpixels'], url, cz, cx, cy)
 
 		s += """	  </Document>
 	</kml>
