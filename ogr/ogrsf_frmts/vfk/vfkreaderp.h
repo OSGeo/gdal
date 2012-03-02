@@ -74,7 +74,7 @@ public:
     OGRErr         OpenFile(const char *);
     int            ReadDataBlocks();
     int            ReadDataRecords(IVFKDataBlock *);
-    long           LoadGeometry();
+    int            LoadGeometry();
     
     int            GetDataBlockCount() const { return m_nDataBlockCount; }
     IVFKDataBlock *GetDataBlock(int) const;

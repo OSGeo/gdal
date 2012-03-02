@@ -117,16 +117,21 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
         CPLError(CE_Failure, CPLE_AppDefined, 
 		 "File %s appears to be VFK but the VFK reader can't"
 		 "be instantiated.",
-		 pszNewName );
+		 pszNewName);
         return FALSE;
     }
+
+#ifndef HAVE_SQLITE
+    CPLError(CE_Warning, CPLE_AppDefined, 
+	     "OGR is not compiled with SQLite support. "
+	     "VFK driver will not work properly.");
+#endif
 
     /* open file for reading */
     poReader->OpenFile(pszNewName);
     
     /* read data blocks, i.e. &B */
     poReader->ReadDataBlocks();
-    /* poReader->LoadGeometry(); */
     
     /* get list of layers */
     papoLayers = (OGRVFKLayer **) CPLCalloc(sizeof(OGRVFKLayer *), poReader->GetDataBlockCount());

@@ -92,6 +92,7 @@ protected:
     long                      m_nFID;
     OGRwkbGeometryType        m_nGeometryType;
     bool                      m_bGeometry;
+    bool                      m_bValid;
     OGRGeometry              *m_paGeom;
 
     virtual bool         LoadGeometryPoint() = 0;
@@ -107,9 +108,11 @@ public:
     void                 SetFID(long);
     void                 SetGeometryType(OGRwkbGeometryType);
 
+    bool                 IsValid() const { return m_bValid; }
+    
     IVFKDataBlock       *GetDataBlock() const { return m_poDataBlock; }
     OGRwkbGeometryType   GetGeometryType() const { return m_nGeometryType; }
-    void                 SetGeometry(OGRGeometry *);
+    bool                 SetGeometry(OGRGeometry *);
     OGRGeometry         *GetGeometry();
 
     bool                 LoadGeometry();
@@ -229,10 +232,10 @@ protected:
     bool               AppendLineToRing(PointListArray *, const OGRLineString *, bool);
     int                LoadData();
     
-    virtual long       LoadGeometryPoint() = 0;
-    virtual long       LoadGeometryLineStringSBP() = 0;
-    virtual long       LoadGeometryLineStringHP() = 0;
-    virtual long       LoadGeometryPolygon() = 0;
+    virtual int        LoadGeometryPoint() = 0;
+    virtual int        LoadGeometryLineStringSBP() = 0;
+    virtual int        LoadGeometryLineStringHP() = 0;
+    virtual int        LoadGeometryPolygon() = 0;
 
 public:
     IVFKDataBlock(const char *, const IVFKReader *);
@@ -264,7 +267,7 @@ public:
     long               GetMaxFID();
     long               SetMaxFID(long);
 
-    long               LoadGeometry();
+    int                LoadGeometry();
 
     IVFKReader        *GetReader() const { return m_poReader; }
 };
@@ -275,10 +278,10 @@ public:
 class CPL_DLL VFKDataBlock : public IVFKDataBlock
 {
 private:
-    long               LoadGeometryPoint();
-    long               LoadGeometryLineStringSBP();
-    long               LoadGeometryLineStringHP();
-    long               LoadGeometryPolygon();
+    int                LoadGeometryPoint();
+    int                LoadGeometryLineStringSBP();
+    int                LoadGeometryLineStringHP();
+    int                LoadGeometryPolygon();
 
 public:
     VFKDataBlock(const char *pszName, const IVFKReader *poReader) : IVFKDataBlock(pszName, poReader) {}
@@ -297,10 +300,10 @@ public:
 class CPL_DLL VFKDataBlockSQLite : public IVFKDataBlock
 {
 private:
-    long                 LoadGeometryPoint();
-    long                 LoadGeometryLineStringSBP();
-    long                 LoadGeometryLineStringHP();
-    long                 LoadGeometryPolygon();
+    int                  LoadGeometryPoint();
+    int                  LoadGeometryLineStringSBP();
+    int                  LoadGeometryLineStringHP();
+    int                  LoadGeometryPolygon();
 
 public:
     VFKDataBlockSQLite(const char *pszName, const IVFKReader *poReader) : IVFKDataBlock(pszName, poReader) {}
@@ -330,7 +333,7 @@ public:
     virtual int            OpenFile(const char *) = 0;
     virtual int            ReadDataBlocks() = 0;
     virtual int            ReadDataRecords(IVFKDataBlock *) = 0;
-    virtual long           LoadGeometry() = 0;
+    virtual int            LoadGeometry() = 0;
 
     virtual int            GetDataBlockCount() const = 0;
     virtual IVFKDataBlock *GetDataBlock(int) const = 0;

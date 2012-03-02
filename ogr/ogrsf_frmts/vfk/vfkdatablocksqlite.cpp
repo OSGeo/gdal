@@ -40,11 +40,11 @@
 /*!
   \brief Load geometry (point layers)
 
-  \return number of processed features
+  \return number of invalid features
 */
-long VFKDataBlockSQLite::LoadGeometryPoint()
+int VFKDataBlockSQLite::LoadGeometryPoint()
 {
-    long   nfeatures;
+    int   nInvalid;
     double x, y;
 
     CPLString     osSQL;
@@ -53,7 +53,7 @@ long VFKDataBlockSQLite::LoadGeometryPoint()
     VFKFeatureSQLite *poFeature;
     VFKReaderSQLite  *poReader;
 	
-    nfeatures = 0;
+    nInvalid  = 0;
     poReader  = (VFKReaderSQLite*) m_poReader;
 
     osSQL.Printf("SELECT SOURADNICE_Y,SOURADNICE_X FROM '%s'", m_pszName);
@@ -65,22 +65,22 @@ long VFKDataBlockSQLite::LoadGeometryPoint()
 	x = -1.0 * sqlite3_column_double(hStmt, 0);
 	y = -1.0 * sqlite3_column_double(hStmt, 1);
 	OGRPoint pt(x, y);
-	poFeature->SetGeometry(&pt);
-	nfeatures++;
+	if (!poFeature->SetGeometry(&pt))
+	    nInvalid++;
     }
     ResetReading();
 
-    return nfeatures;
+    return nInvalid;
 }
 
 /*!
   \brief Load geometry (linestring SBP layer)
 
-  \return number of processed features
+  \return number of invalid features
 */
-long VFKDataBlockSQLite::LoadGeometryLineStringSBP()
+int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
 {
-    long     nfeatures;
+    int      nInvalid;
     int      rowId;
     GUIntBig id, ipcb;
 
@@ -93,7 +93,7 @@ long VFKDataBlockSQLite::LoadGeometryLineStringSBP()
     
     OGRLineString oOGRLine;
     
-    nfeatures = 0;
+    nInvalid  = 0;
     poReader  = (VFKReaderSQLite*) m_poReader;
     poLine    = NULL;
     
@@ -101,7 +101,7 @@ long VFKDataBlockSQLite::LoadGeometryLineStringSBP()
     if (NULL == poDataBlockPoints) {
     	CPLError(CE_Failure, CPLE_NotSupported, 
                  "Data block %s not found.\n", m_pszName);
-	return nfeatures;
+	return nInvalid;
     }
     
     poDataBlockPoints->LoadGeometry();
@@ -128,11 +128,11 @@ long VFKDataBlockSQLite::LoadGeometryLineStringSBP()
 	    if (ipcb == 1) {
 		if (!oOGRLine.IsEmpty()) {
 		    oOGRLine.setCoordinateDimension(2); /* force 2D */
-		    poLine->SetGeometry(&oOGRLine);
+		    if (!poLine->SetGeometry(&oOGRLine))
+			nInvalid++;
 		    oOGRLine.empty(); /* restore line */
 		}
 		poLine = poFeature;
-		nfeatures++;
 	    }
 	    else {
 		poFeature->SetGeometryType(wkbUnknown);
@@ -145,21 +145,23 @@ long VFKDataBlockSQLite::LoadGeometryLineStringSBP()
 	}
 	/* add last line */
 	oOGRLine.setCoordinateDimension(2); /* force 2D */
-	if (poLine)
-	    poLine->SetGeometry(&oOGRLine);
+	if (poLine) {
+	    if (!poLine->SetGeometry(&oOGRLine))
+		nInvalid++;
+	}
     }
     
-    return nfeatures;
+    return nInvalid;
 }
 
 /*!
   \brief Load geometry (linestring HP/DPM layer)
 
-  \return number of processed features
+  \return number of invalid features
 */
-long VFKDataBlockSQLite::LoadGeometryLineStringHP()
+int VFKDataBlockSQLite::LoadGeometryLineStringHP()
 {
-    long         nfeatures;
+    int          nInvalid;
     int          rowId;
     
     CPLString    osColumn, osSQL;
@@ -172,14 +174,14 @@ long VFKDataBlockSQLite::LoadGeometryLineStringHP()
     VFKDataBlockSQLite *poDataBlockLines;
     VFKFeatureSQLite   *poFeature, *poLine;
     
-    nfeatures = 0;
+    nInvalid  = 0;
     poReader  = (VFKReaderSQLite*) m_poReader;
     
     poDataBlockLines = (VFKDataBlockSQLite *) m_poReader->GetDataBlock("SBP");
     if (NULL == poDataBlockLines) {
     	CPLError(CE_Failure, CPLE_NotSupported, 
                  "Data block %s not found.\n", m_pszName);
-	return nfeatures;
+	return nInvalid;
     }
     
     poDataBlockLines->LoadGeometry();
@@ -199,21 +201,21 @@ long VFKDataBlockSQLite::LoadGeometryLineStringHP()
 	poLine = poDataBlockLines->GetFeature(vrColumn, vrValue, 2);
 	if (!poLine || !poLine->GetGeometry())
 	    continue;
-	poFeature->SetGeometry(poLine->GetGeometry());
-	nfeatures++;
+	if (!poFeature->SetGeometry(poLine->GetGeometry()))
+	    nInvalid++;
     }
     
-    return nfeatures;
+    return nInvalid;
 }
 
 /*!
   \brief Load geometry (polygon BUD/PAR layers)
 
-  \return number of processed features
+  \return number of invalid features
 */
-long VFKDataBlockSQLite::LoadGeometryPolygon()
+int VFKDataBlockSQLite::LoadGeometryPolygon()
 {
-    long nfeatures;
+    int  nInvalid;
     int  rowId, nCount, nCountMax;
     bool bIsPar, bNewRing, bFound;
 	
@@ -235,7 +237,7 @@ long VFKDataBlockSQLite::LoadGeometryPolygon()
     OGRLinearRing ogrRing;
     OGRPolygon    ogrPolygon;
     
-    nfeatures = 0;
+    nInvalid  = 0;
     poReader  = (VFKReaderSQLite*) m_poReader;
     
     if (EQUAL (m_pszName, "PAR")) {
@@ -251,7 +253,7 @@ long VFKDataBlockSQLite::LoadGeometryPolygon()
     if (NULL == poDataBlockLines1 || NULL == poDataBlockLines2) {
     	CPLError(CE_Failure, CPLE_NotSupported, 
                  "Data block %s not found.\n", m_pszName);
-	return nfeatures;
+	return nInvalid;
     }
     
     poDataBlockLines1->LoadGeometry();
@@ -342,8 +344,8 @@ long VFKDataBlockSQLite::LoadGeometryPolygon()
 	
 	/* set polygon */
 	ogrPolygon.setCoordinateDimension(2); /* force 2D */
-	poFeature->SetGeometry(&ogrPolygon);
-	nfeatures++;
+	if (!poFeature->SetGeometry(&ogrPolygon))
+	    nInvalid++;
     }
     
     /* free ring list */
@@ -353,7 +355,7 @@ long VFKDataBlockSQLite::LoadGeometryPolygon()
 	*iRing = NULL;
     }
     
-    return nfeatures;
+    return nInvalid;
 }
 
 /*!
