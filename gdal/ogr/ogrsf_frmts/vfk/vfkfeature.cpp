@@ -45,7 +45,7 @@ IVFKFeature::IVFKFeature(IVFKDataBlock *poDataBlock)
     CPLAssert(NULL != poDataBlock);
     m_poDataBlock   = poDataBlock;
     
-    m_nFID           = -1;
+    m_nFID          = -1;
     m_nGeometryType = poDataBlock->GetGeometryType();
     m_bGeometry     = FALSE;
     m_paGeom        = NULL;
@@ -79,20 +79,20 @@ void IVFKFeature::SetGeometryType(OGRwkbGeometryType nGeomType)
 */
 void IVFKFeature::SetFID(long nFID)
 {
-    if (m_nFID > 0)
-    {
+    if (m_nFID > 0) {
         m_nFID = nFID;
     }
     
-    if (m_nFID < 1)
-    {
-        long nMaxFID = m_poDataBlock->GetMaxFID();
-        if (nFID == 0) /* next */
-        {
+    if (m_nFID < 1) {
+        long nMaxFID;
+	
+	nMaxFID = m_poDataBlock->GetMaxFID();
+        if (nFID == 0) {
+	    /* next */
             m_nFID = nMaxFID + 1;
         }
-        else /* same */
-        {
+        else {
+	    /* same */
             m_nFID = nMaxFID;
         }
     }

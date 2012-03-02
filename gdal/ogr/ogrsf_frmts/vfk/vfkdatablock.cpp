@@ -403,12 +403,13 @@ IVFKFeature *IVFKDataBlock::GetFeature(long nFID)
 	LoadGeometry();
     }
     
-    if (m_nGeometryType == wkbPoint || m_nGeometryType == wkbPolygon) {
-	// m_iNextFeature = (int) nFID;
+    if (m_nGeometryType == wkbPoint ||
+	m_nGeometryType == wkbPolygon ||
+	m_nGeometryType == wkbNone) {
 	return GetFeatureByIndex(int (nFID) - 1); /* zero-based index */
     }
     else if (m_nGeometryType == wkbLineString) {
-	/* line string */
+	/* line string is built from more data records */
 	for (int i = 0; i < m_nFeatureCount; i++) {
 	    if (m_papoFeature[i]->GetFID() == nFID) {
 		m_iNextFeature = i + 1;
