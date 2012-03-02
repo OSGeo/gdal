@@ -864,10 +864,10 @@ static void PDFFreeDoc(PDFDoc* poDoc)
 GDALPDFDictionaryRW* PDFDataset::GetCatalogDict()
 {
     GDALPDFDictionaryRW* poCatalogDictCopy = NULL;
+    GDALPDFObject* poCatalogObject = NULL;
 
 #ifdef HAVE_POPPLER
     ObjectAutoFree oCatalog;
-    GDALPDFObject* poCatalogObject = NULL;
     if (bUsePoppler)
     {
         poDocPoppler->getXRef()->getCatalog(&oCatalog);
