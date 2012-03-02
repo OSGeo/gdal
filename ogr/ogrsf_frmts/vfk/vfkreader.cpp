@@ -312,9 +312,9 @@ IVFKDataBlock *VFKReader::GetDataBlock(const char *pszName) const
 /*!
   \brief Load geometry (loop datablocks)
 
-  \return number of processed features
+  \return number of invalid features
 */
-long VFKReader::LoadGeometry()
+int VFKReader::LoadGeometry()
 {
     long int nfeatures;
 
@@ -323,7 +323,7 @@ long VFKReader::LoadGeometry()
 	nfeatures += m_papoDataBlock[i]->LoadGeometry();
     }
     
-    CPLDebug("OGR_VFK", "VFKReader::LoadGeometry(): n=%ld", nfeatures);
+    CPLDebug("OGR_VFK", "VFKReader::LoadGeometry(): invalid=%ld", nfeatures);
     
     return nfeatures;
 }
