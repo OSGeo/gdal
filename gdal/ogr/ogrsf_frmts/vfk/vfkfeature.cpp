@@ -48,6 +48,7 @@ IVFKFeature::IVFKFeature(IVFKDataBlock *poDataBlock)
     m_nFID          = -1;
     m_nGeometryType = poDataBlock->GetGeometryType();
     m_bGeometry     = FALSE;
+    m_bValid        = FALSE;
     m_paGeom        = NULL;
 }
 
@@ -102,29 +103,39 @@ void IVFKFeature::SetFID(long nFID)
   \brief Set feature geometry
 
   \param poGeom pointer to OGRGeometry
+
+  \return TRUE on valid feature
+  \return otherwise FALSE
 */
-void IVFKFeature::SetGeometry(OGRGeometry *poGeom)
+bool IVFKFeature::SetGeometry(OGRGeometry *poGeom)
 {
     m_bGeometry = TRUE;
     if (!poGeom)
-        return;
+        return m_bValid;
 
     delete m_paGeom;
     m_paGeom = (OGRGeometry *) poGeom->clone(); /* make copy */
-    
-    if (m_nGeometryType == wkbNone && m_paGeom->IsEmpty())
-    {
+
+    m_bValid = TRUE;    
+    if (m_nGeometryType == wkbNone && m_paGeom->IsEmpty()) {
         CPLError(CE_Warning, CPLE_AppDefined, 
                  "Empty geometry FID %ld.\n", m_nFID);
+	m_bValid = FALSE;
+    }
+    
+    if (m_nGeometryType == wkbLineString &&
+	((OGRLineString *) m_paGeom)->getNumPoints() < 2) {
+	m_bValid = FALSE;
+    }
+    
+    if (m_nGeometryType == wkbPolygon) {
+	OGRLinearRing *poRing;
+	poRing = ((OGRPolygon *) m_paGeom)->getExteriorRing();
+	if (!poRing || poRing->getNumPoints() < 3)
+	    m_bValid = FALSE;
     }
 
-    if (m_nGeometryType == wkbLineString && ((OGRLineString *) m_paGeom)->getNumPoints() < 2)
-    {
-        CPLError(CE_Warning, CPLE_AppDefined, 
-                 "Invalid LineString FID %ld (%d points).\n",
-                 m_nFID,
-                 ((OGRLineString *) m_paGeom)->getNumPoints());
-    }
+    return m_bValid;
 }
 
 /*!
