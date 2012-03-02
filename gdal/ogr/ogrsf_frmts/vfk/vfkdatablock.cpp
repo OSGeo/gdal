@@ -454,18 +454,20 @@ long IVFKDataBlock::SetMaxFID(long nFID)
 /*!
   \brief Load geometry
 
-  \return number of processed features
+  Print warning when some invalid features are detected.
+
+  \return number of invalid features
   \return -1 on failure
 */
-long IVFKDataBlock::LoadGeometry()
+int IVFKDataBlock::LoadGeometry()
 {
-    long          nfeatures;
+    int           nInvalid;
     clock_t       start, end;
     
     if (m_bGeometry)
 	return 0;
 
-    nfeatures   = 0;
+    nInvalid    = 0;
     m_bGeometry = TRUE;
     start       = clock();
 
@@ -480,29 +482,33 @@ long IVFKDataBlock::LoadGeometry()
 	EQUAL (m_pszName, "OP") ||
 	EQUAL (m_pszName, "OBPEJ")) {
 	/* -> wkbPoint */
-	nfeatures = LoadGeometryPoint();
+	nInvalid = LoadGeometryPoint();
     }
     else if (EQUAL (m_pszName, "SBP")) {
 	/* -> wkbLineString */
-	nfeatures = LoadGeometryLineStringSBP();
+	nInvalid = LoadGeometryLineStringSBP();
     }
     else if (EQUAL (m_pszName, "HP") ||
 	     EQUAL (m_pszName, "DPM")) {
 	/* -> wkbLineString */
-	nfeatures = LoadGeometryLineStringHP();
+	nInvalid = LoadGeometryLineStringHP();
     }
     else if (EQUAL (m_pszName, "PAR") ||
 	     EQUAL (m_pszName, "BUD")) {
 	/* -> wkbPolygon */
-	nfeatures = LoadGeometryPolygon();
+	nInvalid = LoadGeometryPolygon();
     }
     
     end = clock();
     
-    CPLDebug("OGR_VFK", "VFKDataBlock::LoadGeometry(): name=%s nfeatures=%ld sec=%ld",
-	     m_pszName, nfeatures, (long)((end - start) / CLOCKS_PER_SEC));
+    if (nInvalid > 0) {
+	CPLError(CE_Warning, CPLE_AppDefined, 
+		 "%s: %d invalid features detected.", m_pszName, nInvalid);
+    }
+    CPLDebug("OGR_VFK", "VFKDataBlock::LoadGeometry(): name=%s sec=%ld",
+	     m_pszName, (long)((end - start) / CLOCKS_PER_SEC));
 
-    return nfeatures;
+    return nInvalid;
 }
 
 /*!
@@ -739,24 +745,24 @@ int VFKDataBlock::GetFeatureCount(const char *pszName, const char *pszValue)
 /*!
   \brief Load geometry (point layers)
 
-  \return number of processed features
+  \return number of invalid features
 */
-long VFKDataBlock::LoadGeometryPoint()
+int VFKDataBlock::LoadGeometryPoint()
 {
     /* -> wkbPoint */
-    long   nfeatures;
+    long   nInvalid;
     double x, y;
     int    i_idxX, i_idxY;
     
     VFKFeature *poFeature;
     
-    nfeatures = 0;
+    nInvalid = 0;
     i_idxY = GetPropertyIndex("SOURADNICE_Y");
     i_idxX = GetPropertyIndex("SOURADNICE_X");
     if (i_idxY < 0 || i_idxX < 0) {
 	CPLError(CE_Failure, CPLE_NotSupported, 
                  "Corrupted data (%s).\n", m_pszName);
-	return nfeatures;
+	return nInvalid;
     }
     
     for (int j = 0; j < ((IVFKDataBlock *) this)->GetFeatureCount(); j++) {
@@ -764,37 +770,37 @@ long VFKDataBlock::LoadGeometryPoint()
 	x = -1.0 * poFeature->GetProperty(i_idxY)->GetValueD();
 	y = -1.0 * poFeature->GetProperty(i_idxX)->GetValueD();
 	OGRPoint pt(x, y);
-	poFeature->SetGeometry(&pt);
-	nfeatures++;
+	if (!poFeature->SetGeometry(&pt))
+	    nInvalid++;
     }
     
-    return nfeatures;
+    return nInvalid;
 }
 
 /*!
   \brief Load geometry (linestring SBP layer)
 
-  \return number of processed features
+  \return number of invalid features
 */
-long VFKDataBlock::LoadGeometryLineStringSBP()
+int VFKDataBlock::LoadGeometryLineStringSBP()
 {
     int      idxId, idxBp_Id, idxPCB;
     GUIntBig id, ipcb;
-    long     nfeatures;
+    int      nInvalid;
     
     VFKDataBlock *poDataBlockPoints;
     VFKFeature   *poFeature, *poPoint, *poLine;
     
     OGRLineString oOGRLine;
     
-    nfeatures = 0;
+    nInvalid  = 0;
     poLine    = NULL;
     
     poDataBlockPoints = (VFKDataBlock *) m_poReader->GetDataBlock("SOBR");
     if (NULL == poDataBlockPoints) {
     	CPLError(CE_Failure, CPLE_NotSupported, 
                  "Data block %s not found.\n", m_pszName);
-	return nfeatures;
+	return nInvalid;
     }
     
     poDataBlockPoints->LoadGeometry();
@@ -804,7 +810,7 @@ long VFKDataBlock::LoadGeometryLineStringSBP()
     if (idxId < 0 || idxBp_Id < 0 || idxPCB < 0) {
 	CPLError(CE_Failure, CPLE_NotSupported, 
 		 "Corrupted data (%s).\n", m_pszName);
-	return nfeatures;
+	return nInvalid;
     }
     
     for (int j = 0; j < ((IVFKDataBlock *) this)->GetFeatureCount(); j++) {
@@ -815,11 +821,11 @@ long VFKDataBlock::LoadGeometryLineStringSBP()
 	if (ipcb == 1) {
 	    if (!oOGRLine.IsEmpty()) {
 		oOGRLine.setCoordinateDimension(2); /* force 2D */
-		poLine->SetGeometry(&oOGRLine);
+		if (!poLine->SetGeometry(&oOGRLine))
+		    nInvalid++;
 		oOGRLine.empty(); /* restore line */
 	    }
 	    poLine = poFeature;
-	    nfeatures++;
 	}
 	else {
 	    poFeature->SetGeometryType(wkbUnknown);
@@ -832,22 +838,23 @@ long VFKDataBlock::LoadGeometryLineStringSBP()
     }
     /* add last line */
     oOGRLine.setCoordinateDimension(2); /* force 2D */
-    if (poLine)
-	poLine->SetGeometry(&oOGRLine);
-    
+    if (poLine) {
+	if (!poLine->SetGeometry(&oOGRLine))
+	    nInvalid++;
+    }
     poDataBlockPoints->ResetReading();
 
-    return nfeatures;
+    return nInvalid;
 }
 
 /*!
   \brief Load geometry (linestring HP/DPM layer)
 
-  \return number of processed features
+  \return number of invalid features
 */
-long VFKDataBlock::LoadGeometryLineStringHP()
+int VFKDataBlock::LoadGeometryLineStringHP()
 {
-    long          nfeatures;
+    long          nInvalid;
     int           idxId, idxMy_Id, idxPCB;
     GUIntBig      id;
     
@@ -855,13 +862,13 @@ long VFKDataBlock::LoadGeometryLineStringHP()
     VFKFeature    *poFeature, *poLine;
     VFKFeatureList poLineList;
     
-    nfeatures = 0;
+    nInvalid = 0;
     
     poDataBlockLines = (VFKDataBlock *) m_poReader->GetDataBlock("SBP");
     if (NULL == poDataBlockLines) {
     	CPLError(CE_Failure, CPLE_NotSupported, 
                  "Data block %s not found.\n", m_pszName);
-	return nfeatures;
+	return nInvalid;
     }
     
     poDataBlockLines->LoadGeometry();
@@ -874,7 +881,7 @@ long VFKDataBlock::LoadGeometryLineStringHP()
     if (idxId < 0 || idxMy_Id < 0 || idxPCB < 0) {
 	CPLError(CE_Failure, CPLE_NotSupported, 
 		 "Corrupted data (%s).\n", m_pszName);
-	return nfeatures;
+	return nInvalid;
     }
     
     poLineList = poDataBlockLines->GetFeatures(idxPCB, 1); /* reduce to first segment */
@@ -884,26 +891,27 @@ long VFKDataBlock::LoadGeometryLineStringHP()
 	poLine = poDataBlockLines->GetFeature(idxMy_Id, id, &poLineList);
 	if (!poLine || !poLine->GetGeometry())
 	    continue;
-	poFeature->SetGeometry(poLine->GetGeometry());
-	nfeatures++;
+	if (!poFeature->SetGeometry(poLine->GetGeometry()))
+	    nInvalid++;
     }
     poDataBlockLines->ResetReading();
 
-    return nfeatures;
+    return nInvalid;
 }
 
 /*!
   \brief Load geometry (polygon BUD/PAR layers)
 
-  \return number of processed features
+  \return number of invalid features
 */
-long VFKDataBlock::LoadGeometryPolygon()
+int VFKDataBlock::LoadGeometryPolygon()
 {
-    long nfeatures;
+    long nInvalid;
     bool bIsPar, bNewRing, bFound;
 	
     GUIntBig id, idOb;
-    int idxId, idxPar1 = 0, idxPar2 = 0, idxBud = 0, idxOb = 0, idxIdOb = 0;
+    int  nCount, nCountMax;
+    int idxId, idxPar1, idxPar2, idxBud, idxOb, idxIdOb;
     
     VFKFeature   *poFeature;
     VFKDataBlock *poDataBlockLines1, *poDataBlockLines2;
@@ -914,7 +922,8 @@ long VFKDataBlock::LoadGeometryPolygon()
     OGRLinearRing ogrRing;
     OGRPolygon    ogrPolygon;
     
-    nfeatures = 0;
+    idxPar1 = idxPar2 = idxBud = idxOb = idxIdOb = 0;
+    nInvalid = 0;
     if (EQUAL (m_pszName, "PAR")) {
 	poDataBlockLines1 = (VFKDataBlock *) m_poReader->GetDataBlock("HP");
 	poDataBlockLines2 = poDataBlockLines1;
@@ -928,7 +937,7 @@ long VFKDataBlock::LoadGeometryPolygon()
     if (NULL == poDataBlockLines1 || NULL == poDataBlockLines2) {
     	CPLError(CE_Failure, CPLE_NotSupported, 
                  "Data block %s not found.\n", m_pszName);
-	return nfeatures;
+	return nInvalid;
     }
     
     poDataBlockLines1->LoadGeometry();
@@ -937,7 +946,7 @@ long VFKDataBlock::LoadGeometryPolygon()
     if (idxId < 0) {
 	CPLError(CE_Failure, CPLE_NotSupported, 
 		 "Corrupted data (%s).\n", m_pszName);
-	return nfeatures;
+	return nInvalid;
     }
     
     if (bIsPar) {
@@ -946,7 +955,7 @@ long VFKDataBlock::LoadGeometryPolygon()
 	if (idxPar1 < 0 || idxPar2 < 0) {
 	    CPLError(CE_Failure, CPLE_NotSupported, 
 		     "Corrupted data (%s).\n", m_pszName);
-	    return nfeatures;
+	    return nInvalid;
 	}
     }
     else { /* BUD */
@@ -956,7 +965,7 @@ long VFKDataBlock::LoadGeometryPolygon()
 	if (idxIdOb < 0 || idxBud < 0 || idxOb < 0) {
 	    CPLError(CE_Failure, CPLE_NotSupported, 
 		     "Corrupted data (%s).\n", m_pszName);
-	    return nfeatures;
+	    return nInvalid;
 	}
     }
     
@@ -988,7 +997,9 @@ long VFKDataBlock::LoadGeometryPolygon()
 	
 	/* collect rings (points) */
 	bFound = FALSE;
-	while (poLineList.size() > 0) {
+	nCount = 0;
+	nCountMax = poLineList.size() * 2;
+	while (poLineList.size() > 0 && nCount < nCountMax) {
 	    bNewRing = !bFound ? TRUE : FALSE;
 	    bFound = FALSE;
 	    for (VFKFeatureList::iterator iHp = poLineList.begin(), eHp = poLineList.end();
@@ -1000,6 +1011,7 @@ long VFKDataBlock::LoadGeometryPolygon()
 		    break;
 		}
 	    }
+	    nCount++;
 	}
 	/* create rings */
 	for (PointListArray::const_iterator iRing = poRingList.begin(), eRing = poRingList.end();
@@ -1014,18 +1026,18 @@ long VFKDataBlock::LoadGeometryPolygon()
 	}
 	/* set polygon */
 	ogrPolygon.setCoordinateDimension(2); /* force 2D */
-	poFeature->SetGeometry(&ogrPolygon);
-	nfeatures++;
+	if (!poFeature->SetGeometry(&ogrPolygon))
+	    nInvalid++;
     }
     
     /* free ring list */
-    for (PointListArray::iterator iRing = poRingList.begin(), eRing = poRingList.end();
-	 iRing != eRing; ++iRing) {
+    for (PointListArray::iterator iRing = poRingList.begin(),
+	     eRing = poRingList.end(); iRing != eRing; ++iRing) {
 	delete (*iRing);
 	*iRing = NULL;
     }
     poDataBlockLines1->ResetReading();
     poDataBlockLines2->ResetReading();
 
-    return nfeatures;
+    return nInvalid;
 }
