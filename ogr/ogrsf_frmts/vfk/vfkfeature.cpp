@@ -235,9 +235,9 @@ void VFKFeature::SetProperties(const char *poLine)
     iIndex = 0;
     nLength = 0;
     inString = FALSE;
-    while(*poChar != '\0' && !(*poChar == '\r' && *(poChar+1) == '\n')) {
+    while(*poChar != '\0') {
 	if (*poChar == '"' && 
-	    (*(poChar-1) == ';' || *(poChar+1) == ';' || *(poChar+1) == '\r')) {
+	    (*(poChar-1) == ';' || *(poChar+1) == ';' || *(poChar+1) == '\0')) {
 	    poChar++; /* skip '"' */
 	    inString = inString ? FALSE : TRUE;
 	    if (inString) {
@@ -247,7 +247,7 @@ void VFKFeature::SetProperties(const char *poLine)
 		    inString = FALSE;
 		}
 	    }
-	    if (*poChar == '\r' && *(poChar+1) == '\n')
+	    if (*poChar == '\0')
 		break;
 	}
 	if (*poChar == ';' && !inString) {
