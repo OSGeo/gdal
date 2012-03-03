@@ -195,7 +195,7 @@ int VSIPDFFileStream::getChar()
 #else
     if (nPosInBuffer == nBufferLength)
     {
-        if (!FillBuffer())
+        if (!FillBuffer() || nPosInBuffer >= nBufferLength)
             return EOF;
     }
 
