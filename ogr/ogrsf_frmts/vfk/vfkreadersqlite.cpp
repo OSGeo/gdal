@@ -37,6 +37,8 @@
 
 #define SUPPORT_GEOMETRY
 
+#include <cstdio>
+
 #ifdef SUPPORT_GEOMETRY
 #  include "ogr_geometry.h"
 #endif
@@ -46,10 +48,20 @@
 /*!
   \brief VFKReaderSQLite constructor
 */
-VFKReaderSQLite::VFKReaderSQLite()
+VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilename)
 {
-    /* create in-memory SQLite DB */
-    if (SQLITE_OK != sqlite3_open(":memory:", &m_poDB)) {
+    CPLString pszDbName(m_pszFilename);
+    
+    /* open tmp SQLite DB (remove DB file if already exists) */
+    pszDbName += ".db";
+
+    if (access(pszDbName, F_OK) != -1 &&
+	remove(pszDbName) != 0) {
+	CPLError(CE_Failure, CPLE_AppDefined, 
+		 "Removing SQLite DB failed");
+    }
+    
+    if (SQLITE_OK != sqlite3_open(pszDbName, &m_poDB)) {
 	CPLError(CE_Failure, CPLE_AppDefined, 
 		 "Creating in-memory SQLite DB failed");
     }
@@ -60,13 +72,21 @@ VFKReaderSQLite::VFKReaderSQLite()
 */
 VFKReaderSQLite::~VFKReaderSQLite()
 {
-    /* close in-memory SQLite DB */
+    CPLString pszDbName(m_pszFilename);
+
+    pszDbName += ".db";
+    
+    /* close tmp SQLite DB */
     if (SQLITE_OK != sqlite3_close(m_poDB)) {
 	CPLError(CE_Failure, CPLE_AppDefined, 
 		 "Closing in-memory SQLite DB failed\n  %s",
 		 sqlite3_errmsg(m_poDB));
     }
-    m_poDB = NULL;
+
+    /* remove tmp SQLite DB file */
+    if (remove(pszDbName) != 0)
+	CPLError(CE_Failure, CPLE_AppDefined, 
+		 "Removing SQLite DB failed");
 }
 
 /*!
