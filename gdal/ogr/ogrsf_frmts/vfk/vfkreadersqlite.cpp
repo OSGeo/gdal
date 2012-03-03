@@ -37,8 +37,6 @@
 
 #define SUPPORT_GEOMETRY
 
-#include <cstdio>
-
 #ifdef SUPPORT_GEOMETRY
 #  include "ogr_geometry.h"
 #endif
@@ -50,13 +48,15 @@
 */
 VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilename)
 {
-    CPLString pszDbName(m_pszFilename);
+    CPLString   pszDbName(m_pszFilename);
+    VSIStatBufL sStatBuf;
     
     /* open tmp SQLite DB (remove DB file if already exists) */
     pszDbName += ".db";
 
-    if (access(pszDbName, F_OK) != -1 &&
-	remove(pszDbName) != 0) {
+
+    if (VSIStatL(pszDbName, &sStatBuf ) == 0 && 
+	VSIUnlink(pszDbName) != 0) {
 	CPLError(CE_Failure, CPLE_AppDefined, 
 		 "Removing SQLite DB failed");
     }
@@ -84,7 +84,7 @@ VFKReaderSQLite::~VFKReaderSQLite()
     }
 
     /* remove tmp SQLite DB file */
-    if (remove(pszDbName) != 0)
+    if (VSIUnlink(pszDbName) != 0)
 	CPLError(CE_Failure, CPLE_AppDefined, 
 		 "Removing SQLite DB failed");
 }
