@@ -112,7 +112,7 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
 
     pszName = CPLStrdup(pszNewName);
     
-    poReader = CreateVFKReader();
+    poReader = CreateVFKReader(pszNewName);
     if (poReader == NULL) {
         CPLError(CE_Failure, CPLE_AppDefined, 
 		 "File %s appears to be VFK but the VFK reader can't"
@@ -126,9 +126,6 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
 	     "OGR is not compiled with SQLite support. "
 	     "VFK driver will not work properly.");
 #endif
-
-    /* open file for reading */
-    poReader->OpenFile(pszNewName);
     
     /* read data blocks, i.e. &B */
     poReader->ReadDataBlocks();

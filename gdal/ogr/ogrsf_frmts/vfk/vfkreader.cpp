@@ -56,28 +56,32 @@ IVFKReader::~IVFKReader()
 
   \return pointer to VFKReader instance
 */
-IVFKReader *CreateVFKReader()
+IVFKReader *CreateVFKReader(const char *pszFilename)
 {
 #ifdef HAVE_SQLITE
-    return new VFKReaderSQLite();
+    return new VFKReaderSQLite(pszFilename);
 #else
-    return new VFKReader();
+    return new VFKReader(pszFilename);
 #endif
 }
 
 /*!
   \brief VFKReader constructor
 */
-VFKReader::VFKReader()
+VFKReader::VFKReader(const char *pszFilename)
 {
-    m_pszFilename     = NULL;
-
-    m_poFD            = NULL;
-    
     m_nDataBlockCount = 0;
     m_papoDataBlock   = NULL;
-
     m_bLatin2         = TRUE; /* encoding ISO-8859-2 or WINDOWS-1250 */
+
+    /* open VFK file for reading */
+    CPLAssert(NULL == m_pszFilename);
+    m_pszFilename = CPLStrdup(pszFilename);
+    m_poFD = VSIFOpen(m_pszFilename, "rb");
+    if (m_poFD == NULL) {
+	CPLError(CE_Failure, CPLE_OpenFailed, 
+		 "Failed to open file %s.", m_pszFilename);
+    }
 }
 
 /*!
@@ -94,31 +98,6 @@ VFKReader::~VFKReader()
     for (int i = 0; i < m_nDataBlockCount; i++)
         delete m_papoDataBlock[i];
     CPLFree(m_papoDataBlock);
-    
-    m_nDataBlockCount = 0;
-    m_papoDataBlock = NULL;
-}
-
-/*!
-  \brief Open data file
-
-  \return OGRERR_NONE on success
-  \return OGRERR_FAILURE on error
-*/
-OGRErr VFKReader::OpenFile(const char *pszFilename)
-{
-    CPLAssert(NULL == m_pszFilename);
-    
-    m_pszFilename = CPLStrdup(pszFilename);
-    
-    m_poFD = VSIFOpen(m_pszFilename, "rb");
-    if (m_poFD == NULL) {
-	CPLError(CE_Failure, CPLE_OpenFailed, 
-		 "Failed to open file %s.", m_pszFilename);
-        return OGRERR_FAILURE;
-    }
-
-    return OGRERR_NONE;
 }
 
 char *GetDataBlockName(const char *pszLine)

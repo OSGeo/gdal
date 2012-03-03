@@ -50,7 +50,6 @@ class VFKReader;
 class VFKReader : public IVFKReader 
 {
 private:
-    char          *m_pszFilename;
     bool           m_bLatin2;
 
     FILE          *m_poFD;
@@ -62,6 +61,7 @@ private:
     void          AddInfo(const char *);
 
 protected:
+    char           *m_pszFilename;
     int             m_nDataBlockCount;
     IVFKDataBlock **m_papoDataBlock;
 
@@ -70,10 +70,9 @@ protected:
     void            AddFeature(IVFKDataBlock *, VFKFeature *);
 
 public:
-    VFKReader();
+    VFKReader(const char *);
     virtual ~VFKReader();
 
-    OGRErr         OpenFile(const char *);
     int            ReadDataBlocks();
     int            ReadDataRecords(IVFKDataBlock *);
     int            LoadGeometry();
@@ -101,7 +100,7 @@ private:
 
     friend class   VFKFeatureSQLite;
 public:
-    VFKReaderSQLite();
+    VFKReaderSQLite(const char *);
     virtual ~VFKReaderSQLite();
 
     int           ReadDataBlocks();
