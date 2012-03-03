@@ -123,7 +123,7 @@ void IVFKDataBlock::SetProperties(const char *poLine)
     /* read property name/type */
     poProp  = poChar;
     nLength = 0;
-    while(*poChar != '\0' && !(*poChar == '\r' && *(poChar+1) == '\n')) {
+    while(*poChar != '\0') {
 	if (*poChar == ' ') {
 	    pszName = (char *) CPLRealloc(pszName, nLength + 1);
 	    strncpy(pszName, poProp, nLength);
