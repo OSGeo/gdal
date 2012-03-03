@@ -209,32 +209,34 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
     while ((pszRawLine = CPLReadLine(m_poFD)) != NULL) {
 	if (strlen(pszRawLine) < 2)
 	    continue;
-	if (pszRawLine[strlen(pszRawLine) - 1] == '\244') {
-	    CPLString pszLine1;
-	    
-	    /* merge lines */
-	    do {
-		pszLine1 += pszRawLine;
-		pszLine1.erase(pszLine1.size() - 1); /* remove \244 from string */
-	    } while ((pszRawLine = CPLReadLine(m_poFD)) != NULL &&
-		   pszRawLine[strlen(pszRawLine) - 1] == '\244');
-	    pszLine1 += pszRawLine;
-	    pszLine = pszLine1.c_str();
-	}
-	else {
-	    pszLine = pszRawLine;
-	}
 	
-	if (pszLine[1] == 'D') {
-	    pszBlockName = GetDataBlockName(pszLine);
+	if (pszRawLine[1] == 'D') {
+	    pszBlockName = GetDataBlockName(pszRawLine);
 	    if (pszBlockName && EQUAL(pszBlockName, pszName)) {
+		if (pszRawLine[strlen(pszRawLine) - 1] == '\244') {
+		    CPLString pszLine1;
+		    
+		    /* merge lines */
+		    do {
+			pszLine1 += pszRawLine;
+			/* remove \244 from string */
+			pszLine1.erase(pszLine1.size() - 1);
+		    } while ((pszRawLine = CPLReadLine(m_poFD)) != NULL &&
+			     pszRawLine[strlen(pszRawLine) - 1] == '\244');
+		    pszLine1 += pszRawLine;
+		    pszLine = pszLine1.c_str();
+		}
+		else {
+		    pszLine = pszRawLine;
+		}
+		
 		poNewFeature = new VFKFeature(poDataBlock);
 		poNewFeature->SetProperties(pszLine);
 		AddFeature(poDataBlock, poNewFeature);
 	    }
 	    CPLFree(pszBlockName);
 	}
-	else if (pszLine[1] == 'K') {
+	else if (pszRawLine[1] == 'K' && strlen(pszRawLine) == 2) {
 	    /* end of file */
 	    break;
 	}
