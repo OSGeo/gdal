@@ -329,8 +329,7 @@ protected:
 
 public:
     virtual ~IVFKReader();
-
-    virtual int            OpenFile(const char *) = 0;
+    
     virtual int            ReadDataBlocks() = 0;
     virtual int            ReadDataRecords(IVFKDataBlock *) = 0;
     virtual int            LoadGeometry() = 0;
@@ -342,6 +341,6 @@ public:
     virtual const char    *GetInfo(const char *) = 0;
 };
 
-IVFKReader *CreateVFKReader();
+IVFKReader *CreateVFKReader(const char *);
 
 #endif // GDAL_OGR_VFK_VFKREADER_H_INCLUDED
