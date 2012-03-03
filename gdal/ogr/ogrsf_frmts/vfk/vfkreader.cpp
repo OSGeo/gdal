@@ -344,12 +344,11 @@ void VFKReader::AddInfo(const char *pszLine)
     
     poChar = poKey = pszLine + 2; /* &H */
     iKeyLength = 0;
-    while (*poChar != '\0' && *poChar != ';')
-    {
+    while (*poChar != '\0' && *poChar != ';') {
 	iKeyLength++;
         poChar ++;
     }
-    if( *poChar == '\0' )
+    if (*poChar == '\0')
         return;
 
     pszKey = (char *) CPLMalloc(iKeyLength + 1);
@@ -358,12 +357,11 @@ void VFKReader::AddInfo(const char *pszLine)
 
     poValue = poChar;
     iValueLength = 0;
-    while(*poChar != '\0' && !(*poChar == '\r' && *(poChar+1) == '\n')) {
+    while (*poChar != '\0') {
 	iValueLength++;
 	poChar++;
     }
-    if( *poChar == '\0' )
-    {
+    if (*poChar == '\0') {
         CPLFree(pszKey);
         return;
     }
