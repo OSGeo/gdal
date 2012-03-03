@@ -75,8 +75,8 @@ VFKReader::VFKReader(const char *pszFilename)
     m_bLatin2         = TRUE; /* encoding ISO-8859-2 or WINDOWS-1250 */
 
     /* open VFK file for reading */
+    CPLAssert(NULL != pszFilename);
     m_pszFilename = CPLStrdup(pszFilename);
-    CPLAssert(NULL == m_pszFilename);
     m_poFD = VSIFOpen(m_pszFilename, "rb");
     if (m_poFD == NULL) {
 	CPLError(CE_Failure, CPLE_OpenFailed, 
