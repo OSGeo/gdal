@@ -897,17 +897,23 @@ double GDALPDFObjectPoppler::GetReal()
 
 static CPLString GDALPDFPopplerGetUTF8(GooString* poStr)
 {
-    if (!poStr->hasUnicodeMarker())
+    GByte* pabySrc = (GByte*)poStr->getCString();
+    int nLen = poStr->getLength();
+    int bBEUnicodeMarker = nLen > 2 && pabySrc[0] == 0xFF && pabySrc[1] == 0xFE;
+    if (!poStr->hasUnicodeMarker() && !bBEUnicodeMarker)
         return poStr->getCString();
 
     /* This is UTF-16 content */
-    GByte* pabySrc = ((GByte*)poStr->getCString()) + 2;
-    int nLen = (poStr->getLength() - 2) / 2;
+    pabySrc += 2;
+    nLen = (nLen - 2) / 2;
     wchar_t *pwszSource = new wchar_t[nLen + 1];
     int j = 0;
     for(int i=0; i<nLen; i++, j++)
     {
-        pwszSource[j] = (pabySrc[2 * i] << 8) + pabySrc[2 * i + 1];
+        if (!bBEUnicodeMarker)
+            pwszSource[j] = (pabySrc[2 * i] << 8) + pabySrc[2 * i + 1];
+        else
+            pwszSource[j] = (pabySrc[2 * i + 1] << 8) + pabySrc[2 * i];
 #ifndef _WIN32
         /* Is there a surrogate pair ? See http://en.wikipedia.org/wiki/UTF-16 */
         /* On Windows, CPLRecodeFromWChar does this for us, because wchar_t is only */
@@ -915,7 +921,11 @@ static CPLString GDALPDFPopplerGetUTF8(GooString* poStr)
         if (pwszSource[j] >= 0xD800 && pwszSource[j] <= 0xDBFF && i + 1 < nLen)
         {
             /* should be in the range 0xDC00... 0xDFFF */
-            wchar_t nTrailSurrogate = (pabySrc[2 * (i+1)] << 8) + pabySrc[2 * (i+1) + 1];
+            wchar_t nTrailSurrogate;
+            if (!bBEUnicodeMarker)
+                nTrailSurrogate = (pabySrc[2 * (i+1)] << 8) + pabySrc[2 * (i+1) + 1];
+            else
+                nTrailSurrogate = (pabySrc[2 * (i+1) + 1] << 8) + pabySrc[2 * (i+1)];
             if (nTrailSurrogate >= 0xDC00 && nTrailSurrogate <= 0xDFFF)
             {
                 pwszSource[j] = ((pwszSource[j] - 0xD800) << 10) + (nTrailSurrogate - 0xDC00) + 0x10000;
