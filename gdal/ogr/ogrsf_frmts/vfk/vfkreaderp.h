@@ -51,8 +51,10 @@ class VFKReader : public IVFKReader
 {
 private:
     char          *m_pszFilename;
+    bool           m_bLatin2;
 
     FILE          *m_poFD;
+    char          *ReadLine();
     
     /* metadata */
     std::map<std::string, std::string> poInfo;

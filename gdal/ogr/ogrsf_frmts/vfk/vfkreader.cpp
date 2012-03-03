@@ -34,12 +34,15 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_string.h"
 
 #define SUPPORT_GEOMETRY
 
 #ifdef SUPPORT_GEOMETRY
 #  include "ogr_geometry.h"
 #endif
+
+static char *GetDataBlockName(const char *);
 
 /*!
   \brief IVFKReader desctructor
@@ -73,6 +76,8 @@ VFKReader::VFKReader()
     
     m_nDataBlockCount = 0;
     m_papoDataBlock   = NULL;
+
+    m_bLatin2         = TRUE; /* encoding ISO-8859-2 or WINDOWS-1250 */
 }
 
 /*!
@@ -116,7 +121,7 @@ OGRErr VFKReader::OpenFile(const char *pszFilename)
     return OGRERR_NONE;
 }
 
-static char *GetDataBlockName(const char *pszLine)
+char *GetDataBlockName(const char *pszLine)
 {
     int         n;
     const char *pszLineChar;
@@ -136,6 +141,27 @@ static char *GetDataBlockName(const char *pszLine)
 }
 
 /*!
+  \brief Read a line from file
+
+  \return a NULL terminated string which should be freed with CPLFree().
+*/
+char *VFKReader::ReadLine()
+{
+    const char *pszRawLine;
+    char *pszLine;
+    
+    pszRawLine = CPLReadLine(m_poFD);
+    if (pszRawLine == NULL)
+	return NULL;
+    
+    pszLine = CPLRecode(pszRawLine,
+			m_bLatin2 ? "ISO-8859-2" : "WINDOWS-1250",
+			CPL_ENC_UTF8);
+    
+    return pszLine;
+}
+
+/*!
   \brief Load data block definitions (&B)
 
   Call VFKReader::OpenFile() before this function.
@@ -145,15 +171,14 @@ static char *GetDataBlockName(const char *pszLine)
 */
 int VFKReader::ReadDataBlocks()
 {
-    const char *pszLine;
-    char       *pszBlockName;
+    char       *pszLine, *pszBlockName;
 
     IVFKDataBlock *poNewDataBlock;
     
     CPLAssert(NULL != m_pszFilename);
 
     VSIFSeek(m_poFD, 0, SEEK_SET);
-    while ((pszLine = CPLReadLine(m_poFD)) != NULL) {
+    while ((pszLine = ReadLine()) != NULL) {
         if (strlen(pszLine) < 2 || pszLine[0] != '&')
 	    continue;
 	if (pszLine[1] == 'B') {
@@ -173,10 +198,12 @@ int VFKReader::ReadDataBlocks()
 	    /* header - metadata */
 	    AddInfo(pszLine);
 	}
-	else if (pszLine[1] == 'K') {
+	else if (pszLine[1] == 'K' && strlen(pszLine) == 2) {
 	    /* end of file */
+	    CPLFree(pszLine);
 	    break;
 	}
+	CPLFree(pszLine);
     }
     
     return m_nDataBlockCount;
@@ -193,10 +220,11 @@ int VFKReader::ReadDataBlocks()
 */
 int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
 {
-    const char *pszRawLine, *pszName, *pszLine;
-    char       *pszBlockName;
-
-    VFKFeature    *poNewFeature;
+    const char *pszName;
+    char       *pszBlockName, *pszLine;
+    bool        bMultiLine;
+    
+    VFKFeature *poNewFeature;
     
     if (poDataBlock->GetFeatureCount() >= 0)
 	return -1;
@@ -206,28 +234,35 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
     pszName = poDataBlock->GetName();
 
     VSIFSeek(m_poFD, 0, SEEK_SET);
-    while ((pszRawLine = CPLReadLine(m_poFD)) != NULL) {
-	if (strlen(pszRawLine) < 2)
+    while ((pszLine = ReadLine()) != NULL) {
+	bMultiLine = FALSE;
+	if (strlen(pszLine) < 2)
 	    continue;
 	
-	if (pszRawLine[1] == 'D') {
-	    pszBlockName = GetDataBlockName(pszRawLine);
+	if (pszLine[1] == 'D') {
+	    pszBlockName = GetDataBlockName(pszLine);
 	    if (pszBlockName && EQUAL(pszBlockName, pszName)) {
-		if (pszRawLine[strlen(pszRawLine) - 1] == '\244') {
-		    CPLString pszLine1;
+		/* merge lines if needed */
+		if (pszLine[strlen(pszLine) - 1] == '\244') {
+		    bMultiLine = TRUE;
 		    
-		    /* merge lines */
-		    do {
-			pszLine1 += pszRawLine;
+		    /* remove \244 from string */
+		    pszLine[strlen(pszLine) - 1] = '\0';
+		    
+		    CPLString pszMultiLine(pszLine);
+		    CPLFree(pszLine);
+		    
+		    while ((pszLine = ReadLine()) != NULL &&
+			   pszLine[strlen(pszLine) - 1] == '\244') {
 			/* remove \244 from string */
-			pszLine1.erase(pszLine1.size() - 1);
-		    } while ((pszRawLine = CPLReadLine(m_poFD)) != NULL &&
-			     pszRawLine[strlen(pszRawLine) - 1] == '\244');
-		    pszLine1 += pszRawLine;
-		    pszLine = pszLine1.c_str();
-		}
-		else {
-		    pszLine = pszRawLine;
+			pszLine[strlen(pszLine) - 1] = '\0';
+			
+			/* append line */
+			pszMultiLine += pszLine;
+			CPLFree(pszLine);
+		    } 
+		    pszMultiLine += pszLine;
+		    pszLine = (char *)pszMultiLine.c_str();
 		}
 		
 		poNewFeature = new VFKFeature(poDataBlock);
@@ -236,10 +271,13 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
 	    }
 	    CPLFree(pszBlockName);
 	}
-	else if (pszRawLine[1] == 'K' && strlen(pszRawLine) == 2) {
+	else if (pszLine[1] == 'K' && strlen(pszLine) == 2) {
 	    /* end of file */
+	    CPLFree(pszLine);
 	    break;
 	}
+	if (!bMultiLine)
+	    CPLFree(pszLine);
     }
     
     return poDataBlock->GetFeatureCount();
@@ -337,10 +375,10 @@ int VFKReader::LoadGeometry()
 */
 void VFKReader::AddInfo(const char *pszLine)
 {
-    int iKeyLength, iValueLength;
-    char *pszKey, *pszValue;
+    int         iKeyLength, iValueLength;
+    char       *pszKey, *pszValue;
     const char *poChar, *poKey, *poValue;
-    std::string key, value;
+    CPLString   key, value;
     
     poChar = poKey = pszLine + 2; /* &H */
     iKeyLength = 0;
@@ -355,15 +393,11 @@ void VFKReader::AddInfo(const char *pszLine)
     strncpy(pszKey, poKey, iKeyLength);
     pszKey[iKeyLength] = '\0';
 
-    poValue = poChar;
+    poValue = ++poChar; /* skip ';' */
     iValueLength = 0;
     while (*poChar != '\0') {
 	iValueLength++;
 	poChar++;
-    }
-    if (*poChar == '\0') {
-        CPLFree(pszKey);
-        return;
     }
 
     pszValue = (char *) CPLMalloc(iValueLength + 1);
@@ -371,6 +405,11 @@ void VFKReader::AddInfo(const char *pszLine)
     pszValue[iValueLength] = '\0';
 
     poInfo[pszKey] = pszValue;
+
+    if (EQUAL(pszKey, "CODEPAGE")) {
+	if (!EQUAL(pszValue, "\"WE8ISO8859P2\""))
+	    m_bLatin2 = FALSE;
+    }
 
     CPLFree(pszKey);
     CPLFree(pszValue);
