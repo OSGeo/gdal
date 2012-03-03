@@ -313,6 +313,8 @@ void VFKFeature::SetProperty(int iIndex, const char *pszValue)
 	m_propertyList[iIndex] = VFKProperty();
     else {
 	OGRFieldType fType;
+	char *pszValueUTF8;
+	
 	fType = m_poDataBlock->GetProperty(iIndex)->GetType();
 	switch (fType) {
 	case OFTInteger:
@@ -322,7 +324,9 @@ void VFKFeature::SetProperty(int iIndex, const char *pszValue)
 	    m_propertyList[iIndex] = VFKProperty(CPLAtof(pszValue));
 	    break;
 	default:
-	    m_propertyList[iIndex] = VFKProperty(pszValue);
+	    pszValueUTF8 = CPLRecode(pszValue, "WINDOWS-1250", CPL_ENC_UTF8);
+	    m_propertyList[iIndex] = VFKProperty(pszValueUTF8);
+	    CPLFree(pszValueUTF8);
 	    break;
 	}
     }
