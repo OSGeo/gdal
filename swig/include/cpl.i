@@ -115,13 +115,8 @@ typedef char retStringAndCPLFree;
 %rename (PushFinderLocation) CPLPushFinderLocation;
 %rename (PopFinderLocation) CPLPopFinderLocation;
 %rename (FinderClean) CPLFinderClean;
-#ifdef SWIGPERL
-%rename (_FindFile) CPLFindFile;
-%rename (_ReadDir) VSIReadDir;
-#else
 %rename (FindFile) CPLFindFile;
 %rename (ReadDir) VSIReadDir;
-#endif
 %rename (Mkdir) VSIMkdir;
 %rename (Rmdir) VSIRmdir;
 %rename (Rename) VSIRename;
