@@ -293,19 +293,6 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	$_[3] = $RESAMPLING_STRING2INT{$_[3]} if $_[3] and exists $RESAMPLING_STRING2INT{$_[3]};
 	return _AutoCreateWarpedVRT(@_);
     }
-    sub FindFile {
-	my $a = _FindFile(@_);
-	$a = decode('utf8', $a); # GDAL returns utf8
-	return $a;
-    }
-    sub ReadDir {
-	return unless defined wantarray;
-	my $a = _ReadDir(@_);
-	for (@$a) {
-	    $_ = decode('utf8', $_); # GDAL returns utf8
-	}
-	return wantarray ? @$a : $a;
-    }
 
     package Geo::GDAL::MajorObject;
     use vars qw/@DOMAINS/;
