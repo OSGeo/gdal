@@ -855,6 +855,14 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                  OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
+    else if( strstr(pszProj4,"wktext") != NULL )
+    {
+        // Fake out a projected coordinate system for otherwise 
+        // unrecognised projections for which we are already planning
+        // to embed the actual PROJ.4 string via extension node.
+        SetProjection( "custom_proj4" );
+    }
+
     else
     {
         CPLDebug( "OGR_PROJ4", "Unsupported projection: %s", pszProj );
