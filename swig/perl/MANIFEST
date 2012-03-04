@@ -18,4 +18,11 @@ gdalconst_wrap.c
 gdal_wrap.cpp
 ogr_wrap.cpp
 osr_wrap.cpp
+cr.dox
+cv.dox
+index.dox
+rr.dox
+rv.dox
+transform.dox
+check_dox.pl
 META.yml                                 Module meta-data (added by MakeMaker)

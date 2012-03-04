@@ -120,8 +120,12 @@ for my $module (keys %object) {
 		   MAKEFILE => 'Makefile_'.$add,
 		   LIBS => $LIB,
 		   INC => $INC,
-		   OBJECT => $object{$module}
-		   );
+		   OBJECT => $object{$module},
+		   PM => {'lib/Geo/GDAL.pm' => '$(INST_LIBDIR)/GDAL.pm',
+			  'lib/Geo/OGR.pm' => '$(INST_LIBDIR)/OGR.pm',
+			  'lib/Geo/OSR.pm' => '$(INST_LIBDIR)/OSR.pm',
+			  'lib/Geo/GDAL/Const.pm' => '$(INST_LIBDIR)/GDAL/Const.pm'}
+	);
 }
 
 sub parse_libtool_library_file_for_l {
