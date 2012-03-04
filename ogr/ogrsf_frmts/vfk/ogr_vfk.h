@@ -116,9 +116,6 @@ public:
     int            TestCapability(const char *);
 
     IVFKReader    *GetReader() const { return poReader; }
-
-    void           AddInfo(const char *, const char *);
-    const char    *GetInfo(const char *);
 };
 
 /************************************************************************/
