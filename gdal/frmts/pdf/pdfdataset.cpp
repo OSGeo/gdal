@@ -39,12 +39,14 @@
 
 #ifdef HAVE_POPPLER
 #include "pdfio.h"
+#include <goo/GooList.h>
 #endif
 
 #include "pdfobject.h"
 #include "pdfcreatecopy.h"
 
 #include <set>
+#include <map>
 
 /* g++ -fPIC -g -Wall frmts/pdf/pdfdataset.cpp -shared -o gdal_PDF.so -Iport -Igcore -Iogr -L. -lgdal -lpoppler -I/usr/include/poppler */
 
@@ -524,6 +526,16 @@ class PDFDataset : public GDALPamDataset
 
     GDALPDFDictionaryRW* GetCatalogDict();
 
+#ifdef HAVE_POPPLER
+    void         AddLayer(const char* pszLayerName, OptionalContentGroup* ocg);
+    void         ExploreLayers(GDALPDFArray* poArray, CPLString osTopLayer = "");
+    void         FindLayers();
+    void         TurnLayersOnOff();
+    CPLStringList osLayerList;
+    std::map<CPLString, OptionalContentGroup*> oLayerOCGMap;
+#endif
+    int          bUseOCG;
+
   public:
                  PDFDataset();
     virtual     ~PDFDataset();
@@ -673,7 +685,8 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 #ifdef POPPLER_HAS_OPTCONTENT
         Catalog* poCatalog = poDoc->getCatalog();
         OCGs* poOldOCGs = poCatalog->optContent;
-        poCatalog->optContent = NULL;
+        if (!poGDS->bUseOCG)
+            poCatalog->optContent = NULL;
 #endif
         poDoc->displayPageSlice(poSplashOut,
                                        poGDS->iPage,
@@ -836,6 +849,7 @@ PDFDataset::PDFDataset()
     pabyData = NULL;
     iPage = -1;
     poNeatLine = NULL;
+    bUseOCG = FALSE;
 }
 
 /************************************************************************/
@@ -1451,7 +1465,289 @@ void PDFDataset::ParseInfo(GDALPDFObject* poInfoObj)
         if (bOneMDISet)
             SetMetadataItem("CREATION_DATE", poItem->GetString().c_str());
     }
- }
+}
+
+#ifdef HAVE_POPPLER
+
+/************************************************************************/
+/*                           PDFSanitizeLayerName()                     */
+/************************************************************************/
+
+CPLString PDFSanitizeLayerName(const char* pszName)
+{
+    CPLString osName;
+    for(int i=0; pszName[i] != '\0'; i++)
+    {
+        if (pszName[i] == ' ' || pszName[i] == '.' || pszName[i] == ',')
+            osName += "_";
+        else
+            osName += pszName[i];
+    }
+    return osName;
+}
+
+/************************************************************************/
+/*                               AddLayer()                             */
+/************************************************************************/
+
+void PDFDataset::AddLayer(const char* pszLayerName, OptionalContentGroup* ocg)
+{
+    int nNewIndex = osLayerList.size() /*/ 2*/;
+
+    if (nNewIndex == 100)
+    {
+        CPLStringList osNewLayerList;
+        for(int i=0;i<100;i++)
+        {
+            osNewLayerList.AddNameValue(CPLSPrintf("LAYER_%03d_NAME", i),
+                                        osLayerList[i * 2] + strlen("LAYER_00_NAME="));
+            /*osNewLayerList.AddNameValue(CPLSPrintf("LAYER_%03d_INIT_STATE", i),
+                                        osLayerList[i * 2 + 1] + strlen("LAYER_00_INIT_STATE="));*/
+        }
+        osLayerList = osNewLayerList;
+    }
+
+    char szFormatName[64];
+    /* char szFormatInitState[64]; */
+    sprintf(szFormatName, "LAYER_%%0%dd_NAME",  nNewIndex >= 100 ? 3 : 2);
+    /* sprintf(szFormatInitState, "LAYER_%%0%dd_INIT_STATE", nNewIndex >= 100 ? 3 : 2); */
+
+    osLayerList.AddNameValue(CPLSPrintf(szFormatName, nNewIndex),
+                             pszLayerName);
+    /*osLayerList.AddNameValue(CPLSPrintf(szFormatInitState, nNewIndex),
+                             (ocg == NULL || ocg->getState() == OptionalContentGroup::On) ? "ON" : "OFF");*/
+    oLayerOCGMap[pszLayerName] = ocg;
+}
+
+/************************************************************************/
+/*                             ExploreLayers()                          */
+/************************************************************************/
+
+void PDFDataset::ExploreLayers(GDALPDFArray* poArray, CPLString osTopLayer)
+{
+    int nLength = poArray->GetLength();
+    CPLString osCurLayer;
+    for(int i=0;i<nLength;i++)
+    {
+        GDALPDFObject* poObj = poArray->Get(i);
+        if (i == 0 && poObj->GetType() == PDFObjectType_String)
+        {
+            CPLString osName = PDFSanitizeLayerName(poObj->GetString().c_str());
+            if (osTopLayer.size())
+                osTopLayer = osTopLayer + "." + osName;
+            else
+                osTopLayer = osName;
+            AddLayer(osTopLayer.c_str(), NULL);
+        }
+        else if (poObj->GetType() == PDFObjectType_Array)
+        {
+            ExploreLayers(poObj->GetArray(), osCurLayer);
+            osCurLayer = "";
+        }
+        else if (poObj->GetType() == PDFObjectType_Dictionary)
+        {
+            GDALPDFDictionary* poDict = poObj->GetDictionary();
+            GDALPDFObject* poName = poDict->Get("Name");
+            if (poName != NULL && poName->GetType() == PDFObjectType_String)
+            {
+                CPLString osName = PDFSanitizeLayerName(poName->GetString().c_str());
+                if (osTopLayer.size())
+                    osCurLayer = osTopLayer + "." + osName;
+                else
+                    osCurLayer = osName;
+                //CPLDebug("PDF", "Layer %s", osCurLayer.c_str());
+
+                OCGs* optContentConfig = poDocPoppler->getOptContentConfig();
+                struct Ref r;
+                r.num = poObj->GetRefNum();
+                r.gen = poObj->GetRefGen();
+                OptionalContentGroup* ocg = optContentConfig->findOcgByRef(r);
+                if (ocg)
+                {
+                    AddLayer(osCurLayer.c_str(), ocg);
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                              FindLayers()                            */
+/************************************************************************/
+
+void PDFDataset::FindLayers()
+{
+    OCGs* optContentConfig = poDocPoppler->getOptContentConfig();
+    if (optContentConfig == NULL || !optContentConfig->isOk() )
+        return;
+
+    Array* array = optContentConfig->getOrderArray();
+    if (array)
+    {
+        GDALPDFArray* poArray = GDALPDFCreateArray(array);
+        ExploreLayers(poArray);
+        delete poArray;
+    }
+    else
+    {
+        GooList* ocgList = optContentConfig->getOCGs();
+        for(int i=0;i<ocgList->getLength();i++)
+        {
+            OptionalContentGroup* ocg = (OptionalContentGroup*) ocgList->get(i);
+            AddLayer((const char*)ocg->getName()->getCString(), ocg);
+        }
+    }
+
+    oMDMD.SetMetadata(osLayerList.List(), "LAYERS");
+}
+
+/************************************************************************/
+/*                            TurnLayersOnOff()                         */
+/************************************************************************/
+
+void PDFDataset::TurnLayersOnOff()
+{
+    OCGs* optContentConfig = poDocPoppler->getOptContentConfig();
+    if (optContentConfig == NULL || !optContentConfig->isOk() )
+        return;
+
+    // Which layers to turn ON ?
+    const char* pszLayers = CPLGetConfigOption("GDAL_PDF_LAYERS", NULL);
+    if (pszLayers)
+    {
+        int i;
+        int bAll = EQUAL(pszLayers, "ALL");
+        GooList* ocgList = optContentConfig->getOCGs();
+        for(i=0;i<ocgList->getLength();i++)
+        {
+            OptionalContentGroup* ocg = (OptionalContentGroup*) ocgList->get(i);
+            ocg->setState( (bAll) ? OptionalContentGroup::On : OptionalContentGroup::Off );
+        }
+
+        char** papszLayers = CSLTokenizeString2(pszLayers, ",", 0);
+        for(i=0;!bAll && papszLayers[i] != NULL;i++)
+        {
+            std::map<CPLString, OptionalContentGroup*>::iterator oIter =
+                oLayerOCGMap.find(papszLayers[i]);
+            if (oIter != oLayerOCGMap.end())
+            {
+                if (oIter->second)
+                {
+                    //CPLDebug("PDF", "Turn '%s' on", papszLayers[i]);
+                    oIter->second->setState(OptionalContentGroup::On);
+                }
+
+                // Turn child layers on, unless there's one of them explicitely listed
+                // in the list.
+                int nLen = strlen(papszLayers[i]);
+                int bFoundChildLayer = FALSE;
+                oIter = oLayerOCGMap.begin();
+                for( ; oIter != oLayerOCGMap.end() && !bFoundChildLayer; oIter ++)
+                {
+                    if ((int)oIter->first.size() > nLen &&
+                        strncmp(oIter->first.c_str(), papszLayers[i], nLen) == 0 &&
+                        oIter->first[nLen] == '.')
+                    {
+                        for(int j=0;papszLayers[j] != NULL;j++)
+                        {
+                            if (strcmp(papszLayers[j], oIter->first.c_str()) == 0)
+                                bFoundChildLayer = TRUE;
+                        }
+                    }
+                }
+
+                if( !bFoundChildLayer )
+                {
+                    oIter = oLayerOCGMap.begin();
+                    for( ; oIter != oLayerOCGMap.end() && !bFoundChildLayer; oIter ++)
+                    {
+                        if ((int)oIter->first.size() > nLen &&
+                            strncmp(oIter->first.c_str(), papszLayers[i], nLen) == 0 &&
+                            oIter->first[nLen] == '.')
+                        {
+                            if (oIter->second)
+                            {
+                                //CPLDebug("PDF", "Turn '%s' on too", oIter->first.c_str());
+                                oIter->second->setState(OptionalContentGroup::On);
+                            }
+                        }
+                    }
+                }
+
+                // Turn parent layers on too
+                char* pszLastDot;
+                while( (pszLastDot = strrchr(papszLayers[i], '.')) != NULL)
+                {
+                    *pszLastDot = '\0';
+                    oIter = oLayerOCGMap.find(papszLayers[i]);
+                    if (oIter != oLayerOCGMap.end())
+                    {
+                        if (oIter->second)
+                        {
+                            //CPLDebug("PDF", "Turn '%s' on too", papszLayers[i]);
+                            oIter->second->setState(OptionalContentGroup::On);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined, "Unknown layer '%s'",
+                            papszLayers[i]);
+            }
+        }
+        CSLDestroy(papszLayers);
+
+        bUseOCG = TRUE;
+    }
+
+    // Which layers to turn OFF ?
+    const char* pszLayersOFF = CPLGetConfigOption("GDAL_PDF_LAYERS_OFF", NULL);
+    if (pszLayersOFF)
+    {
+        char** papszLayersOFF = CSLTokenizeString2(pszLayersOFF, ",", 0);
+        for(int i=0;papszLayersOFF[i] != NULL;i++)
+        {
+            std::map<CPLString, OptionalContentGroup*>::iterator oIter =
+                oLayerOCGMap.find(papszLayersOFF[i]);
+            if (oIter != oLayerOCGMap.end())
+            {
+                if (oIter->second)
+                {
+                    //CPLDebug("PDF", "Turn '%s' off", papszLayersOFF[i]);
+                    oIter->second->setState(OptionalContentGroup::Off);
+                }
+
+                // Turn child layers off too
+                int nLen = strlen(papszLayersOFF[i]);
+                oIter = oLayerOCGMap.begin();
+                for( ; oIter != oLayerOCGMap.end(); oIter ++)
+                {
+                    if ((int)oIter->first.size() > nLen &&
+                        strncmp(oIter->first.c_str(), papszLayersOFF[i], nLen) == 0 &&
+                        oIter->first[nLen] == '.')
+                    {
+                        if (oIter->second)
+                        {
+                            //CPLDebug("PDF", "Turn '%s' off too", oIter->first.c_str());
+                            oIter->second->setState(OptionalContentGroup::Off);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined, "Unknown layer '%s'",
+                            papszLayersOFF[i]);
+            }
+        }
+        CSLDestroy(papszLayersOFF);
+
+        bUseOCG = TRUE;
+    }
+}
+
+#endif
  
 /************************************************************************/
 /*                                Open()                                */
@@ -1967,6 +2263,12 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     GDALPDFObjectPoppler oInfoObjPoppler(&oInfo, FALSE);
     poDS->ParseInfo(&oInfoObjPoppler);
     oInfo.free();
+
+    /* Find layers */
+    poDS->FindLayers();
+
+    /* Turn user specified layers on or off */
+    poDS->TurnLayersOnOff();
   }
 #endif
 

@@ -283,6 +283,8 @@ class GDALPDFObjectPoppler : public GDALPDFObject
         virtual int                 GetRefGen();
 };
 
+GDALPDFArray* GDALPDFCreateArray(Array* array);
+
 #endif // HAVE_POPPLER
 
 #ifdef HAVE_PODOFO
