@@ -37,7 +37,6 @@ except:
 
 
 import sys
-import glob
 import math
 
 __version__ = '$id$'[5:-1]
@@ -356,11 +355,8 @@ def main( argv=None ):
             sys.exit( 1 )
 
         else:
-            # Expand any possible wildcards from command line arguments
-            f = glob.glob( arg )
-            if len(f) == 0:
-                print('File not found: "%s"' % (str( arg )))
-            names += f # append 1 or more files
+            names.append(arg)
+
         i = i + 1
 
     if len(names) == 0:
