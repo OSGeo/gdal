@@ -203,16 +203,3 @@ OGRVFKLayer *OGRVFKDataSource::CreateLayerFromBlock(const IVFKDataBlock *poDataB
     
     return poLayer;
 }
-
-/*!
-  \brief Get info
-
-  \param key key
-
-  \return value (string)
-  \return NULL if not found
-*/
-const char *OGRVFKDataSource::GetInfo(const char *key)
-{
-    return poReader->GetInfo(key);
-}
