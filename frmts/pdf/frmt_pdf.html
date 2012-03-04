@@ -46,15 +46,46 @@ rasterization with the Its default value is 150. Starting with GDAL 2.0, the dri
 will make some effort to guess the DPI value either from a specific metadata item contained in some PDF files, or
 from the raster images inside the PDF (in simple cases).</li>
 <p>
-Starting with GDAL &gt;= 2.0.0 and when GDAL compiled against libpoppler, the following options are also
+Starting with GDAL &gt;= 2.0.0 and when GDAL is compiled against libpoppler, the following options are also
 available :
 
-<li><i>GDAL_PDF_RENDERING_OPTIONS</i> : a string with a combination of VECTOR, BITMAP and TEXT separated
+<li><i>GDAL_PDF_RENDERING_OPTIONS</i> : a combination of VECTOR, BITMAP and TEXT separated
 by comma, to select whether vector, bitmap or text features should be rendered. If the option is not
 specified, all features are rendered.</li>
 <li><i>GDAL_PDF_BANDS</i> = 3 or 4 : whether the PDF should be rendered as a RGB (3) or RGBA (4) image.
 Defaults to 3.</li>
+<li><i>GDAL_PDF_LAYERS</i> = list of layers (comma separated) to turn ON (or "ALL" to turn all layers ON).
+The layer names can be obtained by querying the LAYERS metadata domain. When this option is specified,
+layers not explicitely listed will be turned off.</li>
+<li><i>GDAL_PDF_LAYERS_OFF</i> = list of layers (comma separated) to turn OFF. The layer names can be obtained by
+querying the LAYERS metadata domain. When this option is specified, layers not explicitely listed will be turned
+off.</li>
 </ul>
+
+<h2>LAYERS Metadata domain</h2>
+
+Starting with GDAL &gt;= 2.0.0 and when GDAL is compiled against libpoppler, the LAYERS metadata domain can be queried
+to retrieve layer names that can be turned ON or OFF. This is usefull to know which values to specify for the
+<i>GDAL_PDF_LAYERS</i> or i>GDAL_PDF_LAYERS_OFF</i> configuration options.<p>
+
+For example :
+<pre>
+$ gdalinfo ../autotest/gdrivers/data/adobe_style_geospatial.pdf -mdd LAYERS
+
+Driver: PDF/Geospatial PDF
+Files: ../autotest/gdrivers/data/adobe_style_geospatial.pdf
+[...]
+Metadata (LAYERS):
+  LAYER_00_NAME=New_Data_Frame
+  LAYER_01_NAME=New_Data_Frame.Graticule
+  LAYER_02_NAME=Layers
+  LAYER_03_NAME=Layers.Measured_Grid
+  LAYER_04_NAME=Layers.Graticule
+[...]
+
+$ gdal_translate ../autotest/gdrivers/data/adobe_style_geospatial.pdf out.tif --config GDAL_PDF_LAYERS_OFF "New_Data_Frame"
+
+</pre>
 
 <h2>Restrictions</h2>
 
@@ -66,8 +97,6 @@ in the driver. Unrecognized datums will be considered as being based on the WGS8
 <p>
 For documents that contain several neatlines in a page (insets), the georeferencing will be
 extracted from the inset that has the largest area (in term of screen points).
-<p>
-There is currently no support for selective layer rendering.
 <p>
 
 <h2>Creation Issues (GDAL &gt;= 2.0.0)</h2>
