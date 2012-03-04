@@ -1118,6 +1118,68 @@ def pdf_check_identity_ogc_bp():
 
     return 'success'
 
+###############################################################################
+# Check layers support
+
+def pdf_layers():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    if gdaltest.pdf_drv.GetMetadataItem('HAVE_POPPLER') == None:
+        return 'skip'
+
+    pdf_lib = gdal.GetConfigOption("GDAL_PDF_LIB")
+    if pdf_lib is not None and pdf_lib == 'PODOFO':
+        return 'skip'
+
+    ds = gdal.Open('data/adobe_style_geospatial.pdf')
+    layers = ds.GetMetadata_List('LAYERS')
+    cs1 = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    #if layers != ['LAYER_00_INIT_STATE=ON', 'LAYER_00_NAME=New_Data_Frame', 'LAYER_01_INIT_STATE=ON', 'LAYER_01_NAME=New_Data_Frame.Graticule', 'LAYER_02_INIT_STATE=ON', 'LAYER_02_NAME=Layers', 'LAYER_03_INIT_STATE=ON', 'LAYER_03_NAME=Layers.Measured_Grid', 'LAYER_04_INIT_STATE=ON', 'LAYER_04_NAME=Layers.Graticule']:
+    if layers != ['LAYER_00_NAME=New_Data_Frame', 'LAYER_01_NAME=New_Data_Frame.Graticule', 'LAYER_02_NAME=Layers', 'LAYER_03_NAME=Layers.Measured_Grid', 'LAYER_04_NAME=Layers.Graticule']:
+        gdaltest.post_reason('did not get expected layers')
+        print(layers)
+        return 'fail'
+
+    # Turn a layer off
+    gdal.SetConfigOption('GDAL_PDF_LAYERS_OFF', 'New_Data_Frame')
+    ds = gdal.Open('data/adobe_style_geospatial.pdf')
+    cs2 = ds.GetRasterBand(1).Checksum()
+    ds = None
+    gdal.SetConfigOption('GDAL_PDF_LAYERS_OFF', None)
+
+    if cs2 == cs1:
+        gdaltest.post_reason('did not get expected checksum')
+        return 'fail'
+
+    # Turn the other layer on
+    gdal.SetConfigOption('GDAL_PDF_LAYERS', 'Layers')
+    ds = gdal.Open('data/adobe_style_geospatial.pdf')
+    cs3 = ds.GetRasterBand(1).Checksum()
+    ds = None
+    gdal.SetConfigOption('GDAL_PDF_LAYERS', None)
+
+    # So the end result must be identical
+    if cs3 != cs2:
+        gdaltest.post_reason('did not get expected checksum')
+        return 'fail'
+
+    # Turn another sublayer on
+    gdal.SetConfigOption('GDAL_PDF_LAYERS', 'Layers.Measured_Grid')
+    ds = gdal.Open('data/adobe_style_geospatial.pdf')
+    cs4 = ds.GetRasterBand(1).Checksum()
+    ds = None
+    gdal.SetConfigOption('GDAL_PDF_LAYERS', None)
+
+    if cs4 == cs1 or cs4 == cs2:
+        gdaltest.post_reason('did not get expected checksum')
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     pdf_init,
     pdf_online_1,
@@ -1154,6 +1216,7 @@ gdaltest_list = [
     pdf_set_neatline_ogc_bp,
     pdf_check_identity_iso32000,
     pdf_check_identity_ogc_bp,
+    pdf_layers,
 
     pdf_switch_underlying_lib,
 
