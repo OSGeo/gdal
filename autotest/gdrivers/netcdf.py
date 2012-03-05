@@ -1018,9 +1018,13 @@ def netcdf_28():
     if not 'int t(time, levelist, lat, lon) ;' in ret:
         err = err + 'variable (t) has wrong dimensions or is missing\n'
     if not 'levelist = 2 ;' in ret:
-        err = err + 'levelist dimension is missing\n'
+        err = err + 'levelist dimension is missing or incorrect\n'
+    if not 'int levelist(levelist) ;' in ret:
+        err = err + 'levelist variable is missing or incorrect\n'
     if not 'time = 4 ;' in ret:
-        err = err + 'time dimension is missing\n'
+        err = err + 'time dimension is missing or incorrect\n'
+    if not 'double time(time) ;' in ret:
+        err = err + 'time variable is missing or incorrect\n'
     # uncomment this to get full header in output
     #if err != '':
     #    err = err + ret
@@ -1111,7 +1115,7 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     #make sure we cleanup
-    gdaltest.clean_tmp()
+    #gdaltest.clean_tmp()
 
     gdaltest.summarize()
 
