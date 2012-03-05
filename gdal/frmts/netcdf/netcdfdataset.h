@@ -120,8 +120,9 @@ __FILE__, __FUNCTION__, __LINE__ ); }
 #endif
 #endif
 
+
 /* -------------------------------------------------------------------- */
-/*       CF or NUG (NetCDF User's Guide) defs                           */
+/*       CF-1 or NUG (NetCDF User's Guide) defs                         */
 /* -------------------------------------------------------------------- */
 
 /* CF: http://cf-pcmdi.llnl.gov/documents/cf-conventions/1.5/cf-conventions.html */
@@ -136,12 +137,15 @@ __FILE__, __FUNCTION__, __LINE__ ); }
 #define CF_UNITS_D           SRS_UA_DEGREE
 #define CF_PROJ_X_COORD      "projection_x_coordinate"
 #define CF_PROJ_Y_COORD      "projection_y_coordinate"
+#define CF_PROJ_X_COORD_LONG_NAME "x coordinate of projection"
+#define CF_PROJ_Y_COORD_LONG_NAME "y coordinate of projection"
 #define CF_GRD_MAPPING_NAME  "grid_mapping_name"
 #define CF_GRD_MAPPING       "grid_mapping"
 #define CF_COORDINATES       "coordinates"
 /* #define CF_AXIS            "axis" */
 /* #define CF_BOUNDS          "bounds" */
 /* #define CF_ORIG_UNITS      "original_units" */
+
 
 /* -------------------------------------------------------------------- */
 /*      CF-1 convention standard variables related to                   */
@@ -189,6 +193,59 @@ __FILE__, __FUNCTION__, __LINE__ ); }
 #define CF_PP_SEMI_MAJOR_AXIS        "semi_major_axis"
 #define CF_PP_SEMI_MINOR_AXIS        "semi_minor_axis"
 #define CF_PP_VERT_PERSP             "vertical_perspective" /*not used yet */
+
+
+/* -------------------------------------------------------------------- */
+/*         CF-1 Coordinate Type Naming (Chapter 4.  Coordinate Types )  */
+/* -------------------------------------------------------------------- */
+static const char* papszCFLongitudeVarNames[] = { "lon", "longitude", NULL };
+static const char* papszCFLongitudeAttribNames[] = { "units", CF_STD_NAME, "axis", NULL };
+static const char* papszCFLongitudeAttribValues[] = { "degrees_east", "longitude", "X", NULL };
+static const char* papszCFLatitudeVarNames[] = { "lat", "latitude", NULL };
+static const char* papszCFLatitudeAttribNames[] = { "units", CF_STD_NAME, "axis", NULL };
+static const char* papszCFLatitudeAttribValues[] = { "degrees_north", "latitude", "Y", NULL };
+ 
+static const char* papszCFProjectionXVarNames[] = { "x", "xc", NULL };
+static const char* papszCFProjectionXAttribNames[] = { CF_STD_NAME, NULL };
+static const char* papszCFProjectionXAttribValues[] = { CF_PROJ_X_COORD, NULL };
+static const char* papszCFProjectionYVarNames[] = { "y", "yc", NULL };
+static const char* papszCFProjectionYAttribNames[] = { CF_STD_NAME, NULL };
+static const char* papszCFProjectionYAttribValues[] = { CF_PROJ_Y_COORD, NULL };
+
+static const char* papszCFVerticalAttribNames[] = { "axis", "positive", "positive", NULL };
+static const char* papszCFVerticalAttribValues[] = { "Z", "up", "down", NULL };
+static const char* papszCFVerticalUnitsValues[] = { 
+    /* units of pressure */
+    "bar", "bars", "millibar", "millibars", "decibar", "decibars", 
+    "atmosphere", "atmospheres", "atm", "pascal", "pascals", "Pa", "hPa",
+    /* units of length */
+    "meter", "meters", "m", "kilometer", "kilometers", "km", 
+    /* dimensionless vertical coordinates */
+    "level", "layer", "sigma_level",
+    NULL };
+/* dimensionless vertical coordinates */
+static const char* papszCFVerticalStandardNameValues[] = { 
+    "atmosphere_ln_pressure_coordinate", "atmosphere_sigma_coordinate",
+    "atmosphere_hybrid_sigma_pressure_coordinate", 
+    "atmosphere_hybrid_height_coordinate",
+    "atmosphere_sleve_coordinate", "ocean_sigma_coordinate",
+    "ocean_s_coordinate", "ocean_sigma_z_coordinate",
+    "ocean_double_sigma_coordinate", "atmosphere_ln_pressure_coordinate",
+    "atmosphere_sigma_coordinate", 
+    "atmosphere_hybrid_sigma_pressure_coordinate",
+    "atmosphere_hybrid_height_coordinate",
+    "atmosphere_sleve_coordinate", "ocean_sigma_coordinate",
+    "ocean_s_coordinate", "ocean_sigma_z_coordinate",
+    "ocean_double_sigma_coordinate", NULL };
+
+static const char* papszCFTimeAttribNames[] = { "axis", NULL };
+static const char* papszCFTimeAttribValues[] = { "T", NULL };
+static const char* papszCFTimeUnitsValues[] = { 
+    "days since", "day since", "d since", 
+    "hours since", "hour since", "h since", "hr since", 
+    "minutes since", "minute since", "min since", 
+    "seconds since", "second since", "sec since", "s since", 
+    NULL };
 
 
 /* -------------------------------------------------------------------- */

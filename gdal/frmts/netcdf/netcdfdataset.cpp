@@ -62,14 +62,12 @@ CPLErr NCDFPutAttr( int nCdfId, int nVarId,
 
 double NCDFGetDefaultNoDataValue( int nVarType );
 
-int NCDFDoesVarHaveAttribEqual( int nCdfId, 
-                                const char ** papszAttribNames, 
-                                const char ** papszAttribValues,
-                                int nVarId=-1,
-                                const char * pszVarName=NULL );
-
 int NCDFIsVarLongitude(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
 int NCDFIsVarLatitude(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
+int NCDFIsVarProjectionX( int nCdfId, int nVarId=-1, const char * pszVarName=NULL );
+int NCDFIsVarProjectionY( int nCdfId, int nVarId=-1, const char * pszVarName=NULL );
+int NCDFIsVarVerticalCoord(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
+int NCDFIsVarTimeCoord(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
 
 
 /************************************************************************/
@@ -4145,7 +4143,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     int          nDim = 2;
     int          status;
     int          nDimID;
-    char         attname[NC_MAX_NAME];
+    char         szConventions[NC_MAX_NAME];
     int          ndims, nvars, ngatts, unlimdimid;
     int          nCount=0;
     int          nVarID=-1;
@@ -4332,8 +4330,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     CPLDebug( "GDAL_netCDF", "dim_count = %d", dim_count );
 
+    szConventions[0] = '\0';
     if( (status = nc_get_att_text( cdfid, NC_GLOBAL, "Conventions",
-                                   attname )) != NC_NOERR ) {
+                                   szConventions )) != NC_NOERR ) {
         CPLError( CE_Warning, CPLE_AppDefined, 
                   "No UNIDATA NC_GLOBAL:Conventions attribute");
         /* note that 'Conventions' is always capital 'C' in CF spec*/
@@ -4472,6 +4471,66 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      possible, be placed to the left of the spatiotemporal           */
 /*      dimensions.                                                     */
 /* -------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------- */
+/*      Verify that dimensions are in the {T,Z,Y,X} or {T,Z,Y,X} order  */
+/*      Ideally we should detect for other ordering and act accordingly */
+/*      Only done if file has Conventions=CF-* and only prints warning  */
+/*      To disable set GDAL_NETCDF_VERIFY_DIMS=NO and to use only       */
+/*      attributes (not varnames) set GDAL_NETCDF_VERIFY_DIMS=STRICT    */
+/* -------------------------------------------------------------------- */
+    
+    int bCheckDims = FALSE;
+    bCheckDims = 
+        ( CSLTestBoolean( CPLGetConfigOption( "GDAL_NETCDF_VERIFY_DIMS", "YES" ) )
+          != FALSE ) && EQUALN( szConventions, "CF", 2 );
+
+    if ( bCheckDims ) {
+        char szDimName1[NC_MAX_NAME], szDimName2[NC_MAX_NAME], 
+            szDimName3[NC_MAX_NAME], szDimName4[NC_MAX_NAME];
+        szDimName1[0]='\0';
+        szDimName2[0]='\0';
+        szDimName3[0]='\0';
+        szDimName4[0]='\0';
+        nc_inq_dimname( cdfid, paDimIds[nd-1], szDimName1 );
+        nc_inq_dimname( cdfid, paDimIds[nd-2], szDimName2 );
+        if (  NCDFIsVarLongitude( cdfid, -1, szDimName1 )==FALSE && 
+              NCDFIsVarProjectionX( cdfid, -1, szDimName1 )==FALSE ) {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "dimension #%d (%s) is not a Longitude/X dimension.", 
+                      nd-1, szDimName1 );
+        }
+        if ( NCDFIsVarLatitude( cdfid, -1, szDimName2 )==FALSE &&
+             NCDFIsVarProjectionY( cdfid, -1, szDimName2 )==FALSE ) {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "dimension #%d (%s) is not a Latitude/Y dimension.", 
+                      nd-2, szDimName2 );
+        }
+        if ( nd >= 3 ) {
+            nc_inq_dimname( cdfid, paDimIds[nd-3], szDimName3 );
+            if ( nd >= 4 ) {
+                nc_inq_dimname( cdfid, paDimIds[nd-4], szDimName4 );
+                if ( NCDFIsVarVerticalCoord( cdfid, -1, szDimName3 )==FALSE ) {
+                    CPLError( CE_Warning, CPLE_AppDefined, 
+                              "dimension #%d (%s) is not a Time  dimension.", 
+                              nd-3, szDimName3 );
+                }
+                if ( NCDFIsVarTimeCoord( cdfid, -1, szDimName4 )==FALSE ) {
+                    CPLError( CE_Warning, CPLE_AppDefined, 
+                              "dimension #%d (%s) is not a Time  dimension.", 
+                              nd-4, szDimName4 );
+                }
+            }
+            else {
+                if ( NCDFIsVarVerticalCoord( cdfid, -1, szDimName3 )==FALSE && 
+                     NCDFIsVarTimeCoord( cdfid, -1, szDimName3 )==FALSE ) {
+                    CPLError( CE_Warning, CPLE_AppDefined, 
+                              "dimension #%d (%s) is not a Time or Vertical dimension.", 
+                              nd-3, szDimName3 );
+                }
+            }
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Get X dimensions information                                    */
@@ -6011,7 +6070,8 @@ int NCDFDoesVarContainAttribVal( int nCdfId,
                                  const char ** papszAttribNames, 
                                  const char ** papszAttribValues,
                                  int nVarId,
-                                 const char * pszVarName )
+                                 const char * pszVarName,
+                                 int bStrict=TRUE )
 {
     char *pszTemp = NULL;
     int bFound = FALSE;
@@ -6019,40 +6079,187 @@ int NCDFDoesVarContainAttribVal( int nCdfId,
     if ( (nVarId == -1) && (pszVarName != NULL) )
         nc_inq_varid( nCdfId, pszVarName, &nVarId );
     
-    if ( nVarId == -1 ) return FALSE;
+    if ( nVarId == -1 ) return -1;
 
     for( int i=0; !bFound && i<CSLCount((char**)papszAttribNames); i++ ) {
         if ( NCDFGetAttr( nCdfId, nVarId, papszAttribNames[i], &pszTemp ) 
              == CE_None ) { 
-            if ( EQUAL( pszTemp, papszAttribValues[i] ) )
-                bFound=TRUE;
+            if ( bStrict ) {
+                if ( EQUAL( pszTemp, papszAttribValues[i] ) )
+                    bFound=TRUE;
+            }
+            else {
+                if ( EQUALN( pszTemp, papszAttribValues[i], strlen(papszAttribValues[i]) ) )
+                    bFound=TRUE;
+            }
             CPLFree( pszTemp );
         }
     }
     return bFound;
 }
 
+int NCDFDoesVarContainAttribVal2( int nCdfId,
+                                  const char * papszAttribName, 
+                                  const char ** papszAttribValues,
+                                  int nVarId,
+                                  const char * pszVarName,
+                                  int bStrict=TRUE )
+{
+    char *pszTemp = NULL;
+    int bFound = FALSE;
 
-/* test that a variable is longitude/latitude, following CF 4.1 and 4.2 */
+    if ( (nVarId == -1) && (pszVarName != NULL) )
+        nc_inq_varid( nCdfId, pszVarName, &nVarId );
+    
+    if ( nVarId == -1 ) return -1;
+
+    if ( NCDFGetAttr( nCdfId, nVarId, papszAttribName, &pszTemp ) 
+         != CE_None ) return FALSE;
+
+    for( int i=0; !bFound && i<CSLCount((char**)papszAttribValues); i++ ) {
+        if ( bStrict ) {
+            if ( EQUAL( pszTemp, papszAttribValues[i] ) )
+                bFound=TRUE;
+        }
+        else {
+            if ( EQUALN( pszTemp, papszAttribValues[i], strlen(papszAttribValues[i]) ) )
+                bFound=TRUE;
+        }
+    }
+
+    CPLFree( pszTemp );
+
+    return bFound;
+}
+
+int NCDFEqual( const char * papszName, const char ** papszValues )
+{
+    int bFound = FALSE;
+
+    if ( papszName == NULL || EQUAL(papszName,"") )
+        return FALSE;
+
+    for( int i=0; i<CSLCount((char**)papszValues); i++ ) {
+        if( EQUAL( papszName, papszValues[i] ) )
+            bFound = TRUE;
+        break;
+    }
+     
+    return bFound;
+}
+
+/* test that a variable is longitude/latitude coordinate, following CF 4.1 and 4.2 */
 int NCDFIsVarLongitude( int nCdfId, int nVarId,
                         const char * pszVarName )
 {
-    const char* papszAttribNames[] = { "units", "standard_name", "axis", NULL };
-    const char* papszAttribXValues[] = { "degrees_east", "longitude", "X", NULL };
-
-    return  NCDFDoesVarContainAttribVal( nCdfId,
-                                         papszAttribNames, papszAttribXValues,
-                                         nVarId, pszVarName );
+    /* check for matching attributes */
+    int bVal = NCDFDoesVarContainAttribVal( nCdfId,
+                                            papszCFLongitudeAttribNames, 
+                                            papszCFLongitudeAttribValues,
+                                            nVarId, pszVarName );
+    /* if not found using attributes then check using var name */
+    /* unless GDAL_NETCDF_VERIFY_DIMS=STRICT */
+    if ( bVal == -1 ) {
+        if ( ! EQUAL( CPLGetConfigOption( "GDAL_NETCDF_VERIFY_DIMS", "YES" ), 
+                      "STRICT" ) )
+            bVal = NCDFEqual(pszVarName, papszCFLongitudeVarNames );
+        else
+            bVal = FALSE;
+    }
+    return bVal;
 }
-
+ 
 int NCDFIsVarLatitude( int nCdfId, int nVarId, const char * pszVarName )
 {
-    const char* papszAttribNames[] = { "units", "standard_name", "axis", NULL };
-    const char* papszAttribXValues[] = { "degrees_north", "latitude", "Y", NULL };
-    
-    return  NCDFDoesVarContainAttribVal( nCdfId,
-                                         papszAttribNames, papszAttribXValues,
-                                         nVarId, pszVarName );
+    int bVal = NCDFDoesVarContainAttribVal( nCdfId,
+                                            papszCFLatitudeAttribNames, 
+                                            papszCFLatitudeAttribValues,
+                                            nVarId, pszVarName );
+    if ( bVal == -1 ) {
+        if ( ! EQUAL( CPLGetConfigOption( "GDAL_NETCDF_VERIFY_DIMS", "YES" ), 
+                      "STRICT" ) )
+            bVal = NCDFEqual(pszVarName, papszCFLatitudeVarNames );
+        else
+            bVal = FALSE;
+    }
+    return bVal;
 }
 
+int NCDFIsVarProjectionX( int nCdfId, int nVarId, const char * pszVarName )
+{
+    int bVal = NCDFDoesVarContainAttribVal( nCdfId,
+                                            papszCFProjectionXAttribNames, 
+                                            papszCFProjectionXAttribValues,
+                                            nVarId, pszVarName );
+    if ( bVal == -1 ) {
+        if ( ! EQUAL( CPLGetConfigOption( "GDAL_NETCDF_VERIFY_DIMS", "YES" ), 
+                      "STRICT" ) )
+            bVal = NCDFEqual(pszVarName, papszCFProjectionXVarNames );
+        else
+            bVal = FALSE;
 
+    }
+    return bVal;
+}
+
+int NCDFIsVarProjectionY( int nCdfId, int nVarId, const char * pszVarName )
+{
+    int bVal = NCDFDoesVarContainAttribVal( nCdfId,
+                                            papszCFProjectionYAttribNames, 
+                                            papszCFProjectionYAttribValues,
+                                            nVarId, pszVarName );
+    if ( bVal == -1 ) {
+        if ( ! EQUAL( CPLGetConfigOption( "GDAL_NETCDF_VERIFY_DIMS", "YES" ), 
+                      "STRICT" ) )
+            bVal = NCDFEqual(pszVarName, papszCFProjectionYVarNames );
+        else
+            bVal = FALSE;
+    }
+    return bVal;
+}
+
+/* test that a variable is a vertical coordinate, following CF 4.3 */
+int NCDFIsVarVerticalCoord( int nCdfId, int nVarId,
+                            const char * pszVarName )
+{
+    /* check for matching attributes */ 
+    if ( NCDFDoesVarContainAttribVal( nCdfId,
+                                      papszCFVerticalAttribNames,
+                                      papszCFVerticalAttribValues,
+                                      nVarId, pszVarName ) == TRUE )
+        return TRUE;
+    /* check for matching units */ 
+    else if ( NCDFDoesVarContainAttribVal2( nCdfId,
+                                            CF_UNITS, 
+                                            papszCFVerticalUnitsValues,
+                                            nVarId, pszVarName ) == TRUE )
+        return TRUE;
+    /* check for matching standard name */ 
+    else if ( NCDFDoesVarContainAttribVal2( nCdfId,
+                                            CF_STD_NAME, 
+                                            papszCFVerticalStandardNameValues,
+                                            nVarId, pszVarName ) == TRUE )
+        return TRUE;
+    else 
+        return FALSE;
+}
+
+/* test that a variable is a time coordinate, following CF 4.4 */
+int NCDFIsVarTimeCoord( int nCdfId, int nVarId,
+                        const char * pszVarName )
+{
+    /* check for matching attributes */ 
+    if ( NCDFDoesVarContainAttribVal( nCdfId,
+                                      papszCFTimeAttribNames, 
+                                      papszCFTimeAttribValues,
+                                      nVarId, pszVarName ) == TRUE )
+        return TRUE;
+    /* check for matching units */ 
+    else if ( NCDFDoesVarContainAttribVal2( nCdfId,
+                                            CF_UNITS, 
+                                            papszCFTimeUnitsValues,
+                                            nVarId, pszVarName, FALSE ) == TRUE )
+        return TRUE;
+    else
+        return FALSE;
+}
