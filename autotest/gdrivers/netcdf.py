@@ -878,12 +878,12 @@ def netcdf_24():
     if gdaltest.netcdf_drv is None:
         return 'skip'
 
-    vals_global = {'NC_GLOBAL#test' : 'testval', 'NC_GLOBAL#valid_range_i': '0, 255',\
+    vals_global = {'NC_GLOBAL#test' : 'testval', 'NC_GLOBAL#valid_range_i': '0,255',\
                        'NC_GLOBAL#valid_min' : '10.1' }
-    vals_band = { '_Unsigned' : 'true', 'valid_min' : '10.1', 'valid_range_b' : '1, 10', \
-                      'valid_range_d' : '0.1111112222222, 255.555555555556', \
-                      'valid_range_f' : '0.1111111, 255.5556', \
-                      'valid_range_s' : '0, 255' }
+    vals_band = { '_Unsigned' : 'true', 'valid_min' : '10.1', 'valid_range_b' : '1,10', \
+                      'valid_range_d' : '0.1111112222222,255.555555555556', \
+                      'valid_range_f' : '0.1111111,255.5556', \
+                      'valid_range_s' : '0,255' }
 
     return netcdf_check_vars( 'data/nc_vars.nc', vals_global, vals_band )
 
@@ -898,12 +898,12 @@ def netcdf_25():
     if result != 'success':
         return result
 
-    vals_global = {'NC_GLOBAL#test' : 'testval', 'NC_GLOBAL#valid_range_i': '0, 255',\
+    vals_global = {'NC_GLOBAL#test' : 'testval', 'NC_GLOBAL#valid_range_i': '0,255',\
                        'NC_GLOBAL#valid_min' : '10.1' }
-    vals_band = { '_Unsigned' : 'true', 'valid_min' : '10.1', 'valid_range_b' : '1, 10', \
-                      'valid_range_d' : '0.1111112222222, 255.555555555556', \
-                      'valid_range_f' : '0.1111111, 255.5556', \
-                      'valid_range_s' : '0, 255' }
+    vals_band = { '_Unsigned' : 'true', 'valid_min' : '10.1', 'valid_range_b' : '1,10', \
+                      'valid_range_d' : '0.1111112222222,255.555555555556', \
+                      'valid_range_f' : '0.1111111,255.5556', \
+                      'valid_range_s' : '0,255' }
 
     return netcdf_check_vars( 'tmp/netcdf_25.nc', vals_global, vals_band )
  
@@ -967,7 +967,71 @@ def netcdf_27():
         return result
     
     return 'success'
- 
+
+###############################################################################
+# check support for writing multi-dimensional files
+def netcdf_28():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ifile = 'data/netcdf-4d.nc'
+    ofile = 'tmp/netcdf_28.nc'
+
+    # copy file
+    result = netcdf_test_copy( ifile, None, None, ofile )
+    if result != 'success':
+        gdaltest.post_reason( 'copy failed' )
+        return 'fail'
+
+    # test result file has 8 bands and 0 subdasets (instead of 0 bands and 8 subdatasets)
+    ds = gdal.Open( ofile )
+    if ds is None:
+        gdaltest.post_reason( 'open of copy failed' )
+        return 'fail'
+    md = ds.GetMetadata( 'SUBDATASETS' )
+    subds_count = 0
+    if not md is None:
+        subds_count = len(md) / 2
+    if ds.RasterCount != 8 or subds_count != 0:
+        gdaltest.post_reason( 'copy has %d bands (expected 8) and has %d subdatasets'\
+                                  ' (expected 0)' % (ds.RasterCount, subds_count ) )
+        return 'fail'
+    ds is None
+
+    # get file header with ncdump (if available)
+    try:
+        (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
+    except:
+        gdaltest.post_reason('NOTICE: ncdump not found')
+        return 'skip'
+    if err == None or not 'netcdf library version' in err:
+        gdaltest.post_reason('NOTICE: ncdump not found')
+        return 'skip'
+    (ret, err) = gdaltest.runexternal_out_and_err( 'ncdump -h '+ ofile )
+    if ret == '' or err != '':
+        gdaltest.post_reason( 'ncdump failed' )
+        return 'fail'
+
+    # simple dimension tests using ncdump output
+    err = ""
+    if not 'int t(time, levelist, lat, lon) ;' in ret:
+        err = err + 'variable (t) has wrong dimensions or is missing\n'
+    if not 'levelist = 2 ;' in ret:
+        err = err + 'levelist dimension is missing\n'
+    if not 'time = 4 ;' in ret:
+        err = err + 'time dimension is missing\n'
+    # uncomment this to get full header in output
+    #if err != '':
+    #    err = err + ret
+    if err != '':
+        gdaltest.post_reason( err )
+        return 'fail'
+    
+        
+    return 'success'
+    
+
 ###############################################################################
 
 ###############################################################################
@@ -1001,6 +1065,7 @@ gdaltest_list = [
     netcdf_25,
     netcdf_26,
     netcdf_27,
+    netcdf_28,
  ]
 
 ###############################################################################
