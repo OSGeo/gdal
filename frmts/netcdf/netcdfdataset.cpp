@@ -51,23 +51,27 @@ void NCDFWriteProjAttribs(const OGR_SRSNode *poPROJCS,
 
 CPLErr NCDFSafeStrcat(char** ppszDest, char* pszSrc, size_t* nDestSize);
 
+/* var / attribute helper functions */
 CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName, 
                     double *pdfValue );
-
 CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName, 
                     char **pszValue );
-
 CPLErr NCDFPutAttr( int nCdfId, int nVarId, 
                     const char *pszAttrName, const char *pszValue );
+CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue );//replace this where used
+CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue );
 
 double NCDFGetDefaultNoDataValue( int nVarType );
 
+/* dimension check functions */
 int NCDFIsVarLongitude(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
 int NCDFIsVarLatitude(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
 int NCDFIsVarProjectionX( int nCdfId, int nVarId=-1, const char * pszVarName=NULL );
 int NCDFIsVarProjectionY( int nCdfId, int nVarId=-1, const char * pszVarName=NULL );
 int NCDFIsVarVerticalCoord(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
 int NCDFIsVarTimeCoord(int nCdfId, int nVarId=-1, const char * nVarName=NULL );
+
+char **NCDFTokenizeArray( const char *pszValue );//replace this where used
 
 
 /************************************************************************/
@@ -302,9 +306,6 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             }
         }
     }
-
-    CPLDebug( "GDAL_netCDF", "valid_range={%f,%f}",
-              adfValidRange[0], adfValidRange[1] );
 
 /* -------------------------------------------------------------------- */
 /*  Special For Byte Bands: check for signed/unsigned byte              */
@@ -1537,15 +1538,7 @@ char** netCDFDataset::FetchStandardParallels( const char *pszGridMappingValue )
     strcat( szTemp, CF_PP_STD_PARALLEL );
     pszValue = CSLFetchNameValue( papszMetadata, szTemp );
     if( pszValue != NULL ) {
-        // papszValues = CSLTokenizeString2( pszValue, ",", CSLT_STRIPLEADSPACES |
-        //                                   CSLT_STRIPENDSPACES );
-        /* format has changed to { std1, std2 }, must remove { and } */
-        strcpy( szTemp,pszValue );
-        int last_char = strlen(pszValue) - 1;
-        if ( szTemp[0] == '{' ) szTemp[0] = ' ';
-        if ( szTemp[last_char] == '}' ) szTemp[last_char] = ' ';
-        papszValues = CSLTokenizeString2( szTemp, ",", CSLT_STRIPLEADSPACES |
-                                          CSLT_STRIPENDSPACES );
+        papszValues = NCDFTokenizeArray( pszValue );
     }
     //try gdal tags
     else
@@ -2885,111 +2878,46 @@ int netCDFDataset::ProcessCFGeolocation( int nVarId )
     return bAddGeoloc;
 }
 
-int netCDFDataset::Set1DGeolocation( int nVarId, const char *szDimName )
+CPLErr netCDFDataset::Set1DGeolocation( int nVarId, const char *szDimName )
 {
-    nc_type nVarType = NC_NAT;
-    size_t  nVarLen = 0;
-    size_t nVarStart = 0;
-    size_t  nVarValueSize;
-    char szTemp[ NCDF_MAX_STR_LEN ];
-    char szFormat[10];
-    char *pszVarValues = NULL;
-    double *pdfVarValues = NULL;
-    int nDimId = -1;
+    char    szTemp[ NCDF_MAX_STR_LEN ];
+    char    *pszVarValues = NULL;
+    CPLErr eErr;
+
+    /* get values */
+    eErr = NCDFGet1DVar( cdfid, nVarId, &pszVarValues );
+    if ( eErr != CE_None )
+        return eErr;
     
-    /* get var information */
-    status = nc_inq_varndims( cdfid, nVarId, &nDimId );
-    if ( nDimId != 1 ) /* only 1D allowed */
-        return FALSE;
-    status = nc_inq_vardimid( cdfid, nVarId, &nDimId );
-    if ( status != NC_NOERR )
-        return FALSE;
-    status = nc_inq_dimlen( cdfid, nDimId, &nVarLen );
-    if ( nVarLen <= 0 )
-        return FALSE;
-    status = nc_inq_vartype( cdfid, nVarId, &nVarType );
-    if ( nVarType == NC_NAT || nVarType == NC_CHAR )
-        return FALSE;
-
-    /* read values */
-    pdfVarValues = (double *) CPLCalloc( nVarLen, sizeof(double) );
-    status = nc_get_vara_double( cdfid, nVarId, &nVarStart, &nVarLen, pdfVarValues );
-    if ( status != NC_NOERR ) {
-        if ( pdfVarValues ) CPLFree( pdfVarValues );
-        return FALSE;
-    }
-
-    /* Allocate guaranteed minimum size */
-    nVarValueSize = nVarLen + 1;
-    pszVarValues = (char *) CPLCalloc( nVarValueSize, sizeof( char ));
-    *pszVarValues = '\0';
-    
-    /* create output string */
-    if ( nVarLen > 1  && nVarType != NC_CHAR )    
-        NCDFSafeStrcat(&pszVarValues, (char *)"{ ", &nVarValueSize);
-    if ( nVarType == NC_FLOAT )
-        strcpy( szFormat, "%.8g, " );
-    else
-        strcpy( szFormat, "%.16g, " );
-    for ( size_t i=0; i<nVarLen-1; i++ ) {
-        sprintf( szTemp, szFormat, pdfVarValues[i] );
-        NCDFSafeStrcat(&pszVarValues, szTemp, &nVarValueSize);
-    }
-    if ( nVarType == NC_FLOAT )
-        strcpy( szFormat, "%.8g" );
-    else
-        strcpy( szFormat, "%.16g" );
-    sprintf( szTemp, szFormat, pdfVarValues[nVarLen-1] );
-    NCDFSafeStrcat(&pszVarValues, szTemp, &nVarValueSize);
-
-    if ( nVarLen > 1  && nVarType != NC_CHAR )    
-        NCDFSafeStrcat(&pszVarValues, (char *)" }", &nVarValueSize);
-
     /* write metadata */
     sprintf( szTemp, "%s_VALUES", szDimName );
     SetMetadataItem( szTemp, pszVarValues, "GEOLOCATION" );
 
-    CPLFree( pdfVarValues );
     CPLFree( pszVarValues );
     
-    return TRUE;
+    return CE_None;
 }
 
 
 double *netCDFDataset::Get1DGeolocation( const char *szDimName, int &nVarLen )
 {
-    const char *pszValue = NULL;
-    char    **papszValues = NULL;
-    char    *pszTemp = NULL;
-    char    szTemp[ NCDF_MAX_STR_LEN ];
+    char   **papszValues = NULL;
+    char   *pszTemp = NULL;
     double *pdfVarValues = NULL;
 
     nVarLen = 0;
 
-    pszValue = GetMetadataItem( "Y_VALUES", "GEOLOCATION" );
-    if ( !pszValue || EQUAL( pszValue, "" ) )
-        return NULL;
-
-    /* tokenize to find multiple values */
-    strcpy( szTemp,pszValue );
-    int last_char = strlen(pszValue) - 1;
-    if ( ( szTemp[0] == '{' ) && ( szTemp[last_char] == '}' ) ) {
-        szTemp[0] = ' '; 
-        szTemp[last_char] = ' ';
-    }
-    papszValues = CSLTokenizeString2( szTemp, ",", CSLT_STRIPLEADSPACES |
-                                      CSLT_STRIPENDSPACES );
+    /* get Y_VALUES as tokens */
+    papszValues = NCDFTokenizeArray( GetMetadataItem( "Y_VALUES", "GEOLOCATION" ) );
     if ( papszValues == NULL )
         return NULL;
 
-    nVarLen = CSLCount(papszValues);
-
     /* initialize and fill array */
+    nVarLen = CSLCount(papszValues);
     pdfVarValues = (double *) CPLCalloc( nVarLen, sizeof( double ) );
     for(int i=0, j=0; i < nVarLen; i++) { 
         if ( ! bBottomUp ) j=nVarLen - 1 - i;
         else j=i; /* invert latitude values */
-        // j=i; /* invert latitude values */
         pdfVarValues[j] = strtod( papszValues[i], &pszTemp );
     }
     CSLDestroy( papszValues );
@@ -5789,7 +5717,7 @@ CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     *pszAttrValue = '\0';
 
     if ( nAttrLen > 1  && nAttrType != NC_CHAR )    
-        NCDFSafeStrcat(&pszAttrValue, (char *)"{ ", &nAttrValueSize);
+        NCDFSafeStrcat(&pszAttrValue, (char *)"{", &nAttrValueSize);
 
     switch (nAttrType) {
         case NC_CHAR:
@@ -5804,7 +5732,7 @@ CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
             nc_get_att_schar( nCdfId, nVarId, pszAttrName, pscTemp );
             dfValue = (double)pscTemp[0];
             for(m=0; m < nAttrLen-1; m++) {
-                sprintf( szTemp, "%d, ", pscTemp[m] );
+                sprintf( szTemp, "%d,", pscTemp[m] );
                 NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
             }
             sprintf( szTemp, "%d", pscTemp[m] );
@@ -5817,7 +5745,7 @@ CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
             nc_get_att_short( nCdfId, nVarId, pszAttrName, psTemp );
             dfValue = (double)psTemp[0];
             for(m=0; m < nAttrLen-1; m++) {
-                sprintf( szTemp, "%hd, ", psTemp[m] );
+                sprintf( szTemp, "%hd,", psTemp[m] );
                 NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
             }
             sprintf( szTemp, "%hd", psTemp[m] );
@@ -5830,7 +5758,7 @@ CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
             nc_get_att_int( nCdfId, nVarId, pszAttrName, pnTemp );
             dfValue = (double)pnTemp[0];
             for(m=0; m < nAttrLen-1; m++) {
-                sprintf( szTemp, "%d, ", pnTemp[m] );
+                sprintf( szTemp, "%d,", pnTemp[m] );
                 NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
             }
             sprintf( szTemp, "%d", pnTemp[m] );
@@ -5843,7 +5771,7 @@ CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
             nc_get_att_float( nCdfId, nVarId, pszAttrName, pfTemp );
             dfValue = (double)pfTemp[0];
             for(m=0; m < nAttrLen-1; m++) {
-                sprintf( szTemp, "%.8g, ", pfTemp[m] );
+                sprintf( szTemp, "%.8g,", pfTemp[m] );
                 NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
             }
             sprintf( szTemp, "%.8g", pfTemp[m] );
@@ -5856,7 +5784,7 @@ CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
             nc_get_att_double( nCdfId, nVarId, pszAttrName, pdfTemp );
             dfValue = pdfTemp[0];
             for(m=0; m < nAttrLen-1; m++) {
-                sprintf( szTemp, "%.16g, ", pdfTemp[m] );
+                sprintf( szTemp, "%.16g,", pdfTemp[m] );
                 NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
             }
             sprintf( szTemp, "%.16g", pdfTemp[m] );
@@ -5872,7 +5800,7 @@ CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
     }
 
     if ( nAttrLen > 1  && nAttrType!= NC_CHAR )    
-        NCDFSafeStrcat(&pszAttrValue, (char *)" }", &nAttrValueSize);
+        NCDFSafeStrcat(&pszAttrValue, (char *)"}", &nAttrValueSize);
 
     // CPLDebug( "GDAL_netCDF", "NCDFGetAttr got %s=%s / %f",
     //           pszAttrName,pszAttrValue,dfValue);
@@ -5915,29 +5843,16 @@ CPLErr NCDFPutAttr( int nCdfId, int nVarId,
     char    *pszTemp = NULL;
     char    **papszValues = NULL;
     
-    int     bIsArray = FALSE;
     int     nValue = 0;
     float   fValue = 0.0f;
     double  dfValue = 0.0;
 
-    if ( EQUAL( pszValue, "" ) )
-        return CE_Failure;
-
-    strcpy( szTemp,pszValue );
-
-    /* tokenize to find multiple values */
-    int last_char = strlen(pszValue) - 1;
-    if ( ( szTemp[0] == '{' ) && ( szTemp[last_char] == '}' ) ) {
-        bIsArray = TRUE;
-        szTemp[0] = ' '; 
-        szTemp[last_char] = ' ';
-    }
-    papszValues = CSLTokenizeString2( szTemp, ",", CSLT_STRIPLEADSPACES |
-                                      CSLT_STRIPENDSPACES );
+    /* get the attribute values as tokens */
+    papszValues = NCDFTokenizeArray( pszValue );
     if ( papszValues == NULL ) 
         return CE_Failure;
 
-    nAttrLen = CSLCount(papszValues);
+   nAttrLen = CSLCount(papszValues);
     
     /* first detect type */
     nAttrType = NC_CHAR;
@@ -5972,7 +5887,7 @@ CPLErr NCDFPutAttr( int nCdfId, int nVarId,
     }
 
     /* now write the data */
-    if ( !bIsArray && nAttrType == NC_CHAR ) {
+    if ( nAttrType == NC_CHAR ) {
         status = nc_put_att_text( nCdfId, nVarId, pszAttrName,
                                   strlen( pszValue ), pszValue );
         NCDF_ERR(status);                        
@@ -6024,6 +5939,218 @@ CPLErr NCDFPutAttr( int nCdfId, int nVarId,
 
      return CE_None;
 }
+
+CPLErr NCDFGet1DVar( int nCdfId, int nVarId, char **pszValue )
+{
+    nc_type nVarType = NC_NAT;
+    size_t  nVarLen = 0;
+    int     status = 0;
+    size_t  m;
+    char    szTemp[ NCDF_MAX_STR_LEN ];
+    char    *pszVarValue = NULL;
+    size_t  nVarValueSize;
+    int     nVarDimId=-1;
+    size_t start[1], count[1];
+
+    /* get var information */
+    status = nc_inq_varndims( nCdfId, nVarId, &nVarDimId );
+    if ( status != NC_NOERR || nVarDimId != 1)
+        return CE_Failure;
+    status = nc_inq_vardimid( nCdfId, nVarId, &nVarDimId );
+    if ( status != NC_NOERR )
+        return CE_Failure;
+    status = nc_inq_vartype( nCdfId, nVarId, &nVarType );
+    if ( status != NC_NOERR )
+        return CE_Failure;
+    status = nc_inq_dimlen( nCdfId, nVarDimId, &nVarLen );
+    if ( status != NC_NOERR )
+        return CE_Failure;
+    start[0] = 0;
+    count[0] = nVarLen;
+
+    /* Allocate guaranteed minimum size */
+    nVarValueSize = NCDF_MAX_STR_LEN;
+    pszVarValue = (char *) CPLCalloc( nVarValueSize, sizeof( char ));
+    *pszVarValue = '\0';
+
+    if ( nVarLen > 1 && nVarType != NC_CHAR )    
+        NCDFSafeStrcat(&pszVarValue, (char *)"{", &nVarValueSize);
+
+    switch (nVarType) {
+        case NC_CHAR:
+            nc_get_vara_text( nCdfId, nVarId, start, count, pszVarValue );
+            pszVarValue[nVarLen]='\0';
+            break;
+        /* TODO support NC_UBYTE */
+        case NC_BYTE:
+            signed char *pscTemp;
+            pscTemp = (signed char *) CPLCalloc( nVarLen, sizeof( signed char ) );
+            nc_get_vara_schar( nCdfId, nVarId, start, count, pscTemp );
+            for(m=0; m < nVarLen-1; m++) {
+                sprintf( szTemp, "%d,", pscTemp[m] );
+                NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
+            }
+            sprintf( szTemp, "%d", pscTemp[m] );
+            NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
+            CPLFree(pscTemp);
+            break;
+        case NC_SHORT:
+            short *psTemp;
+            psTemp = (short *) CPLCalloc( nVarLen, sizeof( short ) );
+            nc_get_vara_short( nCdfId, nVarId, start, count, psTemp );
+            for(m=0; m < nVarLen-1; m++) {
+                sprintf( szTemp, "%hd,", psTemp[m] );
+                NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
+            }
+            sprintf( szTemp, "%hd", psTemp[m] );
+            NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
+            CPLFree(psTemp);
+            break;
+        case NC_INT:
+            int *pnTemp;
+            pnTemp = (int *) CPLCalloc( nVarLen, sizeof( int ) );
+            nc_get_vara_int( nCdfId, nVarId, start, count, pnTemp );
+            for(m=0; m < nVarLen-1; m++) {
+                sprintf( szTemp, "%d,", pnTemp[m] );
+                NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
+            }
+            sprintf( szTemp, "%d", pnTemp[m] );
+            NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
+            CPLFree(pnTemp);
+            break;
+        case NC_FLOAT:
+            float *pfTemp;
+            pfTemp = (float *) CPLCalloc( nVarLen, sizeof( float ) );
+            nc_get_vara_float( nCdfId, nVarId, start, count, pfTemp );
+            for(m=0; m < nVarLen-1; m++) {
+                sprintf( szTemp, "%.8g,", pfTemp[m] );
+                NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
+            }
+            sprintf( szTemp, "%.8g", pfTemp[m] );
+            NCDFSafeStrcat(&pszVarValue,szTemp, &nVarValueSize);
+            CPLFree(pfTemp);
+            break;
+        case NC_DOUBLE:
+            double *pdfTemp;
+            pdfTemp = (double *) CPLCalloc(nVarLen, sizeof(double));
+            nc_get_vara_double( nCdfId, nVarId, start, count, pdfTemp );
+            for(m=0; m < nVarLen-1; m++) {
+                sprintf( szTemp, "%.16g,", pdfTemp[m] );
+                NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
+            }
+            sprintf( szTemp, "%.16g", pdfTemp[m] );
+            NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
+            CPLFree(pdfTemp);
+            break;
+        default:
+            CPLDebug( "GDAL_netCDF", "NCDFGetVar1D unsupported type %d",
+                      nVarType );
+            CPLFree( pszVarValue );
+            pszVarValue = NULL;
+            break;
+    }
+
+    if ( nVarLen > 1  && nVarType!= NC_CHAR )    
+        NCDFSafeStrcat(&pszVarValue, (char *)"}", &nVarValueSize);
+
+    /* set return values */
+    *pszValue = pszVarValue;
+
+    return CE_None;
+}
+
+CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
+{
+    nc_type nVarType = NC_CHAR;
+    size_t  nVarLen = 0;
+    int     status = 0;
+    size_t  i;
+    char    *pszTemp = NULL;
+    char    **papszValues = NULL;
+    
+    int     nVarDimId=-1;
+    size_t start[1], count[1];
+
+    if ( EQUAL( pszValue, "" ) )
+        return CE_Failure;
+
+    /* get var information */
+    status = nc_inq_varndims( nCdfId, nVarId, &nVarDimId );
+    if ( status != NC_NOERR || nVarDimId != 1)
+        return CE_Failure;
+    status = nc_inq_vardimid( nCdfId, nVarId, &nVarDimId );
+    if ( status != NC_NOERR )
+        return CE_Failure;
+    status = nc_inq_vartype( nCdfId, nVarId, &nVarType );
+    if ( status != NC_NOERR )
+        return CE_Failure;
+    status = nc_inq_dimlen( nCdfId, nVarDimId, &nVarLen );
+    if ( status != NC_NOERR )
+        return CE_Failure;
+    start[0] = 0;
+    count[0] = nVarLen;
+
+    /* get the values as tokens */
+    papszValues = NCDFTokenizeArray( pszValue );
+    if ( papszValues == NULL ) 
+        return CE_Failure;
+
+    nVarLen = CSLCount(papszValues);
+
+    /* now write the data */
+    if ( nVarType == NC_CHAR ) {
+        status = nc_put_vara_text( nCdfId, nVarId, start, count,
+                                  pszValue );
+        NCDF_ERR(status);                        
+    }
+    else {
+        
+        switch( nVarType ) {
+            /* TODO add other types */
+            case  NC_INT:
+                int *pnTemp;
+                pnTemp = (int *) CPLCalloc( nVarLen, sizeof( int ) );
+                for(i=0; i < nVarLen; i++) {
+                    pnTemp[i] = strtol( papszValues[i], &pszTemp, 10 );
+                }
+                status = nc_put_vara_int( nCdfId, nVarId, start, count, pnTemp );  
+                NCDF_ERR(status);
+                CPLFree(pnTemp);
+            break;
+            case  NC_FLOAT:
+                float *pfTemp;
+                pfTemp = (float *) CPLCalloc( nVarLen, sizeof( float ) );
+                for(i=0; i < nVarLen; i++) {
+                    pfTemp[i] = (float)strtod( papszValues[i], &pszTemp );
+                }
+                status = nc_put_vara_float( nCdfId, nVarId, start, count, 
+                                            pfTemp );  
+                NCDF_ERR(status);
+                CPLFree(pfTemp);
+            break;
+            case  NC_DOUBLE:
+                double *pdfTemp;
+                pdfTemp = (double *) CPLCalloc( nVarLen, sizeof( double ) );
+                for(i=0; i < nVarLen; i++) {
+                    pdfTemp[i] = strtod( papszValues[i], &pszTemp );
+                }
+                status = nc_put_vara_double( nCdfId, nVarId, start, count, 
+                                             pdfTemp );
+                NCDF_ERR(status);
+                CPLFree(pdfTemp);
+            break;
+        default:
+            if ( papszValues ) CSLDestroy( papszValues );
+            return CE_Failure;
+            break;
+        }   
+    }
+
+    if ( papszValues ) CSLDestroy( papszValues );
+
+     return CE_None;
+}
+
 
 /************************************************************************/
 /*                           GetDefaultNoDataValue()                    */
@@ -6263,3 +6390,34 @@ int NCDFIsVarTimeCoord( int nCdfId, int nVarId,
     else
         return FALSE;
 }
+
+/* parse a string, and return as a string list */
+/* if it an array of the form {a,b} then tokenize it */
+/* else return a copy */
+char **NCDFTokenizeArray( const char *pszValue )
+{
+    char **papszValues = NULL;
+    char *pszTemp = NULL;
+    int nLen = 0;
+
+    if ( pszValue==NULL || EQUAL( pszValue, "" ) ) 
+        return NULL;
+
+    nLen = strlen(pszValue);
+
+    if ( ( pszValue[0] == '{' ) && ( pszValue[nLen-1] == '}' ) ) {
+        pszTemp = (char *) CPLCalloc(nLen-2,sizeof(char*));
+        strncpy( pszTemp, pszValue+1, nLen-2);
+        pszTemp[nLen-2] = '\0';
+        papszValues = CSLTokenizeString2( pszTemp, ",", CSLT_ALLOWEMPTYTOKENS );
+        CPLFree( pszTemp);
+    }
+    else {
+        papszValues = (char**) CPLCalloc(2,sizeof(char*));
+        papszValues[0] = CPLStrdup( pszValue );
+        papszValues[1] = NULL;
+    }
+    
+    return papszValues;
+}
+
