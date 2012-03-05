@@ -724,7 +724,7 @@ class netCDFDataset : public GDALPamDataset
     void  SetProjectionFromVar( int );
 
     int ProcessCFGeolocation( int );
-    int Set1DGeolocation( int nVarId, const char *szDimName );
+    CPLErr Set1DGeolocation( int nVarId, const char *szDimName );
     double * Get1DGeolocation( const char *szDimName, int &nVarLen );
 
   protected:
