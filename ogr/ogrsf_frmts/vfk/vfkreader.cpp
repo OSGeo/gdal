@@ -201,7 +201,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
 {
     const char *pszName;
     char       *pszBlockName, *pszLine;
-    bool        bMultiLine;
+    int         nLength;
     
     VFKFeature *poNewFeature;
     
@@ -214,34 +214,40 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
 
     VSIFSeek(m_poFD, 0, SEEK_SET);
     while ((pszLine = ReadLine()) != NULL) {
-	bMultiLine = FALSE;
-	if (strlen(pszLine) < 2)
+	nLength = strlen(pszLine);
+	if (nLength < 2)
 	    continue;
 	
 	if (pszLine[1] == 'D') {
 	    pszBlockName = GetDataBlockName(pszLine);
 	    if (pszBlockName && EQUAL(pszBlockName, pszName)) {
 		/* merge lines if needed */
-		if (pszLine[strlen(pszLine) - 1] == '\244') {
-		    bMultiLine = TRUE;
+		if (pszLine[nLength - 2] == '\302' &&
+		    pszLine[nLength - 1] == '\244') {
 		    
-		    /* remove \244 from string */
-		    pszLine[strlen(pszLine) - 1] = '\0';
+		    /* remove 0302 0244 (currency sign) from string */
+		    pszLine[nLength - 2] = '\0';
 		    
 		    CPLString pszMultiLine(pszLine);
 		    CPLFree(pszLine);
 		    
 		    while ((pszLine = ReadLine()) != NULL &&
+			   pszLine[strlen(pszLine) - 2] == '\302' &&
 			   pszLine[strlen(pszLine) - 1] == '\244') {
-			/* remove \244 from string */
-			pszLine[strlen(pszLine) - 1] = '\0';
+			/* remove 0302 0244 (currency sign) from string */
+			pszLine[strlen(pszLine) - 2] = '\0';
 			
 			/* append line */
 			pszMultiLine += pszLine;
 			CPLFree(pszLine);
 		    } 
 		    pszMultiLine += pszLine;
-		    pszLine = (char *)pszMultiLine.c_str();
+		    CPLFree(pszLine);
+		    
+		    nLength = pszMultiLine.size();
+		    pszLine = (char *) CPLMalloc(nLength + 1);
+		    strncpy(pszLine, pszMultiLine.c_str(), nLength);
+		    pszLine[nLength] = '\0';
 		}
 		
 		poNewFeature = new VFKFeature(poDataBlock);
@@ -255,8 +261,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
 	    CPLFree(pszLine);
 	    break;
 	}
-	if (!bMultiLine)
-	    CPLFree(pszLine);
+	CPLFree(pszLine);
     }
     
     return poDataBlock->GetFeatureCount();
