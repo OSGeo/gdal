@@ -1115,7 +1115,7 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     #make sure we cleanup
-    #gdaltest.clean_tmp()
+    gdaltest.clean_tmp()
 
     gdaltest.summarize()
 
