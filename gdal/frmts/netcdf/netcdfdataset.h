@@ -75,7 +75,6 @@
 #define NCDF_MAX_STR_LEN     8192
 #define NCDF_CONVENTIONS_CF  "CF-1.5"
 #define NCDF_GDAL             GDALVersionInfo("--version")
-#define NCDF_NBDIM           2
 #define NCDF_SPATIAL_REF     "spatial_ref"
 #define NCDF_GEOTRANSFORM    "GeoTransform"
 #define NCDF_DIMNAME_X       "x"
@@ -677,6 +676,8 @@ class netCDFDataset : public GDALPamDataset
     int           nFormat;
     int           bIsGdalFile; /* was this file created by GDAL? */
     int           bIsGdalCfFile; /* was this file created by the (new) CF-compliant driver? */
+    char         *pszCFProjection;
+    char         *pszCFCoordinates;
 
     /* projection/GT */
     double       adfGeoTransform[6];
@@ -692,6 +693,7 @@ class netCDFDataset : public GDALPamDataset
     int          bSetProjection; 
     int          bSetGeoTransform;
     int          bAddedProjectionVars;
+    int          bAddedGridMappingRef;
 
     /* create vars */
     char         **papszCreationOptions;
@@ -707,12 +709,11 @@ class netCDFDataset : public GDALPamDataset
 
     char **      FetchStandardParallels( const char *pszGridMappingValue );
 
-    
-    /* new */
     void ProcessCreationOptions( );
     int DefVarDeflate( int nVarId, int bChunking=TRUE );
     CPLErr AddProjectionVars( GDALProgressFunc pfnProgress=GDALDummyProgress, 
                               void * pProgressData=NULL );
+    void AddGridMappingRef(); 
 
     int GetDefineMode() { return bDefineMode; }
     int SetDefineMode( int bNewDefineMode );
