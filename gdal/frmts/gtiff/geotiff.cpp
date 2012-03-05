@@ -1691,6 +1691,7 @@ CPLErr GTiffRasterBand::SetColorTable( GDALColorTable * poCT )
         poGDS->bNeedsRewrite = TRUE;
 
     poGDS->poColorTable = poCT->Clone();
+    eBandInterp = GCI_PaletteIndex;
 
     return CE_None;
 }
