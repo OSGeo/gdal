@@ -979,7 +979,7 @@ def netcdf_28():
     ofile = 'tmp/netcdf_28.nc'
 
     # copy file
-    result = netcdf_test_copy( ifile, None, None, ofile )
+    result = netcdf_test_copy( ifile, 0, None, ofile )
     if result != 'success':
         gdaltest.post_reason( 'copy failed' )
         return 'fail'
