@@ -41,30 +41,24 @@ CPL_CVSID("$Id$");
 // 
 static const char* ILI2_DATASECTION = "DATASECTION";
 
-// 
+//
 // ILI2Handler
 // 
 ILI2Handler::ILI2Handler( ILI2Reader *poReader ) {
   m_poReader = poReader;
   
-  // initialize once
-  static int ili2DomTreeInitialized = FALSE;
-  
-  if (!ili2DomTreeInitialized) {
-    XMLCh *tmpCh = XMLString::transcode("CORE");
-    DOMImplementation *impl = DOMImplementationRegistry::getDOMImplementation(tmpCh);
-    XMLString::release(&tmpCh);
-    
-    // the root element
-    tmpCh = XMLString::transcode("ROOT");
-    dom_doc = impl->createDocument(0,tmpCh,0);
-    XMLString::release(&tmpCh);
-  
-    // the first element is root
-    dom_elem = dom_doc->getDocumentElement();
-    
-    ili2DomTreeInitialized = TRUE;
-  }
+  XMLCh *tmpCh = XMLString::transcode("CORE");
+  DOMImplementation *impl = DOMImplementationRegistry::getDOMImplementation(tmpCh);
+  XMLString::release(&tmpCh);
+
+  // the root element
+  tmpCh = XMLString::transcode("ROOT");
+  dom_doc = impl->createDocument(0,tmpCh,0);
+  XMLString::release(&tmpCh);
+
+  // the first element is root
+  dom_elem = dom_doc->getDocumentElement();
+
 }
 
 ILI2Handler::~ILI2Handler() {
@@ -78,7 +72,7 @@ ILI2Handler::~ILI2Handler() {
   
   // release the dom tree
   dom_doc->release();
-    
+
 }
 
     
@@ -181,9 +175,9 @@ void ILI2Handler::characters( const XMLCh *const chars,
     char *tmpC = XMLString::transcode(chars);
     
     // only add the text if it is not empty
-    if (trim(tmpC) != "") 
+    if (trim(tmpC) != "")
       dom_elem->appendChild(dom_doc->createTextNode(chars));
-    
+
     XMLString::release(&tmpC);
   }
 }
@@ -191,7 +185,7 @@ void ILI2Handler::characters( const XMLCh *const chars,
 
 void ILI2Handler::startEntity (const XMLCh *const name)
 {
-    m_nEntityCounter ++;
+    m_nEntityCounter++;
     if (m_nEntityCounter > 1000)
     {
         throw SAXNotSupportedException ("File probably corrupted (million laugh pattern)");

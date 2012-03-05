@@ -51,6 +51,9 @@ private:
     OGRILI1Layer *curLayer;
     OGRILI1Layer *metaLayer;
     double       arcIncr;
+    char         codeBlank;
+    char         codeUndefined;
+    char         codeContinue;
 
 public:
                  ILI1Reader();

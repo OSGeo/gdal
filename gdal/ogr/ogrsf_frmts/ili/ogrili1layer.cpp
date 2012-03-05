@@ -167,7 +167,8 @@ OGRFeature *OGRILI1Layer::GetFeatureRef( long nFID )
 
 int OGRILI1Layer::GetFeatureCount( int bForce )
 {
-    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL)
+    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL &&
+        poAreaLineLayer == NULL)
     {
         return nFeatures;
     }
@@ -304,7 +305,7 @@ OGRErr OGRILI1Layer::CreateFeature( OGRFeature *poFeature ) {
     static long tid = -1; //system generated TID (must be unique within table)
     VSIFPrintf( poDS->GetTransferFile(), "OBJE" );
 
-    if ( !EQUAL(poFeatureDefn->GetFieldDefn(0)->GetNameRef(), "TID") )
+    if ( poFeatureDefn->GetFieldCount() && !EQUAL(poFeatureDefn->GetFieldDefn(0)->GetNameRef(), "TID") )
     {
         //Input is not generated from an Interlis 1 source
         if (poFeature->GetFID() != OGRNullFID)
@@ -344,7 +345,18 @@ OGRErr OGRILI1Layer::CreateFeature( OGRFeature *poFeature ) {
           if ( poFeature->IsFieldSet( iField ) )
           {
               const char *pszRaw = poFeature->GetFieldAsString( iField );
-              VSIFPrintf( poDS->GetTransferFile(), " %s", pszRaw );
+              if (poFeatureDefn->GetFieldDefn( iField )->GetType() == OFTString) {
+                  //Interlis 1 encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
+                  char* pszString  = CPLRecode(pszRaw, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+                  //Replace spaces
+                  for(size_t i=0; i<strlen(pszString); i++ ) {
+                      if (pszString[i] == ' ') pszString[i] = '_';
+                  }
+                  VSIFPrintf( poDS->GetTransferFile(), " %s", pszString );
+                  CPLFree( pszString );
+              } else {
+                  VSIFPrintf( poDS->GetTransferFile(), " %s", pszRaw );
+              }
           }
           else
           {
@@ -532,7 +544,8 @@ void OGRILI1Layer::PolygonizeAreaLayer()
         {
             if (ahInGeoms[i] && GEOSWithin(point, ahInGeoms[i]))
             {
-                OGRFeature* areaFeature = feature->Clone();
+                OGRFeature* areaFeature = new OGRFeature(poFeatureDefn);
+                areaFeature->SetFrom(feature);
                 areaFeature->SetGeometry( polys->getGeometryRef(i) );
                 AddFeature(areaFeature);
                 break;
@@ -551,4 +564,5 @@ void OGRILI1Layer::PolygonizeAreaLayer()
 #endif
     poAreaReferenceLayer = 0;
     poAreaLineLayer = 0;
+    delete polys;
 }
