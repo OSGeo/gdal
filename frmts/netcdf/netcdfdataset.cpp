@@ -428,6 +428,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     int      status;  
     double   dfNoData = 0.0;
     char szTemp[NCDF_MAX_STR_LEN];
+    int bDefineVar = FALSE;
 
     this->poDS = poNCDFDS;
     this->nBand = nBand;
@@ -517,7 +518,9 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 /*      Define the variable if necessary (if nZId==-1)                  */
 /* -------------------------------------------------------------------- */
     if ( nZId == -1 ) {
- 
+
+        bDefineVar = TRUE;
+
         /* make sure we are in define mode */
         ( ( netCDFDataset * ) poDS )->SetDefineMode( TRUE );
         
@@ -557,7 +560,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     /* for Byte data add signed/unsigned info */
     if ( eDataType == GDT_Byte ) {
 
-        if ( nZId == -1 ) { //only add attributes if creating variable
+        if ( bDefineVar ) { //only add attributes if creating variable
         CPLDebug( "GDAL_netCDF", "adding valid_range attributes for Byte Band" );
         /* For unsigned NC_BYTE (except NC4 format) */
         /* add valid_range and _Unsigned ( defined in CF-1 and NUG ) */
@@ -5094,13 +5097,13 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         panDimVarIds = (int *)CPLCalloc( nDim-2, sizeof( int ) );
 
         /* define all dims */
-        // for ( int i=0; i<CSLCount( papszExtraDimNames ); i++ ) {
         for ( int i=CSLCount( papszExtraDimNames )-1; i>=0; i-- ) {
             poDS->papszDimName.AddString( papszExtraDimNames[i] );
             sprintf( szTemp, "NETCDF_DIM_%s_DEF", papszExtraDimNames[i] );
             papszExtraDimValues = NCDFTokenizeArray( poSrcDS->GetMetadataItem(szTemp,"") );
             nDimSize = atol( papszExtraDimValues[0] );
-            nVarType = atol( papszExtraDimValues[1] );
+            /* nc_type is an enum in netcdf-3, needs casting */
+            nVarType = (nc_type) atol( papszExtraDimValues[1] );
             CSLDestroy( papszExtraDimValues );
             panBandZLev[ i ] = nDimSize;
             panBandDimPos[ i+2 ] = i; //Save Position of ZDim
@@ -5163,7 +5166,6 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if ( nDim > 2 ) { 
         /* make sure we are in data mode */
         ( ( netCDFDataset * ) poDS )->SetDefineMode( FALSE );
-        // for ( int i=0; i<CSLCount( papszExtraDimNames ); i++ ) {
         for ( int i=CSLCount( papszExtraDimNames )-1; i>=0; i-- ) {
             sprintf( szTemp, "NETCDF_DIM_%s_VALUES", papszExtraDimNames[i] );
             if ( poSrcDS->GetMetadataItem( szTemp ) != NULL ) {
