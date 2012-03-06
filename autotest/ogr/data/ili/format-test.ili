@@ -1,10 +1,10 @@
-TRANSFER FormatDefault;
+TRANSFER FormatTest;
 
   DOMAIN
     LKoord = COORD2 100.00 100.00
                     300.00 300.00;
 
-MODEL FormatDefault
+MODEL FormatTest
 
   TOPIC FormatTests =
 
@@ -18,7 +18,7 @@ MODEL FormatDefault
 
   END FormatTests.
 
-END FormatDefault.
+END FormatTest.
 
 FORMAT FREE;
 CODE BLANK = 94, UNDEFINED = 34, CONTINUE = 96; !! BLANK = ^ UNDEFINED = " CONTINUE = `
