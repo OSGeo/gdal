@@ -52,6 +52,10 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
                       void ** phTransformArg,
                       GDALDatasetH* phSrcDS );
 
+static void 
+RemoveConflictingMetadata( GDALMajorObjectH hObj, char **papszMetadata,
+                           const char *pszValueConflict );
+
 static double	       dfMinX=0.0, dfMinY=0.0, dfMaxX=0.0, dfMaxY=0.0;
 static double	       dfXRes=0.0, dfYRes=0.0;
 static int             bTargetAlignedPixels = FALSE;
@@ -83,6 +87,7 @@ gdalwarp [--help-general] [--formats]
     [-cutline datasource] [-cl layer] [-cwhere expression]
     [-csql statement] [-cblend dist_in_pixels] [-crop_to_cutline]
     [-of format] [-co "NAME=VALUE"]* [-overwrite]
+    [-nomd] [-cvmd meta_conflict_value]
     srcfile* dstfile
 \endverbatim
 
@@ -182,6 +187,11 @@ cutline datasource.</dd>
 <dt> <b>-cblend</b> <em>distance</em>:</dt><dd>Set a blend distance to use to blend over cutlines (in pixels).</dd>
 <dt> <b>-crop_to_cutline</b>:</dt><dd>(GDAL >= 1.8.0) Crop the extent of the target dataset to the extent of the cutline.</dd>
 <dt> <b>-overwrite</b>:</dt><dd>(GDAL >= 1.8.0) Overwrite the target dataset if it already exists.</dd>
+<dt> <b>-nomd</b>:</dt><dd>(GDAL >= 2.0.0) Do not copy metadata. Without this option, dataset and band metadata 
+(as well as some band information) will be copied from the first source dataset. 
+Items that differ between source datasets will be set to * (see -cvmd option).</dd>
+<dt> <b>-cvmd</b> <em>meta_conflict_value</em>:</dt><dd>(GDAL >= 2.0.0) 
+Value to set metadata items that conflict between source datasets (default is "*"). Use "" to remove conflicting items. </dd>
 
 <dt> <em>srcfile</em>:</dt><dd> The source file name(s). </dd>
 <dt> <em>dstfile</em>:</dt><dd> The destination file name. </dd>
@@ -243,6 +253,7 @@ static void Usage()
         "    [-cutline datasource] [-cl layer] [-cwhere expression]\n"
         "    [-csql statement] [-cblend dist_in_pixels] [-crop_to_cutline]\n"
         "    [-of format] [-co \"NAME=VALUE\"]* [-overwrite]\n"
+        "    [-nomd] [-cvmd meta_conflict_value]\n"
         "    srcfile* dstfile\n"
         "\n"
         "Available resampling methods:\n"
@@ -309,6 +320,9 @@ int main( int argc, char ** argv )
     int                  bHasGotErr = FALSE;
     int                  bCropToCutline = FALSE;
     int                  bOverwrite = FALSE;
+    int                  bCopyMetadata = TRUE;
+    int                  bCopyBandInfo = TRUE;
+    const char           *pszMDConflictValue = "*";
 
     /* Check that we are running against at least GDAL 1.6 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -602,6 +616,13 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-overwrite") )
             bOverwrite = TRUE;
+        else if( EQUAL(argv[i],"-nomd") )
+        {
+            bCopyMetadata = FALSE;
+            bCopyBandInfo = FALSE;
+        }   
+        else if( EQUAL(argv[i],"-cvmd") && i < argc-1 )
+            pszMDConflictValue = argv[++i];
 
         else if( argv[i][0] == '-' )
             Usage();
@@ -870,6 +891,86 @@ int main( int argc, char ** argv )
 
         if( !bQuiet )
             printf( "Processing input file %s.\n", papszSrcFiles[iSrc] );
+
+/* -------------------------------------------------------------------- */
+/*      Get the metadata of the first source DS and copy it to the      */
+/*      destination DS. Copy Band-level metadata and other info, only   */
+/*      if source and destination band count are equal. Any values that */
+/*      conflict between source datasets are set to pszMDConflictValue. */
+/* -------------------------------------------------------------------- */
+        if ( bCopyMetadata )
+        {
+            char **papszMetadata = NULL;
+            const char *pszSrcInfo = NULL;
+            const char *pszDstInfo = NULL;
+            GDALRasterBandH hSrcBand = NULL;
+            GDALRasterBandH hDstBand = NULL;
+
+            /* copy metadata from first dataset */
+            if ( iSrc == 0 )
+            {
+                /* copy dataset-level metadata */
+                papszMetadata = GDALGetMetadata( hSrcDS, NULL );
+                if ( CSLCount(papszMetadata) > 0 )
+                    GDALSetMetadata( hDstDS, papszMetadata, NULL );
+                
+                /* copy band-level metadata and other info */
+                if ( GDALGetRasterCount( hSrcDS ) == GDALGetRasterCount( hDstDS ) )              
+                {
+                    for ( int iBand = 0; iBand < GDALGetRasterCount( hSrcDS ); iBand++ )
+                    {
+                        hSrcBand = GDALGetRasterBand( hSrcDS, iBand + 1 );
+                        hDstBand = GDALGetRasterBand( hDstDS, iBand + 1 );
+                        /* copy metadata */
+                        papszMetadata = GDALGetMetadata( hSrcBand, NULL);              
+                        if ( CSLCount(papszMetadata) > 0 )
+                            GDALSetMetadata( hDstBand, papszMetadata, NULL );
+                        /* copy other info (Description, Unit Type) - what else? */
+                        if ( bCopyBandInfo ) {
+                            pszSrcInfo = GDALGetDescription( hSrcBand );
+                            if(  pszSrcInfo != NULL && strlen(pszSrcInfo) > 0 )
+                                GDALSetDescription( hDstBand, pszSrcInfo );  
+                            pszSrcInfo = GDALGetRasterUnitType( hSrcBand );
+                            if(  pszSrcInfo != NULL && strlen(pszSrcInfo) > 0 )
+                                GDALSetRasterUnitType( hDstBand, pszSrcInfo );  
+                        }
+                    }
+                }
+            }
+            /* remove metadata that conflicts between datasets */
+            else 
+            {
+                /* remove conflicting dataset-level metadata */
+                RemoveConflictingMetadata( hDstDS, GDALGetMetadata( hSrcDS, NULL ), pszMDConflictValue );
+                
+                /* remove conflicting copy band-level metadata and other info */
+                if ( GDALGetRasterCount( hSrcDS ) == GDALGetRasterCount( hDstDS ) )              
+                {
+                    for ( int iBand = 0; iBand < GDALGetRasterCount( hSrcDS ); iBand++ )
+                    {
+                        hSrcBand = GDALGetRasterBand( hSrcDS, iBand + 1 );
+                        hDstBand = GDALGetRasterBand( hDstDS, iBand + 1 );
+                        /* remove conflicting metadata */
+                        RemoveConflictingMetadata( hDstBand, GDALGetMetadata( hSrcBand, NULL ), pszMDConflictValue );
+                        /* remove conflicting info */
+                        if ( bCopyBandInfo ) {
+                            pszSrcInfo = GDALGetDescription( hSrcBand );
+                            pszDstInfo = GDALGetDescription( hDstBand );
+                            if( ! ( pszSrcInfo != NULL && strlen(pszSrcInfo) > 0  &&
+                                    pszDstInfo != NULL && strlen(pszDstInfo) > 0  &&
+                                    EQUAL( pszSrcInfo, pszDstInfo ) ) )
+                                GDALSetDescription( hDstBand, "" );  
+                            pszSrcInfo = GDALGetRasterUnitType( hSrcBand );
+                            pszDstInfo = GDALGetRasterUnitType( hDstBand );
+                            if( ! ( pszSrcInfo != NULL && strlen(pszSrcInfo) > 0  &&
+                                    pszDstInfo != NULL && strlen(pszDstInfo) > 0  &&
+                                    EQUAL( pszSrcInfo, pszDstInfo ) ) )
+                                GDALSetRasterUnitType( hDstBand, "" );  
+                        }
+                    }
+                }
+            }          
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Warns if the file has a color table and something more          */
@@ -2030,4 +2131,31 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
                                           "CUTLINE", pszWKT );
     CPLFree( pszWKT );
 #endif
+}
+
+static void 
+RemoveConflictingMetadata( GDALMajorObjectH hObj, char **papszMetadata, 
+                           const char *pszValueConflict )
+{
+    if ( hObj == NULL ) return;
+
+    char *pszKey = NULL; 
+    const char *pszValueRef; 
+    const char *pszValueComp; 
+    char ** papszMetadataRef = CSLDuplicate( papszMetadata );
+    int nCount = CSLCount( papszMetadataRef ); 
+
+    for( int i = 0; i < nCount; i++ ) 
+    { 
+        pszValueRef = CPLParseNameValue( papszMetadataRef[i], &pszKey ); 
+        pszValueComp = GDALGetMetadataItem( hObj, pszKey, NULL );
+        if ( ( pszValueRef == NULL || pszValueComp == NULL ||
+               ! EQUAL( pszValueRef, pszValueComp ) ) &&
+             ! EQUAL( pszValueComp, pszValueConflict ) ) {
+            GDALSetMetadataItem( hObj, pszKey, pszValueConflict, NULL ); 
+        }
+        CPLFree( pszKey ); 
+    } 
+
+    CSLDestroy( papszMetadataRef );
 }
