@@ -348,6 +348,9 @@ def ogr_interlis1_8():
     ds = ogr.Open( 'data/ili/Beispiel.itf,data/ili/Beispiel.ili' )
 
     lyr = ds.GetLayerByName('BoFlaechen__Art')
+    if lyr is None:
+        gdaltest.post_reason( 'Enumeration layer not available.' )
+        return 'fail'
 
     if lyr.GetFeatureCount() != 6:
         gdaltest.post_reason( 'feature count wrong.' )
@@ -367,6 +370,102 @@ def ogr_interlis1_8():
           feat.DumpReadable()
           print(feat.GetFieldAsString(i))
           print str(field_values[i])
+          gdaltest.post_reason( 'field value wrong.' )
+          return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Ili1 VRT rename
+
+def ogr_interlis1_9():
+
+    if not gdaltest.have_ili_reader:
+        return 'skip'
+
+    ds = ogr.Open( 'data/ili/Beispiel-rename.vrt' )
+    layers = ['BoGebaeude']
+    if ds.GetLayerCount() != len(layers):
+        gdaltest.post_reason( 'layer count wrong.' )
+        return 'fail'
+
+    for i in range(ds.GetLayerCount()):
+      if not ds.GetLayer(i).GetName() in layers:
+          gdaltest.post_reason( 'Did not get right layers' )
+          return 'fail'
+
+    lyr = ds.GetLayerByName('BoGebaeude')
+
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef() != 'AssekuranzNr':
+        gdaltest.post_reason( 'Wrong field name: ' +  lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef())
+        return 'fail'
+
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason( 'feature count wrong.' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    field_values = ['958', 10, 'POINT (148.41 175.96)']
+
+    if feat.GetFieldCount() != len(field_values)-1:
+        gdaltest.post_reason( 'field count wrong.' )
+        return 'fail'
+
+    for i in range(feat.GetFieldCount()):
+        if feat.GetFieldAsString(i) != str(field_values[i]):
+          feat.DumpReadable()
+          print(feat.GetFieldAsString(i))
+          gdaltest.post_reason( 'field value wrong.' )
+          return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Ili1 VRT join
+
+def ogr_interlis1_10():
+
+    if not gdaltest.have_ili_reader:
+        return 'skip'
+
+    ds = ogr.Open( 'data/ili/Beispiel-join.vrt' )
+    layers = ['BoFlaechenJoined']
+    if ds.GetLayerCount() != len(layers):
+        gdaltest.post_reason( 'layer count wrong.' )
+        return 'fail'
+
+    for i in range(ds.GetLayerCount()):
+      if not ds.GetLayer(i).GetName() in layers:
+          gdaltest.post_reason( 'Did not get right layers' )
+          return 'fail'
+
+    lyr = ds.GetLayerByName('BoFlaechenJoined')
+
+    #TODO: Test that attribute filters are passed through to an underlying layer.
+    #lyr.SetAttributeFilter( 'other = "Second"' )
+    #lyr.ResetReading()
+
+    if lyr.GetFeatureCount() != 3:
+        gdaltest.post_reason( 'feature count wrong.' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    field_values = ['10', 0, 148.2, 183.48,'Gebaeude',  -1]
+
+    if feat.GetFieldCount() != len(field_values)-1:
+        gdaltest.post_reason( 'field count wrong.' )
+        return 'fail'
+
+    for i in range(feat.GetFieldCount()):
+        if feat.GetFieldAsString(i) != str(field_values[i]):
+          feat.DumpReadable()
+          print(feat.GetFieldAsString(i))
           gdaltest.post_reason( 'field value wrong.' )
           return 'fail'
 
@@ -461,6 +560,8 @@ gdaltest_list = [
     ogr_interlis1_6,
     ogr_interlis1_7,
     ogr_interlis1_8,
+    ogr_interlis1_9,
+    ogr_interlis1_10,
     ogr_interlis2_1,
     #ogr_interlis2_2,
     ogr_interlis_cleanup ]
