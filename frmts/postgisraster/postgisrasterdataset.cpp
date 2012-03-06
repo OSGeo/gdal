@@ -264,7 +264,8 @@ GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
 
         PQclear(poResult);
 
-    }        /**********************************************************************
+    }
+        /**********************************************************************
          * Fetch all the schema's raster tables and store them as subdatasets
          **********************************************************************/
     else {
@@ -917,7 +918,6 @@ CPLErr PostGISRasterDataset::IRasterIO(GDALRWFlag eRWFlag,
     int nBlocksPerRow, nBlocksPerColumn;
     char orderByY[4];
     char orderByX[3];
-    int rid;
 
 
     /**
@@ -1220,69 +1220,19 @@ CPLErr PostGISRasterDataset::IRasterIO(GDALRWFlag eRWFlag,
 }
 
 /******************************************************************************
- * \brief Open a connection with PostgreSQL. The connection string will have
- * the PostgreSQL accepted format, plus the next key=value pairs:
- *	schema = <schema_name>
- *	table = <table_name>
- *	column = <column_name>
- *	where = <SQL where>
- *  mode = <working mode> (1 or 2)
- *
- * These pairs are used for selecting the right raster table.
- *****************************************************************************/
-GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
-    char** papszParams = NULL;
-    char* pszConnectionString = NULL;
-    char* pszValidConnectionString = NULL;
-    char* pszSchema = NULL;
-    char* pszTable = NULL;
-    char* pszColumn = NULL;
-    char* pszWhere = NULL;
-    char* pszTmp = NULL;
-    int nMode = -1;
-    int nPos = -1;
-    int i = 0;
-    PGconn * poConn = NULL;
-    PostGISRasterDataset* poDS = NULL;
-    GBool bBrowseDatabase = false;
-    PGresult * poResult = NULL;
-    CPLString osCommand;
-
-    /**************************
-     * Check input parameter
-     **************************/
-    if (poOpenInfo->pszFilename == NULL ||
-            poOpenInfo->fp != NULL ||
-            !EQUALN(poOpenInfo->pszFilename, "PG:", 3) ||
-            (papszParams = ParseConnectionString(poOpenInfo->pszFilename)) == NULL) {
-        /**
-         * Drivers must quietly return NULL if the passed file is not of
-         * their format. They should only produce an error if the file
-         * does appear to be of their supported format, but for some
-         * reason, unsupported or corrupt
-         */
-        return NULL;
+ * \brief Get the connection information for a filename.
+ ******************************************************************************/
+GBool
+PostGISRasterDataset::GetConnectionInfo(const char * pszFilename, 
+    char ** pszConnectionString, char ** pszSchema, char ** pszTable, 
+    char ** pszColumn, char ** pszWhere, int * nMode, GBool * bBrowseDatabase)
+{
+    int nPos = -1, i;
+    char * pszTmp = NULL;
+    char **papszParams = ParseConnectionString(pszFilename);
+    if (papszParams == NULL) {
+        return false;
     }
-
-    /**************************
-     * Create driver instance
-     **************************/
-    /*
-    poDriver = (PostGISRasterDriver*) GDALGetDriverByName("PostGISRaster");
-    if (poDriver == NULL) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "PostGIS Raster driver not registered");
-        return NULL;
-    }
-     */
-
-    /***************************************************************
-     * Now check existence of db, schema, table, column and where.
-     * If there's no enough data for querying one single table,
-     * we'll create a GDAL metadata's list of sub-datasets, with all
-     * the table with columns of type 'rasters'
-     ***************************************************************/
-
 
     /**************************************************************************
      * Get mode:
@@ -1292,9 +1242,9 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
      **************************************************************************/
     nPos = CSLFindName(papszParams, "mode");
     if (nPos != -1) {
-        nMode = atoi(CPLParseNameValue(papszParams[nPos], NULL));
+        *nMode = atoi(CPLParseNameValue(papszParams[nPos], NULL));
 
-        if (nMode != ONE_RASTER_PER_ROW && nMode != ONE_RASTER_PER_TABLE) {
+        if (*nMode != ONE_RASTER_PER_ROW && *nMode != ONE_RASTER_PER_TABLE) {
             /* Unrecognized mode, using default one */
             /*
             CPLError(CE_Warning, CPLE_AppDefined, "Undefined working mode (%d)."
@@ -1302,7 +1252,7 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
                     " (ONE_RASTER_PER_TABLE). Using ONE_RASTER_PER_TABLE"
                     " by default", nMode);
              */
-            nMode = ONE_RASTER_PER_ROW;
+            *nMode = ONE_RASTER_PER_ROW;
         }
 
         /* Remove the mode from connection string */
@@ -1310,7 +1260,7 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
     }
         /* Default mode */
     else
-        nMode = ONE_RASTER_PER_ROW;
+        *nMode = ONE_RASTER_PER_ROW;
 
     /**
      * Case 1: There's no database name: Error, you need, at least,
@@ -1320,7 +1270,7 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
     if (nPos == -1) {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "You must specify at least a db name");
-        return NULL;
+        return false;
     }
 
     /**
@@ -1330,12 +1280,12 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
      **/
     nPos = CSLFindName(papszParams, "table");
     if (nPos == -1) {
-        bBrowseDatabase = true;
+        *bBrowseDatabase = true;
 
         /* Get schema name, if exist */
         nPos = CSLFindName(papszParams, "schema");
         if (nPos != -1) {
-            pszSchema = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+            *pszSchema = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
             /* Delete this pair from params array */
             papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
         }
@@ -1356,7 +1306,7 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
             papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
         }
     } else {
-        pszTable = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+        *pszTable = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
         /* Delete this pair from params array */
         papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
 
@@ -1367,13 +1317,14 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
          **/
         nPos = CSLFindName(papszParams, "column");
         if (nPos == -1) {
-            pszColumn = CPLStrdup(DEFAULT_COLUMN);
-        }            /**
-             * Case 4: There's database, table and column name: Use the table to
-             * create a dataset
-             **/
+            *pszColumn = CPLStrdup(DEFAULT_COLUMN);
+        }
+        /**
+         * Case 4: There's database, table and column name: Use the table to
+         * create a dataset
+         **/
         else {
-            pszColumn = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+            *pszColumn = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
             /* Delete this pair from params array */
             papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
         }
@@ -1381,16 +1332,16 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
         /* Get the rest of the parameters, if exist */
         nPos = CSLFindName(papszParams, "schema");
         if (nPos == -1) {
-            pszSchema = CPLStrdup(DEFAULT_SCHEMA);
+            *pszSchema = CPLStrdup(DEFAULT_SCHEMA);
         } else {
-            pszSchema = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+            *pszSchema = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
             /* Delete this pair from params array */
             papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
         }
 
         nPos = CSLFindName(papszParams, "where");
         if (nPos != -1) {
-            pszWhere = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+            *pszWhere = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
             /* Delete this pair from params array */
             papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
         }
@@ -1398,27 +1349,79 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
     }
 
     /* Parse pszWhere, if needed */
-    if (pszWhere) {
-        pszTmp = ReplaceQuotes(pszWhere, strlen(pszWhere));
-        CPLFree(pszWhere);
-        pszWhere = pszTmp;
+    if (*pszWhere) {
+        pszTmp = ReplaceQuotes(*pszWhere, strlen(*pszWhere));
+        CPLFree(*pszWhere);
+        *pszWhere = pszTmp;
     }
-
 
     /***************************************
      * Construct a valid connection string
      ***************************************/
-    pszValidConnectionString = (char*) CPLCalloc(strlen(poOpenInfo->pszFilename),
+    *pszConnectionString = (char*) CPLCalloc(strlen(pszFilename),
             sizeof (char));
     for (i = 0; i < CSLCount(papszParams); i++) {
-        pszValidConnectionString = strncat(pszValidConnectionString, papszParams[i], strlen(papszParams[i]));
-        pszValidConnectionString = strncat(pszValidConnectionString, " ", strlen(" "));
-
-        //CPLStrlcat(pszValidConnectionString, papszParams[i], strlen(papszParams[i]));
-        //CPLStrlcat(pszValidConnectionString, " ", strlen(" "));
-
+        *pszConnectionString = strncat(*pszConnectionString, papszParams[i], strlen(papszParams[i]));
+        *pszConnectionString = strncat(*pszConnectionString, " ", strlen(" "));
     }
 
+    CSLDestroy(papszParams);
+
+    CPLDebug("PostGIS_Raster", "PostGISRasterDataset::GetConnectionInfo(): "
+        "Mode: %d\nSchema: %s\nTable: %s\nColumn: %s\nWhere: %s\n"
+        "Connection String: %s", *nMode, *pszSchema, *pszTable, *pszColumn, 
+        *pszWhere, *pszConnectionString);
+
+    return true;
+}
+
+
+/******************************************************************************
+ * \brief Open a connection with PostgreSQL. The connection string will have
+ * the PostgreSQL accepted format, plus the next key=value pairs:
+ *	schema = <schema_name>
+ *	table = <table_name>
+ *	column = <column_name>
+ *	where = <SQL where>
+ *  mode = <working mode> (1 or 2)
+ *
+ * These pairs are used for selecting the right raster table.
+ *****************************************************************************/
+GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
+    char* pszConnectionString = NULL;
+    char* pszSchema = NULL;
+    char* pszTable = NULL;
+    char* pszColumn = NULL;
+    char* pszWhere = NULL;
+    int nMode = -1;
+    PGconn * poConn = NULL;
+    PostGISRasterDataset* poDS = NULL;
+    GBool bBrowseDatabase = false;
+    PGresult * poResult = NULL;
+    CPLString osCommand;
+
+    /**************************
+     * Check input parameter
+     **************************/
+    if (poOpenInfo->pszFilename == NULL ||
+            poOpenInfo->fp != NULL ||
+            !EQUALN(poOpenInfo->pszFilename, "PG:", 3))
+    {
+        /**
+         * Drivers must quietly return NULL if the passed file is not of
+         * their format. They should only produce an error if the file
+         * does appear to be of their supported format, but for some
+         * reason, unsupported or corrupt
+         */
+        return NULL;
+    }
+
+    if (!GetConnectionInfo((char *)poOpenInfo->pszFilename,
+        &pszConnectionString, &pszSchema, &pszTable, &pszColumn, &pszWhere,
+        &nMode, &bBrowseDatabase))
+    {
+        return NULL;
+    }
 
 
     /********************************************************************
@@ -1429,7 +1432,7 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
      * PROBLEMS DETECTED (SEE DRIVER DESTRUCTOR FOR FURTHER INFORMATION)
      ********************************************************************/
     /*
-    poConn = poDriver->GetConnection(pszValidConnectionString,
+    poConn = poDriver->GetConnection(pszConnectionString,
             CSLFetchNameValueDef(papszParams, "host", DEFAULT_HOST),
             CSLFetchNameValueDef(papszParams, "port", DEFAULT_PORT),
             CSLFetchNameValueDef(papszParams, "user", DEFAULT_USER),
@@ -1440,7 +1443,6 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
                 "Couldn't establish a database connection");
         CSLDestroy(papszParams);
         CPLFree(pszConnectionString);
-        CPLFree(pszValidConnectionString);
         if (pszSchema)
             CPLFree(pszSchema);
         if (pszTable)
@@ -1458,14 +1460,14 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
 
 
     /* Frees no longer needed memory */
-    CSLDestroy(papszParams);
-    CPLFree(pszConnectionString);
+    //CSLDestroy(papszParams);
+    //CPLFree(pszConnectionString);
 
     /**
      * Get connection
      * TODO: Try to get connection from poDriver
      **/
-    poConn = PQconnectdb(pszValidConnectionString);
+    poConn = PQconnectdb(pszConnectionString);
     if (poConn == NULL) {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Couldn't establish a database connection");
@@ -1515,12 +1517,12 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
 
     /* Check spatial tables existence */
     poResult = PQexec(poConn, "select pg_namespace.nspname as schemaname, \
-					pg_class.relname as tablename from pg_class, \
-					pg_namespace where pg_class.relnamespace = pg_namespace.oid \
-					and (pg_class.relname='raster_columns' or \
+                    pg_class.relname as tablename from pg_class, \
+                    pg_namespace where pg_class.relnamespace = pg_namespace.oid \
+                    and (pg_class.relname='raster_columns' or \
                     pg_class.relname='raster_overviews' or \
-					pg_class.relname='geometry_columns' or \
-					pg_class.relname='spatial_ref_sys')");
+                    pg_class.relname='geometry_columns' or \
+                    pg_class.relname='spatial_ref_sys')");
     if (
             poResult == NULL ||
             PQresultStatus(poResult) != PGRES_TUPLES_OK ||
@@ -1576,8 +1578,8 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
          * Look for raster tables at database and
          * store them as subdatasets
          **/
-        if (!poDS->BrowseDatabase(pszSchema, pszValidConnectionString)) {
-            CPLFree(pszValidConnectionString);
+        if (!poDS->BrowseDatabase(pszSchema, pszConnectionString)) {
+            CPLFree(pszConnectionString);
             delete poDS;
             return NULL;
         }
@@ -1603,22 +1605,22 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
          * Fetch basic raster metadata from db
          **/
 
-        if (!poDS->SetRasterProperties(pszValidConnectionString)) {
-            CPLFree(pszValidConnectionString);
+        if (!poDS->SetRasterProperties(pszConnectionString)) {
+            CPLFree(pszConnectionString);
             delete poDS;
             return NULL;
         }
 
         /* Set raster bands */
         if (!poDS->SetRasterBands()) {
-            CPLFree(pszValidConnectionString);
+            CPLFree(pszConnectionString);
             delete poDS;
             return NULL;
         }
 
     }
 
-    CPLFree(pszValidConnectionString);
+    CPLFree(pszConnectionString);
     return poDS;
 
 }
@@ -1800,9 +1802,531 @@ CPLErr PostGISRasterDataset::GetGeoTransform(double * padfTransform) {
     return CE_None;
 }
 
+/********************************************************
+ * \brief Create a copy of a PostGIS Raster dataset.
+ ********************************************************/
+GDALDataset * 
+PostGISRasterDataset::CreateCopy( const char * pszFilename,
+    GDALDataset *poGSrcDS, int bStrict, char ** papszOptions, 
+    GDALProgressFunc pfnProgress, void * pProgressData ) 
+{
+    char* pszSchema = NULL;
+    char* pszTable = NULL;
+    char* pszColumn = NULL;
+    char* pszWhere = NULL;
+    GBool bBrowseDatabase;
+    int nMode;
+    char* pszConnectionString = NULL;
+    const char* pszSubdatasetName;
+    PGconn * poConn = NULL;
+    PGresult * poResult = NULL;
+    CPLString osCommand;
+    GBool bInsertSuccess;
+    PostGISRasterDataset *poSrcDS = (PostGISRasterDataset *)poGSrcDS;
+    PostGISRasterDataset *poSubDS;
+
+    // Check connection string
+    if (pszFilename == NULL ||
+        !EQUALN(pszFilename, "PG:", 3)) {
+        /**
+         * The connection string provided is not a valid connection 
+         * string.
+         */
+        CPLError( CE_Failure, CPLE_NotSupported, 
+            "PostGIS Raster driver was unable to parse the provided "
+            "connection string." );
+        return NULL;
+    }
+
+    if (!GetConnectionInfo(pszFilename,
+        &pszConnectionString, &pszSchema, &pszTable, &pszColumn, &pszWhere,
+        &nMode, &bBrowseDatabase)) {
+        return NULL;
+    }
+
+    /**
+     * Get connection
+     * TODO: Try to get connection from poDriver
+     **/
+    poConn = PQconnectdb(pszConnectionString);
+    if (poConn == NULL) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Couldn't establish a database connection");
+        if (pszSchema)
+            CPLFree(pszSchema);
+        if (pszTable)
+            CPLFree(pszTable);
+        if (pszColumn)
+            CPLFree(pszColumn);
+        
+        CPLFree(pszConnectionString);
+
+        return NULL;
+    }
+
+    /* Check geometry type existence */
+    poResult = PQexec(poConn, "SELECT oid FROM pg_type WHERE typname = 'geometry'");
+    if (
+            poResult == NULL ||
+            PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+            PQntuples(poResult) <= 0
+            ) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Error checking geometry type existence. Is PostGIS correctly \
+                installed?: %s", PQerrorMessage(poConn));
+        if (poResult != NULL)
+            PQclear(poResult);
+        if (pszSchema)
+            CPLFree(pszSchema);
+        if (pszTable)
+            CPLFree(pszTable);
+        if (pszColumn)
+            CPLFree(pszColumn);
+
+        CPLFree(pszConnectionString);
+
+        PQfinish(poConn);
+
+        return NULL;
+    }
+
+    PQclear(poResult);
+
+    /* Check spatial tables existence */
+    poResult = PQexec(poConn, "select pg_namespace.nspname as schemaname, \
+                    pg_class.relname as tablename from pg_class, \
+                    pg_namespace where pg_class.relnamespace = pg_namespace.oid \
+                    and (pg_class.relname='raster_columns' or \
+                    pg_class.relname='raster_overviews' or \
+                    pg_class.relname='geometry_columns' or \
+                    pg_class.relname='spatial_ref_sys')");
+    if (
+            poResult == NULL ||
+            PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+            PQntuples(poResult) <= 0
+            ) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Error checking needed tables existence: %s",
+                PQerrorMessage(poConn));
+        if (poResult != NULL)
+            PQclear(poResult);
+        if (pszSchema)
+            CPLFree(pszSchema);
+        if (pszTable)
+            CPLFree(pszTable);
+        if (pszColumn)
+            CPLFree(pszColumn);
+
+        CPLFree(pszConnectionString);
+
+        PQfinish(poConn);
+
+        return NULL;
+    }
+
+    PQclear(poResult);
+
+    // begin transaction
+    poResult = PQexec(poConn, "begin");
+    if (poResult == NULL ||
+        PQresultStatus(poResult) != PGRES_COMMAND_OK) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Error beginning database transaction: %s",
+            PQerrorMessage(poConn));
+        if (poResult != NULL)
+            PQclear(poResult);
+        if (pszSchema)
+            CPLFree(pszSchema);
+        if (pszTable)
+            CPLFree(pszTable);
+        if (pszColumn)
+            CPLFree(pszColumn);
+
+        CPLFree(pszConnectionString);
+
+        PQfinish(poConn);
+
+        return NULL;
+    }
+
+    PQclear(poResult);
+
+    // create table for raster (if not exists because a
+    // dataset will not be reported for an empty table)
+
+    osCommand.Printf("create table if not exists %s.%s (rid serial, %s "
+        "public.raster, constraint %s_pkey primary key (rid));",
+        pszSchema, pszTable, pszColumn, pszTable);
+    poResult = PQexec(poConn, osCommand.c_str());
+    if (
+            poResult == NULL ||
+            PQresultStatus(poResult) != PGRES_COMMAND_OK) {
+
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Error creating needed tables: %s",
+                PQerrorMessage(poConn));
+        if (poResult != NULL)
+            PQclear(poResult);
+
+        // rollback
+        poResult = PQexec(poConn, "rollback");
+        if (poResult == NULL ||
+            PQresultStatus(poResult) != PGRES_COMMAND_OK) {
+
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "Error rolling back transaction: %s",
+                PQerrorMessage(poConn));
+        }
+        if (poResult != NULL)
+            PQclear(poResult);
+
+        PQfinish(poConn);
+
+        return NULL;
+    }
+
+    PQclear(poResult);
+
+    osCommand.Printf("create index %s_%s_gist ON %s.%s USING gist "
+        "(public.st_convexhull(%s));", pszTable, pszColumn, 
+        pszSchema, pszTable, pszColumn);
+    poResult = PQexec(poConn, osCommand.c_str());
+    if (
+            poResult == NULL ||
+            PQresultStatus(poResult) != PGRES_COMMAND_OK) {
+
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Error creating needed index: %s",
+                PQerrorMessage(poConn));
+        if (poResult != NULL)
+            PQclear(poResult);
+
+        // rollback
+        poResult = PQexec(poConn, "rollback");
+        if (poResult == NULL ||
+            PQresultStatus(poResult) != PGRES_COMMAND_OK) {
+
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "Error rolling back transaction: %s",
+                PQerrorMessage(poConn));
+        }
+        if (poResult != NULL)
+            PQclear(poResult);
+
+        PQfinish(poConn);
+
+        return NULL;
+    }
+
+    PQclear(poResult);
+
+    if (poSrcDS->nMode == ONE_RASTER_PER_TABLE) {
+        // one raster per table
+
+        // insert one raster
+        bInsertSuccess = InsertRaster(poConn, poSrcDS,
+            pszSchema, pszTable, pszColumn);
+        if (!bInsertSuccess) {
+            if (pszSchema)
+                CPLFree(pszSchema);
+            if (pszTable)
+                CPLFree(pszTable);
+            if (pszColumn)
+                CPLFree(pszColumn);
+
+            // rollback
+            poResult = PQexec(poConn, "rollback");
+            if (poResult == NULL ||
+                PQresultStatus(poResult) != PGRES_COMMAND_OK) {
+
+                CPLError(CE_Failure, CPLE_AppDefined,
+                    "Error rolling back transaction: %s",
+                    PQerrorMessage(poConn));
+            }
+            if (poResult != NULL)
+                PQclear(poResult);
+
+            CPLFree(pszConnectionString);
+
+            PQfinish(poConn);
+            return NULL;
+        }
+    }
+    else if (poSrcDS->nMode == ONE_RASTER_PER_ROW) {
+        // one raster per row
+
+        // papszSubdatasets contains name/desc for each subdataset
+        for (int i = 0; i < CSLCount(poSrcDS->papszSubdatasets); i += 2) {
+            pszSubdatasetName = CPLParseNameValue( poSrcDS->papszSubdatasets[i], NULL);
+            if (pszSubdatasetName == NULL) {
+                CPLDebug("PostGIS_Raster", "PostGISRasterDataset::CreateCopy(): "
+                "Could not parse name/value out of subdataset list: "
+                "%s", poSrcDS->papszSubdatasets[i]);
+                continue;
+            }
+
+            // for each subdataset
+            GDALOpenInfo poOpenInfo( pszSubdatasetName, GA_ReadOnly );
+            // open the subdataset
+            poSubDS = (PostGISRasterDataset *)Open(&poOpenInfo);
+
+            if (poSubDS == NULL) {
+                // notify!
+                CPLDebug("PostGIS_Raster", "PostGISRasterDataset::CreateCopy(): "
+                    "Could not open a subdataset: %s", 
+                    pszSubdatasetName);
+                continue;
+            }
+
+            // insert one raster
+            bInsertSuccess = InsertRaster(poConn, poSubDS,
+                pszSchema, pszTable, pszColumn);
+
+            if (!bInsertSuccess) {
+                CPLDebug("PostGIS_Raster", "PostGISRasterDataset::CreateCopy(): "
+                    "Could not copy raster subdataset to new dataset." );
+
+                // keep trying ...
+            }
+
+            // close this dataset
+            GDALClose((GDALDatasetH)poSubDS);
+        }
+    }
+
+    // commit transaction
+    poResult = PQexec(poConn, "commit");
+    if (poResult == NULL ||
+        PQresultStatus(poResult) != PGRES_COMMAND_OK) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Error committing database transaction: %s",
+            PQerrorMessage(poConn));
+        if (poResult != NULL)
+            PQclear(poResult);
+        if (pszSchema)
+            CPLFree(pszSchema);
+        if (pszTable)
+            CPLFree(pszTable);
+        if (pszColumn)
+            CPLFree(pszColumn);
+
+        CPLFree(pszConnectionString);
+
+        PQfinish(poConn);
+
+        return NULL;
+    }
+
+    PQclear(poResult);
+
+    // this is static, and opens a new connection each time, 
+    // so finish with the connection when this method is done
+    PQfinish(poConn);
+
+    CPLFree(pszConnectionString);
+
+    CPLDebug("PostGIS_Raster", "PostGISRasterDataset::CreateCopy(): "
+        "Opening new dataset: %s", pszFilename);
+
+    // connect to the new dataset
+    GDALOpenInfo poOpenInfo( pszFilename, GA_Update );
+    // open the newdataset
+    poSubDS = (PostGISRasterDataset *)Open(&poOpenInfo);
+
+    if (poSubDS == NULL) {
+        CPLDebug("PostGIS_Raster", "PostGISRasterDataset::CreateCopy(): "
+            "New dataset could not be opened.");
+    }
+
+    return poSubDS;
+}
+
+/********************************************************
+ * \brief Helper method to insert a new raster.
+ ********************************************************/
+GBool 
+PostGISRasterDataset::InsertRaster(PGconn * poConn, 
+    PostGISRasterDataset * poSrcDS, const char *pszSchema, 
+    const char * pszTable, const char * pszColumn)
+{
+    CPLString osCommand;
+    PGresult * poResult = NULL;
+
+    if (poSrcDS->pszWhere == NULL) {
+        osCommand.Printf("insert into %s.%s (%s) (select %s from %s.%s)",
+            pszSchema, pszTable, pszColumn, poSrcDS->pszColumn, 
+            poSrcDS->pszSchema, poSrcDS->pszTable);
+    }
+    else {
+        osCommand.Printf("insert into %s.%s (%s) (select %s from %s.%s where %s)",
+            pszSchema, pszTable, pszColumn, poSrcDS->pszColumn, 
+            poSrcDS->pszSchema, poSrcDS->pszTable, poSrcDS->pszWhere);
+    }
+
+    CPLDebug("PostGIS_Raster", "PostGISRasterDataset::InsertRaster(): Query = %s",
+        osCommand.c_str());
+
+    poResult = PQexec(poConn, osCommand.c_str());
+    if (
+            poResult == NULL ||
+            PQresultStatus(poResult) != PGRES_COMMAND_OK) {
+
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Error inserting raster: %s",
+                PQerrorMessage(poConn));
+        if (poResult != NULL)
+            PQclear(poResult);
+
+        return false;
+    }
+
+    return true;
+}
+
+/*********************************************************
+ * \brief Delete a PostGIS Raster dataset. 
+ *********************************************************/
+CPLErr
+PostGISRasterDataset::Delete(const char* pszFilename) 
+{
+    char* pszSchema = NULL;
+    char* pszTable = NULL;
+    char* pszColumn = NULL;
+    char* pszWhere = NULL;
+    GBool bBrowseDatabase;
+    char* pszConnectionString = NULL;
+    const char* pszSubdatasetName;
+    int nMode;
+    PGconn * poConn = NULL;
+    PGresult * poResult = NULL;
+    CPLString osCommand;
+    CPLErr nError = CE_Failure;
+
+    // Check connection string
+    if (pszFilename == NULL ||
+        !EQUALN(pszFilename, "PG:", 3)) { 
+        /**
+         * The connection string provided is not a valid connection 
+         * string.
+         */
+        CPLError( CE_Failure, CPLE_NotSupported, 
+            "PostGIS Raster driver was unable to parse the provided "
+            "connection string. Nothing was deleted." );
+        return CE_Failure;
+    }
+
+    if (!GetConnectionInfo(pszFilename,
+        &pszConnectionString, &pszSchema, &pszTable, &pszColumn, &pszWhere,
+        &nMode, &bBrowseDatabase)) {
+        return CE_Failure;
+    }
+
+    /**
+     * Get connection
+     * TODO: Try to get connection from poDriver
+     **/
+    poConn = PQconnectdb(pszConnectionString);
+    if (poConn == NULL) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Couldn't establish a database connection");
+        if (pszSchema)
+            CPLFree(pszSchema);
+        if (pszTable)
+            CPLFree(pszTable);
+        if (pszColumn)
+            CPLFree(pszColumn);
+        if (pszWhere)
+            CPLFree(pszWhere);
+        
+        CPLFree(pszConnectionString);
+
+        return CE_Failure;
+    }
+
+    // begin transaction
+    poResult = PQexec(poConn, "begin");
+    if (poResult == NULL ||
+        PQresultStatus(poResult) != PGRES_COMMAND_OK) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Error beginning database transaction: %s",
+            PQerrorMessage(poConn));
+
+        // set nMode to NO_MODE to avoid any further processing
+        nMode = NO_MODE;
+    }
+
+    if ( nMode == ONE_RASTER_PER_TABLE or 
+        (nMode == ONE_RASTER_PER_ROW && pszWhere == NULL)) {
+        // without a where clause, this delete command shall delete
+        // all subdatasets, even if the mode is ONE_RASTER_PER_ROW
+
+        // drop table <schema>.<table>;
+        osCommand.Printf("drop table %s.%s", pszSchema, pszTable);
+        poResult = PQexec(poConn, osCommand.c_str());
+        if (poResult == NULL || 
+            PQresultStatus(poResult) != PGRES_COMMAND_OK) {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Couldn't drop the table %s.%s: %s",
+                    pszSchema, pszTable, PQerrorMessage(poConn));
+        }
+        else {
+            nError = CE_None;
+        }
+    }
+    else if (nMode == ONE_RASTER_PER_ROW) {
+
+        // delete from <schema>.<table> where <where>
+        osCommand.Printf("delete from %s.%s where %s", pszSchema, 
+            pszTable, pszWhere);
+        poResult = PQexec(poConn, osCommand.c_str());
+        if (poResult == NULL || 
+            PQresultStatus(poResult) != PGRES_COMMAND_OK) {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Couldn't delete records from the table %s.%s: %s",
+                    pszSchema, pszTable, PQerrorMessage(poConn));
+        }
+        else {
+            nError = CE_None;
+        }
+    }
+
+    // if mode == NO_MODE, the begin transaction above did not complete,
+    // so no commit is necessary
+    if (nMode != NO_MODE) {
+        poResult = PQexec(poConn, "commit");
+        if (poResult == NULL ||
+            PQresultStatus(poResult) != PGRES_COMMAND_OK) {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "Error committing database transaction: %s",
+                PQerrorMessage(poConn));
+
+            nError = CE_Failure;
+        }
+    }
+
+    if (poResult)
+        PQclear(poResult);
+    if (pszSchema)
+        CPLFree(pszSchema);
+    if (pszTable)
+        CPLFree(pszTable);
+    if (pszColumn)
+        CPLFree(pszColumn);
+    if (pszWhere)
+        CPLFree(pszWhere);
+
+    // clean up connection string
+    CPLFree(pszConnectionString);
+
+    // this is static, and opens a new connection each time, 
+    // so finish with the connection when this method is done
+    PQfinish(poConn);
+
+    return nError;
+}
 
 /************************************************************************/
-/*                          GDALRegister_PostGISRaster()                    */
+/*                          GDALRegister_PostGISRaster()                */
 
 /************************************************************************/
 void GDALRegister_PostGISRaster() {
@@ -1816,6 +2340,8 @@ void GDALRegister_PostGISRaster() {
                 "PostGIS Raster driver");
 
         poDriver->pfnOpen = PostGISRasterDataset::Open;
+        poDriver->pfnCreateCopy = PostGISRasterDataset::CreateCopy;
+        poDriver->pfnDelete = PostGISRasterDataset::Delete;
 
         GetGDALDriverManager()->RegisterDriver(poDriver);
     }
