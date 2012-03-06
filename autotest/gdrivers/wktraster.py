@@ -108,10 +108,9 @@ def wktraster_compare_utm():
         
     src_ds = gdal.Open( 'data/utm.tif' )
     dst_ds = gdal.Open( gdaltest.wktraster_connection_string + "table='utm'" )
-    
+
     # dataset actually contains many sub-datasets. test the first one
     dst_ds = gdal.Open( dst_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'] )
- 
     
     diff = gdaltest.compare_ds(src_ds, dst_ds, width=100, height=100, verbose = 1)
     if diff == 0:
@@ -227,10 +226,161 @@ def wktraster_test_small_world_open_b3():
     main_ds = gdal.Open( gdaltest.wktraster_connection_string + "table='small_world'" )
 
     
+    main_ds = gdal.Open( gdaltest.wktraster_connection_string + "table='small_world'" )
+
     # Checksum for each band can be obtained by gdalinfo -checksum <file>
     tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 3, cs, filename_absolute = 1)
 
-    return tst.testOpen(check_prj = prj, check_gt = gt, skip_checksum = True)        
+    return tst.testOpen(check_prj = prj, check_gt = gt, skip_checksum = True)
+
+def wktraster_test_create_copy_bad_conn_string():
+    if gdaltest.wktrasterDriver is None:
+        return 'skip'
+
+    src_ds = gdal.Open( gdaltest.wktraster_connection_string + "table='small_world'" )
+
+    new_ds = gdaltest.wktrasterDriver.CreateCopy( "bogus connection string", src_ds, strict = True )
+
+    if new_ds is None:
+        return 'success'
+    else:
+        return 'fail'
+
+def wktraster_test_create_copy_no_dbname():
+    if gdaltest.wktrasterDriver is None:
+        return 'skip'
+
+    src_ds = gdal.Open( gdaltest.wktraster_connection_string + "table='small_world'" )
+
+    # This is set in order to prevent GDAL from attempting to auto-identify
+    # a bogus PG: filename to the postgis raster driver
+    options = ['APPEND_SUBDATASET=YES']
+
+    new_ds = gdaltest.wktrasterDriver.CreateCopy( "PG: no database name", src_ds, strict = True, options = options )
+
+    if new_ds is None:
+        return 'success'
+    else:
+        return 'fail'
+
+def wktraster_test_create_copy_no_tablename():
+    if gdaltest.wktrasterDriver is None:
+        return 'skip'
+
+    src_ds = gdal.Open( gdaltest.wktraster_connection_string + "table='small_world'" )
+
+    # This is set in order to prevent GDAL from attempting to auto-identify
+    # a bogus PG: filename to the postgis raster driver
+    options = ['APPEND_SUBDATASET=YES']
+
+    new_ds = gdaltest.wktrasterDriver.CreateCopy( gdaltest.wktraster_connection_string, src_ds, strict = True, options = options )
+
+    if new_ds is None:
+        return 'success'
+    else:
+        return 'fail'
+
+def wktraster_test_create_copy_and_delete():
+    """
+    Test the "CreateCopy" implementation. What to do when we're done?
+    Why, test "Delete", of course!
+    """
+    if gdaltest.wktrasterDriver is None:
+        return 'skip'
+
+    src_ds = gdal.Open( gdaltest.wktraster_connection_string + "table='small_world'" )
+
+    new_ds = gdaltest.wktrasterDriver.CreateCopy( gdaltest.wktraster_connection_string + "table='small_world_copy'", src_ds, strict = True )
+
+    if new_ds is None:
+        return 'fail'
+
+    deleted = gdaltest.wktrasterDriver.Delete( gdaltest.wktraster_connection_string + "table='small_world_copy'")
+
+    if deleted:
+        return 'fail'
+    else:
+        return 'success'
+
+def wktraster_test_create_copy_and_delete_phases():
+    """
+    Create a copy of the dataset, then delete it in phases.
+    """
+    if gdaltest.wktrasterDriver is None:
+        return 'skip'
+
+    src_ds = gdal.Open( gdaltest.wktraster_connection_string + "table='small_world'" )
+
+    src_md = src_ds.GetMetadata('SUBDATASETS').keys()
+
+    new_ds = gdaltest.wktrasterDriver.CreateCopy( gdaltest.wktraster_connection_string + "table='small_world_copy'", src_ds, strict = True )
+
+    new_md = new_ds.GetMetadata('SUBDATASETS').keys()
+
+    # done with src
+    src_ds = None
+
+    if new_ds is None:
+        gdaltest.post_reason( 'No new dataset was created during copy.' )
+        return 'fail'
+    elif len(src_md) != len(new_md):
+        gdaltest.post_reason( 'Metadata differs between new and old rasters.' )
+        return 'fail'
+
+    # should delete all raster parts over 50
+    deleted = gdaltest.wktrasterDriver.Delete( gdaltest.wktraster_connection_string + "table='small_world_copy' where='rid>50'")
+
+    if deleted:
+        gdaltest.post_reason( 'Delete returned an error.' )
+        return 'fail'
+
+    src_ds = gdal.Open( gdaltest.wktraster_connection_string + "table='small_world_copy'")
+
+    src_md = src_ds.GetMetadata('SUBDATASETS').keys()
+
+    if src_ds is None:
+        gdaltest.post_reason( 'Could not open reduced dataset (1).' )
+        return 'fail'
+    elif len(src_md) != 100:
+        # The length of the metadata contains two pcs of 
+        # information per raster, so 50 rasters remaining = 100 keys
+        gdaltest.post_reason( 'Expected 100 keys of metadata for 50 subadataset rasters.' )
+        print len(src_md)
+        return 'fail'
+
+    # done with src
+    src_ds = None
+
+    deleted = gdaltest.wktrasterDriver.Delete( gdaltest.wktraster_connection_string + "table='small_world_copy' where='rid<=25'")
+
+    if deleted:
+        gdaltest.post_reason( 'Delete returned an error.' )
+        return 'fail'
+
+    src_ds = gdal.Open( gdaltest.wktraster_connection_string + "table='small_world_copy'")
+
+    src_md = src_ds.GetMetadata('SUBDATASETS').keys()
+
+    if src_ds is None:
+        gdaltest.post_reason( 'Could not open reduced dataset (2).' )
+        return 'fail'
+    elif len(src_md) != 50:
+        # The length of the metadata contains two pcs of 
+        # information per raster, so 25 rasters remaining = 50 keys
+        gdaltest.post_reason( 'Expected 50 keys of metadata for 25 subdataset rasters.' )
+        print len(src_md)
+        return 'fail'
+
+    # done with src
+    src_ds = None
+
+    deleted = gdaltest.wktrasterDriver.Delete( gdaltest.wktraster_connection_string + "table='small_world_copy'")
+
+    if deleted:
+        gdaltest.post_reason( 'Delete returned an error.' )
+        return 'fail'
+
+    return 'success'
 
 
 gdaltest_list = [
@@ -242,7 +392,12 @@ gdaltest_list = [
     wktraster_test_utm_open,
     wktraster_test_small_world_open_b1,
     wktraster_test_small_world_open_b2,
-    wktraster_test_small_world_open_b3]
+    wktraster_test_small_world_open_b3,
+    wktraster_test_create_copy_bad_conn_string,
+    wktraster_test_create_copy_no_dbname,
+    wktraster_test_create_copy_no_tablename,
+    wktraster_test_create_copy_and_delete,
+    wktraster_test_create_copy_and_delete_phases]
 
 if __name__ == '__main__':
 
