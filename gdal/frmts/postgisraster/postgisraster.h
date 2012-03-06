@@ -110,6 +110,12 @@ public:
     PostGISRasterDataset();
     virtual ~PostGISRasterDataset();
     static GDALDataset* Open(GDALOpenInfo *);
+    static GDALDataset* CreateCopy(const char *, GDALDataset *, 
+        int, char **, GDALProgressFunc, void *);
+    static GBool InsertRaster(PGconn *, PostGISRasterDataset *, 
+        const char *, const char *, const char *);
+    static CPLErr Delete(const char*);
+    static GBool GetConnectionInfo(const char *, char **, char **, char **, char **, char **, int *, GBool *);
     char ** GetMetadata(const char *);
     const char* GetProjectionRef();
     CPLErr SetProjection(const char*);
