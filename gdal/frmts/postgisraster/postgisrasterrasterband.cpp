@@ -115,9 +115,9 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(PostGISRasterDataset *poDS,
         nRasterXSize = poDS->GetRasterXSize();
         nRasterYSize = poDS->GetRasterYSize();
  
-        osCommand.Printf("select o_table_name, overview_factor, o_column, "
+        osCommand.Printf("select o_table_name, overview_factor, o_raster_column, "
                 "o_table_schema from raster_overviews where r_table_schema = "
-                "'%s' and r_table_name = '%s' and r_column = '%s'",
+                "'%s' and r_table_name = '%s' and r_raster_column = '%s'",
                 poDS->pszSchema, poDS->pszTable, poDS->pszColumn);
 
         poResult = PQexec(poDS->poConn, osCommand.c_str());

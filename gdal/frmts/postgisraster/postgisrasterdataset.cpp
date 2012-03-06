@@ -109,10 +109,6 @@ PostGISRasterDataset::~PostGISRasterDataset() {
 
     if (papszSubdatasets)
         CSLDestroy(papszSubdatasets);
-
-    PQfinish(poConn);
-
-    //delete poDriver;
 }
 
 /**************************************************************
@@ -1222,10 +1218,12 @@ CPLErr PostGISRasterDataset::IRasterIO(GDALRWFlag eRWFlag,
 /******************************************************************************
  * \brief Get the connection information for a filename.
  ******************************************************************************/
-GBool
-PostGISRasterDataset::GetConnectionInfo(const char * pszFilename, 
-    char ** pszConnectionString, char ** pszSchema, char ** pszTable, 
-    char ** pszColumn, char ** pszWhere, int * nMode, GBool * bBrowseDatabase)
+static GBool
+GetConnectionInfo(const char * pszFilename, 
+    char ** ppszConnectionString, char ** ppszSchema, char ** ppszTable, 
+    char ** ppszColumn, char ** ppszWhere, char ** ppszHost, 
+    char ** ppszPort, char ** ppszUser, char ** ppszPassword, 
+    int * nMode, GBool * bBrowseDatabase)
 {
     int nPos = -1, i;
     char * pszTmp = NULL;
@@ -1270,6 +1268,9 @@ PostGISRasterDataset::GetConnectionInfo(const char * pszFilename,
     if (nPos == -1) {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "You must specify at least a db name");
+
+        CSLDestroy(papszParams);
+
         return false;
     }
 
@@ -1285,7 +1286,7 @@ PostGISRasterDataset::GetConnectionInfo(const char * pszFilename,
         /* Get schema name, if exist */
         nPos = CSLFindName(papszParams, "schema");
         if (nPos != -1) {
-            *pszSchema = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+            *ppszSchema = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
             /* Delete this pair from params array */
             papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
         }
@@ -1306,7 +1307,7 @@ PostGISRasterDataset::GetConnectionInfo(const char * pszFilename,
             papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
         }
     } else {
-        *pszTable = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+        *ppszTable = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
         /* Delete this pair from params array */
         papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
 
@@ -1317,14 +1318,14 @@ PostGISRasterDataset::GetConnectionInfo(const char * pszFilename,
          **/
         nPos = CSLFindName(papszParams, "column");
         if (nPos == -1) {
-            *pszColumn = CPLStrdup(DEFAULT_COLUMN);
+            *ppszColumn = CPLStrdup(DEFAULT_COLUMN);
         }
         /**
          * Case 4: There's database, table and column name: Use the table to
          * create a dataset
          **/
         else {
-            *pszColumn = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+            *ppszColumn = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
             /* Delete this pair from params array */
             papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
         }
@@ -1332,47 +1333,202 @@ PostGISRasterDataset::GetConnectionInfo(const char * pszFilename,
         /* Get the rest of the parameters, if exist */
         nPos = CSLFindName(papszParams, "schema");
         if (nPos == -1) {
-            *pszSchema = CPLStrdup(DEFAULT_SCHEMA);
+            *ppszSchema = CPLStrdup(DEFAULT_SCHEMA);
         } else {
-            *pszSchema = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+            *ppszSchema = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
             /* Delete this pair from params array */
             papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
         }
 
         nPos = CSLFindName(papszParams, "where");
         if (nPos != -1) {
-            *pszWhere = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+            *ppszWhere = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
             /* Delete this pair from params array */
             papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
         }
 
     }
 
-    /* Parse pszWhere, if needed */
-    if (*pszWhere) {
-        pszTmp = ReplaceQuotes(*pszWhere, strlen(*pszWhere));
-        CPLFree(*pszWhere);
-        *pszWhere = pszTmp;
+    /* Parse ppszWhere, if needed */
+    if (*ppszWhere) {
+        pszTmp = ReplaceQuotes(*ppszWhere, strlen(*ppszWhere));
+        CPLFree(*ppszWhere);
+        *ppszWhere = pszTmp;
     }
 
     /***************************************
      * Construct a valid connection string
      ***************************************/
-    *pszConnectionString = (char*) CPLCalloc(strlen(pszFilename),
+    *ppszConnectionString = (char*) CPLCalloc(strlen(pszFilename),
             sizeof (char));
     for (i = 0; i < CSLCount(papszParams); i++) {
-        *pszConnectionString = strncat(*pszConnectionString, papszParams[i], strlen(papszParams[i]));
-        *pszConnectionString = strncat(*pszConnectionString, " ", strlen(" "));
+        *ppszConnectionString = strncat(*ppszConnectionString, papszParams[i], strlen(papszParams[i]));
+        *ppszConnectionString = strncat(*ppszConnectionString, " ", strlen(" "));
+    }
+
+    nPos = CSLFindName(papszParams, "host");
+    if (nPos != -1) {
+        *ppszHost = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+    }
+    else if (getenv("PGHOST") != NULL) {
+        *ppszHost = CPLStrdup(getenv("PGHOST"));
+    }
+    else {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Host parameter must be provided, or PGHOST environment "
+                "variable must be set. Please set the host and try again.");
+
+        // cleanup
+        CPLFree(*ppszSchema);
+
+        if (*ppszTable)
+            CPLFree(*ppszTable);
+        if (*ppszColumn)
+            CPLFree(*ppszColumn);
+        if (*ppszWhere)
+            CPLFree(*ppszWhere);
+
+        CPLFree(*ppszConnectionString);
+
+        CSLDestroy(papszParams);
+
+        return false;
+    }
+
+    nPos = CSLFindName(papszParams, "port");
+    if (nPos != -1) {
+        *ppszPort = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+    }
+    else if (getenv("PGPORT") != NULL ) {
+        *ppszPort = CPLStrdup(getenv("PGPORT"));
+    }
+    else {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Port parameter must be provided, or PGPORT environment "
+                "variable must be set. Please set the port and try again.");
+
+        // cleanup
+        CPLFree(*ppszSchema);
+
+        if (*ppszTable)
+            CPLFree(*ppszTable);
+        if (*ppszColumn)
+            CPLFree(*ppszColumn);
+        if (*ppszWhere)
+            CPLFree(*ppszWhere);
+
+        CPLFree(*ppszConnectionString);
+        CPLFree(*ppszHost);
+
+        CSLDestroy(papszParams);
+
+        return false;
+    }
+
+    nPos = CSLFindName(papszParams, "user");
+    if (nPos != -1) {
+        *ppszUser = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+    }
+    else if (getenv("PGUSER") != NULL ) {
+        *ppszUser = CPLStrdup(getenv("PGUSER"));
+    }
+    else {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "User parameter must be provided, or PGUSER environment "
+                "variable must be set. Please set the user and try again.");
+
+        // cleanup
+        CPLFree(*ppszSchema);
+
+        if (*ppszTable)
+            CPLFree(*ppszTable);
+        if (*ppszColumn)
+            CPLFree(*ppszColumn);
+        if (*ppszWhere)
+            CPLFree(*ppszWhere);
+
+        CPLFree(*ppszConnectionString);
+        CPLFree(*ppszHost);
+        CPLFree(*ppszPort);
+
+        CSLDestroy(papszParams);
+
+        return false;
+    }
+
+    nPos = CSLFindName(papszParams, "password");
+    if (nPos != -1) {
+        *ppszPassword = CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+    }
+    else {
+        // if PGPASSWORD is not set, ppszPassword is set to an empty string.
+        // this is okay, since there may be configurations in pg_hba.conf
+        // that don't require any password to connect
+        *ppszPassword = CPLStrdup(getenv("PGPASSWORD"));
     }
 
     CSLDestroy(papszParams);
 
     CPLDebug("PostGIS_Raster", "PostGISRasterDataset::GetConnectionInfo(): "
         "Mode: %d\nSchema: %s\nTable: %s\nColumn: %s\nWhere: %s\n"
-        "Connection String: %s", *nMode, *pszSchema, *pszTable, *pszColumn, 
-        *pszWhere, *pszConnectionString);
+        "Host: %s\nPort: %s\nUser: %s\nPassword: %s\nConnection String: %s", 
+        *nMode, *ppszSchema, *ppszTable, *ppszColumn, 
+        *ppszWhere, *ppszHost, *ppszPort, *ppszUser, *ppszPassword, *ppszConnectionString);
 
     return true;
+}
+
+/******************************************************************************
+ * \brief Create a connection to a postgres database
+ ******************************************************************************/
+static PGconn *
+GetConnection(const char * pszFilename, char ** ppszConnectionString,
+    char ** ppszSchema, char ** ppszTable, char ** ppszColumn, char ** ppszWhere, 
+    int * nMode, GBool * bBrowseDatabase) 
+{
+    PostGISRasterDriver * poDriver;
+    PGconn * poConn = NULL;
+    char * pszHost = NULL;
+    char * pszPort = NULL;
+    char * pszUser = NULL;
+    char * pszPassword = NULL;
+
+    if (GetConnectionInfo(pszFilename, ppszConnectionString, ppszSchema, 
+        ppszTable, ppszColumn, ppszWhere, &pszHost, &pszPort, &pszUser, 
+        &pszPassword, nMode, bBrowseDatabase)) 
+    {
+        /********************************************************************
+         * Open a new database connection
+         ********************************************************************/
+        poDriver = (PostGISRasterDriver *)GDALGetDriverByName("PostGISRaster");
+        poConn = poDriver->GetConnection(*ppszConnectionString,
+                pszHost, pszPort, pszUser, pszPassword);
+
+        if (poConn == NULL) {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Couldn't establish a database connection");
+            CPLFree(*ppszConnectionString);
+            if (*ppszSchema)
+                CPLFree(*ppszSchema);
+            if (*ppszTable)
+                CPLFree(*ppszTable);
+            if (*ppszColumn)
+                CPLFree(*ppszColumn);
+            if (*ppszWhere)
+                CPLFree(*ppszWhere);
+        }
+    }
+
+    if (pszHost)
+        CPLFree(pszHost);
+    if (pszPort)
+        CPLFree(pszPort);
+    if (pszUser)
+        CPLFree(pszUser);
+    if (pszPassword)
+        CPLFree(pszPassword);
+
+    return poConn;
 }
 
 
@@ -1416,72 +1572,11 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
         return NULL;
     }
 
-    if (!GetConnectionInfo((char *)poOpenInfo->pszFilename,
+    poConn = GetConnection((char *)poOpenInfo->pszFilename,
         &pszConnectionString, &pszSchema, &pszTable, &pszColumn, &pszWhere,
-        &nMode, &bBrowseDatabase))
-    {
-        return NULL;
-    }
-
-
-    /********************************************************************
-     * Open a new database connection
-     * TODO: Use enviroment vars (PGHOST, PGPORT, PGUSER) instead of
-     * default values.
-     * TODO: USE DRIVER INSTEAD OF OPENNING A CONNECTION HERE. MEMORY
-     * PROBLEMS DETECTED (SEE DRIVER DESTRUCTOR FOR FURTHER INFORMATION)
-     ********************************************************************/
-    /*
-    poConn = poDriver->GetConnection(pszConnectionString,
-            CSLFetchNameValueDef(papszParams, "host", DEFAULT_HOST),
-            CSLFetchNameValueDef(papszParams, "port", DEFAULT_PORT),
-            CSLFetchNameValueDef(papszParams, "user", DEFAULT_USER),
-            CSLFetchNameValueDef(papszParams, "password", DEFAULT_PASSWORD));
-
+        &nMode, &bBrowseDatabase);
     if (poConn == NULL) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Couldn't establish a database connection");
-        CSLDestroy(papszParams);
-        CPLFree(pszConnectionString);
-        if (pszSchema)
-            CPLFree(pszSchema);
-        if (pszTable)
-            CPLFree(pszTable);
-        if (pszColumn)
-            CPLFree(pszColumn);
-        if (pszWhere)
-            CPLFree(pszWhere);
-
-        delete poDriver;
-
         return NULL;
-    }
-     */
-
-
-    /* Frees no longer needed memory */
-    //CSLDestroy(papszParams);
-    //CPLFree(pszConnectionString);
-
-    /**
-     * Get connection
-     * TODO: Try to get connection from poDriver
-     **/
-    poConn = PQconnectdb(pszConnectionString);
-    if (poConn == NULL) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Couldn't establish a database connection");
-        if (pszSchema)
-            CPLFree(pszSchema);
-        if (pszTable)
-            CPLFree(pszTable);
-        if (pszColumn)
-            CPLFree(pszColumn);
-        if (pszWhere)
-            CPLFree(pszWhere);
-
-        return NULL;
-
     }
 
     /* Check geometry type existence */
@@ -1504,10 +1599,6 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
             CPLFree(pszColumn);
         if (pszWhere)
             CPLFree(pszWhere);
-
-        PQfinish(poConn);
-
-        //delete poDriver;
 
         return NULL;
     }
@@ -1541,10 +1632,6 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
             CPLFree(pszColumn);
         if (pszWhere)
             CPLFree(pszWhere);
-
-        PQfinish(poConn);
-
-        //delete poDriver;
 
         return NULL;
 
@@ -1581,8 +1668,27 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
         if (!poDS->BrowseDatabase(pszSchema, pszConnectionString)) {
             CPLFree(pszConnectionString);
             delete poDS;
+
+            if (pszSchema)
+                CPLFree(pszSchema);
+            if (pszTable)
+                CPLFree(pszTable);
+            if (pszColumn)
+                CPLFree(pszColumn);
+            if (pszWhere)
+                CPLFree(pszWhere);
+
             return NULL;
         }
+
+        if (pszSchema)
+            CPLFree(pszSchema);
+        if (pszTable)
+            CPLFree(pszTable);
+        if (pszColumn)
+            CPLFree(pszColumn);
+        if (pszWhere)
+            CPLFree(pszWhere);
     }
         /***********************************************************************
          * A table will be read: Fetch raster properties from db. Pay attention
@@ -1814,7 +1920,7 @@ PostGISRasterDataset::CreateCopy( const char * pszFilename,
     char* pszTable = NULL;
     char* pszColumn = NULL;
     char* pszWhere = NULL;
-    GBool bBrowseDatabase;
+    GBool bBrowseDatabase = false;
     int nMode;
     char* pszConnectionString = NULL;
     const char* pszSubdatasetName;
@@ -1838,29 +1944,22 @@ PostGISRasterDataset::CreateCopy( const char * pszFilename,
         return NULL;
     }
 
-    if (!GetConnectionInfo(pszFilename,
-        &pszConnectionString, &pszSchema, &pszTable, &pszColumn, &pszWhere,
-        &nMode, &bBrowseDatabase)) {
-        return NULL;
-    }
-
-    /**
-     * Get connection
-     * TODO: Try to get connection from poDriver
-     **/
-    poConn = PQconnectdb(pszConnectionString);
-    if (poConn == NULL) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Couldn't establish a database connection");
+    poConn = GetConnection(pszFilename, &pszConnectionString, &pszSchema, 
+        &pszTable, &pszColumn, &pszWhere, &nMode, &bBrowseDatabase);
+    if (poConn == NULL || bBrowseDatabase || pszTable == NULL) 
+    {
+        if (pszConnectionString)
+            CPLFree(pszConnectionString);
         if (pszSchema)
             CPLFree(pszSchema);
         if (pszTable)
             CPLFree(pszTable);
         if (pszColumn)
             CPLFree(pszColumn);
-        
-        CPLFree(pszConnectionString);
+        if (pszWhere)
+            CPLFree(pszWhere);
 
+        // if connection info fails, browsing mode, or no table set
         return NULL;
     }
 
@@ -1882,10 +1981,10 @@ PostGISRasterDataset::CreateCopy( const char * pszFilename,
             CPLFree(pszTable);
         if (pszColumn)
             CPLFree(pszColumn);
+        if (pszWhere)
+            CPLFree(pszWhere);
 
         CPLFree(pszConnectionString);
-
-        PQfinish(poConn);
 
         return NULL;
     }
@@ -1916,10 +2015,10 @@ PostGISRasterDataset::CreateCopy( const char * pszFilename,
             CPLFree(pszTable);
         if (pszColumn)
             CPLFree(pszColumn);
+        if (pszWhere)
+            CPLFree(pszWhere);
 
         CPLFree(pszConnectionString);
-
-        PQfinish(poConn);
 
         return NULL;
     }
@@ -1941,10 +2040,10 @@ PostGISRasterDataset::CreateCopy( const char * pszFilename,
             CPLFree(pszTable);
         if (pszColumn)
             CPLFree(pszColumn);
+        if (pszWhere)
+            CPLFree(pszWhere);
 
         CPLFree(pszConnectionString);
-
-        PQfinish(poConn);
 
         return NULL;
     }
@@ -1979,8 +2078,16 @@ PostGISRasterDataset::CreateCopy( const char * pszFilename,
         }
         if (poResult != NULL)
             PQclear(poResult);
+        if (pszSchema)
+            CPLFree(pszSchema);
+        if (pszTable)
+            CPLFree(pszTable);
+        if (pszColumn)
+            CPLFree(pszColumn);
+        if (pszWhere)
+            CPLFree(pszWhere);
 
-        PQfinish(poConn);
+        CPLFree(pszConnectionString);
 
         return NULL;
     }
@@ -2012,8 +2119,16 @@ PostGISRasterDataset::CreateCopy( const char * pszFilename,
         }
         if (poResult != NULL)
             PQclear(poResult);
+        if (pszSchema)
+            CPLFree(pszSchema);
+        if (pszTable)
+            CPLFree(pszTable);
+        if (pszColumn)
+            CPLFree(pszColumn);
+        if (pszWhere)
+            CPLFree(pszWhere);
 
-        PQfinish(poConn);
+        CPLFree(pszConnectionString);
 
         return NULL;
     }
@@ -2027,13 +2142,6 @@ PostGISRasterDataset::CreateCopy( const char * pszFilename,
         bInsertSuccess = InsertRaster(poConn, poSrcDS,
             pszSchema, pszTable, pszColumn);
         if (!bInsertSuccess) {
-            if (pszSchema)
-                CPLFree(pszSchema);
-            if (pszTable)
-                CPLFree(pszTable);
-            if (pszColumn)
-                CPLFree(pszColumn);
-
             // rollback
             poResult = PQexec(poConn, "rollback");
             if (poResult == NULL ||
@@ -2045,10 +2153,17 @@ PostGISRasterDataset::CreateCopy( const char * pszFilename,
             }
             if (poResult != NULL)
                 PQclear(poResult);
+            if (pszSchema)
+                CPLFree(pszSchema);
+            if (pszTable)
+                CPLFree(pszTable);
+            if (pszColumn)
+                CPLFree(pszColumn);
+            if (pszWhere)
+                CPLFree(pszWhere);
 
             CPLFree(pszConnectionString);
 
-            PQfinish(poConn);
             return NULL;
         }
     }
@@ -2109,19 +2224,24 @@ PostGISRasterDataset::CreateCopy( const char * pszFilename,
             CPLFree(pszTable);
         if (pszColumn)
             CPLFree(pszColumn);
+        if (pszWhere)
+            CPLFree(pszWhere);
 
         CPLFree(pszConnectionString);
-
-        PQfinish(poConn);
 
         return NULL;
     }
 
     PQclear(poResult);
 
-    // this is static, and opens a new connection each time, 
-    // so finish with the connection when this method is done
-    PQfinish(poConn);
+    if (pszSchema)
+        CPLFree(pszSchema);
+    if (pszTable)
+        CPLFree(pszTable);
+    if (pszColumn)
+        CPLFree(pszColumn);
+    if (pszWhere)
+        CPLFree(pszWhere);
 
     CPLFree(pszConnectionString);
 
@@ -2180,6 +2300,8 @@ PostGISRasterDataset::InsertRaster(PGconn * poConn,
         return false;
     }
 
+    PQclear(poResult);
+
     return true;
 }
 
@@ -2195,7 +2317,6 @@ PostGISRasterDataset::Delete(const char* pszFilename)
     char* pszWhere = NULL;
     GBool bBrowseDatabase;
     char* pszConnectionString = NULL;
-    const char* pszSubdatasetName;
     int nMode;
     PGconn * poConn = NULL;
     PGresult * poResult = NULL;
@@ -2215,31 +2336,10 @@ PostGISRasterDataset::Delete(const char* pszFilename)
         return CE_Failure;
     }
 
-    if (!GetConnectionInfo(pszFilename,
-        &pszConnectionString, &pszSchema, &pszTable, &pszColumn, &pszWhere,
-        &nMode, &bBrowseDatabase)) {
-        return CE_Failure;
-    }
-
-    /**
-     * Get connection
-     * TODO: Try to get connection from poDriver
-     **/
-    poConn = PQconnectdb(pszConnectionString);
+    poConn = GetConnection(pszFilename, &pszConnectionString, 
+        &pszSchema, &pszTable, &pszColumn, &pszWhere,
+        &nMode, &bBrowseDatabase);
     if (poConn == NULL) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Couldn't establish a database connection");
-        if (pszSchema)
-            CPLFree(pszSchema);
-        if (pszTable)
-            CPLFree(pszTable);
-        if (pszColumn)
-            CPLFree(pszColumn);
-        if (pszWhere)
-            CPLFree(pszWhere);
-        
-        CPLFree(pszConnectionString);
-
         return CE_Failure;
     }
 
@@ -2254,6 +2354,8 @@ PostGISRasterDataset::Delete(const char* pszFilename)
         // set nMode to NO_MODE to avoid any further processing
         nMode = NO_MODE;
     }
+
+    PQclear(poResult);
 
     if ( nMode == ONE_RASTER_PER_TABLE or 
         (nMode == ONE_RASTER_PER_ROW && pszWhere == NULL)) {
@@ -2270,6 +2372,7 @@ PostGISRasterDataset::Delete(const char* pszFilename)
                     pszSchema, pszTable, PQerrorMessage(poConn));
         }
         else {
+            PQclear(poResult);
             nError = CE_None;
         }
     }
@@ -2286,6 +2389,7 @@ PostGISRasterDataset::Delete(const char* pszFilename)
                     pszSchema, pszTable, PQerrorMessage(poConn));
         }
         else {
+            PQclear(poResult);
             nError = CE_None;
         }
     }
@@ -2318,10 +2422,6 @@ PostGISRasterDataset::Delete(const char* pszFilename)
     // clean up connection string
     CPLFree(pszConnectionString);
 
-    // this is static, and opens a new connection each time, 
-    // so finish with the connection when this method is done
-    PQfinish(poConn);
-
     return nError;
 }
 
@@ -2333,7 +2433,7 @@ void GDALRegister_PostGISRaster() {
     GDALDriver *poDriver;
 
     if (GDALGetDriverByName("PostGISRaster") == NULL) {
-        poDriver = new GDALDriver();
+        poDriver = new PostGISRasterDriver();
 
         poDriver->SetDescription("PostGISRaster");
         poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
