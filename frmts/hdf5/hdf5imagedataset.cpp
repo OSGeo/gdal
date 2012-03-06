@@ -333,7 +333,14 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     H5Sclose( memspace );
 
-    return CE_None;
+    if( status < 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "H5Dread() failed for block." );
+        return CE_Failure;
+    }
+    else
+        return CE_None;
 }
 
 /************************************************************************/
