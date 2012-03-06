@@ -969,20 +969,8 @@ def netcdf_27():
     return 'success'
 
 ###############################################################################
-# check support for writing multi-dimensional files
-def netcdf_28():
-
-    if gdaltest.netcdf_drv is None:
-        return 'skip'
-
-    ifile = 'data/netcdf-4d.nc'
-    ofile = 'tmp/netcdf_28.nc'
-
-    # copy file
-    result = netcdf_test_copy( ifile, 0, None, ofile )
-    if result != 'success':
-        gdaltest.post_reason( 'copy failed' )
-        return 'fail'
+# check support for writing multi-dimensional files (helper function)
+def netcdf_test_4dfile( ofile ):
 
     # test result file has 8 bands and 0 subdasets (instead of 0 bands and 8 subdatasets)
     ds = gdal.Open( ofile )
@@ -1003,11 +991,11 @@ def netcdf_28():
     try:
         (ret, err) = gdaltest.runexternal_out_and_err('ncdump -h')
     except:
-        gdaltest.post_reason('NOTICE: ncdump not found')
-        return 'skip'
+        print('NOTICE: ncdump not found')
+        return 'success'
     if err == None or not 'netcdf library version' in err:
-        gdaltest.post_reason('NOTICE: ncdump not found')
-        return 'skip'
+        print('NOTICE: ncdump not found')
+        return 'success'
     (ret, err) = gdaltest.runexternal_out_and_err( 'ncdump -h '+ ofile )
     if ret == '' or err != '':
         gdaltest.post_reason( 'ncdump failed' )
@@ -1031,10 +1019,72 @@ def netcdf_28():
     if err != '':
         gdaltest.post_reason( err )
         return 'fail'
-    
-        
+         
     return 'success'
+
+###############################################################################
+# check support for writing multi-dimensional files using CreateCopy()
+def netcdf_28():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ifile = 'data/netcdf-4d.nc'
+    ofile = 'tmp/netcdf_28.nc'
+
+    # copy file
+    result = netcdf_test_copy( ifile, 0, None, ofile )
+    if result != 'success':
+        return 'fail'
+
+    # test file
+    return netcdf_test_4dfile( ofile )
     
+###############################################################################
+# Check support for writing multi-dimensional files using gdalwarp.
+# Requires metadata copy support in gdalwarp (see bug #3898).
+# First create a vrt file using gdalwarp, then copy file to netcdf.
+# The workaround is (currently ??) necessary because dimension rolling code is 
+# in netCDFDataset::CreateCopy() and necessary dimension metadata 
+# is not saved to netcdf when using gdalwarp (as the driver does not write
+# metadata to netcdf file with SetMetadata() and SetMetadataItem()).
+def netcdf_29():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ifile = 'data/netcdf-4d.nc'
+    ofile1 = 'tmp/netcdf_29.vrt'
+    ofile = 'tmp/netcdf_29.nc'
+
+    # create tif file using gdalwarp
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        gdaltest.post_reason('gdalwarp not found')
+        return 'fail'
+
+    warp_cmd = '%s -q -overwrite -of vrt %s %s' %\
+        ( test_cli_utilities.get_gdalwarp_path(), ifile, ofile1 )
+    try:
+        (ret, err) = gdaltest.runexternal_out_and_err( warp_cmd )
+    except:
+        gdaltest.post_reason('gdalwarp execution failed')
+        return 'fail'
+        
+    if ( err != '' or ret != '' ):
+        gdaltest.post_reason('gdalwarp returned error\n'+str(ret)+' '+str(err))
+        return 'fail'
+
+    # copy vrt to netcdf, with proper dimension rolling
+    result = netcdf_test_copy( ofile1, 0, None, ofile )
+    if result != 'success':
+        return 'fail'
+
+    # test file
+    result = netcdf_test_4dfile( ofile )
+    if result == 'fail':
+        print('test failed - does gdalwarp support metadata copying?')
+
+    return result
 
 ###############################################################################
 
@@ -1070,6 +1120,7 @@ gdaltest_list = [
     netcdf_26,
     netcdf_27,
     netcdf_28,
+    netcdf_29,
  ]
 
 ###############################################################################
