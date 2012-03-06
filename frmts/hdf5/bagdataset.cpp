@@ -636,8 +636,6 @@ void BAGDataset::LoadMetadata()
         CSLDestroy( papszCornerTokens );
     }
 
-    CPLDestroyXMLNode( psRoot );
-
 /* -------------------------------------------------------------------- */
 /*      Try to get the coordinate system.                               */
 /* -------------------------------------------------------------------- */
@@ -648,6 +646,19 @@ void BAGDataset::LoadMetadata()
     {
         oSRS.exportToWkt( &pszProjection );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Fetch acquisition date.                                         */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psDateTime = CPLSearchXMLNode( psRoot, "=dateTime" );
+    if( psDateTime != NULL )
+    {
+        const char *pszDateTimeValue = CPLGetXMLValue( psDateTime, NULL, "" );
+        if( pszDateTimeValue )
+            SetMetadataItem( "BAG_DATETIME", pszDateTimeValue );
+    }
+
+    CPLDestroyXMLNode( psRoot );
 }
 
 /************************************************************************/
