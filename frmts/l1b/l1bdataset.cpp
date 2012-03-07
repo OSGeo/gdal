@@ -47,6 +47,7 @@ enum {                  // File formats
 
 enum {          // Spacecrafts:
     TIROSN,     // TIROS-N
+    // NOAA are given a letter before launch and a number after launch
     NOAA6,      // NOAA-6(A)
     NOAAB,      // NOAA-B
     NOAA7,      // NOAA-7(C)
@@ -61,7 +62,11 @@ enum {          // Spacecrafts:
     NOAA16,     // NOAA-16(L)
     NOAA17,     // NOAA-17(M)
     NOAA18,     // NOAA-18(N)
-    METOP2      // METOP-2(A)
+    NOAA19,     // NOAA-19(N')
+    // MetOp are given a number before launch and a letter after launch
+    METOP2,     // METOP-A(2)
+    METOP1,     // METOP-B(1)
+    METOP3,     // METOP-C(3)
 };
 
 enum {          // Product types
@@ -1009,6 +1014,7 @@ CPLErr L1BDataset::ProcessDatasetHeader()
              eProcCenter = UNKNOWN_CENTER;
 
         // Determine the spacecraft name
+		// See http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/klm/html/c8/sec83132-2.htm
         int iWord = CPL_MSBWORD16( *(GUInt16 *)
             (abyRecHeader + L1B_NOAA15_HDR_REC_ID_OFF) );
         switch ( iWord )
@@ -1025,16 +1031,21 @@ CPLErr L1BDataset::ProcessDatasetHeader()
             case 7:
                 eSpacecraftID = NOAA18;
                 break;
-            /* FIXME: find appropriate samples and test these two cases:
-             * case 8:
-                eSpacecraftID = NOAA-N';
+            case 8:
+                eSpacecraftID = NOAA19;
                 break;
             case 11:
-                eSpacecraftID = METOP-1;
-                break;*/
+                eSpacecraftID = METOP1;
+                break;
             case 12:
-            case 14:    // METOP simulator (code used in AAPP format)
                 eSpacecraftID = METOP2;
+                break;
+            // METOP3 is not documented yet
+            case 13:
+                eSpacecraftID = METOP3;
+                break;
+            case 14:
+                eSpacecraftID = METOP3;
                 break;
             default:
 #ifdef DEBUG
@@ -1155,8 +1166,17 @@ CPLErr L1BDataset::ProcessDatasetHeader()
         case NOAA18:
             pszText = "NOAA-18(N)";
             break;
+        case NOAA19:
+            pszText = "NOAA-19(N')";
+            break;
         case METOP2:
-            pszText = "METOP-2(A)";
+            pszText = "METOP-A(2)";
+            break;
+        case METOP1:
+            pszText = "METOP-B(1)";
+            break;
+        case METOP3:
+            pszText = "METOP-C(3)";
             break;
         default:
             pszText = "Unknown";
@@ -1734,7 +1754,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( iBand, new L1BRasterBand( poDS, iBand ));
         
         // Channels descriptions
-        if ( poDS->eSpacecraftID >= NOAA6 && poDS->eSpacecraftID <= METOP2 )
+        if ( poDS->eSpacecraftID >= NOAA6 && poDS->eSpacecraftID <= METOP3 )
         {
             if ( !(i & 0x01) && poDS->iChannelsMask & 0x01 )
             {
@@ -1751,7 +1771,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
             if ( !(i & 0x04) && poDS->iChannelsMask & 0x04 )
             {
                 if ( poDS->eSpacecraftID >= NOAA15
-                     && poDS->eSpacecraftID <= METOP2 )
+                     && poDS->eSpacecraftID <= METOP3 )
                     if ( poDS->iInstrumentStatus & 0x0400 )
                         poDS->GetRasterBand(iBand)->SetDescription( apszBandDesc[7] );
                     else
