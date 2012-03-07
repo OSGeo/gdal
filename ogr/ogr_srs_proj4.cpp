@@ -756,23 +756,37 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
     else if( EQUAL(pszProj,"omerc") )
     {
-        SetHOM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                OSR_GDV( papszNV, "lonc", 0.0 ), 
-                OSR_GDV( papszNV, "alpha", 0.0 ), 
-                OSR_GDV( papszNV, "gamma", 0.0 ), 
-                OSR_GDV( papszNV, "k", 1.0 ), 
-                OSR_GDV( papszNV, "x_0", 0.0 ), 
-                OSR_GDV( papszNV, "y_0", 0.0 ) );
+        if( CSLFetchNameValue(papszNV,"no_uoff") != NULL
+            || CSLFetchNameValue(papszNV,"no_off") != NULL )
+        {
+            SetHOM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                    OSR_GDV( papszNV, "lonc", 0.0 ), 
+                    OSR_GDV( papszNV, "alpha", 0.0 ), 
+                    OSR_GDV( papszNV, "gamma", 0.0 ), 
+                    OSR_GDV( papszNV, "k", 1.0 ), 
+                    OSR_GDV( papszNV, "x_0", 0.0 ), 
+                    OSR_GDV( papszNV, "y_0", 0.0 ) );
+        }
+        else
+        {
+            SetOM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                   OSR_GDV( papszNV, "lonc", 0.0 ), 
+                   OSR_GDV( papszNV, "alpha", 0.0 ), 
+                   OSR_GDV( papszNV, "gamma", 0.0 ), 
+                   OSR_GDV( papszNV, "k", 1.0 ), 
+                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
+        }
     }
 
     else if( EQUAL(pszProj,"somerc") )
     {
-        SetHOM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-                OSR_GDV( papszNV, "lon_0", 0.0 ), 
-                90.0,  90.0, 
-                OSR_GDV( papszNV, "k", 1.0 ), 
-                OSR_GDV( papszNV, "x_0", 0.0 ), 
-                OSR_GDV( papszNV, "y_0", 0.0 ) );
+        SetOM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+               OSR_GDV( papszNV, "lon_0", 0.0 ), 
+               90.0,  90.0, 
+               OSR_GDV( papszNV, "k", 1.0 ), 
+               OSR_GDV( papszNV, "x_0", 0.0 ), 
+               OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"krovak") )
@@ -1802,6 +1816,43 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     }
 
     else if( EQUAL(pszProjection,SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
+    {
+        /* special case for swiss oblique mercator : see bug 423 */
+        if( fabs(GetNormProjParm(SRS_PP_AZIMUTH,0.0) - 90.0) < 0.0001 
+            && fabs(GetNormProjParm(SRS_PP_RECTIFIED_GRID_ANGLE,0.0)-90.0) < 0.0001 )
+        {
+            sprintf( szProj4+strlen(szProj4),
+                     "+proj=somerc +lat_0=%.16g +lon_0=%.16g"
+                     " +k_0=%.16g +x_0=%.16g +y_0=%.16g ",
+                     GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                     GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                     GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
+                     GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                     GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+        }
+        else
+        {
+            sprintf( szProj4+strlen(szProj4),
+                     "+proj=omerc +lat_0=%.16g +lonc=%.16g +alpha=%.16g"
+                     " +k=%.16g +x_0=%.16g +y_0=%.16g +no_uoff ",
+                     GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                     GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                     GetNormProjParm(SRS_PP_AZIMUTH,0.0),
+                     GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
+                     GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                     GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+
+            // RSO variant - http://trac.osgeo.org/proj/ticket/62
+            // Note that gamma is only supported by PROJ 4.8.0 and later.
+            if( GetNormProjParm(SRS_PP_RECTIFIED_GRID_ANGLE,1000.0) != 1000.0 )
+            {
+                sprintf( szProj4+strlen(szProj4), "+gamma=%.16g ",
+                         GetNormProjParm(SRS_PP_RECTIFIED_GRID_ANGLE,1000.0));
+            }
+        }
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_OBLIQUE_MERCATOR) )
     {
         /* special case for swiss oblique mercator : see bug 423 */
         if( fabs(GetNormProjParm(SRS_PP_AZIMUTH,0.0) - 90.0) < 0.0001 
