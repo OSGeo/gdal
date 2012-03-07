@@ -117,6 +117,7 @@ typedef enum {
 #define SRS_PT_GOODE_HOMOLOSINE "Goode_Homolosine"
 #define SRS_PT_IGH              "Interrupted_Goode_Homolosine"
 #define SRS_PT_GNOMONIC         "Gnomonic"
+#define SRS_PT_OBLIQUE_MERCATOR "Oblique_Mercator"
 #define SRS_PT_HOTINE_OBLIQUE_MERCATOR                                  \
                                 "Hotine_Oblique_Mercator"
 #define SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN         \
@@ -493,6 +494,13 @@ OGRErr CPL_DLL OSRSetGaussSchreiberTMercator( OGRSpatialReferenceH hSRS,
 OGRErr CPL_DLL OSRSetGnomonic(OGRSpatialReferenceH hSRS,
                               double dfCenterLat, double dfCenterLong,
                             double dfFalseEasting, double dfFalseNorthing );
+
+/** Oblique Mercator (aka HOM (variant B) */
+OGRErr CPL_DLL OSRSetOM( OGRSpatialReferenceH hSRS,
+                         double dfCenterLat, double dfCenterLong,
+                         double dfAzimuth, double dfRectToSkew,
+                         double dfScale,
+                         double dfFalseEasting, double dfFalseNorthing );
 
 /** Hotine Oblique Mercator using azimuth angle */
 OGRErr CPL_DLL OSRSetHOM( OGRSpatialReferenceH hSRS,
