@@ -29,6 +29,7 @@
 #include <ogr_featurestyle.h>
 
 #include <kml/dom.h>
+#include <kml/engine.h>
 #include <kml/base/color32.h>
 
 using kmldom::KmlFactory;;
@@ -36,6 +37,9 @@ using kmldom::ElementPtr;
 using kmldom::ObjectPtr;
 using kmldom::FeaturePtr;
 using kmldom::StylePtr;
+using kmldom::StyleMapPtr;
+using kmldom::STYLESTATE_NORMAL;
+using kmldom::STYLESTATE_HIGHLIGHT;
 using kmldom::StyleSelectorPtr;
 using kmldom::LineStylePtr;
 using kmldom::PolyStylePtr;
@@ -44,6 +48,8 @@ using kmldom::IconStyleIconPtr;
 using kmldom::LabelStylePtr;
 using kmldom::HotSpotPtr;
 using kmlbase::Color32;
+using kmldom::PairPtr;
+using kmldom::KmlPtr;
 
 #include "ogrlibkmlstyle.h"
 
@@ -743,6 +749,234 @@ void kml2styletable (
 }
 
 /******************************************************************************
+ function to follow the kml stylemap if one exists
+******************************************************************************/
+
+StyleSelectorPtr StyleFromStyleSelector(
+    const StyleSelectorPtr& poKmlStyleSelector, 
+    OGRStyleTable * poStyleTable) 
+{
+    
+    /***** is it a style? *****/
+
+    if ( poKmlStyleSelector->IsA( kmldom::Type_Style) )
+        return poKmlStyleSelector;
+
+    /***** is it a style map? *****/
+    
+    else if ( poKmlStyleSelector->IsA( kmldom::Type_StyleMap) )
+        return StyleFromStyleMap(kmldom::AsStyleMap(poKmlStyleSelector), poStyleTable);
+
+    /***** not a style or a style map *****/
+    
+    return NULL;
+}
+
+
+/******************************************************************************
+ function to get the container from the kmlroot
+ 
+ Args:          poKmlRoot   the root element
+ 
+ Returns:       root if its a container, if its a kml the container it
+                contains, or NULL
+
+******************************************************************************/
+
+static ContainerPtr MyGetContainerFromRoot (
+    KmlFactory *m_poKmlFactory, ElementPtr poKmlRoot )
+{
+    ContainerPtr poKmlContainer = NULL;
+
+    if ( poKmlRoot ) {
+
+        /***** skip over the <kml> we want the container *****/
+
+        if ( poKmlRoot->IsA ( kmldom::Type_kml ) ) {
+
+            KmlPtr poKmlKml = AsKml ( poKmlRoot );
+
+            if ( poKmlKml->has_feature (  ) ) {
+                FeaturePtr poKmlFeat = poKmlKml->get_feature (  );
+
+                if ( poKmlFeat->IsA ( kmldom::Type_Container ) )
+                    poKmlContainer = AsContainer ( poKmlFeat );
+                else if ( poKmlFeat->IsA ( kmldom::Type_Placemark ) )
+                {
+                    poKmlContainer = m_poKmlFactory->CreateDocument (  );
+                    poKmlContainer->add_feature ( kmldom::AsFeature(kmlengine::Clone(poKmlFeat)) );
+                }
+            }
+        }
+
+        else if ( poKmlRoot->IsA ( kmldom::Type_Container ) )
+            poKmlContainer = AsContainer ( poKmlRoot );
+    }
+
+    return poKmlContainer;
+}
+
+
+
+StyleSelectorPtr StyleFromStyleURL(
+    const StyleMapPtr& stylemap,
+    const string styleurl,
+    OGRStyleTable * poStyleTable) 
+{
+    // TODO:: Parse the styleURL
+
+    char *pszUrl = CPLStrdup ( styleurl.c_str (  ) );
+    char *pszStyleMapId = CPLStrdup ( stylemap->get_id().c_str (  ) );
+    
+
+    /***** is it an interenal style ref that starts with a # *****/
+
+    if ( *pszUrl == '#' && poStyleTable ) {
+
+        /***** searh the style table for the style we *****/
+        /***** want and copy it back into the table   *****/
+
+        const char *pszTest = NULL;
+        pszTest = poStyleTable->Find ( pszUrl + 1 );
+        if ( pszTest ) {
+            poStyleTable->AddStyle(pszStyleMapId, pszTest);
+        }
+    }
+
+    /***** We have a real URL and need to go out and fetch it *****/
+    /***** FIXME this could be a relative path in a kmz *****/
+    
+    else if ( strchr(pszUrl, '#') ) {
+
+        const char *pszFetch = CPLGetConfigOption ( "LIBKML_EXTERNAL_STYLE", "no" );
+        if ( EQUAL(pszFetch, "yes") ) {
+
+            /***** Lets go out and fetch the style from the external URL *****/
+
+            char *pszUrlTmp = CPLStrdup(pszUrl);
+            char *pszPound;
+            char *pszRemoteStyleName = NULL;
+            // Chop off the stuff (style id) after the URL
+            if ((pszPound = strchr(pszUrlTmp, '#'))) {
+                *pszPound = '\0';
+                pszRemoteStyleName = pszPound + 1;
+            }
+
+            /***** try it as a url then a file *****/
+
+            VSILFILE *fp = NULL;
+            if ( (fp = VSIFOpenL( CPLFormFilename( "/vsicurl/",
+                                                   pszUrlTmp,
+                                                  NULL), "r" ))
+                 ||  (fp = VSIFOpenL( pszUrlTmp, "r" )) )
+            {
+                char szbuf[1025];
+                std::string oStyle = "";
+
+                /***** loop, read and copy to a string *****/
+
+                size_t nRead;
+                do {                        
+                    nRead = VSIFReadL(szbuf, 1, sizeof(szbuf) - 1, fp);
+                    if (nRead == 0)
+                        break;
+                    
+                    /***** copy buf to the string *****/
+                    
+                    szbuf[nRead] = '\0';
+                    oStyle.append( szbuf );                        
+                } while (!VSIFEofL(fp));
+                
+                VSIFCloseL(fp);
+
+                /***** parse the kml into the dom *****/
+                
+                std::string oKmlErrors;
+                ElementPtr poKmlRoot = kmldom::Parse ( oStyle, &oKmlErrors );
+
+                if ( !poKmlRoot ) {
+                    CPLError ( CE_Failure, CPLE_OpenFailed,
+                               "ERROR Parseing style kml %s :%s",
+                               pszUrlTmp, oKmlErrors.c_str (  ) );
+                    CPLFree(pszUrlTmp);
+                    CPLFree ( pszUrl );
+                    CPLFree ( pszStyleMapId );
+
+                    return NULL;
+                }
+
+                /***** get the root container *****/
+                
+                ContainerPtr poKmlContainer;
+                kmldom::KmlFactory* poKmlFactory = kmldom::KmlFactory::GetFactory();
+                if ( !( poKmlContainer = MyGetContainerFromRoot ( poKmlFactory, poKmlRoot ) ) ) {
+                    CPLFree(pszUrlTmp);
+                    CPLFree ( pszUrl );
+                    CPLFree ( pszStyleMapId );
+
+                    return NULL;
+                }
+
+                /**** parse the styles into the table *****/
+                
+                ParseStyles ( AsDocument ( poKmlContainer ), &poStyleTable );
+                    
+                /***** look for the style we leed to map to in the table *****/
+
+                const char *pszTest = NULL;
+                pszTest = poStyleTable->Find(pszRemoteStyleName);
+
+                /***** if found copy it to the table as a new style *****/
+                if ( pszTest )
+                    poStyleTable->AddStyle(pszStyleMapId, pszTest);
+
+            }
+            CPLFree(pszUrlTmp);
+        }
+    }
+
+    /***** FIXME add suport here for relative links inside kml *****/
+    
+    CPLFree ( pszUrl );
+    CPLFree ( pszStyleMapId );
+
+    return NULL;
+}
+
+StyleSelectorPtr StyleFromStyleMap(
+    const StyleMapPtr& poKmlStyleMap,
+    OGRStyleTable * poStyleTable) 
+{
+
+    /***** check the config option to see if the    *****/
+    /***** user wants normal or highlighted mapping *****/
+
+    const char *pszStyleMapKey = CPLGetConfigOption ( "LIBKML_STYLEMAP_KEY", "normal" );
+    int nStyleMapKey = STYLESTATE_NORMAL;
+    if ( EQUAL (pszStyleMapKey, "highlight"))
+         nStyleMapKey = STYLESTATE_HIGHLIGHT;
+
+    /*****  Loop through the stylemap pairs and look for the "normal" one *****/
+
+    for (size_t i = 0; i < poKmlStyleMap->get_pair_array_size(); ++i) {
+        PairPtr myPair = poKmlStyleMap->get_pair_array_at(i);
+
+        /***** is it the right one of the pair? *****/
+        
+        if ( myPair->get_key() == nStyleMapKey ) {
+            
+            if (myPair->has_styleselector())
+                return StyleFromStyleSelector(myPair->get_styleselector(), poStyleTable);
+
+            else if (myPair->has_styleurl())
+                return StyleFromStyleURL(poKmlStyleMap, myPair->get_styleurl(), poStyleTable);
+        }
+    }
+
+    return NULL;
+}
+
+/******************************************************************************
  function to parse a style table out of a document
 ******************************************************************************/
 
@@ -761,20 +995,78 @@ void ParseStyles (
     size_t nKmlStyles = poKmlDocument->get_styleselector_array_size (  );
     size_t iKmlStyle;
 
-    for ( iKmlStyle = 0; iKmlStyle < nKmlStyles; iKmlStyle++ ) {
+    /***** Lets first build the style table.    *****/
+    /***** to begin this is just proper styles. *****/
 
+    for ( iKmlStyle = 0; iKmlStyle < nKmlStyles; iKmlStyle++ ) {
         StyleSelectorPtr poKmlStyle =
             poKmlDocument->get_styleselector_array_at ( iKmlStyle );
+
+        /***** Everything that is not a style you skip *****/
 
         if ( !poKmlStyle->IsA ( kmldom::Type_Style ) )
             continue;
 
+        /***** We need to check to see if this is the first style. if it *****/
+        /***** is we will not have a style table and need to create one  *****/
+
         if ( !*poStyleTable )
             *poStyleTable = new OGRStyleTable (  );
 
-        ElementPtr poKmlElement = AsElement ( poKmlStyle );
+        /***** TODO:: Not sure we need to do this as we seem *****/
+        /***** to cast to element and then back to style.    *****/
 
+        ElementPtr poKmlElement = AsElement ( poKmlStyle );
         kml2styletable ( *poStyleTable, AsStyle ( poKmlElement ) );
+    }
+
+    /***** Now we have to loop back around and get the style maps. We    *****/ 
+    /***** have to do this a second time since the stylemap might matter *****/ 
+    /***** and we are just looping reference styles that are farther     *****/
+    /***** down in the file. Order through the XML as it is parsed.      *****/
+
+    for ( iKmlStyle = 0; iKmlStyle < nKmlStyles; iKmlStyle++ ) {
+        StyleSelectorPtr poKmlStyle =
+            poKmlDocument->get_styleselector_array_at ( iKmlStyle );
+
+        /***** Everything that is not a stylemap you skip *****/
+
+        if ( !poKmlStyle->IsA ( kmldom::Type_StyleMap ) )
+            continue;
+
+        /***** We need to check to see if this is the first style. if it *****/
+        /***** is we will not have a style table and need to create one  *****/
+
+        if ( !*poStyleTable )
+            *poStyleTable = new OGRStyleTable (  );
+
+        /***** copy the style the style map points to since *****/
+        
+        char *pszStyleMapId = CPLStrdup ( poKmlStyle->get_id().c_str (  ) );
+        poKmlStyle = StyleFromStyleMap(kmldom::AsStyleMap(poKmlStyle), *poStyleTable);
+        if (poKmlStyle == NULL) {
+            CPLFree(pszStyleMapId);
+            continue;
+        }
+        char *pszStyleId = CPLStrdup ( poKmlStyle->get_id().c_str (  ) );
+
+        /***** TODO:: Not sure we need to do this as we seem *****/
+        /***** to cast to element and then back to style.    *****/
+
+        ElementPtr poKmlElement = AsElement ( poKmlStyle );
+        kml2styletable ( *poStyleTable, AsStyle ( poKmlElement ) );
+
+        // Change the name of the new style in the style table
+
+        const char *pszTest = NULL;
+        pszTest = (*poStyleTable)->Find(pszStyleId);
+        // If we found the style we want in the style table we...
+        if ( pszTest ) {
+            (*poStyleTable)->AddStyle(pszStyleMapId, pszTest);
+            (*poStyleTable)->RemoveStyle ( pszStyleId );
+        }
+        CPLFree ( pszStyleId );
+        CPLFree ( pszStyleMapId );
     }
 
     return;
