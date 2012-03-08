@@ -394,7 +394,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     const char* pszFetched  = "";
     char* pszDescription    = NULL;
     char* pszInsert         = NULL;
-    int   nQuality          = 75;
+    int   nQuality          = -1;
 
     if( ! poGRW->sTable.empty() )
     {
@@ -724,6 +724,11 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
             CPLError( CE_Warning, CPLE_IllegalArg, 
                 "Incorrect COORDLOCATION (%s)", pszFetched );
         }
+    }
+
+    if ( nQuality > 0 )
+    {
+        poGRD->poGeoRaster->nCompressQuality = nQuality;
     }
 
     //  -------------------------------------------------------------------
