@@ -2357,7 +2357,7 @@ PostGISRasterDataset::Delete(const char* pszFilename)
 
     PQclear(poResult);
 
-    if ( nMode == ONE_RASTER_PER_TABLE or 
+    if ( nMode == ONE_RASTER_PER_TABLE || 
         (nMode == ONE_RASTER_PER_ROW && pszWhere == NULL)) {
         // without a where clause, this delete command shall delete
         // all subdatasets, even if the mode is ONE_RASTER_PER_ROW
