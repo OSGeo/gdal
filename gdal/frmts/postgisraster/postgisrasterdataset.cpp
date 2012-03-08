@@ -1378,18 +1378,6 @@ GetConnectionInfo(const char * pszFilename,
                 "Host parameter must be provided, or PGHOST environment "
                 "variable must be set. Please set the host and try again.");
 
-        // cleanup
-        CPLFree(*ppszSchema);
-
-        if (*ppszTable)
-            CPLFree(*ppszTable);
-        if (*ppszColumn)
-            CPLFree(*ppszColumn);
-        if (*ppszWhere)
-            CPLFree(*ppszWhere);
-
-        CPLFree(*ppszConnectionString);
-
         CSLDestroy(papszParams);
 
         return false;
@@ -1407,19 +1395,6 @@ GetConnectionInfo(const char * pszFilename,
                 "Port parameter must be provided, or PGPORT environment "
                 "variable must be set. Please set the port and try again.");
 
-        // cleanup
-        CPLFree(*ppszSchema);
-
-        if (*ppszTable)
-            CPLFree(*ppszTable);
-        if (*ppszColumn)
-            CPLFree(*ppszColumn);
-        if (*ppszWhere)
-            CPLFree(*ppszWhere);
-
-        CPLFree(*ppszConnectionString);
-        CPLFree(*ppszHost);
-
         CSLDestroy(papszParams);
 
         return false;
@@ -1436,20 +1411,6 @@ GetConnectionInfo(const char * pszFilename,
         CPLError(CE_Failure, CPLE_AppDefined,
                 "User parameter must be provided, or PGUSER environment "
                 "variable must be set. Please set the user and try again.");
-
-        // cleanup
-        CPLFree(*ppszSchema);
-
-        if (*ppszTable)
-            CPLFree(*ppszTable);
-        if (*ppszColumn)
-            CPLFree(*ppszColumn);
-        if (*ppszWhere)
-            CPLFree(*ppszWhere);
-
-        CPLFree(*ppszConnectionString);
-        CPLFree(*ppszHost);
-        CPLFree(*ppszPort);
 
         CSLDestroy(papszParams);
 
@@ -1507,26 +1468,13 @@ GetConnection(const char * pszFilename, char ** ppszConnectionString,
         if (poConn == NULL) {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Couldn't establish a database connection");
-            CPLFree(*ppszConnectionString);
-            if (*ppszSchema)
-                CPLFree(*ppszSchema);
-            if (*ppszTable)
-                CPLFree(*ppszTable);
-            if (*ppszColumn)
-                CPLFree(*ppszColumn);
-            if (*ppszWhere)
-                CPLFree(*ppszWhere);
         }
     }
 
-    if (pszHost)
-        CPLFree(pszHost);
-    if (pszPort)
-        CPLFree(pszPort);
-    if (pszUser)
-        CPLFree(pszUser);
-    if (pszPassword)
-        CPLFree(pszPassword);
+    CPLFree(pszHost);
+    CPLFree(pszPort);
+    CPLFree(pszUser);
+    CPLFree(pszPassword);
 
     return poConn;
 }
@@ -1576,6 +1524,11 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
         &pszConnectionString, &pszSchema, &pszTable, &pszColumn, &pszWhere,
         &nMode, &bBrowseDatabase);
     if (poConn == NULL) {
+        CPLFree(pszConnectionString);
+        CPLFree(pszSchema);
+        CPLFree(pszTable);
+        CPLFree(pszColumn);
+        CPLFree(pszWhere);
         return NULL;
     }
 
@@ -1948,16 +1901,11 @@ PostGISRasterDataset::CreateCopy( const char * pszFilename,
         &pszTable, &pszColumn, &pszWhere, &nMode, &bBrowseDatabase);
     if (poConn == NULL || bBrowseDatabase || pszTable == NULL) 
     {
-        if (pszConnectionString)
-            CPLFree(pszConnectionString);
-        if (pszSchema)
-            CPLFree(pszSchema);
-        if (pszTable)
-            CPLFree(pszTable);
-        if (pszColumn)
-            CPLFree(pszColumn);
-        if (pszWhere)
-            CPLFree(pszWhere);
+        CPLFree(pszConnectionString);
+        CPLFree(pszSchema);
+        CPLFree(pszTable);
+        CPLFree(pszColumn);
+        CPLFree(pszWhere);
 
         // if connection info fails, browsing mode, or no table set
         return NULL;
@@ -2340,6 +2288,12 @@ PostGISRasterDataset::Delete(const char* pszFilename)
         &pszSchema, &pszTable, &pszColumn, &pszWhere,
         &nMode, &bBrowseDatabase);
     if (poConn == NULL) {
+        CPLFree(pszConnectionString);
+        CPLFree(pszSchema);
+        CPLFree(pszTable);
+        CPLFree(pszColumn);
+        CPLFree(pszWhere);
+
         return CE_Failure;
     }
 
