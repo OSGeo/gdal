@@ -944,7 +944,7 @@ int main( int argc, char ** argv )
             else 
             {
                 CPLDebug("WARP", 
-                         "Removing conflicting from destination dataset (source #%d)", iSrc );
+                         "Removing conflicting metadata from destination dataset (source #%d)", iSrc );
                 /* remove conflicting dataset-level metadata */
                 RemoveConflictingMetadata( hDstDS, GDALGetMetadata( hSrcDS, NULL ), pszMDConflictValue );
                 
