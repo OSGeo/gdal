@@ -125,10 +125,16 @@ DEFLATE or NONE. The two JPEG options are lossy, meaning that the
 original pixel values are changed. The JPEG-F store a full JPEG
 structure on each block while JPEG-B are smaller since they don't store
 Huffman and Quantization tables.</li>
-  <li><span style="font-weight: bold;">QUALITY</span>: Quality
-compression option for JPEG ranging from 0 to 100. The default is 75.</li>
-  <li><span style="font-weight: bold;">NBITS</span>: Sub byte data
-type, options: 1, 2 or 4.</li>
+  <li><strong>QUALITY</strong>: Quality compression option for JPEG 
+ranging from 0 to 100. The default is 75.</li>
+  <li><strong>NBITS</strong>: Sub byte data type, options: 1, 2 or 4.</li>
+  <li><strong>SPATIALEXTENT</strong>: Generate Spatial Extents. The default for that options is 
+TRUE, that means that this option only need to be informed to force the Spatial Extent to 
+remain as NULL. If EXTENTSRID is not informed the Spatial Extent geometry will be generated with 
+the same SRID as the GeoGeoraster object.</li>
+  <li><strong>EXTENTSRID</strong>: SRID code to be used on the Spatial Extent geometry. 
+If the table/column has already a spatial extent, the value informed should be the same as the 
+SRID on the Spatial Extent of the other existing GeoRaster.</li>
 </ul>
 <strong></strong>
 <h3>Importing GeoRaster</h3>
