@@ -695,10 +695,8 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         poGRD->poGeoRaster->SetGeoReference( atoi( pszFetched ) );
     }
 
-    if( CSLFetchBoolean( papszOptions, "SPATIALEXTENT", FALSE ) )
-    {
-        poGRD->poGeoRaster->bGenSpatialIndex = true;
-    }
+    poGRD->poGeoRaster->bGenSpatialIndex = 
+        CSLFetchBoolean( papszOptions, "SPATIALEXTENT", TRUE );
 
     pszFetched = CSLFetchNameValue( papszOptions, "EXTENTSRID" );
 
@@ -1885,7 +1883,7 @@ void CPL_DLL GDALRegister_GEOR()
                                            "default='0'/>"
 "  <Option name='SPATIALEXTENT' type='boolean'"
                                            "description='Generate Spatial Extent' "
-                                           "default='FALSE'/>"
+                                           "default='TRUE'/>"
 "  <Option name='EXTENTSRID'  type='int'    description='Spatial ExtentSRID code' "
                                            "default='0'/>"
 "  <Option name='NBITS'       type='int'    description='BITS for sub-byte "
