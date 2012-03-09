@@ -1151,6 +1151,7 @@ void GDALRegister_HDF4()
                                    "Hierarchical Data Format Release 4" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_hdf4.html" );
+        poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "hdf");
 
         poDriver->pfnOpen = HDF4Dataset::Open;
         poDriver->pfnIdentify = HDF4Dataset::Identify;
