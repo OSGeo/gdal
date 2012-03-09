@@ -909,11 +909,14 @@ int main( int argc, char ** argv )
             /* copy metadata from first dataset */
             if ( iSrc == 0 )
             {
+                CPLDebug("WARP", "Copying metadata from first source to destination dataset");
                 /* copy dataset-level metadata */
                 papszMetadata = GDALGetMetadata( hSrcDS, NULL );
-                if ( CSLCount(papszMetadata) > 0 )
-                    GDALSetMetadata( hDstDS, papszMetadata, NULL );
-                
+                if ( CSLCount(papszMetadata) > 0 ) {
+                    if ( GDALSetMetadata( hDstDS, papszMetadata, NULL ) != CE_None )
+                         fprintf( stderr, 
+                                  "Warning: error copying metadata to destination dataset.\n" );
+                }
                 /* copy band-level metadata and other info */
                 if ( GDALGetRasterCount( hSrcDS ) == GDALGetRasterCount( hDstDS ) )              
                 {
@@ -940,6 +943,8 @@ int main( int argc, char ** argv )
             /* remove metadata that conflicts between datasets */
             else 
             {
+                CPLDebug("WARP", 
+                         "Removing conflicting from destination dataset (source #%d)", iSrc );
                 /* remove conflicting dataset-level metadata */
                 RemoveConflictingMetadata( hDstDS, GDALGetMetadata( hSrcDS, NULL ), pszMDConflictValue );
                 
