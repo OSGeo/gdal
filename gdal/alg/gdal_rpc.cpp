@@ -343,9 +343,7 @@ typedef struct {
  * should be used in replacement of RPC_HEIGHT to provide a way of defining
  * a non uniform ground for the target scene (GDAL >= 1.8.0)
  *
- * <li> RPC_DEMINTERPOLATION: the DEM interpolation (near, bilinear or cubic). 
- * This is the way how to get the height for each pixel of the transforming
- * raster from the DEM.
+ * <li> RPC_DEMINTERPOLATION: the DEM interpolation (near, bilinear or cubic)
  * </ul>
  *
  * @param psRPCInfo Definition of the RPC parameters.
@@ -411,7 +409,7 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
 /* -------------------------------------------------------------------- */
 /*                      The DEM interpolation                           */
 /* -------------------------------------------------------------------- */
-    const char *pszDEMInterpolation = CSLFetchNameValue( papszOptions, "RPC_DEMINTERPOLATION" );
+    const char *pszDEMInterpolation = CSLFetchNameValueDef( papszOptions, "RPC_DEMINTERPOLATION", "bilinear" );
     if(EQUAL(pszDEMInterpolation, "near" ))
         psTransform->eResampleAlg = DRA_NearestNeighbour;
     else if(EQUAL(pszDEMInterpolation, "bilinear" ))
@@ -979,6 +977,25 @@ CPLXMLNode *GDALSerializeRPCTransformer( void *pTransformArg )
             CPLString().Printf( "%s", psInfo->pszDEMPath ) );
 
 /* -------------------------------------------------------------------- */
+/*      Serialize DEM interpolation                                     */
+/* -------------------------------------------------------------------- */
+    CPLString soDEMInterpolation;
+    switch(psInfo->eResampleAlg)
+    {
+    case  DRA_NearestNeighbour:
+        soDEMInterpolation = "near";
+        break;
+    case DRA_Cubic:
+        soDEMInterpolation = "cubic";
+        break;
+    default:
+    case DRA_Bilinear:
+        soDEMInterpolation = "bilinear";
+    }
+    CPLCreateXMLElementAndValue( 
+        psTree, "DEMInterpolation", soDEMInterpolation );
+
+/* -------------------------------------------------------------------- */
 /*      Serialize pixel error threshold.                                */
 /* -------------------------------------------------------------------- */
     CPLCreateXMLElementAndValue( 
@@ -1082,6 +1099,11 @@ void *GDALDeserializeRPCTransformer( CPLXMLNode *psTree )
     if (pszDEMPath != NULL)
         papszOptions = CSLSetNameValue( papszOptions, "RPC_DEM",
                                         pszDEMPath);
+
+    const char* pszDEMInterpolation = CPLGetXMLValue(psTree,"DEMInterpolation", "bilinear");
+    if (pszDEMInterpolation != NULL)
+        papszOptions = CSLSetNameValue( papszOptions, "RPC_DEMINTERPOLATION",
+                                        pszDEMInterpolation);
 
 /* -------------------------------------------------------------------- */
 /*      Generate transformation.                                        */
