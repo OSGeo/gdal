@@ -22,6 +22,9 @@ Prerequisites:
     preserved : no method signature change, no addition of virtual methods, no
     new members. Only non-virtual methods can be added.
 
+    It may also be helpful to check:
+      http://upstream-tracker.org/versions/gdal.html
+
 Process :
 
 1) a) Regenerate configure using autogen.sh and commit if changed.
