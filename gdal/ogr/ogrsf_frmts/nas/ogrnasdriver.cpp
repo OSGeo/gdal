@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrgmldriver.cpp 10645 2007-01-18 02:22:39Z warmerdam $
+ * $Id$
  *
  * Project:  OGR
  * Purpose:  OGRNASDriver implementation
@@ -30,7 +30,7 @@
 #include "ogr_nas.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id: ogrgmldriver.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          ~OGRNASDriver()                           */

@@ -1,7 +1,7 @@
 /**********************************************************************
- * $Id: gmlhandler.cpp 13760 2008-02-11 17:48:30Z warmerdam $
+ * $Id$
  *
- * Project:  GML Reader
+ * Project:  NAS Reader
  * Purpose:  Implementation of NASHandler class.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -107,6 +107,15 @@ void NASHandler::startElement(const XMLCh* const    uri,
         return;
     }
 
+#ifdef DEBUG_VERBOSE
+    CPLDebug("NAS",
+              "%*sstartElement %s m_bIgnoreFeature:%d depth:%d depthFeature:%d featureClass:%s",
+              m_nDepth, "", szElementName,
+              m_bIgnoreFeature, m_nDepth, m_nDepthFeature,
+              poState->m_poFeature ? poState->m_poFeature->GetClass()->GetElementName() : "(no feature)"
+            );
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      If we are in the midst of collecting a feature attribute        */
 /*      value, then this must be a complex attribute which we don't     */
@@ -155,8 +164,9 @@ void NASHandler::startElement(const XMLCh* const    uri,
     }
     
 /* -------------------------------------------------------------------- */
-/*      Is this the ogc:Filter element in a wfs:Delete operation?       */
-/*      If so we translate it as a specialized sort of feature.         */
+/*      Is this the ogc:Filter element in a wfs:Delete or               */
+/*      wfsext:Replace operation?  If so we translate it as a           */
+/*      specialized sort of feature.                                    */
 /* -------------------------------------------------------------------- */
     else if( EQUAL(szElementName,"Filter") 
              && (pszLast = m_poReader->GetState()->GetLastComponent()) != NULL
@@ -179,8 +189,19 @@ void NASHandler::startElement(const XMLCh* const    uri,
 
         m_nDepthFeature = m_nDepth;
         m_nDepth ++;
-            
+
+        CPLAssert( m_osLastTypeName != "" );
         m_poReader->SetFeaturePropertyDirectly( "typeName", CPLStrdup(m_osLastTypeName) );
+        m_poReader->SetFeaturePropertyDirectly( "context", CPLStrdup(pszLast) );
+
+        if( EQUAL( pszLast, "Replace" ) )
+        {
+            CPLAssert( m_osLastReplacingFID != "" );
+            CPLAssert( m_osLastSafeToIgnore != "" );
+            m_poReader->SetFeaturePropertyDirectly( "replacedBy", CPLStrdup(m_osLastReplacingFID) );
+            m_poReader->SetFeaturePropertyDirectly( "safeToIgnore", CPLStrdup(m_osLastSafeToIgnore) );
+        }
+
         return;
     }
 
@@ -192,6 +213,29 @@ void NASHandler::startElement(const XMLCh* const    uri,
         m_osLastTypeName = szElementName;
 
         const char* pszFilteredClassName = m_poReader->GetFilteredClassName();
+
+        pszLast = m_poReader->GetState()->GetLastComponent();
+        if( pszLast != NULL && EQUAL(pszLast,"Replace") )
+        {
+            int nIndex;
+            XMLCh  Name[100];
+
+            tr_strcpy( Name, "gml:id" );
+            nIndex = attrs.getIndex( Name );
+
+            CPLAssert( nIndex!=-1 );
+            CPLAssert( m_osLastReplacingFID=="" );
+
+            // Capture "gml:id" attribute as part of the property value -
+            // primarily this is for the wfsext:Replace operation's attribute.
+            char *pszReplacingFID = tr_strdup( attrs.getValue( nIndex ) );
+            m_osLastReplacingFID = pszReplacingFID;
+            CPLFree( pszReplacingFID );
+
+#ifdef DEBUG_VERBOSE
+	        CPLDebug("NAS", "%*s### Replace typeName=%s replacedBy=%s", m_nDepth, "", m_osLastTypeName.c_str(), m_osLastReplacingFID.c_str() );
+#endif
+        }
 
         if ( pszFilteredClassName != NULL &&
              strcmp(szElementName, pszFilteredClassName) != 0 )
@@ -232,6 +276,37 @@ void NASHandler::startElement(const XMLCh* const    uri,
             m_osLastTypeName = pszTypeName;
             CPLFree( pszTypeName );
         }
+
+        m_osLastSafeToIgnore = "";
+        m_osLastReplacingFID = "";
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If it is the wfsext:Replace element, then remember the          */
+/*      safeToIgnore attribute so we can assign it to the feature       */
+/*      that will be produced when we process the Filter element.       */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(szElementName,"Replace") )
+    {
+        int nIndex;
+        XMLCh  Name[100];
+
+        tr_strcpy( Name, "safeToIgnore" );
+        nIndex = attrs.getIndex( Name );
+
+        if( nIndex != -1 )
+        {
+            char *pszSafeToIgnore = tr_strdup( attrs.getValue( nIndex ) );
+            m_osLastSafeToIgnore = pszSafeToIgnore;
+            CPLFree( pszSafeToIgnore );
+        }
+        else
+        {
+	    CPLError( CE_Warning, CPLE_AppDefined, "NAS: safeToIgnore attribute missing" );
+            m_osLastSafeToIgnore = "false";
+        }
+
+        m_osLastReplacingFID = "";
     }
 
 /* -------------------------------------------------------------------- */
@@ -286,6 +361,15 @@ void NASHandler::endElement(const   XMLCh* const    uri,
         return;
     }
 
+#ifdef DEBUG_VERBOSE
+   CPLDebug("NAS",
+              "%*sendElement %s m_bIgnoreFeature:%d depth:%d depthFeature:%d featureClass:%s",
+              m_nDepth, "", szElementName,
+              m_bIgnoreFeature, m_nDepth, m_nDepthFeature,
+              poState->m_poFeature ? poState->m_poFeature->GetClass()->GetElementName() : "(no feature)"
+            );
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Is this closing off an attribute value?  We assume so if        */
 /*      we are collecting an attribute value and got to this point.     */
@@ -328,7 +412,24 @@ void NASHandler::endElement(const   XMLCh* const    uri,
             {
                 CPLXMLNode* psNode = CPLParseXMLString(m_pszGeometry);
                 if (psNode)
+                {
+                    /* workaround common malformed gml:pos with just a
+                     * elevation value instead of a full 3D coordinate:
+                     *
+                     * <gml:Point gml:id="BII2H">
+                     *    <gml:pos srsName="urn:adv:crs:ETRS89_h">41.394</gml:pos>
+                     * </gml:Point>
+                     *
+                     */
+                    const char *pszPos;
+                    if( (pszPos = CPLGetXMLValue( psNode, "=Point.pos", NULL ) ) != NULL
+                        && strstr(pszPos, " ") == NULL )
+                    {
+                        CPLSetXMLValue( psNode, "pos", CPLSPrintf("0 0 %s", pszPos) );
+                    }
+
                     poState->m_poFeature->SetGeometryDirectly( psNode );
+                }
             }
 
             CPLFree( m_pszGeometry );
