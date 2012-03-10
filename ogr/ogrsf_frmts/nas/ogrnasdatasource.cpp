@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrgmldatasource.cpp 12743 2007-11-13 13:59:37Z dron $
+ * $Id$
  *
  * Project:  OGR
  * Purpose:  Implements OGRNASDataSource class.
@@ -31,7 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id: ogrgmldatasource.cpp 12743 2007-11-13 13:59:37Z dron $");
+CPL_CVSID("$Id$");
 
 static const char *apszURNNames[] = 
 { 
@@ -237,7 +237,19 @@ int OGRNASDataSource::Open( const char * pszNewName, int bTestOpen )
     }
     
     poRelationLayer = new OGRNASRelationLayer( this );
-    papoLayers[nLayers++] = poRelationLayer;
+
+    // keep delete the last layer
+    if( nLayers>0 && EQUAL( papoLayers[nLayers-1]->GetName(), "Delete" ) )
+    {
+      papoLayers[nLayers]   = papoLayers[nLayers-1];
+      papoLayers[nLayers-1] = poRelationLayer;
+    }
+    else
+    {
+      papoLayers[nLayers] = poRelationLayer;
+    }
+
+    nLayers++;
     
     return TRUE;
 }
