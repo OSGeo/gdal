@@ -894,7 +894,7 @@ GDALPDFDictionaryRW* PDFDataset::GetCatalogDict()
     if (!bUsePoppler)
     {
         int nCatalogNum = 0, nCatalogGen = 0;
-        VSILFILE* fp = VSIFOpenL(GetDescription(), "rb");
+        VSILFILE* fp = VSIFOpenL(osFilename.c_str(), "rb");
         if (fp != NULL)
         {
             GDALPDFWriter oWriter(fp, TRUE);
@@ -968,7 +968,7 @@ PDFDataset::~PDFDataset()
     /* Now do the update */
     if (poPageDictCopy)
     {
-        VSILFILE* fp = VSIFOpenL(GetDescription(), "rb+");
+        VSILFILE* fp = VSIFOpenL(osFilename, "rb+");
         if (fp != NULL)
         {
             GDALPDFWriter oWriter(fp, TRUE);
@@ -985,6 +985,11 @@ PDFDataset::~PDFDataset()
                     oWriter.UpdateXMP(this, poCatalogDictCopy);
             }
             oWriter.Close();
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot open %s in update mode", osFilename.c_str());
         }
     }
     delete poPageDictCopy;
