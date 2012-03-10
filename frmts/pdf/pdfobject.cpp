@@ -901,7 +901,18 @@ static CPLString GDALPDFPopplerGetUTF8(GooString* poStr)
     int nLen = poStr->getLength();
     int bBEUnicodeMarker = nLen > 2 && pabySrc[0] == 0xFF && pabySrc[1] == 0xFE;
     if (!poStr->hasUnicodeMarker() && !bBEUnicodeMarker)
-        return poStr->getCString();
+    {
+        const char* pszStr = poStr->getCString();
+        if (CPLIsUTF8(pszStr, -1))
+            return pszStr;
+        else
+        {
+            char* pszUTF8 = CPLRecode( pszStr, CPL_ENC_ISO8859_1, CPL_ENC_UTF8 );
+            CPLString osRet = pszUTF8;
+            CPLFree(pszUTF8);
+            return osRet;
+        }
+    }
 
     /* This is UTF-16 content */
     pabySrc += 2;
