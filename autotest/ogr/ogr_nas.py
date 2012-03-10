@@ -225,6 +225,10 @@ def ogr_nas_4():
     del_lyr.ResetReading()
     feat = del_lyr.GetNextFeature()
 
+    if feat.GetField('context') != 'Delete':
+        gdaltest.post_reason( 'did not get expected context' )
+        return 'fail'
+
     if feat.GetField('typeName') != 'AX_Namensnummer':
         gdaltest.post_reason( 'did not get expected typeName' )
         return 'fail'
@@ -282,6 +286,18 @@ def ogr_nas_5():
 
     del_lyr.ResetReading()
     feat = del_lyr.GetNextFeature()
+
+    if feat.GetField('context') != 'Replace':
+        gdaltest.post_reason( 'did not get expected context' )
+        return 'fail'
+
+    if feat.GetField('replacedBy') != 'DENW44AL00003IkM20110429T070635Z':
+        gdaltest.post_reason( 'did not get expected replacedBy' )
+        return 'fail'
+
+    if feat.GetField('safeToIgnore') != 'false':
+        gdaltest.post_reason( 'did not get expected safeToIgnore' )
+        return 'fail'
 
     if feat.GetField('typeName') != 'AX_Flurstueck':
         gdaltest.post_reason( 'did not get expected typeName' )
