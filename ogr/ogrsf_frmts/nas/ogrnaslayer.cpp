@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrnaslayer.cpp 10645 2007-01-18 02:22:39Z warmerdam $
+ * $Id$
  *
  * Project:  OGR
  * Purpose:  Implements OGRNASLayer class.
@@ -32,7 +32,7 @@
 #include "cpl_port.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id: ogrnaslayer.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           OGRNASLayer()                              */

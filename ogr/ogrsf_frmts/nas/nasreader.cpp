@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: gmlreader.cpp 10645 2007-01-18 02:22:39Z warmerdam $
+ * $Id$
  *
  * Project:  NAS Reader
  * Purpose:  Implementation of NASReader class.
@@ -263,7 +263,7 @@ GMLFeature *NASReader::NextFeature()
     }
     catch (const XMLException& toCatch)
     {
-        CPLDebug( "GML", 
+        CPLDebug( "NAS", 
                   "Error during NextFeature()! Message:\n%s", 
                   tr_strdup( toCatch.getMessage() ) );
     }
@@ -306,7 +306,7 @@ void NASReader::PushFeature( const char *pszElement,
 
         GMLFeatureClass *poNewClass = new GMLFeatureClass( pszElement );
 
-        AddClass( poNewClass );
+        iClass = AddClass( poNewClass );
     }
 
 /* -------------------------------------------------------------------- */
@@ -360,7 +360,7 @@ int NASReader::IsFeatureElement( const char *pszElement )
 
     if( (nLen < 6 || !EQUAL(pszLast+nLen-6,"Insert")) 
         && (nLen < 13 || !EQUAL(pszLast+nLen-13,"featureMember"))
-        && (nLen < 6 || !EQUAL(pszLast+nLen-7,"Replace")) )
+        && (nLen < 7 || !EQUAL(pszLast+nLen-7,"Replace")) )
         return FALSE;
 
     // If the class list isn't locked, any element that is a featureMember
@@ -491,9 +491,19 @@ int NASReader::AddClass( GMLFeatureClass *poNewClass )
     m_nClassCount++;
     m_papoClass = (GMLFeatureClass **) 
         CPLRealloc( m_papoClass, sizeof(void*) * m_nClassCount );
-    m_papoClass[m_nClassCount-1] = poNewClass;
 
-    return m_nClassCount-1;
+    // keep delete the last entry
+    if( m_nClassCount > 1 && EQUAL( m_papoClass[m_nClassCount-2]->GetName(), "Delete" ) )
+    {
+      m_papoClass[m_nClassCount-1] = m_papoClass[m_nClassCount-2];
+      m_papoClass[m_nClassCount-2] = poNewClass;
+      return m_nClassCount-2;
+    }
+    else
+    {
+      m_papoClass[m_nClassCount-1] = poNewClass;
+      return m_nClassCount-1;
+    }
 }
 
 /************************************************************************/
@@ -545,7 +555,7 @@ void NASReader::SetFeaturePropertyDirectly( const char *pszElement,
     {
         if( poClass->IsSchemaLocked() )
         {
-            CPLDebug("GML","Encountered property missing from class schema.");
+            CPLDebug("NAS","Encountered property missing from class schema.");
             CPLFree(pszValue);
             return;
         }
