@@ -121,7 +121,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
 	while(poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
 	    id    = sqlite3_column_double(hStmt, 0);
 	    ipcb  = sqlite3_column_double(hStmt, 1);
-	    rowId = sqlite3_column_int(hStmt, 2);
+	    rowId = sqlite3_column_int(hStmt, 2) - 1;
 	    poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(rowId);
 	    poFeature->SetGeometry(NULL);
 	    
@@ -195,7 +195,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringHP()
     
     while(poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
 	vrValue[0] = sqlite3_column_double(hStmt, 0);
-	rowId      = sqlite3_column_int(hStmt, 1);
+	rowId      = sqlite3_column_int(hStmt, 1) - 1;
 	poFeature  = (VFKFeatureSQLite *) GetFeatureByIndex(rowId);
 	    
 	poLine = poDataBlockLines->GetFeature(vrColumn, vrValue, 2);
@@ -274,7 +274,7 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
     
     while(poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
 	id        = sqlite3_column_double(hStmt, 0);
-	rowId     = sqlite3_column_int(hStmt, 1);
+	rowId     = sqlite3_column_int(hStmt, 1) - 1;
 	poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(rowId);
 	if (bIsPar) {
 	    vrValue[0] = vrValue[1] = id;
@@ -382,7 +382,7 @@ VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char *column, GUIntBig va
     if (poReader->ExecuteSQL(hStmt) != OGRERR_NONE)
 	return NULL;
     
-    idx = sqlite3_column_int(hStmt, 0);
+    idx = sqlite3_column_int(hStmt, 0) - 1;
     if (idx < 0 || idx >= m_nFeatureCount) // ? assert
 	return NULL;
     
@@ -424,7 +424,7 @@ VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char **column, GUIntBig *
     if (poReader->ExecuteSQL(hStmt) != OGRERR_NONE)
 	return NULL;
     
-    idx = sqlite3_column_int(hStmt, 0);
+    idx = sqlite3_column_int(hStmt, 0) - 1;
     
     if (idx < 0 || idx >= m_nFeatureCount) // ? assert
 	return NULL;
@@ -466,7 +466,7 @@ VFKFeatureSQLiteList VFKDataBlockSQLite::GetFeatures(const char **column, GUIntB
     
     hStmt = poReader->PrepareStatement(osSQL.c_str());
     while (poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
-	idx = sqlite3_column_int(hStmt, 0);
+	idx = sqlite3_column_int(hStmt, 0) - 1;
 	if (idx < 0 || idx >= m_nFeatureCount)
 	    continue; // assert?
 	fList.push_back((VFKFeatureSQLite *)GetFeatureByIndex(idx));
