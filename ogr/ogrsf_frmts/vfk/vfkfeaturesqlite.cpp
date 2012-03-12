@@ -122,7 +122,7 @@ OGRErr VFKFeatureSQLite::LoadProperties(OGRFeature *poFeature)
     poDB = poReader->m_poDB;
 
     osSQL.Printf("SELECT * FROM '%s' WHERE _rowid_ = %d",
-		 m_poDataBlock->GetName(), m_nIndex);
+		 m_poDataBlock->GetName(), m_nIndex + 1);
     pszSQL = osSQL.c_str();
     
     rc = sqlite3_prepare(poDB, pszSQL, strlen(pszSQL),
