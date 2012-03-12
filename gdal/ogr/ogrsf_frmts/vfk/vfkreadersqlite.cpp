@@ -132,48 +132,50 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
 
     pszName = poDataBlock->GetName();
     
-    if (EQUAL(pszName, "SOBR")) {
-	osSQL.Printf("CREATE UNIQUE INDEX idx2 ON '%s' (ID)",
-		     pszName);
-	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
-    }
-    else if (EQUAL(pszName, "SBP")) {
-	osSQL.Printf("CREATE UNIQUE INDEX idx3 ON '%s' (OB_ID)",
+    osSQL.Printf("CREATE UNIQUE INDEX %s_ID ON '%s' (ID)",
+		 pszName, pszName);
+    sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
+    
+    if (EQUAL(pszName, "SBP")) {
+	/* create extra indices for SBP */
+	osSQL.Printf("CREATE UNIQUE INDEX SBP_OB ON '%s' (OB_ID)",
 		     pszName);
 	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
 
-	osSQL.Printf("CREATE UNIQUE INDEX idx4 ON '%s' (HP_ID)",
+	osSQL.Printf("CREATE UNIQUE INDEX SBP_HP ON '%s' (HP_ID)",
 		     pszName);
 	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
 	
-	osSQL.Printf("CREATE UNIQUE INDEX idx5 ON '%s' (DPM_ID)",
+	osSQL.Printf("CREATE UNIQUE INDEX SBP_DPM ON '%s' (DPM_ID)",
 		     pszName);
 	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
 	
-	osSQL.Printf("CREATE UNIQUE INDEX idx6 ON '%s' (OB_ID,HP_ID,DPM_ID)",
+	osSQL.Printf("CREATE UNIQUE INDEX SBP_OB_HP_DPM ON '%s' (OB_ID,HP_ID,DPM_ID)",
 		     pszName);
 	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
 	
-	osSQL.Printf("CREATE UNIQUE INDEX idx7 ON '%s' (HP_ID,PORADOVE_CISLO_BODU)",
+	osSQL.Printf("CREATE UNIQUE INDEX SBP_HP_POR ON '%s' (HP_ID,PORADOVE_CISLO_BODU)",
 		     pszName);
 	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
 	
-	osSQL.Printf("CREATE UNIQUE INDEX idx8 ON '%s' (DPM_ID,PORADOVE_CISLO_BODU)",
+	osSQL.Printf("CREATE UNIQUE INDEX SBP_DPM_POR ON '%s' (DPM_ID,PORADOVE_CISLO_BODU)",
 		     pszName);
 	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
     }
     else if (EQUAL(pszName, "HP")) {
-	osSQL.Printf("CREATE UNIQUE INDEX idx9 ON '%s' (PAR_ID_1)",
+	/* create extra indices for HP */
+	osSQL.Printf("CREATE UNIQUE INDEX HP_PAR1 ON '%s' (PAR_ID_1)",
 		     pszName);
 	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
 	
-	osSQL.Printf("CREATE UNIQUE INDEX idx10 ON '%s' (PAR_ID_2)",
+	osSQL.Printf("CREATE UNIQUE INDEX HP_PAR2 ON '%s' (PAR_ID_2)",
 		     pszName);
 	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
 	
     }
     else if (EQUAL(pszName, "OP")) {
-	osSQL.Printf("CREATE UNIQUE INDEX idx11 ON '%s' (BUD_ID)",
+	/* create extra indices for OP */
+	osSQL.Printf("CREATE UNIQUE INDEX OP_BUD ON '%s' (BUD_ID)",
 		     pszName);
 	sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
 	
