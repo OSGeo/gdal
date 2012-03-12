@@ -282,11 +282,13 @@ void GDALPDFWriter::UpdateProj(GDALDataset* poSrcDS,
     CPLAssert(nPageNum != 0);
     CPLAssert(poPageDict != NULL);
 
+    PDFMargins sMargins = {0, 0, 0, 0};
+
     const char* pszGEO_ENCODING = CPLGetConfigOption("GDAL_PDF_GEO_ENCODING", "ISO32000");
     if (EQUAL(pszGEO_ENCODING, "ISO32000") || EQUAL(pszGEO_ENCODING, "BOTH"))
-        nViewportId = WriteSRS_ISO32000(poSrcDS, dfDPI / 72.0, NULL);
+        nViewportId = WriteSRS_ISO32000(poSrcDS, dfDPI / 72.0, NULL, &sMargins);
     if (EQUAL(pszGEO_ENCODING, "OGC_BP") || EQUAL(pszGEO_ENCODING, "BOTH"))
-        nLGIDictId = WriteSRS_OGC_BP(poSrcDS, dfDPI / 72.0, NULL);
+        nLGIDictId = WriteSRS_OGC_BP(poSrcDS, dfDPI / 72.0, NULL, &sMargins);
 
 #ifdef invalidate_xref_entry
     GDALPDFObject* poVP = poPageDict->Get("VP");
@@ -545,7 +547,8 @@ void GDALPDFFind4Corners(const GDAL_GCP* pasGCPList,
 
 int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
                                       double dfUserUnit,
-                                      const char* pszNEATLINE)
+                                      const char* pszNEATLINE,
+                                      PDFMargins* psMargins)
 {
     int  nWidth = poSrcDS->GetRasterXSize();
     int  nHeight = poSrcDS->GetRasterYSize();
@@ -741,10 +744,10 @@ int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
     oViewPortDict.Add("Type", GDALPDFObjectRW::CreateName("Viewport"))
                  .Add("Name", "Layer")
                  .Add("BBox", &((new GDALPDFArrayRW())
-                                ->Add(dfULPixel / dfUserUnit)
-                                .Add((nHeight - dfLRLine) / dfUserUnit)
-                                .Add(dfLRPixel / dfUserUnit)
-                                .Add((nHeight - dfULLine) / dfUserUnit)))
+                                ->Add(dfULPixel / dfUserUnit + psMargins->nLeft)
+                                .Add((nHeight - dfLRLine) / dfUserUnit + psMargins->nBottom)
+                                .Add(dfLRPixel / dfUserUnit + psMargins->nLeft)
+                                .Add((nHeight - dfULLine) / dfUserUnit + psMargins->nBottom)))
                  .Add("Measure", nMeasureId, 0);
     VSIFPrintfL(fp, "%s\n", oViewPortDict.Serialize().c_str());
     EndObj();
@@ -1148,7 +1151,8 @@ static GDALPDFDictionaryRW* GDALPDFBuildOGC_BP_Projection(const OGRSpatialRefere
 
 int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
                                    double dfUserUnit,
-                                   const char* pszNEATLINE)
+                                   const char* pszNEATLINE,
+                                   PDFMargins* psMargins)
 {
     int  nWidth = poSrcDS->GetRasterXSize();
     int  nHeight = poSrcDS->GetRasterYSize();
@@ -1216,8 +1220,8 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
                     double Y = poLS->getY(i);
                     double x = adfGeoTransformInv[0] + X * adfGeoTransformInv[1] + Y * adfGeoTransformInv[2];
                     double y = adfGeoTransformInv[3] + X * adfGeoTransformInv[4] + Y * adfGeoTransformInv[5];
-                    poNeatLineArray->Add(x / dfUserUnit, TRUE);
-                    poNeatLineArray->Add((nHeight - y) / dfUserUnit, TRUE);
+                    poNeatLineArray->Add(x / dfUserUnit + psMargins->nLeft, TRUE);
+                    poNeatLineArray->Add((nHeight - y) / dfUserUnit + psMargins->nBottom, TRUE);
                 }
             }
         }
@@ -1237,14 +1241,14 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
                                 iUL,iUR, iLR, iLL);
 
             double adfNL[8];
-            adfNL[0] = pasGCPList[iUL].dfGCPPixel / dfUserUnit;
-            adfNL[1] = (nHeight - pasGCPList[iUL].dfGCPLine) / dfUserUnit;
-            adfNL[2] = pasGCPList[iLL].dfGCPPixel / dfUserUnit;
-            adfNL[3] = (nHeight - pasGCPList[iLL].dfGCPLine) / dfUserUnit;
-            adfNL[4] = pasGCPList[iLR].dfGCPPixel / dfUserUnit;
-            adfNL[5] = (nHeight - pasGCPList[iLR].dfGCPLine) / dfUserUnit;
-            adfNL[6] = pasGCPList[iUR].dfGCPPixel / dfUserUnit;
-            adfNL[7] = (nHeight - pasGCPList[iUR].dfGCPLine) / dfUserUnit;
+            adfNL[0] = pasGCPList[iUL].dfGCPPixel / dfUserUnit + psMargins->nLeft;
+            adfNL[1] = (nHeight - pasGCPList[iUL].dfGCPLine) / dfUserUnit + psMargins->nBottom;
+            adfNL[2] = pasGCPList[iLL].dfGCPPixel / dfUserUnit + psMargins->nLeft;
+            adfNL[3] = (nHeight - pasGCPList[iLL].dfGCPLine) / dfUserUnit + psMargins->nBottom;
+            adfNL[4] = pasGCPList[iLR].dfGCPPixel / dfUserUnit + psMargins->nLeft;
+            adfNL[5] = (nHeight - pasGCPList[iLR].dfGCPLine) / dfUserUnit + psMargins->nBottom;
+            adfNL[6] = pasGCPList[iUR].dfGCPPixel / dfUserUnit + psMargins->nLeft;
+            adfNL[7] = (nHeight - pasGCPList[iUR].dfGCPLine) / dfUserUnit + psMargins->nBottom;
 
             poNeatLineArray = new GDALPDFArrayRW();
             poNeatLineArray->Add(adfNL, 8, TRUE);
@@ -1257,8 +1261,8 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
             int i;
             for(i = 0; i < nGCPCount; i++)
             {
-                poNeatLineArray->Add(pasGCPList[i].dfGCPPixel / dfUserUnit, TRUE);
-                poNeatLineArray->Add((nHeight - pasGCPList[i].dfGCPLine) / dfUserUnit, TRUE);
+                poNeatLineArray->Add(pasGCPList[i].dfGCPPixel / dfUserUnit + psMargins->nLeft, TRUE);
+                poNeatLineArray->Add((nHeight - pasGCPList[i].dfGCPLine) / dfUserUnit + psMargins->nBottom, TRUE);
             }
         }
     }
@@ -1266,17 +1270,17 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
     {
         poNeatLineArray = new GDALPDFArrayRW();
 
-        poNeatLineArray->Add(0 / dfUserUnit, TRUE);
-        poNeatLineArray->Add((nHeight - 0) / dfUserUnit, TRUE);
+        poNeatLineArray->Add(0 / dfUserUnit + psMargins->nLeft, TRUE);
+        poNeatLineArray->Add((nHeight - 0) / dfUserUnit + psMargins->nBottom, TRUE);
 
-        poNeatLineArray->Add(0 / dfUserUnit, TRUE);
-        poNeatLineArray->Add((nHeight -nHeight) / dfUserUnit, TRUE);
+        poNeatLineArray->Add(0 / dfUserUnit + psMargins->nLeft, TRUE);
+        poNeatLineArray->Add((nHeight -nHeight) / dfUserUnit + psMargins->nBottom, TRUE);
 
-        poNeatLineArray->Add(nWidth / dfUserUnit, TRUE);
-        poNeatLineArray->Add((nHeight -nHeight) / dfUserUnit, TRUE);
+        poNeatLineArray->Add(nWidth / dfUserUnit + psMargins->nLeft, TRUE);
+        poNeatLineArray->Add((nHeight -nHeight) / dfUserUnit + psMargins->nBottom, TRUE);
 
-        poNeatLineArray->Add(nWidth / dfUserUnit, TRUE);
-        poNeatLineArray->Add((nHeight - 0) / dfUserUnit, TRUE);
+        poNeatLineArray->Add(nWidth / dfUserUnit + psMargins->nLeft, TRUE);
+        poNeatLineArray->Add((nHeight - 0) / dfUserUnit + psMargins->nBottom, TRUE);
     }
 
     int nLGIDictId = AllocNewObject();
@@ -1287,8 +1291,8 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
     if( bHasGT )
     {
         double adfCTM[6];
-        double dfX1 = 0;
-        double dfY2 = nHeight / dfUserUnit;
+        double dfX1 = psMargins->nLeft;
+        double dfY2 = nHeight / dfUserUnit + psMargins->nBottom ;
 
         adfCTM[0] = adfGeoTransform[1] * dfUserUnit;
         adfCTM[1] = adfGeoTransform[2] * dfUserUnit;
@@ -1306,8 +1310,8 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
         for(i = 0; i < nGCPCount; i++)
         {
             GDALPDFArrayRW* poPTArray = new GDALPDFArrayRW();
-            poPTArray->Add(pasGCPList[i].dfGCPPixel / dfUserUnit, TRUE);
-            poPTArray->Add((nHeight - pasGCPList[i].dfGCPLine) / dfUserUnit, TRUE);
+            poPTArray->Add(pasGCPList[i].dfGCPPixel / dfUserUnit + psMargins->nLeft, TRUE);
+            poPTArray->Add((nHeight - pasGCPList[i].dfGCPLine) / dfUserUnit + psMargins->nBottom, TRUE);
             poPTArray->Add(pasGCPList[i].dfGCPX, TRUE);
             poPTArray->Add(pasGCPList[i].dfGCPY, TRUE);
             poRegistrationArray->Add(poPTArray);
@@ -1451,6 +1455,8 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
                              double dfDPI,
                              const char* pszGEO_ENCODING,
                              const char* pszNEATLINE,
+                             PDFMargins* psMargins,
+                             const char* pszExtraContentStream,
                              PDFCompressMethod eCompressMethod,
                              int nPredictor,
                              int nJPEGQuality,
@@ -1464,8 +1470,8 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
     int  nBands = poSrcDS->GetRasterCount();
 
     double dfUserUnit = dfDPI / 72.0;
-    double dfWidthInUserUnit = nWidth / dfUserUnit;
-    double dfHeightInUserUnit = nHeight / dfUserUnit;
+    double dfWidthInUserUnit = nWidth / dfUserUnit + psMargins->nLeft + psMargins->nRight;
+    double dfHeightInUserUnit = nHeight / dfUserUnit + psMargins->nBottom + psMargins->nTop;
 
     int nPageId = AllocNewObject();
     asPageId.push_back(nPageId);
@@ -1481,11 +1487,11 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
 
     int nViewportId = 0;
     if( bISO32000 )
-        nViewportId = WriteSRS_ISO32000(poSrcDS, dfUserUnit, pszNEATLINE);
+        nViewportId = WriteSRS_ISO32000(poSrcDS, dfUserUnit, pszNEATLINE, psMargins);
         
     int nLGIDictId = 0;
     if( bOGC_BP )
-        nLGIDictId = WriteSRS_OGC_BP(poSrcDS, dfUserUnit, pszNEATLINE);
+        nLGIDictId = WriteSRS_OGC_BP(poSrcDS, dfUserUnit, pszNEATLINE, psMargins);
 
     StartObj(nPageId);
     GDALPDFDictionaryRW oDictPage;
@@ -1607,6 +1613,7 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
     }
     VSIFPrintfL(fp, "stream\n");
     vsi_l_offset nStreamStart = VSIFTellL(fp);
+
     for(nBlockYOff = 0; nBlockYOff < nYBlocks; nBlockYOff ++)
     {
         for(nBlockXOff = 0; nBlockXOff < nXBlocks; nBlockXOff ++)
@@ -1619,8 +1626,8 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
             VSIFPrintfL(fp, "q\n");
             GDALPDFObjectRW* poXSize = GDALPDFObjectRW::CreateReal(nReqWidth / dfUserUnit);
             GDALPDFObjectRW* poYSize = GDALPDFObjectRW::CreateReal(nReqHeight / dfUserUnit);
-            GDALPDFObjectRW* poXOff = GDALPDFObjectRW::CreateReal((nBlockXOff * nBlockXSize) / dfUserUnit);
-            GDALPDFObjectRW* poYOff = GDALPDFObjectRW::CreateReal((nHeight - nBlockYOff * nBlockYSize - nReqHeight) / dfUserUnit);
+            GDALPDFObjectRW* poXOff = GDALPDFObjectRW::CreateReal((nBlockXOff * nBlockXSize) / dfUserUnit + psMargins->nLeft);
+            GDALPDFObjectRW* poYOff = GDALPDFObjectRW::CreateReal((nHeight - nBlockYOff * nBlockYSize - nReqHeight) / dfUserUnit + psMargins->nBottom);
             VSIFPrintfL(fp, "%s 0 0 %s %s %s cm\n",
                         poXSize->Serialize().c_str(),
                         poYSize->Serialize().c_str(),
@@ -1635,6 +1642,10 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
             VSIFPrintfL(fp, "Q\n");
         }
     }
+
+    if (pszExtraContentStream)
+        VSIFPrintfL(fp, "%s\n", pszExtraContentStream);
+
     vsi_l_offset nStreamEnd = VSIFTellL(fp);
     VSIFPrintfL(fp, "endstream\n");
     EndObj();
@@ -1648,12 +1659,43 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
     StartObj(nResourcesId);
     {
         GDALPDFDictionaryRW oDict;
-        GDALPDFDictionaryRW* poDict2 = new GDALPDFDictionaryRW();
-        oDict.Add("XObject", poDict2);
+        GDALPDFDictionaryRW* poDictXObject = new GDALPDFDictionaryRW();
+        oDict.Add("XObject", poDictXObject);
         for(size_t iImage = 0; iImage < asImageId.size(); iImage ++)
         {
-            poDict2->Add(CPLSPrintf("Image%d", asImageId[iImage]), asImageId[iImage], 0);
+            poDictXObject->Add(CPLSPrintf("Image%d", asImageId[iImage]), asImageId[iImage], 0);
         }
+
+        GDALPDFDictionaryRW* poDictFTimesRoman = NULL;
+        if (pszExtraContentStream && strstr(pszExtraContentStream, "/FTimesRoman"))
+        {
+            poDictFTimesRoman = new GDALPDFDictionaryRW();
+            poDictFTimesRoman->Add("Type", GDALPDFObjectRW::CreateName("Font"));
+            poDictFTimesRoman->Add("BaseFont", GDALPDFObjectRW::CreateName("Times-Roman"));
+            poDictFTimesRoman->Add("Encoding", GDALPDFObjectRW::CreateName("WinAnsiEncoding"));
+            poDictFTimesRoman->Add("Subtype", GDALPDFObjectRW::CreateName("Type1"));
+        }
+
+        GDALPDFDictionaryRW* poDictFTimesBold = NULL;
+        if (pszExtraContentStream && strstr(pszExtraContentStream, "/FTimesBold"))
+        {
+            poDictFTimesBold = new GDALPDFDictionaryRW();
+            poDictFTimesBold->Add("Type", GDALPDFObjectRW::CreateName("Font"));
+            poDictFTimesBold->Add("BaseFont", GDALPDFObjectRW::CreateName("Times-Bold"));
+            poDictFTimesBold->Add("Encoding", GDALPDFObjectRW::CreateName("WinAnsiEncoding"));
+            poDictFTimesBold->Add("Subtype", GDALPDFObjectRW::CreateName("Type1"));
+        }
+
+        if (poDictFTimesRoman != NULL || poDictFTimesBold != NULL)
+        {
+            GDALPDFDictionaryRW* poDictFont = new GDALPDFDictionaryRW();
+            if (poDictFTimesRoman)
+                poDictFont->Add("FTimesRoman", poDictFTimesRoman);
+            if (poDictFTimesBold)
+                poDictFont->Add("FTimesBold", poDictFTimesBold);
+            oDict.Add("Font", poDictFont);
+        }
+
         VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
     }
     EndObj();
@@ -2284,6 +2326,28 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
 
     const char* pszNEATLINE = CSLFetchNameValue(papszOptions, "NEATLINE");
 
+    int nMargin = atoi(CSLFetchNameValueDef(papszOptions, "MARGIN", "0"));
+
+    PDFMargins sMargins;
+    sMargins.nLeft = nMargin;
+    sMargins.nRight = nMargin;
+    sMargins.nTop = nMargin;
+    sMargins.nBottom = nMargin;
+
+    const char* pszLeftMargin = CSLFetchNameValue(papszOptions, "LEFT_MARGIN");
+    if (pszLeftMargin) sMargins.nLeft = atoi(pszLeftMargin);
+
+    const char* pszRightMargin = CSLFetchNameValue(papszOptions, "RIGHT_MARGIN");
+    if (pszRightMargin) sMargins.nRight = atoi(pszRightMargin);
+
+    const char* pszTopMargin = CSLFetchNameValue(papszOptions, "TOP_MARGIN");
+    if (pszTopMargin) sMargins.nTop = atoi(pszTopMargin);
+
+    const char* pszBottomMargin = CSLFetchNameValue(papszOptions, "BOTTOM_MARGIN");
+    if (pszBottomMargin) sMargins.nBottom = atoi(pszBottomMargin);
+
+    const char* pszExtraContentStream = CSLFetchNameValue(papszOptions, "EXTRA_CONTENT_STREAM");
+
 /* -------------------------------------------------------------------- */
 /*      Create file.                                                    */
 /* -------------------------------------------------------------------- */
@@ -2307,6 +2371,8 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
                                  dfDPI,
                                  pszGEO_ENCODING,
                                  pszNEATLINE,
+                                 &sMargins,
+                                 pszExtraContentStream,
                                  eCompressMethod,
                                  nPredictor,
                                  nJPEGQuality,
