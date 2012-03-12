@@ -1448,6 +1448,31 @@ int  GDALPDFWriter::SetXMP(GDALDataset* poSrcDS,
 }
 
 /************************************************************************/
+/*                              WriteOCG()                              */
+/************************************************************************/
+
+int GDALPDFWriter::WriteOCG(const char* pszLayerName)
+{
+    if (pszLayerName == NULL)
+        return 0;
+
+    int nLayerId = AllocNewObject();
+
+    asLayersId.push_back(nLayerId);
+
+    StartObj(nLayerId);
+    {
+        GDALPDFDictionaryRW oDict;
+        oDict.Add("Type", GDALPDFObjectRW::CreateName("OCG"));
+        oDict.Add("Name", pszLayerName);
+        VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
+    }
+    EndObj();
+
+    return nLayerId;
+}
+
+/************************************************************************/
 /*                              WritePage()                             */
 /************************************************************************/
 
@@ -1457,6 +1482,8 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
                              const char* pszNEATLINE,
                              PDFMargins* psMargins,
                              const char* pszExtraContentStream,
+                             const char* pszLayerName,
+                             const char* pszExtraContentLayerName,
                              PDFCompressMethod eCompressMethod,
                              int nPredictor,
                              int nJPEGQuality,
@@ -1614,6 +1641,9 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
     VSIFPrintfL(fp, "stream\n");
     vsi_l_offset nStreamStart = VSIFTellL(fp);
 
+    if (pszLayerName)
+        VSIFPrintfL(fp, "/OC /LyrRaster BDC\n");
+
     for(nBlockYOff = 0; nBlockYOff < nYBlocks; nBlockYOff ++)
     {
         for(nBlockXOff = 0; nBlockXOff < nXBlocks; nBlockXOff ++)
@@ -1643,8 +1673,17 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
         }
     }
 
+    if (pszLayerName)
+        VSIFPrintfL(fp, "EMC\n");
+
     if (pszExtraContentStream)
+    {
+        if (pszExtraContentLayerName)
+            VSIFPrintfL(fp, "/OC /LyrExtraContent BDC\n");
         VSIFPrintfL(fp, "%s\n", pszExtraContentStream);
+        if (pszExtraContentLayerName)
+            VSIFPrintfL(fp, "EMC\n");
+    }
 
     vsi_l_offset nStreamEnd = VSIFTellL(fp);
     VSIFPrintfL(fp, "endstream\n");
@@ -1655,6 +1694,10 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
                 "   %ld\n",
                 (long)(nStreamEnd - nStreamStart));
     EndObj();
+
+    int nLayerExtraContentId = WriteOCG(pszExtraContentLayerName);
+
+    int nLayerRasterId = WriteOCG(pszLayerName);
 
     StartObj(nResourcesId);
     {
@@ -1694,6 +1737,16 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
             if (poDictFTimesBold)
                 poDictFont->Add("FTimesBold", poDictFTimesBold);
             oDict.Add("Font", poDictFont);
+        }
+
+        if (nLayerExtraContentId || nLayerRasterId)
+        {
+            GDALPDFDictionaryRW* poDictProperties = new GDALPDFDictionaryRW();
+            if (nLayerExtraContentId)
+                poDictProperties->Add("LyrExtraContent", nLayerExtraContentId, 0);
+            if (nLayerRasterId)
+                poDictProperties->Add("LyrRaster", nLayerRasterId, 0);
+            oDict.Add("Properties", poDictProperties);
         }
 
         VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
@@ -2161,6 +2214,26 @@ void GDALPDFWriter::WritePages()
              .Add("Pages", nPageResourceId, 0);
         if (nXMPId)
             oDict.Add("Metadata", nXMPId, 0);
+        if (asLayersId.size())
+        {
+            GDALPDFDictionaryRW* poDictOCProperties = new GDALPDFDictionaryRW();
+            oDict.Add("OCProperties", poDictOCProperties);
+
+            GDALPDFDictionaryRW* poDictD = new GDALPDFDictionaryRW();
+            poDictOCProperties->Add("D", poDictD);
+
+            GDALPDFArrayRW* poArrayOrder = new GDALPDFArrayRW();
+            size_t i;
+            for(i=0;i<asLayersId.size();i++)
+                poArrayOrder->Add(asLayersId[i], 0);
+            poDictD->Add("Order", poArrayOrder);
+
+
+            GDALPDFArrayRW* poArrayOGCs = new GDALPDFArrayRW();
+            for(i=0;i<asLayersId.size();i++)
+                poArrayOGCs->Add(asLayersId[i], 0);
+            poDictOCProperties->Add("OCGs", poArrayOGCs);
+        }
         VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
     }
     EndObj();
@@ -2348,6 +2421,9 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
 
     const char* pszExtraContentStream = CSLFetchNameValue(papszOptions, "EXTRA_CONTENT_STREAM");
 
+    const char* pszLayerName = CSLFetchNameValue(papszOptions, "LAYER_NAME");
+    const char* pszExtraContentLayerName = CSLFetchNameValue(papszOptions, "EXTRA_CONTENT_LAYER_NAME");
+
 /* -------------------------------------------------------------------- */
 /*      Create file.                                                    */
 /* -------------------------------------------------------------------- */
@@ -2373,6 +2449,8 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
                                  pszNEATLINE,
                                  &sMargins,
                                  pszExtraContentStream,
+                                 pszLayerName,
+                                 pszExtraContentLayerName,
                                  eCompressMethod,
                                  nPredictor,
                                  nJPEGQuality,
