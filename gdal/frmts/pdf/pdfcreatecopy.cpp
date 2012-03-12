@@ -1453,7 +1453,7 @@ int  GDALPDFWriter::SetXMP(GDALDataset* poSrcDS,
 
 int GDALPDFWriter::WriteOCG(const char* pszLayerName)
 {
-    if (pszLayerName == NULL)
+    if (pszLayerName == NULL || pszLayerName[0] == '\0')
         return 0;
 
     int nLayerId = AllocNewObject();
@@ -1473,24 +1473,14 @@ int GDALPDFWriter::WriteOCG(const char* pszLayerName)
 }
 
 /************************************************************************/
-/*                              WritePage()                             */
+/*                              StartPage()                             */
 /************************************************************************/
 
-int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
+int GDALPDFWriter::StartPage(GDALDataset* poSrcDS,
                              double dfDPI,
                              const char* pszGEO_ENCODING,
                              const char* pszNEATLINE,
-                             PDFMargins* psMargins,
-                             const char* pszExtraContentStream,
-                             const char* pszLayerName,
-                             const char* pszExtraContentLayerName,
-                             PDFCompressMethod eCompressMethod,
-                             int nPredictor,
-                             int nJPEGQuality,
-                             const char* pszJPEG2000_DRIVER,
-                             int nBlockXSize, int nBlockYSize,
-                             GDALProgressFunc pfnProgress,
-                             void * pProgressData)
+                             PDFMargins* psMargins)
 {
     int  nWidth = poSrcDS->GetRasterXSize();
     int  nHeight = poSrcDS->GetRasterYSize();
@@ -1504,7 +1494,6 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
     asPageId.push_back(nPageId);
 
     int nContentId = AllocNewObject();
-    int nContentLengthId = AllocNewObject();
     int nResourcesId = AllocNewObject();
 
     int bISO32000 = EQUAL(pszGEO_ENCODING, "ISO32000") ||
@@ -1550,6 +1539,31 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
     VSIFPrintfL(fp, "%s\n", oDictPage.Serialize().c_str());
     EndObj();
 
+    oPageContext.nContentId = nContentId;
+    oPageContext.nResourcesId = nResourcesId;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                             WriteImagery()                           */
+/************************************************************************/
+
+int GDALPDFWriter::WriteImagery(GDALDataset* poSrcDS,
+                                double dfDPI,
+                                PDFMargins* psMargins,
+                                PDFCompressMethod eCompressMethod,
+                                int nPredictor,
+                                int nJPEGQuality,
+                                const char* pszJPEG2000_DRIVER,
+                                int nBlockXSize, int nBlockYSize,
+                                GDALProgressFunc pfnProgress,
+                                void * pProgressData)
+{
+    int  nWidth = poSrcDS->GetRasterXSize();
+    int  nHeight = poSrcDS->GetRasterYSize();
+    double dfUserUnit = dfDPI / 72.0;
+
     /* Does the source image has a color table ? */
     GDALColorTable* poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
     int nColorTableId = 0;
@@ -1593,8 +1607,7 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
         VSIFPrintfL(fp, "endstream\n");
         EndObj();
     }
-
-    std::vector<int> asImageId;
+    
     int nXBlocks = (nWidth + nBlockXSize - 1) / nBlockXSize;
     int nYBlocks = (nHeight + nBlockYSize - 1) / nBlockYSize;
     int nBlocks = nXBlocks * nYBlocks;
@@ -1628,60 +1641,79 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
             if (nImageId == 0)
                 return FALSE;
 
-            asImageId.push_back(nImageId);
+            GDALPDFImageDesc oImageDesc;
+            oImageDesc.nImageId = nImageId;
+            oImageDesc.dfXOff = (nBlockXOff * nBlockXSize) / dfUserUnit + psMargins->nLeft;
+            oImageDesc.dfYOff = (nHeight - nBlockYOff * nBlockYSize - nReqHeight) / dfUserUnit + psMargins->nBottom;
+            oImageDesc.dfXSize = nReqWidth / dfUserUnit;
+            oImageDesc.dfYSize = nReqHeight / dfUserUnit;
+
+            oPageContext.asImageDesc.push_back(oImageDesc);
         }
     }
 
-    StartObj(nContentId);
+    return TRUE;
+}
+
+/************************************************************************/
+/*                               EndPage()                              */
+/************************************************************************/
+
+int GDALPDFWriter::EndPage(const char* pszLayerName,
+                           const char* pszExtraContentStream,
+                           const char* pszExtraContentLayerName)
+{
+    int nLayerExtraContentId = WriteOCG(pszExtraContentLayerName);
+    int nLayerRasterId = WriteOCG(pszLayerName);
+
+    int bHasTimesRoman = pszExtraContentStream && strstr(pszExtraContentStream, "/FTimesRoman");
+    int bHasTimesBold = pszExtraContentStream && strstr(pszExtraContentStream, "/FTimesBold");
+
+    int nContentLengthId = AllocNewObject();
+
+    StartObj(oPageContext.nContentId);
     {
         GDALPDFDictionaryRW oDict;
         oDict.Add("Length", nContentLengthId, 0);
         VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
     }
+
     VSIFPrintfL(fp, "stream\n");
     vsi_l_offset nStreamStart = VSIFTellL(fp);
 
-    if (pszLayerName)
-        VSIFPrintfL(fp, "/OC /LyrRaster BDC\n");
+    if (nLayerRasterId)
+        VSIFPrintfL(fp, "/OC /Lyr%d BDC\n", nLayerRasterId);
 
-    for(nBlockYOff = 0; nBlockYOff < nYBlocks; nBlockYOff ++)
+    for(size_t iImage = 0; iImage < oPageContext.asImageDesc.size(); iImage ++)
     {
-        for(nBlockXOff = 0; nBlockXOff < nXBlocks; nBlockXOff ++)
-        {
-            int nReqWidth = MIN(nBlockXSize, nWidth - nBlockXOff * nBlockXSize);
-            int nReqHeight = MIN(nBlockYSize, nHeight - nBlockYOff * nBlockYSize);
-
-            int iImage = nBlockYOff * nXBlocks + nBlockXOff;
-
-            VSIFPrintfL(fp, "q\n");
-            GDALPDFObjectRW* poXSize = GDALPDFObjectRW::CreateReal(nReqWidth / dfUserUnit);
-            GDALPDFObjectRW* poYSize = GDALPDFObjectRW::CreateReal(nReqHeight / dfUserUnit);
-            GDALPDFObjectRW* poXOff = GDALPDFObjectRW::CreateReal((nBlockXOff * nBlockXSize) / dfUserUnit + psMargins->nLeft);
-            GDALPDFObjectRW* poYOff = GDALPDFObjectRW::CreateReal((nHeight - nBlockYOff * nBlockYSize - nReqHeight) / dfUserUnit + psMargins->nBottom);
-            VSIFPrintfL(fp, "%s 0 0 %s %s %s cm\n",
-                        poXSize->Serialize().c_str(),
-                        poYSize->Serialize().c_str(),
-                        poXOff->Serialize().c_str(),
-                        poYOff->Serialize().c_str());
-            delete poXSize;
-            delete poYSize;
-            delete poXOff;
-            delete poYOff;
-            VSIFPrintfL(fp, "/Image%d Do\n",
-                        asImageId[iImage]);
-            VSIFPrintfL(fp, "Q\n");
-        }
+        VSIFPrintfL(fp, "q\n");
+        GDALPDFObjectRW* poXSize = GDALPDFObjectRW::CreateReal(oPageContext.asImageDesc[iImage].dfXSize);
+        GDALPDFObjectRW* poYSize = GDALPDFObjectRW::CreateReal(oPageContext.asImageDesc[iImage].dfYSize);
+        GDALPDFObjectRW* poXOff = GDALPDFObjectRW::CreateReal(oPageContext.asImageDesc[iImage].dfXOff);
+        GDALPDFObjectRW* poYOff = GDALPDFObjectRW::CreateReal(oPageContext.asImageDesc[iImage].dfYOff);
+        VSIFPrintfL(fp, "%s 0 0 %s %s %s cm\n",
+                    poXSize->Serialize().c_str(),
+                    poYSize->Serialize().c_str(),
+                    poXOff->Serialize().c_str(),
+                    poYOff->Serialize().c_str());
+        delete poXSize;
+        delete poYSize;
+        delete poXOff;
+        delete poYOff;
+        VSIFPrintfL(fp, "/Image%d Do\n",
+                    oPageContext.asImageDesc[iImage].nImageId);
+        VSIFPrintfL(fp, "Q\n");
     }
 
-    if (pszLayerName)
+    if (nLayerRasterId)
         VSIFPrintfL(fp, "EMC\n");
 
     if (pszExtraContentStream)
     {
-        if (pszExtraContentLayerName)
-            VSIFPrintfL(fp, "/OC /LyrExtraContent BDC\n");
+        if (nLayerExtraContentId)
+            VSIFPrintfL(fp, "/OC /Lyr%d BDC\n", nLayerExtraContentId);
         VSIFPrintfL(fp, "%s\n", pszExtraContentStream);
-        if (pszExtraContentLayerName)
+        if (nLayerExtraContentId)
             VSIFPrintfL(fp, "EMC\n");
     }
 
@@ -1695,22 +1727,19 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
                 (long)(nStreamEnd - nStreamStart));
     EndObj();
 
-    int nLayerExtraContentId = WriteOCG(pszExtraContentLayerName);
-
-    int nLayerRasterId = WriteOCG(pszLayerName);
-
-    StartObj(nResourcesId);
+    StartObj(oPageContext.nResourcesId);
     {
         GDALPDFDictionaryRW oDict;
         GDALPDFDictionaryRW* poDictXObject = new GDALPDFDictionaryRW();
         oDict.Add("XObject", poDictXObject);
-        for(size_t iImage = 0; iImage < asImageId.size(); iImage ++)
+        for(size_t iImage = 0; iImage < oPageContext.asImageDesc.size(); iImage ++)
         {
-            poDictXObject->Add(CPLSPrintf("Image%d", asImageId[iImage]), asImageId[iImage], 0);
+            poDictXObject->Add(CPLSPrintf("Image%d", oPageContext.asImageDesc[iImage].nImageId),
+                               oPageContext.asImageDesc[iImage].nImageId, 0);
         }
 
         GDALPDFDictionaryRW* poDictFTimesRoman = NULL;
-        if (pszExtraContentStream && strstr(pszExtraContentStream, "/FTimesRoman"))
+        if (bHasTimesRoman)
         {
             poDictFTimesRoman = new GDALPDFDictionaryRW();
             poDictFTimesRoman->Add("Type", GDALPDFObjectRW::CreateName("Font"));
@@ -1720,7 +1749,7 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
         }
 
         GDALPDFDictionaryRW* poDictFTimesBold = NULL;
-        if (pszExtraContentStream && strstr(pszExtraContentStream, "/FTimesBold"))
+        if (bHasTimesBold)
         {
             poDictFTimesBold = new GDALPDFDictionaryRW();
             poDictFTimesBold->Add("Type", GDALPDFObjectRW::CreateName("Font"));
@@ -1739,13 +1768,12 @@ int GDALPDFWriter::WritePage(GDALDataset* poSrcDS,
             oDict.Add("Font", poDictFont);
         }
 
-        if (nLayerExtraContentId || nLayerRasterId)
+        if (asLayersId.size())
         {
             GDALPDFDictionaryRW* poDictProperties = new GDALPDFDictionaryRW();
-            if (nLayerExtraContentId)
-                poDictProperties->Add("LyrExtraContent", nLayerExtraContentId, 0);
-            if (nLayerRasterId)
-                poDictProperties->Add("LyrRaster", nLayerRasterId, 0);
+            for(size_t i=0; i<asLayersId.size(); i++)
+                poDictProperties->Add(CPLSPrintf("Lyr%d", asLayersId[i]),
+                                      asLayersId[i], 0);
             oDict.Add("Properties", poDictProperties);
         }
 
@@ -2443,20 +2471,26 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
         oWriter.SetInfo(poSrcDS, papszOptions);
     oWriter.SetXMP(poSrcDS, pszXMP);
 
-    int bRet = oWriter.WritePage(poSrcDS,
-                                 dfDPI,
-                                 pszGEO_ENCODING,
-                                 pszNEATLINE,
-                                 &sMargins,
-                                 pszExtraContentStream,
-                                 pszLayerName,
-                                 pszExtraContentLayerName,
-                                 eCompressMethod,
-                                 nPredictor,
-                                 nJPEGQuality,
-                                 pszJPEG2000_DRIVER,
-                                 nBlockXSize, nBlockYSize,
-                                 pfnProgress, pProgressData);
+    oWriter.StartPage(poSrcDS,
+                      dfDPI,
+                      pszGEO_ENCODING,
+                      pszNEATLINE,
+                      &sMargins);
+
+    int bRet = oWriter.WriteImagery(poSrcDS,
+                                    dfDPI,
+                                    &sMargins,
+                                    eCompressMethod,
+                                    nPredictor,
+                                    nJPEGQuality,
+                                    pszJPEG2000_DRIVER,
+                                    nBlockXSize, nBlockYSize,
+                                    pfnProgress, pProgressData);
+
+    if (bRet)
+        oWriter.EndPage(pszLayerName,
+                        pszExtraContentStream,
+                        pszExtraContentLayerName);
     oWriter.Close();
 
     if (!bRet)
