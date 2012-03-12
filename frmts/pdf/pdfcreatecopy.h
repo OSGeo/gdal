@@ -67,6 +67,24 @@ class GDALXRefEntry
         GDALXRefEntry& operator= (const GDALXRefEntry& oOther) { nOffset = oOther.nOffset; nGen = oOther.nGen; bFree = oOther.bFree; return *this; }
 };
 
+class GDALPDFImageDesc
+{
+    public:
+        int          nImageId;
+        double       dfXOff;
+        double       dfYOff;
+        double       dfXSize;
+        double       dfYSize;
+};
+
+class GDALPDFPageContext
+{
+    public:
+        int          nContentId;
+        int          nResourcesId;
+        std::vector<GDALPDFImageDesc> asImageDesc;
+};
+
 class GDALPDFWriter
 {
     VSILFILE* fp;
@@ -86,6 +104,8 @@ class GDALPDFWriter
     int nLastStartXRef;
     int nLastXRefSize;
     int bCanUpdate;
+
+    GDALPDFPageContext oPageContext;
 
     void    Init();
 
@@ -136,21 +156,25 @@ class GDALPDFWriter
                                 const char* pszNEATLINE,
                                 PDFMargins* psMargins);
 
-       int  WritePage(GDALDataset* poSrcDS,
+       int  StartPage(GDALDataset* poSrcDS,
                       double dfDPI,
                       const char* pszGEO_ENCODING,
                       const char* pszNEATLINE,
-                      PDFMargins* psMargins,
-                      const char* pszExtraContentStream,
-                      const char* pszLayerName,
-                      const char* pszExtraContentLayerName,
-                      PDFCompressMethod eCompressMethod,
-                      int nPredictor,
-                      int nJPEGQuality,
-                      const char* pszJPEG2000_DRIVER,
-                      int nBlockXSize, int nBlockYSize,
-                      GDALProgressFunc pfnProgress,
-                      void * pProgressData);
+                      PDFMargins* psMargins);
+       int WriteImagery(GDALDataset* poSrcDS,
+                        double dfDPI,
+                        PDFMargins* psMargins,
+                        PDFCompressMethod eCompressMethod,
+                        int nPredictor,
+                        int nJPEGQuality,
+                        const char* pszJPEG2000_DRIVER,
+                        int nBlockXSize, int nBlockYSize,
+                        GDALProgressFunc pfnProgress,
+                        void * pProgressData);
+       int  EndPage(const char* pszLayerName,
+                    const char* pszExtraContentStream,
+                    const char* pszExtraContentLayerName);
+
        int  SetInfo(GDALDataset* poSrcDS,
                     char** papszOptions);
        int  SetXMP(GDALDataset* poSrcDS,
