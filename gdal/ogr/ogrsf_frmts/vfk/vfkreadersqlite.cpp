@@ -132,9 +132,6 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
 
     pszName = poDataBlock->GetName();
     
-    osSQL.Printf("CREATE UNIQUE INDEX idx_%s ON '%s' (_rowid_)",
-		 pszName, pszName);
-    sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
     if (EQUAL(pszName, "SOBR")) {
 	osSQL.Printf("CREATE UNIQUE INDEX idx2 ON '%s' (ID)",
 		     pszName);
@@ -213,7 +210,7 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock)
 			poPropertyDefn->GetTypeSQL().c_str());
 	osCommand += osColumn;
     }
-    osCommand += ",_rowid_);";
+    osCommand += ");";
 
     ExecuteSQL(osCommand.c_str());
  
@@ -356,8 +353,7 @@ void VFKReaderSQLite::AddFeature(IVFKDataBlock *poDataBlock, VFKFeature *poFeatu
 	}
 	osCommand += osValue;
     }
-    osValue.Printf(",%d);", poDataBlock->GetFeatureCount());
-    osCommand += osValue;
+    osCommand += ");";
     
     ExecuteSQL(osCommand.c_str());
 
