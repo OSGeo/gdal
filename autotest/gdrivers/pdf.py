@@ -1193,7 +1193,9 @@ def pdf_custom_layout():
                 'RIGHT_MARGIN=3',
                 'BOTTOM_MARGIN=4',
                 'DPI=300',
-                'EXTRA_CONTENT_STREAM=BT 255 0 0 rg /FTimesRoman 1 Tf 1 0 0 1 1 1 Tm (Footpage string) Tj ET' ]
+                'EXTRA_CONTENT_STREAM=BT 255 0 0 rg /FTimesRoman 1 Tf 1 0 0 1 1 1 Tm (Footpage string) Tj ET',
+                'LAYER_NAME=byte_tif',
+                'EXTRA_CONTENT_LAYER_NAME=Footpage']
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_custom_layout.pdf', src_ds, options = options)
@@ -1202,9 +1204,15 @@ def pdf_custom_layout():
 
     ds = gdal.Open('tmp/pdf_custom_layout.pdf')
     ds.GetRasterBand(1).Checksum()
+    layers = ds.GetMetadata_List('LAYERS')
     ds = None
 
     gdal.Unlink('tmp/pdf_custom_layout.pdf')
+
+    if layers != ['LAYER_00_NAME=Footpage', 'LAYER_01_NAME=byte_tif']:
+        gdaltest.post_reason('did not get expected layers')
+        print(layers)
+        return 'fail'
 
     return 'success'
 

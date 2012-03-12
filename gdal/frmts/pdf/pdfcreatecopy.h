@@ -72,6 +72,7 @@ class GDALPDFWriter
     VSILFILE* fp;
     std::vector<GDALXRefEntry> asXRefEntries;
     std::vector<int> asPageId;
+    std::vector<int> asLayersId;
 
     int nInfoId;
     int nInfoGen;
@@ -104,6 +105,7 @@ class GDALPDFWriter
     int     WriteMask(GDALDataset* poSrcDS,
                       int nXOff, int nYOff, int nReqXSize, int nReqYSize,
                       PDFCompressMethod eCompressMethod);
+    int     WriteOCG(const char* pszLayerName);
 
     int     AllocNewObject();
 
@@ -140,6 +142,8 @@ class GDALPDFWriter
                       const char* pszNEATLINE,
                       PDFMargins* psMargins,
                       const char* pszExtraContentStream,
+                      const char* pszLayerName,
+                      const char* pszExtraContentLayerName,
                       PDFCompressMethod eCompressMethod,
                       int nPredictor,
                       int nJPEGQuality,
