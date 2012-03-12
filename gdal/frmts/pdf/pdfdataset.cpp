@@ -1522,6 +1522,9 @@ void PDFDataset::AddLayer(const char* pszLayerName, OptionalContentGroup* ocg)
     /*osLayerList.AddNameValue(CPLSPrintf(szFormatInitState, nNewIndex),
                              (ocg == NULL || ocg->getState() == OptionalContentGroup::On) ? "ON" : "OFF");*/
     oLayerOCGMap[pszLayerName] = ocg;
+
+    //if (ocg != NULL && ocg->getState() == OptionalContentGroup::Off)
+    //    bUseOCG = TRUE;
 }
 
 /************************************************************************/
@@ -4001,6 +4004,12 @@ void GDALRegister_PDF()
 "   <Option name='TILED' type='boolean' description='Switch to tiled format' default='NO'/>\n"
 "   <Option name='BLOCKXSIZE' type='int' description='Block Width'/>\n"
 "   <Option name='BLOCKYSIZE' type='int' description='Block Height'/>\n"
+"   <Option name='EXTRA_CONTENT_STREAM' type='string' description='Extra data to insert into the page content stream'/>\n"
+"   <Option name='MARGIN' type='int' description='Margin around image in user units'/>\n"
+"   <Option name='LEFT_MARGIN' type='int' description='Left margin in user units'/>\n"
+"   <Option name='RIGHT_MARGIN' type='int' description='Right margin in user units'/>\n"
+"   <Option name='TOP_MARGIN' type='int' description='Top margin in user units'/>\n"
+"   <Option name='BOTTOM_MARGIN' type='int' description='Bottom margin in user units'/>\n"
 "   <Option name='XMP' type='string' description='xml:XMP metadata'/>\n"
 "   <Option name='WRITE_INFO' type='boolean' description='to control whether a Info block must be written' default='YES'/>\n"
 "   <Option name='AUTHOR' type='string'/>\n"
