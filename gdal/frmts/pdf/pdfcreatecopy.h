@@ -42,6 +42,14 @@ typedef enum
     COMPRESS_JPEG2000
 } PDFCompressMethod;
 
+typedef struct
+{
+    int nLeft;
+    int nRight;
+    int nTop;
+    int nBottom;
+} PDFMargins;
+
 /************************************************************************/
 /*                          GDALPDFWriter                               */
 /************************************************************************/
@@ -119,15 +127,19 @@ class GDALPDFWriter
 
        int     WriteSRS_ISO32000(GDALDataset* poSrcDS,
                                 double dfUserUnit,
-                                const char* pszNEATLINE);
+                                const char* pszNEATLINE,
+                                PDFMargins* psMargins);
        int     WriteSRS_OGC_BP(GDALDataset* poSrcDS,
                                 double dfUserUnit,
-                                const char* pszNEATLINE);
+                                const char* pszNEATLINE,
+                                PDFMargins* psMargins);
 
        int  WritePage(GDALDataset* poSrcDS,
                       double dfDPI,
                       const char* pszGEO_ENCODING,
                       const char* pszNEATLINE,
+                      PDFMargins* psMargins,
+                      const char* pszExtraContentStream,
                       PDFCompressMethod eCompressMethod,
                       int nPredictor,
                       int nJPEGQuality,

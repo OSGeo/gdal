@@ -1180,6 +1180,34 @@ def pdf_layers():
 
     return 'success'
 
+###############################################################################
+# Test MARGIN and EXTRA_CONTENT_STREAM options
+
+def pdf_custom_layout():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    options = [ 'LEFT_MARGIN=1',
+                'TOP_MARGIN=2',
+                'RIGHT_MARGIN=3',
+                'BOTTOM_MARGIN=4',
+                'DPI=300',
+                'EXTRA_CONTENT_STREAM=BT 255 0 0 rg /FTimesRoman 1 Tf 1 0 0 1 1 1 Tm (Footpage string) Tj ET' ]
+
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_custom_layout.pdf', src_ds, options = options)
+    ds = None
+    src_ds = None
+
+    ds = gdal.Open('tmp/pdf_custom_layout.pdf')
+    ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    gdal.Unlink('tmp/pdf_custom_layout.pdf')
+
+    return 'success'
+
 gdaltest_list = [
     pdf_init,
     pdf_online_1,
@@ -1217,6 +1245,7 @@ gdaltest_list = [
     pdf_check_identity_iso32000,
     pdf_check_identity_ogc_bp,
     pdf_layers,
+    pdf_custom_layout,
 
     pdf_switch_underlying_lib,
 
