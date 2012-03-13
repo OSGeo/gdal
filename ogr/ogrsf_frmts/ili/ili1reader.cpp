@@ -156,6 +156,30 @@ void ILI1Reader::AddCoord(OGRILI1Layer* layer, IOM_BASKET model, IOM_OBJECT mode
   }
 }
 
+void ILI1Reader::AddEnumTable(OGRILI1Layer* layer, IOM_BASKET model, IOM_OBJECT enumeration) {
+  //Add enums as features
+  IOM_ITERATOR fieldit=iom_iteratorobject(model);
+  for (IOM_OBJECT fieldele=iom_nextobject(fieldit); fieldele; fieldele=iom_nextobject(fieldit)){
+    const char *etag=iom_getobjecttag(fieldele);
+    if (etag && (EQUAL(etag,"iom04.metamodel.Enumeration_Element"))) {
+      if (GetAttrObj(model, fieldele, "enumeration") == enumeration) {
+        IOM_OBJECT subenum = GetAttrObj(model, fieldele, "subEnumeration");
+        unsigned int order_pos = iom_getobjectreforderpos(iom_getattrobj(fieldele, "enumeration", 0));
+        if (subenum) {
+          AddEnumTable(layer, model, subenum);
+        } else if (order_pos) {
+          OGRFeature *feature = OGRFeature::CreateFeature(layer->GetLayerDefn());
+          feature->SetField("id", (int)order_pos-1);
+          feature->SetField("value", iom_getattrvalue(fieldele, "name"));
+          layer->AddFeature(feature);
+        }
+      }
+    }
+    iom_releaseobject(fieldele);
+  }
+  iom_releaseiterator(fieldit);
+}
+
 OGRILI1Layer* ILI1Reader::AddGeomTable(const char* datalayername, const char* geomname, OGRwkbGeometryType eType) {
   static char layername[512];
   layername[0] = '\0';
@@ -414,28 +438,7 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
           layer->GetLayerDefn()->AddFieldDefn(&fieldDef);
           }
           CPLDebug( "OGR_ILI", "Enumeration layer '%s'", layername );
-
-          //Add enums as features
-          IOM_ITERATOR fieldit=iom_iteratorobject(model);
-          for (IOM_OBJECT fieldele=iom_nextobject(fieldit); fieldele; fieldele=iom_nextobject(fieldit)){
-            const char *etag=iom_getobjecttag(fieldele);
-            if (etag && (EQUAL(etag,"iom04.metamodel.Enumeration_Element"))) {
-              if (GetAttrObj(model, fieldele, "enumeration") == enumeration) {
-                unsigned int order_pos = iom_getobjectreforderpos(iom_getattrobj(fieldele, "enumeration", 0));
-                if (order_pos) {
-                  OGRFeature *feature = OGRFeature::CreateFeature(layer->GetLayerDefn());
-                  feature->SetField("id", (int)order_pos-1);
-                  feature->SetField("value", iom_getattrvalue(fieldele, "name"));
-                  layer->AddFeature(feature);
-                }
-                if (GetAttrObj(model, fieldele, "subEnumeration")) {
-                  CPLDebug( "OGR_ILI", "subEnumeration ignored" ); //FIXME
-                }
-              }
-            }
-            iom_releaseobject(fieldele);
-          }
-          iom_releaseiterator(fieldit);
+          AddEnumTable(layer, model, enumeration);
         }
       } else if (EQUAL(tag,"iom04.metamodel.Ili1Format")) {
         codeBlank = atoi(iom_getattrvalue(modelele, "blankCode"));
