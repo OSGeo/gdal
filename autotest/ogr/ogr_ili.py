@@ -82,7 +82,7 @@ def ogr_interlis1_2():
               'Bodenbedeckung__BoFlaechen__Areas',
               'Bodenbedeckung__Strasse',
               'Bodenbedeckung__Gebaeude',
-              'BoFlaechen__Art']
+              'Bodenbedeckung__BoFlaechen__Art']
     if ds.GetLayerCount() != len(layers):
         gdaltest.post_reason( 'layer count wrong.' )
         return 'fail'
@@ -347,7 +347,7 @@ def ogr_interlis1_8():
 
     ds = ogr.Open( 'data/ili/Beispiel.itf,data/ili/Beispiel.ili' )
 
-    lyr = ds.GetLayerByName('BoFlaechen__Art')
+    lyr = ds.GetLayerByName('Bodenbedeckung__BoFlaechen__Art')
     if lyr is None:
         gdaltest.post_reason( 'Enumeration layer not available.' )
         return 'fail'
