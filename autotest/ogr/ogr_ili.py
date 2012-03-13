@@ -345,7 +345,7 @@ def ogr_interlis1_8():
     if not gdaltest.have_ili_reader:
         return 'skip'
 
-    ds = ogr.Open( 'data/ili/Beispiel.itf,data/ili/Beispiel.ili' )
+    ds = ogr.Open( 'data/ili/enum-test.itf,data/ili/enum-test.ili' )
 
     lyr = ds.GetLayerByName('Bodenbedeckung__BoFlaechen__Art')
     if lyr is None:
@@ -372,6 +372,26 @@ def ogr_interlis1_8():
           print str(field_values[i])
           gdaltest.post_reason( 'field value wrong.' )
           return 'fail'
+
+    #Nested enum (domain)
+    lyr = ds.GetLayerByName('Bodenbedeckung__BoFlaechen__NestedEnum')
+    #TODO: should be on domain level: EnumTest__Enum
+    if lyr is None:
+        gdaltest.post_reason( 'Enumeration layer not available.' )
+        return 'fail'
+
+    if lyr.GetFeatureCount() != 4:
+        gdaltest.post_reason( 'feature count wrong.' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    while feat:
+        #print("Id %d -> %s" % (feat.GetFieldAsInteger("id"), feat.GetFieldAsString(1)) )
+        feat = lyr.GetNextFeature()
+    #Id 0 -> Enum0
+    #Id 0 -> Enum1
+    #Id 1 -> Enum2
+    #Id 2 -> Enum3
 
     ds.Destroy()
 
