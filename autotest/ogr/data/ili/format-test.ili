@@ -1,9 +1,5 @@
 TRANSFER FormatTest;
 
-  DOMAIN
-    LKoord = COORD2 100.00 100.00
-                    300.00 300.00;
-
 MODEL FormatTest
 
   TOPIC FormatTests =
