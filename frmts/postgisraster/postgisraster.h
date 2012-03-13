@@ -131,6 +131,7 @@ public:
 class PostGISRasterRasterBand : public GDALRasterBand {
     friend class PostGISRasterDataset;
 private:
+    GBool bHasNoDataValue;
     double dfNoDataValue;
     int nOverviewFactor;
     GBool bIsOffline;
@@ -145,7 +146,7 @@ private:
 public:
 
     PostGISRasterRasterBand(PostGISRasterDataset *poDS, int nBand, GDALDataType hDataType,
-            double dfNodata, GBool bSignedByte, int nBitDepth, int nFactor,
+            GBool bHasNoDataValue, double dfNodata, GBool bSignedByte, int nBitDepth, int nFactor,
             GBool bIsOffline, char * pszSchema = NULL, char * pszTable = NULL,
             char * pszColumn = NULL);
 
