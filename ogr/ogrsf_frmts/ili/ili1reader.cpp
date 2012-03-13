@@ -381,15 +381,28 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
               }
           }
         }
+      } else if (EQUAL(tag,"iom04.metamodel.Domain")) {
+        // Check for enumeration
+        //Domain -> EnumerationType -> Enumeration
+        //LocalAttribute -> TypeAlias -> EnumerationType -> Enumeration
+        if (EQUAL(GetTypeName(model, modelele), "iom04.metamodel.EnumerationType")) {
+          //TODO: Replace LocalAttribute enumeration tables with one table for Domain
+        }
       } else if (EQUAL(tag,"iom04.metamodel.LocalAttribute")) {
         // Check for enumeration
+        //LocalAttribute -> EnumerationType -> Enumeration
+        //Enumeration_Element -> Enumeration
+        //                   (-> subEnumeration)
         if (EQUAL(GetTypeName(model, modelele), "iom04.metamodel.EnumerationType")) {
-          const char* layername = GetLayerName(model, modelele);
           IOM_OBJECT enumeration = GetAttrObj(model, GetTypeObj(model, modelele), "enumeration");
           OGRSpatialReference *poSRSIn = NULL;
           int bWriterIn = 0;
           OGRwkbGeometryType eReqType = wkbUnknown;
           OGRILI1DataSource *poDSIn = NULL;
+          IOM_OBJECT table = GetAttrObj(model, modelele, "container");
+          char* topicname = CPLStrdup(iom_getattrvalue(GetAttrObj(model, table, "container"), "name"));
+          const char* layername = GetLayerNameString(topicname, GetLayerName(model, modelele));
+          CPLFree(topicname);
           OGRILI1Layer* layer = new OGRILI1Layer(layername, poSRSIn, bWriterIn, eReqType, poDSIn);
           AddLayer(layer);
           {
@@ -400,7 +413,7 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
           OGRFieldDefn fieldDef("value", OFTString);
           layer->GetLayerDefn()->AddFieldDefn(&fieldDef);
           }
-          CPLDebug( "OGR_ILI", "Enumeration layer'%s'", layername );
+          CPLDebug( "OGR_ILI", "Enumeration layer '%s'", layername );
 
           //Add enums as features
           IOM_ITERATOR fieldit=iom_iteratorobject(model);
@@ -414,6 +427,9 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
                   feature->SetField("id", (int)order_pos-1);
                   feature->SetField("value", iom_getattrvalue(fieldele, "name"));
                   layer->AddFeature(feature);
+                }
+                if (GetAttrObj(model, fieldele, "subEnumeration")) {
+                  CPLDebug( "OGR_ILI", "subEnumeration ignored" ); //FIXME
                 }
               }
             }
