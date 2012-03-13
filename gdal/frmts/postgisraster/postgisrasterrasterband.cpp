@@ -51,7 +51,7 @@
  *          domain.
  */
 PostGISRasterRasterBand::PostGISRasterRasterBand(PostGISRasterDataset *poDS,
-        int nBand, GDALDataType hDataType, double dfNodata, GBool bSignedByte,
+        int nBand, GDALDataType hDataType, GBool bHasNoDataValue, double dfNodata, GBool bSignedByte,
         int nBitDepth, int nFactor, GBool bIsOffline, char * pszSchema, 
         char * pszTable, char * pszColumn)
 {
@@ -67,6 +67,7 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(PostGISRasterDataset *poDS,
 
     eAccess = poDS->GetAccess();
     eDataType = hDataType;
+    this->bHasNoDataValue = bHasNoDataValue;
     dfNoDataValue = dfNodata;
 
 
@@ -150,7 +151,7 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(PostGISRasterDataset *poDS,
                  * if we're talking about an overview band
                  */
                 papoOverviews[i] = new PostGISRasterRasterBand(poDS, nBand,
-                        hDataType, dfNodata, bSignedByte, nBitDepth,
+                        hDataType, bHasNoDataValue, dfNodata, bSignedByte, nBitDepth,
                         nFetchOvFactor, bIsOffline, pszOvSchema, pszOvTable, pszOvColumn);
 
             }
@@ -269,7 +270,7 @@ CPLErr PostGISRasterRasterBand::SetNoDataValue(double dfNewValue) {
  */
 double PostGISRasterRasterBand::GetNoDataValue(int *pbSuccess) {
     if (pbSuccess != NULL)
-        *pbSuccess = TRUE;
+        *pbSuccess = (int) bHasNoDataValue;
 
     return dfNoDataValue;
 }

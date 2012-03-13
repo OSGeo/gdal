@@ -703,6 +703,7 @@ GBool PostGISRasterDataset::SetRasterBands() {
     GDALDataType hDataType = GDT_Byte;
     int nTuples = 0;
     GBool bIsOffline = false;
+    GBool bHasNoDataValue = false;
 
     /* Create each PostGISRasterRasterBand using the band metadata */
     for (iBand = 0; iBand < nBands; iBand++) {
@@ -758,6 +759,7 @@ GBool PostGISRasterDataset::SetRasterBands() {
 
         /* Get metadata and create raster band objects */
         pszDataType = CPLStrdup(PQgetvalue(poResult, 0, 0));
+        bHasNoDataValue = EQUALN(PQgetvalue(poResult, 0, 1), "t", sizeof(char));
         dfNodata = atof(PQgetvalue(poResult, 0, 2));
         bIsOffline = EQUALN(PQgetvalue(poResult, 0, 3), "t", sizeof (char));
 
@@ -807,7 +809,7 @@ GBool PostGISRasterDataset::SetRasterBands() {
 
         /* Create raster band object */
         SetBand(iBand + 1, new PostGISRasterRasterBand(this, iBand + 1, hDataType,
-                dfNodata, bSignedByte, nBitDepth, 0, bIsOffline));
+                bHasNoDataValue, dfNodata, bSignedByte, nBitDepth, 0, bIsOffline));
 
         CPLFree(pszDataType);
         PQclear(poResult);
