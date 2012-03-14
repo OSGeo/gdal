@@ -75,7 +75,8 @@
 	    }
 	    CSLDestroy($1);
 	}
-	$result = newRV_noinc((SV*)av);
+	$result = newRV((SV*)av);
+	sv_2mortal($result);
 	argvi++;
     }
 }
@@ -93,7 +94,8 @@
     }
     CSLDestroy($1);
   }
-  $result = newRV_noinc((SV*)av);
+  $result = newRV((SV*)av);
+  sv_2mortal($result);
   argvi++;
 }
 %typemap(out) (char **free)
@@ -107,7 +109,8 @@
     }
     CPLFree($1);
   }
-  $result = newRV_noinc((SV*)av);
+  $result = newRV((SV*)av);
+  sv_2mortal($result);
   argvi++;
 }
 /* drop GDAL return value */
@@ -140,6 +143,11 @@
 %typemap(out) IF_ERROR_RETURN_NONE
 {
   /* %typemap(out) IF_ERROR_RETURN_NONE */
+}
+/* return value is really void or prepared by typemaps, avoids unnecessary sv_newmortal */
+%typemap(out) void
+{
+  /* %typemap(out) void */
 }
 
 /*
@@ -188,7 +196,7 @@ CreateArrayFromIntArray( int *first, unsigned int size ) {
     av_store(av,i,newSViv(*first));
     ++first;
   }
-  return newRV_noinc((SV*)av);
+  return sv_2mortal(newRV((SV*)av));
 }
 %}
 
@@ -200,7 +208,7 @@ CreateArrayFromDoubleArray( double *first, unsigned int size ) {
     av_store(av,i,newSVnv(*first));
     ++first;
   }
-  return newRV_noinc((SV*)av);
+  return sv_2mortal(newRV((SV*)av));
 }
 %}
 
@@ -214,7 +222,7 @@ CreateArrayFromStringArray( char **first ) {
     av_store(av,i,sv);
     ++first;
   }
-  return newRV_noinc((SV*)av);
+  return sv_2mortal(newRV((SV*)av));
 }
 %}
 
@@ -476,7 +484,7 @@ CreateArrayFromStringArray( char **first ) {
     }
     else
     {
-        $result = sv_newmortal();
+        $result = &PL_sv_undef;
     }
     argvi++ ;
 %}
@@ -522,7 +530,7 @@ CreateArrayFromStringArray( char **first ) {
     SWIG_MakePtr( sv, (void*)o, $*2_descriptor, SWIG_SHADOW|SWIG_OWNER);
     av_store(dict, i, sv);
   }
-  $result = newRV_noinc((SV*)dict);
+  $result = sv_2mortal(newRV((SV*)dict));
   argvi++;
 }
 %typemap(in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) ( GDAL_GCP *tmpGCPList )
@@ -648,7 +656,8 @@ CreateArrayFromStringArray( char **first ) {
       stringarray++;
     }
   }
-  $result = newRV_noinc((SV*)hv);
+  $result = newRV((SV*)hv);
+  sv_2mortal($result);
   argvi++;
 }
 %typemap(freearg) char **dict
@@ -709,7 +718,8 @@ CreateArrayFromStringArray( char **first ) {
 		SvREFCNT_dec(sv);
 	}
     }
-    $result = newRV_noinc((SV*)av);
+    $result = newRV((SV*)av);
+    sv_2mortal($result);
     argvi++;
 }
 
@@ -900,7 +910,7 @@ static AV *XMLTreeToAV( CPLXMLNode *psTree )
          psChild != NULL; 
          psChild = psChild->psNext, iChild++ )
     {
-	SV *s = newRV_inc((SV*)XMLTreeToAV(psChild));
+	SV *s = newRV((SV*)XMLTreeToAV(psChild));
 	if (!av_store(av, iChild, s))
 	    SvREFCNT_dec(s);
     }
@@ -912,7 +922,8 @@ static AV *XMLTreeToAV( CPLXMLNode *psTree )
 %typemap(out,fragment="XMLTreeToAV") (CPLXMLNode*)
 {
   /* %typemap(out) (CPLXMLNode*) */
-  $result = newRV_noinc((SV*)XMLTreeToAV( $1 ));
+  $result = newRV((SV*)XMLTreeToAV( $1 ));
+  sv_2mortal($result);
   argvi++;
 }
 %typemap(ret) (CPLXMLNode*)
@@ -1084,8 +1095,7 @@ CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
 {
   /* %typemap(argout) (void *pBuffer, size_t nSize, size_t nCount) */
   if (result) {
-    $result = newSVpvn((char*)$1, result);
-    sv_2mortal($result);
+    $result = sv_2mortal(newSVpvn((char*)$1, result));
   } else {
     $result = &PL_sv_undef;
   }
