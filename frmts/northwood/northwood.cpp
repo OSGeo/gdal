@@ -208,48 +208,42 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
         //load the dictionary
         for( usTmp=0; usTmp < pGrd->stClassDict->nNumClassifiedItems; usTmp++ )
         {
-            pGrd->stClassDict->stClassifedItem[usTmp] =
-              (NWT_CLASSIFIED_ITEM *) calloc( sizeof(NWT_CLASSIFIED_ITEM), 1 );
+            NWT_CLASSIFIED_ITEM *psItem = 
+                pGrd->stClassDict->stClassifedItem[usTmp] =
+                (NWT_CLASSIFIED_ITEM *) calloc(sizeof(NWT_CLASSIFIED_ITEM), 1);
+
             if( !VSIFReadL( &cTmp, 9, 1, pGrd->fp ) )
             {
                 CPLError( CE_Failure, CPLE_FileIO, 
                           "Read failure, file short?" );
                 return FALSE;
             }
-            memcpy( (void *) &pGrd->stClassDict->
-                    stClassifedItem[usTmp]->usPixVal, (void *) &cTmp[0], 2 );
-            CPL_LSBPTR16(&pGrd->stClassDict->stClassifedItem[usTmp]->usPixVal);
-            memcpy( (void *) &pGrd->stClassDict->stClassifedItem[usTmp]->res1,
+            memcpy( (void *) &psItem->usPixVal, (void *) &cTmp[0], 2 );
+            CPL_LSBPTR16(&psItem->usPixVal);
+            memcpy( (void *) &psItem->res1,
                     (void *) &cTmp[2], 1 );
-            memcpy( (void *) &pGrd->stClassDict->stClassifedItem[usTmp]->r,
+            memcpy( (void *) &psItem->r,
                     (void *) &cTmp[3], 1 );
-            memcpy( (void *) &pGrd->stClassDict->stClassifedItem[usTmp]->g,
+            memcpy( (void *) &psItem->g,
                     (void *) &cTmp[4], 1 );
-            memcpy( (void *) &pGrd->stClassDict->stClassifedItem[usTmp]->b,
+            memcpy( (void *) &psItem->b,
                     (void *) &cTmp[5], 1 );
-            memcpy( (void *) &pGrd->stClassDict->stClassifedItem[usTmp]->res2,
+            memcpy( (void *) &psItem->res2,
                     (void *) &cTmp[6], 1 );
-            memcpy( (void *) &pGrd->stClassDict->stClassifedItem[usTmp]->usLen,
+            memcpy( (void *) &psItem->usLen,
                     (void *) &cTmp[7], 2 );
-            CPL_LSBPTR16(&pGrd->stClassDict->stClassifedItem[usTmp]->usLen);
+            CPL_LSBPTR16(&psItem->usLen);
                     
-            if ( pGrd->stClassDict->stClassifedItem[usTmp]->usLen > sizeof(NWT_CLASSIFIED_ITEM::szClassName)-1 )
+            if ( psItem->usLen > sizeof(psItem->szClassName)-1 )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Unexpected long class name, %d characters long - unable to read file.",
-                          pGrd->stClassDict->stClassifedItem[usTmp]->usLen );
+                          psItem->usLen );
                 return FALSE;
             }
 
-            if( !VSIFReadL( &pGrd->stClassDict->stClassifedItem[usTmp]->szClassName,
-                        pGrd->stClassDict->stClassifedItem[usTmp]->usLen,
-                        1, pGrd->fp ) )
+            if( !VSIFReadL( &psItem->szClassName, psItem->usLen, 1, pGrd->fp ) )
                 return FALSE;
-
-            CPLDebug( "GRC", "Class[%d].name = %s", 
-                      usTmp,
-                      pGrd->stClassDict->stClassifedItem[usTmp]->szClassName );
-                
         }
     }
     
