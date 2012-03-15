@@ -184,11 +184,15 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
     if( pGrd->cFormat & 0x80 )        // if is GRC load the Dictionary
     {
         VSIFSeekL( pGrd->fp,
-               1024 + (pGrd->nXSide * pGrd->nYSide) * pGrd->nBitsPerPixel / 8,
-               SEEK_SET );
+                   1024 + (pGrd->nXSide * pGrd->nYSide) * (pGrd->nBitsPerPixel/8),
+                   SEEK_SET );
 
         if( !VSIFReadL( &usTmp, 2, 1, pGrd->fp) )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "Read failure, file short?" );
             return FALSE;
+        }
         CPL_LSBPTR16(&usTmp);
         pGrd->stClassDict =
             (NWT_CLASSIFIED_DICT *) calloc( sizeof(NWT_CLASSIFIED_DICT), 1 );
@@ -207,7 +211,11 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
             pGrd->stClassDict->stClassifedItem[usTmp] =
               (NWT_CLASSIFIED_ITEM *) calloc( sizeof(NWT_CLASSIFIED_ITEM), 1 );
             if( !VSIFReadL( &cTmp, 9, 1, pGrd->fp ) )
+            {
+                CPLError( CE_Failure, CPLE_FileIO, 
+                          "Read failure, file short?" );
                 return FALSE;
+            }
             memcpy( (void *) &pGrd->stClassDict->
                     stClassifedItem[usTmp]->usPixVal, (void *) &cTmp[0], 2 );
             CPL_LSBPTR16(&pGrd->stClassDict->stClassifedItem[usTmp]->usPixVal);
@@ -225,15 +233,23 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
                     (void *) &cTmp[7], 2 );
             CPL_LSBPTR16(&pGrd->stClassDict->stClassifedItem[usTmp]->usLen);
                     
-            if ( pGrd->stClassDict->stClassifedItem[usTmp]->usLen > 256)
+            if ( pGrd->stClassDict->stClassifedItem[usTmp]->usLen > sizeof(NWT_CLASSIFIED_ITEM::szClassName)-1 )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Unexpected long class name, %d characters long - unable to read file.",
+                          pGrd->stClassDict->stClassifedItem[usTmp]->usLen );
                 return FALSE;
+            }
 
             if( !VSIFReadL( &pGrd->stClassDict->stClassifedItem[usTmp]->szClassName,
                         pGrd->stClassDict->stClassifedItem[usTmp]->usLen,
                         1, pGrd->fp ) )
                 return FALSE;
+
+            CPLDebug( "GRC", "Class[%d].name = %s", 
+                      usTmp,
+                      pGrd->stClassDict->stClassifedItem[usTmp]->szClassName );
                 
-            pGrd->stClassDict->stClassifedItem[usTmp]->szClassName[255] = '\0';
         }
     }
     
