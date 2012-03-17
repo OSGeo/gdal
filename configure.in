@@ -2948,7 +2948,6 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
     if test -z "`${CXX} testpoppler.cpp -o testpoppler ${TEST_POPPLER_INC} ${TEST_POPPLER_LIB} 2>&1`" ; then
         HAVE_POPPLER=yes
         LIBS="${TEST_POPPLER_LIB} ${LIBS}"
-        OPT_GDAL_FORMATS="pdf $OPT_GDAL_FORMATS"
         AC_MSG_RESULT([yes])
         POPPLER_INC=$TEST_POPPLER_INC
 
@@ -3046,7 +3045,6 @@ if test "$with_podofo" != "no" -a "$with_podofo" != ""; then
         if test -z "`${CXX} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${PODOFO_LIB}  2>&1`" ; then
             HAVE_PODOFO=yes
             LIBS="${PODOFO_LIB} ${LIBS}"
-            OPT_GDAL_FORMATS="pdf $OPT_GDAL_FORMATS"
             PODOFO_INC=$TEST_PODOFO_INC
             AC_MSG_RESULT([yes])
         fi
@@ -3077,7 +3075,6 @@ if test "$with_podofo" != "no" -a "$with_podofo" != ""; then
         if test -z "`${CXX} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${TEST_PODOFO_LIB} 2>&1`" ; then
             HAVE_PODOFO=yes
             LIBS="${PODOFO_LIB} ${LIBS}"
-            OPT_GDAL_FORMATS="pdf $OPT_GDAL_FORMATS"
             PODOFO_INC=$TEST_PODOFO_INC
             AC_MSG_RESULT([yes])
         else
