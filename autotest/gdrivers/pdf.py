@@ -52,6 +52,11 @@ def pdf_init():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
+    md = gdaltest.pdf_drv.GetMetadata()
+    if not 'HAVE_POPPLER' in md and not 'HAVE_PODOFO' in md:
+        gdaltest.pdf_drv = None
+        return 'skip'
+
     return 'success'
 
 ###############################################################################
@@ -1216,6 +1221,51 @@ def pdf_custom_layout():
 
     return 'success'
 
+###############################################################################
+# Test adding a OGR datasource
+
+def pdf_write_ogr():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    f = gdal.VSIFOpenL('/vsimem/test.csv', 'wb')
+    data = """id,foo,WKT,style
+1,bar,"MULTIPOLYGON (((440720 3751320,440720 3750120,441020 3750120,441020 3751320,440720 3751320),(440800 3751200,440900 3751200,440900 3751000,440800 3751000,440800 3751200)),((441720 3751320,441720 3750120,441920 3750120,441920 3751320,441720 3751320)))",
+2,baz,"LINESTRING(440720 3751320,441920 3750120)","PEN(c:#FF0000,w:5pt,p:""2px 1pt"")"
+3,baz2,"POINT(441322.400 3750717.600)","PEN(c:#FF00FF,w:5pt);BRUSH(fc:#FFFFFF)"
+"""
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+
+    f = gdal.VSIFOpenL('/vsimem/test.vrt', 'wb')
+    data = """<OGRVRTDataSource>
+  <OGRVRTLayer name="test">
+    <SrcDataSource relativeToVRT="0" shared="1">/vsimem/test.csv</SrcDataSource>
+    <SrcLayer>test</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <Field name="id" type="Integer" src="id"/>
+    <Field name="foo" type="String" src="foo"/>
+    <Field name="WKT" type="String" src="WKT"/>
+    <Style>style</Style>
+  </OGRVRTLayer>
+</OGRVRTDataSource>
+"""
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+
+    options = [ 'OGR_DATASOURCE=/vsimem/test.vrt', 'OGR_DISPLAY_LAYER_NAMES=A_Layer', 'OGR_DISPLAY_FIELD=foo' ]
+
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_write_ogr.pdf', src_ds, options = options)
+    ds = None
+    src_ds = None
+
+    gdal.Unlink('/vsimem/test.csv')
+    gdal.Unlink('/vsimem/test.vrt')
+
+    return 'success'
+
 gdaltest_list = [
     pdf_init,
     pdf_online_1,
@@ -1254,6 +1304,7 @@ gdaltest_list = [
     pdf_check_identity_ogc_bp,
     pdf_layers,
     pdf_custom_layout,
+    pdf_write_ogr,
 
     pdf_switch_underlying_lib,
 

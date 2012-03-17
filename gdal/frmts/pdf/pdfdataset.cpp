@@ -56,6 +56,8 @@ CPL_C_START
 void    GDALRegister_PDF(void);
 CPL_C_END
 
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+
 static double Get(GDALPDFObject* poObj, int nIndice = -1);
 
 #ifdef HAVE_POPPLER
@@ -3950,6 +3952,8 @@ CPLErr PDFDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
     return CE_None;
 }
 
+#endif // #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+
 /************************************************************************/
 /*                         GDALRegister_PDF()                           */
 /************************************************************************/
@@ -4012,6 +4016,10 @@ void GDALRegister_PDF()
 "   <Option name='RIGHT_MARGIN' type='int' description='Right margin in user units'/>\n"
 "   <Option name='TOP_MARGIN' type='int' description='Top margin in user units'/>\n"
 "   <Option name='BOTTOM_MARGIN' type='int' description='Bottom margin in user units'/>\n"
+"   <Option name='OGR_DATASOURCE' type='string' description='Name of OGR datasource to display on top of the raster layer'/>\n"
+"   <Option name='OGR_DISPLAY_FIELD' type='string' description='Name of field to use as the display field in the feature tree'/>\n"
+"   <Option name='OGR_DISPLAY_LAYER_NAMES' type='string' description='Comma separated list of OGR layer names to display in the feature tree'/>\n"
+"   <Option name='OGR_WRITE_ATTRIBUTES' type='boolean' description='Whether to write attributes of OGR features' default='YES'/>\n"
 "   <Option name='XMP' type='string' description='xml:XMP metadata'/>\n"
 "   <Option name='WRITE_INFO' type='boolean' description='to control whether a Info block must be written' default='YES'/>\n"
 "   <Option name='AUTHOR' type='string'/>\n"
@@ -4023,8 +4031,11 @@ void GDALRegister_PDF()
 "   <Option name='TITLE' type='string'/>\n"
 "</CreationOptionList>\n" );
 
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
         poDriver->pfnOpen = PDFDataset::Open;
         poDriver->pfnIdentify = PDFDataset::Identify;
+#endif
+
         poDriver->pfnCreateCopy = GDALPDFCreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );

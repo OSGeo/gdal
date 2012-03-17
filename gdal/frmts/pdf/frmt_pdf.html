@@ -108,6 +108,8 @@ have 1 band (graylevel or with color table), 3 bands (RGB) or 4 bands (RGBA).</p
 the ISO32000 specification. It is also possible to write it according to the
 OGC Best Practice conventions (but limited to a few datum and projection types).</p>
 
+<p>Note: PDF write support does not require linking to poppler or podofo.</p>
+
 <h3>Creation Options</h3>
 
 <ul>
@@ -162,6 +164,14 @@ If this option is set to NO, no information will be written.</p></li>
 
 <li><p><b>AUTHOR</b>, <b>CREATOR</b>, <b>CREATION_DATE</b>, <b>KEYWORDS</b>, <b>PRODUCER</b>,
     <b>SUBJECT</b>, <b>TITLE</b> : metadata that can be written into the PDF Info block.</p></li>
+
+<li><p><b>OGR_DATASOURCE=name</b> : Name of OGR datasource to display on top of the raster layer.</li>
+
+<li><p><b>OGR_DISPLAY_FIELD=name</b> : Name of field to use as the display field in the feature tree.</li>
+
+<li><p><b>OGR_DISPLAY_LAYER_NAMES=names</b> : Comma separated list of OGR layer names to display in the feature tree.</li>
+
+<li><p><b>OGR_WRITE_ATTRIBUTES=YES/NO</b> : Whether to write attributes of OGR features. Defaults to YES</li>
 
 </ul>
 
