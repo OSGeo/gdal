@@ -34,6 +34,10 @@
 #include "gdal_priv.h"
 #include <vector>
 
+#ifdef OGR_ENABLED
+#include "ogr_api.h"
+#endif
+
 typedef enum
 {
     COMPRESS_NONE,
@@ -77,12 +81,29 @@ class GDALPDFImageDesc
         double       dfYSize;
 };
 
+class GDALPDFLayerDesc
+{
+    public:
+        int          nLayerId;
+        int          nFeatureLayerId;
+        CPLString    osLayerName;
+        int          bWriteOGRAttributes;
+        std::vector<int> aIds;
+        std::vector<int> aUserPropertiesIds;
+        std::vector<CPLString> aFeatureNames;
+};
+
 class GDALPDFPageContext
 {
     public:
+        GDALDataset* poSrcDS;
+        double       dfDPI;
+        PDFMargins   sMargins;
+        int          nPageId;
         int          nContentId;
         int          nResourcesId;
         std::vector<GDALPDFImageDesc> asImageDesc;
+        std::vector<GDALPDFLayerDesc> asVectorDesc;
 };
 
 class GDALPDFWriter
@@ -95,6 +116,7 @@ class GDALPDFWriter
     int nInfoId;
     int nInfoGen;
     int nPageResourceId;
+    int nStructTreeRootId;
     int nCatalogId;
     int nCatalogGen;
     int nXMPId;
@@ -160,17 +182,42 @@ class GDALPDFWriter
                       double dfDPI,
                       const char* pszGEO_ENCODING,
                       const char* pszNEATLINE,
-                      PDFMargins* psMargins);
-       int WriteImagery(GDALDataset* poSrcDS,
-                        double dfDPI,
-                        PDFMargins* psMargins,
-                        PDFCompressMethod eCompressMethod,
+                      PDFMargins* psMargins,
+                      int bHasOGRData);
+
+       int WriteImagery(PDFCompressMethod eCompressMethod,
                         int nPredictor,
                         int nJPEGQuality,
                         const char* pszJPEG2000_DRIVER,
                         int nBlockXSize, int nBlockYSize,
                         GDALProgressFunc pfnProgress,
                         void * pProgressData);
+
+#ifdef OGR_ENABLED
+       int WriteOGRDataSource(const char* pszOGRDataSource,
+                              const char* pszOGRDisplayField,
+                              const char* pszOGRDisplayLayerNames,
+                              int bWriteOGRAttributes);
+
+       GDALPDFLayerDesc StartOGRLayer(CPLString osLayerName,
+                                      int bWriteOGRAttributes);
+       void EndOGRLayer(GDALPDFLayerDesc& osVectorDesc);
+
+       int WriteOGRLayer(OGRDataSourceH hDS,
+                         int iLayer,
+                         const char* pszOGRDisplayField,
+                         CPLString osLayerName,
+                         int bWriteOGRAttributes,
+                         int& iObj);
+
+       int WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
+                           OGRFeatureH hFeat,
+                           const char* pszOGRDisplayField,
+                           int bWriteOGRAttributes,
+                           int& iObj,
+                           int& iObjLayer);
+#endif
+
        int  EndPage(const char* pszLayerName,
                     const char* pszExtraContentStream,
                     const char* pszExtraContentLayerName);
