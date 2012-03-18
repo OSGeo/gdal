@@ -1186,7 +1186,7 @@ def pdf_layers():
     return 'success'
 
 ###############################################################################
-# Test MARGIN and EXTRA_CONTENT_STREAM options
+# Test MARGIN, EXTRA_STREAM, EXTRA_LAYER_NAME and EXTRA_IMAGES options
 
 def pdf_custom_layout():
 
@@ -1198,9 +1198,10 @@ def pdf_custom_layout():
                 'RIGHT_MARGIN=3',
                 'BOTTOM_MARGIN=4',
                 'DPI=300',
-                'EXTRA_CONTENT_STREAM=BT 255 0 0 rg /FTimesRoman 1 Tf 1 0 0 1 1 1 Tm (Footpage string) Tj ET',
                 'LAYER_NAME=byte_tif',
-                'EXTRA_CONTENT_LAYER_NAME=Footpage']
+                'EXTRA_STREAM=BT 255 0 0 rg /FTimesRoman 1 Tf 1 0 0 1 1 1 Tm (Footpage string) Tj ET',
+                'EXTRA_LAYER_NAME=Footpage_and_logo',
+                'EXTRA_IMAGES=data/byte.tif,0.5,10,0.2']
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_custom_layout.pdf', src_ds, options = options)
@@ -1214,7 +1215,7 @@ def pdf_custom_layout():
 
     gdal.Unlink('tmp/pdf_custom_layout.pdf')
 
-    if layers != ['LAYER_00_NAME=byte_tif', 'LAYER_01_NAME=Footpage']:
+    if layers != ['LAYER_00_NAME=byte_tif', 'LAYER_01_NAME=Footpage_and_logo']:
         gdaltest.post_reason('did not get expected layers')
         print(layers)
         return 'fail'

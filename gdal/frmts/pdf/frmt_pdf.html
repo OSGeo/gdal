@@ -114,7 +114,10 @@ OGC Best Practice conventions (but limited to a few datum and projection types).
 
 <ul>
 <li><p><b>COMPRESS=[NONE/DEFLATE/JPEG/JPEG2000]</b>:
-Set the compression to use. DEFLATE is the default.</p></li>
+Set the compression to use for raster data. DEFLATE is the default.</p></li>
+
+<li><p><b>STREAM_COMPRESS=[NONE/DEFLATE]</b>:
+Set the compression to use for stream objects. DEFLATE is the default.</p></li>
 
 <li><p><b>DPI=value</b>:
 Set the DPI to use. Default to 72.</p></li>
@@ -136,12 +139,16 @@ option can be used to force creation of tiled PDF files.</p></li>
 
 <li><p><b>BLOCKYSIZE=n</b>: Set tile height, defaults to 256.</p></li>
 
+<li><p><b>LAYER_NAME=name</b>: Name for layer where the raster is placed.</p></li>
+
 <li><p><b>EXTRA_CONTENT_STREAM=content</b>: A PDF content stream to draw after the imagery, typically to add some text. It may refer
 the /FTimesRoman and /FTimesBold fonts.</p></li>
 
-<li><p><b>LAYER_NAME=name</b>: Name for layer where the raster is placed.</p></li>
+<li><p><b>EXTRA_IMAGES=image_file_name,x,y,scale (possibly repeated)</b>: A list of images to insert into
+the page as extra content. This is usefull to insert logos, legends, etc... x and y are in user units from the lower left corner of the page. scale
+is a magnifying ratio (use 1 if unsure).</p></li>
 
-<li><p><b>EXTRA_CONTENT_LAYER_NAME=name</b>: Name for layer where the extra content specified with EXTRA_CONTENT_STREAM is placed.</p></li>
+<li><p><b>EXTRA_CONTENT_LAYER_NAME=name</b>: Name for layer where the extra content specified with EXTRA_CONTENT_STREAM or EXTRA_IMAGES is placed.</p></li>
 
 <li><p><b>MARGIN/LEFT_MARGIN/RIGHT_MARGIN/TOP_MARGIN/BOTTOM_MARGIN=value</b>: Margin around image in user units.</p></li>
 
