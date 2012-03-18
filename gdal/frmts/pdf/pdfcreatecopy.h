@@ -160,6 +160,8 @@ class GDALPDFWriter
                       PDFCompressMethod eCompressMethod);
     int     WriteOCG(const char* pszLayerName, int nParentId = 0);
 
+    int     WriteColorTable(GDALDataset* poSrcDS);
+
     int     AllocNewObject();
 
     public:
@@ -231,8 +233,9 @@ class GDALPDFWriter
                            int& iObjLayer);
 #endif
 
-       int  EndPage(const char* pszExtraContentStream,
-                    const char* pszExtraContentLayerName);
+       int  EndPage(const char* pszExtraImages,
+                    const char* pszExtraStream,
+                    const char* pszExtraLayerName);
 
        int  SetInfo(GDALDataset* poSrcDS,
                     char** papszOptions);

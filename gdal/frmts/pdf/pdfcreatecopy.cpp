@@ -1573,25 +1573,11 @@ int GDALPDFWriter::StartPage(GDALDataset* poSrcDS,
 }
 
 /************************************************************************/
-/*                             WriteImagery()                           */
+/*                             WriteColorTable()                        */
 /************************************************************************/
 
-int GDALPDFWriter::WriteImagery(const char* pszLayerName,
-                                PDFCompressMethod eCompressMethod,
-                                int nPredictor,
-                                int nJPEGQuality,
-                                const char* pszJPEG2000_DRIVER,
-                                int nBlockXSize, int nBlockYSize,
-                                GDALProgressFunc pfnProgress,
-                                void * pProgressData)
+int GDALPDFWriter::WriteColorTable(GDALDataset* poSrcDS)
 {
-    GDALDataset* poSrcDS = oPageContext.poSrcDS;
-    int  nWidth = poSrcDS->GetRasterXSize();
-    int  nHeight = poSrcDS->GetRasterYSize();
-    double dfUserUnit = oPageContext.dfDPI / 72.0;
-
-    oPageContext.nOCGRasterId = WriteOCG(pszLayerName);
-
     /* Does the source image has a color table ? */
     GDALColorTable* poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
     int nColorTableId = 0;
@@ -1635,7 +1621,33 @@ int GDALPDFWriter::WriteImagery(const char* pszLayerName,
         VSIFPrintfL(fp, "endstream\n");
         EndObj();
     }
-    
+
+    return nColorTableId;
+}
+
+/************************************************************************/
+/*                             WriteImagery()                           */
+/************************************************************************/
+
+int GDALPDFWriter::WriteImagery(const char* pszLayerName,
+                                PDFCompressMethod eCompressMethod,
+                                int nPredictor,
+                                int nJPEGQuality,
+                                const char* pszJPEG2000_DRIVER,
+                                int nBlockXSize, int nBlockYSize,
+                                GDALProgressFunc pfnProgress,
+                                void * pProgressData)
+{
+    GDALDataset* poSrcDS = oPageContext.poSrcDS;
+    int  nWidth = poSrcDS->GetRasterXSize();
+    int  nHeight = poSrcDS->GetRasterYSize();
+    double dfUserUnit = oPageContext.dfDPI / 72.0;
+
+    oPageContext.nOCGRasterId = WriteOCG(pszLayerName);
+
+    /* Does the source image has a color table ? */
+    int nColorTableId = WriteColorTable(poSrcDS);
+
     int nXBlocks = (nWidth + nBlockXSize - 1) / nBlockXSize;
     int nYBlocks = (nHeight + nBlockYSize - 1) / nBlockYSize;
     int nBlocks = nXBlocks * nYBlocks;
@@ -2367,14 +2379,70 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
 /*                               EndPage()                              */
 /************************************************************************/
 
-int GDALPDFWriter::EndPage(const char* pszExtraContentStream,
-                           const char* pszExtraContentLayerName)
+int GDALPDFWriter::EndPage(const char* pszExtraImages,
+                           const char* pszExtraStream,
+                           const char* pszExtraLayerName)
 {
-    int nLayerExtraContentId = WriteOCG(pszExtraContentLayerName);
+    int nLayerExtraId = WriteOCG(pszExtraLayerName);
 
-    int bHasTimesRoman = pszExtraContentStream && strstr(pszExtraContentStream, "/FTimesRoman");
-    int bHasTimesBold = pszExtraContentStream && strstr(pszExtraContentStream, "/FTimesBold");
+    int bHasTimesRoman = pszExtraStream && strstr(pszExtraStream, "/FTimesRoman");
+    int bHasTimesBold = pszExtraStream && strstr(pszExtraStream, "/FTimesBold");
 
+    /* -------------------------------------------------------------- */
+    /*  Write extra images                                            */
+    /* -------------------------------------------------------------- */
+    std::vector<GDALPDFImageDesc> asExtraImageDesc;
+    if (pszExtraImages)
+    {
+        char** papszExtraImagesTokens = CSLTokenizeString2(pszExtraImages, ",", 0);
+        int nCount = CSLCount(papszExtraImagesTokens);
+        if ((nCount % 4) == 0)
+        {
+            double dfUserUnit = oPageContext.dfDPI / 72.0;
+            for(int i=0;i<nCount;i+=4)
+            {
+                const char* pszImageFilename = papszExtraImagesTokens[i+0];
+                double dfX = atof(papszExtraImagesTokens[i+1]);
+                double dfY = atof(papszExtraImagesTokens[i+2]);
+                double dfScale = atof(papszExtraImagesTokens[i+3]);
+                GDALDataset* poImageDS = (GDALDataset* )GDALOpen(pszImageFilename, GA_ReadOnly);
+                if (poImageDS)
+                {
+                    int nColorTableId = WriteColorTable(poImageDS);
+                    int nImageId = WriteBlock( poImageDS,
+                                               0, 0,
+                                               poImageDS->GetRasterXSize(),
+                                               poImageDS->GetRasterYSize(),
+                                               nColorTableId,
+                                               COMPRESS_DEFLATE,
+                                               0,
+                                               0,
+                                               NULL,
+                                               NULL,
+                                               NULL );
+
+                    if (nImageId)
+                    {
+                        GDALPDFImageDesc oImageDesc;
+                        oImageDesc.nImageId = nImageId;
+                        oImageDesc.dfXSize = poImageDS->GetRasterXSize() / dfUserUnit * dfScale;
+                        oImageDesc.dfYSize = poImageDS->GetRasterYSize() / dfUserUnit * dfScale;
+                        oImageDesc.dfXOff = dfX;
+                        oImageDesc.dfYOff = dfY - oImageDesc.dfYSize;
+
+                        asExtraImageDesc.push_back(oImageDesc);
+                    }
+
+                    GDALClose(poImageDS);
+                }
+            }
+        }
+        CSLDestroy(papszExtraImagesTokens);
+    }
+
+    /* -------------------------------------------------------------- */
+    /*  Write content dictionary                                      */
+    /* -------------------------------------------------------------- */
     int nContentLengthId = AllocNewObject();
 
     StartObj(oPageContext.nContentId);
@@ -2388,6 +2456,9 @@ int GDALPDFWriter::EndPage(const char* pszExtraContentStream,
         VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
     }
 
+    /* -------------------------------------------------------------- */
+    /*  Write content stream                                          */
+    /* -------------------------------------------------------------- */
     VSIFPrintfL(fp, "stream\n");
     vsi_l_offset nStreamStart = VSIFTellL(fp);
 
@@ -2399,6 +2470,9 @@ int GDALPDFWriter::EndPage(const char* pszExtraContentStream,
         fp = fpGZip;
     }
 
+    /* -------------------------------------------------------------- */
+    /*  Write drawing instructions for raster blocks                  */
+    /* -------------------------------------------------------------- */
     if (oPageContext.nOCGRasterId)
         VSIFPrintfL(fp, "/OC /Lyr%d BDC\n", oPageContext.nOCGRasterId);
 
@@ -2426,6 +2500,9 @@ int GDALPDFWriter::EndPage(const char* pszExtraContentStream,
     if (oPageContext.nOCGRasterId)
         VSIFPrintfL(fp, "EMC\n");
 
+    /* -------------------------------------------------------------- */
+    /*  Write drawing instructions for vector features                */
+    /* -------------------------------------------------------------- */
     int iObj = 0;
     for(size_t iLayer = 0; iLayer < oPageContext.asVectorDesc.size(); iLayer ++)
     {
@@ -2458,6 +2535,9 @@ int GDALPDFWriter::EndPage(const char* pszExtraContentStream,
         VSIFPrintfL(fp, "EMC\n");
     }
 
+    /* -------------------------------------------------------------- */
+    /*  Write drawing instructions for labels of vector features      */
+    /* -------------------------------------------------------------- */
     iObj = 0;
     for(size_t iLayer = 0; iLayer < oPageContext.asVectorDesc.size(); iLayer ++)
     {
@@ -2496,12 +2576,42 @@ int GDALPDFWriter::EndPage(const char* pszExtraContentStream,
             iObj += oLayerDesc.aIds.size();
     }
 
-    if (pszExtraContentStream)
+    /* -------------------------------------------------------------- */
+    /*  Write drawing instructions for extra content.                 */
+    /* -------------------------------------------------------------- */
+    if (pszExtraStream || asExtraImageDesc.size())
     {
-        if (nLayerExtraContentId)
-            VSIFPrintfL(fp, "/OC /Lyr%d BDC\n", nLayerExtraContentId);
-        VSIFPrintfL(fp, "%s\n", pszExtraContentStream);
-        if (nLayerExtraContentId)
+        if (nLayerExtraId)
+            VSIFPrintfL(fp, "/OC /Lyr%d BDC\n", nLayerExtraId);
+
+        /* -------------------------------------------------------------- */
+        /*  Write drawing instructions for extra images.                  */
+        /* -------------------------------------------------------------- */
+        for(size_t iImage = 0; iImage < asExtraImageDesc.size(); iImage ++)
+        {
+            VSIFPrintfL(fp, "q\n");
+            GDALPDFObjectRW* poXSize = GDALPDFObjectRW::CreateReal(asExtraImageDesc[iImage].dfXSize);
+            GDALPDFObjectRW* poYSize = GDALPDFObjectRW::CreateReal(asExtraImageDesc[iImage].dfYSize);
+            GDALPDFObjectRW* poXOff = GDALPDFObjectRW::CreateReal(asExtraImageDesc[iImage].dfXOff);
+            GDALPDFObjectRW* poYOff = GDALPDFObjectRW::CreateReal(asExtraImageDesc[iImage].dfYOff);
+            VSIFPrintfL(fp, "%s 0 0 %s %s %s cm\n",
+                        poXSize->Serialize().c_str(),
+                        poYSize->Serialize().c_str(),
+                        poXOff->Serialize().c_str(),
+                        poYOff->Serialize().c_str());
+            delete poXSize;
+            delete poYSize;
+            delete poXOff;
+            delete poYOff;
+            VSIFPrintfL(fp, "/Image%d Do\n",
+                        asExtraImageDesc[iImage].nImageId);
+            VSIFPrintfL(fp, "Q\n");
+        }
+
+        if (pszExtraStream)
+            VSIFPrintfL(fp, "%s\n", pszExtraStream);
+
+        if (nLayerExtraId)
             VSIFPrintfL(fp, "EMC\n");
     }
 
@@ -2521,6 +2631,9 @@ int GDALPDFWriter::EndPage(const char* pszExtraContentStream,
                 (long)(nStreamEnd - nStreamStart));
     EndObj();
 
+    /* -------------------------------------------------------------- */
+    /*  Write objects for feature tree.                               */
+    /* -------------------------------------------------------------- */
     if (nStructTreeRootId)
     {
         int nParentTreeId = AllocNewObject();
@@ -2555,15 +2668,24 @@ int GDALPDFWriter::EndPage(const char* pszExtraContentStream,
         EndObj();
     }
 
+    /* -------------------------------------------------------------- */
+    /*  Write page resource dictionary.                               */
+    /* -------------------------------------------------------------- */
     StartObj(oPageContext.nResourcesId);
     {
         GDALPDFDictionaryRW oDict;
         GDALPDFDictionaryRW* poDictXObject = new GDALPDFDictionaryRW();
         oDict.Add("XObject", poDictXObject);
-        for(size_t iImage = 0; iImage < oPageContext.asImageDesc.size(); iImage ++)
+        size_t iImage;
+        for(iImage = 0; iImage < oPageContext.asImageDesc.size(); iImage ++)
         {
             poDictXObject->Add(CPLSPrintf("Image%d", oPageContext.asImageDesc[iImage].nImageId),
                                oPageContext.asImageDesc[iImage].nImageId, 0);
+        }
+        for(iImage = 0; iImage < asExtraImageDesc.size(); iImage ++)
+        {
+            poDictXObject->Add(CPLSPrintf("Image%d", asExtraImageDesc[iImage].nImageId),
+                               asExtraImageDesc[iImage].nImageId, 0);
         }
         for(size_t iLayer = 0; iLayer < oPageContext.asVectorDesc.size(); iLayer ++)
         {
@@ -3010,7 +3132,7 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
                 break;
             }
 
-            if( eErr == CE_None
+            if( eErr == CE_None && pfnProgress != NULL
                 && !pfnProgress( (iLine+1) / (double)nReqYSize,
                                 NULL, pProgressData ) )
             {
@@ -3322,10 +3444,11 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     const char* pszBottomMargin = CSLFetchNameValue(papszOptions, "BOTTOM_MARGIN");
     if (pszBottomMargin) sMargins.nBottom = atoi(pszBottomMargin);
 
-    const char* pszExtraContentStream = CSLFetchNameValue(papszOptions, "EXTRA_CONTENT_STREAM");
-
     const char* pszLayerName = CSLFetchNameValue(papszOptions, "LAYER_NAME");
-    const char* pszExtraContentLayerName = CSLFetchNameValue(papszOptions, "EXTRA_CONTENT_LAYER_NAME");
+
+    const char* pszExtraImages = CSLFetchNameValue(papszOptions, "EXTRA_IMAGES");
+    const char* pszExtraStream = CSLFetchNameValue(papszOptions, "EXTRA_STREAM");
+    const char* pszExtraLayerName = CSLFetchNameValue(papszOptions, "EXTRA_LAYER_NAME");
 
     const char* pszOGRDataSource = CSLFetchNameValue(papszOptions, "OGR_DATASOURCE");
     const char* pszOGRDisplayField = CSLFetchNameValue(papszOptions, "OGR_DISPLAY_FIELD");
@@ -3376,8 +3499,9 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
 #endif
 
     if (bRet)
-        oWriter.EndPage(pszExtraContentStream,
-                        pszExtraContentLayerName);
+        oWriter.EndPage(pszExtraImages,
+                        pszExtraStream,
+                        pszExtraLayerName);
     oWriter.Close();
 
     if (!bRet)
