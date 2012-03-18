@@ -526,7 +526,11 @@ class PDFDataset : public GDALPamDataset
     void         FindXMP(GDALPDFObject* poObj);
     void         ParseInfo(GDALPDFObject* poObj);
 
-    GDALPDFDictionaryRW* GetCatalogDict();
+#ifdef HAVE_POPPLER
+    ObjectAutoFree* poCatalogObjectPoppler;
+#endif
+    GDALPDFObject* poCatalogObject;
+    GDALPDFObject* GetCatalog();
 
 #ifdef HAVE_POPPLER
     void         AddLayer(const char* pszLayerName, OptionalContentGroup* ocg);
@@ -852,6 +856,10 @@ PDFDataset::PDFDataset()
     iPage = -1;
     poNeatLine = NULL;
     bUseOCG = FALSE;
+    poCatalogObject = NULL;
+#ifdef HAVE_POPPLER
+    poCatalogObjectPoppler = NULL;
+#endif
 }
 
 /************************************************************************/
@@ -874,21 +882,21 @@ static void PDFFreeDoc(PDFDoc* poDoc)
 #endif
 
 /************************************************************************/
-/*                          GetCatalogDict()                            */
+/*                            GetCatalog()                              */
 /************************************************************************/
 
-GDALPDFDictionaryRW* PDFDataset::GetCatalogDict()
+GDALPDFObject* PDFDataset::GetCatalog()
 {
-    GDALPDFDictionaryRW* poCatalogDictCopy = NULL;
-    GDALPDFObject* poCatalogObject = NULL;
+    if (poCatalogObject)
+        return poCatalogObject;
 
 #ifdef HAVE_POPPLER
-    ObjectAutoFree oCatalog;
     if (bUsePoppler)
     {
-        poDocPoppler->getXRef()->getCatalog(&oCatalog);
-        if (!oCatalog.isNull())
-            poCatalogObject = new GDALPDFObjectPoppler(&oCatalog, FALSE);
+        poCatalogObjectPoppler = new ObjectAutoFree;
+        poDocPoppler->getXRef()->getCatalog(poCatalogObjectPoppler);
+        if (!poCatalogObjectPoppler->isNull())
+            poCatalogObject = new GDALPDFObjectPoppler(poCatalogObjectPoppler, FALSE);
     }
 #endif
 
@@ -915,11 +923,7 @@ GDALPDFDictionaryRW* PDFDataset::GetCatalogDict()
     }
 #endif
 
-    if (poCatalogObject && poCatalogObject->GetType() == PDFObjectType_Dictionary)
-        poCatalogDictCopy = poCatalogObject->GetDictionary()->Clone();
-    delete poCatalogObject;
-
-    return poCatalogDictCopy;
+    return poCatalogObject;
 }
 
 /************************************************************************/
@@ -950,7 +954,9 @@ PDFDataset::~PDFDataset()
         if (bXMPDirty)
         {
             /* We need the catalog because it points to the XMP Metadata object */
-            poCatalogDictCopy = GetCatalogDict();
+            GetCatalog();
+            if (poCatalogObject && poCatalogObject->GetType() == PDFObjectType_Dictionary)
+                poCatalogDictCopy = poCatalogObject->GetDictionary()->Clone();
         }
     }
 
@@ -958,7 +964,10 @@ PDFDataset::~PDFDataset()
     /* in read-write mode afterwards */
     delete poPageObj;
     poPageObj = NULL;
+    delete poCatalogObject;
+    poCatalogObject = NULL;
 #ifdef HAVE_POPPLER
+    delete poCatalogObjectPoppler;
     PDFFreeDoc(poDocPoppler);
     poDocPoppler = NULL;
 #endif
@@ -3856,6 +3865,15 @@ CPLErr      PDFDataset::SetMetadata( char ** papszMetadata,
 const char *PDFDataset::GetMetadataItem( const char * pszName,
                                          const char * pszDomain )
 {
+    if ( (pszDomain == NULL || EQUAL(pszDomain, "")) && EQUAL(pszName, "PDF_PAGE_OBJECT") )
+    {
+        return CPLSPrintf("%p", poPageObj);
+    }
+    if ( (pszDomain == NULL || EQUAL(pszDomain, "")) && EQUAL(pszName, "PDF_CATALOG_OBJECT") )
+    {
+        return CPLSPrintf("%p", GetCatalog());
+    }
+
     return oMDMD.GetMetadataItem(pszName, pszDomain);
 }
 
