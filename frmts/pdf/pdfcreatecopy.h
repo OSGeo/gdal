@@ -84,11 +84,13 @@ class GDALPDFImageDesc
 class GDALPDFLayerDesc
 {
     public:
-        int          nLayerId;
+        int          nOGCId;
+        int          nOCGTextId;
         int          nFeatureLayerId;
         CPLString    osLayerName;
         int          bWriteOGRAttributes;
         std::vector<int> aIds;
+        std::vector<int> aIdsText;
         std::vector<int> aUserPropertiesIds;
         std::vector<CPLString> aFeatureNames;
 };
@@ -104,6 +106,14 @@ class GDALPDFPageContext
         int          nResourcesId;
         std::vector<GDALPDFImageDesc> asImageDesc;
         std::vector<GDALPDFLayerDesc> asVectorDesc;
+        int          nOCGRasterId;
+};
+
+class GDALPDFOCGDesc
+{
+    public:
+        int          nId;
+        int          nParentId;
 };
 
 class GDALPDFWriter
@@ -111,7 +121,7 @@ class GDALPDFWriter
     VSILFILE* fp;
     std::vector<GDALXRefEntry> asXRefEntries;
     std::vector<int> asPageId;
-    std::vector<int> asLayersId;
+    std::vector<GDALPDFOCGDesc> asOCGs;
 
     int nInfoId;
     int nInfoGen;
@@ -147,7 +157,7 @@ class GDALPDFWriter
     int     WriteMask(GDALDataset* poSrcDS,
                       int nXOff, int nYOff, int nReqXSize, int nReqYSize,
                       PDFCompressMethod eCompressMethod);
-    int     WriteOCG(const char* pszLayerName);
+    int     WriteOCG(const char* pszLayerName, int nParentId = 0);
 
     int     AllocNewObject();
 
@@ -185,7 +195,8 @@ class GDALPDFWriter
                       PDFMargins* psMargins,
                       int bHasOGRData);
 
-       int WriteImagery(PDFCompressMethod eCompressMethod,
+       int WriteImagery(const char* pszLayerName,
+                        PDFCompressMethod eCompressMethod,
                         int nPredictor,
                         int nJPEGQuality,
                         const char* pszJPEG2000_DRIVER,
@@ -218,8 +229,7 @@ class GDALPDFWriter
                            int& iObjLayer);
 #endif
 
-       int  EndPage(const char* pszLayerName,
-                    const char* pszExtraContentStream,
+       int  EndPage(const char* pszExtraContentStream,
                     const char* pszExtraContentLayerName);
 
        int  SetInfo(GDALDataset* poSrcDS,
