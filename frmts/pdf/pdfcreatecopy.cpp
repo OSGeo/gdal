@@ -2105,8 +2105,8 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                     dfPenWidth,
                     osDashArray.c_str());
 
-    VSIFPrintfL(fp, "%d %d %d RG\n", nPenR, nPenG, nPenB);
-    VSIFPrintfL(fp, "%d %d %d rg\n", nBrushR, nBrushG, nBrushB);
+    VSIFPrintfL(fp, "%f %f %f RG\n", nPenR / 255.0, nPenG / 255.0, nPenB / 255.0);
+    VSIFPrintfL(fp, "%f %f %f rg\n", nBrushR / 255.0, nBrushG / 255.0, nBrushB / 255.0);
 
     if (wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPoint)
     {
@@ -2261,7 +2261,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                         sin(dfTextAngle), cos(dfTextAngle),
                         dfX, dfY);
         }
-        VSIFPrintfL(fp, "%d %d %d rg\n", nTextR, nTextG, nTextB);
+        VSIFPrintfL(fp, "%f %f %f rg\n", nTextR / 255.0, nTextG / 255.0, nTextB / 255.0);
         VSIFPrintfL(fp, "/FTimesRoman %f Tf\n", dfTextSize);
         VSIFPrintfL(fp, "(");
         for(size_t i=0;i<osLabelText.size();i++)
