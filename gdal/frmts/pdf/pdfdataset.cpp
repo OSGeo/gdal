@@ -1279,7 +1279,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
               (poUserUnit->GetType() == PDFObjectType_Int ||
                poUserUnit->GetType() == PDFObjectType_Real) )
         {
-            dfDPI = Get(poUserUnit) * 72.0;
+            dfDPI = ROUND_TO_INT_IF_CLOSE(Get(poUserUnit) * 72.0);
             CPLDebug("PDF", "Found UserUnit in Page --> DPI = %.16g", dfDPI);
             SetMetadataItem("DPI", CPLSPrintf("%.16g", dfDPI));
         }
@@ -3988,13 +3988,17 @@ void GDALRegister_PDF()
 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>\n"
-"   <Option name='COMPRESS' type='string-select' default='DEFLATE'>\n"
+"   <Option name='COMPRESS' type='string-select' description='Compression method for raster data' default='DEFLATE'>\n"
 "     <Value>NONE</Value>\n"
 "     <Value>DEFLATE</Value>\n"
 "     <Value>JPEG</Value>\n"
 "     <Value>JPEG2000</Value>\n"
 "   </Option>\n"
-"   <Option name='GEO_ENCODING' type='string-select' default='ISO32000'>\n"
+"   <Option name='STREAM_COMPRESS' type='string-select' description='Compression method for object streams' default='DEFLATE'>\n"
+"     <Value>NONE</Value>\n"
+"     <Value>DEFLATE</Value>\n"
+"   </Option>\n"
+"   <Option name='GEO_ENCODING' type='string-select' description='Format of geo-encoding' default='ISO32000'>\n"
 "     <Value>NONE</Value>\n"
 "     <Value>ISO32000</Value>\n"
 "     <Value>OGC_BP</Value>\n"
