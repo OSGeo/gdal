@@ -1496,6 +1496,7 @@ int GDALPDFWriter::StartPage(GDALDataset* poSrcDS,
                              const char* pszGEO_ENCODING,
                              const char* pszNEATLINE,
                              PDFMargins* psMargins,
+                             PDFCompressMethod eStreamCompressMethod,
                              int bHasOGRData)
 {
     int  nWidth = poSrcDS->GetRasterXSize();
@@ -1566,6 +1567,7 @@ int GDALPDFWriter::StartPage(GDALDataset* poSrcDS,
     oPageContext.dfDPI = dfDPI;
     oPageContext.sMargins = *psMargins;
     oPageContext.nOCGRasterId = 0;
+    oPageContext.eStreamCompressMethod = eStreamCompressMethod;
 
     return TRUE;
 }
@@ -2053,6 +2055,10 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                                 Add((int)ceil(sEnvelope.MaxX * adfMatrix[1] + adfMatrix[0] + dfMargin)).
                                 Add((int)ceil(sEnvelope.MaxY * adfMatrix[3] + adfMatrix[2] + dfMargin))))
             .Add("Subtype", GDALPDFObjectRW::CreateName("Form"));
+        if( oPageContext.eStreamCompressMethod != COMPRESS_NONE )
+        {
+            oDict.Add("Filter", GDALPDFObjectRW::CreateName("FlateDecode"));
+        }
 
         GDALPDFDictionaryRW* poGS1 = new GDALPDFDictionaryRW();
         poGS1->Add("Type", GDALPDFObjectRW::CreateName("ExtGState"));
@@ -2078,6 +2084,14 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
     VSIFPrintfL(fp, "stream\n");
 
     vsi_l_offset nStreamStart = VSIFTellL(fp);
+
+    VSILFILE* fpGZip = NULL;
+    VSILFILE* fpBack = fp;
+    if( oPageContext.eStreamCompressMethod != COMPRESS_NONE )
+    {
+        fpGZip = (VSILFILE* )VSICreateGZipWritable( (VSIVirtualHandle*) fp, TRUE, FALSE );
+        fp = fpGZip;
+    }
 
     VSIFPrintfL(fp, "q\n");
 
@@ -2126,9 +2140,14 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
         DrawGeometry(fp, hGeom, adfMatrix);
     }
 
-    VSIFPrintfL(fp, "Q\n");
+    VSIFPrintfL(fp, "Q");
+
+    if (fpGZip)
+        VSIFCloseL(fpGZip);
+    fp = fpBack;
 
     vsi_l_offset nStreamEnd = VSIFTellL(fp);
+    VSIFPrintfL(fp, "\n");
     VSIFPrintfL(fp, "endstream\n");
     EndObj();
 
@@ -2170,6 +2189,10 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                 .Add("BBox", &((new GDALPDFArrayRW())
                                 ->Add(0).Add(0)).Add(dfWidthInUserUnit).Add(dfHeightInUserUnit))
                 .Add("Subtype", GDALPDFObjectRW::CreateName("Form"));
+            if( oPageContext.eStreamCompressMethod != COMPRESS_NONE )
+            {
+                oDict.Add("Filter", GDALPDFObjectRW::CreateName("FlateDecode"));
+            }
 
             GDALPDFDictionaryRW* poResources = new GDALPDFDictionaryRW();
 
@@ -2209,6 +2232,14 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
 
         vsi_l_offset nStreamStart = VSIFTellL(fp);
 
+        VSILFILE* fpGZip = NULL;
+        VSILFILE* fpBack = fp;
+        if( oPageContext.eStreamCompressMethod != COMPRESS_NONE )
+        {
+            fpGZip = (VSILFILE* )VSICreateGZipWritable( (VSIVirtualHandle*) fp, TRUE, FALSE );
+            fp = fpGZip;
+        }
+
         double dfX = OGR_G_GetX(hGeom, 0) * adfMatrix[1] + adfMatrix[0];
         double dfY = OGR_G_GetY(hGeom, 0) * adfMatrix[3] + adfMatrix[2];
 
@@ -2244,9 +2275,14 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
         }
         VSIFPrintfL(fp, ") Tj\n");
         VSIFPrintfL(fp, "ET\n");
-        VSIFPrintfL(fp, "Q\n");
+        VSIFPrintfL(fp, "Q");
+
+        if (fpGZip)
+            VSIFCloseL(fpGZip);
+        fp = fpBack;
 
         vsi_l_offset nStreamEnd = VSIFTellL(fp);
+        VSIFPrintfL(fp, "\n");
         VSIFPrintfL(fp, "endstream\n");
         EndObj();
 
@@ -2345,11 +2381,23 @@ int GDALPDFWriter::EndPage(const char* pszExtraContentStream,
     {
         GDALPDFDictionaryRW oDict;
         oDict.Add("Length", nContentLengthId, 0);
+        if( oPageContext.eStreamCompressMethod != COMPRESS_NONE )
+        {
+            oDict.Add("Filter", GDALPDFObjectRW::CreateName("FlateDecode"));
+        }
         VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
     }
 
     VSIFPrintfL(fp, "stream\n");
     vsi_l_offset nStreamStart = VSIFTellL(fp);
+
+    VSILFILE* fpGZip = NULL;
+    VSILFILE* fpBack = fp;
+    if( oPageContext.eStreamCompressMethod != COMPRESS_NONE )
+    {
+        fpGZip = (VSILFILE* )VSICreateGZipWritable( (VSIVirtualHandle*) fp, TRUE, FALSE );
+        fp = fpGZip;
+    }
 
     if (oPageContext.nOCGRasterId)
         VSIFPrintfL(fp, "/OC /Lyr%d BDC\n", oPageContext.nOCGRasterId);
@@ -2457,7 +2505,13 @@ int GDALPDFWriter::EndPage(const char* pszExtraContentStream,
             VSIFPrintfL(fp, "EMC\n");
     }
 
+    if (fpGZip)
+        VSIFCloseL(fpGZip);
+    fp = fpBack;
+
     vsi_l_offset nStreamEnd = VSIFTellL(fp);
+    if (fpGZip)
+        VSIFPrintfL(fp, "\n");
     VSIFPrintfL(fp, "endstream\n");
     EndObj();
 
@@ -2675,7 +2729,6 @@ int GDALPDFWriter::WriteMask(GDALDataset* poSrcDS,
 
     if (fpGZip)
         VSIFCloseL(fpGZip);
-
     fp = fpBack;
 
     vsi_l_offset nStreamEnd = VSIFTellL(fp);
@@ -2972,7 +3025,6 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
 
         if (fpGZip)
             VSIFCloseL(fpGZip);
-
         fp = fpBack;
     }
 
@@ -3162,6 +3214,24 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
         }
     }
 
+    PDFCompressMethod eStreamCompressMethod = COMPRESS_DEFLATE;
+    const char* pszStreamCompressMethod = CSLFetchNameValue(papszOptions, "STREAM_COMPRESS");
+    if (pszStreamCompressMethod)
+    {
+        if( EQUAL(pszStreamCompressMethod, "NONE") )
+            eStreamCompressMethod = COMPRESS_NONE;
+        else if( EQUAL(pszStreamCompressMethod, "DEFLATE") )
+            eStreamCompressMethod = COMPRESS_DEFLATE;
+        else
+        {
+            CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
+                    "Unsupported value for STREAM_COMPRESS.");
+
+            if (bStrict)
+                return NULL;
+        }
+    }
+
     if (nBands == 1 &&
         poSrcDS->GetRasterBand(1)->GetColorTable() != NULL &&
         (eCompressMethod == COMPRESS_JPEG || eCompressMethod == COMPRESS_JPEG2000))
@@ -3286,6 +3356,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
                       pszGEO_ENCODING,
                       pszNEATLINE,
                       &sMargins,
+                      eStreamCompressMethod,
                       pszOGRDataSource != NULL && bWriteOGRAttributes);
 
     int bRet = oWriter.WriteImagery(pszLayerName,

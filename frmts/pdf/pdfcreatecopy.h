@@ -99,6 +99,7 @@ class GDALPDFPageContext
 {
     public:
         GDALDataset* poSrcDS;
+        PDFCompressMethod eStreamCompressMethod;
         double       dfDPI;
         PDFMargins   sMargins;
         int          nPageId;
@@ -193,6 +194,7 @@ class GDALPDFWriter
                       const char* pszGEO_ENCODING,
                       const char* pszNEATLINE,
                       PDFMargins* psMargins,
+                      PDFCompressMethod eStreamCompressMethod,
                       int bHasOGRData);
 
        int WriteImagery(const char* pszLayerName,
