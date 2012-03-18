@@ -2357,7 +2357,8 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
         oDict.Add("K", iObj);
         oDict.Add("P", osVectorDesc.nFeatureLayerId, 0);
         oDict.Add("Pg", oPageContext.nPageId, 0);
-        oDict.Add("S", GDALPDFObjectRW::CreateName(osFeatureName));
+        oDict.Add("S", GDALPDFObjectRW::CreateName("feature"));
+        oDict.Add("T", osFeatureName);
 
         VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
 
@@ -2515,11 +2516,8 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
             CPLString osName = oLayerDesc.aFeatureNames[iVector];
             if (osName.size())
             {
-                GDALPDFObject* poObjName = GDALPDFObjectRW::CreateName(osName);
-                VSIFPrintfL(fp, "%s <</MCID %d>> BDC\n",
-                            poObjName->Serialize().c_str(),
+                VSIFPrintfL(fp, "/feature <</MCID %d>> BDC\n",
                             iObj);
-                delete poObjName;
             }
 
             iObj ++;
@@ -2554,11 +2552,8 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
                     CPLString osName = oLayerDesc.aFeatureNames[iVector];
                     if (osName.size())
                     {
-                        GDALPDFObject* poObjName = GDALPDFObjectRW::CreateName(osName);
-                        VSIFPrintfL(fp, "%s <</MCID %d>> BDC\n",
-                                    poObjName->Serialize().c_str(),
+                        VSIFPrintfL(fp, "/feature <</MCID %d>> BDC\n",
                                     iObj);
-                        delete poObjName;
                     }
 
                     VSIFPrintfL(fp, "/Text%d Do\n", oLayerDesc.aIdsText[iVector]);
