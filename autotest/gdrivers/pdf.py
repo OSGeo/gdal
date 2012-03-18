@@ -1214,7 +1214,7 @@ def pdf_custom_layout():
 
     gdal.Unlink('tmp/pdf_custom_layout.pdf')
 
-    if layers != ['LAYER_00_NAME=Footpage', 'LAYER_01_NAME=byte_tif']:
+    if layers != ['LAYER_00_NAME=byte_tif', 'LAYER_01_NAME=Footpage']:
         gdaltest.post_reason('did not get expected layers')
         print(layers)
         return 'fail'
@@ -1233,7 +1233,7 @@ def pdf_write_ogr():
     data = """id,foo,WKT,style
 1,bar,"MULTIPOLYGON (((440720 3751320,440720 3750120,441020 3750120,441020 3751320,440720 3751320),(440800 3751200,440900 3751200,440900 3751000,440800 3751000,440800 3751200)),((441720 3751320,441720 3750120,441920 3750120,441920 3751320,441720 3751320)))",
 2,baz,"LINESTRING(440720 3751320,441920 3750120)","PEN(c:#FF0000,w:5pt,p:""2px 1pt"")"
-3,baz2,"POINT(441322.400 3750717.600)","PEN(c:#FF00FF,w:5pt);BRUSH(fc:#FFFFFF)"
+3,baz2,"POINT(441322.400 3750717.600)","PEN(c:#FF00FF,w:10px);BRUSH(fc:#FFFFFF);LABEL(c:#FF000080, f:""Arial, Helvetica"", a:45, s:12pt, t:""Hello World!"")"
 """
     gdal.VSIFWriteL(data, 1, len(data), f)
     gdal.VSIFCloseL(f)
@@ -1260,6 +1260,18 @@ def pdf_write_ogr():
     ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_write_ogr.pdf', src_ds, options = options)
     ds = None
     src_ds = None
+
+    ds = gdal.Open('tmp/pdf_write_ogr.pdf')
+    ds.GetRasterBand(1).Checksum()
+    layers = ds.GetMetadata_List('LAYERS')
+    ds = None
+
+    gdal.Unlink('tmp/pdf_write_ogr.pdf')
+
+    if layers != ['LAYER_00_NAME=A_Layer', 'LAYER_01_NAME=A_Layer.Text']:
+        gdaltest.post_reason('did not get expected layers')
+        print(layers)
+        return 'fail'
 
     gdal.Unlink('/vsimem/test.csv')
     gdal.Unlink('/vsimem/test.vrt')
