@@ -21829,52 +21829,21 @@ if test "$with_fgdb" = "no" ; then
 
 elif test "$with_fgdb" = "yes" -o "$with_fgdb" = "" ; then
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenGeodatabase in -lFileGDBAPI" >&5
-$as_echo_n "checking for OpenGeodatabase in -lFileGDBAPI... " >&6; }
-if ${ac_cv_lib_FileGDBAPI_OpenGeodatabase+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lFileGDBAPI -lFileGDBAPI -lfgdblinuxrtl $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char OpenGeodatabase ();
-int
-main ()
-{
-return OpenGeodatabase ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_FileGDBAPI_OpenGeodatabase=yes
-else
-  ac_cv_lib_FileGDBAPI_OpenGeodatabase=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_FileGDBAPI_OpenGeodatabase" >&5
-$as_echo "$ac_cv_lib_FileGDBAPI_OpenGeodatabase" >&6; }
-if test "x$ac_cv_lib_FileGDBAPI_OpenGeodatabase" = xyes; then :
-  FGDB_ENABLED=yes
-else
-  FGDB_ENABLED=no
-fi
-
-
-  if test "$FGDB_ENABLED" = "yes" ; then
-    LIBS="-lFileGDBAPI -lfgdblinuxrtl"
-  fi
+    rm -f testfgdb.*
+    rm -f testfgdb
+    echo "#include <FileGDBAPI.h>" > testfgdb.cpp
+    echo "using namespace FileGDBAPI;" >> testfgdb.cpp
+    echo "int main() { Geodatabase oDB; std::wstring osStr; ::OpenGeodatabase(osStr, oDB); return 0; }" >> testfgdb.cpp
+    if test -z "`${CXX} ${CPPFLAGS} testfgdb.cpp -lFileGDBAPI -o testfgdb 2>&1`" ; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: FileGDBAPI found" >&5
+$as_echo "FileGDBAPI found" >&6; }
+        FGDB_ENABLED="yes"
+        FGDB_LIB="-lFileGDBAPI"
+    else
+        as_fn_error $? "FileGDBAPI not found." "$LINENO" 5
+    fi
+    rm -f testfgdb.*
+    rm -f testfgdb
 
 else
 
@@ -21884,7 +21853,7 @@ $as_echo_n "checking for libFileGDBAPI.so in in $with_fgdb/lib... " >&6; }
   if test -r $with_fgdb/lib/libFileGDBAPI.so ; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: found." >&5
 $as_echo "found." >&6; }
-    FGDB_LIB="-L$with_fgdb/lib -lFileGDBAPI -lfgdblinuxrtl"
+    FGDB_LIB="-L$with_fgdb/lib -lFileGDBAPI"
   else
     as_fn_error $? "not found." "$LINENO" 5
   fi
