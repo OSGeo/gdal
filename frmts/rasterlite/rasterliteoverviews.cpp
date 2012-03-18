@@ -550,16 +550,39 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
             CPLSetThreadLocalConfigOption("SQLITE_LIST_ALL_TABLES", "TRUE");
             hDS = OGROpen(osFileName.c_str(), TRUE, NULL);
             CPLSetThreadLocalConfigOption("SQLITE_LIST_ALL_TABLES", osOldVal.c_str());
-            
+        }
+
+        /* Insert base resolution into raster_pyramids if not already done */
+        int bHasBaseResolution = FALSE;
+        osSQL.Printf("SELECT * FROM raster_pyramids WHERE "
+                     "table_prefix = '%s' AND pixel_x_size >= %.15f AND pixel_x_size <= %.15f AND "
+                     "pixel_y_size >= %.15f AND pixel_y_size <= %.15f",
+                     osTableName.c_str(),
+                     padfXResolutions[0] - 1e-15, padfXResolutions[0] + 1e-15,
+                     padfYResolutions[0] - 1e-15, padfYResolutions[0] + 1e-15);
+        hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+        if (hSQLLyr)
+        {
+            OGRFeatureH hFeat = OGR_L_GetNextFeature(hSQLLyr);
+            if (hFeat)
+            {
+                bHasBaseResolution = TRUE;
+                OGR_F_Destroy(hFeat);
+            }
+            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+        }
+
+        if (!bHasBaseResolution)
+        {
             osSQL.Printf("SELECT COUNT(*) FROM \"%s\" WHERE "
                           "pixel_x_size >= %.15f AND pixel_x_size <= %.15f AND "
                           "pixel_y_size >= %.15f AND pixel_y_size <= %.15f",
                           osMetatadataLayer.c_str(),
                           padfXResolutions[0] - 1e-15, padfXResolutions[0] + 1e-15,
                           padfYResolutions[0] - 1e-15, padfYResolutions[0] + 1e-15);
-                          
+
             int nBlocksMainRes = 0;
-            
+
             hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
             if (hSQLLyr)
             {
@@ -571,7 +594,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
                 }
                 OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
             }
-            
+
             osSQL.Printf("INSERT INTO raster_pyramids "
                          "( table_prefix, pixel_x_size, pixel_y_size, tile_count ) "
                          "VALUES ( '%s', %.18f, %.18f, %d )",
@@ -579,7 +602,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
                          nBlocksMainRes);
             OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
         }
-        
+
         osSQL.Printf("INSERT INTO raster_pyramids "
                      "( table_prefix, pixel_x_size, pixel_y_size, tile_count ) "
                      "VALUES ( '%s', %.18f, %.18f, %d )",
