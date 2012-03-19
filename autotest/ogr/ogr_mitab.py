@@ -35,6 +35,7 @@ import gdaltest
 import ogrtest
 import ogr
 import gdal
+import test_cli_utilities
 
 ###############################################################################
 # Create TAB file. 
@@ -379,6 +380,98 @@ def ogr_mitab_11():
     return 'success'
 
 ###############################################################################
+# Verify that field widths and precisions are propogated correctly in TAB
+
+def ogr_mitab_12():
+
+    if gdaltest.mapinfo_drv is None:
+        return 'skip'
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/testlyrdef.tab')
+        ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testlyrdef.tab')
+    except:
+        pass
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f "MapInfo File" tmp/testlyrdef.tab ../ogr/data/testlyrdef.gml')
+
+    ds = ogr.Open('tmp/testlyrdef.tab')
+
+    #Check if the width and precision are as preserved.
+    lyr = ds.GetLayer('testlyrdef')
+    if lyr is None:
+        gdaltest.post_reason( 'Layer missing.' )
+        return 'fail'
+
+    defn = lyr.GetLayerDefn()
+
+    data = [['AREA',  ogr.OFTReal,   7, 4],
+            ['VOLUME',ogr.OFTReal,   0, 0],
+            ['LENGTH',ogr.OFTInteger,10,0],
+            ['WIDTH', ogr.OFTInteger, 4,0]]
+
+    for field in data:
+        fld = defn.GetFieldDefn(defn.GetFieldIndex(field[0]))
+        if fld.GetType() != field[1] or fld.GetWidth() != field[2] or fld.GetPrecision() != field[3]:
+            gdaltest.post_reason( field[0] + ' field definition wrong.' )
+            return 'fail'
+
+    ds.Destroy()
+    
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testlyrdef.tab')
+
+    return 'success'
+
+###############################################################################
+# Verify that field widths and precisions are propogated correctly in MIF
+
+def ogr_mitab_13():
+
+    if gdaltest.mapinfo_drv is None:
+        return 'skip'
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/testlyrdef.mif')
+        ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testlyrdef.mif')
+    except:
+        pass
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f "MapInfo File" -dsco FORMAT=MIF tmp/testlyrdef.mif ../ogr/data/testlyrdef.gml')
+
+    ds = ogr.Open('tmp/testlyrdef.mif')
+
+    #Check if the width and precision are as preserved.
+    lyr = ds.GetLayer('testlyrdef')
+    if lyr is None:
+        gdaltest.post_reason( 'Layer missing.' )
+        return 'fail'
+
+    defn = lyr.GetLayerDefn()
+
+    data = [['AREA',  ogr.OFTReal,   7, 4],
+            ['VOLUME',ogr.OFTReal,   0, 0],
+            ['LENGTH',ogr.OFTInteger,10,0],
+            ['WIDTH', ogr.OFTInteger, 4,0]]
+
+    for field in data:
+        fld = defn.GetFieldDefn(defn.GetFieldIndex(field[0]))
+        if fld.GetType() != field[1] or fld.GetWidth() != field[2] or fld.GetPrecision() != field[3]:
+            gdaltest.post_reason( field[0] + ' field definition wrong.' )
+            return 'fail'
+
+    ds.Destroy()
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testlyrdef.mif')
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_mitab_cleanup():
@@ -404,6 +497,8 @@ gdaltest_list = [
     ogr_mitab_9,
     ogr_mitab_10,
     ogr_mitab_11,
+    ogr_mitab_12,
+    ogr_mitab_13,
     ogr_mitab_cleanup ]
 
 if __name__ == '__main__':
