@@ -1399,7 +1399,7 @@ CPLErr OGRContourWriter( double dfLevel,
 /**
  * Create vector contours from raster DEM.
  *
- * This algorithm will generate contours vectors for the input raster band
+ * This algorithm will generate contour vectors for the input raster band
  * on the requested set of contour levels.  The vector contours are written
  * to the passed in OGR vector layer.  Also, a NODATA value may be specified
  * to identify pixels that should not be considered in contour line generation.
@@ -1414,10 +1414,10 @@ value at the center of the corresponding pixel region.  For the purpose of
 contour generation we virtually connect each pixel center to the values to
 the left, right, top and bottom.  We assume that the pixel value is linearly
 interpolated between the pixel centers along each line, and determine where
-(if any) contour lines will appear onlong these line segements.  Then the
+(if any) contour lines will appear along these line segements.  Then the
 contour crossings are connected.  
 
-This means that contour lines nodes won't actually be on pixel edges, but 
+This means that contour lines' nodes won't actually be on pixel edges, but 
 rather along vertical and horizontal lines connecting the pixel centers. 
 
 \verbatim
@@ -1507,25 +1507,25 @@ an averaged value from the two nearby points (in this case (12+3+5)/3).
  *
  * @param bUseNoData If TRUE the dfNoDataValue will be used.
  *
- * @param dfNoDataValue the value to use as a "nodata" value. That is, a
+ * @param dfNoDataValue The value to use as a "nodata" value. That is, a
  * pixel value which should be ignored in generating contours as if the value
  * of the pixel were not known. 
  *
- * @param hLayer the layer to which new contour vectors will be written. 
+ * @param hLayer The layer to which new contour vectors will be written. 
  * Each contour will have a LINESTRING geometry attached to it.   This
  * is really of type OGRLayerH, but void * is used to avoid pulling the
  * ogr_api.h file in here. 
  *
- * @param iIDField if not -1 this will be used as a field index to indicate
+ * @param iIDField If not -1 this will be used as a field index to indicate
  * where a unique id should be written for each feature (contour) written.
  * 
- * @param iElevField if not -1 this will be used as a field index to indicate
+ * @param iElevField If not -1 this will be used as a field index to indicate
  * where the elevation value of the contour should be written.
  *
- * @param pfnProgress a GDALProgressFunc that may be used to report progress
+ * @param pfnProgress A GDALProgressFunc that may be used to report progress
  * to the user, or to interrupt the algorithm.  May be NULL if not required.
  * 
- * @param pProgressArg the callback data for the pfnProgress function.
+ * @param pProgressArg The callback data for the pfnProgress function.
  *
  * @return CE_None on success or CE_Failure if an error occurs.
  */
