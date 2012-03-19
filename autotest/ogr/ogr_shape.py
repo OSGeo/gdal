@@ -1410,7 +1410,7 @@ def ogr_shape_32():
     
     from decimal import Decimal
 
-    BigFilePath = 'tmp'
+    BigFilePath = '/tmp'
 
     #######################################################
     # Create a layer
@@ -1438,7 +1438,8 @@ def ogr_shape_32():
             return 'fail'
         dst_feat.Destroy()
         if (n % 22846) == 0:
-            print('\b\b\b\b\b\b\b\b\b\b\b\b\b\b',(n/Decimal('228460.0')),'%  ', sys.stdout.flush())
+            sys.stdout.write( '\r%.1f%%   ' % (n/Decimal('228460.0')))
+            sys.stdout.flush()
 #    gdal.PopErrorHandler()
 
     #######################################################
