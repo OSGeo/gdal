@@ -141,6 +141,65 @@ def ogr_pdf_2():
     return 'success'
 
 ###############################################################################
+# Test read support with a non-OGR datasource
+
+def ogr_pdf_online_1():
+
+    # Check read support
+    gdal_pdf_drv = gdal.GetDriverByName('PDF')
+    md = gdal_pdf_drv.GetMetadata()
+    if not 'HAVE_POPPLER' in md and not 'HAVE_PODOFO' in md:
+        return 'skip'
+
+    if not gdaltest.download_file('http://www.terragotech.com/system/files/geopdf/webmap_urbansample.pdf', 'webmap_urbansample.pdf'):
+        return 'skip'
+
+    expected_layers = [
+        [ "Cadastral Boundaries", ogr.wkbPolygon ],
+        [ "Water Lines", ogr.wkbLineString ],
+        [ "Sewerage Lines", ogr.wkbLineString ],
+        [ "Sewerage Jump-Ups", ogr.wkbLineString ],
+        [ "Roads", ogr.wkbUnknown ],
+        [ "Water Points", ogr.wkbPoint ],
+        [ "Sewerage Pump Stations", ogr.wkbPoint ],
+        [ "Sewerage Man Holes", ogr.wkbPoint ],
+        [ "BPS - Buildings", ogr.wkbPolygon ],
+        [ "BPS - Facilities", ogr.wkbPolygon ],
+        [ "BPS - Water Sources", ogr.wkbPoint ],
+    ]
+
+    ds = ogr.Open( 'tmp/cache/webmap_urbansample.pdf' )
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ds.GetLayerCount() != len(expected_layers):
+        gdaltest.post_reason('fail')
+        print(ds.GetLayerCount())
+        return 'fail'
+
+    for i in range(ds.GetLayerCount()):
+        if ds.GetLayer(i).GetName() != expected_layers[i][0]:
+            gdaltest.post_reason('fail')
+            print('%d : %s' % (i, ds.GetLayer(i).GetName()))
+            return 'fail'
+
+        if ds.GetLayer(i).GetGeomType() != expected_layers[i][1]:
+            gdaltest.post_reason('fail')
+            print('%d : %d' % (i, ds.GetLayer(i).GetGeomType()))
+            return 'fail'
+
+    lyr = ds.GetLayerByName('Water Points')
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT (724431.316665166523308 7672947.24189974181354)')) != 0:
+        return 'fail'
+    if feat.GetField('ID') != 'VL46':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_pdf_cleanup():
@@ -152,6 +211,7 @@ def ogr_pdf_cleanup():
 gdaltest_list = [ 
     ogr_pdf_1,
     ogr_pdf_2,
+    ogr_pdf_online_1,
     ogr_pdf_cleanup
 ]
 
