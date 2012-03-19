@@ -559,6 +559,40 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
               sprintf( pszOgrFS+strlen(pszOgrFS), ",s:%.12fg", 
                        psText->height_mult );
 
+          // Add the font name. Name it MstnFont<FONTNUMBER> if not available
+          // in the font list. #3392
+          static const char *papszFontList[] =
+          { "STANDARD", "WORKING", "FANCY", "ENGINEERING", "NEWZERO", "STENCEL", //0-5
+            "USTN_FANCY", "COMPRESSED", "STENCEQ", NULL, "hand", "ARCH", //6-11
+            "ARCHB", NULL, NULL, "IGES1001", "IGES1002", "IGES1003", //12-17
+            "CENTB", "MICROS", NULL, NULL, "ISOFRACTIONS", "ITALICS", //18-23
+            "ISO30", NULL, "GREEK", "ISOREC", "Isoeq", NULL, //24-29
+            "ISO_FONTLEFT", "ISO_FONTRIGHT", "INTL_ENGINEERING", "INTL_WORKING", "ISOITEQ", NULL, //30-35
+            "USTN FONT 26", NULL, NULL, NULL, NULL, "ARCHITECTURAL", //36-41
+            "BLOCK_OUTLINE", "LOW_RES_FILLED", NULL, NULL, NULL, NULL, //42-47
+            NULL, NULL, "UPPERCASE", NULL, NULL, NULL, //48-53
+            NULL, NULL, NULL, NULL, NULL, NULL, //54-49
+            "FONT060", "din", "dinit", "helvl", "HELVLIT", "helv", //60-65
+            "HELVIT", "cent", "CENTIT", "SCRIPT", NULL, NULL, //66-71
+            NULL, NULL, NULL, NULL, "MICROQ", "dotfont", //72-77
+            "DOTIT", NULL, NULL, NULL, NULL, NULL, //78-83
+            NULL, NULL, NULL, NULL, NULL, NULL, //84-89
+            NULL, NULL, "FONT092", NULL, "FONT094", NULL, //90-95
+            NULL, NULL, NULL, NULL, "ANSI_SYMBOLS", "FEATURE_CONTROL_SYSMBOLS", //96-101
+            "SYMB_FAST", NULL, NULL, "INTL_ISO", "INTL_ISO_EQUAL", "INTL_ISO_ITALIC", //102-107
+            "INTL_ISO_ITALIC_EQUAL" }; //108
+
+          if(psText->font_id <= 108 && papszFontList[psText->font_id] != NULL )
+          {
+              sprintf( pszOgrFS+strlen(pszOgrFS), ",f:%s",
+                       papszFontList[psText->font_id] );
+          }
+          else
+          {
+              sprintf( pszOgrFS+strlen(pszOgrFS), ",f:MstnFont%d",
+                       psText->font_id );
+          }
+
           // Add the angle, if not horizontal
           if( psText->rotation != 0.0 )
               sprintf( pszOgrFS+strlen(pszOgrFS), ",a:%d", 
@@ -870,6 +904,8 @@ DGNElemCore **OGRDGNLayer::TranslateLabel( OGRFeature *poFeature )
     const char *pszText = poFeature->GetFieldAsString( "Text" );
     double dfRotation = 0.0;
     double dfCharHeight = 100.0;
+    const char *pszFontName;
+    int nFontID = 1; // 1 is the default font for DGN. Not 0.
 
     oMgr.InitFromFeature( poFeature );
     poLabel = (OGRStyleLabel *) oMgr.GetPart( 0 );
@@ -894,15 +930,37 @@ DGNElemCore **OGRDGNLayer::TranslateLabel( OGRFeature *poFeature )
         if( !bDefault && poLabel->GetUnit() == OGRSTUMM )
             dfCharHeight = poLabel->Size(bDefault)/1000.0;
 
-        /* poLabel->ForeColor(); */
-
         /* get font id */
+        static char  *papszFontNumbers[] =
+          { "STANDARD=0", "WORKING=1", "FANCY=2", "ENGINEERING=3", "NEWZERO=4",
+            "STENCEL=5", "USTN_FANCY=7", "COMPRESSED=8", "STENCEQ=9", "hand=10",
+            "ARCH=11", "ARCHB=12", "IGES1001=15", "IGES1002=16", "IGES1003=17", 
+            "CENTB=18", "MICROS=19", "ISOFRACTIONS=22", "ITALICS=23",
+            "ISO30=24", "GREEK=25", "ISOREC=26", "Isoeq=27", "ISO_FONTLEFT=30",
+            "ISO_FONTRIGHT=31", "INTL_ENGINEERING=32", "INTL_WORKING=33",
+            "ISOITEQ=34", "USTN FONT 26=36", "ARCHITECTURAL=41",
+            "BLOCK_OUTLINE=42", "LOW_RES_FILLED=43", "UPPERCASE50",
+            "FONT060=60", "din=61", "dinit=62", "helvl=63", "HELVLIT=64",
+            "helv=65", "HELVIT=66", "cent=67", "CENTIT=68", "SCRIPT=69", 
+            "MICROQ=76", "dotfont=77", "DOTIT=78", "FONT092=92", "FONT094=94",
+            "ANSI_SYMBOLS=100", "FEATURE_CONTROL_SYSMBOLS=101", "SYMB_FAST=102",
+            "INTL_ISO=105", "INTL_ISO_EQUAL=106", "INTL_ISO_ITALIC=107", 
+            "INTL_ISO_ITALIC_EQUAL=108", NULL }; 
 
+        pszFontName = poLabel->FontName( bDefault );
+        if( !bDefault && pszFontName != NULL )
+        {
+            const char *pszFontNumber = CSLFetchNameValue(papszFontNumbers, pszFontName);
+            if( pszFontNumber != NULL )
+            {
+                nFontID = atoi( pszFontNumber );
+            }
+        }
     }
 
     papsGroup = (DGNElemCore **) CPLCalloc(sizeof(void*),2);
     papsGroup[0] = 
-        DGNCreateTextElem( hDGN, pszText, 0, DGNJ_LEFT_BOTTOM, 
+        DGNCreateTextElem( hDGN, pszText, nFontID, DGNJ_LEFT_BOTTOM, 
                            dfCharHeight, dfCharHeight, dfRotation, NULL,
                            poPoint->getX(), 
                            poPoint->getY(), 
