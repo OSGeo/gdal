@@ -1,0 +1,68 @@
+<html>
+<head>
+<title>PDF - Geospatial PDF</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>PDF - Geospatial PDF</h1>
+
+(GDAL/OGR >= 2.0.0)<p>
+
+This driver can rean and write geospatial PDF with vector features.<p>
+
+Read support requires linking to podofo or poppler libraries, but write support does not.<p>
+
+Vector features are encoded according to PDF's logical structure facilities (as described by "§10.6 - Logical Structure" of PDF spec).<p>
+
+For write support, the driver will attempt to make use of the attached style information (encoded according to the OGR Feature Style specification),
+if available.<p>
+
+<h2>Dataset creation options</h2>
+
+<ul>
+
+<li><p><b>DPI=value</b>:
+Set the DPI to use. Default to 72.</p></li>
+
+<li><p><b>EXTRA_STREAM=content</b>: A PDF content stream to draw after the vector content, typically to add some text. It may refer
+the /FTimesRoman and /FTimesBold fonts.</p></li>
+
+<li><p><b>EXTRA_LAYER_NAME=name</b>: Name for layer where the extra content specified with EXTRA_CONTENT_STREAM is placed.</p></li>
+
+<li><p><b>MARGIN/LEFT_MARGIN/RIGHT_MARGIN/TOP_MARGIN/BOTTOM_MARGIN=value</b>: Margin around image in user units.</p></li>
+
+<li><p><b>GEO_ENCODING=[NONE/ISO32000/OGC_BP/BOTH]</b>:
+Set the Geo encoding method to use. ISO32000 is the default.</p></li>
+
+<li><p><b>NEATLINE=polygon_definition_in_wkt</b>:
+Set the NEATLINE to use.</p></li>
+
+<li><p><b>AUTHOR</b>, <b>CREATOR</b>, <b>CREATION_DATE</b>, <b>KEYWORDS</b>, <b>PRODUCER</b>,
+    <b>SUBJECT</b>, <b>TITLE</b> : metadata that can be written into the PDF Info block.</p></li>
+
+<li><p><b>OGR_DISPLAY_FIELD=name</b> : Name of field to use as the display field in the feature tree.</li>
+
+<li><p><b>OGR_DISPLAY_LAYER_NAMES=names</b> : Comma separated list of OGR layer names to display in the feature tree.</li>
+
+<li><p><b>OGR_WRITE_ATTRIBUTES=YES/NO</b> : Whether to write attributes of OGR features. Defaults to YES</li>
+
+</ul>
+
+<h2>See also</h2>
+
+Specifications :
+
+<ul>
+<li><a href="http://portal.opengeospatial.org/files/?artifact_id=40537">OGC GeoPDF Encoding Best Practice Version 2.2 (08-139r3)</a></li>
+<li><a href="http://www.adobe.com/devnet/acrobat/pdfs/adobe_supplement_iso32000.pdf">Adobe Supplement to ISO 32000</a></li>
+<li><a href="http://www.adobe.com/devnet/acrobat/pdfs/pdf_reference_1-7.pdf">PDF Reference, version 1.7</a></li>
+</ul>
+
+Also:
+<ul>
+<li><a href="../frmt_pdf.html">GDAL PDF driver</a></li>
+</ul>
+
+</body>
+</html>

@@ -59,6 +59,7 @@ class CPL_DLL OGRLayer
     OGREnvelope  m_sFilterEnvelope;
     
     int          FilterGeometry( OGRGeometry * );
+    //int          FilterGeometry( OGRGeometry *, OGREnvelope* psGeometryEnvelope);
     int          InstallFilter( OGRGeometry * );
 
   public:
@@ -381,6 +382,7 @@ void CPL_DLL RegisterOGRXLS();
 void CPL_DLL RegisterOGRODS();
 void CPL_DLL RegisterOGRXLSX();
 void CPL_DLL RegisterOGRElastic();
+void CPL_DLL RegisterOGRPDF();
 CPL_C_END
 
 

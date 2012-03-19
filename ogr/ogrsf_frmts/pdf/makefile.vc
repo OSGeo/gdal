@@ -1,0 +1,16 @@
+
+OBJ	=	ogrpdfdriver.obj ogrpdfdatasource.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS =	-I.. -I..\.. -I..\mem -I..\..\..\frmts\mem -I..\..\..\frmts\pdf
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+
+
