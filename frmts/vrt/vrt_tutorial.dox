@@ -82,6 +82,19 @@ and georeferenced coordinates.<P>
 \endcode
 </li>
 
+<li> <b>GCPList</b>: This element contains a list of Ground Control Points for
+the dataset, mapping between pixel/line coordinates and georeferenced
+coordinates. The Projection attribute should contain the SRS of the
+georeferenced coordinates in the same format as the SRS element.<P>
+
+\code
+<GCPList Projection="EPSG:4326">
+  <GCP Id="1" Info="a" Pixel="0.5" Line="0.5" X="0.0" Y="0.0" Z="0.0" />
+  <GCP Id="2" Info="b" Pixel="13.5" Line="23.5" X="1.0" Y="2.0" Z="0.0" />
+</GCPList>
+\endcode
+</li>
+
 <li> <b>Metadata</b>: This element contains a list of metadata name/value 
 pairs associated with the VRTDataset as a whole, or a VRTRasterBand.   It has
 <MDI> (metadata item) subelements which have a "key" attribute and the value
