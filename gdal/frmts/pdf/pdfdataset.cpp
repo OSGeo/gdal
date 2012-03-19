@@ -1517,7 +1517,7 @@ void PDFDataset::AddLayer(const char* pszLayerName, OptionalContentGroup* ocg)
         for(int i=0;i<100;i++)
         {
             osNewLayerList.AddNameValue(CPLSPrintf("LAYER_%03d_NAME", i),
-                                        osLayerList[i * 2] + strlen("LAYER_00_NAME="));
+                                        osLayerList[/*2 * */ i] + strlen("LAYER_00_NAME="));
             /*osNewLayerList.AddNameValue(CPLSPrintf("LAYER_%03d_INIT_STATE", i),
                                         osLayerList[i * 2 + 1] + strlen("LAYER_00_INIT_STATE="));*/
         }
