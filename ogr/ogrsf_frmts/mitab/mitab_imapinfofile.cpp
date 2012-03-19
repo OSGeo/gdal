@@ -449,9 +449,15 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
     }
     else if( poField->GetType() == OFTReal )
     {
-        eTABType = TABFFloat;
-        if( nWidth == 0 )
+        if( nWidth == 0 && poField->GetPrecision() == 0)
+        {
+            eTABType = TABFFloat;
             nWidth = 32;
+        }
+        else
+        {
+            eTABType = TABFDecimal;
+        }
     }
     else if( poField->GetType() == OFTDate )
     {
