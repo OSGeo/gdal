@@ -931,67 +931,28 @@ DGNElemCore **OGRDGNLayer::TranslateLabel( OGRFeature *poFeature )
             dfCharHeight = poLabel->Size(bDefault)/1000.0;
 
         /* get font id */
-        static char  **papszFontNumbers;
-        papszFontNumbers = CSLAddString(papszFontNumbers,"STANDARD=0");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"WORKING=1");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"FANCY=2");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"ENGINEERING=3");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"NEWZERO=4");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"STENCEL=5");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"USTN_FANCY=7");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"COMPRESSED=8");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"STENCEQ=9");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"hand=10");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"ARCH=11");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"ARCHB=12");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"IGES1001=15");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"IGES1002=16");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"IGES1003=17");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"CENTB=18");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"MICROS=19");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"ISOFRACTIONS=22");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"ITALICS=23");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"ISO30=24");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"GREEK=25");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"ISOREC=26");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"Isoeq=27");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"ISO_FONTLEFT=30");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"ISO_FONTRIGHT=31");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"INTL_ENGINEERING=32");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"INTL_WORKING=33");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"ISOITEQ=34");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"USTN FONT 26=36");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"ARCHITECTURAL=41");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"BLOCK_OUTLINE=42");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"LOW_RES_FILLED=43");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"UPPERCASE50");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"FONT060=60");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"din=61");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"dinit=62");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"helvl=63");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"HELVLIT=64");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"helv=65");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"HELVIT=66");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"cent=67");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"CENTIT=68");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"SCRIPT=69");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"MICROQ=76");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"dotfont=77");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"DOTIT=78");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"FONT092=92");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"FONT094=94");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"ANSI_SYMBOLS=100");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"FEATURE_CONTROL_SYSMBOLS=101");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"SYMB_FAST=102");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"INTL_ISO=105");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"INTL_ISO_EQUAL=106");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"INTL_ISO_ITALIC=107");
-        papszFontNumbers = CSLAddString(papszFontNumbers,"INTL_ISO_ITALIC_EQUAL=108");
+        static const char  *papszFontNumbers[] =
+          { "STANDARD=0", "WORKING=1", "FANCY=2", "ENGINEERING=3", "NEWZERO=4",
+            "STENCEL=5", "USTN_FANCY=7", "COMPRESSED=8", "STENCEQ=9", "hand=10",
+            "ARCH=11", "ARCHB=12", "IGES1001=15", "IGES1002=16", "IGES1003=17", 
+            "CENTB=18", "MICROS=19", "ISOFRACTIONS=22", "ITALICS=23",
+            "ISO30=24", "GREEK=25", "ISOREC=26", "Isoeq=27", "ISO_FONTLEFT=30",
+            "ISO_FONTRIGHT=31", "INTL_ENGINEERING=32", "INTL_WORKING=33",
+            "ISOITEQ=34", "USTN FONT 26=36", "ARCHITECTURAL=41",
+            "BLOCK_OUTLINE=42", "LOW_RES_FILLED=43", "UPPERCASE50",
+            "FONT060=60", "din=61", "dinit=62", "helvl=63", "HELVLIT=64",
+            "helv=65", "HELVIT=66", "cent=67", "CENTIT=68", "SCRIPT=69", 
+            "MICROQ=76", "dotfont=77", "DOTIT=78", "FONT092=92", "FONT094=94",
+            "ANSI_SYMBOLS=100", "FEATURE_CONTROL_SYSMBOLS=101", "SYMB_FAST=102",
+            "INTL_ISO=105", "INTL_ISO_EQUAL=106", "INTL_ISO_ITALIC=107", 
+            "INTL_ISO_ITALIC_EQUAL=108", NULL }; 
 
         pszFontName = poLabel->FontName( bDefault );
         if( !bDefault && pszFontName != NULL )
         {
-            const char *pszFontNumber = CSLFetchNameValue(papszFontNumbers, pszFontName);
+            const char *pszFontNumber = 
+                CSLFetchNameValue((char**)papszFontNumbers, pszFontName);
+
             if( pszFontNumber != NULL )
             {
                 nFontID = atoi( pszFontNumber );
