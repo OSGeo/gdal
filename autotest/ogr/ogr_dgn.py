@@ -70,6 +70,10 @@ def ogr_dgn_2():
     if ogrtest.check_feature_geometry( feat, 'POINT (0.73650000 4.21980000)'):
         return 'fail'
 
+    if feat.GetStyleString() != 'LABEL(t:"Demo Text",c:#ffffff,s:1.000g,f:ENGINEERING)':
+        gdaltest.post_reason( 'Style string different than expected.' )
+        return 'fail'
+
     feat.Destroy()
 
     return 'success'
@@ -238,6 +242,10 @@ def ogr_dgn_8():
         return 'fail'
 
     if ogrtest.check_feature_geometry( feat, 'POINT (0.73650000 4.21980000)'):
+        return 'fail'
+
+    if feat.GetStyleString() != 'LABEL(t:"Demo Text",c:#ffffff,s:1.000g,f:ENGINEERING)':
+        gdaltest.post_reason( 'feature 1: Style string different than expected.' )
         return 'fail'
 
     feat.Destroy()
