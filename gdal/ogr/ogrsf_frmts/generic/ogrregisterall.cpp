@@ -246,4 +246,7 @@ void OGRRegisterAll()
 #ifdef ELASTIC_ENABLED
     RegisterOGRElastic();
 #endif
+#ifdef PDF_ENABLED
+    RegisterOGRPDF();
+#endif
 } /* OGRRegisterAll */

@@ -31,6 +31,7 @@
 /* in include/poppler/goo/gtypes.h with the one defined in cpl_port.h */
 #define CPL_GBOOL_DEFINED
 
+#include "pdfdataset.h"
 #include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
 #include "gdal_pam.h"
@@ -3971,6 +3972,21 @@ CPLErr PDFDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 }
 
 #endif // #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+
+
+/************************************************************************/
+/*                          GDALPDFOpen()                               */
+/************************************************************************/
+
+GDALDataset* GDALPDFOpen(const char* pszFilename, GDALAccess eAccess)
+{
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+    GDALOpenInfo oOpenInfo(pszFilename, eAccess);
+    return PDFDataset::Open(&oOpenInfo);
+#else
+    return NULL;
+#endif
+}
 
 /************************************************************************/
 /*                         GDALRegister_PDF()                           */
