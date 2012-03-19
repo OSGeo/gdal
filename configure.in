@@ -1688,6 +1688,8 @@ if test "$with_fgdb" = "no" ; then
 
 elif test "$with_fgdb" = "yes" -o "$with_fgdb" = "" ; then
 
+    AC_MSG_CHECKING([for FileGDBAPI])
+
     rm -f testfgdb.*
     rm -f testfgdb
     echo "#include <FileGDBAPI.h>" > testfgdb.cpp
@@ -1698,7 +1700,11 @@ elif test "$with_fgdb" = "yes" -o "$with_fgdb" = "" ; then
         FGDB_ENABLED="yes"
         FGDB_LIB="-lFileGDBAPI"
     else
-        AC_MSG_ERROR([FileGDBAPI not found.])
+        if test "$with_fgdb" = "yes"; then
+            AC_MSG_ERROR([FileGDBAPI not found.])
+        else
+            AC_MSG_RESULT([FileGDBAPI not found.])
+        fi
     fi
     rm -f testfgdb.*
     rm -f testfgdb

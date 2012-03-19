@@ -21830,6 +21830,9 @@ if test "$with_fgdb" = "no" ; then
 
 elif test "$with_fgdb" = "yes" -o "$with_fgdb" = "" ; then
 
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FileGDBAPI" >&5
+$as_echo_n "checking for FileGDBAPI... " >&6; }
+
     rm -f testfgdb.*
     rm -f testfgdb
     echo "#include <FileGDBAPI.h>" > testfgdb.cpp
@@ -21841,7 +21844,12 @@ $as_echo "FileGDBAPI found" >&6; }
         FGDB_ENABLED="yes"
         FGDB_LIB="-lFileGDBAPI"
     else
-        as_fn_error $? "FileGDBAPI not found." "$LINENO" 5
+        if test "$with_fgdb" = "yes"; then
+            as_fn_error $? "FileGDBAPI not found." "$LINENO" 5
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: FileGDBAPI not found." >&5
+$as_echo "FileGDBAPI not found." >&6; }
+        fi
     fi
     rm -f testfgdb.*
     rm -f testfgdb
