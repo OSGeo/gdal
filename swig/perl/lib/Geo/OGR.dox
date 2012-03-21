@@ -191,7 +191,8 @@
 # \note a.k.a. DeleteDataSource
 # @param name The name of data source.
 
-## @method $GetName()
+## @method $Name()
+# \note a.k.a. GetName
 # @return the name of the driver.
 
 

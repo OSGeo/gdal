@@ -133,6 +133,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	*Copy = *CopyDataSource;
 	*OpenDataSource = *Open;
 	*Delete = *DeleteDataSource;
+	*Name = *GetName;
 
 	package Geo::OGR::DataSource;
 	use Carp;
@@ -1191,9 +1192,10 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
     }
     sub GetDriver {
 	my($name) = @_;
-	my $driver = GetDriverByName("$name");
-	$driver = _GetDriver($name) unless $driver;
-	croak "No such OGR driver: $name\n" unless $driver;
+	# is name an integer?
+	my $driver = _GetDriver($name) if $name =~ /^\d+$/;
+	$driver = GetDriverByName("$name") unless $driver;
+	croak "OGR driver not found (maybe support for it was not built in?): $name\n" unless $driver;
 	return $driver;
     }
     *Driver = *GetDriver;
