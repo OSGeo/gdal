@@ -356,6 +356,7 @@ GBool PostGISRasterDataset::SetRasterProperties
     OGREnvelope* poE = NULL;
     char* pszExtent;
     char* pszProjectionRef;
+    char* pszIdColumn = NULL;
     int nTmpSrid = -1;
     double dfTmpScaleX = 0.0;
     double dfTmpScaleY = 0.0;
@@ -366,14 +367,76 @@ GBool PostGISRasterDataset::SetRasterProperties
     int nTmpWidth = 0;
     int nTmpHeight = 0;
 
+    /* Determine the primary key/unique column on the raster table */
+    osCommand.Printf("select cols.column_name from information_schema."
+        "constraint_column_usage as cols join information_schema."
+        "table_constraints as constr on constr.constraint_name = cols."
+        "constraint_name where cols.table_schema = '%s' and cols.table_name "
+        "= '%s'", pszSchema, pszTable);
+
+    CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+            "Query: %s", osCommand.c_str());
+    poResult = PQexec(poConn, osCommand.c_str());
+    if (poResult == NULL ||
+        PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+        PQntuples(poResult) <= 0 ) {
+
+        PQclear(poResult);
+
+        // maybe there is no primary key or unique constraint;
+        // a sequence will also suffice, so look for the first sequence
+
+        osCommand.Printf("select cols.column_name from information_schema."
+            "columns as cols join information_schema.sequences as seqs on cols."
+            "column_default like '%%'||seqs.sequence_name||'%%' where cols."
+            "table_schema = '%s' and cols.table_name = '%s'", pszSchema, 
+            pszTable);
+
+        CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+                "Query: %s", osCommand.c_str());
+        poResult = PQexec(poConn, osCommand.c_str());
+
+        if (poResult == NULL || 
+            PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+            PQntuples(poResult) <= 0) {
+
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Could not find a primary key or unique column on the specified table.");
+
+            /* If no primary key or unique column found, fall back to raster upperleft x&y */
+        }
+        else {
+            pszIdColumn = CPLStrdup(PQgetvalue(poResult, 0, 0));
+        }
+    }
+    else {
+        pszIdColumn = CPLStrdup(PQgetvalue(poResult, 0, 0));
+    }
+
+    PQclear(poResult);
 
     /* Execute the query to fetch raster data from db */
     if (pszWhere == NULL) {
-        osCommand.Printf("select (foo.md).*, foo.rid from (select rid, st_metadata(%s) as md \
-                        from %s.%s) as foo", pszColumn, pszSchema, pszTable);
+        if (pszIdColumn == NULL) {
+            osCommand.Printf("select (foo.md).* from (select st_metadata(%s) "
+                "as md from %s.%s) as foo", pszColumn, pszSchema, pszTable);
+        }
+        else {
+            osCommand.Printf("select (foo.md).*, foo.%s from (select %s, "
+                "st_metadata(%s) as md from %s.%s) as foo", pszIdColumn, 
+                pszIdColumn, pszColumn, pszSchema, pszTable);
+        }
     } else {
-        osCommand.Printf("select (foo.md).*, foo.rid from (select rid, st_metadata(%s) as md \
-                        from %s.%s where %s) as foo", pszColumn, pszSchema, pszTable, pszWhere);
+        if (pszIdColumn == NULL) {
+            osCommand.Printf("select (foo.md).* from (select st_metadata(%s) "
+            "as md from %s.%s where %s) as foo", pszColumn, pszSchema, 
+            pszTable, pszWhere);
+        }
+        else {
+            osCommand.Printf("select (foo.md).*, foo.%s from (select %s, "
+            "st_metadata(%s) as md from %s.%s where %s) as foo", pszIdColumn, 
+            pszIdColumn, pszColumn, pszSchema, pszTable, pszWhere);
+        }
     }
 
     CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
@@ -386,8 +449,12 @@ GBool PostGISRasterDataset::SetRasterProperties
             ) {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Error browsing database for PostGIS Raster properties");
+
         if (poResult != NULL)
             PQclear(poResult);
+
+        if (pszIdColumn != NULL)
+            CPLFree(pszIdColumn);
 
         return false;
     }
@@ -428,19 +495,43 @@ GBool PostGISRasterDataset::SetRasterProperties
             case ONE_RASTER_PER_ROW:
                 {
 
-                for (i = 0; i < nTuples; i++) {
-                    nSrid = atoi(PQgetvalue(poResult, i, 10));
+                if (pszIdColumn == NULL) {
+                    for (i = 0; i < nTuples; i++) {
+                        adfGeoTransform[0] = atof(PQgetvalue(poResult, i, 0)); //upperleft x
+                        adfGeoTransform[3] = atof(PQgetvalue(poResult, i, 1)); //upperleft y
+                        papszSubdatasets = CSLSetNameValue(papszSubdatasets,
+                                CPLSPrintf("SUBDATASET_%d_NAME", (i + 1)),
+                                CPLSPrintf("PG:%s schema=%s table=%s column=%s "
+                                    "where='ST_UpperLeftX(%s) = %f AND ST_UpperLeftY(%s) = %f'",
+                                    pszValidConnectionString, pszSchema, pszTable, pszColumn, 
+                                    pszColumn, adfGeoTransform[0], pszColumn, adfGeoTransform[3]));
 
-                    papszSubdatasets = CSLSetNameValue(papszSubdatasets,
-                            CPLSPrintf("SUBDATASET_%d_NAME", (i + 1)),
-                            CPLSPrintf("PG:%s schema=%s table=%s column=%s where='rid = %d'",
-                            pszValidConnectionString, pszSchema, pszTable, pszColumn, nSrid));
-
-                    papszSubdatasets = CSLSetNameValue(papszSubdatasets,
-                            CPLSPrintf("SUBDATASET_%d_DESC", (i + 1)),
-                            CPLSPrintf("PostGIS Raster at %s.%s (%s), rid = %d", pszSchema,
-                            pszTable, pszColumn, nSrid));
+                        papszSubdatasets = CSLSetNameValue(papszSubdatasets,
+                                CPLSPrintf("SUBDATASET_%d_DESC", (i + 1)),
+                                CPLSPrintf("PostGIS Raster at %s.%s (%s), UpperLeft = %f, %f", pszSchema,
+                                    pszTable, pszColumn, adfGeoTransform[0], adfGeoTransform[3]));
+                    }
                 }
+                else {
+                    for (i = 0; i < nTuples; i++) {
+                        // this is the raster ID (or unique column)
+                        nSrid = atoi(PQgetvalue(poResult, i, 10));
+
+                        papszSubdatasets = CSLSetNameValue(papszSubdatasets,
+                                CPLSPrintf("SUBDATASET_%d_NAME", (i + 1)),
+                                CPLSPrintf("PG:%s schema=%s table=%s column=%s where='%s = %d'",
+                                pszValidConnectionString, pszSchema, pszTable, pszColumn, 
+                                pszIdColumn, nSrid));
+
+                        papszSubdatasets = CSLSetNameValue(papszSubdatasets,
+                                CPLSPrintf("SUBDATASET_%d_DESC", (i + 1)),
+                                CPLSPrintf("PostGIS Raster at %s.%s (%s), %s = %d", pszSchema,
+                                pszTable, pszColumn, pszIdColumn, nSrid));
+                    }
+
+                    CPLFree(pszIdColumn);
+                }
+
 
                 /* Not a single raster fetched */
                 nRasterXSize = 0;
@@ -456,6 +547,9 @@ GBool PostGISRasterDataset::SetRasterProperties
                 ************************************************************/
             case ONE_RASTER_PER_TABLE:
                 {
+                /* This column is not used in this mode. */
+                if (pszIdColumn != NULL)
+                    CPLFree(pszIdColumn);
 
                 /**
                  * Get the rest of raster properties from this object
@@ -496,6 +590,7 @@ GBool PostGISRasterDataset::SetRasterProperties
                                 "not supported yet", pszSchema, pszTable);
 
                             PQclear(poResult);
+
                             return false;                             
                         }
                     }
@@ -555,6 +650,7 @@ GBool PostGISRasterDataset::SetRasterProperties
                                 pszSchema, pszTable);
 
                             PQclear(poResult);
+
                             return false;
                         }
                     }
@@ -667,6 +763,10 @@ GBool PostGISRasterDataset::SetRasterProperties
                 {
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "Error, incorrect working mode");
+
+                /* This column is not used in this mode. */
+                if (pszIdColumn != NULL)
+                    CPLFree(pszIdColumn);
 
                 bRetValue = false;
                 }
@@ -1020,7 +1120,7 @@ CPLErr PostGISRasterDataset::IRasterIO(GDALRWFlag eRWFlag,
         *********************************************************************/
         if (pszWhere == NULL)
         {
-            osCommand.Printf("SELECT rid, %s, ST_ScaleX(%s), ST_SkewY(%s), "
+            osCommand.Printf("SELECT %s, ST_ScaleX(%s), ST_SkewY(%s), "
                 "ST_SkewX(%s), ST_ScaleY(%s), ST_UpperLeftX(%s), "
                 "ST_UpperLeftY(%s), ST_Width(%s), ST_Height(%s) FROM %s.%s WHERE "
                 "ST_Intersects(%s, ST_PolygonFromText('POLYGON((%f %f, %f %f, %f %f"
@@ -1036,7 +1136,7 @@ CPLErr PostGISRasterDataset::IRasterIO(GDALRWFlag eRWFlag,
 
         else
         {
-            osCommand.Printf("SELECT rid, %s ST_ScaleX(%s), ST_SkewY(%s), "
+            osCommand.Printf("SELECT %s ST_ScaleX(%s), ST_SkewY(%s), "
                 "ST_SkewX(%s), ST_ScaleY(%s), ST_UpperLeftX(%s), "
                 "ST_UpperLeftY(%s), ST_Width(%s), ST_Height(%s) FROM %s.%s WHERE %s AND "
                 "ST_Intersects(%s, ST_PolygonFromText('POLYGON((%f %f, %f %f, %f %f"
@@ -1348,7 +1448,6 @@ GetConnectionInfo(const char * pszFilename,
             /* Delete this pair from params array */
             papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
         }
-
     }
 
     /* Parse ppszWhere, if needed */
@@ -1542,8 +1641,8 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
             PQntuples(poResult) <= 0
             ) {
         CPLError(CE_Failure, CPLE_AppDefined,
-                "Error checking geometry type existence. Is PostGIS correctly \
-                installed?: %s", PQerrorMessage(poConn));
+                "Error checking geometry type existence. Is PostGIS correctly "
+                "installed?: %s", PQerrorMessage(poConn));
         if (poResult != NULL)
             PQclear(poResult);
         if (pszSchema)
@@ -1562,13 +1661,13 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
 
 
     /* Check spatial tables existence */
-    poResult = PQexec(poConn, "select pg_namespace.nspname as schemaname, \
-                    pg_class.relname as tablename from pg_class, \
-                    pg_namespace where pg_class.relnamespace = pg_namespace.oid \
-                    and (pg_class.relname='raster_columns' or \
-                    pg_class.relname='raster_overviews' or \
-                    pg_class.relname='geometry_columns' or \
-                    pg_class.relname='spatial_ref_sys')");
+    poResult = PQexec(poConn, "select pg_namespace.nspname as schemaname, "
+                    "pg_class.relname as tablename from pg_class, "
+                    "pg_namespace where pg_class.relnamespace = pg_namespace.oid "
+                    "and (pg_class.relname='raster_columns' or "
+                    "pg_class.relname='raster_overviews' or "
+                    "pg_class.relname='geometry_columns' or "
+                    "pg_class.relname='spatial_ref_sys')");
     if (
             poResult == NULL ||
             PQresultStatus(poResult) != PGRES_TUPLES_OK ||
@@ -2003,6 +2102,7 @@ PostGISRasterDataset::CreateCopy( const char * pszFilename,
     // create table for raster (if not exists because a
     // dataset will not be reported for an empty table)
 
+    // TODO: is 'rid' necessary?
     osCommand.Printf("create table if not exists %s.%s (rid serial, %s "
         "public.raster, constraint %s_pkey primary key (rid));",
         pszSchema, pszTable, pszColumn, pszTable);
