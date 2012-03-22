@@ -162,6 +162,9 @@ bishop        Dmitry Baryshnikov            postgis, hdf, geotiff, mitab, shp
 rcoup         Robert Coup                  OGR: FGDB
               robert@coup.net.nz
 
+dzwarg        David Zwarg                  PostGIS Raster
+              dzwarg@azavea.com
+
 ===============
 Past developers
 ===============
