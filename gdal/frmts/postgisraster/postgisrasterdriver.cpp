@@ -85,8 +85,8 @@ PGconn* PostGISRasterDriver::GetConnection(const char* pszConnectionString,
      **/
     for (i = 0; i < nRefCount; i++) {
         CPLDebug("PostGIS_Raster", "PostGISRasterDriver::GetConnection(): "
-            "User: %s\nPassword: %s\nHost: %s\nPort: %s\n%d / %d", pszUserIn,
-            pszPasswordIn, pszHostIn, pszPortIn, i, nRefCount);
+            "User: %s\nPassword: %s\nHost: %s\nPort: %s", pszUserIn,
+            pszPasswordIn, pszHostIn, pszPortIn);
         if (EQUAL(pszUserIn, PQuser(papoConnection[i])) &&
                 EQUAL(pszPasswordIn, PQpass(papoConnection[i])) &&
                 EQUAL(pszHostIn, PQhost(papoConnection[i])) &&
