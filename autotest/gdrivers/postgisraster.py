@@ -381,6 +381,78 @@ def postgisraster_test_create_copy_and_delete_phases():
 
     return 'success'
 
+def postgisraster_test_norid():
+    """
+    Test the ability to connect to a data source if it has no 'rid' column.
+    """
+    if gdaltest.postgisrasterDriver is None:
+        return 'skip'
+
+    src_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world_noid'" )
+
+    src_md = src_ds.GetMetadata('SUBDATASETS')
+
+    import re
+
+    # Check each subdataset
+    for k in src_md.keys():
+        if k[-4:] == 'NAME':
+            # Ensure the subdataset has upperleftx and upperlefty coords,
+            # as there is no unique key on the table
+            if not re.search("column=(\w+) where='ST_UpperLeftX\(\\1\) = -?\d+\.\d+ AND ST_UpperLeftY\(\\1\) = -?\d+\.\d+'", src_md[k]):
+                return 'fail'
+
+    return 'success'
+
+def postgisraster_test_serial():
+    """
+    Test the ability to connect to a data source if it has no primary key,
+    but uses a sequence instead.
+    """
+    if gdaltest.postgisrasterDriver is None:
+        return 'skip'
+
+    src_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world_serial'" )
+
+    src_md = src_ds.GetMetadata('SUBDATASETS')
+
+    import re
+
+    # Check each subdataset
+    for k in src_md.keys():
+        if k[-4:] == 'NAME':
+            # Ensure the subdataset has upperleftx and upperlefty coords,
+            # as there is no unique key on the table
+            if not re.search("where='serialid = \d+'", src_md[k]):
+                print k,':',src_md[k]
+                return 'fail'
+
+    return 'success'
+
+def postgisraster_test_unique():
+    """
+    Test the ability to connect to a data source if it has no primary key,
+    but uses a unique constraint instead.
+    """
+    if gdaltest.postgisrasterDriver is None:
+        return 'skip'
+
+    src_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world_unique'" )
+
+    src_md = src_ds.GetMetadata('SUBDATASETS')
+
+    import re
+
+    # Check each subdataset
+    for k in src_md.keys():
+        if k[-4:] == 'NAME':
+            # Ensure the subdataset has upperleftx and upperlefty coords,
+            # as there is no unique key on the table
+            if not re.search("where='uniq = \d+'", src_md[k]):
+                print k,':',src_md[k]
+                return 'fail'
+
+    return 'success'
 
 gdaltest_list = [
     postgisraster_init,
@@ -396,7 +468,10 @@ gdaltest_list = [
     postgisraster_test_create_copy_no_dbname,
     postgisraster_test_create_copy_no_tablename,
     postgisraster_test_create_copy_and_delete,
-    postgisraster_test_create_copy_and_delete_phases]
+    postgisraster_test_create_copy_and_delete_phases,
+    postgisraster_test_norid,
+    postgisraster_test_serial,
+    postgisraster_test_unique]
 
 if __name__ == '__main__':
 
