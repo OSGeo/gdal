@@ -83,16 +83,29 @@ int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName,
 /*      Set name, and capture the directory path so we can use it       */
 /*      for relative datasources.                                       */
 /* -------------------------------------------------------------------- */
-    char *pszVRTDirectory = CPLStrdup( CPLGetPath( pszNewName ) );
+    CPLString osVRTDirectory = CPLGetPath( pszNewName );
 
     pszName = CPLStrdup( pszNewName );
+
+/* -------------------------------------------------------------------- */
+/*      Look for the OGRVRTDataSource node, it might be after an        */
+/*      <xml> node.                                                     */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psVRTDSXML = CPLGetXMLNode( psTree, "=OGRVRTDataSource" );
+    if( psVRTDSXML == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Did not find the <OGRVRTDataSource> node in the root of the document,\n"
+                  "this is not really an OGR VRT." );
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Look for layers.                                                */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psLTree;
 
-    for( psLTree=psTree->psChild; psLTree != NULL; psLTree=psLTree->psNext )
+    for( psLTree=psVRTDSXML->psChild; psLTree != NULL; psLTree=psLTree->psNext )
     {
         if( psLTree->eType != CXT_Element
             || !EQUAL(psLTree->pszValue,"OGRVRTLayer") )
@@ -105,9 +118,8 @@ int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName,
         
         poLayer = new OGRVRTLayer(this);
         
-        if( !poLayer->FastInitialize( psLTree, pszVRTDirectory, bUpdate ) )
+        if( !poLayer->FastInitialize( psLTree, osVRTDirectory, bUpdate ) )
         {
-            CPLFree( pszVRTDirectory );
             delete poLayer;
             return FALSE;
         }
@@ -120,7 +132,6 @@ int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName,
         papoLayers[nLayers++] = poLayer;
     }
 
-    CPLFree( pszVRTDirectory );
     return TRUE;
 }
 
