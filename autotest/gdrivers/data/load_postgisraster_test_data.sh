@@ -36,4 +36,26 @@ raster2pgsql -l 2,4,8 -t 40x20 -s 4326 -I -M small_world.tif $DATABASE_SCHEMA.sm
 
 psql -h $HOST_NAME -U $USER_NAME -d $DATABASE_NAME -f "$SQL_OUTPUT_FILES_PATH/small_world_level2-8.sql"
 
+raster2pgsql -l 2 -t 40x40 -s 4326 -I -M small_world.tif $DATABASE_SCHEMA.small_world_noid > "$SQL_OUTPUT_FILES_PATH/small_world_level2_noid.sql"
+raster2pgsql -l 2 -t 40x40 -s 4326 -I -M small_world.tif $DATABASE_SCHEMA.small_world_serial > "$SQL_OUTPUT_FILES_PATH/small_world_level2_serial.sql"
+raster2pgsql -l 2 -t 40x40 -s 4326 -I -M small_world.tif $DATABASE_SCHEMA.small_world_unique > "$SQL_OUTPUT_FILES_PATH/small_world_level2_unique.sql"
+
+psql -h $HOST_NAME -U $USER_NAME -d $DATABASE_NAME -f "$SQL_OUTPUT_FILES_PATH/small_world_level2_noid.sql"
+psql -h $HOST_NAME -U $USER_NAME -d $DATABASE_NAME -c "ALTER TABLE $DATABASE_SCHEMA.small_world_noid DROP COLUMN rid"
+
+psql -h $HOST_NAME -U $USER_NAME -d $DATABASE_NAME -f "$SQL_OUTPUT_FILES_PATH/small_world_level2_serial.sql"
+psql -h $HOST_NAME -U $USER_NAME -d $DATABASE_NAME -c "\
+ALTER TABLE $DATABASE_SCHEMA.small_world_serial ADD COLUMN serialid integer; \
+UPDATE $DATABASE_SCHEMA.small_world_serial SET serialid = rid; \
+ALTER TABLE $DATABASE_SCHEMA.small_world_serial DROP COLUMN rid; \
+CREATE SEQUENCE small_world_serial_serialid_sequence INCREMENT 1 START 51; \
+ALTER TABLE $DATABASE_SCHEMA.small_world_serial ALTER COLUMN serialid SET DEFAULT nextval('small_world_serial_serialid_sequence'::regclass);"
+
+psql -h $HOST_NAME -U $USER_NAME -d $DATABASE_NAME -f "$SQL_OUTPUT_FILES_PATH/small_world_level2_unique.sql"
+psql -h $HOST_NAME -U $USER_NAME -d $DATABASE_NAME -c "\
+ALTER TABLE $DATABASE_SCHEMA.small_world_unique ADD COLUMN uniq integer; \
+UPDATE $DATABASE_SCHEMA.small_world_unique SET uniq = rid; \
+ALTER TABLE $DATABASE_SCHEMA.small_world_unique DROP COLUMN rid; \
+ALTER TABLE $DATABASE_SCHEMA.small_world_unique ADD UNIQUE (uniq);"
+
 rm -rf "$SQL_OUTPUT_FILES_PATH"
