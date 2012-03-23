@@ -399,6 +399,8 @@ public:
     CPLString           sValueAttributeTab;
 
     int                 nSRID;
+    int                 nExtentSRID;
+    bool                bGenSpatialIndex;
     CPLXMLNode*         phMetadata;
     CPLString           sCellDepth;
     CPLString           sCompressionType;
