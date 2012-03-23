@@ -1,4 +1,5 @@
-<OGRVRTDataSource>
+ <?xml version="1.0"?>
+ <OGRVRTDataSource>
 
     <OGRVRTLayer name="test2">
         <SrcDataSource relativeToVRT="1">flat.dbf</SrcDataSource> 
