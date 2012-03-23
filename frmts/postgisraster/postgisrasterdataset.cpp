@@ -400,8 +400,8 @@ GBool PostGISRasterDataset::SetRasterProperties
             PQresultStatus(poResult) != PGRES_TUPLES_OK ||
             PQntuples(poResult) <= 0) {
 
-            CPLError(CE_Failure, CPLE_AppDefined,
-                    "Could not find a primary key or unique column on the specified table.");
+            CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+                "Could not find a primary key or unique column on the specified table; using UpperLeftX and UpperLeftY.");
 
             /* If no primary key or unique column found, fall back to raster upperleft x&y */
         }
