@@ -81,20 +81,17 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
     else
     {
         VSILFILE *fp;
-        char achHeader[18];
+        char achHeader[512];
 
         fp = VSIFOpenL( pszFilename, "rb" );
 
         if( fp == NULL )
             return NULL;
 
-        if( VSIFReadL( achHeader, sizeof(achHeader), 1, fp ) != 1 )
-        {
-            VSIFCloseL( fp );
-            return NULL;
-        }
+        memset( achHeader, 0, sizeof(achHeader) );
+        VSIFReadL( achHeader, 1, sizeof(achHeader)-1, fp );
 
-        if( !EQUALN(achHeader,"<OGRVRTDataSource>",18) )
+        if( strstr(achHeader,"<OGRVRTDataSource") == NULL )
         {
             VSIFCloseL( fp );
             return NULL;
@@ -104,6 +101,7 @@ OGRDataSource *OGRVRTDriver::Open( const char * pszFilename,
         if ( VSIStatL( pszFilename, &sStatBuf ) != 0 ||
              sStatBuf.st_size > 1024 * 1024 )
         {
+            CPLDebug( "VRT", "Unreasonable long file, not likely really VRT" );
             VSIFCloseL( fp );
             return NULL;
         }
@@ -175,4 +173,3 @@ void RegisterOGRVRT()
 {
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRVRTDriver );
 }
-
