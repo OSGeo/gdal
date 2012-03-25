@@ -542,8 +542,12 @@ CPLErr GDALWarpKernel::PerformWarp()
     // See #2445 and #3079
     if (nSrcXSize <= 0 || nSrcYSize <= 0)
     {
-        pfnProgress( dfProgressBase + dfProgressScale,
-                      "", pProgress );
+        if ( !pfnProgress( dfProgressBase + dfProgressScale,
+                           "", pProgress ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            return CE_Failure;
+        }
         return CE_None;
     }
 
