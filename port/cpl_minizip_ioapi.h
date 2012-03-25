@@ -21,6 +21,12 @@
 #include "cpl_vsi.h"
 #define uLong64 vsi_l_offset
 
+/* Gentoo removed OF from their copy of zconf.h (https://bugs.gentoo.org/show_bug.cgi?id=383179) */
+/* but our copy of minizip needs it. */
+#ifndef OF
+#define OF(args) args
+#endif
+
 #define ZLIB_FILEFUNC_SEEK_CUR (1)
 #define ZLIB_FILEFUNC_SEEK_END (2)
 #define ZLIB_FILEFUNC_SEEK_SET (0)
