@@ -2558,7 +2558,10 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
 
                     VSIFPrintfL(fp, "/Text%d Do\n", oLayerDesc.aIdsText[iVector]);
 
-                    VSIFPrintfL(fp, "EMC\n");
+                    if (osName.size())
+                    {
+                        VSIFPrintfL(fp, "EMC\n");
+                    }
                 }
 
                 iObj ++;
