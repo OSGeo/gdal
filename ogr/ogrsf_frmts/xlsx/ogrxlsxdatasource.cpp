@@ -635,8 +635,10 @@ void OGRXLSXDataSource::startElementRow(const char *pszName,
         else if (nS != -1)
             CPLDebug("XLSX", "Cannot find style %d", nS);
 
-        const char* pszT = GetAttributeValue(ppszAttr, "t", NULL);
-        if (pszT && strcmp(pszT, "s") == 0)
+        const char* pszT = GetAttributeValue(ppszAttr, "t", "");
+        if ( EQUAL(pszT,"s"))
+            osValueType = "stringLookup";
+        else if( EQUAL(pszT,"inlineStr") )
             osValueType = "string";
 
         osValue = "";
@@ -804,6 +806,10 @@ void OGRXLSXDataSource::startElementCell(const char *pszName,
     {
         PushState(STATE_TEXTV);
     }
+    else if (osValue.size() == 0 && strcmp(pszName, "t") == 0)
+    {
+        PushState(STATE_TEXTV);
+    }
 }
 
 /************************************************************************/
@@ -816,13 +822,14 @@ void OGRXLSXDataSource::endElementCell(const char *pszName)
     {
         CPLAssert(strcmp(pszName, "c") == 0);
 
-        if (osValueType == "string")
+        if (osValueType == "stringLookup")
         {
             int nIndex = atoi(osValue);
             if (nIndex >= 0 && nIndex < (int)(apoSharedStrings.size()))
                 osValue = apoSharedStrings[nIndex];
             else
                 CPLDebug("XLSX", "Cannot find string %d", nIndex);
+            osValueType = "string";
         }
 
         apoCurLineValues.push_back(osValue);
