@@ -231,12 +231,48 @@ def ogr_xlsx_5():
 
     return ret
 
+###############################################################################
+# Test reading a file using inlineStr representation.
+
+def ogr_xlsx_6():
+
+    drv = ogr.GetDriverByName('XLSX')
+    if drv is None:
+        return 'skip'
+
+    # In this dataset the column titles are not recognised by default.
+    gdal.SetConfigOption('OGR_XLSX_HEADERS', 'FORCE')
+    ds = ogr.Open('data/inlineStr.xlsx')
+
+    lyr = ds.GetLayerByName('inlineStr')
+
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        print(lyr.GetFeatureCount())
+        return 'fail'
+
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    if feat.Bl_District_t != 'text6':
+        gdaltest.post_reason( 'Did not get expected value(1)' )
+        return 'fail'
+
+    if abs(float(feat.GetField('Lat')) -  23.6247122) > 0.00001:
+        gdaltest.post_reason( 'Did not get expected value(2)' )
+        return 'fail'
+
+    gdal.SetConfigOption('OGR_XLSX_HEADERS', None)
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_xlsx_1,
     ogr_xlsx_2,
     ogr_xlsx_3,
     ogr_xlsx_4,
-    ogr_xlsx_5
+    ogr_xlsx_5,
+    ogr_xlsx_6
+    
 ]
 
 if __name__ == '__main__':
