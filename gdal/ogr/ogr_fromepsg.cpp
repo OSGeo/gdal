@@ -1613,6 +1613,8 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
         break;
 
       case 9823: /* Equidistant Cylindrical / Plate Carre / Equirectangular */
+      case 1028:
+      case 1029:
         poSRS->SetEquirectangular( OGR_FP( NatOriginLat ),
                                    OGR_FP( NatOriginLong ), 
                                    0.0, 0.0 );
