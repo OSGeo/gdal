@@ -31,6 +31,7 @@
 import os
 import sys
 import string
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -371,6 +372,51 @@ AB,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 
     return 'success'
 
+###############################################################################
+# Test update support
+
+def ogr_ods_7():
+
+    drv = ogr.GetDriverByName('ODS')
+    if drv is None:
+        return 'skip'
+
+    try:
+        os.unlink('tmp/ogr_ods_7.ods')
+    except:
+        pass
+    shutil.copy('data/test.ods', 'tmp/ogr_ods_7.ods')
+
+    ds = ogr.Open('tmp/ogr_ods_7.ods', update = 1)
+    lyr = ds.GetLayerByName('Feuille7')
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != 2:
+        gdaltest.post_reason('did not get expected FID')
+        feat.DumpReadabe()
+        return 'fail'
+    feat.SetField(0, 'modified_value')
+    lyr.SetFeature(feat)
+    feat = None
+    ds = None
+
+    ds = ogr.Open('tmp/ogr_ods_7.ods')
+    lyr = ds.GetLayerByName('Feuille7')
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != 2:
+        gdaltest.post_reason('did not get expected FID')
+        feat.DumpReadabe()
+        return 'fail'
+    if feat.GetField(0) != 'modified_value':
+        gdaltest.post_reason('did not get expected value')
+        feat.DumpReadabe()
+        return 'fail'
+    feat = None
+    ds = None
+
+    os.unlink('tmp/ogr_ods_7.ods')
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_ods_1,
     ogr_ods_kspread_1,
@@ -379,6 +425,7 @@ gdaltest_list = [
     ogr_ods_4,
     ogr_ods_5,
     ogr_ods_6,
+    ogr_ods_7
 ]
 
 if __name__ == '__main__':

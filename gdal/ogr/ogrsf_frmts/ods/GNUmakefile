@@ -15,7 +15,7 @@ default:	$(O_OBJ:.o=.$(OBJ_EXT))
 clean:
 	rm -f *.o $(O_OBJ) testparser$(EXE)
 
-$(O_OBJ):	ogr_ods.h ods_formula.h ods_formula_parser.hpp
+$(O_OBJ):	ogr_ods.h ods_formula.h ods_formula_parser.hpp ../mem/ogr_mem.h
 
 # The sed substition below workarounds a bug with gcc 4.1 -O2 (checked on 64bit platforms)
 # that produces buggy compiled code.

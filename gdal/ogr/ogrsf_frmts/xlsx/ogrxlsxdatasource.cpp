@@ -48,6 +48,7 @@ OGRXLSXLayer::OGRXLSXLayer( OGRXLSXDataSource* poDSIn,
     nSheetId = nSheetIdIn;
     poDS = poDSIn;
     bUpdated = bUpdatedIn;
+    bHasHeaderLine = FALSE;
 }
 
 /************************************************************************/
@@ -88,6 +89,62 @@ void OGRXLSXLayer::SetUpdated(int bUpdatedIn)
 OGRErr OGRXLSXLayer::SyncToDisk()
 {
     return poDS->SyncToDisk();
+}
+
+/************************************************************************/
+/*                          GetNextFeature()                            */
+/************************************************************************/
+
+OGRFeature* OGRXLSXLayer::GetNextFeature()
+{
+    Init();
+    OGRFeature* poFeature = OGRMemLayer::GetNextFeature();
+    if (poFeature)
+        poFeature->SetFID(poFeature->GetFID() + 1 + bHasHeaderLine);
+    return poFeature;
+}
+
+/************************************************************************/
+/*                           GetFeature()                               */
+/************************************************************************/
+
+OGRFeature* OGRXLSXLayer::GetFeature( long nFeatureId )
+{
+    Init();
+    OGRFeature* poFeature = OGRMemLayer::GetFeature(nFeatureId - (1 + bHasHeaderLine));
+    if (poFeature)
+        poFeature->SetFID(nFeatureId);
+    return poFeature;
+}
+
+/************************************************************************/
+/*                           SetFeature()                               */
+/************************************************************************/
+
+OGRErr OGRXLSXLayer::SetFeature( OGRFeature *poFeature )
+{
+    Init();
+    if (poFeature == NULL)
+        return OGRMemLayer::SetFeature(poFeature);
+
+    long nFID = poFeature->GetFID();
+    if (nFID != OGRNullFID)
+        poFeature->SetFID(nFID - (1 + bHasHeaderLine));
+    SetUpdated();
+    OGRErr eErr = OGRMemLayer::SetFeature(poFeature);
+    poFeature->SetFID(nFID);
+    return eErr;
+}
+
+/************************************************************************/
+/*                          DeleteFeature()                             */
+/************************************************************************/
+
+OGRErr OGRXLSXLayer::DeleteFeature( long nFID )
+{
+    Init();
+    SetUpdated();
+    return OGRMemLayer::DeleteFeature(nFID - (1 + bHasHeaderLine));
 }
 
 /************************************************************************/
@@ -574,7 +631,6 @@ void OGRXLSXDataSource::endElementTable(const char *pszName)
                 SetField(poFeature, i, apoFirstLineValues[i].c_str(),
                          apoFirstLineTypes[i].c_str());
             }
-            poFeature->SetFID(1);
             poCurLayer->CreateFeature(poFeature);
             delete poFeature;
         }
@@ -680,6 +736,8 @@ void OGRXLSXDataSource::endElementRow(const char *pszName)
         {
             DetectHeaderLine();
 
+            poCurLayer->SetHasHeaderLine(bFirstLineIsHeaders);
+
             if (bFirstLineIsHeaders)
             {
                 for(i = 0; i < apoFirstLineValues.size(); i++)
@@ -716,7 +774,6 @@ void OGRXLSXDataSource::endElementRow(const char *pszName)
                     SetField(poFeature, i, apoFirstLineValues[i].c_str(),
                              apoFirstLineTypes[i].c_str());
                 }
-                poFeature->SetFID(1);
                 poCurLayer->CreateFeature(poFeature);
                 delete poFeature;
             }
@@ -789,7 +846,6 @@ void OGRXLSXDataSource::endElementRow(const char *pszName)
                 SetField(poFeature, i, apoCurLineValues[i].c_str(),
                          apoCurLineTypes[i].c_str());
             }
-            poFeature->SetFID(nCurLine + 1);
             poCurLayer->CreateFeature(poFeature);
             delete poFeature;
        }
@@ -855,7 +911,7 @@ void OGRXLSXDataSource::dataHandlerTextV(const char *data, int nLen)
 /*                              BuildLayer()                            */
 /************************************************************************/
 
-void OGRXLSXDataSource::BuildLayer(OGRLayer* poLayer, int nSheetId)
+void OGRXLSXDataSource::BuildLayer(OGRXLSXLayer* poLayer, int nSheetId)
 {
     poCurLayer = poLayer;
 
@@ -1878,6 +1934,12 @@ OGRErr OGRXLSXDataSource::SyncToDisk()
                     "Cannot delete %s", pszName);
             return OGRERR_FAILURE;
         }
+    }
+
+    /* Cause all layers to be initialized */
+    for(int i = 0; i<nLayers; i++)
+    {
+        ((OGRXLSXLayer*)papoLayers[i])->GetLayerDefn();
     }
 
     /* Maintain new ZIP files opened */

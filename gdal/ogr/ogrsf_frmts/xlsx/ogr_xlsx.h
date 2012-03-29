@@ -52,6 +52,7 @@ class OGRXLSXLayer : public OGRMemLayer
     int                nSheetId;
     void               Init();
     int                bUpdated;
+    int                bHasHeaderLine;
 
     public:
         OGRXLSXLayer( OGRXLSXDataSource* poDSIn,
@@ -62,6 +63,9 @@ class OGRXLSXLayer : public OGRMemLayer
     int                 HasBeenUpdated() { return bUpdated; }
     void                SetUpdated(int bUpdatedIn = TRUE);
 
+    int                 GetHasHeaderLine() { return bHasHeaderLine; }
+    void                SetHasHeaderLine(int bIn) { bHasHeaderLine = bIn; }
+
     const char         *GetName() { return OGRMemLayer::GetLayerDefn()->GetName(); };
     OGRwkbGeometryType  GetGeomType() { return wkbNone; }
     virtual OGRSpatialReference *GetSpatialRef() { return NULL; }
@@ -69,23 +73,17 @@ class OGRXLSXLayer : public OGRMemLayer
     void                ResetReading()
     { Init(); OGRMemLayer::ResetReading(); }
 
-    OGRFeature *        GetNextFeature()
-    { Init(); return OGRMemLayer::GetNextFeature(); }
+    /* For external usage. Mess with FID */
+    virtual OGRFeature *        GetNextFeature();
+    virtual OGRFeature         *GetFeature( long nFeatureId );
+    virtual OGRErr              SetFeature( OGRFeature *poFeature );
+    virtual OGRErr              DeleteFeature( long nFID );
 
     virtual OGRErr      SetNextByIndex( long nIndex )
     { Init(); return OGRMemLayer::SetNextByIndex(nIndex); }
 
-    OGRFeature         *GetFeature( long nFeatureId )
-    { Init(); return OGRMemLayer::GetFeature(nFeatureId); }
-
-    OGRErr              SetFeature( OGRFeature *poFeature )
-    { Init(); SetUpdated(); return OGRMemLayer::SetFeature(poFeature); }
-
     OGRErr              CreateFeature( OGRFeature *poFeature )
     { Init(); SetUpdated(); return OGRMemLayer::CreateFeature(poFeature); }
-
-    virtual OGRErr      DeleteFeature( long nFID )
-    { Init(); SetUpdated(); return OGRMemLayer::DeleteFeature(nFID); }
 
     OGRFeatureDefn *    GetLayerDefn()
     { Init(); return OGRMemLayer::GetLayerDefn(); }
@@ -163,7 +161,7 @@ class OGRXLSXDataSource : public OGRDataSource
     int                 nCurLine;
     int                 nCurCol;
 
-    OGRLayer           *poCurLayer;
+    OGRXLSXLayer       *poCurLayer;
 
     int                 nStackDepth;
     int                 nDepth;
@@ -237,7 +235,7 @@ class OGRXLSXDataSource : public OGRDataSource
     void                startElementStylesCbk(const char *pszName, const char **ppszAttr);
     void                endElementStylesCbk(const char *pszName);
 
-    void                BuildLayer(OGRLayer* poLayer, int nSheetId);
+    void                BuildLayer(OGRXLSXLayer* poLayer, int nSheetId);
 
     int                 GetUpdatable() { return bUpdatable; }
     void                SetUpdated() { bUpdated = TRUE; }

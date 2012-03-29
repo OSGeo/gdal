@@ -31,6 +31,7 @@
 import os
 import sys
 import string
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -265,14 +266,59 @@ def ogr_xlsx_6():
 
     return 'success'
 
-gdaltest_list = [ 
+###############################################################################
+# Test update support
+
+def ogr_xlsx_7():
+
+    drv = ogr.GetDriverByName('XLSX')
+    if drv is None:
+        return 'skip'
+
+    try:
+        os.unlink('tmp/ogr_xlsx_7.xlsx')
+    except:
+        pass
+    shutil.copy('data/test.xlsx', 'tmp/ogr_xlsx_7.xlsx')
+
+    ds = ogr.Open('tmp/ogr_xlsx_7.xlsx', update = 1)
+    lyr = ds.GetLayerByName('Feuille7')
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != 2:
+        gdaltest.post_reason('did not get expected FID')
+        feat.DumpReadabe()
+        return 'fail'
+    feat.SetField(0, 'modified_value')
+    lyr.SetFeature(feat)
+    feat = None
+    ds = None
+
+    ds = ogr.Open('tmp/ogr_xlsx_7.xlsx')
+    lyr = ds.GetLayerByName('Feuille7')
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != 2:
+        gdaltest.post_reason('did not get expected FID')
+        feat.DumpReadabe()
+        return 'fail'
+    if feat.GetField(0) != 'modified_value':
+        gdaltest.post_reason('did not get expected value')
+        feat.DumpReadabe()
+        return 'fail'
+    feat = None
+    ds = None
+
+    os.unlink('tmp/ogr_xlsx_7.xlsx')
+
+    return 'success'
+
+gdaltest_list = [
     ogr_xlsx_1,
     ogr_xlsx_2,
     ogr_xlsx_3,
     ogr_xlsx_4,
     ogr_xlsx_5,
-    ogr_xlsx_6
-    
+    ogr_xlsx_6,
+    ogr_xlsx_7
 ]
 
 if __name__ == '__main__':
