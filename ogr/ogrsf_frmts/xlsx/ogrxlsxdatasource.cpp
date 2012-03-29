@@ -574,6 +574,7 @@ void OGRXLSXDataSource::endElementTable(const char *pszName)
                 SetField(poFeature, i, apoFirstLineValues[i].c_str(),
                          apoFirstLineTypes[i].c_str());
             }
+            poFeature->SetFID(1);
             poCurLayer->CreateFeature(poFeature);
             delete poFeature;
         }
@@ -715,6 +716,7 @@ void OGRXLSXDataSource::endElementRow(const char *pszName)
                     SetField(poFeature, i, apoFirstLineValues[i].c_str(),
                              apoFirstLineTypes[i].c_str());
                 }
+                poFeature->SetFID(1);
                 poCurLayer->CreateFeature(poFeature);
                 delete poFeature;
             }
@@ -787,6 +789,7 @@ void OGRXLSXDataSource::endElementRow(const char *pszName)
                 SetField(poFeature, i, apoCurLineValues[i].c_str(),
                          apoCurLineTypes[i].c_str());
             }
+            poFeature->SetFID(nCurLine + 1);
             poCurLayer->CreateFeature(poFeature);
             delete poFeature;
        }
