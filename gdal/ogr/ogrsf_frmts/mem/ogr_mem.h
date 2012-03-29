@@ -53,6 +53,8 @@ class OGRMemLayer : public OGRLayer
     int                 bUpdatable;
     int                 bAdvertizeUTF8;
 
+    int                 bHasHoles;
+
   public:
                         OGRMemLayer( const char * pszName,
                                      OGRSpatialReference *poSRS,
