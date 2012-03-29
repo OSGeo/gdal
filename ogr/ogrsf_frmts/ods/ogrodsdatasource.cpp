@@ -589,6 +589,7 @@ void OGRODSDataSource::endElementTable(const char *pszName)
             {
                 SetField(poFeature, i, apoFirstLineValues[i].c_str());
             }
+            poFeature->SetFID(1);
             poCurLayer->CreateFeature(poFeature);
             delete poFeature;
         }
@@ -725,6 +726,7 @@ void OGRODSDataSource::endElementRow(const char *pszName)
             for(i = 0; i < (size_t)nEmptyRowsAccumulated; i++)
             {
                 poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
+                poFeature->SetFID(nCurLine + i + 1);
                 poCurLayer->CreateFeature(poFeature);
                 delete poFeature;
             }
@@ -788,6 +790,7 @@ void OGRODSDataSource::endElementRow(const char *pszName)
                 {
                     SetField(poFeature, i, apoFirstLineValues[i].c_str());
                 }
+                poFeature->SetFID(1);
                 poCurLayer->CreateFeature(poFeature);
                 delete poFeature;
             }
@@ -861,6 +864,7 @@ void OGRODSDataSource::endElementRow(const char *pszName)
                 {
                     SetField(poFeature, i, apoCurLineValues[i].c_str());
                 }
+                poFeature->SetFID(nCurLine + j + 1);
                 poCurLayer->CreateFeature(poFeature);
                 delete poFeature;
             }
