@@ -48,7 +48,8 @@ class OGRODSDataSource;
 class OGRODSLayer : public OGRMemLayer
 {
     OGRODSDataSource* poDS;
-    int                bUpdated;
+    int               bUpdated;
+    int               bHasHeaderLine;
 
     public:
         OGRODSLayer( OGRODSDataSource* poDSIn,
@@ -57,18 +58,25 @@ class OGRODSLayer : public OGRMemLayer
 
     void                SetUpdated(int bUpdatedIn = TRUE);
 
+    int                 GetHasHeaderLine() { return bHasHeaderLine; }
+    void                SetHasHeaderLine(int bIn) { bHasHeaderLine = bIn; }
+
     const char         *GetName() { return OGRMemLayer::GetLayerDefn()->GetName(); };
     OGRwkbGeometryType  GetGeomType() { return wkbNone; }
     virtual OGRSpatialReference *GetSpatialRef() { return NULL; }
 
-    OGRErr              SetFeature( OGRFeature *poFeature )
-    { SetUpdated(); return OGRMemLayer::SetFeature(poFeature); }
+    /* For external usage. Mess with FID */
+    virtual OGRFeature *        GetNextFeature();
+    virtual OGRFeature         *GetFeature( long nFeatureId );
+    virtual OGRErr              SetFeature( OGRFeature *poFeature );
+    virtual OGRErr              DeleteFeature( long nFID );
+
+    /* For internal usage, for cell resolver */
+    OGRFeature *        GetNextFeatureWithoutFIDHack() { return OGRMemLayer::GetNextFeature(); }
+    OGRErr              SetFeatureWithoutFIDHack( OGRFeature *poFeature ) { SetUpdated(); return OGRMemLayer::SetFeature(poFeature); }
 
     OGRErr              CreateFeature( OGRFeature *poFeature )
     { SetUpdated(); return OGRMemLayer::CreateFeature(poFeature); }
-
-    virtual OGRErr      DeleteFeature( long nFID )
-    { SetUpdated(); return OGRMemLayer::DeleteFeature(nFID); }
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE )
@@ -140,7 +148,7 @@ class OGRODSDataSource : public OGRDataSource
     int                 nCellsRepeated;
     int                 bEndTableParsing;
 
-    OGRLayer           *poCurLayer;
+    OGRODSLayer        *poCurLayer;
 
     int                 nStackDepth;
     int                 nDepth;
