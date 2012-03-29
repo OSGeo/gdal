@@ -44,11 +44,11 @@ CPL_CVSID("$Id$");
 class ODSCellEvaluator : public IODSCellEvaluator
 {
 private:
-        OGRMemLayer* poLayer;
+        OGRODSLayer* poLayer;
         std::set<std::pair<int,int> > oVisisitedCells;
 
 public:
-        ODSCellEvaluator(OGRMemLayer* poLayerIn) : poLayer(poLayerIn) {}
+        ODSCellEvaluator(OGRODSLayer* poLayerIn) : poLayer(poLayerIn) {}
 
         int EvaluateRange(int nRow1, int nCol1, int nRow2, int nCol2,
                           std::vector<ods_formula_node>& aoOutValues);
@@ -67,6 +67,7 @@ OGRODSLayer::OGRODSLayer( OGRODSDataSource* poDSIn,
 {
     poDS = poDSIn;
     bUpdated = bUpdatedIn;
+    bHasHeaderLine = FALSE;
 }
 
 /************************************************************************/
@@ -93,6 +94,58 @@ void OGRODSLayer::SetUpdated(int bUpdatedIn)
 OGRErr OGRODSLayer::SyncToDisk()
 {
     return poDS->SyncToDisk();
+}
+
+/************************************************************************/
+/*                          GetNextFeature()                            */
+/************************************************************************/
+
+OGRFeature* OGRODSLayer::GetNextFeature()
+{
+    OGRFeature* poFeature = OGRMemLayer::GetNextFeature();
+    if (poFeature)
+        poFeature->SetFID(poFeature->GetFID() + 1 + bHasHeaderLine);
+    return poFeature;
+}
+
+/************************************************************************/
+/*                           GetFeature()                               */
+/************************************************************************/
+
+OGRFeature* OGRODSLayer::GetFeature( long nFeatureId )
+{
+    OGRFeature* poFeature = OGRMemLayer::GetFeature(nFeatureId - (1 + bHasHeaderLine));
+    if (poFeature)
+        poFeature->SetFID(nFeatureId);
+    return poFeature;
+}
+
+/************************************************************************/
+/*                           SetFeature()                               */
+/************************************************************************/
+
+OGRErr OGRODSLayer::SetFeature( OGRFeature *poFeature )
+{
+    if (poFeature == NULL)
+        return OGRMemLayer::SetFeature(poFeature);
+
+    long nFID = poFeature->GetFID();
+    if (nFID != OGRNullFID)
+        poFeature->SetFID(nFID - (1 + bHasHeaderLine));
+    SetUpdated(); 
+    OGRErr eErr = OGRMemLayer::SetFeature(poFeature);
+    poFeature->SetFID(nFID);
+    return eErr;
+}
+
+/************************************************************************/
+/*                          DeleteFeature()                             */
+/************************************************************************/
+
+OGRErr OGRODSLayer::DeleteFeature( long nFID )
+{
+    SetUpdated();
+    return OGRMemLayer::DeleteFeature(nFID - (1 + bHasHeaderLine));
 }
 
 /************************************************************************/
@@ -589,7 +642,6 @@ void OGRODSDataSource::endElementTable(const char *pszName)
             {
                 SetField(poFeature, i, apoFirstLineValues[i].c_str());
             }
-            poFeature->SetFID(1);
             poCurLayer->CreateFeature(poFeature);
             delete poFeature;
         }
@@ -614,7 +666,7 @@ void OGRODSDataSource::endElementTable(const char *pszName)
                             const char* pszVal = poFeature->GetFieldAsString(i);
                             if (strncmp(pszVal, "of:=", 4) == 0)
                             {
-                                ODSCellEvaluator oCellEvaluator((OGRMemLayer*)poCurLayer);
+                                ODSCellEvaluator oCellEvaluator(poCurLayer);
                                 oCellEvaluator.Evaluate(nRow, i);
                             }
                         }
@@ -726,7 +778,6 @@ void OGRODSDataSource::endElementRow(const char *pszName)
             for(i = 0; i < (size_t)nEmptyRowsAccumulated; i++)
             {
                 poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
-                poFeature->SetFID(nCurLine + i + 1);
                 poCurLayer->CreateFeature(poFeature);
                 delete poFeature;
             }
@@ -754,6 +805,8 @@ void OGRODSDataSource::endElementRow(const char *pszName)
         if (nCurLine == 1)
         {
             DetectHeaderLine();
+
+            poCurLayer->SetHasHeaderLine(bFirstLineIsHeaders);
 
             if (bFirstLineIsHeaders)
             {
@@ -790,7 +843,6 @@ void OGRODSDataSource::endElementRow(const char *pszName)
                 {
                     SetField(poFeature, i, apoFirstLineValues[i].c_str());
                 }
-                poFeature->SetFID(1);
                 poCurLayer->CreateFeature(poFeature);
                 delete poFeature;
             }
@@ -864,7 +916,6 @@ void OGRODSDataSource::endElementRow(const char *pszName)
                 {
                     SetField(poFeature, i, apoCurLineValues[i].c_str());
                 }
-                poFeature->SetFID(nCurLine + j + 1);
                 poCurLayer->CreateFeature(poFeature);
                 delete poFeature;
             }
@@ -1685,7 +1736,7 @@ int ODSCellEvaluator::EvaluateRange(int nRow1, int nCol1, int nRow2, int nCol2,
         return FALSE;
     }
 
-    int nCurFID = poLayer->GetNextReadFID();
+    int nIndexBackup = poLayer->GetNextReadFID();
 
     if (poLayer->SetNextByIndex(nRow1) != OGRERR_NONE)
     {
@@ -1696,13 +1747,13 @@ int ODSCellEvaluator::EvaluateRange(int nRow1, int nCol1, int nRow2, int nCol2,
 
     for(int nRow = nRow1; nRow <= nRow2; nRow ++)
     {
-        OGRFeature* poFeature = poLayer->GetNextFeature();
+        OGRFeature* poFeature = poLayer->GetNextFeatureWithoutFIDHack();
 
         if (poFeature == NULL)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Cannot fetch feature for for row = %d", nRow);
-            poLayer->SetNextByIndex(nCurFID);
+            poLayer->SetNextByIndex(nIndexBackup);
             return FALSE;
         }
 
@@ -1733,12 +1784,12 @@ int ODSCellEvaluator::EvaluateRange(int nRow1, int nCol1, int nRow2, int nCol2,
                         /*CPLError(CE_Warning, CPLE_AppDefined,
                                 "Formula at cell (%d, %d) has not yet been resolved",
                                 nRow + 1, nCol + 1);*/
-                        poLayer->SetNextByIndex(nCurFID);
+                        poLayer->SetNextByIndex(nIndexBackup);
                         return FALSE;
                     }
 
                     poLayer->SetNextByIndex(nRow);
-                    poFeature = poLayer->GetNextFeature();
+                    poFeature = poLayer->GetNextFeatureWithoutFIDHack();
 
                     if (!poFeature->IsFieldSet(nCol))
                     {
@@ -1781,7 +1832,7 @@ int ODSCellEvaluator::EvaluateRange(int nRow1, int nCol1, int nRow2, int nCol2,
         delete poFeature;
     }
 
-    poLayer->SetNextByIndex(nCurFID);
+    poLayer->SetNextByIndex(nIndexBackup);
 
     return TRUE;
 }
@@ -1808,7 +1859,7 @@ int ODSCellEvaluator::Evaluate(int nRow, int nCol)
         return FALSE;
     }
 
-    OGRFeature* poFeature = poLayer->GetNextFeature();
+    OGRFeature* poFeature = poLayer->GetNextFeatureWithoutFIDHack();
     if (poFeature->IsFieldSet(nCol) &&
         poFeature->GetFieldDefnRef(nCol)->GetType() == OFTString)
     {
@@ -1823,27 +1874,27 @@ int ODSCellEvaluator::Evaluate(int nRow, int nCol)
                 /* Refetch feature in case Evaluate() modified another cell in this row */
                 delete poFeature;
                 poLayer->SetNextByIndex(nRow);
-                poFeature = poLayer->GetNextFeature();
+                poFeature = poLayer->GetNextFeatureWithoutFIDHack();
 
                 if (expr_out->field_type == ODS_FIELD_TYPE_EMPTY)
                 {
                     poFeature->UnsetField(nCol);
-                    poLayer->SetFeature(poFeature);
+                    poLayer->SetFeatureWithoutFIDHack(poFeature);
                 }
                 else if (expr_out->field_type == ODS_FIELD_TYPE_INTEGER)
                 {
                     poFeature->SetField(nCol, expr_out->int_value);
-                    poLayer->SetFeature(poFeature);
+                    poLayer->SetFeatureWithoutFIDHack(poFeature);
                 }
                 else if (expr_out->field_type == ODS_FIELD_TYPE_FLOAT)
                 {
                     poFeature->SetField(nCol, expr_out->float_value);
-                    poLayer->SetFeature(poFeature);
+                    poLayer->SetFeatureWithoutFIDHack(poFeature);
                 }
                 else if (expr_out->field_type == ODS_FIELD_TYPE_STRING)
                 {
                     poFeature->SetField(nCol, expr_out->string_value);
-                    poLayer->SetFeature(poFeature);
+                    poLayer->SetFeatureWithoutFIDHack(poFeature);
                 }
             }
             delete expr_out;
