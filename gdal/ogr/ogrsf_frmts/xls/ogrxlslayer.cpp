@@ -354,7 +354,8 @@ OGRFeature *OGRXLSLayer::GetNextRawFeature()
         }
     }
 
-    poFeature->SetFID(nNextFID ++);
+    poFeature->SetFID(nNextFID + 1);
+    nNextFID ++;
 
     return poFeature;
 }
