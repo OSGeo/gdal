@@ -59,6 +59,7 @@ OGRMemLayer::OGRMemLayer( const char * pszName, OGRSpatialReference *poSRSIn,
 
     bUpdatable = TRUE;
     bAdvertizeUTF8 = FALSE;
+    bHasHoles = FALSE;
 }
 
 /************************************************************************/
@@ -133,7 +134,7 @@ OGRFeature *OGRMemLayer::GetNextFeature()
 OGRErr OGRMemLayer::SetNextByIndex( long nIndex )
 
 {
-    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
+    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL || bHasHoles )
         return OGRLayer::SetNextByIndex( nIndex );
         
     if (nIndex < 0 || nIndex >= nMaxFeatureCount)
@@ -227,6 +228,10 @@ OGRErr OGRMemLayer::CreateFeature( OGRFeature *poFeature )
     if (!bUpdatable)
         return OGRERR_FAILURE;
 
+    if( poFeature->GetFID() != OGRNullFID &&
+        poFeature->GetFID() != iNextCreateFID )
+        bHasHoles = TRUE;
+
     if( poFeature->GetFID() != OGRNullFID 
         && poFeature->GetFID() >= 0
         && poFeature->GetFID() < nMaxFeatureCount )
@@ -258,6 +263,8 @@ OGRErr OGRMemLayer::DeleteFeature( long nFID )
     }
     else 
     {
+        bHasHoles = TRUE;
+
         delete papoFeatures[nFID];
         papoFeatures[nFID] = NULL;
         nFeatureCount--;
@@ -313,7 +320,7 @@ int OGRMemLayer::TestCapability( const char * pszCap )
         return bUpdatable;
 
     else if( EQUAL(pszCap,OLCFastSetNextByIndex) )
-        return m_poFilterGeom == NULL && m_poAttrQuery == NULL;
+        return m_poFilterGeom == NULL && m_poAttrQuery == NULL && !bHasHoles;
 
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
         return bAdvertizeUTF8;
