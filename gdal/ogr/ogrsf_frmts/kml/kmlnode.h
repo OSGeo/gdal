@@ -37,7 +37,6 @@
 #include <vector>
 
 std::string Nodetype2String(Nodetype const& type);
-bool isNumberDigit(const char cIn);
 
 class KMLNode
 {
