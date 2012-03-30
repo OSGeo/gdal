@@ -62,6 +62,7 @@ std::string Nodetype2String(Nodetype const& type)
         return "Unknown";
 }
 
+static
 bool isNumberDigit(const char cIn)
 {
     return ( cIn == '-' || cIn == '+' || 
@@ -69,38 +70,40 @@ bool isNumberDigit(const char cIn)
              cIn == '.' || cIn == 'e' || cIn == 'E' );
 }
 
+static
 Coordinate* ParseCoordinate(std::string const& text)
 {
-    std::string::size_type pos = 0;
+    int pos = 0;
+    const char* pszStr = text.c_str();
     Coordinate *psTmp = new Coordinate();
 
     // X coordinate
-    while(isNumberDigit(text[pos++]));
-    psTmp->dfLongitude = CPLAtof(text.substr(0, (pos - 1)).c_str());
+    while(isNumberDigit(pszStr[pos++]));
+    psTmp->dfLongitude = CPLAtof(pszStr);
 
     // Y coordinate
-    if(text[pos - 1] != ',')
+    if(pszStr[pos - 1] != ',')
     {
         delete psTmp;
         return NULL;
     }
-    std::string tmp(text.substr(pos, text.length() - pos));
-    pos = 0;
-    while(isNumberDigit(tmp[pos++]));
-    psTmp->dfLatitude = CPLAtof(tmp.substr(0, (pos - 1)).c_str());
-    
+
+    int posBefore = pos;
+    while(isNumberDigit(pszStr[pos++]));
+    psTmp->dfLatitude = CPLAtof(pszStr + posBefore);
+
     // Z coordinate
-    if(tmp[pos - 1] != ',')
+    if(pszStr[pos - 1] != ',')
     {
         psTmp->bHasZ = FALSE;
         psTmp->dfAltitude = 0;
         return psTmp;
     }
-    tmp = tmp.substr(pos, tmp.length() - pos);
-    pos = 0;
-    while(isNumberDigit(tmp[pos++]));
+
+    posBefore = pos;
+    while(isNumberDigit(pszStr[pos++]));
     psTmp->bHasZ = TRUE;
-    psTmp->dfAltitude = CPLAtof(tmp.substr(0, (pos - 1)).c_str());
+    psTmp->dfAltitude = CPLAtof(pszStr + posBefore);
 
     return psTmp;
 }
