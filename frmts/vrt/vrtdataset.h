@@ -171,6 +171,9 @@ class CPL_DLL VRTDataset : public GDALDataset
 
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath);
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
+
+    /* Used by PDF driver for example */
+    GDALDataset*        GetSingleSimpleSource();
  
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
