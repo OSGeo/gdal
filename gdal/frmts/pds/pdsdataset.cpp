@@ -646,7 +646,7 @@ int PDSDataset::ParseImage( CPLString osPrefix )
     int nDetachedOffset = 0;
     int bDetachedOffsetInBytes = FALSE;
 
-    if( osQube[0] == '(' )
+    if( osQube.size() && osQube[0] == '(' )
     {
         osQube = "\"";
         osQube += GetKeywordSub( osImageKeyword, 1 );
@@ -659,7 +659,7 @@ int PDSDataset::ParseImage( CPLString osPrefix )
             bDetachedOffsetInBytes = TRUE;
     }
 
-    if( osQube[0] == '"' )
+    if( osQube.size() && osQube[0] == '"' )
     {
         CPLString osTPath = CPLGetPath(GetDescription());
         CPLString osFilename = osQube;
