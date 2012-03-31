@@ -1298,10 +1298,13 @@ def pdf_jpeg_direct_copy():
     ds = gdal.Open('tmp/pdf_jpeg_direct_copy.pdf')
     # No XMP at PDF level
     if ds.GetMetadata('xml:XMP') is not None:
+        gdaltest.post_reason('failed')
         return 'fail'
     if ds.RasterXSize != 20:
+        gdaltest.post_reason('failed')
         return 'fail'
     if ds.GetRasterBand(1).Checksum() == 0:
+        gdaltest.post_reason('failed')
         return 'fail'
     ds = None
 
@@ -1314,6 +1317,62 @@ def pdf_jpeg_direct_copy():
     gdal.Unlink('tmp/pdf_jpeg_direct_copy.pdf')
 
     if offset == -1:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test direct copy of source JPEG file within VRT file
+
+def pdf_jpeg_in_vrt_direct_copy():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName('JPEG') is None:
+        return 'skip'
+
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
+  <SRS>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982139006,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","26711"]]</SRS>
+  <GeoTransform>  4.4072000000000000e+05,  6.0000000000000000e+01,  0.0000000000000000e+00,  3.7513200000000000e+06,  0.0000000000000000e+00, -6.0000000000000000e+01</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte_with_xmp.jpg</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="1" />
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_jpeg_in_vrt_direct_copy.pdf', src_ds)
+    ds = None
+    src_ds = None
+
+    ds = gdal.Open('tmp/pdf_jpeg_in_vrt_direct_copy.pdf')
+    # No XMP at PDF level
+    if ds.GetMetadata('xml:XMP') is not None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if ds.RasterXSize != 20:
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if ds.GetRasterBand(1).Checksum() == 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+    ds = None
+
+    # But we can find the original XMP from the JPEG file !
+    f = open('tmp/pdf_jpeg_in_vrt_direct_copy.pdf', 'rb')
+    data = f.read().decode('ISO-8859-1')
+    f.close()
+    offset = data.find('ns.adobe.com')
+
+    gdal.Unlink('tmp/pdf_jpeg_in_vrt_direct_copy.pdf')
+
+    if offset == -1:
+        gdaltest.post_reason('failed')
         return 'fail'
 
     return 'success'
@@ -1358,6 +1417,7 @@ gdaltest_list = [
     pdf_custom_layout,
     pdf_write_ogr,
     pdf_jpeg_direct_copy,
+    pdf_jpeg_in_vrt_direct_copy,
 
     pdf_switch_underlying_lib,
 
