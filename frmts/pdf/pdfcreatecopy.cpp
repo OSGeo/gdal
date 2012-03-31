@@ -38,6 +38,7 @@
 #include "cpl_error.h"
 #include "ogr_spatialref.h"
 #include "ogr_geometry.h"
+#include "vrtdataset.h"
 
 #include "pdfobject.h"
 
@@ -2887,6 +2888,88 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
     GDALDatasetH hMemDS = NULL;
     GByte* pabyMEMDSBuffer = NULL;
 
+    if (eCompressMethod == COMPRESS_DEFAULT)
+    {
+        GDALDataset* poSrcDSToTest = poSrcDS;
+
+        /* Test if we can directly copy original JPEG content */
+        /* if available */
+        if (poSrcDS->GetDriver() != NULL &&
+            poSrcDS->GetDriver() == GDALGetDriverByName("VRT"))
+        {
+            VRTDataset* poVRTDS = (VRTDataset* )poSrcDS;
+            poSrcDSToTest = poVRTDS->GetSingleSimpleSource();
+        }
+
+        if (poSrcDSToTest != NULL &&
+            poSrcDSToTest->GetDriver() != NULL &&
+            poSrcDSToTest->GetDriver() == GDALGetDriverByName("JPEG") &&
+            nXOff == 0 && nYOff == 0 &&
+            nReqXSize == poSrcDSToTest->GetRasterXSize() &&
+            nReqYSize == poSrcDSToTest->GetRasterYSize() &&
+            nJPEGQuality < 0)
+        {
+            VSILFILE* fpSrc = VSIFOpenL(poSrcDSToTest->GetDescription(), "rb");
+            if (fpSrc != NULL)
+            {
+                CPLDebug("PDF", "Copying directly original JPEG file");
+
+                VSIFSeekL(fpSrc, 0, SEEK_END);
+                int nLength = (int)VSIFTellL(fpSrc);
+                VSIFSeekL(fpSrc, 0, SEEK_SET);
+
+                int nImageId = AllocNewObject();
+
+                StartObj(nImageId);
+
+                GDALPDFDictionaryRW oDict;
+                oDict.Add("Length", nLength)
+                     .Add("Type", GDALPDFObjectRW::CreateName("XObject"))
+                     .Add("Filter", GDALPDFObjectRW::CreateName("DCTDecode"))
+                     .Add("Subtype", GDALPDFObjectRW::CreateName("Image"))
+                     .Add("Width", nReqXSize)
+                     .Add("Height", nReqYSize)
+                     .Add("ColorSpace",
+                        (nBands == 1) ?        GDALPDFObjectRW::CreateName("DeviceGray") :
+                                                GDALPDFObjectRW::CreateName("DeviceRGB"))
+                     .Add("BitsPerComponent", 8);
+                VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
+                VSIFPrintfL(fp, "stream\n");
+
+                GByte abyBuffer[1024];
+                for(int i=0;i<nLength;i += 1024)
+                {
+                    int nRead = (int) VSIFReadL(abyBuffer, 1, 1024, fpSrc);
+                    if ((int)VSIFWriteL(abyBuffer, 1, nRead, fp) != nRead)
+                    {
+                        eErr = CE_Failure;
+                        break;
+                    }
+
+                    if( eErr == CE_None && pfnProgress != NULL
+                        && !pfnProgress( (i + nRead) / (double)nLength,
+                                        NULL, pProgressData ) )
+                    {
+                        CPLError( CE_Failure, CPLE_UserInterrupt,
+                                "User terminated CreateCopy()" );
+                        eErr = CE_Failure;
+                        break;
+                    }
+                }
+
+                VSIFPrintfL(fp, "\nendstream\n");
+
+                EndObj();
+
+                VSIFCloseL(fpSrc);
+
+                return eErr == CE_None ? nImageId : 0;
+            }
+        }
+
+        eCompressMethod = COMPRESS_DEFLATE;
+    }
+
     int nMaskId = 0;
     if (nBands == 4)
     {
@@ -3312,7 +3395,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*     Read options.                                                    */
 /* -------------------------------------------------------------------- */
-    PDFCompressMethod eCompressMethod = COMPRESS_DEFLATE;
+    PDFCompressMethod eCompressMethod = COMPRESS_DEFAULT;
     const char* pszCompressMethod = CSLFetchNameValue(papszOptions, "COMPRESS");
     if (pszCompressMethod)
     {
