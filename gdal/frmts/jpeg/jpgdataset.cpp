@@ -290,7 +290,7 @@ void JPGDataset::ReadXMPMetadata()
 /* -------------------------------------------------------------------- */
     GByte abyChunkHeader[2+2+29];
     int nChunkLoc = 2;
-    int bFoundXMP = TRUE;
+    int bFoundXMP = FALSE;
 
     for( ; TRUE; )
     {
