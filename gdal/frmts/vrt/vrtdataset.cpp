@@ -1253,6 +1253,53 @@ int VRTDataset::CheckCompatibleForDatasetIO()
 }
 
 /************************************************************************/
+/*                         GetSingleSimpleSource()                      */
+/*                                                                      */
+/* Returns a non-NULL dataset if the VRT is made of a single source     */
+/* that is a simple source, in its full extent, and with all of its     */
+/* bands. Basically something produced by :                             */
+/*   gdal_translate src dst.vrt -of VRT (-a_srs / -a_ullr)              */
+/************************************************************************/
+
+GDALDataset* VRTDataset::GetSingleSimpleSource()
+{
+    if (!CheckCompatibleForDatasetIO())
+        return NULL;
+
+    VRTSourcedRasterBand* poVRTBand = (VRTSourcedRasterBand* )papoBands[0];
+    VRTSimpleSource* poSource = (VRTSimpleSource* )poVRTBand->papoSources[0];
+    GDALRasterBand* poBand = poSource->GetBand();
+    if (poBand == NULL)
+        return NULL;
+    GDALDataset* poSrcDS = poBand->GetDataset();
+    if (poSrcDS == NULL)
+        return NULL;
+
+    /* Check that it uses the full source dataset */
+    int nReqXOff, nReqYOff, nReqXSize, nReqYSize;
+    int nOutXOff, nOutYOff, nOutXSize, nOutYSize;
+    poSource->GetSrcDstWindow( 0, 0,
+                               poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
+                               poSrcDS->GetRasterXSize(), poSrcDS->GetRasterYSize(),
+                               &nReqXOff, &nReqYOff,
+                               &nReqXSize, &nReqYSize,
+                               &nOutXOff, &nOutYOff,
+                               &nOutXSize, &nOutYSize );
+
+    if (nReqXOff != 0 || nReqYOff != 0 ||
+        nReqXSize != poSrcDS->GetRasterXSize() ||
+        nReqYSize != poSrcDS->GetRasterYSize())
+        return NULL;
+
+    if (nOutXOff != 0 || nOutYOff != 0 ||
+        nOutXSize != poSrcDS->GetRasterXSize() ||
+        nOutYSize != poSrcDS->GetRasterYSize())
+        return NULL;
+
+    return poSrcDS;
+}
+
+/************************************************************************/
 /*                              IRasterIO()                             */
 /************************************************************************/
 
