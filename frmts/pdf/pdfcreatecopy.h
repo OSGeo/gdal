@@ -43,7 +43,8 @@ typedef enum
     COMPRESS_NONE,
     COMPRESS_DEFLATE,
     COMPRESS_JPEG,
-    COMPRESS_JPEG2000
+    COMPRESS_JPEG2000,
+    COMPRESS_DEFAULT
 } PDFCompressMethod;
 
 typedef struct
