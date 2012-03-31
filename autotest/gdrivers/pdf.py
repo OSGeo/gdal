@@ -1279,6 +1279,45 @@ def pdf_write_ogr():
 
     return 'success'
 
+###############################################################################
+# Test direct copy of source JPEG file
+
+def pdf_jpeg_direct_copy():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName('JPEG') is None:
+        return 'skip'
+
+    src_ds = gdal.Open('data/byte_with_xmp.jpg')
+    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_jpeg_direct_copy.pdf', src_ds, options = ['XMP=NO'])
+    ds = None
+    src_ds = None
+
+    ds = gdal.Open('tmp/pdf_jpeg_direct_copy.pdf')
+    # No XMP at PDF level
+    if ds.GetMetadata('xml:XMP') is not None:
+        return 'fail'
+    if ds.RasterXSize != 20:
+        return 'fail'
+    if ds.GetRasterBand(1).Checksum() == 0:
+        return 'fail'
+    ds = None
+
+    # But we can find the original XMP from the JPEG file !
+    f = open('tmp/pdf_jpeg_direct_copy.pdf', 'rb')
+    data = f.read().decode('ISO-8859-1')
+    f.close()
+    offset = data.find('ns.adobe.com')
+
+    gdal.Unlink('tmp/pdf_jpeg_direct_copy.pdf')
+
+    if offset == -1:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     pdf_init,
     pdf_online_1,
@@ -1318,6 +1357,7 @@ gdaltest_list = [
     pdf_layers,
     pdf_custom_layout,
     pdf_write_ogr,
+    pdf_jpeg_direct_copy,
 
     pdf_switch_underlying_lib,
 
