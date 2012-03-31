@@ -1163,6 +1163,7 @@ png_init_read_transformations(png_structp png_ptr)
 
 #ifdef PNG_READ_SHIFT_SUPPORTED
    if ((png_ptr->transformations & PNG_SHIFT) &&
+      !(png_ptr->transformations & PNG_EXPAND) &&
       (color_type == PNG_COLOR_TYPE_PALETTE))
    {
       png_uint_16 i;
@@ -1183,6 +1184,8 @@ png_init_read_transformations(png_structp png_ptr)
          png_ptr->palette[i].green >>= sg;
          png_ptr->palette[i].blue >>= sb;
       }
+
+      png_ptr->transformations &= ~PNG_SHIFT;
    }
 #endif  /* PNG_READ_SHIFT_SUPPORTED */
  }
