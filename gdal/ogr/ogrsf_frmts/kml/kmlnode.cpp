@@ -78,8 +78,8 @@ Coordinate* ParseCoordinate(std::string const& text)
     Coordinate *psTmp = new Coordinate();
 
     // X coordinate
-    while(isNumberDigit(pszStr[pos++]));
     psTmp->dfLongitude = CPLAtof(pszStr);
+    while(isNumberDigit(pszStr[pos++]));
 
     // Y coordinate
     if(pszStr[pos - 1] != ',')
@@ -88,9 +88,8 @@ Coordinate* ParseCoordinate(std::string const& text)
         return NULL;
     }
 
-    int posBefore = pos;
+    psTmp->dfLatitude = CPLAtof(pszStr + pos);
     while(isNumberDigit(pszStr[pos++]));
-    psTmp->dfLatitude = CPLAtof(pszStr + posBefore);
 
     // Z coordinate
     if(pszStr[pos - 1] != ',')
@@ -100,10 +99,8 @@ Coordinate* ParseCoordinate(std::string const& text)
         return psTmp;
     }
 
-    posBefore = pos;
-    while(isNumberDigit(pszStr[pos++]));
     psTmp->bHasZ = TRUE;
-    psTmp->dfAltitude = CPLAtof(pszStr + posBefore);
+    psTmp->dfAltitude = CPLAtof(pszStr + pos);
 
     return psTmp;
 }
