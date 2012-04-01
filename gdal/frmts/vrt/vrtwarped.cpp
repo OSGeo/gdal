@@ -381,14 +381,25 @@ CPLErr VRTWarpedDataset::Initialize( void *psWO )
 
     poWarper = new GDALWarpOperation();
 
+    GDALWarpOptions* psWO_Dup = GDALCloneWarpOptions((GDALWarpOptions *) psWO);
+
+    /* Avoid errors when adding an alpha band, but source dataset has */
+    /* no alpha band (#4571) */
+    if (CSLFetchNameValue( psWO_Dup->papszWarpOptions, "INIT_DEST" ) == NULL)
+        psWO_Dup->papszWarpOptions = CSLSetNameValue(psWO_Dup->papszWarpOptions, "INIT_DEST", "0");
+
     // The act of initializing this warped dataset with this warp options
     // will result in our assuming ownership of a reference to the
     // hSrcDS.
 
     if( ((GDALWarpOptions *) psWO)->hSrcDS != NULL )
-        GDALReferenceDataset( ((GDALWarpOptions *) psWO)->hSrcDS );
+        GDALReferenceDataset( psWO_Dup->hSrcDS );
 
-    return poWarper->Initialize( (GDALWarpOptions *) psWO );
+    CPLErr eErr = poWarper->Initialize( psWO_Dup );
+
+    GDALDestroyWarpOptions(psWO_Dup);
+
+    return eErr;
 }
 
 /************************************************************************/
@@ -857,6 +868,11 @@ CPLErr VRTWarpedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
     psWO = GDALDeserializeWarpOptions( psOptionsTree );
     if( psWO == NULL )
         return CE_Failure;
+
+    /* Avoid errors when adding an alpha band, but source dataset has */
+    /* no alpha band (#4571) */
+    if (CSLFetchNameValue( psWO->papszWarpOptions, "INIT_DEST" ) == NULL)
+        psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions, "INIT_DEST", "0");
 
     this->eAccess = GA_Update;
 

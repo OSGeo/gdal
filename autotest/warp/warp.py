@@ -858,6 +858,26 @@ def warp_27():
     return 'success'
 
 ###############################################################################
+# Test reading a VRT with a destination alpha band, but no explicit
+# INIT_DEST setting
+
+def warp_28():
+
+    ds = gdal.Open( 'data/utm_alpha_noinit.vrt' )
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 52243:
+        gdaltest.post_reason('bad checksum')
+        print(cs)
+        return 'fail'
+    cs = ds.GetRasterBand(2).Checksum()
+    if cs != 15171:
+        gdaltest.post_reason('bad checksum')
+        print(cs)
+        return 'fail'
+    ds = None
+
+    return 'success'
+###############################################################################
 
 gdaltest_list = [
     warp_1,
@@ -892,6 +912,7 @@ gdaltest_list = [
     warp_25,
     warp_26,
     warp_27,
+    warp_28,
     ]
 
 if __name__ == '__main__':
