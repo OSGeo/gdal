@@ -428,6 +428,28 @@ def pdf_rgba_default_compression():
 def pdf_jpeg_compression_rgba():
     return pdf_jpeg_compression('../../gcore/data/stefan_full_rgba.tif')
 
+###############################################################################
+# Test PREDICTOR=2
+
+def pdf_predictor_2():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'PDF', 'utm.tif', 1, None, options = ['PREDICTOR=2'] )
+    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = True)
+
+    return ret
+
+def pdf_predictor_2_rgb():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'PDF', 'rgbsmall.tif', 1, None, options = ['PREDICTOR=2'] )
+    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = True)
+
+    return ret
 
 ###############################################################################
 # Test tiling
@@ -1406,6 +1428,8 @@ gdaltest_list = [
     pdf_jpeg_compression_rgb,
     pdf_rgba_default_compression,
     pdf_jpeg_compression_rgba,
+    pdf_predictor_2,
+    pdf_predictor_2_rgb,
     pdf_tiled,
     pdf_tiled_128,
     pdf_color_table,

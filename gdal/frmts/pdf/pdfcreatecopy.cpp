@@ -3050,7 +3050,7 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
     {
         oDict.Add("Filter", GDALPDFObjectRW::CreateName("FlateDecode"));
         if( nPredictor == 2 )
-            oDict.Add("Filter", &((new GDALPDFDictionaryRW())
+            oDict.Add("DecodeParms", &((new GDALPDFDictionaryRW())
                                   ->Add("Predictor", 2)
                                    .Add("Colors", nBands)
                                    .Add("Columns", nReqXSize)));
@@ -3486,6 +3486,9 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     int nPredictor = 1;
     if (pszPredictor)
     {
+        if (eCompressMethod == COMPRESS_DEFAULT)
+            eCompressMethod = COMPRESS_DEFLATE;
+
         if (eCompressMethod != COMPRESS_DEFLATE)
         {
             CPLError(CE_Warning, CPLE_NotSupported,
