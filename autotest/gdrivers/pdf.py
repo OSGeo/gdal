@@ -321,18 +321,26 @@ def pdf_jpeg_compression(filename = 'byte.tif'):
 
     return ret
 
+def pdf_get_J2KDriver(drv_name):
+    drv = gdal.GetDriverByName(drv_name)
+    if drv is None:
+        return None
+    if drv_name == 'JP2ECW' and drv.GetMetadataItem('DMD_CREATIONDATATYPES') is None:
+        return None
+    return drv
+
 def pdf_jpx_compression(filename, drv_name = None):
 
     if gdaltest.pdf_drv is None:
         return 'skip'
 
     if drv_name is None:
-        if gdal.GetDriverByName('JP2KAK') is None and \
-           gdal.GetDriverByName('JP2ECW') is None and \
-           gdal.GetDriverByName('JP2OpenJpeg') is None and \
-           gdal.GetDriverByName('JPEG2000') is None :
+        if pdf_get_J2KDriver('JP2KAK') is None and \
+           pdf_get_J2KDriver('JP2ECW') is None and \
+           pdf_get_J2KDriver('JP2OpenJpeg') is None and \
+           pdf_get_J2KDriver('JPEG2000') is None :
             return 'skip'
-    elif gdal.GetDriverByName(drv_name) is None:
+    elif pdf_get_J2KDriver(drv_name) is None:
         return 'skip'
 
     if drv_name is None:
