@@ -393,6 +393,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_SNODAS();
 #endif
 
+#ifdef FRMT_arg
+    GDALRegister_ARG();
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Our test for the following is weak or expensive so we try       */
 /*      them last.                                                      */
