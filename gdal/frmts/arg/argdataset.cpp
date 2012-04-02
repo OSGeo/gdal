@@ -752,7 +752,7 @@ GDALDataset * ARGDataset::CreateCopy( const char * pszFilename,
 
     poBand->GetBlockSize(&nXBlockSize, &nYBlockSize);
 
-    pabyData = (GByte *) CPLMalloc(nXBlockSize * nYBlockSize);
+    pabyData = (GByte *) CPLMalloc(nXBlockSize * nYBlockSize * nPixelOffset);
 
     // convert any blocks into scanlines
     for (int nYBlock = 0; nYBlock * nYBlockSize < nYSize; nYBlock++) {
