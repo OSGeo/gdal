@@ -38,6 +38,23 @@ CPL_CVSID("$Id$");
 
 #define MAX_FILENAME_LEN 4096
 
+#ifndef NAN
+#  ifdef HUGE_VAL
+#    define NAN (HUGE_VAL * 0.0)
+#  else
+
+static float CPLNaN(void)
+{
+    float fNan;
+    int nNan = 0x7FC00000;
+    memcpy(&fNan, &nNan, 4);
+    return fNan;
+}
+
+#    define NAN CPLNan()
+#  endif
+#endif
+
 /************************************************************************/
 /* ==================================================================== */
 /*				ARGDataset				                                */

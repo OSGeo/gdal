@@ -1,7 +1,7 @@
 
 OBJ	=	argdataset.obj
 
-EXTRAFLAGS  =   -I..\..\ogr\ogrsf_frmts\geojson
+EXTRAFLAGS  =   -I..\..\ogr\ogrsf_frmts\geojson -I..\raw
 
 GDAL_ROOT	=	..\..
 
