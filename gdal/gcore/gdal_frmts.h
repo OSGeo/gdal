@@ -172,6 +172,7 @@ void CPL_DLL GDALRegister_WEBP(void);
 void CPL_DLL GDALRegister_ZMap(void);
 void CPL_DLL GDALRegister_NGSGEOID(void);
 void CPL_DLL GDALRegister_MBTiles(void);
+void CPL_DLL GDALRegister_ARG(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
