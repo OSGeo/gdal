@@ -97,7 +97,10 @@ class OGRPDFDataSource : public OGRDataSource
     int                 UnstackTokens(const CPLString& osToken,
                                       std::stack<CPLString>& osTokenStack,
                                       double* adfCoords);
-    void                ParseContent(const char* pszContent, int nMCID, GDALPDFObject* poResources);
+    void                ParseContent(const char* pszContent,
+                                     int nMCID,
+                                     GDALPDFObject* poResources,
+                                     int bInitBDCStack);
 
   public:
                         OGRPDFDataSource();
