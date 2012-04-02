@@ -256,22 +256,22 @@ void OGRPDFDataSource::InitMapOperators()
     oMapOperators["B"] = 0;
     oMapOperators["b*"] = 0;
     oMapOperators["B*"] = 0;
-    // BDC
+    oMapOperators["BDC"] = 2;
     // BI
     // BMC
     // BT
     // BX
     oMapOperators["c"] = 6;
     oMapOperators["cm"] = 6;
-    // CS
-    // cs
+    oMapOperators["CS"] = 1;
+    oMapOperators["cs"] = 1;
     oMapOperators["d"] = 1; /* we have ignored the first arg */
     // d0
     // d1
     oMapOperators["Do"] = 1;
     // DP
     // EI
-    // EMC
+    oMapOperators["EMC"] = 0;
     // ET
     // EX
     oMapOperators["f"] = 0;
@@ -281,7 +281,7 @@ void OGRPDFDataSource::InitMapOperators()
     oMapOperators["g"] = 1;
     oMapOperators["gs"] = 1;
     oMapOperators["h"] = 0;
-    // i
+    oMapOperators["i"] = 1;
     // ID
     oMapOperators["j"] = 1;
     oMapOperators["J"] = 1;
@@ -302,8 +302,8 @@ void OGRPDFDataSource::InitMapOperators()
     oMapOperators["S"] = 0;
     // SC
     // sc
-    // SCN
-    // scn
+    oMapOperators["SCN"] = -1;
+    oMapOperators["scn"] = -1;
     // sh
     // T*
     // Tc
@@ -562,7 +562,8 @@ int OGRPDFDataSource::UnstackTokens(const CPLString& osToken,
 
 void OGRPDFDataSource::ParseContent(const char* pszContent,
                                     int nMCID,
-                                    GDALPDFObject* poResources)
+                                    GDALPDFObject* poResources,
+                                    int bInitBDCStack)
 {
     CPLString osToken;
     char ch;
@@ -580,6 +581,12 @@ void OGRPDFDataSource::ParseContent(const char* pszContent,
     int bHasFoundFill = FALSE;
     int bHasMultiPart = FALSE;
     int bHasRe = FALSE;
+
+    if (bInitBDCStack)
+    {
+        osTokenStack.push("dummy");
+        osTokenStack.push("dummy");
+    }
 
     while((ch = *pszContent) != '\0')
     {
@@ -645,7 +652,21 @@ void OGRPDFDataSource::ParseContent(const char* pszContent,
         if (bPushToken && osToken.size())
         {
             if (osToken == "BDC")
+            {
+                int nArgs = oMapOperators[osToken];
+                for(int i=0;i<nArgs;i++)
+                {
+                    if (osTokenStack.empty())
+                    {
+                        CPLDebug("PDF",
+                                    "not enough arguments for %s",
+                                    osToken.c_str());
+                        return;
+                    }
+                    osTokenStack.pop();
+                }
                 nBDCLevel ++;
+            }
             else if (osToken == "EMC")
             {
                 nBDCLevel --;
@@ -830,22 +851,35 @@ void OGRPDFDataSource::ParseContent(const char* pszContent,
                         return;
 
                     char* pszStr = poStream->GetBytes();
-                    ParseContent(pszStr, nMCID, NULL);
+                    ParseContent(pszStr, nMCID, NULL, FALSE);
                     CPLFree(pszStr);
                 }
                 else if (oMapOperators.find(osToken) != oMapOperators.end())
                 {
                     int nArgs = oMapOperators[osToken];
-                    for(int i=0;i<nArgs;i++)
+                    if (nArgs < 0)
                     {
-                        if (osTokenStack.empty())
+                        while( !osTokenStack.empty() )
                         {
-                            CPLDebug("PDF",
-                                     "not enough arguments for %s",
-                                     osToken.c_str());
-                            return;
+                            CPLString osTopToken = osTokenStack.top();
+                            if (oMapOperators.find(osTopToken) != oMapOperators.end())
+                                break;
+                            osTokenStack.pop();
                         }
-                        osTokenStack.pop();
+                    }
+                    else
+                    {
+                        for(int i=0;i<nArgs;i++)
+                        {
+                            if (osTokenStack.empty())
+                            {
+                                CPLDebug("PDF",
+                                        "not enough arguments for %s",
+                                        osToken.c_str());
+                                return;
+                            }
+                            osTokenStack.pop();
+                        }
                     }
                 }
                 else
@@ -967,12 +1001,20 @@ void OGRPDFDataSource::ParseContent(const char* pszContent,
                     }
                     else
                     {
-                        OGRPolygon* poPoly =  new OGRPolygon();
-                        poPoly->addRingDirectly(poLS);
-                        poLS = NULL;
+                        if (poLS->getNumPoints() >= 3)
+                        {
+                            OGRPolygon* poPoly =  new OGRPolygon();
+                            poPoly->addRingDirectly(poLS);
+                            poLS = NULL;
 
-                        papoPoly = (OGRGeometry**) CPLRealloc(papoPoly, (nPolys + 1) * sizeof(OGRGeometry*));
-                        papoPoly[nPolys ++] = poPoly;
+                            papoPoly = (OGRGeometry**) CPLRealloc(papoPoly, (nPolys + 1) * sizeof(OGRGeometry*));
+                            papoPoly[nPolys ++] = poPoly;
+                        }
+                        else
+                        {
+                            delete poLS;
+                            poLS = NULL;
+                        }
                     }
                 }
             }
@@ -991,9 +1033,42 @@ void OGRPDFDataSource::ParseContent(const char* pszContent,
         delete poLS;
 
         int bIsValidGeometry;
+        if (nPolys == 2 &&
+            ((OGRPolygon*)papoPoly[0])->getNumInteriorRings() == 0 &&
+            ((OGRPolygon*)papoPoly[1])->getNumInteriorRings() == 0)
+        {
+            OGRLinearRing* poRing0 = ((OGRPolygon*)papoPoly[0])->getExteriorRing();
+            OGRLinearRing* poRing1 = ((OGRPolygon*)papoPoly[1])->getExteriorRing();
+            if (poRing0->getNumPoints() == poRing1->getNumPoints())
+            {
+                int bSameRing = TRUE;
+                for(int i=0;i<poRing0->getNumPoints();i++)
+                {
+                    if (poRing0->getX(i) != poRing1->getX(i))
+                    {
+                        bSameRing = FALSE;
+                        break;
+                    }
+                    if (poRing0->getY(i) != poRing1->getY(i))
+                    {
+                        bSameRing = FALSE;
+                        break;
+                    }
+                }
+
+                /* Just keep on ring if they are identical */
+                if (bSameRing)
+                {
+                    delete papoPoly[1];
+                    nPolys = 1;
+                }
+            }
+        }
         if (nPolys)
+        {
             poGeom = OGRGeometryFactory::organizePolygons(
                     papoPoly, nPolys, &bIsValidGeometry, NULL);
+        }
         CPLFree(papoPoly);
     }
 
@@ -1031,7 +1106,7 @@ void OGRPDFDataSource::ExploreContents(GDALPDFObject* poObj,
         {
             int nMCID = atoi(pszMCID + 6);
             if (GetGeometryFromMCID(nMCID) == NULL)
-                ParseContent(pszBDC, nMCID, poResources);
+                ParseContent(pszBDC, nMCID, poResources, TRUE);
         }
         pszMCID += 5;
     }
@@ -1106,7 +1181,16 @@ int OGRPDFDataSource::Open( const char * pszName)
 
     CleanupIntermediateResources();
 
-    if (nLayers == 0)
+    int bEmptyDS = TRUE;
+    for(int i=0;i<nLayers;i++)
+    {
+        if (papoLayers[i]->GetFeatureCount() != 0)
+        {
+            bEmptyDS = FALSE;
+            break;
+        }
+    }
+    if (bEmptyDS)
         return FALSE;
 
     return TRUE;
