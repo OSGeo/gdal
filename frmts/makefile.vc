@@ -160,6 +160,10 @@ EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_webp
 EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_gta
 !ENDIF
 
+!IFDEF INCLUDE_OGR_FRMTS
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_arg
+!ENDIF
+
 default:	o\gdalallregister.obj subdirs
 
 list:
