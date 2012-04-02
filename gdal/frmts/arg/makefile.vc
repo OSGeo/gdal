@@ -1,0 +1,15 @@
+
+OBJ	=	argdataset.obj
+
+EXTRAFLAGS  =   -I..\..\ogr\ogrsf_frmts\geojson
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+

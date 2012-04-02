@@ -470,6 +470,10 @@ ifeq ($(HAVE_CHARLS),yes)
 GDAL_FORMATS := $(GDAL_FORMATS) jpegls
 endif
 
+ifeq ($(OGR_ENABLED),yes)
+GDAL_FORMATS := $(GDAL_FORMATS) arg
+endif
+
 #
 # CONFIG_LIBS is what local program should link against, and CONFIG_LIBS_INS
 # is what will be emitted into the gdal-config script that is installed
