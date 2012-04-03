@@ -15,7 +15,7 @@ LIBTOOL	=	@LIBTOOL@
 ifeq ($(HAVE_LIBTOOL),yes)
 LIBTOOL_COMPILE_CC =	$(LIBTOOL) --mode=compile --tag=CC
 LIBTOOL_COMPILE_CXX =	$(LIBTOOL) --mode=compile --tag=CXX
-LIBTOOL_LINK	=	$(LIBTOOL) --mode=link    --tag=LD
+LIBTOOL_LINK	=	$(LIBTOOL) --mode=link
 LIBTOOL_INSTALL	=	$(LIBTOOL) --mode=install
 LIBTOOL_FINISH	=	$(LIBTOOL) --mode=finish --silent
 LIBTOOL_CLEAN	=	$(LIBTOOL) --mode=clean
