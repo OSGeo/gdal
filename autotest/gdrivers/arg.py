@@ -184,6 +184,45 @@ def arg_getgeotransform():
 
     return 'success'
 
+def arg_blocksize():
+    if gdaltest.argDriver is None:
+        return 'skip'
+
+    tifDriver = None
+    try:
+        tifDriver = gdal.GetDriverByName('GTiff')
+    except Exception, ex:
+        return 'fail'
+
+    if tifDriver is None:
+        return 'fail'
+
+    ds = gdal.Open('data/utm.tif')
+    xsize = ds.RasterXSize
+    ysize = ds.RasterYSize
+
+    # create a blocked tiff, where blocks don't line up evenly 
+    # with the image boundary
+    ds2 = tifDriver.CreateCopy('data/utm-uneven-blocks.tif', ds, False, ['BLOCKXSIZE=25', 'BLOCKYSIZE=25', 'TILED=NO'])
+
+    # convert the new blocked tiff to arg
+    ds = gdaltest.argDriver.CreateCopy('data/utm.arg', ds2, False)
+
+    ds2 = None
+    ds = None
+
+    stat = os.stat('data/utm.arg')
+
+    os.remove('data/utm-uneven-blocks.tif')
+    os.remove('data/utm.arg')
+
+    if stat.st_size != (xsize*ysize):
+        print stat.st_size
+        print xsize*ysize
+        return 'fail'
+
+    return 'success'
+
 def arg_destroy():
     if gdaltest.argDriver is None:
         return 'skip'
@@ -201,6 +240,7 @@ gdaltest_list = [
     arg_unsupported,
     arg_getrastercount,
     arg_getgeotransform,
+    arg_blocksize,
     arg_destroy]
 
 if __name__ == '__main__':
