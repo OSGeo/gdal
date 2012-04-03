@@ -757,6 +757,10 @@ GDALDataset * ARGDataset::CreateCopy( const char * pszFilename,
     // convert any blocks into scanlines
     for (int nYBlock = 0; nYBlock * nYBlockSize < nYSize; nYBlock++) {
         for (int nYScanline = 0; nYScanline < nYBlockSize; nYScanline++) {
+            if ((nYScanline+1) + nYBlock * nYBlockSize > poBand->GetYSize() ) {
+                continue;
+            }
+
             for (int nXBlock = 0; nXBlock * nXBlockSize < nXSize; nXBlock++) {
                 int nXValid;
 
