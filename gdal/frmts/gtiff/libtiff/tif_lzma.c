@@ -1,4 +1,4 @@
-/* $Id: tif_lzma.c,v 1.3 2011-02-22 21:55:13 fwarmerdam Exp $ */
+/* $Id: tif_lzma.c,v 1.4 2011-12-22 00:29:29 bfriesen Exp $ */
 
 /*
  * Copyright (c) 2010, Andrey Kiselev <dron@ak4719.spb.edu>
@@ -220,7 +220,7 @@ LZMADecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 		return 0;
 	}
 
-        tif->tif_rawcp = sp->stream.next_in;
+        tif->tif_rawcp = (uint8 *)sp->stream.next_in; /* cast away const */
         tif->tif_rawcc = sp->stream.avail_in;
         
 	return 1;
