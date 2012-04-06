@@ -938,6 +938,7 @@ int main( int nArgc, char ** papszArgv )
         }
         else if( EQUAL(papszArgv[iArg],"-clipdst") && iArg < nArgc-1 )
         {
+            VSIStatBufL  sStat;
             if ( IsNumber(papszArgv[iArg+1])
                  && papszArgv[iArg+2] != NULL 
                  && papszArgv[iArg+3] != NULL 
@@ -955,8 +956,9 @@ int main( int nArgc, char ** papszArgv )
                 ((OGRPolygon *) poClipDst)->addRing( &oRing );
                 iArg += 4;
             }
-            else if (EQUALN(papszArgv[iArg+1], "POLYGON", 7) ||
-                     EQUALN(papszArgv[iArg+1], "MULTIPOLYGON", 12))
+            else if ((EQUALN(papszArgv[iArg+1], "POLYGON", 7) ||
+                      EQUALN(papszArgv[iArg+1], "MULTIPOLYGON", 12)) &&
+                      VSIStatL(papszArgv[iArg+1], &sStat) != 0)
             {
                 char* pszTmp = (char*) papszArgv[iArg+1];
                 OGRGeometryFactory::createFromWkt(&pszTmp, NULL, &poClipDst);
