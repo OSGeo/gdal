@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.78 2011-02-23 21:46:09 fwarmerdam Exp $ */
+/* $Id: tif_getimage.c,v 1.79 2012-04-06 16:46:46 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -692,6 +692,7 @@ gtTileSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 	unsigned char* p2;
 	unsigned char* pa;
 	tmsize_t tilesize;
+	tmsize_t bufsize;
 	int32 fromskew, toskew;
 	int alpha = img->alpha;
 	uint32 nrow;
@@ -699,12 +700,17 @@ gtTileSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
         int colorchannels;
 
 	tilesize = TIFFTileSize(tif);  
-	buf = (unsigned char*) _TIFFmalloc((alpha?4:3)*tilesize);
+	bufsize = TIFFSafeMultiply(tmsize_t,alpha?4:3,tilesize);
+	if (bufsize == 0) {
+		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "Integer overflow in %s", "gtTileSeparate");
+		return (0);
+	}
+	buf = (unsigned char*) _TIFFmalloc(bufsize);
 	if (buf == 0) {
 		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "%s", "No space for tile buffer");
 		return (0);
 	}
-	_TIFFmemset(buf, 0, (alpha?4:3)*tilesize);
+	_TIFFmemset(buf, 0, bufsize);
 	p0 = buf;
 	p1 = p0 + tilesize;
 	p2 = p1 + tilesize;
@@ -917,17 +923,23 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 	uint32 rowsperstrip, offset_row;
 	uint32 imagewidth = img->width;
 	tmsize_t stripsize;
+	tmsize_t bufsize;
 	int32 fromskew, toskew;
 	int alpha = img->alpha;
 	int ret = 1, flip, colorchannels;
 
 	stripsize = TIFFStripSize(tif);  
-	p0 = buf = (unsigned char *)_TIFFmalloc((alpha?4:3)*stripsize);
+	bufsize = TIFFSafeMultiply(tmsize_t,alpha?4:3,stripsize);
+	if (bufsize == 0) {
+		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "Integer overflow in %s", "gtStripSeparate");
+		return (0);
+	}
+	p0 = buf = (unsigned char *)_TIFFmalloc(bufsize);
 	if (buf == 0) {
 		TIFFErrorExt(tif->tif_clientdata, TIFFFileName(tif), "No space for tile buffer");
 		return (0);
 	}
-	_TIFFmemset(buf, 0, (alpha?4:3)*stripsize);
+	_TIFFmemset(buf, 0, bufsize);
 	p1 = p0 + stripsize;
 	p2 = p1 + stripsize;
 	pa = (alpha?(p2+stripsize):NULL);
