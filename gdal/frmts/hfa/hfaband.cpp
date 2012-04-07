@@ -410,6 +410,12 @@ CPLErr	HFABand::LoadExternalBlockInfo()
 /*      Open raw data file.                                             */
 /* -------------------------------------------------------------------- */
     const char *pszFullFilename = HFAGetIGEFilename( psInfo );
+    if (pszFullFilename == NULL)
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Cannot find external data file name" );
+        return CE_Failure;
+    }
 
     if( psInfo->eAccess == HFA_ReadOnly )
 	fpExternal = VSIFOpenL( pszFullFilename, "rb" );
