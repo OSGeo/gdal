@@ -4,7 +4,7 @@ include ../../GDALmake.opt
 
 OBJ	=	argdataset.o
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) -I../../ogr/ogrsf_frmts/geojson -I../raw
+CPPFLAGS :=	-I../../ogr/ogrsf_frmts/geojson -I../raw $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
