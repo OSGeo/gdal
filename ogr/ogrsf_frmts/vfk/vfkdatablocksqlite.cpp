@@ -128,8 +128,11 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
 	    if (ipcb == 1) {
 		if (!oOGRLine.IsEmpty()) {
 		    oOGRLine.setCoordinateDimension(2); /* force 2D */
-		    if (!poLine->SetGeometry(&oOGRLine))
-			nInvalid++;
+            if (poLine)
+            {
+                if (!poLine->SetGeometry(&oOGRLine))
+                    nInvalid++;
+            }
 		    oOGRLine.empty(); /* restore line */
 		}
 		poLine = poFeature;
@@ -141,6 +144,8 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
 	    if (!poPoint)
 		continue;
 	    OGRPoint *pt = (OGRPoint *) poPoint->GetGeometry();
+        if (!pt)
+            continue;
 	    oOGRLine.addPoint(pt);
 	}
 	/* add last line */
