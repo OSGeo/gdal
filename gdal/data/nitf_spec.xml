@@ -61,6 +61,58 @@
         </loop>
     </tre>
 
+    <tre name="ACFTB" md_prefix="NITF_ACFTB_" length="207" location="image">
+        <field name="AC_MSN_ID" length="20"/>
+        <field name="AC_TAIL_NO" length="10"/>
+        <field name="AC_TO" length="12"/>
+        <field name="SENSOR_ID_TYPE" length="4"/>
+        <field name="SENSOR_ID" length="6"/>
+        <field name="SCENE_SOURCE" length="1"/>
+        <field name="SCNUM" length="6"/>
+        <field name="PDATE" length="8"/>
+        <field name="IMHOSTNO" length="6"/>
+        <field name="IMREQID" length="5"/>
+        <field name="MPLAN" length="3"/>
+        <field name="ENTLOC" length="25"/>
+        <field name="LOC_ACCY" length="6"/>
+        <field name="ENTELV" length="6"/>
+        <field name="ELV_UNIT" length="1"/>
+        <field name="EXITLOC" length="25"/>
+        <field name="EXITELV" length="6"/>
+        <field name="TMAP" length="7"/>
+        <field name="ROW_SPACING" length="7"/>
+        <field name="ROW_SPACING_UNITS" length="1"/>
+        <field name="COL_SPACING" length="7"/>
+        <field name="COL_SPACING_UNITS" length="1"/>
+        <field name="FOCAL_LENGTH" length="6"/>
+        <field name="SENSERIAL" length="6"/>
+        <field name="ABSWVER" length="7"/>
+        <field name="CAL_DATE" length="8"/>
+        <field name="PATCH_TOT" length="4"/>
+        <field name="MTI_TOT" length="3"/>
+    </tre>
+
+    <tre name="AIMIDB" md_prefix="NITF_AIMIDB_" length="89" location="image">
+        <field name="ACQUISITION_DATE" length="14"/>
+        <field name="MISSION_NO" length="4"/>
+        <field name="MISSION_IDENTIFICATION" length="10"/>
+        <field name="FLIGHT_NO" length="2"/>
+        <field name="OP_NUM" length="3"/>
+        <field name="CURRENT_SEGMENT" length="2"/>
+        <field name="REPRO_NUM" length="2"/>
+        <field name="REPLAY" length="3"/>
+        <field name="RESERVED_1" length="1"/>
+        <field name="START_TILE_COLUMN" length="3"/>
+        <field name="START_TILE_ROW" length="5"/>
+        <field name="END_SEGMENT" length="2"/>
+        <field name="END_TILE_COLUMN" length="3"/>
+        <field name="END_TILE_ROW" length="5"/>
+        <field name="COUNTRY" length="2"/>
+        <field name="RESERVED_2" length="4"/>
+        <field name="LOCATION" length="11"/>
+        <field name="RESERVED_3" length="13"/>
+    </tre>
+
     <tre name="BLOCKA" length="123" location="image">
         <field name="BLOCK_INSTANCE" length="2" type="integer" minval="1" maxval="99"/>
         <field name="N_GRAY" length="5" type="integer" minval="0" maxval="99999"/>
