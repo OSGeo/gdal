@@ -278,15 +278,18 @@ void VFKFeature::SetProperties(const char *poLine)
     
     /* set fid */
     if (EQUAL(m_poDataBlock->GetName(), "SBP")) {
-	GUIntBig id;
-	const VFKProperty *poVfkProperty;
-	
-	poVfkProperty = GetProperty("PORADOVE_CISLO_BODU");
-	id = strtoul(poVfkProperty->GetValueS(), NULL, 0);
-	if (id == 1)
-	    SetFID(0); /* set next feature */
-	else
-	    SetFID(-1); /* set same feature */
+        GUIntBig id;
+        const VFKProperty *poVfkProperty;
+
+        poVfkProperty = GetProperty("PORADOVE_CISLO_BODU");
+        if (poVfkProperty)
+        {
+            id = strtoul(poVfkProperty->GetValueS(), NULL, 0);
+            if (id == 1)
+                SetFID(0); /* set next feature */
+            else
+                SetFID(-1); /* set same feature */
+        }
     }
     else {
 	SetFID(0); /* set next feature */
