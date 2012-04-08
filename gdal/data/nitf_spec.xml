@@ -61,7 +61,7 @@
         </loop>
     </tre>
 
-    <tre name="ACFTB" md_prefix="NITF_ACFTB_" length="207" location="image">
+    <tre name="ACFTB" length="207" location="image">
         <field name="AC_MSN_ID" length="20"/>
         <field name="AC_TAIL_NO" length="10"/>
         <field name="AC_TO" length="12"/>
@@ -92,7 +92,7 @@
         <field name="MTI_TOT" length="3"/>
     </tre>
 
-    <tre name="AIMIDB" md_prefix="NITF_AIMIDB_" length="89" location="image">
+    <tre name="AIMIDB" length="89" location="image">
         <field name="ACQUISITION_DATE" length="14"/>
         <field name="MISSION_NO" length="4"/>
         <field name="MISSION_IDENTIFICATION" length="10"/>
