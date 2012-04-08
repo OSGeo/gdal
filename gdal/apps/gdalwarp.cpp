@@ -235,6 +235,30 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 */
 
 /************************************************************************/
+/*                               GDALExit()                             */
+/*  This function exits and cleans up GDAL and OGR resources            */
+/*  Perhaps it should be added to C api and used in all apps?           */
+/************************************************************************/
+
+static int GDALExit( int nCode )
+{
+  const char  *pszDebug = CPLGetConfigOption("CPL_DEBUG",NULL);
+  if( pszDebug && (EQUAL(pszDebug,"ON") || EQUAL(pszDebug,"") ) )
+  {  
+    GDALDumpOpenDatasets( stderr );
+    CPLDumpSharedList( NULL );
+  }
+
+  GDALDestroyDriverManager();
+
+#ifdef OGR_ENABLED
+  OGRCleanupAll();
+#endif
+
+  exit( nCode );
+}
+
+/************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
 
@@ -258,7 +282,7 @@ static void Usage()
         "\n"
         "Available resampling methods:\n"
         "    near (default), bilinear, cubic, cubicspline, lanczos.\n" );
-    exit( 1 );
+    GDALExit( 1 );
 }
 
 /************************************************************************/
@@ -281,7 +305,7 @@ char *SanitizeSRS( const char *pszUserInput )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Translating source or target SRS failed:\n%s",
                   pszUserInput );
-        exit( 1 );
+        GDALExit( 1 );
     }
     
     OSRDestroySpatialReference( hSRS );
@@ -330,7 +354,7 @@ int main( int argc, char ** argv )
     {
         fprintf(stderr, "At least, GDAL >= 1.6.0 is required for this version of %s, "
                 "which was compiled against GDAL %s\n", argv[0], GDAL_RELEASE_NAME);
-        exit(1);
+        GDALExit(1);
     }
 
     /* Must process GDAL_SKIP before GDALAllRegister(), but we can't call */
@@ -353,7 +377,7 @@ int main( int argc, char ** argv )
     GDALAllRegister();
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
     if( argc < 1 )
-        exit( -argc );
+        GDALExit( -argc );
 
 /* -------------------------------------------------------------------- */
 /*      Parse arguments.                                                */
@@ -680,7 +704,7 @@ int main( int argc, char ** argv )
          strcmp(papszSrcFiles[0], pszDstFilename) == 0 && bOverwrite)
     {
         fprintf(stderr, "Source and destination datasets must be different.\n");
-        exit( 1 );
+        GDALExit( 1 );
     }
 
     CPLPushErrorHandler( CPLQuietErrorHandler );
@@ -700,7 +724,7 @@ int main( int argc, char ** argv )
                  "but some commandline options were provided indicating a new dataset\n"
                  "should be created.  Please delete existing dataset and run again.\n",
                  pszDstFilename );
-        exit( 1 );
+        GDALExit( 1 );
     }
 
     /* Avoid overwriting an existing destination file that cannot be opened in */
@@ -717,7 +741,7 @@ int main( int argc, char ** argv )
                      "Output dataset %s exists, but cannot be opened in update mode\n",
                      pszDstFilename );
             GDALClose(hDstDS);
-            exit( 1 );
+            GDALExit( 1 );
         }
     }
 
@@ -748,7 +772,7 @@ int main( int argc, char ** argv )
             if( OSRImportFromWkt( hTargetSRS, (char **)&pszThisTargetSRS ) != CE_None )
             {
                 fprintf(stderr, "Cannot compute bounding box of cutline.\n");
-                exit(1);
+                GDALExit(1);
             }
 
             hCT = OCTNewCoordinateTransformation(hCutlineSRS, hTargetSRS);
@@ -763,7 +787,7 @@ int main( int argc, char ** argv )
                 if (hSrcDS == NULL)
                 {
                     fprintf(stderr, "Cannot compute bounding box of cutline.\n");
-                    exit(1);
+                    GDALExit(1);
                 }
 
                 OGRSpatialReferenceH  hRasterSRS = NULL;
@@ -778,14 +802,14 @@ int main( int argc, char ** argv )
                 if( pszProjection == NULL )
                 {
                     fprintf(stderr, "Cannot compute bounding box of cutline.\n");
-                    exit(1);
+                    GDALExit(1);
                 }
 
                 hRasterSRS = OSRNewSpatialReference(NULL);
                 if( OSRImportFromWkt( hRasterSRS, (char **)&pszProjection ) != CE_None )
                 {
                     fprintf(stderr, "Cannot compute bounding box of cutline.\n");
-                    exit(1);
+                    GDALExit(1);
                 }
 
                 hCT = OCTNewCoordinateTransformation(hCutlineSRS, hRasterSRS);
@@ -797,7 +821,7 @@ int main( int argc, char ** argv )
             else
             {
                 fprintf(stderr, "Cannot compute bounding box of cutline.\n");
-                exit(1);
+                GDALExit(1);
             }
         }
 
@@ -858,7 +882,7 @@ int main( int argc, char ** argv )
     }
  
     if( hDstDS == NULL )
-        exit( 1 );
+        GDALExit( 1 );
 
 /* -------------------------------------------------------------------- */
 /*      Loop over all source files, processing each in turn.            */
@@ -878,7 +902,7 @@ int main( int argc, char ** argv )
             hSrcDS = GDALOpen( papszSrcFiles[iSrc], GA_ReadOnly );
     
         if( hSrcDS == NULL )
-            exit( 2 );
+            GDALExit( 2 );
 
 /* -------------------------------------------------------------------- */
 /*      Check that there's at least one raster band                     */
@@ -886,7 +910,7 @@ int main( int argc, char ** argv )
         if ( GDALGetRasterCount(hSrcDS) == 0 )
         {     
             fprintf(stderr, "Input file %s has no raster bands.\n", papszSrcFiles[iSrc] );
-            exit( 1 );
+            GDALExit( 1 );
         }
 
         if( !bQuiet )
@@ -1017,7 +1041,7 @@ int main( int argc, char ** argv )
                 GDALCreateGenImgProjTransformer2( hSrcDS, hDstDS, papszTO );
         
         if( hTransformArg == NULL )
-            exit( 1 );
+            GDALExit( 1 );
         
         pfnTransformer = GDALGenImgProjTransform;
 
@@ -1292,7 +1316,7 @@ int main( int argc, char ** argv )
         if( bVRT )
         {
             if( GDALInitializeWarpedVRT( hDstDS, psWO ) != CE_None )
-                exit( 1 );
+                GDALExit( 1 );
 
             GDALClose( hDstDS );
             GDALClose( hSrcDS );
@@ -1441,7 +1465,7 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
             }
         }
         printf( "\n" );
-        exit( 1 );
+        GDALExit( 1 );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1468,7 +1492,7 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
 
         hSrcDS = GDALOpen( papszSrcFiles[iSrc], GA_ReadOnly );
         if( hSrcDS == NULL )
-            exit( 1 );
+            GDALExit( 1 );
 
 /* -------------------------------------------------------------------- */
 /*      Check that there's at least one raster band                     */
@@ -1476,7 +1500,7 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
         if ( GDALGetRasterCount(hSrcDS) == 0 )
         {
             fprintf(stderr, "Input file %s has no raster bands.\n", papszSrcFiles[iSrc] );
-            exit( 1 );
+            GDALExit( 1 );
         }
 
         if( eDT == GDT_Unknown )
@@ -1923,7 +1947,7 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
 #ifndef OGR_ENABLED
     CPLError( CE_Failure, CPLE_AppDefined, 
               "Request to load a cutline failed, this build does not support OGR features.\n" );
-    exit( 1 );
+    GDALExit( 1 );
 #else // def OGR_ENABLED
     OGRRegisterAll();
 
@@ -1934,7 +1958,7 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
 
     hSrcDS = OGROpen( pszCutlineDSName, FALSE, NULL );
     if( hSrcDS == NULL )
-        exit( 1 );
+        GDALExit( 1 );
 
 /* -------------------------------------------------------------------- */
 /*      Get the source layer                                            */
@@ -1951,7 +1975,7 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
     if( hLayer == NULL )
     {
         fprintf( stderr, "Failed to identify source layer from datasource.\n" );
-        exit( 1 );
+        GDALExit( 1 );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1976,7 +2000,7 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
         if( hGeom == NULL )
         {
             fprintf( stderr, "ERROR: Cutline feature without a geometry.\n" );
-            exit( 1 );
+            GDALExit( 1 );
         }
         
         OGRwkbGeometryType eType = wkbFlatten(OGR_G_GetGeometryType( hGeom ));
@@ -1996,7 +2020,7 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
         else
         {
             fprintf( stderr, "ERROR: Cutline not of polygon type.\n" );
-            exit( 1 );
+            GDALExit( 1 );
         }
 
         OGR_F_Destroy( hFeat );
@@ -2005,7 +2029,7 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
     if( OGR_G_GetGeometryCount( hMultiPolygon ) == 0 )
     {
         fprintf( stderr, "ERROR: Did not get any cutline features.\n" );
-        exit( 1 );
+        GDALExit( 1 );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2117,7 +2141,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
     CSLDestroy( papszTO );
 
     if( oTransformer.hSrcImageTransformer == NULL )
-        exit( 1 );
+        GDALExit( 1 );
 
     OGR_G_Transform( hMultiPolygon, 
                      (OGRCoordinateTransformationH) &oTransformer );
