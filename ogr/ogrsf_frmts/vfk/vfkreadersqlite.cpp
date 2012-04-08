@@ -65,6 +65,10 @@ VFKReaderSQLite::VFKReaderSQLite(const char *pszFilename) : VFKReader(pszFilenam
 	CPLError(CE_Failure, CPLE_AppDefined, 
 		 "Creating in-memory SQLite DB failed");
     }
+
+    char* pszErrMsg = NULL;
+    sqlite3_exec( m_poDB, "PRAGMA synchronous = OFF", NULL, NULL, &pszErrMsg );
+    sqlite3_free( pszErrMsg );
 }
 
 /*!
