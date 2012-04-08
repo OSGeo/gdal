@@ -725,7 +725,7 @@ CPLErr netCDFRasterBand::SetNoDataValue( double dfNoData )
                       dfNoData, dfNoDataValue, cdfid, nBand );
         }
 /* TODO add NCDFDebug function for verbose debugging */
-#ifdef NETCDF_DEBUG
+#ifdef NCDF_DEBUG
         else {
             CPLDebug( "GDAL_netCDF", "Setting NoDataValue to %.18g (id #%d, band #%d)", 
                       dfNoData, cdfid, nBand );
@@ -1079,7 +1079,7 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int    Taken=-1;
     int    nd;
 
-#ifdef NETCDF_DEBUG
+#ifdef NCDF_DEBUG
     if ( (nBlockYOff == 0) || (nBlockYOff == nRasterYSize-1) )
         CPLDebug( "GDAL_netCDF", "netCDFRasterBand::IReadBlock( %d, %d, ... ) nBand=%d",
                   nBlockXOff, nBlockYOff, nBand );
@@ -1221,7 +1221,7 @@ CPLErr netCDFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     int    Taken=-1;
     int    nd;
 
-#ifdef NETCDF_DEBUG
+#ifdef NCDF_DEBUG
     if ( (nBlockYOff == 0) || (nBlockYOff == nRasterYSize-1) )
         CPLDebug( "GDAL_netCDF", "netCDFRasterBand::IWriteBlock( %d, %d, ... ) nBand=%d",
                   nBlockXOff, nBlockYOff, nBand );
@@ -1391,6 +1391,10 @@ netCDFDataset::netCDFDataset()
 netCDFDataset::~netCDFDataset()
 
 {
+    #ifdef NCDF_DEBUG
+    CPLDebug( "GDAL_netCDF", "netCDFDataset::~netCDFDataset(), cdfid=%d",
+              cdfid );
+    #endif
     /* make sure projection is written if GeoTransform OR Projection are missing */
     if( (GetAccess() == GA_Update) && (! bAddedProjectionVars) ) {
         if ( bSetProjection && ! bSetGeoTransform )
@@ -1418,8 +1422,13 @@ netCDFDataset::~netCDFDataset()
     if( pszCFCoordinates )
         CPLFree( pszCFCoordinates );
 
-    if( cdfid ) 
-        nc_close( cdfid );
+    if( cdfid ) {
+#ifdef NCDF_DEBUG
+        CPLDebug( "GDAL_netCDF", "calling nc_close( %d )", cdfid );
+#endif
+        status = nc_close( cdfid );
+        NCDF_ERR(status);
+    }
 }
 
 /************************************************************************/
@@ -4231,11 +4240,12 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
-    CPLDebug( "GDAL_netCDF", "\n=====\ncalling nc_open( %s )\n", poDS->osFilename.c_str() );
+    CPLDebug( "GDAL_netCDF", "\n=====\ncalling nc_open( %s )", poDS->osFilename.c_str() );
     if( nc_open( poDS->osFilename, NC_NOWRITE, &cdfid ) != NC_NOERR ) {
         delete poDS;
         return NULL;
     }
+    CPLDebug( "GDAL_netCDF", "got cdfid=%d\n", cdfid );
 
 /* -------------------------------------------------------------------- */
 /*      Is this a real netCDF file?                                     */
@@ -5081,11 +5091,14 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             nDim = 2 + CSLCount( papszExtraDimNames );
         }
         else {
-            CPLError( CE_Failure, CPLE_NotSupported, 
-                      "Number of bands (%d) is not compatible with dimensions (total=%ld names=%s)", 
-                      nBands, nDimSizeTot,
+            // if nBands != #bands computed raise a warning
+            // just issue a debug message, because it was probably intentional
+            CPLDebug( "GDAL_netCDF",
+                      "Warning: Number of bands (%d) is not compatible with dimensions "
+                      "(total=%ld names=%s)", nBands, nDimSizeTot,
                       poSrcDS->GetMetadataItem("NETCDF_DIM_EXTRA","") );
             CSLDestroy( papszExtraDimNames );
+            papszExtraDimNames = NULL;
         }
     }
 
@@ -5194,9 +5207,9 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         /* Get var name from NETCDF_VARNAME */
         tmpMetadata = poSrcBand->GetMetadataItem("NETCDF_VARNAME");
        	if( tmpMetadata != NULL) {
-            // if( nDim > 2 && nBands > 1 ) sprintf(szBandName,"%s%d",tmpMetadata,iBand);
-            // else strcpy( szBandName, tmpMetadata );
-            strcpy( szBandName, tmpMetadata );
+            if( nBands > 1 && papszExtraDimNames == NULL ) 
+                sprintf(szBandName,"%s%d",tmpMetadata,iBand);
+            else strcpy( szBandName, tmpMetadata );
         }
         else 
             szBandName[0]='\0';
@@ -5274,11 +5287,7 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         poSrcBand = poSrcDS->GetRasterBand( iBand );
         eDT = poSrcBand->GetRasterDataType();
         
-        // if ( nDim > 2 )
-        //     poDstBand = poDS->GetRasterBand( 1 );
-        // else
-            poDstBand = poDS->GetRasterBand( iBand );
- 
+        poDstBand = poDS->GetRasterBand( iBand );
 
 
 /* -------------------------------------------------------------------- */
@@ -5325,11 +5334,16 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     delete( poDS );
 // CPLFree(pszProj4Defn );
  
-    CSLDestroy( papszExtraDimNames );
-    CPLFree( panDimIds );
-    CPLFree( panBandDimPos );
-    CPLFree( panBandZLev );
-    CPLFree( panDimVarIds );
+    if ( panDimIds )
+        CPLFree( panDimIds );
+    if( panBandDimPos )
+        CPLFree( panBandDimPos );
+    if ( panBandZLev )
+        CPLFree( panBandZLev );
+    if( panDimVarIds )
+        CPLFree( panDimVarIds );
+    if ( papszExtraDimNames )
+        CSLDestroy( papszExtraDimNames );
 
     pfnProgress( 0.95, NULL, pProgressData );
 
