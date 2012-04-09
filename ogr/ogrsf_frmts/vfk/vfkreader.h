@@ -165,7 +165,11 @@ private:
     bool                 LoadGeometryLineStringHP();
     bool                 LoadGeometryPolygon();
 
+    OGRErr               SetFIDFromDB();
+    OGRErr               ExecuteSQL(const char *);
+    void                 FinalizeSQL();
 public:
+    VFKFeatureSQLite(IVFKDataBlock *);
     VFKFeatureSQLite(const VFKFeature *);
 
     OGRErr               LoadProperties(OGRFeature *);
@@ -324,7 +328,7 @@ private:
 
 protected:
     virtual IVFKDataBlock *CreateDataBlock(const char *) = 0;
-    virtual void AddDataBlock(IVFKDataBlock * = NULL) = 0;
+    virtual void AddDataBlock(IVFKDataBlock * = NULL, const char * = NULL) = 0;
     virtual void AddFeature(IVFKDataBlock * = NULL, VFKFeature * = NULL) = 0;
 
 public:

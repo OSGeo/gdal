@@ -37,16 +37,102 @@
 
 #ifdef HAVE_SQLITE
 
+/*!
+  \brief VFKFeatureSQLite constructor 
+
+  Read VFK feature from DB
+*/
+VFKFeatureSQLite::VFKFeatureSQLite(IVFKDataBlock *poDataBlock) : IVFKFeature(poDataBlock)
+{
+    m_hStmt  = NULL;
+    m_nIndex = m_poDataBlock->GetFeatureCount();
+
+    /* set FID from DB */
+    SetFIDFromDB(); /* -> m_nFID */
+}
 
 /*!
-  \brief VFKFeatureSQLite constructor
+  \brief Read FID from DB
+*/
+OGRErr VFKFeatureSQLite::SetFIDFromDB()
+{
+    CPLString   osSQL;
+    
+    osSQL.Printf("SELECT ogr_fid FROM '%s' WHERE _rowid_ = %d",
+		 m_poDataBlock->GetName(), m_nIndex + 1);
+    if (ExecuteSQL(osSQL.c_str()) != OGRERR_NONE)
+	return OGRERR_FAILURE;
+
+    m_nFID = sqlite3_column_int(m_hStmt, 0);
+  
+    FinalizeSQL();
+    
+    return OGRERR_NONE;
+}
+
+/*!
+  \brief Finalize SQL statement
+*/
+void VFKFeatureSQLite::FinalizeSQL()
+{
+    sqlite3_finalize(m_hStmt);
+    m_hStmt = NULL;
+}
+
+/*!
+  \brief Execute SQL (select) statement
+
+  \param pszSQLCommand SQL command string
+
+  \return OGRERR_NONE on success
+  \return OGRERR_FAILURE on error
+*/
+OGRErr VFKFeatureSQLite::ExecuteSQL(const char *pszSQLCommand)
+{
+    int rc;
+
+    sqlite3  *poDB;
+    
+    VFKReaderSQLite *poReader = (VFKReaderSQLite *) m_poDataBlock->GetReader();
+    poDB = poReader->m_poDB;
+    
+    rc = sqlite3_prepare(poDB, pszSQLCommand, strlen(pszSQLCommand),
+			 &m_hStmt, NULL);
+    if (rc != SQLITE_OK) {
+        CPLError(CE_Failure, CPLE_AppDefined, 
+		 "In LoadProperties(): sqlite3_prepare(%s):\n  %s",
+		 pszSQLCommand, sqlite3_errmsg(poDB));
+	
+        if(m_hStmt != NULL) {
+	    FinalizeSQL();
+        }
+	return OGRERR_FAILURE;
+    }
+    rc = sqlite3_step(m_hStmt);
+    if (rc != SQLITE_ROW) {
+	CPLError(CE_Failure, CPLE_AppDefined, 
+		 "In ExecuteSQL(): sqlite3_step(%s):\n  %s", 
+		 pszSQLCommand, sqlite3_errmsg(poDB));
+	
+	if (m_hStmt) {
+	    FinalizeSQL();
+	}
+	
+	return OGRERR_FAILURE;
+    }
+
+    return OGRERR_NONE;
+}
+
+/*!
+  \brief VFKFeatureSQLite constructor (derived from VFKFeature)
+
+  Read VFK feature from VFK file and insert it into DB
 */
 VFKFeatureSQLite::VFKFeatureSQLite(const VFKFeature *poVFKFeature) : IVFKFeature(poVFKFeature->m_poDataBlock)
 {
     m_nFID   = poVFKFeature->m_nFID;
-    
     m_hStmt  = NULL;
-    
     m_nIndex = m_poDataBlock->GetFeatureCount();
 }
 
@@ -112,48 +198,13 @@ bool VFKFeatureSQLite::LoadGeometryPolygon()
 */
 OGRErr VFKFeatureSQLite::LoadProperties(OGRFeature *poFeature)
 {
-    int rc;
     CPLString   osSQL;
-    const char *pszSQL;
-
-    sqlite3  *poDB;
-
-    VFKReaderSQLite *poReader = (VFKReaderSQLite *) m_poDataBlock->GetReader();
-    poDB = poReader->m_poDB;
 
     osSQL.Printf("SELECT * FROM '%s' WHERE _rowid_ = %d",
 		 m_poDataBlock->GetName(), m_nIndex + 1);
-    pszSQL = osSQL.c_str();
-    
-    rc = sqlite3_prepare(poDB, pszSQL, strlen(pszSQL),
-			 &m_hStmt, NULL);
-    
-    if (rc != SQLITE_OK) {
-        CPLError(CE_Failure, CPLE_AppDefined, 
-		 "In LoadProperties(): sqlite3_prepare(%s):\n  %s",
-		 pszSQL, sqlite3_errmsg(poDB));
-	
-        if(m_hStmt != NULL) {
-            sqlite3_finalize(m_hStmt);
-	    m_hStmt = NULL;
-        }
+    if (ExecuteSQL(osSQL.c_str()) != OGRERR_NONE)
 	return OGRERR_FAILURE;
-    }
-    
-    rc = sqlite3_step(m_hStmt);
-    if (rc != SQLITE_ROW) {
-	CPLError(CE_Failure, CPLE_AppDefined, 
-		 "In ExecuteSQL(): sqlite3_step(%s):\n  %s", 
-		 pszSQL, sqlite3_errmsg(poDB));
-	
-	if (m_hStmt) {
-	    sqlite3_finalize(m_hStmt);
-	    m_hStmt = NULL;
-	}
-	
-	return OGRERR_FAILURE;
-    }
-    
+
     for (int iField = 0; iField < m_poDataBlock->GetPropertyCount(); iField++) {
 	OGRFieldType fType = poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
 	if (fType == OFTInteger)
@@ -167,8 +218,7 @@ OGRErr VFKFeatureSQLite::LoadProperties(OGRFeature *poFeature)
 				(const char *) sqlite3_column_text(m_hStmt, iField));
     }
 
-    sqlite3_finalize(m_hStmt);
-    m_hStmt = NULL;
+    FinalizeSQL();
 
     return OGRERR_NONE;
 }

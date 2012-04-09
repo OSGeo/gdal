@@ -171,7 +171,7 @@ int VFKReader::ReadDataBlocks()
 	    CPLFree(pszBlockName);
 	    poNewDataBlock->SetGeometryType();
 	    poNewDataBlock->SetProperties(pszLine);
-	    AddDataBlock(poNewDataBlock);
+	    AddDataBlock(poNewDataBlock, pszLine);
 	}
 	else if (pszLine[1] == 'H') {
 	    /* header - metadata */
@@ -279,7 +279,7 @@ IVFKDataBlock *VFKReader::CreateDataBlock(const char *pszBlockName)
 
   \return number of registred data blocks
 */
-void VFKReader::AddDataBlock(IVFKDataBlock *poNewDataBlock)
+void VFKReader::AddDataBlock(IVFKDataBlock *poNewDataBlock, const char *pszDefn)
 {
     m_nDataBlockCount++;
     

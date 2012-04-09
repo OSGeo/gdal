@@ -66,7 +66,7 @@ protected:
     IVFKDataBlock **m_papoDataBlock;
 
     IVFKDataBlock  *CreateDataBlock(const char *);
-    void            AddDataBlock(IVFKDataBlock *);
+    void            AddDataBlock(IVFKDataBlock *, const char *);
     void            AddFeature(IVFKDataBlock *, VFKFeature *);
 
 public:
@@ -95,7 +95,7 @@ private:
     sqlite3       *m_poDB;
 
     IVFKDataBlock *CreateDataBlock(const char *);
-    void           AddDataBlock(IVFKDataBlock *);
+    void           AddDataBlock(IVFKDataBlock *, const char *);
     void           AddFeature(IVFKDataBlock *, VFKFeature *);
 
     friend class   VFKFeatureSQLite;
