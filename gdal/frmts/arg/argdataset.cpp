@@ -51,7 +51,7 @@ static float CPLNaN(void)
     return fNan;
 }
 
-#    define NAN CPLNan()
+#    define NAN CPLNaN()
 #  endif
 #endif
 
@@ -247,6 +247,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     json_object * pJSONObject;
     const char * pszJSONStr;
+    char * pszLayer;
     /***** items from the json metadata *****/
     GDALDataType eType = GDT_Unknown;
     double fXmin = 0.0;
@@ -296,23 +297,6 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
     else if (!EQUAL(pszJSONStr, "arg")) {
         CPLError(CE_Failure, CPLE_AppDefined,
             "The ARG 'type' is not recognized: '%s'.", pszJSONStr);
-        json_object_put(pJSONObject);
-        pJSONObject = NULL;
-        return NULL;
-    }
-
-    // get the layer (always the file basename)
-    pszJSONStr = GetJsonValueStr(pJSONObject, "layer");
-    if (pszJSONStr == NULL) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-            "The ARG 'layer' is missing from the JSON file.");
-        json_object_put(pJSONObject);
-        pJSONObject = NULL;
-        return NULL;
-    }
-    else if (!EQUAL(pszJSONStr, CPLGetBasename(poOpenInfo->pszFilename))) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-            "The ARG 'layer' does not match the filename.");
         json_object_put(pJSONObject);
         pJSONObject = NULL;
         return NULL;
@@ -514,6 +498,18 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    // get the layer (always the file basename)
+    pszJSONStr = GetJsonValueStr(pJSONObject, "layer");
+    if (pszJSONStr == NULL) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "The ARG 'layer' is missing from the JSON file.");
+        json_object_put(pJSONObject);
+        pJSONObject = NULL;
+        return NULL;
+    }
+
+    pszLayer = CPLStrdup(pszJSONStr);
+
     // done with the json object now
     json_object_put(pJSONObject);
     pJSONObject = NULL;
@@ -526,12 +522,14 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new ARGDataset();
 
     poDS->pszFilename = CPLStrdup(poOpenInfo->pszFilename);
+    poDS->SetMetadataItem("LAYER",pszLayer,NULL);
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
     poDS->SetProjection( pszWKT );
 
     // done with the projection string
     CPLFree(pszWKT);
+    CPLFree(pszLayer);
 
 /* -------------------------------------------------------------------- */
 /*      Assume ownership of the file handled from the GDALOpenInfo.     */
@@ -604,6 +602,8 @@ GDALDataset * ARGDataset::CreateCopy( const char * pszFilename,
     GByte * pabyData;
     OGRSpatialReference oSRS;
     char * pszWKT = NULL;
+    char ** pszTokens = NULL;
+    const char * pszLayer = NULL;
     int nSrs = 0;
     OGRErr nErr = OGRERR_NONE;
 
@@ -689,10 +689,22 @@ GDALDataset * ARGDataset::CreateCopy( const char * pszFilename,
 
     poJSONObject = json_object_new_object();
 
-    // Set the layer
-    json_object_object_add(poJSONObject, "layer", json_object_new_string(
-        CPLGetBasename(pszJSONFilename)
-    ));
+    pszTokens = poSrcDS->GetMetadata();
+    pszLayer = CSLFetchNameValue(pszTokens, "LAYER");
+
+    if ( pszLayer == NULL) {
+        // Set the layer
+        json_object_object_add(poJSONObject, "layer", json_object_new_string(
+            CPLGetBasename(pszJSONFilename)
+        ));
+    }
+    else {
+        // Set the layer
+        json_object_object_add(poJSONObject, "layer", json_object_new_string(
+            pszLayer
+        ));
+    }
+
     // Set the type
     json_object_object_add(poJSONObject, "type", json_object_new_string("arg"));
     // Set the datatype
