@@ -59,9 +59,9 @@ OGRErr VFKFeatureSQLite::SetFIDFromDB()
     CPLString   osSQL;
     
     osSQL.Printf("SELECT ogr_fid FROM '%s' WHERE _rowid_ = %d",
-		 m_poDataBlock->GetName(), m_nIndex + 1);
+                 m_poDataBlock->GetName(), m_nIndex + 1);
     if (ExecuteSQL(osSQL.c_str()) != OGRERR_NONE)
-	return OGRERR_FAILURE;
+        return OGRERR_FAILURE;
 
     m_nFID = sqlite3_column_int(m_hStmt, 0);
   
@@ -97,28 +97,28 @@ OGRErr VFKFeatureSQLite::ExecuteSQL(const char *pszSQLCommand)
     poDB = poReader->m_poDB;
     
     rc = sqlite3_prepare(poDB, pszSQLCommand, strlen(pszSQLCommand),
-			 &m_hStmt, NULL);
+                         &m_hStmt, NULL);
     if (rc != SQLITE_OK) {
         CPLError(CE_Failure, CPLE_AppDefined, 
-		 "In LoadProperties(): sqlite3_prepare(%s):\n  %s",
-		 pszSQLCommand, sqlite3_errmsg(poDB));
-	
+                 "In LoadProperties(): sqlite3_prepare(%s):\n  %s",
+                 pszSQLCommand, sqlite3_errmsg(poDB));
+        
         if(m_hStmt != NULL) {
-	    FinalizeSQL();
+            FinalizeSQL();
         }
-	return OGRERR_FAILURE;
+        return OGRERR_FAILURE;
     }
     rc = sqlite3_step(m_hStmt);
     if (rc != SQLITE_ROW) {
-	CPLError(CE_Failure, CPLE_AppDefined, 
-		 "In ExecuteSQL(): sqlite3_step(%s):\n  %s", 
-		 pszSQLCommand, sqlite3_errmsg(poDB));
-	
-	if (m_hStmt) {
-	    FinalizeSQL();
-	}
-	
-	return OGRERR_FAILURE;
+        CPLError(CE_Failure, CPLE_AppDefined, 
+                 "In ExecuteSQL(): sqlite3_step(%s):\n  %s", 
+                 pszSQLCommand, sqlite3_errmsg(poDB));
+        
+        if (m_hStmt) {
+            FinalizeSQL();
+        }
+        
+        return OGRERR_FAILURE;
     }
 
     return OGRERR_NONE;
@@ -201,21 +201,21 @@ OGRErr VFKFeatureSQLite::LoadProperties(OGRFeature *poFeature)
     CPLString   osSQL;
 
     osSQL.Printf("SELECT * FROM '%s' WHERE _rowid_ = %d",
-		 m_poDataBlock->GetName(), m_nIndex + 1);
+                 m_poDataBlock->GetName(), m_nIndex + 1);
     if (ExecuteSQL(osSQL.c_str()) != OGRERR_NONE)
-	return OGRERR_FAILURE;
+        return OGRERR_FAILURE;
 
     for (int iField = 0; iField < m_poDataBlock->GetPropertyCount(); iField++) {
-	OGRFieldType fType = poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
-	if (fType == OFTInteger)
-	    poFeature->SetField(iField,
-				sqlite3_column_int(m_hStmt, iField));
-	else if (fType == OFTReal)
-	    poFeature->SetField(iField,
-				sqlite3_column_double(m_hStmt, iField));
-	else
-	    poFeature->SetField(iField,
-				(const char *) sqlite3_column_text(m_hStmt, iField));
+        OGRFieldType fType = poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
+        if (fType == OFTInteger)
+            poFeature->SetField(iField,
+                                sqlite3_column_int(m_hStmt, iField));
+        else if (fType == OFTReal)
+            poFeature->SetField(iField,
+                                sqlite3_column_double(m_hStmt, iField));
+        else
+            poFeature->SetField(iField,
+                                (const char *) sqlite3_column_text(m_hStmt, iField));
     }
 
     FinalizeSQL();

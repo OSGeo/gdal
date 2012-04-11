@@ -60,7 +60,7 @@ const char *OGRVFKDriver::GetName()
   \return NULL on failure
 */
 OGRDataSource *OGRVFKDriver::Open(const char * pszFilename,
-				  int bUpdate)
+                                  int bUpdate)
 {
     OGRVFKDataSource *poDS;
 

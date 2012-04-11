@@ -52,7 +52,7 @@ int VFKDataBlockSQLite::LoadGeometryPoint()
     
     VFKFeatureSQLite *poFeature;
     VFKReaderSQLite  *poReader;
-	
+        
     nInvalid  = 0;
     poReader  = (VFKReaderSQLite*) m_poReader;
 
@@ -61,12 +61,12 @@ int VFKDataBlockSQLite::LoadGeometryPoint()
     
     ResetReading();
     while(poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
-	poFeature = (VFKFeatureSQLite *) GetNextFeature(); // assert
-	x = -1.0 * sqlite3_column_double(hStmt, 0);
-	y = -1.0 * sqlite3_column_double(hStmt, 1);
-	OGRPoint pt(x, y);
-	if (!poFeature->SetGeometry(&pt))
-	    nInvalid++;
+        poFeature = (VFKFeatureSQLite *) GetNextFeature(); // assert
+        x = -1.0 * sqlite3_column_double(hStmt, 0);
+        y = -1.0 * sqlite3_column_double(hStmt, 1);
+        OGRPoint pt(x, y);
+        if (!poFeature->SetGeometry(&pt))
+            nInvalid++;
     }
     ResetReading();
 
@@ -99,61 +99,61 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
     
     poDataBlockPoints = (VFKDataBlockSQLite *) m_poReader->GetDataBlock("SOBR");
     if (NULL == poDataBlockPoints) {
-    	CPLError(CE_Failure, CPLE_NotSupported, 
+        CPLError(CE_Failure, CPLE_NotSupported, 
                  "Data block %s not found.\n", m_pszName);
-	return nInvalid;
+        return nInvalid;
     }
     
     poDataBlockPoints->LoadGeometry();
     
     for (int i = 0; i < 2; i++) {
-	if (i == 0)
-	    osSQL.Printf("SELECT BP_ID,PORADOVE_CISLO_BODU,_rowid_,ID FROM '%s' WHERE "
-			 "HP_ID IS NOT NULL OR OB_ID IS NOT NULL OR DPM_ID IS NOT NULL "
-			 "ORDER BY HP_ID,OB_ID,DPM_ID,PORADOVE_CISLO_BODU", m_pszName);
-	else
-	    osSQL.Printf("SELECT BP_ID,PORADOVE_CISLO_BODU,_rowid_,ID FROM '%s' WHERE "
-			 "OB_ID IS NULL AND HP_ID IS NULL AND DPM_ID IS NULL "
-			 "ORDER BY ID,PORADOVE_CISLO_BODU", m_pszName);
-	
-	hStmt = poReader->PrepareStatement(osSQL.c_str());
-	
-	while(poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
-	    id    = sqlite3_column_double(hStmt, 0);
-	    ipcb  = sqlite3_column_double(hStmt, 1);
-	    rowId = sqlite3_column_int(hStmt, 2) - 1;
-	    poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(rowId);
-	    poFeature->SetGeometry(NULL);
-	    
-	    if (ipcb == 1) {
-		if (!oOGRLine.IsEmpty()) {
-		    oOGRLine.setCoordinateDimension(2); /* force 2D */
+        if (i == 0)
+            osSQL.Printf("SELECT BP_ID,PORADOVE_CISLO_BODU,_rowid_,ID FROM '%s' WHERE "
+                         "HP_ID IS NOT NULL OR OB_ID IS NOT NULL OR DPM_ID IS NOT NULL "
+                         "ORDER BY HP_ID,OB_ID,DPM_ID,PORADOVE_CISLO_BODU", m_pszName);
+        else
+            osSQL.Printf("SELECT BP_ID,PORADOVE_CISLO_BODU,_rowid_,ID FROM '%s' WHERE "
+                         "OB_ID IS NULL AND HP_ID IS NULL AND DPM_ID IS NULL "
+                         "ORDER BY ID,PORADOVE_CISLO_BODU", m_pszName);
+        
+        hStmt = poReader->PrepareStatement(osSQL.c_str());
+        
+        while(poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
+            id    = sqlite3_column_double(hStmt, 0);
+            ipcb  = sqlite3_column_double(hStmt, 1);
+            rowId = sqlite3_column_int(hStmt, 2) - 1;
+            poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(rowId);
+            poFeature->SetGeometry(NULL);
+            
+            if (ipcb == 1) {
+                if (!oOGRLine.IsEmpty()) {
+                    oOGRLine.setCoordinateDimension(2); /* force 2D */
             if (poLine)
             {
                 if (!poLine->SetGeometry(&oOGRLine))
                     nInvalid++;
             }
-		    oOGRLine.empty(); /* restore line */
-		}
-		poLine = poFeature;
-	    }
-	    else {
-		poFeature->SetGeometryType(wkbUnknown);
-	    }
-	    poPoint = (VFKFeatureSQLite *) poDataBlockPoints->GetFeature("ID", id);
-	    if (!poPoint)
-		continue;
-	    OGRPoint *pt = (OGRPoint *) poPoint->GetGeometry();
+                    oOGRLine.empty(); /* restore line */
+                }
+                poLine = poFeature;
+            }
+            else {
+                poFeature->SetGeometryType(wkbUnknown);
+            }
+            poPoint = (VFKFeatureSQLite *) poDataBlockPoints->GetFeature("ID", id);
+            if (!poPoint)
+                continue;
+            OGRPoint *pt = (OGRPoint *) poPoint->GetGeometry();
         if (!pt)
             continue;
-	    oOGRLine.addPoint(pt);
-	}
-	/* add last line */
-	oOGRLine.setCoordinateDimension(2); /* force 2D */
-	if (poLine) {
-	    if (!poLine->SetGeometry(&oOGRLine))
-		nInvalid++;
-	}
+            oOGRLine.addPoint(pt);
+        }
+        /* add last line */
+        oOGRLine.setCoordinateDimension(2); /* force 2D */
+        if (poLine) {
+            if (!poLine->SetGeometry(&oOGRLine))
+                nInvalid++;
+        }
     }
     
     return nInvalid;
@@ -184,9 +184,9 @@ int VFKDataBlockSQLite::LoadGeometryLineStringHP()
     
     poDataBlockLines = (VFKDataBlockSQLite *) m_poReader->GetDataBlock("SBP");
     if (NULL == poDataBlockLines) {
-    	CPLError(CE_Failure, CPLE_NotSupported, 
+        CPLError(CE_Failure, CPLE_NotSupported, 
                  "Data block %s not found.\n", m_pszName);
-	return nInvalid;
+        return nInvalid;
     }
     
     poDataBlockLines->LoadGeometry();
@@ -199,15 +199,15 @@ int VFKDataBlockSQLite::LoadGeometryLineStringHP()
     hStmt = poReader->PrepareStatement(osSQL.c_str());
     
     while(poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
-	vrValue[0] = sqlite3_column_double(hStmt, 0);
-	rowId      = sqlite3_column_int(hStmt, 1) - 1;
-	poFeature  = (VFKFeatureSQLite *) GetFeatureByIndex(rowId);
-	    
-	poLine = poDataBlockLines->GetFeature(vrColumn, vrValue, 2);
-	if (!poLine || !poLine->GetGeometry())
-	    continue;
-	if (!poFeature->SetGeometry(poLine->GetGeometry()))
-	    nInvalid++;
+        vrValue[0] = sqlite3_column_double(hStmt, 0);
+        rowId      = sqlite3_column_int(hStmt, 1) - 1;
+        poFeature  = (VFKFeatureSQLite *) GetFeatureByIndex(rowId);
+            
+        poLine = poDataBlockLines->GetFeature(vrColumn, vrValue, 2);
+        if (!poLine || !poLine->GetGeometry())
+            continue;
+        if (!poFeature->SetGeometry(poLine->GetGeometry()))
+            nInvalid++;
     }
     
     return nInvalid;
@@ -223,7 +223,7 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
     int  nInvalid;
     int  rowId, nCount, nCountMax;
     bool bIsPar, bNewRing, bFound;
-	
+        
     CPLString    osSQL;
     const char  *vrColumn[2];
     GUIntBig     vrValue[2];
@@ -246,118 +246,118 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
     poReader  = (VFKReaderSQLite*) m_poReader;
     
     if (EQUAL (m_pszName, "PAR")) {
-	poDataBlockLines1 = (VFKDataBlockSQLite *) m_poReader->GetDataBlock("HP");
-	poDataBlockLines2 = poDataBlockLines1;
-	bIsPar = TRUE;
+        poDataBlockLines1 = (VFKDataBlockSQLite *) m_poReader->GetDataBlock("HP");
+        poDataBlockLines2 = poDataBlockLines1;
+        bIsPar = TRUE;
     }
     else {
-	poDataBlockLines1 = (VFKDataBlockSQLite *) m_poReader->GetDataBlock("OB");
-	poDataBlockLines2 = (VFKDataBlockSQLite *) m_poReader->GetDataBlock("SBP");
-	bIsPar = FALSE;
+        poDataBlockLines1 = (VFKDataBlockSQLite *) m_poReader->GetDataBlock("OB");
+        poDataBlockLines2 = (VFKDataBlockSQLite *) m_poReader->GetDataBlock("SBP");
+        bIsPar = FALSE;
     }
     if (NULL == poDataBlockLines1 || NULL == poDataBlockLines2) {
-    	CPLError(CE_Failure, CPLE_NotSupported, 
+        CPLError(CE_Failure, CPLE_NotSupported, 
                  "Data block %s not found.\n", m_pszName);
-	return nInvalid;
+        return nInvalid;
     }
     
     poDataBlockLines1->LoadGeometry();
     poDataBlockLines2->LoadGeometry();
     
     if (bIsPar) {
-	vrColumn[0] = "PAR_ID_1";
-	vrColumn[1] = "PAR_ID_2";
+        vrColumn[0] = "PAR_ID_1";
+        vrColumn[1] = "PAR_ID_2";
     }
     else {
-	vrColumn[0] = "OB_ID";
-	vrColumn[1] = "PORADOVE_CISLO_BODU";
-	vrValue[1]  = 1;
+        vrColumn[0] = "OB_ID";
+        vrColumn[1] = "PORADOVE_CISLO_BODU";
+        vrValue[1]  = 1;
     }
 
     osSQL.Printf("SELECT ID,_rowid_ FROM '%s'", m_pszName);
     hStmt = poReader->PrepareStatement(osSQL.c_str());
     
     while(poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
-	id        = sqlite3_column_double(hStmt, 0);
-	rowId     = sqlite3_column_int(hStmt, 1) - 1;
-	poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(rowId);
-	if (bIsPar) {
-	    vrValue[0] = vrValue[1] = id;
-	    poLineList = poDataBlockLines1->GetFeatures(vrColumn, vrValue, 2);
-	}
-	else {
-	    VFKFeatureSQLite *poLineSbp;
-	    std::vector<VFKFeatureSQLite *> poLineListOb;
-	    sqlite3_stmt *hStmtOb;
-	    
-	    osSQL.Printf("SELECT ID FROM '%s' WHERE BUD_ID = %llu",
-			 poDataBlockLines1->GetName(), id);
-	    hStmtOb = poReader->PrepareStatement(osSQL.c_str());
-	    
-	    while(poReader->ExecuteSQL(hStmtOb) == OGRERR_NONE) {
-		idOb = sqlite3_column_double(hStmtOb, 0); 
-		vrValue[0] = idOb;
-		poLineSbp = poDataBlockLines2->GetFeature(vrColumn, vrValue, 2);
-		if (poLineSbp)
-		    poLineList.push_back(poLineSbp);
-	    }
-	}
-	if (poLineList.size() < 1)
-	    continue;
-	
-	/* clear */
-	ogrPolygon.empty();
-	poRingList.clear();
-	
-	/* collect rings (points) */
-	bFound = FALSE;
-	nCount = 0;
-	nCountMax = poLineList.size() * 2;
-	while (poLineList.size() > 0 && nCount < nCountMax) {
-	    bNewRing = !bFound ? TRUE : FALSE;
-	    bFound = FALSE;
-	    for (VFKFeatureSQLiteList::iterator iHp = poLineList.begin(), eHp = poLineList.end();
-		 iHp != eHp; ++iHp) {
-		const OGRLineString *pLine = (OGRLineString *) (*iHp)->GetGeometry();
-		if (pLine && AppendLineToRing(&poRingList, pLine, bNewRing)) {
-		    bFound = TRUE;
-		    poLineList.erase(iHp);
-		    break;
-		}
-	    }
-	    nCount++;
-	}
-	
-	if (poLineList.size() > 0) {
-	    CPLError(CE_Warning, CPLE_AppDefined, 
-		     "Unable to collect rings for feature %llu (%s).\n",
-		     id, m_pszName);
-	    continue;
-	}
-	
-	/* create rings */
-	for (PointListArray::const_iterator iRing = poRingList.begin(), eRing = poRingList.end();
-	     iRing != eRing; ++iRing) {
-	    PointList *poList = *iRing;
-	    ogrRing.empty();
-	    for (PointList::iterator iPoint = poList->begin(), ePoint = poList->end();
-		 iPoint != ePoint; ++iPoint) {
-		ogrRing.addPoint(&(*iPoint));
-	    }
-	    ogrPolygon.addRing(&ogrRing);
-	}
-	
-	/* set polygon */
-	ogrPolygon.setCoordinateDimension(2); /* force 2D */
-	if (!poFeature->SetGeometry(&ogrPolygon))
-	    nInvalid++;
+        id        = sqlite3_column_double(hStmt, 0);
+        rowId     = sqlite3_column_int(hStmt, 1) - 1;
+        poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(rowId);
+        if (bIsPar) {
+            vrValue[0] = vrValue[1] = id;
+            poLineList = poDataBlockLines1->GetFeatures(vrColumn, vrValue, 2);
+        }
+        else {
+            VFKFeatureSQLite *poLineSbp;
+            std::vector<VFKFeatureSQLite *> poLineListOb;
+            sqlite3_stmt *hStmtOb;
+            
+            osSQL.Printf("SELECT ID FROM '%s' WHERE BUD_ID = %llu",
+                         poDataBlockLines1->GetName(), id);
+            hStmtOb = poReader->PrepareStatement(osSQL.c_str());
+            
+            while(poReader->ExecuteSQL(hStmtOb) == OGRERR_NONE) {
+                idOb = sqlite3_column_double(hStmtOb, 0); 
+                vrValue[0] = idOb;
+                poLineSbp = poDataBlockLines2->GetFeature(vrColumn, vrValue, 2);
+                if (poLineSbp)
+                    poLineList.push_back(poLineSbp);
+            }
+        }
+        if (poLineList.size() < 1)
+            continue;
+        
+        /* clear */
+        ogrPolygon.empty();
+        poRingList.clear();
+        
+        /* collect rings (points) */
+        bFound = FALSE;
+        nCount = 0;
+        nCountMax = poLineList.size() * 2;
+        while (poLineList.size() > 0 && nCount < nCountMax) {
+            bNewRing = !bFound ? TRUE : FALSE;
+            bFound = FALSE;
+            for (VFKFeatureSQLiteList::iterator iHp = poLineList.begin(), eHp = poLineList.end();
+                 iHp != eHp; ++iHp) {
+                const OGRLineString *pLine = (OGRLineString *) (*iHp)->GetGeometry();
+                if (pLine && AppendLineToRing(&poRingList, pLine, bNewRing)) {
+                    bFound = TRUE;
+                    poLineList.erase(iHp);
+                    break;
+                }
+            }
+            nCount++;
+        }
+        
+        if (poLineList.size() > 0) {
+            CPLError(CE_Warning, CPLE_AppDefined, 
+                     "Unable to collect rings for feature %llu (%s).\n",
+                     id, m_pszName);
+            continue;
+        }
+        
+        /* create rings */
+        for (PointListArray::const_iterator iRing = poRingList.begin(), eRing = poRingList.end();
+             iRing != eRing; ++iRing) {
+            PointList *poList = *iRing;
+            ogrRing.empty();
+            for (PointList::iterator iPoint = poList->begin(), ePoint = poList->end();
+                 iPoint != ePoint; ++iPoint) {
+                ogrRing.addPoint(&(*iPoint));
+            }
+            ogrPolygon.addRing(&ogrRing);
+        }
+        
+        /* set polygon */
+        ogrPolygon.setCoordinateDimension(2); /* force 2D */
+        if (!poFeature->SetGeometry(&ogrPolygon))
+            nInvalid++;
     }
     
     /* free ring list */
     for (PointListArray::iterator iRing = poRingList.begin(), eRing = poRingList.end();
-	 iRing != eRing; ++iRing) {
-	delete (*iRing);
-	*iRing = NULL;
+         iRing != eRing; ++iRing) {
+        delete (*iRing);
+        *iRing = NULL;
     }
     
     return nInvalid;
@@ -385,11 +385,11 @@ VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char *column, GUIntBig va
     osSQL.Printf("SELECT _rowid_ from '%s' WHERE %s = %llu", m_pszName, column, value);
     hStmt = poReader->PrepareStatement(osSQL.c_str());
     if (poReader->ExecuteSQL(hStmt) != OGRERR_NONE)
-	return NULL;
+        return NULL;
     
     idx = sqlite3_column_int(hStmt, 0) - 1;
     if (idx < 0 || idx >= m_nFeatureCount) // ? assert
-	return NULL;
+        return NULL;
     
     sqlite3_finalize(hStmt);
 
@@ -418,21 +418,21 @@ VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char **column, GUIntBig *
     
     osSQL.Printf("SELECT _rowid_ from '%s' WHERE ", m_pszName);
     for (int i = 0; i < num; i++) {
-	if (i > 0)
-	    osItem.Printf(" AND %s = %llu", column[i], value[i]);
-	else
-	    osItem.Printf("%s = %llu", column[i], value[i]);
-	osSQL += osItem;
+        if (i > 0)
+            osItem.Printf(" AND %s = %llu", column[i], value[i]);
+        else
+            osItem.Printf("%s = %llu", column[i], value[i]);
+        osSQL += osItem;
     }
     
     hStmt = poReader->PrepareStatement(osSQL.c_str());
     if (poReader->ExecuteSQL(hStmt) != OGRERR_NONE)
-	return NULL;
+        return NULL;
     
     idx = sqlite3_column_int(hStmt, 0) - 1;
     
     if (idx < 0 || idx >= m_nFeatureCount) // ? assert
-	return NULL;
+        return NULL;
 
     sqlite3_finalize(hStmt);
     
@@ -462,19 +462,19 @@ VFKFeatureSQLiteList VFKDataBlockSQLite::GetFeatures(const char **column, GUIntB
     
     osSQL.Printf("SELECT _rowid_ from '%s' WHERE ", m_pszName);
     for (int i = 0; i < num; i++) {
-	if (i > 0)
-	    osItem.Printf(" OR %s = %llu", column[i], value[i]);
-	else
-	    osItem.Printf("%s = %llu", column[i], value[i]);
-	osSQL += osItem;
+        if (i > 0)
+            osItem.Printf(" OR %s = %llu", column[i], value[i]);
+        else
+            osItem.Printf("%s = %llu", column[i], value[i]);
+        osSQL += osItem;
     }
     
     hStmt = poReader->PrepareStatement(osSQL.c_str());
     while (poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
-	idx = sqlite3_column_int(hStmt, 0) - 1;
-	if (idx < 0 || idx >= m_nFeatureCount)
-	    continue; // assert?
-	fList.push_back((VFKFeatureSQLite *)GetFeatureByIndex(idx));
+        idx = sqlite3_column_int(hStmt, 0) - 1;
+        if (idx < 0 || idx >= m_nFeatureCount)
+            continue; // assert?
+        fList.push_back((VFKFeatureSQLite *)GetFeatureByIndex(idx));
     }
     
     return fList;
