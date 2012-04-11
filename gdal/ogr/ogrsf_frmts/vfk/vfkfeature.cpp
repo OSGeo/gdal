@@ -58,7 +58,7 @@ IVFKFeature::IVFKFeature(IVFKDataBlock *poDataBlock)
 IVFKFeature::~IVFKFeature()
 {
     if (m_paGeom)
-	delete m_paGeom;
+        delete m_paGeom;
     
     m_poDataBlock = NULL;
 }
@@ -86,14 +86,14 @@ void IVFKFeature::SetFID(long nFID)
     
     if (m_nFID < 1) {
         long nMaxFID;
-	
-	nMaxFID = m_poDataBlock->GetMaxFID();
+        
+        nMaxFID = m_poDataBlock->GetMaxFID();
         if (nFID == 0) {
-	    /* next */
+            /* next */
             m_nFID = nMaxFID + 1;
         }
         else {
-	    /* same */
+            /* same */
             m_nFID = nMaxFID;
         }
     }
@@ -120,19 +120,19 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom)
     if (m_nGeometryType == wkbNone && m_paGeom->IsEmpty()) {
         CPLError(CE_Warning, CPLE_AppDefined, 
                  "Empty geometry FID %ld.\n", m_nFID);
-	m_bValid = FALSE;
+        m_bValid = FALSE;
     }
     
     if (m_nGeometryType == wkbLineString &&
-	((OGRLineString *) m_paGeom)->getNumPoints() < 2) {
-	m_bValid = FALSE;
+        ((OGRLineString *) m_paGeom)->getNumPoints() < 2) {
+        m_bValid = FALSE;
     }
     
     if (m_nGeometryType == wkbPolygon) {
-	OGRLinearRing *poRing;
-	poRing = ((OGRPolygon *) m_paGeom)->getExteriorRing();
-	if (!poRing || poRing->getNumPoints() < 3)
-	    m_bValid = FALSE;
+        OGRLinearRing *poRing;
+        poRing = ((OGRPolygon *) m_paGeom)->getExteriorRing();
+        if (!poRing || poRing->getNumPoints() < 3)
+            m_bValid = FALSE;
     }
 
     return m_bValid;
@@ -165,33 +165,33 @@ bool IVFKFeature::LoadGeometry()
     CPLString osSQL;
     
     if (m_bGeometry)
-	return TRUE;
+        return TRUE;
 
     pszName  = m_poDataBlock->GetName();
     
     if (EQUAL (pszName, "SOBR") ||
-	EQUAL (pszName, "OBBP") ||
-	EQUAL (pszName, "SPOL") ||
-	EQUAL (pszName, "OB") ||
-	EQUAL (pszName, "OP") ||
-	EQUAL (pszName, "OBPEJ")) {
-	/* -> wkbPoint */
-	
-	return LoadGeometryPoint();
+        EQUAL (pszName, "OBBP") ||
+        EQUAL (pszName, "SPOL") ||
+        EQUAL (pszName, "OB") ||
+        EQUAL (pszName, "OP") ||
+        EQUAL (pszName, "OBPEJ")) {
+        /* -> wkbPoint */
+        
+        return LoadGeometryPoint();
     }
     else if (EQUAL (pszName, "SBP")) {
-	/* -> wkbLineString */
-	return LoadGeometryLineStringSBP();
+        /* -> wkbLineString */
+        return LoadGeometryLineStringSBP();
     }
     else if (EQUAL (pszName, "HP") ||
-	     EQUAL (pszName, "DPM")) {
-	/* -> wkbLineString */
-	return LoadGeometryLineStringHP();
+             EQUAL (pszName, "DPM")) {
+        /* -> wkbLineString */
+        return LoadGeometryLineStringHP();
     }
     else if (EQUAL (pszName, "PAR") ||
-	     EQUAL (pszName, "BUD")) {
-	/* -> wkbPolygon */
-	return LoadGeometryPolygon();
+             EQUAL (pszName, "BUD")) {
+        /* -> wkbPolygon */
+        return LoadGeometryPolygon();
     }
 
     return FALSE;
@@ -224,10 +224,10 @@ void VFKFeature::SetProperties(const char *poLine)
     
     /* set feature properties */
     for (poChar = poLine; *poChar != '\0' && *poChar != ';'; poChar++)
-	/* skip data block name */
-	;
+        /* skip data block name */
+        ;
     if (poChar == '\0')
-	return;
+        return;
 
     poChar++; /* skip ';' */
     
@@ -236,43 +236,43 @@ void VFKFeature::SetProperties(const char *poLine)
     nLength = 0;
     inString = FALSE;
     while(*poChar != '\0') {
-	if (*poChar == '"' && 
-	    (*(poChar-1) == ';' || *(poChar+1) == ';' || *(poChar+1) == '\0')) {
-	    poChar++; /* skip '"' */
-	    inString = inString ? FALSE : TRUE;
-	    if (inString) {
-		poProp = poChar;
-		if (*poChar == '"') { 
-		    poChar++;
-		    inString = FALSE;
-		}
-	    }
-	    if (*poChar == '\0')
-		break;
-	}
-	if (*poChar == ';' && !inString) {
-	    pszProp = (char *) CPLRealloc(pszProp, nLength + 1);
-	    if (nLength > 0)
-		strncpy(pszProp, poProp, nLength);
-	    pszProp[nLength] = '\0';
-	    SetProperty(iIndex, pszProp);
-	    iIndex++;
-	    poProp = ++poChar;
-	    nLength = 0;
-	}
-	else {
-	    poChar++;
-	    nLength++;
-	}
+        if (*poChar == '"' && 
+            (*(poChar-1) == ';' || *(poChar+1) == ';' || *(poChar+1) == '\0')) {
+            poChar++; /* skip '"' */
+            inString = inString ? FALSE : TRUE;
+            if (inString) {
+                poProp = poChar;
+                if (*poChar == '"') { 
+                    poChar++;
+                    inString = FALSE;
+                }
+            }
+            if (*poChar == '\0')
+                break;
+        }
+        if (*poChar == ';' && !inString) {
+            pszProp = (char *) CPLRealloc(pszProp, nLength + 1);
+            if (nLength > 0)
+                strncpy(pszProp, poProp, nLength);
+            pszProp[nLength] = '\0';
+            SetProperty(iIndex, pszProp);
+            iIndex++;
+            poProp = ++poChar;
+            nLength = 0;
+        }
+        else {
+            poChar++;
+            nLength++;
+        }
     }
 
     /* append last property */
     if (inString) {
-	nLength--; /* ignore '"' */
+        nLength--; /* ignore '"' */
     }
     pszProp = (char *) CPLRealloc(pszProp, nLength + 1);
     if (nLength > 0)
-	strncpy(pszProp, poProp, nLength);
+        strncpy(pszProp, poProp, nLength);
     pszProp[nLength] = '\0';
     SetProperty(iIndex, pszProp);
     
@@ -292,7 +292,7 @@ void VFKFeature::SetProperties(const char *poLine)
         }
     }
     else {
-	SetFID(0); /* set next feature */
+        SetFID(0); /* set next feature */
     }
     m_poDataBlock->SetMaxFID(GetFID()); /* update max value */
 
@@ -313,22 +313,22 @@ void VFKFeature::SetProperty(int iIndex, const char *pszValue)
     }
 
     if (strlen(pszValue) < 1)
-	m_propertyList[iIndex] = VFKProperty();
+        m_propertyList[iIndex] = VFKProperty();
     else {
-	OGRFieldType fType;
-	
-	fType = m_poDataBlock->GetProperty(iIndex)->GetType();
-	switch (fType) {
-	case OFTInteger:
-	    m_propertyList[iIndex] = VFKProperty(atoi(pszValue));
-	    break;
-	case OFTReal:
-	    m_propertyList[iIndex] = VFKProperty(CPLAtof(pszValue));
-	    break;
-	default:
-	    m_propertyList[iIndex] = VFKProperty(pszValue);
-	    break;
-	}
+        OGRFieldType fType;
+        
+        fType = m_poDataBlock->GetProperty(iIndex)->GetType();
+        switch (fType) {
+        case OFTInteger:
+            m_propertyList[iIndex] = VFKProperty(atoi(pszValue));
+            break;
+        case OFTReal:
+            m_propertyList[iIndex] = VFKProperty(CPLAtof(pszValue));
+            break;
+        default:
+            m_propertyList[iIndex] = VFKProperty(pszValue);
+            break;
+        }
     }
 }
 
@@ -378,7 +378,7 @@ bool VFKFeature::LoadGeometryPoint()
     i_idxY = m_poDataBlock->GetPropertyIndex("SOURADNICE_Y");
     i_idxX = m_poDataBlock->GetPropertyIndex("SOURADNICE_X");
     if (i_idxY < 0 || i_idxX < 0)
-	return FALSE;
+        return FALSE;
     
     x = -1.0 * GetProperty(i_idxY)->GetValueD();
     y = -1.0 * GetProperty(i_idxX)->GetValueD();
@@ -407,36 +407,36 @@ bool VFKFeature::LoadGeometryLineStringSBP()
     
     poDataBlockPoints = (VFKDataBlock *) m_poDataBlock->GetReader()->GetDataBlock("SOBR");
     if (!poDataBlockPoints)
-	return FALSE;
+        return FALSE;
     
     idxId    = poDataBlockPoints->GetPropertyIndex("ID");
     idxBp_Id = m_poDataBlock->GetPropertyIndex("BP_ID");
     idxPCB   = m_poDataBlock->GetPropertyIndex("PORADOVE_CISLO_BODU");
     if (idxId < 0 || idxBp_Id < 0 || idxPCB < 0)
-	return false;
+        return false;
     
     poLine = this;
     while (TRUE)
     {
-	id   = poLine->GetProperty(idxBp_Id)->GetValueI();
-	ipcb = poLine->GetProperty(idxPCB)->GetValueI();
-	if (OGRLine.getNumPoints() > 0 && ipcb == 1)
-	{
-	    m_poDataBlock->GetPreviousFeature(); /* push back */
-	    break;
-	}
+        id   = poLine->GetProperty(idxBp_Id)->GetValueI();
+        ipcb = poLine->GetProperty(idxPCB)->GetValueI();
+        if (OGRLine.getNumPoints() > 0 && ipcb == 1)
+        {
+            m_poDataBlock->GetPreviousFeature(); /* push back */
+            break;
+        }
         
-	poPoint = poDataBlockPoints->GetFeature(idxId, id);
-	if (!poPoint)
-	{
-	    continue;
-	}
-	OGRPoint *pt = (OGRPoint *) poPoint->GetGeometry();
-	OGRLine.addPoint(pt);
+        poPoint = poDataBlockPoints->GetFeature(idxId, id);
+        if (!poPoint)
+        {
+            continue;
+        }
+        OGRPoint *pt = (OGRPoint *) poPoint->GetGeometry();
+        OGRLine.addPoint(pt);
         
-	poLine = (VFKFeature *) m_poDataBlock->GetNextFeature();
-	if (!poLine)
-	    break;
+        poLine = (VFKFeature *) m_poDataBlock->GetNextFeature();
+        if (!poLine)
+            break;
     };
     
     OGRLine.setCoordinateDimension(2); /* force 2D */
@@ -464,17 +464,17 @@ bool VFKFeature::LoadGeometryLineStringHP()
     
     poDataBlockLines = (VFKDataBlock *) m_poDataBlock->GetReader()->GetDataBlock("SBP");
     if (!poDataBlockLines)
-	return FALSE;
+        return FALSE;
     
     idxId    = m_poDataBlock->GetPropertyIndex("ID");
     idxHp_Id = poDataBlockLines->GetPropertyIndex("HP_ID");
     if (idxId < 0 || idxHp_Id < 0)
-	return FALSE;
+        return FALSE;
     
     id = GetProperty(idxId)->GetValueI();
     poLine = poDataBlockLines->GetFeature(idxHp_Id, id);
     if (!poLine || !poLine->GetGeometry())
-	return FALSE;
+        return FALSE;
     
     SetGeometry(poLine->GetGeometry());
     poDataBlockLines->ResetReading();
@@ -497,18 +497,18 @@ bool VFKFeature::LoadGeometryPolygon()
 OGRErr VFKFeature::LoadProperties(OGRFeature *poFeature)
 {
     for (int iField = 0; iField < m_poDataBlock->GetPropertyCount(); iField++) {
-	if (GetProperty(iField)->IsNull())
-	    continue;
-	OGRFieldType fType = poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
-	if (fType == OFTInteger) 
-	    poFeature->SetField(iField,
-				GetProperty(iField)->GetValueI());
-	else if (fType == OFTReal)
-	    poFeature->SetField(iField,
-				GetProperty(iField)->GetValueD());
-	else
-	    poFeature->SetField(iField,
-				GetProperty(iField)->GetValueS());
+        if (GetProperty(iField)->IsNull())
+            continue;
+        OGRFieldType fType = poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
+        if (fType == OFTInteger) 
+            poFeature->SetField(iField,
+                                GetProperty(iField)->GetValueI());
+        else if (fType == OFTReal)
+            poFeature->SetField(iField,
+                                GetProperty(iField)->GetValueD());
+        else
+            poFeature->SetField(iField,
+                                GetProperty(iField)->GetValueS());
     }
 
     return OGRERR_NONE;
