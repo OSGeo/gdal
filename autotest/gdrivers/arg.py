@@ -217,8 +217,41 @@ def arg_blocksize():
     os.remove('data/utm.arg')
 
     if stat.st_size != (xsize*ysize):
-        print stat.st_size
-        print xsize*ysize
+        return 'fail'
+
+    return 'success'
+
+def arg_layername():
+    if gdaltest.argDriver is None:
+        return 'skip'
+
+    ds = gdal.Open('data/arg-int16.arg');
+
+    lyr = 'ARG FTW'
+
+    # set the layer name
+    ds.SetMetadataItem('LAYER', lyr)
+
+    # did the layer name stick?
+    if ds.GetMetadata()['LAYER'] != lyr:
+        return 'fail'
+
+    # copy the dataset to a new ARG
+    ds2 = gdaltest.argDriver.CreateCopy('data/arg-int16-2.arg', ds, False)
+
+    ds = None
+    ds2 = None
+
+    # open the new dataset
+    ds = gdal.Open('data/arg-int16-2.arg')
+
+    lyr2 = ds.GetMetadata()['LAYER']
+
+    ds = None
+    os.remove('data/arg-int16-2.arg')
+
+    # does the new dataset's layer match the layer set before copying
+    if lyr2 != lyr:
         return 'fail'
 
     return 'success'
@@ -241,6 +274,7 @@ gdaltest_list = [
     arg_getrastercount,
     arg_getgeotransform,
     arg_blocksize,
+    arg_layername,
     arg_destroy]
 
 if __name__ == '__main__':
