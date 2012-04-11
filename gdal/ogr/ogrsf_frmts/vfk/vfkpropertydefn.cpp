@@ -51,7 +51,7 @@ VFKPropertyDefn::VFKPropertyDefn(const char *pszName, const char *pszType)
 
     poWidth = poChar = m_pszType + 1;
     for (nLength = 0; *poChar && *poChar != '.'; nLength++, poChar++)
-	;
+        ;
 
     /* width */
     pszWidth = (char *) CPLMalloc(nLength+1);
@@ -66,31 +66,31 @@ VFKPropertyDefn::VFKPropertyDefn(const char *pszName, const char *pszType)
     
     /* type */
     if (*m_pszType == 'N') {
-	if (*poChar == '.') {
-	    m_eFType = OFTReal;
-	    m_nPrecision = atoi(poChar+1);
-	}
-	else {
-	    if (m_nWidth < 10)
-		m_eFType = OFTInteger;
-	    else {
-		m_eFType  = OFTString;
-	    }
-	}
+        if (*poChar == '.') {
+            m_eFType = OFTReal;
+            m_nPrecision = atoi(poChar+1);
+        }
+        else {
+            if (m_nWidth < 10)
+                m_eFType = OFTInteger;
+            else {
+                m_eFType  = OFTString;
+            }
+        }
     }
     else if (*m_pszType == 'T') {
-	/* string */
-	m_eFType = OFTString;
+        /* string */
+        m_eFType = OFTString;
     }
     else if (*m_pszType == 'D') {
-	/* date */
-	/* m_eFType = OFTDateTime; */
-	m_eFType = OFTString;
-	m_nWidth = 25;
+        /* date */
+        /* m_eFType = OFTDateTime; */
+        m_eFType = OFTString;
+        m_nWidth = 25;
     }
     else {
-	/* unknown - string */
-	m_eFType = OFTString;
+        /* unknown - string */
+        m_eFType = OFTString;
     }
 }
 
@@ -112,15 +112,15 @@ CPLString VFKPropertyDefn::GetTypeSQL() const
 {
     switch(m_eFType) {
     case OFTInteger:
-	return CPLString("integer");
+        return CPLString("integer");
     case OFTReal:
-	return CPLString("real");
+        return CPLString("real");
     case OFTString:
-	if (m_pszType[0] == 'N')
-	    return CPLString("integer");
-	else
-	    return CPLString("text");
+        if (m_pszType[0] == 'N')
+            return CPLString("integer");
+        else
+            return CPLString("text");
     default:
-	return CPLString("text");
+        return CPLString("text");
     }
 }
