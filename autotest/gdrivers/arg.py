@@ -222,6 +222,11 @@ def arg_blocksize():
     return 'success'
 
 def arg_layername():
+    """
+    The layer name of the ARG in the .json file need not be the name of
+    the .arg file. The original driver enforced this constraint, but that
+    behavior was wrong. See ticket #4609
+    """
     if gdaltest.argDriver is None:
         return 'skip'
 
@@ -256,6 +261,21 @@ def arg_layername():
 
     return 'success'
 
+def arg_nodata():
+    """
+    Check that the NoData value for int8 images is 128, as per the
+    ARG spec. See ticket #4610
+    """
+    if gdaltest.argDriver is None:
+        return 'skip'
+
+    ds = gdal.Open('data/arg-int8.arg')
+
+    if ds.GetRasterBand(1).GetNoDataValue() != 128:
+        return 'fail'
+
+    return 'success'
+
 def arg_destroy():
     if gdaltest.argDriver is None:
         return 'skip'
@@ -275,6 +295,7 @@ gdaltest_list = [
     arg_getgeotransform,
     arg_blocksize,
     arg_layername,
+    arg_nodata,
     arg_destroy]
 
 if __name__ == '__main__':

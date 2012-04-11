@@ -316,7 +316,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
             "int8 data is not supported in GDAL -- mapped to uint8");
         eType = GDT_Byte; 
         nPixelOffset = 1;
-        fNoDataValue = 255;
+        fNoDataValue = 128;
     }
     else if (EQUAL(pszJSONStr, "int16")) {
         eType = GDT_Int16;
