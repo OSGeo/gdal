@@ -151,7 +151,7 @@ LDEBUG= /debug
 STDCALL=YES
 
 # Version number embedded in DLL name. 
-!IFNDEF
+!IFNDEF VERSION
 VERSION =	19
 !ENDIF
 
