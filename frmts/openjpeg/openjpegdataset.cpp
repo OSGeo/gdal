@@ -172,6 +172,8 @@ class JP2OpenJPEGDataset : public GDALPamDataset
     virtual int         GetGCPCount();
     virtual const char  *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
+
+    static void         WriteBox(VSILFILE* fp, GDALJP2Box* poBox);
 };
 
 /************************************************************************/
@@ -888,6 +890,25 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                           WriteBox()                                 */
+/************************************************************************/
+
+void JP2OpenJPEGDataset::WriteBox(VSILFILE* fp, GDALJP2Box* poBox)
+{
+    GUInt32   nLBox;
+    GUInt32   nTBox;
+
+    nLBox = (int) poBox->GetDataLength();
+    nLBox = CPL_MSBWORD32( nLBox );
+
+    memcpy(&nTBox, poBox->GetType(), 4);
+
+    VSIFWriteL( &nLBox, 4, 1, fp );
+    VSIFWriteL( &nTBox, 4, 1, fp );
+    VSIFWriteL(poBox->GetWritableData(), 1, (int) poBox->GetDataLength(), fp);
+}
+
+/************************************************************************/
 /*                          CreateCopy()                                */
 /************************************************************************/
 
@@ -1289,11 +1310,50 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     opj_stream_destroy(pStream);
     opj_image_destroy(psImage);
     opj_destroy_codec(pCodec);
-    VSIFCloseL(fp);
+
+/* -------------------------------------------------------------------- */
+/*      Setup GML and GeoTIFF information.                              */
+/* -------------------------------------------------------------------- */
+    GDALJP2Metadata oJP2MD;
+
+    int bWriteBoxes = FALSE;
+    const char* pszWKT = poSrcDS->GetProjectionRef();
+    if( pszWKT != NULL && pszWKT[0] != '\0' )
+    {
+        bWriteBoxes = TRUE;
+        oJP2MD.SetProjection( pszWKT );
+    }
+    double adfGeoTransform[6];
+    if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+    {
+        bWriteBoxes = TRUE;
+        oJP2MD.SetGeoTransform( adfGeoTransform );
+    }
+
+    if( bWriteBoxes )
+    {
+        if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) )
+        {
+            GDALJP2Box* poBox = oJP2MD.CreateGMLJP2(nXSize,nYSize);
+            VSIFSeekL(fp, 0, SEEK_END);
+            WriteBox(fp, poBox);
+            delete poBox;
+        }
+        if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) )
+        {
+            GDALJP2Box* poBox = oJP2MD.CreateJP2GeoTIFF();
+            VSIFSeekL(fp, 0, SEEK_END);
+            WriteBox(fp, poBox);
+            delete poBox;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxilary pam information.         */
 /* -------------------------------------------------------------------- */
+
+    VSIFCloseL(fp);
+
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
     JP2OpenJPEGDataset *poDS = (JP2OpenJPEGDataset*) JP2OpenJPEGDataset::Open(&oOpenInfo);
 
@@ -1335,6 +1395,8 @@ void GDALRegister_JP2OpenJPEG()
 "       <Value>JP2</Value>"
 "       <Value>J2K</Value>"
 "   </Option>"
+"   <Option name='GeoJP2' type='boolean' description='defaults to ON'/>"
+"   <Option name='GMLJP2' type='boolean' description='defaults to ON'/>"
 "   <Option name='QUALITY' type='float' description='Quality. 0-100' default='25'/>"
 "   <Option name='REVERSIBLE' type='boolean' description='True if the compression is reversible' default='false'/>"
 "   <Option name='RESOLUTIONS' type='int' description='Number of resolutions. 1-7' default='6'/>"
