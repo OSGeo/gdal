@@ -32,7 +32,8 @@ import os
 import sys
 import string
 import array
-import gdal
+from osgeo import gdal
+from osgeo import osr
 
 sys.path.append( '../pymod' )
 
@@ -118,8 +119,50 @@ def jp2openjpeg_4():
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'JP2OpenJPEG', 'byte.jp2', 1, 50054, options = ['REVERSIBLE=YES', 'QUALITY=100'] )
-    if tst.testCreateCopy(  ) != 'success':
+    src_ds = gdal.Open('data/byte.jp2')
+    src_wkt = src_ds.GetProjectionRef()
+    src_gt = src_ds.GetGeoTransform()
+
+    out_ds = gdal.GetDriverByName('JP2OpenJPEG').CreateCopy('tmp/jp2openjpeg_4.jp2', src_ds, options = ['REVERSIBLE=YES', 'QUALITY=100'])
+    out_ds = None
+
+    try:
+        os.unlink('tmp/jp2openjpeg_4.jp2.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open('tmp/jp2openjpeg_4.jp2')
+    cs = ds.GetRasterBand(1).Checksum()
+    got_wkt = ds.GetProjectionRef()
+    got_gt = ds.GetGeoTransform()
+    ds = None
+
+    try:
+        os.unlink('tmp/jp2openjpeg_4.jp2')
+    except:
+        pass
+
+    sr1 = osr.SpatialReference()
+    sr1.SetFromUserInput(got_wkt)
+    sr2 = osr.SpatialReference()
+    sr2.SetFromUserInput(src_wkt)
+
+    if sr1.IsSame(sr2) == 0:
+        gdaltest.post_reason('bad spatial reference')
+        print(got_wkt)
+        print(src_wkt)
+        return 'fail'
+
+    for i in range(6):
+        if abs(got_gt[i] - src_gt[i]) > 1e-8:
+            gdaltest.post_reason('bad geotransform')
+            print(got_gt)
+            print(src_gt)
+            return 'fail'
+
+    if cs != 50054:
+        gdaltest.post_reason('bad checksum')
+        print(cs)
         return 'fail'
 
     return 'success'
