@@ -234,11 +234,15 @@ GIntBig GDALJP2Box::GetDataLength()
 /*                            DumpReadable()                            */
 /************************************************************************/
 
-int GDALJP2Box::DumpReadable( FILE *fpOut )
+int GDALJP2Box::DumpReadable( FILE *fpOut, int nIndentLevel )
 
 {
     if( fpOut == NULL )
         fpOut = stdout;
+
+    int i;
+    for(i=0;i<nIndentLevel;i++)
+        fprintf( fpOut, "  " );
 
     fprintf( fpOut, "  Type=%s, Offset=%d/%d, Data Size=%d",
              szBoxType, (int) nBoxOffset, (int) nDataOffset, 
@@ -259,15 +263,16 @@ int GDALJP2Box::DumpReadable( FILE *fpOut )
              strlen(oSubBox.GetType()) > 0;
              oSubBox.ReadNextChild( this ) )
         {
-            oSubBox.DumpReadable( fpOut );
+            oSubBox.DumpReadable( fpOut, nIndentLevel + 1 );
         }
-
-        printf( "  (end of %s subboxes)\n", szBoxType );
     }
 
     if( EQUAL(GetType(),"uuid") )
     {
         char *pszHex = CPLBinaryToHex( 16, GetUUID() );
+        for(i=0;i<nIndentLevel;i++)
+            fprintf( fpOut, "  " );
+
         fprintf( fpOut, "    UUID=%s", pszHex );
 
         if( EQUAL(pszHex,"B14BF8BD083D4B43A5AE8CD7D5A6CE03") )
