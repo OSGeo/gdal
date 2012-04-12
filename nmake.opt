@@ -151,7 +151,9 @@ LDEBUG= /debug
 STDCALL=YES
 
 # Version number embedded in DLL name. 
+!IFNDEF
 VERSION =	19
+!ENDIF
 
 # Comment the following out if you want PAM supported disabled
 # by default.  
