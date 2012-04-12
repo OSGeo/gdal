@@ -74,7 +74,7 @@ public:
 
     int         IsSuperBox();
 
-    int         DumpReadable( FILE * );
+    int         DumpReadable( FILE *, int nIndentLevel = 0 );
 
     VSILFILE   *GetFILE() { return fpVSIL; }
 
