@@ -210,10 +210,15 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
     GDALJP2Box oBox( fpVSIL );
     int iBox = 0;
 
-    oBox.ReadFirst(); 
+    oBox.ReadFirst();
 
     while( strlen(oBox.GetType()) > 0 )
     {
+#ifdef DEBUG
+        if (CSLTestBoolean(CPLGetConfigOption("DUMP_JP2_BOXES", "NO")))
+            oBox.DumpReadable(stderr);
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Collect geotiff box.                                            */
 /* -------------------------------------------------------------------- */
