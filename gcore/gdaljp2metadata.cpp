@@ -228,6 +228,11 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
         {
             nGeoTIFFSize = (int) oBox.GetDataLength();
             pabyGeoTIFFData = oBox.ReadBoxData();
+            if (pabyGeoTIFFData == NULL)
+            {
+                CPLDebug("GDALJP2", "Cannot read data for UUID GeoTIFF box");
+                nGeoTIFFSize = 0;
+            }
         }
 
 /* -------------------------------------------------------------------- */
@@ -239,7 +244,8 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
             nMSIGSize = (int) oBox.GetDataLength();
             pabyMSIGData = oBox.ReadBoxData();
 
-            if( nMSIGSize < 70 
+            if( nMSIGSize < 70
+                || pabyMSIGData == NULL
                 || memcmp( pabyMSIGData, "MSIG/", 5 ) != 0 )
             {
                 CPLFree( pabyMSIGData );
@@ -269,7 +275,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
             if( EQUAL(oSubBox.GetType(),"lbl ") )
             {
                 char *pszLabel = (char *) oSubBox.ReadBoxData();
-                if( EQUAL(pszLabel,"gml.data") )
+                if( pszLabel != NULL && EQUAL(pszLabel,"gml.data") )
                 {
                     CollectGMLData( &oBox );
                 }
@@ -311,9 +317,10 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
                     
                     // we will use either the resd or resc box, which ever
                     // happens to be first.  Should we prefer resd?
-                    if( oResBox.GetDataLength() == 10 )
+                    unsigned char *pabyResData = NULL;
+                    if( oResBox.GetDataLength() == 10 &&
+                        (pabyResData = oResBox.ReadBoxData()) != NULL )
                     {
-                        unsigned char *pabyResData = oResBox.ReadBoxData();
                         int nVertNum, nVertDen, nVertExp;
                         int nHorzNum, nHorzDen, nHorzExp;
                         
