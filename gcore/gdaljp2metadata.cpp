@@ -210,7 +210,8 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
     GDALJP2Box oBox( fpVSIL );
     int iBox = 0;
 
-    oBox.ReadFirst();
+    if (!oBox.ReadFirst())
+        return FALSE;
 
     while( strlen(oBox.GetType()) > 0 )
     {
@@ -350,9 +351,10 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
             }
         }
 
-        oBox.ReadNext();
+        if (!oBox.ReadNext())
+            break;
     }
-    
+
     return TRUE;
 }
 
