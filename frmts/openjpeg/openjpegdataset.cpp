@@ -898,7 +898,7 @@ void JP2OpenJPEGDataset::WriteBox(VSILFILE* fp, GDALJP2Box* poBox)
     GUInt32   nLBox;
     GUInt32   nTBox;
 
-    nLBox = (int) poBox->GetDataLength();
+    nLBox = (int) poBox->GetDataLength() + 8;
     nLBox = CPL_MSBWORD32( nLBox );
 
     memcpy(&nTBox, poBox->GetType(), 4);
