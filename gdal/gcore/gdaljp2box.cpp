@@ -183,6 +183,12 @@ int GDALJP2Box::ReadBox()
         nDataOffset += 16;
     }
 
+    if( GetDataLength() < 0 )
+    {
+        CPLDebug("GDALJP2", "Invalid length for box %s", szBoxType);
+        return FALSE;
+    }
+
     return TRUE;
 }
 
