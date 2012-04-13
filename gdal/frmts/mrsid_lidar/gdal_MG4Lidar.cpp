@@ -35,6 +35,7 @@
 * POSSIBILITY OF SUCH DAMAGE.
 ****************************************************************************/
 #include "lidar/MG4PointReader.h"
+#include "lidar/FileIO.h"
 #include "lidar/Error.h"
 #include "lidar/Version.h"
 #include <float.h>
@@ -61,9 +62,9 @@ class MG4LidarRasterBand;
 class CropableMG4PointReader : public MG4PointReader
 {
    CONCRETE_OBJECT(CropableMG4PointReader);
-   void init (const char *path, Bounds *bounds)
+   void init (IO *io, Bounds *bounds)
    {
-      MG4PointReader::init(path);
+      MG4PointReader::init(io);
       if (bounds != NULL)
          setBounds(*bounds);
    }
@@ -86,6 +87,7 @@ public:
    const char *GetProjectionRef();
 protected:
    MG4PointReader *reader;
+   FileIO *fileIO;
    CPLErr OpenZoomLevel( int Zoom );
    PointInfo requiredChannels;
    int nOverviewCount;
@@ -525,6 +527,7 @@ double MG4LidarRasterBand::GetNoDataValue( int *pbSuccess )
 MG4LidarDataset::MG4LidarDataset()
 {
    reader = NULL;
+   fileIO = NULL;
 
    poXMLPCView = NULL;
    ownsXML = false;
@@ -550,6 +553,7 @@ MG4LidarDataset::~MG4LidarDataset()
       CPLDestroyXMLNode(poXMLPCView);
 
    RELEASE(reader);
+   RELEASE(fileIO);
 }
 
 /************************************************************************/
@@ -767,9 +771,32 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    poDS->poXMLPCView = pxmlPCView;
    poDS->ownsXML = true;
    poDS->reader = CropableMG4PointReader::create();
+   poDS->fileIO = FileIO::create();
+
    const char * pszClipExtent = CPLGetXMLValue(pxmlPCView, "ClipBox", NULL);
    MG4PointReader *r = MG4PointReader::create();
-   r->init(openinfo.pszFilename);
+   FileIO* io = FileIO::create();
+
+#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
+   bool bIsUTF8 = CSLTestBoolean( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) );
+   wchar_t *pwszFilename = NULL;
+   if (bIsUTF8)
+   {
+      pwszFilename = CPLRecodeToWChar(openinfo.pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2);
+      if (!pwszFilename)
+      {
+         RELEASE(r);
+         RELEASE(io);
+         return NULL;
+       }
+       io->init(pwszFilename, "r");
+   }
+   else
+      io->init(openinfo.pszFilename, "r");
+#else
+   io->init(openinfo.pszFilename, "r");
+#endif
+   r->init(io);
    Bounds bounds = r->getBounds();
    if (pszClipExtent)
    {
@@ -782,6 +809,11 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
          CSLDestroy(papszClipExtent);
          delete poDS;
          RELEASE(r);
+         RELEASE(io);
+#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
+         if ( pwszFilename ) 
+            CPLFree( pwszFilename );
+#endif
          return NULL;
       }
       if (!EQUAL(papszClipExtent[0], "NOFILTER"))
@@ -802,7 +834,18 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
       CSLDestroy(papszClipExtent);
    }
 
-   dynamic_cast<CropableMG4PointReader *>(poDS->reader)->init(openinfo.pszFilename, &bounds);
+#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
+   if (bIsUTF8)
+   {
+      poDS->fileIO->init(pwszFilename, "r");
+      CPLFree(pwszFilename);
+   }
+   else
+      poDS->fileIO->init( openinfo.pszFilename, "r" );
+#else
+   poDS->fileIO->init( openinfo.pszFilename, "r" );
+#endif
+   dynamic_cast<CropableMG4PointReader *>(poDS->reader)->init(poDS->fileIO, &bounds);
    poDS->SetDescription(poOpenInfo->pszFilename);
    poDS->TryLoadXML(); 
 
@@ -815,6 +858,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    MaxRasterSize = MAX(poDS->reader->getBounds().x.length()/cell_side, poDS->reader->getBounds().y.length()/cell_side);
 
    RELEASE(r);
+   RELEASE(io);
 
    // Calculate the number of levels to expose.  The highest level correpsonds to a
    // raster size of 256 on the longest side.
