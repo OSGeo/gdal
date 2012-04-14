@@ -1209,6 +1209,65 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Setup GML and GeoTIFF information.                              */
+/* -------------------------------------------------------------------- */
+    GDALJP2Metadata oJP2MD;
+
+    int bWriteGeoBoxes = FALSE;
+    if( eCodecFormat == CODEC_JP2 &&
+        (CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) ||
+         CSLFetchBoolean( papszOptions, "GeoJP2", TRUE )) )
+    {
+        const char* pszWKT = poSrcDS->GetProjectionRef();
+        if( pszWKT != NULL && pszWKT[0] != '\0' )
+        {
+            bWriteGeoBoxes = TRUE;
+            oJP2MD.SetProjection( pszWKT );
+        }
+        double adfGeoTransform[6];
+        if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+        {
+            bWriteGeoBoxes = TRUE;
+            oJP2MD.SetGeoTransform( adfGeoTransform );
+        }
+    }
+
+    /* The file pointer should have been set 8 bytes after the */
+    /* last written bytes, because openjpeg has reserved it */
+    /* for the jp2c header, but still not written. */
+    vsi_l_offset nPosOriginalJP2C = 0;
+    vsi_l_offset nPosRealJP2C = 0;
+    GByte abyBackupGMLJP2orGeoJP2BoxHeader[8];
+
+    if( bWriteGeoBoxes )
+    {
+        nPosOriginalJP2C = VSIFTellL(fp) - 8;
+        VSIFSeekL(fp, nPosOriginalJP2C, SEEK_SET);
+
+        if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) )
+        {
+            GDALJP2Box* poBox = oJP2MD.CreateGMLJP2(nXSize,nYSize);
+            WriteBox(fp, poBox);
+            delete poBox;
+        }
+        if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) )
+        {
+            GDALJP2Box* poBox = oJP2MD.CreateJP2GeoTIFF();
+            WriteBox(fp, poBox);
+            delete poBox;
+        }
+
+        nPosRealJP2C = VSIFTellL(fp);
+
+        /* Backup the GMLJP2 or GeoJP2 box header */
+        /* that will be overwritten by opj_end_compress() */
+        VSIFSeekL(fp, nPosOriginalJP2C, SEEK_SET);
+        VSIFReadL(abyBackupGMLJP2orGeoJP2BoxHeader, 1, 8, fp);
+
+        VSIFSeekL(fp, nPosRealJP2C + 8, SEEK_SET);
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Iterate over the tiles                                          */
 /* -------------------------------------------------------------------- */
     pfnProgress( 0.0, NULL, pProgressData );
@@ -1311,48 +1370,27 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     opj_image_destroy(psImage);
     opj_destroy_codec(pCodec);
 
-/* -------------------------------------------------------------------- */
-/*      Setup GML and GeoTIFF information.                              */
-/* -------------------------------------------------------------------- */
-    GDALJP2Metadata oJP2MD;
+    /* Move the jp2c box header at its real position */
+    /* and restore the GMLJP2 or GeoJP2 box header that */
+    /* has been overwritten */
+    if( bWriteGeoBoxes )
+    {
+        GByte abyJP2CHeader[8];
 
-    int bWriteBoxes = FALSE;
-    const char* pszWKT = poSrcDS->GetProjectionRef();
-    if( pszWKT != NULL && pszWKT[0] != '\0' )
-    {
-        bWriteBoxes = TRUE;
-        oJP2MD.SetProjection( pszWKT );
-    }
-    double adfGeoTransform[6];
-    if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
-    {
-        bWriteBoxes = TRUE;
-        oJP2MD.SetGeoTransform( adfGeoTransform );
+        VSIFSeekL(fp, nPosOriginalJP2C, SEEK_SET);
+        VSIFReadL(abyJP2CHeader, 1, 8, fp);
+
+        VSIFSeekL(fp, nPosOriginalJP2C, SEEK_SET);
+        VSIFWriteL(abyBackupGMLJP2orGeoJP2BoxHeader, 1, 8, fp);
+
+        VSIFSeekL(fp, nPosRealJP2C, SEEK_SET);
+        VSIFWriteL(abyJP2CHeader, 1, 8, fp);
     }
 
-    if( bWriteBoxes )
-    {
-        if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) )
-        {
-            GDALJP2Box* poBox = oJP2MD.CreateGMLJP2(nXSize,nYSize);
-            VSIFSeekL(fp, 0, SEEK_END);
-            WriteBox(fp, poBox);
-            delete poBox;
-        }
-        if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) )
-        {
-            GDALJP2Box* poBox = oJP2MD.CreateJP2GeoTIFF();
-            VSIFSeekL(fp, 0, SEEK_END);
-            WriteBox(fp, poBox);
-            delete poBox;
-        }
-    }
-
+    VSIFCloseL(fp);
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxilary pam information.         */
 /* -------------------------------------------------------------------- */
-
-    VSIFCloseL(fp);
 
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
     JP2OpenJPEGDataset *poDS = (JP2OpenJPEGDataset*) JP2OpenJPEGDataset::Open(&oOpenInfo);
