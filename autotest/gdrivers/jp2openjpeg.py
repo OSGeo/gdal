@@ -114,7 +114,7 @@ def jp2openjpeg_3():
 ###############################################################################
 # Test copying byte.jp2
 
-def jp2openjpeg_4():
+def jp2openjpeg_4(out_filename = 'tmp/jp2openjpeg_4.jp2'):
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
@@ -123,24 +123,20 @@ def jp2openjpeg_4():
     src_wkt = src_ds.GetProjectionRef()
     src_gt = src_ds.GetGeoTransform()
 
-    out_ds = gdal.GetDriverByName('JP2OpenJPEG').CreateCopy('tmp/jp2openjpeg_4.jp2', src_ds, options = ['REVERSIBLE=YES', 'QUALITY=100'])
+    gdal.Unlink(out_filename)
+
+    out_ds = gdal.GetDriverByName('JP2OpenJPEG').CreateCopy(out_filename, src_ds, options = ['REVERSIBLE=YES', 'QUALITY=100'])
     out_ds = None
 
-    try:
-        os.unlink('tmp/jp2openjpeg_4.jp2.aux.xml')
-    except:
-        pass
+    gdal.Unlink(out_filename + '.aux.xml')
 
-    ds = gdal.Open('tmp/jp2openjpeg_4.jp2')
+    ds = gdal.Open(out_filename)
     cs = ds.GetRasterBand(1).Checksum()
     got_wkt = ds.GetProjectionRef()
     got_gt = ds.GetGeoTransform()
     ds = None
 
-    try:
-        os.unlink('tmp/jp2openjpeg_4.jp2')
-    except:
-        pass
+    gdal.Unlink(out_filename)
 
     sr1 = osr.SpatialReference()
     sr1.SetFromUserInput(got_wkt)
@@ -167,6 +163,10 @@ def jp2openjpeg_4():
 
     return 'success'
 
+
+def jp2openjpeg_4_vsimem():
+    return jp2openjpeg_4('/vsimem/jp2openjpeg_4.jp2')
+
 ###############################################################################
 # Test copying int16.jp2
 
@@ -175,7 +175,7 @@ def jp2openjpeg_5():
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'JP2OpenJPEG', 'int16.jp2', 1, None, options = ['RESOLUTIONS=1','REVERSIBLE=YES', 'QUALITY=100'] )
+    tst = gdaltest.GDALTest( 'JP2OpenJPEG', 'int16.jp2', 1, None, options = ['RESOLUTIONS=1','REVERSIBLE=YES', 'QUALITY=100', 'CODEC=J2K'] )
     return tst.testCreateCopy()
 
 ###############################################################################
@@ -417,6 +417,7 @@ gdaltest_list = [
     jp2openjpeg_2,
     jp2openjpeg_3,
     jp2openjpeg_4,
+    jp2openjpeg_4_vsimem,
     jp2openjpeg_5,
     jp2openjpeg_6,
     jp2openjpeg_7,
