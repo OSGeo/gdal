@@ -809,3 +809,38 @@ CPLErr GDALWMSRasterBand::SetColorInterpretation( GDALColorInterp eNewInterp )
     return CE_None;
 }
 
+// Utility function, returns a value from a vector corresponding to the band index
+// or the first entry
+static double getBandValue(std::vector<double> &v,size_t idx)
+{
+    idx--;
+    if (v.size()>idx) return v[idx];
+    return v[0];
+}
+
+double GDALWMSRasterBand::GetNoDataValue( int *pbSuccess)
+{
+    std::vector<double> &v=m_parent_dataset->vNoData;
+    if (v.size()==0)
+        return GDALPamRasterBand::GetNoDataValue(pbSuccess);
+    if (pbSuccess) *pbSuccess=TRUE;
+    return getBandValue(v,nBand);
+}
+
+double GDALWMSRasterBand::GetMinimum( int *pbSuccess)
+{
+    std::vector<double> &v=m_parent_dataset->vMin;
+    if (v.size()==0)
+        return GDALPamRasterBand::GetMinimum(pbSuccess);
+    if (pbSuccess) *pbSuccess=TRUE;
+    return getBandValue(v,nBand);
+}
+
+double GDALWMSRasterBand::GetMaximum( int *pbSuccess)
+{
+    std::vector<double> &v=m_parent_dataset->vMax;
+    if (v.size()==0)
+        return GDALPamRasterBand::GetMaximum(pbSuccess);
+    if (pbSuccess) *pbSuccess=TRUE;
+    return getBandValue(v,nBand);
+}
