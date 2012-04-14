@@ -1680,9 +1680,9 @@ dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH(fgdb,[  --with-fgdb[=ARG]        Include ESRI File Geodatabase support (ARG=FGDP API Path, yes or no)],,)
 
-if test "$with_fgdb" = "no" ; then
+FGDB_ENABLED=no
 
-  FGDB_ENABLED=no
+if test "$with_fgdb" = "no" ; then
 
   echo "FGDB support disabled."
 
@@ -3697,7 +3697,7 @@ if test -z "$BINDINGS"; then
 else
     WHAT_BINDINGS="$BINDINGS"
 fi
-LOC_MSG([  SWIG Bindings:          ${WHAT_BINDINGS}])
+LOC_MSG([  SWIG Bindings:             ${WHAT_BINDINGS}])
 LOC_MSG()
 LOC_MSG([  Statically link PROJ.4:    ${PROJ_STATIC}])
 LOC_MSG([  enable OGR building:       ${OGR_ENABLED}])
