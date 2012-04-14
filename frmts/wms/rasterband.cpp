@@ -844,3 +844,8 @@ double GDALWMSRasterBand::GetMaximum( int *pbSuccess)
     if (pbSuccess) *pbSuccess=TRUE;
     return getBandValue(v,nBand);
 }
+
+GDALColorTable *GDALWMSRasterBand::GetColorTable()
+{
+    return m_parent_dataset->m_poColorTable;
+}

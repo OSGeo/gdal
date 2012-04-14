@@ -221,6 +221,7 @@ public:
     void WMSSetDataType(GDALDataType type);
     void WMSSetDataWindow(GDALWMSDataWindow &window);
     void WMSSetBandsCount(int count);
+    void SetColorTable(GDALColorTable *pct) { m_poColorTable=pct; }
 
     void WMSSetNoDataValue(const char * pszNoData);
     void WMSSetMinValue(const char* pszMin);
@@ -254,6 +255,7 @@ protected:
     GDALWMSMiniDriverCapabilities m_mini_driver_caps;
     GDALWMSCache *m_cache;
     CPLString m_projection;
+    GDALColorTable *m_poColorTable;
     std::vector<double> vNoData, vMin, vMax;
     int m_overview_count;
     GDALDataType m_data_type;
@@ -299,6 +301,7 @@ public:
     virtual double GetNoDataValue( int * );
     virtual double GetMinimum( int * );
     virtual double GetMaximum( int * );
+    virtual GDALColorTable *GetColorTable();
     virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, char **options);
 
     virtual GDALColorInterp GetColorInterpretation();
