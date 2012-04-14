@@ -221,6 +221,11 @@ public:
     void WMSSetDataType(GDALDataType type);
     void WMSSetDataWindow(GDALWMSDataWindow &window);
     void WMSSetBandsCount(int count);
+
+    void WMSSetNoDataValue(const char * pszNoData);
+    void WMSSetMinValue(const char* pszMin);
+    void WMSSetMaxValue(const char* pszMax);
+
     void mSetBand(int i, GDALRasterBand *band) { SetBand(i,band); };
     GDALWMSRasterBand *mGetBand(int i) { return reinterpret_cast<GDALWMSRasterBand *>(GetRasterBand(i)); };
 
@@ -249,6 +254,7 @@ protected:
     GDALWMSMiniDriverCapabilities m_mini_driver_caps;
     GDALWMSCache *m_cache;
     CPLString m_projection;
+    std::vector<double> vNoData, vMin, vMax;
     int m_overview_count;
     GDALDataType m_data_type;
     int m_block_size_x, m_block_size_y;
@@ -290,6 +296,9 @@ public:
     GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, double scale);
     virtual ~GDALWMSRasterBand();
     void AddOverview(double scale);
+    virtual double GetNoDataValue( int * );
+    virtual double GetMinimum( int * );
+    virtual double GetMaximum( int * );
     virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, char **options);
 
     virtual GDALColorInterp GetColorInterpretation();

@@ -410,6 +410,21 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
         }
     }
 
+    // Same for Min, Max and NoData, defined per band or per dataset
+    // If they are set as null strings, they clear the server declared values
+    if (ret == CE_None) {
+       // Data values are attributes, they include NoData Min and Max
+       // TODO: document those options
+       if (0!=CPLGetXMLNode(config,"DataValues")) {
+           const char *nodata=CPLGetXMLValue(config,"DataValues.NoData",NULL);
+           if (nodata!=NULL) WMSSetNoDataValue(nodata);
+           const char *min=CPLGetXMLValue(config,"DataValues.min",NULL);
+           if (min!=NULL) WMSSetMinValue(min);
+           const char *max=CPLGetXMLValue(config,"DataValues.max",NULL);
+           if (max!=NULL) WMSSetMaxValue(max);
+       }
+    }
+
     if (ret == CE_None) {
         CPLXMLNode *cache_node = CPLGetXMLNode(config, "Cache");
         if (cache_node != NULL) {
@@ -554,6 +569,32 @@ void GDALWMSDataset::WMSSetDefaultOverviewCount(int overview_count)
 void GDALWMSDataset::WMSSetNeedsDataWindow(int flag)
 {
     m_bNeedsDataWindow = flag;
+}
+
+static void list2vec(std::vector<double> &v,const char *pszList)
+{
+    if ((pszList==NULL)||(pszList[0]==0)) return;
+    char **papszTokens=CSLTokenizeString2(pszList," \t\n\r",
+        CSLT_STRIPLEADSPACES|CSLT_STRIPENDSPACES);
+    v.clear();
+    for (int i=0;i<CSLCount(papszTokens);i++)
+        v.push_back(CPLStrtod(papszTokens[i],NULL));
+    CSLDestroy(papszTokens);
+}
+
+void GDALWMSDataset::WMSSetNoDataValue(const char * pszNoData)
+{
+    list2vec(vNoData,pszNoData);
+}
+
+void GDALWMSDataset::WMSSetMinValue(const char * pszMin)
+{
+    list2vec(vMin,pszMin);
+}
+
+void GDALWMSDataset::WMSSetMaxValue(const char * pszMax)
+{
+    list2vec(vMax,pszMax);
 }
 
 CPLErr GDALWMSDataset::AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, char **options) {
