@@ -46,7 +46,7 @@ CPL_CVSID("$Id$");
 void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDecimalSep, int nPrecision )
 {
     int i;
-    int bHasTruncated = FALSE;
+    int nTruncations = 0;
     char szFormat[16];
     sprintf(szFormat, "%%.%df", nPrecision);
 
@@ -112,10 +112,9 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
     /* -------------------------------------------------------------------- */
     /*      Detect trailing 99999X's as they are likely roundoff error.     */
     /* -------------------------------------------------------------------- */
-        if( !bHasTruncated &&
-            i > 10 &&
+        if( i > 10 &&
             iDotPos >= 0 &&
-            nPrecision >= 15)
+            nPrecision + nTruncations >= 15)
         {
             if (/*pszBuffer[i-1] == '9' && */
                  pszBuffer[i-2] == '9' 
@@ -124,8 +123,10 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
                 && pszBuffer[i-5] == '9' 
                 && pszBuffer[i-6] == '9' )
             {
-                snprintf(pszBuffer, nBufferLen, "%.9f", dfVal);
-                bHasTruncated = TRUE;
+                nPrecision --;
+                nTruncations ++;
+                sprintf(szFormat, "%%.%df", nPrecision);
+                snprintf(pszBuffer, nBufferLen, szFormat, dfVal);
                 continue;
             }
             else if (i - 9 > iDotPos && /*pszBuffer[i-1] == '9' && */
@@ -138,9 +139,10 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal, char chDeci
                     && pszBuffer[i-8] == '9'
                     && pszBuffer[i-9] == '9')
             {
-                sprintf(szFormat, "%%.%df", MIN(5,12 - nCountBeforeDot));
+                nPrecision --;
+                nTruncations ++;
+                sprintf(szFormat, "%%.%df", nPrecision);
                 snprintf(pszBuffer, nBufferLen, szFormat, dfVal);
-                bHasTruncated = TRUE;
                 continue;
             }
         }
