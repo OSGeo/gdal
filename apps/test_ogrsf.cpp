@@ -40,6 +40,7 @@ int     bVerbose = TRUE;
 static void Usage();
 static int TestOGRLayer( OGRDataSource * poDS, OGRLayer * poLayer, int bIsSQLLayer );
 static int TestInterleavedReading( const char* pszDataSource, char** papszLayers );
+static int TestErrorConditions( OGRDataSource * poDS );
 
 /************************************************************************/
 /*                                main()                                */
@@ -230,6 +231,8 @@ int main( int nArgc, char ** papszArgv )
             
             papszLayerIter ++;
         }
+
+        bRet &= TestErrorConditions(poDS);
 
         if (CSLCount(papszLayers) >= 2)
         {
@@ -1613,5 +1616,117 @@ bye:
     OGRFeature::DestroyFeature(poFeature22);
     OGRDataSource::DestroyDataSource(poDS);
     OGRDataSource::DestroyDataSource(poDS2);
+    return bRet;
+}
+
+/************************************************************************/
+/*                          TestErrorConditions()                       */
+/************************************************************************/
+
+static int TestErrorConditions( OGRDataSource * poDS )
+{
+    int bRet = TRUE;
+    OGRLayer* poLyr;
+
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+
+    if (poDS->TestCapability("fake_capability"))
+    {
+        printf( "ERROR: TestCapability(\"fake_capability\") should have returned FALSE\n" );
+        bRet = FALSE;
+        goto bye;
+    }
+
+    if (poDS->GetLayer(-1) != NULL)
+    {
+        printf( "ERROR: GetLayer(-1) should have returned NULL\n" );
+        bRet = FALSE;
+        goto bye;
+    }
+
+    if (poDS->GetLayer(poDS->GetLayerCount()) != NULL)
+    {
+        printf( "ERROR: GetLayer(poDS->GetLayerCount()) should have returned NULL\n" );
+        bRet = FALSE;
+        goto bye;
+    }
+
+    if (poDS->GetLayerByName("non_existing_layer") != NULL)
+    {
+        printf( "ERROR: GetLayerByName(\"non_existing_layer\") should have returned NULL\n" );
+        bRet = FALSE;
+        goto bye;
+    }
+
+    poLyr = poDS->ExecuteSQL("a fake SQL command", NULL, NULL);
+    if (poLyr != NULL)
+    {
+        poDS->ReleaseResultSet(poLyr);
+        printf( "ERROR: ExecuteSQL(\"a fake SQL command\") should have returned NULL\n" );
+        bRet = FALSE;
+        goto bye;
+    }
+
+    poLyr = poDS->GetLayer(0);
+    if (poLyr == NULL)
+        goto bye;
+
+    if (poLyr->TestCapability("fake_capability"))
+    {
+        printf( "ERROR: poLyr->TestCapability(\"fake_capability\") should have returned FALSE\n" );
+        bRet = FALSE;
+        goto bye;
+    }
+
+    if (poLyr->GetFeature(-10) != NULL)
+    {
+        printf( "ERROR: GetFeature(-10) should have returned NULL\n" );
+        bRet = FALSE;
+        goto bye;
+    }
+
+    if (poLyr->GetFeature(2000000000) != NULL)
+    {
+        printf( "ERROR: GetFeature(2000000000) should have returned NULL\n" );
+        bRet = FALSE;
+        goto bye;
+    }
+
+#if 0
+    /* PG driver doesn't issue errors when the feature doesn't exist */
+    /* So, not sure if emitting error is expected or not */
+
+    if (poLyr->DeleteFeature(-10) == OGRERR_NONE)
+    {
+        printf( "ERROR: DeleteFeature(-10) should have returned an error\n" );
+        bRet = FALSE;
+        goto bye;
+    }
+
+    if (poLyr->DeleteFeature(2000000000) == OGRERR_NONE)
+    {
+        printf( "ERROR: DeleteFeature(2000000000) should have returned an error\n" );
+        bRet = FALSE;
+        goto bye;
+    }
+#endif
+
+    if (poLyr->SetNextByIndex(-10) != OGRERR_FAILURE)
+    {
+        printf( "ERROR: SetNextByIndex(-10) should have returned OGRERR_FAILURE\n" );
+        bRet = FALSE;
+        goto bye;
+    }
+
+    if (poLyr->SetNextByIndex(2000000000) == OGRERR_NONE &&
+        poLyr->GetNextFeature() != NULL)
+    {
+        printf( "ERROR: SetNextByIndex(2000000000) and then GetNextFeature() should have returned NULL\n" );
+        bRet = FALSE;
+        goto bye;
+    }
+
+bye:
+    CPLPopErrorHandler();
     return bRet;
 }
