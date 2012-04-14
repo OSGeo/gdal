@@ -53,11 +53,13 @@ GDALWMSDataset::GDALWMSDataset() {
     m_default_tile_count_y = 1;
     m_default_overview_count = -1;
     m_zeroblock_on_serverexceptions = 0;
+    m_poColorTable = NULL;
 }
 
 GDALWMSDataset::~GDALWMSDataset() {
     if (m_mini_driver) delete m_mini_driver;
     if (m_cache) delete m_cache;
+    if (m_poColorTable) delete m_poColorTable;
 }
 
 CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
