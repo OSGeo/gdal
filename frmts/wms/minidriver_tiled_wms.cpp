@@ -562,8 +562,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
                 mbsx=atoi(pszWIDTH);
                 mbsy=atoi(pszHEIGHT);
                 if (m_projection_wkt.empty()) {
-                    const char* pszSRS = CSLFetchNameValue(papszTokens,"SRS");
-                    m_projection_wkt = (pszSRS) ? pszSRS : "";
+                    m_projection_wkt = CSLFetchNameValueDef(papszTokens,"SRS", "");
                     if (!m_projection_wkt.empty())
                         m_projection_wkt=ProjToWKT(m_projection_wkt);
                 }
@@ -579,7 +578,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
                 }
 
                 double x,y,X,Y;
-                if (sscanf(CSLFetchNameValue(papszTokens,"BBOX"),"%lf,%lf,%lf,%lf",&x,&y,&X,&Y)!=4)
+                if (sscanf(CSLFetchNameValueDef(papszTokens,"BBOX", ""),"%lf,%lf,%lf,%lf",&x,&y,&X,&Y)!=4)
                 {
                     CPLError(ret=CE_Failure,CPLE_AppDefined,
                         "%s Error parsing BBOX, pattern %d\n",SIG,overview_count+1);
