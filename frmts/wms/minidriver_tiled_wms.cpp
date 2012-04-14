@@ -3,7 +3,7 @@
  * Project:  WMS Client Driver
  * Purpose:  Implementation of the OnEarth Tiled WMS minidriver.
  *           http://onearth.jpl.nasa.gov/tiled.html
- * Author:   Lucian Plesea (Lucian dot Pleasea at jpl.nasa.gov)
+ * Author:   Lucian Plesea (Lucian dot Plesea at jpl.nasa.gov)
  *           Adam Nowacki
  *
  ******************************************************************************
@@ -32,6 +32,33 @@
 
 CPP_GDALWMSMiniDriverFactory(TiledWMS)
 
+static char SIG[]="GDAL_WMS TiledWMS: ";
+
+/*
+ *\brief Read a number from an xml element
+ */
+
+static double getXMLNum(CPLXMLNode *poRoot, const char *pszPath, const char *pszDefault)
+{
+    return CPLAtof(CPLGetXMLValue(poRoot,pszPath,pszDefault));
+}
+
+/*
+ *\brief Read a ColorEntry XML node, return a GDALColorEntry structure
+ *
+ */
+
+static GDALColorEntry GetXMLColorEntry(CPLXMLNode *p)
+{
+    GDALColorEntry ce;
+    ce.c1= static_cast<short>(getXMLNum(p,"c1","0"));
+    ce.c2= static_cast<short>(getXMLNum(p,"c2","0"));
+    ce.c3= static_cast<short>(getXMLNum(p,"c3","0"));
+    ce.c4= static_cast<short>(getXMLNum(p,"c4","255"));
+    return ce;
+}
+
+
 /************************************************************************/
 /*                           SearchXMLSiblings()                        */
 /************************************************************************/
@@ -57,21 +84,20 @@ static CPLXMLNode *SearchXMLSiblings( CPLXMLNode *psRoot, const char *pszElement
     if( psRoot == NULL || pszElement == NULL )
         return NULL;
 
-    // If the strings starts with '=', include the current node
-    if (pszElement[0]=='=') {
-	if (EQUAL(psRoot->pszValue,pszElement+1))
-	    return psRoot;
-	else return SearchXMLSiblings(psRoot,pszElement+1);
-    }
+    // If the strings starts with '=', skip it and test the root
+    // If not, start testing with the next sibling
+    if (pszElement[0]=='=')
+        pszElement++;
+    else
+        psRoot=psRoot->psNext;
 
-    // Only search the siblings, starting with psRoot->psNext
-    for (psRoot=psRoot->psNext;psRoot!=NULL;psRoot=psRoot->psNext) {
-	if ( (psRoot->eType == CXT_Element ||
-              psRoot->eType == CXT_Attribute)
-	     && EQUAL(pszElement,psRoot->pszValue) )
+    for (;psRoot!=NULL;psRoot=psRoot->psNext)
+    {
+        if ((psRoot->eType == CXT_Element ||
+             psRoot->eType == CXT_Attribute)
+             && EQUAL(pszElement,psRoot->pszValue))
             return psRoot;
     }
-
     return NULL;
 }
 
@@ -98,7 +124,7 @@ static CPLXMLNode *SearchLeafGroupName( CPLXMLNode *psRoot, const char *name )
     if( psRoot == NULL || name == NULL ) return NULL;
 
     // Has to be a leaf TileGroup with the right name
-    if (NULL==CPLSearchXMLNode(psRoot->psChild,"=TiledGroup"))
+    if (NULL==SearchXMLSiblings(psRoot->psChild,"TiledGroup"))
     {
         if (EQUAL(name,CPLGetXMLValue(psRoot,"Name","")))
         {
@@ -173,52 +199,80 @@ static int FindBbox(CPLString in) {
 /************************************************************************/
 
 /*
- * \brief Utility function to pick the right request pattern based on
- * the change request list
- *
- * @param cdata, the list of possible requests, white space separated
- * @param substs, the list of substitutions
- * @param ret The best match request
+ * \brief Build the right request pattern based on the change request list
+ * It only gets called on initialization
+ * @param cdata, possible request strings, white space separated
+ * @param substs, the list of substitutions to be applied
+ * @param keys, the list of available substitution keys
+ * @param ret The return value, a matching request or an empty string
  */
 
-void FindChangePattern( char *cdata,char **substs, CPLString &ret) {
+static void FindChangePattern( char *cdata,char **substs, char **keys, CPLString &ret)
+{
     char **papszTokens=CSLTokenizeString2(cdata," \t\n\r",
-                                          CSLT_STRIPLEADSPACES|CSLT_STRIPENDSPACES);
+                                           CSLT_STRIPLEADSPACES|CSLT_STRIPENDSPACES);
+    ret.clear();
 
     int matchcount=CSLCount(substs);
-    for (int j=0;j<CSLCount(papszTokens);j++)
+    int keycount=CSLCount(keys);
+    if (keycount<matchcount)
     {
-        int thiscount=0;
-        CPLString this_string=papszTokens[j];
-        for (int i=0;i<matchcount;i++) {
-            char *key = NULL;
-            CPLParseNameValue(substs[i],&key);
-            if (key)
-            {
-                if (std::string::npos!=this_string.find(key,0))
-                    thiscount++;
-                CPLFree(key);
-            }
-        }
-        if (thiscount==matchcount) {
-            ret=papszTokens[j];
-            break;
-        }
+        CSLDestroy(papszTokens);
+        return;
     }
 
-    // if no match is found, return first string
-    if (ret.empty()) ret=papszTokens[0];
+    // A valid string has only the keys in the substs list and none other
+    for (int j=0;j<CSLCount(papszTokens);j++)
+    {
+        ret=papszTokens[j];  // The target string
+        bool matches=true;
+
+        for (int k=0;k<keycount;k++)
+        {
+            const char *key=keys[k];
+            int sub_number=CSLPartialFindString(substs,key);
+            if (sub_number!=-1)
+            { // It is a listed match
+                // But is the match for the key position?
+                char *found_key=NULL;
+                const char *found_value=CPLParseNameValue(substs[sub_number],&found_key);
+                if (EQUAL(found_key,key))
+                {  // Should exits in the request
+                    if (std::string::npos==ret.find(key))
+                    {
+                        matches=false;
+                        break;
+                    }
+                    // Execute the substitution on the "ret" string
+                    URLSearchAndReplace(&ret,key,found_value);
+                }
+                if (found_key!=NULL) CPLFree(found_key);
+            }
+            else
+            {  // Key not in the subst list, should not match
+                if (std::string::npos!=ret.find(key))
+                {
+                    matches=false;
+                    break;
+                }
+            }
+        } // Key loop
+        if (matches)
+        {
+            CSLDestroy(papszTokens);
+            return;  // We got the string ready, all keys accounted for and substs applied
+        }
+    }
+    ret.clear();
     CSLDestroy(papszTokens);
 }
 
 GDALWMSMiniDriver_TiledWMS::GDALWMSMiniDriver_TiledWMS() {
     m_requests = NULL;
-    m_substs = NULL;
 }
 
 GDALWMSMiniDriver_TiledWMS::~GDALWMSMiniDriver_TiledWMS() {
     CSLDestroy(m_requests);
-    CSLDestroy(m_substs);
 }
 
 
@@ -233,26 +287,35 @@ double GDALWMSMiniDriver_TiledWMS::Scale(const char *request) {
 
 
 // Finds, extracts, and returns the highest resolution request string from a list, starting at item i
-void GDALWMSMiniDriver_TiledWMS::GetLowestScale(char **& list,int i, CPLString &req) {
-    req="";
+CPLString GDALWMSMiniDriver_TiledWMS::GetLowestScale(char **& list,int i)
+{
+    CPLString req;
     double scale=-1;
     int position=-1;
-    while (NULL!=list[i]) {
-	double tscale=Scale(list[i]);
-	if (tscale>=scale) {
-	    scale=tscale;
-	    position=i;
-	}
-	i++;
+    while (NULL!=list[i])
+    {
+        double tscale=Scale(list[i]);
+        if (tscale>=scale)
+        {
+            scale=tscale;
+            position=i;
+        }
+        i++;
     }
-    if (position>-1) {
+    if (position>-1)
+    {
         req=list[position];
         list = CSLRemoveStrings(list,position,1,NULL);
     }
+    return req;
 }
 
+/*
+ *\Brief Initialize minidriver with info from the server
+ */
 
-CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
+CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
+{
     CPLErr ret = CE_None;
     CPLXMLNode *tileServiceConfig=NULL;
     CPLHTTPResult *psResult=NULL;
@@ -260,6 +323,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
 
     char **requests=NULL;
     char **substs=NULL;
+    char **keys=NULL;
 
     for (int once=1;once;once--) { // Something to break out of
         // Parse info from the service
@@ -267,13 +331,13 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
         m_end_url = CPLGetXMLValue(config,"AdditionalArgs","");
         m_base_url = CPLGetXMLValue(config, "ServerURL", "");
         if (m_base_url.empty()) {
-            CPLError(ret=CE_Failure, CPLE_AppDefined, "GDALWMS, WMS mini-driver: ServerURL missing.");
+            CPLError(ret=CE_Failure, CPLE_AppDefined, "%s ServerURL missing.",SIG);
             break;
         }
 
-        m_tiledGroupName = CPLGetXMLValue(config, "TiledGroupName", "");
-        if (m_tiledGroupName.empty()) {
-            CPLError(ret=CE_Failure, CPLE_AppDefined, "GDALWMS, Tiled WMS: TiledGroupName missing.");
+        CPLString tiledGroupName (CPLGetXMLValue(config, "TiledGroupName", ""));
+        if (tiledGroupName.empty()) {
+            CPLError(ret=CE_Failure, CPLE_AppDefined, "%s TiledGroupName missing.",SIG);
             break;
         }
 
@@ -282,14 +346,12 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
         TG=CPLSearchXMLNode(config, "Change");
         while(TG!=NULL) {
             CPLString name=CPLGetXMLValue(TG,"key","");
-            if (!name.empty()) {
-                CPLString value=CPLGetXMLValue(TG,"","");
-                substs=CSLSetNameValue(substs,name,value);
-            } else {
-                CPLError(ret=CE_Failure, CPLE_AppDefined, "GDALWMS, Tiled WMS: Syntax error in configuration file.\n"
-                         "Change element needs a non-empty \"key\" attribute");
+            if (name.empty()) {
+                CPLError(ret=CE_Failure, CPLE_AppDefined,
+                    "%s Change element needs a non-empty \"key\" attribute",SIG);
                 break;
             }
+            substs=CSLSetNameValue(substs,name,CPLGetXMLValue(TG,"",""));
             TG=SearchXMLSiblings(TG,"Change");
         }
         if (ret!=CE_None) break;
@@ -298,75 +360,180 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
         psResult = CPLHTTPFetch(getTileServiceUrl, NULL);
 
         if (NULL==psResult) {
-            CPLError(ret=CE_Failure, CPLE_AppDefined, 
-                     "GDALWMS, Tiled WMS: Can't use GDAL HTTP, no curl support.");
+            CPLError(ret=CE_Failure, CPLE_AppDefined, "%s Can't use HTTP", SIG);
             break;
         }
 
         if ((psResult->nStatus!=0)||(NULL==psResult->pabyData)||('\0'==psResult->pabyData[0])) {
-            CPLError(ret=CE_Failure, CPLE_AppDefined,
-                     "GDALWMS, Tiled WMS: Can't get server response to GetTileService.");
+            CPLError(ret=CE_Failure, CPLE_AppDefined, "%s Server response error on GetTileService.",SIG);
             break;
         }
 
         if (NULL==(tileServiceConfig=CPLParseXMLString((const char*)psResult->pabyData))) {
-            CPLError(ret=CE_Failure,CPLE_AppDefined, "GDALWMS, Tiled WMS: Error parsing the GetTileService response.");
+            CPLError(ret=CE_Failure,CPLE_AppDefined, "%s Error parsing the GetTileService response.",SIG);
             break;
         }
-    
-        m_base_url=CPLGetXMLValue(tileServiceConfig,"TiledPatterns.OnlineResource.xlink:href","");
-        if (m_base_url.empty()) {
-            CPLError(ret=CE_Failure,CPLE_AppDefined, "GDALWMS, Tiled WMS: Can't locate OnlineResource in the server response.");
-            break;
-        }
-    
+
         if (NULL==(TG=CPLSearchXMLNode(tileServiceConfig, "TiledPatterns"))) {
-            CPLError(ret=CE_Failure,CPLE_AppDefined, 
-                     "GDALWMS, Tiled WMS: Can't locate TiledPatterns in server response.");
-            break;
-        }
-    
-        if (NULL==(TG=SearchLeafGroupName(TG->psChild,m_tiledGroupName))) {
             CPLError(ret=CE_Failure,CPLE_AppDefined,
-                     "GDALWMS, Tiled WMS: Can't locate TiledGroup in server response.");
+                "%s Can't locate TiledPatterns in server response.",SIG);
             break;
         }
 
-        if (0>(m_bands_count=atoi(CPLGetXMLValue(TG, "Bands", "3")))) {
+        // Get the global base_url and bounding box, these can be overwritten at the tileGroup level
+        // They are just pointers into existing structures, cleanup is not required
+        const char *global_base_url=CPLGetXMLValue(tileServiceConfig,"TiledPatterns.OnlineResource.xlink:href","");
+        CPLXMLNode *global_latlonbbox=CPLGetXMLNode(tileServiceConfig, "TiledPatterns.LatLonBoundingBox");
+        CPLXMLNode *global_bbox=CPLGetXMLNode(tileServiceConfig, "TiledPatterns.BoundingBox");
+
+        if (NULL==(TG=SearchLeafGroupName(TG->psChild,tiledGroupName))) {
             CPLError(ret=CE_Failure,CPLE_AppDefined,
-                     "GDALWMS, Tiled WMS: Invalid number of bands in server response");
-            break;
-        }
-        if (!GDALCheckBandCount(m_bands_count, FALSE))
-        {
-            ret = CE_Failure;
+                "%s Can't locate TiledGroup ""%s"" in server response.",SIG,
+                tiledGroupName.c_str());
             break;
         }
 
-        m_parent_dataset->WMSSetBandsCount(m_bands_count);
+        int band_count=atoi(CPLGetXMLValue(TG, "Bands", "3"));
+
+        if (!GDALCheckBandCount(band_count, FALSE)) {
+            CPLError(ret=CE_Failure,CPLE_AppDefined,"%s%s",SIG,
+                "Invalid number of bands in server response");
+            break;
+        }
+
+        // Collect all keys defined by this tileset
+        if (NULL!=CPLGetXMLNode(TG,"Key")) {
+            CPLXMLNode *node=CPLGetXMLNode(TG,"Key");
+                while (NULL!=node) {
+                    const char *val=CPLGetXMLValue(node,NULL,NULL);
+                    if (val) keys=CSLAddString(keys,val);
+                    node=SearchXMLSiblings(node,"Key");
+                }
+        }
+
+       // Data values are attributes, they include NoData Min and Max
+       if (0!=CPLGetXMLNode(TG,"DataValues")) {
+           const char *nodata=CPLGetXMLValue(TG,"DataValues.NoData",NULL);
+           if (nodata!=NULL) m_parent_dataset->WMSSetNoDataValue(nodata);
+           const char *min=CPLGetXMLValue(TG,"DataValues.min",NULL);
+           if (min!=NULL) m_parent_dataset->WMSSetMinValue(min);
+           const char *max=CPLGetXMLValue(TG,"DataValues.max",NULL);
+           if (max!=NULL) m_parent_dataset->WMSSetMaxValue(max);
+       }
+
+        m_parent_dataset->WMSSetBandsCount(band_count);
         m_parent_dataset->WMSSetDataType(GDALGetDataTypeByName(CPLGetXMLValue(TG, "DataType", "Byte")));
         m_projection_wkt=CPLGetXMLValue(TG, "Projection","");
 
-        // Bounding box for the group itself
-        CPLXMLNode *latlonbbox = CPLSearchXMLNode(TG, "LatLonBoundingBox");
-        if (NULL==latlonbbox) {
-            CPLError(ret=CE_Failure,CPLE_AppDefined,
-                     "GDALWMS, Tiled WMS: Can't locate the LatLonBoundingBox in server response.");
+        m_base_url=CPLGetXMLValue(TG,"OnlineResource.xlink:href",global_base_url);
+        if (m_base_url[0]=='\0') {
+            CPLError(ret=CE_Failure,CPLE_AppDefined, "%s%s",SIG,
+                "Can't locate OnlineResource in the server response.");
             break;
         }
 
-        m_data_window.m_x0=atof(CPLGetXMLValue(latlonbbox,"minx","0"));
-        m_data_window.m_x1=atof(CPLGetXMLValue(latlonbbox,"maxx","-1"));
-        m_data_window.m_y0=atof(CPLGetXMLValue(latlonbbox,"maxy","0"));
-        m_data_window.m_y1=atof(CPLGetXMLValue(latlonbbox,"miny","-1"));
+        // Bounding box, local, global, local lat-lon, global lat-lon, in this order
+        CPLXMLNode *bbox = CPLGetXMLNode(TG, "BoundingBox");
+        if (NULL==bbox) bbox=global_bbox;
+        if (NULL==bbox) bbox=CPLGetXMLNode(TG, "LatLonBoundingBox");
+        if (NULL==bbox) bbox=global_latlonbbox;
+
+        if (NULL==bbox) {
+            CPLError(ret=CE_Failure,CPLE_AppDefined,"%s%s",SIG,
+                "Can't locate the LatLonBoundingBox in server response.");
+            break;
+        }
+
+        m_data_window.m_x0=atof(CPLGetXMLValue(bbox,"minx","0"));
+        m_data_window.m_x1=atof(CPLGetXMLValue(bbox,"maxx","-1"));
+        m_data_window.m_y0=atof(CPLGetXMLValue(bbox,"maxy","0"));
+        m_data_window.m_y1=atof(CPLGetXMLValue(bbox,"miny","-1"));
 
         if ((m_data_window.m_x1-m_data_window.m_x0)<0) {
-            CPLError(ret=CE_Failure,CPLE_AppDefined,
-                     "GDALWMS, Tiled WMS: Coordinate order in boundingbox problem in server response.");
+            CPLError(ret=CE_Failure,CPLE_AppDefined,"%s%s", SIG,
+                "Coordinate order in BBox, problem in server response");
             break;
         }
 
-        m_overview_count=0;
+        // Is there a palette?
+        //
+        // Format is
+        // <Palette>
+        //   <Size>N</Size> : Optional
+        //   <Model>RGBA|RGB|CMYK|HSV|HLS|L</Model> :mandatory
+        //   <Entry idx=i c1=v1 c2=v2 c3=v3 c4=v4/> :Optional
+        //   <Entry .../>
+        // </Palette>
+        // the idx attribute is optional, it autoincrements
+        // The entries are actually vertices, interpolation takes place inside
+        // The palette starts initialized with zeros
+        // HSV and HLS are the similar, with c2 and c3 swapped
+        // RGB or RGBA are same
+        //
+
+        GDALColorTable *poColorTable=NULL;
+
+        if ((band_count==1) && CPLGetXMLNode(TG,"Palette")) {
+
+            CPLXMLNode *node=CPLGetXMLNode(TG,"Palette");
+
+            int entries=static_cast<int>(getXMLNum(node,"Size","255"));
+            GDALPaletteInterp eInterp=GPI_RGB;
+
+            CPLString pModel=CPLGetXMLValue(node,"Model","RGB");
+            if (!pModel.empty() && pModel.find("RGB")!=std::string::npos)
+                eInterp=GPI_RGB;
+            else {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                    "%s Palette Model %s is unknown, use RGB or RGBA",
+                    SIG, pModel.c_str());
+                return CE_Failure;
+            }
+
+            if ((entries>0)&&(entries<257)) {
+                int start_idx, end_idx;
+                GDALColorEntry ce_start={0,0,0,255},ce_end={0,0,0,255};
+
+                // Create it and initialize it to nothing
+                poColorTable = new GDALColorTable(eInterp);
+                poColorTable->CreateColorRamp(0,&ce_start,entries-1,&ce_end);
+                // Read the values
+                CPLXMLNode *p=CPLGetXMLNode(node,"Entry");
+                if (p) {
+                    // Initialize the first entry
+                    start_idx=static_cast<int>(getXMLNum(p,"idx","0"));
+                    ce_start=GetXMLColorEntry(p);
+                    if (start_idx<0) {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                            "%s Palette index %d not allowed",SIG,start_idx);
+                        delete poColorTable;
+                        return CE_Failure;
+                    }
+                    poColorTable->SetColorEntry(start_idx,&ce_start);
+                    while (NULL!=(p=SearchXMLSiblings(p,"Entry"))) {
+                        // For every entry, create a ramp
+                        ce_end=GetXMLColorEntry(p);
+                        end_idx=static_cast<int>(getXMLNum(p,"idx",CPLString().FormatC(start_idx+1).c_str()));
+                        if ((end_idx<=start_idx)||(start_idx>=entries)) {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                "%s Index Error at index %d",SIG,end_idx);
+                            delete poColorTable;
+                            return CE_Failure;
+                        }
+                        poColorTable->CreateColorRamp(start_idx,&ce_start,
+                            end_idx,&ce_end);
+                        ce_start=ce_end;
+                        start_idx=end_idx;
+                    }
+                }
+                m_parent_dataset->SetColorTable(poColorTable);
+            } else {
+                CPLError(CE_Failure, CPLE_AppDefined,"%s Palette definition error",SIG);
+                return CE_Failure;
+            }
+        }
+
+        int overview_count=0;
         CPLXMLNode *Pattern=TG->psChild;
 
         m_bsx=m_bsy=-1;
@@ -377,12 +544,23 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
                 int mbsx,mbsy;
 
                 CPLString request;
-                FindChangePattern(Pattern->psChild->pszValue,substs,request);
+                FindChangePattern(Pattern->psChild->pszValue,substs,keys,request);
 
-                char **papszTokens=CSLTokenizeString2(request,"&",0);
+                char **papszTokens=CSLTokenizeString2(request,"&",NULL);
 
-                mbsx=atoi(CSLFetchNameValue(papszTokens,"WIDTH"));
-                mbsy=atoi(CSLFetchNameValue(papszTokens,"HEIGHT"));
+                const char* pszWIDTH = CSLFetchNameValue(papszTokens,"WIDTH");
+                const char* pszHEIGHT = CSLFetchNameValue(papszTokens,"HEIGHT");
+                if (pszWIDTH == NULL || pszHEIGHT == NULL)
+                {
+                    CPLError(ret=CE_Failure,CPLE_AppDefined,"%s%s",SIG,
+                        "Cannot find width and/or height parameters.");
+                    overview_count=0;
+                    CSLDestroy(papszTokens);
+                    break;
+                }
+
+                mbsx=atoi(pszWIDTH);
+                mbsy=atoi(pszHEIGHT);
                 if (m_projection_wkt.empty()) {
                     const char* pszSRS = CSLFetchNameValue(papszTokens,"SRS");
                     m_projection_wkt = (pszSRS) ? pszSRS : "";
@@ -393,30 +571,22 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
                 if (-1==m_bsx) m_bsx=mbsx;
                 if (-1==m_bsy) m_bsy=mbsy;
                 if ((m_bsy!=mbsy)||(m_bsy!=mbsy)) {
-                    CPLError(ret=CE_Failure,CPLE_AppDefined,
-                             "GDALWMS, Tiled WMS: Tileset uses different block sizes.");
-                    m_overview_count=0;
-                    CSLDestroy(papszTokens);
-                    break;
-                }
-
-                const char* pszBBOX = CSLFetchNameValue(papszTokens,"BBOX");
-                if (pszBBOX == NULL)
-                {
-                    CPLError(ret=CE_Failure,CPLE_AppDefined,
-                        "GDALWMS, Tiled WMS: BBOX parameter not found in server response.");
+                    CPLError(ret=CE_Failure,CPLE_AppDefined,"%s%s",SIG,
+                        "Tileset uses different block sizes.");
+                    overview_count=0;
                     CSLDestroy(papszTokens);
                     break;
                 }
 
                 double x,y,X,Y;
-                if (sscanf(pszBBOX,"%lf,%lf,%lf,%lf",&x,&y,&X,&Y) != 4)
+                if (sscanf(CSLFetchNameValue(papszTokens,"BBOX"),"%lf,%lf,%lf,%lf",&x,&y,&X,&Y)!=4)
                 {
                     CPLError(ret=CE_Failure,CPLE_AppDefined,
-                        "GDALWMS, Tiled WMS: Invalid value for BBOX parameter in server response.");
+                        "%s Error parsing BBOX, pattern %d\n",SIG,overview_count+1);
                     CSLDestroy(papszTokens);
                     break;
                 }
+                // Pick the largest size
                 int sx=static_cast<int>((m_data_window.m_x1-m_data_window.m_x0)/(X-x)*m_bsx);
                 int sy=static_cast<int>(fabs((m_data_window.m_y1-m_data_window.m_y0)/(Y-y)*m_bsy));
                 if (sx>m_data_window.m_sx) m_data_window.m_sx=sx;
@@ -428,10 +598,10 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
                 pix_off=m_bsy*modf(fabs((Y-m_data_window.m_y0)/(Y-y)),&temp);
                 if ((pix_off<1)||((m_bsy-pix_off)<1)) {
                     requests=CSLAddString(requests,request);
-                    m_overview_count++;
+                    overview_count++;
                 } else
                     CPLError(CE_Warning,CPLE_AppDefined,
-                             "GDALWMS, Tiled WMS: Overlay size %dX%d can't be used due to alignment",sx,sy);
+                    "%s Overlay size %dX%d can't be used due to alignment",SIG,sx,sy);
 
                 Pattern=Pattern->psNext;
 
@@ -447,60 +617,56 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config) {
             m_parent_dataset->WMSSetRasterSize(m_data_window.m_sx,m_data_window.m_sy);
 
             m_parent_dataset->WMSSetDataWindow(m_data_window);
-            m_parent_dataset->WMSSetOverviewCount(m_overview_count);
+            //m_parent_dataset->WMSSetOverviewCount(overview_count);
             m_parent_dataset->WMSSetClamp(false);
 
             // Ready for the Rasterband creation
-            int i;
-            for (i=0;i<m_overview_count;i++) {
-                CPLString request="";
-                GetLowestScale(requests,i,request);
+            for (int i=0;i<overview_count;i++) {
+                CPLString request=GetLowestScale(requests,i);
                 double scale=Scale(request);
 
-                if (i == 0)
-                {
-                    if (fabs(scale-1.0) >1e-6)
-                    {
-                        CPLError(ret=CE_Failure,CPLE_AppDefined,
-                         "GDALWMS, Tiled WMS: Did not get expected scale : %.15f", scale);
-                        break;
-                    }
+                // Base scale should be very close to 1
+                if ((0==i)&&(fabs(scale-1) > 1e-6)) {
+                    CPLError(ret=CE_Failure,CPLE_AppDefined,"%s%s",SIG,
+                        "Base resolution pattern missing.");
+                    break;
                 }
 
                 // Prepare the request and insert it back into the list
-                int startBbox=FindBbox(request);
-                int BboxSize=request.find_first_of("&",startBbox);
-                request.replace(startBbox,BboxSize,"${GDAL_BBOX}");
+                // Find returns an answer relative to the original string start!
+                size_t startBbox=FindBbox(request);
+                size_t endBbox=request.find('&',startBbox);
+                if (endBbox==std::string::npos) endBbox=request.size();
+                request.replace(startBbox,endBbox-startBbox,"${GDAL_BBOX}");
                 requests = CSLInsertString(requests,i,request);
 
                 // Create the Rasterband or overview
-                for (int j = 1; j <= m_bands_count; j++) {
-                    if (i == 0) {
-                        GDALWMSRasterBand *band=new GDALWMSRasterBand(m_parent_dataset, j, scale);
-                        band->SetColorInterpretation(BandInterp(m_bands_count,j));
-                        m_parent_dataset->mSetBand(j, band);
-                    } else
+                for (int j = 1; j <= band_count; j++) {
+                    if (i!=0)
                         m_parent_dataset->mGetBand(j)->AddOverview(scale);
+                    else { // Base resolution
+                        GDALWMSRasterBand *band=new
+                            GDALWMSRasterBand(m_parent_dataset,j,1);
+                        if (poColorTable!=NULL) band->SetColorInterpretation(GCI_PaletteIndex);
+                        else band->SetColorInterpretation(BandInterp(band_count,j));
+                        m_parent_dataset->mSetBand(j, band);
+                    };
                 }
             }
-
-            if (i != m_overview_count)
-                break;
-
-            if ((m_overview_count==0)||(m_bsx<1)||(m_bsy<1)) {
+            if ((overview_count==0)||(m_bsx<1)||(m_bsy<1)) {
                 CPLError(ret=CE_Failure,CPLE_AppDefined,
-                         "GDALWMS, Tiled WMS: No usable TilePattern elements found");
+                    "%s No usable TilePattern elements found",SIG);
                 break;
             }
         }
     }
 
-    m_requests=requests;
-    m_substs=substs;
-
+    CSLDestroy(keys);
+    CSLDestroy(substs);
     if (tileServiceConfig) CPLDestroyXMLNode(tileServiceConfig);
     if (psResult) CPLHTTPDestroyResult(psResult);
 
+    m_requests=requests;
     return ret;
 }
 
@@ -522,14 +688,6 @@ void GDALWMSMiniDriver_TiledWMS::TiledImageRequest(CPLString *url, const GDALWMS
     URLAppend(url,CSLGetField(m_requests,-tiri.m_level));
     URLSearchAndReplace(url,"${GDAL_BBOX}","%013.8f,%013.8f,%013.8f,%013.8f",
                         iri.m_x0,iri.m_y1,iri.m_x1,iri.m_y0);
-    if (m_substs!=NULL) {
-	for (int i=0;i<CSLCount(m_substs);i++) {
-	    char *k;
-	    const char *v=CPLParseNameValue(m_substs[i],&k);
-	    URLSearchAndReplace(url,k,"%s",v);
-	    VSIFree(k);
-	}
-    }
     URLAppend(url,m_end_url);
 }
 
