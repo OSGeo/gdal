@@ -675,6 +675,31 @@ def wms_16():
     return 'success'
 
 ###############################################################################
+# Test a TiledWMS dataset with a color table (#4613)
+
+def wms_17():
+
+    if gdaltest.wms_drv is None:
+        return 'skip'
+
+    name = '<GDAL_WMS><Service name="TiledWMS"><ServerUrl>http://onmoon.lmmp.nasa.gov/sites/wms.cgi?</ServerUrl><TiledGroupName>King Crater DEM Color Confidence, LMMP</TiledGroupName></Service></GDAL_WMS>'
+    ds = gdal.Open( name )
+    if ds is None:
+        srv = 'http://onmoon.lmmp.nasa.gov/sites/wms.cgi?'
+        if gdaltest.gdalurlopen(srv) is None:
+            return 'skip'
+        gdaltest.post_reason( 'open of %s failed.' % name)
+        return 'fail'
+
+    band = ds.GetRasterBand(1)
+    if band.GetColorTable() is None:
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 def wms_cleanup():
 
     gdaltest.wms_ds = None
@@ -699,6 +724,7 @@ gdaltest_list = [
     wms_14,
     wms_15,
     wms_16,
+    wms_17,
     wms_cleanup ]
 
 if __name__ == '__main__':
