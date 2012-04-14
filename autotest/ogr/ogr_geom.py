@@ -655,6 +655,18 @@ def ogr_geom_coord_round():
     return 'success'
 
 ###############################################################################
+def ogr_geom_coord_round_2():
+
+    geom = ogr.CreateGeometryFromWkt('POINT(1.0 169.600374)')
+    wkt = geom.ExportToWkt()
+    if wkt != 'POINT (1.0 169.600374)':
+        gdaltest.post_reason('did not get expected WKT')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test Area calculation for a Point
 
 def ogr_geom_area_point():
@@ -922,6 +934,7 @@ gdaltest_list = [
     ogr_geom_flattenTo2D,
     ogr_geom_linestring_limits,
     ogr_geom_coord_round,
+    ogr_geom_coord_round_2,
     ogr_geom_area_point,
     ogr_geom_length_point,
     ogr_geom_length_multilinestring,
