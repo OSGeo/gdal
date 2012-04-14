@@ -21822,9 +21822,9 @@ if test "${with_fgdb+set}" = set; then :
 fi
 
 
-if test "$with_fgdb" = "no" ; then
+FGDB_ENABLED=no
 
-  FGDB_ENABLED=no
+if test "$with_fgdb" = "no" ; then
 
   echo "FGDB support disabled."
 
@@ -30376,7 +30376,7 @@ else
     WHAT_BINDINGS="$BINDINGS"
 fi
 
-echo "  SWIG Bindings:          ${WHAT_BINDINGS}"
+echo "  SWIG Bindings:             ${WHAT_BINDINGS}"
 
 
 echo ""
