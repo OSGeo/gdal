@@ -124,6 +124,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     */
 
     if (m_data_window.m_sx<1) {
+        int nOverviews = 0;
 
 	if (ret == CE_None) {
 	    m_block_size_x = atoi(CPLGetXMLValue(config, "BlockSizeX", CPLString().Printf("%d", m_default_block_size_x)));
@@ -212,16 +213,17 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
 			ret = CE_Failure;
 		    }
 		}
+
 		if (ret == CE_None) {
 		    if (overview_count[0] != '\0') {
-			m_overview_count = atoi(overview_count);
+			nOverviews = atoi(overview_count);
 		    } else if (tlevel[0] != '\0') {
-			m_overview_count = m_data_window.m_tlevel;
+			nOverviews = m_data_window.m_tlevel;
 		    } else {
 			const int min_overview_size = MAX(32, MIN(m_block_size_x, m_block_size_y));
 			double a = log(static_cast<double>(MIN(m_data_window.m_sx, m_data_window.m_sy))) / log(2.0) 
 			    - log(static_cast<double>(min_overview_size)) / log(2.0);
-			m_overview_count = MAX(0, MIN(static_cast<int>(ceil(a)), 32));
+			nOverviews = MAX(0, MIN(static_cast<int>(ceil(a)), 32));
 		    }
 		}
 		if (ret == CE_None) {
@@ -285,7 +287,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
                 band->m_color_interp = color_interp;
                 SetBand(i + 1, band);
                 double scale = 0.5;
-                for (int j = 0; j < m_overview_count; ++j) {
+                for (int j = 0; j < nOverviews; ++j) {
                     band->AddOverview(scale);
                     band->m_color_interp = color_interp;
                     scale *= 0.5;
@@ -517,10 +519,6 @@ void GDALWMSDataset::WMSSetBlockSize(int x, int y) {
 void GDALWMSDataset::WMSSetRasterSize(int x, int y) {
     nRasterXSize=x;
     nRasterYSize=y;
-}
-
-void GDALWMSDataset::WMSSetOverviewCount(int count) {
-    m_overview_count=count;
 }
 
 void GDALWMSDataset::WMSSetBandsCount(int count) {

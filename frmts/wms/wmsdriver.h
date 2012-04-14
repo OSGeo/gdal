@@ -215,7 +215,6 @@ public:
 
     const GDALWMSDataWindow *WMSGetDataWindow() const;
     void WMSSetClamp(bool flag);
-    void WMSSetOverviewCount(int count);
     void WMSSetBlockSize(int x, int y);
     void WMSSetRasterSize(int x, int y);
     void WMSSetDataType(GDALDataType type);
@@ -257,7 +256,6 @@ protected:
     CPLString m_projection;
     GDALColorTable *m_poColorTable;
     std::vector<double> vNoData, vMin, vMax;
-    int m_overview_count;
     GDALDataType m_data_type;
     int m_block_size_x, m_block_size_y;
     GDALWMSRasterIOHint m_hint;
