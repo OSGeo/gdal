@@ -405,6 +405,9 @@ OGRErr OGRLayer::SetNextByIndex( long nIndex )
 {
     OGRFeature *poFeature;
 
+    if( nIndex < 0 )
+        return OGRERR_FAILURE;
+
     ResetReading();
     while( nIndex-- > 0 )
     {
