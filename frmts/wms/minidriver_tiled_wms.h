@@ -3,7 +3,7 @@
  * Project:  WMS Client Driver
  * Purpose:  Declarations for the OnEarth Tiled WMS minidriver.
  *           http://onearth.jpl.nasa.gov/tiled.html
- * Author:   Lucian Plesea (Lucian dot Pleasea at jpl.nasa.gov)
+ * Author:   Lucian Plesea (Lucian dot Plesea at jpl.nasa.gov)
  *           Adam Nowacki
  *
  ******************************************************************************
@@ -44,17 +44,11 @@ public:
 
 protected:
     double Scale(const char *request);
-    void GetLowestScale(char **& list,int i, CPLString &req);
+    CPLString GetLowestScale(char **&list,int i);
     GDALWMSDataWindow m_data_window;
-    int m_overview_count;
-    int m_bands_count;
     char **m_requests;
-    char **m_substs;
     CPLString m_base_url;
     CPLString m_end_url;
-    CPLString m_tiledGroupName;
-    int m_iversion;
     int m_bsx,m_bsy;
     CPLString m_projection_wkt;
 };
-

@@ -1,7 +1,8 @@
 <GDAL_WMS>
     <Service name="TiledWMS">
-	<ServerUrl>http://onearth.jpl.nasa.gov/wms.cgi?</ServerUrl>
-	<TiledGroupName>Daily Planet</TiledGroupName>
-	<Change key="${time}">2009-10-12</Change>
+        <ServerUrl>http://map1.vis.earthdata.nasa.gov/data/wms.cgi?</ServerUrl>
+        <TiledGroupName>MODIS TERRA tileset</TiledGroupName>
+        <!-- Pick a specific day -->
+        <!-- <Change key="${time}">2009-10-12</Change> -->
     </Service>
 </GDAL_WMS>
