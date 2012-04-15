@@ -207,7 +207,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	return (-2147483648,2147483647) if $t =~ /Int32$/; # also CInt
 	return (-4294967295.0,4294967295.0) if $t =~ /Float32$/; # also CFloat
 	return (-4294967295.0,4294967295.0) if $t =~ /Float64$/; # also CFloat
-	croak "unsupported data type: $t";
+	croak "GDAL does not support data type '$t'";
     }
     sub DataTypeIsComplex {
 	my $t = shift;
@@ -225,7 +225,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	return 'l' if $t =~ /^Int32$/;
 	return 'f' if $t =~ /^Float32$/;
 	return 'd' if $t =~ /^Float64$/;
-	croak "unsupported data type: $t";
+	croak "data type '$t' is not known in Geo::GDAL::PackCharacter";
     }
     sub Drivers {
 	my @drivers;
@@ -417,6 +417,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     }
     sub GetRasterBand {
 	my($self, $index) = @_;
+	$index = 1 unless defined $index;
 	my $band = _GetRasterBand($self, $index);
 	$BANDS{tied(%{$band})} = $self;
 	return $band;
@@ -452,9 +453,9 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     }
 
     package Geo::GDAL::Band;
-    use Carp;
-    use UNIVERSAL qw(isa);
     use strict;
+    use Carp;
+    use Scalar::Util 'blessed';
     use vars qw/
         @COLOR_INTERPRETATIONS
 	%COLOR_INTERPRETATION_STRING2INT %COLOR_INTERPRETATION_INT2STRING @DOMAINS
@@ -589,7 +590,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 			ProgressData => undef);
 	my %params = @_;
 	for (keys %params) {
-	    croak "unknown parameter: $_" unless exists $defaults{$_};
+	    carp "unknown parameter $_ in Geo::GDAL::Band::GetHistogram" unless exists $defaults{$_};
 	}
 	for (keys %defaults) {
 	    $params{$_} = $defaults{$_} unless defined $params{$_};
@@ -612,7 +613,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 			callback => undef,
 			callback_data => undef);
 	my %params;
-	if (!defined($_[0]) or isa($_[0], 'Geo::OGR::DataSource')) {
+	if (!defined($_[0]) or (blessed($_[0]) and $_[0]->isa('Geo::OGR::DataSource'))) {
 	    ($params{DataSource}, $params{LayerConstructor},
 	     $params{ContourInterval}, $params{ContourBase},
 	     $params{FixedLevels}, $params{NoDataValue}, 
@@ -622,17 +623,39 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	    %params = @_;
 	}
 	for (keys %params) {
-	    croak "unknown parameter: $_" unless exists $defaults{$_};
+	    carp "unknown parameter $_ in Geo::GDAL::Band::Contours" unless exists $defaults{$_};
 	}
 	for (keys %defaults) {
 	    $params{$_} = $defaults{$_} unless defined $params{$_};
 	}
 	$params{DataSource} = Geo::OGR::GetDriver('Memory')->CreateDataSource('ds') 
 	    unless defined $params{DataSource};
+	$params{LayerConstructor}->{Schema} = {} unless $params{LayerConstructor}->{Schema};
+	$params{LayerConstructor}->{Schema}{Fields} = [] unless $params{LayerConstructor}->{Schema}{Fields};
+	my %fields;
+	for my $f (@{$params{LayerConstructor}->{Schema}{Fields}}) {
+	    $fields{$f->{Name}} = $f->{Type};
+	    for my $k (sort keys %$f) {
+		print "before field: $_ => $k->{$_}\n";
+	    }
+	}
+	unless ($params{IDField} =~ /^[+-]?\d+$/ or $fields{$params{IDField}}) {
+	    push @{$params{LayerConstructor}->{Schema}{Fields}}, {Name => $params{IDField}, Type => 'Integer'};
+	}
+	unless ($params{ElevField} =~ /^[+-]?\d+$/ or $fields{$params{ElevField}}) {
+	    my $type = $self->DataType() =~ /Float/ ? 'Real' : 'Integer';
+	    push @{$params{LayerConstructor}->{Schema}{Fields}}, {Name => $params{ElevField}, Type => $type};
+	}
+	for my $f (@{$params{LayerConstructor}->{Schema}{Fields}}) {
+	    for my $k (sort keys %$f) {
+		print "after field: $k => $f->{$k}\n";
+	    }
+	}
 	my $layer = $params{DataSource}->CreateLayer($params{LayerConstructor});
 	my $schema = $layer->GetLayerDefn;
 	for ('IDField', 'ElevField') {
-	    $params{$_} = $schema->GetFieldIndex($params{ElevField}) unless $params{ElevField} =~ /^[+-]?\d+$/;
+	    $params{$_} = $schema->GetFieldIndex($params{$_}) unless $params{$_} =~ /^[+-]?\d+$/;
+	    print "$_ => $params{$_}\n";
 	}
 	$params{callback_data} = 1 if $params{callback} and not defined $params{callback_data};
 	ContourGenerate($self, $params{ContourInterval}, $params{ContourBase}, $params{FixedLevels},
@@ -641,7 +664,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	return $layer;
     }
     sub FillNodata {
-      croak 'usage: FillNodata($mask)' unless isa($_[1], 'Geo::GDAL::Band');
+      croak 'usage: Geo::GDAL::Band->FillNodata($mask)' unless blessed($_[1]) and $_[1]->isa('Geo::GDAL::Band');
       $_[2] = 10 unless defined $_[2];
       $_[3] = 0 unless defined $_[3];
       $_[4] = undef unless defined $_[4];
