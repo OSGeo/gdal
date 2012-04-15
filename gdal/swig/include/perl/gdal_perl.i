@@ -633,12 +633,6 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	$params{LayerConstructor}->{Schema} = {} unless $params{LayerConstructor}->{Schema};
 	$params{LayerConstructor}->{Schema}{Fields} = [] unless $params{LayerConstructor}->{Schema}{Fields};
 	my %fields;
-	for my $f (@{$params{LayerConstructor}->{Schema}{Fields}}) {
-	    $fields{$f->{Name}} = $f->{Type};
-	    for my $k (sort keys %$f) {
-		print "before field: $_ => $k->{$_}\n";
-	    }
-	}
 	unless ($params{IDField} =~ /^[+-]?\d+$/ or $fields{$params{IDField}}) {
 	    push @{$params{LayerConstructor}->{Schema}{Fields}}, {Name => $params{IDField}, Type => 'Integer'};
 	}
@@ -646,16 +640,10 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	    my $type = $self->DataType() =~ /Float/ ? 'Real' : 'Integer';
 	    push @{$params{LayerConstructor}->{Schema}{Fields}}, {Name => $params{ElevField}, Type => $type};
 	}
-	for my $f (@{$params{LayerConstructor}->{Schema}{Fields}}) {
-	    for my $k (sort keys %$f) {
-		print "after field: $k => $f->{$k}\n";
-	    }
-	}
 	my $layer = $params{DataSource}->CreateLayer($params{LayerConstructor});
 	my $schema = $layer->GetLayerDefn;
 	for ('IDField', 'ElevField') {
 	    $params{$_} = $schema->GetFieldIndex($params{$_}) unless $params{$_} =~ /^[+-]?\d+$/;
-	    print "$_ => $params{$_}\n";
 	}
 	$params{callback_data} = 1 if $params{callback} and not defined $params{callback_data};
 	ContourGenerate($self, $params{ContourInterval}, $params{ContourBase}, $params{FixedLevels},
