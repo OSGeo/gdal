@@ -169,6 +169,11 @@ static double OGRSpatialReferenceUSGSUnpackNoOp(double dfVal)
     return dfVal;
 }
 
+static double OGRSpatialReferenceUSGSUnpackRadian(double dfVal)
+{
+    return (dfVal * 180.0 / M_PI);
+}
+
 /************************************************************************/
 /*                          importFromUSGS()                            */
 /************************************************************************/
@@ -397,24 +402,28 @@ static double OGRSpatialReferenceUSGSUnpackNoOp(double dfVal)
  *      19: Sphere of Radius 6370997 meters
  * </pre>
  *
- * @param bAnglesInPackedDMSFormat TRUE if the angle values specified in the padfPrjParams array should
- * be in the packed DMS format
+ * @param nUSGSAngleFormat one of USGS_ANGLE_DECIMALDEGREES, USGS_ANGLE_PACKEDDMS, or USGS_ANGLE_RADIANS (default is USGS_ANGLE_PACKEDDMS).
+ *
  * @return OGRERR_NONE on success or an error code in case of failure. 
  */
 
 OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                                             double *padfPrjParams,
-                                            long iDatum, int bAnglesInPackedDMSFormat )
+                                            long iDatum, 
+                                            int nUSGSAngleFormat  )
 
 {
     if( !padfPrjParams )
         return OGRERR_CORRUPT_DATA;
 
-    double (*pfnUnpackAnglesFn)(double);
-    if (bAnglesInPackedDMSFormat)
-        pfnUnpackAnglesFn = CPLPackedDMSToDec;
-    else
+    double (*pfnUnpackAnglesFn)(double) = NULL;
+
+    if (nUSGSAngleFormat == USGS_ANGLE_DECIMALDEGREES )
         pfnUnpackAnglesFn = OGRSpatialReferenceUSGSUnpackNoOp;
+    else if (nUSGSAngleFormat == USGS_ANGLE_RADIANS )
+        pfnUnpackAnglesFn = OGRSpatialReferenceUSGSUnpackRadian;
+    else
+        pfnUnpackAnglesFn = CPLPackedDMSToDec;
 
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection code.                    */

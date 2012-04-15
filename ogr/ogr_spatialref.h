@@ -183,9 +183,12 @@ class CPL_DLL OGRSpatialReference
     OGRErr      importFromESRI( char ** );
     OGRErr      importFromPCI( const char *, const char * = NULL,
                                double * = NULL );
+#define USGS_ANGLE_DECIMALDEGREES 0
+#define USGS_ANGLE_PACKEDDMS      TRUE /* 1 */
+#define USGS_ANGLE_RADIANS        2
     OGRErr      importFromUSGS( long iProjSys, long iZone,
-                                double *padfPrjParams,
-                                long iDatum, int bAnglesInPackedDMSFormat = TRUE );
+                                double *padfPrjParams, long iDatum, 
+                                int nUSGSAngleFormat = USGS_ANGLE_PACKEDDMS );
     OGRErr      importFromPanorama( long, long, long, double* );
     OGRErr      importFromOzi( const char *, const char *, const char * );
     OGRErr      importFromWMSAUTO( const char *pszAutoDef );
