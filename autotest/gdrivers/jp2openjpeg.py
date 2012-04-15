@@ -123,10 +123,18 @@ def jp2openjpeg_4(out_filename = 'tmp/jp2openjpeg_4.jp2'):
     src_wkt = src_ds.GetProjectionRef()
     src_gt = src_ds.GetGeoTransform()
 
+    vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/jp2openjpeg_4.vrt', src_ds)
+    vrt_ds.SetMetadataItem('TIFFTAG_XRESOLUTION', '300')
+    vrt_ds.SetMetadataItem('TIFFTAG_YRESOLUTION', '200')
+    vrt_ds.SetMetadataItem('TIFFTAG_RESOLUTIONUNIT', '3 (pixels/cm)')
+
     gdal.Unlink(out_filename)
 
-    out_ds = gdal.GetDriverByName('JP2OpenJPEG').CreateCopy(out_filename, src_ds, options = ['REVERSIBLE=YES', 'QUALITY=100'])
+    out_ds = gdal.GetDriverByName('JP2OpenJPEG').CreateCopy(out_filename, vrt_ds, options = ['REVERSIBLE=YES', 'QUALITY=100'])
     out_ds = None
+
+    vrt_ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_4.vrt')
 
     gdal.Unlink(out_filename + '.aux.xml')
 
@@ -134,9 +142,19 @@ def jp2openjpeg_4(out_filename = 'tmp/jp2openjpeg_4.jp2'):
     cs = ds.GetRasterBand(1).Checksum()
     got_wkt = ds.GetProjectionRef()
     got_gt = ds.GetGeoTransform()
+    xres = ds.GetMetadataItem('TIFFTAG_XRESOLUTION')
+    yres = ds.GetMetadataItem('TIFFTAG_YRESOLUTION')
+    resunit = ds.GetMetadataItem('TIFFTAG_RESOLUTIONUNIT')
     ds = None
 
     gdal.Unlink(out_filename)
+
+    if xres != '300' or yres != '200' or resunit != '3 (pixels/cm)':
+        gdaltest.post_reason('bad resolution')
+        print(xres)
+        print(yres)
+        print(resunit)
+        return 'fail'
 
     sr1 = osr.SpatialReference()
     sr1.SetFromUserInput(got_wkt)
