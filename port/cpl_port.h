@@ -309,6 +309,10 @@ typedef unsigned long    GUIntBig;
 #  define ABS(x)        ((x<0) ? (-1*(x)) : x)
 #endif
 
+#ifndef M_PI
+# define M_PI		3.14159265358979323846	/* pi */
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Macro to test equality of two floating point values.            */
 /*      We use fabs() function instead of ABS() macro to avoid side     */
