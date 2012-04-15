@@ -875,6 +875,20 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         apszMDList[1] = NULL;
         poDS->SetMetadata(apszMDList, "xml:XMP");
     }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have other misc metadata?                                 */
+/* -------------------------------------------------------------------- */
+    if( oJP2Geo.papszMetadata != NULL )
+    {
+        char **papszMD = CSLDuplicate(poDS->GDALPamDataset::GetMetadata());
+
+        papszMD = CSLMerge( papszMD, oJP2Geo.papszMetadata );
+        poDS->GDALPamDataset::SetMetadata( papszMD );
+
+        CSLDestroy( papszMD );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
@@ -1213,7 +1227,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     GDALJP2Metadata oJP2MD;
 
-    int bWriteGeoBoxes = FALSE;
+    int bWriteExtraBoxes = FALSE;
     if( eCodecFormat == CODEC_JP2 &&
         (CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) ||
          CSLFetchBoolean( papszOptions, "GeoJP2", TRUE )) )
@@ -1221,14 +1235,47 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         const char* pszWKT = poSrcDS->GetProjectionRef();
         if( pszWKT != NULL && pszWKT[0] != '\0' )
         {
-            bWriteGeoBoxes = TRUE;
+            bWriteExtraBoxes = TRUE;
             oJP2MD.SetProjection( pszWKT );
         }
         double adfGeoTransform[6];
         if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
         {
-            bWriteGeoBoxes = TRUE;
+            bWriteExtraBoxes = TRUE;
             oJP2MD.SetGeoTransform( adfGeoTransform );
+        }
+    }
+
+#define PIXELS_PER_INCH 2
+#define PIXELS_PER_CM   3
+
+    // Resolution
+    double dfXRes = 0, dfYRes = 0;
+    int nResUnit = 0;
+    if( eCodecFormat == CODEC_JP2
+        && poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION") != NULL
+        && poSrcDS->GetMetadataItem("TIFFTAG_YRESOLUTION") != NULL
+        && poSrcDS->GetMetadataItem("TIFFTAG_RESOLUTIONUNIT") != NULL )
+    {
+        dfXRes =
+            CPLAtof(poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION"));
+        dfYRes =
+            CPLAtof(poSrcDS->GetMetadataItem("TIFFTAG_YRESOLUTION"));
+        nResUnit = atoi(poSrcDS->GetMetadataItem("TIFFTAG_RESOLUTIONUNIT"));
+
+        if( nResUnit == PIXELS_PER_INCH )
+        {
+            // convert pixels per inch to pixels per cm.
+            dfXRes = dfXRes * 39.37 / 100.0;
+            dfYRes = dfYRes * 39.37 / 100.0;
+            nResUnit = PIXELS_PER_CM;
+        }
+
+        if( nResUnit == PIXELS_PER_CM &&
+            dfXRes > 0 && dfYRes > 0 &&
+            dfXRes < 65535 && dfYRes < 65535 )
+        {
+            bWriteExtraBoxes = TRUE;
         }
     }
 
@@ -1237,12 +1284,78 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     /* for the jp2c header, but still not written. */
     vsi_l_offset nPosOriginalJP2C = 0;
     vsi_l_offset nPosRealJP2C = 0;
-    GByte abyBackupGMLJP2orGeoJP2BoxHeader[8];
+    GByte abyBackupWhatShouldHaveBeenTheJP2CBoxHeader[8];
 
-    if( bWriteGeoBoxes )
+    if( bWriteExtraBoxes )
     {
         nPosOriginalJP2C = VSIFTellL(fp) - 8;
+
+        char szBoxName[4+1];
+        int nLBoxJP2H;
+
+        /* If we must write a Res/Resd box, */
+        /* read the box header at offset 32 */
+        if ( nResUnit == PIXELS_PER_CM )
+        {
+            VSIFSeekL(fp, 32, SEEK_SET);
+            VSIFReadL(&nLBoxJP2H, 1, 4, fp);
+            nLBoxJP2H = CPL_MSBWORD32( nLBoxJP2H );
+            VSIFReadL(szBoxName, 1, 4, fp);
+            szBoxName[4] = '\0';
+        }
+
         VSIFSeekL(fp, nPosOriginalJP2C, SEEK_SET);
+
+        /* And check that it is the jp2h box before */
+        /* writing the res box */
+        if ( nResUnit == PIXELS_PER_CM && EQUAL(szBoxName, "jp2h") )
+        {
+            /* Format a resd box and embed it inside a res box */
+            GDALJP2Box oResd;
+            oResd.SetType("resd");
+            GByte aby[10];
+
+            int nYDenom = 1;
+            while (nYDenom < 32767 && dfYRes < 32767)
+            {
+                dfYRes *= 2;
+                nYDenom *= 2;
+            }
+            int nXDenom = 1;
+            while (nXDenom < 32767 && dfXRes < 32767)
+            {
+                dfXRes *= 2;
+                nXDenom *= 2;
+            }
+
+            aby[0] = ((int)dfYRes) / 256;
+            aby[1] = ((int)dfYRes) % 256;
+            aby[2] = nYDenom / 256;
+            aby[3] = nYDenom % 256;
+            aby[4] = ((int)dfXRes) / 256;
+            aby[5] = ((int)dfXRes) % 256;
+            aby[6] = nXDenom / 256;
+            aby[7] = nXDenom % 256;
+            aby[8] = 2;
+            aby[9] = 2;
+            oResd.SetWritableData(10, aby);
+            GDALJP2Box* poResd = &oResd;
+            GDALJP2Box* poRes = GDALJP2Box::CreateAsocBox( 1, &poResd );
+            poRes->SetType("res ");
+
+            /* Now let's extend the jp2c box header so that the */
+            /* res box becomes a sub-box of it */
+            nLBoxJP2H += poRes->GetDataLength() + 8;
+            nLBoxJP2H = CPL_MSBWORD32( nLBoxJP2H );
+            VSIFSeekL(fp, 32, SEEK_SET);
+            VSIFWriteL(&nLBoxJP2H, 1, 4, fp);
+
+            /* Write the box at the end of the file */
+            VSIFSeekL(fp, nPosOriginalJP2C, SEEK_SET);
+            WriteBox(fp, poRes);
+
+            delete poRes;
+        }
 
         if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) )
         {
@@ -1259,10 +1372,10 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 
         nPosRealJP2C = VSIFTellL(fp);
 
-        /* Backup the GMLJP2 or GeoJP2 box header */
+        /* Backup the res, GMLJP2 or GeoJP2 box header */
         /* that will be overwritten by opj_end_compress() */
         VSIFSeekL(fp, nPosOriginalJP2C, SEEK_SET);
-        VSIFReadL(abyBackupGMLJP2orGeoJP2BoxHeader, 1, 8, fp);
+        VSIFReadL(abyBackupWhatShouldHaveBeenTheJP2CBoxHeader, 1, 8, fp);
 
         VSIFSeekL(fp, nPosRealJP2C + 8, SEEK_SET);
     }
@@ -1371,9 +1484,9 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     opj_destroy_codec(pCodec);
 
     /* Move the jp2c box header at its real position */
-    /* and restore the GMLJP2 or GeoJP2 box header that */
+    /* and restore the res, GMLJP2 or GeoJP2 box header that */
     /* has been overwritten */
-    if( bWriteGeoBoxes )
+    if( bWriteExtraBoxes )
     {
         GByte abyJP2CHeader[8];
 
@@ -1381,7 +1494,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         VSIFReadL(abyJP2CHeader, 1, 8, fp);
 
         VSIFSeekL(fp, nPosOriginalJP2C, SEEK_SET);
-        VSIFWriteL(abyBackupGMLJP2orGeoJP2BoxHeader, 1, 8, fp);
+        VSIFWriteL(abyBackupWhatShouldHaveBeenTheJP2CBoxHeader, 1, 8, fp);
 
         VSIFSeekL(fp, nPosRealJP2C, SEEK_SET);
         VSIFWriteL(abyJP2CHeader, 1, 8, fp);
