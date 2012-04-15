@@ -2586,7 +2586,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             double dfXRes = 
                 CPLAtof(poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION"));
             double dfYRes = 
-                CPLAtof(poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION"));
+                CPLAtof(poSrcDS->GetMetadataItem("TIFFTAG_YRESOLUTION"));
 
             if( atoi(poSrcDS->GetMetadataItem("TIFFTAG_RESOLUTIONUNIT")) == 2 )
             {
