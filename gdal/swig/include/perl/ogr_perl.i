@@ -95,6 +95,8 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 %rename (_GetLayerByName) GetLayerByName;
 %rename (_CreateLayer) CreateLayer;
 %rename (_DeleteLayer) DeleteLayer;
+%rename (_CreateField) CreateField;
+%rename (_DeleteField) DeleteField;
 %rename (_GetFieldType) GetFieldType;
 %rename (_SetGeometryDirectly) SetGeometryDirectly;
 %rename (_ExportToWkb) ExportToWkb;
@@ -177,7 +179,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    } else {
 		$layer = _GetLayerByIndex($self, 0);
 	    }
-	    croak "No such layer: $name\n" unless $layer;
+	    croak "the data source does not appear to have a layer with name '$name'" unless $layer;
 	    $LAYERS{tied(%$layer)} = $self;
 	    return $layer;
 	}
@@ -194,14 +196,14 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my($self, $index) = @_;
 	    $index = 0 unless defined $index;
 	    my $layer = _GetLayerByIndex($self, $index+0);
-	    croak "No such layer: $index\n" unless $layer;
+	    croak "the data source does not appear to have a layer with index '$index'" unless $layer;
 	    $LAYERS{tied(%$layer)} = $self;
 	    return $layer;
 	}
 	sub GetLayerByName {
 	    my($self, $name) = @_;
 	    my $layer = _GetLayerByName($self, "$name");
-	    croak "No such layer: $name\n" unless $layer;
+	    croak "the data source does not appear to have a layer with name $name" unless $layer;
 	    $LAYERS{tied(%$layer)} = $self;
 	    return $layer;
 	}
@@ -219,7 +221,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		($params{Name}, $params{SRS}, $params{GeometryType}, $params{Options}, $params{Schema}) = @_;
 	    }
 	    for (keys %params) {
-		croak "unknown parameter: $_" unless exists $defaults{$_};
+		carp "unknown parameter $_ in Geo::OGR::DataSource->CreateLayer" unless exists $defaults{$_};
 	    }
 	    for (keys %defaults) {
 		$params{$_} = $defaults{$_} unless defined $params{$_};
@@ -252,6 +254,8 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 
 	package Geo::OGR::Layer;
 	use strict;
+	use Carp;
+	use Scalar::Util 'blessed';
 	use vars qw /@CAPABILITIES %CAPABILITIES/;
 	@CAPABILITIES = qw/RandomRead SequentialWrite RandomWrite 
 		   FastSpatialFilter FastFeatureCount FastGetExtent 
@@ -294,6 +298,57 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my($self, $cap) = @_;
 	    return _TestCapability($self, $CAPABILITIES{$cap});
 	}
+        sub DataSource {
+	    my $self = shift;
+	    return $Geo::OGR::DataSource::LAYERS{$self};
+	}
+	sub HasField {
+	    my($self, $fn) = @_;
+	    eval {
+		$fn = $self->GetLayerDefn->GetFieldIndex($fn) unless $fn =~ /^\d+$/;
+		$self->GetLayerDefn->GetFieldDefn($fn);
+	    };
+	    return $@ eq '';
+	}
+        sub GetField {
+	    my($self, $fn) = @_;
+	    $fn = $self->GetLayerDefn->GetFieldIndex($fn) unless $fn =~ /^\d+$/;
+	    return $self->GetLayerDefn->GetFieldDefn($fn)->Schema;
+	}
+	sub CreateField {
+	    my $self = shift;
+	    my $fd = shift;
+	    if (blessed($fd) and $fd->isa('Geo::OGR::FieldDefn')) {
+		my $n = $fd->Schema->{Name};
+		croak "the layer already has a field with name '$n'" if $self->HasField($n);
+		my $a = shift || 1;
+		_CreateField($self, $fd, $a);
+	    } else {
+		$fd = Geo::OGR::FieldDefn->create($fd, @_);
+		my $n = $fd->Schema->{Name};
+		croak "the layer already has a field with name '$n'" if $self->HasField($n);
+		_CreateField($self, $fd); # approximation flag cannot be set using this method
+	    }
+	}
+        sub AlterField {
+	    my $self = shift;
+	    my $fn = shift;
+	    my $index = $fn;	    
+	    $index = $self->GetLayerDefn->GetFieldIndex($fn) unless $fn =~ /^\d+$/;
+	    my $field = $self->GetLayerDefn->GetFieldDefn($index);
+	    my $definition = Geo::OGR::FieldDefn->create(@_);
+	    my $flags = 0;
+	    my %params = @_;
+	    $flags |= 1 if $params{Name};
+	    $flags |= 2 if $params{Type};
+	    $flags |= 4 if $params{Width};
+	    AlterFieldDefn($self, $index, $definition, $flags);
+	}
+	sub DeleteField {
+	    my($self, $fn) = @_;
+	    $fn = $self->GetLayerDefn->GetFieldIndex($fn) unless $fn =~ /\d+/;
+	    _DeleteField($self, $fn);
+	}
 	sub Schema {
 	    my $self = shift;
 	    if (@_) {
@@ -304,7 +359,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 			$fd = Geo::OGR::FieldDefn->create(%$fd);
 		    }
 		    $schema{ApproxOK} = 1 unless defined $schema{ApproxOK};
-		    CreateField($self, $fd, $schema{ApproxOK});
+		    _CreateField($self, $fd, $schema{ApproxOK});
 		}
 	    }
 	    return unless defined wantarray;
@@ -594,18 +649,25 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    }
 	    return @ret;
 	}
+	sub Index {
+	    my($self, $field) = @_;
+	    my $index;
+	    if ($field =~ /^\d+$/) {
+		$index = $field;
+	    } else {
+		$index = GetFieldIndex($self, "$field");
+	    }
+	    croak "the feature does not have a field with name '$field'" if $index < 0 or $index >= GetFieldCount($self);
+	    return $index;
+	}
 	sub GetFieldType {
 	    my($self, $field) = @_;
-	    my $index = GetFieldIndex($self, "$field");
-	    $field = $index unless $index == -1;
-	    croak "No such field: $field" if $field < 0 or $field >= GetFieldCount($self);
+	    $field = Index($self, $field);
 	    return $Geo::OGR::FieldDefn::TYPE_INT2STRING{_GetFieldType($self, $field)};
 	}
 	sub FieldIsList {
 	    my($self, $field) = @_;
-	    my $index = GetFieldIndex($self, "$field");
-	    $field = $index unless $index == -1;
-	    croak "No such field: $field" if $field < 0 or $field >= GetFieldCount($self);
+	    $field = Index($self, $field);
 	    my $type = _GetFieldType($self, $field);
 	    return 1 if ($type == $Geo::OGR::OFTIntegerList or
 			 $type == $Geo::OGR::OFTRealList or
@@ -617,9 +679,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub GetField {
 	    my($self, $field) = @_;
-	    my $index = GetFieldIndex($self, "$field");
-	    $field = $index unless $index == -1;
-	    croak "No such field: $field" if $field < 0 or $field >= GetFieldCount($self);
+	    $field = Index($self, $field);
 	    return undef unless IsFieldSet($self, $field);
 	    my $type = _GetFieldType($self, $field);
 	    if ($type == $Geo::OGR::OFTInteger) {
@@ -658,21 +718,17 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    if ($type == $Geo::OGR::OFTDateTime) {
 		return GetFieldAsDateTime($self, $field);
 	    }
-	    carp "unknown/unsupported field type: $type";
+	    croak "GDAL does not have a field type whose constant is '$type'";
 	}
 	sub UnsetField {
 	    my($self, $field) = @_;
-	    my $index = GetFieldIndex($self, "$field");
-	    $field = $index unless $index == -1;
-	    croak "No such field: $field" if $field < 0 or $field >= GetFieldCount($self);
+	    $field = Index($self, $field);
 	    _UnsetField($self, $field);
 	}
 	sub SetField {
 	    my $self = shift;
 	    my $field = $_[0];
-	    my $index = GetFieldIndex($self, "$field");
-	    $field = $index unless $index == -1;
-	    croak "No such field: $field" if $field < 0 or $field >= GetFieldCount($self);
+	    $field = Index($self, $field);
 	    shift;
 	    if (@_ == 0 or !defined($_[0])) {
 		_UnsetField($self, $field);
@@ -712,7 +768,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		_SetField($self, $field, @$list[0..6]);
 	    } 
 	    else {
-		carp "unknown or unsupported field type: $type";
+		croak "GDAL does not have a field type of number '$type'";
 	    }
 	}
 	sub Field {
@@ -765,6 +821,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    %TYPE_STRING2INT %TYPE_INT2STRING
 	    %JUSTIFY_STRING2INT %JUSTIFY_INT2STRING
 	    /;
+        use Carp;
 	use Encode;
 	@FIELD_TYPES = qw/Integer IntegerList Real RealList String StringList 
 			WideString WideStringList Binary Date Time DateTime/;
@@ -797,6 +854,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		    }
 		}
 	    }
+	    croak "usage: Geo::OGR::FieldDefn->create(%params)" if ref($param{Name});
 	    $param{Type} = $TYPE_STRING2INT{$param{Type}} 
 	    if defined $param{Type} and exists $TYPE_STRING2INT{$param{Type}};
 	    $param{Justify} = $JUSTIFY_STRING2INT{$param{Justify}} 
@@ -930,13 +988,13 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    } elsif (defined $json) {
 		$self = Geo::OGRc::CreateGeometryFromJson($json);
 	    } elsif (defined $type) {
-		croak "unknown GeometryType: $type" unless 
+		croak "unknown GeometryType '$type' when creating a Geo::OGR::Geometry object" unless 
 		    exists($TYPE_STRING2INT{$type}) or exists($TYPE_INT2STRING{$type});
 		$self = Geo::OGRc::new_Geometry($type);
 	    } elsif (defined $arc) {
 		$self = Geo::OGRc::ApproximateArcAngles(@$arc);
 	    } else {
-		croak "missing GeometryType, WKT, WKB, GML, or GeoJSON parameter in Geo::OGR::Geometry::create";
+		croak "missing a parameter when creating a Geo::OGR::Geometry object";
 	    }
 	    bless $self, $pkg if defined $self;
 	    $self->Points($points) if $points;
@@ -1028,7 +1086,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    if ($points) {
 		Empty($self);
 		if ($t eq 'Unknown' or $t eq 'None' or $t eq 'GeometryCollection') {
-		    croak("Can't set points of a geometry of type: $t");
+		    croak("can't set points of a geometry of type '$t'");
 		} elsif ($t eq 'Point') {
 		    # support both "Point" as a list of one point and one point
 		    if (ref($points->[0])) {
@@ -1173,7 +1231,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		exists $Geo::OGR::Geometry::TYPE_STRING2INT{$type_or_name};
 	    return $Geo::OGR::Geometry::TYPE_INT2STRING{$type_or_name} if 
 		exists $Geo::OGR::Geometry::TYPE_INT2STRING{$type_or_name};
-	    croak "unknown geometry type or name: $type_or_name";
+	    croak "unknown geometry type constant value or name '$type_or_name'";
 	} else {
 	    return keys %Geo::OGR::Geometry::TYPE_STRING2INT;
 	}
@@ -1195,7 +1253,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	# is name an integer?
 	my $driver = _GetDriver($name) if $name =~ /^\d+$/;
 	$driver = GetDriverByName("$name") unless $driver;
-	croak "OGR driver not found (maybe support for it was not built in?): $name\n" unless $driver;
+	croak "OGR driver with name '$name' not found (maybe support for it was not built in?)" unless $driver;
 	return $driver;
     }
     *Driver = *GetDriver;
