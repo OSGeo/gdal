@@ -1004,14 +1004,23 @@
 ## @method Geo::OGR::Layer Contours($DataSource, \%LayerConstructor, $ContourInterval, $ContourBase, \@FixedLevels, $NoDataValue, $IDField, $ElevField, $callback, $callback_data)
 # Generate contours for this raster band. This method can also be used with named parameters.
 # @note This method is a wrapper for ContourGenerate.
+#
+# An example:
+# \code
+# use Geo::GDAL;
+# $dem = Geo::GDAL::Open('dem.gtiff');
+# $contours = $dem->Band->Contours(ContourInterval => 10, ElevField => 'z');
+# $n = $contours->GetFeatureCount;
+# \endcode
+#
 # @param DataSource a Geo::OGR::DataSource object, default is a Memory data source
 # @param LayerConstructor data for Geo::OGR::DataSource::CreateLayer, default is {Name => 'contours'}
 # @param ContourInterval default is 100
 # @param ContourBase default is 0
 # @param FixedLevels a reference to a list of fixed contour levels, default is []
 # @param NoDataValue default is undef
-# @param IDField default is '', i.e., no field
-# @param ElevField default is '', i.e., no field
+# @param IDField default is '', i.e., no field (the field is created if this is given)
+# @param ElevField default is '', i.e., no field (the field is created if this is given)
 # @param callback [optional] a reference to a subroutine, which will
 # be called with parameters (number progress, string msg, callback_data)
 # @param callback_data [optional]
