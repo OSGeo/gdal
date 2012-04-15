@@ -305,14 +305,54 @@
 # Layer capabilities known to GDAL
 
 ## @cmethod @Capabilities()
+# Examples:
+# \code
+# @cap = Geo::OGR::Layer::Capabilities(); # the class method
+# @cap = $layer->Capabilities(); # the object method
+# \endcode
 # @return a list of capabilities. The class method returns a list of
-# all potential capabilities a layer may have; the object method
+# all potential capabilities a layer may have. The object method
 # returns a list of all capabilities the layer has.
 
 ## @method $TestCapability($cap)
 # @param cap A capability string.
 # @return a boolean value indicating whether the layer has the
 # specified capability.
+
+## @method Geo::OGR::DataSource()
+# @return the data source object to which this layer object belongs to.
+
+## @method %GetField($field_name)
+# @param field_name the name (or index) of the field
+# @return the schema of the field in a hash (in list context) or in an
+# anonymous hash
+
+## @method CreateField(%parameters)
+# @param parameters named parameters: Name, Type, Justify, Width,
+# Precision
+
+## @method CreateField($field_definition, $approximation_ok)
+# @deprecated use CreateField(hash parameters)
+# @param field_definition a Geo::OGR::FieldDefn object
+# @param approximation_ok may the field be created in a slightly
+# different form depending on the limitations of the format driver.
+
+## @method AlterField($field_name, %new_definition)
+# @param field_name the name (or index) of the field to be altered
+# @param new_definition one or more of Name, Type, and Width
+
+## @method AlterFieldDefn($field, $definition, $flags)
+# @deprecated use AlterField(scalar name, hash parameters)
+# Alter the definition of an existing field on a layer.
+# @param field index of the field whose definition is altered
+# @param definition a Geo::OGR::FieldDefn object
+# @param flags 1 to alter the name, 2 to alter the type, 4 to alter
+# the width, use combinations 3, 5, 6 or 7 to alter two or more
+# properties
+
+## @method DeleteField($field)
+# Delete an existing field from a layer.
+# @param field name (or index) of the field which is deleted
 
 ## @method \%Schema(%schema)
 # Get and/or set the schema of the layer.
@@ -417,6 +457,7 @@
 ## @method SyncToDisk()
 
 ## @method Geo::OGR::FeatureDefn GetLayerDefn()
+# @deprecated use Geo::OGR::Layer::Schema, which returns a Perl structure
 # @return a new Geo::OGR::FeatureDefn object
 
 ## @method $GetFeatureCount($force = 1)
@@ -434,10 +475,6 @@
 # @param force
 # @return the extent = ($minx, $miny, $maxx, $maxy) as a listref
 
-## @method CreateField($field_def, $approx_ok = 1)
-# @param field_def a Geo::OGR::FieldDefn object
-# @param approx_ok
-
 ## @method StartTransaction()
 
 ## @method CommitTransaction()
@@ -448,19 +485,6 @@
 # @return a new Geo::OSR::SpatialReference object
 
 ## @ignore GetRefCount
-
-## @method AlterFieldDefn($field, $definition, $flags)
-# Alter the definition of an existing field on a layer.
-# @param field index of the field whose definition is altered
-# @param definition a Geo::OGR::FieldDefn object
-# @param flags 1 to alter the name, 2 to alter the type, 4 to alter
-# the width, use combinations 3, 5, 6 or 7 to alter two or more
-# properties
-# @todo Perlify: support field names and string flags
-
-## @method DeleteField($field)
-# Delete an existing field from a layer.
-# @param field index of the field which is deleted
 
 ## @method $GetFIDColumn()
 # @return the name of the underlying database column being used as the FID column, or "" if not supported.
@@ -1194,10 +1218,11 @@
 # Modify the geometry such it has no segment longer than the given length.
 # @param MaxLength the given length
 
-## @method Simplify($Tolerance)
+## @method Geo::OGR::Geometry Simplify($Tolerance)
 # Simplify the geometry.
 # @param Tolerance the length tolerance for the simplification
 # @since 1.8.0
+# @return a new Geo::OSR::Geometry object
 
 ## @method TransformTo($srs)
 # @param srs a Geo::OSR::SpatialReference object
