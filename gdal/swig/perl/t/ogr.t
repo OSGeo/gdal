@@ -40,6 +40,27 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
     is_deeply($s1, $s2, "Layer schema test");
 }
 
+{
+    my $l = Geo::OGR::Driver('Memory')->Create()->CreateLayer({GeometryType=>'Polygon'});
+    eval {
+	# this is an error because the layer is polygon and this is a point
+	$l->InsertFeature([0,{wkt=>'POINT(1 1)'},12.2,3]);
+    };
+    ok($@, 'an error because geometry type mismatch');
+}
+
+{
+    my $l = Geo::OGR::Driver('Memory')->Create()->CreateLayer();
+    $l->CreateField(Name => 'value', Type => 'Integer');
+    $l->InsertFeature([0,{wkt=>'POINT(1 1)'},12.2,3]);
+    my $f = $l->GetFeature(0);
+    my $r = $f->Row;
+    ok($r->{Geometry}->AsText eq 'POINT (1 1)', 'The geometry of the inserted feature is ok');
+    ok($r->{value} == 12, "The float is changed to integer because that's the type in the layer");
+    my $n = $f->Tuple;
+    ok($n == 3, 'The extra field is scrapped because layer does not have a field for it');
+}
+
 %test_driver = ('ESRI Shapefile' => 1,
 		'MapInfo File' => 1,
 		'Memory' => 1,
@@ -136,20 +157,6 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 	       );
     my $f = Geo::OGR::Feature->new($d);
     ok($f->Schema->{Fields}->[1]->{Index} == 1, "Index in field in schema");
-
-    sub print_schema {
-	my %schema = @_;
-	print "<---Schema:\n";
-	print "Name = $schema{Name}\n";
-	print "GeometryType = $schema{GeometryType}\n";
-	print "Fields:\n";
-	for my $f (@{$schema{Fields}}) {
-	    print "  $f->{Name}, $f->{Type}, $f->{Justify}, $f->{Width}, $f->{Precision}\n";
-	}
-	print "--->\n";
-    }
-    print_schema($f->Schema);
-    
     $f->Row( ilist => [1,2,3],
 	     rlist => [1.1,2.2,3.3],
 	     slist => ['a','b','c'],

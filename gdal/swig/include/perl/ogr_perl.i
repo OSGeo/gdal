@@ -367,79 +367,42 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub Row {
 	    my $self = shift;
-	    my %row = @_;
-	    my $f = defined $row{FID} ? $self->GetFeature($row{FID}) : $self->GetNextFeature;
-	    my $d = $f->GetDefnRef;
-	    my $changed = 0;
-	    if (defined $row{Geometry}) {
-		if (ref($row{Geometry}) eq 'HASH') {
-		    my %geom = %{$row{Geometry}};
-		    $geom{GeometryType} = $d->GeometryType unless $geom{GeometryType};
-		    $f->SetGeometryDirectly(Geo::OGR::Geometry->create(%geom));
-		} else {
-		    $f->SetGeometryDirectly($row{Geometry});
-		}
-		$changed = 1;
+	    my %row;
+	    my $update;
+	    if (@_ > 0 and ref($_[0])) { # undocumented hack: the first argument may be the schema
+		$update = @_ > 1;
+		%row = @_[1..$#$_];
+	    } else {
+		$update = @_ > 0;
+		%row = @_;
 	    }
-	    for my $fn (keys %row) {
-		next if $fn eq 'FID';
-		next if $fn eq 'Geometry';
-		$f->SetField($fn, $row{$fn});
-		$changed = 1;
+	    my $feature = defined $row{FID} ? $self->GetFeature($row{FID}) : $self->GetNextFeature;
+	    my $ret;
+	    if (defined wantarray) {
+		$ret = $feature->Row(@_);
+	    } else {
+		$feature->Row(@_);
 	    }
-	    $self->SetFeature($f) if $changed;
+	    $self->SetFeature($feature) if $update;
 	    return unless defined wantarray;
-	    %row = ();
-	    my $s = $d->Schema;
-	    for my $field (@{$s->{Fields}}) {
-		my $n = $field->{Name};
-		if ($f->FieldIsList($n)) {
-		    $row{$n} = [$f->GetField($n)];
-		} else {
-		    $row{$n} = $f->GetField($n);
-		}
-	    }
-	    $row{FID} = $f->GetFID;
-	    $row{Geometry} = $f->GetGeometry;
-	    return \%row;
+	    return $ret;
 	}
 	sub Tuple {
 	    my $self = shift;
+	    # undocumented hack: the first argument may be the schema
+	    my $schema = ref($_[0]) ? shift : $self->Schema;
 	    my $FID = shift;
-	    my $Geometry = shift;
-	    my $f = defined $FID ? $self->GetFeature($FID) : $self->GetNextFeature;
-	    my $d = $f->GetDefnRef;
-	    my $changed = 0;
-	    if (defined $Geometry) {
-		if (ref($Geometry) eq 'HASH') {
-		    my %geom = %$Geometry;
-		    $geom{GeometryType} = $d->GeometryType unless $geom{GeometryType};
-		    $f->SetGeometryDirectly(Geo::OGR::Geometry->create(%geom));
-		} else {
-		    $f->SetGeometryDirectly($Geometry);
-		}
-		$changed = 1;
+	    my $feature = defined $FID ? $self->GetFeature($FID) : $self->GetNextFeature;
+	    my $set = @_ > 0;
+	    unshift @_, $feature->GetFID if $set;
+	    my @ret;
+	    if (defined wantarray) {
+		@ret = $feature->Tuple($schema, @_);
+	    } else {
+		$feature->Tuple($schema, @_);
 	    }
-	    my $s = $d->Schema;
-	    if (@_) {
-		for my $field (@{$s->{Fields}}) {
-		    my $v = shift;
-		    my $n = $field->{Name};
-		    $f->SetField($n, $v);
-		}
-		$changed = 1;
-	    }
-	    $self->SetFeature($f) if $changed;
+	    $self->SetFeature($feature) if $set;
 	    return unless defined wantarray;
-	    my @ret = ($f->GetFID, $f->GetGeometry);
-	    my $i = 0;
-	    for my $field (@{$s->{Fields}}) {
-		if ($f->FieldIsList($i)) {
-		    push @ret, [$f->GetField($i++)];
-		} else {
-		    push @ret, $f->GetField($i++);
-		}
-	    }
 	    return @ret;
 	}
 	sub SpatialFilter {
@@ -451,17 +414,43 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub InsertFeature {
 	    my $self = shift;
-	    my $f = shift;
-	    if (ref($f) eq 'HASH') {
-		my %row = %$f;
-		$f = Geo::OGR::Feature->new($self->GetLayerDefn);
-		$f->Row(%row);
-	    } elsif (ref($f) eq 'ARRAY') {
-		my @tuple = @$f;
-		$f = Geo::OGR::Feature->new($self->GetLayerDefn);
-		$f->Tuple(@tuple);
+	    my $feature = shift;
+	    croak "InsertFeature requires the feature data in an object or in a referenced hash or array" unless ref($feature);
+	    my $schema = shift;
+	    $schema = $self->Schema unless $schema;
+	    my $new = Geo::OGR::Feature->create($schema);
+	    if (ref($feature) eq 'HASH') {
+		$new->Row($schema, %$feature);
+	    } elsif (ref($feature) eq 'ARRAY') {
+		$new->Tuple($schema, @$feature);
+	    } elsif (blessed($feature) and $feature->isa('Geo::OGR::Feature')) {
+		$new->Tuple($schema, $feature->Tuple);
 	    }
-	    $self->CreateFeature($f);
+	    $self->CreateFeature($new);
+	}
+	sub ForFeatures {
+	    my $self = shift;
+	    my $code = shift;
+	    my $in_place = shift;
+	    $self->ResetReading;
+	    while (my $f = $self->GetNextFeature) {
+		$code->($f);
+		$self->SetFeature($f) if $in_place;
+	    };
+	}
+	sub ForGeometries {
+	    my $self = shift;
+	    my $code = shift;
+	    my $in_place = shift;
+	    $self->ResetReading;
+	    while (my $f = $self->GetNextFeature) {
+		my $g = $f->Geometry();
+		$code->($g);
+		if ($in_place) {
+		    $f->Geometry($g);
+		    $self->SetFeature($f);
+		}
+	    }
 	}
 	sub GeometryType {
 	    my $self = shift;
@@ -483,10 +472,13 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    bless $self, $pkg;
 	    $self->GeometryType($schema{GeometryType});
 	    for my $fd (@{$schema{Fields}}) {
+		my $d;
 		if (ref($fd) eq 'HASH') {
-		    $fd = Geo::OGR::FieldDefn->create(%$fd);
+		    $d = Geo::OGR::FieldDefn->create(%$fd);
+		} else {
+		    $d = Geo::OGR::FieldDefn->create($fd->Schema);
 		}
-		AddFieldDefn($self, $fd);
+		AddFieldDefn($self, $d);
 	    }
 	    return $self;
 	}
@@ -584,26 +576,21 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub Row {
 	    my $self = shift;
-	    my %row = @_;
-	    $self->SetFID($row{FID}) if defined $row{FID};
-	    if (defined $row{Geometry}) {
-		if (ref($row{Geometry}) eq 'HASH') {
-		    my %geom = %{$row{Geometry}};
-		    $geom{GeometryType} = $self->GetDefnRef->GeometryType unless $geom{GeometryType};
-		    $self->SetGeometryDirectly(Geo::OGR::Geometry->create(%geom));
-		} else {
-		    $self->SetGeometryDirectly($row{Geometry});
+	    # undocumented hack: the first argument may be the schema
+	    my $schema = ref($_[0]) ? shift : $self->Schema;
+	    if (@_) { # update
+		my %row = @_;
+		$self->SetFID($row{FID}) if defined $row{FID};
+		$self->Geometry($schema, $row{Geometry}) if $row{Geometry};
+		for my $fn (keys %row) {
+		    next if $fn eq 'FID';
+		    next if $fn eq 'Geometry';
+		    $self->SetField($fn, $row{$fn}); # should quietly skip non-fields...
 		}
 	    }
-	    for my $fn (keys %row) {
-		next if $fn eq 'FID';
-		next if $fn eq 'Geometry';
-		$self->SetField($fn, $row{$fn});
-	    }
 	    return unless defined wantarray;
-	    %row = ();
-	    my $s = $self->GetDefnRef->Schema;
-	    for my $field (@{$s->{Fields}}) {
+	    my %row = ();
+	    for my $field (@{$schema->{Fields}}) {
 		my $n = $field->{Name};
 		if (FieldIsList($self, $n)) {
 		    $row{$n} = [$self->GetField($n)];
@@ -612,35 +599,30 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		}
 	    }
 	    $row{FID} = $self->GetFID;
-	    $row{Geometry} = $self->GetGeometry;
+	    $row{Geometry} = $self->Geometry;
 	    return \%row;
 	}
 	sub Tuple {
 	    my $self = shift;
+	    # undocumented hack: the first argument may be the schema
+	    my $schema = ref($_[0]) ? shift : $self->Schema;
 	    my $FID = shift;
-	    my $Geometry = shift;
-	    $self->SetFID($FID) if defined $FID;
-	    if (defined $Geometry) {
-		if (ref($Geometry) eq 'HASH') {
-		    my %geom = %$Geometry;
-		    $geom{GeometryType} = $self->GetDefnRef->GeometryType unless $geom{GeometryType};
-		    $self->SetGeometryDirectly(Geo::OGR::Geometry->create(%geom));
-		} else {
-		    $self->SetGeometryDirectly($Geometry);
-		}
-	    }
-	    my $s = $self->GetDefnRef->Schema;
-	    if (@_) {
-		for my $field (@{$s->{Fields}}) {
-		    my $v = shift;
-		    my $n = $field->{Name};
-		    $self->SetField($n, $v);
+	    if (defined $FID) {
+		$self->SetFID($FID);
+		my $geometry = shift;
+		$self->Geometry($schema, $geometry) if $geometry;
+		if (@_) {
+		    for my $field (@{$schema->{Fields}}) {
+			my $v = shift;
+			my $n = $field->{Name};
+			$self->SetField($n, $v);
+		    }
 		}
 	    }
 	    return unless defined wantarray;
-	    my @ret = ($self->GetFID, $self->GetGeometry);
+	    my @ret = ($self->GetFID, $self->Geometry);
 	    my $i = 0;
-	    for my $field (@{$s->{Fields}}) {
+	    for my $field (@{$schema->{Fields}}) {
 		if (FieldIsList($self, $i)) {
 		    push @ret, [$self->GetField($i++)];
 		} else {
@@ -779,9 +761,34 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	}
 	sub Geometry {
 	    my $self = shift;
-	    SetGeometry($self, $_[0]) if @_;
-            my $geometry = GetGeometryRef($self);
-	    $geometry->Clone() if $geometry and defined wantarray;
+	    if (@_) {
+		# undocumented hack: the first argument may be the schema
+		my $schema = @_ == 2 ? shift : $self->Schema;
+		my $geometry = shift;
+		my $type = $schema->{GeometryType};
+		if (ref($geometry) eq 'HASH') {
+		    my $geom;
+		    eval {
+			$geom = Geo::OGR::Geometry->create(%$geometry);
+		    };
+		    if ($@) {
+			$geometry->{GeometryType} = $type;
+			$geom = Geo::OGR::Geometry->create(%$geometry);
+		    }
+		    unless ($type eq 'Unknown' or !$geom->GeometryType) {
+			croak "an attempt to insert a geometry with type '",$geom->GeometryType,"' into a feature with geometry type '$type'" unless $type eq $geom->GeometryType;
+		    }
+		    $self->SetGeometryDirectly($geom);
+		} else {
+		    unless ($type eq 'Unknown') {
+			croak "an attempt to insert a geometry with type '$geometry->{GeometryType}' into a feature with geometry type '$type'" unless $type eq $geometry->GeometryType;
+		    }
+		    $self->SetGeometry($geometry);
+		}
+	    }
+	    return unless defined wantarray;
+            my $geometry = $self->GetGeometryRef();
+	    $geometry->Clone() if $geometry;
 	}
 	sub SetGeometryDirectly {
 	    _SetGeometryDirectly(@_);
@@ -1250,8 +1257,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
     }
     sub GetDriver {
 	my($name) = @_;
-	# is name an integer?
-	my $driver = _GetDriver($name) if $name =~ /^\d+$/;
+	my $driver = _GetDriver($name) if $name =~ /^\d+$/; # is the name an index to driver list?
 	$driver = GetDriverByName("$name") unless $driver;
 	croak "OGR driver with name '$name' not found (maybe support for it was not built in?)" unless $driver;
 	return $driver;
