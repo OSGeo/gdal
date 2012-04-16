@@ -1507,6 +1507,27 @@ DECLARESepPutFunc(putRGBAAseparate8bittile)
 }
 
 /*
+ * 8-bit unpacked CMYK samples => RGBA
+ */
+DECLARESepPutFunc(putCMYKseparate8bittile)
+{
+  (void) img; (void) y;
+	while (h-- > 0) {
+		uint32 rv, gv, bv, kv;
+		uint8* m;
+		for (x = w; x-- > 0;) {
+			kv = 255 - *a++;
+			rv = (kv*(255-*r++))/255;
+			gv = (kv*(255-*g++))/255;
+			bv = (kv*(255-*b++))/255;
+			*cp++ = PACK4(rv,gv,bv,255);
+		}
+		SKEW4(r, g, b, a, fromskew);
+		cp += toskew;
+	}
+}
+
+/*
  * 8-bit unpacked samples => RGBA w/ unassociated alpha
  */
 DECLARESepPutFunc(putRGBUAseparate8bittile)
@@ -2586,6 +2607,13 @@ PickSeparateCase(TIFFRGBAImage* img)
 							img->put.separate = putRGBseparate16bittile;
 					}
 					break;
+			}
+			break;
+		case PHOTOMETRIC_SEPARATED:
+			if (img->bitspersample == 8 && img->samplesperpixel == 4)
+			{
+				img->alpha = 1; // Not alpha, but seems like the only way to get 4th band
+				img->put.separate = putCMYKseparate8bittile;
 			}
 			break;
 		case PHOTOMETRIC_YCBCR:
