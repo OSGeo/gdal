@@ -227,7 +227,7 @@
 
 ## @fn Geo::GDAL::Driver Driver($driver)
 # Create a driver object for the internal GDAL driver.
-# \note a.k.a. GetDriver
+# @note a.k.a. GetDriver
 # @param driver The name or number of the driver.
 # @return a new Geo::GDAL::Driver object
 
@@ -536,7 +536,8 @@
 
 ## @method Geo::GDAL::Dataset Create($name, $xsize, $ysize, $bands =1, $type = 'Byte', \%options = undef)
 # Create a GDAL dataset using this driver.
-# \note a.k.a. CreateDataset
+# @note a.k.a. CreateDataset
+#
 # Create a new Geo::GDAL::Dataset
 # @param name
 # @param xsize
@@ -641,7 +642,7 @@
 
 ## @method Geo::GDAL::Band Band($index)
 # Create a band object for the band within the dataset.
-# \note a.k.a. GetRasterBand
+# @note a.k.a. GetRasterBand
 # @param index 1...RasterCount
 # @return a new Geo::GDAL::Band object
 
