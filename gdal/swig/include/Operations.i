@@ -31,14 +31,12 @@
 %{
 #include "gdalgrid.h"
 
-#ifdef OGR_ENABLED
 #ifdef DEBUG 
 typedef struct OGRLayerHS OGRLayerShadow;
 typedef struct OGRGeometryHS OGRGeometryShadow;
 #else
 typedef void OGRLayerShadow;
 typedef void OGRGeometryShadow;
-#endif
 #endif
 %}
 
@@ -178,7 +176,6 @@ int  ComputeProximity( GDALRasterBandShadow *srcBand,
 %} 
 %clear GDALRasterBandShadow *srcBand, GDALRasterBandShadow *proximityBand;
 
-#ifdef OGR_ENABLED
 /************************************************************************/
 /*                        RasterizeLayer()                              */
 /************************************************************************/
@@ -297,8 +294,6 @@ int  Polygonize( GDALRasterBandShadow *srcBand,
 }
 %} 
 %clear GDALRasterBandShadow *srcBand, OGRLayerShadow *outLayer;
-
-#endif
 
 /************************************************************************/
 /*                             FillNodata()                             */
@@ -468,8 +463,6 @@ int wrapper_GridCreate( char* algorithmOptions,
 %clear (void *nioBuffer, long nioBufferSize);
 #endif
 
-#ifdef OGR_ENABLED
-
 /************************************************************************/
 /*                          ContourGenerate()                           */
 /************************************************************************/
@@ -516,8 +509,6 @@ int ContourGenerate( GDALRasterBandShadow *srcBand,
 %clear GDALRasterBandShadow *srcBand;
 %clear OGRLayerShadow* dstLayer;
 %clear  (int fixedLevelCount, double *fixedLevels );
-
-#endif
 
 /************************************************************************/
 /*                        AutoCreateWarpedVRT()                         */
