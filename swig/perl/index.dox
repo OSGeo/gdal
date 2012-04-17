@@ -3,22 +3,13 @@
 \section index_version Version
 
 These pages document the development version of the GDAL Perl API,
-which is extended from the released versions APIs.
-
-<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.4/html/index.html">The
-documentation for the version 1.4 API.</a>
-
-<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.5/html/index.html">The
-documentation for the version 1.5 API.</a>
-
-<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.6/html/index.html">The
-documentation for the version 1.6 API.</a>
-
-<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.7/html/index.html">The
-documentation for the version 1.7 API.</a>
-
-<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.8/html/index.html">The
-documentation for the version 1.8 API.</a>
+which is extended from the released versions APIs. Old versions: 
+<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.4/html/index.html">1.4</a>
+<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.5/html/index.html">1.5</a>
+<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.6/html/index.html">1.6</a>
+<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.7/html/index.html">1.7</a>
+<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.8/html/index.html">1.8</a>
+<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.9/html/index.html">1.9</a>
 
 \section index_intro Introduction
 
