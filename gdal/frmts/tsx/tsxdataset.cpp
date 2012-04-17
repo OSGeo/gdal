@@ -272,9 +272,9 @@ int TSXDataset::Identify( GDALOpenInfo *poOpenInfo )
             VSIStatBufL sStat;
             if( VSIStatL( osFilename, &sStat ) == 0 )
                 return 1;
-
-            return 0;
         }
+
+        return 0;
     }
 
     /* Check if the filename contains TSX1_SAR (TerraSAR-X) or TDX1_SAR (TanDEM-X) */
