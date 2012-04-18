@@ -910,6 +910,22 @@ def ogr_csv_21():
 
 
 ###############################################################################
+# Test handling of UTF8 BOM (bug #4623)
+
+def ogr_csv_22():
+
+    ds = ogr.Open('data/csv_with_utf8_bom.csv')
+    lyr = ds.GetLayer(0)
+    fld0_name = lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef()
+
+    if fld0_name != 'id':
+        gdaltest.post_reason('bad field name')
+        print(fld0_name)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_csv_cleanup():
@@ -960,6 +976,7 @@ gdaltest_list = [
     ogr_csv_19,
     ogr_csv_20,
     ogr_csv_21,
+    ogr_csv_22,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':
