@@ -377,6 +377,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		%row = @_;
 	    }
 	    my $feature = defined $row{FID} ? $self->GetFeature($row{FID}) : $self->GetNextFeature;
+	    return unless $feature;
 	    my $ret;
 	    if (defined wantarray) {
 		$ret = $feature->Row(@_);
@@ -393,6 +394,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my $schema = ref($_[0]) ? shift : $self->Schema;
 	    my $FID = shift;
 	    my $feature = defined $FID ? $self->GetFeature($FID) : $self->GetNextFeature;
+	    return unless $feature;
 	    my $set = @_ > 0;
 	    unshift @_, $feature->GetFID if $set;
 	    my @ret;
