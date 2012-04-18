@@ -65,7 +65,7 @@ def ogr_pg_1():
     gdaltest.pg_ds = None
     gdaltest.pg_connection_string='dbname=autotest'
     #gdaltest.pg_connection_string='dbname=autotest port=5432'
-    #gdaltest.pg_connection_string='dbname=autotest-postgis2.0 port=5432'
+    #gdaltest.pg_connection_string='dbname=autotest-postgis2.0'
     #gdaltest.pg_connection_string='dbname=autotest host=127.0.0.1 port=5433 user=postgres'
     #gdaltest.pg_connection_string='dbname=autotest host=127.0.0.1 port=5434 user=postgres'
     #gdaltest.pg_connection_string='dbname=autotest port=5435 host=127.0.0.1'
@@ -2715,7 +2715,7 @@ def ogr_pg_56():
 
     gdal.SetConfigOption( 'PG_USE_COPY', 'YES' )
 
-    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update = 1)
     lyr = ds.GetLayerByName('ogr_pg_56')
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -2939,7 +2939,7 @@ def ogr_pg_61():
 
     gdal.SetConfigOption( 'PG_USE_COPY', 'YES' )
 
-    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string, update = 1)
     lyr = ds.GetLayerByName('ogr_pg_61')
 
     feat = ogr.Feature(lyr.GetLayerDefn())
