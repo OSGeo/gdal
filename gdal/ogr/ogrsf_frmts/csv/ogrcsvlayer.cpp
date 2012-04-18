@@ -276,6 +276,14 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
         pszLine = CPLReadLineL( fpCSV );
         if ( pszLine != NULL )
         {
+            /* Detect and remove UTF-8 BOM marker if found (#4623) */
+            if (pszLine[0] == (char)0xEF &&
+                pszLine[1] == (char)0xBB &&
+                pszLine[2] == (char)0xBF)
+            {
+                pszLine += 3;
+            }
+
             /* tokenize the strings and preserve quotes, so we can separate string from numeric */
             /* this is only used in the test for bHasFeldNames (bug #4361) */
             papszTokens = CSLTokenizeString2( pszLine, szDelimiter, 
