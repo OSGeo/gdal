@@ -40,6 +40,8 @@ CPL_CVSID("$Id$");
 static CPLString OGRPGEscapeStringList(PGconn *hPGConn,
                                        char** papszItems, int bForInsertOrUpdate);
 
+#define UNSUPPORTED_OP_READ_ONLY "%s : unsupported operation on a read-only datasource."
+
 /************************************************************************/
 /*                          OGRPGTableLayer()                           */
 /************************************************************************/
@@ -863,6 +865,14 @@ OGRErr OGRPGTableLayer::DeleteFeature( long nFID )
 
     GetLayerDefn();
 
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "DeleteFeature");
+        return OGRERR_FAILURE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      We can only delete features if we have a well defined FID       */
 /*      column to target.                                               */
@@ -1076,6 +1086,14 @@ OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
 
     GetLayerDefn();
 
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "SetFeature");
+        return OGRERR_FAILURE;
+    }
+
     if( NULL == poFeature )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -1258,6 +1276,14 @@ OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
 OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
 {
     GetLayerDefn();
+
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "CreateFeature");
+        return OGRERR_FAILURE;
+    }
 
     if( NULL == poFeature )
     {
@@ -2044,6 +2070,14 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 
     GetLayerDefn();
 
+    if( !bUpdateAccess )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "CreateField");
+        return OGRERR_FAILURE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Do we want to "launder" the column names into Postgres          */
 /*      friendly format?                                                */
@@ -2118,7 +2152,8 @@ OGRErr OGRPGTableLayer::DeleteField( int iField )
     if( !bUpdateAccess )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't delete fields on a read-only datasource.");
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "DeleteField");
         return OGRERR_FAILURE;
     }
 
@@ -2176,7 +2211,8 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
     if( !bUpdateAccess )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't alter field definition on a read-only datasource.");
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "AlterFieldDefn");
         return OGRERR_FAILURE;
     }
 

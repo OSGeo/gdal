@@ -1719,7 +1719,8 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
     CPLString osCurrentSchema = GetCurrentSchema();
     OGRPGTableLayer* poLayer = OpenTable( osCurrentSchema, pszTableName,
                                           pszSchemaName,
-                                          pszGeomColumnName, TRUE, TRUE, TRUE );
+                                          pszGeomColumnName,
+                                          bDSUpdate, TRUE, TRUE );
     CPLFree(pszTableName);
     CPLFree(pszSchemaName);
     CPLFree(pszGeomColumnName);
