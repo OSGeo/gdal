@@ -559,11 +559,19 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
         {
             OGRPGClearResult( hResult );
+            CPLDebug("PG","Command \"%s\" failed. Trying without 'public'.",osCommand.c_str());
+            osCommand.Printf("SET search_path='%s'", osActiveSchema.c_str());
+            PGresult    *hResult2 = OGRPG_PQexec(hPGConn, osCommand );
 
-            CPLError( CE_Failure, CPLE_AppDefined,
-                    "%s", PQerrorMessage(hPGConn) );
+            if( !hResult2 || PQresultStatus(hResult2) != PGRES_COMMAND_OK )
+            {
+                OGRPGClearResult( hResult2 );
 
-            goto end;
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "%s", PQerrorMessage(hPGConn) );
+
+                goto end;
+            }
         }
 
         OGRPGClearResult(hResult);
