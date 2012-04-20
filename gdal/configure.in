@@ -3294,6 +3294,12 @@ if test "$datadir" = '${datarootdir}' \
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl By default mandir is $datarootdir/man which would be
+dnl /usr/local/share/gdal/man but we want man pages in /usr/local/man. 
+dnl ---------------------------------------------------------------------------
+mandir='${prefix}/man'
+
+dnl ---------------------------------------------------------------------------
 dnl Capture GDAL_PREFIX for the cpl_config.h include file. 
 dnl ---------------------------------------------------------------------------
 
