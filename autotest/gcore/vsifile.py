@@ -136,9 +136,25 @@ def vsifile_3():
 
     return 'success'
 
+###############################################################################
+# Test fix for #4583
+
+def vsifile_4():
+
+    fp = gdal.VSIFOpenL('vsifile.py', 'rb')
+    data = gdal.VSIFReadL(1000000, 1, fp)
+    #print(len(data))
+    gdal.VSIFSeekL(fp, 0, 0)
+    data = gdal.VSIFReadL(1, 1000000, fp)
+    if len(data) == 0:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ vsifile_1,
                   vsifile_2,
-                  vsifile_3 ]
+                  vsifile_3,
+                  vsifile_4 ]
 
 if __name__ == '__main__':
 
