@@ -62,7 +62,7 @@ echo
 # Disable for now, seems to depend on modern SVN versions.
 #SVN_CONFIG="--config-option config:miscellany:use-commit-times=yes"
 
-svn checkout ${SVNURL}/${SVNBRANCH}/${SVNMODULE} ${SVNMODULE} ${SVN_CONFIG}
+svn checkout -q ${SVNURL}/${SVNBRANCH}/${SVNMODULE} ${SVNMODULE} ${SVN_CONFIG}
 
 if [ \! -d gdal ] ; then
 	echo "svn checkout reported an error ... abandoning mkgdaldist"
@@ -95,7 +95,7 @@ if test -d "man"; then
     rm -rf man
 fi
 
-(cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=doc ogr"; echo "FILE_PATTERNS=*utilities.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES") | doxygen -
+(cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=apps swig/python/scripts"; echo "FILE_PATTERNS=*.cpp *.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES"; echo "QUIET=YES") | doxygen -
 
 if test ! -d "man"; then
     echo " make man failed"
@@ -128,7 +128,6 @@ cd ${CWD}
 # Make distribution packages
 #
 echo "* Making distribution packages..."
-rm -rf gdal/viewer
 rm -rf gdal/dist_docs
 
 rm -f gdal/VERSION
@@ -140,7 +139,7 @@ rm -f ../gdal-${GDAL_VERSION}${RC}.tar.gz ../gdal${COMPRESSED_VERSION}${RC}.zip
 
 tar cf ../gdal-${GDAL_VERSION}${RC}.tar gdal-${GDAL_VERSION}
 gzip -9 ../gdal-${GDAL_VERSION}${RC}.tar
-zip -r ../gdal${COMPRESSED_VERSION}${RC}.zip gdal-${GDAL_VERSION}
+zip -qr ../gdal${COMPRESSED_VERSION}${RC}.zip gdal-${GDAL_VERSION}
 
 echo "* Generating MD5 sums ..."
 
