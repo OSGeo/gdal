@@ -1,8 +1,8 @@
 
 OBJ	=	geotiff.obj gt_wkt_srs.obj gt_overview.obj \
-		tifvsi.obj tif_float.obj gt_citation.obj
+		tifvsi.obj tif_float.obj gt_citation.obj gt_jpeg_copy.obj
 
-EXTRAFLAGS = 	$(TIFF_OPTS) $(TIFF_INC) $(GEOTIFF_INC)
+EXTRAFLAGS = 	$(JPEG_FLAGS) $(TIFF_OPTS) $(TIFF_INC) $(GEOTIFF_INC)
 
 GDAL_ROOT	=	..\..
 
@@ -22,6 +22,13 @@ GEOTIFF_INC   =	-Ilibgeotiff
 SUB_GEOTIFF_TARGET =	geotiff
 !ENDIF
 
+!IFDEF JPEG_SUPPORTED
+!IFDEF JPEG_EXTERNAL_LIB
+JPEG_FLAGS =	-I.. -I..\jpeg -I$(JPEGDIR) -DHAVE_LIBJPEG
+!ELSE
+JPEG_FLAGS =	-I.. -I..\jpeg -I..\jpeg\libjpeg -DHAVE_LIBJPEG
+!ENDIF
+!ENDIF
 
 default:	$(OBJ) $(SUB_TIFF_TARGET) $(SUB_GEOTIFF_TARGET)
 	xcopy /D  /Y *.obj ..\o

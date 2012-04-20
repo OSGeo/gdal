@@ -2,7 +2,7 @@
 include ../../GDALmake.opt
 
 OBJ	=	geotiff.o gt_wkt_srs.o gt_citation.o  gt_overview.o \
-		tif_float.o tifvsi.o
+		tif_float.o tifvsi.o gt_jpeg_copy.o
 
 SUBLIBS 	=
 
@@ -22,7 +22,17 @@ TIFF_OPTS	:=	-DRENAME_INTERNAL_LIBGEOTIFF_SYMBOLS $(TIFF_OPTS)
 endif
 endif
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(GEOTIFF_INCLUDE) $(TIFF_OPTS) $(CPPFLAGS)
+JPEG_FLAGS =
+
+ifneq ($(JPEG_SETTING),no)
+JPEG_FLAGS 	:=	$(JPEG_FLAGS) -I.. -I../jpeg -DHAVE_LIBJPEG
+endif
+
+ifeq ($(JPEG_SETTING),internal)
+JPEG_FLAGS 	:=	$(JPEG_FLAGS) -I../jpeg/libjpeg
+endif
+
+CPPFLAGS	:=	 $(JPEG_FLAGS) $(GDAL_INCLUDE) $(GEOTIFF_INCLUDE) $(TIFF_OPTS) $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)
 

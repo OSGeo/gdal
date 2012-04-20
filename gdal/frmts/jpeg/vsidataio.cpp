@@ -28,12 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_vsi.h"
+#include "vsidataio.h"
 
 CPL_CVSID("$Id$");
 
 CPL_C_START
-#include "jpeglib.h"
 #include "jerror.h"
 CPL_C_END
 
