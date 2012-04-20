@@ -165,6 +165,7 @@ class CPL_DLL OGRSpatialReference
     OGRSpatialReference *Clone() const;
     OGRSpatialReference *CloneGeogCS() const;
 
+    void        dumpReadable();
     OGRErr      exportToWkt( char ** ) const;
     OGRErr      exportToPrettyWkt( char **, int = FALSE) const;
     OGRErr      exportToProj4( char ** ) const;
