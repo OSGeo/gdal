@@ -281,8 +281,11 @@ size_t VSIUnixStdioHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
     bLastOpRead = TRUE;
 
     if (nResult != nCount)
+    {
+        nOffset = VSI_FTELL64( fp );
         bAtEOF = feof(fp);
-    
+    }
+
     return nResult;
 }
 
