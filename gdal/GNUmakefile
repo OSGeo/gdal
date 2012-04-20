@@ -129,6 +129,8 @@ docs:
 	cp frmts/wms/frmt_wms_*.xml html
 	cp frmts/wms/frmt_twms_*.xml html
 
+.PHONY: man
+
 man:
 # Generate man pages
 	(cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=apps swig/python/scripts"; echo "FILE_PATTERNS=*.cpp *.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES") | doxygen -
