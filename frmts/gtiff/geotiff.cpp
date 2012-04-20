@@ -52,6 +52,7 @@
 #include "tifvsi.h"
 #include "cpl_multiproc.h"
 #include "cplkeywordparser.h"
+#include "gt_jpeg_copy.h"
 
 CPL_CVSID("$Id$");
 
@@ -7749,11 +7750,43 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
         dfExtraSpaceForOverviews *= nBands * (GDALGetDataTypeSize(eType) / 8);
     }
-    
+
+/* -------------------------------------------------------------------- */
+/*      Should we use optimized way of copying from an input JPEG       */
+/*      dataset ?                                                       */
+/* -------------------------------------------------------------------- */
+    int bCopyFromJPEG = FALSE;
+    int bDirectCopyFromJPEG = FALSE;
+
+    /* Note: JPEG_DIRECT_COPY is not defined by default, because it is mainly */
+    /* usefull for debugging purposes */
+#ifdef JPEG_DIRECT_COPY
+    if (CSLFetchBoolean(papszCreateOptions, "JPEG_DIRECT_COPY", FALSE) &&
+        GTIFF_CanDirectCopyFromJPEG(poSrcDS, papszCreateOptions))
+    {
+        CPLDebug("GTiff", "Using special direct copy mode from a JPEG dataset");
+
+        bDirectCopyFromJPEG = TRUE;
+    }
+#endif
+
+#ifdef HAVE_LIBJPEG
+    /* when CreateCopy'ing() from a JPEG dataset, and asking for COMPRESS=JPEG, */
+    /* use DCT coefficients (unless other options are incompatible, like strip/tile dimensions, */
+    /* specifying JPEG_QUALITY option, incompatible PHOTOMETRIC with the source colorspace, etc...) */
+    /* to avoid the lossy steps involved by uncompression/recompression */
+    if (!bDirectCopyFromJPEG && GTIFF_CanCopyFromJPEG(poSrcDS, papszCreateOptions))
+    {
+        CPLDebug("GTiff", "Using special copy mode from a JPEG dataset");
+
+        bCopyFromJPEG = TRUE;
+    }
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Create the file.                                                */
 /* -------------------------------------------------------------------- */
-    hTIFF = CreateLL( pszFilename, nXSize, nYSize, nBands, 
+    hTIFF = CreateLL( pszFilename, nXSize, nYSize, nBands,
                       eType, dfExtraSpaceForOverviews, papszCreateOptions );
 
     CSLDestroy( papszCreateOptions );
@@ -8334,7 +8367,35 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                                   1.0,
                                                   pfnProgress, pProgressData);
 
-    if (poDS->bTreatAsSplit || poDS->bTreatAsSplitBitmap)
+    int bTryCopy = TRUE;
+
+#ifdef HAVE_LIBJPEG
+    if (bCopyFromJPEG)
+    {
+        eErr = GTIFF_CopyFromJPEG(poDS, poSrcDS,
+                                  pfnProgress, pProgressData,
+                                  bTryCopy);
+
+        /* In case of failure in the decompression step, try normal copy */
+        if (bTryCopy)
+            eErr = CE_None;
+    }
+#endif
+
+#ifdef JPEG_DIRECT_COPY
+    if (bDirectCopyFromJPEG)
+    {
+        eErr = GTIFF_DirectCopyFromJPEG(poDS, poSrcDS,
+                                        pfnProgress, pProgressData,
+                                        bTryCopy);
+
+        /* In case of failure in the reading step, try normal copy */
+        if (bTryCopy)
+            eErr = CE_None;
+    }
+#endif
+
+    if (bTryCopy && (poDS->bTreatAsSplit || poDS->bTreatAsSplitBitmap))
     {
         /* For split bands, we use TIFFWriteScanline() interface */
         CPLAssert(poDS->nBitsPerSample == 8 || poDS->nBitsPerSample == 1);
@@ -8420,12 +8481,12 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
 #endif
     }
-    else if (eErr == CE_None)
+    else if (bTryCopy && eErr == CE_None)
     {
         char* papszCopyWholeRasterOptions[2] = { NULL, NULL };
         if (nCompression != COMPRESSION_NONE)
             papszCopyWholeRasterOptions[0] = (char*) "COMPRESSED=YES";
-        eErr = GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcDS, 
+        eErr = GDALDatasetCopyWholeRaster( (GDALDatasetH) poSrcDS,
                                             (GDALDatasetH) poDS,
                                             papszCopyWholeRasterOptions,
                                             GDALScaledProgress, pScaledData );
@@ -9374,8 +9435,14 @@ void GDALRegister_GTiff()
             strcat( szCreateOptions, ""        
 "   <Option name='PREDICTOR' type='int' description='Predictor Type'/>");
         if (bHasJPEG)
+        {
             strcat( szCreateOptions, ""
-"   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100' default='75'/>");
+"   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100' default='75'/>" );
+#ifdef JPEG_DIRECT_COPY
+            strcat( szCreateOptions, ""
+"   <Option name='JPEG_DIRECT_COPY' type='boolean' description='To copy without any decompression/recompression a JPEG source file' default='NO'/>");
+#endif
+        }
         if (bHasDEFLATE)
             strcat( szCreateOptions, ""
 "   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='6'/>");

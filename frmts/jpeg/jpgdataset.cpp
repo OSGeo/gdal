@@ -66,8 +66,7 @@ CPL_C_START
 void	GDALRegister_JPEG(void);
 CPL_C_END
 
-void jpeg_vsiio_src (j_decompress_ptr cinfo, VSILFILE * infile);
-void jpeg_vsiio_dest (j_compress_ptr cinfo, VSILFILE * outfile);
+#include "vsidataio.h"
 
 /*  
 * Do we want to do special processing suitable for when JSAMPLE is a 
