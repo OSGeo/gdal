@@ -4158,6 +4158,68 @@ def tiff_write_105():
     return 'success'
 
 ###############################################################################
+# Test the direct copy mechanism of JPEG source
+
+def tiff_write_106(filename = '../gdrivers/data/byte_with_xmp.jpg', options = ['COMPRESS=JPEG'], check_cs = True):
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    src_ds = gdal.Open(filename)
+    nbands = src_ds.RasterCount
+    src_cs = []
+    for i in range(nbands):
+        src_cs.append(src_ds.GetRasterBand(i+1).Checksum())
+
+    out_ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_106.tif', src_ds, options = options)
+    out_ds = None
+
+    out_ds = gdal.Open('/vsimem/tiff_write_106.tif')
+    cs = []
+    for i in range(nbands):
+        cs.append(out_ds.GetRasterBand(i+1).Checksum())
+    out_ds = None
+
+    gdal.Unlink('/vsimem/tiff_write_106.tif')
+
+    if check_cs:
+        for i in range(nbands):
+            if cs[i] != src_cs[i]:
+                gdaltest.post_reason('did not get expected checksum')
+                print(cs[i])
+                print(src_cs[i])
+                return 'fail'
+    else:
+        for i in range(nbands):
+            if cs[i] == 0:
+                gdaltest.post_reason('did not get expected checksum')
+                return 'fail'
+
+    return 'success'
+
+def tiff_write_107():
+    return tiff_write_106(options = ['COMPRESS=JPEG','BLOCKYSIZE=8'])
+
+def tiff_write_108():
+    return tiff_write_106(options = ['COMPRESS=JPEG','BLOCKYSIZE=20'])
+
+def tiff_write_109():
+    return tiff_write_106(options = ['COMPRESS=JPEG','TILED=YES','BLOCKYSIZE=16','BLOCKXSIZE=16'])
+
+# Strip organization of YCbCr does *NOT* give exact pixels w.r.t. original image
+def tiff_write_110():
+    return tiff_write_106(filename = '../gdrivers/data/albania.jpg' , check_cs = False)
+
+# Whole copy of YCbCr *DOES* give exact pixels w.r.t. original image
+def tiff_write_111():
+    return tiff_write_106(filename = '../gdrivers/data/albania.jpg' , options = ['COMPRESS=JPEG', 'BLOCKYSIZE=260'])
+
+# Tiled organization of YCbCr does *NOT* give exact pixels w.r.t. original image
+def tiff_write_112():
+    return tiff_write_106(filename = '../gdrivers/data/albania.jpg' , options = ['COMPRESS=JPEG', 'TILED=YES'], check_cs = False)
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -4275,6 +4337,13 @@ gdaltest_list = [
     tiff_write_103,
     tiff_write_104,
     tiff_write_105,
+    tiff_write_106,
+    tiff_write_107,
+    tiff_write_108,
+    tiff_write_109,
+    tiff_write_110,
+    tiff_write_111,
+    tiff_write_112,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
