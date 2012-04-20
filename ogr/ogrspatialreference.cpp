@@ -552,6 +552,22 @@ OGRSpatialReferenceH CPL_STDCALL OSRClone( OGRSpatialReferenceH hSRS )
 }
 
 /************************************************************************/
+/*                            dumpReadable()                            */
+/*                                                                      */
+/*      Dump pretty wkt to stdout, mostly for debugging.                */
+/************************************************************************/
+
+void OGRSpatialReference::dumpReadable()
+
+{
+    char *pszPrettyWkt = NULL;
+
+    exportToPrettyWkt( &pszPrettyWkt, FALSE );
+    printf( "%s\n", pszPrettyWkt );
+    CPLFree( pszPrettyWkt );
+}
+
+/************************************************************************/
 /*                         exportToPrettyWkt()                          */
 /************************************************************************/
 
