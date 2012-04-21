@@ -29,7 +29,6 @@
 
 #include "cpl_vsi.h"
 #include "gt_jpeg_copy.h"
-#include "vrt/vrtdataset.h"
 
 /* Note: JPEG_DIRECT_COPY is not defined by default, because it is mainly */
 /* usefull for debugging purposes */
@@ -37,6 +36,8 @@
 CPL_CVSID("$Id$");
 
 #if defined(JPEG_DIRECT_COPY) || defined(HAVE_LIBJPEG)
+
+#include "vrt/vrtdataset.h"
 
 /************************************************************************/
 /*                      GetUnderlyingDataset()                          */
