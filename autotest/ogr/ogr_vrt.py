@@ -602,14 +602,14 @@ def ogr_vrt_14():
 
     vrt_xml = """
 <OGRVRTDataSource>
-    <OGRVRTLayer name="test">
+    <OGRVRTLayer name="mytest">
         <SrcDataSource relativeToVRT="0">tmp/test.shp</SrcDataSource>
         <SrcLayer>test</SrcLayer>
         <SrcRegion>POLYGON((0 40,0 50,10 50,10 40,0 40))</SrcRegion>
     </OGRVRTLayer>
 </OGRVRTDataSource>"""
     vrt_ds = ogr.Open( vrt_xml )
-    vrt_lyr = vrt_ds.GetLayerByName( 'test' )
+    vrt_lyr = vrt_ds.GetLayerByName( 'mytest' )
 
     if vrt_lyr.TestCapability(ogr.OLCFastSpatialFilter) != 1:
         gdaltest.post_reason( 'Fast filter not set.' )
@@ -900,9 +900,9 @@ def ogr_vrt_18():
     return 'success'
 
 ###############################################################################
-# Run test_ogrsf
+# Run test_ogrsf (optimized path)
 
-def ogr_vrt_19():
+def ogr_vrt_19_optimized():
 
     if gdaltest.vrt_ds is None:
         return 'skip'
@@ -919,6 +919,25 @@ def ogr_vrt_19():
 
     return 'success'
 
+###############################################################################
+# Run test_ogrsf (non optimized path)
+
+def ogr_vrt_19_nonoptimized():
+
+    if gdaltest.vrt_ds is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/poly_nonoptimized_vrt.vrt')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Test VGS_Direct
@@ -967,13 +986,13 @@ def ogr_vrt_20():
 
     vrt_xml = """
 <OGRVRTDataSource>
-    <OGRVRTLayer name="test">
+    <OGRVRTLayer name="mytest">
         <SrcDataSource relativeToVRT="0">tmp/test.shp</SrcDataSource>
         <SrcLayer>test</SrcLayer>
     </OGRVRTLayer>
 </OGRVRTDataSource>"""
     vrt_ds = ogr.Open( vrt_xml )
-    vrt_lyr = vrt_ds.GetLayerByName( 'test' )
+    vrt_lyr = vrt_ds.GetLayerByName( 'mytest' )
 
     if vrt_lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
         gdaltest.post_reason( 'Fast feature count not set.' )
@@ -1358,7 +1377,8 @@ gdaltest_list = [
     ogr_vrt_16,
     ogr_vrt_17,
     ogr_vrt_18,
-    ogr_vrt_19,
+    ogr_vrt_19_optimized,
+    ogr_vrt_19_nonoptimized,
     ogr_vrt_20,
     ogr_vrt_21,
     ogr_vrt_22,

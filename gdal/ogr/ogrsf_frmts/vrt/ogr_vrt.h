@@ -68,6 +68,7 @@ class OGRVRTLayer : public OGRLayer
 
     OGRDataSource       *poSrcDS;
     OGRLayer            *poSrcLayer;
+    OGRFeatureDefn      *poSrcFeatureDefn;
     int                 bNeedReset;
     int                 bSrcLayerFromSQL;
     int                 bSrcDSShared;
@@ -108,6 +109,9 @@ class OGRVRTLayer : public OGRLayer
     int                 ResetSourceReading();
 
     int                 FullInitialize();
+
+    OGRFeatureDefn     *GetSrcLayerDefn();
+    void                ClipAndAssignSRS(OGRFeature* poFeature);
 
   public:
                         OGRVRTLayer(OGRVRTDataSource* poDSIn);
