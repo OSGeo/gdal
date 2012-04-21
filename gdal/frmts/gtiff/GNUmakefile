@@ -25,14 +25,14 @@ endif
 JPEG_FLAGS =
 
 ifneq ($(JPEG_SETTING),no)
-JPEG_FLAGS 	:=	$(JPEG_FLAGS) -I.. -I../jpeg -DHAVE_LIBJPEG
+JPEG_FLAGS 	:=	$(JPEG_FLAGS) -I../jpeg -DHAVE_LIBJPEG
 endif
 
 ifeq ($(JPEG_SETTING),internal)
 JPEG_FLAGS 	:=	$(JPEG_FLAGS) -I../jpeg/libjpeg
 endif
 
-CPPFLAGS	:=	 $(JPEG_FLAGS) $(GDAL_INCLUDE) $(GEOTIFF_INCLUDE) $(TIFF_OPTS) $(CPPFLAGS)
+CPPFLAGS	:=	 -I.. $(JPEG_FLAGS) $(GDAL_INCLUDE) $(GEOTIFF_INCLUDE) $(TIFF_OPTS) $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT)) $(SUBLIBS)
 
