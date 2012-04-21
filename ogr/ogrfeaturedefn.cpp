@@ -922,3 +922,34 @@ void OGRFeatureDefn::DestroyFeatureDefn( OGRFeatureDefn *poDefn )
 {
     delete poDefn;
 }
+
+/************************************************************************/
+/*                             IsSame()                                 */
+/************************************************************************/
+
+/**
+ * \brief Test if the feature definition is identical to the other one.
+ *
+ * @param poOtherFeatureDefn the other feature definition to compare to.
+ * @return TRUE if the feature definition is identical to the other one.
+ */
+
+int OGRFeatureDefn::IsSame( const OGRFeatureDefn * poOtherFeatureDefn ) const
+{
+    if (strcmp(pszFeatureClassName, poOtherFeatureDefn->pszFeatureClassName) == 0 &&
+        eGeomType == poOtherFeatureDefn->eGeomType &&
+        nFieldCount == poOtherFeatureDefn->nFieldCount)
+    {
+        for(int i=0;i<nFieldCount;i++)
+        {
+            const OGRFieldDefn* poFldDefn = papoFieldDefn[i];
+            const OGRFieldDefn* poOtherFldDefn = poOtherFeatureDefn->papoFieldDefn[i];
+            if (!poFldDefn->IsSame(poOtherFldDefn))
+            {
+                return FALSE;
+            }
+        }
+        return TRUE;
+    }
+    return FALSE;
+}
