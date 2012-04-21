@@ -4219,6 +4219,10 @@ def tiff_write_111():
 def tiff_write_112():
     return tiff_write_106(filename = '../gdrivers/data/albania.jpg' , options = ['COMPRESS=JPEG', 'TILED=YES'], check_cs = False)
 
+# The source is a JPEG in RGB colorspace (usually it is YCbCr).
+def tiff_write_113():
+    return tiff_write_106(filename = '../gdrivers/data/rgbsmall_rgb.jpg' , options = ['COMPRESS=JPEG', 'BLOCKYSIZE=8'])
+
 ###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
@@ -4344,6 +4348,7 @@ gdaltest_list = [
     tiff_write_110,
     tiff_write_111,
     tiff_write_112,
+    tiff_write_113,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
