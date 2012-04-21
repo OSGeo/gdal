@@ -410,6 +410,8 @@ void OGRSQLiteTableLayer::BuildWhere()
     {
         OGREnvelope  sEnvelope;
 
+        CPLLocaleC  oLocaleEnforcer;
+
         m_poFilterGeom->getEnvelope( &sEnvelope );
 
         osWHERE.Printf("WHERE ROWID IN ( SELECT pkid FROM 'idx_%s_%s' WHERE "
@@ -422,6 +424,8 @@ void OGRSQLiteTableLayer::BuildWhere()
     if( m_poFilterGeom != NULL && bSpatialiteLoaded && !bHasSpatialIndex)
     {
         OGREnvelope  sEnvelope;
+
+        CPLLocaleC  oLocaleEnforcer;
 
         m_poFilterGeom->getEnvelope( &sEnvelope );
 
