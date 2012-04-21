@@ -1262,6 +1262,26 @@ def ogr_sqlite_27():
     return 'success'
 
 ###############################################################################
+# Run test_ogrsf on a spatialite enabled DB
+
+def ogr_sqlite_28():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/poly_spatialite.sqlite')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test if SpatiaLite is available
 
 def ogr_spatialite_1():
@@ -1922,6 +1942,7 @@ gdaltest_list = [
     ogr_sqlite_25,
     ogr_sqlite_26,
     ogr_sqlite_27,
+    ogr_sqlite_28,
     ogr_spatialite_1,
     ogr_sqlite_17,
     ogr_sqlite_18,
