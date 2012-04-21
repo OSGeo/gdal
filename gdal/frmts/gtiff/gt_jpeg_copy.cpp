@@ -322,8 +322,8 @@ static void GTIFF_ErrorExitJPEG(j_common_ptr cinfo)
 /************************************************************************/
 
 void GTIFF_Set_TIFFTAG_JPEGTABLES(TIFF* hTIFF,
-                                 jpeg_decompress_struct& sDInfo,
-                                 jpeg_compress_struct& sCInfo)
+                                  jpeg_decompress_struct& sDInfo,
+                                  jpeg_compress_struct& sCInfo)
 {
     char szTmpFilename[128];
     sprintf(szTmpFilename, "/vsimem/tables_%p", &sDInfo);
@@ -339,6 +339,99 @@ void GTIFF_Set_TIFFTAG_JPEGTABLES(TIFF* hTIFF,
     TIFFSetField(hTIFF, TIFFTAG_JPEGTABLES, (int)nSizeTables, pabyJPEGTablesData);
 
     VSIUnlink(szTmpFilename);
+}
+
+/************************************************************************/
+/*             GTIFF_CopyFromJPEG_WriteAdditionalTags()                 */
+/************************************************************************/
+
+CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags(TIFF* hTIFF,
+                                              GDALDataset* poSrcDS)
+{
+    poSrcDS = GetUnderlyingDataset(poSrcDS);
+    if (poSrcDS == NULL)
+        return CE_Failure;
+
+/* -------------------------------------------------------------------- */
+/*      Write TIFFTAG_JPEGTABLES                                        */
+/* -------------------------------------------------------------------- */
+
+    VSILFILE* fpJPEG = VSIFOpenL(poSrcDS->GetDescription(), "rb");
+    if (fpJPEG == NULL)
+        return CE_Failure;
+
+    struct jpeg_error_mgr sJErr;
+    struct jpeg_decompress_struct sDInfo;
+    jmp_buf setjmp_buffer;
+    if (setjmp(setjmp_buffer))
+    {
+        VSIFCloseL(fpJPEG);
+        return CE_Failure;
+    }
+
+    sDInfo.err = jpeg_std_error( &sJErr );
+    sJErr.error_exit = GTIFF_ErrorExitJPEG;
+    sDInfo.client_data = (void *) &setjmp_buffer;
+
+    jpeg_create_decompress(&sDInfo);
+
+    jpeg_vsiio_src( &sDInfo, fpJPEG );
+    jpeg_read_header( &sDInfo, TRUE );
+
+    struct jpeg_compress_struct sCInfo;
+
+    sCInfo.err = jpeg_std_error( &sJErr );
+    sJErr.error_exit = GTIFF_ErrorExitJPEG;
+    sCInfo.client_data = (void *) &setjmp_buffer;
+
+    jpeg_create_compress(&sCInfo);
+    jpeg_copy_critical_parameters(&sDInfo, &sCInfo);
+    GTIFF_Set_TIFFTAG_JPEGTABLES(hTIFF, sDInfo, sCInfo);
+    jpeg_abort_compress(&sCInfo);
+    jpeg_destroy_compress(&sCInfo);
+
+    jpeg_abort_decompress( &sDInfo );
+    jpeg_destroy_decompress( &sDInfo );
+
+    VSIFCloseL(fpJPEG);
+
+/* -------------------------------------------------------------------- */
+/*      Write TIFFTAG_REFERENCEBLACKWHITE if needed.                    */
+/* -------------------------------------------------------------------- */
+
+    uint16 nPhotometric;
+    if( !TIFFGetField( hTIFF, TIFFTAG_PHOTOMETRIC, &(nPhotometric) ) )
+        nPhotometric = PHOTOMETRIC_MINISBLACK;
+
+    uint16 nBitsPerSample;
+    if( !TIFFGetField(hTIFF, TIFFTAG_BITSPERSAMPLE, &(nBitsPerSample)) )
+        nBitsPerSample = 1;
+
+    if ( nPhotometric == PHOTOMETRIC_YCBCR )
+    {
+        /*
+         * A ReferenceBlackWhite field *must* be present since the
+         * default value is inappropriate for YCbCr.  Fill in the
+         * proper value if application didn't set it.
+         */
+        float *ref;
+        if (!TIFFGetField(hTIFF, TIFFTAG_REFERENCEBLACKWHITE,
+                    &ref))
+        {
+            float refbw[6];
+            long top = 1L << nBitsPerSample;
+            refbw[0] = 0;
+            refbw[1] = (float)(top-1L);
+            refbw[2] = (float)(top>>1);
+            refbw[3] = refbw[1];
+            refbw[4] = refbw[2];
+            refbw[5] = refbw[1];
+            TIFFSetField(hTIFF, TIFFTAG_REFERENCEBLACKWHITE,
+                        refbw);
+        }
+    }
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -381,17 +474,6 @@ static CPLErr GTIFF_CopyBlockFromJPEG(TIFF* hTIFF,
     /* ensure libjpeg won't write any extraneous markers */
     sCInfo.write_JFIF_header = FALSE;
     sCInfo.write_Adobe_marker = FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      Deal with JPEG tables                                           */
-/* -------------------------------------------------------------------- */
-    if (iX == 0 && iY == 0)
-    {
-        /* When dealing with the first block, copy the JPEG tables */
-        /* into the TIFFTAG_JPEGTABLES */
-        GTIFF_Set_TIFFTAG_JPEGTABLES(hTIFF, sDInfo, sCInfo);
-    }
-    jpeg_suppress_tables( &sCInfo, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Allocated destination coefficient array                         */
@@ -459,6 +541,8 @@ static CPLErr GTIFF_CopyBlockFromJPEG(TIFF* hTIFF,
 
     /* Start compressor (note no image data is actually written here) */
     jpeg_write_coefficients(&sCInfo, pDstCoeffs);
+
+    jpeg_suppress_tables( &sCInfo, TRUE );
 
     /* We simply have to copy the right amount of data (the destination's
     * image size) starting at the given X and Y offsets in the source.
