@@ -33,6 +33,8 @@
 #include "ogr_p.h"
 #include <string>
 
+#define UNSUPPORTED_OP_READ_ONLY "%s : unsupported operation on a read-only datasource."
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -742,7 +744,8 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     if (!poDS->GetUpdate())
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't create fields on a read-only layer.");
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "CreateField");
         return OGRERR_FAILURE;
     }
 
@@ -1176,7 +1179,8 @@ OGRErr OGRSQLiteTableLayer::DeleteField( int iFieldToDelete )
     if (!poDS->GetUpdate())
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't delete fields on a read-only layer.");
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "DeleteField");
         return OGRERR_FAILURE;
     }
 
@@ -1263,7 +1267,8 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
     if (!poDS->GetUpdate())
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't alter field definition on a read-only layer.");
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "AlterFieldDefn");
         return OGRERR_FAILURE;
     }
 
@@ -1357,7 +1362,8 @@ OGRErr OGRSQLiteTableLayer::ReorderFields( int* panMap )
     if (!poDS->GetUpdate())
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't reorder fields on a read-only layer.");
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "ReorderFields");
         return OGRERR_FAILURE;
     }
 
@@ -1580,7 +1586,8 @@ OGRErr OGRSQLiteTableLayer::SetFeature( OGRFeature *poFeature )
     if (bSpatialiteReadOnly || !poDS->GetUpdate())
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't update feature on a read-only layer.");
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "SetFeature");
         return OGRERR_FAILURE;
     }
 
@@ -1706,7 +1713,8 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
     if (bSpatialiteReadOnly || !poDS->GetUpdate())
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't create feature on a read-only layer.");
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "CreateFeature");
         return OGRERR_FAILURE;
     }
 
@@ -1884,7 +1892,8 @@ OGRErr OGRSQLiteTableLayer::DeleteFeature( long nFID )
     if (bSpatialiteReadOnly || !poDS->GetUpdate())
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't delete feature on a read-only layer.");
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "DeleteFeature");
         return OGRERR_FAILURE;
     }
 
