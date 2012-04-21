@@ -93,6 +93,8 @@ class CPL_DLL OGRFieldDefn
     
     int                 IsIgnored() { return bIgnore; }
     void                SetIgnored( int bIgnore ) { this->bIgnore = bIgnore; }
+
+    int                 IsSame( const OGRFieldDefn * ) const;
 };
 
 /************************************************************************/
@@ -158,6 +160,8 @@ class CPL_DLL OGRFeatureDefn
     void        SetGeometryIgnored( int bIgnore ) { bIgnoreGeometry = bIgnore; }
     int        IsStyleIgnored() { return bIgnoreStyle; }
     void        SetStyleIgnored( int bIgnore ) { bIgnoreStyle = bIgnore; }
+
+    int         IsSame( const OGRFeatureDefn * poOtherFeatureDefn ) const;
 
     static OGRFeatureDefn  *CreateFeatureDefn( const char *pszName = NULL );
     static void         DestroyFeatureDefn( OGRFeatureDefn * );
