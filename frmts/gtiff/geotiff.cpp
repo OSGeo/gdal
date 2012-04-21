@@ -8111,6 +8111,14 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         GTIFFree( psGTIF );
     }
 
+#ifdef HAVE_LIBJPEG
+    if (bCopyFromJPEG)
+    {
+        GTIFF_CopyFromJPEG_WriteAdditionalTags(hTIFF,
+                                               poSrcDS);
+    }
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      If we are writing jpeg compression we need to write some        */
 /*      imagery to force the jpegtables to get created.  This is,       */
