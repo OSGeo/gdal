@@ -705,3 +705,22 @@ void OGR_Fld_SetIgnored( OGRFieldDefnH hDefn, int ignore )
 {
     ((OGRFieldDefn *) hDefn)->SetIgnored( ignore );
 }
+
+/************************************************************************/
+/*                             IsSame()                                 */
+/************************************************************************/
+
+/**
+ * \brief Test if the field definition is identical to the other one.
+ *
+ * @param poOtherFieldDefn the other field definition to compare to.
+ * @return TRUE if the field definition is identical to the other one.
+ */
+
+int OGRFieldDefn::IsSame( const OGRFieldDefn * poOtherFieldDefn ) const
+{
+    return (strcmp(pszName, poOtherFieldDefn->pszName) == 0 &&
+            eType == poOtherFieldDefn->eType &&
+            nWidth == poOtherFieldDefn->nWidth &&
+            nPrecision == poOtherFieldDefn->nPrecision);
+}
