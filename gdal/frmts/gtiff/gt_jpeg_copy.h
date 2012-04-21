@@ -51,6 +51,9 @@ CPLErr GTIFF_DirectCopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
 
 int GTIFF_CanCopyFromJPEG(GDALDataset* poSrcDS, char** &papszCreateOptions);
 
+CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags(TIFF* hTIFF,
+                                              GDALDataset* poSrcDS);
+
 CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
                           GDALProgressFunc pfnProgress, void * pProgressData,
                           int& bShouldFallbackToNormalCopyIfFail);
