@@ -430,9 +430,17 @@ void OGRLinearRing::reverseWindingOrder()
     for( int i = 0; i < nPointCount / 2; i++ ) 
     { 
         getPoint( i, &tempPoint ); 
-        pos = nPointCount - i - 1; 
-        setPoint( i, getX(pos), getY(pos), getZ(pos) ); 
-        setPoint( pos, tempPoint.getX(), tempPoint.getY(), tempPoint.getZ() ); 
+        pos = nPointCount - i - 1;
+        if( getCoordinateDimension() == 2 )
+        {
+            setPoint( i, getX(pos), getY(pos) );
+            setPoint( pos, tempPoint.getX(), tempPoint.getY() );
+        }
+        else
+        {
+            setPoint( i, getX(pos), getY(pos), getZ(pos) );
+            setPoint( pos, tempPoint.getX(), tempPoint.getY(), tempPoint.getZ() );
+        }
     } 
 } 
 
