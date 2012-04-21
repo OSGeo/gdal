@@ -378,6 +378,10 @@ static CPLErr GTIFF_CopyBlockFromJPEG(TIFF* hTIFF,
     jpeg_create_compress(&sCInfo);
     jpeg_copy_critical_parameters(&sDInfo, &sCInfo);
 
+    /* ensure libjpeg won't write any extraneous markers */
+    sCInfo.write_JFIF_header = FALSE;
+    sCInfo.write_Adobe_marker = FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Deal with JPEG tables                                           */
 /* -------------------------------------------------------------------- */
