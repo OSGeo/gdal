@@ -818,8 +818,7 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
             if( papszRow[4] != NULL )
                 nSRID = atoi(papszRow[4]);
 
-            /* Only look for presence of a spatial index if linked against SpatiaLite */
-            if( bSpatialiteLoaded && papszRow[5] != NULL )
+            if( papszRow[5] != NULL )
                 bHasSpatialIndex = atoi(papszRow[5]);
 
             OpenTable( papszRow[0], papszRow[1], eGeomType, "SpatiaLite",
