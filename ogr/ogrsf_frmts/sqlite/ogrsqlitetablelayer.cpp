@@ -425,9 +425,10 @@ int OGRSQLiteTableLayer::CheckSpatialIndexTable()
         char *pszErrMsg = NULL;
 
         CPLString osSQL;
-        osSQL.Printf("SELECT name FROM sqlite_master "
-                    "WHERE name='idx_%s_%s'",
-                    pszEscapedTableName, osGeomColumn.c_str());
+
+        /* This will ensure that RTree support is available */
+        osSQL.Printf("SELECT pkid FROM 'idx_%s_%s' WHERE xmax > 0 AND xmin < 0 AND ymax > 0 AND ymin < 0",
+                     pszEscapedTableName, osGeomColumn.c_str());
 
         int  rc = sqlite3_get_table( poDS->GetDB(), osSQL.c_str(),
                                     &papszResult, &nRowCount,
@@ -435,20 +436,13 @@ int OGRSQLiteTableLayer::CheckSpatialIndexTable()
 
         if( rc != SQLITE_OK )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "Error: %s",
-                    pszErrMsg );
+            CPLDebug("SQLITE", "Count not find or use idx_%s_%s layer (%s). Disabling spatial index",
+                        pszEscapedTableName, osGeomColumn.c_str(), pszErrMsg);
             sqlite3_free( pszErrMsg );
             bHasSpatialIndex = FALSE;
         }
         else
         {
-            if (nRowCount != 1)
-            {
-                bHasSpatialIndex = FALSE;
-                CPLDebug("SQLITE", "Count not find idx_%s_%s layer. Disabling spatial index",
-                        pszEscapedTableName, osGeomColumn.c_str());
-            }
-
             sqlite3_free_table(papszResult);
         }
     }
