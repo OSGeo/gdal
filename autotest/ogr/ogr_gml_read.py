@@ -1576,7 +1576,7 @@ def ogr_gml_39():
     return ogr_gml_38('NONE')
 
 ###############################################################################
-# Test parsind XSD where simpleTypes not inlined, but defined elsewhere in the .xsd (#4328)
+# Test parsing XSD where simpleTypes not inlined, but defined elsewhere in the .xsd (#4328)
 
 def ogr_gml_40():
 
@@ -1588,6 +1588,79 @@ def ogr_gml_40():
     fld_defn = lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('CITYNAME'))
     if fld_defn.GetWidth() != 26:
         return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test validating against .xsd
+
+def ogr_gml_41():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    if not gdaltest.download_file('http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip', 'SCHEMAS_OPENGIS_NET.zip' ):
+        return 'skip'
+
+    ds = ogr.Open('data/expected_gml_21.gml')
+
+    gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', '/vsizip/./tmp/cache/SCHEMAS_OPENGIS_NET.zip')
+    lyr = ds.ExecuteSQL('SELECT ValidateSchema()')
+    gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', None)
+
+    feat = lyr.GetNextFeature()
+    val = feat.GetFieldAsInteger(0)
+    feat = None
+
+    ds.ReleaseResultSet(lyr)
+
+    if val == 0:
+        if gdal.GetLastErrorMsg().find('not implemented due to missing libxml2 support') == -1:
+            return 'fail'
+        return 'skip'
+
+    return 'success'
+
+###############################################################################
+# Test validating against .xsd
+
+def ogr_gml_42():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    if not gdaltest.download_file('http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip', 'SCHEMAS_OPENGIS_NET.zip' ):
+        return 'skip'
+
+    try:
+        os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/gml')
+    except:
+        try:
+            os.mkdir('tmp/cache/SCHEMAS_OPENGIS_NET')
+            gdaltest.unzip( 'tmp/cache/SCHEMAS_OPENGIS_NET', 'tmp/cache/SCHEMAS_OPENGIS_NET.zip')
+            try:
+                os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/gml')
+            except:
+                return 'skip'
+        except:
+            return 'skip'
+
+    ds = ogr.Open('data/expected_gml_gml32.gml')
+
+    gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', './tmp/cache/SCHEMAS_OPENGIS_NET')
+    lyr = ds.ExecuteSQL('SELECT ValidateSchema()')
+    gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', None)
+
+    feat = lyr.GetNextFeature()
+    val = feat.GetFieldAsInteger(0)
+    feat = None
+
+    ds.ReleaseResultSet(lyr)
+
+    if val == 0:
+        if gdal.GetLastErrorMsg().find('not implemented due to missing libxml2 support') == -1:
+            return 'fail'
+        return 'skip'
 
     return 'success'
 
@@ -1750,6 +1823,8 @@ gdaltest_list = [
     ogr_gml_38,
     ogr_gml_39,
     ogr_gml_40,
+    ogr_gml_41,
+    ogr_gml_42,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':

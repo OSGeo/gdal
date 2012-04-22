@@ -220,7 +220,17 @@ CPLErr CPL_DLL CPLCreateFileInZip( void *hZip, const char *pszFilename,
 CPLErr CPL_DLL CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize );
 CPLErr CPL_DLL CPLCloseFileInZip( void *hZip );
 CPLErr CPL_DLL CPLCloseZip( void *hZip );
-                            
+
+/* -------------------------------------------------------------------- */
+/*      XML validation.                                                 */
+/* -------------------------------------------------------------------- */
+typedef void* CPLXMLSchemaPtr;
+CPLXMLSchemaPtr CPL_DLL CPLLoadXMLSchema(const char* pszXSDFilename);
+void CPL_DLL CPLFreeXMLSchema(CPLXMLSchemaPtr pSchema);
+
+int CPL_DLL CPLValidateXML(const char* pszXMLFilename, CPLXMLSchemaPtr pSchema,
+                           char** papszOptions);
+
 CPL_C_END
 
 /* -------------------------------------------------------------------- */
