@@ -339,7 +339,14 @@ char *swq_expr_node::Unparse( swq_field_list *field_list )
         if( field_type == SWQ_INTEGER || field_type == SWQ_BOOLEAN )
             osExpr.Printf( "%d", int_value );
         else if( field_type == SWQ_FLOAT )
+        {
             osExpr.Printf( "%.15g", float_value );
+            /* Make sure this is interpreted as a floating point value */
+            /* and not as an integer later */
+            if (strchr(osExpr, '.') == NULL && strchr(osExpr, 'e') == NULL  &&
+                strchr(osExpr, 'E') == NULL)
+                osExpr += '.';
+        }
         else 
         {
             osExpr = string_value;
