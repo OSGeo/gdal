@@ -33,10 +33,12 @@ CPL_CVSID("$Id$");
 
 #ifdef HAVE_LIBXML2
 #include <libxml/xmlversion.h>
-#if defined(LIBXML_VERSION) && LIBXML_VERSION >= 20620
+#if defined(LIBXML_VERSION) && LIBXML_VERSION >= 20622
 /* We need at least 2.6.20 for xmlSchemaValidateDoc */
 /* and xmlParseDoc to accept a const xmlChar* */
 /* We could workaround it, but likely not worth the effort for now. */
+/* Actually, we need at least 2.6.22, at runtime, to be */
+/* able to parse the OGC GML schemas */
 #define HAVE_RECENT_LIBXML2
 #else
 #warning "Not recent enough libxml2 version"
