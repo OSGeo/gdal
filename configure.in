@@ -2433,6 +2433,42 @@ AC_SUBST(CURL_INC,    $CURL_INC)
 AC_SUBST(CURL_LIB,    $CURL_LIB)
 
 dnl ---------------------------------------------------------------------------
+dnl Check for libxml2.
+dnl ---------------------------------------------------------------------------
+
+HAVE_LIBXML2=no
+LIBXML2_INC=
+LIBXML2_LIB=
+
+AC_ARG_WITH(xml2,
+    [  --with-xml2[=ARG]       Include libxml2 (ARG=path to xml2-config.)],,,)
+
+if test "`basename xx/$with_xml2`" = "xml2-config" ; then
+  LIBXML2_CONFIG="$with_xml2"
+elif test "$with_xml2" = "no" ; then
+  LIBXML2_CONFIG=no
+else
+  AC_PATH_PROG(LIBXML2_CONFIG, xml2-config, no)
+fi
+
+if test "$LIBXML2_CONFIG" != "no" ; then
+
+  AC_CHECK_LIB(xml2,xmlParseDoc,HAVE_LIBXML2=yes,HAVE_LIBXML2=no,`$LIBXML2_CONFIG --libs`)
+
+fi
+
+if test "$HAVE_LIBXML2" = "yes" ; then
+
+  LIBXML2_INC=`$LIBXML2_CONFIG --cflags`
+  LIBXML2_LIB=`$LIBXML2_CONFIG --libs`
+
+fi
+
+AC_SUBST(HAVE_LIBXML2,$HAVE_LIBXML2)
+AC_SUBST(LIBXML2_INC, $LIBXML2_INC)
+AC_SUBST(LIBXML2_LIB, $LIBXML2_LIB)
+
+dnl ---------------------------------------------------------------------------
 dnl Check for SpatiaLite.
 dnl ---------------------------------------------------------------------------
 
@@ -3671,6 +3707,7 @@ LOC_MSG([  Ingres support:            ${HAVE_INGRES}])
 LOC_MSG([  Xerces-C support:          ${HAVE_XERCES}])
 LOC_MSG([  NAS support:               ${HAVE_NAS}])
 LOC_MSG([  Expat support:             ${HAVE_EXPAT}])
+LOC_MSG([  libxml2 support:           ${HAVE_LIBXML2}])
 LOC_MSG([  Google libkml support:     ${HAVE_LIBKML}])
 LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
 LOC_MSG([  PGeo support:              ${ODBC_SETTING}])

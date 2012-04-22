@@ -192,6 +192,11 @@ class OGRGMLDataSource : public OGRDataSource
 
     OGRGMLLayer*        GetLastReadLayer() const { return poLastReadLayer; }
     void                SetLastReadLayer(OGRGMLLayer* poLayer) { poLastReadLayer = poLayer; }
+
+    virtual OGRLayer *          ExecuteSQL( const char *pszSQLCommand,
+                                            OGRGeometry *poSpatialFilter,
+                                            const char *pszDialect );
+    virtual void                ReleaseResultSet( OGRLayer * poResultsSet );
 };
 
 /************************************************************************/
