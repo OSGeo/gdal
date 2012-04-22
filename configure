@@ -669,6 +669,10 @@ SQLITE3_VERSION
 SPATIALITE_AMALGAMATION
 SPATIALITE_INC
 HAVE_SPATIALITE
+LIBXML2_LIB
+LIBXML2_INC
+HAVE_LIBXML2
+LIBXML2_CONFIG
 CURL_LIB
 CURL_INC
 CURL_SETTING
@@ -918,6 +922,7 @@ with_libkml_lib
 with_odbc
 with_dods_root
 with_curl
+with_xml2
 with_spatialite
 with_sqlite3
 with_dwgdirect
@@ -1661,6 +1666,7 @@ Optional Packages:
   --with-odbc=ARG       Include ODBC support (ARG=no or path)
   --with-dods-root=ARG  Include DODS support (ARG=no or absolute path)
   --with-curl=ARG       Include curl (ARG=path to curl-config.)
+  --with-xml2=ARG       Include libxml2 (ARG=path to xml2-config.)
   --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes or path)
   --with-sqlite3=[ARG]    use SQLite 3 library [default=yes], optionally
                           specify the prefix for sqlite3 library
@@ -24517,6 +24523,127 @@ CURL_LIB=$CURL_LIB
 
 
 
+HAVE_LIBXML2=no
+LIBXML2_INC=
+LIBXML2_LIB=
+
+
+# Check whether --with-xml2 was given.
+if test "${with_xml2+set}" = set; then :
+  withval=$with_xml2;
+fi
+
+
+if test "`basename xx/$with_xml2`" = "xml2-config" ; then
+  LIBXML2_CONFIG="$with_xml2"
+elif test "$with_xml2" = "no" ; then
+  LIBXML2_CONFIG=no
+else
+  # Extract the first word of "xml2-config", so it can be a program name with args.
+set dummy xml2-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_LIBXML2_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $LIBXML2_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_LIBXML2_CONFIG="$LIBXML2_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_LIBXML2_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_LIBXML2_CONFIG" && ac_cv_path_LIBXML2_CONFIG="no"
+  ;;
+esac
+fi
+LIBXML2_CONFIG=$ac_cv_path_LIBXML2_CONFIG
+if test -n "$LIBXML2_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $LIBXML2_CONFIG" >&5
+$as_echo "$LIBXML2_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+
+if test "$LIBXML2_CONFIG" != "no" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlParseDoc in -lxml2" >&5
+$as_echo_n "checking for xmlParseDoc in -lxml2... " >&6; }
+if ${ac_cv_lib_xml2_xmlParseDoc+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lxml2 `$LIBXML2_CONFIG --libs` $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char xmlParseDoc ();
+int
+main ()
+{
+return xmlParseDoc ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_xml2_xmlParseDoc=yes
+else
+  ac_cv_lib_xml2_xmlParseDoc=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_xml2_xmlParseDoc" >&5
+$as_echo "$ac_cv_lib_xml2_xmlParseDoc" >&6; }
+if test "x$ac_cv_lib_xml2_xmlParseDoc" = xyes; then :
+  HAVE_LIBXML2=yes
+else
+  HAVE_LIBXML2=no
+fi
+
+
+fi
+
+if test "$HAVE_LIBXML2" = "yes" ; then
+
+  LIBXML2_INC=`$LIBXML2_CONFIG --cflags`
+  LIBXML2_LIB=`$LIBXML2_CONFIG --libs`
+
+fi
+
+HAVE_LIBXML2=$HAVE_LIBXML2
+
+LIBXML2_INC=$LIBXML2_INC
+
+LIBXML2_LIB=$LIBXML2_LIB
+
+
+
 
 # Check whether --with-spatialite was given.
 if test "${with_spatialite+set}" = set; then :
@@ -27111,6 +27238,8 @@ if test "$datadir" = '${datarootdir}' \
      -a "$datarootdir" = '${prefix}/share' ; then
   datarootdir='${prefix}/share/gdal'
 fi
+
+mandir='${prefix}/man'
 
 
 if test "$prefix" = "NONE" ; then
@@ -30292,6 +30421,9 @@ echo "  NAS support:               ${HAVE_NAS}"
 
 
 echo "  Expat support:             ${HAVE_EXPAT}"
+
+
+echo "  libxml2 support:           ${HAVE_LIBXML2}"
 
 
 echo "  Google libkml support:     ${HAVE_LIBKML}"

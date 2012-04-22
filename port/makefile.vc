@@ -43,6 +43,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_vsil_buffered_reader.obj \
 		cpl_vsil_cache.obj \
 		cpl_base64.obj \
+		cpl_xml_validate.obj \
 		$(ODBC_OBJ)
 
 LIB	=	cpl.lib

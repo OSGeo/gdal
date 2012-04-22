@@ -1550,3 +1550,98 @@ void OGRGMLDataSource::PrintLine(VSILFILE* fp, const char *fmt, ...)
 
     VSIFPrintfL(fp, "%s%s", osWork.c_str(), pszEOL);
 }
+
+
+/************************************************************************/
+/*                     OGRGMLSingleFeatureLayer                         */
+/************************************************************************/
+
+class OGRGMLSingleFeatureLayer : public OGRLayer
+{
+  private:
+    int                 nVal;
+    OGRFeatureDefn     *poFeatureDefn;
+    int                 iNextShapeId;
+
+  public:
+                        OGRGMLSingleFeatureLayer(int nVal );
+                        ~OGRGMLSingleFeatureLayer() { poFeatureDefn->Release(); }
+
+    virtual void        ResetReading() { iNextShapeId = 0; }
+    virtual OGRFeature *GetNextFeature();
+    virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
+    virtual int         TestCapability( const char * ) { return FALSE; }
+};
+
+/************************************************************************/
+/*                      OGRGMLSingleFeatureLayer()                      */
+/************************************************************************/
+
+OGRGMLSingleFeatureLayer::OGRGMLSingleFeatureLayer( int nVal )
+{
+    poFeatureDefn = new OGRFeatureDefn( "SELECT" );
+    poFeatureDefn->Reference();
+    OGRFieldDefn oField( "Validates", OFTInteger );
+    poFeatureDefn->AddFieldDefn( &oField );
+
+    this->nVal = nVal;
+    iNextShapeId = 0;
+}
+
+/************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
+
+OGRFeature * OGRGMLSingleFeatureLayer::GetNextFeature()
+{
+    if (iNextShapeId != 0)
+        return NULL;
+
+    OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
+    poFeature->SetField(0, nVal);
+    poFeature->SetFID(iNextShapeId ++);
+    return poFeature;
+}
+
+/************************************************************************/
+/*                            ExecuteSQL()                              */
+/************************************************************************/
+
+OGRLayer * OGRGMLDataSource::ExecuteSQL( const char *pszSQLCommand,
+                                         OGRGeometry *poSpatialFilter,
+                                         const char *pszDialect )
+{
+    if (EQUAL(pszSQLCommand, "SELECT ValidateSchema()"))
+    {
+        CPLString osXSDFilename = CPLResetExtension( pszName, "xsd" );
+        int bIsValid = FALSE;
+        CPLErrorReset();
+        CPLXMLSchemaPtr pSchema = CPLLoadXMLSchema(osXSDFilename);
+        if (pSchema)
+        {
+            bIsValid = CPLValidateXML(pszName, pSchema, NULL);
+            CPLFreeXMLSchema(pSchema);
+        }
+        else
+        {
+            if (strstr(CPLGetLastErrorMsg(), "not implemented due to missing libxml2 support") == NULL)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Cannot load %s", osXSDFilename.c_str());
+            }
+        }
+
+        return new OGRGMLSingleFeatureLayer(bIsValid);
+    }
+
+    return OGRDataSource::ExecuteSQL(pszSQLCommand, poSpatialFilter, pszDialect);
+}
+
+/************************************************************************/
+/*                          ReleaseResultSet()                          */
+/************************************************************************/
+
+void OGRGMLDataSource::ReleaseResultSet( OGRLayer * poResultsSet )
+{
+    delete poResultsSet;
+}
