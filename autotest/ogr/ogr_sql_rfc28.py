@@ -559,6 +559,22 @@ def ogr_rfc28_26():
         return 'fail'
 
 ###############################################################################
+# Test that we correctly let floating point values as floating point, and not as integer (#4634)"
+
+def ogr_rfc28_27():
+
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * FROM poly WHERE 4000000000. > 2000000000." )
+
+    count = lyr.GetFeatureCount()
+
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    if count == 10:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -594,6 +610,7 @@ gdaltest_list = [
     ogr_rfc28_24,
     ogr_rfc28_25,
     ogr_rfc28_26,
+    ogr_rfc28_27,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':
