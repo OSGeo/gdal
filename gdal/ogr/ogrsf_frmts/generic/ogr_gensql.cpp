@@ -605,14 +605,38 @@ int OGRGenSQLResultsLayer::PrepareSummary()
 
 /* -------------------------------------------------------------------- */
 /*      Ignore geometry reading if no spatial filter in place and that  */
-/*      the where clause doesn't include OGR_GEOMETRY, OGR_GEOM_WKT or  */
-/*      OGR_GEOM_AREA special fields.                                   */
+/*      the where clause and no column references OGR_GEOMETRY,         */
+/*      OGR_GEOM_WKT or OGR_GEOM_AREA special fields.                   */
 /* -------------------------------------------------------------------- */
     int bSaveIsGeomIgnored = poSrcLayer->GetLayerDefn()->IsGeometryIgnored();
     if ( m_poFilterGeom == NULL && ( psSelectInfo->where_expr == NULL ||
                 !ContainGeomSpecialField(psSelectInfo->where_expr) ) )
     {
-        poSrcLayer->GetLayerDefn()->SetGeometryIgnored(TRUE);
+        int bFoundGeomExpr = FALSE;
+        for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
+        {
+            swq_col_def *psColDef = psSelectInfo->column_defs + iField;
+            if (psColDef->table_index != -1 && psColDef->field_index != -1)
+            {
+                OGRLayer* poLayer = papoTableLayers[psColDef->table_index];
+                int nSpecialFieldIdx = psColDef->field_index -
+                                poLayer->GetLayerDefn()->GetFieldCount();
+                if (nSpecialFieldIdx == SPF_OGR_GEOMETRY ||
+                    nSpecialFieldIdx == SPF_OGR_GEOM_WKT ||
+                    nSpecialFieldIdx == SPF_OGR_GEOM_AREA)
+                {
+                    bFoundGeomExpr = TRUE;
+                    break;
+                }
+            }
+            if (psColDef->expr != NULL && ContainGeomSpecialField(psColDef->expr))
+            {
+                bFoundGeomExpr = TRUE;
+                break;
+            }
+        }
+        if (!bFoundGeomExpr)
+            poSrcLayer->GetLayerDefn()->SetGeometryIgnored(TRUE);
     }
 
 /* -------------------------------------------------------------------- */

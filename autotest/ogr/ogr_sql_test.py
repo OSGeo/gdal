@@ -1139,6 +1139,25 @@ def ogr_sql_37():
 
     return 'success'
 
+###############################################################################
+# Test "SELECT MAX(OGR_GEOM_AREA) FROM XXXX" (#4633)
+
+def ogr_sql_38():
+
+    sql_lyr = gdaltest.ds.ExecuteSQL( "SELECT MAX(OGR_GEOM_AREA) FROM poly" )
+
+    feat = sql_lyr.GetNextFeature()
+    val = feat.GetFieldAsDouble(0)
+
+    gdaltest.ds.ReleaseResultSet( sql_lyr )
+
+    if abs(val - 1634833.39062) < 1e-5:
+        return 'success'
+    else:
+        print(val)
+        return 'fail'
+
+
 def ogr_sql_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -1185,6 +1204,7 @@ gdaltest_list = [
     ogr_sql_35,
     ogr_sql_36,
     ogr_sql_37,
+    ogr_sql_38,
     ogr_sql_cleanup ]
 
 if __name__ == '__main__':
