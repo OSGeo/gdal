@@ -363,7 +363,8 @@ CPLXMLNode* CPLLoadSchemaStrInternal(CPLHashSet* hSetSchemas,
              strcmp(psIter->pszValue, "xs:include") == 0||
              strcmp(psIter->pszValue, "xsd:include") == 0) &&
             psIter->psChild != NULL &&
-            psIter->psChild->eType == CXT_Attribute)
+            psIter->psChild->eType == CXT_Attribute &&
+            strcmp(psIter->psChild->pszValue, "schemaLocation") == 0)
         {
             const char* pszIncludeSchema = psIter->psChild->psChild->pszValue;
             char* pszFullFilename = CPLStrdup(
