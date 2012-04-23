@@ -635,6 +635,9 @@ class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
 
   protected:
     virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              int, int );
 
   public:
                 GDALNoDataMaskBand( GDALRasterBand * );
