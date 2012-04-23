@@ -239,3 +239,47 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
 
     return CE_None;
 }
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr GDALNoDataMaskBand::IRasterIO( GDALRWFlag eRWFlag,
+                                      int nXOff, int nYOff, int nXSize, int nYSize,
+                                      void * pData, int nBufXSize, int nBufYSize,
+                                      GDALDataType eBufType,
+                                      int nPixelSpace, int nLineSpace )
+{
+    /* Optimization in common use case (#4488) */
+    /* This avoids triggering the block cache on this band, which helps */
+    /* reducing the global block cache consumption */
+    if (eRWFlag == GF_Read && eBufType == GDT_Byte &&
+        poParent->GetRasterDataType() == GDT_Byte &&
+        nXSize == nBufXSize && nYSize == nBufYSize &&
+        nPixelSpace == 1 && nLineSpace == nBufXSize)
+    {
+        CPLErr eErr = poParent->RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,
+                                          pData, nBufXSize, nBufYSize,
+                                          eBufType,
+                                          nPixelSpace, nLineSpace );
+        if (eErr != CE_None)
+            return eErr;
+
+        GByte* pabyData = (GByte*) pData;
+        GByte byNoData = (GByte) dfNoDataValue;
+
+        for( int i = nBufXSize * nBufYSize - 1; i >= 0; i-- )
+        {
+            if( pabyData[i] == byNoData )
+                pabyData[i] = 0;
+            else
+                pabyData[i] = 255;
+        }
+        return CE_None;
+    }
+
+    return GDALRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                      pData, nBufXSize, nBufYSize,
+                                      eBufType,
+                                      nPixelSpace, nLineSpace );
+}
