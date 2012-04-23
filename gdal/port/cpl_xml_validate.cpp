@@ -59,12 +59,19 @@ static xmlExternalEntityLoader pfnLibXMLOldExtranerEntityLoader = NULL;
 static int bHasLibXMLBug = -1;
 
 /************************************************************************/
-/*                     CPLRemoveSlashDotDotSlash()                      */
+/*                            CPLFixPath()                              */
 /************************************************************************/
 
-/* Replace "a/b/../c" --> "a/c" */
-static void CPLRemoveSlashDotDotSlash(char* pszPath)
+/* Replace \ by / to make libxml2 happy on Windows and */
+/* replace "a/b/../c" pattern by "a/c" */
+static void CPLFixPath(char* pszPath)
 {
+    for(int i=0;pszPath[i] != '\0';i++)
+    {
+        if (pszPath[i] == '\\')
+            pszPath[i] = '/';
+    }
+
     while(TRUE)
     {
         char* pszSlashDotDot = strstr(pszPath, "/../");
@@ -370,7 +377,7 @@ CPLXMLNode* CPLLoadSchemaStrInternal(CPLHashSet* hSetSchemas,
             char* pszFullFilename = CPLStrdup(
                 CPLFormFilename(CPLGetPath(pszFile), pszIncludeSchema, NULL));
 
-            CPLRemoveSlashDotDotSlash(pszFullFilename);
+            CPLFixPath(pszFullFilename);
 
             CPLXMLNode* psSubXML = NULL;
 
@@ -442,7 +449,7 @@ CPLXMLNode* CPLLoadSchemaStrInternal(CPLHashSet* hSetSchemas,
                 {
                     char* pszFullFilename = CPLStrdup(CPLFormFilename(
                                       CPLGetPath(pszFile), psIter2->psChild->pszValue, NULL));
-                    CPLRemoveSlashDotDotSlash(pszFullFilename);
+                    CPLFixPath(pszFullFilename);
                     CPLFree(psIter2->psChild->pszValue);
                     psIter2->psChild->pszValue = pszFullFilename;
                 }
