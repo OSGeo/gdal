@@ -575,6 +575,97 @@ def ogr_rfc28_27():
         return 'fail'
 
 ###############################################################################
+# Extensive test of the evaluation of arithmetic and logical operators
+
+def ogr_rfc28_28_test_boolean(formula, expected_bool):
+    lyr = gdaltest.ds.ExecuteSQL( "SELECT * from poly where fid = 0 and " + formula )
+    count = lyr.GetFeatureCount()
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    if expected_bool:
+        expected_count = 1
+    else:
+        expected_count = 0
+
+    if count != expected_count:
+        gdaltest.post_reason('bad result for %s : %d' % (formula, count))
+        return 'fail'
+
+    return 'success'
+
+def ogr_rfc28_28():
+
+    operators = [ '+', '-', '*', '/', '%' ]
+    formulas = []
+    for operator in operators:
+        formulas.append( '6' + operator + '3' )
+        formulas.append( '5.' + operator + '3.' )
+        formulas.append( '5' + operator + '3.' )
+        formulas.append( '5.' + operator + '3' )
+
+    for formula in formulas:
+        lyr = gdaltest.ds.ExecuteSQL( "SELECT " + formula + " from poly where fid = 0" )
+        expect = [ eval(formula) ]
+        tr = ogrtest.check_features_against_list( lyr, 'field_1', expect )
+        gdaltest.ds.ReleaseResultSet( lyr )
+
+        if tr == 0:
+            gdaltest.post_reason('bad result for %s' % formula)
+            return 'fail'
+
+    operators = [ '<', '<=', '>', '>=', ' = ', '<>' ]
+    formulas = []
+    for operator in operators:
+        formulas.append( '3' + operator + '3' )
+        formulas.append( '3.' + operator + '3.' )
+        formulas.append( '3' + operator + '6' )
+        formulas.append( '3.' + operator + '6.' )
+        formulas.append( '3' + operator + '6.' )
+        formulas.append( '3.' + operator + '6' )
+        formulas.append( '6' + operator + '3' )
+        formulas.append( '6.' + operator + '3.' )
+        formulas.append( '6' + operator + '3.' )
+        formulas.append( '6.' + operator + '3' )
+        formulas.append( "'a'" + operator + "'a'" )
+        formulas.append( "'a'" + operator + "'b'" )
+        formulas.append( "'b'" + operator + "'a'" )
+
+    for formula in formulas:
+        expected_bool = eval(formula.replace(' = ','==').replace('<>','!='))
+        ret = ogr_rfc28_28_test_boolean(formula, expected_bool)
+        if ret == 'fail':
+            return ret
+
+    formulas_and_expected_bool = [ [ '3 in (3,5)', True ],
+                                   [ '4 in (3,5)', False ],
+                                   [ '3. in (3.,4.)', True ],
+                                   [ '4. in (3.,5.)', False ],
+                                   [ "'c' in ('c','e')", True ],
+                                   [ "'d' in ('c','e')", False ],
+                                   [ '2 between 2 and 4', True ],
+                                   [ '3 between 2 and 4', True ],
+                                   [ '4 between 2 and 4', True ],
+                                   [ '1 between 2 and 4', False ],
+                                   [ '5 between 2 and 4', False ],
+                                   [ '2. between 2. and 4.', True ],
+                                   [ '3. between 2. and 4.', True ],
+                                   [ '4. between 2. and 4.', True ],
+                                   [ '1. between 2. and 4.', False ],
+                                   [ '5. between 2. and 4.', False ],
+                                   [ "'b' between 'b' and 'd'", True ],
+                                   [ "'c' between 'b' and 'd'", True ],
+                                   [ "'d' between 'b' and 'd'", True ],
+                                   [ "'a' between 'b' and 'd'", False ],
+                                   [ "'e' between 'b' and 'd'", False ] ]
+
+    for [formula, expected_bool] in formulas_and_expected_bool:
+        ret = ogr_rfc28_28_test_boolean(formula, expected_bool)
+        if ret == 'fail':
+            return ret
+
+    return 'success'
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -611,6 +702,7 @@ gdaltest_list = [
     ogr_rfc28_25,
     ogr_rfc28_26,
     ogr_rfc28_27,
+    ogr_rfc28_28,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':
