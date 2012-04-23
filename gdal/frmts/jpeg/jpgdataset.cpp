@@ -2501,6 +2501,12 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         sCInfo.data_precision = 8;
     }
 
+    /* Mostly for debugging purposes */
+    if( nBands == 3 && CSLTestBoolean(CPLGetConfigOption("JPEG_WRITE_RGB", "NO")) )
+    {
+        jpeg_set_colorspace(&sCInfo, JCS_RGB);
+    }
+
     GDALDataType eWorkDT;
 #ifdef JPEG_LIB_MK1
     sCInfo.bits_in_jsample = sCInfo.data_precision;
@@ -2523,6 +2529,8 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int nMaskFlags = poSrcDS->GetRasterBand(1)->GetMaskFlags();
     int bAppendMask =( !(nMaskFlags & GMF_ALL_VALID)
         && (nBands == 1 || (nMaskFlags & GMF_PER_DATASET)) );
+
+    bAppendMask &= CSLFetchBoolean( papszOptions, "INTERNAL_MASK", TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
@@ -2685,9 +2693,10 @@ void GDALRegister_JPEG()
 #endif
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>\n"
-"   <Option name='PROGRESSIVE' type='boolean'/>\n"
+"   <Option name='PROGRESSIVE' type='boolean' default='NO'/>\n"
 "   <Option name='QUALITY' type='int' description='good=100, bad=0, default=75'/>\n"
-"   <Option name='WORLDFILE' type='boolean'/>\n"
+"   <Option name='WORLDFILE' type='boolean' default='NO'/>\n"
+"   <Option name='INTERNAL_MASK' type='boolean' default='YES'/>\n"
 "</CreationOptionList>\n" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
