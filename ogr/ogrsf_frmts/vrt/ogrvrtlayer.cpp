@@ -1937,3 +1937,34 @@ OGRwkbGeometryType OGRVRTLayer::GetGeomType()
 
     return GetLayerDefn()->GetGeomType();
 }
+
+/************************************************************************/
+/*                             GetFIDColumn()                           */
+/************************************************************************/
+
+const char * OGRVRTLayer::GetFIDColumn()
+{
+    if (!bHasFullInitialized) FullInitialize();
+    if (!poSrcLayer) return "";
+
+    const char* pszFIDColumn;
+    if (iFIDField == -1)
+    {
+        /* If pass-through, then query the source layer FID column */
+        pszFIDColumn = poSrcLayer->GetFIDColumn();
+        if (pszFIDColumn == NULL || EQUAL(pszFIDColumn, ""))
+            return "";
+    }
+    else
+    {
+        /* Otherwise get the name from the index in the source layer definition */
+        OGRFieldDefn* poFDefn = GetSrcLayerDefn()->GetFieldDefn(iFIDField);
+        pszFIDColumn = poFDefn->GetNameRef();
+    }
+
+    /* Check that the FIDColumn is actually reported in the VRT layer definition */
+    if (GetLayerDefn()->GetFieldIndex(pszFIDColumn) != -1)
+        return pszFIDColumn;
+    else
+        return "";
+}
