@@ -49,6 +49,7 @@ CPL_CVSID("$Id$");
 #include <string.h>
 #include <libxml/xmlschemas.h>
 #include <libxml/parserInternals.h>
+#include <libxml/catalog.h>
 
 #include "cpl_string.h"
 #include "cpl_hash_set.h"
@@ -570,6 +571,19 @@ xmlParserInputPtr CPLExternalEntityLoader (const char * URL,
 {
     //CPLDebug("CPL", "CPLExternalEntityLoader(%s)", URL);
     CPLString osURL;
+    
+    /* Use libxml2 catalog mechanism to resolve the URL to something else */
+    xmlChar* pszResolved = xmlCatalogResolveSystem((const xmlChar*)URL);
+    if (pszResolved == NULL)
+        pszResolved = xmlCatalogResolveURI((const xmlChar*)URL);
+    if (pszResolved)
+    {
+        CPLDebug("CPL", "Resolving %s in %s", URL, (const char*)pszResolved );
+        osURL = (const char*)pszResolved;
+        URL = osURL.c_str();
+        xmlFree(pszResolved);
+        pszResolved = NULL;
+    }
 
     if (strncmp(URL, "http://", 7) == 0)
     {
@@ -593,6 +607,20 @@ xmlParserInputPtr CPLExternalEntityLoader (const char * URL,
     else if (strncmp(URL, "ftp://", 6) == 0)
     {
         return pfnLibXMLOldExtranerEntityLoader(URL, ID, context);
+    }
+    else if (strncmp(URL, "file://", 7) == 0)
+    {
+        /* Parse file:// URI so as to be able to open them with VSI*L API */
+        if (strncmp(URL, "file://localhost/", 17) == 0)
+            URL += 16;
+        else
+            URL += 7;
+        if (URL[0] == '/' && URL[1] != '\0' && URL[2] == ':' && URL[3] == '/') /* Windows */
+            URL ++;
+        else if (URL[0] == '/') /* Unix */
+            ;
+        else
+            return pfnLibXMLOldExtranerEntityLoader(URL, ID, context);
     }
 
     CPLString osModURL;
