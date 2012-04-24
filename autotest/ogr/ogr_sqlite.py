@@ -1282,6 +1282,29 @@ def ogr_sqlite_28():
     return 'success'
 
 ###############################################################################
+# Test CreateFeature() with empty feature
+
+def ogr_sqlite_29():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    try:
+        os.remove('tmp/ogr_sqlite_29.sqlite')
+    except:
+        pass
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_29.sqlite')
+
+    lyr = ds.CreateLayer('test')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    if lyr.CreateFeature(feat) != 0:
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Test if SpatiaLite is available
 
 def ogr_spatialite_1():
@@ -1915,6 +1938,11 @@ def ogr_sqlite_cleanup():
     except:
         pass
 
+    try:
+        os.remove( 'tmp/ogr_sqlite_29.sqlite' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [ 
@@ -1943,6 +1971,7 @@ gdaltest_list = [
     ogr_sqlite_26,
     ogr_sqlite_27,
     ogr_sqlite_28,
+    ogr_sqlite_29,
     ogr_spatialite_1,
     ogr_sqlite_17,
     ogr_sqlite_18,
