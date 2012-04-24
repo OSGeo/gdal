@@ -54,6 +54,8 @@ static const OGRGeomTypeName asGeomTypeNames[] = { /* 25D versions are implicit 
     { wkbNone, NULL }
 };
 
+#define UNSUPPORTED_OP_READ_ONLY "%s : unsupported operation on a read-only datasource."
+
 /************************************************************************/
 /*                            OGRVRTLayer()                             */
 /************************************************************************/
@@ -1340,8 +1342,9 @@ OGRErr OGRVRTLayer::CreateFeature( OGRFeature* poVRTFeature )
 
     if(!bUpdate)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-            "The CreateFeature() operation is not permitted on a read-only VRT." );
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "CreateFeature");
         return OGRERR_FAILURE;
     }
 
@@ -1377,8 +1380,9 @@ OGRErr OGRVRTLayer::SetFeature( OGRFeature* poVRTFeature )
 
     if(!bUpdate)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-            "The SetFeature() operation is not permitted on a read-only VRT." );
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "SetFeature");
         return OGRERR_FAILURE;
     }
 
@@ -1410,8 +1414,9 @@ OGRErr OGRVRTLayer::DeleteFeature( long nFID )
 
     if(!bUpdate )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-            "The DeleteFeature() operation is not permitted on a read-only VRT." );
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  UNSUPPORTED_OP_READ_ONLY,
+                  "DeleteFeature");
         return OGRERR_FAILURE;
     }
 
@@ -1490,6 +1495,9 @@ int OGRVRTLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
         return poSrcLayer->TestCapability(pszCap);
+
+    else if( EQUAL(pszCap,OLCTransactions) )
+        return bUpdate && poSrcLayer->TestCapability(pszCap);
 
     return FALSE;
 }
@@ -1967,4 +1975,40 @@ const char * OGRVRTLayer::GetFIDColumn()
         return pszFIDColumn;
     else
         return "";
+}
+
+/************************************************************************/
+/*                           StartTransaction()                         */
+/************************************************************************/
+
+OGRErr OGRVRTLayer::StartTransaction()
+{
+    if (!bHasFullInitialized) FullInitialize();
+    if (!poSrcLayer || !bUpdate) return OGRERR_FAILURE;
+
+    return poSrcLayer->StartTransaction();
+}
+
+/************************************************************************/
+/*                           CommitTransaction()                        */
+/************************************************************************/
+
+OGRErr OGRVRTLayer::CommitTransaction()
+{
+    if (!bHasFullInitialized) FullInitialize();
+    if (!poSrcLayer || !bUpdate) return OGRERR_FAILURE;
+
+    return poSrcLayer->CommitTransaction();
+}
+
+/************************************************************************/
+/*                          RollbackTransaction()                       */
+/************************************************************************/
+
+OGRErr OGRVRTLayer::RollbackTransaction()
+{
+    if (!bHasFullInitialized) FullInitialize();
+    if (!poSrcLayer || !bUpdate) return OGRERR_FAILURE;
+
+    return poSrcLayer->RollbackTransaction();
 }
