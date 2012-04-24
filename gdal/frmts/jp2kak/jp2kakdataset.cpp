@@ -551,7 +551,12 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int iBand;
 
     for( iBand = 0; iBand < poBaseDS->GetRasterCount(); iBand++ )
+    {
+        GDALRasterBand* poBand = poBaseDS->GetRasterBand(iBand+1);
+        if ( poBand->GetRasterDataType() != eDataType )
+          continue;
         anBands.push_back(iBand+1);
+    }
 
     GByte *pabyWrkBuffer = (GByte *) 
         VSIMalloc3( nWordSize * anBands.size(), nBlockXSize, nBlockYSize );
