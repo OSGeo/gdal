@@ -157,6 +157,8 @@ class OGRVRTLayer : public OGRLayer
     virtual OGRErr      DeleteFeature( long nFID );
 
     virtual OGRErr      SyncToDisk();
+
+    virtual const char *GetFIDColumn();
 };
 
 /************************************************************************/
