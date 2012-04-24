@@ -620,7 +620,7 @@ try_again:
                  }
              }
 
-             if (iSrcField != poFeatureDefn->GetFieldCount() - 1)
+             if (iSrcField < 0 || (pszArg != NULL && strcmp(pszArg, pszName) != 0))
                  bAttrFilterPassThrough = FALSE;
              else
              {
@@ -632,8 +632,6 @@ try_again:
              anSrcField.push_back( iSrcField );
          }
      }
-
-     bAttrFilterPassThrough &= ( poFeatureDefn->GetFieldCount() == GetSrcLayerDefn()->GetFieldCount() );
 
      CPLAssert( poFeatureDefn->GetFieldCount() == (int) anSrcField.size() );
 
