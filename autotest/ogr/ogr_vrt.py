@@ -1143,6 +1143,12 @@ def ogr_vrt_21_internal():
         return 'fail'
     ds = None
 
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test3')
+    if lyr.GetFIDColumn() != 'fid':
+        return 'fail'
+    ds = None
+
     feature_defn = ogr.FeatureDefn()
     feat = ogr.Feature(feature_defn)
     ds = ogr.Open('data/vrt_test.vrt')
@@ -1256,6 +1262,12 @@ def ogr_vrt_22_internal():
 
     ds = ogr.Open('data/vrt_test.vrt')
     lyr = ds.GetLayerByName('test5')
+    if lyr.GetFIDColumn() != '':
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
     lyr.GetExtent()
     ds = None
 
@@ -1342,6 +1354,36 @@ def ogr_vrt_24():
 
     return ogr_vrt_23(' shared="1"')
 
+
+###############################################################################
+# Test GetFIDColumn() (#4637)
+
+def ogr_vrt_25():
+
+    ds = ogr.Open('data/vrt_test.vrt')
+
+    # test3 layer just declares fid, and implicit fields (so all source
+    # fields are taken as VRT fields), we can report the fid column 
+    lyr = ds.GetLayerByName('test3')
+    if lyr.GetFIDColumn() != 'fid':
+        return 'fail'
+
+    # test3 layer just declares fid, and explicit fields without the fid
+    # column, so we can *not* report it
+    lyr = ds.GetLayerByName('test6')
+    if lyr.GetFIDColumn() != '':
+        return 'fail'
+
+    # test2 layer does not declare fid, and source layer has no fid column
+    # so nothing to report
+    lyr = ds.GetLayerByName('test2')
+    if lyr.GetFIDColumn() != '':
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -1384,6 +1426,7 @@ gdaltest_list = [
     ogr_vrt_22,
     ogr_vrt_23,
     ogr_vrt_24,
+    ogr_vrt_25,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':

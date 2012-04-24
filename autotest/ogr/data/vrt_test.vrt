@@ -34,4 +34,11 @@
         <GeometryField encoding="WKT" field="wkt"/>
     </OGRVRTLayer>
 
+    <OGRVRTLayer name="test6">
+        <SrcDataSource shared="TRUE">data/flat.dbf</SrcDataSource>
+        <SrcLayer>flat</SrcLayer>
+        <FID>fid</FID>
+        <Field name="x"/>
+    </OGRVRTLayer>
+
 </OGRVRTDataSource>
