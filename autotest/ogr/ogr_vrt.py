@@ -1293,6 +1293,21 @@ def ogr_vrt_22_internal():
     lyr.SyncToDisk()
     ds = None
 
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    lyr.StartTransaction()
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    lyr.CommitTransaction()
+    ds = None
+
+    ds = ogr.Open('data/vrt_test.vrt')
+    lyr = ds.GetLayerByName('test5')
+    lyr.RollbackTransaction()
+    ds = None
+
     return 'success'
 
 def ogr_vrt_22():
@@ -1385,6 +1400,64 @@ def ogr_vrt_25():
     return 'success'
 
 ###############################################################################
+# Test transaction support
+
+def ogr_vrt_26():
+
+    if ogr.GetDriverByName('SQLite') is None:
+        return 'skip'
+
+    sqlite_ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_vrt_26.db')
+    if sqlite_ds is None:
+        return 'skip'
+
+    lyr = sqlite_ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+    lyr = None
+
+    vrt_ds = ogr.Open("""<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource>/vsimem/ogr_vrt_26.db</SrcDataSource>
+    </OGRVRTLayer>
+</OGRVRTDataSource>""", update = 1)
+
+    lyr = vrt_ds.GetLayer(0)
+    if lyr.TestCapability(ogr.OLCTransactions) == 0:
+        return 'fail'
+
+    lyr.StartTransaction()
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 'foo')
+    lyr.CreateFeature(feat)
+    feat = None
+
+    if lyr.GetFeatureCount() != 1:
+        return 'fail'
+
+    lyr.RollbackTransaction()
+
+    if lyr.GetFeatureCount() != 0:
+        return 'fail'
+
+    lyr.StartTransaction()
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 'bar')
+    lyr.CreateFeature(feat)
+    feat = None
+    lyr.CommitTransaction()
+
+    if lyr.GetFeatureCount() != 1:
+        return 'fail'
+
+    vrt_ds = None
+
+    sqlite_ds = None
+
+    ogr.GetDriverByName('SQLite').DeleteDataSource('/vsimem/ogr_vrt_26.db')
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_vrt_cleanup():
@@ -1427,6 +1500,7 @@ gdaltest_list = [
     ogr_vrt_23,
     ogr_vrt_24,
     ogr_vrt_25,
+    ogr_vrt_26,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':

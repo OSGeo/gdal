@@ -159,6 +159,10 @@ class OGRVRTLayer : public OGRLayer
     virtual OGRErr      SyncToDisk();
 
     virtual const char *GetFIDColumn();
+
+    virtual OGRErr      StartTransaction();
+    virtual OGRErr      CommitTransaction();
+    virtual OGRErr      RollbackTransaction();
 };
 
 /************************************************************************/
