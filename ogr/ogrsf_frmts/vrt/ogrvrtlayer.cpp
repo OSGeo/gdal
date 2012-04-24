@@ -538,6 +538,7 @@ try_again:
 /* ==================================================================== */
 /*      Search for schema definitions in the VRT.                       */
 /* ==================================================================== */
+     bAttrFilterPassThrough = TRUE;
      for( psChild = psLTree->psChild; psChild != NULL; psChild=psChild->psNext )
      {
          if( psChild->eType == CXT_Element && EQUAL(psChild->pszValue,"Field") )
@@ -618,10 +619,21 @@ try_again:
                      goto error;
                  }
              }
-             
+
+             if (iSrcField != poFeatureDefn->GetFieldCount() - 1)
+                 bAttrFilterPassThrough = FALSE;
+             else
+             {
+                 OGRFieldDefn* poSrcFieldDefn = GetSrcLayerDefn()->GetFieldDefn(iSrcField);
+                 if (poSrcFieldDefn->GetType() != oFieldDefn.GetType())
+                     bAttrFilterPassThrough = FALSE;
+             }
+
              anSrcField.push_back( iSrcField );
          }
      }
+
+     bAttrFilterPassThrough &= ( poFeatureDefn->GetFieldCount() == GetSrcLayerDefn()->GetFieldCount() );
 
      CPLAssert( poFeatureDefn->GetFieldCount() == (int) anSrcField.size() );
 
@@ -661,16 +673,6 @@ try_again:
      }
 
 /* -------------------------------------------------------------------- */
-/*      Allow vrt to override whether attribute filters should be       */
-/*      passed through.                                                 */
-/* -------------------------------------------------------------------- */
-     if( CPLGetXMLValue( psLTree, "attrFilterPassThrough", NULL ) != NULL )
-         bAttrFilterPassThrough = 
-             CSLTestBoolean(
-                 CPLGetXMLValue(psLTree, "attrFilterPassThrough",
-                                "TRUE") );
-
-/* -------------------------------------------------------------------- */
 /*      Do we have a SrcRegion?                                         */
 /* -------------------------------------------------------------------- */
      pszSrcRegion = CPLGetXMLValue( psLTree, "SrcRegion", NULL );
@@ -689,7 +691,7 @@ try_again:
      }
 
 /* -------------------------------------------------------------------- */
-/*      Is out layer definition identical to the source layer defn ?    */
+/*      Is VRT layer definition identical to the source layer defn ?    */
 /*      If so, use it directly, and save the translation of features.   */
 /* -------------------------------------------------------------------- */
      if (poSrcFeatureDefn != NULL && iFIDField == -1 && iStyleField == -1 &&
@@ -701,6 +703,16 @@ try_again:
         poFeatureDefn = poSrcFeatureDefn;
         poFeatureDefn->Reference();
      }
+
+/* -------------------------------------------------------------------- */
+/*      Allow vrt to override whether attribute filters should be       */
+/*      passed through.                                                 */
+/* -------------------------------------------------------------------- */
+     if( CPLGetXMLValue( psLTree, "attrFilterPassThrough", NULL ) != NULL )
+         bAttrFilterPassThrough =
+             CSLTestBoolean(
+                 CPLGetXMLValue(psLTree, "attrFilterPassThrough",
+                                "TRUE") );
 
      return TRUE;
 
