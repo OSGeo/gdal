@@ -1415,6 +1415,170 @@ end:
     return bRet;
 }
 
+/*************************************************************************/
+/*                         TestTransactions()                            */
+/*************************************************************************/
+
+static int TestTransactions( OGRLayer *poLayer )
+
+{
+    OGRFeature* poFeature = NULL;
+    int nInitialFeatureCount = poLayer->GetFeatureCount();
+
+    OGRErr eErr = poLayer->StartTransaction();
+    if (eErr == OGRERR_NONE)
+    {
+        if (poLayer->TestCapability(OLCTransactions) == FALSE)
+        {
+            eErr = poLayer->RollbackTransaction();
+            if (eErr == OGRERR_UNSUPPORTED_OPERATION && poLayer->TestCapability(OLCTransactions) == FALSE)
+            {
+                /* The default implementation has a dummy StartTransaction(), but RollbackTransaction() returns */
+                /* OGRERR_UNSUPPORTED_OPERATION */
+                printf( "INFO: Transactions test skipped due to lack of transaction support.\n" );
+                return FALSE;
+            }
+            else
+            {
+                printf("WARN: StartTransaction() is supported, but TestCapability(OLCTransactions) returns FALSE.\n");
+            }
+        }
+    }
+    else if (eErr == OGRERR_FAILURE)
+    {
+        if (poLayer->TestCapability(OLCTransactions) == TRUE)
+        {
+            printf("ERROR: StartTransaction() failed, but TestCapability(OLCTransactions) returns TRUE.\n");
+            return FALSE;
+        }
+        else
+        {
+            return TRUE;
+        }
+    }
+
+    eErr = poLayer->RollbackTransaction();
+    if (eErr != OGRERR_NONE)
+    {
+        printf("ERROR: RollbackTransaction() failed after successfull StartTransaction().\n");
+        return FALSE;
+    }
+
+    /* ---------------- */
+
+    eErr = poLayer->StartTransaction();
+    if (eErr != OGRERR_NONE)
+    {
+        printf("ERROR: StartTransaction() failed.\n");
+        return FALSE;
+    }
+
+    eErr = poLayer->CommitTransaction();
+    if (eErr != OGRERR_NONE)
+    {
+        printf("ERROR: CommitTransaction() failed after successfull StartTransaction().\n");
+        return FALSE;
+    }
+
+    /* ---------------- */
+
+    eErr = poLayer->StartTransaction();
+    if (eErr != OGRERR_NONE)
+    {
+        printf("ERROR: StartTransaction() failed.\n");
+        return FALSE;
+    }
+
+    poFeature = new OGRFeature(poLayer->GetLayerDefn());
+    if (poLayer->GetLayerDefn()->GetFieldCount() > 0)
+        poFeature->SetField(0, "0");
+    eErr = poLayer->CreateFeature(poFeature);
+    delete poFeature;
+    poFeature = NULL;
+
+    if (eErr == OGRERR_FAILURE)
+    {
+        printf("INFO: CreateFeature() failed. Exiting this test now.\n");
+        poLayer->RollbackTransaction();
+        return FALSE;
+    }
+
+    eErr = poLayer->RollbackTransaction();
+    if (eErr != OGRERR_NONE)
+    {
+        printf("ERROR: RollbackTransaction() failed after successfull StartTransaction().\n");
+        return FALSE;
+    }
+
+    if (poLayer->GetFeatureCount() != nInitialFeatureCount)
+    {
+        printf("INFO: GetFeatureCount() should have returned its initial value after RollbackTransaction().\n");
+        poLayer->RollbackTransaction();
+        return FALSE;
+    }
+
+    /* ---------------- */
+
+    if( poLayer->TestCapability( OLCDeleteFeature ) )
+    {
+        eErr = poLayer->StartTransaction();
+        if (eErr != OGRERR_NONE)
+        {
+            printf("ERROR: StartTransaction() failed.\n");
+            return FALSE;
+        }
+
+        poFeature = new OGRFeature(poLayer->GetLayerDefn());
+        if (poLayer->GetLayerDefn()->GetFieldCount() > 0)
+            poFeature->SetField(0, "0");
+        eErr = poLayer->CreateFeature(poFeature);
+        int nFID = poFeature->GetFID();
+        delete poFeature;
+        poFeature = NULL;
+
+        if (eErr == OGRERR_FAILURE)
+        {
+            printf("INFO: CreateFeature() failed. Exiting this test now.\n");
+            poLayer->RollbackTransaction();
+            return FALSE;
+        }
+
+        eErr = poLayer->CommitTransaction();
+        if (eErr != OGRERR_NONE)
+        {
+            printf("ERROR: CommitTransaction() failed after successfull StartTransaction().\n");
+            return FALSE;
+        }
+
+        if (poLayer->GetFeatureCount() != nInitialFeatureCount + 1)
+        {
+            printf("INFO: GetFeatureCount() should have returned its initial value + 1 after CommitTransaction().\n");
+            poLayer->RollbackTransaction();
+            return FALSE;
+        }
+
+        eErr = poLayer->DeleteFeature(nFID);
+        if (eErr != OGRERR_NONE)
+        {
+            printf("ERROR: DeleteFeature() failed.\n");
+            return FALSE;
+        }
+
+        if (poLayer->GetFeatureCount() != nInitialFeatureCount)
+        {
+            printf("INFO: GetFeatureCount() should have returned its initial value after DeleteFeature().\n");
+            poLayer->RollbackTransaction();
+            return FALSE;
+        }
+    }
+
+    /* ---------------- */
+
+    printf( "INFO: Transactions test passed.\n" );
+
+    return TRUE;
+}
+
 /************************************************************************/
 /*                            TestOGRLayer()                            */
 /************************************************************************/
@@ -1486,7 +1650,18 @@ static int TestOGRLayer( OGRDataSource* poDS, OGRLayer * poLayer, int bIsSQLLaye
         bRet &= TestOGRLayerRandomWrite( poLayer );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Test UTF-8 reporting                                            */
+/* -------------------------------------------------------------------- */
     bRet &= TestOGRLayerUTF8( poLayer );
+
+/* -------------------------------------------------------------------- */
+/*      Test TestTransactions()                                         */
+/* -------------------------------------------------------------------- */
+    if( poLayer->TestCapability( OLCSequentialWrite ) )
+    {
+        bRet &= TestTransactions( poLayer );
+    }
 
     return bRet;
 }
