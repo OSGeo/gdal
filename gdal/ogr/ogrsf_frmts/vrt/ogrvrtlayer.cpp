@@ -50,7 +50,6 @@ static const OGRGeomTypeName asGeomTypeNames[] = { /* 25D versions are implicit 
     { wkbMultiPolygon, "wkbMultiPolygon" },
     { wkbGeometryCollection, "wkbGeometryCollection" },
     { wkbNone, "wkbNone" },
-    { wkbLinearRing, "wkbLinearRing" },
     { wkbNone, NULL }
 };
 
