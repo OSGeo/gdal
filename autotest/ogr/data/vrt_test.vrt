@@ -1,4 +1,4 @@
- <?xml version="1.0"?>
+<?xml version="1.0"?>
  <OGRVRTDataSource>
 
     <OGRVRTLayer name="test2">
