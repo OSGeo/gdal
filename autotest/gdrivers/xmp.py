@@ -53,6 +53,11 @@ class TestXMPRead:
         if drv is None:
             return 'skip'
 
+        if self.drivername == 'PDF':
+            md = drv.GetMetadata()
+            if not 'HAVE_POPPLER' in md and not 'HAVE_PODOFO' in md:
+                return 'skip'
+
         if self.filename == 'data/byte_with_xmp.jp2':
             gdaltest.deregister_all_jpeg2000_drivers_but(self.drivername)
 
