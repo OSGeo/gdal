@@ -1458,6 +1458,48 @@ def ogr_vrt_26():
     return 'success'
 
 ###############################################################################
+# Test shapebin geometry
+
+def ogr_vrt_27():
+
+    csv = """dummy,shapebin
+"dummy","01000000000000000000F03F0000000000000040"
+"dummy","0300000000000000000008400000000000001040000000000000144000000000000018400100000002000000000000000000000000000840000000000000104000000000000014400000000000001840"
+"dummy","0500000000000000000000000000000000000000000000000000F03F000000000000F03F010000000500000000000000000000000000000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000000000000000000000000000000000000000"
+"""
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_vrt_27.csv', csv)
+
+    ds = ogr.Open("""<OGRVRTDataSource>
+  <OGRVRTLayer name="ogr_vrt_27">
+    <SrcDataSource relativeToVRT="0" shared="0">/vsimem/ogr_vrt_27.csv</SrcDataSource>
+    <GeometryField encoding="shape" field="shapebin"/>
+    <Field name="foo"/>
+  </OGRVRTLayer>
+</OGRVRTDataSource>""")
+
+    if ds is None:
+        return 'fail'
+
+    lyr = ds.GetLayer(0)
+
+    wkt_list = [ 'POINT (1 2)', 'LINESTRING (3 4,5 6)', 'POLYGON ((0 0,0 1,1 1,1 0,0 0))' ]
+
+    feat = lyr.GetNextFeature()
+    i = 0
+    while feat is not None:
+        if ogrtest.check_feature_geometry(feat, wkt_list[i]) != 0:
+            return 'fail'
+        feat = lyr.GetNextFeature()
+        i = i + 1
+
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_vrt_27.csv')
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_vrt_cleanup():
@@ -1501,6 +1543,7 @@ gdaltest_list = [
     ogr_vrt_24,
     ogr_vrt_25,
     ogr_vrt_26,
+    ogr_vrt_27,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':
