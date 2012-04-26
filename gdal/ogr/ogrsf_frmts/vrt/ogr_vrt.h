@@ -102,8 +102,6 @@ class OGRVRTLayer : public OGRLayer
     int                 bUpdate;
 
     OGRFeature         *TranslateFeature( OGRFeature*& , int bUseSrcRegion );
-    OGRErr              createFromShapeBin( GByte *, OGRGeometry **, int );
-    
     OGRFeature         *TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeature);
 
     int                 ResetSourceReading();
