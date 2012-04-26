@@ -52,6 +52,12 @@ def ogr_pgeo_1(tested_driver = 'PGeo', other_driver = 'MDB'):
     if ogrtest.other_driver is not None:
         print('Unregistering %s driver' % ogrtest.other_driver.GetName())
         ogrtest.other_driver.Deregister()
+        if other_driver == 'PGeo':
+            # Re-register Geomedia at the end, *after* MDB
+            geomedia_driver = ogr.GetDriverByName('Geomedia')
+            if geomedia_driver is not None:
+                geomedia_driver.Deregister()
+                geomedia_driver.Register()
 
     try:
         drv = ogr.GetDriverByName(tested_driver)
