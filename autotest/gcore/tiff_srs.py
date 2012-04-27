@@ -104,6 +104,7 @@ tiff_srs_list = [ 2758, #tmerc
                   2056, #somerc
                   2027, #utm
                   4326, #longlat
+                  26943, #utm
 ]
 
 for item in tiff_srs_list:
