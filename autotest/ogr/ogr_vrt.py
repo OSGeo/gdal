@@ -1500,6 +1500,49 @@ def ogr_vrt_27():
     return 'success'
 
 ###############################################################################
+# Invalid VRT testing
+
+def ogr_vrt_28():
+
+    ds = ogr.Open("data/invalid.vrt")
+    if ds is None:
+        return 'fail'
+
+    for i in range(ds.GetLayerCount()):
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        lyr = ds.GetLayer(i)
+        feat = lyr.GetNextFeature()
+        gdal.PopErrorHandler()
+        if gdal.GetLastErrorMsg() == '':
+            gdaltest.post_reason('expected failure for layer %d of datasource %s' % (i, ds.GetName()))
+            return 'fail'
+
+    ds = None
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = ogr.Open("<OGRVRTDataSource><OGRVRTLayer/></OGRVRTDataSource>")
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('expected datasource opening failure')
+        return 'fail'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = ogr.Open("data/invalid2.vrt")
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('expected datasource opening failure')
+        return 'fail'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = ogr.Open("data/invalid3.vrt")
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('expected datasource opening failure')
+        return 'fail'
+
+    return 'success'
+###############################################################################
 # 
 
 def ogr_vrt_cleanup():
@@ -1544,6 +1587,7 @@ gdaltest_list = [
     ogr_vrt_25,
     ogr_vrt_26,
     ogr_vrt_27,
+    ogr_vrt_28,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':

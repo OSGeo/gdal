@@ -1,0 +1,6 @@
+<OGRVRTDataSource>
+    <OGRVRTLayer name="poly">
+        <SrcDataSource relativeToVRT="1">poly.shp</SrcDataSource>
+        <GeometryType>foo</GeometryType>
+    </OGRVRTLayer>
+</OGRVRTDataSource>
