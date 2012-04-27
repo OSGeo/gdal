@@ -1550,12 +1550,12 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
         break;
 
       case 9815:
-        poSRS->SetOM( OGR_FP( ProjCenterLat ), OGR_FP( ProjCenterLong ),
-                      OGR_FP( Azimuth ), 
-                      OGR_FP( AngleRectifiedToSkewedGrid ),
-                      OGR_FP( InitialLineScaleFactor ),
-                      OGR_FP( ProjCenterEasting ), 
-                      OGR_FP( ProjCenterNorthing ) );
+        poSRS->SetHOMAC( OGR_FP( ProjCenterLat ), OGR_FP( ProjCenterLong ),
+                         OGR_FP( Azimuth ), 
+                         OGR_FP( AngleRectifiedToSkewedGrid ),
+                         OGR_FP( InitialLineScaleFactor ),
+                         OGR_FP( ProjCenterEasting ), 
+                         OGR_FP( ProjCenterNorthing ) );
         break;
 
       case 9816:

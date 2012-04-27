@@ -4381,16 +4381,17 @@ OGRErr OSRSetGnomonic( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
-/*                               SetOM()                                */
+/*                              SetHOMAC()                              */
 /************************************************************************/
 
 /**
- * \brief Set an Oblique Mercator projection using azimuth angle.
+ * \brief Set an Hotine Oblique Mercator Azimuth Center projection using 
+ * azimuth angle.
  *
  * This projection corresponds to EPSG projection method 9815, also 
  * sometimes known as hotine oblique mercator (variant B).
  *
- * This method does the same thing as the C function OSRSetOM().
+ * This method does the same thing as the C function OSRSetHOMAC().
  *
  * @param dfCenterLat Latitude of the projection origin.
  * @param dfCenterLong Longitude of the projection origin.
@@ -4404,14 +4405,14 @@ OGRErr OSRSetGnomonic( OGRSpatialReferenceH hSRS,
  * @return OGRERR_NONE on success.
  */ 
 
-OGRErr OGRSpatialReference::SetOM( double dfCenterLat, double dfCenterLong,
-                                   double dfAzimuth, double dfRectToSkew,
-                                   double dfScale,
-                                   double dfFalseEasting,
-                                   double dfFalseNorthing )
+OGRErr OGRSpatialReference::SetHOMAC( double dfCenterLat, double dfCenterLong,
+                                      double dfAzimuth, double dfRectToSkew,
+                                      double dfScale,
+                                      double dfFalseEasting,
+                                      double dfFalseNorthing )
 
 {
-    SetProjection( SRS_PT_OBLIQUE_MERCATOR );
+    SetProjection( SRS_PT_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER );
     SetNormProjParm( SRS_PP_LATITUDE_OF_CENTER, dfCenterLat );
     SetNormProjParm( SRS_PP_LONGITUDE_OF_CENTER, dfCenterLong );
     SetNormProjParm( SRS_PP_AZIMUTH, dfAzimuth );
@@ -4424,24 +4425,25 @@ OGRErr OGRSpatialReference::SetOM( double dfCenterLat, double dfCenterLong,
 }
 
 /************************************************************************/
-/*                             OSRSetOM()                               */
+/*                            OSRSetHOMAC()                             */
 /************************************************************************/
+
 /**
  * \brief Set an Oblique Mercator projection using azimuth angle.
  *
- * This is the same as the C++ method OGRSpatialReference::SetOM()
+ * This is the same as the C++ method OGRSpatialReference::SetHOMAC()
  */
-OGRErr OSRSetOM( OGRSpatialReferenceH hSRS, 
-                 double dfCenterLat, double dfCenterLong,
-                 double dfAzimuth, double dfRectToSkew, 
-                 double dfScale,
-                 double dfFalseEasting,
-                 double dfFalseNorthing )
+OGRErr OSRSetHOMAC( OGRSpatialReferenceH hSRS, 
+                    double dfCenterLat, double dfCenterLong,
+                    double dfAzimuth, double dfRectToSkew, 
+                    double dfScale,
+                    double dfFalseEasting,
+                    double dfFalseNorthing )
     
 {
-    VALIDATE_POINTER1( hSRS, "OSRSetOM", CE_Failure );
+    VALIDATE_POINTER1( hSRS, "OSRSetHOMAC", CE_Failure );
 
-    return ((OGRSpatialReference *) hSRS)->SetOM( 
+    return ((OGRSpatialReference *) hSRS)->SetHOMAC( 
         dfCenterLat, dfCenterLong, 
         dfAzimuth, dfRectToSkew, 
         dfScale,
