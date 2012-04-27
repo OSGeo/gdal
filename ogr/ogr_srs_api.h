@@ -117,7 +117,8 @@ typedef enum {
 #define SRS_PT_GOODE_HOMOLOSINE "Goode_Homolosine"
 #define SRS_PT_IGH              "Interrupted_Goode_Homolosine"
 #define SRS_PT_GNOMONIC         "Gnomonic"
-#define SRS_PT_OBLIQUE_MERCATOR "Oblique_Mercator"
+#define SRS_PT_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER                   \
+                                "Hotine_Oblique_Mercator_Azimuth_Center"
 #define SRS_PT_HOTINE_OBLIQUE_MERCATOR                                  \
                                 "Hotine_Oblique_Mercator"
 #define SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN         \
