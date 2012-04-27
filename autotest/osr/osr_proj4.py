@@ -31,13 +31,11 @@
 import os
 import sys
 import string
-import gdal
 
 sys.path.append( '../pymod' )
 
+from osgeo import gdal, osr, ogr
 import gdaltest
-import osr
-import ogr
 
 ###############################################################################
 # Return True if proj is at least 4.8.0
@@ -288,7 +286,7 @@ def osr_proj4_7():
             TOWGS84[52.17,-71.82,-14.9,0,0,0,0]],
         PRIMEM["Greenwich",0],
         UNIT["degree",0.0174532925199433]],
-    PROJECTION["Hotine_Oblique_Mercator"],
+    PROJECTION["Hotine_Oblique_Mercator_Azimuth_Center"],
     PARAMETER["latitude_of_center",47.14439372222222],
     PARAMETER["longitude_of_center",19.04857177777778],
     PARAMETER["azimuth",90],
@@ -521,11 +519,16 @@ def osr_proj4_13():
                      '+proj=longlat +a=5',
                      '+proj=longlat +ellps=wgs72 +towgs84=3']
 
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+
     for proj4str in proj4strlist:
         srs = osr.SpatialReference()
         gdal.ErrorReset()
         if srs.ImportFromProj4(proj4str) == 0 and gdal.GetLastErrorMsg() == '':
+            gdal.PopErrorHandler()
             return 'fail'
+
+    gdal.PopErrorHandler()
 
     return 'success'
 

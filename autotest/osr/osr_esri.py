@@ -37,8 +37,7 @@ import gzip
 sys.path.append( '../pymod' )
 
 import gdaltest
-import osr
-import gdal
+from osgeo import gdal, osr
 
 ###############################################################################
 # This test verifies that morphToESRI() translates ideosyncratic datum names
