@@ -64,8 +64,6 @@ static const char *apszProjMapping[] = {
     "Plate_Carree", SRS_PT_EQUIRECTANGULAR,
     "Hotine_Oblique_Mercator_Azimuth_Natural_Origin", 
                                         SRS_PT_HOTINE_OBLIQUE_MERCATOR,
-    "Hotine_Oblique_Mercator_Azimuth_Center", 
-                                        SRS_PT_HOTINE_OBLIQUE_MERCATOR,
     "Lambert_Conformal_Conic", SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP,
     "Lambert_Conformal_Conic", SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP,
     "Van_der_Grinten_I", SRS_PT_VANDERGRINTEN,

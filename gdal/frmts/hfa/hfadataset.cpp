@@ -2288,7 +2288,7 @@ CPLErr HFADataset::WriteProjection()
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
         sPro.proParams[12] = 1.0;
     }
-    else if( EQUAL(pszProjName,"Hotine_Oblique_Mercator_Azimuth_Center") )
+    else if( EQUAL(pszProjName,SRS_PT_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER) )
     {
         sPro.proNumber = EPRJ_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER;
         sPro.proName = (char*) "Hotine Oblique Mercator Azimuth Center";
@@ -2541,17 +2541,6 @@ CPLErr HFADataset::WriteProjection()
         sPro.proNumber = EPRJ_VERTICAL_NEAR_SIDE_PERSPECTIVE;
         sPro.proName = (char*) "Vertical_Near_Side_Perspective";
         sPro.proParams[2] = oSRS.GetProjParm("Height");
-        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER, 75.0)*D2R;
-        sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER, 40.0)*D2R;
-        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
-        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
-    }
-    else if( EQUAL(pszProjName, "Hotine_Oblique_Mercator_Azimuth_Center") )
-    {
-        sPro.proNumber = EPRJ_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER;
-        sPro.proName = (char*) "Hotine_Oblique_Mercator_Azimuth_Center";
-        sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_SCALE_FACTOR, 1.0);
-        sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_AZIMUTH, 45.0)*D2R; 
         sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER, 75.0)*D2R;
         sPro.proParams[5] = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_CENTER, 40.0)*D2R;
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
@@ -3240,6 +3229,14 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
                          psPro->proParams[6], psPro->proParams[7] );
         break;
 
+      case EPRJ_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER:
+        if( psPro->proParams[12] > 0.0 )
+            oSRS.SetHOMAC( psPro->proParams[5]*R2D, psPro->proParams[4]*R2D,
+                           psPro->proParams[3]*R2D, 0.0,
+                           psPro->proParams[2],
+                           psPro->proParams[6], psPro->proParams[7] );
+        break;
+
       case EPRJ_ROBINSON:
         oSRS.SetRobinson( psPro->proParams[4]*R2D,
                           psPro->proParams[6], psPro->proParams[7] );
@@ -3460,22 +3457,6 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
           oSRS.SetNormProjParm( SRS_PP_LONGITUDE_OF_CENTER,
                            psPro->proParams[4] * R2D );
           oSRS.SetNormProjParm( "height",
-                           psPro->proParams[2] );
-          oSRS.SetNormProjParm( SRS_PP_FALSE_EASTING, psPro->proParams[6] );
-          oSRS.SetNormProjParm( SRS_PP_FALSE_NORTHING, psPro->proParams[7] );
-      }
-      break;
-
-      case EPRJ_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER:
-      {
-          oSRS.SetProjection( "Hotine_Oblique_Mercator_Azimuth_Center" );
-          oSRS.SetNormProjParm( SRS_PP_LATITUDE_OF_CENTER,
-                           psPro->proParams[5] * R2D );
-          oSRS.SetNormProjParm( SRS_PP_LONGITUDE_OF_CENTER,
-                           psPro->proParams[4] * R2D );
-          oSRS.SetNormProjParm( SRS_PP_AZIMUTH,
-                           psPro->proParams[3] * R2D );
-          oSRS.SetNormProjParm( SRS_PP_SCALE_FACTOR,
                            psPro->proParams[2] );
           oSRS.SetNormProjParm( SRS_PP_FALSE_EASTING, psPro->proParams[6] );
           oSRS.SetNormProjParm( SRS_PP_FALSE_NORTHING, psPro->proParams[7] );
