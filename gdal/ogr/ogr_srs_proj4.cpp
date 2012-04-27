@@ -769,7 +769,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         }
         else
         {
-            SetOM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+            SetHOMAC( OSR_GDV( papszNV, "lat_0", 0.0 ), 
                    OSR_GDV( papszNV, "lonc", 0.0 ), 
                    OSR_GDV( papszNV, "alpha", 0.0 ), 
                    OSR_GDV( papszNV, "gamma", 0.0 ), 
@@ -781,12 +781,12 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 
     else if( EQUAL(pszProj,"somerc") )
     {
-        SetOM( OSR_GDV( papszNV, "lat_0", 0.0 ), 
-               OSR_GDV( papszNV, "lon_0", 0.0 ), 
-               90.0,  90.0, 
-               OSR_GDV( papszNV, "k", 1.0 ), 
-               OSR_GDV( papszNV, "x_0", 0.0 ), 
-               OSR_GDV( papszNV, "y_0", 0.0 ) );
+        SetHOMAC( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                  OSR_GDV( papszNV, "lon_0", 0.0 ), 
+                  90.0,  90.0, 
+                  OSR_GDV( papszNV, "k", 1.0 ), 
+                  OSR_GDV( papszNV, "x_0", 0.0 ), 
+                  OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"krovak") )
@@ -1852,7 +1852,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         }
     }
 
-    else if( EQUAL(pszProjection,SRS_PT_OBLIQUE_MERCATOR) )
+    else if( EQUAL(pszProjection,SRS_PT_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER))
     {
         /* special case for swiss oblique mercator : see bug 423 */
         if( fabs(GetNormProjParm(SRS_PP_AZIMUTH,0.0) - 90.0) < 0.0001 

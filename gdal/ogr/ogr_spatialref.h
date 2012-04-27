@@ -397,11 +397,16 @@ class CPL_DLL OGRSpatialReference
                             double dfScale,
                             double dfFalseEasting, double dfFalseNorthing );
 
-    /** Oblique Mercator */
     OGRErr      SetOM( double dfCenterLat, double dfCenterLong,
                        double dfAzimuth, double dfRectToSkew,
                        double dfScale,
                        double dfFalseEasting, double dfFalseNorthing );
+
+    /** Hotine Oblique Mercator Azimuth Center / Variant B */
+    OGRErr      SetHOMAC( double dfCenterLat, double dfCenterLong,
+                          double dfAzimuth, double dfRectToSkew,
+                          double dfScale,
+                          double dfFalseEasting, double dfFalseNorthing );
 
     /** International Map of the World Polyconic */
     OGRErr      SetIWMPolyconic( double dfLat1, double dfLat2,
