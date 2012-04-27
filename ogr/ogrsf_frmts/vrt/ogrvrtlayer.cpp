@@ -366,7 +366,6 @@ try_again:
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Failed to open datasource `%s'.", 
                       pszSrcDSName );
-        CPLFree( pszSrcDSName );
         goto error;
     }
 
@@ -404,12 +403,12 @@ try_again:
             CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to find layer '%s' on datasource '%s'.", 
                       pszSrcLayerName, pszSrcDSName );
-            CPLFree( pszSrcDSName );
             goto error;
         }
     }
         
     CPLFree( pszSrcDSName );
+    pszSrcDSName = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a fixed geometry type?  If not derive from the       */
@@ -730,6 +729,7 @@ try_again:
      return TRUE;
 
 error:
+    CPLFree( pszSrcDSName );
     if( poFeatureDefn )
         poFeatureDefn->Release();
     poFeatureDefn = new OGRFeatureDefn( osName );
