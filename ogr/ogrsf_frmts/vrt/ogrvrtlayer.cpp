@@ -587,10 +587,25 @@ try_again:
 /* -------------------------------------------------------------------- */
 /*      Width and precision.                                            */
 /* -------------------------------------------------------------------- */
-             oFieldDefn.SetWidth( 
-                 atoi(CPLGetXMLValue( psChild, "width", "0" )) );
-             oFieldDefn.SetPrecision( 
-                 atoi(CPLGetXMLValue( psChild, "precision", "0" )) );
+             int nWidth = atoi(CPLGetXMLValue( psChild, "width", "0" ));
+             if (nWidth < 0 || nWidth > 1024)
+             {
+                CPLError( CE_Failure, CPLE_IllegalArg,
+                          "Invalid width for field %s.",
+                          pszName );
+                goto error;
+             }
+             oFieldDefn.SetWidth(nWidth);
+
+             int nPrecision = atoi(CPLGetXMLValue( psChild, "precision", "0" ));
+             if (nPrecision < 0 || nPrecision > 1024)
+             {
+                CPLError( CE_Failure, CPLE_IllegalArg,
+                          "Invalid precision for field %s.",
+                          pszName );
+                goto error;
+             }
+             oFieldDefn.SetPrecision(nPrecision);
 
 /* -------------------------------------------------------------------- */
 /*      Create the field.                                               */
