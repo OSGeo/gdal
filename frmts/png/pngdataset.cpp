@@ -141,8 +141,6 @@ class PNGDataset : public GDALPamDataset
     virtual void FlushCache( void );
 
     virtual char  **GetMetadata( const char * pszDomain = "" );
-    virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );
 
     // semi-private.
     jmp_buf     sSetJmpContext;
@@ -839,21 +837,6 @@ char  **PNGDataset::GetMetadata( const char * pszDomain )
 }
 
 /************************************************************************/
-/*                       GetMetadataItem()                              */
-/************************************************************************/
-
-const char *PNGDataset::GetMetadataItem( const char * pszName,
-                                         const char * pszDomain )
-{
-    if (fpImage == NULL)
-        return NULL;
-    if (eAccess == GA_ReadOnly && !bHasReadXMPMetadata &&
-        (pszDomain != NULL && EQUAL(pszDomain, "xml:XMP")))
-        CollectXMPMetadata();
-    return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
-}
-
-/************************************************************************/
 /*                              Identify()                              */
 /************************************************************************/
 
@@ -1087,8 +1070,6 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Extract any text chunks as "metadata".                          */
 /* -------------------------------------------------------------------- */
     poDS->CollectMetadata();
-
-    poDS->CollectXMPMetadata();
 
 /* -------------------------------------------------------------------- */
 /*      More metadata.                                                  */

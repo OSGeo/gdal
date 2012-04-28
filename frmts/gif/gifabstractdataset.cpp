@@ -225,21 +225,6 @@ char  **GIFAbstractDataset::GetMetadata( const char * pszDomain )
 }
 
 /************************************************************************/
-/*                       GetMetadataItem()                              */
-/************************************************************************/
-
-const char *GIFAbstractDataset::GetMetadataItem( const char * pszName,
-                                         const char * pszDomain )
-{
-    if (fp == NULL)
-        return NULL;
-    if (eAccess == GA_ReadOnly && !bHasReadXMPMetadata &&
-        (pszDomain != NULL && EQUAL(pszDomain, "xml:XMP")))
-        CollectXMPMetadata();
-    return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
-}
-
-/************************************************************************/
 /*                        GetProjectionRef()                            */
 /************************************************************************/
 

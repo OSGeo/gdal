@@ -14,6 +14,8 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(XTRA_OPT)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
+$(O_OBJ):       gifabstractdataset.h
+
 clean:
 	rm -f *.o $(O_OBJ)
 
