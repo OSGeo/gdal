@@ -103,6 +103,8 @@ protected:
     int nShapePos;
     int nNumShapes;
     int nSRSId;
+    /* geometry or geography */
+    int nColType;
 
 protected:
     OGRPoint*           ReadPoint(int iShape);
@@ -114,7 +116,7 @@ protected:
     OGRGeometryCollection* ReadGeometryCollection(int iShape);
 
 public:
-                        OGRMSSQLGeometryParser();
+                        OGRMSSQLGeometryParser( int nGeomColumnType );
     OGRErr              ParseSqlGeometry(unsigned char* pszInput, int nLen,
                                                         OGRGeometry **poGeom);
     int                 GetSRSId() { return nSRSId; };
