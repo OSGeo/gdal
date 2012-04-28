@@ -391,11 +391,6 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags(TIFF* hTIFF,
     jpeg_abort_compress(&sCInfo);
     jpeg_destroy_compress(&sCInfo);
 
-    jpeg_abort_decompress( &sDInfo );
-    jpeg_destroy_decompress( &sDInfo );
-
-    VSIFCloseL(fpJPEG);
-
 /* -------------------------------------------------------------------- */
 /*      Write TIFFTAG_REFERENCEBLACKWHITE if needed.                    */
 /* -------------------------------------------------------------------- */
@@ -431,6 +426,38 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags(TIFF* hTIFF,
                         refbw);
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Write TIFFTAG_YCBCRSUBSAMPLING if needed.                       */
+/* -------------------------------------------------------------------- */
+
+    if (sDInfo.num_components == 3)
+    {
+        if ((sDInfo.comp_info[0].h_samp_factor == 1 || sDInfo.comp_info[0].h_samp_factor == 2) &&
+            (sDInfo.comp_info[0].v_samp_factor == 1 || sDInfo.comp_info[0].v_samp_factor == 2) &&
+            sDInfo.comp_info[1].h_samp_factor == 1 &&
+            sDInfo.comp_info[1].v_samp_factor == 1 &&
+            sDInfo.comp_info[2].h_samp_factor == 1 &&
+            sDInfo.comp_info[2].v_samp_factor == 1)
+        {
+            TIFFSetField(hTIFF, TIFFTAG_YCBCRSUBSAMPLING,
+                         sDInfo.comp_info[0].h_samp_factor,
+                         sDInfo.comp_info[0].v_samp_factor);
+        }
+        else
+        {
+            CPLDebug("GTiff", "Unusual sampling factors. TIFFTAG_YCBCRSUBSAMPLING not written.");
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup.                                                        */
+/* -------------------------------------------------------------------- */
+
+    jpeg_abort_decompress( &sDInfo );
+    jpeg_destroy_decompress( &sDInfo );
+
+    VSIFCloseL(fpJPEG);
 
     return CE_None;
 }
