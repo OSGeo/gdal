@@ -141,7 +141,7 @@ def ogr_wfs_geoserver():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    if gdaltest.gdalurlopen('http://demo.opengeo.org/geoserver/wfs') is None:
+    if gdaltest.gdalurlopen('http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points&SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType') is None:
         print('cannot open URL')
         gdaltest.geoserver_wfs = False
         return 'skip'
