@@ -1480,6 +1480,10 @@ def ogr_pg_32():
     srs.ImportFromEPSG( 26632 )
 
     gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext4', geom_type = ogr.wkbPoint, srs = srs);
+    feat = ogr.Feature(gdaltest.pg_lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    gdaltest.pg_lyr.CreateFeature(feat)
+    feat = None
     sr = gdaltest.pg_lyr.GetSpatialRef()
     if sr.ExportToWkt().find('26632') == -1:
         gdaltest.post_reason('did not get expected SRS')
@@ -1491,6 +1495,17 @@ def ogr_pg_32():
     if  feat.count != 2:
         gdaltest.post_reason('did not get expected count after step (4)')
         feat.DumpReadable()
+        return 'fail'
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+
+
+    ######################################################
+    # Test GetSpatialRef() on SQL layer (#4644)
+
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT * FROM testsrtext4')
+    sr = sql_lyr.GetSpatialRef()
+    if sr.ExportToWkt().find('26632') == -1:
+        gdaltest.post_reason('did not get expected SRS')
         return 'fail'
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
