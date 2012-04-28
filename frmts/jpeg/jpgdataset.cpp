@@ -373,9 +373,6 @@ const char *JPGDataset::GetMetadataItem( const char * pszName,
         (pszDomain == NULL || EQUAL(pszDomain, "")) &&
         pszName != NULL && EQUALN(pszName, "EXIF_", 5))
         ReadEXIFMetadata();
-    if (eAccess == GA_ReadOnly && !bHasReadXMPMetadata &&
-        (pszDomain != NULL && EQUAL(pszDomain, "xml:XMP")))
-        ReadXMPMetadata();
     return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
 }
 

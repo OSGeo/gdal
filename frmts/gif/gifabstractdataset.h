@@ -72,8 +72,6 @@ class GIFAbstractDataset : public GDALPamDataset
     virtual const GDAL_GCP *GetGCPs();
 
     virtual char  **GetMetadata( const char * pszDomain = "" );
-    virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );
 
     static int          Identify( GDALOpenInfo * );
 };
