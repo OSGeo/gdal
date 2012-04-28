@@ -27476,7 +27476,28 @@ JAVA_INC=""
 
 if test "x$with_java" = "xyes"; then
 
-    if test -d /usr/lib/jvm/java-6-openjdk; then
+    JAVA_6_TEST_DIR=
+    JAVA_7_TEST_DIR=
+    case "$host_cpu" in
+        i*86*)
+            JAVA_6_TEST_DIR=/usr/lib/jvm/java-6-openjdk-i386
+            JAVA_7_TEST_DIR=/usr/lib/jvm/java-7-openjdk-i386
+            ;;
+        x86_64*)
+            JAVA_6_TEST_DIR=/usr/lib/jvm/java-6-openjdk-amd64
+            JAVA_7_TEST_DIR=/usr/lib/jvm/java-7-openjdk-amd64
+            ;;
+        *)
+            ;;
+    esac
+
+    if test "x$JAVA_7_TEST_DIR" != "x" -a -d "$JAVA_7_TEST_DIR/include"; then
+        with_java="$JAVA_7_TEST_DIR"
+
+    elif test "x$JAVA_6_TEST_DIR" != "x" -a -d "$JAVA_6_TEST_DIR/include"; then
+        with_java="$JAVA_6_TEST_DIR"
+
+    elif test -d /usr/lib/jvm/java-6-openjdk; then
         with_java="/usr/lib/jvm/java-6-openjdk"
 
     elif test -d /usr/lib/jvm/java-openjdk; then
