@@ -322,7 +322,7 @@ OGRFeature *OGRMSSQLSpatialLayer::GetNextRawFeature()
                 {
                 case MSSQLGEOMETRY_NATIVE:
                     {
-                        OGRMSSQLGeometryParser oParser; 
+                        OGRMSSQLGeometryParser oParser( nGeomColumnType ); 
                         eErr = oParser.ParseSqlGeometry( 
                             (unsigned char *) pszGeomText, nLength, &poGeom );
                         nSRSId = oParser.GetSRSId();
