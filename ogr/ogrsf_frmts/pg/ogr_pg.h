@@ -306,6 +306,8 @@ class OGRPGResultLayer : public OGRPGLayer
     virtual int         TestCapability( const char * );
 
     virtual OGRFeature *GetNextFeature();
+
+    virtual OGRSpatialReference *GetSpatialRef();
 };
 
 /************************************************************************/
