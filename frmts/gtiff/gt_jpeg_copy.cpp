@@ -431,7 +431,7 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags(TIFF* hTIFF,
 /*      Write TIFFTAG_YCBCRSUBSAMPLING if needed.                       */
 /* -------------------------------------------------------------------- */
 
-    if (sDInfo.num_components == 3)
+    if ( nPhotometric == PHOTOMETRIC_YCBCR && sDInfo.num_components == 3 )
     {
         if ((sDInfo.comp_info[0].h_samp_factor == 1 || sDInfo.comp_info[0].h_samp_factor == 2) &&
             (sDInfo.comp_info[0].v_samp_factor == 1 || sDInfo.comp_info[0].v_samp_factor == 2) &&
