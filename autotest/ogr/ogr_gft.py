@@ -108,6 +108,17 @@ def ogr_gft_read():
         print(count)
         return 'fail'
 
+    sql_lyr = ds.ExecuteSQL("SELECT Latitude, Longitude FROM 224453 WHERE ST_INTERSECTS('Latitude', RECTANGLE(LATLNG(31.5,67.0), LATLNG(32.0,67.5))) AND 'Attack on' = 'ENEMY'")
+    if sql_lyr is None:
+        gdaltest.post_reason('SQL request failed')
+        return 'fail'
+    sql_lyr_count = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+
+    if sql_lyr_count != count:
+        gdaltest.post_reason('did not get expected feature count. Got %d, expected %d' % (sql_lyr_count, count))
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
