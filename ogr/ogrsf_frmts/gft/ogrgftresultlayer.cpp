@@ -79,17 +79,14 @@ void OGRGFTResultLayer::ResetReading()
 
 int OGRGFTResultLayer::FetchNextRows()
 {
-    if (!((EQUALN(osSQL.c_str(), "SELECT", 6) ||
-           EQUALN(osSQL.c_str(), "select", 6))))
+    if (!EQUALN(osSQL.c_str(), "SELECT", 6))
         return FALSE;
 
     aosRows.resize(0);
 
     CPLString osChangedSQL(osSQL);
-    if (strstr(osSQL.c_str(), " OFFSET ") == NULL &&
-        strstr(osSQL.c_str(), " offset ") == NULL &&
-        strstr(osSQL.c_str(), " LIMIT ") == NULL &&
-        strstr(osSQL.c_str(), " limit ") == NULL )
+    if (osSQL.ifind(" OFFSET ") == std::string::npos &&
+        osSQL.ifind(" LIMIT ") == std::string::npos)
     {
         osChangedSQL += CPLSPrintf(" OFFSET %d LIMIT %d",
                                    nOffset, GetFeaturesToFetch());
@@ -183,18 +180,15 @@ int OGRGFTResultLayer::RunSQL()
     CPLString osTableId;
     if (EQUALN(osSQL.c_str(), "SELECT", 6))
     {
-        const char* pszFROM = strstr(osSQL.c_str(), " FROM ");
-        if (pszFROM == NULL)
-            pszFROM = strstr(osSQL.c_str(), " from ");
-        if (pszFROM == NULL)
+        size_t nPosFROM = osSQL.ifind(" FROM ");
+        if (nPosFROM == std::string::npos)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "RunSQL() failed. Missing FROM in SELECT");
             return FALSE;
         }
         CPLString osReminder;
-        int nPosFROM = pszFROM - osSQL.c_str() + 6;
-        osTableId = OGRGFTExtractTableID(pszFROM + 6, osReminder);
-        pszFROM = NULL;
+        nPosFROM += 6;
+        osTableId = OGRGFTExtractTableID(osSQL.c_str() + nPosFROM, osReminder);
 
         poTableLayer = (OGRGFTTableLayer*) poDS->GetLayerByName(osTableId);
         if (poTableLayer != NULL)
@@ -214,10 +208,8 @@ int OGRGFTResultLayer::RunSQL()
         }
 
         int nFeaturesToFetch = GetFeaturesToFetch();
-        if (strstr(osSQL.c_str(), " OFFSET ") == NULL &&
-            strstr(osSQL.c_str(), " offset ") == NULL &&
-            strstr(osSQL.c_str(), " LIMIT ") == NULL &&
-            strstr(osSQL.c_str(), " limit ") == NULL &&
+        if (osSQL.ifind(" OFFSET ") == std::string::npos &&
+            osSQL.ifind(" LIMIT ") == std::string::npos &&
             nFeaturesToFetch > 0)
         {
             osChangedSQL += CPLSPrintf(" LIMIT %d", nFeaturesToFetch);
