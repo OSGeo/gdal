@@ -551,6 +551,17 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF* hGTIF, GTIFDefn* psDefn, OGRSp
 {
     if( !hGTIF || !psDefn || !poSRS )
         return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      For ESRI builds we are interested in maximizing PE              */
+/*      compatability, but generally we prefer to use EPSG              */
+/*      definitions of the coordinate system if PCS is defined.         */
+/* -------------------------------------------------------------------- */
+#if !defined(ESRI_BUILD)
+    if( psDefn->PCS != KvUserDefined )
+        return FALSE;
+#endif
+
     char  szCTString[512];
     szCTString[0] = '\0';
 
@@ -677,6 +688,7 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM(GTIF* hGTIF, GTIFDefn* psDefn, OGRSp
         if( poSRS->ImportFromESRIStatePlaneWKT(0, NULL, (const char*)units, psDefn->PCS) == OGRERR_NONE )
             return TRUE;
     }
+
     return FALSE;
 }
 
