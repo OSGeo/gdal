@@ -367,6 +367,10 @@ def tiff_grads():
 
 def tiff_citation():
 
+    build_info = gdal.VersionInfo('BUILD_INFO')
+    if build_info.find('ESRI_BUILD=YES') == -1:
+        return 'skip'
+        
     ds = gdal.Open('data/citation_mixedcase.tif')
     wkt = ds.GetProjectionRef()
 
