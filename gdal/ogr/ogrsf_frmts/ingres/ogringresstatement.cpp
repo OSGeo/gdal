@@ -72,6 +72,8 @@ void OGRIngresStatement::Close()
 {
     IIAPI_WAITPARM  waitParm = { -1 };
 
+    ClearDynamicColumns();
+
     if( hStmt != NULL )
     {
         IIAPI_CLOSEPARM closeParm;
@@ -104,8 +106,6 @@ void OGRIngresStatement::Close()
         hTransaction = NULL;
     }
 
-    ClearDynamicColumns();
- 
     // Set the descriptorCount to zero to avoid attempting to refree it
     // in another Close call.
     getDescrParm.gd_descriptorCount = 0;
@@ -565,7 +565,7 @@ int OGRIngresStatement::SendParms()
  
     setDescrParm.sd_descriptor[0].ds_dataType = eParmType;
     setDescrParm.sd_descriptor[0].ds_nullable = FALSE;
-    setDescrParm.sd_descriptor[0].ds_length = nParmLen+2;
+    setDescrParm.sd_descriptor[0].ds_length = (II_UINT2) (nParmLen+2);
     setDescrParm.sd_descriptor[0].ds_precision = 0;
     setDescrParm.sd_descriptor[0].ds_scale = 0;
     setDescrParm.sd_descriptor[0].ds_columnType = IIAPI_COL_QPARM;
@@ -596,7 +596,7 @@ int OGRIngresStatement::SendParms()
 
     while( nBytesSent < nParmLen )
     {
-        GInt16 nLen = (int) MIN((int)sizeof(abyChunk)-2,nParmLen-nBytesSent);
+        GInt16 nLen = (GInt16) MIN((int)sizeof(abyChunk)-2,nParmLen-nBytesSent);
 
         // presuming we want machine local order...
         memcpy( abyChunk, &nLen, sizeof(nLen) );

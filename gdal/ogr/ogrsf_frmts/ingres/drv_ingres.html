@@ -12,17 +12,39 @@ This driver implements read and write access for spatial data in
 functionality was introduced in GDAL/OGR 1.6.0.  <p>
 
 When opening a database, it's name should be specified in the form
-"@driver=ingres,dbname=<i>dbname</i>[,options]" where the options can 
+"@driver=ingres,[host=<i>host</i>, instance=<i>instance</i>],dbname=<i>[vnode::]dbname</i>
+[,options]". where the options can 
 include comma seperated
-items like "username=*userid*", "password=*password*", "timeout=*timeout*",
+items like "host=*ip_address*","instance=*instance*", "username=*userid*", "password=*password*", 
+"effuser=*database_user*", "dbpwd=*database_passwd*", "timeout=*timeout*",
 "tables=table1/table2".  The driver and dbname values are required, while
 the rest are optional.  If username and password are not provided an attempt
-is made to authenticate as the current user.<p>
+is made to authenticate as the current OS user.<p>
+
+If the host and instance options are both specified,
+the username and password *must* be supplied as to componsit the 
+<a href=http://docs.actian.com/ingres/10.0/command-reference-guide/1207-dynamic-vnode-specificationconnect-to-remote-node>dynamic vnode</a>.
+The default protocal is Tcp/IP. If any other protocal is expected to be used, a pre-build vnode is preferable.
+If vnode and these two options are passed at the same time, an error will occur.
+<p>
+
+The option effuser and dbpwd are mapped to the real user name and password needs to be authorized in dbms, compared to the
+username and password which are used for OS level authorization.<p>
 
 Examples:
 <pre>
+  @driver=ingres,host=192.168.0.1, instance=II, dbname=test,userid=warmerda,password=test,effuser=frank, dbpwd=123, tables=usa/canada
+  
+  @driver=ingres,host=192.168.0.1, instance=II, dbname=test,userid=warmerda,password=test,tables=usa/canada
+  
   @driver=ingres,dbname=test,userid=warmerda,password=test,tables=usa/canada
 
+  @driver=ingres,dbname=test,userid=warmerda,password=test,tables=usa/canada
+  
+  @driver=ingres,dbname=test,userid=warmerda,password=test,tables=usa/canada
+  
+  @driver=ingres,dbname=server::mapping
+  
   @driver=ingres,dbname=mapping
 </pre>
 
