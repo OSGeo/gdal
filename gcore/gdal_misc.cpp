@@ -1925,6 +1925,8 @@ GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
  * <li> "LICENCE": Returns the content of the LICENSE.TXT file from the GDAL_DATA directory.
  *      Before GDAL 1.7.0, the returned string was leaking memory but this is now resolved.
  *      So the result should not been freed by the caller.
+ * <li> "BUILD_INFO": List of NAME=VALUE pairs separated by newlines with 
+ * information on build time options.
  * </ul>
  *
  * @param pszRequest the type of version info desired, as listed above.
@@ -1935,6 +1937,28 @@ GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
 const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
 
 {
+/* -------------------------------------------------------------------- */
+/*      Try to capture as much build information as practical.          */
+/* -------------------------------------------------------------------- */
+    if( pszRequest != NULL && EQUAL(pszRequest,"BUILD_INFO") ) 
+    {
+        CPLString osBuildInfo;
+
+#ifdef ESRI_BUILD
+        osBuildInfo += "ESRI_BUILD=YES\n";
+#endif
+#ifdef PAM_ENABLED
+        osBuildInfo += "PAM_ENABLED=YES\n";
+#endif
+#ifdef OGR_ENABLED
+        osBuildInfo += "OGR_ENABLED=YES\n";
+#endif
+
+        CPLFree(CPLGetTLS(CTLS_VERSIONINFO));
+        CPLSetTLS(CTLS_VERSIONINFO, CPLStrdup(osBuildInfo), TRUE );
+        return (char *) CPLGetTLS(CTLS_VERSIONINFO);
+    }
+
 /* -------------------------------------------------------------------- */
 /*      LICENSE is a special case. We try to find and read the          */
 /*      LICENSE.TXT file from the GDAL_DATA directory and return it     */
@@ -1979,27 +2003,27 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
         return pszResultLicence;
     }
 
-    char* pszResultSmall = (char*) CPLGetTLS( CTLS_VERSIONINFO );
-    if( pszResultSmall == NULL )
-    {
-        pszResultSmall = (char*) CPLCalloc(128, 1);
-        CPLSetTLS( CTLS_VERSIONINFO, pszResultSmall, TRUE );
-    }
+/* -------------------------------------------------------------------- */
+/*      All other strings are fairly small.                             */
+/* -------------------------------------------------------------------- */
+    CPLString osVersionInfo;
 
     if( pszRequest == NULL || EQUAL(pszRequest,"VERSION_NUM") )
-        sprintf(pszResultSmall, "%d", GDAL_VERSION_NUM );
+        osVersionInfo.Printf( "%d", GDAL_VERSION_NUM );
     else if( EQUAL(pszRequest,"RELEASE_DATE") )
-        sprintf(pszResultSmall, "%d", GDAL_RELEASE_DATE );
+        osVersionInfo.Printf( "%d", GDAL_RELEASE_DATE );
     else if( EQUAL(pszRequest,"RELEASE_NAME") )
-        sprintf(pszResultSmall, GDAL_RELEASE_NAME );
+        osVersionInfo.Printf( GDAL_RELEASE_NAME );
     else // --version
-        sprintf(pszResultSmall, "GDAL %s, released %d/%02d/%02d",
-                 GDAL_RELEASE_NAME, 
-                 GDAL_RELEASE_DATE / 10000, 
-                 (GDAL_RELEASE_DATE % 10000) / 100,
-                 GDAL_RELEASE_DATE % 100 );
+        osVersionInfo.Printf( "GDAL %s, released %d/%02d/%02d",
+                              GDAL_RELEASE_NAME, 
+                              GDAL_RELEASE_DATE / 10000, 
+                              (GDAL_RELEASE_DATE % 10000) / 100,
+                              GDAL_RELEASE_DATE % 100 );
 
-    return pszResultSmall;
+    CPLFree(CPLGetTLS(CTLS_VERSIONINFO)); // clear old value.
+    CPLSetTLS(CTLS_VERSIONINFO, CPLStrdup(osVersionInfo), TRUE ); 
+    return (char *) CPLGetTLS(CTLS_VERSIONINFO);
 }
 
 /************************************************************************/
@@ -2301,6 +2325,7 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
  * commandline options:
  *  
  *  --version: report version of GDAL in use. 
+ *  --build: report build info about GDAL in use.
  *  --license: report GDAL license info.
  *  --formats: report all format drivers configured.
  *  --format [format]: report details of one format driver. 
@@ -2359,6 +2384,16 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
         if( EQUAL(papszArgv[iArg],"--version") )
         {
             printf( "%s\n", GDALVersionInfo( "--version" ) );
+            CSLDestroy( papszReturn );
+            return 0;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      --build                                                         */
+/* -------------------------------------------------------------------- */
+        else if( EQUAL(papszArgv[iArg],"--build") )
+        {
+            printf( "%s", GDALVersionInfo( "BUILD_INFO" ) );
             CSLDestroy( papszReturn );
             return 0;
         }
