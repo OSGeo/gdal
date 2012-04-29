@@ -30,6 +30,7 @@
 import sys
 import string
 import os
+import time
 
 try:
     from osgeo import gdal
@@ -49,6 +50,8 @@ failure_summary = []
 reason = None
 count_skipped_tests_download = 0
 count_skipped_tests_slow = 0
+start_time = None
+end_time = None
 
 jp2kak_drv = None
 jpeg2000_drv = None
@@ -85,7 +88,11 @@ def setup_run( name ):
 def run_tests( test_list ):
     global success_counter, failure_counter, expected_failure_counter, blow_counter, skip_counter
     global reason, failure_summary, cur_name
+    global start_time, end_time
 
+    set_time = start_time is None
+    if set_time:
+        start_time = time.time()
     had_errors_this_script = 0
     
     for test_item in test_list:
@@ -131,6 +138,9 @@ def run_tests( test_list ):
         else:
             blow_counter = blow_counter + 1
 
+    if set_time:
+        end_time = time.time()
+
 ###############################################################################
 
 def get_lineno_2framesback( frames ):
@@ -162,14 +172,22 @@ def summarize():
     global count_skipped_tests_download, count_skipped_tests_slow
     global success_counter, failure_counter, blow_counter, skip_counter
     global cur_name
+    global start_time, end_time
     
     print('')
-    print('Test Script: %s' % cur_name)
+    if cur_name is not None:
+        print('Test Script: %s' % cur_name)
     print('Succeeded: %d' % success_counter)
     print('Failed:    %d (%d blew exceptions)' \
           % (failure_counter+blow_counter, blow_counter))
     print('Skipped:   %d' % skip_counter)
     print('Expected fail:%d' % expected_failure_counter)
+    if start_time is not None:
+        duration = end_time - start_time
+        if duration >= 60:
+            print('Duration:  %02dm%02.1fs' % (duration / 60., duration % 60.))
+        else:
+            print('Duration:  %02.2fs' % duration)
     if count_skipped_tests_download != 0:
         print('As GDAL_DOWNLOAD_TEST_DATA environment variable is not defined, %d tests relying on data to downloaded from the Web have been skipped' % count_skipped_tests_download)
     if count_skipped_tests_slow != 0:
@@ -188,6 +206,11 @@ def summarize():
 ###############################################################################
 
 def run_all( dirlist, option_list ):
+
+    global start_time, end_time
+    global cur_name
+
+    start_time = time.time()
 
     for dir_name in dirlist:
         files = os.listdir(dir_name)
@@ -224,6 +247,9 @@ def run_all( dirlist, option_list ):
         # We only add the tool directory to the python path long enough
         # to load the tool files.
         sys.path = old_path
+
+    end_time = time.time()
+    cur_name = None
 
     if len(failure_summary) > 0:
         print('')
