@@ -168,6 +168,11 @@ int OGRPGResultLayer::TestCapability( const char * pszCap )
 OGRFeature *OGRPGResultLayer::GetNextFeature()
 
 {
+    if( m_poFilterGeom != NULL &&
+        (bHasPostGISGeometry || bHasPostGISGeography) && nSRSId == UNDETERMINED_SRID )
+    {
+        GetSpatialRef(); /* make sure that we fetch the SRID if not already done */
+    }
 
     for( ; TRUE; )
     {
@@ -197,6 +202,11 @@ void OGRPGResultLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 {
     if( InstallFilter( poGeomIn ) )
     {
+        if( (bHasPostGISGeometry || bHasPostGISGeography) && nSRSId == UNDETERMINED_SRID )
+        {
+            GetSpatialRef(); /* make sure that we fetch the SRID if not already done */
+        }
+
         if ((bHasPostGISGeometry || bHasPostGISGeography) && nSRSId != UNDETERMINED_SRID)
         {
             if( m_poFilterGeom != NULL)
@@ -247,6 +257,11 @@ OGRErr OGRPGResultLayer::GetExtent( OGREnvelope *psExtent, int bForce )
         pszExtentFct = "ST_Extent";
     else
         pszExtentFct = "Extent";
+
+    if( (bHasPostGISGeometry || bHasPostGISGeography) && nSRSId == UNDETERMINED_SRID )
+    {
+        GetSpatialRef(); /* make sure that we fetch the SRID if not already done */
+    }
 
     if ( TestCapability(OLCFastGetExtent) )
     {
