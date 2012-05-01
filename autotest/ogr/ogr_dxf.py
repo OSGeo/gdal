@@ -1059,6 +1059,66 @@ def ogr_dxf_21():
     ds = None
 
     return 'success'
+
+
+###############################################################################
+# TEXT
+
+def ogr_dxf_22():
+
+    # Read TEXT feature
+    ds = ogr.Open('data/text.dxf')
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsString('Text') != 'test_text':
+        gdaltest.post_reason('bad attribute')
+        return 'fail'
+    style = feat.GetStyleString()
+    if style != 'LABEL(f:"Arial",t:"test_text",a:45,s:10g,c:#ff0000)':
+        gdaltest.post_reason('bad style')
+        print(style)
+        return 'fail'
+    if ogrtest.check_feature_geometry( feat, 'POINT(1 2 3)' ):
+        gdaltest.post_reason('bad geometry')
+        return 'fail'
+
+    # Write text feature
+    out_ds = ogr.GetDriverByName('DXF').CreateDataSource('/vsimem/ogr_dxf_22.dxf')
+    out_lyr = out_ds.CreateLayer( 'entities' )
+    out_feat = ogr.Feature(out_lyr.GetLayerDefn())
+    out_feat.SetStyleString(style)
+    out_feat.SetGeometry(feat.GetGeometryRef())
+    out_lyr.CreateFeature(out_feat)
+    out_feat = None
+    out_lyr = None
+    out_ds = None
+
+    ds = None
+
+    # Check written file
+    ds = ogr.Open('/vsimem/ogr_dxf_22.dxf')
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsString('Text') != 'test_text':
+        gdaltest.post_reason('bad attribute')
+        return 'fail'
+    style = feat.GetStyleString()
+    if style != 'LABEL(f:"Arial",t:"test_text",a:45,s:10g,c:#ff0000)':
+        gdaltest.post_reason('bad style')
+        print(style)
+        return 'fail'
+    if ogrtest.check_feature_geometry( feat, 'POINT(1 2 3)' ):
+        gdaltest.post_reason('bad geometry')
+        return 'fail'
+
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_dxf_22.dxf')
+
+    return 'success'
+
 ###############################################################################
 # cleanup
 
@@ -1094,6 +1154,7 @@ gdaltest_list = [
     ogr_dxf_19,
     ogr_dxf_20,
     ogr_dxf_21,
+    ogr_dxf_22,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
