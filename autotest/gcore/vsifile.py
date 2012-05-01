@@ -137,7 +137,7 @@ def vsifile_3():
     return 'success'
 
 ###############################################################################
-# Test fix for #4583
+# Test fix for #4583 (short reads)
 
 def vsifile_4():
 
@@ -151,10 +151,86 @@ def vsifile_4():
 
     return 'success'
 
+###############################################################################
+# Test vsicache
+
+def vsifile_5():
+
+    fp = gdal.VSIFOpenL('tmp/vsifile_5.bin', 'wb')
+    ref_data = ''.join(['%08X' % i for i in range(5*32768)])
+    gdal.VSIFWriteL(ref_data, 1, len(ref_data), fp)
+    gdal.VSIFCloseL(fp)
+
+    gdal.SetConfigOption('VSI_CACHE', 'YES')
+
+    for i in range(3):
+        if i == 0:
+            gdal.SetConfigOption('VSI_CACHE_SIZE', '0')
+        elif i == 1:
+            gdal.SetConfigOption('VSI_CACHE_SIZE', '65536')
+        else:
+            gdal.SetConfigOption('VSI_CACHE_SIZE', None)
+
+        fp = gdal.VSIFOpenL('tmp/vsifile_5.bin', 'rb')
+
+        gdal.VSIFSeekL(fp, 50000, 0)
+        if gdal.VSIFTellL(fp) != 50000:
+            gdaltest.post_reason('fail')
+            gdal.SetConfigOption('VSI_CACHE_SIZE', None)
+            gdal.SetConfigOption('VSI_CACHE', None)
+            return 'fail'
+
+        gdal.VSIFSeekL(fp, 50000, 1)
+        if gdal.VSIFTellL(fp) != 100000:
+            gdaltest.post_reason('fail')
+            gdal.SetConfigOption('VSI_CACHE_SIZE', None)
+            gdal.SetConfigOption('VSI_CACHE', None)
+            return 'fail'
+
+        gdal.VSIFSeekL(fp, 0, 2)
+        if gdal.VSIFTellL(fp) != 5*32768*8:
+            gdaltest.post_reason('fail')
+            gdal.SetConfigOption('VSI_CACHE_SIZE', None)
+            gdal.SetConfigOption('VSI_CACHE', None)
+            return 'fail'
+        gdal.VSIFReadL(1, 1, fp)
+
+        gdal.VSIFSeekL(fp, 0, 0)
+        data = gdal.VSIFReadL(1,3*32768,fp)
+        if data.decode('ascii') != ref_data[0:3*32768]:
+            gdaltest.post_reason('fail')
+            gdal.SetConfigOption('VSI_CACHE_SIZE', None)
+            gdal.SetConfigOption('VSI_CACHE', None)
+            return 'fail'
+
+        gdal.VSIFSeekL(fp, 16384, 0)
+        data = gdal.VSIFReadL(1,5*32768,fp)
+        if data.decode('ascii') != ref_data[16384:16384+5*32768]:
+            gdaltest.post_reason('fail')
+            gdal.SetConfigOption('VSI_CACHE_SIZE', None)
+            gdal.SetConfigOption('VSI_CACHE', None)
+            return 'fail'
+
+        data = gdal.VSIFReadL(1,50*32768,fp)
+        if data[0:1130496].decode('ascii') != ref_data[16384+5*32768:]:
+            gdaltest.post_reason('fail')
+            gdal.SetConfigOption('VSI_CACHE_SIZE', None)
+            gdal.SetConfigOption('VSI_CACHE', None)
+            return 'fail'
+
+        gdal.VSIFCloseL(fp)
+
+    gdal.SetConfigOption('VSI_CACHE_SIZE', None)
+    gdal.SetConfigOption('VSI_CACHE', None)
+    gdal.Unlink('tmp/vsifile_5.bin')
+
+    return 'success'
+    
 gdaltest_list = [ vsifile_1,
                   vsifile_2,
                   vsifile_3,
-                  vsifile_4 ]
+                  vsifile_4,
+                  vsifile_5 ]
 
 if __name__ == '__main__':
 
@@ -163,4 +239,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
