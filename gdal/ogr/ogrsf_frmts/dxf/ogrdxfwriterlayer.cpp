@@ -988,7 +988,15 @@ OGRErr OGRDXFWriterLayer::CreateFeature( OGRFeature *poFeature )
     OGRwkbGeometryType eGType = wkbNone;
     
     if( poGeom != NULL )
+    {
+        if( !poGeom->IsEmpty() )
+        {
+            OGREnvelope sEnvelope;
+            poGeom->getEnvelope(&sEnvelope);
+            poDS->UpdateExtent(&sEnvelope);
+        }
         eGType = wkbFlatten(poGeom->getGeometryType());
+    }
 
     if( eGType == wkbPoint )
     {
