@@ -366,6 +366,8 @@ class OGRDXFWriterDS : public OGRDataSource
     int                 TransferUpdateTrailer( VSILFILE * );
     int                 FixupHANDSEED( VSILFILE * );
 
+    OGREnvelope         oGlobalEnvelope;
+
   public:
                         OGRDXFWriterDS();
                         ~OGRDXFWriterDS();
@@ -388,6 +390,8 @@ class OGRDXFWriterDS : public OGRDataSource
     int                 CheckEntityID( const char *pszEntityID );
     long                WriteEntityID( VSILFILE * fp,
                                        long nPreferredFID = OGRNullFID );
+
+    void                UpdateExtent( OGREnvelope* psEnvelope );
 };
 
 /************************************************************************/
