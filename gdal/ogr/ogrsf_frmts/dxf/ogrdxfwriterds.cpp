@@ -303,6 +303,29 @@ static int WriteValue( VSILFILE *fp, int nCode, const char *pszLine )
 }
 
 /************************************************************************/
+/*                             WriteValue()                             */
+/************************************************************************/
+
+static int WriteValue( VSILFILE *fp, int nCode, double dfValue )
+
+{
+    char szLinePair[64];
+
+    snprintf(szLinePair, sizeof(szLinePair), "%3d\n%.15g\n", nCode, dfValue );
+    char* pszComma = strchr(szLinePair, ',');
+    if (pszComma)
+        *pszComma = '.';
+    size_t nLen = strlen(szLinePair);
+    if( VSIFWriteL( szLinePair, 1, nLen, fp ) != nLen )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Attempt to write line to DXF file failed, disk full?." );
+        return FALSE;
+    }
+    else
+        return TRUE;
+}
+/************************************************************************/
 /*                        TransferUpdateHeader()                        */
 /************************************************************************/
 
@@ -376,6 +399,52 @@ int OGRDXFWriterDS::TransferUpdateHeader( VSILFILE *fpOut )
             }
 
             nHANDSEEDOffset = VSIFTellL( fpOut );
+        }
+
+        // Patch EXTMIN with minx and miny
+        if( nCode == 9 && EQUAL(szLineBuf,"$EXTMIN") )
+        {
+            if( !WriteValue( fpOut, nCode, szLineBuf ) )
+                return FALSE;
+
+            nCode = oHeaderDS.ReadValue( szLineBuf, sizeof(szLineBuf) );
+            if (nCode == 10)
+            {
+                if( !WriteValue( fpOut, nCode, oGlobalEnvelope.MinX ) )
+                    return FALSE;
+
+                nCode = oHeaderDS.ReadValue( szLineBuf, sizeof(szLineBuf) );
+                if (nCode == 20)
+                {
+                    if( !WriteValue( fpOut, nCode, oGlobalEnvelope.MinY ) )
+                        return FALSE;
+
+                    continue;
+                }
+            }
+        }
+
+        // Patch EXTMAX with maxx and maxy
+        if( nCode == 9 && EQUAL(szLineBuf,"$EXTMAX") )
+        {
+            if( !WriteValue( fpOut, nCode, szLineBuf ) )
+                return FALSE;
+
+            nCode = oHeaderDS.ReadValue( szLineBuf, sizeof(szLineBuf) );
+            if (nCode == 10)
+            {
+                if( !WriteValue( fpOut, nCode, oGlobalEnvelope.MaxX ) )
+                    return FALSE;
+
+                nCode = oHeaderDS.ReadValue( szLineBuf, sizeof(szLineBuf) );
+                if (nCode == 20)
+                {
+                    if( !WriteValue( fpOut, nCode, oGlobalEnvelope.MaxY ) )
+                        return FALSE;
+
+                    continue;
+                }
+            }
         }
 
         // Copy over the source line.
@@ -871,4 +940,13 @@ long OGRDXFWriterDS::WriteEntityID( VSILFILE *fp, long nPreferredFID )
     WriteValue( fp, 5, osEntityID );
 
     return nNextFID - 1;
+}
+
+/************************************************************************/
+/*                           UpdateExtent()                             */
+/************************************************************************/
+
+void OGRDXFWriterDS::UpdateExtent( OGREnvelope* psEnvelope )
+{
+    oGlobalEnvelope.Merge(*psEnvelope);
 }
