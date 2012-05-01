@@ -180,7 +180,7 @@ CPLErr NWT_GRDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void *pIma
     int i;
     unsigned short raw1;
 
-    VSIFSeekL( poGDS->fp, 1024 + nRecordSize * nBlockYOff, SEEK_SET );
+    VSIFSeekL( poGDS->fp, 1024 + nRecordSize * (vsi_l_offset)nBlockYOff, SEEK_SET );
 
     pszRecord = (char *) CPLMalloc( nRecordSize );
     VSIFReadL( pszRecord, 1, nRecordSize, poGDS->fp );
