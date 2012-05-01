@@ -235,7 +235,7 @@ CPLErr NWT_GRCRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if( nBand == 1 )
     {                            //grc's are just one band of indices
-        VSIFSeekL( poGDS->fp, 1024 + nRecordSize * nBlockYOff, SEEK_SET );
+        VSIFSeekL( poGDS->fp, 1024 + nRecordSize * (vsi_l_offset)nBlockYOff, SEEK_SET );
         VSIFReadL( pImage, 1, nRecordSize, poGDS->fp );
     }
     else
