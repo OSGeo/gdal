@@ -1053,6 +1053,12 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
         dfBulge = 0.0;
     }
 
+    if(smoothPolyline.IsEmpty())
+    {
+        delete poFeature;
+        return NULL;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Close polyline if necessary.                                    */
 /* -------------------------------------------------------------------- */
