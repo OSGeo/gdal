@@ -399,6 +399,15 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
         size_t iBlock = (size_t) ((nOffset + nAmountCopied) / CHUNK_SIZE);
         size_t nThisCopy;
         VSICacheChunk *poBlock = apoCache[iBlock];
+        if( poBlock == NULL )
+        {
+            /* We can reach that point when the amount to read exceeds */
+            /* the cache size */
+            LoadBlocks( iBlock, 1, ((GByte *) pBuffer) + nAmountCopied,
+                        MIN(nSize * nCount - nAmountCopied, CHUNK_SIZE) );
+            poBlock = apoCache[iBlock];
+            CPLAssert(poBlock != NULL);
+        }
 
         nThisCopy = (size_t)
             ((iBlock * CHUNK_SIZE + poBlock->nDataFilled) 
