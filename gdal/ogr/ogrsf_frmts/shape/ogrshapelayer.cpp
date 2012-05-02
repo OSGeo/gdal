@@ -40,8 +40,6 @@
 #define FD_CLOSED           1
 #define FD_CANNOT_REOPEN    2
 
-#define UNSUPPORTED_OP_READ_ONLY "%s : unsupported operation on a read-only datasource."
-
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -729,9 +727,8 @@ OGRErr OGRShapeLayer::SetFeature( OGRFeature *poFeature )
 
     if( !bUpdateAccess )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "SetFeature");
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "The SetFeature() operation is not permitted on a read-only shapefile." );
         return OGRERR_FAILURE;
     }
 
@@ -755,9 +752,8 @@ OGRErr OGRShapeLayer::DeleteFeature( long nFID )
 
     if( !bUpdateAccess )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "DeleteFeature");
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "The DeleteFeature() operation is not permitted on a read-only shapefile." );
         return OGRERR_FAILURE;
     }
 
@@ -812,9 +808,8 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
 
     if( !bUpdateAccess )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "CreateFeature");
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "The CreateFeature() operation is not permitted on a read-only shapefile." );
         return OGRERR_FAILURE;
     }
 
@@ -1236,8 +1231,15 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+    {
+#ifdef CPL_RECODE_ICONV    
         return strlen(osEncoding) > 0; /* if encoding is defined, we are able to convert to UTF-8 */
-
+#else /* CPL_RECODE_STUB */
+        if( EQUAL(osEncoding, CPL_ENC_ASCII) || EQUAL(osEncoding, CPL_ENC_ISO8859_1) || EQUAL(osEncoding, CPL_ENC_UTF8))
+            return TRUE;
+        return FALSE;
+#endif /* CPL_RECODE_ICONV */        
+    }
     else 
         return FALSE;
 }
@@ -1259,8 +1261,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
     if( !bUpdateAccess )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "CreateField");
+                  "Can't create fields on a read-only shapefile layer.\n");
         return OGRERR_FAILURE;
 
     }
@@ -1461,8 +1462,7 @@ OGRErr OGRShapeLayer::DeleteField( int iField )
     if( !bUpdateAccess )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "DeleteField");
+                  "Can't delete fields on a read-only shapefile layer.");
         return OGRERR_FAILURE;
     }
 
@@ -1495,8 +1495,7 @@ OGRErr OGRShapeLayer::ReorderFields( int* panMap )
     if( !bUpdateAccess )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "ReorderFields");
+                  "Can't reorder fields on a read-only shapefile layer.");
         return OGRERR_FAILURE;
     }
 
@@ -1527,8 +1526,7 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, 
     if( !bUpdateAccess )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "AlterFieldDefn");
+                  "Can't alter field definition on a read-only shapefile layer.");
         return OGRERR_FAILURE;
     }
 
@@ -1880,9 +1878,8 @@ OGRErr OGRShapeLayer::Repack()
 
     if( !bUpdateAccess )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "Repack");
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "The REPACK operation is not permitted on a read-only shapefile." );
         return OGRERR_FAILURE;
     }
     
@@ -2168,9 +2165,8 @@ OGRErr OGRShapeLayer::ResizeDBF()
 
     if( !bUpdateAccess )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "ResizeDBF");
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "The RESIZE operation is not permitted on a read-only shapefile." );
         return OGRERR_FAILURE;
     }
 
@@ -2315,9 +2311,8 @@ OGRErr OGRShapeLayer::RecomputeExtent()
 
     if( !bUpdateAccess )
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  UNSUPPORTED_OP_READ_ONLY,
-                  "RecomputeExtent");
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "The RECOMPUTE EXTENT operation is not permitted on a read-only shapefile." );
         return OGRERR_FAILURE;
     }
     
