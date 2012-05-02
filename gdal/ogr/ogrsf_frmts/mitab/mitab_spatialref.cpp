@@ -791,6 +791,7 @@ OGRSpatialReference *TABFile::GetSpatialRef()
       case 13:
         m_poSpatialRef->SetMollweide( sTABProj.adProjParams[0],
                                       0.0, 0.0 );
+        break;
 
         /*--------------------------------------------------------------
          * Eckert IV
