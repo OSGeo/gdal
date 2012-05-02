@@ -528,6 +528,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
       case 13:
         poSR->SetMollweide( GetMIFParm( papszNextField, 0, 0.0 ),
                             0.0, 0.0 );
+        break;
 
         /*--------------------------------------------------------------
          * Eckert IV
