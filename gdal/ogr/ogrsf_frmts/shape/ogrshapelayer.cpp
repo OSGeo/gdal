@@ -1236,14 +1236,16 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
+    {
 #ifdef CPL_RECODE_ICONV    
         return strlen(osEncoding) > 0; /* if encoding is defined, we are able to convert to UTF-8 */
 #else /* CPL_RECODE_STUB */
-        if(EQUAL(osEncoding, CPL_ENC_ASCII) || EQUAL(osEncoding, CPL_ENC_ISO8859_1) || EQUAL(osEncoding, CPL_ENC_UTF8))
+        if(EQUAL(osEncoding, CPL_ENC_ASCII) || EQUAL(osEncoding, CPL_ENC_ISO8859_1) 
+            || EQUAL(osEncoding, CPL_ENC_UTF8))
             return TRUE;
         return FALSE;
 #endif /* CPL_RECODE_ICONV */      
-
+    }
     else 
         return FALSE;
 }
