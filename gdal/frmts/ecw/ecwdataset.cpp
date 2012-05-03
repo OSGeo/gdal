@@ -1506,18 +1506,17 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Check for world file for ecw files.                             */
+/*      Check for world file.                                           */
 /* -------------------------------------------------------------------- */
-    if( !poDS->bGeoTransformValid 
-        && EQUAL(CPLGetExtension(osFilename),"ecw") )
+    if( !poDS->bGeoTransformValid )
     {
         poDS->bGeoTransformValid |= 
-            GDALReadWorldFile( osFilename, ".eww", 
-                               poDS->adfGeoTransform )
-            || GDALReadWorldFile( osFilename, ".ecww", 
-                                  poDS->adfGeoTransform )
-            || GDALReadWorldFile( osFilename, ".wld", 
-                                  poDS->adfGeoTransform );
+            GDALReadWorldFile2( osFilename, NULL,
+                                poDS->adfGeoTransform,
+                                poOpenInfo->papszSiblingFiles, NULL )
+            || GDALReadWorldFile2( osFilename, ".wld",
+                                   poDS->adfGeoTransform,
+                                   poOpenInfo->papszSiblingFiles, NULL );
     }
 
 /* -------------------------------------------------------------------- */
