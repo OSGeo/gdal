@@ -203,7 +203,32 @@ def jpeg2000_8():
         return 'fail'
             
     return 'success'
-    
+
+###############################################################################
+# Check that we can use .j2w world files (#4651)
+
+def jpeg2000_9():
+
+    if gdaltest.jpeg2000_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/byte_without_geotransform.jp2' )
+
+    geotransform = ds.GetGeoTransform()
+    if abs(geotransform[0]-440720) > 0.1 \
+        or abs(geotransform[1]-60) > 0.001 \
+        or abs(geotransform[2]-0) > 0.001 \
+        or abs(geotransform[3]-3751320) > 0.1 \
+        or abs(geotransform[4]-0) > 0.001 \
+        or abs(geotransform[5]- -60) > 0.001:
+        print(geotransform)
+        gdaltest.post_reason( 'geotransform differs from expected' )
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 def jpeg2000_online_1():
 
@@ -387,6 +412,7 @@ gdaltest_list = [
     jpeg2000_6,
     jpeg2000_7,
     jpeg2000_8,
+    jpeg2000_9,
     jpeg2000_online_1,
     jpeg2000_online_2,
     jpeg2000_online_3,

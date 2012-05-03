@@ -417,6 +417,31 @@ def mrsid_10():
     return 'success'
 
 ###############################################################################
+# Check that we can use .j2w world files (#4651)
+
+def mrsid_11():
+
+    if gdaltest.jp2mrsid_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/byte_without_geotransform.jp2' )
+
+    geotransform = ds.GetGeoTransform()
+    if abs(geotransform[0]-440720) > 0.1 \
+        or abs(geotransform[1]-60) > 0.001 \
+        or abs(geotransform[2]-0) > 0.001 \
+        or abs(geotransform[3]-3751320) > 0.1 \
+        or abs(geotransform[4]-0) > 0.001 \
+        or abs(geotransform[5]- -60) > 0.001:
+        print(geotransform)
+        gdaltest.post_reason( 'geotransform differs from expected' )
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 def mrsid_online_1():
 
     if gdaltest.jp2mrsid_drv is None:
@@ -562,6 +587,7 @@ gdaltest_list = [
     mrsid_8,
     mrsid_9,
     mrsid_10,
+    mrsid_11,
     mrsid_online_1,
     mrsid_online_2,
     mrsid_online_3,
