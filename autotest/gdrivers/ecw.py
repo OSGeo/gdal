@@ -887,6 +887,31 @@ def ecw_26():
     return 'success'
 
 ###############################################################################
+# Check that we can use .j2w world files (#4651)
+
+def ecw_27():
+
+    if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
+        return 'skip'
+
+    ds = gdal.Open( 'data/byte_without_geotransform.jp2' )
+
+    geotransform = ds.GetGeoTransform()
+    if abs(geotransform[0]-440720) > 0.1 \
+        or abs(geotransform[1]-60) > 0.001 \
+        or abs(geotransform[2]-0) > 0.001 \
+        or abs(geotransform[3]-3751320) > 0.1 \
+        or abs(geotransform[4]-0) > 0.001 \
+        or abs(geotransform[5]- -60) > 0.001:
+        print(geotransform)
+        gdaltest.post_reason( 'geotransform differs from expected' )
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -1143,6 +1168,7 @@ gdaltest_list = [
     ecw_24,
     ecw_25,
     ecw_26,
+    ecw_27,
     ecw_online_1,
     ecw_online_2,
     ecw_online_3,
