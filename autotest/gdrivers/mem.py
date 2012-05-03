@@ -38,10 +38,6 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 
-#
-# TODO:
-# o Add testing of add band.
-
 ###############################################################################
 # Create a MEM dataset, and set some data, then test it.
 
@@ -67,6 +63,15 @@ def mem_1():
     band = ds.GetRasterBand(1)
     band.SetNoDataValue( -1.0 )
 
+    # Set GCPs()
+    wkt_gcp = gdaltest.user_srs_to_wkt( 'EPSG:4326' )
+    gcps = [ gdal.GCP(0,1,2,3,4) ]
+    ds.SetGCPs([], "")
+    ds.SetGCPs(gcps, wkt_gcp)
+    ds.SetGCPs([], "")
+    ds.SetGCPs(gcps, wkt_gcp)
+    ds.SetGCPs(gcps, wkt_gcp)
+
     #######################################################
     # Verify dataset.
 
@@ -87,6 +92,18 @@ def mem_1():
         print(band.Checksum())
         return 'fail'
 
+    if ds.GetGCPCount() != 1:
+        gdaltest.post_reason( 'GetGCPCount wrong' )
+        return 'fail'
+
+    if len(ds.GetGCPs()) != 1:
+        gdaltest.post_reason( 'GetGCPs wrong' )
+        return 'fail'
+
+    if ds.GetGCPProjection() != wkt_gcp:
+        gdaltest.post_reason( 'GetGCPProjection wrong' )
+        return 'fail'
+
     gdaltest.mem_ds = None
 
     return 'success'
@@ -96,41 +113,79 @@ def mem_1():
 
 def mem_2():
 
-    # allocate band data array.
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.Open( 'MEM:::' )
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason( 'opening MEM dataset should have failed.' )
+        return 'fail'
 
     try:
-        p = gdal.ptrcreate( 'float', 5, 150 )
+        import ctypes
     except:
         return 'skip'
-    
-    tokens = string.split(p,'_')
+
+    for libname in ['msvcrt', 'libc.so.6']:
+        try:
+            crt = ctypes.CDLL(libname)
+        except:
+            crt = None
+        if crt is not None:
+            break
+
+    if crt is None:
+        return 'skip'
+
+    malloc = crt.malloc
+    malloc.argtypes = [ctypes.c_size_t]
+    malloc.restype = ctypes.c_void_p
+
+    free = crt.free
+    free.argtypes = [ctypes.c_void_p]
+    free.restype = None
+
+    # allocate band data array.
+    width = 50
+    height = 3
+    p = malloc(width*height*4)
+    if p is None:
+        return 'skip'
+    float_p = ctypes.cast(p,ctypes.POINTER(ctypes.c_float))
 
     # build ds name.
-    dsname = 'MEM:::DATAPOINTER=0x'+tokens[1]+',PIXELS=50,LINES=3,BANDS=1,' \
-             + 'DATATYPE=Float32,PIXELOFFSET=4,LINEOFFSET=200,BANDOFFSET=0'
+    dsnames = ['MEM:::DATAPOINTER=0x%X,PIXELS=%d,LINES=%d,BANDS=1,DATATYPE=Float32,PIXELOFFSET=4,LINEOFFSET=%d,BANDOFFSET=0' % (p, width, height, width * 4),
+               'MEM:::DATAPOINTER=0x%X,PIXELS=%d,LINES=%d,DATATYPE=Float32' % (p, width, height) ]
 
-    ds = gdal.Open( dsname )
-    if ds is None:
-        gdaltest.post_reason( 'opening MEM dataset failed.' )
-        return 'fail'
+    for dsname in dsnames:
 
-    chksum = ds.GetRasterBand(1).Checksum()
-    if chksum != 750:
-        gdaltest.post_reason( 'checksum failed.' )
-        print(chksum)
-        return 'fail'
+        for i in range(width*height):
+            float_p[i] = 5.0
 
-    ds.GetRasterBand(1).Fill( 100.0 )
-    ds.FlushCache()
+        ds = gdal.Open( dsname )
+        if ds is None:
+            gdaltest.post_reason( 'opening MEM dataset failed.' )
+            free(p)
+            return 'fail'
 
-    if gdal.ptrvalue(p,5) != 100.0:
-        print(gdal.ptrvalue(p,5))
-        gdaltest.post_reason( 'fill seems to have failed.' )
-        return 'fail'
+        chksum = ds.GetRasterBand(1).Checksum()
+        if chksum != 750:
+            gdaltest.post_reason( 'checksum failed.' )
+            print(chksum)
+            free(p)
+            return 'fail'
 
-    ds = None
+        ds.GetRasterBand(1).Fill( 100.0 )
+        ds.FlushCache()
 
-    gdal.ptrfree( p )
+        if float_p[0] != 100.0:
+            print(float_p[0])
+            gdaltest.post_reason( 'fill seems to have failed.' )
+            free(p)
+            return 'fail'
+
+        ds = None
+
+    free(p)
 
     return 'success'
 
@@ -210,6 +265,62 @@ def mem_5():
     return 'success'
 
 ###############################################################################
+# Test out-of-memory situations (simulated by multiplication overflows)
+
+def mem_6():
+
+    drv = gdal.GetDriverByName('MEM')
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 16, options = ['INTERLEAVE=PIXEL'] )
+    gdal.PopErrorHandler()
+    if ds is not None:
+        return 'fail'
+    ds = None
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 16, gdal.GDT_Float64 )
+    gdal.PopErrorHandler()
+    if ds is not None:
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test AddBand()
+
+def mem_7():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.Create( 'MEM:::', 1, 1, 1 )
+    ds.AddBand(gdal.GDT_Byte, [])
+    if ds.RasterCount != 2:
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test SetDefaultHistogram() / GetDefaultHistogram()
+
+def mem_8():
+
+    drv = gdal.GetDriverByName('MEM')
+    ds = drv.Create( 'MEM:::', 1, 1, 1 )
+    ds.GetRasterBand(1).SetDefaultHistogram(0,255,[])
+    ds.GetRasterBand(1).SetDefaultHistogram(1,2,[5,6])
+    ds.GetRasterBand(1).SetDefaultHistogram(1,2,[3,4])
+    hist = ds.GetRasterBand(1).GetDefaultHistogram(force=0)
+    ds = None
+
+    if hist != (1.0, 2.0, 2, [3, 4]):
+        print(hist)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def mem_cleanup():
@@ -223,9 +334,10 @@ gdaltest_list = [
     mem_3,
     mem_4,
     mem_5,
+    mem_6,
+    mem_7,
+    mem_8,
     mem_cleanup ]
-  
-
 
 if __name__ == '__main__':
 

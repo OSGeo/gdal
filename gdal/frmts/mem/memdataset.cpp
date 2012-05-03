@@ -116,6 +116,9 @@ MEMRasterBand::~MEMRasterBand()
 
     CPLFree( pszUnitType );
     CSLDestroy( papszCategoryNames );
+
+    if (psSavedHistograms != NULL)
+        CPLDestroyXMLNode(psSavedHistograms);
 }
 
 
