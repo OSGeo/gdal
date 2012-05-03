@@ -1306,11 +1306,9 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
     else if( iZoom == 0 )
     {
         bHasGeoTransform = 
-            GDALReadWorldFile( GetDescription(), ".sdw",  
+            GDALReadWorldFile( GetDescription(), NULL,
                                adfGeoTransform )
-            || GDALReadWorldFile( GetDescription(), ".sidw", 
-                                  adfGeoTransform )
-            || GDALReadWorldFile( GetDescription(), ".wld", 
+            || GDALReadWorldFile( GetDescription(), ".wld",
                                   adfGeoTransform );
     }
     
