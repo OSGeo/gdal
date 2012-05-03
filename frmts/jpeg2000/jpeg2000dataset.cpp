@@ -858,6 +858,20 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Check for world file.                                           */
+/* -------------------------------------------------------------------- */
+    if( !poDS->bGeoTransformValid )
+    {
+        poDS->bGeoTransformValid |=
+            GDALReadWorldFile2( poOpenInfo->pszFilename, NULL,
+                                poDS->adfGeoTransform,
+                                poOpenInfo->papszSiblingFiles, NULL )
+            || GDALReadWorldFile2( poOpenInfo->pszFilename, ".wld",
+                                   poDS->adfGeoTransform,
+                                   poOpenInfo->papszSiblingFiles, NULL );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
