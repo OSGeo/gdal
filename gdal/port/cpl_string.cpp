@@ -1999,6 +1999,9 @@ CPLValueType CPLGetValueType(const char* pszValue)
     /* Skip leading spaces */
     while( isspace( (unsigned char)*pszValue ) )
         pszValue ++;
+        
+    if (*pszValue == '\0')
+        return CPL_VALUE_STRING;
 
     for(; *pszValue != '\0'; pszValue++ )
     {
