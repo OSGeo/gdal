@@ -204,6 +204,22 @@ void GDALRasterFPolygonEnumerator::ProcessLine(
             {
                 MergePolygon( panLastLineId[i], panThisLineId[i] );
             }
+
+            if( nConnectedness == 8 
+                && pafLastLineVal[i-1] == pafThisLineVal[i] 
+                && (panPolyIdMap[panLastLineId[i-1]]
+                    != panPolyIdMap[panThisLineId[i]]) )
+            {
+                MergePolygon( panLastLineId[i-1], panThisLineId[i] );
+            }
+
+            if( nConnectedness == 8 && i < nXSize-1 
+                && pafLastLineVal[i+1] == pafThisLineVal[i] 
+                && (panPolyIdMap[panLastLineId[i+1]]
+                    != panPolyIdMap[panThisLineId[i]]) )
+            {
+                MergePolygon( panLastLineId[i+1], panThisLineId[i] );
+            }
         }
         else if( GDALFloatEquals(pafLastLineVal[i], pafThisLineVal[i]) )
         {
@@ -213,6 +229,13 @@ void GDALRasterFPolygonEnumerator::ProcessLine(
                  && GDALFloatEquals(pafLastLineVal[i-1], pafThisLineVal[i]) )
         {
             panThisLineId[i] = panLastLineId[i-1];
+
+            if( i < nXSize-1 && pafLastLineVal[i+1] == pafThisLineVal[i]
+                && (panPolyIdMap[panLastLineId[i+1]]
+                != panPolyIdMap[panThisLineId[i]]) )
+            {
+                MergePolygon( panLastLineId[i+1], panThisLineId[i] );
+            }
         }
         else if( i < nXSize-1 && nConnectedness == 8 
                  && GDALFloatEquals(pafLastLineVal[i+1], pafThisLineVal[i]) )
