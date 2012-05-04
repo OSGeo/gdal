@@ -287,7 +287,9 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
             /* tokenize the strings and preserve quotes, so we can separate string from numeric */
             /* this is only used in the test for bHasFeldNames (bug #4361) */
             papszTokens = CSLTokenizeString2( pszLine, szDelimiter, 
-                                              CSLT_HONOURSTRINGS | CSLT_PRESERVEQUOTES );
+                                              (CSLT_HONOURSTRINGS |
+                                               CSLT_ALLOWEMPTYTOKENS |
+                                               CSLT_PRESERVEQUOTES) );
             nFieldCount = CSLCount( papszTokens );
             bHasFieldNames = TRUE;
 
@@ -305,7 +307,8 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
             CSLDestroy( papszTokens );
             // papszTokens = OGRCSVReadParseLineL( fpCSV, chDelimiter, FALSE );   
             papszTokens = CSLTokenizeString2( pszLine, szDelimiter, 
-                                              CSLT_HONOURSTRINGS);
+                                              (CSLT_HONOURSTRINGS |
+                                               CSLT_ALLOWEMPTYTOKENS));
             nFieldCount = CSLCount( papszTokens );
         }
     }
