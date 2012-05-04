@@ -918,9 +918,11 @@ int CPL_DLL GDALCheckBandCount( int nBands, int bIsZeroAllowed );
  (dfVal1 == dfVal2 || fabs(dfVal1 - dfVal2) < 1e-10 || (dfVal2 != 0 && fabs(1 - dfVal1 / dfVal2) < 1e-10 ))
 
 /* Internal use only */
-int GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
-                        double *padfGeoTransform, char** papszSiblingFiles,
-                        char** ppszWorldFileNameOut);
+
+/* CPL_DLL exported, but only for in-tree drivers that can be built as plugins */
+int CPL_DLL GDALReadWorldFile2( const char *pszBaseFilename, const char *pszExtension,
+                                double *padfGeoTransform, char** papszSiblingFiles,
+                                char** ppszWorldFileNameOut);
 int GDALReadTabFile2( const char * pszBaseFilename,
                       double *padfGeoTransform, char **ppszWKT,
                       int *pnGCPCount, GDAL_GCP **ppasGCPs,
