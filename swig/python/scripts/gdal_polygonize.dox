@@ -6,7 +6,7 @@ produces a polygon feature layer from a raster
 \section gdal_polygonize_synopsis SYNOPSIS
 
 \verbatim
-gdal_polygonize.py [-o name=value] [-nomask] [-mask filename] raster_file [-b band]
+gdal_polygonize.py [-8] [-nomask] [-mask filename] raster_file [-b band]
                 [-q] [-f ogr_format] out_file [layer] [fieldname]
 \endverbatim
 
@@ -24,6 +24,11 @@ The utility is based on the GDALPolygonize() function which has additional
 details on the algorithm. 
 
 <dl>
+
+<dt> <b>-8</b>:</dt><dd> (GDAL >= 2.0)
+Use 8 connectedness. Default is 4 connectedness.
+</dd>
+
 <dt> <b>-nomask</b>:</dt><dd>
 Do not use the default validity mask for the input band (such as nodata, or 
 alpha masks). 
@@ -52,10 +57,6 @@ file to be created.  Default is GML.
 
 <dt> <i>fieldname</i></dt><dd> The name of the field to create (defaults to 
 "DN"). 
-</dd>
-
-<dt> <b>-o</b> <i>name=value</i>:</dt><dd>
-Specify a special argument to the algorithm.  Currently none are supported.
 </dd>
 
 <dt> <b>-q</b>:</dt><dd>
