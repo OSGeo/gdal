@@ -60,8 +60,6 @@ class SRPDataset : public GDALPamDataset
     int          PCB;
     int          PVB;
 
-
-    int          bGeoTransformValid;
     double       adfGeoTransform[6];
 
     GDALColorTable oCT;
@@ -72,13 +70,8 @@ class SRPDataset : public GDALPamDataset
     
     virtual const char *GetProjectionRef(void);
     virtual CPLErr GetGeoTransform( double * padfGeoTransform );
-    virtual CPLErr SetGeoTransform( double * padfGeoTransform );
 
     virtual char **GetFileList();
-
-    virtual char      **GetMetadata( const char * pszDomain = "" );
-
-    void                AddSubDataset(const char* pszFilename);
 
     int                 GetFromRecord( const char* pszFileName, 
                                        DDFRecord * record);
@@ -358,16 +351,6 @@ CPLString SRPDataset::ResetTo01( const char* str )
 }
 
 /************************************************************************/
-/*                            GetMetadata()                             */
-/************************************************************************/
-
-char **SRPDataset::GetMetadata( const char *pszDomain )
-
-{
-    return GDALPamDataset::GetMetadata( pszDomain );
-}
-
-/************************************************************************/
 /*                        GetProjectionRef()                            */
 /************************************************************************/
 
@@ -418,18 +401,6 @@ CPLErr SRPDataset::GetGeoTransform( double * padfGeoTransform)
     }
 
     return CE_Failure;
-}
-
-/************************************************************************/
-/*                          SetGeoTransform()                           */
-/************************************************************************/
-
-CPLErr SRPDataset::SetGeoTransform( double * padfGeoTransform )
-
-{
-    memcpy( adfGeoTransform, padfGeoTransform, sizeof(double)*6 );
-    bGeoTransformValid = TRUE;
-    return CE_None;
 }
 
 /************************************************************************/
