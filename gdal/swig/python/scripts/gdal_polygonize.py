@@ -38,7 +38,7 @@ import os.path
 
 def Usage():
     print("""
-gdal_polygonize [-o name=value] [-nomask] [-mask filename] raster_file [-b band]
+gdal_polygonize [-8] [-nomask] [-mask filename] raster_file [-b band]
                 [-q] [-f ogr_format] out_file [layer] [fieldname]
 """)
     sys.exit(1)
@@ -76,6 +76,9 @@ while i < len(argv):
 
     elif arg == '-q' or arg == '-quiet':
         quiet_flag = 1
+
+    elif arg == '-8':
+        options.append('8CONNECTED=8')
         
     elif arg == '-nomask':
         mask = 'none'
