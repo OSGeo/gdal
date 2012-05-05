@@ -84,9 +84,6 @@ class SRPDataset : public GDALPamDataset
                                        DDFRecord * record);
 
     static GDALDataset *Open( GDALOpenInfo * );
-    
-    static double GetLongitudeFromString(const char* str);
-    static double GetLatitudeFromString(const char* str);
 };
 
 /************************************************************************/
@@ -434,45 +431,6 @@ CPLErr SRPDataset::SetGeoTransform( double * padfGeoTransform )
     bGeoTransformValid = TRUE;
     return CE_None;
 }
-
-/************************************************************************/
-/*                     GetLongitudeFromString()                         */
-/************************************************************************/
-
-double SRPDataset::GetLongitudeFromString(const char* str)
-{
-    char ddd[3+1] = { 0 };
-    char mm[2+1] = { 0 };
-    char ssdotss[5+1] = { 0 };
-    int sign = (str[0] == '+') ? 1 : - 1;
-    str++;
-    strncpy(ddd, str, 3);
-    str+=3;
-    strncpy(mm, str, 2);
-    str+=2;
-    strncpy(ssdotss, str, 5);
-    return sign * (atof(ddd) + atof(mm) / 60 + atof(ssdotss) / 3600);
-}
-
-/************************************************************************/
-/*                      GetLatitudeFromString()                         */
-/************************************************************************/
-
-double SRPDataset::GetLatitudeFromString(const char* str)
-{
-    char ddd[2+1] = { 0 };
-    char mm[2+1] = { 0 };
-    char ssdotss[5+1] = { 0 };
-    int sign = (str[0] == '+') ? 1 : - 1;
-    str++;
-    strncpy(ddd, str, 2);
-    str+=2;
-    strncpy(mm, str, 2);
-    str+=2;
-    strncpy(ssdotss, str, 5);
-    return sign * (atof(ddd) + atof(mm) / 60 + atof(ssdotss) / 3600);
-}
-
 
 /************************************************************************/
 /*                           GetFromRecord()                            */
