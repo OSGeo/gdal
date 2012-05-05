@@ -911,6 +911,32 @@ def tiff_read_rpc_txt():
     return 'success'
 
 ###############################################################################
+# Test a very small TIFF with only 4 tags :
+# Magic: 0x4949 <little-endian> Version: 0x2a
+# Directory 0: offset 8 (0x8) next 0 (0)
+# ImageWidth (256) SHORT (3) 1<1>
+# ImageLength (257) SHORT (3) 1<1>
+# StripOffsets (273) LONG (4) 1<0>
+# StripByteCounts (279) LONG (4) 1<1>
+
+def tiff_small():
+
+    content = '\x49\x49\x2A\x00\x08\x00\x00\x00\x04\x00\x00\x01\x03\x00\x01\x00\x00\x00\x01\x00\x00\x00\x01\x01\x03\x00\x01\x00\x00\x00\x01\x00\x00\x00\x11\x01\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x17\x01\x04\x00\x01\x00\x00\x00\x01\x00\x00\x00'
+
+    # Create in-memory file
+    gdal.FileFromMemBuffer('/vsimem/small.tif', content)
+
+    ds = gdal.Open('/vsimem/small.tif')
+    if ds.GetRasterBand(1).Checksum() != 0:
+            print('Expected checksum = %d. Got = %d' % (0, ds.GetRasterBand(1).Checksum()))
+            return 'fail'
+
+    # Release memory associated to the in-memory file
+    gdal.Unlink('/vsimem/small.tif')
+
+    return 'success'
+
+###############################################################################
 # Test reading a YCbCr JPEG all-in-one-strip multiband TIFF (#3259, #3894)
 
 def tiff_read_online_1():
@@ -1017,6 +1043,7 @@ gdaltest_list.append( (tiff_read_corrupted_gtiff) )
 gdaltest_list.append( (tiff_read_tag_without_null_byte) )
 gdaltest_list.append( (tiff_read_buggy_packbits) )
 gdaltest_list.append( (tiff_read_rpc_txt) )
+gdaltest_list.append( (tiff_small) )
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
 
