@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 2037 2011-05-24 01:45:24Z warmerdam $
+ * $Id: geo_normalize.c 2208 2012-05-06 07:25:55Z warmerdam $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -2275,6 +2275,10 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
         GTIFGetUOMLengthInfo( psDefn->UOMLength, NULL,
                               &(psDefn->UOMLengthInMeters) );
     }
+    else
+    {
+        GTIFKeyGet(psGTIF,ProjLinearUnitSizeGeoKey,&(psDefn->UOMLengthInMeters),0,1);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Handle a variety of user defined transform types.               */
@@ -2563,6 +2567,11 @@ void GTIFPrintDefn( GTIFDefn * psDefn, FILE * fp )
         fprintf( fp, "Projection Linear Units: %d/%s (%fm)\n",
                  psDefn->UOMLength, pszName, psDefn->UOMLengthInMeters );
         CPLFree( pszName );
+    }
+    else
+    {
+        fprintf( fp, "Projection Linear Units: User-Defined (%fm)\n",
+                 psDefn->UOMLengthInMeters );
     }
 }
 
