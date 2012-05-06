@@ -307,7 +307,8 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     }
     sub Metadata {
 	my $self = shift;
-	my $metadata = shift if ref $_[0];
+	my $metadata;
+	$metadata = shift if ref $_[0];
 	my $domain = shift;
 	$domain = '' unless defined $domain;
 	SetMetadata($self, $metadata, $domain) if defined $metadata;
