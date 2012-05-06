@@ -787,7 +787,7 @@ CPLErr GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
         int nBlockXOff = 0;
         int nBlockYOff = nSrcLine / nBlockYSize;
         int nYOffsetInBlock = nSrcLine % nBlockYSize;
-        int nBlocksPerRow = (nRasterXSize + nBlockXSize - 1) / nBlockXSize;
+        int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
         int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
         if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
         {
@@ -3281,8 +3281,8 @@ int GTiffDataset::WriteEncodedTile(uint32 tile, GByte *pabyData,
     */
     if( nCompression == COMPRESSION_JPEG )
     {
-        nBlocksPerRow = (nRasterXSize + nBlockXSize - 1) / nBlockXSize;
-        nBlocksPerColumn = (nRasterYSize + nBlockYSize - 1) / nBlockYSize;
+        nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
+        nBlocksPerColumn = DIV_ROUND_UP(nRasterYSize, nBlockYSize);
 
         iColumn = (tile % nBlocksPerBand) % nBlocksPerRow;
         iRow = (tile % nBlocksPerBand) / nBlocksPerRow;
@@ -3545,7 +3545,7 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, int bReadFromDisk )
 /*      an error won't be reported in this case. (#1179)                */
 /* -------------------------------------------------------------------- */
     int nBlockReqSize = nBlockBufSize;
-    int nBlocksPerRow = (nRasterXSize + nBlockXSize - 1) / nBlockXSize;
+    int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
     int nBlockYOff = (nBlockId % nBlocksPerBand) / nBlocksPerRow;
 
     if( (int)((nBlockYOff+1) * nBlockYSize) > nRasterYSize )
@@ -6064,8 +6064,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     }
         
     nBlocksPerBand =
-        ((nYSize + nBlockYSize - 1) / nBlockYSize)
-        * ((nXSize + nBlockXSize  - 1) / nBlockXSize);
+        DIV_ROUND_UP(nYSize, nBlockYSize) * DIV_ROUND_UP(nXSize, nBlockXSize);
 
 /* -------------------------------------------------------------------- */
 /*      Should we handle this using the GTiffBitmapBand?                */
@@ -7574,8 +7573,8 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     }
 
     poDS->nBlocksPerBand =
-        ((nYSize + poDS->nBlockYSize - 1) / poDS->nBlockYSize)
-        * ((nXSize + poDS->nBlockXSize - 1) / poDS->nBlockXSize);
+        DIV_ROUND_UP(nYSize, poDS->nBlockYSize)
+        * DIV_ROUND_UP(nXSize, poDS->nBlockXSize);
 
     if( CSLFetchNameValue( papszParmList, "PROFILE" ) != NULL )
         poDS->osProfile = CSLFetchNameValue( papszParmList, "PROFILE" );
