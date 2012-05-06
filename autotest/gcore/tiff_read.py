@@ -937,6 +937,18 @@ def tiff_small():
     return 'success'
 
 ###############################################################################
+# Test that we can workaround a DoS with 
+
+def tiff_dos_strip_chop():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.Open('data/tiff_dos_strip_chop.tif')
+    gdal.PopErrorHandler()
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Test reading a YCbCr JPEG all-in-one-strip multiband TIFF (#3259, #3894)
 
 def tiff_read_online_1():
@@ -1044,6 +1056,7 @@ gdaltest_list.append( (tiff_read_tag_without_null_byte) )
 gdaltest_list.append( (tiff_read_buggy_packbits) )
 gdaltest_list.append( (tiff_read_rpc_txt) )
 gdaltest_list.append( (tiff_small) )
+gdaltest_list.append( (tiff_dos_strip_chop) )
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
 
