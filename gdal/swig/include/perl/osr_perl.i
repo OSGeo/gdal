@@ -151,7 +151,8 @@ LONGITUDE_OF_2ND_POINT
     }
     sub Export {
 	my $self = shift;
-	my $format = pop if @_ == 1;
+	my $format;
+	$format = pop if @_ == 1;
 	my %params = @_;
 	$format = $params{to} unless $format;
 	$format = $params{format} unless $format;

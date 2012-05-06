@@ -950,6 +950,13 @@ static AV *XMLTreeToAV( CPLXMLNode *psTree )
 }
 %enddef
 
+%define IF_UNDEF_NULL(type, param)
+%typemap(default) type param {
+    /* %typemap(default) type param */
+    $1 = NULL;
+}
+%enddef
+
 CHECK_NOT_UNDEF(char, method, method)
 CHECK_NOT_UNDEF(const char, name, name)
 CHECK_NOT_UNDEF(const char, request, request)
@@ -965,6 +972,8 @@ CHECK_NOT_UNDEF(OGRFieldDefnShadow, field_defn, field definition)
 CHECK_NOT_UNDEF(OGRFeatureShadow, feature, feature)
 
 IF_UNDEF_SET_EMPTY_STRING(const char *, utf8_path)
+
+IF_UNDEF_NULL(const char *, target_key)
 
 %typemap(in, numinputs=1) (int nCount, double *x, double *y, double *z)
 {
@@ -1028,6 +1037,7 @@ IF_UNDEF_SET_EMPTY_STRING(const char *, utf8_path)
 
 %typemap(arginit, noblock=1) ( void* callback_data = NULL)
 {
+    /* %typemap(arginit, noblock=1) ( void* callback_data = NULL) */
     SavedEnv saved_env;
     saved_env.fct = NULL;
     saved_env.data = &PL_sv_undef;
