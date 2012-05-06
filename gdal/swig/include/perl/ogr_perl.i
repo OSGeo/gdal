@@ -1259,7 +1259,8 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
     }
     sub GetDriver {
 	my($name) = @_;
-	my $driver = _GetDriver($name) if $name =~ /^\d+$/; # is the name an index to driver list?
+	my $driver;
+	$driver = _GetDriver($name) if $name =~ /^\d+$/; # is the name an index to driver list?
 	$driver = GetDriverByName("$name") unless $driver;
 	croak "OGR driver with name '$name' not found (maybe support for it was not built in?)" unless $driver;
 	return $driver;
