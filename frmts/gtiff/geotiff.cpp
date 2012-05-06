@@ -5483,13 +5483,79 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->eAccess == GA_ReadOnly )
-	hTIFF = VSI_TIFFOpen( pszFilename, "r" );
-    else
-        hTIFF = VSI_TIFFOpen( pszFilename, "r+" );
-    
+
+    /* Disable strip chop for now */
+    hTIFF = VSI_TIFFOpen( pszFilename, ( poOpenInfo->eAccess == GA_ReadOnly ) ? "rc" : "r+c" );
     if( hTIFF == NULL )
         return( NULL );
+
+    uint32  nXSize, nYSize;
+    uint16  nPlanarConfig;
+    uint32  nRowsPerStrip;
+    uint16  nCompression;
+
+    TIFFGetField( hTIFF, TIFFTAG_IMAGEWIDTH, &nXSize );
+    TIFFGetField( hTIFF, TIFFTAG_IMAGELENGTH, &nYSize );
+
+    if( nXSize > INT_MAX || nYSize > INT_MAX )
+    {
+        /* GDAL only supports signed 32bit dimensions */
+        XTIFFClose( hTIFF );
+        return( NULL );
+    }
+
+    if( !TIFFGetField( hTIFF, TIFFTAG_PLANARCONFIG, &(nPlanarConfig) ) )
+        nPlanarConfig = PLANARCONFIG_CONTIG;
+
+    if( !TIFFGetField( hTIFF, TIFFTAG_COMPRESSION, &(nCompression) ) )
+        nCompression = COMPRESSION_NONE;
+
+    if( !TIFFGetField( hTIFF, TIFFTAG_ROWSPERSTRIP, &(nRowsPerStrip) ) )
+        nRowsPerStrip = nYSize;
+
+    if (!TIFFIsTiled( hTIFF ) &&
+        nCompression == COMPRESSION_NONE &&
+        nRowsPerStrip >= nYSize &&
+        nPlanarConfig == PLANARCONFIG_CONTIG)
+    {
+        int bReopenWithStripChop = TRUE;
+        if ( nYSize > 128 * 1024 * 1024 )
+        {
+            uint16  nSamplesPerPixel;
+            uint16  nBitsPerSample;
+
+            if( !TIFFGetField(hTIFF, TIFFTAG_SAMPLESPERPIXEL, &nSamplesPerPixel ) )
+                nSamplesPerPixel = 1;
+
+            if( !TIFFGetField(hTIFF, TIFFTAG_BITSPERSAMPLE, &(nBitsPerSample)) )
+                nBitsPerSample = 1;
+
+            vsi_l_offset nLineSize = (nSamplesPerPixel * (vsi_l_offset)nXSize * nBitsPerSample + 7) / 8;
+            int nDefaultStripHeight = (int)(8192 / nLineSize);
+            if (nDefaultStripHeight == 0) nDefaultStripHeight = 1;
+            vsi_l_offset nStrips = nYSize / nDefaultStripHeight;
+
+            /* There is a risk of DoS due to huge amount of memory allocated in ChopUpSingleUncompressedStrip() */
+            /* in libtiff */
+            if (nStrips > 128 * 1024 * 1024 &&
+                !CSLTestBoolean(CPLGetConfigOption("GTIFF_FORCE_STRIP_CHOP", "NO")))
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Potential denial of service detected. Avoid using strip chop. "
+                        "Set the GTIFF_FORCE_STRIP_CHOP configuration open to go over this test.");
+                bReopenWithStripChop = FALSE;
+            }
+        }
+
+        if (bReopenWithStripChop)
+        {
+            CPLDebug("GTiff", "Reopen with strip chop enabled");
+            XTIFFClose(hTIFF);
+            hTIFF = VSI_TIFFOpen( pszFilename, ( poOpenInfo->eAccess == GA_ReadOnly ) ? "r" : "r+" );
+            if( hTIFF == NULL )
+                return( NULL );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
