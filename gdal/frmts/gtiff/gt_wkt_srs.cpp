@@ -2298,7 +2298,7 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
 /* -------------------------------------------------------------------- */
 /*      Initialize access to the memory geotiff structure.              */
 /* -------------------------------------------------------------------- */
-    hTIFF = VSI_TIFFOpen( szFilename, "r" );
+    hTIFF = VSI_TIFFOpen( szFilename, "rc" );
 
     if( hTIFF == NULL )
     {
