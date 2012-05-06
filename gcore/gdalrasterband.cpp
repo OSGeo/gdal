@@ -708,24 +708,9 @@ int GDALRasterBand::InitBlockInfo()
         }
     }
 
-    /* Check for overflows in computation of nBlocksPerRow and nBlocksPerColumn */
-    if (nRasterXSize > INT_MAX - (nBlockXSize-1))
-    {
-        ReportError( CE_Failure, CPLE_NotSupported, "Inappropriate raster width (%d) for block width (%d)",
-                    nRasterXSize, nBlockXSize );
-        return FALSE;
-    }
+    nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
+    nBlocksPerColumn = DIV_ROUND_UP(nRasterYSize, nBlockYSize);
 
-    if (nRasterYSize > INT_MAX - (nBlockYSize-1))
-    {
-        ReportError( CE_Failure, CPLE_NotSupported, "Inappropriate raster height (%d) for block height (%d)",
-                    nRasterYSize, nBlockYSize );
-        return FALSE;
-    }
-
-    nBlocksPerRow = (nRasterXSize+nBlockXSize-1) / nBlockXSize;
-    nBlocksPerColumn = (nRasterYSize+nBlockYSize-1) / nBlockYSize;
-    
     if( nBlocksPerRow < SUBBLOCK_SIZE/2 )
     {
         bSubBlockingActive = FALSE;
@@ -744,25 +729,10 @@ int GDALRasterBand::InitBlockInfo()
     }
     else
     {
-        /* Check for overflows in computation of nSubBlocksPerRow and nSubBlocksPerColumn */
-        if (nBlocksPerRow > INT_MAX - (SUBBLOCK_SIZE+1))
-        {
-            ReportError( CE_Failure, CPLE_NotSupported, "Inappropriate raster width (%d) for block width (%d)",
-                        nRasterXSize, nBlockXSize );
-            return FALSE;
-        }
-
-        if (nBlocksPerColumn > INT_MAX - (SUBBLOCK_SIZE+1))
-        {
-            ReportError( CE_Failure, CPLE_NotSupported, "Inappropriate raster height (%d) for block height (%d)",
-                        nRasterYSize, nBlockYSize );
-            return FALSE;
-        }
-
         bSubBlockingActive = TRUE;
 
-        nSubBlocksPerRow = (nBlocksPerRow + SUBBLOCK_SIZE + 1)/SUBBLOCK_SIZE;
-        nSubBlocksPerColumn = (nBlocksPerColumn + SUBBLOCK_SIZE + 1)/SUBBLOCK_SIZE;
+        nSubBlocksPerRow = DIV_ROUND_UP(nBlocksPerRow, SUBBLOCK_SIZE);
+        nSubBlocksPerColumn = DIV_ROUND_UP(nBlocksPerColumn, SUBBLOCK_SIZE);
 
         if (nSubBlocksPerRow < INT_MAX / nSubBlocksPerColumn)
         {
