@@ -53,6 +53,14 @@ def ogr_idrisi_1():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    if lyr.GetLayerDefn().GetFieldDefn(1).GetName() != 'IntegerField':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     sr = lyr.GetSpatialRef()
     if sr.ExportToWkt().find('PROJCS["UTM Zone 31, Northern Hemisphere"') != 0:
         gdaltest.post_reason('fail')
@@ -78,6 +86,21 @@ def ogr_idrisi_1():
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsDouble(0) != 1.0:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    if feat.GetFieldAsInteger(1) != 2:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    if feat.GetFieldAsDouble(2) != 3.45:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    if feat.GetFieldAsString(3) != 'foo':
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         return 'fail'

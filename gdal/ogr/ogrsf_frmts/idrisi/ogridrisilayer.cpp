@@ -39,7 +39,9 @@ CPL_CVSID("$Id$");
 /*                         OGRIdrisiLayer()                             */
 /************************************************************************/
 
-OGRIdrisiLayer::OGRIdrisiLayer( const char* pszLayerName, VSILFILE* fp,
+OGRIdrisiLayer::OGRIdrisiLayer( const char* pszFilename,
+                                const char* pszLayerName,
+                                VSILFILE* fp,
                                 OGRwkbGeometryType eGeomType,
                                 const char* pszWTKString )
 
@@ -48,6 +50,7 @@ OGRIdrisiLayer::OGRIdrisiLayer( const char* pszLayerName, VSILFILE* fp,
     this->eGeomType = eGeomType;
     nNextFID = 1;
     bEOF = FALSE;
+    fpAVL = NULL;
 
     if (pszWTKString)
     {
@@ -73,6 +76,16 @@ OGRIdrisiLayer::OGRIdrisiLayer( const char* pszLayerName, VSILFILE* fp,
         nTotalFeatures = 0;
     CPL_LSBPTR32(&nTotalFeatures);
 
+    if (nTotalFeatures != 0)
+    {
+        if (!Detect_AVL_ADC(pszFilename))
+        {
+            if( fpAVL != NULL )
+                VSIFCloseL( fpAVL );
+            fpAVL = NULL;
+        }
+    }
+
     ResetReading();
 }
 
@@ -89,6 +102,148 @@ OGRIdrisiLayer::~OGRIdrisiLayer()
     poFeatureDefn->Release();
 
     VSIFCloseL( fp );
+
+    if( fpAVL != NULL )
+        VSIFCloseL( fpAVL );
+}
+
+/************************************************************************/
+/*                           Detect_AVL_ADC()                           */
+/************************************************************************/
+
+int OGRIdrisiLayer::Detect_AVL_ADC(const char* pszFilename)
+{
+// --------------------------------------------------------------------
+//      Look for .adc file
+// --------------------------------------------------------------------
+    const char* pszADCFilename = CPLResetExtension(pszFilename, "adc");
+    VSILFILE* fpADC = VSIFOpenL(pszADCFilename, "rb");
+    if (fpADC == NULL)
+    {
+        pszADCFilename = CPLResetExtension(pszFilename, "ADC");
+        fpADC = VSIFOpenL(pszADCFilename, "rb");
+    }
+
+    char** papszADC = NULL;
+    if (fpADC != NULL)
+    {
+        VSIFCloseL(fpADC);
+        fpADC = NULL;
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        papszADC = CSLLoad2(pszADCFilename, 1024, 256, NULL);
+        CPLPopErrorHandler();
+        CPLErrorReset();
+    }
+
+    if (papszADC == NULL)
+        return FALSE;
+
+    CSLSetNameValueSeparator( papszADC, ":" );
+
+    const char *pszVersion = CSLFetchNameValue( papszADC, "file format " );
+    if( pszVersion == NULL || !EQUAL( pszVersion, "IDRISI Values A.1" ) )
+    {
+        CSLDestroy( papszADC );
+        return FALSE;
+    }
+
+    const char *pszFileType = CSLFetchNameValue( papszADC, "file type   " );
+    if( pszFileType == NULL || !EQUAL( pszFileType, "ascii" ) )
+    {
+        CPLDebug("IDRISI", ".adc file found, but file type != ascii");
+        CSLDestroy( papszADC );
+        return FALSE;
+    }
+
+    const char* pszRecords = CSLFetchNameValue( papszADC, "records     " );
+    if( pszRecords == NULL || atoi(pszRecords) != nTotalFeatures )
+    {
+        CPLDebug("IDRISI", ".adc file found, but 'records' not found or not "
+                 "consistant with feature number declared in .vdc");
+        CSLDestroy( papszADC );
+        return FALSE;
+    }
+
+    const char* pszFields = CSLFetchNameValue( papszADC, "fields      " );
+    if( pszFields == NULL || atoi(pszFields) <= 1 )
+    {
+        CPLDebug("IDRISI", ".adc file found, but 'fields' not found or invalid");
+        CSLDestroy( papszADC );
+        return FALSE;
+    }
+
+// --------------------------------------------------------------------
+//      Look for .avl file
+// --------------------------------------------------------------------
+    const char* pszAVLFilename = CPLResetExtension(pszFilename, "avl");
+    fpAVL = VSIFOpenL(pszAVLFilename, "rb");
+    if (fpAVL == NULL)
+    {
+        pszAVLFilename = CPLResetExtension(pszFilename, "AVL");
+        fpAVL = VSIFOpenL(pszAVLFilename, "rb");
+    }
+    if (fpAVL == NULL)
+    {
+        CSLDestroy( papszADC );
+        return FALSE;
+    }
+
+// --------------------------------------------------------------------
+//      Build layer definition
+// --------------------------------------------------------------------
+
+    int nFields = atoi(pszFields);
+    int iCurField;
+    char szKey[32];
+
+    iCurField = 0;
+    sprintf(szKey, "field %d ", iCurField);
+
+    char** papszIter = papszADC;
+    const char* pszLine;
+    int bFieldFound = FALSE;
+    CPLString osFieldName;
+    while((pszLine = *papszIter) != NULL)
+    {
+        //CPLDebug("IDRISI", "%s", pszLine);
+        if (strncmp(pszLine, szKey, strlen(szKey)) == 0)
+        {
+            const char* pszColon = strchr(pszLine, ':');
+            if (pszColon)
+            {
+                osFieldName = pszColon + 1;
+                bFieldFound = TRUE;
+            }
+        }
+        else if (bFieldFound &&
+                 strncmp(pszLine, "data type   :", strlen("data type   :")) == 0)
+        {
+            const char* pszFieldType = pszLine + strlen("data type   :");
+
+            OGRFieldDefn oFieldDefn(osFieldName.c_str(),
+                                    EQUAL(pszFieldType, "integer") ? OFTInteger :
+                                    EQUAL(pszFieldType, "real") ? OFTReal : OFTString);
+
+            if( iCurField == 0 && oFieldDefn.GetType() != OFTInteger )
+            {
+                CSLDestroy( papszADC );
+                return FALSE;
+            }
+
+            if( iCurField != 0 )
+                poFeatureDefn->AddFieldDefn( &oFieldDefn );
+
+            iCurField ++;
+            sprintf(szKey, "field %d ", iCurField);
+        }
+
+        papszIter++;
+    }
+
+    CSLDestroy(papszADC);
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -101,6 +256,8 @@ void OGRIdrisiLayer::ResetReading()
     nNextFID = 1;
     bEOF = FALSE;
     VSIFSeekL( fp, 0x105, SEEK_SET );
+    if( fpAVL != NULL )
+        VSIFSeekL( fpAVL, 0, SEEK_SET );
 }
 
 /************************************************************************/
@@ -190,6 +347,7 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
             poFeature->SetField(0, dfId);
             poFeature->SetFID(nNextFID ++);
             poFeature->SetGeometryDirectly(poGeom);
+            ReadAVLLine(poFeature);
             return poFeature;
         }
         else if (eGeomType == wkbLineString)
@@ -263,6 +421,7 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
             poFeature->SetField(0, dfId);
             poFeature->SetFID(nNextFID ++);
             poFeature->SetGeometryDirectly(poGeom);
+            ReadAVLLine(poFeature);
             return poFeature;
         }
         else /* if (eGeomType == wkbPolygon) */
@@ -365,9 +524,39 @@ OGRFeature *OGRIdrisiLayer::GetNextRawFeature()
             poFeature->SetField(0, dfId);
             poFeature->SetFID(nNextFID ++);
             poFeature->SetGeometryDirectly(poGeom);
+            ReadAVLLine(poFeature);
             return poFeature;
         }
     }
+}
+
+/************************************************************************/
+/*                            ReadAVLLine()                             */
+/************************************************************************/
+
+void OGRIdrisiLayer::ReadAVLLine(OGRFeature* poFeature)
+{
+    if (fpAVL == NULL)
+        return;
+
+    const char* pszLine = CPLReadLineL(fpAVL);
+    if (pszLine == NULL)
+        return;
+
+    char** papszTokens = CSLTokenizeStringComplex(pszLine, "\t", TRUE, TRUE);
+    if (CSLCount(papszTokens) == poFeatureDefn->GetFieldCount())
+    {
+        int nID = atoi(papszTokens[0]);
+        if (nID == poFeature->GetFID())
+        {
+            int i;
+            for(i=1;i<poFeatureDefn->GetFieldCount();i++)
+            {
+                poFeature->SetField(i, papszTokens[i]);
+            }
+        }
+    }
+    CSLDestroy(papszTokens);
 }
 
 /************************************************************************/
