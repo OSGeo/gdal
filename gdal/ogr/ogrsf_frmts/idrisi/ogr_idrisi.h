@@ -44,6 +44,7 @@ protected:
     OGRwkbGeometryType eGeomType;
 
     VSILFILE*          fp;
+    VSILFILE*          fpAVL;
     int                bEOF;
 
     int                nNextFID;
@@ -56,10 +57,14 @@ protected:
 
     unsigned int       nTotalFeatures;
 
+    int                Detect_AVL_ADC(const char* pszFilename);
+    void               ReadAVLLine(OGRFeature* poFeature);
+
     virtual OGRFeature *       GetNextRawFeature();
 
   public:
-                        OGRIdrisiLayer(const char* pszLayerName, VSILFILE* fp,
+                        OGRIdrisiLayer(const char* pszFilename,
+                                       const char* pszLayerName, VSILFILE* fp,
                                        OGRwkbGeometryType eGeomType, const char* pszWTKString);
                         ~OGRIdrisiLayer();
 
