@@ -326,7 +326,7 @@ indexed datasets. The 'gray' value (from GDAL 1.7.0) enables to expand a
 dataset with a color table that only contains gray levels to a gray indexed
 dataset.</dd>
 <dt> <b>-outsize</b> <i>xsize[%] ysize[%]</i>:</dt><dd> Set the size of the output
-file.  Outsize is in pixels and lines unless '%' is attached in which case it
+file.  Outsize is in pixels and lines unless '\%' is attached in which case it
 is as a fraction of the input image size.</dd>
 <dt> <b>-scale</b> <i>[src_min src_max [dst_min dst_max]]</i>:</dt><dd> Rescale the
 input pixels values from the range <i>src_min</i> to <i>src_max</i> to
