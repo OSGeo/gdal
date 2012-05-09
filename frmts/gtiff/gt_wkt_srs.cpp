@@ -1236,7 +1236,10 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
     double	dfLinearUOM = poSRS->GetLinearUnits( &pszLinearUOMName );
     int         nUOMLengthCode = 9001; /* meters */
 
-    if( (pszLinearUOMName != NULL
+    if( poSRS->GetAuthorityName("PROJCS|UNIT") != NULL 
+        && EQUAL(poSRS->GetAuthorityName("PROJCS|UNIT"),"EPSG") )
+        nUOMLengthCode = atoi(poSRS->GetAuthorityCode("PROJCS|UNIT"));
+    else if( (pszLinearUOMName != NULL
          && EQUAL(pszLinearUOMName,SRS_UL_FOOT))
         || fabs(dfLinearUOM-GTIFAtof(SRS_UL_FOOT_CONV)) < 0.0000001 )
         nUOMLengthCode = 9002; /* international foot */
