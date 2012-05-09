@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 2208 2012-05-06 07:25:55Z warmerdam $
+ * $Id: geo_normalize.c 2209 2012-05-09 01:34:58Z warmerdam $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -1027,7 +1027,7 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
         return( CT_ObliqueMercator_Rosenmund ); /* swiss  */
 
       case 9815:
-        return( CT_ObliqueMercator );
+        return( CT_HotineObliqueMercatorAzimuthCenter );
 
       case 9816: /* tunesia mining grid has no counterpart */
         return( KvUserDefined );
@@ -1041,6 +1041,9 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
 
       case 9834:
         return( CT_CylindricalEqualArea );
+
+      default: /* use the EPSG code for other methods */
+        return nEPSG;
     }
 
     return( KvUserDefined );
@@ -1087,6 +1090,7 @@ static int SetGTParmIds( int nCTProjection,
         return TRUE;
 
       case CT_ObliqueMercator:
+      case CT_HotineObliqueMercatorAzimuthCenter:
         panProjParmId[0] = ProjCenterLatGeoKey;
         panProjParmId[1] = ProjCenterLongGeoKey;
         panProjParmId[2] = ProjAzimuthAngleGeoKey;
@@ -1535,6 +1539,7 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
 
 /* -------------------------------------------------------------------- */
       case CT_ObliqueMercator: /* hotine */
+      case CT_HotineObliqueMercatorAzimuthCenter: 
 /* -------------------------------------------------------------------- */
         if( GTIFKeyGet(psGTIF, ProjNatOriginLongGeoKey, 
                        &dfNatOriginLong, 0, 1 ) == 0
