@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_ctrans.inc 657 2005-03-04 03:59:11Z fwarmerdam $
+ * $Id: geo_ctrans.inc 2209 2012-05-09 01:34:58Z warmerdam $
  *
  * Project:  libgeotiff
  * Purpose:  GeoTIFF Projection Method codes. 
@@ -75,6 +75,9 @@ ValuePair(CT_TransvMercator_SouthOrientated, 27)
 
 /* Added Feb 2005 */
 ValuePair(CT_CylindricalEqualArea, 28)
+
+/* Added May 2012 - from now on we use the EPSG */
+ValuePair(CT_HotineObliqueMercatorAzimuthCenter, 9815)
 
 
 /* Aliases */
