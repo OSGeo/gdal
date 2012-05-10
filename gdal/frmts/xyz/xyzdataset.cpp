@@ -259,6 +259,7 @@ XYZDataset::XYZDataset()
     fp = NULL;
     nDataLineNum = INT_MAX;
     nLineNum = 0;
+    nCommentLineCount = 0;
     bHasHeaderLine = FALSE;
     nXIndex = -1;
     nYIndex = -1;
@@ -915,21 +916,26 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
     if (eErr != CE_None)
         return NULL;
 
-    /* If outputing to stdout, we can't reopen it, so we'll return */
-    /* a fake dataset to make the caller happy */
-    CPLPushErrorHandler(CPLQuietErrorHandler);
-    GDALDataset* poDS = (GDALDataset*) GDALOpen(pszFilename, GA_ReadOnly);
-    CPLPopErrorHandler();
-    if (poDS)
-        return poDS;
-
-    CPLErrorReset();
-
+/* -------------------------------------------------------------------- */
+/*      We don't want to call GDALOpen() since it will be expensive,    */
+/*      so we "hand prepare" an XYZ dataset referencing our file.       */
+/* -------------------------------------------------------------------- */
     XYZDataset* poXYZ_DS = new XYZDataset();
     poXYZ_DS->nRasterXSize = nXSize;
     poXYZ_DS->nRasterYSize = nYSize;
     poXYZ_DS->nBands = 1;
     poXYZ_DS->SetBand( 1, new XYZRasterBand( poXYZ_DS, 1, eReqDT ) );
+    poXYZ_DS->fp = VSIFOpenL( pszFilename, "r" );
+    memcpy( &(poXYZ_DS->adfGeoTransform), adfGeoTransform, sizeof(double)*6 );
+    poXYZ_DS->nXIndex = 0;
+    poXYZ_DS->nYIndex = 1;
+    poXYZ_DS->nZIndex = 2;
+    if( pszAddHeaderLine )
+    {
+        poXYZ_DS->nDataLineNum = 1;
+        poXYZ_DS->bHasHeaderLine = TRUE;
+    }
+
     return poXYZ_DS;
 }
 
