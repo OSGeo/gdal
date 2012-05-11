@@ -170,6 +170,10 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
     poReader->SaveClasses( pszName );
 
     listLayer = poReader->GetLayers();
+    list<OGRLayer *>::const_iterator layerIt;
+    for (layerIt = listLayer.begin(); layerIt != listLayer.end(); ++layerIt) {
+        (*layerIt)->ResetReading();
+    }
 
     CSLDestroy( filenames );
 

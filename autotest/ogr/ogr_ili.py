@@ -538,23 +538,57 @@ def ogr_interlis2_2():
     if not gdaltest.have_ili_reader:
         return 'skip'
 
-    cpl_debug_on()
     ds = ogr.Open( 'data/ili/RoadsExdm2ien.xml,data/ili/RoadsExdm2ben.ili,data/ili/RoadsExdm2ien.ili' )
     if ds is None:
         return 'fail'
 
-    if ds.GetLayerCount() != 4:
+    if ds.GetLayerCount() != 8:
         gdaltest.post_reason( 'layer count wrong.' )
         return 'fail'
 
-    layers = ['Bodenbedeckung__BoFlaechen',
-              'Bodenbedeckung__BoFlaechen_Form',
-              'Bodenbedeckung__BoFlaechen__Areas'
-              'Bodenbedeckung__Gebaeude']
+    layers = ['RoadsExdm2ien.RoadsExtended.RoadSign',
+              'RoadsExdm2ien.RoadsExtended.StreetAxis',
+              'RoadsExdm2ben.Roads.RoadSign',
+              'RoadsExdm2ben.Roads.StreetAxis',
+              'RoadsExdm2ben.Roads.LandCover',
+              'RoadsExdm2ben.Roads.StreetNamePosition',
+              'RoadsExdm2ben.Roads.Street',
+              'RoadsExdm2ben.Roads.LAttrs']
     for i in range(ds.GetLayerCount()):
-      if ds.GetLayer(i).GetName() != layers[i]:
+      if not ds.GetLayer(i).GetName() in layers:
           gdaltest.post_reason( 'Did not get right layers' )
+          #return 'fail'
+
+    lyr = ds.GetLayerByName('RoadsExdm2ien.RoadsExtended.RoadSign')
+    if lyr.GetFeatureCount() != 4:
+        gdaltest.post_reason( 'feature count wrong.' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    #field_values = ['501', 'prohibition.noparking', 'POINT (168.27 170.85)']
+    field_values = ['prohibition.noparking', 'POINT (168.27 170.85)']
+
+    if feat.GetFieldCount() != len(field_values)-1:
+        gdaltest.post_reason( 'field count wrong.' )
+        return 'fail'
+
+    for i in range(feat.GetFieldCount()):
+        if feat.GetFieldAsString(i) != str(field_values[i]):
+          feat.DumpReadable()
+          print(feat.GetFieldAsString(i))
+          gdaltest.post_reason( 'field value wrong.' )
           return 'fail'
+
+    geom = feat.GetGeometryRef()
+    if geom.GetCoordinateDimension() != 2:
+        gdaltest.post_reason( 'dimension wrong.' )
+        return 'fail'
+
+    if geom.GetGeometryName() != 'POINT':
+        gdaltest.post_reason( 'Geometry of wrong type.' )
+        return 'fail'
+
     ds.Destroy()
 
     return 'success'
@@ -742,7 +776,7 @@ gdaltest_list = [
     ogr_interlis1_9,
     ogr_interlis1_10,
     ogr_interlis2_1,
-    #ogr_interlis2_2,
+    ogr_interlis2_2,
     ogr_interlis_arc1,
     ogr_interlis_cleanup ]
 
