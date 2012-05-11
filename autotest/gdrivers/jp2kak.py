@@ -391,6 +391,43 @@ def jp2kak_16():
     return 'success'
 
 ###############################################################################
+# Test reading a file with axis orientation set properly for an alternate
+# axis order coordinate system (urn:...:EPSG::4326). 
+# In addition, the source .jp2 file's embedded GML has the alternate order
+# between the offsetVector tags, and the "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER"
+# option is turned on to match that situation.
+# This test case was adapted from the "jp2kak_7()" case above.
+
+def jp2kak_17():
+
+    if gdaltest.jp2kak_drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption( 'GDAL_JP2K_ALT_OFFSETVECTOR_ORDER', 'YES' )
+
+    ds = gdal.Open( 'data/gmljp2_dtedsm_epsg_4326_axes_alt_offsetVector.jp2' )
+
+    gt = ds.GetGeoTransform()
+    gte = (42.999583333333369,0.008271349862259,0,
+           34.000416666666631,0,-0.008271349862259)
+    
+    if abs(gt[0] - gte[0]) > 0.0000001 or abs(gt[3] - gte[3]) > 0.000001 \
+       or abs(gt[1] - gte[1]) > 0.000000000005 \
+       or abs(gt[2] - gte[2]) > 0.000000000005 \
+       or abs(gt[4] - gte[4]) > 0.000000000005 \
+       or abs(gt[5] - gte[5]) > 0.000000000005:
+        gdaltest.post_reason( 'did not get expected geotransform' )
+        print('got: ', gt)
+        gdal.SetConfigOption( 'GDAL_JP2K_ALT_OFFSETVECTOR_ORDER', 'NO' )
+        return 'fail'
+       
+    ds = None
+
+    gdal.SetConfigOption( 'GDAL_JP2K_ALT_OFFSETVECTOR_ORDER', 'NO' )
+
+    return 'success'
+    
+###############################################################################
 # Cleanup.
 
 def jp2kak_cleanup():
@@ -416,6 +453,7 @@ gdaltest_list = [
     jp2kak_14,
     jp2kak_15,
     jp2kak_16,
+    jp2kak_17,
     jp2kak_cleanup ]
 
 if __name__ == '__main__':
