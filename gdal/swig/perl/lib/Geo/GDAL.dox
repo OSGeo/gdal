@@ -110,7 +110,8 @@
 # 'GDAL_PAM_ENABLED', 'GDAL_PAM_MODE', 'GDAL_PAM_PROXY_DIR',
 # 'GDAL_MAX_DATASET_POOL_SIZE', 'GDAL_FORCE_CACHING', 'GDAL_CACHEMAX',
 # 'GDAL_SWATH_SIZE', 'PROJSO', 'CENTER_LONG',
-# 'OGR_DEBUG_ORGANIZE_POLYGONS', and 'OGR_ORGANIZE_POLYGONS'.
+# 'OGR_DEBUG_ORGANIZE_POLYGONS', 'OGR_ORGANIZE_POLYGONS',
+# and 'GDAL_JP2K_ALT_OFFSETVECTOR_ORDER'.
 # Consult the GDAL main documentation for the semantics of config options.
 # @param value A value for the option, typically 'YES', 'NO',
 # undef, a path, or a filename.
