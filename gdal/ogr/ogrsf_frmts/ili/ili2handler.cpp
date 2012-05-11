@@ -93,7 +93,7 @@ void ILI2Handler::startElement(
         const   Attributes& attrs
     ) {
   
-  // start to add the layers, features with the DATASECTION  
+  // start to add the layers, features with the DATASECTION
   char *tmpC = NULL;
   m_nEntityCounter = 0;
   if ((level >= 0) || (cmpStr(ILI2_DATASECTION, tmpC = XMLString::transcode(qname)) == 0)) {
@@ -128,9 +128,9 @@ void ILI2Handler::endElement(
       // go to the parent element and parse the child element
       DOMElement* childElem = dom_elem;
       dom_elem = (DOMElement*)dom_elem->getParentNode();
-       
+
       m_poReader->AddFeature(childElem);
-      
+
       // remove the child element
       childElem = (DOMElement*)dom_elem->removeChild(childElem);
     } else if (level >= 3) {
