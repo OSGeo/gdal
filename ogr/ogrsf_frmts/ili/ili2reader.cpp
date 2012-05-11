@@ -549,6 +549,7 @@ void ILI2Reader::SetFieldValues(OGRFeature *feature, DOMElement* elem) {
           feature->SetField(fIndex, objVal);
           CPLFree(objVal);
         } else {
+          CPLDebug( "OGR_ILI","Attribute '%s' not found", fName);
           m_missAttrs.push_back(fName);
         }
         CPLFree(fName);
@@ -686,6 +687,7 @@ int ILI2Reader::SaveClasses( const char *pszFile = NULL ) {
     // parse and create layers and features
     try
     {
+        CPLDebug( "OGR_ILI", "Parsing %s", pszFile);
         m_poSAXReader->parse(pszFile);
     }
     catch (const SAXException& toCatch)
@@ -702,7 +704,7 @@ int ILI2Reader::SaveClasses( const char *pszFile = NULL ) {
     m_missAttrs.sort();
     m_missAttrs.unique();
     string attrs = "";
-    list<string>::const_iterator it = m_missAttrs.begin();
+    list<string>::const_iterator it;
     for (it = m_missAttrs.begin(); it != m_missAttrs.end(); ++it)
       attrs += *it + ", ";
 
@@ -754,7 +756,7 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
   // the feature and field definition
   OGRFeatureDefn *featureDef = curLayer->GetLayerDefn();
   if (newLayer) {
-    // the TID feature
+    // add TID field
     OGRFieldDefn ofieldDefn (ILI2_TID, OFTString);
     featureDef->AddFieldDefn(&ofieldDefn);
 
@@ -764,13 +766,17 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
   // add the features
   OGRFeature *feature = new OGRFeature(featureDef);
 
-  // the TID feature
+  // assign TID
   int fIndex = feature->GetFieldIndex(ILI2_TID);
-  XMLCh *pszIli2_tid = XMLString::transcode(ILI2_TID);
-  char *fChVal = XMLString::transcode(elem->getAttribute(pszIli2_tid));
-  feature->SetField(fIndex, fChVal);
-  XMLString::release (&pszIli2_tid);
-  XMLString::release (&fChVal);
+  if (fIndex != -1) {
+      XMLCh *pszIli2_tid = XMLString::transcode(ILI2_TID);
+      char *fChVal = XMLString::transcode(elem->getAttribute(pszIli2_tid));
+      feature->SetField(fIndex, fChVal);
+      XMLString::release (&pszIli2_tid);
+      XMLString::release (&fChVal);
+  } else {
+      CPLDebug( "OGR_ILI","'%s' not found", ILI2_TID);
+  }
 
   SetFieldValues(feature, elem);
   curLayer->SetFeature(feature);
