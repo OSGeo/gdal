@@ -381,46 +381,6 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
               }
           }
         }
-      } else if (EQUAL(tag,"iom04.metamodel.LocalAttribute")) {
-        // Check for enumeration
-        if (EQUAL(GetTypeName(model, modelele), "iom04.metamodel.EnumerationType")) {
-          const char* layername = GetLayerName(model, modelele);
-          IOM_OBJECT enumeration = GetAttrObj(model, GetTypeObj(model, modelele), "enumeration");
-          OGRSpatialReference *poSRSIn = NULL;
-          int bWriterIn = 0;
-          OGRwkbGeometryType eReqType = wkbUnknown;
-          OGRILI1DataSource *poDSIn = NULL;
-          OGRILI1Layer* layer = new OGRILI1Layer(layername, poSRSIn, bWriterIn, eReqType, poDSIn);
-          AddLayer(layer);
-          {
-          OGRFieldDefn fieldDef("id", OFTInteger);
-          layer->GetLayerDefn()->AddFieldDefn(&fieldDef);
-          }
-          {
-          OGRFieldDefn fieldDef("value", OFTString);
-          layer->GetLayerDefn()->AddFieldDefn(&fieldDef);
-          }
-          CPLDebug( "OGR_ILI", "Enumeration layer'%s'", layername );
-
-          //Add enums as features
-          IOM_ITERATOR fieldit=iom_iteratorobject(model);
-          for (IOM_OBJECT fieldele=iom_nextobject(fieldit); fieldele; fieldele=iom_nextobject(fieldit)){
-            const char *etag=iom_getobjecttag(fieldele);
-            if (etag && (EQUAL(etag,"iom04.metamodel.Enumeration_Element"))) {
-              if (GetAttrObj(model, fieldele, "enumeration") == enumeration) {
-                unsigned int order_pos = iom_getobjectreforderpos(iom_getattrobj(fieldele, "enumeration", 0));
-                if (order_pos) {
-                  OGRFeature *feature = OGRFeature::CreateFeature(layer->GetLayerDefn());
-                  feature->SetField("id", (int)order_pos-1);
-                  feature->SetField("value", iom_getattrvalue(fieldele, "name"));
-                  layer->AddFeature(feature);
-                }
-              }
-            }
-            iom_releaseobject(fieldele);
-          }
-          iom_releaseiterator(fieldit);
-        }
       } else if (EQUAL(tag,"iom04.metamodel.Ili1Format")) {
         codeBlank = atoi(iom_getattrvalue(modelele, "blankCode"));
         CPLDebug( "OGR_ILI", "Reading Ili1Format blankCode '%c'", codeBlank );
