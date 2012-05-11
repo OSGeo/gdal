@@ -795,13 +795,25 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         adfGeoTransform[0] = adfGeoTransform[3];
         adfGeoTransform[3] = dfTemp;
 
+        int swapWith1Index = 4;
+        int swapWith2Index = 5;
+
+        if( CSLTestBoolean( CPLGetConfigOption( "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER",
+                                                "FALSE" ) ) )
+        {
+            swapWith1Index = 5;
+            swapWith2Index = 4;
+            CPLDebug( "GMLJP2", "Choosing alternate GML \"<offsetVector>\" order based on "
+                "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER." );
+        }
+
         dfTemp = adfGeoTransform[1];
-        adfGeoTransform[1] = adfGeoTransform[4];
-        adfGeoTransform[4] = dfTemp;
+        adfGeoTransform[1] = adfGeoTransform[swapWith1Index];
+        adfGeoTransform[swapWith1Index] = dfTemp;
 
         dfTemp = adfGeoTransform[2];
-        adfGeoTransform[2] = adfGeoTransform[5];
-        adfGeoTransform[5] = dfTemp;
+        adfGeoTransform[2] = adfGeoTransform[swapWith2Index];
+        adfGeoTransform[swapWith2Index] = dfTemp;
     }
 
     return pszProjection != NULL && bSuccess;
@@ -1001,6 +1013,23 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
         adfOrigin[0] = adfOrigin[1];
         adfOrigin[1] = dfTemp;
 
+        if( CSLTestBoolean( CPLGetConfigOption( "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER",
+                                                "FALSE" ) ) )
+        {
+            CPLDebug( "GMLJP2", "Choosing alternate GML \"<offsetVector>\" order based on "
+                "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER." );
+
+            /* In this case the swapping is done in an "X" pattern */
+            dfTemp = adfXVector[0];
+            adfXVector[0] = adfYVector[1];
+            adfYVector[1] = dfTemp;
+
+            dfTemp = adfYVector[0];
+            adfYVector[0] = adfXVector[1];
+            adfXVector[1] = dfTemp;
+        }
+        else
+        {
         dfTemp = adfXVector[0];
         adfXVector[0] = adfXVector[1];
         adfXVector[1] = dfTemp;
@@ -1008,6 +1037,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
         dfTemp = adfYVector[0];
         adfYVector[0] = adfYVector[1];
         adfYVector[1] = dfTemp;
+        }
     }
 
 /* -------------------------------------------------------------------- */
