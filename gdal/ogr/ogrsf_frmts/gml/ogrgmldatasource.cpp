@@ -1616,19 +1616,11 @@ OGRLayer * OGRGMLDataSource::ExecuteSQL( const char *pszSQLCommand,
         CPLString osXSDFilename = CPLResetExtension( pszName, "xsd" );
         int bIsValid = FALSE;
         CPLErrorReset();
-        CPLXMLSchemaPtr pSchema = CPLLoadXMLSchema(osXSDFilename);
-        if (pSchema)
+        bIsValid = CPLValidateXML(pszName, osXSDFilename, NULL);
+        if (!bIsValid && strstr(CPLGetLastErrorMsg(), "not implemented due to missing libxml2 support") == NULL)
         {
-            bIsValid = CPLValidateXML(pszName, pSchema, NULL);
-            CPLFreeXMLSchema(pSchema);
-        }
-        else
-        {
-            if (strstr(CPLGetLastErrorMsg(), "not implemented due to missing libxml2 support") == NULL)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                        "Cannot load %s", osXSDFilename.c_str());
-            }
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot load %s", osXSDFilename.c_str());
         }
 
         return new OGRGMLSingleFeatureLayer(bIsValid);
