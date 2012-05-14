@@ -194,20 +194,20 @@ class GDALPDFOutputDev : public SplashOutputDev
         virtual void setSoftMaskFromImageMask(GfxState *state,
                             Object *ref, Stream *str,
                             int width, int height, GBool invert,
-                            GBool inlineImg)
+                            GBool inlineImg, double *baseMatrix)
         {
             if (bEnableBitmap)
                 SplashOutputDev::setSoftMaskFromImageMask(state, ref, str,
                                                width, height, invert,
-                                               inlineImg);
+                                               inlineImg, baseMatrix);
             else
                 str->close();
         }
 
-        virtual void unsetSoftMaskFromImageMask(GfxState *state)
+        virtual void unsetSoftMaskFromImageMask(GfxState *state, double *baseMatrix)
         {
             if (bEnableBitmap)
-                SplashOutputDev::unsetSoftMaskFromImageMask(state);
+                SplashOutputDev::unsetSoftMaskFromImageMask(state, baseMatrix);
         }
 #endif
 
