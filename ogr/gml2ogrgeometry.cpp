@@ -2115,6 +2115,29 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                                         nRecLevel + 1 );
     }
 
+/* -------------------------------------------------------------------- */
+/*      SimplePolygon, SimpleRectangle, SimpleTriangle                  */
+/*      (GML 3.3 compact encoding)                                      */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszBaseGeometry,"SimplePolygon") ||
+        EQUAL(pszBaseGeometry,"SimpleRectangle") ||
+        EQUAL(pszBaseGeometry,"SimpleTriangle") )
+    {
+        OGRLinearRing   *poRing = new OGRLinearRing();
+
+        if( !ParseGMLCoordinates( psNode, poRing ) )
+        {
+            delete poRing;
+            return NULL;
+        }
+
+        poRing->closeRings();
+
+        OGRPolygon* poPolygon = new OGRPolygon();
+        poPolygon->addRingDirectly(poRing);
+        return poPolygon;
+    }
+
     CPLError( CE_Failure, CPLE_AppDefined, 
               "Unrecognised geometry type <%.500s>.", 
               pszBaseGeometry );
