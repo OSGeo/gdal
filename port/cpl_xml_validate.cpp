@@ -564,6 +564,37 @@ static void CPLLibXMLInputStreamCPLFree(xmlChar* pszBuffer)
 /*                      CPLExternalEntityLoader()                       */
 /************************************************************************/
 
+static const char szXML_XSD[] = "<xs:schema targetNamespace=\"http://www.w3.org/XML/1998/namespace\""
+" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">"
+"<xs:attribute name=\"lang\">"
+"<xs:simpleType>"
+"<xs:union memberTypes=\"xs:language\">"
+"<xs:simpleType>"
+"<xs:restriction base=\"xs:string\">"
+"<xs:enumeration value=\"\"/>"
+"</xs:restriction>"
+"</xs:simpleType>"
+"</xs:union>"
+"</xs:simpleType>"
+"</xs:attribute>"
+"<xs:attribute name=\"space\">"
+"<xs:simpleType>"
+"<xs:restriction base=\"xs:NCName\">"
+"<xs:enumeration value=\"default\"/>"
+"<xs:enumeration value=\"preserve\"/>"
+"</xs:restriction>"
+"</xs:simpleType>"
+"</xs:attribute>"
+"<xs:attribute name=\"base\" type=\"xs:anyURI\"/>"
+"<xs:attribute name=\"id\" type=\"xs:ID\"/>"
+"<xs:attributeGroup name=\"specialAttrs\">"
+"<xs:attribute ref=\"xml:base\"/>"
+"<xs:attribute ref=\"xml:lang\"/>"
+"<xs:attribute ref=\"xml:space\"/>"
+"<xs:attribute ref=\"xml:id\"/>"
+"</xs:attributeGroup>"
+"</xs:schema>";
+
 static
 xmlParserInputPtr CPLExternalEntityLoader (const char * URL,
                                            const char * ID,
@@ -597,6 +628,11 @@ xmlParserInputPtr CPLExternalEntityLoader (const char * URL,
             osURL = "http://schemas.opengis.net/";
             osURL += pszGML;
             URL = osURL.c_str();
+        }
+        else if (strcmp(URL, "http://www.w3.org/2001/xml.xsd") == 0)
+        {
+            CPLDebug("CPL", "Resolving http://www.w3.org/2001/xml.xsd to local definition");
+            return xmlNewStringInputStream(context, (const xmlChar*) szXML_XSD);
         }
         else if (strncmp(URL, "http://schemas.opengis.net/",
                          strlen("http://schemas.opengis.net/")) != 0)
@@ -758,6 +794,8 @@ char* CPLLoadContentFromFile(const char* pszFilename)
 /*                         CPLLoadXMLSchema()                           */
 /************************************************************************/
 
+typedef void* CPLXMLSchemaPtr;
+
 /**
  * \brief Load a XSD schema.
  *
@@ -769,6 +807,7 @@ char* CPLLoadContentFromFile(const char* pszFilename)
  * @since GDAL 2.0.0
  */
 
+static
 CPLXMLSchemaPtr CPLLoadXMLSchema(const char* pszXSDFilename)
 {
     char* pszStr = CPLLoadSchemaStr(pszXSDFilename);
@@ -810,6 +849,7 @@ CPLXMLSchemaPtr CPLLoadXMLSchema(const char* pszXSDFilename)
  * @since GDAL 2.0.0
  */
 
+static
 void CPLFreeXMLSchema(CPLXMLSchemaPtr pSchema)
 {
     if (pSchema)
@@ -823,19 +863,19 @@ void CPLFreeXMLSchema(CPLXMLSchemaPtr pSchema)
 /**
  * \brief Validate a XML file against a XML schema.
  *
- * The return value should be freed with CPLFreeXMLSchema().
- *
- * @param pszXMLFilename the XML filename to validate.
- * @param pSchema a handle returned by CPLLoadXMLSchema().
+ * @param pszXMLFilename the filename of the XML file to validate.
+ * @param pszXSDFilename the filename of the XSD schema.
  * @param papszOptions unused for now.
  * @return TRUE if the XML file validates against the XML schema.
  *
  * @since GDAL 2.0.0
  */
 
-int CPLValidateXML(const char* pszXMLFilename, CPLXMLSchemaPtr pSchema,
+int CPLValidateXML(const char* pszXMLFilename,
+                   const char* pszXSDFilename,
                    char** papszOptions)
 {
+    CPLXMLSchemaPtr pSchema = CPLLoadXMLSchema(pszXSDFilename);
     if (pSchema == NULL)
         return FALSE;
 
@@ -844,7 +884,10 @@ int CPLValidateXML(const char* pszXMLFilename, CPLXMLSchemaPtr pSchema,
     pSchemaValidCtxt = xmlSchemaNewValidCtxt((xmlSchemaPtr)pSchema);
 
     if (pSchemaValidCtxt == NULL)
+    {
+        CPLFreeXMLSchema(pSchema);
         return FALSE;
+    }
 
     xmlSchemaSetValidErrors(pSchemaValidCtxt,
                             CPLLibXMLWarningErrorCallback,
@@ -872,6 +915,7 @@ int CPLValidateXML(const char* pszXMLFilename, CPLXMLSchemaPtr pSchema,
         CPLFree(pszXML);
     }
     xmlSchemaFreeValidCtxt(pSchemaValidCtxt);
+    CPLFreeXMLSchema(pSchema);
 
     return bValid;
 }
@@ -879,30 +923,11 @@ int CPLValidateXML(const char* pszXMLFilename, CPLXMLSchemaPtr pSchema,
 #else // HAVE_RECENT_LIBXML2
 
 /************************************************************************/
-/*                         CPLLoadXMLSchema()                           */
-/************************************************************************/
-
-CPLXMLSchemaPtr CPLLoadXMLSchema(const char* pszXSDFilename)
-{
-    CPLError(CE_Failure, CPLE_NotSupported,
-             "%s not implemented due to missing libxml2 support",
-             "CPLLoadSchema()");
-    return NULL;
-}
-
-/************************************************************************/
-/*                         CPLFreeXMLSchema()                           */
-/************************************************************************/
-
-void CPLFreeXMLSchema(CPLXMLSchemaPtr pSchema)
-{
-}
-
-/************************************************************************/
 /*                          CPLValidateXML()                            */
 /************************************************************************/
 
-int CPLValidateXML(const char* pszXMLFilename, CPLXMLSchemaPtr pSchema,
+int CPLValidateXML(const char* pszXMLFilename,
+                   const char* pszXSDFilename,
                    char** papszOptions)
 {
     CPLError(CE_Failure, CPLE_NotSupported,
