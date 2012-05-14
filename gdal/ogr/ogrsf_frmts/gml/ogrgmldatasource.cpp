@@ -1617,12 +1617,6 @@ OGRLayer * OGRGMLDataSource::ExecuteSQL( const char *pszSQLCommand,
         int bIsValid = FALSE;
         CPLErrorReset();
         bIsValid = CPLValidateXML(pszName, osXSDFilename, NULL);
-        if (!bIsValid && strstr(CPLGetLastErrorMsg(), "not implemented due to missing libxml2 support") == NULL)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot load %s", osXSDFilename.c_str());
-        }
-
         return new OGRGMLSingleFeatureLayer(bIsValid);
     }
 
