@@ -224,11 +224,8 @@ CPLErr CPL_DLL CPLCloseZip( void *hZip );
 /* -------------------------------------------------------------------- */
 /*      XML validation.                                                 */
 /* -------------------------------------------------------------------- */
-typedef void* CPLXMLSchemaPtr;
-CPLXMLSchemaPtr CPL_DLL CPLLoadXMLSchema(const char* pszXSDFilename);
-void CPL_DLL CPLFreeXMLSchema(CPLXMLSchemaPtr pSchema);
-
-int CPL_DLL CPLValidateXML(const char* pszXMLFilename, CPLXMLSchemaPtr pSchema,
+int CPL_DLL CPLValidateXML(const char* pszXMLFilename,
+                           const char* pszXSDFilename,
                            char** papszOptions);
 
 CPL_C_END
