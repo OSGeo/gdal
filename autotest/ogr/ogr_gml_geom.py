@@ -170,6 +170,22 @@ def gml_posList_line3d():
     return 'success'
 
 ###############################################################################
+# Test GML 3.x "posList" element for a 3D linestring, but with srsDimension
+# set on LineString, not posList
+
+def gml_posList_line3d_2():
+
+    gml = '<LineString srsDimension="3"><posList>31 42 1 53 64 2 55 76 3</posList></LineString>'
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'LINESTRING (31 42 1,53 64 2,55 76 3)':
+        gdaltest.post_reason( '<gml:posList> not correctly parsed' )
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 # Test GML 3.x "polygon" element for a point.
 
 def gml_polygon():
@@ -1155,6 +1171,7 @@ gdaltest_list.append( gml_pos_point )
 gdaltest_list.append( gml_pos_polygon )
 gdaltest_list.append( gml_posList_line )
 gdaltest_list.append( gml_posList_line3d )
+gdaltest_list.append( gml_posList_line3d_2 )
 gdaltest_list.append( gml_polygon )
 gdaltest_list.append( gml_out_point_srs )
 gdaltest_list.append( gml_out_point3d_srs )
