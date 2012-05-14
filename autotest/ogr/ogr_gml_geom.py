@@ -1153,6 +1153,54 @@ def gml_nested():
     return 'success'
 
 ###############################################################################
+# Test GML 3.3 SimplePolygon
+
+def gml_SimplePolygon():
+
+    gml = """<gmlce:SimplePolygon><gml:posList>0 0 1 0 1 1 0 1</gml:posList></gmlce:SimplePolygon>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'POLYGON ((0 0,1 0,1 1,0 1,0 0))':
+        gdaltest.post_reason( '<gmlce:SimplePolygon> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GML 3.3 SimpleRectangle
+
+def gml_SimpleRectangle():
+
+    gml = """<gmlce:SimpleRectangle><gml:posList>0 0 1 0 1 1 0 1</gml:posList></gmlce:SimpleRectangle>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'POLYGON ((0 0,1 0,1 1,0 1,0 0))':
+        gdaltest.post_reason( '<gmlce:SimpleRectangle> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GML 3.3 SimpleTriangle
+
+def gml_SimpleTriangle():
+
+    gml = """<gmlce:SimpleTriangle><gml:posList>0 0 1 0 1 1</gml:posList></gmlce:SimpleTriangle>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'POLYGON ((0 0,1 0,1 1,0 0))':
+        gdaltest.post_reason( '<gmlce:SimpleTriangle> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # When imported build a list of units based on the files available.
 
 #print 'hit enter'
@@ -1202,6 +1250,9 @@ gdaltest_list.append( gml_invalid_geoms )
 gdaltest_list.append( gml_write_gml3_geometries )
 gdaltest_list.append( gml_write_gml3_srs )
 gdaltest_list.append( gml_nested )
+gdaltest_list.append( gml_SimplePolygon )
+gdaltest_list.append( gml_SimpleRectangle )
+gdaltest_list.append( gml_SimpleTriangle )
 
 if __name__ == '__main__':
 
