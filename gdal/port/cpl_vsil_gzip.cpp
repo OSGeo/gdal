@@ -1635,9 +1635,10 @@ VSIZipReader::~VSIZipReader()
 
 void VSIZipReader::SetInfo()
 {
-    char fileName[512];
+    char fileName[8193];
     unz_file_info file_info;
-    cpl_unzGetCurrentFileInfo (unzF, &file_info, fileName, 512, NULL, 0, NULL, 0);
+    cpl_unzGetCurrentFileInfo (unzF, &file_info, fileName, sizeof(fileName) - 1, NULL, 0, NULL, 0);
+    fileName[sizeof(fileName) - 1] = '\0';
     osNextFileName = fileName;
     nNextFileSize = file_info.uncompressed_size;
     struct tm brokendowntime;
