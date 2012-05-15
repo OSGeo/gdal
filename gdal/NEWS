@@ -1,8 +1,6 @@
 = GDAL/OGR 1.9.1 Release Notes = 
 
-(Captured fixes from r24410 back to r24045)
-
-The 1.9.1 release is a bug release. 
+The 1.9.1 release is a bug fix release. 
 
 == Core ==
 
@@ -12,21 +10,30 @@ The 1.9.1 release is a bug release.
 
  * Improve OpenJDK finding logic in configure. (#4643)
 
-== GDAL 1.9.0 ==
+ * Fix iconv configure problem on FreeBSD (#4525)
+
+ * Fix MinGW build when pthread is also available (#4430)
+
+ * makegdalXX.vcproj : update 71,80 and 90 version. Drop 10 version --> open the 90 version and VS2010 should convert it (#4415)
+
+== GDAL 1.9.1 ==
+
+ * Fix statistics computation when nodata value is +/- infinity (#4506)
 
 gdal_polygonize.py:
  * Fix problem identifying some 8-connected polygons (#4647)
 
 gdalwarp:
  * properly close datasets in error conditions (#4554)
+ * assign color interpretation of source bands to target dataset, in the case of target VRT (#4462)
 
 gdalident.py, gdal_merge.py:
  * backout the evil globbing stuff (#2783, #4542)
 
 GTIFF (GeoTIFF) Driver:
- * internal libgeotiff updated from upstream to capture fix for user 
-   defined linear units (libgeotiff #51)
+ * internal libgeotiff updated from upstream to capture fix for user defined linear units (libgeotiff #51)
  * Maximize EPSG compatability where PCS is defined (#4607)
+ * ensure that rowsperstrip is never larger than ysize (#4468)
 
 JP2KAK / JP2ECW / JP2MrSID Drivers:
  * Fix support for GMLJP2 Axis interpretation (#4657)
@@ -39,8 +46,7 @@ Northwood Driver:
  * avoid win32 build issue with sizeof, remove debug output (#4565)
 
 TSX Driver:
- * fix crashes in Identify() with certain filenames, and the file is empty 
-   or doesn't exist (#4622)
+ * fix crashes in Identify() with certain filenames, and the file is empty or doesn't exist (#4622)
 
 HFA (Imagine) Driver:
  * fix crash on dataset closing when .ige file header is corrupted (#4596)
@@ -53,17 +59,33 @@ GRIB Driver:
  * fix fgetc signed/unsigned problem for Grib format VSI*L reader (#4603)
  
 JPEG Driver:
- * don't return junk content when requesting xml:XMP but no XMP metadata is 
-   present (#4593)
+ * don't return junk content when requesting xml:XMP but no XMP metadata is present (#4593)
 
 Oracle GeoRaster Driver:
  * Backport various improvements.
 
-== OGR 1.9.0 ==
+KML Superoverlay Driver:
+ * Remove code that limited generation to one zoom level (#4527)
+
+PDF Driver:
+ * Fix crashes on some PDF files with poppler >= 0.17.0 (#4520)
+
+ISIS Driver:
+ * ensure projection scaleFactor defaults to 1 (#4499)
+
+NetCDF Driver:
+ * use nc-config to detect netcdf compilation and linking parameters (#4424)
+ * make sure netcdf file is in data mode in IReadBlock and only set data/define mode for datasets in update mode (#4432)
+
+ACE2 Driver:
+ * fix typo that prevented dataset to be opened with explicit /vsigzip/ (#4460)
+
+== OGR 1.9.1 ==
 
 OGR Core: 
  * reverseWindingOrder(): don't force coordinate dimension to 3 (#4621)
  * Fix incorrect rounding in OGRFormatDouble (#4614)
+ * Fix segfault when running 'ogr2ogr target src -select AFIELD -where FID=xxx' when the source layer has more than 5 fields (#4500)
 
 OGRSpatialReference:
  * mapped methods EPSG methods 1028 and 1029 to equidistant cylindrical (#4589)
@@ -71,18 +93,38 @@ OGRSpatialReference:
 OGR SQL:
  * Fix invalid conversion from float to integer (#4634)
  * fix 'SELECT MAX(OGR_GEOM_AREA) FROM XXXX' (#4633)
+ * fix incorrect result with more than 2 JOINs and SELECT with expressions with field names (#4521)
+ * fix segfault on SELECT DISTINCT(foo) when first feature has NULL value for foo (#4509)
+
+gdalsrsinfo: 
+ * fix gdalrsrsinfo --formats (#4518)
+ * try to open with GDAL and OGR even if argument is not a file (bug #4493)
+ * Fix build of gdalsrsinfo when OGR support is disabled (#4459)
 
 ogr2ogr: 
- * correctly deal with filenames that begin with 'polygon' or 'multipolygon' 
-   as arguments of -clipdst and -clipsrc (#4590)
+ * correctly deal with filenames that begin with 'polygon' or 'multipolygon' as arguments of -clipdst and -clipsrc (#4590)
+ * fix -select with shapefile output when specified field name case doesn't match source field name case (#4502)
+
+Shapefile Driver:
+ * fix GetFeatureCount?() when spatial filter set, especially on big-endian hosts (#4491)
+
+GML Driver:
+ * make sure to use provided control points in linear approximation of gml:Arc (#4451)
+ * be tolerant about valid constructs for empty geometries (#4473)
+ * avoid point duplication concatenating gml curve segments (#4451)
+ * .xsd parser: recognize type='date' or type='dateType' as a string for now (#4439)
+ * make filtering of features based on OGR_GEOMETRY work (#4428)
+
+OCI (Oracle) Driver:
+ * (optionally) put back OCI index creation when layers are created (#4497)
 
 ESRI FileGDB Driver:
- * Unix configure: fix r24125 when no --with-fgdb option is specified and 
-   there's no filegdbapi in system directory (#4570)
-
-Spatialite / Sqlite Driver:
- * spatial index can be used even when linking against regular SQLite (#4632)
- * make sure C locale is loaded when building spatial filter (#4631)
+ * Unix configure: fix r24125 when no --with-fgdb option is specified and there's no filegdbapi in system directory (#4570)
+ * Add OBJECTID as a reserved word for FGDB field names (#4517).
+ * make test for use of reserved keywords case insensitive (#4458)
+ * define CLSID/EXTCLSID to fix Feature Class alias being ignored in ArcMap? (#4477)
+ * do appropriate layer name laundering in CreateLayer?() (#4466)
+ * implment field name laundering, avoid reserved words (#4458)
 
 ILI (Interlis) Driver:
  * Upgraded to support reading models.
@@ -100,12 +142,22 @@ DXF (Autocad) Driver:
 PG (Postgres/PostGIS) Driver:
  * SRS evaluation for SQL layers (#4644) 
  * Avoid fatal error when the public schema is absent. #4611
+ * Fix bad AND priority when spatial and attribute filter are combined in PG, MySQL, SQLite and MSSpatial drivers (#4507)
 
-INGRES Driver:
- * Bulk backport of improvements from trunk (#4567) 
+Spatialite / Sqlite Driver:
+ * spatial index can be used even when linking against regular SQLite (#4632)
+ * make sure C locale is loaded when building spatial filter (#4631)
+ * fix compilation problem with SQLite >= 3.6.0 and < 3.6.7 (#4515)
+ * fix temporary names creation in OGRSQLiteVFS (#4510)
 
 MYSQL Driver:
  * Fixed parser to swap coordiantes with geography data type (#4642)
+
+MSSQL Spatial Driver:
+ * Report DeleteFeature/DeleteLayer? capabilities for the MSSQL Spatial data source. (#4474)
+
+INGRES Driver:
+ * Bulk backport of improvements from trunk (#4567) 
 
 KML Driver:
  * simplify ParseCoordinate?() implementation (#4592) 
@@ -116,6 +168,19 @@ LibKML Driver:
  
 VRT Driver:
  * fix OGR VRT sensitive to whitespace and <?xml> nodes (#4582)
+
+PGEO Driver:
+ * remove heuristics that tried to identify if a MDB file belonged to the PGeo or Geomedia driver. It broke the opening of valid PGeo MDB files (#4498)
+ * fix crash when reading polygon with 0 rings, such as in Top25namen_07.mdb (#4441)
+
+WFS Driver:
+ * Don't trust width/precision from single sample feature (#4440)
+
+TIGER/Line Driver:
+ * Fix opening TIGER datasource by full file name (#4443)
+
+XLS Driver:
+ * fix behaviour of OGRXLSLayer::DetectColumnTypes?() in -O2 optimization level (#4423)
 
 = GDAL/OGR 1.9.0 Release Notes =
 
