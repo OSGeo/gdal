@@ -1,3 +1,122 @@
+= GDAL/OGR 1.9.1 Release Notes = 
+
+(Captured fixes from r24410 back to r24045)
+
+The 1.9.1 release is a bug release. 
+
+== Core ==
+
+ * fix crash with VSICachedFile::Read() for large reads (#4646)
+
+ * Unix VSI*L: correctly set current offset after a failed read (#4583)
+
+ * Improve OpenJDK finding logic in configure. (#4643)
+
+== GDAL 1.9.0 ==
+
+gdal_polygonize.py:
+ * Fix problem identifying some 8-connected polygons (#4647)
+
+gdalwarp:
+ * properly close datasets in error conditions (#4554)
+
+gdalident.py, gdal_merge.py:
+ * backout the evil globbing stuff (#2783, #4542)
+
+GTIFF (GeoTIFF) Driver:
+ * internal libgeotiff updated from upstream to capture fix for user 
+   defined linear units (libgeotiff #51)
+ * Maximize EPSG compatability where PCS is defined (#4607)
+
+JP2KAK / JP2ECW / JP2MrSID Drivers:
+ * Fix support for GMLJP2 Axis interpretation (#4657)
+
+DIMAP2 Driver: 
+ * Backport support for DIMAP2 (
+
+Northwood Driver: 
+ * Fix wrong file offset computation for >2GB files. (#4645)
+ * avoid win32 build issue with sizeof, remove debug output (#4565)
+
+TSX Driver:
+ * fix crashes in Identify() with certain filenames, and the file is empty 
+   or doesn't exist (#4622)
+
+HFA (Imagine) Driver:
+ * fix crash on dataset closing when .ige file header is corrupted (#4596)
+ * Added BASEDATA support for EPT_u1 (#4537)
+
+HDF4 Driver:
+ * add .hdf extension to the HDF4 driver metadata (#4559)
+
+GRIB Driver:
+ * fix fgetc signed/unsigned problem for Grib format VSI*L reader (#4603)
+ 
+JPEG Driver:
+ * don't return junk content when requesting xml:XMP but no XMP metadata is 
+   present (#4593)
+
+Oracle GeoRaster Driver:
+ * Backport various improvements.
+
+== OGR 1.9.0 ==
+
+OGR Core: 
+ * reverseWindingOrder(): don't force coordinate dimension to 3 (#4621)
+ * Fix incorrect rounding in OGRFormatDouble (#4614)
+
+OGRSpatialReference:
+ * mapped methods EPSG methods 1028 and 1029 to equidistant cylindrical (#4589)
+
+OGR SQL:
+ * Fix invalid conversion from float to integer (#4634)
+ * fix 'SELECT MAX(OGR_GEOM_AREA) FROM XXXX' (#4633)
+
+ogr2ogr: 
+ * correctly deal with filenames that begin with 'polygon' or 'multipolygon' 
+   as arguments of -clipdst and -clipsrc (#4590)
+
+ESRI FileGDB Driver:
+ * Unix configure: fix r24125 when no --with-fgdb option is specified and 
+   there's no filegdbapi in system directory (#4570)
+
+Spatialite / Sqlite Driver:
+ * spatial index can be used even when linking against regular SQLite (#4632)
+ * make sure C locale is loaded when building spatial filter (#4631)
+
+ILI (Interlis) Driver:
+ * Upgraded to support reading models.
+
+CSV Driver:
+ * Fix support for empty column names in header (#4654)
+ * Detect and remove UTF-8 BOM marker if found (#4623)
+
+MITAB (MapInfo) Driver:
+ * Fix support with Mollweide projection (#4628)
+
+DXF (Autocad) Driver:
+ * fix crash with TranslatePOLYLINE() with empty geometries (#4648)
+
+PG (Postgres/PostGIS) Driver:
+ * SRS evaluation for SQL layers (#4644) 
+ * Avoid fatal error when the public schema is absent. #4611
+
+INGRES Driver:
+ * Bulk backport of improvements from trunk (#4567) 
+
+MYSQL Driver:
+ * Fixed parser to swap coordiantes with geography data type (#4642)
+
+KML Driver:
+ * simplify ParseCoordinate?() implementation (#4592) 
+ * avoid potential out-of-range string access (#4592)
+
+LibKML Driver: 
+ * backport libkml stylemap support into 1.9 branch
+ 
+VRT Driver:
+ * fix OGR VRT sensitive to whitespace and <?xml> nodes (#4582)
+
 = GDAL/OGR 1.9.0 Release Notes =
 
 == In a nutshell... ==
