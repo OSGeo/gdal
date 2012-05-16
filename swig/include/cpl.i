@@ -95,6 +95,7 @@ typedef char retStringAndCPLFree;
 %rename (finder_clean) CPLFinderClean;
 %rename (find_file) CPLFindFile;
 %rename (read_dir) VSIReadDir;
+%rename (read_dir_recursive) VSIReadDirRecursive;
 %rename (mkdir) VSIMkdir;
 %rename (rmdir) VSIRmdir;
 %rename (rename) VSIRename;
@@ -117,6 +118,7 @@ typedef char retStringAndCPLFree;
 %rename (FinderClean) CPLFinderClean;
 %rename (FindFile) CPLFindFile;
 %rename (ReadDir) VSIReadDir;
+%rename (ReadDirRecursive) VSIReadDirRecursive;
 %rename (Mkdir) VSIMkdir;
 %rename (Rmdir) VSIRmdir;
 %rename (Rename) VSIRename;
@@ -223,6 +225,10 @@ const char * CPLFindFile( const char *pszClass, const char *utf8_path );
 
 %apply (char **CSL) {char **};
 char **VSIReadDir( const char * utf8_path );
+%clear char **;
+
+%apply (char **CSL) {char **};
+char **VSIReadDirRecursive( const char * utf8_path );
 %clear char **;
 
 %apply Pointer NONNULL {const char * pszKey};
