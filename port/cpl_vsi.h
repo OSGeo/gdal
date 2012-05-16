@@ -200,6 +200,7 @@ void CPL_DLL *VSIMalloc3( size_t nSize1, size_t nSize2, size_t nSize3 ) CPL_WARN
 
 #define CPLReadDir VSIReadDir
 char CPL_DLL **VSIReadDir( const char * );
+char CPL_DLL **VSIReadDirRecursive( const char *pszPath );
 int CPL_DLL VSIMkdir( const char * pathname, long mode );
 int CPL_DLL VSIRmdir( const char * pathname );
 int CPL_DLL VSIUnlink( const char * pathname );
