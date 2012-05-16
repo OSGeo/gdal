@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 2209 2012-05-09 01:34:58Z warmerdam $
+ * $Id: geo_normalize.c 2210 2012-05-16 00:18:02Z warmerdam $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -1011,7 +1011,7 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
         return( CT_ObliqueStereographic );
 
       case 9810:
-        /* case 9829: variant B not quite the same */ 
+      case 9829: /* variant B not quite the same - not sure how to handle */ 
         return( CT_PolarStereographic );
 
       case 9811:
