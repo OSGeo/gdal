@@ -62,8 +62,8 @@ void Usage()
 int main( int argc, char ** argv ) 
 
 {
-    GDALDatasetH	hDataset;
-    GDALRasterBandH	hBand;
+    GDALDatasetH	hDataset = NULL;
+    GDALRasterBandH	hBand = NULL;
     int			i, iBand;
     double		adfGeoTransform[6];
     GDALDriverH		hDriver;
@@ -171,12 +171,35 @@ int main( int argc, char ** argv )
 /*      Open dataset.                                                   */
 /* -------------------------------------------------------------------- */
     hDataset = GDALOpen( pszFilename, GA_ReadOnly );
-    
+
     if( hDataset == NULL )
     {
         fprintf( stderr,
                  "gdalinfo failed - unable to open '%s'.\n",
                  pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      If argument is a VSIFILE, then print its contents               */
+/* -------------------------------------------------------------------- */
+        if ( strncmp( pszFilename, "/vsizip/", 8 ) == 0 || 
+             strncmp( pszFilename, "/vsitar/", 8 ) == 0 ) 
+        {
+            papszFileList = VSIReadDirRecursive( pszFilename );
+            if ( papszFileList )
+            {
+                int nCount = CSLCount( papszFileList );
+                fprintf( stdout, 
+                         "Unable to open source `%s' directly.\n"
+                         "The archive contains %d files:\n", 
+                         pszFilename, nCount );
+                for ( i = 0; i < nCount; i++ )
+                {
+                    fprintf( stdout, "       %s/%s\n", pszFilename, papszFileList[i] );
+                }
+                CSLDestroy( papszFileList );
+                papszFileList = NULL;
+            }
+        }
 
         CSLDestroy( argv );
         CSLDestroy( papszExtraMDDomains );
@@ -820,7 +843,6 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
     if( ABS(dfGeoX) < 181 && ABS(dfGeoY) < 91 )
     {
         printf( "(%12.7f,%12.7f) ", dfGeoX, dfGeoY );
-
     }
     else
     {

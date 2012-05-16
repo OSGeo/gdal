@@ -198,6 +198,10 @@ def ReadDir(*args):
   """ReadDir(char utf8_path) -> char"""
   return _gdal.ReadDir(*args)
 
+def ReadDirRecursive(*args):
+  """ReadDirRecursive(char utf8_path) -> char"""
+  return _gdal.ReadDirRecursive(*args)
+
 def SetConfigOption(*args):
   """SetConfigOption(char pszKey, char pszValue)"""
   return _gdal.SetConfigOption(*args)
