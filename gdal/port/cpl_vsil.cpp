@@ -67,6 +67,95 @@ char **VSIReadDir(const char *pszPath)
 }
 
 /************************************************************************/
+/*                             VSIReadRecursive()                       */
+/************************************************************************/
+
+/**
+ * \brief Read names in a directory recursively.
+ *
+ * This function abstracts access to directory contents and subdirectories.
+ * It returns a list of strings containing the names of files and directories 
+ * in this directory and all subdirectories.  The resulting string list becomes
+ * the responsibility of the application and should be freed with CSLDestroy()
+ *  when no longer needed.
+ *
+ * Note that no error is issued via CPLError() if the directory path is
+ * invalid, though NULL is returned.
+ * 
+ * @param pszPath the relative, or absolute path of a directory to read.  
+ * UTF-8 encoded.
+ *
+ * @return The list of entries in the directory and subdirectories 
+ * or NULL if the directory doesn't exist.  Filenames are returned in UTF-8 
+ * encoding.
+ * @since GDAL 2.0.0
+ *
+ */
+
+char **VSIReadDirRecursive( const char *pszPath )
+{
+    CPLStringList oFiles = NULL;
+    char **papszFiles1 = NULL;
+    char **papszFiles2 = NULL;
+    VSIStatBufL psStatBuf;
+    CPLString osTemp1, osTemp2;
+    int i, j;
+    int nCount1, nCount2;
+
+    // get listing
+    papszFiles1 = VSIReadDir( pszPath );
+    if ( ! papszFiles1 )
+        return NULL;
+    
+    // get files and directories inside listing
+    nCount1 = CSLCount( papszFiles1 );
+    for ( i = 0; i < nCount1; i++ )
+    {
+        // build complete file name for stat
+        osTemp1.clear();
+        osTemp1.append( pszPath );
+        osTemp1.append( "/" );
+        osTemp1.append( papszFiles1[i] );
+
+        // if is file, add it
+        if ( VSIStatL( osTemp1.c_str(), &psStatBuf ) == 0 &&
+             VSI_ISREG( psStatBuf.st_mode ) )
+        {
+            oFiles.AddString( papszFiles1[i] );
+        }
+        else if ( VSIStatL( osTemp1.c_str(), &psStatBuf ) == 0 &&
+              VSI_ISDIR( psStatBuf.st_mode ) )
+        {
+            // add directory entry
+            osTemp2.clear();
+            osTemp2.append( papszFiles1[i] );
+            osTemp2.append( "/" );
+            oFiles.AddString( osTemp2.c_str() );
+
+            // recursively add files inside directory
+            papszFiles2 = VSIReadDirRecursive( osTemp1.c_str() );
+            if ( papszFiles2 )
+            {
+                nCount2 = CSLCount( papszFiles2 );
+                for ( j = 0; j < nCount2; j++ )
+                {
+                    osTemp2.clear();
+                    osTemp2.append( papszFiles1[i] );
+                    osTemp2.append( "/" );
+                    osTemp2.append( papszFiles2[j] );
+                    oFiles.AddString( osTemp2.c_str() );
+                }
+                CSLDestroy( papszFiles2 );
+            }
+        }
+    }
+    CSLDestroy( papszFiles1 );
+    
+    return oFiles.StealList();
+}
+
+
+/************************************************************************/
 /*                             CPLReadDir()                             */
 /*                                                                      */
 /*      This is present only to provide ABI compatability with older    */
