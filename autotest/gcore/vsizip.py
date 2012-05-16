@@ -223,9 +223,59 @@ def vsizip_3():
 
     return 'success'
 
+###############################################################################
+# Test ReadRecursive on valid zip
+
+def vsizip_4():
+
+    # read recursive and validate content
+    res = gdal.ReadDirRecursive("/vsizip/data/testzip.zip")
+    if res is None:
+        gdaltest.post_reason('fail read')
+        return 'fail'
+    if res != ['subdir/', 'subdir/subdir/', 'subdir/subdir/uint16.tif', \
+                   'subdir/subdir/test_rpc.txt', 'subdir/test_rpc.txt', \
+                   'test_rpc.txt', 'uint16.tif']:
+        gdaltest.post_reason('bad content')
+        print(res)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test ReadRecursive on deep zip
+
+def vsizip_5():
+
+    # make file in memory
+    fmain = gdal.VSIFOpenL('/vsizip/vsimem/bigdepthzip.zip', 'wb')
+    filename = "a"
+    for i in range(1000):
+        filename = filename + "/a"
+    finside = gdal.VSIFOpenL('/vsizip/vsimem/bigdepthzip.zip/' + filename, 'wb')
+    gdal.VSIFCloseL(finside)
+    gdal.VSIFCloseL(fmain)
+
+    # read recursive and validate content
+    res = gdal.ReadDirRecursive("/vsizip/vsimem/bigdepthzip.zip")
+    if res is None:
+        gdaltest.post_reason('fail read')
+        return 'fail'
+    if len(res) != 1001:
+        gdaltest.post_reason('wrong size: '+str(len(res)))
+        return 'fail'
+    if res[10] != 'a/a/a/a/a/a/a/a/a/a/a/':
+        gdaltest.post_reason('bad content: '+res[10])
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ vsizip_1,
                   vsizip_2,
-                  vsizip_3 ]
+                  vsizip_3,
+                  vsizip_4,
+                  vsizip_5,
+                  ]
 
 
 if __name__ == '__main__':
