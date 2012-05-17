@@ -2940,6 +2940,7 @@ AC_ARG_WITH(poppler,[  --with-poppler[=ARG]    Include poppler(for PDF) support 
 HAVE_POPPLER=no
 POPPLER_HAS_OPTCONTENT=no
 POPPLER_BASE_STREAM_HAS_TWO_ARGS=no
+POPPLER_0_20_OR_LATER=no
 
 AC_MSG_CHECKING([for poppler])
 
@@ -2999,6 +3000,19 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
         if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
             POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
             AC_MSG_RESULT([yes])
+
+            # And now we check if we have Poppler >= 0.20.0
+            AC_MSG_CHECKING([if we have Poppler >= 0.20.0])
+            rm -f testpoppler.*
+            echo '#include <poppler/Error.h>' > testpoppler.cpp
+            echo 'int main(int argc, char** argv) { setErrorCallback(0,0); return 0; }' >> testpoppler.cpp
+            if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                POPPLER_0_20_OR_LATER=yes
+                AC_MSG_RESULT([yes])
+            else
+                AC_MSG_RESULT([no])
+            fi
+
         else
             AC_MSG_RESULT([no])
         fi
@@ -3014,6 +3028,7 @@ fi
 AC_SUBST(HAVE_POPPLER, $HAVE_POPPLER)
 AC_SUBST(POPPLER_HAS_OPTCONTENT, $POPPLER_HAS_OPTCONTENT)
 AC_SUBST(POPPLER_BASE_STREAM_HAS_TWO_ARGS, $POPPLER_BASE_STREAM_HAS_TWO_ARGS)
+AC_SUBST(POPPLER_0_20_OR_LATER, $POPPLER_0_20_OR_LATER)
 AC_SUBST(POPPLER_INC, $POPPLER_INC)
 
 dnl ---------------------------------------------------------------------------
