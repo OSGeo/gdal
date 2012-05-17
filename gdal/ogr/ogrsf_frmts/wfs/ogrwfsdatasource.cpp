@@ -1539,7 +1539,8 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
     std::vector<GMLFeatureClass*> aosClasses;
     GMLParseXSD( osTmpFileName, aosClasses );
 
-    if ((int)aosClasses.size() == nLayersToFetch)
+    int nLayersFound = 0;
+    if ((int)aosClasses.size() > 0)
     {
         std::vector<GMLFeatureClass*>::const_iterator iter = aosClasses.begin();
         std::vector<GMLFeatureClass*>::const_iterator eiter = aosClasses.end();
@@ -1564,6 +1565,8 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
             {
                 if (!poLayer->HasLayerDefn())
                 {
+                    nLayersFound ++;
+
                     CPLXMLNode* psSchemaForLayer = CPLCloneXMLTree(psSchema);
                     CPLStripXMLNamespace( psSchemaForLayer, NULL, TRUE );
                     CPLXMLNode* psIter = psSchemaForLayer->psChild;
@@ -1665,26 +1668,11 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
                              poClass->GetName());
                 }
             }
-            else
-            {
-                CPLDebug("WFS", "Cannot find layer %s. Shouldn't happen",
-                            poClass->GetName());
-            }
             delete poClass;
         }
     }
-    else if (aosClasses.size() > 0)
-    {
-        std::vector<GMLFeatureClass*>::const_iterator iter = aosClasses.begin();
-        std::vector<GMLFeatureClass*>::const_iterator eiter = aosClasses.end();
-        while (iter != eiter)
-        {
-            GMLFeatureClass* poClass = *iter;
-            iter ++;
-            delete poClass;
-        }
-    }
-    else
+
+    if (nLayersFound != nLayersToFetch)
     {
         CPLDebug("WFS", "Turn off loading of multiple layer definitions at a single time");
         bLoadMultipleLayerDefn = FALSE;
