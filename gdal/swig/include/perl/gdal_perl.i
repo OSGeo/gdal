@@ -142,8 +142,8 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     # version should match. GDAL version is available in runtime but
     # it is needed here for the build time when it is compared against
     # the version of GDAL against which we build.
-    our $VERSION = '1.90';
-    our $GDAL_VERSION = '1.9.0';
+    our $VERSION = '1.91';
+    our $GDAL_VERSION = '1.9.1';
     use vars qw/
 	%TYPE_STRING2INT %TYPE_INT2STRING
 	%ACCESS_STRING2INT %ACCESS_INT2STRING
