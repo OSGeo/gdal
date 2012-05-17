@@ -301,7 +301,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 /* -------------------------------------------------------------------- */
 /*      Is the given path a directory or a regular file?                */
 /* -------------------------------------------------------------------- */
-    if( VSIStatL( pszFilename, &stat ) != 0 
+    if( VSIStatExL( pszFilename, &stat, VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG ) != 0
         || (!VSI_ISDIR(stat.st_mode) && !VSI_ISREG(stat.st_mode)) )
     {
         if( !bTestOpen )
