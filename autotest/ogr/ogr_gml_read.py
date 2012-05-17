@@ -1665,6 +1665,38 @@ def ogr_gml_42():
     return 'success'
 
 ###############################################################################
+# Test automated downloading of WFS schema
+
+def ogr_gml_43():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.Open('data/wfs_typefeature.gml')
+    if ds is None:
+        return 'fail'
+    ds = None
+
+    try:
+        os.stat('data/wfs_typefeature.gfs')
+        gfs_found = True
+    except:
+        gfs_found = False
+        pass
+
+    if gfs_found:
+        if gdaltest.gdalurlopen('http://testing.deegree.org:80/deegree-wfs/services?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=app:Springs&NAMESPACE=xmlns(app=http://www.deegree.org/app)') is None:
+            can_download_schema = False
+        else:
+            can_download_schema = True
+
+        if can_download_schema:
+            gdaltest.post_reason('.gfs found, but schema could be downloaded')
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -1771,6 +1803,10 @@ def ogr_gml_clean_files():
         os.remove( 'tmp/sample_gml_face_hole_negative_no.xml' )
     except:
         pass
+    try:
+        os.remove( 'data/wfs_typefeature.gfs' )
+    except:
+        pass
 
     files = os.listdir('data')
     for filename in files:
@@ -1825,6 +1861,7 @@ gdaltest_list = [
     ogr_gml_40,
     ogr_gml_41,
     ogr_gml_42,
+    ogr_gml_43,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':

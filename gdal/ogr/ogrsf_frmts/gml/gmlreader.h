@@ -131,7 +131,8 @@ public:
     const char *GetGeometryElement() const { return m_pszGeometryElement; }
     void        SetGeometryElement( const char *pszElementName );
 
-    const char *GetName() const { return m_pszName; } 
+    const char *GetName() const { return m_pszName; }
+    void        SetName(const char* pszNewName);
     int         GetPropertyCount() const { return m_nPropertyCount; }
     GMLPropertyDefn *GetProperty( int iIndex ) const;
     int GetPropertyIndex( const char *pszName ) const;
