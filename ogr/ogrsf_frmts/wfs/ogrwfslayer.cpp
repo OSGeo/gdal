@@ -144,7 +144,12 @@ OGRWFSLayer* OGRWFSLayer::Clone()
     poDupLayer->pszRequiredOutputFormat = pszRequiredOutputFormat ? CPLStrdup(pszRequiredOutputFormat) : NULL;
     poDupLayer->pszRequiredOutputFormatURL = pszRequiredOutputFormatURL ? CPLStrdup(pszRequiredOutputFormatURL) : NULL;
     poDupLayer->bAscFlag = bAscFlag;
-    
+
+    /* Copy existing schema file if already found */
+    CPLString osSrcFileName = CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
+    CPLString osTargetFileName = CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", poDupLayer);
+    CPLCopyFile(osTargetFileName, osSrcFileName);
+
     return poDupLayer;
 }
 
@@ -287,6 +292,7 @@ OGRFeatureDefn* OGRWFSLayer::ParseSchema(CPLXMLNode* psSchema)
 
     if (bHaveSchema && aosClasses.size() == 1)
     {
+        //CPLDebug("WFS", "Creating %s for %s", osTmpFileName.c_str(), GetName());
         return BuildLayerDefnFromFeatureClass(aosClasses[0]);
     }
     else if (bHaveSchema)
