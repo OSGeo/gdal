@@ -33,6 +33,7 @@ gdalident.py, gdal_merge.py:
 GTIFF (GeoTIFF) Driver:
  * internal libgeotiff updated from upstream to capture fix for user defined linear units (libgeotiff #51)
  * Maximize EPSG compatability where PCS is defined (#4607)
+ * Better preserve and use units defined by EPSG code (libgeotiff #51)
  * ensure that rowsperstrip is never larger than ysize (#4468)
 
 JP2KAK / JP2ECW / JP2MrSID Drivers:
