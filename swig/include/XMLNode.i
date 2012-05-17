@@ -37,18 +37,18 @@ typedef enum
     CXT_Literal = 4     
 } CPLXMLNodeType;
 
-%rename (XMLNode) _CPLXMLNode;
-%rename (Type) _CPLXMLNode::eType;
-%rename (Value) _CPLXMLNode::pszValue;
-%rename (Next) _CPLXMLNode::psNext;
-%rename (Child) _CPLXMLNode::psChild;
-typedef struct _CPLXMLNode
+%rename (XMLNode) CPLXMLNode;
+%rename (Type) CPLXMLNode::eType;
+%rename (Value) CPLXMLNode::pszValue;
+%rename (Next) CPLXMLNode::psNext;
+%rename (Child) CPLXMLNode::psChild;
+typedef struct CPLXMLNode
 {
 %immutable;
     CPLXMLNodeType      eType;       
     char                *pszValue;   
-    struct _CPLXMLNode *psNext;     
-    struct _CPLXMLNode *psChild;
+    struct CPLXMLNode *psNext;
+    struct CPLXMLNode *psChild;
 %mutable;  
 } CPLXMLNode;
 
