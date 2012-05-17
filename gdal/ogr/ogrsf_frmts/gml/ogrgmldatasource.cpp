@@ -641,7 +641,9 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
                 {
                     for(int i=0;i<nTokens;i+=2)
                     {
-                        CPLString osLocation = papszTokens[i+1];
+                        char* pszLocation = CPLUnescapeString(papszTokens[i+1], NULL, CPLES_URL);
+                        CPLString osLocation = pszLocation;
+                        CPLFree(pszLocation);
                         if (osLocation.ifind("typename=") != std::string::npos &&
                             osLocation.ifind("request=DescribeFeatureType") != std::string::npos)
                         {
