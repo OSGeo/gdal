@@ -148,6 +148,9 @@ class OGRGMLDataSource : public OGRDataSource
     GMLFeature         *poStoredGMLFeature;
     OGRGMLLayer        *poLastReadLayer;
 
+    void                FindAndParseBoundedBy(VSILFILE* fp);
+    void                SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
+
   public:
                         OGRGMLDataSource();
                         ~OGRGMLDataSource();
