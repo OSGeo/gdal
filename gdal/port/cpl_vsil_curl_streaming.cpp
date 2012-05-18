@@ -912,7 +912,7 @@ void VSICurlStreamingHandle::PutRingBufferInCache()
     if ( nBufSize > 0 )
     {
         if (nRingBufferFileOffset + nBufSize > BKGND_BUFFER_SIZE)
-            nBufSize = BKGND_BUFFER_SIZE - nRingBufferFileOffset;
+            nBufSize = (size_t) (BKGND_BUFFER_SIZE - nRingBufferFileOffset);
         GByte* pabyTmp = (GByte*) CPLMalloc(nBufSize);
         oRingBuffer.Read(pabyTmp, nBufSize);
         poFS->AddRegion(pszURL, nRingBufferFileOffset,
@@ -953,7 +953,7 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
     CachedRegion* psRegion = poFS->GetRegion(pszURL);
     if( psRegion != NULL && curOffset + nRemaining <= psRegion->nSize )
     {
-        size_t nSz = MIN(nRemaining, psRegion->nSize - curOffset);
+        size_t nSz = MIN(nRemaining, (size_t)(psRegion->nSize - curOffset));
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "Using cache for [%d, %d[ in %s",
                      (int)curOffset, (int)nSz, pszURL);
@@ -966,7 +966,7 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
               curOffset + nRemaining > fileSize &&
               fileSize == psRegion->nSize )
     {
-        size_t nSz = psRegion->nSize - curOffset;
+        size_t nSz = (size_t) (psRegion->nSize - curOffset);
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "Using cache for [%d, %d[ in %s",
                      (int)curOffset, (int)nSz, pszURL);
@@ -1001,11 +1001,11 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
                 nBytesToRead = oRingBuffer.GetSize();
             if (nBytesToRead > SKIP_BUFFER_SIZE)
                 nBytesToRead = SKIP_BUFFER_SIZE;
-            oRingBuffer.Read(pabyTmp, nBytesToRead);
+            oRingBuffer.Read(pabyTmp, (size_t)nBytesToRead);
             CPLReleaseMutex(hRingBufferMutex);
 
             if (nBytesToRead)
-                poFS->AddRegion(pszURL, nRingBufferFileOffset, nBytesToRead, pabyTmp);
+                poFS->AddRegion(pszURL, nRingBufferFileOffset, (size_t)nBytesToRead, pabyTmp);
 
             nBytesToSkip -= nBytesToRead;
             nRingBufferFileOffset += nBytesToRead;
@@ -1221,12 +1221,12 @@ void  VSICurlStreamingFSHandler::AddRegion( const char* pszURL,
     if (nFileOffsetStart <= psRegion->nSize &&
         nFileOffsetStart + nSize > psRegion->nSize)
     {
-        size_t nSz = MIN(nSize, BKGND_BUFFER_SIZE - nFileOffsetStart);
+        size_t nSz = MIN(nSize, (size_t) (BKGND_BUFFER_SIZE - nFileOffsetStart));
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "Writing [%d, %d[ in cache for %s",
                      (int)nFileOffsetStart, (int)(nFileOffsetStart + nSz), pszURL);
         memcpy(psRegion->pData + nFileOffsetStart, pData, nSz);
-        psRegion->nSize = nFileOffsetStart + nSz;
+        psRegion->nSize = (size_t) (nFileOffsetStart + nSz);
     }
 }
 
