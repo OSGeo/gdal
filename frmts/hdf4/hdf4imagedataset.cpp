@@ -238,6 +238,16 @@ HDF4ImageRasterBand::HDF4ImageRasterBand( HDF4ImageDataset *poDS, int nBand,
             nBlockYSize = poDS->nBlockPreferredYSize;
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      We need to avoid using the tile based api if we aren't          */
+/*      matching the tile size. (#4672)                                 */
+/* -------------------------------------------------------------------- */
+    if( nBlockXSize != poDS->nBlockPreferredXSize
+        || nBlockYSize != poDS->nBlockPreferredYSize ) 
+    {
+        poDS->bReadTile = FALSE;
+    }
 }
 
 /************************************************************************/
