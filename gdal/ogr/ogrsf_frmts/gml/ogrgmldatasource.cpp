@@ -397,10 +397,8 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
     }
     
 /* -------------------------------------------------------------------- */
-/*      We assume now that it is GML.  Close and instantiate a          */
-/*      GMLReader on it.                                                */
+/*      We assume now that it is GML.  Instantiate a GMLReader on it.   */
 /* -------------------------------------------------------------------- */
-    VSIFCloseL( fp );
 
     const char* pszReadMode = CPLGetConfigOption("GML_READ_MODE", NULL);
     if (pszReadMode == NULL || EQUAL(pszReadMode, "STANDARD"))
@@ -458,11 +456,12 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
                   "be instantiated, likely because Xerces or Expat support wasn't\n"
                   "configured in.", 
                   pszFilename );
+        VSIFCloseL( fp );
         return FALSE;
     }
 
     poReader->SetSourceFile( pszFilename );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Resolve the xlinks in the source file and save it with the      */
 /*      extension ".resolved.gml". The source file will to set to that. */
@@ -550,6 +549,7 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
                                             iSqliteCacheMB ) == FALSE )
             {
                 // we assume an errors have been reported.
+                VSIFCloseL(fp);
                 return FALSE;
             }
         }
@@ -565,6 +565,14 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
     pszXlinkResolvedFilename = NULL;
     CSLDestroy( papszSkip );
     papszSkip = NULL;
+
+    /* If the source filename for the reader is still the GML filename, then */
+    /* we can directly provide the file pointer. Otherwise we close it */
+    if (strcmp(poReader->GetSourceFileName(), pszFilename) == 0)
+        poReader->SetFP(fp);
+    else
+        VSIFCloseL(fp);
+    fp = NULL;
 
     /* Is a prescan required ? */
     if( bHaveSchema && !bSchemaDone )
