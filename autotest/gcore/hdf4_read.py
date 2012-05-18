@@ -204,11 +204,18 @@ def hdf4_read_online_6():
         return ret
 
     ds = gdal.Open('HDF4_EOS:EOS_GRID:tmp/cache/MOD09Q1G_EVI.A2006233.h07v03.005.2008338190308.hdf:MODIS_NACP_EVI:MODIS_EVI')
+
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
         if blockx != 4800 or blocky != 4800:
             gdaltest.post_reason("Did not get expected block size")
             return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 12197:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs)
+        return 'fail'
 
     ds = None
 
@@ -233,11 +240,18 @@ def hdf4_read_online_7():
         return ret
 
     ds = gdal.Open('HDF4_EOS:EOS_GRID:tmp/cache/MOD09A1.A2010041.h06v03.005.2010051001103.hdf:MOD_Grid_500m_Surface_Reflectance:sur_refl_b01')
+
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
         if blockx != 2400 or blocky != 32:
             gdaltest.post_reason("Did not get expected block size")
             return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 54894:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs)
+        return 'fail'
 
     ds = None
 
@@ -264,6 +278,13 @@ def hdf4_read_online_8():
         return ret
 
     ds = gdal.Open('HDF4_EOS:EOS_GRID:tmp/cache/MOD13Q1.A2006161.h21v13.005.2008234103220.hdf:MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI')
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 53837:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs)
+        return 'fail'
+
     if 'GetBlockSize' in dir(gdal.Band):
         (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
         if blockx != 4800 or blocky == 1:
@@ -303,6 +324,35 @@ def hdf4_read_online_9():
 
     return 'success'
 
+###############################################################################
+# Test that non-tiled access works (#4672)
+
+def hdf4_read_online_10():
+
+    if gdaltest.hdf4_drv is None:
+        return 'skip'
+
+    if not gdaltest.download_file('http://trac.osgeo.org/gdal/raw-attachment/ticket/4672/MOD16A2.A2000M01.h14v02.105.2010357183410.hdf', 'MOD16A2.A2000M01.h14v02.105.2010357183410.hdf'):
+        return 'skip'
+
+    ds = gdal.Open('HDF4_EOS:EOS_GRID:"tmp/cache/MOD16A2.A2000M01.h14v02.105.2010357183410.hdf":MOD_Grid_MOD16A2:ET_1km')
+
+    if 'GetBlockSize' in dir(gdal.Band):
+        (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
+        if blockx != 1200 or blocky != 833:
+            gdaltest.post_reason("Did not get expected block size")
+            return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 20976:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'HDF4Image', item[0], item[1], item[2] )
@@ -320,6 +370,7 @@ gdaltest_list.append( hdf4_read_online_6 )
 gdaltest_list.append( hdf4_read_online_7 )
 gdaltest_list.append( hdf4_read_online_8 )
 gdaltest_list.append( hdf4_read_online_9 )
+gdaltest_list.append( hdf4_read_online_10 )
 
 if __name__ == '__main__':
 
