@@ -50,6 +50,8 @@ CPLString WFS_TurnSQLFilterToOGCFilter( const char * pszFilter,
 const char* FindSubStringInsensitive(const char* pszStr,
                                      const char* pszSubStr);
 
+CPLString WFS_EscapeURL(CPLString osURL);
+
 /************************************************************************/
 /*                             OGRWFSLayer                              */
 /************************************************************************/
@@ -82,6 +84,7 @@ class OGRWFSLayer : public OGRLayer
     int nFeatures;
 
     CPLString           MakeGetFeatureURL(int nMaxFeatures, int bRequestHits);
+    int                 MustRetryIfNonCompliantServer(const char* pszServerAnswer);
     OGRDataSource*      FetchGetFeature(int nMaxFeatures);
     OGRFeatureDefn*     DescribeFeatureType();
     int                 ExecuteGetFeatureResultTypeHits();

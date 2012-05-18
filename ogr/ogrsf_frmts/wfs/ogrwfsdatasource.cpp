@@ -1718,7 +1718,7 @@ int OGRWFSDataSource::IsOldDeegree(const char* pszErrorString)
 /*                         WFS_EscapeURL()                              */
 /************************************************************************/
 
-static CPLString WFS_EscapeURL(CPLString osURL)
+CPLString WFS_EscapeURL(CPLString osURL)
 {
     CPLString osNewURL;
     size_t i;
