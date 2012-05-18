@@ -951,25 +951,28 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
 
     /* Can we use the cache ? */
     CachedRegion* psRegion = poFS->GetRegion(pszURL);
-    if( psRegion != NULL && curOffset + nRemaining <= psRegion->nSize )
+    if( psRegion != NULL && curOffset < psRegion->nSize )
     {
         size_t nSz = MIN(nRemaining, (size_t)(psRegion->nSize - curOffset));
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "Using cache for [%d, %d[ in %s",
-                     (int)curOffset, (int)nSz, pszURL);
+                     (int)curOffset, (int)(curOffset + nSz), pszURL);
         memcpy(pabyBuffer, psRegion->pData + curOffset, nSz);
         pabyBuffer += nSz;
         curOffset += nSz;
         nRemaining -= nSz;
     }
-    else if ( psRegion != NULL && bHastComputedFileSize &&
-              curOffset + nRemaining > fileSize &&
-              fileSize == psRegion->nSize )
+
+    /* Is the request partially covered by the cache and going beyond file size ? */
+    if ( psRegion != NULL && bHastComputedFileSize &&
+         curOffset <= psRegion->nSize &&
+         curOffset + nRemaining > fileSize &&
+         fileSize == psRegion->nSize )
     {
         size_t nSz = (size_t) (psRegion->nSize - curOffset);
-        if (ENABLE_DEBUG)
+        if (ENABLE_DEBUG && nSz != 0)
             CPLDebug("VSICURL", "Using cache for [%d, %d[ in %s",
-                     (int)curOffset, (int)nSz, pszURL);
+                    (int)curOffset, (int)(curOffset + nSz), pszURL);
         memcpy(pabyBuffer, psRegion->pData + curOffset, nSz);
         pabyBuffer += nSz;
         curOffset += nSz;
@@ -977,6 +980,7 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
         bEOF = TRUE;
     }
 
+    /* Has a Seek() being done since the last Read() ? */
     if (!bEOF && nRemaining > 0 && curOffset != nRingBufferFileOffset)
     {
         /* Backward seek : we need to restart the download from the start */
@@ -1035,6 +1039,7 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
         CPLAssert(curOffset == nRingBufferFileOffset);
     }
 
+    /* Fill the destination buffer from the ring buffer */
     while(!bEOF && nRemaining > 0)
     {
         int bDownloadInProgressInMutex;
