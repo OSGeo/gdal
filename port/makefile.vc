@@ -39,6 +39,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_vsil_abstract_archive.obj \
 		cpl_vsil_tar.obj \
 		cpl_vsil_curl.obj \
+		cpl_vsil_curl_streaming.obj \
 		cpl_vsil_stdin.obj \
 		cpl_vsil_buffered_reader.obj \
 		cpl_vsil_cache.obj \

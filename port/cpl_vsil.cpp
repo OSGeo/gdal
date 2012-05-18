@@ -839,6 +839,7 @@ VSIFileManager *VSIFileManager::Get()
 #endif
 #ifdef HAVE_CURL
         VSIInstallCurlFileHandler();
+        VSIInstallCurlStreamingFileHandler();
 #endif
         VSIInstallStdinHandler();
         VSIInstallStdoutHandler();
