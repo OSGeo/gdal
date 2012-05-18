@@ -442,6 +442,7 @@ public:
         { m_bClassListLocked = bFlag; }
 
     void             SetSourceFile( const char *pszFilename );
+    void             SetFP( VSILFILE* fp );
     const char*      GetSourceFileName();
 
     int              GetClassCount() const { return m_nClassCount; }
