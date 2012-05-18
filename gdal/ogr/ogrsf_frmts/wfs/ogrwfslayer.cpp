@@ -610,6 +610,50 @@ const char* OGRWFSFetchContentDispositionFilename(char** papszHeaders)
 }
 
 /************************************************************************/
+/*                  MustRetryIfNonCompliantServer()                     */
+/************************************************************************/
+
+int OGRWFSLayer::MustRetryIfNonCompliantServer(const char* pszServerAnswer)
+{
+    int bRetry = FALSE;
+
+    /* Deegree server does not support PropertyIsNotEqualTo */
+    /* We have to turn it into <Not><PropertyIsEqualTo> */
+    if (osWFSWhere.size() != 0 && poDS->PropertyIsNotEqualToSupported() &&
+        strstr(pszServerAnswer, "Unknown comparison operation: 'PropertyIsNotEqualTo'") != NULL)
+    {
+        poDS->SetPropertyIsNotEqualToUnSupported();
+        bRetry = TRUE;
+    }
+
+    /* Deegree server requires the gml: prefix in GmlObjectId element, but ESRI */
+    /* doesn't like it at all ! Other servers don't care... */
+    if (osWFSWhere.size() != 0 && !poDS->DoesGmlObjectIdNeedGMLPrefix() &&
+        strstr(pszServerAnswer, "&lt;GmlObjectId&gt; requires 'gml:id'-attribute!") != NULL)
+    {
+        poDS->SetGmlObjectIdNeedsGMLPrefix();
+        bRetry = TRUE;
+    }
+
+    /* GeoServer can return the error 'Only FeatureIds are supported when encoding id filters to SDE' */
+    if (osWFSWhere.size() != 0 && !bUseFeatureIdAtLayerLevel &&
+        strstr(pszServerAnswer, "Only FeatureIds are supported") != NULL)
+    {
+        bUseFeatureIdAtLayerLevel = TRUE;
+        bRetry = TRUE;
+    }
+
+    if (bRetry)
+    {
+        SetAttributeFilter(osSQLWhere);
+        bHasFetched = TRUE;
+        bReloadNeeded = FALSE;
+    }
+
+    return bRetry;
+}
+
+/************************************************************************/
 /*                         FetchGetFeature()                            */
 /************************************************************************/
 
@@ -619,7 +663,61 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
     CPLString osURL = MakeGetFeatureURL(nMaxFeatures, FALSE);
     CPLDebug("WFS", "%s", osURL.c_str());
 
-    CPLHTTPResult* psResult = poDS->HTTPFetch( osURL, NULL);
+    CPLHTTPResult* psResult = NULL;
+
+    CPLString osOutputFormat = CPLURLGetValue(osURL, "OUTPUTFORMAT");
+
+    /* Try streaming when the output format is GML and that we have a .xsd */
+    /* that we are able to understand */
+    CPLString osXSDFileName = CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
+    VSIStatBufL sBuf;
+    OGRSFDriverH hGMLDrv = OGRGetDriverByName("GML");
+    if (CSLTestBoolean(CPLGetConfigOption("OGR_WFS_USE_STREAMING", "YES")) &&
+        (osOutputFormat.size() == 0 || osOutputFormat.ifind("GML") != std::string::npos) &&
+        VSIStatL(osXSDFileName, &sBuf) == 0 && hGMLDrv != NULL)
+    {
+        const char* pszStreamingName = CPLSPrintf("/vsicurl_streaming/%s",
+                                                    WFS_EscapeURL(osURL).c_str());
+        const char* pszStreamingNameWithXSD = CPLSPrintf("%s,xsd=%s",
+                                            pszStreamingName, osXSDFileName.c_str());
+        OGRDataSource* poGML_DS = (OGRDataSource*)
+                OGR_Dr_Open(hGMLDrv, pszStreamingNameWithXSD, FALSE);
+        if (poGML_DS)
+            return poGML_DS;
+
+        /* In case of failure, read directly the content to examine */
+        /* it, if it is XML error content */
+        char szBuffer[2048];
+        int nRead = 0;
+        VSILFILE* fp = VSIFOpenL(pszStreamingName, "rb");
+        if (fp)
+        {
+            nRead = (int)VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fp);
+            szBuffer[nRead] = '\0';
+            VSIFCloseL(fp);
+        }
+
+        if (nRead != 0)
+        {
+            if (MustRetryIfNonCompliantServer(szBuffer))
+                return FetchGetFeature(nMaxFeatures);
+
+            if (strstr(szBuffer, "<ServiceExceptionReport") != NULL ||
+                strstr(szBuffer, "<ows:ExceptionReport") != NULL)
+            {
+                if (poDS->IsOldDeegree(szBuffer))
+                {
+                    return FetchGetFeature(nMaxFeatures);
+                }
+
+                CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
+                            szBuffer);
+                return NULL;
+            }
+        }
+    }
+
+    psResult = poDS->HTTPFetch( osURL, NULL);
     if (psResult == NULL)
     {
         return NULL;
@@ -679,7 +777,6 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
     int bZIP = FALSE;
     int bGZIP = FALSE;
 
-    CPLString osOutputFormat = CPLURLGetValue(osURL, "OUTPUTFORMAT");
     const char* pszOutputFormat = osOutputFormat.c_str();
 
     if (FindSubStringInsensitive(pszContentType, "json") ||
@@ -711,40 +808,8 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
         bGZIP = TRUE;
     }
 
-    int bRetry = FALSE;
-
-    /* Deegree server does not support PropertyIsNotEqualTo */
-    /* We have to turn it into <Not><PropertyIsEqualTo> */
-    if (osWFSWhere.size() != 0 && poDS->PropertyIsNotEqualToSupported() &&
-        strstr((const char*)pabyData, "Unknown comparison operation: 'PropertyIsNotEqualTo'") != NULL)
+    if (MustRetryIfNonCompliantServer((const char*)pabyData))
     {
-        poDS->SetPropertyIsNotEqualToUnSupported();
-        bRetry = TRUE;
-    }
-
-    /* Deegree server requires the gml: prefix in GmlObjectId element, but ESRI */
-    /* doesn't like it at all ! Other servers don't care... */
-    if (osWFSWhere.size() != 0 && !poDS->DoesGmlObjectIdNeedGMLPrefix() &&
-        strstr((const char*)pabyData, "&lt;GmlObjectId&gt; requires 'gml:id'-attribute!") != NULL)
-    {
-        poDS->SetGmlObjectIdNeedsGMLPrefix();
-        bRetry = TRUE;
-    }
-
-    /* GeoServer can return the error 'Only FeatureIds are supported when encoding id filters to SDE' */
-    if (osWFSWhere.size() != 0 && !bUseFeatureIdAtLayerLevel &&
-        strstr((const char*)pabyData, "Only FeatureIds are supported") != NULL)
-    {
-        bUseFeatureIdAtLayerLevel = TRUE;
-        bRetry = TRUE;
-    }
-
-    if (bRetry)
-    {
-        SetAttributeFilter(osSQLWhere);
-        bHasFetched = TRUE;
-        bReloadNeeded = FALSE;
-
         CPLHTTPDestroyResult(psResult);
         return FetchGetFeature(nMaxFeatures);
     }

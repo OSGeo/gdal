@@ -946,6 +946,14 @@ def ogr_wfs_erdas_apollo():
 def ogr_wfs_intergraph():
     return ogr_wfs_get_multiple_layer_defn('http://ideg.xunta.es/WFS_POL/request.aspx')
 
+
+###############################################################################
+# Test with OGR_WFS_USE_STREAMING=NO
+
+def ogr_wfs_turn_streaming_off():
+    gdal.SetConfigOption('OGR_WFS_USE_STREAMING', 'NO')
+    return 'success'
+
 gdaltest_list = [ 
     ogr_wfs_init,
     ogr_wfs_mapserver,
@@ -968,7 +976,10 @@ gdaltest_list = [
     ogr_wfs_cubewerx,
     ogr_wfs_tinyows,
     ogr_wfs_erdas_apollo,
-    ogr_wfs_intergraph
+    ogr_wfs_intergraph,
+    ogr_wfs_turn_streaming_off,
+    ogr_wfs_deegree,
+    ogr_wfs_test_ogrsf,
     ]
 
 if __name__ == '__main__':
