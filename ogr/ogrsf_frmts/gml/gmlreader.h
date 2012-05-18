@@ -31,6 +31,7 @@
 #define _GMLREADER_H_INCLUDED
 
 #include "cpl_port.h"
+#include "cpl_vsi.h"
 #include "cpl_minixml.h"
 
 #include <vector>
@@ -225,6 +226,7 @@ public:
     virtual void SetClassListLocked( int bFlag ) = 0;
 
     virtual void SetSourceFile( const char *pszFilename ) = 0;
+    virtual void SetFP( VSILFILE* fp ) { }
     virtual const char* GetSourceFileName() = 0;
 
     virtual int  GetClassCount() const = 0;
