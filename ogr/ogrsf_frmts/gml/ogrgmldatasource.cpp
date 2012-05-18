@@ -212,6 +212,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     int         nNumberOfFeatures = 0;
     CPLString   osWithVsiGzip;
     const char *pszSchemaLocation = NULL;
+    int bCheckAuxFile = TRUE;
 
     pszName = CPLStrdup( pszNewName );
 
@@ -378,6 +379,9 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         pszSchemaLocation = strstr(szPtr, "schemaLocation=");
         if (pszSchemaLocation)
             pszSchemaLocation += strlen("schemaLocation=");
+
+        if (bIsWFS && EQUALN(pszNewName, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")))
+            bCheckAuxFile = FALSE;
     }
     
 /* -------------------------------------------------------------------- */
@@ -477,7 +481,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 
         // Check if the file already exists.
         VSIStatBufL sResStatBuf, sGMLStatBuf;
-        if( VSIStatL( pszXlinkResolvedFilename, &sResStatBuf ) == 0 )
+        if( bCheckAuxFile && VSIStatL( pszXlinkResolvedFilename, &sResStatBuf ) == 0 )
         {
             VSIStatL( pszNewName, &sGMLStatBuf );
             if( sGMLStatBuf.st_mtime > sResStatBuf.st_mtime )
@@ -571,7 +575,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
         if (strncmp(pszGFSFilename, "/vsigzip/", strlen("/vsigzip/")) == 0)
             pszGFSFilename += strlen("/vsigzip/");
-        if( VSIStatL( pszGFSFilename, &sGFSStatBuf ) == 0 )
+        if( bCheckAuxFile && VSIStatL( pszGFSFilename, &sGFSStatBuf ) == 0 )
         {
             VSIStatL( pszNewName, &sGMLStatBuf );
             if( sGMLStatBuf.st_mtime > sGFSStatBuf.st_mtime )
@@ -614,7 +618,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         char** papszTypeNames = NULL;
 
         pszXSDFilename = CPLResetExtension( pszNewName, "xsd" );
-        if( VSIStatL( pszXSDFilename, &sGMLStatBuf ) == 0 )
+        if( bCheckAuxFile && VSIStatL( pszXSDFilename, &sGMLStatBuf ) == 0 )
         {
             bHasFoundXSD = TRUE;
         }
@@ -805,7 +809,8 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         !EQUALN(pszNewName, "/vsizip/", strlen("/vsizip/")) &&
         !EQUALN(pszNewName, "/vsigzip/vsi", strlen("/vsigzip/vsi")) &&
         !EQUALN(pszNewName, "/vsigzip//vsi", strlen("/vsigzip//vsi")) &&
-        !EQUALN(pszNewName, "/vsicurl/", strlen("/vsicurl/")))
+        !EQUALN(pszNewName, "/vsicurl/", strlen("/vsicurl/")) &&
+        !EQUALN(pszNewName, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")))
     {
         VSILFILE    *fp = NULL;
 
