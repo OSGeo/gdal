@@ -1448,7 +1448,22 @@ int OGRWFSLayer::GetFeatureCount( int bForce )
         if (nFeatures >= 0)
             return nFeatures;
     }
-    
+
+    /* If we have not yet the base layer, try to read one */
+    /* feature, and then query again OLCFastFeatureCount on the */
+    /* base layer. In case the WFS response would contain the */
+    /* number of features */
+    if (poBaseLayer == NULL)
+    {
+        ResetReading();
+        OGRFeature* poFeature = GetNextFeature();
+        delete poFeature;
+        ResetReading();
+
+        if (TestCapability(OLCFastFeatureCount))
+            return poBaseLayer->GetFeatureCount(bForce);
+    }
+
     nFeatures = OGRLayer::GetFeatureCount(bForce);
     return nFeatures;
 }
@@ -1480,6 +1495,18 @@ OGRErr OGRWFSLayer::GetExtent(OGREnvelope *psExtent, int bForce)
         psExtent->MaxX = dfMaxX;
         psExtent->MaxY = dfMaxY;
         return OGRERR_NONE;
+    }
+
+    /* If we have not yet the base layer, try to read one */
+    /* feature, and then query again OLCFastGetExtent on the */
+    /* base layer. In case the WFS response would contain the */
+    /* global extent */
+    if (poBaseLayer == NULL)
+    {
+        ResetReading();
+        OGRFeature* poFeature = GetNextFeature();
+        delete poFeature;
+        ResetReading();
     }
 
     if (TestCapability(OLCFastGetExtent))
