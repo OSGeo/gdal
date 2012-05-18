@@ -152,6 +152,7 @@ public:
     int         GetFeatureCount();
     void        SetFeatureCount( int );
 
+    int         HasExtents() const { return m_bHaveExtents; }
     void        SetExtents( double dfXMin, double dfXMax, 
                             double dFYMin, double dfYMax );
     int         GetExtents( double *pdfXMin, double *pdfXMax, 
@@ -256,6 +257,7 @@ public:
 
     virtual int HasStoppedParsing() = 0;
 
+    virtual void  SetGlobalSRSName( const char* pszGlobalSRSName ) {}
     virtual const char* GetGlobalSRSName() = 0;
     virtual int CanUseGlobalSRSName() = 0;
 

@@ -252,13 +252,13 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
 /* -------------------------------------------------------------------- */
     if( bTestOpen )
     {
-        size_t nRead = VSIFReadL( szHeader, 1, sizeof(szHeader), fp );
+        size_t nRead = VSIFReadL( szHeader, 1, sizeof(szHeader)-1, fp );
         if (nRead <= 0)
         {
             VSIFCloseL( fp );
             return FALSE;
         }
-        szHeader[MIN(nRead, sizeof(szHeader))-1] = '\0';
+        szHeader[nRead] = '\0';
 
         /* Might be a OS-Mastermap gzipped GML, so let be nice and try to open */
         /* it transparently with /vsigzip/ */
@@ -276,13 +276,13 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
             if( fp == NULL )
                 return FALSE;
 
-            nRead = VSIFReadL( szHeader, 1, sizeof(szHeader), fp );
+            nRead = VSIFReadL( szHeader, 1, sizeof(szHeader) - 1, fp );
             if (nRead <= 0)
             {
                 VSIFCloseL( fp );
                 return FALSE;
             }
-            szHeader[MIN(nRead, sizeof(szHeader))-1] = '\0';
+            szHeader[nRead] = '\0';
         }
 
 /* -------------------------------------------------------------------- */
@@ -395,7 +395,7 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
         if (bIsWFS && EQUALN(pszFilename, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")))
             bCheckAuxFile = FALSE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      We assume now that it is GML.  Instantiate a GMLReader on it.   */
 /* -------------------------------------------------------------------- */
@@ -461,6 +461,12 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
     }
 
     poReader->SetSourceFile( pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Find <gml:boundedBy>                                            */
+/* -------------------------------------------------------------------- */
+
+    FindAndParseBoundedBy(fp);
 
 /* -------------------------------------------------------------------- */
 /*      Resolve the xlinks in the source file and save it with the      */
@@ -923,6 +929,47 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
         {
             delete poSRS;
             poSRS = NULL;
+        }
+    }
+    else if (bIsWFS && poReader->GetClassCount() == 1)
+    {
+        pszSRSName = GetGlobalSRSName();
+        if (pszSRSName)
+        {
+            poSRS = new OGRSpatialReference();
+            if (poSRS->SetFromUserInput(pszSRSName) != OGRERR_NONE)
+            {
+                delete poSRS;
+                poSRS = NULL;
+            }
+
+            if (poSRS != NULL && m_bInvertAxisOrderIfLatLong &&
+                GML_IsSRSLatLongOrder(pszSRSName))
+            {
+                OGR_SRSNode *poGEOGCS = poSRS->GetAttrNode( "GEOGCS" );
+                if( poGEOGCS != NULL )
+                {
+                    poGEOGCS->StripNodes( "AXIS" );
+
+                    if (!poClass->HasExtents() &&
+                        sBoundingRect.IsInit())
+                    {
+                        poClass->SetExtents(sBoundingRect.MinY,
+                                            sBoundingRect.MaxY,
+                                            sBoundingRect.MinX,
+                                            sBoundingRect.MaxX);
+                    }
+                }
+            }
+        }
+
+        if (!poClass->HasExtents() &&
+            sBoundingRect.IsInit())
+        {
+            poClass->SetExtents(sBoundingRect.MinX,
+                                sBoundingRect.MaxX,
+                                sBoundingRect.MinY,
+                                sBoundingRect.MaxY);
         }
     }
 
@@ -1801,4 +1848,115 @@ OGRLayer * OGRGMLDataSource::ExecuteSQL( const char *pszSQLCommand,
 void OGRGMLDataSource::ReleaseResultSet( OGRLayer * poResultsSet )
 {
     delete poResultsSet;
+}
+
+/************************************************************************/
+/*                         FindAndParseBoundedBy()                      */
+/************************************************************************/
+
+void OGRGMLDataSource::FindAndParseBoundedBy(VSILFILE* fp)
+{
+    /* Build a shortened XML file that contain only the global */
+    /* boundedBy element, so as to be able to parse it easily */
+
+    char szStartTag[128];
+    char* pszXML = (char*)CPLMalloc(8192 + 128 + 3 + 1);
+    VSIFSeekL(fp, 0, SEEK_SET);
+    int nRead = (int)VSIFReadL(pszXML, 1, 8192, fp);
+    pszXML[nRead] = 0;
+
+    const char* pszStartTag = strchr(pszXML, '<');
+    if (pszStartTag != NULL)
+    {
+        while (pszStartTag != NULL && pszStartTag[1] == '?')
+            pszStartTag = strchr(pszStartTag + 1, '<');
+
+        if (pszStartTag != NULL)
+        {
+            pszStartTag ++;
+            const char* pszEndTag = strchr(pszStartTag, ' ');
+            if (pszEndTag != NULL && pszEndTag - pszStartTag < 128 )
+            {
+                memcpy(szStartTag, pszStartTag, pszEndTag - pszStartTag);
+                szStartTag[pszEndTag - pszStartTag] = '\0';
+            }
+            else
+                pszStartTag = NULL;
+        }
+    }
+
+    char* pszEndBoundedBy = strstr(pszXML, "</gml:boundedBy>");
+    if (pszStartTag != NULL && pszEndBoundedBy != NULL)
+    {
+        pszEndBoundedBy[strlen("</gml:boundedBy>")] = '\0';
+        strcat(pszXML, "</");
+        strcat(pszXML, szStartTag);
+        strcat(pszXML, ">");
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        CPLXMLNode* psXML = CPLParseXMLString(pszXML);
+        CPLPopErrorHandler();
+        CPLErrorReset();
+        if (psXML != NULL)
+        {
+            CPLXMLNode* psBoundedBy = NULL;
+            CPLXMLNode* psIter = psXML;
+            while(psIter != NULL)
+            {
+                psBoundedBy = CPLGetXMLNode(psIter, "gml:boundedBy");
+                if (psBoundedBy != NULL)
+                    break;
+                psIter = psIter->psNext;
+            }
+
+            const char* pszSRSName = NULL;
+            const char* pszLowerCorner = NULL;
+            const char* pszUpperCorner = NULL;
+            if (psBoundedBy != NULL)
+            {
+                CPLXMLNode* psEnvelope = CPLGetXMLNode(psBoundedBy, "gml:Envelope");
+                if (psEnvelope)
+                {
+                    pszSRSName = CPLGetXMLValue(psEnvelope, "srsName", NULL);
+                    pszLowerCorner = CPLGetXMLValue(psEnvelope, "gml:lowerCorner", NULL);
+                    pszUpperCorner = CPLGetXMLValue(psEnvelope, "gml:upperCorner", NULL);
+                }
+            }
+            if (pszSRSName != NULL && pszLowerCorner != NULL && pszUpperCorner != NULL)
+            {
+                char** papszLC = CSLTokenizeString(pszLowerCorner);
+                char** papszUC = CSLTokenizeString(pszUpperCorner);
+                if (CSLCount(papszLC) >= 2 && CSLCount(papszUC) >= 2)
+                {
+                    CPLDebug("GML", "Global SRS = %s", pszSRSName);
+                    poReader->SetGlobalSRSName(pszSRSName);
+
+                    double dfMinX = CPLAtofM(papszLC[0]);
+                    double dfMinY = CPLAtofM(papszLC[1]);
+                    double dfMaxX = CPLAtofM(papszUC[0]);
+                    double dfMaxY = CPLAtofM(papszUC[1]);
+
+                    SetExtents(dfMinX, dfMinY, dfMaxX, dfMaxY);
+                }
+                CSLDestroy(papszLC);
+                CSLDestroy(papszUC);
+            }
+
+            CPLDestroyXMLNode(psXML);
+        }
+    }
+
+    CPLFree(pszXML);
+}
+
+/************************************************************************/
+/*                             SetExtents()                             */
+/************************************************************************/
+
+void OGRGMLDataSource::SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY)
+{
+    sBoundingRect.MinX = dfMinX;
+    sBoundingRect.MinY = dfMinY;
+    sBoundingRect.MaxX = dfMaxX;
+    sBoundingRect.MaxY = dfMaxY;
 }
