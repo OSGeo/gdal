@@ -1697,6 +1697,60 @@ def ogr_gml_43():
     return 'success'
 
 ###############################################################################
+# Test providing a custom XSD filename
+
+def ogr_gml_44():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    xsd_content = """<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema targetNamespace="http://ogr.maptools.org/" xmlns:ogr="http://ogr.maptools.org/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml" elementFormDefault="qualified" version="1.0">
+<xs:import namespace="http://www.opengis.net/gml" schemaLocation="http://schemas.opengeospatial.net/gml/2.1.2/feature.xsd"/><xs:element name="FeatureCollection" type="ogr:FeatureCollectionType" substitutionGroup="gml:_FeatureCollection"/>
+<xs:complexType name="FeatureCollectionType">
+  <xs:complexContent>
+    <xs:extension base="gml:AbstractFeatureCollectionType">
+      <xs:attribute name="lockId" type="xs:string" use="optional"/>
+      <xs:attribute name="scope" type="xs:string" use="optional"/>
+    </xs:extension>
+  </xs:complexContent>
+</xs:complexType>
+<xs:element name="test_point" type="ogr:test_point_Type" substitutionGroup="gml:_Feature"/>
+<xs:complexType name="test_point_Type">
+  <xs:complexContent>
+    <xs:extension base="gml:AbstractFeatureType">
+      <xs:sequence>
+<xs:element name="geometryProperty" type="gml:GeometryPropertyType" nillable="true" minOccurs="1" maxOccurs="1"/>
+    <xs:element name="dbl" nillable="true" minOccurs="0" maxOccurs="1">
+      <xs:simpleType>
+        <xs:restriction base="xs:decimal">
+          <xs:totalDigits value="32"/>
+          <xs:fractionDigits value="3"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:element>
+      </xs:sequence>
+    </xs:extension>
+  </xs:complexContent>
+</xs:complexType>
+</xs:schema>"""
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gml_44.xsd', xsd_content)
+
+    ds = ogr.Open('data/test_point.gml,xsd=/vsimem/ogr_gml_44.xsd')
+    lyr = ds.GetLayer(0)
+
+    # fid and dbl
+    if lyr.GetLayerDefn().GetFieldCount() != 2:
+        return 'fail'
+
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gml_44.xsd')
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -1862,6 +1916,7 @@ gdaltest_list = [
     ogr_gml_41,
     ogr_gml_42,
     ogr_gml_43,
+    ogr_gml_44,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
