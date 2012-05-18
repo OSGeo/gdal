@@ -456,6 +456,15 @@ def ogr_vrt_11():
         return 'fail'
     if gdal.GetLastErrorMsg() != '':
         return 'fail'
+
+    vrt_lyr.SetAttributeFilter("1 = 1")
+    if vrt_lyr.GetFeatureCount() != 1:
+        return 'fail'
+
+    vrt_lyr.SetAttributeFilter("1 = 0")
+    if vrt_lyr.GetFeatureCount() != 0:
+        return 'fail'
+
     vrt_ds.Destroy()
     vrt_ds = None
 
