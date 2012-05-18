@@ -204,7 +204,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
+int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
 
 {
     VSILFILE   *fp;
@@ -214,18 +214,30 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     const char *pszSchemaLocation = NULL;
     int bCheckAuxFile = TRUE;
 
-    pszName = CPLStrdup( pszNewName );
+/* -------------------------------------------------------------------- */
+/*      Extract xsd filename from connexion string if present.          */
+/* -------------------------------------------------------------------- */
+    CPLString osFilename_ = pszNameIn;
+    const char *pszXSDFilename = strstr(pszNameIn, ",xsd=");
+    if (pszXSDFilename != NULL)
+    {
+        osFilename_.resize(pszXSDFilename - pszNameIn);
+        pszXSDFilename += strlen(",xsd=");
+    }
+    const char *pszFilename = osFilename_.c_str();
+
+    pszName = CPLStrdup( pszNameIn );
 
 /* -------------------------------------------------------------------- */
 /*      Open the source file.                                           */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpenL( pszNewName, "r" );
+    fp = VSIFOpenL( pszFilename, "r" );
     if( fp == NULL )
     {
         if( !bTestOpen )
             CPLError( CE_Failure, CPLE_OpenFailed, 
                       "Failed to open GML file `%s'.", 
-                      pszNewName );
+                      pszFilename );
 
         return FALSE;
     }
@@ -251,16 +263,16 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         /* Might be a OS-Mastermap gzipped GML, so let be nice and try to open */
         /* it transparently with /vsigzip/ */
         if ( ((GByte*)szHeader)[0] == 0x1f && ((GByte*)szHeader)[1] == 0x8b &&
-             EQUAL(CPLGetExtension(pszNewName), "gz") &&
-             strncmp(pszNewName, "/vsigzip/", strlen("/vsigzip/")) != 0 )
+             EQUAL(CPLGetExtension(pszFilename), "gz") &&
+             strncmp(pszFilename, "/vsigzip/", strlen("/vsigzip/")) != 0 )
         {
             VSIFCloseL( fp );
             osWithVsiGzip = "/vsigzip/";
-            osWithVsiGzip += pszNewName;
+            osWithVsiGzip += pszFilename;
 
-            pszNewName = osWithVsiGzip;
+            pszFilename = osWithVsiGzip;
 
-            fp = VSIFOpenL( pszNewName, "r" );
+            fp = VSIFOpenL( pszFilename, "r" );
             if( fp == NULL )
                 return FALSE;
 
@@ -350,7 +362,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
                 }
             }
         }
-        else if (strncmp(pszNewName, "/vsimem/tempwfs_", strlen("/vsimem/tempwfs_")) == 0)
+        else if (strncmp(pszFilename, "/vsimem/tempwfs_", strlen("/vsimem/tempwfs_")) == 0)
         {
             /* http://regis.intergraph.com/wfs/dcmetro/request.asp? returns a <G:FeatureCollection> */
             /* Who knows what servers can return ? Ok, so when in the context of the WFS driver */
@@ -380,7 +392,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         if (pszSchemaLocation)
             pszSchemaLocation += strlen("schemaLocation=");
 
-        if (bIsWFS && EQUALN(pszNewName, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")))
+        if (bIsWFS && EQUALN(pszFilename, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")))
             bCheckAuxFile = FALSE;
     }
     
@@ -445,11 +457,11 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
                   "File %s appears to be GML but the GML reader can't\n"
                   "be instantiated, likely because Xerces or Expat support wasn't\n"
                   "configured in.", 
-                  pszNewName );
+                  pszFilename );
         return FALSE;
     }
 
-    poReader->SetSourceFile( pszNewName );
+    poReader->SetSourceFile( pszFilename );
     
 /* -------------------------------------------------------------------- */
 /*      Resolve the xlinks in the source file and save it with the      */
@@ -463,7 +475,7 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
     if( pszOption != NULL && EQUALN( pszOption, "SAME", 4 ) )
     {
         // "SAME" will overwrite the existing gml file
-        pszXlinkResolvedFilename = CPLStrdup( pszNewName );
+        pszXlinkResolvedFilename = CPLStrdup( pszFilename );
     }
     else if( pszOption != NULL &&
              CPLStrnlen( pszOption, 5 ) >= 5 &&
@@ -477,13 +489,13 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         // When no option is given or is not recognised,
         // use the same file name with the extension changed to .resolved.gml
         pszXlinkResolvedFilename = CPLStrdup(
-                            CPLResetExtension( pszNewName, "resolved.gml" ) );
+                            CPLResetExtension( pszFilename, "resolved.gml" ) );
 
         // Check if the file already exists.
         VSIStatBufL sResStatBuf, sGMLStatBuf;
         if( bCheckAuxFile && VSIStatL( pszXlinkResolvedFilename, &sResStatBuf ) == 0 )
         {
-            VSIStatL( pszNewName, &sGMLStatBuf );
+            VSIStatL( pszFilename, &sGMLStatBuf );
             if( sGMLStatBuf.st_mtime > sResStatBuf.st_mtime )
             {
                 CPLDebug( "GML", 
@@ -511,7 +523,6 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
                                            CSLT_STRIPLEADSPACES |
                                            CSLT_STRIPENDSPACES );
     const char *pszGFSFilename;
-    VSIStatBufL sGFSStatBuf, sGMLStatBuf;
     int         bHaveSchema = FALSE;
     int         bSchemaDone = FALSE;
  
@@ -570,14 +581,16 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
 /*      Can we find a GML Feature Schema (.gfs) for the input file?     */
 /* -------------------------------------------------------------------- */
-    if( !bHaveSchema )
+    if( !bHaveSchema && pszXSDFilename == NULL)
     {
-        pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
+        pszGFSFilename = CPLResetExtension( pszFilename, "gfs" );
         if (strncmp(pszGFSFilename, "/vsigzip/", strlen("/vsigzip/")) == 0)
             pszGFSFilename += strlen("/vsigzip/");
+        VSIStatBufL sGFSStatBuf;
         if( bCheckAuxFile && VSIStatL( pszGFSFilename, &sGFSStatBuf ) == 0 )
         {
-            VSIStatL( pszNewName, &sGMLStatBuf );
+            VSIStatBufL sGMLStatBuf;
+            VSIStatL( pszFilename, &sGMLStatBuf );
             if( sGMLStatBuf.st_mtime > sGFSStatBuf.st_mtime )
             {
                 CPLDebug( "GML", 
@@ -590,13 +603,13 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
                 bHaveSchema = poReader->LoadClasses( pszGFSFilename );
                 if (bHaveSchema)
                 {
-                    const char *pszXSDFilename;
-                    pszXSDFilename = CPLResetExtension( pszNewName, "xsd" );
-                    if( VSIStatExL( pszXSDFilename, &sGMLStatBuf,
+                    const char *pszXSDFilenameTmp;
+                    pszXSDFilenameTmp = CPLResetExtension( pszFilename, "xsd" );
+                    if( VSIStatExL( pszXSDFilenameTmp, &sGMLStatBuf,
                                     VSI_STAT_EXISTS_FLAG ) == 0 )
                     {
                         CPLDebug("GML", "Using %s file, ignoring %s",
-                                 pszGFSFilename, pszXSDFilename);
+                                 pszGFSFilename, pszXSDFilenameTmp);
                     }
                 }
             }
@@ -609,7 +622,6 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /*      schemaLocation in the GML feature collection but for now we     */
 /*      just hopes it is in the same director with the same name.       */
 /* -------------------------------------------------------------------- */
-    const char *pszXSDFilename;
     int bHasFoundXSD = FALSE;
 
     if( !bHaveSchema )
@@ -617,10 +629,21 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         CPLString osTmpXSDFile;
         char** papszTypeNames = NULL;
 
-        pszXSDFilename = CPLResetExtension( pszNewName, "xsd" );
-        if( bCheckAuxFile && VSIStatL( pszXSDFilename, &sGMLStatBuf ) == 0 )
+        VSIStatBufL sXSDStatBuf;
+        if (pszXSDFilename == NULL)
         {
-            bHasFoundXSD = TRUE;
+            pszXSDFilename = CPLResetExtension( pszFilename, "xsd" );
+            if( bCheckAuxFile && VSIStatExL( pszXSDFilename, &sXSDStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
+            {
+                bHasFoundXSD = TRUE;
+            }
+        }
+        else
+        {
+            if ( VSIStatExL( pszXSDFilename, &sXSDStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
+            {
+                bHasFoundXSD = TRUE;
+            }
         }
 
         /* For WFS, try to fetch the application schema */
@@ -805,20 +828,21 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /*      can't ... could be read-only directory or something.            */
 /* -------------------------------------------------------------------- */
     if( !bHaveSchema && !poReader->HasStoppedParsing() &&
-        !EQUALN(pszNewName, "/vsitar/", strlen("/vsitar/")) &&
-        !EQUALN(pszNewName, "/vsizip/", strlen("/vsizip/")) &&
-        !EQUALN(pszNewName, "/vsigzip/vsi", strlen("/vsigzip/vsi")) &&
-        !EQUALN(pszNewName, "/vsigzip//vsi", strlen("/vsigzip//vsi")) &&
-        !EQUALN(pszNewName, "/vsicurl/", strlen("/vsicurl/")) &&
-        !EQUALN(pszNewName, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")))
+        !EQUALN(pszFilename, "/vsitar/", strlen("/vsitar/")) &&
+        !EQUALN(pszFilename, "/vsizip/", strlen("/vsizip/")) &&
+        !EQUALN(pszFilename, "/vsigzip/vsi", strlen("/vsigzip/vsi")) &&
+        !EQUALN(pszFilename, "/vsigzip//vsi", strlen("/vsigzip//vsi")) &&
+        !EQUALN(pszFilename, "/vsicurl/", strlen("/vsicurl/")) &&
+        !EQUALN(pszFilename, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")))
     {
         VSILFILE    *fp = NULL;
 
-        pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
+        pszGFSFilename = CPLResetExtension( pszFilename, "gfs" );
         if (strncmp(pszGFSFilename, "/vsigzip/", strlen("/vsigzip/")) == 0)
             pszGFSFilename += strlen("/vsigzip/");
 
-        if( VSIStatL( pszGFSFilename, &sGFSStatBuf ) != 0 
+        VSIStatBufL sGFSStatBuf;
+        if( VSIStatExL( pszGFSFilename, &sGFSStatBuf, VSI_STAT_EXISTS_FLAG ) != 0
             && (fp = VSIFOpenL( pszGFSFilename, "wt" )) != NULL )
         {
             VSIFCloseL( fp );
