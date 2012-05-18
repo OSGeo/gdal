@@ -839,8 +839,9 @@ int OGRVRTLayer::ResetSourceReading()
     {
         CPLString osMerged = pszFilter;
 
-        osMerged += " AND ";
+        osMerged += " AND (";
         osMerged += pszAttrFilter;
+        osMerged += ")";
 
         bSuccess = (poSrcLayer->SetAttributeFilter(osMerged) == CE_None);
     }
