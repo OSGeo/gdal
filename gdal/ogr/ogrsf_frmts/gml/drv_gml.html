@@ -66,6 +66,9 @@ looking for "known" gml objects in the gml namespace to determine the organizati
 While this approach is error prone, it has the advantage of working for GML files
 even if the associated schema (.xsd) file has been lost.<p>
 
+Starting with OGR 2.0, it is possible to specify an explicit filename for the XSD
+schema to use, by using "a_filename.gml,xsd=another_filename.xsd" as a connection string.<p>
+
 The first time a GML file is opened, if the associated .xsd is absent or could not been
 parsed correctly, it is completely scanned in order to
 determine the set of featuretypes, the attributes associated with each and
