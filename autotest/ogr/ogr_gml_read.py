@@ -1688,7 +1688,7 @@ def ogr_gml_43():
         if gdaltest.gdalurlopen('http://testing.deegree.org:80/deegree-wfs/services?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=app:Springs&NAMESPACE=xmlns(app=http://www.deegree.org/app)') is None:
             can_download_schema = False
         else:
-            can_download_schema = True
+            can_download_schema = gdal.GetDriverByName('HTTP') is not None 
 
         if can_download_schema:
             gdaltest.post_reason('.gfs found, but schema could be downloaded')
