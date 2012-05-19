@@ -571,7 +571,7 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
             }
         }
 
-        if (bHasIgnoredField)
+        if (bHasIgnoredField && osPropertyName.size())
         {
             osPropertyName = "(" + osPropertyName + ")";
             osURL = CPLURLAddKVP(osURL, "PROPERTYNAME", osPropertyName);
