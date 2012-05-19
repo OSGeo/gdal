@@ -328,8 +328,8 @@ private:
     CPLErr          CreateKernelMask( GDALWarpKernel *, int iBand, 
                                       const char *pszType );
 
-    void            *hThread1Mutex;
-    void            *hThread2Mutex;
+    void            *unused1;
+    void            *unused2;
     void            *hIOMutex;
     void            *hWarpMutex;
 
