@@ -262,11 +262,13 @@ VSICurlStreamingHandle::VSICurlStreamingHandle(VSICurlStreamingFSHandler* poFS, 
 
     curOffset = 0;
 
+    poFS->AcquireMutex();
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
     eExists = cachedFileProp->eExists;
     fileSize = cachedFileProp->fileSize;
     bHastComputedFileSize = cachedFileProp->bHastComputedFileSize;
     bIsDirectory = cachedFileProp->bIsDirectory;
+    poFS->ReleaseMutex();
 
     lastDownloadedOffset = -1;
     nBlocksToDownload = 1;
@@ -615,11 +617,13 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     CPLFree(sWriteFuncData.pBuffer);
     CPLFree(sWriteFuncHeaderData.pBuffer);
 
+    poFS->AcquireMutex();
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
     cachedFileProp->bHastComputedFileSize = TRUE;
     cachedFileProp->fileSize = fileSize;
     cachedFileProp->eExists = eExists;
     cachedFileProp->bIsDirectory = bIsDirectory;
+    poFS->ReleaseMutex();
 
     vsi_l_offset nRet = fileSize;
     ReleaseMutex();
@@ -669,10 +673,12 @@ int VSICurlStreamingHandle::Exists()
                 eExists = EXIST_NO;
                 fileSize = 0;
 
+                poFS->AcquireMutex();
                 CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
                 cachedFileProp->bHastComputedFileSize = TRUE;
                 cachedFileProp->fileSize = fileSize;
                 cachedFileProp->eExists = eExists;
+                poFS->ReleaseMutex();
 
                 CSLDestroy(papszExtensions);
 
@@ -686,8 +692,10 @@ int VSICurlStreamingHandle::Exists()
         int bExists = (Read(&chFirstByte, 1, 1) == 1);
 
         AcquireMutex();
+        poFS->AcquireMutex();
         CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
         cachedFileProp->eExists = eExists = bExists ? EXIST_YES : EXIST_NO;
+        poFS->ReleaseMutex();
         ReleaseMutex();
 
         Seek(0, SEEK_SET);
@@ -720,8 +728,10 @@ int VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count, size_t nm
     AcquireMutex();
     if (eExists == EXIST_UNKNOWN)
     {
+        poFS->AcquireMutex();
         CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
         cachedFileProp->eExists = eExists = EXIST_YES;
+        poFS->ReleaseMutex();
     }
     else if (eExists == EXIST_NO)
     {
@@ -824,8 +834,10 @@ int VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, siz
             if (ENABLE_DEBUG)
                 CPLDebug("VSICURL", "HTTP code = %d", nHTTPCode);
 
+            poFS->AcquireMutex();
             CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
             cachedFileProp->eExists = eExists = (nHTTPCode == 200) ? EXIST_YES : EXIST_NO;
+            poFS->ReleaseMutex();
         }
 
         if (!bHastComputedFileSize)
@@ -834,12 +846,14 @@ int VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, siz
             const char* pszEndOfLine = pszContentLength ? strchr(pszContentLength, '\n') : NULL;
             if (pszEndOfLine != NULL)
             {
+                poFS->AcquireMutex();
                 CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
                 cachedFileProp->fileSize = fileSize = CPLScanUIntBig(pszContentLength + 16,
                                                                      pszEndOfLine - (pszContentLength + 16));
                 cachedFileProp->bHastComputedFileSize = bHastComputedFileSize = TRUE;
                 if (ENABLE_DEBUG)
                     CPLDebug("VSICURL", "File size = " CPL_FRMT_GUIB, fileSize);
+                poFS->ReleaseMutex();
             }
         }
 
@@ -890,11 +904,13 @@ void VSICurlStreamingHandle::DownloadInThread()
     AcquireMutex();
     if (!bAskDownloadEnd && eRet == 0 && !bHastComputedFileSize)
     {
+        poFS->AcquireMutex();
         CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
         cachedFileProp->fileSize = fileSize = nBodySize;
         cachedFileProp->bHastComputedFileSize = bHastComputedFileSize = TRUE;
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "File size = " CPL_FRMT_GUIB, fileSize);
+        poFS->ReleaseMutex();
     }
 
     bDownloadInProgress = FALSE;
@@ -1272,8 +1288,7 @@ void VSICurlStreamingFSHandler::ReleaseMutex()
 /*                          GetRegion()                                 */
 /************************************************************************/
 
-/* Should be called and used under the FS mutex, because the region might be */
-/* discarded by a call of AddRegion() by another thread */
+/* Should be called undef the FS Lock */
 
 CachedRegion* VSICurlStreamingFSHandler::GetRegion(const char* pszURL)
 {
@@ -1354,10 +1369,10 @@ void  VSICurlStreamingFSHandler::AddRegion( const char* pszURL,
 /*                         GetCachedFileProp()                          */
 /************************************************************************/
 
+/* Should be called undef the FS Lock */
+
 CachedFileProp*  VSICurlStreamingFSHandler::GetCachedFileProp(const char* pszURL)
 {
-    AcquireMutex();
-
     CachedFileProp* cachedFileProp = cacheFileSize[pszURL];
     if (cachedFileProp == NULL)
     {
@@ -1368,8 +1383,6 @@ CachedFileProp*  VSICurlStreamingFSHandler::GetCachedFileProp(const char* pszURL
         cachedFileProp->bIsDirectory = FALSE;
         cacheFileSize[pszURL] = cachedFileProp;
     }
-
-    ReleaseMutex();
 
     return cachedFileProp;
 }
