@@ -171,6 +171,9 @@ public:
                                     const char *pszAccess);
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
 
+    void                AcquireMutex();
+    void                ReleaseMutex();
+
     CachedRegion*       GetRegion(const char*     pszURL);
 
     void                AddRegion(const char*     pszURL,
@@ -222,6 +225,9 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     size_t          nHeaderSize;
     vsi_l_offset    nBodySize;
 
+    void                AcquireMutex();
+    void                ReleaseMutex();
+
   public:
 
     VSICurlStreamingHandle(VSICurlStreamingFSHandler* poFS, const char* pszURL);
@@ -256,11 +262,13 @@ VSICurlStreamingHandle::VSICurlStreamingHandle(VSICurlStreamingFSHandler* poFS, 
 
     curOffset = 0;
 
+    poFS->AcquireMutex();
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
     eExists = cachedFileProp->eExists;
     fileSize = cachedFileProp->fileSize;
     bHastComputedFileSize = cachedFileProp->bHastComputedFileSize;
     bIsDirectory = cachedFileProp->bIsDirectory;
+    poFS->ReleaseMutex();
 
     lastDownloadedOffset = -1;
     nBlocksToDownload = 1;
@@ -270,7 +278,7 @@ VSICurlStreamingHandle::VSICurlStreamingHandle(VSICurlStreamingFSHandler* poFS, 
 
     hThread = NULL;
     hRingBufferMutex = CPLCreateMutex();
-    CPLReleaseMutex(hRingBufferMutex);
+    ReleaseMutex();
     hCondProducer = CPLCreateCond();
     hCondConsumer = CPLCreateCond();
 
@@ -301,6 +309,24 @@ VSICurlStreamingHandle::~VSICurlStreamingHandle()
     CPLDestroyMutex( hRingBufferMutex );
     CPLDestroyCond( hCondProducer );
     CPLDestroyCond( hCondConsumer );
+}
+
+/************************************************************************/
+/*                         AcquireMutex()                               */
+/************************************************************************/
+
+void VSICurlStreamingHandle::AcquireMutex()
+{
+    CPLAcquireMutex(hRingBufferMutex, 1000.0);
+}
+
+/************************************************************************/
+/*                          ReleaseMutex()                              */
+/************************************************************************/
+
+void VSICurlStreamingHandle::ReleaseMutex()
+{
+    CPLReleaseMutex(hRingBufferMutex);
 }
 
 /************************************************************************/
@@ -465,10 +491,14 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     WriteFuncStruct sWriteFuncData;
     WriteFuncStruct sWriteFuncHeaderData;
 
+    AcquireMutex();
     if (bHastComputedFileSize)
-        return fileSize;
-
-    bHastComputedFileSize = TRUE;
+    {
+        vsi_l_offset nRet = fileSize;
+        ReleaseMutex();
+        return nRet;
+    }
+    ReleaseMutex();
 
 #if LIBCURL_VERSION_NUM < 0x070B00
     /* Curl 7.10.X doesn't manage to unset the CURLOPT_RANGE that would have been */
@@ -520,7 +550,10 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     double dfSize = 0;
     curl_easy_perform(hLocalHandle);
 
+    AcquireMutex();
+
     eExists = EXIST_UNKNOWN;
+    bHastComputedFileSize = TRUE;
 
     if (strncmp(pszURL, "ftp", 3) == 0)
     {
@@ -584,18 +617,23 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     CPLFree(sWriteFuncData.pBuffer);
     CPLFree(sWriteFuncHeaderData.pBuffer);
 
+    poFS->AcquireMutex();
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
     cachedFileProp->bHastComputedFileSize = TRUE;
     cachedFileProp->fileSize = fileSize;
     cachedFileProp->eExists = eExists;
     cachedFileProp->bIsDirectory = bIsDirectory;
+    poFS->ReleaseMutex();
+
+    vsi_l_offset nRet = fileSize;
+    ReleaseMutex();
 
     if (hCurlHandle == NULL)
         hCurlHandle = hLocalHandle;
     else
         curl_easy_cleanup(hLocalHandle);
 
-    return fileSize;
+    return nRet;
 }
 
 /************************************************************************/
@@ -635,10 +673,12 @@ int VSICurlStreamingHandle::Exists()
                 eExists = EXIST_NO;
                 fileSize = 0;
 
+                poFS->AcquireMutex();
                 CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
                 cachedFileProp->bHastComputedFileSize = TRUE;
                 cachedFileProp->fileSize = fileSize;
                 cachedFileProp->eExists = eExists;
+                poFS->ReleaseMutex();
 
                 CSLDestroy(papszExtensions);
 
@@ -648,9 +688,16 @@ int VSICurlStreamingHandle::Exists()
             CSLDestroy(papszExtensions);
         }
 
-        CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
         char chFirstByte;
-        cachedFileProp->eExists = eExists = (Read(&chFirstByte, 1, 1) == 1) ? EXIST_YES : EXIST_NO;
+        int bExists = (Read(&chFirstByte, 1, 1) == 1);
+
+        AcquireMutex();
+        poFS->AcquireMutex();
+        CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
+        cachedFileProp->eExists = eExists = bExists ? EXIST_YES : EXIST_NO;
+        poFS->ReleaseMutex();
+        ReleaseMutex();
+
         Seek(0, SEEK_SET);
     }
 
@@ -678,19 +725,22 @@ int VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count, size_t nm
     if (ENABLE_DEBUG)
         CPLDebug("VSICURL", "Receiving %d bytes...", (int)nSize);
 
+    AcquireMutex();
     if (eExists == EXIST_UNKNOWN)
     {
+        poFS->AcquireMutex();
         CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
         cachedFileProp->eExists = eExists = EXIST_YES;
+        poFS->ReleaseMutex();
     }
     else if (eExists == EXIST_NO)
     {
+        ReleaseMutex();
         return 0;
     }
 
     while(TRUE)
     {
-        CPLAcquireMutex(hRingBufferMutex, 1000);
         size_t nFree = oRingBuffer.GetCapacity() - oRingBuffer.GetSize();
         if (nSize <= nFree)
         {
@@ -699,12 +749,12 @@ int VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count, size_t nm
             /* Signal to the consumer that we have added bytes to the buffer */
             CPLCondSignal(hCondProducer);
 
-            CPLReleaseMutex(hRingBufferMutex);
-
             if (bAskDownloadEnd)
             {
                 if (ENABLE_DEBUG)
                     CPLDebug("VSICURL", "Download interruption asked");
+
+                ReleaseMutex();
                 return 0;
             }
             break;
@@ -725,16 +775,19 @@ int VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count, size_t nm
             {
                 CPLCondWait(hCondConsumer, hRingBufferMutex);
             }
-            CPLReleaseMutex(hRingBufferMutex);
 
             if (bAskDownloadEnd)
             {
                 if (ENABLE_DEBUG)
                     CPLDebug("VSICURL", "Download interruption asked");
+
+                ReleaseMutex();
                 return 0;
             }
         }
     }
+
+    ReleaseMutex();
 
     return nmemb;
 }
@@ -770,6 +823,8 @@ int VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, siz
 
         //CPLDebug("VSICURL", "Header : %s", pabyHeaderData);
 
+        AcquireMutex();
+
         if (eExists == EXIST_UNKNOWN &&
             strchr((const char*)pabyHeaderData, '\n') != NULL &&
             (EQUALN((const char*)pabyHeaderData, "HTTP/1.0 ", 9) ||
@@ -779,8 +834,10 @@ int VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, siz
             if (ENABLE_DEBUG)
                 CPLDebug("VSICURL", "HTTP code = %d", nHTTPCode);
 
+            poFS->AcquireMutex();
             CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
             cachedFileProp->eExists = eExists = (nHTTPCode == 200) ? EXIST_YES : EXIST_NO;
+            poFS->ReleaseMutex();
         }
 
         if (!bHastComputedFileSize)
@@ -789,14 +846,18 @@ int VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, siz
             const char* pszEndOfLine = pszContentLength ? strchr(pszContentLength, '\n') : NULL;
             if (pszEndOfLine != NULL)
             {
+                poFS->AcquireMutex();
                 CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
                 cachedFileProp->fileSize = fileSize = CPLScanUIntBig(pszContentLength + 16,
                                                                      pszEndOfLine - (pszContentLength + 16));
                 cachedFileProp->bHastComputedFileSize = bHastComputedFileSize = TRUE;
                 if (ENABLE_DEBUG)
                     CPLDebug("VSICURL", "File size = " CPL_FRMT_GUIB, fileSize);
+                poFS->ReleaseMutex();
             }
         }
+
+        ReleaseMutex();
     }
 
     return nmemb;
@@ -840,22 +901,24 @@ void VSICurlStreamingHandle::DownloadInThread()
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, NULL);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, NULL);
 
+    AcquireMutex();
     if (!bAskDownloadEnd && eRet == 0 && !bHastComputedFileSize)
     {
+        poFS->AcquireMutex();
         CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
         cachedFileProp->fileSize = fileSize = nBodySize;
         cachedFileProp->bHastComputedFileSize = bHastComputedFileSize = TRUE;
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "File size = " CPL_FRMT_GUIB, fileSize);
+        poFS->ReleaseMutex();
     }
 
-    CPLAcquireMutex(hRingBufferMutex, 1000);
     bDownloadInProgress = FALSE;
     bDownloadStopped = TRUE;
 
     /* Signal to the consumer that the download has ended */
     CPLCondSignal(hCondProducer);
-    CPLReleaseMutex(hRingBufferMutex);
+    ReleaseMutex();
 }
 
 static void VSICurlDownloadInThread(void* pArg)
@@ -894,7 +957,7 @@ void VSICurlStreamingHandle::StopDownload()
         //if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "Stop download for %s", pszURL);
 
-        CPLAcquireMutex(hRingBufferMutex, 1000);
+        AcquireMutex();
         /* Signal to the producer that we ask for download interruption */
         bAskDownloadEnd = TRUE;
         CPLCondSignal(hCondConsumer);
@@ -902,10 +965,11 @@ void VSICurlStreamingHandle::StopDownload()
         /* Wait for the producer to have finished */
         while(bDownloadInProgress)
             CPLCondWait(hCondProducer, hRingBufferMutex);
-        CPLReleaseMutex(hRingBufferMutex);
 
         bAskDownloadEnd = FALSE;
-        
+
+        ReleaseMutex();
+
         CPLJoinThread(hThread);
         hThread = NULL;
 
@@ -928,7 +992,7 @@ void VSICurlStreamingHandle::PutRingBufferInCache()
     if (nRingBufferFileOffset >= BKGND_BUFFER_SIZE)
         return;
 
-    CPLAcquireMutex(hRingBufferMutex, 1000);
+    AcquireMutex();
 
     /* Cache any remaining bytes available in the ring buffer */
     size_t nBufSize = oRingBuffer.GetSize();
@@ -948,7 +1012,7 @@ void VSICurlStreamingHandle::PutRingBufferInCache()
         CPLFree(pabyTmp);
     }
 
-    CPLReleaseMutex(hRingBufferMutex);
+    ReleaseMutex();
 }
 
 /************************************************************************/
@@ -963,7 +1027,12 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
         return 0;
     size_t nRemaining = nBufferRequestSize;
 
-    if (bHastComputedFileSize && curOffset >= fileSize)
+    AcquireMutex();
+    int bHastComputedFileSizeLocal = bHastComputedFileSize;
+    vsi_l_offset fileSizeLocal = fileSize;
+    ReleaseMutex();
+
+    if (bHastComputedFileSizeLocal && curOffset >= fileSizeLocal)
         bEOF = TRUE;
     if (bEOF)
         return 0;
@@ -976,6 +1045,7 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
                  curOffset, curOffset + nBufferRequestSize, pszURL);
 
     /* Can we use the cache ? */
+    poFS->AcquireMutex();
     CachedRegion* psRegion = poFS->GetRegion(pszURL);
     if( psRegion != NULL && curOffset < psRegion->nSize )
     {
@@ -990,9 +1060,9 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
     }
 
     /* Is the request partially covered by the cache and going beyond file size ? */
-    if ( psRegion != NULL && bHastComputedFileSize &&
+    if ( psRegion != NULL && bHastComputedFileSizeLocal &&
          curOffset <= psRegion->nSize &&
-         curOffset + nRemaining > fileSize &&
+         curOffset + nRemaining > fileSizeLocal &&
          fileSize == psRegion->nSize )
     {
         size_t nSz = (size_t) (psRegion->nSize - curOffset);
@@ -1005,6 +1075,7 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
         nRemaining -= nSz;
         bEOF = TRUE;
     }
+    poFS->ReleaseMutex();
 
     /* Has a Seek() being done since the last Read() ? */
     if (!bEOF && nRemaining > 0 && curOffset != nRingBufferFileOffset)
@@ -1024,7 +1095,7 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
         {
             vsi_l_offset nBytesToRead = nBytesToSkip;
 
-            CPLAcquireMutex(hRingBufferMutex, 1000);
+            AcquireMutex();
             if (nBytesToRead > oRingBuffer.GetSize())
                 nBytesToRead = oRingBuffer.GetSize();
             if (nBytesToRead > SKIP_BUFFER_SIZE)
@@ -1033,7 +1104,7 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
 
             /* Signal to the producer that we have ingested some bytes */
             CPLCondSignal(hCondConsumer);
-            CPLReleaseMutex(hRingBufferMutex);
+            ReleaseMutex();
 
             if (nBytesToRead)
                 poFS->AddRegion(pszURL, nRingBufferFileOffset, (size_t)nBytesToRead, pabyTmp);
@@ -1046,11 +1117,11 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
                 if (ENABLE_DEBUG)
                     CPLDebug("VSICURL", "Waiting for writer to produce some bytes...");
 
-                CPLAcquireMutex(hRingBufferMutex, 1000);
+                AcquireMutex();
                 while(oRingBuffer.GetSize() == 0 && bDownloadInProgress)
                     CPLCondWait(hCondProducer, hRingBufferMutex);
                 int bBufferEmpty = (oRingBuffer.GetSize() == 0);
-                CPLReleaseMutex(hRingBufferMutex);
+                ReleaseMutex();
 
                 if (bBufferEmpty && !bDownloadInProgress)
                     break;
@@ -1075,7 +1146,7 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
     /* Fill the destination buffer from the ring buffer */
     while(!bEOF && nRemaining > 0)
     {
-        CPLAcquireMutex(hRingBufferMutex, 1000);
+        AcquireMutex();
         size_t nToRead = oRingBuffer.GetSize();
         if (nToRead > nRemaining)
             nToRead = nRemaining;
@@ -1083,7 +1154,7 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
 
         /* Signal to the producer that we have ingested some bytes */
         CPLCondSignal(hCondConsumer);
-        CPLReleaseMutex(hRingBufferMutex);
+        ReleaseMutex();
 
         if (nToRead)
             poFS->AddRegion(pszURL, curOffset, nToRead, pabyBuffer);
@@ -1098,11 +1169,11 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
             if (ENABLE_DEBUG)
                 CPLDebug("VSICURL", "Waiting for writer to produce some bytes...");
 
-            CPLAcquireMutex(hRingBufferMutex, 1000);
+            AcquireMutex();
             while(oRingBuffer.GetSize() == 0 && bDownloadInProgress)
                 CPLCondWait(hCondProducer, hRingBufferMutex);
             int bBufferEmpty = (oRingBuffer.GetSize() == 0);
-            CPLReleaseMutex(hRingBufferMutex);
+            ReleaseMutex();
 
             if (bBufferEmpty && !bDownloadInProgress)
                 break;
@@ -1162,7 +1233,8 @@ int       VSICurlStreamingHandle::Close()
 
 VSICurlStreamingFSHandler::VSICurlStreamingFSHandler()
 {
-    hMutex = NULL;
+    hMutex = CPLCreateMutex();
+    CPLReleaseMutex(hMutex);
     papsRegions = NULL;
     nRegions = 0;
 }
@@ -1190,8 +1262,7 @@ VSICurlStreamingFSHandler::~VSICurlStreamingFSHandler()
         CPLFree(iterCacheFileSize->second);
     }
 
-    if( hMutex != NULL )
-        CPLDestroyMutex( hMutex );
+    CPLDestroyMutex( hMutex );
     hMutex = NULL;
 }
 
@@ -1199,10 +1270,28 @@ VSICurlStreamingFSHandler::~VSICurlStreamingFSHandler()
 /*                          GetRegion()                                 */
 /************************************************************************/
 
+void VSICurlStreamingFSHandler::AcquireMutex()
+{
+    CPLAcquireMutex(hMutex, 1000.0);
+}
+
+/************************************************************************/
+/*                          GetRegion()                                 */
+/************************************************************************/
+
+void VSICurlStreamingFSHandler::ReleaseMutex()
+{
+    CPLReleaseMutex(hMutex);
+}
+
+/************************************************************************/
+/*                          GetRegion()                                 */
+/************************************************************************/
+
+/* Should be called undef the FS Lock */
+
 CachedRegion* VSICurlStreamingFSHandler::GetRegion(const char* pszURL)
 {
-    CPLMutexHolder oHolder( &hMutex );
-
     unsigned long   pszURLHash = CPLHashSetHashStr(pszURL);
 
     int i;
@@ -1227,11 +1316,11 @@ void  VSICurlStreamingFSHandler::AddRegion( const char* pszURL,
                                             vsi_l_offset    nFileOffsetStart,
                                             size_t          nSize,
                                             GByte          *pData )
-    {
+{
     if (nFileOffsetStart >= BKGND_BUFFER_SIZE)
         return;
 
-    CPLMutexHolder oHolder( &hMutex );
+    AcquireMutex();
 
     unsigned long   pszURLHash = CPLHashSetHashStr(pszURL);
 
@@ -1272,16 +1361,18 @@ void  VSICurlStreamingFSHandler::AddRegion( const char* pszURL,
         memcpy(psRegion->pData + nFileOffsetStart, pData, nSz);
         psRegion->nSize = (size_t) (nFileOffsetStart + nSz);
     }
+
+    ReleaseMutex();
 }
 
 /************************************************************************/
 /*                         GetCachedFileProp()                          */
 /************************************************************************/
 
+/* Should be called undef the FS Lock */
+
 CachedFileProp*  VSICurlStreamingFSHandler::GetCachedFileProp(const char* pszURL)
 {
-    CPLMutexHolder oHolder( &hMutex );
-
     CachedFileProp* cachedFileProp = cacheFileSize[pszURL];
     if (cachedFileProp == NULL)
     {
