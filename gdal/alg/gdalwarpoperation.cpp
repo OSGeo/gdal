@@ -121,8 +121,6 @@ GDALWarpOperation::GDALWarpOperation()
 {
     psOptions = NULL;
 
-    hThread1Mutex = NULL;
-    hThread2Mutex = NULL;
     hIOMutex = NULL;
     hWarpMutex = NULL;
 
@@ -143,10 +141,8 @@ GDALWarpOperation::~GDALWarpOperation()
 {
     WipeOptions();
 
-    if( hThread1Mutex != NULL )
+    if( hIOMutex != NULL )
     {
-        CPLDestroyMutex( hThread1Mutex );
-        CPLDestroyMutex( hThread2Mutex );
         CPLDestroyMutex( hIOMutex );
         CPLDestroyMutex( hWarpMutex );
     }
@@ -740,13 +736,17 @@ CPLErr GDALChunkAndWarpImage( GDALWarpOperationH hOperation,
 
 typedef struct
 {
-    void              *hThreadMutex;
     GDALWarpOperation *poOperation;
     int               *panChunkInfo;
-    int                bFinished;
+    void              *hThreadHandle;
     CPLErr             eErr;
     double             dfProgressBase;
     double             dfProgressScale;
+    void              *hIOMutex;
+
+    void              *hCondMutex;
+    int                bIOMutexTaken;
+    void              *hCond;
 } ChunkThreadData;
 
 
@@ -755,27 +755,40 @@ static void ChunkThreadMain( void *pThreadData )
 {
     volatile ChunkThreadData* psData = (volatile ChunkThreadData*) pThreadData;
 
-    if( !CPLAcquireMutex( psData->hThreadMutex, 2.0 ) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Failed to acquire thread mutex in ChunkThreadMain()." );
-        return;
-    }
-
     int *panChunkInfo = psData->panChunkInfo;
-    psData->eErr = psData->poOperation->WarpRegion(
-                                 panChunkInfo[0], panChunkInfo[1],
-                                 panChunkInfo[2], panChunkInfo[3], 
-                                 panChunkInfo[4], panChunkInfo[5], 
-                                 panChunkInfo[6], panChunkInfo[7],
-                                 psData->dfProgressBase,
-                                 psData->dfProgressScale);
 
-    /* Marks that we are done. */
-    psData->bFinished = TRUE;
+/* -------------------------------------------------------------------- */
+/*      Acquire IO mutex.                                               */
+/* -------------------------------------------------------------------- */
+    if( !CPLAcquireMutex( psData->hIOMutex, 600.0 ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "Failed to acquire IOMutex in WarpRegion()." );
+        psData->eErr = CE_Failure;
+    }
+    else
+    {
+        if (psData->hCond != NULL)
+        {
+            CPLAcquireMutex( psData->hCondMutex, 1.0 );
+            psData->bIOMutexTaken = TRUE;
+            CPLCondSignal(psData->hCond);
+            CPLReleaseMutex( psData->hCondMutex );
+        }
 
-    /* Release mutex so parent knows we are done. */
-    CPLReleaseMutex( psData->hThreadMutex );
+        psData->eErr = psData->poOperation->WarpRegion(
+                                    panChunkInfo[0], panChunkInfo[1],
+                                    panChunkInfo[2], panChunkInfo[3],
+                                    panChunkInfo[4], panChunkInfo[5],
+                                    panChunkInfo[6], panChunkInfo[7],
+                                    psData->dfProgressBase,
+                                    psData->dfProgressScale);
+
+    /* -------------------------------------------------------------------- */
+    /*      Release the IO mutex.                                           */
+    /* -------------------------------------------------------------------- */
+        CPLReleaseMutex( psData->hIOMutex );
+    }
 }
 
 /************************************************************************/
@@ -806,15 +819,15 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
     int nDstXOff, int nDstYOff,  int nDstXSize, int nDstYSize )
 
 {
-    hThread1Mutex = CPLCreateMutex();
-    hThread2Mutex = CPLCreateMutex();
     hIOMutex = CPLCreateMutex();
     hWarpMutex = CPLCreateMutex();
 
-    CPLReleaseMutex( hThread1Mutex );
-    CPLReleaseMutex( hThread2Mutex );
     CPLReleaseMutex( hIOMutex );
     CPLReleaseMutex( hWarpMutex );
+
+    void* hCond = CPLCreateCond();
+    void* hCondMutex = CPLCreateMutex();
+    CPLReleaseMutex(hCondMutex);
 
 /* -------------------------------------------------------------------- */
 /*      Collect the list of chunks to operate on.                       */
@@ -831,12 +844,10 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
 /* -------------------------------------------------------------------- */
     ChunkThreadData volatile asThreadData[2];
     memset((void*)&asThreadData, 0, sizeof(asThreadData));
-    asThreadData[0].hThreadMutex = hThread1Mutex;
     asThreadData[0].poOperation = this;
-    asThreadData[0].bFinished = TRUE;
-    asThreadData[1].hThreadMutex = hThread2Mutex;
+    asThreadData[0].hIOMutex = hIOMutex;
     asThreadData[1].poOperation = this;
-    asThreadData[1].bFinished = TRUE;
+    asThreadData[1].hIOMutex = hIOMutex;
 
     int iChunk;
     double dfPixelsProcessed=0.0, dfTotalPixels = nDstXSize*(double)nDstYSize;
@@ -860,20 +871,39 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
             dfPixelsProcessed += dfChunkPixels;
 
             asThreadData[iThread].panChunkInfo = panThisChunk;
-            asThreadData[iThread].bFinished = FALSE;
+
+            if ( iChunk == 0 )
+            {
+                asThreadData[iThread].hCond = hCond;
+                asThreadData[iThread].hCondMutex = hCondMutex;
+            }
+            else
+            {
+                asThreadData[iThread].hCond = NULL;
+                asThreadData[iThread].hCondMutex = NULL;
+            }
+            asThreadData[iThread].bIOMutexTaken = FALSE;
 
             CPLDebug( "GDAL", "Start chunk %d.", iChunk );
-            if( CPLCreateThread( ChunkThreadMain, (void*) &asThreadData[iThread]) == -1 )
+            asThreadData[iThread].hThreadHandle =
+                CPLCreateJoinableThread( ChunkThreadMain, (void*) &asThreadData[iThread] );
+            if( asThreadData[iThread].hThreadHandle == NULL )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
-                          "CPLCreateThread() failed in ChunkAndWarpMulti()" );
-                return CE_Failure;
+                          "CPLCreateJoinableThread() failed in ChunkAndWarpMulti()" );
+                eErr = CE_Failure;
+                break;
             }
 
-            /* Eventually we need a mechanism to ensure we wait for this 
-               thread to acquire the IO mutex before proceeding. */
+            /* Wait that the first thread has acquired the IO mutex before proceeding. */
+            /* (This will ensure that the first thread will run before the second one). */
             if( iChunk == 0 )
-                CPLSleep( 0.25 );
+            {
+                CPLAcquireMutex(hCondMutex, 1.0);
+                while (asThreadData[iThread].bIOMutexTaken == FALSE)
+                    CPLCondWait(hCond, hCondMutex);
+                CPLReleaseMutex(hCondMutex);
+            }
         }
 
         
@@ -885,11 +915,8 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
             iThread = (iChunk-1) % 2;
             
             /* Wait for thread to finish. */
-            while( !(asThreadData[iThread].bFinished) )
-            {
-                if( CPLAcquireMutex( asThreadData[iThread].hThreadMutex, 1.0 ) )
-                    CPLReleaseMutex( asThreadData[iThread].hThreadMutex );
-            }
+            CPLJoinThread(asThreadData[iThread].hThreadHandle);
+            asThreadData[iThread].hThreadHandle = NULL;
 
             CPLDebug( "GDAL", "Finished chunk %d.", iChunk-1 );
 
@@ -906,12 +933,12 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
     int iThread;
     for(iThread = 0; iThread < 2; iThread ++)
     {
-        while( !(asThreadData[iThread].bFinished) )
-        {
-            if( CPLAcquireMutex( asThreadData[iThread].hThreadMutex, 1.0 ) )
-                CPLReleaseMutex( asThreadData[iThread].hThreadMutex );
-        }
+        if (asThreadData[iThread].hThreadHandle)
+            CPLJoinThread(asThreadData[iThread].hThreadHandle);
     }
+
+    CPLDestroyCond(hCond);
+    CPLDestroyMutex(hCondMutex);
 
     WipeChunkList();
 
@@ -1175,19 +1202,6 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
     CPLErr eErr;
     int   iBand;
 
-/* -------------------------------------------------------------------- */
-/*      Acquire IO mutex.                                               */
-/* -------------------------------------------------------------------- */
-    if( hIOMutex != NULL )
-    {
-        if( !CPLAcquireMutex( hIOMutex, 600.0 ) )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Failed to acquire IOMutex in WarpRegion()." );
-            return CE_Failure;
-        }
-    }
-
     ReportTiming( NULL );
 
 /* -------------------------------------------------------------------- */
@@ -1203,8 +1217,6 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Integer overflow : nDstXSize=%d, nDstYSize=%d",
                   nDstXSize, nDstYSize);
-        if( hIOMutex != NULL )
-            CPLReleaseMutex( hIOMutex );
         return CE_Failure;
     }
 
@@ -1214,8 +1226,6 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
         CPLError( CE_Failure, CPLE_OutOfMemory,
                   "Out of memory allocating %d byte destination buffer.",
                   nBandSize * psOptions->nBandCount );
-        if( hIOMutex != NULL )
-            CPLReleaseMutex( hIOMutex );
         return CE_Failure;
     }
 
@@ -1300,8 +1310,6 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
         if( eErr != CE_None )
         {
             CPLFree( pDstBuffer );
-            if( hIOMutex != NULL )
-                CPLReleaseMutex( hIOMutex );
             return eErr;
         }
 
@@ -1347,9 +1355,6 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 /* -------------------------------------------------------------------- */
     VSIFree( pDstBuffer );
     
-    if( hIOMutex != NULL )
-        CPLReleaseMutex( hIOMutex );
-
     return eErr;
 }
 
