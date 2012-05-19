@@ -210,6 +210,8 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     volatile int    bAskDownloadEnd;
     vsi_l_offset    nRingBufferFileOffset;
     void           *hRingBufferMutex;
+    void           *hCondProducer;
+    void           *hCondConsumer;
     RingBuffer      oRingBuffer;
     void            StartDownload();
     void            StopDownload();
@@ -264,7 +266,11 @@ VSICurlStreamingHandle::VSICurlStreamingHandle(VSICurlStreamingFSHandler* poFS, 
     bEOF = FALSE;
 
     hCurlHandle = NULL;
-    hRingBufferMutex = NULL;
+
+    hRingBufferMutex = CPLCreateMutex();
+    CPLReleaseMutex(hRingBufferMutex);
+    hCondProducer = CPLCreateCond();
+    hCondConsumer = CPLCreateCond();
 
     bDownloadInProgress = FALSE;
     bDownloadStopped = FALSE;
@@ -290,9 +296,9 @@ VSICurlStreamingHandle::~VSICurlStreamingHandle()
 
     CPLFree(pabyHeaderData);
 
-    if( hRingBufferMutex != NULL )
-        CPLDestroyMutex( hRingBufferMutex );
-    hRingBufferMutex = NULL;
+    CPLDestroyMutex( hRingBufferMutex );
+    CPLDestroyCond( hCondProducer );
+    CPLDestroyCond( hCondConsumer );
 }
 
 /************************************************************************/
@@ -689,6 +695,9 @@ int VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count, size_t nm
             oRingBuffer.Write(buffer, nSize);
             CPLReleaseMutex(hRingBufferMutex);
 
+            /* Signal to the consumer that we have added bytes to the buffer */
+            CPLCondSignal(hCondProducer);
+
             if (bAskDownloadEnd)
             {
                 if (ENABLE_DEBUG)
@@ -704,16 +713,17 @@ int VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count, size_t nm
             nSize -= nFree;
             CPLReleaseMutex(hRingBufferMutex);
 
-            if (bAskDownloadEnd)
-            {
-                if (ENABLE_DEBUG)
-                    CPLDebug("VSICURL", "Download interruption asked");
-                return 0;
-            }
+            /* Signal to the consumer that we have added bytes to the buffer */
+            CPLCondSignal(hCondProducer);
 
             if (ENABLE_DEBUG)
                 CPLDebug("VSICURL", "Waiting for reader to consume some bytes...");
-            CPLSleep(0.05);
+            CPLAcquireMutex(hRingBufferMutex, 1000);
+            while(oRingBuffer.GetSize() == oRingBuffer.GetCapacity() && !bAskDownloadEnd)
+            {
+                CPLCondWait(hCondConsumer, hRingBufferMutex);
+            }
+            CPLReleaseMutex(hRingBufferMutex);
 
             if (bAskDownloadEnd)
             {
@@ -839,6 +849,9 @@ void VSICurlStreamingHandle::DownloadInThread()
 
     bDownloadInProgress = FALSE;
     bDownloadStopped = TRUE;
+
+    /* Signal to the consumer that the download has ended */
+    CPLCondSignal(hCondProducer);
 }
 
 static void VSICurlDownloadInThread(void* pArg)
@@ -854,9 +867,6 @@ void VSICurlStreamingHandle::StartDownload()
 {
     if (bDownloadInProgress || bDownloadStopped)
         return;
-    {
-        CPLMutexHolder oHolder( &hRingBufferMutex );
-    }
 
     //if (ENABLE_DEBUG)
         CPLDebug("VSICURL", "Start download for %s", pszURL);
@@ -880,9 +890,16 @@ void VSICurlStreamingHandle::StopDownload()
         //if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "Stop download for %s", pszURL);
 
+        /* Signal to the producer that we ask for download interruption */
         bAskDownloadEnd = TRUE;
+        CPLCondSignal(hCondConsumer);
+
+        /* Wait for the producer to have finished */
+        CPLAcquireMutex(hRingBufferMutex, 1000);
         while(bDownloadInProgress)
-            CPLSleep(0.05);
+            CPLCondWait(hCondProducer, hRingBufferMutex);
+        CPLReleaseMutex(hRingBufferMutex);
+
         bAskDownloadEnd = FALSE;
 
         curl_easy_cleanup(hCurlHandle);
@@ -904,8 +921,7 @@ void VSICurlStreamingHandle::PutRingBufferInCache()
     if (nRingBufferFileOffset >= BKGND_BUFFER_SIZE)
         return;
 
-    if (hRingBufferMutex)
-        CPLAcquireMutex(hRingBufferMutex, 1000);
+    CPLAcquireMutex(hRingBufferMutex, 1000);
 
     /* Cache any remaining bytes available in the ring buffer */
     size_t nBufSize = oRingBuffer.GetSize();
@@ -915,14 +931,17 @@ void VSICurlStreamingHandle::PutRingBufferInCache()
             nBufSize = (size_t) (BKGND_BUFFER_SIZE - nRingBufferFileOffset);
         GByte* pabyTmp = (GByte*) CPLMalloc(nBufSize);
         oRingBuffer.Read(pabyTmp, nBufSize);
+
+        /* Signal to the consumer that we have ingested some bytes */
+        CPLCondSignal(hCondConsumer);
+
         poFS->AddRegion(pszURL, nRingBufferFileOffset,
                         nBufSize, pabyTmp);
         nRingBufferFileOffset += nBufSize;
         CPLFree(pabyTmp);
     }
 
-    if (hRingBufferMutex)
-        CPLReleaseMutex(hRingBufferMutex);
+    CPLReleaseMutex(hRingBufferMutex);
 }
 
 /************************************************************************/
@@ -996,17 +1015,18 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
         vsi_l_offset nBytesToSkip = curOffset - nRingBufferFileOffset;
         while(nBytesToSkip > 0)
         {
-            int bDownloadInProgressInMutex;
             vsi_l_offset nBytesToRead = nBytesToSkip;
 
             CPLAcquireMutex(hRingBufferMutex, 1000);
-            bDownloadInProgressInMutex = bDownloadInProgress;
             if (nBytesToRead > oRingBuffer.GetSize())
                 nBytesToRead = oRingBuffer.GetSize();
             if (nBytesToRead > SKIP_BUFFER_SIZE)
                 nBytesToRead = SKIP_BUFFER_SIZE;
             oRingBuffer.Read(pabyTmp, (size_t)nBytesToRead);
             CPLReleaseMutex(hRingBufferMutex);
+
+            /* Signal to the consumer that we have ingested some bytes */
+            CPLCondSignal(hCondConsumer);
 
             if (nBytesToRead)
                 poFS->AddRegion(pszURL, nRingBufferFileOffset, (size_t)nBytesToRead, pabyTmp);
@@ -1016,11 +1036,17 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
 
             if (nBytesToRead == 0 && nBytesToSkip != 0)
             {
-                if (!bDownloadInProgressInMutex)
-                    break;
                 if (ENABLE_DEBUG)
                     CPLDebug("VSICURL", "Waiting for writer to produce some bytes...");
-                CPLSleep(0.05);
+
+                CPLAcquireMutex(hRingBufferMutex, 1000);
+                while(oRingBuffer.GetSize() == 0 && bDownloadInProgress)
+                    CPLCondWait(hCondProducer, hRingBufferMutex);
+                int bBufferEmpty = (oRingBuffer.GetSize() == 0);
+                CPLReleaseMutex(hRingBufferMutex);
+
+                if (bBufferEmpty && !bDownloadInProgress)
+                    break;
             }
         }
 
@@ -1042,15 +1068,15 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
     /* Fill the destination buffer from the ring buffer */
     while(!bEOF && nRemaining > 0)
     {
-        int bDownloadInProgressInMutex;
-
         CPLAcquireMutex(hRingBufferMutex, 1000);
-        bDownloadInProgressInMutex = bDownloadInProgress;
         size_t nToRead = oRingBuffer.GetSize();
         if (nToRead > nRemaining)
             nToRead = nRemaining;
         oRingBuffer.Read(pabyBuffer, nToRead);
         CPLReleaseMutex(hRingBufferMutex);
+
+        /* Signal to the consumer that we have ingested some bytes */
+        CPLCondSignal(hCondConsumer);
 
         if (nToRead)
             poFS->AddRegion(pszURL, curOffset, nToRead, pabyBuffer);
@@ -1062,11 +1088,17 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
 
         if (nToRead == 0 && nRemaining != 0)
         {
-            if (!bDownloadInProgressInMutex)
-                break;
             if (ENABLE_DEBUG)
                 CPLDebug("VSICURL", "Waiting for writer to produce some bytes...");
-            CPLSleep(0.05);
+
+            CPLAcquireMutex(hRingBufferMutex, 1000);
+            while(oRingBuffer.GetSize() == 0 && bDownloadInProgress)
+                CPLCondWait(hCondProducer, hRingBufferMutex);
+            int bBufferEmpty = (oRingBuffer.GetSize() == 0);
+            CPLReleaseMutex(hRingBufferMutex);
+
+            if (bBufferEmpty && !bDownloadInProgress)
+                break;
         }
     }
 
