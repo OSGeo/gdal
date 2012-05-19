@@ -72,6 +72,8 @@ void  CPL_DLL  CPLDestroyCond( void *hCond );
 
 GIntBig CPL_DLL CPLGetPID();
 int   CPL_DLL CPLCreateThread( CPLThreadFunc pfnMain, void *pArg );
+void  CPL_DLL* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pArg );
+void  CPL_DLL CPLJoinThread(void* hJoinableThread); 
 void  CPL_DLL CPLSleep( double dfWaitInSeconds );
 
 const char CPL_DLL *CPLGetThreadingModel();
