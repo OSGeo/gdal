@@ -432,6 +432,26 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pArg )
 }
 
 /************************************************************************/
+/*                      CPLCreateJoinableThread()                       */
+/************************************************************************/
+
+void* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThreadArg )
+
+{
+    CPLDebug( "CPLCreateJoinableThread", "Fails to dummy implementation" );
+
+    return NULL;
+}
+
+/************************************************************************/
+/*                          CPLJoinThread()                             */
+/************************************************************************/
+
+void CPLJoinThread(void* hJoinableThread)
+{
+}
+
+/************************************************************************/
 /*                              CPLSleep()                              */
 /************************************************************************/
 
@@ -818,6 +838,7 @@ GIntBig CPLGetPID()
 typedef struct {
     void *pAppData;
     CPLThreadFunc pfnMain;
+    HANDLE hThread;
 } CPLStdCallThreadInfo;
 
 static DWORD WINAPI CPLStdCallThreadJacket( void *pData )
@@ -827,7 +848,8 @@ static DWORD WINAPI CPLStdCallThreadJacket( void *pData )
 
     psInfo->pfnMain( psInfo->pAppData );
 
-    CPLFree( psInfo );
+    if (psInfo->hThread == NULL)
+        CPLFree( psInfo ); /* Only for detached threads */
 
     CPLCleanupTLS();
 
@@ -852,6 +874,7 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
     psInfo = (CPLStdCallThreadInfo*) CPLCalloc(sizeof(CPLStdCallThreadInfo),1);
     psInfo->pAppData = pThreadArg;
     psInfo->pfnMain = pfnMain;
+    psInfo->hThread = NULL;
 
     hThread = CreateThread( NULL, 0, CPLStdCallThreadJacket, psInfo, 
                             0, &nThreadId );
@@ -862,6 +885,44 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
     CloseHandle( hThread );
 
     return nThreadId;
+}
+
+/************************************************************************/
+/*                      CPLCreateJoinableThread()                       */
+/************************************************************************/
+
+void* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThreadArg )
+
+{
+    HANDLE hThread;
+    DWORD  nThreadId;
+    CPLStdCallThreadInfo *psInfo;
+
+    psInfo = (CPLStdCallThreadInfo*) CPLCalloc(sizeof(CPLStdCallThreadInfo),1);
+    psInfo->pAppData = pThreadArg;
+    psInfo->pfnMain = pfnMain;
+
+    hThread = CreateThread( NULL, 0, CPLStdCallThreadJacket, psInfo, 
+                            0, &nThreadId );
+
+    if( hThread == NULL )
+        return NULL;
+        
+    psInfo->hThread = hThread;
+    return psInfo;
+}
+
+/************************************************************************/
+/*                          CPLJoinThread()                             */
+/************************************************************************/
+
+void CPLJoinThread(void* hJoinableThread)
+{
+    CPLStdCallThreadInfo *psInfo = (CPLStdCallThreadInfo *) hJoinableThread;
+    
+    WaitForSingleObject(psInfo->hThread, INFINITE);
+    CloseHandle( psInfo->hThread );
+    CPLFree( psInfo );
 }
 
 /************************************************************************/
@@ -1214,6 +1275,7 @@ typedef struct {
     void *pAppData;
     CPLThreadFunc pfnMain;
     pthread_t hThread;
+    int bJoinable;
 } CPLStdCallThreadInfo;
 
 static void *CPLStdCallThreadJacket( void *pData )
@@ -1223,7 +1285,8 @@ static void *CPLStdCallThreadJacket( void *pData )
 
     psInfo->pfnMain( psInfo->pAppData );
 
-    CPLFree( psInfo );
+    if (!psInfo->bJoinable)
+        CPLFree( psInfo );
 
     return NULL;
 }
@@ -1246,6 +1309,7 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
     psInfo = (CPLStdCallThreadInfo*) CPLCalloc(sizeof(CPLStdCallThreadInfo),1);
     psInfo->pAppData = pThreadArg;
     psInfo->pfnMain = pfnMain;
+    psInfo->bJoinable = FALSE;
 
     pthread_attr_init( &hThreadAttr );
     pthread_attr_setdetachstate( &hThreadAttr, PTHREAD_CREATE_DETACHED );
@@ -1257,6 +1321,47 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
     }
 
     return 1; /* can we return the actual thread pid? */
+}
+
+/************************************************************************/
+/*                      CPLCreateJoinableThread()                       */
+/************************************************************************/
+
+void* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThreadArg )
+
+{
+    CPLStdCallThreadInfo *psInfo;
+    pthread_attr_t hThreadAttr;
+
+    psInfo = (CPLStdCallThreadInfo*) CPLCalloc(sizeof(CPLStdCallThreadInfo),1);
+    psInfo->pAppData = pThreadArg;
+    psInfo->pfnMain = pfnMain;
+    psInfo->bJoinable = TRUE;
+
+    pthread_attr_init( &hThreadAttr );
+    pthread_attr_setdetachstate( &hThreadAttr, PTHREAD_CREATE_JOINABLE );
+    if( pthread_create( &(psInfo->hThread), &hThreadAttr,
+                        CPLStdCallThreadJacket, (void *) psInfo ) != 0 )
+    {
+        CPLFree( psInfo );
+        return NULL;
+    }
+
+    return psInfo;
+}
+
+/************************************************************************/
+/*                          CPLJoinThread()                             */
+/************************************************************************/
+
+void CPLJoinThread(void* hJoinableThread)
+{
+    CPLStdCallThreadInfo *psInfo = (CPLStdCallThreadInfo*) hJoinableThread;
+
+    void* status;
+    pthread_join( psInfo->hThread, &status);
+
+    CPLFree(psInfo);
 }
 
 /************************************************************************/
