@@ -108,6 +108,7 @@ static const char *apszSpheroidMapping[] = {
     "WGS_72", "WGS_1972",
     "GRS_1967_Modified", "GRS_1967_Truncated",
     "Krassowsky_1940", "Krasovsky_1940",
+    "Everest_1830_1937_Adjustment", "Everest_Adjustment_1937",
     NULL, NULL }; 
  
 static const char *apszUnitMapping[] = {
@@ -1670,13 +1671,8 @@ OGRErr OGRSpatialReference::morphFromESRI()
             /* we found the ESRI datum name in the map */
             if( EQUAL(DMGetESRIName(i),pszDatumOrig) )
             {
-                int nGeogCS;
-                int bDeprecated;
                 const char *pszFilename = NULL;
                 char **papszRecord = NULL;
-                OGR_SRSNode *poNode = NULL;
-                const char *pszThisValue = NULL;
-                char *pszOtherValue = NULL;
                 
                 /* look for GEOGCS corresponding to this datum */
                 pszFilename = CSVFilename("gcs.csv");
@@ -1685,11 +1681,13 @@ OGRErr OGRSpatialReference::morphFromESRI()
                 if ( papszRecord != NULL )
                 {
                     /* make sure we got a valid EPSG code and it is not DEPRECATED */
-                    nGeogCS = atoi( CSLGetField( papszRecord,
-                                                 CSVGetFileFieldId(pszFilename,"COORD_REF_SYS_CODE")) );
-                    bDeprecated = atoi( CSLGetField( papszRecord,
-                                                     CSVGetFileFieldId(pszFilename,"DEPRECATED")) );
+                    int nGeogCS = atoi( CSLGetField( papszRecord,
+                                                     CSVGetFileFieldId(pszFilename,"COORD_REF_SYS_CODE")) );
+                    // int bDeprecated = atoi( CSLGetField( papszRecord,
+                    //                                      CSVGetFileFieldId(pszFilename,"DEPRECATED")) );
                     
+                    CPLDebug( "OGR_ESRI", "morphFromESRI() got GEOGCS node #%d", nGeogCS );
+
                     // if ( nGeogCS >= 1 && bDeprecated == 0 )
                     if ( nGeogCS >= 1 )
                     {
@@ -1699,9 +1697,18 @@ OGRErr OGRSpatialReference::morphFromESRI()
                             /* make clone of GEOGCS and strip CT parms for testing */
                             OGRSpatialReference *poSRSTemp2 = NULL;
                             int bIsSame = FALSE;
+                            char *pszOtherValue = NULL;
+                            double dfThisValue, dfOtherValue;
+                            OGR_SRSNode *poNode = NULL;
+
                             poSRSTemp2 = oSRSTemp.CloneGeogCS();
                             poSRSTemp2->StripCTParms();
                             bIsSame = this->IsSameGeogCS( poSRSTemp2 );
+                            exportToWkt ( &pszOtherValue );
+                            CPLDebug( "OGR_ESRI", 
+                                      "morphFromESRI() got SRS %s, matching: %d", 
+                                      pszOtherValue, bIsSame );
+                            CPLFree( pszOtherValue );
                             delete poSRSTemp2;
 
                             /* clone GEOGCS from original if they match and if allowed */
@@ -1724,34 +1731,37 @@ OGRErr OGRSpatialReference::morphFromESRI()
                             {
                                 /* test for matching SPHEROID, because there can be 2 datums with same ESRI name 
                                    but different spheroids (e.g. EPSG:4618 and EPSG:4291) - see bug #4345 */
-                                pszThisValue = pszOtherValue = NULL;                                
-                                pszThisValue = this->GetAttrValue( "DATUM|SPHEROID", 0 );
-                                if ( oSRSTemp.GetAttrValue( "DATUM|SPHEROID", 0 ) )
-                                {                                   
-                                    pszOtherValue = CPLStrdup(oSRSTemp.GetAttrValue( "DATUM|SPHEROID", 0 ) );
-                                    MorphNameToESRI( &pszOtherValue ); /* morph spheroid name to ESRI */
-                                }
-                                if ( EQUAL( pszThisValue, pszOtherValue ) )
-                                    bIsSame = TRUE;
-                                else 
+                                /* instead of testing for matching SPHEROID name (which can be error-prone), test
+                                   for matching parameters (semi-major and inverse flattening ) - see bug #4673 */
+                                bIsSame = TRUE;
+                                dfThisValue = this->GetSemiMajor();
+                                dfOtherValue = oSRSTemp.GetSemiMajor();
+                                if ( ABS( dfThisValue - dfOtherValue ) > 0.01 )
                                     bIsSame = FALSE;
-                                if (pszOtherValue) CPLFree(pszOtherValue);
+                                CPLDebug( "OGR_ESRI", 
+                                          "morphFromESRI() SemiMajor: this = %.15g other = %.15g", 
+                                          dfThisValue, dfOtherValue );
+                                dfThisValue = this->GetInvFlattening();
+                                dfOtherValue = oSRSTemp.GetInvFlattening();
+                                if ( ABS( dfThisValue - dfOtherValue ) > 0.0001 )
+                                    bIsSame = FALSE;
+                                CPLDebug( "OGR_ESRI", 
+                                          "morphFromESRI() InvFlattening: this = %g other = %g", 
+                                          dfThisValue, dfOtherValue );
 
                                 if ( bIsSame )
                                 {
                                     /* test for matching PRIMEM, because there can be 2 datums with same ESRI name 
                                        but different prime meridian (e.g. EPSG:4218 and EPSG:4802)  - see bug #4378 */
-                                    pszThisValue = pszOtherValue = NULL;                                
-                                    pszThisValue = this->GetAttrValue( "PRIMEM", 0 );
-                                    if ( oSRSTemp.GetAttrValue( "PRIMEM", 0 ) )
-                                    {                                   
-                                        pszOtherValue = CPLStrdup(oSRSTemp.GetAttrValue( "PRIMEM", 0 ) );
-                                    }
-                                    if ( EQUAL( pszThisValue, pszOtherValue )  )
-                                        bIsSame = TRUE;
-                                    else 
+                                    /* instead of testing for matching PRIMEM name (which can be error-prone), test
+                                       for matching value - see bug #4673 */
+                                    dfThisValue = this->GetPrimeMeridian();
+                                    dfOtherValue = oSRSTemp.GetPrimeMeridian();
+                                    CPLDebug( "OGR_ESRI", 
+                                              "morphFromESRI() PRIMEM: this = %.15g other = %.15g", 
+                                              dfThisValue, dfOtherValue );
+                                    if ( ABS( dfThisValue - dfOtherValue ) > 0.0001 )
                                         bIsSame = FALSE;
-                                    if (pszOtherValue) CPLFree(pszOtherValue);
                                 }
                 
                                 /* found a matching spheroid */ 
