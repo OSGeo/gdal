@@ -101,6 +101,7 @@ OGRWFSLayer::OGRWFSLayer( OGRWFSDataSource* poDS,
     poGMLFeatureClass = NULL;
     bGotApproximateLayerDefn = FALSE;
 
+    bStreamingDS = FALSE;
     poBaseDS = NULL;
     poBaseLayer = NULL;
     bReloadNeeded = FALSE;
@@ -685,7 +686,10 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
         OGRDataSource* poGML_DS = (OGRDataSource*)
                 OGR_Dr_Open(hGMLDrv, pszStreamingNameWithXSD, FALSE);
         if (poGML_DS)
+        {
+            bStreamingDS = TRUE;
             return poGML_DS;
+        }
 
         /* In case of failure, read directly the content to examine */
         /* it, if it is XML error content */
@@ -719,6 +723,7 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
         }
     }
 
+    bStreamingDS = FALSE;
     psResult = poDS->HTTPFetch( osURL, NULL);
     if (psResult == NULL)
     {
@@ -1171,7 +1176,9 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
 
 void OGRWFSLayer::SetSpatialFilter( OGRGeometry * poGeom )
 {
-    if (poFetchedFilterGeom == NULL && poBaseDS != NULL)
+    if (bStreamingDS)
+        bReloadNeeded = TRUE;
+    else if (poFetchedFilterGeom == NULL && poBaseDS != NULL)
     {
         /* If there was no filter set, and that we set one */
         /* the new result set can only be a subset of the whole */
