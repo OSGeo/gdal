@@ -450,6 +450,8 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
             osGeomFilter += "</ValueReference>";
         else
             osGeomFilter += "</PropertyName>";
+
+        CPLLocaleC  oLocaleEnforcer;
         if ( poDS->RequiresEnvelopeSpatialFilter() )
         {
             osGeomFilter += "<Envelope xmlns=\"http://www.opengis.net/gml\">";
@@ -1609,6 +1611,8 @@ OGRErr OGRWFSLayer::CreateFeature( OGRFeature *poFeature )
     osPost += "    <feature:"; osPost += pszShortName; osPost += " xmlns:feature=\"";
     osPost += osTargetNamespace; osPost += "\">\n";
 
+    CPLLocaleC  oLocaleEnforcer;
+
     int i;
     for(i=1; i <= poFeature->GetFieldCount(); i++)
     {
@@ -1851,6 +1855,8 @@ OGRErr OGRWFSLayer::SetFeature( OGRFeature *poFeature )
 
     osPost += "  <wfs:Update typeName=\"feature:"; osPost += pszShortName; osPost +=  "\" xmlns:feature=\"";
     osPost += osTargetNamespace; osPost += "\">\n";
+
+    CPLLocaleC  oLocaleEnforcer;
 
     OGRGeometry* poGeom = poFeature->GetGeometryRef();
     if ( osGeometryColumnName.size() != 0 )
