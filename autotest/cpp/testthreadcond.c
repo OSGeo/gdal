@@ -65,11 +65,8 @@ void ProducerThread(void *unused)
             psJobList = psItem;
         }
 
-        CPLReleaseMutex(hClientMutex);
-
         CPLCondBroadcast(hCond);
 
-        CPLAcquireMutex(hClientMutex, 1000.0);
         while (nJobListSize > nThreadTotal)
         {
             CPLCondWait(hCondJobFinished, hClientMutex);
@@ -79,9 +76,8 @@ void ProducerThread(void *unused)
 
     CPLAcquireMutex(hClientMutex, 1000.0);
     bProducedFinished = 1;
-    CPLReleaseMutex(hClientMutex);
-
     CPLCondBroadcast(hCond);
+    CPLReleaseMutex(hClientMutex);
 }
 
 void ConsumerThread(void* pIndex)
@@ -118,9 +114,8 @@ void ConsumerThread(void* pIndex)
 
         CPLAcquireMutex(hClientMutex, 1000.0);
         nJobListSize --;
-        CPLReleaseMutex(hClientMutex);
-
         CPLCondSignal(hCondJobFinished);
+        CPLReleaseMutex(hClientMutex);
     }
 }
 
