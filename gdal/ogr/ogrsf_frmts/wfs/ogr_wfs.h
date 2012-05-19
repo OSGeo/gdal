@@ -74,6 +74,7 @@ class OGRWFSLayer : public OGRLayer
     char*               pszNS;
     char*               pszNSVal;
 
+    int                 bStreamingDS;
     OGRDataSource      *poBaseDS;
     OGRLayer           *poBaseLayer;
     int                 bHasFetched;
