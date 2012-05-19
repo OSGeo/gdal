@@ -1929,7 +1929,16 @@ void OGRGMLDataSource::FindAndParseBoundedBy(VSILFILE* fp)
                 if (CSLCount(papszLC) >= 2 && CSLCount(papszUC) >= 2)
                 {
                     CPLDebug("GML", "Global SRS = %s", pszSRSName);
-                    poReader->SetGlobalSRSName(pszSRSName);
+
+                    if (strncmp(pszSRSName, "http://www.opengis.net/gml/srs/epsg.xml#", 40) == 0)
+                    {
+                        std::string osWork;
+                        osWork.assign("EPSG:", 5);
+                        osWork.append(pszSRSName+40);
+                        poReader->SetGlobalSRSName(osWork.c_str());
+                    }
+                    else
+                        poReader->SetGlobalSRSName(pszSRSName);
 
                     double dfMinX = CPLAtofM(papszLC[0]);
                     double dfMinY = CPLAtofM(papszLC[1]);
