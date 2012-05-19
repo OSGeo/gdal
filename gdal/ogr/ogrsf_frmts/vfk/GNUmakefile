@@ -14,7 +14,7 @@ ifeq ($(HAVE_SQLITE),yes)
 CPPFLAGS +=  -DHAVE_SQLITE
 endif
 
-CPPFLAGS := -I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS := -I.. -I../.. $(GDAL_INCLUDE) $(SQLITE_INC) $(CPPFLAGS)
 
 default: $(O_OBJ:.o=.$(OBJ_EXT))
 
