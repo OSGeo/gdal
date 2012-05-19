@@ -64,6 +64,12 @@ int   CPL_DLL CPLAcquireMutex( void *hMutex, double dfWaitInSeconds );
 void  CPL_DLL CPLReleaseMutex( void *hMutex );
 void  CPL_DLL CPLDestroyMutex( void *hMutex );
 
+void  CPL_DLL *CPLCreateCond();
+void  CPL_DLL  CPLCondWait( void *hCond, void* hMutex );
+void  CPL_DLL  CPLCondSignal( void *hCond );
+void  CPL_DLL  CPLCondBroadcast( void *hCond );
+void  CPL_DLL  CPLDestroyCond( void *hCond );
+
 GIntBig CPL_DLL CPLGetPID();
 int   CPL_DLL CPLCreateThread( CPLThreadFunc pfnMain, void *pArg );
 void  CPL_DLL CPLSleep( double dfWaitInSeconds );
@@ -97,7 +103,7 @@ class CPL_DLL CPLMutexHolder
 /* -------------------------------------------------------------------- */
 
 #define CTLS_RLBUFFERINFO     		1         /* cpl_conv.cpp */
-#define CTLS_UNUSED2                    2
+#define CTLS_WIN32_COND                 2         /* cpl_multiproc.cpp */
 #define CTLS_CSVTABLEPTR                3         /* cpl_csv.cpp */
 #define CTLS_CSVDEFAULTFILENAME         4         /* cpl_csv.cpp */
 #define CTLS_ERRORCONTEXT               5         /* cpl_error.cpp */
