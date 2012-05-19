@@ -292,6 +292,47 @@ void CPLDestroyMutex( void *hMutex )
 }
 
 /************************************************************************/
+/*                            CPLCreateCond()                           */
+/************************************************************************/
+
+void  *CPLCreateCond()
+{
+    return NULL;
+}
+
+/************************************************************************/
+/*                            CPLCondWait()                             */
+/************************************************************************/
+
+void  CPLCondWait( void *hCond, void* hMutex )
+{
+}
+
+/************************************************************************/
+/*                            CPLCondSignal()                           */
+/************************************************************************/
+
+void  CPLCondSignal( void *hCond )
+{
+}
+
+/************************************************************************/
+/*                           CPLCondBroadcast()                         */
+/************************************************************************/
+
+void  CPLCondBroadcast( void *hCond )
+{
+}
+
+/************************************************************************/
+/*                            CPLDestroyCond()                          */
+/************************************************************************/
+
+void  CPLDestroyCond( void *hCond )
+{
+}
+
+/************************************************************************/
 /*                            CPLLockFile()                             */
 /*                                                                      */
 /*      Lock a file.  This implementation has a terrible race           */
@@ -562,6 +603,146 @@ void CPLDestroyMutex( void *hMutexIn )
     DeleteCriticalSection( pcs );
     free( pcs );
 #endif
+}
+
+/************************************************************************/
+/*                            CPLCreateCond()                           */
+/************************************************************************/
+
+struct _WaiterItem
+{
+    HANDLE hEvent;
+    struct _WaiterItem* psNext;
+};
+typedef struct _WaiterItem WaiterItem;
+
+typedef struct
+{
+    void        *hInternalMutex;
+    WaiterItem  *psWaiterList;
+} Win32Cond;
+
+void  *CPLCreateCond()
+{
+    Win32Cond* psCond = (Win32Cond*) malloc(sizeof(Win32Cond));
+    if (psCond == NULL)
+        return NULL;
+    psCond->hInternalMutex = CPLCreateMutex();
+    if (psCond->hInternalMutex == NULL)
+    {
+        free(psCond);
+        return NULL;
+    }
+    CPLReleaseMutex(psCond->hInternalMutex);
+    psCond->psWaiterList = NULL;
+    return psCond;
+}
+
+/************************************************************************/
+/*                            CPLCondWait()                             */
+/************************************************************************/
+
+static void CPLTLSFreeEvent(void* pData)
+{
+    CloseHandle((HANDLE)pData);
+}
+
+void  CPLCondWait( void *hCond, void* hClientMutex )
+{
+    Win32Cond* psCond = (Win32Cond*) hCond;
+
+    HANDLE hEvent = (HANDLE) CPLGetTLS(CTLS_WIN32_COND);
+    if (hEvent == NULL)
+    {
+        hEvent = CreateEvent(NULL, /* security attributes */
+                             0,    /* manual reset = no */
+                             0,    /* initial state = unsignaled */
+                             NULL  /* no name */);
+        CPLAssert(hEvent != NULL);
+
+        CPLSetTLSWithFreeFunc(CTLS_WIN32_COND, hEvent, CPLTLSFreeEvent);
+    }
+
+    /* Insert the waiter into the waiter list of the condition */
+    CPLAcquireMutex(psCond->hInternalMutex, 1000.0);
+
+    WaiterItem* psItem = (WaiterItem*)malloc(sizeof(WaiterItem));
+    CPLAssert(psItem != NULL);
+
+    psItem->hEvent = hEvent;
+    psItem->psNext = psCond->psWaiterList;
+
+    psCond->psWaiterList = psItem;
+
+    CPLReleaseMutex(psCond->hInternalMutex);
+
+    /* Release the client mutex before waiting for the event being signaled */
+    CPLReleaseMutex(hClientMutex);
+
+    DWORD nRet = WaitForSingleObject(hEvent, INFINITE);
+    CPLAssert (nRet != WAIT_FAILED);
+
+    /* Reacquire the client mutex */
+    CPLAcquireMutex(hClientMutex, 1000.0);
+}
+
+/************************************************************************/
+/*                            CPLCondSignal()                           */
+/************************************************************************/
+
+void  CPLCondSignal( void *hCond )
+{
+    Win32Cond* psCond = (Win32Cond*) hCond;
+
+    /* Signal the first registered event, and remove it from the list */
+    CPLAcquireMutex(psCond->hInternalMutex, 1000.0);
+
+    WaiterItem* psIter = psCond->psWaiterList;
+    if (psIter != NULL)
+    {
+        SetEvent(psIter->hEvent);
+        psCond->psWaiterList = psIter->psNext;
+        free(psIter);
+    }
+
+    CPLReleaseMutex(psCond->hInternalMutex);
+}
+
+/************************************************************************/
+/*                           CPLCondBroadcast()                         */
+/************************************************************************/
+
+void  CPLCondBroadcast( void *hCond )
+{
+    Win32Cond* psCond = (Win32Cond*) hCond;
+
+    /* Signal all the registered events, and remove them from the list */
+    CPLAcquireMutex(psCond->hInternalMutex, 1000.0);
+
+    WaiterItem* psIter = psCond->psWaiterList;
+    while (psIter != NULL)
+    {
+        WaiterItem* psNext = psIter->psNext;
+        SetEvent(psIter->hEvent);
+        free(psIter);
+        psIter = psNext;
+    }
+    psCond->psWaiterList = NULL;
+
+    CPLReleaseMutex(psCond->hInternalMutex);
+}
+
+/************************************************************************/
+/*                            CPLDestroyCond()                          */
+/************************************************************************/
+
+void  CPLDestroyCond( void *hCond )
+{
+    Win32Cond* psCond = (Win32Cond*) hCond;
+    CPLDestroyMutex(psCond->hInternalMutex);
+    psCond->hInternalMutex = NULL;
+    CPLAssert(psCond->psWaiterList == NULL);
+    free(psCond);
 }
 
 /************************************************************************/
@@ -889,6 +1070,60 @@ void CPLDestroyMutex( void *hMutexIn )
 {
     pthread_mutex_destroy( (pthread_mutex_t *) hMutexIn );
     free( hMutexIn );
+}
+
+/************************************************************************/
+/*                            CPLCreateCond()                           */
+/************************************************************************/
+
+void  *CPLCreateCond()
+{
+    pthread_cond_t* pCond = (pthread_cond_t* )malloc(sizeof(pthread_cond_t));
+    if (pCond)
+        pthread_cond_init(pCond, NULL);
+    return pCond;
+}
+
+/************************************************************************/
+/*                            CPLCondWait()                             */
+/************************************************************************/
+
+void  CPLCondWait( void *hCond, void* hMutex )
+{
+    pthread_cond_t* pCond = (pthread_cond_t* )hCond;
+    pthread_mutex_t * pMutex = (pthread_mutex_t *)hMutex;
+    pthread_cond_wait(pCond,  pMutex);
+}
+
+/************************************************************************/
+/*                            CPLCondSignal()                           */
+/************************************************************************/
+
+void  CPLCondSignal( void *hCond )
+{
+    pthread_cond_t* pCond = (pthread_cond_t* )hCond;
+    pthread_cond_signal(pCond);
+}
+
+/************************************************************************/
+/*                           CPLCondBroadcast()                         */
+/************************************************************************/
+
+void  CPLCondBroadcast( void *hCond )
+{
+    pthread_cond_t* pCond = (pthread_cond_t* )hCond;
+    pthread_cond_broadcast(pCond);
+}
+
+/************************************************************************/
+/*                            CPLDestroyCond()                          */
+/************************************************************************/
+
+void  CPLDestroyCond( void *hCond )
+{
+    pthread_cond_t* pCond = (pthread_cond_t* )hCond;
+    pthread_cond_destroy(pCond);
+    free(hCond);
 }
 
 /************************************************************************/

@@ -78,7 +78,7 @@ CFLAGS = $(OPTFLAGS) $(CPPFLAGS) $(INCLUDE_DIR)
 GDAL_DLL = gdal$(GDAL_VERSION).dll
 GDAL_TEST_EXE = gdal_unit_test.exe
 
-default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe
+default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testthreadcond.exe
 
 check:	 $(GDAL_TEST_EXE)
 	 $(GDAL_TEST_EXE)
@@ -94,7 +94,11 @@ testcopywords.exe: testcopywords.cpp
 testperfcopywords.exe: testperfcopywords.cpp
 	$(CC) testperfcopywords.cpp $(CFLAGS) $(GDAL_LIB)
     if exist testperfcopywords.exe.manifest mt -manifest testperfcopywords.exe.manifest -outputresource:testperfcopywords.exe;1
-	
+
+testthreadcond.exe: testthreadcond.c
+	$(CC) testthreadcond.c $(CFLAGS) $(GDAL_LIB)
+    if exist testthreadcond.exe.manifest mt -manifest testthreadcond.exe.manifest -outputresource:testthreadcond.exe;1
+
 copy-gdal-dll:	$(GDAL_DLL) 
 
 $(GDAL_DLL):	$(GDAL_ROOT)\$(GDAL_DLL)
