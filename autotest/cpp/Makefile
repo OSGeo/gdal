@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS =`gdal-config --cflags` -Wall -I. -Itut $(CPPFLAGS)
 LDFLAGS = `gdal-config --libs`
 
-PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm
+PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond
 
 all: $(PROGS)
 
@@ -11,6 +11,7 @@ test:
 	./testperfcopywords
 	./testcopywords
 	./testclosedondestroydm
+	./testthreadcond
 
 OBJ = \
     gdal_unit_test.o \
@@ -36,7 +37,10 @@ testcopywords: testcopywords.cpp
 	$(CXX) -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
 testclosedondestroydm: testclosedondestroydm.c
-	$(CXX) -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
+	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
+
+testthreadcond: testthreadcond.c
+	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
 clean:
 	$(RM) $(PROGS)
