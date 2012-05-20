@@ -129,6 +129,9 @@ class OGRGMLDataSource : public OGRDataSource
     int                 bWriteSpaceIndentation;
 
     // input related parameters.
+    CPLString           osFilename;
+    CPLString           osXSDFilename;
+
     IGMLReader          *poReader;
     int                 bOutIsTempFile;
 
