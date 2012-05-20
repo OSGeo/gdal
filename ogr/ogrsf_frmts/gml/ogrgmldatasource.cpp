@@ -98,8 +98,9 @@ OGRGMLDataSource::~OGRGMLDataSource()
 
     if( fpOutput != NULL )
     {
-        PrintLine( fpOutput, "%s", 
-                    "</ogr:FeatureCollection>" );
+        const char* pszPrefix = GetAppPrefix();
+
+        PrintLine( fpOutput, "</%s:FeatureCollection>", pszPrefix );
 
         if( bFpOutputIsNonSeekable)
         {
@@ -1115,8 +1116,10 @@ int OGRGMLDataSource::Create( const char *pszFilename,
     if (!bFpOutputIsNonSeekable)
         nSchemaInsertLocation = (int) VSIFTellL( fpOutput );
 
-    PrintLine( fpOutput, "%s", 
-                "<ogr:FeatureCollection" );
+    const char* pszPrefix = GetAppPrefix();
+    const char* pszTargetNameSpace = CSLFetchNameValueDef(papszOptions,"TARGET_NAMESPACE", "http://ogr.maptools.org/");
+
+    PrintLine( fpOutput, "<%s:FeatureCollection", pszPrefix );
 
     if (IsGML32Output())
         PrintLine( fpOutput, "%s",
@@ -1134,7 +1137,7 @@ int OGRGMLDataSource::Create( const char *pszFilename,
               "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
         PrintLine( fpOutput, 
               "     xsi:schemaLocation=\"%s\"", 
-                    CSLFetchNameValue( papszOptions, "XSISCHEMAURI" ) );
+                    pszSchemaURI );
     }
     else if( pszSchemaOpt == NULL || EQUAL(pszSchemaOpt,"EXTERNAL") )
     {
@@ -1143,13 +1146,14 @@ int OGRGMLDataSource::Create( const char *pszFilename,
         PrintLine( fpOutput, 
               "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
         PrintLine( fpOutput, 
-              "     xsi:schemaLocation=\"http://ogr.maptools.org/ %s\"", 
+              "     xsi:schemaLocation=\"%s %s\"",
+                    pszTargetNameSpace,
                     CPLResetExtension( pszBasename, "xsd" ) );
         CPLFree( pszBasename );
     }
 
-    PrintLine( fpOutput, "%s", 
-                "     xmlns:ogr=\"http://ogr.maptools.org/\"" );
+    PrintLine( fpOutput,
+                "     xmlns:%s=\"%s\"", pszPrefix, pszTargetNameSpace );
     if (IsGML32Output())
         PrintLine( fpOutput, "%s",
                 "     xmlns:gml=\"http://www.opengis.net/gml/3.2\">" );
@@ -1350,8 +1354,8 @@ void OGRGMLDataSource::InsertHeader()
 /* -------------------------------------------------------------------- */
 /*      Emit the start of the schema section.                           */
 /* -------------------------------------------------------------------- */
-    const char *pszTargetNameSpace = "http://ogr.maptools.org/";
-    const char *pszPrefix = "ogr";
+    const char* pszPrefix = GetAppPrefix();
+    const char* pszTargetNameSpace = CSLFetchNameValueDef(papszCreateOptions,"TARGET_NAMESPACE", "http://ogr.maptools.org/");
 
     if (IsGML3Output())
     {
@@ -1967,4 +1971,13 @@ void OGRGMLDataSource::SetExtents(double dfMinX, double dfMinY, double dfMaxX, d
     sBoundingRect.MinY = dfMinY;
     sBoundingRect.MaxX = dfMaxX;
     sBoundingRect.MaxY = dfMaxY;
+}
+
+/************************************************************************/
+/*                             GetAppPrefix()                           */
+/************************************************************************/
+
+const char* OGRGMLDataSource::GetAppPrefix()
+{
+    return CSLFetchNameValueDef(papszCreateOptions, "PREFIX", "ogr");
 }
