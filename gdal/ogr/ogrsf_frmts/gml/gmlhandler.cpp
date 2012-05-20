@@ -426,6 +426,7 @@ static const char* const apszGMLGeometryElements[] =
     "SimplePolygon", /* GML 3.3 compact encoding */
     "SimpleRectangle", /* GML 3.3 compact encoding */
     "SimpleTriangle", /* GML 3.3 compact encoding */
+    "SimpleMultiPoint", /* GML 3.3 compact encoding */
     "Solid",
     "Surface",
     "TopoCurve",
