@@ -461,7 +461,9 @@ CPLXMLNode* CPLLoadSchemaStrInternal(CPLHashSet* hSetSchemas,
                     strcmp(psIter2->pszValue, "schemaLocation") == 0 &&
                     psIter2->psChild != NULL &&
                     strncmp(psIter2->psChild->pszValue, "http://", 7) != 0 &&
-                    strncmp(psIter2->psChild->pszValue, "ftp://", 6) != 0)
+                    strncmp(psIter2->psChild->pszValue, "ftp://", 6) != 0 &&
+                    /* If the top file is our warping file, don't alter the path of the import */
+                    strstr(pszFile, "/vsimem/CPLValidateXML_") == NULL )
                 {
                     char* pszFullFilename = CPLStrdup(CPLFormFilename(
                                       CPLGetPath(pszFile), psIter2->psChild->pszValue, NULL));
@@ -892,7 +894,78 @@ int CPLValidateXML(const char* pszXMLFilename,
                    const char* pszXSDFilename,
                    char** papszOptions)
 {
-    CPLXMLSchemaPtr pSchema = CPLLoadXMLSchema(pszXSDFilename);
+    VSILFILE* fpXML = VSIFOpenL(pszXMLFilename, "rb");
+    if (fpXML == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Cannot open %s", pszXMLFilename);
+        return FALSE;
+    }
+    CPLString osTmpXSDFilename;
+    char szHeader[2048];
+    int nRead = (int)VSIFReadL(szHeader, 1, sizeof(szHeader)-1, fpXML);
+    szHeader[nRead] = '\0';
+    VSIFCloseL(fpXML);
+
+    /* Workaround following bug : "element FeatureCollection: Schemas validity error : Element '{http://www.opengis.net/wfs}FeatureCollection': No matching global declaration available for the validation root" */
+    /* We create a wrapping XSD that imports the WFS .xsd (and possibly the GML .xsd too) and the application schema */
+    /* This is a known libxml2 limitation */
+    if (strstr(szHeader, "<wfs:FeatureCollection") ||
+        (strstr(szHeader, "<FeatureCollection") && strstr(szHeader, "xmlns:wfs=\"http://www.opengis.net/wfs\"")))
+    {
+        const char* pszWFSSchemaNamespace = "http://www.opengis.net/wfs";
+        const char* pszWFSSchemaLocation = NULL;
+        const char* pszGMLSchemaLocation = NULL;
+        if (strstr(szHeader, "wfs/1.0.0/WFS-basic.xsd"))
+        {
+            pszWFSSchemaLocation = "http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd";
+        }
+        else if (strstr(szHeader, "wfs/1.1.0/wfs.xsd"))
+        {
+            pszWFSSchemaLocation = "http://schemas.opengis.net/wfs/1.1.0/wfs.xsd";
+        }
+        else if (strstr(szHeader, "wfs/2.0/wfs.xsd"))
+        {
+            pszWFSSchemaNamespace = "http://www.opengis.net/wfs/2.0";
+            pszWFSSchemaLocation = "http://schemas.opengis.net/wfs/2.0/wfs.xsd";
+        }
+
+        VSILFILE* fpXSD = VSIFOpenL(pszXSDFilename, "rb");
+        if (fpXSD == NULL)
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                    "Cannot open %s", pszXSDFilename);
+            return FALSE;
+        }
+        int nRead = (int)VSIFReadL(szHeader, 1, sizeof(szHeader)-1, fpXSD);
+        szHeader[nRead] = '\0';
+        VSIFCloseL(fpXSD);
+
+        if (strstr(szHeader, "gml/3.1.1") != NULL &&
+            strstr(szHeader, "gml/3.1.1/base/gml.xsd") == NULL)
+        {
+            pszGMLSchemaLocation = "http://schemas.opengis.net/gml/3.1.1/base/gml.xsd";
+        }
+
+        if (pszWFSSchemaLocation != NULL)
+        {
+            osTmpXSDFilename = CPLSPrintf("/vsimem/CPLValidateXML_%p_%p.xsd", pszXMLFilename, pszXSDFilename);
+            char* pszEscapedXSDFilename = CPLEscapeString(pszXSDFilename, -1, CPLES_XML);
+            VSILFILE* fpMEM = VSIFOpenL(osTmpXSDFilename, "wb");
+            VSIFPrintfL(fpMEM, "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n");
+            VSIFPrintfL(fpMEM, "   <xs:import namespace=\"%s\" schemaLocation=\"%s\"/>\n", pszWFSSchemaNamespace, pszWFSSchemaLocation);
+            VSIFPrintfL(fpMEM, "   <xs:import namespace=\"ignored\" schemaLocation=\"%s\"/>\n", pszEscapedXSDFilename);
+            if (pszGMLSchemaLocation)
+                VSIFPrintfL(fpMEM, "   <xs:import namespace=\"http://www.opengis.net/gml\" schemaLocation=\"%s\"/>\n", pszGMLSchemaLocation);
+            VSIFPrintfL(fpMEM, "</xs:schema>\n");
+            VSIFCloseL(fpMEM);
+            CPLFree(pszEscapedXSDFilename);
+        }
+    }
+
+    CPLXMLSchemaPtr pSchema = CPLLoadXMLSchema(osTmpXSDFilename.size() ? osTmpXSDFilename.c_str() : pszXSDFilename);
+    if (osTmpXSDFilename.size())
+        VSIUnlink(osTmpXSDFilename);
     if (pSchema == NULL)
         return FALSE;
 
