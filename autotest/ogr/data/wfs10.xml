@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FeatureCollection xmlns:java="java" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:wfs="http://www.opengis.net/wfs" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ows="http://www.opengis.net/ows" xmlns:gml="http://www.opengis.net/gml" xmlns:geomutils="org.deegree.framework.xml.GeometryUtils" xmlns:ogc="http://www.opengis.net/ogc" xmlns="http://www.opengis.net/wfs" xsi:schemaLocation="http://www.deegree.org/app http://testing.deegree.org:80/deegree-wfs/services?SERVICE=WFS&amp;VERSION=1.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=app:Springs&amp;NAMESPACE=xmlns(app=http://www.deegree.org/app) http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd">
+<gml:boundedBy xmlns:app="http://www.deegree.org/app">
+<gml:Box srsName="EPSG:26912">
+<gml:coordinates cs=" " decimal="." ts=",">558750.703125 4402882.05,558750.703125 4402882.05</gml:coordinates>
+</gml:Box>
+</gml:boundedBy>
+<gml:featureMember xmlns:app="http://www.deegree.org/app">
+<app:Springs fid="SGID024_Springs1">
+<gml:boundedBy>
+<gml:Box srsName="EPSG:26912">
+<gml:coordinates cs=" " decimal="." ts=",">558750.703125 4402882.05,558750.703125 4402882.05</gml:coordinates>
+</gml:Box>
+</gml:boundedBy>
+<app:geometry>
+<gml:Point srsName="EPSG:26912">
+<gml:coordinates cs=" " decimal="." ts=",">558750.703125 4402882.05</gml:coordinates>
+</gml:Point>
+</app:geometry>
+<app:objectid>1</app:objectid>
+<app:rel>13555</app:rel>
+<app:code>2</app:code>
+<app:source>CFF99</app:source>
+</app:Springs>
+</gml:featureMember>
+</FeatureCollection>
