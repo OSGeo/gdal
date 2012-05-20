@@ -1014,6 +1014,12 @@ def gml_invalid_geoms():
         ('<gml:OrientableSurface><foo/></gml:OrientableSurface>', None),
         ('<gml:OrientableSurface><gml:baseSurface/></gml:OrientableSurface>', None),
         ('<gml:OrientableSurface><gml:baseSurface><foo/></gml:baseSurface></gml:OrientableSurface>', None),
+        ('<gmlce:SimplePolygon/>',None), #invalid
+        ('<gmlce:SimplePolygon><foo/></gmlce:SimplePolygon>',None), # invalid GML3, but we are tolerant
+        ('<gmlce:SimplePolygon><gml:posList/></gmlce:SimplePolygon>','POLYGON EMPTY'), # validates the schema
+        ('<gmlce:SimpleMultiPoint/>',None), #invalid
+        ('<gmlce:SimpleMultiPoint><foo/></gmlce:SimpleMultiPoint>',None), # invalid GML3, but we are tolerant
+        ('<gmlce:SimpleMultiPoint><gml:posList/></gmlce:SimpleMultiPoint>','MULTIPOINT EMPTY'), # validates the schema
     ]
 
     for (gml, expected_wkt) in gml_expected_wkt_list:
@@ -1201,6 +1207,22 @@ def gml_SimpleTriangle():
     return 'success'
 
 ###############################################################################
+# Test GML 3.3 SimpleMultiPoint
+
+def gml_SimpleMultiPoint():
+
+    gml = """<gmlce:SimpleMultiPoint><gml:posList>0 1 2 3</gml:posList></gmlce:SimpleMultiPoint>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'MULTIPOINT (0 1,2 3)':
+        gdaltest.post_reason( '<gmlce:SimpleMultiPoint> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # When imported build a list of units based on the files available.
 
 #print 'hit enter'
@@ -1253,6 +1275,7 @@ gdaltest_list.append( gml_nested )
 gdaltest_list.append( gml_SimplePolygon )
 gdaltest_list.append( gml_SimpleRectangle )
 gdaltest_list.append( gml_SimpleTriangle )
+gdaltest_list.append( gml_SimpleMultiPoint )
 
 if __name__ == '__main__':
 
