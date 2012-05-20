@@ -1544,6 +1544,7 @@ def ogr_gml_38(resolver = 'HUGE'):
 
     gdal.SetConfigOption('GML_SKIP_RESOLVE_ELEMS', resolver)
     ds = ogr.Open('tmp/sample_gml_face_hole_negative_no.xml')
+    gdal.SetConfigOption('GML_SKIP_RESOLVE_ELEMS', None)
     gdal.SetConfigOption('GML_FACE_HOLE_NEGATIVE', None)
 
     if resolver == 'HUGE':
@@ -1596,6 +1597,8 @@ def ogr_gml_40():
 
 def ogr_gml_41():
 
+    gdaltest.have_gml_validation = False
+
     if not gdaltest.have_gml_reader:
         return 'skip'
 
@@ -1619,6 +1622,8 @@ def ogr_gml_41():
             return 'fail'
         return 'skip'
 
+    gdaltest.have_gml_validation = True
+
     return 'success'
 
 ###############################################################################
@@ -1626,24 +1631,8 @@ def ogr_gml_41():
 
 def ogr_gml_42():
 
-    if not gdaltest.have_gml_reader:
+    if not gdaltest.have_gml_validation:
         return 'skip'
-
-    if not gdaltest.download_file('http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip', 'SCHEMAS_OPENGIS_NET.zip' ):
-        return 'skip'
-
-    try:
-        os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/gml')
-    except:
-        try:
-            os.mkdir('tmp/cache/SCHEMAS_OPENGIS_NET')
-            gdaltest.unzip( 'tmp/cache/SCHEMAS_OPENGIS_NET', 'tmp/cache/SCHEMAS_OPENGIS_NET.zip')
-            try:
-                os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/gml')
-            except:
-                return 'skip'
-        except:
-            return 'skip'
 
     ds = ogr.Open('data/expected_gml_gml32.gml')
 
@@ -1658,9 +1647,7 @@ def ogr_gml_42():
     ds.ReleaseResultSet(lyr)
 
     if val == 0:
-        if gdal.GetLastErrorMsg().find('not implemented due to missing libxml2 support') == -1:
-            return 'fail'
-        return 'skip'
+        return 'fail'
 
     return 'success'
 
@@ -1747,6 +1734,173 @@ def ogr_gml_44():
     ds = None
 
     gdal.Unlink('/vsimem/ogr_gml_44.xsd')
+
+    return 'success'
+
+###############################################################################
+# Test PREFIX and TARGET_NAMESPACE creation options
+
+def ogr_gml_45():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    drv = ogr.GetDriverByName('GML')
+    ds = drv.CreateDataSource('/vsimem/ogr_gml_45.gml', options = ['PREFIX=foo', 'TARGET_NAMESPACE=http://bar/'])
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('int', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('dbl', ogr.OFTReal))
+
+    dst_feat = ogr.Feature( lyr.GetLayerDefn() )
+    dst_feat.SetField('str', 'str')
+    dst_feat.SetField('int', 1)
+    dst_feat.SetField('dbl', 2.34)
+
+    lyr.CreateFeature( dst_feat )
+
+    dst_feat = None
+    ds = None
+
+    if not gdaltest.have_gml_validation:
+        gdal.Unlink('/vsimem/ogr_gml_45.gml')
+        gdal.Unlink('/vsimem/ogr_gml_45.xsd')
+        return 'skip'
+
+    # Validate document
+
+    ds = ogr.Open('/vsimem/ogr_gml_45.gml')
+
+    gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', './tmp/cache/SCHEMAS_OPENGIS_NET')
+    lyr = ds.ExecuteSQL('SELECT ValidateSchema()')
+    gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', None)
+
+    feat = lyr.GetNextFeature()
+    val = feat.GetFieldAsInteger(0)
+    feat = None
+
+    ds.ReleaseResultSet(lyr)
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gml_45.gml')
+    gdal.Unlink('/vsimem/ogr_gml_45.xsd')
+
+    if val == 0:
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Validate different kinds of GML files
+
+def ogr_gml_46():
+
+    if not gdaltest.have_gml_validation:
+        return 'skip'
+
+    wkt_list = [ '',
+                 'POINT (0 1)',
+                 # 'POINT (0 1 2)',
+                 'LINESTRING (0 1,2 3)',
+                 # 'LINESTRING (0 1 2,3 4 5)',
+                 'POLYGON ((0 0,0 1,1 1,1 0,0 0))',
+                 # 'POLYGON ((0 0 10,0 1 10,1 1 10,1 0 10,0 0 10))',
+                 'MULTIPOINT (0 1)',
+                 # 'MULTIPOINT (0 1 2)',
+                 'MULTILINESTRING ((0 1,2 3))',
+                 # 'MULTILINESTRING ((0 1 2,3 4 5))',
+                 'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))',
+                 # 'MULTIPOLYGON (((0 0 10,0 1 10,1 1 10,1 0 10,0 0 10)))',
+                 'GEOMETRYCOLLECTION (POINT (0 1))',
+                 # 'GEOMETRYCOLLECTION (POINT (0 1 2))'
+                ]
+
+    format_list = [ 'GML2', 'GML3', 'GML3Deegree', 'GML3.2' ]
+
+    for wkt in wkt_list:
+        for format in format_list:
+            drv = ogr.GetDriverByName('GML')
+            ds = drv.CreateDataSource('/vsimem/ogr_gml_46.gml', options = ['FORMAT=%s' % format])
+            if wkt != '':
+                geom = ogr.CreateGeometryFromWkt(wkt)
+                geom_type = geom.GetGeometryType()
+                srs = osr.SpatialReference()
+                srs.ImportFromEPSG(4326)
+            else:
+                geom = None
+                geom_type = ogr.wkbNone
+                srs = None
+
+            lyr = ds.CreateLayer('test', geom_type = geom_type, srs = srs)
+
+            lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
+            lyr.CreateField(ogr.FieldDefn('int', ogr.OFTInteger))
+            lyr.CreateField(ogr.FieldDefn('dbl', ogr.OFTReal))
+
+            dst_feat = ogr.Feature( lyr.GetLayerDefn() )
+            dst_feat.SetField('str', 'str')
+            dst_feat.SetField('int', 1)
+            dst_feat.SetField('dbl', 2.34)
+            dst_feat.SetGeometry(geom)
+
+            lyr.CreateFeature( dst_feat )
+
+            dst_feat = None
+            ds = None
+
+            # Validate document
+
+            ds = ogr.Open('/vsimem/ogr_gml_46.gml')
+
+            lyr = ds.GetLayer(0)
+            feat = lyr.GetNextFeature()
+            got_geom = feat.GetGeometryRef()
+
+            if got_geom is None:
+                got_geom_wkt = ''
+            else:
+                got_geom_wkt = got_geom.ExportToWkt()
+
+            if got_geom_wkt != wkt:
+                gdaltest.post_reason('geometry do not match')
+                print('got %s, expected %s' % (got_geom_wkt, wkt))
+
+            feat = None
+
+            gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', './tmp/cache/SCHEMAS_OPENGIS_NET')
+            lyr = ds.ExecuteSQL('SELECT ValidateSchema()')
+            gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', None)
+
+            feat = lyr.GetNextFeature()
+            val = feat.GetFieldAsInteger(0)
+            feat = None
+
+            ds.ReleaseResultSet(lyr)
+            ds = None
+
+            if val == 0:
+                gdaltest.post_reason('validation failed for format=%s, wkt=%s' % (format, wkt))
+
+                f = gdal.VSIFOpenL('/vsimem/ogr_gml_46.gml', 'rb')
+                content = gdal.VSIFReadL(1, 10000, f)
+                gdal.VSIFCloseL(f)
+                print(content)
+
+                f = gdal.VSIFOpenL('/vsimem/ogr_gml_46.xsd', 'rb')
+                content = gdal.VSIFReadL(1, 10000, f)
+                gdal.VSIFCloseL(f)
+                print(content)
+
+            gdal.Unlink('/vsimem/ogr_gml_46.gml')
+            gdal.Unlink('/vsimem/ogr_gml_46.xsd')
+
+            if val == 0:
+                return 'fail'
+
+        # Only minor schema changes
+        if format == 'GML3Deegree':
+            break
 
     return 'success'
 
@@ -1917,6 +2071,8 @@ gdaltest_list = [
     ogr_gml_42,
     ogr_gml_43,
     ogr_gml_44,
+    ogr_gml_45,
+    ogr_gml_46,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
