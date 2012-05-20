@@ -487,6 +487,7 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
     int bIsGML3Output = poDS->IsGML3Output();
     VSILFILE *fp = poDS->GetOutputFP();
     int bWriteSpaceIndentation = poDS->WriteSpaceIndentation();
+    const char* pszPrefix = poDS->GetAppPrefix();
 
     if( !bWriter )
         return OGRERR_FAILURE;
@@ -494,7 +495,7 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
     if (bWriteSpaceIndentation)
         VSIFPrintfL(fp, "  ");
     if (bIsGML3Output)
-        poDS->PrintLine( fp, "<ogr:featureMember>" );
+        poDS->PrintLine( fp, "<%s:featureMember>", pszPrefix );
     else
         poDS->PrintLine( fp, "<gml:featureMember>" );
 
@@ -508,36 +509,41 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
     {
         nGMLIdIndex = poFeatureDefn->GetFieldIndex("gml_id");
         if (nGMLIdIndex >= 0 && poFeature->IsFieldSet( nGMLIdIndex ) )
-            poDS->PrintLine( fp, "<ogr:%s gml:id=\"%s\">",
-                poFeatureDefn->GetName(),
-                poFeature->GetFieldAsString(nGMLIdIndex) );
+            poDS->PrintLine( fp, "<%s:%s gml:id=\"%s\">",
+                             pszPrefix,
+                             poFeatureDefn->GetName(),
+                             poFeature->GetFieldAsString(nGMLIdIndex) );
         else
-            poDS->PrintLine( fp, "<ogr:%s gml:id=\"%s.%ld\">",
-                    poFeatureDefn->GetName(),
-                    poFeatureDefn->GetName(),
-                    poFeature->GetFID() );
+            poDS->PrintLine( fp, "<%s:%s gml:id=\"%s.%ld\">",
+                             pszPrefix,
+                             poFeatureDefn->GetName(),
+                             poFeatureDefn->GetName(),
+                             poFeature->GetFID() );
     }
     else
     {
         nGMLIdIndex = poFeatureDefn->GetFieldIndex("fid");
         if (bUseOldFIDFormat)
         {
-            poDS->PrintLine( fp, "<ogr:%s fid=\"F%ld\">",
-                                poFeatureDefn->GetName(),
-                                poFeature->GetFID() );
+            poDS->PrintLine( fp, "<%s:%s fid=\"F%ld\">",
+                             pszPrefix,
+                             poFeatureDefn->GetName(),
+                             poFeature->GetFID() );
         }
         else if (nGMLIdIndex >= 0 && poFeature->IsFieldSet( nGMLIdIndex ) )
         {
-            poDS->PrintLine( fp, "<ogr:%s fid=\"%s\">",
-                poFeatureDefn->GetName(),
-                poFeature->GetFieldAsString(nGMLIdIndex) );
+            poDS->PrintLine( fp, "<%s:%s fid=\"%s\">",
+                             pszPrefix,
+                             poFeatureDefn->GetName(),
+                             poFeature->GetFieldAsString(nGMLIdIndex) );
         }
         else
         {
-            poDS->PrintLine( fp, "<ogr:%s fid=\"%s.%ld\">",
-                    poFeatureDefn->GetName(),
-                    poFeatureDefn->GetName(),
-                    poFeature->GetFID() );
+            poDS->PrintLine( fp, "<%s:%s fid=\"%s.%ld\">",
+                             pszPrefix,
+                             poFeatureDefn->GetName(),
+                             poFeatureDefn->GetName(),
+                             poFeature->GetFID() );
         }
     }
 
@@ -589,8 +595,8 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
         CSLDestroy(papszOptions);
         if (bWriteSpaceIndentation)
             VSIFPrintfL(fp, "      ");
-        poDS->PrintLine( fp, "<ogr:geometryProperty>%s</ogr:geometryProperty>",
-                    pszGeometry );
+        poDS->PrintLine( fp, "<%s:geometryProperty>%s</%s:geometryProperty>",
+                         pszPrefix, pszGeometry, pszPrefix );
         CPLFree( pszGeometry );
     }
 
@@ -619,20 +625,22 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
 
             if (bWriteSpaceIndentation)
                 VSIFPrintfL(fp, "      ");
-            poDS->PrintLine( fp, "<ogr:%s>%s</ogr:%s>",
-                        poFieldDefn->GetNameRef(), pszEscaped, 
-                        poFieldDefn->GetNameRef() );
+            poDS->PrintLine( fp, "<%s:%s>%s</%s:%s>",
+                             pszPrefix,
+                             poFieldDefn->GetNameRef(), pszEscaped,
+                             pszPrefix,
+                             poFieldDefn->GetNameRef());
             CPLFree( pszEscaped );
         }
     }
 
     if (bWriteSpaceIndentation)
         VSIFPrintfL(fp, "    ");
-    poDS->PrintLine( fp, "</ogr:%s>", poFeatureDefn->GetName() );
+    poDS->PrintLine( fp, "</%s:%s>", pszPrefix, poFeatureDefn->GetName() );
     if (bWriteSpaceIndentation)
         VSIFPrintfL(fp, "  ");
     if (bIsGML3Output)
-        poDS->PrintLine( fp, "</ogr:featureMember>" );
+        poDS->PrintLine( fp, "</%s:featureMember>", pszPrefix );
     else
         poDS->PrintLine( fp, "</gml:featureMember>" );
 
