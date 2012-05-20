@@ -40,6 +40,13 @@ CPL_CVSID("$Id$");
 /* Actually, we need at least 2.6.22, at runtime, to be */
 /* able to parse the OGC GML schemas */
 #define HAVE_RECENT_LIBXML2
+
+/* libxml2 before 2.8.0 had a bug to parse the OGC GML schemas */
+/* We have a workaround for that for versions >= 2.6.20 and < 2.8.0 */
+#if defined(LIBXML_VERSION) && LIBXML_VERSION < 20800
+#define HAS_VALIDATION_BUG
+#endif
+
 #else
 #warning "Not recent enough libxml2 version"
 #endif
@@ -56,8 +63,6 @@ CPL_CVSID("$Id$");
 #include "cpl_minixml.h"
 
 static xmlExternalEntityLoader pfnLibXMLOldExtranerEntityLoader = NULL;
-
-static int bHasLibXMLBug = -1;
 
 /************************************************************************/
 /*                            CPLFixPath()                              */
@@ -87,6 +92,10 @@ static void CPLFixPath(char* pszPath)
                 strlen(pszSlashDotDot + 4) + 1);
     }
 }
+
+#ifdef HAS_VALIDATION_BUG
+
+static int bHasLibXMLBug = -1;
 
 /************************************************************************/
 /*                  CPLHasLibXMLBugWarningCallback()                    */
@@ -152,6 +161,8 @@ static int CPLHasLibXMLBug()
     return bHasLibXMLBug;
 }
 
+#endif
+
 /************************************************************************/
 /*                         CPLExtractSubSchema()                        */
 /************************************************************************/
@@ -211,6 +222,7 @@ static CPLXMLNode* CPLExtractSubSchema(CPLXMLNode* psSubXML, CPLXMLNode* psMainS
     return psSubXML;
 }
 
+#ifdef HAS_VALIDATION_BUG
 /************************************************************************/
 /*                        CPLWorkaroundLibXMLBug()                      */
 /************************************************************************/
@@ -314,6 +326,7 @@ static int CPLWorkaroundLibXMLBug(CPLXMLNode* psIter)
 
     return FALSE;
 }
+#endif
 
 /************************************************************************/
 /*                       CPLLoadSchemaStrInternal()                     */
@@ -362,8 +375,10 @@ CPLXMLNode* CPLLoadSchemaStrInternal(CPLHashSet* hSetSchemas,
     {
         int bDestroyCurrentNode = FALSE;
 
+#ifdef HAS_VALIDATION_BUG
         if (bHasLibXMLBug)
             bDestroyCurrentNode = CPLWorkaroundLibXMLBug(psIter);
+#endif
 
         /* Load the referenced schemas, and integrate them in the main schema */
         if (psIter->eType == CXT_Element &&
@@ -535,7 +550,9 @@ char* CPLLoadSchemaStr(const char* pszXSDFilename)
 {
     char* pszStr = NULL;
 
+#ifdef HAS_VALIDATION_BUG
     CPLHasLibXMLBug();
+#endif
 
     CPLHashSet* hSetSchemas =
         CPLHashSetNew(CPLHashSetHashStr, CPLHashSetEqualStr, CPLFree);
