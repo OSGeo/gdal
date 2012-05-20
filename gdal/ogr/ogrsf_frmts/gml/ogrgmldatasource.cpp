@@ -1599,7 +1599,7 @@ void OGRGMLDataSource::InsertHeader()
                 break;
             case wkbMultiLineString:
                 if (IsGML3Output())
-                    pszGeometryTypeName = "MutliCurvePropertyType";
+                    pszGeometryTypeName = "MultiCurvePropertyType";
                 else
                     pszGeometryTypeName = "MultiLineStringPropertyType";
                 break;
