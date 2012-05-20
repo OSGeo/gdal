@@ -198,6 +198,9 @@ OGRGMLDataSource::~OGRGMLDataSource()
     delete poGlobalSRS;
 
     delete poStoredGMLFeature;
+
+    if (osXSDFilename.compare(CPLSPrintf("/vsimem/tmp_gml_xsd_%p.xsd", this)) == 0)
+        VSIUnlink(osXSDFilename);
 }
 
 /************************************************************************/
@@ -217,14 +220,14 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
 /* -------------------------------------------------------------------- */
 /*      Extract xsd filename from connexion string if present.          */
 /* -------------------------------------------------------------------- */
-    CPLString osFilename_ = pszNameIn;
-    const char *pszXSDFilename = strstr(pszNameIn, ",xsd=");
-    if (pszXSDFilename != NULL)
+    osFilename = pszNameIn;
+    const char *pszXSDFilenameTmp = strstr(pszNameIn, ",xsd=");
+    if (pszXSDFilenameTmp != NULL)
     {
-        osFilename_.resize(pszXSDFilename - pszNameIn);
-        pszXSDFilename += strlen(",xsd=");
+        osFilename.resize(pszXSDFilenameTmp - pszNameIn);
+        osXSDFilename = pszXSDFilenameTmp + strlen(",xsd=");
     }
-    const char *pszFilename = osFilename_.c_str();
+    const char *pszFilename = osFilename.c_str();
 
     pszName = CPLStrdup( pszNameIn );
 
@@ -595,7 +598,7 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
 /* -------------------------------------------------------------------- */
 /*      Can we find a GML Feature Schema (.gfs) for the input file?     */
 /* -------------------------------------------------------------------- */
-    if( !bHaveSchema && pszXSDFilename == NULL)
+    if( !bHaveSchema && osXSDFilename.size() == 0)
     {
         pszGFSFilename = CPLResetExtension( pszFilename, "gfs" );
         if (strncmp(pszGFSFilename, "/vsigzip/", strlen("/vsigzip/")) == 0)
@@ -640,21 +643,20 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
 
     if( !bHaveSchema )
     {
-        CPLString osTmpXSDFile;
         char** papszTypeNames = NULL;
 
         VSIStatBufL sXSDStatBuf;
-        if (pszXSDFilename == NULL)
+        if (osXSDFilename.size() == 0)
         {
-            pszXSDFilename = CPLResetExtension( pszFilename, "xsd" );
-            if( bCheckAuxFile && VSIStatExL( pszXSDFilename, &sXSDStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
+            osXSDFilename = CPLResetExtension( pszFilename, "xsd" );
+            if( bCheckAuxFile && VSIStatExL( osXSDFilename, &sXSDStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
             {
                 bHasFoundXSD = TRUE;
             }
         }
         else
         {
-            if ( VSIStatExL( pszXSDFilename, &sXSDStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
+            if ( VSIStatExL( osXSDFilename, &sXSDStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
             {
                 bHasFoundXSD = TRUE;
             }
@@ -700,10 +702,10 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
                                     if (psResult->nStatus == 0 && psResult->pabyData != NULL)
                                     {
                                         bHasFoundXSD = TRUE;
-                                        osTmpXSDFile = pszXSDFilename =
-                                            CPLSPrintf("/vsimem/tmp_gml_xsd_%p.xsd", psResult);
+                                        osXSDFilename =
+                                            CPLSPrintf("/vsimem/tmp_gml_xsd_%p.xsd", this);
                                         VSILFILE* fpMem = VSIFileFromMemBuffer(
-                                            osTmpXSDFile, psResult->pabyData,
+                                            osXSDFilename, psResult->pabyData,
                                             psResult->nDataLen, TRUE);
                                         VSIFCloseL(fpMem);
                                         psResult->pabyData = NULL;
@@ -723,10 +725,10 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
         if( bHasFoundXSD )
         {
             std::vector<GMLFeatureClass*> aosClasses;
-            bHaveSchema = GMLParseXSD( pszXSDFilename, aosClasses );
+            bHaveSchema = GMLParseXSD( osXSDFilename, aosClasses );
             if (bHaveSchema)
             {
-                CPLDebug("GML", "Using %s", pszXSDFilename);
+                CPLDebug("GML", "Using %s", osXSDFilename.c_str());
 
                 std::vector<GMLFeatureClass*>::const_iterator iter = aosClasses.begin();
                 std::vector<GMLFeatureClass*>::const_iterator eiter = aosClasses.end();
@@ -806,8 +808,6 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
         }
 
         CSLDestroy(papszTypeNames);
-        if (osTmpXSDFile.size())
-            VSIUnlink(osTmpXSDFile);
     }
 
 /* -------------------------------------------------------------------- */
@@ -826,7 +826,7 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
         if( bHasFoundXSD )
         {
             CPLDebug("GML", "Generating %s file, ignoring %s",
-                     pszGFSFilename, pszXSDFilename);
+                     pszGFSFilename, osXSDFilename.c_str());
         }
     }
 
@@ -1080,6 +1080,7 @@ int OGRGMLDataSource::Create( const char *pszFilename,
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
     pszName = CPLStrdup( pszFilename );
+    osFilename = pszName;
 
     if( strcmp(pszFilename,"/vsistdout/") == 0 ||
         strncmp(pszFilename,"/vsigzip/", 9) == 0 )
@@ -1829,12 +1830,14 @@ OGRLayer * OGRGMLDataSource::ExecuteSQL( const char *pszSQLCommand,
                                          OGRGeometry *poSpatialFilter,
                                          const char *pszDialect )
 {
-    if (EQUAL(pszSQLCommand, "SELECT ValidateSchema()"))
+    if (poReader != NULL && EQUAL(pszSQLCommand, "SELECT ValidateSchema()"))
     {
-        CPLString osXSDFilename = CPLResetExtension( pszName, "xsd" );
         int bIsValid = FALSE;
-        CPLErrorReset();
-        bIsValid = CPLValidateXML(pszName, osXSDFilename, NULL);
+        if (osXSDFilename.size())
+        {
+            CPLErrorReset();
+            bIsValid = CPLValidateXML(osFilename, osXSDFilename, NULL);
+        }
         return new OGRGMLSingleFeatureLayer(bIsValid);
     }
 
