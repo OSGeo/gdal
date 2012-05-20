@@ -9,15 +9,15 @@
 #############################################################################
 # CONFIGURATION
 
-GDAL_VERSION = 19dev
-GDAL_ROOT = ..\..
-
 # GDAL library
+
 !IFNDEF GDAL_ROOT
+!IF EXIST("..\..\gdal\nmake.opt")
 GDAL_ROOT = ..\..\gdal
 !ENDIF
+!ENDIF
 
-GDAL_LIB = $(GDAL_ROOT)\gdal_i.lib
+!INCLUDE $(GDAL_ROOT)\nmake.opt
 
 # Specification of enabled GDAL drivers
 #GDAL_SUPPORT = \
@@ -36,14 +36,12 @@ GDAL_SUPPORT = \
 
 # END OF CONFIGURATION
 #############################################################################
+
+GDAL_LIB = $(GDAL_ROOT)\gdal_i.lib
+
 INCLUDE_DIR = \
     -I. \
     -Itut \
-    -I$(GDAL_ROOT)\port \
-    -I$(GDAL_ROOT)\alg \
-    -I$(GDAL_ROOT)\gcore \
-    -I$(GDAL_ROOT)\ogr \
-    -I$(GDAL_ROOT)\ogr/ogrsf_frmts \
     -I$(PROJ4_ROOT)\src
 
 OBJ = \
@@ -64,24 +62,23 @@ OBJ = \
 # Commands
 RM = -del
 
-# Always compile tests in debug mode
-OPTFLAGS = /nologo /MDd /EHsc /W3 /Od /Zi \
-	 /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
-
-# Preprocessor definitions
-CPPFLAGS = /D "WIN32" /D "_DEBUG" /D "UNICODE" /D "_UNICODE" /D "_CONSOLE" \
-    $(GDAL_SUPPORT)
-
 # Complete set of compilation flags
-CFLAGS = $(OPTFLAGS) $(CPPFLAGS) $(INCLUDE_DIR)
+CFLAGS	= $(CFLAGS) $(INCLUDE_DIR)
+CPPFLAGS = $(CFLAGS)
 
-GDAL_DLL = gdal$(GDAL_VERSION).dll
 GDAL_TEST_EXE = gdal_unit_test.exe
 
-default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testthreadcond.exe
+default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe
 
 check:	 $(GDAL_TEST_EXE)
 	 $(GDAL_TEST_EXE)
+
+check-all:	 $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe
+	 $(GDAL_TEST_EXE)
+	testcopywords.exe
+	testperfcopywords.exe
+	testclosedondestroydm.exe
+	testthreadcond.exe
 
 $(GDAL_TEST_EXE): gdal_unit_test.cpp $(GDAL_DLL) $(OBJ)
 	$(CC) gdal_unit_test.cpp $(CFLAGS) $(OBJ) $(GDAL_LIB) $(GEOS_LIB) $(PROJ4_LIB)
@@ -95,6 +92,10 @@ testperfcopywords.exe: testperfcopywords.cpp
 	$(CC) testperfcopywords.cpp $(CFLAGS) $(GDAL_LIB)
     if exist testperfcopywords.exe.manifest mt -manifest testperfcopywords.exe.manifest -outputresource:testperfcopywords.exe;1
 
+testclosedondestroydm.exe: testclosedondestroydm.c
+	$(CC) testclosedondestroydm.c $(CFLAGS) $(GDAL_LIB)
+    if exist testclosedondestroydm.exe.manifest mt -manifest testclosedondestroydm.exe.manifest -outputresource:testclosedondestroydm.exe;1
+
 testthreadcond.exe: testthreadcond.c
 	$(CC) testthreadcond.c $(CFLAGS) $(GDAL_LIB)
     if exist testthreadcond.exe.manifest mt -manifest testthreadcond.exe.manifest -outputresource:testthreadcond.exe;1
@@ -102,7 +103,7 @@ testthreadcond.exe: testthreadcond.c
 copy-gdal-dll:	$(GDAL_DLL) 
 
 $(GDAL_DLL):	$(GDAL_ROOT)\$(GDAL_DLL)
-    copy $(GDAL_ROOT)\$(GDAL_DLL) .
+    copy /y $(GDAL_ROOT)\$(GDAL_DLL) .
 
 .cpp.obj:
 	$(CC) $(CFLAGS) /c $*.cpp /Fo$@
