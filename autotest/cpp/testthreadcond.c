@@ -51,7 +51,7 @@ void ProducerThread(void *unused)
     int jobNumber = 0;
     JobItem* psItem;
 
-    while(jobNumber < 10000)
+    while(jobNumber < 1000)
     {
         CPLAcquireMutex(hClientMutex, 1000.0);
 

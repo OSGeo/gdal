@@ -4,11 +4,15 @@
 
 int main(int argc, char* argv[])
 {
+    int nOvrLevel;
+    int nBandNum;
+    GDALDatasetH hDS;
+    GDALDatasetH hSrcDS;
+    FILE* f;
+
     CPLSetConfigOption("GDAL_SKIP", "GIF");
 
     GDALAllRegister();
-    GDALDatasetH hDS;
-    GDALDatasetH hSrcDS;
 
     hDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
     if (hDS)
@@ -58,8 +62,8 @@ int main(int argc, char* argv[])
     GDALClose(hSrcDS);
     hSrcDS = NULL;
     hDS = GDALOpen("byte.tif", GA_ReadOnly);
-    int nOvrLevel = 2;
-    int nBandNum = 1;
+    nOvrLevel = 2;
+    nBandNum = 1;
     GDALBuildOverviews( hDS, "NEAR", 1, &nOvrLevel, 1, &nBandNum, NULL, NULL);
     GDALClose(hDS);
 
@@ -92,7 +96,7 @@ int main(int argc, char* argv[])
     hDS = GDALOpen("byte3.tif", GA_ReadOnly);
     GDALGetMaskFlags(GDALGetRasterBand(hDS, 1));
 
-    FILE* f = fopen("byte.vrt", "wb");
+    f = fopen("byte.vrt", "wb");
     fprintf(f, "%s", "<VRTDataset rasterXSize=\"20\" rasterYSize=\"20\">"
   "<VRTRasterBand dataType=\"Byte\" band=\"1\">"
     "<SimpleSource>"
