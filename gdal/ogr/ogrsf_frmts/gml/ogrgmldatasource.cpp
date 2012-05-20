@@ -112,10 +112,9 @@ OGRGMLDataSource::~OGRGMLDataSource()
 
         if( !bFpOutputIsNonSeekable
             && nBoundedByLocation != -1
-            && sBoundingRect.IsInit() 
             && VSIFSeekL( fpOutput, nBoundedByLocation, SEEK_SET ) == 0 )
         {
-            if (IsGML3Output())
+            if (sBoundingRect.IsInit()  && IsGML3Output())
             {
                 int bCoordSwap = FALSE;
                 char* pszSRSName;
@@ -140,7 +139,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
                            (bBBOX3D) ? " srsDimension=\"3\"" : "", pszSRSName, szLowerCorner, szUpperCorner);
                 CPLFree(pszSRSName);
             }
-            else
+            else if (sBoundingRect.IsInit())
             {
                 if (bWriteSpaceIndentation)
                     VSIFPrintfL( fpOutput, "  ");
@@ -174,6 +173,15 @@ OGRGMLDataSource::~OGRGMLDataSource()
                 if (bWriteSpaceIndentation)
                     VSIFPrintfL( fpOutput, "  ");
                 PrintLine( fpOutput, "</gml:boundedBy>" );
+            }
+            else
+            {
+                if (bWriteSpaceIndentation)
+                    VSIFPrintfL( fpOutput, "  ");
+                if (IsGML3Output())
+                    PrintLine( fpOutput, "<gml:boundedBy><gml:Null /></gml:boundedBy>" );
+                else
+                    PrintLine( fpOutput, "<gml:boundedBy><gml:null>missing</gml:null></gml:boundedBy>" );
             }
         }
 
@@ -1165,16 +1173,26 @@ int OGRGMLDataSource::Create( const char *pszFilename,
 /*      Should we initialize an area to place the boundedBy element?    */
 /*      We will need to seek back to fill it in.                        */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchBoolean( papszOptions, "BOUNDEDBY", TRUE ) &&
-        !bFpOutputIsNonSeekable )
+    nBoundedByLocation = -1;
+    if( CSLFetchBoolean( papszOptions, "BOUNDEDBY", TRUE ))
     {
-        nBoundedByLocation = (int) VSIFTellL( fpOutput );
+        if (!bFpOutputIsNonSeekable )
+        {
+            nBoundedByLocation = (int) VSIFTellL( fpOutput );
 
-        if( nBoundedByLocation != -1 )
-            PrintLine( fpOutput, "%350s", "" );
+            if( nBoundedByLocation != -1 )
+                PrintLine( fpOutput, "%350s", "" );
+        }
+        else
+        {
+            if (bWriteSpaceIndentation)
+                VSIFPrintfL( fpOutput, "  ");
+            if (IsGML3Output())
+                PrintLine( fpOutput, "<gml:boundedBy><gml:Null /></gml:boundedBy>" );
+            else
+                PrintLine( fpOutput, "<gml:boundedBy><gml:null>missing</gml:null></gml:boundedBy>" );
+        }
     }
-    else
-        nBoundedByLocation = -1;
 
     return TRUE;
 }
