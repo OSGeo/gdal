@@ -560,12 +560,12 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
         poGeom->getEnvelope( &sGeomBounds );
         poDS->GrowExtents( &sGeomBounds, nCoordDimension );
 
+        if (poGeom->getSpatialReference() == NULL && poSRS != NULL)
+            poGeom->assignSpatialReference(poSRS);
+
         if (bIsGML3Output)
         {
             int bCoordSwap;
-
-            if (poGeom->getSpatialReference() == NULL && poSRS != NULL)
-                poGeom->assignSpatialReference(poSRS);
 
             char* pszSRSName = GML_GetSRSName(poGeom->getSpatialReference(), poDS->IsLongSRSRequired(), &bCoordSwap);
             char szLowerCorner[75], szUpperCorner[75];
