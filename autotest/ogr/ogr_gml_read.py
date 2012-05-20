@@ -1905,6 +1905,39 @@ def ogr_gml_46():
     return 'success'
 
 ###############################################################################
+# Test validation of WFS GML documents
+
+def ogr_gml_47():
+
+    if not gdaltest.have_gml_validation:
+        return 'skip'
+
+    filenames = [ 'data/wfs10.xml', 'data/wfs11.xml', 'data/wfs20.xml' ]
+
+    for filename in filenames:
+
+        # Validate document
+
+        ds = ogr.Open(filename)
+
+        gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', './tmp/cache/SCHEMAS_OPENGIS_NET')
+        lyr = ds.ExecuteSQL('SELECT ValidateSchema()')
+        gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', None)
+
+        feat = lyr.GetNextFeature()
+        val = feat.GetFieldAsInteger(0)
+        feat = None
+
+        ds.ReleaseResultSet(lyr)
+        ds = None
+
+        if val == 0:
+            gdaltest.post_reason('validation failed for file=%s' % filename)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -2073,6 +2106,7 @@ gdaltest_list = [
     ogr_gml_44,
     ogr_gml_45,
     ogr_gml_46,
+    ogr_gml_47,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
