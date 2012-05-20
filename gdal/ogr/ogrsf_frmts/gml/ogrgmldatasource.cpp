@@ -530,7 +530,6 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
         papszSkip = CSLTokenizeString2( pszSkipOption, ",",
                                            CSLT_STRIPLEADSPACES |
                                            CSLT_STRIPENDSPACES );
-    const char *pszGFSFilename;
     int         bHaveSchema = FALSE;
     int         bSchemaDone = FALSE;
  
@@ -595,16 +594,17 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
         }
     }
 
+    CPLString osGFSFilename = CPLResetExtension( pszFilename, "gfs" );
+    if (strncmp(osGFSFilename, "/vsigzip/", strlen("/vsigzip/")) == 0)
+        osGFSFilename = osGFSFilename.substr(strlen("/vsigzip/"));
+
 /* -------------------------------------------------------------------- */
 /*      Can we find a GML Feature Schema (.gfs) for the input file?     */
 /* -------------------------------------------------------------------- */
     if( !bHaveSchema && osXSDFilename.size() == 0)
     {
-        pszGFSFilename = CPLResetExtension( pszFilename, "gfs" );
-        if (strncmp(pszGFSFilename, "/vsigzip/", strlen("/vsigzip/")) == 0)
-            pszGFSFilename += strlen("/vsigzip/");
         VSIStatBufL sGFSStatBuf;
-        if( bCheckAuxFile && VSIStatL( pszGFSFilename, &sGFSStatBuf ) == 0 )
+        if( bCheckAuxFile && VSIStatL( osGFSFilename, &sGFSStatBuf ) == 0 )
         {
             VSIStatBufL sGMLStatBuf;
             VSIStatL( pszFilename, &sGMLStatBuf );
@@ -613,11 +613,11 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
                 CPLDebug( "GML", 
                           "Found %s but ignoring because it appears\n"
                           "be older than the associated GML file.", 
-                          pszGFSFilename );
+                          osGFSFilename.c_str() );
             }
             else
             {
-                bHaveSchema = poReader->LoadClasses( pszGFSFilename );
+                bHaveSchema = poReader->LoadClasses( osGFSFilename );
                 if (bHaveSchema)
                 {
                     const char *pszXSDFilenameTmp;
@@ -626,7 +626,7 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
                                     VSI_STAT_EXISTS_FLAG ) == 0 )
                     {
                         CPLDebug("GML", "Using %s file, ignoring %s",
-                                 pszGFSFilename, pszXSDFilenameTmp);
+                                 osGFSFilename.c_str(), pszXSDFilenameTmp);
                     }
                 }
             }
@@ -826,7 +826,7 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
         if( bHasFoundXSD )
         {
             CPLDebug("GML", "Generating %s file, ignoring %s",
-                     pszGFSFilename, osXSDFilename.c_str());
+                     osGFSFilename.c_str(), osXSDFilename.c_str());
         }
     }
 
@@ -851,22 +851,18 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
     {
         VSILFILE    *fp = NULL;
 
-        pszGFSFilename = CPLResetExtension( pszFilename, "gfs" );
-        if (strncmp(pszGFSFilename, "/vsigzip/", strlen("/vsigzip/")) == 0)
-            pszGFSFilename += strlen("/vsigzip/");
-
         VSIStatBufL sGFSStatBuf;
-        if( VSIStatExL( pszGFSFilename, &sGFSStatBuf, VSI_STAT_EXISTS_FLAG ) != 0
-            && (fp = VSIFOpenL( pszGFSFilename, "wt" )) != NULL )
+        if( VSIStatExL( osGFSFilename, &sGFSStatBuf, VSI_STAT_EXISTS_FLAG ) != 0
+            && (fp = VSIFOpenL( osGFSFilename, "wt" )) != NULL )
         {
             VSIFCloseL( fp );
-            poReader->SaveClasses( pszGFSFilename );
+            poReader->SaveClasses( osGFSFilename );
         }
         else
         {
             CPLDebug("GML", 
                      "Not saving %s files already exists or can't be created.",
-                     pszGFSFilename );
+                     osGFSFilename.c_str() );
         }
     }
 
