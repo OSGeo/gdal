@@ -2138,6 +2138,31 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
         return poPolygon;
     }
 
+/* -------------------------------------------------------------------- */
+/*      SimpleMultiPoint (GML 3.3 compact encoding)                     */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszBaseGeometry,"SimpleMultiPoint") )
+    {
+        OGRLineString   *poLS = new OGRLineString();
+
+        if( !ParseGMLCoordinates( psNode, poLS ) )
+        {
+            delete poLS;
+            return NULL;
+        }
+
+        OGRMultiPoint* poMP = new OGRMultiPoint();
+        int nPoints = poLS->getNumPoints();
+        for(int i = 0; i < nPoints; i++)
+        {
+            OGRPoint* poPoint = new OGRPoint();
+            poLS->getPoint(i, poPoint);
+            poMP->addGeometryDirectly(poPoint);
+        }
+        delete poLS;
+        return poMP;
+    }
+
     CPLError( CE_Failure, CPLE_AppDefined, 
               "Unrecognised geometry type <%.500s>.", 
               pszBaseGeometry );
