@@ -47,6 +47,28 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
+/*                   ReplaceSpaceByPct20IfNeeded()                      */
+/************************************************************************/
+
+static CPLString ReplaceSpaceByPct20IfNeeded(const char* pszURL)
+{
+    /* Replace ' ' by '%20' */
+    CPLString osRet = pszURL;
+    const char* pszNeedle = strstr(pszURL, "text/xml; subtype=");
+    if (pszNeedle)
+    {
+        char* pszTmp = (char*)CPLMalloc(strlen(pszURL) + 2 +1);
+        int nBeforeNeedle = (int)(pszNeedle - pszURL);
+        memcpy(pszTmp, pszURL, nBeforeNeedle);
+        strcpy(pszTmp + nBeforeNeedle, "text/xml;%20subtype=");
+        strcpy(pszTmp + nBeforeNeedle + strlen("text/xml;%20subtype="), pszNeedle + strlen("text/xml; subtype="));
+        osRet = pszTmp;
+        CPLFree(pszTmp);
+    }
+    return osRet;
+}
+
+/************************************************************************/
 /*                         OGRGMLDataSource()                         */
 /************************************************************************/
 
@@ -347,6 +369,12 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
         const char* pszFeatureCollection = strstr(szPtr, "wfs:FeatureCollection");
         if (pszFeatureCollection == NULL)
             pszFeatureCollection = strstr(szPtr, "gml:FeatureCollection"); /* GML 3.2.1 output */
+        if (pszFeatureCollection == NULL)
+        {
+            pszFeatureCollection = strstr(szPtr, "<FeatureCollection"); /* Deegree WFS 1.0.0 output */
+            if (pszFeatureCollection && strstr(szPtr, "xmlns:wfs=\"http://www.opengis.net/wfs\"") == NULL)
+                pszFeatureCollection = NULL;
+        }
         if (pszFeatureCollection)
         {
             bExposeGMLId = TRUE;
@@ -677,17 +705,20 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
              strchr(pszSchemaLocation + 1, pszSchemaLocation[0]) != NULL )
         {
             char* pszSchemaLocationTmp1 = CPLStrdup(pszSchemaLocation + 1);
-            int nTruncLen = (int)(strchr(pszSchemaLocation + 1, pszSchemaLocation[0]) - pszSchemaLocation);
+            int nTruncLen = (int)(strchr(pszSchemaLocation + 1, pszSchemaLocation[0]) - (pszSchemaLocation + 1));
             pszSchemaLocationTmp1[nTruncLen] = '\0';
             char* pszSchemaLocationTmp2 = CPLUnescapeString(
                 pszSchemaLocationTmp1, NULL, CPLES_XML);
+            CPLString osEscaped = ReplaceSpaceByPct20IfNeeded(pszSchemaLocationTmp2);
+            CPLFree(pszSchemaLocationTmp2);
+            pszSchemaLocationTmp2 = CPLStrdup(osEscaped);
             if (pszSchemaLocationTmp2)
             {
                 /* pszSchemaLocationTmp2 is of the form : */
                 /* http://namespace1 http://namespace1_schema_location http://namespace2 http://namespace1_schema_location2 */
                 /* So we try to find http://namespace1_schema_location that contains hints that it is the WFS application */
                 /* schema, i.e. if it contains typename= and request=DescribeFeatureType */
-                char** papszTokens = CSLTokenizeString(pszSchemaLocationTmp2);
+                char** papszTokens = CSLTokenizeString2(pszSchemaLocationTmp2, " \r\n", 0);
                 int nTokens = CSLCount(papszTokens);
                 if ((nTokens % 2) == 0)
                 {
@@ -705,7 +736,8 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
                             if (!bHasFoundXSD && CPLHTTPEnabled() &&
                                 CSLTestBoolean(CPLGetConfigOption("GML_DOWNLOAD_WFS_SCHEMA", "YES")))
                             {
-                                CPLHTTPResult* psResult = CPLHTTPFetch(osLocation, NULL);
+                                CPLString osEscaped = ReplaceSpaceByPct20IfNeeded(osLocation);
+                                CPLHTTPResult* psResult = CPLHTTPFetch(osEscaped, NULL);
                                 if (psResult)
                                 {
                                     if (psResult->nStatus == 0 && psResult->pabyData != NULL)
