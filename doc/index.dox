@@ -16,8 +16,8 @@ Geospatial Foundation</a>.  As a library, it presents a
 to the calling application for all supported formats.  It also comes with a variety
 of useful \link gdal_utilities.html commandline utilities\endlink
 for data translation and processing.  The 
-<a href="http://trac.osgeo.org/gdal/wiki/Release/1.9.0-News">NEWS</a>
-page describes the December 2011 GDAL/OGR 1.9.0 release.
+<a href="http://trac.osgeo.org/gdal/wiki/Release/1.9.1-News">NEWS</a>
+page describes the May 2012 GDAL/OGR 1.9.1 release.
 
 The related <a href="ogr/index.html">OGR</a> library (which lives within the GDAL source tree) 
 provides a similar capability for simple features vector data.
