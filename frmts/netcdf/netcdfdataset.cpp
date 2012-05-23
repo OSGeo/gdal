@@ -5308,12 +5308,12 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             NCDFCopyBand<GInt32>( poSrcBand, poDstBand, nXSize, nYSize,
                                  GDALScaledProgress, pScaledProgress );
         }
-        else if( (eDT == GDT_Float32) ) {
+        else if( eDT == GDT_Float32 ) {
             CPLDebug( "GDAL_netCDF", "float Band#%d", iBand);
             NCDFCopyBand<float>( poSrcBand, poDstBand, nXSize, nYSize,
                                  GDALScaledProgress, pScaledProgress );
         }
-        else if( (eDT == GDT_Float64) ) {
+        else if( eDT == GDT_Float64 ) {
             CPLDebug( "GDAL_netCDF", "double Band#%d", iBand);
             NCDFCopyBand<double>( poSrcBand, poDstBand, nXSize, nYSize,
                                  GDALScaledProgress, pScaledProgress );
