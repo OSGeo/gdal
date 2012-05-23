@@ -67,7 +67,7 @@ class GDALXRefEntry
         int             bFree;
 
         GDALXRefEntry() : nOffset(0), nGen(0), bFree(FALSE) {}
-        GDALXRefEntry(vsi_l_offset nOffsetIn, int nGenIn = 0) : nOffset(nOffsetIn), nGen(nGen), bFree(FALSE) {}
+        GDALXRefEntry(vsi_l_offset nOffsetIn, int nGenIn = 0) : nOffset(nOffsetIn), nGen(nGenIn), bFree(FALSE) {}
         GDALXRefEntry(const GDALXRefEntry& oOther) : nOffset(oOther.nOffset), nGen(oOther.nGen), bFree(oOther.bFree) {}
         GDALXRefEntry& operator= (const GDALXRefEntry& oOther) { nOffset = oOther.nOffset; nGen = oOther.nGen; bFree = oOther.bFree; return *this; }
 };
