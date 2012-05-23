@@ -1237,7 +1237,8 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
     int         nUOMLengthCode = 9001; /* meters */
 
     if( poSRS->GetAuthorityName("PROJCS|UNIT") != NULL 
-        && EQUAL(poSRS->GetAuthorityName("PROJCS|UNIT"),"EPSG") )
+        && EQUAL(poSRS->GetAuthorityName("PROJCS|UNIT"),"EPSG")
+        && poSRS->GetAttrNode( "PROJCS|UNIT" ) != poSRS->GetAttrNode("GEOGCS|UNIT") )
         nUOMLengthCode = atoi(poSRS->GetAuthorityCode("PROJCS|UNIT"));
     else if( (pszLinearUOMName != NULL
          && EQUAL(pszLinearUOMName,SRS_UL_FOOT))
