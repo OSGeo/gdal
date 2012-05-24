@@ -82,6 +82,34 @@ class TestTiffSRS:
 
         return 'success'
 
+###############################################################################
+# Test fix for #4677:
+def tiff_srs_without_linear_units():
+
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4('+proj=vandg +datum=WGS84')
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_srs_without_linear_units.tif',1,1)
+    ds.SetProjection(sr.ExportToWkt())
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_srs_without_linear_units.tif')
+    wkt = ds.GetProjectionRef()
+    sr2 = osr.SpatialReference()
+    sr2.SetFromUserInput(wkt)
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_srs_without_linear_units.tif')
+
+    if sr.IsSame(sr2) != 1:
+
+        gdaltest.post_reason('did not get expected SRS')
+        print(sr)
+        print(sr2)
+        return 'fail'
+
+    return 'success'
+
 
 gdaltest_list = []
 
@@ -120,6 +148,9 @@ for item in tiff_srs_list:
     gdaltest_list.append( (ut.test, "tiff_srs_epsg_%d" % epsg_code) )
     ut = TestTiffSRS( epsg_code, 0, epsg_proj4_broken )
     gdaltest_list.append( (ut.test, "tiff_srs_proj4_of_epsg_%d" % epsg_code) )
+
+gdaltest_list.append( tiff_srs_without_linear_units )
+
 
 if __name__ == '__main__':
 
