@@ -255,7 +255,9 @@
 # @param SRS a Geo::OSR::SpatialReference object.
 # @param GeometryType one of \@Geo::OGR::Geometry::GEOMETRY_TYPES
 # @param Options A ref to a hash of format specific options.
-# @param Schema forwarded to Layer::Schema, which is called if this parameter exists
+# @param Schema forwarded to Layer::Schema, which is called if this
+# parameter exists. Additionally, if $Schema->{GeometryType} exists,
+# it overrides $GeometryType argument and default.
 # @return a new Geo::OGR::Layer object
 
 ## @method Geo::OGR::Layer CopyLayer($layer, $name, \%options = undef)
