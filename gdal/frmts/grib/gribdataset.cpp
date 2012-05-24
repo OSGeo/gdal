@@ -74,6 +74,11 @@ class GRIBDataset : public GDALPamDataset
 		char  *pszDescription;
     OGRCoordinateTransformation *poTransform;
     double adfGeoTransform[6]; // Calculate and store once as GetGeoTransform may be called multiple times
+
+    GIntBig  nCachedBytes;
+    GIntBig  nCachedBytesThreshold;
+    int      bCacheOnlyOneBand;
+    GRIBRasterBand* poLastUsedBand;
 };
 
 /************************************************************************/
@@ -93,6 +98,8 @@ public:
     virtual const char *GetDescription() const;
 
     void    FindPDSTemplate();
+
+    void    UncacheData();
 
 private:
     static void ReadGribData( DataSource &, sInt4, int, double**, grib_MetaData**);
@@ -242,6 +249,32 @@ CPLErr GRIBRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         GRIBDataset *poGDS = (GRIBDataset *) poDS;
 
+        if (poGDS->bCacheOnlyOneBand)
+        {
+            /* In "one-band-at-a-time" strategy, if the last recently used */
+            /* band is not that one, uncache it. We could use a smarter strategy */
+            /* based on a LRU, but that's a bit overkill for now. */
+            poGDS->poLastUsedBand->UncacheData();
+            poGDS->nCachedBytes = 0;
+        }
+        else
+        {
+            /* Once we have cached more than nCachedBytesThreshold bytes, we will switch */
+            /* to "one-band-at-a-time" strategy, instead of caching all bands that have */
+            /* been accessed */
+            if (poGDS->nCachedBytes > poGDS->nCachedBytesThreshold)
+            {
+                CPLDebug("GRIB", "Maximum band cache size reached for this dataset. "
+                         "Caching only one band at a time from now");
+                for(int i=0;i<poGDS->nBands;i++)
+                {
+                    ((GRIBRasterBand*) poGDS->GetRasterBand(i+1))->UncacheData();
+                }
+                poGDS->nCachedBytes = 0;
+                poGDS->bCacheOnlyOneBand = TRUE;
+            }
+        }
+
         FileDataSource grib_fp (poGDS->fp);
 
         // we don't seem to have any way to detect errors in this!
@@ -258,6 +291,9 @@ CPLErr GRIBRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
         nGribDataXSize = m_Grib_MetaData->gds.Nx;
         nGribDataYSize = m_Grib_MetaData->gds.Ny;
+
+        poGDS->nCachedBytes += nGribDataXSize * nGribDataYSize * sizeof(double);
+        poGDS->poLastUsedBand = this;
 
         if( nGribDataXSize != nRasterXSize 
             || nGribDataYSize != nRasterYSize )
@@ -350,19 +386,30 @@ void GRIBRasterBand::ReadGribData( DataSource & fp, sInt4 start, int subgNum, do
 }
 
 /************************************************************************/
+/*                            UncacheData()                             */
+/************************************************************************/
+
+void GRIBRasterBand::UncacheData()
+{
+    if (m_Grib_Data)
+        free (m_Grib_Data);
+    m_Grib_Data = NULL;
+    if (m_Grib_MetaData)
+    {
+        MetaFree( m_Grib_MetaData );
+        delete m_Grib_MetaData;
+    }
+    m_Grib_MetaData = NULL;
+}
+
+/************************************************************************/
 /*                           ~GRIBRasterBand()                          */
 /************************************************************************/
 
 GRIBRasterBand::~GRIBRasterBand()
 {
     CPLFree(longFstLevel);
-    if (m_Grib_Data)
-        free (m_Grib_Data);
-    if (m_Grib_MetaData)
-    {
-        MetaFree( m_Grib_MetaData );
-        delete m_Grib_MetaData;
-    }
+    UncacheData();
 }
 
 /************************************************************************/
@@ -382,6 +429,13 @@ GRIBDataset::GRIBDataset()
   adfGeoTransform[3] = 0.0;
   adfGeoTransform[4] = 0.0;
   adfGeoTransform[5] = 1.0;
+
+  nCachedBytes = 0;
+  /* Switch caching strategy once 100 MB threshold is reached */
+  /* Why 100 MB ? --> why not ! */
+  nCachedBytesThreshold = ((GIntBig)atoi(CPLGetConfigOption("GRIB_CACHEMAX", "100"))) * 1024 * 1024;
+  bCacheOnlyOneBand = FALSE;
+  poLastUsedBand = NULL;
 }
 
 /************************************************************************/
