@@ -35,6 +35,8 @@
   
 %}
 
+%include callback.i
+
 %include cpl_exceptions.i
 
 %rename (GetDriverCount) OGRGetDriverCount;
@@ -175,7 +177,8 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    my $layer;
 	    if (defined $name) {
 		$layer = _GetLayerByName($self, "$name");
-		$layer = _GetLayerByIndex($self, $name) unless $layer;
+		croak "$name is not a layer in this datasource" if (not $layer and not $name =~ /^\d+$/);
+		$layer = _GetLayerByIndex($self, $name+0) unless $layer;
 	    } else {
 		$layer = _GetLayerByIndex($self, 0);
 	    }
@@ -226,6 +229,8 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    for (keys %defaults) {
 		$params{$_} = $defaults{$_} unless defined $params{$_};
 	    }
+	    $params{GeometryType} = $params{Schema}->{GeometryType} if 
+		($params{Schema} and exists $params{Schema}->{GeometryType});
 	    $params{GeometryType} = $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}} if 
 		exists $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}};
 	    my $layer = _CreateLayer($self, $params{Name}, $params{SRS}, $params{GeometryType}, $params{Options});
