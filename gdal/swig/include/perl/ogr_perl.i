@@ -790,7 +790,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		    $self->SetGeometryDirectly($geom);
 		} else {
 		    unless ($type eq 'Unknown') {
-			croak "an attempt to insert a geometry with type '$geometry->{GeometryType}' into a feature with geometry type '$type'" unless $type eq $geometry->GeometryType;
+			croak "an attempt to insert a geometry with type '",$geometry->GeometryType,"' into a feature with geometry type '$type'" unless $type eq $geometry->GeometryType;
 		    }
 		    $self->SetGeometry($geometry);
 		}
