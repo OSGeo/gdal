@@ -431,7 +431,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    } elsif (ref($feature) eq 'ARRAY') {
 		$new->Tuple($schema, @$feature);
 	    } elsif (blessed($feature) and $feature->isa('Geo::OGR::Feature')) {
-		$new->Tuple($schema, $feature->Tuple);
+		$new->Row($schema, $feature->Row);
 	    }
 	    $self->CreateFeature($new);
 	}
@@ -586,13 +586,15 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    # undocumented hack: the first argument may be the schema
 	    my $schema = ref($_[0]) ? shift : $self->Schema;
 	    if (@_) { # update
-		my %row = @_;
+		my %row = ref($_[0]) ? %{$_[0]} : @_;
 		$self->SetFID($row{FID}) if defined $row{FID};
 		$self->Geometry($schema, $row{Geometry}) if $row{Geometry};
 		for my $fn (keys %row) {
 		    next if $fn eq 'FID';
 		    next if $fn eq 'Geometry';
-		    $self->SetField($fn, $row{$fn}); # should quietly skip non-fields...
+		    my $index = GetFieldIndex($self, $fn);
+		    next if $index < 0;
+		    $self->SetField($index, $row{$fn});
 		}
 	    }
 	    return unless defined wantarray;
