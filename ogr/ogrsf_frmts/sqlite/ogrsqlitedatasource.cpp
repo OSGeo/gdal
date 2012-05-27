@@ -1266,6 +1266,9 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
             CPLError( CE_Failure, CPLE_AppDefined, 
                   "In ExecuteSQL(): sqlite3_step(%s):\n  %s", 
                   pszSQLCommand, sqlite3_errmsg(GetDB()) );
+
+            sqlite3_finalize( hSQLStmt );
+            return NULL;
         }
 
         if( EQUALN(pszSQLCommand, "CREATE ", 7) )
@@ -1278,10 +1281,16 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
                 OpenVirtualTable(papszTokens[3], pszSQLCommand);
             }
             CSLDestroy(papszTokens);
+
+            sqlite3_finalize( hSQLStmt );
+            return NULL;
         }
 
-        sqlite3_finalize( hSQLStmt );
-        return NULL;
+        if( !EQUALN(pszSQLCommand, "SELECT ", 7) )
+        {
+            sqlite3_finalize( hSQLStmt );
+            return NULL;
+        }
     }
     
 /* -------------------------------------------------------------------- */
