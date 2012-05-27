@@ -1305,6 +1305,22 @@ def ogr_sqlite_29():
     return 'success'
 
 ###############################################################################
+# Test ExecuteSQL() with empty result set (#4684)
+
+def ogr_sqlite_30():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL('SELECT * FROM tpoly WHERE eas_id = 12345')
+    if sql_lyr is None:
+        return 'skip'
+
+    gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
+
+    return 'success'
+
+###############################################################################
 # Test if SpatiaLite is available
 
 def ogr_spatialite_1():
@@ -1972,6 +1988,7 @@ gdaltest_list = [
     ogr_sqlite_27,
     ogr_sqlite_28,
     ogr_sqlite_29,
+    ogr_sqlite_30,
     ogr_spatialite_1,
     ogr_sqlite_17,
     ogr_sqlite_18,
