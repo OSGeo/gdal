@@ -1011,6 +1011,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
     double              dfX = 0.0, dfY = 0.0, dfZ = 0.0;
     double              dfBulge = 0.0;
     DXFSmoothPolyline   smoothPolyline;
+    int                 nVertexFlag = 0;
 
     smoothPolyline.setCoordinateDimension(2);
 
@@ -1045,12 +1046,18 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
                 dfBulge = CPLAtof(szLineBuf);
                 break;
 
+              case 70:
+                nVertexFlag = atoi(szLineBuf);
+                break;
+
               default:
                 break;
             }
         }
 
-        smoothPolyline.AddPoint( dfX, dfY, dfZ, dfBulge );
+        // Ignore Spline frame control points ( see #4683 )
+        if ((nVertexFlag & 16) == 0)
+            smoothPolyline.AddPoint( dfX, dfY, dfZ, dfBulge );
         dfBulge = 0.0;
     }
 
