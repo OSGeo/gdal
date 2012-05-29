@@ -230,6 +230,38 @@ def jpeg2000_9():
     return 'success'
 
 ###############################################################################
+# Check writing a file with more than 4 bands (#4686)
+
+def jpeg2000_10():
+
+    if gdaltest.jpeg2000_drv is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/jpeg2000_10_src.tif', 128, 128, 5)
+    for i in range(src_ds.RasterCount):
+        src_ds.GetRasterBand(i+1).Fill(10*i+1)
+
+    ds = gdaltest.jpeg2000_drv.CreateCopy('/vsimem/jpeg2000_10_dst.tif', src_ds)
+    ds = None
+
+    ds = gdal.Open( '/vsimem/jpeg2000_10_dst.tif' )
+    if ds is None:
+        return 'fail'
+    for i in range(src_ds.RasterCount):
+        if ds.GetRasterBand(i+1).Checksum() != src_ds.GetRasterBand(i+1).Checksum():
+            gdaltest.post_reason('bad checksum for band %d' % (i+1))
+            print(ds.GetRasterBand(i+1).Checksum())
+            print(src_ds.GetRasterBand(i+1).Checksum())
+            return 'fail'
+    ds = None
+    src_ds = None
+
+    gdal.Unlink('/vsimem/jpeg2000_10_src.tif')
+    gdal.Unlink('/vsimem/jpeg2000_10_dst.tif')
+
+    return 'success'
+
+###############################################################################
 def jpeg2000_online_1():
 
     if gdaltest.jpeg2000_drv is None:
@@ -413,6 +445,7 @@ gdaltest_list = [
     jpeg2000_7,
     jpeg2000_8,
     jpeg2000_9,
+    jpeg2000_10,
     jpeg2000_online_1,
     jpeg2000_online_2,
     jpeg2000_online_3,
