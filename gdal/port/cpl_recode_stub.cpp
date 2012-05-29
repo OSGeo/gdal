@@ -46,6 +46,11 @@ static unsigned utf8froma(char* dst, unsigned dstlen,
                           const char* src, unsigned srclen);
 static int utf8test(const char* src, unsigned srclen);
 
+#ifdef _WIN32
+static char* CPLWin32Recode( const char* src,
+                             unsigned src_code_page, unsigned dst_code_page );
+#endif
+
 #ifdef FUTURE_NEEDS
 static const char* utf8fwd(const char* p, const char* start, const char* end);
 static const char* utf8back(const char* p, const char* start, const char*end);
@@ -127,6 +132,32 @@ char *CPLRecodeStub( const char *pszSource,
         
         return pszResult;
     }
+
+#ifdef _WIN32
+/* ---------------------------------------------------------------------*/
+/*      CPXXX to UTF8                                                   */
+/* ---------------------------------------------------------------------*/
+    if( strncmp(pszSrcEncoding,"CP",2) == 0
+        && strcmp(pszDstEncoding,CPL_ENC_UTF8) == 0 )
+    {
+        int nCode = atoi( pszSrcEncoding + 2 );
+        if( nCode > 0 ) {
+           return CPLWin32Recode( pszSource, nCode, 65001 );
+        }
+    }
+
+/* ---------------------------------------------------------------------*/
+/*      UTF8 to CPXXX                                                   */
+/* ---------------------------------------------------------------------*/
+    if( strcmp(pszSrcEncoding,CPL_ENC_UTF8) == 0
+        && strncmp(pszDstEncoding,"CP",2) == 0 )
+    {
+         int nCode = atoi( pszDstEncoding + 2 );
+         if( nCode > 0 ) {
+             return CPLWin32Recode( pszSource, 65001, nCode );
+         }
+    }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Anything else to UTF-8 is treated as ISO8859-1 to UTF-8 with    */
@@ -820,7 +851,7 @@ static unsigned utf8toa(const char* src, unsigned srclen,
               bHasWarned = TRUE;
               CPLError(CE_Warning, CPLE_AppDefined,
                        "One or several characters couldn't be converted correctly from UTF-8 to ISO-8859-1.\n"
-                       "This warning will not be emitted anymore");
+                       "This warning will not be emitted anymore.");
           }
           dst[count] = '?';
       }
@@ -992,6 +1023,123 @@ static unsigned utf8froma(char* dst, unsigned dstlen,
   }
   return count;
 }
+
+#ifdef _WIN32
+
+/************************************************************************/
+/*                            CPLWin32Recode()                          */
+/************************************************************************/
+
+/* Convert an CODEPAGE (ie normal c-string) byte stream
+     to another CODEPAGE (ie normal c-string) byte stream.
+
+    \a src is target c-string byte stream (including a null terminator).
+    \a src_code_page is target c-string byte code page.
+    \a dst_code_page is destination c-string byte code page.
+
+   UTF7          65000
+   UTF8          65001
+   OEM-US          437
+   OEM-ALABIC      720
+   OEM-GREEK       737
+   OEM-BALTIC      775
+   OEM-MLATIN1     850
+   OEM-LATIN2      852
+   OEM-CYRILLIC    855
+   OEM-TURKISH     857
+   OEM-MLATIN1P    858
+   OEM-HEBREW      862
+   OEM-RUSSIAN     866
+
+   THAI            874
+   SJIS            932
+   GBK             936
+   KOREA           949
+   BIG5            950
+
+   EUROPE         1250
+   CYRILLIC       1251
+   LATIN1         1252
+   GREEK          1253
+   TURKISH        1254
+   HEBREW         1255
+   ARABIC         1256
+   BALTIC         1257
+   VIETNAM        1258
+
+   ISO-LATIN1    28591
+   ISO-LATIN2    28592
+   ISO-LATIN3    28593
+   ISO-BALTIC    28594
+   ISO-CYRILLIC  28595
+   ISO-ARABIC    28596
+   ISO-HEBREW    28598
+   ISO-TURKISH   28599
+   ISO-LATIN9    28605
+
+   ISO-2022-JP   50220
+
+*/
+
+#include <windows.h>
+
+char* CPLWin32Recode( const char* src, unsigned src_code_page, unsigned dst_code_page )
+{
+    /* Convert from source code page to Unicode */
+
+    /* Compute the length in wide characters */
+    int wlen = MultiByteToWideChar( src_code_page, MB_ERR_INVALID_CHARS, src, -1, 0, 0 );
+    if (wlen == 0 && GetLastError() == ERROR_NO_UNICODE_TRANSLATION)
+    {
+        static int bHasWarned = FALSE;
+        if (!bHasWarned)
+        {
+            bHasWarned = TRUE;
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "One or several characters could not be translated from CP%d. "
+                    "This warning will not be emitted anymore.", src_code_page);
+        }
+
+        /* Retry now without MB_ERR_INVALID_CHARS flag */
+        wlen = MultiByteToWideChar( src_code_page, 0, src, -1, 0, 0 );
+    }
+
+    /* Do the actual conversion */
+    wchar_t* tbuf = (wchar_t*)CPLCalloc(sizeof(wchar_t),wlen+1);
+    tbuf[wlen] = 0;
+    MultiByteToWideChar( src_code_page, 0, src, -1, tbuf, wlen+1 );
+
+    /* Convert from Unicode to destination code page */
+
+    /* Compute the length in chars */
+    BOOL bUsedDefaultChar = FALSE;
+    int len = WideCharToMultiByte( dst_code_page, 0, tbuf, -1, 0, 0, 0, &bUsedDefaultChar );
+    if (bUsedDefaultChar)
+    {
+        static int bHasWarned = FALSE;
+        if (!bHasWarned)
+        {
+            bHasWarned = TRUE;
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "One or several characters could not be translated to CP%d. "
+                    "This warning will not be emitted anymore.", dst_code_page);
+        }
+    }
+
+    /* Do the actual conversion */
+    char* pszResult = (char*)CPLCalloc(sizeof(char),len+1);
+    WideCharToMultiByte( dst_code_page, 0, tbuf, -1, pszResult, len+1, 0, &bUsedDefaultChar );
+    pszResult[len] = 0;
+
+    /* Cleanup */
+    CPLFree(tbuf);
+
+    return pszResult;
+}
+
+#endif
+
+
 
 /*
 ** For now we disable the rest which is locale() related.  We may need 
