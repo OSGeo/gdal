@@ -703,10 +703,23 @@ To disable the progress bar on the console
 Example:
 \endhtmlonly
 
+Make a virtual mosaic from all TIFF files containes in a directory :
 \verbatim
 gdalbuildvrt doq_index.vrt doq/*.tif
+\endverbatim
+
+Make a virtual mosaic from files whose name is specified in a text file :
+\verbatim
 gdalbuildvrt -input_file_list my_liste.txt doq_index.vrt
+\endverbatim
+
+Make a RGB virtual mosaic from 3 single-band input files :
+\verbatim
 gdalbuildvrt -separate rgb.vrt red.tif green.tif blue.tif
+\endverbatim
+
+Make a virtual mosaic with blue background colour (RGB: 0 0 255) :
+\verbatim
 gdalbuildvrt -hidenodata -vrtnodata "0 0 255" doq_index.vrt doq/*.tif
 \endverbatim
 
