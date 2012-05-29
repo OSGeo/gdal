@@ -1129,9 +1129,18 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
     else                                    // Unknown
     {
-        jas_image_setclrspc( psImage, JAS_CLRSPC_UNKNOWN );
+        /* JAS_CLRSPC_UNKNOWN causes crashes in Jasper jp2_enc.c at line 231 */
+        /* iccprof = jas_iccprof_createfromcmprof(jas_image_cmprof(image)); */
+        /* but if we explictely set the cmprof, it does not work better */
+        /* since it would abort at line 281 later ... */
+        /* So the best option is to switch to gray colorspace */
+        /* And we need to switch at the band level too, otherwise Kakadu or */
+        /* JP2MrSID don't like it */
+        //jas_image_setclrspc( psImage, JAS_CLRSPC_UNKNOWN );
+        jas_image_setclrspc( psImage, JAS_CLRSPC_SGRAY );
         for ( iBand = 0; iBand < nBands; iBand++ )
-            jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_UNKNOWN );
+            //jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_UNKNOWN );
+            jas_image_setcmpttype( psImage, iBand, JAS_IMAGE_CT_GRAY_Y );
     }
 
 /* -------------------------------------------------------------------- */
