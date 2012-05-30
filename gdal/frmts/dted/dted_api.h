@@ -120,6 +120,8 @@ typedef struct {
 
   int           nDataOffset;
 
+  int           bRewriteHeaders;
+
 } DTEDInfo;
 
 /* -------------------------------------------------------------------- */
@@ -183,7 +185,8 @@ typedef enum {
     DTEDMD_ORIGINLONG = 20,             /* UHL 5+7 */
     DTEDMD_ORIGINLAT = 21,              /* UHL 13+7 */
     DTEDMD_NIMA_DESIGNATOR = 22,        /* DSI 60 + 5 */
-    DTEDMD_MAX = 22
+    DTEDMD_PARTIALCELL_DSI = 23,        /* DSI 289 + 2 */ 
+    DTEDMD_MAX = 23
 } DTEDMetaDataCode;
 
     

@@ -171,6 +171,7 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
     psDInfo->fp = fp;
 
     psDInfo->bUpdate = EQUAL(pszAccess,"r+b");
+    psDInfo->bRewriteHeaders = FALSE;
 
     psDInfo->nUHLOffset = (int)VSIFTellL( fp ) - DTED_UHL_SIZE;
     psDInfo->pachUHLRecord = (char *) CPLMalloc(DTED_UHL_SIZE);
@@ -754,6 +755,14 @@ static void DTEDGetMetadataLocation( DTEDInfo *psDInfo,
         *pnLength = 5;
         break;
 
+     case DTEDMD_PARTIALCELL_DSI:
+        if (bIsWeirdDTED)
+           *ppszLocation = NULL;
+        else
+           *ppszLocation = psDInfo->pachDSIRecord + 289;
+        *pnLength = 2;
+        break;
+
       default:
         *ppszLocation = NULL;
         *pnLength = 0;
@@ -810,17 +819,9 @@ int DTEDSetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode,
     strncpy( pszFieldSrc, pszNewValue, 
              MIN((size_t)nFieldLen,strlen(pszNewValue)) );
 
-/* -------------------------------------------------------------------- */
-/*      Write all headers back to disk.                                 */
-/* -------------------------------------------------------------------- */
-    VSIFSeekL( psDInfo->fp, psDInfo->nUHLOffset, SEEK_SET );
-    VSIFWriteL( psDInfo->pachUHLRecord, 1, DTED_UHL_SIZE, psDInfo->fp );
-
-    VSIFSeekL( psDInfo->fp, psDInfo->nDSIOffset, SEEK_SET );
-    VSIFWriteL( psDInfo->pachDSIRecord, 1, DTED_DSI_SIZE, psDInfo->fp );
-
-    VSIFSeekL( psDInfo->fp, psDInfo->nACCOffset, SEEK_SET );
-    VSIFWriteL( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, psDInfo->fp );
+    /* Turn the flag on, so that the headers are rewritten at file */
+    /* closing */
+    psDInfo->bRewriteHeaders = TRUE;
 
     return TRUE;
 }
@@ -832,6 +833,21 @@ int DTEDSetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode,
 void DTEDClose( DTEDInfo * psDInfo )
 
 {
+    if( psDInfo->bRewriteHeaders )
+    {
+/* -------------------------------------------------------------------- */
+/*      Write all headers back to disk.                                 */
+/* -------------------------------------------------------------------- */
+        VSIFSeekL( psDInfo->fp, psDInfo->nUHLOffset, SEEK_SET );
+        VSIFWriteL( psDInfo->pachUHLRecord, 1, DTED_UHL_SIZE, psDInfo->fp );
+
+        VSIFSeekL( psDInfo->fp, psDInfo->nDSIOffset, SEEK_SET );
+        VSIFWriteL( psDInfo->pachDSIRecord, 1, DTED_DSI_SIZE, psDInfo->fp );
+
+        VSIFSeekL( psDInfo->fp, psDInfo->nACCOffset, SEEK_SET );
+        VSIFWriteL( psDInfo->pachACCRecord, 1, DTED_ACC_SIZE, psDInfo->fp );
+    }
+
     VSIFCloseL( psDInfo->fp );
 
     CPLFree( psDInfo->pachUHLRecord );
