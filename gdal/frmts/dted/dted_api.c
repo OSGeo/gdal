@@ -754,6 +754,14 @@ static void DTEDGetMetadataLocation( DTEDInfo *psDInfo,
         *pnLength = 5;
         break;
 
+     case DTEDMD_PARTIALCELL_DSI:
+        if (bIsWeirdDTED)
+           *ppszLocation = NULL;
+        else
+           *ppszLocation = psDInfo->pachDSIRecord + 289;
+        *pnLength = 2;
+        break;
+
       default:
         *ppszLocation = NULL;
         *pnLength = 0;
