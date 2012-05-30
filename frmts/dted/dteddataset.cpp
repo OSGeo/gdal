@@ -458,7 +458,11 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
     pszValue = DTEDGetMetadata( psDTED, DTEDMD_NIMA_DESIGNATOR ); 
     poDS->SetMetadataItem( "DTED_NimaDesignator", pszValue ); 
     free( pszValue );
-    
+
+    pszValue = DTEDGetMetadata( psDTED, DTEDMD_PARTIALCELL_DSI );
+    poDS->SetMetadataItem( "DTED_PartialCellIndicator", pszValue );
+    free( pszValue ); 
+
     poDS->SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
 
 /* -------------------------------------------------------------------- */
@@ -788,7 +792,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
            iPartialCell=1;
     }
     sprintf(szPartialCell,"%02d",iPartialCell);
-    strncpy((char *) (psDTED->pachDSIRecord+289), szPartialCell, 2 );
+    DTEDSetMetadata(psDTED, DTEDMD_PARTIALCELL_DSI, szPartialCell); 
 
 /* -------------------------------------------------------------------- */
 /*      Try to copy any matching available metadata.                    */
