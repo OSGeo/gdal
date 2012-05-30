@@ -1048,7 +1048,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             dfFactorC = GTIFAtof(
                 CSVGetField( pszFilename, 
                              "uom_code", szSearchKey, CC_Integer,
-                             "factor_b" ));
+                             "factor_c" ));
             if( dfFactorB != 0.0 && dfFactorC != 0.0 )
                 sprintf( szInMeters, "%.16g", dfFactorB / dfFactorC );
             else
