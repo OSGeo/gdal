@@ -366,7 +366,10 @@ void OGRLineString::setNumPoints( int nNewPointCount )
 void OGRLineString::setPoint( int iPoint, OGRPoint * poPoint )
 
 {
-    setPoint( iPoint, poPoint->getX(), poPoint->getY(), poPoint->getZ() );
+    if (poPoint->getCoordinateDimension() < 3)
+        setPoint( iPoint, poPoint->getX(), poPoint->getY() );
+    else
+        setPoint( iPoint, poPoint->getX(), poPoint->getY(), poPoint->getZ() );
 }
 
 /************************************************************************/
