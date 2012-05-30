@@ -788,7 +788,7 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
            iPartialCell=1;
     }
     sprintf(szPartialCell,"%02d",iPartialCell);
-    strncpy((char *) (psDTED->pachDSIRecord+289), szPartialCell, 2 );
+    DTEDSetMetadata(psDTED, DTEDMD_PARTIALCELL_DSI, szPartialCell); 
 
 /* -------------------------------------------------------------------- */
 /*      Try to copy any matching available metadata.                    */
