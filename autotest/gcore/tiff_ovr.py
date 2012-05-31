@@ -1340,9 +1340,9 @@ def tiff_ovr_37():
     ds = None
 
     predictor2_size = os.stat('tmp/ovr37.dt0.ovr')[stat.ST_SIZE]
-    # 3963 : on little-endian host
-    # 3913 : on big-endian host
-    if predictor2_size != 3963 and predictor2_size != 3913:
+    # 4131 : on little-endian host
+    # XXXX : on big-endian host ??? FIXME: To be updated
+    if predictor2_size != 4131:
         print(predictor2_size)
         gdaltest.post_reason( 'did not get expected file size.' )
         return 'fail'

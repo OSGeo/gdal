@@ -711,14 +711,26 @@ GTIFFBuildOverviews( const char * pszFilename,
         papapoOverviewBands = (GDALRasterBand ***) CPLCalloc(sizeof(void*),nBands);
         for( iBand = 0; iBand < nBands && eErr == CE_None; iBand++ )
         {
+            GDALRasterBand    *hSrcBand = papoBandList[iBand];
             GDALRasterBand    *hDstBand = hODS->GetRasterBand( iBand+1 );
             papapoOverviewBands[iBand] = (GDALRasterBand **) CPLCalloc(sizeof(void*),nOverviews);
             papapoOverviewBands[iBand][0] = hDstBand;
+
+            int bHasNoData;
+            double noDataValue = hSrcBand->GetNoDataValue(&bHasNoData);
+            if (bHasNoData)
+                hDstBand->SetNoDataValue(noDataValue);
+
             for( int i = 0; i < nOverviews-1 && eErr == CE_None; i++ )
             {
                 papapoOverviewBands[iBand][i+1] = hDstBand->GetOverview(i);
                 if (papapoOverviewBands[iBand][i+1] == NULL)
                     eErr = CE_Failure;
+                else
+                {
+                    if (bHasNoData)
+                        papapoOverviewBands[iBand][i+1]->SetNoDataValue(noDataValue);
+                }
             }
         }
 
@@ -747,6 +759,11 @@ GTIFFBuildOverviews( const char * pszFilename,
 
             hDstBand = hODS->GetRasterBand( iBand+1 );
 
+            int bHasNoData;
+            double noDataValue = hSrcBand->GetNoDataValue(&bHasNoData);
+            if (bHasNoData)
+                hDstBand->SetNoDataValue(noDataValue);
+
             papoOverviews[0] = hDstBand;
             nDstOverviews = hDstBand->GetOverviewCount() + 1;
             CPLAssert( nDstOverviews < 128 );
@@ -757,6 +774,11 @@ GTIFFBuildOverviews( const char * pszFilename,
                 papoOverviews[i+1] = hDstBand->GetOverview(i);
                 if (papoOverviews[i+1] == NULL)
                     eErr = CE_Failure;
+                else
+                {
+                    if (bHasNoData)
+                        papoOverviews[i+1]->SetNoDataValue(noDataValue);
+                }
             }
 
             void         *pScaledProgressData;
