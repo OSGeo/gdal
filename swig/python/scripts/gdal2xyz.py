@@ -132,7 +132,7 @@ if __name__ == '__main__':
     else:
         dst_fh = sys.stdout
 
-    band_format = ("%g " * len(bands)).rstrip() + '\n'
+    band_format = (("%g" + delim) * len(bands)).rstrip(delim) + '\n'
 
     # Setup an appropriate print format.
     if abs(gt[0]) < 180 and abs(gt[3]) < 180 \
