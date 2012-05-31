@@ -416,7 +416,7 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
             else if( nEType % 1000 == 3 )
             {
                 /* its one poly ring, create new poly or add to existing */
-                if( nEType > 999 && nEType < 2999 )
+                if( nEType == 1003 )
                 {
                     if( poPolygon != NULL 
                         && poPolygon->getExteriorRing() != NULL )
