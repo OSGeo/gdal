@@ -4414,6 +4414,7 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     nBands = poSrcDS->GetRasterCount();
     nXSize = poSrcDS->GetRasterXSize();
     nYSize = poSrcDS->GetRasterYSize();
+    pszWKT = poSrcDS->GetProjectionRef();
   
 /* -------------------------------------------------------------------- */
 /*      Check input bands for errors                                    */
@@ -4530,7 +4531,6 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         poDS->bSetGeoTransform = FALSE;
     }
 
-    pszWKT = poSrcDS->GetProjectionRef( );
     if ( pszWKT ) {
         poDS->SetProjection( pszWKT );
         /* now we can call AddProjectionVars() directly */
@@ -4539,7 +4539,6 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                                     pProgressData );
         poDS->AddProjectionVars( GDALScaledProgress, pScaledProgress );
         GDALDestroyScaledProgress( pScaledProgress );
-
     }
 
     pfnProgress( 0.5, NULL, pProgressData );
