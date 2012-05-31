@@ -5023,7 +5023,8 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     nBands = poSrcDS->GetRasterCount();
     nXSize = poSrcDS->GetRasterXSize();
     nYSize = poSrcDS->GetRasterYSize();
-  
+    pszWKT = poSrcDS->GetProjectionRef();
+
 /* -------------------------------------------------------------------- */
 /*      Check input bands for errors                                    */
 /* -------------------------------------------------------------------- */
@@ -5158,7 +5159,6 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     /* copy projection */
-    pszWKT = poSrcDS->GetProjectionRef( );
     if ( pszWKT ) {
         poDS->SetProjection( pszWKT );
         /* now we can call AddProjectionVars() directly */
