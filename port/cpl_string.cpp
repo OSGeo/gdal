@@ -1981,7 +1981,7 @@ CPLValueType CPLGetValueType(const char* pszValue)
 {
     /*
     doubles : "+25.e+3", "-25.e-3", "25.e3", "25e3", " 25e3 "
-    not doubles: "25e 3", "25e.3", "-2-5e3", "2-5e3", "25.25.3"
+    not doubles: "25e 3", "25e.3", "-2-5e3", "2-5e3", "25.25.3", "-3d"
     */
 
     int bFoundDot = FALSE;
@@ -1992,16 +1992,16 @@ CPLValueType CPLGetValueType(const char* pszValue)
     if (pszValue == NULL)
         return CPL_VALUE_STRING;
 
-    /* Skip leading + or - */
-    if (*pszValue == '+' || *pszValue == '-')
-        pszValue ++;
-
     /* Skip leading spaces */
     while( isspace( (unsigned char)*pszValue ) )
         pszValue ++;
-        
+
     if (*pszValue == '\0')
         return CPL_VALUE_STRING;
+
+    /* Skip leading + or - */
+    if (*pszValue == '+' || *pszValue == '-')
+        pszValue ++;
 
     for(; *pszValue != '\0'; pszValue++ )
     {
@@ -2042,6 +2042,10 @@ CPLValueType CPLGetValueType(const char* pszValue)
         else if (*pszValue == 'D' || *pszValue == 'd'
                  || *pszValue == 'E' || *pszValue == 'e' )
         {
+            if (!(pszValue[1] == '+' || pszValue[1] == '-' ||
+                  isdigit(pszValue[1])))
+                return CPL_VALUE_STRING;
+
             bIsReal = TRUE;
             if (!bFoundExponent)
                 bFoundExponent = TRUE;
