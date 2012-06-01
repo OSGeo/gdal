@@ -1261,20 +1261,7 @@ static int ProxyMain( int argc, char ** argv )
 int ArgIsNumeric( const char *pszArg )
 
 {
-    if( pszArg[0] == '-' )
-        pszArg++;
-
-    if( *pszArg == '\0' )
-        return FALSE;
-
-    while( *pszArg != '\0' )
-    {
-        if( (*pszArg < '0' || *pszArg > '9') && *pszArg != '.' )
-            return FALSE;
-        pszArg++;
-    }
-        
-    return TRUE;
+    return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
 }
 
 /************************************************************************/
