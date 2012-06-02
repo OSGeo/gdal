@@ -1351,8 +1351,28 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                           &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
         return CE_None;
-       
-        
+
+    return ProcessData(nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+                       ((GByte *)pData)
+                            + nPixelSpace * nOutXOff
+                            + nLineSpace * nOutYOff,
+                       nOutXSize, nOutYSize,
+                       eBufType,
+                       nPixelSpace, nLineSpace );
+}
+
+/************************************************************************/
+/*                          RasterIOInternal()                          */
+/************************************************************************/
+
+/* nReqXOff, nReqYOff, nReqXSize, nReqYSize are expressed in source band */
+/* referential */
+CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
+                                      int nReqXSize, int nReqYSize,
+                                      void *pData, int nOutXSize, int nOutYSize,
+                                      GDALDataType eBufType,
+                                      int nPixelSpace, int nLineSpace )
+{
 /* -------------------------------------------------------------------- */
 /*      Read into a temporary buffer.                                   */
 /* -------------------------------------------------------------------- */
@@ -1416,8 +1436,8 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
             GByte *pDstLocation;
 
             pDstLocation = ((GByte *)pData)
-                + nPixelSpace * (iX + nOutXOff)
-                + nLineSpace * (iY + nOutYOff);
+                + nPixelSpace * iX
+                + nLineSpace * iY;
 
             if (pafData && !bIsComplex)
             {
