@@ -12,7 +12,8 @@
 GDAL supports reading Geospatial PDF documents, by extracting georeferencing information and rasterizing the data.
 Non-geospatial PDF documents will also be recognized by the driver.
 <p>
-Starting with GDAL &gt;= 2.0.0, PDF documents can be created from other GDAL raster datasets.
+Starting with GDAL &gt;= 2.0.0, PDF documents can be created from other GDAL raster datasets, and OGR datasources can
+also optionnaly be drawn on top of the raster layer (see OGR_* creation options in the below section).
 <p>
 GDAL must be compiled with libpoppler support (GPL-licensed), and libpoppler itself must have been configured with
 --enable-xpdf-headers so that the xpdf C++ headers are available. Note: the poppler C++ API isn't
@@ -66,7 +67,7 @@ off.</li>
 
 Starting with GDAL &gt;= 2.0.0 and when GDAL is compiled against libpoppler, the LAYERS metadata domain can be queried
 to retrieve layer names that can be turned ON or OFF. This is usefull to know which values to specify for the
-<i>GDAL_PDF_LAYERS</i> or i>GDAL_PDF_LAYERS_OFF</i> configuration options.<p>
+<i>GDAL_PDF_LAYERS</i> or <i>GDAL_PDF_LAYERS_OFF</i> configuration options.<p>
 
 For example :
 <pre>
@@ -172,11 +173,19 @@ If this option is set to NO, no information will be written.</p></li>
 <li><p><b>AUTHOR</b>, <b>CREATOR</b>, <b>CREATION_DATE</b>, <b>KEYWORDS</b>, <b>PRODUCER</b>,
     <b>SUBJECT</b>, <b>TITLE</b> : metadata that can be written into the PDF Info block.</p></li>
 
-<li><p><b>OGR_DATASOURCE=name</b> : Name of OGR datasource to display on top of the raster layer.</li>
+<li><p><b>OGR_DATASOURCE=name</b> : Name of the OGR datasource to display on top of the raster layer.</li>
 
-<li><p><b>OGR_DISPLAY_FIELD=name</b> : Name of field to use as the display field in the feature tree.</li>
+<li><p><b>OGR_DISPLAY_FIELD=name</b> : Name of the field (matching the name of a field from the OGR layer definition)
+to use to build the label of features that appear in the "Model Tree" UI component of a well-known PDF viewer.
+For example, if the OGR layer has a field called "ID", this can be used as the value for that option : features
+in the "Model Tree" will be labelled from their value for the "ID" field.
+If not specified, sequential generic labels will be used ("feature1", "feature2", etc... ).</li>
 
-<li><p><b>OGR_DISPLAY_LAYER_NAMES=names</b> : Comma separated list of OGR layer names to display in the feature tree.</li>
+<li><p><b>OGR_DISPLAY_LAYER_NAMES=names</b> : Comma separated list of names to display for the OGR layers in the "Model Tree".
+This option is useful to provide custom names, instead of sequential generic labels ("layer1", "layer2", etc...) that are used
+when this option is not specified.
+When specified, the number of names should be the same as the number of OGR layers in the datasource (and in the order they appear when
+listed by ogrinfo for example). </li>
 
 <li><p><b>OGR_WRITE_ATTRIBUTES=YES/NO</b> : Whether to write attributes of OGR features. Defaults to YES</li>
 
@@ -201,6 +210,12 @@ Updated elements are written at the end of the file, following the incremental u
 the PDF specification.<p>
 
 <h2>See also</h2>
+
+Other drivers :
+<ul>
+<li><a href="../ogr/drv_pdf.html">OGR PDF driver</a></li>
+</ul>
+<p>
 
 Specifications :
 
