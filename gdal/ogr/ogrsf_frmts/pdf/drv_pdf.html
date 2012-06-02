@@ -41,15 +41,28 @@ Set the NEATLINE to use.</p></li>
 <li><p><b>AUTHOR</b>, <b>CREATOR</b>, <b>CREATION_DATE</b>, <b>KEYWORDS</b>, <b>PRODUCER</b>,
     <b>SUBJECT</b>, <b>TITLE</b> : metadata that can be written into the PDF Info block.</p></li>
 
-<li><p><b>OGR_DISPLAY_FIELD=name</b> : Name of field to use as the display field in the feature tree.</li>
+<li><p><b>OGR_DISPLAY_FIELD=name</b> : Name of the field (matching the name of a field from the OGR layer definition)
+to use to build the label of features that appear in the "Model Tree" UI component of a well-known PDF viewer.
+For example, if the OGR layer has a field called "ID", this can be used as the value for that option : features
+in the "Model Tree" will be labelled from their value for the "ID" field.
+If not specified, sequential generic labels will be used ("feature1", "feature2", etc... ).</li>
 
-<li><p><b>OGR_DISPLAY_LAYER_NAMES=names</b> : Comma separated list of OGR layer names to display in the feature tree.</li>
+<li><p><b>OGR_DISPLAY_LAYER_NAMES=names</b> : Comma separated list of names to display for the OGR layers in the "Model Tree".
+This option is useful to provide custom names, instead of sequential generic labels ("layer1", "layer2", etc...) that are used
+when this option is not specified.
+When specified, the number of names should be the same as the number of OGR layers written (and in the order they are written). </li>
 
 <li><p><b>OGR_WRITE_ATTRIBUTES=YES/NO</b> : Whether to write attributes of OGR features. Defaults to YES</li>
 
 </ul>
 
 <h2>See also</h2>
+
+Other drivers :
+<ul>
+<li><a href="../frmt_pdf.html">GDAL PDF driver</a></li>
+</ul>
+<p>
 
 Specifications :
 
