@@ -131,6 +131,21 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                                            eBufType, nPixelSpace, nLineSpace );
     }
 
+    // The window we will actually request from the source raster band.
+    int nReqXOff, nReqYOff, nReqXSize, nReqYSize;
+
+    // The window we will actual set _within_ the pData buffer.
+    int nOutXOff, nOutYOff, nOutXSize, nOutYSize;
+
+    if( !GetSrcDstWindow( nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
+                        &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
+                        &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
+        return CE_None;
+
+    pData = ((GByte *)pData)
+                            + nPixelSpace * nOutXOff
+                            + nLineSpace * nOutYOff;
+
 /* -------------------------------------------------------------------- */
 /*      Determine the data type we want to request.  We try to match    */
 /*      the source or destination request, and if both those fail we    */
@@ -179,8 +194,8 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /*      source data fed into the filter.                                */
 /* -------------------------------------------------------------------- */
     int nPixelOffset, nLineOffset;
-    int nExtraXSize = nBufXSize + 2 * nExtraEdgePixels;
-    int nExtraYSize = nBufYSize + 2 * nExtraEdgePixels;
+    int nExtraXSize = nOutXSize + 2 * nExtraEdgePixels;
+    int nExtraYSize = nOutYSize + 2 * nExtraEdgePixels;
     GByte *pabyWorkData;
 
     // FIXME? : risk of multiplication overflow
@@ -209,7 +224,7 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
         || eOperDataType != eBufType )
     {
         pabyOutData = (GByte *) 
-            VSIMalloc3(nBufXSize, nBufYSize, nPixelOffset );
+            VSIMalloc3(nOutXSize, nOutYSize, nPixelOffset );
 
         if( pabyOutData == NULL )
         {
@@ -229,8 +244,8 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     int nTopFill=0, nLeftFill=0, nRightFill=0, nBottomFill=0;
     int nFileXOff, nFileYOff, nFileXSize, nFileYSize;
 
-    nFileXOff = nXOff - nExtraEdgePixels;
-    nFileYOff = nYOff - nExtraEdgePixels;
+    nFileXOff = nReqXOff - nExtraEdgePixels;
+    nFileYOff = nReqYOff - nExtraEdgePixels;
     nFileXSize = nExtraXSize;
     nFileYSize = nExtraYSize;
 
@@ -265,13 +280,13 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     CPLErr eErr;
 
-    eErr = 
-      VRTComplexSource::RasterIO( nFileXOff, nFileYOff, nFileXSize, nFileYSize,
-                                  pabyWorkData 
-                                  + nLineOffset * nTopFill
-                                  + nPixelOffset * nLeftFill,
-                                  nFileXSize, nFileYSize, eOperDataType, 
-                                  nPixelOffset, nLineOffset );
+    eErr =
+        VRTComplexSource::RasterIOInternal( nFileXOff, nFileYOff, nFileXSize, nFileYSize,
+                                            pabyWorkData
+                                              + nLineOffset * nTopFill
+                                              + nPixelOffset * nLeftFill,
+                                            nFileXSize, nFileYSize, eOperDataType,
+                                            nPixelOffset, nLineOffset );
 
     if( eErr != CE_None )
     {
@@ -324,7 +339,7 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Filter the data.                                                */
 /* -------------------------------------------------------------------- */
-    eErr = FilterData( nBufXSize, nBufYSize, eOperDataType, 
+    eErr = FilterData( nOutXSize, nOutYSize, eOperDataType,
                        pabyWorkData, pabyOutData );
 
     VSIFree( pabyWorkData );
@@ -341,12 +356,12 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     if( pabyOutData != pData )
     {
-        for( i = 0; i < nBufYSize; i++ )
+        for( i = 0; i < nOutYSize; i++ )
         {
-            GDALCopyWords( pabyOutData + i * (nPixelOffset * nBufXSize),
+            GDALCopyWords( pabyOutData + i * (nPixelOffset * nOutXSize),
                            eOperDataType, nPixelOffset,
                            ((GByte *) pData) + i * nLineSpace, 
-                           eBufType, nPixelSpace, nBufXSize );
+                           eBufType, nPixelSpace, nOutXSize );
         }
 
         VSIFree( pabyOutData );
@@ -445,7 +460,8 @@ FilterData( int nXSize, int nYSize, GDALDataType eType,
         return CE_Failure; 
     }
 
-    CPLAssert( nExtraEdgePixels*2 + 1 == nKernelSize );
+    CPLAssert( nExtraEdgePixels*2 + 1 == nKernelSize ||
+               (nKernelSize == 0 && nExtraEdgePixels == 0) );
 
 /* -------------------------------------------------------------------- */
 /*      Float32 case.                                                   */
@@ -574,6 +590,9 @@ CPLXMLNode *VRTKernelFilteredSource::SerializeToXML( const char *pszVRTPath )
 
     CPLFree( psSrc->pszValue );
     psSrc->pszValue = CPLStrdup("KernelFilteredSource" );
+
+    if( nKernelSize == 0 )
+        return psSrc;
 
     psKernel = CPLCreateXMLNode( psSrc, CXT_Element, "Kernel" );
 
