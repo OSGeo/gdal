@@ -630,6 +630,13 @@ public:
 
 class VRTComplexSource : public VRTSimpleSource
 {
+protected:
+    CPLErr          RasterIOInternal( int nReqXOff, int nReqYOff,
+                                      int nReqXSize, int nReqYSize,
+                                      void *pData, int nOutXSize, int nOutYSize,
+                                      GDALDataType eBufType,
+                                      int nPixelSpace, int nLineSpace );
+
 public:
                    VRTComplexSource();
     virtual        ~VRTComplexSource();
