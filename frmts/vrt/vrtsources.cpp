@@ -1352,7 +1352,7 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                           &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
         return CE_None;
 
-    return ProcessData(nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+    return RasterIOInternal(nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                        ((GByte *)pData)
                             + nPixelSpace * nOutXOff
                             + nLineSpace * nOutYOff,
