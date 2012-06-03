@@ -47,6 +47,10 @@ static unsigned utf8froma(char* dst, unsigned dstlen,
 static int utf8test(const char* src, unsigned srclen);
 
 #ifdef _WIN32
+
+#include <windows.h>
+#include <winnls.h>
+
 static char* CPLWin32Recode( const char* src,
                              unsigned src_code_page, unsigned dst_code_page );
 #endif
@@ -142,7 +146,7 @@ char *CPLRecodeStub( const char *pszSource,
     {
         int nCode = atoi( pszSrcEncoding + 2 );
         if( nCode > 0 ) {
-           return CPLWin32Recode( pszSource, nCode, 65001 );
+           return CPLWin32Recode( pszSource, nCode, CP_UTF8 );
         }
     }
 
@@ -154,7 +158,7 @@ char *CPLRecodeStub( const char *pszSource,
     {
          int nCode = atoi( pszDstEncoding + 2 );
          if( nCode > 0 ) {
-             return CPLWin32Recode( pszSource, 65001, nCode );
+             return CPLWin32Recode( pszSource, CP_UTF8, nCode );
          }
     }
 #endif
@@ -1081,8 +1085,6 @@ static unsigned utf8froma(char* dst, unsigned dstlen,
 
 */
 
-#include <windows.h>
-
 char* CPLWin32Recode( const char* src, unsigned src_code_page, unsigned dst_code_page )
 {
     /* Convert from source code page to Unicode */
@@ -1113,7 +1115,11 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page, unsigned dst_code
 
     /* Compute the length in chars */
     BOOL bUsedDefaultChar = FALSE;
-    int len = WideCharToMultiByte( dst_code_page, 0, tbuf, -1, 0, 0, 0, &bUsedDefaultChar );
+    int len;
+    if ( dst_code_page == CP_UTF7 || dst_code_page == CP_UTF8 )
+        len = WideCharToMultiByte( dst_code_page, 0, tbuf, -1, 0, 0, 0, NULL );
+    else
+        len = WideCharToMultiByte( dst_code_page, 0, tbuf, -1, 0, 0, 0, &bUsedDefaultChar );
     if (bUsedDefaultChar)
     {
         static int bHasWarned = FALSE;
@@ -1128,7 +1134,7 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page, unsigned dst_code
 
     /* Do the actual conversion */
     char* pszResult = (char*)CPLCalloc(sizeof(char),len+1);
-    WideCharToMultiByte( dst_code_page, 0, tbuf, -1, pszResult, len+1, 0, &bUsedDefaultChar );
+    WideCharToMultiByte( dst_code_page, 0, tbuf, -1, pszResult, len+1, 0, NULL );
     pszResult[len] = 0;
 
     /* Cleanup */
