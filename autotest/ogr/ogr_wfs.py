@@ -782,7 +782,7 @@ def ogr_wfs_deegree_gml321():
             return 'skip'
         return 'fail'
 
-    lyr = ds.GetLayerByName("ad:Address")
+    lyr = ds.GetLayerByName("cp:CadastralParcel")
     count = lyr.GetFeatureCount()
     if count != 10:
         print(count)
