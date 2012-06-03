@@ -200,13 +200,24 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Guess the data type. Since October 1, 2009, it should be        */
+/*      Float32. Before it was double.                                  */
+/* -------------------------------------------------------------------- */
+    GDALDataType eDT = GDT_Float32;
+    VSIFSeekL(poDS->fpImage, 0, SEEK_END);
+    vsi_l_offset nSize = VSIFTellL(poDS->fpImage);
+    if( nSize == 40 + 8 * poDS->nRasterXSize * poDS->nRasterYSize )
+        eDT = GDT_Float64;
+    int nDTSize = GDALGetDataTypeSize(eDT) / 8;
+
+/* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetBand( 
         1, new RawRasterBand( poDS, 1, poDS->fpImage, 
-                              (poDS->nRasterYSize-1)*poDS->nRasterXSize*4 + 40,
-                              4, poDS->nRasterXSize * -4,
-                              GDT_Float32,
+                              (poDS->nRasterYSize-1)*poDS->nRasterXSize*nDTSize + 40,
+                              nDTSize, poDS->nRasterXSize * -nDTSize,
+                              eDT,
                               !CPL_IS_LSB, TRUE, FALSE ) );
 
 /* -------------------------------------------------------------------- */
