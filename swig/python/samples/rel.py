@@ -222,9 +222,9 @@ dx = 2 * xsize
 dy = 2 * ysize
 
 for i in range(1, inband.YSize - 1):
-    next = inband.ReadAsArray(0, i + 1, inband.XSize, 1, inband.XSize, 1)[0]
+    next_ = inband.ReadAsArray(0, i + 1, inband.XSize, 1, inband.XSize, 1)[0]
     dzx = (cur[0:-2] - cur[2:]) * elstep
-    dzy = (prev[1:-1] - next[1:-1]) * elstep
+    dzy = (prev[1:-1] - next_[1:-1]) * elstep
     nx = -dy * dzx
     ny = dx * dzy
     nz = dx * dy
@@ -236,7 +236,7 @@ for i in range(1, inband.YSize - 1):
     outband.WriteArray(outline, 0, i)
 
     prev = cur
-    cur = next
+    cur = next_
 
     # Display progress report on terminal
     gdal.TermProgress(float(i + 1) / (inband.YSize - 1))

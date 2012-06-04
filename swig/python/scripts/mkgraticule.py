@@ -160,10 +160,10 @@ if not connected:
     geom = ogr.Geometry( type = ogr.wkbLineString )
 
     for lat in float_range(ymin,ymax+stepsize/2,stepsize):
-        for long in float_range(xmin,xmax-substepsize/2,substepsize):
+        for long_ in float_range(xmin,xmax-substepsize/2,substepsize):
 
-            geom.SetPoint( 0, long, lat )
-            geom.SetPoint( 1, long+substepsize, lat )
+            geom.SetPoint( 0, long_, lat )
+            geom.SetPoint( 1, long_+substepsize, lat )
 
             err = 0
             if ct is not None:
@@ -176,10 +176,10 @@ if not connected:
     #########################################################################
     # Generate lines of longitude
 
-    for long in float_range(xmin,xmax+stepsize/2,stepsize):
+    for long_ in float_range(xmin,xmax+stepsize/2,stepsize):
         for lat in float_range(ymin,ymax-substepsize/2,substepsize):
-            geom.SetPoint( 0, long, lat )
-            geom.SetPoint( 1, long, lat+substepsize )
+            geom.SetPoint( 0, long_, lat )
+            geom.SetPoint( 1, long_, lat+substepsize )
 
             err = 0
             if ct is not None:
@@ -204,8 +204,8 @@ if connected:
 
         geom = ogr.Geometry( type = ogr.wkbLineString )
         
-        for long in float_range(xmin,xmax+substepsize/2,substepsize):
-            geom.AddPoint( long, lat )
+        for long_ in float_range(xmin,xmax+substepsize/2,substepsize):
+            geom.AddPoint( long_, lat )
 
         err = 0
         if ct is not None:
@@ -218,12 +218,12 @@ if connected:
     #########################################################################
     # Generate lines of longitude
 
-    for long in float_range(xmin,xmax+stepsize/2,stepsize):
+    for long_ in float_range(xmin,xmax+stepsize/2,stepsize):
         
         geom = ogr.Geometry( type = ogr.wkbLineString )
         
         for lat in float_range(ymin,ymax+substepsize/2,substepsize):
-            geom.AddPoint( long, lat )
+            geom.AddPoint( long_, lat )
 
         err = 0
         if ct is not None:
