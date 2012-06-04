@@ -138,7 +138,7 @@ def UseExceptions(*args):
 def DontUseExceptions(*args):
   """DontUseExceptions()"""
   return _ogr.DontUseExceptions(*args)
-import osr
+
 class Driver(_object):
     """Proxy of C++ OGRDriverShadow class"""
     __swig_setmethods__ = {}
@@ -752,7 +752,6 @@ class DataSource(_object):
     ] would return the first layer on the datasource.
     aname'] would return the layer named "aname".
     :4] would return a list of the first four layers."""
-        import types
         if isinstance(value, slice):
             output = []
             for i in xrange(value.start,value.stop,value.step):
@@ -772,7 +771,6 @@ class DataSource(_object):
 
     def GetLayer(self,iLayer=0):
         """Return the layer given an index or a name"""
-        import types
         if isinstance(iLayer, str):
             return self.GetLayerByName(str(iLayer))
         elif isinstance(iLayer, int):
@@ -782,7 +780,6 @@ class DataSource(_object):
 
     def DeleteLayer(self, value):
         """Deletes the layer given an index or layer name"""
-        import types
         if isinstance(value, str):
             for i in range(self.GetLayerCount()):
                 name = self.GetLayer(i).GetName()
@@ -792,7 +789,7 @@ class DataSource(_object):
         elif isinstance(value, int):
             return _ogr.DataSource_DeleteLayer(self, value)
         else:
-            raise TypeError("Input %s is not of String or Int type" % type(iLayer))
+            raise TypeError("Input %s is not of String or Int type" % type(value))
 
 DataSource_swigregister = _ogr.DataSource_swigregister
 DataSource_swigregister(DataSource)
@@ -1888,8 +1885,8 @@ class Layer(_object):
         """Support list and slice -like access to the layer.
     r[0] would return the first feature on the layer.
     r[0:4] would return a list of the first four features."""
-        import types
         if isinstance(value, slice):
+            import sys
             output = []
             if value.stop == sys.maxint:
                 
@@ -1912,7 +1909,7 @@ class Layer(_object):
         else:
             raise TypeError("Input %s is not of IntType or SliceType" % type(value))
 
-    def CreateFields(fields):
+    def CreateFields(self, fields):
         """Create a list of fields on the Layer"""
         for i in fields:
             self.CreateField(i)
@@ -2781,7 +2778,6 @@ class Feature(_object):
         self.SetField2( key, value )    
 
     def GetField(self, fld_index):
-        import types
         if isinstance(fld_index, str):
             fld_index = self.GetFieldIndex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
