@@ -49,14 +49,14 @@ def pack(fmt, nodata, value):
 # packs the given values together as bytes
 def encode(fmt, nodata, values):
     chunks = [pack(fmt, nodata, v) for v in values]
-    return ''.join(chunks)
+    return ''.encode('ascii').join(chunks)
 
 ###############################################################################
 # 
 def arg_init():
     try:
         gdaltest.argDriver = gdal.GetDriverByName('ARG')
-    except Exception, ex:
+    except:
         gdaltest.argDriver = None
 
     if gdaltest.argDriver is None:
@@ -116,11 +116,7 @@ def arg_init():
             json.write( gdaltest.argJsontpl % meta )
             json.close()
 
-    try:
-        ds = gdal.Open('data/arg-'+gdaltest.argTests[0]['formats'][1][0]+'.arg')
-    except Exception, ex:
-        gdaltest.argDriver = None
-
+    ds = gdal.Open('data/arg-'+gdaltest.argTests[0]['formats'][1][0]+'.arg')
     if ds is None:
         gdaltest.argDriver = None
 
@@ -188,12 +184,7 @@ def arg_blocksize():
     if gdaltest.argDriver is None:
         return 'skip'
 
-    tifDriver = None
-    try:
-        tifDriver = gdal.GetDriverByName('GTiff')
-    except Exception, ex:
-        return 'fail'
-
+    tifDriver = gdal.GetDriverByName('GTiff')
     if tifDriver is None:
         return 'fail'
 
