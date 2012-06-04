@@ -243,20 +243,20 @@ if __name__ == '__main__':
             ntv2_filename = arg
             
         else:
-            print 'Unrecognised argument: ', arg
+            print('Unrecognised argument: ', arg)
             Usage()
 
         i = i + 1
 
     if len(loslas_list) == 0:
-        print 'No .los/.las files specified as input.'
+        print('No .los/.las files specified as input.')
         Usage()
 
     if auto_flag == 1:
         auto_noaa( options, loslas_list )
         
     if ntv2_filename is None:
-        print 'No NTv2 file specified.'
+        print('No NTv2 file specified.')
         Usage()
 
     # Process loslas files.

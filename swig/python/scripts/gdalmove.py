@@ -247,7 +247,7 @@ if __name__ == '__main__':
             filename = argv[i]
 
         else:
-            print 'Urecognised argument: ' + argv[i]
+            print('Urecognised argument: ' + argv[i])
             Usage()
 
         i = i + 1
@@ -255,11 +255,11 @@ if __name__ == '__main__':
 
 
     if filename is None:
-        print 'Missing name of file to operate on, but required.'
+        print('Missing name of file to operate on, but required.')
         Usage()
 
     if t_srs is None:
-        print 'Target SRS (-t_srs) missing, but required.'
+        print('Target SRS (-t_srs) missing, but required.')
         Usage()
 
 
