@@ -63,12 +63,12 @@ except ImportError:
     pass
 
 fixer_names = [
-    'import',
-    'next',
-    'renames',
-    'unicode',
-    'ws_comma',
-    'xrange',
+    'lib2to3.fixes.fix_import',
+    'lib2to3.fixes.fix_next',
+    'lib2to3.fixes.fix_renames',
+    'lib2to3.fixes.fix_unicode',
+    'lib2to3.fixes.fix_ws_comma',
+    'lib2to3.fixes.fix_xrange',
 ]
 extra = {}
 try:
@@ -80,10 +80,10 @@ except ImportError:
 
     try:
         from distutils.command.build_py import build_py_2to3 as build_py
-        from distutils.command.build_py import build_scripts_2to3 as build_scripts
+        from distutils.command.build_scripts import build_scripts_2to3 as build_scripts
     except ImportError:
         from distutils.command.build_py import build_py
-        from distutils.command.build_py import build_scripts
+        from distutils.command.build_scripts import build_scripts
     else:
         build_py.fixer_names = fixer_names
         build_scripts.fixer_names = fixer_names
@@ -92,8 +92,7 @@ else:
         from lib2to3.refactor import get_fixers_from_package
 
         all_fixers = set(get_fixers_from_package('lib2to3.fixes'))
-        fixers = ['lib2to3.fixes.fix_' + name for name in fixer_names]
-        exclude_fixers = sorted(all_fixers.difference(fixers))
+        exclude_fixers = sorted(all_fixers.difference(fixer_names))
 
         extra['use_2to3'] = True
         extra['use_2to3_fixers'] = []
