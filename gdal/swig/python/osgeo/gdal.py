@@ -814,7 +814,7 @@ class Dataset(MajorObject):
             return sd_list
 
         i = 1
-        while sd.has_key('SUBDATASET_'+str(i)+'_NAME'):
+        while 'SUBDATASET_'+str(i)+'_NAME' in sd:
             sd_list.append( ( sd['SUBDATASET_'+str(i)+'_NAME'],
                               sd['SUBDATASET_'+str(i)+'_DESC'] ) )
             i = i + 1

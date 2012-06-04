@@ -80,7 +80,7 @@ def read_grid_crs_to_crs(filename,shape):
 
     # report the file header defining the transformation
     for i in range(5):
-      print fd.readline().rstrip()
+      print(fd.readline().rstrip())
 
     points_found = 0
 
@@ -92,8 +92,8 @@ def read_grid_crs_to_crs(filename,shape):
         ptuple = next_point(fd)
 
     if points_found < shape[0] * shape[1]:
-        print 'points found:   ', points_found
-        print 'points expected:', shape[1] * shape[2]
+        print('points found:   ', points_found)
+        print('points expected:', shape[1] * shape[2])
         sys.exit(1)
 
     return grid
@@ -299,7 +299,7 @@ if __name__ == '__main__':
             Usage(brief=0)
 
         elif argv[i][0] == '-':
-            print 'Urecognised argument: ' + argv[i]
+            print('Urecognised argument: ' + argv[i])
             Usage()
 
         elif src_crs_id is None:
@@ -315,7 +315,7 @@ if __name__ == '__main__':
             dst_crs_date = argv[i]
 
         else:
-            print 'Urecognised argument: ' + argv[i]
+            print('Urecognised argument: ' + argv[i])
             Usage()
 
         i = i + 1
@@ -323,24 +323,24 @@ if __name__ == '__main__':
 
 
     if output_grid_name is None:
-        print 'Missing output grid name (-o)'
+        print('Missing output grid name (-o)')
         Usage()
 
     if dst_crs_date is None:
-        print 'Source and Destination CRS Ids and Dates are manditory, not all provided.'
+        print('Source and Destination CRS Ids and Dates are manditory, not all provided.')
         Usage()
 
     # Do a bit of validation of parameters.
     if src_crs_id < 1 or src_crs_id > 32 \
        or dst_crs_id < 1 or dst_crs_id > 32:
-        print 'Invalid source or destination CRS Id %d and %d.' \
-              % (src_crs_id, dst_crs_id)
+        print('Invalid source or destination CRS Id %d and %d.' \
+              % (src_crs_id, dst_crs_id))
         Usage(brief=0)
 
     if float(src_crs_date) < 1700.0 or float(src_crs_date) > 2300.0 \
        or float(dst_crs_date) < 1700.0 or float(dst_crs_date) > 2300.0:
-        print 'Source or destination CRS date seems odd %s and %s.' \
-              % (src_crs_date, dst_crs_date)
+        print('Source or destination CRS date seems odd %s and %s.' \
+              % (src_crs_date, dst_crs_date))
         Usage(brief=0)
 
     # Prepare out set of working file names.
@@ -365,10 +365,10 @@ if __name__ == '__main__':
 
     rc = os.system( htdp_path + ' < ' + control_fn )
     if rc != 0:
-      print 'htdp run failed!'
+      print('htdp run failed!')
       sys.exit(1)
 
-    print 'htdp run complete.'
+    print('htdp run complete.')
 
     adjustment = read_grid_crs_to_crs(out_grid_fn,grid.shape)
 
@@ -384,4 +384,4 @@ if __name__ == '__main__':
       os.unlink( out_grid_fn )
       os.unlink( control_fn )
 
-    print 'Processing complete: see ' + output_grid_name
+    print('Processing complete: see ' + output_grid_name)
