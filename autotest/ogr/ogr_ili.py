@@ -369,7 +369,7 @@ def ogr_interlis1_8():
         if feat.GetFieldAsString(i) != str(field_values[i]):
           feat.DumpReadable()
           print(feat.GetFieldAsString(i))
-          print str(field_values[i])
+          print(str(field_values[i]))
           gdaltest.post_reason( 'field value wrong.' )
           return 'fail'
 
