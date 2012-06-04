@@ -62,12 +62,42 @@ try:
 except ImportError:
     pass
 
+fixer_names = [
+    'import',
+    'next',
+    'renames',
+    'unicode',
+    'ws_comma',
+    'xrange',
+]
+extra = {}
 try:
     from setuptools import setup
     from setuptools import Extension
     HAVE_SETUPTOOLS = True
 except ImportError:
     from distutils.core import setup, Extension
+
+    try:
+        from distutils.command.build_py import build_py_2to3 as build_py
+        from distutils.command.build_py import build_scripts_2to3 as build_scripts
+    except ImportError:
+        from distutils.command.build_py import build_py
+        from distutils.command.build_py import build_scripts
+    else:
+        build_py.fixer_names = fixer_names
+        build_scripts.fixer_names = fixer_names
+else:
+    if sys.version_info >= (3,):
+        from lib2to3.refactor import get_fixers_from_package
+
+        all_fixers = set(get_fixers_from_package('lib2to3.fixes'))
+        fixers = ['lib2to3.fixes.fix_' + name for name in fixer_names]
+        exclude_fixers = sorted(all_fixers.difference(fixers))
+
+        extra['use_2to3'] = True
+        extra['use_2to3_fixers'] = []
+        extra['use_2to3_exclude_fixers'] = exclude_fixers
 
 class gdal_config_error(Exception): pass
 
@@ -229,7 +259,8 @@ classifiers = [
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
-        'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
         'Programming Language :: C',
         'Programming Language :: C++',
         'Topic :: Scientific/Engineering :: GIS',
@@ -264,7 +295,8 @@ if HAVE_SETUPTOOLS:
            zip_safe = False,
            exclude_package_data = exclude_package_data,
            cmdclass={'build_ext':gdal_ext},
-           ext_modules = ext_modules )
+           ext_modules = ext_modules,
+           **extra )
 else:
     setup( name = name,
            version = gdal_version,
@@ -280,5 +312,7 @@ else:
            packages = packages,
            data_files = data_files,
            url=url,
-           cmdclass={'build_ext':gdal_ext},
+           cmdclass={'build_ext':gdal_ext,
+                     'build_py': build_py,
+                     'build_scripts': build_scripts},
            ext_modules = ext_modules )
