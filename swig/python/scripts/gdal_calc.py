@@ -277,7 +277,7 @@ gdal_calc.py [-A <filename>] [--A_band] [-B...-Z filename]  [--calc <calculation
 
     parser.add_option("--outfile", dest="outF", default='gdal_calc.tif', help="output file to generate or fill.")
     parser.add_option("--NoDataValue", dest="NoDataValue", type=float, help="set output nodatavalue (Defaults to datatype specific values)")
-    parser.add_option("--type", dest="type", help="set datatype must be one of %s" %DefaultNDVLookup.keys())
+    parser.add_option("--type", dest="type", help="set datatype must be one of %s" % list(DefaultNDVLookup.keys()))
     parser.add_option("--format", dest="format", default="GTiff", help="GDAL format for output file (default 'GTiff')")
     parser.add_option("--overwrite", dest="overwrite", action="store_true", help="overwrite output file if it already exists")
     parser.add_option("--debug", dest="debug", action="store_true", help="print debugging information")
