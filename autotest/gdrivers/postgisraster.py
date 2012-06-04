@@ -50,7 +50,7 @@ import gdaltest
 def postgisraster_init():
     try:
         gdaltest.postgisrasterDriver = gdal.GetDriverByName('PostGISRaster')
-    except Exception, ex:
+    except:
         gdaltest.postgisrasterDriver = None
 
     if gdaltest.postgisrasterDriver is None:
@@ -60,7 +60,7 @@ def postgisraster_init():
 
     try:
         ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='utm'" )
-    except Exception, ex:
+    except:
         gdaltest.postgisrasterDriver = None
 
     if ds is None:
@@ -344,7 +344,7 @@ def postgisraster_test_create_copy_and_delete_phases():
         # The length of the metadata contains two pcs of 
         # information per raster, so 50 rasters remaining = 100 keys
         gdaltest.post_reason( 'Expected 100 keys of metadata for 50 subadataset rasters.' )
-        print len(src_md)
+        print(len(src_md))
         return 'fail'
 
     # done with src
@@ -367,7 +367,7 @@ def postgisraster_test_create_copy_and_delete_phases():
         # The length of the metadata contains two pcs of 
         # information per raster, so 25 rasters remaining = 50 keys
         gdaltest.post_reason( 'Expected 50 keys of metadata for 25 subdataset rasters.' )
-        print len(src_md)
+        print(len(src_md))
         return 'fail'
 
     # done with src
@@ -424,7 +424,7 @@ def postgisraster_test_serial():
             # Ensure the subdataset has upperleftx and upperlefty coords,
             # as there is no unique key on the table
             if not re.search("where='serialid = \d+'", src_md[k]):
-                print k,':',src_md[k]
+                print(k,':',src_md[k])
                 return 'fail'
 
     return 'success'
@@ -449,7 +449,7 @@ def postgisraster_test_unique():
             # Ensure the subdataset has upperleftx and upperlefty coords,
             # as there is no unique key on the table
             if not re.search("where='uniq = \d+'", src_md[k]):
-                print k,':',src_md[k]
+                print(k,':',src_md[k])
                 return 'fail'
 
     return 'success'
