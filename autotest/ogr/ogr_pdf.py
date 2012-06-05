@@ -48,7 +48,7 @@ def ogr_pdf_1():
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
 
-    ds = ogr.GetDriverByName('PDF').CreateDataSource('tmp/ogr_pdf_1.pdf')
+    ds = ogr.GetDriverByName('PDF').CreateDataSource('tmp/ogr_pdf_1.pdf', options = ['MARGIN=10'])
 
     lyr = ds.CreateLayer('first_layer', srs = sr)
 
@@ -74,6 +74,12 @@ def ogr_pdf_1():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((2 48,2 49,3 49,3 48,2 48),(2.25 48.25,2.25 48.75,2.75 48.75,2.75 48.25,2.25 48.25))'))
     lyr.CreateFeature(feat)
+
+    for i in range(10):
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetStyleString('SYMBOL(c:#FF0000,id:"ogr-sym-%d",s:10)' % i)
+        feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%f 49.1)' % (2 + i * 0.05)))
+        lyr.CreateFeature(feat)
 
     ds = None
 
@@ -135,6 +141,12 @@ def ogr_pdf_2():
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POLYGON((2 48,2 49,3 49,3 48,2 48),(2.25 48.25,2.25 48.75,2.75 48.75,2.75 48.25,2.25 48.25))')) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
+
+    for i in range(10):
+        feat = lyr.GetNextFeature()
+        if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT(%f 49.1)' % (2 + i * 0.05))) != 0:
+            gdaltest.post_reason('fail with ogr-sym-%d' % i)
+            return 'fail'
 
     ds = None
 
