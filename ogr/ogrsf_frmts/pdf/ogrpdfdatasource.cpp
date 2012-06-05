@@ -36,6 +36,9 @@
 
 #include "memdataset.h"
 
+#define SQUARE(x) ((x)*(x))
+#define EPSILON 1e-5
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -553,6 +556,121 @@ int OGRPDFDataSource::UnstackTokens(const CPLString& osToken,
 }
 
 /************************************************************************/
+/*                         PDFGetCircleCenter()                         */
+/************************************************************************/
+
+/* Return the center of a circle, or NULL if it is not recognized */
+
+static OGRPoint* PDFGetCircleCenter(OGRLineString* poLS)
+{
+    if (poLS == NULL || poLS->getNumPoints() != 5)
+        return NULL;
+
+    if (poLS->getY(0) == poLS->getY(2) &&
+        poLS->getX(1) == poLS->getX(3) &&
+        fabs((poLS->getX(0) + poLS->getX(2)) / 2 - poLS->getX(1)) < EPSILON &&
+        fabs((poLS->getY(1) + poLS->getY(3)) / 2 - poLS->getY(0)) < EPSILON)
+    {
+        return new OGRPoint((poLS->getX(0) + poLS->getX(2)) / 2,
+                            (poLS->getY(1) + poLS->getY(3)) / 2);
+    }
+    return NULL;
+}
+
+/************************************************************************/
+/*                         PDFGetSquareCenter()                         */
+/************************************************************************/
+
+/* Return the center of a square, or NULL if it is not recognized */
+
+static OGRPoint* PDFGetSquareCenter(OGRLineString* poLS)
+{
+    if (poLS == NULL || poLS->getNumPoints() < 4 || poLS->getNumPoints() > 5)
+        return NULL;
+
+    if (poLS->getX(0) == poLS->getX(3) &&
+        poLS->getY(0) == poLS->getY(1) &&
+        poLS->getX(1) == poLS->getX(2) &&
+        poLS->getY(2) == poLS->getY(3) &&
+        fabs(fabs(poLS->getX(0) - poLS->getX(1)) - fabs(poLS->getY(0) - poLS->getY(3))) < EPSILON)
+    {
+        return new OGRPoint((poLS->getX(0) + poLS->getX(1)) / 2,
+                            (poLS->getY(0) + poLS->getY(3)) / 2);
+    }
+    return NULL;
+}
+
+/************************************************************************/
+/*                        PDFGetTriangleCenter()                        */
+/************************************************************************/
+
+/* Return the center of a equilateral triangle, or NULL if it is not recognized */
+
+static OGRPoint* PDFGetTriangleCenter(OGRLineString* poLS)
+{
+    if (poLS == NULL || poLS->getNumPoints() < 3 || poLS->getNumPoints() > 4)
+        return NULL;
+
+    double dfSqD1 = SQUARE(poLS->getX(0) - poLS->getX(1)) + SQUARE(poLS->getY(0) - poLS->getY(1));
+    double dfSqD2 = SQUARE(poLS->getX(1) - poLS->getX(2)) + SQUARE(poLS->getY(1) - poLS->getY(2));
+    double dfSqD3 = SQUARE(poLS->getX(0) - poLS->getX(2)) + SQUARE(poLS->getY(0) - poLS->getY(2));
+    if (fabs(dfSqD1 - dfSqD2) < EPSILON && fabs(dfSqD2 - dfSqD3) < EPSILON)
+    {
+        return new OGRPoint((poLS->getX(0) + poLS->getX(1) + poLS->getX(2)) / 3,
+                            (poLS->getY(0) + poLS->getY(1) + poLS->getY(2)) / 3);
+    }
+    return NULL;
+}
+
+/************************************************************************/
+/*                          PDFGetStarCenter()                          */
+/************************************************************************/
+
+/* Return the center of a 5-point star, or NULL if it is not recognized */
+
+static OGRPoint* PDFGetStarCenter(OGRLineString* poLS)
+{
+    if (poLS == NULL || poLS->getNumPoints() < 10 || poLS->getNumPoints() > 11)
+        return NULL;
+
+    double dfSqD01 = SQUARE(poLS->getX(0) - poLS->getX(1)) +
+                     SQUARE(poLS->getY(0) - poLS->getY(1));
+    double dfSqD02 = SQUARE(poLS->getX(0) - poLS->getX(2)) +
+                       SQUARE(poLS->getY(0) - poLS->getY(2));
+    double dfSqD13 = SQUARE(poLS->getX(1) - poLS->getX(3)) +
+                      SQUARE(poLS->getY(1) - poLS->getY(3));
+    const double dfSin18divSin126 = 0.38196601125;
+    int bOK = fabs(dfSqD13 / dfSqD02 - SQUARE(dfSin18divSin126)) < EPSILON;
+    for(int i=1;i<10 && bOK;i++)
+    {
+        double dfSqDiip1 = SQUARE(poLS->getX(i) - poLS->getX((i+1)%10)) +
+                           SQUARE(poLS->getY(i) - poLS->getY((i+1)%10));
+        if (fabs(dfSqDiip1 - dfSqD01) > EPSILON)
+        {
+            bOK = FALSE;
+        }
+        double dfSqDiip2 = SQUARE(poLS->getX(i) - poLS->getX((i+2)%10)) +
+                           SQUARE(poLS->getY(i) - poLS->getY((i+2)%10));
+        if ( (i%2) == 1 && fabs(dfSqDiip2 - dfSqD13) > EPSILON )
+        {
+            bOK = FALSE;
+        }
+        if ( (i%2) == 0 && fabs(dfSqDiip2 - dfSqD02) > EPSILON )
+        {
+            bOK = FALSE;
+        }
+    }
+    if (bOK)
+    {
+        return new OGRPoint((poLS->getX(0) + poLS->getX(2) + poLS->getX(4) +
+                             poLS->getX(6) + poLS->getX(8)) / 5,
+                            (poLS->getY(0) + poLS->getY(2) + poLS->getY(4) +
+                             poLS->getY(6) + poLS->getY(8)) / 5);
+    }
+    return NULL;
+}
+
+/************************************************************************/
 /*                           ParseContent()                             */
 /************************************************************************/
 
@@ -954,6 +1072,76 @@ void OGRPDFDataSource::ParseContent(const char* pszContent,
                 }
             }
         }
+
+        /* Recognize points as outputed by GDAL (ogr-sym-2 : circle (not filled)) */
+        if (poLS && poLS->getNumPoints() == 5)
+        {
+            OGRPoint* poCenter = PDFGetCircleCenter(poLS);
+            if (poCenter)
+            {
+                delete poGeom;
+                poGeom = poCenter;
+            }
+        }
+        /* Recognize points as outputed by GDAL (ogr-sym-4: square (not filled)) */
+        else if (poLS && poLS->getNumPoints() == 4)
+        {
+            OGRPoint* poCenter = PDFGetSquareCenter(poLS);
+            if (poCenter)
+            {
+                delete poGeom;
+                poGeom = poCenter;
+            }
+        }
+        /* Recognize points as outputed by GDAL (ogr-sym-6: triangle (not filled)) */
+        else if (poLS && poLS->getNumPoints() == 3)
+        {
+            OGRPoint* poCenter = PDFGetTriangleCenter(poLS);
+            if (poCenter)
+            {
+                delete poGeom;
+                poGeom = poCenter;
+            }
+        }
+        /* Recognize points as outputed by GDAL (ogr-sym-8: star (not filled)) */
+        else if (poLS && poLS->getNumPoints() == 10)
+        {
+            OGRPoint* poCenter = PDFGetStarCenter(poLS);
+            if (poCenter)
+            {
+                delete poGeom;
+                poGeom = poCenter;
+            }
+        }
+        else if (poMLS && poMLS->getNumGeometries() == 2)
+        {
+            OGRLineString* poLS1 = (OGRLineString* )poMLS->getGeometryRef(0);
+            OGRLineString* poLS2 = (OGRLineString* )poMLS->getGeometryRef(1);
+
+            /* Recognize points as outputed by GDAL (ogr-sym-0: cross (+) ) */
+            if (poLS1->getNumPoints() == 2 && poLS2->getNumPoints() == 2 &&
+                poLS1->getY(0) == poLS1->getY(1) &&
+                poLS2->getX(0) == poLS2->getX(1) &&
+                fabs(fabs(poLS1->getX(0) - poLS1->getX(1)) - fabs(poLS2->getY(0) - poLS2->getY(1))) < EPSILON &&
+                fabs((poLS1->getX(0) + poLS1->getX(1)) / 2 - poLS2->getX(0)) < EPSILON &&
+                fabs((poLS2->getY(0) + poLS2->getY(1)) / 2 - poLS1->getY(0)) < EPSILON)
+            {
+                delete poGeom;
+                poGeom = new OGRPoint(poLS2->getX(0), poLS1->getY(0));
+            }
+            /* Recognize points as outputed by GDAL (ogr-sym-1: diagcross (X) ) */
+            else if (poLS1->getNumPoints() == 2 && poLS2->getNumPoints() == 2 &&
+                     poLS1->getX(0) == poLS2->getX(0) &&
+                     poLS1->getY(0) == poLS2->getY(1) &&
+                     poLS1->getX(1) == poLS2->getX(1) &&
+                     poLS1->getY(1) == poLS2->getY(0) &&
+                     fabs(fabs(poLS1->getX(0) - poLS1->getX(1)) - fabs(poLS1->getY(0) - poLS1->getY(1))) < EPSILON)
+            {
+                delete poGeom;
+                poGeom = new OGRPoint((poLS1->getX(0) + poLS1->getX(1)) / 2,
+                                      (poLS1->getY(0) + poLS1->getY(1)) / 2);
+            }
+        }
     }
     else
     {
@@ -975,46 +1163,76 @@ void OGRPDFDataSource::ParseContent(const char* pszContent,
                 {
                     poLS->closeRings();
 
-                    /* Recognize points as outputed by GDAL */
                     if (nPolys == 0 &&
-                        poLS->getNumPoints() == 5 &&
-                        poLS->getY(0) == poLS->getY(2) &&
-                        poLS->getX(1) == poLS->getX(3) &&
-                        fabs((poLS->getX(0) + poLS->getX(2)) / 2 - poLS->getX(1)) < 1e-5 &&
-                        fabs((poLS->getY(1) + poLS->getY(3)) / 2 - poLS->getY(0)) < 1e-5)
+                        poLS &&
+                        poLS->getNumPoints() == 5)
                     {
-                        poGeom = new OGRPoint((poLS->getX(0) + poLS->getX(2)) / 2,
-                                                (poLS->getY(1) + poLS->getY(3)) / 2);
-                        break;
+                        /* Recognize points as outputed by GDAL (ogr-sym-3 : circle (filled)) */
+                        OGRPoint* poCenter = PDFGetCircleCenter(poLS);
+                        if (poCenter)
+                        {
+                            poGeom = poCenter;
+                            break;
+                        }
+
+                        /* Recognize points as outputed by GDAL (ogr-sym-5: square (filled)) */
+                        poCenter = PDFGetSquareCenter(poLS);
+                        if (poCenter)
+                        {
+                            poGeom = poCenter;
+                            break;
+                        }
+
+                        /* ESRI points */
+                        if (bHasRe && oCoords.size() == 14 &&
+                            poLS->getY(0) == poLS->getY(1) &&
+                            poLS->getX(1) == poLS->getX(2) &&
+                            poLS->getY(2) == poLS->getY(3) &&
+                            poLS->getX(3) == poLS->getX(0))
+                        {
+                            poGeom = new OGRPoint((poLS->getX(0) + poLS->getX(1)) / 2,
+                                                  (poLS->getY(0) + poLS->getY(2)) / 2);
+                            break;
+                        }
                     }
-                    /* ESRI points */
-                    else if (bHasRe && oCoords.size() == 14 && nPolys == 0 &&
-                                poLS->getNumPoints() == 5 &&
-                                poLS->getY(0) == poLS->getY(1) &&
-                                poLS->getX(1) == poLS->getX(2) &&
-                                poLS->getY(2) == poLS->getY(3) &&
-                                poLS->getX(3) == poLS->getX(0))
+                    /* Recognize points as outputed by GDAL (ogr-sym-7: triangle (filled)) */
+                    else if (nPolys == 0 &&
+                             poLS &&
+                             poLS->getNumPoints() == 4)
                     {
-                        poGeom = new OGRPoint((poLS->getX(0) + poLS->getX(1)) / 2,
-                                                (poLS->getY(0) + poLS->getY(2)) / 2);
-                        break;
+                        OGRPoint* poCenter = PDFGetTriangleCenter(poLS);
+                        if (poCenter)
+                        {
+                            poGeom = poCenter;
+                            break;
+                        }
+                    }
+                    /* Recognize points as outputed by GDAL (ogr-sym-9: star (filled)) */
+                    else if (nPolys == 0 &&
+                             poLS &&
+                             poLS->getNumPoints() == 11)
+                    {
+                        OGRPoint* poCenter = PDFGetStarCenter(poLS);
+                        if (poCenter)
+                        {
+                            poGeom = poCenter;
+                            break;
+                        }
+                    }
+
+                    if (poLS->getNumPoints() >= 3)
+                    {
+                        OGRPolygon* poPoly =  new OGRPolygon();
+                        poPoly->addRingDirectly(poLS);
+                        poLS = NULL;
+
+                        papoPoly = (OGRGeometry**) CPLRealloc(papoPoly, (nPolys + 1) * sizeof(OGRGeometry*));
+                        papoPoly[nPolys ++] = poPoly;
                     }
                     else
                     {
-                        if (poLS->getNumPoints() >= 3)
-                        {
-                            OGRPolygon* poPoly =  new OGRPolygon();
-                            poPoly->addRingDirectly(poLS);
-                            poLS = NULL;
-
-                            papoPoly = (OGRGeometry**) CPLRealloc(papoPoly, (nPolys + 1) * sizeof(OGRGeometry*));
-                            papoPoly[nPolys ++] = poPoly;
-                        }
-                        else
-                        {
-                            delete poLS;
-                            poLS = NULL;
-                        }
+                        delete poLS;
+                        poLS = NULL;
                     }
                 }
             }

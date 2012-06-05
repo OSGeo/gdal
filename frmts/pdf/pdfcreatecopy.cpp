@@ -1916,8 +1916,6 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
     adfMatrix[2] = - (adfGeoTransform[3] + adfGeoTransform[5] * nHeight) / (-adfGeoTransform[5] * dfUserUnit) + oPageContext.sMargins.nBottom;
     adfMatrix[3] = 1.0 / (-adfGeoTransform[5] * dfUserUnit);
 
-    double dfRadius = 5 * dfUserUnit;
-
     OGRGeometryH hGeom = OGR_F_GetGeometryRef(hFeat);
     if (hGeom == NULL)
     {
@@ -1937,10 +1935,14 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
     int nPenR = 0, nPenG = 0, nPenB = 0, nPenA = 255;
     int nBrushR = 127, nBrushG = 127, nBrushB = 127, nBrushA = 127;
     int nTextR = 0, nTextG = 0, nTextB = 0, nTextA = 255;
+    int bSymbolColorDefined = FALSE;
+    int nSymbolR = 0, nSymbolG = 0, nSymbolB = 0, nSymbolA = 255;
     double dfTextSize = 12, dfTextAngle = 0;
     double dfPenWidth = 1;
+    double dfSymbolSize = 5;
     CPLString osDashArray;
     CPLString osLabelText;
+    CPLString osSymbolId;
 
     OGRStyleMgrH hSM = OGR_SM_Create(NULL);
     OGR_SM_InitFromFeature(hSM, hFeat);
@@ -2042,10 +2044,54 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                     dfTextAngle = dfVal;
                 }
             }
+            else if (OGR_ST_GetType(hTool) == OGRSTCSymbol)
+            {
+                int bIsNull;
+                const char* pszSymbolId = OGR_ST_GetParamStr(hTool, OGRSTSymbolId, &bIsNull);
+                if (pszSymbolId && !bIsNull)
+                    osSymbolId = pszSymbolId;
+
+                double dfVal = OGR_ST_GetParamDbl(hTool, OGRSTSymbolSize, &bIsNull);
+                if (!bIsNull)
+                {
+                    dfSymbolSize = dfVal;
+                }
+
+                const char* pszColor = OGR_ST_GetParamStr(hTool, OGRSTSymbolColor, &bIsNull);
+                if (pszColor && !bIsNull)
+                {
+                    int nRed = 0, nGreen = 0, nBlue = 0, nAlpha = 255;
+                    int nVals = sscanf(pszColor,"#%2x%2x%2x%2x",&nRed,&nGreen,&nBlue,&nAlpha);
+                    if (nVals >= 3)
+                    {
+                        bSymbolColorDefined = TRUE;
+                        nSymbolR = nRed;
+                        nSymbolG = nGreen;
+                        nSymbolB = nBlue;
+                        if (nVals == 4)
+                            nSymbolA = nAlpha;
+                    }
+                }
+            }
+
             OGR_ST_Destroy(hTool);
         }
     }
     OGR_SM_Destroy(hSM);
+
+    if (wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPoint && bSymbolColorDefined)
+    {
+        nPenR = nSymbolR;
+        nPenG = nSymbolG;
+        nPenB = nSymbolB;
+        nPenA = nSymbolA;
+        nBrushR = nSymbolR;
+        nBrushG = nSymbolG;
+        nBrushB = nSymbolB;
+        nBrushA = nSymbolA;
+    }
+
+    double dfRadius = dfSymbolSize * dfUserUnit;
 
     /* -------------------------------------------------------------- */
     /*  Write object dictionary                                       */
@@ -2126,27 +2172,108 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
         double dfX = OGR_G_GetX(hGeom, 0) * adfMatrix[1] + adfMatrix[0];
         double dfY = OGR_G_GetY(hGeom, 0) * adfMatrix[3] + adfMatrix[2];
 
-        /* See http://www.whizkidtech.redprince.net/bezier/circle/kappa/ */
-        const double dfKappa = 0.5522847498;
+        if (osSymbolId == "")
+            osSymbolId = "ogr-sym-3"; /* symbol by default */
+        else if ( !(osSymbolId == "ogr-sym-0" ||
+                    osSymbolId == "ogr-sym-1" ||
+                    osSymbolId == "ogr-sym-2" ||
+                    osSymbolId == "ogr-sym-3" ||
+                    osSymbolId == "ogr-sym-4" ||
+                    osSymbolId == "ogr-sym-5" ||
+                    osSymbolId == "ogr-sym-6" ||
+                    osSymbolId == "ogr-sym-7" ||
+                    osSymbolId == "ogr-sym-8" ||
+                    osSymbolId == "ogr-sym-9") )
+        {
+            CPLDebug("PDF", "Unhandled symbol id : %s. Using ogr-sym-3 instead", osSymbolId.c_str());
+            osSymbolId = "ogr-sym-3";
+        }
 
-        VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY);
-        VSIFPrintfL(fp, "%f %f %f %f %f %f c\n",
-                    dfX - dfRadius, dfY - dfRadius * dfKappa,
-                    dfX - dfRadius * dfKappa, dfY - dfRadius,
-                    dfX, dfY - dfRadius);
-        VSIFPrintfL(fp, "%f %f %f %f %f %f c\n",
-                    dfX + dfRadius * dfKappa, dfY - dfRadius,
-                    dfX + dfRadius, dfY - dfRadius * dfKappa,
-                    dfX + dfRadius, dfY);
-        VSIFPrintfL(fp, "%f %f %f %f %f %f c\n",
-                    dfX + dfRadius, dfY + dfRadius * dfKappa,
-                    dfX + dfRadius * dfKappa, dfY + dfRadius,
-                    dfX, dfY + dfRadius);
-        VSIFPrintfL(fp, "%f %f %f %f %f %f c\n",
-                    dfX - dfRadius * dfKappa, dfY + dfRadius,
-                    dfX - dfRadius, dfY + dfRadius * dfKappa,
-                    dfX - dfRadius, dfY);
-        VSIFPrintfL(fp, "b*\n");
+        if (osSymbolId == "ogr-sym-0") /* cross (+)  */
+        {
+            VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY);
+            VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY);
+            VSIFPrintfL(fp, "%f %f m\n", dfX, dfY - dfRadius);
+            VSIFPrintfL(fp, "%f %f l\n", dfX, dfY + dfRadius);
+            VSIFPrintfL(fp, "s\n");
+        }
+        else if (osSymbolId == "ogr-sym-1") /* diagcross (X) */
+        {
+            VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY - dfRadius);
+            VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY + dfRadius);
+            VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY + dfRadius);
+            VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY - dfRadius);
+            VSIFPrintfL(fp, "s\n");
+        }
+        else if (osSymbolId == "ogr-sym-2" ||
+                 osSymbolId == "ogr-sym-3") /* circle */
+        {
+            /* See http://www.whizkidtech.redprince.net/bezier/circle/kappa/ */
+            const double dfKappa = 0.5522847498;
+
+            VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY);
+            VSIFPrintfL(fp, "%f %f %f %f %f %f c\n",
+                        dfX - dfRadius, dfY - dfRadius * dfKappa,
+                        dfX - dfRadius * dfKappa, dfY - dfRadius,
+                        dfX, dfY - dfRadius);
+            VSIFPrintfL(fp, "%f %f %f %f %f %f c\n",
+                        dfX + dfRadius * dfKappa, dfY - dfRadius,
+                        dfX + dfRadius, dfY - dfRadius * dfKappa,
+                        dfX + dfRadius, dfY);
+            VSIFPrintfL(fp, "%f %f %f %f %f %f c\n",
+                        dfX + dfRadius, dfY + dfRadius * dfKappa,
+                        dfX + dfRadius * dfKappa, dfY + dfRadius,
+                        dfX, dfY + dfRadius);
+            VSIFPrintfL(fp, "%f %f %f %f %f %f c\n",
+                        dfX - dfRadius * dfKappa, dfY + dfRadius,
+                        dfX - dfRadius, dfY + dfRadius * dfKappa,
+                        dfX - dfRadius, dfY);
+            if (osSymbolId == "ogr-sym-2") 
+                VSIFPrintfL(fp, "s\n"); /* not filled */
+            else
+                VSIFPrintfL(fp, "b*\n"); /* filled */
+        }
+        else if (osSymbolId == "ogr-sym-4" ||
+                 osSymbolId == "ogr-sym-5") /* square */
+        {
+            VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY + dfRadius);
+            VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY + dfRadius);
+            VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY - dfRadius);
+            VSIFPrintfL(fp, "%f %f l\n", dfX - dfRadius, dfY - dfRadius);
+            if (osSymbolId == "ogr-sym-4")
+                VSIFPrintfL(fp, "s\n"); /* not filled */
+            else
+                VSIFPrintfL(fp, "b*\n"); /* filled */
+        }
+        else if (osSymbolId == "ogr-sym-6" ||
+                 osSymbolId == "ogr-sym-7") /* triangle */
+        {
+            const double dfSqrt3 = 1.73205080757;
+            VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY - dfRadius * dfSqrt3 / 3);
+            VSIFPrintfL(fp, "%f %f l\n", dfX, dfY + 2 * dfRadius * dfSqrt3 / 3);
+            VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY - dfRadius * dfSqrt3 / 3);
+            if (osSymbolId == "ogr-sym-6")
+                VSIFPrintfL(fp, "s\n"); /* not filled */
+            else
+                VSIFPrintfL(fp, "b*\n"); /* filled */
+        }
+        else if (osSymbolId == "ogr-sym-8" ||
+                 osSymbolId == "ogr-sym-9") /* star */
+        {
+            const double dfSin18divSin126 = 0.38196601125;
+            VSIFPrintfL(fp, "%f %f m\n", dfX, dfY + dfRadius);
+            for(int i=1; i<10;i++)
+            {
+                double dfFactor = ((i % 2) == 1) ? dfSin18divSin126 : 1.0;
+                VSIFPrintfL(fp, "%f %f l\n",
+                            dfX + cos(M_PI / 2 - i * M_PI * 36 / 180) * dfRadius * dfFactor,
+                            dfY + sin(M_PI / 2 - i * M_PI * 36 / 180) * dfRadius * dfFactor);
+            }
+            if (osSymbolId == "ogr-sym-8")
+                VSIFPrintfL(fp, "s\n"); /* not filled */
+            else
+                VSIFPrintfL(fp, "b*\n"); /* filled */
+        }
     }
     else
     {
