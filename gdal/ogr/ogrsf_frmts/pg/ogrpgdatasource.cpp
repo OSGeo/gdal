@@ -112,7 +112,6 @@ OGRPGDataSource::~OGRPGDataSource()
 
 CPLString OGRPGDataSource::GetCurrentSchema()
 {
-    CPLString osCurrentSchema;
     /* -------------------------------------------- */
     /*          Get the current schema              */
     /* -------------------------------------------- */
@@ -1311,8 +1310,6 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
         pszSchemaName = CPLStrdup(CSLFetchNameValue( papszOptions, "SCHEMA" ));
     }
 
-    CPLString osCurrentSchema = GetCurrentSchema();
-
     if ( pszSchemaName == NULL && strlen(osCurrentSchema) > 0)
     {
       pszSchemaName = CPLStrdup(osCurrentSchema);
@@ -1724,11 +1721,21 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
     CPLFree(pszNameWithoutBracket);
     pszNameWithoutBracket = NULL;
 
-    CPLString osCurrentSchema = GetCurrentSchema();
-    OGRPGTableLayer* poLayer = OpenTable( osCurrentSchema, pszTableName,
-                                          pszSchemaName,
-                                          pszGeomColumnName,
-                                          bDSUpdate, TRUE, TRUE );
+    OGRLayer* poLayer = NULL;
+
+    if (pszSchemaName != NULL && osCurrentSchema == pszSchemaName &&
+        pszGeomColumnName == NULL )
+    {
+        poLayer = GetLayerByName(pszTableName);
+    }
+    else
+    {
+        poLayer = OpenTable( osCurrentSchema, pszTableName,
+                             pszSchemaName,
+                             pszGeomColumnName,
+                             bDSUpdate, TRUE, TRUE );
+    }
+
     CPLFree(pszTableName);
     CPLFree(pszSchemaName);
     CPLFree(pszGeomColumnName);
