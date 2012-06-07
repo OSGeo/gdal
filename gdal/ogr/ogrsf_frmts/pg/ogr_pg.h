@@ -159,6 +159,8 @@ class OGRPGLayer : public OGRLayer
     virtual const char *GetGeometryColumn();
 
     virtual OGRErr      SetNextByIndex( long nIndex );
+
+    int                 GetSRID();
 };
 
 /************************************************************************/
@@ -287,6 +289,9 @@ class OGRPGResultLayer : public OGRPGLayer
 
     char                *pszRawStatement;
 
+    char                *pszGeomTableName;
+    char                *pszGeomTableSchemaName;
+
     CPLString           osWHERE;
 
   public:
@@ -350,6 +355,7 @@ class OGRPGDataSource : public OGRDataSource
 
     void                OGRPGDecodeVersionString(PGver* psVersion, const char* pszVer);
 
+    CPLString           osCurrentSchema;
     CPLString           GetCurrentSchema();
 
     int                 nUndefinedSRID;

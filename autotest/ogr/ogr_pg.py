@@ -2928,6 +2928,41 @@ def ogr_pg_60():
     return 'success'
 
 ###############################################################################
+# Test ExecuteSQL() and getting SRID of the request (#4699)
+
+def ogr_pg_62():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    if not gdaltest.pg_has_postgis:
+        return 'skip'
+
+    # Test on a regular request in a table
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    gdaltest.pg_ds.ExecuteSQL('DELLAYER:testsrtext2')
+    gdaltest.pg_ds.CreateLayer( 'testsrtext2', srs = srs);
+
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT * FROM testsrtext2')
+    got_srs = sql_lyr.GetSpatialRef()
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+    if got_srs is None or got_srs.ExportToWkt().find('32631') == -1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test a request on a table, but with a geometry column not in the table
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT eas_id, GeomFromEWKT('SRID=4326;POINT(0 1)') FROM tpoly")
+    got_srs = sql_lyr.GetSpatialRef()
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+    if got_srs is None or got_srs.ExportToWkt().find('4326') == -1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -3057,6 +3092,7 @@ gdaltest_list_internal = [
     ogr_pg_58,
     ogr_pg_59,
     ogr_pg_60,
+    ogr_pg_62,
     ogr_pg_cleanup ]
 
 ###############################################################################

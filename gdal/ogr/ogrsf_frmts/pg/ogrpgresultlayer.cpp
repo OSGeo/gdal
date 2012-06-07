@@ -55,6 +55,46 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
 
     poFeatureDefn = ReadResultDefinition(hInitialResultIn);
 
+    pszGeomTableName = NULL;
+    pszGeomTableSchemaName = NULL;
+
+    /* Find at which index the geometry column is */
+    int iGeomCol = -1;
+    if (pszGeomColumn != NULL)
+    {
+        int iRawField;
+        for( iRawField = 0; iRawField < PQnfields(hInitialResultIn); iRawField++ )
+        {
+            if( strcmp(PQfname(hInitialResultIn,iRawField), pszGeomColumn) == 0 )
+            {
+                iGeomCol = iRawField;
+                break;
+            }
+        }
+    }
+
+    /* Determine the table from which the geometry column is extracted */
+    if (iGeomCol != -1)
+    {
+        Oid tableOID = PQftable(hInitialResultIn, iGeomCol);
+        if (tableOID != InvalidOid)
+        {
+            CPLString osGetTableName;
+            osGetTableName.Printf("SELECT c.relname, n.nspname FROM pg_class c "
+                                  "JOIN pg_namespace n ON c.relnamespace=n.oid WHERE c.oid = %d ", tableOID);
+            PGresult* hTableNameResult = OGRPG_PQexec(poDS->GetPGConn(), osGetTableName );
+            if( hTableNameResult && PQresultStatus(hTableNameResult) == PGRES_TUPLES_OK)
+            {
+                if ( PQntuples(hTableNameResult) > 0 )
+                {
+                    pszGeomTableName = CPLStrdup(PQgetvalue(hTableNameResult,0,0));
+                    pszGeomTableSchemaName = CPLStrdup(PQgetvalue(hTableNameResult,0,1));
+                }
+            }
+            OGRPGClearResult( hTableNameResult );
+        }
+    }
+
     if (bHasPostGISGeography)
     {
         // FIXME? But for the moment, PostGIS 1.5 only handles SRID:4326.
@@ -70,6 +110,8 @@ OGRPGResultLayer::~OGRPGResultLayer()
 
 {
     CPLFree( pszRawStatement );
+    CPLFree( pszGeomTableName );
+    CPLFree( pszGeomTableSchemaName );
 }
 
 
@@ -298,29 +340,53 @@ OGRSpatialReference *OGRPGResultLayer::GetSpatialRef()
         /* to do spatial filtering */
         if (bHasPostGISGeometry)
         {
-            CPLString osGetSRID;
-            osGetSRID += "SELECT getsrid(";
-            osGetSRID += OGRPGEscapeColumnName(pszGeomColumn);
-            osGetSRID += ") FROM (";
-            osGetSRID += pszRawStatement;
-            osGetSRID += ") AS ogrpggetsrid LIMIT 1";
-
-            PGresult* hSRSIdResult = OGRPG_PQexec(poDS->GetPGConn(), osGetSRID );
-
-            nSRSId = -1;
-
-            if( hSRSIdResult && PQresultStatus(hSRSIdResult) == PGRES_TUPLES_OK)
+            if (pszGeomTableName != NULL)
             {
-                if ( PQntuples(hSRSIdResult) > 0 )
-                    nSRSId = atoi(PQgetvalue(hSRSIdResult, 0, 0));
-            }
-            else
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                            "%s", PQerrorMessage(poDS->GetPGConn()) );
+                CPLString osName(pszGeomTableSchemaName);
+                osName += ".";
+                osName += pszGeomTableName;
+                OGRPGLayer* poBaseLayer = (OGRPGLayer*) poDS->GetLayerByName(osName);
+                if (poBaseLayer)
+                {
+                    nSRSId = poBaseLayer->GetSRID();
+                }
             }
 
-            OGRPGClearResult(hSRSIdResult);
+            if( nSRSId == UNDETERMINED_SRID )
+            {
+                CPLString osGetSRID;
+
+                const char* psGetSRIDFct;
+                if (poDS->sPostGISVersion.nMajor >= 2)
+                    psGetSRIDFct = "ST_SRID";
+                else
+                    psGetSRIDFct = "getsrid";
+
+                osGetSRID += "SELECT ";
+                osGetSRID += psGetSRIDFct;
+                osGetSRID += "(";
+                osGetSRID += OGRPGEscapeColumnName(pszGeomColumn);
+                osGetSRID += ") FROM(";
+                osGetSRID += pszRawStatement;
+                osGetSRID += ") AS ogrpggetsrid LIMIT 1";
+
+                PGresult* hSRSIdResult = OGRPG_PQexec(poDS->GetPGConn(), osGetSRID );
+
+                nSRSId = -1;
+
+                if( hSRSIdResult && PQresultStatus(hSRSIdResult) == PGRES_TUPLES_OK)
+                {
+                    if ( PQntuples(hSRSIdResult) > 0 )
+                        nSRSId = atoi(PQgetvalue(hSRSIdResult, 0, 0));
+                }
+                else
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                                "%s", PQerrorMessage(poDS->GetPGConn()) );
+                }
+
+                OGRPGClearResult(hSRSIdResult);
+            }
         }
     }
 
