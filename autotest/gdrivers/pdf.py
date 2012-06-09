@@ -1407,6 +1407,48 @@ def pdf_jpeg_in_vrt_direct_copy():
 
     return 'success'
 
+###############################################################################
+# Test reading georeferencing attached to an image, and not to the page (#4695)
+
+def pdf_georef_on_image(src_filename = 'data/byte.tif'):
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    src_ds = gdal.Open(src_filename)
+    gdal.SetConfigOption('GDAL_PDF_WRITE_GEOREF_ON_IMAGE', 'YES')
+    out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_georef_on_image.pdf', src_ds, options = ['MARGIN=10', 'GEO_ENCODING=NONE'])
+    out_ds = None
+    gdal.SetConfigOption('GDAL_PDF_WRITE_GEOREF_ON_IMAGE', None)
+    src_cs = src_ds.GetRasterBand(1).Checksum()
+    src_ds = None
+
+    ds = gdal.Open('tmp/pdf_georef_on_image.pdf')
+    subdataset_name = ds.GetMetadataItem('SUBDATASET_1_NAME', 'SUBDATASETS')
+    ds = None
+
+    ds = gdal.Open(subdataset_name)
+    got_wkt = ds.GetProjectionRef()
+    got_cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    gdal.Unlink('tmp/pdf_georef_on_image.pdf')
+
+    if got_wkt == '':
+        gdaltest.post_reason('did not get projection')
+        return 'fail'
+
+    if src_cs != got_cs:
+        gdaltest.post_reason('did not get same checksum')
+        print(src_cs)
+        print(got_cs)
+        return 'fail'
+
+    return 'success'
+
+def pdf_georef_on_image_rgb():
+    return pdf_georef_on_image('data/rgbsmall.tif')
+
 gdaltest_list = [
     pdf_init,
     pdf_online_1,
@@ -1450,6 +1492,8 @@ gdaltest_list = [
     pdf_write_ogr,
     pdf_jpeg_direct_copy,
     pdf_jpeg_in_vrt_direct_copy,
+    pdf_georef_on_image,
+    pdf_georef_on_image_rgb,
 
     pdf_switch_underlying_lib,
 
