@@ -33,6 +33,7 @@
 #include "pdfobject.h"
 #include "gdal_priv.h"
 #include <vector>
+#include <map>
 
 #ifdef OGR_ENABLED
 #include "ogr_api.h"
@@ -124,6 +125,7 @@ class GDALPDFWriter
     std::vector<GDALXRefEntry> asXRefEntries;
     std::vector<int> asPageId;
     std::vector<GDALPDFOCGDesc> asOCGs;
+    std::map<CPLString,GDALPDFImageDesc> oMapSymbolFilenameToDesc;
 
     int nInfoId;
     int nInfoGen;
