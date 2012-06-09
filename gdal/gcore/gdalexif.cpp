@@ -194,7 +194,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
 /*      Extract all entry from a IFD                                    */
 /************************************************************************/
 CPLErr EXIFExtractMetadata(char**& papszMetadata,
-                           VSILFILE *fp, int nOffset,
+                           void *fpInL, int nOffset,
                            int bSwabflag, int nTIFFHEADER,
                            int& nExifOffset, int& nInterOffset, int& nGPSOffset)
 {
@@ -203,6 +203,8 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
     unsigned int           n,i;
     char          pszTemp[MAXSTRINGLENGTH];
     char          pszName[128];
+
+    VSILFILE* fp = (VSILFILE* )fpInL;
 
     TIFFDirEntry *poTIFFDirEntry;
     TIFFDirEntry *poTIFFDir;
