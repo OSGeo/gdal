@@ -933,9 +933,8 @@ CPL_C_END
 CPLString GDALFindAssociatedFile( const char *pszBasename, const char *pszExt,
                                   char **papszSiblingFiles, int nFlags );
 
-#include "cpl_vsi.h"
 CPLErr EXIFExtractMetadata(char**& papszMetadata,
-                           VSILFILE *fp, int nOffset,
+                           void *fpL, int nOffset,
                            int bSwabflag, int nTIFFHEADER,
                            int& nExifOffset, int& nInterOffset, int& nGPSOffset);
 
