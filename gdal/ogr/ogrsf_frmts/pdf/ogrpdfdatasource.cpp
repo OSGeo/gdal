@@ -951,7 +951,17 @@ void OGRPDFDataSource::ParseContent(const char* pszContent,
                         return;
 
                     if (poResources == NULL)
-                        return;
+                    {
+                        if (osObjectName.find("/SymImage") == 0)
+                        {
+                            oCoords.push_back(oGS.adfCM[4] + oGS.adfCM[0] / 2);
+                            oCoords.push_back(oGS.adfCM[5] + oGS.adfCM[3] / 2);
+                            osToken = "";
+                            continue;
+                        }
+                        else
+                            return;
+                    }
 
                     GDALPDFObject* poXObject =
                         poResources->GetDictionary()->Get("XObject");
@@ -1028,7 +1038,13 @@ void OGRPDFDataSource::ParseContent(const char* pszContent,
 
 
     OGRGeometry* poGeom = NULL;
-    if (!bHasFoundFill)
+    if (oCoords.size() == 2)
+    {
+        double X, Y;
+        PDFCoordsToSRSCoords(oCoords[0], oCoords[1], X, Y);
+        poGeom = new OGRPoint(X, Y);
+    }
+    else if (!bHasFoundFill)
     {
         OGRLineString* poLS = NULL;
         OGRMultiLineString* poMLS = NULL;

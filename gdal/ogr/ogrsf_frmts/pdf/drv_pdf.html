@@ -1,5 +1,6 @@
 <html>
 <head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <title>PDF - Geospatial PDF</title>
 </head>
 
@@ -15,8 +16,37 @@ Read support requires linking to podofo or poppler libraries, but write support 
 
 Vector features are encoded according to PDF's logical structure facilities (as described by "§10.6 - Logical Structure" of PDF spec).<p>
 
-For write support, the driver will attempt to make use of the attached style information (encoded according to the OGR Feature Style specification),
-if available.<p>
+<h2>Feature style support</h2>
+
+For write support, the driver has partial support for the style information attached to features,
+encoded according to the <a href="ogr_feature_style.html">OGR Feature Style Specification</a>.<p>
+
+The following tools are recognized :
+<ul>
+<li>For points, LABEL and SYMBOL.</li>
+<li>For lines, PEN.</li>
+<li>For polygons, PEN and BRUSH.</li>
+</ul>
+
+The supported attributes for each tool are summed up in the following table :<p>
+
+<table border="1">
+
+<tr>
+<th>Tool</th>
+<th>Supported attributes</th>
+<th>Example</th>
+</tr>
+
+<tr><td>PEN</td><td>color, width and dash pattern</td><td>PEN(c:#FF0000,w:5px)</td></tr>
+<tr><td>BRUSH</td><td>foreground color</td><td>BRUSH(fc:#0000FF)</td></tr>
+<tr><td>LABEL</td><td>text (limited to ASCII strings), foreground color, size and angle</td><td>LABEL(c:#000000,t:"Hello World!",s:5)</td></tr>
+<tr><td>SYMBOL</td><td>id (ogr-sym-0 to ogr-sym-9, and filenames for raster symbols), color and size</td>
+<td>SYMBOL(c:#00FF00,id:"ogr-sym-3",s:10)<br>SYMBOL(c:#000000,id:"a_symbol.png")</td></tr>
+</table>
+<p>
+
+Alpha values are supported for colors. If not specified, for BRUSH, it is set at 50% opaque.<p>
 
 <h2>Dataset creation options</h2>
 
@@ -58,15 +88,10 @@ When specified, the number of names should be the same as the number of OGR laye
 
 <h2>See also</h2>
 
-Other drivers :
-<ul>
-<li><a href="../frmt_pdf.html">GDAL PDF driver</a></li>
-</ul>
-<p>
-
 Specifications :
 
 <ul>
+<li><a href="ogr_feature_style.html">OGR Feature Style Specification</a></li>
 <li><a href="http://portal.opengeospatial.org/files/?artifact_id=40537">OGC GeoPDF Encoding Best Practice Version 2.2 (08-139r3)</a></li>
 <li><a href="http://www.adobe.com/devnet/acrobat/pdfs/adobe_supplement_iso32000.pdf">Adobe Supplement to ISO 32000</a></li>
 <li><a href="http://www.adobe.com/devnet/acrobat/pdfs/pdf_reference_1-7.pdf">PDF Reference, version 1.7</a></li>
