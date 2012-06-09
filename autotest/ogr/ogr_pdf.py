@@ -81,6 +81,11 @@ def ogr_pdf_1():
         feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%f 49.1)' % (2 + i * 0.05)))
         lyr.CreateFeature(feat)
 
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetStyleString('SYMBOL(c:#000000,id:"../gcore/data/byte.tif")')
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2.5 49.1)'))
+    lyr.CreateFeature(feat)
+
     ds = None
 
     return 'success'
@@ -147,6 +152,11 @@ def ogr_pdf_2():
         if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT(%f 49.1)' % (2 + i * 0.05))) != 0:
             gdaltest.post_reason('fail with ogr-sym-%d' % i)
             return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT(2.5 49.1)')) != 0:
+        gdaltest.post_reason('fail with raster icon')
+        return 'fail'
 
     ds = None
 
