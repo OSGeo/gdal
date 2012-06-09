@@ -9,7 +9,7 @@ OBJ	=	gdalopeninfo.obj gdaldrivermanager.obj gdaldriver.obj \
 		gdalallvalidmaskband.obj gdalnodatamaskband.obj \
 		gdal_rpcimdio.obj gdalproxydataset.obj gdalproxypool.obj \
 		gdalnodatavaluesmaskband.obj gdaldefaultasync.obj \
-        gdaldllmain.obj
+        gdaldllmain.obj gdalexif.obj
 
 RES	=	Version.res
 

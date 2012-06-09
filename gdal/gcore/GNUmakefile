@@ -9,18 +9,24 @@ OBJ	=	gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
 		gdal_rat.o gdalgmlcoverage.o gdalpamproxydb.o \
 		gdalallvalidmaskband.o gdalnodatamaskband.o gdal_rpcimdio.o \
  		gdalproxydataset.o gdalproxypool.o gdaldefaultasync.o \
-		gdalnodatavaluesmaskband.o gdaldllmain.o
+		gdalnodatavaluesmaskband.o gdaldllmain.o gdalexif.o
 
 # Enable the following if you want to use MITAB's code to convert
 # .tab coordinate systems into well known text.  But beware that linking
 # against static libraries becomes more complicated because of the odd
 # call out.
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(PAM_SETTING) -I../frmts/gtiff
+ifeq ($(TIFF_SETTING),internal)
+ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes)
+XTRA_OPT 	:=	$(XTRA_OPT) -DRENAME_INTERNAL_LIBTIFF_SYMBOLS
+endif
+endif
+
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(PAM_SETTING) $(XTRA_OPT) -I../frmts/gtiff
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
-$(OBJ):	gdal_priv.h
+$(OBJ):	gdal_priv.h gdal_proxy.h
 
 clean:
 	$(RM) *.o $(O_OBJ)
