@@ -19,13 +19,6 @@ OBJ	=	jpgdataset.o vsidataio.o
 XTRA_OPT	=	
 endif
 
-ifeq ($(TIFF_SETTING),internal)
-ifeq ($(RENAME_INTERNAL_LIBTIFF_SYMBOLS),yes)
-XTRA_OPT 	:=	$(XTRA_OPT) -DRENAME_INTERNAL_LIBTIFF_SYMBOLS
-endif
-XTRA_OPT	:=	$(XTRA_OPT) -I../gtiff/libtiff
-endif
-
 ifeq ($(JPEG12_ENABLED),yes)
 XTRA_OPT_12 	=	-Ilibjpeg12 -DDEFAULT_MAX_MEM=500000000L
 XTRA_OPT := -DJPEG_DUAL_MODE_8_12 $(XTRA_OPT)

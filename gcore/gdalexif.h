@@ -27,14 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#define	ord(e)	((int)e)
 #define EXIFOFFSETTAG 0x8769
 #define INTEROPERABILITYOFFSET 0xA005
 #define GPSOFFSETTAG     0x8825
 #define MAXSTRINGLENGTH 65535
 
 #ifdef RENAME_INTERNAL_LIBTIFF_SYMBOLS
-#include "gdal_libtiff_symbol_rename.h"
+#include "../frmts/gtiff/libtiff/gdal_libtiff_symbol_rename.h"
 #endif
 
 static const struct gpsname {
@@ -195,25 +194,6 @@ static const struct intr_tag {
     { 0x0000,       ""}
 };
 
-#define TIFF_VERSION            42
-#define TIFF_BIGTIFF_VERSION    43
-
-#define TIFF_BIGENDIAN          0x4d4d
-#define TIFF_LITTLEENDIAN       0x4949
-
-/*
- * TIFF header.
- */
-typedef struct {
-        GUInt16  tiff_magic;     /* magic number (defines byte order) */
-#define TIFF_MAGIC_SIZE         2
-        GUInt16  tiff_version;   /* TIFF version number */
-#define TIFF_VERSION_SIZE       2
-        GUInt32  tiff_diroff;    /* byte offset to first directory */
-#define TIFF_DIROFFSET_SIZE     4
-} TIFFHeader;
-
-
 typedef enum {
         TIFF_NOTYPE     = 0,    /* placeholder */
         TIFF_BYTE       = 1,    /* 8-bit unsigned integer */
@@ -249,16 +229,12 @@ typedef struct {
         GUInt32          tdir_offset;    /* byte offset to field data */
 } TIFFDirEntry;
 
-typedef GUInt32 tsize_t;          /* i/o size in bytes */
-
-
 CPL_C_START
 extern	int TIFFDataWidth(TIFFDataType);    /* table of tag datatype widths */
 extern	void TIFFSwabShort(GUInt16*);
 extern	void TIFFSwabLong(GUInt32*);
 extern	void TIFFSwabDouble(double*);
 extern	void TIFFSwabArrayOfShort(GUInt16*, unsigned long);
-extern	void TIFFSwabArrayOfTriples(GByte*, unsigned long);
 extern	void TIFFSwabArrayOfLong(GUInt32*, unsigned long);
 extern	void TIFFSwabArrayOfDouble(double*, unsigned long);
 CPL_C_END
