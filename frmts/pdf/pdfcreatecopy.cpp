@@ -298,7 +298,7 @@ void GDALPDFWriter::UpdateProj(GDALDataset* poSrcDS,
 
     const char* pszGEO_ENCODING = CPLGetConfigOption("GDAL_PDF_GEO_ENCODING", "ISO32000");
     if (EQUAL(pszGEO_ENCODING, "ISO32000") || EQUAL(pszGEO_ENCODING, "BOTH"))
-        nViewportId = WriteSRS_ISO32000(poSrcDS, dfDPI / 72.0, NULL, &sMargins);
+        nViewportId = WriteSRS_ISO32000(poSrcDS, dfDPI / 72.0, NULL, &sMargins, TRUE);
     if (EQUAL(pszGEO_ENCODING, "OGC_BP") || EQUAL(pszGEO_ENCODING, "BOTH"))
         nLGIDictId = WriteSRS_OGC_BP(poSrcDS, dfDPI / 72.0, NULL, &sMargins);
 
@@ -560,7 +560,8 @@ void GDALPDFFind4Corners(const GDAL_GCP* pasGCPList,
 int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
                                       double dfUserUnit,
                                       const char* pszNEATLINE,
-                                      PDFMargins* psMargins)
+                                      PDFMargins* psMargins,
+                                      int bWriteViewport)
 {
     int  nWidth = poSrcDS->GetRasterXSize();
     int  nHeight = poSrcDS->GetRasterYSize();
@@ -747,22 +748,25 @@ int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
     if (pszESRIWKT == NULL)
         return 0;
 
-    int nViewportId = AllocNewObject();
+    int nViewportId = (bWriteViewport) ? AllocNewObject() : 0;
     int nMeasureId = AllocNewObject();
     int nGCSId = AllocNewObject();
 
-    StartObj(nViewportId);
-    GDALPDFDictionaryRW oViewPortDict;
-    oViewPortDict.Add("Type", GDALPDFObjectRW::CreateName("Viewport"))
-                 .Add("Name", "Layer")
-                 .Add("BBox", &((new GDALPDFArrayRW())
-                                ->Add(dfULPixel / dfUserUnit + psMargins->nLeft)
-                                .Add((nHeight - dfLRLine) / dfUserUnit + psMargins->nBottom)
-                                .Add(dfLRPixel / dfUserUnit + psMargins->nLeft)
-                                .Add((nHeight - dfULLine) / dfUserUnit + psMargins->nBottom)))
-                 .Add("Measure", nMeasureId, 0);
-    VSIFPrintfL(fp, "%s\n", oViewPortDict.Serialize().c_str());
-    EndObj();
+    if (nViewportId)
+    {
+        StartObj(nViewportId);
+        GDALPDFDictionaryRW oViewPortDict;
+        oViewPortDict.Add("Type", GDALPDFObjectRW::CreateName("Viewport"))
+                    .Add("Name", "Layer")
+                    .Add("BBox", &((new GDALPDFArrayRW())
+                                    ->Add(dfULPixel / dfUserUnit + psMargins->nLeft)
+                                    .Add((nHeight - dfLRLine) / dfUserUnit + psMargins->nBottom)
+                                    .Add(dfLRPixel / dfUserUnit + psMargins->nLeft)
+                                    .Add((nHeight - dfULLine) / dfUserUnit + psMargins->nBottom)))
+                    .Add("Measure", nMeasureId, 0);
+        VSIFPrintfL(fp, "%s\n", oViewPortDict.Serialize().c_str());
+        EndObj();
+    }
 
     StartObj(nMeasureId);
     GDALPDFDictionaryRW oMeasureDict;
@@ -799,7 +803,7 @@ int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
 
     CPLFree(pszESRIWKT);
 
-    return nViewportId;
+    return nViewportId ? nViewportId : nMeasureId;
 }
 
 /************************************************************************/
@@ -1521,7 +1525,7 @@ int GDALPDFWriter::StartPage(GDALDataset* poSrcDS,
 
     int nViewportId = 0;
     if( bISO32000 )
-        nViewportId = WriteSRS_ISO32000(poSrcDS, dfUserUnit, pszNEATLINE, psMargins);
+        nViewportId = WriteSRS_ISO32000(poSrcDS, dfUserUnit, pszNEATLINE, psMargins, TRUE);
 
     int nLGIDictId = 0;
     if( bOGC_BP )
@@ -3167,6 +3171,15 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
     int nImageId = AllocNewObject();
     int nImageLengthId = AllocNewObject();
 
+    int nMeasureId = 0;
+    if( CSLTestBoolean(CPLGetConfigOption("GDAL_PDF_WRITE_GEOREF_ON_IMAGE", "FALSE")) &&
+        nReqXSize == poSrcDS->GetRasterXSize() &&
+        nReqYSize == poSrcDS->GetRasterYSize() )
+    {
+        PDFMargins sMargins = {0, 0, 0, 0};
+        nMeasureId = WriteSRS_ISO32000(poSrcDS, 1, NULL, &sMargins, FALSE);
+    }
+
     StartObj(nImageId);
 
     GDALPDFDictionaryRW oDict;
@@ -3203,6 +3216,11 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
     {
         oDict.Add("SMask", nMaskId, 0);
     }
+    if( nMeasureId )
+    {
+        oDict.Add("Measure", nMeasureId, 0);
+    }
+
     VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
     VSIFPrintfL(fp, "stream\n");
 

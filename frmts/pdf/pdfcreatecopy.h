@@ -184,9 +184,10 @@ class GDALPDFWriter
                        GDALPDFDictionaryRW* poCatalogDict);
 
        int     WriteSRS_ISO32000(GDALDataset* poSrcDS,
-                                double dfUserUnit,
-                                const char* pszNEATLINE,
-                                PDFMargins* psMargins);
+                                 double dfUserUnit,
+                                 const char* pszNEATLINE,
+                                 PDFMargins* psMargins,
+                                 int bWriteViewport);
        int     WriteSRS_OGC_BP(GDALDataset* poSrcDS,
                                 double dfUserUnit,
                                 const char* pszNEATLINE,
