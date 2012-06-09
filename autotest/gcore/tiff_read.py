@@ -949,6 +949,38 @@ def tiff_dos_strip_chop():
     return 'success'
 
 ###############################################################################
+# Test reading EXIF and GPS metadata
+
+def tiff_read_exif_and_gps():
+
+    ds = gdal.Open('data/exif_and_gps.tif')
+    exif_md = ds.GetMetadata('EXIF')
+    ds = None
+
+    if exif_md is None or len(exif_md) == 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    ds = gdal.Open('data/exif_and_gps.tif')
+    EXIF_GPSVersionID = ds.GetMetadataItem('EXIF_GPSVersionID', 'EXIF')
+    ds = None
+
+    if EXIF_GPSVersionID is None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # We should not get any EXIF metadata with that file
+    ds = gdal.Open('data/byte.tif')
+    exif_md = ds.GetMetadata('EXIF')
+    ds = None
+
+    if not (exif_md is None or len(exif_md) == 0):
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test reading a YCbCr JPEG all-in-one-strip multiband TIFF (#3259, #3894)
 
 def tiff_read_online_1():
@@ -1057,6 +1089,7 @@ gdaltest_list.append( (tiff_read_buggy_packbits) )
 gdaltest_list.append( (tiff_read_rpc_txt) )
 gdaltest_list.append( (tiff_small) )
 gdaltest_list.append( (tiff_dos_strip_chop) )
+gdaltest_list.append( (tiff_read_exif_and_gps) )
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
 
