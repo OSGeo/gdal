@@ -2973,14 +2973,27 @@ def ogr_shape_62():
 
 def ogr_shape_63():
 
-    # FIXME
-    if sys.version_info >= (3,0,0):
-        return 'skip'
+    import struct
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_63.dbf')
     lyr = ds.CreateLayer('ogr_shape_63')
     gdaltest.fieldname = '\xc3\xa9'
-    lyr.CreateField(ogr.FieldDefn(gdaltest.fieldname, ogr.OFTString))
+    if lyr.CreateField(ogr.FieldDefn(gdaltest.fieldname, ogr.OFTString)) != 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    chinese_str = struct.pack('B' * 6, 229, 144, 141, 231, 167, 176)
+    if sys.version_info >= (3,0,0):
+        chinese_str = chinese_str.decode('UTF-8')
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.CreateField(ogr.FieldDefn(chinese_str, ogr.OFTString))
+    gdal.PopErrorHandler()
+
+    if ret == 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
     ds = None
 
     ds = ogr.Open('/vsimem/ogr_shape_63.dbf')
