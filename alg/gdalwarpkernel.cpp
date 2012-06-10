@@ -276,8 +276,8 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
         {
             pasThreadJob[i].poWK = poWK;
             pasThreadJob[i].pnCounter = &nCounter;
-            pasThreadJob[i].iYMin = i * nDstYSize / nThreads;
-            pasThreadJob[i].iYMax = (i + 1) * nDstYSize / nThreads;
+            pasThreadJob[i].iYMin = (int)(((GIntBig)i) * nDstYSize / nThreads);
+            pasThreadJob[i].iYMax = (int)(((GIntBig)(i + 1)) * nDstYSize / nThreads);
             pasThreadJob[i].pbStop = &bStop;
             pasThreadJob[i].hCond = hCond;
             pasThreadJob[i].hCondMutex = hCondMutex;
