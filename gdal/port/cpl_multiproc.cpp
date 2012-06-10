@@ -227,7 +227,7 @@ void *CPLCreateMutex()
 
 {
 #ifndef MUTEX_NONE
-    unsigned char *pabyMutex = (unsigned char *) CPLMalloc( 4 );
+    unsigned char *pabyMutex = (unsigned char *) malloc( 4 );
 
     pabyMutex[0] = 1;
     pabyMutex[1] = 'r';
@@ -296,7 +296,7 @@ void CPLDestroyMutex( void *hMutex )
     CPLAssert( pabyMutex[1] == 'r' && pabyMutex[2] == 'e' 
                && pabyMutex[3] == 'd' );
 
-    CPLFree( pabyMutex );
+    free( pabyMutex );
 #endif
 }
 
