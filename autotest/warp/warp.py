@@ -874,6 +874,40 @@ def warp_28():
     ds = None
 
     return 'success'
+
+###############################################################################
+# Test multi-thread computations
+
+def warp_29():
+
+    ds = gdal.Open( 'data/white_nodata.vrt' )
+    cs_monothread = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    old_val = gdal.GetConfigOption('WARP_NUM_THREADS')
+    gdal.SetConfigOption('WARP_NUM_THREADS', 'ALL_CPUS')
+    ds = gdal.Open( 'data/white_nodata.vrt' )
+    cs_multithread = ds.GetRasterBand(1).Checksum()
+    ds = None
+    gdal.SetConfigOption('WARP_NUM_THREADS', old_val)
+
+    if cs_monothread != cs_multithread:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    old_val = gdal.GetConfigOption('WARP_NUM_THREADS')
+    gdal.SetConfigOption('WARP_NUM_THREADS', '2')
+    ds = gdal.Open( 'data/white_nodata.vrt' )
+    cs_multithread = ds.GetRasterBand(1).Checksum()
+    ds = None
+    gdal.SetConfigOption('WARP_NUM_THREADS', old_val)
+
+    if cs_monothread != cs_multithread:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 
 gdaltest_list = [
@@ -910,6 +944,7 @@ gdaltest_list = [
     warp_26,
     warp_27,
     warp_28,
+    warp_29,
     ]
 
 if __name__ == '__main__':

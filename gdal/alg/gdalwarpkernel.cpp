@@ -32,6 +32,8 @@
 #include "gdalwarper.h"
 #include "cpl_string.h"
 #include "gdalwarpkernel_opencl.h"
+#include "cpl_atomic_ops.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -67,6 +69,253 @@ static CPLErr GWKCubicSplineNoMasksShort( GDALWarpKernel *poWK );
 static CPLErr GWKNearestShort( GDALWarpKernel *poWK );
 static CPLErr GWKNearestNoMasksFloat( GDALWarpKernel *poWK );
 static CPLErr GWKNearestFloat( GDALWarpKernel *poWK );
+
+/************************************************************************/
+/*                           GWKJobStruct                               */
+/************************************************************************/
+
+typedef struct _GWKJobStruct GWKJobStruct;
+
+struct _GWKJobStruct
+{
+    void           *hThread;
+    GDALWarpKernel *poWK;
+    int             iYMin;
+    int             iYMax;
+    volatile int   *pnCounter;
+    volatile int   *pbStop;
+    void           *hCond;
+    void           *hCondMutex;
+    int           (*pfnProgress)(GWKJobStruct* psJob);
+    void           *pTransformerArg;
+} ;
+
+/************************************************************************/
+/*                        GWKProgressThread()                           */
+/************************************************************************/
+
+/* Return TRUE if the computation must be interrupted */
+static int GWKProgressThread(GWKJobStruct* psJob)
+{
+    CPLAcquireMutex(psJob->hCondMutex, 1.0);
+    (*(psJob->pnCounter)) ++;
+    CPLCondSignal(psJob->hCond);
+    int bStop = *(psJob->pbStop);
+    CPLReleaseMutex(psJob->hCondMutex);
+
+    return bStop;
+}
+
+/************************************************************************/
+/*                      GWKProgressMonoThread()                         */
+/************************************************************************/
+
+/* Return TRUE if the computation must be interrupted */
+static int GWKProgressMonoThread(GWKJobStruct* psJob)
+{
+    GDALWarpKernel *poWK = psJob->poWK;
+    int nCounter = ++(*(psJob->pnCounter));
+    if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
+                            (nCounter / (double) psJob->iYMax),
+                            "", poWK->pProgress ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/************************************************************************/
+/*                       GWKGenericMonoThread()                         */
+/************************************************************************/
+
+static CPLErr GWKGenericMonoThread( GDALWarpKernel *poWK,
+                                    void (*pfnFunc) (void *pUserData) )
+{
+    volatile int bStop = FALSE;
+    volatile int nCounter = 0;
+
+    GWKJobStruct sThreadJob;
+    sThreadJob.poWK = poWK;
+    sThreadJob.pnCounter = &nCounter;
+    sThreadJob.iYMin = 0;
+    sThreadJob.iYMax = poWK->nDstYSize;
+    sThreadJob.pbStop = &bStop;
+    sThreadJob.hCond = NULL;
+    sThreadJob.hCondMutex = NULL;
+    sThreadJob.hThread = NULL;
+    sThreadJob.pfnProgress = GWKProgressMonoThread;
+    sThreadJob.pTransformerArg = poWK->pTransformerArg;
+
+    pfnFunc(&sThreadJob);
+
+    return !bStop ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                                GWKRun()                              */
+/************************************************************************/
+
+static CPLErr GWKRun( GDALWarpKernel *poWK,
+                      const char* pszFuncName,
+                      void (*pfnFunc) (void *pUserData) )
+
+{
+    int nDstYSize = poWK->nDstYSize;
+
+    CPLDebug( "GDAL", "GDALWarpKernel()::%s()\n"
+              "Src=%d,%d,%dx%d Dst=%d,%d,%dx%d",
+              pszFuncName,
+              poWK->nSrcXOff, poWK->nSrcYOff,
+              poWK->nSrcXSize, poWK->nSrcYSize,
+              poWK->nDstXOff, poWK->nDstYOff,
+              poWK->nDstXSize, poWK->nDstYSize );
+
+    if( !poWK->pfnProgress( poWK->dfProgressBase, "", poWK->pProgress ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        return CE_Failure;
+    }
+
+    const char* pszWarpThreads = CSLFetchNameValue(poWK->papszWarpOptions, "NUM_THREADS");
+    int nThreads;
+    if (pszWarpThreads == NULL)
+        pszWarpThreads = CPLGetConfigOption("WARP_NUM_THREADS", "1");
+    if (EQUAL(pszWarpThreads, "ALL_CPUS"))
+        nThreads = CPLGetNumCPUs();
+    else
+        nThreads = atoi(pszWarpThreads);
+    if (nThreads > 128)
+        nThreads = 128;
+    if (nThreads >= nDstYSize / 2)
+        nThreads = nDstYSize / 2;
+
+    if (nThreads <= 1)
+    {
+        return GWKGenericMonoThread(poWK, pfnFunc);
+    }
+    else
+    {
+        GWKJobStruct* pasThreadJob =
+            (GWKJobStruct*)CPLMalloc(sizeof(GWKJobStruct) * nThreads);
+
+/* -------------------------------------------------------------------- */
+/*      Duplicate pTransformerArg per thread.                           */
+/* -------------------------------------------------------------------- */
+        int i;
+        int bTransformerCloningSuccess = TRUE;
+
+        CPLXMLNode* psTransformerNode = GDALSerializeTransformer(
+                            poWK->pfnTransformer, poWK->pTransformerArg );
+        if (psTransformerNode == NULL)
+        {
+            CPLDebug("WARP", "Cannot serialize transformer");
+            bTransformerCloningSuccess = FALSE;
+        }
+        else
+        {
+            for(i=0;i<nThreads;i++)
+            {
+                GDALTransformerFunc pfnTransformer = NULL;
+                if (GDALDeserializeTransformer(psTransformerNode,
+                       &pfnTransformer, &(pasThreadJob[i].pTransformerArg))
+                                                                    != CE_None)
+                {
+                    CPLDebug("WARP", "Cannot deserialize transformer");
+                    bTransformerCloningSuccess = FALSE;
+                    break;
+                }
+                if (pfnTransformer != poWK->pfnTransformer)
+                {
+                    CPLDebug("WARP", "Deserialized transformer function is "
+                             "different from source transformer function");
+                    GDALDestroyTransformer(pasThreadJob[i].pTransformerArg);
+                    bTransformerCloningSuccess = FALSE;
+                    break;
+                }
+            }
+
+            CPLDestroyXMLNode(psTransformerNode);
+        }
+
+        if (!bTransformerCloningSuccess)
+        {
+            CPLFree(pasThreadJob);
+
+            CPLDebug("WARP", "Cannot duplicate transformer function. "
+                     "Falling back to mono-thread computation");
+            return GWKGenericMonoThread(poWK, pfnFunc);
+        }
+
+        void* hCond = CPLCreateCond();
+        if (hCond == NULL)
+        {
+            CPLFree(pasThreadJob);
+
+            CPLDebug("WARP", "Multithreading disabled. "
+                     "Falling back to mono-thread computation");
+            return GWKGenericMonoThread(poWK, pfnFunc);
+        }
+
+        CPLDebug("WARP", "Using %d threads", nThreads);
+
+        void* hCondMutex = CPLCreateMutex(); /* and take implicitely the mutex */
+
+        volatile int bStop = FALSE;
+        volatile int nCounter = 0;
+
+/* -------------------------------------------------------------------- */
+/*      Lannch worker threads                                           */
+/* -------------------------------------------------------------------- */
+        for(i=0;i<nThreads;i++)
+        {
+            pasThreadJob[i].poWK = poWK;
+            pasThreadJob[i].pnCounter = &nCounter;
+            pasThreadJob[i].iYMin = i * nDstYSize / nThreads;
+            pasThreadJob[i].iYMax = (i + 1) * nDstYSize / nThreads;
+            pasThreadJob[i].pbStop = &bStop;
+            pasThreadJob[i].hCond = hCond;
+            pasThreadJob[i].hCondMutex = hCondMutex;
+            pasThreadJob[i].pfnProgress = GWKProgressThread;
+            pasThreadJob[i].hThread = CPLCreateJoinableThread( pfnFunc,
+                                                  (void*) &pasThreadJob[i] );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Report progress.                                                */
+/* -------------------------------------------------------------------- */
+        while(nCounter < nDstYSize)
+        {
+            CPLCondWait(hCond, hCondMutex);
+
+            if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
+                                    (nCounter / (double) nDstYSize),
+                                    "", poWK->pProgress ) )
+            {
+                CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+                bStop = TRUE;
+                break;
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Wait for all threads to complete and finish.                    */
+/* -------------------------------------------------------------------- */
+        for(i=0;i<nThreads;i++)
+        {
+            CPLJoinThread(pasThreadJob[i].hThread);
+            GDALDestroyTransformer(pasThreadJob[i].pTransformerArg);
+        }
+
+        CPLReleaseMutex(hCondMutex);
+
+        CPLFree(pasThreadJob);
+        CPLDestroyCond(hCond);
+        CPLDestroyMutex(hCondMutex);
+
+        return !bStop ? CE_None : CE_Failure;
+    }
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -2692,26 +2941,24 @@ free_warper:
 /*      efficiency.                                                     */
 /************************************************************************/
 
+static void GWKGeneralCaseThread(void* pData);
+
 static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKGeneralCase", GWKGeneralCaseThread );
+}
+
+static void GWKGeneralCaseThread( void* pData)
 
 {
+    GWKJobStruct* psJob = (GWKJobStruct*) pData;
+    GDALWarpKernel *poWK = psJob->poWK;
+    int iYMin = psJob->iYMin;
+    int iYMax = psJob->iYMax;
+
     int iDstY;
-    int nDstXSize = poWK->nDstXSize, nDstYSize = poWK->nDstYSize;
+    int nDstXSize = poWK->nDstXSize;
     int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-    CPLErr eErr = CE_None;
-
-    CPLDebug( "GDAL", "GDALWarpKernel()::GWKGeneralCase()\n"
-              "Src=%d,%d,%dx%d Dst=%d,%d,%dx%d",
-              poWK->nSrcXOff, poWK->nSrcYOff, 
-              poWK->nSrcXSize, poWK->nSrcYSize,
-              poWK->nDstXOff, poWK->nDstYOff, 
-              poWK->nDstXSize, poWK->nDstYSize );
-
-    if( !poWK->pfnProgress( poWK->dfProgressBase, "", poWK->pProgress ) )
-    {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return CE_Failure;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate x,y,z coordinate arrays for transformation ... one     */
@@ -2735,7 +2982,7 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
-    for( iDstY = 0; iDstY < nDstYSize && eErr == CE_None; iDstY++ )
+    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
     {
         int iDstX;
 
@@ -2753,7 +3000,7 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
 /*      Transform the points from destination pixel/line coordinates    */
 /*      to source pixel/line coordinates.                               */
 /* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( poWK->pTransformerArg, TRUE, nDstXSize, 
+        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
 
 /* ==================================================================== */
@@ -2872,13 +3119,8 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
-                                ((iDstY+1) / (double) nDstYSize), 
-                                "", poWK->pProgress ) )
-        {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            eErr = CE_Failure;
-        }
+        if (psJob->pfnProgress(psJob))
+            break;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2890,8 +3132,6 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
     CPLFree( pabSuccess );
     if (psWrkStruct)
         GWKResampleDeleteWrkStruct(psWrkStruct);
-
-    return eErr;
 }
 
 /************************************************************************/
@@ -2902,26 +3142,23 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
 /*      possible for this particular transformation type.               */
 /************************************************************************/
 
+static void GWKNearestNoMasksByteThread(void* pData);
+
 static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK )
-
 {
+    return GWKRun( poWK, "GWKNearestNoMasksByte", GWKNearestNoMasksByteThread );
+}
+
+static void GWKNearestNoMasksByteThread(void* pData)
+{
+    GWKJobStruct* psJob = (GWKJobStruct*) pData;
+    GDALWarpKernel *poWK = psJob->poWK;
+    int iYMin = psJob->iYMin;
+    int iYMax = psJob->iYMax;
+
     int iDstY;
-    int nDstXSize = poWK->nDstXSize, nDstYSize = poWK->nDstYSize;
+    int nDstXSize = poWK->nDstXSize;
     int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-    CPLErr eErr = CE_None;
-
-    CPLDebug( "GDAL", "GDALWarpKernel()::GWKNearestNoMasksByte()\n"
-              "Src=%d,%d,%dx%d Dst=%d,%d,%dx%d",
-              poWK->nSrcXOff, poWK->nSrcYOff, 
-              poWK->nSrcXSize, poWK->nSrcYSize,
-              poWK->nDstXOff, poWK->nDstYOff, 
-              poWK->nDstXSize, poWK->nDstYSize );
-
-    if( !poWK->pfnProgress( poWK->dfProgressBase, "", poWK->pProgress ) )
-    {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return CE_Failure;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate x,y,z coordinate arrays for transformation ... one     */
@@ -2938,7 +3175,7 @@ static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK )
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
-    for( iDstY = 0; iDstY < nDstYSize && eErr == CE_None; iDstY++ )
+    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
     {
         int iDstX;
 
@@ -2956,7 +3193,7 @@ static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK )
 /*      Transform the points from destination pixel/line coordinates    */
 /*      to source pixel/line coordinates.                               */
 /* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( poWK->pTransformerArg, TRUE, nDstXSize, 
+        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
 
 /* ==================================================================== */
@@ -2987,13 +3224,8 @@ static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
-                                ((iDstY+1) / (double) nDstYSize), 
-                                "", poWK->pProgress ) )
-        {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            eErr = CE_Failure;
-        }
+        if (psJob->pfnProgress(psJob))
+            break;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3003,8 +3235,6 @@ static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK )
     CPLFree( padfY );
     CPLFree( padfZ );
     CPLFree( pabSuccess );
-
-    return eErr;
 }
 
 /************************************************************************/
@@ -3015,26 +3245,23 @@ static CPLErr GWKNearestNoMasksByte( GDALWarpKernel *poWK )
 /*      for this particular transformation type.                        */
 /************************************************************************/
 
+static void GWKBilinearNoMasksByteThread(void* pData);
+
 static CPLErr GWKBilinearNoMasksByte( GDALWarpKernel *poWK )
-
 {
+    return GWKRun( poWK, "GWKBilinearNoMasksByte", GWKBilinearNoMasksByteThread );
+}
+
+static void GWKBilinearNoMasksByteThread(void* pData)
+{
+    GWKJobStruct* psJob = (GWKJobStruct*) pData;
+    GDALWarpKernel *poWK = psJob->poWK;
+    int iYMin = psJob->iYMin;
+    int iYMax = psJob->iYMax;
+
     int iDstY;
-    int nDstXSize = poWK->nDstXSize, nDstYSize = poWK->nDstYSize;
+    int nDstXSize = poWK->nDstXSize;
     int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-    CPLErr eErr = CE_None;
-
-    CPLDebug( "GDAL", "GDALWarpKernel()::GWKBilinearNoMasksByte()\n"
-              "Src=%d,%d,%dx%d Dst=%d,%d,%dx%d",
-              poWK->nSrcXOff, poWK->nSrcYOff, 
-              poWK->nSrcXSize, poWK->nSrcYSize,
-              poWK->nDstXOff, poWK->nDstYOff, 
-              poWK->nDstXSize, poWK->nDstYSize );
-
-    if( !poWK->pfnProgress( poWK->dfProgressBase, "", poWK->pProgress ) )
-    {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return CE_Failure;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate x,y,z coordinate arrays for transformation ... one     */
@@ -3051,7 +3278,7 @@ static CPLErr GWKBilinearNoMasksByte( GDALWarpKernel *poWK )
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
-    for( iDstY = 0; iDstY < nDstYSize && eErr == CE_None; iDstY++ )
+    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
     {
         int iDstX;
 
@@ -3069,7 +3296,7 @@ static CPLErr GWKBilinearNoMasksByte( GDALWarpKernel *poWK )
 /*      Transform the points from destination pixel/line coordinates    */
 /*      to source pixel/line coordinates.                               */
 /* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( poWK->pTransformerArg, TRUE, nDstXSize, 
+        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
 
 /* ==================================================================== */
@@ -3099,13 +3326,8 @@ static CPLErr GWKBilinearNoMasksByte( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
-                                ((iDstY+1) / (double) nDstYSize), 
-                                "", poWK->pProgress ) )
-        {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            eErr = CE_Failure;
-        }
+        if (psJob->pfnProgress(psJob))
+            break;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3115,8 +3337,6 @@ static CPLErr GWKBilinearNoMasksByte( GDALWarpKernel *poWK )
     CPLFree( padfY );
     CPLFree( padfZ );
     CPLFree( pabSuccess );
-
-    return eErr;
 }
 
 /************************************************************************/
@@ -3127,26 +3347,24 @@ static CPLErr GWKBilinearNoMasksByte( GDALWarpKernel *poWK )
 /*      for this particular transformation type.                        */
 /************************************************************************/
 
+static void GWKCubicNoMasksByteThread(void* pData);
+
 static CPLErr GWKCubicNoMasksByte( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKCubicNoMasksByte", GWKCubicNoMasksByteThread );
+}
+
+static void GWKCubicNoMasksByteThread( void* pData )
 
 {
+    GWKJobStruct* psJob = (GWKJobStruct*) pData;
+    GDALWarpKernel *poWK = psJob->poWK;
+    int iYMin = psJob->iYMin;
+    int iYMax = psJob->iYMax;
+
     int iDstY;
-    int nDstXSize = poWK->nDstXSize, nDstYSize = poWK->nDstYSize;
+    int nDstXSize = poWK->nDstXSize;
     int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-    CPLErr eErr = CE_None;
-
-    CPLDebug( "GDAL", "GDALWarpKernel()::GWKCubicNoMasksByte()\n"
-              "Src=%d,%d,%dx%d Dst=%d,%d,%dx%d",
-              poWK->nSrcXOff, poWK->nSrcYOff, 
-              poWK->nSrcXSize, poWK->nSrcYSize,
-              poWK->nDstXOff, poWK->nDstYOff, 
-              poWK->nDstXSize, poWK->nDstYSize );
-
-    if( !poWK->pfnProgress( poWK->dfProgressBase, "", poWK->pProgress ) )
-    {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return CE_Failure;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate x,y,z coordinate arrays for transformation ... one     */
@@ -3163,7 +3381,7 @@ static CPLErr GWKCubicNoMasksByte( GDALWarpKernel *poWK )
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
-    for( iDstY = 0; iDstY < nDstYSize && eErr == CE_None; iDstY++ )
+    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
     {
         int iDstX;
 
@@ -3181,7 +3399,7 @@ static CPLErr GWKCubicNoMasksByte( GDALWarpKernel *poWK )
 /*      Transform the points from destination pixel/line coordinates    */
 /*      to source pixel/line coordinates.                               */
 /* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( poWK->pTransformerArg, TRUE, nDstXSize, 
+        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
 
 /* ==================================================================== */
@@ -3211,13 +3429,8 @@ static CPLErr GWKCubicNoMasksByte( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
-                                ((iDstY+1) / (double) nDstYSize), 
-                                "", poWK->pProgress ) )
-        {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            eErr = CE_Failure;
-        }
+        if (psJob->pfnProgress(psJob))
+            break;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3227,8 +3440,6 @@ static CPLErr GWKCubicNoMasksByte( GDALWarpKernel *poWK )
     CPLFree( padfY );
     CPLFree( padfZ );
     CPLFree( pabSuccess );
-
-    return eErr;
 }
 
 /************************************************************************/
@@ -3239,26 +3450,24 @@ static CPLErr GWKCubicNoMasksByte( GDALWarpKernel *poWK )
 /*      for this particular transformation type.                        */
 /************************************************************************/
 
+static void GWKCubicSplineNoMasksByteThread(void* pData);
+
 static CPLErr GWKCubicSplineNoMasksByte( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKCubicSplineNoMasksByte", GWKCubicSplineNoMasksByteThread );
+}
+
+static void GWKCubicSplineNoMasksByteThread( void* pData )
 
 {
+    GWKJobStruct* psJob = (GWKJobStruct*) pData;
+    GDALWarpKernel *poWK = psJob->poWK;
+    int iYMin = psJob->iYMin;
+    int iYMax = psJob->iYMax;
+
     int iDstY;
-    int nDstXSize = poWK->nDstXSize, nDstYSize = poWK->nDstYSize;
+    int nDstXSize = poWK->nDstXSize;
     int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-    CPLErr eErr = CE_None;
-
-    CPLDebug( "GDAL", "GDALWarpKernel()::GWKCubicSplineNoMasksByte()\n"
-              "Src=%d,%d,%dx%d Dst=%d,%d,%dx%d",
-              poWK->nSrcXOff, poWK->nSrcYOff, 
-              poWK->nSrcXSize, poWK->nSrcYSize,
-              poWK->nDstXOff, poWK->nDstYOff, 
-              poWK->nDstXSize, poWK->nDstYSize );
-
-    if( !poWK->pfnProgress( poWK->dfProgressBase, "", poWK->pProgress ) )
-    {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return CE_Failure;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate x,y,z coordinate arrays for transformation ... one     */
@@ -3278,7 +3487,7 @@ static CPLErr GWKCubicSplineNoMasksByte( GDALWarpKernel *poWK )
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
-    for( iDstY = 0; iDstY < nDstYSize && eErr == CE_None; iDstY++ )
+    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
     {
         int iDstX;
 
@@ -3296,7 +3505,7 @@ static CPLErr GWKCubicSplineNoMasksByte( GDALWarpKernel *poWK )
 /*      Transform the points from destination pixel/line coordinates    */
 /*      to source pixel/line coordinates.                               */
 /* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( poWK->pTransformerArg, TRUE, nDstXSize, 
+        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
 
 /* ==================================================================== */
@@ -3327,13 +3536,8 @@ static CPLErr GWKCubicSplineNoMasksByte( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
-                                ((iDstY+1) / (double) nDstYSize), 
-                                "", poWK->pProgress ) )
-        {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            eErr = CE_Failure;
-        }
+        if (psJob->pfnProgress(psJob))
+            break;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3344,8 +3548,6 @@ static CPLErr GWKCubicSplineNoMasksByte( GDALWarpKernel *poWK )
     CPLFree( padfZ );
     CPLFree( pabSuccess );
     CPLFree( padfBSpline );
-
-    return eErr;
 }
 
 /************************************************************************/
@@ -3356,26 +3558,24 @@ static CPLErr GWKCubicSplineNoMasksByte( GDALWarpKernel *poWK )
 /*      particular transformation type.                                 */
 /************************************************************************/
 
+static void GWKNearestByteThread(void* pData);
+
 static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKNearestByte", GWKNearestByteThread );
+}
+
+static void GWKNearestByteThread( void* pData )
 
 {
+    GWKJobStruct* psJob = (GWKJobStruct*) pData;
+    GDALWarpKernel *poWK = psJob->poWK;
+    int iYMin = psJob->iYMin;
+    int iYMax = psJob->iYMax;
+
     int iDstY;
-    int nDstXSize = poWK->nDstXSize, nDstYSize = poWK->nDstYSize;
+    int nDstXSize = poWK->nDstXSize;
     int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-    CPLErr eErr = CE_None;
-
-    CPLDebug( "GDAL", "GDALWarpKernel()::GWKNearestByte()\n"
-              "Src=%d,%d,%dx%d Dst=%d,%d,%dx%d",
-              poWK->nSrcXOff, poWK->nSrcYOff, 
-              poWK->nSrcXSize, poWK->nSrcYSize,
-              poWK->nDstXOff, poWK->nDstYOff, 
-              poWK->nDstXSize, poWK->nDstYSize );
-
-    if( !poWK->pfnProgress( poWK->dfProgressBase, "", poWK->pProgress ) )
-    {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return CE_Failure;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate x,y,z coordinate arrays for transformation ... one     */
@@ -3392,7 +3592,7 @@ static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
-    for( iDstY = 0; iDstY < nDstYSize && eErr == CE_None; iDstY++ )
+    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
     {
         int iDstX;
 
@@ -3410,7 +3610,7 @@ static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
 /*      Transform the points from destination pixel/line coordinates    */
 /*      to source pixel/line coordinates.                               */
 /* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( poWK->pTransformerArg, TRUE, nDstXSize, 
+        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
 
 /* ==================================================================== */
@@ -3494,13 +3694,8 @@ static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
-                                ((iDstY+1) / (double) nDstYSize), 
-                                "", poWK->pProgress ) )
-        {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            eErr = CE_Failure;
-        }
+        if (psJob->pfnProgress(psJob))
+            break;
     } /* Next iDstY */
 
 /* -------------------------------------------------------------------- */
@@ -3510,8 +3705,6 @@ static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
     CPLFree( padfY );
     CPLFree( padfZ );
     CPLFree( pabSuccess );
-
-    return eErr;
 }
 
 /************************************************************************/
@@ -3523,26 +3716,24 @@ static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
 /*      transformation type.                                            */
 /************************************************************************/
 
+static void GWKNearestNoMasksShortThread(void* pData);
+
 static CPLErr GWKNearestNoMasksShort( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKNearestNoMasksShort", GWKNearestNoMasksShortThread );
+}
+
+static void GWKNearestNoMasksShortThread( void* pData )
 
 {
+    GWKJobStruct* psJob = (GWKJobStruct*) pData;
+    GDALWarpKernel *poWK = psJob->poWK;
+    int iYMin = psJob->iYMin;
+    int iYMax = psJob->iYMax;
+
     int iDstY;
-    int nDstXSize = poWK->nDstXSize, nDstYSize = poWK->nDstYSize;
+    int nDstXSize = poWK->nDstXSize;
     int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-    CPLErr eErr = CE_None;
-
-    CPLDebug( "GDAL", "GDALWarpKernel()::GWKNearestNoMasksShort()\n"
-              "Src=%d,%d,%dx%d Dst=%d,%d,%dx%d",
-              poWK->nSrcXOff, poWK->nSrcYOff, 
-              poWK->nSrcXSize, poWK->nSrcYSize,
-              poWK->nDstXOff, poWK->nDstYOff, 
-              poWK->nDstXSize, poWK->nDstYSize );
-
-    if( !poWK->pfnProgress( poWK->dfProgressBase, "", poWK->pProgress ) )
-    {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return CE_Failure;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate x,y,z coordinate arrays for transformation ... one     */
@@ -3559,7 +3750,7 @@ static CPLErr GWKNearestNoMasksShort( GDALWarpKernel *poWK )
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
-    for( iDstY = 0; iDstY < nDstYSize && eErr == CE_None; iDstY++ )
+    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
     {
         int iDstX;
 
@@ -3577,7 +3768,7 @@ static CPLErr GWKNearestNoMasksShort( GDALWarpKernel *poWK )
 /*      Transform the points from destination pixel/line coordinates    */
 /*      to source pixel/line coordinates.                               */
 /* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( poWK->pTransformerArg, TRUE, nDstXSize, 
+        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
 
 /* ==================================================================== */
@@ -3606,13 +3797,8 @@ static CPLErr GWKNearestNoMasksShort( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
-                                ((iDstY+1) / (double) nDstYSize), 
-                                "", poWK->pProgress ) )
-        {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            eErr = CE_Failure;
-        }
+        if (psJob->pfnProgress(psJob))
+            break;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3622,8 +3808,6 @@ static CPLErr GWKNearestNoMasksShort( GDALWarpKernel *poWK )
     CPLFree( padfY );
     CPLFree( padfZ );
     CPLFree( pabSuccess );
-
-    return eErr;
 }
 
 /************************************************************************/
@@ -3634,26 +3818,24 @@ static CPLErr GWKNearestNoMasksShort( GDALWarpKernel *poWK )
 /*      for this particular transformation type.                        */
 /************************************************************************/
 
+static void GWKBilinearNoMasksShortThread(void* pData);
+
 static CPLErr GWKBilinearNoMasksShort( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKBilinearNoMasksShort", GWKBilinearNoMasksShortThread );
+}
+
+static void GWKBilinearNoMasksShortThread( void* pData )
 
 {
+    GWKJobStruct* psJob = (GWKJobStruct*) pData;
+    GDALWarpKernel *poWK = psJob->poWK;
+    int iYMin = psJob->iYMin;
+    int iYMax = psJob->iYMax;
+
     int iDstY;
-    int nDstXSize = poWK->nDstXSize, nDstYSize = poWK->nDstYSize;
+    int nDstXSize = poWK->nDstXSize;
     int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-    CPLErr eErr = CE_None;
-
-    CPLDebug( "GDAL", "GDALWarpKernel()::GWKBilinearNoMasksShort()\n"
-              "Src=%d,%d,%dx%d Dst=%d,%d,%dx%d",
-              poWK->nSrcXOff, poWK->nSrcYOff, 
-              poWK->nSrcXSize, poWK->nSrcYSize,
-              poWK->nDstXOff, poWK->nDstYOff, 
-              poWK->nDstXSize, poWK->nDstYSize );
-
-    if( !poWK->pfnProgress( poWK->dfProgressBase, "", poWK->pProgress ) )
-    {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return CE_Failure;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate x,y,z coordinate arrays for transformation ... one     */
@@ -3670,7 +3852,7 @@ static CPLErr GWKBilinearNoMasksShort( GDALWarpKernel *poWK )
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
-    for( iDstY = 0; iDstY < nDstYSize && eErr == CE_None; iDstY++ )
+    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
     {
         int iDstX;
 
@@ -3688,7 +3870,7 @@ static CPLErr GWKBilinearNoMasksShort( GDALWarpKernel *poWK )
 /*      Transform the points from destination pixel/line coordinates    */
 /*      to source pixel/line coordinates.                               */
 /* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( poWK->pTransformerArg, TRUE, nDstXSize, 
+        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
 
 /* ==================================================================== */
@@ -3720,13 +3902,8 @@ static CPLErr GWKBilinearNoMasksShort( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
-                                ((iDstY+1) / (double) nDstYSize), 
-                                "", poWK->pProgress ) )
-        {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            eErr = CE_Failure;
-        }
+        if (psJob->pfnProgress(psJob))
+            break;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3736,8 +3913,6 @@ static CPLErr GWKBilinearNoMasksShort( GDALWarpKernel *poWK )
     CPLFree( padfY );
     CPLFree( padfZ );
     CPLFree( pabSuccess );
-
-    return eErr;
 }
 
 /************************************************************************/
@@ -3748,26 +3923,24 @@ static CPLErr GWKBilinearNoMasksShort( GDALWarpKernel *poWK )
 /*      for this particular transformation type.                        */
 /************************************************************************/
 
+static void GWKCubicNoMasksShortThread(void* pData);
+
 static CPLErr GWKCubicNoMasksShort( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKCubicNoMasksShort", GWKCubicNoMasksShortThread );
+}
+
+static void GWKCubicNoMasksShortThread( void* pData )
 
 {
+    GWKJobStruct* psJob = (GWKJobStruct*) pData;
+    GDALWarpKernel *poWK = psJob->poWK;
+    int iYMin = psJob->iYMin;
+    int iYMax = psJob->iYMax;
+
     int iDstY;
-    int nDstXSize = poWK->nDstXSize, nDstYSize = poWK->nDstYSize;
+    int nDstXSize = poWK->nDstXSize;
     int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-    CPLErr eErr = CE_None;
-
-    CPLDebug( "GDAL", "GDALWarpKernel()::GWKCubicNoMasksShort()\n"
-              "Src=%d,%d,%dx%d Dst=%d,%d,%dx%d",
-              poWK->nSrcXOff, poWK->nSrcYOff, 
-              poWK->nSrcXSize, poWK->nSrcYSize,
-              poWK->nDstXOff, poWK->nDstYOff, 
-              poWK->nDstXSize, poWK->nDstYSize );
-
-    if( !poWK->pfnProgress( poWK->dfProgressBase, "", poWK->pProgress ) )
-    {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return CE_Failure;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate x,y,z coordinate arrays for transformation ... one     */
@@ -3784,7 +3957,7 @@ static CPLErr GWKCubicNoMasksShort( GDALWarpKernel *poWK )
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
-    for( iDstY = 0; iDstY < nDstYSize && eErr == CE_None; iDstY++ )
+    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
     {
         int iDstX;
 
@@ -3802,7 +3975,7 @@ static CPLErr GWKCubicNoMasksShort( GDALWarpKernel *poWK )
 /*      Transform the points from destination pixel/line coordinates    */
 /*      to source pixel/line coordinates.                               */
 /* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( poWK->pTransformerArg, TRUE, nDstXSize, 
+        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
 
 /* ==================================================================== */
@@ -3834,13 +4007,8 @@ static CPLErr GWKCubicNoMasksShort( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
-                                ((iDstY+1) / (double) nDstYSize), 
-                                "", poWK->pProgress ) )
-        {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            eErr = CE_Failure;
-        }
+        if (psJob->pfnProgress(psJob))
+            break;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3850,8 +4018,6 @@ static CPLErr GWKCubicNoMasksShort( GDALWarpKernel *poWK )
     CPLFree( padfY );
     CPLFree( padfZ );
     CPLFree( pabSuccess );
-
-    return eErr;
 }
 
 /************************************************************************/
@@ -3862,26 +4028,24 @@ static CPLErr GWKCubicNoMasksShort( GDALWarpKernel *poWK )
 /*      for this particular transformation type.                        */
 /************************************************************************/
 
+static void GWKCubicSplineNoMasksShortThread(void* pData);
+
 static CPLErr GWKCubicSplineNoMasksShort( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKCubicSplineNoMasksShort", GWKCubicSplineNoMasksShortThread );
+}
+
+static void GWKCubicSplineNoMasksShortThread( void* pData )
 
 {
+    GWKJobStruct* psJob = (GWKJobStruct*) pData;
+    GDALWarpKernel *poWK = psJob->poWK;
+    int iYMin = psJob->iYMin;
+    int iYMax = psJob->iYMax;
+
     int iDstY;
-    int nDstXSize = poWK->nDstXSize, nDstYSize = poWK->nDstYSize;
+    int nDstXSize = poWK->nDstXSize;
     int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-    CPLErr eErr = CE_None;
-
-    CPLDebug( "GDAL", "GDALWarpKernel()::GWKCubicSplineNoMasksShort()\n"
-              "Src=%d,%d,%dx%d Dst=%d,%d,%dx%d",
-              poWK->nSrcXOff, poWK->nSrcYOff, 
-              poWK->nSrcXSize, poWK->nSrcYSize,
-              poWK->nDstXOff, poWK->nDstYOff, 
-              poWK->nDstXSize, poWK->nDstYSize );
-
-    if( !poWK->pfnProgress( poWK->dfProgressBase, "", poWK->pProgress ) )
-    {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return CE_Failure;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate x,y,z coordinate arrays for transformation ... one     */
@@ -3902,7 +4066,7 @@ static CPLErr GWKCubicSplineNoMasksShort( GDALWarpKernel *poWK )
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
-    for( iDstY = 0; iDstY < nDstYSize && eErr == CE_None; iDstY++ )
+    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
     {
         int iDstX;
 
@@ -3920,7 +4084,7 @@ static CPLErr GWKCubicSplineNoMasksShort( GDALWarpKernel *poWK )
 /*      Transform the points from destination pixel/line coordinates    */
 /*      to source pixel/line coordinates.                               */
 /* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( poWK->pTransformerArg, TRUE, nDstXSize, 
+        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
 
 /* ==================================================================== */
@@ -3953,13 +4117,8 @@ static CPLErr GWKCubicSplineNoMasksShort( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
-                                ((iDstY+1) / (double) nDstYSize), 
-                                "", poWK->pProgress ) )
-        {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            eErr = CE_Failure;
-        }
+        if (psJob->pfnProgress(psJob))
+            break;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3970,8 +4129,6 @@ static CPLErr GWKCubicSplineNoMasksShort( GDALWarpKernel *poWK )
     CPLFree( padfZ );
     CPLFree( pabSuccess );
     CPLFree( padfBSpline );
-
-    return eErr;
 }
 
 /************************************************************************/
@@ -3982,26 +4139,23 @@ static CPLErr GWKCubicSplineNoMasksShort( GDALWarpKernel *poWK )
 /*      for this particular transformation type.                        */
 /************************************************************************/
 
+static void GWKNearestShortThread(void* pData);
+
 static CPLErr GWKNearestShort( GDALWarpKernel *poWK )
-
 {
+    return GWKRun( poWK, "GWKNearestShort", GWKNearestShortThread );
+}
+
+static void GWKNearestShortThread(void* pData)
+{
+    GWKJobStruct* psJob = (GWKJobStruct*) pData;
+    GDALWarpKernel *poWK = psJob->poWK;
+    int iYMin = psJob->iYMin;
+    int iYMax = psJob->iYMax;
+
     int iDstY;
-    int nDstXSize = poWK->nDstXSize, nDstYSize = poWK->nDstYSize;
+    int nDstXSize = poWK->nDstXSize;
     int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-    CPLErr eErr = CE_None;
-
-    CPLDebug( "GDAL", "GDALWarpKernel()::GWKNearestShort()\n"
-              "Src=%d,%d,%dx%d Dst=%d,%d,%dx%d",
-              poWK->nSrcXOff, poWK->nSrcYOff, 
-              poWK->nSrcXSize, poWK->nSrcYSize,
-              poWK->nDstXOff, poWK->nDstYOff, 
-              poWK->nDstXSize, poWK->nDstYSize );
-
-    if( !poWK->pfnProgress( poWK->dfProgressBase, "", poWK->pProgress ) )
-    {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return CE_Failure;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate x,y,z coordinate arrays for transformation ... one     */
@@ -4018,7 +4172,7 @@ static CPLErr GWKNearestShort( GDALWarpKernel *poWK )
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
-    for( iDstY = 0; iDstY < nDstYSize && eErr == CE_None; iDstY++ )
+    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
     {
         int iDstX;
 
@@ -4036,7 +4190,7 @@ static CPLErr GWKNearestShort( GDALWarpKernel *poWK )
 /*      Transform the points from destination pixel/line coordinates    */
 /*      to source pixel/line coordinates.                               */
 /* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( poWK->pTransformerArg, TRUE, nDstXSize, 
+        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
 
 /* ==================================================================== */
@@ -4120,13 +4274,8 @@ static CPLErr GWKNearestShort( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
-                                ((iDstY+1) / (double) nDstYSize), 
-                                "", poWK->pProgress ) )
-        {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            eErr = CE_Failure;
-        }
+        if (psJob->pfnProgress(psJob))
+            break;
     } /* Next iDstY */
 
 /* -------------------------------------------------------------------- */
@@ -4136,8 +4285,6 @@ static CPLErr GWKNearestShort( GDALWarpKernel *poWK )
     CPLFree( padfY );
     CPLFree( padfZ );
     CPLFree( pabSuccess );
-
-    return eErr;
 }
 
 /************************************************************************/
@@ -4148,26 +4295,24 @@ static CPLErr GWKNearestShort( GDALWarpKernel *poWK )
 /*      as possible for this particular transformation type.            */
 /************************************************************************/
 
+static void GWKNearestNoMasksFloatThread(void* pData);
+
 static CPLErr GWKNearestNoMasksFloat( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKNearestNoMasksFloat", GWKNearestNoMasksFloatThread );
+}
+
+static void GWKNearestNoMasksFloatThread( void* pData )
 
 {
+    GWKJobStruct* psJob = (GWKJobStruct*) pData;
+    GDALWarpKernel *poWK = psJob->poWK;
+    int iYMin = psJob->iYMin;
+    int iYMax = psJob->iYMax;
+
     int iDstY;
-    int nDstXSize = poWK->nDstXSize, nDstYSize = poWK->nDstYSize;
+    int nDstXSize = poWK->nDstXSize;
     int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-    CPLErr eErr = CE_None;
-
-    CPLDebug( "GDAL", "GDALWarpKernel()::GWKNearestNoMasksFloat()\n"
-              "Src=%d,%d,%dx%d Dst=%d,%d,%dx%d",
-              poWK->nSrcXOff, poWK->nSrcYOff, 
-              poWK->nSrcXSize, poWK->nSrcYSize,
-              poWK->nDstXOff, poWK->nDstYOff, 
-              poWK->nDstXSize, poWK->nDstYSize );
-
-    if( !poWK->pfnProgress( poWK->dfProgressBase, "", poWK->pProgress ) )
-    {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return CE_Failure;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate x,y,z coordinate arrays for transformation ... one     */
@@ -4184,7 +4329,7 @@ static CPLErr GWKNearestNoMasksFloat( GDALWarpKernel *poWK )
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
-    for( iDstY = 0; iDstY < nDstYSize && eErr == CE_None; iDstY++ )
+    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
     {
         int iDstX;
 
@@ -4202,7 +4347,7 @@ static CPLErr GWKNearestNoMasksFloat( GDALWarpKernel *poWK )
 /*      Transform the points from destination pixel/line coordinates    */
 /*      to source pixel/line coordinates.                               */
 /* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( poWK->pTransformerArg, TRUE, nDstXSize, 
+        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
 
 /* ==================================================================== */
@@ -4231,13 +4376,8 @@ static CPLErr GWKNearestNoMasksFloat( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
-                                ((iDstY+1) / (double) nDstYSize), 
-                                "", poWK->pProgress ) )
-        {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            eErr = CE_Failure;
-        }
+        if (psJob->pfnProgress(psJob))
+            break;
     }
 
 /* -------------------------------------------------------------------- */
@@ -4247,8 +4387,6 @@ static CPLErr GWKNearestNoMasksFloat( GDALWarpKernel *poWK )
     CPLFree( padfY );
     CPLFree( padfZ );
     CPLFree( pabSuccess );
-
-    return eErr;
 }
 
 /************************************************************************/
@@ -4259,26 +4397,24 @@ static CPLErr GWKNearestNoMasksFloat( GDALWarpKernel *poWK )
 /*      for this particular transformation type.                        */
 /************************************************************************/
 
+static void GWKNearestFloatThread(void* pData);
+
 static CPLErr GWKNearestFloat( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKNearestFloat", GWKNearestFloatThread );
+}
+
+static void GWKNearestFloatThread( void* pData )
 
 {
+    GWKJobStruct* psJob = (GWKJobStruct*) pData;
+    GDALWarpKernel *poWK = psJob->poWK;
+    int iYMin = psJob->iYMin;
+    int iYMax = psJob->iYMax;
+
     int iDstY;
-    int nDstXSize = poWK->nDstXSize, nDstYSize = poWK->nDstYSize;
+    int nDstXSize = poWK->nDstXSize;
     int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
-    CPLErr eErr = CE_None;
-
-    CPLDebug( "GDAL", "GDALWarpKernel()::GWKNearestFloat()\n"
-              "Src=%d,%d,%dx%d Dst=%d,%d,%dx%d",
-              poWK->nSrcXOff, poWK->nSrcYOff, 
-              poWK->nSrcXSize, poWK->nSrcYSize,
-              poWK->nDstXOff, poWK->nDstYOff, 
-              poWK->nDstXSize, poWK->nDstYSize );
-
-    if( !poWK->pfnProgress( poWK->dfProgressBase, "", poWK->pProgress ) )
-    {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return CE_Failure;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate x,y,z coordinate arrays for transformation ... one     */
@@ -4295,7 +4431,7 @@ static CPLErr GWKNearestFloat( GDALWarpKernel *poWK )
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
 /* ==================================================================== */
-    for( iDstY = 0; iDstY < nDstYSize && eErr == CE_None; iDstY++ )
+    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
     {
         int iDstX;
 
@@ -4313,7 +4449,7 @@ static CPLErr GWKNearestFloat( GDALWarpKernel *poWK )
 /*      Transform the points from destination pixel/line coordinates    */
 /*      to source pixel/line coordinates.                               */
 /* -------------------------------------------------------------------- */
-        poWK->pfnTransformer( poWK->pTransformerArg, TRUE, nDstXSize, 
+        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
 
 /* ==================================================================== */
@@ -4398,13 +4534,8 @@ static CPLErr GWKNearestFloat( GDALWarpKernel *poWK )
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */
 /* -------------------------------------------------------------------- */
-        if( !poWK->pfnProgress( poWK->dfProgressBase + poWK->dfProgressScale *
-                                ((iDstY+1) / (double) nDstYSize), 
-                                "", poWK->pProgress ) )
-        {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            eErr = CE_Failure;
-        }
+        if (psJob->pfnProgress(psJob))
+            break;
     }
 
 /* -------------------------------------------------------------------- */
@@ -4414,7 +4545,5 @@ static CPLErr GWKNearestFloat( GDALWarpKernel *poWK )
     CPLFree( padfY );
     CPLFree( padfZ );
     CPLFree( pabSuccess );
-
-    return eErr;
 }
 
