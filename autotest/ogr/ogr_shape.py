@@ -2982,6 +2982,11 @@ def ogr_shape_63():
         gdaltest.post_reason('failed')
         return 'fail'
 
+    gdaltest.fieldname = '\xc3\xa9\xc3\xa9'
+    if lyr.AlterFieldDefn(0, ogr.FieldDefn(gdaltest.fieldname, ogr.OFTString), ogr.ALTER_NAME_FLAG) != 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
     chinese_str = struct.pack('B' * 6, 229, 144, 141, 231, 167, 176)
     if sys.version_info >= (3,0,0):
         chinese_str = chinese_str.decode('UTF-8')
