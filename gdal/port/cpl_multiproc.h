@@ -78,6 +78,8 @@ void  CPL_DLL CPLSleep( double dfWaitInSeconds );
 
 const char CPL_DLL *CPLGetThreadingModel();
 
+int CPL_DLL CPLGetNumCPUs();
+
 CPL_C_END
 
 #ifdef __cplusplus
