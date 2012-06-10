@@ -909,6 +909,88 @@ def warp_29():
     return 'success'
 
 ###############################################################################
+# Test warping interruption
+
+def warp_30_progress_callback(pct, message, user_data):
+    if pct > 0.2:
+        return 0 # stop
+    else:
+        return 1 # continue
+
+def warp_30():
+
+    # Open source dataset
+    src_ds = gdal.Open('../gcore/data/byte.tif')
+
+    # Desfine target SRS
+    dst_srs = osr.SpatialReference()
+    dst_srs.ImportFromEPSG(4326)
+    dst_wkt = dst_srs.ExportToWkt()
+
+    error_threshold = 0.125  # error threshold --> use same value as in gdalwarp
+    resampling = gdal.GRA_Bilinear
+
+    # Call AutoCreateWarpedVRT() to fetch default values for target raster dimensions and geotransform
+    tmp_ds = gdal.AutoCreateWarpedVRT( src_ds, \
+                                       None, # src_wkt : left to default value --> will use the one from source \
+                                       dst_wkt, \
+                                       resampling, \
+                                       error_threshold )
+    dst_xsize = tmp_ds.RasterXSize
+    dst_ysize = tmp_ds.RasterYSize
+    dst_gt = tmp_ds.GetGeoTransform()
+    tmp_ds = None
+
+    # Now create the true target dataset
+    dst_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/warp_30.tif', dst_xsize, dst_ysize,
+                                                  src_ds.RasterCount)
+    dst_ds.SetProjection(dst_wkt)
+    dst_ds.SetGeoTransform(dst_gt)
+
+    # And run the reprojection
+
+    cbk = warp_30_progress_callback
+    cbk_user_data = None # value for last parameter of above warp_27_progress_callback
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = gdal.ReprojectImage( src_ds, \
+                         dst_ds, \
+                         None, # src_wkt : left to default value --> will use the one from source \
+                         None, # dst_wkt : left to default value --> will use the one from destination \
+                         resampling, \
+                         0, # WarpMemoryLimit : left to default value \
+                         error_threshold,
+                         cbk, # Progress callback : could be left to None or unspecified for silent progress
+                         cbk_user_data)  # Progress callback user data
+    gdal.PopErrorHandler()
+
+    if ret == 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    old_val = gdal.GetConfigOption('WARP_NUM_THREADS')
+    gdal.SetConfigOption('WARP_NUM_THREADS', '2')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = gdal.ReprojectImage( src_ds, \
+                         dst_ds, \
+                         None, # src_wkt : left to default value --> will use the one from source \
+                         None, # dst_wkt : left to default value --> will use the one from destination \
+                         resampling, \
+                         0, # WarpMemoryLimit : left to default value \
+                         error_threshold,
+                         cbk, # Progress callback : could be left to None or unspecified for silent progress
+                         cbk_user_data)  # Progress callback user data
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('WARP_NUM_THREADS', old_val)
+
+    if ret == 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     warp_1,
@@ -945,6 +1027,7 @@ gdaltest_list = [
     warp_27,
     warp_28,
     warp_29,
+    warp_30,
     ]
 
 if __name__ == '__main__':
