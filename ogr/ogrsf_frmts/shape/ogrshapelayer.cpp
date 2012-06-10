@@ -1271,7 +1271,9 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
             CPLFree( pszUTF8Field );
 
             if (CPLGetLastErrorType() != 0)
+            {
                 return FALSE;
+            }
         }
 
         return TRUE;
@@ -1320,6 +1322,8 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
         bDBFJustCreated = TRUE;
     }
 
+    CPLErrorReset();
+
     if ( poFeatureDefn->GetFieldCount() == 255 )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
@@ -1343,9 +1347,20 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
     CPLString osFieldName;
     if( osEncoding.size() )
     {
+        CPLClearRecodeWarningFlags();
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        CPLErr eLastErr = CPLGetLastErrorType();
         char* pszRecoded = CPLRecode( poFieldDefn->GetNameRef(), CPL_ENC_UTF8, osEncoding);
+        CPLPopErrorHandler();
         osFieldName = pszRecoded;
         CPLFree(pszRecoded);
+        if( CPLGetLastErrorType() != eLastErr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to create field name '%s' : cannot convert to %s",
+                     poFieldDefn->GetNameRef(), osEncoding.c_str());
+            return OGRERR_FAILURE;
+        }
     }
     else
         osFieldName = poFieldDefn->GetNameRef();
