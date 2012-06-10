@@ -1384,15 +1384,18 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
                   poFieldDefn->GetNameRef() );//One hundred similar field names!!?
     }
 
+    OGRFieldDefn oModFieldDefn(poFieldDefn);
+
     if( !EQUAL(osFieldName,szNewFieldName) )
+    {
         CPLError( CE_Warning, CPLE_NotSupported,
                   "Normalized/laundered field name: '%s' to '%s'", 
                   poFieldDefn->GetNameRef(),
                   szNewFieldName );
-                  
-    // Set field name with normalized value
-    OGRFieldDefn oModFieldDefn(poFieldDefn);
-    oModFieldDefn.SetName(szNewFieldName);
+
+        // Set field name with normalized value
+        oModFieldDefn.SetName(szNewFieldName);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Add field to layer                                              */
