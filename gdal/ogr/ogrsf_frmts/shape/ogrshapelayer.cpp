@@ -96,7 +96,16 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
 
     bTruncationWarningEmitted = FALSE;
 
-    
+    /* Init info for the LRU layer mechanism */
+    poPrevLayer = NULL;
+    poNextLayer = NULL;
+    bHSHPWasNonNULL = hSHPIn != NULL;
+    bHDBFWasNonNULL = hDBFIn != NULL;
+    eFileDescriptorsState = FD_OPENED;
+    TouchLayer();
+
+    bResizeAtClose = FALSE;
+
     if( hDBF != NULL && hDBF->pszCodePage != NULL )
     {
         CPLDebug( "Shape", "DBF Codepage = %s for %s", 
@@ -110,20 +119,18 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
         osEncoding = CPLGetConfigOption( "SHAPE_ENCODING", "" );
 
     if( osEncoding != "" )
+    {
         CPLDebug( "Shape", "Treating as encoding '%s'.", osEncoding.c_str() );
+
+        if (!TestCapability(OLCStringsAsUTF8))
+        {
+            CPLDebug( "Shape", "Cannot recode from '%s'. Disabling recoding", osEncoding.c_str() );
+            osEncoding = "";
+        }
+    }
 
     poFeatureDefn = SHPReadOGRFeatureDefn( CPLGetBasename(pszName),
                                            hSHP, hDBF, osEncoding );
-
-    /* Init info for the LRU layer mechanism */
-    poPrevLayer = NULL;
-    poNextLayer = NULL;
-    bHSHPWasNonNULL = hSHPIn != NULL;
-    bHDBFWasNonNULL = hDBFIn != NULL;
-    eFileDescriptorsState = FD_OPENED;
-    TouchLayer();
-
-    bResizeAtClose = FALSE;
 }
 
 /************************************************************************/
@@ -1243,6 +1250,8 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
 
         if( hDBF == NULL || DBFGetFieldCount( hDBF ) == 0 )
             return TRUE;
+
+        CPLClearRecodeWarningFlags();
 
         /* Otherwise test that we can re-encode field names to UTF-8 */
         int nFieldCount = DBFGetFieldCount( hDBF );
