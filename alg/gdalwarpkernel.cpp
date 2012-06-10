@@ -120,6 +120,7 @@ static int GWKProgressMonoThread(GWKJobStruct* psJob)
                             "", poWK->pProgress ) )
     {
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        *(psJob->pbStop) = TRUE;
         return TRUE;
     }
     return FALSE;
