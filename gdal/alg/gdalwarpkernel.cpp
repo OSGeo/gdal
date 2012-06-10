@@ -3208,9 +3208,6 @@ static void GWKNearestNoMasksByteThread(void* pData)
 /* ==================================================================== */
         for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
         {
-            if( !pabSuccess[iDstX] )
-                continue;
-
             COMPUTE_iSrcOffset(pabSuccess, iDstX, padfX, padfY, poWK, nSrcXSize, nSrcYSize);
 
 /* ==================================================================== */
