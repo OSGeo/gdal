@@ -2992,6 +2992,14 @@ def ogr_shape_63():
         chinese_str = chinese_str.decode('UTF-8')
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = lyr.AlterFieldDefn(0, ogr.FieldDefn(chinese_str, ogr.OFTString), ogr.ALTER_NAME_FLAG)
+    gdal.PopErrorHandler()
+
+    if ret == 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = lyr.CreateField(ogr.FieldDefn(chinese_str, ogr.OFTString))
     gdal.PopErrorHandler()
 
