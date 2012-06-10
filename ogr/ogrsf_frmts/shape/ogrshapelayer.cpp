@@ -1432,7 +1432,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                         "Field %s of width %d truncated to %d.",
-                        oModFieldDefn.GetNameRef(), nWidth, 255 );
+                        szNewFieldName, nWidth, 255 );
                 nWidth = 255;
             }
             break;
@@ -1445,7 +1445,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
         case OFTDateTime:
             CPLError( CE_Warning, CPLE_NotSupported,
                     "Field %s create as date field, though DateTime requested.",
-                    oModFieldDefn.GetNameRef() );
+                    szNewFieldName );
             chType = 'D';
             nWidth = 8;
             oModFieldDefn.SetType( OFTDate );
@@ -1468,12 +1468,12 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Can't create field %s in Shape DBF file. "
                   "Maximum record length reached.",
-                  oModFieldDefn.GetNameRef() );
+                  szNewFieldName );
         return OGRERR_FAILURE;
     }
 
     iNewField =
-        DBFAddNativeFieldType( hDBF, oModFieldDefn.GetNameRef(),
+        DBFAddNativeFieldType( hDBF, szNewFieldName,
                                chType, nWidth, nDecimals );
 
     if( iNewField != -1 )
@@ -1494,7 +1494,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Can't create field %s in Shape DBF file, reason unknown.",
-                  oModFieldDefn.GetNameRef() );
+                  szNewFieldName );
 
         return OGRERR_FAILURE;
     }
