@@ -2967,6 +2967,49 @@ def ogr_shape_62():
     ds = None
 
     return 'success'
+
+###############################################################################
+# More testing of recoding
+
+def ogr_shape_63():
+
+    # FIXME
+    if sys.version_info >= (3,0,0):
+        return 'skip'
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_63.dbf')
+    lyr = ds.CreateLayer('ogr_shape_63')
+    gdaltest.fieldname = '\xc3\xa9'
+    lyr.CreateField(ogr.FieldDefn(gdaltest.fieldname, ogr.OFTString))
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_shape_63.dbf')
+    lyr = ds.GetLayer(0)
+    if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetName() != gdaltest.fieldname:
+        gdaltest.post_reason('failed')
+        print(gdaltest.fieldname)
+        return 'fail'
+    ds = None
+
+    # Set an invalid encoding
+    gdal.FileFromMemBuffer('/vsimem/ogr_shape_63.cpg', 'FOO')
+
+    ds = ogr.Open('/vsimem/ogr_shape_63.dbf')
+    lyr = ds.GetLayer(0)
+    # TestCapability(OLCStringsAsUTF8) should return FALSE
+    if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_shape_63.dbf')
+    gdal.Unlink('/vsimem/ogr_shape_63.cpg')
+
+    return 'success'
+
 ###############################################################################
 # 
 
@@ -3061,6 +3104,7 @@ gdaltest_list = [
     ogr_shape_60,
     ogr_shape_61,
     ogr_shape_62,
+    ogr_shape_63,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
