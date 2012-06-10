@@ -2023,7 +2023,13 @@ def ogr_shape_50():
         return 'skip'
     lyr = ds.GetLayer(0)
 
+    reconv_possible = lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
+
     if gdal.GetLastErrorMsg().find('Recode from CP936 to UTF-8 not supported, treated as ISO8859-1 to UTF-8.') != -1:
+        if reconv_possible:
+            gdaltest.post_reason( 'Recode failed, but TestCapability(OLCStringsAsUTF8) returns TRUE' )
+            return 'fail'
+
         gdaltest.post_reason( 'skipping test: iconv support needed' )
         return 'skip'
 
@@ -2035,6 +2041,10 @@ def ogr_shape_50():
         gdaltest.fieldname = gdaltest.fieldname.encode('utf-8')
 
     if lyr.GetLayerDefn().GetFieldIndex(gdaltest.fieldname) != 1:
+        return 'fail'
+
+    if not reconv_possible:
+        gdaltest.post_reason( 'TestCapability(OLCStringsAsUTF8) should return TRUE' )
         return 'fail'
 
     return 'success'
