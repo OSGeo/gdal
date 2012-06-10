@@ -1340,15 +1340,25 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
     char * pszTmp = NULL;
     int nRenameNum = 1;
 
-    size_t nNameSize = strlen( poFieldDefn->GetNameRef() );
-    pszTmp = CPLScanString( poFieldDefn->GetNameRef(),
+    CPLString osFieldName;
+    if( osEncoding.size() )
+    {
+        char* pszRecoded = CPLRecode( poFieldDefn->GetNameRef(), CPL_ENC_UTF8, osEncoding);
+        osFieldName = pszRecoded;
+        CPLFree(pszRecoded);
+    }
+    else
+        osFieldName = poFieldDefn->GetNameRef();
+
+    size_t nNameSize = osFieldName.size();
+    pszTmp = CPLScanString( osFieldName,
                             MIN( nNameSize, 10) , TRUE, TRUE);
     strncpy(szNewFieldName, pszTmp, 10);
     szNewFieldName[10] = '\0';
 
     if( !bApproxOK &&
         ( DBFGetFieldIndex( hDBF, szNewFieldName ) >= 0 ||
-          !EQUAL(poFieldDefn->GetNameRef(),szNewFieldName) ) )
+          !EQUAL(osFieldName,szNewFieldName) ) )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Failed to add field named '%s'",
@@ -1374,7 +1384,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
                   poFieldDefn->GetNameRef() );//One hundred similar field names!!?
     }
 
-    if( !EQUAL(poFieldDefn->GetNameRef(),szNewFieldName) )
+    if( !EQUAL(osFieldName,szNewFieldName) )
         CPLError( CE_Warning, CPLE_NotSupported,
                   "Normalized/laundered field name: '%s' to '%s'", 
                   poFieldDefn->GetNameRef(),
