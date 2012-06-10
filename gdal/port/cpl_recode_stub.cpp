@@ -62,6 +62,7 @@ static int utf8bytes(unsigned ucs);
 static int bHaveWarned1 = FALSE;
 static int bHaveWarned2 = FALSE;
 static int bHaveWarned3 = FALSE;
+static int bHaveWarned4 = FALSE;
 
 /************************************************************************/
 /*                 CPLClearRecodeStubWarningFlags()                     */
@@ -72,6 +73,7 @@ void CPLClearRecodeStubWarningFlags()
     bHaveWarned1 = FALSE;
     bHaveWarned2 = FALSE;
     bHaveWarned3 = FALSE;
+    bHaveWarned4 = FALSE;
 }
 
 /************************************************************************/
@@ -825,10 +827,9 @@ static unsigned utf8toa(const char* src, unsigned srclen,
       if (ucs < 0x100) dst[count] = (char)ucs;
       else
       {
-          static int bHasWarned = FALSE;
-          if (!bHasWarned)
+          if (!bHaveWarned4)
           {
-              bHasWarned = TRUE;
+              bHaveWarned4 = TRUE;
               CPLError(CE_Warning, CPLE_AppDefined,
                        "One or several characters couldn't be converted correctly from UTF-8 to ISO-8859-1.\n"
                        "This warning will not be emitted anymore");
