@@ -1635,7 +1635,28 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, 
 
     if (nFlags & ALTER_NAME_FLAG)
     {
-        strncpy(szFieldName, poNewFieldDefn->GetNameRef(), 10);
+        CPLString osFieldName;
+        if( osEncoding.size() )
+        {
+            CPLClearRecodeWarningFlags();
+            CPLErrorReset();
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            char* pszRecoded = CPLRecode( poNewFieldDefn->GetNameRef(), CPL_ENC_UTF8, osEncoding);
+            CPLPopErrorHandler();
+            osFieldName = pszRecoded;
+            CPLFree(pszRecoded);
+            if( CPLGetLastErrorType() != 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Failed to rename field name to '%s' : cannot convert to %s",
+                        poNewFieldDefn->GetNameRef(), osEncoding.c_str());
+                return OGRERR_FAILURE;
+            }
+        }
+        else
+            osFieldName = poNewFieldDefn->GetNameRef();
+
+        strncpy(szFieldName, osFieldName, 10);
         szFieldName[10] = '\0';
     }
     if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
@@ -1650,7 +1671,7 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, 
         if (nFlags & ALTER_TYPE_FLAG)
             poFieldDefn->SetType(eType);
         if (nFlags & ALTER_NAME_FLAG)
-            poFieldDefn->SetName(szFieldName);
+            poFieldDefn->SetName(poNewFieldDefn->GetNameRef());
         if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
         {
             poFieldDefn->SetWidth(nWidth);
