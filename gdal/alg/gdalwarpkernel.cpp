@@ -303,6 +303,10 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
             }
         }
 
+        /* Release mutex before joining threads, otherwise they will dead-lock */
+        /* forever in GWKProgressThread() */
+        CPLReleaseMutex(hCondMutex);
+
 /* -------------------------------------------------------------------- */
 /*      Wait for all threads to complete and finish.                    */
 /* -------------------------------------------------------------------- */
@@ -311,8 +315,6 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
             CPLJoinThread(pasThreadJob[i].hThread);
             GDALDestroyTransformer(pasThreadJob[i].pTransformerArg);
         }
-
-        CPLReleaseMutex(hCondMutex);
 
         CPLFree(pasThreadJob);
         CPLDestroyCond(hCond);
