@@ -59,6 +59,21 @@ static int utf8bytes(unsigned ucs);
 /* ==================================================================== */
 /************************************************************************/
 
+static int bHaveWarned1 = FALSE;
+static int bHaveWarned2 = FALSE;
+static int bHaveWarned3 = FALSE;
+
+/************************************************************************/
+/*                 CPLClearRecodeStubWarningFlags()                     */
+/************************************************************************/
+
+void CPLClearRecodeStubWarningFlags()
+{
+    bHaveWarned1 = FALSE;
+    bHaveWarned2 = FALSE;
+    bHaveWarned3 = FALSE;
+}
+
 /************************************************************************/
 /*                           CPLRecodeStub()                            */
 /************************************************************************/
@@ -136,11 +151,10 @@ char *CPLRecodeStub( const char *pszSource,
     {
         int nCharCount = strlen(pszSource);
         char *pszResult = (char *) CPLCalloc(1,nCharCount*2+1);
-        static int bHaveWarned = FALSE;
 
-        if( !bHaveWarned )
+        if( !bHaveWarned1 )
         {
-            bHaveWarned = 1;
+            bHaveWarned1 = 1;
             CPLError( CE_Warning, CPLE_AppDefined, 
                       "Recode from %s to UTF-8 not supported, treated as ISO8859-1 to UTF-8.", 
                       pszSrcEncoding );
@@ -160,11 +174,10 @@ char *CPLRecodeStub( const char *pszSource,
     {
         int nCharCount = strlen(pszSource);
         char *pszResult = (char *) CPLCalloc(1,nCharCount+1);
-        static int bHaveWarned = FALSE;
 
-        if( !bHaveWarned )
+        if( !bHaveWarned2 )
         {
-            bHaveWarned = 1;
+            bHaveWarned2 = 1;
             CPLError( CE_Warning, CPLE_AppDefined, 
                       "Recode from UTF-8 to %s not supported, treated as UTF-8 to ISO8859-1.", 
                       pszDstEncoding );
@@ -179,11 +192,9 @@ char *CPLRecodeStub( const char *pszSource,
 /*      Everything else is treated as a no-op with a warning.           */
 /* -------------------------------------------------------------------- */
     {
-        static int bHaveWarned = FALSE;
-
-        if( !bHaveWarned )
+        if( !bHaveWarned3 )
         {
-            bHaveWarned = 1;
+            bHaveWarned3 = 1;
             CPLError( CE_Warning, CPLE_AppDefined, 
                       "Recode from %s to %s not supported, no change applied.", 
                       pszSrcEncoding, pszDstEncoding );

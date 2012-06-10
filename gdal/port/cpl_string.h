@@ -164,6 +164,7 @@ size_t CPL_DLL CPLStrnlen (const char *pszStr, size_t nMaxLen);
 #define CPL_ENC_ISO8859_1  "ISO-8859-1"
 
 int CPL_DLL  CPLEncodingCharSize( const char *pszEncoding );
+void CPL_DLL  CPLClearRecodeWarningFlags();
 char CPL_DLL *CPLRecode( const char *pszSource, 
                          const char *pszSrcEncoding, 
                          const char *pszDstEncoding ) CPL_WARN_UNUSED_RESULT;
