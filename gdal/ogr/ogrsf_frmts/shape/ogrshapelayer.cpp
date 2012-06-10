@@ -1135,8 +1135,37 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCStringsAsUTF8) )
-        return strlen(osEncoding) > 0; /* if encoding is defined, we are able to convert to UTF-8 */
+    {
+        /* No encoding defined : we don't know */
+        if( osEncoding.size() == 0)
+            return FALSE;
 
+        if( hDBF == NULL || DBFGetFieldCount( hDBF ) == 0 )
+            return TRUE;
+
+        /* Otherwise test that we can re-encode field names to UTF-8 */
+        int nFieldCount = DBFGetFieldCount( hDBF );
+        for(int i=0;i<nFieldCount;i++)
+        {
+            char            szFieldName[20];
+            int             nWidth, nPrecision;
+
+            DBFGetFieldInfo( hDBF, i, szFieldName,
+                            &nWidth, &nPrecision );
+
+            CPLErrorReset();
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            char *pszUTF8Field = CPLRecode( szFieldName,
+                                            osEncoding, CPL_ENC_UTF8);
+            CPLPopErrorHandler();
+            CPLFree( pszUTF8Field );
+
+            if (CPLGetLastErrorType() != 0)
+                return FALSE;
+        }
+
+        return TRUE;
+    }
     else 
         return FALSE;
 }
