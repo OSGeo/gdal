@@ -225,6 +225,9 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
                     bTransformerCloningSuccess = FALSE;
                     break;
                 }
+#if 0
+                /* Sanity check that should not fail, but does not work on Windows */
+                /* due to the way pointers to functions work. */
                 if (pfnTransformer != poWK->pfnTransformer)
                 {
                     CPLDebug("WARP", "Deserialized transformer function is "
@@ -233,6 +236,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
                     bTransformerCloningSuccess = FALSE;
                     break;
                 }
+#endif
             }
 
             CPLDestroyXMLNode(psTransformerNode);
