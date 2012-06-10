@@ -71,6 +71,9 @@ static int utf8bytes(unsigned ucs);
 static int bHaveWarned1 = FALSE;
 static int bHaveWarned2 = FALSE;
 static int bHaveWarned3 = FALSE;
+static int bHaveWarned4 = FALSE;
+static int bHaveWarned5 = FALSE;
+static int bHaveWarned6 = FALSE;
 
 /************************************************************************/
 /*                 CPLClearRecodeStubWarningFlags()                     */
@@ -81,6 +84,9 @@ void CPLClearRecodeStubWarningFlags()
     bHaveWarned1 = FALSE;
     bHaveWarned2 = FALSE;
     bHaveWarned3 = FALSE;
+    bHaveWarned4 = FALSE;
+    bHaveWarned5 = FALSE;
+    bHaveWarned6 = FALSE;
 }
 
 /************************************************************************/
@@ -860,10 +866,9 @@ static unsigned utf8toa(const char* src, unsigned srclen,
       if (ucs < 0x100) dst[count] = (char)ucs;
       else
       {
-          static int bHasWarned = FALSE;
-          if (!bHasWarned)
+          if (!bHaveWarned4)
           {
-              bHasWarned = TRUE;
+              bHaveWarned4 = TRUE;
               CPLError(CE_Warning, CPLE_AppDefined,
                        "One or several characters couldn't be converted correctly from UTF-8 to ISO-8859-1.\n"
                        "This warning will not be emitted anymore.");
@@ -1104,10 +1109,9 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page, unsigned dst_code
     int wlen = MultiByteToWideChar( src_code_page, MB_ERR_INVALID_CHARS, src, -1, 0, 0 );
     if (wlen == 0 && GetLastError() == ERROR_NO_UNICODE_TRANSLATION)
     {
-        static int bHasWarned = FALSE;
-        if (!bHasWarned)
+        if (!bHaveWarned5)
         {
-            bHasWarned = TRUE;
+            bHaveWarned5 = TRUE;
             CPLError(CE_Warning, CPLE_AppDefined,
                     "One or several characters could not be translated from CP%d. "
                     "This warning will not be emitted anymore.", src_code_page);
@@ -1133,10 +1137,9 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page, unsigned dst_code
         len = WideCharToMultiByte( dst_code_page, 0, tbuf, -1, 0, 0, 0, &bUsedDefaultChar );
     if (bUsedDefaultChar)
     {
-        static int bHasWarned = FALSE;
-        if (!bHasWarned)
+        if (!bHaveWarned6)
         {
-            bHasWarned = TRUE;
+            bHaveWarned6 = TRUE;
             CPLError(CE_Warning, CPLE_AppDefined,
                     "One or several characters could not be translated to CP%d. "
                     "This warning will not be emitted anymore.", dst_code_page);
