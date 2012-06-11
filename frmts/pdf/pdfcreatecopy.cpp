@@ -1812,16 +1812,62 @@ int GDALPDFWriter::WriteOGRLayer(OGRDataSourceH hDS,
                                  int bWriteOGRAttributes,
                                  int& iObj)
 {
+    GDALDataset* poSrcDS = oPageContext.poSrcDS;
+    double adfGeoTransform[6];
+    if (poSrcDS->GetGeoTransform(adfGeoTransform) != CE_None)
+        return FALSE;
+
     GDALPDFLayerDesc osVectorDesc = StartOGRLayer(osLayerName,
                                                   bWriteOGRAttributes);
     OGRLayerH hLyr = OGR_DS_GetLayer(hDS, iLayer);
 
+    const char* pszWKT = poSrcDS->GetProjectionRef();
+    OGRSpatialReferenceH hGDAL_SRS = NULL;
+    if( pszWKT && pszWKT[0] != '\0' )
+        hGDAL_SRS = OSRNewSpatialReference(pszWKT);
+    OGRSpatialReferenceH hOGR_SRS = OGR_L_GetSpatialRef(hLyr);
+    OGRCoordinateTransformationH hCT = NULL;
+
+    if( hGDAL_SRS == NULL && hOGR_SRS != NULL )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Vector layer has a SRS set, but Raster layer has no SRS set. Assuming they are the same.");
+    }
+    else if( hGDAL_SRS != NULL && hOGR_SRS == NULL )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Vector layer has no SRS set, but Raster layer has a SRS set. Assuming they are the same.");
+    }
+    else if( hGDAL_SRS != NULL && hOGR_SRS != NULL )
+    {
+        if (!OSRIsSame(hGDAL_SRS, hOGR_SRS))
+        {
+            hCT = OCTNewCoordinateTransformation( hOGR_SRS, hGDAL_SRS );
+            if( hCT == NULL )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Cannot compute coordinate transformation from vector SRS to raster SRS");
+            }
+        }
+    }
+
+    if( hCT == NULL )
+    {
+        double dfXMin = adfGeoTransform[0];
+        double dfYMin = adfGeoTransform[3] + poSrcDS->GetRasterYSize() * adfGeoTransform[5];
+        double dfXMax = adfGeoTransform[0] + poSrcDS->GetRasterXSize() * adfGeoTransform[1];
+        double dfYMax = adfGeoTransform[3];
+        OGR_L_SetSpatialFilterRect(hLyr, dfXMin, dfYMin, dfXMax, dfYMax);
+    }
+
     OGRFeatureH hFeat;
     int iObjLayer = 0;
+
     while( (hFeat = OGR_L_GetNextFeature(hLyr)) != NULL)
     {
         WriteOGRFeature(osVectorDesc,
                         hFeat,
+                        hCT,
                         pszOGRDisplayField,
                         bWriteOGRAttributes,
                         iObj,
@@ -1831,6 +1877,11 @@ int GDALPDFWriter::WriteOGRLayer(OGRDataSourceH hDS,
     }
 
     EndOGRLayer(osVectorDesc);
+
+    if( hCT != NULL )
+        OCTDestroyCoordinateTransformation(hCT);
+    if( hGDAL_SRS != NULL )
+        OSRDestroySpatialReference(hGDAL_SRS);
 
     return TRUE;
 }
@@ -1905,6 +1956,7 @@ static void DrawGeometry(VSILFILE* fp, OGRGeometryH hGeom, double adfMatrix[4], 
 
 int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                                    OGRFeatureH hFeat,
+                                   OGRCoordinateTransformationH hCT,
                                    const char* pszOGRDisplayField,
                                    int bWriteOGRAttributes,
                                    int& iObj,
@@ -1928,12 +1980,33 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
         return TRUE;
     }
 
-    /* -------------------------------------------------------------- */
-    /*  Get envelope                                                  */
-    /* -------------------------------------------------------------- */
     OGREnvelope sEnvelope;
-    OGR_G_GetEnvelope(hGeom, &sEnvelope);
 
+    if( hCT != NULL )
+    {
+        /* Reproject */
+        if( OGR_G_Transform(hGeom, hCT) != OGRERR_NONE )
+        {
+            return TRUE;
+        }
+
+        OGREnvelope sRasterEnvelope;
+        sRasterEnvelope.MinX = adfGeoTransform[0];
+        sRasterEnvelope.MinY = adfGeoTransform[3] + poSrcDS->GetRasterYSize() * adfGeoTransform[5];
+        sRasterEnvelope.MaxX = adfGeoTransform[0] + poSrcDS->GetRasterXSize() * adfGeoTransform[1];
+        sRasterEnvelope.MaxY = adfGeoTransform[3];
+
+        /* Check that the reprojected geometry interescts the raster envelope */
+        OGR_G_GetEnvelope(hGeom, &sEnvelope);
+        if( !(sRasterEnvelope.Intersects(sEnvelope)) )
+        {
+            return TRUE;
+        }
+    }
+    else
+    {
+        OGR_G_GetEnvelope(hGeom, &sEnvelope);
+    }
 
     /* -------------------------------------------------------------- */
     /*  Get style                                                     */
