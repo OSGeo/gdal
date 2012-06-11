@@ -1265,6 +1265,7 @@ def pdf_write_ogr():
 1,bar,"MULTIPOLYGON (((440720 3751320,440720 3750120,441020 3750120,441020 3751320,440720 3751320),(440800 3751200,440900 3751200,440900 3751000,440800 3751000,440800 3751200)),((441720 3751320,441720 3750120,441920 3750120,441920 3751320,441720 3751320)))",
 2,baz,"LINESTRING(440720 3751320,441920 3750120)","PEN(c:#FF0000,w:5pt,p:""2px 1pt"")"
 3,baz2,"POINT(441322.400 3750717.600)","PEN(c:#FF00FF,w:10px);BRUSH(fc:#FFFFFF);LABEL(c:#FF000080, f:""Arial, Helvetica"", a:45, s:12pt, t:""Hello World!"")"
+4,baz3,"POINT(0 0)",""
 """
     gdal.VSIFWriteL(data, 1, len(data), f)
     gdal.VSIFCloseL(f)
@@ -1275,6 +1276,7 @@ def pdf_write_ogr():
     <SrcDataSource relativeToVRT="0" shared="1">/vsimem/test.csv</SrcDataSource>
     <SrcLayer>test</SrcLayer>
     <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>EPSG:26711</LayerSRS>
     <Field name="id" type="Integer" src="id"/>
     <Field name="foo" type="String" src="foo"/>
     <Field name="WKT" type="String" src="WKT"/>
@@ -1297,15 +1299,86 @@ def pdf_write_ogr():
     layers = ds.GetMetadata_List('LAYERS')
     ds = None
 
+    ogr_ds = ogr.Open('tmp/pdf_write_ogr.pdf')
+    ogr_lyr = ogr_ds.GetLayer(0)
+    feature_count = ogr_lyr.GetFeatureCount()
+    ogr_ds = None
+
     gdal.Unlink('tmp/pdf_write_ogr.pdf')
+
+    gdal.Unlink('/vsimem/test.csv')
+    gdal.Unlink('/vsimem/test.vrt')
 
     if layers != ['LAYER_00_NAME=A_Layer', 'LAYER_01_NAME=A_Layer.Text']:
         gdaltest.post_reason('did not get expected layers')
         print(layers)
         return 'fail'
 
+    # Should have filtered out id = 4
+    if feature_count != 3:
+        gdaltest.post_reason('did not get expected feature count')
+        print(feature_count)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test adding a OGR datasource with reprojection of OGR SRS to GDAL SRS
+
+def pdf_write_ogr_with_reprojection():
+
+    if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    f = gdal.VSIFOpenL('/vsimem/test.csv', 'wb')
+    data = """WKT,id
+"POINT (-117.641059792392142 33.902263065734573)",1
+"POINT (-117.64098016484607 33.891620919037436)",2
+"POINT (-117.62829768175105 33.902328822481238)",3
+"POINT (-117.628219639160108 33.891686649558416)",4
+"POINT (-117.634639319537328 33.896975031776485)",5
+"POINT (-121.488694798047447 0.0)",6
+"""
+
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+
+    f = gdal.VSIFOpenL('/vsimem/test.vrt', 'wb')
+    data = """<OGRVRTDataSource>
+  <OGRVRTLayer name="test">
+    <SrcDataSource relativeToVRT="0" shared="1">/vsimem/test.csv</SrcDataSource>
+    <SrcLayer>test</SrcLayer>
+    <GeometryType>wkbUnknown</GeometryType>
+    <LayerSRS>EPSG:4326</LayerSRS>
+    <Field name="id" type="Integer" src="id"/>
+  </OGRVRTLayer>
+</OGRVRTDataSource>
+"""
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+
+    options = [ 'OGR_DATASOURCE=/vsimem/test.vrt', 'OGR_DISPLAY_LAYER_NAMES=A_Layer', 'OGR_DISPLAY_FIELD=foo' ]
+
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_write_ogr.pdf', src_ds, options = options)
+    ds = None
+    src_ds = None
+
+    ogr_ds = ogr.Open('tmp/pdf_write_ogr.pdf')
+    ogr_lyr = ogr_ds.GetLayer(0)
+    feature_count = ogr_lyr.GetFeatureCount()
+    ogr_ds = None
+
+    gdal.Unlink('tmp/pdf_write_ogr.pdf')
+
     gdal.Unlink('/vsimem/test.csv')
     gdal.Unlink('/vsimem/test.vrt')
+
+    # Should have filtered out id = 6
+    if feature_count != 5:
+        gdaltest.post_reason('did not get expected feature count')
+        print(feature_count)
+        return 'fail'
 
     return 'success'
 
@@ -1490,6 +1563,7 @@ gdaltest_list = [
     pdf_layers,
     pdf_custom_layout,
     pdf_write_ogr,
+    pdf_write_ogr_with_reprojection,
     pdf_jpeg_direct_copy,
     pdf_jpeg_in_vrt_direct_copy,
     pdf_georef_on_image,

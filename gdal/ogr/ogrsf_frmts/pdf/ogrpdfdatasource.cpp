@@ -1596,6 +1596,7 @@ OGRErr OGRPDFDataSource::SyncToDisk()
 
             oWriter.WriteOGRFeature(osVectorDesc,
                                     (OGRFeatureH) poFeature,
+                                    NULL,
                                     pszOGRDisplayField,
                                     bWriteOGRAttributes,
                                     iObj,
