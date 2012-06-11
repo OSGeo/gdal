@@ -231,6 +231,7 @@ class GDALPDFWriter
 
        int WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                            OGRFeatureH hFeat,
+                           OGRCoordinateTransformationH hCT,
                            const char* pszOGRDisplayField,
                            int bWriteOGRAttributes,
                            int& iObj,
