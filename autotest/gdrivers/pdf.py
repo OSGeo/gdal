@@ -35,6 +35,7 @@ from osgeo import ogr
 from osgeo import osr
 
 sys.path.append( '../pymod' )
+sys.path.append( '../osr' )
 
 import gdaltest
 import ogrtest
@@ -1330,6 +1331,11 @@ def pdf_write_ogr_with_reprojection():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
+    import osr_ct
+    osr_ct.osr_ct_1()
+    if gdaltest.have_proj4 == 0:
+        return 'skip'
+
     f = gdal.VSIFOpenL('/vsimem/test.csv', 'wb')
     data = """WKT,id
 "POINT (-117.641059792392142 33.902263065734573)",1
@@ -1349,7 +1355,7 @@ def pdf_write_ogr_with_reprojection():
     <SrcDataSource relativeToVRT="0" shared="1">/vsimem/test.csv</SrcDataSource>
     <SrcLayer>test</SrcLayer>
     <GeometryType>wkbUnknown</GeometryType>
-    <LayerSRS>EPSG:4326</LayerSRS>
+    <LayerSRS>+proj=longlat +datum=NAD27</LayerSRS>
     <Field name="id" type="Integer" src="id"/>
   </OGRVRTLayer>
 </OGRVRTDataSource>
