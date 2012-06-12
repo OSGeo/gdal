@@ -226,6 +226,8 @@ static GBool bDisableReadBytesEOFError = FALSE;
 
 void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
 {
+    int nTotalBytesToRead = nBytesToRead;
+
     /* Make sure file is opened with Read access
      */
     if (psFile == NULL || 
@@ -270,10 +272,16 @@ void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
              * Note: AVCRawBinEOF() can set bDisableReadBytesEOFError=TRUE
              *       to disable the error message whils it is testing
              *       for EOF.
+             *
+             * TODO: We are not resetting the buffer. Also, there is no easy
+             *       way to recover from the situation.
              */
             if (bDisableReadBytesEOFError == FALSE)
                 CPLError(CE_Failure, CPLE_FileIO,
-                         "Attempt to read past EOF in %s.", psFile->pszFname);
+                         "EOF encountered in %s after reading %d bytes while "
+                         "trying to read %d bytes. File may be corrupt.",
+                         psFile->pszFname, nTotalBytesToRead-nBytesToRead,
+                         nTotalBytesToRead);
             return;
         }
 
@@ -406,14 +414,19 @@ GBool AVCRawBinEOF(AVCRawBinFile *psFile)
 
     /* If the file pointer has been moved by AVCRawBinFSeek(), then
      * we may be at a position past EOF, but VSIFeof() would still
-     * return FALSE.
+     * return FALSE. It also returns false if we have read just upto
+     * the end of the file. EOF marker would not have been set unless
+     * we try to read past that.
+     * 
      * To prevent this situation, if the memory buffer is empty,
      * we will try to read 1 byte from the file to force the next
      * chunk of data to be loaded (and we'll move the the read pointer
      * back by 1 char after of course!).  
      * If we are at the end of the file, this will trigger the EOF flag.
      */
-    if (psFile->nCurPos == 0 && psFile->nCurSize == 0)
+    if ((psFile->nCurPos == 0 && psFile->nCurSize == 0) ||
+        (psFile->nCurPos == AVCRAWBIN_READBUFSIZE &&
+         psFile->nCurSize == AVCRAWBIN_READBUFSIZE))
     {
         GByte c;
         /* Set bDisableReadBytesEOFError=TRUE to temporarily disable 
