@@ -1087,6 +1087,23 @@ def netcdf_29():
     return result
 
 ###############################################################################
+# check support for file with nan values (bug #4705)
+def netcdf_30():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'NetCDF', 'trmm-nan.nc', 1, 62519 )
+
+    # We don't want to gum up the test stream output with the
+    # 'Warning 1: No UNIDATA NC_GLOBAL:Conventions attribute' message.
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    result = tst.testOpen()
+    gdal.PopErrorHandler()
+
+    return result
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -1121,6 +1138,7 @@ gdaltest_list = [
     netcdf_27,
     netcdf_28,
     netcdf_29,
+    netcdf_30,
  ]
 
 ###############################################################################
