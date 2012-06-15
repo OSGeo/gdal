@@ -19898,8 +19898,26 @@ fi
 
         if test -r /usr/include/geotiff.h ; then
       GEOTIFF_INCLUDE=
-    elif test -r /usr/include/geotiff/geotiff.h ; then
+        elif test -r /usr/include/geotiff/geotiff.h ; then
       GEOTIFF_INCLUDE="-I/usr/include/geotiff"
+        elif test -r /usr/include/libgeotiff/geotiff.h ; then
+      GEOTIFF_INCLUDE="-I/usr/include/libgeotiff"
+    else
+      for ac_header in geotiff.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "geotiff.h" "ac_cv_header_geotiff_h" "$ac_includes_default"
+if test "x$ac_cv_header_geotiff_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_GEOTIFF_H 1
+_ACEOF
+
+fi
+
+done
+
+      if test "$ac_cv_header_geotiff_h" = "no" ; then
+        as_fn_error $? "cannot find geotiff.h" "$LINENO" 5
+      fi
     fi
 
     LIBS="-lgeotiff $LIBS"
