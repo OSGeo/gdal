@@ -902,8 +902,17 @@ if test "$with_geotiff" = "yes" -o "$with_geotiff" = "" ; then
     dnl Now search for headers
     if test -r /usr/include/geotiff.h ; then
       GEOTIFF_INCLUDE=
+    dnl Debian (at least some versions of it) install in /usr/include/geotiff
     elif test -r /usr/include/geotiff/geotiff.h ; then
       GEOTIFF_INCLUDE="-I/usr/include/geotiff"
+    dnl Fedora and OpenSuse in /usr/include/libgeotiff (#4706)
+    elif test -r /usr/include/libgeotiff/geotiff.h ; then
+      GEOTIFF_INCLUDE="-I/usr/include/libgeotiff"
+    else
+      AC_CHECK_HEADERS([geotiff.h])
+      if test "$ac_cv_header_geotiff_h" = "no" ; then
+        AC_MSG_ERROR([cannot find geotiff.h])
+      fi
     fi
 
     LIBS="-lgeotiff $LIBS"
