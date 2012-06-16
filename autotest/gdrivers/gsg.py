@@ -74,6 +74,19 @@ def gsg_6():
     tst = gdaltest.GDALTest( 'gsbg', 'gsg_binary.grd', 1, 4672 )
 
     return tst.testCreate( out_bands = 1 )
+
+def gsg_7():
+
+    tst = gdaltest.GDALTest( 'gs7bg', 'gsg_7binary.grd', 1, 4672 )
+
+    return tst.testCreate( out_bands = 1 )
+
+def gsg_8():
+
+    tst = gdaltest.GDALTest( 'gs7bg', 'gsg_7binary.grd', 1, 4672 )
+
+    return tst.testCreateCopy( check_gt = 1 )
+
 ###############################################################################
 
 gdaltest_list = [
@@ -82,7 +95,9 @@ gdaltest_list = [
     gsg_3,
     gsg_4,
     gsg_5,
-    gsg_6
+    gsg_6,
+    gsg_7,
+    gsg_8
 ]
   
 if __name__ == '__main__':
