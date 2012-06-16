@@ -40,9 +40,10 @@ import gdaltest
 ###############################################################################
 #
 class TestXMPRead:
-    def __init__( self, drivername, filename ):
+    def __init__( self, drivername, filename, expect_xmp ):
         self.drivername = drivername
         self.filename = filename
+        self.expect_xmp = expect_xmp
 
     def test( self ):
         try:
@@ -67,12 +68,16 @@ class TestXMPRead:
             gdaltest.post_reason('open failed')
             ret = 'failure'
         else:
+            xmp_md = ds.GetMetadata('xml:XMP')
             if ds.GetDriver().ShortName != self.drivername:
                 gdaltest.post_reason('opened with wrong driver')
                 print(ds.GetDriver().ShortName)
                 ret = 'failure'
-            elif len(ds.GetMetadata('xml:XMP')) == 0:
+            elif self.expect_xmp and len(xmp_md) == 0:
                 gdaltest.post_reason('did not find xml:XMP metadata')
+                ret = 'failure'
+            elif (not self.expect_xmp) and xmp_md is not None and len(xmp_md) != 0:
+                gdaltest.post_reason('found unexpected xml:XMP metadata')
                 ret = 'failure'
         ds = None
 
@@ -84,24 +89,37 @@ class TestXMPRead:
 
 gdaltest_list = []
 
-list = [ [ "GTiff", "data/byte_with_xmp.tif" ],
-         [ "GIF", "data/byte_with_xmp.gif" ],
-         [ "JPEG", "data/byte_with_xmp.jpg" ],
-         [ "PNG", "data/byte_with_xmp.png" ],
-         [ "JP2ECW", "data/byte_with_xmp.jp2" ],
-         [ "JP2MrSID", "data/byte_with_xmp.jp2" ],
-         [ "JPEG2000", "data/byte_with_xmp.jp2" ],
-         [ "JP2OpenJPEG", "data/byte_with_xmp.jp2" ],
-         [ "JP2KAK", "data/byte_with_xmp.jp2" ],
-         [ "PDF", "data/adobe_style_geospatial_with_xmp.pdf" ],
+list = [ [ "GTiff", "data/byte_with_xmp.tif", True ],
+         [ "GTiff", "data/byte.tif", False ],
+         [ "GIF", "data/byte_with_xmp.gif", True ],
+         [ "BIGGIF", "data/fakebig.gif", False ],
+         [ "JPEG", "data/byte_with_xmp.jpg", True ],
+         [ "JPEG", "data/rgbsmall_rgb.jpg", False ],
+         [ "PNG", "data/byte_with_xmp.png", True ],
+         [ "PNG", "data/test.png", False ],
+         [ "JP2ECW", "data/byte_with_xmp.jp2", True ],
+         [ "JP2ECW", "data/byte.jp2", False ],
+         [ "JP2MrSID", "data/byte_with_xmp.jp2", True ],
+         [ "JP2MrSID", "data/byte.jp2", False ],
+         [ "JPEG2000", "data/byte_with_xmp.jp2", True ],
+         [ "JPEG2000", "data/byte.jp2", False ],
+         [ "JP2OpenJPEG", "data/byte_with_xmp.jp2", True ],
+         [ "JP2OpenJPEG", "data/byte.jp2", False ],
+         [ "JP2KAK", "data/byte_with_xmp.jp2", True ],
+         [ "JP2KAK", "data/byte.jp2", False ],
+         [ "PDF", "data/adobe_style_geospatial_with_xmp.pdf", True ],
+         [ "PDF", "data/adobe_style_geospatial.pdf", False ],
+         [ "WEBP", "data/rgbsmall_with_xmp.webp", True ],
+         [ "WEBP", "data/rgbsmall.webp", False ],
 ]
 
 for item in list:
     drivername = item[0]
     filename = item[1]
+    expect_xmp = item[2]
 
-    ut = TestXMPRead( drivername, filename )
-    gdaltest_list.append( (ut.test, "xmp_read_%s" % drivername) )
+    ut = TestXMPRead( drivername, filename, expect_xmp )
+    gdaltest_list.append( (ut.test, "xmp_read_%s_%s" % (drivername, "true" if expect_xmp is True else "false")) )
 
 if __name__ == '__main__':
 
