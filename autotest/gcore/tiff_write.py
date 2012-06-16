@@ -4224,6 +4224,15 @@ def tiff_write_113():
     return tiff_write_106(filename = '../gdrivers/data/rgbsmall_rgb.jpg' , options = ['COMPRESS=JPEG', 'BLOCKYSIZE=8'])
 
 ###############################################################################
+# Test CreateCopy() interruption
+
+def tiff_write_114():
+
+    tst = gdaltest.GDALTest( 'GTiff', 'byte.tif', 1, 4672 )
+
+    return tst.testCreateCopy( vsimem = 1, interrupt_during_copy = True )
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -4324,14 +4333,14 @@ gdaltest_list = [
     tiff_write_86,
     tiff_write_87,
     tiff_write_88,
-    tiff_write_89,
-    tiff_write_90,
-    tiff_write_91,
-    tiff_write_92,
-    tiff_write_93,
-    tiff_write_94,
+    tiff_write_89, # leaks mem
+    tiff_write_90, # leaks mem
+    tiff_write_91, # leaks mem
+    tiff_write_92, # leaks mem
+    tiff_write_93, # leaks mem
+    tiff_write_94,  # leaks mem
     tiff_write_95,
-    tiff_write_96,
+    tiff_write_96,  # leaks mem
     tiff_write_97,
     tiff_write_98,
     tiff_write_99,
@@ -4349,6 +4358,7 @@ gdaltest_list = [
     tiff_write_111,
     tiff_write_112,
     tiff_write_113,
+    tiff_write_114,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':

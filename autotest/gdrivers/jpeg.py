@@ -499,6 +499,15 @@ def jpeg_14():
 
     return 'success'
 
+###############################################################################
+# Test CreateCopy() interruption
+
+def jpeg_15():
+
+    tst = gdaltest.GDALTest( 'JPEG', 'albania.jpg', 2, 17016 )
+
+    return tst.testCreateCopy( vsimem = 1, interrupt_during_copy = True )
+
 gdaltest_list = [
     jpeg_1,
     jpeg_2,
@@ -513,7 +522,8 @@ gdaltest_list = [
     jpeg_11,
     jpeg_12,
     jpeg_13,
-    jpeg_14 ]
+    jpeg_14,
+    jpeg_15 ]
 
 if __name__ == '__main__':
 

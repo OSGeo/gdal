@@ -271,7 +271,14 @@ def clean_tmp():
         except:
             pass
     return 'success'
-    
+
+###############################################################################
+def testCreateCopyInterruptCallback(pct, message, user_data):
+    if pct > 0.5:
+        return 0 # to stop
+    else:
+        return 1 # to continue
+
 ###############################################################################
 
 class GDALTest:
@@ -420,12 +427,11 @@ class GDALTest:
             post_reason('Checksum for band %d in "%s" is %d, but expected %d.' \
                         % (self.band, self.filename, chksum, self.chksum) )
             return 'fail'
-        
 
     def testCreateCopy(self, check_minmax = 1, check_gt = 0, check_srs = None,
                        vsimem = 0, new_filename = None, strict_in = 0,
                        skip_preclose_test = 0, delete_copy = 1, gt_epsilon = None,
-                       check_checksum_not_null = None):
+                       check_checksum_not_null = None, interrupt_during_copy = False):
 
         if self.testDriver() == 'fail':
             return 'skip'
@@ -449,10 +455,29 @@ class GDALTest:
                 new_filename = 'tmp/' + self.filename + '.tst'
 
         gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-        new_ds = self.driver.CreateCopy( new_filename, src_ds,
+        if interrupt_during_copy:
+            new_ds = self.driver.CreateCopy( new_filename, src_ds,
                                          strict = strict_in,
-                                         options = self.options )
+                                         options = self.options,
+                                         callback = testCreateCopyInterruptCallback)
+        else:
+            new_ds = self.driver.CreateCopy( new_filename, src_ds,
+                                            strict = strict_in,
+                                            options = self.options )
         gdal.PopErrorHandler()
+
+        if interrupt_during_copy:
+            if new_ds is None:
+                gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+                self.driver.Delete( new_filename )
+                gdal.PopErrorHandler()
+                return 'success'
+            else:
+                post_reason( 'CreateCopy() should have failed due to interruption')
+                new_ds = None
+                self.driver.Delete( new_filename )
+                return 'fail'
+
         if new_ds is None:
             post_reason( 'Failed to create test file using CreateCopy method.'\
                          + '\n' + gdal.GetLastErrorMsg() )

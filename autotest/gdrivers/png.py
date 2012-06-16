@@ -226,6 +226,15 @@ def png_10():
 
     return 'success'
 
+###############################################################################
+# Test CreateCopy() interruption
+
+def png_11():
+
+    tst = gdaltest.GDALTest( 'PNG', 'byte.tif', 1, 4672 )
+
+    return tst.testCreateCopy( vsimem = 1, interrupt_during_copy = True )
+
 gdaltest_list = [
     png_1,
     png_2,
@@ -236,7 +245,8 @@ gdaltest_list = [
     png_7,
     png_8,
     png_9,
-    png_10 ]
+    png_10,
+    png_11 ]
 
 if __name__ == '__main__':
 
