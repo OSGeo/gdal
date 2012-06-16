@@ -91,6 +91,7 @@ class GSBGDataset : public GDALPamDataset
   public:
 		~GSBGDataset();
 
+    static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
 			 	int nXSize, int nYSize, int nBands,
@@ -101,7 +102,6 @@ class GSBGDataset : public GDALPamDataset
 				    int bStrict, char **papszOptions,
 				    GDALProgressFunc pfnProgress,
 				    void *pProgressData );
-    static CPLErr Delete( const char *pszFilename );
 
     CPLErr GetGeoTransform( double *padfGeoTransform );
     CPLErr SetGeoTransform( double *padfGeoTransform );
@@ -513,15 +513,30 @@ GSBGDataset::~GSBGDataset()
 }
 
 /************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
+
+int GSBGDataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+    /* Check for signature */
+    if( poOpenInfo->nHeaderBytes < 4
+        || !EQUALN((const char *) poOpenInfo->pabyHeader,"DSBB",4) )
+    {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *GSBGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    /* Check for signature */
-    if( poOpenInfo->nHeaderBytes < 4
-	|| !EQUALN((const char *) poOpenInfo->pabyHeader,"DSBB",4) )
+    if( !Identify(poOpenInfo) )
     {
         return NULL;
     }
@@ -1078,7 +1093,7 @@ GDALDataset *GSBGDataset::CreateCopy( const char *pszFilename,
 	    return NULL;
 	}
 
-	if( !pfnProgress( static_cast<double>(iRow)/nYSize,
+	if( !pfnProgress( static_cast<double>(nYSize - iRow)/nYSize,
 			  NULL, pProgressData ) )
 	{
 	    VSIFCloseL( fp );
@@ -1102,115 +1117,13 @@ GDALDataset *GSBGDataset::CreateCopy( const char *pszFilename,
 
     VSIFCloseL( fp );
 
-    GDALPamDataset *poDstDS = (GDALPamDataset *)GDALOpen( pszFilename,
-							  GA_Update );
-    if( poDstDS == NULL )
+    GDALPamDataset *poDS = (GDALPamDataset *)GDALOpen( pszFilename,
+                                                GA_Update );
+    if (poDS)
     {
-	VSIUnlink( pszFilename );
-	CPLError( CE_Failure, CPLE_FileIO,
-		  "Unable to open copy of dataset.\n" );
-	return NULL;
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
     }
-    else if( dynamic_cast<GSBGDataset *>(poDstDS) == NULL )
-    {
-	VSIUnlink( pszFilename );
-	delete poDstDS;
-	CPLError( CE_Failure, CPLE_FileIO,
-		  "Copy dataset not opened as Golden Surfer Binary Grid!?\n" );
-	return NULL;
-    }
-
-    GDALRasterBand *poDstBand = poSrcDS->GetRasterBand(1);
-    if( poDstBand == NULL )
-    {
-	VSIUnlink( pszFilename );
-	delete poDstDS;
-	CPLError( CE_Failure, CPLE_FileIO,
-		  "Unable to open copy of raster band?\n" );
-	return NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Attempt to copy metadata.					*/
-/* -------------------------------------------------------------------- */
-    if( !bStrict )
-	CPLPushErrorHandler( CPLQuietErrorHandler );
-
-    /* non-zero transform 2 or 4 or negative 1 or 5  not supported natively */
-    /*if( adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0
-	|| adfGeoTransform[1] < 0.0 || adfGeoTransform[5] < 0.0 )
-	poDstDS->GDALPamDataset::SetGeoTransform( adfGeoTransform );*/
-
-    const char *szProjectionRef = poSrcDS->GetProjectionRef();
-    if( *szProjectionRef != '\0' )
-	poDstDS->SetProjection( szProjectionRef );
-
-    char **pszMetadata = poSrcDS->GetMetadata();
-    if( pszMetadata != NULL )
-	poDstDS->SetMetadata( pszMetadata );
-
-    /* FIXME:  Should the dataset description be copied as well, or is it
-     *         always the file name? */
-    poDstBand->SetDescription( poSrcBand->GetDescription() );
-
-    int bSuccess;
-    double dfOffset = poSrcBand->GetOffset( &bSuccess );
-    if( bSuccess && dfOffset != 0.0 )
-	poDstBand->SetOffset( dfOffset );
-
-    double dfScale = poSrcBand->GetScale( &bSuccess );
-    if( bSuccess && dfScale != 1.0 )
-	poDstBand->SetScale( dfScale );
-
-    GDALColorInterp oColorInterp = poSrcBand->GetColorInterpretation();
-    if( oColorInterp != GCI_Undefined )
-        poDstBand->SetColorInterpretation( oColorInterp );
-
-    char **pszCatNames = poSrcBand->GetCategoryNames();
-    if( pszCatNames != NULL)
-	poDstBand->SetCategoryNames( pszCatNames );
-
-    GDALColorTable *poColorTable = poSrcBand->GetColorTable();
-    if( poColorTable != NULL )
-	poDstBand->SetColorTable( poColorTable );
-
-    if( !bStrict )
-	CPLPopErrorHandler();
-
-    return poDstDS;
-}
-
-/************************************************************************/
-/*                               Delete()                               */
-/************************************************************************/
-
-CPLErr GSBGDataset::Delete( const char *pszFilename )
-
-{
-    VSIStatBufL sStat;
-    
-    if( VSIStatL( pszFilename, &sStat ) != 0 )
-    {
-	CPLError( CE_Failure, CPLE_FileIO,
-		  "Unable to stat() %s.\n", pszFilename );
-	return CE_Failure;
-    }
-    
-    if( !VSI_ISREG( sStat.st_mode ) )
-    {
-	CPLError( CE_Failure, CPLE_FileIO,
-		  "%s is not a regular file, not removed.\n", pszFilename );
-	return CE_Failure;
-    }
-
-    if( VSIUnlink( pszFilename ) != 0 )
-    {
-	CPLError( CE_Failure, CPLE_FileIO,
-		  "Error unlinking %s.\n", pszFilename );
-	return CE_Failure;
-    }
-
-    return CE_None;
+    return poDS;
 }
 
 /************************************************************************/
@@ -1236,10 +1149,10 @@ void GDALRegister_GSBG()
 				   "Byte Int16 UInt16 Float32" );
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
+        poDriver->pfnIdentify = GSBGDataset::Identify;
         poDriver->pfnOpen = GSBGDataset::Open;
 	poDriver->pfnCreate = GSBGDataset::Create;
 	poDriver->pfnCreateCopy = GSBGDataset::CreateCopy;
-	poDriver->pfnDelete = GSBGDataset::Delete;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
