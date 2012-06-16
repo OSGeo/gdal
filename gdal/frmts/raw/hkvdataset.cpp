@@ -1795,6 +1795,7 @@ HKVDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     CPLError( CE_Failure, CPLE_UserInterrupt, 
                               "User terminated" );
                     delete poDS;
+                    CPLFree(pData);
 
                     GDALDriver *poHKVDriver = 
                         (GDALDriver *) GDALGetDriverByName( "MFF2" );
@@ -1812,6 +1813,8 @@ HKVDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                             eType, 0, 0 );
                 if( eErr != CE_None )
                 {
+                    delete poDS;
+                    CPLFree(pData);
                     return NULL;
                 }
             
@@ -1823,6 +1826,8 @@ HKVDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
                 if( eErr != CE_None )
                 {
+                    delete poDS;
+                    CPLFree(pData);
                     return NULL;
                 }
             }
