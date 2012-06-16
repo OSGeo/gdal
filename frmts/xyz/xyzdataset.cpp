@@ -908,7 +908,10 @@ GDALDataset* XYZDataset::CreateCopy( const char * pszFilename,
             }
         }
         if (!pfnProgress( (j+1) * 1.0 / nYSize, NULL, pProgressData))
+        {
+            eErr = CE_Failure;
             break;
+        }
     }
     CPLFree(pLineBuffer);
     VSIFCloseL(fp);
