@@ -314,7 +314,7 @@ def misc_6_internal(datatype, nBands):
                         gdaltest.post_reason(reason)
                         return 'fail'
 
-                    if has_succeeded and not drv.ShortName in ['ECW', 'JP2ECW', 'VRT', 'AAIGrid', 'XPM', 'JPEG2000', 'FIT', 'RST', 'INGR', 'USGSDEM', 'KMLSUPEROVERLAY', 'XYZ', 'HF2', 'ZMap', 'GMT']:
+                    if has_succeeded and not drv.ShortName in ['ECW', 'JP2ECW', 'VRT', 'XPM', 'JPEG2000', 'FIT', 'RST', 'INGR', 'USGSDEM', 'KMLSUPEROVERLAY', 'GMT']:
                         dst_ds = drv.CreateCopy(filename, ds, callback = misc_6_interrupt_callback)
                         if dst_ds is not None:
                             gdaltest.post_reason('interruption did not work with drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))

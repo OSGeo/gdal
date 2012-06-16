@@ -1145,6 +1145,9 @@ GDALDataset * AAIGDataset::CreateCopy(
     CPLFree( padfScanline );
     VSIFCloseL( fpImage );
 
+    if( eErr != CE_None )
+        return NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Try to write projection file.                                   */
 /* -------------------------------------------------------------------- */

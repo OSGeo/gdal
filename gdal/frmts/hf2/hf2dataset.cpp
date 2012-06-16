@@ -1061,6 +1061,9 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
 
     VSIFCloseL(fp);
 
+    if (eErr != CE_None)
+        return NULL;
+
     return (GDALDataset*) GDALOpen(osFilename.c_str(), GA_ReadOnly);
 }
 
