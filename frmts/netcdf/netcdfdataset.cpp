@@ -4972,7 +4972,12 @@ CPLErr  NCDFCopyBand( GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
         }
 
         if ( ( nYSize>10 ) && ( iLine % (nYSize/10) == 1 ) ) {
-            pfnProgress( 1.0*iLine/nYSize , NULL, pProgressData );
+            if( !pfnProgress( 1.0*iLine/nYSize , NULL, pProgressData ) )
+            {
+                eErr = CE_Failure;
+                CPLError( CE_Failure, CPLE_UserInterrupt,
+                        "User terminated CreateCopy()" );
+            }
         }
     }
            
@@ -5273,7 +5278,9 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     dfTemp = dfTemp2 = 0.5;
 
-    for( iBand=1; iBand <= nBands; iBand++ ) {
+    eErr = CE_None;
+
+    for( iBand=1; iBand <= nBands && eErr == CE_None; iBand++ ) {
         
         dfTemp2 = dfTemp + 0.4/nBands; 
         pScaledProgress = 
@@ -5295,27 +5302,27 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
         if( eDT == GDT_Byte ) {
             CPLDebug( "GDAL_netCDF", "GByte Band#%d", iBand );
-            NCDFCopyBand<GByte>( poSrcBand, poDstBand, nXSize, nYSize,
+            eErr = NCDFCopyBand<GByte>( poSrcBand, poDstBand, nXSize, nYSize,
                                  GDALScaledProgress, pScaledProgress );
         } 
         else if( ( eDT == GDT_UInt16 ) || ( eDT == GDT_Int16 ) ) {
             CPLDebug( "GDAL_netCDF", "GInt16 Band#%d", iBand );
-            NCDFCopyBand<GInt16>( poSrcBand, poDstBand, nXSize, nYSize,
+            eErr = NCDFCopyBand<GInt16>( poSrcBand, poDstBand, nXSize, nYSize,
                                  GDALScaledProgress, pScaledProgress );
         } 
         else if( (eDT == GDT_UInt32) || (eDT == GDT_Int32) ) {
             CPLDebug( "GDAL_netCDF", "GInt16 Band#%d", iBand );
-            NCDFCopyBand<GInt32>( poSrcBand, poDstBand, nXSize, nYSize,
+            eErr = NCDFCopyBand<GInt32>( poSrcBand, poDstBand, nXSize, nYSize,
                                  GDALScaledProgress, pScaledProgress );
         }
         else if( eDT == GDT_Float32 ) {
             CPLDebug( "GDAL_netCDF", "float Band#%d", iBand);
-            NCDFCopyBand<float>( poSrcBand, poDstBand, nXSize, nYSize,
+            eErr = NCDFCopyBand<float>( poSrcBand, poDstBand, nXSize, nYSize,
                                  GDALScaledProgress, pScaledProgress );
         }
         else if( eDT == GDT_Float64 ) {
             CPLDebug( "GDAL_netCDF", "double Band#%d", iBand);
-            NCDFCopyBand<double>( poSrcBand, poDstBand, nXSize, nYSize,
+            eErr = NCDFCopyBand<double>( poSrcBand, poDstBand, nXSize, nYSize,
                                  GDALScaledProgress, pScaledProgress );
         }
         else {
@@ -5325,7 +5332,6 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
         
         GDALDestroyScaledProgress( pScaledProgress );
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -5344,6 +5350,9 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLFree( panDimVarIds );
     if ( papszExtraDimNames )
         CSLDestroy( papszExtraDimNames );
+
+    if (eErr != CE_None)
+        return NULL;
 
     pfnProgress( 0.95, NULL, pProgressData );
 
