@@ -74,7 +74,6 @@
 /* NETCDF driver defs */
 #define NCDF_MAX_STR_LEN     8192
 #define NCDF_CONVENTIONS_CF  "CF-1.5"
-#define NCDF_GDAL             GDALVersionInfo("--version")
 #define NCDF_SPATIAL_REF     "spatial_ref"
 #define NCDF_GEOTRANSFORM    "GeoTransform"
 #define NCDF_DIMNAME_X       "x"

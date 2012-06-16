@@ -5635,9 +5635,10 @@ void NCDFAddGDALHistory( int fpImage,
     nc_put_att_text( fpImage, NC_GLOBAL, "Conventions", 
                      strlen(NCDF_CONVENTIONS_CF),
                      NCDF_CONVENTIONS_CF ); 
-    
+
+    const char* pszNCDF_GDAL = GDALVersionInfo("--version");
     nc_put_att_text( fpImage, NC_GLOBAL, "GDAL", 
-                     strlen(NCDF_GDAL), NCDF_GDAL ); 
+                     strlen(pszNCDF_GDAL), pszNCDF_GDAL );
 
     /* Add history */
 #ifdef GDAL_SET_CMD_LINE_DEFINED_TMP
