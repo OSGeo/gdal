@@ -56,6 +56,8 @@ class WEBPDataset : public GDALPamDataset
     int    bHasBeenUncompressed;
     CPLErr Uncompress();
 
+    int    bHasReadXMPMetadata;
+
   public:
                  WEBPDataset();
                  ~WEBPDataset();
@@ -63,6 +65,8 @@ class WEBPDataset : public GDALPamDataset
     virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
                                    void *, int, int, GDALDataType,
                                    int, int *, int, int, int );
+
+    virtual char  **GetMetadata( const char * pszDomain = "" );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -164,6 +168,7 @@ WEBPDataset::WEBPDataset()
     fpImage = NULL;
     pabyUncompressed = NULL;
     bHasBeenUncompressed = FALSE;
+    bHasReadXMPMetadata = FALSE;
 }
 
 /************************************************************************/
@@ -177,6 +182,83 @@ WEBPDataset::~WEBPDataset()
     if (fpImage)
         VSIFCloseL(fpImage);
     VSIFree(pabyUncompressed);
+}
+
+/************************************************************************/
+/*                           GetMetadata()                              */
+/************************************************************************/
+
+char  **WEBPDataset::GetMetadata( const char * pszDomain )
+{
+    if ((pszDomain != NULL && EQUAL(pszDomain, "xml:XMP")) && !bHasReadXMPMetadata)
+    {
+        bHasReadXMPMetadata = TRUE;
+
+        VSIFSeekL(fpImage, 12, SEEK_SET);
+
+        int bFirst = TRUE;
+        while(TRUE)
+        {
+            char szHeader[5];
+            GUInt32 nChunkSize;
+
+            if (VSIFReadL(szHeader, 1, 4, fpImage) != 4 ||
+                VSIFReadL(&nChunkSize, 1, 4, fpImage) != 4)
+                break;
+
+            szHeader[4] = '\0';
+            CPL_LSBPTR32(&nChunkSize);
+
+            if (bFirst)
+            {
+                if (strcmp(szHeader, "VP8X") != 0 || nChunkSize < 12)
+                    break;
+
+                int nFlags;
+                if (VSIFReadL(&nFlags, 1, 4, fpImage) != 4)
+                    break;
+                CPL_LSBPTR32(&nFlags);
+                if ((nFlags & 8) == 0)
+                    break;
+
+                VSIFSeekL(fpImage, nChunkSize - 4, SEEK_CUR);
+
+                bFirst = FALSE;
+            }
+            else if (strcmp(szHeader, "META") == 0)
+            {
+                if (nChunkSize > 1024 * 1024)
+                    break;
+
+                char* pszXMP = (char*) VSIMalloc(nChunkSize + 1);
+                if (pszXMP == NULL)
+                    break;
+
+                if ((GUInt32)VSIFReadL(pszXMP, 1, nChunkSize, fpImage) != nChunkSize)
+                {
+                    VSIFree(pszXMP);
+                    break;
+                }
+
+                /* Avoid setting the PAM dirty bit just for that */
+                int nOldPamFlags = nPamFlags;
+
+                char *apszMDList[2];
+                apszMDList[0] = pszXMP;
+                apszMDList[1] = NULL;
+                SetMetadata(apszMDList, "xml:XMP");
+
+                nPamFlags = nOldPamFlags;
+
+                VSIFree(pszXMP);
+                break;
+            }
+            else
+                VSIFSeekL(fpImage, nChunkSize, SEEK_CUR);
+        }
+    }
+
+    return GDALPamDataset::GetMetadata(pszDomain);
 }
 
 /************************************************************************/
