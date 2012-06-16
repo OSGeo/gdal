@@ -237,6 +237,14 @@ def misc_5():
 
     return ret
 
+
+###############################################################################
+def misc_6_interrupt_callback(pct, message, user_data):
+    if pct > 0.5:
+        return 0 # to stop
+    else:
+        return 1 # to continue
+
 ###############################################################################
 # Test CreateCopy() with a source dataset with various band numbers (including 0) and datatype
 
@@ -294,7 +302,9 @@ def misc_6_internal(datatype, nBands):
                         filename = filename + '.ecw'
                     elif drv.ShortName == 'KMLSUPEROVERLAY':
                         filename = filename + '.kmz'
+
                     dst_ds = drv.CreateCopy(filename, ds)
+                    has_succeeded = dst_ds is not None
                     dst_ds = None
 
                     try:
@@ -303,6 +313,32 @@ def misc_6_internal(datatype, nBands):
                         reason = 'Cannot remove %s after drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
                         gdaltest.post_reason(reason)
                         return 'fail'
+
+                    if has_succeeded and not drv.ShortName in ['ECW', 'JP2ECW', 'VRT', 'AAIGrid', 'XPM', 'netCDF', 'JPEG2000', 'FIT', 'RST', 'INGR', 'USGSDEM', 'KMLSUPEROVERLAY', 'XYZ', 'HF2', 'ZMap', 'GMT']:
+                        dst_ds = drv.CreateCopy(filename, ds, callback = misc_6_interrupt_callback)
+                        if dst_ds is not None:
+                            gdaltest.post_reason('interruption did not work with drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
+                            dst_ds = None
+
+                            try:
+                                shutil.rmtree(dirname)
+                            except:
+                                pass
+
+                            return 'fail'
+
+                        dst_ds = None
+
+                        try:
+                            shutil.rmtree(dirname)
+                        except:
+                            pass
+                        try:
+                            os.mkdir(dirname)
+                        except:
+                            reason = 'Cannot create %s before drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+                            gdaltest.post_reason(reason)
+                            return 'fail'
         ds = None
         if nBands == 0:
             gdal.GetDriverByName('ILWIS').Delete('tmp/tmp.mpl')
@@ -328,7 +364,12 @@ def misc_6():
         except:
             gdaltest.post_reason('Cannot create tmp/tmp')
             return 'fail'
-        
+
+    # This is to speed-up the runtime of tests on EXT4 filesystems
+    # Do not use this for production environment if you care about data safety
+    # w.r.t system/OS crashes, unless you know what you are doing.
+    gdal.SetConfigOption('OGR_SQLITE_SYNCHRONOUS', 'OFF')
+
     datatype = gdal.GDT_Byte
     for nBands in range(6):
         ret = misc_6_internal(datatype, nBands)
