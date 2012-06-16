@@ -71,10 +71,76 @@ def webp_3():
     tst = gdaltest.GDALTest( 'WEBP', 'rgbsmall.tif', 1, 21464, options = ['QUALITY=80'] )
     return tst.testCreateCopy( vsimem = 1, check_minmax = False )
 
+###############################################################################
+# CreateCopy() on RGBA 
+
+def webp_4():
+
+    if gdaltest.webp_drv is None:
+        return 'skip'
+
+    md = gdaltest.webp_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LOSSLESS') == -1:
+        return 'skip'
+
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    out_ds = gdaltest.webp_drv.CreateCopy('/vsimem/webp_4.webp', src_ds)
+    src_ds = None
+    cs1 = out_ds.GetRasterBand(1).Checksum()
+    cs4 = out_ds.GetRasterBand(4).Checksum()
+    out_ds = None
+    gdal.Unlink('/vsimem/webp_4.webp')
+
+    if cs1 != 22001:
+        gdaltest.post_reason('did not get expected checksum on band 1')
+        print(cs1)
+        return 'fail'
+
+    if cs4 != 10807: # lossless alpha
+        gdaltest.post_reason('did not get expected checksum on band 4')
+        print(cs4)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# CreateCopy() on RGBA with lossless compression
+
+def webp_5():
+
+    if gdaltest.webp_drv is None:
+        return 'skip'
+
+    md = gdaltest.webp_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('LOSSLESS') == -1:
+        return 'skip'
+
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
+    out_ds = gdaltest.webp_drv.CreateCopy('/vsimem/webp_5.webp', src_ds, options = ['LOSSLESS=YES'])
+    src_ds = None
+    cs1 = out_ds.GetRasterBand(1).Checksum()
+    cs4 = out_ds.GetRasterBand(4).Checksum()
+    out_ds = None
+    gdal.Unlink('/vsimem/webp_5.webp')
+
+    if cs1 != 12603:
+        gdaltest.post_reason('did not get expected checksum on band 1')
+        print(cs1)
+        return 'fail'
+
+    if cs4 != 10807:
+        gdaltest.post_reason('did not get expected checksum on band 4')
+        print(cs4)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     webp_1,
     webp_2,
-    webp_3 ]
+    webp_3,
+    webp_4,
+    webp_5 ]
 
 if __name__ == '__main__':
 
