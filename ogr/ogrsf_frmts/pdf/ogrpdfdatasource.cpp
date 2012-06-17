@@ -681,7 +681,8 @@ static OGRPoint* PDFGetStarCenter(OGRLineString* poLS)
 void OGRPDFDataSource::ParseContent(const char* pszContent,
                                     int nMCID,
                                     GDALPDFObject* poResources,
-                                    int bInitBDCStack)
+                                    int bInitBDCStack,
+                                    int bMatchQ)
 {
     CPLString osToken;
     char ch;
@@ -758,6 +759,36 @@ void OGRPDFDataSource::ParseContent(const char* pszContent,
                 bPushToken = TRUE;
             }
         }
+        else if (ch == '<' && pszContent[1] == '<' && osToken.size() == 0)
+        {
+            int nDictDepth = 0;
+
+            while(*pszContent != '\0')
+            {
+                if (pszContent[0] == '<' && pszContent[1] == '<')
+                {
+                    osToken += "<";
+                    osToken += "<";
+                    nDictDepth ++;
+                    pszContent += 2;
+                }
+                else if (pszContent[0] == '>' && pszContent[1] == '>')
+                {
+                    osToken += ">";
+                    osToken += ">";
+                    nDictDepth --;
+                    pszContent += 2;
+                    if (nDictDepth == 0)
+                        break;
+                }
+                else
+                {
+                    osToken += *pszContent;
+                    pszContent ++;
+                }
+            }
+            continue;
+        }
         else
         {
             osToken += ch;
@@ -788,7 +819,7 @@ void OGRPDFDataSource::ParseContent(const char* pszContent,
             else if (osToken == "EMC")
             {
                 nBDCLevel --;
-                if (nBDCLevel == 0)
+                if (nBDCLevel == 0 && bInitBDCStack)
                     break;
             }
 
@@ -817,6 +848,9 @@ void OGRPDFDataSource::ParseContent(const char* pszContent,
 
                     oGS = oGSStack.top();
                     oGSStack.pop();
+
+                    if (oGSStack.empty() && bMatchQ)
+                        break;
                 }
                 else if (osToken == "cm")
                 {
@@ -979,7 +1013,7 @@ void OGRPDFDataSource::ParseContent(const char* pszContent,
                         return;
 
                     char* pszStr = poStream->GetBytes();
-                    ParseContent(pszStr, nMCID, NULL, FALSE);
+                    ParseContent(pszStr, nMCID, NULL, FALSE, FALSE);
                     CPLFree(pszStr);
                 }
                 else if (oMapOperators.find(osToken) != oMapOperators.end())
@@ -1312,9 +1346,31 @@ void OGRPDFDataSource::ExploreContents(GDALPDFObject* poObj,
         const char* pszBDC = strstr(pszMCID, "BDC");
         if (pszBDC)
         {
+            /* Hack for http://www.avenza.com/sites/default/files/spatialpdf/US_County_Populations.pdf */
+            /* FIXME: that logic is too fragile. */
+            const char* pszStartParsing = pszBDC;
+            const char* pszAfterBDC = pszBDC + 3;
+            int bMatchQ = FALSE;
+            while (pszAfterBDC[0] == ' ' || pszAfterBDC[0] == '\r' || pszAfterBDC[0] == '\n')
+                pszAfterBDC ++;
+            if (strncmp(pszAfterBDC, "0 0 m", 5) == 0)
+            {
+                const char* pszLastq = pszBDC;
+                while(pszLastq > pszStr && *pszLastq != 'q')
+                    pszLastq --;
+
+                if (pszLastq > pszStr && *pszLastq == 'q' &&
+                    (pszLastq[-1] == ' ' || pszLastq[-1] == '\r' || pszLastq[-1] == '\n') &&
+                    (pszLastq[1] == ' ' || pszLastq[1] == '\r' || pszLastq[1] == '\n'))
+                {
+                    pszStartParsing = pszLastq;
+                    bMatchQ = TRUE;
+                }
+            }
+
             int nMCID = atoi(pszMCID + 6);
             if (GetGeometryFromMCID(nMCID) == NULL)
-                ParseContent(pszBDC, nMCID, poResources, TRUE);
+                ParseContent(pszStartParsing, nMCID, poResources, !bMatchQ, bMatchQ);
         }
         pszMCID += 5;
     }
