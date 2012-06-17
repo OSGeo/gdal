@@ -100,7 +100,8 @@ class OGRPDFDataSource : public OGRDataSource
     void                ParseContent(const char* pszContent,
                                      int nMCID,
                                      GDALPDFObject* poResources,
-                                     int bInitBDCStack);
+                                     int bInitBDCStack,
+                                     int bMatchQ);
 
   public:
                         OGRPDFDataSource();
