@@ -43,12 +43,12 @@ from osgeo import osr
 ###############################################################################
 # Test write support
 
-def ogr_pdf_1():
+def ogr_pdf_1(name = 'tmp/ogr_pdf_1.pdf', write_attributes = 'YES'):
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
 
-    ds = ogr.GetDriverByName('PDF').CreateDataSource('tmp/ogr_pdf_1.pdf', options = ['MARGIN=10'])
+    ds = ogr.GetDriverByName('PDF').CreateDataSource(name, options = ['MARGIN=10', 'OGR_WRITE_ATTRIBUTES=%s' % write_attributes])
 
     lyr = ds.CreateLayer('first_layer', srs = sr)
 
@@ -93,7 +93,7 @@ def ogr_pdf_1():
 ###############################################################################
 # Test read support
 
-def ogr_pdf_2():
+def ogr_pdf_2(name = 'tmp/ogr_pdf_1.pdf', has_attributes = True):
 
     # Check read support
     gdal_pdf_drv = gdal.GetDriverByName('PDF')
@@ -101,7 +101,7 @@ def ogr_pdf_2():
     if not 'HAVE_POPPLER' in md and not 'HAVE_PODOFO' in md:
         return 'skip'
 
-    ds = ogr.Open('tmp/ogr_pdf_1.pdf')
+    ds = ogr.Open(name)
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -111,12 +111,16 @@ def ogr_pdf_2():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTString:
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTInteger:
-        return 'fail'
-    if lyr.GetLayerDefn().GetFieldDefn(2).GetType() != ogr.OFTReal:
-        return 'fail'
+    if has_attributes:
+        if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTString:
+            return 'fail'
+        if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTInteger:
+            return 'fail'
+        if lyr.GetLayerDefn().GetFieldDefn(2).GetType() != ogr.OFTReal:
+            return 'fail'
+    else:
+        if lyr.GetLayerDefn().GetFieldCount() != 0:
+            return 'fail'
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT(2 49)')) != 0:
@@ -126,16 +130,18 @@ def ogr_pdf_2():
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('LINESTRING(2 48,3 50)')) != 0:
         return 'fail'
-    if feat.GetField('strfield') != 'str':
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if feat.GetField('intfield') != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    if abs(feat.GetFieldAsDouble('realfield') - 2.34) > 1e-10:
-        gdaltest.post_reason('fail')
-        print(feat.GetFieldAsDouble('realfield'))
-        return 'fail'
+
+    if has_attributes:
+        if feat.GetField('strfield') != 'str':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if feat.GetField('intfield') != 1:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if abs(feat.GetFieldAsDouble('realfield') - 2.34) > 1e-10:
+            gdaltest.post_reason('fail')
+            print(feat.GetFieldAsDouble('realfield'))
+            return 'fail'
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POLYGON((2 48,2 49,3 49,3 48,2 48))')) != 0:
@@ -161,6 +167,18 @@ def ogr_pdf_2():
     ds = None
 
     return 'success'
+
+###############################################################################
+# Test write support without writing attributes
+
+def ogr_pdf_3():
+    return ogr_pdf_1('tmp/ogr_pdf_2.pdf', 'NO')
+
+###############################################################################
+# Check read support without writing attributes
+
+def ogr_pdf_4():
+    return ogr_pdf_2('tmp/ogr_pdf_2.pdf', False)
 
 ###############################################################################
 # Test read support with a non-OGR datasource
@@ -227,12 +245,15 @@ def ogr_pdf_online_1():
 def ogr_pdf_cleanup():
 
     ogr.GetDriverByName('PDF').DeleteDataSource('tmp/ogr_pdf_1.pdf')
+    ogr.GetDriverByName('PDF').DeleteDataSource('tmp/ogr_pdf_2.pdf')
 
     return 'success'
 
 gdaltest_list = [ 
     ogr_pdf_1,
     ogr_pdf_2,
+    ogr_pdf_3,
+    ogr_pdf_4,
     ogr_pdf_online_1,
     ogr_pdf_cleanup
 ]
