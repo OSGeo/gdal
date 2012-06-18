@@ -180,6 +180,26 @@ def ogr_pdf_3():
 def ogr_pdf_4():
     return ogr_pdf_2('tmp/ogr_pdf_2.pdf', False)
 
+
+###############################################################################
+# Switch from poppler to podofo if both are available
+
+def ogr_pdf_4_podofo():
+
+    gdal_pdf_drv = gdal.GetDriverByName('PDF')
+    if gdal_pdf_drv is None:
+        return 'skip'
+
+    md = gdal_pdf_drv.GetMetadata()
+    if 'HAVE_POPPLER' in md and 'HAVE_PODOFO' in md:
+        gdal.SetConfigOption("GDAL_PDF_LIB", "PODOFO")
+        print('Using podofo now')
+        ret = ogr_pdf_4()
+        gdal.SetConfigOption("GDAL_PDF_LIB", None)
+        return ret
+    else:
+        return 'skip'
+
 ###############################################################################
 # Test read support with a non-OGR datasource
 
@@ -254,6 +274,7 @@ gdaltest_list = [
     ogr_pdf_2,
     ogr_pdf_3,
     ogr_pdf_4,
+    ogr_pdf_4_podofo,
     ogr_pdf_online_1,
     ogr_pdf_cleanup
 ]
