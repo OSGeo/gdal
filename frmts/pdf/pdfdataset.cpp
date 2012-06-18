@@ -547,9 +547,12 @@ class PDFDataset : public GDALPamDataset
     void         FindLayers();
     void         TurnLayersOnOff();
     CPLStringList osLayerList;
-    CPLStringList osLayerWithRefList;
     std::map<CPLString, OptionalContentGroup*> oLayerOCGMap;
 #endif
+
+    CPLStringList osLayerWithRefList;
+    void          FindLayersGeneric(GDALPDFDictionary* poPageDict);
+
     int          bUseOCG;
 
   public:
@@ -1585,12 +1588,11 @@ void PDFDataset::ParseInfo(GDALPDFObject* poInfoObj)
     }
 }
 
-#ifdef HAVE_POPPLER
-
 /************************************************************************/
 /*                           PDFSanitizeLayerName()                     */
 /************************************************************************/
 
+static
 CPLString PDFSanitizeLayerName(const char* pszName)
 {
     CPLString osName;
@@ -1603,6 +1605,8 @@ CPLString PDFSanitizeLayerName(const char* pszName)
     }
     return osName;
 }
+
+#ifdef HAVE_POPPLER
 
 /************************************************************************/
 /*                               AddLayer()                             */
@@ -1871,7 +1875,52 @@ void PDFDataset::TurnLayersOnOff()
 }
 
 #endif
- 
+
+/************************************************************************/
+/*                         FindLayersGeneric()                          */
+/************************************************************************/
+
+void PDFDataset::FindLayersGeneric(GDALPDFDictionary* poPageDict)
+{
+    GDALPDFObject* poResources = poPageDict->Get("Resources");
+    if (poResources != NULL &&
+        poResources->GetType() == PDFObjectType_Dictionary)
+    {
+        GDALPDFObject* poProperties =
+            poResources->GetDictionary()->Get("Properties");
+        if (poProperties != NULL &&
+            poProperties->GetType() == PDFObjectType_Dictionary)
+        {
+            std::map<CPLString, GDALPDFObject*>& oMap =
+                                    poProperties->GetDictionary()->GetValues();
+            std::map<CPLString, GDALPDFObject*>::iterator oIter = oMap.begin();
+            std::map<CPLString, GDALPDFObject*>::iterator oEnd = oMap.end();
+
+            for(; oIter != oEnd; ++oIter)
+            {
+                GDALPDFObject* poObj = oIter->second;
+                if( poObj->GetRefNum() != 0 && poObj->GetType() == PDFObjectType_Dictionary )
+                {
+                    GDALPDFObject* poType = poObj->GetDictionary()->Get("Type");
+                    GDALPDFObject* poName = poObj->GetDictionary()->Get("Name");
+                    if( poType != NULL &&
+                        poType->GetType() == PDFObjectType_Name &&
+                        poType->GetName() == "OCG" &&
+                        poName != NULL &&
+                        poName->GetType() == PDFObjectType_String )
+                    {
+                        osLayerWithRefList.AddString(
+                            CPLSPrintf("%s %d %d",
+                                       PDFSanitizeLayerName(poName->GetString()).c_str(),
+                                       poObj->GetRefNum(),
+                                       poObj->GetRefGen()));
+                    }
+                }
+            }
+        }
+    }
+}
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -2518,6 +2567,9 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         GDALPDFObjectPodofo oObjPodofo((*it), poDocPodofo->GetObjects());
         poDS->FindXMP(&oObjPodofo);
     }
+
+    /* Find layers */
+    poDS->FindLayersGeneric(poPageDict);
 
     /* Read Info object */
     PoDoFo::PdfInfo* poInfo = poDocPodofo->GetInfo();
