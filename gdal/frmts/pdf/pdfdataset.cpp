@@ -547,6 +547,7 @@ class PDFDataset : public GDALPamDataset
     void         FindLayers();
     void         TurnLayersOnOff();
     CPLStringList osLayerList;
+    CPLStringList osLayerWithRefList;
     std::map<CPLString, OptionalContentGroup*> oLayerOCGMap;
 #endif
     int          bUseOCG;
@@ -1685,6 +1686,8 @@ void PDFDataset::ExploreLayers(GDALPDFArray* poArray, CPLString osTopLayer)
                 if (ocg)
                 {
                     AddLayer(osCurLayer.c_str(), ocg);
+                    osLayerWithRefList.AddString(
+                        CPLSPrintf("%s %d %d", osCurLayer.c_str(), r.num, r.gen));
                 }
             }
         }
@@ -4071,6 +4074,11 @@ CPLErr PDFDataset::SetGeoTransform(double* padfGeoTransform)
 
 char      **PDFDataset::GetMetadata( const char * pszDomain )
 {
+    if( pszDomain != NULL && EQUAL(pszDomain, "LAYERS_WITH_REF") )
+    {
+        return osLayerWithRefList.List(); /* Used by OGR driver */
+    }
+
     return oMDMD.GetMetadata(pszDomain);
 }
 

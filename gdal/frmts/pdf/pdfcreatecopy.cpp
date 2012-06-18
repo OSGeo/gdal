@@ -2360,7 +2360,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
             VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY);
             VSIFPrintfL(fp, "%f %f m\n", dfX, dfY - dfRadius);
             VSIFPrintfL(fp, "%f %f l\n", dfX, dfY + dfRadius);
-            VSIFPrintfL(fp, "s\n");
+            VSIFPrintfL(fp, "S\n");
         }
         else if (osSymbolId == "ogr-sym-1") /* diagcross (X) */
         {
@@ -2368,7 +2368,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
             VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY + dfRadius);
             VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY + dfRadius);
             VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY - dfRadius);
-            VSIFPrintfL(fp, "s\n");
+            VSIFPrintfL(fp, "S\n");
         }
         else if (osSymbolId == "ogr-sym-2" ||
                  osSymbolId == "ogr-sym-3") /* circle */

@@ -94,14 +94,24 @@ class OGRPDFDataSource : public OGRDataSource
 
     void                ExploreTree(GDALPDFObject* poObj);
     void                ExploreContents(GDALPDFObject* poObj, GDALPDFObject* poResources);
+
+    void                ExploreContentsNonStructuredInternal(GDALPDFObject* poContents,
+                                                             GDALPDFObject* poResources,
+                                                             std::map<CPLString, OGRPDFLayer*>& oMapPropertyToLayer);
+    void                ExploreContentsNonStructured(GDALPDFObject* poObj, GDALPDFObject* poResources);
+
     int                 UnstackTokens(const CPLString& osToken,
                                       std::stack<CPLString>& osTokenStack,
                                       double* adfCoords);
-    void                ParseContent(const char* pszContent,
-                                     int nMCID,
+    OGRGeometry*        ParseContent(const char* pszContent,
                                      GDALPDFObject* poResources,
                                      int bInitBDCStack,
-                                     int bMatchQ);
+                                     int bMatchQ,
+                                     std::map<CPLString, OGRPDFLayer*>& oMapPropertyToLayer,
+                                     OGRPDFLayer* poCurLayer);
+    OGRGeometry*        BuildGeometry(std::vector<double>& oCoords,
+                                      int bHasFoundFill,
+                                      int bHasMultiPart);
 
   public:
                         OGRPDFDataSource();
