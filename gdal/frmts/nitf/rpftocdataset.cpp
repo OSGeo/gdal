@@ -800,15 +800,50 @@ GDALDataset* RPFTOCSubDataset::CreateDataSetFromTocEntry(const char* openInforma
             if (!entry->frameEntries[i].fileExists)
                 continue;
             
+            int bAllBlack = TRUE;
             GDALDataset *poSrcDS = (GDALDataset *) GDALOpenShared( entry->frameEntries[i].fullFilePath, GA_ReadOnly );
-            poBand->SetColorTable(poSrcDS->GetRasterBand(1)->GetColorTable());
-            
-            int bHasNoDataValue;
-            double noDataValue = poSrcDS->GetRasterBand(1)->GetNoDataValue(&bHasNoDataValue);
-            if (bHasNoDataValue)
-                poBand->SetNoDataValue(noDataValue);
-            GDALClose(poSrcDS);
-            break;
+            if( poSrcDS != NULL )
+            {
+                if( poSrcDS->GetRasterCount() == 1 )
+                {
+                    int bHasNoDataValue;
+                    double noDataValue = poSrcDS->GetRasterBand(1)->GetNoDataValue(&bHasNoDataValue);
+                    if (bHasNoDataValue)
+                        poBand->SetNoDataValue(noDataValue);
+
+                    /* Avoid setting a color table that is all black (which might be */
+                    /* the case of the edge tiles of a RPF subdataset) */
+                    GDALColorTable* poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
+                    if( poCT != NULL )
+                    {
+                        for(int iC = 0; iC < poCT->GetColorEntryCount(); iC++)
+                        {
+                            if( bHasNoDataValue && iC == (int)noDataValue )
+                                continue;
+
+                            const GDALColorEntry* entry = poCT->GetColorEntry(i);
+                            if( entry->c1 != 0 || entry->c2 != 0 || entry->c3 != 0)
+                            {
+                                bAllBlack = FALSE;
+                                break;
+                            }
+                        }
+
+                        /* Assign it temporarily, in the hope of a better match */
+                        /* afterwards */
+                        poBand->SetColorTable(poCT);
+                        if( bAllBlack )
+                        {
+                            CPLDebug("RPFTOC",
+                                     "Skipping %s. Its palette is all black.",
+                                     poSrcDS->GetDescription());
+                        }
+                    }
+                }
+                GDALClose(poSrcDS);
+            }
+            if( !bAllBlack )
+                break;
         }
     }
     else
