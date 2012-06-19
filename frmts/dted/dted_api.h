@@ -122,6 +122,8 @@ typedef struct {
 
   int           bRewriteHeaders;
 
+  int           *panMapLogicalColsToOffsets; /* size of nXSize elements. Might be NULL */
+
 } DTEDInfo;
 
 /* -------------------------------------------------------------------- */
