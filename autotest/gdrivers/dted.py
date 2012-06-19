@@ -287,6 +287,24 @@ def dted_12():
     return 'success'
 
 ###############################################################################
+# Test a DTED file that has only a few (sequential) columns. Derived from
+# a real-world DTED file
+
+def dted_13():
+
+    tst = gdaltest.GDALTest( 'dted', 'n43_partial_cols.dt0', 1, 56006)
+    return tst.testOpen()
+
+###############################################################################
+# Test a DTED file that has only a few (non-sequential) columns. Only theoretical
+# case for now.
+
+def dted_14():
+
+    tst = gdaltest.GDALTest( 'dted', 'n43_sparse_cols.dt0', 1, 56369)
+    return tst.testOpen()
+
+###############################################################################
 # Cleanup.
 
 def dted_cleanup():
@@ -317,6 +335,8 @@ gdaltest_list = [
     dted_10,
     dted_11,
     dted_12,
+    dted_13,
+    dted_14,
     dted_cleanup
     ]
   
