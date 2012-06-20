@@ -1173,6 +1173,7 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                     if (poGeom)
                     {
                         OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
+                        poGeom->assignSpatialReference(poCurLayer->GetSpatialRef());
                         poFeature->SetGeometryDirectly(poGeom);
                         poCurLayer->CreateFeature(poFeature);
                         delete poFeature;
@@ -1536,6 +1537,24 @@ void OGRPDFDataSource::ExploreContents(GDALPDFObject* poObj,
 }
 
 /************************************************************************/
+/*                           PDFSanitizeLayerName()                     */
+/************************************************************************/
+
+static
+CPLString PDFSanitizeLayerName(const char* pszName)
+{
+    CPLString osName;
+    for(int i=0; pszName[i] != '\0'; i++)
+    {
+        if (pszName[i] == ' ' || pszName[i] == '.' || pszName[i] == ',')
+            osName += "_";
+        else
+            osName += pszName[i];
+    }
+    return osName;
+}
+
+/************************************************************************/
 /*                   ExploreContentsNonStructured()                     */
 /************************************************************************/
 
@@ -1586,22 +1605,28 @@ void OGRPDFDataSource::ExploreContentsNonStructured(GDALPDFObject* poContents,
                 int nNum = atoi(papszTokens[1]);
                 int nGen = atoi(papszTokens[2]);
 
-                const char* pszWKT = poGDAL_DS->GetProjectionRef();
-                OGRSpatialReference* poSRS = NULL;
-                if (pszWKT && pszWKT[0] != '\0')
+                CPLString osSanitizedName(PDFSanitizeLayerName(pszLayerName));
+
+                OGRPDFLayer* poLayer = (OGRPDFLayer*) GetLayerByName(osSanitizedName.c_str());
+                if (poLayer == NULL)
                 {
-                    poSRS = new OGRSpatialReference();
-                    poSRS->importFromWkt((char**) &pszWKT);
+                    const char* pszWKT = poGDAL_DS->GetProjectionRef();
+                    OGRSpatialReference* poSRS = NULL;
+                    if (pszWKT && pszWKT[0] != '\0')
+                    {
+                        poSRS = new OGRSpatialReference();
+                        poSRS->importFromWkt((char**) &pszWKT);
+                    }
+
+                    poLayer =
+                        new OGRPDFLayer(this, osSanitizedName.c_str(), poSRS, wkbUnknown);
+                    delete poSRS;
+
+                    papoLayers = (OGRLayer**)
+                        CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
+                    papoLayers[nLayers] = poLayer;
+                    nLayers ++;
                 }
-
-                OGRPDFLayer* poLayer =
-                    new OGRPDFLayer(this, pszLayerName, poSRS, wkbUnknown);
-                delete poSRS;
-
-                papoLayers = (OGRLayer**)
-                    CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
-                papoLayers[nLayers] = poLayer;
-                nLayers ++;
 
                 oMapNumGenToLayer[ std::pair<int,int>(nNum, nGen) ] = poLayer;
 
