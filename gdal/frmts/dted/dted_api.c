@@ -197,7 +197,7 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
                  "DSI or ACC record missing.  DTED access to\n%s failed.",
                  pszFilename );
         
-        VSIFCloseL( fp );
+        DTEDClose(psDInfo);
         return NULL;
     }
 
@@ -233,6 +233,20 @@ DTEDInfo * DTEDOpen( const char * pszFilename,
 
         psDInfo->nXSize = atoi(DTEDGetField(szResult,psDInfo->pachDSIRecord,563,4));
         psDInfo->nYSize = atoi(DTEDGetField(szResult,psDInfo->pachDSIRecord,567,4));
+    }
+
+    if (psDInfo->nXSize <= 0 || psDInfo->nYSize <= 0)
+    {
+#ifndef AVOID_CPL
+        CPLError( CE_Failure, CPLE_OpenFailed,
+#else
+        fprintf( stderr,
+#endif
+                 "Invalid dimensions : %d x %d.  DTED access to\n%s failed.",
+                 psDInfo->nXSize, psDInfo->nYSize, pszFilename );
+
+        DTEDClose(psDInfo);
+        return NULL;
     }
 
     /* create a scope so I don't need to declare these up top */
