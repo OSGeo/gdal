@@ -542,14 +542,14 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      What filename do we use, excluding the extension?               */
 /* -------------------------------------------------------------------- */
-    char *pszBasename;
+    char *pszFilenameWithoutExt;
 
     if(  bSingleFileDataSource && nLayers == 0 )
     {
         char *pszPath = CPLStrdup(CPLGetPath(pszName));
         char *pszFBasename = CPLStrdup(CPLGetBasename(pszName));
 
-        pszBasename = CPLStrdup(CPLFormFilename(pszPath, pszFBasename, NULL));
+        pszFilenameWithoutExt = CPLStrdup(CPLFormFilename(pszPath, pszFBasename, NULL));
 
         CPLFree( pszFBasename );
         CPLFree( pszPath );
@@ -563,11 +563,11 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
         /* So technically, we will not be any longer a single file */
         /* datasource ... Ahem ahem */
         char *pszPath = CPLStrdup(CPLGetPath(pszName));
-        pszBasename = CPLStrdup(CPLFormFilename(pszPath,pszLayerName,NULL));
+        pszFilenameWithoutExt = CPLStrdup(CPLFormFilename(pszPath,pszLayerName,NULL));
         CPLFree( pszPath );
     }
     else
-        pszBasename = CPLStrdup(CPLFormFilename(pszName,pszLayerName,NULL));
+        pszFilenameWithoutExt = CPLStrdup(CPLFormFilename(pszName,pszLayerName,NULL));
 
 /* -------------------------------------------------------------------- */
 /*      Create the shapefile.                                           */
@@ -576,7 +576,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 
     if( nShapeType != SHPT_NULL )
     {
-        pszFilename = CPLStrdup(CPLFormFilename( NULL, pszBasename, "shp" ));
+        pszFilename = CPLStrdup(CPLFormFilename( NULL, pszFilenameWithoutExt, "shp" ));
 
         hSHP = SHPCreate( pszFilename, nShapeType );
         
@@ -586,7 +586,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
                       "Failed to open Shapefile `%s'.\n",
                       pszFilename );
             CPLFree( pszFilename );
-            CPLFree( pszBasename );
+            CPLFree( pszFilenameWithoutExt );
             return NULL;
         }
         CPLFree( pszFilename );
@@ -602,7 +602,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Create a DBF file.                                              */
 /* -------------------------------------------------------------------- */
-    pszFilename = CPLStrdup(CPLFormFilename( NULL, pszBasename, "dbf" ));
+    pszFilename = CPLStrdup(CPLFormFilename( NULL, pszFilenameWithoutExt, "dbf" ));
 
     if( pszLDID != NULL )
         hDBF = DBFCreateEx( pszFilename, pszLDID );
@@ -615,7 +615,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
                   "Failed to open Shape DBF file `%s'.\n",
                   pszFilename );
         CPLFree( pszFilename );
-        CPLFree( pszBasename );
+        CPLFree( pszFilenameWithoutExt );
         SHPClose(hSHP);
         return NULL;
     }
@@ -628,7 +628,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
     if( poSRS != NULL )
     {
         char    *pszWKT = NULL;
-        CPLString osPrjFile = CPLFormFilename( NULL, pszBasename, "prj");
+        CPLString osPrjFile = CPLFormFilename( NULL, pszFilenameWithoutExt, "prj");
         VSILFILE    *fp;
 
         /* the shape layer needs it's own copy */
@@ -652,10 +652,16 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     OGRShapeLayer       *poLayer;
 
-    poLayer = new OGRShapeLayer( this, pszBasename, hSHP, hDBF, poSRS, TRUE, TRUE,
+    /* OGRShapeLayer constructor expects a filename with an extension (that could be */
+    /* random actually), otherwise this is going to cause problems with layer */
+    /* names that have a dot (not speaking about the one before the shp) */
+    pszFilename = CPLStrdup(CPLFormFilename( NULL, pszFilenameWithoutExt, "shp" ));
+
+    poLayer = new OGRShapeLayer( this, pszFilename, hSHP, hDBF, poSRS, TRUE, TRUE,
                                  eType );
 
-    CPLFree( pszBasename );
+    CPLFree( pszFilenameWithoutExt );
+    CPLFree( pszFilename );
 
     poLayer->SetResizeAtClose( CSLFetchBoolean( papszOptions, "RESIZE", FALSE ) );
 
