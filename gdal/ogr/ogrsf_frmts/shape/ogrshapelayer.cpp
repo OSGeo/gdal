@@ -49,7 +49,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
-                              const char * pszName,
+                              const char * pszFullNameIn,
                               SHPHandle hSHPIn, DBFHandle hDBFIn, 
                               OGRSpatialReference *poSRSIn, int bSRSSetIn,
                               int bUpdate,
@@ -60,7 +60,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     poSRS = poSRSIn;
     bSRSSet = bSRSSetIn;
 
-    pszFullName = CPLStrdup(pszName);
+    pszFullName = CPLStrdup(pszFullNameIn);
     
     hSHP = hSHPIn;
     hDBF = hDBFIn;
@@ -109,7 +109,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     if( hDBF != NULL && hDBF->pszCodePage != NULL )
     {
         CPLDebug( "Shape", "DBF Codepage = %s for %s", 
-                  hDBF->pszCodePage, pszName );
+                  hDBF->pszCodePage, pszFullName );
 
         // Not too sure about this, but it seems like better than nothing.
         osEncoding = ConvertCodePage( hDBF->pszCodePage );
@@ -129,7 +129,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
         }
     }
 
-    poFeatureDefn = SHPReadOGRFeatureDefn( CPLGetBasename(pszName),
+    poFeatureDefn = SHPReadOGRFeatureDefn( CPLGetBasename(pszFullName),
                                            hSHP, hDBF, osEncoding );
 }
 

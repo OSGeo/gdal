@@ -3037,6 +3037,56 @@ def ogr_shape_63():
     return 'success'
 
 ###############################################################################
+# Test creating layers whose name include dot character
+
+def ogr_shape_64():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_64')
+
+    lyr = ds.CreateLayer('a.b')
+    if lyr.GetName() != 'a.b':
+        gdaltest.post_reason('failed')
+        return 'fail'
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('foo', 'bar')
+    lyr.CreateFeature(feat)
+    feat = None
+
+    lyr = ds.CreateLayer('a.c')
+    if lyr.GetName() != 'a.c':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # Test that we cannot create a duplicate layer
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    lyr = ds.CreateLayer('a.b')
+    gdal.PopErrorHandler()
+    if lyr is not None:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_shape_64/a.b.shp')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsString('foo') != 'bar':
+        gdaltest.post_reason('failed')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_shape_64/a.b.shp')
+    gdal.Unlink('/vsimem/ogr_shape_64/a.b.shx')
+    gdal.Unlink('/vsimem/ogr_shape_64/a.b.dbf')
+    gdal.Unlink('/vsimem/ogr_shape_64/a.c.shp')
+    gdal.Unlink('/vsimem/ogr_shape_64/a.c.shx')
+    gdal.Unlink('/vsimem/ogr_shape_64/a.c.dbf')
+    gdal.Unlink('/vsimem/ogr_shape_64')
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -3131,6 +3181,7 @@ gdaltest_list = [
     ogr_shape_61,
     ogr_shape_62,
     ogr_shape_63,
+    ogr_shape_64,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
