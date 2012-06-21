@@ -108,6 +108,7 @@ void CheckDestDataSourceNameConsistency(const char* pszDestFilename,
                                                { "sql"    , "PGDump" },
                                                { "gtm"    , "GPSTrackMaker" },
                                                { "gmt"    , "GMT" },
+                                               { "pdf"    , "PDF" },
                                                { NULL, NULL }
                                               };
     static const char* apszBeginName[][2] =  { { "PG:"      , "PG" },
