@@ -76,6 +76,9 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     bCheckedForQIX = FALSE;
     hQIX = NULL;
 
+    bCheckedForSBN = FALSE;
+    hSBN = NULL;
+
     bSbnSbxDeleted = FALSE;
 
     bHeaderDirty = FALSE;
@@ -174,6 +177,9 @@ OGRShapeLayer::~OGRShapeLayer()
 
     if( hQIX != NULL )
         SHPCloseDiskTree( hQIX );
+
+    if( hSBN != NULL )
+        SBNCloseDiskTree( hSBN );
 }
 
 /************************************************************************/
@@ -311,6 +317,27 @@ int OGRShapeLayer::CheckForQIX()
 }
 
 /************************************************************************/
+/*                            CheckForSBN()                             */
+/************************************************************************/
+
+int OGRShapeLayer::CheckForSBN()
+
+{
+    const char *pszSBNFilename;
+
+    if( bCheckedForSBN )
+        return hSBN != NULL;
+
+    pszSBNFilename = CPLResetExtension( pszFullName, "sbn" );
+
+    hSBN = SBNOpenDiskTree( pszSBNFilename, NULL );
+
+    bCheckedForSBN = TRUE;
+
+    return hSBN != NULL;
+}
+
+/************************************************************************/
 /*                            ScanIndices()                             */
 /*                                                                      */
 /*      Utilize optional spatial and attribute indices if they are      */
@@ -355,11 +382,14 @@ int OGRShapeLayer::ScanIndices()
 
     if( m_poFilterGeom != NULL && !bCheckedForQIX )
         CheckForQIX();
+    if( hQIX == NULL && !bCheckedForSBN )
+        CheckForSBN();
 
 /* -------------------------------------------------------------------- */
 /*      Compute spatial index if appropriate.                           */
 /* -------------------------------------------------------------------- */
-    if( m_poFilterGeom != NULL && hQIX != NULL && panSpatialFIDs == NULL )
+    if( m_poFilterGeom != NULL && (hQIX != NULL || hSBN != NULL) &&
+        panSpatialFIDs == NULL )
     {
         double adfBoundsMin[4], adfBoundsMax[4];
 
@@ -372,9 +402,15 @@ int OGRShapeLayer::ScanIndices()
         adfBoundsMax[2] = 0.0;
         adfBoundsMax[3] = 0.0;
 
-        panSpatialFIDs = SHPSearchDiskTreeEx( hQIX,
-                                            adfBoundsMin, adfBoundsMax, 
-                                            &nSpatialFIDCount );
+        if( hQIX != NULL )
+            panSpatialFIDs = SHPSearchDiskTreeEx( hQIX,
+                                                  adfBoundsMin, adfBoundsMax,
+                                                  &nSpatialFIDCount );
+        else
+            panSpatialFIDs = SBNSearchDiskTree( hSBN,
+                                                adfBoundsMin, adfBoundsMax,
+                                                &nSpatialFIDCount );
+
         CPLDebug( "SHAPE", "Used spatial index, got %d matches.", 
                   nSpatialFIDCount );
 
@@ -743,7 +779,7 @@ OGRErr OGRShapeLayer::SetFeature( OGRFeature *poFeature )
     }
 
     bHeaderDirty = TRUE;
-    if( CheckForQIX() )
+    if( CheckForQIX() || CheckForSBN() )
         DropSpatialIndex();
 
     return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature,
@@ -799,7 +835,7 @@ OGRErr OGRShapeLayer::DeleteFeature( long nFID )
         return OGRERR_FAILURE;
 
     bHeaderDirty = TRUE;
-    if( CheckForQIX() )
+    if( CheckForQIX() || CheckForSBN() )
         DropSpatialIndex();
 
     return OGRERR_NONE;
@@ -826,7 +862,7 @@ OGRErr OGRShapeLayer::CreateFeature( OGRFeature *poFeature )
     }
 
     bHeaderDirty = TRUE;
-    if( CheckForQIX() )
+    if( CheckForQIX() || CheckForSBN() )
         DropSpatialIndex();
 
     poFeature->SetFID( OGRNullFID );
@@ -1213,13 +1249,13 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
         return bUpdateAccess;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return m_poFilterGeom == NULL || CheckForQIX();
+        return m_poFilterGeom == NULL || CheckForQIX() || CheckForSBN();
 
     else if( EQUAL(pszCap,OLCDeleteFeature) )
         return bUpdateAccess;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
-        return CheckForQIX();
+        return CheckForQIX() || CheckForSBN();
 
     else if( EQUAL(pszCap,OLCFastGetExtent) )
         return TRUE;
@@ -1838,7 +1874,7 @@ OGRErr OGRShapeLayer::DropSpatialIndex()
     if (!TouchLayer())
         return OGRERR_FAILURE;
 
-    if( !CheckForQIX() )
+    if( !CheckForQIX() && !CheckForSBN() )
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
                   "Layer %s has no spatial index, DROP SPATIAL INDEX failed.",
@@ -1846,21 +1882,30 @@ OGRErr OGRShapeLayer::DropSpatialIndex()
         return OGRERR_FAILURE;
     }
 
+    int bHadQIX = hQIX != NULL;
+
     SHPCloseDiskTree( hQIX );
     hQIX = NULL;
     bCheckedForQIX = FALSE;
-    
-    const char *pszQIXFilename;
 
-    pszQIXFilename = CPLResetExtension( pszFullName, "qix" );
-    CPLDebug( "SHAPE", "Unlinking index file %s", pszQIXFilename );
+    SBNCloseDiskTree( hSBN );
+    hSBN = NULL;
+    bCheckedForSBN = FALSE;
 
-    if( VSIUnlink( pszQIXFilename ) != 0 )
+    if( bHadQIX )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to delete file %s.\n%s", 
-                  pszQIXFilename, VSIStrerror( errno ) );
-        return OGRERR_FAILURE;
+        const char *pszQIXFilename;
+
+        pszQIXFilename = CPLResetExtension( pszFullName, "qix" );
+        CPLDebug( "SHAPE", "Unlinking index file %s", pszQIXFilename );
+
+        if( VSIUnlink( pszQIXFilename ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Failed to delete file %s.\n%s",
+                    pszQIXFilename, VSIStrerror( errno ) );
+            return OGRERR_FAILURE;
+        }
     }
 
     if( !bSbnSbxDeleted )
@@ -2045,7 +2090,7 @@ OGRErr OGRShapeLayer::Repack()
 /*      Cleanup any existing spatial index.  It will become             */
 /*      meaningless when the fids change.                               */
 /* -------------------------------------------------------------------- */
-    if( CheckForQIX() )
+    if( CheckForQIX() || CheckForSBN() )
         DropSpatialIndex();
 
 /* -------------------------------------------------------------------- */
@@ -2550,6 +2595,11 @@ void OGRShapeLayer::CloseFileDescriptors()
         SHPCloseDiskTree( hQIX ); 
     hQIX = NULL;
     bCheckedForQIX = FALSE;
+
+    if( hSBN != NULL )
+        SBNCloseDiskTree( hSBN );
+    hSBN = NULL;
+    bCheckedForSBN = FALSE;
 
     eFileDescriptorsState = FD_CLOSED;
 }

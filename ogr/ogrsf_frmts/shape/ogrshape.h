@@ -90,8 +90,11 @@ class OGRShapeLayer : public OGRLayer
 
     int                 bCheckedForQIX;
     SHPTreeDiskHandle   hQIX;
-
     int                 CheckForQIX();
+
+    int                 bCheckedForSBN;
+    SBNSearchHandle     hSBN;
+    int                 CheckForSBN();
 
     int                 bSbnSbxDeleted;
 
