@@ -502,6 +502,32 @@ SHPSearchDiskTreeEx( SHPTreeDiskHandle hDiskTree,
 int SHPAPI_CALL
     SHPWriteTreeLL(SHPTree *hTree, const char *pszFilename, SAHooks *psHooks );
 
+
+/* -------------------------------------------------------------------- */
+/*      SBN Search API                                                  */
+/* -------------------------------------------------------------------- */
+
+typedef struct SBNSearchInfo* SBNSearchHandle;
+
+SBNSearchHandle SHPAPI_CALL
+    SBNOpenDiskTree( const char* pszSBNFilename,
+                 SAHooks *psHooks );
+
+void SHPAPI_CALL
+    SBNCloseDiskTree( SBNSearchHandle hSBN );
+
+int SHPAPI_CALL1(*)
+SBNSearchDiskTree( SBNSearchHandle hSBN,
+                   double *padfBoundsMin, double *padfBoundsMax,
+                   int *pnShapeCount );
+
+int SHPAPI_CALL1(*)
+SBNSearchDiskTreeInteger( SBNSearchHandle hSBN,
+                          int bMinX, int bMinY, int bMaxX, int bMaxY,
+                          int *pnShapeCount );
+
+void SHPAPI_CALL SBNSearchFreeIds( int* panShapeId );
+
 /************************************************************************/
 /*                             DBF Support.                             */
 /************************************************************************/
