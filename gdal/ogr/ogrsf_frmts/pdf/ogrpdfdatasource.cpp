@@ -253,61 +253,67 @@ void OGRPDFDataSource::CleanupIntermediateResources()
 /*                          InitMapOperators()                          */
 /************************************************************************/
 
-void OGRPDFDataSource::InitMapOperators()
+typedef struct
 {
-    oMapOperators["b"] = 0;
-    oMapOperators["B"] = 0;
-    oMapOperators["b*"] = 0;
-    oMapOperators["B*"] = 0;
-    oMapOperators["BDC"] = 2;
+    char        szOpName[4];
+    char        nArgs;
+} PDFOperator;
+
+static const PDFOperator asPDFOperators [] =
+{
+    { "b", 0 },
+    { "B", 0 },
+    { "b*", 0 },
+    { "B*", 0 },
+    { "BDC", 2 },
     // BI
-    oMapOperators["BMC"] = 1;
+    { "BMC", 1 },
     // BT
-    // BX
-    oMapOperators["c"] = 6;
-    oMapOperators["cm"] = 6;
-    oMapOperators["CS"] = 1;
-    oMapOperators["cs"] = 1;
-    oMapOperators["d"] = 1; /* we have ignored the first arg */
+    { "BX", 0 },
+    { "c", 6 },
+    { "cm", 6 },
+    { "CS", 1 },
+    { "cs", 1 },
+    { "d", 1 }, /* we have ignored the first arg */
     // d0
     // d1
-    oMapOperators["Do"] = 1;
-    oMapOperators["DP"] = 2;
+    { "Do", 1 },
+    { "DP", 2 },
     // EI
-    oMapOperators["EMC"] = 0;
+    { "EMC", 0 },
     // ET
-    // EX
-    oMapOperators["f"] = 0;
-    oMapOperators["F"] = 0;
-    oMapOperators["f*"] = 0;
-    oMapOperators["G"] = 1;
-    oMapOperators["g"] = 1;
-    oMapOperators["gs"] = 1;
-    oMapOperators["h"] = 0;
-    oMapOperators["i"] = 1;
+    { "EX", 0 },
+    { "f", 0 },
+    { "F", 0 },
+    { "f*", 0 },
+    { "G", 1 },
+    { "g", 1 },
+    { "gs", 1 },
+    { "h", 0 },
+    { "i", 1 },
     // ID
-    oMapOperators["j"] = 1;
-    oMapOperators["J"] = 1;
-    // K
-    // k
-    oMapOperators["l"] = 2;
-    oMapOperators["m"] = 2;
-    oMapOperators["M"] = 1;
-    oMapOperators["MP"] = 1;
-    oMapOperators["n"] = 0;
-    oMapOperators["q"] = 0;
-    oMapOperators["Q"] = 0;
-    oMapOperators["re"] = 4;
-    oMapOperators["RG"] = 3;
-    oMapOperators["rg"] = 3;
-    // ri
-    oMapOperators["s"] = 0;
-    oMapOperators["S"] = 0;
-    // SC
-    // sc
-    oMapOperators["SCN"] = -1;
-    oMapOperators["scn"] = -1;
-    // sh
+    { "j", 1 },
+    { "J", 1 },
+    { "K", 4 },
+    { "k", 4 },
+    { "l", 2 },
+    { "m", 2 },
+    { "M", 1 },
+    { "MP", 1 },
+    { "n", 0 },
+    { "q", 0 },
+    { "Q", 0 },
+    { "re", 4 },
+    { "RG", 3 },
+    { "rg", 3 },
+    { "ri", 1 },
+    { "s", 0 },
+    { "S", 0 },
+    { "SC", -1 },
+    { "sc", -1 },
+    { "SCN", -1 },
+    { "scn", -1 },
+    { "sh", 1 },
     // T*
     // Tc
     // Td
@@ -321,13 +327,19 @@ void OGRPDFDataSource::InitMapOperators()
     // Ts
     // Tw
     // Tz
-    oMapOperators["v"] = 4;
-    oMapOperators["w"] = 1;
-    oMapOperators["W"] = 0;
-    oMapOperators["W*"] = 0;
-    oMapOperators["y"] = 4;
+    { "v", 4 },
+    { "w", 1 },
+    { "W", 0 },
+    { "W*", 0 },
+    { "y", 4 },
     // '
     // "
+};
+
+void OGRPDFDataSource::InitMapOperators()
+{
+    for(size_t i=0;i<sizeof(asPDFOperators) / sizeof(asPDFOperators[0]); i++)
+        oMapOperators[asPDFOperators[i].szOpName] = asPDFOperators[i].nArgs;
 }
 
 /************************************************************************/
@@ -1116,20 +1128,37 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                             return NULL;
                         }
 
-                        GDALPDFStream* poStream = poObject->GetStream();
-                        if (!poStream)
+                        int bParseStream = TRUE;
+                        /* Check if the object is an image. If so, no need to try to parse */
+                        /* it. */
+                        if (poObject->GetType() == PDFObjectType_Dictionary)
                         {
-                            CPLDebug("PDF", "Should not happen at line %d", __LINE__);
-                            return NULL;
+                            GDALPDFObject* poSubtype = poObject->GetDictionary()->Get("Subtype");
+                            if (poSubtype != NULL &&
+                                poSubtype->GetType() == PDFObjectType_Name &&
+                                poSubtype->GetName() == "Image" )
+                            {
+                                bParseStream = FALSE;
+                            }
                         }
 
-                        char* pszStr = poStream->GetBytes();
-                        OGRGeometry* poGeom = ParseContent(pszStr, NULL, FALSE, FALSE,
-                                                        oMapPropertyToLayer, poCurLayer);
-                        CPLFree(pszStr);
-                        if (poGeom && !bCollectAllObjects)
-                            return poGeom;
-                        delete poGeom;
+                        if( bParseStream )
+                        {
+                            GDALPDFStream* poStream = poObject->GetStream();
+                            if (!poStream)
+                            {
+                                CPLDebug("PDF", "Should not happen at line %d", __LINE__);
+                                return NULL;
+                            }
+
+                            char* pszStr = poStream->GetBytes();
+                            OGRGeometry* poGeom = ParseContent(pszStr, NULL, FALSE, FALSE,
+                                                            oMapPropertyToLayer, poCurLayer);
+                            CPLFree(pszStr);
+                            if (poGeom && !bCollectAllObjects)
+                                return poGeom;
+                            delete poGeom;
+                        }
                     }
                 }
                 else if (oMapOperators.find(osToken) != oMapOperators.end())
@@ -1656,6 +1685,9 @@ void OGRPDFDataSource::ExploreContentsNonStructured(GDALPDFObject* poContents,
             }
         }
     }
+
+    if( nLayers == 0 )
+        return;
 
     ExploreContentsNonStructuredInternal(poContents,
                                          poResources,
