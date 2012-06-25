@@ -156,30 +156,6 @@ void ILI1Reader::AddCoord(OGRILI1Layer* layer, IOM_BASKET model, IOM_OBJECT mode
   }
 }
 
-void ILI1Reader::AddEnumTable(OGRILI1Layer* layer, IOM_BASKET model, IOM_OBJECT enumeration) {
-  //Add enums as features
-  IOM_ITERATOR fieldit=iom_iteratorobject(model);
-  for (IOM_OBJECT fieldele=iom_nextobject(fieldit); fieldele; fieldele=iom_nextobject(fieldit)){
-    const char *etag=iom_getobjecttag(fieldele);
-    if (etag && (EQUAL(etag,"iom04.metamodel.Enumeration_Element"))) {
-      if (GetAttrObj(model, fieldele, "enumeration") == enumeration) {
-        IOM_OBJECT subenum = GetAttrObj(model, fieldele, "subEnumeration");
-        unsigned int order_pos = iom_getobjectreforderpos(iom_getattrobj(fieldele, "enumeration", 0));
-        if (subenum) {
-          AddEnumTable(layer, model, subenum);
-        } else if (order_pos) {
-          OGRFeature *feature = OGRFeature::CreateFeature(layer->GetLayerDefn());
-          feature->SetField("id", (int)order_pos-1);
-          feature->SetField("value", iom_getattrvalue(fieldele, "name"));
-          layer->AddFeature(feature);
-        }
-      }
-    }
-    iom_releaseobject(fieldele);
-  }
-  iom_releaseiterator(fieldit);
-}
-
 OGRILI1Layer* ILI1Reader::AddGeomTable(const char* datalayername, const char* geomname, OGRwkbGeometryType eType) {
   static char layername[512];
   layername[0] = '\0';
@@ -404,41 +380,6 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
                 areaLayer->CreateField(layer->GetLayerDefn()->GetFieldDefn(i));
               }
           }
-        }
-      } else if (EQUAL(tag,"iom04.metamodel.Domain")) {
-        // Check for enumeration
-        //Domain -> EnumerationType -> Enumeration
-        //LocalAttribute -> TypeAlias -> EnumerationType -> Enumeration
-        if (EQUAL(GetTypeName(model, modelele), "iom04.metamodel.EnumerationType")) {
-          //TODO: Replace LocalAttribute enumeration tables with one table for Domain
-        }
-      } else if (EQUAL(tag,"iom04.metamodel.LocalAttribute")) {
-        // Check for enumeration
-        //LocalAttribute -> EnumerationType -> Enumeration
-        //Enumeration_Element -> Enumeration
-        //                   (-> subEnumeration)
-        if (EQUAL(GetTypeName(model, modelele), "iom04.metamodel.EnumerationType")) {
-          IOM_OBJECT enumeration = GetAttrObj(model, GetTypeObj(model, modelele), "enumeration");
-          OGRSpatialReference *poSRSIn = NULL;
-          int bWriterIn = 0;
-          OGRwkbGeometryType eReqType = wkbUnknown;
-          OGRILI1DataSource *poDSIn = NULL;
-          IOM_OBJECT table = GetAttrObj(model, modelele, "container");
-          char* topicname = CPLStrdup(iom_getattrvalue(GetAttrObj(model, table, "container"), "name"));
-          const char* layername = GetLayerNameString(topicname, GetLayerName(model, modelele));
-          CPLFree(topicname);
-          OGRILI1Layer* layer = new OGRILI1Layer(layername, poSRSIn, bWriterIn, eReqType, poDSIn);
-          AddLayer(layer);
-          {
-          OGRFieldDefn fieldDef("id", OFTInteger);
-          layer->GetLayerDefn()->AddFieldDefn(&fieldDef);
-          }
-          {
-          OGRFieldDefn fieldDef("value", OFTString);
-          layer->GetLayerDefn()->AddFieldDefn(&fieldDef);
-          }
-          CPLDebug( "OGR_ILI", "Enumeration layer '%s'", layername );
-          AddEnumTable(layer, model, enumeration);
         }
       } else if (EQUAL(tag,"iom04.metamodel.Ili1Format")) {
         codeBlank = atoi(iom_getattrvalue(modelele, "blankCode"));

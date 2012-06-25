@@ -81,8 +81,7 @@ def ogr_interlis1_2():
               'Bodenbedeckung__BoFlaechen_Form',
               'Bodenbedeckung__BoFlaechen__Areas',
               'Bodenbedeckung__Strasse',
-              'Bodenbedeckung__Gebaeude',
-              'Bodenbedeckung__BoFlaechen__Art']
+              'Bodenbedeckung__Gebaeude']
     if ds.GetLayerCount() != len(layers):
         gdaltest.post_reason( 'layer count wrong.' )
         return 'fail'
@@ -338,66 +337,6 @@ def ogr_interlis1_7():
     return 'success'
 
 ###############################################################################
-# Ili1 enumeration test.
-
-def ogr_interlis1_8():
-
-    if not gdaltest.have_ili_reader:
-        return 'skip'
-
-    ds = ogr.Open( 'data/ili/enum-test.itf,data/ili/enum-test.ili' )
-
-    lyr = ds.GetLayerByName('Bodenbedeckung__BoFlaechen__Art')
-    if lyr is None:
-        gdaltest.post_reason( 'Enumeration layer not available.' )
-        return 'fail'
-
-    if lyr.GetFeatureCount() != 6:
-        gdaltest.post_reason( 'feature count wrong.' )
-        return 'fail'
-
-    feat = lyr.GetNextFeature()
-    while feat and feat.GetFieldAsInteger("id") != 0:
-      feat = lyr.GetNextFeature()
-
-    field_values = [0, 'Gebaeude', -1]
-    if feat.GetFieldCount() != len(field_values)-1:
-        gdaltest.post_reason( 'field count wrong.' )
-        return 'fail'
-
-    for i in range(feat.GetFieldCount()):
-        if feat.GetFieldAsString(i) != str(field_values[i]):
-          feat.DumpReadable()
-          print(feat.GetFieldAsString(i))
-          print(str(field_values[i]))
-          gdaltest.post_reason( 'field value wrong.' )
-          return 'fail'
-
-    #Nested enum (domain)
-    lyr = ds.GetLayerByName('Bodenbedeckung__BoFlaechen__NestedEnum')
-    #TODO: should be on domain level: EnumTest__Enum
-    if lyr is None:
-        gdaltest.post_reason( 'Enumeration layer not available.' )
-        return 'fail'
-
-    if lyr.GetFeatureCount() != 4:
-        gdaltest.post_reason( 'feature count wrong.' )
-        return 'fail'
-
-    feat = lyr.GetNextFeature()
-    while feat:
-        #print("Id %d -> %s" % (feat.GetFieldAsInteger("id"), feat.GetFieldAsString(1)) )
-        feat = lyr.GetNextFeature()
-    #Id 0 -> Enum0
-    #Id 0 -> Enum1
-    #Id 1 -> Enum2
-    #Id 2 -> Enum3
-
-    ds.Destroy()
-
-    return 'success'
-
-###############################################################################
 # Ili1 VRT rename
 
 def ogr_interlis1_9():
@@ -453,7 +392,7 @@ def ogr_interlis1_10():
     if not gdaltest.have_ili_reader:
         return 'skip'
 
-    ds = ogr.Open( 'data/ili/Beispiel-join.vrt' )
+    ds = ogr.Open( 'data/ili/Beispiel-join.vrt' ) #broken without enums
     layers = ['BoFlaechenJoined']
     if ds.GetLayerCount() != len(layers):
         gdaltest.post_reason( 'layer count wrong.' )
@@ -744,9 +683,8 @@ gdaltest_list = [
     ogr_interlis1_5,
     ogr_interlis1_6,
     ogr_interlis1_7,
-    ogr_interlis1_8,
     ogr_interlis1_9,
-    ogr_interlis1_10,
+    #ogr_interlis1_10,
     ogr_interlis2_1,
     ogr_interlis2_2,
     ogr_interlis_arc1,
