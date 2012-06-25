@@ -844,22 +844,23 @@ void SHPCloseDiskTree( SHPTreeDiskHandle hDiskTree )
 static int
 SHPSearchDiskTreeNode( SHPTreeDiskHandle hDiskTree, double *padfBoundsMin, double *padfBoundsMax,
                        int **ppanResultBuffer, int *pnBufferMax, 
-                       int *pnResultCount, int bNeedSwap )
+                       int *pnResultCount, int bNeedSwap, int nRecLevel )
 
 {
-    int i;
-    int offset;
-    int numshapes, numsubnodes;
+    unsigned int i;
+    unsigned int offset;
+    unsigned int numshapes, numsubnodes;
     double adfNodeBoundsMin[2], adfNodeBoundsMax[2];
+    int nFReadAcc;
 
 /* -------------------------------------------------------------------- */
 /*      Read and unswap first part of node info.                        */
 /* -------------------------------------------------------------------- */
-    hDiskTree->sHooks.FRead( &offset, 4, 1, hDiskTree->fpQIX );
+    nFReadAcc = (int)hDiskTree->sHooks.FRead( &offset, 4, 1, hDiskTree->fpQIX );
     if ( bNeedSwap ) SwapWord ( 4, &offset );
 
-    hDiskTree->sHooks.FRead( adfNodeBoundsMin, sizeof(double), 2, hDiskTree->fpQIX );
-    hDiskTree->sHooks.FRead( adfNodeBoundsMax, sizeof(double), 2, hDiskTree->fpQIX );
+    nFReadAcc += (int)hDiskTree->sHooks.FRead( adfNodeBoundsMin, sizeof(double), 2, hDiskTree->fpQIX );
+    nFReadAcc += (int)hDiskTree->sHooks.FRead( adfNodeBoundsMax, sizeof(double), 2, hDiskTree->fpQIX );
     if ( bNeedSwap )
     {
         SwapWord( 8, adfNodeBoundsMin + 0 );
@@ -868,8 +869,29 @@ SHPSearchDiskTreeNode( SHPTreeDiskHandle hDiskTree, double *padfBoundsMin, doubl
         SwapWord( 8, adfNodeBoundsMax + 1 );
     }
       
-    hDiskTree->sHooks.FRead( &numshapes, 4, 1, hDiskTree->fpQIX );
+    nFReadAcc += (int)hDiskTree->sHooks.FRead( &numshapes, 4, 1, hDiskTree->fpQIX );
     if ( bNeedSwap ) SwapWord ( 4, &numshapes );
+
+    /* Check that we could read all previous values */
+    if( nFReadAcc != 1 + 2 + 2 + 1 )
+    {
+        hDiskTree->sHooks.Error("I/O error");
+        return FALSE;
+    }
+
+    /* Sanity checks to avoid int overflows in later computation */
+    if( offset > INT_MAX - sizeof(int) )
+    {
+        hDiskTree->sHooks.Error("Invalid value for offset");
+        return FALSE;
+    }
+
+    if( numshapes > (INT_MAX - offset - sizeof(int)) / sizeof(int) ||
+        numshapes > INT_MAX / sizeof(int) - *pnResultCount )
+    {
+        hDiskTree->sHooks.Error("Invalid value for numshapes");
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we don't overlap this node at all, we can just fseek()       */
@@ -890,13 +912,31 @@ SHPSearchDiskTreeNode( SHPTreeDiskHandle hDiskTree, double *padfBoundsMin, doubl
     {
         if( *pnResultCount + numshapes > *pnBufferMax )
         {
-            *pnBufferMax = (int) ((*pnResultCount + numshapes + 100) * 1.25);
-            *ppanResultBuffer = (int *) 
+            int* pNewBuffer;
+
+            *pnBufferMax = (*pnResultCount + numshapes + 100) * 5 / 4;
+
+            if( *pnBufferMax > INT_MAX / sizeof(int) )
+                *pnBufferMax = *pnResultCount + numshapes;
+
+            pNewBuffer = (int *)
                 SfRealloc( *ppanResultBuffer, *pnBufferMax * sizeof(int) );
+
+            if( pNewBuffer == NULL )
+            {
+                hDiskTree->sHooks.Error("Out of memory error");
+                return FALSE;
+            }
+
+            *ppanResultBuffer = pNewBuffer;
         }
 
-        hDiskTree->sHooks.FRead( *ppanResultBuffer + *pnResultCount, 
-               sizeof(int), numshapes, hDiskTree->fpQIX );
+        if( hDiskTree->sHooks.FRead( *ppanResultBuffer + *pnResultCount,
+                    sizeof(int), numshapes, hDiskTree->fpQIX ) != numshapes )
+        {
+            hDiskTree->sHooks.Error("I/O error");
+            return FALSE;
+        }
 
         if (bNeedSwap )
         {
@@ -910,14 +950,23 @@ SHPSearchDiskTreeNode( SHPTreeDiskHandle hDiskTree, double *padfBoundsMin, doubl
 /* -------------------------------------------------------------------- */
 /*      Process the subnodes.                                           */
 /* -------------------------------------------------------------------- */
-    hDiskTree->sHooks.FRead( &numsubnodes, 4, 1, hDiskTree->fpQIX );
+    if( hDiskTree->sHooks.FRead( &numsubnodes, 4, 1, hDiskTree->fpQIX ) != 1 )
+    {
+        hDiskTree->sHooks.Error("I/O error");
+        return FALSE;
+    }
     if ( bNeedSwap  ) SwapWord ( 4, &numsubnodes );
+    if( numsubnodes > 0 && nRecLevel == 32 )
+    {
+        hDiskTree->sHooks.Error("Shape tree is too deep");
+        return FALSE;
+    }
 
     for(i=0; i<numsubnodes; i++)
     {
         if( !SHPSearchDiskTreeNode( hDiskTree, padfBoundsMin, padfBoundsMax, 
                                     ppanResultBuffer, pnBufferMax, 
-                                    pnResultCount, bNeedSwap ) )
+                                    pnResultCount, bNeedSwap, nRecLevel + 1 ) )
             return FALSE;
     }
 
@@ -1014,7 +1063,7 @@ int* SHPSearchDiskTreeEx( SHPTreeDiskHandle hDiskTree,
 /* -------------------------------------------------------------------- */
     if( !SHPSearchDiskTreeNode( hDiskTree, padfBoundsMin, padfBoundsMax, 
                                 &panResultBuffer, &nBufferMax, 
-                                pnShapeCount, bNeedSwap ) )
+                                pnShapeCount, bNeedSwap, 0 ) )
     {
         if( panResultBuffer != NULL )
             free( panResultBuffer );
