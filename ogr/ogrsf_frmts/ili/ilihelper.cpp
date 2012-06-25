@@ -68,8 +68,8 @@ void interpolateArc(OGRLineString* line, OGRPoint *ptStart, OGRPoint *ptOnArc, O
   double px = ptOnArc->getX(); double py = ptOnArc->getY();
   double r = sqrt((cx-px)*(cx-px)+(cy-py)*(cy-py));
 
-  double myAlpha = 2.0*acos(1.0-0.002/r);
-      
+  //assure minimal chord length (0.002m???)
+  double myAlpha = 2.0*acos(1.0-0.002/r);      
   if (myAlpha < arcIncr)  {
       arcIncr = myAlpha;
   }
