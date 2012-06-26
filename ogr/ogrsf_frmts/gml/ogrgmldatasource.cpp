@@ -1938,9 +1938,39 @@ void OGRGMLDataSource::FindAndParseBoundedBy(VSILFILE* fp)
         }
     }
 
-    char* pszEndBoundedBy = strstr(pszXML, "</gml:boundedBy>");
+    char* pszEndBoundedBy = strstr(pszXML, "</wfs:boundedBy>");
+    int bWFSBoundedBy = FALSE;
+    if (pszEndBoundedBy != NULL)
+        bWFSBoundedBy = TRUE;
+    else
+        pszEndBoundedBy = strstr(pszXML, "</gml:boundedBy>");
     if (pszStartTag != NULL && pszEndBoundedBy != NULL)
     {
+        const char* pszSRSName = NULL;
+        char szSRSName[128];
+
+        szSRSName[0] = '\0';
+
+        /* Find a srsName somewhere for some WFS 2.0 documents */
+        /* that have not it set at the <wfs:boundedBy> element */
+        /* e.g. http://geoserv.weichand.de:8080/geoserver/wfs?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0&TYPENAME=bvv:gmd_ex */
+        if( bIsWFS )
+        {
+            pszSRSName = strstr(pszXML, "srsName=\"");
+            if( pszSRSName != NULL )
+            {
+                pszSRSName += 9;
+                const char* pszEndQuote = strchr(pszSRSName, '"');
+                if (pszEndQuote != NULL &&
+                    (int)(pszEndQuote - pszSRSName) < sizeof(szSRSName))
+                {
+                    memcpy(szSRSName, pszSRSName, pszEndQuote - pszSRSName);
+                    szSRSName[pszEndQuote - pszSRSName] = '\0';
+                }
+                pszSRSName = NULL;
+            }
+        }
+
         pszEndBoundedBy[strlen("</gml:boundedBy>")] = '\0';
         strcat(pszXML, "</");
         strcat(pszXML, szStartTag);
@@ -1956,13 +1986,13 @@ void OGRGMLDataSource::FindAndParseBoundedBy(VSILFILE* fp)
             CPLXMLNode* psIter = psXML;
             while(psIter != NULL)
             {
-                psBoundedBy = CPLGetXMLNode(psIter, "gml:boundedBy");
+                psBoundedBy = CPLGetXMLNode(psIter, bWFSBoundedBy ?
+                                        "wfs:boundedBy" : "gml:boundedBy");
                 if (psBoundedBy != NULL)
                     break;
                 psIter = psIter->psNext;
             }
 
-            const char* pszSRSName = NULL;
             const char* pszLowerCorner = NULL;
             const char* pszUpperCorner = NULL;
             if (psBoundedBy != NULL)
@@ -1975,6 +2005,14 @@ void OGRGMLDataSource::FindAndParseBoundedBy(VSILFILE* fp)
                     pszUpperCorner = CPLGetXMLValue(psEnvelope, "gml:upperCorner", NULL);
                 }
             }
+
+            if( bIsWFS && pszSRSName == NULL &&
+                pszLowerCorner != NULL && pszUpperCorner != NULL &&
+                szSRSName[0] != '\0' )
+            {
+                pszSRSName = szSRSName;
+            }
+
             if (pszSRSName != NULL && pszLowerCorner != NULL && pszUpperCorner != NULL)
             {
                 char** papszLC = CSLTokenizeString(pszLowerCorner);
