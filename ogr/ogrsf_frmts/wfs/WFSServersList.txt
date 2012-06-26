@@ -1,13 +1,18 @@
 DISCLAIMER: At the time when you'll read this, you can expect some dead links !
 
 GeoServer:
-http://sigma.openplans.org/geoserver/ows
+http://sigma.openplans.org/geoserver/ows (dead link)
 http://demo.opengeo.org/geoserver/wfs (WFS-T with write permissions)
 http://giswebservices.massgis.state.ma.us/geoserver/wfs
 http://gem.demo.opengeo.org/geoserver/wfs
 http://geohub.jrc.ec.europa.eu/effis/ows
 http://v2.suite.opengeo.org/geoserver/ows
 http://data.wien.gv.at/daten/wfs  # layers with identical names within 2 different namespaces
+http://geoserv.weichand.de:8080/geoserver/wfs?VERSION=2.0.0 (WFS 2.0 capable, with paging)
+http://briseide02.ingr.briseide.eu:8080/geoserver/briseide/ows?VERSION=2.0.0 (WFS 2.0 capable, with paging)
+http://gis.facilities.ucsb.edu:8080/geoserver/wfs
+http://kartenn.region-bretagne.fr/geoserver/wfs
+http://agismap1.faa.gov/geoserver/ows (AIXM data)
 
 MapServer:
 http://www.bsc-eoc.org/cgi-bin/bsc_ows.asp (4.8.1)
@@ -18,7 +23,8 @@ http://map.ns.ec.gc.ca/MapServer/mapserv.exe?map=/mapserver/services/envdat/conf
 http://nsidc.org/cgi-bin/acap.pl
 http://sdmdataaccess.nrcs.usda.gov/Spatial/SDMNAD83Geographic.wfs
 http://demo.mapserver.org/cgi-bin/wfs?
-http://hip.latuviitta.org/cgi-bin/mapserver_wfs 
+http://hip.latuviitta.org/cgi-bin/mapserver_wfs
+http://geolittoral.application.equipement.gouv.fr/wfs/metropole?VERSION=1.0.0 (5.6)
 
 Deegree:
 http://www.nokis.org/deegree2/ogcwebservice (not responding, requires namespace to be passed)
@@ -27,9 +33,10 @@ http://demo.deegree.org/deegree-wfs/services
 http://testing.deegree.org/deegree-wfs/services (WFS-T, but permission denied)
 http://lkee-xplanung2.lat-lon.de/xplan-wfs/services (with complex schema that we cannot understand with the XSD parser)
 http://deegree3-testing.deegree.org/deegree-geosciml-demo/services (offline currently)
-http://deegree3-demo.deegree.org:80/inspire-workspace/services (GML 3.2.1 output only)
+http://deegree3-demo.deegree.org:80/inspire-workspace/services (GML 3.2.1 output only and WFS 2.0 capable)
 http://deegree3-demo.deegree.org:80/utah-workspace/services (WFS 2.0 capable)
 http://inspire.kademo.nl/deegree-wfs/services
+http://www.iai.fzk.de/wfs (Deegree 2)
 
 TinyOWS:
 http://dev4.mapgears.com/cgi-bin/tinyows (old & buggy version)
