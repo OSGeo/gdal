@@ -453,7 +453,31 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
             osGeomFilter += "</PropertyName>";
 
         CPLLocaleC  oLocaleEnforcer;
-        if ( poDS->RequiresEnvelopeSpatialFilter() )
+
+        if ( atoi(poDS->GetVersion()) >= 2 )
+        {
+            osGeomFilter += "<gml:Envelope";
+
+            CPLString osSRSName = CPLURLGetValue(pszBaseURL, "SRSNAME");
+            if( osSRSName.size() )
+            {
+                osGeomFilter += " srsName=\"";
+                osGeomFilter += osSRSName;
+                osGeomFilter += "\"";
+            }
+
+            osGeomFilter += ">";
+            if (bAxisOrderAlreadyInverted)
+            {
+                osGeomFilter += CPLSPrintf("<gml:lowerCorner>%.16f %.16f</gml:lowerCorner><gml:upperCorner>%.16f %.16f</gml:upperCorner>",
+                                        oEnvelope.MinY, oEnvelope.MinX, oEnvelope.MaxY, oEnvelope.MaxX);
+            }
+            else
+                osGeomFilter += CPLSPrintf("<gml:lowerCorner>%.16f %.16f</gml:lowerCorner><gml:upperCorner>%.16f %.16f</gml:upperCorner>",
+                                        oEnvelope.MinX, oEnvelope.MinY, oEnvelope.MaxX, oEnvelope.MaxY);
+            osGeomFilter += "</gml:Envelope>";
+        }
+        else if ( poDS->RequiresEnvelopeSpatialFilter() )
         {
             osGeomFilter += "<Envelope xmlns=\"http://www.opengis.net/gml\">";
             if (bAxisOrderAlreadyInverted)
@@ -505,7 +529,10 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
             osFilter += pszNSVal;
             osFilter += "\"";
         }
-        osFilter += " xmlns:gml=\"http://www.opengis.net/gml\">";
+        if (atoi(poDS->GetVersion()) >= 2)
+            osFilter += " xmlns:gml=\"http://www.opengis.net/gml/3.2\">";
+        else
+            osFilter += " xmlns:gml=\"http://www.opengis.net/gml\">";
         if (osGeomFilter.size() != 0 && osWFSWhere.size() != 0)
             osFilter += "<And>";
         osFilter += osWFSWhere;
