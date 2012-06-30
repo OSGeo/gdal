@@ -666,6 +666,22 @@ def ogr_rfc28_28():
     return 'success'
 
 ###############################################################################
+# Test behaviour of binary operations when one operand is a NULL value
+
+def ogr_rfc28_29():
+
+    lyr = gdaltest.ds.ExecuteSQL( "select * from idlink where (eas_id + cast(null as integer)) is not null or eas_id = 170 + cast(null as integer) or (eas_id + cast(null as float)) is not null or eas_id = 170.0 + cast(null as float)" )
+
+    count = lyr.GetFeatureCount()
+
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    if count == 0:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -703,6 +719,7 @@ gdaltest_list = [
     ogr_rfc28_26,
     ogr_rfc28_27,
     ogr_rfc28_28,
+    ogr_rfc28_29,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':
