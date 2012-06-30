@@ -1580,6 +1580,114 @@ static int TestTransactions( OGRLayer *poLayer )
 }
 
 /************************************************************************/
+/*                     TestOGRLayerIgnoreFields()                       */
+/************************************************************************/
+
+static int TestOGRLayerIgnoreFields( OGRLayer* poLayer )
+{
+    int iFieldNonEmpty = -1;
+    int iFieldNonEmpty2 = -1;
+    int bGeomNonEmpty = FALSE;
+    OGRFeature* poFeature;
+
+    poLayer->ResetReading();
+    while( (poFeature = poLayer->GetNextFeature()) != NULL )
+    {
+        if( iFieldNonEmpty < 0 )
+        {
+            for(int i=0;i<poFeature->GetFieldCount();i++)
+            {
+                if( poFeature->IsFieldSet(i) )
+                {
+                    iFieldNonEmpty = i;
+                    break;
+                }
+            }
+        }
+        else if ( iFieldNonEmpty2 < 0 )
+        {
+            for(int i=0;i<poFeature->GetFieldCount();i++)
+            {
+                if( i != iFieldNonEmpty && poFeature->IsFieldSet(i) )
+                {
+                    iFieldNonEmpty2 = i;
+                    break;
+                }
+            }
+        }
+
+        if( !bGeomNonEmpty && poFeature->GetGeometryRef() != NULL)
+            bGeomNonEmpty = TRUE;
+
+        delete poFeature;
+    }
+
+    if( iFieldNonEmpty < 0 && bGeomNonEmpty == FALSE )
+    {
+        printf( "INFO: IgnoreFields test skipped.\n" );
+        return TRUE;
+    }
+
+    char** papszIgnoredFields = NULL;
+    if( iFieldNonEmpty >= 0 )
+        papszIgnoredFields = CSLAddString(papszIgnoredFields,
+            poLayer->GetLayerDefn()->GetFieldDefn(iFieldNonEmpty)->GetNameRef());
+
+    if( bGeomNonEmpty )
+        papszIgnoredFields = CSLAddString(papszIgnoredFields, "OGR_GEOMETRY");
+
+    OGRErr eErr = poLayer->SetIgnoredFields((const char**)papszIgnoredFields);
+    CSLDestroy(papszIgnoredFields);
+
+    if( eErr == OGRERR_FAILURE )
+    {
+        printf( "ERROR: SetIgnoredFields() failed.\n" );
+        poLayer->SetIgnoredFields(NULL);
+        return FALSE;
+    }
+
+    int bFoundNonEmpty2 = FALSE;
+
+    poLayer->ResetReading();
+    while( (poFeature = poLayer->GetNextFeature()) != NULL )
+    {
+        if( iFieldNonEmpty >= 0 && poFeature->IsFieldSet(iFieldNonEmpty) )
+        {
+            delete poFeature;
+            printf( "ERROR: After SetIgnoredFields(), found a non empty field that should have been ignored.\n" );
+            poLayer->SetIgnoredFields(NULL);
+            return FALSE;
+        }
+
+        if( iFieldNonEmpty2 >= 0 && poFeature->IsFieldSet(iFieldNonEmpty2) )
+            bFoundNonEmpty2 = TRUE;
+
+        if( bGeomNonEmpty && poFeature->GetGeometryRef() != NULL)
+        {
+            delete poFeature;
+            printf( "ERROR: After SetIgnoredFields(), found a non empty geometry that should have been ignored.\n" );
+            poLayer->SetIgnoredFields(NULL);
+            return FALSE;
+        }
+
+        delete poFeature;
+    }
+
+    if( iFieldNonEmpty2 >= 0 && !bFoundNonEmpty2)
+    {
+        printf( "ERROR: SetIgnoredFields() discarded fields that it should not have discarded.\n" );
+        poLayer->SetIgnoredFields(NULL);
+        return FALSE;
+    }
+
+    poLayer->SetIgnoredFields(NULL);
+
+    printf( "INFO: IgnoreFields test passed.\n" );
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                            TestOGRLayer()                            */
 /************************************************************************/
 
@@ -1648,6 +1756,14 @@ static int TestOGRLayer( OGRDataSource* poDS, OGRLayer * poLayer, int bIsSQLLaye
     if( poLayer->TestCapability( OLCRandomWrite ) )
     {
         bRet &= TestOGRLayerRandomWrite( poLayer );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Test OLCIgnoreFields.                                           */
+/* -------------------------------------------------------------------- */
+    if( poLayer->TestCapability( OLCIgnoreFields ) )
+    {
+        bRet &= TestOGRLayerIgnoreFields( poLayer );
     }
 
 /* -------------------------------------------------------------------- */
