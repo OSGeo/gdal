@@ -371,7 +371,12 @@ CPLErr BIGGIFDataset::ReOpen()
     VSIFSeekL( fp, 0, SEEK_SET );
 
     nLastLineRead = -1;
+#if defined(GIFLIB_MAJOR) && GIFLIB_MAJOR >= 5
+    int nError;
+    hGifFile = DGifOpen( fp, VSIGIFReadFunc, &nError );
+#else
     hGifFile = DGifOpen( fp, VSIGIFReadFunc );
+#endif
     if( hGifFile == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
