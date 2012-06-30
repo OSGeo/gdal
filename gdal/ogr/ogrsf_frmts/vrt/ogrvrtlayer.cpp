@@ -1508,7 +1508,7 @@ int OGRVRTLayer::TestCapability( const char * pszCap )
     else if ( EQUAL(pszCap,OLCFastGetExtent) )
         return eGeometryStyle == VGS_Direct &&
                m_poAttrQuery == NULL &&
-               poSrcRegion == NULL &&
+               (poSrcRegion == NULL || bSrcClip) &&
                poSrcLayer->TestCapability(pszCap);
 
     else if( EQUAL(pszCap,OLCRandomRead) )
@@ -1555,12 +1555,20 @@ OGRErr OGRVRTLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 
     if ( eGeometryStyle == VGS_Direct &&
          m_poAttrQuery == NULL &&
-         poSrcRegion == NULL )
+         (poSrcRegion == NULL || bSrcClip) )
     {
         if( bNeedReset )
             ResetSourceReading();
 
-        return poSrcLayer->GetExtent(psExtent, bForce);
+        OGRErr eErr = poSrcLayer->GetExtent(psExtent, bForce);
+        if( eErr != OGRERR_NONE || poSrcRegion == NULL )
+            return eErr;
+
+        OGREnvelope sSrcRegionEnvelope;
+        poSrcRegion->getEnvelope(&sSrcRegionEnvelope);
+
+        psExtent->Intersect(sSrcRegionEnvelope);
+        return eErr;
     }
 
     return OGRLayer::GetExtent(psExtent, bForce);
