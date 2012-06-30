@@ -2170,6 +2170,29 @@ def ogr_shape_53():
         gdaltest.post_reason('failed')
         return 'fail'
 
+    # SetFeature() on a invalid FID
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    ret = lyr.SetFeature(feat)
+    feat = None
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    # SetFeature() on a invalid FID
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetFID(1000)
+    ret = lyr.SetFeature(feat)
+    feat = None
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
     # DeleteFeature() on a invalid FID
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
