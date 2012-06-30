@@ -778,6 +778,17 @@ OGRErr OGRShapeLayer::SetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
+    long nFID = poFeature->GetFID();
+    if( nFID < 0
+        || (hSHP != NULL && nFID >= hSHP->nRecords)
+        || (hDBF != NULL && nFID >= hDBF->nRecords) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to set shape with feature id (%ld) which does "
+                  "not exist.", nFID );
+        return OGRERR_FAILURE;
+    }
+
     bHeaderDirty = TRUE;
     if( CheckForQIX() || CheckForSBN() )
         DropSpatialIndex();
