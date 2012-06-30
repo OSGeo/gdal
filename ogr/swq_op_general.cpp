@@ -128,6 +128,46 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             sub_node_values[1]->field_type == SWQ_INTEGER )
             sub_node_values[1]->float_value = sub_node_values[1]->int_value;
 
+        if( node->nOperation != SWQ_ISNULL )
+        {
+            for( int i = 0; i < node->nSubExprCount; i++ )
+            {
+                if( sub_node_values[i]->is_null )
+                {
+                    if( node->nOperation == SWQ_AND ||
+                        node->nOperation == SWQ_OR ||
+                        node->nOperation == SWQ_NOT ||
+                        node->nOperation == SWQ_EQ ||
+                        node->nOperation == SWQ_NE ||
+                        node->nOperation == SWQ_GT ||
+                        node->nOperation == SWQ_LT ||
+                        node->nOperation == SWQ_GE ||
+                        node->nOperation == SWQ_LE ||
+                        node->nOperation == SWQ_IN ||
+                        node->nOperation == SWQ_BETWEEN )
+                    {
+                        poRet->int_value = FALSE;
+                        return poRet;
+                    }
+                    else if( node->nOperation == SWQ_ADD ||
+                             node->nOperation == SWQ_SUBTRACT ||
+                             node->nOperation == SWQ_MULTIPLY ||
+                             node->nOperation == SWQ_DIVIDE )
+                    {
+                        poRet->float_value = 0;
+                        poRet->is_null = 1;
+                        return poRet;
+                    }
+                    else if(node->nOperation == SWQ_MODULUS )
+                    {
+                        poRet->int_value = 0;
+                        poRet->is_null = 1;
+                        return poRet;
+                    }
+                }
+            }
+        }
+
         switch( (swq_op) node->nOperation )
         {
           case SWQ_EQ:
@@ -237,6 +277,41 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
     {
         poRet = new swq_expr_node(0);
         poRet->field_type = node->field_type;
+
+        if( node->nOperation != SWQ_ISNULL )
+        {
+            for( int i = 0; i < node->nSubExprCount; i++ )
+            {
+                if( sub_node_values[i]->is_null )
+                {
+                    if( node->nOperation == SWQ_AND ||
+                        node->nOperation == SWQ_OR ||
+                        node->nOperation == SWQ_NOT ||
+                        node->nOperation == SWQ_EQ ||
+                        node->nOperation == SWQ_NE ||
+                        node->nOperation == SWQ_GT ||
+                        node->nOperation == SWQ_LT ||
+                        node->nOperation == SWQ_GE ||
+                        node->nOperation == SWQ_LE ||
+                        node->nOperation == SWQ_IN ||
+                        node->nOperation == SWQ_BETWEEN )
+                    {
+                        poRet->int_value = FALSE;
+                        return poRet;
+                    }
+                    else if( node->nOperation == SWQ_ADD ||
+                             node->nOperation == SWQ_SUBTRACT ||
+                             node->nOperation == SWQ_MULTIPLY ||
+                             node->nOperation == SWQ_DIVIDE ||
+                             node->nOperation == SWQ_MODULUS )
+                    {
+                        poRet->int_value = 0;
+                        poRet->is_null = 1;
+                        return poRet;
+                    }
+                }
+            }
+        }
 
         switch( (swq_op) node->nOperation )
         {
