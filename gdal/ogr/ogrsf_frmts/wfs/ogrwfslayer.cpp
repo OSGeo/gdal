@@ -1317,7 +1317,7 @@ int OGRWFSLayer::TestCapability( const char * pszCap )
     }
     else if( EQUAL(pszCap,OLCIgnoreFields) )
     {
-        return TRUE;
+        return poBaseDS == NULL;
     }
 
     return FALSE;
