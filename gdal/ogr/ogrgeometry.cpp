@@ -3441,8 +3441,15 @@ int OGRGeometry::Centroid( OGRPoint *poPoint ) const
         }
 
         OGRPoint *poCentroid = (OGRPoint *) poCentroidGeom;
-	poPoint->setX( poCentroid->getX() );
-	poPoint->setY( poCentroid->getY() );
+        if( !poCentroid->IsEmpty() )
+        {
+            poPoint->setX( poCentroid->getX() );
+            poPoint->setY( poCentroid->getY() );
+        }
+        else
+        {
+            poPoint->empty();
+        }
 
         delete poCentroidGeom;
 
