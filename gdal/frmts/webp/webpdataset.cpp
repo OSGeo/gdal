@@ -211,7 +211,7 @@ char  **WEBPDataset::GetMetadata( const char * pszDomain )
 
             if (bFirst)
             {
-                if (strcmp(szHeader, "VP8X") != 0 || nChunkSize < 12)
+                if (strcmp(szHeader, "VP8X") != 0 || nChunkSize < 10)
                     break;
 
                 int nFlags;
