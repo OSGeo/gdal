@@ -33,6 +33,7 @@
 
 #include "ogrsf_frmts.h"
 #include "shapefil.h"
+#include "ogrlayerpool.h"
 #include <vector>
 
 /* ==================================================================== */
@@ -56,7 +57,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 
 class OGRShapeDataSource;
 
-class OGRShapeLayer : public OGRLayer
+class OGRShapeLayer : public OGRAbstractProxiedLayer
 {
     OGRShapeDataSource  *poDS;
     OGRSpatialReference *poSRS; /* lazy loaded --> use GetSpatialRef() */
@@ -113,6 +114,11 @@ class OGRShapeLayer : public OGRLayer
 
     void                TruncateDBF();
 
+
+  protected:
+
+    virtual void        CloseUnderlyingLayer();
+
 /* WARNING: each of the below public methods should start with a call to */
 /* TouchLayer() and test its return value, so as to make sure that */
 /* the layer is properly re-opened if necessary */
@@ -127,13 +133,6 @@ class OGRShapeLayer : public OGRLayer
     void                SetResizeAtClose( int bFlag ) { bResizeAtClose = bFlag; }
 
     const char         *GetFullName() { return pszFullName; }
-
-    void                CloseFileDescriptors();
-
-    /* The 2 following members should not be used by OGRShapeLayer, except */
-    /* in its constructor */
-    OGRShapeLayer      *poPrevLayer; /* Chain to a layer that was used more recently */
-    OGRShapeLayer      *poNextLayer; /* Chain to a layer that was used less recently */
 
     OGRFeature *        FetchShape(int iShapeId);
     int                 GetFeatureCountWithSpatialFilterOnly();
@@ -190,9 +189,7 @@ class OGRShapeDataSource : public OGRDataSource
 
     int                 bSingleFileDataSource;
 
-    OGRShapeLayer      *poMRULayer; /* the most recently used layer */
-    OGRShapeLayer      *poLRULayer; /* the least recently used layer (still opened) */
-    int                 nMRUListSize; /* the size of the list */
+    OGRLayerPool*       poPool;
 
     void                AddLayer(OGRShapeLayer* poLayer);
 
@@ -201,6 +198,8 @@ class OGRShapeDataSource : public OGRDataSource
   public:
                         OGRShapeDataSource();
                         ~OGRShapeDataSource();
+
+    OGRLayerPool       *GetPool() { return poPool; }
 
     int                 Open( const char *, int bUpdate, int bTestOpen,
                               int bForceSingleFileDataSource = FALSE );
