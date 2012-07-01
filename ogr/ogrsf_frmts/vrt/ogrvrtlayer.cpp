@@ -35,25 +35,6 @@
 
 CPL_CVSID("$Id$");
 
-typedef struct 
-{
-    OGRwkbGeometryType  eType;
-    const char          *pszName;
-} OGRGeomTypeName;
-
-static const OGRGeomTypeName asGeomTypeNames[] = { /* 25D versions are implicit */
-    { wkbUnknown, "wkbUnknown" },
-    { wkbPoint, "wkbPoint" },
-    { wkbLineString, "wkbLineString" },
-    { wkbPolygon, "wkbPolygon" },
-    { wkbMultiPoint, "wkbMultiPoint" },
-    { wkbMultiLineString, "wkbMultiLineString" },
-    { wkbMultiPolygon, "wkbMultiPolygon" },
-    { wkbGeometryCollection, "wkbGeometryCollection" },
-    { wkbNone, "wkbNone" },
-    { wkbNone, NULL }
-};
-
 #define UNSUPPORTED_OP_READ_ONLY "%s : unsupported operation on a read-only datasource."
 
 /************************************************************************/
@@ -91,6 +72,8 @@ OGRVRTLayer::OGRVRTLayer(OGRVRTDataSource* poDSIn)
     poSrcRegion = NULL;
     bUpdate = FALSE;
     bAttrFilterPassThrough = FALSE;
+
+    nFeatureCount = -1;
 }
 
 /************************************************************************/
@@ -180,22 +163,9 @@ int OGRVRTLayer::FastInitialize( CPLXMLNode *psLTree, const char *pszVRTDirector
      const char *pszGType = CPLGetXMLValue( psLTree, "GeometryType", NULL );
      if( pszGType != NULL )
      {
-         int iType;
-
-         for( iType = 0; asGeomTypeNames[iType].pszName != NULL; iType++ )
-         {
-             if( EQUALN(pszGType, asGeomTypeNames[iType].pszName,
-                        strlen(asGeomTypeNames[iType].pszName)) )
-             {
-                 eGeomType = asGeomTypeNames[iType].eType;
-
-                 if( strstr(pszGType,"25D") != NULL )
-                     eGeomType = (OGRwkbGeometryType) (eGeomType | wkb25DBit);
-                 break;
-             }
-         }
-
-         if( asGeomTypeNames[iType].pszName == NULL )
+         int bError;
+         eGeomType = OGRVRTGetGeometryType(pszGType, &bError);
+         if( bError )
          {
              CPLError( CE_Failure, CPLE_AppDefined,
                        "GeometryType %s not recognised.",
@@ -224,6 +194,31 @@ int OGRVRTLayer::FastInitialize( CPLXMLNode *psLTree, const char *pszVRTDirector
              }
              poSRS = oSRS.Clone();
          }
+     }
+
+/* -------------------------------------------------------------------- */
+/*      Set FeatureCount if provided                                    */
+/* -------------------------------------------------------------------- */
+     const char* pszFeatureCount = CPLGetXMLValue( psLTree, "FeatureCount", NULL );
+     if( pszFeatureCount != NULL )
+     {
+         nFeatureCount = atoi(pszFeatureCount);
+     }
+
+/* -------------------------------------------------------------------- */
+/*      Set Extent if provided                                          */
+/* -------------------------------------------------------------------- */
+     const char* pszExtentXMin = CPLGetXMLValue( psLTree, "ExtentXMin", NULL );
+     const char* pszExtentYMin = CPLGetXMLValue( psLTree, "ExtentYMin", NULL );
+     const char* pszExtentXMax = CPLGetXMLValue( psLTree, "ExtentXMax", NULL );
+     const char* pszExtentYMax = CPLGetXMLValue( psLTree, "ExtentYMax", NULL );
+     if( pszExtentXMin != NULL && pszExtentYMin != NULL &&
+         pszExtentXMax != NULL && pszExtentYMax != NULL )
+     {
+         sStaticEnvelope.MinX = CPLAtof(pszExtentXMin);
+         sStaticEnvelope.MinY = CPLAtof(pszExtentYMin);
+         sStaticEnvelope.MaxX = CPLAtof(pszExtentXMax);
+         sStaticEnvelope.MaxY = CPLAtof(pszExtentYMax);
      }
 
      return TRUE;
@@ -726,6 +721,8 @@ try_again:
                  CPLGetXMLValue(psLTree, "attrFilterPassThrough",
                                 "TRUE") );
 
+     SetIgnoredFields(NULL);
+
      return TRUE;
 
 error:
@@ -988,7 +985,7 @@ retry:
 /*      Handle the geometry.  Eventually there will be several more     */
 /*      supported options.                                              */
 /* -------------------------------------------------------------------- */
-    if( eGeometryStyle == VGS_None )
+    if( eGeometryStyle == VGS_None || GetLayerDefn()->IsGeometryIgnored() )
     {
         /* do nothing */
     }
@@ -1120,7 +1117,7 @@ retry:
         OGRFieldDefn *poDstDefn = poFeatureDefn->GetFieldDefn( iVRTField );
         OGRFieldDefn *poSrcDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( anSrcField[iVRTField] );
 
-        if( !poSrcFeat->IsFieldSet( anSrcField[iVRTField] ) )
+        if( !poSrcFeat->IsFieldSet( anSrcField[iVRTField] ) || poDstDefn->IsIgnored() )
             continue;
 
         if( abDirectCopy[iVRTField] 
@@ -1491,6 +1488,15 @@ OGRErr OGRVRTLayer::SetAttributeFilter( const char *pszNewQuery )
 int OGRVRTLayer::TestCapability( const char * pszCap )
 
 {
+    if ( EQUAL(pszCap,OLCFastFeatureCount) &&
+         nFeatureCount >= 0 &&
+         m_poFilterGeom == NULL && m_poAttrQuery == NULL )
+        return TRUE;
+
+    if ( EQUAL(pszCap,OLCFastGetExtent) &&
+         sStaticEnvelope.IsInit() )
+        return TRUE;
+
     if (!bHasFullInitialized) FullInitialize();
     if (!poSrcLayer) return FALSE;
 
@@ -1525,6 +1531,9 @@ int OGRVRTLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCTransactions) )
         return bUpdate && poSrcLayer->TestCapability(pszCap);
 
+    else if( EQUAL(pszCap,OLCIgnoreFields) )
+        return poSrcLayer->TestCapability(pszCap);
+
     return FALSE;
 }
 
@@ -1550,6 +1559,12 @@ OGRSpatialReference *OGRVRTLayer::GetSpatialRef()
 
 OGRErr OGRVRTLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 {
+    if( sStaticEnvelope.IsInit() )
+    {
+        memcpy(psExtent, &sStaticEnvelope, sizeof(OGREnvelope));
+        return OGRERR_NONE;
+    }
+
     if (!bHasFullInitialized) FullInitialize();
     if (!poSrcLayer) return OGRERR_FAILURE;
 
@@ -1581,6 +1596,12 @@ OGRErr OGRVRTLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 int OGRVRTLayer::GetFeatureCount( int bForce )
 
 {
+    if (nFeatureCount >= 0 &&
+        m_poFilterGeom == NULL && m_poAttrQuery == NULL)
+    {
+        return nFeatureCount;
+    }
+
     if (!bHasFullInitialized) FullInitialize();
     if (!poSrcLayer) return 0;
 
@@ -1712,4 +1733,71 @@ OGRErr OGRVRTLayer::RollbackTransaction()
     if (!poSrcLayer || !bUpdate) return OGRERR_FAILURE;
 
     return poSrcLayer->RollbackTransaction();
+}
+
+/************************************************************************/
+/*                          SetIgnoredFields()                          */
+/************************************************************************/
+
+OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
+{
+    if (!bHasFullInitialized) FullInitialize();
+    if (!poSrcLayer) return OGRERR_FAILURE;
+
+    if( !poSrcLayer->TestCapability(OLCIgnoreFields) )
+        return OGRERR_FAILURE;
+
+    OGRErr eErr = OGRLayer::SetIgnoredFields(papszFields);
+    if( eErr != OGRERR_NONE )
+        return eErr;
+
+    const char** papszIter = papszFields;
+    char** papszFieldsSrc = NULL;
+    OGRFeatureDefn* poSrcFeatureDefn = poSrcLayer->GetLayerDefn();
+    while ( papszIter != NULL && *papszIter != NULL )
+    {
+        const char* pszFieldName = *papszIter;
+        if ( EQUAL(pszFieldName, "OGR_GEOMETRY") ||
+                EQUAL(pszFieldName, "OGR_STYLE") )
+        {
+            papszFieldsSrc = CSLAddString(papszFieldsSrc, pszFieldName);
+        }
+        else
+        {
+            int iVRTField = GetLayerDefn()->GetFieldIndex(pszFieldName);
+            if( iVRTField >= 0 )
+            {
+                int iSrcField = anSrcField[iVRTField];
+                if (iSrcField >= 0)
+                {
+                    OGRFieldDefn *poSrcDefn = poSrcFeatureDefn->GetFieldDefn( iSrcField );
+                    papszFieldsSrc = CSLAddString(papszFieldsSrc, poSrcDefn->GetNameRef());
+                }
+            }
+        }
+        papszIter++;
+    }
+
+    int* panSrcFieldsUsed = (int*) CPLCalloc(sizeof(int), poSrcFeatureDefn->GetFieldCount());
+    for(int iVRTField = 0; iVRTField < GetLayerDefn()->GetFieldCount(); iVRTField++)
+    {
+        int iSrcField = anSrcField[iVRTField];
+        if (iSrcField >= 0)
+            panSrcFieldsUsed[iSrcField] = TRUE;
+    }
+    for(int iSrcField = 0; iSrcField < poSrcFeatureDefn->GetFieldCount(); iSrcField ++)
+    {
+        if( !panSrcFieldsUsed[iSrcField] )
+        {
+            OGRFieldDefn *poSrcDefn = poSrcFeatureDefn->GetFieldDefn( iSrcField );
+            papszFieldsSrc = CSLAddString(papszFieldsSrc, poSrcDefn->GetNameRef());
+        }
+    }
+    CPLFree(panSrcFieldsUsed);
+
+    eErr = poSrcLayer->SetIgnoredFields((const char**)papszFieldsSrc);
+
+    CSLDestroy(papszFieldsSrc);
+
+    return eErr;
 }
