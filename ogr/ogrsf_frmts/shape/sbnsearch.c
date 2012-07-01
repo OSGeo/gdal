@@ -472,9 +472,6 @@ static int SBNAddShapeId( SearchStruct* psSearch,
         if( pNewPtr == NULL )
         {
             psSearch->hSBN->sHooks.Error( "Out of memory error" );
-            free(psSearch->panShapeId);
-            psSearch->panShapeId = NULL;
-            psSearch->nShapeCount = 0;
             return FALSE;
         }
         psSearch->panShapeId = pNewPtr;
@@ -903,6 +900,7 @@ int* SBNSearchDiskTreeInteger( SBNSearchHandle hSBN,
                                int *pnShapeCount )
 {
     SearchStruct sSearch;
+    int bRet;
 
     *pnShapeCount = 0;
 
@@ -927,12 +925,20 @@ int* SBNSearchDiskTreeInteger( SBNSearchHandle hSBN,
     sSearch.nBytesRead = 0;
 #endif
 
-    SBNSearchDiskInternal(&sSearch, 0, 0, 0, 0, 255, 255);
+    bRet = SBNSearchDiskInternal(&sSearch, 0, 0, 0, 0, 255, 255);
 
 #ifdef DEBUG_IO
     hSBN->nTotalBytesRead += sSearch.nBytesRead;
     /* printf("nBytesRead = %d\n", sSearch.nBytesRead); */
 #endif
+
+    if( !bRet )
+    {
+        if( sSearch.panShapeId != NULL )
+            free( sSearch.panShapeId );
+        *pnShapeCount = 0;
+        return NULL;
+    }
 
     *pnShapeCount = sSearch.nShapeCount;
 
@@ -940,6 +946,10 @@ int* SBNSearchDiskTreeInteger( SBNSearchHandle hSBN,
 /*      Sort the id array                                               */
 /* -------------------------------------------------------------------- */
     qsort(sSearch.panShapeId, *pnShapeCount, sizeof(int), compare_ints);
+
+    /* To distinguish between empty intersection from error case */
+    if( sSearch.panShapeId == NULL )
+        sSearch.panShapeId = (int*) calloc(1, sizeof(int));
 
     return sSearch.panShapeId;
 }
