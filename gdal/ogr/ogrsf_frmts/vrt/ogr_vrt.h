@@ -33,6 +33,7 @@
 #include "ogrsf_frmts.h"
 #include "cpl_error.h"
 #include "cpl_minixml.h"
+#include "ogrlayerpool.h"
 
 #include <vector>
 #include <string>
@@ -185,10 +186,6 @@ class OGRVRTDataSource : public OGRDataSource
 
     std::set<std::string> aosOtherDSNameSet;
 
-    OGRLayer*           CreateLayer(CPLXMLNode *psLTree,
-                                    const char *pszVRTDirectory,
-                                    int bUpdate,
-                                    int nRecLevel = 0);
     OGRLayer*           InstanciateWarpedLayer(CPLXMLNode *psLTree,
                                                const char *pszVRTDirectory,
                                                int bUpdate,
@@ -198,9 +195,21 @@ class OGRVRTDataSource : public OGRDataSource
                                                int bUpdate,
                                                int nRecLevel);
 
+    OGRLayerPool*       poLayerPool;
+
   public:
                         OGRVRTDataSource();
                         ~OGRVRTDataSource();
+
+    OGRLayer*           CreateLayer(CPLXMLNode *psLTree,
+                                    const char *pszVRTDirectory,
+                                    int bUpdate,
+                                    int nRecLevel = 0);
+
+    OGRLayer*           CreateLayerInternal(CPLXMLNode *psLTree,
+                                            const char *pszVRTDirectory,
+                                            int bUpdate,
+                                            int nRecLevel);
 
     int                 Initialize( CPLXMLNode *psXML, const char *pszName,
                                     int bUpdate );
