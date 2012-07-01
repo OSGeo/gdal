@@ -416,6 +416,29 @@ record cannot be found, the secondary derived fields will be NULL.  If more
 than one matching secondary field is found only the first will be used. 
 </ol>
 
+\section ogr_sql_union_all UNION ALL
+
+(OGR >= 2.0.0)
+
+The SQL engine can deal with several SELECT combined with
+UNION ALL. The effect of UNION ALL is to concatenate the rows returned by the right SELECT
+statement to the rows returned by the left SELECT statement.
+
+\code
+[(] SELECT field_list FROM first_layer [WHERE where_expr] [)]
+UNION ALL [(] SELECT field_list FROM second_layer [WHERE where_expr] [)]
+[UNION ALL [(] SELECT field_list FROM third_layer [WHERE where_expr] [)]]*
+\endcode
+
+\subsection ogr_sql_union_all_restrictions UNION ALL restrictions
+
+The processing of UNION ALL in OGR differs from the SQL standard, in which it accepts
+that the columns from the various SELECT are not identical. In that case, it will return
+a super-set of all the fields from each SELECT statement.
+
+There is also a restriction : ORDER BY can only be specified for each SELECT, and
+not at the level of the result of the union.
+
 \section ogr_sql_special_fields SPECIAL FIELDS
 
 The OGR SQL query processor treats some of the attributes of the features as

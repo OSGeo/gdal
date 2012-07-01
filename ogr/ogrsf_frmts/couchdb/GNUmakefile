@@ -11,4 +11,4 @@ default:	$(O_OBJ:.o=.$(OBJ_EXT))
 clean:
 	rm -f *.o $(O_OBJ)
 
-$(O_OBJ):	ogr_couchdb.h ../geojson/ogrgeojsonreader.h ../geojson/ogrgeojsonwriter.h
+$(O_OBJ):	ogr_couchdb.h ../../swq.h ../geojson/ogrgeojsonreader.h ../geojson/ogrgeojsonwriter.h

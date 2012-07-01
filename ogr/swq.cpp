@@ -218,6 +218,10 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
             nReturn = SWQT_DISTINCT;
         else if( EQUAL(osToken,"CAST") )
             nReturn = SWQT_CAST;
+        else if( EQUAL(osToken,"UNION") )
+            nReturn = SWQT_UNION;
+        else if( EQUAL(osToken,"ALL") )
+            nReturn = SWQT_ALL;
         else
         {
             *ppNode = new swq_expr_node( osToken );
@@ -668,7 +672,9 @@ static const char* apszSQLReservedKeywords[] = {
     "FROM",
     "AS",
     "ASC",
-    "DESC"
+    "DESC",
+    "UNION",
+    "ALL"
 };
 
 int swq_is_reserved_keyword(const char* pszStr)
