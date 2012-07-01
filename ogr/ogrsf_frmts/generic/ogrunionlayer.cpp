@@ -461,7 +461,7 @@ void OGRUnionLayer::AutoWarpLayerIfNecessary(int iLayer)
         else if (poSRS != NULL && poSRS2 != NULL &&
                  poSRS != poSRS2 && !poSRS->IsSame(poSRS2))
         {
-            CPLDebug("", "SRS of layer %s not consistant with layer SRS. "
+            CPLDebug("VRT", "SRS of layer %s not consistant with layer SRS. "
                      "Trying auto warping",
                      papoSrcLayers[iLayer]->GetName());
             OGRCoordinateTransformation* poCT =
