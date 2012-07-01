@@ -1735,7 +1735,7 @@ def ogr_vrt_30():
 
     f = open('tmp/ogr_vrt_30.vrt', 'wt')
     f.write("""<OGRVRTDataSource>
-    <OGRVRTUnionLayer name="union">
+    <OGRVRTUnionLayer name="union_layer">
         <OGRVRTLayer name="ogr_vrt_30_1">
             <SrcDataSource relativetoVRT="1">ogr_vrt_30_1.shp</SrcDataSource>
         </OGRVRTLayer>
@@ -1917,7 +1917,7 @@ def ogr_vrt_30():
     # Test various optional attributes
     f = open('tmp/ogr_vrt_30.vrt', 'wt')
     f.write("""<OGRVRTDataSource>
-    <OGRVRTUnionLayer name="union">
+    <OGRVRTUnionLayer name="union_layer">
         <OGRVRTLayer name="ogr_vrt_30_1">
             <SrcDataSource relativetoVRT="1">ogr_vrt_30_1.shp</SrcDataSource>
         </OGRVRTLayer>
