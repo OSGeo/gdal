@@ -100,6 +100,7 @@ OGRVRTDataSource::OGRVRTDataSource()
     nLayers = 0;
     psTree = NULL;
     nCallLevel = 0;
+    poLayerPool = NULL;
 }
 
 /************************************************************************/
@@ -120,6 +121,8 @@ OGRVRTDataSource::~OGRVRTDataSource()
 
     if( psTree != NULL)
         CPLDestroyXMLNode( psTree );
+
+    delete poLayerPool;
 }
 
 /************************************************************************/
@@ -550,13 +553,13 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                        CreateLayerInternal()                         */
 /************************************************************************/
 
-OGRLayer* OGRVRTDataSource::CreateLayer(CPLXMLNode *psLTree,
-                                        const char *pszVRTDirectory,
-                                        int bUpdate,
-                                        int nRecLevel)
+OGRLayer* OGRVRTDataSource::CreateLayerInternal(CPLXMLNode *psLTree,
+                                                const char *pszVRTDirectory,
+                                                int bUpdate,
+                                                int nRecLevel)
 {
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
@@ -585,6 +588,88 @@ OGRLayer* OGRVRTDataSource::CreateLayer(CPLXMLNode *psLTree,
     }
     else
         return NULL;
+}
+
+/************************************************************************/
+/*                        OGRVRTOpenProxiedLayer()                      */
+/************************************************************************/
+
+typedef struct
+{
+    OGRVRTDataSource* poDS;
+    CPLXMLNode *psNode;
+    char       *pszVRTDirectory;
+    int         bUpdate;
+} PooledInitData;
+
+static OGRLayer* OGRVRTOpenProxiedLayer(void* pUserData)
+{
+    PooledInitData* pData = (PooledInitData*) pUserData;
+    return pData->poDS->CreateLayerInternal(pData->psNode,
+                                            pData->pszVRTDirectory,
+                                            pData->bUpdate,
+                                            0);
+}
+
+/************************************************************************/
+/*                     OGRVRTFreeProxiedLayerUserData()                 */
+/************************************************************************/
+
+static void OGRVRTFreeProxiedLayerUserData(void* pUserData)
+{
+    PooledInitData* pData = (PooledInitData*) pUserData;
+    CPLFree(pData->pszVRTDirectory);
+    CPLFree(pData);
+}
+
+/************************************************************************/
+/*                            CreateLayer()                             */
+/************************************************************************/
+
+OGRLayer* OGRVRTDataSource::CreateLayer(CPLXMLNode *psLTree,
+                                        const char *pszVRTDirectory,
+                                        int bUpdate,
+                                        int nRecLevel)
+{
+    if( poLayerPool != NULL && EQUAL(psLTree->pszValue,"OGRVRTLayer"))
+    {
+        PooledInitData* pData = (PooledInitData*) CPLMalloc(sizeof(PooledInitData));
+        pData->poDS = this;
+        pData->psNode = psLTree;
+        pData->pszVRTDirectory = CPLStrdup(pszVRTDirectory);
+        pData->bUpdate = bUpdate;
+        return new OGRProxiedLayer(poLayerPool,
+                                    OGRVRTOpenProxiedLayer,
+                                    OGRVRTFreeProxiedLayerUserData,
+                                    pData);
+    }
+    else
+    {
+        return CreateLayerInternal(psLTree, pszVRTDirectory,
+                                    bUpdate, nRecLevel);
+    }
+}
+
+/************************************************************************/
+/*                           CountOGRVRTLayers()                        */
+/************************************************************************/
+
+static int CountOGRVRTLayers(CPLXMLNode *psTree)
+{
+    if( psTree->eType != CXT_Element )
+        return 0;
+
+    int nCount = 0;
+    if( EQUAL(psTree->pszValue, "OGRVRTLayer") )
+        nCount ++;
+
+    CPLXMLNode* psNode;
+    for( psNode=psTree->psChild; psNode != NULL; psNode=psNode->psNext )
+    {
+        nCount += CountOGRVRTLayers(psNode);
+    }
+
+    return nCount;
 }
 
 /************************************************************************/
@@ -619,6 +704,17 @@ int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName,
                   "this is not really an OGR VRT." );
         return FALSE;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Determine if we must proxy layers.                              */
+/* -------------------------------------------------------------------- */
+    int nOGRVRTLayerCount = CountOGRVRTLayers(psVRTDSXML);
+
+    int nMaxSimultaneouslyOpened = atoi(CPLGetConfigOption("OGR_VRT_MAX_OPENED", "100"));
+    if( nMaxSimultaneouslyOpened < 1 )
+        nMaxSimultaneouslyOpened = 1;
+    if( nOGRVRTLayerCount > nMaxSimultaneouslyOpened )
+        poLayerPool = new OGRLayerPool(nMaxSimultaneouslyOpened);
 
 /* -------------------------------------------------------------------- */
 /*      Look for layers.                                                */
