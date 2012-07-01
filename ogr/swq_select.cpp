@@ -53,6 +53,8 @@ swq_select::swq_select()
 
     order_specs = 0;
     order_defs = NULL;
+
+    poOtherSelect = NULL;
 }
 
 /************************************************************************/
@@ -114,8 +116,9 @@ swq_select::~swq_select()
         CPLFree( join_defs[i].secondary_field_name );
     }
     CPLFree( join_defs );
-}
 
+    delete poOtherSelect;
+}
 
 /************************************************************************/
 /*                              preparse()                              */
@@ -128,15 +131,6 @@ CPLErr swq_select::preparse( const char *select_statement )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Allocate a big field list.  It would be nice to make this       */
-/*      dynamic!                                                        */
-/* -------------------------------------------------------------------- */
-#define MAX_COLUMNS 250
-
-    column_defs = (swq_col_def *) CPLMalloc(sizeof(swq_col_def) * MAX_COLUMNS);
-    memset( column_defs, 0, sizeof(swq_col_def) * MAX_COLUMNS );
-
-/* -------------------------------------------------------------------- */
 /*      Prepare a parser context.                                       */
 /* -------------------------------------------------------------------- */
     swq_parse_context context;
@@ -144,8 +138,8 @@ CPLErr swq_select::preparse( const char *select_statement )
     context.pszInput = select_statement;
     context.pszNext = select_statement;
     context.nStartToken = SWQT_SELECT_START;
-    context.poSelect = this;
-    
+    context.poCurSelect = this;
+
 /* -------------------------------------------------------------------- */
 /*      Do the parse.                                                   */
 /* -------------------------------------------------------------------- */
@@ -155,12 +149,17 @@ CPLErr swq_select::preparse( const char *select_statement )
         return CE_Failure;
     }
 
-/* -------------------------------------------------------------------- */
-/*      resize the columns list properly.                               */
-/* -------------------------------------------------------------------- */
-    column_defs = (swq_col_def *) 
-        CPLRealloc( column_defs, sizeof(swq_col_def) * result_columns );
+    postpreparse();
 
+    return CE_None;
+}
+
+/************************************************************************/
+/*                          postpreparse()                              */
+/************************************************************************/
+
+void swq_select::postpreparse()
+{
 /* -------------------------------------------------------------------- */
 /*      Reorder the joins in the order they appear in the SQL string.   */
 /* -------------------------------------------------------------------- */
@@ -179,7 +178,8 @@ CPLErr swq_select::preparse( const char *select_statement )
         CPLAssert(join_defs[i].secondary_table == i + 1);
     }
 
-    return CE_None;
+    if( poOtherSelect != NULL)
+        poOtherSelect->postpreparse();
 }
 
 /************************************************************************/
@@ -536,6 +536,15 @@ void swq_select::PushJoin( int iSecondaryTable,
     join_defs[join_count-1].secondary_field = -1;
 }
 
+/************************************************************************/
+/*                             PushUnionAll()                           */
+/************************************************************************/
+
+void swq_select::PushUnionAll( swq_select* poOtherSelectIn )
+{
+    CPLAssert(poOtherSelect == NULL);
+    poOtherSelect = poOtherSelectIn;
+}
 
 /************************************************************************/
 /*                          expand_wildcard()                           */

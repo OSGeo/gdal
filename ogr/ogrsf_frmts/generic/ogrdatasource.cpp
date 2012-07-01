@@ -34,6 +34,7 @@
 #include "ogr_gensql.h"
 #include "ogr_attrind.h"
 #include "cpl_multiproc.h"
+#include "ogrunionlayer.h"
 
 CPL_CVSID("$Id$");
 
@@ -1299,13 +1300,6 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
 
     (void) pszDialect;
 
-    swq_field_list sFieldList;
-    int            nFIDIndex = 0;
-    OGRGenSQLResultsLayer *poResults = NULL;
-    char *pszWHERE = NULL;
-
-    memset( &sFieldList, 0, sizeof(sFieldList) );
-
 /* -------------------------------------------------------------------- */
 /*      Handle CREATE INDEX statements specially.                       */
 /* -------------------------------------------------------------------- */
@@ -1386,6 +1380,77 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
         delete psSelectInfo;
         return NULL;
     }
+
+/* -------------------------------------------------------------------- */
+/*      If there is no UNION ALL, build result layer.                   */
+/* -------------------------------------------------------------------- */
+    if( psSelectInfo->poOtherSelect == NULL )
+    {
+        return BuildLayerFromSelectInfo(psSelectInfo,
+                                        poSpatialFilter,
+                                        pszDialect);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Build result union layer.                                       */
+/* -------------------------------------------------------------------- */
+    int nSrcLayers = 0;
+    OGRLayer** papoSrcLayers = NULL;
+
+    do
+    {
+        swq_select* psNextSelectInfo = psSelectInfo->poOtherSelect;
+        psSelectInfo->poOtherSelect = NULL;
+
+        OGRLayer* poLayer = BuildLayerFromSelectInfo(psSelectInfo,
+                                                     poSpatialFilter,
+                                                     pszDialect);
+        if( poLayer == NULL )
+        {
+            /* Each source layer owns an independant select info */
+            for(int i=0;i<nSrcLayers;i++)
+                delete papoSrcLayers[i];
+            CPLFree(papoSrcLayers);
+
+            /* So we just have to destroy the remaining select info */
+            delete psNextSelectInfo;
+
+            return NULL;
+        }
+        else
+        {
+            papoSrcLayers = (OGRLayer**) CPLRealloc(papoSrcLayers,
+                                sizeof(OGRLayer*) * (nSrcLayers + 1));
+            papoSrcLayers[nSrcLayers] = poLayer;
+            nSrcLayers ++;
+
+            psSelectInfo = psNextSelectInfo;
+        }
+    }
+    while( psSelectInfo != NULL );
+
+    return new OGRUnionLayer("SELECT",
+                                nSrcLayers,
+                                papoSrcLayers,
+                                TRUE);
+}
+
+/************************************************************************/
+/*                        BuildLayerFromSelectInfo()                    */
+/************************************************************************/
+
+OGRLayer* OGRDataSource::BuildLayerFromSelectInfo(void* psSelectInfoIn,
+                                                  OGRGeometry *poSpatialFilter,
+                                                  const char *pszDialect)
+{
+    swq_select* psSelectInfo = (swq_select*) psSelectInfoIn;
+
+    swq_field_list sFieldList;
+    int            nFIDIndex = 0;
+    OGRGenSQLResultsLayer *poResults = NULL;
+    char *pszWHERE = NULL;
+
+    memset( &sFieldList, 0, sizeof(sFieldList) );
 
 /* -------------------------------------------------------------------- */
 /*      Validate that all the source tables are recognised, count       */
@@ -1540,7 +1605,7 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
 /*      Everything seems OK, try to instantiate a results layer.        */
 /* -------------------------------------------------------------------- */
 
-    poResults = new OGRGenSQLResultsLayer( this, psSelectInfo, 
+    poResults = new OGRGenSQLResultsLayer( this, psSelectInfo,
                                            poSpatialFilter,
                                            pszWHERE,
                                            pszDialect );

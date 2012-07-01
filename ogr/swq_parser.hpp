@@ -61,13 +61,15 @@
      SWQT_DESC = 277,
      SWQT_DISTINCT = 278,
      SWQT_CAST = 279,
-     SWQT_LOGICAL_START = 280,
-     SWQT_VALUE_START = 281,
-     SWQT_SELECT_START = 282,
-     SWQT_NOT = 283,
-     SWQT_OR = 284,
-     SWQT_AND = 285,
-     SWQT_UMINUS = 286
+     SWQT_UNION = 280,
+     SWQT_ALL = 281,
+     SWQT_LOGICAL_START = 282,
+     SWQT_VALUE_START = 283,
+     SWQT_SELECT_START = 284,
+     SWQT_NOT = 285,
+     SWQT_OR = 286,
+     SWQT_AND = 287,
+     SWQT_UMINUS = 288
    };
 #endif
 
