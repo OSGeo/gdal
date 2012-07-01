@@ -81,6 +81,7 @@ class OGRUnionLayer : public OGRLayer
     int                 nNextFID;
     int                *panMap;
     char              **papszIgnoredFields;
+    int                 bAttrFilterPassThroughValue;
     int                *pabModifiedLayers;
     int                *pabCheckIfAutoWrap;
 
