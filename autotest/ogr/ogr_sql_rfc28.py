@@ -769,6 +769,7 @@ gdaltest_list = [
     ogr_rfc28_28,
     ogr_rfc28_29,
     ogr_rfc28_30,
+    ogr_rfc28_31,
     ogr_rfc28_32,
     ogr_rfc28_cleanup ]
 
