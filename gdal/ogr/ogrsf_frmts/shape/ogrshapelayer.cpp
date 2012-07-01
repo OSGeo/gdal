@@ -53,7 +53,8 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
                               SHPHandle hSHPIn, DBFHandle hDBFIn, 
                               OGRSpatialReference *poSRSIn, int bSRSSetIn,
                               int bUpdate,
-                              OGRwkbGeometryType eReqType )
+                              OGRwkbGeometryType eReqType ) :
+                                OGRAbstractProxiedLayer(poDSIn->GetPool())
 
 {
     poDS = poDSIn;
@@ -99,9 +100,6 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
 
     bTruncationWarningEmitted = FALSE;
 
-    /* Init info for the LRU layer mechanism */
-    poPrevLayer = NULL;
-    poNextLayer = NULL;
     bHSHPWasNonNULL = hSHPIn != NULL;
     bHDBFWasNonNULL = hDBFIn != NULL;
     eFileDescriptorsState = FD_OPENED;
@@ -147,9 +145,6 @@ OGRShapeLayer::~OGRShapeLayer()
     {
         ResizeDBF();
     }
-
-    /* Remove us from the list of LRU layers if necessary */
-    poDS->UnchainLayer(this);
 
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
@@ -2608,12 +2603,12 @@ int OGRShapeLayer::ReopenFileDescriptors()
 }
 
 /************************************************************************/
-/*                        CloseFileDescriptors()                        */
+/*                        CloseUnderlyingLayer()                        */
 /************************************************************************/
 
-void OGRShapeLayer::CloseFileDescriptors()
+void OGRShapeLayer::CloseUnderlyingLayer()
 {
-    CPLDebug("SHAPE", "CloseFileDescriptors(%s)", pszFullName);
+    CPLDebug("SHAPE", "CloseUnderlyingLayer(%s)", pszFullName);
 
     if( hDBF != NULL )
         DBFClose( hDBF );
