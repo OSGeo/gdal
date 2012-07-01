@@ -1074,6 +1074,10 @@ int* SHPSearchDiskTreeEx( SHPTreeDiskHandle hDiskTree,
 /*      Sort the id array                                               */
 /* -------------------------------------------------------------------- */
     qsort(panResultBuffer, *pnShapeCount, sizeof(int), compare_ints);
+
+    /* To distinguish between empty intersection from error case */
+    if( panResultBuffer == NULL )
+        panResultBuffer = (int*) calloc(1, sizeof(int));
     
     return panResultBuffer;
 }
