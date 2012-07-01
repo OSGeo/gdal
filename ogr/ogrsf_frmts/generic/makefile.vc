@@ -2,7 +2,7 @@
 OBJ	=	ogrsfdriverregistrar.obj ogrlayer.obj ogr_gensql.obj \
 		ogrdatasource.obj ogrsfdriver.obj ogrregisterall.obj \
 		ogr_attrind.obj ogr_miattrind.obj ogrlayerdecorator.obj \
-		ogrwarpedlayer.obj ogrunionlayer.obj
+		ogrwarpedlayer.obj ogrunionlayer.obj ogrlayerpool.obj
 
 
 GDAL_ROOT	=	..\..\..
