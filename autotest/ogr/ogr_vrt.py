@@ -1907,6 +1907,13 @@ def ogr_vrt_30():
     import test_cli_utilities
     if test_cli_utilities.get_test_ogrsf_path() is not None:
 
+        ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/ogr_vrt_30.vrt --config OGR_VRT_MAX_OPENED 1')
+
+        if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+            gdaltest.post_reason('fail')
+            print(ret)
+            return 'fail'
+
         ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/ogr_vrt_30.vrt')
 
         if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
