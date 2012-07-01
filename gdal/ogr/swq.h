@@ -172,7 +172,7 @@ public:
 
 class swq_parse_context {
 public:
-    swq_parse_context() : nStartToken(0), poRoot(NULL), poSelect(NULL) {}
+    swq_parse_context() : nStartToken(0), poRoot(NULL), poCurSelect(NULL) {}
 
     int        nStartToken;
     const char *pszInput;
@@ -180,7 +180,7 @@ public:
 
     swq_expr_node *poRoot;
 
-    swq_select    *poSelect;
+    swq_select    *poCurSelect;
 };
 
 /* Compile an SQL WHERE clause into an internal form.  The field_list is
@@ -305,9 +305,13 @@ public:
 
     void        PushOrderBy( const char *pszFieldName, int bAscending );
     int         order_specs;
-    swq_order_def *order_defs;    
+    swq_order_def *order_defs;
+
+    swq_select *poOtherSelect;
+    void        PushUnionAll( swq_select* poOtherSelectIn );
 
     CPLErr      preparse( const char *select_statement );
+    void        postpreparse();
     CPLErr      expand_wildcard( swq_field_list *field_list );
     CPLErr      parse( swq_field_list *field_list, int parse_flags );
 

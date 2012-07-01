@@ -51,6 +51,9 @@ class OGRSFDriver;
  *
  */
 
+/* Note: any virtual method added to this class must also be added in the */
+/* OGRLayerDecorator class. */
+
 class CPL_DLL OGRLayer
 {
   protected:
@@ -161,6 +164,10 @@ class CPL_DLL OGRDataSource
     friend class OGRSFDriverRegistrar;
 
     void        *m_hMutex;
+
+    OGRLayer*       BuildLayerFromSelectInfo(void* psSelectInfo,
+                                             OGRGeometry *poSpatialFilter,
+                                             const char *pszDialect);
 
   public:
 

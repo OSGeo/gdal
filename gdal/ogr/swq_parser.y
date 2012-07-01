@@ -78,6 +78,8 @@ static void swqerror( swq_parse_context *context, const char *msg )
 %token SWQT_DESC
 %token SWQT_DISTINCT
 %token SWQT_CAST
+%token SWQT_UNION
+%token SWQT_ALL
 
 %token SWQT_LOGICAL_START
 %token SWQT_VALUE_START
@@ -492,10 +494,24 @@ type_def:
 	}
 
 select_statement: 
-	SWQT_SELECT select_field_list SWQT_FROM table_def opt_joins opt_where opt_order_by
-	{
-	    delete $4;
-	}
+	select_core opt_union_all
+    | '(' select_core ')' opt_union_all
+
+select_core:
+    SWQT_SELECT select_field_list SWQT_FROM table_def opt_joins opt_where opt_order_by
+    {
+        delete $4;
+    }
+
+opt_union_all:
+    | union_all select_statement
+
+union_all: SWQT_UNION SWQT_ALL
+    {
+        swq_select* poNewSelect = new swq_select();
+        context->poCurSelect->PushUnionAll(poNewSelect);
+        context->poCurSelect = poNewSelect;
+    }
 
 select_field_list:
 	column_spec
@@ -504,7 +520,7 @@ select_field_list:
 column_spec: 
 	 SWQT_DISTINCT field_value
 	    {
-		if( !context->poSelect->PushField( $2, NULL, TRUE ) )
+		if( !context->poCurSelect->PushField( $2, NULL, TRUE ) )
         {
             delete $2;
 		    YYERROR;
@@ -513,7 +529,7 @@ column_spec:
 
     | SWQT_DISTINCT SWQT_STRING
         {
-        if( !context->poSelect->PushField( $2, NULL, TRUE ) )
+        if( !context->poCurSelect->PushField( $2, NULL, TRUE ) )
         {
             delete $2;
             YYERROR;
@@ -522,7 +538,7 @@ column_spec:
 
     | value_expr
 	    {
-		if( !context->poSelect->PushField( $1 ) )
+		if( !context->poCurSelect->PushField( $1 ) )
         {
             delete $1;
 		    YYERROR;
@@ -531,7 +547,7 @@ column_spec:
 
 	| SWQT_DISTINCT field_value SWQT_AS string_or_identifier
 	    {
-		if( !context->poSelect->PushField( $2, $4->string_value, TRUE ))
+		if( !context->poCurSelect->PushField( $2, $4->string_value, TRUE ))
         {
             delete $2;
             delete $4;
@@ -543,7 +559,7 @@ column_spec:
 
 	| value_expr SWQT_AS string_or_identifier
 	    {
-		if( !context->poSelect->PushField( $1, $3->string_value ) )
+		if( !context->poCurSelect->PushField( $1, $3->string_value ) )
         {
             delete $1;
             delete $3;
@@ -559,7 +575,7 @@ column_spec:
 		poNode->string_value = CPLStrdup( "*" );
 		poNode->table_index = poNode->field_index = -1;
 
-		if( !context->poSelect->PushField( poNode ) )
+		if( !context->poCurSelect->PushField( poNode ) )
         {
             delete poNode;
 		    YYERROR;
@@ -581,7 +597,7 @@ column_spec:
 		poNode->string_value = CPLStrdup( osQualifiedField );
 		poNode->table_index = poNode->field_index = -1;
 
-		if( !context->poSelect->PushField( poNode ) )
+		if( !context->poCurSelect->PushField( poNode ) )
         {
             delete poNode;
 		    YYERROR;
@@ -611,7 +627,7 @@ column_spec:
 		swq_expr_node *count = new swq_expr_node( (swq_op)SWQ_COUNT );
 		count->PushSubExpression( poNode );
 
-		if( !context->poSelect->PushField( count ) )
+		if( !context->poCurSelect->PushField( count ) )
         {
             delete count;
 		    YYERROR;
@@ -642,7 +658,7 @@ column_spec:
 		swq_expr_node *count = new swq_expr_node( (swq_op)SWQ_COUNT );
 		count->PushSubExpression( poNode );
 
-		if( !context->poSelect->PushField( count, $6->string_value ) )
+		if( !context->poCurSelect->PushField( count, $6->string_value ) )
         {
             delete count;
             delete $6;
@@ -669,7 +685,7 @@ column_spec:
                 swq_expr_node *count = new swq_expr_node( SWQ_COUNT );
                 count->PushSubExpression( $4 );
                 
-		if( !context->poSelect->PushField( count, NULL, TRUE ) )
+		if( !context->poCurSelect->PushField( count, NULL, TRUE ) )
         {
             delete count;
 		    YYERROR;
@@ -692,7 +708,7 @@ column_spec:
                 swq_expr_node *count = new swq_expr_node( SWQ_COUNT );
                 count->PushSubExpression( $4 );
                 
-		if( !context->poSelect->PushField( count, $7->string_value, TRUE ) )
+		if( !context->poCurSelect->PushField( count, $7->string_value, TRUE ) )
         {
             delete $1;
             delete count;
@@ -707,13 +723,13 @@ column_spec:
 opt_where:  
 	| SWQT_WHERE logical_expr
 	    {	     
-	    	 context->poSelect->where_expr = $2;
+	    	 context->poCurSelect->where_expr = $2;
 	    }
 
 opt_joins:
         | SWQT_JOIN table_def SWQT_ON field_value '=' field_value opt_joins
 	    {
-	        context->poSelect->PushJoin( $2->int_value, 
+	        context->poCurSelect->PushJoin( $2->int_value,
 					     $4->string_value, 
 					     $6->string_value );
                 delete $2;
@@ -722,7 +738,7 @@ opt_joins:
 	    }
         | SWQT_LEFT SWQT_JOIN table_def SWQT_ON field_value '=' field_value opt_joins
 	    {
-	        context->poSelect->PushJoin( $3->int_value, 
+	        context->poCurSelect->PushJoin( $3->int_value,
 					     $5->string_value, 
 					     $7->string_value );
                 delete $3;
@@ -740,19 +756,19 @@ sort_spec_list:
 sort_spec:
 	field_value
             {
-                context->poSelect->PushOrderBy( $1->string_value, TRUE );
+                context->poCurSelect->PushOrderBy( $1->string_value, TRUE );
                 delete $1;
                 $1 = NULL;
             }
 	| field_value SWQT_ASC
             {
-                context->poSelect->PushOrderBy( $1->string_value, TRUE );
+                context->poCurSelect->PushOrderBy( $1->string_value, TRUE );
                 delete $1;
                 $1 = NULL;
             }
 	| field_value SWQT_DESC
             {
-                context->poSelect->PushOrderBy( $1->string_value, FALSE );
+                context->poCurSelect->PushOrderBy( $1->string_value, FALSE );
                 delete $1;
                 $1 = NULL;
             }
@@ -771,7 +787,7 @@ table_def:
 	string_or_identifier
 	{
 	    int iTable;
-	    iTable =context->poSelect->PushTableDef( NULL, $1->string_value, 
+	    iTable =context->poCurSelect->PushTableDef( NULL, $1->string_value,
 	    	   				     	   NULL );
 	    delete $1;
 
@@ -781,7 +797,7 @@ table_def:
 	| string_or_identifier SWQT_IDENTIFIER
 	{
 	    int iTable;
-	    iTable = context->poSelect->PushTableDef( NULL, $1->string_value, 
+	    iTable = context->poCurSelect->PushTableDef( NULL, $1->string_value,
 	    					      $2->string_value );
 	    delete $1;
 	    delete $2;
@@ -792,7 +808,7 @@ table_def:
 	| SWQT_STRING '.' string_or_identifier
 	{
 	    int iTable;
-	    iTable = context->poSelect->PushTableDef( $1->string_value, 
+	    iTable = context->poCurSelect->PushTableDef( $1->string_value,
 	    					      $3->string_value, NULL );
 	    delete $1;
 	    delete $3;
@@ -803,7 +819,7 @@ table_def:
 	| SWQT_STRING '.' string_or_identifier SWQT_IDENTIFIER
 	{
 	    int iTable;
-	    iTable = context->poSelect->PushTableDef( $1->string_value, 
+	    iTable = context->poCurSelect->PushTableDef( $1->string_value,
 	    				     	      $3->string_value, 
 					     	      $4->string_value );
 	    delete $1;
