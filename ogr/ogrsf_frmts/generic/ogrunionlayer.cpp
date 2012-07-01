@@ -69,6 +69,7 @@ OGRUnionLayer::OGRUnionLayer( const char* pszName,
     nNextFID = 0;
     panMap = NULL;
     papszIgnoredFields = NULL;
+    bAttrFilterPassThroughValue = -1;
 
     pabModifiedLayers = (int*)CPLCalloc(sizeof(int), nSrcLayers);
     pabCheckIfAutoWrap = (int*)CPLCalloc(sizeof(int), nSrcLayers);
@@ -449,6 +450,9 @@ void OGRUnionLayer::AutoWarpLayerIfNecessary(int iLayer)
         pabCheckIfAutoWrap[iLayer] = TRUE;
 
         OGRSpatialReference* poSRS = GetSpatialRef();
+        if( poSRS != NULL )
+            poSRS->Reference();
+
         OGRSpatialReference* poSRS2 = papoSrcLayers[iLayer]->GetSpatialRef();
 
         if( (poSRS == NULL && poSRS2 != NULL) ||
@@ -472,6 +476,9 @@ void OGRUnionLayer::AutoWarpLayerIfNecessary(int iLayer)
                 papoSrcLayers[iLayer] = new OGRWarpedLayer(
                             papoSrcLayers[iLayer], TRUE, poCT, poReversedCT);
         }
+
+        if( poSRS != NULL )
+            poSRS->Release();
     }
 }
 
@@ -679,6 +686,9 @@ int OGRUnionLayer::GetAttrFilterPassThroughValue()
     if( m_poAttrQuery == NULL )
         return TRUE;
 
+    if( bAttrFilterPassThroughValue >= 0)
+        return bAttrFilterPassThroughValue;
+
     char** papszUsedFields = m_poAttrQuery->GetUsedFields();
     int bRet = TRUE;
 
@@ -709,6 +719,8 @@ int OGRUnionLayer::GetAttrFilterPassThroughValue()
     }
 
     CSLDestroy(papszUsedFields);
+
+    bAttrFilterPassThroughValue = bRet;
 
     return bRet;
 }
@@ -767,6 +779,8 @@ OGRErr OGRUnionLayer::SetAttributeFilter( const char * pszAttributeFilterIn )
         return OGRERR_NONE;
 
     if( poFeatureDefn == NULL ) GetLayerDefn();
+
+    bAttrFilterPassThroughValue = -1;
 
     OGRErr eErr = OGRLayer::SetAttributeFilter(pszAttributeFilterIn);
     if( eErr != OGRERR_NONE )
