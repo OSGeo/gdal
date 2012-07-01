@@ -1,11 +1,11 @@
 
-OBJ	=	ogrvrtdriver.obj ogrvrtdatasource.obj ogrvrtlayer.obj \
+OBJ	=	ogrvrtdriver.obj ogrvrtdatasource.obj ogrvrtlayer.obj
 
 GDAL_ROOT	=	..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-EXTRAFLAGS = -I.. -I..\..
+EXTRAFLAGS = -I.. -I..\.. -I..\generic
 
 default:	$(OBJ)
 
