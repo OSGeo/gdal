@@ -111,6 +111,9 @@ class OGRVRTLayer : public OGRLayer
     OGRFeatureDefn     *GetSrcLayerDefn();
     void                ClipAndAssignSRS(OGRFeature* poFeature);
 
+    int                 nFeatureCount;
+    OGREnvelope         sStaticEnvelope;
+
   public:
                         OGRVRTLayer(OGRVRTDataSource* poDSIn);
     virtual             ~OGRVRTLayer();
@@ -161,6 +164,8 @@ class OGRVRTLayer : public OGRLayer
     virtual OGRErr      StartTransaction();
     virtual OGRErr      CommitTransaction();
     virtual OGRErr      RollbackTransaction();
+
+    virtual OGRErr      SetIgnoredFields( const char **papszFields );
 };
 
 /************************************************************************/
@@ -169,7 +174,7 @@ class OGRVRTLayer : public OGRLayer
 
 class OGRVRTDataSource : public OGRDataSource
 {
-    OGRVRTLayer        **papoLayers;
+    OGRLayer          **papoLayers;
     int                 nLayers;
     
     char               *pszName;
@@ -179,6 +184,19 @@ class OGRVRTDataSource : public OGRDataSource
     int                 nCallLevel;
 
     std::set<std::string> aosOtherDSNameSet;
+
+    OGRLayer*           CreateLayer(CPLXMLNode *psLTree,
+                                    const char *pszVRTDirectory,
+                                    int bUpdate,
+                                    int nRecLevel = 0);
+    OGRLayer*           InstanciateWarpedLayer(CPLXMLNode *psLTree,
+                                               const char *pszVRTDirectory,
+                                               int bUpdate,
+                                               int nRecLevel);
+    OGRLayer*           InstanciateUnionLayer(CPLXMLNode *psLTree,
+                                               const char *pszVRTDirectory,
+                                               int bUpdate,
+                                               int nRecLevel);
 
   public:
                         OGRVRTDataSource();
@@ -216,6 +234,7 @@ class OGRVRTDriver : public OGRSFDriver
     int         TestCapability( const char * );
 };
 
+OGRwkbGeometryType OGRVRTGetGeometryType(const char* pszGType, int* pbError);
 
 #endif /* ndef _OGR_VRT_H_INCLUDED */
 

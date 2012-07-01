@@ -34,6 +34,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 import ogrtest
 import ogr
+import osr
 import gdal
 
 ###############################################################################
@@ -1551,6 +1552,630 @@ def ogr_vrt_28():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test OGRVRTWarpedLayer
+
+def ogr_vrt_29():
+
+    try:
+        os.unlink('tmp/ogr_vrt_29.shp')
+        os.unlink('tmp/ogr_vrt_29.shx')
+        os.unlink('tmp/ogr_vrt_29.dbf')
+        os.unlink('tmp/ogr_vrt_29.prj')
+    except:
+        pass
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_vrt_29.shp')
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer('ogr_vrt_29', srs = sr)
+    lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
+
+    for i in range(5):
+        for j in range(5):
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat.SetField(0, i * 5 + j)
+            feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%f %f)' % (2 + i / 5.0, 49 + j / 5.0)))
+            lyr.CreateFeature(feat)
+            feat = None
+
+    ds = None
+
+    f = open('tmp/ogr_vrt_29.vrt', 'wt')
+    f.write("""<OGRVRTDataSource>
+    <OGRVRTWarpedLayer>
+        <OGRVRTLayer name="ogr_vrt_29">
+            <SrcDataSource relativetoVRT="1">ogr_vrt_29.shp</SrcDataSource>
+        </OGRVRTLayer>
+        <TargetSRS>EPSG:32631</TargetSRS>
+    </OGRVRTWarpedLayer>
+</OGRVRTDataSource>\n""")
+    f.close()
+
+    # Check reprojection in both directions
+    ds = ogr.Open('tmp/ogr_vrt_29.vrt', update = 1)
+    lyr = ds.GetLayer(0)
+
+    sr = lyr.GetSpatialRef()
+    got_wkt = sr.ExportToWkt()
+    if got_wkt.find('32631') == -1:
+        gdaltest.post_reason('did not get expected WKT')
+        print(got_wkt)
+        return 'fail'
+
+    bb = lyr.GetExtent()
+    expected_bb = (426857.98771727527, 485607.2165091355, 5427475.0501426803, 5516873.8591036052)
+
+    for i in range(4):
+        if abs(bb[i] - expected_bb[i]) > 1:
+            gdaltest.post_reason('did not get expected extent')
+            print(bb)
+            return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat, 'POINT(426857.987717275274917 5427937.523466162383556)') != 0:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(500000 0)'))
+    lyr.SetFeature(feat)
+    feat = None
+
+    lyr.SetSpatialFilterRect(499999,-1,500001,1)
+    lyr.ResetReading()
+
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat, 'POINT(500000 0)') != 0:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    ds = None
+
+    # Check in .shp file
+    ds = ogr.Open('tmp/ogr_vrt_29.shp', update = 1)
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(feat, 'POINT(3.0 0.0)') != 0:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    ds = None
+
+    # Check with test_ogrsf
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is not None:
+
+        ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/ogr_vrt_29.vrt')
+
+        if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+            gdaltest.post_reason('fail')
+            print(ret)
+            return 'fail'
+
+    try:
+        os.unlink('tmp/ogr_vrt_29.shp')
+        os.unlink('tmp/ogr_vrt_29.shx')
+        os.unlink('tmp/ogr_vrt_29.dbf')
+        os.unlink('tmp/ogr_vrt_29.prj')
+    except:
+        pass
+    os.unlink('tmp/ogr_vrt_29.vrt')
+
+    return 'success'
+
+
+###############################################################################
+# Test OGRVRTUnionLayer
+
+def ogr_vrt_30():
+
+    for filename in [ 'tmp/ogr_vrt_30_1.shp',
+                      'tmp/ogr_vrt_30_1.shx',
+                      'tmp/ogr_vrt_30_1.dbf',
+                      'tmp/ogr_vrt_30_1.prj',
+                      'tmp/ogr_vrt_30_1.qix',
+                      'tmp/ogr_vrt_30_2.shp',
+                      'tmp/ogr_vrt_30_2.shx',
+                      'tmp/ogr_vrt_30_2.dbf',
+                      'tmp/ogr_vrt_30_2.prj',
+                      'tmp/ogr_vrt_30_2.qix' ]:
+        try:
+            os.unlink(filename)
+        except:
+            pass
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_vrt_30_1.shp')
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer('ogr_vrt_30_1', srs = sr)
+    lyr.CreateField(ogr.FieldDefn('id1', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('id2', ogr.OFTInteger))
+
+    for i in range(5):
+        for j in range(5):
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat.SetField(0, i * 5 + j)
+            feat.SetField(1, 100 + i * 5 + j)
+            feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%f %f)' % (2 + i / 5.0, 49 + j / 5.0)))
+            lyr.CreateFeature(feat)
+            feat = None
+
+    ds.ExecuteSQL('CREATE SPATIAL INDEX ON ogr_vrt_30_1')
+
+    ds = None
+
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_vrt_30_2.shp')
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer('ogr_vrt_30_2', srs = sr)
+    lyr.CreateField(ogr.FieldDefn('id2', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('id3', ogr.OFTInteger))
+
+    for i in range(5):
+        for j in range(5):
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat.SetField(0, 200 + i * 5 + j)
+            feat.SetField(1, 300 + i * 5 + j)
+            feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%f %f)' % (4 + i / 5.0, 49 + j / 5.0)))
+            lyr.CreateFeature(feat)
+            feat = None
+
+    ds.ExecuteSQL('CREATE SPATIAL INDEX ON ogr_vrt_30_2')
+
+    ds = None
+
+    f = open('tmp/ogr_vrt_30.vrt', 'wt')
+    f.write("""<OGRVRTDataSource>
+    <OGRVRTUnionLayer name="union">
+        <OGRVRTLayer name="ogr_vrt_30_1">
+            <SrcDataSource relativetoVRT="1">ogr_vrt_30_1.shp</SrcDataSource>
+        </OGRVRTLayer>
+        <OGRVRTLayer name="ogr_vrt_30_2">
+            <SrcDataSource relativetoVRT="1">ogr_vrt_30_2.shp</SrcDataSource>
+        </OGRVRTLayer>
+    </OGRVRTUnionLayer>
+</OGRVRTDataSource>\n""")
+    f.close()
+
+    # Check
+
+    for check in range(10):
+        ds = ogr.Open('tmp/ogr_vrt_30.vrt', update = 1)
+        lyr = ds.GetLayer(0)
+
+        if check == 0:
+            sr = lyr.GetSpatialRef()
+            got_wkt = sr.ExportToWkt()
+            if got_wkt.find('GEOGCS["GCS_WGS_1984"') == -1:
+                gdaltest.post_reason('did not get expected WKT')
+                print(got_wkt)
+                return 'fail'
+        elif check == 1:
+            bb = lyr.GetExtent()
+            expected_bb = (2.0, 4.7999999999999998, 49.0, 49.799999999999997)
+
+            for i in range(4):
+                if abs(bb[i] - expected_bb[i]) > 1:
+                    gdaltest.post_reason('did not get expected extent')
+                    print(bb)
+                    return 'fail'
+        elif check == 2:
+            feat_count = lyr.GetFeatureCount()
+            if feat_count != 2 * 5 * 5:
+                gdaltest.post_reason('did not get expected feature count')
+                print(feat_count)
+                return 'fail'
+        elif check == 3:
+            if lyr.GetLayerDefn().GetFieldCount() != 3:
+                gdaltest.post_reason('did not get expected field count')
+                return 'fail'
+        elif check == 4:
+            feat = lyr.GetNextFeature()
+            i = 0
+            while feat is not None:
+                if i < 5 * 5:
+                    if feat.GetFID() != i:
+                        gdaltest.post_reason('did not get expected value')
+                        print(feat.GetFID())
+                        return 'fail'
+                    if feat.GetFieldAsInteger("id1") != i:
+                        gdaltest.post_reason('did not get expected value')
+                        return 'fail'
+                    if feat.GetFieldAsInteger("id2") != 100 + i:
+                        gdaltest.post_reason('did not get expected value')
+                        return 'fail'
+                    if feat.IsFieldSet("id3"):
+                        gdaltest.post_reason('did not get expected value')
+                        return 'fail'
+                    if ogrtest.check_feature_geometry(feat, 'POINT(%f %f)' % (2 + int(i / 5) / 5.0, 49 + int(i % 5) / 5.0)) != 0:
+                        gdaltest.post_reason('did not get expected value')
+                        return 'fail'
+                else:
+                    if feat.GetFID() != i:
+                        gdaltest.post_reason('did not get expected value')
+                        print(feat.GetFID())
+                        return 'fail'
+                    if feat.IsFieldSet("id1"):
+                        gdaltest.post_reason('did not get expected value')
+                        return 'fail'
+                    if feat.GetFieldAsInteger("id2") != 200 + i - 5 * 5:
+                        gdaltest.post_reason('did not get expected value')
+                        return 'fail'
+                    if feat.GetFieldAsInteger("id3") != 300 + i - 5 * 5:
+                        gdaltest.post_reason('did not get expected value')
+                        return 'fail'
+                    if ogrtest.check_feature_geometry(feat, 'POINT(%f %f)' % (4 + int((i - 5 * 5) / 5) / 5.0, 49 + int((i - 5 * 5) % 5) / 5.0)) != 0:
+                        gdaltest.post_reason('did not get expected value')
+                        return 'fail'
+
+                i = i + 1
+                feat = lyr.GetNextFeature()
+
+        elif check == 5:
+            if lyr.GetGeomType() != ogr.wkbPoint:
+                gdaltest.post_reason('did not get expected geom type')
+                return 'fail'
+
+        elif check == 6:
+            if lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
+                gdaltest.post_reason('did not get expected capability')
+                return 'fail'
+
+            if lyr.TestCapability(ogr.OLCFastGetExtent) != 1:
+                gdaltest.post_reason('did not get expected capability')
+                return 'fail'
+
+            if lyr.TestCapability(ogr.OLCFastSpatialFilter) != 1:
+                gdaltest.post_reason('did not get expected capability')
+                return 'fail'
+
+            if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
+                gdaltest.post_reason('did not get expected capability')
+                return 'fail'
+
+            if lyr.TestCapability(ogr.OLCIgnoreFields) != 1:
+                gdaltest.post_reason('did not get expected capability')
+                return 'fail'
+
+            if lyr.TestCapability(ogr.OLCRandomWrite) != 0:
+                gdaltest.post_reason('did not get expected capability')
+                return 'fail'
+
+            if lyr.TestCapability(ogr.OLCSequentialWrite) != 0:
+                gdaltest.post_reason('did not get expected capability')
+                return 'fail'
+
+        elif check == 7:
+            lyr.SetSpatialFilterRect(2.49, 49.29, 4.49, 49.69)
+            if lyr.GetFeatureCount() != 10:
+                print(lyr.GetFeatureCount())
+                gdaltest.post_reason('did not get expected feature count')
+                return 'fail'
+
+        elif check == 8:
+            lyr.SetAttributeFilter('id1 = 0')
+            if lyr.GetFeatureCount() != 1:
+                print(lyr.GetFeatureCount())
+                gdaltest.post_reason('did not get expected feature count')
+                return 'fail'
+
+        elif check == 9:
+            # CreateFeature() should fail
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat.SetField('id2', 12345)
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
+            ret = lyr.CreateFeature(feat)
+            gdal.PopErrorHandler()
+            if ret == 0:
+                gdaltest.post_reason('should have failed')
+                return 'fail'
+            feat = None
+
+            # SetFeature() should fail
+            lyr.ResetReading()
+            feat = lyr.GetNextFeature()
+            feat.SetField('id2', 45321)
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
+            ret = lyr.SetFeature(feat)
+            gdal.PopErrorHandler()
+            if ret == 0:
+                gdaltest.post_reason('should have failed')
+                return 'fail'
+            feat = None
+
+            # Test feature existence : should fail
+            lyr.SetAttributeFilter('id2 = 12345 or id2 = 45321')
+            lyr.ResetReading()
+
+            feat = lyr.GetNextFeature()
+            if feat is not None:
+                gdaltest.post_reason('should have failed')
+                return 'fail'
+
+        ds = None
+
+    # Check with test_ogrsf
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is not None:
+
+        ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/ogr_vrt_30.vrt')
+
+        if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+            gdaltest.post_reason('fail')
+            print(ret)
+            return 'fail'
+
+    # Test various optional attributes
+    f = open('tmp/ogr_vrt_30.vrt', 'wt')
+    f.write("""<OGRVRTDataSource>
+    <OGRVRTUnionLayer name="union">
+        <OGRVRTLayer name="ogr_vrt_30_1">
+            <SrcDataSource relativetoVRT="1">ogr_vrt_30_1.shp</SrcDataSource>
+        </OGRVRTLayer>
+        <OGRVRTLayer name="ogr_vrt_30_2">
+            <SrcDataSource relativetoVRT="1">ogr_vrt_30_2.shp</SrcDataSource>
+        </OGRVRTLayer>
+        <SourceLayerFieldName>source_layer</SourceLayerFieldName>
+        <PreserveSrcFID>ON</PreserveSrcFID>
+        <FieldStrategy>Intersection</FieldStrategy>
+        <GeometryType>wkbPoint25D</GeometryType>
+        <LayerSRS>WGS72</LayerSRS>
+        <FeatureCount>100</FeatureCount>
+        <ExtentXMin>-180</ExtentXMin>
+        <ExtentYMin>-90</ExtentYMin>
+        <ExtentXMax>180</ExtentXMax>
+        <ExtentYMax>90</ExtentYMax>
+    </OGRVRTUnionLayer>
+</OGRVRTDataSource>\n""")
+    f.close()
+
+    for check in range(9):
+        ds = ogr.Open('tmp/ogr_vrt_30.vrt', update = 1)
+        lyr = ds.GetLayer(0)
+
+        if check == 0:
+            sr = lyr.GetSpatialRef()
+            got_wkt = sr.ExportToWkt()
+            if got_wkt.find('WGS 72') == -1:
+                gdaltest.post_reason('did not get expected WKT')
+                print(got_wkt)
+                return 'fail'
+
+        elif check == 1:
+            bb = lyr.GetExtent()
+            expected_bb = (-180.0, 180.0, -90.0, 90.0)
+
+            for i in range(4):
+                if abs(bb[i] - expected_bb[i]) > 1:
+                    gdaltest.post_reason('did not get expected extent')
+                    print(bb)
+                    return 'fail'
+
+        elif check == 2:
+            if lyr.GetFeatureCount() != 100:
+                gdaltest.post_reason('did not get expected feature count')
+                return 'fail'
+
+        elif check == 3:
+            if lyr.GetLayerDefn().GetFieldCount() != 2:
+                gdaltest.post_reason('did not get expected field count')
+                return 'fail'
+
+        elif check == 4:
+            feat = lyr.GetNextFeature()
+            i = 0
+            while feat is not None:
+                if i < 5 * 5:
+                    if feat.GetFID() != i:
+                        gdaltest.post_reason('did not get expected value')
+                        print(feat.GetFID())
+                        return 'fail'
+                    if feat.GetFieldAsString("source_layer") != 'ogr_vrt_30_1':
+                        gdaltest.post_reason('did not get expected value')
+                        return 'fail'
+                    if feat.GetFieldAsInteger("id2") != 100 + i:
+                        gdaltest.post_reason('did not get expected value')
+                        return 'fail'
+
+                else:
+                    if feat.GetFID() != i - 5 * 5:
+                        gdaltest.post_reason('did not get expected value')
+                        print(feat.GetFID())
+                        return 'fail'
+                    if feat.GetFieldAsString("source_layer") != 'ogr_vrt_30_2':
+                        gdaltest.post_reason('did not get expected value')
+                        return 'fail'
+                    if feat.GetFieldAsInteger("id2") != 200 + i - 5 * 5:
+                        gdaltest.post_reason('did not get expected value')
+                        return 'fail'
+
+                i = i + 1
+                feat = lyr.GetNextFeature()
+
+        elif check == 5:
+            if lyr.GetGeomType() != ogr.wkbPoint25D:
+                gdaltest.post_reason('did not get expected geom type')
+                return 'fail'
+
+        elif check == 6:
+            if lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
+                gdaltest.post_reason('did not get expected capability')
+                return 'fail'
+
+            if lyr.TestCapability(ogr.OLCFastGetExtent) != 1:
+                gdaltest.post_reason('did not get expected capability')
+                return 'fail'
+
+            if lyr.TestCapability(ogr.OLCFastSpatialFilter) != 1:
+                gdaltest.post_reason('did not get expected capability')
+                return 'fail'
+
+            if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
+                gdaltest.post_reason('did not get expected capability')
+                return 'fail'
+
+            if lyr.TestCapability(ogr.OLCIgnoreFields) != 1:
+                gdaltest.post_reason('did not get expected capability')
+                return 'fail'
+
+            if lyr.TestCapability(ogr.OLCRandomWrite) != 1:
+                gdaltest.post_reason('did not get expected capability')
+                return 'fail'
+
+            if lyr.TestCapability(ogr.OLCSequentialWrite) != 1:
+                gdaltest.post_reason('did not get expected capability')
+                return 'fail'
+
+        elif check == 7:
+            lyr.SetSpatialFilterRect(2.49, 49.29, 4.49, 49.69)
+            if lyr.GetFeatureCount() != 10:
+                gdaltest.post_reason('did not get expected feature count')
+                return 'fail'
+
+        elif check == 8:
+            # invalid source_layer name with CreateFeature()
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat.SetField('source_layer', 'random_name')
+            feat.SetField('id2', 12345)
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
+            ret = lyr.CreateFeature(feat)
+            gdal.PopErrorHandler()
+            if ret == 0:
+                gdaltest.post_reason('should have failed')
+                return 'fail'
+            feat = None
+
+            # unset source_layer name with CreateFeature()
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat.SetField('id2', 12345)
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
+            ret = lyr.CreateFeature(feat)
+            gdal.PopErrorHandler()
+            if ret == 0:
+                gdaltest.post_reason('should have failed')
+                return 'fail'
+            feat = None
+
+            # FID set with CreateFeature()
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat.SetFID(999999)
+            feat.SetField('source_layer', 'ogr_vrt_30_2')
+            feat.SetField('id2', 12345)
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
+            ret = lyr.CreateFeature(feat)
+            gdal.PopErrorHandler()
+            if ret == 0:
+                gdaltest.post_reason('should have failed')
+                return 'fail'
+            feat = None
+
+            # CreateFeature() OK
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat.SetField('source_layer', 'ogr_vrt_30_2')
+            feat.SetField('id2', 12345)
+            if lyr.CreateFeature(feat) != 0:
+                gdaltest.post_reason('should have succeeded')
+                return 'fail'
+
+            # SetFeature() OK
+            feat.SetField('id2', 45321)
+            if lyr.SetFeature(feat) != 0:
+                gdaltest.post_reason('should have succeeded')
+                return 'fail'
+
+            # invalid source_layer name with SetFeature()
+            feat.SetField('source_layer', 'random_name')
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
+            ret = lyr.SetFeature(feat)
+            gdal.PopErrorHandler()
+            if ret == 0:
+                gdaltest.post_reason('should have failed')
+                return 'fail'
+
+            # unset source_layer name with SetFeature()
+            feat.UnsetField('source_layer')
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
+            ret = lyr.SetFeature(feat)
+            gdal.PopErrorHandler()
+            if ret == 0:
+                gdaltest.post_reason('should have failed')
+                return 'fail'
+
+            # FID unset with SetFeature()
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat.SetField('source_layer', 'ogr_vrt_30_2')
+            feat.SetField('id2', 12345)
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
+            ret = lyr.SetFeature(feat)
+            gdal.PopErrorHandler()
+            if ret == 0:
+                gdaltest.post_reason('should have failed')
+                return 'fail'
+            feat = None
+
+            # Test feature existence (with passthru)
+            lyr.SetAttributeFilter('id2 = 45321 AND OGR_GEOMETRY IS NULL')
+
+            if lyr.TestCapability(ogr.OLCFastFeatureCount) != 1:
+                gdaltest.post_reason('should have returned 1')
+                return 'fail'
+
+            lyr.ResetReading()
+
+            feat = lyr.GetNextFeature()
+            if feat is None:
+                gdaltest.post_reason('should have succeeded')
+                return 'fail'
+
+            # Test feature existence (without passthru)
+            lyr.SetAttributeFilter("id2 = 45321 AND OGR_GEOMETRY IS NULL AND source_layer = 'ogr_vrt_30_2'")
+
+            if lyr.TestCapability(ogr.OLCFastFeatureCount) != 0:
+                gdaltest.post_reason('should have returned 0')
+                return 'fail'
+
+            lyr.ResetReading()
+
+            feat = lyr.GetNextFeature()
+            if feat is None:
+                gdaltest.post_reason('should have succeeded')
+                return 'fail'
+
+            # Test SyncToDisk()
+            if lyr.SyncToDisk() != 0:
+                gdaltest.post_reason('should have succeeded')
+                return 'fail'
+
+        ds = None
+
+    for filename in [ 'tmp/ogr_vrt_30_1.shp',
+                      'tmp/ogr_vrt_30_1.shx',
+                      'tmp/ogr_vrt_30_1.dbf',
+                      'tmp/ogr_vrt_30_1.prj',
+                      'tmp/ogr_vrt_30_1.qix',
+                      'tmp/ogr_vrt_30_2.shp',
+                      'tmp/ogr_vrt_30_2.shx',
+                      'tmp/ogr_vrt_30_2.dbf',
+                      'tmp/ogr_vrt_30_2.prj',
+                      'tmp/ogr_vrt_30_2.qix' ]:
+        try:
+            os.unlink(filename)
+        except:
+            pass
+    os.unlink('tmp/ogr_vrt_30.vrt')
+
+    return 'success'
+
+
 ###############################################################################
 # 
 
@@ -1597,6 +2222,8 @@ gdaltest_list = [
     ogr_vrt_26,
     ogr_vrt_27,
     ogr_vrt_28,
+    ogr_vrt_29,
+    ogr_vrt_30,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':
