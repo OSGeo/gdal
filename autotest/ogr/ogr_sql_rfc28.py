@@ -698,6 +698,38 @@ def ogr_rfc28_30():
         return 'fail'
 
 ###############################################################################
+# Test UNION ALL
+
+def ogr_rfc28_31():
+
+    lyr = gdaltest.ds.ExecuteSQL( "select * from idlink union all select * from idlink2" )
+
+    count = lyr.GetFeatureCount()
+
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    if count != 6 + 7:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
+# Test UNION ALL with parenthesis
+
+def ogr_rfc28_32():
+
+    lyr = gdaltest.ds.ExecuteSQL( "(select * from idlink) union all (select * from idlink2 order by eas_id)" )
+
+    count = lyr.GetFeatureCount()
+
+    gdaltest.ds.ReleaseResultSet( lyr )
+
+    if count != 6 + 7:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -737,6 +769,7 @@ gdaltest_list = [
     ogr_rfc28_28,
     ogr_rfc28_29,
     ogr_rfc28_30,
+    ogr_rfc28_32,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':

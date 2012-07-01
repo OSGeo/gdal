@@ -810,6 +810,11 @@ def ogr_sql_28():
     "SELECT * FROM my_layer LEFT JOIN my_layer2 ON my_layer.strfield != my_layer2.strfield",
     "SELECT *, my_layer2. FROM my_layer LEFT JOIN my_layer2 ON my_layer.strfield = my_layer2.strfield",
     "SELECT *, my_layer2.foo FROM my_layer LEFT JOIN my_layer2 ON my_layer.strfield = my_layer2.strfield",
+    "SELECT * FROM my_layer UNION" ,
+    "SELECT * FROM my_layer UNION ALL" ,
+    "SELECT * FROM my_layer UNION ALL SELECT" ,
+    "SELECT * FROM my_layer UNION ALL SELECT *" ,
+    "SELECT * FROM my_layer UNION ALL SELECT * FROM" ,
     ]
 
     for query in queries:
