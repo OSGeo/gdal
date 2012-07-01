@@ -778,7 +778,8 @@ def ogr_shape_21():
 
         # Test fix for #3665
         lyr.ResetReading()
-        lyr.SetSpatialFilterRect(0,0,1,1)
+        (minx, maxx, miny, maxy) = lyr.GetExtent()
+        lyr.SetSpatialFilterRect(minx+1e-9,miny+1e-9,maxx-1e-9,maxy-1e-9)
         gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
         feat = lyr.GetNextFeature()
         gdal.PopErrorHandler()
