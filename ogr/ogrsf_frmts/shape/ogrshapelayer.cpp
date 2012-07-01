@@ -366,39 +366,58 @@ int OGRShapeLayer::ScanIndices()
 /*      Check for spatial index if we have a spatial query.             */
 /* -------------------------------------------------------------------- */
 
-    OGREnvelope oEnvelope;
-    if( m_poFilterGeom != NULL )
-    {
-        m_poFilterGeom->getEnvelope( &oEnvelope );
+    if( m_poFilterGeom == NULL || hSHP == NULL )
+        return TRUE;
 
-        OGREnvelope oLayerExtent;
-        if (GetExtent(&oLayerExtent, TRUE) == OGRERR_NONE &&
-            oEnvelope.Contains(oLayerExtent))
+    OGREnvelope oSpatialFilterEnvelope;
+    int bTryQIXorSBN = TRUE;
+
+    m_poFilterGeom->getEnvelope( &oSpatialFilterEnvelope );
+
+    OGREnvelope oLayerExtent;
+    if (GetExtent(&oLayerExtent, TRUE) == OGRERR_NONE)
+    {
+        if (oSpatialFilterEnvelope.Contains(oLayerExtent))
         {
             // The spatial filter is larger than the layer extent. No use of .qix file for now
             return TRUE;
         }
+        else if (!oSpatialFilterEnvelope.Intersects(oLayerExtent))
+        {
+            /* No intersection : no need to check for .qix or .sbn */
+            bTryQIXorSBN = FALSE;
+
+            /* Set an empty result for spatial FIDs */
+            free(panSpatialFIDs);
+            panSpatialFIDs = (int*) calloc(1, sizeof(int));
+            nSpatialFIDCount = 0;
+
+            delete m_poFilterGeomLastValid;
+            m_poFilterGeomLastValid = m_poFilterGeom->clone();
+        }
     }
 
-    if( m_poFilterGeom != NULL && !bCheckedForQIX )
-        CheckForQIX();
-    if( hQIX == NULL && !bCheckedForSBN )
-        CheckForSBN();
+    if( bTryQIXorSBN )
+    {
+        if( !bCheckedForQIX )
+            CheckForQIX();
+        if( hQIX == NULL && !bCheckedForSBN )
+            CheckForSBN();
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Compute spatial index if appropriate.                           */
 /* -------------------------------------------------------------------- */
-    if( m_poFilterGeom != NULL && (hQIX != NULL || hSBN != NULL) &&
-        panSpatialFIDs == NULL )
+    if( bTryQIXorSBN && (hQIX != NULL || hSBN != NULL) && panSpatialFIDs == NULL )
     {
         double adfBoundsMin[4], adfBoundsMax[4];
 
-        adfBoundsMin[0] = oEnvelope.MinX;
-        adfBoundsMin[1] = oEnvelope.MinY;
+        adfBoundsMin[0] = oSpatialFilterEnvelope.MinX;
+        adfBoundsMin[1] = oSpatialFilterEnvelope.MinY;
         adfBoundsMin[2] = 0.0;
         adfBoundsMin[3] = 0.0;
-        adfBoundsMax[0] = oEnvelope.MaxX;
-        adfBoundsMax[1] = oEnvelope.MaxY;
+        adfBoundsMax[0] = oSpatialFilterEnvelope.MaxX;
+        adfBoundsMax[1] = oSpatialFilterEnvelope.MaxY;
         adfBoundsMax[2] = 0.0;
         adfBoundsMax[3] = 0.0;
 
@@ -421,7 +440,7 @@ int OGRShapeLayer::ScanIndices()
 /* -------------------------------------------------------------------- */
 /*      Use spatial index if appropriate.                               */
 /* -------------------------------------------------------------------- */
-    if( m_poFilterGeom != NULL && panSpatialFIDs != NULL )
+    if( panSpatialFIDs != NULL )
     {
         // Use resulting list as matching FID list (but reallocate and
         // terminate with OGRNullFID).
@@ -1164,14 +1183,18 @@ int OGRShapeLayer::GetFeatureCount( int bForce )
     int bHasTrivialSpatialFilter;
     if (m_poFilterGeom != NULL)
     {
-        OGREnvelope oEnvelope;
-        m_poFilterGeom->getEnvelope( &oEnvelope );
+        OGREnvelope oSpatialFilterEnvelope;
+        m_poFilterGeom->getEnvelope( &oSpatialFilterEnvelope );
 
         OGREnvelope oLayerExtent;
-        if (GetExtent(&oLayerExtent, TRUE) == OGRERR_NONE &&
-            oEnvelope.Contains(oLayerExtent))
+        if (GetExtent(&oLayerExtent, TRUE) == OGRERR_NONE)
         {
-            bHasTrivialSpatialFilter = TRUE;
+            if (oSpatialFilterEnvelope.Contains(oLayerExtent))
+            {
+                bHasTrivialSpatialFilter = TRUE;
+            }
+            else
+                bHasTrivialSpatialFilter = FALSE;
         }
         else
             bHasTrivialSpatialFilter = FALSE;
