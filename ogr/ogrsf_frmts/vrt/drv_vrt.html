@@ -33,8 +33,10 @@ is to say, the <i>FID</i> element is not specified</li>
 <h1>Virtual File Format</h1>
 
 The root element of the XML control file is <b>OGRVRTDataSource</b>.  It has
-an <b>OGRVRTLayer</b> child for each layer in the virtual datasource.  That
-element should have a <b>name</b> attribute with the layer name, and may have the 
+an <b>OGRVRTLayer</b> (or <b>OGRVRTWarpedLayer</b> or <b>OGRVRTUnionLayer</b> starting
+with GDAL 2.0.0) child for each layer in the virtual datasource.<p>
+
+A <b>OGRVRTLayer</b> element should have a <b>name</b> attribute with the layer name, and may have the
 following subelements:
 
 <ul>
@@ -44,24 +46,34 @@ a <b>relativeToVRT</b> attribute which defaults to "0", but if "1" indicates
 that the source datasource should be interpreted as relative to the virtual
 file.  This can be any OGR supported dataset, including ODBC, CSV, etc.
 The element may also have a <b>shared</b> attribute to control whether the
-datasource should be opened in shared mode. Defaults to OFF for SrcLayer use and ON for SrcSQL use.<p>
+datasource should be opened in shared mode. Defaults to OFF for SrcLayer use and ON for SrcSQL use.</li>
+
+<br>
 
 <li> <b>SrcLayer</b> (optional): The value is the name of the layer on the
 source data source from which this virtual layer should be derived.  If this
-element isn't provided, then the SrcSQL element must be provided.<p>
+element isn't provided, then the SrcSQL element must be provided.</li>
+
+<br>
 
 <li> <b>SrcSQL</b> (optional): An SQL statement to execute to generate the
 desired layer result.  This should be provided instead of the SrcLayer for
 statement derived results.   Some limitations may apply for SQL derived 
-layers.<p> 
+layers.</li>
+
+<br>
 
 <li> <b>FID</b> (optional): Name of the attribute column from which the 
 FID of features should be derived.  If not provided, the FID of the source
-features will be used directly.<p>
+features will be used directly.</li>
+
+<br>
 
 <li> <b>Style</b> (optional): Name of the attribute column from which the 
 style of features should be derived.  If not provided, the style of the source
-features will be used directly.<p>
+features will be used directly.</li>
+
+<br>
 
 <li> <b>GeometryType</b> (optional): The geometry type to be assigned to the 
 layer. 
@@ -70,13 +82,17 @@ be one of "wkbNone", "wkbUnknown", "wkbPoint", "wkbLineString", "wkbPolygon",
 "wkbMultiPoint", 
 "wkbMultiLineString", "wkbMultiPolygon", or "wkbGeometryCollection".  
 Optionally "25D" may be appended to mark it as including Z coordinates.  
-Defaults to "wkbUnknown" indicating that any geometry type is allowed.<p>
+Defaults to "wkbUnknown" indicating that any geometry type is allowed.</li>
+
+<br>
 
 <li> <b>LayerSRS</b> (optional): The value of this element is the spatial
 reference to use for the layer.  If not provided, it is inherited from the
 source layer.  The value may be WKT or any other input that is accepted
 by the OGRSpatialReference::SetUserInput() method. If the value is NULL, then
-no SRS will be used for the layer.<p>
+no SRS will be used for the layer.</li>
+
+<br>
 
 <li> <b>GeometryField</b> (optional): This element is used to define
 how the geometry for features should be derived.<br>
@@ -91,7 +107,9 @@ The <b>z</b> attribute is optional.<br>
 Starting with GDAL 1.7.0, the optional <b>reportSrcColumn</b> attribute can be used to specify
 whether the source geometry fields (the fields set in the <b>field</b>, <b>x</b>, <b>x</b>
 or <b>z</b> attributes) should be reported as fields of the VRT layer. It defaults to TRUE.
-If set to FALSE, the source geometry fields will only be used to build the geometry of the features of the VRT layer.<p>
+If set to FALSE, the source geometry fields will only be used to build the geometry of the features of the VRT layer.</li>
+
+<br>
 
 <li> <b>SrcRegion</b> (optionnal, from GDAL 1.7.0) : This element is used
 to define an initial spatial filter for the source features. This spatial
@@ -99,7 +117,9 @@ filter will be combined with any spatial filter explicitely set on the VRT
 layer with the SetSpatialFilter() method. The value of the element must be
 a valid WKT string defining a polygon. An optional <b>clip</b> attribute
 can be set to "TRUE" to clip the geometries to the source region, otherwise
-the source geometries are not modified.<p>
+the source geometries are not modified.</li>
+
+<br>
 
 <li> <b>Field</b> (optional, from GDAL 1.7.0): One or more attribute fields 
 may be defined with Field elements.  If no Field elements are defined, the 
@@ -115,8 +135,98 @@ or "DateTime" - defaults to "String".
 <li> <b>src</b>: the name of the source field to be copied to this one.  By
 default defaults to the value of "name".
 </ul>
+</li>
+
+<br>
+
+<li> <b>FeatureCount</b> (optional, from GDAL 2.0.0) : This element is used
+to define the feature count of the layer (when no spatial or attribute filter is set).
+This can be usefull on static data, when getting the feature count from the source layer is slow.</li>
+
+<br>
+
+<li> <b>ExtentXMin</b>, <b>ExtentYMin</b>, <b>ExtentXMax</b> and <b>ExtentXMax</b> (optional, from GDAL 2.0.0) :
+Those elements are used to define the extent of the layer. This can be usefull on static data, when
+getting the extent from the source layer is slow.</li>
+
+<br>
 
 </ul>
+
+<p>
+
+A <b>OGRVRTWarpedLayer</b> element (GDAL &gt;=2.0.0) is used to do on-the-fly reprojection of
+a source layer. It may have the following subelements:
+
+<ul>
+
+<li> <b>OGRVRTLayer</b>, <b>OGRVRTWarpedLayer</b> or <b>OGRVRTUnionLayer</b> (mandatory):
+the source layer to reproject.</li>
+<br>
+
+<li> <b>SrcSRS</b> (mandatory): The value of this element is the spatial
+reference to use for the layer before reprojection. If not specified, it is deduced from
+the source layer.</li>
+<br>
+
+<li> <b>TargetSRS</b> (mandatory): The value of this element is the spatial
+reference to use for the layer after reprojection. </li>
+<br>
+
+<li> <b>ExtentXMin</b>, <b>ExtentYMin</b>, <b>ExtentXMax</b> and <b>ExtentXMax</b> (optional, from GDAL 2.0.0) :
+Those elements are used to define the extent of the layer. This can be usefull on static data, when
+getting the extent from the source layer is slow.</li>
+
+<br>
+
+</ul>
+
+<p>
+
+A <b>OGRVRTUnionLayer</b> element (GDAL &gt;=2.0.0) is used to concatenate the content of source
+layers. It should have a <b>name</b> and may have the following subelements:
+
+<ul>
+
+<li> <b>OGRVRTLayer</b>, <b>OGRVRTWarpedLayer</b> or <b>OGRVRTUnionLayer</b> (mandatory and may be repeated):
+a source layer to add in the union.</li>
+<br>
+
+<li> <b>PreserveSrcFID</b> (optional) : may be ON or OFF. If set to ON, the FID from the source layer
+will be used, otherwise a counter will be used. Defaults to OFF.</li>
+<br>
+
+<li> <b>SourceLayerFieldName</b> (optional) : if specified, an additional field (named with
+the value of SourceLayerFieldName) will be added in the layer field definition. For each feature,
+the value of this field will be set with the name of the layer from which the feature comes from.</li>
+<br>
+
+<li> <b>GeometryType</b> (optional) : see above for the syntax. If not specified, the geometry type
+will be deduced from the geometry type of all source layers.</li>
+<br>
+
+<li> <b>LayerSRS</b> (optional) : see above for the syntax. If not specified, the SRS will be the
+SRS of the first source layer.</li>
+<br>
+
+<li> <b>FieldStrategy</b> (optional, exclusive with <b>Field</b>) :
+may be <b>FirstLayer</b> to use the fields from the first layer found,
+<b>Union</b> to use a super-set of all the fields from all source layers, or
+<b>Intersection</b> to use a sub-set of all the common fields from all source layers. Defaults to <b>Union</b>.</li>
+<br>
+
+<li> <b>Field</b> (optional, exclusive with <b>FieldStrategy</b>) : see above for the syntax. Note: the src attribute
+is not supported in the context of a OGRVRTUnionLayer element (field names are assumed to be identical).</li>
+<br>
+
+<li> <b>FeatureCount</b> (optional) : see above for the syntax</li>
+<br>
+
+<li> <b>ExtentXMin</b>, <b>ExtentYMin</b>, <b>ExtentXMax</b> and <b>ExtentXMax</b> (optional) : see above for the syntax</li>
+<br>
+
+</ul>
+
 
 <h2>Example: ODBC Point Layer</h2>
 
@@ -168,7 +278,7 @@ definitions:
 &lt;/OGRVRTDataSource&gt;
 </pre>
 
-<h2>Example: Transparent spatial filtering (GDAL >= 1.7.0)</h2>
+<h2>Example: Transparent spatial filtering (GDAL &gt;= 1.7.0)</h2>
 
 The following example will only return features from the source layer that
 intersect the (0,40)-(10,50) region. Furthermore, returned geometries will be clipped
@@ -182,6 +292,36 @@ to fit into that region.<p>
 &lt;/OGRVRTDataSource&gt;
 </pre>
 
+<h2>Example: Reprojected layer (GDAL &gt;= 2.0.0)</h2>
+
+The following example will return the source.shp layer reprojected to EPSG:4326.<p>
+
+<pre>&lt;OGRVRTDataSource&gt;
+    &lt;OGRVRTWarpedLayer&gt;
+        &lt;OGRVRTLayer name="source"&gt;
+            &lt;SrcDataSource&gt;source.shp&lt;/SrcDataSource&gt;
+        &lt;/OGRVRTLayer&gt;
+        &lt;TargetSRS&gt;EPSG:4326&lt;/TargetSRS&gt;
+    &lt;/OGRVRTWarpedLayer&gt;
+&lt;/OGRVRTDataSource&gt;
+</pre>
+
+<h2>Example: Union layer (GDAL &gt;= 2.0.0)</h2>
+
+The following example will return a layer that is the concatenation of source1.shp
+and source2.shp.<p>
+
+<pre>&lt;OGRVRTDataSource&gt;
+    &lt;OGRVRTUnionLayer name="unionLayer"&gt;
+        &lt;OGRVRTLayer name="source1"&gt;
+            &lt;SrcDataSource&gt;source1.shp&lt;/SrcDataSource&gt;
+        &lt;/OGRVRTLayer&gt;
+        &lt;OGRVRTLayer name="source2"&gt;
+            &lt;SrcDataSource&gt;source2.shp&lt;/SrcDataSource&gt;
+        &lt;/OGRVRTLayer&gt;
+    &lt;/OGRVRTUnionLayer&gt;
+&lt;/OGRVRTDataSource&gt;
+</pre>
 
 <h2>Other Notes</h2>
 
