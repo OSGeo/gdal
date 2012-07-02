@@ -130,10 +130,8 @@ void OGRLayerPool::UnchainLayer(OGRAbstractProxiedLayer* poLayer)
     OGRAbstractProxiedLayer* poPrevLayer = poLayer->poPrevLayer;
     OGRAbstractProxiedLayer* poNextLayer = poLayer->poNextLayer;
 
-    if (poPrevLayer != NULL)
-        CPLAssert(poPrevLayer->poNextLayer == poLayer);
-    if (poNextLayer != NULL)
-        CPLAssert(poNextLayer->poPrevLayer == poLayer);
+    CPLAssert(poPrevLayer == NULL || poPrevLayer->poNextLayer == poLayer);
+    CPLAssert(poNextLayer == NULL || poNextLayer->poPrevLayer == poLayer);
 
     if (poPrevLayer != NULL || poNextLayer != NULL || poLayer == poMRULayer)
         nMRUListSize --;
