@@ -249,6 +249,9 @@ int OGRVRTLayer::FullInitialize()
     poFeatureDefn = new OGRFeatureDefn( osName );
     poFeatureDefn->Reference();
 
+    if (poDS->GetRecursionDetected())
+        return FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Figure out the data source name.  It may be treated relative    */
 /*      to vrt filename, but normally it is used directly.              */
@@ -316,6 +319,7 @@ try_again:
         if (poDS->IsInForbiddenNames(pszSrcDSName))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cyclic VRT opening detected !");
+            poDS->SetRecursionDetected();
         }
         else
         {
@@ -338,12 +342,22 @@ try_again:
             {
                 OGRVRTDataSource* poVRTSrcDS = (OGRVRTDataSource*)poSrcDS;
                 poVRTSrcDS->SetCallLevel(poDS->GetCallLevel() + 1);
+                poVRTSrcDS->SetParentDS(poDS);
             }
         }
         else
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Trying to open a VRT from a VRT from a VRT from ... [32 times] a VRT !");
+
+            poDS->SetRecursionDetected();
+
+            OGRVRTDataSource* poParent = poDS->GetParentDS();
+            while(poParent != NULL)
+            {
+                poParent->SetRecursionDetected();
+                poParent = poParent->GetParentDS();
+            }
         }
     }
 
@@ -887,7 +901,7 @@ OGRFeature *OGRVRTLayer::GetNextFeature()
 
 {
     if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer) return NULL;
+    if (!poSrcLayer || poDS->GetRecursionDetected()) return NULL;
 
     if( bNeedReset )
     {
@@ -1151,7 +1165,7 @@ OGRFeature *OGRVRTLayer::GetFeature( long nFeatureId )
 
 {
     if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer) return NULL;
+    if (!poSrcLayer || poDS->GetRecursionDetected()) return NULL;
 
     bNeedReset = TRUE;
 
@@ -1207,7 +1221,7 @@ OGRFeature *OGRVRTLayer::GetFeature( long nFeatureId )
 OGRErr OGRVRTLayer::SetNextByIndex( long nIndex )
 {
     if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer) return OGRERR_FAILURE;
+    if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
 
     if (TestCapability(OLCFastSetNextByIndex))
         return poSrcLayer->SetNextByIndex(nIndex);
@@ -1361,7 +1375,7 @@ OGRFeature* OGRVRTLayer::TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeatu
 OGRErr OGRVRTLayer::CreateFeature( OGRFeature* poVRTFeature )
 {
     if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer) return OGRERR_FAILURE;
+    if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
 
     if(!bUpdate)
     {
@@ -1399,7 +1413,7 @@ OGRErr OGRVRTLayer::CreateFeature( OGRFeature* poVRTFeature )
 OGRErr OGRVRTLayer::SetFeature( OGRFeature* poVRTFeature )
 {
     if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer) return OGRERR_FAILURE;
+    if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
 
     if(!bUpdate)
     {
@@ -1433,7 +1447,7 @@ OGRErr OGRVRTLayer::DeleteFeature( long nFID )
 
 {
     if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer) return OGRERR_FAILURE;
+    if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
 
     if(!bUpdate )
     {
@@ -1461,7 +1475,7 @@ OGRErr OGRVRTLayer::SetAttributeFilter( const char *pszNewQuery )
 
 {
     if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer) return OGRERR_FAILURE;
+    if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
 
     if( bAttrFilterPassThrough )
     {
@@ -1498,7 +1512,7 @@ int OGRVRTLayer::TestCapability( const char * pszCap )
         return TRUE;
 
     if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer) return FALSE;
+    if (!poSrcLayer || poDS->GetRecursionDetected()) return FALSE;
 
     if ( EQUAL(pszCap,OLCFastFeatureCount) ||
          EQUAL(pszCap,OLCFastSetNextByIndex) )
@@ -1548,7 +1562,7 @@ OGRSpatialReference *OGRVRTLayer::GetSpatialRef()
         return poSRS;
 
     if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer) return NULL;
+    if (!poSrcLayer || poDS->GetRecursionDetected()) return NULL;
 
     return poSRS;
 }
@@ -1566,7 +1580,7 @@ OGRErr OGRVRTLayer::GetExtent( OGREnvelope *psExtent, int bForce )
     }
 
     if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer) return OGRERR_FAILURE;
+    if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
 
     if ( eGeometryStyle == VGS_Direct &&
          m_poAttrQuery == NULL &&
@@ -1603,7 +1617,7 @@ int OGRVRTLayer::GetFeatureCount( int bForce )
     }
 
     if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer) return 0;
+    if (!poSrcLayer || poDS->GetRecursionDetected()) return 0;
 
     if ((eGeometryStyle == VGS_Direct ||
          (poSrcRegion == NULL && m_poFilterGeom == NULL)) &&
@@ -1626,7 +1640,7 @@ int OGRVRTLayer::GetFeatureCount( int bForce )
 void OGRVRTLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 {
     if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer) return;
+    if (!poSrcLayer || poDS->GetRecursionDetected()) return;
 
     if (eGeometryStyle == VGS_Direct)
         bNeedReset = TRUE;
@@ -1640,7 +1654,7 @@ void OGRVRTLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 OGRErr OGRVRTLayer::SyncToDisk()
 {
     if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer) return OGRERR_FAILURE;
+    if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
 
     return poSrcLayer->SyncToDisk();
 }
@@ -1675,7 +1689,7 @@ OGRwkbGeometryType OGRVRTLayer::GetGeomType()
 const char * OGRVRTLayer::GetFIDColumn()
 {
     if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer) return "";
+    if (!poSrcLayer || poDS->GetRecursionDetected()) return "";
 
     const char* pszFIDColumn;
     if (iFIDField == -1)
@@ -1706,7 +1720,7 @@ const char * OGRVRTLayer::GetFIDColumn()
 OGRErr OGRVRTLayer::StartTransaction()
 {
     if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer || !bUpdate) return OGRERR_FAILURE;
+    if (!poSrcLayer || !bUpdate || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
 
     return poSrcLayer->StartTransaction();
 }
@@ -1718,7 +1732,7 @@ OGRErr OGRVRTLayer::StartTransaction()
 OGRErr OGRVRTLayer::CommitTransaction()
 {
     if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer || !bUpdate) return OGRERR_FAILURE;
+    if (!poSrcLayer || !bUpdate || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
 
     return poSrcLayer->CommitTransaction();
 }
@@ -1730,7 +1744,7 @@ OGRErr OGRVRTLayer::CommitTransaction()
 OGRErr OGRVRTLayer::RollbackTransaction()
 {
     if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer || !bUpdate) return OGRERR_FAILURE;
+    if (!poSrcLayer || !bUpdate || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
 
     return poSrcLayer->RollbackTransaction();
 }
@@ -1742,7 +1756,7 @@ OGRErr OGRVRTLayer::RollbackTransaction()
 OGRErr OGRVRTLayer::SetIgnoredFields( const char **papszFields )
 {
     if (!bHasFullInitialized) FullInitialize();
-    if (!poSrcLayer) return OGRERR_FAILURE;
+    if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
 
     if( !poSrcLayer->TestCapability(OLCIgnoreFields) )
         return OGRERR_FAILURE;

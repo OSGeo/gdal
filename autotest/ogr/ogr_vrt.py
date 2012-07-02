@@ -1362,6 +1362,7 @@ def ogr_vrt_23(shared_ds_flag = ''):
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds.GetLayer(0).GetLayerDefn()
+    ds.GetLayer(0).GetFeatureCount()
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('error expected !')
@@ -2182,6 +2183,61 @@ def ogr_vrt_30():
 
     return 'success'
 
+###############################################################################
+# Test anti-recursion mechanism with union layer
+
+def ogr_vrt_31(shared_ds_flag = ''):
+
+    rec1 = """<OGRVRTDataSource>
+    <OGRVRTUnionLayer name="rec1">
+        <OGRVRTLayer name="rec2">
+            <SrcDataSource%s>/vsimem/rec2.vrt</SrcDataSource>
+        </OGRVRTLayer>
+        <OGRVRTLayer name="rec1">
+            <SrcDataSource%s>/vsimem/rec1.vrt</SrcDataSource>
+        </OGRVRTLayer>
+    </OGRVRTUnionLayer>
+</OGRVRTDataSource>""" % (shared_ds_flag, shared_ds_flag)
+
+    rec2 = """<OGRVRTDataSource>
+    <OGRVRTUnionLayer name="rec2">
+        <OGRVRTLayer name="rec1">
+            <SrcDataSource%s>/vsimem/rec1.vrt</SrcDataSource>
+        </OGRVRTLayer>
+        <OGRVRTLayer name="rec2">
+            <SrcDataSource%s>/vsimem/rec2.vrt</SrcDataSource>
+        </OGRVRTLayer>
+    </OGRVRTUnionLayer>
+</OGRVRTDataSource>""" % (shared_ds_flag, shared_ds_flag)
+
+    gdal.FileFromMemBuffer('/vsimem/rec1.vrt', rec1)
+    gdal.FileFromMemBuffer('/vsimem/rec2.vrt', rec2)
+
+    ds = ogr.Open('/vsimem/rec1.vrt')
+    if ds is None:
+        return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds.GetLayer(0).GetLayerDefn()
+    ds.GetLayer(0).GetFeatureCount()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('error expected !')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/rec1.vrt')
+    gdal.Unlink('/vsimem/rec2.vrt')
+
+    return 'success'
+
+###############################################################################
+# Test anti-recursion mechanism on shared DS
+
+def ogr_vrt_32():
+
+    return ogr_vrt_31(' shared="1"')
+
 
 ###############################################################################
 # 
@@ -2231,6 +2287,8 @@ gdaltest_list = [
     ogr_vrt_28,
     ogr_vrt_29,
     ogr_vrt_30,
+    ogr_vrt_31,
+    ogr_vrt_32,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':
