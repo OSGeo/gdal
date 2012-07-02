@@ -1695,7 +1695,7 @@ JPEGPreEncode(TIFF* tif, uint16 s)
 		} else {
 			if ((td->td_photometric == PHOTOMETRIC_MINISWHITE || td->td_photometric == PHOTOMETRIC_MINISBLACK) && td->td_samplesperpixel == 1)
 				sp->cinfo.c.in_color_space = JCS_GRAYSCALE;
-			else if (td->td_photometric == PHOTOMETRIC_RGB)
+			else if (td->td_photometric == PHOTOMETRIC_RGB && td->td_samplesperpixel == 3)
 				sp->cinfo.c.in_color_space = JCS_RGB;
 			else if (td->td_photometric == PHOTOMETRIC_SEPARATED && td->td_samplesperpixel == 4)
 				sp->cinfo.c.in_color_space = JCS_CMYK;
