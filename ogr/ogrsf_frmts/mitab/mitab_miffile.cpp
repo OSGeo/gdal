@@ -326,7 +326,6 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess,
         else
             CPLErrorReset();
 
-        CPLFree(m_pszFname);
         return -1;
     }
 
