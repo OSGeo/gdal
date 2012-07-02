@@ -101,6 +101,8 @@ OGRVRTDataSource::OGRVRTDataSource()
     psTree = NULL;
     nCallLevel = 0;
     poLayerPool = NULL;
+    poParentDS = NULL;
+    bRecursionDetected = FALSE;
 }
 
 /************************************************************************/

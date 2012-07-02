@@ -197,6 +197,9 @@ class OGRVRTDataSource : public OGRDataSource
 
     OGRLayerPool*       poLayerPool;
 
+    OGRVRTDataSource   *poParentDS;
+    int                 bRecursionDetected;
+
   public:
                         OGRVRTDataSource();
                         ~OGRVRTDataSource();
@@ -223,6 +226,12 @@ class OGRVRTDataSource : public OGRDataSource
     /* Anti-recursion mechanism for standard Open */
     void                SetCallLevel(int nCallLevelIn) { nCallLevel = nCallLevelIn; }
     int                 GetCallLevel() { return nCallLevel; }
+
+    void                SetParentDS(OGRVRTDataSource* poParentDSIn) { poParentDS = poParentDSIn; }
+    OGRVRTDataSource*   GetParentDS() { return poParentDS; }
+
+    void                SetRecursionDetected() { bRecursionDetected = TRUE; }
+    int                 GetRecursionDetected() { return bRecursionDetected; }
 
     /* Anti-recursion mechanism for shared Open */
     void                AddForbiddenNames(const char* pszOtherDSName);
