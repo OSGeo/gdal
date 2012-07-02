@@ -981,6 +981,64 @@ def tiff_read_exif_and_gps():
     return 'success'
 
 ###############################################################################
+# Test reading a pixel interleaved RGBA JPEG-compressed TIFF
+
+def tiff_jpeg_rgba_pixel_interleaved():
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    ds = gdal.Open('data/stefan_full_rgba_jpeg_contig.tif')
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
+    if md['INTERLEAVE'] != 'PIXEL':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    expected_cs = [16404, 62700, 37913, 14174]
+    for i in range(4):
+        cs = ds.GetRasterBand(i+1).Checksum()
+        if cs != expected_cs[i]:
+            gdaltest.post_reason('failed')
+            return 'fail'
+
+        if ds.GetRasterBand(i+1).GetRasterColorInterpretation() != gdal.GCI_RedBand + i:
+            gdaltest.post_reason('failed')
+            return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test reading a band interleaved RGBA JPEG-compressed TIFF
+
+def tiff_jpeg_rgba_band_interleaved():
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    ds = gdal.Open('data/stefan_full_rgba_jpeg_separate.tif')
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
+    if md['INTERLEAVE'] != 'BAND':
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    expected_cs = [16404, 62700, 37913, 14174]
+    for i in range(4):
+        cs = ds.GetRasterBand(i+1).Checksum()
+        if cs != expected_cs[i]:
+            gdaltest.post_reason('failed')
+            return 'fail'
+
+        if ds.GetRasterBand(i+1).GetRasterColorInterpretation() != gdal.GCI_RedBand + i:
+            gdaltest.post_reason('failed')
+            return 'fail'
+
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 # Test reading a YCbCr JPEG all-in-one-strip multiband TIFF (#3259, #3894)
 
 def tiff_read_online_1():
@@ -1090,6 +1148,8 @@ gdaltest_list.append( (tiff_read_rpc_txt) )
 gdaltest_list.append( (tiff_small) )
 gdaltest_list.append( (tiff_dos_strip_chop) )
 gdaltest_list.append( (tiff_read_exif_and_gps) )
+gdaltest_list.append( (tiff_jpeg_rgba_pixel_interleaved) )
+gdaltest_list.append( (tiff_jpeg_rgba_band_interleaved) )
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
 
