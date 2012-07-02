@@ -4233,6 +4233,108 @@ def tiff_write_114():
     return tst.testCreateCopy( vsimem = 1, interrupt_during_copy = True )
 
 ###############################################################################
+# Test writing a pixel interleaved RGBA JPEG-compressed TIFF
+
+def tiff_write_115():
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    tmpfilename = '/vsimem/tiff_write_115.tif'
+
+    src_ds = gdal.Open('data/stefan_full_rgba.tif')
+    ds = gdaltest.tiff_drv.CreateCopy(tmpfilename, src_ds, options = ['COMPRESS=JPEG'])
+    if ds is None:
+        return 'fail'
+    ds = None
+    src_ds = None
+
+    f = gdal.VSIFOpenL(tmpfilename + '.aux.xml', 'rb')
+    if f is not None:
+        gdal.VSIFCloseL(f)
+        gdal.Unlink(tmpfilename)
+        return 'fail'
+
+    ds = gdal.Open(tmpfilename)
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
+    if md['INTERLEAVE'] != 'PIXEL':
+        gdaltest.post_reason('failed')
+        ds = None
+        gdal.Unlink(tmpfilename)
+        return 'fail'
+
+    expected_cs = [16404, 62700, 37913, 14174]
+    for i in range(4):
+        cs = ds.GetRasterBand(i+1).Checksum()
+        if cs != expected_cs[i]:
+            gdaltest.post_reason('failed')
+            ds = None
+            gdal.Unlink(tmpfilename)
+            return 'fail'
+
+        if ds.GetRasterBand(i+1).GetRasterColorInterpretation() != gdal.GCI_RedBand + i:
+            gdaltest.post_reason('failed')
+            ds = None
+            gdal.Unlink(tmpfilename)
+            return 'fail'
+
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+    return 'success'
+
+###############################################################################
+# Test writing a band interleaved RGBA JPEG-compressed TIFF
+
+def tiff_write_116():
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    tmpfilename = '/vsimem/tiff_write_116.tif'
+
+    src_ds = gdal.Open('data/stefan_full_rgba.tif')
+    ds = gdaltest.tiff_drv.CreateCopy(tmpfilename, src_ds, options = ['COMPRESS=JPEG', 'INTERLEAVE=BAND'])
+    if ds is None:
+        return 'fail'
+    ds = None
+    src_ds = None
+
+    f = gdal.VSIFOpenL(tmpfilename + '.aux.xml', 'rb')
+    if f is not None:
+        gdal.VSIFCloseL(f)
+        gdal.Unlink(tmpfilename)
+        return 'fail'
+
+    ds = gdal.Open(tmpfilename)
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
+    if md['INTERLEAVE'] != 'BAND':
+        gdaltest.post_reason('failed')
+        ds = None
+        gdal.Unlink(tmpfilename)
+        return 'fail'
+
+    expected_cs = [16404, 62700, 37913, 14174]
+    for i in range(4):
+        cs = ds.GetRasterBand(i+1).Checksum()
+        if cs != expected_cs[i]:
+            gdaltest.post_reason('failed')
+            ds = None
+            gdal.Unlink(tmpfilename)
+            return 'fail'
+
+        if ds.GetRasterBand(i+1).GetRasterColorInterpretation() != gdal.GCI_RedBand + i:
+            gdaltest.post_reason('failed')
+            ds = None
+            gdal.Unlink(tmpfilename)
+            return 'fail'
+
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+    return 'success'
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -4359,6 +4461,8 @@ gdaltest_list = [
     tiff_write_112,
     tiff_write_113,
     tiff_write_114,
+    tiff_write_115,
+    tiff_write_116,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
