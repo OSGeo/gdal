@@ -1523,6 +1523,30 @@ GDALColorInterp GTiffRasterBand::GetColorInterpretation()
 }
 
 /************************************************************************/
+/*                         GTiffGetAlphaValue()                         */
+/************************************************************************/
+
+ /* Note: was EXTRASAMPLE_ASSOCALPHA in GDAL < 2.0 */
+#define DEFAULT_ALPHA_TYPE              EXTRASAMPLE_UNASSALPHA
+
+static int GTiffGetAlphaValue(const char* pszValue, int nDefault)
+{
+    if (pszValue == NULL)
+        return nDefault;
+    else if (EQUAL(pszValue, "YES"))
+        return DEFAULT_ALPHA_TYPE;
+    else if (EQUAL(pszValue, "PREMULTIPLIED"))
+        return EXTRASAMPLE_ASSOCALPHA;
+    else if (EQUAL(pszValue, "NON-PREMULTIPLIED"))
+        return EXTRASAMPLE_UNASSALPHA;
+    else if (EQUAL(pszValue, "NO") ||
+             EQUAL(pszValue, "UNSPECIFIED"))
+        return EXTRASAMPLE_UNSPECIFIED;
+    else
+        return nDefault;
+}
+
+/************************************************************************/
 /*                       SetColorInterpretation()                       */
 /************************************************************************/
 
@@ -1541,7 +1565,9 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
         && poGDS->nSamplesPerPixel == 2 
         && poGDS->nPhotometric == PHOTOMETRIC_MINISBLACK )
     {
-        uint16 v[1] = { EXTRASAMPLE_ASSOCALPHA };
+        uint16 v[1];
+        v[0] = GTiffGetAlphaValue(CPLGetConfigOption("GTIFF_ALPHA", NULL),
+                                  DEFAULT_ALPHA_TYPE);
 
         TIFFSetField(poGDS->hTIFF, TIFFTAG_EXTRASAMPLES, 1, v);
         eBandInterp = eInterp;
@@ -1554,7 +1580,9 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
              && poGDS->nSamplesPerPixel == 4
              && poGDS->nPhotometric == PHOTOMETRIC_RGB )
     {
-        uint16 v[1] = { EXTRASAMPLE_ASSOCALPHA };
+        uint16 v[1];
+        v[0] = GTiffGetAlphaValue(CPLGetConfigOption("GTIFF_ALPHA", NULL),
+                                  DEFAULT_ALPHA_TYPE);
 
         TIFFSetField(poGDS->hTIFF, TIFFTAG_EXTRASAMPLES, 1, v);
         eBandInterp = eInterp;
@@ -7427,7 +7455,9 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         {
             uint16 v[1];
 
-            v[0] = EXTRASAMPLE_ASSOCALPHA;
+            v[0] = GTiffGetAlphaValue(CSLFetchNameValue(papszParmList,"ALPHA"),
+                                      DEFAULT_ALPHA_TYPE);
+
             TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, 1, v);
             TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
             nSamplesAccountedFor = 4;
@@ -7451,11 +7481,9 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
         v = (uint16 *) CPLMalloc( sizeof(uint16) * nExtraSamples );
 
-        if( CSLFetchBoolean(papszParmList,"ALPHA",FALSE) )
-            v[0] = EXTRASAMPLE_ASSOCALPHA;
-        else
-            v[0] = EXTRASAMPLE_UNSPECIFIED;
-            
+        v[0] = GTiffGetAlphaValue(CSLFetchNameValue(papszParmList, "ALPHA"),
+                                  EXTRASAMPLE_UNSPECIFIED);
+
         for( i = 1; i < nExtraSamples; i++ )
             v[i] = EXTRASAMPLE_UNSPECIFIED;
 
@@ -7928,8 +7956,10 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         uint16 v[1];
 
-        v[0] = EXTRASAMPLE_ASSOCALPHA;
-	TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, 1, v);
+        v[0] = GTiffGetAlphaValue(CSLFetchNameValue(papszOptions, "ALPHA"),
+                                  DEFAULT_ALPHA_TYPE);
+
+        TIFFSetField(hTIFF, TIFFTAG_EXTRASAMPLES, 1, v);
         TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
     }
 
@@ -9659,7 +9689,13 @@ void GDALRegister_GTiff()
 "       <Value>ITULAB</Value>"
 "   </Option>"
 "   <Option name='SPARSE_OK' type='boolean' description='Can newly created files have missing blocks?' default='FALSE'/>"
-"   <Option name='ALPHA' type='boolean' description='Mark first extrasample as being alpha'/>"
+"   <Option name='ALPHA' type='string-select' description='Mark first extrasample as being alpha'>"
+"       <Value>NON-PREMULTIPLIED</Value>"
+"       <Value>PREMULTIPLIED</Value>"
+"       <Value>UNSPECIFIED</Value>"
+"       <Value aliasOf='NON-PREMULTIPLIED'>YES</Value>"
+"       <Value aliasOf='UNSPECIFIED'>NO</Value>"
+"   </Option>"
 "   <Option name='PROFILE' type='string-select' default='GDALGeoTIFF'>"
 "       <Value>GDALGeoTIFF</Value>"
 "       <Value>GeoTIFF</Value>"
