@@ -1317,14 +1317,22 @@ int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
                 CPLXMLNode* psStringSelect = psChildNode->psChild;
                 while(psStringSelect)
                 {
-                    CPLXMLNode* psOptionNode = psStringSelect->psChild;
-                    if (psOptionNode && EQUAL(psStringSelect->pszValue, "Value"))
+                    if (psStringSelect->eType == CXT_Element &&
+                        EQUAL(psStringSelect->pszValue, "Value"))
                     {
-                        if (EQUAL(psOptionNode->pszValue, pszValue))
+                        CPLXMLNode* psOptionNode = psStringSelect->psChild;
+                        while(psOptionNode)
                         {
-                            bMatchFound = TRUE;
-                            break;
+                            if (psOptionNode->eType == CXT_Text &&
+                                EQUAL(psOptionNode->pszValue, pszValue))
+                            {
+                                bMatchFound = TRUE;
+                                break;
+                            }
+                            psOptionNode = psOptionNode->psNext;
                         }
+                        if (bMatchFound)
+                            break;
                     }
                     psStringSelect = psStringSelect->psNext;
                 }
