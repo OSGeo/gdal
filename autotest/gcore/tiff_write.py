@@ -4135,6 +4135,11 @@ def tiff_write_104():
 
 def tiff_write_105():
 
+    # This hangs forever with libtiff 3.8.2, so skip it
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
     shutil.copyfile( 'data/bug4468.tif', 'tmp/bug4468.tif' )
 
     # Update a pixel and close again.  

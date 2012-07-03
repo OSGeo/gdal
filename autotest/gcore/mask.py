@@ -198,6 +198,11 @@ def mask_4():
 
 def mask_5():
 
+    # This crashes with libtiff 3.8.2, so skip it
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
     if gdaltest.have_ng == 0:
         return 'skip'
 
