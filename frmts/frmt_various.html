@@ -387,6 +387,9 @@ recognising map_info keywords with the
 coordinate system and georeferencing.  In particular, UTM and State Plane 
 should work.</p>
 
+<p>Starting with GDAL 2.0, all ENVI header fields will be stored in the
+ENVI metadata domain.</p>
+
 <p>Creation Options:</p>
 
 <ul>
@@ -535,8 +538,7 @@ metadata, and shapes are not supported.</p>
 <p>This is the binary (non-human-readable) version of one of the raster formats
 used by Golden Software products (such as the Surfer series).  This format
 differs from the <a href="#GSBG">GSBG</a> format (also known as Surfer 6
-binary grid format), it is more complicated and flexible. This format is
-supported for reading only.</p>
+binary grid format), it is more complicated and flexible.</p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/gsg/gs7bgdataset.cpp</tt>.</p>
 
