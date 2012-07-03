@@ -2349,6 +2349,23 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Set all the header metadata into the ENVI domain                */
+/* -------------------------------------------------------------------- */	
+    {
+        char** pTmp = poDS->papszHeader;
+        while (*pTmp != NULL)
+        {
+            char** pTokens = CSLTokenizeString2(*pTmp, "=", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
+            if (pTokens[0] != NULL && pTokens[1] != NULL && pTokens[2] == NULL)
+            {
+                poDS->SetMetadataItem(pTokens[0], pTokens[1], "ENVI");
+            }
+            CSLDestroy(pTokens);
+            pTmp++;
+        }
+    } 
+
+/* -------------------------------------------------------------------- */
 /*      Read the stats file if it is present                            */
 /* -------------------------------------------------------------------- */	
     poDS->ProcessStatsFile();
