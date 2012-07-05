@@ -32,6 +32,8 @@
 
 #include "gdal_pam.h"
 
+char** RasterliteGetTileDriverOptions(char** papszOptions);
+
 class RasterliteBand;
 
 /************************************************************************/
@@ -106,6 +108,7 @@ class RasterliteDataset : public GDALPamDataset
     CPLErr CleanOverviewLevel(int nOvrFactor);
     CPLErr ReloadOverviews();
     CPLErr CreateOverviewLevel(int nOvrFactor,
+                               char** papszOptions,
                                GDALProgressFunc pfnProgress,
                                void * pProgressData);
 };

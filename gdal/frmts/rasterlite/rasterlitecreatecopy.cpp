@@ -64,7 +64,7 @@ static char** RasterliteAddTileDriverOptionsForDriver(char** papszOptions,
     return papszTileDriverOptions;
 }
 
-static char** RasterliteGetTileDriverOptions(char** papszOptions)
+char** RasterliteGetTileDriverOptions(char** papszOptions)
 {
     char** papszTileDriverOptions = NULL;
 

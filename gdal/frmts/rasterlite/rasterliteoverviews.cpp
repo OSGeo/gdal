@@ -287,6 +287,7 @@ CPLErr RasterliteDataset::CleanOverviewLevel(int nOvrFactor)
 /************************************************************************/
 
 CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
+                                              char** papszOptions,
                                               GDALProgressFunc pfnProgress,
                                               void * pProgressData)
 {
@@ -296,25 +297,46 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
     
     CPLString osSQL;
 
-    int nBlockXSize = 256;
-    int nBlockYSize = 256;
     int nOvrXSize = nRasterXSize / nOvrFactor;
     int nOvrYSize = nRasterYSize / nOvrFactor;
     
     if (nOvrXSize == 0 || nOvrYSize == 0)
         return CE_Failure;
+
+    int bTiled = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "TILED", "YES"));
+    int nBlockXSize, nBlockYSize;
+    if (bTiled)
+    {
+        nBlockXSize = atoi(CSLFetchNameValueDef(papszOptions, "BLOCKXSIZE", "256"));
+        nBlockYSize = atoi(CSLFetchNameValueDef(papszOptions, "BLOCKYSIZE", "256"));
+        if (nBlockXSize < 64) nBlockXSize = 64;
+        else if (nBlockXSize > 4096)  nBlockXSize = 4096;
+        if (nBlockYSize < 64) nBlockYSize = 64;
+        else if (nBlockYSize > 4096)  nBlockYSize = 4096;
+    }
+    else
+    {
+        nBlockXSize = nOvrXSize;
+        nBlockYSize = nOvrYSize;
+    }
     
     int nXBlocks = (nOvrXSize + nBlockXSize - 1) / nBlockXSize;
     int nYBlocks = (nOvrYSize + nBlockYSize - 1) / nBlockYSize;
     
-    const char* pszDriverName = "GTiff";
+    const char* pszDriverName = CSLFetchNameValueDef(papszOptions, "DRIVER", "GTiff");
+    if (EQUAL(pszDriverName, "MEM") || EQUAL(pszDriverName, "VRT"))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "GDAL %s driver cannot be used as underlying driver",
+                 pszDriverName);
+        return CE_Failure;
+    }
     GDALDriverH hTileDriver = GDALGetDriverByName(pszDriverName);
     if (hTileDriver == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot load GDAL %s driver", pszDriverName);
         return CE_Failure;
     }
-    
+
     GDALDriverH hMemDriver = GDALGetDriverByName("MEM");
     if (hMemDriver == NULL)
     {
@@ -330,8 +352,6 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
     {
         return CE_Failure;
     }
-    
-    char** papszTileDriverOptions = NULL;
     
     CPLString osTempFileName;
     osTempFileName.Printf("/vsimem/%p", hDS);
@@ -390,6 +410,8 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
 /* -------------------------------------------------------------------- */
 /*      Iterate over blocks to add data into raster and metadata tables */
 /* -------------------------------------------------------------------- */
+
+    char** papszTileDriverOptions = RasterliteGetTileDriverOptions(papszOptions);
 
     OGR_DS_ExecuteSQL(hDS, "BEGIN", NULL, NULL);
     
@@ -518,7 +540,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
                 eErr = CE_Failure;
         }
     }
-    
+
     nLimitOvrCount = -1;
     
     if (eErr == CE_None)
@@ -527,7 +549,10 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
         OGR_DS_ExecuteSQL(hDS, "ROLLBACK", NULL, NULL);
     
     VSIFree(pabyMEMDSBuffer);
-    
+
+    CSLDestroy(papszTileDriverOptions);
+    papszTileDriverOptions = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Update raster_pyramids table                                    */
 /* -------------------------------------------------------------------- */
@@ -687,7 +712,11 @@ CPLErr RasterliteDataset::IBuildOverviews( const char * pszResampling,
                   "for RASTERLITE overviews");
         return CE_Failure;
     }
-    
+
+    const char* pszOvrOptions = CPLGetConfigOption("RASTERLITE_OVR_OPTIONS", NULL);
+    char** papszOptions = (pszOvrOptions) ? CSLTokenizeString2( pszOvrOptions, ",", 0) : NULL;
+    GDALValidateCreationOptions( GetDriver(), papszOptions);
+
     int i;
     for(i=0;i<nOverviews && eErr == CE_None;i++)
     {
@@ -696,10 +725,12 @@ CPLErr RasterliteDataset::IBuildOverviews( const char * pszResampling,
 
         eErr = CleanOverviewLevel(panOverviewList[i]);
         if (eErr == CE_None)
-            eErr = CreateOverviewLevel(panOverviewList[i], pfnProgress, pProgressData);
+            eErr = CreateOverviewLevel(panOverviewList[i], papszOptions, pfnProgress, pProgressData);
     
         ReloadOverviews();
     }
+
+    CSLDestroy(papszOptions);
     
     return eErr;
 }
