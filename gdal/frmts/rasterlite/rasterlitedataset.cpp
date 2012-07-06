@@ -1049,7 +1049,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
         OGRLayerH hMetadataLyr, hRasterLyr, hRasterPyramidsLyr;
         OGRLayerH hSQLLyr;
         OGRFeatureH hFeat;
-        int i, nResolutions;
+        int i, nResolutions = 0;
         int iBand, nBands, nBlockXSize, nBlockYSize;
         GDALDataType eDataType;
 
@@ -1078,39 +1078,41 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
                          "FROM raster_pyramids WHERE table_prefix = '%s' "
                          "ORDER BY pixel_x_size ASC",
                          osTableName.c_str());
-         }
-         else
-         {
-            osSQL.Printf("SELECT DISTINCT(pixel_x_size), pixel_y_size "
-                         "FROM \"%s_metadata\" WHERE pixel_x_size != 0  "
-                         "ORDER BY pixel_x_size ASC",
-                         osTableName.c_str());
-         }
 
-        hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
-        if (hSQLLyr == NULL)
+            hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+            if (hSQLLyr != NULL)
+            {
+                nResolutions = OGR_L_GetFeatureCount(hSQLLyr, TRUE);
+                if( nResolutions == 0 )
+                {
+                    OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+                    hSQLLyr = NULL;
+                }
+            }
+        }
+        else
+            hSQLLyr = NULL;
+
+        if( hSQLLyr == NULL )
         {
-            if (hRasterPyramidsLyr == NULL)
-                goto end;
-                
             osSQL.Printf("SELECT DISTINCT(pixel_x_size), pixel_y_size "
                          "FROM \"%s_metadata\" WHERE pixel_x_size != 0  "
                          "ORDER BY pixel_x_size ASC",
                          osTableName.c_str());
-                         
+
             hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
             if (hSQLLyr == NULL)
                 goto end;
+
+            nResolutions = OGR_L_GetFeatureCount(hSQLLyr, TRUE);
+
+            if (nResolutions == 0)
+            {
+                OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+                goto end;
+            }
         }
-            
-        nResolutions = OGR_L_GetFeatureCount(hSQLLyr, TRUE);
-                     
-        if (nResolutions == 0)
-        {
-            OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-            goto end;
-        }
-            
+
 /* -------------------------------------------------------------------- */
 /*      Set dataset attributes                                          */
 /* -------------------------------------------------------------------- */
