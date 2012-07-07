@@ -60,7 +60,6 @@ PostGISRasterDataset::PostGISRasterDataset() {
     papszSubdatasets = NULL;
     nSrid = -1;
     poConn = NULL;
-    bRegularBlocking = false;
     bRegisteredInRasterColumns = false;
     pszSchema = NULL;
     pszTable = NULL;
@@ -345,10 +344,9 @@ GBool PostGISRasterDataset::SetRasterProperties
 {
     PGresult* poResult = NULL;
     CPLString osCommand;
-    CPLString osCommand2;
-    PGresult* poResult2 = NULL;
     int i = 0;
     int nTuples = 0;
+    int nRasterID = 0;
     GBool bRetValue = false;
     OGRSpatialReference * poSR = NULL;
     OGRGeometry* poGeom = NULL;
@@ -357,86 +355,23 @@ GBool PostGISRasterDataset::SetRasterProperties
     char* pszExtent;
     char* pszProjectionRef;
     char* pszIdColumn = NULL;
-    int nTmpSrid = -1;
-    double dfTmpScaleX = 0.0;
-    double dfTmpScaleY = 0.0;
-    double dfTmpSkewX = 0.0;
-    double dfTmpSkewY = 0.0;
-    int nWidth = 0;
-    int nHeight = 0;
-    int nTmpWidth = 0;
-    int nTmpHeight = 0;
-
-    /* Determine the primary key/unique column on the raster table */
-    osCommand.Printf("select cols.column_name from information_schema."
-        "constraint_column_usage as cols join information_schema."
-        "table_constraints as constr on constr.constraint_name = cols."
-        "constraint_name where cols.table_schema = '%s' and cols.table_name "
-        "= '%s'", pszSchema, pszTable);
-
-    CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
-            "Query: %s", osCommand.c_str());
-    poResult = PQexec(poConn, osCommand.c_str());
-    if (poResult == NULL ||
-        PQresultStatus(poResult) != PGRES_TUPLES_OK ||
-        PQntuples(poResult) <= 0 ) {
-
-        PQclear(poResult);
-
-        // maybe there is no primary key or unique constraint;
-        // a sequence will also suffice, so look for the first sequence
-
-        osCommand.Printf("select cols.column_name from information_schema."
-            "columns as cols join information_schema.sequences as seqs on cols."
-            "column_default like '%%'||seqs.sequence_name||'%%' where cols."
-            "table_schema = '%s' and cols.table_name = '%s'", pszSchema, 
-            pszTable);
-
-        CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
-                "Query: %s", osCommand.c_str());
-        poResult = PQexec(poConn, osCommand.c_str());
-
-        if (poResult == NULL || 
-            PQresultStatus(poResult) != PGRES_TUPLES_OK ||
-            PQntuples(poResult) <= 0) {
-
-            CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
-                "Could not find a primary key or unique column on the specified table; using UpperLeftX and UpperLeftY.");
-
-            /* If no primary key or unique column found, fall back to raster upperleft x&y */
-        }
-        else {
-            pszIdColumn = CPLStrdup(PQgetvalue(poResult, 0, 0));
-        }
-    }
-    else {
-        pszIdColumn = CPLStrdup(PQgetvalue(poResult, 0, 0));
-    }
-
-    PQclear(poResult);
+    /* Incorporated variables from old SetRasterBand method */
+    GBool bSignedByte = false;
+    int nBitDepth = 8;
+    char* pszDataType = NULL;
+    int iBand = 0;
+    double dfNodata = 0.0;
+    GDALDataType hDataType = GDT_Byte;
+    GBool bIsOffline = false;
+    GBool bHasNoDataValue = false;
 
     /* Execute the query to fetch raster data from db */
     if (pszWhere == NULL) {
-        if (pszIdColumn == NULL) {
-            osCommand.Printf("select (foo.md).* from (select st_metadata(%s) "
-                "as md from %s.%s) as foo", pszColumn, pszSchema, pszTable);
-        }
-        else {
-            osCommand.Printf("select (foo.md).*, foo.%s from (select %s, "
-                "st_metadata(%s) as md from %s.%s) as foo", pszIdColumn, 
-                pszIdColumn, pszColumn, pszSchema, pszTable);
-        }
+        osCommand.Printf("select count(*) from %s.%s", 
+            pszSchema, pszTable);
     } else {
-        if (pszIdColumn == NULL) {
-            osCommand.Printf("select (foo.md).* from (select st_metadata(%s) "
-            "as md from %s.%s where %s) as foo", pszColumn, pszSchema, 
-            pszTable, pszWhere);
-        }
-        else {
-            osCommand.Printf("select (foo.md).*, foo.%s from (select %s, "
-            "st_metadata(%s) as md from %s.%s where %s) as foo", pszIdColumn, 
-            pszIdColumn, pszColumn, pszSchema, pszTable, pszWhere);
-        }
+        osCommand.Printf("select count(*) from %s.%s where %s", 
+            pszSchema, pszTable, pszWhere);
     }
 
     CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
@@ -453,40 +388,111 @@ GBool PostGISRasterDataset::SetRasterProperties
         if (poResult != NULL)
             PQclear(poResult);
 
-        if (pszIdColumn != NULL)
-            CPLFree(pszIdColumn);
 
         return false;
     }
 
-    nTuples = PQntuples(poResult);
+    nTuples = atoi(PQgetvalue(poResult, 0, 0));
 
+    PQclear(poResult);
 
     /******************************************
      * Easier case. Only one raster to fetch
      ******************************************/
-    if (nTuples == 1) {
-        nSrid = atoi(PQgetvalue(poResult, 0, 8));
-        nBands = atoi(PQgetvalue(poResult, 0, 9));
-        adfGeoTransform[0] = atof(PQgetvalue(poResult, 0, 0)); //upperleft x
-        adfGeoTransform[1] = atof(PQgetvalue(poResult, 0, 4)); //pixelsize x
-        adfGeoTransform[2] = atof(PQgetvalue(poResult, 0, 6)); //skew x
-        adfGeoTransform[3] = atof(PQgetvalue(poResult, 0, 1)); //upperleft y
-        adfGeoTransform[4] = atof(PQgetvalue(poResult, 0, 7)); //skew y
-        adfGeoTransform[5] = atof(PQgetvalue(poResult, 0, 5)); //pixelsize y
+    if (nTuples == 1 || ONE_RASTER_PER_TABLE) {
+        if (pszWhere == NULL) {
+            osCommand.Printf(
+                "select st_xmin(geom) xmin, st_ymax(geom) ymin, srid, nbband "
+                "from (select st_srid(%s) srid, st_extent(%s::geometry) geom, "
+                "max(ST_NumBands(rast)) nbband from %s.%s "
+                "group by srid) foo",
+                pszColumn, pszColumn, pszSchema, pszTable);
+        }
+        else {
+            osCommand.Printf(
+                "select st_xmin(geom) xmin, st_ymax(geom) ymin, srid, nbband "
+                "from (select st_srid(%s) srid, st_extent(%s::geometry) geom, "
+                "max(ST_NumBands(rast)) nbband from %s.%s where %s "
+                "group by srid) foo",
+                pszColumn, pszColumn, pszSchema, pszTable, pszWhere);
+        }
 
-        nRasterXSize = atoi(PQgetvalue(poResult, 0, 2));
-        nRasterYSize = atoi(PQgetvalue(poResult, 0, 3));
+        CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+            "Query: %s", osCommand.c_str());
+        poResult = PQexec(poConn, osCommand.c_str());
+        if (
+            poResult == NULL ||
+            PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+            PQntuples(poResult) <= 0
+            ) {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "Error retrieving aggregate raster metadata");
+
+            if (poResult != NULL)
+                PQclear(poResult);
+
+            return false;
+        }
+
+        adfGeoTransform[0] = atof(PQgetvalue(poResult, 0, 0)); //upperleft x
+        adfGeoTransform[3] = atof(PQgetvalue(poResult, 0, 1)); //upperleft y
+        nSrid = atoi(PQgetvalue(poResult, 0, 2));
+        nBands = atoi(PQgetvalue(poResult, 0, 3));
+
+        if (pszWhere == NULL) {
+            osCommand.Printf(
+                "select st_scalex(%s), st_scaley(%s), st_skewx(%s), "
+                "st_skewy(%s), st_width(%s), st_height(%s) from %s.%s limit 1",
+                pszColumn, pszColumn, pszColumn, pszColumn,
+                pszColumn, pszColumn, pszSchema, pszTable);
+        }
+        else {
+            osCommand.Printf(
+                "select st_scalex(%s), st_scaley(%s), st_skewx(%s), "
+                "st_skewy(%s), st_width(%s), st_height(%s) from %s.%s "
+                "where %s limit 1",
+                pszColumn, pszColumn, pszColumn, pszColumn,
+                pszColumn, pszColumn, pszSchema, pszTable, pszWhere);
+        }
+
+        CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+            "Query: %s", osCommand.c_str());
+        poResult = PQexec(poConn, osCommand.c_str());
+        if (
+            poResult == NULL ||
+            PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+            PQntuples(poResult) <= 0
+            ) {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                "Error retrieving first raster metadata");
+
+            if (poResult != NULL)
+                PQclear(poResult);
+
+            return false;
+        }
+
+        adfGeoTransform[1] = atof(PQgetvalue(poResult, 0, 0)); //pixelsize x
+        adfGeoTransform[5] = atof(PQgetvalue(poResult, 0, 1)); //pixelsize y
+        adfGeoTransform[2] = atof(PQgetvalue(poResult, 0, 2)); //skew x
+        adfGeoTransform[4] = atof(PQgetvalue(poResult, 0, 3)); //skew y
+
+        nBlockXSize = atoi(PQgetvalue(poResult, 0, 4));
+        nBlockYSize = atoi(PQgetvalue(poResult, 0, 5));
+
+        PQclear(poResult);
 
         /**
          * Not tiled dataset: The whole raster.
          * TODO: 'invent' a good block size.
          */
-        nBlockXSize = nRasterXSize;
-        nBlockYSize = nRasterYSize;
+        nRasterXSize = nBlockXSize;
+        nRasterYSize = nBlockYSize;
 
         bRetValue = true;
-    } else {
+    }
+    
+    if (nTuples > 1 ) {
         switch (nMode) {
                 /**
                  * Each row is a different raster. Create subdatasets, one per row
@@ -494,8 +500,91 @@ GBool PostGISRasterDataset::SetRasterProperties
 
             case ONE_RASTER_PER_ROW:
                 {
+                /* Determine the primary key/unique column on the table */
+                osCommand.Printf("select d.attname from pg_catalog.pg_constraint as a "
+                    "join pg_catalog.pg_indexes as b on a.conname = b.indexname "
+                    "join pg_catalog.pg_class as c on c.relname = b.tablename "
+                    "join pg_catalog.pg_attribute as d on c.relfilenode = d.attrelid "
+                    "where b.schemaname = '%s' and b.tablename = '%s' and "
+                    "d.attnum = a.conkey[1] and a.contype in ('p', 'u')", 
+                    pszSchema, pszTable);
+
+                CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+                        "Query: %s", osCommand.c_str());
+                poResult = PQexec(poConn, osCommand.c_str());
+                if (poResult == NULL ||
+                    PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+                    PQntuples(poResult) <= 0 ) {
+
+                    PQclear(poResult);
+
+                    /*
+                       Maybe there is no primary key or unique constraint;
+                       a sequence will also suffice; get the first one
+                     */
+
+                    osCommand.Printf("select cols.column_name from information_schema."
+                        "columns as cols join information_schema.sequences as seqs on cols."
+                        "column_default like '%%'||seqs.sequence_name||'%%' where cols."
+                        "table_schema = '%s' and cols.table_name = '%s'", pszSchema, 
+                        pszTable);
+
+                    CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+                            "Query: %s", osCommand.c_str());
+                    poResult = PQexec(poConn, osCommand.c_str());
+
+                    if (poResult == NULL || 
+                        PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+                        PQntuples(poResult) <= 0) {
+
+                        CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+                            "Could not find a primary key or unique column on the specified table; using UpperLeftX and UpperLeftY.");
+
+                        /* 
+                            If no primary key or unique column found, 
+                            fall back to raster upperleft x&y
+                         */
+                    }
+                    else {
+                        pszIdColumn = CPLStrdup(PQgetvalue(poResult, 0, 0));
+                    }
+                }
+                else {
+                    pszIdColumn = CPLStrdup(PQgetvalue(poResult, 0, 0));
+                }
+
+                PQclear(poResult);
 
                 if (pszIdColumn == NULL) {
+                    if (pszWhere == NULL) {
+                        osCommand.Printf("select ST_UpperLeftX(%s), ST_UpperLeftY(%s) from %s.%s", pszColumn, 
+                            pszColumn, pszSchema, pszTable);
+                    }
+                    else {
+                        osCommand.Printf("select ST_UpperLeftX(%s), ST_UpperLeftY(%s) from %s.%s where %s", 
+                            pszColumn, pszColumn, pszSchema, pszTable, pszWhere);
+                    }
+                    CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+                        "Query: %s", osCommand.c_str());
+                    poResult = PQexec(poConn, osCommand.c_str());
+                    if (
+                        poResult == NULL ||
+                        PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+                        PQntuples(poResult) <= 0
+                        ) {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                            "Error retrieving raster row metadata");
+
+                        if (poResult != NULL)
+                            PQclear(poResult);
+
+                        // pszIdColumn is alread null
+
+                        return false;
+                    }
+
+                    nTuples = PQntuples(poResult);
+
                     for (i = 0; i < nTuples; i++) {
                         adfGeoTransform[0] = atof(PQgetvalue(poResult, i, 0)); //upperleft x
                         adfGeoTransform[3] = atof(PQgetvalue(poResult, i, 1)); //upperleft y
@@ -511,25 +600,57 @@ GBool PostGISRasterDataset::SetRasterProperties
                                 CPLSPrintf("PostGIS Raster at %s.%s (%s), UpperLeft = %f, %f", pszSchema,
                                     pszTable, pszColumn, adfGeoTransform[0], adfGeoTransform[3]));
                     }
+
+                    PQclear(poResult);
                 }
                 else {
+                    if (pszWhere == NULL) {
+                        osCommand.Printf("select %s from %s.%s", 
+                            pszIdColumn, pszSchema, pszTable);
+                    }
+                    else {
+                        osCommand.Printf("select %s from %s.%s where %s", 
+                            pszIdColumn, pszSchema, pszTable, pszWhere);
+                    }
+                    CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+                        "Query: %s", osCommand.c_str());
+                    poResult = PQexec(poConn, osCommand.c_str());
+                    if (
+                        poResult == NULL ||
+                        PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+                        PQntuples(poResult) <= 0
+                        ) {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                            "Error retrieving raster row metadata");
+
+                        if (poResult != NULL)
+                            PQclear(poResult);
+
+                        if (pszIdColumn != NULL)
+                            CPLFree(pszIdColumn);
+
+                        return false;
+                    }
+
+                    nTuples = PQntuples(poResult);
+
                     for (i = 0; i < nTuples; i++) {
                         // this is the raster ID (or unique column)
-                        nSrid = atoi(PQgetvalue(poResult, i, 10));
+                        nRasterID = atoi(PQgetvalue(poResult, i, 0));
 
                         papszSubdatasets = CSLSetNameValue(papszSubdatasets,
                                 CPLSPrintf("SUBDATASET_%d_NAME", (i + 1)),
                                 CPLSPrintf("PG:%s schema=%s table=%s column=%s where='%s = %d'",
                                 pszValidConnectionString, pszSchema, pszTable, pszColumn, 
-                                pszIdColumn, nSrid));
+                                pszIdColumn, nRasterID));
 
                         papszSubdatasets = CSLSetNameValue(papszSubdatasets,
                                 CPLSPrintf("SUBDATASET_%d_DESC", (i + 1)),
                                 CPLSPrintf("PostGIS Raster at %s.%s (%s), %s = %d", pszSchema,
-                                pszTable, pszColumn, pszIdColumn, nSrid));
+                                pszTable, pszColumn, pszIdColumn, nRasterID));
                     }
 
-                    CPLFree(pszIdColumn);
+                    PQclear(poResult);
                 }
 
 
@@ -538,6 +659,9 @@ GBool PostGISRasterDataset::SetRasterProperties
                 nRasterYSize = 0;
 
                 bRetValue = true;
+    
+                if (pszIdColumn != NULL)
+                    CPLFree(pszIdColumn);
 
                 }
                 break;
@@ -547,148 +671,24 @@ GBool PostGISRasterDataset::SetRasterProperties
                 ************************************************************/
             case ONE_RASTER_PER_TABLE:
                 {
-                /* This column is not used in this mode. */
-                if (pszIdColumn != NULL)
-                    CPLFree(pszIdColumn);
-
-                /**
-                 * Get the rest of raster properties from this object
-                 */
-                nSrid = atoi(PQgetvalue(poResult, 0, 8));
-
-                nBands = atoi(PQgetvalue(poResult, 0, 9));
-                adfGeoTransform[0] = atof(PQgetvalue(poResult, 0, 0)); //upperleft x
-                adfGeoTransform[1] = atof(PQgetvalue(poResult, 0, 4)); //pixelsize x
-                adfGeoTransform[2] = atof(PQgetvalue(poResult, 0, 6)); //skew x
-                adfGeoTransform[3] = atof(PQgetvalue(poResult, 0, 1)); //upperleft y
-                adfGeoTransform[4] = atof(PQgetvalue(poResult, 0, 7)); //skew y
-                adfGeoTransform[5] = atof(PQgetvalue(poResult, 0, 5)); //pixelsize y
-                nWidth = atoi(PQgetvalue(poResult, 0, 2));
-                nHeight = atoi(PQgetvalue(poResult, 0, 3));
-
-                /**
-                 * Now check if all tiles have the same dimensions.
-                 *
-                 * NOTE: If bRegularBlocking is 'true', this is not checked.
-                 * It's user responsibility
-                 *
-                 * TODO: Find a good block size, that works in any situation.
-                 **/
-                if (!bRegularBlocking) 
-                {
-                    for(i = 1; i < nTuples; i++)
-                    {
-                        nTmpWidth = atoi(PQgetvalue(poResult, i, 2));
-                        nTmpHeight = atoi(PQgetvalue(poResult, i, 3));
-
-                        if (nWidth != nTmpWidth || nHeight != nTmpHeight)
-                        {
-                            // Not supported until the above TODO is implemented
-                            CPLError(CE_Failure, CPLE_AppDefined,
-                                "Error, the table %s.%s contains tiles with "
-                                "different size, and irregular blocking is "
-                                "not supported yet", pszSchema, pszTable);
-
-                            PQclear(poResult);
-
-                            return false;                             
-                        }
-                    }
-
-                    // Now, we can ensure this
-                    bRegularBlocking = true;
-                    nBlockXSize = nWidth;
-                    nBlockYSize = nHeight;
-                }
-
-                // The user ensures this...
-                else
-                {                                        
-                    nBlockXSize = nWidth;
-                    nBlockYSize = nHeight;
-                }
-
-                /**
-                 * Check all the raster tiles have the same srid and snap to the
-                 * same grid. If not, return an error
-                 *
-                 * NOTE: If bAllTilesSnapToSameGrid is 'true', this is not
-                 * checked. It's user responsibility.
-                 *
-                 * TODO: Work even if this requisites are  not complained. For
-                 * example, by:
-                 *  - Resampling all the rows to the grid of the first one
-                 *  - Providing a new grid alignment for all the rows, with a
-                 *    maximum of 6 parameters: ulx, uly, pixelsizex, pixelsizey,
-                 *    skewx, skewy or a minimum of 3 parameters: ulx, uly,
-                 *    pixelsize (x and y pixel sizes are equal and both skew are
-                 *    0).
-                 **/
-                if (!bAllTilesSnapToSameGrid)
-                {
-                    for(i = 1; i < nTuples; i++)
-                    {
-                        nTmpSrid = atoi(PQgetvalue(poResult, i, 8));
-                        dfTmpScaleX = atof(PQgetvalue(poResult, i, 4));
-                        dfTmpScaleY = atof(PQgetvalue(poResult, i, 5));
-                        dfTmpSkewX = atof(PQgetvalue(poResult, i, 6));
-                        dfTmpSkewY = atof(PQgetvalue(poResult, i, 7));
-
-                        if (nTmpSrid != nSrid ||
-                                FLT_NEQ(dfTmpScaleX, adfGeoTransform[1]) ||
-                                FLT_NEQ(dfTmpScaleY, adfGeoTransform[5]) ||
-                                FLT_NEQ(dfTmpSkewX, adfGeoTransform[2]) ||
-                                FLT_NEQ(dfTmpSkewY, adfGeoTransform[4]))
-                        {
-                            /**
-                             * In this mode, it is not allowed this situation,
-                             * unless while the above TODO is not implemented
-                             **/
-                            CPLError(CE_Failure, CPLE_AppDefined,
-                                "Error, the table %s.%s contains tiles with "
-                                "different SRID or snapping to different grids",
-                                pszSchema, pszTable);
-
-                            PQclear(poResult);
-
-                            return false;
-                        }
-                    }
-
-                    // Now, we can ensure this
-                    bAllTilesSnapToSameGrid = true;
-                }
-
-                /**
-                 * Now, if there's irregular blocking and/or the blocks don't
-                 * snap to the same grid or don't have the same srid, we should
-                 * fix these situations. Assuming that we don't return an error
-                 * in that cases, of course.
-                 **/
-
-
-
                 /**
                  * Get whole raster extent
                  **/
                 if (pszWhere == NULL)
-                    osCommand2.Printf("select st_astext(st_setsrid(st_extent(%s::geometry),%d)) from %s.%s",
+                    osCommand.Printf("select st_astext(st_setsrid(st_extent(%s::geometry),%d)) from %s.%s",
                         pszColumn, nSrid, pszSchema, pszTable);
                 else
-                    osCommand2.Printf("select st_astext(st_setsrid(st_extent(%s::geometry),%d)) from %s.%s where %s",
+                    osCommand.Printf("select st_astext(st_setsrid(st_extent(%s::geometry),%d)) from %s.%s where %s",
                         pszColumn, nSrid, pszSchema, pszTable, pszWhere);
 
 
-                poResult2 = PQexec(poConn, osCommand2.c_str());
-                if (poResult2 == NULL ||
-                        PQresultStatus(poResult2) != PGRES_TUPLES_OK ||
-                        PQntuples(poResult2) <= 0) {
+                poResult = PQexec(poConn, osCommand.c_str());
+                if (poResult == NULL ||
+                        PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+                        PQntuples(poResult) <= 0) {
                     CPLError(CE_Failure, CPLE_AppDefined,
                             "Error calculating whole raster extent: %s",
                             PQerrorMessage(poConn));
-
-                    if (poResult2 != NULL)
-                        PQclear(poResult2);
 
                     if (poResult != NULL)
                         PQclear(poResult);
@@ -697,7 +697,7 @@ GBool PostGISRasterDataset::SetRasterProperties
                 }
 
                 /* Construct an OGR object with the raster extent */
-                pszExtent = PQgetvalue(poResult2, 0, 0);
+                pszExtent = PQgetvalue(poResult, 0, 0);
 
                 pszProjectionRef = (char*) GetProjectionRef();
                 poSR = new OGRSpatialReference(pszProjectionRef);
@@ -706,9 +706,6 @@ GBool PostGISRasterDataset::SetRasterProperties
                 if (OgrErr != OGRERR_NONE) {
                     CPLError(CE_Failure, CPLE_AppDefined,
                             "Couldn't calculate raster extent");
-
-                    if (poResult2)
-                        PQclear(poResult2);
 
                     if (poResult != NULL)
                         PQclear(poResult);
@@ -751,7 +748,7 @@ GBool PostGISRasterDataset::SetRasterProperties
                 OGRGeometryFactory::destroyGeometry(poGeom);
                 delete poE;
                 delete poSR;
-                PQclear(poResult2);
+                PQclear(poResult);
 
                 bRetValue = true;
 
@@ -763,10 +760,6 @@ GBool PostGISRasterDataset::SetRasterProperties
                 {
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "Error, incorrect working mode");
-
-                /* This column is not used in this mode. */
-                if (pszIdColumn != NULL)
-                    CPLFree(pszIdColumn);
 
                 bRetValue = false;
                 }
@@ -785,55 +778,45 @@ GBool PostGISRasterDataset::SetRasterProperties
     CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
             "Block dimensions = (%d x %d)", nBlockXSize, nBlockYSize);
 
-    PQclear(poResult);
-    return bRetValue;
-}
+    /* Do not set bands if properties error'd */
+    if (!bRetValue) {
+        return bRetValue;
+    }
 
-/*********************************************
- * \brief Set raster bands for this dataset
- *********************************************/
-GBool PostGISRasterDataset::SetRasterBands() {
-    GBool bSignedByte = false;
-    int nBitDepth = 8;
-    char* pszDataType = NULL;
-    int iBand = 0;
-    PGresult * poResult = NULL;
-    CPLString osCommand;
-    double dfNodata = 0.0;
-    GDALDataType hDataType = GDT_Byte;
-    int nTuples = 0;
-    GBool bIsOffline = false;
-    GBool bHasNoDataValue = false;
+    /* Create query to fetch metadata from db */
+    if (pszWhere == NULL) {
+        osCommand.Printf("select st_bandpixeltype(rast, band), "
+            "st_bandnodatavalue(rast, band) is null, "
+            "st_bandnodatavalue(rast, band) from (select %s, "
+            "generate_series(1, st_numbands(%s)) band from (select "
+            "rast from %s.%s limit 1) bar) foo",
+            pszColumn, pszColumn, pszSchema, pszTable);
+    } else {
+        osCommand.Printf("select st_bandpixeltype(rast, band), "
+            "st_bandnodatavalue(rast, band) is null, "
+            "st_bandnodatavalue(rast, band) from (select %s, "
+            "generate_series(1, st_numbands(%s)) band from (select "
+            "rast from %s.%s where %s limit 1) bar) foo",
+            pszColumn, pszColumn, pszSchema, pszTable, pszWhere);
+    }
+
+    poResult = PQexec(poConn, osCommand.c_str());
+    nTuples = PQntuples(poResult);
+
+    /* Error getting info from database */
+    if (poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+            nTuples <= 0) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                "Error getting band metadata: %s",
+                PQerrorMessage(poConn));
+        if (poResult)
+            PQclear(poResult);
+
+        return false;
+    }
 
     /* Create each PostGISRasterRasterBand using the band metadata */
-    for (iBand = 0; iBand < nBands; iBand++) {
-        /* Create query to fetch metadata from db */
-        if (pszWhere == NULL) {
-            osCommand.Printf("select (foo.md).* from (select"
-                    " distinct st_bandmetadata( %s, %d) as md from %s. %s) as foo",
-                    pszColumn, iBand + 1, pszSchema, pszTable);
-        } else {
-
-            osCommand.Printf("select (foo.md).* from (select"
-                    " distinct st_bandmetadata( %s, %d) as md from %s. %s where %s) as foo",
-                    pszColumn, iBand + 1, pszSchema, pszTable, pszWhere);
-        }
-
-        poResult = PQexec(poConn, osCommand.c_str());
-        nTuples = PQntuples(poResult);
-
-        /* Error getting info from database */
-        if (poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK ||
-                nTuples <= 0) {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                    "Error getting band metadata: %s",
-                    PQerrorMessage(poConn));
-            if (poResult)
-                PQclear(poResult);
-
-            return false;
-        }
-
+    for (iBand = 0; iBand < nTuples; iBand++) {
         /**
          * If we have more than one record here is because there are several
          * rows, belonging to the same raster coverage, with different band
@@ -858,10 +841,16 @@ GBool PostGISRasterDataset::SetRasterBands() {
 
 
         /* Get metadata and create raster band objects */
-        pszDataType = CPLStrdup(PQgetvalue(poResult, 0, 0));
-        bHasNoDataValue = EQUALN(PQgetvalue(poResult, 0, 1), "t", sizeof(char));
-        dfNodata = atof(PQgetvalue(poResult, 0, 2));
-        bIsOffline = EQUALN(PQgetvalue(poResult, 0, 3), "t", sizeof (char));
+        pszDataType = CPLStrdup(PQgetvalue(poResult, iBand, 0));
+        bHasNoDataValue = EQUALN(PQgetvalue(poResult, iBand, 1), "f", sizeof(char));
+        dfNodata = atof(PQgetvalue(poResult, iBand, 2));
+        /** 
+         * Offline rasters are not yet supported. When offline rasters are
+         * supported, they will also requires a fast 'getter', other than 
+         * the ST_BandMetaData accessor.
+         **/
+        /*
+        bIsOffline = EQUALN(PQgetvalue(poResult, iBand, 3), "t", sizeof (char));        */
 
         if (EQUALN(pszDataType, "1BB", 3 * sizeof (char))) {
             hDataType = GDT_Byte;
@@ -912,8 +901,9 @@ GBool PostGISRasterDataset::SetRasterBands() {
                 bHasNoDataValue, dfNodata, bSignedByte, nBitDepth, 0, bIsOffline));
 
         CPLFree(pszDataType);
-        PQclear(poResult);
     }
+
+    PQclear(poResult);
 
     return true;
 }
@@ -1014,8 +1004,8 @@ CPLErr PostGISRasterDataset::IRasterIO(GDALRWFlag eRWFlag,
     PostGISRasterRasterBand * poBand = NULL;
     GByte * pabySrcBlock = NULL;
     int nBlocksPerRow, nBlocksPerColumn;
-    char orderByY[4];
-    char orderByX[3];
+    char orderByY[5];
+    char orderByX[4];
 
 
     /**
@@ -1104,8 +1094,8 @@ CPLErr PostGISRasterDataset::IRasterIO(GDALRWFlag eRWFlag,
 
 
         /* Construct order by for the query */
-        memset(orderByX, 0, 3);
-        memset(orderByY, 0, 4);
+        memset(orderByX, 0, 4);
+        memset(orderByY, 0, 5);
 
         strcpy(orderByX, "asc");
         if (nSrid == -1)
@@ -1136,7 +1126,7 @@ CPLErr PostGISRasterDataset::IRasterIO(GDALRWFlag eRWFlag,
 
         else
         {
-            osCommand.Printf("SELECT %s ST_ScaleX(%s), ST_SkewY(%s), "
+            osCommand.Printf("SELECT %s, ST_ScaleX(%s), ST_SkewY(%s), "
                 "ST_SkewX(%s), ST_ScaleY(%s), ST_UpperLeftX(%s), "
                 "ST_UpperLeftY(%s), ST_Width(%s), ST_Height(%s) FROM %s.%s WHERE %s AND "
                 "ST_Intersects(%s, ST_PolygonFromText('POLYGON((%f %f, %f %f, %f %f"
@@ -1602,7 +1592,6 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
     PGconn * poConn = NULL;
     PostGISRasterDataset* poDS = NULL;
     GBool bBrowseDatabase = false;
-    PGresult * poResult = NULL;
     CPLString osCommand;
 
     /**************************
@@ -1632,66 +1621,6 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
         CPLFree(pszWhere);
         return NULL;
     }
-
-    /* Check geometry type existence */
-    poResult = PQexec(poConn, "SELECT oid FROM pg_type WHERE typname = 'geometry'");
-    if (
-            poResult == NULL ||
-            PQresultStatus(poResult) != PGRES_TUPLES_OK ||
-            PQntuples(poResult) <= 0
-            ) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Error checking geometry type existence. Is PostGIS correctly "
-                "installed?: %s", PQerrorMessage(poConn));
-        if (poResult != NULL)
-            PQclear(poResult);
-        if (pszSchema)
-            CPLFree(pszSchema);
-        if (pszTable)
-            CPLFree(pszTable);
-        if (pszColumn)
-            CPLFree(pszColumn);
-        if (pszWhere)
-            CPLFree(pszWhere);
-
-        return NULL;
-    }
-
-    PQclear(poResult);
-
-
-    /* Check spatial tables existence */
-    poResult = PQexec(poConn, "select pg_namespace.nspname as schemaname, "
-                    "pg_class.relname as tablename from pg_class, "
-                    "pg_namespace where pg_class.relnamespace = pg_namespace.oid "
-                    "and (pg_class.relname='raster_columns' or "
-                    "pg_class.relname='raster_overviews' or "
-                    "pg_class.relname='geometry_columns' or "
-                    "pg_class.relname='spatial_ref_sys')");
-    if (
-            poResult == NULL ||
-            PQresultStatus(poResult) != PGRES_TUPLES_OK ||
-            PQntuples(poResult) <= 0
-            ) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Error checking needed tables existence: %s",
-                PQerrorMessage(poConn));
-        if (poResult != NULL)
-            PQclear(poResult);
-        if (pszSchema)
-            CPLFree(pszSchema);
-        if (pszTable)
-            CPLFree(pszTable);
-        if (pszColumn)
-            CPLFree(pszColumn);
-        if (pszWhere)
-            CPLFree(pszWhere);
-
-        return NULL;
-
-    }
-
-    PQclear(poResult);
 
     /*************************************************************************
      * No table will be read. Only shows information about the existent raster
@@ -1766,13 +1695,6 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
          **/
 
         if (!poDS->SetRasterProperties(pszConnectionString)) {
-            CPLFree(pszConnectionString);
-            delete poDS;
-            return NULL;
-        }
-
-        /* Set raster bands */
-        if (!poDS->SetRasterBands()) {
             CPLFree(pszConnectionString);
             delete poDS;
             return NULL;
@@ -2011,68 +1933,6 @@ PostGISRasterDataset::CreateCopy( const char * pszFilename,
         // if connection info fails, browsing mode, or no table set
         return NULL;
     }
-
-    /* Check geometry type existence */
-    poResult = PQexec(poConn, "SELECT oid FROM pg_type WHERE typname = 'geometry'");
-    if (
-            poResult == NULL ||
-            PQresultStatus(poResult) != PGRES_TUPLES_OK ||
-            PQntuples(poResult) <= 0
-            ) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Error checking geometry type existence. Is PostGIS correctly \
-                installed?: %s", PQerrorMessage(poConn));
-        if (poResult != NULL)
-            PQclear(poResult);
-        if (pszSchema)
-            CPLFree(pszSchema);
-        if (pszTable)
-            CPLFree(pszTable);
-        if (pszColumn)
-            CPLFree(pszColumn);
-        if (pszWhere)
-            CPLFree(pszWhere);
-
-        CPLFree(pszConnectionString);
-
-        return NULL;
-    }
-
-    PQclear(poResult);
-
-    /* Check spatial tables existence */
-    poResult = PQexec(poConn, "select pg_namespace.nspname as schemaname, \
-                    pg_class.relname as tablename from pg_class, \
-                    pg_namespace where pg_class.relnamespace = pg_namespace.oid \
-                    and (pg_class.relname='raster_columns' or \
-                    pg_class.relname='raster_overviews' or \
-                    pg_class.relname='geometry_columns' or \
-                    pg_class.relname='spatial_ref_sys')");
-    if (
-            poResult == NULL ||
-            PQresultStatus(poResult) != PGRES_TUPLES_OK ||
-            PQntuples(poResult) <= 0
-            ) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Error checking needed tables existence: %s",
-                PQerrorMessage(poConn));
-        if (poResult != NULL)
-            PQclear(poResult);
-        if (pszSchema)
-            CPLFree(pszSchema);
-        if (pszTable)
-            CPLFree(pszTable);
-        if (pszColumn)
-            CPLFree(pszColumn);
-        if (pszWhere)
-            CPLFree(pszWhere);
-
-        CPLFree(pszConnectionString);
-
-        return NULL;
-    }
-
-    PQclear(poResult);
 
     // begin transaction
     poResult = PQexec(poConn, "begin");
