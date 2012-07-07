@@ -103,7 +103,6 @@ private:
     GBool bBlocksCached;
     GBool SetRasterProperties(const char *);
     GBool BrowseDatabase(const char *, char *);
-    GBool SetRasterBands();
     GBool SetOverviewCount();
 
 public:
