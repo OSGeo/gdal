@@ -287,7 +287,7 @@ gdal_translate [--help-general]
        [-of format] [-b band] [-mask band] [-expand {gray|rgb|rgba}]
        [-outsize xsize[%] ysize[%]]
        [-unscale] [-scale [src_min src_max [dst_min dst_max]]]
-       [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry]
+       [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry] [-epo] [-eco]
        [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
        [-gcp pixel line easting northing [elevation]]*
        [-mo "META-TAG=VALUE"]* [-q] [-sds]
@@ -342,6 +342,13 @@ from the source image for copying based on pixel/line location.  </dd>
 <dt> <b>-projwin</b> <i>ulx uly lrx lry</i>:</dt><dd> Selects a subwindow from
 the source image for copying (like <b>-srcwin</b>) but with the corners given
 in georeferenced coordinates. </dd>
+<dt> <b>-epo</b>: (Error when Partially Outside)</dt><dd>(GDAL >= 2.0) If this
+option is set, <b>-srcwin</b> or <b>-projwin</b> values that falls partially outside the
+source raster extent will be considered as an error. The default behaviour starting
+with GDAL 2.0 is to accept such requests, when they were considered as an error before.</dd>
+<dt> <b>-eco</b>: (Error when Completely Outside)</dt><dd>(GDAL >= 2.0) Same
+as <b>-epo</b>, except that the criteron for erroring out is when the request falls completely
+outside the source raster extent.</dd>
 <dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> Override the projection for the
 output file.  The <i>srs_def</i> may be any of the usual GDAL/OGR forms,
 complete WKT, PROJ.4, EPSG:n or a file containing the WKT. </dd>

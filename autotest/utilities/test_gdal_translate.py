@@ -641,6 +641,32 @@ def test_gdal_translate_23():
         pass
 
     return 'success'
+
+
+
+###############################################################################
+# Test -srcwin option when partially outside
+
+def test_gdal_translate_24():
+    if test_cli_utilities.get_gdal_translate_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -q -srcwin -10 -10 40 40 ../gcore/data/byte.tif tmp/test_gdal_translate_24.tif')
+
+    ds = gdal.Open('tmp/test_gdal_translate_24.tif')
+    if ds is None:
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 4620:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 # Cleanup
 
@@ -706,6 +732,10 @@ def test_gdal_translate_cleanup():
         gdal.GetDriverByName('GTiff').Delete('tmp/test_gdal_translate_23.tif')
     except:
         pass
+    try:
+        os.remove('tmp/test_gdal_translate_24.tif')
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
@@ -732,6 +762,7 @@ gdaltest_list = [
     test_gdal_translate_21,
     test_gdal_translate_22,
     test_gdal_translate_23,
+    test_gdal_translate_24,
     test_gdal_translate_cleanup
     ]
 
