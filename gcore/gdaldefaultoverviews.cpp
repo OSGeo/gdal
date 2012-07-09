@@ -282,7 +282,9 @@ void GDALDefaultOverviews::OverviewScan()
             else
                 osOvrFilename = pszProxyOvrFilename;
 
+            CPLPushErrorHandler(CPLQuietErrorHandler);
             poODS = (GDALDataset *) GDALOpen(osOvrFilename,poDS->GetAccess());
+            CPLPopErrorHandler();
         }
     }
 
