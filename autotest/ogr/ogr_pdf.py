@@ -58,6 +58,8 @@ def ogr_pdf_1(name = 'tmp/ogr_pdf_1.pdf', write_attributes = 'YES'):
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2 49)'))
+    feat.SetField('strfield', 'super tex !')
+    feat.SetStyleString('LABEL(t:{strfield})')
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())

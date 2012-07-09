@@ -2095,6 +2095,21 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                 if (pszStr)
                 {
                     osLabelText = pszStr;
+
+                    /* If the text is of the form {stuff}, then it means we want to fetch */
+                    /* the value of the field "stuff" in the feature */
+                    if( osLabelText.size() && osLabelText[0] == '{' &&
+                        osLabelText[osLabelText.size() - 1] == '}' )
+                    {
+                        osLabelText = pszStr + 1;
+                        osLabelText.resize(osLabelText.size() - 1);
+
+                        int nIdxField = OGR_F_GetFieldIndex(hFeat, osLabelText);
+                        if( nIdxField >= 0 )
+                            osLabelText = OGR_F_GetFieldAsString(hFeat, nIdxField);
+                        else
+                            osLabelText = "";
+                    }
                 }
 
                 const char* pszColor = OGR_ST_GetParamStr(hTool, OGRSTLabelFColor, &bIsNull);
