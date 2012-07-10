@@ -1113,14 +1113,15 @@ CPLErr PostGISRasterDataset::IRasterIO(GDALRWFlag eRWFlag,
             osCommand.Printf("SELECT %s, ST_ScaleX(%s), ST_SkewY(%s), "
                 "ST_SkewX(%s), ST_ScaleY(%s), ST_UpperLeftX(%s), "
                 "ST_UpperLeftY(%s), ST_Width(%s), ST_Height(%s) FROM %s.%s WHERE "
-                "ST_Intersects(%s, ST_PolygonFromText('POLYGON((%f %f, %f %f, %f %f"
-                ", %f %f, %f %f))', %d)) ORDER BY ST_UpperLeftY(%s) %s, "
-                "ST_UpperLeftX(%s) %s", pszColumn, pszColumn,
-                pszColumn, pszColumn, pszColumn, pszColumn, pszColumn, pszColumn,
-                pszColumn, pszSchema, pszTable, pszColumn, adfProjWin[0],
-                adfProjWin[1], adfProjWin[2], adfProjWin[3], adfProjWin[4],
-                adfProjWin[5], adfProjWin[6], adfProjWin[7], adfProjWin[0],
-                adfProjWin[1], nSrid, pszColumn, orderByY, pszColumn, orderByX);
+                "ST_Intersects(%s, ST_PolygonFromText('POLYGON((%.17f %.17f, "
+                "%.17f %.17f, %.17f %.17f, %.17f %.17f, %.17f %.17f))', %d)) "
+                "ORDER BY ST_UpperLeftY(%s) %s, ST_UpperLeftX(%s) %s", 
+                pszColumn, pszColumn, pszColumn, pszColumn, pszColumn, 
+                pszColumn, pszColumn, pszColumn, pszColumn, pszSchema, 
+                pszTable, pszColumn, adfProjWin[0], adfProjWin[1], 
+                adfProjWin[2], adfProjWin[3], adfProjWin[4], adfProjWin[5], 
+                adfProjWin[6], adfProjWin[7], adfProjWin[0], adfProjWin[1], 
+                nSrid, pszColumn, orderByY, pszColumn, orderByX);
         }
 
 
@@ -1129,14 +1130,15 @@ CPLErr PostGISRasterDataset::IRasterIO(GDALRWFlag eRWFlag,
             osCommand.Printf("SELECT %s, ST_ScaleX(%s), ST_SkewY(%s), "
                 "ST_SkewX(%s), ST_ScaleY(%s), ST_UpperLeftX(%s), "
                 "ST_UpperLeftY(%s), ST_Width(%s), ST_Height(%s) FROM %s.%s WHERE %s AND "
-                "ST_Intersects(%s, ST_PolygonFromText('POLYGON((%f %f, %f %f, %f %f"
-                ", %f %f, %f %f))', %d)) ORDER BY ST_UpperLeftY(%s) %s, "
-                "ST_UpperLeftX(%s) %s", pszColumn, pszColumn,
-                pszColumn, pszColumn, pszColumn, pszColumn, pszColumn, pszColumn,
-                pszColumn,pszSchema, pszTable, pszWhere, pszColumn, adfProjWin[0],
-                adfProjWin[1], adfProjWin[2], adfProjWin[3], adfProjWin[4],
-                adfProjWin[5], adfProjWin[6], adfProjWin[7], adfProjWin[0],
-                adfProjWin[1], nSrid, pszColumn, orderByY, pszColumn, orderByX);
+                "ST_Intersects(%s, ST_PolygonFromText('POLYGON((%.17f %.17f, "
+                "%.17f %.17f, %.17f %.17f, %.17f %.17f, %.17f %.17f))', %d)) "
+                "ORDER BY ST_UpperLeftY(%s) %s, ST_UpperLeftX(%s) %s", 
+                pszColumn, pszColumn, pszColumn, pszColumn, pszColumn, 
+                pszColumn, pszColumn, pszColumn, pszColumn, pszSchema, 
+                pszTable, pszWhere, pszColumn, adfProjWin[0], adfProjWin[1], 
+                adfProjWin[2], adfProjWin[3], adfProjWin[4], adfProjWin[5], 
+                adfProjWin[6], adfProjWin[7], adfProjWin[0], adfProjWin[1], 
+                nSrid, pszColumn, orderByY, pszColumn, orderByX);
         }
 
         CPLDebug("PostGIS_Raster", "PostGISRasterDataset::IRasterIO(): Query = %s",
