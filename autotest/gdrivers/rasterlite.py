@@ -402,7 +402,41 @@ def rasterlite_10():
     tst = gdaltest.GDALTest( 'RASTERLITE', 'rgbsmall.tif', 1, 23189, options = ['DRIVER=EPSILON'] )
 
     return tst.testCreateCopy( check_gt = 1, check_srs = 1, check_minmax = 0 )
-    
+
+###############################################################################
+# Test BuildOverviews() with AVERAGE resampling
+
+def rasterlite_11():
+
+    if gdaltest.rasterlite_drv is None:
+        return 'skip'
+
+    if gdaltest.has_spatialite is False:
+        return 'skip'
+
+    ds = gdal.Open( 'tmp/byte.sqlite', gdal.GA_Update )
+
+    ds.BuildOverviews( overviewlist = [] )
+
+    # Resampling method is not taken into account
+    ds.BuildOverviews( 'AVERAGE', overviewlist = [2, 4] )
+
+    # Reopen and test
+    ds = None
+    ds = gdal.Open( 'tmp/byte.sqlite' )
+
+    if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1152:
+        gdaltest.post_reason('Wrong checksum for overview 0')
+        print(ds.GetRasterBand(1).GetOverview(0).Checksum())
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetOverview(1).Checksum() != 215:
+        gdaltest.post_reason('Wrong checksum for overview 1')
+        print(ds.GetRasterBand(1).GetOverview(1).Checksum())
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 # Cleanup
 
@@ -444,6 +478,7 @@ gdaltest_list = [
     rasterlite_8,
     rasterlite_9,
     rasterlite_10,
+    rasterlite_11,
     rasterlite_cleanup ]
 
 if __name__ == '__main__':

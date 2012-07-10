@@ -107,7 +107,8 @@ class RasterliteDataset : public GDALPamDataset
     CPLErr CleanOverviews();
     CPLErr CleanOverviewLevel(int nOvrFactor);
     CPLErr ReloadOverviews();
-    CPLErr CreateOverviewLevel(int nOvrFactor,
+    CPLErr CreateOverviewLevel(const char * pszResampling,
+                               int nOvrFactor,
                                char** papszOptions,
                                GDALProgressFunc pfnProgress,
                                void * pProgressData);
