@@ -439,6 +439,8 @@ GBool PostGISRasterDataset::SetRasterProperties
         nSrid = atoi(PQgetvalue(poResult, 0, 2));
         nBands = atoi(PQgetvalue(poResult, 0, 3));
 
+        PQclear(poResult);
+
         if (pszWhere == NULL) {
             osCommand.Printf(
                 "select st_scalex(%s), st_scaley(%s), st_skewx(%s), "
@@ -751,6 +753,9 @@ GBool PostGISRasterDataset::SetRasterProperties
                 PQclear(poResult);
 
                 bRetValue = true;
+    
+                if (pszIdColumn != NULL)
+                    CPLFree(pszIdColumn);
 
                 }
                 break;
