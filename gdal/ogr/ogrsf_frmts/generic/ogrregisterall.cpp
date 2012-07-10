@@ -183,6 +183,10 @@ void OGRRegisterAll()
 #ifdef PGDUMP_ENABLED
     RegisterOGRPGDump();
 #endif
+#ifdef OSM_ENABLED
+    /* Register before GPSBabel, that could recognize .osm file too */
+    RegisterOGROSM();
+#endif
 #ifdef GPSBABEL_ENABLED
     RegisterOGRGPSBabel();
 #endif
