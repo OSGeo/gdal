@@ -177,6 +177,10 @@ ifeq ($(CURL_SETTING),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DELASTIC_ENABLED
 endif
 
+ifeq ($(HAVE_SQLITE),yes)
+CXXFLAGS :=	$(CXXFLAGS) -DOSM_ENABLED
+endif
+
 CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
