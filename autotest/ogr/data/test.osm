@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="hand">
+ <bounds minlat="49" minlon="2" maxlat="50" maxlon="3"/>
+ <node id="1" lat="49" lon="2" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <node id="2" lat="50" lon="3" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <node id="3" lat="49.5" lon="3" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <tag k="name" v="Some interesting point"/>
+ </node>
+ <node id="4" lat="49" lon="3" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <node id="5" lat="50" lon="2" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <node id="6" lat="49.1" lon="2.1" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <node id="7" lat="49.1" lon="2.2" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <node id="8" lat="49.2" lon="2.2" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <node id="9" lat="49.2" lon="2.1" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z"/>
+ <way id="1" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <nd ref="1"/>
+  <nd ref="2"/>
+  <tag k="highway" v="motorway"/>
+ </way>
+ <way id="2" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <tag k="area" v="yes"/>
+  <nd ref="1"/>
+  <nd ref="4"/>
+  <nd ref="2"/>
+  <nd ref="5"/>
+  <nd ref="1"/>
+ </way>
+ <way id="3" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <tag k="area" v="yes"/>
+  <nd ref="6"/>
+  <nd ref="7"/>
+  <nd ref="8"/>
+  <nd ref="9"/>
+  <nd ref="6"/>
+ </way>
+ <relation id="1" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <member type="way" ref="2" role="outer"/>
+  <member type="way" ref="3" role="inner"/>
+  <tag k="type" v="multipolygon"/>
+ </relation>
+</osm>
