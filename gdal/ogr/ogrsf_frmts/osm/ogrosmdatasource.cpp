@@ -208,8 +208,20 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode* pasNodes)
 {
     unsigned int i;
 
+    const OGREnvelope* psEnvelope =
+        papoLayers[IDX_LYR_POINTS]->GetSpatialFilterEnvelope();
+
     for(i = 0; i < nNodes; i++)
     {
+        /* If the point doesn't fit into the envelope of the spatial filter */
+        /* then skip it */
+        if( psEnvelope != NULL &&
+            !(pasNodes[i].dfLon >= psEnvelope->MinX &&
+              pasNodes[i].dfLon <= psEnvelope->MaxX &&
+              pasNodes[i].dfLat >= psEnvelope->MinY &&
+              pasNodes[i].dfLat <= psEnvelope->MaxY) )
+            continue;
+
         unsigned int j;
         int bInterestingTag = bReportAllNodes;
         OSMTag* pasTags = pasNodes[i].pasTags;
@@ -227,18 +239,6 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode* pasNodes)
                 }
             }
         }
-
-        /*if( nNodesInTransaction == 0 )
-            StartTransaction();
-        else if ( nNodesInTransaction == 100000 )
-        {
-            CommitTransaction();
-            StartTransaction();
-            nNodesInTransaction = 0;
-        }
-        nNodesInTransaction ++;
-        */
-
         IndexPoint(&pasNodes[i]);
 
         if( bInterestingTag )
@@ -254,7 +254,10 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode* pasNodes)
 
             int bFilteredOut = FALSE;
             if( !papoLayers[IDX_LYR_POINTS]->AddFeature(poFeature, &bFilteredOut) )
+            {
                 bStopParsing = TRUE;
+                break;
+            }
             else if (!bFilteredOut)
                 bFeatureAdded = TRUE;
         }
