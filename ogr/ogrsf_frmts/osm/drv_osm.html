@@ -1,0 +1,108 @@
+<html>
+<head>
+<title>OSM - OpenStreetMap XML and PBF</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>OSM - OpenStreetMap XML and PBF</h1>
+
+(GDAL/OGR &gt;= 2.0.0)<p>
+
+This driver reads OpenStreetMap files, in .osm (XML based) and .pbf (optimized binary) formats.<p>
+
+The driver is available if GDAL is built with SQLite support and, for .osm XML files, with Expat support.<p>
+
+The filenames must end with .osm or .pbf extension.<p>
+
+The driver will categorize features into 4 layers :
+<ul>
+    <li><b>points</b> : "node" features that have significant tags attached.</li>
+    <li><b>lines</b> : "way" features that are recognized as non-area.</li>
+    <li><b>polygons</b> : "way" features that are recognized as area.</li>
+    <li><b>multipolygons</b> : "relation" features that form a multipolygon.</li>
+</ul>
+<p>
+
+<h3>Configuration</h3>
+
+In the <i>data</i> folder of the GDAL distribution, you can find a <i>osmconf.ini</i> file that can be
+customized to fit your needs. You can also define an alternate path with the OSM_CONFIG_FILE configuration
+option.<p>
+
+The customization is essentially which OSM attributes and keys should be translated into OGR layer fields.<p>
+
+<h3>Internal working</h3>
+
+The driver will use an internal SQLite database to resolve geometries. If that database remains under 100 MB
+it will reside in RAM. If it grows above, it will be written in a temporary file on disk. By default, this
+file will be written in the current directory, unless you define the CPL_TMPDIR configuration option. The
+100 MB default threshold can be adjusted with the OSM_MAX_TMPFILE_SIZE configuration option (value in MB).<p>
+
+<h3>Interleaved reading</h3>
+
+Due to the nature of OSM files and how the driver works internally, the default reading mode might not work
+correctly, because too many features will accumulate in the layers before being consummed by the user application.
+For large files, applications should set the OGR_INTERLEAVED_READING=YES configuration option to turn on a
+special reading mode where the following reading pattern must be used :
+
+<pre>
+    int bHasLayersNonEmpty;
+    do
+    {
+        bHasLayersNonEmpty = FALSE;
+
+        for( int iLayer = 0; iLayer &lt; poDS->GetLayerCount(); iLayer++ )
+        {
+            OGRLayer *poLayer = poDS->GetLayer(iLayer);
+
+            OGRFeature* poFeature;
+            while( (poFeature = poLayer->GetNextFeature()) != NULL )
+            {
+                bHasLayersNonEmpty = TRUE;
+                OGRFeature::DestroyFeature(poFeature);
+            }
+        }
+    }
+    while( bHasLayersNonEmpty );
+</pre>
+
+<p>
+
+Note : the ogr2ogr application has been modified to use that OGR_INTERLEAVED_READING mode without any
+particular user action.<p>
+
+
+<h3>Reading .osm.bz2 files and/or online files</h3>
+
+.osm.bz2 are not natively recognized, however you can process them (on Unix), with the following command :
+<pre>
+bzcat my.osm.bz2 | ogr2ogr -f SQLite my.sqlite /vsistdin/
+</pre>
+
+You can convert a .osm or .pbf file without downloading it :
+<pre>
+wget -O - http://www.example.com/some.pbf | ogr2ogr -f SQLite my.sqlite /vsistdin/
+
+or
+
+ogr2ogr -f SQLite my.sqlite /vsicurl_streaming/http://www.example.com/some.pbf -progress
+</pre>
+
+And to combine the above steps :
+
+<pre>
+wget -O - http://www.example.com/some.osm.bz2 | bzcat | ogr2ogr -f SQLite my.sqlite /vsistdin/
+</pre>
+
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://www.openstreetmap.org/">OpenStreetMap home page</a><p>
+<li> <a href="http://wiki.openstreetmap.org/wiki/OSM_XML">OSM XML Format description</a><p>
+<li> <a href="http://wiki.openstreetmap.org/wiki/PBF_Format">OSM PBF Format description</a><p>
+</ul>
+
+</body>
+</html>

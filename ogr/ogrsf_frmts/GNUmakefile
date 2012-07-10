@@ -35,6 +35,7 @@ SUBDIRS-$(HAVE_FREEXL)  += xls
 SUBDIRS-$(HAVE_EXPAT)   += ods
 SUBDIRS-$(HAVE_EXPAT)   += xlsx
 SUBDIRS-$(CURL_SETTING) += elastic
+SUBDIRS-$(HAVE_SQLITE)	+= osm
 
 ifeq ($(PCIDSK_SETTING),internal)
 SUBDIRS-yes  += pcidsk

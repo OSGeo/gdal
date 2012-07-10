@@ -1,0 +1,18 @@
+
+OBJ	=	ogrosmdriver.obj ogrosmdatasource.obj ogrosmlayer.obj osm_parser.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IFDEF EXPAT_DIR
+EXTRAFLAGS =	-I.. -I..\.. -I..\..\..\frmts\zlib -DHAVE_LIBZ -I..\sqlite $(SQLITE_INC) -DHAVE_SQLITE $(EXPAT_INCLUDE) -DHAVE_EXPAT=1
+!ELSE
+EXTRAFLAGS =	-I.. -I..\.. -I..\..\..\frmts\zlib -DHAVE_LIBZ -I..\sqlite $(SQLITE_INC) -DHAVE_SQLITE
+!ENDIF
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
