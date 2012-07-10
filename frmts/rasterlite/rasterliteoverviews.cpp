@@ -286,7 +286,8 @@ CPLErr RasterliteDataset::CleanOverviewLevel(int nOvrFactor)
 /*                       CleanOverviewLevel()                           */
 /************************************************************************/
 
-CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
+CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
+                                              int nOvrFactor,
                                               char** papszOptions,
                                               GDALProgressFunc pfnProgress,
                                               void * pProgressData)
@@ -406,7 +407,29 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
         }
         nLimitOvrCount++;
     }
-    
+/* -------------------------------------------------------------------- */
+/*      Allocate buffer for tile of previous overview level             */
+/* -------------------------------------------------------------------- */
+
+    GDALDataset* poPrevOvrLevel =
+        (papoOverviews != NULL && iLev >= 2 && iLev <= nResolutions && papoOverviews[iLev-2]) ?
+            papoOverviews[iLev-2] : this;
+    double dfRatioPrevOvr = poPrevOvrLevel->GetRasterBand(1)->GetXSize() / nOvrXSize;
+    int nPrevOvrBlockXSize = (int)(nBlockXSize * dfRatioPrevOvr + 0.5);
+    int nPrevOvrBlockYSize = (int)(nBlockYSize * dfRatioPrevOvr + 0.5);
+    GByte* pabyPrevOvrMEMDSBuffer = NULL;
+
+    if( !EQUALN(pszResampling, "NEAR", 4))
+    {
+        pabyPrevOvrMEMDSBuffer =
+            (GByte*)VSIMalloc3(nPrevOvrBlockXSize, nPrevOvrBlockYSize, nBands * nDataTypeSize);
+        if (pabyPrevOvrMEMDSBuffer == NULL)
+        {
+            VSIFree(pabyMEMDSBuffer);
+            return CE_Failure;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Iterate over blocks to add data into raster and metadata tables */
 /* -------------------------------------------------------------------- */
@@ -421,6 +444,8 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
     {
         for(nBlockXOff=0;eErr == CE_None && nBlockXOff<nXBlocks;nBlockXOff++)
         {
+            GDALDatasetH hPrevOvrMemDS = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Create in-memory tile                                           */
 /* -------------------------------------------------------------------- */
@@ -429,19 +454,66 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
                 nReqXSize = nOvrXSize - nBlockXOff * nBlockXSize;
             if ((nBlockYOff+1) * nBlockYSize > nOvrYSize)
                 nReqYSize = nOvrYSize - nBlockYOff * nBlockYSize;
-            
-            eErr = RasterIO(GF_Read,
-                            nBlockXOff * nBlockXSize * nOvrFactor,
-                            nBlockYOff * nBlockYSize * nOvrFactor,
-                            nReqXSize * nOvrFactor, nReqYSize * nOvrFactor,
-                            pabyMEMDSBuffer, nReqXSize, nReqYSize,
-                            eDataType, nBands, NULL,
-                            0, 0, 0);
-            if (eErr != CE_None)
+
+            if( pabyPrevOvrMEMDSBuffer != NULL )
             {
-                break;
+                int nPrevOvrReqXSize =
+                    (int)(nReqXSize * dfRatioPrevOvr + 0.5);
+                int nPrevOvrReqYSize =
+                    (int)(nReqYSize * dfRatioPrevOvr + 0.5);
+
+                eErr = RasterIO(GF_Read,
+                                nBlockXOff * nBlockXSize * nOvrFactor,
+                                nBlockYOff * nBlockYSize * nOvrFactor,
+                                nReqXSize * nOvrFactor, nReqYSize * nOvrFactor,
+                                pabyPrevOvrMEMDSBuffer, nPrevOvrReqXSize, nPrevOvrReqYSize,
+                                eDataType, nBands, NULL,
+                                0, 0, 0);
+
+                if (eErr != CE_None)
+                {
+                    break;
+                }
+
+                hPrevOvrMemDS = GDALCreate(hMemDriver, "MEM:::",
+                                           nPrevOvrReqXSize, nPrevOvrReqYSize, 0,
+                                           eDataType, NULL);
+
+                if (hPrevOvrMemDS == NULL)
+                {
+                    eErr = CE_Failure;
+                    break;
+                }
+
+                int iBand;
+                for(iBand = 0; iBand < nBands; iBand ++)
+                {
+                    char** papszOptions = NULL;
+                    char szTmp[64];
+                    memset(szTmp, 0, sizeof(szTmp));
+                    CPLPrintPointer(szTmp,
+                                    pabyPrevOvrMEMDSBuffer + iBand * nDataTypeSize *
+                                    nPrevOvrReqXSize * nPrevOvrReqYSize, sizeof(szTmp));
+                    papszOptions = CSLSetNameValue(papszOptions, "DATAPOINTER", szTmp);
+                    GDALAddBand(hPrevOvrMemDS, eDataType, papszOptions);
+                    CSLDestroy(papszOptions);
+                }
             }
-            
+            else
+            {
+                eErr = RasterIO(GF_Read,
+                                nBlockXOff * nBlockXSize * nOvrFactor,
+                                nBlockYOff * nBlockYSize * nOvrFactor,
+                                nReqXSize * nOvrFactor, nReqYSize * nOvrFactor,
+                                pabyMEMDSBuffer, nReqXSize, nReqYSize,
+                                eDataType, nBands, NULL,
+                                0, 0, 0);
+                if (eErr != CE_None)
+                {
+                    break;
+                }
+            }
+
             GDALDatasetH hMemDS = GDALCreate(hMemDriver, "MEM:::",
                                               nReqXSize, nReqYSize, 0, 
                                               eDataType, NULL);
@@ -464,7 +536,24 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
                 GDALAddBand(hMemDS, eDataType, papszOptions);
                 CSLDestroy(papszOptions);
             }
-            
+
+            if( hPrevOvrMemDS != NULL )
+            {
+                for(iBand = 0; iBand < nBands; iBand ++)
+                {
+                    GDALRasterBandH hDstOvrBand = GDALGetRasterBand(hMemDS, iBand+1);
+
+                    eErr = GDALRegenerateOverviews( GDALGetRasterBand(hPrevOvrMemDS, iBand+1),
+                                                    1, &hDstOvrBand,
+                                                    pszResampling,
+                                                    NULL, NULL );
+                    if( eErr != CE_None )
+                        break;
+                }
+
+                GDALClose(hPrevOvrMemDS);
+            }
+
             GDALDatasetH hOutDS = GDALCreateCopy(hTileDriver,
                                         osTempFileName.c_str(), hMemDS, FALSE,
                                         papszTileDriverOptions, NULL, NULL);
@@ -549,6 +638,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(int nOvrFactor,
         OGR_DS_ExecuteSQL(hDS, "ROLLBACK", NULL, NULL);
     
     VSIFree(pabyMEMDSBuffer);
+    VSIFree(pabyPrevOvrMEMDSBuffer);
 
     CSLDestroy(papszTileDriverOptions);
     papszTileDriverOptions = NULL;
@@ -704,14 +794,6 @@ CPLErr RasterliteDataset::IBuildOverviews( const char * pszResampling,
                   "Operation failed.\n" );
         return CE_Failure;
     }
-    
-    if( !EQUALN(pszResampling, "NEAR", 4))
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Only NEAREST resampling is allowed for now "
-                  "for RASTERLITE overviews");
-        return CE_Failure;
-    }
 
     const char* pszOvrOptions = CPLGetConfigOption("RASTERLITE_OVR_OPTIONS", NULL);
     char** papszOptions = (pszOvrOptions) ? CSLTokenizeString2( pszOvrOptions, ",", 0) : NULL;
@@ -725,7 +807,7 @@ CPLErr RasterliteDataset::IBuildOverviews( const char * pszResampling,
 
         eErr = CleanOverviewLevel(panOverviewList[i]);
         if (eErr == CE_None)
-            eErr = CreateOverviewLevel(panOverviewList[i], papszOptions, pfnProgress, pProgressData);
+            eErr = CreateOverviewLevel(pszResampling, panOverviewList[i], papszOptions, pfnProgress, pProgressData);
     
         ReloadOverviews();
     }
