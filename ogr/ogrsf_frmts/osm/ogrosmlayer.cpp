@@ -236,6 +236,13 @@ OGRFeature *OGROSMLayer::GetNextFeature()
 
 int OGROSMLayer::TestCapability( const char * pszCap )
 {
+    if( EQUAL(pszCap, OLCFastGetExtent) )
+    {
+        OGREnvelope sExtent;
+        if (poDS->GetExtent(&sExtent) == OGRERR_NONE)
+            return TRUE;
+    }
+
     return FALSE;
 }
 

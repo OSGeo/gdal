@@ -31,6 +31,7 @@
 #include "gpb.h"
 
 #include "cpl_conv.h"
+#include "cpl_string.h"
 #include "cpl_vsi.h"
 
 #include <zlib.h>
@@ -113,6 +114,8 @@ struct _OSMContext
 
     OSMWay         sWay;
     OSMRelation    sRelation;
+
+    int            bTryToFetchBounds;
 #endif
 
     VSILFILE      *fp;
@@ -1662,41 +1665,70 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData, const char *pszName
 
     psCtxt->nWithoutEventCounter = 0;
 
-    if( strcmp(pszName, "bounds") == 0 )
+    if( psCtxt->bTryToFetchBounds )
     {
-        if( ppszIter )
+        if( strcmp(pszName, "bounds") == 0 ||
+            strcmp(pszName, "bound") == 0 /* osmosis uses bound */ )
         {
-            while( ppszIter[0] != NULL )
+            int nCountCoords = 0;
+
+            psCtxt->bTryToFetchBounds = FALSE;
+
+            if( ppszIter )
             {
-                if( strcmp(ppszIter[0], "minlon") == 0 )
+                while( ppszIter[0] != NULL )
                 {
-                    psCtxt->dfLeft = CPLAtof( ppszIter[1] );
+                    if( strcmp(ppszIter[0], "minlon") == 0 )
+                    {
+                        psCtxt->dfLeft = CPLAtof( ppszIter[1] );
+                        nCountCoords ++;
+                    }
+                    else if( strcmp(ppszIter[0], "minlat") == 0 )
+                    {
+                        psCtxt->dfBottom = CPLAtof( ppszIter[1] );
+                        nCountCoords ++;
+                    }
+                    else if( strcmp(ppszIter[0], "maxlon") == 0 )
+                    {
+                        psCtxt->dfRight = CPLAtof( ppszIter[1] );
+                        nCountCoords ++;
+                    }
+                    else if( strcmp(ppszIter[0], "maxlat") == 0 )
+                    {
+                        psCtxt->dfTop = CPLAtof( ppszIter[1] );
+                        nCountCoords ++;
+                    }
+                    else if( strcmp(ppszIter[0], "box") == 0  /* osmosis uses box */ )
+                    {
+                        char** papszTokens = CSLTokenizeString2( ppszIter[1], ",", 0 );
+                        if( CSLCount(papszTokens) == 4 )
+                        {
+                            psCtxt->dfBottom = CPLAtof( papszTokens[0] );
+                            psCtxt->dfLeft = CPLAtof( papszTokens[1] );
+                            psCtxt->dfTop = CPLAtof( papszTokens[2] );
+                            psCtxt->dfRight = CPLAtof( papszTokens[3] );
+                            nCountCoords = 4;
+                        }
+                        CSLDestroy(papszTokens);
+                    }
+                    ppszIter += 2;
                 }
-                else if( strcmp(ppszIter[0], "minlat") == 0 )
-                {
-                    psCtxt->dfBottom = CPLAtof( ppszIter[1] );;
-                }
-                else if( strcmp(ppszIter[0], "maxlon") == 0 )
-                {
-                    psCtxt->dfRight = CPLAtof( ppszIter[1] );
-                }
-                else if( strcmp(ppszIter[0], "maxlat") == 0 )
-                {
-                    psCtxt->dfTop = CPLAtof( ppszIter[1] );
-                }
-                ppszIter += 2;
+            }
+
+            if( nCountCoords == 4 )
+            {
+                psCtxt->pfnNotifyBounds(psCtxt->dfLeft, psCtxt->dfBottom,
+                                        psCtxt->dfRight, psCtxt->dfTop,
+                                        psCtxt, psCtxt->user_data);
             }
         }
-
-        psCtxt->pfnNotifyBounds(psCtxt->dfLeft, psCtxt->dfBottom,
-                                psCtxt->dfRight, psCtxt->dfTop,
-                                psCtxt, psCtxt->user_data);
     }
 
-    else if( !psCtxt->bInNode && !psCtxt->bInWay && !psCtxt->bInRelation &&
-             strcmp(pszName, "node") == 0 )
+    if( !psCtxt->bInNode && !psCtxt->bInWay && !psCtxt->bInRelation &&
+        strcmp(pszName, "node") == 0 )
     {
         psCtxt->bInNode = TRUE;
+        psCtxt->bTryToFetchBounds = FALSE;
 
         psCtxt->nStrLength = 0;
         psCtxt->pszStrBuf[0] = '\0';
@@ -2174,6 +2206,8 @@ OSMContext* OSM_Open( const char* pszFilename,
                               OSM_XML_endElementCbk);
         XML_SetCharacterDataHandler(psCtxt->hXMLParser, OSM_XML_dataHandlerCbk);
 
+        psCtxt->bTryToFetchBounds = TRUE;
+
         psCtxt->nNodesAllocated = 1;
         psCtxt->pasNodes = (OSMNode*) VSIMalloc(sizeof(OSMNode) * psCtxt->nNodesAllocated);
 
@@ -2265,6 +2299,7 @@ void OSM_ResetReading( OSMContext* psCtxt )
         psCtxt->pszStrBuf[0] = '\0';
         psCtxt->nTags = 0;
 
+        psCtxt->bTryToFetchBounds = TRUE;
         psCtxt->bInNode = FALSE;
         psCtxt->bInWay = FALSE;
         psCtxt->bInRelation = FALSE;
