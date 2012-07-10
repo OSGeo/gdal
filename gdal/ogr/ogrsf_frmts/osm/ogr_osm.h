@@ -92,6 +92,8 @@ class OGROSMLayer : public OGRLayer
     
     virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
 
+    const OGREnvelope*  GetSpatialFilterEnvelope();
+
     int                 AddFeature(OGRFeature* poFeature, int* pbFilteredOut = NULL);
     void                ForceResetReading();
 

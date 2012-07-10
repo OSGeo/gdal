@@ -496,3 +496,15 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
     if( allTags.size() )
         poFeature->SetField(GetLayerDefn()->GetFieldCount() - 1, allTags.c_str());
 }
+
+/************************************************************************/
+/*                      GetSpatialFilterEnvelope()                      */
+/************************************************************************/
+
+const OGREnvelope* OGROSMLayer::GetSpatialFilterEnvelope()
+{
+    if( m_poFilterGeom != NULL )
+        return &m_sFilterEnvelope;
+    else
+        return NULL;
+}
