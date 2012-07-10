@@ -2016,7 +2016,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
     int nTextR = 0, nTextG = 0, nTextB = 0, nTextA = 255;
     int bSymbolColorDefined = FALSE;
     int nSymbolR = 0, nSymbolG = 0, nSymbolB = 0, nSymbolA = 255;
-    double dfTextSize = 12, dfTextAngle = 0;
+    double dfTextSize = 12, dfTextAngle = 0, dfTextDx = 0, dfTextDy = 0;
     double dfPenWidth = 1;
     double dfSymbolSize = 5;
     CPLString osDashArray;
@@ -2138,6 +2138,19 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                 {
                     dfTextAngle = dfVal;
                 }
+
+                dfVal = OGR_ST_GetParamDbl(hTool, OGRSTLabelDx, &bIsNull);
+                if (!bIsNull)
+                {
+                    dfTextDx = dfVal;
+                }
+
+                dfVal = OGR_ST_GetParamDbl(hTool, OGRSTLabelDy, &bIsNull);
+                if (!bIsNull)
+                {
+                    dfTextDy = dfVal;
+                }
+
             }
             else if (OGR_ST_GetType(hTool) == OGRSTCSymbol)
             {
@@ -2560,8 +2573,8 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
             fp = fpGZip;
         }
 
-        double dfX = OGR_G_GetX(hGeom, 0) * adfMatrix[1] + adfMatrix[0];
-        double dfY = OGR_G_GetY(hGeom, 0) * adfMatrix[3] + adfMatrix[2];
+        double dfX = OGR_G_GetX(hGeom, 0) * adfMatrix[1] + adfMatrix[0] + dfTextDx;
+        double dfY = OGR_G_GetY(hGeom, 0) * adfMatrix[3] + adfMatrix[2] + dfTextDy;
 
         VSIFPrintfL(fp, "q\n");
         VSIFPrintfL(fp, "BT\n");
