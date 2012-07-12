@@ -175,6 +175,7 @@ clean:
 	-del *.ilk
 	-del *.lib
 	-del *.manifest
+	-del *.exp
 
 install:	default
 	copy *.exe $(BINDIR)
