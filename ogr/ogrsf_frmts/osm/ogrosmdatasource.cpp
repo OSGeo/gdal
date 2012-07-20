@@ -231,6 +231,11 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode* pasNodes)
               pasNodes[i].dfLat <= psEnvelope->MaxY) )
             continue;
 
+        IndexPoint(&pasNodes[i]);
+
+        if( !papoLayers[IDX_LYR_POINTS]->IsUserInterested() )
+            continue;
+
         unsigned int j;
         int bInterestingTag = bReportAllNodes;
         OSMTag* pasTags = pasNodes[i].pasTags;
@@ -248,7 +253,6 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode* pasNodes)
                 }
             }
         }
-        IndexPoint(&pasNodes[i]);
 
         if( bInterestingTag )
         {
@@ -262,7 +266,7 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode* pasNodes)
                 poFeature, pasNodes[i].nID, pasNodes[i].nTags, pasTags, &pasNodes[i].sInfo );
 
             int bFilteredOut = FALSE;
-            if( !papoLayers[IDX_LYR_POINTS]->AddFeature(poFeature, &bFilteredOut) )
+            if( !papoLayers[IDX_LYR_POINTS]->AddFeature(poFeature, FALSE, &bFilteredOut) )
             {
                 bStopParsing = TRUE;
                 break;
@@ -409,9 +413,6 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
         return;
     }
 
-    std::map< GIntBig, std::pair<float,float> > aoMapNodes;
-    LookupNodes(aoMapNodes, psWay);
-
     /* Is a closed way a polygon ? */
     int bIsArea = FALSE;
     if( psWay->panNodeRefs[0] == psWay->panNodeRefs[psWay->nRefs - 1] )
@@ -441,9 +442,45 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
 
     int iCurLayer = (bIsArea) ? IDX_LYR_POLYGONS : IDX_LYR_LINES ;
 
-    OGRFeature* poFeature = new OGRFeature(papoLayers[iCurLayer]->GetLayerDefn());
+    if( !papoLayers[iCurLayer]->IsUserInterested() &&
+        !bIndexWays )
+    {
+        return;
+    }
+
+    OGRFeature* poFeature = NULL;
+
+    /* Optimization : if we have an attribute filter, that does not require geometry, */
+    /* and if we don't need to index ways, then we can just evaluate the attribute */
+    /* filter without the geometry */
+    if( papoLayers[iCurLayer]->HasAttributeFilter() &&
+        !papoLayers[iCurLayer]->AttributeFilterEvaluationNeedsGeometry() &&
+        !bIndexWays )
+    {
+        poFeature = new OGRFeature(papoLayers[iCurLayer]->GetLayerDefn());
+
+        papoLayers[iCurLayer]->SetFieldsFromTags(
+            poFeature, psWay->nID, psWay->nTags, psWay->pasTags, &psWay->sInfo );
+
+        if( !papoLayers[iCurLayer]->EvaluateAttributeFilter(poFeature) )
+        {
+            delete poFeature;
+            return;
+        }
+    }
+
+    std::map< GIntBig, std::pair<float,float> > aoMapNodes;
+    unsigned int nFound = LookupNodes(aoMapNodes, psWay);
+    if( nFound < 2 )
+    {
+        CPLDebug("OSM", "Way " CPL_FRMT_GIB " with %d nodes that could be found. Discarding it",
+                 psWay->nID, nFound);
+        delete poFeature;
+        return;
+    }
 
     OGRLineString* poLS;
+    OGRGeometry* poGeom;
     if( bIsArea )
     {
         /*OGRMultiPolygon* poMulti = new OGRMultiPolygon();*/
@@ -452,19 +489,19 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
         /*poMulti->addGeometryDirectly(poPoly);*/
         poPoly->addRingDirectly(poRing);
         poLS = poRing;
-        /*poFeature->SetGeometryDirectly(poMulti);*/
-        poFeature->SetGeometryDirectly(poPoly);
+
+        poGeom = poPoly;
     }
     else
     {
         poLS = new OGRLineString();
-        poFeature->SetGeometryDirectly(poLS);
+        poGeom = poLS;
     }
 
     poLS->setNumPoints((int)psWay->nRefs);
 
     std::map< GIntBig, std::pair<float,float> >::iterator oIter;
-    unsigned int nFound = 0;
+    nFound = 0;
     for(i=0;i<psWay->nRefs;i++)
     {
         oIter = aoMapNodes.find( psWay->panNodeRefs[i] );
@@ -481,21 +518,41 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
     {
         CPLDebug("OSM", "Way " CPL_FRMT_GIB " with %d nodes that could be found. Discarding it",
                  psWay->nID, nFound);
+        delete poGeom;
         delete poFeature;
         return;
     }
 
     IndexWay(psWay, poLS);
 
+    if( !papoLayers[iCurLayer]->IsUserInterested() )
+    {
+        delete poGeom;
+        delete poFeature;
+        return;
+    }
+
+    int bAttrFilterAlreadyEvaluated;
+    if( poFeature == NULL )
+    {
+        poFeature = new OGRFeature(papoLayers[iCurLayer]->GetLayerDefn());
+
+        papoLayers[iCurLayer]->SetFieldsFromTags(
+            poFeature, psWay->nID, psWay->nTags, psWay->pasTags, &psWay->sInfo );
+
+        bAttrFilterAlreadyEvaluated = FALSE;
+    }
+    else
+        bAttrFilterAlreadyEvaluated = TRUE;
+
+    poFeature->SetGeometryDirectly(poGeom);
+
     if( nFound != psWay->nRefs )
         CPLDebug("OSM", "For way " CPL_FRMT_GIB ", got only %d nodes instead of %d\n",
                  psWay->nID, nFound, psWay->nRefs);
 
-    papoLayers[iCurLayer]->SetFieldsFromTags(
-        poFeature, psWay->nID, psWay->nTags, psWay->pasTags, &psWay->sInfo );
-
     int bFilteredOut = FALSE;
-    if( !papoLayers[iCurLayer]->AddFeature(poFeature, &bFilteredOut) )
+    if( !papoLayers[iCurLayer]->AddFeature(poFeature, bAttrFilterAlreadyEvaluated, &bFilteredOut) )
         bStopParsing = TRUE;
     else if (!bFilteredOut)
         bFeatureAdded = TRUE;
@@ -750,14 +807,15 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
         return;
     }
 
-    OGRGeometry* poGeom = BuildMultiPolygon(psRelation);
+    OGRFeature* poFeature = NULL;
 
-    if( poGeom != NULL )
+    /* Optimization : if we have an attribute filter, that does not require geometry, */
+    /* then we can just evaluate the attribute filter without the geometry */
+    int iCurLayer = IDX_LYR_MULTIPOLYGONS;
+    if( papoLayers[iCurLayer]->HasAttributeFilter() &&
+        !papoLayers[iCurLayer]->AttributeFilterEvaluationNeedsGeometry() )
     {
-        int iCurLayer = IDX_LYR_MULTIPOLYGONS;
-        OGRFeature* poFeature = new OGRFeature(papoLayers[iCurLayer]->GetLayerDefn());
-
-        poFeature->SetGeometryDirectly(poGeom);
+        poFeature = new OGRFeature(papoLayers[iCurLayer]->GetLayerDefn());
 
         papoLayers[iCurLayer]->SetFieldsFromTags( poFeature,
                                                   psRelation->nID,
@@ -765,8 +823,39 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
                                                   psRelation->pasTags,
                                                   &psRelation->sInfo);
 
+        if( !papoLayers[iCurLayer]->EvaluateAttributeFilter(poFeature) )
+        {
+            delete poFeature;
+            return;
+        }
+    }
+
+    OGRGeometry* poGeom = BuildMultiPolygon(psRelation);
+
+    if( poGeom != NULL )
+    {
+        int bAttrFilterAlreadyEvaluated;
+        if( poFeature == NULL )
+        {
+            poFeature = new OGRFeature(papoLayers[iCurLayer]->GetLayerDefn());
+
+            papoLayers[iCurLayer]->SetFieldsFromTags( poFeature,
+                                                      psRelation->nID,
+                                                      psRelation->nTags,
+                                                      psRelation->pasTags,
+                                                      &psRelation->sInfo);
+
+            bAttrFilterAlreadyEvaluated = FALSE;
+        }
+        else
+            bAttrFilterAlreadyEvaluated = TRUE;
+
+        poFeature->SetGeometryDirectly(poGeom);
+
         int bFilteredOut = FALSE;
-        if( !papoLayers[iCurLayer]->AddFeature(poFeature, &bFilteredOut) )
+        if( !papoLayers[iCurLayer]->AddFeature( poFeature,
+                                                bAttrFilterAlreadyEvaluated,
+                                                &bFilteredOut ) )
             bStopParsing = TRUE;
         else if (!bFilteredOut)
             bFeatureAdded = TRUE;

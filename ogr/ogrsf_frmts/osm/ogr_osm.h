@@ -95,7 +95,9 @@ class OGROSMLayer : public OGRLayer
 
     const OGREnvelope*  GetSpatialFilterEnvelope();
 
-    int                 AddFeature(OGRFeature* poFeature, int* pbFilteredOut = NULL);
+    int                 AddFeature(OGRFeature* poFeature,
+                                   int bAttrFilterAlreadyEvaluated,
+                                   int* pbFilteredOut = NULL);
     void                ForceResetReading();
 
     void                AddField(const char* pszName, OGRFieldType eFieldType);
@@ -130,6 +132,9 @@ class OGROSMLayer : public OGRLayer
 
     void                SetDeclareInterest(int bIn) { bUserInterested = bIn; }
     int                 IsUserInterested() const { return bUserInterested; }
+
+    int                 HasAttributeFilter() const { return m_poAttrQuery != NULL; }
+    int                 EvaluateAttributeFilter(OGRFeature* poFeature);
 
     std::set<std::string> aoSetUnsignificantKeys;
     std::set<std::string> aoSetIgnoreKeys;
