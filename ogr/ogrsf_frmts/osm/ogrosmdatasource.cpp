@@ -814,6 +814,7 @@ int OGROSMDataSource::Open( const char * pszFilename, int bUpdateIn)
     const char* pszExt = CPLGetExtension(pszFilename);
     if( !EQUAL(pszExt, "pbf") &&
         !EQUAL(pszExt, "osm") &&
+        !EQUALN(pszFilename, "/vsicurl_streaming/", strlen("/vsicurl_streaming/")) &&
         strcmp(pszFilename, "/vsistdin/") != 0 &&
         strcmp(pszFilename, "/dev/stdin/") != 0 )
         return FALSE;
