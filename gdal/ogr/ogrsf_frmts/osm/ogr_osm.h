@@ -200,6 +200,8 @@ class OGROSMDataSource : public OGRDataSource
     int                   bIndexWaysBackup;
     int                   bUseWaysIndexBackup;
 
+    int                 bIsFeatureCountEnabled;
+
     int                 ParseConf();
     int                 CreateTempDB();
     int                 SetDBOptions();
@@ -252,6 +254,7 @@ class OGROSMDataSource : public OGRDataSource
     OGROSMLayer*        GetCurrentLayer() { return poCurrentLayer; }
     void                SetCurrentLayer(OGROSMLayer* poLyr) { poCurrentLayer = poLyr; }
 
+    int                 IsFeatureCountEnabled() const { return bIsFeatureCountEnabled; }
 };
 
 /************************************************************************/

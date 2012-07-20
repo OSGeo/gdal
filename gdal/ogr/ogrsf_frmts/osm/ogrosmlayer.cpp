@@ -131,10 +131,9 @@ void OGROSMLayer::ForceResetReading()
 
 int OGROSMLayer::GetFeatureCount( int bForce )
 {
-    /*if ( poDS->IsInterleavedReading() )
-        return 0;
+    if( poDS->IsFeatureCountEnabled() )
+        return OGRLayer::GetFeatureCount(bForce);
 
-    return OGRLayer::GetFeatureCount(bForce);*/
     return -1;
 }
 
