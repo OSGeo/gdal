@@ -178,6 +178,56 @@ def ogr_osm_1(filename = 'data/test.pbf'):
             feat.DumpReadable()
             return 'fail'
 
+    # Test multilinestrings
+    lyr = ds.GetLayer('multilinestrings')
+    if filename == 'tmp/ogr_osm_3':
+        if lyr.GetGeomType() != ogr.wkbLineString:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    else:
+        if lyr.GetGeomType() != ogr.wkbMultiLineString:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsString('osm_id') != '3':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    if filename == 'tmp/ogr_osm_3':
+        if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('LINESTRING (2 49,3 50)')) != 0:
+            gdaltest.post_reason('fail')
+            feat.DumpReadable()
+            return 'fail'
+    else:
+        if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('MULTILINESTRING ((2 49,3 50))')) != 0:
+            gdaltest.post_reason('fail')
+            feat.DumpReadable()
+            return 'fail'
+
+    # Test other_relations
+    lyr = ds.GetLayer('other_relations')
+    if filename == 'tmp/ogr_osm_3':
+        if lyr is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    else:
+        if lyr.GetGeomType() != ogr.wkbGeometryCollection:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        feat = lyr.GetNextFeature()
+        if feat.GetFieldAsString('osm_id') != '4':
+            gdaltest.post_reason('fail')
+            feat.DumpReadable()
+            return 'fail'
+
+        if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POINT (2 49),LINESTRING (2 49,3 50))')) != 0:
+            gdaltest.post_reason('fail')
+            feat.DumpReadable()
+            return 'fail'
+
     ds = None
 
     return 'success'
@@ -205,11 +255,12 @@ def ogr_osm_3():
         return 'skip'
 
     try:
-        ogr.GetDriverByName('ESRI Shapefile').Delete('tmp/ogr_osm_3')
+        os.stat('tmp/ogr_osm_3')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/ogr_osm_3')
     except:
         pass
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/ogr_osm_3 data/test.pbf -progress')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/ogr_osm_3 data/test.pbf points lines polygons multipolygons multilinestrings -progress')
 
     ret = ogr_osm_1('tmp/ogr_osm_3')
 
@@ -295,7 +346,9 @@ def ogr_osm_5():
               [ 'polygons', '2', True ],
               [ 'polygons', 'foo', False ],
               [ 'multipolygons', '1', True ],
-              [ 'multipolygons', 'foo', False ] ]
+              [ 'multipolygons', 'foo', False ],
+              [ 'multilinestrings', '3', True ],
+              [ 'multilinestrings', 'foo', False ] ]
 
     for test in tests:
         sql_lyr = ds.ExecuteSQL("SELECT * FROM %s WHERE osm_id = '%s'" % (test[0], test[1]))

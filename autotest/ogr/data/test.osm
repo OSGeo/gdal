@@ -70,4 +70,9 @@
   <member type="way" ref="1" role=""/>
   <tag k="type" v="route"/>
  </relation>
+ <relation id="4" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <member type="node" ref="1" role=""/>
+  <member type="way" ref="1" role=""/>
+  <tag k="type" v="other_type"/>
+ </relation>
 </osm>

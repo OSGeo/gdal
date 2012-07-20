@@ -77,6 +77,8 @@ class OGROSMLayer : public OGRLayer
 
     int                AddToArray(OGRFeature* poFeature);
 
+    CPLString             GetFieldName(const char* pszName);
+
   public:
                         OGROSMLayer( OGROSMDataSource* poDS,
                                      const char* pszName );
@@ -207,6 +209,8 @@ class OGROSMDataSource : public OGRDataSource
 
     int                 bIsFeatureCountEnabled;
 
+    int                 bAttributeNameLaundering;
+
     int                 ParseConf();
     int                 CreateTempDB();
     int                 SetDBOptions();
@@ -226,6 +230,7 @@ class OGROSMDataSource : public OGRDataSource
                                     OSMRelation* psRelation );
 
     OGRGeometry*        BuildMultiPolygon(OSMRelation* psRelation);
+    OGRGeometry*        BuildGeometryCollection(OSMRelation* psRelation, int bMultiLineString);
 
   public:
                         OGROSMDataSource();
@@ -260,6 +265,8 @@ class OGROSMDataSource : public OGRDataSource
     void                SetCurrentLayer(OGROSMLayer* poLyr) { poCurrentLayer = poLyr; }
 
     int                 IsFeatureCountEnabled() const { return bIsFeatureCountEnabled; }
+
+    int                 DoesAttributeNameLaundering() const { return bAttributeNameLaundering; }
 };
 
 /************************************************************************/
