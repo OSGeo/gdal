@@ -309,6 +309,17 @@ def ogr_osm_5():
             print(test)
             return 'fail'
 
+    sql_lyr = ds.ExecuteSQL("select * from multipolygons where type = 'multipolygon'")
+    feat = sql_lyr.GetNextFeature()
+    is_none = feat is None
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    if is_none:
+        gdaltest.post_reason('fail')
+        print(test)
+        return 'fail'
+
     return 'success'
 
 gdaltest_list = [
