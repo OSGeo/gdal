@@ -280,7 +280,10 @@ CPLString OGRShapeLayer::ConvertCodePage( const char *pszCodePage )
     }
     if( EQUALN(pszCodePage,"8859",4) )
     {
-        osEncoding.Printf( "ISO%s", pszCodePage );
+        if( pszCodePage[4] == '-' )
+            osEncoding.Printf( "ISO-8859-%s", pszCodePage + 5 );
+        else
+            osEncoding.Printf( "ISO-8859-%s", pszCodePage + 4 );
         return osEncoding;
     }
     if( EQUALN(pszCodePage,"UTF-8",5) )
