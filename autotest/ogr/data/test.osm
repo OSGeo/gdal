@@ -33,9 +33,41 @@
   <nd ref="9"/>
   <nd ref="6"/>
  </way>
+ <way id="4" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <tag k="name" v="id_4"/>
+<!-- all nodes missing : skipped way -->
+  <nd ref="600"/>
+  <nd ref="700"/>
+  <nd ref="800"/>
+  <nd ref="900"/>
+ </way>
+ <way id="5" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <tag k="name" v="id_5"/>
+<!-- only one node : skipped way -->
+  <nd ref="1"/>
+ </way>
+ <way id="6" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <tag k="name" v="id_6"/>
+  <nd ref="1"/>
+  <nd ref="4"/>
+  <nd ref="2"/>
+  <nd ref="5"/>
+  <nd ref="900"/> <!-- unexisting node -->
+  <nd ref="1"/>
+ </way>
  <relation id="1" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
   <member type="way" ref="2" role="outer"/>
   <member type="way" ref="3" role="inner"/>
   <tag k="type" v="multipolygon"/>
+ </relation>
+ <relation id="2" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <member type="way" ref="2" role="outer"/>
+<!-- at least, one missing way : skipped whole relation -->
+  <member type="way" ref="300" role="inner"/>
+  <tag k="type" v="multipolygon"/>
+ </relation>
+ <relation id="3" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <member type="way" ref="1" role=""/>
+  <tag k="type" v="route"/>
  </relation>
 </osm>
