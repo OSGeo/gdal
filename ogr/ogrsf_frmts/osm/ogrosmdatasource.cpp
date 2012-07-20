@@ -89,6 +89,8 @@ OGROSMDataSource::OGROSMDataSource()
     bUsePointsIndexBackup = FALSE;
     bIndexWaysBackup = FALSE;
     bUseWaysIndexBackup = FALSE;
+
+    bIsFeatureCountEnabled = FALSE;
 }
 
 /************************************************************************/
@@ -1814,6 +1816,10 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
 
                 poResultSetLayer = poRet;
 
+                /* If the user explicitely run a COUNT() request, then do it ! */
+                if( poResultSetLayer )
+                    bIsFeatureCountEnabled = TRUE;
+
                 return poRet;
             }
         }
@@ -1834,6 +1840,8 @@ void OGROSMDataSource::ReleaseResultSet( OGRLayer * poLayer )
     if( poLayer != NULL && poLayer == poResultSetLayer )
     {
         poResultSetLayer = NULL;
+
+        bIsFeatureCountEnabled = FALSE;
 
         /* Restore backup'ed optimization parameters */
         for(int i=0; i < nLayers; i++)
