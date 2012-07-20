@@ -1502,23 +1502,24 @@ int main( int nArgc, char ** papszArgv )
                 exit( 1 );
             }
 
-            if( pszWHERE != NULL )
-            {
-                if( poLayer->SetAttributeFilter( pszWHERE ) != OGRERR_NONE )
-                {
-                    fprintf( stderr, "FAILURE: SetAttributeFilter(%s) failed.\n", pszWHERE );
-                    if (!bSkipFailures)
-                        exit( 1 );
-                }
-            }
-
-            if( poSpatialFilter != NULL )
-                poLayer->SetSpatialFilter( poSpatialFilter );
-
             pasAssocLayers[iLayer].poSrcLayer = poLayer;
 
             if( CSLFindString(papszLayers, poLayer->GetName()) >= 0 )
             {
+                if( pszWHERE != NULL )
+                {
+                    if( poLayer->SetAttributeFilter( pszWHERE ) != OGRERR_NONE )
+                    {
+                        fprintf( stderr, "FAILURE: SetAttributeFilter(%s) on layer '%s' failed.\n",
+                                 pszWHERE, poLayer->GetName() );
+                        if (!bSkipFailures)
+                            exit( 1 );
+                    }
+                }
+
+                if( poSpatialFilter != NULL )
+                    poLayer->SetSpatialFilter( poSpatialFilter );
+
                 TargetLayerInfo* psInfo = SetupTargetLayer( poDS,
                                                     poLayer,
                                                     poODS,
@@ -1698,7 +1699,8 @@ int main( int nArgc, char ** papszArgv )
             {
                 if( poLayer->SetAttributeFilter( pszWHERE ) != OGRERR_NONE )
                 {
-                    fprintf( stderr, "FAILURE: SetAttributeFilter(%s) failed.\n", pszWHERE );
+                    fprintf( stderr, "FAILURE: SetAttributeFilter(%s) on layer '%s' failed.\n",
+                             pszWHERE, poLayer->GetName() );
                     if (!bSkipFailures)
                         exit( 1 );
                 }
