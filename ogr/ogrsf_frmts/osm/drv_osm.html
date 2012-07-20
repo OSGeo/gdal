@@ -20,7 +20,9 @@ The driver will categorize features into 4 layers :
     <li><b>points</b> : "node" features that have significant tags attached.</li>
     <li><b>lines</b> : "way" features that are recognized as non-area.</li>
     <li><b>polygons</b> : "way" features that are recognized as area.</li>
-    <li><b>multipolygons</b> : "relation" features that form a multipolygon.</li>
+    <li><b>multilinestrings</b> : "relation" features that form a multilinestring(type = 'multilinestring' or type = 'route').</li>
+    <li><b>multipolygons</b> : "relation" features that form a multipolygon (type = 'multipolygon' or type = 'boundary').</li>
+    <li><b>other_relations</b> : "relation" features that do not belong to the above 2 layers.</li>
 </ul>
 <p>
 

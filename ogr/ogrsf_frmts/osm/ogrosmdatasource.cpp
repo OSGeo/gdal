@@ -37,10 +37,12 @@
 
 #define MAX_NODES_PER_WAY 2000
 
-#define IDX_LYR_POINTS          0
-#define IDX_LYR_LINES           1
-#define IDX_LYR_POLYGONS        2
-#define IDX_LYR_MULTIPOLYGONS   3
+#define IDX_LYR_POINTS           0
+#define IDX_LYR_LINES            1
+#define IDX_LYR_POLYGONS         2
+#define IDX_LYR_MULTILINESTRINGS 3
+#define IDX_LYR_MULTIPOLYGONS    4
+#define IDX_LYR_OTHER_RELATIONS  5
 
 CPL_CVSID("$Id$");
 
@@ -91,6 +93,8 @@ OGROSMDataSource::OGROSMDataSource()
     bUseWaysIndexBackup = FALSE;
 
     bIsFeatureCountEnabled = FALSE;
+
+    bAttributeNameLaundering = TRUE;
 }
 
 /************************************************************************/
@@ -564,7 +568,7 @@ static void OGROSMNotifyWay (OSMWay* psWay, OSMContext* psOSMContext, void* user
 }
 
 /************************************************************************/
-/*                            LookupNodes()                             */
+/*                            LookupWays()                              */
 /************************************************************************/
 
 unsigned int OGROSMDataSource::LookupWays( std::map< GIntBig, std::pair<int,void*> >& aoMapWays,
@@ -610,11 +614,14 @@ unsigned int OGROSMDataSource::LookupWays( std::map< GIntBig, std::pair<int,void
         while( sqlite3_step(hStmt) == SQLITE_ROW )
         {
             GIntBig id = sqlite3_column_int(hStmt, 0);
-            int nBlobSize = sqlite3_column_bytes(hStmt, 1);
-            const void* blob = sqlite3_column_blob(hStmt, 1);
-            void* blob_dup = CPLMalloc(nBlobSize);
-            memcpy(blob_dup, blob, nBlobSize);
-            aoMapWays[id] = std::pair<int,void*>(nBlobSize, blob_dup);
+            if( aoMapWays.find(id) == aoMapWays.end() )
+            {
+                int nBlobSize = sqlite3_column_bytes(hStmt, 1);
+                const void* blob = sqlite3_column_blob(hStmt, 1);
+                void* blob_dup = CPLMalloc(nBlobSize);
+                memcpy(blob_dup, blob, nBlobSize);
+                aoMapWays[id] = std::pair<int,void*>(nBlobSize, blob_dup);
+            }
             nFound++;
         }
 
@@ -766,6 +773,75 @@ cleanup:
 }
 
 /************************************************************************/
+/*                          BuildGeometryCollection()                   */
+/************************************************************************/
+
+OGRGeometry* OGROSMDataSource::BuildGeometryCollection(OSMRelation* psRelation, int bMultiLineString)
+{
+    std::map< GIntBig, std::pair<int,void*> > aoMapWays;
+    LookupWays( aoMapWays, psRelation );
+
+    unsigned int i;
+
+    OGRGeometryCollection* poColl;
+    if( bMultiLineString )
+        poColl = new OGRMultiLineString();
+    else
+        poColl = new OGRGeometryCollection();
+
+    for(i = 0; i < psRelation->nMembers; i ++ )
+    {
+        if( psRelation->pasMembers[i].eType == MEMBER_NODE && !bMultiLineString )
+        {
+            std::map< GIntBig, std::pair<float,float> > aoMapNodes;
+            OSMWay sWay;
+            sWay.nRefs = 1;
+            sWay.panNodeRefs = &( psRelation->pasMembers[i].nID );
+            unsigned int nFound = LookupNodes(aoMapNodes, &sWay);
+            if( nFound == 1 )
+            {
+                const std::pair<float,float>& oPair = aoMapNodes[psRelation->pasMembers[i].nID];
+                poColl->addGeometryDirectly(new OGRPoint(oPair.first, oPair.second));
+            }
+        }
+        else if( psRelation->pasMembers[i].eType == MEMBER_WAY &&
+                 strcmp(psRelation->pasMembers[i].pszRole, "subarea") != 0  &&
+                 aoMapWays.find( psRelation->pasMembers[i].nID ) != aoMapWays.end() )
+        {
+            const std::pair<int, void*>& oGeom = aoMapWays[ psRelation->pasMembers[i].nID ];
+            int nPoints = oGeom.first / (2 * sizeof(float));
+            float* pafCoords = (float*) oGeom.second;
+            OGRLineString* poLS;
+
+            poLS = new OGRLineString();
+            poColl->addGeometryDirectly(poLS);
+
+            poLS->setNumPoints(nPoints);
+            for(int j=0;j<nPoints;j++)
+            {
+                poLS->setPoint( j,
+                                pafCoords[2 * j + 0],
+                                pafCoords[2 * j + 1] );
+            }
+
+        }
+    }
+
+    if( poColl->getNumGeometries() == 0 )
+    {
+        delete poColl;
+        poColl = NULL;
+    }
+
+    /* Cleanup */
+    std::map< GIntBig, std::pair<int,void*> >::iterator oIter;
+    for( oIter = aoMapWays.begin(); oIter != aoMapWays.end(); ++oIter )
+        CPLFree(oIter->second.second);
+
+    return poColl;
+}
+
+/************************************************************************/
 /*                            NotifyRelation()                          */
 /************************************************************************/
 
@@ -782,6 +858,7 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
     }*/
 
     int bMultiPolygon = FALSE;
+    int bMultiLineString = FALSE;
     for(i = 0; i < psRelation->nTags; i ++ )
     {
         if( strcmp(psRelation->pasTags[i].pszK, "type") == 0 )
@@ -791,27 +868,26 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
                 strcmp(pszV, "boundary") == 0)
             {
                 bMultiPolygon = TRUE;
-                break;
             }
-
-            CPLDebug("OSM", "Relation " CPL_FRMT_GIB " is of type %s. Ignoring it",
-                    psRelation->nID, pszV);
-            return;
+            else if( strcmp(pszV, "multilinestring") == 0 ||
+                     strcmp(pszV, "route") == 0 )
+            {
+                bMultiLineString = TRUE;
+            }
+            break;
         }
     }
 
-    if( !bMultiPolygon )
-    {
-        CPLDebug("OSM", "Relation " CPL_FRMT_GIB " isn't a multipolygon. Ignoring it",
-                 psRelation->nID);
+    /* Optimization : if we have an attribute filter, that does not require geometry, */
+    /* then we can just evaluate the attribute filter without the geometry */
+    int iCurLayer = (bMultiPolygon) ?    IDX_LYR_MULTIPOLYGONS :
+                    (bMultiLineString) ? IDX_LYR_MULTILINESTRINGS :
+                                         IDX_LYR_OTHER_RELATIONS;
+    if( !papoLayers[iCurLayer]->IsUserInterested() )
         return;
-    }
 
     OGRFeature* poFeature = NULL;
 
-    /* Optimization : if we have an attribute filter, that does not require geometry, */
-    /* then we can just evaluate the attribute filter without the geometry */
-    int iCurLayer = IDX_LYR_MULTIPOLYGONS;
     if( papoLayers[iCurLayer]->HasAttributeFilter() &&
         !papoLayers[iCurLayer]->AttributeFilterEvaluationNeedsGeometry() )
     {
@@ -830,7 +906,12 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
         }
     }
 
-    OGRGeometry* poGeom = BuildMultiPolygon(psRelation);
+    OGRGeometry* poGeom;
+
+    if( bMultiPolygon )
+        poGeom = BuildMultiPolygon(psRelation);
+    else
+        poGeom = BuildGeometryCollection(psRelation, bMultiLineString);
 
     if( poGeom != NULL )
     {
@@ -928,7 +1009,7 @@ int OGROSMDataSource::Open( const char * pszFilename, int bUpdateIn)
         return FALSE;
     }
 
-    nLayers = 4;
+    nLayers = 6;
     papoLayers = (OGROSMLayer**) CPLMalloc(nLayers * sizeof(OGROSMLayer*));
 
     papoLayers[IDX_LYR_POINTS] = new OGROSMLayer(this, "points");
@@ -940,8 +1021,14 @@ int OGROSMDataSource::Open( const char * pszFilename, int bUpdateIn)
     papoLayers[IDX_LYR_POLYGONS] = new OGROSMLayer(this, "polygons");
     papoLayers[IDX_LYR_POLYGONS]->GetLayerDefn()->SetGeomType(wkbPolygon);
 
+    papoLayers[IDX_LYR_MULTILINESTRINGS] = new OGROSMLayer(this, "multilinestrings");
+    papoLayers[IDX_LYR_MULTILINESTRINGS]->GetLayerDefn()->SetGeomType(wkbMultiLineString);
+
     papoLayers[IDX_LYR_MULTIPOLYGONS] = new OGROSMLayer(this, "multipolygons");
     papoLayers[IDX_LYR_MULTIPOLYGONS]->GetLayerDefn()->SetGeomType(wkbMultiPolygon);
+
+    papoLayers[IDX_LYR_OTHER_RELATIONS] = new OGROSMLayer(this, "other_relations");
+    papoLayers[IDX_LYR_OTHER_RELATIONS]->GetLayerDefn()->SetGeomType(wkbGeometryCollection);
 
     if( !ParseConf() )
     {
@@ -1359,6 +1446,18 @@ int OGROSMDataSource::ParseConf()
             else if( strcmp(pszLine + strlen("report_all_nodes="), "yes") == 0 )
             {
                 bReportAllNodes = TRUE;
+            }
+        }
+
+        else if(strncmp(pszLine, "attribute_name_laundering=", strlen("attribute_name_laundering=")) == 0)
+        {
+            if( strcmp(pszLine + strlen("attribute_name_laundering="), "no") == 0 )
+            {
+                bAttributeNameLaundering = FALSE;
+            }
+            else if( strcmp(pszLine + strlen("attribute_name_laundering="), "yes") == 0 )
+            {
+                bAttributeNameLaundering = TRUE;
             }
         }
 
@@ -1794,7 +1893,9 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
         if( papoLayers[IDX_LYR_POINTS]->IsUserInterested() &&
             !papoLayers[IDX_LYR_LINES]->IsUserInterested() &&
             !papoLayers[IDX_LYR_POLYGONS]->IsUserInterested() &&
-            !papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() )
+            !papoLayers[IDX_LYR_MULTILINESTRINGS]->IsUserInterested() &&
+            !papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() &&
+            !papoLayers[IDX_LYR_OTHER_RELATIONS]->IsUserInterested())
         {
             if( CPLGetConfigOption("OSM_INDEX_POINTS", NULL) == NULL )
             {
@@ -1817,7 +1918,9 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
         }
         else if( (papoLayers[IDX_LYR_LINES]->IsUserInterested() ||
                   papoLayers[IDX_LYR_POLYGONS]->IsUserInterested()) &&
-                 !papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() )
+                 !papoLayers[IDX_LYR_MULTILINESTRINGS]->IsUserInterested() &&
+                 !papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() &&
+                 !papoLayers[IDX_LYR_OTHER_RELATIONS]->IsUserInterested() )
         {
             if( CPLGetConfigOption("OSM_INDEX_WAYS", NULL) == NULL )
             {
