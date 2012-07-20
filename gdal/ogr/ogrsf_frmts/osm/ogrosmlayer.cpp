@@ -350,12 +350,32 @@ OGRErr OGROSMLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 }
 
 /************************************************************************/
+/*                     OGROSMLayerGetFieldName()                        */
+/************************************************************************/
+
+CPLString OGROSMLayer::GetFieldName(const char* pszName)
+{
+    CPLString osName(pszName);
+    if( poDS->DoesAttributeNameLaundering() )
+    {
+        int nLen = (int) osName.size();
+        for( int i = 0; i < nLen; i++ )
+        {
+            if( osName[i] == ':' )
+                osName[i] = '_';
+        }
+    }
+    return osName;
+}
+
+/************************************************************************/
 /*                              AddField()                              */
 /************************************************************************/
 
 void OGROSMLayer::AddField(const char* pszName, OGRFieldType eFieldType)
 {
-    OGRFieldDefn oField(pszName, eFieldType);
+    const CPLString& osLaunderedName = GetFieldName(pszName);
+    OGRFieldDefn oField(osLaunderedName, eFieldType);
     poFeatureDefn->AddFieldDefn(&oField);
 }
 
@@ -464,7 +484,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
     {
         const char* pszK = pasTags[j].pszK;
         const char* pszV = pasTags[j].pszV;
-        int nIndex = GetFieldIndex(pszK);
+        int nIndex = GetFieldIndex(GetFieldName(pszK));
         if( nIndex >= 0 )
             poFeature->SetField(nIndex, pszV);
         else if ( HasOtherTags() )
