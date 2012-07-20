@@ -1992,6 +1992,11 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
         || EQUALN(pszDefinition,"urn:opengis:def:crs:",20))
         return importFromURN( pszDefinition );
 
+    if( EQUALN(pszDefinition,"http://opengis.net/def/crs",26)
+        || EQUALN(pszDefinition,"http://www.opengis.net/def/crs",30)
+        || EQUALN(pszDefinition,"www.opengis.net/def/crs",23))
+        return importFromCRSURL( pszDefinition );
+
     if( EQUALN(pszDefinition,"AUTO:",5) )
         return importFromWMSAUTO( pszDefinition );
 
@@ -2247,7 +2252,7 @@ OGRErr OGRSpatialReference::importFromURNPart(const char* pszAuthority,
 /*      Is this an EPSG code? Note that we import it with EPSG          */
 /*      preferred axis ordering for geographic coordinate systems!      */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszAuthority,"EPSG:",5) )
+    if( EQUALN(pszAuthority,"EPSG",4) )
         return importFromEPSGA( atoi(pszCode) );
 
 /* -------------------------------------------------------------------- */
@@ -2259,7 +2264,7 @@ OGRErr OGRSpatialReference::importFromURNPart(const char* pszAuthority,
 /* -------------------------------------------------------------------- */
 /*      Is this an OGC code?                                            */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(pszAuthority,"OGC:",4) )
+    if( !EQUALN(pszAuthority,"OGC",3) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "URN %s has unrecognised authority.",
@@ -2458,6 +2463,158 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
     }
     else
         return eStatus;
+}
+
+/************************************************************************/
+/*                           importFromCRSURL()                         */
+/*                                                                      */
+/*      See OGC Best Practice document 11-135 for details.              */
+/************************************************************************/
+
+/**
+ * \brief Initialize from OGC URL. 
+ *
+ * Initializes this spatial reference from a coordinate system defined
+ * by an OGC URL prefixed with "http://opengis.net/def/crs" per best practice 
+ * paper 11-135.  Currently EPSG and OGC authority values are supported, 
+ * including OGC auto codes, but not including CRS1 or CRS88 (NAVD88). 
+ *
+ * This method is also supported through SetFromUserInput() which can
+ * normally be used for URLs.
+ * 
+ * @param pszURL the URL string. 
+ *
+ * @return OGRERR_NONE on success or an error code.
+ */
+
+OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
+
+{
+    const char *pszCur;
+    
+    if( EQUALN(pszURL,"http://opengis.net/def/crs",26) )
+        pszCur = pszURL + 26;
+    else if( EQUALN(pszURL,"http://www.opengis.net/def/crs",30) )
+        pszCur = pszURL + 30;
+    else if( EQUALN(pszURL,"www.opengis.net/def/crs",23) )
+        pszCur = pszURL + 23;
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "URL %s not a supported format.", pszURL );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Clear any existing definition.                                  */
+/* -------------------------------------------------------------------- */
+    if( GetRoot() != NULL )
+    {
+        delete poRoot;
+        poRoot = NULL;
+    }
+
+    if( EQUALN(pszCur, "-compound?1=", 12) )
+    {
+/* -------------------------------------------------------------------- */
+/*      It's a compound CRS, of the form:                               */
+/*                                                                      */
+/*      http://opengis.net/def/crs-compound?1=URL1&2=URL2&3=URL3&..     */
+/* -------------------------------------------------------------------- */
+        pszCur += 12;
+        
+        // extract each component CRS URL
+        int iComponentUrl = 2;
+
+        CPLString osName = "";
+        Clear();
+        
+        while (iComponentUrl != -1)
+        {
+            char searchStr[5];
+            sprintf(searchStr, "&%d=", iComponentUrl);
+            
+            const char* pszUrlEnd = strstr(pszCur, searchStr);
+            
+            // figure out the next component URL
+            char* pszComponentUrl;
+            
+            if( pszUrlEnd )
+            {
+                size_t nLen = pszUrlEnd - pszCur;
+                pszComponentUrl = (char*) CPLMalloc(nLen + 1);
+                strncpy(pszComponentUrl, pszCur, nLen);
+                pszComponentUrl[nLen] = '\0';
+                
+                ++iComponentUrl;
+                pszCur += nLen + strlen(searchStr);
+            }
+            else
+            {
+                if( iComponentUrl == 2 )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                              "Compound CRS URLs must have at least two component CRSs." );
+                    return OGRERR_FAILURE;
+                }
+                else
+                {
+                    pszComponentUrl = CPLStrdup(pszCur);
+                    // no more components
+                    iComponentUrl = -1;
+                }
+            }
+            
+            OGRSpatialReference oComponentSRS;
+            OGRErr eStatus = oComponentSRS.importFromCRSURL( pszComponentUrl );
+
+            CPLFree(pszComponentUrl);
+            pszComponentUrl = NULL;
+            
+            if( eStatus == OGRERR_NONE )
+            {
+                if( osName.length() != 0 )
+                {
+                  osName += " + ";
+                }
+                osName += oComponentSRS.GetRoot()->GetValue();
+                SetNode( "COMPD_CS", osName );
+                GetRoot()->AddChild( oComponentSRS.GetRoot()->Clone() );
+            }
+            else
+                return eStatus;
+        }
+        
+        
+        return OGRERR_NONE;
+    }
+    else
+    {
+/* -------------------------------------------------------------------- */
+/*      It's a normal CRS URL, of the form:                             */
+/*                                                                      */
+/*      http://opengis.net/def/crs/AUTHORITY/VERSION/CODE               */
+/* -------------------------------------------------------------------- */
+        ++pszCur;
+        const char *pszAuthority = pszCur;
+
+        // skip authority
+        while( *pszCur != '/' && *pszCur )
+            pszCur++;
+        if( *pszCur == '/' )
+            pszCur++;
+        
+
+        // skip version
+        while( *pszCur != '/' && *pszCur )
+            pszCur++;
+        if( *pszCur == '/' )
+            pszCur++;
+        
+        const char *pszCode = pszCur;
+        
+        return importFromURNPart( pszAuthority, pszCode, pszURL );
+    }
 }
 
 /************************************************************************/

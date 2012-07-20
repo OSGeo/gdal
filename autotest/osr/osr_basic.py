@@ -592,6 +592,33 @@ def osr_basic_16():
     return 'success'
 
 ###############################################################################
+# Test OGC URL support
+
+def osr_basic_17():
+
+    wkt_1 = osr.GetUserInputAsWKT( 'urn:ogc:def:crs:EPSG::4326' )
+    wkt_2 = osr.GetUserInputAsWKT( 'http://www.opengis.net/def/crs/EPSG/0/4326' )
+    if wkt_1 != wkt_2:
+        gdaltest.post_reason( 'CRS URL parsing not as expected.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test OGC URL support for compound CRS
+
+def osr_basic_18():
+
+    # This is a dummy one, but who cares
+    wkt = osr.GetUserInputAsWKT( 'http://www.opengis.net/def/crs-compound?1=http://www.opengis.net/def/crs/EPSG/0/4326&2=http://www.opengis.net/def/crs/EPSG/0/4326' )
+    if wkt.find('COMPD_CS') != 0:
+        print(wkt)
+        gdaltest.post_reason( 'CRS URL parsing not as expected.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [ 
     osr_basic_1,
@@ -610,6 +637,8 @@ gdaltest_list = [
     osr_basic_14,
     osr_basic_15,
     osr_basic_16,
+    osr_basic_17,
+    osr_basic_18,
     None ]
 
 if __name__ == '__main__':
