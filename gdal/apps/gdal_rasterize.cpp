@@ -285,6 +285,18 @@ static void ProcessLayer(
 /* -------------------------------------------------------------------- */
     if( bInverse )
     {
+        if( ahGeometries.size() == 0 )
+        {
+            for( unsigned int iBand = 0; iBand < anBandList.size(); iBand++ )
+            {
+                if( adfBurnValues.size() > 0 )
+                    adfFullBurnValues.push_back(
+                        adfBurnValues[MIN(iBand,adfBurnValues.size()-1)] );
+                else /* FIXME? Not sure what to do exactly in the else case, but we must insert a value */
+                    adfFullBurnValues.push_back( 0.0 );
+            }
+        }
+
         InvertGeometries( hDstDS, ahGeometries );
     }
 
