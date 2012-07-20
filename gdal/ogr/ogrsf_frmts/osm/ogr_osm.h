@@ -35,6 +35,7 @@
 
 #include <set>
 #include <map>
+#include <vector>
 
 #include "osm_parser.h"
 
@@ -185,10 +186,19 @@ class OGROSMDataSource : public OGRDataSource
 
     int                 bFeatureAdded;
 
+    int                 bInTransaction;
+
     int                 bIndexPoints;
     int                 bUsePointsIndex;
     int                 bIndexWays;
     int                 bUseWaysIndex;
+
+    std::vector<int>      abSavedDeclaredInterest;
+    OGRLayer*             poResultSetLayer;
+    int                   bIndexPointsBackup;
+    int                   bUsePointsIndexBackup;
+    int                   bIndexWaysBackup;
+    int                   bUseWaysIndexBackup;
 
     int                 ParseConf();
     int                 CreateTempDB();
@@ -200,7 +210,6 @@ class OGROSMDataSource : public OGRDataSource
     void                IndexPoint(OSMNode* psNode);
     void                IndexWay(OSMWay* psWay, OGRLineString* poLS);
 
-    int                 bInTransaction;
     int                 StartTransaction();
     int                 CommitTransaction();
 

@@ -31,6 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_api.h"
+#include "swq.h"
 
 #define LIMIT_IDS_PER_REQUEST 200
 
@@ -82,6 +83,12 @@ OGROSMDataSource::OGROSMDataSource()
     bUsePointsIndex = CSLTestBoolean(CPLGetConfigOption("OSM_USE_POINTS_INDEX", "YES"));
     bIndexWays = CSLTestBoolean(CPLGetConfigOption("OSM_INDEX_WAYS", "YES"));
     bUseWaysIndex = CSLTestBoolean(CPLGetConfigOption("OSM_USE_WAYS_INDEX", "YES"));
+
+    poResultSetLayer = NULL;
+    bIndexPointsBackup = FALSE;
+    bUsePointsIndexBackup = FALSE;
+    bIndexWaysBackup = FALSE;
+    bUseWaysIndexBackup = FALSE;
 }
 
 /************************************************************************/
@@ -1651,11 +1658,6 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
                                          const char *pszDialect )
 
 {
-    if( pszDialect != NULL && EQUAL(pszDialect,"OGRSQL") )
-        return OGRDataSource::ExecuteSQL( pszSQLCommand,
-                                          poSpatialFilter,
-                                          pszDialect );
-
 /* -------------------------------------------------------------------- */
 /*      Special GetBytesRead() command                                  */
 /* -------------------------------------------------------------------- */
@@ -1666,11 +1668,17 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
         return new OGROSMSingleFeatureLayer( "GetBytesRead", szVal );
     }
 
+    if( poResultSetLayer != NULL )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "A SQL result layer is still in use. Please delete it first");
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Special SET interest_layers = command                           */
 /* -------------------------------------------------------------------- */
-    else if (strncmp(pszSQLCommand, "SET interest_layers =", 21) == 0)
+    if (strncmp(pszSQLCommand, "SET interest_layers =", 21) == 0)
     {
         char** papszTokens = CSLTokenizeString2(pszSQLCommand + 21, ",", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
         int i;
@@ -1713,8 +1721,7 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
                 bUseWaysIndex = FALSE;
             }
         }
-        else if( papoLayers[IDX_LYR_POINTS]->IsUserInterested() &&
-                 (papoLayers[IDX_LYR_LINES]->IsUserInterested() ||
+        else if( (papoLayers[IDX_LYR_LINES]->IsUserInterested() ||
                   papoLayers[IDX_LYR_POLYGONS]->IsUserInterested()) &&
                  !papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() )
         {
@@ -1734,6 +1741,84 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
         return NULL;
     }
 
+    while(*pszSQLCommand == ' ')
+        pszSQLCommand ++;
+
+    /* Try to analyse the SQL command to get the interest table */
+    if( EQUALN(pszSQLCommand, "SELECT", 5) )
+    {
+        swq_select sSelectInfo;
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        CPLErr eErr = sSelectInfo.preparse( pszSQLCommand );
+        CPLPopErrorHandler();
+
+        if( eErr == CPLE_None )
+        {
+            int bOnlyFromThisDataSource = TRUE;
+
+            swq_select* pCurSelect = &sSelectInfo;
+            while(pCurSelect != NULL && bOnlyFromThisDataSource)
+            {
+                for( int iTable = 0; iTable < pCurSelect->table_count; iTable++ )
+                {
+                    swq_table_def *psTableDef = pCurSelect->table_defs + iTable;
+                    if( psTableDef->data_source != NULL )
+                    {
+                        bOnlyFromThisDataSource = FALSE;
+                        break;
+                    }
+                }
+
+                pCurSelect = pCurSelect->poOtherSelect;
+            }
+
+            if( bOnlyFromThisDataSource )
+            {
+                int bLayerAlreadyAdded = FALSE;
+                CPLString osInterestLayers = "SET interest_layers =";
+
+                pCurSelect = &sSelectInfo;
+                while(pCurSelect != NULL && bOnlyFromThisDataSource)
+                {
+                    for( int iTable = 0; iTable < pCurSelect->table_count; iTable++ )
+                    {
+                        swq_table_def *psTableDef = pCurSelect->table_defs + iTable;
+                        if( bLayerAlreadyAdded ) osInterestLayers += ",";
+                        bLayerAlreadyAdded = TRUE;
+                        osInterestLayers += psTableDef->table_name;
+                    }
+                    pCurSelect = pCurSelect->poOtherSelect;
+                }
+
+                /* Backup current optimization parameters */
+                abSavedDeclaredInterest.resize(0);
+                for(int i=0; i < nLayers; i++)
+                {
+                    abSavedDeclaredInterest.push_back(papoLayers[i]->IsUserInterested());
+                }
+                bIndexPointsBackup = bIndexPoints;
+                bUsePointsIndexBackup = bUsePointsIndex;
+                bIndexWaysBackup = bIndexWays;
+                bUseWaysIndexBackup = bUseWaysIndex;
+
+                /* Update optimization parameters */
+                ExecuteSQL(osInterestLayers, NULL, NULL);
+
+                ResetReading();
+
+                /* Run the request */
+                OGRLayer* poRet = OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                                             poSpatialFilter,
+                                                             pszDialect );
+
+                poResultSetLayer = poRet;
+
+                return poRet;
+            }
+        }
+    }
+
     return OGRDataSource::ExecuteSQL( pszSQLCommand,
                                       poSpatialFilter,
                                       pszDialect );
@@ -1746,6 +1831,26 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
 void OGROSMDataSource::ReleaseResultSet( OGRLayer * poLayer )
 
 {
+    if( poLayer != NULL && poLayer == poResultSetLayer )
+    {
+        poResultSetLayer = NULL;
+
+        /* Restore backup'ed optimization parameters */
+        for(int i=0; i < nLayers; i++)
+        {
+            papoLayers[i]->SetDeclareInterest(abSavedDeclaredInterest[i]);
+        }
+        if( bIndexPointsBackup && !bIndexPoints )
+            CPLDebug("OSM", "Re-enabling indexing of nodes");
+        bIndexPoints = bIndexPointsBackup;
+        bUsePointsIndex = bUsePointsIndexBackup;
+        if( bIndexWaysBackup && !bIndexWays )
+            CPLDebug("OSM", "Re-enabling indexing of ways");
+        bIndexWays = bIndexWaysBackup;
+        bUseWaysIndex = bUseWaysIndexBackup;
+        abSavedDeclaredInterest.resize(0);
+    }
+
     delete poLayer;
 }
 
