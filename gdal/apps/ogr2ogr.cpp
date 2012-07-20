@@ -1537,7 +1537,7 @@ int main( int nArgc, char ** papszArgv )
                                                     pszZField,
                                                     pszWHERE );
 
-                if( psInfo == NULL )
+                if( psInfo == NULL && !bSkipFailures )
                     exit(1);
 
                 pasAssocLayers[iLayer].psInfo = psInfo;
@@ -1805,8 +1805,8 @@ int main( int nArgc, char ** papszArgv )
 
             poPassedLayer->ResetReading();
 
-            if( psInfo == NULL ||
-                (!TranslateLayer( psInfo, poDS, poPassedLayer, poODS,
+            if( (psInfo == NULL ||
+                !TranslateLayer( psInfo, poDS, poPassedLayer, poODS,
                                   poOutputSRS, bNullifyOutputSRS,
                                   eGType,
                                   eGeomOp, dfGeomOpParam,
@@ -1814,8 +1814,8 @@ int main( int nArgc, char ** papszArgv )
                                   poClipSrc, poClipDst,
                                   bExplodeCollections,
                                   nSrcFileSize, NULL,
-                                  pfnProgress, pProgressArg )
-                && !bSkipFailures) )
+                                  pfnProgress, pProgressArg ))
+                && !bSkipFailures )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                         "Terminating translation prematurely after failed\n"
@@ -2461,6 +2461,8 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
 
 static void FreeTargetLayerInfo(TargetLayerInfo* psInfo)
 {
+    if( psInfo == NULL )
+        return;
     OGRCoordinateTransformation::DestroyCT(psInfo->poCT);
     CSLDestroy(psInfo->papszTransformOptions);
     CPLFree(psInfo->panMap);
