@@ -860,6 +860,8 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
         else if (!bFilteredOut)
             bFeatureAdded = TRUE;
     }
+    else
+        delete poFeature;
 }
 
 static void OGROSMNotifyRelation (OSMRelation* psRelation,
