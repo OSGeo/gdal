@@ -206,10 +206,65 @@ def ogr_osm_3():
 
     return ret
 
+###############################################################################
+# Test optimization when reading only the points layer through a SQL request
+
+def ogr_osm_4():
+
+    try:
+        drv = ogr.GetDriverByName('OSM')
+    except:
+        drv = None
+    if drv is None:
+        return 'skip'
+
+    ds = ogr.Open( 'data/test.pbf' )
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM points')
+
+    feat = sql_lyr.GetNextFeature()
+    is_none = feat is None
+
+    ds.ReleaseResultSet(sql_lyr)
+
+    if is_none:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Change layer
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM lines')
+
+    feat = sql_lyr.GetNextFeature()
+    is_none = feat is None
+
+    ds.ReleaseResultSet(sql_lyr)
+
+    if is_none:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Change layer
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM points')
+
+    feat = sql_lyr.GetNextFeature()
+    is_none = feat is None
+
+    ds.ReleaseResultSet(sql_lyr)
+
+    if is_none:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_osm_1,
     ogr_osm_2,
     ogr_osm_3,
+    ogr_osm_4,
     ]
 
 if __name__ == '__main__':
