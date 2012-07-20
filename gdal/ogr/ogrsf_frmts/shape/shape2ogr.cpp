@@ -1009,21 +1009,28 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 /* -------------------------------------------------------------------- */
 /*      Fetch geometry from Shapefile to OGRFeature.                    */
 /* -------------------------------------------------------------------- */
-    if( hSHP != NULL && !poDefn->IsGeometryIgnored() )
+    if( hSHP != NULL )
     {
-        OGRGeometry* poGeometry = NULL;
-        poGeometry = SHPReadOGRObject( hSHP, iShape, psShape );
+        if( !poDefn->IsGeometryIgnored() )
+        {
+            OGRGeometry* poGeometry = NULL;
+            poGeometry = SHPReadOGRObject( hSHP, iShape, psShape );
 
-        /*
-         * NOTE - mloskot:
-         * Two possibilities are expected here (bot hare tested by GDAL Autotests):
-         * 1. Read valid geometry and assign it directly.
-         * 2. Read and assign null geometry if it can not be read correctly from a shapefile
-         *
-         * It's NOT required here to test poGeometry == NULL.
-         */
+            /*
+            * NOTE - mloskot:
+            * Two possibilities are expected here (bot hare tested by GDAL Autotests):
+            * 1. Read valid geometry and assign it directly.
+            * 2. Read and assign null geometry if it can not be read correctly from a shapefile
+            *
+            * It's NOT required here to test poGeometry == NULL.
+            */
 
-        poFeature->SetGeometryDirectly( poGeometry );
+            poFeature->SetGeometryDirectly( poGeometry );
+        }
+        else if( psShape != NULL )
+        {
+            SHPDestroyObject( psShape );
+        }
     }
 
 /* -------------------------------------------------------------------- */
