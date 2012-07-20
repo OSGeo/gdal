@@ -112,6 +112,17 @@ def ogr_osm_1(filename = 'data/test.pbf'):
         return 'fail'
 
     feat = lyr.GetNextFeature()
+    if feat.GetFieldAsString('osm_id') != '6':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('LINESTRING (2 49,3 49,3 50,2 50,2 49)')) != 0:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
     if feat is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -260,11 +271,52 @@ def ogr_osm_4():
 
     return 'success'
 
+###############################################################################
+# Test optimizations for early attribute filter evaluation
+
+def ogr_osm_5():
+
+    try:
+        drv = ogr.GetDriverByName('OSM')
+    except:
+        drv = None
+    if drv is None:
+        return 'skip'
+
+    ds = ogr.Open( 'data/test.pbf' )
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    tests = [ [ 'points', '3', True ],
+              [ 'points', 'foo', False ],
+              [ 'lines', '1', True ],
+              [ 'lines', 'foo', False ],
+              [ 'polygons', '2', True ],
+              [ 'polygons', 'foo', False ],
+              [ 'multipolygons', '1', True ],
+              [ 'multipolygons', 'foo', False ] ]
+
+    for test in tests:
+        sql_lyr = ds.ExecuteSQL("SELECT * FROM %s WHERE osm_id = '%s'" % (test[0], test[1]))
+        feat = sql_lyr.GetNextFeature()
+        is_none = feat is None
+        feat = None
+        ds.ReleaseResultSet(sql_lyr)
+
+        if not (test[2] ^ is_none):
+            gdaltest.post_reason('fail')
+            print(test)
+            return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_osm_1,
     ogr_osm_2,
     ogr_osm_3,
     ogr_osm_4,
+    ogr_osm_5,
     ]
 
 if __name__ == '__main__':

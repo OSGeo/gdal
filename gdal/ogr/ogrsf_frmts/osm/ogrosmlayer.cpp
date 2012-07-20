@@ -283,10 +283,22 @@ int  OGROSMLayer::AddToArray(OGRFeature* poFeature)
 }
 
 /************************************************************************/
+/*                        EvaluateAttributeFilter()                     */
+/************************************************************************/
+
+int OGROSMLayer::EvaluateAttributeFilter(OGRFeature* poFeature)
+{
+    return (m_poAttrQuery == NULL
+            || m_poAttrQuery->Evaluate( poFeature ));
+}
+
+/************************************************************************/
 /*                             AddFeature()                             */
 /************************************************************************/
 
-int  OGROSMLayer::AddFeature(OGRFeature* poFeature, int* pbFilteredOut)
+int  OGROSMLayer::AddFeature(OGRFeature* poFeature,
+                             int bAttrFilterAlreadyEvaluated,
+                             int* pbFilteredOut)
 {
     if( !bUserInterested )
     {
@@ -302,7 +314,7 @@ int  OGROSMLayer::AddFeature(OGRFeature* poFeature, int* pbFilteredOut)
     
     if( (m_poFilterGeom == NULL
         || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL
+        && (m_poAttrQuery == NULL || bAttrFilterAlreadyEvaluated
             || m_poAttrQuery->Evaluate( poFeature )) )
     {
         if (!AddToArray(poFeature))
