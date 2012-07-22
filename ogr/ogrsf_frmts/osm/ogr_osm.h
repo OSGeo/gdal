@@ -187,7 +187,7 @@ class OGROSMDataSource : public OGRDataSource
 
     std::set<std::string> aoSetClosedWaysArePolygons;
 
-    float*              pafLonLatCache;
+    int*                panLonLatCache;
 
     int                 bReportAllNodes;
 
@@ -219,12 +219,13 @@ class OGROSMDataSource : public OGRDataSource
     void                CloseDB();
 
     void                IndexPoint(OSMNode* psNode);
-    void                IndexWay(OSMWay* psWay, OGRLineString* poLS);
+
+    void                IndexWay(GIntBig nWayID, int* panLonLatPairs, int nPairs);
 
     int                 StartTransaction();
     int                 CommitTransaction();
 
-    unsigned int        LookupNodes( std::map< GIntBig, std::pair<float,float> >& aoMapNodes,
+    unsigned int        LookupNodes( std::map< GIntBig, std::pair<int,int> >& aoMapNodes,
                                      OSMWay* psWay );
     unsigned int        LookupWays( std::map< GIntBig, std::pair<int,void*> >& aoMapWays,
                                     OSMRelation* psRelation );

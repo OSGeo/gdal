@@ -44,6 +44,9 @@
 #define IDX_LYR_MULTIPOLYGONS    4
 #define IDX_LYR_OTHER_RELATIONS  5
 
+#define DBL_TO_INT(x)            (int)floor((x) * 1e7 + 0.5)
+#define INT_TO_DBL(x)            ((x) / 1e7)
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -72,7 +75,7 @@ OGROSMDataSource::OGROSMDataSource()
     bInTransaction = FALSE;
     pahSelectNodeStmt = NULL;
     pahSelectWayStmt = NULL;
-    pafLonLatCache = NULL;
+    panLonLatCache = NULL;
     bInMemoryTmpDB = FALSE;
     bMustUnlink = TRUE;
     nMaxSizeForInMemoryDBInMB = atoi(CPLGetConfigOption("OSM_MAX_TMPFILE_SIZE", "100"));
@@ -116,7 +119,7 @@ OGROSMDataSource::~OGROSMDataSource()
 
     OSM_Close(psParser);
 
-    CPLFree(pafLonLatCache);
+    CPLFree(panLonLatCache);
 
     if( hDB != NULL )
         CloseDB();
@@ -198,11 +201,11 @@ void OGROSMDataSource::IndexPoint(OSMNode* psNode)
 
     sqlite3_bind_int64( hInsertNodeStmt, 1, psNode->nID );
 
-    float afLonLat[2];
-    afLonLat[0] = (float)psNode->dfLon;
-    afLonLat[1] = (float)psNode->dfLat;
+    int anLonLat[2];
+    anLonLat[0] = DBL_TO_INT(psNode->dfLon);
+    anLonLat[1] = DBL_TO_INT(psNode->dfLat);
 
-    sqlite3_bind_blob( hInsertNodeStmt, 2, afLonLat, 2 * sizeof(float), SQLITE_STATIC );
+    sqlite3_bind_blob( hInsertNodeStmt, 2, anLonLat, 2 * sizeof(int), SQLITE_STATIC );
 
     int rc = sqlite3_step( hInsertNodeStmt );
     sqlite3_reset( hInsertNodeStmt );
@@ -291,7 +294,7 @@ static void OGROSMNotifyNodes (unsigned int nNodes, OSMNode* pasNodes,
 /*                            LookupNodes()                             */
 /************************************************************************/
 
-unsigned int OGROSMDataSource::LookupNodes( std::map< GIntBig, std::pair<float,float> >& aoMapNodes,
+unsigned int OGROSMDataSource::LookupNodes( std::map< GIntBig, std::pair<int,int> >& aoMapNodes,
                                             OSMWay* psWay )
 {
     unsigned int nFound = 0;
@@ -318,8 +321,8 @@ unsigned int OGROSMDataSource::LookupNodes( std::map< GIntBig, std::pair<float,f
         while( sqlite3_step(hSelectNodeBetweenStmt) == SQLITE_ROW )
         {
             GIntBig id = sqlite3_column_int(hSelectNodeBetweenStmt, 0);
-            float* pafLonLat = (float*)sqlite3_column_blob(hSelectNodeBetweenStmt, 1);
-            aoMapNodes[id] = std::pair<float,float>(pafLonLat[0], pafLonLat[1]);
+            int* panLonLat = (int*)sqlite3_column_blob(hSelectNodeBetweenStmt, 1);
+            aoMapNodes[id] = std::pair<int,int>(panLonLat[0], panLonLat[1]);
             nFound++;
         }
 
@@ -346,8 +349,8 @@ unsigned int OGROSMDataSource::LookupNodes( std::map< GIntBig, std::pair<float,f
         while( sqlite3_step(hStmt) == SQLITE_ROW )
         {
             GIntBig id = sqlite3_column_int(hStmt, 0);
-            float* pafLonLat = (float*)sqlite3_column_blob(hStmt, 1);
-            aoMapNodes[id] = std::pair<float,float>(pafLonLat[0], pafLonLat[1]);
+            int* panLonLat = (int*)sqlite3_column_blob(hStmt, 1);
+            aoMapNodes[id] = std::pair<int,int>(panLonLat[0], panLonLat[1]);
             nFound++;
         }
 
@@ -361,24 +364,15 @@ unsigned int OGROSMDataSource::LookupNodes( std::map< GIntBig, std::pair<float,f
 /*                              IndexWay()                              */
 /************************************************************************/
 
-void OGROSMDataSource::IndexWay(OSMWay* psWay, OGRLineString* poLS)
+void OGROSMDataSource::IndexWay(GIntBig nWayID, int* panLonLatPairs, int nPairs)
 {
     if( !bIndexWays )
         return;
 
-    sqlite3_bind_int64( hInsertWayStmt, 1, psWay->nID );
+    sqlite3_bind_int64( hInsertWayStmt, 1, nWayID );
 
-    int nPoints = poLS->getNumPoints();
-    if( pafLonLatCache == NULL )
-        pafLonLatCache = (float*)CPLMalloc(sizeof(float) * 2 * MAX_NODES_PER_WAY);
-    for(int i = 0; i < nPoints; i++)
-    {
-        pafLonLatCache[i * 2 + 0] = poLS->getX(i);
-        pafLonLatCache[i * 2 + 1] = poLS->getY(i);
-    }
-
-    sqlite3_bind_blob( hInsertWayStmt, 2, pafLonLatCache,
-                        sizeof(float) * 2 * nPoints, SQLITE_STATIC );
+    sqlite3_bind_blob( hInsertWayStmt, 2, panLonLatPairs,
+                        sizeof(int) * 2 * nPairs, SQLITE_STATIC );
 
     int rc = sqlite3_step( hInsertWayStmt );
     sqlite3_reset( hInsertWayStmt );
@@ -386,7 +380,7 @@ void OGROSMDataSource::IndexWay(OSMWay* psWay, OGRLineString* poLS)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Failed inserting way " CPL_FRMT_GIB ": %s",
-                psWay->nID, sqlite3_errmsg(hDB));
+                nWayID, sqlite3_errmsg(hDB));
     }
 }
 
@@ -473,12 +467,45 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
         }
     }
 
-    std::map< GIntBig, std::pair<float,float> > aoMapNodes;
+    std::map< GIntBig, std::pair<int,int> > aoMapNodes;
     unsigned int nFound = LookupNodes(aoMapNodes, psWay);
     if( nFound < 2 )
     {
         CPLDebug("OSM", "Way " CPL_FRMT_GIB " with %d nodes that could be found. Discarding it",
                  psWay->nID, nFound);
+        delete poFeature;
+        return;
+    }
+
+    if( panLonLatCache == NULL )
+        panLonLatCache = (int*)CPLMalloc(sizeof(int) * 2 * MAX_NODES_PER_WAY);
+
+    std::map< GIntBig, std::pair<int,int> >::iterator oIter;
+    nFound = 0;
+    for(i=0;i<psWay->nRefs;i++)
+    {
+        oIter = aoMapNodes.find( psWay->panNodeRefs[i] );
+        if( oIter != aoMapNodes.end() )
+        {
+            const std::pair<int,int>& oPair = oIter->second;
+            panLonLatCache[nFound * 2 + 0] = oPair.first;
+            panLonLatCache[nFound * 2 + 1] = oPair.second;
+            nFound ++;
+        }
+    }
+
+    if( nFound < 2 )
+    {
+        CPLDebug("OSM", "Way " CPL_FRMT_GIB " with %d nodes that could be found. Discarding it",
+                 psWay->nID, nFound);
+        delete poFeature;
+        return;
+    }
+
+    IndexWay(psWay->nID, panLonLatCache, (int)nFound);
+
+    if( !papoLayers[iCurLayer]->IsUserInterested() )
+    {
         delete poFeature;
         return;
     }
@@ -502,38 +529,12 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
         poGeom = poLS;
     }
 
-    poLS->setNumPoints((int)psWay->nRefs);
-
-    std::map< GIntBig, std::pair<float,float> >::iterator oIter;
-    nFound = 0;
-    for(i=0;i<psWay->nRefs;i++)
-    {
-        oIter = aoMapNodes.find( psWay->panNodeRefs[i] );
-        if( oIter != aoMapNodes.end() )
-        {
-            const std::pair<float,float>& oPair = oIter->second;
-            poLS->setPoint(nFound, oPair.first, oPair.second);
-            nFound ++;
-        }
-    }
     poLS->setNumPoints((int)nFound);
-
-    if( nFound < 2 )
+    for(i=0;i<nFound;i++)
     {
-        CPLDebug("OSM", "Way " CPL_FRMT_GIB " with %d nodes that could be found. Discarding it",
-                 psWay->nID, nFound);
-        delete poGeom;
-        delete poFeature;
-        return;
-    }
-
-    IndexWay(psWay, poLS);
-
-    if( !papoLayers[iCurLayer]->IsUserInterested() )
-    {
-        delete poGeom;
-        delete poFeature;
-        return;
+        poLS->setPoint(i,
+                       INT_TO_DBL(panLonLatCache[i * 2 + 0]),
+                       INT_TO_DBL(panLonLatCache[i * 2 + 1]));
     }
 
     int bAttrFilterAlreadyEvaluated;
@@ -675,12 +676,12 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation)
             strcmp(psRelation->pasMembers[i].pszRole, "subarea") != 0  )
         {
             const std::pair<int, void*>& oGeom = aoMapWays[ psRelation->pasMembers[i].nID ];
-            int nPoints = oGeom.first / (2 * sizeof(float));
-            float* pafCoords = (float*) oGeom.second;
+            int nPoints = oGeom.first / (2 * sizeof(int));
+            int* panCoords = (int*) oGeom.second;
             OGRLineString* poLS;
 
-            if ( pafCoords[0] == pafCoords[2 * (nPoints - 1)] &&
-                    pafCoords[1] == pafCoords[2 * (nPoints - 1) + 1] )
+            if ( panCoords[0] == panCoords[2 * (nPoints - 1)] &&
+                    panCoords[1] == panCoords[2 * (nPoints - 1) + 1] )
             {
                 OGRPolygon* poPoly = new OGRPolygon();
                 OGRLinearRing* poRing = new OGRLinearRing();
@@ -698,8 +699,8 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation)
             for(int j=0;j<nPoints;j++)
             {
                 poLS->setPoint( j,
-                                pafCoords[2 * j + 0],
-                                pafCoords[2 * j + 1] );
+                                INT_TO_DBL(panCoords[2 * j + 0]),
+                                INT_TO_DBL(panCoords[2 * j + 1]) );
             }
 
         }
@@ -793,15 +794,15 @@ OGRGeometry* OGROSMDataSource::BuildGeometryCollection(OSMRelation* psRelation, 
     {
         if( psRelation->pasMembers[i].eType == MEMBER_NODE && !bMultiLineString )
         {
-            std::map< GIntBig, std::pair<float,float> > aoMapNodes;
+            std::map< GIntBig, std::pair<int,int> > aoMapNodes;
             OSMWay sWay;
             sWay.nRefs = 1;
             sWay.panNodeRefs = &( psRelation->pasMembers[i].nID );
             unsigned int nFound = LookupNodes(aoMapNodes, &sWay);
             if( nFound == 1 )
             {
-                const std::pair<float,float>& oPair = aoMapNodes[psRelation->pasMembers[i].nID];
-                poColl->addGeometryDirectly(new OGRPoint(oPair.first, oPair.second));
+                const std::pair<int,int>& oPair = aoMapNodes[psRelation->pasMembers[i].nID];
+                poColl->addGeometryDirectly(new OGRPoint(INT_TO_DBL(oPair.first), INT_TO_DBL(oPair.second)));
             }
         }
         else if( psRelation->pasMembers[i].eType == MEMBER_WAY &&
@@ -809,8 +810,8 @@ OGRGeometry* OGROSMDataSource::BuildGeometryCollection(OSMRelation* psRelation, 
                  aoMapWays.find( psRelation->pasMembers[i].nID ) != aoMapWays.end() )
         {
             const std::pair<int, void*>& oGeom = aoMapWays[ psRelation->pasMembers[i].nID ];
-            int nPoints = oGeom.first / (2 * sizeof(float));
-            float* pafCoords = (float*) oGeom.second;
+            int nPoints = oGeom.first / (2 * sizeof(int));
+            int* panCoords = (int*) oGeom.second;
             OGRLineString* poLS;
 
             poLS = new OGRLineString();
@@ -820,8 +821,8 @@ OGRGeometry* OGROSMDataSource::BuildGeometryCollection(OSMRelation* psRelation, 
             for(int j=0;j<nPoints;j++)
             {
                 poLS->setPoint( j,
-                                pafCoords[2 * j + 0],
-                                pafCoords[2 * j + 1] );
+                                INT_TO_DBL(panCoords[2 * j + 0]),
+                                INT_TO_DBL(panCoords[2 * j + 1]) );
             }
 
         }
