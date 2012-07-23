@@ -19,6 +19,7 @@
  </way>
  <way id="2" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
   <tag k="area" v="yes"/>
+  <tag k="natural" v="wood"/>
   <nd ref="1"/>
   <nd ref="4"/>
   <nd ref="2"/>
@@ -55,10 +56,16 @@
   <nd ref="900"/> <!-- unexisting node -->
   <nd ref="1"/>
  </way>
+ <!-- no tag: will not be reported in lines layer -->
+ <way id="7" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <nd ref="1"/>
+  <nd ref="2"/>
+ </way>
  <relation id="1" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
   <member type="way" ref="2" role="outer"/>
   <member type="way" ref="3" role="inner"/>
   <tag k="type" v="multipolygon"/>
+  <tag k="natural" v="forest"/>
  </relation>
  <relation id="2" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
   <member type="way" ref="2" role="outer"/>
@@ -74,5 +81,11 @@
   <member type="node" ref="1" role=""/>
   <member type="way" ref="1" role=""/>
   <tag k="type" v="other_type"/>
+ </relation>
+<!-- inherit tags from outer way -->
+ <relation id="5" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <member type="way" ref="2" role="outer"/>
+  <member type="way" ref="3" role="inner"/>
+  <tag k="type" v="multipolygon"/>
  </relation>
 </osm>

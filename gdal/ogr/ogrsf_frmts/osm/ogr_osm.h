@@ -190,6 +190,7 @@ class OGROSMDataSource : public OGRDataSource
     int*                panLonLatCache;
 
     int                 bReportAllNodes;
+    int                 bReportAllWays;
 
     int                 bFeatureAdded;
 
@@ -211,6 +212,8 @@ class OGROSMDataSource : public OGRDataSource
 
     int                 bAttributeNameLaundering;
 
+    GByte              *pabyWayBuffer;
+
     int                 ParseConf();
     int                 CreateTempDB();
     int                 SetDBOptions();
@@ -220,7 +223,9 @@ class OGROSMDataSource : public OGRDataSource
 
     void                IndexPoint(OSMNode* psNode);
 
-    void                IndexWay(GIntBig nWayID, int* panLonLatPairs, int nPairs);
+    void                IndexWay(GIntBig nWayID,
+                                 unsigned int nTags, OSMTag* pasTags,
+                                 int* panLonLatPairs, int nPairs);
 
     int                 StartTransaction();
     int                 CommitTransaction();
@@ -230,7 +235,9 @@ class OGROSMDataSource : public OGRDataSource
     unsigned int        LookupWays( std::map< GIntBig, std::pair<int,void*> >& aoMapWays,
                                     OSMRelation* psRelation );
 
-    OGRGeometry*        BuildMultiPolygon(OSMRelation* psRelation);
+    OGRGeometry*        BuildMultiPolygon(OSMRelation* psRelation,
+                                          unsigned int* pnTags,
+                                          OSMTag* pasTags);
     OGRGeometry*        BuildGeometryCollection(OSMRelation* psRelation, int bMultiLineString);
 
     int                 TransferToDiskIfNecesserary();

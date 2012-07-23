@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ###############################################################################
-# $Id $
+# $Id$
 #
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test read functionality for OGR OSM driver.
@@ -167,6 +167,11 @@ def ogr_osm_1(filename = 'data/test.pbf'):
         feat.DumpReadable()
         return 'fail'
 
+    if feat.GetFieldAsString('natural') != 'forest':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
     if filename == 'tmp/ogr_osm_3':
         if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POLYGON ((2 49,2 50,3 50,3 49,2 49),(2.1 49.1,2.2 49.1,2.2 49.2,2.1 49.2,2.1 49.1))')) != 0:
             gdaltest.post_reason('fail')
@@ -177,6 +182,17 @@ def ogr_osm_1(filename = 'data/test.pbf'):
             gdaltest.post_reason('fail')
             feat.DumpReadable()
             return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsString('osm_id') != '5':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    if feat.GetFieldAsString('natural') != 'wood':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
 
     # Test multilinestrings
     lyr = ds.GetLayer('multilinestrings')
