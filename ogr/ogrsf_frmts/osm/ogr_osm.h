@@ -233,6 +233,8 @@ class OGROSMDataSource : public OGRDataSource
     OGRGeometry*        BuildMultiPolygon(OSMRelation* psRelation);
     OGRGeometry*        BuildGeometryCollection(OSMRelation* psRelation, int bMultiLineString);
 
+    int                 TransferToDiskIfNecesserary();
+
   public:
                         OGROSMDataSource();
                         ~OGROSMDataSource();
