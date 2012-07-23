@@ -32,6 +32,7 @@
 #include "cpl_string.h"
 #include "ogr_api.h"
 #include "swq.h"
+#include "gpb.h"
 
 #define LIMIT_IDS_PER_REQUEST 200
 
@@ -46,6 +47,12 @@
 
 #define DBL_TO_INT(x)            (int)floor((x) * 1e7 + 0.5)
 #define INT_TO_DBL(x)            ((x) / 1e7)
+
+#define MAX_COUNT_FOR_TAGS_IN_WAY   255  /* must fit on 1 byte */
+#define MAX_SIZE_FOR_TAGS_IN_WAY    1024
+
+/* 5 bytes for encoding a int : really the worst case scenario ! */
+#define WAY_BUFFER_SIZE (1 + MAX_NODES_PER_WAY * 2 * 5 + MAX_SIZE_FOR_TAGS_IN_WAY)
 
 CPL_CVSID("$Id$");
 
@@ -80,6 +87,7 @@ OGROSMDataSource::OGROSMDataSource()
     bMustUnlink = TRUE;
     nMaxSizeForInMemoryDBInMB = atoi(CPLGetConfigOption("OSM_MAX_TMPFILE_SIZE", "100"));
     bReportAllNodes = FALSE;
+    bReportAllWays = FALSE;
     bFeatureAdded = FALSE;
     nNodeSelectBetween = 0;
     nNodeSelectIn = 0;
@@ -98,6 +106,8 @@ OGROSMDataSource::OGROSMDataSource()
     bIsFeatureCountEnabled = FALSE;
 
     bAttributeNameLaundering = TRUE;
+
+    pabyWayBuffer = NULL;
 }
 
 /************************************************************************/
@@ -120,6 +130,7 @@ OGROSMDataSource::~OGROSMDataSource()
     OSM_Close(psParser);
 
     CPLFree(panLonLatCache);
+    CPLFree(pabyWayBuffer);
 
     if( hDB != NULL )
         CloseDB();
@@ -361,18 +372,194 @@ unsigned int OGROSMDataSource::LookupNodes( std::map< GIntBig, std::pair<int,int
 }
 
 /************************************************************************/
+/*                            WriteVarSInt()                            */
+/************************************************************************/
+
+static void WriteVarSInt(int nSVal, GByte** ppabyData)
+{
+    int nVal;
+    if( nSVal >= 0 )
+        nVal = nSVal << 1;
+    else
+        nVal = ((-1-nSVal) << 1) + 1;
+
+    GByte* pabyData = *ppabyData;
+    while(TRUE)
+    {
+        if( (nVal & (~0x7f)) == 0 )
+        {
+            *pabyData = (GByte)nVal;
+            *ppabyData = pabyData + 1;
+            return;
+        }
+
+        *pabyData = 0x80 | (GByte)(nVal & 0x7f);
+        nVal >>= 7;
+        pabyData ++;
+    }
+}
+/************************************************************************/
+/*                           WriteVarSInt64()                           */
+/************************************************************************/
+
+static void WriteVarSInt64(GIntBig nSVal, GByte** ppabyData)
+{
+    GIntBig nVal;
+    if( nSVal >= 0 )
+        nVal = nSVal << 1;
+    else
+        nVal = ((-1-nSVal) << 1) + 1;
+
+    GByte* pabyData = *ppabyData;
+    while(TRUE)
+    {
+        if( (nVal & (~0x7f)) == 0 )
+        {
+            *pabyData = (GByte)nVal;
+            *ppabyData = pabyData + 1;
+            return;
+        }
+
+        *pabyData = 0x80 | (GByte)(nVal & 0x7f);
+        nVal >>= 7;
+        pabyData ++;
+    }
+}
+
+/************************************************************************/
+/*                             CompressWay()                            */
+/************************************************************************/
+
+static int CompressWay (unsigned int nTags, OSMTag* pasTags,
+                        int nPoints, int* panLonLatPairs,
+                        GByte* pabyCompressedWay)
+{
+    GByte* pabyPtr = pabyCompressedWay;
+    pabyPtr ++;
+
+    int nTagByteSize = 0;
+    int nTagCount = 0;
+    for(unsigned int iTag = 0; iTag < nTags; iTag++)
+    {
+        int nLenK = strlen(pasTags[iTag].pszK) + 1;
+        int nLenV = strlen(pasTags[iTag].pszV) + 1;
+        if (nTagByteSize + nLenK + nLenV > MAX_SIZE_FOR_TAGS_IN_WAY)
+        {
+            break;
+        }
+        nTagByteSize += nLenK + nLenV;
+
+        if (strcmp(pasTags[iTag].pszK, "area") == 0)
+            continue;
+        if (strcmp(pasTags[iTag].pszK, "created_by") == 0)
+            continue;
+        if (strcmp(pasTags[iTag].pszK, "converted_by") == 0)
+            continue;
+
+        memcpy(pabyPtr, pasTags[iTag].pszK, nLenK);
+        pabyPtr += nLenK;
+        memcpy(pabyPtr, pasTags[iTag].pszV, nLenV);
+        pabyPtr += nLenV;
+
+        nTagCount ++;
+        if( nTagCount == MAX_COUNT_FOR_TAGS_IN_WAY )
+            break;
+    }
+
+    pabyCompressedWay[0] = (GByte) nTagCount;
+
+    memcpy(pabyPtr, panLonLatPairs + 0, sizeof(int));
+    memcpy(pabyPtr + sizeof(int), panLonLatPairs + 1, sizeof(int));
+    pabyPtr += 2 * sizeof(int);
+    for(int i=1;i<nPoints;i++)
+    {
+        GIntBig nDiff64;
+        int nDiff;
+
+        nDiff64 = (GIntBig)panLonLatPairs[2 * i + 0] - (GIntBig)panLonLatPairs[2 * (i-1) + 0];
+        WriteVarSInt64(nDiff64, &pabyPtr);
+
+        nDiff = panLonLatPairs[2 * i + 1] - panLonLatPairs[2 * (i-1) + 1];
+        WriteVarSInt(nDiff, &pabyPtr);
+    }
+    int nBufferSize = (int)(pabyPtr - pabyCompressedWay);
+    return nBufferSize;
+}
+
+/************************************************************************/
+/*                             UncompressWay()                          */
+/************************************************************************/
+
+static int UncompressWay (int nBytes, GByte* pabyCompressedWay,
+                          int* panCoords,
+                          unsigned int* pnTags, OSMTag* pasTags)
+{
+    GByte* pabyPtr = pabyCompressedWay;
+    unsigned int nTags = *pabyPtr;
+    pabyPtr ++;
+
+    if (pnTags)
+        *pnTags = nTags;
+
+    for(unsigned int iTag = 0; iTag < nTags; iTag++)
+    {
+        GByte* pszK = pabyPtr;
+        while(*pabyPtr != '\0')
+            pabyPtr ++;
+        pabyPtr ++;
+
+        GByte* pszV = pabyPtr;
+        while(*pabyPtr != '\0')
+            pabyPtr ++;
+        pabyPtr ++;
+
+        if( pasTags )
+        {
+            pasTags[iTag].pszK = (const char*) pszK;
+            pasTags[iTag].pszV = (const char*) pszV;
+        }
+    }
+
+    memcpy(&panCoords[0], pabyPtr, sizeof(int));
+    memcpy(&panCoords[1], pabyPtr + sizeof(int), sizeof(int));
+    pabyPtr += 2 * sizeof(int);
+    int nPoints = 1;
+    do
+    {
+        GIntBig nSVal64 = ReadVarInt64(&pabyPtr);
+        GIntBig nDiff64 = ((nSVal64 & 1) == 0) ? (((GUIntBig)nSVal64) >> 1) : -(((GUIntBig)nSVal64) >> 1)-1;
+        panCoords[2 * nPoints + 0] = panCoords[2 * (nPoints - 1) + 0] + nDiff64;
+
+        int nSVal = ReadVarInt32(&pabyPtr);
+        int nDiff = ((nSVal & 1) == 0) ? (((unsigned int)nSVal) >> 1) : -(((unsigned int)nSVal) >> 1)-1;
+        panCoords[2 * nPoints + 1] = panCoords[2 * (nPoints - 1) + 1] + nDiff;
+
+        nPoints ++;
+    } while (pabyPtr < pabyCompressedWay + nBytes);
+
+    return nPoints;
+}
+
+/************************************************************************/
 /*                              IndexWay()                              */
 /************************************************************************/
 
-void OGROSMDataSource::IndexWay(GIntBig nWayID, int* panLonLatPairs, int nPairs)
+void OGROSMDataSource::IndexWay(GIntBig nWayID,
+                                unsigned int nTags, OSMTag* pasTags,
+                                int* panLonLatPairs, int nPairs)
 {
     if( !bIndexWays )
         return;
 
     sqlite3_bind_int64( hInsertWayStmt, 1, nWayID );
 
-    sqlite3_bind_blob( hInsertWayStmt, 2, panLonLatPairs,
-                        sizeof(int) * 2 * nPairs, SQLITE_STATIC );
+    if( pabyWayBuffer == NULL )
+        pabyWayBuffer = (GByte*)CPLMalloc(WAY_BUFFER_SIZE);
+
+    int nBufferSize = CompressWay (nTags, pasTags, nPairs, panLonLatPairs, pabyWayBuffer);
+    CPLAssert(nBufferSize <= WAY_BUFFER_SIZE);
+    sqlite3_bind_blob( hInsertWayStmt, 2, pabyWayBuffer,
+                       nBufferSize, SQLITE_STATIC );
 
     int rc = sqlite3_step( hInsertWayStmt );
     sqlite3_reset( hInsertWayStmt );
@@ -502,9 +689,32 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
         return;
     }
 
-    IndexWay(psWay->nID, panLonLatCache, (int)nFound);
+    if( bIsArea && papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() )
+        IndexWay(psWay->nID, psWay->nTags, psWay->pasTags, panLonLatCache, (int)nFound);
+    else
+        IndexWay(psWay->nID, 0, NULL, panLonLatCache, (int)nFound);
 
     if( !papoLayers[iCurLayer]->IsUserInterested() )
+    {
+        delete poFeature;
+        return;
+    }
+
+    int bInterestingTag = bReportAllWays;
+    if( !bReportAllWays )
+    {
+        for(i=0;i<psWay->nTags;i++)
+        {
+            const char* pszK = psWay->pasTags[i].pszK;
+            if( papoLayers[iCurLayer]->aoSetUnsignificantKeys.find(pszK) ==
+                papoLayers[iCurLayer]->aoSetUnsignificantKeys.end() )
+            {
+                bInterestingTag = TRUE;
+                break;
+            }
+        }
+    }
+    if( !bInterestingTag )
     {
         delete poFeature;
         return;
@@ -636,7 +846,9 @@ unsigned int OGROSMDataSource::LookupWays( std::map< GIntBig, std::pair<int,void
 /*                          BuildMultiPolygon()                         */
 /************************************************************************/
 
-OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation)
+OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
+                                                 unsigned int* pnTags,
+                                                 OSMTag* pasTags)
 {
 
     std::map< GIntBig, std::pair<int,void*> > aoMapWays;
@@ -647,13 +859,15 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation)
     for(i = 0; i < psRelation->nMembers; i ++ )
     {
         if( psRelation->pasMembers[i].eType == MEMBER_WAY &&
-            strcmp(psRelation->pasMembers[i].pszRole, "subarea") != 0  &&
-            aoMapWays.find( psRelation->pasMembers[i].nID ) == aoMapWays.end() )
+            strcmp(psRelation->pasMembers[i].pszRole, "subarea") != 0 )
         {
-            CPLDebug("OSM", "Relation " CPL_FRMT_GIB " has missing ways. Ignoring it",
-                     psRelation->nID);
-            bMissing = TRUE;
-            break;
+            if( aoMapWays.find( psRelation->pasMembers[i].nID ) == aoMapWays.end() )
+            {
+                CPLDebug("OSM", "Relation " CPL_FRMT_GIB " has missing ways. Ignoring it",
+                        psRelation->nID);
+                bMissing = TRUE;
+                break;
+            }
         }
     }
 
@@ -670,14 +884,39 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation)
         sizeof(OGRGeometry*) *  psRelation->nMembers);
     nPolys = 0;
 
+    if( pnTags != NULL )
+        *pnTags = 0;
+
     for(i = 0; i < psRelation->nMembers; i ++ )
     {
         if( psRelation->pasMembers[i].eType == MEMBER_WAY &&
             strcmp(psRelation->pasMembers[i].pszRole, "subarea") != 0  )
         {
             const std::pair<int, void*>& oGeom = aoMapWays[ psRelation->pasMembers[i].nID ];
-            int nPoints = oGeom.first / (2 * sizeof(int));
-            int* panCoords = (int*) oGeom.second;
+
+            int* panCoords = (int*) panLonLatCache;
+            int nPoints;
+
+            if( pnTags != NULL && *pnTags == 0 &&
+                strcmp(psRelation->pasMembers[i].pszRole, "outer") == 0 )
+            {
+                int nCompressedWaySize = oGeom.first;
+                GByte* pabyCompressedWay = (GByte*) oGeom.second;
+
+                if( pabyWayBuffer == NULL )
+                    pabyWayBuffer = (GByte*)CPLMalloc(WAY_BUFFER_SIZE);
+                memcpy(pabyWayBuffer, pabyCompressedWay, nCompressedWaySize);
+
+                nPoints = UncompressWay (nCompressedWaySize, pabyWayBuffer,
+                                         panCoords,
+                                         pnTags, pasTags );
+            }
+            else
+            {
+                nPoints = UncompressWay (oGeom.first, (GByte*) oGeom.second, panCoords,
+                                         NULL, NULL);
+            }
+
             OGRLineString* poLS;
 
             if ( panCoords[0] == panCoords[2 * (nPoints - 1)] &&
@@ -810,8 +1049,10 @@ OGRGeometry* OGROSMDataSource::BuildGeometryCollection(OSMRelation* psRelation, 
                  aoMapWays.find( psRelation->pasMembers[i].nID ) != aoMapWays.end() )
         {
             const std::pair<int, void*>& oGeom = aoMapWays[ psRelation->pasMembers[i].nID ];
-            int nPoints = oGeom.first / (2 * sizeof(int));
-            int* panCoords = (int*) oGeom.second;
+
+            int* panCoords = (int*) panLonLatCache;
+            int nPoints = UncompressWay (oGeom.first, (GByte*) oGeom.second, panCoords, NULL, NULL);
+
             OGRLineString* poLS;
 
             poLS = new OGRLineString();
@@ -860,11 +1101,15 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
 
     int bMultiPolygon = FALSE;
     int bMultiLineString = FALSE;
+    int bInterestingTagFound = FALSE;
+    const char* pszTypeV = NULL;
     for(i = 0; i < psRelation->nTags; i ++ )
     {
-        if( strcmp(psRelation->pasTags[i].pszK, "type") == 0 )
+        const char* pszK = psRelation->pasTags[i].pszK;
+        if( strcmp(pszK, "type") == 0 )
         {
             const char* pszV = psRelation->pasTags[i].pszV;
+            pszTypeV = pszV;
             if( strcmp(pszV, "multipolygon") == 0 ||
                 strcmp(pszV, "boundary") == 0)
             {
@@ -875,8 +1120,9 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
             {
                 bMultiLineString = TRUE;
             }
-            break;
         }
+        else if ( strcmp(pszK, "created_by") != 0 )
+            bInterestingTagFound = TRUE;
     }
 
     /* Optimization : if we have an attribute filter, that does not require geometry, */
@@ -909,8 +1155,21 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
 
     OGRGeometry* poGeom;
 
+    unsigned int nExtraTags = 0;
+    OSMTag pasExtraTags[1 + MAX_NODES_PER_WAY];
+
     if( bMultiPolygon )
-        poGeom = BuildMultiPolygon(psRelation);
+    {
+        if( !bInterestingTagFound )
+        {
+            poGeom = BuildMultiPolygon(psRelation, &nExtraTags, pasExtraTags);
+            pasExtraTags[nExtraTags].pszK = "type";
+            pasExtraTags[nExtraTags].pszV = pszTypeV;
+            nExtraTags ++;
+        }
+        else
+            poGeom = BuildMultiPolygon(psRelation, NULL, NULL);
+    }
     else
         poGeom = BuildGeometryCollection(psRelation, bMultiLineString);
 
@@ -923,8 +1182,8 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
 
             papoLayers[iCurLayer]->SetFieldsFromTags( poFeature,
                                                       psRelation->nID,
-                                                      psRelation->nTags,
-                                                      psRelation->pasTags,
+                                                      nExtraTags ? nExtraTags : psRelation->nTags,
+                                                      nExtraTags ? pasExtraTags : psRelation->pasTags,
                                                       &psRelation->sInfo);
 
             bAttrFilterAlreadyEvaluated = FALSE;
@@ -1485,6 +1744,18 @@ int OGROSMDataSource::ParseConf()
             else if( strcmp(pszLine + strlen("report_all_nodes="), "yes") == 0 )
             {
                 bReportAllNodes = TRUE;
+            }
+        }
+
+        else if(strncmp(pszLine, "report_all_ways=", strlen("report_all_ways=")) == 0)
+        {
+            if( strcmp(pszLine + strlen("report_all_ways="), "no") == 0 )
+            {
+                bReportAllWays = FALSE;
+            }
+            else if( strcmp(pszLine + strlen("report_all_ways="), "yes") == 0 )
+            {
+                bReportAllWays = TRUE;
             }
         }
 
