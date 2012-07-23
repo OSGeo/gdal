@@ -1051,11 +1051,13 @@ int OGROSMDataSource::CreateTempDB()
 
     int rc;
     int bIsExisting = FALSE;
+    int bSuccess = FALSE;
 
 #ifdef HAVE_SQLITE_VFS
     const char* pszExistingTmpFile = CPLGetConfigOption("OSM_EXISTING_TMPFILE", NULL);
     if ( pszExistingTmpFile != NULL )
     {
+        bSuccess = TRUE;
         bIsExisting = TRUE;
         rc = sqlite3_open_v2( pszExistingTmpFile, &hDB,
                               SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX,
@@ -1063,31 +1065,67 @@ int OGROSMDataSource::CreateTempDB()
     }
     else
     {
-        bInMemoryTmpDB = TRUE;
         osTmpDBName.Printf("/vsimem/osm_importer/osm_temp_%p.sqlite", this);
-        pMyVFS = OGRSQLiteCreateVFS(NULL, this);
-        sqlite3_vfs_register(pMyVFS, 0);
-        rc = sqlite3_open_v2( osTmpDBName.c_str(), &hDB,
-                            SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX,
-                            pMyVFS->zName );
-    }
-#else
-    osTmpDBName = CPLGenerateTempFilename("osm_tmp");
-    rc = sqlite3_open( osTmpDBName.c_str(), &hDB );
 
-    /* On Unix filesystems, you can remove a file even if it */
-    /* opened */
-    if( rc == SQLITE_OK )
-    {
-        const char* pszVal = CPLGetConfigOption("OSM_UNLINK_TMPFILE", "YES");
-        if( EQUAL(pszVal, "YES") )
+        /* On 32 bit, the virtual memory space is scarce, so we need to reserve it right now */
+        /* Won't hurt on 64 bit either. */
+        VSILFILE* fp = VSIFOpenL(osTmpDBName, "wb");
+        if( fp )
         {
+            GIntBig nSize = (GIntBig)nMaxSizeForInMemoryDBInMB * 1024 * 1024;
+            if (nSize < 0 || (GIntBig)(size_t)nSize != nSize)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid value for OSM_MAX_TMPFILE_SIZE. Using 100 instead.");
+                nMaxSizeForInMemoryDBInMB = 100;
+                nSize = (GIntBig)nMaxSizeForInMemoryDBInMB * 1024 * 1024;
+            }
+
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            bMustUnlink = VSIUnlink( osTmpDBName ) != 0;
+            bSuccess = VSIFSeekL(fp, (vsi_l_offset) nSize, SEEK_SET) == 0;
             CPLPopErrorHandler();
+
+            if( bSuccess )
+                 VSIFTruncateL(fp, 0);
+
+            VSIFCloseL(fp);
+
+            if( !bSuccess )
+            {
+                CPLDebug("OSM", "Not enough memory for in-memory file. Using disk temporary file instead.");
+                VSIUnlink(osTmpDBName);
+            }
+        }
+
+        if( bSuccess )
+        {
+            bInMemoryTmpDB = TRUE;
+            pMyVFS = OGRSQLiteCreateVFS(NULL, this);
+            sqlite3_vfs_register(pMyVFS, 0);
+            rc = sqlite3_open_v2( osTmpDBName.c_str(), &hDB,
+                                SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX,
+                                pMyVFS->zName );
         }
     }
 #endif
+
+    if( !bSuccess )
+    {
+        osTmpDBName = CPLGenerateTempFilename("osm_tmp");
+        rc = sqlite3_open( osTmpDBName.c_str(), &hDB );
+
+        /* On Unix filesystems, you can remove a file even if it */
+        /* opened */
+        if( rc == SQLITE_OK )
+        {
+            const char* pszVal = CPLGetConfigOption("OSM_UNLINK_TMPFILE", "YES");
+            if( EQUAL(pszVal, "YES") )
+            {
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+                bMustUnlink = VSIUnlink( osTmpDBName ) != 0;
+                CPLPopErrorHandler();
+            }
+        }
+    }
 
     if( rc != SQLITE_OK )
     {
@@ -1635,10 +1673,28 @@ int OGROSMDataSource::ParseNextChunk()
             bStopParsing = TRUE;
             return FALSE;
         }
-        else if( bFeatureAdded )
-            break;
+        else
+        {
+            if( bInMemoryTmpDB )
+            {
+                if( !TransferToDiskIfNecesserary() )
+                    return FALSE;
+            }
+
+            if( bFeatureAdded )
+                break;
+        }
     }
 
+    return TRUE;
+}
+
+/************************************************************************/
+/*                    TransferToDiskIfNecesserary()                     */
+/************************************************************************/
+
+int OGROSMDataSource::TransferToDiskIfNecesserary()
+{
     if( bInMemoryTmpDB )
     {
         VSIStatBufL sStat;
