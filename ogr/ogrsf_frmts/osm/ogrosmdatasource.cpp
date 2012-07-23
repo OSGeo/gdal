@@ -108,6 +108,8 @@ OGROSMDataSource::OGROSMDataSource()
     bAttributeNameLaundering = TRUE;
 
     pabyWayBuffer = NULL;
+
+    nNextKeyIndex = 0;
 }
 
 /************************************************************************/
@@ -150,6 +152,20 @@ OGROSMDataSource::~OGROSMDataSource()
         if( !EQUAL(pszVal, "NOT_EVEN_AT_END") )
             VSIUnlink(osTmpDBName);
     }
+
+#ifdef OSM_DEBUG
+    FILE* f;
+    f = fopen("keys.txt", "wt");
+    std::map<CPLString, KeyDesc>::iterator oIter;
+    for( oIter = aoMapIndexedKeys.begin(); oIter != aoMapIndexedKeys.end(); ++oIter )
+    {
+        fprintf(f, "%08d idx=%d %s\n",
+                oIter->second.nOccurences,
+                oIter->second.nKeyIndex,
+                oIter->first.c_str());
+    }
+    fclose(f);
+#endif
 }
 
 /************************************************************************/
@@ -372,17 +388,11 @@ unsigned int OGROSMDataSource::LookupNodes( std::map< GIntBig, std::pair<int,int
 }
 
 /************************************************************************/
-/*                            WriteVarSInt()                            */
+/*                            WriteVarInt()                             */
 /************************************************************************/
 
-static void WriteVarSInt(int nSVal, GByte** ppabyData)
+static void WriteVarInt(int nVal, GByte** ppabyData)
 {
-    int nVal;
-    if( nSVal >= 0 )
-        nVal = nSVal << 1;
-    else
-        nVal = ((-1-nSVal) << 1) + 1;
-
     GByte* pabyData = *ppabyData;
     while(TRUE)
     {
@@ -397,6 +407,21 @@ static void WriteVarSInt(int nSVal, GByte** ppabyData)
         nVal >>= 7;
         pabyData ++;
     }
+}
+
+/************************************************************************/
+/*                            WriteVarSInt()                            */
+/************************************************************************/
+
+static void WriteVarSInt(int nSVal, GByte** ppabyData)
+{
+    int nVal;
+    if( nSVal >= 0 )
+        nVal = nSVal << 1;
+    else
+        nVal = ((-1-nSVal) << 1) + 1;
+
+    WriteVarInt(nVal, ppabyData);
 }
 /************************************************************************/
 /*                           WriteVarSInt64()                           */
@@ -430,36 +455,98 @@ static void WriteVarSInt64(GIntBig nSVal, GByte** ppabyData)
 /*                             CompressWay()                            */
 /************************************************************************/
 
-static int CompressWay (unsigned int nTags, OSMTag* pasTags,
-                        int nPoints, int* panLonLatPairs,
-                        GByte* pabyCompressedWay)
+int OGROSMDataSource::CompressWay ( unsigned int nTags, OSMTag* pasTags,
+                                    int nPoints, int* panLonLatPairs,
+                                    GByte* pabyCompressedWay )
 {
     GByte* pabyPtr = pabyCompressedWay;
     pabyPtr ++;
 
-    int nTagByteSize = 0;
     int nTagCount = 0;
     for(unsigned int iTag = 0; iTag < nTags; iTag++)
     {
-        int nLenK = strlen(pasTags[iTag].pszK) + 1;
-        int nLenV = strlen(pasTags[iTag].pszV) + 1;
-        if (nTagByteSize + nLenK + nLenV > MAX_SIZE_FOR_TAGS_IN_WAY)
+        const char* pszK = pasTags[iTag].pszK;
+        const char* pszV = pasTags[iTag].pszV;
+
+        if ((int)(pabyPtr - pabyCompressedWay) + 2 >= MAX_SIZE_FOR_TAGS_IN_WAY)
         {
             break;
         }
-        nTagByteSize += nLenK + nLenV;
 
-        if (strcmp(pasTags[iTag].pszK, "area") == 0)
+        if (strcmp(pszK, "area") == 0)
             continue;
-        if (strcmp(pasTags[iTag].pszK, "created_by") == 0)
+        if (strcmp(pszK, "created_by") == 0)
             continue;
-        if (strcmp(pasTags[iTag].pszK, "converted_by") == 0)
+        if (strcmp(pszK, "converted_by") == 0)
+            continue;
+        if (strcmp(pszK, "note") == 0)
+            continue;
+        if (strcmp(pszK, "todo") == 0)
+            continue;
+        if (strcmp(pszK, "fixme") == 0)
+            continue;
+        if (strcmp(pszK, "FIXME") == 0)
             continue;
 
-        memcpy(pabyPtr, pasTags[iTag].pszK, nLenK);
-        pabyPtr += nLenK;
-        memcpy(pabyPtr, pasTags[iTag].pszV, nLenV);
-        pabyPtr += nLenV;
+        std::map<CPLString, KeyDesc>::iterator oIterK;
+        oIterK = aoMapIndexedKeys.find(pszK);
+        if (oIterK == aoMapIndexedKeys.end())
+        {
+            KeyDesc sKD;
+            sKD.nKeyIndex = nNextKeyIndex ++;
+            sKD.nNextValueIndex = 1;
+            sKD.bHasWarnedManyValues = FALSE;
+            sKD.nOccurences = 0;
+            sKD.asValues.push_back("");
+            aoMapIndexedKeys[pszK] = sKD;
+            asKeys.push_back(pszK);
+            oIterK = aoMapIndexedKeys.find(pszK);
+        }
+        KeyDesc& sKD = oIterK->second;
+        sKD.nOccurences ++;
+        WriteVarInt(sKD.nKeyIndex, &pabyPtr);
+
+        /* to fit in 2 bytes, the theoretical limit would be 127 * 128 + 127 */
+        if( sKD.nNextValueIndex < 1024 )
+        {
+            if ((int)(pabyPtr - pabyCompressedWay) + 2 >= MAX_SIZE_FOR_TAGS_IN_WAY)
+            {
+                break;
+            }
+
+            std::map<CPLString, int>::iterator oIterV;
+            oIterV = sKD.anMapV.find(pszV);
+            if (oIterV == sKD.anMapV.end())
+            {
+                WriteVarInt(sKD.nNextValueIndex, &pabyPtr);
+                sKD.anMapV[pszV] = sKD.nNextValueIndex ++;
+                sKD.asValues.push_back(pszV);
+            }
+            else
+            {
+                WriteVarInt(oIterV->second, &pabyPtr);
+            }
+        }
+        else
+        {
+            int nLenV = strlen(pszV) + 1;
+            if ((int)(pabyPtr - pabyCompressedWay) + 2 + nLenV >= MAX_SIZE_FOR_TAGS_IN_WAY)
+            {
+                break;
+            }
+
+            if( !sKD.bHasWarnedManyValues )
+            {
+                sKD.bHasWarnedManyValues = TRUE;
+                CPLDebug("OSM", "More than %d different values for tag %s",
+                         1024, pszK);
+            }
+
+            WriteVarInt(0, &pabyPtr);
+
+            memcpy(pabyPtr, pszV, nLenV);
+            pabyPtr += nLenV;
+        }
 
         nTagCount ++;
         if( nTagCount == MAX_COUNT_FOR_TAGS_IN_WAY )
@@ -490,9 +577,9 @@ static int CompressWay (unsigned int nTags, OSMTag* pasTags,
 /*                             UncompressWay()                          */
 /************************************************************************/
 
-static int UncompressWay (int nBytes, GByte* pabyCompressedWay,
-                          int* panCoords,
-                          unsigned int* pnTags, OSMTag* pasTags)
+int OGROSMDataSource::UncompressWay( int nBytes, GByte* pabyCompressedWay,
+                                     int* panCoords,
+                                     unsigned int* pnTags, OSMTag* pasTags )
 {
     GByte* pabyPtr = pabyCompressedWay;
     unsigned int nTags = *pabyPtr;
@@ -503,20 +590,21 @@ static int UncompressWay (int nBytes, GByte* pabyCompressedWay,
 
     for(unsigned int iTag = 0; iTag < nTags; iTag++)
     {
-        GByte* pszK = pabyPtr;
-        while(*pabyPtr != '\0')
+        int nK = ReadVarInt32(&pabyPtr);
+        int nV = ReadVarInt32(&pabyPtr);
+        GByte* pszV = NULL;
+        if( nV == 0 )
+        {
+            pszV = pabyPtr;
+            while(*pabyPtr != '\0')
+                pabyPtr ++;
             pabyPtr ++;
-        pabyPtr ++;
-
-        GByte* pszV = pabyPtr;
-        while(*pabyPtr != '\0')
-            pabyPtr ++;
-        pabyPtr ++;
+        }
 
         if( pasTags )
         {
-            pasTags[iTag].pszK = (const char*) pszK;
-            pasTags[iTag].pszV = (const char*) pszV;
+            pasTags[iTag].pszK = asKeys[nK].c_str();
+            pasTags[iTag].pszV = nV ? aoMapIndexedKeys[pasTags[iTag].pszK].asValues[nV].c_str() : (const char*) pszV;
         }
     }
 
