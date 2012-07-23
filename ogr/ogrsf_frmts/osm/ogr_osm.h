@@ -147,6 +147,16 @@ class OGROSMLayer : public OGRLayer
 /*                        OGROSMDataSource                              */
 /************************************************************************/
 
+typedef struct
+{
+    int nKeyIndex;
+    int nNextValueIndex;
+    int bHasWarnedManyValues;
+    int nOccurences;
+    std::vector<CPLString> asValues;
+    std::map<CPLString, int> anMapV;
+} KeyDesc;
+
 class OGROSMDataSource : public OGRDataSource
 {
     friend class OGROSMLayer;
@@ -213,6 +223,17 @@ class OGROSMDataSource : public OGRDataSource
     int                 bAttributeNameLaundering;
 
     GByte              *pabyWayBuffer;
+
+    int                          nNextKeyIndex;
+    std::vector<CPLString>       asKeys;
+    std::map<CPLString, KeyDesc> aoMapIndexedKeys;
+
+    int                 CompressWay (unsigned int nTags, OSMTag* pasTags,
+                                     int nPoints, int* panLonLatPairs,
+                                     GByte* pabyCompressedWay);
+    int                 UncompressWay( int nBytes, GByte* pabyCompressedWay,
+                                       int* panCoords,
+                                       unsigned int* pnTags, OSMTag* pasTags );
 
     int                 ParseConf();
     int                 CreateTempDB();
