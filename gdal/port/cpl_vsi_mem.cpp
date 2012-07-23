@@ -213,7 +213,12 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
 
         pabyNewData = (GByte *) VSIRealloc(pabyData, (size_t)nNewAlloc);
         if( pabyNewData == NULL )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Cannot extend in-memory file to " CPL_FRMT_GUIB " bytes due to out-of-memory situation",
+                     nNewAlloc);
             return false;
+        }
             
         /* Clear the new allocated part of the buffer */
         memset(pabyNewData + nAllocLength, 0, 
