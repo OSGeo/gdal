@@ -117,8 +117,8 @@ chaitanya     Chaitanya Kumar CH
 rprinceley    Robin Princeley              ESRI branches.
               rprinceley at esri.com
 
-jorgearevalo  Jorge Arevalo		   WKT Raster driver.
-	      jorgearevalo at gis4free.org
+jorgearevalo  Jorge Arevalo		   PostGIS Raster driver.
+	      jorgearevalo at libregis.org
 
 martinl       Martin Landa                 OGR: VFK and GRASS drivers
               landa.martin at gmail.com
