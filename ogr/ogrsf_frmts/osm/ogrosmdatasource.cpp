@@ -183,7 +183,8 @@ OGROSMDataSource::~OGROSMDataSource()
 
     CPLFree(pszName);
 
-    CPLDebug("OSM", "Number of bytes read in file : " CPL_FRMT_GUIB, OSM_GetBytesRead(psParser));
+    if( psParser != NULL )
+        CPLDebug("OSM", "Number of bytes read in file : " CPL_FRMT_GUIB, OSM_GetBytesRead(psParser));
     OSM_Close(psParser);
 
     CPLFree(panLonLatCache);
@@ -382,7 +383,7 @@ int OGROSMDataSource::IndexPointCustom(OSMNode* psNode)
         return FALSE;
     }
 
-    int nBucket = psNode->nID / BUCKET_SIZE;
+    int nBucket = (int)(psNode->nID / BUCKET_SIZE);
     int nOffInBucket = psNode->nID % BUCKET_SIZE;
     int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
     int nOffInBucketReducedRemainer = nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
@@ -620,7 +621,7 @@ void OGROSMDataSource::LookupNodesCustom( )
     {
         GIntBig id = panUnsortedReqIds[i];
 
-        int nBucket = id / BUCKET_SIZE;
+        int nBucket = (int)(id / BUCKET_SIZE);
         int nOffInBucket = id % BUCKET_SIZE;
         int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
         int nBitmapIndex = nOffInBucketReduced / 8;
@@ -652,7 +653,7 @@ void OGROSMDataSource::LookupNodesCustom( )
 #else
         GIntBig id = panReqIds[i];
 
-        int nBucket = id / BUCKET_SIZE;
+        int nBucket = (int)(id / BUCKET_SIZE);
         int nOffInBucket = id % BUCKET_SIZE;
         int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
         int nOffInBucketReducedRemainer = nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
