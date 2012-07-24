@@ -153,9 +153,34 @@ typedef struct
     int nNextValueIndex;
     int bHasWarnedManyValues;
     int nOccurences;
-    std::vector<CPLString> asValues;
+    std::vector<char*> asValues;
     std::map<CPLString, int> anMapV;
 } KeyDesc;
+
+typedef struct
+{
+    GIntBig             nOff;
+    GByte              *pabyBitmap;
+} Bucket;
+
+typedef struct
+{
+    int               nLon;
+    int               nLat;
+} LonLat;
+
+typedef struct
+{
+    GIntBig             nWayID;
+    unsigned int        nRefs;
+    GIntBig*            panNodeRefs; /* point to a sub-array of OGROSMDataSource.anReqIds */
+    unsigned int        nTags;
+    OSMTag*             pasTags; /*  point to a sub-array of OGROSMDataSource.pasAccumulatedTags */
+    int                 iCurLayer : 6;
+    int                 bAttrFilterAlreadyEvaluated : 1;
+    int                 bInterestingTag : 1;
+    OGRFeature         *poFeature;
+} WayFeaturePair;
 
 class OGROSMDataSource : public OGRDataSource
 {
@@ -185,8 +210,6 @@ class OGROSMDataSource : public OGRDataSource
     sqlite3_stmt       *hSelectNodeBetweenStmt;
     sqlite3_stmt      **pahSelectNodeStmt;
     sqlite3_stmt      **pahSelectWayStmt;
-
-    int                 nNodeSelectBetween, nNodeSelectIn;
 
     int                 nMaxSizeForInMemoryDBInMB;
     int                 bInMemoryTmpDB;
@@ -224,9 +247,40 @@ class OGROSMDataSource : public OGRDataSource
 
     GByte              *pabyWayBuffer;
 
+    int                 nWaysProcessed;
+    int                 nRelationsProcessed;
+
+    int                 bCustomIndexing;
+
+    unsigned int        nUnsortedReqIds;
+    GIntBig            *panUnsortedReqIds;
+
+    unsigned int        nReqIds;
+    GIntBig            *panReqIds;
+    LonLat             *pasLonLatArray;
+
+    OSMTag             *pasAccumulatedTags; /* points to content of pabyNonRedundantValues or aoMapIndexedKeys */
+    int                 nAccumulatedTags;
+    GByte              *pabyNonRedundantValues;
+    int                 nNonRedundantValuesLen;
+    WayFeaturePair     *pasWayFeaturePairs;
+    int                 nWayFeaturePairs;
+
     int                          nNextKeyIndex;
-    std::vector<CPLString>       asKeys;
+    std::vector<char*>           asKeys;
     std::map<CPLString, KeyDesc> aoMapIndexedKeys;
+
+    CPLString           osNodesFilename;
+    int                 bInMemoryNodesFile;
+    int                 bMustUnlinkNodesFile;
+    GIntBig             nNodesFileSize;
+    VSILFILE           *fpNodes;
+
+    GIntBig             nPrevNodeId;
+    int                 nBucketOld;
+    int                 nOffInBucketReducedOld;
+    GByte              *pabySector;
+    Bucket             *papsBuckets;
 
     int                 CompressWay (unsigned int nTags, OSMTag* pasTags,
                                      int nPoints, int* panLonLatPairs,
@@ -242,7 +296,9 @@ class OGROSMDataSource : public OGRDataSource
     int                 CreatePreparedStatements();
     void                CloseDB();
 
-    void                IndexPoint(OSMNode* psNode);
+    int                 IndexPoint(OSMNode* psNode);
+    int                 IndexPointSQLite(OSMNode* psNode);
+    int                 IndexPointCustom(OSMNode* psNode);
 
     void                IndexWay(GIntBig nWayID,
                                  unsigned int nTags, OSMTag* pasTags,
@@ -251,8 +307,13 @@ class OGROSMDataSource : public OGRDataSource
     int                 StartTransaction();
     int                 CommitTransaction();
 
-    unsigned int        LookupNodes( std::map< GIntBig, std::pair<int,int> >& aoMapNodes,
-                                     OSMWay* psWay );
+    int                 FindNode(GIntBig nID);
+    void                ProcessWaysBatch();
+
+    void                LookupNodes();
+    void                LookupNodesSQLite();
+    void                LookupNodesCustom();
+
     unsigned int        LookupWays( std::map< GIntBig, std::pair<int,void*> >& aoMapWays,
                                     OSMRelation* psRelation );
 
