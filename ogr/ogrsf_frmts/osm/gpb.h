@@ -37,12 +37,14 @@
 #define CHECK_OOB 1
 #endif
 
-#if 0
-static void error_occured()
+//#define DEBUG_GPB_ERRORS
+#ifdef DEBUG_GPB_ERRORS
+static void error_occured(int nLine)
 {
+    CPLError(CE_Failure, CPLE_AppDefined, "Parsing error occured at line %d", nLine);
 }
 
-#define GOTO_END_ERROR do { error_occured(); goto end_error; } while(0)
+#define GOTO_END_ERROR do { error_occured(__LINE__); goto end_error; } while(0)
 #else
 #define GOTO_END_ERROR goto end_error
 #endif

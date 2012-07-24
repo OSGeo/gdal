@@ -41,6 +41,11 @@ it will reside in RAM. If it grows above, it will be written in a temporary file
 file will be written in the current directory, unless you define the CPL_TMPDIR configuration option. The
 100 MB default threshold can be adjusted with the OSM_MAX_TMPFILE_SIZE configuration option (value in MB).<p>
 
+For indexation of nodes, a custom mechanism not relying on SQLite is used by default (indexation of ways
+to solve relations is still relying on SQLite). It can speed up operations significantly. However, in some
+situations (non increasing node ids, or node ids not in expected range), it might not work and the driver will
+output an error message suggesting to relaunch by defining the OSM_USE_CUSTOM_INDEXING configuration option to NO.<p>
+
 <h3>Interleaved reading</h3>
 
 Due to the nature of OSM files and how the driver works internally, the default reading mode might not work
