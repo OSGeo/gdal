@@ -138,7 +138,7 @@ def UseExceptions(*args):
 def DontUseExceptions(*args):
   """DontUseExceptions()"""
   return _ogr.DontUseExceptions(*args)
-
+import osr
 class Driver(_object):
     """Proxy of C++ OGRDriverShadow class"""
     __swig_setmethods__ = {}
@@ -1880,6 +1880,14 @@ class Layer(_object):
     def __len__(self):
         """Returns the number of features in the layer"""
         return self.GetFeatureCount()
+
+
+
+    def __nonzero__(self):
+        return True
+
+
+    __bool__ = __nonzero__
 
     def __getitem__(self, value):
         """Support list and slice -like access to the layer.
