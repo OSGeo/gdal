@@ -124,6 +124,14 @@ ds[0:4] would return a list of the first four layers."""
         """Returns the number of features in the layer"""
         return self.GetFeatureCount()
 
+    # To avoid __len__ being called when testing boolean value
+    # which can have side effects (#4758)
+    def __nonzero__(self):
+        return True
+
+    # For Python 3 compat
+    __bool__ = __nonzero__
+
     def __getitem__(self, value):
         """Support list and slice -like access to the layer.
 layer[0] would return the first feature on the layer.
