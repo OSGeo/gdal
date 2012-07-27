@@ -520,14 +520,14 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     if( nBands != 3
-#if WEBP_ENCODER_ABI_VERSION >= 0x0003
+#if WEBP_ENCODER_ABI_VERSION >= 0x0100
         && nBands != 4
 #endif
         )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "WEBP driver doesn't support %d bands. Must be 3 (RGB) "
-#if WEBP_ENCODER_ABI_VERSION >= 0x0003
+#if WEBP_ENCODER_ABI_VERSION >= 0x0100
                   "or 4 (RGBA) "
 #endif
                   "bands.",
@@ -639,10 +639,10 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 #if WEBP_ENCODER_ABI_VERSION >= 0x0002
     FETCH_AND_SET_OPTION_INT("PARTITION_LIMIT", partition_limit, 0, 100);
 #endif
-#if WEBP_ENCODER_ABI_VERSION >= 0x0003
+#if WEBP_ENCODER_ABI_VERSION >= 0x0100
     sConfig.lossless = CSLFetchBoolean(papszOptions, "LOSSLESS", FALSE);
     if (sConfig.lossless)
-        sPicture.use_argb_input = 1;
+        sPicture.use_argb = 1;
 #endif
 
     if (!WebPValidateConfig(&sConfig))
@@ -690,7 +690,7 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     sPicture.height = nYSize;
     sPicture.writer = WEBPDatasetWriter;
     sPicture.custom_ptr = &sUserData;
-#if WEBP_ENCODER_ABI_VERSION >= 0x0003
+#if WEBP_ENCODER_ABI_VERSION >= 0x0100
     sPicture.progress_hook = WEBPDatasetProgressHook;
 #endif
     if (!WebPPictureAlloc(&sPicture))
@@ -714,7 +714,7 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Import and write to file                                        */
 /* -------------------------------------------------------------------- */
-#if WEBP_ENCODER_ABI_VERSION >= 0x0003
+#if WEBP_ENCODER_ABI_VERSION >= 0x0100
     if (eErr == CE_None && nBands == 4)
     {
         if (!WebPPictureImportRGBA(&sPicture, pabyBuffer, nBands * nXSize))
@@ -735,7 +735,7 @@ WEBPDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if (eErr == CE_None && !WebPEncode(&sConfig, &sPicture))
     {
         const char* pszErrorMsg = NULL;
-#if WEBP_ENCODER_ABI_VERSION >= 0x0003
+#if WEBP_ENCODER_ABI_VERSION >= 0x0100
         switch(sPicture.error_code)
         {
             case VP8_ENC_ERROR_OUT_OF_MEMORY: pszErrorMsg = "Out of memory"; break;
@@ -819,7 +819,7 @@ void GDALRegister_WEBP()
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>\n"
 "   <Option name='QUALITY' type='float' description='good=100, bad=0' default='75'/>\n"
-#if WEBP_ENCODER_ABI_VERSION >= 0x0003
+#if WEBP_ENCODER_ABI_VERSION >= 0x0100
 "   <Option name='LOSSLESS' type='boolean' description='Whether lossless compression should be used' default='FALSE'/>\n"
 #endif
 "   <Option name='PRESET' type='string-select' description='kind of image' default='DEFAULT'>\n"
