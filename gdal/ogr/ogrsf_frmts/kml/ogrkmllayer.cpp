@@ -459,7 +459,19 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
             while( *pszRaw == ' ' )
                 pszRaw++;
 
-            char *pszEscaped = OGRGetXML_UTF8_EscapedString( pszRaw );
+            char *pszEscaped;
+            if (poFeatureDefn_->GetFieldDefn(iField)->GetType() == OFTReal)
+            {
+                pszEscaped = CPLStrdup( pszRaw );
+                /* Use point as decimal separator */
+                char* pszComma = strchr(pszEscaped, ',');
+                if (pszComma)
+                    *pszComma = '.';
+            }
+            else
+            {
+                pszEscaped = OGRGetXML_UTF8_EscapedString( pszRaw );
+            }
 
             VSIFPrintfL( fp, "\t\t<SimpleData name=\"%s\">%s</SimpleData>\n", 
                         poField->GetNameRef(), pszEscaped);
