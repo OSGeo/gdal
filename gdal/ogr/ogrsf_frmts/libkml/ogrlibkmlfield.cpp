@@ -638,16 +638,6 @@ void field2kml (
                 break;
             }
 
-        case OFTStringList:    //     Array of strings
-        case OFTBinary:        //     Raw Binary data
-
-            /***** other *****/
-
-            poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
-            poKmlSimpleData->set_name ( name );
-            poKmlSimpleData->set_text ( poOgrFeat->GetFieldAsString ( i ) );
-
-            break;
         case OFTInteger:       //    Simple 32bit integer
 
             /***** extrude *****/
@@ -698,18 +688,27 @@ void field2kml (
             poKmlSimpleData->set_text ( poOgrFeat->GetFieldAsString ( i ) );
 
             break;
-        case OFTIntegerList:   //    List of 32bit integers
+
         case OFTReal:          //   Double Precision floating point
-
-            /***** other *****/
-
+        {
             poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
             poKmlSimpleData->set_name ( name );
-            poKmlSimpleData->set_text ( poOgrFeat->GetFieldAsString ( i ) );
+
+            char* pszStr = CPLStrdup( poOgrFeat->GetFieldAsString ( i ) );
+            /* Use point as decimal separator */
+            char* pszComma = strchr(pszStr, ',');
+            if (pszComma)
+                *pszComma = '.';
+            poKmlSimpleData->set_text ( pszStr );
+            CPLFree(pszStr);
 
             break;
-        case OFTRealList:      //   List of doubles
+        }
 
+        case OFTStringList:    //     Array of strings
+        case OFTIntegerList:   //    List of 32bit integers
+        case OFTRealList:   //    List of doubles
+        case OFTBinary:        //     Raw Binary data
         case OFTWideStringList:    //     deprecated
         default:
 
