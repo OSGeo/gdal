@@ -1054,16 +1054,19 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
         if( iField > 0 )
             VSIFPrintfL( fpCSV, "%c", chDelimiter );
         
-        pszEscaped = 
-            CPLEscapeString( poNewFeature->GetFieldAsString(iField),
-                            -1, CPLES_CSV );
-
         if (poFeatureDefn->GetFieldDefn(iField)->GetType() == OFTReal)
         {
+            pszEscaped = CPLStrdup(poNewFeature->GetFieldAsString(iField));
             /* Use point as decimal separator */
             char* pszComma = strchr(pszEscaped, ',');
             if (pszComma)
                 *pszComma = '.';
+        }
+        else
+        {
+            pszEscaped =
+                CPLEscapeString( poNewFeature->GetFieldAsString(iField),
+                                -1, CPLES_CSV );
         }
 
         VSIFWriteL( pszEscaped, 1, strlen(pszEscaped), fpCSV );
