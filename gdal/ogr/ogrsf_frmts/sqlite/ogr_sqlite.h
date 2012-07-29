@@ -186,6 +186,7 @@ class OGRSQLiteLayer : public OGRLayer
     int                 iNextShapeId;
 
     sqlite3_stmt        *hStmt;
+    int                  bDoStep;
 
     OGRSQLiteDataSource *poDS;
 
@@ -274,7 +275,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     void                BuildWhere(void);
 
-    OGRErr              ResetStatement();
+    virtual OGRErr      ResetStatement();
 
     OGRErr              AddColumnAncientMethod( OGRFieldDefn& oField);
 
@@ -377,7 +378,7 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
 
     void                BuildWhere(void);
 
-    OGRErr              ResetStatement();
+    virtual OGRErr      ResetStatement();
 
     CPLErr              EstablishFeatureDefn();
 
@@ -422,7 +423,7 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer
     CPLString           osSQLBase;
     CPLString           osSQLCurrent;
 
-    OGRErr              ResetStatement();
+    virtual OGRErr      ResetStatement();
 
     OGRSQLiteLayer     *GetBaseLayer(size_t& i);
     void                RebuildSQL();
@@ -430,7 +431,8 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer
   public:
                         OGRSQLiteSelectLayer( OGRSQLiteDataSource *, 
                                               CPLString osSQL,
-                                              sqlite3_stmt * );
+                                              sqlite3_stmt *,
+                                              int bUseStatementForGetNextFeature );
                         ~OGRSQLiteSelectLayer();
 
     virtual void        SetSpatialFilter( OGRGeometry * );
