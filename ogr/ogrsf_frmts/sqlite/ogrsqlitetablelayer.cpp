@@ -58,6 +58,7 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
     pszEscapedTableName = NULL;
 
     bHasCheckedSpatialIndexTable = FALSE;
+    bDeferedSpatialIndexCreation = FALSE;
 
     hInsertStmt = NULL;
 
@@ -76,6 +77,10 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
 {
     ClearStatement();
     ClearInsertStmt();
+    if( bDeferedSpatialIndexCreation )
+    {
+        CreateSpatialIndex();
+    }
     CPLFree(pszTableName);
     CPLFree(pszEscapedTableName);
 }
@@ -141,7 +146,6 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
     this->bHasM = bHasM;
     this->bSpatialiteReadOnly = bSpatialiteReadOnly;
     this->bSpatialiteLoaded = bSpatialiteLoaded;
-    this->iSpatialiteVersion = iSpatialiteVersion;
     this->bIsVirtualShape = bIsVirtualShapeIn;
     this->pszTableName = CPLStrdup(pszTableName);
     this->eGeomType = eGeomType;
@@ -419,7 +423,7 @@ void OGRSQLiteTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
 int OGRSQLiteTableLayer::CheckSpatialIndexTable()
 {
-    if (bHasSpatialIndex && !bHasCheckedSpatialIndexTable)
+    if (HasSpatialIndex() && !bHasCheckedSpatialIndexTable)
     {
         bHasCheckedSpatialIndexTable = TRUE;
         char **papszResult;
@@ -538,10 +542,10 @@ int OGRSQLiteTableLayer::TestCapability( const char * pszCap )
 {
     if (EQUAL(pszCap,OLCFastFeatureCount))
         return m_poFilterGeom == NULL || osGeomColumn.size() == 0 ||
-               bHasSpatialIndex;
+               HasSpatialIndex();
 
     else if (EQUAL(pszCap,OLCFastSpatialFilter))
-        return bHasSpatialIndex;
+        return HasSpatialIndex();
 
     else if( EQUAL(pszCap,OLCRandomRead) )
         return pszFIDColumn != NULL;
@@ -1921,4 +1925,48 @@ OGRErr OGRSQLiteTableLayer::DeleteFeature( long nFID )
     }
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         CreateSpatialIndex()                         */
+/************************************************************************/
+
+int OGRSQLiteTableLayer::CreateSpatialIndex()
+{
+    CPLString osCommand;
+
+    osCommand.Printf("SELECT CreateSpatialIndex('%s', '%s')",
+                     pszEscapedTableName, osGeomColumn.c_str());
+
+    char* pszErrMsg = NULL;
+    sqlite3 *hDB = poDS->GetDB();
+#ifdef DEBUG
+    CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
+#endif
+    int rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                "Unable to create spatial index:\n%s", pszErrMsg );
+        sqlite3_free( pszErrMsg );
+        return FALSE;
+    }
+
+    bHasSpatialIndex = TRUE;
+    return TRUE;
+}
+
+/************************************************************************/
+/*                           HasSpatialIndex()                          */
+/************************************************************************/
+
+int OGRSQLiteTableLayer::HasSpatialIndex()
+{
+    if( bDeferedSpatialIndexCreation )
+    {
+        bDeferedSpatialIndexCreation = FALSE;
+        bHasSpatialIndex = CreateSpatialIndex();
+    }
+
+    return bHasSpatialIndex;
 }
