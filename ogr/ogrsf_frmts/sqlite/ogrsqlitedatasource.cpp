@@ -1176,7 +1176,8 @@ static const char* apszSpatialiteFuncs[] =
     "DiscardGeometryColumn",
     "CreateSpatialIndex",
     "CreateMbrCache",
-    "DisableSpatialIndex"
+    "DisableSpatialIndex",
+    "UpdateLayerStatistics"
 };
 
 OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
@@ -1228,6 +1229,7 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
     /* This will speed-up layer creation */
     /* ORDER BY are costly to evaluate and are not necessary to establish */
     /* the layer definition. */
+    int bUseStatementForGetNextFeature = TRUE;
     if( osSQLCommand.ifind("SELECT ") == 0 &&
         osSQLCommand.ifind(" UNION ") == std::string::npos &&
         osSQLCommand.ifind(" INTERSECT ") == std::string::npos &&
@@ -1235,7 +1237,10 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         size_t nOrderByPos = osSQLCommand.ifind(" ORDER BY ");
         if( nOrderByPos != std::string::npos )
+        {
             osSQLCommand.resize(nOrderByPos);
+            bUseStatementForGetNextFeature = FALSE;
+        }
     }
 
     rc = sqlite3_prepare( GetDB(), osSQLCommand.c_str(), osSQLCommand.size(),
@@ -1327,7 +1332,7 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
     OGRSQLiteSelectLayer *poLayer = NULL;
         
     CPLString osSQL = pszSQLCommand;
-    poLayer = new OGRSQLiteSelectLayer( this, osSQL, hSQLStmt );
+    poLayer = new OGRSQLiteSelectLayer( this, osSQL, hSQLStmt, bUseStatementForGetNextFeature );
 
     if( poSpatialFilter != NULL )
         poLayer->SetSpatialFilter( poSpatialFilter );
