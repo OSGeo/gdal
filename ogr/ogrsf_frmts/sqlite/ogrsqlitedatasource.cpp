@@ -1359,6 +1359,8 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
     char                *pszLayerName;
     int                  bForce2D = FALSE;
     const char          *pszGeomFormat;
+    int                  bImmediateSpatialIndexCreation = FALSE;
+    int                  bDeferedSpatialIndexCreation = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Verify we are in update mode.                                   */
@@ -1645,19 +1647,13 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
         if ( 0 )
 #endif
         {
-            if( pszSI == NULL || CSLTestBoolean(pszSI) )
+            if( pszSI != NULL && EQUAL(pszSI, "IMMEDIATE") )
             {
-                osCommand.Printf("SELECT CreateSpatialIndex('%s', '%s')",
-                                 pszEscapedLayerName, pszGeomCol);
-
-                rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
-                if( rc != SQLITE_OK )
-                {
-                    CPLError( CE_Failure, CPLE_AppDefined, 
-                            "Unable to create spatial index:\n%s", pszErrMsg );
-                    sqlite3_free( pszErrMsg );
-                    return FALSE;
-                }
+                bImmediateSpatialIndexCreation = TRUE;
+            }
+            else if( pszSI == NULL || CSLTestBoolean(pszSI) )
+            {
+                bDeferedSpatialIndexCreation = TRUE;
             }
         }
     }
@@ -1669,8 +1665,12 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 
     poLayer = new OGRSQLiteTableLayer( this );
 
+    int iSpatialiteVersion = OGRSQLiteGetSpatialiteVersionNumber();
+
     if ( poLayer->Initialize( pszLayerName, pszGeomCol, eType, pszGeomFormat,
-                         FetchSRS(nSRSId), nSRSId ) != CE_None )
+                              FetchSRS(nSRSId), nSRSId, FALSE, FALSE,
+                              FALSE, bSpatialiteLoaded,
+                              iSpatialiteVersion ) != CE_None )
     {
         delete poLayer;
         CPLFree( pszLayerName );
@@ -1681,6 +1681,10 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
     if ( CSLFetchBoolean(papszOptions,"COMPRESS_GEOM",FALSE) )
         poLayer->SetUseCompressGeom( TRUE );
     poLayer->SetSpatialite2D ( bForce2D );
+    if( bImmediateSpatialIndexCreation )
+        poLayer->CreateSpatialIndex();
+    else if( bDeferedSpatialIndexCreation )
+        poLayer->SetDeferedSpatialIndexCreation( TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
