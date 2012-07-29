@@ -200,7 +200,6 @@ class OGRSQLiteLayer : public OGRLayer
     int                 bHasM;
     int                 bSpatialiteReadOnly;
     int                 bSpatialiteLoaded;
-    int                 iSpatialiteVersion;
 
     int                 bIsVirtualShape;
 
@@ -243,7 +242,7 @@ class OGRSQLiteLayer : public OGRLayer
 
     virtual int          IsTableLayer() { return FALSE; }
 
-    int                  HasSpatialIndex() const { return bHasSpatialIndex; }
+    virtual int          HasSpatialIndex() { return bHasSpatialIndex; }
 
     virtual CPLString     GetSpatialWhere(OGRGeometry* poFilterGeom) { return ""; }
 };
@@ -260,6 +259,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     CPLString           osWHERE;
     CPLString           osQuery;
     int                 bHasCheckedSpatialIndexTable;
+    int                 bDeferedSpatialIndexCreation;
 
     OGRwkbGeometryType  eGeomType;
 
@@ -345,8 +345,13 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                 { bSpatialite2D = bFlag; }
     void                SetUseCompressGeom( int bFlag )
                                 { bUseComprGeom = bFlag; }
+    void                SetDeferedSpatialIndexCreation( int bFlag )
+                                { bDeferedSpatialIndexCreation = bFlag; }
+    int                 CreateSpatialIndex();
 
     virtual int          IsTableLayer() { return TRUE; }
+
+    virtual int          HasSpatialIndex();
 
     virtual CPLString    GetSpatialWhere(OGRGeometry* poFilterGeom);
 };

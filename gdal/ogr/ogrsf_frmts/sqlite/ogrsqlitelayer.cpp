@@ -70,7 +70,6 @@ OGRSQLiteLayer::OGRSQLiteLayer()
     bHasM = FALSE;
     bSpatialiteReadOnly = FALSE;
     bSpatialiteLoaded = FALSE;
-    iSpatialiteVersion = -1;
 
     bIsVirtualShape = FALSE;
 
