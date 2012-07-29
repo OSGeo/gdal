@@ -57,6 +57,7 @@ OGRSQLiteLayer::OGRSQLiteLayer()
     eGeomFormat = OSGF_None;
 
     hStmt = NULL;
+    bDoStep = TRUE;
 
     iNextShapeId = 0;
 
@@ -322,25 +323,30 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we are marked to restart then do so, and fetch a record.     */
+/*      Fetch a record (unless otherwise instructed)                    */
 /* -------------------------------------------------------------------- */
-    int rc;
-
-    rc = sqlite3_step( hStmt );
-    if( rc != SQLITE_ROW )
+    if( bDoStep )
     {
-        if ( rc != SQLITE_DONE )
+        int rc;
+
+        rc = sqlite3_step( hStmt );
+        if( rc != SQLITE_ROW )
         {
-            sqlite3_reset(hStmt);
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                    "In GetNextRawFeature(): sqlite3_step() : %s", 
-                    sqlite3_errmsg(poDS->GetDB()) );
+            if ( rc != SQLITE_DONE )
+            {
+                sqlite3_reset(hStmt);
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "In GetNextRawFeature(): sqlite3_step() : %s",
+                        sqlite3_errmsg(poDS->GetDB()) );
+            }
+
+            ClearStatement();
+
+            return NULL;
         }
-
-        ClearStatement();
-
-        return NULL;
     }
+    else
+        bDoStep = TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Create a feature from the current result.                       */

@@ -38,7 +38,8 @@ CPL_CVSID("$Id$");
 
 OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
                                             CPLString osSQLIn,
-                                            sqlite3_stmt *hStmtIn )
+                                            sqlite3_stmt *hStmtIn,
+                                            int bUseStatementForGetNextFeature )
 
 {
     poDS = poDSIn;
@@ -49,7 +50,13 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
 
     BuildFeatureDefn( "SELECT", hStmtIn );
 
-    sqlite3_finalize( hStmtIn );
+    if( bUseStatementForGetNextFeature )
+    {
+        hStmt = hStmtIn;
+        bDoStep = FALSE;
+    }
+    else
+        sqlite3_finalize( hStmtIn );
 
     osSQLBase = osSQLIn;
     osSQLCurrent = osSQLIn;
@@ -76,6 +83,7 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
     ClearStatement();
 
     iNextShapeId = 0;
+    bDoStep = TRUE;
 
 #ifdef DEBUG
     CPLDebug( "OGR_SQLITE", "prepare(%s)", osSQLCurrent.c_str() );
