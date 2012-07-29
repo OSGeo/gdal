@@ -684,7 +684,7 @@ void OGROSMDataSource::LookupNodesCustom( )
 /*                            WriteVarInt()                             */
 /************************************************************************/
 
-static void WriteVarInt(int nVal, GByte** ppabyData)
+static void WriteVarInt(unsigned int nVal, GByte** ppabyData)
 {
     GByte* pabyData = *ppabyData;
     while(TRUE)
@@ -702,20 +702,6 @@ static void WriteVarInt(int nVal, GByte** ppabyData)
     }
 }
 
-/************************************************************************/
-/*                            WriteVarSInt()                            */
-/************************************************************************/
-
-static void WriteVarSInt(int nSVal, GByte** ppabyData)
-{
-    int nVal;
-    if( nSVal >= 0 )
-        nVal = nSVal << 1;
-    else
-        nVal = ((-1-nSVal) << 1) + 1;
-
-    WriteVarInt(nVal, ppabyData);
-}
 /************************************************************************/
 /*                           WriteVarSInt64()                           */
 /************************************************************************/
@@ -818,13 +804,12 @@ int OGROSMDataSource::CompressWay ( unsigned int nTags, OSMTag* pasTags,
     for(int i=1;i<nPoints;i++)
     {
         GIntBig nDiff64;
-        int nDiff;
 
         nDiff64 = (GIntBig)panLonLatPairs[2 * i + 0] - (GIntBig)panLonLatPairs[2 * (i-1) + 0];
         WriteVarSInt64(nDiff64, &pabyPtr);
 
-        nDiff = panLonLatPairs[2 * i + 1] - panLonLatPairs[2 * (i-1) + 1];
-        WriteVarSInt(nDiff, &pabyPtr);
+        nDiff64 = panLonLatPairs[2 * i + 1] - panLonLatPairs[2 * (i-1) + 1];
+        WriteVarSInt64(nDiff64, &pabyPtr);
     }
     int nBufferSize = (int)(pabyPtr - pabyCompressedWay);
     return nBufferSize;
@@ -875,9 +860,9 @@ int OGROSMDataSource::UncompressWay( int nBytes, GByte* pabyCompressedWay,
         GIntBig nDiff64 = ((nSVal64 & 1) == 0) ? (((GUIntBig)nSVal64) >> 1) : -(((GUIntBig)nSVal64) >> 1)-1;
         panCoords[2 * nPoints + 0] = panCoords[2 * (nPoints - 1) + 0] + nDiff64;
 
-        int nSVal = ReadVarInt32(&pabyPtr);
-        int nDiff = ((nSVal & 1) == 0) ? (((unsigned int)nSVal) >> 1) : -(((unsigned int)nSVal) >> 1)-1;
-        panCoords[2 * nPoints + 1] = panCoords[2 * (nPoints - 1) + 1] + nDiff;
+        nSVal64 = ReadVarInt64(&pabyPtr);
+        nDiff64 = ((nSVal64 & 1) == 0) ? (((GUIntBig)nSVal64) >> 1) : -(((GUIntBig)nSVal64) >> 1)-1;
+        panCoords[2 * nPoints + 1] = panCoords[2 * (nPoints - 1) + 1] + nDiff64;
 
         nPoints ++;
     } while (pabyPtr < pabyCompressedWay + nBytes);
