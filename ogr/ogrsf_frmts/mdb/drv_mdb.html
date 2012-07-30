@@ -30,13 +30,14 @@
 
   <pre>./configure --with-java=yes --with-mdb=yes</pre>
 
-  It is possible to add the <i>--with-jvm-lib-add-rpath</i> option to embed the path to the libjvm.so in the GDAL library.<p>
-
   On others Linux flavours, you may need to specify :
 
   <pre>./configure --with-java=/path/to/jdk/root/path --with-jvm-lib=/path/to/libjvm/directory --with-mdb=yes</pre>
 
-  where /path/to/libjvm/directory is for example /usr/lib/jvm/java-6-openjdk/jre/lib/amd64
+  where /path/to/libjvm/directory is for example /usr/lib/jvm/java-6-openjdk/jre/lib/amd64/server <p>
+
+  It is possible to add the <i>--with-jvm-lib-add-rpath</i> option (no value or "yes") to embed the path
+  to the libjvm.so in the GDAL library.<p>
 
   <h2>How to run the MDB driver (on Linux)</h2>
 
