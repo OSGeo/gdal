@@ -55,10 +55,13 @@
 #define WAY_BUFFER_SIZE (1 + MAX_NODES_PER_WAY * 2 * 5 + MAX_SIZE_FOR_TAGS_IN_WAY)
 
 /* 65536 * 65536 so we can adress node ids between 0 and 4.2 billion */
-#define BUCKET_SIZE         65536
+#define NODE_PER_BUCKET     65536
+ /* Maximum count of buckets */
 #define BUCKET_COUNT        65536
 
-/* Minimum size of data written on disk */
+#define VALID_ID_FOR_CUSTOM_INDEXING(_id) ((_id) >= 0 && (_id) <= (GIntBig)NODE_PER_BUCKET * BUCKET_COUNT)
+
+/* Minimum size of data written on disk, in *uncompressed* case */
 #define SECTOR_SIZE         512
 /* Which represents, 64 nodes */
 /* #define NODE_PER_SECTOR     SECTOR_SIZE / (2 * 4) */
@@ -67,8 +70,14 @@
 
 /* Per bucket, we keep track of the absence/presence of sectors */
 /* only, to reduce memory usage */
-/* #define BUCKET_BITMAP_SIZE  BUCKET_SIZE / (8 * NODE_PER_SECTOR) */
+/* #define BUCKET_BITMAP_SIZE  NODE_PER_BUCKET / (8 * NODE_PER_SECTOR) */
 #define BUCKET_BITMAP_SIZE  128
+
+/* #define BUCKET_SECTOR_SIZE_ARRAY_SIZE  NODE_PER_BUCKET / NODE_PER_SECTOR */
+/* Per bucket, we keep track of the real size of the sector. Each sector */
+/* size is encoded in a single byte, whose value is : */
+/* (sector_size in bytes - 8 ) / 2, minus 8. 252 means uncompressed */
+#define BUCKET_SECTOR_SIZE_ARRAY_SIZE   1024
 
 /* Max number of features that are accumulated in pasWayFeaturePairs */
 #define MAX_DELAYED_FEATURES        75000
@@ -85,6 +94,8 @@
 #ifdef DEBUG_MEM_USAGE
 size_t GetMaxTotalAllocs();
 #endif
+
+static void WriteVarSInt64(GIntBig nSVal, GByte** ppabyData);
 
 CPL_CVSID("$Id$");
 
@@ -121,11 +132,10 @@ OGROSMDataSource::OGROSMDataSource()
     bReportAllWays = FALSE;
     bFeatureAdded = FALSE;
 
-    /* The following 4 config options are only usefull for debugging */
-    bIndexPoints = CSLTestBoolean(CPLGetConfigOption("OSM_INDEX_POINTS", "YES"));
-    bUsePointsIndex = CSLTestBoolean(CPLGetConfigOption("OSM_USE_POINTS_INDEX", "YES"));
-    bIndexWays = CSLTestBoolean(CPLGetConfigOption("OSM_INDEX_WAYS", "YES"));
-    bUseWaysIndex = CSLTestBoolean(CPLGetConfigOption("OSM_USE_WAYS_INDEX", "YES"));
+    bIndexPoints = TRUE;
+    bUsePointsIndex = TRUE;
+    bIndexWays = TRUE;
+    bUseWaysIndex = TRUE;
 
     poResultSetLayer = NULL;
     bIndexPointsBackup = FALSE;
@@ -142,7 +152,8 @@ OGROSMDataSource::OGROSMDataSource()
     nWaysProcessed = 0;
     nRelationsProcessed = 0;
 
-    bCustomIndexing = CSLTestBoolean(CPLGetConfigOption("OSM_USE_CUSTOM_INDEXING", "YES"));
+    bCustomIndexing = TRUE;
+    bCompressNodes = FALSE;
 
     bInMemoryNodesFile = FALSE;
     bMustUnlinkNodesFile = TRUE;
@@ -259,7 +270,10 @@ OGROSMDataSource::~OGROSMDataSource()
     {
         for( i = 0; i < BUCKET_COUNT; i++)
         {
-            CPLFree(papsBuckets[i].pabyBitmap);
+            if( bCompressNodes )
+                CPLFree(papsBuckets[i].u.panSectorSize);
+            else
+                CPLFree(papsBuckets[i].u.pabyBitmap);
         }
         CPLFree(papsBuckets);
     }
@@ -344,6 +358,10 @@ int OGROSMDataSource::IndexPoint(OSMNode* psNode)
         return IndexPointSQLite(psNode);
 }
 
+/************************************************************************/
+/*                          IndexPointSQLite()                          */
+/************************************************************************/
+
 int OGROSMDataSource::IndexPointSQLite(OSMNode* psNode)
 {
     sqlite3_bind_int64( hInsertNodeStmt, 1, psNode->nID );
@@ -365,6 +383,110 @@ int OGROSMDataSource::IndexPointSQLite(OSMNode* psNode)
     return TRUE;
 }
 
+/************************************************************************/
+/*                           FlushCurrentSector()                       */
+/************************************************************************/
+
+int OGROSMDataSource::FlushCurrentSector()
+{
+#ifndef FAKE_LOOKUP_NODES
+    if( bCompressNodes )
+        return FlushCurrentSectorCompressedCase();
+    else
+        return FlushCurrentSectorNonCompressedCase();
+#else
+    return TRUE;
+#endif
+}
+
+/************************************************************************/
+/*                     FlushCurrentSectorCompressedCase()               */
+/************************************************************************/
+
+int OGROSMDataSource::FlushCurrentSectorCompressedCase()
+{
+    GByte abyOutBuffer[2 * SECTOR_SIZE];
+    GByte* pabyOut = abyOutBuffer;
+    int* panSector = (int*)pabySector;
+    int nLastLon = 0, nLastLat = 0;
+    int bLastValid = FALSE;
+    int i;
+
+    CPLAssert((NODE_PER_SECTOR % 8) == 0);
+    memset(abyOutBuffer, 0, NODE_PER_SECTOR / 8);
+    pabyOut += NODE_PER_SECTOR / 8;
+    for(i = 0; i < NODE_PER_SECTOR; i++)
+    {
+        if( panSector[2 * i + 0] || panSector[2 * i + 1] )
+        {
+            abyOutBuffer[i >> 3] |= (1 << (i % 8));
+            if( bLastValid )
+            {
+                GIntBig nDiff64Lon = (GIntBig)panSector[2 * i + 0] - (GIntBig)nLastLon;
+                GIntBig nDiff64Lat = panSector[2 * i + 1] - nLastLat;
+                WriteVarSInt64(nDiff64Lon, &pabyOut);
+                WriteVarSInt64(nDiff64Lat, &pabyOut);
+            }
+            else
+            {
+                memcpy(pabyOut, panSector + 2 * i, 8);
+                pabyOut += 8;
+            }
+            bLastValid = TRUE;
+
+            nLastLon = panSector[2 * i + 0];
+            nLastLat = panSector[2 * i + 1];
+        }
+    }
+
+    size_t nCompressSize = (size_t)(pabyOut - abyOutBuffer);
+    CPLAssert(nCompressSize < sizeof(abyOutBuffer) - 1);
+    abyOutBuffer[nCompressSize] = 0;
+
+    nCompressSize = ((nCompressSize + 1) / 2) * 2;
+    GByte* pabyToWrite;
+    if(nCompressSize >= SECTOR_SIZE)
+    {
+        nCompressSize = SECTOR_SIZE;
+        pabyToWrite = pabySector;
+    }
+    else
+        pabyToWrite = abyOutBuffer;
+
+    if( VSIFWriteL(pabyToWrite, 1, nCompressSize, fpNodes) == nCompressSize )
+    {
+        memset(pabySector, 0, SECTOR_SIZE);
+        nNodesFileSize += nCompressSize;
+
+        Bucket* psBucket = &papsBuckets[nBucketOld];
+        psBucket->u.panSectorSize[nOffInBucketReducedOld] = (nCompressSize - 8) / 2;
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/************************************************************************/
+/*                   FlushCurrentSectorNonCompressedCase()              */
+/************************************************************************/
+
+int OGROSMDataSource::FlushCurrentSectorNonCompressedCase()
+{
+   if( VSIFWriteL(pabySector, 1, SECTOR_SIZE, fpNodes) == SECTOR_SIZE )
+    {
+        memset(pabySector, 0, SECTOR_SIZE);
+        nNodesFileSize += SECTOR_SIZE;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/************************************************************************/
+/*                          IndexPointCustom()                          */
+/************************************************************************/
+
 int OGROSMDataSource::IndexPointCustom(OSMNode* psNode)
 {
     if( psNode->nID <= nPrevNodeId)
@@ -374,7 +496,7 @@ int OGROSMDataSource::IndexPointCustom(OSMNode* psNode)
         bStopParsing = TRUE;
         return FALSE;
     }
-    if( psNode->nID < 0 || psNode->nID >= (GIntBig)BUCKET_SIZE * BUCKET_SIZE)
+    if( !VALID_ID_FOR_CUSTOM_INDEXING(psNode->nID) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unsupported node id value (" CPL_FRMT_GIB "). Use OSM_USE_CUSTOM_INDEXING=NO",
@@ -383,31 +505,30 @@ int OGROSMDataSource::IndexPointCustom(OSMNode* psNode)
         return FALSE;
     }
 
-    int nBucket = (int)(psNode->nID / BUCKET_SIZE);
-    int nOffInBucket = psNode->nID % BUCKET_SIZE;
+    int nBucket = (int)(psNode->nID / NODE_PER_BUCKET);
+    int nOffInBucket = psNode->nID % NODE_PER_BUCKET;
     int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
     int nOffInBucketReducedRemainer = nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
     Bucket* psBucket = &papsBuckets[nBucket];
 
-    int nBitmapIndex = nOffInBucketReduced / 8;
-    int nBitmapRemainer = nOffInBucketReduced % 8;
-    psBucket->pabyBitmap[nBitmapIndex] |= (1 << nBitmapRemainer);
+    if( !bCompressNodes )
+    {
+        int nBitmapIndex = nOffInBucketReduced / 8;
+        int nBitmapRemainer = nOffInBucketReduced % 8;
+        psBucket->u.pabyBitmap[nBitmapIndex] |= (1 << nBitmapRemainer);
+    }
 
     if( nBucket != nBucketOld )
     {
         CPLAssert(nBucket > nBucketOld);
         if( nBucketOld >= 0 )
         {
-#ifndef FAKE_LOOKUP_NODES
-            if( VSIFWriteL(pabySector, 1, SECTOR_SIZE, fpNodes) != SECTOR_SIZE )
+            if( !FlushCurrentSector() )
             {
                 bStopParsing = TRUE;
                 return FALSE;
             }
-#endif
-            nNodesFileSize += SECTOR_SIZE;
         }
-        memset(pabySector, 0, SECTOR_SIZE);
         nBucketOld = nBucket;
         nOffInBucketReducedOld = nOffInBucketReduced;
         CPLAssert(psBucket->nOff == -1);
@@ -416,15 +537,11 @@ int OGROSMDataSource::IndexPointCustom(OSMNode* psNode)
     else if( nOffInBucketReduced != nOffInBucketReducedOld )
     {
         CPLAssert(nOffInBucketReduced > nOffInBucketReducedOld);
-#ifndef FAKE_LOOKUP_NODES
-        if( VSIFWriteL(pabySector, 1, SECTOR_SIZE, fpNodes) != SECTOR_SIZE )
+        if( !FlushCurrentSector() )
         {
             bStopParsing = TRUE;
             return FALSE;
         }
-#endif
-        nNodesFileSize += SECTOR_SIZE;
-        memset(pabySector, 0, SECTOR_SIZE);
         nOffInBucketReducedOld = nOffInBucketReduced;
     }
 
@@ -540,6 +657,10 @@ void OGROSMDataSource::LookupNodes( )
         LookupNodesSQLite();
 }
 
+/************************************************************************/
+/*                           LookupNodesSQLite()                        */
+/************************************************************************/
+
 void OGROSMDataSource::LookupNodesSQLite( )
 {
     unsigned int iCur;
@@ -596,20 +717,71 @@ void OGROSMDataSource::LookupNodesSQLite( )
     nReqIds = j;
 }
 
+/************************************************************************/
+/*                           DecompressSector()                         */
+/************************************************************************/
+
+static int DecompressSector(GByte* pabyIn, int nSectorSize, GByte* pabyOut)
+{
+    GByte* pabyPtr = pabyIn;
+    int* panOut = (int*) pabyOut;
+    int nLastLon = 0, nLastLat = 0;
+    int bLastValid = FALSE;
+    int i;
+
+    pabyPtr += 8;
+    for(i = 0; i < NODE_PER_SECTOR; i++)
+    {
+        if( pabyIn[i >> 3] & (1 << (i % 8)) )
+        {
+            if( bLastValid )
+            {
+                GIntBig nSVal64 = ReadVarInt64(&pabyPtr);
+                GIntBig nDiff64 = ((nSVal64 & 1) == 0) ? (((GUIntBig)nSVal64) >> 1) : -(((GUIntBig)nSVal64) >> 1)-1;
+                panOut[2 * i + 0] = nLastLon + nDiff64;
+
+                nSVal64 = ReadVarInt64(&pabyPtr);
+                nDiff64 = ((nSVal64 & 1) == 0) ? (((GUIntBig)nSVal64) >> 1) : -(((GUIntBig)nSVal64) >> 1)-1;
+                panOut[2 * i + 1] = nLastLat + nDiff64;
+            }
+            else
+            {
+                bLastValid = TRUE;
+                memcpy(panOut + 2 * i, pabyPtr, 8);
+                pabyPtr += 8;
+            }
+
+            nLastLon = panOut[2 * i + 0];
+            nLastLat = panOut[2 * i + 1];
+        }
+        else
+        {
+            panOut[2 * i + 0] = 0;
+            panOut[2 * i + 1] = 0;
+        }
+    }
+
+    int nRead = (int)(pabyPtr - pabyIn);
+    nRead = ((nRead + 1) / 2) * 2;
+    return( nRead == nSectorSize );
+}
+
+/************************************************************************/
+/*                           LookupNodesCustom()                        */
+/************************************************************************/
+
 void OGROSMDataSource::LookupNodesCustom( )
 {
     nReqIds = 0;
 
     if( nBucketOld >= 0 )
     {
-#ifndef FAKE_LOOKUP_NODES
-        if( VSIFWriteL(pabySector, 1, SECTOR_SIZE, fpNodes) != SECTOR_SIZE )
+        if( !FlushCurrentSector() )
         {
             bStopParsing = TRUE;
             return;
         }
-#endif
-        nNodesFileSize += SECTOR_SIZE;
+
         nBucketOld = -1;
     }
 
@@ -621,15 +793,26 @@ void OGROSMDataSource::LookupNodesCustom( )
     {
         GIntBig id = panUnsortedReqIds[i];
 
-        int nBucket = (int)(id / BUCKET_SIZE);
-        int nOffInBucket = id % BUCKET_SIZE;
+        if( !VALID_ID_FOR_CUSTOM_INDEXING(id) )
+            continue;
+
+        int nBucket = (int)(id / NODE_PER_BUCKET);
+        int nOffInBucket = id % NODE_PER_BUCKET;
         int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
-        int nBitmapIndex = nOffInBucketReduced / 8;
-        int nBitmapRemainer = nOffInBucketReduced % 8;
         Bucket* psBucket = &papsBuckets[nBucket];
 
-        if( !(psBucket->pabyBitmap[nBitmapIndex] & (1 << nBitmapRemainer)) )
-            continue;
+        if( bCompressNodes )
+        {
+            if( !(psBucket->u.panSectorSize[nOffInBucketReduced]) )
+                continue;
+        }
+        else
+        {
+            int nBitmapIndex = nOffInBucketReduced / 8;
+            int nBitmapRemainer = nOffInBucketReduced % 8;
+            if( !(psBucket->u.pabyBitmap[nBitmapIndex] & (1 << nBitmapRemainer)) )
+                continue;
+        }
 
         panReqIds[nReqIds++] = id;
     }
@@ -644,17 +827,117 @@ void OGROSMDataSource::LookupNodesCustom( )
             panReqIds[j++] = panReqIds[i];
     }
     nReqIds = j;
-    
+
+#ifdef FAKE_LOOKUP_NODES
     for(i = 0; i < nReqIds; i++)
     {
-#ifdef FAKE_LOOKUP_NODES
         pasLonLatArray[i].nLon = 0;
         pasLonLatArray[i].nLat = 0;
+    }
 #else
+    if( bCompressNodes )
+        LookupNodesCustomCompressedCase();
+    else
+        LookupNodesCustomNonCompressedCase();
+#endif
+}
+
+/************************************************************************/
+/*                      LookupNodesCustomCompressedCase()               */
+/************************************************************************/
+
+void OGROSMDataSource::LookupNodesCustomCompressedCase()
+{
+    unsigned int i;
+    unsigned int j = 0;
+#define SECURITY_MARGIN     (8 + 8 + 2 * NODE_PER_SECTOR)
+    GByte abyRawSector[SECTOR_SIZE + SECURITY_MARGIN];
+    memset(abyRawSector + SECTOR_SIZE, 0, SECURITY_MARGIN);
+
+    int nBucketOld = -1;
+    int nOffInBucketReducedOld = -1;
+
+    for(i = 0; i < nReqIds; i++)
+    {
         GIntBig id = panReqIds[i];
 
-        int nBucket = (int)(id / BUCKET_SIZE);
-        int nOffInBucket = id % BUCKET_SIZE;
+        int nBucket = (int)(id / NODE_PER_BUCKET);
+        int nOffInBucket = id % NODE_PER_BUCKET;
+        int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
+        int nOffInBucketReducedRemainer = nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
+
+        if( nBucket != nBucketOld || nOffInBucketReduced != nOffInBucketReducedOld )
+        {
+            Bucket* psBucket = &papsBuckets[nBucket];
+            int nSectorSize = psBucket->u.panSectorSize[nOffInBucketReduced] * 2 + 8;
+
+            int k;
+            int nExtraOff = 0;
+            for(k = 0; k < nOffInBucketReduced; k++)
+            {
+                if( psBucket->u.panSectorSize[k] )
+                    nExtraOff += psBucket->u.panSectorSize[k] * 2 + 8;
+            }
+
+            VSIFSeekL(fpNodes, psBucket->nOff + nExtraOff, SEEK_SET);
+            if( nSectorSize == SECTOR_SIZE )
+            {
+                if( VSIFReadL(pabySector, 1, SECTOR_SIZE, fpNodes) != SECTOR_SIZE )
+                {
+                    CPLError(CE_Failure,  CPLE_AppDefined,
+                            "Cannot read node " CPL_FRMT_GIB, id);
+                    continue;
+                    // FIXME ?
+                }
+            }
+            else
+            {
+                if( (int)VSIFReadL(abyRawSector, 1, nSectorSize, fpNodes) != nSectorSize )
+                {
+                    CPLError(CE_Failure,  CPLE_AppDefined,
+                            "Cannot read sector for node " CPL_FRMT_GIB, id);
+                    continue;
+                    // FIXME ?
+                }
+                abyRawSector[nSectorSize] = 0;
+
+                if( !DecompressSector(abyRawSector, nSectorSize, pabySector) )
+                {
+                    CPLError(CE_Failure,  CPLE_AppDefined,
+                            "Error while uncompressing sector for node " CPL_FRMT_GIB, id);
+                    continue;
+                    // FIXME ?
+                }
+            }
+
+            nBucketOld = nBucket;
+            nOffInBucketReducedOld = nOffInBucketReduced;
+        }
+
+        panReqIds[j] = id;
+        memcpy(pasLonLatArray + j, pabySector + nOffInBucketReducedRemainer * 8, 8);
+
+        if( pasLonLatArray[j].nLon || pasLonLatArray[j].nLat )
+            j++;
+    }
+    nReqIds = j;
+}
+
+/************************************************************************/
+/*                    LookupNodesCustomNonCompressedCase()              */
+/************************************************************************/
+
+void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
+{
+    unsigned int i;
+    unsigned int j = 0;
+
+    for(i = 0; i < nReqIds; i++)
+    {
+        GIntBig id = panReqIds[i];
+
+        int nBucket = (int)(id / NODE_PER_BUCKET);
+        int nOffInBucket = id % NODE_PER_BUCKET;
         int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
         int nOffInBucketReducedRemainer = nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
 
@@ -662,22 +945,28 @@ void OGROSMDataSource::LookupNodesCustom( )
         int nBitmapRemainer = nOffInBucketReduced % 8;
         Bucket* psBucket = &papsBuckets[nBucket];
 
-        int j;
+        int k;
         int nSector = 0;
-        for(j = 0; j < nBitmapIndex; j++)
-            nSector += abyBitsCount[psBucket->pabyBitmap[j]];
+        for(k = 0; k < nBitmapIndex; k++)
+            nSector += abyBitsCount[psBucket->u.pabyBitmap[k]];
         if (nBitmapRemainer)
-            nSector += abyBitsCount[psBucket->pabyBitmap[nBitmapIndex] & ((1 << nBitmapRemainer) - 1)];
+            nSector += abyBitsCount[psBucket->u.pabyBitmap[nBitmapIndex] & ((1 << nBitmapRemainer) - 1)];
 
         VSIFSeekL(fpNodes, psBucket->nOff + nSector * SECTOR_SIZE + nOffInBucketReducedRemainer * 8, SEEK_SET);
-        if( VSIFReadL(pasLonLatArray + i, 1, 8, fpNodes) != 8 )
+        if( VSIFReadL(pasLonLatArray + j, 1, 8, fpNodes) != 8 )
         {
             CPLError(CE_Failure,  CPLE_AppDefined,
                      "Cannot read node " CPL_FRMT_GIB, id);
             // FIXME ?
         }
-#endif
+        else
+        {
+            panReqIds[j] = id;
+            if( pasLonLatArray[j].nLon || pasLonLatArray[j].nLat )
+                j++;
+        }
     }
+    nReqIds = j;
 }
 
 /************************************************************************/
@@ -1749,6 +2038,19 @@ int OGROSMDataSource::Open( const char * pszFilename, int bUpdateIn)
         return FALSE;
     }
 
+    /* The following 4 config options are only usefull for debugging */
+    bIndexPoints = CSLTestBoolean(CPLGetConfigOption("OSM_INDEX_POINTS", "YES"));
+    bUsePointsIndex = CSLTestBoolean(CPLGetConfigOption("OSM_USE_POINTS_INDEX", "YES"));
+    bIndexWays = CSLTestBoolean(CPLGetConfigOption("OSM_INDEX_WAYS", "YES"));
+    bUseWaysIndex = CSLTestBoolean(CPLGetConfigOption("OSM_USE_WAYS_INDEX", "YES"));
+
+    bCustomIndexing = CSLTestBoolean(CPLGetConfigOption("OSM_USE_CUSTOM_INDEXING", "YES"));
+    if( !bCustomIndexing )
+        CPLDebug("OSM", "Using SQLite indexing for points");
+    bCompressNodes = CSLTestBoolean(CPLGetConfigOption("OSM_COMPRESS_NODES", "NO"));
+    if( bCompressNodes )
+        CPLDebug("OSM", "Using compression for nodes DB");
+
     nLayers = 6;
     papoLayers = (OGROSMLayer**) CPLMalloc(nLayers * sizeof(OGROSMLayer*));
 
@@ -1777,15 +2079,29 @@ int OGROSMDataSource::Open( const char * pszFilename, int bUpdateIn)
         return FALSE;
     }
 
-    panLonLatCache = (int*)CPLMalloc(sizeof(int) * 2 * MAX_NODES_PER_WAY);
-    pabyWayBuffer = (GByte*)CPLMalloc(WAY_BUFFER_SIZE);
+    panLonLatCache = (int*)VSIMalloc(sizeof(int) * 2 * MAX_NODES_PER_WAY);
+    pabyWayBuffer = (GByte*)VSIMalloc(WAY_BUFFER_SIZE);
 
-    panReqIds = (GIntBig*)CPLMalloc(MAX_ACCUMULATED_NODES * sizeof(GIntBig));
-    pasLonLatArray = (LonLat*)CPLMalloc(MAX_ACCUMULATED_NODES * sizeof(LonLat));
-    panUnsortedReqIds = (GIntBig*)CPLMalloc(MAX_ACCUMULATED_NODES * sizeof(GIntBig));
-    pasWayFeaturePairs = (WayFeaturePair*)CPLMalloc(MAX_DELAYED_FEATURES * sizeof(WayFeaturePair));
-    pasAccumulatedTags = (OSMTag*) CPLMalloc(MAX_ACCUMULATED_TAGS * sizeof(OSMTag));
-    pabyNonRedundantValues = (GByte*) CPLMalloc(MAX_NON_REDUNDANT_VALUES);
+    panReqIds = (GIntBig*)VSIMalloc(MAX_ACCUMULATED_NODES * sizeof(GIntBig));
+    pasLonLatArray = (LonLat*)VSIMalloc(MAX_ACCUMULATED_NODES * sizeof(LonLat));
+    panUnsortedReqIds = (GIntBig*)VSIMalloc(MAX_ACCUMULATED_NODES * sizeof(GIntBig));
+    pasWayFeaturePairs = (WayFeaturePair*)VSIMalloc(MAX_DELAYED_FEATURES * sizeof(WayFeaturePair));
+    pasAccumulatedTags = (OSMTag*) VSIMalloc(MAX_ACCUMULATED_TAGS * sizeof(OSMTag));
+    pabyNonRedundantValues = (GByte*) VSIMalloc(MAX_NON_REDUNDANT_VALUES);
+
+    if( panLonLatCache == NULL ||
+        pabyWayBuffer == NULL ||
+        panReqIds == NULL ||
+        pasLonLatArray == NULL ||
+        panUnsortedReqIds == NULL ||
+        pasWayFeaturePairs == NULL ||
+        pasAccumulatedTags == NULL ||
+        pabyNonRedundantValues == NULL )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Out-of-memory when allocating one of the buffer used for the processing.");
+        return FALSE;
+    }
 
     nMaxSizeForInMemoryDBInMB = atoi(CPLGetConfigOption("OSM_MAX_TMPFILE_SIZE", "100"));
     GIntBig nSize = (GIntBig)nMaxSizeForInMemoryDBInMB * 1024 * 1024;
@@ -1798,13 +2114,35 @@ int OGROSMDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     if( bCustomIndexing )
     {
-        pabySector = (GByte*) CPLCalloc(1, SECTOR_SIZE);
-        papsBuckets = (Bucket*) CPLMalloc(sizeof(Bucket) * BUCKET_COUNT);
+        pabySector = (GByte*) VSICalloc(1, SECTOR_SIZE);
+        papsBuckets = (Bucket*) VSIMalloc(sizeof(Bucket) * BUCKET_COUNT);
         size_t i;
-        for(i = 0; i < BUCKET_COUNT; i++)
+        int bOOM = FALSE;
+        if( papsBuckets )
         {
-            papsBuckets[i].nOff = -1;
-            papsBuckets[i].pabyBitmap = (GByte*)CPLCalloc(1, BUCKET_BITMAP_SIZE);
+            for(i = 0; i < BUCKET_COUNT && !bOOM; i++)
+            {
+                papsBuckets[i].nOff = -1;
+                if( bCompressNodes )
+                {
+                    papsBuckets[i].u.panSectorSize = (GByte*)VSICalloc(1, BUCKET_SECTOR_SIZE_ARRAY_SIZE);
+                    if( papsBuckets[i].u.panSectorSize == NULL )
+                        bOOM = TRUE;
+                }
+                else
+                {
+                    papsBuckets[i].u.pabyBitmap = (GByte*)VSICalloc(1, BUCKET_BITMAP_SIZE);
+                    if( papsBuckets[i].u.pabyBitmap == NULL )
+                        bOOM = TRUE;
+                }
+            }
+        }
+
+        if( pabySector == NULL || papsBuckets == NULL || bOOM )
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                    "Out-of-memory when allocating one of the buffer used for the processing.");
+            return FALSE;
         }
 
         bInMemoryNodesFile = TRUE;
@@ -2500,7 +2838,10 @@ int OGROSMDataSource::ResetReading()
         for(int i = 0; i < BUCKET_COUNT; i++)
         {
             papsBuckets[i].nOff = -1;
-            memset(papsBuckets[i].pabyBitmap, 0, BUCKET_BITMAP_SIZE);
+            if( bCompressNodes )
+                memset(papsBuckets[i].u.panSectorSize, 0, BUCKET_SECTOR_SIZE_ARRAY_SIZE);
+            else
+                memset(papsBuckets[i].u.pabyBitmap, 0, BUCKET_BITMAP_SIZE);
         }
     }
 
