@@ -139,7 +139,7 @@ CPLErr BTRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Seek to profile.                                                */
 /* -------------------------------------------------------------------- */
     if( VSIFSeekL( fpImage, 
-                   256 + nBlockXOff * nDataSize * nRasterYSize, 
+                   256 + nBlockXOff * nDataSize * (vsi_l_offset) nRasterYSize, 
                    SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
@@ -913,7 +913,7 @@ GDALDataset *BTDataset::Create( const char * pszFilename,
 /*      Write to disk.                                                  */
 /* -------------------------------------------------------------------- */
     VSIFWriteL( (void *) abyHeader, 256, 1, fp );
-    if( VSIFSeekL( fp, (GDALGetDataTypeSize(eType)/8) * nXSize * nYSize - 1, 
+    if( VSIFSeekL( fp, (GDALGetDataTypeSize(eType)/8) * nXSize * (vsi_l_offset)nYSize - 1, 
                    SEEK_CUR ) != 0 
         || VSIFWriteL( abyHeader+255, 1, 1, fp ) != 1 )
     {
