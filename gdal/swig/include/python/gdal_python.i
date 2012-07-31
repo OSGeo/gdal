@@ -14,6 +14,8 @@
   }
 %}
 
+%include "gdal_rasterband_docs.i"
+
 %pythoncode %{
 
   
