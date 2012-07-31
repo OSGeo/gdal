@@ -34,7 +34,7 @@ option.<p>
 
 The customization is essentially which OSM attributes and keys should be translated into OGR layer fields.<p>
 
-<h3>Internal working</h3>
+<h3>Internal working and performance tweaking</h3>
 
 The driver will use an internal SQLite database to resolve geometries. If that database remains under 100 MB
 it will reside in RAM. If it grows above, it will be written in a temporary file on disk. By default, this
@@ -45,6 +45,12 @@ For indexation of nodes, a custom mechanism not relying on SQLite is used by def
 to solve relations is still relying on SQLite). It can speed up operations significantly. However, in some
 situations (non increasing node ids, or node ids not in expected range), it might not work and the driver will
 output an error message suggesting to relaunch by defining the OSM_USE_CUSTOM_INDEXING configuration option to NO.<p>
+
+When custom indexing is used (default case), the OSM_COMPRESS_NODES configuration option can be set to YES (the
+default is ON). This option might be turned on to improve performances when I/O access is the limiting factor (typically
+the case of rotational disk), and will be mostly efficient for country-sized OSM extracts where compression rate can
+go up to a factor of 3 or 4, and help keep the node DB to a size that fit in the OS I/O caches. For whole planet file, the
+effect of this option will be less efficient. This option consumes addionnal 60 MB of RAM.<p>
 
 <h3>Interleaved reading</h3>
 
