@@ -2761,6 +2761,8 @@ class Feature(_object):
 
     def __getattr__(self, key):
         """Returns the values of fields by the given name"""
+        if key == 'this':
+            return self.__dict__[key]
         try:
             return self.GetField(key)
         except:
