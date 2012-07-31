@@ -257,7 +257,7 @@ def ogr_osm_2():
 ###############################################################################
 # Test ogr2ogr
 
-def ogr_osm_3():
+def ogr_osm_3(options = None):
 
     try:
         drv = ogr.GetDriverByName('OSM')
@@ -276,13 +276,29 @@ def ogr_osm_3():
     except:
         pass
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/ogr_osm_3 data/test.pbf points lines polygons multipolygons multilinestrings -progress')
+    if options is not None:
+        options = ' ' + options
+    else:
+        options = ''
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/ogr_osm_3 data/test.pbf points lines polygons multipolygons multilinestrings -progress' + options)
 
     ret = ogr_osm_1('tmp/ogr_osm_3')
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/ogr_osm_3')
 
     return ret
+
+###############################################################################
+# Test ogr2ogr with --config OSM_USE_CUSTOM_INDEXING NO
+
+def ogr_osm_3_sqlite_nodes():
+    return ogr_osm_3(options = '--config OSM_USE_CUSTOM_INDEXING NO')
+
+###############################################################################
+# Test ogr2ogr with --config OSM_COMPRESS_NODES YES
+
+def ogr_osm_3_custom_compress_nodes():
+    return ogr_osm_3(options = '--config OSM_COMPRESS_NODES YES')
 
 ###############################################################################
 # Test optimization when reading only the points layer through a SQL request
@@ -395,6 +411,8 @@ gdaltest_list = [
     ogr_osm_1,
     ogr_osm_2,
     ogr_osm_3,
+    ogr_osm_3_sqlite_nodes,
+    ogr_osm_3_custom_compress_nodes,
     ogr_osm_4,
     ogr_osm_5,
     ]

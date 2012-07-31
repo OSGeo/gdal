@@ -160,7 +160,11 @@ typedef struct
 typedef struct
 {
     GIntBig             nOff;
-    GByte              *pabyBitmap;
+    union
+    {
+        GByte          *pabyBitmap;
+        GByte          *panSectorSize; /* (size in bytes - 8 ) / 2, minus 8. 252 means uncompressed */
+    } u;
 } Bucket;
 
 typedef struct
@@ -251,6 +255,7 @@ class OGROSMDataSource : public OGRDataSource
     int                 nRelationsProcessed;
 
     int                 bCustomIndexing;
+    int                 bCompressNodes;
 
     unsigned int        nUnsortedReqIds;
     GIntBig            *panUnsortedReqIds;
@@ -298,6 +303,9 @@ class OGROSMDataSource : public OGRDataSource
 
     int                 IndexPoint(OSMNode* psNode);
     int                 IndexPointSQLite(OSMNode* psNode);
+    int                 FlushCurrentSector();
+    int                 FlushCurrentSectorCompressedCase();
+    int                 FlushCurrentSectorNonCompressedCase();
     int                 IndexPointCustom(OSMNode* psNode);
 
     void                IndexWay(GIntBig nWayID,
@@ -313,6 +321,8 @@ class OGROSMDataSource : public OGRDataSource
     void                LookupNodes();
     void                LookupNodesSQLite();
     void                LookupNodesCustom();
+    void                LookupNodesCustomCompressedCase();
+    void                LookupNodesCustomNonCompressedCase();
 
     unsigned int        LookupWays( std::map< GIntBig, std::pair<int,void*> >& aoMapWays,
                                     OSMRelation* psRelation );
