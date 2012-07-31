@@ -1263,7 +1263,6 @@ CPLErr GDALColorReliefRasterBand::IReadBlock( int nBlockXOff,
     else
         nReqYSize = nBlockYSize;
 
-    int nCount = nReqXSize * nReqYSize;
     if ( poGDS->nCurBlockXOff != nBlockXOff ||
          poGDS->nCurBlockYOff != nBlockYOff )
     {
@@ -1283,34 +1282,42 @@ CPLErr GDALColorReliefRasterBand::IReadBlock( int nBlockXOff,
                             0, 0);
         if (eErr != CE_None)
         {
-            memset(pImage, 0, nCount);
+            memset(pImage, 0, nBlockXSize * nBlockYSize);
             return eErr;
         }
     }
 
-    int j;
+    int x, y, j = 0;
     if (poGDS->panSourceBuf)
     {
-        for ( j = 0; j < nCount; j++)
+        for( y = 0; y < nReqYSize; y++ )
         {
-            int nIndex = poGDS->panSourceBuf[j] + poGDS->nIndexOffset;
-            ((GByte*)pImage)[j] = poGDS->pabyPrecomputed[4*nIndex + nBand-1];
+            for( x = 0; x < nReqXSize; x++ )
+            {
+                int nIndex = poGDS->panSourceBuf[j] + poGDS->nIndexOffset;
+                ((GByte*)pImage)[y * nBlockXSize + x] = poGDS->pabyPrecomputed[4*nIndex + nBand-1];
+                j++;
+            }
         }
     }
     else
     {
         int anComponents[4];
-        for ( j = 0; j < nCount; j++)
+        for( y = 0; y < nReqYSize; y++ )
         {
-            GDALColorReliefGetRGBA  (poGDS->pasColorAssociation,
-                                     poGDS->nColorAssociation,
-                                     poGDS->pafSourceBuf[j],
-                                     poGDS->eColorSelectionMode,
-                                     &anComponents[0],
-                                     &anComponents[1],
-                                     &anComponents[2],
-                                     &anComponents[3]);
-            ((GByte*)pImage)[j] = (GByte) anComponents[nBand-1];
+            for( x = 0; x < nReqXSize; x++ )
+            {
+                GDALColorReliefGetRGBA  (poGDS->pasColorAssociation,
+                                        poGDS->nColorAssociation,
+                                        poGDS->pafSourceBuf[j],
+                                        poGDS->eColorSelectionMode,
+                                        &anComponents[0],
+                                        &anComponents[1],
+                                        &anComponents[2],
+                                        &anComponents[3]);
+                ((GByte*)pImage)[y * nBlockXSize + x] = (GByte) anComponents[nBand-1];
+                j++;
+            }
         }
     }
     
