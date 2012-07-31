@@ -211,6 +211,8 @@ layer[0:4] would return a list of the first four features."""
     # This has some risk of name collisions.
     def __getattr__(self, key):
         """Returns the values of fields by the given name"""
+        if key == 'this':
+            return self.__dict__[key]
         try:
             return self.GetField(key)
         except:
