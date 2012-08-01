@@ -407,6 +407,42 @@ def ogr_osm_5():
 
     return 'success'
 
+###############################################################################
+# Test ogr2ogr -sql
+
+def ogr_osm_6():
+
+    try:
+        drv = ogr.GetDriverByName('OSM')
+    except:
+        drv = None
+    if drv is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/ogr_osm_6')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/ogr_osm_6')
+    except:
+        pass
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/ogr_osm_6 data/test.pbf -sql "select * from multipolygons" -progress')
+
+    ds = ogr.Open('tmp/ogr_osm_6')
+    lyr = ds.GetLayer(0)
+    count = lyr.GetFeatureCount()
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/ogr_osm_6')
+
+    if count != 2:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_osm_1,
     ogr_osm_2,
@@ -415,6 +451,7 @@ gdaltest_list = [
     ogr_osm_3_custom_compress_nodes,
     ogr_osm_4,
     ogr_osm_5,
+    ogr_osm_6,
     ]
 
 if __name__ == '__main__':
