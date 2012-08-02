@@ -41,6 +41,15 @@
 
 #include "ogr_sqlite.h"
 
+class ConstCharComp
+{
+    public:
+        bool operator()(const char* a, const char* b) const
+        {
+            return strcmp(a, b) < 0;
+        }
+};
+
 /************************************************************************/
 /*                           OGROSMLayer                                */
 /************************************************************************/
@@ -55,6 +64,9 @@ class OGROSMLayer : public OGRLayer
     OGRFeatureDefn      *poFeatureDefn;
     OGRSpatialReference *poSRS;
     long                 nFeatureCount;
+
+    std::vector<char*>   apszNames;
+    std::map<const char*, int, ConstCharComp> oMapFieldNameToIndex;
 
     int                  bResetReadingAllowed;
     
@@ -71,13 +83,25 @@ class OGROSMLayer : public OGRLayer
     int                   bHasChangeset;
     int                   bHasOtherTags;
 
-    int                   bHasWarned;
+    int                   bHasWarnedTooManyFeatures;
+
+    char                 *pszAllTags;
+    int                   bHasWarnedAllTagsTruncated;
 
     int                   bUserInterested;
 
-    int                AddToArray(OGRFeature* poFeature);
+    int                  AddToArray(OGRFeature* poFeature);
 
-    CPLString             GetFieldName(const char* pszName);
+    char                  szLaunderedFieldName[256];
+    const char*           GetLaunderedFieldName(const char* pszName);
+
+    std::vector<char*>    apszUnsignificantKeys;
+    std::map<const char*, int, ConstCharComp> aoSetUnsignificantKeys;
+
+    std::vector<char*>    apszIgnoreKeys;
+    std::map<const char*, int, ConstCharComp> aoSetIgnoreKeys;
+
+    std::set<std::string> aoSetWarnKeys;
 
   public:
                         OGROSMLayer( OGROSMDataSource* poDS,
@@ -138,9 +162,12 @@ class OGROSMLayer : public OGRLayer
     int                 HasAttributeFilter() const { return m_poAttrQuery != NULL; }
     int                 EvaluateAttributeFilter(OGRFeature* poFeature);
 
-    std::set<std::string> aoSetUnsignificantKeys;
-    std::set<std::string> aoSetIgnoreKeys;
-    std::set<std::string> aoSetWarnKeys;
+    void                AddUnsignificantKey(const char* pszK);
+    int                 IsSignificantKey(const char* pszK) const
+        { return aoSetUnsignificantKeys.find(pszK) == aoSetUnsignificantKeys.end(); }
+
+    void                AddIgnoreKey(const char* pszK);
+    void                AddWarnKey(const char* pszK);
 };
 
 /************************************************************************/
@@ -149,13 +176,23 @@ class OGROSMLayer : public OGRLayer
 
 typedef struct
 {
+    char* pszK;
     int nKeyIndex;
-    int nNextValueIndex;
-    int bHasWarnedManyValues;
     int nOccurences;
     std::vector<char*> asValues;
-    std::map<CPLString, int> anMapV;
+    std::map<const char*, int, ConstCharComp> anMapV; /* map that is the reverse of asValues */
 } KeyDesc;
+
+typedef struct
+{
+    short               nKeyIndex; /* index of OGROSMDataSource.asKeys */
+    short               bVIsIndex; /* whether we should use nValueIndex or nOffsetInpabyNonRedundantValues */
+    union
+    {
+        int                 nValueIndex; /* index of KeyDesc.asValues */
+        int                 nOffsetInpabyNonRedundantValues; /* offset in OGROSMDataSource.pabyNonRedundantValues */
+    } u;
+} IndexedKVP;
 
 typedef struct
 {
@@ -179,7 +216,7 @@ typedef struct
     unsigned int        nRefs;
     GIntBig*            panNodeRefs; /* point to a sub-array of OGROSMDataSource.anReqIds */
     unsigned int        nTags;
-    OSMTag*             pasTags; /*  point to a sub-array of OGROSMDataSource.pasAccumulatedTags */
+    IndexedKVP*         pasTags; /*  point to a sub-array of OGROSMDataSource.pasAccumulatedTags */
     int                 iCurLayer : 6;
     int                 bAttrFilterAlreadyEvaluated : 1;
     int                 bInterestingTag : 1;
@@ -224,7 +261,7 @@ class OGROSMDataSource : public OGRDataSource
 
     std::set<std::string> aoSetClosedWaysArePolygons;
 
-    int*                panLonLatCache;
+    LonLat             *pasLonLatCache;
 
     int                 bReportAllNodes;
     int                 bReportAllWays;
@@ -264,7 +301,7 @@ class OGROSMDataSource : public OGRDataSource
     GIntBig            *panReqIds;
     LonLat             *pasLonLatArray;
 
-    OSMTag             *pasAccumulatedTags; /* points to content of pabyNonRedundantValues or aoMapIndexedKeys */
+    IndexedKVP         *pasAccumulatedTags; /* points to content of pabyNonRedundantValues or aoMapIndexedKeys */
     int                 nAccumulatedTags;
     GByte              *pabyNonRedundantValues;
     int                 nNonRedundantValuesLen;
@@ -272,8 +309,8 @@ class OGROSMDataSource : public OGRDataSource
     int                 nWayFeaturePairs;
 
     int                          nNextKeyIndex;
-    std::vector<char*>           asKeys;
-    std::map<CPLString, KeyDesc> aoMapIndexedKeys;
+    std::vector<KeyDesc*>         asKeys;
+    std::map<const char*, KeyDesc*, ConstCharComp> aoMapIndexedKeys; /* map that is the reverse of asKeys */
 
     CPLString           osNodesFilename;
     int                 bInMemoryNodesFile;
@@ -287,11 +324,11 @@ class OGROSMDataSource : public OGRDataSource
     GByte              *pabySector;
     Bucket             *papsBuckets;
 
-    int                 CompressWay (unsigned int nTags, OSMTag* pasTags,
-                                     int nPoints, int* panLonLatPairs,
+    int                 CompressWay (unsigned int nTags, IndexedKVP* pasTags,
+                                     int nPoints, LonLat* pasLonLatPairs,
                                      GByte* pabyCompressedWay);
     int                 UncompressWay( int nBytes, GByte* pabyCompressedWay,
-                                       int* panCoords,
+                                       LonLat* pasCoords,
                                        unsigned int* pnTags, OSMTag* pasTags );
 
     int                 ParseConf();
@@ -309,8 +346,8 @@ class OGROSMDataSource : public OGRDataSource
     int                 IndexPointCustom(OSMNode* psNode);
 
     void                IndexWay(GIntBig nWayID,
-                                 unsigned int nTags, OSMTag* pasTags,
-                                 int* panLonLatPairs, int nPairs);
+                                 unsigned int nTags, IndexedKVP* pasTags,
+                                 LonLat* pasLonLatPairs, int nPairs);
 
     int                 StartTransaction();
     int                 CommitTransaction();
