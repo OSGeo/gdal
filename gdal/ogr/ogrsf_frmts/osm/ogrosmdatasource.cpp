@@ -29,10 +29,11 @@
 
 #include "ogr_osm.h"
 #include "cpl_conv.h"
-#include "cpl_string.h"
 #include "ogr_api.h"
 #include "swq.h"
 #include "gpb.h"
+
+#include <algorithm>
 
 #define LIMIT_IDS_PER_REQUEST 200
 
@@ -59,7 +60,7 @@
  /* Maximum count of buckets */
 #define BUCKET_COUNT        65536
 
-#define VALID_ID_FOR_CUSTOM_INDEXING(_id) ((_id) >= 0 && (_id) <= (GIntBig)NODE_PER_BUCKET * BUCKET_COUNT)
+#define VALID_ID_FOR_CUSTOM_INDEXING(_id) ((_id) >= 0 && (_id) < (GIntBig)NODE_PER_BUCKET * BUCKET_COUNT)
 
 /* Minimum size of data written on disk, in *uncompressed* case */
 #define SECTOR_SIZE         512
@@ -124,7 +125,7 @@ OGROSMDataSource::OGROSMDataSource()
     bInTransaction = FALSE;
     pahSelectNodeStmt = NULL;
     pahSelectWayStmt = NULL;
-    panLonLatCache = NULL;
+    pasLonLatCache = NULL;
     bInMemoryTmpDB = FALSE;
     bMustUnlink = TRUE;
     nMaxSizeForInMemoryDBInMB = 0;
@@ -198,7 +199,7 @@ OGROSMDataSource::~OGROSMDataSource()
         CPLDebug("OSM", "Number of bytes read in file : " CPL_FRMT_GUIB, OSM_GetBytesRead(psParser));
     OSM_Close(psParser);
 
-    CPLFree(panLonLatCache);
+    CPLFree(pasLonLatCache);
     CPLFree(pabyWayBuffer);
 
     if( hDB != NULL )
@@ -235,25 +236,24 @@ OGROSMDataSource::~OGROSMDataSource()
 #ifdef OSM_DEBUG
     FILE* f;
     f = fopen("keys.txt", "wt");
-    std::map<CPLString, KeyDesc>::iterator oIter;
-    for( oIter = aoMapIndexedKeys.begin(); oIter != aoMapIndexedKeys.end(); ++oIter )
+    for(i=0;i<(int)asKeys.size();i++)
     {
+        KeyDesc* psKD = asKeys[i];
         fprintf(f, "%08d idx=%d %s\n",
-                oIter->second.nOccurences,
-                oIter->second.nKeyIndex,
-                oIter->first.c_str());
+                psKD->nOccurences,
+                psKD->nKeyIndex,
+                psKD->pszK);
     }
     fclose(f);
 #endif
 
     for(i=0;i<(int)asKeys.size();i++)
-        CPLFree(asKeys[i]);
-    std::map<CPLString, KeyDesc>::iterator oIter = aoMapIndexedKeys.begin();
-    for(; oIter != aoMapIndexedKeys.end(); ++oIter)
     {
-        KeyDesc& sKD = oIter->second;
-        for(i=0;i<(int)sKD.asValues.size();i++)
-            CPLFree(sKD.asValues[i]);
+        KeyDesc* psKD = asKeys[i];
+        CPLFree(psKD->pszK);
+        for(int j=0;j<(int)psKD->asValues.size();j++)
+            CPLFree(psKD->asValues[j]);
+        delete psKD;
     }
 
     if( fpNodes )
@@ -366,11 +366,11 @@ int OGROSMDataSource::IndexPointSQLite(OSMNode* psNode)
 {
     sqlite3_bind_int64( hInsertNodeStmt, 1, psNode->nID );
 
-    int anLonLat[2];
-    anLonLat[0] = DBL_TO_INT(psNode->dfLon);
-    anLonLat[1] = DBL_TO_INT(psNode->dfLat);
+    LonLat sLonLat;
+    sLonLat.nLon = DBL_TO_INT(psNode->dfLon);
+    sLonLat.nLat = DBL_TO_INT(psNode->dfLat);
 
-    sqlite3_bind_blob( hInsertNodeStmt, 2, anLonLat, 2 * sizeof(int), SQLITE_STATIC );
+    sqlite3_bind_blob( hInsertNodeStmt, 2, &sLonLat, sizeof(sLonLat), SQLITE_STATIC );
 
     int rc = sqlite3_step( hInsertNodeStmt );
     sqlite3_reset( hInsertNodeStmt );
@@ -545,9 +545,9 @@ int OGROSMDataSource::IndexPointCustom(OSMNode* psNode)
         nOffInBucketReducedOld = nOffInBucketReduced;
     }
 
-    int* panLonLat = (int*)(pabySector + 8 * nOffInBucketReducedRemainer);
-    panLonLat[0] = DBL_TO_INT(psNode->dfLon);
-    panLonLat[1] = DBL_TO_INT(psNode->dfLat);
+    LonLat* psLonLat = (LonLat*)(pabySector + sizeof(LonLat) * nOffInBucketReducedRemainer);
+    psLonLat->nLon = DBL_TO_INT(psNode->dfLon);
+    psLonLat->nLat = DBL_TO_INT(psNode->dfLat);
 
     nPrevNodeId = psNode->nID;
 
@@ -591,8 +591,7 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode* pasNodes)
             for(j = 0; j < pasNodes[i].nTags; j++)
             {
                 const char* pszK = pasTags[j].pszK;
-                if( papoLayers[IDX_LYR_POINTS]->aoSetUnsignificantKeys.find(pszK) ==
-                    papoLayers[IDX_LYR_POINTS]->aoSetUnsignificantKeys.end() )
+                if( papoLayers[IDX_LYR_POINTS]->IsSignificantKey(pszK) )
                 {
                     bInterestingTag = TRUE;
                     break;
@@ -630,22 +629,6 @@ static void OGROSMNotifyNodes (unsigned int nNodes, OSMNode* pasNodes,
 }
 
 /************************************************************************/
-/*                          SortReqIdsArray()                           */
-/************************************************************************/
-
-static int SortReqIdsArray(const void *a, const void *b)
-{
-    GIntBig* pa = (GIntBig*)a;
-    GIntBig* pb = (GIntBig*)b;
-    if (*pa < *pb)
-        return -1;
-    else if (*pa > *pb)
-        return 1;
-    else
-        return 0;
-}
-
-/************************************************************************/
 /*                            LookupNodes()                             */
 /************************************************************************/
 
@@ -675,7 +658,7 @@ void OGROSMDataSource::LookupNodesSQLite( )
         panReqIds[nReqIds++] = id;
     }
 
-    qsort(panReqIds, nReqIds, sizeof(GIntBig), SortReqIdsArray);
+    std::sort(panReqIds, panReqIds + nReqIds);
 
     /* Remove duplicates */
     unsigned int j = 0;
@@ -704,17 +687,28 @@ void OGROSMDataSource::LookupNodesSQLite( )
         while( sqlite3_step(hStmt) == SQLITE_ROW )
         {
             GIntBig id = sqlite3_column_int(hStmt, 0);
-            int* panLonLat = (int*)sqlite3_column_blob(hStmt, 1);
+            LonLat* psLonLat = (LonLat*)sqlite3_column_blob(hStmt, 1);
 
             panReqIds[j] = id;
-            pasLonLatArray[j].nLon = panLonLat[0];
-            pasLonLatArray[j].nLat = panLonLat[1];
+            pasLonLatArray[j].nLon = psLonLat->nLon;
+            pasLonLatArray[j].nLat = psLonLat->nLat;
             j++;
         }
 
         sqlite3_reset(hStmt);
     }
     nReqIds = j;
+}
+
+/************************************************************************/
+/*                            ReadVarSInt64()                           */
+/************************************************************************/
+
+static GIntBig ReadVarSInt64(GByte** ppabyPtr)
+{
+    GIntBig nSVal64 = ReadVarInt64(ppabyPtr);
+    GIntBig nDiff64 = ((nSVal64 & 1) == 0) ? (((GUIntBig)nSVal64) >> 1) : -(((GUIntBig)nSVal64) >> 1)-1;
+    return nDiff64;
 }
 
 /************************************************************************/
@@ -736,13 +730,8 @@ static int DecompressSector(GByte* pabyIn, int nSectorSize, GByte* pabyOut)
         {
             if( bLastValid )
             {
-                GIntBig nSVal64 = ReadVarInt64(&pabyPtr);
-                GIntBig nDiff64 = ((nSVal64 & 1) == 0) ? (((GUIntBig)nSVal64) >> 1) : -(((GUIntBig)nSVal64) >> 1)-1;
-                panOut[2 * i + 0] = nLastLon + nDiff64;
-
-                nSVal64 = ReadVarInt64(&pabyPtr);
-                nDiff64 = ((nSVal64 & 1) == 0) ? (((GUIntBig)nSVal64) >> 1) : -(((GUIntBig)nSVal64) >> 1)-1;
-                panOut[2 * i + 1] = nLastLat + nDiff64;
+                panOut[2 * i + 0] = nLastLon + ReadVarSInt64(&pabyPtr);
+                panOut[2 * i + 1] = nLastLat + ReadVarSInt64(&pabyPtr);
             }
             else
             {
@@ -817,7 +806,7 @@ void OGROSMDataSource::LookupNodesCustom( )
         panReqIds[nReqIds++] = id;
     }
 
-    qsort(panReqIds, nReqIds, sizeof(GIntBig), SortReqIdsArray);
+    std::sort(panReqIds, panReqIds + nReqIds);
 
     /* Remove duplicates */
     unsigned int j = 0;
@@ -856,6 +845,8 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
 
     int nBucketOld = -1;
     int nOffInBucketReducedOld = -1;
+    int k = 0;
+    int nOffFromBucketStart = 0;
 
     for(i = 0; i < nReqIds; i++)
     {
@@ -866,20 +857,27 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
         int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
         int nOffInBucketReducedRemainer = nOffInBucket & ((1 << NODE_PER_SECTOR_SHIFT) - 1);
 
-        if( nBucket != nBucketOld || nOffInBucketReduced != nOffInBucketReducedOld )
+        if( nBucket != nBucketOld )
+        {
+            nOffInBucketReducedOld = -1;
+            k = 0;
+            nOffFromBucketStart = 0;
+        }
+
+        if ( nOffInBucketReduced != nOffInBucketReducedOld )
         {
             Bucket* psBucket = &papsBuckets[nBucket];
             int nSectorSize = psBucket->u.panSectorSize[nOffInBucketReduced] * 2 + 8;
 
-            int k;
-            int nExtraOff = 0;
-            for(k = 0; k < nOffInBucketReduced; k++)
+            /* If we stay in the same bucket, we can reuse the previously */
+            /* computed offset, instead of starting from bucket start */
+            for(; k < nOffInBucketReduced; k++)
             {
                 if( psBucket->u.panSectorSize[k] )
-                    nExtraOff += psBucket->u.panSectorSize[k] * 2 + 8;
+                    nOffFromBucketStart += psBucket->u.panSectorSize[k] * 2 + 8;
             }
 
-            VSIFSeekL(fpNodes, psBucket->nOff + nExtraOff, SEEK_SET);
+            VSIFSeekL(fpNodes, psBucket->nOff + nOffFromBucketStart, SEEK_SET);
             if( nSectorSize == SECTOR_SIZE )
             {
                 if( VSIFReadL(pabySector, 1, SECTOR_SIZE, fpNodes) != SECTOR_SIZE )
@@ -952,8 +950,8 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
         if (nBitmapRemainer)
             nSector += abyBitsCount[psBucket->u.pabyBitmap[nBitmapIndex] & ((1 << nBitmapRemainer) - 1)];
 
-        VSIFSeekL(fpNodes, psBucket->nOff + nSector * SECTOR_SIZE + nOffInBucketReducedRemainer * 8, SEEK_SET);
-        if( VSIFReadL(pasLonLatArray + j, 1, 8, fpNodes) != 8 )
+        VSIFSeekL(fpNodes, psBucket->nOff + nSector * SECTOR_SIZE + nOffInBucketReducedRemainer * sizeof(LonLat), SEEK_SET);
+        if( VSIFReadL(pasLonLatArray + j, 1, sizeof(LonLat), fpNodes) != sizeof(LonLat) )
         {
             CPLError(CE_Failure,  CPLE_AppDefined,
                      "Cannot read node " CPL_FRMT_GIB, id);
@@ -1023,8 +1021,8 @@ static void WriteVarSInt64(GIntBig nSVal, GByte** ppabyData)
 /*                             CompressWay()                            */
 /************************************************************************/
 
-int OGROSMDataSource::CompressWay ( unsigned int nTags, OSMTag* pasTags,
-                                    int nPoints, int* panLonLatPairs,
+int OGROSMDataSource::CompressWay ( unsigned int nTags, IndexedKVP* pasTags,
+                                    int nPoints, LonLat* pasLonLatPairs,
                                     GByte* pabyCompressedWay )
 {
     GByte* pabyPtr = pabyCompressedWay;
@@ -1034,46 +1032,32 @@ int OGROSMDataSource::CompressWay ( unsigned int nTags, OSMTag* pasTags,
     CPLAssert(nTags < MAX_COUNT_FOR_TAGS_IN_WAY);
     for(unsigned int iTag = 0; iTag < nTags; iTag++)
     {
-        const char* pszK = pasTags[iTag].pszK;
-        const char* pszV = pasTags[iTag].pszV;
-
         if ((int)(pabyPtr - pabyCompressedWay) + 2 >= MAX_SIZE_FOR_TAGS_IN_WAY)
         {
             break;
         }
 
-        std::map<CPLString, KeyDesc>::iterator oIterK;
-        oIterK = aoMapIndexedKeys.find(pszK);
-        CPLAssert (oIterK != aoMapIndexedKeys.end());
-        KeyDesc& sKD = oIterK->second;
-        WriteVarInt(sKD.nKeyIndex, &pabyPtr);
+        WriteVarInt(pasTags[iTag].nKeyIndex, &pabyPtr);
 
         /* to fit in 2 bytes, the theoretical limit would be 127 * 128 + 127 */
-        if( sKD.nNextValueIndex < 1024 )
+        if( pasTags[iTag].bVIsIndex )
         {
             if ((int)(pabyPtr - pabyCompressedWay) + 2 >= MAX_SIZE_FOR_TAGS_IN_WAY)
             {
                 break;
             }
 
-            std::map<CPLString, int>::iterator oIterV;
-            oIterV = sKD.anMapV.find(pszV);
-            CPLAssert(oIterV != sKD.anMapV.end());
-            WriteVarInt(oIterV->second, &pabyPtr);
+            WriteVarInt(pasTags[iTag].u.nValueIndex, &pabyPtr);
         }
         else
         {
+            const char* pszV = (const char*)pabyNonRedundantValues +
+                pasTags[iTag].u.nOffsetInpabyNonRedundantValues;
+
             int nLenV = strlen(pszV) + 1;
             if ((int)(pabyPtr - pabyCompressedWay) + 2 + nLenV >= MAX_SIZE_FOR_TAGS_IN_WAY)
             {
                 break;
-            }
-
-            if( !sKD.bHasWarnedManyValues )
-            {
-                sKD.bHasWarnedManyValues = TRUE;
-                CPLDebug("OSM", "More than %d different values for tag %s",
-                         1024, pszK);
             }
 
             WriteVarInt(0, &pabyPtr);
@@ -1087,17 +1071,16 @@ int OGROSMDataSource::CompressWay ( unsigned int nTags, OSMTag* pasTags,
 
     pabyCompressedWay[0] = (GByte) nTagCount;
 
-    memcpy(pabyPtr, panLonLatPairs + 0, sizeof(int));
-    memcpy(pabyPtr + sizeof(int), panLonLatPairs + 1, sizeof(int));
-    pabyPtr += 2 * sizeof(int);
+    memcpy(pabyPtr, &(pasLonLatPairs[0]), sizeof(LonLat));
+    pabyPtr += sizeof(LonLat);
     for(int i=1;i<nPoints;i++)
     {
         GIntBig nDiff64;
 
-        nDiff64 = (GIntBig)panLonLatPairs[2 * i + 0] - (GIntBig)panLonLatPairs[2 * (i-1) + 0];
+        nDiff64 = (GIntBig)pasLonLatPairs[i].nLon - (GIntBig)pasLonLatPairs[i-1].nLon;
         WriteVarSInt64(nDiff64, &pabyPtr);
 
-        nDiff64 = panLonLatPairs[2 * i + 1] - panLonLatPairs[2 * (i-1) + 1];
+        nDiff64 = pasLonLatPairs[i].nLat - pasLonLatPairs[i-1].nLat;
         WriteVarSInt64(nDiff64, &pabyPtr);
     }
     int nBufferSize = (int)(pabyPtr - pabyCompressedWay);
@@ -1109,7 +1092,7 @@ int OGROSMDataSource::CompressWay ( unsigned int nTags, OSMTag* pasTags,
 /************************************************************************/
 
 int OGROSMDataSource::UncompressWay( int nBytes, GByte* pabyCompressedWay,
-                                     int* panCoords,
+                                     LonLat* pasCoords,
                                      unsigned int* pnTags, OSMTag* pasTags )
 {
     GByte* pabyPtr = pabyCompressedWay;
@@ -1119,6 +1102,7 @@ int OGROSMDataSource::UncompressWay( int nBytes, GByte* pabyCompressedWay,
     if (pnTags)
         *pnTags = nTags;
 
+    /* TODO? : some additional safety checks */
     for(unsigned int iTag = 0; iTag < nTags; iTag++)
     {
         int nK = ReadVarInt32(&pabyPtr);
@@ -1134,24 +1118,21 @@ int OGROSMDataSource::UncompressWay( int nBytes, GByte* pabyCompressedWay,
 
         if( pasTags )
         {
-            pasTags[iTag].pszK = asKeys[nK];
-            pasTags[iTag].pszV = nV ? aoMapIndexedKeys[pasTags[iTag].pszK].asValues[nV] : (const char*) pszV;
+            CPLAssert(nK >= 0 && nK < (int)asKeys.size());
+            pasTags[iTag].pszK = asKeys[nK]->pszK;
+            CPLAssert(nV == 0 || (nV > 0 && nV < (int)asKeys[nK]->asValues.size()));
+            pasTags[iTag].pszV = nV ? asKeys[nK]->asValues[nV] : (const char*) pszV;
         }
     }
 
-    memcpy(&panCoords[0], pabyPtr, sizeof(int));
-    memcpy(&panCoords[1], pabyPtr + sizeof(int), sizeof(int));
+    memcpy(&pasCoords[0].nLon, pabyPtr, sizeof(int));
+    memcpy(&pasCoords[0].nLat, pabyPtr + sizeof(int), sizeof(int));
     pabyPtr += 2 * sizeof(int);
     int nPoints = 1;
     do
     {
-        GIntBig nSVal64 = ReadVarInt64(&pabyPtr);
-        GIntBig nDiff64 = ((nSVal64 & 1) == 0) ? (((GUIntBig)nSVal64) >> 1) : -(((GUIntBig)nSVal64) >> 1)-1;
-        panCoords[2 * nPoints + 0] = panCoords[2 * (nPoints - 1) + 0] + nDiff64;
-
-        nSVal64 = ReadVarInt64(&pabyPtr);
-        nDiff64 = ((nSVal64 & 1) == 0) ? (((GUIntBig)nSVal64) >> 1) : -(((GUIntBig)nSVal64) >> 1)-1;
-        panCoords[2 * nPoints + 1] = panCoords[2 * (nPoints - 1) + 1] + nDiff64;
+        pasCoords[nPoints].nLon = pasCoords[nPoints-1].nLon + ReadVarSInt64(&pabyPtr);
+        pasCoords[nPoints].nLat = pasCoords[nPoints-1].nLat + ReadVarSInt64(&pabyPtr);
 
         nPoints ++;
     } while (pabyPtr < pabyCompressedWay + nBytes);
@@ -1164,15 +1145,15 @@ int OGROSMDataSource::UncompressWay( int nBytes, GByte* pabyCompressedWay,
 /************************************************************************/
 
 void OGROSMDataSource::IndexWay(GIntBig nWayID,
-                                unsigned int nTags, OSMTag* pasTags,
-                                int* panLonLatPairs, int nPairs)
+                                unsigned int nTags, IndexedKVP* pasTags,
+                                LonLat* pasLonLatPairs, int nPairs)
 {
     if( !bIndexWays )
         return;
 
     sqlite3_bind_int64( hInsertWayStmt, 1, nWayID );
 
-    int nBufferSize = CompressWay (nTags, pasTags, nPairs, panLonLatPairs, pabyWayBuffer);
+    int nBufferSize = CompressWay (nTags, pasTags, nPairs, pasLonLatPairs, pabyWayBuffer);
     CPLAssert(nBufferSize <= WAY_BUFFER_SIZE);
     sqlite3_bind_blob( hInsertWayStmt, 2, pabyWayBuffer,
                        nBufferSize, SQLITE_STATIC );
@@ -1221,25 +1202,36 @@ void OGROSMDataSource::ProcessWaysBatch()
 
     for(int iPair = 0; iPair < nWayFeaturePairs; iPair ++)
     {
-        int iLocalCurLayer = pasWayFeaturePairs[iPair].iCurLayer;
+        WayFeaturePair* psWayFeaturePairs = &pasWayFeaturePairs[iPair];
+
+        int iLocalCurLayer = psWayFeaturePairs->iCurLayer;
 
         unsigned int nFound = 0;
         unsigned int i;
-        for(i=0;i<pasWayFeaturePairs[iPair].nRefs;i++)
+        int nIdx = -1;
+        for(i=0;i<psWayFeaturePairs->nRefs;i++)
         {
-            int nIdx = FindNode( pasWayFeaturePairs[iPair].panNodeRefs[i] );
+            if( nIdx >= 0 && psWayFeaturePairs->panNodeRefs[i] == psWayFeaturePairs->panNodeRefs[i-1] + 1 )
+            {
+                if( nIdx+1 < (int)nReqIds && panReqIds[nIdx+1] == psWayFeaturePairs->panNodeRefs[i] )
+                    nIdx ++;
+                else
+                    nIdx = -1;
+            }
+            else
+                nIdx = FindNode( psWayFeaturePairs->panNodeRefs[i] );
             if (nIdx >= 0)
             {
-                panLonLatCache[nFound * 2 + 0] = pasLonLatArray[nIdx].nLon;
-                panLonLatCache[nFound * 2 + 1] = pasLonLatArray[nIdx].nLat;
+                pasLonLatCache[nFound].nLon = pasLonLatArray[nIdx].nLon;
+                pasLonLatCache[nFound].nLat = pasLonLatArray[nIdx].nLat;
                 nFound ++;
             }
         }
 
         if( nFound > 0 && iLocalCurLayer == IDX_LYR_POLYGONS )
         {
-            panLonLatCache[nFound * 2 + 0] = panLonLatCache[0 * 2 + 0];
-            panLonLatCache[nFound * 2 + 1] = panLonLatCache[0 * 2 + 1];
+            pasLonLatCache[nFound].nLon = pasLonLatCache[0].nLon;
+            pasLonLatCache[nFound].nLat = pasLonLatCache[0].nLat;
             nFound ++;
         }
 
@@ -1255,10 +1247,10 @@ void OGROSMDataSource::ProcessWaysBatch()
             IndexWay(pasWayFeaturePairs[iPair].nWayID,
                      pasWayFeaturePairs[iPair].nTags,
                      pasWayFeaturePairs[iPair].pasTags,
-                     panLonLatCache, (int)nFound);
+                     pasLonLatCache, (int)nFound);
         else
             IndexWay(pasWayFeaturePairs[iPair].nWayID, 0, NULL,
-                     panLonLatCache, (int)nFound);
+                     pasLonLatCache, (int)nFound);
 
         if( pasWayFeaturePairs[iPair].poFeature == NULL )
         {
@@ -1286,8 +1278,8 @@ void OGROSMDataSource::ProcessWaysBatch()
         for(i=0;i<nFound;i++)
         {
             poLS->setPoint(i,
-                        INT_TO_DBL(panLonLatCache[i * 2 + 0]),
-                        INT_TO_DBL(panLonLatCache[i * 2 + 1]));
+                        INT_TO_DBL(pasLonLatCache[i].nLon),
+                        INT_TO_DBL(pasLonLatCache[i].nLat));
         }
 
         pasWayFeaturePairs[iPair].poFeature->SetGeometryDirectly(poGeom);
@@ -1385,8 +1377,7 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
         for(i=0;i<psWay->nTags;i++)
         {
             const char* pszK = psWay->pasTags[i].pszK;
-            if( papoLayers[iCurLayer]->aoSetUnsignificantKeys.find(pszK) ==
-                papoLayers[iCurLayer]->aoSetUnsignificantKeys.end() )
+            if( papoLayers[iCurLayer]->IsSignificantKey(pszK) )
             {
                 bInterestingTag = TRUE;
                 break;
@@ -1464,57 +1455,70 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
             if (strcmp(pszK, "FIXME") == 0)
                 continue;
 
-            std::map<CPLString, KeyDesc>::iterator oIterK;
-            oIterK = aoMapIndexedKeys.find(pszK);
+            std::map<const char*, KeyDesc*, ConstCharComp>::iterator oIterK =
+                aoMapIndexedKeys.find(pszK);
+            KeyDesc* psKD;
             if (oIterK == aoMapIndexedKeys.end())
             {
-                KeyDesc sKD;
-                sKD.nKeyIndex = nNextKeyIndex ++;
+                if( nNextKeyIndex >= 32768 ) /* somewhat arbitrary */
+                {
+                    if( nNextKeyIndex == 32768 )
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Too many different keys in file");
+                        nNextKeyIndex ++; /* to avoid next warnings */
+                    }
+                    continue;
+                }
+                psKD = new KeyDesc();
+                psKD->pszK = CPLStrdup(pszK);
+                psKD->nKeyIndex = nNextKeyIndex ++;
                 //CPLDebug("OSM", "nNextKeyIndex=%d", nNextKeyIndex);
-                sKD.nNextValueIndex = 1;
-                sKD.bHasWarnedManyValues = FALSE;
-                sKD.nOccurences = 0;
-                sKD.asValues.push_back(CPLStrdup(""));
-                aoMapIndexedKeys[pszK] = sKD;
-                asKeys.push_back(CPLStrdup(pszK));
-                oIterK = aoMapIndexedKeys.find(pszK);
+                psKD->nOccurences = 0;
+                psKD->asValues.push_back(CPLStrdup(""));
+                aoMapIndexedKeys[psKD->pszK] = psKD;
+                asKeys.push_back(psKD);
             }
-            KeyDesc& sKD = oIterK->second;
-            sKD.nOccurences ++;
+            else
+                psKD = oIterK->second;
+            psKD->nOccurences ++;
 
-            pasAccumulatedTags[nAccumulatedTags].pszK = asKeys[sKD.nKeyIndex];
+            pasAccumulatedTags[nAccumulatedTags].nKeyIndex = psKD->nKeyIndex;
 
             /* to fit in 2 bytes, the theoretical limit would be 127 * 128 + 127 */
-            if( sKD.nNextValueIndex < 1024 )
+            if( psKD->asValues.size() < 1024 )
             {
-                std::map<CPLString, int>::iterator oIterV;
-                oIterV = sKD.anMapV.find(pszV);
-                int nVIndex;
-                if (oIterV == sKD.anMapV.end())
+                std::map<const char*, int, ConstCharComp>::iterator oIterV;
+                oIterV = psKD->anMapV.find(pszV);
+                int nValueIndex;
+                if (oIterV == psKD->anMapV.end())
                 {
-                    nVIndex = sKD.nNextValueIndex;
-                    sKD.anMapV[pszV] = sKD.nNextValueIndex ++;
-                    sKD.asValues.push_back(CPLStrdup(pszV));
+                    char* pszVDup = CPLStrdup(pszV);
+                    nValueIndex = (int)psKD->asValues.size();
+                    psKD->anMapV[pszVDup] = nValueIndex;
+                    psKD->asValues.push_back(pszVDup);
                 }
                 else
-                    nVIndex = oIterV->second;
+                    nValueIndex = oIterV->second;
 
-                pasAccumulatedTags[nAccumulatedTags].pszV = sKD.asValues[nVIndex];
+                pasAccumulatedTags[nAccumulatedTags].bVIsIndex = TRUE;
+                pasAccumulatedTags[nAccumulatedTags].u.nValueIndex = nValueIndex;
             }
             else
             {
                 int nLenV = strlen(pszV) + 1;
 
-                if( !sKD.bHasWarnedManyValues )
+                if( psKD->asValues.size() == 1024 )
                 {
-                    sKD.bHasWarnedManyValues = TRUE;
                     CPLDebug("OSM", "More than %d different values for tag %s",
                             1024, pszK);
+                    psKD->asValues.push_back(CPLStrdup(""));  /* to avoid next warnings */
                 }
 
                 CPLAssert( nNonRedundantValuesLen + nLenV <= MAX_NON_REDUNDANT_VALUES );
                 memcpy(pabyNonRedundantValues + nNonRedundantValuesLen, pszV, nLenV);
-                pasAccumulatedTags[nAccumulatedTags].pszV = (const char*) pabyNonRedundantValues + nNonRedundantValuesLen;
+                pasAccumulatedTags[nAccumulatedTags].bVIsIndex = FALSE;
+                pasAccumulatedTags[nAccumulatedTags].u.nOffsetInpabyNonRedundantValues = nNonRedundantValuesLen;
                 nNonRedundantValuesLen += nLenV;
             }
             nAccumulatedTags ++;
@@ -1659,7 +1663,7 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
         {
             const std::pair<int, void*>& oGeom = aoMapWays[ psRelation->pasMembers[i].nID ];
 
-            int* panCoords = (int*) panLonLatCache;
+            LonLat* pasCoords = (LonLat*) pasLonLatCache;
             int nPoints;
 
             if( pnTags != NULL && *pnTags == 0 &&
@@ -1671,19 +1675,19 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
                 memcpy(pabyWayBuffer, pabyCompressedWay, nCompressedWaySize);
 
                 nPoints = UncompressWay (nCompressedWaySize, pabyWayBuffer,
-                                         panCoords,
+                                         pasCoords,
                                          pnTags, pasTags );
             }
             else
             {
-                nPoints = UncompressWay (oGeom.first, (GByte*) oGeom.second, panCoords,
+                nPoints = UncompressWay (oGeom.first, (GByte*) oGeom.second, pasCoords,
                                          NULL, NULL);
             }
 
             OGRLineString* poLS;
 
-            if ( panCoords[0] == panCoords[2 * (nPoints - 1)] &&
-                    panCoords[1] == panCoords[2 * (nPoints - 1) + 1] )
+            if ( pasCoords[0].nLon == pasCoords[nPoints - 1].nLon &&
+                 pasCoords[0].nLat == pasCoords[nPoints - 1].nLat )
             {
                 OGRPolygon* poPoly = new OGRPolygon();
                 OGRLinearRing* poRing = new OGRLinearRing();
@@ -1701,8 +1705,8 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
             for(int j=0;j<nPoints;j++)
             {
                 poLS->setPoint( j,
-                                INT_TO_DBL(panCoords[2 * j + 0]),
-                                INT_TO_DBL(panCoords[2 * j + 1]) );
+                                INT_TO_DBL(pasCoords[j].nLon),
+                                INT_TO_DBL(pasCoords[j].nLat) );
             }
 
         }
@@ -1812,8 +1816,8 @@ OGRGeometry* OGROSMDataSource::BuildGeometryCollection(OSMRelation* psRelation, 
         {
             const std::pair<int, void*>& oGeom = aoMapWays[ psRelation->pasMembers[i].nID ];
 
-            int* panCoords = (int*) panLonLatCache;
-            int nPoints = UncompressWay (oGeom.first, (GByte*) oGeom.second, panCoords, NULL, NULL);
+            LonLat* pasCoords = (LonLat*) pasLonLatCache;
+            int nPoints = UncompressWay (oGeom.first, (GByte*) oGeom.second, pasCoords, NULL, NULL);
 
             OGRLineString* poLS;
 
@@ -1824,8 +1828,8 @@ OGRGeometry* OGROSMDataSource::BuildGeometryCollection(OSMRelation* psRelation, 
             for(int j=0;j<nPoints;j++)
             {
                 poLS->setPoint( j,
-                                INT_TO_DBL(panCoords[2 * j + 0]),
-                                INT_TO_DBL(panCoords[2 * j + 1]) );
+                                INT_TO_DBL(pasCoords[j].nLon),
+                                INT_TO_DBL(pasCoords[j].nLat) );
             }
 
         }
@@ -2079,17 +2083,17 @@ int OGROSMDataSource::Open( const char * pszFilename, int bUpdateIn)
         return FALSE;
     }
 
-    panLonLatCache = (int*)VSIMalloc(sizeof(int) * 2 * MAX_NODES_PER_WAY);
+    pasLonLatCache = (LonLat*)VSIMalloc(MAX_NODES_PER_WAY * sizeof(LonLat));
     pabyWayBuffer = (GByte*)VSIMalloc(WAY_BUFFER_SIZE);
 
     panReqIds = (GIntBig*)VSIMalloc(MAX_ACCUMULATED_NODES * sizeof(GIntBig));
     pasLonLatArray = (LonLat*)VSIMalloc(MAX_ACCUMULATED_NODES * sizeof(LonLat));
     panUnsortedReqIds = (GIntBig*)VSIMalloc(MAX_ACCUMULATED_NODES * sizeof(GIntBig));
     pasWayFeaturePairs = (WayFeaturePair*)VSIMalloc(MAX_DELAYED_FEATURES * sizeof(WayFeaturePair));
-    pasAccumulatedTags = (OSMTag*) VSIMalloc(MAX_ACCUMULATED_TAGS * sizeof(OSMTag));
+    pasAccumulatedTags = (IndexedKVP*) VSIMalloc(MAX_ACCUMULATED_TAGS * sizeof(IndexedKVP));
     pabyNonRedundantValues = (GByte*) VSIMalloc(MAX_NON_REDUNDANT_VALUES);
 
-    if( panLonLatCache == NULL ||
+    if( pasLonLatCache == NULL ||
         pabyWayBuffer == NULL ||
         panReqIds == NULL ||
         pasLonLatArray == NULL ||
@@ -2737,7 +2741,7 @@ int OGROSMDataSource::ParseConf()
                 char** papszTokens2 = CSLTokenizeString2(papszTokens[1], ",", 0);
                 for(int i=0;papszTokens2[i] != NULL;i++)
                 {
-                    papoLayers[iCurLayer]->aoSetUnsignificantKeys.insert(papszTokens2[i]);
+                    papoLayers[iCurLayer]->AddUnsignificantKey(papszTokens2[i]);
                 }
                 CSLDestroy(papszTokens2);
             }
@@ -2746,8 +2750,8 @@ int OGROSMDataSource::ParseConf()
                 char** papszTokens2 = CSLTokenizeString2(papszTokens[1], ",", 0);
                 for(int i=0;papszTokens2[i] != NULL;i++)
                 {
-                    papoLayers[iCurLayer]->aoSetIgnoreKeys.insert(papszTokens2[i]);
-                    papoLayers[iCurLayer]->aoSetWarnKeys.insert(papszTokens2[i]);
+                    papoLayers[iCurLayer]->AddIgnoreKey(papszTokens2[i]);
+                    papoLayers[iCurLayer]->AddWarnKey(papszTokens2[i]);
                 }
                 CSLDestroy(papszTokens2);
             }
@@ -2811,15 +2815,14 @@ int OGROSMDataSource::ResetReading()
         nNonRedundantValuesLen = 0;
 
         for(i=0;i<(int)asKeys.size();i++)
-            CPLFree(asKeys[i]);
-        asKeys.resize(0);
-        std::map<CPLString, KeyDesc>::iterator oIter = aoMapIndexedKeys.begin();
-        for(; oIter != aoMapIndexedKeys.end(); ++oIter)
         {
-            KeyDesc& sKD = oIter->second;
-            for(i=0;i<(int)sKD.asValues.size();i++)
-                CPLFree(sKD.asValues[i]);
+            KeyDesc* psKD = asKeys[i];
+            CPLFree(psKD->pszK);
+            for(int j=0;j<(int)psKD->asValues.size();j++)
+                CPLFree(psKD->asValues[j]);
+            delete psKD;
         }
+        asKeys.resize(0);
         aoMapIndexedKeys.clear();
         nNextKeyIndex = 0;
     }

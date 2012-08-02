@@ -38,6 +38,8 @@ CPL_CVSID("$Id$");
 #define SWITCH_THRESHOLD   10000
 #define MAX_THRESHOLD      100000
 
+#define ALLTAGS_LENGTH     8192
+
 /************************************************************************/
 /*                          OGROSMLayer()                               */
 /************************************************************************/
@@ -69,7 +71,10 @@ OGROSMLayer::OGROSMLayer(OGROSMDataSource* poDS, const char* pszName )
     bHasOtherTags = TRUE;
 
     bResetReadingAllowed = FALSE;
-    bHasWarned = FALSE;
+    bHasWarnedTooManyFeatures = FALSE;
+
+    pszAllTags = (char*)CPLMalloc(ALLTAGS_LENGTH);
+    bHasWarnedAllTagsTruncated = FALSE;
 
     bUserInterested = TRUE;
 }
@@ -92,6 +97,17 @@ OGROSMLayer::~OGROSMLayer()
         if (papoFeatures[i])
             delete papoFeatures[i];
     }
+
+    for(i=0;i<(int)apszNames.size();i++)
+        CPLFree(apszNames[i]);
+
+    for(i=0;i<(int)apszUnsignificantKeys.size();i++)
+        CPLFree(apszUnsignificantKeys[i]);
+
+    for(i=0;i<(int)apszIgnoreKeys.size();i++)
+        CPLFree(apszIgnoreKeys[i]);
+    
+    CPLFree(pszAllTags);
 
     CPLFree(papoFeatures);
 }
@@ -253,14 +269,14 @@ int  OGROSMLayer::AddToArray(OGRFeature* poFeature)
 {
     if( nFeatureArraySize > MAX_THRESHOLD)
     {
-        if( !bHasWarned )
+        if( !bHasWarnedTooManyFeatures )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Too many features have accumulated in %s layer. "
                     "Use OGR_INTERLEAVED_READING=YES mode",
                     GetName());
         }
-        bHasWarned = TRUE;
+        bHasWarnedTooManyFeatures = TRUE;
         return FALSE;
     }
 
@@ -350,22 +366,28 @@ OGRErr OGROSMLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 }
 
 /************************************************************************/
-/*                     OGROSMLayerGetFieldName()                        */
+/*                          GetLaunderedFieldName()                     */
 /************************************************************************/
 
-CPLString OGROSMLayer::GetFieldName(const char* pszName)
+const char* OGROSMLayer::GetLaunderedFieldName(const char* pszName)
 {
-    CPLString osName(pszName);
-    if( poDS->DoesAttributeNameLaundering() )
+    if( poDS->DoesAttributeNameLaundering()  &&
+        strchr(pszName, ':') != NULL )
     {
-        int nLen = (int) osName.size();
-        for( int i = 0; i < nLen; i++ )
+        size_t i;
+        for( i = 0;
+             pszName[i] != '\0' && i < sizeof(szLaunderedFieldName) - 1; i++ )
         {
-            if( osName[i] == ':' )
-                osName[i] = '_';
+            if( pszName[i] == ':' )
+                szLaunderedFieldName[i] = '_';
+            else
+                szLaunderedFieldName[i] = pszName[i];
         }
+        szLaunderedFieldName[i] = '\0';
+        return szLaunderedFieldName;
     }
-    return osName;
+    else
+        return pszName;
 }
 
 /************************************************************************/
@@ -374,9 +396,14 @@ CPLString OGROSMLayer::GetFieldName(const char* pszName)
 
 void OGROSMLayer::AddField(const char* pszName, OGRFieldType eFieldType)
 {
-    const CPLString& osLaunderedName = GetFieldName(pszName);
-    OGRFieldDefn oField(osLaunderedName, eFieldType);
+    const char* pszLaunderedName = GetLaunderedFieldName(pszName);
+    OGRFieldDefn oField(pszLaunderedName, eFieldType);
     poFeatureDefn->AddFieldDefn(&oField);
+
+    int nIndex = poFeatureDefn->GetFieldCount() - 1;
+    char* pszDupName = CPLStrdup(pszName);
+    apszNames.push_back(pszDupName);
+    oMapFieldNameToIndex[pszDupName] = nIndex;
 }
 
 /************************************************************************/
@@ -385,7 +412,12 @@ void OGROSMLayer::AddField(const char* pszName, OGRFieldType eFieldType)
 
 int OGROSMLayer::GetFieldIndex(const char* pszName)
 {
-    return poFeatureDefn->GetFieldIndex(pszName);
+    std::map<const char*, int, ConstCharComp>::iterator oIter =
+        oMapFieldNameToIndex.find(pszName);
+    if( oIter != oMapFieldNameToIndex.end() )
+        return oIter->second;
+    else
+        return -1;
 }
 
 /************************************************************************/
@@ -423,8 +455,6 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
                                     unsigned int nTags, OSMTag* pasTags,
                                     OSMInfo* psInfo)
 {
-    std::string allTags;
-
     if( (long)nID == nID )
         poFeature->SetFID( (long)nID ); /* Will not work with 32bit GDAL if id doesn't fit into 32 bits */
 
@@ -480,21 +510,34 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
         poFeature->SetField("osm_changeset", (int) psInfo->nChangeset);
     }
 
+    int nAllTagsOff = 0;
     for(unsigned int j = 0; j < nTags; j++)
     {
         const char* pszK = pasTags[j].pszK;
         const char* pszV = pasTags[j].pszV;
-        int nIndex = GetFieldIndex(GetFieldName(pszK));
+        int nIndex = GetFieldIndex(pszK);
         if( nIndex >= 0 )
             poFeature->SetField(nIndex, pszV);
         else if ( HasOtherTags() )
         {
             if ( AddInOtherTag(pszK) )
             {
-                if( allTags.size() )
-                    allTags += ",";
-                allTags += pszK;
-                allTags += "=>";
+                int nLenK = (int)strlen(pszK);
+                int nLenV = (int)strlen(pszV);
+                if( nAllTagsOff + nLenK + 2 + 1 + 2 * nLenV + 1 + 1 >= ALLTAGS_LENGTH - 1 )
+                {
+                    if( !bHasWarnedAllTagsTruncated )
+                        CPLDebug("OSM", "all_tags field truncated for feature " CPL_FRMT_GIB, nID);
+                    bHasWarnedAllTagsTruncated = TRUE;
+                    continue;
+                }
+
+                if( nAllTagsOff )
+                    pszAllTags[nAllTagsOff++] = ',';
+                memcpy(pszAllTags + nAllTagsOff, pszK, nLenK);
+                nAllTagsOff += nLenK;
+                pszAllTags[nAllTagsOff++] = '=';
+                pszAllTags[nAllTagsOff++] = '>';
 
                 int k;
                 int bMustEscape = FALSE;
@@ -508,17 +551,20 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
                 }
                 if( bMustEscape )
                 {
-                    allTags += "\"";
+                    pszAllTags[nAllTagsOff++] = '"';
                     for(k=0;pszV[k] != '\0'; k++)
                     {
                         if( pszV[k] == '"' )
-                            allTags += "\"";
-                        allTags += pszV[k];
+                            pszAllTags[nAllTagsOff++] = '"';
+                        pszAllTags[nAllTagsOff++] = pszV[k];
                     }
-                    allTags += "\"";
+                    pszAllTags[nAllTagsOff++] = '"';
                 }
                 else
-                    allTags += pszV;
+                {
+                    memcpy(pszAllTags + nAllTagsOff, pszV, nLenV);
+                    nAllTagsOff += nLenV;
+                }
             }
 
 #ifdef notdef
@@ -531,8 +577,12 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
 #endif
         }
     }
-    if( allTags.size() )
-        poFeature->SetField(GetLayerDefn()->GetFieldCount() - 1, allTags.c_str());
+
+    if( nAllTagsOff )
+    {
+        pszAllTags[nAllTagsOff] = '\0';
+        poFeature->SetField(GetLayerDefn()->GetFieldCount() - 1, pszAllTags);
+    }
 }
 
 /************************************************************************/
@@ -545,4 +595,35 @@ const OGREnvelope* OGROSMLayer::GetSpatialFilterEnvelope()
         return &m_sFilterEnvelope;
     else
         return NULL;
+}
+
+/************************************************************************/
+/*                        AddUnsignificantKey()                         */
+/************************************************************************/
+
+void OGROSMLayer::AddUnsignificantKey(const char* pszK)
+{
+    char* pszKDup = CPLStrdup(pszK);
+    apszUnsignificantKeys.push_back(pszKDup);
+    aoSetUnsignificantKeys[pszKDup] = 1;
+}
+
+/************************************************************************/
+/*                          AddIgnoreKey()                              */
+/************************************************************************/
+
+void OGROSMLayer::AddIgnoreKey(const char* pszK)
+{
+    char* pszKDup = CPLStrdup(pszK);
+    apszIgnoreKeys.push_back(pszKDup);
+    aoSetIgnoreKeys[pszKDup] = 1;
+}
+
+/************************************************************************/
+/*                           AddWarnKey()                               */
+/************************************************************************/
+
+void OGROSMLayer::AddWarnKey(const char* pszK)
+{
+    aoSetWarnKeys.insert(pszK);
 }
