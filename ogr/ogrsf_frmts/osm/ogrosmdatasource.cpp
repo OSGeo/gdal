@@ -80,6 +80,11 @@
 /* (sector_size in bytes - 8 ) / 2, minus 8. 252 means uncompressed */
 #define BUCKET_SECTOR_SIZE_ARRAY_SIZE   1024
 
+/* compressSize should not be greater than 512, so COMPRESS_SIZE_TO_BYTE() fits on a byte */
+#define COMPRESS_SIZE_TO_BYTE(nCompressSize)  (((nCompressSize) - 8) / 2)
+#define ROUND_COMPRESS_SIZE(nCompressSize)    (((nCompressSize) + 1) / 2) * 2;
+#define COMPRESS_SIZE_FROM_BYTE(byte_on_size) ((byte_on_size) * 2 + 8)
+
 /* Max number of features that are accumulated in pasWayFeaturePairs */
 #define MAX_DELAYED_FEATURES        75000
 /* Max number of tags that are accumulated in pasAccumulatedTags */
@@ -407,7 +412,7 @@ int OGROSMDataSource::FlushCurrentSectorCompressedCase()
 {
     GByte abyOutBuffer[2 * SECTOR_SIZE];
     GByte* pabyOut = abyOutBuffer;
-    int* panSector = (int*)pabySector;
+    LonLat* pasLonLatIn = (LonLat*)pabySector;
     int nLastLon = 0, nLastLat = 0;
     int bLastValid = FALSE;
     int i;
@@ -417,25 +422,25 @@ int OGROSMDataSource::FlushCurrentSectorCompressedCase()
     pabyOut += NODE_PER_SECTOR / 8;
     for(i = 0; i < NODE_PER_SECTOR; i++)
     {
-        if( panSector[2 * i + 0] || panSector[2 * i + 1] )
+        if( pasLonLatIn[i].nLon || pasLonLatIn[i].nLat )
         {
             abyOutBuffer[i >> 3] |= (1 << (i % 8));
             if( bLastValid )
             {
-                GIntBig nDiff64Lon = (GIntBig)panSector[2 * i + 0] - (GIntBig)nLastLon;
-                GIntBig nDiff64Lat = panSector[2 * i + 1] - nLastLat;
+                GIntBig nDiff64Lon = (GIntBig)pasLonLatIn[i].nLon - (GIntBig)nLastLon;
+                GIntBig nDiff64Lat = pasLonLatIn[i].nLat - nLastLat;
                 WriteVarSInt64(nDiff64Lon, &pabyOut);
                 WriteVarSInt64(nDiff64Lat, &pabyOut);
             }
             else
             {
-                memcpy(pabyOut, panSector + 2 * i, 8);
-                pabyOut += 8;
+                memcpy(pabyOut, &pasLonLatIn[i], sizeof(LonLat));
+                pabyOut += sizeof(LonLat);
             }
             bLastValid = TRUE;
 
-            nLastLon = panSector[2 * i + 0];
-            nLastLat = panSector[2 * i + 1];
+            nLastLon = pasLonLatIn[i].nLon;
+            nLastLat = pasLonLatIn[i].nLat;
         }
     }
 
@@ -443,7 +448,7 @@ int OGROSMDataSource::FlushCurrentSectorCompressedCase()
     CPLAssert(nCompressSize < sizeof(abyOutBuffer) - 1);
     abyOutBuffer[nCompressSize] = 0;
 
-    nCompressSize = ((nCompressSize + 1) / 2) * 2;
+    nCompressSize = ROUND_COMPRESS_SIZE(nCompressSize);
     GByte* pabyToWrite;
     if(nCompressSize >= SECTOR_SIZE)
     {
@@ -459,7 +464,8 @@ int OGROSMDataSource::FlushCurrentSectorCompressedCase()
         nNodesFileSize += nCompressSize;
 
         Bucket* psBucket = &papsBuckets[nBucketOld];
-        psBucket->u.panSectorSize[nOffInBucketReducedOld] = (nCompressSize - 8) / 2;
+        psBucket->u.panSectorSize[nOffInBucketReducedOld] =
+                                    COMPRESS_SIZE_TO_BYTE(nCompressSize);
 
         return TRUE;
     }
@@ -718,40 +724,40 @@ static GIntBig ReadVarSInt64(GByte** ppabyPtr)
 static int DecompressSector(GByte* pabyIn, int nSectorSize, GByte* pabyOut)
 {
     GByte* pabyPtr = pabyIn;
-    int* panOut = (int*) pabyOut;
+    LonLat* pasLonLatOut = (LonLat*) pabyOut;
     int nLastLon = 0, nLastLat = 0;
     int bLastValid = FALSE;
     int i;
 
-    pabyPtr += 8;
+    pabyPtr += NODE_PER_SECTOR / 8;
     for(i = 0; i < NODE_PER_SECTOR; i++)
     {
         if( pabyIn[i >> 3] & (1 << (i % 8)) )
         {
             if( bLastValid )
             {
-                panOut[2 * i + 0] = nLastLon + ReadVarSInt64(&pabyPtr);
-                panOut[2 * i + 1] = nLastLat + ReadVarSInt64(&pabyPtr);
+                pasLonLatOut[i].nLon = nLastLon + ReadVarSInt64(&pabyPtr);
+                pasLonLatOut[i].nLat = nLastLat + ReadVarSInt64(&pabyPtr);
             }
             else
             {
                 bLastValid = TRUE;
-                memcpy(panOut + 2 * i, pabyPtr, 8);
-                pabyPtr += 8;
+                memcpy(&(pasLonLatOut[i]), pabyPtr, sizeof(LonLat));
+                pabyPtr += sizeof(LonLat);
             }
 
-            nLastLon = panOut[2 * i + 0];
-            nLastLat = panOut[2 * i + 1];
+            nLastLon = pasLonLatOut[i].nLon;
+            nLastLat = pasLonLatOut[i].nLat;
         }
         else
         {
-            panOut[2 * i + 0] = 0;
-            panOut[2 * i + 1] = 0;
+            pasLonLatOut[i].nLon = 0;
+            pasLonLatOut[i].nLat = 0;
         }
     }
 
     int nRead = (int)(pabyPtr - pabyIn);
-    nRead = ((nRead + 1) / 2) * 2;
+    nRead = ROUND_COMPRESS_SIZE(nRead);
     return( nRead == nSectorSize );
 }
 
@@ -867,14 +873,14 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
         if ( nOffInBucketReduced != nOffInBucketReducedOld )
         {
             Bucket* psBucket = &papsBuckets[nBucket];
-            int nSectorSize = psBucket->u.panSectorSize[nOffInBucketReduced] * 2 + 8;
+            int nSectorSize = COMPRESS_SIZE_FROM_BYTE(psBucket->u.panSectorSize[nOffInBucketReduced]);
 
             /* If we stay in the same bucket, we can reuse the previously */
             /* computed offset, instead of starting from bucket start */
             for(; k < nOffInBucketReduced; k++)
             {
                 if( psBucket->u.panSectorSize[k] )
-                    nOffFromBucketStart += psBucket->u.panSectorSize[k] * 2 + 8;
+                    nOffFromBucketStart += COMPRESS_SIZE_FROM_BYTE(psBucket->u.panSectorSize[k]);
             }
 
             VSIFSeekL(fpNodes, psBucket->nOff + nOffFromBucketStart, SEEK_SET);
@@ -913,7 +919,9 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
         }
 
         panReqIds[j] = id;
-        memcpy(pasLonLatArray + j, pabySector + nOffInBucketReducedRemainer * 8, 8);
+        memcpy(pasLonLatArray + j,
+               pabySector + nOffInBucketReducedRemainer * sizeof(LonLat),
+               sizeof(LonLat));
 
         if( pasLonLatArray[j].nLon || pasLonLatArray[j].nLat )
             j++;
