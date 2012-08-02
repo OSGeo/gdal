@@ -65,9 +65,8 @@ OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn )
     
     poGeometry = NULL;
 
-    // we should likely be initializing from the defaults, but this will
-    // usually be a waste. 
-    pauFields = (OGRField *) CPLCalloc( poDefn->GetFieldCount(),
+    // Allocate array of fields and initialize them to the unset special value
+    pauFields = (OGRField *) CPLMalloc( poDefn->GetFieldCount() *
                                         sizeof(OGRField) );
 
     for( int i = 0; i < poDefn->GetFieldCount(); i++ )
