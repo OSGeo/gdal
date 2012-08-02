@@ -2581,6 +2581,12 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
             CPLErrorReset();
             poDstFeature = OGRFeature::CreateFeature( poDstLayer->GetLayerDefn() );
 
+            /* Optimization to avoid duplicating the source geometry in the */
+            /* target feature : we steal it from the source feature for now... */
+            OGRGeometry* poStealedGeometry = NULL;
+            if( !bExplodeCollections )
+                poStealedGeometry = poFeature->StealGeometry();
+
             if( poDstFeature->SetFrom( poFeature, panMap, TRUE ) != OGRERR_NONE )
             {
                 if( nGroupTransactions )
@@ -2592,10 +2598,15 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
 
                 OGRFeature::DestroyFeature( poFeature );
                 OGRFeature::DestroyFeature( poDstFeature );
+                OGRGeometryFactory::destroyGeometry( poStealedGeometry );
                 VSIFree(panMap);
                 CSLDestroy(papszTransformOptions);
                 return FALSE;
             }
+
+            /* ... and now we can attach the stealed geometry */
+            if( poStealedGeometry )
+                poDstFeature->SetGeometryDirectly(poStealedGeometry);
 
             if( bPreserveFID )
                 poDstFeature->SetFID( poFeature->GetFID() );
