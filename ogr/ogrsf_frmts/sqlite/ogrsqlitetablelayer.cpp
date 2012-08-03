@@ -105,6 +105,7 @@ void OGRSQLiteTableLayer::ClearInsertStmt()
 
 CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName, 
                                         const char *pszGeomCol,
+                                        int bMustIncludeGeomColName,
                                         OGRwkbGeometryType eGeomType,
                                         const char *pszGeomFormat,
                                         OGRSpatialReference *poSRS,
@@ -150,6 +151,11 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
     this->pszTableName = CPLStrdup(pszTableName);
     this->eGeomType = eGeomType;
 
+    if( bMustIncludeGeomColName )
+        osLayerName.Printf("%s(%s)", pszTableName, osGeomColumn.c_str());
+    else
+        osLayerName = pszTableName;
+
     pszEscapedTableName = CPLStrdup(OGRSQLiteEscape(pszTableName));
 
     sqlite3_stmt *hColStmt = NULL;
@@ -184,6 +190,15 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
         poSRS->Reference();
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                               GetName()                              */
+/************************************************************************/
+
+const char* OGRSQLiteTableLayer::GetName()
+{
+    return osLayerName.c_str();
 }
 
 /************************************************************************/
@@ -239,7 +254,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn()
 /* -------------------------------------------------------------------- */
 /*      Collect the rest of the fields.                                 */
 /* -------------------------------------------------------------------- */
-    BuildFeatureDefn( pszTableName, hColStmt );
+    BuildFeatureDefn( osLayerName, hColStmt, poDS->GetGeomColsForTable(pszTableName) );
     sqlite3_finalize( hColStmt );
 
 /* -------------------------------------------------------------------- */
@@ -266,7 +281,7 @@ OGRFeatureDefn* OGRSQLiteTableLayer::GetLayerDefn()
     {
         bLayerDefnError = TRUE;
 
-        poFeatureDefn = new OGRFeatureDefn( pszTableName );
+        poFeatureDefn = new OGRFeatureDefn( osLayerName );
         poFeatureDefn->Reference();
     }
 

@@ -33,6 +33,7 @@
 #include "ogrsf_frmts.h"
 #include "cpl_error.h"
 #include <map>
+#include <set>
 
 #ifdef HAVE_SPATIALITE
   #ifdef SPATIALITE_AMALGAMATION
@@ -205,7 +206,8 @@ class OGRSQLiteLayer : public OGRLayer
     int                 bIsVirtualShape;
 
     void                BuildFeatureDefn( const char *pszLayerName,
-                                          sqlite3_stmt *hStmt );
+                                          sqlite3_stmt *hStmt,
+                                          const std::set<CPLString>& aosGeomCols);
 
     void                ClearStatement();
     virtual OGRErr      ResetStatement() = 0;
@@ -266,6 +268,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     char               *pszTableName;
     char               *pszEscapedTableName;
+    CPLString           osLayerName;
 
     int                 bLayerDefnError;
 
@@ -302,6 +305,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     CPLErr              Initialize( const char *pszTableName, 
                                     const char *pszGeomCol,
+                                    int bMustIncludeGeomColName,
                                     OGRwkbGeometryType eGeomType,
                                     const char *pszGeomFormat,
                                     OGRSpatialReference *poSRS,
@@ -313,7 +317,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                     int iSpatialiteVersion = -1,
                                     int bIsVirtualShapeIn = FALSE);
 
-    virtual const char* GetName() { return pszTableName; }
+    virtual const char* GetName();
     virtual OGRwkbGeometryType GetGeomType() { return (eGeomType != wkbUnknown) ? eGeomType : OGRLayer::GetGeomType(); }
 
     virtual int         GetFeatureCount( int );
@@ -375,6 +379,9 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
 
     CPLString           osUnderlyingTableName;
     CPLString           osUnderlyingGeometryColumn;
+
+    OGRSQLiteLayer     *poUnderlyingLayer;
+    OGRSQLiteLayer     *GetUnderlyingLayer();
 
     void                BuildWhere(void);
 
@@ -512,6 +519,8 @@ class OGRSQLiteDataSource : public OGRDataSource
 
     std::map<CPLString, OGREnvelope> oMapSQLEnvelope;
 
+    std::map< CPLString, std::set<CPLString> > aoMapTableToSetOfGeomCols;
+
   public:
                         OGRSQLiteDataSource();
                         ~OGRSQLiteDataSource();
@@ -521,6 +530,7 @@ class OGRSQLiteDataSource : public OGRDataSource
 
     int                 OpenTable( const char *pszTableName, 
                                    const char *pszGeomCol = NULL,
+                                   int bMustIncludeGeomColName = FALSE,
                                    OGRwkbGeometryType eGeomType = wkbUnknown,
                                    const char *pszGeomFormat = NULL,
                                    OGRSpatialReference *poSRS = NULL,
@@ -577,6 +587,9 @@ class OGRSQLiteDataSource : public OGRDataSource
 
     const OGREnvelope*  GetEnvelopeFromSQL(const CPLString& osSQL);
     void                SetEnvelopeForSQL(const CPLString& osSQL, const OGREnvelope& oEnvelope);
+
+    const std::set<CPLString>& GetGeomColsForTable(const char* pszTableName)
+            { return aoMapTableToSetOfGeomCols[pszTableName]; }
 };
 
 /************************************************************************/
