@@ -118,7 +118,8 @@ OGRSQLiteLayer::~OGRSQLiteLayer()
 /************************************************************************/
 
 void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
-                                         sqlite3_stmt *hStmt )
+                                       sqlite3_stmt *hStmt,
+                                       const std::set<CPLString>& aosGeomCols )
 
 {
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
@@ -155,7 +156,9 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         if( osGeomColumn.size()
             && EQUAL(oField.GetNameRef(),osGeomColumn) )
             continue;
-        
+        if( aosGeomCols.find( oField.GetNameRef() ) != aosGeomCols.end() )
+            continue;
+
         int nColType = sqlite3_column_type( hStmt, iCol );
         const char * pszDeclType = sqlite3_column_decltype(hStmt, iCol);
         //CPLDebug("SQLITE", "decltype(%s) = %s",
@@ -206,6 +209,44 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
             osGeomColumn = oField.GetNameRef();
             eGeomFormat = OSGF_SpatiaLite;
             continue;
+        }
+
+        // Recognize a geometry column from trying to build the geometry
+        // Usefull for OGRSQLiteSelectLayer
+        if( nColType == SQLITE_BLOB && osGeomColumn.size() == 0 )
+        {
+            const int nBytes = sqlite3_column_bytes( hStmt, iCol );
+            if( nBytes )
+            {
+                OGRGeometry* poGeometry = NULL;
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+                if( OGRGeometryFactory::createFromWkb(
+                        (GByte*)sqlite3_column_blob( hStmt, iCol ),
+                        NULL, &poGeometry, nBytes ) == OGRERR_NONE )
+                {
+                    eGeomFormat = OSGF_WKB;
+                }
+                else if (!bTriedAsSpatiaLite)
+                {
+                    /* If the layer is the result of a sql select, we cannot be sure if it is */
+                    /* WKB or SpatialLite format */
+                    if( ImportSpatiaLiteGeometry(
+                        (GByte*)sqlite3_column_blob( hStmt, iCol ), nBytes,
+                        &poGeometry ) == OGRERR_NONE )
+                    {
+                        eGeomFormat = OSGF_SpatiaLite;
+                    }
+                    bTriedAsSpatiaLite = TRUE;
+                }
+                CPLPopErrorHandler();
+                CPLErrorReset();
+                if( poGeometry != NULL )
+                {
+                    osGeomColumn = oField.GetNameRef();
+                    delete poGeometry;
+                    continue;
+                }
+            }
         }
 
         // The rowid is for internal use, not a real column.

@@ -92,6 +92,7 @@ CPLErr OGRSQLiteViewLayer::Initialize( const char *pszViewName,
 
     osUnderlyingTableName = pszUnderlyingTableName;
     osUnderlyingGeometryColumn = pszUnderlyingGeometryColumn;
+    poUnderlyingLayer = NULL;
 
     this->bSpatialiteLoaded = bSpatialiteLoaded;
     //this->bHasM = bHasM;
@@ -125,6 +126,30 @@ OGRFeatureDefn* OGRSQLiteViewLayer::GetLayerDefn()
 }
 
 /************************************************************************/
+/*                        GetUnderlyingLayer()                          */
+/************************************************************************/
+
+OGRSQLiteLayer* OGRSQLiteViewLayer::GetUnderlyingLayer()
+{
+    if( poUnderlyingLayer == NULL )
+    {
+        poUnderlyingLayer =
+            (OGRSQLiteLayer*) poDS->GetLayerByName(osUnderlyingTableName);
+        if( poUnderlyingLayer == NULL &&
+            strchr(osUnderlyingTableName, '(') == NULL )
+        {
+            CPLString osNewUnderlyingTableName;
+            osNewUnderlyingTableName.Printf("%s(%s)",
+                                            osUnderlyingTableName.c_str(),
+                                            osUnderlyingGeometryColumn.c_str());
+            poUnderlyingLayer =
+                (OGRSQLiteLayer*) poDS->GetLayerByName(osNewUnderlyingTableName);
+        }
+    }
+    return poUnderlyingLayer;
+}
+
+/************************************************************************/
 /*                            GetGeomType()                             */
 /************************************************************************/
 
@@ -133,7 +158,7 @@ OGRwkbGeometryType OGRSQLiteViewLayer::GetGeomType()
     if (poFeatureDefn)
         return poFeatureDefn->GetGeomType();
 
-    OGRSQLiteLayer* poUnderlyingLayer = (OGRSQLiteLayer*) poDS->GetLayerByName(osUnderlyingTableName);
+    OGRSQLiteLayer* poUnderlyingLayer = GetUnderlyingLayer();
     if (poUnderlyingLayer)
         return poUnderlyingLayer->GetGeomType();
 
@@ -151,7 +176,7 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
     sqlite3_stmt *hColStmt = NULL;
     const char *pszSQL;
 
-    OGRSQLiteLayer* poUnderlyingLayer = (OGRSQLiteLayer*) poDS->GetLayerByName(osUnderlyingTableName);
+    OGRSQLiteLayer* poUnderlyingLayer = GetUnderlyingLayer();
     if (poUnderlyingLayer == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -214,7 +239,8 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
 /* -------------------------------------------------------------------- */
 /*      Collect the rest of the fields.                                 */
 /* -------------------------------------------------------------------- */
-    BuildFeatureDefn( pszViewName, hColStmt );
+    std::set<CPLString> aosEmpty;
+    BuildFeatureDefn( pszViewName, hColStmt, aosEmpty );
     sqlite3_finalize( hColStmt );
 
 /* -------------------------------------------------------------------- */

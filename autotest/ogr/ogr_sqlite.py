@@ -193,7 +193,7 @@ def ogr_sqlite_3():
         orig_feat.Destroy()
 
     gdaltest.poly_feat = None
-    gdaltest.shp_ds.Destroy()
+    gdaltest.shp_ds = None
 
     if tr:
         return 'success'
@@ -1894,6 +1894,185 @@ def ogr_spatialite_7():
     return 'success'
 
 ###############################################################################
+# Test tables with multiple geometry columns (#4768)
+
+def ogr_spatialite_8():
+
+    if gdaltest.has_spatialite == False:
+        return 'skip'
+
+    if gdaltest.spatialite_version.find('2.3') == 0:
+        return 'skip'
+
+    try:
+        os.remove('tmp/ogr_spatialite_8.sqlite')
+    except:
+        pass
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_spatialite_8.sqlite', options = ['SPATIALITE=YES'])
+    ds.ExecuteSQL("CREATE TABLE test(OGC_FID INTEGER PRIMARY KEY, foo VARCHAR)")
+    ds.ReleaseResultSet(ds.ExecuteSQL("SELECT AddGeometryColumn('test', 'geom1', 4326, 'POINT', 2)"))
+    ds.ReleaseResultSet(ds.ExecuteSQL("SELECT AddGeometryColumn('test', 'geom2', 4326, 'LINESTRING', 2)"))
+    ds.ReleaseResultSet(ds.ExecuteSQL("SELECT CreateSpatialIndex('test', 'geom1')"))
+    ds.ReleaseResultSet(ds.ExecuteSQL("SELECT CreateSpatialIndex('test', 'geom2')"))
+    ds.ExecuteSQL("INSERT INTO test (foo, geom1, geom2) VALUES ('bar', GeomFromText('POINT(0 1)',4326), GeomFromText('LINESTRING(0 1,2 3)',4326))")
+    ds.ExecuteSQL('CREATE VIEW view_test_geom1 AS SELECT OGC_FID AS pk_id, foo, geom1 AS renamed_geom1 FROM test')
+    ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column) VALUES " + \
+                    "('view_test_geom1', 'renamed_geom1', 'pk_id', 'test', 'geom1')")
+    ds.ExecuteSQL('CREATE VIEW view_test_geom2 AS SELECT OGC_FID AS pk_id, foo, geom2 AS renamed_geom2 FROM test')
+    ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column) VALUES " + \
+                    "('view_test_geom2', 'renamed_geom2', 'pk_id', 'test', 'geom2')")
+    ds = None
+
+    ds = ogr.Open('tmp/ogr_spatialite_8.sqlite')
+
+    lyr = ds.GetLayerByName('test(geom1)')
+    view_lyr = ds.GetLayerByName('view_test_geom1')
+    if lyr.GetGeometryColumn() != 'geom1':
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if view_lyr.GetGeometryColumn() != 'renamed_geom1':
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if lyr.GetGeomType() != ogr.wkbPoint:
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if view_lyr.GetGeomType() != lyr.GetGeomType():
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if view_lyr.GetFeatureCount() != lyr.GetFeatureCount():
+        gdaltest.post_reason('failed')
+        return 'fail'
+    feat = view_lyr.GetFeature(1)
+    if feat.GetFieldAsString(0) != 'bar':
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+    view_lyr.SetSpatialFilterRect(-1,-1,10,10)
+    feat = view_lyr.GetNextFeature()
+    if feat.GetFID() != 1:
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+
+    lyr = ds.GetLayerByName('test(geom2)')
+    view_lyr = ds.GetLayerByName('view_test_geom2')
+    if lyr.GetGeometryColumn() != 'geom2':
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if view_lyr.GetGeometryColumn() != 'renamed_geom2':
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if lyr.GetGeomType() != ogr.wkbLineString:
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if view_lyr.GetGeomType() != lyr.GetGeomType():
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if view_lyr.GetFeatureCount() != lyr.GetFeatureCount():
+        gdaltest.post_reason('failed')
+        return 'fail'
+    feat = view_lyr.GetFeature(1)
+    if feat.GetFieldAsString(0) != 'bar':
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+    view_lyr.SetSpatialFilterRect(-1,-1,10,10)
+    feat = view_lyr.GetNextFeature()
+    if feat.GetFID() != 1:
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+    if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (0 1,2 3)':
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+
+    sql_lyr = ds.ExecuteSQL('SELECT foo, geom2 FROM test')
+    sql_lyr.SetSpatialFilterRect(-1,-1,10,10)
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (0 1,2 3)':
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test tables with multiple geometry columns (#4768)
+
+def ogr_sqlite_31():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    try:
+        os.remove('tmp/ogr_sqlite_31.sqlite')
+    except:
+        pass
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_31.sqlite')
+    ds.ExecuteSQL("CREATE TABLE test(OGC_FID INTEGER PRIMARY KEY, foo VARCHAR, geom1 TEXT, geom2 TEXT)")
+    ds.ExecuteSQL("INSERT INTO geometry_columns(f_table_name, f_geometry_column, geometry_format, geometry_type, coord_dimension, srid) VALUES ('test', 'geom1', 'WKT', 1, 2, 4326)")
+    ds.ExecuteSQL("INSERT INTO geometry_columns(f_table_name, f_geometry_column, geometry_format, geometry_type, coord_dimension, srid) VALUES ('test', 'geom2', 'WKT', 2, 2, 4326)")
+    ds.ExecuteSQL("INSERT INTO test (foo, geom1, geom2) VALUES ('bar', 'POINT(0 1)', 'LINESTRING(0 1,2 3)')")
+    ds = None
+
+    ds = ogr.Open('tmp/ogr_sqlite_31.sqlite')
+
+    lyr = ds.GetLayerByName('test(geom1)')
+    if lyr.GetGeometryColumn() != 'geom1':
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if lyr.GetGeomType() != ogr.wkbPoint:
+        gdaltest.post_reason('failed')
+        return 'fail'
+    lyr.SetSpatialFilterRect(-1,-1,10,10)
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != 1:
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+
+    lyr = ds.GetLayerByName('test(geom2)')
+    if lyr.GetGeometryColumn() != 'geom2':
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if lyr.GetGeomType() != ogr.wkbLineString:
+        gdaltest.post_reason('failed')
+        return 'fail'
+    lyr.SetSpatialFilterRect(-1,-1,10,10)
+    feat = lyr.GetNextFeature()
+    if feat.GetFID() != 1:
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+    if feat.GetGeometryRef().ExportToWkt() != 'LINESTRING (0 1,2 3)':
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -1914,6 +2093,8 @@ def ogr_sqlite_cleanup():
 
     gdaltest.sl_ds.Destroy()
     gdaltest.sl_ds = None
+
+    gdaltest.shp_ds = None
 
     try:
         os.remove( 'tmp/sqlite_test.db' )
@@ -1959,6 +2140,16 @@ def ogr_sqlite_cleanup():
     except:
         pass
 
+    try:
+        os.remove( 'tmp/ogr_spatialite_8.sqlite' )
+    except:
+        pass
+
+    try:
+        os.remove( 'tmp/ogr_sqlite_31.sqlite' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [ 
@@ -2000,6 +2191,8 @@ gdaltest_list = [
     ogr_spatialite_compressed_geom_5,
     ogr_spatialite_6,
     ogr_spatialite_7,
+    ogr_spatialite_8,
+    ogr_sqlite_31,
     ogr_sqlite_cleanup ]
 
 if __name__ == '__main__':
