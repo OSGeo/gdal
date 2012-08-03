@@ -53,6 +53,14 @@ at the expense of data safety w.r.t system/OS crashes. So use it carefully in
 production environments and read the SQLite
 <a href="http://www.sqlite.org/pragma.html#pragma_synchronous">related documentation</a>.</p>
 
+<h2>Tables with multiple geometries</h2>
+
+Starting with OGR 2.0, tables that have multiple geometry columns registered in geometry_columns can be used by OGR.
+For such tables, there are as many OGR layers exposed as there are geometry columns. They are named
+"table_name(geometry_column_name)".<p>
+
+Note: this support is limited to read-only operations.<p>
+
 <h2>VSI Virtual File System API support</h2>
 
 (Require OGR &gt;= 1.9.0 and SQLite &gt;= 3.6.0)<p>

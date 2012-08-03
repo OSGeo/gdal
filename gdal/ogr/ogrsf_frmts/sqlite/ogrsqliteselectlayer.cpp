@@ -48,7 +48,8 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
     nSRSId = -1;
     poFeatureDefn = NULL;
 
-    BuildFeatureDefn( "SELECT", hStmtIn );
+    std::set<CPLString> aosEmpty;
+    BuildFeatureDefn( "SELECT", hStmtIn, aosEmpty );
 
     if( bUseStatementForGetNextFeature )
     {
@@ -183,7 +184,22 @@ OGRSQLiteLayer* OGRSQLiteSelectLayer::GetBaseLayer(size_t& i)
             osBaseLayerName += osSQLBase[i];
     }
 
-    return (OGRSQLiteLayer*) poDS->GetLayerByName(osBaseLayerName);
+    OGRSQLiteLayer* poUnderlyingLayer =
+        (OGRSQLiteLayer*) poDS->GetLayerByName(osBaseLayerName);
+
+    if( poUnderlyingLayer == NULL &&
+        strchr(osBaseLayerName, '(') == NULL &&
+        osGeomColumn.size() != 0 )
+    {
+        CPLString osNewUnderlyingTableName;
+        osNewUnderlyingTableName.Printf("%s(%s)",
+                                        osBaseLayerName.c_str(),
+                                        osGeomColumn.c_str());
+        poUnderlyingLayer =
+            (OGRSQLiteLayer*) poDS->GetLayerByName(osNewUnderlyingTableName);
+    }
+
+    return poUnderlyingLayer;
 }
 
 /************************************************************************/
