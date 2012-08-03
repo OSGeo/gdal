@@ -1927,6 +1927,12 @@ def ogr_spatialite_8():
 
     lyr = ds.GetLayerByName('test(geom1)')
     view_lyr = ds.GetLayerByName('view_test_geom1')
+    if lyr.GetLayerDefn().GetFieldCount() != 1:
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if view_lyr.GetLayerDefn().GetFieldCount() != 1:
+        gdaltest.post_reason('failed')
+        return 'fail'
     if lyr.GetGeometryColumn() != 'geom1':
         gdaltest.post_reason('failed')
         return 'fail'
@@ -1962,6 +1968,12 @@ def ogr_spatialite_8():
 
     lyr = ds.GetLayerByName('test(geom2)')
     view_lyr = ds.GetLayerByName('view_test_geom2')
+    if lyr.GetLayerDefn().GetFieldCount() != 1:
+        gdaltest.post_reason('failed')
+        return 'fail'
+    if view_lyr.GetLayerDefn().GetFieldCount() != 1:
+        gdaltest.post_reason('failed')
+        return 'fail'
     if lyr.GetGeometryColumn() != 'geom2':
         gdaltest.post_reason('failed')
         return 'fail'
@@ -2031,6 +2043,9 @@ def ogr_sqlite_31():
     ds = ogr.Open('tmp/ogr_sqlite_31.sqlite')
 
     lyr = ds.GetLayerByName('test(geom1)')
+    if lyr.GetLayerDefn().GetFieldCount() != 1:
+        gdaltest.post_reason('failed')
+        return 'fail'
     if lyr.GetGeometryColumn() != 'geom1':
         gdaltest.post_reason('failed')
         return 'fail'
@@ -2050,6 +2065,9 @@ def ogr_sqlite_31():
     feat = None
 
     lyr = ds.GetLayerByName('test(geom2)')
+    if lyr.GetLayerDefn().GetFieldCount() != 1:
+        gdaltest.post_reason('failed')
+        return 'fail'
     if lyr.GetGeometryColumn() != 'geom2':
         gdaltest.post_reason('failed')
         return 'fail'
