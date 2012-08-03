@@ -757,14 +757,28 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
     
         bHaveGeometryColumns = TRUE;
 
+        for ( iRow = 0; iRow < nRowCount; iRow++ )
+        {
+            char **papszRow = papszResult + iRow * 6 + 6;
+            const char* pszTableName = papszRow[0];
+            const char* pszGeomCol = papszRow[1];
+
+            if( pszTableName == NULL || pszGeomCol == NULL )
+                continue;
+
+            aoMapTableToSetOfGeomCols[pszTableName].insert(pszGeomCol);
+        }
+
         for( iRow = 0; iRow < nRowCount; iRow++ )
         {
             char **papszRow = papszResult + iRow * 6 + 6;
             OGRwkbGeometryType eGeomType = wkbUnknown;
             int nSRID = 0;
+            const char* pszTableName = papszRow[0];
+            const char* pszGeomCol = papszRow[1];
 
-            if (papszRow[0] == NULL ||
-                papszRow[1] == NULL ||
+            if (pszTableName == NULL ||
+                pszGeomCol == NULL ||
                 papszRow[2] == NULL ||
                 papszRow[3] == NULL)
                 continue;
@@ -777,7 +791,9 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
             if( papszRow[5] != NULL )
                 nSRID = atoi(papszRow[5]);
 
-            OpenTable( papszRow[0], papszRow[1], eGeomType, papszRow[4],
+            int nOccurences = (int)aoMapTableToSetOfGeomCols[pszTableName].size();
+
+            OpenTable( pszTableName, pszGeomCol, nOccurences > 1, eGeomType, papszRow[4],
                        FetchSRS( nSRID ) );
                        
             if (bListAllTables)
@@ -843,13 +859,27 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
         for ( iRow = 0; iRow < nRowCount; iRow++ )
         {
             char **papszRow = papszResult + iRow * 6 + 6;
+            const char* pszTableName = papszRow[0];
+            const char* pszGeomCol = papszRow[1];
+
+            if( pszTableName == NULL || pszGeomCol == NULL )
+                continue;
+
+            aoMapTableToSetOfGeomCols[pszTableName].insert(pszGeomCol);
+        }
+
+        for ( iRow = 0; iRow < nRowCount; iRow++ )
+        {
+            char **papszRow = papszResult + iRow * 6 + 6;
             OGRwkbGeometryType eGeomType;
             int nSRID = 0;
             int bHasM = FALSE;
             int bHasSpatialIndex = FALSE;
+            const char* pszTableName = papszRow[0];
+            const char* pszGeomCol = papszRow[1];
 
-            if (papszRow[0] == NULL ||
-                papszRow[1] == NULL ||
+            if (pszTableName == NULL ||
+                pszGeomCol == NULL ||
                 papszRow[2] == NULL ||
                 papszRow[3] == NULL)
                 continue;
@@ -872,7 +902,9 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
             if( papszRow[5] != NULL )
                 bHasSpatialIndex = atoi(papszRow[5]);
 
-            OpenTable( papszRow[0], papszRow[1], eGeomType, "SpatiaLite",
+            int nOccurences = (int)aoMapTableToSetOfGeomCols[pszTableName].size();
+
+            OpenTable( pszTableName, pszGeomCol, nOccurences > 1, eGeomType, "SpatiaLite",
                        FetchSRS( nSRID ), nSRID, bHasSpatialIndex, bHasM, 
                        bSpatialiteReadOnly, bSpatialiteLoaded,
                        iSpatialiteVersion, bForce2D );
@@ -1031,7 +1063,7 @@ int OGRSQLiteDataSource::OpenVirtualTable(const char* pszName, const char* pszSQ
         }
     }
 
-    if (OpenTable(pszName, NULL, wkbUnknown, NULL,
+    if (OpenTable(pszName, NULL, FALSE, wkbUnknown, NULL,
                  (nSRID > 0) ? FetchSRS( nSRID ) : NULL, nSRID,
                   FALSE, FALSE, TRUE, FALSE, -1, FALSE,
                   pszVirtualShape != NULL))
@@ -1057,6 +1089,7 @@ int OGRSQLiteDataSource::OpenVirtualTable(const char* pszName, const char* pszSQ
 
 int OGRSQLiteDataSource::OpenTable( const char *pszTableName,
                                     const char *pszGeomCol,
+                                    int bMustIncludeGeomColName,
                                     OGRwkbGeometryType eGeomType,
                                     const char *pszGeomFormat,
                                     OGRSpatialReference *poSRS, int nSRID,
@@ -1075,7 +1108,7 @@ int OGRSQLiteDataSource::OpenTable( const char *pszTableName,
 
     poLayer = new OGRSQLiteTableLayer( this );
 
-    if( poLayer->Initialize( pszTableName, pszGeomCol,
+    if( poLayer->Initialize( pszTableName, pszGeomCol, bMustIncludeGeomColName,
                              eGeomType, pszGeomFormat,
                              poSRS, nSRID, bHasSpatialIndex, 
                              bHasM, bSpatialiteReadOnly,
@@ -1672,7 +1705,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 
     int iSpatialiteVersion = OGRSQLiteGetSpatialiteVersionNumber();
 
-    if ( poLayer->Initialize( pszLayerName, pszGeomCol, eType, pszGeomFormat,
+    if ( poLayer->Initialize( pszLayerName, pszGeomCol, FALSE, eType, pszGeomFormat,
                               FetchSRS(nSRSId), nSRSId, FALSE, FALSE,
                               FALSE, bSpatialiteLoaded,
                               iSpatialiteVersion ) != CE_None )
