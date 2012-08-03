@@ -1486,8 +1486,10 @@ do {                                                                    \
         {
             if ( poDS->sExtHeader.nZone == 0 )
             {
+                double centerXCoord = poDS->sHeader.dfLLX +
+                    (poDS->nRasterXSize * poDS->sHeader.dfPixelSize / 2.0);
                 padfPrjParams[7] =
-                    floor((poDS->sHeader.dfLLX - 500000.0 ) / 1000000.0);
+                    floor((centerXCoord - 500000.0 ) / 1000000.0);
             }
             else
                 padfPrjParams[7] = poDS->sExtHeader.nZone;
