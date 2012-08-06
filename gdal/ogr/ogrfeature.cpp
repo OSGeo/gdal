@@ -3084,6 +3084,94 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int *panMap ,
 /* -------------------------------------------------------------------- */
 /*      Set the fields by name.                                         */
 /* -------------------------------------------------------------------- */
+
+    eErr = SetFieldsFrom( poSrcFeature, panMap, bForgiving );
+    if( eErr != OGRERR_NONE )
+        return eErr;
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                      OGR_F_SetFromWithMap()                          */
+/************************************************************************/
+
+/**
+ * \brief Set one feature from another.
+ *
+ * Overwrite the contents of this feature from the geometry and attributes
+ * of another.  The hOtherFeature does not need to have the same
+ * OGRFeatureDefn.  Field values are copied according to the provided indices
+ * map. Field types do not have to exactly match.  OGR_F_SetField*() function 
+ * conversion rules will be applied as needed. This is more efficient than
+ * OGR_F_SetFrom() in that this doesn't lookup the fields by their names.
+ * Particularly useful when the field names don't match.
+ *
+ * This function is the same as the C++ method OGRFeature::SetFrom().
+ *
+ * @param hFeat handle to the feature to set to.
+ * @param hOtherFeat handle to the feature from which geometry,
+ * and field values will be copied.
+ *
+ * @param panMap Array of the indices of the destination feature's fields
+ * stored at the corresponding index of the source feature's fields. A value of
+ * -1 should be used to ignore the source's field. The array should not be NULL
+ * and be as long as the number of fields in the source feature.
+ * 
+ * @param bForgiving TRUE if the operation should continue despite lacking
+ * output fields matching some of the source fields.
+ *
+ * @return OGRERR_NONE if the operation succeeds, even if some values are
+ * not transferred, otherwise an error code.
+ */
+
+OGRErr OGR_F_SetFromWithMap( OGRFeatureH hFeat, OGRFeatureH hOtherFeat, 
+                      int bForgiving, int *panMap )
+
+{
+    VALIDATE_POINTER1( hFeat, "OGR_F_SetFrom", CE_Failure );
+    VALIDATE_POINTER1( hOtherFeat, "OGR_F_SetFrom", CE_Failure );
+    VALIDATE_POINTER1( panMap, "OGR_F_SetFrom", CE_Failure);
+
+    return ((OGRFeature *) hFeat)->SetFrom( (OGRFeature *) hOtherFeat, 
+                                           panMap, bForgiving );
+}
+
+/************************************************************************/
+/*                           SetFieldsFrom()                            */
+/************************************************************************/
+
+/**
+ * \brief Set fields from another feature.
+ *
+ * Overwrite the fields of this feature from the attributes of
+ * another. The FID and the style string are not set. The poSrcFeature
+ * does not need to have the same OGRFeatureDefn.  Field values are
+ * copied according to the provided indices map. Field types do not
+ * have to exactly match.  SetField() method conversion rules will be
+ * applied as needed. This is more efficient than OGR_F_SetFrom() in
+ * that this doesn't lookup the fields by their names.  Particularly
+ * useful when the field names don't match.
+ *
+ * @param poSrcFeature the feature from which geometry, and field values will
+ * be copied.
+ *
+ * @param panMap Array of the indices of the feature's fields
+ * stored at the corresponding index of the source feature's fields. A value of
+ * -1 should be used to ignore the source's field. The array should not be NULL
+ * and be as long as the number of fields in the source feature.
+ * 
+ * @param bForgiving TRUE if the operation should continue despite lacking
+ * output fields matching some of the source fields.
+ *
+ * @return OGRERR_NONE if the operation succeeds, even if some values are
+ * not transferred, otherwise an error code.
+ */
+
+OGRErr OGRFeature::SetFieldsFrom( OGRFeature * poSrcFeature, int *panMap ,
+                                  int bForgiving )
+
+{
     int         iField, iDstField;
 
     for( iField = 0; iField < poSrcFeature->GetFieldCount(); iField++ )
@@ -3180,51 +3268,6 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int *panMap ,
     }
 
     return OGRERR_NONE;
-}
-
-/************************************************************************/
-/*                      OGR_F_SetFromWithMap()                          */
-/************************************************************************/
-
-/**
- * \brief Set one feature from another.
- *
- * Overwrite the contents of this feature from the geometry and attributes
- * of another.  The hOtherFeature does not need to have the same
- * OGRFeatureDefn.  Field values are copied according to the provided indices
- * map. Field types do not have to exactly match.  OGR_F_SetField*() function 
- * conversion rules will be applied as needed. This is more efficient than
- * OGR_F_SetFrom() in that this doesn't lookup the fields by their names.
- * Particularly useful when the field names don't match.
- *
- * This function is the same as the C++ method OGRFeature::SetFrom().
- *
- * @param hFeat handle to the feature to set to.
- * @param hOtherFeat handle to the feature from which geometry,
- * and field values will be copied.
- *
- * @param panMap Array of the indices of the destination feature's fields
- * stored at the corresponding index of the source feature's fields. A value of
- * -1 should be used to ignore the source's field. The array should not be NULL
- * and be as long as the number of fields in the source feature.
- * 
- * @param bForgiving TRUE if the operation should continue despite lacking
- * output fields matching some of the source fields.
- *
- * @return OGRERR_NONE if the operation succeeds, even if some values are
- * not transferred, otherwise an error code.
- */
-
-OGRErr OGR_F_SetFromWithMap( OGRFeatureH hFeat, OGRFeatureH hOtherFeat, 
-                      int bForgiving, int *panMap )
-
-{
-    VALIDATE_POINTER1( hFeat, "OGR_F_SetFrom", CE_Failure );
-    VALIDATE_POINTER1( hOtherFeat, "OGR_F_SetFrom", CE_Failure );
-    VALIDATE_POINTER1( panMap, "OGR_F_SetFrom", CE_Failure);
-
-    return ((OGRFeature *) hFeat)->SetFrom( (OGRFeature *) hOtherFeat, 
-                                           panMap, bForgiving );
 }
 
 /************************************************************************/
