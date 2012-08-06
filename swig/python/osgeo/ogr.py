@@ -1869,6 +1869,55 @@ class Layer(_object):
         """
         return _ogr.Layer_SetIgnoredFields(self, *args)
 
+    def Intersection(self, *args):
+        """
+        Intersection(self, Layer method_layer, Layer result_layer, char options = None, 
+            GDALProgressFunc callback = None, void callback_data = None) -> OGRErr
+        """
+        return _ogr.Layer_Intersection(self, *args)
+
+    def Union(self, *args):
+        """
+        Union(self, Layer method_layer, Layer result_layer, char options = None, 
+            GDALProgressFunc callback = None, void callback_data = None) -> OGRErr
+        """
+        return _ogr.Layer_Union(self, *args)
+
+    def SymDifference(self, *args):
+        """
+        SymDifference(self, Layer method_layer, Layer result_layer, char options = None, 
+            GDALProgressFunc callback = None, void callback_data = None) -> OGRErr
+        """
+        return _ogr.Layer_SymDifference(self, *args)
+
+    def Identity(self, *args):
+        """
+        Identity(self, Layer method_layer, Layer result_layer, char options = None, 
+            GDALProgressFunc callback = None, void callback_data = None) -> OGRErr
+        """
+        return _ogr.Layer_Identity(self, *args)
+
+    def Update(self, *args):
+        """
+        Update(self, Layer method_layer, Layer result_layer, char options = None, 
+            GDALProgressFunc callback = None, void callback_data = None) -> OGRErr
+        """
+        return _ogr.Layer_Update(self, *args)
+
+    def Clip(self, *args):
+        """
+        Clip(self, Layer method_layer, Layer result_layer, char options = None, 
+            GDALProgressFunc callback = None, void callback_data = None) -> OGRErr
+        """
+        return _ogr.Layer_Clip(self, *args)
+
+    def Erase(self, *args):
+        """
+        Erase(self, Layer method_layer, Layer result_layer, char options = None, 
+            GDALProgressFunc callback = None, void callback_data = None) -> OGRErr
+        """
+        return _ogr.Layer_Erase(self, *args)
+
     def Reference(self):
       "For backwards compatibility only."
       pass
