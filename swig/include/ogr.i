@@ -731,6 +731,62 @@ public:
     return OGR_L_SetIgnoredFields( self, options );
   }
 
+  OGRErr Intersection( OGRLayerShadow *method_layer, 
+                       OGRLayerShadow *result_layer, 
+                       char **options=NULL,
+                       GDALProgressFunc callback=NULL,
+                       void* callback_data=NULL ) {
+    return OGR_L_Intersection( self, method_layer, result_layer, options, callback, callback_data );
+  }
+
+  OGRErr Union( OGRLayerShadow *method_layer, 
+                OGRLayerShadow *result_layer, 
+                char **options=NULL,
+                GDALProgressFunc callback=NULL,
+                void* callback_data=NULL ) {
+    return OGR_L_Union( self, method_layer, result_layer, options, callback, callback_data );
+  }
+
+  OGRErr SymDifference( OGRLayerShadow *method_layer, 
+                        OGRLayerShadow *result_layer, 
+                        char **options=NULL,
+                        GDALProgressFunc callback=NULL,
+                        void* callback_data=NULL ) {
+    return OGR_L_SymDifference( self, method_layer, result_layer, options, callback, callback_data );
+  }
+
+  OGRErr Identity( OGRLayerShadow *method_layer, 
+                   OGRLayerShadow *result_layer, 
+                   char **options=NULL,
+                   GDALProgressFunc callback=NULL,
+                   void* callback_data=NULL ) {
+    return OGR_L_Identity( self, method_layer, result_layer, options, callback, callback_data );
+  }
+  
+  OGRErr Update( OGRLayerShadow *method_layer, 
+                 OGRLayerShadow *result_layer, 
+                 char **options=NULL,
+                 GDALProgressFunc callback=NULL,
+                 void* callback_data=NULL ) {
+    return OGR_L_Update( self, method_layer, result_layer, options, callback, callback_data );
+  }
+
+  OGRErr Clip( OGRLayerShadow *method_layer, 
+               OGRLayerShadow *result_layer, 
+               char **options=NULL,
+               GDALProgressFunc callback=NULL,
+               void* callback_data=NULL ) {
+    return OGR_L_Clip( self, method_layer, result_layer, options, callback, callback_data );
+  }
+
+  OGRErr Erase( OGRLayerShadow *method_layer, 
+                OGRLayerShadow *result_layer, 
+                char **options=NULL,
+                GDALProgressFunc callback=NULL,
+                void* callback_data=NULL ) {
+    return OGR_L_Erase( self, method_layer, result_layer, options, callback, callback_data );
+  }
+
 } /* %extend */
 
 

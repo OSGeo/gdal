@@ -414,3 +414,5 @@ layer[0:4] would return a list of the first four features."""
 }
 
 %import typemaps_python.i
+
+%include "callback.i"
