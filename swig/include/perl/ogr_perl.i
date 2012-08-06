@@ -54,6 +54,12 @@ ALTERED_DESTROY(OGRFeatureDefnShadow, OGRc, delete_FeatureDefn)
 ALTERED_DESTROY(OGRFieldDefnShadow, OGRc, delete_FieldDefn)
 ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 
+%extend OGRDataSourceShadow {
+
+  %rename (_ExecuteSQL) ExecuteSQL;
+
+ }
+
 %extend OGRGeometryShadow {
 
     %rename (AddPoint_3D) AddPoint;
@@ -172,6 +178,12 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	sub OpenShared {
 	    return Geo::OGR::OpenShared(@_);
 	}
+	sub ExecuteSQL {
+	    my $self = shift;
+	    my $layer = $self->_ExecuteSQL(@_);
+	    $LAYERS{tied(%$layer)} = $self;
+	    return $layer;
+	}
 	sub Layer {
 	    my($self, $name) = @_;
 	    my $layer;
@@ -216,7 +228,8 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 			    SRS => undef, 
 			    GeometryType => 'Unknown', 
 			    Options => [], 
-			    Schema => undef);
+			    Schema => undef,
+			    Fields => undef);
 	    my %params;
 	    if (ref($_[0]) eq 'HASH') {
 		%params = %{$_[0]};
@@ -235,6 +248,10 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 		exists $Geo::OGR::Geometry::TYPE_STRING2INT{$params{GeometryType}};
 	    my $layer = _CreateLayer($self, $params{Name}, $params{SRS}, $params{GeometryType}, $params{Options});
 	    $LAYERS{tied(%$layer)} = $self;
+	    if ($params{Fields}) {
+		$params{Schema} = {} unless $params{Schema};
+		$params{Schema}{Fields} = $params{Fields};
+	    }
 	    $layer->Schema(%{$params{Schema}}) if $params{Schema};
 	    return $layer;
 	}
