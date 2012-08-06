@@ -251,13 +251,20 @@
 
 ## @method Geo::OGR::Layer CreateLayer($Name, $SRS = undef, $GeometryType = 'Unknown', \%Options = undef, \%Schema = undef)
 # @note This method can also be used with named parameters: $ds->CreateLayer({parameter=>value, ...}).
+#
+# Example:
+# \code
+# my $roads = Geo::OGR::Driver('Memory')->Create('road')->
+#     CreateLayer({GeometryType=>'LineString25D', Fields=>[{Name=>'class',Type=>'Integer'}]});
+# \endcode
 # @param Name name for the new layer.
 # @param SRS a Geo::OSR::SpatialReference object.
 # @param GeometryType one of \@Geo::OGR::Geometry::GEOMETRY_TYPES
-# @param Options A ref to a hash of format specific options.
+# @param Options a ref to a hash of format specific options.
 # @param Schema forwarded to Layer::Schema, which is called if this
 # parameter exists. Additionally, if $Schema->{GeometryType} exists,
 # it overrides $GeometryType argument and default.
+# @param Fields the fields for the schema of the layer [only usable as a named parameter].
 # @return a new Geo::OGR::Layer object
 
 ## @method Geo::OGR::Layer CopyLayer($layer, $name, \%options = undef)
@@ -384,6 +391,8 @@
 # is not given). The order of the data in the tuple is: feature id,
 # Geometry, fields in their order. Calls Geo::OGR::Feature::Tuple.
 # @param tuple [optional] feature data
+# @note The schema of the tuple needs to be the same as that of the
+# layer.
 # @return a reference to feature data in an array
 
 ## @method Geo::OGR::Geometry SpatialFilter($filter)
@@ -584,6 +593,8 @@
 # @note This method discards the data the destination feature (or
 # layer) does not support. Changes in data due to differences between
 # field types may also occur.
+# @note The schema of the tuple needs to be the same as that of the
+# feature.
 #
 # Get and/set the data of the feature. The order of the data in the
 # tuple is: field_id, geometry, fields in their order. The geometry is
