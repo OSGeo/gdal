@@ -39,6 +39,7 @@
  * See also: ogr_geometry.h, ogr_feature.h, ogrsf_frmts.h, ogr_featurestyle.h
  */
 
+#include "gdal.h"
 #include "ogr_core.h"
 
 CPL_C_START
@@ -382,6 +383,13 @@ OGRStyleTableH CPL_DLL OGR_L_GetStyleTable( OGRLayerH );
 void   CPL_DLL OGR_L_SetStyleTableDirectly( OGRLayerH, OGRStyleTableH );
 void   CPL_DLL OGR_L_SetStyleTable( OGRLayerH, OGRStyleTableH );
 OGRErr CPL_DLL OGR_L_SetIgnoredFields( OGRLayerH, const char** );
+OGRErr OGR_L_Intersection( OGRLayerH, OGRLayerH, OGRLayerH, char**, GDALProgressFunc, void * );
+OGRErr OGR_L_Union( OGRLayerH, OGRLayerH, OGRLayerH, char**, GDALProgressFunc, void * );
+OGRErr OGR_L_SymDifference( OGRLayerH, OGRLayerH, OGRLayerH, char**, GDALProgressFunc, void * );
+OGRErr OGR_L_Identity( OGRLayerH, OGRLayerH, OGRLayerH, char**, GDALProgressFunc, void * );
+OGRErr OGR_L_Update( OGRLayerH, OGRLayerH, OGRLayerH, char**, GDALProgressFunc, void * );
+OGRErr OGR_L_Clip( OGRLayerH, OGRLayerH, OGRLayerH, char**, GDALProgressFunc, void * );
+OGRErr OGR_L_Erase( OGRLayerH, OGRLayerH, OGRLayerH, char**, GDALProgressFunc, void * );
 
 /* OGRDataSource */
 

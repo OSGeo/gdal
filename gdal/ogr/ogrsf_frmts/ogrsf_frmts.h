@@ -30,6 +30,7 @@
 #ifndef _OGRSF_FRMTS_H_INCLUDED
 #define _OGRSF_FRMTS_H_INCLUDED
 
+#include "gdal.h"
 #include "ogr_feature.h"
 #include "ogr_featurestyle.h"
 
@@ -119,6 +120,42 @@ class CPL_DLL OGRLayer
 
     virtual OGRErr      SetIgnoredFields( const char **papszFields );
 
+    OGRErr              Intersection( OGRLayer *pLayerMethod, 
+                                      OGRLayer *pLayerResult, 
+                                      char** papszOptions = NULL, 
+                                      GDALProgressFunc pfnProgress = NULL, 
+                                      void * pProgressArg = NULL );
+    OGRErr              Union( OGRLayer *pLayerMethod, 
+                               OGRLayer *pLayerResult, 
+                               char** papszOptions = NULL, 
+                               GDALProgressFunc pfnProgress = NULL, 
+                               void * pProgressArg = NULL );
+    OGRErr              SymDifference( OGRLayer *pLayerMethod, 
+                                       OGRLayer *pLayerResult, 
+                                       char** papszOptions, 
+                                       GDALProgressFunc pfnProgress, 
+                                       void * pProgressArg );
+    OGRErr              Identity( OGRLayer *pLayerMethod, 
+                                  OGRLayer *pLayerResult, 
+                                  char** papszOptions = NULL, 
+                                  GDALProgressFunc pfnProgress = NULL, 
+                                  void * pProgressArg = NULL );
+    OGRErr              Update( OGRLayer *pLayerMethod, 
+                                OGRLayer *pLayerResult, 
+                                char** papszOptions = NULL, 
+                                GDALProgressFunc pfnProgress = NULL, 
+                                void * pProgressArg = NULL );
+    OGRErr              Clip( OGRLayer *pLayerMethod, 
+                              OGRLayer *pLayerResult, 
+                              char** papszOptions = NULL, 
+                              GDALProgressFunc pfnProgress = NULL, 
+                              void * pProgressArg = NULL );
+    OGRErr              Erase( OGRLayer *pLayerMethod, 
+                               OGRLayer *pLayerResult, 
+                               char** papszOptions = NULL, 
+                               GDALProgressFunc pfnProgress = NULL, 
+                               void * pProgressArg = NULL );
+    
     int                 Reference();
     int                 Dereference();
     int                 GetRefCount() const;
