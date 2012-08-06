@@ -147,7 +147,6 @@ template <typename T> T SwigValueInit() {
 
 /* Python.h has to appear first */
 #include <Python.h>
-#include <stddef.h>
 
 /* -----------------------------------------------------------------------------
  * swigrun.swg
@@ -13753,7 +13752,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "SRS_PT_GOODE_HOMOLOSINE",SWIG_FromCharPtr("Goode_Homolosine"));
   SWIG_Python_SetConstant(d, "SRS_PT_IGH",SWIG_FromCharPtr("Interrupted_Goode_Homolosine"));
   SWIG_Python_SetConstant(d, "SRS_PT_GNOMONIC",SWIG_FromCharPtr("Gnomonic"));
-  SWIG_Python_SetConstant(d, "SRS_PT_OBLIQUE_MERCATOR",SWIG_FromCharPtr("Oblique_Mercator"));
+  SWIG_Python_SetConstant(d, "SRS_PT_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER",SWIG_FromCharPtr("Hotine_Oblique_Mercator_Azimuth_Center"));
   SWIG_Python_SetConstant(d, "SRS_PT_HOTINE_OBLIQUE_MERCATOR",SWIG_FromCharPtr("Hotine_Oblique_Mercator"));
   SWIG_Python_SetConstant(d, "SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN",SWIG_FromCharPtr("Hotine_Oblique_Mercator_Two_Point_Natural_Origin"));
   SWIG_Python_SetConstant(d, "SRS_PT_LABORDE_OBLIQUE_MERCATOR",SWIG_FromCharPtr("Laborde_Oblique_Mercator"));
