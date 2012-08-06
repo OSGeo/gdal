@@ -1388,3 +1388,1625 @@ OGRErr OGR_L_SetIgnoredFields( OGRLayerH hLayer, const char **papszFields )
 
     return ((OGRLayer *) hLayer)->SetIgnoredFields( papszFields );
 }
+
+/************************************************************************/
+/*         helper functions for layer overlay methods                   */
+/************************************************************************/
+
+OGRErr clone_spatial_filter(OGRLayer *pLayer, OGRGeometry **ppGeometry)
+{
+    OGRErr ret = OGRERR_NONE;
+    OGRGeometry *g = pLayer->GetSpatialFilter();
+    *ppGeometry = g ? g->clone() : NULL;
+    return ret;
+}
+
+OGRErr create_field_map(OGRFeatureDefn *poDefn, int **map)
+{
+    OGRErr ret = OGRERR_NONE;
+    int n = poDefn->GetFieldCount();
+    if (n > 0) {
+        *map = (int*)VSIMalloc(sizeof(int) * n);
+        if (!(*map)) return OGRERR_NOT_ENOUGH_MEMORY;
+    }
+    return ret;
+}
+
+OGRErr set_result_schema(OGRLayer *pLayerResult,
+                         OGRFeatureDefn *poDefnInput, 
+                         OGRFeatureDefn *poDefnMethod,
+                         int *mapInput,
+                         int *mapMethod,
+                         int combined)
+{
+    OGRErr ret = OGRERR_NONE;
+    OGRFeatureDefn *poDefnResult = pLayerResult->GetLayerDefn();
+    if (poDefnResult->GetFieldCount() > 0) {
+        // the user has defined the schema of the output layer
+        for( int iField = 0; iField < poDefnInput->GetFieldCount(); iField++ ) {
+            mapInput[iField] = poDefnResult->GetFieldIndex(poDefnInput->GetFieldDefn(iField)->GetNameRef());
+        }
+        if (!mapMethod) return ret;
+        for( int iField = 0; iField < poDefnMethod->GetFieldCount(); iField++ ) {
+            mapMethod[iField] = poDefnResult->GetFieldIndex(poDefnMethod->GetFieldDefn(iField)->GetNameRef());
+        }
+    } else {
+        // use schema from the input layer or from input and method layers
+        int nFieldsInput = poDefnInput->GetFieldCount();
+        for( int iField = 0; iField < nFieldsInput; iField++ ) {
+            ret = pLayerResult->CreateField(poDefnInput->GetFieldDefn(iField));
+            if (ret != OGRERR_NONE) return ret;
+            mapInput[iField] = iField;
+        }
+        if (!combined) return ret;
+        if (!mapMethod) return ret;
+        for( int iField = 0; iField < poDefnMethod->GetFieldCount(); iField++ ) {
+            ret = pLayerResult->CreateField(poDefnMethod->GetFieldDefn(iField));
+            if (ret != OGRERR_NONE) return ret;
+            mapMethod[iField] = nFieldsInput+iField;
+        }
+    }
+    return ret;
+}
+
+OGRGeometry *set_filter_from(OGRLayer *pLayer, OGRGeometry *pGeometryExistingFilter, OGRFeature *pFeature)
+{
+    OGRGeometry *geom = pFeature->GetGeometryRef();
+    if (!geom) return NULL;
+    if (pGeometryExistingFilter) {
+        if (!geom->Intersects(pGeometryExistingFilter)) return NULL;
+        OGRGeometry *intersection = geom->Intersection(pGeometryExistingFilter);
+        pLayer->SetSpatialFilter(intersection);
+        if (intersection) delete intersection;
+    } else {
+        pLayer->SetSpatialFilter(geom);
+    }
+    return geom;
+}
+
+/************************************************************************/
+/*                          Intersection()                              */
+/************************************************************************/
+/**
+ * \brief Intersection of two layers.
+ *
+ * The result layer contains features whose geometries represent areas
+ * that are common between features in the input layer and in the
+ * method layer. The features in the result layer have attributes from
+ * both input and method layers. The schema of the result layer can be
+ * set by the user or, if it is empty, is initialized to contain all
+ * fields in the input and method layers.
+ *
+ * \note If the schema of the result is set by user and contains
+ * fields that have the same name as a field in input and in method
+ * layer, then the attribute in the result feature will get the value
+ * from the feature of the method layer.
+ *
+ * \note For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ *
+ * \note This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * This method is the same as the C function OGR_L_Intersection().
+ *
+ * @param pLayerMethod the method layer. Should not be NULL.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be NULL. See above the note
+ * about the schema.
+ *
+ * @param papszOptions NULL terminated list of options (may be NULL).
+ *
+ * @param pfnProgress a GDALProgressFunc() compatible callback function for
+ * reporting progress or NULL.
+ *
+ * @param pProgressArg argument to be passed to pfnProgress. May be NULL.
+ *
+ * @return an error code if there was an error or the execution was
+ * interrupted, OGRERR_NONE otherwise.
+ */
+
+OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod, 
+                               OGRLayer *pLayerResult, 
+                               char** papszOptions, 
+                               GDALProgressFunc pfnProgress, 
+                               void * pProgressArg )
+{
+    OGRErr ret = OGRERR_NONE;
+    OGRFeatureDefn *poDefnInput = GetLayerDefn();
+    OGRFeatureDefn *poDefnMethod = pLayerMethod->GetLayerDefn();
+    OGRFeatureDefn *poDefnResult = NULL;
+    OGRGeometry *pGeometryMethodFilter = NULL;
+    int *mapInput = NULL;
+    int *mapMethod = NULL;
+    OGREnvelope sEnvelopeMethod;
+    GBool bEnvelopeSet;
+    double progress_max = GetFeatureCount(0);
+    double progress_counter = 0;
+    double progress_ticker = 0;
+
+    // check for GEOS
+    if (!OGRGeometryFactory::haveGEOS()) {
+        return OGRERR_UNSUPPORTED_OPERATION;
+    }
+
+    // get resources
+    ret = clone_spatial_filter(pLayerMethod, &pGeometryMethodFilter);
+    if (ret != OGRERR_NONE) goto done;
+    ret = create_field_map(poDefnInput, &mapInput);
+    if (ret != OGRERR_NONE) goto done;
+    ret = create_field_map(poDefnMethod, &mapMethod);
+    if (ret != OGRERR_NONE) goto done;
+    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 1);
+    if (ret != OGRERR_NONE) goto done;
+    poDefnResult = pLayerResult->GetLayerDefn();
+    bEnvelopeSet = pLayerMethod->GetExtent(&sEnvelopeMethod, 1) == OGRERR_NONE;
+
+    ResetReading();
+    while (OGRFeature *x = GetNextFeature()) {
+
+        if (pfnProgress) {
+            double p = progress_counter/progress_max;
+            if (p > progress_ticker) {
+                if (!pfnProgress(p, "", pProgressArg)) {
+                    CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+                    ret = OGRERR_FAILURE;
+                    delete x;
+                    goto done;
+                }
+                progress_ticker += 0.01;
+            }
+            progress_counter += 1.0;
+        }
+
+        // is it worth to proceed?
+        if (bEnvelopeSet) {
+            OGRGeometry *x_geom = x->GetGeometryRef();
+            if (x_geom) {
+                OGREnvelope x_env;
+                x_geom->getEnvelope(&x_env);
+                if (x_env.MaxX < sEnvelopeMethod.MinX 
+                    || x_env.MaxY < sEnvelopeMethod.MinY
+                    || sEnvelopeMethod.MaxX < x_env.MinX
+                    || sEnvelopeMethod.MaxY < x_env.MinY) {
+                    delete x;
+                    continue;
+                }
+            } else {
+                delete x;
+                continue;
+            }
+        }
+
+        // set up the filter for method layer
+        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
+        if (!x_geom) {
+            delete x;
+            continue;
+        }
+
+        pLayerMethod->ResetReading();
+        while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
+            OGRGeometry *y_geom = y->GetGeometryRef();
+            if (!y_geom) {delete y; continue;}
+            OGRFeature *z = new OGRFeature(poDefnResult);
+            z->SetFieldsFrom(x, mapInput);
+            z->SetFieldsFrom(y, mapMethod);
+            z->SetGeometryDirectly(x_geom->Intersection(y_geom));
+            delete y;
+            ret = pLayerResult->CreateFeature(z);
+            delete z;
+            if (ret != OGRERR_NONE) {delete x; goto done;}
+        }
+
+        delete x;
+    }
+    if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
+      CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+      ret = OGRERR_FAILURE;
+      goto done;
+    }
+done:
+    // release resources
+    pLayerMethod->SetSpatialFilter(pGeometryMethodFilter);
+    if (pGeometryMethodFilter) delete pGeometryMethodFilter;
+    if (mapInput) VSIFree(mapInput);
+    if (mapMethod) VSIFree(mapMethod);
+    return ret;
+}
+
+/************************************************************************/
+/*                       OGR_L_Intersection()                           */
+/************************************************************************/
+/**
+ * \brief Intersection of two layers.
+ *
+ * The result layer contains features whose geometries represent areas
+ * that are common between features in the input layer and in the
+ * method layer. The features in the result layer have attributes from
+ * both input and method layers. The schema of the result layer can be
+ * set by the user or, if it is empty, is initialized to contain all
+ * fields in the input and method layers.
+ *
+ * \note If the schema of the result is set by user and contains
+ * fields that have the same name as a field in input and in method
+ * layer, then the attribute in the result feature will get the value
+ * from the feature of the method layer.
+ *
+ * \note For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ *
+ * \note This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * This function is the same as the C++ method OGRLayer::Intersection().
+ * 
+ * @param pLayerInput the input layer. Should not be NULL.
+ *
+ * @param pLayerMethod the method layer. Should not be NULL.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be NULL. See above the note
+ * about the schema.
+ *
+ * @param papszOptions NULL terminated list of options (may be NULL).
+ *
+ * @param pfnProgress a GDALProgressFunc() compatible callback function for
+ * reporting progress or NULL.
+ *
+ * @param pProgressArg argument to be passed to pfnProgress. May be NULL.
+ *
+ * @return an error code if there was an error or the execution was
+ * interrupted, OGRERR_NONE otherwise.
+ */
+
+OGRErr OGR_L_Intersection( OGRLayerH pLayerInput, 
+                           OGRLayerH pLayerMethod, 
+                           OGRLayerH pLayerResult, 
+                           char** papszOptions, 
+                           GDALProgressFunc pfnProgress, 
+                           void * pProgressArg )
+
+{
+    VALIDATE_POINTER1( pLayerInput, "OGR_L_Intersection", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( pLayerMethod, "OGR_L_Intersection", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( pLayerResult, "OGR_L_Intersection", OGRERR_INVALID_HANDLE );
+
+    return ((OGRLayer *)pLayerInput)->Intersection( (OGRLayer *)pLayerMethod, (OGRLayer *)pLayerResult, papszOptions, pfnProgress, pProgressArg );
+}
+
+/************************************************************************/
+/*                              Union()                                 */
+/************************************************************************/
+
+/**
+ * \brief Union of two layers.
+ *
+ * The result layer contains features whose geometries represent areas
+ * that are in either in the input layer or in the method layer. The
+ * features in the result layer have attributes from both input and
+ * method layers. For features which represent areas that are only in
+ * the input or in the method layer the respective attributes have
+ * undefined values. The schema of the result layer can be set by the
+ * user or, if it is empty, is initialized to contain all fields in
+ * the input and method layers.
+ *
+ * \note If the schema of the result is set by user and contains
+ * fields that have the same name as a field in input and in method
+ * layer, then the attribute in the result feature will get the value
+ * from the feature of the method layer (even if it is undefined).
+ *
+ * \note For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ *
+ * \note This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * This method is the same as the C function OGR_L_Union().
+ * 
+ * @param pLayerMethod the method layer. Should not be NULL.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be NULL. See above the note
+ * about the schema.
+ *
+ * @param papszOptions NULL terminated list of options (may be NULL).
+ *
+ * @param pfnProgress a GDALProgressFunc() compatible callback function for
+ * reporting progress or NULL.
+ *
+ * @param pProgressArg argument to be passed to pfnProgress. May be NULL.
+ *
+ * @return an error code if there was an error or the execution was
+ * interrupted, OGRERR_NONE otherwise.
+ */
+
+OGRErr OGRLayer::Union( OGRLayer *pLayerMethod, 
+                        OGRLayer *pLayerResult, 
+                        char** papszOptions, 
+                        GDALProgressFunc pfnProgress, 
+                        void * pProgressArg )
+{
+    OGRErr ret = OGRERR_NONE;
+    OGRFeatureDefn *poDefnInput = GetLayerDefn();
+    OGRFeatureDefn *poDefnMethod = pLayerMethod->GetLayerDefn();
+    OGRFeatureDefn *poDefnResult = NULL;
+    OGRGeometry *pGeometryMethodFilter = NULL;
+    OGRGeometry *pGeometryInputFilter = NULL;
+    int *mapInput = NULL;
+    int *mapMethod = NULL;
+    double progress_max = GetFeatureCount(0) + pLayerMethod->GetFeatureCount(0);
+    double progress_counter = 0;
+    double progress_ticker = 0;
+    
+    // check for GEOS
+    if (!OGRGeometryFactory::haveGEOS()) {
+        return OGRERR_UNSUPPORTED_OPERATION;
+    }
+
+    // get resources
+    ret = clone_spatial_filter(this, &pGeometryInputFilter);
+    if (ret != OGRERR_NONE) goto done;
+    ret = clone_spatial_filter(pLayerMethod, &pGeometryMethodFilter);
+    if (ret != OGRERR_NONE) goto done;
+    ret = create_field_map(poDefnInput, &mapInput);
+    if (ret != OGRERR_NONE) goto done;
+    ret = create_field_map(poDefnMethod, &mapMethod);
+    if (ret != OGRERR_NONE) goto done;
+    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 1);
+    if (ret != OGRERR_NONE) goto done;
+    poDefnResult = pLayerResult->GetLayerDefn();
+
+    // add features based on input layer
+    ResetReading();
+    while (OGRFeature *x = GetNextFeature()) {
+
+        if (pfnProgress) {
+            double p = progress_counter/progress_max;
+            if (p > progress_ticker) {
+                if (!pfnProgress(p, "", pProgressArg)) {
+                    CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+                    ret = OGRERR_FAILURE;
+                    delete x;
+                    goto done;
+                }
+                progress_ticker += 0.01;
+            }
+            progress_counter += 1.0;
+        }
+
+        // set up the filter on method layer
+        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
+        if (!x_geom) {
+            delete x; 
+            continue;
+        }
+        
+        OGRGeometry *x_geom_diff = x_geom->clone(); // this will be the geometry of the result feature
+        pLayerMethod->ResetReading();
+        while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
+            OGRGeometry *y_geom = y->GetGeometryRef();
+            if (!y_geom) {delete y; continue;}
+            OGRFeature *z = new OGRFeature(poDefnResult);
+            z->SetFieldsFrom(x, mapInput);
+            z->SetFieldsFrom(y, mapMethod);
+            z->SetGeometryDirectly(x_geom->Intersection(y_geom));
+            OGRGeometry *x_geom_diff_new = x_geom_diff ? x_geom_diff->Difference(y_geom) : NULL;
+            if (x_geom_diff) delete x_geom_diff;
+            x_geom_diff = x_geom_diff_new;
+            delete y;
+            ret = pLayerResult->CreateFeature(z);
+            delete z;
+            if (ret != OGRERR_NONE) {delete x; if (x_geom_diff) delete x_geom_diff; goto done;}
+        }
+
+        OGRFeature *z = new OGRFeature(poDefnResult);
+        z->SetFieldsFrom(x, mapInput);
+        z->SetGeometryDirectly(x_geom_diff);
+        delete x;
+        ret = pLayerResult->CreateFeature(z);
+        delete z;
+        if (ret != OGRERR_NONE) goto done;
+    }
+
+    // restore filter on method layer and add features based on it
+    pLayerMethod->SetSpatialFilter(pGeometryMethodFilter);
+    pLayerMethod->ResetReading();
+    while (OGRFeature *x = pLayerMethod->GetNextFeature()) {
+
+        if (pfnProgress) {
+            double p = progress_counter/progress_max;
+            if (p > progress_ticker) {
+                if (!pfnProgress(p, "", pProgressArg)) {
+                    CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+                    ret = OGRERR_FAILURE;
+                    delete x;
+                    goto done;
+                }
+                progress_ticker += 0.01;
+            }
+            progress_counter += 1.0;
+        }
+
+        // set up the filter on input layer
+        OGRGeometry *x_geom = set_filter_from(this, pGeometryInputFilter, x);
+        if (!x_geom) {
+            delete x; 
+            continue;
+        }
+        
+        OGRGeometry *x_geom_diff = x_geom->clone(); // this will be the geometry of the result feature
+        ResetReading();
+        while (OGRFeature *y = GetNextFeature()) {
+            OGRGeometry *y_geom = y->GetGeometryRef();
+            if (!y_geom) {delete y; continue;}
+            OGRGeometry *x_geom_diff_new = x_geom_diff ? x_geom_diff->Difference(y_geom) : NULL;
+            if (x_geom_diff) delete x_geom_diff;
+            x_geom_diff = x_geom_diff_new;
+            delete y;
+        }
+
+        OGRFeature *z = new OGRFeature(poDefnResult);
+        z->SetFieldsFrom(x, mapMethod);
+        z->SetGeometryDirectly(x_geom_diff);
+        delete x;
+        ret = pLayerResult->CreateFeature(z);
+        delete z;
+        if (ret != OGRERR_NONE) goto done;
+    }
+    if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
+      CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+      ret = OGRERR_FAILURE;
+      goto done;
+    }
+done:
+    // release resources
+    SetSpatialFilter(pGeometryInputFilter);
+    pLayerMethod->SetSpatialFilter(pGeometryMethodFilter);
+    if (pGeometryMethodFilter) delete pGeometryMethodFilter;
+    if (pGeometryInputFilter) delete pGeometryInputFilter;
+    if (mapInput) VSIFree(mapInput);
+    if (mapMethod) VSIFree(mapMethod);
+    return ret;
+}
+
+/************************************************************************/
+/*                           OGR_L_Union()                              */
+/************************************************************************/
+
+/**
+ * \brief Union of two layers.
+ *
+ * The result layer contains features whose geometries represent areas
+ * that are in either in the input layer or in the method layer. The
+ * features in the result layer have attributes from both input and
+ * method layers. For features which represent areas that are only in
+ * the input or in the method layer the respective attributes have
+ * undefined values. The schema of the result layer can be set by the
+ * user or, if it is empty, is initialized to contain all fields in
+ * the input and method layers.
+ *
+ * \note If the schema of the result is set by user and contains
+ * fields that have the same name as a field in input and in method
+ * layer, then the attribute in the result feature will get the value
+ * from the feature of the method layer (even if it is undefined).
+ *
+ * \note For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ *
+ * \note This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * This function is the same as the C++ method OGRLayer::Union().
+ * 
+ * @param pLayerInput the input layer. Should not be NULL.
+ *
+ * @param pLayerMethod the method layer. Should not be NULL.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be NULL. See above the note
+ * about the schema.
+ *
+ * @param papszOptions NULL terminated list of options (may be NULL).
+ *
+ * @param pfnProgress a GDALProgressFunc() compatible callback function for
+ * reporting progress or NULL.
+ *
+ * @param pProgressArg argument to be passed to pfnProgress. May be NULL.
+ *
+ * @return an error code if there was an error or the execution was
+ * interrupted, OGRERR_NONE otherwise.
+ */
+
+OGRErr OGR_L_Union( OGRLayerH pLayerInput, 
+                    OGRLayerH pLayerMethod, 
+                    OGRLayerH pLayerResult, 
+                    char** papszOptions, 
+                    GDALProgressFunc pfnProgress, 
+                    void * pProgressArg )
+
+{
+    VALIDATE_POINTER1( pLayerInput, "OGR_L_Union", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( pLayerMethod, "OGR_L_Union", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( pLayerResult, "OGR_L_Union", OGRERR_INVALID_HANDLE );
+
+    return ((OGRLayer *)pLayerInput)->Union( (OGRLayer *)pLayerMethod, (OGRLayer *)pLayerResult, papszOptions, pfnProgress, pProgressArg );
+}
+
+/************************************************************************/
+/*                          SymDifference()                             */
+/************************************************************************/
+
+/**
+ * \brief Symmetrical difference of two layers.
+ *
+ * The result layer contains features whose geometries represent areas
+ * that are in either in the input layer or in the method layer but
+ * not in both. The features in the result layer have attributes from
+ * both input and method layers. For features which represent areas
+ * that are only in the input or in the method layer the respective
+ * attributes have undefined values. The schema of the result layer
+ * can be set by the user or, if it is empty, is initialized to
+ * contain all fields in the input and method layers.
+ *
+ * \note If the schema of the result is set by user and contains
+ * fields that have the same name as a field in input and in method
+ * layer, then the attribute in the result feature will get the value
+ * from the feature of the method layer (even if it is undefined).
+ *
+ * \note For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ *
+ * \note This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * This method is the same as the C function OGR_L_SymDifference().
+ * 
+ * @param pLayerMethod the method layer. Should not be NULL.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be NULL. See above the note
+ * about the schema.
+ *
+ * @param papszOptions NULL terminated list of options (may be NULL).
+ *
+ * @param pfnProgress a GDALProgressFunc() compatible callback function for
+ * reporting progress or NULL.
+ *
+ * @param pProgressArg argument to be passed to pfnProgress. May be NULL.
+ *
+ * @return an error code if there was an error or the execution was
+ * interrupted, OGRERR_NONE otherwise.
+ */
+
+OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod, 
+                                OGRLayer *pLayerResult, 
+                                char** papszOptions, 
+                                GDALProgressFunc pfnProgress, 
+                                void * pProgressArg )
+{
+    OGRErr ret = OGRERR_NONE;
+    OGRFeatureDefn *poDefnInput = GetLayerDefn();
+    OGRFeatureDefn *poDefnMethod = pLayerMethod->GetLayerDefn();
+    OGRFeatureDefn *poDefnResult = NULL;
+    OGRGeometry *pGeometryMethodFilter = NULL;
+    OGRGeometry *pGeometryInputFilter = NULL;
+    int *mapInput = NULL;
+    int *mapMethod = NULL;
+    double progress_max = GetFeatureCount(0) + pLayerMethod->GetFeatureCount(0);
+    double progress_counter = 0;
+    double progress_ticker = 0;
+
+    // check for GEOS
+    if (!OGRGeometryFactory::haveGEOS()) {
+        return OGRERR_UNSUPPORTED_OPERATION;
+    }
+
+    // get resources
+    ret = clone_spatial_filter(this, &pGeometryInputFilter);
+    if (ret != OGRERR_NONE) goto done;
+    ret = clone_spatial_filter(pLayerMethod, &pGeometryMethodFilter);
+    if (ret != OGRERR_NONE) goto done;
+    ret = create_field_map(poDefnInput, &mapInput);
+    if (ret != OGRERR_NONE) goto done;
+    ret = create_field_map(poDefnMethod, &mapMethod);
+    if (ret != OGRERR_NONE) goto done;
+    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 1);
+    if (ret != OGRERR_NONE) goto done;
+    poDefnResult = pLayerResult->GetLayerDefn();
+
+    // add features based on input layer
+    ResetReading();
+    while (OGRFeature *x = GetNextFeature()) {
+
+        if (pfnProgress) {
+            double p = progress_counter/progress_max;
+            if (p > progress_ticker) {
+                if (!pfnProgress(p, "", pProgressArg)) {
+                    CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+                    ret = OGRERR_FAILURE;
+                    delete x;
+                    goto done;
+                }
+                progress_ticker += 0.01;
+            }
+            progress_counter += 1.0;
+        }
+
+        // set up the filter on method layer
+        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
+        if (!x_geom) {
+            delete x; 
+            continue;
+        }
+        
+        OGRGeometry *geom = x_geom->clone(); // this will be the geometry of the result feature
+        pLayerMethod->ResetReading();
+        while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
+            OGRGeometry *y_geom = y->GetGeometryRef();
+            if (!y_geom) {delete y; continue;}
+            OGRGeometry *geom_new = geom ? geom->Difference(y_geom) : NULL;
+            if (geom) delete geom;
+            geom = geom_new;
+            delete y;
+            if (geom && geom->IsEmpty()) break;
+        }
+
+        OGRFeature *z = NULL;
+        if (geom && !geom->IsEmpty()) {
+            z = new OGRFeature(poDefnResult);
+            z->SetFieldsFrom(x, mapInput);
+            z->SetGeometryDirectly(geom);
+        } else {
+            if (geom) delete geom;
+        }
+        delete x;
+        if (z) {
+            ret = pLayerResult->CreateFeature(z);
+            delete z;
+            if (ret != OGRERR_NONE) goto done;
+        }
+    }
+
+    // restore filter on method layer and add features based on it
+    pLayerMethod->SetSpatialFilter(pGeometryMethodFilter);
+    pLayerMethod->ResetReading();
+    while (OGRFeature *x = pLayerMethod->GetNextFeature()) {
+
+        if (pfnProgress) {
+            double p = progress_counter/progress_max;
+            if (p > progress_ticker) {
+                if (!pfnProgress(p, "", pProgressArg)) {
+                    CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+                    ret = OGRERR_FAILURE;
+                    delete x;
+                    goto done;
+                }
+                progress_ticker += 0.01;
+            }
+            progress_counter += 1.0;
+        }
+
+        // set up the filter on input layer
+        OGRGeometry *x_geom = set_filter_from(this, pGeometryInputFilter, x);
+        if (!x_geom) {
+            delete x; 
+            continue;
+        }
+        
+        OGRGeometry *geom = x_geom->clone(); // this will be the geometry of the result feature
+        ResetReading();
+        while (OGRFeature *y = GetNextFeature()) {
+            OGRGeometry *y_geom = y->GetGeometryRef();
+            if (!y_geom) {delete y; continue;}
+            OGRGeometry *geom_new = geom ? geom->Difference(y_geom) : NULL;
+            if (geom) delete geom;
+            geom = geom_new;
+            delete y;
+            if (geom->IsEmpty()) break;
+        }
+
+        OGRFeature *z = NULL;
+        if (geom && !geom->IsEmpty()) {
+            z = new OGRFeature(poDefnResult);
+            z->SetFieldsFrom(x, mapInput);
+            z->SetGeometryDirectly(geom);
+        } else {
+            if (geom) delete geom;
+        }
+        delete x;
+        if (z) {
+            ret = pLayerResult->CreateFeature(z);
+            delete z;
+            if (ret != OGRERR_NONE) goto done;
+        }
+    }
+    if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
+      CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+      ret = OGRERR_FAILURE;
+      goto done;
+    }
+done:
+    // release resources
+    SetSpatialFilter(pGeometryInputFilter);
+    pLayerMethod->SetSpatialFilter(pGeometryMethodFilter);
+    if (pGeometryMethodFilter) delete pGeometryMethodFilter;
+    if (pGeometryInputFilter) delete pGeometryInputFilter;
+    if (mapInput) VSIFree(mapInput);
+    if (mapMethod) VSIFree(mapMethod);
+    return ret;
+}
+
+/************************************************************************/
+/*                        OGR_L_SymDifference()                         */
+/************************************************************************/
+
+/**
+ * \brief Symmetrical difference of two layers.
+ *
+ * The result layer contains features whose geometries represent areas
+ * that are in either in the input layer or in the method layer but
+ * not in both. The features in the result layer have attributes from
+ * both input and method layers. For features which represent areas
+ * that are only in the input or in the method layer the respective
+ * attributes have undefined values. The schema of the result layer
+ * can be set by the user or, if it is empty, is initialized to
+ * contain all fields in the input and method layers.
+ *
+ * \note If the schema of the result is set by user and contains
+ * fields that have the same name as a field in input and in method
+ * layer, then the attribute in the result feature will get the value
+ * from the feature of the method layer (even if it is undefined).
+ *
+ * \note For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ *
+ * \note This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * This function is the same as the C++ method OGRLayer::SymDifference().
+ * 
+ * @param pLayerMethod the method layer. Should not be NULL.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be NULL. See above the note
+ * about the schema.
+ *
+ * @param papszOptions NULL terminated list of options (may be NULL).
+ *
+ * @param pfnProgress a GDALProgressFunc() compatible callback function for
+ * reporting progress or NULL.
+ *
+ * @param pProgressArg argument to be passed to pfnProgress. May be NULL.
+ *
+ * @return an error code if there was an error or the execution was
+ * interrupted, OGRERR_NONE otherwise.
+ */
+
+OGRErr OGR_L_SymDifference( OGRLayerH pLayerInput, 
+                            OGRLayerH pLayerMethod, 
+                            OGRLayerH pLayerResult, 
+                            char** papszOptions, 
+                            GDALProgressFunc pfnProgress, 
+                            void * pProgressArg )
+
+{
+    VALIDATE_POINTER1( pLayerInput, "OGR_L_SymDifference", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( pLayerMethod, "OGR_L_SymDifference", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( pLayerResult, "OGR_L_SymDifference", OGRERR_INVALID_HANDLE );
+
+    return ((OGRLayer *)pLayerInput)->SymDifference( (OGRLayer *)pLayerMethod, (OGRLayer *)pLayerResult, papszOptions, pfnProgress, pProgressArg );
+}
+
+/************************************************************************/
+/*                            Identity()                                */
+/************************************************************************/
+
+/**
+ * \brief Identify the features of this layer with the ones from the
+ * identity layer.
+ *
+ * The result layer contains features whose geometries represent areas
+ * that are in the input layer. The features in the result layer have
+ * attributes from both input and method layers. The schema of the
+ * result layer can be set by the user or, if it is empty, is
+ * initialized to contain all fields in input and method layers.
+ *
+ * \note If the schema of the result is set by user and contains
+ * fields that have the same name as a field in input and in method
+ * layer, then the attribute in the result feature will get the value
+ * from the feature of the method layer (even if it is undefined).
+ *
+ * \note For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ *
+ * \note This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * This method is the same as the C function OGR_L_Identity().
+ * 
+ * @param pLayerMethod the method layer. Should not be NULL.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be NULL. See above the note
+ * about the schema.
+ *
+ * @param papszOptions NULL terminated list of options (may be NULL).
+ *
+ * @param pfnProgress a GDALProgressFunc() compatible callback function for
+ * reporting progress or NULL.
+ *
+ * @param pProgressArg argument to be passed to pfnProgress. May be NULL.
+ *
+ * @return an error code if there was an error or the execution was
+ * interrupted, OGRERR_NONE otherwise.
+ */
+
+OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod, 
+                           OGRLayer *pLayerResult, 
+                           char** papszOptions, 
+                           GDALProgressFunc pfnProgress, 
+                           void * pProgressArg )
+{
+    OGRErr ret = OGRERR_NONE;
+    OGRFeatureDefn *poDefnInput = GetLayerDefn();
+    OGRFeatureDefn *poDefnMethod = pLayerMethod->GetLayerDefn();
+    OGRFeatureDefn *poDefnResult = NULL;
+    OGRGeometry *pGeometryMethodFilter = NULL;
+    int *mapInput = NULL;
+    int *mapMethod = NULL;
+    double progress_max = GetFeatureCount(0);
+    double progress_counter = 0;
+    double progress_ticker = 0;
+
+    // check for GEOS
+    if (!OGRGeometryFactory::haveGEOS()) {
+        return OGRERR_UNSUPPORTED_OPERATION;
+    }
+
+    // get resources
+    ret = clone_spatial_filter(pLayerMethod, &pGeometryMethodFilter);
+    if (ret != OGRERR_NONE) goto done;
+    ret = create_field_map(poDefnInput, &mapInput);
+    if (ret != OGRERR_NONE) goto done;
+    ret = create_field_map(poDefnMethod, &mapMethod);
+    if (ret != OGRERR_NONE) goto done;
+    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 1);
+    if (ret != OGRERR_NONE) goto done;
+    poDefnResult = pLayerResult->GetLayerDefn();
+
+    // split the features in input layer to the result layer
+    ResetReading();
+    while (OGRFeature *x = GetNextFeature()) {
+
+        if (pfnProgress) {
+            double p = progress_counter/progress_max;
+            if (p > progress_ticker) {
+                if (!pfnProgress(p, "", pProgressArg)) {
+                    CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+                    ret = OGRERR_FAILURE;
+                    delete x;
+                    goto done;
+                }
+                progress_ticker += 0.01;
+            }
+            progress_counter += 1.0;
+        }
+
+        // set up the filter on method layer
+        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
+        if (!x_geom) {
+            delete x; 
+            continue;
+        }
+        
+        OGRGeometry *x_geom_diff = x_geom->clone(); // this will be the geometry of the result feature
+        pLayerMethod->ResetReading();
+        while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
+            OGRGeometry *y_geom = y->GetGeometryRef();
+            if (!y_geom) {delete y; continue;}
+            OGRFeature *z = new OGRFeature(poDefnResult);
+            z->SetFieldsFrom(x, mapInput);
+            z->SetFieldsFrom(y, mapMethod);
+            z->SetGeometryDirectly(x_geom->Intersection(y_geom));
+            OGRGeometry *x_geom_diff_new = x_geom_diff ? x_geom_diff->Difference(y_geom) : NULL;
+            if (x_geom_diff) delete x_geom_diff;
+            x_geom_diff = x_geom_diff_new;
+            delete y;
+            ret = pLayerResult->CreateFeature(z);
+            delete z;
+            if (ret != OGRERR_NONE) {delete x; delete x_geom_diff; goto done;}
+        }
+
+        OGRFeature *z = new OGRFeature(poDefnResult);
+        z->SetFieldsFrom(x, mapInput);
+        z->SetGeometryDirectly(x_geom_diff);
+        delete x;
+        ret = pLayerResult->CreateFeature(z);
+        delete z;
+        if (ret != OGRERR_NONE) goto done;
+    }
+    if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
+      CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+      ret = OGRERR_FAILURE;
+      goto done;
+    }
+done:
+    // release resources
+    pLayerMethod->SetSpatialFilter(pGeometryMethodFilter);
+    if (pGeometryMethodFilter) delete pGeometryMethodFilter;
+    if (mapInput) VSIFree(mapInput);
+    if (mapMethod) VSIFree(mapMethod);
+    return ret;
+}
+
+/************************************************************************/
+/*                         OGR_L_Identity()                             */
+/************************************************************************/
+
+/**
+ * \brief Identify the features of this layer with the ones from the
+ * identity layer.
+ *
+ * The result layer contains features whose geometries represent areas
+ * that are in the input layer. The features in the result layer have
+ * attributes from both input and method layers. The schema of the
+ * result layer can be set by the user or, if it is empty, is
+ * initialized to contain all fields in input and method layers.
+ *
+ * \note If the schema of the result is set by user and contains
+ * fields that have the same name as a field in input and in method
+ * layer, then the attribute in the result feature will get the value
+ * from the feature of the method layer (even if it is undefined).
+ *
+ * \note For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ *
+ * \note This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * This function is the same as the C++ method OGRLayer::Identity().
+ * 
+ * @param pLayerInput the input layer. Should not be NULL.
+ *
+ * @param pLayerMethod the method layer. Should not be NULL.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be NULL. See above the note
+ * about the schema.
+ *
+ * @param papszOptions NULL terminated list of options (may be NULL).
+ *
+ * @param pfnProgress a GDALProgressFunc() compatible callback function for
+ * reporting progress or NULL.
+ *
+ * @param pProgressArg argument to be passed to pfnProgress. May be NULL.
+ *
+ * @return an error code if there was an error or the execution was
+ * interrupted, OGRERR_NONE otherwise.
+ */
+
+OGRErr OGR_L_Identity( OGRLayerH pLayerInput, 
+                       OGRLayerH pLayerMethod, 
+                       OGRLayerH pLayerResult, 
+                       char** papszOptions, 
+                       GDALProgressFunc pfnProgress, 
+                       void * pProgressArg )
+
+{
+    VALIDATE_POINTER1( pLayerInput, "OGR_L_Identity", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( pLayerMethod, "OGR_L_Identity", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( pLayerResult, "OGR_L_Identity", OGRERR_INVALID_HANDLE );
+
+    return ((OGRLayer *)pLayerInput)->Identity( (OGRLayer *)pLayerMethod, (OGRLayer *)pLayerResult, papszOptions, pfnProgress, pProgressArg );
+}
+
+/************************************************************************/
+/*                             Update()                                 */
+/************************************************************************/
+
+/**
+ * \brief Update this layer with features from the update layer.
+ *
+ * The result layer contains features whose geometries represent areas
+ * that are either in the input layer or in the method layer. The
+ * features in the result layer have areas of the features of the
+ * method layer or those ares of the features of the input layer that
+ * are not covered by the method layer. The features of the result
+ * layer get their attributes from the input layer. The schema of the
+ * result layer can be set by the user or, if it is empty, is
+ * initialized to contain all fields in the input layer.
+ *
+ * \note If the schema of the result is set by user and contains
+ * fields that have the same name as a field in the method layer, then
+ * the attribute in the result feature the originates from the method
+ * layer will get the value from the feature of the method layer.
+ *
+ * \note For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ *
+ * \note This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * This method is the same as the C function OGR_L_Update().
+ * 
+ * @param pLayerMethod the method layer. Should not be NULL.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be NULL. See above the note
+ * about the schema.
+ *
+ * @param papszOptions NULL terminated list of options (may be NULL).
+ *
+ * @param pfnProgress a GDALProgressFunc() compatible callback function for
+ * reporting progress or NULL.
+ *
+ * @param pProgressArg argument to be passed to pfnProgress. May be NULL.
+ *
+ * @return an error code if there was an error or the execution was
+ * interrupted, OGRERR_NONE otherwise.
+ */
+
+OGRErr OGRLayer::Update( OGRLayer *pLayerMethod, 
+                         OGRLayer *pLayerResult, 
+                         char** papszOptions, 
+                         GDALProgressFunc pfnProgress, 
+                         void * pProgressArg )
+{
+    OGRErr ret = OGRERR_NONE;
+    OGRFeatureDefn *poDefnInput = GetLayerDefn();
+    OGRFeatureDefn *poDefnMethod = pLayerMethod->GetLayerDefn();
+    OGRFeatureDefn *poDefnResult = NULL;
+    OGRGeometry *pGeometryMethodFilter = NULL;
+    int *mapInput = NULL;
+    int *mapMethod = NULL;
+    double progress_max = GetFeatureCount(0) + pLayerMethod->GetFeatureCount(0);
+    double progress_counter = 0;
+    double progress_ticker = 0;
+
+    // check for GEOS
+    if (!OGRGeometryFactory::haveGEOS()) {
+        return OGRERR_UNSUPPORTED_OPERATION;
+    }
+
+    // get resources
+    ret = clone_spatial_filter(pLayerMethod, &pGeometryMethodFilter);
+    if (ret != OGRERR_NONE) goto done;
+    ret = create_field_map(poDefnInput, &mapInput);
+    if (ret != OGRERR_NONE) goto done;
+    ret = create_field_map(poDefnMethod, &mapMethod);
+    if (ret != OGRERR_NONE) goto done;
+    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 0);
+    if (ret != OGRERR_NONE) goto done;
+    poDefnResult = pLayerResult->GetLayerDefn();
+
+    // add clipped features from the input layer
+    ResetReading();
+    while (OGRFeature *x = GetNextFeature()) {
+
+        if (pfnProgress) {
+            double p = progress_counter/progress_max;
+            if (p > progress_ticker) {
+                if (!pfnProgress(p, "", pProgressArg)) {
+                    CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+                    ret = OGRERR_FAILURE;
+                    delete x;
+                    goto done;
+                }
+                progress_ticker += 0.01;
+            }
+            progress_counter += 1.0;
+        }
+
+        // set up the filter on method layer
+        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
+        if (!x_geom) {
+            delete x; 
+            continue;
+        }
+        
+        OGRGeometry *x_geom_diff = x_geom->clone(); //this will be the geometry of a result feature
+        pLayerMethod->ResetReading();
+        while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
+            OGRGeometry *y_geom = y->GetGeometryRef();
+            if (!y_geom) {delete y; continue;}
+            OGRGeometry *x_geom_diff_new = x_geom_diff ? x_geom_diff->Difference(y_geom) : NULL;
+            if (x_geom_diff) delete x_geom_diff;
+            x_geom_diff = x_geom_diff_new;
+            delete y;
+        }
+
+        OGRFeature *z = new OGRFeature(poDefnResult);
+        z->SetFieldsFrom(x, mapInput);
+        z->SetGeometryDirectly(x_geom_diff);
+        delete x;
+        ret = pLayerResult->CreateFeature(z);
+        delete z;
+        if (ret != OGRERR_NONE) goto done;
+    }
+
+    // restore the original filter and add features from the update layer
+    pLayerMethod->SetSpatialFilter(pGeometryMethodFilter);
+    pLayerMethod->ResetReading();
+    while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
+
+        if (pfnProgress) {
+            double p = progress_counter/progress_max;
+            if (p > progress_ticker) {
+                if (!pfnProgress(p, "", pProgressArg)) {
+                    CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+                    ret = OGRERR_FAILURE;
+                    delete y;
+                    goto done;
+                }
+                progress_ticker += 0.01;
+            }
+            progress_counter += 1.0;
+        }
+
+        OGRGeometry *y_geom = y->GetGeometryRef();
+        if (!y_geom) {delete y; continue;}
+        OGRFeature *z = new OGRFeature(poDefnResult);
+        if (mapMethod) z->SetFieldsFrom(y, mapMethod);
+        z->SetGeometry(y_geom);
+        delete y;
+        ret = pLayerResult->CreateFeature(z);
+        delete z;
+        if (ret != OGRERR_NONE) goto done;
+    }
+    if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
+      CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+      ret = OGRERR_FAILURE;
+      goto done;
+    }
+done:
+    // release resources
+    pLayerMethod->SetSpatialFilter(pGeometryMethodFilter);
+    if (pGeometryMethodFilter) delete pGeometryMethodFilter;
+    if (mapInput) VSIFree(mapInput);
+    if (mapMethod) VSIFree(mapMethod);
+    return ret;
+}
+
+/************************************************************************/
+/*                          OGR_L_Update()                              */
+/************************************************************************/
+
+/**
+ * \brief Update this layer with features from the update layer.
+ *
+ * The result layer contains features whose geometries represent areas
+ * that are either in the input layer or in the method layer. The
+ * features in the result layer have areas of the features of the
+ * method layer or those ares of the features of the input layer that
+ * are not covered by the method layer. The features of the result
+ * layer get their attributes from the input layer. The schema of the
+ * result layer can be set by the user or, if it is empty, is
+ * initialized to contain all fields in the input layer.
+ *
+ * \note If the schema of the result is set by user and contains
+ * fields that have the same name as a field in the method layer, then
+ * the attribute in the result feature the originates from the method
+ * layer will get the value from the feature of the method layer.
+ *
+ * \note For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ *
+ * \note This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * This function is the same as the C++ method OGRLayer::Update().
+ * 
+ * @param pLayerInput the input layer. Should not be NULL.
+ *
+ * @param pLayerMethod the method layer. Should not be NULL.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be NULL. See above the note
+ * about the schema.
+ *
+ * @param papszOptions NULL terminated list of options (may be NULL).
+ *
+ * @param pfnProgress a GDALProgressFunc() compatible callback function for
+ * reporting progress or NULL.
+ *
+ * @param pProgressArg argument to be passed to pfnProgress. May be NULL.
+ *
+ * @return an error code if there was an error or the execution was
+ * interrupted, OGRERR_NONE otherwise.
+ */
+
+OGRErr OGR_L_Update( OGRLayerH pLayerInput, 
+                     OGRLayerH pLayerMethod, 
+                     OGRLayerH pLayerResult, 
+                     char** papszOptions, 
+                     GDALProgressFunc pfnProgress, 
+                     void * pProgressArg )
+
+{
+    VALIDATE_POINTER1( pLayerInput, "OGR_L_Update", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( pLayerMethod, "OGR_L_Update", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( pLayerResult, "OGR_L_Update", OGRERR_INVALID_HANDLE );
+
+    return ((OGRLayer *)pLayerInput)->Update( (OGRLayer *)pLayerMethod, (OGRLayer *)pLayerResult, papszOptions, pfnProgress, pProgressArg );
+}
+
+/************************************************************************/
+/*                              Clip()                                  */
+/************************************************************************/
+
+/**
+ * \brief Clip off areas that are not covered by the method layer.
+ *
+ * The result layer contains features whose geometries represent areas
+ * that are common between features in the input layer and in the
+ * method layer. The features in the result layer have the (possibly
+ * clipped) areas of the input layer and the attributes from the input
+ * layer. The schema of the result layer can be set by the user or, if
+ * it is empty, is initialized to contain all fields in the input
+ * layer.
+ *
+ * \note For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ *
+ * \note This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * This method is the same as the C function OGR_L_Clip().
+ * 
+ * @param pLayerMethod the method layer. Should not be NULL.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be NULL. See above the note
+ * about the schema.
+ *
+ * @param papszOptions NULL terminated list of options (may be NULL).
+ *
+ * @param pfnProgress a GDALProgressFunc() compatible callback function for
+ * reporting progress or NULL.
+ *
+ * @param pProgressArg argument to be passed to pfnProgress. May be NULL.
+ *
+ * @return an error code if there was an error or the execution was
+ * interrupted, OGRERR_NONE otherwise.
+ */
+
+OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod, 
+                       OGRLayer *pLayerResult, 
+                       char** papszOptions, 
+                       GDALProgressFunc pfnProgress, 
+                       void * pProgressArg )
+{
+    OGRErr ret = OGRERR_NONE;
+    OGRFeatureDefn *poDefnInput = GetLayerDefn();
+    OGRFeatureDefn *poDefnResult = NULL;
+    OGRGeometry *pGeometryMethodFilter = NULL;
+    int *mapInput = NULL;
+    double progress_max = GetFeatureCount(0);
+    double progress_counter = 0;
+    double progress_ticker = 0;
+
+    // check for GEOS
+    if (!OGRGeometryFactory::haveGEOS()) {
+        return OGRERR_UNSUPPORTED_OPERATION;
+    }
+
+    ret = clone_spatial_filter(pLayerMethod, &pGeometryMethodFilter);
+    if (ret != OGRERR_NONE) goto done;
+    ret = create_field_map(poDefnInput, &mapInput);
+    if (ret != OGRERR_NONE) goto done;
+    ret = set_result_schema(pLayerResult, poDefnInput, NULL, mapInput, NULL, 0);
+    if (ret != OGRERR_NONE) goto done;
+    
+    poDefnResult = pLayerResult->GetLayerDefn();
+    ResetReading();
+    while (OGRFeature *x = GetNextFeature()) {
+
+        if (pfnProgress) {
+            double p = progress_counter/progress_max;
+            if (p > progress_ticker) {
+                if (pfnProgress(p, "", pProgressArg)) {
+                    CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+                    ret = OGRERR_FAILURE;
+                    delete x;
+                    goto done;
+                }
+                progress_ticker += 0.01;
+            }
+            progress_counter += 1.0;
+        }
+
+        // set up the filter on method layer
+        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
+        if (!x_geom) {
+            delete x; 
+            continue;
+        }
+        
+        OGRGeometry *geom = x_geom->clone(); // this will be the geometry of the result feature 
+        pLayerMethod->ResetReading();
+        while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
+            OGRGeometry *y_geom = y->GetGeometryRef();
+            if (!y_geom) {delete y; continue;}
+            OGRGeometry *geom_new = geom->Difference(y_geom);
+            delete geom;
+            geom = geom_new;
+            delete y;
+            if (!geom || geom->IsEmpty()) break;
+        }
+
+        OGRFeature *z = NULL;
+        if (geom && !geom->IsEmpty()) {
+            z = new OGRFeature(poDefnResult);
+            z->SetFieldsFrom(x, mapInput);
+            z->SetGeometryDirectly(geom);
+        } else {
+            if (geom) delete geom;
+        }
+        delete x;
+        if (z) {
+            ret = pLayerResult->CreateFeature(z);
+            delete z;
+            if (ret != OGRERR_NONE) goto done;
+        }
+    }
+    if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
+      CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+      ret = OGRERR_FAILURE;
+      goto done;
+    }
+done:
+    // release resources
+    pLayerMethod->SetSpatialFilter(pGeometryMethodFilter);
+    if (pGeometryMethodFilter) delete pGeometryMethodFilter;
+    if (mapInput) VSIFree(mapInput);
+    return ret;
+}
+
+/************************************************************************/
+/*                           OGR_L_Clip()                               */
+/************************************************************************/
+
+/**
+ * \brief Clip off areas that are not covered by the method layer.
+ *
+ * The result layer contains features whose geometries represent areas
+ * that are common between features in the input layer and in the
+ * method layer. The features in the result layer have the (possibly
+ * clipped) areas of the input layer and the attributes from the input
+ * layer. The schema of the result layer can be set by the user or, if
+ * it is empty, is initialized to contain all fields in the input
+ * layer.
+ *
+ * \note For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ *
+ * \note This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * This function is the same as the C++ method OGRLayer::Clip().
+ * 
+ * @param pLayerInput the input layer. Should not be NULL.
+ *
+ * @param pLayerMethod the method layer. Should not be NULL.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be NULL. See above the note
+ * about the schema.
+ *
+ * @param papszOptions NULL terminated list of options (may be NULL).
+ *
+ * @param pfnProgress a GDALProgressFunc() compatible callback function for
+ * reporting progress or NULL.
+ *
+ * @param pProgressArg argument to be passed to pfnProgress. May be NULL.
+ *
+ * @return an error code if there was an error or the execution was
+ * interrupted, OGRERR_NONE otherwise.
+ */
+
+OGRErr OGR_L_Clip( OGRLayerH pLayerInput, 
+                   OGRLayerH pLayerMethod, 
+                   OGRLayerH pLayerResult, 
+                   char** papszOptions, 
+                   GDALProgressFunc pfnProgress, 
+                   void * pProgressArg )
+
+{
+    VALIDATE_POINTER1( pLayerInput, "OGR_L_Clip", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( pLayerMethod, "OGR_L_Clip", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( pLayerResult, "OGR_L_Clip", OGRERR_INVALID_HANDLE );
+
+    return ((OGRLayer *)pLayerInput)->Clip( (OGRLayer *)pLayerMethod, (OGRLayer *)pLayerResult, papszOptions, pfnProgress, pProgressArg );
+}
+
+/************************************************************************/
+/*                              Erase()                                 */
+/************************************************************************/
+
+/**
+ * \brief Remove areas that are covered by the method layer.
+ *
+ * The result layer contains features whose geometries represent areas
+ * that are in the input layer but not in the method layer. The
+ * features in the result layer have attributes from the input
+ * layer. The schema of the result layer can be set by the user or, if
+ * it is empty, is initialized to contain all fields in the input
+ * layer.
+ *
+ * \note For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ *
+ * \note This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * This method is the same as the C function OGR_L_Erase().
+ *
+ * @param pLayerMethod the method layer. Should not be NULL.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be NULL. See above the note
+ * about the schema.
+ *
+ * @param papszOptions NULL terminated list of options (may be NULL).
+ *
+ * @param pfnProgress a GDALProgressFunc() compatible callback function for
+ * reporting progress or NULL.
+ *
+ * @param pProgressArg argument to be passed to pfnProgress. May be NULL.
+ *
+ * @return an error code if there was an error or the execution was
+ * interrupted, OGRERR_NONE otherwise.
+ */
+
+OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod, 
+                        OGRLayer *pLayerResult, 
+                        char** papszOptions, 
+                        GDALProgressFunc pfnProgress, 
+                        void * pProgressArg )
+{
+    OGRErr ret = OGRERR_NONE;
+    OGRFeatureDefn *poDefnInput = GetLayerDefn();
+    OGRFeatureDefn *poDefnResult = NULL;
+    OGRGeometry *pGeometryMethodFilter = NULL;
+    int *mapInput = NULL;
+    double progress_max = GetFeatureCount(0);
+    double progress_counter = 0;
+    double progress_ticker = 0;
+
+    // check for GEOS
+    if (!OGRGeometryFactory::haveGEOS()) {
+        return OGRERR_UNSUPPORTED_OPERATION;
+    }
+
+    // get resources
+    ret = clone_spatial_filter(pLayerMethod, &pGeometryMethodFilter);
+    if (ret != OGRERR_NONE) goto done;
+    ret = create_field_map(poDefnInput, &mapInput);
+    if (ret != OGRERR_NONE) goto done;
+    ret = set_result_schema(pLayerResult, poDefnInput, NULL, mapInput, NULL, 0);
+    if (ret != OGRERR_NONE) goto done;
+    poDefnResult = pLayerResult->GetLayerDefn();
+
+    ResetReading();
+    while (OGRFeature *x = GetNextFeature()) {
+
+        if (pfnProgress) {
+            double p = progress_counter/progress_max;
+            if (p > progress_ticker) {
+                if (!pfnProgress(p, "", pProgressArg)) {
+                    CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+                    ret = OGRERR_FAILURE;
+                    delete x;
+                    goto done;
+                }
+                progress_ticker += 0.01;
+            }
+            progress_counter += 1.0;
+        }
+
+        // set up the filter on the method layer
+        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
+        if (!x_geom) {
+            delete x; 
+            continue;
+        }
+
+        OGRGeometry *geom = NULL; // this will be the geometry of the result feature
+        pLayerMethod->ResetReading();
+        while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
+            OGRGeometry *y_geom = y->GetGeometryRef();
+            if (!y_geom) {delete y; continue;}
+            if (!geom) {
+                geom = y_geom->clone();
+            } else {
+                OGRGeometry *geom_new = geom->Union(y_geom);
+                delete geom;
+                geom = geom_new;
+            }
+            delete y;
+        }
+
+        OGRFeature *z = NULL;
+        if (geom) {
+            z = new OGRFeature(poDefnResult);
+            z->SetFieldsFrom(x, mapInput);
+            z->SetGeometryDirectly(x_geom->Difference(geom));
+            delete geom;
+        }
+        delete x;
+        if (z) {
+            ret = pLayerResult->CreateFeature(z);
+            delete z;
+            if (ret != OGRERR_NONE) goto done;
+        }
+    }
+    if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
+      CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+      ret = OGRERR_FAILURE;
+      goto done;
+    }
+done:
+    // release resources
+    pLayerMethod->SetSpatialFilter(pGeometryMethodFilter);
+    if (pGeometryMethodFilter) delete pGeometryMethodFilter;
+    if (mapInput) VSIFree(mapInput);
+    return ret;
+}
+
+/************************************************************************/
+/*                           OGR_L_Erase()                              */
+/************************************************************************/
+
+/**
+ * \brief Remove areas that are covered by the method layer.
+ *
+ * The result layer contains features whose geometries represent areas
+ * that are in the input layer but not in the method layer. The
+ * features in the result layer have attributes from the input
+ * layer. The schema of the result layer can be set by the user or, if
+ * it is empty, is initialized to contain all fields in the input
+ * layer.
+ *
+ * \note For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ *
+ * \note This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * This function is the same as the C++ method OGRLayer::Erase().
+ * 
+ * @param pLayerInput the input layer. Should not be NULL.
+ *
+ * @param pLayerMethod the method layer. Should not be NULL.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be NULL. See above the note
+ * about the schema.
+ *
+ * @param papszOptions NULL terminated list of options (may be NULL).
+ *
+ * @param pfnProgress a GDALProgressFunc() compatible callback function for
+ * reporting progress or NULL.
+ *
+ * @param pProgressArg argument to be passed to pfnProgress. May be NULL.
+ *
+ * @return an error code if there was an error or the execution was
+ * interrupted, OGRERR_NONE otherwise.
+ */
+
+OGRErr OGR_L_Erase( OGRLayerH pLayerInput, 
+                    OGRLayerH pLayerMethod, 
+                    OGRLayerH pLayerResult, 
+                    char** papszOptions, 
+                    GDALProgressFunc pfnProgress, 
+                    void * pProgressArg )
+
+{
+    VALIDATE_POINTER1( pLayerInput, "OGR_L_Erase", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( pLayerMethod, "OGR_L_Erase", OGRERR_INVALID_HANDLE );
+    VALIDATE_POINTER1( pLayerResult, "OGR_L_Erase", OGRERR_INVALID_HANDLE );
+
+    return ((OGRLayer *)pLayerInput)->Erase( (OGRLayer *)pLayerMethod, (OGRLayer *)pLayerResult, papszOptions, pfnProgress, pProgressArg );
+}
