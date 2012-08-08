@@ -485,6 +485,12 @@ AVCE00ReadE00Ptr AVCE00ReadOpenE00(const char *pszE00FileName)
      * Scan the E00 file for sections
      *----------------------------------------------------------------*/
     _AVCE00ReadScanE00(psRead);
+    if (CPLGetLastErrorNo() != 0)
+    {
+        AVCE00ReadCloseE00(psRead);
+        return NULL;
+    }
+
     AVCE00ReadRewindE00(psRead);
     CPLErrorReset();
 
@@ -555,8 +561,6 @@ void AVCE00ReadClose(AVCE00ReadPtr psInfo)
  **********************************************************************/
 void AVCE00ReadCloseE00(AVCE00ReadE00Ptr psRead)
 {
-    CPLErrorReset();
-
     if (psRead == NULL)
         return;
 
