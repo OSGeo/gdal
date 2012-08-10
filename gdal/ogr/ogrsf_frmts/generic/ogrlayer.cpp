@@ -2110,7 +2110,7 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
         OGRFeature *z = NULL;
         if (geom && !geom->IsEmpty()) {
             z = new OGRFeature(poDefnResult);
-            z->SetFieldsFrom(x, mapInput);
+            z->SetFieldsFrom(x, mapMethod);
             z->SetGeometryDirectly(geom);
         } else {
             if (geom) delete geom;
