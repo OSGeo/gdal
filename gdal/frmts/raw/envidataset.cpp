@@ -2111,8 +2111,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
         // all others we will attempt to open
         if(EQUAL(pszEnviFileType, "envi meta file") ||
            EQUAL(pszEnviFileType, "envi virtual mosaic") ||
-           EQUAL(pszEnviFileType, "envi spectral library") ||
-           EQUAL(pszEnviFileType, "envi fft result"))
+           EQUAL(pszEnviFileType, "envi spectral library"))
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
                       "File %s contains an invalid file type in the ENVI .hdr\n"
