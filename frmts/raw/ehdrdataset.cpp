@@ -1079,32 +1079,32 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                  || EQUAL(papszTokens[0],"xllcorner") 
                  || EQUAL(papszTokens[0],"xllcenter") )
         {
-            dfULXMap = atof(papszTokens[1]);
+            dfULXMap = CPLAtofM(papszTokens[1]);
             if( EQUAL(papszTokens[0],"xllcorner") )
                 bCenter = FALSE;
         }
         else if( EQUAL(papszTokens[0],"ulymap") )
         {
-            dfULYMap = atof(papszTokens[1]);
+            dfULYMap = CPLAtofM(papszTokens[1]);
         }
         else if( EQUAL(papszTokens[0],"yllcorner") 
                  || EQUAL(papszTokens[0],"yllcenter") )
         {
-            dfYLLCorner = atof(papszTokens[1]);
+            dfYLLCorner = CPLAtofM(papszTokens[1]);
             if( EQUAL(papszTokens[0],"yllcorner") )
                 bCenter = FALSE;
         }
         else if( EQUAL(papszTokens[0],"xdim") )
         {
-            dfXDim = atof(papszTokens[1]);
+            dfXDim = CPLAtofM(papszTokens[1]);
         }
         else if( EQUAL(papszTokens[0],"ydim") )
         {
-            dfYDim = atof(papszTokens[1]);
+            dfYDim = CPLAtofM(papszTokens[1]);
         }
         else if( EQUAL(papszTokens[0],"cellsize") )
         {
-            dfXDim = dfYDim = atof(papszTokens[1]);
+            dfXDim = dfYDim = CPLAtofM(papszTokens[1]);
         }
         else if( EQUAL(papszTokens[0],"nbands") )
         {
@@ -1118,7 +1118,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         else if( EQUAL(papszTokens[0],"NODATA_value") 
                  || EQUAL(papszTokens[0],"NODATA") )
         {
-            dfNoData = atof(papszTokens[1]);
+            dfNoData = CPLAtofM(papszTokens[1]);
             bNoDataSet = TRUE;
         }
         else if( EQUAL(papszTokens[0],"NBITS") )
@@ -1142,13 +1142,13 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         else if( EQUAL(papszTokens[0],"MinValue") ||
                  EQUAL(papszTokens[0],"MIN_VALUE") )
         {
-            dfMin = atof(papszTokens[1]);
+            dfMin = CPLAtofM(papszTokens[1]);
             bHasMin = TRUE;
         }
         else if( EQUAL(papszTokens[0],"MaxValue") ||
                  EQUAL(papszTokens[0],"MAX_VALUE") )
         {
-            dfMax = atof(papszTokens[1]);
+            dfMax = CPLAtofM(papszTokens[1]);
             bHasMax = TRUE;
         }
 
