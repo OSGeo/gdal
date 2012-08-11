@@ -73,6 +73,8 @@ public:
 
     static GDALDataset  *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
+
+    OGRErr ParseWKTFromXML( const char *pszISOXML );
 };
 
 /************************************************************************/
@@ -645,6 +647,10 @@ void BAGDataset::LoadMetadata()
         == OGRERR_NONE )
     {
         oSRS.exportToWkt( &pszProjection );
+    } 
+    else
+    {
+        ParseWKTFromXML( pszXMLMetadata );
     }
 
 /* -------------------------------------------------------------------- */
@@ -659,6 +665,107 @@ void BAGDataset::LoadMetadata()
     }
 
     CPLDestroyXMLNode( psRoot );
+}
+
+/************************************************************************/
+/*                          ParseWKTFromXML()                           */
+/************************************************************************/
+OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
+{
+    OGRSpatialReference oSRS;
+    CPLXMLNode *psRoot = CPLParseXMLString( pszISOXML );
+    OGRErr eOGRErr = OGRERR_FAILURE;
+
+    if( psRoot == NULL )
+        return eOGRErr;
+
+    CPLStripXMLNamespace( psRoot, NULL, TRUE ); 
+
+    CPLXMLNode *psRSI = CPLSearchXMLNode( psRoot, "=referenceSystemInfo" );
+    if( psRSI == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+          "Unable to find <referenceSystemInfo> in metadata." );
+        CPLDestroyXMLNode( psRoot );
+        return eOGRErr;
+    }
+
+    oSRS.Clear();
+
+    const char *pszSRCodeString = 
+        CPLGetXMLValue( psRSI, "MD_ReferenceSystem.referenceSystemIdentifier.RS_Identifier.code.CharacterString", NULL );
+    if( pszSRCodeString == NULL )
+    {
+        CPLDebug("BAG",
+          "Unable to find /MI_Metadata/referenceSystemInfo[1]/MD_ReferenceSystem[1]/referenceSystemIdentifier[1]/RS_Identifier[1]/code[1]/CharacterString[1] in metadata." );
+        CPLDestroyXMLNode( psRoot );
+        return eOGRErr;
+    }
+    
+    const char *pszSRCodeSpace = 
+        CPLGetXMLValue( psRSI, "MD_ReferenceSystem.referenceSystemIdentifier.RS_Identifier.codeSpace.CharacterString", "" );
+    if( !EQUAL( pszSRCodeSpace, "WKT" ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+            "Spatial reference string is not in WKT." );
+        CPLDestroyXMLNode( psRoot );
+        return eOGRErr;
+    }
+
+    char* pszWKT = const_cast< char* >( pszSRCodeString );
+    if( oSRS.importFromWkt( &pszWKT ) != OGRERR_NONE )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+          "Failed parsing WKT string \"%s\".", pszSRCodeString );
+        CPLDestroyXMLNode( psRoot );
+        return eOGRErr;
+    }
+
+    oSRS.exportToWkt( &pszProjection );
+    eOGRErr = OGRERR_NONE;
+
+    psRSI = CPLSearchXMLNode( psRSI->psNext, "=referenceSystemInfo" );
+    if( psRSI == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+            "Unable to find second instance of <referenceSystemInfo> in metadata." );
+        CPLDestroyXMLNode( psRoot );
+        return eOGRErr;
+    }
+
+    pszSRCodeString = 
+      CPLGetXMLValue( psRSI, "MD_ReferenceSystem.referenceSystemIdentifier.RS_Identifier.code.CharacterString", NULL );
+    if( pszSRCodeString == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+            "Unable to find /MI_Metadata/referenceSystemInfo[2]/MD_ReferenceSystem[1]/referenceSystemIdentifier[1]/RS_Identifier[1]/code[1]/CharacterString[1] in metadata." );
+        CPLDestroyXMLNode( psRoot );
+        return eOGRErr;
+    }
+
+    pszSRCodeSpace = 
+        CPLGetXMLValue( psRSI, "MD_ReferenceSystem.referenceSystemIdentifier.RS_Identifier.codeSpace.CharacterString", "" );
+    if( !EQUAL( pszSRCodeSpace, "WKT" ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+            "Spatial reference string is not in WKT." );
+        CPLDestroyXMLNode( psRoot );
+        return eOGRErr;
+    }
+
+    if( EQUALN(pszSRCodeString, "VERTCS", 6 ) )
+    {
+        CPLString oString( pszProjection );
+        oString += ",";
+        oString += pszSRCodeString;
+        if ( pszProjection )
+            CPLFree( pszProjection );
+        pszProjection = CPLStrdup( oString );
+    }
+
+    CPLDestroyXMLNode( psRoot );
+    
+    return eOGRErr;
 }
 
 /************************************************************************/
