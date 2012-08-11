@@ -2640,12 +2640,11 @@ OGRErr OGR_L_Update( OGRLayerH pLayerInput,
  * \brief Clip off areas that are not covered by the method layer.
  *
  * The result layer contains features whose geometries represent areas
- * that are in the input layer but not in the method layer. The
- * features in the result layer have the (possibly clipped) areas of
- * features in the input layer and the attributes from the same
- * features. The schema of the result layer can be set by the user or,
- * if it is empty, is initialized to contain all fields in the input
- * layer.
+ * that are in the input layer and in the method layer. The features
+ * in the result layer have the (possibly clipped) areas of features
+ * in the input layer and the attributes from the same features. The
+ * schema of the result layer can be set by the user or, if it is
+ * empty, is initialized to contain all fields in the input layer.
  *
  * \note For best performance use the minimum amount of features in
  * the method layer and copy it into a memory layer.
@@ -2724,29 +2723,34 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
             continue;
         }
         
-        OGRGeometry *geom = x_geom->clone(); // this will be the geometry of the result feature 
+        OGRGeometry *geom = NULL; // this will be the geometry of the result feature 
         pLayerMethod->ResetReading();
+        // incrementally add area from y to geom
         while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
             OGRGeometry *y_geom = y->GetGeometryRef();
             if (!y_geom) {delete y; continue;}
-            OGRGeometry *geom_new = geom->Difference(y_geom);
-            delete geom;
-            geom = geom_new;
+            if (!geom) {
+                geom = y_geom->clone();
+            } else {
+                OGRGeometry *geom_new = geom->Union(y_geom);
+                delete geom;
+                geom = geom_new;
+            }
             delete y;
-            if (!geom || geom->IsEmpty()) break;
         }
 
+        // possibly add a new feature with area x intersection sum of y
         OGRFeature *z = NULL;
-        if (geom && !geom->IsEmpty()) {
+        if (geom) {
             z = new OGRFeature(poDefnResult);
             z->SetFieldsFrom(x, mapInput);
-            z->SetGeometryDirectly(geom);
-        } else {
-            if (geom) delete geom;
+            z->SetGeometryDirectly(x_geom->Intersection(geom));
+            delete geom;
         }
         delete x;
         if (z) {
-            ret = pLayerResult->CreateFeature(z);
+            if (!z->GetGeometryRef()->IsEmpty())
+                ret = pLayerResult->CreateFeature(z);
             delete z;
             if (ret != OGRERR_NONE) goto done;
         }
@@ -2772,12 +2776,11 @@ done:
  * \brief Clip off areas that are not covered by the method layer.
  *
  * The result layer contains features whose geometries represent areas
- * that are in the input layer but not in the method layer. The
- * features in the result layer have the (possibly clipped) areas of
- * features in the input layer and the attributes from the same
- * features. The schema of the result layer can be set by the user or,
- * if it is empty, is initialized to contain all fields in the input
- * layer.
+ * that are in the input layer and in the method layer. The features
+ * in the result layer have the (possibly clipped) areas of features
+ * in the input layer and the attributes from the same features. The
+ * schema of the result layer can be set by the user or, if it is
+ * empty, is initialized to contain all fields in the input layer.
  *
  * \note For best performance use the minimum amount of features in
  * the method layer and copy it into a memory layer.
@@ -2915,6 +2918,7 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
 
         OGRGeometry *geom = NULL; // this will be the geometry of the result feature
         pLayerMethod->ResetReading();
+        // incrementally add area from y to geom
         while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
             OGRGeometry *y_geom = y->GetGeometryRef();
             if (!y_geom) {delete y; continue;}
@@ -2928,6 +2932,7 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
             delete y;
         }
 
+        // possibly add a new feature with area x minus sum of y
         OGRFeature *z = NULL;
         if (geom) {
             z = new OGRFeature(poDefnResult);
@@ -2937,7 +2942,8 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
         }
         delete x;
         if (z) {
-            ret = pLayerResult->CreateFeature(z);
+            if (!z->GetGeometryRef()->IsEmpty())
+                ret = pLayerResult->CreateFeature(z);
             delete z;
             if (ret != OGRERR_NONE) goto done;
         }
