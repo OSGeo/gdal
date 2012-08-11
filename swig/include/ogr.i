@@ -731,6 +731,8 @@ public:
     return OGR_L_SetIgnoredFields( self, options );
   }
 
+%apply Pointer NONNULL {OGRFieldDefnShadow *method_layer};
+%apply Pointer NONNULL {OGRFieldDefnShadow *result_layer};
   OGRErr Intersection( OGRLayerShadow *method_layer, 
                        OGRLayerShadow *result_layer, 
                        char **options=NULL,

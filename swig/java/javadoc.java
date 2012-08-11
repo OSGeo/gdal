@@ -7127,6 +7127,325 @@ Layers will return false for any unrecognised capabilities.<p>
 */
 public class Layer:public boolean TestCapability(String cap)
 
+/**
+ * Intersection of two layers.
+ * <p>
+ * The result layer contains features whose geometries represent areas
+ * that are common between features in the input layer and in the
+ * method layer. The features in the result layer have attributes from
+ * both input and method layers. The schema of the result layer can be
+ * set by the user or, if it is empty, is initialized to contain all
+ * fields in the input and method layers.
+ * <p>
+ * If the schema of the result is set by user and contains
+ * fields that have the same name as a field in input and in method
+ * layer, then the attribute in the result feature will get the value
+ * from the feature of the method layer.
+ * <p>
+ * For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ * <p>
+ * This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * @param pLayerMethod the method layer. Should not be null.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be null. See above the note
+ * about the schema.
+ *
+ * @param options list of options (may be null).
+ *
+ * @param callback a callback function for reporting progress or null.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
+ *
+ * @since OGR 2.0
+ */
+public class Layer:public int Intersection( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
+
+/**
+ * Intersection of two layers.
+ *
+ * @see #Intersection( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
+ */
+public class Layer:public int Intersection( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options )
+
+public class Layer:public int Intersection( Layer pLayerMethod, Layer pLayerResult)
+
+
+/**
+ * Union of two layers.
+ * <p>
+ * The result layer contains features whose geometries represent areas
+ * that are in either in the input layer or in the method layer. The
+ * features in the result layer have attributes from both input and
+ * method layers. For features which represent areas that are only in
+ * the input or in the method layer the respective attributes have
+ * undefined values. The schema of the result layer can be set by the
+ * user or, if it is empty, is initialized to contain all fields in
+ * the input and method layers.
+ * <p>
+ * If the schema of the result is set by user and contains
+ * fields that have the same name as a field in input and in method
+ * layer, then the attribute in the result feature will get the value
+ * from the feature of the method layer (even if it is undefined).
+ * <p>
+ * For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ * <p>
+ * This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * @param pLayerMethod the method layer. Should not be null.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be null. See above the note
+ * about the schema.
+ *
+ * @param options list of options (may be null).
+ *
+ * @param callback a callback function for reporting progress or null.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
+ *
+ * @since OGR 2.0
+ */
+public class Layer:public int Union( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
+
+/**
+ * Union of two layers.
+ *
+ * @see #Union( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
+ */
+public class Layer:public int Union( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options )
+
+public class Layer:public int Union( Layer pLayerMethod, Layer pLayerResult)
+
+/**
+ * Symmetrical difference of two layers.
+ * <p>
+ * The result layer contains features whose geometries represent areas
+ * that are in either in the input layer or in the method layer but
+ * not in both. The features in the result layer have attributes from
+ * both input and method layers. For features which represent areas
+ * that are only in the input or in the method layer the respective
+ * attributes have undefined values. The schema of the result layer
+ * can be set by the user or, if it is empty, is initialized to
+ * contain all fields in the input and method layers.
+ * <p>
+ * If the schema of the result is set by user and contains
+ * fields that have the same name as a field in input and in method
+ * layer, then the attribute in the result feature will get the value
+ * from the feature of the method layer (even if it is undefined).
+ * <p>
+ * For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ * <p>
+ * This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * @param pLayerMethod the method layer. Should not be null.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be null. See above the note
+ * about the schema.
+ *
+ * @param options list of options (may be null).
+ *
+ * @param callback a callback function for reporting progress or null.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
+ *
+ * @since OGR 2.0
+ */
+public class Layer:public int SymDifference( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
+
+/**
+ * Symmetrical difference of two layers.
+ *
+ * @see #SymDifference( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
+ */
+public class Layer:public int SymDifference( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options )
+
+public class Layer:public int SymDifference( Layer pLayerMethod, Layer pLayerResult)
+
+/**
+ * Identify the features of this layer with the ones from the
+ * identity layer.
+ * <p>
+ * The result layer contains features whose geometries represent areas
+ * that are in the input layer. The features in the result layer have
+ * attributes from both input and method layers. The schema of the
+ * result layer can be set by the user or, if it is empty, is
+ * initialized to contain all fields in input and method layers.
+ * <p>
+ * If the schema of the result is set by user and contains
+ * fields that have the same name as a field in input and in method
+ * layer, then the attribute in the result feature will get the value
+ * from the feature of the method layer (even if it is undefined).
+ * <p>
+ * For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ * <p>
+ * This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * @param pLayerMethod the method layer. Should not be null.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be null. See above the note
+ * about the schema.
+ *
+ * @param options list of options (may be null).
+ *
+ * @param callback a callback function for reporting progress or null.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
+ *
+ * @since OGR 2.0
+ */
+public class Layer:public int Identity( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
+
+/**
+ * Identify the features of this layer with the ones from the
+ * identity layer.
+ *
+ * @see #Identity( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
+ */
+public class Layer:public int Identity( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options )
+
+public class Layer:public int Identity( Layer pLayerMethod, Layer pLayerResult)
+
+/**
+ * Update this layer with features from the update layer.
+ * <p>
+ * The result layer contains features whose geometries represent areas
+ * that are either in the input layer or in the method layer. The
+ * features in the result layer have areas of the features of the
+ * method layer or those ares of the features of the input layer that
+ * are not covered by the method layer. The features of the result
+ * layer get their attributes from the input layer. The schema of the
+ * result layer can be set by the user or, if it is empty, is
+ * initialized to contain all fields in the input layer.
+ * <p>
+ * If the schema of the result is set by user and contains
+ * fields that have the same name as a field in the method layer, then
+ * the attribute in the result feature the originates from the method
+ * layer will get the value from the feature of the method layer.
+ * <p>
+ * For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ * <p>
+ * This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * @param pLayerMethod the method layer. Should not be null.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be null. See above the note
+ * about the schema.
+ *
+ * @param options list of options (may be null).
+ *
+ * @param callback a callback function for reporting progress or null.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
+ *
+ * @since OGR 2.0
+ */
+public class Layer:public int Update( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
+
+/**
+ * Update this layer with features from the update layer.
+ *
+ * @see #Update( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
+ */
+public class Layer:public int Update( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options )
+
+public class Layer:public int Update( Layer pLayerMethod, Layer pLayerResult)
+
+/**
+ * Clip off areas that are not covered by the method layer.
+ * <p>
+ * The result layer contains features whose geometries represent areas
+ * that are in the input layer and in the method layer. The features
+ * in the result layer have the (possibly clipped) areas of features
+ * in the input layer and the attributes from the same features. The
+ * schema of the result layer can be set by the user or, if it is
+ * empty, is initialized to contain all fields in the input layer.
+ * <p>
+ * For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ * <p>
+ * This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * @param pLayerMethod the method layer. Should not be null.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be null. See above the note
+ * about the schema.
+ *
+ * @param options list of options (may be null).
+ *
+ * @param callback a callback function for reporting progress or null.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
+ *
+ * @since OGR 2.0
+ */
+public class Layer:public int Clip( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
+
+/**
+ * Clip off areas that are not covered by the method layer.
+ *
+ * @see #Clip( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
+ */
+public class Layer:public int Clip( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options )
+
+public class Layer:public int Clip( Layer pLayerMethod, Layer pLayerResult)
+
+/**
+ * Remove areas that are covered by the method layer.
+ * <p>
+ * The result layer contains features whose geometries represent areas
+ * that are in the input layer but not in the method layer. The
+ * features in the result layer have attributes from the input
+ * layer. The schema of the result layer can be set by the user or, if
+ * it is empty, is initialized to contain all fields in the input
+ * layer.
+ * <p>
+ * For best performance use the minimum amount of features in
+ * the method layer and copy it into a memory layer.
+ * <p>
+ * This method relies on GEOS support. Do not use unless the
+ * GEOS support is compiled in.
+ *
+ * @param pLayerMethod the method layer. Should not be null.
+ *
+ * @param pLayerResult the layer where the features resulting from the
+ * operation are inserted. Should not be null. See above the note
+ * about the schema.
+ *
+ * @param options list of options (may be null).
+ *
+ * @param callback a callback function for reporting progress or null.
+ *
+ * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
+ *
+ * @since OGR 2.0
+ */
+public class Layer:public int Erase( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
+
+/**
+ * Remove areas that are covered by the method layer.
+ *
+ * @see #Erase( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
+ */
+public class Layer:public int Erase( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options )
+
+public class Layer:public int Erase( Layer pLayerMethod, Layer pLayerResult)
 
 
 /* Class Feature */
@@ -8571,7 +8890,7 @@ public class Geometry:public boolean Intersects(Geometry other)
  * @return a new geometry representing the intersection or null if there is
  * no intersection or an error occurs.
  *
- * @see Intersects(Geometry)
+ * @see #Intersects(Geometry)
  */
 public class Geometry:public Geometry Intersection(Geometry other)
 
