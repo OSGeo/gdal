@@ -72,6 +72,8 @@ class PDSDataset : public RawDataset
 
     CPLString   osTempResult;
 
+    CPLString   osExternalCube;
+
     void        ParseSRS();
     int         ParseCompressedImage();
     int	        ParseImage( CPLString osPrefix = "" );
@@ -183,6 +185,11 @@ char **PDSDataset::GetFileList()
         papszFileList = CSLInsertStrings( papszFileList, -1, 
                                           papszCFileList );
         CSLDestroy( papszCFileList );
+    }
+
+    if( !osExternalCube.empty() )
+    {
+        papszFileList = CSLAddString( papszFileList, osExternalCube );
     }
 
     return papszFileList;
@@ -665,6 +672,7 @@ int PDSDataset::ParseImage( CPLString osPrefix )
         CPLString osFilename = osQube;
         CleanString( osFilename );
         osTargetFile = CPLFormCIFilename( osTPath, osFilename, NULL );
+        osExternalCube = osTargetFile;
     }
 
     GDALDataType eDataType = GDT_Byte;
