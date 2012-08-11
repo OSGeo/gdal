@@ -26,9 +26,11 @@ It is also possible to specify the name of an XML file whose content matches the
 (the &lt;OGRWFSDataSource&gt element must be the first bytes of the file):
 <pre>
 &lt;OGRWFSDataSource&gt;
-    &lt;URL&gt;http://path/to/WFS/service[?OPTIONAL_PARAMETER1=VALUE[&amp;OPTIONNAL_PARAMETER2=VALUE]]&lt;/URL&gt;
+    &lt;URL&gt;http://path/to/WFS/service[?OPTIONAL_PARAMETER1=VALUE[&amp;amp;OPTIONNAL_PARAMETER2=VALUE]]&lt;/URL&gt;
 &lt;/OGRWFSDataSource&gt;
 </pre><p>
+
+Note: the URL must be XML-escaped, for example the <i>&amp;</i> character must be written as <i>&amp;amp;</i><p>
 
 At the first opening, the content of the result of the <i>GetCapabilities</i> request will be appended to the file, so that it can be cached
 for later openings of the dataset. The same applies for the <i>DescribeFeatureType</i> request issued to discover the field definition of each layer.<p>
