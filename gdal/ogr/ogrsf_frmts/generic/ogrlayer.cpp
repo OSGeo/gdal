@@ -2640,11 +2640,11 @@ OGRErr OGR_L_Update( OGRLayerH pLayerInput,
  * \brief Clip off areas that are not covered by the method layer.
  *
  * The result layer contains features whose geometries represent areas
- * that are common between features in the input layer and in the
- * method layer. The features in the result layer have the (possibly
- * clipped) areas of the input layer and the attributes from the input
- * layer. The schema of the result layer can be set by the user or, if
- * it is empty, is initialized to contain all fields in the input
+ * that are in the input layer but not in the method layer. The
+ * features in the result layer have the (possibly clipped) areas of
+ * features in the input layer and the attributes from the same
+ * features. The schema of the result layer can be set by the user or,
+ * if it is empty, is initialized to contain all fields in the input
  * layer.
  *
  * \note For best performance use the minimum amount of features in
@@ -2772,11 +2772,11 @@ done:
  * \brief Clip off areas that are not covered by the method layer.
  *
  * The result layer contains features whose geometries represent areas
- * that are common between features in the input layer and in the
- * method layer. The features in the result layer have the (possibly
- * clipped) areas of the input layer and the attributes from the input
- * layer. The schema of the result layer can be set by the user or, if
- * it is empty, is initialized to contain all fields in the input
+ * that are in the input layer but not in the method layer. The
+ * features in the result layer have the (possibly clipped) areas of
+ * features in the input layer and the attributes from the same
+ * features. The schema of the result layer can be set by the user or,
+ * if it is empty, is initialized to contain all fields in the input
  * layer.
  *
  * \note For best performance use the minimum amount of features in
