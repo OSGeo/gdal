@@ -95,6 +95,20 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
 
         poThis->SetUTM( ABS(nZone), nZone > 0 );
     }
+    else if( EQUAL(pszProjection,"Geodetic") )
+    {
+        const char *pszEllipsoid = 
+            CPLGetXMLValue( psRSI, "MD_CRS.ellipsoid.RS_Identifier.code", "" );
+
+        if( !EQUAL(pszDatum, "WGS84") ||
+            !EQUAL(pszEllipsoid, "WGS84") )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "ISO 19115 parser does not support custom GCS." );
+            CPLDestroyXMLNode( psRoot );
+            return OGRERR_FAILURE;
+        }
+    }
     else 
     {
         CPLError( CE_Failure, CPLE_AppDefined,
