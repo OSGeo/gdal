@@ -85,9 +85,30 @@ def ogr_avc_2():
     else:
         return 'fail'
 
+###############################################################################
+# Try opening a compressed E00 (which is not supported)
+
+def ogr_avc_3():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    avc_ds = ogr.Open( 'data/compressed.e00' )
+    gdal.PopErrorHandler()
+    last_error_msg = gdal.GetLastErrorMsg()
+
+    if avc_ds is not None:
+        gdaltest.post_reason('expected failure')
+        return 'fail'
+
+    if last_error_msg == '':
+        gdaltest.post_reason('expected error message')
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_avc_1,
-    ogr_avc_2
+    ogr_avc_2,
+    ogr_avc_3,
  ]
 
 if __name__ == '__main__':
