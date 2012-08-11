@@ -455,4 +455,6 @@ SMART_FINALIZER(Geometry)
 /* End of smart finalizer mechanism                                  */
 /* ----------------------------------------------------------------- */
 
+%include callback.i
+
 %include typemaps_java.i
