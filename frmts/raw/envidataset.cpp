@@ -1855,7 +1855,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
             fpHeader = VSIFOpenL( osHdrFilename, pszMode );
         }
 
-        if( fpHeader == NULL && VSIIsCaseSensitiveFS(osHdrFilename) )
+        if( fpHeader == NULL )
         {
             osHdrFilename = CPLFormFilename( NULL, poOpenInfo->pszFilename, 
                                             "hdr" );
