@@ -50,7 +50,7 @@ CPL_C_END
 class MerisL2FlagBand : public GDALPamRasterBand
 {
   public:
-    MerisL2FlagBand( GDALDataset *, int, FILE*, off_t, off_t );
+    MerisL2FlagBand( GDALDataset *, int, VSILFILE*, off_t, off_t );
     virtual ~MerisL2FlagBand();
     virtual CPLErr IReadBlock( int, int, void * );
 
@@ -61,14 +61,14 @@ class MerisL2FlagBand : public GDALPamRasterBand
     size_t nRecordSize;
     size_t nDataSize;
     GByte *pReadBuf;
-    FILE *fpImage;
+    VSILFILE *fpImage;
 };
 
 /************************************************************************/
 /*                        MerisL2FlagBand()                       */
 /************************************************************************/
 MerisL2FlagBand::MerisL2FlagBand( GDALDataset *poDS, int nBand,
-                                  FILE* fpImage, off_t nImgOffset,
+                                  VSILFILE* fpImage, off_t nImgOffset,
                                   off_t nPrefixBytes )
 {
     this->poDS = (GDALDataset *) poDS;
@@ -111,7 +111,7 @@ CPLErr MerisL2FlagBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     off_t nOffset = nImgOffset + nPrefixBytes +
                     nBlockYOff * nBlockYSize * nRecordSize;
 
-    if ( VSIFSeek( fpImage, nOffset, SEEK_SET ) != 0 )
+    if ( VSIFSeekL( fpImage, nOffset, SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Seek to %d for scanline %d failed.\n",
@@ -119,7 +119,7 @@ CPLErr MerisL2FlagBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    if ( VSIFRead( pReadBuf, 1, nDataSize, fpImage ) != nDataSize )
+    if ( VSIFReadL( pReadBuf, 1, nDataSize, fpImage ) != nDataSize )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Read of %d bytes for scanline %d failed.\n",
@@ -158,7 +158,7 @@ CPLErr MerisL2FlagBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 class EnvisatDataset : public RawDataset
 {
     EnvisatFile *hEnvisatFile;
-    FILE	*fpImage;
+    VSILFILE	*fpImage;
 
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
@@ -217,7 +217,7 @@ EnvisatDataset::~EnvisatDataset()
         EnvisatFile_Close( hEnvisatFile );
 
     if( fpImage != NULL )
-        VSIFClose( fpImage );
+        VSIFCloseL( fpImage );
 
     if( nGCPCount > 0 )
     {
@@ -771,7 +771,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check the header.                                               */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 8 || poOpenInfo->fp == NULL )
+    if( poOpenInfo->nHeaderBytes < 8 )
         return NULL;
 
     if( !EQUALN((const char *) poOpenInfo->pabyHeader, "PRODUCT=",8) )
@@ -907,11 +907,12 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Assume ownership of the file handled from the GDALOpenInfo.     */
-/* -------------------------------------------------------------------- */
-    poDS->fpImage = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
+    poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    if( poDS->fpImage == NULL )
+    {
+        delete poDS;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to collect GCPs.                                            */
@@ -949,7 +950,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
                                           ds_offset + nPrefixBytes,
                                           GDALGetDataTypeSize(eDataType) / 8,
                                           dsr_size,
-                                          eDataType, bNative ) );
+                                          eDataType, bNative, TRUE ) );
             iBand++;
 
             poDS->GetRasterBand(iBand)->SetDescription( pszDSName );
@@ -967,7 +968,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->SetBand( iBand+1,
                            new RawRasterBand( poDS, iBand+1, poDS->fpImage,
                                               ds_offset + nPrefixBytes, 3,
-                                              dsr_size, GDT_Byte, bNative ) );
+                                              dsr_size, GDT_Byte, bNative, TRUE ) );
                 iBand++;
 
                 poDS->GetRasterBand(iBand)->SetDescription( pszDSName );
@@ -977,7 +978,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
                            new RawRasterBand( poDS, iBand+1, poDS->fpImage,
                                               ds_offset + nPrefixBytes + 1,
                                               3, dsr_size, GDT_Int16,
-                                              bNative ) );
+                                              bNative, TRUE ) );
                 iBand++;
 
                 const char *pszSuffix = strstr( pszDSName, "MDS" );
@@ -1022,7 +1023,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
                         new RawRasterBand( poDS, iBand+1, poDS->fpImage,
                                            nSubBandOffset,
                                            nPixelSize * nSubBands,
-                                           dsr_size2, eDataType2, bNative ) );
+                                           dsr_size2, eDataType2, bNative, TRUE ) );
                 iBand++;
 
                 if (nSubBands > 1)
@@ -1082,6 +1083,8 @@ void GDALRegister_Envisat()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "frmt_various.html#Envisat" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "n1" );
+
+        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = EnvisatDataset::Open;
 
