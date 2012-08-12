@@ -1078,6 +1078,8 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         {
             if( EQUAL(pszValue,"meter" ) || EQUAL(pszValue,"m") )
                 SetLinearUnits( SRS_UL_METER, 1.0 );
+            else if( EQUAL(pszValue,"km") )
+                SetLinearUnits( SRS_UL_METER, 1000.0 );
             else if( EQUAL(pszValue,"us-ft" ) )
                 SetLinearUnits( SRS_UL_US_FOOT, CPLAtof(SRS_UL_US_FOOT_CONV) );
             else if( EQUAL(pszValue,"ft" ) )
