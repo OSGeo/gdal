@@ -435,12 +435,17 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer
     OGRSQLiteLayer     *GetBaseLayer(size_t& i);
     void                RebuildSQL();
 
+    int                 bEmptyLayer;
+
   public:
                         OGRSQLiteSelectLayer( OGRSQLiteDataSource *, 
                                               CPLString osSQL,
                                               sqlite3_stmt *,
-                                              int bUseStatementForGetNextFeature );
+                                              int bUseStatementForGetNextFeature,
+                                              int bEmptyLayer );
                         ~OGRSQLiteSelectLayer();
+
+    virtual OGRFeature *GetNextFeature();
 
     virtual void        SetSpatialFilter( OGRGeometry * );
 
