@@ -1263,6 +1263,8 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
     /* ORDER BY are costly to evaluate and are not necessary to establish */
     /* the layer definition. */
     int bUseStatementForGetNextFeature = TRUE;
+    int bEmptyLayer = FALSE;
+
     if( osSQLCommand.ifind("SELECT ") == 0 &&
         osSQLCommand.ifind(" UNION ") == std::string::npos &&
         osSQLCommand.ifind(" INTERSECT ") == std::string::npos &&
@@ -1329,6 +1331,9 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
             sqlite3_finalize( hSQLStmt );
             return NULL;
         }
+
+        bUseStatementForGetNextFeature = FALSE;
+        bEmptyLayer = TRUE;
     }
     
 /* -------------------------------------------------------------------- */
@@ -1365,7 +1370,8 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
     OGRSQLiteSelectLayer *poLayer = NULL;
         
     CPLString osSQL = pszSQLCommand;
-    poLayer = new OGRSQLiteSelectLayer( this, osSQL, hSQLStmt, bUseStatementForGetNextFeature );
+    poLayer = new OGRSQLiteSelectLayer( this, osSQL, hSQLStmt,
+                                        bUseStatementForGetNextFeature, bEmptyLayer );
 
     if( poSpatialFilter != NULL )
         poLayer->SetSpatialFilter( poSpatialFilter );
