@@ -39,7 +39,8 @@ CPL_CVSID("$Id$");
 OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
                                             CPLString osSQLIn,
                                             sqlite3_stmt *hStmtIn,
-                                            int bUseStatementForGetNextFeature )
+                                            int bUseStatementForGetNextFeature,
+                                            int bEmptyLayer )
 
 {
     poDS = poDSIn;
@@ -61,6 +62,7 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
 
     osSQLBase = osSQLIn;
     osSQLCurrent = osSQLIn;
+    this->bEmptyLayer = bEmptyLayer;
 }
 
 /************************************************************************/
@@ -70,6 +72,18 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
 OGRSQLiteSelectLayer::~OGRSQLiteSelectLayer()
 
 {
+}
+
+/************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
+
+OGRFeature *OGRSQLiteSelectLayer::GetNextFeature()
+{
+    if( bEmptyLayer )
+        return NULL;
+
+    return OGRSQLiteLayer::GetNextFeature();
 }
 
 /************************************************************************/
