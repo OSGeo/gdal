@@ -1138,8 +1138,7 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
         void* cbfunction = NULL;
         SWIG_ConvertPtr( $input, 
                          (void**)&cbfunction,
-                         SWIGTYPE_p_GDALProgressFunc,
-                         /*SWIGTYPE_p_f_double_p_q_const__char_p_void__int,*/
+                         SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
                          SWIG_POINTER_EXCEPTION | 0 );
 
         if ( cbfunction == GDALTermProgress ) {
