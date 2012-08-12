@@ -2603,14 +2603,14 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
             const char *pszUnitsX = NULL;
             const char *pszUnitsY = NULL;
 
-            strcpy( szTemp, "x" );
+            strcpy( szTemp, poDS->papszDimName[nXDimID] );
             strcat( szTemp, "#units" );
             pszValue = CSLFetchNameValue( poDS->papszMetadata, 
                                           szTemp );
             if( pszValue != NULL ) 
                 pszUnitsX = pszValue;
 
-            strcpy( szTemp, "y" );
+            strcpy( szTemp, poDS->papszDimName[nYDimID] );
             strcat( szTemp, "#units" );
             pszValue = CSLFetchNameValue( poDS->papszMetadata, 
                                           szTemp );
@@ -2624,12 +2624,14 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
 
             /* add units to PROJCS */
             if ( pszUnits != NULL && ! EQUAL(pszUnits,"") ) {
+                CPLDebug( "GDAL_netCDF", 
+                          "units=%s", pszUnits );
                 if ( EQUAL(pszUnits,"m") ) {
-                    oSRS.SetLinearUnits( CF_UNITS_M, 1.0 );
+                    oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
                     oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", 9001 );
                 }
                 else if ( EQUAL(pszUnits,"km") ) {
-                    oSRS.SetLinearUnits( CF_UNITS_M, 1000.0 );
+                    oSRS.SetLinearUnits( SRS_UL_METER, 1000.0 );
                     oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", 9001 );
                 }
                 /* TODO check for other values */
