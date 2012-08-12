@@ -7437,7 +7437,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Layer_Intersection(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Layer_Intersection(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OGRLayerShadow *arg2 = (OGRLayerShadow *) 0 ;
@@ -7457,6 +7457,9 @@ SWIGINTERN PyObject *_wrap_Layer_Intersection(PyObject *SWIGUNUSEDPARM(self), Py
   PyObject * obj3 = 0 ;
   PyObject * obj4 = 0 ;
   PyObject * obj5 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "method_layer",(char *) "result_layer",(char *) "options",(char *) "callback",(char *) "callback_data", NULL 
+  };
   OGRErr result;
   
   /* %typemap(arginit) ( const char* callback_data=NULL)  */
@@ -7466,7 +7469,7 @@ SWIGINTERN PyObject *_wrap_Layer_Intersection(PyObject *SWIGUNUSEDPARM(self), Py
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
   arg6 = psProgressInfo;
-  if (!PyArg_ParseTuple(args,(char *)"OOO|OOO:Layer_Intersection",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO|OOO:Layer_Intersection",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_Intersection" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
@@ -7612,7 +7615,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Layer_Union(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Layer_Union(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OGRLayerShadow *arg2 = (OGRLayerShadow *) 0 ;
@@ -7632,6 +7635,9 @@ SWIGINTERN PyObject *_wrap_Layer_Union(PyObject *SWIGUNUSEDPARM(self), PyObject 
   PyObject * obj3 = 0 ;
   PyObject * obj4 = 0 ;
   PyObject * obj5 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "method_layer",(char *) "result_layer",(char *) "options",(char *) "callback",(char *) "callback_data", NULL 
+  };
   OGRErr result;
   
   /* %typemap(arginit) ( const char* callback_data=NULL)  */
@@ -7641,7 +7647,7 @@ SWIGINTERN PyObject *_wrap_Layer_Union(PyObject *SWIGUNUSEDPARM(self), PyObject 
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
   arg6 = psProgressInfo;
-  if (!PyArg_ParseTuple(args,(char *)"OOO|OOO:Layer_Union",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO|OOO:Layer_Union",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_Union" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
@@ -7787,7 +7793,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Layer_SymDifference(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Layer_SymDifference(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OGRLayerShadow *arg2 = (OGRLayerShadow *) 0 ;
@@ -7807,6 +7813,9 @@ SWIGINTERN PyObject *_wrap_Layer_SymDifference(PyObject *SWIGUNUSEDPARM(self), P
   PyObject * obj3 = 0 ;
   PyObject * obj4 = 0 ;
   PyObject * obj5 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "method_layer",(char *) "result_layer",(char *) "options",(char *) "callback",(char *) "callback_data", NULL 
+  };
   OGRErr result;
   
   /* %typemap(arginit) ( const char* callback_data=NULL)  */
@@ -7816,7 +7825,7 @@ SWIGINTERN PyObject *_wrap_Layer_SymDifference(PyObject *SWIGUNUSEDPARM(self), P
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
   arg6 = psProgressInfo;
-  if (!PyArg_ParseTuple(args,(char *)"OOO|OOO:Layer_SymDifference",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO|OOO:Layer_SymDifference",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_SymDifference" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
@@ -7962,7 +7971,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Layer_Identity(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Layer_Identity(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OGRLayerShadow *arg2 = (OGRLayerShadow *) 0 ;
@@ -7982,6 +7991,9 @@ SWIGINTERN PyObject *_wrap_Layer_Identity(PyObject *SWIGUNUSEDPARM(self), PyObje
   PyObject * obj3 = 0 ;
   PyObject * obj4 = 0 ;
   PyObject * obj5 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "method_layer",(char *) "result_layer",(char *) "options",(char *) "callback",(char *) "callback_data", NULL 
+  };
   OGRErr result;
   
   /* %typemap(arginit) ( const char* callback_data=NULL)  */
@@ -7991,7 +8003,7 @@ SWIGINTERN PyObject *_wrap_Layer_Identity(PyObject *SWIGUNUSEDPARM(self), PyObje
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
   arg6 = psProgressInfo;
-  if (!PyArg_ParseTuple(args,(char *)"OOO|OOO:Layer_Identity",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO|OOO:Layer_Identity",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_Identity" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
@@ -8137,7 +8149,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Layer_Update(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Layer_Update(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OGRLayerShadow *arg2 = (OGRLayerShadow *) 0 ;
@@ -8157,6 +8169,9 @@ SWIGINTERN PyObject *_wrap_Layer_Update(PyObject *SWIGUNUSEDPARM(self), PyObject
   PyObject * obj3 = 0 ;
   PyObject * obj4 = 0 ;
   PyObject * obj5 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "method_layer",(char *) "result_layer",(char *) "options",(char *) "callback",(char *) "callback_data", NULL 
+  };
   OGRErr result;
   
   /* %typemap(arginit) ( const char* callback_data=NULL)  */
@@ -8166,7 +8181,7 @@ SWIGINTERN PyObject *_wrap_Layer_Update(PyObject *SWIGUNUSEDPARM(self), PyObject
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
   arg6 = psProgressInfo;
-  if (!PyArg_ParseTuple(args,(char *)"OOO|OOO:Layer_Update",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO|OOO:Layer_Update",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_Update" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
@@ -8312,7 +8327,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Layer_Clip(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Layer_Clip(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OGRLayerShadow *arg2 = (OGRLayerShadow *) 0 ;
@@ -8332,6 +8347,9 @@ SWIGINTERN PyObject *_wrap_Layer_Clip(PyObject *SWIGUNUSEDPARM(self), PyObject *
   PyObject * obj3 = 0 ;
   PyObject * obj4 = 0 ;
   PyObject * obj5 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "method_layer",(char *) "result_layer",(char *) "options",(char *) "callback",(char *) "callback_data", NULL 
+  };
   OGRErr result;
   
   /* %typemap(arginit) ( const char* callback_data=NULL)  */
@@ -8341,7 +8359,7 @@ SWIGINTERN PyObject *_wrap_Layer_Clip(PyObject *SWIGUNUSEDPARM(self), PyObject *
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
   arg6 = psProgressInfo;
-  if (!PyArg_ParseTuple(args,(char *)"OOO|OOO:Layer_Clip",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO|OOO:Layer_Clip",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_Clip" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
@@ -8487,7 +8505,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Layer_Erase(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Layer_Erase(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
   OGRLayerShadow *arg2 = (OGRLayerShadow *) 0 ;
@@ -8507,6 +8525,9 @@ SWIGINTERN PyObject *_wrap_Layer_Erase(PyObject *SWIGUNUSEDPARM(self), PyObject 
   PyObject * obj3 = 0 ;
   PyObject * obj4 = 0 ;
   PyObject * obj5 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "method_layer",(char *) "result_layer",(char *) "options",(char *) "callback",(char *) "callback_data", NULL 
+  };
   OGRErr result;
   
   /* %typemap(arginit) ( const char* callback_data=NULL)  */
@@ -8516,7 +8537,7 @@ SWIGINTERN PyObject *_wrap_Layer_Erase(PyObject *SWIGUNUSEDPARM(self), PyObject 
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
   arg6 = psProgressInfo;
-  if (!PyArg_ParseTuple(args,(char *)"OOO|OOO:Layer_Erase",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO|OOO:Layer_Erase",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_Erase" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
@@ -18923,37 +18944,37 @@ static PyMethodDef SwigMethods[] = {
 		"OGRERR_NONE if all field names have been resolved (even if the driver\n"
 		"does not support this method) \n"
 		""},
-	 { (char *)"Layer_Intersection", _wrap_Layer_Intersection, METH_VARARGS, (char *)"\n"
+	 { (char *)"Layer_Intersection", (PyCFunction) _wrap_Layer_Intersection, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"Layer_Intersection(Layer self, Layer method_layer, Layer result_layer, \n"
 		"    char options = None, GDALProgressFunc callback = None, \n"
 		"    void callback_data = None) -> OGRErr\n"
 		""},
-	 { (char *)"Layer_Union", _wrap_Layer_Union, METH_VARARGS, (char *)"\n"
+	 { (char *)"Layer_Union", (PyCFunction) _wrap_Layer_Union, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"Layer_Union(Layer self, Layer method_layer, Layer result_layer, \n"
 		"    char options = None, GDALProgressFunc callback = None, \n"
 		"    void callback_data = None) -> OGRErr\n"
 		""},
-	 { (char *)"Layer_SymDifference", _wrap_Layer_SymDifference, METH_VARARGS, (char *)"\n"
+	 { (char *)"Layer_SymDifference", (PyCFunction) _wrap_Layer_SymDifference, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"Layer_SymDifference(Layer self, Layer method_layer, Layer result_layer, \n"
 		"    char options = None, GDALProgressFunc callback = None, \n"
 		"    void callback_data = None) -> OGRErr\n"
 		""},
-	 { (char *)"Layer_Identity", _wrap_Layer_Identity, METH_VARARGS, (char *)"\n"
+	 { (char *)"Layer_Identity", (PyCFunction) _wrap_Layer_Identity, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"Layer_Identity(Layer self, Layer method_layer, Layer result_layer, \n"
 		"    char options = None, GDALProgressFunc callback = None, \n"
 		"    void callback_data = None) -> OGRErr\n"
 		""},
-	 { (char *)"Layer_Update", _wrap_Layer_Update, METH_VARARGS, (char *)"\n"
+	 { (char *)"Layer_Update", (PyCFunction) _wrap_Layer_Update, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"Layer_Update(Layer self, Layer method_layer, Layer result_layer, \n"
 		"    char options = None, GDALProgressFunc callback = None, \n"
 		"    void callback_data = None) -> OGRErr\n"
 		""},
-	 { (char *)"Layer_Clip", _wrap_Layer_Clip, METH_VARARGS, (char *)"\n"
+	 { (char *)"Layer_Clip", (PyCFunction) _wrap_Layer_Clip, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"Layer_Clip(Layer self, Layer method_layer, Layer result_layer, \n"
 		"    char options = None, GDALProgressFunc callback = None, \n"
 		"    void callback_data = None) -> OGRErr\n"
 		""},
-	 { (char *)"Layer_Erase", _wrap_Layer_Erase, METH_VARARGS, (char *)"\n"
+	 { (char *)"Layer_Erase", (PyCFunction) _wrap_Layer_Erase, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
 		"Layer_Erase(Layer self, Layer method_layer, Layer result_layer, \n"
 		"    char options = None, GDALProgressFunc callback = None, \n"
 		"    void callback_data = None) -> OGRErr\n"
