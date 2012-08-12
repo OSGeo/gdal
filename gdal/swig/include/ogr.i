@@ -733,6 +733,10 @@ public:
 
 %apply Pointer NONNULL {OGRFieldDefnShadow *method_layer};
 %apply Pointer NONNULL {OGRFieldDefnShadow *result_layer};
+
+#ifndef SWIGJAVA
+  %feature( "kwargs" ) Intersection;
+#endif
   OGRErr Intersection( OGRLayerShadow *method_layer, 
                        OGRLayerShadow *result_layer, 
                        char **options=NULL,
@@ -741,6 +745,9 @@ public:
     return OGR_L_Intersection( self, method_layer, result_layer, options, callback, callback_data );
   }
 
+#ifndef SWIGJAVA
+  %feature( "kwargs" ) Union;
+#endif
   OGRErr Union( OGRLayerShadow *method_layer, 
                 OGRLayerShadow *result_layer, 
                 char **options=NULL,
@@ -749,6 +756,9 @@ public:
     return OGR_L_Union( self, method_layer, result_layer, options, callback, callback_data );
   }
 
+#ifndef SWIGJAVA
+  %feature( "kwargs" ) SymDifference;
+#endif
   OGRErr SymDifference( OGRLayerShadow *method_layer, 
                         OGRLayerShadow *result_layer, 
                         char **options=NULL,
@@ -757,6 +767,9 @@ public:
     return OGR_L_SymDifference( self, method_layer, result_layer, options, callback, callback_data );
   }
 
+#ifndef SWIGJAVA
+  %feature( "kwargs" ) Identity;
+#endif
   OGRErr Identity( OGRLayerShadow *method_layer, 
                    OGRLayerShadow *result_layer, 
                    char **options=NULL,
@@ -764,7 +777,10 @@ public:
                    void* callback_data=NULL ) {
     return OGR_L_Identity( self, method_layer, result_layer, options, callback, callback_data );
   }
-  
+
+#ifndef SWIGJAVA
+  %feature( "kwargs" ) Update;
+#endif
   OGRErr Update( OGRLayerShadow *method_layer, 
                  OGRLayerShadow *result_layer, 
                  char **options=NULL,
@@ -773,6 +789,9 @@ public:
     return OGR_L_Update( self, method_layer, result_layer, options, callback, callback_data );
   }
 
+#ifndef SWIGJAVA
+  %feature( "kwargs" ) Clip;
+#endif
   OGRErr Clip( OGRLayerShadow *method_layer, 
                OGRLayerShadow *result_layer, 
                char **options=NULL,
@@ -781,6 +800,9 @@ public:
     return OGR_L_Clip( self, method_layer, result_layer, options, callback, callback_data );
   }
 
+#ifndef SWIGJAVA
+  %feature( "kwargs" ) Erase;
+#endif
   OGRErr Erase( OGRLayerShadow *method_layer, 
                 OGRLayerShadow *result_layer, 
                 char **options=NULL,
