@@ -29,6 +29,8 @@
 
 #include "ogr_osm.h"
 #include "cpl_conv.h"
+#include "cpl_time.h"
+#include "ogr_p.h"
 #include "ogr_api.h"
 #include "swq.h"
 #include "gpb.h"
@@ -41,10 +43,9 @@
 
 #define IDX_LYR_POINTS           0
 #define IDX_LYR_LINES            1
-#define IDX_LYR_POLYGONS         2
-#define IDX_LYR_MULTILINESTRINGS 3
-#define IDX_LYR_MULTIPOLYGONS    4
-#define IDX_LYR_OTHER_RELATIONS  5
+#define IDX_LYR_MULTILINESTRINGS 2
+#define IDX_LYR_MULTIPOLYGONS    3
+#define IDX_LYR_OTHER_RELATIONS  4
 
 #define DBL_TO_INT(x)            (int)floor((x) * 1e7 + 0.5)
 #define INT_TO_DBL(x)            ((x) / 1e7)
@@ -101,6 +102,7 @@
 size_t GetMaxTotalAllocs();
 #endif
 
+static void WriteVarInt64(GUIntBig nSVal, GByte** ppabyData);
 static void WriteVarSInt64(GIntBig nSVal, GByte** ppabyData);
 
 CPL_CVSID("$Id$");
@@ -126,6 +128,10 @@ OGROSMDataSource::OGROSMDataSource()
     hDB = NULL;
     hInsertNodeStmt = NULL;
     hInsertWayStmt = NULL;
+    hInsertPolygonsStandaloneStmt = NULL;
+    hDeletePolygonsStandaloneStmt = NULL;
+    hSelectPolygonsStandaloneStmt = NULL;
+    bHasRowInPolygonsStandalone = FALSE;
     nNodesInTransaction = 0;
     bInTransaction = FALSE;
     pahSelectNodeStmt = NULL;
@@ -184,6 +190,8 @@ OGROSMDataSource::OGROSMDataSource()
     nNonRedundantValuesLen = 0;
     pabyNonRedundantValues = NULL;
     nNextKeyIndex = 0;
+
+    bNeedsToSaveWayInfo = FALSE;
 }
 
 /************************************************************************/
@@ -299,6 +307,18 @@ void OGROSMDataSource::CloseDB()
     if( hInsertWayStmt != NULL )
         sqlite3_finalize( hInsertWayStmt );
     hInsertWayStmt = NULL;
+
+    if( hInsertPolygonsStandaloneStmt != NULL )
+        sqlite3_finalize( hInsertPolygonsStandaloneStmt );
+    hInsertPolygonsStandaloneStmt = NULL;
+
+    if( hDeletePolygonsStandaloneStmt != NULL )
+        sqlite3_finalize( hDeletePolygonsStandaloneStmt );
+    hDeletePolygonsStandaloneStmt = NULL;
+
+    if( hSelectPolygonsStandaloneStmt != NULL )
+        sqlite3_finalize( hSelectPolygonsStandaloneStmt );
+    hSelectPolygonsStandaloneStmt = NULL;
 
     if( pahSelectNodeStmt != NULL )
     {
@@ -614,7 +634,7 @@ void OGROSMDataSource::NotifyNodes(unsigned int nNodes, OSMNode* pasNodes)
                 new OGRPoint(pasNodes[i].dfLon, pasNodes[i].dfLat));
 
             papoLayers[IDX_LYR_POINTS]->SetFieldsFromTags(
-                poFeature, pasNodes[i].nID, pasNodes[i].nTags, pasTags, &pasNodes[i].sInfo );
+                poFeature, pasNodes[i].nID, FALSE, pasNodes[i].nTags, pasTags, &pasNodes[i].sInfo );
 
             int bFilteredOut = FALSE;
             if( !papoLayers[IDX_LYR_POINTS]->AddFeature(poFeature, FALSE, &bFilteredOut) )
@@ -998,6 +1018,28 @@ static void WriteVarInt(unsigned int nVal, GByte** ppabyData)
 }
 
 /************************************************************************/
+/*                           WriteVarInt64()                            */
+/************************************************************************/
+
+static void WriteVarInt64(GUIntBig nVal, GByte** ppabyData)
+{
+    GByte* pabyData = *ppabyData;
+    while(TRUE)
+    {
+        if( (nVal & (~0x7f)) == 0 )
+        {
+            *pabyData = (GByte)nVal;
+            *ppabyData = pabyData + 1;
+            return;
+        }
+
+        *pabyData = 0x80 | (GByte)(nVal & 0x7f);
+        nVal >>= 7;
+        pabyData ++;
+    }
+}
+
+/************************************************************************/
 /*                           WriteVarSInt64()                           */
 /************************************************************************/
 
@@ -1031,6 +1073,7 @@ static void WriteVarSInt64(GIntBig nSVal, GByte** ppabyData)
 
 int OGROSMDataSource::CompressWay ( unsigned int nTags, IndexedKVP* pasTags,
                                     int nPoints, LonLat* pasLonLatPairs,
+                                    OSMInfo* psInfo,
                                     GByte* pabyCompressedWay )
 {
     GByte* pabyPtr = pabyCompressedWay;
@@ -1079,6 +1122,26 @@ int OGROSMDataSource::CompressWay ( unsigned int nTags, IndexedKVP* pasTags,
 
     pabyCompressedWay[0] = (GByte) nTagCount;
 
+    if( bNeedsToSaveWayInfo )
+    {
+        if( psInfo != NULL )
+        {
+            *pabyPtr = 1;
+            pabyPtr ++;
+
+            WriteVarInt64(psInfo->ts.nTimeStamp, &pabyPtr);
+            WriteVarInt64(psInfo->nChangeset, &pabyPtr);
+            WriteVarInt(psInfo->nVersion, &pabyPtr);
+            WriteVarInt(psInfo->nUID, &pabyPtr);
+            // FIXME : do something with pszUserSID
+        }
+        else
+        {
+            *pabyPtr = 0;
+            pabyPtr ++;
+        }
+    }
+
     memcpy(pabyPtr, &(pasLonLatPairs[0]), sizeof(LonLat));
     pabyPtr += sizeof(LonLat);
     for(int i=1;i<nPoints;i++)
@@ -1101,7 +1164,8 @@ int OGROSMDataSource::CompressWay ( unsigned int nTags, IndexedKVP* pasTags,
 
 int OGROSMDataSource::UncompressWay( int nBytes, GByte* pabyCompressedWay,
                                      LonLat* pasCoords,
-                                     unsigned int* pnTags, OSMTag* pasTags )
+                                     unsigned int* pnTags, OSMTag* pasTags,
+                                     OSMInfo* psInfo )
 {
     GByte* pabyPtr = pabyCompressedWay;
     unsigned int nTags = *pabyPtr;
@@ -1133,6 +1197,28 @@ int OGROSMDataSource::UncompressWay( int nBytes, GByte* pabyCompressedWay,
         }
     }
 
+    if( bNeedsToSaveWayInfo )
+    {
+        if( *pabyPtr )
+        {
+            pabyPtr ++;
+
+            OSMInfo sInfo;
+            if( psInfo == NULL )
+                psInfo = &sInfo;
+
+            psInfo->ts.nTimeStamp = ReadVarInt64(&pabyPtr);
+            psInfo->nChangeset = ReadVarInt64(&pabyPtr);
+            psInfo->nVersion = ReadVarInt32(&pabyPtr);
+            psInfo->nUID = ReadVarInt32(&pabyPtr);
+
+            psInfo->bTimeStampIsStr = FALSE;
+            psInfo->pszUserSID = ""; // FIXME
+        }
+        else
+            pabyPtr ++;
+    }
+
     memcpy(&pasCoords[0].nLon, pabyPtr, sizeof(int));
     memcpy(&pasCoords[0].nLat, pabyPtr + sizeof(int), sizeof(int));
     pabyPtr += 2 * sizeof(int);
@@ -1154,14 +1240,15 @@ int OGROSMDataSource::UncompressWay( int nBytes, GByte* pabyCompressedWay,
 
 void OGROSMDataSource::IndexWay(GIntBig nWayID,
                                 unsigned int nTags, IndexedKVP* pasTags,
-                                LonLat* pasLonLatPairs, int nPairs)
+                                LonLat* pasLonLatPairs, int nPairs,
+                                OSMInfo* psInfo)
 {
     if( !bIndexWays )
         return;
 
     sqlite3_bind_int64( hInsertWayStmt, 1, nWayID );
 
-    int nBufferSize = CompressWay (nTags, pasTags, nPairs, pasLonLatPairs, pabyWayBuffer);
+    int nBufferSize = CompressWay (nTags, pasTags, nPairs, pasLonLatPairs, psInfo, pabyWayBuffer);
     CPLAssert(nBufferSize <= WAY_BUFFER_SIZE);
     sqlite3_bind_blob( hInsertWayStmt, 2, pabyWayBuffer,
                        nBufferSize, SQLITE_STATIC );
@@ -1208,11 +1295,12 @@ void OGROSMDataSource::ProcessWaysBatch()
     //printf("nodes = %d, features = %d\n", nUnsortedReqIds, nWayFeaturePairs);
     LookupNodes();
 
-    for(int iPair = 0; iPair < nWayFeaturePairs; iPair ++)
+    int iPair;
+    for(iPair = 0; iPair < nWayFeaturePairs; iPair ++)
     {
         WayFeaturePair* psWayFeaturePairs = &pasWayFeaturePairs[iPair];
 
-        int iLocalCurLayer = psWayFeaturePairs->iCurLayer;
+        int bIsArea = psWayFeaturePairs->bIsArea;
 
         unsigned int nFound = 0;
         unsigned int i;
@@ -1236,7 +1324,7 @@ void OGROSMDataSource::ProcessWaysBatch()
             }
         }
 
-        if( nFound > 0 && iLocalCurLayer == IDX_LYR_POLYGONS )
+        if( nFound > 0 && bIsArea )
         {
             pasLonLatCache[nFound].nLon = pasLonLatCache[0].nLon;
             pasLonLatCache[nFound].nLat = pasLonLatCache[0].nLat;
@@ -1246,41 +1334,35 @@ void OGROSMDataSource::ProcessWaysBatch()
         if( nFound < 2 )
         {
             CPLDebug("OSM", "Way " CPL_FRMT_GIB " with %d nodes that could be found. Discarding it",
-                    pasWayFeaturePairs[iPair].nWayID, nFound);
-            delete pasWayFeaturePairs[iPair].poFeature;
+                    psWayFeaturePairs->nWayID, nFound);
+            delete psWayFeaturePairs->poFeature;
+            psWayFeaturePairs->poFeature = NULL;
+            psWayFeaturePairs->bIsArea = FALSE;
             continue;
         }
 
-        if( iLocalCurLayer == IDX_LYR_POLYGONS && papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() )
-            IndexWay(pasWayFeaturePairs[iPair].nWayID,
-                     pasWayFeaturePairs[iPair].nTags,
-                     pasWayFeaturePairs[iPair].pasTags,
-                     pasLonLatCache, (int)nFound);
+        if( bIsArea && papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() )
+        {
+            IndexWay(psWayFeaturePairs->nWayID,
+                     psWayFeaturePairs->nTags,
+                     psWayFeaturePairs->pasTags,
+                     pasLonLatCache, (int)nFound,
+                     &psWayFeaturePairs->sInfo);
+        }
         else
-            IndexWay(pasWayFeaturePairs[iPair].nWayID, 0, NULL,
-                     pasLonLatCache, (int)nFound);
+            IndexWay(psWayFeaturePairs->nWayID, 0, NULL,
+                     pasLonLatCache, (int)nFound, NULL);
 
-        if( pasWayFeaturePairs[iPair].poFeature == NULL )
+        if( psWayFeaturePairs->poFeature == NULL )
         {
             continue;
         }
 
         OGRLineString* poLS;
         OGRGeometry* poGeom;
-        if( iLocalCurLayer == IDX_LYR_POLYGONS )
-        {
-            OGRPolygon* poPoly = new OGRPolygon();
-            OGRLinearRing* poRing = new OGRLinearRing();
-            poPoly->addRingDirectly(poRing);
-            poLS = poRing;
 
-            poGeom = poPoly;
-        }
-        else
-        {
-            poLS = new OGRLineString();
-            poGeom = poLS;
-        }
+        poLS = new OGRLineString();
+        poGeom = poLS;
 
         poLS->setNumPoints((int)nFound);
         for(i=0;i<nFound;i++)
@@ -1290,20 +1372,43 @@ void OGROSMDataSource::ProcessWaysBatch()
                         INT_TO_DBL(pasLonLatCache[i].nLat));
         }
 
-        pasWayFeaturePairs[iPair].poFeature->SetGeometryDirectly(poGeom);
+        psWayFeaturePairs->poFeature->SetGeometryDirectly(poGeom);
 
-        if( nFound != pasWayFeaturePairs[iPair].nRefs + (iLocalCurLayer == IDX_LYR_POLYGONS) )
+        if( nFound != psWayFeaturePairs->nRefs )
             CPLDebug("OSM", "For way " CPL_FRMT_GIB ", got only %d nodes instead of %d",
-                   pasWayFeaturePairs[iPair].nWayID, nFound,
-                   pasWayFeaturePairs[iPair].nRefs + (iLocalCurLayer == IDX_LYR_POLYGONS));
+                   psWayFeaturePairs->nWayID, nFound,
+                   psWayFeaturePairs->nRefs);
 
         int bFilteredOut = FALSE;
-        if( !papoLayers[iLocalCurLayer]->AddFeature(pasWayFeaturePairs[iPair].poFeature,
-                                                    pasWayFeaturePairs[iPair].bAttrFilterAlreadyEvaluated,
-                                                    &bFilteredOut) )
+        if( !papoLayers[IDX_LYR_LINES]->AddFeature(psWayFeaturePairs->poFeature,
+                                                   psWayFeaturePairs->bAttrFilterAlreadyEvaluated,
+                                                   &bFilteredOut) )
             bStopParsing = TRUE;
         else if (!bFilteredOut)
             bFeatureAdded = TRUE;
+    }
+
+    if( papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() )
+    {
+        for(iPair = 0; iPair < nWayFeaturePairs; iPair ++)
+        {
+            WayFeaturePair* psWayFeaturePairs = &pasWayFeaturePairs[iPair];
+
+            if( psWayFeaturePairs->bIsArea &&
+                (psWayFeaturePairs->nTags || bReportAllWays) )
+            {
+                sqlite3_bind_int64( hInsertPolygonsStandaloneStmt , 1, psWayFeaturePairs->nWayID );
+
+                int rc = sqlite3_step( hInsertPolygonsStandaloneStmt );
+                sqlite3_reset( hInsertPolygonsStandaloneStmt );
+                if( !(rc == SQLITE_OK || rc == SQLITE_DONE) )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Failed inserting into polygons_standalone " CPL_FRMT_GIB ": %s",
+                            psWayFeaturePairs->nWayID, sqlite3_errmsg(hDB));
+                }
+            }
+        }
     }
 
     nWayFeaturePairs = 0;
@@ -1375,17 +1480,16 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
             }
         }
     }
-    int iCurLayer = (bIsArea) ? IDX_LYR_POLYGONS : IDX_LYR_LINES ;
 
     OGRFeature* poFeature = NULL;
 
     int bInterestingTag = bReportAllWays;
-    if( !bReportAllWays )
+    if( !bIsArea && !bReportAllWays )
     {
         for(i=0;i<psWay->nTags;i++)
         {
             const char* pszK = psWay->pasTags[i].pszK;
-            if( papoLayers[iCurLayer]->IsSignificantKey(pszK) )
+            if( papoLayers[IDX_LYR_LINES]->IsSignificantKey(pszK) )
             {
                 bInterestingTag = TRUE;
                 break;
@@ -1394,21 +1498,21 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
     }
 
     int bAttrFilterAlreadyEvaluated = FALSE;
-    if( papoLayers[iCurLayer]->IsUserInterested() && bInterestingTag )
+    if( !bIsArea && papoLayers[IDX_LYR_LINES]->IsUserInterested() && bInterestingTag )
     {
-        poFeature = new OGRFeature(papoLayers[iCurLayer]->GetLayerDefn());
+        poFeature = new OGRFeature(papoLayers[IDX_LYR_LINES]->GetLayerDefn());
 
-        papoLayers[iCurLayer]->SetFieldsFromTags(
-            poFeature, psWay->nID, psWay->nTags, psWay->pasTags, &psWay->sInfo );
+        papoLayers[IDX_LYR_LINES]->SetFieldsFromTags(
+            poFeature, psWay->nID, FALSE, psWay->nTags, psWay->pasTags, &psWay->sInfo );
 
         /* Optimization : if we have an attribute filter, that does not require geometry, */
         /* and if we don't need to index ways, then we can just evaluate the attribute */
         /* filter without the geometry */
-        if( papoLayers[iCurLayer]->HasAttributeFilter() &&
-            !papoLayers[iCurLayer]->AttributeFilterEvaluationNeedsGeometry() &&
+        if( papoLayers[IDX_LYR_LINES]->HasAttributeFilter() &&
+            !papoLayers[IDX_LYR_LINES]->AttributeFilterEvaluationNeedsGeometry() &&
             !bIndexWays )
         {
-            if( !papoLayers[iCurLayer]->EvaluateAttributeFilter(poFeature) )
+            if( !papoLayers[IDX_LYR_LINES]->EvaluateAttributeFilter(poFeature) )
             {
                 delete poFeature;
                 return;
@@ -1429,19 +1533,61 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
         ProcessWaysBatch();
     }
 
-    pasWayFeaturePairs[nWayFeaturePairs].nWayID = psWay->nID;
-    pasWayFeaturePairs[nWayFeaturePairs].nRefs = psWay->nRefs - bIsArea;
-    pasWayFeaturePairs[nWayFeaturePairs].panNodeRefs = panUnsortedReqIds + nUnsortedReqIds;
-    pasWayFeaturePairs[nWayFeaturePairs].poFeature = poFeature;
-    pasWayFeaturePairs[nWayFeaturePairs].iCurLayer = iCurLayer;
-    pasWayFeaturePairs[nWayFeaturePairs].bInterestingTag = bInterestingTag;
-    pasWayFeaturePairs[nWayFeaturePairs].bAttrFilterAlreadyEvaluated = bAttrFilterAlreadyEvaluated;
+    WayFeaturePair* psWayFeaturePairs = &pasWayFeaturePairs[nWayFeaturePairs];
+
+    psWayFeaturePairs->nWayID = psWay->nID;
+    psWayFeaturePairs->nRefs = psWay->nRefs - bIsArea;
+    psWayFeaturePairs->panNodeRefs = panUnsortedReqIds + nUnsortedReqIds;
+    psWayFeaturePairs->poFeature = poFeature;
+    psWayFeaturePairs->bIsArea = bIsArea;
+    psWayFeaturePairs->bAttrFilterAlreadyEvaluated = bAttrFilterAlreadyEvaluated;
 
     if( bIsArea && papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() )
     {
         int nTagCount = 0;
 
-        pasWayFeaturePairs[nWayFeaturePairs].pasTags = pasAccumulatedTags + nAccumulatedTags;
+        if( bNeedsToSaveWayInfo )
+        {
+            if( !psWay->sInfo.bTimeStampIsStr )
+                psWayFeaturePairs->sInfo.ts.nTimeStamp =
+                    psWay->sInfo.ts.nTimeStamp;
+            else
+            {
+                int year, month, day, hour, minute, TZ;
+                float second;
+                if (OGRParseXMLDateTime(psWay->sInfo.ts.pszTimeStamp, &year, &month, &day,
+                                        &hour, &minute, &second, &TZ))
+                {
+                    struct tm brokendown;
+                    brokendown.tm_year = year - 1900;
+                    brokendown.tm_mon = month - 1;
+                    brokendown.tm_mday = day;
+                    brokendown.tm_hour = hour;
+                    brokendown.tm_min = minute;
+                    brokendown.tm_sec = (int)(second + .5);
+                    psWayFeaturePairs->sInfo.ts.nTimeStamp =
+                        CPLYMDHMSToUnixTime(&brokendown);
+                }
+                else
+                    psWayFeaturePairs->sInfo.ts.nTimeStamp = 0;
+            }
+            psWayFeaturePairs->sInfo.nChangeset = psWay->sInfo.nChangeset;
+            psWayFeaturePairs->sInfo.nVersion = psWay->sInfo.nVersion;
+            psWayFeaturePairs->sInfo.nUID = psWay->sInfo.nUID;
+            psWayFeaturePairs->sInfo.bTimeStampIsStr = FALSE;
+            psWayFeaturePairs->sInfo.pszUserSID = ""; // FIXME
+        }
+        else
+        {
+            psWayFeaturePairs->sInfo.ts.nTimeStamp = 0;
+            psWayFeaturePairs->sInfo.nChangeset = 0;
+            psWayFeaturePairs->sInfo.nVersion = 0;
+            psWayFeaturePairs->sInfo.nUID = 0;
+            psWayFeaturePairs->sInfo.bTimeStampIsStr = FALSE;
+            psWayFeaturePairs->sInfo.pszUserSID = "";
+        }
+
+        psWayFeaturePairs->pasTags = pasAccumulatedTags + nAccumulatedTags;
 
         for(unsigned int iTag = 0; iTag < psWay->nTags; iTag++)
         {
@@ -1536,12 +1682,19 @@ void OGROSMDataSource::NotifyWay (OSMWay* psWay)
                 break;
         }
 
-        pasWayFeaturePairs[nWayFeaturePairs].nTags = nTagCount;
+        psWayFeaturePairs->nTags = nTagCount;
     }
     else
     {
-        pasWayFeaturePairs[nWayFeaturePairs].nTags = 0;
-        pasWayFeaturePairs[nWayFeaturePairs].pasTags = NULL;
+        psWayFeaturePairs->sInfo.ts.nTimeStamp = 0;
+        psWayFeaturePairs->sInfo.nChangeset = 0;
+        psWayFeaturePairs->sInfo.nVersion = 0;
+        psWayFeaturePairs->sInfo.nUID = 0;
+        psWayFeaturePairs->sInfo.bTimeStampIsStr = FALSE;
+        psWayFeaturePairs->sInfo.pszUserSID = "";
+
+        psWayFeaturePairs->nTags = 0;
+        psWayFeaturePairs->pasTags = NULL;
     }
 
     nWayFeaturePairs++;
@@ -1684,12 +1837,12 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
 
                 nPoints = UncompressWay (nCompressedWaySize, pabyWayBuffer,
                                          pasCoords,
-                                         pnTags, pasTags );
+                                         pnTags, pasTags, NULL );
             }
             else
             {
                 nPoints = UncompressWay (oGeom.first, (GByte*) oGeom.second, pasCoords,
-                                         NULL, NULL);
+                                         NULL, NULL, NULL);
             }
 
             OGRLineString* poLS;
@@ -1702,6 +1855,13 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
                 poPoly->addRingDirectly(poRing);
                 papoPolygons[nPolys ++] = poPoly;
                 poLS = poRing;
+
+                if( strcmp(psRelation->pasMembers[i].pszRole, "outer") == 0 )
+                {
+                    sqlite3_bind_int64( hDeletePolygonsStandaloneStmt, 1, psRelation->pasMembers[i].nID );
+                    sqlite3_step( hDeletePolygonsStandaloneStmt );
+                    sqlite3_reset( hDeletePolygonsStandaloneStmt );
+                }
             }
             else
             {
@@ -1825,7 +1985,7 @@ OGRGeometry* OGROSMDataSource::BuildGeometryCollection(OSMRelation* psRelation, 
             const std::pair<int, void*>& oGeom = aoMapWays[ psRelation->pasMembers[i].nID ];
 
             LonLat* pasCoords = (LonLat*) pasLonLatCache;
-            int nPoints = UncompressWay (oGeom.first, (GByte*) oGeom.second, pasCoords, NULL, NULL);
+            int nPoints = UncompressWay (oGeom.first, (GByte*) oGeom.second, pasCoords, NULL, NULL, NULL);
 
             OGRLineString* poLS;
 
@@ -1916,13 +2076,15 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
 
     OGRFeature* poFeature = NULL;
 
-    if( papoLayers[iCurLayer]->HasAttributeFilter() &&
+    if( !(bMultiPolygon && !bInterestingTagFound) && /* we cannot do early filtering for multipolygon that has no interesting tag, since we may fetch attributes from ways */
+        papoLayers[iCurLayer]->HasAttributeFilter() &&
         !papoLayers[iCurLayer]->AttributeFilterEvaluationNeedsGeometry() )
     {
         poFeature = new OGRFeature(papoLayers[iCurLayer]->GetLayerDefn());
 
         papoLayers[iCurLayer]->SetFieldsFromTags( poFeature,
                                                   psRelation->nID,
+                                                  FALSE,
                                                   psRelation->nTags,
                                                   psRelation->pasTags,
                                                   &psRelation->sInfo);
@@ -1937,13 +2099,14 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
     OGRGeometry* poGeom;
 
     unsigned int nExtraTags = 0;
-    OSMTag pasExtraTags[1 + MAX_NODES_PER_WAY];
+    OSMTag pasExtraTags[1 + MAX_COUNT_FOR_TAGS_IN_WAY];
 
     if( bMultiPolygon )
     {
         if( !bInterestingTagFound )
         {
             poGeom = BuildMultiPolygon(psRelation, &nExtraTags, pasExtraTags);
+            CPLAssert(nExtraTags <= MAX_COUNT_FOR_TAGS_IN_WAY);
             pasExtraTags[nExtraTags].pszK = "type";
             pasExtraTags[nExtraTags].pszV = pszTypeV;
             nExtraTags ++;
@@ -1963,6 +2126,7 @@ void OGROSMDataSource::NotifyRelation (OSMRelation* psRelation)
 
             papoLayers[iCurLayer]->SetFieldsFromTags( poFeature,
                                                       psRelation->nID,
+                                                      FALSE,
                                                       nExtraTags ? nExtraTags : psRelation->nTags,
                                                       nExtraTags ? pasExtraTags : psRelation->pasTags,
                                                       &psRelation->sInfo);
@@ -1990,6 +2154,101 @@ static void OGROSMNotifyRelation (OSMRelation* psRelation,
                                   OSMContext* psOSMContext, void* user_data)
 {
     ((OGROSMDataSource*) user_data)->NotifyRelation(psRelation);
+}
+
+
+/************************************************************************/
+/*                      ProcessPolygonsStandalone()                     */
+/************************************************************************/
+
+void OGROSMDataSource::ProcessPolygonsStandalone()
+{
+    unsigned int nTags = 0;
+    OSMTag pasTags[MAX_COUNT_FOR_TAGS_IN_WAY];
+    OSMInfo sInfo;
+    int bFirst = TRUE;
+
+    sInfo.ts.nTimeStamp = 0;
+    sInfo.nChangeset = 0;
+    sInfo.nVersion = 0;
+    sInfo.nUID = 0;
+    sInfo.bTimeStampIsStr = FALSE;
+    sInfo.pszUserSID = "";
+
+    if( !bHasRowInPolygonsStandalone )
+        bHasRowInPolygonsStandalone = (sqlite3_step(hSelectPolygonsStandaloneStmt) == SQLITE_ROW);
+
+    while( bHasRowInPolygonsStandalone &&
+           papoLayers[IDX_LYR_MULTIPOLYGONS]->nFeatureArraySize < 10000 )
+    {
+        if( bFirst )
+        {
+            CPLDebug("OSM", "Remaining standalone polygons");
+            bFirst = FALSE;
+        }
+
+        GIntBig id = sqlite3_column_int(hSelectPolygonsStandaloneStmt, 0);
+
+        sqlite3_bind_int64( pahSelectWayStmt[0], 1, id );
+        if( sqlite3_step(pahSelectWayStmt[0]) == SQLITE_ROW )
+        {
+            int nBlobSize = sqlite3_column_bytes(pahSelectWayStmt[0], 1);
+            const void* blob = sqlite3_column_blob(pahSelectWayStmt[0], 1);
+
+            LonLat* pasCoords = (LonLat*) pasLonLatCache;
+
+            int nPoints = UncompressWay (nBlobSize, (GByte*) blob,
+                                         pasCoords,
+                                         &nTags, pasTags, &sInfo );
+            CPLAssert(nTags <= MAX_COUNT_FOR_TAGS_IN_WAY);
+
+            OGRLineString* poLS;
+
+            OGRMultiPolygon* poMulti = new OGRMultiPolygon();
+            OGRPolygon* poPoly = new OGRPolygon();
+            OGRLinearRing* poRing = new OGRLinearRing();
+            poMulti->addGeometryDirectly(poPoly);
+            poPoly->addRingDirectly(poRing);
+            poLS = poRing;
+
+            poLS->setNumPoints(nPoints);
+            for(int j=0;j<nPoints;j++)
+            {
+                poLS->setPoint( j,
+                                INT_TO_DBL(pasCoords[j].nLon),
+                                INT_TO_DBL(pasCoords[j].nLat) );
+            }
+
+            OGRFeature* poFeature = new OGRFeature(papoLayers[IDX_LYR_MULTIPOLYGONS]->GetLayerDefn());
+
+            papoLayers[IDX_LYR_MULTIPOLYGONS]->SetFieldsFromTags( poFeature,
+                                                                  id,
+                                                                  TRUE,
+                                                                  nTags,
+                                                                  pasTags,
+                                                                  &sInfo);
+
+            poFeature->SetGeometryDirectly(poMulti);
+
+            int bFilteredOut = FALSE;
+            if( !papoLayers[IDX_LYR_MULTIPOLYGONS]->AddFeature( poFeature,
+                                                    FALSE,
+                                                    &bFilteredOut ) )
+            {
+                bStopParsing = TRUE;
+                break;
+            }
+            else if (!bFilteredOut)
+                bFeatureAdded = TRUE;
+
+        }
+        else
+            CPLAssert(FALSE);
+
+        sqlite3_reset(pahSelectWayStmt[0]);
+
+        bHasRowInPolygonsStandalone = (sqlite3_step(hSelectPolygonsStandaloneStmt) == SQLITE_ROW);
+    }
 }
 
 /************************************************************************/
@@ -2063,7 +2322,7 @@ int OGROSMDataSource::Open( const char * pszFilename, int bUpdateIn)
     if( bCompressNodes )
         CPLDebug("OSM", "Using compression for nodes DB");
 
-    nLayers = 6;
+    nLayers = 5;
     papoLayers = (OGROSMLayer**) CPLMalloc(nLayers * sizeof(OGROSMLayer*));
 
     papoLayers[IDX_LYR_POINTS] = new OGROSMLayer(this, "points");
@@ -2071,9 +2330,6 @@ int OGROSMDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     papoLayers[IDX_LYR_LINES] = new OGROSMLayer(this, "lines");
     papoLayers[IDX_LYR_LINES]->GetLayerDefn()->SetGeomType(wkbLineString);
-
-    papoLayers[IDX_LYR_POLYGONS] = new OGROSMLayer(this, "polygons");
-    papoLayers[IDX_LYR_POLYGONS]->GetLayerDefn()->SetGeomType(wkbPolygon);
 
     papoLayers[IDX_LYR_MULTILINESTRINGS] = new OGROSMLayer(this, "multilinestrings");
     papoLayers[IDX_LYR_MULTILINESTRINGS]->GetLayerDefn()->SetGeomType(wkbMultiLineString);
@@ -2090,6 +2346,13 @@ int OGROSMDataSource::Open( const char * pszFilename, int bUpdateIn)
                  "Could not parse configuration file for OSM import");
         return FALSE;
     }
+
+    bNeedsToSaveWayInfo =
+        ( papoLayers[IDX_LYR_MULTIPOLYGONS]->HasTimestamp() ||
+          papoLayers[IDX_LYR_MULTIPOLYGONS]->HasChangeset() ||
+          papoLayers[IDX_LYR_MULTIPOLYGONS]->HasVersion() ||
+          papoLayers[IDX_LYR_MULTIPOLYGONS]->HasUID() ||
+          papoLayers[IDX_LYR_MULTIPOLYGONS]->HasUser() );
 
     pasLonLatCache = (LonLat*)VSIMalloc(MAX_NODES_PER_WAY * sizeof(LonLat));
     pabyWayBuffer = (GByte*)VSIMalloc(WAY_BUFFER_SIZE);
@@ -2317,12 +2580,23 @@ int OGROSMDataSource::CreateTempDB()
         }
 
         rc = sqlite3_exec( hDB,
-                        "CREATE TABLE ways (id INTEGER PRIMARY KEY, coords BLOB)",
+                        "CREATE TABLE ways (id INTEGER PRIMARY KEY, data BLOB)",
                         NULL, NULL, &pszErrMsg );
         if( rc != SQLITE_OK )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                     "Unable to create table ways : %s", pszErrMsg );
+            sqlite3_free( pszErrMsg );
+            return FALSE;
+        }
+
+        rc = sqlite3_exec( hDB,
+                        "CREATE TABLE polygons_standalone (id INTEGER PRIMARY KEY)",
+                        NULL, NULL, &pszErrMsg );
+        if( rc != SQLITE_OK )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Unable to create table polygons_standalone : %s", pszErrMsg );
             sqlite3_free( pszErrMsg );
             return FALSE;
         }
@@ -2480,7 +2754,7 @@ int OGROSMDataSource::CreatePreparedStatements()
         }
     }
 
-    rc = sqlite3_prepare( hDB, "INSERT INTO ways (id, coords) VALUES (?,?)", -1,
+    rc = sqlite3_prepare( hDB, "INSERT INTO ways (id, data) VALUES (?,?)", -1,
                           &hInsertWayStmt, NULL );
     if( rc != SQLITE_OK )
     {
@@ -2491,7 +2765,7 @@ int OGROSMDataSource::CreatePreparedStatements()
 
     pahSelectWayStmt = (sqlite3_stmt**) CPLCalloc(sizeof(sqlite3_stmt*), LIMIT_IDS_PER_REQUEST);
 
-    strcpy(szTmp, "SELECT id, coords FROM ways WHERE id IN (");
+    strcpy(szTmp, "SELECT id, data FROM ways WHERE id IN (");
     nLen = strlen(szTmp);
     for(int i=0;i<LIMIT_IDS_PER_REQUEST;i++)
     {
@@ -2512,6 +2786,33 @@ int OGROSMDataSource::CreatePreparedStatements()
                     "sqlite3_prepare() failed :  %s", sqlite3_errmsg(hDB) );
             return FALSE;
         }
+    }
+
+    rc = sqlite3_prepare( hDB, "INSERT INTO polygons_standalone (id) VALUES (?)", -1,
+                          &hInsertPolygonsStandaloneStmt, NULL );
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "sqlite3_prepare() failed :  %s", sqlite3_errmsg(hDB) );
+        return FALSE;
+    }
+
+    rc = sqlite3_prepare( hDB, "DELETE FROM polygons_standalone WHERE id = ?", -1,
+                          &hDeletePolygonsStandaloneStmt, NULL );
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "sqlite3_prepare() failed :  %s", sqlite3_errmsg(hDB) );
+        return FALSE;
+    }
+
+    rc = sqlite3_prepare( hDB, "SELECT id FROM polygons_standalone ORDER BY id", -1,
+                          &hSelectPolygonsStandaloneStmt, NULL );
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                "sqlite3_prepare() failed :  %s", sqlite3_errmsg(hDB) );
+        return FALSE;
     }
 
     return TRUE;
@@ -2683,9 +2984,12 @@ int OGROSMDataSource::ParseConf()
                 {
                     papoLayers[iCurLayer]->SetHasOSMId(TRUE);
                     papoLayers[iCurLayer]->AddField("osm_id", OFTString);
+
+                    if( iCurLayer == IDX_LYR_MULTIPOLYGONS )
+                        papoLayers[iCurLayer]->AddField("osm_way_id", OFTString);
                 }
             }
-            else if( CSLCount(papszTokens) == 2 && strcmp(papszTokens[0], "osm_version") == 0 )
+             else if( CSLCount(papszTokens) == 2 && strcmp(papszTokens[0], "osm_version") == 0 )
             {
                 if( strcmp(papszTokens[1], "no") == 0 )
                     papoLayers[iCurLayer]->SetHasVersion(FALSE);
@@ -2810,6 +3114,16 @@ int OGROSMDataSource::ResetReading()
         return FALSE;
     }
 
+    rc = sqlite3_exec( hDB, "DELETE FROM polygons_standalone", NULL, NULL, &pszErrMsg );
+    if( rc != SQLITE_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to DELETE FROM polygons_standalone : %s", pszErrMsg );
+        sqlite3_free( pszErrMsg );
+        return FALSE;
+    }
+    bHasRowInPolygonsStandalone = FALSE;
+
     {
         int i;
         for( i = 0; i < nWayFeaturePairs; i++)
@@ -2893,15 +3207,23 @@ int OGROSMDataSource::ParseNextChunk()
             {
                 if( nWayFeaturePairs != 0 )
                     ProcessWaysBatch();
+
+                ProcessPolygonsStandalone();
+
+                if( !bHasRowInPolygonsStandalone )
+                    bStopParsing = TRUE;
+
+                return bFeatureAdded || bHasRowInPolygonsStandalone;
             }
             else
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "An error occured during the parsing of data around byte " CPL_FRMT_GUIB,
                          OSM_GetBytesRead(psParser));
+
+                bStopParsing = TRUE;
+                return FALSE;
             }
-            bStopParsing = TRUE;
-            return FALSE;
         }
         else
         {
@@ -3255,7 +3577,6 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         if( papoLayers[IDX_LYR_POINTS]->IsUserInterested() &&
             !papoLayers[IDX_LYR_LINES]->IsUserInterested() &&
-            !papoLayers[IDX_LYR_POLYGONS]->IsUserInterested() &&
             !papoLayers[IDX_LYR_MULTILINESTRINGS]->IsUserInterested() &&
             !papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() &&
             !papoLayers[IDX_LYR_OTHER_RELATIONS]->IsUserInterested())
@@ -3279,8 +3600,7 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
                 bUseWaysIndex = FALSE;
             }
         }
-        else if( (papoLayers[IDX_LYR_LINES]->IsUserInterested() ||
-                  papoLayers[IDX_LYR_POLYGONS]->IsUserInterested()) &&
+        else if( papoLayers[IDX_LYR_LINES]->IsUserInterested() &&
                  !papoLayers[IDX_LYR_MULTILINESTRINGS]->IsUserInterested() &&
                  !papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested() &&
                  !papoLayers[IDX_LYR_OTHER_RELATIONS]->IsUserInterested() )

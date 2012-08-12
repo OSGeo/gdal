@@ -63,6 +63,8 @@ OGROSMLayer::OGROSMLayer(OGROSMDataSource* poDS, const char* pszName )
     nFeatureCount = 0;
 
     bHasOSMId = FALSE;
+    nIndexOSMId = -1;
+    nIndexOSMWayId = -1;
     bHasVersion = FALSE;
     bHasTimestamp = FALSE;
     bHasUID = FALSE;
@@ -404,6 +406,12 @@ void OGROSMLayer::AddField(const char* pszName, OGRFieldType eFieldType)
     char* pszDupName = CPLStrdup(pszName);
     apszNames.push_back(pszDupName);
     oMapFieldNameToIndex[pszDupName] = nIndex;
+
+    if( strcmp(pszName, "osm_id") == 0 )
+        nIndexOSMId = nIndex;
+
+    else if( strcmp(pszName, "osm_way_id") == 0 )
+        nIndexOSMWayId = nIndex;
 }
 
 /************************************************************************/
@@ -452,17 +460,33 @@ int OGROSMLayer::AddInOtherTag(const char* pszK)
 
 void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
                                     GIntBig nID,
+                                    int bIsWayID,
                                     unsigned int nTags, OSMTag* pasTags,
                                     OSMInfo* psInfo)
 {
-    if( (long)nID == nID )
-        poFeature->SetFID( (long)nID ); /* Will not work with 32bit GDAL if id doesn't fit into 32 bits */
-
-    if( bHasOSMId )
+    if( !bIsWayID )
     {
-        char szID[32];
-        sprintf(szID, CPL_FRMT_GIB, nID );
-        poFeature->SetField("osm_id", szID);
+        if( (long)nID == nID )
+            poFeature->SetFID( (long)nID ); /* Will not work with 32bit GDAL if id doesn't fit into 32 bits */
+
+        if( bHasOSMId )
+        {
+            char szID[32];
+            sprintf(szID, CPL_FRMT_GIB, nID );
+            poFeature->SetField(nIndexOSMId, szID);
+        }
+    }
+    else
+    {
+        if( (long)nID == nID )
+            poFeature->SetFID( (long)nID ); /* Will not work with 32bit GDAL if id doesn't fit into 32 bits */
+
+        if( nIndexOSMWayId >= 0 )
+        {
+            char szID[32];
+            sprintf(szID, CPL_FRMT_GIB, nID );
+            poFeature->SetField(nIndexOSMWayId, szID );
+        }
     }
 
     if( bHasVersion )
