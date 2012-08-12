@@ -1869,54 +1869,54 @@ class Layer(_object):
         """
         return _ogr.Layer_SetIgnoredFields(self, *args)
 
-    def Intersection(self, *args):
+    def Intersection(self, *args, **kwargs):
         """
         Intersection(self, Layer method_layer, Layer result_layer, char options = None, 
             GDALProgressFunc callback = None, void callback_data = None) -> OGRErr
         """
-        return _ogr.Layer_Intersection(self, *args)
+        return _ogr.Layer_Intersection(self, *args, **kwargs)
 
-    def Union(self, *args):
+    def Union(self, *args, **kwargs):
         """
         Union(self, Layer method_layer, Layer result_layer, char options = None, 
             GDALProgressFunc callback = None, void callback_data = None) -> OGRErr
         """
-        return _ogr.Layer_Union(self, *args)
+        return _ogr.Layer_Union(self, *args, **kwargs)
 
-    def SymDifference(self, *args):
+    def SymDifference(self, *args, **kwargs):
         """
         SymDifference(self, Layer method_layer, Layer result_layer, char options = None, 
             GDALProgressFunc callback = None, void callback_data = None) -> OGRErr
         """
-        return _ogr.Layer_SymDifference(self, *args)
+        return _ogr.Layer_SymDifference(self, *args, **kwargs)
 
-    def Identity(self, *args):
+    def Identity(self, *args, **kwargs):
         """
         Identity(self, Layer method_layer, Layer result_layer, char options = None, 
             GDALProgressFunc callback = None, void callback_data = None) -> OGRErr
         """
-        return _ogr.Layer_Identity(self, *args)
+        return _ogr.Layer_Identity(self, *args, **kwargs)
 
-    def Update(self, *args):
+    def Update(self, *args, **kwargs):
         """
         Update(self, Layer method_layer, Layer result_layer, char options = None, 
             GDALProgressFunc callback = None, void callback_data = None) -> OGRErr
         """
-        return _ogr.Layer_Update(self, *args)
+        return _ogr.Layer_Update(self, *args, **kwargs)
 
-    def Clip(self, *args):
+    def Clip(self, *args, **kwargs):
         """
         Clip(self, Layer method_layer, Layer result_layer, char options = None, 
             GDALProgressFunc callback = None, void callback_data = None) -> OGRErr
         """
-        return _ogr.Layer_Clip(self, *args)
+        return _ogr.Layer_Clip(self, *args, **kwargs)
 
-    def Erase(self, *args):
+    def Erase(self, *args, **kwargs):
         """
         Erase(self, Layer method_layer, Layer result_layer, char options = None, 
             GDALProgressFunc callback = None, void callback_data = None) -> OGRErr
         """
-        return _ogr.Layer_Erase(self, *args)
+        return _ogr.Layer_Erase(self, *args, **kwargs)
 
     def Reference(self):
       "For backwards compatibility only."
