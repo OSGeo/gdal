@@ -4999,4 +4999,9 @@ def GeneralCmdLineProcessor(*args):
   """GeneralCmdLineProcessor(char papszArgv, int nOptions = 0) -> char"""
   return _ogr.GeneralCmdLineProcessor(*args)
 
+def TermProgress_nocb(*args, **kwargs):
+  """TermProgress_nocb(double dfProgress, char pszMessage = None, void pData = None) -> int"""
+  return _ogr.TermProgress_nocb(*args, **kwargs)
+TermProgress = _ogr.TermProgress
+
 

@@ -2230,6 +2230,26 @@ class GeometryNative {
 };
 #endif
 
+
+/************************************************************************/
+/*                            TermProgress()                            */
+/************************************************************************/
+
+#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
+%rename (TermProgress_nocb) GDALTermProgress_nocb;
+%feature( "kwargs" ) GDALTermProgress_nocb;
+%inline %{
+int GDALTermProgress_nocb( double dfProgress, const char * pszMessage=NULL, void *pData=NULL ) {
+  return GDALTermProgress( dfProgress, pszMessage, pData);
+}
+%}
+
+%rename (TermProgress) GDALTermProgress;
+%callback("%s");
+int GDALTermProgress( double, const char *, void * );
+%nocallback;
+#endif
+
 //************************************************************************
 //
 // Language specific extensions
