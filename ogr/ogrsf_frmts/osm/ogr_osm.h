@@ -76,6 +76,8 @@ class OGROSMLayer : public OGRLayer
     OGRFeature**         papoFeatures;
 
     int                   bHasOSMId;
+    int                   nIndexOSMId;
+    int                   nIndexOSMWayId;
     int                   bHasVersion;
     int                   bHasTimestamp;
     int                   bHasUID;
@@ -153,6 +155,7 @@ class OGROSMLayer : public OGRLayer
 
     void                SetFieldsFromTags(OGRFeature* poFeature,
                                           GIntBig nID,
+                                          int bIsWayID,
                                           unsigned int nTags, OSMTag* pasTags,
                                           OSMInfo* psInfo);
 
@@ -213,14 +216,14 @@ typedef struct
 typedef struct
 {
     GIntBig             nWayID;
-    unsigned int        nRefs;
     GIntBig*            panNodeRefs; /* point to a sub-array of OGROSMDataSource.anReqIds */
+    unsigned int        nRefs;
     unsigned int        nTags;
     IndexedKVP*         pasTags; /*  point to a sub-array of OGROSMDataSource.pasAccumulatedTags */
-    int                 iCurLayer : 6;
-    int                 bAttrFilterAlreadyEvaluated : 1;
-    int                 bInterestingTag : 1;
+    OSMInfo             sInfo;
     OGRFeature         *poFeature;
+    int                 bIsArea : 1;
+    int                 bAttrFilterAlreadyEvaluated : 1;
 } WayFeaturePair;
 
 class OGROSMDataSource : public OGRDataSource
@@ -251,6 +254,10 @@ class OGROSMDataSource : public OGRDataSource
     sqlite3_stmt       *hSelectNodeBetweenStmt;
     sqlite3_stmt      **pahSelectNodeStmt;
     sqlite3_stmt      **pahSelectWayStmt;
+    sqlite3_stmt       *hInsertPolygonsStandaloneStmt;
+    sqlite3_stmt       *hDeletePolygonsStandaloneStmt;
+    sqlite3_stmt       *hSelectPolygonsStandaloneStmt;
+    int                 bHasRowInPolygonsStandalone;
 
     int                 nMaxSizeForInMemoryDBInMB;
     int                 bInMemoryTmpDB;
@@ -324,12 +331,16 @@ class OGROSMDataSource : public OGRDataSource
     GByte              *pabySector;
     Bucket             *papsBuckets;
 
+    int                 bNeedsToSaveWayInfo;
+
     int                 CompressWay (unsigned int nTags, IndexedKVP* pasTags,
                                      int nPoints, LonLat* pasLonLatPairs,
+                                     OSMInfo* psInfo,
                                      GByte* pabyCompressedWay);
     int                 UncompressWay( int nBytes, GByte* pabyCompressedWay,
                                        LonLat* pasCoords,
-                                       unsigned int* pnTags, OSMTag* pasTags );
+                                       unsigned int* pnTags, OSMTag* pasTags,
+                                       OSMInfo* psInfo );
 
     int                 ParseConf();
     int                 CreateTempDB();
@@ -347,13 +358,16 @@ class OGROSMDataSource : public OGRDataSource
 
     void                IndexWay(GIntBig nWayID,
                                  unsigned int nTags, IndexedKVP* pasTags,
-                                 LonLat* pasLonLatPairs, int nPairs);
+                                 LonLat* pasLonLatPairs, int nPairs,
+                                 OSMInfo* psInfo);
 
     int                 StartTransaction();
     int                 CommitTransaction();
 
     int                 FindNode(GIntBig nID);
     void                ProcessWaysBatch();
+
+    void                ProcessPolygonsStandalone();
 
     void                LookupNodes();
     void                LookupNodesSQLite();
