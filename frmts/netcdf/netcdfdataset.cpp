@@ -2627,12 +2627,12 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
                 CPLDebug( "GDAL_netCDF", 
                           "units=%s", pszUnits );
                 if ( EQUAL(pszUnits,"m") ) {
-                    oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
+                    oSRS.SetLinearUnits( "metre", 1.0 );
                     oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", 9001 );
                 }
                 else if ( EQUAL(pszUnits,"km") ) {
-                    oSRS.SetLinearUnits( SRS_UL_METER, 1000.0 );
-                    oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", 9001 );
+                    oSRS.SetLinearUnits( "kilometre", 1000.0 );
+                    oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", 9036 );
                 }
                 /* TODO check for other values */
                 // else 
