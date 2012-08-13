@@ -1,4 +1,4 @@
-/* $Id: tif_dirwrite.c,v 1.76 2011-02-18 20:53:04 fwarmerdam Exp $ */
+/* $Id: tif_dirwrite.c,v 1.77 2012-07-06 19:18:31 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -2570,7 +2570,7 @@ _TIFFRewriteField(TIFF* tif, uint16 tag, TIFFDataType in_datatype,
                   tmsize_t count, void* data)
 {
     static const char module[] = "TIFFResetField";
-    const TIFFField* fip = NULL;
+    /* const TIFFField* fip = NULL; */
     uint16 dircount;
     tmsize_t dirsize;
     uint8 direntry_raw[20];
@@ -2586,7 +2586,7 @@ _TIFFRewriteField(TIFF* tif, uint16 tag, TIFFDataType in_datatype,
 /* -------------------------------------------------------------------- */
 /*      Find field definition.                                          */
 /* -------------------------------------------------------------------- */
-    fip = TIFFFindField(tif, tag, TIFF_ANY);
+    /*fip =*/ TIFFFindField(tif, tag, TIFF_ANY);
 
 /* -------------------------------------------------------------------- */
 /*      Do some checking this is a straight forward case.               */

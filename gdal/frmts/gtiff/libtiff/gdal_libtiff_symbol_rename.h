@@ -330,8 +330,14 @@
 #define TIFFFetchNormalTag gdal_TIFFFetchNormalTag
 #define TIFFFetchStripThing gdal_TIFFFetchStripThing
 #define TIFFFetchSubjectDistance gdal_TIFFFetchSubjectDistance
+#define TIFFFieldDataType gdal_TIFFFieldDataType
+#define TIFFFieldName gdal_TIFFFieldName
+#define TIFFFieldPassCount gdal_TIFFFieldPassCount
+#define TIFFFieldReadCount gdal_TIFFFieldReadCount
+#define TIFFFieldTag gdal_TIFFFieldTag
 #define TIFFFieldWithName gdal_TIFFFieldWithName
 #define TIFFFieldWithTag gdal_TIFFFieldWithTag
+#define TIFFFieldWriteCount gdal_TIFFFieldWriteCount
 #define TIFFFileName gdal_TIFFFileName
 #define TIFFFileno gdal_TIFFFileno
 #define _TIFFFillStriles gdal__TIFFFillStriles

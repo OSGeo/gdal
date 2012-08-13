@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.36 2011-02-18 20:53:04 fwarmerdam Exp $ */
+/* $Id: tif_write.c,v 1.37 2012-08-13 22:10:17 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -226,17 +226,28 @@ TIFFWriteEncodedStrip(TIFF* tif, uint32 strip, void* data, tmsize_t cc)
 			return ((tmsize_t) -1);
 		tif->tif_flags |= TIFF_CODERSETUP;
 	}
-        
-	tif->tif_rawcc = 0;
-	tif->tif_rawcp = tif->tif_rawdata;  
 
 	if( td->td_stripbytecount[strip] > 0 )
         {
+            /* Make sure that at the first attempt of rewriting the tile, we will have */
+            /* more bytes available in the output buffer than the previous byte count, */
+            /* so that TIFFAppendToStrip() will detect the overflow when it is called the first */
+            /* time if the new compressed tile is bigger than the older one. (GDAL #4771) */
+            if( tif->tif_rawdatasize <= td->td_stripbytecount[strip] )
+            {
+                if( !(TIFFWriteBufferSetup(tif, NULL,
+                    (tmsize_t)TIFFroundup_64((uint64)(td->td_stripbytecount[strip] + 1), 1024))) )
+                    return ((tmsize_t)(-1));
+            }
+
 	    /* Force TIFFAppendToStrip() to consider placing data at end
                of file. */
             tif->tif_curoff = 0;
         }
-        
+
+    tif->tif_rawcc = 0;
+    tif->tif_rawcp = tif->tif_rawdata;
+
 	tif->tif_flags &= ~TIFF_POSTENCODE;
 	sample = (uint16)(strip / td->td_stripsperimage);
 	if (!(*tif->tif_preencode)(tif, sample))
@@ -362,16 +373,27 @@ TIFFWriteEncodedTile(TIFF* tif, uint32 tile, void* data, tmsize_t cc)
         tif->tif_flags |= TIFF_BUF4WRITE;
 	tif->tif_curtile = tile;
 
-	tif->tif_rawcc = 0;
-	tif->tif_rawcp = tif->tif_rawdata;
-
 	if( td->td_stripbytecount[tile] > 0 )
         {
+            /* Make sure that at the first attempt of rewriting the tile, we will have */
+            /* more bytes available in the output buffer than the previous byte count, */
+            /* so that TIFFAppendToStrip() will detect the overflow when it is called the first */
+            /* time if the new compressed tile is bigger than the older one. (GDAL #4771) */
+            if( tif->tif_rawdatasize <= td->td_stripbytecount[tile] )
+            {
+                if( !(TIFFWriteBufferSetup(tif, NULL,
+                    (tmsize_t)TIFFroundup_64((uint64)(td->td_stripbytecount[tile] + 1), 1024))) )
+                    return ((tmsize_t)(-1));
+            }
+
 	    /* Force TIFFAppendToStrip() to consider placing data at end
                of file. */
             tif->tif_curoff = 0;
         }
-        
+
+    tif->tif_rawcc = 0;
+    tif->tif_rawcp = tif->tif_rawdata;
+
 	/* 
 	 * Compute tiles per row & per column to compute
 	 * current row and column

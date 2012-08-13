@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.108 2012-06-05 03:24:30 fwarmerdam Exp $ */
+/* $Id: tif_jpeg.c,v 1.111 2012-07-06 18:48:04 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -1138,6 +1138,9 @@ JPEGPreDecode(TIFF* tif, uint16 s)
 	if (downsampled_output) {
 		/* Need to use raw-data interface to libjpeg */
 		sp->cinfo.d.raw_data_out = TRUE;
+#if JPEG_LIB_VERSION >= 70
+		sp->cinfo.d.do_fancy_upsampling = FALSE;
+#endif /* JPEG_LIB_VERSION >= 70 */
 		tif->tif_decoderow = DecodeRowError;
 		tif->tif_decodestrip = JPEGDecodeRaw;
 		tif->tif_decodetile = JPEGDecodeRaw;
@@ -1357,7 +1360,7 @@ JPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 					JSAMPLE *outptr = (JSAMPLE*)tmpbuf + clumpoffset;
 #else
 					JSAMPLE *outptr = (JSAMPLE*)buf + clumpoffset;
-					if (cc < clumpoffset + samples_per_clump*(clumps_per_line-1) + hsamp) {
+					if (cc < (tmsize_t) (clumpoffset + samples_per_clump*(clumps_per_line-1) + hsamp)) {
 						TIFFErrorExt(tif->tif_clientdata, "JPEGDecodeRaw",
 							     "application buffer not large enough for all data, possible subsampling issue");
 						return 0;
