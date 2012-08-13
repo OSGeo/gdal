@@ -4340,6 +4340,58 @@ def tiff_write_116():
     return 'success'
 
 ###############################################################################
+# Test bugfix for ticket #4771 (rewriting of a deflate compressed tile, libtiff bug)
+
+def tiff_write_117():
+    # This will also fail with a libtiff 4.x older than 2012-08-13
+    # Might be good to be able to test internal libtiff presence
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('BigTIFF') == -1:
+        return 'skip'
+
+    import random
+    from osgeo import gdal
+
+    # so that we have always the same random :-)
+    random.seed(0)
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_117.tif', 512, 256, 2, options = ['COMPRESS=DEFLATE', 'TILED=YES'])
+
+    # Write first tile so that its byte count of that tile is 2048 (a multiple of 1024)
+    adjust = 1254
+    data = ''.join(['0' for i in range(65536 - adjust)]) + ''.join([('%c' % random.randint(0,255)) for i in range(adjust)])
+    ds.GetRasterBand(1).WriteRaster(0, 0, 256, 256, data)
+
+    # Second tile will be implicitely written at closing, or we could write any content
+
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_117.tif', gdal.GA_Update)
+
+    # Will adjust tif_rawdatasize to TIFFroundup_64((uint64)size, 1024) = TIFFroundup_64(2048, 1024) = 2048
+    ds.GetRasterBand(1).ReadRaster(0, 0, 256, 256)
+
+    # The new bytecount will be greater than 2048
+    data = ''.join([('%c' % random.randint(0,255)) for i in range(256 * 256)])
+    ds.GetRasterBand(1).WriteRaster(0, 0, 256, 256, data)
+
+    # Make sure that data is written now
+    ds.FlushCache()
+
+    # Oops, without fix, the second tile will have been overwritten and an error will be emitted
+    data = ds.GetRasterBand(1).ReadRaster(256, 0, 256, 256)
+
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_write_117.tif')
+
+    if data is None:
+        gdaltest.post_reason('if GDAL is configured with external libtiff 4.x, it can fail if it is older than 4.0.3. With internal libtiff, should not fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -4468,6 +4520,7 @@ gdaltest_list = [
     tiff_write_114,
     tiff_write_115,
     tiff_write_116,
+    tiff_write_117,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':

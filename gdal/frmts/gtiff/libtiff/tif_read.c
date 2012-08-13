@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.40 2012-06-01 00:55:09 fwarmerdam Exp $ */
+/* $Id: tif_read.c,v 1.41 2012-07-06 19:22:58 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -50,7 +50,7 @@ TIFFFillStripPartial( TIFF *tif, int strip, tmsize_t read_ahead, int restart )
         uint64 unused_data;
         uint64 read_offset;
         tmsize_t cc, to_read;
-        tmsize_t bytecountm;
+        /* tmsize_t bytecountm; */
         
         if (!_TIFFFillStriles( tif ) || !tif->tif_dir.td_stripbytecount)
             return 0;
@@ -61,7 +61,7 @@ TIFFFillStripPartial( TIFF *tif, int strip, tmsize_t read_ahead, int restart )
          * bound on the size of a buffer we'll use?).
          */
 
-        bytecountm=(tmsize_t) td->td_stripbytecount[strip];
+        /* bytecountm=(tmsize_t) td->td_stripbytecount[strip]; */
         if (read_ahead*2 > tif->tif_rawdatasize) {
                 assert( restart );
                 
