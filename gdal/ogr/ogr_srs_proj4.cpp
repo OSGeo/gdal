@@ -1054,10 +1054,10 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         }
         else if( (pszValue = CSLFetchNameValue(papszNV, "units")) != NULL )
         {
-            if( EQUAL(pszValue,"meter" ) || EQUAL(pszValue,"m") )
+            if( EQUAL(pszValue,"meter" ) || EQUAL(pszValue,"m") || EQUAL(pszValue,"metre") )
                 SetLinearUnits( SRS_UL_METER, 1.0 );
             else if( EQUAL(pszValue,"km") )
-                SetLinearUnits( SRS_UL_METER, 1000.0 );
+                SetLinearUnits( "kilometre", 1000.0 );
             else if( EQUAL(pszValue,"us-ft" ) )
                 SetLinearUnits( SRS_UL_US_FOOT, CPLAtof(SRS_UL_US_FOOT_CONV) );
             else if( EQUAL(pszValue,"ft" ) )
@@ -1170,7 +1170,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         }
         else if( (pszValue = CSLFetchNameValue(papszNV, "vunits")) != NULL )
         {
-            if( EQUAL(pszValue,"meter" ) || EQUAL(pszValue,"m") )
+            if( EQUAL(pszValue,"meter" ) || EQUAL(pszValue,"m") || EQUAL(pszValue,"metre") )
             {
                 pszUnitName = SRS_UL_METER;
                 pszUnitConv = "1.0";
