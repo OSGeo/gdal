@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.37 2012-05-24 23:21:45 fwarmerdam Exp $ */
+/* $Id: tif_pixarlog.c,v 1.38 2012-06-21 01:01:53 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -673,7 +673,7 @@ PixarLogSetupDecode(TIFF* tif)
 				      td->td_rowsperstrip), sizeof(uint16));
 	if (tbuf_size == 0)
 		return (0);   /* TODO: this is an error return without error report through TIFFErrorExt */
-	sp->tbuf = (uint16 *) _TIFFmalloc(tbuf_size+sizeof(uint16));
+	sp->tbuf = (uint16 *) _TIFFmalloc(tbuf_size+sizeof(uint16)*sp->stride);
 	if (sp->tbuf == NULL)
 		return (0);
 	if (sp->user_datafmt == PIXARLOGDATAFMT_UNKNOWN)
