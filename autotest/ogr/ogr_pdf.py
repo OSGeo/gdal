@@ -253,7 +253,8 @@ def ogr_pdf_online_1():
 
     lyr = ds.GetLayerByName('Water Points')
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT (724431.316665166523308 7672947.24189974181354)')) != 0:
+    if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT (724431.316665166523308 7672947.212302438914776)')) != 0:
+        feat.DumpReadable()
         return 'fail'
     if feat.GetField('ID') != 'VL46':
         gdaltest.post_reason('fail')
