@@ -2321,8 +2321,8 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
 
     double dfUserUnit = poDS->dfDPI / 72.0;
-    poDS->nRasterXSize = (int) ((dfX2 - dfX1) * dfUserUnit);
-    poDS->nRasterYSize = (int) ((dfY2 - dfY1) * dfUserUnit);
+    poDS->nRasterXSize = (int) floor((dfX2 - dfX1) * dfUserUnit+0.5);
+    poDS->nRasterYSize = (int) floor((dfY2 - dfY1) * dfUserUnit+0.5);
 
     double dfRotation = 0;
 #ifdef HAVE_POPPLER
