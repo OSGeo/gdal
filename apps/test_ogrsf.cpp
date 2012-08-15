@@ -378,6 +378,50 @@ bye:
 }
 
 /************************************************************************/
+/*                          GetLayerNameForSQL()                        */
+/************************************************************************/
+
+const char* GetLayerNameForSQL( OGRDataSource* poDS, const char* pszLayerName )
+{
+    int i;
+    char ch;
+    for(i=0;(ch = pszLayerName[i]) != 0;i++)
+    {
+        if (ch >= '0' && ch <= '9')
+        {
+            if (i == 0)
+                break;
+        }
+        else if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')))
+            break;
+    }
+    /* Only quote if needed. Quoting conventions depend on the driver... */
+    if (ch == 0)
+        return pszLayerName;
+
+    if (EQUAL(poDS->GetDriver()->GetName(), "MYSQL"))
+        return CPLSPrintf("`%s`", pszLayerName);
+
+    if (EQUAL(poDS->GetDriver()->GetName(), "PostgreSQL") &&
+                strchr(pszLayerName, '.'))
+    {
+        const char* pszRet;
+        char** papszTokens = CSLTokenizeStringComplex(pszLayerName, ".", 0, 0);
+        if (CSLCount(papszTokens) == 2)
+            pszRet = CPLSPrintf("\"%s\".\"%s\"", papszTokens[0], papszTokens[1]);
+        else
+            pszRet = CPLSPrintf("\"%s\"", pszLayerName);
+        CSLDestroy(papszTokens);
+        return pszRet;
+    }
+
+    if (EQUAL(poDS->GetDriver()->GetName(), "SQLAnywhere"))
+        return pszLayerName;
+
+    return CPLSPrintf("\"%s\"", pszLayerName);
+}
+
+/************************************************************************/
 /*                      TestOGRLayerFeatureCount()                      */
 /*                                                                      */
 /*      Verify that the feature count matches the actual number of      */
@@ -460,43 +504,9 @@ static int TestOGRLayerFeatureCount( OGRDataSource* poDS, OGRLayer *poLayer, int
     if (!bIsSQLLayer)
     {
         CPLString osSQL;
-        const char* pszLayerName = poLayer->GetName();
-        int i;
-        char ch;
-        for(i=0;(ch = pszLayerName[i]) != 0;i++)
-        {
-            if (ch >= '0' && ch <= '9')
-            {
-                if (i == 0)
-                    break;
-            }
-            else if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')))
-                break;
-        }
-        /* Only quote if needed. Quoting conventions depend on the driver... */
-        if (ch == 0)
-            osSQL.Printf("SELECT COUNT(*) FROM %s", pszLayerName);
-        else
-        {
-            if (EQUAL(poDS->GetDriver()->GetName(), "MYSQL"))
-                osSQL.Printf("SELECT COUNT(*) FROM `%s`", pszLayerName);
-            else if (EQUAL(poDS->GetDriver()->GetName(), "PostgreSQL") &&
-                     strchr(pszLayerName, '.'))
-            {
-                char** papszTokens = CSLTokenizeStringComplex(pszLayerName, ".", 0, 0);
-                if (CSLCount(papszTokens) == 2)
-                {
-                    osSQL.Printf("SELECT COUNT(*) FROM \"%s\".\"%s\"", papszTokens[0], papszTokens[1]);
-                }
-                else
-                    osSQL.Printf("SELECT COUNT(*) FROM \"%s\"", pszLayerName);
-                CSLDestroy(papszTokens);
-            }
-            else if (EQUAL(poDS->GetDriver()->GetName(), "SQLAnywhere"))
-                osSQL.Printf("SELECT COUNT(*) FROM %s", pszLayerName);
-            else
-                osSQL.Printf("SELECT COUNT(*) FROM \"%s\"", pszLayerName);
-        }
+
+        osSQL.Printf("SELECT COUNT(*) FROM %s", GetLayerNameForSQL(poDS, poLayer->GetName()));
+
         OGRLayer* poSQLLyr = poDS->ExecuteSQL(osSQL.c_str(), NULL, NULL);
         if (poSQLLyr)
         {
@@ -1794,6 +1804,40 @@ static int TestOGRLayerIgnoreFields( OGRLayer* poLayer )
 }
 
 /************************************************************************/
+/*                            TestLayerSQL()                            */
+/************************************************************************/
+
+static int TestLayerSQL( OGRDataSource* poDS, OGRLayer * poLayer )
+
+{
+    int bRet = TRUE;
+
+    CPLString osSQL;
+
+    osSQL.Printf("SELECT * FROM %s WHERE 0 = 1", GetLayerNameForSQL(poDS, poLayer->GetName()));
+
+    OGRLayer* poSQLLyr = poDS->ExecuteSQL(osSQL.c_str(), NULL, NULL);
+    if (poSQLLyr)
+    {
+        OGRFeature* poFeat = poSQLLyr->GetNextFeature();
+        if (poFeat != NULL)
+        {
+            bRet = FALSE;
+            printf( "ERROR: ExecuteSQL() should have returned a layer without features.\n" );
+        }
+        OGRFeature::DestroyFeature(poFeat);
+        poDS->ReleaseResultSet(poSQLLyr);
+    }
+    else
+    {
+        printf( "ERROR: ExecuteSQL() should have returned a non-NULL result.\n");
+        bRet = FALSE;
+    }
+
+    return bRet;
+}
+
+/************************************************************************/
 /*                            TestOGRLayer()                            */
 /************************************************************************/
 
@@ -1893,7 +1937,14 @@ static int TestOGRLayer( OGRDataSource* poDS, OGRLayer * poLayer, int bIsSQLLaye
 /* -------------------------------------------------------------------- */
 /*      Test error conditions.                                          */
 /* -------------------------------------------------------------------- */
-    bRet &= TestLayerErrorConditions( poLayer);
+    bRet &= TestLayerErrorConditions( poLayer );
+
+
+/* -------------------------------------------------------------------- */
+/*      Test some SQL.                                                  */
+/* -------------------------------------------------------------------- */
+    if( !bIsSQLLayer )
+        bRet &= TestLayerSQL( poDS, poLayer );
 
     return bRet;
 }
