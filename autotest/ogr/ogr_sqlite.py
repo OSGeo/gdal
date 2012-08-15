@@ -1316,6 +1316,11 @@ def ogr_sqlite_30():
     if sql_lyr is None:
         return 'skip'
 
+    # Test fix added in r24768
+    feat = sql_lyr.GetNextFeature()
+    if feat is not None:
+        return 'fail'
+
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
