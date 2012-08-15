@@ -763,6 +763,82 @@ def ogr_wfs_xmldescriptionfile():
     return 'success'
 
 ###############################################################################
+# Test opening a datasource from a XML description file that has just the URL
+
+def ogr_wfs_xmldescriptionfile_to_be_updated():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    if gdaltest.geoserver_wfs != True:
+        return 'skip'
+
+    f = open('tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml', 'wt')
+    f.write('<OGRWFSDataSource>\n')
+    f.write('<URL>http://demo.opengeo.org/geoserver/wfs</URL>\n')
+    f.write('</OGRWFSDataSource>\n')
+    f.close()
+
+    # Should only emit GetCapabilities and serialize it
+    ds = ogr.Open('tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml')
+    if ds is None:
+        return 'fail'
+    ds = None
+
+    f = open('tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml', 'rt')
+    content = f.read()
+    if content.find('WFS_Capabilities') == -1:
+        print(content)
+        gdaltest.post_reason('XML description file was not filled as expected')
+        return 'fail'
+    if content.find('<OGRWFSLayer') != -1:
+        print(content)
+        gdaltest.post_reason('XML description file was not filled as expected')
+        return 'fail'
+    f.close()
+
+    # Should emit DescribeFeatureType and serialize its result
+    ds = ogr.Open('tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml')
+    if ds is None:
+        return 'fail'
+    ds.GetLayerByName('za:za_points').GetLayerDefn()
+    ds = None
+
+    f = open('tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml', 'rt')
+    content = f.read()
+    if content.find('<OGRWFSLayer name="za:za_points">') == -1:
+        print(content)
+        gdaltest.post_reason('XML description file was not filled as expected')
+        return 'fail'
+    f.close()
+
+    os.unlink('tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml')
+
+    return 'success'
+
+###############################################################################
+# Test opening a datasource directly from a GetCapabilities answer XML file
+# The following test should issue 0 WFS http request
+
+def ogr_wfs_getcapabilitiesfile():
+
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.Open('data/getcapabilities_wfs.xml')
+
+    if ds is None:
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Test opening a datastore which only support GML 3.2.1 output
 
 def ogr_wfs_deegree_gml321():
@@ -968,6 +1044,8 @@ gdaltest_list = [
     #ogr_wfs_ionic_wfst,
     #ogr_wfs_ionic_sql,
     ogr_wfs_xmldescriptionfile,
+    ogr_wfs_xmldescriptionfile_to_be_updated,
+    ogr_wfs_getcapabilitiesfile,
     ogr_wfs_deegree_gml321,
     ogr_wfs_deegree_wfs200,
     ogr_wfs_deegree_sortby,
