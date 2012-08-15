@@ -1223,6 +1223,12 @@ OGRErr OGRVRTLayer::SetNextByIndex( long nIndex )
     if (!bHasFullInitialized) FullInitialize();
     if (!poSrcLayer || poDS->GetRecursionDetected()) return OGRERR_FAILURE;
 
+    if( bNeedReset )
+    {
+        if( !ResetSourceReading() )
+            return OGRERR_FAILURE;
+    }
+
     if (TestCapability(OLCFastSetNextByIndex))
         return poSrcLayer->SetNextByIndex(nIndex);
 
