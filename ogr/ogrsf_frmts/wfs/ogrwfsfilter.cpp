@@ -308,7 +308,9 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
                 osFilter += "<ValueReference>";
             else
                 osFilter += "<PropertyName>";
-            osFilter += pszFieldname;
+            char* pszFieldnameXML = CPLEscapeString(pszFieldname, -1, CPLES_XML);
+            osFilter += pszFieldnameXML;
+            CPLFree(pszFieldnameXML);
             if (psOptions->nVersion >= 200)
                 osFilter += "</ValueReference>";
             else
@@ -317,19 +319,29 @@ static int WFS_ExprDumpAsOGCFilter(CPLString& osFilter,
         }
 
         case TOKEN_LITERAL:
+        {
             if (bExpectBinary)
                 return FALSE;
-            osFilter += "<Literal>";
+
+            const char* pszLiteral;
+            CPLString osVal;
             if (expr->pszVal[0] == '\'' || expr->pszVal[0] == '"')
             {
-                CPLString osVal(expr->pszVal + 1);
+                osVal = expr->pszVal + 1;
                 osVal.resize(osVal.size() - 1);
-                osFilter += osVal;
+                pszLiteral = osVal.c_str();
             }
             else
-                osFilter += expr->pszVal;
+                pszLiteral = expr->pszVal;
+
+            osFilter += "<Literal>";
+            char* pszLiteralXML = CPLEscapeString(pszLiteral, -1, CPLES_XML);
+            osFilter += pszLiteralXML;
+            CPLFree(pszLiteralXML);
             osFilter += "</Literal>";
+
             break;
+        }
 
         case TOKEN_NOT:
             osFilter += "<Not>";

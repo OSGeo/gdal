@@ -1377,7 +1377,8 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
     OGRWFSLayer* poRefLayer = (OGRWFSLayer*)GetLayerByName(pszLayerName);
     if (poRefLayer == NULL)
         return;
-    const char* pszRequiredOutputFormatURL = poRefLayer->GetRequiredOutputFormatURL();
+
+    const char* pszRequiredOutputFormat = poRefLayer->GetRequiredOutputFormat();
 
 #if USE_GET_FOR_DESCRIBE_FEATURE_TYPE == 1
     CPLString osLayerToFetch(pszLayerName);
@@ -1400,9 +1401,9 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
             if (((pszPrefix[0] == 0 && strchr(pszName, ':') == NULL) ||
                 (pszPrefix[0] != 0 && strncmp(pszName, pszPrefix, strlen(pszPrefix)) == 0 &&
                  pszName[strlen(pszPrefix)] == ':')) &&
-                ((pszRequiredOutputFormatURL == NULL && papoLayers[i]->GetRequiredOutputFormatURL() == NULL) ||
-                 (pszRequiredOutputFormatURL != NULL && papoLayers[i]->GetRequiredOutputFormatURL() != NULL &&
-                  strcmp(pszRequiredOutputFormatURL, papoLayers[i]->GetRequiredOutputFormatURL()) == 0)))
+                ((pszRequiredOutputFormat == NULL && papoLayers[i]->GetRequiredOutputFormat() == NULL) ||
+                 (pszRequiredOutputFormat != NULL && papoLayers[i]->GetRequiredOutputFormat() != NULL &&
+                  strcmp(pszRequiredOutputFormat, papoLayers[i]->GetRequiredOutputFormat()) == 0)))
             {
                 if (aoSetAlreadyTriedLayers.find(pszName) != aoSetAlreadyTriedLayers.end())
                     continue;
@@ -1434,11 +1435,11 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
     osURL = CPLURLAddKVP(osURL, "SERVICE", "WFS");
     osURL = CPLURLAddKVP(osURL, "VERSION", GetVersion());
     osURL = CPLURLAddKVP(osURL, "REQUEST", "DescribeFeatureType");
-    osURL = CPLURLAddKVP(osURL, "TYPENAME", osLayerToFetch);
+    osURL = CPLURLAddKVP(osURL, "TYPENAME", WFS_EscapeURL(osLayerToFetch));
     osURL = CPLURLAddKVP(osURL, "PROPERTYNAME", NULL);
     osURL = CPLURLAddKVP(osURL, "MAXFEATURES", NULL);
     osURL = CPLURLAddKVP(osURL, "FILTER", NULL);
-    osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", pszRequiredOutputFormatURL);
+    osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", pszRequiredOutputFormat ? WFS_EscapeURL(pszRequiredOutputFormat).c_str() : NULL);
 
     if (pszNS && GetNeedNAMESPACE())
     {
@@ -1449,7 +1450,7 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
         osValue += "=";
         osValue += pszNSVal;
         osValue += ")";
-        osURL = CPLURLAddKVP(osURL, "NAMESPACE", osValue);
+        osURL = CPLURLAddKVP(osURL, "NAMESPACE", WFS_EscapeURL(osValue));
     }
 
     CPLHTTPResult* psResult = HTTPFetch( osURL, NULL);
@@ -1724,42 +1725,15 @@ int OGRWFSDataSource::IsOldDeegree(const char* pszErrorString)
 /*                         WFS_EscapeURL()                              */
 /************************************************************************/
 
-CPLString WFS_EscapeURL(CPLString osURL)
+CPLString WFS_EscapeURL(const char* pszURL)
 {
-    CPLString osNewURL;
-    size_t i;
+    CPLString osEscapedURL;
 
-    int bNeedsEscaping = FALSE;
-    for(i=0;i<osURL.size();i++)
-    {
-        char ch = osURL[i];
-        if (ch == '<' || ch == '>' || ch == ' ' || ch == '"')
-        {
-            bNeedsEscaping = TRUE;
-            break;
-        }
-    }
+    char* pszEscapedURL = CPLEscapeString(pszURL, -1, CPLES_URL);
+    osEscapedURL = pszEscapedURL;
+    CPLFree(pszEscapedURL);
 
-    if (!bNeedsEscaping)
-        return osURL;
-
-    for(i=0;i<osURL.size();i++)
-    {
-        char ch = osURL[i];
-        if (ch == '<')
-            osNewURL += "%3C";
-        else if (ch == '>')
-            osNewURL += "%3E";
-        else if (ch == ' ')
-            osNewURL += "%20";
-        else if (ch == '"')
-            osNewURL += "%22";
-        else if (ch == '%')
-            osNewURL += "%25";
-        else
-            osNewURL += ch;
-    }
-    return osNewURL;
+    return osEscapedURL;
 }
 
 /************************************************************************/
@@ -1773,7 +1747,7 @@ CPLHTTPResult* OGRWFSDataSource::HTTPFetch( const char* pszURL, char** papszOpti
         papszNewOptions = CSLAddNameValue(papszNewOptions, "HTTP_VERSION", "1.0");
     if (papszHttpOptions)
         papszNewOptions = CSLMerge(papszNewOptions, papszHttpOptions);
-    CPLHTTPResult* psResult = CPLHTTPFetch( WFS_EscapeURL(pszURL), papszNewOptions );
+    CPLHTTPResult* psResult = CPLHTTPFetch( pszURL, papszNewOptions );
     CSLDestroy(papszNewOptions);
     
     if (psResult == NULL)
