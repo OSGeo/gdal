@@ -1249,11 +1249,12 @@ OGRErr OGRWFSLayer::SetAttributeFilter( const char * pszFilter )
         int nVersion = (strcmp(poDS->GetVersion(),"1.0.0") == 0) ? 100 :
                        (atoi(poDS->GetVersion()) >= 2) ? 200 : 110;
         osWFSWhere = WFS_TurnSQLFilterToOGCFilter(pszFilter,
-                                              nVersion,
-                                              poDS->PropertyIsNotEqualToSupported(),
-                                              poDS->UseFeatureId() || bUseFeatureIdAtLayerLevel,
-                                              poDS->DoesGmlObjectIdNeedGMLPrefix(),
-                                              &bNeedsNullCheck);
+                                                  GetLayerDefn(),
+                                                  nVersion,
+                                                  poDS->PropertyIsNotEqualToSupported(),
+                                                  poDS->UseFeatureId() || bUseFeatureIdAtLayerLevel,
+                                                  poDS->DoesGmlObjectIdNeedGMLPrefix(),
+                                                  &bNeedsNullCheck);
         if (bNeedsNullCheck && !poDS->HasNullCheck())
             osWFSWhere = "";
         if (osWFSWhere.size() == 0)
