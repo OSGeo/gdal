@@ -41,11 +41,12 @@
 
 CPLXMLNode* WFSFindNode(CPLXMLNode* psXML, const char* pszRootName);
 CPLString WFS_TurnSQLFilterToOGCFilter( const char * pszFilter,
-                                    int nVersion,
-                                    int bPropertyIsNotEqualToSupported,
-                                    int bUseFeatureId,
-                                    int bGmlObjectIdNeedsGMLPrefix,
-                                    int* pbOutNeedsNullCheck );
+                                        OGRFeatureDefn* poFDefn,
+                                        int nVersion,
+                                        int bPropertyIsNotEqualToSupported,
+                                        int bUseFeatureId,
+                                        int bGmlObjectIdNeedsGMLPrefix,
+                                        int* pbOutNeedsNullCheck );
 
 const char* FindSubStringInsensitive(const char* pszStr,
                                      const char* pszSubStr);
