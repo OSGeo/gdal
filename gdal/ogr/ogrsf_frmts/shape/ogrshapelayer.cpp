@@ -590,6 +590,9 @@ OGRErr OGRShapeLayer::SetNextByIndex( long nIndex )
     if (!TouchLayer())
         return OGRERR_FAILURE;
 
+    if( nIndex < 0 )
+        return OGRERR_FAILURE;
+
     // Eventually we should try to use panMatchingFIDs list 
     // if available and appropriate. 
     if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
