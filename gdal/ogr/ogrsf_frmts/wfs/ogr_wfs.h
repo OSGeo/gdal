@@ -51,7 +51,7 @@ CPLString WFS_TurnSQLFilterToOGCFilter( const char * pszFilter,
 const char* FindSubStringInsensitive(const char* pszStr,
                                      const char* pszSubStr);
 
-CPLString WFS_EscapeURL(CPLString osURL);
+CPLString WFS_EscapeURL(const char* pszURL);
 
 /************************************************************************/
 /*                             OGRWFSLayer                              */
@@ -120,7 +120,6 @@ class OGRWFSLayer : public OGRLayer
     OGRFeatureDefn*     BuildLayerDefnFromFeatureClass(GMLFeatureClass* poClass);
 
     char                *pszRequiredOutputFormat;
-    char                *pszRequiredOutputFormatURL;
 
     CPLString            osFieldToSort;
     int                  bAscFlag;
@@ -184,7 +183,6 @@ class OGRWFSLayer : public OGRLayer
     void                SetRequiredOutputFormat(const char* pszRequiredOutputFormatIn);
 
     const char         *GetRequiredOutputFormat() { return pszRequiredOutputFormat; };
-    const char         *GetRequiredOutputFormatURL() { return pszRequiredOutputFormatURL; };
 
     void                SetOrderBy(const char* pszFieldToSort, int bAscFlag);
     int                 HasGotApproximateLayerDefn() { GetLayerDefn(); return bGotApproximateLayerDefn; }
