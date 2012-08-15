@@ -1063,6 +1063,10 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         }
     }
 
+    char** papszTypenames = NULL;
+    if (osTypeName.size() != 0)
+        papszTypenames = CSLTokenizeStringComplex( osTypeName, ",", FALSE, FALSE );
+
     for(psChildIter = psChild->psChild;
         psChildIter != NULL;
         psChildIter = psChildIter->psNext)
@@ -1087,8 +1091,8 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
             const char* pszTitle = CPLGetXMLValue(psChildIter, "Title", NULL);
             const char* pszAbstract = CPLGetXMLValue(psChildIter, "Abstract", NULL);
             if (pszName != NULL &&
-                (osTypeName.size() == 0 ||
-                    strcmp(osTypeName.c_str(), pszName) == 0))
+                (papszTypenames == NULL ||
+                 CSLFindString(papszTypenames, pszName) != -1))
             {
                 const char* pszDefaultSRS =
                         CPLGetXMLValue(psChildIter, "DefaultSRS", NULL);
@@ -1335,6 +1339,8 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
             }
         }
     }
+
+    CSLDestroy(papszTypenames);
 
     if (!psFileXML) CPLDestroyXMLNode( psXML );
     CPLDestroyXMLNode( psStrippedXML );

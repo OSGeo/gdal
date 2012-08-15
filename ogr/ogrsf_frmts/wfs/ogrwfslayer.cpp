@@ -320,7 +320,7 @@ OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poC
 {
     this->poGMLFeatureClass = poClass;
 
-    OGRFeatureDefn* poFDefn = new OGRFeatureDefn(poDS->GetKeepLayerNamePrefix() ? pszName : poGMLFeatureClass->GetName());
+    OGRFeatureDefn* poFDefn = new OGRFeatureDefn( pszName );
     poFDefn->SetGeomType( (OGRwkbGeometryType)poGMLFeatureClass->GetGeometryType() );
 
 /* -------------------------------------------------------------------- */
