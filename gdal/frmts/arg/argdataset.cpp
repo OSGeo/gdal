@@ -554,10 +554,11 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     RawRasterBand *poBand;
+
 #ifdef CPL_LSB
-    int	bNative = TRUE;
-#else
     int bNative = FALSE;
+#else
+    int bNative = TRUE;
 #endif
 
     poBand = new RawRasterBand( poDS, 1, poDS->fpImage,
@@ -597,15 +598,17 @@ GDALDataset * ARGDataset::CreateCopy( const char * pszFilename,
     CPLString pszDataType;
     json_object * poJSONObject = NULL;
     double adfTransform[6];
+    GDALRasterBand * poSrcBand = NULL;
+    RawRasterBand * poDstBand = NULL;
     VSILFILE * fpImage = NULL;
-    GDALRasterBand * poBand = NULL;
-    GByte * pabyData;
+    void * pabyData;
     OGRSpatialReference oSRS;
     char * pszWKT = NULL;
     char ** pszTokens = NULL;
     const char * pszLayer = NULL;
     int nSrs = 0;
     OGRErr nErr = OGRERR_NONE;
+    CPLErr eErr;
 
     if( nBands != 1 )
     {
@@ -710,9 +713,9 @@ GDALDataset * ARGDataset::CreateCopy( const char * pszFilename,
     // Set the datatype
     json_object_object_add(poJSONObject, "datatype", json_object_new_string(pszDataType));
     // Set the number of rows
-    json_object_object_add(poJSONObject, "rows", json_object_new_int(nXSize));
+    json_object_object_add(poJSONObject, "rows", json_object_new_int(nYSize));
     // Set the number of columns
-    json_object_object_add(poJSONObject, "cols", json_object_new_int(nYSize));
+    json_object_object_add(poJSONObject, "cols", json_object_new_int(nXSize));
     // Set the xmin
     json_object_object_add(poJSONObject, "xmin", json_object_new_double(adfTransform[0]));
     // Set the ymax
@@ -760,35 +763,69 @@ GDALDataset * ARGDataset::CreateCopy( const char * pszFilename,
     }
 
     // only 1 raster band
-    poBand = poSrcDS->GetRasterBand( 1 );
+    poSrcBand = poSrcDS->GetRasterBand( 1 );
 
-    poBand->GetBlockSize(&nXBlockSize, &nYBlockSize);
+#ifdef CPL_LSB
+    int bNative = FALSE;
+#else
+    int bNative = TRUE;
+#endif
 
-    pabyData = (GByte *) CPLMalloc(nXBlockSize * nYBlockSize * nPixelOffset);
+    poDstBand = new RawRasterBand( fpImage, 0, nPixelOffset, 
+        nPixelOffset * nXSize, eType, bNative, nXSize, nYSize, TRUE, FALSE);
+
+    poSrcBand->GetBlockSize(&nXBlockSize, &nYBlockSize);
+
+    pabyData = CPLMalloc(nXBlockSize * nPixelOffset);
 
     // convert any blocks into scanlines
     for (int nYBlock = 0; nYBlock * nYBlockSize < nYSize; nYBlock++) {
         for (int nYScanline = 0; nYScanline < nYBlockSize; nYScanline++) {
-            if ((nYScanline+1) + nYBlock * nYBlockSize > poBand->GetYSize() ) {
+            if ((nYScanline+1) + nYBlock * nYBlockSize > poSrcBand->GetYSize() ) {
                 continue;
             }
 
             for (int nXBlock = 0; nXBlock * nXBlockSize < nXSize; nXBlock++) {
                 int nXValid;
 
-                poBand->ReadBlock(nXBlock, nYBlock, pabyData);
-
-                if( (nXBlock+1) * nXBlockSize > poBand->GetXSize() )
-                    nXValid = poBand->GetXSize() - nXBlock * nXBlockSize;
+                if( (nXBlock+1) * nXBlockSize > poSrcBand->GetXSize() )
+                    nXValid = poSrcBand->GetXSize() - nXBlock * nXBlockSize;
                 else
                     nXValid = nXBlockSize;
 
-                VSIFWriteL( pabyData + (nYScanline * nXBlockSize * nPixelOffset), nPixelOffset, nXValid, fpImage );
+                eErr = poSrcBand->RasterIO(GF_Read, nXBlock * nXBlockSize, 
+                    nYBlock * nYBlockSize + nYScanline, nXValid, 1, pabyData, nXBlockSize, 
+                    1, eType, 0, 0);
+
+                if (eErr != CE_None) {
+                    CPLError(CE_Failure, CPLE_AppDefined, "Error reading.");
+
+                    CPLFree( pabyData );
+                    delete poDstBand;
+                    VSIFCloseL( fpImage );
+
+                    return NULL;
+                }
+
+                eErr = poDstBand->RasterIO(GF_Write, nXBlock * nXBlockSize, 
+                    nYBlock * nYBlockSize + nYScanline, nXValid, 1, pabyData, nXBlockSize, 
+                    1, eType, 0, 0);
+
+                if (eErr != CE_None) {
+                    CPLError(CE_Failure, CPLE_AppDefined, "Error writing.");
+
+                    CPLFree( pabyData );
+                    delete poDstBand;
+                    VSIFCloseL( fpImage );
+
+                    return NULL;
+                }
             }
         }
     }
 
     CPLFree( pabyData );
+    delete poDstBand;
     VSIFCloseL( fpImage );
 
     return (GDALDataset *)GDALOpen( pszFilename, GA_ReadOnly );
