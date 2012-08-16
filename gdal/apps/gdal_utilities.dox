@@ -1898,7 +1898,7 @@ Usage:
     gdaldem hillshade input_dem output_hillshade
                 [-z ZFactor (default=1)] [-s scale* (default=1)]"
                 [-az Azimuth (default=315)] [-alt Altitude (default=45)]
-                [-alg ZevenbergenThorne]
+                [-alg ZevenbergenThorne] [-combined]
                 [-compute_edges] [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-q]
 
 - To generate a slope map from any GDAL-supported elevation raster :
@@ -1991,6 +1991,7 @@ The following specific options are available :
 <dt> <b>-s</b> <i>scale</i>:</dt><dd>ratio of vertical units to horizontal. If the horizontal unit of the source DEM is degrees (e.g Lat/Long WGS84 projection), you can use scale=111120 if the vertical units are meters (or scale=370400 if they are in feet)</dd>
 <dt> <b>-az</b> <i>azimuth</i>:</dt><dd>azimuth of the light, in degrees. 0 if it comes from the top of the raster, 90 from the east, ... The default value, 315, should rarely be changed as it is the value generally used to generate shaded maps.</dd>
 <dt> <b>-alt</b> <i>altitude</i>:</dt><dd>altitude of the light, in degrees. 90 if the light comes from above the DEM, 0 if it is raking light.</dd>
+<dt> <b>-combined</b> <i>combined shading</i>:</dt><dd>(starting with GDAL 2.0) a combination of slope and oblique shading.</dd>
 </dl>
 
 \subsection gdaldem_slope slope

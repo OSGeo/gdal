@@ -80,6 +80,47 @@ def test_gdaldem_hillshade():
     return 'success'
 
 ###############################################################################
+# Test gdaldem hillshade -combined
+
+def test_gdaldem_hillshade_combined():
+    if test_cli_utilities.get_gdaldem_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdaldem_path() + ' hillshade -s 111120 -z 30 -combined ../gdrivers/data/n43.dt0 tmp/n43_hillshade_combined.tif')
+
+    src_ds = gdal.Open('../gdrivers/data/n43.dt0')
+    ds = gdal.Open('tmp/n43_hillshade_combined.tif')
+    if ds is None:
+        return 'fail'
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 43876:
+        gdaltest.post_reason('Bad checksum')
+        print(cs)
+        return 'fail'
+
+    src_gt = src_ds.GetGeoTransform()
+    dst_gt = ds.GetGeoTransform()
+    for i in range(6):
+        if abs(src_gt[i] - dst_gt[i]) > 1e-10:
+            gdaltest.post_reason('Bad geotransform')
+            return 'fail'
+
+    dst_wkt = ds.GetProjectionRef()
+    if dst_wkt.find('AUTHORITY["EPSG","4326"]') == -1:
+        gdaltest.post_reason('Bad projection')
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetNoDataValue() != 0:
+        gdaltest.post_reason('Bad nodata value')
+        return 'fail'
+
+    src_ds = None
+    ds = None
+
+    return 'success'
+    
+###############################################################################
 # Test gdaldem hillshade with -compute_edges
 
 def test_gdaldem_hillshade_compute_edges():
@@ -559,6 +600,10 @@ def test_gdaldem_cleanup():
     except:
         pass
     try:
+        os.remove('tmp/n43_hillshade_combined.tif')
+    except:
+        pass
+    try:
         os.remove('tmp/n43_hillshade_compute_edges.tif')
     except:
         pass
@@ -624,6 +669,7 @@ def test_gdaldem_cleanup():
 
 gdaltest_list = [
     test_gdaldem_hillshade,
+    test_gdaldem_hillshade_combined,
     test_gdaldem_hillshade_compute_edges,
     test_gdaldem_hillshade_azimuth,
     test_gdaldem_hillshade_png,
