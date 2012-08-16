@@ -305,15 +305,8 @@ def arg_byteorder():
             tmp1 = open(basename+'.arg', 'rb')
             tmp2 = open(basename+'2.arg', 'rb')
 
-            diff = 0
-            data = True
-            while data:
-                d1 = tmp1.read(1)
-                d2 = tmp2.read(1)
-                if d1 == '' or d2 == '':
-                    data = False
-                elif d1 != d2:
-                    diff += 1
+            data1 = tmp1.read()
+            data2 = tmp2.read()
 
             tmp1.close()
             tmp2.close()
@@ -322,7 +315,7 @@ def arg_byteorder():
             os.remove(basename+'2.arg')
             os.remove(basename+'2.json')
 
-            if diff != 0:
+            if data1 != data2:
                 return 'fail'
 
     return 'success'
