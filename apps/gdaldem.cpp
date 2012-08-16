@@ -111,7 +111,7 @@ static void Usage()
             "     gdaldem hillshade input_dem output_hillshade \n"
             "                 [-z ZFactor (default=1)] [-s scale* (default=1)] \n"
             "                 [-az Azimuth (default=315)] [-alt Altitude (default=45)]\n"
-            "                 [-alg ZevenbergenThorne]\n"
+            "                 [-alg ZevenbergenThorne] [-combined]\n"
             "                 [-compute_edges] [-b Band (default=1)] [-of format] [-co \"NAME=VALUE\"]* [-q]\n"
             "\n"
             " - To generates a slope map from any GDAL-supported elevation raster :\n\n"
@@ -442,6 +442,7 @@ typedef struct
     double cos_altRadians_mul_z_scale_factor;
     double azRadians;
     double square_z_scale_factor;
+    double square_M_PI_2;
 } GDALHillshadeAlgData;
 
 /* Unoptimized formulas are :
@@ -493,6 +494,41 @@ float GDALHillshadeAlg (float* afWin, float fDstNoDataValue, void* pData)
     return (float) cang;
 }
 
+float GDALHillshadeCombinedAlg (float* afWin, float fDstNoDataValue, void* pData)
+{
+    GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
+    double x, y, aspect, xx_plus_yy, cang;
+    
+    // First Slope ...
+    x = ((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
+        (afWin[2] + afWin[5] + afWin[5] + afWin[8])) / psData->ewres;
+
+    y = ((afWin[6] + afWin[7] + afWin[7] + afWin[8]) -
+        (afWin[0] + afWin[1] + afWin[1] + afWin[2])) / psData->nsres;
+
+    xx_plus_yy = x * x + y * y;
+
+    // ... then aspect...
+    aspect = atan2(y,x);
+    double slope = xx_plus_yy * psData->square_z_scale_factor;
+
+    // ... then the shade value
+    cang = acos((psData->sin_altRadians -
+           psData->cos_altRadians_mul_z_scale_factor * sqrt(xx_plus_yy) *
+           sin(aspect - psData->azRadians)) /
+           sqrt(1 + slope));
+
+    // combined shading
+    cang = 1 - cang * atan(sqrt(slope)) / psData->square_M_PI_2;
+
+    if (cang <= 0.0) 
+        cang = 1.0;
+    else
+        cang = 1.0 + (254.0 * cang);
+        
+    return (float) cang;
+}
+
 float GDALHillshadeZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, void* pData)
 {
     GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
@@ -522,6 +558,39 @@ float GDALHillshadeZevenbergenThorneAlg (float* afWin, float fDstNoDataValue, vo
     return (float) cang;
 }
 
+float GDALHillshadeZevenbergenThorneCombinedAlg (float* afWin, float fDstNoDataValue, void* pData)
+{
+    GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
+    double x, y, aspect, xx_plus_yy, cang;
+    
+    // First Slope ...
+    x = (afWin[3] - afWin[5]) / psData->ewres;
+
+    y = (afWin[7] - afWin[1]) / psData->nsres;
+
+    xx_plus_yy = x * x + y * y;
+
+    // ... then aspect...
+    aspect = atan2(y,x);
+    double slope = xx_plus_yy * psData->square_z_scale_factor;
+
+    // ... then the shade value
+    cang = acos((psData->sin_altRadians -
+           psData->cos_altRadians_mul_z_scale_factor * sqrt(xx_plus_yy) *
+           sin(aspect - psData->azRadians)) /
+           sqrt(1 + slope));
+
+    // combined shading
+    cang = 1 - cang * atan(sqrt(slope)) / psData->square_M_PI_2;
+
+    if (cang <= 0.0) 
+        cang = 1.0;
+    else
+        cang = 1.0 + (254.0 * cang);
+        
+    return (float) cang;
+}
+
 void*  GDALCreateHillshadeData(double* adfGeoTransform,
                                double z,
                                double scale,
@@ -541,6 +610,7 @@ void*  GDALCreateHillshadeData(double* adfGeoTransform,
     pData->cos_altRadians_mul_z_scale_factor =
         cos(alt * degreesToRadians) * z_scale_factor;
     pData->square_z_scale_factor = z_scale_factor * z_scale_factor;
+    pData->square_M_PI_2 = (M_PI*M_PI)/4;
     return pData;
 }
 
@@ -2162,7 +2232,7 @@ int main( int argc, char ** argv )
     
     int bComputeAtEdges = FALSE;
     int bZevenbergenThorne = FALSE;
-
+    int bCombined = FALSE;
     int bQuiet = FALSE;
     
     /* Check strict compilation and runtime library version as we use C++ API */
@@ -2284,6 +2354,13 @@ int main( int argc, char ** argv )
           )
         {
             alt = atof(argv[++i]);
+        }
+        else if( eUtilityMode == HILL_SHADE &&
+            (EQUAL(argv[i], "-combined") || 
+             EQUAL(argv[i], "--combined"))
+          )
+        {
+            bCombined = TRUE;
         }
         else if( eUtilityMode == COLOR_RELIEF &&
                  EQUAL(argv[i], "-alpha"))
@@ -2429,9 +2506,19 @@ int main( int argc, char ** argv )
                                            az,
                                            bZevenbergenThorne);
         if (bZevenbergenThorne)
-            pfnAlg = GDALHillshadeZevenbergenThorneAlg;
+        {
+            if(!bCombined)
+                pfnAlg = GDALHillshadeZevenbergenThorneAlg;
+            else
+                pfnAlg = GDALHillshadeZevenbergenThorneCombinedAlg;
+        }
         else
-            pfnAlg = GDALHillshadeAlg;
+        {
+            if(!bCombined)
+                pfnAlg = GDALHillshadeAlg;
+            else
+                pfnAlg = GDALHillshadeCombinedAlg;
+        }
     }
     else if (eUtilityMode == SLOPE)
     {
