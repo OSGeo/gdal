@@ -267,6 +267,66 @@ def arg_nodata():
 
     return 'success'
 
+def arg_byteorder():
+    """
+    Check that a roundtrip from ARG -> GTiff -> ARG has the same
+    binary values. See ticket #4779
+
+    Unfortunately, computing statistics yields different results
+    when the binary data is the same. Compare them byte-by-byte.
+    """
+    if gdaltest.argDriver is None:
+        return 'skip'
+
+    tifDriver = gdal.GetDriverByName('GTiff')
+    if tifDriver is None:
+        return 'fail'
+
+    for d in gdaltest.argTests:
+        for (name, fmt, nodata) in d['formats']:
+
+            basename = 'data/arg-'+name
+            orig = gdal.Open(basename+'.arg')
+            if orig is None:
+                continue
+
+            dest = tifDriver.CreateCopy(basename+'.tif', orig, False)
+            if dest is None:
+                return 'fail'
+
+            mirror = gdaltest.argDriver.CreateCopy(basename+'2.arg', dest, False)
+            if mirror is None:
+                return 'fail'
+
+            orig = None
+            dest = None
+            mirror = None
+
+            tmp1 = open(basename+'.arg', 'rb')
+            tmp2 = open(basename+'2.arg', 'rb')
+
+            diff = 0
+            data = True
+            while data:
+                d1 = tmp1.read(1)
+                d2 = tmp2.read(1)
+                if d1 == '' or d2 == '':
+                    data = False
+                elif d1 != d2:
+                    diff += 1
+
+            tmp1.close()
+            tmp2.close()
+
+            os.remove(basename+'.tif')
+            os.remove(basename+'2.arg')
+            os.remove(basename+'2.json')
+
+            if diff != 0:
+                return 'fail'
+
+    return 'success'
+
 def arg_destroy():
     if gdaltest.argDriver is None:
         return 'skip'
@@ -287,6 +347,7 @@ gdaltest_list = [
     arg_blocksize,
     arg_layername,
     arg_nodata,
+    arg_byteorder,
     arg_destroy]
 
 if __name__ == '__main__':
