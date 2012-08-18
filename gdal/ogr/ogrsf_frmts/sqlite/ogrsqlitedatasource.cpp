@@ -108,6 +108,8 @@ OGRSQLiteDataSource::OGRSQLiteDataSource()
 #endif
 
     fpMainFile = NULL; /* Do not close ! The VFS layer will do it for us */
+    nFileTimestamp = 0;
+    bLastSQLCommandIsUpdateLayerStatistics = FALSE;
 }
 
 /************************************************************************/
@@ -118,6 +120,17 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
 
 {
     int         i;
+
+    for( i = 0; i < nLayers; i++ )
+    {
+        if( papoLayers[i]->IsTableLayer() )
+        {
+            OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[i];
+            poLayer->CreateSpatialIndexIfNecessary();
+        }
+    }
+
+    SaveStatistics();
 
     CPLFree( pszName );
 
@@ -145,6 +158,99 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
         CPLFree(pMyVFS);
     }
 #endif
+}
+
+/************************************************************************/
+/*                              SaveStatistics()                        */
+/************************************************************************/
+
+void OGRSQLiteDataSource::SaveStatistics()
+{
+    int i;
+    int nSavedAllLayersCacheData = -1;
+
+    if( !bIsSpatiaLite || !bSpatialiteLoaded || bLastSQLCommandIsUpdateLayerStatistics )
+        return;
+
+    for( i = 0; i < nLayers; i++ )
+    {
+        if( papoLayers[i]->IsTableLayer() )
+        {
+            OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[i];
+            int nSaveRet = poLayer->SaveStatistics();
+            if( nSaveRet >= 0)
+            {
+                if( nSavedAllLayersCacheData < 0 )
+                    nSavedAllLayersCacheData = nSaveRet;
+                else
+                    nSavedAllLayersCacheData &= nSaveRet;
+            }
+        }
+    }
+
+    if( hDB && nSavedAllLayersCacheData == TRUE )
+    {
+        char* pszErrMsg = NULL;
+
+        int nRowCount = 0, nColCount = 0;
+        char **papszResult = NULL;
+        int nReplaceEventId = -1;
+
+        sqlite3_get_table( hDB,
+                           "SELECT event_id, table_name, geometry_column, event "
+                           "FROM spatialite_history ORDER BY event_id DESC LIMIT 1",
+                           &papszResult,
+                           &nRowCount, &nColCount, &pszErrMsg );
+
+        if( nRowCount == 1 )
+        {
+            char **papszRow = papszResult + 4;
+            const char* pszEventId = papszRow[0];
+            const char* pszTableName = papszRow[1];
+            const char* pszGeomCol = papszRow[2];
+            const char* pszEvent = papszRow[3];
+
+            if( pszEventId != NULL && pszTableName != NULL &&
+                pszGeomCol != NULL && pszEvent != NULL &&
+                strcmp(pszTableName, "ALL-TABLES") == 0 &&
+                strcmp(pszGeomCol, "ALL-GEOMETRY-COLUMNS") == 0 &&
+                strcmp(pszEvent, "UpdateLayerStatistics") == 0 )
+            {
+                nReplaceEventId = atoi(pszEventId);
+            }
+        }
+        if( pszErrMsg )
+            sqlite3_free( pszErrMsg );
+        pszErrMsg = NULL;
+
+        sqlite3_free_table( papszResult );
+
+        int rc;
+
+        if( nReplaceEventId >= 0 )
+        {
+            rc = sqlite3_exec( hDB,
+                               CPLSPrintf("UPDATE spatialite_history SET "
+                                          "timestamp = DateTime('now') "
+                                          "WHERE event_id = %d", nReplaceEventId),
+                               NULL, NULL, &pszErrMsg );
+        }
+        else
+        {
+            rc = sqlite3_exec( hDB,
+                "INSERT INTO spatialite_history (table_name, geometry_column, "
+                "event, timestamp, ver_sqlite, ver_splite) VALUES ("
+                "'ALL-TABLES', 'ALL-GEOMETRY-COLUMNS', 'UpdateLayerStatistics', "
+                "DateTime('now'), sqlite_version(), spatialite_version())",
+                NULL, NULL, &pszErrMsg );
+        }
+
+        if( rc != SQLITE_OK )
+        {
+            CPLDebug("SQLITE", "Error %s", pszErrMsg ? pszErrMsg : "unknown");
+            sqlite3_free( pszErrMsg );
+        }
+    }
 }
 
 /************************************************************************/
@@ -716,6 +822,12 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
         pszName = CPLStrdup( pszNewName );
     bUpdate = bUpdateIn;
 
+    VSIStatBufL sStat;
+    if( VSIStatL( pszName, &sStat ) == 0 )
+    {
+        nFileTimestamp = sStat.st_mtime;
+    }
+
     int bListAllTables = CSLTestBoolean(CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "NO"));
 
 /* -------------------------------------------------------------------- */
@@ -1252,6 +1364,21 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
     }
 
 /* -------------------------------------------------------------------- */
+/*      In case, this is not a SELECT, invalidate cached feature        */
+/*      count and extent to be on the safe side.                        */
+/* -------------------------------------------------------------------- */
+    if( !EQUALN(pszSQLCommand,"SELECT ",7) && !EQUAL(pszSQLCommand, "BEGIN")
+        && !EQUAL(pszSQLCommand, "COMMIT") &&
+        !EQUALN(pszSQLCommand, "CREATE TABLE ", strlen("CREATE TABLE ")) )
+    {
+        for(int i = 0; i < nLayers; i++)
+            papoLayers[i]->InvalidateCachedFeatureCountAndExtent();
+    }
+
+    bLastSQLCommandIsUpdateLayerStatistics =
+        EQUAL(pszSQLCommand, "SELECT UpdateLayerStatistics()");
+
+/* -------------------------------------------------------------------- */
 /*      Prepare statement.                                              */
 /* -------------------------------------------------------------------- */
     int rc;
@@ -1721,6 +1848,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
         return NULL;
     }
 
+    poLayer->InitFeatureCount();
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     if ( CSLFetchBoolean(papszOptions,"COMPRESS_GEOM",FALSE) )
         poLayer->SetUseCompressGeom( TRUE );
@@ -1729,6 +1857,13 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
         poLayer->CreateSpatialIndex();
     else if( bDeferedSpatialIndexCreation )
         poLayer->SetDeferedSpatialIndexCreation( TRUE );
+
+
+    if( bIsSpatiaLite && nLayers == 0)
+    {
+        /* To create the layer_statistics and spatialite_history tables */
+        sqlite3_exec( hDB, "SELECT UpdateLayerStatistics()", NULL, NULL, NULL );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
