@@ -237,6 +237,8 @@ class OGRSQLiteLayer : public OGRLayer
     virtual OGRErr       CommitTransaction();
     virtual OGRErr       RollbackTransaction();
 
+    virtual void        InvalidateCachedFeatureCountAndExtent() { }
+
     virtual int          IsTableLayer() { return FALSE; }
 
     virtual int          HasSpatialIndex() { return bHasSpatialIndex; }
@@ -297,8 +299,12 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     CPLErr              EstablishFeatureDefn();
 
+    int                 bStatisticsNeedsToBeFlushed;
     OGREnvelope         oCachedExtent;
     int                 bCachedExtentIsValid;
+    GIntBig             nFeatureCount; /* if -1, means not up-to-date */
+
+    void                LoadStatistics();
 
   public:
                         OGRSQLiteTableLayer( OGRSQLiteDataSource * );
@@ -354,6 +360,13 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     void                SetDeferedSpatialIndexCreation( int bFlag )
                                 { bDeferedSpatialIndexCreation = bFlag; }
     int                 CreateSpatialIndex();
+
+    void                InitFeatureCount();
+
+    void                CreateSpatialIndexIfNecessary();
+    int                 SaveStatistics();
+
+    virtual void        InvalidateCachedFeatureCountAndExtent();
 
     virtual int          IsTableLayer() { return TRUE; }
 
@@ -522,10 +535,14 @@ class OGRSQLiteDataSource : public OGRDataSource
 
     VSILFILE*           fpMainFile; /* Set by the VFS layer when it opens the DB */
                                     /* Must *NOT* be closed by the datasource explicitely. */
+    GIntBig             nFileTimestamp;
+    int                 bLastSQLCommandIsUpdateLayerStatistics;
 
     std::map<CPLString, OGREnvelope> oMapSQLEnvelope;
 
     std::map< CPLString, std::set<CPLString> > aoMapTableToSetOfGeomCols;
+
+    void                SaveStatistics();
 
   public:
                         OGRSQLiteDataSource();
@@ -596,6 +613,8 @@ class OGRSQLiteDataSource : public OGRDataSource
 
     const std::set<CPLString>& GetGeomColsForTable(const char* pszTableName)
             { return aoMapTableToSetOfGeomCols[pszTableName]; }
+
+    GIntBig             GetFileTimestamp() const { return nFileTimestamp; }
 };
 
 /************************************************************************/
