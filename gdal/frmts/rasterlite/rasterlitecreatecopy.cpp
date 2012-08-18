@@ -250,7 +250,14 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
             return NULL;
         }
         OGR_DS_ReleaseResultSet(hDS, hLyr);
-        
+
+        /* Create statistics tables */
+        osSQL.Printf("SELECT UpdateLayerStatistics()");
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        hLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+        CPLPopErrorHandler();
+        OGR_DS_ReleaseResultSet(hDS, hLyr);
+
         /* Re-open the DB to take into account the new tables*/
         OGRReleaseDataSource(hDS);
         
