@@ -56,6 +56,41 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
     {
         hStmt = hStmtIn;
         bDoStep = FALSE;
+
+        // Try to extract SRS from first geometry
+        if( !bEmptyLayer && osGeomColumn.size() != 0 )
+        {
+            int    nRawColumns = sqlite3_column_count( hStmt );
+            for( int iCol = 0; iCol < nRawColumns; iCol++ )
+            {
+                int nBytes;
+                if( sqlite3_column_type( hStmt, iCol ) == SQLITE_BLOB &&
+                    strcmp(sqlite3_column_name( hStmt, iCol ), osGeomColumn.c_str()) == 0 &&
+                    (nBytes = sqlite3_column_bytes( hStmt, iCol )) > 39 )
+                {
+                    const GByte* pabyBlob = (const GByte*)sqlite3_column_blob( hStmt, iCol );
+                    int eByteOrder = pabyBlob[1];
+                    if( pabyBlob[0] == 0x00 &&
+                        (eByteOrder == wkbNDR || eByteOrder == wkbXDR) &&
+                        pabyBlob[38] == 0x7C )
+                    {
+                        int nSRSId;
+                        memcpy(&nSRSId, pabyBlob + 2, 4);
+#ifdef CPL_LSB
+                        if( eByteOrder != wkbNDR)
+                            CPL_SWAP32PTR(&nSRSId);
+#else
+                        if( eByteOrder == wkbNDR)
+                            CPL_SWAP32PTR(&nSRSId);
+#endif
+                        poSRS = poDS->FetchSRS( nSRSId );
+                        if( poSRS != NULL )
+                            poSRS->Reference();
+                    }
+                }
+                break;
+            }
+        }
     }
     else
         sqlite3_finalize( hStmtIn );
