@@ -212,12 +212,6 @@ class OGRSQLiteLayer : public OGRLayer
     void                ClearStatement();
     virtual OGRErr      ResetStatement() = 0;
 
-    static OGRErr       ImportSpatiaLiteGeometry( const GByte *, int,
-                                                  OGRGeometry ** );
-    static OGRErr       ExportSpatiaLiteGeometry( const OGRGeometry *,
-                                                  GInt32, OGRwkbByteOrder,
-                                                  int, int, int bUseComprGeom, GByte **, int * );
-
     int                 bUseComprGeom;
 
   public:
@@ -248,6 +242,13 @@ class OGRSQLiteLayer : public OGRLayer
     virtual int          HasSpatialIndex() { return bHasSpatialIndex; }
 
     virtual CPLString     GetSpatialWhere(OGRGeometry* poFilterGeom) { return ""; }
+
+    static OGRErr       ImportSpatiaLiteGeometry( const GByte *, int,
+                                                  OGRGeometry ** );
+    static OGRErr       ExportSpatiaLiteGeometry( const OGRGeometry *,
+                                                  GInt32, OGRwkbByteOrder,
+                                                  int, int, int bUseComprGeom, GByte **, int * );
+
 };
 
 /************************************************************************/
