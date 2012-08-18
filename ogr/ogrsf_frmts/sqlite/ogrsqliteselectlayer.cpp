@@ -87,8 +87,8 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
                         if( poSRS != NULL )
                             poSRS->Reference();
                     }
+                    break;
                 }
-                break;
             }
         }
     }
