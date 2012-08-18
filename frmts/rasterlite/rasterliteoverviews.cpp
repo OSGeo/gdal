@@ -665,7 +665,12 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
             CPLSetThreadLocalConfigOption("SQLITE_LIST_ALL_TABLES", "TRUE");
             hDS = OGROpen(osFileName.c_str(), TRUE, NULL);
             CPLSetThreadLocalConfigOption("SQLITE_LIST_ALL_TABLES", osOldVal.c_str());
+
+            hRasterPyramidsLyr = OGR_DS_GetLayerByName(hDS, "raster_pyramids");
+            if (hRasterPyramidsLyr == NULL)
+                return CE_Failure;
         }
+        OGRFeatureDefnH hFDefn = OGR_L_GetLayerDefn(hRasterPyramidsLyr);
 
         /* Insert base resolution into raster_pyramids if not already done */
         int bHasBaseResolution = FALSE;
@@ -710,20 +715,22 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
                 OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
             }
 
-            osSQL.Printf("INSERT INTO raster_pyramids "
-                         "( table_prefix, pixel_x_size, pixel_y_size, tile_count ) "
-                         "VALUES ( '%s', %.18f, %.18f, %d )",
-                         osTableName.c_str(), padfXResolutions[0], padfYResolutions[0],
-                         nBlocksMainRes);
-            OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+            OGRFeatureH hFeat = OGR_F_Create( hFDefn );
+            OGR_F_SetFieldString(hFeat, OGR_FD_GetFieldIndex(hFDefn, "table_prefix"), osTableName.c_str());
+            OGR_F_SetFieldDouble(hFeat, OGR_FD_GetFieldIndex(hFDefn, "pixel_x_size"), padfXResolutions[0]);
+            OGR_F_SetFieldDouble(hFeat, OGR_FD_GetFieldIndex(hFDefn, "pixel_y_size"), padfYResolutions[0]);
+            OGR_F_SetFieldInteger(hFeat, OGR_FD_GetFieldIndex(hFDefn, "tile_count"), nBlocksMainRes);
+            OGR_L_CreateFeature(hRasterPyramidsLyr, hFeat);
+            OGR_F_Destroy(hFeat);
         }
 
-        osSQL.Printf("INSERT INTO raster_pyramids "
-                     "( table_prefix, pixel_x_size, pixel_y_size, tile_count ) "
-                     "VALUES ( '%s', %.18f, %.18f, %d )",
-                     osTableName.c_str(), dfXResolution, dfYResolution,
-                     nTotalBlocks);
-        OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+        OGRFeatureH hFeat = OGR_F_Create( hFDefn );
+        OGR_F_SetFieldString(hFeat, OGR_FD_GetFieldIndex(hFDefn, "table_prefix"), osTableName.c_str());
+        OGR_F_SetFieldDouble(hFeat, OGR_FD_GetFieldIndex(hFDefn, "pixel_x_size"), dfXResolution);
+        OGR_F_SetFieldDouble(hFeat, OGR_FD_GetFieldIndex(hFDefn, "pixel_y_size"), dfYResolution);
+        OGR_F_SetFieldInteger(hFeat, OGR_FD_GetFieldIndex(hFDefn, "tile_count"), nTotalBlocks);
+        OGR_L_CreateFeature(hRasterPyramidsLyr, hFeat);
+        OGR_F_Destroy(hFeat);
     }
 
     return eErr;
