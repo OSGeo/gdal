@@ -183,7 +183,11 @@ help to get a noticeably better performance.
 Starting since GDAL 1.9.0 you can explicitly set the internal Page Cache size using the 
 configuration option <b>OGR_SQLITE_CACHE</b> <i>value</i> [<i>value</i> being measured in MB];
 if your HW has enough available RAM, defining a Cache size as big as 512MB (or even 1024MB) 
-may sometimes help a lot in order to get better performance.
+may sometimes help a lot in order to get better performance.<p>
+
+Setting the <b>OGR_SQLITE_SYNCHRONOUS</b> configuration option to <i>OFF</i> might also
+increase creation time of SQLite databases (altough at the expense of integrity in case of
+interruption/crash ).<p>
 
 <h2>Credits</h2>
 <ul>
