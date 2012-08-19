@@ -2181,7 +2181,10 @@ OGRErr OGRSQLiteDataSource::SoftRollback()
         sqlite3_free( pszErrMsg );
         return OGRERR_FAILURE;
     }
-    
+
+    for(int i = 0; i < nLayers; i++)
+        papoLayers[i]->InvalidateCachedFeatureCountAndExtent();
+
     return OGRERR_NONE;
 }
 
