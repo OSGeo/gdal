@@ -160,9 +160,9 @@ static int OGRSQLiteIOFileControl(sqlite3_file* pFile, int op, void *pArg)
 {
 #ifdef DEBUG_IO
     OGRSQLiteFileStruct* pMyFile = (OGRSQLiteFileStruct*) pFile;
-    CPLDebug("SQLITE", "OGRSQLiteIOFileControl(%p)", pMyFile->fp);
+    CPLDebug("SQLITE", "OGRSQLiteIOFileControl(%p, %d)", pMyFile->fp, op);
 #endif
-    return SQLITE_OK;
+    return SQLITE_NOTFOUND;
 }
 
 static int OGRSQLiteIOSectorSize(sqlite3_file* pFile)
