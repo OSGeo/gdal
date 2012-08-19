@@ -213,6 +213,9 @@ OGRErr OGRMemLayer::SetFeature( OGRFeature *poFeature )
     }
 
     papoFeatures[poFeature->GetFID()] = poFeature->Clone();
+    OGRGeometry* poGeom = papoFeatures[poFeature->GetFID()]->GetGeometryRef();
+    if( poGeom != NULL && poGeom->getSpatialReference() == NULL )
+        poGeom->assignSpatialReference(GetSpatialRef());
     nFeatureCount++;
 
     return OGRERR_NONE;
