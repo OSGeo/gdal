@@ -84,6 +84,19 @@ OGRSQLiteLayer::OGRSQLiteLayer()
 OGRSQLiteLayer::~OGRSQLiteLayer()
 
 {
+    Finalize();
+}
+
+/************************************************************************/
+/*                               Finalize()                             */
+/************************************************************************/
+
+void OGRSQLiteLayer::Finalize()
+{
+    /* Caution: this function can be called several times (see */
+    /* OGRSQLiteExecuteSQLLayer::~OGRSQLiteExecuteSQLLayer()), so it must */
+    /* be a no-op on second call */
+
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "SQLite", "%d features read on layer '%s'.",
@@ -104,10 +117,15 @@ OGRSQLiteLayer::~OGRSQLiteLayer()
     }
 
     if( poSRS != NULL )
-        poSRS->Dereference();
+    {
+        poSRS->Release();
+        poSRS = NULL;
+    }
 
     CPLFree( pszFIDColumn );
+    pszFIDColumn = NULL;
     CPLFree( panFieldOrdinals );
+    panFieldOrdinals = NULL;
 }
 
 /************************************************************************/

@@ -218,6 +218,8 @@ class OGRSQLiteLayer : public OGRLayer
                         OGRSQLiteLayer();
     virtual             ~OGRSQLiteLayer();
 
+    virtual void        Finalize();
+
     virtual void        ResetReading();
     virtual OGRFeature *GetNextRawFeature();
     virtual OGRFeature *GetNextFeature();
@@ -457,7 +459,6 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer
                                               sqlite3_stmt *,
                                               int bUseStatementForGetNextFeature,
                                               int bEmptyLayer );
-                        ~OGRSQLiteSelectLayer();
 
     virtual OGRFeature *GetNextFeature();
 
