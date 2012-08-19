@@ -637,8 +637,14 @@ class OGRSQLiteDriver : public OGRSFDriver
     int                 TestCapability( const char * );
 };
 
-CPLString OGRSQLiteEscape( const char *pszSrcName );
+/* To escape literals. The returned string doesn't contain the surrounding single quotes */
+CPLString OGRSQLiteEscape( const char *pszLiteral );
+
+/* To escape table or field names. The returned string doesn't contain the surrounding double quotes */
+CPLString OGRSQLiteEscapeName( const char* pszName );
+
 int OGRSQLiteGetSpatialiteVersionNumber();
+
 #ifdef HAVE_SQLITE_VFS
 typedef void (*pfnNotifyFileOpenedType)(void* pfnUserData, const char* pszFilename, VSILFILE* fp);
 sqlite3_vfs* OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void* pfnUserData);
