@@ -103,7 +103,7 @@ static int OGRSQLiteIOTruncate(sqlite3_file* pFile, sqlite3_int64 size)
 {
     OGRSQLiteFileStruct* pMyFile = (OGRSQLiteFileStruct*) pFile;
 #ifdef DEBUG_IO
-    CPLDebug("SQLITE", "OGRSQLiteIOTruncate(%p)", pMyFile->fp);
+    CPLDebug("SQLITE", "OGRSQLiteIOTruncate(%p, " CPL_FRMT_GIB ")", pMyFile->fp, size);
 #endif
     int nRet = VSIFTruncateL(pMyFile->fp, size);
     return (nRet == 0) ? SQLITE_OK : SQLITE_IOERR_TRUNCATE;
@@ -121,13 +121,13 @@ static int OGRSQLiteIOSync(sqlite3_file* pFile, int flags)
 static int OGRSQLiteIOFileSize(sqlite3_file* pFile, sqlite3_int64 *pSize)
 {
     OGRSQLiteFileStruct* pMyFile = (OGRSQLiteFileStruct*) pFile;
-#ifdef DEBUG_IO
-    CPLDebug("SQLITE", "OGRSQLiteIOFileSize(%p)", pMyFile->fp);
-#endif
     vsi_l_offset nCurOffset = VSIFTellL(pMyFile->fp);
     VSIFSeekL(pMyFile->fp, 0, SEEK_END);
     *pSize = VSIFTellL(pMyFile->fp);
     VSIFSeekL(pMyFile->fp, nCurOffset, SEEK_SET);
+#ifdef DEBUG_IO
+    CPLDebug("SQLITE", "OGRSQLiteIOFileSize(%p) = " CPL_FRMT_GIB, pMyFile->fp, *pSize);
+#endif
     return SQLITE_OK;
 }
 
@@ -163,9 +163,9 @@ static int OGRSQLiteIOFileControl(sqlite3_file* pFile, int op, void *pArg)
 {
 #ifdef DEBUG_IO
     OGRSQLiteFileStruct* pMyFile = (OGRSQLiteFileStruct*) pFile;
-    CPLDebug("SQLITE", "OGRSQLiteIOFileControl(%p)", pMyFile->fp);
+    CPLDebug("SQLITE", "OGRSQLiteIOFileControl(%p, %d)", pMyFile->fp, op);
 #endif
-    return SQLITE_OK;
+    return SQLITE_NOTFOUND;
 }
 
 static int OGRSQLiteIOSectorSize(sqlite3_file* pFile)
