@@ -1902,16 +1902,34 @@ char *OGRSQLiteDataSource::LaunderName( const char *pszSrcName )
 /*                          OGRSQLiteEscape()                           */
 /************************************************************************/
 
-CPLString OGRSQLiteEscape( const char *pszSrcName )
+CPLString OGRSQLiteEscape( const char *pszLiteral )
 {
     CPLString osVal;
-    for( int i = 0; pszSrcName[i] != '\0'; i++ )
+    for( int i = 0; pszLiteral[i] != '\0'; i++ )
     {
-        if ( pszSrcName[i] == '\'' )
+        if ( pszLiteral[i] == '\'' )
             osVal += '\'';
-        osVal += pszSrcName[i];
+        osVal += pszLiteral[i];
     }
     return osVal;
+}
+
+/************************************************************************/
+/*                        OGRSQLiteEscapeName()                         */
+/************************************************************************/
+
+CPLString OGRSQLiteEscapeName(const char* pszName)
+{
+    CPLString osRet;
+    while( *pszName != '\0' )
+    {
+        if( *pszName == '"' )
+            osRet += "\"\"";
+        else
+            osRet += *pszName;
+        pszName ++;
+    }
+    return osRet;
 }
 
 /************************************************************************/
