@@ -120,7 +120,7 @@ static CSVTable *CSVAccess( const char * pszFilename )
              * Eventually we should consider promoting to the front of
              * the list to accelerate frequently accessed tables.
              */
-            
+
             return( psTable );
         }
     }
@@ -1197,4 +1197,3 @@ void SetCSVFilenameHook( const char *(*pfnNewHook)( const char * ) )
     pfnCSVFilenameHook = pfnNewHook;
 }
 CPL_C_END
-
