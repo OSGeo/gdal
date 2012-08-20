@@ -30,6 +30,8 @@
 #include "ogrsqlitevirtualogr.h"
 #include "ogr_api.h"
 
+#ifdef HAVE_SQLITE_VFS
+
 /* The layout of fields is :
    0   : RegularField0
    ...
@@ -928,3 +930,6 @@ void OGR2SQLITEModule::SetToDB(sqlite3* hDB)
     sqlite3_create_function(hDB, "Transform", 3, SQLITE_ANY, this,
                             OGR2SQLITE_Transform, NULL, NULL);
 }
+
+#endif // HAVE_SQLITE_VFS
+
