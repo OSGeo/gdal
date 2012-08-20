@@ -33,6 +33,8 @@
 #include "ogr_sqlite.h"
 #include <map>
 
+#ifdef HAVE_SQLITE_VFS
+
 /************************************************************************/
 /*                           OGR2SQLITEModule                           */
 /************************************************************************/
@@ -54,5 +56,7 @@ class OGR2SQLITEModule
 };
 
 CPLString OGR2SQLITE_GetNameForGeometryColumn(OGRLayer* poLayer);
+
+#endif // HAVE_SQLITE_VFS
 
 #endif // _OGR_SQLITE_VIRTUAL_OGR_H_INCLUDED
