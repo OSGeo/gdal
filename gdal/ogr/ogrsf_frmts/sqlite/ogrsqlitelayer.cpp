@@ -62,7 +62,7 @@ OGRSQLiteLayer::OGRSQLiteLayer()
     iNextShapeId = 0;
 
     poSRS = NULL;
-    nSRSId = -2; // we haven't even queried the database for it yet. 
+    nSRSId = UNINITIALIZED_SRID; // we haven't even queried the database for it yet. 
 
     panFieldOrdinals = NULL;
 

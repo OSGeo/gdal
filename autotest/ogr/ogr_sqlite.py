@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -1821,8 +1822,13 @@ def ogr_spatialite_6():
 
     # Create spatial view
     ds.ExecuteSQL('CREATE VIEW view_of_regular_layer AS SELECT OGC_FID AS pk_id, GEOMETRY AS the_geom, intcol, realcol FROM regular_layer')
-    ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column) VALUES " + \
-                  "('view_of_regular_layer', 'the_geom', 'pk_id', 'regular_layer', 'GEOMETRY')")
+
+    if int(gdaltest.spatialite_version[0:gdaltest.spatialite_version.find('.')]) >= 4:
+        ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column, read_only) VALUES " + \
+                    "('view_of_regular_layer', 'the_geom', 'pk_id', 'regular_layer', 'GEOMETRY', 1)")
+    else:
+        ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column) VALUES " + \
+                    "('view_of_regular_layer', 'the_geom', 'pk_id', 'regular_layer', 'GEOMETRY')")
 
     ds = None
 
@@ -1921,11 +1927,19 @@ def ogr_spatialite_8():
     ds.ReleaseResultSet(ds.ExecuteSQL("SELECT CreateSpatialIndex('test', 'geom2')"))
     ds.ExecuteSQL("INSERT INTO test (foo, geom1, geom2) VALUES ('bar', GeomFromText('POINT(0 1)',4326), GeomFromText('LINESTRING(0 1,2 3)',4326))")
     ds.ExecuteSQL('CREATE VIEW view_test_geom1 AS SELECT OGC_FID AS pk_id, foo, geom1 AS renamed_geom1 FROM test')
-    ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column) VALUES " + \
-                    "('view_test_geom1', 'renamed_geom1', 'pk_id', 'test', 'geom1')")
+
+    if int(gdaltest.spatialite_version[0:gdaltest.spatialite_version.find('.')]) >= 4:
+        readonly_col = ', read_only'
+        readonly_val = ', 1'
+    else:
+        readonly_col = ''
+        readonly_val = ''
+
+    ds.ExecuteSQL(("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column%s) VALUES " % readonly_col) + \
+                    ("('view_test_geom1', 'renamed_geom1', 'pk_id', 'test', 'geom1'%s)" % readonly_val))
     ds.ExecuteSQL('CREATE VIEW view_test_geom2 AS SELECT OGC_FID AS pk_id, foo, geom2 AS renamed_geom2 FROM test')
-    ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column) VALUES " + \
-                    "('view_test_geom2', 'renamed_geom2', 'pk_id', 'test', 'geom2')")
+    ds.ExecuteSQL(("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column%s) VALUES " % readonly_col) + \
+                    ("('view_test_geom2', 'renamed_geom2', 'pk_id', 'test', 'geom2'%s)" % readonly_val))
     ds = None
 
     ds = ogr.Open('tmp/ogr_spatialite_8.sqlite')

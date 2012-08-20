@@ -45,8 +45,6 @@ OGRSQLiteViewLayer::OGRSQLiteViewLayer( OGRSQLiteDataSource *poDSIn )
 
     iNextShapeId = 0;
 
-    nSRSId = -1;
-
     poFeatureDefn = NULL;
     pszViewName = NULL;
     pszEscapedTableName = NULL;

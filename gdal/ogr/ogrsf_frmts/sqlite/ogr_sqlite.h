@@ -63,6 +63,8 @@
 #define HAVE_SQLITE3_PREPARE_V2
 #endif
 
+#define UNINITIALIZED_SRID  -2
+
 /************************************************************************/
 /*      Format used to store geometry data in the database.             */
 /************************************************************************/
@@ -318,7 +320,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                     OGRwkbGeometryType eGeomType,
                                     const char *pszGeomFormat,
                                     OGRSpatialReference *poSRS,
-                                    int nSRSId = -1,
+                                    int nSRSId = UNINITIALIZED_SRID,
                                     int bHasSpatialIndex = FALSE,
                                     int bHasM = FALSE,
                                     int bSpatialiteReadOnly = FALSE,
@@ -518,10 +520,13 @@ class OGRSQLiteDataSource : public OGRDataSource
 
     int                 bHaveGeometryColumns;
     int                 bIsSpatiaLite;
-    
+    int                 bSpatialite4Layout;
+
+    int                 nUndefinedSRID;
+
     virtual void        DeleteLayer( const char *pszLayer );
 
-    int                 DetectSRSWktColumn();
+    const char*         GetSRTEXTColName();
 
     int                 OpenOrCreateDB(int flags);
     int                 InitWithEPSG();
@@ -558,7 +563,7 @@ class OGRSQLiteDataSource : public OGRDataSource
                                    OGRwkbGeometryType eGeomType = wkbUnknown,
                                    const char *pszGeomFormat = NULL,
                                    OGRSpatialReference *poSRS = NULL,
-                                   int nSRID = -1,
+                                   int nSRID = UNINITIALIZED_SRID,
                                    int bHasSpatialIndex = FALSE,
                                    int bHasM = FALSE,
                                    int bSpatialiteReadOnly = FALSE,
@@ -616,6 +621,10 @@ class OGRSQLiteDataSource : public OGRDataSource
             { return aoMapTableToSetOfGeomCols[pszTableName]; }
 
     GIntBig             GetFileTimestamp() const { return nFileTimestamp; }
+    
+    int                 HasSpatialite4Layout() const { return bSpatialite4Layout; }
+    
+    int                 GetUndefinedSRID() const { return nUndefinedSRID; }
 };
 
 /************************************************************************/
