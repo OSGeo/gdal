@@ -52,8 +52,6 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
 
     iNextShapeId = 0;
 
-    nSRSId = -1;
-
     poFeatureDefn = NULL;
     pszTableName = NULL;
     pszEscapedTableName = NULL;
@@ -152,6 +150,9 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
 
     CPLFree( pszFIDColumn );
     pszFIDColumn = NULL;
+
+    if( nSRSId == UNINITIALIZED_SRID )
+        nSRSId = poDS->GetUndefinedSRID();
 
     this->poSRS = poSRS;
     this->nSRSId = nSRSId;
@@ -1513,6 +1514,9 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
             {
                 int     nBLOBLen;
                 GByte   *pabySLBLOB;
+
+                if( nSRSId == UNINITIALIZED_SRID )
+                    nSRSId = poDS->GetUndefinedSRID();
 
                 ExportSpatiaLiteGeometry( poGeom, nSRSId, wkbNDR, bHasM,
                                         bSpatialite2D, bUseComprGeom, &pabySLBLOB, &nBLOBLen );
