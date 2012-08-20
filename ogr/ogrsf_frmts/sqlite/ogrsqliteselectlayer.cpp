@@ -46,7 +46,6 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
     poDS = poDSIn;
 
     iNextShapeId = 0;
-    nSRSId = -1;
     poFeatureDefn = NULL;
 
     std::set<CPLString> aosEmpty;
@@ -74,7 +73,6 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
                         (eByteOrder == wkbNDR || eByteOrder == wkbXDR) &&
                         pabyBlob[38] == 0x7C )
                     {
-                        int nSRSId;
                         memcpy(&nSRSId, pabyBlob + 2, 4);
 #ifdef CPL_LSB
                         if( eByteOrder != wkbNDR)
