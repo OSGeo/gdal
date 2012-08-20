@@ -36,6 +36,10 @@
 #include "cpl_multiproc.h"
 #include "ogrunionlayer.h"
 
+#ifdef SQLITE_ENABLED
+#include "../sqlite/ogrsqliteexecutesql.h"
+#endif
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -1298,7 +1302,16 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
 {
     swq_select *psSelectInfo = NULL;
 
-    (void) pszDialect;
+    if( pszDialect != NULL && EQUAL(pszDialect, "SQLite") )
+    {
+#ifdef SQLITE_ENABLED
+        return OGRSQLiteExecuteSQL( this, pszStatement, poSpatialFilter, pszDialect );
+#else
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "The SQLite driver needs to be compiled to support the SQLite SQL dialect");
+        return NULL;
+#endif
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Handle CREATE INDEX statements specially.                       */
