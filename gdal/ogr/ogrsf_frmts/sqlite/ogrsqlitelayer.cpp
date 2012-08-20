@@ -129,6 +129,48 @@ void OGRSQLiteLayer::Finalize()
 }
 
 /************************************************************************/
+/*                          OGRIsBinaryGeomCol()                        */
+/************************************************************************/
+
+static
+int OGRIsBinaryGeomCol( sqlite3_stmt *hStmt, int iCol,
+                        OGRFieldDefn& oField,
+                        OGRSQLiteGeomFormat& eGeomFormat,
+                        CPLString& osGeomColumn )
+{
+    OGRGeometry* poGeometry = NULL;
+    const int nBytes = sqlite3_column_bytes( hStmt, iCol );
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    if( OGRGeometryFactory::createFromWkb(
+            (GByte*)sqlite3_column_blob( hStmt, iCol ),
+            NULL, &poGeometry, nBytes ) == OGRERR_NONE )
+    {
+        eGeomFormat = OSGF_WKB;
+    }
+    else if( OGRSQLiteLayer::ImportSpatiaLiteGeometry(
+            (GByte*)sqlite3_column_blob( hStmt, iCol ), nBytes,
+            &poGeometry ) == OGRERR_NONE )
+    {
+        eGeomFormat = OSGF_SpatiaLite;
+    }
+    else if( OGRGeometryFactory::createFromFgf( 
+            (GByte*)sqlite3_column_blob( hStmt, iCol ),
+            NULL, &poGeometry, nBytes, NULL ) == OGRERR_NONE )
+    {
+        eGeomFormat = OSGF_FGF;
+    }
+    CPLPopErrorHandler();
+    CPLErrorReset();
+    delete poGeometry;
+    if( eGeomFormat != OSGF_None )
+    {
+        osGeomColumn = oField.GetNameRef();
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/************************************************************************/
 /*                          BuildFeatureDefn()                          */
 /*                                                                      */
 /*      Build feature definition from a set of column definitions       */
@@ -205,18 +247,48 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         {
             if( nColType == SQLITE_BLOB )
             {
-                osGeomColumn = oField.GetNameRef();
-                eGeomFormat = OSGF_WKB;
-                /* This could also be a SpatialLite geometry, so */
-                /* we'll also try to decode as SpatialLite if */
-                /* bTriedAsSpatiaLite is not FALSE */
-                continue;
+                const int nBytes = sqlite3_column_bytes( hStmt, iCol );
+                if( nBytes > 0 )
+                {
+                    if( OGRIsBinaryGeomCol( hStmt, iCol, oField,
+                                    eGeomFormat, osGeomColumn ) )
+                        continue;
+                }
+                else
+                {
+                    /* This could also be a SpatialLite geometry, so */
+                    /* we'll also try to decode as SpatialLite if */
+                    /* bTriedAsSpatiaLite is not FALSE */
+                    osGeomColumn = oField.GetNameRef();
+                    eGeomFormat = OSGF_WKB;
+                    continue;
+                }
             }
             else if( nColType == SQLITE_TEXT )
             {
-                osGeomColumn = oField.GetNameRef();
-                eGeomFormat = OSGF_WKT;
-                continue;
+                char* pszText = (char*) sqlite3_column_text( hStmt, iCol );
+                if( pszText != NULL )
+                {
+                    CPLPushErrorHandler(CPLQuietErrorHandler);
+                    OGRGeometry* poGeometry = NULL;
+                    if( OGRGeometryFactory::createFromWkt( 
+                        &pszText, NULL, &poGeometry ) == OGRERR_NONE )
+                    {
+                        osGeomColumn = oField.GetNameRef();
+                        eGeomFormat = OSGF_WKT;
+                    }
+                    CPLPopErrorHandler();
+                    CPLErrorReset();
+                    delete poGeometry;
+                    if( eGeomFormat != OSGF_None )
+                        continue;
+                }
+                else
+                {
+                    osGeomColumn = oField.GetNameRef();
+                    eGeomFormat = OSGF_WKT;
+                    continue;
+                }
             }
         }
 
@@ -234,37 +306,9 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         if( nColType == SQLITE_BLOB && osGeomColumn.size() == 0 )
         {
             const int nBytes = sqlite3_column_bytes( hStmt, iCol );
-            if( nBytes )
-            {
-                OGRGeometry* poGeometry = NULL;
-                CPLPushErrorHandler(CPLQuietErrorHandler);
-                if( OGRGeometryFactory::createFromWkb(
-                        (GByte*)sqlite3_column_blob( hStmt, iCol ),
-                        NULL, &poGeometry, nBytes ) == OGRERR_NONE )
-                {
-                    eGeomFormat = OSGF_WKB;
-                }
-                else if (!bTriedAsSpatiaLite)
-                {
-                    /* If the layer is the result of a sql select, we cannot be sure if it is */
-                    /* WKB or SpatialLite format */
-                    if( ImportSpatiaLiteGeometry(
-                        (GByte*)sqlite3_column_blob( hStmt, iCol ), nBytes,
-                        &poGeometry ) == OGRERR_NONE )
-                    {
-                        eGeomFormat = OSGF_SpatiaLite;
-                    }
-                    bTriedAsSpatiaLite = TRUE;
-                }
-                CPLPopErrorHandler();
-                CPLErrorReset();
-                if( poGeometry != NULL )
-                {
-                    osGeomColumn = oField.GetNameRef();
-                    delete poGeometry;
-                    continue;
-                }
-            }
+            if( nBytes > 0 && OGRIsBinaryGeomCol( hStmt, iCol, oField,
+                                                  eGeomFormat, osGeomColumn ) )
+                continue;
         }
 
         // The rowid is for internal use, not a real column.
