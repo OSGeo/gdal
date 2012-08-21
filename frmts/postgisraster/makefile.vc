@@ -1,7 +1,7 @@
 
 OBJ	=	postgisrasterdataset.obj postgisrasterrasterband.obj postgisrasterdriver.obj
 
-EXTRAFLAGS =  -I$(PG_INC_DIR)
+EXTRAFLAGS = -I ../mem -I ../vrt -I$(PG_INC_DIR)
 
 GDAL_ROOT	=	..\..
 
