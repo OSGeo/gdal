@@ -7,11 +7,11 @@ include ../../GDALmake.opt
 OBJ	=	postgisrasterdriver.o postgisrasterdataset.o postgisrasterrasterband.o
 
 
-CPPFLAGS	:= $(XTRA_OPT) $(PG_INC) $(GDAL_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:= -I ../mem -I ../vrt $(XTRA_OPT) $(PG_INC) $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
-$(O_OBJ):       postgisraster.h
+$(O_OBJ):       postgisraster.h ../vrt/vrtdataset.h ../mem/memdataset.h
  
 clean:
 	rm -f *.o $(O_OBJ)
