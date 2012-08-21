@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -122,12 +123,14 @@ def ogr_wkbwkt_geom_bigexponents():
     geom = ogr.Geometry( ogr.wkbPoint )
     geom.SetPoint( 0, bigx, bigy )
 
-    expect = 'POINT (0 0 0)'
+    #expect = 'POINT (0 0 0)'
+    expect = 'POINT (too_big too_big 0)'
     wkt = geom.ExportToWkt()
 
     if str(wkt) != str(expect):
-            gdaltest.post_reason( 'trimming long float numbers failed.' )
-            return 'fail'
+        print(wkt)
+        gdaltest.post_reason( 'trimming long float numbers failed.' )
+        return 'fail'
 
     return 'success'
 
