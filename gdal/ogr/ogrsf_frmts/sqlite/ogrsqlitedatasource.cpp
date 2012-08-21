@@ -1387,9 +1387,40 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      In case, this is not a SELECT, invalidate cached feature        */
 /*      count and extent to be on the safe side.                        */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(pszSQLCommand,"SELECT ",7) && !EQUAL(pszSQLCommand, "BEGIN")
-        && !EQUAL(pszSQLCommand, "COMMIT") &&
-        !EQUALN(pszSQLCommand, "CREATE TABLE ", strlen("CREATE TABLE ")) )
+    if( EQUAL(pszSQLCommand, "VACUUM") )
+    {
+        int bNeedRefresh = -1;
+        int i;
+        for( i = 0; i < nLayers; i++ )
+        {
+            if( papoLayers[i]->IsTableLayer() )
+            {
+                OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[i];
+                if ( !(poLayer->AreStatisticsValid()) ||
+                     poLayer->DoStatisticsNeedToBeFlushed())
+                {
+                    bNeedRefresh = FALSE;
+                    break;
+                }
+                else if( bNeedRefresh < 0 )
+                    bNeedRefresh = TRUE;
+            }
+        }
+        if( bNeedRefresh == TRUE )
+        {
+            for( i = 0; i < nLayers; i++ )
+            {
+                if( papoLayers[i]->IsTableLayer() )
+                {
+                    OGRSQLiteTableLayer* poLayer = (OGRSQLiteTableLayer*) papoLayers[i];
+                    poLayer->ForceStatisticsToBeFlushed();
+                }
+            }
+        }
+    }
+    else if( !EQUALN(pszSQLCommand,"SELECT ",7) && !EQUAL(pszSQLCommand, "BEGIN")
+        && !EQUAL(pszSQLCommand, "COMMIT")
+        && !EQUALN(pszSQLCommand, "CREATE TABLE ", strlen("CREATE TABLE ")) )
     {
         for(int i = 0; i < nLayers; i++)
             papoLayers[i]->InvalidateCachedFeatureCountAndExtent();
