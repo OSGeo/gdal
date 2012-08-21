@@ -82,6 +82,19 @@ examples.</p>
 
 <p>Starting with GDAL 2.0, all resampling methods supported by GDAL overviews are available.</p>
 
+<h2>Performance hints</h2>
+
+Some of the performance hints of the OGR SQLite driver apply. In particular setting the OGR_SQLITE_SYNCHRONOUS
+configuration option to OFF when creating a dataset or adding overviews might increase performance on some
+filesystems.<p>
+
+After having added all the raster tables and building all the needed overview levels, it is advised to run :
+<pre>
+ogrinfo rasterlitedb.sqlite -sql "VACUUM"
+</pre>
+in order to optimize the database, and increase read performances afterwards. This is particularly true with big rasterlite datasets.
+Note that the operation might take a long time.<p>
+
 <h2>Examples:</h2>
 
 <ul>
@@ -193,6 +206,7 @@ $ gdaladdo RASTERLITE:my_db.sqlite,table=source 2 4 8 16 --config RASTERLITE_OVR
 <li><a href="http://www.gaia-gis.it/spatialite/rasterlite-man.pdf">Rasterlite manual</a></li>
 <li><a href="http://www.gaia-gis.it/spatialite/rasterlite-how-to.pdf">Rasterlite howto</a></li>
 <li><a href="http://www.gaia-gis.it/spatialite/resources.html">Sample databases</a></li>
+<li><a href="http://gdal.org/ogr/drv_sqlite.html">OGR SQLite driver</a></li>
 </ul>
 
 </body>
