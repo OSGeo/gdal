@@ -365,9 +365,12 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                 { bDeferedSpatialIndexCreation = bFlag; }
     int                 CreateSpatialIndex();
 
-    void                InitFeatureCount();
-
     void                CreateSpatialIndexIfNecessary();
+
+    void                InitFeatureCount();
+    int                 DoStatisticsNeedToBeFlushed() { return bStatisticsNeedsToBeFlushed && bSpatialiteLoaded; }
+    void                ForceStatisticsToBeFlushed() { bStatisticsNeedsToBeFlushed = TRUE; }
+    int                 AreStatisticsValid() { return nFeatureCount >= 0; }
     int                 SaveStatistics();
 
     virtual void        InvalidateCachedFeatureCountAndExtent();
