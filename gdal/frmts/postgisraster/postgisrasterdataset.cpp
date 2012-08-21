@@ -534,7 +534,6 @@ GBool PostGISRasterDataset::SetRasterProperties
 	
 			// Rotated rasters are not allowed, so far
 			// TODO: allow them
-			/*
 			if (!CPLIsEqual(tileSkewX, 0.0) || !CPLIsEqual(tileSkewY, 0.0)) {
 				CPLError(CE_Failure, CPLE_AppDefined, "GDAL PostGIS Raster driver can not work with "
 				"rotated rasters yet.");
@@ -543,7 +542,6 @@ GBool PostGISRasterDataset::SetRasterProperties
 
 				return false;
 			}
-			*/
 			adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] = tileSkewX;
 			adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] = tileSkewY;
 	
