@@ -34,7 +34,7 @@ int main( int argc, char **argv )
 
 {
     CPLXMLNode *poTree;
-    static char  szXML[10000000];
+    static char  szXML[20000000];
     FILE       *fp;
     int        nLen;
 
