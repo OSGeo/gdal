@@ -42,7 +42,6 @@
 class OGR2SQLITEModule
 {
     OGRDataSource* poDS;
-    struct sqlite3_module sOGR2SQLITEModule;
 
     std::map< std::pair<int,int>, OGRCoordinateTransformation*> oCachedTransformsMap;
 
@@ -50,7 +49,7 @@ class OGR2SQLITEModule
                                 OGR2SQLITEModule(OGRDataSource* poDS);
                                 ~OGR2SQLITEModule();
 
-    void                         SetToDB(sqlite3* hDB);
+    int                          SetToDB(sqlite3* hDB);
     OGRDataSource*               GetDS() { return poDS; }
     OGRCoordinateTransformation* GetTransform(int nSrcSRSId, int nDstSRSId);
 };
