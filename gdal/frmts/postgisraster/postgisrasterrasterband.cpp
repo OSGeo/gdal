@@ -35,6 +35,9 @@
 #include "gdal.h"
 #include <string>
 #include "cpl_string.h"
+#include "gdal_vrt.h"
+#include "vrtdataset.h"
+#include "memdataset.h"
 
 
 /**
@@ -49,39 +52,73 @@
  *          metadata value is added to IMAGE_STRUCTURE domain
  *  - int: The bit depth, to add NBITS as metadata value in IMAGE_STRUCTURE
  *          domain.
+ *	TODO: Comment the rest of parameters
  */
 PostGISRasterRasterBand::PostGISRasterRasterBand(PostGISRasterDataset *poDS,
-        int nBand, GDALDataType hDataType, GBool bHasNoDataValue, double dfNodata, GBool bSignedByte,
-        int nBitDepth, int nFactor, GBool bIsOffline, char * pszSchema, 
-        char * pszTable, char * pszColumn)
+        int nBand, GDALDataType hDataType, GBool bHasNoDataValue, double dfNodata, 
+		GBool bSignedByte,int nBitDepth, int nFactor, int nBlockXSize, int nBlockYSize,
+		GBool bIsOffline, char * inPszSchema, char * inPszTable, char * inPszColumn)
 {
 
     /* Basic properties */
     this->poDS = poDS;
     this->nBand = nBand;
     this->bIsOffline = bIsOffline;
-    this->pszSchema = (pszSchema) ? pszSchema : CPLStrdup(poDS->pszSchema);    
-    this->pszTable = (pszTable) ? pszTable: CPLStrdup(poDS->pszTable);
-    this->pszColumn = (pszColumn) ? pszColumn : CPLStrdup(poDS->pszColumn);
-    this->pszWhere = CPLStrdup(poDS->pszWhere);
 
     eAccess = poDS->GetAccess();
     eDataType = hDataType;
     this->bHasNoDataValue = bHasNoDataValue;
     dfNoDataValue = dfNodata;
 
+	if (poDS->nBands == 1) {
+		eBandInterp = GCI_GrayIndex;
+	}
 
-    /*****************************************************
-     * Check block size issue
-     *****************************************************/
-    nBlockXSize = poDS->nBlockXSize;
-    nBlockYSize = poDS->nBlockYSize;
+	else if (poDS->nBands == 3) {
+		if (nBand == 1)
+			eBandInterp = GCI_RedBand;
+		else if( nBand == 2 )
+            eBandInterp = GCI_GreenBand;
+        else if( nBand == 3 )
+            eBandInterp = GCI_BlueBand;
+        else
+            eBandInterp = GCI_Undefined;
+	}
 
-    if (nBlockXSize == 0 || nBlockYSize == 0) {
-        CPLError(CE_Warning, CPLE_NotSupported,
-                "This band has irregular blocking, but is not supported yet");
-    }
+	else {
+		eBandInterp = GCI_Undefined;
+	}
 
+
+
+    /**************************************************************************
+     * TODO: Set a non arbitrary blocksize. In case or regular blocking, this is 
+	 * easy, otherwise, does it make any sense? Any single tile has its own 
+	 * dimensions.
+     *************************************************************************/
+	if (poDS->bRegularBlocking) {
+		CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::Constructor: "
+			"Band %d has regular blocking", nBand);
+	
+		this->nBlockXSize = nBlockXSize;
+		this->nBlockYSize = nBlockYSize;
+	}
+
+	else {
+		CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::Constructor: "
+			"Band %d does not have regular blocking", nBand);
+
+		/*
+		this->nBlockXSize = MIN(poDS->nRasterXSize, DEFAULT_BLOCK_X_SIZE); 
+		this->nBlockYSize = MIN(poDS->nRasterYSize, DEFAULT_BLOCK_Y_SIZE);
+		*/
+
+		this->nBlockXSize = poDS->nRasterXSize;
+		this->nBlockYSize = 1;
+	}
+
+	CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::Constructor: "
+		"Block size (%dx%d)", this->nBlockXSize, this->nBlockYSize);
         
     // Add pixeltype to image structure domain
     if (bSignedByte == true) {
@@ -95,6 +132,10 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(PostGISRasterDataset *poDS,
 
 
     nOverviewFactor = nFactor;
+
+	this->pszSchema = (inPszSchema) ? inPszSchema : poDS->pszSchema; 
+	this->pszTable = (inPszTable) ? inPszTable : poDS->pszTable; 
+	this->pszColumn = (inPszColumn) ? inPszColumn : poDS->pszColumn; 
 
     /**********************************************************
      * Check overviews. Query RASTER_OVERVIEWS table for
@@ -137,6 +178,9 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(PostGISRasterDataset *poDS,
             }
                        
             for(i = 0; i < nOverviewCount; i++) {
+		
+				CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::Constructor: "
+					"Creating overview for band %d", nBand);
 
                 nFetchOvFactor = atoi(PQgetvalue(poResult, i, 1));
                 pszOvSchema = CPLStrdup(PQgetvalue(poResult, i, 3));
@@ -152,7 +196,8 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(PostGISRasterDataset *poDS,
                  */
                 papoOverviews[i] = new PostGISRasterRasterBand(poDS, nBand,
                         hDataType, bHasNoDataValue, dfNodata, bSignedByte, nBitDepth,
-                        nFetchOvFactor, bIsOffline, pszOvSchema, pszOvTable, pszOvColumn);
+                        nFetchOvFactor, nBlockXSize, nBlockYSize, bIsOffline, pszOvSchema,
+						pszOvTable, pszOvColumn);
 
             }
 
@@ -161,7 +206,9 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(PostGISRasterDataset *poDS,
         }
 
         else {
-
+			
+			CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::Constructor: "
+				"Band %d does not have overviews", nBand);
             nOverviewCount = 0;
             papoOverviews = NULL;
             if (poResult)
@@ -197,15 +244,6 @@ PostGISRasterRasterBand::~PostGISRasterRasterBand()
 {
     int i;
 
-    if (pszSchema)
-        CPLFree(pszSchema);
-    if (pszTable)
-        CPLFree(pszTable);
-    if (pszColumn)
-        CPLFree(pszColumn);
-    if (pszWhere)
-        CPLFree(pszWhere);
-
     if (papoOverviews) {
         for(i = 0; i < nOverviewCount; i++)
             delete papoOverviews[i];
@@ -213,38 +251,571 @@ PostGISRasterRasterBand::~PostGISRasterRasterBand()
         CPLFree(papoOverviews);
     }
 }
+	
+
+/**
+ *
+ **/
+GDALDataType PostGISRasterRasterBand::TranslateDataType(const char * pszDataType)
+{
+	if (EQUALN(pszDataType, "1BB", 3 * sizeof (char)) ||
+		EQUALN(pszDataType, "2BUI", 4 * sizeof (char)) ||
+        EQUALN(pszDataType, "4BUI", 4 * sizeof (char)) ||
+   		EQUALN(pszDataType, "8BUI", 4 * sizeof (char)) ||
+        EQUALN(pszDataType, "8BSI", 4 * sizeof (char))) 
+		
+		return GDT_Byte;
+
+	else if (EQUALN(pszDataType, "16BSI", 5 * sizeof (char)))
+		return GDT_Int16;
+
+	else if (EQUALN(pszDataType, "16BUI", 5 * sizeof (char)))
+		return GDT_UInt16;
+    
+	else if (EQUALN(pszDataType, "32BSI", 5 * sizeof (char)))
+		return GDT_Int32;
+    
+	else if (EQUALN(pszDataType, "32BUI", 5 * sizeof (char)))
+		return GDT_UInt32;
+
+	else if (EQUALN(pszDataType, "32BF", 4 * sizeof (char)))
+		return GDT_Float32;
+
+	else if (EQUALN(pszDataType, "64BF", 4 * sizeof (char)))
+		return GDT_Float64;
+
+	else
+		return GDT_Unknown;
+}
+
 
 
 /**
- * \brief Set the block data to the null value if it is set, or zero if there is
- * no null data value.
- * Parameters:
- *  - void *: the block data
- * Returns: nothing
+ * Read/write a region of image data from multiple bands.
+ *
+ * This method allows reading a region of one or more PostGISRasterBands from
+ * this dataset into a buffer. The write support is still under development
+ *
+ * The function fetches all the raster data that intersects with the region
+ * provided, and store the data in the GDAL cache.
+ *
+ * TODO: This only works in case of regular blocking rasters. A more
+ * general approach to allow non-regular blocking rasters is under development.
+ *
+ * It automatically takes care of data type translation if the data type
+ * (eBufType) of the buffer is different than that of the
+ * PostGISRasterRasterBand.
+ *
+ * TODO: The method should take care of image decimation / replication if the
+ * buffer size (nBufXSize x nBufYSize) is different than the size of the region
+ * being accessed (nXSize x nYSize).
+ *
+ * The nPixelSpace, nLineSpace and nBandSpace parameters allow reading into or
+ * writing from various organization of buffers.
+ *
+ * @param eRWFlag Either GF_Read to read a region of data, or GF_Write to write
+ * a region of data.
+ *
+ * @param nXOff The pixel offset to the top left corner of the region of the
+ * band to be accessed. This would be zero to start from the left side.
+ *
+ * @param nYOff The line offset to the top left corner of the region of the band
+ * to be accessed. This would be zero to start from the top.
+ *
+ * @param nXSize The width of the region of the band to be accessed in pixels.
+ *
+ * @param nYSize The height of the region of the band to be accessed in lines.
+ *
+ * @param pData The buffer into which the data should be read, or from which it
+ * should be written. This buffer must contain at least
+ * nBufXSize * nBufYSize * nBandCount words of type eBufType. It is organized in
+ * left to right,top to bottom pixel order. Spacing is controlled by the
+ * nPixelSpace, and nLineSpace parameters.
+ *
+ * @param nBufXSize the width of the buffer image into which the desired region
+ * is to be read, or from which it is to be written.
+ *
+ * @param nBufYSize the height of the buffer image into which the desired region
+ * is to be read, or from which it is to be written.
+ *
+ * @param eBufType the type of the pixel values in the pData data buffer. The
+ * pixel values will automatically be translated to/from the
+ * PostGISRasterRasterBand data type as needed.
+ *
+ * @param nBandCount the number of bands being read or written.
+ *
+ * @param panBandMap the list of nBandCount band numbers being read/written.
+ * Note band numbers are 1 based. This may be NULL to select the first
+ * nBandCount bands.
+ *
+ * @param nPixelSpace The byte offset from the start of one pixel value in pData
+ * to the start of the next pixel value within a scanline. If defaulted (0) the
+ * size of the datatype eBufType is used.
+ *
+ * @param nLineSpace The byte offset from the start of one scanline in pData to
+ * the start of the next. If defaulted (0) the size of the datatype
+ * eBufType * nBufXSize is used.
+ *
+ * @param nBandSpace the byte offset from the start of one bands data to the
+ * start of the next. If defaulted (0) the value will be nLineSpace * nBufYSize
+ * implying band sequential organization of the data buffer.
+ *
+ * @return CE_Failure if the access fails, otherwise CE_None.
  */
-void PostGISRasterRasterBand::NullBlock(void *pData) 
+
+CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+	int nXSize, int nYSize, void * pData, int nBufXSize, int nBufYSize,
+	GDALDataType eBufType, int nPixelSpace, int nLineSpace)
 {
-    VALIDATE_POINTER0(pData, "NullBlock");
+    double adfTransform[6];
+    double adfProjWin[8];
+    int ulx, uly, lrx, lry;
+    CPLString osCommand;
+    PGresult* poResult = NULL;
+	int iTuplesIndex;
+    int nTuples = 0;
+    char orderByY[5];
+    char orderByX[4];
+	GBool bEqualAreas = false;
+    GByte* pbyData = NULL;
+	GByte** ppbyBandData = NULL;
+    int nWKBLength = 0;
+	int nBandDataLength;
+	int nBandDataSize;
+	int nBufDataSize;
+	int nTileWidth;
+	int nTileHeight;
+	double dfTileScaleX;
+	double dfTileScaleY;
+	double dfTileUpperLeftX;
+	double dfTileUpperLeftY;
+	char * pszDataType = NULL; 
+	char * pszDataTypeName = NULL;
+	GDALDataType eTileDataType;
+	int nTileDataTypeSize;
+	double dfTileBandNoDataValue;
+	VRTDatasetH vrtDataset;
+	GDALDataset ** memDatasets;
+	GDALRasterBandH memRasterBand;
+	GDALRasterBandH vrtRasterBand;
+	char szMemOpenInfo[100];
+	GDALOpenInfo * oOpenInfo;
+	char ** papszOptions;
+	char szTmp[64];
+	char szTileWidth[64];
+	char szTileHeight[64];
+	char szDatasetDescription[64];
+	CPLErr err;
+    PostGISRasterDataset * poPostGISRasterDS = (PostGISRasterDataset*)poDS;
+	int nSrcXOff, nSrcYOff, nDstXOff, nDstYOff;
+	int nDstXSize, nDstYSize;
 
-    int nNaturalBlockXSize = 0;
-    int nNaturalBlockYSize = 0;
-    GetBlockSize(&nNaturalBlockXSize, &nNaturalBlockYSize);
-
-    int nWords = nNaturalBlockXSize * nNaturalBlockYSize;
-    int nChunkSize = MAX(1, GDALGetDataTypeSize(eDataType) / 8);
-
-    int bNoDataSet;
-    double dfNoData = GetNoDataValue(&bNoDataSet);
-    if (!bNoDataSet) 
-    {
-        memset(pData, 0, nWords * nChunkSize);
-    } 
-    else 
-    {
-        int i = 0;
-        for (i = 0; i < nWords; i += nChunkSize)
-            memcpy((GByte *) pData + i, &dfNoData, nChunkSize);
+	/**
+     * TODO: Write support not implemented yet
+     **/
+    if (eRWFlag == GF_Write) {
+        CPLError(CE_Failure, CPLE_NotSupported,
+			"Writing through PostGIS Raster band not supported yet");
+        
+		return CE_Failure;
     }
+    
+	nBandDataSize = GDALGetDataTypeSize(eDataType) / 8;
+    nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
+            
+
+	/**************************************************************************
+	 * Do we have overviews that would be appropriate to satisfy this request?                                                   
+	 *************************************************************************/
+	if( (nBufXSize < nXSize || nBufYSize < nYSize) && GetOverviewCount() > 0 ) {
+		if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, 
+			nBufXSize, nBufYSize, eBufType, nPixelSpace, nLineSpace ) == CE_None )
+                
+		return CE_None;
+	}
+
+  	/**************************************************************************
+	 * Get all the raster rows that are intersected by the window requested
+	 *************************************************************************/		
+	// We first construct a polygon to intersect with
+	poPostGISRasterDS->GetGeoTransform(adfTransform);
+	ulx = nXOff;
+	uly = nYOff;
+	lrx = nXOff + nXSize * nBandDataSize;
+	lry = nYOff + nYSize * nBandDataSize;
+
+	adfProjWin[0] = adfTransform[GEOTRSFRM_TOPLEFT_X] + 
+					ulx * adfTransform[GEOTRSFRM_WE_RES] + 
+					uly * adfTransform[GEOTRSFRM_ROTATION_PARAM1];
+	adfProjWin[1] = adfTransform[GEOTRSFRM_TOPLEFT_Y] + 
+					ulx * adfTransform[GEOTRSFRM_ROTATION_PARAM2] + 
+					uly * adfTransform[GEOTRSFRM_NS_RES];
+	adfProjWin[2] = adfTransform[GEOTRSFRM_TOPLEFT_X] + 
+					lrx * adfTransform[GEOTRSFRM_WE_RES] + 
+					uly * adfTransform[GEOTRSFRM_ROTATION_PARAM1];
+	adfProjWin[3] = adfTransform[GEOTRSFRM_TOPLEFT_Y] + 
+					lrx * adfTransform[GEOTRSFRM_ROTATION_PARAM2] + 
+					uly * adfTransform[GEOTRSFRM_NS_RES];
+	adfProjWin[4] = adfTransform[GEOTRSFRM_TOPLEFT_X] + 
+					lrx * adfTransform[GEOTRSFRM_WE_RES] + 
+					lry * adfTransform[GEOTRSFRM_ROTATION_PARAM1];
+	adfProjWin[5] = adfTransform[GEOTRSFRM_TOPLEFT_Y] + 
+					lrx * adfTransform[GEOTRSFRM_ROTATION_PARAM2] + 
+					lry * adfTransform[GEOTRSFRM_NS_RES];
+	adfProjWin[6] = adfTransform[GEOTRSFRM_TOPLEFT_X] + 
+					ulx * adfTransform[GEOTRSFRM_WE_RES] + 
+					lry * adfTransform[GEOTRSFRM_ROTATION_PARAM1];
+	adfProjWin[7] = adfTransform[GEOTRSFRM_TOPLEFT_Y] + 
+					ulx * adfTransform[GEOTRSFRM_ROTATION_PARAM2] + 
+					lry * adfTransform[GEOTRSFRM_NS_RES];
+
+	memset(orderByX, 0, 4);
+	memset(orderByY, 0, 5);
+
+	strcpy(orderByX, "asc");
+	if (poPostGISRasterDS->nSrid == -1) 
+		strcpy(orderByY, "asc"); // Y starts at 0 and grows
+	else 
+		strcpy(orderByY, "desc");// Y starts at max and decreases
+
+	CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO: "
+		"Buffer size = (%d, %d), Region size = (%d, %d)",
+		nBufXSize, nBufYSize, nXSize, nYSize);
+
+	if (poPostGISRasterDS->pszWhere == NULL) {
+		osCommand.Printf("SELECT st_band(%s, %d), st_width(%s), st_height(%s), st_bandpixeltype(%s, %d), "
+			"st_bandnodatavalue(%s, %d), st_scalex(%s), st_scaley(%s), st_upperleftx(%s), st_upperlefty(%s) "
+			"FROM %s.%s WHERE st_intersects(%s, st_polygonfromtext('POLYGON((%.17f %.17f, %.17f %.17f, "
+			"%.17f %.17f, %.17f %.17f, %.17f %.17f))', %d)) ORDER BY ST_UpperLeftY(%s) %s, "
+			"ST_UpperLeftX(%s) %s", pszColumn, nBand, pszColumn, pszColumn, pszColumn, nBand, pszColumn, 
+			nBand, pszColumn, pszColumn, pszColumn, pszColumn, pszSchema, pszTable, pszColumn, 
+			adfProjWin[0], adfProjWin[1], adfProjWin[2], adfProjWin[3],  adfProjWin[4], adfProjWin[5], 
+			adfProjWin[6], adfProjWin[7], adfProjWin[0], adfProjWin[1], poPostGISRasterDS->nSrid, pszColumn, 
+			orderByY, pszColumn, orderByX);
+	}
+
+	else {
+		osCommand.Printf("SELECT st_band(%s, %d), st_width(%s), st_height(%s), st_bandpixeltype(%s, %d), "
+			"st_bandnodatavalue(%s, %d), st_scalex(%s), st_scaley(%s), st_upperleftx(%s), st_upperlefty(%s) "
+			"FROM %s.%s WHERE (%s) AND st_intersects(%s, st_polygonfromtext('POLYGON((%.17f %.17f, %.17f %.17f, "
+			"%.17f %.17f, %.17f %.17f, %.17f %.17f))', %d)) ORDER BY ST_UpperLeftY(%s) %s, "
+			"ST_UpperLeftX(%s) %s", pszColumn, nBand, pszColumn, pszColumn, pszColumn, nBand, pszColumn, 
+			nBand, pszColumn, pszColumn, pszColumn, pszColumn, pszSchema, pszTable, poPostGISRasterDS->pszWhere, 
+			pszColumn, adfProjWin[0], adfProjWin[1], adfProjWin[2], adfProjWin[3], adfProjWin[4], adfProjWin[5], 
+			adfProjWin[6], adfProjWin[7], adfProjWin[0], adfProjWin[1], poPostGISRasterDS->nSrid, pszColumn, 
+			orderByY, pszColumn, orderByX);
+	}
+
+	CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO(): Query = %s", osCommand.c_str());
+
+	poResult = PQexec(poPostGISRasterDS->poConn, osCommand.c_str());
+	if (poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK || 
+		PQntuples(poResult) < 0) {
+		
+		if (poResult)
+			PQclear(poResult);
+ 
+		CPLError(CE_Failure, CPLE_AppDefined, "Error retrieving raster data from database");
+
+		CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO(): %s", 
+			PQerrorMessage(poPostGISRasterDS->poConn));
+        
+		return CE_Failure;	
+	}
+
+	/**
+	 * No data. Return the buffer filled with nodata values
+	 **/
+	else if (PQntuples(poResult) == 0) {
+		PQclear(poResult);
+		
+		CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO(): Null block");
+
+		memset(pData, dfNoDataValue, nBufDataSize * nBufXSize * nBufYSize);
+
+		return CE_None;	
+	}
+	
+
+	nTuples = PQntuples(poResult);
+
+	/**************************************************************************
+	 * Allocate memory for MEM dataset
+	 * TODO: In case of memory error, provide a different alternative
+	 *************************************************************************/
+	memDatasets = (GDALDataset **)CPLCalloc(nTuples, sizeof(GDALDataset *));
+	if (!memDatasets) {
+		PQclear(poResult);	
+		CPLError(CE_Failure, CPLE_AppDefined, "Memory error while trying to read band data "
+			"from database");
+
+		return CE_Failure;
+	}
+	
+
+	/**************************************************************************
+	 * Create an empty in-memory VRT dataset
+	 * TODO: In case of memory error, provide a different alternative
+	 *************************************************************************/
+	vrtDataset = VRTCreate(nXSize, nYSize);
+	if (!vrtDataset) {
+		PQclear(poResult);
+		CPLFree(memDatasets);
+
+		CPLError(CE_Failure, CPLE_AppDefined, "Memory error while trying to read band data "
+			"from database");
+
+		return CE_Failure;
+	}
+
+	CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO: VRT Dataset "
+		"of (%d, %d) created", nXSize, nYSize);
+	
+	
+	memset(szDatasetDescription, 0, sizeof(szDatasetDescription));
+	sprintf(szDatasetDescription, "postgis_raster_band_%d_buffer_%d_%d.vrt", 
+		nBand, nBufXSize, nBufYSize);
+	GDALSetDescription(vrtDataset, szDatasetDescription);
+	GDALSetProjection(vrtDataset, GDALGetProjectionRef((GDALDatasetH)this->poDS));
+	GDALSetGeoTransform(vrtDataset, adfTransform);
+
+
+	/**
+	 * Create one VRT Raster Band. It will contain the same band of all tiles
+	 * as Simple Sources
+	 **/
+	VRTAddBand(vrtDataset, eDataType, NULL);
+	vrtRasterBand = GDALGetRasterBand(vrtDataset, 1);
+	
+
+	/**
+	 * Allocate memory for MEM data pointers
+	 **/
+	ppbyBandData = (GByte **)CPLCalloc(nTuples, sizeof(GByte *));
+	if (!ppbyBandData) {
+		PQclear(poResult);
+		CPLFree(memDatasets);
+		GDALClose(vrtDataset);
+
+		CPLError(CE_Failure, CPLE_AppDefined, "Memory error while trying to read band data "
+			"from database");
+	
+		return CE_Failure;
+	}
+	
+	/**************************************************************************
+	 * Now, for each block, create a MEM dataset
+	 * TODO: What if whe have a really BIG amount of data fetched from db? CURSORS
+	 *************************************************************************/
+	for(iTuplesIndex = 0; iTuplesIndex < nTuples; iTuplesIndex++) {	
+		/**
+		 * Fetch data from result
+		 **/
+		pbyData = CPLHexToBinary(PQgetvalue(poResult, iTuplesIndex, 0), &nWKBLength);
+		nTileWidth = atoi(PQgetvalue(poResult, iTuplesIndex, 1));
+		nTileHeight = atoi(PQgetvalue(poResult, iTuplesIndex, 2));
+		pszDataType = CPLStrdup(PQgetvalue(poResult, iTuplesIndex, 3));
+		dfTileBandNoDataValue = atof(PQgetvalue(poResult, iTuplesIndex, 4));
+		dfTileScaleX = atof(PQgetvalue(poResult, iTuplesIndex, 5));
+		dfTileScaleY = atof(PQgetvalue(poResult, iTuplesIndex, 6));
+		dfTileUpperLeftX = atof(PQgetvalue(poResult, iTuplesIndex, 7));
+		dfTileUpperLeftY = atof(PQgetvalue(poResult, iTuplesIndex, 8));
+
+
+		CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO: Tile of "
+			"(%d, %d) px created. With pixel size of (%f, %f) and located at "
+			"(%f, %f)", nTileWidth, nTileHeight, dfTileScaleX, dfTileScaleY,
+			dfTileUpperLeftX, dfTileUpperLeftY);
+			
+		/**
+		 * Calculate some useful parameters
+		 **/
+		eTileDataType = TranslateDataType(pszDataType);
+		nTileDataTypeSize = GDALGetDataTypeSize(eTileDataType) / 8;
+		
+		nBandDataLength = nTileWidth * nTileHeight * nTileDataTypeSize;
+		ppbyBandData[iTuplesIndex] = (GByte *)
+			CPLCalloc(nBandDataLength, sizeof(GByte));
+
+		if (!ppbyBandData[iTuplesIndex]) {
+			CPLError(CE_Warning, CPLE_AppDefined, "Could not allocate memory for "
+				"MEMDataset, skipping. The result image may contain gaps");
+			continue;
+		}
+
+		/**
+		 * Get the pointer to the band pixels
+		 **/ 
+		memcpy(ppbyBandData[iTuplesIndex], 
+			GET_BAND_DATA(pbyData, 1, nTileDataTypeSize, nBandDataLength),
+			nBandDataLength);
+		
+		/**
+		 * Create new MEM dataset, based on in-memory array, to hold the pixels.
+		 * The dataset will only have 1 band
+		 **/
+		memset(szTmp, 0, sizeof(szTmp));
+		CPLPrintPointer(szTmp, ppbyBandData[iTuplesIndex], sizeof(szTmp));
+
+		memset(szTileWidth, 0, sizeof(szTileWidth));
+		CPLPrintInt32(szTileWidth, (GInt32)nTileWidth, sizeof(nTileWidth));
+		memset(szTileHeight, 0, sizeof(szTileHeight));
+		CPLPrintInt32(szTileHeight, (GInt32)nTileHeight, sizeof(nTileHeight));
+		
+		memset(szMemOpenInfo, 0, sizeof(szMemOpenInfo));
+		sprintf(szMemOpenInfo, "MEM:::DATAPOINTER=%s,PIXELS=%d,LINES=%d,DATATYPE=%s",
+			szTmp, nTileWidth, nTileHeight, GDALGetDataTypeName(eTileDataType));
+		
+		CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO: MEMDataset "
+			"open info = %s", szMemOpenInfo);
+
+		oOpenInfo = new GDALOpenInfo(szMemOpenInfo, GA_ReadOnly, NULL);
+		if (!oOpenInfo) {
+			CPLError(CE_Warning, CPLE_AppDefined, "Could not allocate memory for "
+				"MEMDataset, skipping. The result image may contain gaps");
+			continue;
+		}
+		
+		memDatasets[iTuplesIndex] = MEMDataset::Open(oOpenInfo);
+		if (!memDatasets[iTuplesIndex]) {
+			delete oOpenInfo;
+			CPLError(CE_Warning, CPLE_AppDefined, "Could not create MEMDataset, "
+				"skipping. The result image may contain gaps");
+			continue;
+		}
+		
+		GDALSetDescription(memDatasets[iTuplesIndex], szMemOpenInfo);
+
+		/** 
+		 * Get MEM raster band, to add it as simple source.
+		 **/
+		memRasterBand = (GDALRasterBandH)memDatasets[iTuplesIndex]->GetRasterBand(1);
+		if (!memRasterBand) {
+			CPLError(CE_Warning, CPLE_AppDefined, "Could not get MEMRasterBand , "
+				"skipping. The result image may contain gaps");
+			continue;
+		} 
+		
+		((MEMRasterBand *)memRasterBand)->SetNoDataValue(dfTileBandNoDataValue);
+
+		CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO: Adding "
+			"VRT Complex Source");
+		
+		/**
+		 * Get source and destination windows for the simple source (first check source
+		 * and destination bounding boxes match. Otherwise, skip this data)
+		 **/ 
+		
+		if (dfTileUpperLeftX + nTileWidth * dfTileScaleX < poPostGISRasterDS->xmin) {
+			CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO: "
+				"dfTileUpperLeftX = %f, nTileWidth = %d, dfTileScaleX = %f, "
+				"RasterDataset minx = %f", dfTileUpperLeftX, nTileWidth, dfTileScaleX,
+				poPostGISRasterDS->xmin);
+			continue;
+		}
+
+		if (dfTileUpperLeftX > poPostGISRasterDS->xmax) {
+			CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO: "
+				"dfTileUpperLeftX = %f, RasterDataset maxx = %f", dfTileUpperLeftX, 
+				poPostGISRasterDS->xmax);
+			continue;
+		}	
+
+		if (dfTileUpperLeftY + nTileHeight * dfTileScaleY > poPostGISRasterDS->ymax) {
+			CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO: "
+				"dfTileUpperLeftY = %f, nTileHeight = %d, ns res = %f, "
+				"RasterDataset maxy = %f", dfTileUpperLeftY, nTileHeight, dfTileScaleY,
+				poPostGISRasterDS->ymax);
+			continue;
+		}
+
+		if (dfTileUpperLeftY < poPostGISRasterDS->ymin) {
+			CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO: "
+				"dfTileUpperLeftY = %f, RasterDataset miny = %f", dfTileUpperLeftY, 
+				poPostGISRasterDS->ymin);
+			continue;
+		}
+		
+
+		if (dfTileUpperLeftX < poPostGISRasterDS->xmin) {
+			nSrcXOff = (int)((poPostGISRasterDS->xmin - dfTileUpperLeftX) / 
+				dfTileScaleX + 0.5);
+        	nDstXOff = 0;
+		}
+
+		else {
+			nSrcXOff = 0;
+			nDstXOff = (int)(0.5 + (dfTileUpperLeftX - poPostGISRasterDS->xmin) / 	
+				adfTransform[GEOTRSFRM_WE_RES]);
+    	}
+
+		if (poPostGISRasterDS->ymax < dfTileUpperLeftY) {
+        	nSrcYOff = (int)((dfTileUpperLeftY - poPostGISRasterDS->ymax) / 
+				fabs(dfTileScaleY) + 0.5);
+			nDstYOff = 0;
+    	}
+
+		else {
+			nSrcYOff = 0;
+			nDstYOff = (int)(0.5 + (poPostGISRasterDS->ymax - dfTileUpperLeftY) / 
+				fabs(adfTransform[GEOTRSFRM_NS_RES]));
+		}
+
+		nDstXSize = (int)(0.5 + nTileWidth * dfTileScaleX / adfTransform[GEOTRSFRM_WE_RES]);
+		nDstYSize = (int)(0.5 + nTileHeight * fabs(dfTileScaleY) / fabs(adfTransform[GEOTRSFRM_NS_RES]));
+     
+
+		/**
+		 * Add the mem raster band as new simple source band
+		 * TODO: How could I specify the nodata value?
+		 **/
+		//VRTAddSimpleSource(vrtRasterBand, memRasterBand, nSrcXOff, nSrcYOff, nTileWidth, nTileHeight,
+		//	nDstXOff, nDstYOff, nDstXSize, nDstYSize, NULL, dfTileBandNoDataValue);
+
+		VRTAddComplexSource(vrtRasterBand, memRasterBand, nSrcXOff, nSrcYOff, nTileWidth, nTileHeight,
+			nDstXOff, nDstYOff, nDstXSize, nDstYSize, 0, 1, dfTileBandNoDataValue);
+		delete oOpenInfo;
+
+		CPLFree(pbyData);
+		CPLFree(pszDataType);
+	
+
+		CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO(): VRT complex source added");
+	}
+ 
+	PQclear(poResult);
+	
+#ifdef DEBUG
+	// Just for testing (writes VRT file, with name = dataset description, to disk)
+	VRTFlushCache(vrtDataset);
+#endif
+
+	CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO(): VRT file created");
+
+	// Execute VRT RasterIO over the band
+	err = ((VRTRasterBand *)vrtRasterBand)->RasterIO(eRWFlag, nXOff, nYOff, nXSize, 
+		nYSize, pData, nBufXSize, nBufYSize, eBufType, nPixelSpace, nLineSpace);
+
+	CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO(): Data read");
+
+	GDALClose(vrtDataset);
+	
+	CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO(): VRTDataset released");
+	
+	// Free resources
+	for(iTuplesIndex = 0; iTuplesIndex < nTuples; iTuplesIndex++) {
+		if (ppbyBandData[iTuplesIndex])
+			CPLFree(ppbyBandData[iTuplesIndex]);
+		delete memDatasets[iTuplesIndex];
+		//GDALClose(memDatasets[iTuplesIndex]);
+	}
+	CPLFree(ppbyBandData);
+	CPLFree(memDatasets);
+	
+	CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO(): MEMDatasets released");
+
+	return err;
+		
 }
 
 /**
@@ -354,178 +925,35 @@ GDALRasterBand * PostGISRasterRasterBand::GetOverview(int i)
 CPLErr PostGISRasterRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void*
         pImage)
 {
-    PostGISRasterDataset * poPostGISRasterDS = (PostGISRasterDataset*)poDS;
-    CPLString osCommand;
-    PGresult* poResult = NULL;
-    double adfTransform[6];
-    int nTuples = 0;
-    int nNaturalBlockXSize = 0;
-    int nNaturalBlockYSize = 0;
-    int nPixelSize = 0;
-    int nPixelXInitPosition;
-    int nPixelYInitPosition;
-    int nPixelXEndPosition;
-    int nPixelYEndPosition;
-    double dfProjXInit = 0.0;
-    double dfProjYInit = 0.0;
-    double dfProjXEnd = 0.0;
-    double dfProjYEnd = 0.0;
-    double dfProjLowerLeftX = 0.0;
-    double dfProjLowerLeftY = 0.0;
-    double dfProjUpperRightX = 0.0;
-    double dfProjUpperRightY = 0.0;
-    GByte* pbyData = NULL;
-    char* pbyDataToRead = NULL;
-    int nWKBLength = 0;
-    int nExpectedDataSize = 0;
+    int nPixelSize = GDALGetDataTypeSize(eDataType)/8;
+    int nReadXSize, nReadYSize;
 
-    /* Get pixel and block size */
-    nPixelSize = MAX(1,GDALGetDataTypeSize(eDataType)/8);
-    GetBlockSize(&nNaturalBlockXSize, &nNaturalBlockYSize);
-    
-    /* Get pixel,line coordinates of the block */
-    /**
-     * TODO: What if the georaster is rotated? Following the gdal_translate
-     * source code, you can't use -projwin option with rotated rasters
-     **/
-    nPixelXInitPosition = nNaturalBlockXSize * nBlockXOff;
-    nPixelYInitPosition = nNaturalBlockYSize * nBlockYOff;
-    nPixelXEndPosition = nPixelXInitPosition + nNaturalBlockXSize;
-    nPixelYEndPosition = nPixelYInitPosition + nNaturalBlockYSize;
-
-    poPostGISRasterDS->GetGeoTransform(adfTransform);
-
-    /* Pixel size correction, in case of overviews */
-    if (nOverviewFactor) {
-        adfTransform[1] *= nOverviewFactor;
-        adfTransform[5] *= nOverviewFactor;
-    }
-
-    /* Calculate the "query box" */
-    dfProjXInit = adfTransform[0] +
-            nPixelXInitPosition * adfTransform[1] +
-            nPixelYInitPosition * adfTransform[2];
-
-    dfProjYInit = adfTransform[3] +
-            nPixelXInitPosition * adfTransform[4] +
-            nPixelYInitPosition * adfTransform[5];
-
-    dfProjXEnd = adfTransform[0] +
-            nPixelXEndPosition * adfTransform[1] +
-            nPixelYEndPosition * adfTransform[2];
-
-    dfProjYEnd = adfTransform[3] +
-            nPixelXEndPosition * adfTransform[4] +
-            nPixelYEndPosition * adfTransform[5];
-
-     /*************************************************************************
-     * Now we have the block coordinates transformed into coordinates of the
-     * raster reference system. This coordinates are from:
-     *  - Upper left corner
-     *  - Lower right corner
-     * But for ST_MakeBox2D, we'll need block's coordinates of:
-     *  - Lower left corner
-     *  - Upper right corner
-     *************************************************************************/
-    dfProjLowerLeftX = dfProjXInit;
-    dfProjLowerLeftY = dfProjYEnd;
-
-    dfProjUpperRightX = dfProjXEnd;
-    dfProjUpperRightY = dfProjYInit;
-
-    /**
-     * Return all raster objects from our raster table that fall reside or
-     * partly reside in a coordinate bounding box.
-     * NOTE: Is it necessary to use a BB optimization like:
-     * select st_makebox2d(...) && geom and (rest of the query)...?
-     **/
-    if (poPostGISRasterDS->pszWhere != NULL)
-    {
-        osCommand.Printf("select rid, %s from %s.%s where %s ~ "
-                "st_setsrid(st_makebox2d(st_point(%.17f, %.17f), st_point(%.17f,"
-                "%.17f)),%d) and %s", pszColumn, pszSchema, pszTable, pszColumn, 
-                dfProjLowerLeftX, dfProjLowerLeftY, dfProjUpperRightX,
-                dfProjUpperRightY, poPostGISRasterDS->nSrid, pszWhere);
-    }
-
+    if( (nBlockXOff+1) * nBlockXSize > GetXSize() )
+        nReadXSize = GetXSize() - nBlockXOff * nBlockXSize;
     else
-    {
-        osCommand.Printf("select rid, %s from %s.%s where %s ~ "
-                "st_setsrid(st_makebox2d(st_point(%.17f, %.17f), st_point(%.17f,"
-                "%.17f)),%d)", pszColumn, pszSchema, pszTable, pszColumn, 
-                dfProjLowerLeftX, dfProjLowerLeftY, dfProjUpperRightX, 
-                dfProjUpperRightY, poPostGISRasterDS->nSrid);
-    }
+        nReadXSize = nBlockXSize;
 
-    CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IReadBlock: "
-            "The query = %s", osCommand.c_str());
-
-    poResult = PQexec(poPostGISRasterDS->poConn, osCommand.c_str());
-    if (poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK ||
-            PQntuples(poResult) <= 0)
-    {
-        if (poResult)
-            PQclear(poResult);
-
-        /* TODO: Raise an error and exit? */
-        CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IReadBlock: "
-                "The block (%d, %d) is empty", nBlockXOff, nBlockYOff);
-        NullBlock(pImage);
-        return CE_None;
-    }
-
-    nTuples = PQntuples(poResult);
-
-    /* No overlapping */
-    if (nTuples == 1)
-    {        
-        /**
-         * Out db band.
-         * TODO: Manage this situation
-         **/
-        if (bIsOffline)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "This raster has outdb storage."
-                    "This feature isn\'t still available");
-            return CE_Failure;
-        }
-
-        int nRid = atoi(PQgetvalue(poResult, 0, 0));
-        
-        /* Only data size, without payload */
-        nExpectedDataSize = nNaturalBlockXSize * nNaturalBlockYSize *
-            nPixelSize;
-        pbyData = CPLHexToBinary(PQgetvalue(poResult, 0, 1), &nWKBLength);
-        pbyDataToRead = (char*)GET_BAND_DATA(pbyData,nBand, nPixelSize,
-                nExpectedDataSize);
-
-        memcpy(pImage, pbyDataToRead, nExpectedDataSize * sizeof(char));
-        
-        CPLDebug("PostGIS_Raster", "IReadBlock: Copied %d bytes from block "
-                "(%d, %d) (rid = %d) to %p", nExpectedDataSize, nBlockXOff, 
-                nBlockYOff, nRid, pImage);
-
-        CPLFree(pbyData);
-        PQclear(poResult);
-
-        return CE_None;
-    }
-
-    /** Overlapping raster data.
-     * TODO: Manage this situation. Suggestion: open several datasets, because
-     * you can't manage overlapping raster data with only one dataset
-     **/
+    if( (nBlockYOff+1) * nBlockYSize > GetYSize() )
+        nReadYSize = GetYSize() - nBlockYOff * nBlockYSize;
     else
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                "Overlapping raster data. Feature under development, not "
-                "available yet");
-        if (poResult)
-            PQclear(poResult);
+        nReadYSize = nBlockYSize;
 
-        return CE_Failure;
+	CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IReadBlock: "
+		"Calling to IRasterIO");
 
-    }
+    return IRasterIO( GF_Read, 
+                      nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize, 
+                      nReadXSize, nReadYSize, 
+                      pImage, nReadXSize, nReadYSize, eDataType, 
+                      nPixelSize, nPixelSize * nBlockXSize );
 }
 
-
+/**
+ * \brief How should this band be interpreted as color?
+ * GCI_Undefined is returned when the format doesn't know anything about the 
+ * color interpretation. 
+ **/
+GDALColorInterp PostGISRasterRasterBand::GetColorInterpretation()
+{
+	return eBandInterp;	
+}
