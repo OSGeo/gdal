@@ -366,7 +366,7 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
 
         CPLString osSQL;
 
-        osSQL.Printf("CREATE VIRTUAL TABLE \"%s\" USING OGR2SQLITE('%s',%d)",
+        osSQL.Printf("CREATE VIRTUAL TABLE \"%s\" USING VirtualOGR('%s',%d)",
                      OGRSQLiteEscapeName(poLayer->GetName()).c_str(),
                      OGRSQLiteEscape(poLayer->GetName()).c_str(),
                      bFoundOGRStyle);
