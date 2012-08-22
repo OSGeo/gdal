@@ -33,6 +33,17 @@ option.<p>
 
 The customization is essentially which OSM attributes and keys should be translated into OGR layer fields.<p>
 
+<h3>"other_tags" field</h3>
+
+When keys are not strictly identified in the <i>osmconf.ini</i> file, the key value pair is appended
+in a "other_tags" field, with a syntax compatible with the PostgreSQL HSTORE type. See the
+<i>HSTORE_COLUMNS</i> layer creation option of the <a href="drv_pg.html">PG driver</a>.<p>
+
+For example :
+<pre>
+ogr2ogr -f PostgreSQL "PG:dbname=osm" test.pbf -lco HSTORE_COLUMNS=other_tags
+</pre>
+
 <h3>Internal working and performance tweaking</h3>
 
 The driver will use an internal SQLite database to resolve geometries. If that database remains under 100 MB
@@ -84,7 +95,6 @@ special reading mode where the following reading pattern must be used :
 Note : the ogr2ogr application has been modified to use that OGR_INTERLEAVED_READING mode without any
 particular user action.<p>
 
-
 <h3>Reading .osm.bz2 files and/or online files</h3>
 
 .osm.bz2 are not natively recognized, however you can process them (on Unix), with the following command :
@@ -106,7 +116,6 @@ And to combine the above steps :
 <pre>
 wget -O - http://www.example.com/some.osm.bz2 | bzcat | ogr2ogr -f SQLite my.sqlite /vsistdin/
 </pre>
-
 
 <h3>See Also</h3>
 

@@ -564,31 +564,34 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
                 pszAllTags[nAllTagsOff++] = '>';
 
                 int k;
-                int bMustEscape = FALSE;
+                int bMustAddDoubleQuotes = FALSE;
+                /* Follow the quoting rules of http://www.postgresql.org/docs/9.0/static/hstore.html */
                 for(k=0;pszV[k] != '\0'; k++)
                 {
-                    if( pszV[k] == ',' || pszV[k] == '"' )
+                    if( pszV[k] == ' ' || pszV[k] == ','||
+                        pszV[k] == '=' || pszV[k] == '>' )
                     {
-                        bMustEscape = TRUE;
+                        bMustAddDoubleQuotes = TRUE;
                         break;
                     }
                 }
-                if( bMustEscape )
+                if( bMustAddDoubleQuotes )
                 {
                     pszAllTags[nAllTagsOff++] = '"';
-                    for(k=0;pszV[k] != '\0'; k++)
-                    {
-                        if( pszV[k] == '"' )
-                            pszAllTags[nAllTagsOff++] = '"';
-                        pszAllTags[nAllTagsOff++] = pszV[k];
-                    }
+                }
+
+                for(k=0;pszV[k] != '\0'; k++)
+                {
+                    if( pszV[k] == '"' || pszV[k] == '\\' )
+                        pszAllTags[nAllTagsOff++] = '\\';
+                    pszAllTags[nAllTagsOff++] = pszV[k];
+                }
+
+                if( bMustAddDoubleQuotes )
+                {
                     pszAllTags[nAllTagsOff++] = '"';
                 }
-                else
-                {
-                    memcpy(pszAllTags + nAllTagsOff, pszV, nLenV);
-                    nAllTagsOff += nLenV;
-                }
+
             }
 
 #ifdef notdef
