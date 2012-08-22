@@ -16,3 +16,8 @@ clean:
 	-del *.lib
 	-del *.obj *.pdb
 	-del *.exe
+
+test_load_virtual_ogr.exe:	test_load_virtual_ogr.obj
+	$(CC) $(CFLAGS) test_load_virtual_ogr.obj $(SQLITE_LIB)  /link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1 
+	del test_load_virtual_ogr.obj
