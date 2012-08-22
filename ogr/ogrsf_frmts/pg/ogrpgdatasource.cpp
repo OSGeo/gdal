@@ -1300,7 +1300,6 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
           pszTableName = CPLStrdup( pszLayerName ); //skip "."
     }
 
-    
 /* -------------------------------------------------------------------- */
 /*      Set the default schema for the layers.                          */
 /* -------------------------------------------------------------------- */
@@ -1615,6 +1614,9 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
+    
+    const char* pszHSTOREColumns = CSLFetchNameValue( papszOptions, "HSTORE_COLUMNS" );
+    poLayer->SetHSTOREColumns(pszHSTOREColumns);
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
