@@ -18,7 +18,12 @@ CPPFLAGS	:=	-I.. $(GDAL_INCLUDE) $(SQLITE_INC) $(SPATIALITE_INC) $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
+all: default test_load_virtual_ogr$(EXE)
+
 clean:
-	rm -f *.o $(O_OBJ)
+	rm -f *.o $(O_OBJ) test_load_virtual_ogr$(EXE)
 
 $(O_OBJ):	ogr_sqlite.h
+
+test_load_virtual_ogr$(EXE):	test_load_virtual_ogr.$(OBJ_EXT)
+	$(LD) $(LDFLAGS) test_load_virtual_ogr.$(OBJ_EXT) -lsqlite3 -o test_load_virtual_ogr$(EXE)
