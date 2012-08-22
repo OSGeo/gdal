@@ -26,9 +26,18 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-
+ 
 #include "ogrsqlitevirtualogr.h"
 #include "ogr_api.h"
+
+#if defined(SPATIALITE_AMALGAMATION)
+#include "ogrsqlite3ext.h"
+#else
+#include "sqlite3ext.h"
+#endif
+  
+/* Declaration of sqlite3_api structure */
+SQLITE_EXTENSION_INIT1
 
 #ifdef HAVE_SQLITE_VFS
 
@@ -1108,21 +1117,64 @@ int OGR2SQLITEModule::SetToDB(sqlite3* hDB)
 /*                        sqlite3_extension_init()                      */
 /************************************************************************/
 
-#include "sqlite3ext.h"
-
 CPL_C_START
 int CPL_DLL sqlite3_extension_init (sqlite3 * hDB, char **pzErrMsg,
                                     const sqlite3_api_routines * pApi);
 CPL_C_END
 
+/* Entry point for dynamically loaded extension (typically called by load_extension()) */
 int sqlite3_extension_init (sqlite3 * hDB, char **pzErrMsg,
                             const sqlite3_api_routines * pApi)
 {
-    CPLDebug("OGR", "OGR SQLite extension loaded");
+    CPLDebug("OGR", "OGR SQLite extension loading...");
+    
+    SQLITE_EXTENSION_INIT2(pApi);
+    
+    *pzErrMsg = NULL;
 
     OGRRegisterAll();
 
-    return OGR2SQLITESetupModule(hDB, NULL);
+    int rc = OGR2SQLITESetupModule(hDB, NULL);
+    
+    if( rc == SQLITE_OK )
+        CPLDebug("OGR", "OGR SQLite extension loaded");
+    
+    return rc;
+}
+
+/************************************************************************/
+/*                        OGR2SQLITE_static_register()                  */
+/************************************************************************/
+
+CPL_C_START
+int CPL_DLL OGR2SQLITE_static_register (sqlite3 * db, char **pzErrMsg,
+                                        const sqlite3_api_routines * pApi);
+CPL_C_END
+
+/* We just set the sqlite3_api structure with the pApi */
+/* The registration of the module will be done later by OGR2SQLITESetupModule */
+/* since we need a specific context. */
+int OGR2SQLITE_static_register (sqlite3 * db, char **pzErrMsg,
+                                const sqlite3_api_routines * pApi)
+{
+    SQLITE_EXTENSION_INIT2 (pApi);
+
+    *pzErrMsg = NULL;
+
+    return SQLITE_OK;
+}
+
+/************************************************************************/
+/*                           OGR2SQLITE_Register()                      */
+/************************************************************************/
+
+/* We call this function so that each time a db is created, */
+/* OGR2SQLITE_static_register is called, to initialize the sqlite3_api */
+/* structure with the right pointers. */
+
+void OGR2SQLITE_Register()
+{
+    sqlite3_auto_extension ((void (*)(void)) OGR2SQLITE_static_register);
 }
 
 #endif // HAVE_SQLITE_VFS
