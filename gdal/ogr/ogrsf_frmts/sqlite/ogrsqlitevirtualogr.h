@@ -54,6 +54,8 @@ class OGR2SQLITEModule
     OGRCoordinateTransformation* GetTransform(int nSrcSRSId, int nDstSRSId);
 };
 
+void OGR2SQLITE_Register();
+
 CPLString OGR2SQLITE_GetNameForGeometryColumn(OGRLayer* poLayer);
 
 #endif // HAVE_SQLITE_VFS
