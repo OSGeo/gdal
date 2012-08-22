@@ -120,6 +120,8 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     }
 
     osPrimaryKey = CPLGetConfigOption( "PGSQL_OGR_FID", "ogc_fid" );
+
+    papszHSTOREColumns = NULL;
 }
 
 //************************************************************************/
@@ -134,6 +136,7 @@ OGRPGTableLayer::~OGRPGTableLayer()
     CPLFree( pszTableName );
     CPLFree( pszSqlGeomParentTableName );
     CPLFree( pszSchemaName );
+    CSLDestroy( papszHSTOREColumns );
 }
 
 /************************************************************************/
@@ -2101,6 +2104,9 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     if (osFieldType.size() == 0)
         return OGRERR_FAILURE;
 
+    if( CSLFindString(papszHSTOREColumns, oField.GetNameRef()) != -1 )
+        osFieldType = "hstore";
+
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
@@ -2760,4 +2766,16 @@ OGRFeatureDefn * OGRPGTableLayer::GetLayerDefn()
         poFeatureDefn->Reference();
     }
     return poFeatureDefn;
+}
+
+/************************************************************************/
+/*                         SetHSTOREColumns()                           */
+/************************************************************************/
+
+void OGRPGTableLayer::SetHSTOREColumns( const char* pszHSTOREColumns )
+{
+    if( pszHSTOREColumns == NULL )
+        return;
+
+    papszHSTOREColumns = CSLTokenizeString2(pszHSTOREColumns, ",", 0);
 }
