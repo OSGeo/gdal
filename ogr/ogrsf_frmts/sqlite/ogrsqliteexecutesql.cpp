@@ -246,6 +246,8 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
     OGRSQLiteDataSource* poSQLiteDS = NULL;
     int nRet;
     int bSpatialiteDB = FALSE;
+    
+    OGR2SQLITE_Register();
 
 /* -------------------------------------------------------------------- */
 /*      Create in-memory sqlite/spatialite DB                           */
