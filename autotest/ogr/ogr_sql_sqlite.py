@@ -62,9 +62,15 @@ def ogr_sql_sqlite_1():
         lyr.CreateField(field_defn)
         field_defn = ogr.FieldDefn('nullablefield', ogr.OFTInteger)
         lyr.CreateField(field_defn)
+        field_defn = ogr.FieldDefn('datetimefield', ogr.OFTDateTime)
+        lyr.CreateField(field_defn)
+        field_defn = ogr.FieldDefn('datefield', ogr.OFTDate)
+        lyr.CreateField(field_defn)
+        field_defn = ogr.FieldDefn('timefield', ogr.OFTTime)
+        lyr.CreateField(field_defn)
 
         # Test INSERT
-        sql_lyr = ds.ExecuteSQL( "INSERT INTO my_layer (intfield, nullablefield, doublefield, strfield, binaryfield) VALUES (1,NULL,2.34,'foo',x'0001FF')", dialect = 'SQLite' )
+        sql_lyr = ds.ExecuteSQL( "INSERT INTO my_layer (intfield, nullablefield, doublefield, strfield, binaryfield, datetimefield, datefield, timefield) VALUES (1,NULL,2.34,'foo',x'0001FF', '2012-08-23 21:24', '2012-08-23', '21:24')", dialect = 'SQLite' )
         ds.ReleaseResultSet( sql_lyr )
 
         lyr.ResetReading()
@@ -73,21 +79,27 @@ def ogr_sql_sqlite_1():
            feat.GetField('nullablefield') is not None or \
            feat.GetField('doublefield') != 2.34 or \
            feat.GetField('strfield') != 'foo' or \
-           feat.GetField('binaryfield') != '0001FF':
+           feat.GetField('binaryfield') != '0001FF' or \
+           feat.GetField('datetimefield') != '2012/08/23 21:24:00' or \
+           feat.GetField('datefield') != '2012/08/23' or \
+           feat.GetField('timefield') != '21:24:00':
             gdaltest.post_reason('failure')
             feat.DumpReadable()
             return 'fail'
         feat = None
 
         # Test UPDATE
-        sql_lyr = ds.ExecuteSQL( "UPDATE my_layer SET intfield = 2, doublefield = 3.45, strfield = 'bar' WHERE ROWID = 0", dialect = 'SQLite' )
+        sql_lyr = ds.ExecuteSQL( "UPDATE my_layer SET intfield = 2, doublefield = 3.45, strfield = 'bar', timefield = '12:34' WHERE ROWID = 0", dialect = 'SQLite' )
         ds.ReleaseResultSet( sql_lyr )
 
         lyr.ResetReading()
         feat = lyr.GetNextFeature()
         if feat.GetField('intfield') != 2 or \
-        feat.GetField('doublefield') != 3.45 or \
-        feat.GetField('strfield') != 'bar' :
+           feat.GetField('doublefield') != 3.45 or \
+           feat.GetField('strfield') != 'bar' or \
+           feat.GetField('datetimefield') != '2012/08/23 21:24:00' or \
+           feat.GetField('datefield') != '2012/08/23' or \
+           feat.GetField('timefield') != '12:34:00':
             gdaltest.post_reason('failure')
             feat.DumpReadable()
             return 'fail'
@@ -103,7 +115,10 @@ def ogr_sql_sqlite_1():
         if feat.GetField('intfield') != 2 or \
            feat.GetField('nullablefield') is not None or \
            feat.GetField('doublefield') != 3.45 or \
-           feat.GetField('strfield') != 'bar' :
+           feat.GetField('strfield') != 'bar' or \
+           feat.GetField('datetimefield') != '2012/08/23 21:24:00' or \
+           feat.GetField('datefield') != '2012/08/23' or \
+           feat.GetField('timefield') != '12:34:00':
             gdaltest.post_reason('failure')
             feat.DumpReadable()
             return 'fail'
