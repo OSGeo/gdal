@@ -4,7 +4,6 @@
  * Project:  CPL - Common Portability Library
  * Purpose:  XML Reformatting - mostly for testing minixml implementation.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
- *
  **********************************************************************
  * Copyright (c) 2001, Frank Warmerdam
  *
