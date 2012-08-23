@@ -361,23 +361,9 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
         osSQL += OGRSQLiteEscapeName(poFieldDefn->GetNameRef());
         osSQL += "\"";
         osSQL += " ";
-        switch( poFieldDefn->GetType() )
-        {
-            case OFTInteger: osSQL += "INTEGER"; break;
-            case OFTReal   : osSQL += "DOUBLE"; break;
-            case OFTBinary : osSQL += "BLOB"; break;
-            case OFTString :
-            {
-                if( poFieldDefn->GetWidth() > 0 )
-                    osSQL += CPLSPrintf("VARCHAR(%d)", poFieldDefn->GetWidth());
-                else
-                    osSQL += "VARCHAR";
-                break;
-            }
-            default:          osSQL += "VARCHAR"; break;
-        }
+        osSQL += OGRSQLiteFieldDefnToSQliteFieldDefn(poFieldDefn);
     }
-    
+
     if( bAddComma )
         osSQL += ",";
     bAddComma = TRUE;
@@ -792,6 +778,46 @@ int OGR2SQLITE_Column(sqlite3_vtab_cursor* pCursor,
             break;
         }
 
+        case OFTDateTime:
+        {
+            int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZ;
+            poFeature->GetFieldAsDateTime(nCol, &nYear, &nMonth, &nDay,
+                                          &nHour, &nMinute, &nSecond, &nTZ);
+            char szBuffer[64];
+            sprintf(szBuffer, "%04d-%02d-%02dT%02d:%02d:%02d",
+                    nYear, nMonth, nDay, nHour, nMinute, nSecond);
+            sqlite3_result_text(pContext,
+                                szBuffer,
+                                -1, SQLITE_TRANSIENT);
+            break;
+        }
+
+        case OFTDate:
+        {
+            int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZ;
+            poFeature->GetFieldAsDateTime(nCol, &nYear, &nMonth, &nDay,
+                                          &nHour, &nMinute, &nSecond, &nTZ);
+            char szBuffer[64];
+            sprintf(szBuffer, "%04d-%02d-%02dT", nYear, nMonth, nDay);
+            sqlite3_result_text(pContext,
+                                szBuffer,
+                                -1, SQLITE_TRANSIENT);
+            break;
+        }
+
+        case OFTTime:
+        {
+            int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZ;
+            poFeature->GetFieldAsDateTime(nCol, &nYear, &nMonth, &nDay,
+                                          &nHour, &nMinute, &nSecond, &nTZ);
+            char szBuffer[64];
+            sprintf(szBuffer, "%02d:%02d:%02d", nHour, nMinute, nSecond);
+            sqlite3_result_text(pContext,
+                                szBuffer,
+                                -1, SQLITE_TRANSIENT);
+            break;
+        }
+
         default:
             sqlite3_result_text(pContext,
                                 poFeature->GetFieldAsString(nCol),
@@ -857,8 +883,9 @@ static OGRFeature* OGR2SQLITE_FeatureFromArgs(OGRLayer* poLayer,
                                               int argc,
                                               sqlite3_value **argv)
 {
-    int nFieldCount = poLayer->GetLayerDefn()->GetFieldCount();
-    int bHasGeomField = (poLayer->GetLayerDefn()->GetGeomType() != wkbNone);
+    OGRFeatureDefn* poLayerDefn = poLayer->GetLayerDefn();
+    int nFieldCount = poLayerDefn->GetFieldCount();
+    int bHasGeomField = (poLayerDefn->GetGeomType() != wkbNone);
     if( argc != 2 + nFieldCount + 1 + bHasGeomField)
     {
         CPLDebug("OGR2SQLITE", "Did not get expect argument count : %d, %d", argc,
@@ -866,7 +893,7 @@ static OGRFeature* OGR2SQLITE_FeatureFromArgs(OGRLayer* poLayer,
         return NULL;
     }
 
-    OGRFeature* poFeature = new OGRFeature(poLayer->GetLayerDefn());
+    OGRFeature* poFeature = new OGRFeature(poLayerDefn);
     int i;
     for(i = 0; i < nFieldCount; i++)
     {
@@ -879,8 +906,25 @@ static OGRFeature* OGR2SQLITE_FeatureFromArgs(OGRLayer* poLayer,
                 poFeature->SetField(i, sqlite3_value_double(argv[2 + i]));
                 break;
             case SQLITE_TEXT:
-                poFeature->SetField(i, (const char*) sqlite3_value_text(argv[2 + i]));
+            {
+                const char* pszValue = (const char*) sqlite3_value_text(argv[2 + i]);
+                switch( poLayerDefn->GetFieldDefn(i)->GetType() )
+                {
+                    case OFTDate:
+                    case OFTTime:
+                    case OFTDateTime:
+                    {
+                        if( !OGRSQLITEStringToDateTimeField( poFeature, i, pszValue ) )
+                            poFeature->SetField(i, pszValue);
+                        break;
+                    }
+
+                    default:
+                        poFeature->SetField(i, pszValue);
+                        break;
+                }
                 break;
+            }
             case SQLITE_BLOB:
             {
                 GByte* paby = (GByte *) sqlite3_value_blob (argv[2 + i]);
