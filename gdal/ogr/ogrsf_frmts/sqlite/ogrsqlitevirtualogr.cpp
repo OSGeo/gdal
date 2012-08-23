@@ -1214,7 +1214,7 @@ int sqlite3_extension_init (sqlite3 * hDB, char **pzErrMsg,
     
     if( rc == SQLITE_OK )
         CPLDebug("OGR", "OGR SQLite extension loaded");
-    
+
     return rc;
 }
 
