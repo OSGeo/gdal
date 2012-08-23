@@ -1,0 +1,127 @@
+/*! \page ogr_sql_sqlite SQLite SQL dialect
+
+Since GDAL/OGR 2.0, the SQLite "dialect" can be used as an alternate SQL dialect to the
+<b><a href="ogr_sql.html">OGR SQL dialect</a></b>.
+This assumes that GDAL/OGR is built with support for SQLite (>= 3.6), and preferably
+with Spatialite support too to benefit from spatial functions.<p>
+
+The SQLite dialect may be used with any OGR datasource, like the OGR SQL dialect. It
+is available through the OGRDataSource::ExecuteSQL() method by specifying the pszDialect to
+"SQLITE". For the <a href="../ogrinfo.html">ogrinfo</a> or <a href="../ogr2ogr.html">ogr2ogr</a>
+utility, you must specify the "-dialect SQLITE" option.<p>
+
+This is mainly aimed to execute SELECT statements, but, for datasources that support
+update, INSERT/UPDATE/DELETE statements can also be run.<p>
+
+The syntax of the SQL statements is fully the one of the SQLite SQL engine. You can
+refer to the following pages:
+<ul>
+<li><a href="http://www.sqlite.org/lang_select.html">SELECT</a> documentation</li>
+<li><a href="http://www.sqlite.org/lang_insert.html">INSERT</a> documentation</li>
+<li><a href="http://www.sqlite.org/lang_update.html">UPDATE</a> documentation</li>
+<li><a href="http://www.sqlite.org/lang_delete.html">DELETE</a> documentation</li>
+</ul>
+
+\section ogr_sql_sqlite_select SELECT
+
+The SELECT statement is used to fetch layer features (analogous to table
+rows in an RDBMS) with the result of the query represented as a temporary layer
+of features.   The layers of the datasource are analagous to tables in an 
+RDBMS and feature attributes are analagous to column values.  The simpliest
+form of OGR SQLITE SELECT statement looks like this:
+
+\code
+SELECT * FROM polylayer
+\endcode
+
+More complex statements can of course be used, including WHERE, JOIN, USING, GROUP BY,
+ORDER BY, sub SELECT, ...<p>
+
+The table names that can be used are the layer names available in the datasource on
+which the ExecuteSQL() method is called.<p>
+
+Similarly to OGRSQL, it is also possible to refer to layers of other datasources with
+the following syntax : "other_datasource_name"."layer_name".<p>
+
+\code
+SELECT p.*, NAME FROM poly p JOIN "idlink.dbf"."idlink" il USING (eas_id)
+\endcode
+
+The column names that can be used in the result column list, in WHERE, JOIN, ... clauses
+are the field names of the layers. Expressions, SQLite functions can also be used,
+spatial functions, etc...<p>
+
+The conditions on fields expressed in WHERE clauses, or in JOINs are
+translated, as far as possible, as attribute filters that are applied on the
+underlying OGR layers. Joins can be very expensive operations if the secondary table is not
+indexed on the key field being used.<p>
+
+\subsection ogr_sql_sqlite_geometry Geometry field
+
+The <b>GEOMETRY</b> special field represents the geometry of the feature
+returned by OGRFeature::GetGeometryRef(). It can be explicitely specified
+in the result column list of a SELECT, and is automatically selected if the
+* wildcard is used.<p>
+
+For OGR layers that have a non-empty geometry column name (generally for RDBMS datasources),
+as returned by OGRLayer::GetGeometryColumn(), the name of the geometry special field
+in the SQL statement will be the name of the geometry column of the underlying OGR layer.<p>
+
+\code
+SELECT EAS_ID, GEOMETRY FROM poly
+
+returns:
+
+OGRFeature(SELECT):0
+  EAS_ID (Real) = 168
+  POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,479647.0 4765369.5,479730.375 4765400.5,480039.03125 4765539.5,480035.34375 4765558.5,480159.78125 4765610.5,480202.28125 4765482.0,480365.0 4765015.5,480389.6875 4764950.0,480133.96875 4764856.5,480080.28125 4764979.5,480082.96875 4765049.5,480088.8125 4765139.5,480059.90625 4765239.5,480019.71875 4765319.5,479980.21875 4765409.5,479909.875 4765370.0,479859.875 4765270.0,479819.84375 4765180.5))
+\endcode 
+
+\code
+SELECT * FROM poly
+
+returns:
+
+OGRFeature(SELECT):0
+  AREA (Real) = 215229.266
+  EAS_ID (Real) = 168
+  PRFEDEA (String) = 35043411
+  POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,479647.0 4765369.5,479730.375 4765400.5,480039.03125 4765539.5,480035.34375 4765558.5,480159.78125 4765610.5,480202.28125 4765482.0,480365.0 4765015.5,480389.6875 4764950.0,480133.96875 4764856.5,480080.28125 4764979.5,480082.96875 4765049.5,480088.8125 4765139.5,480059.90625 4765239.5,480019.71875 4765319.5,479980.21875 4765409.5,479909.875 4765370.0,479859.875 4765270.0,479819.84375 4765180.5))
+\endcode 
+
+\subsection ogr_sql_sqlite_style OGR_STYLE
+
+The <b>OGR_STYLE</b> special field represents the style string of the feature
+returned by OGRFeature::GetStyleString(). By using this field and the
+<b>LIKE</b> operator the result of the query can be filtered by the style.
+For example we can select the annotation features as:
+
+\code
+SELECT * FROM nation WHERE OGR_STYLE LIKE 'LABEL%'
+\endcode 
+
+\subsection ogr_sql_sqlite_spatial Spatial functions
+
+When GDAL/OGR is build with support for the <a href="http://www.gaia-gis.it/spatialite/">Spatialite</a> library,
+a lot of <a href="http://www.gaia-gis.it/gaia-sins/spatialite-sql-3.0.0.html">extra SQL functions</a>,
+in particular spatial functions, can be used in results column fields, WHERE clauses, etc....<p>
+
+\code
+SELECT EAS_ID, ST_Area(GEOMETRY) AS area FROM poly WHERE ST_Intersects(GEOMETRY, ST_Buffer(ST_GeomFromText('POINT(479750.6875 4764702.0)'),100))
+
+returns:
+
+OGRFeature(SELECT):0
+  EAS_ID (Real) = 169
+  area (Real) = 101429.9765625
+
+OGRFeature(SELECT):1
+  EAS_ID (Real) = 165
+  area (Real) = 596610.3359375
+
+OGRFeature(SELECT):2
+  EAS_ID (Real) = 170
+  area (Real) = 5268.8125
+\endcode
+
+*/
