@@ -448,6 +448,32 @@ def ogr_sql_sqlite_7():
 
     return 'success'
 
+###############################################################################
+# Test join with an external datasource
+
+def ogr_sql_sqlite_8():
+
+    if ogr.GetDriverByName('SQLite') is None:
+        return 'skip'
+
+    ds = ogr.Open('data')
+
+    expect = [ 171, 172, 173, 179 ]
+
+    sql_lyr = ds.ExecuteSQL(   \
+        'SELECT p.*, il.name FROM poly p ' \
+        + 'LEFT JOIN "data/idlink.dbf".idlink il USING (eas_id) ' \
+        + 'WHERE eas_id > 170 ORDER BY eas_id', dialect = 'SQLite' )
+
+    tr = ogrtest.check_features_against_list( sql_lyr, 'eas_id', expect )
+
+    ds.ReleaseResultSet( sql_lyr )
+
+    if tr:
+        return 'success'
+    else:
+        return 'fail'
+
 gdaltest_list = [
     ogr_sql_sqlite_1,
     ogr_sql_sqlite_2,
@@ -456,6 +482,7 @@ gdaltest_list = [
     ogr_sql_sqlite_5,
     ogr_sql_sqlite_6,
     ogr_sql_sqlite_7,
+    ogr_sql_sqlite_8,
 ]
 
 if __name__ == '__main__':
