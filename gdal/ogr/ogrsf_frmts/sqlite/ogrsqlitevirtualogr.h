@@ -32,6 +32,7 @@
 
 #include "ogr_sqlite.h"
 #include <map>
+#include <vector>
 
 #ifdef HAVE_SQLITE_VFS
 
@@ -41,7 +42,8 @@
 
 class OGR2SQLITEModule
 {
-    OGRDataSource* poDS;
+    OGRDataSource* poDS; /* *NOT* to be freed */
+    std::vector<OGRDataSource*> apoExtraDS; /* each datasource to be freed */
 
     std::map< std::pair<int,int>, OGRCoordinateTransformation*> oCachedTransformsMap;
 
@@ -52,6 +54,9 @@ class OGR2SQLITEModule
     int                          SetToDB(sqlite3* hDB);
     OGRDataSource*               GetDS() { return poDS; }
     OGRCoordinateTransformation* GetTransform(int nSrcSRSId, int nDstSRSId);
+    
+    int                          AddExtraDS(OGRDataSource* poDS);
+    OGRDataSource               *GetExtraDS(int nIndex);
 };
 
 void OGR2SQLITE_Register();
