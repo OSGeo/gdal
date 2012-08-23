@@ -94,35 +94,58 @@ OGRSQLiteExecuteSQLLayer::~OGRSQLiteExecuteSQLLayer()
 }
 
 /************************************************************************/
-/*                            ExtractLayerName()                        */
+/*                               LayerDesc                              */
 /************************************************************************/
 
-CPLString ExtractLayerName(const char **ppszSQLCommand)
+class LayerDesc
+{
+    public:
+        LayerDesc() {};
+
+        bool operator < ( const LayerDesc& other ) const
+        {
+            return osOriginalStr < other.osOriginalStr;
+        }
+
+        CPLString osOriginalStr;
+        CPLString osSubstitutedName;
+        CPLString osDSName;
+        CPLString osLayerName;
+};
+
+/************************************************************************/
+/*                       OGR2SQLITEExtractUnquotedString()              */
+/************************************************************************/
+
+static CPLString OGR2SQLITEExtractUnquotedString(const char **ppszSQLCommand)
 {
     CPLString osRet;
     const char *pszSQLCommand = *ppszSQLCommand;
-    int bInQuotes = FALSE;
+    char chQuoteChar = 0;
 
-    while( *pszSQLCommand == ' ' )
-        pszSQLCommand ++;
-    if( *pszSQLCommand == '"')
+    if( *pszSQLCommand == '"' || *pszSQLCommand == '\'' )
     {
-        bInQuotes = TRUE;
+        chQuoteChar = *pszSQLCommand;
         pszSQLCommand ++;
     }
+
     while( *pszSQLCommand != '\0' )
     {
-        if( bInQuotes && *pszSQLCommand == '"' && pszSQLCommand[1] == '"' )
+        if( *pszSQLCommand == chQuoteChar &&
+            pszSQLCommand[1] == chQuoteChar )
         {
             pszSQLCommand ++;
-            osRet += "\"";
+            osRet += chQuoteChar;
         }
-        else if( bInQuotes && *pszSQLCommand == '"' )
+        else if( *pszSQLCommand == chQuoteChar )
         {
             pszSQLCommand ++;
             break;
         }
-        else if( !bInQuotes && (*pszSQLCommand == ' ' || *pszSQLCommand == ',') )
+        else if( chQuoteChar == '\0' &&
+                (*pszSQLCommand == ' ' ||
+                 *pszSQLCommand == '.' ||
+                 *pszSQLCommand == ',') )
             break;
         else
             osRet += *pszSQLCommand;
@@ -136,40 +159,108 @@ CPLString ExtractLayerName(const char **ppszSQLCommand)
 }
 
 /************************************************************************/
+/*                      OGR2SQLITEExtractLayerDesc()                    */
+/************************************************************************/
+
+static
+LayerDesc OGR2SQLITEExtractLayerDesc(const char **ppszSQLCommand)
+{
+    CPLString osStr;
+    const char *pszSQLCommand = *ppszSQLCommand;
+    LayerDesc oLayerDesc;
+
+    while( *pszSQLCommand == ' ' )
+        pszSQLCommand ++;
+
+    const char* pszOriginalStrStart = pszSQLCommand;
+    oLayerDesc.osOriginalStr = pszSQLCommand;
+
+    osStr = OGR2SQLITEExtractUnquotedString(&pszSQLCommand);
+
+    if( *pszSQLCommand == '.' )
+    {
+        oLayerDesc.osDSName = osStr;
+        pszSQLCommand ++;
+        oLayerDesc.osLayerName =
+                            OGR2SQLITEExtractUnquotedString(&pszSQLCommand);
+    }
+    else
+    {
+        oLayerDesc.osLayerName = osStr;
+    }
+    
+    oLayerDesc.osOriginalStr.resize(pszSQLCommand - pszOriginalStrStart);
+
+    *ppszSQLCommand = pszSQLCommand;
+
+    return oLayerDesc;
+}
+
+/************************************************************************/
+/*                           OGR2SQLITEAddLayer()                       */
+/************************************************************************/
+
+static void OGR2SQLITEAddLayer( const char*& pszStart, int& nNum,
+                                const char*& pszSQLCommand,
+                                std::set<LayerDesc>& oSet,
+                                CPLString& osModifiedSQL )
+{
+    CPLString osTruncated(pszStart);
+    osTruncated.resize(pszSQLCommand - pszStart);
+    osModifiedSQL += osTruncated;
+    pszStart = pszSQLCommand;
+    LayerDesc oLayerDesc = OGR2SQLITEExtractLayerDesc(&pszSQLCommand);
+    int bInsert = TRUE;
+    if( oLayerDesc.osDSName.size() == 0 )
+    {
+        osTruncated = pszStart;
+        osTruncated.resize(pszSQLCommand - pszStart);
+        osModifiedSQL += osTruncated; 
+    }
+    else
+    {
+        std::set<LayerDesc>::iterator oIter = oSet.find(oLayerDesc);
+        if( oIter == oSet.end() )
+        {
+            oLayerDesc.osSubstitutedName = CPLString().Printf("_OGR_%d", nNum ++);
+            osModifiedSQL += oLayerDesc.osSubstitutedName;
+        }
+        else
+        {
+            osModifiedSQL += (*oIter).osSubstitutedName;
+            bInsert = FALSE;
+        }
+    }
+    if( bInsert )
+    {
+        oSet.insert(oLayerDesc);
+    }
+    pszStart = pszSQLCommand;
+}
+
+/************************************************************************/
 /*                     OGR2SQLITEGetPotentialLayerNames()               */
 /************************************************************************/
 
-static std::set<CPLString> OGR2SQLITEGetPotentialLayerNames(const char *pszSQLCommand)
+static void OGR2SQLITEGetPotentialLayerNames(const char *pszSQLCommand,
+                                             std::set<LayerDesc>& oSet,
+                                             CPLString& osModifiedSQL)
 {
-    std::set<CPLString> oSet;
+    const char* pszStart = pszSQLCommand;
+    int nNum = 1;
+    char ch;
 
-    while( *pszSQLCommand != '\0' )
+    while( (ch = *pszSQLCommand) != '\0' )
     {
-        /* Skip literals */
-        if( *pszSQLCommand == '\'' )
+        /* Skip literals and strings */
+        if( ch == '\'' || ch == '"' )
         {
             pszSQLCommand ++;
             while( *pszSQLCommand != '\0' )
             {
-                if( *pszSQLCommand == '\'' && pszSQLCommand[1] == '\'' )
+                if( ch == '\'' && ch == '\'' )
                     pszSQLCommand ++;
-                else if( *pszSQLCommand == '\'' )
-                {
-                    pszSQLCommand ++;
-                    break;
-                }
-                pszSQLCommand ++;
-            }
-        }
-        /* Skip strings */
-        else if ( *pszSQLCommand == '"' )
-        {
-            pszSQLCommand ++;
-            while( *pszSQLCommand != '\0' )
-            {
-                if( *pszSQLCommand == '"' && pszSQLCommand[1] == '"' )
-                    pszSQLCommand ++;
-                else if( *pszSQLCommand == '"' )
+                else if( ch == '\'' )
                 {
                     pszSQLCommand ++;
                     break;
@@ -180,7 +271,8 @@ static std::set<CPLString> OGR2SQLITEGetPotentialLayerNames(const char *pszSQLCo
         else if( EQUALN(pszSQLCommand, "FROM ", strlen("FROM ")) )
         {
             pszSQLCommand += strlen("FROM ");
-            oSet.insert(ExtractLayerName(&pszSQLCommand));
+            OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand, oSet, osModifiedSQL);
+
             while( *pszSQLCommand != '\0' )
             {
                 if( *pszSQLCommand == ' ' )
@@ -188,17 +280,18 @@ static std::set<CPLString> OGR2SQLITEGetPotentialLayerNames(const char *pszSQLCo
                     pszSQLCommand ++;
                     while( *pszSQLCommand == ' ' )
                         pszSQLCommand ++;
+                    /* Skip alias */
                     if( *pszSQLCommand != '\0' &&
                         *pszSQLCommand != ',' &&
                         !EQUALN(pszSQLCommand, "JOIN", 4) )
-                        ExtractLayerName(&pszSQLCommand);
+                        OGR2SQLITEExtractUnquotedString(&pszSQLCommand);
                 }
                 else if (*pszSQLCommand == ',' )
                 {
                     pszSQLCommand ++;
                     while( *pszSQLCommand == ' ' )
                         pszSQLCommand ++;
-                    oSet.insert(ExtractLayerName(&pszSQLCommand));
+                    OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand, oSet, osModifiedSQL);
                 }
                 else
                     break;
@@ -207,28 +300,30 @@ static std::set<CPLString> OGR2SQLITEGetPotentialLayerNames(const char *pszSQLCo
         else if ( EQUALN(pszSQLCommand, "JOIN ", strlen("JOIN ")) )
         {
             pszSQLCommand += strlen("JOIN ");
-            oSet.insert(ExtractLayerName(&pszSQLCommand));
+            OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand, oSet, osModifiedSQL);
         }
         else if( EQUALN(pszSQLCommand, "INSERT INTO ", strlen("INSERT INTO ")) )
         {
             pszSQLCommand += strlen("INSERT INTO ");
-            oSet.insert(ExtractLayerName(&pszSQLCommand));
+            OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand, oSet, osModifiedSQL);
         }
         else if( EQUALN(pszSQLCommand, "UPDATE ", strlen("UPDATE ")) )
         {
             pszSQLCommand += strlen("UPDATE ");
-            oSet.insert(ExtractLayerName(&pszSQLCommand));
+            OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand, oSet, osModifiedSQL);
         }
         else if ( EQUALN(pszSQLCommand, "DROP TABLE ", strlen("DROP TABLE ")) )
         {
             pszSQLCommand += strlen("DROP TABLE ");
-            oSet.insert(ExtractLayerName(&pszSQLCommand));
+            OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand, oSet, osModifiedSQL);
         }
         else
             pszSQLCommand ++;
     }
-
-    return oSet;
+    
+    CPLString osTruncated(pszStart);
+    osTruncated.resize(pszSQLCommand - pszStart);
+    osModifiedSQL += osTruncated;
 }
 
 /************************************************************************/
@@ -350,28 +445,85 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
 /* -------------------------------------------------------------------- */
 /*      Analysze the statement to determine which tables will be used.  */
 /* -------------------------------------------------------------------- */
-    std::set<CPLString> oSetNames =
-                        OGR2SQLITEGetPotentialLayerNames(pszStatement);
-    std::set<CPLString>::iterator oIter = oSetNames.begin();
-    
-    CPLString osStatement(pszStatement);
-    int bFoundOGRStyle = ( osStatement.ifind("OGR_STYLE") != std::string::npos );
+    std::set<LayerDesc> oSetNames;
+    CPLString osModifiedSQL;
+    OGR2SQLITEGetPotentialLayerNames(pszStatement, oSetNames, osModifiedSQL);
+    std::set<LayerDesc>::iterator oIter = oSetNames.begin();
+
+    if( strcmp(pszStatement, osModifiedSQL.c_str()) != 0 )
+        CPLDebug("OGR", "Modified SQL: %s", osModifiedSQL.c_str());
+    pszStatement = osModifiedSQL.c_str(); /* do not use it anymore */
+
+    int bFoundOGRStyle = ( osModifiedSQL.ifind("OGR_STYLE") != std::string::npos );
 
 /* -------------------------------------------------------------------- */
 /*      For each of those tables, create a Virtual Table.               */
 /* -------------------------------------------------------------------- */
     for(; oIter != oSetNames.end(); ++oIter)
     {
-        OGRLayer* poLayer = poDS->GetLayerByName(*oIter);
-        if( poLayer == NULL )
-            continue;
+        const LayerDesc& oLayerDesc = *oIter;
+        /*CPLDebug("OGR", "Layer desc : %s, %s, %s, %s",
+                 oLayerDesc.osOriginalStr.c_str(),
+                 oLayerDesc.osSubstitutedName.c_str(),
+                 oLayerDesc.osDSName.c_str(),
+                 oLayerDesc.osLayerName.c_str());*/
 
         CPLString osSQL;
+        OGRLayer* poLayer = NULL;
+        CPLString osTableName;
+        if( oLayerDesc.osDSName.size() == 0 )
+        {
+            poLayer = poDS->GetLayerByName(oLayerDesc.osLayerName);
+            /* Might be a false positive (unlikely) */
+            if( poLayer == NULL )
+                continue;
+                
+            osTableName = poLayer->GetName();
 
-        osSQL.Printf("CREATE VIRTUAL TABLE \"%s\" USING VirtualOGR('%s',%d)",
-                     OGRSQLiteEscapeName(poLayer->GetName()).c_str(),
-                     OGRSQLiteEscape(poLayer->GetName()).c_str(),
-                     bFoundOGRStyle);
+            osSQL.Printf("CREATE VIRTUAL TABLE \"%s\" USING VirtualOGR(-1,'%s',%d)",
+                         OGRSQLiteEscapeName(osTableName).c_str(),
+                         OGRSQLiteEscape(osTableName).c_str(),
+                         bFoundOGRStyle);
+        }
+        else
+        {
+            OGRDataSource* poOtherDS = (OGRDataSource* )
+                OGROpen(oLayerDesc.osDSName, FALSE, NULL);
+            if( poOtherDS == NULL )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot open datasource '%s'",
+                         oLayerDesc.osDSName.c_str() );
+                delete poSQLiteDS;
+                VSIUnlink(pszTmpDBName);
+                CPLFree(pszTmpDBName);
+                return NULL;
+            }
+            
+            poLayer = poOtherDS->GetLayerByName(oLayerDesc.osLayerName);
+            if( poLayer == NULL )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot find layer '%s' in '%s'",
+                         oLayerDesc.osLayerName.c_str(),
+                         oLayerDesc.osDSName.c_str() );
+                delete poOtherDS;
+                delete poSQLiteDS;
+                VSIUnlink(pszTmpDBName);
+                CPLFree(pszTmpDBName);
+                return NULL;
+            }
+            
+            osTableName = oLayerDesc.osSubstitutedName;
+            
+            int nExtraDS = poModule->AddExtraDS(poOtherDS);
+
+            osSQL.Printf("CREATE VIRTUAL TABLE \"%s\" USING VirtualOGR(%d,'%s',%d)",
+                         OGRSQLiteEscapeName(osTableName).c_str(),
+                         nExtraDS,
+                         OGRSQLiteEscape(oLayerDesc.osLayerName).c_str(),
+                         bFoundOGRStyle);
+        }
 
         char* pszErrMsg = NULL;
         int rc = sqlite3_exec( poSQLiteDS->GetDB(), osSQL.c_str(),
@@ -379,8 +531,8 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
         if( rc != SQLITE_OK )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot create virtual table for layer' %s' : %s",
-                     poLayer->GetName(), pszErrMsg);
+                     "Cannot create virtual table for layer '%s' : %s",
+                     osTableName.c_str(), pszErrMsg);
             sqlite3_free(pszErrMsg);
             continue;
         }
@@ -394,7 +546,7 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
         CPLString osGeomColEscaped(OGRSQLiteEscape(pszGeomColRaw));
         const char* pszGeomColEscaped = osGeomColEscaped.c_str();
 
-        CPLString osLayerNameEscaped(OGRSQLiteEscape(poLayer->GetName()));
+        CPLString osLayerNameEscaped(OGRSQLiteEscape(osTableName));
         const char* pszLayerNameEscaped = osLayerNameEscaped.c_str();
 
         int nSRSId = -1;
@@ -478,7 +630,7 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
             continue;
 
         CPLString osIdxName(OGRSQLiteEscapeName(
-                CPLSPrintf("idx_%s_%s",poLayer->GetName(), pszGeomColRaw)));
+                CPLSPrintf("idx_%s_%s",osTableName.c_str(), pszGeomColRaw)));
 
         osSQL.Printf("CREATE VIRTUAL TABLE \"%s\" USING rtree(pkid, xmin, xmax, ymin, ymax)",
                      osIdxName.c_str());
