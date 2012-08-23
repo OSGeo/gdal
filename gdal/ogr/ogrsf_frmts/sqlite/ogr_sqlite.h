@@ -655,6 +655,11 @@ CPLString OGRSQLiteEscape( const char *pszLiteral );
 /* To escape table or field names. The returned string doesn't contain the surrounding double quotes */
 CPLString OGRSQLiteEscapeName( const char* pszName );
 
+CPLString OGRSQLiteFieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn );
+
+int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
+                                    const char* pszValue );
+
 int OGRSQLiteGetSpatialiteVersionNumber();
 
 #ifdef HAVE_SQLITE_VFS
