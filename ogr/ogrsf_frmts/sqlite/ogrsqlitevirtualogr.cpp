@@ -750,15 +750,9 @@ int OGR2SQLITE_Column(sqlite3_vtab_cursor* pCursor,
         {
             int nSize;
             GByte* pBlob = poFeature->GetFieldAsBinary(nCol, &nSize);
-            sqlite3_result_blob(pContext, pBlob, nSize, SQLITE_STATIC);
+            sqlite3_result_blob(pContext, pBlob, nSize, SQLITE_TRANSIENT);
             break;
         }
-
-        case OFTString:
-            sqlite3_result_text(pContext,
-                                poFeature->GetFieldAsString(nCol),
-                                -1, SQLITE_STATIC);
-            break;
 
         default:
             sqlite3_result_text(pContext,
