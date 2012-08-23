@@ -762,19 +762,29 @@ OGRErr OGRSQLiteTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 }
 
 /************************************************************************/
-/*                      OGRFieldTypeToSQliteType()                      */
+/*                 OGRSQLiteFieldDefnToSQliteFieldDefn()                */
 /************************************************************************/
 
-static const char* OGRFieldTypeToSQliteType( OGRFieldType eType )
+CPLString OGRSQLiteFieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn )
 {
-    if( eType == OFTInteger )
-        return "INTEGER";
-    else if( eType == OFTReal )
-        return "FLOAT";
-    else if( eType == OFTBinary )
-        return "BLOB";
-    else
-        return "VARCHAR";
+    switch( poFieldDefn->GetType() )
+    {
+        case OFTInteger: return "INTEGER"; break;
+        case OFTReal   : return "FLOAT"; break;
+        case OFTBinary : return "BLOB"; break;
+        case OFTString :
+        {
+            if( poFieldDefn->GetWidth() > 0 )
+                return CPLSPrintf("VARCHAR(%d)", poFieldDefn->GetWidth());
+            else
+                return "VARCHAR";
+            break;
+        }
+        case OFTDateTime: return "TIMESTAMP"; break;
+        case OFTDate    : return "DATE"; break;
+        case OFTTime    : return "TIME"; break;
+        default:          return"VARCHAR"; break;
+    }
 }
 
 /************************************************************************/
@@ -814,6 +824,15 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         CPLFree( pszSafeName );
     }
 
+
+    if( (oField.GetType() == OFTTime || oField.GetType() == OFTDate ||
+         oField.GetType() == OFTDateTime) &&
+        !(CSLTestBoolean(
+            CPLGetConfigOption("OGR_SQLITE_ENABLE_DATETIME", "YES"))) )
+    {
+        oField.SetType(OFTString);
+    }
+
     /* ADD COLUMN only avaliable since sqlite 3.1.3 */
     if (CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_USE_ADD_COLUMN", "YES")) &&
         sqlite3_libversion_number() > 3 * 1000000 + 1 * 1000 + 3)
@@ -823,10 +842,11 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         sqlite3 *hDB = poDS->GetDB();
         CPLString osCommand;
 
+        CPLString osFieldType(OGRSQLiteFieldDefnToSQliteFieldDefn(&oField));
         osCommand.Printf("ALTER TABLE '%s' ADD COLUMN '%s' %s",
                         pszEscapedTableName,
                         oField.GetNameRef(),
-                        OGRFieldTypeToSQliteType(oField.GetType()));
+                        osFieldType.c_str());
 
     #ifdef DEBUG
         CPLDebug( "OGR_SQLITE", "exec(%s)", osCommand.c_str() );
@@ -962,7 +982,7 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
 
         sprintf( pszNewFieldList+strlen(pszNewFieldList), 
                  ", '%s' %s", poFldDefn->GetNameRef(),
-                 OGRFieldTypeToSQliteType(poFldDefn->GetType()) );
+                 OGRSQLiteFieldDefnToSQliteFieldDefn(poFldDefn).c_str() );
 
         iNextOrdinal++;
     }
@@ -973,7 +993,7 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
 
     sprintf( pszNewFieldList+strlen(pszNewFieldList), 
              ", '%s' %s", oField.GetNameRef(),
-             OGRFieldTypeToSQliteType(oField.GetType()) );
+             OGRSQLiteFieldDefnToSQliteFieldDefn(&oField).c_str() );
 
 /* ==================================================================== */
 /*      Backup, destroy, recreate and repopulate the table.  SQLite     */
@@ -1263,7 +1283,7 @@ OGRErr OGRSQLiteTableLayer::DeleteField( int iFieldToDelete )
 
         sprintf( pszNewFieldList+strlen(pszNewFieldList),
                  ", '%s' %s", poFldDefn->GetNameRef(),
-                 OGRFieldTypeToSQliteType(poFldDefn->GetType()) );
+                 OGRSQLiteFieldDefnToSQliteFieldDefn(poFldDefn).c_str() );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1354,14 +1374,14 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
                     ", '%s' %s",
                     (nFlags & ALTER_NAME_FLAG) ? poNewFieldDefn->GetNameRef() :
                                                  poFldDefn->GetNameRef(),
-                    OGRFieldTypeToSQliteType((nFlags & ALTER_TYPE_FLAG) ?
-                            poNewFieldDefn->GetType() : poFldDefn->GetType()) );
+                    OGRSQLiteFieldDefnToSQliteFieldDefn((nFlags & ALTER_TYPE_FLAG) ?
+                            poNewFieldDefn : poFldDefn).c_str() );
         }
         else
         {
             sprintf( pszNewFieldList+strlen(pszNewFieldList),
                     ", '%s' %s", poFldDefn->GetNameRef(),
-                    OGRFieldTypeToSQliteType(poFldDefn->GetType()) );
+                    OGRSQLiteFieldDefnToSQliteFieldDefn(poFldDefn).c_str() );
         }
     }
 
@@ -1444,7 +1464,7 @@ OGRErr OGRSQLiteTableLayer::ReorderFields( int* panMap )
 
         sprintf( pszNewFieldList+strlen(pszNewFieldList),
                 ", '%s' %s", poFldDefn->GetNameRef(),
-                OGRFieldTypeToSQliteType(poFldDefn->GetType()) );
+                OGRSQLiteFieldDefnToSQliteFieldDefn(poFldDefn).c_str() );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1587,6 +1607,43 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
                         poFeature->GetFieldAsBinary( iField, &nDataLength );
                     rc = sqlite3_bind_blob(hStmt, nBindField++,
                                         pabyData, nDataLength, SQLITE_TRANSIENT);
+                    break;
+                }
+
+                case OFTDateTime:
+                {
+                    int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZ;
+                    poFeature->GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
+                                                &nHour, &nMinute, &nSecond, &nTZ);
+                    char szBuffer[64];
+                    sprintf(szBuffer, "%04d-%02d-%02dT%02d:%02d:%02d",
+                            nYear, nMonth, nDay, nHour, nMinute, nSecond);
+                    rc = sqlite3_bind_text(hStmt, nBindField++,
+                                           szBuffer, -1, SQLITE_TRANSIENT);
+                    break;
+                }
+
+                case OFTDate:
+                {
+                    int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZ;
+                    poFeature->GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
+                                                &nHour, &nMinute, &nSecond, &nTZ);
+                    char szBuffer[64];
+                    sprintf(szBuffer, "%04d-%02d-%02dT", nYear, nMonth, nDay);
+                    rc = sqlite3_bind_text(hStmt, nBindField++,
+                                           szBuffer, -1, SQLITE_TRANSIENT);
+                    break;
+                }
+
+                case OFTTime:
+                {
+                    int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZ;
+                    poFeature->GetFieldAsDateTime(iField, &nYear, &nMonth, &nDay,
+                                                &nHour, &nMinute, &nSecond, &nTZ);
+                    char szBuffer[64];
+                    sprintf(szBuffer, "%02d:%02d:%02d", nHour, nMinute, nSecond);
+                    rc = sqlite3_bind_text(hStmt, nBindField++,
+                                           szBuffer, -1, SQLITE_TRANSIENT);
                     break;
                 }
 

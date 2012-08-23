@@ -1325,7 +1325,7 @@ def ogr_sqlite_30():
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
-
+    
 ###############################################################################
 # Test if SpatiaLite is available
 
@@ -2110,6 +2110,62 @@ def ogr_sqlite_31():
     return 'success'
 
 ###############################################################################
+# Test datetime support
+
+def ogr_sqlite_32():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    try:
+        os.remove('tmp/ogr_sqlite_32.sqlite')
+    except:
+        pass
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_32.sqlite')
+    lyr = ds.CreateLayer('test')
+    field_defn = ogr.FieldDefn('datetimefield', ogr.OFTDateTime)
+    lyr.CreateField(field_defn)
+    field_defn = ogr.FieldDefn('datefield', ogr.OFTDate)
+    lyr.CreateField(field_defn)
+    field_defn = ogr.FieldDefn('timefield', ogr.OFTTime)
+    lyr.CreateField(field_defn)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('datetimefield', '2012/08/23 21:24:00  ')
+    feat.SetField('datefield', '2012/08/23  ')
+    feat.SetField('timefield', '21:24:00  ')
+    lyr.CreateFeature(feat)
+    feat = None
+
+    ds = None
+
+    ds = ogr.Open('tmp/ogr_sqlite_32.sqlite')
+    lyr = ds.GetLayer(0)
+
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTDateTime:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTDate:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(2).GetType() != ogr.OFTTime:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('datetimefield') != '2012/08/23 21:24:00' or \
+        feat.GetField('datefield') != '2012/08/23' or \
+        feat.GetField('timefield') != '21:24:00':
+        gdaltest.post_reason('failure')
+        feat.DumpReadable()
+        return 'fail'
+    feat = None
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -2187,6 +2243,11 @@ def ogr_sqlite_cleanup():
     except:
         pass
 
+    try:
+        os.remove( 'tmp/ogr_sqlite_32.sqlite' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [ 
@@ -2230,6 +2291,7 @@ gdaltest_list = [
     ogr_spatialite_7,
     ogr_spatialite_8,
     ogr_sqlite_31,
+    ogr_sqlite_32,
     ogr_sqlite_cleanup ]
 
 if __name__ == '__main__':

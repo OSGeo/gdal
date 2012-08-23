@@ -223,6 +223,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         const char * pszDeclType = sqlite3_column_decltype(hStmt, iCol);
         //CPLDebug("SQLITE", "decltype(%s) = %s",
         //         oField.GetNameRef(), pszDeclType ? pszDeclType : "null");
+        OGRFieldType eFieldType = OFTString;
         if (pszDeclType != NULL)
         {
             if (EQUAL(pszDeclType, "INTEGER"))
@@ -235,6 +236,13 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
             else if (EQUAL(pszDeclType, "TEXT") ||
                      EQUAL(pszDeclType, "VARCHAR"))
                 nColType = SQLITE_TEXT;
+            else if ((EQUAL(pszDeclType, "TIMESTAMP") ||
+                      EQUAL(pszDeclType, "DATETIME")) && nColType == SQLITE_TEXT)
+                eFieldType = OFTDateTime;
+            else if (EQUAL(pszDeclType, "DATE") && nColType == SQLITE_TEXT)
+                eFieldType = OFTDate;
+            else if (EQUAL(pszDeclType, "TIME") && nColType == SQLITE_TEXT)
+                eFieldType = OFTTime;
         }
 
         // Recognise some common geometry column names.
@@ -335,6 +343,15 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
 
           default:
             /* leave it as OFTString */;
+        }
+        
+        /* config option just in case we wouldn't want that in some cases */
+        if( (eFieldType == OFTTime || eFieldType == OFTDate ||
+             eFieldType == OFTDateTime) &&
+            CSLTestBoolean(
+                CPLGetConfigOption("OGR_SQLITE_ENABLE_DATETIME", "YES")) )
+        {
+            oField.SetType( eFieldType );
         }
 
         poFeatureDefn->AddFieldDefn( &oField );
@@ -606,6 +623,19 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
                 (const char *) 
                 sqlite3_column_text( hStmt, iRawField ) );
             break;
+
+        case OFTDate:
+        case OFTTime:
+        case OFTDateTime:
+        {
+            if( sqlite3_column_type( hStmt, iRawField ) == SQLITE_TEXT )
+            {
+                const char* pszValue = (const char *) 
+                    sqlite3_column_text( hStmt, iRawField );
+                OGRSQLITEStringToDateTimeField( poFeature, iField, pszValue );
+            }
+            break;
+        }
 
         default:
             break;
@@ -2836,4 +2866,91 @@ void OGRSQLiteLayer::ClearStatement()
         sqlite3_finalize( hStmt );
         hStmt = NULL;
     }
+}
+
+/************************************************************************/
+/*                    OGRSQLITEStringToDateTimeField()                  */
+/************************************************************************/
+
+int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
+                                    const char* pszValue )
+{
+    int nYear = 0, nMonth = 0, nDay = 0,
+        nHour = 0, nMinute = 0;
+    float fSecond = 0;
+
+    /* YYYY-MM-DD HH:MM:SS or YYYY-MM-DD HH:MM:SS.SSS */
+    nYear = 0; nMonth = 0; nDay = 0; nHour = 0;
+    nMinute = 0; fSecond = 0;
+    if( sscanf(pszValue, "%04d-%02d-%02d %02d:%02d:%f",
+                &nYear, &nMonth, &nDay, &nHour, &nMinute, &fSecond) == 6 )
+    {
+        poFeature->SetField( iField, nYear, nMonth,
+                                nDay, nHour, nMinute, (int)(fSecond + 0.5), 0 );
+        return TRUE;
+    }
+
+    /* YYYY-MM-DD HH:MM */
+    nYear = 0; nMonth = 0; nDay = 0; nHour = 0;
+    nMinute = 0;
+    if( sscanf(pszValue, "%04d-%02d-%02d %02d:%02d",
+                &nYear, &nMonth, &nDay, &nHour, &nMinute) == 5 )
+    {
+        poFeature->SetField( iField, nYear, nMonth,
+                                nDay, nHour, nMinute, 0, 0 );
+        return TRUE;
+    }
+
+    /*  YYYY-MM-DDTHH:MM:SS or YYYY-MM-DDTHH:MM:SS.SSS */
+    nYear = 0; nMonth = 0; nDay = 0; nHour = 0;
+    nMinute = 0; fSecond = 0;
+    if( sscanf(pszValue, "%04d-%02d-%02dT%02d:%02d:%f",
+                &nYear, &nMonth, &nDay, &nHour, &nMinute, &fSecond) == 6 )
+    {
+        poFeature->SetField( iField, nYear, nMonth, nDay,
+                                nHour, nMinute, (int)(fSecond + 0.5), 0 );
+        return TRUE;
+    }
+
+    /* YYYY-MM-DDTHH:MM */
+    nYear = 0; nMonth = 0; nDay = 0; nHour = 0;
+    nMinute = 0;
+    if( sscanf(pszValue, "%04d-%02d-%02dT%02d:%02d",
+                &nYear, &nMonth, &nDay, &nHour, &nMinute) == 5 )
+    {
+        poFeature->SetField( iField, nYear, nMonth, nDay,
+                                nHour, nMinute, 0, 0 );
+        return TRUE;
+    }
+
+    /* YYYY-MM-DD */
+    nYear = 0; nMonth = 0; nDay = 0;
+    if( sscanf(pszValue, "%04d-%02d-%02d",
+                &nYear, &nMonth, &nDay) == 3 )
+    {
+        poFeature->SetField( iField, nYear, nMonth, nDay,
+                                0, 0, 0, 0 );
+        return TRUE;
+    }
+
+    /*  HH:MM:SS or HH:MM:SS.SSS */
+    nDay = 0; nHour = 0; fSecond = 0;
+    if( sscanf(pszValue, "%02d:%02d:%f",
+        &nHour, &nMinute, &fSecond) == 3 )
+    {
+        poFeature->SetField( iField, 0, 0, 0,
+                                nHour, nMinute, (int)(fSecond + 0.5), 0 );
+        return TRUE;
+    }
+
+    /*  HH:MM */
+    nHour = 0; nMinute = 0;
+    if( sscanf(pszValue, "%02d:%02d", &nHour, &nMinute) == 2 )
+    {
+        poFeature->SetField( iField, 0, 0, 0,
+                                nHour, nMinute, 0, 0 );
+        return TRUE;
+    }
+
+    return FALSE;
 }
