@@ -7,6 +7,10 @@ used to provide a subset of SQL SELECT capability to applications.  This
 page discusses the generic SQL implementation implemented within OGR, and 
 issue with driver specific SQL support.<p>
 
+Since GDAL/OGR 2.0, an alternate "dialect", the SQLite dialect, can be used
+instead of the OGRSQL dialect. Refer to the
+<b><a href="ogr_sql_sqlite.html">SQLite SQL dialect</a></b> page for more details.<p>
+
 The OGRLayer class also supports applying an attribute query filter to 
 features returned using the OGRLayer::SetAttributeFilter() method.  The
 syntax for the attribute filter is the same as the WHERE clause in the 
@@ -20,10 +24,10 @@ details of the new features in GDAL/OGR 1.8.0.
 
 \section ogr_sql_select SELECT
 
-The SELECT statement is used to fetch layer features (analygous to table
+The SELECT statement is used to fetch layer features (analogous to table
 rows in an RDBMS) with the result of the query represented as a temporary layer
-of features.   The layers of the datasource are analygous to tables in an 
-RDBMS and feature attributes are analygous to column values.  The simpliest
+of features.   The layers of the datasource are analagous to tables in an 
+RDBMS and feature attributes are analagous to column values.  The simpliest
 form of OGR SQL SELECT statement looks like this:
 
 \code
