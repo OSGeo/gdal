@@ -455,6 +455,47 @@ int OGROSMLayer::AddInOtherTag(const char* pszK)
 }
 
 /************************************************************************/
+/*                        OGROSMFormatForHSTORE()                       */
+/************************************************************************/
+
+static int OGROSMFormatForHSTORE(const char* pszV, char* pszAllTags)
+{
+    int k;
+    int bMustAddDoubleQuotes = FALSE;
+    
+    int nAllTagsOff = 0;
+
+    /* Follow the quoting rules of http://www.postgresql.org/docs/9.0/static/hstore.html */
+    for(k=0;pszV[k] != '\0'; k++)
+    {
+        if( pszV[k] == ' ' || pszV[k] == ','||
+            pszV[k] == '=' || pszV[k] == '>' )
+        {
+            bMustAddDoubleQuotes = TRUE;
+            break;
+        }
+    }
+    if( bMustAddDoubleQuotes )
+    {
+        pszAllTags[nAllTagsOff++] = '"';
+    }
+
+    for(k=0;pszV[k] != '\0'; k++)
+    {
+        if( pszV[k] == '"' || pszV[k] == '\\' )
+            pszAllTags[nAllTagsOff++] = '\\';
+        pszAllTags[nAllTagsOff++] = pszV[k];
+    }
+
+    if( bMustAddDoubleQuotes )
+    {
+        pszAllTags[nAllTagsOff++] = '"';
+    }
+
+    return nAllTagsOff;
+}
+
+/************************************************************************/
 /*                        SetFieldsFromTags()                           */
 /************************************************************************/
 
@@ -548,7 +589,11 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
             {
                 int nLenK = (int)strlen(pszK);
                 int nLenV = (int)strlen(pszV);
-                if( nAllTagsOff + nLenK + 2 + 1 + 2 * nLenV + 1 + 1 >= ALLTAGS_LENGTH - 1 )
+                if( nAllTagsOff +
+                    1 + 2 * nLenK + 1 +
+                    2 +
+                    1 + 2 * nLenV + 1 +
+                    1 >= ALLTAGS_LENGTH - 1 )
                 {
                     if( !bHasWarnedAllTagsTruncated )
                         CPLDebug("OSM", "all_tags field truncated for feature " CPL_FRMT_GIB, nID);
@@ -558,40 +603,15 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
 
                 if( nAllTagsOff )
                     pszAllTags[nAllTagsOff++] = ',';
-                memcpy(pszAllTags + nAllTagsOff, pszK, nLenK);
-                nAllTagsOff += nLenK;
+                
+                nAllTagsOff += OGROSMFormatForHSTORE(pszK,
+                                                     pszAllTags + nAllTagsOff);
+
                 pszAllTags[nAllTagsOff++] = '=';
                 pszAllTags[nAllTagsOff++] = '>';
-
-                int k;
-                int bMustAddDoubleQuotes = FALSE;
-                /* Follow the quoting rules of http://www.postgresql.org/docs/9.0/static/hstore.html */
-                for(k=0;pszV[k] != '\0'; k++)
-                {
-                    if( pszV[k] == ' ' || pszV[k] == ','||
-                        pszV[k] == '=' || pszV[k] == '>' )
-                    {
-                        bMustAddDoubleQuotes = TRUE;
-                        break;
-                    }
-                }
-                if( bMustAddDoubleQuotes )
-                {
-                    pszAllTags[nAllTagsOff++] = '"';
-                }
-
-                for(k=0;pszV[k] != '\0'; k++)
-                {
-                    if( pszV[k] == '"' || pszV[k] == '\\' )
-                        pszAllTags[nAllTagsOff++] = '\\';
-                    pszAllTags[nAllTagsOff++] = pszV[k];
-                }
-
-                if( bMustAddDoubleQuotes )
-                {
-                    pszAllTags[nAllTagsOff++] = '"';
-                }
-
+                
+                nAllTagsOff += OGROSMFormatForHSTORE(pszV,
+                                                     pszAllTags + nAllTagsOff);
             }
 
 #ifdef notdef
