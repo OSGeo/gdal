@@ -59,6 +59,31 @@ OGR2SQLITEModule::~OGR2SQLITEModule()
         oCachedTransformsMap.begin();
     for(; oIter != oCachedTransformsMap.end(); ++oIter)
         delete oIter->second;
+        
+    for(int i=0;i<(int)apoExtraDS.size();i++)
+        delete apoExtraDS[i];
+}
+
+/************************************************************************/
+/*                            AddExtraDS()                              */
+/************************************************************************/
+
+int OGR2SQLITEModule::AddExtraDS(OGRDataSource* poDS)
+{
+    int nRet = (int)apoExtraDS.size();
+    apoExtraDS.push_back(poDS);
+    return nRet;
+}
+
+/************************************************************************/
+/*                            GetExtraDS()                              */
+/************************************************************************/
+
+OGRDataSource* OGR2SQLITEModule::GetExtraDS(int nIndex)
+{
+    if( nIndex < 0 || nIndex > (int)apoExtraDS.size() )
+        return NULL;
+    return apoExtraDS[nIndex];
 }
 
 /************************************************************************/
@@ -186,6 +211,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
     OGRLayer* poLayer = NULL;
     OGRDataSource* poDS = NULL;
     int bExposeOGR_STYLE = FALSE;
+    int bCloseDS = FALSE;
 
     //CPLDebug("OGR2SQLITE", "Connect/Create");
     int i;
@@ -198,14 +224,25 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
     poDS = poModule->GetDS();
     if( poDS != NULL )
     {
-        if( argc < 4 || argc > 5 )
+        if( argc != 6 )
         {
             *pzErr = sqlite3_mprintf(
                 "Expected syntax: CREATE VIRTUAL TABLE xxx USING "
-                "VirtualOGR(layer_name[, expose_ogr_style]])");
+                "VirtualOGR(ds_idx, layer_name, expose_ogr_style)");
+            return SQLITE_ERROR;
         }
 
-        CPLString osLayerName(OGRSQLITEParamsUnquote(argv[3]));
+        int nDSIndex = atoi(argv[3]);
+        if( nDSIndex >= 0 )
+        {
+            poDS = poModule->GetExtraDS(nDSIndex);
+            if( poDS == NULL )
+            {
+                *pzErr = sqlite3_mprintf("Invalid dataset index : %d", nDSIndex);
+                return SQLITE_ERROR;
+            }
+        }
+        CPLString osLayerName(OGRSQLITEParamsUnquote(argv[4]));
 
         poLayer = poDS->GetLayerByName(osLayerName);
         if( poLayer == NULL )
@@ -215,8 +252,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
             return SQLITE_ERROR;
         }
 
-        if( argc == 5 )
-            bExposeOGR_STYLE = atoi(OGRSQLITEParamsUnquote(argv[4]));
+        bExposeOGR_STYLE = atoi(OGRSQLITEParamsUnquote(argv[5]));
     }
     
 /* -------------------------------------------------------------------- */
@@ -289,13 +325,15 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
         {
             bExposeOGR_STYLE = atoi(OGRSQLITEParamsUnquote(argv[6]));
         }
+        
+        bCloseDS = TRUE;
     }
 
     OGR2SQLITE_vtab* vtab =
                 (OGR2SQLITE_vtab*) CPLCalloc(1, sizeof(OGR2SQLITE_vtab));
     /* We dont need to fill the non-extended fields */
     vtab->poDS = poDS;
-    vtab->bCloseDS = (poModule == NULL);
+    vtab->bCloseDS = bCloseDS;
     vtab->poLayer = poLayer;
     vtab->nMyRef = 0;
 
@@ -750,9 +788,15 @@ int OGR2SQLITE_Column(sqlite3_vtab_cursor* pCursor,
         {
             int nSize;
             GByte* pBlob = poFeature->GetFieldAsBinary(nCol, &nSize);
-            sqlite3_result_blob(pContext, pBlob, nSize, SQLITE_TRANSIENT);
+            sqlite3_result_blob(pContext, pBlob, nSize, SQLITE_STATIC);
             break;
         }
+
+        case OFTString:
+            sqlite3_result_text(pContext,
+                                poFeature->GetFieldAsString(nCol),
+                                -1, SQLITE_STATIC);
+            break;
 
         default:
             sqlite3_result_text(pContext,
