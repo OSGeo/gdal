@@ -239,6 +239,25 @@ static void OGR2SQLITEAddLayer( const char*& pszStart, int& nNum,
 }
 
 /************************************************************************/
+/*                         StartsAsSQLITEKeyWord()                      */
+/************************************************************************/
+
+static const char* apszKeywords[] =  {
+    "WHERE", "GROUP", "ORDER", "JOIN", "UNION", "INTERSECT", "EXCEPT", "LIMIT"
+};
+
+static int StartsAsSQLITEKeyWord(const char* pszStr)
+{
+    int i;
+    for(i=0;i<(int)(sizeof(apszKeywords) / sizeof(char*));i++)
+    {
+        if( EQUALN(pszStr, apszKeywords[i], strlen(apszKeywords[i])) )
+            return TRUE;
+    }
+    return FALSE;
+}
+
+/************************************************************************/
 /*                     OGR2SQLITEGetPotentialLayerNames()               */
 /************************************************************************/
 
@@ -282,9 +301,12 @@ static void OGR2SQLITEGetPotentialLayerNames(const char *pszSQLCommand,
                         pszSQLCommand ++;
                     /* Skip alias */
                     if( *pszSQLCommand != '\0' &&
-                        *pszSQLCommand != ',' &&
-                        !EQUALN(pszSQLCommand, "JOIN", 4) )
+                        *pszSQLCommand != ',' )
+                    {
+                        if ( StartsAsSQLITEKeyWord(pszSQLCommand) )
+                            break;
                         OGR2SQLITEExtractUnquotedString(&pszSQLCommand);
+                    }
                 }
                 else if (*pszSQLCommand == ',' )
                 {
