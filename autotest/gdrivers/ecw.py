@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -912,6 +913,35 @@ def ecw_27():
     return 'success'
 
 ###############################################################################
+# Check picking use case
+
+def ecw_28():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    x = y = 50
+
+    ds = gdal.Open( 'data/jrc.ecw' )
+    multiband_data = ds.ReadRaster(x,y,1,1)
+    ds = None
+
+    ds = gdal.Open( 'data/jrc.ecw' )
+    data1 = ds.GetRasterBand(1).ReadRaster(x,y,1,1)
+    data2 = ds.GetRasterBand(2).ReadRaster(x,y,1,1)
+    data3 = ds.GetRasterBand(3).ReadRaster(x,y,1,1)
+    ds = None
+
+    import struct
+    tab1 = struct.unpack('B' * 3, multiband_data)
+    tab2 = struct.unpack('B' * 3, data1 + data2 + data3)
+
+    # Due to the nature of ECW, reading one band or several bands does not give
+    # the same results.
+
+    return 'success'
+
+###############################################################################
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -1169,6 +1199,7 @@ gdaltest_list = [
     ecw_25,
     ecw_26,
     ecw_27,
+    ecw_28,
     ecw_online_1,
     ecw_online_2,
     ecw_online_3,
