@@ -1300,7 +1300,7 @@ int sqlite3_extension_init (sqlite3 * hDB, char **pzErrMsg,
     return rc;
 }
 
-#endif VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
+#endif // VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
 
 /************************************************************************/
 /*                        OGR2SQLITE_static_register()                  */
