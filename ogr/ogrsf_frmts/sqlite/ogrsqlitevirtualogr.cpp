@@ -30,6 +30,8 @@
 #include "ogrsqlitevirtualogr.h"
 #include "ogr_api.h"
 
+#define VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
+
 #if defined(SPATIALITE_AMALGAMATION)
 #include "ogrsqlite3ext.h"
 #else
@@ -198,6 +200,79 @@ static CPLString OGRSQLITEParamsUnquote(const char* pszVal)
     return osRet;
 }
 
+#ifdef VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
+
+/************************************************************************/
+/*                     OGR2SQLITEDetectSuspiciousUsage()                */
+/************************************************************************/
+
+static int OGR2SQLITEDetectSuspiciousUsage(sqlite3* hDB,
+                                           const char* pszVirtualTableName,
+                                           char**pzErr)
+{
+    char **papszResult = NULL;
+    int nRowCount = 0, nColCount = 0;
+    int i;
+
+    std::vector<CPLString> aosDatabaseNames;
+
+    /* Collect database names */
+    sqlite3_get_table( hDB, "PRAGMA database_list",
+                       &papszResult, &nRowCount, &nColCount, NULL );
+
+    for(i = 1; i <= nRowCount; i++)
+    {
+        const char* pszUnescapedName = papszResult[i * nColCount + 1];
+        aosDatabaseNames.push_back(
+            CPLSPrintf("\"%s\".sqlite_master",
+                       OGRSQLiteEscapeName(pszUnescapedName).c_str()));
+    }
+
+    /* Add special database (just in case, not sure it is really needed) */
+    aosDatabaseNames.push_back("sqlite_temp_master");
+
+    sqlite3_free_table(papszResult);
+    papszResult = NULL;
+
+    /* Check the triggers of each database */
+    for(i = 0; i < (int)aosDatabaseNames.size(); i++ )
+    {
+        nRowCount = 0; nColCount = 0;
+
+        const char* pszSQL;
+
+        pszSQL = CPLSPrintf("SELECT name, sql FROM %s "
+                            "WHERE type = 'trigger' AND (sql LIKE '%%%s%%' OR sql LIKE '%%\"%s\"%%')",
+                            aosDatabaseNames[i].c_str(),
+                            pszVirtualTableName,
+                            OGRSQLiteEscapeName(pszVirtualTableName).c_str());
+
+        sqlite3_get_table( hDB, pszSQL, &papszResult, &nRowCount, &nColCount,
+                           NULL );
+
+        sqlite3_free_table(papszResult);
+        papszResult = NULL;
+
+        if( nRowCount > 0 )
+        {
+            if( !CSLTestBoolean(CPLGetConfigOption("ALLOW_VIRTUAL_OGR_FROM_TRIGGER", "NO")) )
+            {
+                *pzErr = sqlite3_mprintf(
+                    "A trigger might reference VirtualOGR table '%s'.\n"
+                    "This is suspicious practice that could be used to steal data without your consent.\n"
+                    "Disabling access to it unless you define the ALLOW_VIRTUAL_OGR_FROM_TRIGGER "
+                    "configuration option to YES.",
+                    pszVirtualTableName);
+                return TRUE;
+            }
+        }
+    }
+
+    return FALSE;
+}
+
+#endif // VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
+
 /************************************************************************/
 /*                      OGR2SQLITE_ConnectCreate()                      */
 /************************************************************************/
@@ -254,7 +329,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
 
         bExposeOGR_STYLE = atoi(OGRSQLITEParamsUnquote(argv[5]));
     }
-    
+#ifdef VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
 /* -------------------------------------------------------------------- */
 /*      If called from outside (OGR loaded as a sqlite3 extension)      */
 /* -------------------------------------------------------------------- */
@@ -265,6 +340,11 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
             *pzErr = sqlite3_mprintf(
                 "Expected syntax: CREATE VIRTUAL TABLE xxx USING "
                 "VirtualOGR(datasource_name[, update_mode, [layer_name[, expose_ogr_style]]])");
+            return SQLITE_ERROR;
+        }
+
+        if( OGR2SQLITEDetectSuspiciousUsage(hDB, argv[2], pzErr) )
+        {
             return SQLITE_ERROR;
         }
 
@@ -328,7 +408,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
         
         bCloseDS = TRUE;
     }
-
+#endif // VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
     OGR2SQLITE_vtab* vtab =
                 (OGR2SQLITE_vtab*) CPLCalloc(1, sizeof(OGR2SQLITE_vtab));
     /* We dont need to fill the non-extended fields */
@@ -1189,6 +1269,8 @@ int OGR2SQLITEModule::SetToDB(sqlite3* hDB)
     return OGR2SQLITESetupModule(hDB, this) == SQLITE_OK;
 }
 
+#ifdef VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
+
 /************************************************************************/
 /*                        sqlite3_extension_init()                      */
 /************************************************************************/
@@ -1217,6 +1299,8 @@ int sqlite3_extension_init (sqlite3 * hDB, char **pzErrMsg,
 
     return rc;
 }
+
+#endif VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
 
 /************************************************************************/
 /*                        OGR2SQLITE_static_register()                  */
