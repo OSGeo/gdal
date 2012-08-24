@@ -52,6 +52,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
+#include <unistd.h>
 
 #if _MSC_VER
 #define snprintf _snprintf
@@ -72,7 +74,7 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    sqlite3_open(":memory:", &db);
+    sqlite3_open("tmp.db", &db);
     if( db == NULL )
     {
         fprintf(stderr, "cannot open DB.\n");
@@ -83,6 +85,8 @@ int main(int argc, char* argv[])
     if( rc != SQLITE_OK )
     {
         fprintf(stderr, "sqlite3_enable_load_extension() failed\n");
+        sqlite3_close(db);
+        unlink("tmp.db");
         exit(1);
     }
 
@@ -91,6 +95,8 @@ int main(int argc, char* argv[])
     {
         fprintf(stderr, "sqlite3_load_extension(%s) failed: %s\n", argv[1], pszErrMsg);
         sqlite3_free( pszErrMsg );
+        sqlite3_close(db);
+        unlink("tmp.db");
         exit(1);
     }
 
@@ -106,6 +112,8 @@ int main(int argc, char* argv[])
     {
         fprintf(stderr, "SELECT ogr_version() failed: %s\n", pszErrMsg);
         sqlite3_free( pszErrMsg );
+        sqlite3_close(db);
+        unlink("tmp.db");
         exit(1);
     }
     sqlite3_free_table(papszResult);
@@ -121,7 +129,7 @@ int main(int argc, char* argv[])
         else
         {
             snprintf(szBuffer, sizeof(szBuffer),
-                     "CREATE VIRTUAL TABLE foo USING VirtualOGR('%s', 0, '%s')",
+                     "CREATE VIRTUAL TABLE foo USING VirtualOGR('%s', 0, '%s', 1)",
                      argv[2], argv[3]);
         }
 
@@ -130,6 +138,8 @@ int main(int argc, char* argv[])
         {
             fprintf(stderr, "%s failed: %s\n", szBuffer, pszErrMsg);
             sqlite3_free( pszErrMsg );
+            sqlite3_close(db);
+            unlink("tmp.db");
             exit(1);
         }
         else
@@ -138,10 +148,41 @@ int main(int argc, char* argv[])
                 printf("Managed to open '%s'\n", argv[2]);
             else
                 printf("Managed to open '%s':'%s'\n", argv[2], argv[3]);
+
+            assert(SQLITE_OK == sqlite3_exec(db, "CREATE TABLE spy_table (spy_content VARCHAR)", NULL, NULL, NULL));
+
+            assert(SQLITE_OK == sqlite3_exec(db, "CREATE TABLE regular_table (bar VARCHAR)", NULL, NULL, NULL));
+
+            assert(SQLITE_OK == sqlite3_exec(db, "CREATE TRIGGER spy_trigger INSERT ON regular_table BEGIN "
+                             "INSERT OR REPLACE INTO spy_table (spy_content) "
+                             "SELECT OGR_STYLE FROM foo; END;", NULL, NULL, NULL));
+
+            sqlite3_close(db);
+            db = NULL;
+
+            sqlite3_open("tmp.db", &db);
+            if( db == NULL )
+            {
+                fprintf(stderr, "cannot reopen DB.\n");
+                unlink("tmp.db");
+                exit(1);
+            }
+
+            assert(SQLITE_OK == sqlite3_enable_load_extension(db, 1));
+
+            assert(SQLITE_OK == sqlite3_load_extension(db, argv[1], NULL, NULL));
+
+            pszErrMsg = NULL;
+            assert(SQLITE_OK != sqlite3_exec(db, "INSERT INTO regular_table (bar) VALUES ('bar')", NULL, NULL, &pszErrMsg));
+
+            fprintf(stderr, "Expected error. We got : %s.\n", pszErrMsg);
+
+            sqlite3_free(pszErrMsg);
         }
     }
 
     sqlite3_close(db);
+    unlink("tmp.db");
 
     return 0;
 }
