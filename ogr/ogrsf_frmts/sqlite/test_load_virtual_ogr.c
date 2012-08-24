@@ -53,7 +53,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#ifndef _MSC_VER
 #include <unistd.h>
+#endif
 
 #if _MSC_VER
 #define snprintf _snprintf
