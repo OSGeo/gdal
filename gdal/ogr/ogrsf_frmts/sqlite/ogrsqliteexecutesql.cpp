@@ -143,7 +143,7 @@ static CPLString OGR2SQLITEExtractUnquotedString(const char **ppszSQLCommand)
             break;
         }
         else if( chQuoteChar == '\0' &&
-                (*pszSQLCommand == ' ' ||
+                (isspace((int)*pszSQLCommand) ||
                  *pszSQLCommand == '.' ||
                  *pszSQLCommand == ',') )
             break;
@@ -169,7 +169,7 @@ LayerDesc OGR2SQLITEExtractLayerDesc(const char **ppszSQLCommand)
     const char *pszSQLCommand = *ppszSQLCommand;
     LayerDesc oLayerDesc;
 
-    while( *pszSQLCommand == ' ' )
+    while( isspace((int)*pszSQLCommand) )
         pszSQLCommand ++;
 
     const char* pszOriginalStrStart = pszSQLCommand;
@@ -294,10 +294,10 @@ static void OGR2SQLITEGetPotentialLayerNames(const char *pszSQLCommand,
 
             while( *pszSQLCommand != '\0' )
             {
-                if( *pszSQLCommand == ' ' )
+                if( isspace((int)*pszSQLCommand) )
                 {
                     pszSQLCommand ++;
-                    while( *pszSQLCommand == ' ' )
+                    while( isspace((int)*pszSQLCommand) )
                         pszSQLCommand ++;
                     /* Skip alias */
                     if( *pszSQLCommand != '\0' &&
@@ -311,7 +311,7 @@ static void OGR2SQLITEGetPotentialLayerNames(const char *pszSQLCommand,
                 else if (*pszSQLCommand == ',' )
                 {
                     pszSQLCommand ++;
-                    while( *pszSQLCommand == ' ' )
+                    while( isspace((int)*pszSQLCommand) )
                         pszSQLCommand ++;
                     OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand, oSet, osModifiedSQL);
                 }
