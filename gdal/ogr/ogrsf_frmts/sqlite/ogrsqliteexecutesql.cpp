@@ -571,28 +571,15 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
         CPLString osLayerNameEscaped(OGRSQLiteEscape(osTableName));
         const char* pszLayerNameEscaped = osLayerNameEscaped.c_str();
 
-        int nSRSId = -1;
+        /* Make sure that the SRS is injected in spatial_ref_sys */
         OGRSpatialReference* poSRS = poLayer->GetSpatialRef();
+        int nSRSId = poSQLiteDS->GetUndefinedSRID();
         if( poSRS != NULL )
-        {
-            const char* pszAuthorityName = poSRS->GetAuthorityName(NULL);
-            if (pszAuthorityName != NULL && EQUAL(pszAuthorityName, "EPSG"))
-            {
-                const char* pszAuthorityCode = poSRS->GetAuthorityCode(NULL);
-                if ( pszAuthorityCode != NULL && strlen(pszAuthorityCode) > 0 )
-                {
-                    nSRSId = atoi(pszAuthorityCode);
-                }
-            }
-        }
+            nSRSId = poSQLiteDS->FetchSRSId(poSRS);
 
         int bCreateSpatialIndex = FALSE;
         if( !bSpatialiteDB )
         {
-            /* Make sure that the SRS is injected in spatial_ref_sys */
-            if( poSRS != NULL )
-                poSQLiteDS->FetchSRSId(poSRS);
-
             osSQL.Printf("INSERT INTO geometry_columns (f_table_name, "
                         "f_geometry_column, geometry_format, geometry_type, "
                         "coord_dimension, srid) "
@@ -686,6 +673,7 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
     }
     sqlite3* hDB = poSQLiteDS->GetDB();
     poModule->SetToDB(hDB);
+    poModule->SetSQLiteDS(poSQLiteDS);
 
 /* -------------------------------------------------------------------- */
 /*      Prepare the statement.                                          */
