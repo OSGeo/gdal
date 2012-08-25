@@ -292,7 +292,46 @@ def ogr_sql_sqlite_2():
     feat = None
     ds.ReleaseResultSet( sql_lyr )
 
-    ds.DeleteLayer(0)
+    # Test with a custom SRS
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("""LOCAL_CS["foo"]""")
+    lyr = ds.CreateLayer( "my_layer2", srs = srs )
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (0 1)'))
+    lyr.CreateFeature(feat)
+    feat = None
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT (0 1)'))
+    lyr.CreateFeature(feat)
+    feat = None
+
+    # Test SELECT
+    sql_lyr = ds.ExecuteSQL( "SELECT * FROM my_layer2", dialect = 'SQLite' )
+
+    layer_srs = sql_lyr.GetSpatialRef()
+    if layer_srs is None or srs.IsSame(layer_srs) == 0:
+        gdaltest.post_reason('failure')
+        print(srs)
+        print(layer_srs)
+        return 'fail'
+
+    for i in range(2):
+        feat = sql_lyr.GetNextFeature()
+        if  feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
+            gdaltest.post_reason('failure')
+            feat.DumpReadable()
+            return 'fail'
+        got_srs = feat.GetGeometryRef().GetSpatialReference()
+        if got_srs is None or srs.IsSame(got_srs) == 0:
+            gdaltest.post_reason('failure')
+            print(srs)
+            print(got_srs)
+            return 'fail'
+        feat = None
+
+    ds.ReleaseResultSet( sql_lyr )
 
     return 'success'
 
