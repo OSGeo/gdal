@@ -551,6 +551,29 @@ def ogr_sql_sqlite_9():
 
     return 'success'
 
+###############################################################################
+# Test optimized count(*)
+
+def ogr_sql_sqlite_10():
+
+    if ogr.GetDriverByName('SQLite') is None:
+        return 'skip'
+
+    ds = ogr.Open('data')
+
+    sql_lyr = ds.ExecuteSQL( "SELECT count(*) as cnt FROM poly", dialect = 'SQLite' )
+
+    feat = sql_lyr.GetNextFeature()
+    cnt = feat.GetField('cnt')
+    feat = None
+
+    ds.ReleaseResultSet( sql_lyr )
+
+    if cnt != 10:
+        return' fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_sql_sqlite_1,
     ogr_sql_sqlite_2,
@@ -561,6 +584,7 @@ gdaltest_list = [
     ogr_sql_sqlite_7,
     ogr_sql_sqlite_8,
     ogr_sql_sqlite_9,
+    ogr_sql_sqlite_10,
 ]
 
 if __name__ == '__main__':

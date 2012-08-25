@@ -31,13 +31,14 @@
 #include "ogr_api.h"
 
 #define VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
+//#define DEBUG_OGR2SQLITE
 
 #if defined(SPATIALITE_AMALGAMATION)
 #include "ogrsqlite3ext.h"
 #else
 #include "sqlite3ext.h"
 #endif
-  
+
 /* Declaration of sqlite3_api structure */
 SQLITE_EXTENSION_INIT1
 
@@ -199,6 +200,14 @@ typedef struct
     OGRDataSource *poDupDataSource;
     OGRLayer      *poLayer;
     OGRFeature    *poFeature;
+
+    /* nFeatureCount >= 0 if the layer has a feast feature count capability. */
+    /* In which case nNextWishedIndex and nCurFeatureIndex */
+    /* will be used to avoid useless GetNextFeature() */
+    /* Helps in SELECT COUNT(*) FROM xxxx scenarios */
+    int            nFeatureCount;
+    int            nNextWishedIndex;
+    int            nCurFeatureIndex;
 } OGR2SQLITE_vtab_cursor;
 
 
@@ -534,7 +543,9 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
 static
 int OGR2SQLITE_BestIndex(sqlite3_vtab *pVTab, sqlite3_index_info* pIndex)
 {
-    //CPLDebug("OGR2SQLITE", "BestIndex");
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "BestIndex");
+#endif
 
     int i;
 
@@ -544,11 +555,11 @@ int OGR2SQLITE_BestIndex(sqlite3_vtab *pVTab, sqlite3_index_info* pIndex)
     int nConstraints = 0;
     for (i = 0; i < pIndex->nConstraint; i++)
     {
+        int iCol = pIndex->aConstraint[i].iColumn;
         if (pIndex->aConstraint[i].usable &&
             pIndex->aConstraint[i].op != SQLITE_INDEX_CONSTRAINT_MATCH &&
-            pIndex->aConstraint[i].iColumn < poFDefn->GetFieldCount() &&
-            (pIndex->aConstraint[i].iColumn < 0 ||
-             poFDefn->GetFieldDefn(pIndex->aConstraint[i].iColumn)->GetType() != OFTBinary))
+            iCol < poFDefn->GetFieldCount() &&
+            (iCol < 0 || poFDefn->GetFieldDefn(iCol)->GetType() != OFTBinary))
         {
             pIndex->aConstraintUsage[i].argvIndex = nConstraints + 1;
             pIndex->aConstraintUsage[i].omit = TRUE;
@@ -629,7 +640,10 @@ static
 int OGR2SQLITE_Open(sqlite3_vtab *pVTab, sqlite3_vtab_cursor **ppCursor)
 {
     OGR2SQLITE_vtab* pMyVTab = (OGR2SQLITE_vtab*) pVTab;
-    //CPLDebug("OGR2SQLITE", "Open(%s, %s)", pMyVTab->poDS->GetName(), pMyVTab->poLayer->GetName());
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "Open(%s, %s)",
+             pMyVTab->poDS->GetName(), pMyVTab->poLayer->GetName());
+#endif
 
     OGR2SQLITE_vtab_cursor* pCursor = (OGR2SQLITE_vtab_cursor*)
                                 CPLCalloc(1, sizeof(OGR2SQLITE_vtab_cursor));
@@ -646,8 +660,8 @@ int OGR2SQLITE_Open(sqlite3_vtab *pVTab, sqlite3_vtab_cursor **ppCursor)
             (OGRDataSource*) OGROpen(pMyVTab->poDS->GetName(), FALSE, NULL);
         if( pCursor->poDupDataSource == NULL )
             return SQLITE_ERROR;
-        pCursor->poLayer =
-            pCursor->poDupDataSource->GetLayerByName(pMyVTab->poLayer->GetName());
+        pCursor->poLayer = pCursor->poDupDataSource->GetLayerByName(
+                                                pMyVTab->poLayer->GetName());
         if( pCursor->poLayer == NULL )
         {
             delete pCursor->poDupDataSource;
@@ -667,6 +681,9 @@ int OGR2SQLITE_Open(sqlite3_vtab *pVTab, sqlite3_vtab_cursor **ppCursor)
 
     pCursor->poLayer->ResetReading();
     pCursor->poFeature = NULL;
+    pCursor->nNextWishedIndex = 0;
+    pCursor->nCurFeatureIndex = -1;
+    pCursor->nFeatureCount = -1;
 
     return SQLITE_OK;
 }
@@ -680,8 +697,10 @@ int OGR2SQLITE_Close(sqlite3_vtab_cursor* pCursor)
 {
     OGR2SQLITE_vtab_cursor* pMyCursor = (OGR2SQLITE_vtab_cursor*) pCursor;
     OGR2SQLITE_vtab* pMyVTab = pMyCursor->pVTab;
-
-    //CPLDebug("OGR2SQLITE", "Close(%s, %s)", pMyVTab->poDS->GetName(), pMyVTab->poLayer->GetName());
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "Close(%s, %s)",
+             pMyVTab->poDS->GetName(), pMyVTab->poLayer->GetName());
+#endif
     pMyVTab->nMyRef --;
 
     delete pMyCursor->poFeature;
@@ -702,7 +721,9 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
                       int argc, sqlite3_value **argv)
 {
     OGR2SQLITE_vtab_cursor* pMyCursor = (OGR2SQLITE_vtab_cursor*) pCursor;
-    //CPLDebug("OGR2SQLITE", "Filter");
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "Filter");
+#endif
 
     int* panConstraints = (int*) idxStr;
     int nConstraints = panConstraints ? panConstraints[0] : 0;
@@ -745,7 +766,8 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
             {
                 sqlite3_free(pMyCursor->pVTab->zErrMsg);
                 pMyCursor->pVTab->zErrMsg = sqlite3_mprintf(
-                        "Unhandled constraint operator : %d", panConstraints[2 * i + 2]);
+                                        "Unhandled constraint operator : %d",
+                                        panConstraints[2 * i + 2]);
                 return SQLITE_ERROR;
             }
         }
@@ -770,22 +792,43 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
         {
             sqlite3_free(pMyCursor->pVTab->zErrMsg);
             pMyCursor->pVTab->zErrMsg = sqlite3_mprintf(
-                    "Unhandled constraint data type : %d",sqlite3_value_type (argv[i]));
+                                    "Unhandled constraint data type : %d",
+                                    sqlite3_value_type (argv[i]));
             return SQLITE_ERROR;
         }
     }
 
-    CPLDebug("OGR2SQLITE", "Attribute filter : %s", osAttributeFilter.c_str());
-    if( pMyCursor->poLayer->SetAttributeFilter(
-            osAttributeFilter.size() ? osAttributeFilter.c_str() : NULL) != OGRERR_NONE )
+    CPLDebug("OGR2SQLITE", "Attribute filter : %s",
+             osAttributeFilter.c_str());
+    if( pMyCursor->poLayer->SetAttributeFilter( osAttributeFilter.size() ?
+                            osAttributeFilter.c_str() : NULL) != OGRERR_NONE )
     {
         sqlite3_free(pMyCursor->pVTab->zErrMsg);
         pMyCursor->pVTab->zErrMsg = sqlite3_mprintf(
-                "Cannot apply attribute filter : %s", osAttributeFilter.c_str());
+                "Cannot apply attribute filter : %s",
+                osAttributeFilter.c_str());
         return SQLITE_ERROR;
     }
 
-    pMyCursor->poFeature = pMyCursor->poLayer->GetNextFeature();
+    if( pMyCursor->poLayer->TestCapability(OLCFastFeatureCount) )
+    {
+        pMyCursor->nFeatureCount = pMyCursor->poLayer->GetFeatureCount();
+        pMyCursor->poLayer->ResetReading();
+    }
+    else
+        pMyCursor->nFeatureCount = -1;
+
+    if( pMyCursor->nFeatureCount < 0 )
+    {
+        pMyCursor->poFeature = pMyCursor->poLayer->GetNextFeature();
+#ifdef DEBUG_OGR2SQLITE
+        CPLDebug("OGR2SQLITE", "GetNextFeature() --> %d",
+            pMyCursor->poFeature ? (int)pMyCursor->poFeature->GetFID() : -1);
+#endif
+    }
+
+    pMyCursor->nNextWishedIndex = 0;
+    pMyCursor->nCurFeatureIndex = -1;
 
     return SQLITE_OK;
 }
@@ -798,11 +841,20 @@ static
 int OGR2SQLITE_Next(sqlite3_vtab_cursor* pCursor)
 {
     OGR2SQLITE_vtab_cursor* pMyCursor = (OGR2SQLITE_vtab_cursor*) pCursor;
-    //CPLDebug("OGR2SQLITE", "Next");
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "Next");
+#endif
 
-    delete pMyCursor->poFeature;
-    pMyCursor->poFeature = pMyCursor->poLayer->GetNextFeature();
-
+    pMyCursor->nNextWishedIndex ++;
+    if( pMyCursor->nFeatureCount < 0 )
+    {
+        delete pMyCursor->poFeature;
+        pMyCursor->poFeature = pMyCursor->poLayer->GetNextFeature();
+#ifdef DEBUG_OGR2SQLITE
+        CPLDebug("OGR2SQLITE", "GetNextFeature() --> %d",
+            pMyCursor->poFeature ? (int)pMyCursor->poFeature->GetFID() : -1);
+#endif
+    }
     return SQLITE_OK;
 }
 
@@ -814,9 +866,40 @@ static
 int OGR2SQLITE_Eof(sqlite3_vtab_cursor* pCursor)
 {
     OGR2SQLITE_vtab_cursor* pMyCursor = (OGR2SQLITE_vtab_cursor*) pCursor;
-    //CPLDebug("OGR2SQLITE", "Eof");
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "Eof");
+#endif
 
-    return (pMyCursor->poFeature == NULL);
+    if( pMyCursor->nFeatureCount < 0 )
+    {
+        return (pMyCursor->poFeature == NULL);
+    }
+    else
+    {
+        return ( pMyCursor->nNextWishedIndex >= pMyCursor->nFeatureCount );
+    }
+}
+
+/************************************************************************/
+/*                      OGR2SQLITE_GoToWishedIndex()                    */
+/************************************************************************/
+
+static void OGR2SQLITE_GoToWishedIndex(OGR2SQLITE_vtab_cursor* pMyCursor)
+{
+    if( pMyCursor->nFeatureCount >= 0 )
+    {
+        while( pMyCursor->nCurFeatureIndex < pMyCursor->nNextWishedIndex )
+        {
+            pMyCursor->nCurFeatureIndex ++;
+
+            delete pMyCursor->poFeature;
+            pMyCursor->poFeature = pMyCursor->poLayer->GetNextFeature();
+#ifdef DEBUG_OGR2SQLITE
+            CPLDebug("OGR2SQLITE", "GetNextFeature() --> %d",
+                pMyCursor->poFeature ? (int)pMyCursor->poFeature->GetFID() : -1);
+#endif
+        }
+    }
 }
 
 /************************************************************************/
@@ -828,9 +911,14 @@ int OGR2SQLITE_Column(sqlite3_vtab_cursor* pCursor,
                       sqlite3_context* pContext, int nCol)
 {
     OGR2SQLITE_vtab_cursor* pMyCursor = (OGR2SQLITE_vtab_cursor*) pCursor;
-    OGRFeature* poFeature = pMyCursor->poFeature;
-    //CPLDebug("OGR2SQLITE", "Column %d", nCol);
+    OGRFeature* poFeature;
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "Column %d", nCol);
+#endif
 
+    OGR2SQLITE_GoToWishedIndex(pMyCursor);
+
+    poFeature = pMyCursor->poFeature;
     if( poFeature == NULL)
         return SQLITE_ERROR;
 
@@ -843,7 +931,8 @@ int OGR2SQLITE_Column(sqlite3_vtab_cursor* pCursor,
                             -1, SQLITE_TRANSIENT);
         return SQLITE_OK;
     }
-    else if( nCol == (poFDefn->GetFieldCount() + 1) && poFDefn->GetGeomType() != wkbNone )
+    else if( nCol == (poFDefn->GetFieldCount() + 1) &&
+             poFDefn->GetGeomType() != wkbNone )
     {
         OGRGeometry* poGeom = poFeature->GetGeometryRef();
         if( poGeom == NULL )
@@ -957,7 +1046,11 @@ static
 int OGR2SQLITE_Rowid(sqlite3_vtab_cursor* pCursor, sqlite3_int64 *pRowid)
 {
     OGR2SQLITE_vtab_cursor* pMyCursor = (OGR2SQLITE_vtab_cursor*) pCursor;
-    //CPLDebug("OGR2SQLITE", "Rowid");
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "Rowid");
+#endif
+
+    OGR2SQLITE_GoToWishedIndex(pMyCursor);
 
     if( pMyCursor->poFeature == NULL)
         return SQLITE_ERROR;
