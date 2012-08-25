@@ -145,6 +145,7 @@ static CPLString OGR2SQLITEExtractUnquotedString(const char **ppszSQLCommand)
         else if( chQuoteChar == '\0' &&
                 (isspace((int)*pszSQLCommand) ||
                  *pszSQLCommand == '.' ||
+                 *pszSQLCommand == ')' ||
                  *pszSQLCommand == ',') )
             break;
         else
@@ -261,16 +262,30 @@ static int StartsAsSQLITEKeyWord(const char* pszStr)
 /*                     OGR2SQLITEGetPotentialLayerNames()               */
 /************************************************************************/
 
-static void OGR2SQLITEGetPotentialLayerNames(const char *pszSQLCommand,
-                                             std::set<LayerDesc>& oSet,
-                                             CPLString& osModifiedSQL)
+static void OGR2SQLITEGetPotentialLayerNamesInternal(const char **ppszSQLCommand,
+                                                     std::set<LayerDesc>& oSet,
+                                                     CPLString& osModifiedSQL,
+                                                     int& nNum)
 {
+    const char *pszSQLCommand = *ppszSQLCommand;
     const char* pszStart = pszSQLCommand;
-    int nNum = 1;
     char ch;
+    int nParenthesisLevel = 0;
 
     while( (ch = *pszSQLCommand) != '\0' )
     {
+        if( ch == '(' )
+            nParenthesisLevel ++;
+        else if( ch == ')' )
+        {
+            nParenthesisLevel --;
+            if( nParenthesisLevel < 0 )
+            {
+                pszSQLCommand ++;
+                break;
+            }
+        }
+
         /* Skip literals and strings */
         if( ch == '\'' || ch == '"' )
         {
@@ -287,10 +302,30 @@ static void OGR2SQLITEGetPotentialLayerNames(const char *pszSQLCommand,
                 pszSQLCommand ++;
             }
         }
-        else if( EQUALN(pszSQLCommand, "FROM ", strlen("FROM ")) )
+        else if( EQUALN(pszSQLCommand, "FROM", strlen("FROM")) &&
+                 isspace(pszSQLCommand[strlen("FROM")]) )
         {
             pszSQLCommand += strlen("FROM ");
-            OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand, oSet, osModifiedSQL);
+
+            while( isspace((int)*pszSQLCommand) )
+                pszSQLCommand ++;
+
+            if( *pszSQLCommand == '(' )
+            {
+                pszSQLCommand++;
+
+                CPLString osTruncated(pszStart);
+                osTruncated.resize(pszSQLCommand - pszStart);
+                osModifiedSQL += osTruncated;
+
+                OGR2SQLITEGetPotentialLayerNamesInternal(
+                            &pszSQLCommand,  oSet, osModifiedSQL, nNum);
+
+                pszStart = pszSQLCommand;
+            }
+            else
+                OGR2SQLITEAddLayer(pszStart, nNum,
+                                   pszSQLCommand, oSet, osModifiedSQL);
 
             while( *pszSQLCommand != '\0' )
             {
@@ -299,6 +334,14 @@ static void OGR2SQLITEGetPotentialLayerNames(const char *pszSQLCommand,
                     pszSQLCommand ++;
                     while( isspace((int)*pszSQLCommand) )
                         pszSQLCommand ++;
+
+                    if( EQUALN(pszSQLCommand, "AS", 2) )
+                    {
+                        pszSQLCommand += 2;
+                        while( isspace((int)*pszSQLCommand) )
+                            pszSQLCommand ++;
+                    }
+
                     /* Skip alias */
                     if( *pszSQLCommand != '\0' &&
                         *pszSQLCommand != ',' )
@@ -313,23 +356,42 @@ static void OGR2SQLITEGetPotentialLayerNames(const char *pszSQLCommand,
                     pszSQLCommand ++;
                     while( isspace((int)*pszSQLCommand) )
                         pszSQLCommand ++;
-                    OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand, oSet, osModifiedSQL);
+
+                    if( *pszSQLCommand == '(' )
+                    {
+                        pszSQLCommand++;
+
+                        CPLString osTruncated(pszStart);
+                        osTruncated.resize(pszSQLCommand - pszStart);
+                        osModifiedSQL += osTruncated;
+
+                        OGR2SQLITEGetPotentialLayerNamesInternal(
+                            &pszSQLCommand,  oSet, osModifiedSQL, nNum);
+
+                        pszStart = pszSQLCommand;
+                    }
+                    else
+                        OGR2SQLITEAddLayer(pszStart, nNum,
+                                           pszSQLCommand, oSet, osModifiedSQL);
                 }
                 else
                     break;
             }
         }
-        else if ( EQUALN(pszSQLCommand, "JOIN ", strlen("JOIN ")) )
+        else if ( EQUALN(pszSQLCommand, "JOIN", strlen("JOIN")) &&
+                  isspace(pszSQLCommand[strlen("JOIN")]) )
         {
             pszSQLCommand += strlen("JOIN ");
             OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand, oSet, osModifiedSQL);
         }
-        else if( EQUALN(pszSQLCommand, "INSERT INTO ", strlen("INSERT INTO ")) )
+        else if( EQUALN(pszSQLCommand, "INTO", strlen("INTO")) &&
+                 isspace(pszSQLCommand[strlen("INTO")]) )
         {
-            pszSQLCommand += strlen("INSERT INTO ");
+            pszSQLCommand += strlen("INTO ");
             OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand, oSet, osModifiedSQL);
         }
-        else if( EQUALN(pszSQLCommand, "UPDATE ", strlen("UPDATE ")) )
+        else if( EQUALN(pszSQLCommand, "UPDATE", strlen("UPDATE")) &&
+                 isspace(pszSQLCommand[strlen("UPDATE")]) )
         {
             pszSQLCommand += strlen("UPDATE ");
             OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand, oSet, osModifiedSQL);
@@ -342,10 +404,20 @@ static void OGR2SQLITEGetPotentialLayerNames(const char *pszSQLCommand,
         else
             pszSQLCommand ++;
     }
-    
+
     CPLString osTruncated(pszStart);
     osTruncated.resize(pszSQLCommand - pszStart);
     osModifiedSQL += osTruncated;
+
+    *ppszSQLCommand = pszSQLCommand;
+}
+
+static void OGR2SQLITEGetPotentialLayerNames(const char *pszSQLCommand,
+                                             std::set<LayerDesc>& oSet,
+                                             CPLString& osModifiedSQL)
+{
+    int nNum = 1;
+    OGR2SQLITEGetPotentialLayerNamesInternal(&pszSQLCommand, oSet, osModifiedSQL, nNum);
 }
 
 /************************************************************************/
