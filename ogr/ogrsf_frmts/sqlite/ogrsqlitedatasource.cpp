@@ -1697,8 +1697,9 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
             osCommand.Printf(
                 "CREATE TABLE '%s' ( "
                 "  OGC_FID INTEGER PRIMARY KEY,"
-                "  %s VARCHAR )", 
-                pszEscapedLayerName, pszGeomCol );
+                "  '%s' VARCHAR )", 
+                pszEscapedLayerName,
+                OGRSQLiteEscape(pszGeomCol).c_str() );
         }
         else
         {
@@ -1718,14 +1719,15 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
                 */
                 osCommand.Printf( "CREATE TABLE '%s' ( "
                                   "  OGC_FID INTEGER PRIMARY KEY)",
-                                  pszLayerName);
+                                  pszEscapedLayerName);
             }
             else
             {
                 osCommand.Printf( "CREATE TABLE '%s' ( "
                                   "  OGC_FID INTEGER PRIMARY KEY,"
-                                  "  %s BLOB )", 
-                                  pszLayerName, pszGeomCol );
+                                  "  '%s' BLOB )", 
+                                  pszEscapedLayerName,
+                                  OGRSQLiteEscape(pszGeomCol).c_str() );
             }
         }
     }
@@ -1806,7 +1808,8 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 
             osCommand.Printf( "SELECT AddGeometryColumn("
                               "'%s', '%s', %d, '%s', %d)",
-                              pszLayerName, pszGeomCol, nSRSId,
+                              pszEscapedLayerName,
+                              OGRSQLiteEscape(pszGeomCol).c_str(), nSRSId,
                               pszType, nCoordDim );
         }
         else
@@ -1818,7 +1821,8 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
                     "(f_table_name, f_geometry_column, geometry_format, "
                     "geometry_type, coord_dimension, srid) VALUES "
                     "('%s','%s','%s', %d, %d, %d)", 
-                    pszEscapedLayerName, pszGeomCol, pszGeomFormat,
+                    pszEscapedLayerName,
+                    OGRSQLiteEscape(pszGeomCol).c_str(), pszGeomFormat,
                     (int) wkbFlatten(eType), nCoordDim, nSRSId );
             }
             else
@@ -1828,7 +1832,8 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
                     "(f_table_name, f_geometry_column, geometry_format, "
                     "geometry_type, coord_dimension) VALUES "
                     "('%s','%s','%s', %d, %d)",
-                    pszEscapedLayerName, pszGeomCol, pszGeomFormat,
+                    pszEscapedLayerName,
+                    OGRSQLiteEscape(pszGeomCol).c_str(), pszGeomFormat,
                     (int) wkbFlatten(eType), nCoordDim );
             }
         }
@@ -1947,6 +1952,33 @@ char *OGRSQLiteDataSource::LaunderName( const char *pszSrcName )
     }
 
     return pszSafeName;
+}
+
+/************************************************************************/
+/*                       OGRSQLiteParamsUnquote()                       */
+/************************************************************************/
+
+CPLString OGRSQLiteParamsUnquote(const char* pszVal)
+{
+    char chQuoteChar = pszVal[0];
+    if( chQuoteChar != '\'' && chQuoteChar != '"' )
+        return pszVal;
+    
+    CPLString osRet;
+    pszVal ++;
+    while( *pszVal != '\0' )
+    {
+        if( *pszVal == chQuoteChar )
+        {
+            if( pszVal[1] == chQuoteChar )
+                pszVal ++;
+            else
+                break;
+        }
+        osRet += *pszVal;
+        pszVal ++;
+    }
+    return osRet;
 }
 
 /************************************************************************/
@@ -2100,20 +2132,20 @@ OGRErr OGRSQLiteDataSource::DeleteLayer(int iLayer)
 /* -------------------------------------------------------------------- */
         if( bIsSpatiaLite && pszGeometryColumn )
         {
-            osCommand.Printf( "DROP TABLE idx_%s_%s", pszEscapedLayerName,
-                              pszGeometryColumn);
+            osCommand.Printf( "DROP TABLE 'idx_%s_%s'", pszEscapedLayerName,
+                              OGRSQLiteEscape(pszGeometryColumn).c_str());
             rc = sqlite3_exec( hDB, osCommand, NULL, NULL, NULL );
 
-            osCommand.Printf( "DROP TABLE idx_%s_%s_node", pszEscapedLayerName,
-                              pszGeometryColumn);
+            osCommand.Printf( "DROP TABLE 'idx_%s_%s_node'", pszEscapedLayerName,
+                              OGRSQLiteEscape(pszGeometryColumn).c_str());
             rc = sqlite3_exec( hDB, osCommand, NULL, NULL, NULL );
 
-            osCommand.Printf( "DROP TABLE idx_%s_%s_parent", pszEscapedLayerName,
-                              pszGeometryColumn);
+            osCommand.Printf( "DROP TABLE 'idx_%s_%s_parent'", pszEscapedLayerName,
+                              OGRSQLiteEscape(pszGeometryColumn).c_str());
             rc = sqlite3_exec( hDB, osCommand, NULL, NULL, NULL );
 
-            osCommand.Printf( "DROP TABLE idx_%s_%s_rowid", pszEscapedLayerName,
-                              pszGeometryColumn);
+            osCommand.Printf( "DROP TABLE 'idx_%s_%s_rowid'", pszEscapedLayerName,
+                              OGRSQLiteEscape(pszGeometryColumn).c_str());
             rc = sqlite3_exec( hDB, osCommand, NULL, NULL, NULL );
         }
     }
