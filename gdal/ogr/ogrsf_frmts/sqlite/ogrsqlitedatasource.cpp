@@ -2295,6 +2295,26 @@ const char* OGRSQLiteDataSource::GetSRTEXTColName()
 }
 
 /************************************************************************/
+/*                         AddSRIDToCache()                             */
+/*                                                                      */
+/*      Note: this will not add a reference on the poSRS object. Make   */
+/*      sure it is freshly created, or add a reference yourself if not. */
+/************************************************************************/
+
+void OGRSQLiteDataSource::AddSRIDToCache(int nId, OGRSpatialReference * poSRS )
+{
+/* -------------------------------------------------------------------- */
+/*      Add to the cache.                                               */
+/* -------------------------------------------------------------------- */
+    panSRID = (int *) CPLRealloc(panSRID,sizeof(int) * (nKnownSRID+1) );
+    papoSRS = (OGRSpatialReference **)
+        CPLRealloc(papoSRS, sizeof(void*) * (nKnownSRID + 1) );
+    panSRID[nKnownSRID] = nId;
+    papoSRS[nKnownSRID] = poSRS;
+    nKnownSRID++;
+}
+
+/************************************************************************/
 /*                             FetchSRSId()                             */
 /*                                                                      */
 /*      Fetch the id corresponding to an SRS, and if not found, add     */
@@ -2315,6 +2335,25 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     if( poSRS == NULL )
         return nSRSId;
 
+/* -------------------------------------------------------------------- */
+/*      First, we look through our SRID cache, is it there?             */
+/* -------------------------------------------------------------------- */
+    int  i;
+
+    for( i = 0; i < nKnownSRID; i++ )
+    {
+        if( papoSRS[i] == poSRS )
+            return panSRID[i];
+    }
+    for( i = 0; i < nKnownSRID; i++ )
+    {
+        if( papoSRS[i]->IsSame(poSRS) )
+            return panSRID[i];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Build a copy since we may call AutoIdentifyEPSG()               */
+/* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS(*poSRS);
     poSRS = NULL;
 
@@ -2403,6 +2442,10 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
             {
                 nSRSId = (papszResult[1] != NULL) ? atoi(papszResult[1]) : nUndefinedSRID;
                 sqlite3_free_table(papszResult);
+
+                if( nSRSId != nUndefinedSRID)
+                    AddSRIDToCache(nSRSId, new OGRSpatialReference(oSRS));
+
                 return nSRSId;
             }
             sqlite3_free_table(papszResult);
@@ -2482,6 +2525,10 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
             nSRSId = nUndefinedSRID;
 
         sqlite3_finalize( hSelectStmt );
+
+        if( nSRSId != nUndefinedSRID)
+            AddSRIDToCache(nSRSId, new OGRSpatialReference(oSRS));
+
         return nSRSId;
     }
 
@@ -2651,7 +2698,6 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     sqlite3_stmt *hInsertStmt = NULL;
     rc = sqlite3_prepare( hDB, osCommand, -1, &hInsertStmt, NULL );
 
-    int i;
     for(i=0;apszToInsert[i]!=NULL;i++)
     {
         if( rc == SQLITE_OK)
@@ -2672,6 +2718,9 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     }
 
     sqlite3_finalize( hInsertStmt );
+
+    if( nSRSId != nUndefinedSRID)
+        AddSRIDToCache(nSRSId, new OGRSpatialReference(oSRS));
 
     return nSRSId;
 }
@@ -2829,12 +2878,7 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
 /* -------------------------------------------------------------------- */
 /*      Add to the cache.                                               */
 /* -------------------------------------------------------------------- */
-    panSRID = (int *) CPLRealloc(panSRID,sizeof(int) * (nKnownSRID+1) );
-    papoSRS = (OGRSpatialReference **)
-        CPLRealloc(papoSRS, sizeof(void*) * (nKnownSRID + 1) );
-    panSRID[nKnownSRID] = nId;
-    papoSRS[nKnownSRID] = poSRS;
-    nKnownSRID++;
+    AddSRIDToCache(nId, poSRS);
 
     return poSRS;
 }
