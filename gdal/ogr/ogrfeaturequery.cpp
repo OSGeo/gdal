@@ -221,6 +221,63 @@ int OGRFeatureQuery::Evaluate( OGRFeature *poFeature )
 }
 
 /************************************************************************/
+/*                            CanUseIndex()                             */
+/************************************************************************/
+
+int OGRFeatureQuery::CanUseIndex( OGRLayer *poLayer )
+{
+    swq_expr_node *psExpr = (swq_expr_node *) pSWQExpr;
+
+/* -------------------------------------------------------------------- */
+/*      Do we have an index on the targetted layer?                     */
+/* -------------------------------------------------------------------- */
+    if ( poLayer->GetIndex() == FALSE )
+        return FALSE;
+
+    return CanUseIndex( psExpr, poLayer );
+}
+
+int OGRFeatureQuery::CanUseIndex( swq_expr_node *psExpr,
+                                  OGRLayer *poLayer )
+{
+    OGRAttrIndex *poIndex;
+
+/* -------------------------------------------------------------------- */
+/*      Does the expression meet our requirements?                      */
+/* -------------------------------------------------------------------- */
+    if( psExpr == NULL ||
+        psExpr->eNodeType != SNT_OPERATION )
+        return FALSE;
+
+    if ((psExpr->nOperation == SWQ_OR || psExpr->nOperation == SWQ_AND) &&
+         psExpr->nSubExprCount == 2)
+    {
+        return CanUseIndex( psExpr->papoSubExpr[0], poLayer ) &&
+               CanUseIndex( psExpr->papoSubExpr[1], poLayer );
+    }
+
+    if( !(psExpr->nOperation == SWQ_EQ || psExpr->nOperation == SWQ_IN)
+        || psExpr->nSubExprCount < 2 )
+        return FALSE;
+
+    swq_expr_node *poColumn = psExpr->papoSubExpr[0];
+    swq_expr_node *poValue = psExpr->papoSubExpr[1];
+    
+    if( poColumn->eNodeType != SNT_COLUMN
+        || poValue->eNodeType != SNT_CONSTANT )
+        return FALSE;
+
+    poIndex = poLayer->GetIndex()->GetFieldIndex( poColumn->field_index );
+    if( poIndex == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      OK, we have an index                                            */
+/* -------------------------------------------------------------------- */
+    return TRUE;
+}
+
+/************************************************************************/
 /*                       EvaluateAgainstIndices()                       */
 /*                                                                      */
 /*      Attempt to return a list of FIDs matching the given             */
@@ -249,7 +306,7 @@ long *OGRFeatureQuery::EvaluateAgainstIndices( OGRLayer *poLayer,
         *peErr = OGRERR_NONE;
 
 /* -------------------------------------------------------------------- */
-/*      Do we have an index on the targetted field?                     */
+/*      Do we have an index on the targetted layer?                     */
 /* -------------------------------------------------------------------- */
     if ( poLayer->GetIndex() == NULL )
         return NULL;
