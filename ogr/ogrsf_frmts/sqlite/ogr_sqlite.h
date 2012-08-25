@@ -658,6 +658,8 @@ CPLString OGRSQLiteEscape( const char *pszLiteral );
 /* To escape table or field names. The returned string doesn't contain the surrounding double quotes */
 CPLString OGRSQLiteEscapeName( const char* pszName );
 
+CPLString OGRSQLiteParamsUnquote(const char* pszVal);
+
 CPLString OGRSQLiteFieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn );
 
 int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,

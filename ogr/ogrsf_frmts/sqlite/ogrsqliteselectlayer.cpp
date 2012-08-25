@@ -64,7 +64,7 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
             {
                 int nBytes;
                 if( sqlite3_column_type( hStmt, iCol ) == SQLITE_BLOB &&
-                    strcmp(sqlite3_column_name( hStmt, iCol ), osGeomColumn.c_str()) == 0 &&
+                    strcmp(OGRSQLiteParamsUnquote(sqlite3_column_name( hStmt, iCol )).c_str(), osGeomColumn.c_str()) == 0 &&
                     (nBytes = sqlite3_column_bytes( hStmt, iCol )) > 39 )
                 {
                     const GByte* pabyBlob = (const GByte*)sqlite3_column_blob( hStmt, iCol );
