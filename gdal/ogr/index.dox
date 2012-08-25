@@ -30,7 +30,7 @@ OGR is a part of the <a href="http://www.gdal.org/">GDAL</a> library.<p>
 
 <li> <a href="ogr_arch.html">OGR Architecture</a>
 
-<li> <a href="ogr_sql.html">OGR SQL</a>
+<li> <a href="ogr_sql.html">OGR SQL</a> dialect and <a href="ogr_sql_sqlite.html">SQLITE SQL</a> dialect
 
 <li> <a href="ogr_feature_style.html">OGR - Feature Style Specification</a>
 
