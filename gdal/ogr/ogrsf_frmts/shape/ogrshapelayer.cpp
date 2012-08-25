@@ -1284,7 +1284,17 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
         return bUpdateAccess;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return m_poFilterGeom == NULL || CheckForQIX() || CheckForSBN();
+    {
+        if( !(m_poFilterGeom == NULL || CheckForQIX() || CheckForSBN()) )
+            return FALSE;
+
+        if( m_poAttrQuery != NULL )
+        {
+            InitializeIndexSupport( pszFullName );
+            return m_poAttrQuery->CanUseIndex(this);
+        }
+        return TRUE;
+    }
 
     else if( EQUAL(pszCap,OLCDeleteFeature) )
         return bUpdateAccess;
