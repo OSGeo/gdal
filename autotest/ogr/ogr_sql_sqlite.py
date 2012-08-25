@@ -528,6 +528,29 @@ def ogr_sql_sqlite_8():
     else:
         return 'fail'
 
+###############################################################################
+# Check parsing of sub-selects
+
+def ogr_sql_sqlite_9():
+
+    if ogr.GetDriverByName('SQLite') is None:
+        return 'skip'
+
+    ds = ogr.Open('data')
+
+    sql_lyr = ds.ExecuteSQL( "SELECT count(*) as cnt FROM (SELECT * FROM (SELECT * FROM\n'data'.poly my_alias))p,(SELECT * FROM 'data'.idlink) il WHERE p.EAS_ID = il.EAS_id", dialect = 'SQLite' )
+
+    feat = sql_lyr.GetNextFeature()
+    cnt = feat.GetField('cnt')
+    feat = None
+
+    ds.ReleaseResultSet( sql_lyr )
+
+    if cnt != 7:
+        return' fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_sql_sqlite_1,
     ogr_sql_sqlite_2,
@@ -537,6 +560,7 @@ gdaltest_list = [
     ogr_sql_sqlite_6,
     ogr_sql_sqlite_7,
     ogr_sql_sqlite_8,
+    ogr_sql_sqlite_9,
 ]
 
 if __name__ == '__main__':
