@@ -1,44 +1,30 @@
 <html>
 <head>
-<title>SQLite RDBMS</title>
+<title>SQLite / Spatialite RDBMS</title>
 </head>
 
 <body bgcolor="#ffffff">
 
-<h1>SQLite RDBMS</h1>
+<h1>SQLite / Spatialite  RDBMS</h1>
 
 <p>OGR optionally supports spatial and non-spatial tables stored in SQLite 3.x
 database files.  SQLite is a "light weight" single file based RDBMS engine
 with fairly complete SQL semantics and respectible performance.</p>
 
-<p>The driver looks for a geometry_columns table layed out as defined
-loosely according to OGC Simple Features standards, particularly as defined
-in <A href="http://trac.osgeo.org/fdo/wiki/FDORfc16">FDO RFC 16</a>.  If
-found it is used to map tables to layers.</P>
-
-<p>If geometry_columns is not found, each table is treated as a layer.  Layers 
-with a WKT_GEOMETRY field will be treated as spatial tables, and the 
-WKT_GEOMETRY column will be read as Well Known Text geometry.</p>
-
-<p>If geometry_columns is found, it will be used to lookup spatial reference
-systems in the spatial_ref_sys table.</P>
+<p>The driver can handle "regular" SQLite databases, as well as Spatialite
+databases (spatial enabled SQLite databases).</p>
 
 <p>The SQLite database is essentially typeless, but the SQLite driver will
 attempt to classify attributes field as text, integer or floating point
 based on the contents of the first record in a table.  None of the list
-attribute field types existing in SQLite.</p>
+attribute field types existing in SQLite. Starting with OGR 2.0, datetime
+field types are also handled.</p>
 
 <p>SQLite databases often due not work well over NFS, or some other networked
 file system protocols due to the poor support for locking.  It is safest
 to operate only on SQLite files on a physical disk of the local system.</p>
 
 <p>SQLite is an optionally compiled in driver.  It is not compiled in by default.</p>
-
-<p>While the SQLite driver supports reading spatial data from records, there is
-no support for spatial indexing, so spatial queries will tend to be slow.
-Attributes queries may be fast, especially if indexes are built for 
-appropriate attribute columns using the "CREATE INDEX <indexname> 
-ON <tablename> ( <columnname> )" SQL command.</p>
 
 <p>By default, SQL statements are passed directly to the SQLite database engine.
 It's also possible to request the driver to handle SQL commands 
@@ -52,6 +38,26 @@ This has the advantage of speeding-up some write operations (e.g. on EXT4 filesy
 at the expense of data safety w.r.t system/OS crashes. So use it carefully in
 production environments and read the SQLite
 <a href="http://www.sqlite.org/pragma.html#pragma_synchronous">related documentation</a>.</p>
+
+<h2>"Regular" SQLite databases</h2>
+
+<p>The driver looks for a geometry_columns table layed out as defined
+loosely according to OGC Simple Features standards, particularly as defined
+in <A href="http://trac.osgeo.org/fdo/wiki/FDORfc16">FDO RFC 16</a>.  If
+found it is used to map tables to layers.</P>
+
+<p>If geometry_columns is not found, each table is treated as a layer.  Layers 
+with a WKT_GEOMETRY field will be treated as spatial tables, and the 
+WKT_GEOMETRY column will be read as Well Known Text geometry.</p>
+
+<p>If geometry_columns is found, it will be used to lookup spatial reference
+systems in the spatial_ref_sys table.</P>
+
+<p>While the SQLite driver supports reading spatial data from records, there is
+no support for spatial indexing, so spatial queries will tend to be slow (use Spatialite for that).
+Attributes queries may be fast, especially if indexes are built for 
+appropriate attribute columns using the "CREATE INDEX <indexname> 
+ON <tablename> ( <columnname> )" SQL command.</p>
 
 <h2>Tables with multiple geometries</h2>
 
@@ -98,6 +104,64 @@ datasource is "VirtualShape:/path/to/shapefile.shp" (the shapefile must be a "re
 
 This gives the capability to use the spatial operations of Spatialite (note that spatial indexes on virtual
 tables are not available).<p>
+
+<h2>The SQLite SQL dialect</h2>
+
+Starting with OGR 2.0, the SQLite SQL engine can be used to run SQL queries
+on any OGR datasource if using the <a href="ogr_sql_sqlite.html">SQLite SQL</a> dialect.
+
+<h2>The VirtualOGR SQLite extension</h2>
+
+Starting with OGR 2.0, the GDAL/OGR library can be loaded as a <a href="http://www.sqlite.org/lang_corefunc.html#load_extension">SQLite extension</a>.
+
+The extension is loaded with the load_extension(gdal_library_name) SQL function, where gdal_library_name is
+typically libgdal.so on Unix/Linux, gdal20.dll on Windows, etc..<p>
+
+After the extension is loaded, a virtual table, corresponding to a OGR layer, can be created with one of
+the following SQL statement :
+<pre>
+CREATE VIRTUAL TABLE table_name USING VirtualOGR(datasource_name);
+CREATE VIRTUAL TABLE table_name USING VirtualOGR(datasource_name, update_mode);
+CREATE VIRTUAL TABLE table_name USING VirtualOGR(datasource_name, update_mode, layer_name);
+CREATE VIRTUAL TABLE table_name USING VirtualOGR(datasource_name, update_mode, layer_name, expose_ogr_style);
+</pre>
+
+where :
+<ul>
+<li><i>datasource_name</i> is the connexion string to any OGR datasource.</li>
+<li><i>update_mode</i> = 0 for read-only mode (default value) or 1 for update mode.</li>
+<li><i>layer_name</i> = the name of a layer of the opened datasource.</li>
+<li><i>expose_ogr_style</i> = 0 to prevent the OGR_STYLE special from being displayed (default value) or 1 to expose it.</li>
+</ul>
+
+Note: <i>layer_name</i> does not need to be specified if the datasource has only one single layer.
+
+<p>
+
+From the sqlite3 console, a typical use case is :
+<pre>
+sqlite> SELECT load_extension('libgdal.so');
+
+sqlite> SELECT load_extension('libspatialite.so');
+
+sqlite> CREATE VIRTUAL TABLE poly USING VirtualOGR('poly.shp');
+
+sqlite> SELECT *, ST_Area(GEOMETRY) FROM POLY;
+215229.266|168.0|35043411||215229.265625
+247328.172|179.0|35043423||247328.171875
+261752.781|171.0|35043414||261752.78125
+547597.188|173.0|35043416||547597.2109375
+15775.758|172.0|35043415||15775.7578125
+101429.977|169.0|35043412||101429.9765625
+268597.625|166.0|35043409||268597.625
+1634833.375|158.0|35043369||1634833.390625
+596610.313|165.0|35043408||596610.3359375
+5268.813|170.0|35043413||5268.8125
+</pre>
+
+<p>
+
+Refer to the <a href="ogr_sql_sqlite.html">SQLite SQL</a> dialect for an overview of the capabilities of VirtualOGR tables.<p>
 
 <h2>Creation Issues</h2>
 
