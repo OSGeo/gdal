@@ -45,6 +45,8 @@ class OGR2SQLITEModule
     OGRDataSource* poDS; /* *NOT* to be freed */
     std::vector<OGRDataSource*> apoExtraDS; /* each datasource to be freed */
 
+    OGRSQLiteDataSource* poSQLiteDS;  /* *NOT* to be freed, might be NULL */
+
     std::map< std::pair<int,int>, OGRCoordinateTransformation*> oCachedTransformsMap;
 
   public:
@@ -57,6 +59,9 @@ class OGR2SQLITEModule
     
     int                          AddExtraDS(OGRDataSource* poDS);
     OGRDataSource               *GetExtraDS(int nIndex);
+
+    void                         SetSQLiteDS(OGRSQLiteDataSource* poSQLiteDS);
+    int                          FetchSRSId(OGRSpatialReference* poSRS);
 };
 
 void OGR2SQLITE_Register();
