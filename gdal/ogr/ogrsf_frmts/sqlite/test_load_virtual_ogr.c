@@ -52,7 +52,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#undef NDEBUG
 #include <assert.h>
+
 #ifndef _MSC_VER
 #include <unistd.h>
 #endif
@@ -177,7 +180,7 @@ int main(int argc, char* argv[])
             pszErrMsg = NULL;
             assert(SQLITE_OK != sqlite3_exec(db, "INSERT INTO regular_table (bar) VALUES ('bar')", NULL, NULL, &pszErrMsg));
 
-            fprintf(stderr, "Expected error. We got : %s.\n", pszErrMsg);
+            fprintf(stderr, "Expected error. We got : %s\n", pszErrMsg);
 
             sqlite3_free(pszErrMsg);
         }
