@@ -1252,11 +1252,20 @@ def ogr_sqlite_27():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         return 'skip'
 
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f SQLite tmp/ogr_sqlite_27.sqlite data/poly.shp')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f SQLite tmp/ogr_sqlite_27.sqlite data/poly.shp --config OGR_SQLITE_SYNCHRONOUS OFF')
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/ogr_sqlite_27.sqlite')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        gdaltest.post_reason('failed')
+        print(ret)
+        return 'fail'
+
+    # Test on a result SQL layer
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro tmp/ogr_sqlite_27.sqlite -sql "SELECT * FROM poly"')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        gdaltest.post_reason('failed')
         print(ret)
         return 'fail'
 
@@ -1277,6 +1286,15 @@ def ogr_sqlite_28():
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/poly_spatialite.sqlite')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        gdaltest.post_reason('failed')
+        print(ret)
+        return 'fail'
+
+    # Test on a result SQL layer
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/poly_spatialite.sqlite -sql "SELECT * FROM poly"')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        gdaltest.post_reason('failed')
         print(ret)
         return 'fail'
 
@@ -1792,8 +1810,8 @@ def ogr_spatialite_6():
     # Create regular layer
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 4326 )
-    lyr = ds.CreateLayer('regular_layer', geom_type = ogr.wkbPoint, srs = srs)
-    lyr.CreateField(ogr.FieldDefn("intcol", ogr.OFTInteger))
+    lyr = ds.CreateLayer('regular_\'layer', geom_type = ogr.wkbPoint, srs = srs, options = ['LAUNDER=NO'])
+    lyr.CreateField(ogr.FieldDefn("int'col", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("realcol", ogr.OFTReal))
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -1820,22 +1838,37 @@ def ogr_spatialite_6():
     feat.SetGeometryDirectly(geom)
     lyr.SetFeature(feat)
 
+    thegeom_single = 'the_"''geom'
+    pkid_single = 'pk_"''id'
+
     # Create spatial view
-    ds.ExecuteSQL('CREATE VIEW view_of_regular_layer AS SELECT OGC_FID AS pk_id, GEOMETRY AS the_geom, intcol, realcol FROM regular_layer')
+    ds.ExecuteSQL("CREATE VIEW \"view_of_'regular_layer\" AS SELECT OGC_FID AS '%s', GEOMETRY AS '%s', \"int'col\", realcol FROM \"regular_'layer\"" % (pkid_single, thegeom_single))
 
     if int(gdaltest.spatialite_version[0:gdaltest.spatialite_version.find('.')]) >= 4:
         ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column, read_only) VALUES " + \
-                    "('view_of_regular_layer', 'the_geom', 'pk_id', 'regular_layer', 'GEOMETRY', 1)")
+                    "('view_of_''regular_layer', '%s', '%s', 'regular_''layer', 'GEOMETRY', 1)" % (thegeom_single, pkid_single))
     else:
         ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column) VALUES " + \
-                    "('view_of_regular_layer', 'the_geom', 'pk_id', 'regular_layer', 'GEOMETRY')")
+                    "('view_of_''regular_layer', '%s', '%s', 'regular_''layer', 'GEOMETRY')" % (thegeom_single, pkid_single))
 
     ds = None
 
     # Test spatial view
     ds = ogr.Open('tmp/ogr_spatialite_6.sqlite')
-    lyr = ds.GetLayerByName('regular_layer')
-    view_lyr = ds.GetLayerByName('view_of_regular_layer')
+    lyr = ds.GetLayerByName('regular_\'layer')
+    view_lyr = ds.GetLayerByName('view_of_\'regular_layer')
+    if view_lyr.GetFIDColumn() != pkid_single:
+        gdaltest.post_reason('failed')
+        print(view_lyr.GetGeometryColumn())
+        return 'fail'
+    if view_lyr.GetGeometryColumn() != thegeom_single:
+        gdaltest.post_reason('failed')
+        print(view_lyr.GetGeometryColumn())
+        return 'fail'
+    if view_lyr.GetLayerDefn().GetFieldDefn(0).GetName() != "int'col":
+        gdaltest.post_reason('failed')
+        print(view_lyr.GetLayerDefn().GetFieldDefn(0).GetName())
+        return 'fail'
     if view_lyr.GetGeomType() != lyr.GetGeomType():
         gdaltest.post_reason('failed')
         return 'fail'
@@ -1846,11 +1879,15 @@ def ogr_spatialite_6():
         gdaltest.post_reason('failed')
         return 'fail'
     feat = view_lyr.GetFeature(3)
+    if feat.GetFieldAsInteger(0) != 34:
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
     if feat.GetFieldAsDouble(1) != 56.78:
         gdaltest.post_reason('failed')
         feat.DumpReadable()
         return 'fail'
-    view_lyr.SetAttributeFilter('intcol = 34')
+    view_lyr.SetAttributeFilter('"int\'col" = 34')
     view_lyr.SetSpatialFilterRect(2.5,49.5,3.5,50.5)
     feat = view_lyr.GetNextFeature()
     if feat.GetFID() != 3:
@@ -1865,15 +1902,15 @@ def ogr_spatialite_6():
 
     # Remove spatial index
     ds = ogr.Open('tmp/ogr_spatialite_6.sqlite', update = 1)
-    sql_lyr = ds.ExecuteSQL("SELECT DisableSpatialIndex('regular_layer', 'GEOMETRY')")
+    sql_lyr = ds.ExecuteSQL("SELECT DisableSpatialIndex('regular_''layer', 'GEOMETRY')")
     ds.ReleaseResultSet(sql_lyr)
-    ds.ExecuteSQL("DROP TABLE idx_regular_layer_GEOMETRY")
+    ds.ExecuteSQL("DROP TABLE \"idx_regular_'layer_GEOMETRY\"")
     ds = None
 
     # Test spatial view again
     ds = ogr.Open('tmp/ogr_spatialite_6.sqlite')
-    view_lyr = ds.GetLayerByName('view_of_regular_layer')
-    view_lyr.SetAttributeFilter('intcol = 34')
+    view_lyr = ds.GetLayerByName('view_of_\'regular_layer')
+    view_lyr.SetAttributeFilter('"int\'col" = 34')
     view_lyr.SetSpatialFilterRect(2.5,49.5,3.5,50.5)
     feat = view_lyr.GetNextFeature()
     if feat.GetFID() != 3:
