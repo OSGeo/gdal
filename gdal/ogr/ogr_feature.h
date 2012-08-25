@@ -322,6 +322,8 @@ class CPL_DLL OGRFeatureQuery
 
     long       *EvaluateAgainstIndices( swq_expr_node*, OGRLayer *, int& nFIDCount);
     
+    int         CanUseIndex( swq_expr_node*, OGRLayer * );
+    
   public:
                 OGRFeatureQuery();
                 ~OGRFeatureQuery();
@@ -330,6 +332,8 @@ class CPL_DLL OGRFeatureQuery
     int         Evaluate( OGRFeature * );
 
     long       *EvaluateAgainstIndices( OGRLayer *, OGRErr * );
+    
+    int         CanUseIndex( OGRLayer * );
 
     char      **GetUsedFields();
 
