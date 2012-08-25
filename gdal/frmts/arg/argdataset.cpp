@@ -139,7 +139,7 @@ json_object * GetJsonObject(CPLString pszFilename)
     CPLString pszJSONFilename = GetJsonFilename(pszFilename);
 
     pJSONObject = json_object_from_file((char *)pszJSONFilename.c_str());
-    if (is_error(pJSONObject) || pJSONObject == NULL) {
+    if (pJSONObject == (struct json_object*)error_ptr(-1) || pJSONObject == NULL) {
         CPLDebug("ARGDataset", "GetJsonObject(): "
             "Could not parse JSON file.");
         return NULL;
@@ -227,13 +227,6 @@ int ARGDataset::Identify( GDALOpenInfo *poOpenInfo )
         return FALSE;
     }
 
-    if (is_error(pJSONObject)) {
-        json_object_put(pJSONObject);
-        pJSONObject = NULL;
-
-        return FALSE;
-    }
-
     json_object_put(pJSONObject);
     pJSONObject = NULL;
 
@@ -278,10 +271,8 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     pJSONObject = GetJsonObject(poOpenInfo->pszFilename);
 
-    if (is_error(pJSONObject)) {
+    if (pJSONObject == NULL) {
         CPLError(CE_Failure, CPLE_AppDefined, "Error parsing JSON.");
-        json_object_put(pJSONObject);
-        pJSONObject = NULL;
         return NULL;
     }
 
