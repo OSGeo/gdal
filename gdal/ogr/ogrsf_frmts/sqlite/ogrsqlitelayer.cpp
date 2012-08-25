@@ -191,7 +191,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
 
     for( int iCol = 0; iCol < nRawColumns; iCol++ )
     {
-        OGRFieldDefn    oField( sqlite3_column_name( hStmt, iCol ),
+        OGRFieldDefn    oField( OGRSQLiteParamsUnquote(sqlite3_column_name( hStmt, iCol )),
                                 OFTString );
 
         // In some cases, particularly when there is a real name for
@@ -483,7 +483,7 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
 
         for( iFIDCol = 0; iFIDCol < sqlite3_column_count(hStmt); iFIDCol++ )
         {
-            if( EQUAL(sqlite3_column_name(hStmt,iFIDCol),
+            if( EQUAL(OGRSQLiteParamsUnquote(sqlite3_column_name(hStmt,iFIDCol)).c_str(),
                       pszFIDColumn) )
                 break;
         }
@@ -514,7 +514,7 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
 
         for( iGeomCol = 0; iGeomCol < sqlite3_column_count(hStmt); iGeomCol++ )
         {
-            if( EQUAL(sqlite3_column_name(hStmt,iGeomCol),
+            if( EQUAL(OGRSQLiteParamsUnquote(sqlite3_column_name(hStmt,iGeomCol)).c_str(),
                       osGeomColumn) )
                 break;
         }

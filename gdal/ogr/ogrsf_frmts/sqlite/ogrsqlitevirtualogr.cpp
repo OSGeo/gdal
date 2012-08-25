@@ -234,33 +234,6 @@ CPLString OGR2SQLITE_GetNameForGeometryColumn(OGRLayer* poLayer)
     }
 }
 
-/************************************************************************/
-/*                       OGRSQLITEParamsUnquote()                       */
-/************************************************************************/
-
-static CPLString OGRSQLITEParamsUnquote(const char* pszVal)
-{
-    char chQuoteChar = pszVal[0];
-    if( chQuoteChar != '\'' && chQuoteChar != '"' )
-        return pszVal;
-    
-    CPLString osRet;
-    pszVal ++;
-    while( *pszVal != '\0' )
-    {
-        if( *pszVal == chQuoteChar )
-        {
-            if( pszVal[1] == chQuoteChar )
-                pszVal ++;
-            else
-                break;
-        }
-        osRet += *pszVal;
-        pszVal ++;
-    }
-    return osRet;
-}
-
 #ifdef VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
 
 /************************************************************************/
@@ -378,7 +351,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
                 return SQLITE_ERROR;
             }
         }
-        CPLString osLayerName(OGRSQLITEParamsUnquote(argv[4]));
+        CPLString osLayerName(OGRSQLiteParamsUnquote(argv[4]));
 
         poLayer = poDS->GetLayerByName(osLayerName);
         if( poLayer == NULL )
@@ -388,7 +361,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
             return SQLITE_ERROR;
         }
 
-        bExposeOGR_STYLE = atoi(OGRSQLITEParamsUnquote(argv[5]));
+        bExposeOGR_STYLE = atoi(OGRSQLiteParamsUnquote(argv[5]));
     }
 #ifdef VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
 /* -------------------------------------------------------------------- */
@@ -409,8 +382,8 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
             return SQLITE_ERROR;
         }
 
-        CPLString osDSName(OGRSQLITEParamsUnquote(argv[3]));
-        CPLString osUpdate(OGRSQLITEParamsUnquote((argc >= 5) ? argv[4] : "0"));
+        CPLString osDSName(OGRSQLiteParamsUnquote(argv[3]));
+        CPLString osUpdate(OGRSQLiteParamsUnquote((argc >= 5) ? argv[4] : "0"));
 
         if( !EQUAL(osUpdate, "1") && !EQUAL(osUpdate, "0") )
         {
@@ -431,7 +404,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
         CPLString osLayerName;
         if( argc >= 6 )
         {
-            osLayerName = OGRSQLITEParamsUnquote(argv[5]);
+            osLayerName = OGRSQLiteParamsUnquote(argv[5]);
             poLayer = poDS->GetLayerByName(osLayerName);
         }
         else
@@ -464,7 +437,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
 
         if( argc == 7 )
         {
-            bExposeOGR_STYLE = atoi(OGRSQLITEParamsUnquote(argv[6]));
+            bExposeOGR_STYLE = atoi(OGRSQLiteParamsUnquote(argv[6]));
         }
         
         bCloseDS = TRUE;

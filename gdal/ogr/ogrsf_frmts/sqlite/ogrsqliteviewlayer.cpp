@@ -212,7 +212,9 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
 /*      Get the column definitions for this table.                      */
 /* -------------------------------------------------------------------- */
     hColStmt = NULL;
-    pszSQL = CPLSPrintf( "SELECT %s, * FROM '%s' LIMIT 1", pszFIDColumn, pszEscapedTableName );
+    pszSQL = CPLSPrintf( "SELECT \"%s\", * FROM '%s' LIMIT 1",
+                         OGRSQLiteEscapeName(pszFIDColumn).c_str(),
+                         pszEscapedTableName );
 
     rc = sqlite3_prepare( hDB, pszSQL, strlen(pszSQL), &hColStmt, NULL ); 
     if( rc != SQLITE_OK )
@@ -263,10 +265,10 @@ OGRErr OGRSQLiteViewLayer::ResetStatement()
 
     iNextShapeId = 0;
 
-    osSQL.Printf( "SELECT %s, * FROM '%s' %s",
-                  pszFIDColumn,
-                    pszEscapedTableName, 
-                    osWHERE.c_str() );
+    osSQL.Printf( "SELECT \"%s\", * FROM '%s' %s",
+                  OGRSQLiteEscapeName(pszFIDColumn).c_str(),
+                  pszEscapedTableName, 
+                  osWHERE.c_str() );
 
     rc = sqlite3_prepare( poDS->GetDB(), osSQL, osSQL.size(),
 		          &hStmt, NULL );
@@ -338,10 +340,11 @@ OGRFeature *OGRSQLiteViewLayer::GetFeature( long nFeatureId )
 
     iNextShapeId = nFeatureId;
 
-    osSQL.Printf( "SELECT %s, * FROM '%s' WHERE \"%s\" = %d",
-                  pszFIDColumn,
+    osSQL.Printf( "SELECT \"%s\", * FROM '%s' WHERE \"%s\" = %d",
+                  OGRSQLiteEscapeName(pszFIDColumn).c_str(),
                   pszEscapedTableName, 
-                  pszFIDColumn, (int) nFeatureId );
+                  OGRSQLiteEscapeName(pszFIDColumn).c_str(),
+                  (int) nFeatureId );
 
     CPLDebug( "OGR_SQLITE", "exec(%s)", osSQL.c_str() );
 
@@ -430,7 +433,8 @@ CPLString OGRSQLiteViewLayer::GetSpatialWhere(OGRGeometry* poFilterGeom)
             CPLString osSQL;
             osSQL.Printf("SELECT name FROM sqlite_master "
                         "WHERE name='idx_%s_%s'",
-                        pszEscapedUnderlyingTableName, osUnderlyingGeometryColumn.c_str());
+                        pszEscapedUnderlyingTableName,
+                         OGRSQLiteEscape(osUnderlyingGeometryColumn).c_str());
 
             int  rc = sqlite3_get_table( poDS->GetDB(), osSQL.c_str(),
                                         &papszResult, &nRowCount,
@@ -456,10 +460,11 @@ CPLString OGRSQLiteViewLayer::GetSpatialWhere(OGRGeometry* poFilterGeom)
 
         if (bHasSpatialIndex)
         {
-            osSpatialWHERE.Printf("%s IN ( SELECT pkid FROM 'idx_%s_%s' WHERE "
+            osSpatialWHERE.Printf("\"%s\" IN ( SELECT pkid FROM 'idx_%s_%s' WHERE "
                            "xmax > %.12f AND xmin < %.12f AND ymax > %.12f AND ymin < %.12f)",
-                            pszFIDColumn,
-                            pszEscapedUnderlyingTableName, osUnderlyingGeometryColumn.c_str(),
+                            OGRSQLiteEscapeName(pszFIDColumn).c_str(),
+                            pszEscapedUnderlyingTableName,
+                            OGRSQLiteEscape(osUnderlyingGeometryColumn).c_str(),
                             sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
                             sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
         }
@@ -479,7 +484,7 @@ CPLString OGRSQLiteViewLayer::GetSpatialWhere(OGRGeometry* poFilterGeom)
 
         /* A bit inefficient but still faster than OGR filtering */
         osSpatialWHERE.Printf("MBRIntersects(\"%s\", BuildMBR(%.12f, %.12f, %.12f, %.12f))",
-                       osGeomColumn.c_str(),
+                       OGRSQLiteEscapeName(osGeomColumn).c_str(),
                        sEnvelope.MinX - 1e-11, sEnvelope.MinY - 1e-11,
                        sEnvelope.MaxX + 1e-11, sEnvelope.MaxY + 1e-11);
     }
