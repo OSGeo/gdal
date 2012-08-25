@@ -96,13 +96,25 @@ AC_DEFUN([AC_UNIX_STDIO_64],
   AC_MSG_CHECKING([for 64bit file io])
 
   dnl Special case when using mingw cross compiler.
-  case "${host_os}" in
-    *mingw*)
+  dnl /* We need __MSVCRT_VERSION__ >= 0x0601 to have "struct __stat64" */
+  dnl /* Latest versions of mingw32 define it, but with older ones, */
+  dnl /* we need to define it manually */
+  if test x"$with_unix_stdio_64" = x"" ; then
+    echo '#if defined(__MINGW32__)' > conftest.c
+    echo '#ifndef __MSVCRT_VERSION__' >> conftest.c
+    echo '#define __MSVCRT_VERSION__ 0x0601' >> conftest.c
+    echo '#endif' >> conftest.c
+    echo '#endif' >> conftest.c
+    echo '#include <sys/types.h>' >> conftest.c
+    echo '#include <sys/stat.h>' >> conftest.c
+    echo 'int main() { struct __stat64 buf; _stat64( "", &buf ); return 0; }' >> conftest.c
+    if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
         with_unix_stdio_64=no
         AC_DEFINE_UNQUOTED(VSI_STAT64,_stat64, [Define to name of 64bit stat function])
         AC_DEFINE_UNQUOTED(VSI_STAT64_T,__stat64, [Define to name of 64bit stat structure])
-        ;;
-  esac
+    fi
+    rm -f conftest*
+  fi
 
   if test x"$with_unix_stdio_64" = x"yes" ; then
     VSI_FTELL64=ftell64

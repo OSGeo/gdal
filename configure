@@ -2289,6 +2289,7 @@ test_array [0] = 0
   return 0;
 }
 _ACEOF
+
 if ac_fn_c_try_compile "$LINENO"; then :
   ac_lo=0 ac_mid=0
   while :; do
@@ -16741,8 +16742,16 @@ fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for 64bit file io" >&5
 $as_echo_n "checking for 64bit file io... " >&6; }
 
-    case "${host_os}" in
-    *mingw*)
+          if test x"$with_unix_stdio_64" = x"" ; then
+    echo '#if defined(__MINGW32__)' > conftest.c
+    echo '#ifndef __MSVCRT_VERSION__' >> conftest.c
+    echo '#define __MSVCRT_VERSION__ 0x0601' >> conftest.c
+    echo '#endif' >> conftest.c
+    echo '#endif' >> conftest.c
+    echo '#include <sys/types.h>' >> conftest.c
+    echo '#include <sys/stat.h>' >> conftest.c
+    echo 'int main() { struct __stat64 buf; _stat64( "", &buf ); return 0; }' >> conftest.c
+    if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
         with_unix_stdio_64=no
 
 cat >>confdefs.h <<_ACEOF
@@ -16754,8 +16763,9 @@ cat >>confdefs.h <<_ACEOF
 #define VSI_STAT64_T __stat64
 _ACEOF
 
-        ;;
-  esac
+    fi
+    rm -f conftest*
+  fi
 
   if test x"$with_unix_stdio_64" = x"yes" ; then
     VSI_FTELL64=ftell64
