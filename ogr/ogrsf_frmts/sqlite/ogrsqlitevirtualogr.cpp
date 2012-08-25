@@ -52,6 +52,14 @@ SQLITE_EXTENSION_INIT1
 */
 
 /************************************************************************/
+/*                        OGR2SQLITEModule()                            */
+/************************************************************************/
+
+OGR2SQLITEModule::OGR2SQLITEModule(OGRDataSource* poDS) : poDS(poDS), poSQLiteDS(NULL)
+{
+}
+
+/************************************************************************/
 /*                          ~OGR2SQLITEModule                           */
 /************************************************************************/
 
@@ -86,6 +94,49 @@ OGRDataSource* OGR2SQLITEModule::GetExtraDS(int nIndex)
     if( nIndex < 0 || nIndex > (int)apoExtraDS.size() )
         return NULL;
     return apoExtraDS[nIndex];
+}
+
+/************************************************************************/
+/*                            SetSQLiteDS()                             */
+/************************************************************************/
+
+void OGR2SQLITEModule::SetSQLiteDS(OGRSQLiteDataSource* poSQLiteDS)
+{
+    this->poSQLiteDS = poSQLiteDS;
+}
+
+/************************************************************************/
+/*                            FetchSRSId()                              */
+/************************************************************************/
+
+int OGR2SQLITEModule::FetchSRSId(OGRSpatialReference* poSRS)
+{
+    int nSRSId;
+
+    if( poSQLiteDS != NULL )
+    {
+        nSRSId = poSQLiteDS->GetUndefinedSRID();
+        if( poSRS != NULL )
+            nSRSId = poSQLiteDS->FetchSRSId(poSRS);
+    }
+    else
+    {
+        nSRSId = -1;
+        if( poSRS != NULL )
+        {
+            const char* pszAuthorityName = poSRS->GetAuthorityName(NULL);
+            if (pszAuthorityName != NULL && EQUAL(pszAuthorityName, "EPSG"))
+            {
+                const char* pszAuthorityCode = poSRS->GetAuthorityCode(NULL);
+                if ( pszAuthorityCode != NULL && strlen(pszAuthorityCode) > 0 )
+                {
+                    nSRSId = atoi(pszAuthorityCode);
+                }
+            }
+        }
+    }
+
+    return nSRSId;
 }
 
 /************************************************************************/
@@ -128,6 +179,7 @@ typedef struct
     char                 *zErrMsg;
 
     /* Extension fields */
+    OGR2SQLITEModule     *poModule;
     OGRDataSource        *poDS;
     int                   bCloseDS;
     OGRLayer             *poLayer;
@@ -412,6 +464,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
     OGR2SQLITE_vtab* vtab =
                 (OGR2SQLITE_vtab*) CPLCalloc(1, sizeof(OGR2SQLITE_vtab));
     /* We dont need to fill the non-extended fields */
+    vtab->poModule = poModule;
     vtab->poDS = poDS;
     vtab->bCloseDS = bCloseDS;
     vtab->poLayer = poLayer;
@@ -800,20 +853,8 @@ int OGR2SQLITE_Column(sqlite3_vtab_cursor* pCursor,
             int     nBLOBLen;
             GByte   *pabySLBLOB;
 
-            int nSRSId = -1;
             OGRSpatialReference* poSRS = poGeom->getSpatialReference();
-            if( poSRS != NULL )
-            {
-                const char* pszAuthorityName = poSRS->GetAuthorityName(NULL);
-                if (pszAuthorityName != NULL && EQUAL(pszAuthorityName, "EPSG"))
-                {
-                    const char* pszAuthorityCode = poSRS->GetAuthorityCode(NULL);
-                    if ( pszAuthorityCode != NULL && strlen(pszAuthorityCode) > 0 )
-                    {
-                        nSRSId = atoi(pszAuthorityCode);
-                    }
-                }
-            }
+            int nSRSId = pMyCursor->pVTab->poModule->FetchSRSId(poSRS);
 
             if( OGRSQLiteLayer::ExportSpatiaLiteGeometry(
                     poGeom, nSRSId, wkbNDR, FALSE, FALSE, FALSE,
@@ -1250,14 +1291,6 @@ static int OGR2SQLITESetupModule(sqlite3* hDB, OGR2SQLITEModule* poModule)
         return rc;
 
     return rc;
-}
-
-/************************************************************************/
-/*                        OGR2SQLITEModule()                            */
-/************************************************************************/
-
-OGR2SQLITEModule::OGR2SQLITEModule(OGRDataSource* poDS) : poDS(poDS)
-{
 }
 
 /************************************************************************/
