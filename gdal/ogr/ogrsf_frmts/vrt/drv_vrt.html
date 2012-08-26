@@ -59,7 +59,11 @@ element isn't provided, then the SrcSQL element must be provided.</li>
 <li> <b>SrcSQL</b> (optional): An SQL statement to execute to generate the
 desired layer result.  This should be provided instead of the SrcLayer for
 statement derived results.   Some limitations may apply for SQL derived 
-layers.</li>
+layers. Starting with OGR 2.0, an optional <b>dialect</b> attribute can be specified
+on the SrcSQL element to specify which SQL "dialect" should be used :
+possible values are currently <a href="ogr_sql.html">OGRSQL</a> or
+<a href="ogr_sql_sqlite.html">SQLITE</a>. If <i>dialect</i> is not specified,
+the default dialect of the datasource will be used.</li>
 
 <br>
 
