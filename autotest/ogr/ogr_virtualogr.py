@@ -134,8 +134,56 @@ def ogr_virtualogr_1():
 
     return 'success'
 
+###############################################################################
+# Test detection of suspicious use of VirtualOGR
+
+def ogr_virtualogr_2():
+
+    try:
+        import sqlite3
+    except:
+        return 'skip'
+
+    if ogr.GetDriverByName('SQLite') is None:
+        return 'skip'
+
+    try:
+        os.unlink('tmp/ogr_virtualogr_2.db')
+    except:
+        pass
+
+    import sqlite3
+    gdal.SetConfigOption('OGR_SQLITE_STATIC_VIRTUAL_OGR', 'YES')
+    conn = sqlite3.connect('tmp/ogr_virtualogr_2.db')
+    gdal.SetConfigOption('OGR_SQLITE_STATIC_VIRTUAL_OGR', None)
+    conn.execute("PRAGMA SYNCHRONOUS = OFF")
+    conn.execute("CREATE VIRTUAL TABLE foo USING VirtualOGR('data/poly.shp')")
+    conn.execute("CREATE TABLE spy_table (spy_content VARCHAR)")
+    conn.execute("CREATE TABLE regular_table (bar VARCHAR)")
+    conn.execute("CREATE TRIGGER spy_trigger INSERT ON regular_table BEGIN " + \
+                 "INSERT OR REPLACE INTO spy_table (spy_content) " + \
+                 "SELECT OGR_STYLE FROM foo; END;")
+    conn.close()
+
+    gdal.SetConfigOption('OGR_SQLITE_STATIC_VIRTUAL_OGR', 'YES')
+    conn = sqlite3.connect('tmp/ogr_virtualogr_2.db')
+    gdal.SetConfigOption('OGR_SQLITE_STATIC_VIRTUAL_OGR', None)
+    conn.execute("PRAGMA SYNCHRONOUS = OFF")
+    try:
+        conn.execute("INSERT INTO regular_table (bar) VALUES ('bar')")
+        gdaltest.post_reason('expected a failure')
+        return 'fail'
+    except:
+        pass
+    finally:
+        conn.close()
+        os.unlink('tmp/ogr_virtualogr_2.db')
+
+    return 'success'
+
 gdaltest_list = [
     ogr_virtualogr_1,
+    ogr_virtualogr_2,
 ]
 
 if __name__ == '__main__':
