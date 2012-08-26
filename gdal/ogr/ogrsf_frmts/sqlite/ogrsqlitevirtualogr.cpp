@@ -31,7 +31,7 @@
 #include "ogr_api.h"
 
 #define VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
-#define DEBUG_OGR2SQLITE
+//#define DEBUG_OGR2SQLITE
 
 #if defined(SPATIALITE_AMALGAMATION)
 #include "ogrsqlite3ext.h"
