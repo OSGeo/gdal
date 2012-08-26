@@ -574,6 +574,67 @@ def ogr_sql_sqlite_10():
 
     return 'success'
 
+###############################################################################
+# Test correct parsing of litterals
+
+def ogr_sql_sqlite_11():
+
+    if ogr.GetDriverByName('SQLite') is None:
+        return 'skip'
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+
+    lyr = ds.CreateLayer( "my_layer" )
+    field_defn = ogr.FieldDefn('intfield', ogr.OFTInteger)
+    lyr.CreateField(field_defn)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('intfield', 1)
+    lyr.CreateFeature(feat)
+    feat = None
+
+    sql_lyr = ds.ExecuteSQL( "SELECT 'a' FROM \"my_layer\"", dialect = 'SQLite' )
+    cnt = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet( sql_lyr )
+
+    ds = None
+
+    if cnt != 1:
+        return' fail'
+
+    return 'success'
+
+###############################################################################
+# Test various error conditions
+
+def ogr_sql_sqlite_12():
+
+    if ogr.GetDriverByName('SQLite') is None:
+        return 'skip'
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+
+    # Invalid SQL
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = ds.ExecuteSQL( "qdfdfdf", dialect = 'SQLite' )
+    gdal.PopErrorHandler()
+    ds.ReleaseResultSet( sql_lyr )
+
+    # Non existing external datasource
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = ds.ExecuteSQL( "SELECT * FROM 'foo'.'bar'", dialect = 'SQLite' )
+    gdal.PopErrorHandler()
+    ds.ReleaseResultSet( sql_lyr )
+
+    # Non existing layer in existing external datasource
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = ds.ExecuteSQL( "SELECT * FROM 'data'.'azertyuio'", dialect = 'SQLite' )
+    gdal.PopErrorHandler()
+    ds.ReleaseResultSet( sql_lyr )
+
+    ds = None
+
+    return 'success'
+
 gdaltest_list = [
     ogr_sql_sqlite_1,
     ogr_sql_sqlite_2,
@@ -585,6 +646,8 @@ gdaltest_list = [
     ogr_sql_sqlite_8,
     ogr_sql_sqlite_9,
     ogr_sql_sqlite_10,
+    ogr_sql_sqlite_11,
+    ogr_sql_sqlite_12,
 ]
 
 if __name__ == '__main__':
