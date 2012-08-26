@@ -45,6 +45,8 @@ class OGR2SQLITEModule
 #ifdef DEBUG
     void* pDummy; /* to track memory leaks */
 #endif
+    sqlite3* hDB; /* *NOT* to be freed */
+
     OGRDataSource* poDS; /* *NOT* to be freed */
     std::vector<OGRDataSource*> apoExtraDS; /* each datasource to be freed */
 
@@ -52,19 +54,28 @@ class OGR2SQLITEModule
 
     std::map< std::pair<int,int>, OGRCoordinateTransformation*> oCachedTransformsMap;
 
+    std::map< CPLString, OGRLayer* > oMapVTableToOGRLayer;
+
   public:
-                                OGR2SQLITEModule(OGRDataSource* poDS);
+                                 OGR2SQLITEModule(OGRDataSource* poDS);
                                 ~OGR2SQLITEModule();
 
-    int                          SetToDB(sqlite3* hDB);
+    int                          Setup(OGRSQLiteDataSource* poSQLiteDS);
+    int                          Setup(sqlite3* hDB, int bAutoDestroy = FALSE);
+    sqlite3*                     GetDBHandle() { return hDB; }
+
     OGRDataSource*               GetDS() { return poDS; }
+
     OGRCoordinateTransformation* GetTransform(int nSrcSRSId, int nDstSRSId);
-    
+
     int                          AddExtraDS(OGRDataSource* poDS);
     OGRDataSource               *GetExtraDS(int nIndex);
 
-    void                         SetSQLiteDS(OGRSQLiteDataSource* poSQLiteDS);
     int                          FetchSRSId(OGRSpatialReference* poSRS);
+
+    void                         RegisterVTable(const char* pszVTableName, OGRLayer* poLayer);
+    void                         UnregisterVTable(const char* pszVTableName);
+    OGRLayer*                    GetLayerForVTable(const char* pszVTableName);
 };
 
 void OGR2SQLITE_Register();
