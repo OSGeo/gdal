@@ -1415,19 +1415,26 @@ int sqlite3_extension_init (sqlite3 * hDB, char **pzErrMsg,
 /************************************************************************/
 
 CPL_C_START
-int CPL_DLL OGR2SQLITE_static_register (sqlite3 * db, char **pzErrMsg,
+int CPL_DLL OGR2SQLITE_static_register (sqlite3 * hDB, char **pzErrMsg,
                                         const sqlite3_api_routines * pApi);
 CPL_C_END
 
 /* We just set the sqlite3_api structure with the pApi */
 /* The registration of the module will be done later by OGR2SQLITESetupModule */
 /* since we need a specific context. */
-int OGR2SQLITE_static_register (sqlite3 * db, char **pzErrMsg,
+int OGR2SQLITE_static_register (sqlite3 * hDB, char **pzErrMsg,
                                 const sqlite3_api_routines * pApi)
 {
     SQLITE_EXTENSION_INIT2 (pApi);
 
     *pzErrMsg = NULL;
+
+    /* This is only for testing purposes. This will behave as if we had */
+    /* dynamically loaded GDAL as a SQLite3 extension, except we don't need to */
+    if( CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "NO")) )
+    {
+        return OGR2SQLITESetupModule(hDB, NULL);
+    }
 
     return SQLITE_OK;
 }
