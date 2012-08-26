@@ -84,6 +84,24 @@
 #include "cpl_config.h"
 
 /* ==================================================================== */
+/*      A few sanity checks, mainly to detect problems that sometimes   */
+/*      arise with bad configured cross-compilation.                    */
+/* ==================================================================== */
+
+#if !defined(SIZEOF_INT) || SIZEOF_INT != 4
+#error "Unexpected value for SIZEOF_INT"
+#endif
+
+#if !defined(SIZEOF_UNSIGNED_LONG) || (SIZEOF_UNSIGNED_LONG != 4 && SIZEOF_UNSIGNED_LONG != 8)
+#error "Unexpected value for SIZEOF_UNSIGNED_LONG"
+#endif
+
+#if !defined(SIZEOF_VOIDP) || (SIZEOF_VOIDP != 4 && SIZEOF_VOIDP != 8)
+#error "Unexpected value for SIZEOF_VOIDP"
+#endif
+
+
+/* ==================================================================== */
 /*      This will disable most WIN32 stuff in a Cygnus build which      */
 /*      defines unix to 1.                                              */
 /* ==================================================================== */
