@@ -588,7 +588,8 @@ RPFTOCProxyRasterDataSet::RPFTOCProxyRasterDataSet
 /*                    SanityCheckOK()                                   */
 /************************************************************************/
 
-#define WARN_CHECK_DS(x) do { if (!(x)) { CPLError(CE_Warning, CPLE_AppDefined, "For %s, assert '" #x "' failed", GetDescription()); checkOK = FALSE; } } while(0)
+#define WARN_ON_FAIL(x) do { if (!(x)) { CPLError(CE_Warning, CPLE_AppDefined, "For %s, assert '" #x "' failed", GetDescription()); } } while(0)
+#define ERROR_ON_FAIL(x) do { if (!(x)) { CPLError(CE_Warning, CPLE_AppDefined, "For %s, assert '" #x "' failed", GetDescription()); checkOK = FALSE; } } while(0)
 
 int RPFTOCProxyRasterDataSet::SanityCheckOK(GDALDataset* sourceDS)
 {
@@ -602,20 +603,20 @@ int RPFTOCProxyRasterDataSet::SanityCheckOK(GDALDataset* sourceDS)
     checkDone = TRUE;
     
     sourceDS->GetGeoTransform(adfGeoTransform);
-    WARN_CHECK_DS(fabs(adfGeoTransform[GEOTRSFRM_TOPLEFT_X] - nwLong) < 1e-10);
-    WARN_CHECK_DS(fabs(adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] - nwLat) < 1e-10);
-    WARN_CHECK_DS(adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] == 0 &&
+    WARN_ON_FAIL(fabs(adfGeoTransform[GEOTRSFRM_TOPLEFT_X] - nwLong) < adfGeoTransform[1] );
+    WARN_ON_FAIL(fabs(adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] - nwLat) < fabs(adfGeoTransform[5]) );
+    WARN_ON_FAIL(adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] == 0 &&
                   adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] == 0); /* No rotation */
-    WARN_CHECK_DS(sourceDS->GetRasterCount() == 1); /* Just 1 band */
-    WARN_CHECK_DS(sourceDS->GetRasterXSize() == nRasterXSize);
-    WARN_CHECK_DS(sourceDS->GetRasterYSize() == nRasterYSize);
-    WARN_CHECK_DS(EQUAL(sourceDS->GetProjectionRef(), GetProjectionRef()));
+    ERROR_ON_FAIL(sourceDS->GetRasterCount() == 1); /* Just 1 band */
+    ERROR_ON_FAIL(sourceDS->GetRasterXSize() == nRasterXSize);
+    ERROR_ON_FAIL(sourceDS->GetRasterYSize() == nRasterYSize);
+    WARN_ON_FAIL(EQUAL(sourceDS->GetProjectionRef(), GetProjectionRef()));
     sourceDS->GetRasterBand(1)->GetBlockSize(&src_nBlockXSize, &src_nBlockYSize);
     GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
-    WARN_CHECK_DS(src_nBlockXSize == nBlockXSize);
-    WARN_CHECK_DS(src_nBlockYSize == nBlockYSize);
-    WARN_CHECK_DS(sourceDS->GetRasterBand(1)->GetColorInterpretation() == GCI_PaletteIndex);
-    WARN_CHECK_DS(sourceDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte);
+    ERROR_ON_FAIL(src_nBlockXSize == nBlockXSize);
+    ERROR_ON_FAIL(src_nBlockYSize == nBlockYSize);
+    WARN_ON_FAIL(sourceDS->GetRasterBand(1)->GetColorInterpretation() == GCI_PaletteIndex);
+    WARN_ON_FAIL(sourceDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte);
 
     return checkOK;
 }
