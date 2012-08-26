@@ -55,7 +55,15 @@
                         <xs:documentation>SrcLayer or(eclusive) SrcSQL are required elements</xs:documentation>
                     </xs:annotation>
                 </xs:element>
-                <xs:element name="SrcSQL" type="nonEmptyStringType"/>
+                <xs:element name="SrcSQL">
+                    <xs:complexType>
+                        <xs:simpleContent>
+                            <xs:extension base="nonEmptyStringType">
+                                <xs:attribute name="dialect" type="nonEmptyStringType"/>
+                            </xs:extension>
+                        </xs:simpleContent>
+                    </xs:complexType>
+                </xs:element>
                 <xs:element name="FID" type="nonEmptyStringType"/>
                 <xs:element name="Style" type="nonEmptyStringType"/>
                 <xs:element name="GeometryType" type="GeometryTypeType"/>
