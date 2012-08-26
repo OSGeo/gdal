@@ -289,12 +289,13 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(const char **ppszSQLCommand
         /* Skip literals and strings */
         if( ch == '\'' || ch == '"' )
         {
+            char chEscapeChar = ch;
             pszSQLCommand ++;
-            while( *pszSQLCommand != '\0' )
+            while( (ch = *pszSQLCommand) != '\0' )
             {
-                if( ch == '\'' && ch == '\'' )
+                if( ch == chEscapeChar && pszSQLCommand[1] == chEscapeChar )
                     pszSQLCommand ++;
-                else if( ch == '\'' )
+                else if( ch == chEscapeChar )
                 {
                     pszSQLCommand ++;
                     break;
@@ -589,6 +590,7 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
                          "Cannot open datasource '%s'",
                          oLayerDesc.osDSName.c_str() );
                 delete poSQLiteDS;
+                delete poModule;
                 VSIUnlink(pszTmpDBName);
                 CPLFree(pszTmpDBName);
                 return NULL;
@@ -603,6 +605,7 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
                          oLayerDesc.osDSName.c_str() );
                 delete poOtherDS;
                 delete poSQLiteDS;
+                delete poModule;
                 VSIUnlink(pszTmpDBName);
                 CPLFree(pszTmpDBName);
                 return NULL;
@@ -739,6 +742,7 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
     if( !poSQLiteDS->Open(pszTmpDBName, TRUE) )
     {
         delete poSQLiteDS;
+        delete poModule;
         VSIUnlink(pszTmpDBName);
         CPLFree(pszTmpDBName);
         return NULL;
@@ -773,6 +777,7 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
         }
 
         delete poSQLiteDS;
+        delete poModule;
         VSIUnlink(pszTmpDBName);
         CPLFree(pszTmpDBName);
 
@@ -794,6 +799,7 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
             sqlite3_finalize( hSQLStmt );
 
             delete poSQLiteDS;
+            delete poModule;
             VSIUnlink(pszTmpDBName);
             CPLFree(pszTmpDBName);
 
@@ -806,6 +812,7 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
             sqlite3_finalize( hSQLStmt );
 
             delete poSQLiteDS;
+            delete poModule;
             VSIUnlink(pszTmpDBName);
             CPLFree(pszTmpDBName);
 

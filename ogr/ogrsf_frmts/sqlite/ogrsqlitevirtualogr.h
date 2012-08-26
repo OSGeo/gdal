@@ -42,6 +42,9 @@
 
 class OGR2SQLITEModule
 {
+#ifdef DEBUG
+    void* pDummy; /* to track memory leaks */
+#endif
     OGRDataSource* poDS; /* *NOT* to be freed */
     std::vector<OGRDataSource*> apoExtraDS; /* each datasource to be freed */
 

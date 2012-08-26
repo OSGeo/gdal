@@ -132,13 +132,18 @@ int OGRSQLiteSelectLayer::GetFeatureCount( int bForce )
 /* -------------------------------------------------------------------- */
 /*      Execute.                                                        */
 /* -------------------------------------------------------------------- */
+    char *pszErrMsg = NULL;
     char **papszResult;
     int nRowCount, nColCount;
     int nResult = -1;
 
     if( sqlite3_get_table( poDS->GetDB(), osFeatureCountSQL, &papszResult, 
-                           &nRowCount, &nColCount, NULL ) != SQLITE_OK )
+                           &nRowCount, &nColCount, &pszErrMsg ) != SQLITE_OK )
+    {
+        CPLDebug("SQLITE", "Error: %s", pszErrMsg);
+        sqlite3_free(pszErrMsg);
         return OGRLayer::GetFeatureCount(bForce);
+    }
 
     if( nRowCount == 1 && nColCount == 1 )
     {
@@ -275,6 +280,15 @@ OGRSQLiteLayer* OGRSQLiteSelectLayer::GetBaseLayer(size_t& i)
                                         osGeomColumn.c_str());
         poUnderlyingLayer =
             (OGRSQLiteLayer*) poDS->GetLayerByName(osNewUnderlyingTableName);
+    }
+
+    if( poUnderlyingLayer != NULL && poSRS != NULL &&
+        poUnderlyingLayer->GetSpatialRef() != NULL &&
+        poSRS != poUnderlyingLayer->GetSpatialRef() &&
+        !poSRS->IsSame(poUnderlyingLayer->GetSpatialRef()) )
+    {
+        CPLDebug("SQLITE", "Result layer and base layer don't have the same SRS.");
+        return NULL;
     }
 
     return poUnderlyingLayer;
