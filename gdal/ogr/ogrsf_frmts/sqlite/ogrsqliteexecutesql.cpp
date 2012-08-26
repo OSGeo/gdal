@@ -224,7 +224,9 @@ static void OGR2SQLITEAddLayer( const char*& pszStart, int& nNum,
         if( oIter == oSet.end() )
         {
             oLayerDesc.osSubstitutedName = CPLString().Printf("_OGR_%d", nNum ++);
+            osModifiedSQL += "\"";
             osModifiedSQL += oLayerDesc.osSubstitutedName;
+            osModifiedSQL += "\"";
         }
         else
         {
@@ -303,6 +305,43 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(const char **ppszSQLCommand
                 pszSQLCommand ++;
             }
         }
+
+        else if( EQUALN(pszSQLCommand, "ogr_layer_extent(", strlen("ogr_layer_extent(")) )
+        {
+            pszSQLCommand += strlen("ogr_layer_extent(");
+            nParenthesisLevel ++;
+
+            while( isspace((int)*pszSQLCommand) )
+                pszSQLCommand ++;
+
+            OGR2SQLITEAddLayer(pszStart, nNum,
+                                pszSQLCommand, oSet, osModifiedSQL);
+        }
+
+        else if( EQUALN(pszSQLCommand, "ogr_layer_srid(", strlen("ogr_layer_srid(")) )
+        {
+            pszSQLCommand += strlen("ogr_layer_srid(");
+            nParenthesisLevel ++;
+
+            while( isspace((int)*pszSQLCommand) )
+                pszSQLCommand ++;
+
+            OGR2SQLITEAddLayer(pszStart, nNum,
+                                pszSQLCommand, oSet, osModifiedSQL);
+        }
+
+        else if( EQUALN(pszSQLCommand, "ogr_layer_geometrytype(", strlen("ogr_layer_geometrytype(")) )
+        {
+            pszSQLCommand += strlen("ogr_layer_geometrytype(");
+            nParenthesisLevel ++;
+
+            while( isspace((int)*pszSQLCommand) )
+                pszSQLCommand ++;
+
+            OGR2SQLITEAddLayer(pszStart, nNum,
+                                pszSQLCommand, oSet, osModifiedSQL);
+        }
+
         else if( EQUALN(pszSQLCommand, "FROM", strlen("FROM")) &&
                  isspace(pszSQLCommand[strlen("FROM")]) )
         {
@@ -535,7 +574,7 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
 /*      Attach the Virtual Table OGR2SQLITE module to it.               */
 /* -------------------------------------------------------------------- */
     OGR2SQLITEModule* poModule = new OGR2SQLITEModule(poDS);
-    poModule->SetToDB(poSQLiteDS->GetDB());
+    poModule->Setup(poSQLiteDS);
 
 /* -------------------------------------------------------------------- */
 /*      Analysze the statement to determine which tables will be used.  */
@@ -748,8 +787,7 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
         return NULL;
     }
     sqlite3* hDB = poSQLiteDS->GetDB();
-    poModule->SetToDB(hDB);
-    poModule->SetSQLiteDS(poSQLiteDS);
+    poModule->Setup(poSQLiteDS);
 
 /* -------------------------------------------------------------------- */
 /*      Prepare the statement.                                          */
