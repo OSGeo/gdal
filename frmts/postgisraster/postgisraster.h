@@ -176,13 +176,11 @@ public:
 
     virtual double GetNoDataValue(int *pbSuccess = NULL);
     virtual CPLErr SetNoDataValue(double);
-    virtual void GetBlockSize(int *, int *);
 	virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int, GDALDataType, 
 		int, int);
     virtual CPLErr IReadBlock(int, int, void *);
     int GetBand();
     GDALDataset* GetDataset();
-    virtual int HasArbitraryOverviews();
     virtual int GetOverviewCount();
     virtual GDALRasterBand * GetOverview(int);
     virtual GDALColorInterp GetColorInterpretation();
