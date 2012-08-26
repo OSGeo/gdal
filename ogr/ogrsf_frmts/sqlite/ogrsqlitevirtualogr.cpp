@@ -31,7 +31,7 @@
 #include "ogr_api.h"
 
 #define VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
-//#define DEBUG_OGR2SQLITE
+#define DEBUG_OGR2SQLITE
 
 #if defined(SPATIALITE_AMALGAMATION)
 #include "ogrsqlite3ext.h"
@@ -56,7 +56,7 @@ SQLITE_EXTENSION_INIT1
 /*                        OGR2SQLITEModule()                            */
 /************************************************************************/
 
-OGR2SQLITEModule::OGR2SQLITEModule(OGRDataSource* poDS) : poDS(poDS), poSQLiteDS(NULL)
+OGR2SQLITEModule::OGR2SQLITEModule(OGRDataSource* poDS) : hDB(NULL), poDS(poDS), poSQLiteDS(NULL)
 {
 #ifdef DEBUG
     pDummy = CPLMalloc(1);
@@ -105,12 +105,13 @@ OGRDataSource* OGR2SQLITEModule::GetExtraDS(int nIndex)
 }
 
 /************************************************************************/
-/*                            SetSQLiteDS()                             */
+/*                                Setup()                               */
 /************************************************************************/
 
-void OGR2SQLITEModule::SetSQLiteDS(OGRSQLiteDataSource* poSQLiteDS)
+int OGR2SQLITEModule::Setup(OGRSQLiteDataSource* poSQLiteDS)
 {
     this->poSQLiteDS = poSQLiteDS;
+    return Setup(poSQLiteDS->GetDB());
 }
 
 /************************************************************************/
@@ -172,6 +173,53 @@ OGRCoordinateTransformation* OGR2SQLITEModule::GetTransform(int nSrcSRSId,
         return oIter->second;
 }
 
+/************************************************************************/
+/*                          RegisterVTable()                            */
+/************************************************************************/
+
+void OGR2SQLITEModule::RegisterVTable(const char* pszVTableName,
+                                      OGRLayer* poLayer)
+{
+    oMapVTableToOGRLayer[pszVTableName] = poLayer;
+}
+
+/************************************************************************/
+/*                          UnregisterVTable()                          */
+/************************************************************************/
+
+void OGR2SQLITEModule::UnregisterVTable(const char* pszVTableName)
+{
+    oMapVTableToOGRLayer[pszVTableName] = NULL;
+}
+
+/************************************************************************/
+/*                          GetLayerForVTable()                         */
+/************************************************************************/
+
+OGRLayer* OGR2SQLITEModule::GetLayerForVTable(const char* pszVTableName)
+{
+    std::map<CPLString, OGRLayer*>::iterator oIter =
+        oMapVTableToOGRLayer.find(pszVTableName);
+    if( oIter == oMapVTableToOGRLayer.end() )
+        return NULL;
+
+    OGRLayer* poLayer = oIter->second;
+    if( poLayer == NULL )
+    {
+        /* If the associate layer is null, then try to "ping" the virtual */
+        /* table since we know that we have managed to create it before */
+        if( sqlite3_exec(hDB,
+                     CPLSPrintf("PRAGMA table_info(\"%s\")",
+                                OGRSQLiteEscapeName(pszVTableName).c_str()),
+                     NULL, NULL, NULL) == SQLITE_OK )
+        {
+            poLayer = oMapVTableToOGRLayer[pszVTableName];
+        }
+    }
+
+    return poLayer;
+}
+
 /* See http://www.sqlite.org/vtab.html for the documentation on how to
    implement a new module for the Virtual Table mechanism. */
 
@@ -187,6 +235,7 @@ typedef struct
     char                 *zErrMsg;
 
     /* Extension fields */
+    char                 *pszVTableName;
     OGR2SQLITEModule     *poModule;
     OGRDataSource        *poDS;
     int                   bCloseDS;
@@ -283,7 +332,7 @@ static int OGR2SQLITEDetectSuspiciousUsage(sqlite3* hDB,
         const char* pszSQL;
 
         pszSQL = CPLSPrintf("SELECT name, sql FROM %s "
-                            "WHERE type = 'trigger' AND (sql LIKE '%%%s%%' OR sql LIKE '%%\"%s\"%%')",
+                            "WHERE type = 'trigger' AND (sql LIKE '%%%s%%' OR sql LIKE '%%\"%s\"%%' OR sql LIKE '%%ogr_layer_%%')",
                             aosDatabaseNames[i].c_str(),
                             pszVirtualTableName,
                             OGRSQLiteEscapeName(pszVirtualTableName).c_str());
@@ -328,9 +377,12 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
     OGRDataSource* poDS = NULL;
     int bExposeOGR_STYLE = FALSE;
     int bCloseDS = FALSE;
-
-    //CPLDebug("OGR2SQLITE", "Connect/Create");
     int i;
+
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "ConnectCreate(%s)", argv[2]);
+#endif
+
     /*for(i=0;i<argc;i++)
         printf("[%d] %s\n", i, argv[i]);*/
 
@@ -453,11 +505,14 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
     OGR2SQLITE_vtab* vtab =
                 (OGR2SQLITE_vtab*) CPLCalloc(1, sizeof(OGR2SQLITE_vtab));
     /* We dont need to fill the non-extended fields */
+    vtab->pszVTableName = CPLStrdup(OGRSQLiteEscapeName(argv[2]));
     vtab->poModule = poModule;
     vtab->poDS = poDS;
     vtab->bCloseDS = bCloseDS;
     vtab->poLayer = poLayer;
     vtab->nMyRef = 0;
+
+    poModule->RegisterVTable(vtab->pszVTableName, poLayer);
 
     *ppVTab = (sqlite3_vtab*) vtab;
 
@@ -601,12 +656,17 @@ int OGR2SQLITE_BestIndex(sqlite3_vtab *pVTab, sqlite3_index_info* pIndex)
 static
 int OGR2SQLITE_DisconnectDestroy(sqlite3_vtab *pVTab)
 {
-    //CPLDebug("OGR2SQLITE", "DisconnectDestroy");
-
     OGR2SQLITE_vtab* pMyVTab = (OGR2SQLITE_vtab*) pVTab;
+
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "DisconnectDestroy(%s)",pMyVTab->pszVTableName);
+#endif
+
     sqlite3_free(pMyVTab->zErrMsg);
     if( pMyVTab->bCloseDS )
         delete pMyVTab->poDS;
+    pMyVTab->poModule->UnregisterVTable(pMyVTab->pszVTableName);
+    CPLFree(pMyVTab->pszVTableName);
     CPLFree(pMyVTab);
 
     return SQLITE_OK;
@@ -1326,6 +1386,169 @@ static const struct sqlite3_module sOGR2SQLITEModule =
 };
 
 /************************************************************************/
+/*                           OGR2SQLITE_GetLayer()                      */
+/************************************************************************/
+
+static
+OGRLayer* OGR2SQLITE_GetLayer(const char* pszFuncName,
+                              sqlite3_context* pContext,
+                              int argc, sqlite3_value** argv)
+{
+    if( argc != 1 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s: %s(): %s",
+                 "VirtualOGR",
+                 pszFuncName,
+                 "Invalid number of arguments");
+        sqlite3_result_null (pContext);
+        return NULL;
+    }
+
+    if( sqlite3_value_type (argv[0]) != SQLITE_TEXT )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s: %s(): %s",
+                 "VirtualOGR",
+                 pszFuncName,
+                 "Invalid argument type");
+        sqlite3_result_null (pContext);
+        return NULL;;
+    }
+
+    const char* pszVTableName = (const char*)sqlite3_value_text(argv[0]);
+
+    OGR2SQLITEModule* poModule =
+                    (OGR2SQLITEModule*) sqlite3_user_data(pContext);
+
+    OGRLayer* poLayer = poModule->GetLayerForVTable(OGRSQLiteParamsUnquote(pszVTableName));
+    if( poLayer == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s: %s(): %s",
+                 "VirtualOGR",
+                 pszFuncName,
+                 "Unknown virtual table");
+        sqlite3_result_null (pContext);
+        return NULL;
+    }
+
+    return poLayer;
+}
+
+/************************************************************************/
+/*                       OGR2SQLITE_ogr_layer_Extent()                  */
+/************************************************************************/
+
+static
+void OGR2SQLITE_ogr_layer_Extent(sqlite3_context* pContext,
+                                 int argc, sqlite3_value** argv)
+{
+    OGRLayer* poLayer = OGR2SQLITE_GetLayer("ogr_layer_Extent",
+                                            pContext, argc, argv);
+    if( poLayer == NULL )
+        return;
+
+    OGR2SQLITEModule* poModule =
+                    (OGR2SQLITEModule*) sqlite3_user_data(pContext);
+
+    if( poLayer->GetGeomType() == wkbNone )
+    {
+        sqlite3_result_null (pContext);
+        return;
+    }
+
+    OGREnvelope sExtent;
+    if( poLayer->GetExtent(&sExtent) != OGRERR_NONE )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%s: %s(): %s",
+                 "VirtualOGR",
+                 "ogr_layer_Extent",
+                 "Cannot fetch layer extent");
+        sqlite3_result_null (pContext);
+        return;
+    }
+
+    OGRPolygon oPoly;
+    OGRLinearRing* poRing = new OGRLinearRing();
+    oPoly.addRingDirectly(poRing);
+    poRing->addPoint(sExtent.MinX, sExtent.MinY);
+    poRing->addPoint(sExtent.MaxX, sExtent.MinY);
+    poRing->addPoint(sExtent.MaxX, sExtent.MaxY);
+    poRing->addPoint(sExtent.MinX, sExtent.MaxY);
+    poRing->addPoint(sExtent.MinX, sExtent.MinY);
+
+    GByte* pabySLBLOB = NULL;
+    int nBLOBLen = 0;
+    int nSRID = poModule->FetchSRSId(poLayer->GetSpatialRef());
+    if( OGRSQLiteLayer::ExportSpatiaLiteGeometry(
+                    &oPoly, nSRID, wkbNDR, FALSE,
+                    FALSE, FALSE, &pabySLBLOB, &nBLOBLen ) == CE_None )
+    {
+        sqlite3_result_blob(pContext, pabySLBLOB, nBLOBLen, CPLFree);
+    }
+    else
+    {
+        sqlite3_result_null (pContext);
+    }
+}
+
+/************************************************************************/
+/*                       OGR2SQLITE_ogr_layer_SRID()                    */
+/************************************************************************/
+
+static
+void OGR2SQLITE_ogr_layer_SRID(sqlite3_context* pContext,
+                                 int argc, sqlite3_value** argv)
+{
+    OGRLayer* poLayer = OGR2SQLITE_GetLayer("OGR2SQLITE_ogr_layer_SRID",
+                                            pContext, argc, argv);
+    if( poLayer == NULL )
+        return;
+
+    OGR2SQLITEModule* poModule =
+                    (OGR2SQLITEModule*) sqlite3_user_data(pContext);
+
+    if( poLayer->GetGeomType() == wkbNone )
+    {
+        sqlite3_result_null (pContext);
+        return;
+    }
+
+    int nSRID = poModule->FetchSRSId(poLayer->GetSpatialRef());
+    sqlite3_result_int(pContext, nSRID);
+}
+
+/************************************************************************/
+/*                 OGR2SQLITE_ogr_layer_GeometryType()                  */
+/************************************************************************/
+
+static
+void OGR2SQLITE_ogr_layer_GeometryType(sqlite3_context* pContext,
+                                 int argc, sqlite3_value** argv)
+{
+    OGRLayer* poLayer = OGR2SQLITE_GetLayer("OGR2SQLITE_ogr_layer_GeometryType",
+                                            pContext, argc, argv);
+    if( poLayer == NULL )
+        return;
+
+    OGRwkbGeometryType eType = poLayer->GetGeomType();
+
+    if( eType == wkbNone )
+    {
+        sqlite3_result_null (pContext);
+        return;
+    }
+
+    const char* psz2DName = OGRToOGCGeomType(eType);
+    if( eType & wkb25DBit )
+        sqlite3_result_text( pContext, CPLSPrintf("%s Z", psz2DName), -1, SQLITE_TRANSIENT );
+    else
+        sqlite3_result_text( pContext, psz2DName, -1, SQLITE_TRANSIENT );
+}
+
+/************************************************************************/
 /*                      OGR2SQLITEDestroyModule()                       */
 /************************************************************************/
 
@@ -1336,45 +1559,50 @@ static void OGR2SQLITEDestroyModule(void* pData)
 }
 
 /************************************************************************/
-/*                      OGR2SQLITESetupModule()                         */
+/*                              Setup()                                 */
 /************************************************************************/
 
-static int OGR2SQLITESetupModule(sqlite3* hDB, OGR2SQLITEModule* poModule)
+int OGR2SQLITEModule::Setup(sqlite3* hDB, int bAutoDestroy)
 {
     int rc;
 
-    if( poModule != NULL )
-        rc = sqlite3_create_module(hDB, "VirtualOGR", &sOGR2SQLITEModule, poModule);
-    else
-    {
-        poModule = new OGR2SQLITEModule(NULL);
-        rc = sqlite3_create_module_v2(hDB, "VirtualOGR", &sOGR2SQLITEModule, poModule,
-                                      OGR2SQLITEDestroyModule);
-    }
-    if( rc != SQLITE_OK )
-        return rc;
+    this->hDB = hDB;
 
-    rc= sqlite3_create_function(hDB, "ogr_version", 0, SQLITE_ANY, NULL,
+    if( !bAutoDestroy )
+        rc = sqlite3_create_module(hDB, "VirtualOGR", &sOGR2SQLITEModule, this);
+    else
+        rc = sqlite3_create_module_v2(hDB, "VirtualOGR", &sOGR2SQLITEModule, this,
+                                      OGR2SQLITEDestroyModule);
+    if( rc != SQLITE_OK )
+        return FALSE;
+
+    rc= sqlite3_create_function(hDB, "ogr_version", 0, SQLITE_ANY, this,
                                 OGR2SQLITE_ogr_version, NULL, NULL);
     if( rc != SQLITE_OK )
-        return rc;
+        return FALSE;
+
+    rc= sqlite3_create_function(hDB, "ogr_layer_Extent", 1, SQLITE_ANY, this,
+                                OGR2SQLITE_ogr_layer_Extent, NULL, NULL);
+    if( rc != SQLITE_OK )
+        return FALSE;
+
+    rc= sqlite3_create_function(hDB, "ogr_layer_SRID", 1, SQLITE_ANY, this,
+                                OGR2SQLITE_ogr_layer_SRID, NULL, NULL);
+    if( rc != SQLITE_OK )
+        return FALSE;
+
+    rc= sqlite3_create_function(hDB, "ogr_layer_GeometryType", 1, SQLITE_ANY, this,
+                                OGR2SQLITE_ogr_layer_GeometryType, NULL, NULL);
+    if( rc != SQLITE_OK )
+        return FALSE;
 
     // Custom and undocumented function, not sure I'll keep it.
-    rc = sqlite3_create_function(hDB, "Transform3", 3, SQLITE_ANY, poModule,
+    rc = sqlite3_create_function(hDB, "Transform3", 3, SQLITE_ANY, this,
                                  OGR2SQLITE_Transform, NULL, NULL);
     if( rc != SQLITE_OK )
-        return rc;
+        return FALSE;
 
-    return rc;
-}
-
-/************************************************************************/
-/*                              SetToDB()                               */
-/************************************************************************/
-
-int OGR2SQLITEModule::SetToDB(sqlite3* hDB)
-{
-    return OGR2SQLITESetupModule(hDB, this) == SQLITE_OK;
+    return TRUE;
 }
 
 #ifdef VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
@@ -1393,19 +1621,21 @@ int sqlite3_extension_init (sqlite3 * hDB, char **pzErrMsg,
                             const sqlite3_api_routines * pApi)
 {
     CPLDebug("OGR", "OGR SQLite extension loading...");
-    
+
     SQLITE_EXTENSION_INIT2(pApi);
-    
+
     *pzErrMsg = NULL;
 
     OGRRegisterAll();
 
-    int rc = OGR2SQLITESetupModule(hDB, NULL);
-    
-    if( rc == SQLITE_OK )
+    OGR2SQLITEModule* poModule = new OGR2SQLITEModule(NULL);
+    if( poModule->Setup(hDB, TRUE) )
+    {
         CPLDebug("OGR", "OGR SQLite extension loaded");
-
-    return rc;
+        return SQLITE_OK;
+    }
+    else
+        return SQLITE_ERROR;
 }
 
 #endif // VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
@@ -1433,7 +1663,8 @@ int OGR2SQLITE_static_register (sqlite3 * hDB, char **pzErrMsg,
     /* dynamically loaded GDAL as a SQLite3 extension, except we don't need to */
     if( CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "NO")) )
     {
-        return OGR2SQLITESetupModule(hDB, NULL);
+        OGR2SQLITEModule* poModule = new OGR2SQLITEModule(NULL);
+        return poModule->Setup(hDB, TRUE) ? SQLITE_OK : SQLITE_ERROR;
     }
 
     return SQLITE_OK;
