@@ -41,16 +41,16 @@ import gdaltest
 ###############################################################################
 def ogr_virtualogr_run_sql(sql_statement):
 
-    import sqlite3
     gdal.SetConfigOption('OGR_SQLITE_STATIC_VIRTUAL_OGR', 'YES')
-    conn = sqlite3.connect(':memory:')
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource(':memory:')
     gdal.SetConfigOption('OGR_SQLITE_STATIC_VIRTUAL_OGR', None)
-    success = True
-    try:
-        conn.execute(sql_statement)
-    except:
-        success = False
-    conn.close()
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = ds.ExecuteSQL(sql_statement)
+    gdal.PopErrorHandler()
+    success = gdal.GetLastErrorMsg() == ''
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
 
     return success
 
@@ -58,11 +58,6 @@ def ogr_virtualogr_run_sql(sql_statement):
 # Basic tests
 
 def ogr_virtualogr_1():
-
-    try:
-        import sqlite3
-    except:
-        return 'skip'
 
     if ogr.GetDriverByName('SQLite') is None:
         return 'skip'
@@ -139,45 +134,34 @@ def ogr_virtualogr_1():
 
 def ogr_virtualogr_2():
 
-    try:
-        import sqlite3
-    except:
-        return 'skip'
-
     if ogr.GetDriverByName('SQLite') is None:
         return 'skip'
 
-    try:
-        os.unlink('tmp/ogr_virtualogr_2.db')
-    except:
-        pass
-
-    import sqlite3
     gdal.SetConfigOption('OGR_SQLITE_STATIC_VIRTUAL_OGR', 'YES')
-    conn = sqlite3.connect('tmp/ogr_virtualogr_2.db')
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_2.db')
     gdal.SetConfigOption('OGR_SQLITE_STATIC_VIRTUAL_OGR', None)
-    conn.execute("PRAGMA SYNCHRONOUS = OFF")
-    conn.execute("CREATE VIRTUAL TABLE foo USING VirtualOGR('data/poly.shp')")
-    conn.execute("CREATE TABLE spy_table (spy_content VARCHAR)")
-    conn.execute("CREATE TABLE regular_table (bar VARCHAR)")
-    conn.execute("CREATE TRIGGER spy_trigger INSERT ON regular_table BEGIN " + \
-                 "INSERT OR REPLACE INTO spy_table (spy_content) " + \
-                 "SELECT OGR_STYLE FROM foo; END;")
-    conn.close()
+    ds.ExecuteSQL("CREATE VIRTUAL TABLE foo USING VirtualOGR('data/poly.shp')")
+    ds.ExecuteSQL("CREATE TABLE spy_table (spy_content VARCHAR)")
+    ds.ExecuteSQL("CREATE TABLE regular_table (bar VARCHAR)")
+    ds.ExecuteSQL("CREATE TRIGGER spy_trigger INSERT ON regular_table BEGIN " + \
+                  "INSERT OR REPLACE INTO spy_table (spy_content) " + \
+                  "SELECT OGR_STYLE FROM foo; END;")
+    ds = None
 
     gdal.SetConfigOption('OGR_SQLITE_STATIC_VIRTUAL_OGR', 'YES')
-    conn = sqlite3.connect('tmp/ogr_virtualogr_2.db')
+    ds = ogr.Open('/vsimem/ogr_virtualogr_2.db')
     gdal.SetConfigOption('OGR_SQLITE_STATIC_VIRTUAL_OGR', None)
-    conn.execute("PRAGMA SYNCHRONOUS = OFF")
-    try:
-        conn.execute("INSERT INTO regular_table (bar) VALUES ('bar')")
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds.ExecuteSQL("INSERT INTO regular_table (bar) VALUES ('bar')")
+    gdal.PopErrorHandler()
+    did_not_get_error = gdal.GetLastErrorMsg() == ''
+    ds = None
+    gdal.Unlink('/vsimem/ogr_virtualogr_2.db')
+
+    if did_not_get_error:
         gdaltest.post_reason('expected a failure')
         return 'fail'
-    except:
-        pass
-    finally:
-        conn.close()
-        os.unlink('tmp/ogr_virtualogr_2.db')
 
     return 'success'
 
