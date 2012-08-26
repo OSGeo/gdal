@@ -22,7 +22,7 @@ refer to the following pages:
 <li><a href="http://www.sqlite.org/lang_delete.html">DELETE</a> documentation</li>
 </ul>
 
-\section ogr_sql_sqlite_select SELECT
+\section ogr_sql_sqlite_select SELECT statement
 
 The SELECT statement is used to fetch layer features (analogous to table
 rows in an RDBMS) with the result of the query represented as a temporary layer
@@ -89,7 +89,7 @@ OGRFeature(SELECT):0
   POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,479647.0 4765369.5,479730.375 4765400.5,480039.03125 4765539.5,480035.34375 4765558.5,480159.78125 4765610.5,480202.28125 4765482.0,480365.0 4765015.5,480389.6875 4764950.0,480133.96875 4764856.5,480080.28125 4764979.5,480082.96875 4765049.5,480088.8125 4765139.5,480059.90625 4765239.5,480019.71875 4765319.5,479980.21875 4765409.5,479909.875 4765370.0,479859.875 4765270.0,479819.84375 4765180.5))
 \endcode 
 
-\subsection ogr_sql_sqlite_style OGR_STYLE
+\subsection ogr_sql_sqlite_style OGR_STYLE special field
 
 The <b>OGR_STYLE</b> special field represents the style string of the feature
 returned by OGRFeature::GetStyleString(). By using this field and the
@@ -100,7 +100,7 @@ For example we can select the annotation features as:
 SELECT * FROM nation WHERE OGR_STYLE LIKE 'LABEL%'
 \endcode 
 
-\subsection ogr_sql_sqlite_spatial Spatial functions
+\subsection ogr_sql_sqlite_spatialite Spatialite SQL functions
 
 When GDAL/OGR is build with support for the <a href="http://www.gaia-gis.it/spatialite/">Spatialite</a> library,
 a lot of <a href="http://www.gaia-gis.it/gaia-sins/spatialite-sql-3.0.0.html">extra SQL functions</a>,
@@ -122,6 +122,22 @@ OGRFeature(SELECT):1
 OGRFeature(SELECT):2
   EAS_ID (Real) = 170
   area (Real) = 5268.8125
+\endcode
+
+\subsection ogr_sql_sqlite_layer_function OGR layer SQL functions
+
+The following SQL functions are available and operate on a layer name :
+<b>ogr_layer_Extent()</b>, <b>ogr_layer_SRID()</b> and <b>ogr_layer_GeometryType()</b><p>
+
+\code
+SELECT ogr_layer_Extent('poly'), ogr_layer_SRID('poly') as srid, ogr_layer_GeometryType('poly') as geomtype
+
+returns:
+
+OGRFeature(SELECT):0
+  srid (Integer) = 40004
+  geomtype (String) = POLYGON
+  POLYGON ((478315.53125 4762880.5,481645.3125 4762880.5,481645.3125 4765610.5,478315.53125 4765610.5,478315.53125 4762880.5))
 \endcode
 
 */

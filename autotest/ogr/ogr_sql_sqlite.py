@@ -635,6 +635,146 @@ def ogr_sql_sqlite_12():
 
     return 'success'
 
+###############################################################################
+# Test ogr_layer_Extent(), ogr_layer_SRID() and ogr_layer_GeometryType()
+
+def ogr_sql_sqlite_13():
+
+    if ogr.GetDriverByName('SQLite') is None:
+        return 'skip'
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+
+    lyr = ds.CreateLayer( "non_spatial", geom_type = ogr.wkbNone )
+
+    lyr = ds.CreateLayer( "my_layer", geom_type = ogr.wkbLineString, srs = srs )
+    field_defn = ogr.FieldDefn('intfield', ogr.OFTInteger)
+    lyr.CreateField(field_defn)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING (0 1,2 3)'))
+    lyr.CreateFeature(feat)
+    feat = None
+
+    # Test with invalid parameter
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = ds.ExecuteSQL( "SELECT ogr_layer_Extent(12)", dialect = 'SQLite' )
+    gdal.PopErrorHandler()
+    feat = sql_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    ds.ReleaseResultSet( sql_lyr )
+
+    if geom is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test on non existing layer
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = ds.ExecuteSQL( "SELECT ogr_layer_Extent('foo')", dialect = 'SQLite' )
+    gdal.PopErrorHandler()
+    feat = sql_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    ds.ReleaseResultSet( sql_lyr )
+
+    if geom is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test ogr_layer_Extent()
+    sql_lyr = ds.ExecuteSQL( "SELECT ogr_layer_Extent('my_layer')", dialect = 'SQLite' )
+    feat = sql_lyr.GetNextFeature()
+    geom_wkt = feat.GetGeometryRef().ExportToWkt()
+    feat = None
+    ds.ReleaseResultSet( sql_lyr )
+
+    if geom_wkt != 'POLYGON ((0 1,2 1,2 3,0 3,0 1))':
+        gdaltest.post_reason('fail')
+        print(geom_wkt)
+        return 'fail'
+
+    # Test ogr_layer_Extent() on a non spatial layer
+    sql_lyr = ds.ExecuteSQL( "SELECT ogr_layer_Extent('non_spatial')", dialect = 'SQLite' )
+    feat = sql_lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    ds.ReleaseResultSet( sql_lyr )
+
+    if geom is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test ogr_layer_SRID()
+    sql_lyr = ds.ExecuteSQL( "SELECT ogr_layer_SRID('my_layer') AS the_srid", dialect = 'SQLite' )
+    feat = sql_lyr.GetNextFeature()
+    the_srid = feat.GetField('the_srid')
+    feat = None
+    ds.ReleaseResultSet( sql_lyr )
+
+    if the_srid != 4326:
+        gdaltest.post_reason('fail')
+        print(the_srid)
+        return 'fail'
+
+    # Test ogr_layer_SRID() on a non spatial layer
+    sql_lyr = ds.ExecuteSQL( "SELECT ogr_layer_SRID('non_spatial') AS the_srid", dialect = 'SQLite' )
+    feat = sql_lyr.GetNextFeature()
+    the_srid = feat.GetField('the_srid')
+    feat = None
+    ds.ReleaseResultSet( sql_lyr )
+
+    if the_srid is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test ogr_layer_GeometryType()
+    sql_lyr = ds.ExecuteSQL( "SELECT ogr_layer_GeometryType('my_layer') AS the_geometrytype", dialect = 'SQLite' )
+    feat = sql_lyr.GetNextFeature()
+    the_geometrytype = feat.GetField('the_geometrytype')
+    feat = None
+    ds.ReleaseResultSet( sql_lyr )
+
+    if the_geometrytype != 'LINESTRING':
+        gdaltest.post_reason('fail')
+        print(the_geometrytype)
+        return 'fail'
+
+    # Test ogr_layer_GeometryType() on a non spatial layer
+    sql_lyr = ds.ExecuteSQL( "SELECT ogr_layer_GeometryType('non_spatial') AS the_geometrytype", dialect = 'SQLite' )
+    feat = sql_lyr.GetNextFeature()
+    the_geometrytype = feat.GetField('the_geometrytype')
+    feat = None
+    ds.ReleaseResultSet( sql_lyr )
+
+    if the_geometrytype is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test on a external virtual table
+    ds_shape = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource('/vsimem/ogr_sql_sqlite_13.shp')
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    lyr = ds_shape.CreateLayer('ogr_sql_sqlite_13', srs = srs)
+    ds_shape = None
+
+    sql_lyr = ds.ExecuteSQL( "SELECT ogr_layer_SRID('/vsimem/ogr_sql_sqlite_13.shp'.ogr_sql_sqlite_13) AS the_srid_shp", dialect = 'SQLite' )
+    feat = sql_lyr.GetNextFeature()
+    the_srid_shp = feat.GetField('the_srid_shp')
+    feat = None
+    ds.ReleaseResultSet( sql_lyr )
+
+    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource('/vsimem/ogr_sql_sqlite_13.shp')
+
+    if the_srid_shp != 32631:
+        gdaltest.post_reason('fail')
+        print(the_srid_shp)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
 gdaltest_list = [
     ogr_sql_sqlite_1,
     ogr_sql_sqlite_2,
@@ -648,6 +788,7 @@ gdaltest_list = [
     ogr_sql_sqlite_10,
     ogr_sql_sqlite_11,
     ogr_sql_sqlite_12,
+    ogr_sql_sqlite_13,
 ]
 
 if __name__ == '__main__':
