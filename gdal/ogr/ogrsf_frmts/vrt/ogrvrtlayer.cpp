@@ -387,7 +387,10 @@ try_again:
 
     if( pszSQL != NULL )
     {
-        poSrcLayer = poSrcDS->ExecuteSQL( pszSQL, NULL, NULL );
+        const char* pszDialect = CPLGetXMLValue( psLTree, "SrcSQL.dialect", NULL );
+        if( pszDialect != NULL && pszDialect[0] == '\0' )
+            pszDialect = NULL;
+        poSrcLayer = poSrcDS->ExecuteSQL( pszSQL, NULL, pszDialect );
         if( poSrcLayer == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
