@@ -58,6 +58,9 @@ SQLITE_EXTENSION_INIT1
 
 OGR2SQLITEModule::OGR2SQLITEModule(OGRDataSource* poDS) : poDS(poDS), poSQLiteDS(NULL)
 {
+#ifdef DEBUG
+    pDummy = CPLMalloc(1);
+#endif
 }
 
 /************************************************************************/
@@ -66,6 +69,10 @@ OGR2SQLITEModule::OGR2SQLITEModule(OGRDataSource* poDS) : poDS(poDS), poSQLiteDS
 
 OGR2SQLITEModule::~OGR2SQLITEModule()
 {
+#ifdef DEBUG
+    CPLFree(pDummy);
+#endif
+
     std::map< std::pair<int,int>, OGRCoordinateTransformation*>::iterator oIter =
         oCachedTransformsMap.begin();
     for(; oIter != oCachedTransformsMap.end(); ++oIter)
@@ -618,40 +625,42 @@ int OGR2SQLITE_Open(sqlite3_vtab *pVTab, sqlite3_vtab_cursor **ppCursor)
              pMyVTab->poDS->GetName(), pMyVTab->poLayer->GetName());
 #endif
 
-    OGR2SQLITE_vtab_cursor* pCursor = (OGR2SQLITE_vtab_cursor*)
-                                CPLCalloc(1, sizeof(OGR2SQLITE_vtab_cursor));
-    /* We dont need to fill the non-extended fields */
-    *ppCursor = (sqlite3_vtab_cursor *)pCursor;
+    OGRDataSource* poDupDataSource = NULL;
+    OGRLayer* poLayer = NULL;
 
     if( pMyVTab->nMyRef == 0 )
     {
-        pCursor->poLayer = pMyVTab->poLayer;
+        poLayer = pMyVTab->poLayer;
     }
     else
     {
-        pCursor->poDupDataSource =
+        poDupDataSource =
             (OGRDataSource*) OGROpen(pMyVTab->poDS->GetName(), FALSE, NULL);
-        if( pCursor->poDupDataSource == NULL )
+        if( poDupDataSource == NULL )
             return SQLITE_ERROR;
-        pCursor->poLayer = pCursor->poDupDataSource->GetLayerByName(
+        poLayer = poDupDataSource->GetLayerByName(
                                                 pMyVTab->poLayer->GetName());
-        if( pCursor->poLayer == NULL )
+        if( poLayer == NULL )
         {
-            delete pCursor->poDupDataSource;
-            pCursor->poDupDataSource = NULL;
+            delete poDupDataSource;
             return SQLITE_ERROR;
         }
-        if( !pCursor->poLayer->GetLayerDefn()->
+        if( !poLayer->GetLayerDefn()->
                 IsSame(pMyVTab->poLayer->GetLayerDefn()) )
         {
-            pCursor->poLayer = NULL;
-            delete pCursor->poDupDataSource;
-            pCursor->poDupDataSource = NULL;
+            delete poDupDataSource;
             return SQLITE_ERROR;
         }
     }
     pMyVTab->nMyRef ++;
 
+    OGR2SQLITE_vtab_cursor* pCursor = (OGR2SQLITE_vtab_cursor*)
+                                CPLCalloc(1, sizeof(OGR2SQLITE_vtab_cursor));
+    /* We dont need to fill the non-extended fields */
+    *ppCursor = (sqlite3_vtab_cursor *)pCursor;
+
+    pCursor->poDupDataSource = poDupDataSource;
+    pCursor->poLayer = poLayer;
     pCursor->poLayer->ResetReading();
     pCursor->poFeature = NULL;
     pCursor->nNextWishedIndex = 0;
