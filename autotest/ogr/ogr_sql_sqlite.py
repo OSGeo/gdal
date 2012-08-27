@@ -68,9 +68,11 @@ def ogr_sql_sqlite_1():
         lyr.CreateField(field_defn)
         field_defn = ogr.FieldDefn('timefield', ogr.OFTTime)
         lyr.CreateField(field_defn)
+        field_defn = ogr.FieldDefn('from', ogr.OFTString)
+        lyr.CreateField(field_defn)
 
         # Test INSERT
-        sql_lyr = ds.ExecuteSQL( "INSERT INTO my_layer (intfield, nullablefield, doublefield, strfield, binaryfield, datetimefield, datefield, timefield) VALUES (1,NULL,2.34,'foo',x'0001FF', '2012-08-23 21:24', '2012-08-23', '21:24')", dialect = 'SQLite' )
+        sql_lyr = ds.ExecuteSQL( "INSERT INTO my_layer (intfield, nullablefield, doublefield, strfield, binaryfield, datetimefield, datefield, timefield, \"from\") VALUES (1,NULL,2.34,'foo',x'0001FF', '2012-08-23 21:24', '2012-08-23', '21:24', 'from_val')", dialect = 'SQLite' )
         ds.ReleaseResultSet( sql_lyr )
 
         lyr.ResetReading()
@@ -82,7 +84,8 @@ def ogr_sql_sqlite_1():
            feat.GetField('binaryfield') != '0001FF' or \
            feat.GetField('datetimefield') != '2012/08/23 21:24:00' or \
            feat.GetField('datefield') != '2012/08/23' or \
-           feat.GetField('timefield') != '21:24:00':
+           feat.GetField('timefield') != '21:24:00' or \
+           feat.GetField('from') != 'from_val':
             gdaltest.post_reason('failure')
             feat.DumpReadable()
             return 'fail'
@@ -148,7 +151,9 @@ def ogr_sql_sqlite_1():
                         'nullablefield IS NULL',
                         "binaryfield = x'0001FF'",
                         "OGR_STYLE = 'cool_style'",
-                        'intfield = 2 AND doublefield = 3.45', 'ROWID = 0']:
+                        'intfield = 2 AND doublefield = 3.45',
+                        'ROWID = 0',
+                        "\"from\" = 'from_val'"]:
             sql_lyr = ds.ExecuteSQL( "SELECT * FROM my_layer WHERE " + cond, dialect = 'SQLite' )
             feat = sql_lyr.GetNextFeature()
             if feat is None:
@@ -161,7 +166,9 @@ def ogr_sql_sqlite_1():
         for cond in [ 'intfield = 0', 'intfield > 3', 'intfield >= 3', 'intfield < 0', 'intfield <= 0',
                         'doublefield = 0', 'doublefield > 3.46', 'doublefield >= 3.46', 'doublefield < 3.45', 'doublefield <= 0',
                         "strfield = 'XXX'", "strfield > 'bas'", "strfield >= 'bas'", "strfield < 'bar'", "strfield <= 'baq'",
-                        'intfield = 2 AND doublefield = 0', 'ROWID = 10000']:
+                        'intfield = 2 AND doublefield = 0',
+                        'ROWID = 10000',
+                        "\"from\" = 'other_val'"]:
             sql_lyr = ds.ExecuteSQL( "SELECT * FROM my_layer WHERE " + cond, dialect = 'SQLite' )
             feat = sql_lyr.GetNextFeature()
             if feat is not None:
@@ -398,6 +405,11 @@ def ogr_sql_sqlite_5():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/foo.db', options = ['SPATIALITE=YES'])
     ogrtest.has_spatialite = ds is not None
+    if ogrtest.has_spatialite:
+        sql_lyr = ds.ExecuteSQL("SELECT spatialite_version()")
+        feat = sql_lyr.GetNextFeature()
+        gdaltest.spatialite_version = feat.GetFieldAsString(0)
+        ds.ReleaseResultSet(sql_lyr)
     ds = None
     gdal.Unlink('/vsimem/foo.db')
     gdal.PopErrorHandler()
@@ -775,6 +787,110 @@ def ogr_sql_sqlite_13():
 
     return 'success'
 
+###############################################################################
+#
+
+def ogr_sql_sqlite_14_and_15(sql):
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+
+    lyr = ds.CreateLayer( "my_layer", geom_type = ogr.wkbLineString, srs = srs )
+    field_defn = ogr.FieldDefn('intfield', ogr.OFTInteger)
+    lyr.CreateField(field_defn)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 1)
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING (0 0,1 1)'))
+    lyr.CreateFeature(feat)
+    feat = None
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 2)
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING (10 0,11 1)'))
+    lyr.CreateFeature(feat)
+    feat = None
+
+    lyr2 = ds.CreateLayer( "my_layer2", geom_type = ogr.wkbLineString, srs = srs )
+    field_defn = ogr.FieldDefn('intfield2', ogr.OFTInteger)
+    lyr2.CreateField(field_defn)
+
+    feat = ogr.Feature(lyr2.GetLayerDefn())
+    feat.SetField(0, 11)
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING (10 1,11 0)'))
+    lyr2.CreateFeature(feat)
+    feat = None
+
+    feat = ogr.Feature(lyr2.GetLayerDefn())
+    feat.SetField(0, 12)
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('LINESTRING (0 1,1 0)'))
+    lyr2.CreateFeature(feat)
+    feat = None
+
+    got_one = False
+    got_two = False
+
+    sql_lyr = ds.ExecuteSQL( sql, dialect = 'SQLite' )
+    for i in range(2):
+        feat = sql_lyr.GetNextFeature()
+        i1 = feat.GetField('intfield')
+        i2 = feat.GetField('intfield2')
+        if (i1 == 1 and i2 == 12 ):
+            got_one = True
+        if (i1 == 2 and i2 == 11 ):
+            got_two = True
+        feat = None
+
+    feat = sql_lyr.GetNextFeature()
+    if feat is not None:
+        return 'fail'
+
+    ds.ReleaseResultSet( sql_lyr )
+
+    if not (got_one and got_two):
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test 'idx_layername_geometryname' spatial index recognition
+
+def ogr_sql_sqlite_14():
+
+    if ogr.GetDriverByName('SQLite') is None:
+        return 'skip'
+
+    if ogrtest.has_spatialite is False:
+        return 'skip'
+
+    sql = "SELECT intfield, intfield2 FROM my_layer, my_layer2 WHERE " + \
+    "my_layer2.rowid IN (SELECT pkid FROM idx_my_layer2_geometry WHERE " + \
+    "xmax > MbrMinX(my_layer.geometry) AND xmin < MbrMaxX(my_layer.geometry) AND " + \
+    "ymax >= MbrMinY(my_layer.geometry) AND ymin <= MbrMaxY(my_layer.geometry) )"
+
+    return ogr_sql_sqlite_14_and_15(sql)
+
+###############################################################################
+# Test 'SpatialIndex' spatial index recognition
+
+def ogr_sql_sqlite_15():
+
+    if ogr.GetDriverByName('SQLite') is None:
+        return 'skip'
+
+    if ogrtest.has_spatialite is False:
+        return 'skip'
+
+    if int(gdaltest.spatialite_version[0:gdaltest.spatialite_version.find('.')]) < 3:
+        return 'skip'
+
+    sql = "SELECT intfield, intfield2 FROM my_layer, my_layer2 WHERE " + \
+    "my_layer2.rowid IN (SELECT ROWID FROM SpatialIndex WHERE f_table_name = 'my_layer2' AND search_frame = my_layer.geometry)"
+
+    return ogr_sql_sqlite_14_and_15(sql)
+
 gdaltest_list = [
     ogr_sql_sqlite_1,
     ogr_sql_sqlite_2,
@@ -789,6 +905,8 @@ gdaltest_list = [
     ogr_sql_sqlite_11,
     ogr_sql_sqlite_12,
     ogr_sql_sqlite_13,
+    ogr_sql_sqlite_14,
+    ogr_sql_sqlite_15,
 ]
 
 if __name__ == '__main__':
