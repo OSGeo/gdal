@@ -2379,7 +2379,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     }
     for( i = 0; i < nKnownSRID; i++ )
     {
-        if( papoSRS[i]->IsSame(poSRS) )
+        if( papoSRS[i] != NULL && papoSRS[i]->IsSame(poSRS) )
             return panSRID[i];
     }
 
