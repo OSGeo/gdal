@@ -153,9 +153,9 @@ GDALIntegralImage::~GDALIntegralImage()
 GDALOctaveLayer::GDALOctaveLayer(int nOctave, int nInterval)
 {
     this->octaveNum = nOctave;
-    this->filterSize = 3 * ((int)pow(2, nOctave) * nInterval + 1);
+    this->filterSize = 3 * ((int)pow(2.0, nOctave) * nInterval + 1);
     this->radius = (this->filterSize - 1) / 2;
-    this->scale = (int)pow(2, nOctave);
+    this->scale = (int)pow(2.0, nOctave);
     this->width = 0;
     this->height = 0;
 
