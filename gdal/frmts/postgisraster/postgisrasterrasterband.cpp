@@ -773,11 +773,6 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYO
  
 	PQclear(poResult);
 	
-#ifdef DEBUG
-	// Just for testing (writes VRT file, with name = dataset description, to disk)
-	VRTFlushCache(vrtDataset);
-#endif
-
 	CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO(): VRT file created");
 
 	/**
