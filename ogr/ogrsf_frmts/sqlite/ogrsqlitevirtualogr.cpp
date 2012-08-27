@@ -29,6 +29,7 @@
  
 #include "ogrsqlitevirtualogr.h"
 #include "ogr_api.h"
+#include "swq.h"
 
 #define VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
 //#define DEBUG_OGR2SQLITE
@@ -264,6 +265,9 @@ typedef struct
     int            nFeatureCount;
     int            nNextWishedIndex;
     int            nCurFeatureIndex;
+
+    GByte         *pabyGeomBLOB;
+    int            nGeomBLOBLen;
 } OGR2SQLITE_vtab_cursor;
 
 
@@ -727,6 +731,9 @@ int OGR2SQLITE_Open(sqlite3_vtab *pVTab, sqlite3_vtab_cursor **ppCursor)
     pCursor->nCurFeatureIndex = -1;
     pCursor->nFeatureCount = -1;
 
+    pCursor->pabyGeomBLOB = NULL;
+    pCursor->nGeomBLOBLen = -1;
+
     return SQLITE_OK;
 }
 
@@ -747,6 +754,8 @@ int OGR2SQLITE_Close(sqlite3_vtab_cursor* pCursor)
 
     delete pMyCursor->poFeature;
     delete pMyCursor->poDupDataSource;
+
+    CPLFree(pMyCursor->pabyGeomBLOB);
 
     CPLFree(pCursor);
 
@@ -793,7 +802,43 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
             osAttributeFilter += " AND ";
 
         if( poFieldDefn != NULL )
-            osAttributeFilter += poFieldDefn->GetNameRef();
+        {
+            const char* pszFieldName = poFieldDefn->GetNameRef();
+            char ch;
+            int bNeedsQuoting = swq_is_reserved_keyword(pszFieldName);
+            for(int j = 0; !bNeedsQuoting &&
+                           (ch = pszFieldName[j]) != '\0'; j++ )
+            {
+                if (!(isalnum((int)ch) || ch == '_'))
+                    bNeedsQuoting = FALSE;
+            }
+
+            if( bNeedsQuoting )
+            {
+                /* FIXME: we would need some virtual method */
+                OGRSFDriver* poDriver = pMyCursor->pVTab->poDS->GetDriver();
+                char chQuote;
+
+                if (poDriver && (
+                    EQUAL(poDriver->GetName(), "PostgreSQL") ||
+                    EQUAL(poDriver->GetName(), "SQLite") ||
+                    EQUAL(poDriver->GetName(), "FileGDB" )) )
+                    chQuote = '"';
+                else
+                    chQuote = '\'';
+
+                osAttributeFilter += chQuote;
+                if( chQuote == '"' )
+                    osAttributeFilter += OGRSQLiteEscapeName(pszFieldName);
+                else
+                    osAttributeFilter += OGRSQLiteEscape(pszFieldName);
+                osAttributeFilter += chQuote;
+            }
+            else
+            {
+                osAttributeFilter += pszFieldName;
+            }
+        }
         else
             osAttributeFilter += "FID";
 
@@ -840,8 +885,11 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
         }
     }
 
+#ifdef DEBUG_OGR2SQLITE
     CPLDebug("OGR2SQLITE", "Attribute filter : %s",
              osAttributeFilter.c_str());
+#endif
+
     if( pMyCursor->poLayer->SetAttributeFilter( osAttributeFilter.size() ?
                             osAttributeFilter.c_str() : NULL) != OGRERR_NONE )
     {
@@ -892,6 +940,11 @@ int OGR2SQLITE_Next(sqlite3_vtab_cursor* pCursor)
     {
         delete pMyCursor->poFeature;
         pMyCursor->poFeature = pMyCursor->poLayer->GetNextFeature();
+
+        CPLFree(pMyCursor->pabyGeomBLOB);
+        pMyCursor->pabyGeomBLOB = NULL;
+        pMyCursor->nGeomBLOBLen = -1;
+
 #ifdef DEBUG_OGR2SQLITE
         CPLDebug("OGR2SQLITE", "GetNextFeature() --> %d",
             pMyCursor->poFeature ? (int)pMyCursor->poFeature->GetFID() : -1);
@@ -930,16 +983,24 @@ static void OGR2SQLITE_GoToWishedIndex(OGR2SQLITE_vtab_cursor* pMyCursor)
 {
     if( pMyCursor->nFeatureCount >= 0 )
     {
-        while( pMyCursor->nCurFeatureIndex < pMyCursor->nNextWishedIndex )
+        if( pMyCursor->nCurFeatureIndex < pMyCursor->nNextWishedIndex )
         {
-            pMyCursor->nCurFeatureIndex ++;
+            do
+            {
+                pMyCursor->nCurFeatureIndex ++;
 
-            delete pMyCursor->poFeature;
-            pMyCursor->poFeature = pMyCursor->poLayer->GetNextFeature();
+                delete pMyCursor->poFeature;
+                pMyCursor->poFeature = pMyCursor->poLayer->GetNextFeature();
 #ifdef DEBUG_OGR2SQLITE
-            CPLDebug("OGR2SQLITE", "GetNextFeature() --> %d",
-                pMyCursor->poFeature ? (int)pMyCursor->poFeature->GetFID() : -1);
+                CPLDebug("OGR2SQLITE", "GetNextFeature() --> %d",
+                    pMyCursor->poFeature ? (int)pMyCursor->poFeature->GetFID() : -1);
 #endif
+            }
+            while( pMyCursor->nCurFeatureIndex < pMyCursor->nNextWishedIndex );
+
+            CPLFree(pMyCursor->pabyGeomBLOB);
+            pMyCursor->pabyGeomBLOB = NULL;
+            pMyCursor->nGeomBLOBLen = -1;
         }
     }
 }
@@ -965,42 +1026,59 @@ int OGR2SQLITE_Column(sqlite3_vtab_cursor* pCursor,
         return SQLITE_ERROR;
 
     OGRFeatureDefn* poFDefn = pMyCursor->poLayer->GetLayerDefn();
+    int nFieldCount = poFDefn->GetFieldCount();
 
-    if( nCol == poFDefn->GetFieldCount() )
+    if( nCol == nFieldCount )
     {
         sqlite3_result_text(pContext,
                             poFeature->GetStyleString(),
                             -1, SQLITE_TRANSIENT);
         return SQLITE_OK;
     }
-    else if( nCol == (poFDefn->GetFieldCount() + 1) &&
+    else if( nCol == (nFieldCount + 1) &&
              poFDefn->GetGeomType() != wkbNone )
     {
-        OGRGeometry* poGeom = poFeature->GetGeometryRef();
-        if( poGeom == NULL )
-            sqlite3_result_null(pContext);
-        else
+        if( pMyCursor->nGeomBLOBLen < 0 )
         {
-            int     nBLOBLen;
-            GByte   *pabySLBLOB;
-
-            OGRSpatialReference* poSRS = poGeom->getSpatialReference();
-            int nSRSId = pMyCursor->pVTab->poModule->FetchSRSId(poSRS);
-
-            if( OGRSQLiteLayer::ExportSpatiaLiteGeometry(
-                    poGeom, nSRSId, wkbNDR, FALSE, FALSE, FALSE,
-                    &pabySLBLOB, &nBLOBLen ) == CE_None )
+            OGRGeometry* poGeom = poFeature->GetGeometryRef();
+            if( poGeom == NULL )
             {
-                sqlite3_result_blob(pContext, pabySLBLOB, nBLOBLen, CPLFree);
+                pMyCursor->nGeomBLOBLen = 0;
             }
             else
             {
-                sqlite3_result_null(pContext);
+                CPLAssert(pMyCursor->pabyGeomBLOB == NULL);
+
+                OGRSpatialReference* poSRS = poGeom->getSpatialReference();
+                int nSRSId = pMyCursor->pVTab->poModule->FetchSRSId(poSRS);
+
+                if( OGRSQLiteLayer::ExportSpatiaLiteGeometry(
+                        poGeom, nSRSId, wkbNDR, FALSE, FALSE, FALSE,
+                        &pMyCursor->pabyGeomBLOB,
+                        &pMyCursor->nGeomBLOBLen ) != CE_None )
+                {
+                    pMyCursor->nGeomBLOBLen = 0;
+                }
             }
         }
+
+        if( pMyCursor->nGeomBLOBLen == 0 )
+        {
+            sqlite3_result_null(pContext);
+        }
+        else
+        {
+            GByte *pabyGeomBLOBDup = (GByte*)
+                                CPLMalloc(pMyCursor->nGeomBLOBLen);
+            memcpy(pabyGeomBLOBDup,
+                   pMyCursor->pabyGeomBLOB, pMyCursor->nGeomBLOBLen);
+            sqlite3_result_blob(pContext, pabyGeomBLOBDup,
+                                pMyCursor->nGeomBLOBLen, CPLFree);
+        }
+
         return SQLITE_OK;
     }
-    else if( nCol < 0 || nCol >= poFDefn->GetFieldCount() )
+    else if( nCol < 0 || nCol >= nFieldCount )
     {
         return SQLITE_ERROR;
     }
@@ -1558,6 +1636,576 @@ static void OGR2SQLITEDestroyModule(void* pData)
     delete (OGR2SQLITEModule*) pData;
 }
 
+/* ENABLE_VIRTUAL_OGR_SPATIAL_INDEX is not defined */
+#ifdef ENABLE_VIRTUAL_OGR_SPATIAL_INDEX
+
+/************************************************************************/
+/*                    OGR2SQLITESpatialIndex_vtab                       */
+/************************************************************************/
+
+typedef struct
+{
+    /* Mandatory fields by sqlite3: don't change or reorder them ! */
+    const sqlite3_module *pModule;
+    int                   nRef;
+    char                 *zErrMsg;
+
+    /* Extension fields */
+    char                 *pszVTableName;
+    OGR2SQLITEModule     *poModule;
+    OGRDataSource        *poDS;
+    int                   bCloseDS;
+    OGRLayer             *poLayer;
+    int                   nMyRef;
+} OGR2SQLITESpatialIndex_vtab;
+
+/************************************************************************/
+/*                  OGR2SQLITESpatialIndex_vtab_cursor                  */
+/************************************************************************/
+
+typedef struct
+{
+    /* Mandatory fields by sqlite3: don't change or reorder them ! */
+    OGR2SQLITESpatialIndex_vtab *pVTab;
+
+    /* Extension fields */
+    OGRDataSource *poDupDataSource;
+    OGRLayer      *poLayer;
+    OGRFeature    *poFeature;
+    int            bHasSetBounds;
+    double         dfMinX, dfMinY, dfMaxX, dfMaxY;
+} OGR2SQLITESpatialIndex_vtab_cursor;
+
+/************************************************************************/
+/*                   OGR2SQLITESpatialIndex_ConnectCreate()             */
+/************************************************************************/
+
+static
+int OGR2SQLITESpatialIndex_ConnectCreate(sqlite3* hDB, void *pAux,
+                             int argc, const char *const*argv,
+                             sqlite3_vtab **ppVTab, char**pzErr)
+{
+    OGR2SQLITEModule* poModule = (OGR2SQLITEModule*) pAux;
+    OGRLayer* poLayer = NULL;
+    OGRDataSource* poDS = NULL;
+    int bCloseDS = FALSE;
+    int i;
+
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "ConnectCreate(%s)", argv[2]);
+#endif
+
+    /*for(i=0;i<argc;i++)
+        printf("[%d] %s\n", i, argv[i]);*/
+
+/* -------------------------------------------------------------------- */
+/*      If called from ogrexecutesql.cpp                                */
+/* -------------------------------------------------------------------- */
+    poDS = poModule->GetDS();
+    if( poDS == NULL )
+        return SQLITE_ERROR;
+
+    if( argc != 10 )
+    {
+        *pzErr = sqlite3_mprintf(
+            "Expected syntax: CREATE VIRTUAL TABLE xxx USING "
+            "VirtualOGRSpatialIndex(ds_idx, layer_name, pkid, xmin, xmax, ymin, ymax)");
+        return SQLITE_ERROR;
+    }
+
+    int nDSIndex = atoi(argv[3]);
+    if( nDSIndex >= 0 )
+    {
+        poDS = poModule->GetExtraDS(nDSIndex);
+        if( poDS == NULL )
+        {
+            *pzErr = sqlite3_mprintf("Invalid dataset index : %d", nDSIndex);
+            return SQLITE_ERROR;
+        }
+    }
+
+    poDS = (OGRDataSource*) OGROpen( poDS->GetName(), FALSE, NULL);
+    if( poDS == NULL )
+    {
+        return SQLITE_ERROR;
+    }
+    bCloseDS = TRUE;
+
+    CPLString osLayerName(OGRSQLiteParamsUnquote(argv[4]));
+
+    poLayer = poDS->GetLayerByName(osLayerName);
+    if( poLayer == NULL )
+    {
+        *pzErr = sqlite3_mprintf( "Cannot find layer '%s' in '%s'",
+                                    osLayerName.c_str(), poDS->GetName() );
+        return SQLITE_ERROR;
+    }
+
+    OGR2SQLITESpatialIndex_vtab* vtab =
+                (OGR2SQLITESpatialIndex_vtab*) CPLCalloc(1, sizeof(OGR2SQLITESpatialIndex_vtab));
+    /* We dont need to fill the non-extended fields */
+    vtab->pszVTableName = CPLStrdup(OGRSQLiteEscapeName(argv[2]));
+    vtab->poModule = poModule;
+    vtab->poDS = poDS;
+    vtab->bCloseDS = bCloseDS;
+    vtab->poLayer = poLayer;
+    vtab->nMyRef = 0;
+
+    *ppVTab = (sqlite3_vtab*) vtab;
+
+    CPLString osSQL;
+    osSQL = "CREATE TABLE ";
+    osSQL += "\"";
+    osSQL += OGRSQLiteEscapeName(argv[2]);
+    osSQL += "\"";
+    osSQL += "(";
+
+    int bAddComma = FALSE;
+
+    for(i=0;i<5;i++)
+    {
+        if( bAddComma )
+            osSQL += ",";
+        bAddComma = TRUE;
+
+        osSQL += "\"";
+        osSQL += OGRSQLiteEscapeName(OGRSQLiteParamsUnquote(argv[5+i]));
+        osSQL += "\"";
+        osSQL += " ";
+        osSQL += (i == 0) ? "INTEGER" : "FLOAT";
+    }
+
+    osSQL += ")";
+
+    CPLDebug("OGR2SQLITE", "sqlite3_declare_vtab(%s)", osSQL.c_str());
+    if (sqlite3_declare_vtab (hDB, osSQL.c_str()) != SQLITE_OK)
+    {
+        *pzErr = sqlite3_mprintf("CREATE VIRTUAL: invalid SQL statement : %s",
+                                 osSQL.c_str());
+        return SQLITE_ERROR;
+    }
+
+    return SQLITE_OK;
+}
+
+/************************************************************************/
+/*                      OGR2SQLITESpatialIndex_BestIndex()              */
+/************************************************************************/
+
+static
+int OGR2SQLITESpatialIndex_BestIndex(sqlite3_vtab *pVTab, sqlite3_index_info* pIndex)
+{
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "BestIndex");
+#endif
+
+    int i;
+
+    int bMinX = FALSE, bMinY = FALSE, bMaxX = FALSE, bMaxY = FALSE;
+
+    for (i = 0; i < pIndex->nConstraint; i++)
+    {
+        int iCol = pIndex->aConstraint[i].iColumn;
+        /* MinX */
+        if( !bMinX && iCol == 1 && pIndex->aConstraint[i].usable &&
+            (pIndex->aConstraint[i].op == SQLITE_INDEX_CONSTRAINT_LE ||
+                pIndex->aConstraint[i].op == SQLITE_INDEX_CONSTRAINT_LT) )
+            bMinX = TRUE;
+        /* MaxX */
+        else if( !bMaxX && iCol == 2 && pIndex->aConstraint[i].usable &&
+            (pIndex->aConstraint[i].op == SQLITE_INDEX_CONSTRAINT_GE ||
+                pIndex->aConstraint[i].op == SQLITE_INDEX_CONSTRAINT_GT) )
+            bMaxX = TRUE;
+        /* MinY */
+        else if( !bMinY && iCol == 3 && pIndex->aConstraint[i].usable &&
+            (pIndex->aConstraint[i].op == SQLITE_INDEX_CONSTRAINT_LE ||
+                pIndex->aConstraint[i].op == SQLITE_INDEX_CONSTRAINT_LT) )
+            bMinY = TRUE;
+        /* MaxY */
+        else if( !bMaxY && iCol == 4 && pIndex->aConstraint[i].usable &&
+            (pIndex->aConstraint[i].op == SQLITE_INDEX_CONSTRAINT_GE ||
+                pIndex->aConstraint[i].op == SQLITE_INDEX_CONSTRAINT_GT) )
+            bMaxY = TRUE;
+        else
+            break;
+    }
+
+    if( bMinX && bMinY && bMaxX && bMaxY )
+    {
+        CPLAssert( pIndex->nConstraint == 4 );
+
+        int nConstraints = 0;
+        for (i = 0; i < pIndex->nConstraint; i++)
+        {
+            pIndex->aConstraintUsage[i].argvIndex = nConstraints + 1;
+            pIndex->aConstraintUsage[i].omit = TRUE;
+
+            nConstraints ++;
+        }
+
+        int* panConstraints = (int*)
+                    sqlite3_malloc( sizeof(int) * (1 + 2 * nConstraints) );
+        panConstraints[0] = nConstraints;
+
+        nConstraints = 0;
+
+        for (i = 0; i < pIndex->nConstraint; i++)
+        {
+            if (pIndex->aConstraintUsage[i].omit)
+            {
+                panConstraints[2 * nConstraints + 1] =
+                                            pIndex->aConstraint[i].iColumn;
+                panConstraints[2 * nConstraints + 2] =
+                                            pIndex->aConstraint[i].op;
+
+                nConstraints ++;
+            }
+        }
+
+        pIndex->idxStr = (char *) panConstraints;
+        pIndex->needToFreeIdxStr = TRUE;
+
+        pIndex->orderByConsumed = FALSE;
+        pIndex->idxNum = 0;
+
+        return SQLITE_OK;
+    }
+    else
+    {
+        CPLDebug("OGR2SQLITE", "OGR2SQLITESpatialIndex_BestIndex: unhandled request");
+        return SQLITE_ERROR;
+/*
+        for (i = 0; i < pIndex->nConstraint; i++)
+        {
+            pIndex->aConstraintUsage[i].argvIndex = 0;
+            pIndex->aConstraintUsage[i].omit = FALSE;
+        }
+
+        pIndex->idxStr = NULL;
+        pIndex->needToFreeIdxStr = FALSE;
+*/
+    }
+}
+
+/************************************************************************/
+/*                  OGR2SQLITESpatialIndex_DisconnectDestroy()          */
+/************************************************************************/
+
+static
+int OGR2SQLITESpatialIndex_DisconnectDestroy(sqlite3_vtab *pVTab)
+{
+    OGR2SQLITESpatialIndex_vtab* pMyVTab = (OGR2SQLITESpatialIndex_vtab*) pVTab;
+
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "DisconnectDestroy(%s)",pMyVTab->pszVTableName);
+#endif
+
+    sqlite3_free(pMyVTab->zErrMsg);
+    if( pMyVTab->bCloseDS )
+        delete pMyVTab->poDS;
+    CPLFree(pMyVTab->pszVTableName);
+    CPLFree(pMyVTab);
+
+    return SQLITE_OK;
+}
+
+/************************************************************************/
+/*                    OGR2SQLITESpatialIndex_Open()                     */
+/************************************************************************/
+
+static
+int OGR2SQLITESpatialIndex_Open(sqlite3_vtab *pVTab, sqlite3_vtab_cursor **ppCursor)
+{
+    OGR2SQLITESpatialIndex_vtab* pMyVTab = (OGR2SQLITESpatialIndex_vtab*) pVTab;
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "Open(%s, %s)",
+             pMyVTab->poDS->GetName(), pMyVTab->poLayer->GetName());
+#endif
+
+    OGRDataSource* poDupDataSource = NULL;
+    OGRLayer* poLayer = NULL;
+
+    if( pMyVTab->nMyRef == 0 )
+    {
+        poLayer = pMyVTab->poLayer;
+    }
+    else
+    {
+        poDupDataSource =
+            (OGRDataSource*) OGROpen(pMyVTab->poDS->GetName(), FALSE, NULL);
+        if( poDupDataSource == NULL )
+            return SQLITE_ERROR;
+        poLayer = poDupDataSource->GetLayerByName(
+                                                pMyVTab->poLayer->GetName());
+        if( poLayer == NULL )
+        {
+            delete poDupDataSource;
+            return SQLITE_ERROR;
+        }
+        if( !poLayer->GetLayerDefn()->
+                IsSame(pMyVTab->poLayer->GetLayerDefn()) )
+        {
+            delete poDupDataSource;
+            return SQLITE_ERROR;
+        }
+    }
+    pMyVTab->nMyRef ++;
+
+    OGR2SQLITESpatialIndex_vtab_cursor* pCursor = (OGR2SQLITESpatialIndex_vtab_cursor*)
+                                CPLCalloc(1, sizeof(OGR2SQLITESpatialIndex_vtab_cursor));
+    /* We dont need to fill the non-extended fields */
+    *ppCursor = (sqlite3_vtab_cursor *)pCursor;
+
+    pCursor->poDupDataSource = poDupDataSource;
+    pCursor->poLayer = poLayer;
+    pCursor->poLayer->ResetReading();
+    pCursor->poFeature = NULL;
+
+    return SQLITE_OK;
+}
+
+/************************************************************************/
+/*                      OGR2SQLITESpatialIndex_Close()                  */
+/************************************************************************/
+
+static
+int OGR2SQLITESpatialIndex_Close(sqlite3_vtab_cursor* pCursor)
+{
+    OGR2SQLITESpatialIndex_vtab_cursor* pMyCursor = (OGR2SQLITESpatialIndex_vtab_cursor*) pCursor;
+    OGR2SQLITESpatialIndex_vtab* pMyVTab = pMyCursor->pVTab;
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "Close(%s, %s)",
+             pMyVTab->poDS->GetName(), pMyVTab->poLayer->GetName());
+#endif
+    pMyVTab->nMyRef --;
+
+    delete pMyCursor->poFeature;
+    delete pMyCursor->poDupDataSource;
+
+    CPLFree(pCursor);
+
+    return SQLITE_OK;
+}
+
+/************************************************************************/
+/*                     OGR2SQLITESpatialIndex_Filter()                  */
+/************************************************************************/
+
+static
+int OGR2SQLITESpatialIndex_Filter(sqlite3_vtab_cursor* pCursor,
+                      int idxNum, const char *idxStr,
+                      int argc, sqlite3_value **argv)
+{
+    OGR2SQLITESpatialIndex_vtab_cursor* pMyCursor = (OGR2SQLITESpatialIndex_vtab_cursor*) pCursor;
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "Filter");
+#endif
+
+    int* panConstraints = (int*) idxStr;
+    int nConstraints = panConstraints ? panConstraints[0] : 0;
+
+    if( nConstraints != argc )
+        return SQLITE_ERROR;
+
+    int i;
+    double dfMinX = 0, dfMaxX = 0, dfMinY = 0, dfMaxY = 0;
+    for (i = 0; i < argc; i++)
+    {
+        int nCol = panConstraints[2 * i + 1];
+        if( nCol < 0 )
+            return SQLITE_ERROR;
+
+        double dfVal;
+        if (sqlite3_value_type (argv[i]) == SQLITE_INTEGER)
+            dfVal = sqlite3_value_int64 (argv[i]);
+        else if (sqlite3_value_type (argv[i]) == SQLITE_FLOAT)
+            dfVal = sqlite3_value_double (argv[i]);
+        else
+            return SQLITE_ERROR;
+
+        if( nCol == 1 )
+            dfMaxX = dfVal;
+        else if( nCol == 2 )
+            dfMinX = dfVal;
+        else if( nCol == 3 )
+            dfMaxY = dfVal;
+        else if( nCol == 4 )
+            dfMinY = dfVal;
+        else
+            return SQLITE_ERROR;
+    }
+
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "Spatial filter : %.18g, %.18g, %.18g, %.18g",
+              dfMinX, dfMinY, dfMaxX, dfMaxY);
+#endif
+
+    pMyCursor->poLayer->SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
+    pMyCursor->poLayer->ResetReading();
+
+    pMyCursor->poFeature = pMyCursor->poLayer->GetNextFeature();
+    pMyCursor->bHasSetBounds = FALSE;
+
+    return SQLITE_OK;
+}
+
+/************************************************************************/
+/*                    OGR2SQLITESpatialIndex_Next()                     */
+/************************************************************************/
+
+static
+int OGR2SQLITESpatialIndex_Next(sqlite3_vtab_cursor* pCursor)
+{
+    OGR2SQLITESpatialIndex_vtab_cursor* pMyCursor = (OGR2SQLITESpatialIndex_vtab_cursor*) pCursor;
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "Next");
+#endif
+
+    delete pMyCursor->poFeature;
+    pMyCursor->poFeature = pMyCursor->poLayer->GetNextFeature();
+    pMyCursor->bHasSetBounds = FALSE;
+
+    return SQLITE_OK;
+}
+
+/************************************************************************/
+/*                      OGR2SQLITESpatialIndex_Eof()                    */
+/************************************************************************/
+
+static
+int OGR2SQLITESpatialIndex_Eof(sqlite3_vtab_cursor* pCursor)
+{
+    OGR2SQLITESpatialIndex_vtab_cursor* pMyCursor = (OGR2SQLITESpatialIndex_vtab_cursor*) pCursor;
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "Eof");
+#endif
+
+    return (pMyCursor->poFeature == NULL);
+}
+
+/************************************************************************/
+/*                    OGR2SQLITESpatialIndex_Column()                   */
+/************************************************************************/
+
+static
+int OGR2SQLITESpatialIndex_Column(sqlite3_vtab_cursor* pCursor,
+                      sqlite3_context* pContext, int nCol)
+{
+    OGR2SQLITESpatialIndex_vtab_cursor* pMyCursor = (OGR2SQLITESpatialIndex_vtab_cursor*) pCursor;
+    OGRFeature* poFeature;
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "Column %d", nCol);
+#endif
+
+    poFeature = pMyCursor->poFeature;
+    if( poFeature == NULL)
+        return SQLITE_ERROR;
+
+    if( nCol == 0 )
+    {
+        CPLDebug("OGR2SQLITE", "--> FID = %ld", poFeature->GetFID());
+        sqlite3_result_int64(pContext, poFeature->GetFID());
+        return SQLITE_OK;
+    }
+
+    if( !pMyCursor->bHasSetBounds )
+    {
+        OGRGeometry* poGeom = poFeature->GetGeometryRef();
+        if( poGeom != NULL && !poGeom->IsEmpty() )
+        {
+            OGREnvelope sEnvelope;
+            poGeom->getEnvelope(&sEnvelope);
+            pMyCursor->bHasSetBounds = TRUE;
+            pMyCursor->dfMinX = sEnvelope.MinX;
+            pMyCursor->dfMinY = sEnvelope.MinY;
+            pMyCursor->dfMaxX = sEnvelope.MaxX;
+            pMyCursor->dfMaxY = sEnvelope.MaxY;
+        }
+    }
+    if( !pMyCursor->bHasSetBounds )
+    {
+        sqlite3_result_null(pContext);
+        return SQLITE_OK;
+    }
+
+    if( nCol == 1 )
+    {
+        sqlite3_result_double(pContext, pMyCursor->dfMinX);
+        return SQLITE_OK;
+    }
+    if( nCol == 2 )
+    {
+        sqlite3_result_double(pContext, pMyCursor->dfMaxX);
+        return SQLITE_OK;
+    }
+    if( nCol == 3 )
+    {
+        sqlite3_result_double(pContext, pMyCursor->dfMinY);
+        return SQLITE_OK;
+    }
+    if( nCol == 4 )
+    {
+        sqlite3_result_double(pContext, pMyCursor->dfMaxY);
+        return SQLITE_OK;
+    }
+
+    return SQLITE_ERROR;
+}
+
+/************************************************************************/
+/*                    OGR2SQLITESpatialIndex_Rowid()                    */
+/************************************************************************/
+
+static
+int OGR2SQLITESpatialIndex_Rowid(sqlite3_vtab_cursor* pCursor, sqlite3_int64 *pRowid)
+{
+#ifdef DEBUG_OGR2SQLITE
+    CPLDebug("OGR2SQLITE", "Rowid");
+#endif
+
+    return SQLITE_ERROR;
+}
+
+/************************************************************************/
+/*                   OGR2SQLITESpatialIndex_Rename()                    */
+/************************************************************************/
+
+static
+int OGR2SQLITESpatialIndex_Rename(sqlite3_vtab *pVtab, const char *zNew)
+{
+    //CPLDebug("OGR2SQLITE", "Rename");
+    return SQLITE_ERROR;
+}
+
+/************************************************************************/
+/*                       sOGR2SQLITESpatialIndex                        */
+/************************************************************************/
+
+static const struct sqlite3_module sOGR2SQLITESpatialIndex =
+{
+    1, /* iVersion */
+    OGR2SQLITESpatialIndex_ConnectCreate, /* xCreate */
+    OGR2SQLITESpatialIndex_ConnectCreate, /* xConnect */
+    OGR2SQLITESpatialIndex_BestIndex,
+    OGR2SQLITESpatialIndex_DisconnectDestroy, /* xDisconnect */
+    OGR2SQLITESpatialIndex_DisconnectDestroy, /* xDestroy */
+    OGR2SQLITESpatialIndex_Open,
+    OGR2SQLITESpatialIndex_Close,
+    OGR2SQLITESpatialIndex_Filter,
+    OGR2SQLITESpatialIndex_Next,
+    OGR2SQLITESpatialIndex_Eof,
+    OGR2SQLITESpatialIndex_Column,
+    OGR2SQLITESpatialIndex_Rowid,
+    NULL, /* xUpdate */
+    NULL, /* xBegin */
+    NULL, /* xSync */
+    NULL, /* xCommit */
+    NULL, /* xFindFunctionRollback */
+    NULL, /* xFindFunction */
+    OGR2SQLITESpatialIndex_Rename
+};
+#endif // ENABLE_VIRTUAL_OGR_SPATIAL_INDEX
+
 /************************************************************************/
 /*                              Setup()                                 */
 /************************************************************************/
@@ -1569,7 +2217,15 @@ int OGR2SQLITEModule::Setup(sqlite3* hDB, int bAutoDestroy)
     this->hDB = hDB;
 
     if( !bAutoDestroy )
+    {
         rc = sqlite3_create_module(hDB, "VirtualOGR", &sOGR2SQLITEModule, this);
+        if( rc != SQLITE_OK )
+            return FALSE;
+#ifdef ENABLE_VIRTUAL_OGR_SPATIAL_INDEX
+        rc = sqlite3_create_module(hDB, "VirtualOGRSpatialIndex",
+                                   &sOGR2SQLITESpatialIndex, this);
+#endif // ENABLE_VIRTUAL_OGR_SPATIAL_INDEX
+    }
     else
         rc = sqlite3_create_module_v2(hDB, "VirtualOGR", &sOGR2SQLITEModule, this,
                                       OGR2SQLITEDestroyModule);
