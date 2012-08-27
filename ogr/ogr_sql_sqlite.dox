@@ -74,7 +74,7 @@ returns:
 
 OGRFeature(SELECT):0
   EAS_ID (Real) = 168
-  POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,479647.0 4765369.5,479730.375 4765400.5,480039.03125 4765539.5,480035.34375 4765558.5,480159.78125 4765610.5,480202.28125 4765482.0,480365.0 4765015.5,480389.6875 4764950.0,480133.96875 4764856.5,480080.28125 4764979.5,480082.96875 4765049.5,480088.8125 4765139.5,480059.90625 4765239.5,480019.71875 4765319.5,479980.21875 4765409.5,479909.875 4765370.0,479859.875 4765270.0,479819.84375 4765180.5))
+  POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,[...],479819.84375 4765180.5))
 \endcode 
 
 \code
@@ -86,7 +86,7 @@ OGRFeature(SELECT):0
   AREA (Real) = 215229.266
   EAS_ID (Real) = 168
   PRFEDEA (String) = 35043411
-  POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,479647.0 4765369.5,479730.375 4765400.5,480039.03125 4765539.5,480035.34375 4765558.5,480159.78125 4765610.5,480202.28125 4765482.0,480365.0 4765015.5,480389.6875 4764950.0,480133.96875 4764856.5,480080.28125 4764979.5,480082.96875 4765049.5,480088.8125 4765139.5,480059.90625 4765239.5,480019.71875 4765319.5,479980.21875 4765409.5,479909.875 4765370.0,479859.875 4765270.0,479819.84375 4765180.5))
+  POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,[...],479819.84375 4765180.5))
 \endcode 
 
 \subsection ogr_sql_sqlite_style OGR_STYLE special field
@@ -107,7 +107,8 @@ a lot of <a href="http://www.gaia-gis.it/gaia-sins/spatialite-sql-3.0.0.html">ex
 in particular spatial functions, can be used in results column fields, WHERE clauses, etc....<p>
 
 \code
-SELECT EAS_ID, ST_Area(GEOMETRY) AS area FROM poly WHERE ST_Intersects(GEOMETRY, ST_Buffer(ST_GeomFromText('POINT(479750.6875 4764702.0)'),100))
+SELECT EAS_ID, ST_Area(GEOMETRY) AS area FROM poly WHERE
+    ST_Intersects(GEOMETRY, BuildCircleMbr(479750.6875,4764702.0,100))
 
 returns:
 
@@ -130,7 +131,8 @@ The following SQL functions are available and operate on a layer name :
 <b>ogr_layer_Extent()</b>, <b>ogr_layer_SRID()</b> and <b>ogr_layer_GeometryType()</b><p>
 
 \code
-SELECT ogr_layer_Extent('poly'), ogr_layer_SRID('poly') as srid, ogr_layer_GeometryType('poly') as geomtype
+SELECT ogr_layer_Extent('poly'), ogr_layer_SRID('poly') AS srid,
+       ogr_layer_GeometryType('poly') AS geomtype
 
 returns:
 
@@ -138,6 +140,35 @@ OGRFeature(SELECT):0
   srid (Integer) = 40004
   geomtype (String) = POLYGON
   POLYGON ((478315.53125 4762880.5,481645.3125 4762880.5,481645.3125 4765610.5,478315.53125 4765610.5,478315.53125 4762880.5))
+\endcode
+
+\subsection ogr_sql_sqlite_spatial_index Spatialite spatial index
+
+Spatialite spatial index mechanism can be triggered by making sure a spatial index
+virtual table is mentionned in the SQL (of the form idx_layername_geometrycolumn), or
+by using the more recent SpatialIndex from the VirtualSpatialIndex extension. In which
+case, a in-memory RTree will be built to be used to speed up the spatial queries.
+
+For example, a spatial intersection between 2 layers, by using a spatial index on one
+of the layers to limit the number of actual geometry intersection computations :
+
+\code
+SELECT city_name, region_name FROM cities, regions WHERE
+    ST_Area(ST_Intersection(cities.geometry, regions.geometry)) > 0 AND
+    regions.rowid IN (
+        SELECT pkid FROM idx_regions_geometry WHERE 
+            xmax >= MbrMinX(cities.geometry) AND xmin <= MbrMaxX(cities.geometry) AND
+            ymax >= MbrMinY(cities.geometry) AND ymin <= MbrMaxY(cities.geometry))
+\endcode
+
+or more elegantly :
+
+\code
+SELECT city_name, region_name FROM cities, regions WHERE
+    ST_Area(ST_Intersection(cities.geometry, regions.geometry)) > 0 AND
+    regions.rowid IN (
+        SELECT rowid FROM SpatialIndex WHERE
+            f_table_name = 'regions' AND search_frame = cities.geometry)
 \endcode
 
 */
