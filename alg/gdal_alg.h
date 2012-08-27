@@ -252,7 +252,6 @@ GDALSerializeTransformer( GDALTransformerFunc pfnFunc, void *pTransformArg );
 CPLErr CPL_DLL GDALDeserializeTransformer( CPLXMLNode *psTree, 
                                            GDALTransformerFunc *ppfnFunc, 
                                            void **ppTransformArg );
-                                      
 
 /* -------------------------------------------------------------------- */
 /*      Contour Line Generation                                         */
@@ -452,6 +451,12 @@ GDALGridCreate( GDALGridAlgorithm, const void *, GUInt32,
                 double, double, double, double,
                 GUInt32, GUInt32, GDALDataType, void *,
                 GDALProgressFunc, void *);
+
+GDAL_GCP CPL_DLL *
+GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
+                           GDALDatasetH hSecondImage,
+                           char **papszOptions,
+                           int *pnGCPCount ); 
 CPL_C_END
                             
 #endif /* ndef GDAL_ALG_H_INCLUDED */
