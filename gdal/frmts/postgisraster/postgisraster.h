@@ -83,6 +83,14 @@ typedef enum
     USER_RESOLUTION
 } ResolutionStrategy;
 
+/**
+ * OPTIMIZATION:
+ * To construct the mosaic of tiles, we should check the pixel size of all tiles, 
+ * in order to determine the dataset's pixel size. This can be really heavy. So, 
+ * we define this number as the number of tiles that will be taken into account to
+ * do it. If set to 0, all the tiles are taken
+ **/ 
+#define MAX_TILES	3 
 
 class PostGISRasterRasterBand;
 
