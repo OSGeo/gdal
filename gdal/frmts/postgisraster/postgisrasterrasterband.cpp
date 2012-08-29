@@ -374,8 +374,6 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYO
     PGresult* poResult = NULL;
 	int iTuplesIndex;
     int nTuples = 0;
-    char orderByY[5];
-    char orderByX[4];
 	GBool bEqualAreas = false;
     GByte* pbyData = NULL;
 	GByte** ppbyBandData = NULL;
@@ -403,7 +401,6 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYO
 	char szTmp[64];
 	char szTileWidth[64];
 	char szTileHeight[64];
-	char szDatasetDescription[64];
 	CPLErr err;
     PostGISRasterDataset * poPostGISRasterDS = (PostGISRasterDataset*)poDS;
 	int nSrcXOff, nSrcYOff, nDstXOff, nDstYOff;
@@ -468,15 +465,6 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYO
 					ulx * adfTransform[GEOTRSFRM_ROTATION_PARAM2] + 
 					lry * adfTransform[GEOTRSFRM_NS_RES];
 
-	memset(orderByX, 0, 4);
-	memset(orderByY, 0, 5);
-
-	strcpy(orderByX, "asc");
-	if (poPostGISRasterDS->nSrid == -1) 
-		strcpy(orderByY, "asc"); // Y starts at 0 and grows
-	else 
-		strcpy(orderByY, "desc");// Y starts at max and decreases
-
 	CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO: "
 		"Buffer size = (%d, %d), Region size = (%d, %d)",
 		nBufXSize, nBufYSize, nXSize, nYSize);
@@ -485,24 +473,20 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYO
 		osCommand.Printf("SELECT st_band(%s, %d), st_width(%s), st_height(%s), st_bandpixeltype(%s, %d), "
 			"st_bandnodatavalue(%s, %d), st_scalex(%s), st_scaley(%s), st_upperleftx(%s), st_upperlefty(%s) "
 			"FROM %s.%s WHERE st_intersects(%s, st_polygonfromtext('POLYGON((%.17f %.17f, %.17f %.17f, "
-			"%.17f %.17f, %.17f %.17f, %.17f %.17f))', %d)) ORDER BY ST_UpperLeftY(%s) %s, "
-			"ST_UpperLeftX(%s) %s", pszColumn, nBand, pszColumn, pszColumn, pszColumn, nBand, pszColumn, 
+			"%.17f %.17f, %.17f %.17f, %.17f %.17f))', %d))", pszColumn, nBand, pszColumn, pszColumn, pszColumn, nBand, pszColumn, 
 			nBand, pszColumn, pszColumn, pszColumn, pszColumn, pszSchema, pszTable, pszColumn, 
 			adfProjWin[0], adfProjWin[1], adfProjWin[2], adfProjWin[3],  adfProjWin[4], adfProjWin[5], 
-			adfProjWin[6], adfProjWin[7], adfProjWin[0], adfProjWin[1], poPostGISRasterDS->nSrid, pszColumn, 
-			orderByY, pszColumn, orderByX);
+			adfProjWin[6], adfProjWin[7], adfProjWin[0], adfProjWin[1], poPostGISRasterDS->nSrid);
 	}
 
 	else {
 		osCommand.Printf("SELECT st_band(%s, %d), st_width(%s), st_height(%s), st_bandpixeltype(%s, %d), "
 			"st_bandnodatavalue(%s, %d), st_scalex(%s), st_scaley(%s), st_upperleftx(%s), st_upperlefty(%s) "
 			"FROM %s.%s WHERE (%s) AND st_intersects(%s, st_polygonfromtext('POLYGON((%.17f %.17f, %.17f %.17f, "
-			"%.17f %.17f, %.17f %.17f, %.17f %.17f))', %d)) ORDER BY ST_UpperLeftY(%s) %s, "
-			"ST_UpperLeftX(%s) %s", pszColumn, nBand, pszColumn, pszColumn, pszColumn, nBand, pszColumn, 
+			"%.17f %.17f, %.17f %.17f, %.17f %.17f))', %d))", pszColumn, nBand, pszColumn, pszColumn, pszColumn, nBand, pszColumn, 
 			nBand, pszColumn, pszColumn, pszColumn, pszColumn, pszSchema, pszTable, poPostGISRasterDS->pszWhere, 
 			pszColumn, adfProjWin[0], adfProjWin[1], adfProjWin[2], adfProjWin[3], adfProjWin[4], adfProjWin[5], 
-			adfProjWin[6], adfProjWin[7], adfProjWin[0], adfProjWin[1], poPostGISRasterDS->nSrid, pszColumn, 
-			orderByY, pszColumn, orderByX);
+			adfProjWin[6], adfProjWin[7], adfProjWin[0], adfProjWin[1], poPostGISRasterDS->nSrid);
 	}
 
 	CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO(): Query = %s", osCommand.c_str());
@@ -571,10 +555,8 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYO
 		"of (%d, %d) created", nXSize, nYSize);
 	
 	
-	memset(szDatasetDescription, 0, sizeof(szDatasetDescription));
-	sprintf(szDatasetDescription, "postgis_raster_band_%d_buffer_%d_%d.vrt", 
-		nBand, nBufXSize, nBufYSize);
-	GDALSetDescription(vrtDataset, szDatasetDescription);
+    // NOTE: Do NOT add a Dataset description, or the VRT file will be written to disk.
+	// This is a memory only dataset.
 	GDALSetProjection(vrtDataset, GDALGetProjectionRef((GDALDatasetH)this->poDS));
 	GDALSetGeoTransform(vrtDataset, adfTransform);
 
@@ -676,7 +658,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYO
 				"skipping. The result image may contain gaps");
 			continue;
 		}
-		
+		 
 		GDALSetDescription(memDatasets[iTuplesIndex], szMemOpenInfo);
 
 		/** 
@@ -773,7 +755,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYO
  
 	PQclear(poResult);
 	
-	CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO(): VRT file created");
+	CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO(): VRT dataset created");
 
 	/**
 	 * We've constructed the VRT Dataset based on the window requested. So, we always

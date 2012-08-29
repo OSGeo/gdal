@@ -370,6 +370,7 @@ GBool PostGISRasterDataset::SetRasterProperties
 	int nPreviousTileWidth = 0;
 	int nPreviousTileHeight = 0;
 	int nBlockXSize = 0, nBlockYSize = 0;
+	char szTmp[20];
 
     /* Incorporated variables from old SetRasterBand method */
     GBool bSignedByte = false;
@@ -470,21 +471,27 @@ GBool PostGISRasterDataset::SetRasterProperties
 	 * Now, we're going to count the number of raster tiles we will have to deal 
 	 * with.To save one database server round, we get the pixel size and rotation
 	 *
-	 * TODO: We need cursors!
+	 * TODO: Improve the optimization, based on MAX_TILES
 	 *****************************************************************************/
+	memset(szTmp, 0, sizeof(szTmp));
+	if (MAX_TILES > 0) {
+		sprintf(szTmp, "limit %d", MAX_TILES);
+	}
+
+
 	if (pszWhere == NULL) {
 		osCommand.Printf(
 			"select st_scalex(%s), st_scaley(%s), st_skewx(%s), "
-			"st_skewy(%s), st_width(%s), st_height(%s) from %s.%s", pszColumn, pszColumn, 
-			pszColumn, pszColumn, pszColumn, pszColumn,	pszSchema, pszTable);
+			"st_skewy(%s), st_width(%s), st_height(%s) from %s.%s %s", pszColumn, pszColumn, 
+			pszColumn, pszColumn, pszColumn, pszColumn,	pszSchema, pszTable, szTmp);
 	}
 
 	else {
 		osCommand.Printf(
 			"select st_scalex(%s), st_scaley(%s), st_skewx(%s), "
-			"st_skewy(%s), st_width(%s), st_height(%s) from %s.%s where %s", pszColumn, 
+			"st_skewy(%s), st_width(%s), st_height(%s) from %s.%s where %s %s", pszColumn, 
 			pszColumn, pszColumn, pszColumn, pszColumn, pszColumn, pszSchema, pszTable, 
-			pszWhere);
+			pszWhere, szTmp);
 	}
 
 	CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
