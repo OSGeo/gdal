@@ -907,9 +907,6 @@ int GDALGeoLocTransform( void *pTransformArg, int bDstToSrc,
 
         for( i = 0; i < nPointCount; i++ )
         {
-            if( !panSuccess[i] )
-                continue;
-
             if( padfX[i] == HUGE_VAL || padfY[i] == HUGE_VAL )
             {
                 panSuccess[i] = FALSE;
@@ -954,9 +951,6 @@ int GDALGeoLocTransform( void *pTransformArg, int bDstToSrc,
 
         for( i = 0; i < nPointCount; i++ )
         {
-            if( !panSuccess[i] )
-                continue;
-
             if( padfX[i] == HUGE_VAL || padfY[i] == HUGE_VAL )
             {
                 panSuccess[i] = FALSE;
@@ -1007,9 +1001,6 @@ int GDALGeoLocTransform( void *pTransformArg, int bDstToSrc,
         for( i = 0; i < nPointCount; i++ )
         {
             double dfGeoLocX, dfGeoLocY;
-
-            if( !panSuccess[i] )
-                continue;
 
             if( padfX[i] == HUGE_VAL || padfY[i] == HUGE_VAL )
             {
