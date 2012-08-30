@@ -907,9 +907,6 @@ int GDALGeoLocTransform( void *pTransformArg, int bDstToSrc,
 
         for( i = 0; i < nPointCount; i++ )
         {
-            if( !panSuccess[i] )
-                continue;
-
             if( padfX[i] == HUGE_VAL || padfY[i] == HUGE_VAL )
             {
                 panSuccess[i] = FALSE;
@@ -954,9 +951,6 @@ int GDALGeoLocTransform( void *pTransformArg, int bDstToSrc,
 
         for( i = 0; i < nPointCount; i++ )
         {
-            if( !panSuccess[i] )
-                continue;
-
             if( padfX[i] == HUGE_VAL || padfY[i] == HUGE_VAL )
             {
                 panSuccess[i] = FALSE;
@@ -969,6 +963,18 @@ int GDALGeoLocTransform( void *pTransformArg, int bDstToSrc,
                           / psTransform->adfBackMapGeoTransform[1]);
             iBMY = (int) ((padfY[i] - psTransform->adfBackMapGeoTransform[3])
                           / psTransform->adfBackMapGeoTransform[5]);
+
+            // provide a bit of slop near the edge. 
+#ifdef notdef
+            if( iBMX == -1 )
+                iBMX++;
+            if( iBMX == psTransform->nBackMapWidth )
+                iBMX--;
+            if( iBMY == -1 )
+                iBMY++;
+            if( iBMY == psTransform->nBackMapHeight )
+                iBMY--;
+#endif
 
             int iBM = iBMX + iBMY * psTransform->nBackMapWidth;
 
@@ -1007,9 +1013,6 @@ int GDALGeoLocTransform( void *pTransformArg, int bDstToSrc,
         for( i = 0; i < nPointCount; i++ )
         {
             double dfGeoLocX, dfGeoLocY;
-
-            if( !panSuccess[i] )
-                continue;
 
             if( padfX[i] == HUGE_VAL || padfY[i] == HUGE_VAL )
             {
