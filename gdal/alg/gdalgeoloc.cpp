@@ -964,18 +964,6 @@ int GDALGeoLocTransform( void *pTransformArg, int bDstToSrc,
             iBMY = (int) ((padfY[i] - psTransform->adfBackMapGeoTransform[3])
                           / psTransform->adfBackMapGeoTransform[5]);
 
-            // provide a bit of slop near the edge. 
-#ifdef notdef
-            if( iBMX == -1 )
-                iBMX++;
-            if( iBMX == psTransform->nBackMapWidth )
-                iBMX--;
-            if( iBMY == -1 )
-                iBMY++;
-            if( iBMY == psTransform->nBackMapHeight )
-                iBMY--;
-#endif
-
             int iBM = iBMX + iBMY * psTransform->nBackMapWidth;
 
             if( iBMX < 0 || iBMY < 0 
