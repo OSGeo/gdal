@@ -851,8 +851,8 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
 
     int iChunk;
     double dfPixelsProcessed=0.0, dfTotalPixels = nDstXSize*(double)nDstYSize;
-    CPLErr eErr = CE_None;
 
+    eErr = CE_None;
     for( iChunk = 0; iChunk < nChunkListCount+1; iChunk++ )
     {
         int    iThread = iChunk % 2;
@@ -994,7 +994,12 @@ CPLErr GDALWarpOperation::CollectChunkList(
                                 &nSrcXOff, &nSrcYOff, &nSrcXSize, &nSrcYSize );
     
     if( eErr != CE_None )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Unable to compute source region for output window %d,%d,%d,%d, skipping.", 
+                  nDstXOff, nDstYOff, nDstXSize, nDstYSize );
         return eErr;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we are allowed to drop no-source regons, do so now if       */
@@ -1075,6 +1080,8 @@ CPLErr GDALWarpOperation::CollectChunkList(
     if( dfTotalMemoryUse > psOptions->dfWarpMemoryLimit 
         && (nDstXSize > 2 || nDstYSize > 2) )
     {
+        CPLErr eErr2;
+
         int bOptimizeSize =
                 CSLFetchBoolean( psOptions->papszWarpOptions, "OPTIMIZE_SIZE", FALSE );
 
@@ -1097,11 +1104,8 @@ CPLErr GDALWarpOperation::CollectChunkList(
             eErr = CollectChunkList( nDstXOff, nDstYOff, 
                                      nChunk1, nDstYSize );
 
-            if( eErr == CE_None )
-            {
-                eErr = CollectChunkList( nDstXOff+nChunk1, nDstYOff, 
-                                         nChunk2, nDstYSize );
-            }
+            eErr2 = CollectChunkList( nDstXOff+nChunk1, nDstYOff, 
+                                      nChunk2, nDstYSize );
         }
         else
         {
@@ -1116,14 +1120,14 @@ CPLErr GDALWarpOperation::CollectChunkList(
             eErr = CollectChunkList( nDstXOff, nDstYOff, 
                                      nDstXSize, nChunk1 );
 
-            if( eErr == CE_None )
-            {
-                eErr = CollectChunkList( nDstXOff, nDstYOff+nChunk1, 
-                                         nDstXSize, nChunk2 );
-            }
+            eErr2 = CollectChunkList( nDstXOff, nDstYOff+nChunk1, 
+                                      nDstXSize, nChunk2 );
         }
 
-        return eErr;
+        if( eErr == CE_None )
+            return eErr2;
+        else
+            return eErr;
     }
 
 /* -------------------------------------------------------------------- */
