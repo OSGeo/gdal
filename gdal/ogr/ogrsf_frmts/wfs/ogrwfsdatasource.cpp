@@ -1218,22 +1218,25 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                     }
                 }
 
-                osLayerMetadataCSV += "\"";
-                osLayerMetadataCSV += pszName;
-                osLayerMetadataCSV += "\"";
+                char* pszCSVEscaped;
+
+                pszCSVEscaped = CPLEscapeString(pszName, -1, CPLES_CSV);
+                osLayerMetadataCSV += pszCSVEscaped;
+                CPLFree(pszCSVEscaped);
+
                 osLayerMetadataCSV += ",";
                 if (pszTitle)
                 {
-                    osLayerMetadataCSV += "\"";
-                    osLayerMetadataCSV += pszTitle;
-                    osLayerMetadataCSV += "\"";
+                    pszCSVEscaped = CPLEscapeString(pszTitle, -1, CPLES_CSV);
+                    osLayerMetadataCSV += pszCSVEscaped;
+                    CPLFree(pszCSVEscaped);
                 }
                 osLayerMetadataCSV += ",";
                 if (pszAbstract)
                 {
-                    osLayerMetadataCSV += "\"";
-                    osLayerMetadataCSV += pszAbstract;
-                    osLayerMetadataCSV += "\"";
+                    pszCSVEscaped = CPLEscapeString(pszAbstract, -1, CPLES_CSV);
+                    osLayerMetadataCSV += pszCSVEscaped;
+                    CPLFree(pszCSVEscaped);
                 }
                 osLayerMetadataCSV += "\n";
 
