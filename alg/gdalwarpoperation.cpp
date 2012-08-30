@@ -852,7 +852,7 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
     int iChunk;
     double dfPixelsProcessed=0.0, dfTotalPixels = nDstXSize*(double)nDstYSize;
 
-    eErr = CE_None;
+    CPLErr eErr = CE_None;
     for( iChunk = 0; iChunk < nChunkListCount+1; iChunk++ )
     {
         int    iThread = iChunk % 2;
