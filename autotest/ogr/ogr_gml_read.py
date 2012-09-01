@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -1938,6 +1939,37 @@ def ogr_gml_47():
     return 'success'
 
 ###############################################################################
+# Test that we can parse some particular .xsd files that have the geometry
+# field declared as :
+#    <xsd:element name="geometry" minOccurs="0" maxOccurs="1">
+#    <xsd:complexType>
+#        <xsd:sequence>
+#        <xsd:element ref="gml:_Geometry"/>
+#        </xsd:sequence>
+#    </xsd:complexType>
+#    </xsd:element>
+
+def ogr_gml_48():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    ds = ogr.Open('data/schema_with_geom_in_complextype.xml')
+    lyr = ds.GetLayer(0)
+
+    if lyr.GetGeomType() != ogr.wkbUnknown:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTString:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -2107,6 +2139,7 @@ gdaltest_list = [
     ogr_gml_45,
     ogr_gml_46,
     ogr_gml_47,
+    ogr_gml_48,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':
