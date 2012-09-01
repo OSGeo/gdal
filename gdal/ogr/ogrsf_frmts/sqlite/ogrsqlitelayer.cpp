@@ -65,6 +65,8 @@ OGRSQLiteLayer::OGRSQLiteLayer()
     nSRSId = UNINITIALIZED_SRID; // we haven't even queried the database for it yet. 
 
     panFieldOrdinals = NULL;
+    iFIDCol = -1;
+    iGeomCol = -1;
 
     bTriedAsSpatiaLite = FALSE;
     bHasSpatialIndex = FALSE;
@@ -189,7 +191,8 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
 
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * nRawColumns );
 
-    for( int iCol = 0; iCol < nRawColumns; iCol++ )
+    int iCol;
+    for( iCol = 0; iCol < nRawColumns; iCol++ )
     {
         OGRFieldDefn    oField( OGRSQLiteParamsUnquote(sqlite3_column_name( hStmt, iCol )),
                                 OFTString );
@@ -358,12 +361,37 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         panFieldOrdinals[poFeatureDefn->GetFieldCount() - 1] = iCol+1;
     }
 
+    if( pszFIDColumn != NULL )
+    {
+        for( iCol = 0; iCol < nRawColumns; iCol++ )
+        {
+            if( EQUAL(OGRSQLiteParamsUnquote(sqlite3_column_name(hStmt,iCol)).c_str(),
+                      pszFIDColumn) )
+            {
+                iFIDCol = iCol;
+                break;
+            }
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If we have no geometry source, we know our geometry type is     */
 /*      none.                                                           */
 /* -------------------------------------------------------------------- */
     if( osGeomColumn.size() == 0 )
         poFeatureDefn->SetGeomType( wkbNone );
+    else
+    {
+        for( iCol = 0; iCol < nRawColumns; iCol++ )
+        {
+            if( EQUAL(OGRSQLiteParamsUnquote(sqlite3_column_name(hStmt,iCol)).c_str(),
+                      osGeomColumn) )
+            {
+                iGeomCol = iCol;
+                break;
+            }
+        }
+    }
 }
 
 /************************************************************************/
@@ -477,27 +505,8 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Set FID if we have a column to set it from.                     */
 /* -------------------------------------------------------------------- */
-    if( pszFIDColumn != NULL )
-    {
-        int iFIDCol;
-
-        for( iFIDCol = 0; iFIDCol < sqlite3_column_count(hStmt); iFIDCol++ )
-        {
-            if( EQUAL(OGRSQLiteParamsUnquote(sqlite3_column_name(hStmt,iFIDCol)).c_str(),
-                      pszFIDColumn) )
-                break;
-        }
-
-        if( iFIDCol == sqlite3_column_count(hStmt) )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Unable to find FID column '%s'.", 
-                      pszFIDColumn );
-            return NULL;
-        }
-        
-        poFeature->SetFID( sqlite3_column_int( hStmt, iFIDCol ) );
-    }
+    if( iFIDCol >= 0 )
+        poFeature->SetFID( sqlite3_column_int64( hStmt, iFIDCol ) );
     else
         poFeature->SetFID( iNextShapeId );
 
@@ -508,25 +517,8 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Process Geometry if we have a column.                           */
 /* -------------------------------------------------------------------- */
-    if( osGeomColumn.size() && !poFeatureDefn->IsGeometryIgnored() )
+    if( iGeomCol >= 0 && !poFeatureDefn->IsGeometryIgnored() )
     {
-        int iGeomCol;
-
-        for( iGeomCol = 0; iGeomCol < sqlite3_column_count(hStmt); iGeomCol++ )
-        {
-            if( EQUAL(OGRSQLiteParamsUnquote(sqlite3_column_name(hStmt,iGeomCol)).c_str(),
-                      osGeomColumn) )
-                break;
-        }
-
-        if( iGeomCol == sqlite3_column_count(hStmt) )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Unable to find Geometry column '%s'.", 
-                      osGeomColumn.c_str() );
-            return NULL;
-        }
-
         OGRGeometry *poGeometry = NULL;
         if ( eGeomFormat == OSGF_WKT )
         {
