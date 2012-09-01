@@ -1704,7 +1704,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nRingCount );
 
-        if (nRingCount < 0)
+        if (nRingCount < 0 || nRingCount > INT_MAX / 4)
             return OGRERR_CORRUPT_DATA;
 
         // Each ring has a minimum of 4 bytes
@@ -1808,7 +1808,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nRingCount );
 
-        if (nRingCount < 0)
+        if (nRingCount < 0 || nRingCount > INT_MAX / 4)
             return OGRERR_CORRUPT_DATA;
 
         // Each ring has a minimum of 4 bytes
@@ -1908,7 +1908,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR( &nRingCount );
 
-        if (nRingCount < 0)
+        if (nRingCount < 0 || nRingCount > INT_MAX / 4)
             return OGRERR_CORRUPT_DATA;
 
         // Each ring has a minimum of 4 bytes 
