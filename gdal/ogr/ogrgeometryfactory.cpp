@@ -63,7 +63,8 @@ CPL_CVSID("$Id$");
  *             created geometry object.  This may be NULL.
  * @param ppoReturn the newly created geometry object will be assigned to the
  *                  indicated pointer on return.  This will be NULL in case
- *                  of failure.
+ *                  of failure. If not NULL, *ppoReturn should be freed with
+ *                  OGRGeometryFactory::destroyGeometry() after use.
  * @param nBytes the number of bytes available in pabyData, or -1 if it isn't
  *               known.
  *
@@ -173,7 +174,8 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
  *             created geometry object.  This may be NULL.
  * @param phGeometry the newly created geometry object will 
  * be assigned to the indicated handle on return.  This will be NULL in case
- * of failure.
+ * of failure. If not NULL, *phGeometry should be freed with
+ * OGR_G_DestroyGeometry() after use.
  * @param nBytes the number of bytes of data available in pabyData, or -1
  * if it is not known, but assumed to be sufficient.
  *
@@ -210,7 +212,8 @@ OGRErr CPL_DLL OGR_G_CreateFromWkb( unsigned char *pabyData,
  *             created geometry object.  This may be NULL.
  * @param ppoReturn the newly created geometry object will be assigned to the
  *                  indicated pointer on return.  This will be NULL if the
- *                  method fails. 
+ *                  method fails. If not NULL, *ppoReturn should be freed with
+ *                  OGRGeometryFactory::destroyGeometry() after use.
  *
  *  <b>Example:</b>
  *
@@ -330,7 +333,8 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
  *             created geometry object.  This may be NULL.
  * @param phGeometry the newly created geometry object will be assigned to the
  *                  indicated handle on return.  This will be NULL if the
- *                  method fails. 
+ *                  method fails. If not NULL, *phGeometry should be freed with
+ *                  OGR_G_DestroyGeometry() after use.
  *
  * @return OGRERR_NONE if all goes well, otherwise any of
  * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
@@ -354,7 +358,7 @@ OGRErr CPL_DLL OGR_G_CreateFromWkt( char **ppszData,
 /** 
  * \brief Create an empty geometry of desired type.
  *
- * This is equivelent to allocating the desired geometry with new, but
+ * This is equivalent to allocating the desired geometry with new, but
  * the allocation is guaranteed to take place in the context of the 
  * GDAL/OGR heap. 
  *
@@ -362,7 +366,8 @@ OGRErr CPL_DLL OGR_G_CreateFromWkt( char **ppszData,
  *
  * @param eGeometryType the type code of the geometry class to be instantiated.
  *
- * @return the newly create geometry or NULL on failure.
+ * @return the newly create geometry or NULL on failure. Should be freed with
+ *          OGRGeometryFactory::destroyGeometry() after use.
  */
 
 OGRGeometry *
@@ -406,7 +411,7 @@ OGRGeometryFactory::createGeometry( OGRwkbGeometryType eGeometryType )
 /** 
  * \brief Create an empty geometry of desired type.
  *
- * This is equivelent to allocating the desired geometry with new, but
+ * This is equivalent to allocating the desired geometry with new, but
  * the allocation is guaranteed to take place in the context of the 
  * GDAL/OGR heap. 
  *
@@ -415,7 +420,8 @@ OGRGeometryFactory::createGeometry( OGRwkbGeometryType eGeometryType )
  *
  * @param eGeometryType the type code of the geometry to be created.
  *
- * @return handle to the newly create geometry or NULL on failure.
+ * @return handle to the newly create geometry or NULL on failure. Should be freed with
+ *         OGR_G_DestroyGeometry() after use.
  */
 
 OGRGeometryH OGR_G_CreateGeometry( OGRwkbGeometryType eGeometryType )
