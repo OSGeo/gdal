@@ -427,12 +427,14 @@ OGRFeature *OGRPCIDSKLayer::GetFeature( long nFID )
 /* -------------------------------------------------------------------- */
     catch( PCIDSK::PCIDSKException ex )
     {
+        delete poFeature;
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s", ex.what() );
         return NULL;
     }
     catch(...)
     {
+        delete poFeature;
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Non-PCIDSK exception trapped." );
         return NULL;
