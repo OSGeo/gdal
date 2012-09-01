@@ -1071,7 +1071,8 @@ OGRErr OGR_G_ImportFromWkt( OGRGeometryH hGeom, char ** ppszSrcText )
  * This method is the same as the C function OGR_G_ExportToWkt().
  *
  * @param ppszDstText a text buffer is allocated by the program, and assigned
- *                    to the passed pointer.
+ *                    to the passed pointer. After use, *ppszDstText should be
+ *                    freed with OGRFree().
  *
  * @return Currently OGRERR_NONE is always returned.
  */
@@ -1088,7 +1089,8 @@ OGRErr OGR_G_ImportFromWkt( OGRGeometryH hGeom, char ** ppszSrcText )
  *
  * @param hGeom handle on the geometry to convert to a text format from.
  * @param ppszSrcText a text buffer is allocated by the program, and assigned
-                       to the passed pointer.
+ *                    to the passed pointer. After use, *ppszDstText should be
+ *                    freed with OGRFree().
  *
  * @return Currently OGRERR_NONE is always returned.
  */
