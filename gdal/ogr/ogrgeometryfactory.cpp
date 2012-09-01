@@ -504,6 +504,8 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
     // build an aggregated polygon from all the polygon rings in the container.
     OGRPolygon *poPolygon = new OGRPolygon();
     OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
+    if( poGeom->getSpatialReference() != NULL )
+        poPolygon->assignSpatialReference(poGeom->getSpatialReference());
     int iGeom;
 
     for( iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
@@ -603,6 +605,8 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
             return poGeom;
         
         OGRMultiPolygon *poMP = new OGRMultiPolygon();
+        if( poGeom->getSpatialReference() != NULL )
+            poMP->assignSpatialReference(poGeom->getSpatialReference());
 
         while( poGC->getNumGeometries() > 0 )
         {
@@ -623,6 +627,8 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
         return poGeom;
 
     OGRMultiPolygon *poMP = new OGRMultiPolygon();
+    if( poGeom->getSpatialReference() != NULL )
+        poMP->assignSpatialReference(poGeom->getSpatialReference());
     poMP->addGeometryDirectly( poGeom );
 
     return poMP;
@@ -702,6 +708,8 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPoint( OGRGeometry *poGeom )
             return poGeom;
         
         OGRMultiPoint *poMP = new OGRMultiPoint();
+        if( poGeom->getSpatialReference() != NULL )
+            poMP->assignSpatialReference(poGeom->getSpatialReference());
 
         while( poGC->getNumGeometries() > 0 )
         {
@@ -718,6 +726,8 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPoint( OGRGeometry *poGeom )
         return poGeom;
 
     OGRMultiPoint *poMP = new OGRMultiPoint();
+    if( poGeom->getSpatialReference() != NULL )
+        poMP->assignSpatialReference(poGeom->getSpatialReference());
     poMP->addGeometryDirectly( poGeom );
 
     return poMP;
@@ -803,6 +813,8 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
             return poGeom;
         
         OGRMultiLineString *poMP = new OGRMultiLineString();
+        if( poGeom->getSpatialReference() != NULL )
+            poMP->assignSpatialReference(poGeom->getSpatialReference());
 
         while( poGC->getNumGeometries() > 0 )
         {
@@ -821,6 +833,8 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
     if( eGeomType == wkbLineString )
     {
         OGRMultiLineString *poMP = new OGRMultiLineString();
+        if( poGeom->getSpatialReference() != NULL )
+            poMP->assignSpatialReference(poGeom->getSpatialReference());
         poMP->addGeometryDirectly( poGeom );
         return poMP;
     }
@@ -833,6 +847,9 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
         OGRMultiLineString *poMP = new OGRMultiLineString();
         OGRPolygon *poPoly = (OGRPolygon *) poGeom;
         int iRing;
+
+        if( poGeom->getSpatialReference() != NULL )
+            poMP->assignSpatialReference(poGeom->getSpatialReference());
 
         for( iRing = 0; iRing < poPoly->getNumInteriorRings()+1; iRing++ )
         {
@@ -868,6 +885,9 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
         OGRMultiLineString *poMP = new OGRMultiLineString();
         OGRMultiPolygon *poMPoly = (OGRMultiPolygon *) poGeom;
         int iPoly;
+
+        if( poGeom->getSpatialReference() != NULL )
+            poMP->assignSpatialReference(poGeom->getSpatialReference());
 
         for( iPoly = 0; iPoly < poMPoly->getNumGeometries(); iPoly++ )
         {
