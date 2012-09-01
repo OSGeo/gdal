@@ -224,6 +224,7 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     GByte          *pabyHeaderData;
     size_t          nHeaderSize;
     vsi_l_offset    nBodySize;
+    int             nHTTPCode;
 
     void                AcquireMutex();
     void                ReleaseMutex();
@@ -290,6 +291,7 @@ VSICurlStreamingHandle::VSICurlStreamingHandle(VSICurlStreamingFSHandler* poFS, 
     pabyHeaderData = NULL;
     nHeaderSize = 0;
     nBodySize = 0;
+    nHTTPCode = 0;
 }
 
 /************************************************************************/
@@ -814,6 +816,15 @@ int VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, siz
     if (ENABLE_DEBUG)
         CPLDebug("VSICURL", "Receiving %d bytes for header...", (int)nSize);
 
+    /* Reset buffer if we have followed link after a redirect */
+    if (nSize >=9 && (nHTTPCode == 301 || nHTTPCode == 302) &&
+        (EQUALN((const char*)buffer, "HTTP/1.0 ", 9) ||
+         EQUALN((const char*)buffer, "HTTP/1.1 ", 9)))
+    {
+        nHeaderSize = 0;
+        nHTTPCode = 0;
+    }
+
     if (nHeaderSize < HEADER_SIZE)
     {
         size_t nSz = MIN(nSize, HEADER_SIZE - nHeaderSize);
@@ -825,22 +836,26 @@ int VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, siz
 
         AcquireMutex();
 
-        if (eExists == EXIST_UNKNOWN &&
+        if (eExists == EXIST_UNKNOWN && nHTTPCode == 0 &&
             strchr((const char*)pabyHeaderData, '\n') != NULL &&
             (EQUALN((const char*)pabyHeaderData, "HTTP/1.0 ", 9) ||
                 EQUALN((const char*)pabyHeaderData, "HTTP/1.1 ", 9)))
         {
-            int nHTTPCode = atoi((const char*)pabyHeaderData + 9);
+            nHTTPCode = atoi((const char*)pabyHeaderData + 9);
             if (ENABLE_DEBUG)
                 CPLDebug("VSICURL", "HTTP code = %d", nHTTPCode);
 
-            poFS->AcquireMutex();
-            CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
-            cachedFileProp->eExists = eExists = (nHTTPCode == 200) ? EXIST_YES : EXIST_NO;
-            poFS->ReleaseMutex();
+            /* If moved permanently/temporarily, go on */
+            if( !(nHTTPCode == 301 || nHTTPCode == 302) )
+            {
+                poFS->AcquireMutex();
+                CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
+                cachedFileProp->eExists = eExists = (nHTTPCode == 200) ? EXIST_YES : EXIST_NO;
+                poFS->ReleaseMutex();
+            }
         }
 
-        if (!bHastComputedFileSize)
+        if ( !(nHTTPCode == 301 || nHTTPCode == 302) && !bHastComputedFileSize)
         {
             const char* pszContentLength = strstr((const char*)pabyHeaderData, "Content-Length: ");
             const char* pszEndOfLine = pszContentLength ? strchr(pszContentLength, '\n') : NULL;
@@ -883,6 +898,7 @@ void VSICurlStreamingHandle::DownloadInThread()
         pabyHeaderData = (GByte*) CPLMalloc(HEADER_SIZE + 1);
     nHeaderSize = 0;
     nBodySize = 0;
+    nHTTPCode = 0;
 
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, this);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, VSICurlStreamingHandleReceivedBytesHeader);
