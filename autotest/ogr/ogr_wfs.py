@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -1022,6 +1023,11 @@ def ogr_wfs_erdas_apollo():
 def ogr_wfs_intergraph():
     return ogr_wfs_get_multiple_layer_defn('http://ideg.xunta.es/WFS_POL/request.aspx')
 
+###############################################################################
+# Test a MapInfo server
+
+def ogr_wfs_mapinfo():
+    return ogr_wfs_get_multiple_layer_defn('http://www.mapinfo.com/miwfs')
 
 ###############################################################################
 # Test with OGR_WFS_USE_STREAMING=NO
@@ -1055,6 +1061,7 @@ gdaltest_list = [
     ogr_wfs_tinyows,
     ogr_wfs_erdas_apollo,
     ogr_wfs_intergraph,
+    ogr_wfs_mapinfo,
     ogr_wfs_turn_streaming_off,
     ogr_wfs_deegree,
     ogr_wfs_test_ogrsf,

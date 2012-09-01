@@ -1732,9 +1732,27 @@ CPLString WFS_EscapeURL(const char* pszURL)
 {
     CPLString osEscapedURL;
 
-    char* pszEscapedURL = CPLEscapeString(pszURL, -1, CPLES_URL);
-    osEscapedURL = pszEscapedURL;
-    CPLFree(pszEscapedURL);
+    /* Difference with CPLEscapeString(, CPLES_URL) : we do not escape */
+    /* colon (:) or comma (,). Causes problems with servers such as http://www.mapinfo.com/miwfs? */
+
+    for( int i = 0; pszURL[i] != '\0' ; i++ )
+    {
+        char ch = pszURL[i];
+        if( (ch >= 'a' && ch <= 'z')
+            || (ch >= 'A' && ch <= 'Z')
+            || (ch >= '0' && ch <= '9')
+            || ch == '_' || ch == '.'
+            || ch == ':' || ch == ',' )
+        {
+            osEscapedURL += ch;
+        }
+        else
+        {
+            char szPercentEncoded[10];
+            sprintf( szPercentEncoded, "%%%02X", ((unsigned char*)pszURL)[i] );
+            osEscapedURL += szPercentEncoded;
+        }
+    }
 
     return osEscapedURL;
 }
