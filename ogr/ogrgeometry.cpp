@@ -2099,6 +2099,8 @@ OGRGeometry *OGRGeometry::ConvexHull() const
         if( hGeosHull != NULL )
         {
             poHullOGRGeom = OGRGeometryFactory::createFromGEOS(hGeosHull);
+            if( poHullOGRGeom != NULL && getSpatialReference() != NULL )
+                poHullOGRGeom->assignSpatialReference(getSpatialReference());
             GEOSGeom_destroy( hGeosHull);
         }
     }
@@ -2184,6 +2186,8 @@ OGRGeometry *OGRGeometry::Boundary() const
         if( hGeosProduct != NULL )
         {
             poOGRProduct = OGRGeometryFactory::createFromGEOS(hGeosProduct);
+            if( poOGRProduct != NULL && getSpatialReference() != NULL )
+                poOGRProduct->assignSpatialReference(getSpatialReference());
             GEOSGeom_destroy( hGeosProduct );
         }
     }
@@ -2310,6 +2314,8 @@ OGRGeometry *OGRGeometry::Buffer( double dfDist, int nQuadSegs ) const
         if( hGeosProduct != NULL )
         {
             poOGRProduct = OGRGeometryFactory::createFromGEOS(hGeosProduct);
+            if( poOGRProduct != NULL && getSpatialReference() != NULL )
+                poOGRProduct->assignSpatialReference(getSpatialReference());
             GEOSGeom_destroy( hGeosProduct );
         }
     }
@@ -2410,6 +2416,12 @@ OGRGeometry *OGRGeometry::Intersection( const OGRGeometry *poOtherGeom ) const
         if( hGeosProduct != NULL )
         {
             poOGRProduct = OGRGeometryFactory::createFromGEOS(hGeosProduct);
+            if( poOGRProduct != NULL && getSpatialReference() != NULL &&
+                poOtherGeom->getSpatialReference() != NULL &&
+                poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()) )
+            {
+                poOGRProduct->assignSpatialReference(getSpatialReference());
+            }
             GEOSGeom_destroy( hGeosProduct );
         }
     }
@@ -2502,6 +2514,12 @@ OGRGeometry *OGRGeometry::Union( const OGRGeometry *poOtherGeom ) const
         if( hGeosProduct != NULL )
         {
             poOGRProduct = OGRGeometryFactory::createFromGEOS(hGeosProduct);
+            if( poOGRProduct != NULL && getSpatialReference() != NULL &&
+                poOtherGeom->getSpatialReference() != NULL &&
+                poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()) )
+            {
+                poOGRProduct->assignSpatialReference(getSpatialReference());
+            }
             GEOSGeom_destroy( hGeosProduct );
         }
     }
@@ -2589,6 +2607,8 @@ OGRGeometry *OGRGeometry::UnionCascaded() const
         if( hGeosProduct != NULL )
         {
             poOGRProduct = OGRGeometryFactory::createFromGEOS(hGeosProduct);
+            if( poOGRProduct != NULL && getSpatialReference() != NULL )
+                poOGRProduct->assignSpatialReference(getSpatialReference());
             GEOSGeom_destroy( hGeosProduct );
         }
     }
@@ -2678,6 +2698,12 @@ OGRGeometry *OGRGeometry::Difference( const OGRGeometry *poOtherGeom ) const
         if( hGeosProduct != NULL )
         {
             poOGRProduct = OGRGeometryFactory::createFromGEOS(hGeosProduct);
+            if( poOGRProduct != NULL && getSpatialReference() != NULL &&
+                poOtherGeom->getSpatialReference() != NULL &&
+                poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()) )
+            {
+                poOGRProduct->assignSpatialReference(getSpatialReference());
+            }
             GEOSGeom_destroy( hGeosProduct );
         }
     }
@@ -2773,6 +2799,12 @@ OGRGeometry::SymDifference( const OGRGeometry *poOtherGeom ) const
         if( hGeosProduct != NULL )
         {
             poOGRProduct = OGRGeometryFactory::createFromGEOS(hGeosProduct);
+            if( poOGRProduct != NULL && getSpatialReference() != NULL &&
+                poOtherGeom->getSpatialReference() != NULL &&
+                poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()) )
+            {
+                poOGRProduct->assignSpatialReference(getSpatialReference());
+            }
             GEOSGeom_destroy( hGeosProduct );
         }
     }
@@ -3442,6 +3474,9 @@ int OGRGeometry::Centroid( OGRPoint *poPoint ) const
             return OGRERR_FAILURE;
         }
 
+        if( poCentroidGeom != NULL && getSpatialReference() != NULL )
+            poCentroidGeom->assignSpatialReference(getSpatialReference());
+
         OGRPoint *poCentroid = (OGRPoint *) poCentroidGeom;
         if( !poCentroid->IsEmpty() )
         {
@@ -3558,6 +3593,8 @@ OGRGeometry *OGRGeometry::Simplify(double dTolerance) const
         if( hGeosProduct != NULL )
         {
             poOGRProduct = OGRGeometryFactory::createFromGEOS( hGeosProduct );
+            if( poOGRProduct != NULL && getSpatialReference() != NULL )
+                poOGRProduct->assignSpatialReference(getSpatialReference());
             GEOSGeom_destroy( hGeosProduct );
         }
     }
@@ -3645,6 +3682,8 @@ OGRGeometry *OGRGeometry::SimplifyPreserveTopology(double dTolerance) const
         if( hGeosProduct != NULL )
         {
             poOGRProduct = OGRGeometryFactory::createFromGEOS( hGeosProduct );
+            if( poOGRProduct != NULL && getSpatialReference() != NULL )
+                poOGRProduct->assignSpatialReference(getSpatialReference());
             GEOSGeom_destroy( hGeosProduct );
         }
     }
@@ -3765,6 +3804,8 @@ OGRGeometry *OGRGeometry::Polygonize() const
         if( hGeosPolygs != NULL )
         {
             poPolygsOGRGeom = OGRGeometryFactory::createFromGEOS(hGeosPolygs);
+            if( poPolygsOGRGeom != NULL && getSpatialReference() != NULL )
+                poPolygsOGRGeom->assignSpatialReference(getSpatialReference());
             GEOSGeom_destroy( hGeosPolygs);
         }
     }
