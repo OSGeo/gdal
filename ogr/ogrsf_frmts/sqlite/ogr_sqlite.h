@@ -200,6 +200,9 @@ class OGRSQLiteLayer : public OGRLayer
     char                *pszFIDColumn;
 
     int                *panFieldOrdinals;
+    int                 iFIDCol;
+    int                 iGeomCol;
+
     int                 bHasSpatialIndex;
     int                 bHasM;
     int                 bSpatialiteReadOnly;
