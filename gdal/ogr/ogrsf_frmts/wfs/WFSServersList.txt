@@ -81,6 +81,9 @@ http://apollo.erdas.com/erdas-apollo/vector/Cherokee
 SnowFlake software:
 http://demo.snowflakesoftware.com:8080/AIXM51FINAL_DONLON/GOPublisherWFS
 
+Mapinfo:
+http://www.mapinfo.com/miwfs
+
 ???
 http://services.interactive-instruments.de/xtra/cgi-bin/wfs?Request=GetCapabilities (doesn't work well)
 
