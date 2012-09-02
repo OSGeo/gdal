@@ -84,11 +84,4 @@
        OGR_G_ExportToWkt(self, &argout);
        return argout;
    }
-
-  %newobject Centroid;
-  OGRGeometryShadow* Centroid() {
-    OGRGeometryH pt = OGR_G_CreateGeometry( wkbPoint );
-    OGR_G_Centroid( (OGRGeometryH) self, (OGRGeometryH) pt );
-    return (OGRGeometryShadow*) pt;
-  }
 }
