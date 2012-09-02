@@ -4281,6 +4281,9 @@ SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_Centroid(OGRGeometryShadow *self
     OGR_G_Centroid( self, pt );
     return pt;
   }
+SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_PointOnSurface(OGRGeometryShadow *self){
+    return (OGRGeometryShadow*) OGR_G_PointOnSurface( self );
+  }
 SWIGINTERN int OGRGeometryShadow_WkbSize(OGRGeometryShadow *self){
     return OGR_G_WkbSize(self);
   }
@@ -16749,6 +16752,39 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Geometry_PointOnSurface(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OGRGeometryShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Geometry_PointOnSurface",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_PointOnSurface" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (OGRGeometryShadow *)OGRGeometryShadow_PointOnSurface(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Geometry_WkbSize(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -21182,6 +21218,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"OGRERR_NONE on success or OGRERR_FAILURE on error. \n"
 		""},
+	 { (char *)"Geometry_PointOnSurface", _wrap_Geometry_PointOnSurface, METH_VARARGS, (char *)"Geometry_PointOnSurface(Geometry self) -> Geometry"},
 	 { (char *)"Geometry_WkbSize", _wrap_Geometry_WkbSize, METH_VARARGS, (char *)"\n"
 		"Geometry_WkbSize(Geometry self) -> int\n"
 		"\n"

@@ -4818,6 +4818,10 @@ class Geometry(_object):
         """
         return _ogr.Geometry_Centroid(self, *args)
 
+    def PointOnSurface(self, *args):
+        """PointOnSurface(self) -> Geometry"""
+        return _ogr.Geometry_PointOnSurface(self, *args)
+
     def WkbSize(self, *args):
         """
         WkbSize(self) -> int

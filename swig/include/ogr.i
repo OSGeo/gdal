@@ -2058,15 +2058,18 @@ public:
   }
 #endif  
 
-#ifndef SWIGJAVA
   %newobject Centroid;
   OGRGeometryShadow* Centroid() {
     OGRGeometryShadow *pt = (OGRGeometryShadow*) OGR_G_CreateGeometry( wkbPoint );
     OGR_G_Centroid( self, pt );
     return pt;
   }
-#endif
   
+  %newobject PointOnSurface;
+  OGRGeometryShadow* PointOnSurface() {
+    return (OGRGeometryShadow*) OGR_G_PointOnSurface( self );
+  }
+
   int WkbSize() {
     return OGR_G_WkbSize(self);
   }
