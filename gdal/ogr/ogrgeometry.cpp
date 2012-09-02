@@ -3549,6 +3549,79 @@ int OGR_G_Centroid( OGRGeometryH hGeom, OGRGeometryH hCentroidPoint )
 }
 
 /************************************************************************/
+/*                        OGR_G_PointOnSurface()                        */
+/************************************************************************/
+
+/**
+ * \brief Returns a point guaranteed to lie on the surface.
+ *
+ * This method relates to the SFCOM ISurface::get_PointOnSurface() method
+ * however the current implementation based on GEOS can operate on other
+ * geometry types than the types that are supported by SQL/MM-Part 3 :
+ * surfaces (polygons) and multisurfaces (multipolygons).
+ *
+ * This method is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this method will always fail, 
+ * issuing a CPLE_NotSupported error. 
+ *
+ * @param hGeom the geometry to operate on. 
+ * @return a point guaranteed to lie on the surface or NULL if an error
+ *         occured.
+ *
+ * @since OGR 2.0
+ */
+
+OGRGeometryH OGR_G_PointOnSurface( OGRGeometryH hGeom )
+
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_PointOnSurface", NULL );
+
+#ifndef HAVE_GEOS
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS support not enabled." );
+    return NULL;
+#else
+    GEOSGeom hThisGeosGeom = NULL;
+    GEOSGeom hOtherGeosGeom = NULL;
+    OGRGeometry* poThis = (OGRGeometry*) hGeom;
+
+    hThisGeosGeom = poThis->exportToGEOS();
+ 
+    if( hThisGeosGeom != NULL )
+    {
+        hOtherGeosGeom = GEOSPointOnSurface( hThisGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+
+        if( hOtherGeosGeom == NULL )
+            return NULL;
+
+        OGRGeometry *poInsidePointGeom = (OGRGeometry *) 
+            OGRGeometryFactory::createFromGEOS( hOtherGeosGeom );
+ 
+        GEOSGeom_destroy( hOtherGeosGeom );
+
+        if (poInsidePointGeom == NULL)
+            return NULL;
+        if (wkbFlatten(poInsidePointGeom->getGeometryType()) != wkbPoint)
+        {
+            delete poInsidePointGeom;
+            return NULL;
+        }
+
+        if( poInsidePointGeom != NULL && poThis->getSpatialReference() != NULL )
+            poInsidePointGeom->assignSpatialReference(poThis->getSpatialReference());
+
+        return (OGRGeometryH) poInsidePointGeom;
+    }
+    else
+    {
+        return NULL;
+    }
+#endif
+}
+
+/************************************************************************/
 /*                              Simplify()                              */
 /************************************************************************/
 

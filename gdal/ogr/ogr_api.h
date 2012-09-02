@@ -149,7 +149,7 @@ OGRGeometryH CPL_DLL OGR_G_Buffer( OGRGeometryH, double, int );
 OGRGeometryH CPL_DLL OGR_G_Intersection( OGRGeometryH, OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_Union( OGRGeometryH, OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_UnionCascaded( OGRGeometryH );
-/*OGRGeometryH CPL_DLL OGR_G_PointOnSurface( OGRGeometryH );*/
+OGRGeometryH CPL_DLL OGR_G_PointOnSurface( OGRGeometryH );
 /*OGRGeometryH CPL_DLL OGR_G_Polygonize( OGRGeometryH *, int);*/
 /*OGRGeometryH CPL_DLL OGR_G_Polygonizer_getCutEdges( OGRGeometryH *, int);*/
 /*OGRGeometryH CPL_DLL OGR_G_LineMerge( OGRGeometryH );*/

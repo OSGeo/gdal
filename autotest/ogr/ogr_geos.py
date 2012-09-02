@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -693,6 +694,22 @@ def ogr_geos_isvalid_false():
 
     return 'success'
 
+###############################################################################
+
+def ogr_geos_pointonsurface():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt( 'POLYGON((0 0, 10 10, 10 0, 0 0))' )
+
+    pointonsurface = g1.PointOnSurface()
+
+    if pointonsurface.Within(g1) != 1:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     ogr_geos_union,
     ogr_geos_intersection,
@@ -719,7 +736,8 @@ gdaltest_list = [
     ogr_geos_issimple_true,
     ogr_geos_issimple_false,
     ogr_geos_isvalid_true,
-    ogr_geos_isvalid_false ]
+    ogr_geos_isvalid_false,
+    ogr_geos_pointonsurface ]
 
 if __name__ == '__main__':
 

@@ -812,49 +812,21 @@ int OGRPolygon::PointOnSurface( OGRPoint *poPoint ) const
 {
     if( poPoint == NULL )
         return OGRERR_FAILURE;
- 
-#ifndef HAVE_GEOS
-    return OGRERR_FAILURE;
-#else
-    GEOSGeom hThisGeosGeom = NULL;
-    GEOSGeom hOtherGeosGeom = NULL;
-     
-    hThisGeosGeom = exportToGEOS();
- 
-    if( hThisGeosGeom != NULL )
-    {
-     	hOtherGeosGeom = GEOSPointOnSurface( hThisGeosGeom );
-        GEOSGeom_destroy( hThisGeosGeom );
 
-        if( hOtherGeosGeom == NULL )
-            return OGRERR_FAILURE;
+    OGRGeometryH hInsidePoint = OGR_G_PointOnSurface( (OGRGeometryH) this );
+    if( hInsidePoint == NULL )
+        return OGRERR_FAILURE;
 
-        OGRGeometry *poInsidePointGeom = (OGRGeometry *) 
-            OGRGeometryFactory::createFromGEOS( hOtherGeosGeom );
- 
-        GEOSGeom_destroy( hOtherGeosGeom );
-
-        if (poInsidePointGeom == NULL)
-            return OGRERR_FAILURE;
-        if (wkbFlatten(poInsidePointGeom->getGeometryType()) != wkbPoint)
-        {
-            delete poInsidePointGeom;
-            return OGRERR_FAILURE;
-        }
-
-        OGRPoint *poInsidePoint = (OGRPoint *) poInsidePointGeom;
- 	poPoint->setX( poInsidePoint->getX() );
- 	poPoint->setY( poInsidePoint->getY() );
- 
-        delete poInsidePointGeom;
- 
-     	return OGRERR_NONE;
-    }
+    OGRPoint *poInsidePoint = (OGRPoint *) hInsidePoint;
+    if( poInsidePoint->IsEmpty() )
+        poPoint->empty();
     else
     {
-     	return OGRERR_FAILURE;
+        poPoint->setX( poInsidePoint->getX() );
+        poPoint->setY( poInsidePoint->getY() );
     }
-#endif /* HAVE_GEOS */
+
+    return OGRERR_NONE;
 }
 
 
