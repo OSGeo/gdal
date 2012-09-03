@@ -20,7 +20,8 @@ OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
 	gdalgrid.obj gdalcutline.obj gdalproximity.obj rasterfill.obj \
 	gdalsievefilter.obj gdalrasterpolygonenumerator.obj polygonize.obj \
 	gdalrasterfpolygonenumerator.obj fpolygonize.obj contour.obj \
-	gdal_octave.obj gdal_simplesurf.obj gdalmatching.obj
+	gdal_octave.obj gdal_simplesurf.obj gdalmatching.obj \
+	gdaltrasnformgeolocs.obj
 	
 
 default:	$(OBJ) 

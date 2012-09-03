@@ -4936,6 +4936,14 @@ SWIGINTERN int GDALTransformerInfoShadow_TransformPoints(GDALTransformerInfoShad
 
     return nRet;
   }
+SWIGINTERN int GDALTransformerInfoShadow_TransformGeolocations(GDALTransformerInfoShadow *self,GDALRasterBandShadow *xBand,GDALRasterBandShadow *yBand,GDALRasterBandShadow *zBand,GDALProgressFunc callback=NULL,void *callback_data=NULL,char **options=NULL){
+
+    CPLErrorReset();
+
+    return GDALTransformGeolocations( xBand, yBand, zBand, 
+                                      GDALUseTransformer, self,
+                            	      callback, callback_data, options );
+  }
 
 GIntBig wrapper_GDALGetCacheMax()
 {
@@ -19803,6 +19811,192 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Transformer_TransformGeolocations(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  GDALTransformerInfoShadow *arg1 = (GDALTransformerInfoShadow *) 0 ;
+  GDALRasterBandShadow *arg2 = (GDALRasterBandShadow *) 0 ;
+  GDALRasterBandShadow *arg3 = (GDALRasterBandShadow *) 0 ;
+  GDALRasterBandShadow *arg4 = (GDALRasterBandShadow *) 0 ;
+  GDALProgressFunc arg5 = (GDALProgressFunc) NULL ;
+  void *arg6 = (void *) NULL ;
+  char **arg7 = (char **) NULL ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
+  void *argp4 = 0 ;
+  int res4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "xBand",(char *) "yBand",(char *) "zBand",(char *) "callback",(char *) "callback_data",(char *) "options", NULL 
+  };
+  int result;
+  
+  /* %typemap(arginit) ( const char* callback_data=NULL)  */
+  PyProgressData *psProgressInfo;
+  psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+  psProgressInfo->nLastReported = -1;
+  psProgressInfo->psPyCallback = NULL;
+  psProgressInfo->psPyCallbackData = NULL;
+  arg6 = psProgressInfo;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOO|OOO:Transformer_TransformGeolocations",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALTransformerInfoShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Transformer_TransformGeolocations" "', argument " "1"" of type '" "GDALTransformerInfoShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALTransformerInfoShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Transformer_TransformGeolocations" "', argument " "2"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< GDALRasterBandShadow * >(argp2);
+  res3 = SWIG_ConvertPtr(obj2, &argp3,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "Transformer_TransformGeolocations" "', argument " "3"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg3 = reinterpret_cast< GDALRasterBandShadow * >(argp3);
+  res4 = SWIG_ConvertPtr(obj3, &argp4,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res4)) {
+    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "Transformer_TransformGeolocations" "', argument " "4"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg4 = reinterpret_cast< GDALRasterBandShadow * >(argp4);
+  if (obj4) {
+    {
+      /* %typemap(in) (GDALProgressFunc callback = NULL) */
+      /* callback_func typemap */
+      if (obj4 && obj4 != Py_None ) {
+        void* cbfunction = NULL;
+        SWIG_ConvertPtr( obj4, 
+          (void**)&cbfunction,
+          SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+          SWIG_POINTER_EXCEPTION | 0 );
+        
+        if ( cbfunction == GDALTermProgress ) {
+          arg5 = GDALTermProgress;
+        } else {
+          if (!PyCallable_Check(obj4)) {
+            PyErr_SetString( PyExc_RuntimeError, 
+              "Object given is not a Python function" );
+            SWIG_fail;
+          }
+          psProgressInfo->psPyCallback = obj4;
+          arg5 = PyProgressProxy;
+        }
+        
+      }
+      
+    }
+  }
+  if (obj5) {
+    {
+      /* %typemap(in) ( void* callback_data=NULL)  */
+      psProgressInfo->psPyCallbackData = obj5 ;
+    }
+  }
+  if (obj6) {
+    {
+      /* %typemap(in) char **options */
+      /* Check if is a list */
+      if ( ! PySequence_Check(obj6)) {
+        PyErr_SetString(PyExc_TypeError,"not a sequence");
+        SWIG_fail;
+      }
+      
+      int size = PySequence_Size(obj6);
+      for (int i = 0; i < size; i++) {
+        PyObject* pyObj = PySequence_GetItem(obj6,i);
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg7 = CSLAddString( arg7, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg7 = CSLAddString( arg7, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg7 = CSLAddString( arg7, PyString_AsString(pyObj) );
+#endif
+        else
+        {
+          Py_DECREF(pyObj);
+          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+          SWIG_fail;
+        }
+        Py_DECREF(pyObj);
+      }
+    }
+  }
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if (!arg3) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if (!arg4) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (int)GDALTransformerInfoShadow_TransformGeolocations(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg7 );
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg7 );
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *Transformer_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *obj;
   if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
@@ -21355,6 +21549,11 @@ static PyMethodDef SwigMethods[] = {
 		"    double z = 0.0) -> int\n"
 		""},
 	 { (char *)"Transformer_TransformPoints", _wrap_Transformer_TransformPoints, METH_VARARGS, (char *)"Transformer_TransformPoints(Transformer self, int bDstToSrc, int nCount) -> int"},
+	 { (char *)"Transformer_TransformGeolocations", (PyCFunction) _wrap_Transformer_TransformGeolocations, METH_VARARGS | METH_KEYWORDS, (char *)"\n"
+		"Transformer_TransformGeolocations(Transformer self, Band xBand, Band yBand, Band zBand, \n"
+		"    GDALProgressFunc callback = None, void callback_data = None, \n"
+		"    char options = None) -> int\n"
+		""},
 	 { (char *)"Transformer_swigregister", Transformer_swigregister, METH_VARARGS, NULL},
 	 { (char *)"ApplyGeoTransform", _wrap_ApplyGeoTransform, METH_VARARGS, (char *)"ApplyGeoTransform(double padfGeoTransform, double dfPixel, double dfLine)"},
 	 { (char *)"InvGeoTransform", _wrap_InvGeoTransform, METH_VARARGS, (char *)"InvGeoTransform(double gt_in) -> int"},
