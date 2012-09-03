@@ -245,6 +245,9 @@ static char* CPLReplacePointByLocalePoint(const char* pszNumber, char point)
  */
 double CPLStrtodDelim(const char *nptr, char **endptr, char point)
 {
+    while( *nptr == ' ' )
+        nptr ++;
+
     if (nptr[0] == '-')
     {
         if (strcmp(nptr, "-1.#QNAN") == 0 ||
