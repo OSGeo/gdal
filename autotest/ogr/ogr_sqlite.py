@@ -1807,10 +1807,28 @@ def ogr_spatialite_6():
         pass
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_spatialite_6.sqlite', options = ['SPATIALITE=YES'])
 
+    if int(gdaltest.spatialite_version[0:gdaltest.spatialite_version.find('.')]) >= 4:
+        layername = 'regular_layer'
+        layername_single = 'regular_layer'
+        viewname = 'view_of_regular_layer'
+        viewname_single = 'view_of_regular_layer'
+        thegeom_single = 'the_geom'
+        pkid_single = 'pk_id'
+    else:
+        layername = 'regular_\'layer'
+        layername_single = 'regular_\'\'layer'
+        viewname = 'view_of_\'regular_layer'
+        viewname_single = 'view_of_\'\'regular_layer'
+        thegeom_single = 'the_"''geom'
+        pkid_single = 'pk_"''id'
+
     # Create regular layer
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 4326 )
-    lyr = ds.CreateLayer('regular_\'layer', geom_type = ogr.wkbPoint, srs = srs, options = ['LAUNDER=NO'])
+    lyr = ds.CreateLayer(layername, geom_type = ogr.wkbPoint, srs = srs, options = ['LAUNDER=NO'])
+
+    geometryname = lyr.GetGeometryColumn()
+
     lyr.CreateField(ogr.FieldDefn("int'col", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("realcol", ogr.OFTReal))
 
@@ -1838,25 +1856,22 @@ def ogr_spatialite_6():
     feat.SetGeometryDirectly(geom)
     lyr.SetFeature(feat)
 
-    thegeom_single = 'the_"''geom'
-    pkid_single = 'pk_"''id'
-
     # Create spatial view
-    ds.ExecuteSQL("CREATE VIEW \"view_of_'regular_layer\" AS SELECT OGC_FID AS '%s', GEOMETRY AS '%s', \"int'col\", realcol FROM \"regular_'layer\"" % (pkid_single, thegeom_single))
+    ds.ExecuteSQL("CREATE VIEW \"%s\" AS SELECT OGC_FID AS '%s', %s AS '%s', \"int'col\", realcol FROM \"%s\"" % (viewname, pkid_single, geometryname, thegeom_single, layername))
 
     if int(gdaltest.spatialite_version[0:gdaltest.spatialite_version.find('.')]) >= 4:
         ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column, read_only) VALUES " + \
-                    "('view_of_''regular_layer', '%s', '%s', 'regular_''layer', 'GEOMETRY', 1)" % (thegeom_single, pkid_single))
+                    "('%s', '%s', '%s', '%s', Lower('%s'), 1)" % (viewname_single, thegeom_single, pkid_single, layername_single, geometryname))
     else:
         ds.ExecuteSQL("INSERT INTO views_geometry_columns(view_name, view_geometry, view_rowid, f_table_name, f_geometry_column) VALUES " + \
-                    "('view_of_''regular_layer', '%s', '%s', 'regular_''layer', 'GEOMETRY')" % (thegeom_single, pkid_single))
+                    "('%s', '%s', '%s', '%s', '%s')" % (viewname_single, thegeom_single, pkid_single, layername_single, geometryname))
 
     ds = None
 
     # Test spatial view
     ds = ogr.Open('tmp/ogr_spatialite_6.sqlite')
-    lyr = ds.GetLayerByName('regular_\'layer')
-    view_lyr = ds.GetLayerByName('view_of_\'regular_layer')
+    lyr = ds.GetLayerByName(layername)
+    view_lyr = ds.GetLayerByName(viewname)
     if view_lyr.GetFIDColumn() != pkid_single:
         gdaltest.post_reason('failed')
         print(view_lyr.GetGeometryColumn())
@@ -1902,14 +1917,14 @@ def ogr_spatialite_6():
 
     # Remove spatial index
     ds = ogr.Open('tmp/ogr_spatialite_6.sqlite', update = 1)
-    sql_lyr = ds.ExecuteSQL("SELECT DisableSpatialIndex('regular_''layer', 'GEOMETRY')")
+    sql_lyr = ds.ExecuteSQL("SELECT DisableSpatialIndex('%s', '%s')" % (layername_single, geometryname))
     ds.ReleaseResultSet(sql_lyr)
-    ds.ExecuteSQL("DROP TABLE \"idx_regular_'layer_GEOMETRY\"")
+    ds.ExecuteSQL("DROP TABLE \"idx_%s_%s\"" % (layername, geometryname))
     ds = None
 
     # Test spatial view again
     ds = ogr.Open('tmp/ogr_spatialite_6.sqlite')
-    view_lyr = ds.GetLayerByName('view_of_\'regular_layer')
+    view_lyr = ds.GetLayerByName(viewname)
     view_lyr.SetAttributeFilter('"int\'col" = 34')
     view_lyr.SetSpatialFilterRect(2.5,49.5,3.5,50.5)
     feat = view_lyr.GetNextFeature()
