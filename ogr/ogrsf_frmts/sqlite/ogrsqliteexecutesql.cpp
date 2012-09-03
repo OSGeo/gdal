@@ -813,7 +813,7 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
                 osSQL.Printf("INSERT INTO geometry_columns (f_table_name, "
                             "f_geometry_column, geometry_type, coord_dimension, "
                             "srid, spatial_index_enabled) "
-                            "VALUES ('%s','%s',%d ,%d ,%d, %d)",
+                            "VALUES ('%s',Lower('%s'),%d ,%d ,%d, %d)",
                             pszLayerNameEscaped,
                             pszGeomColEscaped, nGeomType,
                             nCoordDimension,
