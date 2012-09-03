@@ -1371,6 +1371,14 @@ class Transformer(_object):
         """TransformPoints(self, int bDstToSrc, int nCount) -> int"""
         return _gdal.Transformer_TransformPoints(self, *args)
 
+    def TransformGeolocations(self, *args, **kwargs):
+        """
+        TransformGeolocations(self, Band xBand, Band yBand, Band zBand, GDALProgressFunc callback = None, 
+            void callback_data = None, 
+            char options = None) -> int
+        """
+        return _gdal.Transformer_TransformGeolocations(self, *args, **kwargs)
+
 Transformer_swigregister = _gdal.Transformer_swigregister
 Transformer_swigregister(Transformer)
 

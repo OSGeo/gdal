@@ -253,6 +253,16 @@ CPLErr CPL_DLL GDALDeserializeTransformer( CPLXMLNode *psTree,
                                            GDALTransformerFunc *ppfnFunc, 
                                            void **ppTransformArg );
 
+CPLErr CPL_DLL
+GDALTransformGeolocations( GDALRasterBandH hXBand, 
+                           GDALRasterBandH hYBand, 
+                           GDALRasterBandH hZBand,
+                           GDALTransformerFunc pfnTransformer, 
+                           void *pTransformArg, 
+                           GDALProgressFunc pfnProgress, 
+                           void *pProgressArg,
+                           char **papszOptions );
+
 /* -------------------------------------------------------------------- */
 /*      Contour Line Generation                                         */
 /* -------------------------------------------------------------------- */

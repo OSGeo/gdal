@@ -610,5 +610,30 @@ public:
   %clear (int*);
 #endif
 
+/************************************************************************/
+/*                       TransformGeolocations()                        */
+/************************************************************************/
+
+%apply Pointer NONNULL {GDALRasterBandShadow *xBand, GDALRasterBandShadow *yBand, GDALRasterBandShadow *zBand};
+
+#ifndef SWIGJAVA
+%feature( "kwargs" ) TransformGeolocations;
+#endif
+
+  int  TransformGeolocations( GDALRasterBandShadow *xBand,
+                              GDALRasterBandShadow *yBand, 
+	  		      GDALRasterBandShadow *zBand,
+                              GDALProgressFunc callback=NULL,
+                              void* callback_data=NULL,
+                              char **options = NULL) {
+
+    CPLErrorReset();
+
+    return GDALTransformGeolocations( xBand, yBand, zBand, 
+                                      GDALUseTransformer, self,
+                            	      callback, callback_data, options );
+  }
+%clear GDALRasterBandShadow *xBand, GDALRasterBandShadow *yBand, GDALRasterBandShadow *zBand;
+
 } /*extend */
 };
