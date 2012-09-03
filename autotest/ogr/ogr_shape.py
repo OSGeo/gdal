@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -3111,6 +3112,24 @@ def ogr_shape_64():
     return 'success'
 
 ###############################################################################
+# Test reading a DBF with a 'nan' as a numeric value (#4799)
+
+def ogr_shape_65():
+
+    ds = ogr.Open('data/nan.dbf')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    val = feat.GetFieldAsDouble(0)
+    feat = None
+    ds = None
+    
+    if not gdaltest.isnan(val):
+        print(val)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -3206,6 +3225,7 @@ gdaltest_list = [
     ogr_shape_62,
     ogr_shape_63,
     ogr_shape_64,
+    ogr_shape_65,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
