@@ -2295,7 +2295,7 @@ OGRErr OGRSQLiteDataSource::FlushSoftTransaction()
 
 const char* OGRSQLiteDataSource::GetSRTEXTColName()
 {
-    if( bSpatialite4Layout )
+    if( !bIsSpatiaLite || bSpatialite4Layout )
         return "srtext";
 
 /* testing for SRS_WKT column presence */
@@ -2505,16 +2505,19 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     CPLFree( pszWKT );
     pszWKT = NULL;
 
-    if ( !bIsSpatiaLite )
+    const char* pszSRTEXTColName = GetSRTEXTColName();
+
+    if ( pszSRTEXTColName != NULL )
     {
 /* -------------------------------------------------------------------- */
 /*      Try to find based on the WKT match.                             */
 /* -------------------------------------------------------------------- */
-        osCommand.Printf( "SELECT srid FROM spatial_ref_sys WHERE srtext = ?");
+        osCommand.Printf( "SELECT srid FROM spatial_ref_sys WHERE \"%s\" = ?",
+                          OGRSQLiteEscapeName(pszSRTEXTColName).c_str());
     }
 
 /* -------------------------------------------------------------------- */
-/*      Handle SpatiaLite flavour of the spatial_ref_sys.               */
+/*      Handle SpatiaLite (< 4) flavour of the spatial_ref_sys.         */
 /* -------------------------------------------------------------------- */
     else
     {
@@ -2544,7 +2547,9 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     rc = sqlite3_prepare( hDB, osCommand, -1, &hSelectStmt, NULL );
 
     if( rc == SQLITE_OK)
-        rc = sqlite3_bind_text( hSelectStmt, 1, ( !bIsSpatiaLite ) ? osWKT.c_str() : osProj4.c_str(), -1, SQLITE_STATIC );
+        rc = sqlite3_bind_text( hSelectStmt, 1,
+                                ( pszSRTEXTColName != NULL ) ? osWKT.c_str() : osProj4.c_str(),
+                                -1, SQLITE_STATIC );
 
     if( rc == SQLITE_OK)
         rc = sqlite3_step( hSelectStmt );
@@ -2583,7 +2588,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     if ( pszAuthorityCode != NULL && strlen(pszAuthorityCode) > 0 )
     {
         osCommand.Printf( "SELECT * FROM spatial_ref_sys WHERE auth_srid='%s'",
-                          pszAuthorityCode );
+                          OGRSQLiteEscape(pszAuthorityCode).c_str() );
         rc = sqlite3_get_table( hDB, osCommand, &papszResult,
                                 &nRowCount, &nColCount, &pszErrMsg );
         
@@ -2656,7 +2661,6 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     }
     else
     {
-        const char* pszSRTEXTColName = GetSRTEXTColName();
         CPLString osSRTEXTColNameWithCommaBefore;
         if( pszSRTEXTColName != NULL )
             osSRTEXTColNameWithCommaBefore.Printf(", %s", pszSRTEXTColName);
