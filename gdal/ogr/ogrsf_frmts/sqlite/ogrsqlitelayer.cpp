@@ -143,17 +143,19 @@ int OGRIsBinaryGeomCol( sqlite3_stmt *hStmt, int iCol,
     OGRGeometry* poGeometry = NULL;
     const int nBytes = sqlite3_column_bytes( hStmt, iCol );
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    if( OGRGeometryFactory::createFromWkb(
-            (GByte*)sqlite3_column_blob( hStmt, iCol ),
-            NULL, &poGeometry, nBytes ) == OGRERR_NONE )
-    {
-        eGeomFormat = OSGF_WKB;
-    }
-    else if( OGRSQLiteLayer::ImportSpatiaLiteGeometry(
+    /* Try as spatialite first since createFromWkb() can sometimes */
+    /* interpret spatialite blobs as WKB for certain SRID values */
+    if( OGRSQLiteLayer::ImportSpatiaLiteGeometry(
             (GByte*)sqlite3_column_blob( hStmt, iCol ), nBytes,
             &poGeometry ) == OGRERR_NONE )
     {
         eGeomFormat = OSGF_SpatiaLite;
+    }
+    else if( OGRGeometryFactory::createFromWkb(
+            (GByte*)sqlite3_column_blob( hStmt, iCol ),
+            NULL, &poGeometry, nBytes ) == OGRERR_NONE )
+    {
+        eGeomFormat = OSGF_WKB;
     }
     else if( OGRGeometryFactory::createFromFgf( 
             (GByte*)sqlite3_column_blob( hStmt, iCol ),
@@ -534,11 +536,9 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
         {
             const int nBytes = sqlite3_column_bytes( hStmt, iGeomCol );
 
-            if( OGRGeometryFactory::createFromWkb( 
-                    (GByte*)sqlite3_column_blob( hStmt, iGeomCol ),
-                    NULL, &poGeometry, nBytes ) == OGRERR_NONE )
-                poFeature->SetGeometryDirectly( poGeometry );
-            else if (!bTriedAsSpatiaLite)
+            /* Try as spatialite first since createFromWkb() can sometimes */
+            /* interpret spatialite blobs as WKB for certain SRID values */
+            if (!bTriedAsSpatiaLite)
             {
                 /* If the layer is the result of a sql select, we cannot be sure if it is */
                 /* WKB or SpatialLite format */
@@ -550,6 +550,13 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
                     eGeomFormat = OSGF_SpatiaLite;
                 }
                 bTriedAsSpatiaLite = TRUE;
+            }
+
+            if( eGeomFormat == OSGF_WKB && OGRGeometryFactory::createFromWkb( 
+                    (GByte*)sqlite3_column_blob( hStmt, iGeomCol ),
+                    NULL, &poGeometry, nBytes ) == OGRERR_NONE )
+            {
+                poFeature->SetGeometryDirectly( poGeometry );
             }
         }
         else if ( eGeomFormat == OSGF_FGF )
