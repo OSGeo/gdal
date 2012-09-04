@@ -2218,6 +2218,79 @@ def ogr_sqlite_32():
     return 'success'
 
 ###############################################################################
+# Test SRID layer creation option
+
+def ogr_sqlite_33():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    for i in range(2):
+        try:
+            os.remove('tmp/ogr_sqlite_33.sqlite')
+        except:
+            pass
+        if i == 0:
+            options = []
+        else:
+            if gdaltest.has_spatialite == False:
+                return 'success'
+            options = ['SPATIALITE=YES']
+
+        ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/ogr_sqlite_33.sqlite', options = options)
+
+        if i == 0:
+            # To make sure that the entry is added in spatial_ref_sys
+            srs = osr.SpatialReference()
+            srs.ImportFromEPSG(4326)
+            lyr = ds.CreateLayer('test1', srs = srs)
+
+        # Test with existing entry
+        lyr = ds.CreateLayer('test2', options = ['SRID=4326'])
+
+        # Test with non-existing entry
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        lyr = ds.CreateLayer('test3', options = ['SRID=123456'])
+        gdal.PopErrorHandler()
+        ds = None
+
+        ds = ogr.Open('tmp/ogr_sqlite_33.sqlite')
+        lyr = ds.GetLayerByName('test2')
+        srs = lyr.GetSpatialRef()
+        if srs.ExportToWkt().find('4326') == -1:
+            gdaltest.post_reason('failure')
+            print(i)
+            return 'fail'
+
+        # 123456 should be referenced in geometry_columns...
+        sql_lyr = ds.ExecuteSQL('SELECT * from geometry_columns WHERE srid=123456')
+        feat = sql_lyr.GetNextFeature()
+        is_none = feat is None
+        feat = None
+        ds.ReleaseResultSet(sql_lyr)
+
+        if is_none:
+            gdaltest.post_reason('failure')
+            print(i)
+            return 'fail'
+
+        # ... but not in spatial_ref_sys
+        sql_lyr = ds.ExecuteSQL('SELECT * from spatial_ref_sys WHERE srid=123456')
+        feat = sql_lyr.GetNextFeature()
+        is_none = feat is None
+        feat = None
+        ds.ReleaseResultSet(sql_lyr)
+
+        if not is_none:
+            gdaltest.post_reason('failure')
+            print(i)
+            return 'fail'
+
+        ds = None
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -2300,6 +2373,11 @@ def ogr_sqlite_cleanup():
     except:
         pass
 
+    try:
+        os.remove( 'tmp/ogr_sqlite_33.sqlite' )
+    except:
+        pass
+
     return 'success'
 
 gdaltest_list = [ 
@@ -2344,6 +2422,7 @@ gdaltest_list = [
     ogr_spatialite_8,
     ogr_sqlite_31,
     ogr_sqlite_32,
+    ogr_sqlite_33,
     ogr_sqlite_cleanup ]
 
 if __name__ == '__main__':

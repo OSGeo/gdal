@@ -223,6 +223,13 @@ format is understood by Spatialite v2.4 (or any subsequent version). Default to 
 Note: when updating an existing Spatialite DB, the COMPRESS_GEOM configuration option
 can be set to produce similar results for appended/overwritten features.
 
+<li> <b>SRID=srid</b>: (Starting with GDAL 2.0) Used to force the SRID number of the
+SRS associated with the layer. When this option isn't specified and that a SRS is
+associated with the layer, a search is made in the spatial_ref_sys to find a match for the SRS,
+and, if there is no match, a new entry is inserted for the SRS in the spatial_ref_sys table.
+When the SRID option is specified, this search (and the eventual insertion of a new entry) will
+not be done : the specified SRID is used as such.
+
 </ul>
 
 <h2>Performance hints</h2>
