@@ -1672,8 +1672,23 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
 /*      adding to the srs table if needed.                              */
 /* -------------------------------------------------------------------- */
     int nSRSId = nUndefinedSRID;
+    const char* pszSRID = CSLFetchNameValue(papszOptions, "SRID");
 
-    if( poSRS != NULL )
+    if( pszSRID != NULL )
+    {
+        nSRSId = atoi(pszSRID);
+        if( nSRSId > 0 )
+        {
+            OGRSpatialReference* poSRSFetched = FetchSRS( nSRSId );
+            if( poSRSFetched == NULL )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "SRID %d will be used, but no matching SRS is defined in spatial_ref_sys",
+                         nSRSId);
+            }
+        }
+    }
+    else if( poSRS != NULL )
         nSRSId = FetchSRSId( poSRS );
 
 /* -------------------------------------------------------------------- */
