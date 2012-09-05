@@ -280,7 +280,7 @@ retry:
 
 #define TEN_MEGABYTES 10485760
             
-        if ((int)psSegInfo->nSegmentSize > TEN_MEGABYTES)
+        if (psSegInfo->nSegmentSize > TEN_MEGABYTES)
         {
             char* pszOffset = CPLSPrintf(CPL_FRMT_GUIB, psFile->pasSegmentInfo[iSegment].nSegmentStart);
             char* pszSize = CPLSPrintf(CPL_FRMT_GUIB, psFile->pasSegmentInfo[iSegment].nSegmentSize);
