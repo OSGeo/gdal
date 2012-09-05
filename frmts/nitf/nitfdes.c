@@ -277,32 +277,53 @@ retry:
     }
     else
     {
-        char* pachData = (char*)VSIMalloc((size_t)psSegInfo->nSegmentSize);
-        if (pachData == NULL )
+
+#define TEN_MEGABYTES 10485760
+            
+        if ((int)psSegInfo->nSegmentSize > TEN_MEGABYTES)
         {
-            CPLDebug("NITF", "Cannot allocate " CPL_FRMT_GUIB " bytes DES data",
-                     psSegInfo->nSegmentSize);
-        }
-        else if( VSIFSeekL( psFile->fp, psSegInfo->nSegmentStart,
-                    SEEK_SET ) != 0
-            || VSIFReadL( pachData, 1, (size_t)psSegInfo->nSegmentSize,
-                        psFile->fp ) != psSegInfo->nSegmentSize )
-        {
-            CPLDebug("NITF",
-                    "Failed to read " CPL_FRMT_GUIB" bytes DES data from " CPL_FRMT_GUIB ".",
-                    psSegInfo->nSegmentSize,
-                    psSegInfo->nSegmentStart );
+            char* pszOffset = CPLSPrintf(CPL_FRMT_GUIB, psFile->pasSegmentInfo[iSegment].nSegmentStart);
+            char* pszSize = CPLSPrintf(CPL_FRMT_GUIB, psFile->pasSegmentInfo[iSegment].nSegmentSize);
+            
+            psDES->papszMetadata = CSLSetNameValue( psDES->papszMetadata,
+                                                    "NITF_DESDATA_OFFSET",
+                                                    pszOffset );
+            psDES->papszMetadata = CSLSetNameValue( psDES->papszMetadata,
+                                                    "NITF_DESDATA_LENGTH",
+                                                    pszSize);
+            
         }
         else
         {
-            char* pszEscapedDESDATA =
-                    CPLEscapeString( pachData,
-                                    (int)psSegInfo->nSegmentSize,
-                                    CPLES_BackslashQuotable );
-            psDES->papszMetadata = CSLSetNameValue( psDES->papszMetadata,
-                                                    "NITF_DESDATA",
-                                                    pszEscapedDESDATA );
-            CPLFree(pszEscapedDESDATA);
+            char* pachData = (char*)VSIMalloc((size_t)psSegInfo->nSegmentSize);
+            if (pachData == NULL )
+            {
+                CPLDebug("NITF", "Cannot allocate " CPL_FRMT_GUIB " bytes DES data",
+                         psSegInfo->nSegmentSize);
+            }
+            else if( VSIFSeekL( psFile->fp, psSegInfo->nSegmentStart,
+                        SEEK_SET ) != 0
+                || VSIFReadL( pachData, 1, (size_t)psSegInfo->nSegmentSize,
+                            psFile->fp ) != psSegInfo->nSegmentSize )
+            {
+                CPLDebug("NITF",
+                        "Failed to read " CPL_FRMT_GUIB" bytes DES data from " CPL_FRMT_GUIB ".",
+                        psSegInfo->nSegmentSize,
+                        psSegInfo->nSegmentStart );
+            }
+            else
+            {
+                char* pszEscapedDESDATA =
+                        CPLEscapeString( pachData,
+                                        (int)psSegInfo->nSegmentSize,
+                                        CPLES_BackslashQuotable );
+                psDES->papszMetadata = CSLSetNameValue( psDES->papszMetadata,
+                                                        "NITF_DESDATA",
+                                                        pszEscapedDESDATA );
+                CPLFree(pszEscapedDESDATA);
+                
+            }
+            CPLFree(pachData);
         }
 
 #ifdef notdef
@@ -339,7 +360,7 @@ retry:
         }
 #endif
 
-        CPLFree(pachData);
+        
     }
 
     return psDES;
