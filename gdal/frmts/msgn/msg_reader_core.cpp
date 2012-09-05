@@ -46,7 +46,7 @@ CPL_CVSID("$Id$");
 
 #else
 #define VSIFSeek(fp, pos, ref)    fseek(fp, pos, ref)
-#define VSIFRead(p, bs, nb, fp)   fread(p, bs, nb, ref)
+#define VSIFRead(p, bs, nb, fp)   fread(p, bs, nb, fp)
 #endif
 
 namespace msg_native_format {
