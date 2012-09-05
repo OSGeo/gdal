@@ -219,6 +219,12 @@ int OGRSDELayer::Initialize( const char *pszTableName,
 #ifdef SE_NSTRING_TYPE
           case SE_NSTRING_TYPE:
 #endif
+#ifdef SE_CLOB_TYPE
+          case SE_CLOB_TYPE:
+#endif
+#ifdef SE_NCLOB_TYPE
+          case SE_NCLOB_TYPE:
+#endif
             eOGRType = OFTString;
             nWidth = asColumnDefs[iCol].size;
             break;
@@ -1876,6 +1882,63 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
               }
           }
           break;
+
+#ifdef SE_CLOB_TYPE
+          case SE_CLOB_TYPE:
+          {
+              SE_CLOB_INFO sClobVal;
+
+              nSDEErr = SE_stream_get_clob( hStream, anFieldMap[i]+1, 
+                                            &sClobVal );
+              if( nSDEErr == SE_SUCCESS )
+              {
+                  poFeat->SetField( i, 
+                                    sClobVal.clob_length, 
+                                    (GByte *) sClobVal.clob_buffer );
+                  SE_clob_free( &sClobVal );
+              }
+              else if( nSDEErr != SE_NULL_VALUE )
+              {
+                  poDS->IssueSDEError( nSDEErr, "SE_stream_get_clob" );
+                  return NULL;
+              }
+          }
+          break;
+
+#endif
+
+#ifdef SE_NCLOB_TYPE
+          case SE_NCLOB_TYPE:
+          {
+              SE_NCLOB_INFO sNclobVal;
+
+              memset(&sNclobVal, 0, sizeof(sNclobVal)); /* to prevent from the crash in SE_stream_get_nclob */
+              nSDEErr = SE_stream_get_nclob( hStream, anFieldMap[i]+1, 
+                                            &sNclobVal );
+              if( nSDEErr == SE_SUCCESS )
+              {
+                  /* the returned string is not null-terminated */
+                  SE_WCHAR* sNclobstring = (SE_WCHAR*)CPLMalloc(sizeof(char)*(sNclobVal.nclob_length+2));
+                  memcpy(sNclobstring, sNclobVal.nclob_buffer, sNclobVal.nclob_length);
+				  sNclobstring[sNclobVal.nclob_length / 2] = '\0';
+
+                  char* pszUTF8 = CPLRecodeFromWChar((const wchar_t*)sNclobstring, CPL_ENC_UTF16, CPL_ENC_UTF8);
+
+                  poFeat->SetField( i, pszUTF8 );
+                  CPLFree( pszUTF8 );
+                  
+                  SE_nclob_free( &sNclobVal );
+                  CPLFree(sNclobstring);
+              }
+              else if( nSDEErr != SE_NULL_VALUE )
+              {
+                  poDS->IssueSDEError( nSDEErr, "SE_stream_get_nclob" );
+                  return NULL;
+              }
+          }
+          break;
+
+#endif
 
           case SE_DATE_TYPE:
           {
