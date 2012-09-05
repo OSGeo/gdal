@@ -282,8 +282,8 @@ retry:
             
         if (psSegInfo->nSegmentSize > TEN_MEGABYTES)
         {
-            char* pszOffset = CPLSPrintf(CPL_FRMT_GUIB, psFile->pasSegmentInfo[iSegment].nSegmentStart);
-            char* pszSize = CPLSPrintf(CPL_FRMT_GUIB, psFile->pasSegmentInfo[iSegment].nSegmentSize);
+            const char* pszOffset = CPLSPrintf(CPL_FRMT_GUIB, psFile->pasSegmentInfo[iSegment].nSegmentStart);
+            const char* pszSize = CPLSPrintf(CPL_FRMT_GUIB, psFile->pasSegmentInfo[iSegment].nSegmentSize);
             
             psDES->papszMetadata = CSLSetNameValue( psDES->papszMetadata,
                                                     "NITF_DESDATA_OFFSET",
@@ -291,7 +291,6 @@ retry:
             psDES->papszMetadata = CSLSetNameValue( psDES->papszMetadata,
                                                     "NITF_DESDATA_LENGTH",
                                                     pszSize);
-            
         }
         else
         {
