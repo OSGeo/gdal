@@ -35,13 +35,13 @@ CPL_CVSID("$Id$");
 /*   SqlGeometry serialization format
 
 Simple Point (SerializationProps & IsSinglePoint)
-  [SRID][0x01][SerializationProps][Point]
+  [SRID][0x01][SerializationProps][Point][z][m]
 
 Simple Line Segment (SerializationProps & IsSingleLineSegment)
-  [SRID][0x01][SerializationProps][Point][Point]
+  [SRID][0x01][SerializationProps][Point1][Point2][z1][z2][m1][m2]
 
 Complex Geometries
-  [SRID][0x01][SerializationProps][NumPoints][Point]..[Point]
+  [SRID][0x01][SerializationProps][NumPoints][Point1]..[PointN][z1]..[zN][m1]..[mN]
   [NumFigures][Figure]..[Figure][NumShapes][Shape]..[Shape]
 
 SRID
@@ -56,8 +56,8 @@ SerializationProps (bitmask) 1 byte
   0x20 = IsWholeGlobe
 
 Point (2-4)x8 bytes, size depends on SerializationProps & HasZValues & HasMValues
-  [x][y][z][m]                  - SqlGeometry
-  [latitude][longitude][z][m]   - SqlGeography
+  [x][y]                  - SqlGeometry
+  [latitude][longitude]   - SqlGeography
 
 Figure
   [FigureAttribute][PointOffset]
@@ -119,9 +119,10 @@ ShapeType (1 byte)
 #define PointOffset(iFigure) (ReadInt32(nFigurePos + (iFigure) * 5 + 1))
 #define NextPointOffset(iFigure) (iFigure + 1 < nNumFigures? PointOffset((iFigure) +1) : nNumPoints)
 
-#define ReadX(iPoint) (ReadDouble(nPointPos + nPointSize * (iPoint)))
-#define ReadY(iPoint) (ReadDouble(nPointPos + nPointSize * (iPoint) + 8))
-#define ReadZ(iPoint) (ReadDouble(nPointPos + nPointSize * (iPoint) + 16))
+#define ReadX(iPoint) (ReadDouble(nPointPos + 16 * (iPoint)))
+#define ReadY(iPoint) (ReadDouble(nPointPos + 16 * (iPoint) + 8))
+#define ReadZ(iPoint) (ReadDouble(nPointPos + 16 * nNumPoints + 8 * (iPoint)))
+#define ReadM(iPoint) (ReadDouble(nPointPos + 24 * nNumPoints + 8 * (iPoint)))
 
 /************************************************************************/
 /*                   OGRMSSQLGeometryParser()                           */
@@ -398,6 +399,7 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
     if ( chProps & SP_ISSINGLEPOINT )
     {
         // single point geometry
+        nNumPoints = 1;
         nPointPos = 6;
 
         if (nLen < 6 + nPointSize)
@@ -423,6 +425,7 @@ OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
     else if ( chProps & SP_ISSINGLELINESEGMENT )
     {
         // single line segment with 2 points
+        nNumPoints = 2;
         nPointPos = 6;
 
         if (nLen < 6 + 2 * nPointSize)
