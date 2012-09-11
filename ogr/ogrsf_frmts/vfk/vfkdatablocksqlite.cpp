@@ -61,7 +61,9 @@ int VFKDataBlockSQLite::LoadGeometryPoint()
     
     ResetReading();
     while(poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
-        poFeature = (VFKFeatureSQLite *) GetNextFeature(); // assert
+        poFeature = (VFKFeatureSQLite *) GetNextFeature();
+        CPLAssert(NULL != poFeature);
+        
         x = -1.0 * sqlite3_column_double(hStmt, 0);
         y = -1.0 * sqlite3_column_double(hStmt, 1);
         OGRPoint pt(x, y);
