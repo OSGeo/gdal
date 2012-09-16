@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -972,6 +973,48 @@ def test_gdalwarp_34():
     return 'success'
 
 ###############################################################################
+# Test -ts and -te optimization (doesn't need calling GDALSuggestedWarpOutput2, #4804)
+
+def test_gdalwarp_35():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -ts 20 20 -te 440720.000 3750120.000 441920.000 3751320.000 ../gcore/data/byte.tif tmp/testgdalwarp35.tif')
+
+    ds = gdal.Open('tmp/testgdalwarp35.tif')
+    if ds is None:
+        return 'fail'
+
+    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9) :
+        gdaltest.post_reason('Bad geotransform')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test -tr and -te optimization (doesn't need calling GDALSuggestedWarpOutput2, #4804)
+
+def test_gdalwarp_36():
+    if test_cli_utilities.get_gdalwarp_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' -tr 60 60 -te 440720.000 3750120.000 441920.000 3751320.000 ../gcore/data/byte.tif tmp/testgdalwarp36.tif')
+
+    ds = gdal.Open('tmp/testgdalwarp36.tif')
+    if ds is None:
+        return 'fail'
+
+    if not gdaltest.geotransform_equals(gdal.Open('../gcore/data/byte.tif').GetGeoTransform(), ds.GetGeoTransform(), 1e-9) :
+        gdaltest.post_reason('Bad geotransform')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_cleanup():
@@ -980,7 +1023,7 @@ def test_gdalwarp_cleanup():
     if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) == 'ON':
         return 'success'
     
-    for i in range(29):
+    for i in range(37):
         try:
             os.remove('tmp/testgdalwarp' + str(i+1) + '.tif')
         except:
@@ -1014,15 +1057,6 @@ def test_gdalwarp_cleanup():
     except:
         pass
     try:
-        os.remove('tmp/testgdalwarp31.tif')
-    except:
-        pass
-    try:
-        os.remove('tmp/testgdalwarp32.tif')
-    except:
-        pass
-    try:
-        os.remove('tmp/testgdalwarp33.tif')
         os.remove('tmp/testgdalwarp33_mask.tif')
     except:
         pass
@@ -1064,6 +1098,8 @@ gdaltest_list = [
     test_gdalwarp_32,
     test_gdalwarp_33,
     test_gdalwarp_34,
+    test_gdalwarp_35,
+    test_gdalwarp_36,
     test_gdalwarp_cleanup
     ]
 
