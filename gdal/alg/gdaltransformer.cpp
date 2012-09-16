@@ -698,8 +698,24 @@ retry:
     dfPixelSize = dfDiagonalDist 
         / sqrt(((double)nInXSize)*nInXSize + ((double)nInYSize)*nInYSize);
 
-    *pnPixels = (int) ((dfMaxXOut - dfMinXOut) / dfPixelSize + 0.5);
-    *pnLines = (int) ((dfMaxYOut - dfMinYOut) / dfPixelSize + 0.5);
+    double dfPixels = (dfMaxXOut - dfMinXOut) / dfPixelSize;
+    double dfLines =  (dfMaxYOut - dfMinYOut) / dfPixelSize;
+    
+    if( dfPixels > INT_MAX - 1 || dfLines > INT_MAX - 1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Computed dimensions are too big : %.0f x %.0f",
+                  dfPixels + 0.5, dfLines + 0.5 );
+
+        CPLFree( padfX );
+        CPLFree( padfXRevert );
+        CPLFree( pabSuccess );
+
+        return CE_Failure;
+    }
+
+    *pnPixels = (int) (dfPixels + 0.5);
+    *pnLines = (int) (dfLines + 0.5);
     
     double dfPixelSizeX = dfPixelSize;
     double dfPixelSizeY = dfPixelSize;
