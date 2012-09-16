@@ -327,7 +327,10 @@ OGRFeature* OGRESRIJSONReader::ReadFeature( json_object* poObj )
             {
                 if ( EQUAL( it.key,  poLayer_->GetFIDColumn() ) )
                     poFeature->SetFID( json_object_get_int( it.val ) );
-                poFeature->SetField( nField, json_object_get_string(it.val) );
+                if ( poLayer_->GetLayerDefn()->GetFieldDefn(nField)->GetType() == OFTReal )
+                    poFeature->SetField( nField, CPLAtofM(json_object_get_string(it.val)) );
+                else
+                    poFeature->SetField( nField, json_object_get_string(it.val) );
             }
         }
     }
