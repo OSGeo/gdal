@@ -726,7 +726,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData* meta)
         break;
       case GS3_LAMBERT:
         oSRS.SetLCC(meta->gds.scaleLat1, meta->gds.scaleLat2,
-                    0.0, meta->gds.orientLon,
+                    meta->gds.meshLat, meta->gds.orientLon,
                     0.0, 0.0); // set projection
         break;
 			
