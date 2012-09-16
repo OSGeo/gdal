@@ -480,6 +480,7 @@ int DDFRecord::ReadHeader()
                (int) VSIFReadL(tmpBuf, 1, nFieldEntryWidth, poModule->GetFP())) {
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Data record is short on DDF file.");
+                CPLFree(tmpBuf);
                 return FALSE;
             }
       
@@ -498,6 +499,9 @@ int DDFRecord::ReadHeader()
             }
         }
         while(DDF_FIELD_TERMINATOR != tmpBuf[0]);
+
+        CPLFree(tmpBuf);
+        tmpBuf = NULL;
 
         // --------------------------------------------------------------------
         // Now, rewind a little.  Only the TERMINATOR should have been read
@@ -522,6 +526,7 @@ int DDFRecord::ReadHeader()
                (int) VSIFReadL(tmpBuf, 1, nFieldLength, poModule->GetFP())) {
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Data record is short on DDF file.");
+                CPLFree(tmpBuf);
                 return FALSE;
             }
       
