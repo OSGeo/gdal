@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -387,6 +388,10 @@ def ogr_mitab_12():
     if gdaltest.mapinfo_drv is None:
         return 'skip'
 
+    import ogr_gml_read
+    if ogr_gml_read.ogr_gml_1() != 'success':
+        return 'skip'
+
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
 
@@ -431,6 +436,10 @@ def ogr_mitab_12():
 def ogr_mitab_13():
 
     if gdaltest.mapinfo_drv is None:
+        return 'skip'
+
+    import ogr_gml_read
+    if ogr_gml_read.ogr_gml_1() != 'success':
         return 'skip'
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
