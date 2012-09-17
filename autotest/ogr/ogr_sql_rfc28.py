@@ -730,6 +730,20 @@ def ogr_rfc28_32():
         return 'fail'
 
 ###############################################################################
+# Test lack of end-of-string character
+
+def ogr_rfc28_33():
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = gdaltest.ds.ExecuteSQL( "select * from idlink where name='foo" )
+    gdal.PopErrorHandler()
+
+    if lyr is None:
+        return 'success'
+    else:
+        return 'fail'
+
+###############################################################################
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds.Destroy()
@@ -771,6 +785,7 @@ gdaltest_list = [
     ogr_rfc28_30,
     ogr_rfc28_31,
     ogr_rfc28_32,
+    ogr_rfc28_33,
     ogr_rfc28_cleanup ]
 
 if __name__ == '__main__':
