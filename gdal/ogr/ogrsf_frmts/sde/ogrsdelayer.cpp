@@ -1888,6 +1888,7 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
           {
               SE_CLOB_INFO sClobVal;
 
+              memset(&sClobVal, 0, sizeof(sClobVal)); /* to prevent from the crash in SE_stream_get_nclob */
               nSDEErr = SE_stream_get_clob( hStream, anFieldMap[i]+1, 
                                             &sClobVal );
               if( nSDEErr == SE_SUCCESS )
