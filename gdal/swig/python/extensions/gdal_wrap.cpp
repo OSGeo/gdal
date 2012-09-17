@@ -7439,7 +7439,10 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata(PyObject *self, PyObject *arg
     if (_v) {
       {
         /* %typecheck(SWIG_TYPECHECK_POINTER) (char **dict) */
-        _v = (PyMapping_Check(argv[1]) || PySequence_Check(argv[1]) ) ? 1 : 0;
+        /* Note: we exclude explicitely strings, because they can be considered as a sequence of characters, */
+        /* which is not desirable since it makes it impossible to define bindings such as SetMetadata(string) and SetMetadata(array_of_string) */
+        /* (see #4816) */
+        _v = ((PyMapping_Check(argv[1]) || PySequence_Check(argv[1]) ) && !SWIG_CheckState(SWIG_AsCharPtrAndSize(argv[1], 0, NULL, 0)) ) ? 1 : 0;
       }
       if (_v) {
         if (argc <= 2) {
