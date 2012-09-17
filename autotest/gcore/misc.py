@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -514,6 +515,9 @@ def misc_12():
         gdaltest.post_reason('would crash')
         return 'skip'
 
+    import test_cli_utilities
+    gdal_translate_path = test_cli_utilities.get_gdal_translate_path()
+
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
         #if drv.ShortName == 'ECW' or drv.ShortName == 'JP2ECW':
@@ -562,21 +566,21 @@ def misc_12():
             gdal.PopErrorHandler()
             ds = None
 
-            # Test to detect memleaks
-            ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/misc_12.vrt', src_ds)
-            import test_cli_utilities
-            (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_translate_path() + ' -of ' + drv.ShortName + ' tmp/misc_12.vrt /nonexistingpath/nonexistingfile' + ext, check_memleak = False)
-            ds = None
-            gdal.Unlink('tmp/misc_12.vrt')
+            if gdal_translate_path is not None:
+                # Test to detect memleaks
+                ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/misc_12.vrt', src_ds)
+                (out, err) = gdaltest.runexternal_out_and_err(gdal_translate_path + ' -of ' + drv.ShortName + ' tmp/misc_12.vrt /nonexistingpath/nonexistingfile' + ext, check_memleak = False)
+                ds = None
+                gdal.Unlink('tmp/misc_12.vrt')
 
-            # If DEBUG_VSIMALLOC_STATS is defined, this is an easy way
-            # to catch some memory leaks
-            if out.find('VSIMalloc + VSICalloc - VSIFree') != -1 and \
-               out.find('VSIMalloc + VSICalloc - VSIFree : 0') == -1:
-                   if drv.ShortName == 'Rasterlite' and out.find('VSIMalloc + VSICalloc - VSIFree : 1') != -1:
-                       pass
-                   else:
-                       print('memleak detected for driver %s' % drv.ShortName)
+                # If DEBUG_VSIMALLOC_STATS is defined, this is an easy way
+                # to catch some memory leaks
+                if out.find('VSIMalloc + VSICalloc - VSIFree') != -1 and \
+                out.find('VSIMalloc + VSICalloc - VSIFree : 0') == -1:
+                    if drv.ShortName == 'Rasterlite' and out.find('VSIMalloc + VSICalloc - VSIFree : 1') != -1:
+                        pass
+                    else:
+                        print('memleak detected for driver %s' % drv.ShortName)
 
             src_ds = None
 
