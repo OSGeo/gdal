@@ -69,6 +69,8 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
     {
         char *token;
         int i_token;
+        char chQuote = *pszInput;
+        int bFoundEndQuote = FALSE;
 
         pszInput++;
 
@@ -83,20 +85,24 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
                 pszInput++;
             else if( *pszInput == '\'' && pszInput[1] == '\'' )
                 pszInput++;
-            else if( *pszInput == '"' )
+            else if( *pszInput == chQuote )
             {
                 pszInput++;
-                break;
-            }
-            else if( *pszInput == '\'' )
-            {
-                pszInput++;
+                bFoundEndQuote = TRUE;
                 break;
             }
             
             token[i_token++] = *(pszInput++);
         }
         token[i_token] = '\0';
+
+        if( !bFoundEndQuote )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Did not find end-of-string character");
+            CPLFree( token );
+            return 0;
+        }
 
         *ppNode = new swq_expr_node( token );
         CPLFree( token );
