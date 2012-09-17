@@ -685,7 +685,10 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (char **dict)
 {
   /* %typecheck(SWIG_TYPECHECK_POINTER) (char **dict) */
-  $1 = (PyMapping_Check($input) || PySequence_Check($input) ) ? 1 : 0;
+  /* Note: we exclude explicitely strings, because they can be considered as a sequence of characters, */
+  /* which is not desirable since it makes it impossible to define bindings such as SetMetadata(string) and SetMetadata(array_of_string) */
+  /* (see #4816) */
+  $1 = ((PyMapping_Check($input) || PySequence_Check($input) ) && !SWIG_CheckState(SWIG_AsCharPtrAndSize($input, 0, NULL, 0)) ) ? 1 : 0;
 }
 %typemap(in) char **dict
 {

@@ -4901,6 +4901,11 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
             else
             {
                 pszItemValue = CPLParseNameValue( papszMD[iItem], &pszItemName);
+                if( pszItemName == NULL )
+                {
+                    CPLDebug("GTiff", "Invalid metadata item : %s", papszMD[iItem]);
+                    continue;
+                }
             }
             
 /* -------------------------------------------------------------------- */
