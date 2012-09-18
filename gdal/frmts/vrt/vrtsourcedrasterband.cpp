@@ -161,14 +161,14 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     {
         if (nLineSpace == nBufXSize * nPixelSpace)
         {
-             memset( pData, 0, nBufYSize * nLineSpace );
+             memset( pData, 0, (GIntBig)nBufYSize * nLineSpace );
         }
         else
         {
             int    iLine;
             for( iLine = 0; iLine < nBufYSize; iLine++ )
             {
-                memset( ((GByte*)pData) + iLine * nLineSpace, 0, nBufXSize * nPixelSpace );
+                memset( ((GByte*)pData) + (GIntBig)iLine * nLineSpace, 0, nBufXSize * nPixelSpace );
             }
         }
     }
@@ -183,7 +183,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         for( iLine = 0; iLine < nBufYSize; iLine++ )
         {
             GDALCopyWords( &dfWriteValue, GDT_Float64, 0, 
-                           ((GByte *)pData) + nLineSpace * iLine, 
+                           ((GByte *)pData) + (GIntBig)nLineSpace * iLine, 
                            eBufType, nPixelSpace, nBufXSize );
         }
     }
