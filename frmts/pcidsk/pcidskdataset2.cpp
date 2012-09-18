@@ -728,8 +728,11 @@ CPLErr PCIDSK2Band::SetMetadata( char **papszMD,
             char *pszItemName = NULL;
 
             pszItemValue = CPLParseNameValue( papszMD[iItem], &pszItemName);
-            poChannel->SetMetadataValue( pszItemName, pszItemValue );
-            CPLFree( pszItemName );
+            if( pszItemName != NULL )
+            {
+                poChannel->SetMetadataValue( pszItemName, pszItemValue );
+                CPLFree( pszItemName );
+            }
         }
         return CE_None;
     }
@@ -1129,8 +1132,11 @@ CPLErr PCIDSK2Dataset::SetMetadata( char **papszMD,
             char *pszItemName = NULL;
 
             pszItemValue = CPLParseNameValue( papszMD[iItem], &pszItemName);
-            poFile->SetMetadataValue( pszItemName, pszItemValue );
-            CPLFree( pszItemName );
+            if( pszItemName != NULL )
+            {
+                poFile->SetMetadataValue( pszItemName, pszItemValue );
+                CPLFree( pszItemName );
+            }
         }
         return CE_None;
     }
