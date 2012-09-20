@@ -1893,10 +1893,14 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
                                             &sClobVal );
               if( nSDEErr == SE_SUCCESS )
               {
-                  poFeat->SetField( i, 
-                                    sClobVal.clob_length, 
-                                    (GByte *) sClobVal.clob_buffer );
+                  /* the returned string is not null-terminated */
+                  char* sClobstring = (char*)CPLMalloc(sizeof(char)*(sClobVal.clob_length+1));
+                  memcpy(sClobstring, sClobVal.clob_buffer, sClobVal.clob_length);
+				  sClobstring[sClobVal.clob_length] = '\0';
+                  
+                  poFeat->SetField( i, sClobstring );
                   SE_clob_free( &sClobVal );
+                  CPLFree(sClobstring);
               }
               else if( nSDEErr != SE_NULL_VALUE )
               {
