@@ -4,12 +4,12 @@
 
 These pages document the development version of the GDAL Perl API,
 which is extended from the released versions APIs. Old versions: 
-<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.4/html/index.html">1.4</a>
-<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.5/html/index.html">1.5</a>
-<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.6/html/index.html">1.6</a>
-<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.7/html/index.html">1.7</a>
-<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.8/html/index.html">1.8</a>
-<a href="http://geoinformatics.tkk.fi/doc/Geo-GDAL-1.9/html/index.html">1.9</a>
+<a href="/doc/Geo-GDAL-1.4/html/index.html">1.4</a>
+<a href="/doc/Geo-GDAL-1.5/html/index.html">1.5</a>
+<a href="/doc/Geo-GDAL-1.6/html/index.html">1.6</a>
+<a href="/doc/Geo-GDAL-1.7/html/index.html">1.7</a>
+<a href="/doc/Geo-GDAL-1.8/html/index.html">1.8</a>
+<a href="/doc/Geo-GDAL-1.9/html/index.html">1.9</a>
 
 \section index_intro Introduction
 
@@ -134,6 +134,6 @@ This documentation is generated from files within the GDAL
 distribution (directory swig/perl) with a tweaked version of <a
 href="http://www.bigsister.ch/doxygenfilter/">Perl Doxygen Filter</a>
 with Doxygen. The modified version is available <a
-href="https://geoinformatics.tkk.fi/svn/doxygenfilter/">here</a>.
+href="https://geoinformatics.aalto.fi/svn/doxygenfilter/">here</a>.
 
 */
