@@ -63,13 +63,13 @@ DOCUMENTATION
 The documentation is maintained in Doxygen files. Doxygen is available
 at www.doxygen.org. You will also need Perl Doxygen Filter from
 http://www.bigsister.ch/doxygenfilter/ and an extension to it from
-http://geoinformatics.tkk.fi/files/doxygenfilter/. To generate the
+http://geoinformatics.aalto.fi/files/doxygenfilter/. To generate the
 documentation type
 
     doxygen
 
 You can find the documentation also at
-http://geoinformatics.tkk.fi/doc/Geo-GDAL/html/. However, the
+http://geoinformatics.aalto.fi/doc/Geo-GDAL/html/. However, the
 comprehensive documentation of GDAL and OGR are at
 http://www.gdal.org/.
 
