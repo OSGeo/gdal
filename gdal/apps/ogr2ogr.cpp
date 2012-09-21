@@ -75,7 +75,7 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
                                                 int bNullifyOutputSRS,
                                                 OGRSpatialReference *poSourceSRS,
                                                 char **papszSelFields,
-                                                int bAppend, int eGType, int bOverwrite,
+                                                int bAppend, int eGType, int nCoordDim, int bOverwrite,
                                                 char** papszFieldTypesToString,
                                                 int bWrapDateline,
                                                 int bExplodeCollections,
@@ -91,6 +91,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                            OGRSpatialReference *poOutputSRS,
                            int bNullifyOutputSRS,
                            int eGType,
+                           int nCoordDim,
                            GeomOperation eGeomOp,
                            double dfGeomOpParam,
                            long nCountLayerFeatures,
@@ -682,6 +683,7 @@ int main( int nArgc, char ** papszArgv )
     int          nMaxSplitListSubFields = -1;
     int          bExplodeCollections = FALSE;
     const char  *pszZField = NULL;
+    int          nCoordDim = -1;
 
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -796,6 +798,17 @@ int main( int nArgc, char ** papszArgv )
                 eGType |= wkb25DBit;
 
             iArg++;
+        }
+        else if( EQUAL(papszArgv[iArg],"-dim") && iArg < nArgc-1  )
+        {
+            nCoordDim = atoi(papszArgv[iArg+1]);
+            if( nCoordDim != 2 && nCoordDim != 3 )
+            {
+                fprintf( stderr, "-dim %s: value not handled.\n",
+                        papszArgv[iArg+1] );
+                exit( 1 );
+            }
+            iArg ++;
         }
         else if( (EQUAL(papszArgv[iArg],"-tg") ||
                   EQUAL(papszArgv[iArg],"-gt")) && iArg < nArgc-1 )
@@ -1384,7 +1397,7 @@ int main( int nArgc, char ** papszArgv )
                                                 bNullifyOutputSRS,
                                                 poSourceSRS,
                                                 papszSelFields,
-                                                bAppend, eGType, bOverwrite,
+                                                bAppend, eGType, nCoordDim, bOverwrite,
                                                 papszFieldTypesToString,
                                                 bWrapDateline,
                                                 bExplodeCollections,
@@ -1396,7 +1409,7 @@ int main( int nArgc, char ** papszArgv )
             if( psInfo == NULL ||
                 !TranslateLayer( psInfo, poDS, poPassedLayer, poODS,
                                  poOutputSRS, bNullifyOutputSRS,
-                                 eGType,
+                                 eGType, nCoordDim,
                                  eGeomOp, dfGeomOpParam,
                                  nCountLayerFeatures,
                                  poClipSrc, poClipDst,
@@ -1530,7 +1543,7 @@ int main( int nArgc, char ** papszArgv )
                                                     bNullifyOutputSRS,
                                                     poSourceSRS,
                                                     papszSelFields,
-                                                    bAppend, eGType, bOverwrite,
+                                                    bAppend, eGType, nCoordDim, bOverwrite,
                                                     papszFieldTypesToString,
                                                     bWrapDateline,
                                                     bExplodeCollections,
@@ -1566,7 +1579,7 @@ int main( int nArgc, char ** papszArgv )
                 {
                     if( !TranslateLayer(psInfo, poDS, poLayer, poODS,
                                         poOutputSRS, bNullifyOutputSRS,
-                                        eGType,
+                                        eGType, nCoordDim,
                                         eGeomOp, dfGeomOpParam,
                                         0,
                                         poClipSrc, poClipDst,
@@ -1796,7 +1809,7 @@ int main( int nArgc, char ** papszArgv )
                                                 bNullifyOutputSRS,
                                                 poSourceSRS,
                                                 papszSelFields,
-                                                bAppend, eGType, bOverwrite,
+                                                bAppend, eGType, nCoordDim, bOverwrite,
                                                 papszFieldTypesToString,
                                                 bWrapDateline,
                                                 bExplodeCollections,
@@ -1808,7 +1821,7 @@ int main( int nArgc, char ** papszArgv )
             if( (psInfo == NULL ||
                 !TranslateLayer( psInfo, poDS, poPassedLayer, poODS,
                                   poOutputSRS, bNullifyOutputSRS,
-                                  eGType,
+                                  eGType, nCoordDim,
                                   eGeomOp, dfGeomOpParam,
                                   panLayerCountFeatures[iLayer],
                                   poClipSrc, poClipDst,
@@ -1890,7 +1903,7 @@ static void Usage(int bShort)
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
             "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"
             "               dst_datasource_name src_datasource_name\n"
-            "               [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]\n"
+            "               [-lco NAME=VALUE] [-nln name] [-nlt type] [-dim 2|3] [layer [layer ...]]\n"
             "\n"
             "Advanced options :\n"
             "               [-gt n]\n"
@@ -1947,6 +1960,7 @@ static void Usage(int bShort)
             "      POINT, LINESTRING, POLYGON, GEOMETRYCOLLECTION, MULTIPOINT,\n"
             "      MULTIPOLYGON, or MULTILINESTRING.  Add \"25D\" for 3D layers.\n"
             "      Default is type of source layer.\n"
+            " -dim dimension: Force the coordinate dimension to the specified value.\n"
             " -fieldTypeToString type1,...: Converts fields of specified types to\n"
             "      fields of type string in the new layer. Valid types are : Integer,\n"
             "      Real, String, Date, Time, DateTime, Binary, IntegerList, RealList,\n"
@@ -2027,7 +2041,7 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
                                                 int bNullifyOutputSRS,
                                                 OGRSpatialReference *poSourceSRS,
                                                 char **papszSelFields,
-                                                int bAppend, int eGType, int bOverwrite,
+                                                int bAppend, int eGType, int nCoordDim, int bOverwrite,
                                                 char** papszFieldTypesToString,
                                                 int bWrapDateline,
                                                 int bExplodeCollections,
@@ -2190,6 +2204,11 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
             if ( pszZField )
                 eGType |= wkb25DBit;
         }
+
+        if( nCoordDim == 2 )
+            eGType &= ~wkb25DBit;
+        else if( nCoordDim == 3 )
+            eGType |= wkb25DBit;
 
         if( !poDstDS->TestCapability( ODsCCreateLayer ) )
         {
@@ -2480,6 +2499,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                            OGRSpatialReference *poOutputSRS,
                            int bNullifyOutputSRS,
                            int eGType,
+                           int nCoordDim,
                            GeomOperation eGeomOp,
                            double dfGeomOpParam,
                            long nCountLayerFeatures,
@@ -2631,6 +2651,9 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                     poDstFeature->SetGeometryDirectly(poDupGeometry);
                     poDstGeometry = poDupGeometry;
                 }
+
+                if (nCoordDim == 2 || nCoordDim == 3)
+                    poDstGeometry->setCoordinateDimension( nCoordDim );
 
                 if (eGeomOp == SEGMENTIZE)
                 {
