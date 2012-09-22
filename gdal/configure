@@ -621,9 +621,6 @@ JAVA_INC
 JAVA_HOME
 BINDINGS
 PY_HAVE_SETUPTOOLS
-pymoddir
-pyexecdir
-pythondir
 PYTHON
 BINTRUE
 EXE_EXT
@@ -949,7 +946,6 @@ with_perl
 with_php
 with_ruby
 with_python
-with_pymoddir
 with_java
 with_mdb
 with_jvm_lib
@@ -1695,8 +1691,7 @@ Optional Packages:
   --with-perl           Enable perl bindings
   --with-php            Enable php bindings
   --with-ruby           Enable Ruby bindings
-  --with-python       Enable python bindings
-  --with-pymoddir=ARG   Override Old-gen Python package install dir
+  --with-python=ARG   Enable python bindings (ARG=yes, no, or path to python binary)
   --with-java       Include Java support (ARG=yes, no or JDK home path)  [default=no]
   --with-mdb       Include MDB driver
   --with-jvm-lib=ARG        ARG points to Java libjvm path
@@ -2289,7 +2284,6 @@ test_array [0] = 0
   return 0;
 }
 _ACEOF
-
 if ac_fn_c_try_compile "$LINENO"; then :
   ac_lo=0 ac_mid=0
   while :; do
@@ -27353,9 +27347,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for python bindings" >&5
 $as_echo_n "checking for python bindings... " >&6; }
 if test "$with_python" = "yes" ; then
-  BINDINGS="python $BINDINGS"
-
-                for ac_prog in python python1.5 python1.4 python1.3
+        for ac_prog in python python3 python2
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -27396,83 +27388,33 @@ fi
 
   test -n "$PYTHON" && break
 done
-test -n "$PYTHON" || PYTHON="no"
 
-
-
-
-    ARCH=`uname -i 2>/dev/null`
-    PYLIB=lib
-    if test "$ARCH" = "x86_64" ; then
-        PYLIB=lib64
-    fi
-
-    if test "$PYTHON" != no ; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for location of Python Makefiles" >&5
-$as_echo_n "checking for location of Python Makefiles... " >&6; }
-
-                python_prefix="`$PYTHON -c '
-import sys
-print sys.prefix'`"
-
-                python_execprefix="`$PYTHON -c '
-import sys
-print sys.prefix'`"
-
-                python_version="`$PYTHON -c '
-import sys
-print sys.version[:3]'`"
-
-        pythondir=$python_prefix/$PYLIB/python${python_version}/site-packages
-        pyexecdir=$python_execprefix/$PYLIB/python${python_version}/site-packages
-
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
-$as_echo "found" >&6; }
-
-
-                                                                    else
-                pythondir='$(prefix)/lib/site-python'
-        pyexecdir='$(exec_prefix)/lib/site-python'
-    fi
-
-
-# Check whether --with-pymoddir was given.
-if test "${with_pymoddir+set}" = set; then :
-  withval=$with_pymoddir;
-fi
-
-
-    if test "$PYTHON" != "no" ; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking where to install Python modules" >&5
-$as_echo_n "checking where to install Python modules... " >&6; }
-
-        if test "$with_pymoddir" = "" ; then
-            pymoddir=$pyexecdir
-        else
-            pymoddir=$with_pymoddir
-        fi
-
-        export pymoddir
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pymoddir" >&5
-$as_echo "$pymoddir" >&6; }
-    fi
-
-
-
-
-
-
+  if test "x$PYTHON" = "x"; then
+    as_fn_error $? "--with-python requested, but Python not found!" "$LINENO" 5
+  fi
+elif test "$with_python" != "no" ; then
+  PYTHON="$with_python"
+  if test "`$PYTHON -c "print(1)"`" != "1"; then
+    as_fn_error $? "--with-python requested, but Python not found!" "$LINENO" 5
+  fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
 $as_echo "enabled" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
+$as_echo "disabled" >&6; }
+fi
+
+if test "x$PYTHON" != "x"; then
+  BINDINGS="python $BINDINGS"
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for python setuptools" >&5
 $as_echo_n "checking for python setuptools... " >&6; }
   SETUPTEST='try:
   import setuptools
-  print 1
+  print(1)
 except ImportError:
   pass'
-  PY_HAVE_SETUPTOOLS=`python -c "$SETUPTEST"`
+  PY_HAVE_SETUPTOOLS=`$PYTHON -c "$SETUPTEST"`
   if test "$PY_HAVE_SETUPTOOLS" = "1"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
 $as_echo "found" >&6; }
@@ -27480,9 +27422,6 @@ $as_echo "found" >&6; }
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
   fi
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
-$as_echo "disabled" >&6; }
 fi
 
 

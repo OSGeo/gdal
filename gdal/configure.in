@@ -3405,28 +3405,42 @@ dnl ---------------------------------------------------------------------------
 dnl NG Python bindings.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(python,[  --with-python       Enable python bindings],,)
+AC_ARG_WITH(python,[  --with-python=ARG   Enable python bindings (ARG=yes, no, or path to python binary)],,)
 
 AC_MSG_CHECKING([for python bindings])
 if test "$with_python" = "yes" ; then
-  BINDINGS="python $BINDINGS"
-  AM_PATH_PYTHON
+  dnl
+  dnl Check for Python executable in PATH
+  dnl
+  AC_CHECK_PROGS([PYTHON], [python python3 python2])
+  if test "x$PYTHON" = "x"; then
+    AC_MSG_ERROR([--with-python requested, but Python not found!])
+  fi
+elif test "$with_python" != "no" ; then
+  PYTHON="$with_python"
+  if test "`$PYTHON -c "print(1)"`" != "1"; then
+    AC_MSG_ERROR([--with-python requested, but Python not found!])
+  fi
   AC_MSG_RESULT([enabled])
+else
+  AC_MSG_RESULT([disabled])
+fi
+
+if test "x$PYTHON" != "x"; then
+  BINDINGS="python $BINDINGS"
 
   AC_MSG_CHECKING([for python setuptools])
   SETUPTEST='try:
   import setuptools
-  print 1
+  print(1)
 except ImportError:
   pass'
-  PY_HAVE_SETUPTOOLS=`python -c "$SETUPTEST"`
+  PY_HAVE_SETUPTOOLS=`$PYTHON -c "$SETUPTEST"`
   if test "$PY_HAVE_SETUPTOOLS" = "1"; then
     AC_MSG_RESULT([found])
   else
     AC_MSG_RESULT([not found])
   fi
-else
-  AC_MSG_RESULT([disabled])
 fi
 
 AC_SUBST([PY_HAVE_SETUPTOOLS])
