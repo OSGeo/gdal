@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #/******************************************************************************
 # * $Id$
 # *
@@ -187,6 +188,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
     bWrapDateline = False
     bExplodeCollections = False
     pszZField = None
+    nCoordDim = -1
 
     if args is None:
         args = sys.argv
@@ -285,6 +287,14 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                 print("-nlt %s: type not recognised." % args[iArg+1])
                 return False
 
+            iArg = iArg + 1
+
+        elif EQUAL(args[iArg],"-dim") and iArg < nArgc-1:
+
+            nCoordDim = int(args[iArg+1])
+            if nCoordDim != 2 and nCoordDim != 3:
+                print("-dim %s: value not handled." % args[iArg+1])
+                return False
             iArg = iArg + 1
 
         elif (EQUAL(args[iArg],"-tg") or \
@@ -700,7 +710,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                                         bNullifyOutputSRS, \
                                         poSourceSRS, \
                                         papszSelFields, \
-                                        bAppend, eGType, bOverwrite, \
+                                        bAppend, eGType, nCoordDim, bOverwrite, \
                                         papszFieldTypesToString, \
                                         bWrapDateline, \
                                         bExplodeCollections, \
@@ -711,7 +721,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
 
             if psInfo is None or not TranslateLayer( psInfo, poDS, poResultSet, poODS, \
                                 poOutputSRS, bNullifyOutputSRS, \
-                                eGType, \
+                                eGType, nCoordDim, \
                                 eGeomOp, dfGeomOpParam, \
                                 nCountLayerFeatures, \
                                 poClipSrc, poClipDst, \
@@ -815,7 +825,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                                            bNullifyOutputSRS, \
                                            poSourceSRS, \
                                            papszSelFields, \
-                                           bAppend, eGType, bOverwrite, \
+                                           bAppend, eGType, nCoordDim, bOverwrite, \
                                            papszFieldTypesToString, \
                                            bWrapDateline, \
                                            bExplodeCollections, \
@@ -844,7 +854,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                 if psInfo is not None:
                     if not TranslateLayer(psInfo, poDS, poLayer, poODS, \
                                         poOutputSRS, bNullifyOutputSRS,  \
-                                        eGType,  \
+                                        eGType, nCoordDim, \
                                         eGeomOp, dfGeomOpParam,  \
                                         0,  \
                                         poClipSrc, poClipDst,  \
@@ -977,7 +987,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                                        bNullifyOutputSRS, \
                                        poSourceSRS, \
                                        papszSelFields, \
-                                       bAppend, eGType, bOverwrite, \
+                                       bAppend, eGType, nCoordDim, bOverwrite, \
                                        papszFieldTypesToString, \
                                        bWrapDateline, \
                                        bExplodeCollections, \
@@ -989,7 +999,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
             if (psInfo is None or \
                 not TranslateLayer( psInfo, poDS, poLayer, poODS, \
                                     poOutputSRS, bNullifyOutputSRS, \
-                                    eGType, \
+                                    eGType, nCoordDim, \
                                     eGeomOp, dfGeomOpParam, \
                                     panLayerCountFeatures[iLayer], \
                                     poClipSrc, poClipDst, \
@@ -1029,7 +1039,7 @@ def Usage():
             #// "               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]\n" + \
             "               [-fieldTypeToString All|(type1[,type2]*)] [-explodecollections] \n" + \
             "               dst_datasource_name src_datasource_name\n" + \
-            "               [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]\n" + \
+            "               [-lco NAME=VALUE] [-nln name] [-nlt type] [-dim 2|3] [layer [layer ...]]\n" + \
             "\n" + \
             " -f format_name: output file format name, possible values are:")
 
@@ -1060,6 +1070,7 @@ def Usage():
             "      POINT, LINESTRING, POLYGON, GEOMETRYCOLLECTION, MULTIPOINT,\n" + \
             "      MULTIPOLYGON, or MULTILINESTRING.  Add \"25D\" for 3D layers.\n" + \
             "      Default is type of source layer.\n" + \
+            " -dim dimension: Force the coordinate dimension to the specified value.\n" + \
             " -fieldTypeToString type1,...: Converts fields of specified types to\n" + \
             "      fields of type string in the new layer. Valid types are : \n" + \
             "      Integer, Real, String, Date, Time, DateTime, Binary, IntegerList, RealList,\n" + \
@@ -1178,7 +1189,7 @@ def SetZ (poGeom, dfZ ):
 
 def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                     bTransform,  poOutputSRS, bNullifyOutputSRS, poSourceSRS, papszSelFields, \
-                    bAppend, eGType, bOverwrite, \
+                    bAppend, eGType, nCoordDim, bOverwrite, \
                     papszFieldTypesToString, bWrapDateline, \
                     bExplodeCollections, pszZField, pszWHERE) :
 
@@ -1286,6 +1297,11 @@ def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
 
             if pszZField is not None:
                 eGType = eGType | ogr.wkb25DBit
+
+        if nCoordDim == 2:
+            eGType = eGType & ~ogr.wkb25DBit
+        elif nCoordDim == 3:
+            eGType = eGType | ogr.wkb25DBit
 
         if poDstDS.TestCapability( ogr.ODsCCreateLayer ) == False:
             print("Layer " + pszNewLayerName + "not found, and CreateLayer not supported by driver.")
@@ -1471,7 +1487,7 @@ def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
 
 def TranslateLayer( psInfo, poSrcDS, poSrcLayer, poDstDS,  \
                     poOutputSRS, bNullifyOutputSRS, \
-                    eGType, eGeomOp, dfGeomOpParam, \
+                    eGType, nCoordDim, eGeomOp, dfGeomOpParam, \
                     nCountLayerFeatures, \
                     poClipSrc, poClipDst, bExplodeCollections, nSrcFileSize, \
                     pnReadFeatureCount, pfnProgress, pProgressArg) :
@@ -1574,6 +1590,10 @@ def TranslateLayer( psInfo, poSrcDS, poSrcLayer, poDstDS,  \
                     poDupGeometry = poDstGeometry.Clone()
                     poDstFeature.SetGeometryDirectly(poDupGeometry)
                     poDstGeometry = poDupGeometry
+
+
+                if nCoordDim == 2 or nCoordDim == 3:
+                    poDstGeometry.SetCoordinateDimension( nCoordDim )
 
                 if eGeomOp == GeomOperation.SEGMENTIZE:
                     pass
