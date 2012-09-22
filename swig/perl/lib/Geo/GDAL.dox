@@ -884,9 +884,25 @@
 
 ## @method \@ReadTile($xoff = 0, $yoff = 0, $xsize = <width>, $ysize = <height>)
 #
-# Usage example:
+# Usage example (print the data from a band):
 # \code
 # print "@$_\n" for ( @{ $band->ReadTile() } );
+# \endcode
+# Another usage example (process the data of a large dataset that has one band):
+# \code
+# my($W,$H) = $dataset->Band(1)->Size();
+# my($xoff,$yoff,$w,$h) = (0,0,200,200);
+# while (1) {
+#     if ($xoff >= $W) {
+#         $xoff = 0;
+#         $yoff += $h;
+#         last if $yoff >= $H;
+#     }
+#     my $data = $dataset->Band(1)->ReadTile($xoff,$yoff,$w,$h);
+#     # add your data processing code here
+#     $dataset->Band(1)->WriteTile($data,$xoff,$yoff);
+#     $xoff += $w;
+# }
 # \endcode
 # @param xoff
 # @param yoff
