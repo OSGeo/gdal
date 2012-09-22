@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -1301,6 +1302,48 @@ def test_ogr2ogr_py_39():
 
     return 'success'
 
+###############################################################################
+# Test -dim 3 and -dim 2
+
+def test_ogr2ogr_py_43():
+
+    script_path = test_py_scripts.get_py_script('ogr2ogr')
+    if script_path is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/test_ogr2ogr_43_3d.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_43_3d.shp')
+    except:
+        pass
+
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_43_3d.shp ../ogr/data/poly.shp -dim 3')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_43_3d.shp')
+    lyr = ds.GetLayerByIndex(0)
+    if lyr.GetGeomType() != ogr.wkbPolygon25D:
+        return 'fail'
+    ds = None
+
+    try:
+        os.stat('tmp/test_ogr2ogr_43_2d.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_43_2d.shp')
+    except:
+        pass
+
+    test_py_scripts.run_py_script(script_path, 'ogr2ogr', ' tmp/test_ogr2ogr_43_2d.shp tmp/test_ogr2ogr_43_3d.shp -dim 2')
+
+    ds = ogr.Open('tmp/test_ogr2ogr_43_2d.shp')
+    lyr = ds.GetLayerByIndex(0)
+    if lyr.GetGeomType() != ogr.wkbPolygon:
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_43_2d.shp')
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_43_3d.shp')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_py_1,
     test_ogr2ogr_py_2,
@@ -1337,7 +1380,8 @@ gdaltest_list = [
     test_ogr2ogr_py_36,
     test_ogr2ogr_py_37,
     test_ogr2ogr_py_38,
-    test_ogr2ogr_py_39 ]
+    test_ogr2ogr_py_39,
+    test_ogr2ogr_py_43 ]
     
 if __name__ == '__main__':
 
