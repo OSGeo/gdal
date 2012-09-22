@@ -519,7 +519,13 @@ int DDFRecord::ReadHeader()
             int nEntryOffset = (i*nFieldEntryWidth) + _sizeFieldTag;
             int nFieldLength = DDFScanInt(pachData + nEntryOffset,
                                           _sizeFieldLength);
-            char *tmpBuf = (char*)CPLMalloc(nFieldLength);
+            char *tmpBuf = (char*)VSIMalloc(nFieldLength);
+            if( tmpBuf == NULL )
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Cannot allocate %d bytes", nFieldLength);
+                return FALSE;
+            }
 
             // read an Entry:
             if(nFieldLength != 
@@ -531,7 +537,14 @@ int DDFRecord::ReadHeader()
             }
       
             // move this temp buffer into more permanent storage:
-            char *newBuf = (char*)CPLMalloc(nDataSize+nFieldLength);
+            char *newBuf = (char*)VSIMalloc(nDataSize+nFieldLength);
+            if( newBuf == NULL )
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Cannot allocate %d bytes", nDataSize + nFieldLength);
+                CPLFree(tmpBuf);
+                return FALSE;
+            }
             memcpy(newBuf, pachData, nDataSize);
             CPLFree(pachData);
             memcpy(&newBuf[nDataSize], tmpBuf, nFieldLength);
