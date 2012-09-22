@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -4392,6 +4393,73 @@ def tiff_write_117():
     return 'success'
 
 ###############################################################################
+# Test bugfix for ticket #4816
+
+def tiff_write_118():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_118.tif', 1, 1)
+    # Should be rejected in a non-XML domain
+    ds.SetMetadata('bla', 'foo')
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_118.tif')
+    md = ds.GetMetadata('foo')
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_write_118.tif')
+
+    if len(md) != 0:
+        print(md)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test bugfix for ticket #4816
+
+def tiff_write_119():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_119.tif', 1, 1)
+    ds.SetMetadata('foo=bar', 'foo')
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_119.tif')
+    md = ds.GetMetadata('foo')
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_write_119.tif')
+
+    if md['foo'] != 'bar':
+        print(md)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test bugfix for ticket #4816
+
+def tiff_write_120():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_120.tif', 1, 1)
+    ds.SetMetadata('<foo/>', 'xml:foo')
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_120.tif')
+    md = ds.GetMetadata('xml:foo')
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_write_120.tif')
+
+    if len(md) != 1:
+        print(md)
+        return 'fail'
+    if md[0] != '<foo/>':
+        print(md)
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
 
@@ -4521,6 +4589,9 @@ gdaltest_list = [
     tiff_write_115,
     tiff_write_116,
     tiff_write_117,
+    tiff_write_118,
+    tiff_write_119,
+    tiff_write_120,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
