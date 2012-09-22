@@ -242,6 +242,14 @@ int OGRMySQLDataSource::Open( const char * pszNewName, int bUpdate,
         CSLDestroy( papszTableNames );
         return FALSE;
     }
+    else
+    {
+        // Enable automatic reconnection
+        // Must be called after mysql_real_connect() on MySQL < 5.0.19
+        // and at any point on more recent versions.
+        my_bool reconnect = 1;
+        mysql_options(hConn, MYSQL_OPT_RECONNECT, &reconnect);
+    }
     
     pszName = CPLStrdup( pszNewName );
     
