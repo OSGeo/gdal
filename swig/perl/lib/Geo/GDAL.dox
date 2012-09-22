@@ -898,10 +898,15 @@
 #         $yoff += $h;
 #         last if $yoff >= $H;
 #     }
+#     my $data = $dataset->Band(1)->ReadTile($xoff,$yoff,min($W-$xoff,$w),min($H-$yoff,$h));
 #     my $data = $dataset->Band(1)->ReadTile($xoff,$yoff,$w,$h);
 #     # add your data processing code here
 #     $dataset->Band(1)->WriteTile($data,$xoff,$yoff);
 #     $xoff += $w;
+# }
+#
+# sub min {
+#     return $_[0] < $_[1] ? $_[0] : $_[1];
 # }
 # \endcode
 # @param xoff
