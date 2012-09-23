@@ -346,7 +346,25 @@ int OGRODBCTableLayer::TestCapability( const char * pszCap )
 int OGRODBCTableLayer::GetFeatureCount( int bForce )
 
 {
-    return OGRODBCLayer::GetFeatureCount( bForce );
+    if( m_poFilterGeom != NULL )
+        return OGRODBCLayer::GetFeatureCount( bForce );
+
+    CPLODBCStatement oStmt( poDS->GetSession() );
+    oStmt.Append( "SELECT COUNT(*) FROM " );
+    oStmt.Append( poFeatureDefn->GetName() );
+
+    if( pszQuery != NULL )
+        oStmt.Appendf( " WHERE %s", pszQuery );
+
+    if( !oStmt.ExecuteSQL() || !oStmt.Fetch() )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "GetFeatureCount() failed on query %s.\n%s",
+                  oStmt.GetCommand(), poDS->GetSession()->GetLastError() );
+        return OGRODBCLayer::GetFeatureCount(bForce);
+    }
+
+    return atoi(oStmt.GetColData(0));
 }
 
 /************************************************************************/
