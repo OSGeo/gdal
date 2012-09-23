@@ -184,6 +184,8 @@ class OGRODBCDataSource : public OGRDataSource
     int                *panSRID;
     OGRSpatialReference **papoSRS;
     
+    int                 OpenMDB( const char *, int bUpdate );
+    
   public:
                         OGRODBCDataSource();
                         ~OGRODBCDataSource();

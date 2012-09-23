@@ -143,7 +143,7 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszLayerName,
 
     if( poFeatureDefn->GetFieldCount() == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined, 
                   "No column definitions found for table '%s', layer not usable.", 
                   pszLayerName );
         return CE_Failure;

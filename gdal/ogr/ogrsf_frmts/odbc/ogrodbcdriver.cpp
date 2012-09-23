@@ -61,7 +61,11 @@ OGRDataSource *OGRODBCDriver::Open( const char * pszFilename,
 {
     OGRODBCDataSource     *poDS;
 
-    if( !EQUALN(pszFilename,"ODBC:",5) )
+    if( !EQUALN(pszFilename,"ODBC:",5) 
+#ifdef WIN32
+        && !EQUAL(CPLGetExtension(pszFilename), "MDB")
+#endif
+        )
         return NULL;
 
     poDS = new OGRODBCDataSource();
