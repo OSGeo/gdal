@@ -74,6 +74,94 @@ OGRODBCDataSource::~OGRODBCDataSource()
 }
 
 /************************************************************************/
+/*                              OpenMDB()                               */
+/************************************************************************/
+
+int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
+{
+    const char *pszDSNStringTemplate =
+        "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
+    char* pszDSN = (char *) CPLMalloc(strlen(pszNewName)+strlen(pszDSNStringTemplate)+100);
+    sprintf( pszDSN, pszDSNStringTemplate,  pszNewName );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize based on the DSN.                                    */
+/* -------------------------------------------------------------------- */
+    CPLDebug( "ODBC", "EstablishSession(%s)", pszDSN );
+
+    if( !oSession.EstablishSession( pszDSN, NULL, NULL ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to initialize ODBC connection to DSN for %s,\n"
+                  "%s", pszDSN, oSession.GetLastError() );
+        CPLFree( pszDSN );
+        return FALSE;
+    }
+
+    CPLFree( pszDSN );
+
+    pszName = CPLStrdup( pszNewName );
+
+    bDSUpdate = bUpdate;
+
+/* -------------------------------------------------------------------- */
+/*      Check if it is a PGeo MDB.                                      */
+/* -------------------------------------------------------------------- */
+    {
+        CPLODBCStatement oStmt( &oSession );
+
+        oStmt.Append( "SELECT TableName, FieldName, ShapeType, ExtentLeft, ExtentRight, ExtentBottom, ExtentTop, SRID, HasZ FROM GDB_GeomColumns" );
+
+        if( oStmt.ExecuteSQL() )
+        {
+            return FALSE;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check if it is a Geomedia MDB.                                  */
+/* -------------------------------------------------------------------- */
+    {
+        CPLODBCStatement oStmt( &oSession );
+
+        oStmt.Append( "SELECT TableName FROM GAliasTable WHERE TableType = 'INGRFeatures'" );
+
+        if( oStmt.ExecuteSQL() )
+        {
+            return FALSE;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Return all tables as  non-spatial tables.                       */
+/* -------------------------------------------------------------------- */
+    CPLODBCStatement oTableList( &oSession );
+
+    if( oTableList.GetTables() )
+    {
+        while( oTableList.Fetch() )
+        {
+            const char *pszSchema = oTableList.GetColData(1);
+            CPLString osLayerName;
+
+            if( pszSchema != NULL && strlen(pszSchema) > 0 )
+            {
+                osLayerName = pszSchema;
+                osLayerName += ".";
+            }
+
+            osLayerName += oTableList.GetColData(2);
+
+            OpenTable( osLayerName, NULL, bUpdate );
+        }
+
+        return TRUE;
+    }
+    else
+        return FALSE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -82,6 +170,9 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 
 {
     CPLAssert( nLayers == 0 );
+
+    if( EQUAL(CPLGetExtension(pszNewName), "MDB") )
+        return OpenMDB(pszNewName, bUpdate);
 
 /* -------------------------------------------------------------------- */
 /*      Start parsing dataset name from the end of string, fetching     */

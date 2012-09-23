@@ -58,6 +58,12 @@ with the <a href="/ogr/ogr_sql.html">OGR SQL</a> engine, by passing
 <strong>"OGRSQL"</strong> string to the ExecuteSQL() method, as name of 
 the SQL dialect.</p>
 
+<h2>Access Databases (.MDB) support</h2>
+
+Starting with GDAL 2.0, and on Windows provided that the "Microsoft Access Driver (*.mdb)"
+ODBC driver is installed, non-spatial MS Access Databases (not Personnal
+Geodabases or Geomedia databases) can be opened directly by their filenames.
+
 <h2>Creation Issues</h2>
 
 Currently the ODBC OGR driver is read-only, so new features, tables and
@@ -67,6 +73,9 @@ may be removed in the future. <p>
 
 <ul>
 <li> <a href="http://msdn.microsoft.com/en-us/library/ms714562(VS.85).aspx">MSDN ODBC API Reference</a><p>
+<li> <a href="drv_pgeo.html">PGeo driver</a><p>
+<li> <a href="drv_geomedia.html">Geomedia driver</a><p>
+<li> <a href="drv_mdb.html">MDB driver</a><p>
 </ul>
 
 </body>
