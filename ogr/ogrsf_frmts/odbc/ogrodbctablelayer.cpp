@@ -312,7 +312,7 @@ OGRErr OGRODBCTableLayer::SetAttributeFilter( const char *pszQuery )
         return OGRERR_NONE;
 
     CPLFree( this->pszQuery );
-    this->pszQuery = CPLStrdup( pszQuery );
+    this->pszQuery = (pszQuery != NULL ) ? CPLStrdup( pszQuery ) : NULL;
 
     ClearStatement();
 
