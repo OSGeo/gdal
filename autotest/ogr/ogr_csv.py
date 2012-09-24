@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -926,6 +927,48 @@ def ogr_csv_22():
     return 'success'
 
 ###############################################################################
+# Test single column CSV files
+
+def ogr_csv_23():
+
+    # Create an invalid CSV file
+    f = gdal.VSIFOpenL('/vsimem/invalid.csv', 'wb')
+    gdal.VSIFCloseL(f)
+
+    # and check that it doesn't prevent from creating a new CSV file (#4824)
+    ds = ogr.GetDriverByName('CSV').CreateDataSource( '/vsimem/single.csv' )
+    lyr = ds.CreateLayer('single')
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField(0, 'bar')
+    lyr.CreateFeature(feat)
+    feat = None
+    lyr = None
+    ds = None
+
+    ds = ogr.Open( '/vsimem/single.csv' )
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    feat = lyr.GetNextFeature()
+    if feat.GetField(0) != 'bar':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/single.csv')
+    gdal.Unlink('/vsimem/invalid.csv')
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_csv_cleanup():
@@ -977,6 +1020,7 @@ gdaltest_list = [
     ogr_csv_20,
     ogr_csv_21,
     ogr_csv_22,
+    ogr_csv_23,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':

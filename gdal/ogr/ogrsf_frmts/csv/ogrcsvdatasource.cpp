@@ -279,9 +279,9 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
         {
             if( !OpenTable( oSubFilename ) )
             {
-                CSLDestroy( papszNames );
+                CPLDebug("CSV", "Cannot open %s", oSubFilename.c_str());
                 nNotCSVCount++;
-                return FALSE;
+                continue;
             }
         }
 
@@ -294,9 +294,9 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
             bRet |= OpenTable( oSubFilename, NULL, "SOURCE");
             if ( !bRet )
             {
-                CSLDestroy( papszNames );
+                CPLDebug("CSV", "Cannot open %s", oSubFilename.c_str());
                 nNotCSVCount++;
-                return FALSE;
+                continue;
             }
         }
         /* GNIS specific */
@@ -306,9 +306,9 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
         {
             if ( !OpenTable( oSubFilename, NULL, "PRIMARY") )
             {
-                CSLDestroy( papszNames );
+                CPLDebug("CSV", "Cannot open %s", oSubFilename.c_str());
                 nNotCSVCount++;
-                return FALSE;
+                continue;
             }
         }
         else
