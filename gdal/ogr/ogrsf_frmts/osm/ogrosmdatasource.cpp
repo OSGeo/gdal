@@ -34,6 +34,9 @@
 #include "ogr_api.h"
 #include "swq.h"
 #include "gpb.h"
+#include "ogrlayerdecorator.h"
+#include "ogrsqliteexecutesql.h"
+#include "cpl_multiproc.h"
 
 #include <algorithm>
 
@@ -106,6 +109,53 @@ static void WriteVarInt64(GUIntBig nSVal, GByte** ppabyData);
 static void WriteVarSInt64(GIntBig nSVal, GByte** ppabyData);
 
 CPL_CVSID("$Id$");
+
+class DSToBeOpened
+{
+    public:
+        GIntBig                 nPID;
+        CPLString               osDSName;
+        CPLString               osInterestLayers;
+};
+
+static void                      *hMutex = NULL;
+static std::vector<DSToBeOpened>  oListDSToBeOpened;
+
+/************************************************************************/
+/*                    AddInterestLayersForDSName()                      */
+/************************************************************************/
+
+static void AddInterestLayersForDSName(const CPLString& osDSName,
+                                       const CPLString& osInterestLayers)
+{
+    CPLMutexHolder oMutexHolder(&hMutex);
+    DSToBeOpened oDSToBeOpened;
+    oDSToBeOpened.nPID = CPLGetPID();
+    oDSToBeOpened.osDSName = osDSName;
+    oDSToBeOpened.osInterestLayers = osInterestLayers;
+    oListDSToBeOpened.push_back( oDSToBeOpened );
+}
+
+/************************************************************************/
+/*                    GetInterestLayersForDSName()                      */
+/************************************************************************/
+
+static CPLString GetInterestLayersForDSName(const CPLString& osDSName)
+{
+    CPLMutexHolder oMutexHolder(&hMutex);
+    GIntBig nPID = CPLGetPID();
+    for(int i = 0; i < (int)oListDSToBeOpened.size(); i++)
+    {
+        if( oListDSToBeOpened[i].nPID == nPID &&
+            oListDSToBeOpened[i].osDSName == osDSName )
+        {
+            CPLString osInterestLayers = oListDSToBeOpened[i].osInterestLayers;
+            oListDSToBeOpened.erase(oListDSToBeOpened.begin()+i);
+            return osInterestLayers;
+        }
+    }
+    return "";
+}
 
 /************************************************************************/
 /*                        OGROSMDataSource()                            */
@@ -2468,7 +2518,16 @@ int OGROSMDataSource::Open( const char * pszFilename, int bUpdateIn)
         }
     }
 
-    return CreateTempDB();
+    int bRet = CreateTempDB();
+    if( bRet )
+    {
+        CPLString osInterestLayers = GetInterestLayersForDSName(GetName());
+        if( osInterestLayers.size() )
+        {
+            ExecuteSQL( osInterestLayers, NULL, NULL );
+        }
+    }
+    return bRet;
 }
 
 /************************************************************************/
@@ -3528,6 +3587,33 @@ OGRFeature * OGROSMSingleFeatureLayer::GetNextFeature()
 }
 
 /************************************************************************/
+/*                      OGROSMResultLayerDecorator                      */
+/************************************************************************/
+
+class OGROSMResultLayerDecorator : public OGRLayerDecorator
+{
+        CPLString               osDSName;
+        CPLString               osInterestLayers;
+
+    public:
+        OGROSMResultLayerDecorator(OGRLayer* poLayer,
+                                   CPLString osDSName,
+                                   CPLString osInterestLayers) :
+                                        OGRLayerDecorator(poLayer, TRUE),
+                                        osDSName(osDSName),
+                                        osInterestLayers(osInterestLayers) {}
+
+        virtual int         GetFeatureCount( int bForce = TRUE )
+        {
+            /* When we run GetFeatureCount() with SQLite SQL dialect, */
+            /* the OSM dataset will be re-opened. Make sure that it is */
+            /* re-opened with the same interest layers */
+            AddInterestLayersForDSName(osDSName, osInterestLayers);
+            return OGRLayerDecorator::GetFeatureCount(bForce);
+        }
+};
+
+/************************************************************************/
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
@@ -3627,79 +3713,87 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
     /* Try to analyse the SQL command to get the interest table */
     if( EQUALN(pszSQLCommand, "SELECT", 5) )
     {
-        swq_select sSelectInfo;
+        int bLayerAlreadyAdded = FALSE;
+        CPLString osInterestLayers = "SET interest_layers =";
 
-        CPLPushErrorHandler(CPLQuietErrorHandler);
-        CPLErr eErr = sSelectInfo.preparse( pszSQLCommand );
-        CPLPopErrorHandler();
-
-        if( eErr == CPLE_None )
+        if( pszDialect != NULL && EQUAL(pszDialect, "SQLITE") )
         {
-            int bOnlyFromThisDataSource = TRUE;
-
-            swq_select* pCurSelect = &sSelectInfo;
-            while(pCurSelect != NULL && bOnlyFromThisDataSource)
+            std::set<LayerDesc> oSetLayers = OGRSQLiteGetReferencedLayers(pszSQLCommand);
+            std::set<LayerDesc>::iterator oIter = oSetLayers.begin();
+            for(; oIter != oSetLayers.end(); ++oIter)
             {
-                for( int iTable = 0; iTable < pCurSelect->table_count; iTable++ )
+                const LayerDesc& oLayerDesc = *oIter;
+                if( oLayerDesc.osDSName.size() == 0 )
                 {
-                    swq_table_def *psTableDef = pCurSelect->table_defs + iTable;
-                    if( psTableDef->data_source != NULL )
-                    {
-                        bOnlyFromThisDataSource = FALSE;
-                        break;
-                    }
+                    if( bLayerAlreadyAdded ) osInterestLayers += ",";
+                    bLayerAlreadyAdded = TRUE;
+                    osInterestLayers += oLayerDesc.osLayerName;
                 }
-
-                pCurSelect = pCurSelect->poOtherSelect;
             }
+        }
+        else
+        {
+            swq_select sSelectInfo;
 
-            if( bOnlyFromThisDataSource )
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            CPLErr eErr = sSelectInfo.preparse( pszSQLCommand );
+            CPLPopErrorHandler();
+
+            if( eErr == CPLE_None )
             {
-                int bLayerAlreadyAdded = FALSE;
-                CPLString osInterestLayers = "SET interest_layers =";
-
-                pCurSelect = &sSelectInfo;
-                while(pCurSelect != NULL && bOnlyFromThisDataSource)
+                swq_select* pCurSelect = &sSelectInfo;
+                while(pCurSelect != NULL)
                 {
                     for( int iTable = 0; iTable < pCurSelect->table_count; iTable++ )
                     {
                         swq_table_def *psTableDef = pCurSelect->table_defs + iTable;
-                        if( bLayerAlreadyAdded ) osInterestLayers += ",";
-                        bLayerAlreadyAdded = TRUE;
-                        osInterestLayers += psTableDef->table_name;
+                        if( psTableDef->data_source == NULL )
+                        {
+                            if( bLayerAlreadyAdded ) osInterestLayers += ",";
+                            bLayerAlreadyAdded = TRUE;
+                            osInterestLayers += psTableDef->table_name;
+                        }
                     }
                     pCurSelect = pCurSelect->poOtherSelect;
                 }
-
-                /* Backup current optimization parameters */
-                abSavedDeclaredInterest.resize(0);
-                for(int i=0; i < nLayers; i++)
-                {
-                    abSavedDeclaredInterest.push_back(papoLayers[i]->IsUserInterested());
-                }
-                bIndexPointsBackup = bIndexPoints;
-                bUsePointsIndexBackup = bUsePointsIndex;
-                bIndexWaysBackup = bIndexWays;
-                bUseWaysIndexBackup = bUseWaysIndex;
-
-                /* Update optimization parameters */
-                ExecuteSQL(osInterestLayers, NULL, NULL);
-
-                ResetReading();
-
-                /* Run the request */
-                OGRLayer* poRet = OGRDataSource::ExecuteSQL( pszSQLCommand,
-                                                             poSpatialFilter,
-                                                             pszDialect );
-
-                poResultSetLayer = poRet;
-
-                /* If the user explicitely run a COUNT() request, then do it ! */
-                if( poResultSetLayer )
-                    bIsFeatureCountEnabled = TRUE;
-
-                return poRet;
             }
+        }
+
+        if( bLayerAlreadyAdded )
+        {
+            /* Backup current optimization parameters */
+            abSavedDeclaredInterest.resize(0);
+            for(int i=0; i < nLayers; i++)
+            {
+                abSavedDeclaredInterest.push_back(papoLayers[i]->IsUserInterested());
+            }
+            bIndexPointsBackup = bIndexPoints;
+            bUsePointsIndexBackup = bUsePointsIndex;
+            bIndexWaysBackup = bIndexWays;
+            bUseWaysIndexBackup = bUseWaysIndex;
+
+            /* Update optimization parameters */
+            ExecuteSQL(osInterestLayers, NULL, NULL);
+
+            ResetReading();
+
+            /* Run the request */
+            poResultSetLayer = OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                                            poSpatialFilter,
+                                                            pszDialect );
+
+            /* If the user explicitely run a COUNT() request, then do it ! */
+            if( poResultSetLayer )
+            {
+                if( pszDialect != NULL && EQUAL(pszDialect, "SQLITE") )
+                {
+                    poResultSetLayer = new OGROSMResultLayerDecorator(
+                                poResultSetLayer, GetName(), osInterestLayers);
+                }
+                bIsFeatureCountEnabled = TRUE;
+            }
+
+            return poResultSetLayer;
         }
     }
 
