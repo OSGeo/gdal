@@ -658,6 +658,7 @@ IDB_INC
 HAVE_IDB
 DWGDIRECT
 DWG_PLT
+HAVE_PCRE
 HAVE_SQLITE
 SQLITE_INC
 SQLITE3_LDFLAGS
@@ -922,6 +923,7 @@ with_curl
 with_xml2
 with_spatialite
 with_sqlite3
+with_pcre
 with_dwgdirect
 with_idb
 with_sde
@@ -1666,6 +1668,7 @@ Optional Packages:
   --with-spatialite=ARG Include SpatiaLite support (ARG=no(default), yes or path)
   --with-sqlite3=[ARG]    use SQLite 3 library [default=yes], optionally
                           specify the prefix for sqlite3 library
+  --with-pcre             Include libpcre support (REGEXP support for SQLite)
   --with-dwgdirect=path Include DWG direct support
   --with-dwg-plt=platform DWGdirect Platform, defaults to lnxX86
   --with-idb=DIR        Include Informix DataBlade support (DIR points to Informix root)
@@ -25166,6 +25169,92 @@ HAVE_SQLITE=$HAVE_SQLITE3
 HAVE_SQLITE=$HAVE_SQLITE3
 
 
+HAVE_PCRE=no
+
+
+# Check whether --with-pcre was given.
+if test "${with_pcre+set}" = set; then :
+  withval=$with_pcre;
+fi
+
+
+if test "$with_pcre" = "no"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
+$as_echo "disabled" >&6; }
+    HAVE_PCRE=no
+else
+    for ac_header in pcre.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "pcre.h" "ac_cv_header_pcre_h" "$ac_includes_default"
+if test "x$ac_cv_header_pcre_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_PCRE_H 1
+_ACEOF
+
+fi
+
+done
+
+    if test "$ac_cv_header_pcre_h" = "no" ; then
+        if test "$with_pcre" = "yes"; then
+            as_fn_error $? "cannot find pcre.h" "$LINENO" 5
+        fi
+    else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pcre_compile in -lpcre" >&5
+$as_echo_n "checking for pcre_compile in -lpcre... " >&6; }
+if ${ac_cv_lib_pcre_pcre_compile+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpcre  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char pcre_compile ();
+int
+main ()
+{
+return pcre_compile ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_pcre_pcre_compile=yes
+else
+  ac_cv_lib_pcre_pcre_compile=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pcre_pcre_compile" >&5
+$as_echo "$ac_cv_lib_pcre_pcre_compile" >&6; }
+if test "x$ac_cv_lib_pcre_pcre_compile" = xyes; then :
+  HAVE_PCRE=yes
+else
+  HAVE_PCRE=no
+fi
+
+        if test "$HAVE_PCRE" = "yes" ; then
+            HAVE_PCRE=yes
+            LIBS="$LIBS -lpcre"
+        else
+            if test "$with_pcre" = "yes"; then
+                as_fn_error $? "cannot find libpcre" "$LINENO" 5
+            fi
+        fi
+    fi
+fi
+
+
+
 
 DWGDIRECT=
 DWG_PLT=
@@ -30448,6 +30537,9 @@ echo "  DODS support:              ${HAVE_DODS}"
 
 
 echo "  SQLite support:            ${HAVE_SQLITE}"
+
+
+echo "  PCRE support:              ${HAVE_PCRE}"
 
 
 echo "  SpatiaLite support:        ${HAVE_SPATIALITE}"

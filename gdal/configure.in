@@ -2560,6 +2560,39 @@ AC_SUBST([SQLITE_INC], $SQLITE3_CFLAGS)
 AC_SUBST([HAVE_SQLITE], $HAVE_SQLITE3)
 HAVE_SQLITE=$HAVE_SQLITE3
 
+dnl ---------------------------------------------------------------------------
+dnl Check for PCRE.
+dnl ---------------------------------------------------------------------------
+
+HAVE_PCRE=no
+
+AC_ARG_WITH(pcre,
+    [  --with-pcre             Include libpcre support (REGEXP support for SQLite)],
+    ,,)
+
+if test "$with_pcre" = "no"; then
+    AC_MSG_RESULT(disabled)
+    HAVE_PCRE=no
+else
+    AC_CHECK_HEADERS([pcre.h])
+    if test "$ac_cv_header_pcre_h" = "no" ; then
+        if test "$with_pcre" = "yes"; then
+            AC_MSG_ERROR([cannot find pcre.h])
+        fi
+    else
+        AC_CHECK_LIB(pcre,pcre_compile,HAVE_PCRE=yes,HAVE_PCRE=no,)
+        if test "$HAVE_PCRE" = "yes" ; then
+            HAVE_PCRE=yes
+            LIBS="$LIBS -lpcre"
+        else
+            if test "$with_pcre" = "yes"; then
+                AC_MSG_ERROR([cannot find libpcre])
+            fi
+        fi
+    fi
+fi
+
+AC_SUBST(HAVE_PCRE)
 
 dnl ---------------------------------------------------------------------------
 dnl Check for DWGdirect.
@@ -3764,6 +3797,7 @@ LOC_MSG([  SDE support:               ${SDE_ENABLED}])
 LOC_MSG([  Rasdaman support:          ${RASDAMAN_ENABLED}])
 LOC_MSG([  DODS support:              ${HAVE_DODS}])
 LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
+LOC_MSG([  PCRE support:              ${HAVE_PCRE}])
 LOC_MSG([  SpatiaLite support:        ${HAVE_SPATIALITE}])
 LOC_MSG([  DWGdirect support          ${HAVE_DWGDIRECT}])
 LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
