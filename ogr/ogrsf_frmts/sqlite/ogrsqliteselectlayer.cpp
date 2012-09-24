@@ -120,6 +120,13 @@ int OGRSQLiteSelectLayer::GetFeatureCount( int bForce )
     if( bEmptyLayer )
         return 0;
 
+    if( m_poAttrQuery == NULL &&
+        EQUALN(osSQLCurrent, "SELECT COUNT(*) FROM", strlen("SELECT COUNT(*) FROM")) &&
+        osSQLCurrent.ifind(" UNION ") == std::string::npos &&
+        osSQLCurrent.ifind(" INTERSECT ") == std::string::npos &&
+        osSQLCurrent.ifind(" EXCEPT ") == std::string::npos )
+        return 1;
+
     if( m_poAttrQuery != NULL || (m_poFilterGeom != NULL && !bSpatialFilterInSQL) )
         return OGRLayer::GetFeatureCount(bForce);
 
