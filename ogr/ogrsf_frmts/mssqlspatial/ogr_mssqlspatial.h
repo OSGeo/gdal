@@ -40,6 +40,7 @@ class OGRMSSQLSpatialDataSource;
 #define MSSQLGEOMETRY_NATIVE 0
 #define MSSQLGEOMETRY_WKB 1
 #define MSSQLGEOMETRY_WKT 2
+#define MSSQLGEOMETRY_WKBZM 3  /* SQL Server 2012 */
 
 /* geometry column types */
 #define MSSQLCOLTYPE_GEOMETRY  0
