@@ -478,11 +478,13 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
         if (ParseValue(&pszGeometryFormat, pszConnectionName, 
             "geometryformat=", nCurrent, nNext, nTerm, TRUE))
         {
-            if (EQUALN(pszGeometryFormat, "wkb",3))
+            if (EQUALN(pszGeometryFormat,"wkbzm",5))
+                nGeometryFormat = MSSQLGEOMETRY_WKBZM;
+            else if (EQUALN(pszGeometryFormat, "wkb",3))
                 nGeometryFormat = MSSQLGEOMETRY_WKB;
             else if (EQUALN(pszGeometryFormat,"wkt",3))
                 nGeometryFormat = MSSQLGEOMETRY_WKT;
-            else if (EQUALN(pszGeometryFormat,"native",3))
+            else if (EQUALN(pszGeometryFormat,"native",6))
                 nGeometryFormat = MSSQLGEOMETRY_NATIVE;
             else
             {

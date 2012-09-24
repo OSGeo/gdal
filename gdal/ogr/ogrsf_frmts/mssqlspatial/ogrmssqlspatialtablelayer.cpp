@@ -396,7 +396,13 @@ CPLString OGRMSSQLSpatialTableLayer::BuildFields()
             }
             else if ( poDS->GetGeometryFormat() == MSSQLGEOMETRY_WKT )
             {
-                osFieldList += "].STAsText() as [";
+                osFieldList += "].AsTextZM() as [";
+                osFieldList += pszGeomColumn;
+            }
+            else if ( poDS->GetGeometryFormat() == MSSQLGEOMETRY_WKBZM )
+            {
+                /* SQL Server 2012 */
+                osFieldList += "].AsBinaryZM() as [";
                 osFieldList += pszGeomColumn;
             }
         }
