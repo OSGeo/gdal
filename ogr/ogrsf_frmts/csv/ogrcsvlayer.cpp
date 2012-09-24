@@ -418,6 +418,13 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 
         if (pszFieldName == NULL)
         {
+            /* Re-read single column CSV files that have a trailing comma */
+            /* in the header line */
+            if( iField == 1 && nFieldCount == 2 && papszTokens[1][0] == '\0' )
+            {
+                nFieldCount = 1;
+                break;
+            }
             pszFieldName = szFieldNameBuffer;
             sprintf( szFieldNameBuffer, "field_%d", iField+1 );
         }
@@ -950,6 +957,14 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
                 }
             }
         }
+
+        /* The CSV driver will not recognize single column tables, so add */
+        /* a fake second blank field */
+        if( poFeatureDefn->GetFieldCount() == 1 )
+        {
+            if (fpCSV) VSIFPrintfL( fpCSV, "%c", chDelimiter );
+        }
+
         if( bUseCRLF )
         {
             if (fpCSV) VSIFPutcL( 13, fpCSV );
@@ -1047,6 +1062,7 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
 /* -------------------------------------------------------------------- */
 /*      Write out all the field values.                                 */
 /* -------------------------------------------------------------------- */
+    int bNonEmptyLine = FALSE;
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
         char *pszEscaped;
@@ -1069,10 +1085,15 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
                                 -1, CPLES_CSV );
         }
 
-        VSIFWriteL( pszEscaped, 1, strlen(pszEscaped), fpCSV );
+        int nLen = (int)strlen(pszEscaped);
+        bNonEmptyLine |= (nLen != 0);
+        VSIFWriteL( pszEscaped, 1, nLen, fpCSV );
         CPLFree( pszEscaped );
     }
-    
+
+    if(  poFeatureDefn->GetFieldCount() == 1 && !bNonEmptyLine )
+        VSIFPrintfL( fpCSV, "%c", chDelimiter );
+
     if( bUseCRLF )
         VSIFPutcL( 13, fpCSV );
     VSIFPutcL( '\n', fpCSV );
