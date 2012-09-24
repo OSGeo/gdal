@@ -94,26 +94,6 @@ OGRSQLiteExecuteSQLLayer::~OGRSQLiteExecuteSQLLayer()
 }
 
 /************************************************************************/
-/*                               LayerDesc                              */
-/************************************************************************/
-
-class LayerDesc
-{
-    public:
-        LayerDesc() {};
-
-        bool operator < ( const LayerDesc& other ) const
-        {
-            return osOriginalStr < other.osOriginalStr;
-        }
-
-        CPLString osOriginalStr;
-        CPLString osSubstitutedName;
-        CPLString osDSName;
-        CPLString osLayerName;
-};
-
-/************************************************************************/
 /*                       OGR2SQLITEExtractUnquotedString()              */
 /************************************************************************/
 
@@ -1029,6 +1009,24 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
     return poLayer;
 }
 
+/************************************************************************/
+/*                   OGRSQLiteGetReferencedLayers()                     */
+/************************************************************************/
+
+std::set<LayerDesc> OGRSQLiteGetReferencedLayers(const char* pszStatement)
+{
+/* -------------------------------------------------------------------- */
+/*      Analysze the statement to determine which tables will be used.  */
+/* -------------------------------------------------------------------- */
+    std::set<LayerDesc> oSetLayers;
+    std::set<CPLString> oSetSpatialIndex;
+    CPLString osModifiedSQL;
+    OGR2SQLITEGetPotentialLayerNames(pszStatement, oSetLayers,
+                                     oSetSpatialIndex, osModifiedSQL);
+
+    return oSetLayers;
+}
+
 #else // HAVE_SQLITE_VFS
 
 /************************************************************************/
@@ -1043,6 +1041,16 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
     CPLError(CE_Failure, CPLE_NotSupported,
                 "The SQLite version is to old to support the SQLite SQL dialect");
     return NULL;
+}
+
+/************************************************************************/
+/*                   OGRSQLiteGetReferencedLayers()                     */
+/************************************************************************/
+
+std::set<LayerDesc> OGRSQLiteGetReferencedLayers(const char* pszStatement)
+{
+     std::set<LayerDesc> oSetLayers;
+     return oSetLayers;
 }
 
 #endif // HAVE_SQLITE_VFS

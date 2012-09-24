@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -451,6 +452,34 @@ def ogr_osm_6():
 
     return 'success'
 
+###############################################################################
+# Test optimization when reading only the points layer through a SQL request
+# with SQLite dialect (#4825)
+
+def ogr_osm_7():
+
+    try:
+        drv = ogr.GetDriverByName('OSM')
+    except:
+        drv = None
+    if drv is None:
+        return 'skip'
+
+    ds = ogr.Open( 'data/test.pbf' )
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM points LIMIT 10', dialect = 'SQLite')
+    count = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+
+    if count != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_osm_1,
     ogr_osm_2,
@@ -460,6 +489,7 @@ gdaltest_list = [
     ogr_osm_4,
     ogr_osm_5,
     ogr_osm_6,
+    ogr_osm_7,
     ]
 
 if __name__ == '__main__':
