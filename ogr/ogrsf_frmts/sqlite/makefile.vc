@@ -8,7 +8,11 @@ GDAL_ROOT	=	..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-EXTRAFLAGS = -I.. -I..\.. $(SQLITE_INC)
+EXTRAFLAGS = -I.. -I..\.. $(SQLITE_INC) $(PCRE_EXTRAFLAGS)
+
+!IFDEF PCRE_INC
+PCRE_EXTRAFLAGS = $(PCRE_INC)
+!ENDIF
 
 default:	$(OBJ)
 

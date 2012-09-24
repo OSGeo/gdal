@@ -376,6 +376,10 @@ INGRES_LIB = "$(INGRES_HOME)\lib\iilibapi.lib" \
 #SQLITE_INC=-IC:\osgeo4w\include -DHAVE_SPATIALITE -DSPATIALITE_AMALGAMATION
 #SQLITE_LIB=C:\osgeo4w\lib\spatialite_i.lib
 
+# PCRE Library (REGEXP support for SQLite) for example from http://sourceforge.net/projects/gnuwin32/files/pcre/7.0/pcre-7.0.exe/download
+#PCRE_INC=-I"C:\Program Files\GNUWin32\include" -DHAVE_PCRE
+#PCRE_LIB="C:\Program Files\GNUWin32\lib\pcre.lib"
+
 # Informix Data Blade
 #INFORMIXDIR="C:\Program Files\IBM\Informix\Client-SDK"
 #IDB_INC=-I$(INFORMIXDIR)\incl\cpp -I$(INFORMIXDIR)\incl\dmi \
@@ -658,5 +662,5 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(POPPLER_LIBS) $(PODOFO_LIBS) $(LZMA_LIBS) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
-	$(INGRES_LIB) $(LIBXML2_LIB)
+	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB)
 		
