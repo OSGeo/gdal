@@ -30,6 +30,7 @@
 #include "ogrsqlitevirtualogr.h"
 #include "ogr_api.h"
 #include "swq.h"
+#include "ogrsqliteregexp.h"
 
 #define VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
 //#define DEBUG_OGR2SQLITE
@@ -57,7 +58,7 @@ SQLITE_EXTENSION_INIT1
 /*                        OGR2SQLITEModule()                            */
 /************************************************************************/
 
-OGR2SQLITEModule::OGR2SQLITEModule(OGRDataSource* poDS) : hDB(NULL), poDS(poDS), poSQLiteDS(NULL)
+OGR2SQLITEModule::OGR2SQLITEModule(OGRDataSource* poDS) : hDB(NULL), poDS(poDS), poSQLiteDS(NULL), hRegExpCache(NULL)
 {
 #ifdef DEBUG
     pDummy = CPLMalloc(1);
@@ -81,6 +82,8 @@ OGR2SQLITEModule::~OGR2SQLITEModule()
         
     for(int i=0;i<(int)apoExtraDS.size();i++)
         delete apoExtraDS[i];
+    
+    OGRSQLiteFreeRegExpCache(hRegExpCache);
 }
 
 /************************************************************************/
@@ -582,14 +585,53 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
 static
 int OGR2SQLITE_BestIndex(sqlite3_vtab *pVTab, sqlite3_index_info* pIndex)
 {
-#ifdef DEBUG_OGR2SQLITE
-    CPLDebug("OGR2SQLITE", "BestIndex");
-#endif
-
     int i;
-
     OGR2SQLITE_vtab* pMyVTab = (OGR2SQLITE_vtab*) pVTab;
     OGRFeatureDefn* poFDefn = pMyVTab->poLayer->GetLayerDefn();
+
+#ifdef DEBUG_OGR2SQLITE
+    CPLString osQueryPatternUsable, osQueryPatternNotUsable;
+    for (i = 0; i < pIndex->nConstraint; i++)
+    {
+        int iCol = pIndex->aConstraint[i].iColumn;
+        const char* pszFieldName;
+        if( iCol == -1 )
+            pszFieldName = "FID";
+        else if( iCol >= 0 && iCol < poFDefn->GetFieldCount() )
+            pszFieldName = poFDefn->GetFieldDefn(iCol)->GetNameRef();
+        else
+            pszFieldName = "unkown_field";
+
+        const char* pszOp;
+        switch(pIndex->aConstraint[i].op)
+        {
+            case SQLITE_INDEX_CONSTRAINT_EQ: pszOp = " = "; break;
+            case SQLITE_INDEX_CONSTRAINT_GT: pszOp = " > "; break;
+            case SQLITE_INDEX_CONSTRAINT_LE: pszOp = " <= "; break;
+            case SQLITE_INDEX_CONSTRAINT_LT: pszOp = " < "; break;
+            case SQLITE_INDEX_CONSTRAINT_GE: pszOp = " >= "; break;
+            case SQLITE_INDEX_CONSTRAINT_MATCH: pszOp = " MATCH "; break;
+            default: pszOp = " (unknown op) "; break;
+        }
+
+        if (pIndex->aConstraint[i].usable)
+        {
+            if (osQueryPatternUsable.size()) osQueryPatternUsable += " AND ";
+            osQueryPatternUsable += pszFieldName;
+            osQueryPatternUsable += pszOp;
+            osQueryPatternUsable += "?";
+        }
+        else
+        {
+            if (osQueryPatternNotUsable.size()) osQueryPatternNotUsable += " AND ";
+            osQueryPatternNotUsable += pszFieldName;
+            osQueryPatternNotUsable += pszOp;
+            osQueryPatternNotUsable += "?";
+        }
+    }
+    CPLDebug("OGR2SQLITE", "BestIndex, usable ( %s ), not usable ( %s )",
+             osQueryPatternUsable.c_str(), osQueryPatternNotUsable.c_str());
+#endif
 
     int nConstraints = 0;
     for (i = 0; i < pIndex->nConstraint; i++)
@@ -2257,6 +2299,13 @@ int OGR2SQLITEModule::Setup(sqlite3* hDB, int bAutoDestroy)
                                  OGR2SQLITE_Transform, NULL, NULL);
     if( rc != SQLITE_OK )
         return FALSE;
+
+    // We just need to register it for loadable extension
+    if( bAutoDestroy )
+    {
+        void* hRegExpCache = OGRSQLiteRegisterRegExpFunction(hDB);
+        SetRegExpCache(hRegExpCache);
+    }
 
     return TRUE;
 }

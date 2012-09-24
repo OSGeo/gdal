@@ -39,6 +39,7 @@
 #include "cpl_string.h"
 #include "cpl_hash_set.h"
 #include "cpl_csv.h"
+#include "ogrsqliteregexp.h"
 
 #ifdef HAVE_SPATIALITE
 #include "spatialite.h"
@@ -113,6 +114,8 @@ OGRSQLiteDataSource::OGRSQLiteDataSource()
     fpMainFile = NULL; /* Do not close ! The VFS layer will do it for us */
     nFileTimestamp = 0;
     bLastSQLCommandIsUpdateLayerStatistics = FALSE;
+
+    hRegExpCache = NULL;
 }
 
 /************************************************************************/
@@ -149,6 +152,8 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
     }
     CPLFree( panSRID );
     CPLFree( papoSRS );
+
+    OGRSQLiteFreeRegExpCache(hRegExpCache);
 
     if( hDB != NULL )
         sqlite3_close( hDB );
@@ -436,6 +441,8 @@ int OGRSQLiteDataSource::OpenOrCreateDB(int flags)
 
     if (!SetSynchronous())
         return FALSE;
+
+    hRegExpCache = OGRSQLiteRegisterRegExpFunction(hDB);
 
     return TRUE;
 }
