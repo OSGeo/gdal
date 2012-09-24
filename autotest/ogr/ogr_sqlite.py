@@ -2291,6 +2291,82 @@ def ogr_sqlite_33():
     return 'success'
 
 ###############################################################################
+# Test REGEXP support (#4823)
+
+def ogr_sqlite_34():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT 'a' REGEXP 'a'")
+    gdal.PopErrorHandler()
+    if sql_lyr is None:
+        return 'skip'
+    feat = sql_lyr.GetNextFeature()
+    val = feat.GetField(0)
+    gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
+    if val != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # Evaluates to FALSE
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT 'b' REGEXP 'a'")
+    feat = sql_lyr.GetNextFeature()
+    val = feat.GetField(0)
+    gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
+    if val != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # NULL left-member
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT NULL REGEXP 'a'")
+    feat = sql_lyr.GetNextFeature()
+    val = feat.GetField(0)
+    gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
+    if val != 0:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # NULL regexp
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT 'a' REGEXP NULL")
+    gdal.PopErrorHandler()
+    if sql_lyr is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # Invalid regexp
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT 'a' REGEXP '['")
+    gdal.PopErrorHandler()
+    if sql_lyr is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # Adds another pattern
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT 'b' REGEXP 'b'")
+    feat = sql_lyr.GetNextFeature()
+    val = feat.GetField(0)
+    gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
+    if val != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    # Test cache
+    for j in range(2):
+        for i in range(17):
+            regexp = chr(ord('a') + i)
+            sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT '%s' REGEXP '%s'" % (regexp, regexp))
+            feat = sql_lyr.GetNextFeature()
+            val = feat.GetField(0)
+            gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
+            if val != 1:
+                return 'fail'
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_sqlite_cleanup():
@@ -2423,6 +2499,7 @@ gdaltest_list = [
     ogr_sqlite_31,
     ogr_sqlite_32,
     ogr_sqlite_33,
+    ogr_sqlite_34,
     ogr_sqlite_cleanup ]
 
 if __name__ == '__main__':

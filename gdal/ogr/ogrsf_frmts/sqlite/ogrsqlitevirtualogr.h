@@ -56,6 +56,8 @@ class OGR2SQLITEModule
 
     std::map< CPLString, OGRLayer* > oMapVTableToOGRLayer;
 
+    void* hRegExpCache;
+
   public:
                                  OGR2SQLITEModule(OGRDataSource* poDS);
                                 ~OGR2SQLITEModule();
@@ -76,6 +78,8 @@ class OGR2SQLITEModule
     void                         RegisterVTable(const char* pszVTableName, OGRLayer* poLayer);
     void                         UnregisterVTable(const char* pszVTableName);
     OGRLayer*                    GetLayerForVTable(const char* pszVTableName);
+
+    void                         SetRegExpCache(void* hRegExpCacheIn) { hRegExpCache = hRegExpCacheIn; }
 };
 
 void OGR2SQLITE_Register();

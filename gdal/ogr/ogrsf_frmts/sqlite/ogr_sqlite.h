@@ -533,6 +533,8 @@ class OGRSQLiteDataSource : public OGRDataSource
 
     int                 nUndefinedSRID;
 
+    void               *hRegExpCache;
+
     virtual void        DeleteLayer( const char *pszLayer );
 
     const char*         GetSRTEXTColName();
