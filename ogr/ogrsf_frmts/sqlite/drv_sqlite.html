@@ -67,6 +67,11 @@ For such tables, there are as many OGR layers exposed as there are geometry colu
 
 Note: this support is limited to read-only operations.<p>
 
+<h2>REGEXP operator</h2>
+
+By default, the REGEXP operator has no implementation in SQLite. With OGR &gt;= 2.0 built against
+the PCRE library, the REGEXP operator is available in SQL statements run by OGR.
+
 <h2>VSI Virtual File System API support</h2>
 
 (Require OGR &gt;= 1.9.0 and SQLite &gt;= 3.6.0)<p>
