@@ -31,6 +31,7 @@
 #define _OGR_SQLITE_EXECUTE_SQL_H_INCLUDED
 
 #include "ogrsf_frmts.h"
+#include <set>
 
 OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
                                 const char *pszStatement,
