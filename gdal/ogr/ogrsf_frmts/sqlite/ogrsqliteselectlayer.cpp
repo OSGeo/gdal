@@ -122,6 +122,7 @@ int OGRSQLiteSelectLayer::GetFeatureCount( int bForce )
 
     if( m_poAttrQuery == NULL &&
         EQUALN(osSQLCurrent, "SELECT COUNT(*) FROM", strlen("SELECT COUNT(*) FROM")) &&
+        osSQLCurrent.ifind(" GROUP BY ") == std::string::npos &&
         osSQLCurrent.ifind(" UNION ") == std::string::npos &&
         osSQLCurrent.ifind(" INTERSECT ") == std::string::npos &&
         osSQLCurrent.ifind(" EXCEPT ") == std::string::npos )
