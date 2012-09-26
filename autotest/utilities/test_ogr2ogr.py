@@ -1553,6 +1553,174 @@ def test_ogr2ogr_43():
 
     return 'success'
 
+###############################################################################
+# Test -nlt PROMOTE_TO_MULTI for polygon/multipolygon
+
+def test_ogr2ogr_44():
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/test_ogr2ogr_44_src.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_44_src.shp')
+    except:
+        pass
+
+    try:
+        os.unlink('tmp/test_ogr2ogr_44.gml')
+        os.unlink('tmp/test_ogr2ogr_44.xsd')
+    except:
+        pass
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/test_ogr2ogr_44_src.shp')
+    lyr = ds.CreateLayer('test_ogr2ogr_44_src', geom_type = ogr.wkbPolygon)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,0 0))'))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0,0 1,1 1,0 0)),((10 0,10 1,11 1,10 0)))'))
+    lyr.CreateFeature(feat)
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML tmp/test_ogr2ogr_44.gml tmp/test_ogr2ogr_44_src.shp -nlt PROMOTE_TO_MULTI')
+
+    f = open('tmp/test_ogr2ogr_44.xsd')
+    data = f.read()
+    f.close()
+
+    if data.find('type="gml:MultiPolygonPropertyType"') == -1:
+        gdaltest.post_reason('failure')
+        print(data)
+        return 'fail'
+
+    f = open('tmp/test_ogr2ogr_44.gml')
+    data = f.read()
+    f.close()
+
+    if data.find('<ogr:geometryProperty><gml:MultiPolygon><gml:polygonMember><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>0,0 0,1 1,1 0,0</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></gml:polygonMember></gml:MultiPolygon></ogr:geometryProperty>') == -1:
+        gdaltest.post_reason('failure')
+        print(data)
+        return 'fail'
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_44_src.shp')
+    os.unlink('tmp/test_ogr2ogr_44.gml')
+    os.unlink('tmp/test_ogr2ogr_44.xsd')
+
+    return 'success'
+
+###############################################################################
+# Test -nlt PROMOTE_TO_MULTI for polygon/multipolygon
+
+def test_ogr2ogr_44():
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/test_ogr2ogr_44_src.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_44_src.shp')
+    except:
+        pass
+
+    try:
+        os.unlink('tmp/test_ogr2ogr_44.gml')
+        os.unlink('tmp/test_ogr2ogr_44.xsd')
+    except:
+        pass
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/test_ogr2ogr_44_src.shp')
+    lyr = ds.CreateLayer('test_ogr2ogr_44_src', geom_type = ogr.wkbPolygon)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,0 0))'))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0,0 1,1 1,0 0)),((10 0,10 1,11 1,10 0)))'))
+    lyr.CreateFeature(feat)
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML tmp/test_ogr2ogr_44.gml tmp/test_ogr2ogr_44_src.shp -nlt PROMOTE_TO_MULTI')
+
+    f = open('tmp/test_ogr2ogr_44.xsd')
+    data = f.read()
+    f.close()
+
+    if data.find('type="gml:MultiPolygonPropertyType"') == -1:
+        gdaltest.post_reason('failure')
+        print(data)
+        return 'fail'
+
+    f = open('tmp/test_ogr2ogr_44.gml')
+    data = f.read()
+    f.close()
+
+    if data.find('<ogr:geometryProperty><gml:MultiPolygon><gml:polygonMember><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>0,0 0,1 1,1 0,0</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></gml:polygonMember></gml:MultiPolygon></ogr:geometryProperty>') == -1:
+        gdaltest.post_reason('failure')
+        print(data)
+        return 'fail'
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_44_src.shp')
+    os.unlink('tmp/test_ogr2ogr_44.gml')
+    os.unlink('tmp/test_ogr2ogr_44.xsd')
+
+    return 'success'
+
+###############################################################################
+# Test -nlt PROMOTE_TO_MULTI for linestring/multilinestring
+
+def test_ogr2ogr_45():
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/test_ogr2ogr_45_src.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_45_src.shp')
+    except:
+        pass
+
+    try:
+        os.unlink('tmp/test_ogr2ogr_45.gml')
+        os.unlink('tmp/test_ogr2ogr_45.xsd')
+    except:
+        pass
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/test_ogr2ogr_45_src.shp')
+    lyr = ds.CreateLayer('test_ogr2ogr_45_src', geom_type = ogr.wkbLineString)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,0 1,1 1,0 0)'))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTILINESTRING((0 0,0 1,1 1,0 0),(10 0,10 1,11 1,10 0))'))
+    lyr.CreateFeature(feat)
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML tmp/test_ogr2ogr_45.gml tmp/test_ogr2ogr_45_src.shp -nlt PROMOTE_TO_MULTI')
+
+    f = open('tmp/test_ogr2ogr_45.xsd')
+    data = f.read()
+    f.close()
+
+    if data.find('type="gml:MultiLineStringPropertyType"') == -1:
+        gdaltest.post_reason('failure')
+        print(data)
+        return 'fail'
+
+    f = open('tmp/test_ogr2ogr_45.gml')
+    data = f.read()
+    f.close()
+
+    if data.find('<ogr:geometryProperty><gml:MultiLineString><gml:lineStringMember><gml:LineString><gml:coordinates>0,0 0,1 1,1 0,0</gml:coordinates></gml:LineString></gml:lineStringMember></gml:MultiLineString></ogr:geometryProperty>') == -1:
+        gdaltest.post_reason('failure')
+        print(data)
+        return 'fail'
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_45_src.shp')
+    os.unlink('tmp/test_ogr2ogr_45.gml')
+    os.unlink('tmp/test_ogr2ogr_45.xsd')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -1597,6 +1765,8 @@ gdaltest_list = [
     test_ogr2ogr_41,
     test_ogr2ogr_42,
     test_ogr2ogr_43,
+    test_ogr2ogr_44,
+    test_ogr2ogr_45
     ]
     
 if __name__ == '__main__':
