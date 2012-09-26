@@ -138,6 +138,7 @@ def test_gdaltindex_2():
 
 ###############################################################################
 # Try adding a raster in another projection with -skip_different_projection
+# 5th tile should NOT be inserted
 
 def test_gdaltindex_3():
     if test_cli_utilities.get_gdaltindex_path() is None:
@@ -153,13 +154,40 @@ def test_gdaltindex_3():
 
     (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -skip_different_projection tmp/tileindex.shp tmp/gdaltindex5.tif')
 
-    if ret_stderr.find('Warning : tmp/gdaltindex5.tif is not using the same projection system as other files in the tileindex. This may cause problems when using it in MapServer for example. Skipping it') == -1:
+    expected = 'Warning : tmp/gdaltindex5.tif is not using the same projection system as other files in the tileindex.\nThis may cause problems when using it in MapServer for example.\nUse -t_srs option to set target projection system (not supported by MapServer).'
+    if ret_stderr.find(expected) == -1:
         print(ret_stderr)
-        gdaltest.post_reason( 'got unexpected error messages.' )
+        gdaltest.post_reason( 'got unexpected error message \n[%s]\nexpecting\n[%s]' % (ret_stderr,expected))
         return 'fail'
 
     ds = ogr.Open('tmp/tileindex.shp')
     if ds.GetLayer(0).GetFeatureCount() != 4:
+        return 'fail'
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Try adding a raster in another projection with -t_srs
+# 5th tile should be inserted, will not be if there is a srs transformation error
+
+def test_gdaltindex_4():
+    if test_cli_utilities.get_gdaltindex_path() is None:
+        return 'skip'
+
+    drv = gdal.GetDriverByName('GTiff')
+    wkt = 'GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\"]]'
+
+    ds = drv.Create('tmp/gdaltindex5.tif', 10, 10, 1)
+    ds.SetProjection( wkt )
+    ds.SetGeoTransform( [ 47, 0.1, 0, 2, 0, -0.1 ] )
+    ds = None
+
+    (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdaltindex_path() + ' -t_srs EPSG:4326 tmp/tileindex.shp tmp/gdaltindex5.tif')
+
+    ds = ogr.Open('tmp/tileindex.shp')
+    if ds.GetLayer(0).GetFeatureCount() != 5:
+        gdaltest.post_reason( 'got %d features, expecting 4' %  ds.GetLayer(0).GetFeatureCount() )
         return 'fail'
     ds.Destroy()
 
@@ -187,6 +215,7 @@ gdaltest_list = [
     test_gdaltindex_1,
     test_gdaltindex_2,
     test_gdaltindex_3,
+    test_gdaltindex_4,
     test_gdaltindex_cleanup
     ]
 
