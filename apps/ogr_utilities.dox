@@ -234,7 +234,11 @@ whose geometry intersects the extents will be selected. The geometries will not 
 <dt> <b>-nlt</b><em> type</em>:</dt><dd> Define the geometry type for the 
 created layer.  One of NONE, GEOMETRY, POINT, LINESTRING, POLYGON, 
 GEOMETRYCOLLECTION, MULTIPOINT, MULTIPOLYGON or MULTILINESTRING. 
-Add "25D" to the name to get 2.5D versions.</dd>
+Add "25D" to the name to get 2.5D versions.
+Starting with GDAL 2.0, PROMOTE_TO_MULTI can be used to automatically promote layers
+that mix polygon or multipolygons to multipolygons, and layers that mix linestrings or
+multilinestrings to multilinestrings. Can be usefull when converting shapefiles to PostGIS
+(and other target drivers) that implements strict checks for geometry type.</dd>
 <dt> <b>-dim</b><em> val</em>:</dt><dd>(starting with GDAL 2.0) Force the coordinate dimension to val (valid values are 2 or 3).
 This affects both the layer geometry type, and feature geometries.</dd>
 <dt> <b>-a_srs</b><em> srs_def</em>:</dt><dd> Assign an output SRS</dd>
