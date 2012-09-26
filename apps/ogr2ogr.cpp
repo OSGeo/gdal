@@ -75,7 +75,9 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
                                                 int bNullifyOutputSRS,
                                                 OGRSpatialReference *poSourceSRS,
                                                 char **papszSelFields,
-                                                int bAppend, int eGType, int nCoordDim, int bOverwrite,
+                                                int bAppend, int eGType,
+                                                int bPromoteToMulti,
+                                                int nCoordDim, int bOverwrite,
                                                 char** papszFieldTypesToString,
                                                 int bWrapDateline,
                                                 int bExplodeCollections,
@@ -91,6 +93,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                            OGRSpatialReference *poOutputSRS,
                            int bNullifyOutputSRS,
                            int eGType,
+                           int bPromoteToMulti,
                            int nCoordDim,
                            GeomOperation eGeomOp,
                            double dfGeomOpParam,
@@ -661,6 +664,7 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszSQLStatement = NULL;
     const char  *pszDialect = NULL;
     int         eGType = -2;
+    int          bPromoteToMulti = FALSE;
     GeomOperation eGeomOp = NONE;
     double       dfGeomOpParam = 0;
     char        **papszFieldTypesToString = NULL;
@@ -784,6 +788,8 @@ int main( int nArgc, char ** papszArgv )
                 eGType = wkbNone;
             else if( EQUAL(osGeomName,"GEOMETRY") )
                 eGType = wkbUnknown;
+            else if( EQUAL(osGeomName,"PROMOTE_TO_MULTI") )
+                bPromoteToMulti = TRUE;
             else
             {
                 eGType = OGRFromOGCGeomType(osGeomName);
@@ -794,7 +800,7 @@ int main( int nArgc, char ** papszArgv )
                     exit( 1 );
                 }
             }
-            if (eGType != wkbNone && bIs3D)
+            if (eGType != -2 && eGType != wkbNone && bIs3D)
                 eGType |= wkb25DBit;
 
             iArg++;
@@ -1397,7 +1403,9 @@ int main( int nArgc, char ** papszArgv )
                                                 bNullifyOutputSRS,
                                                 poSourceSRS,
                                                 papszSelFields,
-                                                bAppend, eGType, nCoordDim, bOverwrite,
+                                                bAppend, eGType,
+                                                bPromoteToMulti,
+                                                nCoordDim, bOverwrite,
                                                 papszFieldTypesToString,
                                                 bWrapDateline,
                                                 bExplodeCollections,
@@ -1409,7 +1417,7 @@ int main( int nArgc, char ** papszArgv )
             if( psInfo == NULL ||
                 !TranslateLayer( psInfo, poDS, poPassedLayer, poODS,
                                  poOutputSRS, bNullifyOutputSRS,
-                                 eGType, nCoordDim,
+                                 eGType, bPromoteToMulti, nCoordDim,
                                  eGeomOp, dfGeomOpParam,
                                  nCountLayerFeatures,
                                  poClipSrc, poClipDst,
@@ -1543,7 +1551,9 @@ int main( int nArgc, char ** papszArgv )
                                                     bNullifyOutputSRS,
                                                     poSourceSRS,
                                                     papszSelFields,
-                                                    bAppend, eGType, nCoordDim, bOverwrite,
+                                                    bAppend, eGType,
+                                                    bPromoteToMulti,
+                                                    nCoordDim, bOverwrite,
                                                     papszFieldTypesToString,
                                                     bWrapDateline,
                                                     bExplodeCollections,
@@ -1579,7 +1589,7 @@ int main( int nArgc, char ** papszArgv )
                 {
                     if( !TranslateLayer(psInfo, poDS, poLayer, poODS,
                                         poOutputSRS, bNullifyOutputSRS,
-                                        eGType, nCoordDim,
+                                        eGType, bPromoteToMulti, nCoordDim,
                                         eGeomOp, dfGeomOpParam,
                                         0,
                                         poClipSrc, poClipDst,
@@ -1809,7 +1819,9 @@ int main( int nArgc, char ** papszArgv )
                                                 bNullifyOutputSRS,
                                                 poSourceSRS,
                                                 papszSelFields,
-                                                bAppend, eGType, nCoordDim, bOverwrite,
+                                                bAppend, eGType,
+                                                bPromoteToMulti,
+                                                nCoordDim, bOverwrite,
                                                 papszFieldTypesToString,
                                                 bWrapDateline,
                                                 bExplodeCollections,
@@ -1821,7 +1833,7 @@ int main( int nArgc, char ** papszArgv )
             if( (psInfo == NULL ||
                 !TranslateLayer( psInfo, poDS, poPassedLayer, poODS,
                                   poOutputSRS, bNullifyOutputSRS,
-                                  eGType, nCoordDim,
+                                  eGType, bPromoteToMulti, nCoordDim,
                                   eGeomOp, dfGeomOpParam,
                                   panLayerCountFeatures[iLayer],
                                   poClipSrc, poClipDst,
@@ -1958,7 +1970,7 @@ static void Usage(int bShort)
             " -nln name: Assign an alternate name to the new layer\n"
             " -nlt type: Force a geometry type for new layer.  One of NONE, GEOMETRY,\n"
             "      POINT, LINESTRING, POLYGON, GEOMETRYCOLLECTION, MULTIPOINT,\n"
-            "      MULTIPOLYGON, or MULTILINESTRING.  Add \"25D\" for 3D layers.\n"
+            "      MULTIPOLYGON, or MULTILINESTRING, or PROMOTE_TO_MULTI.  Add \"25D\" for 3D layers.\n"
             "      Default is type of source layer.\n"
             " -dim dimension: Force the coordinate dimension to the specified value.\n"
             " -fieldTypeToString type1,...: Converts fields of specified types to\n"
@@ -2041,7 +2053,9 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
                                                 int bNullifyOutputSRS,
                                                 OGRSpatialReference *poSourceSRS,
                                                 char **papszSelFields,
-                                                int bAppend, int eGType, int nCoordDim, int bOverwrite,
+                                                int bAppend, int eGType,
+                                                int bPromoteToMulti,
+                                                int nCoordDim, int bOverwrite,
                                                 char** papszFieldTypesToString,
                                                 int bWrapDateline,
                                                 int bExplodeCollections,
@@ -2180,9 +2194,17 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
         {
             eGType = poSrcFDefn->GetGeomType();
 
+            int n25DBit = eGType & wkb25DBit;
+            if ( bPromoteToMulti )
+            {
+                if (wkbFlatten(eGType) == wkbLineString)
+                    eGType = wkbMultiLineString | n25DBit;
+                else if (wkbFlatten(eGType) == wkbPolygon)
+                    eGType = wkbMultiPolygon | n25DBit;
+            }
+
             if ( bExplodeCollections )
             {
-                int n25DBit = eGType & wkb25DBit;
                 if (wkbFlatten(eGType) == wkbMultiPoint)
                 {
                     eGType = wkbPoint | n25DBit;
@@ -2499,6 +2521,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                            OGRSpatialReference *poOutputSRS,
                            int bNullifyOutputSRS,
                            int eGType,
+                           int bPromoteToMulti,
                            int nCoordDim,
                            GeomOperation eGeomOp,
                            double dfGeomOpParam,
@@ -2529,7 +2552,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
 
     if( poOutputSRS == NULL && !bNullifyOutputSRS )
         poOutputSRS = poSrcLayer->GetSpatialRef();
-
+    
     if( wkbFlatten(eGType) == wkbPolygon )
         bForceToPolygon = TRUE;
     else if( wkbFlatten(eGType) == wkbMultiPolygon )
@@ -2733,13 +2756,15 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                         OGRGeometryFactory::forceToPolygon(
                             poDstFeature->StealGeometry() ) );
                 }
-                else if( bForceToMultiPolygon )
+                else if( bForceToMultiPolygon ||
+                        (bPromoteToMulti && wkbFlatten(poDstGeometry->getGeometryType()) == wkbPolygon) )
                 {
                     poDstFeature->SetGeometryDirectly(
                         OGRGeometryFactory::forceToMultiPolygon(
                             poDstFeature->StealGeometry() ) );
                 }
-                else if ( bForceToMultiLineString )
+                else if ( bForceToMultiLineString ||
+                        (bPromoteToMulti && wkbFlatten(poDstGeometry->getGeometryType()) == wkbLineString) )
                 {
                     poDstFeature->SetGeometryDirectly(
                         OGRGeometryFactory::forceToMultiLineString(
