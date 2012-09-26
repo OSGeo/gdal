@@ -544,7 +544,7 @@ builds a shapefile as a raster tileindex
 \section gdaltindex_synopsis SYNOPSIS
 
 \verbatim
-gdaltindex [-tileindex field_name] [-write_absolute_path] [-skip_different_projection] index_file [gdal_file]*
+gdaltindex [-tileindex field_name] [-write_absolute_path] [-skip_different_projection] [-t_srs target_srs] index_file [gdal_file]*
 \endverbatim
 
 \section gdaltindex_description DESCRIPTION
@@ -561,7 +561,9 @@ otherwise it will append to the existing file.
 <li> Raster filenames will be put in the file exactly as they are specified
 on the commandline unless the option -write_absolute_path is used.
 <li> If -skip_different_projection is specified, only files with same projection ref
-as files already inserted in the tileindex will be inserted.
+as files already inserted in the tileindex will be inserted (unless t_srs is specified).
+<li> If -t_srs is specified, geometries of input files will be transformed to the desired
+target projection system. Note that using this option generates files that are NOT compatible with MapServer.
 <li> Simple rectangular polygons are generated in the same
 coordinate system as the rasters.
 </ul>
