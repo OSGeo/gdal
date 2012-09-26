@@ -459,13 +459,13 @@ int main(int argc, char *argv[])
                 {
                     fprintf( stderr, 
                              "Warning : unable to transform points from source SRS `%s' to target SRS `%s'\n"
-			     "for file `%s' - file skipped\n", 
+                             "for file `%s' - file skipped\n", 
                              projectionRef, pszTargetSRS, fileNameToWrite );
-		    if ( hCT ) 
-		      OCTDestroyCoordinateTransformation( hCT );
-		    if ( hSourceSRS )
-		      OSRDestroySpatialReference( hSourceSRS );
-		    continue;
+                    if ( hCT ) 
+                        OCTDestroyCoordinateTransformation( hCT );
+                    if ( hSourceSRS )
+                        OSRDestroySpatialReference( hSourceSRS );
+                    continue;
                 }
                 if ( hCT ) 
                     OCTDestroyCoordinateTransformation( hCT );
