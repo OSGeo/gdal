@@ -340,6 +340,7 @@ int OGRGMLDataSource::Open( const char * pszNameIn, int bTestOpen )
         if (pszEncoding)
             bExpatCompatibleEncoding = (pszEncoding[9] == '\'' || pszEncoding[9] == '"') &&
                                        (EQUALN(pszEncoding + 10, "UTF-8", 5) ||
+                                        EQUALN(pszEncoding + 10, "ISO-8859-15", 11) ||
                                         (EQUALN(pszEncoding + 10, "ISO-8859-1", 10) &&
                                          pszEncoding[20] == pszEncoding[9])) ;
         else
