@@ -130,7 +130,7 @@
 %constant CPLE_NoWriteAccess              = CPLE_NoWriteAccess;
 %constant CPLE_UserInterrupt              = CPLE_UserInterrupt;
 
-#ifndef SWIGCSHARP
+#if !defined(SWIGCSHARP) && !defined(SWIGJAVA)
 
 %constant char *DMD_LONGNAME           = GDAL_DMD_LONGNAME;
 %constant char *DMD_HELPTOPIC          = GDAL_DMD_HELPTOPIC;
