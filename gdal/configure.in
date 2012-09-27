@@ -3383,12 +3383,17 @@ dnl ---------------------------------------------------------------------------
 
 if test "$prefix" = "NONE" ; then 
   GDAL_PREFIX=/usr/local
+  INST_LIB=/usr/local/lib
 else
   GDAL_PREFIX=${prefix}
+  INST_LIB=${libdir}
 fi
 
 export GDAL_PREFIX
 AC_DEFINE_UNQUOTED(GDAL_PREFIX,["]$GDAL_PREFIX["], [--prefix directory for GDAL install])
+
+export INST_LIB
+AC_DEFINE_UNQUOTED(INST_LIB,["]$INST_LIB["], [libdir directory for GDAL install])
 
 dnl ---------------------------------------------------------------------------
 dnl Perl bindings.
