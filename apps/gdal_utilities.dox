@@ -563,9 +563,10 @@ on the commandline unless the option -write_absolute_path is used.
 <li> If -skip_different_projection is specified, only files with same projection ref
 as files already inserted in the tileindex will be inserted (unless t_srs is specified).
 <li> If -t_srs is specified, geometries of input files will be transformed to the desired
-target projection system. Note that using this option generates files that are NOT compatible with MapServer.
-<li> Simple rectangular polygons are generated in the same
-coordinate system as the rasters.
+target coordinate reference system. 
+Note that using this option generates files that are NOT compatible with MapServer.
+<li> Simple rectangular polygons are generated in the same coordinate reference system
+as the rasters, or in target reference system if the -t_srs option is used.
 </ul>
 
 \section gdaltindex_example EXAMPLE
