@@ -9,6 +9,9 @@
 /* --prefix directory for GDAL install */
 #undef GDAL_PREFIX
 
+/* libdir directory for GDAL install */
+#undef INST_LIB
+
 /* Define to 1 if you have the <assert.h> header file. */
 #undef HAVE_ASSERT_H
 
