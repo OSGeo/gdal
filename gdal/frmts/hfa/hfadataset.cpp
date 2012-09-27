@@ -1377,6 +1377,12 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
         for( i = 0; i < nOverviews && papoOvBands[iOverview] == NULL; i++ )
         {
             int nThisOvLevel;
+            
+            if( papoOverviewBands[i] == NULL )
+            {
+                CPLDebug("HFA", "Shouldn't happen happened at line %d", __LINE__);
+                continue;
+            }
 
             nThisOvLevel = (int) (0.5 + GetXSize() 
                     / (double) papoOverviewBands[i]->GetXSize());
@@ -1395,7 +1401,14 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
                                          pszResampling );
             if( iResult < 0 )
                 return CE_Failure;
-            
+
+            if( papoOverviewBands == NULL && nOverviews == 0 && iResult > 0)
+            {
+                CPLDebug("HFA", "Shouldn't happen happened at line %d", __LINE__);
+                papoOverviewBands = (HFARasterBand **) 
+                    CPLCalloc( sizeof(void*), iResult );
+            }
+
             nOverviews = iResult + 1;
             papoOverviewBands = (HFARasterBand **) 
                 CPLRealloc( papoOverviewBands, sizeof(void*) * nOverviews);
