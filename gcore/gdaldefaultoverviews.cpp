@@ -616,7 +616,15 @@ GDALDefaultOverviews::BuildOverviews(
 
     if( bOvrIsAux )
     {
-        eErr = HFAAuxBuildOverviews( osOvrFilename, poDS, &poODS,
+        if( nNewOverviews == 0 )
+        {
+            /* if we call HFAAuxBuildOverviews() with nNewOverviews == 0 */
+            /* because that there's no new, this will wipe existing */
+            /* overviews (#4831) */
+            eErr = CE_None;
+        }
+        else
+            eErr = HFAAuxBuildOverviews( osOvrFilename, poDS, &poODS,
                                      nBands, panBandList,
                                      nNewOverviews, panNewOverviewList, 
                                      pszResampling, 
