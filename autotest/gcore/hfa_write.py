@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -256,6 +257,87 @@ def hfa_use_rrd():
 
     return 'success'
 
+
+###############################################################################
+# Test fix for #4831
+
+def hfa_update_existing_aux_overviews():
+
+    gdal.SetConfigOption('USE_RRD', 'YES')
+
+    ds = gdal.GetDriverByName('BMP').Create('tmp/hfa_update_existing_aux_overviews.bmp', 100, 100, 1)
+    ds.GetRasterBand(1).Fill(255)
+    ds = None
+
+    # Create overviews
+    ds = gdal.Open('tmp/hfa_update_existing_aux_overviews.bmp')
+    ds.BuildOverviews( 'NEAR', overviewlist = [2, 4])
+    ds = None
+
+    # Save overviews checksum
+    ds = gdal.Open('tmp/hfa_update_existing_aux_overviews.bmp')
+    cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
+
+    # and regenerate them
+    ds.BuildOverviews( 'NEAR', overviewlist = [2, 4])
+    ds = None
+
+    ds = gdal.Open('tmp/hfa_update_existing_aux_overviews.bmp')
+    # Check overviews checksum
+    new_cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    new_cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    if cs_ovr0 != new_cs_ovr0:
+        gdaltest.post_reason('fail')
+        gdal.SetConfigOption('USE_RRD', None)
+        return 'fail'
+    if cs_ovr1 != new_cs_ovr1:
+        gdaltest.post_reason('fail')
+        gdal.SetConfigOption('USE_RRD', None)
+        return 'fail'
+
+    # and regenerate them twice in a row
+    ds.BuildOverviews( 'NEAR', overviewlist = [2, 4])
+    ds.BuildOverviews( 'NEAR', overviewlist = [2, 4])
+    ds = None
+
+    ds = gdal.Open('tmp/hfa_update_existing_aux_overviews.bmp')
+    # Check overviews checksum
+    new_cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    new_cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    if cs_ovr0 != new_cs_ovr0:
+        gdaltest.post_reason('fail')
+        gdal.SetConfigOption('USE_RRD', None)
+        return 'fail'
+    if cs_ovr1 != new_cs_ovr1:
+        gdaltest.post_reason('fail')
+        gdal.SetConfigOption('USE_RRD', None)
+        return 'fail'
+
+    # and regenerate them with an extra overview level
+    ds.BuildOverviews( 'NEAR', overviewlist = [8])
+    ds = None
+
+    ds = gdal.Open('tmp/hfa_update_existing_aux_overviews.bmp')
+    # Check overviews checksum
+    new_cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    new_cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    if cs_ovr0 != new_cs_ovr0:
+        gdaltest.post_reason('fail')
+        gdal.SetConfigOption('USE_RRD', None)
+        return 'fail'
+    if cs_ovr1 != new_cs_ovr1:
+        gdaltest.post_reason('fail')
+        gdal.SetConfigOption('USE_RRD', None)
+        return 'fail'
+    ds = None
+    
+    gdal.GetDriverByName('BMP').Delete('tmp/hfa_update_existing_aux_overviews.bmp')
+    
+    gdal.SetConfigOption('USE_RRD', None)
+
+    return 'success'
+
 ###############################################################################
 # Get the driver, and verify a few things about it. 
 
@@ -278,7 +360,8 @@ gdaltest_list = [ hfa_write_desc,
                   hfa_update_overviews,
                   hfa_clean_external_overviews,
                   hfa_bug_2525,
-                  hfa_use_rrd ]
+                  hfa_use_rrd,
+                  hfa_update_existing_aux_overviews ]
 
 # full set of tests for normal mode.
 
