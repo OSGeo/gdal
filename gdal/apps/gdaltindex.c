@@ -60,9 +60,10 @@ static void Usage()
             "  o If -skip_different_projection is specified, only files with same projection ref\n"
             "    as files already inserted in the tileindex will be inserted (unless t_srs is specified).\n"
             "  o If -t_srs is specified, geometries of input files will be transformed to the desired\n"
-            "    target projection system.\n"
-            "  o Simple rectangular polygons are generated in the same\n"
-            "    coordinate system as the rasters.\n" );
+            "    target coordinate reference system.\n"
+            "    Note that using this option generates files that are NOT compatible with MapServer.\n"
+            "  o Simple rectangular polygons are generated in the same coordinate reference system\n"
+            "    as the rasters, or in target reference system if the -t_srs option is used.\n");
     exit(1);
 }
 
