@@ -594,12 +594,22 @@ void GDALDriverManager::AutoSkipDrivers()
  * the remainder of the shared library basename ('X' is case sensitive), or
  * failing that to call GDALRegisterMe().
  *
- * There are a few rules for the driver path.  If the GDAL_DRIVER_PATH
- * environment variable it set, it is taken to be a list of directories to
- * search separated by colons on UNIX, or semi-colons on Windows.  Otherwise
- * the /usr/local/lib/gdalplugins directory, and (if known) the
- * lib/gdalplugins subdirectory of the gdal home directory are searched on
- * UNIX and $(BINDIR)\gdalplugins on Windows.
+ * There are a few rules for the driver path.  If the GDAL_DRIVER_PATH 
+ * environment variable it set, it is taken to be a list of directories to 
+ * search separated by colons on unix, or semi-colons on Windows.  
+ *
+ * If that is not set the following defaults are used:
+ *
+ * <ul>
+ * <li> Linux/Unix: &lt;libdir&gt;/gdalplugins is searched or
+ * /usr/local/lib/gdalplugins if the install prefix is not known.
+ * <li> MacOSX: &lt;prefix&gt;/PlugIns is searched, or /usr/local/lib/gdalplugins if
+ * the install prefix is not known.  Also, the framework directory
+ * /Library/Application Support/GDAL/PlugIns is searched.
+ * <li> Win32: &lt;libdir&gt;/gdalplugins if the prefix is known (normally it
+ * is not), otherwise the gdalplugins subdirectory of the directory containing
+ * the currently running executable is used. 
+ * </ul>
  */
 
 void GDALDriverManager::AutoLoadDrivers()
@@ -628,7 +638,11 @@ void GDALDriverManager::AutoLoadDrivers()
         papszSearchPath = CSLAddString( papszSearchPath, 
     #ifdef MACOSX_FRAMEWORK
                                         GDAL_PREFIX "/PlugIns");
+    #elif defined(INST_LIB)
+                                        INST_LIB "/gdalplugins" );
     #else
+        /* Just in case, but shouldn't happen, because if */
+        /* GDAL_PREFIX is defined, INST_LIB too */
                                         GDAL_PREFIX "/lib/gdalplugins" );
     #endif
 #else

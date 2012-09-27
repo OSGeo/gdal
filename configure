@@ -27355,14 +27355,23 @@ mandir='${prefix}/man'
 
 if test "$prefix" = "NONE" ; then
   GDAL_PREFIX=/usr/local
+  INST_LIB=/usr/local/lib
 else
   GDAL_PREFIX=${prefix}
+  INST_LIB=${libdir}
 fi
 
 export GDAL_PREFIX
 
 cat >>confdefs.h <<_ACEOF
 #define GDAL_PREFIX "$GDAL_PREFIX"
+_ACEOF
+
+
+export INST_LIB
+
+cat >>confdefs.h <<_ACEOF
+#define INST_LIB "$INST_LIB"
 _ACEOF
 
 
