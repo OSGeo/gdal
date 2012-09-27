@@ -197,6 +197,8 @@ ifeq ($(MACOSX_FRAMEWORK),yes)
 	rm -f $(DESTDIR)$(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).dylib
 	rm -f $(DESTDIR)$(INST_LIB)/libgdal.dylib
 	rm -f $(DESTDIR)$(INST_LIB)/libgdal.la
+else
+	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)/gdalplugins
 endif
 
 else
@@ -219,6 +221,7 @@ else
 	 ln -s $(GDAL_SLIB_B).$(GDAL_VER) $(GDAL_SLIB_B).$(GDAL_VERSION_MAJOR))
 	(cd $(DESTDIR)$(INST_LIB) ; \
 	 ln -s $(GDAL_SLIB_B).$(GDAL_VERSION_MAJOR) $(GDAL_SLIB_B))
+	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)/gdalplugins
 endif
 
 else
