@@ -765,12 +765,12 @@ OGRSFDriverH OGRGetDriverByName( const char *pszName )
  * If that is not set the following defaults are used:
  *
  * <ul>
- * <li> Linux/Unix: &lt;libdir&gt;/gdalplugins is searched or
+ * <li> Linux/Unix: &lt;prefix&gt;/lib/gdalplugins is searched or
  * /usr/local/lib/gdalplugins if the install prefix is not known.
  * <li> MacOSX: &lt;prefix&gt;/PlugIns is searched, or /usr/local/lib/gdalplugins if
  * the install prefix is not known.  Also, the framework directory
  * /Library/Application Support/GDAL/PlugIns is searched.
- * <li> Win32: &lt;libdir&gt;/gdalplugins if the prefix is known (normally it
+ * <li> Win32: &lt;prefix&gt;/lib/gdalplugins if the prefix is known (normally it
  * is not), otherwise the gdalplugins subdirectory of the directory containing
  * the currently running executable is used. 
  * </ul>
@@ -806,11 +806,7 @@ void OGRSFDriverRegistrar::AutoLoadDrivers()
         papszSearchPath = CSLAddString( papszSearchPath,
     #ifdef MACOSX_FRAMEWORK
                                         GDAL_PREFIX "/PlugIns");
-    #elif defined(INST_LIB)
-                                        INST_LIB "/gdalplugins" );
     #else
-        /* Just in case, but shouldn't happen, because if */
-        /* GDAL_PREFIX is defined, INST_LIB too */
                                         GDAL_PREFIX "/lib/gdalplugins" );
     #endif
 #else
