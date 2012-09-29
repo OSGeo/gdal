@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -282,6 +283,40 @@ def vrt_read_6():
 
     return 'success'
 
+###############################################################################
+# Test GDALOpen() anti-recursion mechanism
+
+def vrt_read_7():
+
+    filename = "/vsimem/vrt_read_7.vrt"
+
+    content = """<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">%s</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""" % filename
+
+    gdal.FileFromMemBuffer(filename, content)
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.Open(filename)
+    gdal.PopErrorHandler()
+    error_msg = gdal.GetLastErrorMsg()
+    gdal.Unlink(filename)
+
+    if ds is not None:
+        return 'fail'
+
+    if error_msg != 'GDALOpen() called with too many recursion levels':
+        return 'fail'
+
+    return 'success'
+
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
     if ut is None:
@@ -295,6 +330,7 @@ gdaltest_list.append( vrt_read_3 )
 gdaltest_list.append( vrt_read_4 )
 gdaltest_list.append( vrt_read_5 )
 gdaltest_list.append( vrt_read_6 )
+gdaltest_list.append( vrt_read_7 )
 
 if __name__ == '__main__':
 
