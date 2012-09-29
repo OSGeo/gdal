@@ -280,6 +280,7 @@ class OGRDXFWriterLayer : public OGRLayer
 
     std::map<CPLString,CPLString> oNewLineTypes;
     int                 nNextAutoID;
+    int                 bWriteHatch;
 
   public:
     OGRDXFWriterLayer( OGRDXFWriterDS *poDS, VSILFILE *fp );
