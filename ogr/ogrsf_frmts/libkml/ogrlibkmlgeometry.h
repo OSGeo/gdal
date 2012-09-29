@@ -26,6 +26,14 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include <kml/dom.h>
+
+using kmldom::ElementPtr;
+using kmldom::KmlFactory;
+using kmldom::GeometryPtr;
+using kmldom::LatLonBoxPtr;
+using kmldom::GxLatLonQuadPtr;
+
 /*******************************************************************************
 	funtion to write out a ogr geometry to kml
 	
@@ -61,4 +69,12 @@ Returns:
 
 OGRGeometry *kml2geom (
     GeometryPtr poKmlGeometry,
+    OGRSpatialReference *poOgrSRS);
+
+OGRGeometry *kml2geom_latlonbox (
+    LatLonBoxPtr poKmlLatLonBox,
+    OGRSpatialReference *poOgrSRS);
+
+OGRGeometry *kml2geom_latlonquad (
+    GxLatLonQuadPtr poKmlLatLonQuad,
     OGRSpatialReference *poOgrSRS);

@@ -17,6 +17,8 @@
     <a href="http://www.opengeospatial.org/standards/kml/">KML</a>
     reading and writing, in the form of a cross platform C++ library.
     You must build and install Libkml in order to use this OGR driver.
+    Note: you need to build libkml from its latest SVN version (libkml 1.2 isn't
+    enough).
   </p>
     
   <p>
@@ -103,7 +105,15 @@
     An OGR <a href="http://www.gdal.org/ogr/ogr_arch.html#ogr_arch_feature">feature</a>
     translates to kml as a
     <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#placemark">
-    &lt;Placemark&gt;</a>.
+    &lt;Placemark&gt;</a>, and vice-versa.
+  </p>
+
+  <p>
+    Starting with OGR 2.0, KML 
+    <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#groundoverlay">
+    &lt;GroundOverlay&gt;</a> elements are supported for reading (unless the 
+    LIBKML_READ_GROUND_OVERLAY configuration option is set to FALSE). For such elements, there
+    are icon and drawOrder fields.
   </p>
   
   <h3>Style</h3>
@@ -217,8 +227,20 @@
       &lt;visibility&gt;</a>. The name of the ogr field can be changed with the
       enviroment variable LIBKML_VISIBILITY_FIELD .
     </dd>
+    <dt>icon</dt>
+    <dd>This string field maps to the kml tag 
+      <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#icon">
+      &lt;icon&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_ICON_FIELD .
+    </dd>
+    <dt>drawOrder</dt>
+    <dd>This integer field maps to the kml tag 
+      <a href="http://code.google.com/apis/kml/documentation/kmlreference.html#draworder">
+      &lt;drawOrder&gt;</a>. The name of the ogr field can be changed with the
+      enviroment variable LIBKML_DRAWORDER_FIELD .
+    </dd>
     <dt>OGR_STYLE</dt>
-    <dd>This string feild maps to a features style string, OGR reads this field
+    <dd>This string field maps to a features style string, OGR reads this field
       if there is no style string set on the feature.
     </dd>
   </dl>

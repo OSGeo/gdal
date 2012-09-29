@@ -29,6 +29,7 @@
 using kmldom::SimpleFieldPtr;
 using kmldom::SchemaPtr;
 using kmldom::KmlFactory;
+using kmldom::FeaturePtr;
 using kmldom::PlacemarkPtr;
 
 /******************************************************************************
@@ -65,7 +66,7 @@ void field2kml (
 
 void kml2field (
     OGRFeature * poOgrFeat,
-    PlacemarkPtr poKmlPlacemark );
+    FeaturePtr poKmlFeature );
 
 /******************************************************************************
  function create a simplefield from a FieldDefn
