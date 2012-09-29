@@ -49,6 +49,9 @@ using kmldom::PolygonPtr;
 using kmldom::MultiGeometryPtr;
 using kmldom::GeometryPtr;
 
+using kmldom::FeaturePtr;
+using kmldom::GroundOverlayPtr;
+using kmldom::IconPtr;
 
 #include "ogr_libkml.h"
 
@@ -966,7 +969,7 @@ int kml2tessellate_rec (
 
 void kml2field (
     OGRFeature * poOgrFeat,
-    PlacemarkPtr poKmlPlacemark )
+    FeaturePtr poKmlFeature )
 {
 
     const char *namefield = CPLGetConfigOption ( "LIBKML_NAME_FIELD", "Name" );
@@ -985,11 +988,15 @@ void kml2field (
         CPLGetConfigOption ( "LIBKML_EXTRUDE_FIELD", "extrude" );
     const char *visibilityfield =
         CPLGetConfigOption ( "LIBKML_VISIBILITY_FIELD", "visibility" );
+    const char *drawOrderfield =
+        CPLGetConfigOption ( "LIBKML_DRAWORDER_FIELD", "drawOrder" );
+    const char *iconfield =
+        CPLGetConfigOption ( "LIBKML_ICON_FIELD", "icon" );
 
     /***** name *****/
 
-    if ( poKmlPlacemark->has_name (  ) ) {
-        const std::string oKmlName = poKmlPlacemark->get_name (  );
+    if ( poKmlFeature->has_name (  ) ) {
+        const std::string oKmlName = poKmlFeature->get_name (  );
         int iField = poOgrFeat->GetFieldIndex ( namefield );
 
         if ( iField > -1 )
@@ -998,17 +1005,17 @@ void kml2field (
 
     /***** description *****/
 
-    if ( poKmlPlacemark->has_description (  ) ) {
-        const std::string oKmlDesc = poKmlPlacemark->get_description (  );
+    if ( poKmlFeature->has_description (  ) ) {
+        const std::string oKmlDesc = poKmlFeature->get_description (  );
         int iField = poOgrFeat->GetFieldIndex ( descfield );
 
         if ( iField > -1 )
             poOgrFeat->SetField ( iField, oKmlDesc.c_str (  ) );
     }
 
-    if ( poKmlPlacemark->has_timeprimitive (  ) ) {
+    if ( poKmlFeature->has_timeprimitive (  ) ) {
         TimePrimitivePtr poKmlTimePrimitive =
-            poKmlPlacemark->get_timeprimitive (  );
+            poKmlFeature->get_timeprimitive (  );
 
         /***** timestamp *****/
 
@@ -1100,7 +1107,10 @@ void kml2field (
     }
 
 
-    if ( poKmlPlacemark->has_geometry (  ) ) {
+    /***** placemark *****/
+    PlacemarkPtr poKmlPlacemark = AsPlacemark ( poKmlFeature );
+    GroundOverlayPtr poKmlGroundOverlay = AsGroundOverlay ( poKmlFeature );
+    if ( poKmlPlacemark && poKmlPlacemark->has_geometry (  ) ) {
         GeometryPtr poKmlGeometry = poKmlPlacemark->get_geometry (  );
 
         /***** altitudeMode *****/
@@ -1172,12 +1182,76 @@ void kml2field (
 
     }
 
+    /***** ground overlay *****/
+
+    else if ( poKmlGroundOverlay ) {
+
+        /***** icon *****/
+
+        int iField = poOgrFeat->GetFieldIndex ( iconfield );
+        if ( iField > -1 ) {
+
+            if ( poKmlGroundOverlay->has_icon (  ) ) {
+                IconPtr icon = poKmlGroundOverlay->get_icon (  );
+                if ( icon->has_href (  ) ) {
+                    poOgrFeat->SetField ( iField, icon->get_href (  ).c_str (  ) );
+                }
+            }
+        }
+
+        /***** drawOrder *****/
+
+
+        iField = poOgrFeat->GetFieldIndex ( drawOrderfield );
+        if ( iField > -1 ) {
+
+            if ( poKmlGroundOverlay->has_draworder (  ) ) {
+                poOgrFeat->SetField ( iField, poKmlGroundOverlay->get_draworder (  ) );
+            }
+        }
+
+        /***** altitudeMode *****/
+
+        iField = poOgrFeat->GetFieldIndex ( altitudeModefield );
+
+        if ( iField > -1 ) {
+
+            if ( poKmlGroundOverlay->has_altitudemode (  ) ) {
+                switch ( poKmlGroundOverlay->get_altitudemode (  ) ) {
+                case kmldom::ALTITUDEMODE_CLAMPTOGROUND:
+                    poOgrFeat->SetField ( iField, "clampToGround" );
+                    break;
+
+                case kmldom::ALTITUDEMODE_RELATIVETOGROUND:
+                    poOgrFeat->SetField ( iField, "relativeToGround" );
+                    break;
+
+                case kmldom::ALTITUDEMODE_ABSOLUTE:
+                    poOgrFeat->SetField ( iField, "absolute" );
+                    break;
+
+                }
+            } else if ( poKmlGroundOverlay->has_gx_altitudemode (  ) ) {
+                switch ( poKmlGroundOverlay->get_gx_altitudemode ( ) ) {
+                case kmldom::GX_ALTITUDEMODE_RELATIVETOSEAFLOOR:
+                    poOgrFeat->SetField ( iField, "relativeToSeaFloor" );
+                    break;
+
+                case kmldom::GX_ALTITUDEMODE_CLAMPTOSEAFLOOR:
+                    poOgrFeat->SetField ( iField, "clampToSeaFloor" );
+                    break;
+                }
+            }
+
+        }
+    }
+
     /***** visibility *****/
 
     int nVisibility = -1;
 
-    if ( poKmlPlacemark->has_visibility (  ) )
-        nVisibility = poKmlPlacemark->get_visibility (  );
+    if ( poKmlFeature->has_visibility (  ) )
+        nVisibility = poKmlFeature->get_visibility (  );
 
     int iField = poOgrFeat->GetFieldIndex ( visibilityfield );
 
@@ -1186,8 +1260,8 @@ void kml2field (
 
     ExtendedDataPtr poKmlExtendedData = NULL;
 
-    if ( poKmlPlacemark->has_extendeddata (  ) ) {
-        poKmlExtendedData = poKmlPlacemark->get_extendeddata (  );
+    if ( poKmlFeature->has_extendeddata (  ) ) {
+        poKmlExtendedData = poKmlFeature->get_extendeddata (  );
 
         /***** loop over the schemadata_arrays *****/
 
