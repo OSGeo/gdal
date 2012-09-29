@@ -353,14 +353,31 @@ int  GenerateChildKml(std::string filename,
     VSIFPrintfL(fp, "\t\t\t<Icon>\n");
     VSIFPrintfL(fp, "\t\t\t\t<href>%d%s</href>\n", iy, fileExt.c_str());
     VSIFPrintfL(fp, "\t\t\t</Icon>\n");
-    VSIFPrintfL(fp, "\t\t\t<gx:LatLonQuad>\n");
-    VSIFPrintfL(fp, "\t\t\t\t<coordinates>\n");
-    VSIFPrintfL(fp, "\t\t\t\t\t%f,%f,0\n", lowerleftT, leftbottomT);
-    VSIFPrintfL(fp, "\t\t\t\t\t%f,%f,0\n", lowerrightT, rightbottomT);
-    VSIFPrintfL(fp, "\t\t\t\t\t%f,%f,0\n", upperrightT, righttopT);
-    VSIFPrintfL(fp, "\t\t\t\t\t%f,%f,0\n", upperleftT, lefttopT);
-    VSIFPrintfL(fp, "\t\t\t\t</coordinates>\n");
-    VSIFPrintfL(fp, "\t\t\t</gx:LatLonQuad>\n");
+
+    /* When possible, use <LatLonBox>. I've noticed otherwise that */
+    /* if using <gx:LatLonQuad> with extents of the size of a country or */
+    /* continent, the overlay is really bad placed in GoogleEarth */
+    if( lowerleftT == upperleftT && lowerrightT == upperrightT &&
+        leftbottomT == rightbottomT && righttopT == lefttopT )
+    {
+        VSIFPrintfL(fp, "\t\t\t<LatLonBox>\n");
+        VSIFPrintfL(fp, "\t\t\t\t<north>%f</north>\n", tnorth);
+        VSIFPrintfL(fp, "\t\t\t\t<south>%f</south>\n", tsouth);
+        VSIFPrintfL(fp, "\t\t\t\t<east>%f</east>\n", teast);
+        VSIFPrintfL(fp, "\t\t\t\t<west>%f</west>\n", twest);
+        VSIFPrintfL(fp, "\t\t\t</LatLonBox>\n");
+    }
+    else
+    {
+        VSIFPrintfL(fp, "\t\t\t<gx:LatLonQuad>\n");
+        VSIFPrintfL(fp, "\t\t\t\t<coordinates>\n");
+        VSIFPrintfL(fp, "\t\t\t\t\t%f,%f,0\n", lowerleftT, leftbottomT);
+        VSIFPrintfL(fp, "\t\t\t\t\t%f,%f,0\n", lowerrightT, rightbottomT);
+        VSIFPrintfL(fp, "\t\t\t\t\t%f,%f,0\n", upperrightT, righttopT);
+        VSIFPrintfL(fp, "\t\t\t\t\t%f,%f,0\n", upperleftT, lefttopT);
+        VSIFPrintfL(fp, "\t\t\t\t</coordinates>\n");
+        VSIFPrintfL(fp, "\t\t\t</gx:LatLonQuad>\n");
+    }
     VSIFPrintfL(fp, "\t\t</GroundOverlay>\n");
 
     for (unsigned int i = 0; i < xchildren.size(); i++)
