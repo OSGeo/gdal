@@ -88,11 +88,19 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    }
 	} else {
 	    int i;
+	    int d = OGR_G_GetCoordinateDimension(self);
 	    for (i = 0; i < OGR_G_GetPointCount(self); i++) {
-		double x = OGR_G_GetX(self, i);
-		double y = OGR_G_GetY(self, i);
-		double z = OGR_G_GetZ(self, i);
-		OGR_G_SetPoint(self, i, x+dx, y+dy, z+dz);
+                if (d == 0) {
+                } else {
+                    double x = OGR_G_GetX(self, i);
+                    double y = OGR_G_GetY(self, i);
+                    if (d == 2) {
+                        OGR_G_SetPoint_2D(self, i, x+dx, y+dy);
+                    } else {
+                        double z = OGR_G_GetZ(self, i);
+                        OGR_G_SetPoint(self, i, x+dx, y+dy, z+dz);
+                    }
+                }
 	    }
 	}
     }
