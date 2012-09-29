@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -1119,6 +1120,46 @@ def ogr_dxf_22():
 
     return 'success'
 
+
+###############################################################################
+# POLYGON with hole
+
+def ogr_dxf_23():
+
+    # Write polygon
+    out_ds = ogr.GetDriverByName('DXF').CreateDataSource('/vsimem/ogr_dxf_23.dxf')
+    out_lyr = out_ds.CreateLayer( 'entities' )
+    out_feat = ogr.Feature(out_lyr.GetLayerDefn())
+    out_feat.SetStyleString('BRUSH(fc:#ff0000)')
+    wkt = 'POLYGON ((0 0,0 10,10 10,10 0,0 0),(1 1,1 9,9 9,9 1,1 1))'
+    out_feat.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
+    out_lyr.CreateFeature(out_feat)
+    out_feat = None
+    out_lyr = None
+    out_ds = None
+
+    ds = None
+
+    # Check written file
+    ds = ogr.Open('/vsimem/ogr_dxf_23.dxf')
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    style = feat.GetStyleString()
+    if style != 'BRUSH(fc:#ff0000)':
+        gdaltest.post_reason('bad style')
+        print(style)
+        return 'fail'
+    if ogrtest.check_feature_geometry( feat, wkt ):
+        gdaltest.post_reason('bad geometry')
+        return 'fail'
+
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_dxf_23.dxf')
+
+    return 'success'
+
 ###############################################################################
 # cleanup
 
@@ -1155,6 +1196,7 @@ gdaltest_list = [
     ogr_dxf_20,
     ogr_dxf_21,
     ogr_dxf_22,
+    ogr_dxf_23,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
