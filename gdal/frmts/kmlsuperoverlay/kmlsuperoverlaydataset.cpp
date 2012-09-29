@@ -298,6 +298,12 @@ int  GenerateChildKml(std::string filename,
     std::vector<int> xchildren;
     std::vector<int> ychildern;
 
+    int minLodPixels = 128;
+    if (zoom == 0)
+    {
+        minLodPixels = 1;
+    }
+
     int maxLodPix = -1;
     if ( zoom < maxzoom )
     {
@@ -338,7 +344,7 @@ int  GenerateChildKml(std::string filename,
     VSIFPrintfL(fp, "\t\t</Style>\n");
     VSIFPrintfL(fp, "\t\t<Region>\n");
     VSIFPrintfL(fp, "\t\t\t<Lod>\n");
-    VSIFPrintfL(fp, "\t\t\t\t<minLodPixels>%d</minLodPixels>\n", 128);
+    VSIFPrintfL(fp, "\t\t\t\t<minLodPixels>%d</minLodPixels>\n", minLodPixels);
     VSIFPrintfL(fp, "\t\t\t\t<maxLodPixels>%d</maxLodPixels>\n", maxLodPix);
     VSIFPrintfL(fp, "\t\t\t</Lod>\n");
     VSIFPrintfL(fp, "\t\t\t<LatLonAltBox>\n");
