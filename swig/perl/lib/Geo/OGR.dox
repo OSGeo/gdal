@@ -949,8 +949,8 @@
 
 ## @cmethod Geo::OGR::Geometry create(%params)
 # @param %params A named parameter, possible are: GeometryType, WKT,
-# WKB, HEXWKB, GML, GeoJSON, arc, and Points (as in method
-# Geo::OGR::Geometry::Points).
+# WKB, HEXWKB, HEXEWKB (PostGIS extended WKB), GML, GeoJSON, arc, and
+# Points (as in method Geo::OGR::Geometry::Points).
 # - \a arc An anonymous list of [CenterX, CenterY, CenterZ,
 #    PrimaryRadius, SecondaryRadius, Rotation, StartAngle, EndAngle,
 #    MaxAngleStepSizeDegrees]
