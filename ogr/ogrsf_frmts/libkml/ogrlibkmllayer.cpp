@@ -39,6 +39,7 @@ using kmldom::Placemark;
 using kmldom::DocumentPtr;
 using kmldom::ContainerPtr;
 using kmldom::FeaturePtr;
+using kmldom::GroundOverlayPtr;
 using kmldom::KmlPtr;
 using kmldom::Kml;
 using kmlengine::KmzFile;
@@ -106,6 +107,8 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
 
     /***** was the layer created from a DS::Open *****/
 
+    m_bReadGroundOverlay = CSLTestBoolean(CPLGetConfigOption("LIBKML_READ_GROUND_OVERLAY", "YES"));
+
     if ( !bNew ) {
 
         /***** get the number of features on the layer *****/
@@ -132,6 +135,10 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
             CPLGetConfigOption ( "LIBKML_EXTRUDE_FIELD", "extrude" );
         const char *visibilityfield =
             CPLGetConfigOption ( "LIBKML_VISIBILITY_FIELD", "visibility" );
+        const char *drawOrderfield =
+            CPLGetConfigOption ( "LIBKML_DRAWORDER_FIELD", "drawOrder" );
+        const char *iconfield =
+            CPLGetConfigOption ( "LIBKML_ICON_FIELD", "icon" );
 
         OGRFieldDefn oOgrFieldName (
     namefield,
@@ -186,6 +193,18 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
     OFTInteger );
 
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldVisibility );
+
+        OGRFieldDefn oOgrFieldDrawOrder (
+    drawOrderfield,
+    OFTInteger );
+
+        m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldDrawOrder );
+
+        OGRFieldDefn oOgrFieldIcon (
+    iconfield,
+    OFTString );
+
+        m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldIcon );
 
         /***** get the styles *****/
 
@@ -382,15 +401,26 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
 
         poKmlFeature = m_poKmlLayer->get_feature_array_at ( iFeature++ );
 
-    } while ( poKmlFeature->Type (  ) != kmldom::Type_Placemark );
+    } while ( poKmlFeature->Type (  ) != kmldom::Type_Placemark &&
+              !(m_bReadGroundOverlay && poKmlFeature->Type (  ) == kmldom::Type_GroundOverlay) );
 
 
-    if ( iFeature <= nFeatures && poKmlFeature
-         && poKmlFeature->Type (  ) == kmldom::Type_Placemark ) {
-        poOgrFeature =
-            kml2feat ( AsPlacemark ( poKmlFeature ), m_poOgrDS, this,
-                       m_poOgrFeatureDefn, m_poOgrSRS );
-        poOgrFeature->SetFID(nFID ++);
+    if ( iFeature <= nFeatures && poKmlFeature )
+    {
+        if (poKmlFeature->Type (  ) == kmldom::Type_Placemark )
+        {
+            poOgrFeature =
+                kml2feat ( AsPlacemark ( poKmlFeature ), m_poOgrDS, this,
+                        m_poOgrFeatureDefn, m_poOgrSRS );
+            poOgrFeature->SetFID(nFID ++);
+        }
+        else if ( m_bReadGroundOverlay && poKmlFeature->Type (  ) == kmldom::Type_GroundOverlay )
+        {
+            poOgrFeature =
+                kmlgroundoverlay2feat ( AsGroundOverlay ( poKmlFeature ), m_poOgrDS, this,
+                        m_poOgrFeatureDefn, m_poOgrSRS );
+            poOgrFeature->SetFID(nFID ++);
+        }
     }
 
     return poOgrFeature;
@@ -450,14 +480,14 @@ int OGRLIBKMLLayer::GetFeatureCount (
 
     else {
         size_t iKmlFeature; 
-     	size_t nKmlFeatures = m_poKmlLayer->get_feature_array_size (  ); 
-     	 
-     	for ( iKmlFeature = 0; iKmlFeature < nKmlFeatures; iKmlFeature++ ) { 
- 	        if ( m_poKmlLayer->get_feature_array_at ( iKmlFeature )-> 
- 	             IsA ( kmldom::Type_Placemark ) ) { 
- 	            i++; 
- 	        } 
- 	    }
+        size_t nKmlFeatures = m_poKmlLayer->get_feature_array_size (  ); 
+        
+        for ( iKmlFeature = 0; iKmlFeature < nKmlFeatures; iKmlFeature++ ) { 
+            const kmldom::FeaturePtr& f(m_poKmlLayer->get_feature_array_at ( iKmlFeature ));
+            if ( f->IsA( kmldom::Type_Placemark ) || (m_bReadGroundOverlay && f->IsA( kmldom::Type_GroundOverlay )) ) {
+                i++; 
+            } 
+        }
     }
     
     return i;
@@ -488,8 +518,8 @@ OGRErr OGRLIBKMLLayer::GetExtent (
 
         return OGRERR_NONE;
     }
-
-    return OGRERR_FAILURE;
+    else
+        return OGRLayer::GetExtent(psExtent, bForce);
 }
 
 
