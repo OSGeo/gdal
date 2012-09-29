@@ -1,0 +1,24 @@
+ 0
+SECTION
+  2
+ENTITIES
+  0
+MTEXT
+ 10
+1.0
+ 20
+2.0
+ 30
+3.0
+ 40
+10.0
+ 1
+test_text
+ 50
+45.0
+ 62
+1
+  0
+ENDSEC
+  0
+EOF

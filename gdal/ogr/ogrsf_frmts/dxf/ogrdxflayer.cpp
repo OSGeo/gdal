@@ -771,7 +771,10 @@ OGRFeature *OGRDXFLayer::TranslatePOINT()
 
     if( nCode == 0 )
         poDS->UnreadValue();
-
+    
+    // Set style pen color
+    PrepareLineStyle( poFeature );
+ 
     return poFeature;
 }
 
@@ -1641,6 +1644,8 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
     }
     else
     {
+        // Set style pen color
+        PrepareLineStyle( poFeature );
         return poFeature;
     }
 }
