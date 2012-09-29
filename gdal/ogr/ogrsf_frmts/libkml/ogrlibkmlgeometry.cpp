@@ -33,6 +33,7 @@
 using kmldom::KmlFactory;
 using kmldom::CoordinatesPtr;
 using kmldom::PointPtr;
+using kmldom::LatLonBoxPtr;
 using kmldom::LineStringPtr;
 using kmldom::LinearRingPtr;
 using kmldom::OuterBoundaryIsPtr;
@@ -42,6 +43,7 @@ using kmldom::MultiGeometryPtr;
 using kmldom::GeometryPtr;
 using kmldom::ElementPtr;
 using kmldom::GeometryPtr;
+using kmldom::GxLatLonQuadPtr;
 
 using kmlbase::Vec3;
 
@@ -529,6 +531,76 @@ OGRGeometry *kml2geom_rec (
     return poOgrGeometry;
 }
 
+static
+OGRGeometry *kml2geom_latlonbox_int (
+    LatLonBoxPtr poKmlLatLonBox,
+    OGRSpatialReference *poOgrSRS)
+
+{
+    OGRPolygon *poOgrPolygon;
+    double north, south, east, west;
+    poOgrPolygon = new OGRPolygon (  );
+    if ( !poKmlLatLonBox->has_north (  ) ||
+         !poKmlLatLonBox->has_south (  ) ||
+         !poKmlLatLonBox->has_east (  ) ||
+         !poKmlLatLonBox->has_west (  ) ) {
+
+        return NULL;
+    }
+    north = poKmlLatLonBox->get_north (  );
+    south = poKmlLatLonBox->get_south (  );
+    east = poKmlLatLonBox->get_east (  );
+    west = poKmlLatLonBox->get_west (  );
+    OGRLinearRing* poOgrRing = new OGRLinearRing (  );
+    poOgrRing->addPoint ( east, north, 0.0 );
+    poOgrRing->addPoint ( east, south, 0.0 );
+    poOgrRing->addPoint ( west, south, 0.0 );
+    poOgrRing->addPoint ( west, north, 0.0 );
+    poOgrRing->addPoint ( east, north, 0.0 );
+    poOgrPolygon->
+        addRingDirectly ( poOgrRing );
+    poOgrPolygon->assignSpatialReference(poOgrSRS);
+
+    return poOgrPolygon;
+}
+
+static
+OGRGeometry *kml2geom_latlonquad_int (
+    GxLatLonQuadPtr poKmlLatLonQuad,
+    OGRSpatialReference *poOgrSRS)
+
+{
+    if( !poKmlLatLonQuad->has_coordinates() )
+        return NULL;
+
+    const CoordinatesPtr& poKmlCoordinates =
+        poKmlLatLonQuad->get_coordinates();
+
+    OGRLinearRing* poOgrLinearRing = new OGRLinearRing (  );
+
+    size_t nCoords = poKmlCoordinates->get_coordinates_array_size (  );
+    for ( size_t i = 0; i < nCoords; i++ ) {
+        Vec3 oKmlVec = poKmlCoordinates->get_coordinates_array_at ( i );
+        if ( oKmlVec.has_altitude (  ) )
+            poOgrLinearRing->
+                addPoint ( oKmlVec.get_longitude (  ),
+                           oKmlVec.get_latitude (  ),
+                           oKmlVec.get_altitude (  ) );
+        else
+            poOgrLinearRing->
+                addPoint ( oKmlVec.get_longitude (  ),
+                           oKmlVec.get_latitude (  ) );
+    }
+    poOgrLinearRing->closeRings();
+
+    OGRPolygon *poOgrPolygon = new OGRPolygon();
+    poOgrPolygon->
+        addRingDirectly ( poOgrLinearRing );
+    poOgrPolygon->assignSpatialReference(poOgrSRS);
+
+    return poOgrPolygon;
+}
+
 /******************************************************************************
  main function to read a kml geometry and translate to ogr
 
@@ -550,6 +622,84 @@ OGRGeometry *kml2geom (
     /***** get the geometry *****/
     
     OGRGeometry *poOgrGeometry = kml2geom_rec (poKmlGeometry, poOgrSRS);
+
+    /***** split the geometry at the dateline? *****/
+    
+    const char *pszWrap = CPLGetConfigOption ( "LIBKML_WRAPDATELINE", "no" );
+    if (CSLTestBoolean(pszWrap)) {
+        
+        char **papszTransformOptions = NULL;
+        papszTransformOptions = CSLAddString( papszTransformOptions,
+                                                "WRAPDATELINE=YES");
+
+        /***** transform *****/
+        
+        OGRGeometry *poOgrDstGeometry = 
+            OGRGeometryFactory::transformWithOptions(poOgrGeometry,
+                                                        NULL,
+                                                        papszTransformOptions);
+
+        /***** replace the original geom *****/
+        
+        if (poOgrDstGeometry) {
+            delete poOgrGeometry;
+            poOgrGeometry = poOgrDstGeometry;
+        }
+        
+        CSLDestroy(papszTransformOptions);
+    }
+
+    return poOgrGeometry;
+}
+
+OGRGeometry *kml2geom_latlonbox (
+    LatLonBoxPtr poKmlLatLonBox,
+    OGRSpatialReference *poOgrSRS)
+
+{
+
+    /***** get the geometry *****/
+    
+    OGRGeometry *poOgrGeometry = kml2geom_latlonbox_int (poKmlLatLonBox, poOgrSRS);
+
+    /***** split the geometry at the dateline? *****/
+    
+    const char *pszWrap = CPLGetConfigOption ( "LIBKML_WRAPDATELINE", "no" );
+    if (CSLTestBoolean(pszWrap)) {
+        
+        char **papszTransformOptions = NULL;
+        papszTransformOptions = CSLAddString( papszTransformOptions,
+                                                "WRAPDATELINE=YES");
+
+        /***** transform *****/
+        
+        OGRGeometry *poOgrDstGeometry = 
+            OGRGeometryFactory::transformWithOptions(poOgrGeometry,
+                                                        NULL,
+                                                        papszTransformOptions);
+
+        /***** replace the original geom *****/
+        
+        if (poOgrDstGeometry) {
+            delete poOgrGeometry;
+            poOgrGeometry = poOgrDstGeometry;
+        }
+        
+        CSLDestroy(papszTransformOptions);
+    }
+
+    return poOgrGeometry;
+}
+
+OGRGeometry *kml2geom_latlonquad (
+    GxLatLonQuadPtr poKmlLatLonQuad,
+    OGRSpatialReference *poOgrSRS)
+
+{
+
+    /***** get the geometry *****/
+    
+    OGRGeometry *poOgrGeometry = kml2geom_latlonquad_int (poKmlLatLonQuad, poOgrSRS);
 
     /***** split the geometry at the dateline? *****/
     

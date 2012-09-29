@@ -716,6 +716,8 @@ static ContainerPtr GetContainerFromRoot (
 {
     ContainerPtr poKmlContainer = NULL;
 
+    int bReadGroundOverlay = CSLTestBoolean(CPLGetConfigOption("LIBKML_READ_GROUND_OVERLAY", "YES"));
+
     if ( poKmlRoot ) {
 
         /***** skip over the <kml> we want the container *****/
@@ -729,12 +731,12 @@ static ContainerPtr GetContainerFromRoot (
 
                 if ( poKmlFeat->IsA ( kmldom::Type_Container ) )
                     poKmlContainer = AsContainer ( poKmlFeat );
-                else if ( poKmlFeat->IsA ( kmldom::Type_Placemark ) )
+                else if ( poKmlFeat->IsA ( kmldom::Type_Placemark ) ||
+                          (bReadGroundOverlay && poKmlFeat->IsA ( kmldom::Type_GroundOverlay )) ) 
                 {
                     poKmlContainer = m_poKmlFactory->CreateDocument (  );
                     poKmlContainer->add_feature ( kmldom::AsFeature(kmlengine::Clone(poKmlFeat)) );
                 }
-
             }
 
         }
