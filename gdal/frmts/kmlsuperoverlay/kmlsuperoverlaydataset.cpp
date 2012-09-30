@@ -1189,11 +1189,17 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
                         if( EQUAL(CPLGetExtension(pszBaseFilename), "kmz") &&
                             strncmp(pszBaseFilename, "/vsizip/", 8) != 0 )
                         {
-                            osSubFilename = CPLSPrintf("/vsizip/%s",
-                                CPLFormFilename(CPLGetPath(pszBaseFilename), pszHref, NULL));
+                            osSubFilename = "/vsizip/";
+                            osSubFilename += CPLGetPath(pszBaseFilename);
+                            osSubFilename += "/";
+                            osSubFilename += pszHref;
                         }
                         else
-                            osSubFilename = CPLFormFilename(CPLGetPath(pszBaseFilename), pszHref, NULL);
+                        {
+                            osSubFilename = CPLGetPath(pszBaseFilename);
+                            osSubFilename += "/";
+                            osSubFilename += pszHref;
+                        }
                         osSubFilename = KMLRemoveSlash(osSubFilename);
                     }
 
@@ -1550,7 +1556,9 @@ GDALDataset* KmlSuperOverlayLoadIcon(const char* pszBaseFilename, const char* ps
         osSubFilename = CPLSPrintf("/vsicurl_streaming/%s", pszIcon);
     else
     {
-        osSubFilename = CPLFormFilename(CPLGetPath(pszBaseFilename), pszIcon, NULL);
+        osSubFilename = CPLGetPath(pszBaseFilename);
+        osSubFilename += "/";
+        osSubFilename += pszIcon;
         osSubFilename = KMLRemoveSlash(osSubFilename);
     }
 
@@ -1608,7 +1616,9 @@ static void KmlSuperOverlayComputeDepth(CPLString osFilename,
                     osSubFilename = CPLSPrintf("/vsicurl_streaming/%s", pszHref);
                 else
                 {
-                    osSubFilename = CPLFormFilename(CPLGetPath(osFilename), pszHref, NULL);
+                    osSubFilename = CPLGetPath(osFilename);
+                    osSubFilename += "/";
+                    osSubFilename += pszHref;
                     osSubFilename = KMLRemoveSlash(osSubFilename);
                 }
 
@@ -1727,7 +1737,9 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(const char* pszFilename,
             osSubFilename = CPLSPrintf("/vsicurl_streaming/%s", pszHref);
         else
         {
-            osSubFilename = CPLFormFilename(CPLGetPath(osFilename), pszHref, NULL);
+            osSubFilename = CPLGetPath(osFilename);
+            osSubFilename += "/";
+            osSubFilename += pszHref;
             osSubFilename = KMLRemoveSlash(osSubFilename);
         }
         CPLDestroyXMLNode(psNode);
