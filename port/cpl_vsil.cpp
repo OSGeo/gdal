@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "cpl_vsi_virtual.h"
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include <string>
 
@@ -826,9 +827,31 @@ static VSIFileManager *poManager = NULL;
 VSIFileManager *VSIFileManager::Get()
 
 {
-    
+    static void* hMutex = NULL;
+    static volatile int nConstructerPID = 0;
+    if( poManager != NULL )
+    {
+        if( nConstructerPID != 0 )
+        {
+            int nCurrentPID = (int)CPLGetPID();
+            if( nConstructerPID != nCurrentPID )
+            {
+                //printf("Thread %d: Waiting for VSIFileManager to be finished by other thread.\n", nCurrentPID);
+                {
+                    CPLMutexHolder oHolder( &hMutex );
+                }
+                //printf("Thread %d: End of wait for VSIFileManager construction to be finished\n", nCurrentPID);
+                CPLAssert(nConstructerPID == 0);
+            }
+        }
+        return poManager;
+    }
+
+    CPLMutexHolder oHolder2( &hMutex );
     if( poManager == NULL )
     {
+        nConstructerPID = (int)CPLGetPID();
+        //printf("Thread %d: VSIFileManager in construction\n", nConstructerPID);
         poManager = new VSIFileManager;
         VSIInstallLargeFileHandler();
         VSIInstallSubFileHandler();
@@ -845,6 +868,8 @@ VSIFileManager *VSIFileManager::Get()
         VSIInstallStdoutHandler();
         VSIInstallSparseFileHandler();
         VSIInstallTarFileHandler();
+        //printf("Thread %d: VSIFileManager construction finished\n", nConstructerPID);
+        nConstructerPID = 0;
     }
     
     return poManager;
