@@ -140,6 +140,8 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
                               double *padfPrjParams )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRImportFromPanorama", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->importFromPanorama( iProjSys,
                                                                iDatum,iEllips,
                                                                padfPrjParams );
@@ -476,6 +478,12 @@ OGRErr OSRExportToPanorama( OGRSpatialReferenceH hSRS,
                             long *piZone, double *padfPrjParams )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRExportToPanorama", CE_Failure );
+    VALIDATE_POINTER1( piProjSys, "OSRExportToPanorama", CE_Failure );
+    VALIDATE_POINTER1( piDatum, "OSRExportToPanorama", CE_Failure );
+    VALIDATE_POINTER1( piEllips, "OSRExportToPanorama", CE_Failure );
+    VALIDATE_POINTER1( padfPrjParams, "OSRExportToPanorama", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->exportToPanorama( piProjSys,
                                                              piDatum, piEllips,
                                                              piZone,
