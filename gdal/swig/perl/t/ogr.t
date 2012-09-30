@@ -85,11 +85,13 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
     # test the Points method
     my $g = Geo::OGR::Geometry->create( WKT => 'POINT(1.1 2.2)');
     my $p = $g->Points;
+    ok ($p->[0] == 1.1 && $p->[1] == 2.2, "Points from a point is a simple anonymous array");
     $g->Points($p);
     my $q = $g->Points;
     is_deeply($p, $q, "Points with a point");
     $g = Geo::OGR::Geometry->create(wkt => "linestring(1 1, 1 2, 2 2)");
     $p = $g->Points;
+    ok ($p->[0]->[0] == 1 && $p->[1]->[1] == 2, "Points from a linestring is an anonymous array of points");
     $g->Points($p);
     $q = $g->Points;
     is_deeply($p, $q, "Points with a linestring");

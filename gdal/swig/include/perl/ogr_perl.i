@@ -1090,7 +1090,7 @@ ALTERED_DESTROY(OGRGeometryShadow, OGRc, delete_Geometry)
 	    } else {
 		$n = $self->GetPointCount;
 		if ($n == 1) {
-		    push @points, $flat ? scalar GetPoint_2D($self) : scalar GetPoint_3D($self);
+		    push @points, $flat ? GetPoint_2D($self) : GetPoint_3D($self);
 		} else {
 		    my $i;
 		    if ($flat) {
