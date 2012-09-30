@@ -760,4 +760,8 @@ CoordinateTransformation_swigregister = _osr.CoordinateTransformation_swigregist
 CoordinateTransformation_swigregister(CoordinateTransformation)
 
 
+def CreateCoordinateTransformation(*args):
+  """CreateCoordinateTransformation(SpatialReference src, SpatialReference dst) -> CoordinateTransformation"""
+  return _osr.CreateCoordinateTransformation(*args)
+
 
