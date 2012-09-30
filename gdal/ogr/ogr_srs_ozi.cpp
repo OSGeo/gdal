@@ -43,6 +43,8 @@ OGRErr OSRImportFromOzi( OGRSpatialReferenceH hSRS,
                          const char *pszProjParms )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRImportFromOzi", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->importFromOzi( pszDatum, pszProj,
                                                           pszProjParms );
 }
