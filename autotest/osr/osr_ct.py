@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -204,6 +205,40 @@ def osr_ct_5():
     return 'success'
 
 ###############################################################################
+# Test osr.CreateCoordinateTransformation() method
+
+def osr_ct_6():
+
+    if gdaltest.have_proj4 == 0:
+        return 'skip'
+
+    ct = osr.CreateCoordinateTransformation( None, None )
+    if ct is not None:
+        return 'fail'
+
+    utm_srs = osr.SpatialReference()
+    utm_srs.SetUTM( 11 )
+    utm_srs.SetWellKnownGeogCS( 'WGS84' )
+
+    ll_srs = osr.SpatialReference()
+    ll_srs.SetWellKnownGeogCS( 'WGS84' )
+
+    ct = osr.CoordinateTransformation( ll_srs, utm_srs )
+    if ct is None:
+        return 'fail'
+
+    result = ct.TransformPoints(  ( (-117.5, 32.0, 0.0), (-117.5, 32.0) ) )
+
+    for i in range(2):
+        if abs(result[i][0] - 452772.06) > 0.01 \
+        or abs(result[i][1] - 3540544.89 ) > 0.01 \
+        or abs(result[i][2] - 0.0) > 0.01:
+            gdaltest.post_reason( 'Wrong LL to UTM result' )
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def osr_ct_cleanup():
@@ -221,6 +256,7 @@ gdaltest_list = [
     osr_ct_3,
     osr_ct_4,
     osr_ct_5,
+    osr_ct_6,
     osr_ct_cleanup,
     None ]
 
