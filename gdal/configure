@@ -27481,7 +27481,7 @@ done
   if test "x$PYTHON" = "x"; then
     as_fn_error $? "--with-python requested, but Python not found!" "$LINENO" 5
   fi
-elif test "$with_python" != "no" ; then
+elif test "x$with_python" != "x" -a "$with_python" != "no" ; then
   PYTHON="$with_python"
   if test "`$PYTHON -c "print(1)"`" != "1"; then
     as_fn_error $? "--with-python requested, but Python not found!" "$LINENO" 5
