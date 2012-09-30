@@ -60,7 +60,8 @@ public class OSRTransform {
 			/* -------------------------------------------------------------------- */
 			/*      making the transform                                            */
 			/* -------------------------------------------------------------------- */
-			CoordinateTransformation ct = new CoordinateTransformation(src, dst);
+            /* New in GDAL 2.0. Before was "new CoordinateTransformation(srs,dst)". */
+			CoordinateTransformation ct = CoordinateTransformation.CreateCoordinateTransformation(src, dst);
 			double[] p = new double[3];
 			p[0] = 19; p[1] = 47; p[2] = 0;
 			ct.TransformPoint(p);

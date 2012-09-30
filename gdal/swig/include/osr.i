@@ -950,3 +950,12 @@ public:
 
 } /*extend */
 };
+
+/* New in GDAL 2.0 */
+%newobject CreateCoordinateTransformation;
+%inline %{
+  OSRCoordinateTransformationShadow *CreateCoordinateTransformation( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst ) {
+    OSRCoordinateTransformationShadow *obj = (OSRCoordinateTransformationShadow*) OCTNewCoordinateTransformation( src, dst );
+    return obj;
+}
+%}

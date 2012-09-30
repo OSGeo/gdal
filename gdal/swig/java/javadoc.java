@@ -11659,13 +11659,38 @@ public class CoordinateTransformation
 /**
  * Create transformation object.
  * <p>
- * Input spatial reference system objects are assigned 
- * by copy (calling clone() method) and no ownership transfer occurs.
+ * Caution: the coordinate transformation object returned can be in a non
+ * working state if no coordinate transformation can be established between
+ * src and dst, and calling other methods on it can result in the process
+ * termination. If using GDAL 2.0 or above, it is recommanded to use the
+ * <a href="#CreateCoordinateTransformation(org.gdal.osr.SpatialReference,%20org.gdal.osr.SpatialReference)">
+ * CreateCoordinateTransformation(org.gdal.osr.SpatialReference, org.gdal.osr.SpatialReference)</a> method instead.
+ * <p>
+ * For GDAL 2.0 or below, you might use the following snippet :
+ * <pre>
+ * gdal.PushErrorHandler( "CPLQuietErrorHandler" );
+ * hTransform = new CoordinateTransformation(src, dst);
+ * gdal.PopErrorHandler();
+ * if (gdal.GetLastErrorMsg().indexOf("Unable to load PROJ.4 library") != -1)
+ *    hTransform = null;
+ * </pre>
  *
  * @param src source spatial reference system. 
- * @param dst target spatial reference system. 
+ * @param dst target spatial reference system.
+ * @deprecated 
+ * @see #CreateCoordinateTransformation(org.gdal.osr.SpatialReference, org.gdal.osr.SpatialReference)
  */
 public class CoordinateTransformation:public CoordinateTransformation(SpatialReference src, SpatialReference dst) 
+
+/**
+ * Create transformation object.
+ *
+ * @param src source spatial reference system. 
+ * @param dst target spatial reference system.
+ * @return a new CoordinateTransformation object, or null in case of failure
+ * @since GDAL 2.0
+ */
+public class CoordinateTransformation:public static CoordinateTransformation CreateCoordinateTransformation(SpatialReference src, SpatialReference dst)
 
 /**
  * Transform point from source to destination space.
@@ -11785,6 +11810,18 @@ public class osr:public static String GetUserInputAsWKT(String definition)
  * @return WKT definition
  */
 public class osr:public static String GetWellKnownGeogCSAsWKT(String definition)
+
+/**
+ * Create transformation object.
+ *
+ * @param src source spatial reference system. 
+ * @param dst target spatial reference system.
+ * @return a new CoordinateTransformation object, or null in case of failure
+ * @since GDAL 2.0
+ * @see <a href="CoordinateTransformation.html#CreateCoordinateTransformation(org.gdal.osr.SpatialReference,%20org.gdal.osr.SpatialReference)">
+ * CoordinateTransformation.CreateCoordinateTransformation(org.gdal.osr.SpatialReference, org.gdal.osr.SpatialReference</a>
+ */
+public class osr:public static CoordinateTransformation CreateCoordinateTransformation(SpatialReference src, SpatialReference dst)
 
 /**
  * @deprecated This is a typo. Use wkb25DBit instead.
