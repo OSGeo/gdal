@@ -797,6 +797,8 @@ int CPL_STDCALL OCTTransform( OGRCoordinateTransformationH hTransform,
                               int nCount, double *x, double *y, double *z )
 
 {
+    VALIDATE_POINTER1( hTransform, "OCTTransform", FALSE );
+
     return ((OGRCoordinateTransformation*) hTransform)->
         Transform( nCount, x, y,z );
 }
@@ -1005,6 +1007,8 @@ int CPL_STDCALL OCTTransformEx( OGRCoordinateTransformationH hTransform,
                                 int *pabSuccess )
 
 {
+    VALIDATE_POINTER1( hTransform, "OCTTransformEx", FALSE );
+
     return ((OGRCoordinateTransformation*) hTransform)->
         TransformEx( nCount, x, y, z, pabSuccess );
 }
