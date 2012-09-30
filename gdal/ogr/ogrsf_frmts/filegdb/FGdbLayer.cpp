@@ -50,6 +50,8 @@ FGdbLayer::FGdbLayer():
     m_pEnumRows(NULL), m_bFilterDirty(true), 
     m_supressColumnMappingError(false), m_forceMulti(false), m_bLaunderReservedKeywords(true)
 {
+    m_bBulkLoadAllowed = -1; /* uninitialized */
+    m_bBulkLoadInProgress = FALSE;
     m_pEnumRows = new EnumRows;
 }
 
@@ -59,6 +61,8 @@ FGdbLayer::FGdbLayer():
 
 FGdbLayer::~FGdbLayer()
 {
+    EndBulkLoad();
+
     if (m_pFeatureDefn)
     {
         m_pFeatureDefn->Release();
@@ -106,7 +110,12 @@ OGRErr FGdbLayer::CreateFeature( OGRFeature *poFeature )
     Table *fgdb_table = m_pTable;
     Row fgdb_row;
     fgdbError hr;
-    ShapeBuffer shape;
+
+    if (m_bBulkLoadAllowed < 0)
+        m_bBulkLoadAllowed = CSLTestBoolean(CPLGetConfigOption("FGDB_BULK_LOAD", "NO"));
+
+    if (m_bBulkLoadAllowed && !m_bBulkLoadInProgress)
+        StartBulkLoad();
 
     hr = fgdb_table->CreateRowObject(fgdb_row);
 
@@ -116,6 +125,41 @@ OGRErr FGdbLayer::CreateFeature( OGRFeature *poFeature )
         GDBErr(hr, "Failed at creating Row in CreateFeature.");
         return OGRERR_FAILURE;
     }
+
+    /* Populate the row with the feature content */
+    if (PopulateRowWithFeature(fgdb_row, poFeature) != OGRERR_NONE)
+        return OGRERR_FAILURE;
+
+    /* Cannot write to FID field - it is managed by GDB*/
+    //std::wstring wfield_name = StringToWString(m_strOIDFieldName);
+    //hr = fgdb_row.SetInteger(wfield_name, poFeature->GetFID());
+
+    /* Write the row to the table */
+    hr = fgdb_table->Insert(fgdb_row);
+    if (FAILED(hr))
+    {
+        GDBErr(hr, "Failed at writing Row to Table in CreateFeature.");
+        return OGRERR_FAILURE;
+    }
+
+    int32 oid = -1;
+    if (!FAILED(hr = fgdb_row.GetOID(oid)))
+    {
+        poFeature->SetFID(oid);
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                    PopulateRowWithFeature()                          */
+/*                                                                      */
+/************************************************************************/
+
+OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
+{
+    ShapeBuffer shape;
+    fgdbError hr;
 
     OGRFeatureDefn* poFeatureDefn = m_pFeatureDefn;
     int nFieldCount = poFeatureDefn->GetFieldCount();
@@ -196,49 +240,39 @@ OGRErr FGdbLayer::CreateFeature( OGRFeature *poFeature )
         }
     }
 
-    /* Done with attribute fields, now do geometry */
-    OGRGeometry *poGeom = poFeature->GetGeometryRef();
-
-    /* Write geometry to a buffer */
-    GByte *pabyShape = NULL;
-    int nShapeSize = 0;
-    OGRErr err = OGRWriteToShapeBin( poGeom, &pabyShape, &nShapeSize );
-    if ( err != OGRERR_NONE )
-        return err;
-
-    /* Copy it into a ShapeBuffer */
-    if ( nShapeSize > 0 )
+    if ( m_pFeatureDefn->GetGeomType() != wkbNone )
     {
-        shape.Allocate(nShapeSize);
-        memcpy(shape.shapeBuffer, pabyShape, nShapeSize);
-        shape.inUseLength = nShapeSize;
-    }
+        /* Done with attribute fields, now do geometry */
+        OGRGeometry *poGeom = poFeature->GetGeometryRef();
 
-    /* Free the shape buffer */
-    CPLFree(pabyShape);
+        /* Write geometry to a buffer */
+        GByte *pabyShape = NULL;
+        int nShapeSize = 0;
+        OGRErr err = OGRWriteToShapeBin( poGeom, &pabyShape, &nShapeSize );
+        if ( err != OGRERR_NONE )
+            return err;
 
-    /* Write ShapeBuffer into the Row */
-    hr = fgdb_row.SetGeometry(shape);
-    if (FAILED(hr))
-    {
-        GDBErr(hr, "Failed at writing Geometry to Row in CreateFeature.");
-        return OGRERR_FAILURE;
-    }
+        /* Copy it into a ShapeBuffer */
+        if ( nShapeSize > 0 )
+        {
+            shape.Allocate(nShapeSize);
+            memcpy(shape.shapeBuffer, pabyShape, nShapeSize);
+            shape.inUseLength = nShapeSize;
+        }
 
-    /* Cannot write to FID field - it is managed by GDB*/
-    //std::wstring wfield_name = StringToWString(m_strOIDFieldName);
-    //hr = fgdb_row.SetInteger(wfield_name, poFeature->GetFID());
+        /* Free the shape buffer */
+        CPLFree(pabyShape);
 
-    /* Write the row to the table */
-    hr = fgdb_table->Insert(fgdb_row);
-    if (FAILED(hr))
-    {
-        GDBErr(hr, "Failed at writing Row to Table in CreateFeature.");
-        return OGRERR_FAILURE;
+        /* Write ShapeBuffer into the Row */
+        hr = fgdb_row.SetGeometry(shape);
+        if (FAILED(hr))
+        {
+            GDBErr(hr, "Failed at writing Geometry to Row in CreateFeature.");
+            return OGRERR_FAILURE;
+        }
     }
 
     return OGRERR_NONE;
-
 }
 
 /************************************************************************/
@@ -1326,6 +1360,8 @@ void FGdbLayer::ResetReading()
 {
     long hr;
 
+    EndBulkLoad();
+
     if (m_pOGRFilterGeometry && !m_pOGRFilterGeometry->IsEmpty())
     {
         // Search spatial
@@ -1639,6 +1675,7 @@ OGRFeature* FGdbLayer::GetNextFeature()
     if (m_bFilterDirty)
         ResetReading();
 
+    EndBulkLoad();
 
     while (1) //want to skip errors
     {
@@ -1691,6 +1728,8 @@ OGRFeature *FGdbLayer::GetFeature( long oid )
     EnumRows       enumRows;
     CPLString      osQuery;
 
+    EndBulkLoad();
+
     osQuery.Printf("%s = %ld", m_strOIDFieldName.c_str(), oid);
 
     if (FAILED(hr = m_pTable->Search(m_wstrSubfields, StringToWString(osQuery.c_str()), true, enumRows)))
@@ -1729,6 +1768,8 @@ int FGdbLayer::GetFeatureCount( int bForce )
 {
     long           hr;
     int32          rowCount = 0;
+
+    EndBulkLoad();
 
     if (m_pOGRFilterGeometry != NULL || m_wstrWhereClause.size() != 0)
         return OGRLayer::GetFeatureCount(bForce);
@@ -1794,6 +1835,41 @@ OGRErr FGdbLayer::GetExtent (OGREnvelope* psExtent, int bForce)
         return OGRERR_FAILURE;
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          StartBulkLoad()                             */
+/************************************************************************/
+
+void FGdbLayer::StartBulkLoad ()
+{
+    if ( ! m_pTable )
+        return;
+
+    if ( m_bBulkLoadInProgress )
+        return;
+
+    m_bBulkLoadInProgress = TRUE;
+    m_pTable->LoadOnlyMode(true);
+    m_pTable->SetWriteLock();
+}
+
+/************************************************************************/
+/*                           EndBulkLoad()                              */
+/************************************************************************/
+
+void FGdbLayer::EndBulkLoad ()
+{
+    if ( ! m_pTable )
+        return;
+
+    if ( ! m_bBulkLoadInProgress )
+        return;
+
+    m_bBulkLoadInProgress = FALSE;
+    m_bBulkLoadAllowed = -1; /* so that the configuration option is read the first time we CreateFeature() again */
+    m_pTable->LoadOnlyMode(false);
+    m_pTable->FreeWriteLock();
 }
 
 /* OGRErr FGdbLayer::StartTransaction ()
