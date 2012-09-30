@@ -3449,7 +3449,7 @@ if test "$with_python" = "yes" ; then
   if test "x$PYTHON" = "x"; then
     AC_MSG_ERROR([--with-python requested, but Python not found!])
   fi
-elif test "$with_python" != "no" ; then
+elif test "x$with_python" != "x" -a "$with_python" != "no" ; then
   PYTHON="$with_python"
   if test "`$PYTHON -c "print(1)"`" != "1"; then
     AC_MSG_ERROR([--with-python requested, but Python not found!])
