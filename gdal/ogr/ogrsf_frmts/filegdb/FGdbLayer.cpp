@@ -539,10 +539,50 @@ CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszOptions)
       "XOrigin", "YOrigin", "XYScale",
       "ZOrigin", "ZScale",
       "XYTolerance", "ZTolerance" };
-    const char* gridvalues[7] = {
-      "-2147483647", "-2147483647", "1000000000",
-      "-2147483647", "1000000000",
-      "0.0001", "0.0001" };
+    const char* gridvalues[7];
+
+    /* 
+    Need different default paramters for geographic and projected coordinate systems.
+    Try and use ArcGIS 10 default values.
+    */
+    // default tolerance is 1mm in the units of the coordinate system
+    double ztol = 0.001 * (poSRS ? poSRS->GetTargetLinearUnits("VERT_CS") : 1.0);
+    // default scale is 10x the tolerance
+    long zscale = 1 / ztol * 10;
+
+    char s_xyscale[50], s_xytol[50], s_zscale[50], s_ztol[50];
+    snprintf(s_ztol, 50, "%f", ztol);
+    snprintf(s_zscale, 50, "%ld", zscale);
+    
+    if ( poSRS == NULL || poSRS->IsProjected() )
+    {
+        // default tolerance is 1mm in the units of the coordinate system
+        double xytol = 0.001 * (poSRS ? poSRS->GetTargetLinearUnits("PROJCS") : 1.0);
+        // default scale is 10x the tolerance
+        long xyscale = 1 / xytol * 10;
+
+        snprintf(s_xytol, 50, "%f", xytol);
+        snprintf(s_xyscale, 50, "%ld", xyscale);
+
+        // Ideally we would use the same X/Y origins as ArcGIS, but we need the algorithm they use.
+        gridvalues[0] = "-2147483647";
+        gridvalues[1] = "-2147483647";
+        gridvalues[2] = s_xyscale;
+        gridvalues[3] = "-100000";
+        gridvalues[4] = s_zscale;
+        gridvalues[5] = s_xytol;
+        gridvalues[6] = s_ztol;
+    }
+    else
+    {
+        gridvalues[0] = "-400";
+        gridvalues[1] = "-400";
+        gridvalues[2] = "1000000000";
+        gridvalues[3] = "-100000";
+        gridvalues[4] = s_zscale;
+        gridvalues[5] = "0.000000008983153";
+        gridvalues[6] = s_ztol;
+    }
 
     /* Convert any layer creation options available, use defaults otherwise */
     for( int i = 0; i < 7; i++ )
