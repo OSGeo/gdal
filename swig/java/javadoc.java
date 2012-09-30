@@ -11666,7 +11666,7 @@ public class CoordinateTransformation
  * <a href="#CreateCoordinateTransformation(org.gdal.osr.SpatialReference,%20org.gdal.osr.SpatialReference)">
  * CreateCoordinateTransformation(org.gdal.osr.SpatialReference, org.gdal.osr.SpatialReference)</a> method instead.
  * <p>
- * For GDAL 2.0 or below, you might use the following snippet :
+ * For GDAL 1.9.X or below, you might use the following snippet :
  * <pre>
  * gdal.PushErrorHandler( "CPLQuietErrorHandler" );
  * hTransform = new CoordinateTransformation(src, dst);
