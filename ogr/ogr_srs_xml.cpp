@@ -1331,6 +1331,7 @@ OGRErr OSRImportFromXML( OGRSpatialReferenceH hSRS, const char *pszXML )
 
 {
     VALIDATE_POINTER1( hSRS, "OSRImportFromXML", CE_Failure );
+    VALIDATE_POINTER1( pszXML, "OSRImportFromXML", CE_Failure );
 
     return ((OGRSpatialReference *) hSRS)->importFromXML( pszXML );
 }
