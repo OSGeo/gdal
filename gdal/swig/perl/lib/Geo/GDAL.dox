@@ -154,7 +154,7 @@
 
 ## @fn $GetDataTypeSize($GDALDataType)
 # @param GDALDataType An integer (one of keys of
-# %Geo::GDAL::TYPE_INT2STRING).
+# Geo::GDAL::TYPE_INT2STRING hash).
 # @return the size as the number of bits.
 
 ## @fn @DataTypeValueRange($DataType)
@@ -164,7 +164,7 @@
 
 ## @fn $DataTypeIsComplex($GDALDataType)
 # @param GDALDataType An integer (one of keys of
-# %Geo::GDAL::TYPE_INT2STRING).
+# Geo::GDAL::TYPE_INT2STRING hash).
 # @return true if the data type is a complex number.
 
 ## @fn $DecToDMS($angle, $axis, $precision=2)
@@ -801,7 +801,7 @@
 ## @ignore SetUnitType
 
 ## @method Unit($type)
-# @param [optional] the unit (a string).
+# @param type [optional] the unit (a string).
 # @return the unit (a string).
 # @since version 1.9 of the bindings.
 

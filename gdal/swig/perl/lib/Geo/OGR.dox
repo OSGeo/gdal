@@ -257,6 +257,7 @@
 # my $roads = Geo::OGR::Driver('Memory')->Create('road')->
 #     CreateLayer({GeometryType=>'LineString25D', Fields=>[{Name=>'class',Type=>'Integer'}]});
 # \endcode
+#
 # @param Name name for the new layer.
 # @param SRS a Geo::OSR::SpatialReference object.
 # @param GeometryType one of \@Geo::OGR::Geometry::GEOMETRY_TYPES
@@ -264,7 +265,7 @@
 # @param Schema forwarded to Layer::Schema, which is called if this
 # parameter exists. Additionally, if $Schema->{GeometryType} exists,
 # it overrides $GeometryType argument and default.
-# @param Fields the fields for the schema of the layer [only usable as a named parameter].
+# @param Fields the fields for the schema of the layer [can be used only as a named parameter].
 # @return a new Geo::OGR::Layer object
 
 ## @method Geo::OGR::Layer CopyLayer($layer, $name, \%options = undef)
@@ -328,7 +329,7 @@
 # @return a boolean value indicating whether the layer has the
 # specified capability.
 
-## @method Geo::OGR::DataSource()
+## @method Geo::OGR::DataSource DataSource()
 # @return the data source object to which this layer object belongs to.
 
 ## @method %GetField($field_name)
@@ -948,9 +949,12 @@
 # @return a new Geo::OGR::Geometry object
 
 ## @cmethod Geo::OGR::Geometry create(%params)
-# @param %params A named parameter, possible are: GeometryType, WKT,
-# WKB, HEXWKB, HEXEWKB (PostGIS extended WKB), GML, GeoJSON, arc, and
-# Points (as in method Geo::OGR::Geometry::Points).
+# @param %params A named parameter, one of: GeometryType, WKT,
+# WKB, HEXWKB, HEXEWKB (PostGIS extended WKB), GML, GeoJSON, arc, and/or
+# Points.
+# - \a Points An anonymous array as in method
+# Geo::OGR::Geometry::Points; Note: requires also GeometryType
+# parameter
 # - \a arc An anonymous list of [CenterX, CenterY, CenterZ,
 #    PrimaryRadius, SecondaryRadius, Rotation, StartAngle, EndAngle,
 #    MaxAngleStepSizeDegrees]
@@ -1094,30 +1098,42 @@
 
 ## @method \@Points(\@points)
 # Get or set the points of the geometry. The points (vertices) are
-# stored in obvious lists of lists. Note that unique points structures
-# may be different geometries depending on the actual geometry
-# type. When setting, the geometry is first emptied. The method uses
-# internally either AddPoint_2D or AddPoint_3D depending on the
-# GeometryType.
-# @param points [optional]
-# @return
+# stored in obvious lists of lists. When setting, the geometry is
+# first emptied. The method uses internally either AddPoint_2D or
+# AddPoint_3D depending on the GeometryType.
+#
+# @note The same structure may represent different geometries
+# depending on the actual geometry type of the object.
+#
+# @param points [optional] A reference to an array. A point is a reference to an
+# array of numbers, a linestring or a ring is a reference to an array of points,
+# a polygon is a reference to an array of rings, etc. 
+#
+# @return A reference to an array.
 
 ## @method Empty()
-# Clear geometry data.
+# Clear geometry data, i.e., remove all points, or, for a point, set
+# the coordinate dimension as zero.
 
 ## @method $IsEmpty()
+# Test whether the geometry is empty (has no points, or, for a point,
+# has coordinate dimension of zero).
 # @return boolean
 
 ## @method $IsRing()
+# Test if the geometry is a ring. Requires GEOS in GDAL.
 # @return boolean
 
 ## @method $IsSimple()
+# Test the simplicity of the geometry (OGC sense). Requires GEOS in GDAL.
 # @return boolean
 
 ## @method $IsValid()
+# Test the validity of the geometry (OGC sense). Requires GEOS in GDAL.
 # @return boolean
 
 ## @method Move($dx, $dy, $dz)
+# Move every point of the object as defined by the parameters.
 # @param dx
 # @param dy
 # @param dz [optional]
