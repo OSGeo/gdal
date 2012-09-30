@@ -159,6 +159,12 @@
   public double[] TransformPoint(double x, double y) {
     return TransformPoint(x, y, 0);
   }
+
+  /* New in GDAL 2.0 */
+  public static CoordinateTransformation CreateCoordinateTransformation(SpatialReference src, SpatialReference dst)
+  {
+      return osr.CreateCoordinateTransformation(src, dst);
+  }
 %}
     
 /******************************************************************************
