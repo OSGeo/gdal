@@ -649,13 +649,9 @@ public class gdalinfo {
 				hLatLong = hProj.CloneGeogCS();
 
 			if (hLatLong != null) {
-				gdal.PushErrorHandler( "CPLQuietErrorHandler" );
-				hTransform = new CoordinateTransformation(hProj, hLatLong);
-				gdal.PopErrorHandler();
-				hLatLong.delete();
-				if (gdal.GetLastErrorMsg().indexOf("Unable to load PROJ.4 library") != -1)
-					hTransform = null;
-			}
+				/* New in GDAL 2.0. Before was "new CoordinateTransformation(srs,dst)". */
+				hTransform = CoordinateTransformation.CreateCoordinateTransformation(hProj, hLatLong);
+            }
 
 			if (hProj != null)
 				hProj.delete();
