@@ -835,10 +835,10 @@ CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszOptions)
     CPLXMLNode *srs_xml = CPLCreateXMLNode(NULL, CXT_Element, "SpatialReference");
 
     /* Extract the WKID before morphing */
-    char *wkid = NULL;
+    int nSRID = 0;
     if ( poSRS && poSRS->GetAuthorityCode(NULL) )
     {
-        wkid = CPLStrdup(poSRS->GetAuthorityCode(NULL));
+        nSRID = atoi(poSRS->GetAuthorityCode(NULL));
     }
 
     /* NULL poSRS => UnknownCoordinateSystem */
@@ -848,34 +848,130 @@ CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszOptions)
     }
     else
     {
-        /* Make a clone so we can morph it without morphing the original */
-        OGRSpatialReference* poSRSClone = poSRS->Clone();
-
-        /* Flip the WKT to ESRI form, return UnknownCoordinateSystem if we can't */
-        if ( poSRSClone->morphToESRI() != OGRERR_NONE )
-        {
-            delete poSRSClone;
-            FGDB_CPLAddXMLAttribute(srs_xml, "xsi:type", "esri:UnknownCoordinateSystem");
-            return srs_xml;
-        }
-
         /* Set the SpatialReference type attribute correctly for GEOGCS/PROJCS */
-        if ( poSRSClone->IsProjected() )
+        if ( poSRS->IsProjected() )
             FGDB_CPLAddXMLAttribute(srs_xml, "xsi:type", "esri:ProjectedCoordinateSystem");
         else
             FGDB_CPLAddXMLAttribute(srs_xml, "xsi:type", "esri:GeographicCoordinateSystem");
 
         /* Add the WKT to the XML */
-        char *wkt = NULL;
-        poSRSClone->exportToWkt(&wkt);
-        if (wkt)
-        {
-            CPLCreateXMLElementAndValue(srs_xml,"WKT", wkt);
-            OGRFree(wkt);
-        }
+        SpatialReferenceInfo oESRI_SRS;
 
-        /* Dispose of our close */
-        delete poSRSClone;
+        /* Do we have a known SRID ? If so, directly query the ESRI SRS DB */
+        if( nSRID && SpatialReferences::FindSpatialReferenceBySRID(nSRID, oESRI_SRS) )
+        {
+            CPLDebug("FGDB",
+                     "Layer SRS has a SRID (%d). Using WKT from ESRI SRS DBFound perfect match. ",
+                     nSRID);
+            CPLCreateXMLElementAndValue(srs_xml,"WKT", WStringToString(oESRI_SRS.srtext).c_str());
+        }
+        else
+        {
+            /* Make a clone so we can morph it without morphing the original */
+            OGRSpatialReference* poSRSClone = poSRS->Clone();
+
+            /* Flip the WKT to ESRI form, return UnknownCoordinateSystem if we can't */
+            if ( poSRSClone->morphToESRI() != OGRERR_NONE )
+            {
+                delete poSRSClone;
+                FGDB_CPLAddXMLAttribute(srs_xml, "xsi:type", "esri:UnknownCoordinateSystem");
+                return srs_xml;
+            }
+
+            char *wkt = NULL;
+            poSRSClone->exportToWkt(&wkt);
+            if (wkt)
+            {
+                EnumSpatialReferenceInfo oEnumESRI_SRS;
+                std::vector<int> oaiCandidateSRS;
+                nSRID = 0;
+
+                /* Enumerate SRS from ESRI DB and find a match */
+                while(TRUE)
+                {
+                    if ( poSRS->IsProjected() )
+                    {
+                        if( !oEnumESRI_SRS.NextProjectedSpatialReference(oESRI_SRS) )
+                            break;
+                    }
+                    else
+                    {
+                        if( !oEnumESRI_SRS.NextGeographicSpatialReference(oESRI_SRS) )
+                            break;
+                    }
+
+                    std::string osESRI_WKT = WStringToString(oESRI_SRS.srtext);
+                    const char* pszESRI_WKT = osESRI_WKT.c_str();
+                    if( strcmp(pszESRI_WKT, wkt) == 0 )
+                    {
+                        /* Exact match found (not sure this case happens) */
+                        nSRID = oESRI_SRS.auth_srid;
+                        break;
+                    }
+                    OGRSpatialReference oSRS_FromESRI;
+                    if( oSRS_FromESRI.SetFromUserInput(pszESRI_WKT) == OGRERR_NONE &&
+                        poSRSClone->IsSame(&oSRS_FromESRI) )
+                    {
+                        /* Potential match found */
+                        oaiCandidateSRS.push_back(oESRI_SRS.auth_srid);
+                    }
+                }
+
+                if( nSRID != 0 )
+                {
+                    CPLDebug("FGDB",
+                             "Found perfect match in ESRI SRS DB "
+                             "for layer SRS. SRID is %d", nSRID);
+                }
+                else if( oaiCandidateSRS.size() == 0 )
+                {
+                     CPLDebug("FGDB",
+                              "Did not found a match in ESRI SRS DB for layer SRS. "
+                              "Using morphed SRS WKT. Failure is to be expected");
+                }
+                else if( oaiCandidateSRS.size() == 1 )
+                {
+                    nSRID = oaiCandidateSRS[0];
+                    if( SpatialReferences::FindSpatialReferenceBySRID(
+                                                            nSRID, oESRI_SRS) )
+                    {
+                        CPLDebug("FGDB",
+                                 "Found a single match in ESRI SRS DB "
+                                 "for layer SRS. SRID is %d",
+                                 nSRID);
+                        nSRID = oESRI_SRS.auth_srid;
+                        OGRFree(wkt);
+                        wkt = CPLStrdup(WStringToString(oESRI_SRS.srtext).c_str());
+                    }
+                }
+                else
+                {
+                    /* Not sure this case can happen */
+
+                    CPLString osCandidateSRS;
+                    for(int i=0; i<(int)oaiCandidateSRS.size() && i < 10; i++)
+                    {
+                        if( osCandidateSRS.size() )
+                            osCandidateSRS += ", ";
+                        osCandidateSRS += CPLSPrintf("%d", oaiCandidateSRS[i]);
+                    }
+                    if(oaiCandidateSRS.size() > 10)
+                        osCandidateSRS += "...";
+
+                    CPLDebug("FGDB",
+                             "As several candidates (%s) have been found in "
+                             "ESRI SRS DB for layer SRS, none has been selected. "
+                             "Using morphed SRS WKT. Failure is to be expected",
+                             osCandidateSRS.c_str());
+                }
+
+                CPLCreateXMLElementAndValue(srs_xml,"WKT", wkt);
+                OGRFree(wkt);
+            }
+
+            /* Dispose of our close */
+            delete poSRSClone;
+        }
     }
     
     /* Handle Origin/Scale/Tolerance */
@@ -941,10 +1037,9 @@ CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszOptions)
     CPLCreateXMLElementAndValue(srs_xml, "HighPrecision", "true");     
 
     /* Add the WKID to the XML */
-    if ( wkid ) 
+    if ( nSRID ) 
     {
-        CPLCreateXMLElementAndValue(srs_xml, "WKID", wkid);
-        CPLFree(wkid);
+        CPLCreateXMLElementAndValue(srs_xml, "WKID", CPLSPrintf("%d", nSRID));
     }
 
     return srs_xml;
@@ -1180,6 +1275,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     FGDB_CPLAddXMLAttribute(fieldarray_xml, "xsi:type", "esri:ArrayOfField");
 
     /* Feature Classes have an implicit geometry column, so we'll add it at creation time */
+    CPLXMLNode *srs_xml = NULL;
     if ( eType != wkbNone )
     {
         CPLXMLNode *shape_xml = CPLCreateXMLNode(fieldarray_xml, CXT_Element, "Field");
@@ -1199,7 +1295,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
         CPLCreateXMLElementAndValue(geom_xml,"HasZ", (has_z ? "true" : "false"));
 
         /* Add the SRS if we have one */
-        CPLXMLNode *srs_xml = XMLSpatialReference(poSRS, papszOptions);
+        srs_xml = XMLSpatialReference(poSRS, papszOptions);
         if ( srs_xml )
             CPLAddXMLChild(geom_xml, srs_xml);
     }
@@ -1264,11 +1360,9 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     }
 
     /* Feature Class with known SRS gets an SRS entry */
-    if( eType != wkbNone )
+    if( eType != wkbNone && srs_xml != NULL)
     {
-        CPLXMLNode *srs_xml = XMLSpatialReference(poSRS, papszOptions);
-        if ( srs_xml )
-            CPLAddXMLChild(defn_xml, srs_xml);
+        CPLAddXMLChild(defn_xml, CPLCloneXMLTree(srs_xml));
     }
 
     /* Convert our XML tree into a string for FGDB */
