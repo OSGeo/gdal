@@ -3362,6 +3362,8 @@ OGRErr OSRSetProjection( OGRSpatialReferenceH hSRS,
                          const char * pszProjection )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetProjection", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetProjection( pszProjection );
 }
 
@@ -4496,6 +4498,8 @@ OGRErr OSRSetGaussSchreiberTMercator( OGRSpatialReferenceH hSRS,
                                       double dfFalseNorthing )
 
 {
+    VALIDATE_POINTER1( hSRS, "OSRSetGaussSchreiberTMercator", CE_Failure );
+
     return ((OGRSpatialReference *) hSRS)->SetGaussSchreiberTMercator(
         dfCenterLat, dfCenterLong, dfScale,
         dfFalseEasting, dfFalseNorthing );
