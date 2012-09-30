@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -45,26 +46,23 @@ import gdaltest
 
 def kmlsuperoverlay_1():
 
-    src_ds = gdal.Open('data/small_world.tif')
-    ds = gdal.GetDriverByName('KMLSUPEROVERLAY').CreateCopy('/vsimem/kmlout.kmz', src_ds, options = [ 'FORMAT=PNG'] )
-    ds = None
+    tst = gdaltest.GDALTest( 'KMLSUPEROVERLAY', 'small_world.tif', 1, 30111, options = [ 'FORMAT=PNG'] )
 
-    ds = gdal.Open('/vsizip//vsimem/kmlout.kmz/0/0/0.png')
-    diff = gdaltest.compare_ds(src_ds, ds)
-    ds = None
-    src_ds = None
-
-    gdal.Unlink('/vsimem/kmlout.kmz')
-
-    if diff != 0:
-        return 'fail'
-
-    return 'success'
+    return tst.testCreateCopy( new_filename = '/vsimem/kmlout.kmz' )
 
 ###############################################################################
 # Test CreateCopy() to a KML file
 
 def kmlsuperoverlay_2():
+
+    tst = gdaltest.GDALTest( 'KMLSUPEROVERLAY', 'small_world.tif', 1, 30111, options = [ 'FORMAT=PNG'] )
+
+    return tst.testCreateCopy( new_filename = '/vsimem/kmlout.kml' )
+
+###############################################################################
+# Test CreateCopy() to a KML file
+
+def kmlsuperoverlay_3():
 
     src_ds = gdal.Open('data/utm.tif')
     ds = gdal.GetDriverByName('KMLSUPEROVERLAY').CreateCopy('tmp/tmp.kml', src_ds)
@@ -95,6 +93,88 @@ def kmlsuperoverlay_2():
     return 'success'
 
 ###############################################################################
+# Test overviews
+
+def kmlsuperoverlay_4():
+
+    vrt_xml = """<VRTDataset rasterXSize="800" rasterYSize="400">
+  <SRS>GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]</SRS>
+  <GeoTransform> -1.8000000000000000e+02,  4.5000000000000001e-01,  0.0000000000000000e+00,  9.0000000000000000e+01,  0.0000000000000000e+00, -4.5000000000000001e-01</GeoTransform>
+  <Metadata>
+    <MDI key="AREA_OR_POINT">Area</MDI>
+  </Metadata>
+  <Metadata domain="IMAGE_STRUCTURE">
+    <MDI key="INTERLEAVE">BAND</MDI>
+  </Metadata>
+  <VRTRasterBand dataType="Byte" band="1">
+    <Metadata />
+    <ColorInterp>Red</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/small_world.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="400" RasterYSize="200" DataType="Byte" BlockXSize="400" BlockYSize="20" />
+      <SrcRect xOff="0" yOff="0" xSize="400" ySize="200" />
+      <DstRect xOff="0" yOff="0" xSize="800" ySize="400" />
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2">
+    <Metadata />
+    <ColorInterp>Green</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/small_world.tif</SourceFilename>
+      <SourceBand>2</SourceBand>
+      <SourceProperties RasterXSize="400" RasterYSize="200" DataType="Byte" BlockXSize="400" BlockYSize="20" />
+      <SrcRect xOff="0" yOff="0" xSize="400" ySize="200" />
+      <DstRect xOff="0" yOff="0" xSize="800" ySize="400" />
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="3">
+    <Metadata />
+    <ColorInterp>Blue</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/small_world.tif</SourceFilename>
+      <SourceBand>3</SourceBand>
+      <SourceProperties RasterXSize="400" RasterYSize="200" DataType="Byte" BlockXSize="400" BlockYSize="20" />
+      <SrcRect xOff="0" yOff="0" xSize="400" ySize="200" />
+      <DstRect xOff="0" yOff="0" xSize="800" ySize="400" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+
+    gdal.FileFromMemBuffer("/vsimem/src.vrt", vrt_xml)
+
+    src_ds = gdal.Open("/vsimem/src.vrt")
+    ds = gdal.GetDriverByName('KMLSUPEROVERLAY').CreateCopy('/vsimem/kmlsuperoverlay_4.kmz', src_ds, options = ['FORMAT=PNG'])
+    if ds.GetRasterBand(1).GetOverviewCount() != 1:
+        gdaltest.post_reason('fail')
+        ds = None
+        src_ds = None
+        gdal.Unlink("/vsimem/src.vrt")
+        gdal.Unlink("/vsimem/kmlsuperoverlay_4.kmz")
+        return 'fail'
+    if ds.GetRasterBand(1).GetOverview(0).Checksum() != 30111:
+        gdaltest.post_reason('fail')
+        ds = None
+        src_ds = None
+        gdal.Unlink("/vsimem/src.vrt")
+        gdal.Unlink("/vsimem/kmlsuperoverlay_4.kmz")
+        return 'fail'
+    if ds.GetRasterBand(1).Checksum() != src_ds.GetRasterBand(1).Checksum():
+        gdaltest.post_reason('fail')
+        ds = None
+        src_ds = None
+        gdal.Unlink("/vsimem/src.vrt")
+        gdal.Unlink("/vsimem/kmlsuperoverlay_4.kmz")
+        return 'fail'
+    ds = None
+    src_ds = None
+
+    gdal.Unlink("/vsimem/src.vrt")
+    gdal.Unlink("/vsimem/kmlsuperoverlay_4.kmz")
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def  kmlsuperoverlay_cleanup():
@@ -105,6 +185,8 @@ def  kmlsuperoverlay_cleanup():
 gdaltest_list = [
     kmlsuperoverlay_1,
     kmlsuperoverlay_2,
+    kmlsuperoverlay_3,
+    kmlsuperoverlay_4,
     kmlsuperoverlay_cleanup ]
 
 if __name__ == '__main__':
