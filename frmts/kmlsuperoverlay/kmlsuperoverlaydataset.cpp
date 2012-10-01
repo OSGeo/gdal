@@ -267,7 +267,8 @@ int  GenerateChildKml(std::string filename,
                       double south, double west, int xsize, 
                       int ysize, int maxzoom, 
                       OGRCoordinateTransformation * poTransform,
-                      std::string fileExt)
+                      std::string fileExt,
+                      bool fixAntiMeridian)
 {
     double tnorth = south + zoomypixel *((iy + 1)*dysize);
     double tsouth = south + zoomypixel *(iy*dysize);
@@ -295,6 +296,13 @@ int  GenerateChildKml(std::string filename,
         poTransform->Transform(1, &upperrightT, &righttopT);
         poTransform->Transform(1, &lowerrightT, &rightbottomT);
         poTransform->Transform(1, &lowerleftT, &leftbottomT);
+    }
+
+    if ( fixAntiMeridian && teast < twest)
+    {
+        teast += 360;
+        lowerrightT += 360;
+        upperrightT += 360;
     }
 
     std::vector<int> xchildren;
@@ -404,6 +412,11 @@ int  GenerateChildKml(std::string filename,
             {
                 poTransform->Transform(1, &cwest, &csouth);
                 poTransform->Transform(1, &ceast, &cnorth);
+            }
+
+            if ( fixAntiMeridian && ceast < cwest )
+            {
+                ceast += 360;
             }
 
             VSIFPrintfL(fp, "\t\t<NetworkLink>\n");
@@ -695,6 +708,12 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename, GDALDataset *p
         }
     }
 
+    bool fixAntiMeridian = CSLFetchBoolean( papszOptions, "FIX_ANTIMERIDIAN", FALSE );
+    if ( fixAntiMeridian && east < west )
+    {
+        east += 360;
+    }
+
     //Zoom levels of the pyramid.
     int maxzoom;
     int tilexsize;
@@ -828,7 +847,7 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename, GDALDataset *p
                 }
 
                 GenerateChildKml(childKmlfile, zoom, ix, iy, zoomxpix, zoomypix, 
-                                 dxsize, dysize, tmpSouth, adfGeoTransform[0], xsize, ysize, maxzoom, poTransform, fileExt);
+                                 dxsize, dysize, tmpSouth, adfGeoTransform[0], xsize, ysize, maxzoom, poTransform, fileExt, fixAntiMeridian);
             }
         }
     }
@@ -1868,6 +1887,7 @@ void GDALRegister_KMLSUPEROVERLAY()
 "       <Value>PNG</Value>"
 "       <Value>JPEG</Value>"
 "   </Option>"
+"   <Option name='FIX_ANTIMERIDIAN' type='boolean' description='Fix for images crossing the antimeridian causing errors in Google Earth' />"
 "</CreationOptionList>" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
