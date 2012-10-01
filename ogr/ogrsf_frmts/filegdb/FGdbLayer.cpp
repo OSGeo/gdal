@@ -42,13 +42,89 @@ using std::string;
 using std::wstring;
 
 /************************************************************************/
-/*                              FGdbLayer()                               */
+/*                           FGdbBaseLayer()                            */
+/************************************************************************/
+FGdbBaseLayer::FGdbBaseLayer() :
+    m_pFeatureDefn(NULL), m_pSRS(NULL), m_pEnumRows(NULL),
+    m_supressColumnMappingError(false), m_forceMulti(false)
+{
+}
+
+/************************************************************************/
+/*                          ~FGdbBaseLayer()                            */
+/************************************************************************/
+FGdbBaseLayer::~FGdbBaseLayer()
+{
+    if (m_pFeatureDefn)
+    {
+        m_pFeatureDefn->Release();
+        m_pFeatureDefn = NULL;
+    }
+
+    if (m_pEnumRows)
+    {
+        delete m_pEnumRows;
+        m_pEnumRows = NULL;
+    }
+
+    if (m_pSRS)
+    {
+        m_pSRS->Release();
+        m_pSRS = NULL;
+    }
+}
+
+/************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
+
+OGRFeature* FGdbBaseLayer::GetNextFeature()
+{
+    while (1) //want to skip errors
+    {
+        if (m_pEnumRows == NULL)
+            return NULL;
+
+        long hr;
+
+        Row row;
+
+        if (FAILED(hr = m_pEnumRows->Next(row)))
+        {
+            GDBErr(hr, "Failed fetching features");
+            return NULL;
+        }
+
+        if (hr != S_OK)
+        {
+        // It's OK, we are done fetching - failure is catched by FAILED macro
+            return NULL;
+        }
+
+        OGRFeature* pOGRFeature = NULL;
+
+        if (!OGRFeatureFromGdbRow(&row,  &pOGRFeature))
+        {
+            int32 oid = -1;
+            row.GetOID(oid);
+
+            GDBErr(hr, CPLSPrintf("Failed translating FGDB row [%d] to OGR Feature", oid));
+
+            //return NULL;
+            continue; //skip feature
+        }
+
+        return pOGRFeature;
+    }
+}
+
+/************************************************************************/
+/*                              FGdbLayer()                             */
 /************************************************************************/
 FGdbLayer::FGdbLayer():
-    OGRLayer(), m_pDS(NULL), m_pTable(NULL), m_pFeatureDefn(NULL), 
-    m_pSRS(NULL), m_wstrSubfields(L"*"), m_pOGRFilterGeometry(NULL), 
-    m_pEnumRows(NULL), m_bFilterDirty(true), 
-    m_supressColumnMappingError(false), m_forceMulti(false), m_bLaunderReservedKeywords(true)
+    m_pDS(NULL), m_pTable(NULL), m_wstrSubfields(L"*"), m_pOGRFilterGeometry(NULL), 
+    m_bFilterDirty(true), 
+    m_bLaunderReservedKeywords(true)
 {
     m_bBulkLoadAllowed = -1; /* uninitialized */
     m_bBulkLoadInProgress = FALSE;
@@ -71,24 +147,6 @@ FGdbLayer::~FGdbLayer()
 #ifdef EXTENT_WORKAROUND
     WorkAroundExtentProblem();
 #endif
-
-    if (m_pFeatureDefn)
-    {
-        m_pFeatureDefn->Release();
-        m_pFeatureDefn = NULL;
-    }
-
-    if (m_pSRS)
-    {
-        m_pSRS->Release();
-        m_pSRS = NULL;
-    }
-
-    if (m_pEnumRows)
-    {
-        delete m_pEnumRows;
-        m_pEnumRows = NULL;
-    }
 
     // NOTE: never delete m_pDS - the memory doesn't belong to us
     // TODO: check if we need to close the table or if the destructor 
@@ -1874,7 +1932,7 @@ OGRErr FGdbLayer::SetAttributeFilter( const char* pszQuery )
 /*                           OGRFeatureFromGdbRow()                      */
 /************************************************************************/
 
-bool FGdbLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
+bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
 {
     long hr;
 
@@ -2087,42 +2145,7 @@ OGRFeature* FGdbLayer::GetNextFeature()
 
     EndBulkLoad();
 
-    while (1) //want to skip errors
-    {
-        if (m_pEnumRows == NULL)
-            return NULL;
-
-        long hr;
-
-        Row row;
-
-        if (FAILED(hr = m_pEnumRows->Next(row)))
-        {
-            GDBErr(hr, "Failed fetching features");
-            return NULL;
-        }
-
-        if (hr != S_OK)
-        {
-        // It's OK, we are done fetching - failure is catched by FAILED macro
-            return NULL;
-        }
-
-        OGRFeature* pOGRFeature = NULL;
-
-        if (!OGRFeatureFromGdbRow(&row,  &pOGRFeature))
-        {
-            int32 oid = -1;
-            row.GetOID(oid);
-
-            GDBErr(hr, CPLSPrintf("Failed translating FGDB row [%d] to OGR Feature", oid));
-
-            //return NULL;
-            continue; //skip feature
-        }
-
-        return pOGRFeature;
-    }
+    return FGdbBaseLayer::GetNextFeature();
 }
 
 /************************************************************************/
