@@ -59,6 +59,33 @@
 /* The ESRI FGDB API namespace */
 using namespace FileGDBAPI;
 
+/************************************************************************/
+/*                           FGdbBaseLayer                              */
+/************************************************************************/
+
+class FGdbBaseLayer : public OGRLayer
+{
+protected:
+
+  FGdbBaseLayer();
+  virtual ~FGdbBaseLayer();
+
+  OGRFeatureDefn* m_pFeatureDefn;
+  OGRSpatialReference* m_pSRS;
+
+  EnumRows*    m_pEnumRows;
+
+  std::vector<std::wstring> m_vOGRFieldToESRIField; //OGR Field Index to ESRI Field Name Mapping
+  std::vector<std::string> m_vOGRFieldToESRIFieldType; //OGR Field Index to ESRI Field Type Mapping
+
+  bool  m_supressColumnMappingError;
+  bool  m_forceMulti;
+
+  bool OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature);
+
+public:
+          virtual OGRFeature* GetNextFeature();
+};
 
 /************************************************************************/
 /*                            FGdbLayer                                 */
@@ -66,7 +93,7 @@ using namespace FileGDBAPI;
 
 class FGdbDataSource;
 
-class FGdbLayer : public OGRLayer
+class FGdbLayer : public FGdbBaseLayer
 {
   int                 m_bBulkLoadAllowed;
   int                 m_bBulkLoadInProgress;
@@ -150,12 +177,8 @@ protected:
   bool ParseGeometryDef(CPLXMLNode* psGeometryDef);
   bool ParseSpatialReference(CPLXMLNode* psSpatialRefNode, std::string* pOutWkt, std::string* pOutWKID);
 
-  bool OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature);
-  
   FGdbDataSource* m_pDS;
   Table* m_pTable;
-  OGRFeatureDefn* m_pFeatureDefn;
-  OGRSpatialReference* m_pSRS;
 
   std::string m_strName; //contains underlying FGDB table name (not catalog name)
 
@@ -168,22 +191,36 @@ protected:
   std::wstring m_wstrSubfields;
   std::wstring m_wstrWhereClause;
   OGRGeometry* m_pOGRFilterGeometry;
-  EnumRows*    m_pEnumRows;
 
   bool        m_bFilterDirty; //optimization to avoid multiple calls to search until necessary
 
-
-  std::vector<std::wstring> m_vOGRFieldToESRIField; //OGR Field Index to ESRI Field Name Mapping
-  std::vector<std::string> m_vOGRFieldToESRIFieldType; //OGR Field Index to ESRI Field Type Mapping
-
-  //buffers are used for avoiding constant reallocation of temp memory
-  //unsigned char* m_pBuffer;
-  //long  m_bufferSize; //in bytes
-  
-  bool  m_supressColumnMappingError;
-  bool  m_forceMulti;
   bool  m_bLaunderReservedKeywords;
 
+};
+
+/************************************************************************/
+/*                         FGdbResultLayer                              */
+/************************************************************************/
+
+class FGdbResultLayer : public FGdbBaseLayer
+{
+public:
+
+  FGdbResultLayer(FGdbDataSource* pParentDataSource, const char* pszStatement, EnumRows* pEnumRows);
+  virtual ~FGdbResultLayer();
+
+  virtual void        ResetReading();
+
+  OGRFeatureDefn *    GetLayerDefn() { return m_pFeatureDefn; }
+
+  //virtual OGRSpatialReference *GetSpatialRef() { return m_pSRS; }
+
+  virtual int         TestCapability( const char * );
+
+protected:
+
+  FGdbDataSource* m_pDS;
+  CPLString       osSQL;
 };
 
 /************************************************************************/
@@ -210,6 +247,7 @@ public:
   virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                   OGRGeometry *poSpatialFilter,
                                   const char *pszDialect );
+  virtual void        ReleaseResultSet( OGRLayer * poResultsSet );
 
   int TestCapability( const char * );
 

@@ -1,4 +1,4 @@
-OBJ     =       FGdbDriver.obj FGdbDatasource.obj FGdbLayer.obj FGdbUtils.obj
+OBJ     =       FGdbDriver.obj FGdbDatasource.obj FGdbLayer.obj FGdbUtils.obj FGdbResultLayer.obj
 EXTRAFLAGS =	-I.. -I..\.. -I$(FGDB_INC)
 
 GDAL_ROOT	=	..\..\..

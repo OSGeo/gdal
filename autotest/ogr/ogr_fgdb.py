@@ -205,8 +205,6 @@ def ogr_fgdb_3():
     import test_cli_utilities
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
-    if test_cli_utilities.get_test_ogrsf_path() is None:
-        return 'skip'
 
     try:
         shutil.rmtree("tmp/poly.gdb")
@@ -221,12 +219,43 @@ def ogr_fgdb_3():
         return 'fail'
     ds = None
 
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly.gdb')
     #print ret
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         print(ret)
         return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test SQL support
+
+def ogr_fgdb_sql():
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    ds = ogr.Open('tmp/poly.gdb')
+
+    ds.ExecuteSQL("CREATE INDEX idx_poly_eas_id ON poly(EAS_ID)")
+
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM POLY WHERE EAS_ID = 170", dialect = 'FileGDB')
+    feat = sql_lyr.GetNextFeature()
+    if feat is None:
+        return 'fail'
+    feat = sql_lyr.GetNextFeature()
+    if feat is not None:
+        return 'fail'
+    feat = None
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
 
     return 'success'
 
@@ -562,6 +591,7 @@ gdaltest_list = [
     ogr_fgdb_DeleteField,
     ogr_fgdb_2,
     ogr_fgdb_3,
+    ogr_fgdb_sql,
     ogr_fgdb_4,
     ogr_fgdb_5,
     ogr_fgdb_6,
