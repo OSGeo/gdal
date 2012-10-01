@@ -1100,7 +1100,7 @@
 # Get or set the points of the geometry. The points (vertices) are
 # stored in obvious lists of lists. When setting, the geometry is
 # first emptied. The method uses internally either AddPoint_2D or
-# AddPoint_3D depending on the GeometryType.
+# AddPoint_3D depending on the coordinate dimension of the input data.
 #
 # @note The same structure may represent different geometries
 # depending on the actual geometry type of the object.
