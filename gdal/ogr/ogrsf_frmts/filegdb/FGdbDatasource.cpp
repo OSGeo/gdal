@@ -414,6 +414,11 @@ OGRLayer * FGdbDataSource::ExecuteSQL( const char *pszSQLCommand,
                                        const char *pszDialect )
 
 {
+    if ( pszDialect != NULL && EQUAL(pszDialect, "OGRSQL") )
+        return OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                          poSpatialFilter,
+                                          pszDialect );
+
 /* -------------------------------------------------------------------- */
 /*      Special case GetLayerDefinition                                 */
 /* -------------------------------------------------------------------- */
@@ -450,7 +455,49 @@ OGRLayer * FGdbDataSource::ExecuteSQL( const char *pszSQLCommand,
             return NULL;
     }
 
-    return OGRDataSource::ExecuteSQL( pszSQLCommand,
+    /* TODO: remove that workaround when the SDK has finally a decent */
+    /* SQL support ! */
+    if( EQUALN(pszSQLCommand, "SELECT ", 7) && pszDialect == NULL )
+    {
+        CPLDebug("FGDB", "Support for SELECT is known to be partially "
+                         "non-compliant with FileGDB SDK API v1.2.\n"
+                         "So for now, we use default OGR SQL engine. "
+                         "Explicitely specify -dialect FileGDB\n"
+                         "to use the SQL engine from the FileGDB SDK API");
+        return OGRDataSource::ExecuteSQL( pszSQLCommand,
                                         poSpatialFilter,
                                         pszDialect );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Run the SQL                                                     */
+/* -------------------------------------------------------------------- */
+    EnumRows* pEnumRows = new EnumRows;
+    long hr;
+    if (FAILED(hr = m_pGeodatabase->ExecuteSQL(
+                                StringToWString(pszSQLCommand), true, *pEnumRows)))
+    {
+        GDBErr(hr, CPLSPrintf("Failed at executing '%s'", pszSQLCommand));
+        delete pEnumRows;
+        return NULL;
+    }
+
+    if( EQUALN(pszSQLCommand, "SELECT ", 7) )
+    {
+        return new FGdbResultLayer(this, pszSQLCommand, pEnumRows);
+    }
+    else
+    {
+        delete pEnumRows;
+        return NULL;
+    }
+}
+
+/************************************************************************/
+/*                           ReleaseResultSet()                         */
+/************************************************************************/
+
+void FGdbDataSource::ReleaseResultSet( OGRLayer * poResultsSet )
+{
+    delete poResultsSet;
 }
