@@ -458,9 +458,9 @@ def test_gdalbuildvrt_13():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
         return 'skip'
 
-    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/test_cli_utilities.vrt ../gcore/data/byte.tif -a_srs EPSG:4326')
+    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/gdalbuildvrt13.vrt ../gcore/data/byte.tif -a_srs EPSG:4326')
 
-    ds = gdal.Open('tmp/test_cli_utilities.vrt')
+    ds = gdal.Open('tmp/gdalbuildvrt13.vrt')
     if ds.GetProjectionRef().find('4326') == -1:
         return 'fail'
     ds = None
