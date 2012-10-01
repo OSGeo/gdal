@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -451,6 +452,22 @@ def test_gdalbuildvrt_12():
     return 'success'
 
 ###############################################################################
+# Test -a_srs
+
+def test_gdalbuildvrt_13():
+    if test_cli_utilities.get_gdalbuildvrt_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_gdalbuildvrt_path() + ' tmp/test_cli_utilities.vrt ../gcore/data/byte.tif -a_srs EPSG:4326')
+
+    ds = gdal.Open('tmp/test_cli_utilities.vrt')
+    if ds.GetProjectionRef().find('4326') == -1:
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalbuildvrt_cleanup():
@@ -467,6 +484,7 @@ def test_gdalbuildvrt_cleanup():
     gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt10.vrt')
     gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt11.vrt')
     gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt12.vrt')
+    gdal.GetDriverByName('VRT').Delete('tmp/gdalbuildvrt13.vrt')
 
     drv = gdal.GetDriverByName('GTiff')
 
@@ -502,6 +520,7 @@ gdaltest_list = [
     test_gdalbuildvrt_10,
     test_gdalbuildvrt_11,
     test_gdalbuildvrt_12,
+    test_gdalbuildvrt_13,
     test_gdalbuildvrt_cleanup
     ]
 
