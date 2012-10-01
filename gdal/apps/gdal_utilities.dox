@@ -598,6 +598,7 @@ gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average|user}]
              [-tr xres yres] [-tap] [-separate] [-allow_projection_difference] [-q]
              [-te xmin ymin xmax ymax] [-addalpha] [-hidenodata]
              [-srcnodata "value [value...]"] [-vrtnodata "value [value...]"]
+             [-a_srs srs_def]
              [-input_file_list my_liste.txt] [-overwrite] output.vrt [gdalfile]*
 \endverbatim
 
@@ -698,6 +699,10 @@ When this option is specified, the utility will accept to make a VRT even if the
 not the same projection. Note: this does not mean that they will be reprojected. Their projection will
 just be ignored.
 </dd>
+
+<dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> (starting with GDAL 2.0)
+Override the projection for the output file.  The <i>srs_def</i> may be any of the usual GDAL/OGR forms,
+complete WKT, PROJ.4, EPSG:n or a file containing the WKT. </dd>
 
 <dt> <b>-input_file_list</b>:</dt><dd> 
 To specify a text file with an input filename on each line
