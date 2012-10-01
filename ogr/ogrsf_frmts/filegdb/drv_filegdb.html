@@ -26,7 +26,14 @@ when inserting a lot of features (see http://trac.osgeo.org/gdal/ticket/4420). T
 is to cause a write lock to be taken and a temporary disabling of the indexes. Those are restored when the datasource is
 closed or when a read operation is done.
 
-<h2>Special SQL requests (OGR >= 2.0)</h2>
+<h2>SQL support (OGR >= 2.0)</h2>
+
+Starting with OGR 2.0, SQL statements are run through the SQL engine of the FileGDB SDK API. This holds for non-SELECT
+statements. However, due to partial/inaccurate support for SELECT statements in current FileGDB SDK API versions (v1.2),
+SELECT statements will be run by default by the OGR SQL engine. This can be changed by specifying the
+<i>-dialect FileGDB</i> option to ogrinfo or ogr2ogr.
+
+<h3>Special SQL requests</h3>
 
 "GetLayerDefinition a_layer_name" and "GetLayerMetadata a_layer_name" can be used as special SQL requests to get
 respectively the definition and metadata of a FileGDB table as XML content.
