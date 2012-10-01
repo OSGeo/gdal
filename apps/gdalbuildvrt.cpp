@@ -91,6 +91,7 @@ static void Usage()
             "                    [-tr xres yres] [-tap] [-separate] [-allow_projection_difference] [-q]\n"
             "                    [-te xmin ymin xmax ymax] [-addalpha] [-hidenodata] \n"
             "                    [-srcnodata \"value [value...]\"] [-vrtnodata \"value [value...]\"] \n"
+            "                    [-a_srs srs_def]\n"
             "                    [-input_file_list my_liste.txt] [-overwrite] output.vrt [gdalfile]*\n"
             "\n"
             "eg.\n"
@@ -197,6 +198,7 @@ class VRTBuilder
     int                 bHideNoData;
     char               *pszSrcNoData;
     char               *pszVRTNoData;
+    char               *pszOutputSRS;
 
     /* Internal variables */
     char               *pszProjectionRef;
@@ -232,7 +234,8 @@ class VRTBuilder
                            double minX, double minY, double maxX, double maxY,
                            int bSeparate, int bAllowProjectionDifference,
                            int bAddAlpha, int bHideNoData,
-                           const char* pszSrcNoData, const char* pszVRTNoData);
+                           const char* pszSrcNoData, const char* pszVRTNoData,
+                           const char* pszOutputSRS);
 
                ~VRTBuilder();
 
@@ -252,7 +255,8 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilename,
                        double minX, double minY, double maxX, double maxY,
                        int bSeparate, int bAllowProjectionDifference,
                        int bAddAlpha, int bHideNoData,
-                       const char* pszSrcNoData, const char* pszVRTNoData)
+                       const char* pszSrcNoData, const char* pszVRTNoData,
+                       const char* pszOutputSRS)
 {
     this->pszOutputFilename = CPLStrdup(pszOutputFilename);
     this->nInputFiles = nInputFiles;
@@ -278,6 +282,7 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilename,
     this->bHideNoData = bHideNoData;
     this->pszSrcNoData = (pszSrcNoData) ? CPLStrdup(pszSrcNoData) : NULL;
     this->pszVRTNoData = (pszVRTNoData) ? CPLStrdup(pszVRTNoData) : NULL;
+    this->pszOutputSRS = (pszOutputSRS) ? CPLStrdup(pszOutputSRS) : NULL;
 
     bUserExtent = FALSE;
     pszProjectionRef = NULL;
@@ -338,6 +343,7 @@ VRTBuilder::~VRTBuilder()
     CPLFree(pszProjectionRef);
     CPLFree(padfSrcNoData);
     CPLFree(padfVRTNoData);
+    CPLFree(pszOutputSRS);
 }
 
 /************************************************************************/
@@ -1033,7 +1039,11 @@ int VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressData)
     VRTDatasetH hVRTDS = VRTCreate(nRasterXSize, nRasterYSize);
     GDALSetDescription(hVRTDS, pszOutputFilename);
 
-    if (pszProjectionRef)
+    if( pszOutputSRS )
+    {
+        GDALSetProjection(hVRTDS, pszOutputSRS);
+    }
+    else if (pszProjectionRef)
     {
         GDALSetProjection(hVRTDS, pszProjectionRef);
     }
@@ -1180,6 +1190,7 @@ int main( int nArgc, char ** papszArgv )
     int bHideNoData = FALSE;
     const char* pszSrcNoData = NULL;
     const char* pszVRTNoData = NULL;
+    char* pszOutputSRS = NULL;
 
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -1284,6 +1295,22 @@ int main( int nArgc, char ** papszArgv )
         {
             pszVRTNoData = papszArgv[++iArg];
         }
+        else if( EQUAL(papszArgv[iArg],"-a_srs") && iArg + 1 < nArgc)
+        {
+            OGRSpatialReferenceH hOutputSRS = OSRNewSpatialReference(NULL);
+
+            if( OSRSetFromUserInput( hOutputSRS, papszArgv[iArg+1] ) != OGRERR_NONE )
+            {
+                fprintf( stderr, "Failed to process SRS definition: %s\n", 
+                         papszArgv[iArg+1] );
+                GDALDestroyDriverManager();
+                exit( 1 );
+            }
+
+            OSRExportToWkt( hOutputSRS, &pszOutputSRS );
+            OSRDestroySpatialReference( hOutputSRS );
+            iArg++;
+        }
         else if ( papszArgv[iArg][0] == '-' )
         {
             printf("Unrecognized option : %s\n", papszArgv[iArg]);
@@ -1377,7 +1404,7 @@ int main( int nArgc, char ** papszArgv )
     VRTBuilder oBuilder(pszOutputFilename, nInputFiles, ppszInputFilenames,
                         eStrategy, we_res, ns_res, bTargetAlignedPixels, xmin, ymin, xmax, ymax,
                         bSeparate, bAllowProjectionDifference, bAddAlpha, bHideNoData,
-                        pszSrcNoData, pszVRTNoData);
+                        pszSrcNoData, pszVRTNoData, pszOutputSRS);
 
     oBuilder.Build(pfnProgress, NULL);
     
@@ -1386,7 +1413,7 @@ int main( int nArgc, char ** papszArgv )
         CPLFree(ppszInputFilenames[i]);
     }
     CPLFree(ppszInputFilenames);
-
+    CPLFree(pszOutputSRS);
 
     CSLDestroy( papszArgv );
     GDALDumpOpenDatasets( stderr );
