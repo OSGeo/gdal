@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -435,6 +436,108 @@ def ogr_fgdb_9():
     return 'success'
 
 ###############################################################################
+# Test SRS support
+
+def ogr_fgdb_10():
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+    try:
+        shutil.rmtree("tmp/test.gdb")
+    except:
+        pass
+
+    srs_exact_4326 = osr.SpatialReference()
+    srs_exact_4326.ImportFromEPSG(4326)
+
+    srs_approx_4326 = srs_exact_4326.Clone()
+    srs_approx_4326.MorphToESRI()
+    srs_approx_4326.MorphFromESRI()
+
+    srs_exact_2193 = osr.SpatialReference()
+    srs_exact_2193.ImportFromEPSG(2193)
+
+    srs_approx_2193 = srs_exact_2193.Clone()
+    srs_approx_2193.MorphToESRI()
+    srs_approx_2193.MorphFromESRI()
+    
+    srs_not_in_db = osr.SpatialReference("""PROJCS["foo",
+    GEOGCS["foo",
+        DATUM["foo",
+            SPHEROID["foo",6000000,300]],
+        PRIMEM["Greenwich",0],
+        UNIT["Degree",0.017453292519943295]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",0],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["Meter",1]]""")
+
+    srs_exact_4230 = osr.SpatialReference()
+    srs_exact_4230.ImportFromEPSG(4230)
+    srs_approx_4230 = srs_exact_4230.Clone()
+    srs_approx_4230.MorphToESRI()
+    srs_approx_4230.MorphFromESRI()
+    
+    srs_approx_intl = osr.SpatialReference()
+    srs_approx_intl.ImportFromProj4('+proj=longlat +ellps=intl +no_defs')
+
+    srs_exact_4233 = osr.SpatialReference()
+    srs_exact_4233.ImportFromEPSG(4233)
+
+    ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
+    lyr = ds.CreateLayer("srs_exact_4326", srs = srs_exact_4326, geom_type = ogr.wkbPoint)
+    lyr = ds.CreateLayer("srs_approx_4326", srs = srs_approx_4326, geom_type = ogr.wkbPoint)
+    lyr = ds.CreateLayer("srs_exact_2193", srs = srs_exact_2193, geom_type = ogr.wkbPoint)
+    lyr = ds.CreateLayer("srs_approx_2193", srs = srs_approx_2193, geom_type = ogr.wkbPoint)
+
+    lyr = ds.CreateLayer("srs_approx_4230", srs = srs_approx_4230, geom_type = ogr.wkbPoint)
+    
+    # will fail
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = ds.CreateLayer("srs_approx_intl", srs = srs_approx_intl, geom_type = ogr.wkbPoint)
+    gdal.PopErrorHandler()
+
+    # will fail: 4233 doesn't exist in DB
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = ds.CreateLayer("srs_exact_4233", srs = srs_exact_4233, geom_type = ogr.wkbPoint)
+    gdal.PopErrorHandler()
+
+    # will fail
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = ds.CreateLayer("srs_not_in_db", srs = srs_not_in_db, geom_type = ogr.wkbPoint)
+    gdal.PopErrorHandler()
+
+    ds = None
+
+    ds = ogr.Open('tmp/test.gdb')
+    lyr = ds.GetLayerByName("srs_exact_4326")
+    if lyr.GetSpatialRef().ExportToWkt().find('4326') == -1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayerByName("srs_approx_4326")
+    if lyr.GetSpatialRef().ExportToWkt().find('4326') == -1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayerByName("srs_exact_2193")
+    if lyr.GetSpatialRef().ExportToWkt().find('2193') == -1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayerByName("srs_approx_2193")
+    if lyr.GetSpatialRef().ExportToWkt().find('2193') == -1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayerByName("srs_approx_4230")
+    if lyr.GetSpatialRef().ExportToWkt().find('4230') == -1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_fgdb_cleanup():
@@ -465,6 +568,7 @@ gdaltest_list = [
     ogr_fgdb_7,
     ogr_fgdb_8,
     ogr_fgdb_9,
+    ogr_fgdb_10,
     ogr_fgdb_cleanup,
     ]
 
