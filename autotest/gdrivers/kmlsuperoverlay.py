@@ -173,6 +173,74 @@ def kmlsuperoverlay_4():
     gdal.Unlink("/vsimem/kmlsuperoverlay_4.kmz")
 
     return 'success'
+ 
+###############################################################################
+# Test that a raster which crosses the anti-meridian will be able to be displayed correctly (#4528)
+
+def kmlsuperoverlay_5():
+
+    try:
+        from xml.etree import ElementTree
+    except:
+        return 'skip'
+
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="512" rasterYSize="512">
+  <SRS>PROJCS["WGS 84 / Mercator 41",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Mercator_1SP"],
+    PARAMETER["central_meridian",100],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",0],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AUTHORITY["EPSG","3994"]]
+</SRS>
+  <GeoTransform>  8.8060000000000000e+06,  3.4960937500000000e+02,  0.0000000000000000e+00, -3.6200000000000000e+06,  0.0000000000000000e+00, -3.5937500000000000e+02</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">data/utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="512" ySize="512" />
+      <DstRect xOff="0" yOff="0" xSize="512" ySize="512" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    ds = gdal.GetDriverByName('KMLSUPEROVERLAY').CreateCopy('tmp/tmp.kml', src_ds, options=['FIX_ANTIMERIDIAN=YES'])
+    ds = None
+    src_ds = None
+
+    files = [
+        'tmp/tmp.kml',
+        'tmp/0/0/0.kml',
+        'tmp/1/0/0.kml',
+        'tmp/1/0/1.kml',
+        'tmp/1/1/0.kml',
+        'tmp/1/1/1.kml',
+    ]
+
+    for file in files:
+        res = ElementTree.parse(file)
+        for tag in res.findall('.//{http://earth.google.com/kml/2.1}LatLonAltBox'):
+            east = tag.find('{http://earth.google.com/kml/2.1}east').text
+            west = tag.find('{http://earth.google.com/kml/2.1}west').text
+
+            if float(east) < float(west):
+                gdaltest.post_reason('East is less than west in LatLonAltBox %s, (%s < %s)' % (file, east, west))
+                return 'fail'
+
+    shutil.rmtree('tmp/0')
+    shutil.rmtree('tmp/1')
+    os.remove('tmp/tmp.kml')
+
+    return 'success'
 
 ###############################################################################
 # Cleanup
@@ -187,6 +255,7 @@ gdaltest_list = [
     kmlsuperoverlay_2,
     kmlsuperoverlay_3,
     kmlsuperoverlay_4,
+    kmlsuperoverlay_5,
     kmlsuperoverlay_cleanup ]
 
 if __name__ == '__main__':
