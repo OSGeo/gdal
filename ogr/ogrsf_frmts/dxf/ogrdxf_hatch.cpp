@@ -99,11 +99,12 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
 /* -------------------------------------------------------------------- */
     OGRErr eErr;
 
-    OGRGeometryH hFinalGeom = 
+    OGRGeometry* poFinalGeom = (OGRGeometry *)
         OGRBuildPolygonFromEdges( (OGRGeometryH) &oGC,
                                   TRUE, TRUE, 0.0000001, &eErr );
 
-    poFeature->SetGeometryDirectly( (OGRGeometry *) hFinalGeom );
+    ApplyOCSTransformer( poFinalGeom );
+    poFeature->SetGeometryDirectly( poFinalGeom );
 
 /* -------------------------------------------------------------------- */
 /*      Work out the color for this feature.  For now we just assume    */
