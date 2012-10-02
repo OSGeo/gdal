@@ -466,10 +466,13 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
     if( nCode == 0 )
         poDS->UnreadValue();
 
+    OGRPoint* poGeom;
     if( bHaveZ )
-        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
+        poGeom = new OGRPoint( dfX, dfY, dfZ );
     else
-        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
+        poGeom = new OGRPoint( dfX, dfY );
+    ApplyOCSTransformer( poGeom );
+    poFeature->SetGeometryDirectly( poGeom );
 
 /* -------------------------------------------------------------------- */
 /*      Apply text after stripping off any extra terminating newline.   */
@@ -624,10 +627,13 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
     if( nCode == 0 )
         poDS->UnreadValue();
 
+    OGRPoint* poGeom;
     if( bHaveZ )
-        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
+        poGeom = new OGRPoint( dfX, dfY, dfZ );
     else
-        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
+        poGeom = new OGRPoint( dfX, dfY );
+    ApplyOCSTransformer( poGeom );
+    poFeature->SetGeometryDirectly( poGeom );
 
 /* -------------------------------------------------------------------- */
 /*      Translate text from Win-1252 to UTF8.  We approximate this      */
@@ -764,10 +770,13 @@ OGRFeature *OGRDXFLayer::TranslatePOINT()
         }
     }
 
+    OGRPoint* poGeom;
     if( bHaveZ )
-        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
+        poGeom = new OGRPoint( dfX, dfY, dfZ );
     else
-        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
+        poGeom = new OGRPoint( dfX, dfY );
+    ApplyOCSTransformer( poGeom );
+    poFeature->SetGeometryDirectly( poGeom );
 
     if( nCode == 0 )
         poDS->UnreadValue();
@@ -849,6 +858,7 @@ OGRFeature *OGRDXFLayer::TranslateLINE()
         poLS->addPoint( dfX2, dfY2 );
     }
 
+    ApplyOCSTransformer( poLS );
     poFeature->SetGeometryDirectly( poLS );
 
     PrepareLineStyle( poFeature );
@@ -1142,6 +1152,7 @@ OGRFeature *OGRDXFLayer::TranslateCIRCLE()
     if( !bHaveZ )
         poCircle->flattenTo2D();
 
+    ApplyOCSTransformer( poCircle );
     poFeature->SetGeometryDirectly( poCircle );
     PrepareLineStyle( poFeature );
 
@@ -1250,6 +1261,7 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
     if( !bHaveZ )
         poEllipse->flattenTo2D();
 
+    ApplyOCSTransformer( poEllipse );
     poFeature->SetGeometryDirectly( poEllipse );
 
     PrepareLineStyle( poFeature );
@@ -1328,6 +1340,7 @@ OGRFeature *OGRDXFLayer::TranslateARC()
     if( !bHaveZ )
         poArc->flattenTo2D();
 
+    ApplyOCSTransformer( poArc );
     poFeature->SetGeometryDirectly( poArc );
 
     PrepareLineStyle( poFeature );
@@ -1431,6 +1444,7 @@ OGRFeature *OGRDXFLayer::TranslateSPLINE()
     for( i = 0; i < p1; i++ )
         poLS->setPoint( i, p[i*3+1], p[i*3+2] );
 
+    ApplyOCSTransformer( poLS );
     poFeature->SetGeometryDirectly( poLS );
 
     PrepareLineStyle( poFeature );
@@ -1565,6 +1579,7 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
 /* -------------------------------------------------------------------- */
     if( !poDS->InlineBlocks() )
     {
+        // ApplyOCSTransformer( poGeom ); ?
         poFeature->SetGeometryDirectly(
             new OGRPoint( oTransformer.dfXOffset, 
                           oTransformer.dfYOffset,
