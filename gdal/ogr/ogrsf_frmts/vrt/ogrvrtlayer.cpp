@@ -599,7 +599,7 @@ try_again:
 /*      Width and precision.                                            */
 /* -------------------------------------------------------------------- */
              int nWidth = atoi(CPLGetXMLValue( psChild, "width", "0" ));
-             if (nWidth < 0 || nWidth > 1024)
+             if (nWidth < 0)
              {
                 CPLError( CE_Failure, CPLE_IllegalArg,
                           "Invalid width for field %s.",
