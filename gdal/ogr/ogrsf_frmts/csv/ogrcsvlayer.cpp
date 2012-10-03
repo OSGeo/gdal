@@ -234,6 +234,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 
     bCreateCSVT = FALSE;
     bDontHonourStrings = FALSE;
+    bWriteBOM = FALSE;
 
     nTotalFeatures = -1;
 
@@ -876,6 +877,11 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
             }
         }
 
+        if (bWriteBOM && fpCSV)
+        {
+            VSIFWriteL("\xEF\xBB\xBF", 1, 3, fpCSV);
+        }
+
         if (eGeometryFormat == OGR_CSV_GEOM_AS_WKT)
         {
             if (fpCSV) VSIFPrintfL( fpCSV, "%s", "WKT");
@@ -1127,6 +1133,15 @@ void OGRCSVLayer::SetWriteGeometry(OGRCSVGeometryFormat eGeometryFormat)
 void OGRCSVLayer::SetCreateCSVT(int bCreateCSVT)
 {
     this->bCreateCSVT = bCreateCSVT;
+}
+
+/************************************************************************/
+/*                          SetWriteBOM()                               */
+/************************************************************************/
+
+void OGRCSVLayer::SetWriteBOM(int bWriteBOM)
+{
+    this->bWriteBOM = bWriteBOM;
 }
 
 /************************************************************************/

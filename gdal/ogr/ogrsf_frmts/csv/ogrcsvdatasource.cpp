@@ -590,6 +590,14 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
     if (pszCreateCSVT)
         papoLayers[nLayers-1]->SetCreateCSVT(CSLTestBoolean(pszCreateCSVT));
 
+/* -------------------------------------------------------------------- */
+/*      Should we write a UTF8 BOM ?                                    */
+/* -------------------------------------------------------------------- */
+
+    const char *pszWriteBOM = CSLFetchNameValue( papszOptions, "WRITE_BOM");
+    if (pszWriteBOM)
+        papoLayers[nLayers-1]->SetWriteBOM(CSLTestBoolean(pszWriteBOM));
+
     return papoLayers[nLayers-1];
 }
 

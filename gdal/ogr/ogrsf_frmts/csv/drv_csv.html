@@ -63,6 +63,12 @@ the first record is treated as a feature. Starting with GDAL 1.9.0
 numeric values are treated as field names if they are enclosed in double quotes. 
 </p>
 
+<p>All CSV files are treated as UTF-8 encoded. Starting with GDAL 1.9.0, a Byte
+Order Mark (BOM) at the beginning of the file will be parsed correctly. From 1.9.2,
+The option WRITE_BOM can be used to create a file with a Byte Order Mark, which can 
+improve compatibility with some software (particularly Excel).
+</p>
+
 Example (employee.csv):
 <pre>
 ID,Salary,Name,Comments
@@ -154,6 +160,7 @@ The geometry column(s) will be prepended to the columns with the attributes valu
 <li><b>CREATE_CSVT</b>=YES/NO (Starting with GDAL 1.7.0): Create the associated .csvt file (see above paragraph)
 to describe the type of each column of the layer and its optional width and precision. Default value : NO</li><p>
 <li><b>SEPARATOR</b>=COMMA/SEMICOLON/TAB (Starting with GDAL 1.7.0): Field separator character. Default value : COMMA</li><p>
+<li><b>WRITE_BOM</b>=YES/NO (Starting with GDAL >1.9.2): Write a UTF-8 Byte Order Mark (BOM) at the start of the file. Default value : NO</li><p>
 </ul>
 </p>
 
