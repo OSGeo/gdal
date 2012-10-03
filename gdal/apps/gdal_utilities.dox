@@ -1349,10 +1349,10 @@ generates directory with TMS tiles, KMLs and simple web viewers
 \section gdal2tiles_synopsis SYNOPSIS
 
 \verbatim
-gdal2tiles.py [-title "Title"] [-publishurl http://yourserver/dir/]
-              [-nogooglemaps] [-noopenlayers] [-nokml]
-              [-googlemapskey KEY] [-forcekml] [-v]
-              input_file [output_dir]
+gdal2tiles.py [-p profile] [-r resampling] [-s srs] [-z zoom]
+              [-e] [-a nodata] [-v] [-h] [-k] [-n] [-u url]
+              [-w webviewer] [-t title] [-c copyright]
+              [-g googlekey] [-b bingkey] input_file [output_dir]
 \endverbatim
 
 \section gdal2tiles_description DESCRIPTION
@@ -1415,8 +1415,9 @@ Options for generated HTML viewers a la Google Maps
   <dd>Copyright for the map.</dd>
 <dt> <b>-g</b> <i>GOOGLEKEY</i>, --googlekey=<i>GOOGLEKEY</i>:</dt>
   <dd>Google Maps API key from http://code.google.com/apis/maps/signup.html.</dd>
-<dt> <b>-y</b> <i>YAHOOKEY</i>, --yahookey=<i>YAHOOKEY</i>:</dt>
-  <dd>Yahoo Application ID from http://developer.yahoo.com/wsregapp/.</dd>
+<dt> <b>-b</b> <i>BINGKEY</i>, --bingkey=<i>BINGKEY</i>:</dt>
+  <dd>Bing Maps API key from https://www.bingmapsportal.com/</dd>
+
 </dl>
 
 
