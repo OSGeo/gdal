@@ -5,20 +5,20 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test OGR CSV driver functionality.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -43,7 +43,7 @@ def ogr_csv_1():
 
     gdaltest.csv_ds = None
     gdaltest.csv_ds = ogr.Open( 'data/prime_meridian.csv' )
-    
+
     if gdaltest.csv_ds is not None:
         return 'success'
     else:
@@ -261,7 +261,7 @@ def ogr_csv_9():
     lyr = gdaltest.csv_tmpds.GetLayer(0)
 
     expect = [ '8901', '8902', '8903', '8904', '7000' ]
-    
+
     tr = ogrtest.check_features_against_list( lyr,'PRIME_MERIDIAN_CODE',expect)
     if not tr:
         return 'fail'
@@ -272,13 +272,13 @@ def ogr_csv_9():
                'Institut Geographique National (IGN), Paris',
                'Instituto Geografico "Augustin Cadazzi" (IGAC); Bogota',
                'This is a newline test\n' ]
-    
+
     tr = ogrtest.check_features_against_list( lyr,'INFORMATION_SOURCE',expect)
     if not tr:
         return 'fail'
 
     lyr.ResetReading()
-    
+
     return 'success'
 
 ###############################################################################
@@ -729,7 +729,7 @@ def ogr_csv_17():
     if csv_lyr.GetLayerDefn().GetGeomType() != ogr.wkbUnknown:
         gdaltest.post_reason( 'did not get wktUnknown for geometry type.' )
         return 'fail'
-    
+
     feat = csv_lyr.GetNextFeature()
     if feat.GetField( 'WKT' ) != 'POLYGON((6.25 1.25,7.25 1.25,7.25 2.25,6.25 2.25,6.25 1.25))':
         gdaltest.post_reason( 'feature 1: expected wkt value' )
@@ -742,7 +742,7 @@ def ogr_csv_17():
 
     feat = csv_lyr.GetNextFeature()
     feat.Destroy()
-    
+
     feat = csv_lyr.GetNextFeature()
     if ogrtest.check_feature_geometry( feat, 'POLYGON((1.001 1.001,3.999 3.999,3.2 1.6,1.001 1.001))'):
         return 'fail'
@@ -910,7 +910,70 @@ def ogr_csv_21():
 
 
 ###############################################################################
-# 
+#
+# Test handling of UTF8 BOM (bug #4623)
+
+def ogr_csv_22():
+
+    ds = ogr.Open('data/csv_with_utf8_bom.csv')
+    lyr = ds.GetLayer(0)
+    fld0_name = lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef()
+
+    if fld0_name != 'id':
+        gdaltest.post_reason('bad field name')
+        print(fld0_name)
+        return 'fail'
+
+    return 'success'
+
+
+def ogr_csv_23():
+    # create a CSV file with UTF8 BOM
+    ds = ogr.Open('tmp/csvwrk', update=1)
+    lyr = ds.CreateLayer('utf8', options=['WRITE_BOM=YES', 'GEOMETRY=AS_WKT'])
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('bar', ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('foo', 123)
+    feat.SetField('bar', 'baz')
+    geom = ogr.CreateGeometryFromWkt('POINT(0 1)')
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+
+    feat = None
+    lyr = None
+    ds = None
+
+    data = open('tmp/csvwrk/utf8.csv', 'rb').read()
+    if data[:6] != '\xef\xbb\xbfWKT':
+        gdaltest.post_reason("No UTF8 BOM header on output")
+        return 'fail'
+
+    # create a CSV file without UTF8 BOM
+    ds = ogr.Open('tmp/csvwrk', update=1)
+    lyr = ds.CreateLayer('utf8no', options=['WRITE_BOM=YES', 'GEOMETRY=AS_WKT'])
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn('bar', ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('foo', 123)
+    feat.SetField('bar', 'baz')
+    geom = ogr.CreateGeometryFromWkt('POINT(0 1)')
+    feat.SetGeometry(geom)
+    lyr.CreateFeature(feat)
+
+    feat = None
+    lyr = None
+    ds = None
+
+    data = open('tmp/csvwrk/utf8no.csv', 'rb').read()
+    if data[:3] == '\xef\xbb\xbfWKT':
+        gdaltest.post_reason("Found UTF8 BOM header on output!")
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+#
 
 def ogr_csv_cleanup():
 
@@ -960,6 +1023,8 @@ gdaltest_list = [
     ogr_csv_19,
     ogr_csv_20,
     ogr_csv_21,
+    ogr_csv_22,
+    ogr_csv_23,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':
