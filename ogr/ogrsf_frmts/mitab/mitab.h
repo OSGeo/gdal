@@ -1894,6 +1894,7 @@ GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
 int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj);
 
 typedef struct {
+    int         nDatumEPSGCode;
     int         nMapInfoDatumID;
     const char  *pszOGCDatumName;
     int         nEllipsoid;
