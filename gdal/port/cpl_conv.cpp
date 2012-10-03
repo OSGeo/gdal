@@ -43,10 +43,20 @@ CPL_CVSID("$Id$");
 static void *hConfigMutex = NULL;
 static volatile char **papszConfigOptions = NULL;
 
+/* Used by CPLOpenShared() and friends */
 static void *hSharedFileMutex = NULL;
 static volatile int nSharedFileCount = 0;
 static volatile CPLSharedFileInfo *pasSharedFileList = NULL;
 
+/* Note: ideally this should be added in CPLSharedFileInfo* */
+/* but CPLSharedFileInfo is exposed in the API, hence that trick */
+/* to hide this detail */
+typedef struct
+{
+    GIntBig             nPID; // pid of opening thread
+} CPLSharedFileInfoExtra;
+
+static volatile CPLSharedFileInfoExtra *pasSharedFileListExtra = NULL;
 
 /************************************************************************/
 /*                             CPLCalloc()                              */
@@ -1978,6 +1988,7 @@ FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
     int i;
     int bReuse;
     CPLMutexHolderD( &hSharedFileMutex );
+    GIntBig nPID = CPLGetPID();
 
 /* -------------------------------------------------------------------- */
 /*      Is there an existing file we can use?                           */
@@ -1988,7 +1999,8 @@ FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
     {
         if( strcmp(pasSharedFileList[i].pszFilename,pszFilename) == 0 
             && !bLarge == !pasSharedFileList[i].bLarge
-            && EQUAL(pasSharedFileList[i].pszAccess,pszAccess) )
+            && EQUAL(pasSharedFileList[i].pszAccess,pszAccess)
+            && nPID == pasSharedFileListExtra[i].nPID)
         {
             pasSharedFileList[i].nRefCount++;
             return pasSharedFileList[i].fp;
@@ -2016,12 +2028,16 @@ FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
     pasSharedFileList = (CPLSharedFileInfo *)
         CPLRealloc( (void *) pasSharedFileList, 
                     sizeof(CPLSharedFileInfo) * nSharedFileCount );
+    pasSharedFileListExtra = (CPLSharedFileInfoExtra *)
+        CPLRealloc( (void *) pasSharedFileListExtra, 
+                    sizeof(CPLSharedFileInfoExtra) * nSharedFileCount );
 
     pasSharedFileList[nSharedFileCount-1].fp = fp;
     pasSharedFileList[nSharedFileCount-1].nRefCount = 1;
     pasSharedFileList[nSharedFileCount-1].bLarge = bLarge;
     pasSharedFileList[nSharedFileCount-1].pszFilename =CPLStrdup(pszFilename);
     pasSharedFileList[nSharedFileCount-1].pszAccess = CPLStrdup(pszAccess);
+    pasSharedFileListExtra[nSharedFileCount-1].nPID = nPID;
 
     return fp;
 }
@@ -2076,15 +2092,20 @@ void CPLCloseShared( FILE * fp )
     CPLFree( pasSharedFileList[i].pszFilename );
     CPLFree( pasSharedFileList[i].pszAccess );
 
-//    pasSharedFileList[i] = pasSharedFileList[--nSharedFileCount];
+    nSharedFileCount --;
     memmove( (void *) (pasSharedFileList + i), 
-             (void *) (pasSharedFileList + --nSharedFileCount), 
+             (void *) (pasSharedFileList + nSharedFileCount), 
              sizeof(CPLSharedFileInfo) );
+    memmove( (void *) (pasSharedFileListExtra + i), 
+             (void *) (pasSharedFileListExtra + nSharedFileCount), 
+             sizeof(CPLSharedFileInfoExtra) );
 
     if( nSharedFileCount == 0 )
     {
         CPLFree( (void *) pasSharedFileList );
         pasSharedFileList = NULL;
+        CPLFree( (void *) pasSharedFileListExtra );
+        pasSharedFileListExtra = NULL;
     }
 }
 
