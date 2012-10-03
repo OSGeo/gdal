@@ -76,7 +76,7 @@ Functions necessary for generation of global tiles used on the web.
 It contains classes implementing coordinate conversions for:
 
   - GlobalMercator (based on EPSG:900913 = EPSG:3785)
-       for Google Maps, Yahoo Maps, Microsoft Maps compatible tiles
+       for Google Maps, Yahoo Maps, Bing Maps compatible tiles
   - GlobalGeodetic (based on EPSG:4326)
        for OpenLayers Base Map and Google Earth compatible tiles
 
@@ -107,13 +107,13 @@ class GlobalMercator(object):
 	TMS Global Mercator Profile
 	---------------------------
 
-	Functions necessary for generation of tiles in Spherical Mercator projection,
-	EPSG:900913 (EPSG:gOOglE, Google Maps Global Mercator), EPSG:3785, OSGEO:41001.
+  Functions necessary for generation of tiles in Spherical Mercator projection,
+  EPSG:900913 (EPSG:gOOglE, Google Maps Global Mercator), EPSG:3785, OSGEO:41001.
 
-	Such tiles are compatible with Google Maps, Microsoft Virtual Earth, Yahoo Maps,
-	UK Ordnance Survey OpenSpace API, ...
-	and you can overlay them on top of base maps of those web mapping applications.
-	
+  Such tiles are compatible with Google Maps, Bing Maps, Yahoo Maps,
+  UK Ordnance Survey OpenSpace API, ...
+  and you can overlay them on top of base maps of those web mapping applications.
+  
 	Pixel and tile coordinates are in TMS notation (origin [0,0] in bottom-left).
 
 	What coordinate conversions do we need for TMS Global Mercator tiles::
@@ -676,25 +676,25 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 		g.add_option("-t", "--title", dest='title',
 						  help="Title of the map")
 		g.add_option("-c", "--copyright", dest='copyright',
-						  help="Copyright for the map")
-		g.add_option("-g", "--googlekey", dest='googlekey',
-						  help="Google Maps API key from http://code.google.com/apis/maps/signup.html")
-		g.add_option("-y", "--yahookey", dest='yahookey',
-						  help="Yahoo Application ID from http://developer.yahoo.com/wsregapp/")
-		p.add_option_group(g)
-		
-		# TODO: MapFile + TileIndexes per zoom level for efficient MapServer WMS
+              help="Copyright for the map")
+    g.add_option("-g", "--googlekey", dest='googlekey',
+              help="Google Maps API key from http://code.google.com/apis/maps/signup.html")
+    g.add_option("-b", "--bingkey", dest='bingkey',
+              help="Bing Maps API key from https://www.bingmapsportal.com/"),
+    p.add_option_group(g)
+    
+    # TODO: MapFile + TileIndexes per zoom level for efficient MapServer WMS
 		#g = OptionGroup(p, "WMS MapServer metadata", "Options for generated mapfile and tileindexes for MapServer")
 		#g.add_option("-i", "--tileindex", dest='wms', action="store_true"
 		#				  help="Generate tileindex and mapfile for MapServer (WMS)")
 		# p.add_option_group(g)
 
-		p.set_defaults(verbose=False, profile="mercator", kml=False, url='',
-		webviewer='all', copyright='', resampling='average', resume=False,
-		googlekey='INSERT_YOUR_KEY_HERE', yahookey='INSERT_YOUR_YAHOO_APP_ID_HERE')
+    p.set_defaults(verbose=False, profile="mercator", kml=False, url='',
+    webviewer='all', copyright='', resampling='average', resume=False,
+    googlekey='INSERT_YOUR_KEY_HERE', bingkey='INSERT_YOUR_KEY_HERE')
 
-		self.parser = p
-		
+    self.parser = p
+    
 	# -------------------------------------------------------------------------
 	def open_input(self):
 		"""Initialization of the input raster, reprojection if necessary"""
@@ -1664,14 +1664,14 @@ gdal2tiles temp.vrt""" % self.input )
 			        body { margin: 10px; background: #fff; }
 			        h1 { margin: 0; padding: 6px; border:0; font-size: 20pt; }
 			        #header { height: 43px; padding: 0; background-color: #eee; border: 1px solid #888; }
-			        #subheader { height: 12px; text-align: right; font-size: 10px; color: #555;}
-			        #map { height: 95%%; border: 1px solid #888; }
-			    </style>
-			    <script src='http://maps.google.com/maps?file=api&amp;v=2&amp;key=%(googlemapskey)s' type='text/javascript'></script>
-			    <script type="text/javascript">
-			    //<![CDATA[
+              #subheader { height: 12px; text-align: right; font-size: 10px; color: #555;}
+              #map { height: 95%%; border: 1px solid #888; }
+          </style>
+          <script src='http://maps.google.com/maps?file=api&amp;v=2&amp;key=%(googlemapskey)s'></script>
+          <script>
+          //<![CDATA[
 
-			    /*
+          /*
 			     * Constants for given map
 			     * TODO: read it from tilemapresource.xml
 			     */
@@ -1936,19 +1936,18 @@ gdal2tiles temp.vrt""" % self.input )
 	# -------------------------------------------------------------------------
 	def generate_openlayers( self ):
 		"""
-		Template for openlayers.html implementing overlay of available Spherical Mercator layers.
+    Template for openlayers.html implementing overlay of available Spherical Mercator layers.
 
-		It returns filled string. Expected variables:
-		title, googlemapskey, yahooappid, north, south, east, west, minzoom, maxzoom, tilesize, tileformat, publishurl
-		"""
+    It returns filled string. Expected variables:
+    title, bingkey, north, south, east, west, minzoom, maxzoom, tilesize, tileformat, publishurl
+    """
 
-		args = {}
-		args['title'] = self.options.title
-		args['googlemapskey'] = self.options.googlekey
-		args['yahooappid'] = self.options.yahookey
-		args['south'], args['west'], args['north'], args['east'] = self.swne
-		args['minzoom'] = self.tminz
-		args['maxzoom'] = self.tmaxz
+    args = {}
+    args['title'] = self.options.title
+    args['bingkey'] = self.options.bingkey
+    args['south'], args['west'], args['north'], args['east'] = self.swne
+    args['minzoom'] = self.tminz
+    args['maxzoom'] = self.tmaxz
 		args['tilesize'] = self.tilesize
 		args['tileformat'] = self.tileext
 		args['publishurl'] = self.options.url
@@ -1966,229 +1965,251 @@ gdal2tiles temp.vrt""" % self.input )
 		        html, body { overflow: hidden; padding: 0; height: 100%%; width: 100%%; font-family: 'Lucida Grande',Geneva,Arial,Verdana,sans-serif; }
 		        body { margin: 10px; background: #fff; }
 		        h1 { margin: 0; padding: 6px; border:0; font-size: 20pt; }
-		        #header { height: 43px; padding: 0; background-color: #eee; border: 1px solid #888; }
-		        #subheader { height: 12px; text-align: right; font-size: 10px; color: #555;}
-		        #map { height: 95%%; border: 1px solid #888; }
-		    </style>""" % args
-		
-		if self.options.profile == 'mercator':
-			s += """
-		    <script src='http://dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.1'></script>
-		    <script src='http://maps.google.com/maps?file=api&amp;v=2&amp;key=%(googlemapskey)s' type='text/javascript'></script>
-		    <script src="http://api.maps.yahoo.com/ajaxymap?v=3.0&amp;appid=%(yahooappid)s"></script>""" % args
+            #header { height: 43px; padding: 0; background-color: #eee; border: 1px solid #888; }
+            #subheader { height: 12px; text-align: right; font-size: 10px; color: #555;}
+            #map { height: 95%%; border: 1px solid #888; }
+            .olImageLoadError { display: none; }
+            .olControlLayerSwitcher .layersDiv { border-radius: 10px 0 0 10px; } 
+        </style>""" % args
+    
+    if self.options.profile == 'mercator':
+      s += """
+        <script src='http://maps.google.com/maps/api/js?sensor=false&v=3.7'></script>""" % args
 
-		s += """
-		    <script src="http://www.openlayers.org/api/2.7/OpenLayers.js" type="text/javascript"></script>
-		    <script type="text/javascript">
-		        var map;
-			    var mapBounds = new OpenLayers.Bounds( %(west)s, %(south)s, %(east)s, %(north)s);
-			    var mapMinZoom = %(minzoom)s;
-			    var mapMaxZoom = %(maxzoom)s;
+    s += """
+        <script src="http://www.openlayers.org/api/2.12/OpenLayers.js"></script>
+        <script>
+          var map;
+          var mapBounds = new OpenLayers.Bounds( %(west)s, %(south)s, %(east)s, %(north)s);
+          var mapMinZoom = %(minzoom)s;
+          var mapMaxZoom = %(maxzoom)s;
+          var emptyTileURL = "http://www.maptiler.org/img/none.png";
+          OpenLayers.IMAGE_RELOAD_ATTEMPTS = 3;
 
-		        // avoid pink tiles
-		        OpenLayers.IMAGE_RELOAD_ATTEMPTS = 3;
-		        OpenLayers.Util.onImageLoadErrorColor = "transparent";
+          function init(){""" % args
 
-		        function init(){""" % args
+    if self.options.profile == 'mercator':
+      s += """
+              var options = {
+                  div: "map",
+                  controls: [],
+                  projection: "EPSG:900913",
+                  displayProjection: new OpenLayers.Projection("EPSG:4326"),
+                  numZoomLevels: 20
+              };
+              map = new OpenLayers.Map(options);
 
-		if self.options.profile == 'mercator':
-			s += """
-	            var options = {
-	                controls: [],
-	                projection: new OpenLayers.Projection("EPSG:900913"),
-	                displayProjection: new OpenLayers.Projection("EPSG:4326"),
-	                units: "m",
-	                maxResolution: 156543.0339,
-	                maxExtent: new OpenLayers.Bounds(-20037508, -20037508, 20037508, 20037508.34)
-		            };
-	            map = new OpenLayers.Map('map', options);
+              // Create Google Mercator layers
+              var gmap = new OpenLayers.Layer.Google("Google Streets",
+              {
+                  type: google.maps.MapTypeId.ROADMAP,
+                  sphericalMercator: true
+              });
+              var gsat = new OpenLayers.Layer.Google("Google Satellite",
+              {
+                  type: google.maps.MapTypeId.SATELLITE,
+                  sphericalMercator: true
+              });
+              var ghyb = new OpenLayers.Layer.Google("Google Hybrid",
+              {
+                  type: google.maps.MapTypeId.HYBRID,
+                  sphericalMercator: true
+              });
+              var gter = new OpenLayers.Layer.Google("Google Terrain",
+              {
+                  type: google.maps.MapTypeId.TERRAIN,
+                  sphericalMercator: true
+              });
 
-	            // create Google Mercator layers
-	            var gmap = new OpenLayers.Layer.Google("Google Streets",
-					{ sphericalMercator: true, numZoomLevels: 20} );
-	            var gsat = new OpenLayers.Layer.Google("Google Satellite",
-					{type: G_SATELLITE_MAP, sphericalMercator: true, numZoomLevels: 20} );
-	            var ghyb = new OpenLayers.Layer.Google("Google Hybrid",
-					{type: G_HYBRID_MAP, sphericalMercator: true, numZoomLevels: 20});
-	            var gter = new OpenLayers.Layer.Google("Google Terrain",
-					{type: G_PHYSICAL_MAP, sphericalMercator: true, numZoomLevels: 20 });
+              // Create Bing layers
+              var broad = new OpenLayers.Layer.Bing({
+                  name: "Bing Roads",
+                  key: "%(bingkey)s",
+                  type: "Road",
+                  sphericalMercator: true
+              });
+              var baer = new OpenLayers.Layer.Bing({
+                  name: "Bing Aerial",
+                  key: "%(bingkey)s",
+                  type: "Aerial",
+                  sphericalMercator: true
+              });
+              var bhyb = new OpenLayers.Layer.Bing({
+                  name: "Bing Hybrid",
+                  key: "%(bingkey)s",
+                  type: "AerialWithLabels",
+                  sphericalMercator: true
+              });
 
-	            // create Virtual Earth layers
-				OpenLayers.Layer.VirtualEarth.prototype.MAX_ZOOM_LEVEL=19;
-				OpenLayers.Layer.VirtualEarth.prototype.RESOLUTIONS=OpenLayers.Layer.Google.prototype.RESOLUTIONS
-	            var veroad = new OpenLayers.Layer.VirtualEarth("Virtual Earth Roads",
-					{'type': VEMapStyle.Road, 'sphericalMercator': true, numZoomLevels: 20});
-	            var veaer = new OpenLayers.Layer.VirtualEarth("Virtual Earth Aerial",
-					{'type': VEMapStyle.Aerial, 'sphericalMercator': true, numZoomLevels: 20 });
-	            var vehyb = new OpenLayers.Layer.VirtualEarth("Virtual Earth Hybrid",
-	                {'type': VEMapStyle.Hybrid, 'sphericalMercator': true});
+              // Create OSM layer
+              var osm = new OpenLayers.Layer.OSM("OpenStreetMap");
 
-	            // create Yahoo layer
-	            var yahoo = new OpenLayers.Layer.Yahoo("Yahoo Street",
-	                {'sphericalMercator': true});
-	            var yahoosat = new OpenLayers.Layer.Yahoo("Yahoo Satellite",
-	                {'type': YAHOO_MAP_SAT, 'sphericalMercator': true});
-	            var yahoohyb = new OpenLayers.Layer.Yahoo("Yahoo Hybrid",
-	                {'type': YAHOO_MAP_HYB, 'sphericalMercator': true});
+              // create TMS Overlay layer
+               var tmsoverlay = new OpenLayers.Layer.TMS("TMS Overlay", "",
+              {
+                  serviceVersion: '.',
+                  layername: '.',
+                  alpha: true,
+                  type: '%(tileformat)s',
+                  isBaseLayer: false,
+                  getURL: getURL
+              });
+              if (OpenLayers.Util.alphaHack() == false) {
+                  tmsoverlay.setOpacity(0.7);
+              }
 
-	            // create OSM/OAM layer
-	            var osm = new OpenLayers.Layer.TMS( "OpenStreetMap",
-	                "http://tile.openstreetmap.org/",
-	                { type: 'png', getURL: osm_getTileURL, displayOutsideMaxExtent: true, attribution: '<a href="http://www.openstreetmap.org/">OpenStreetMap</a>'} );
-	            var oam = new OpenLayers.Layer.TMS( "OpenAerialMap",
-	                "http://tile.openaerialmap.org/tiles/1.0.0/openaerialmap-900913/",
-	                { type: 'png', getURL: osm_getTileURL } );
+              map.addLayers([gmap, gsat, ghyb, gter,
+                             broad, baer, bhyb,
+                             osm, tmsoverlay]);
 
-	            // create TMS Overlay layer
-	            var tmsoverlay = new OpenLayers.Layer.TMS( "TMS Overlay", "",
-	                {   // url: '', serviceVersion: '.', layername: '.',
-						type: 'png', getURL: overlay_getTileURL, alpha: true, 
-						isBaseLayer: false
-	                });
-				if (OpenLayers.Util.alphaHack() == false) { tmsoverlay.setOpacity(0.7); }
+              var switcherControl = new OpenLayers.Control.LayerSwitcher();
+              map.addControl(switcherControl);
+              switcherControl.maximizeControl();
 
-	            map.addLayers([gmap, gsat, ghyb, gter, veroad, veaer, vehyb,
-	                           yahoo, yahoosat, yahoohyb, osm, oam,
-	                           tmsoverlay]);
+              map.zoomToExtent(mapBounds.transform(map.displayProjection, map.projection));
+      """ % args
+  
+    elif self.options.profile == 'geodetic':
+      s += """
+              var options = {
+                  div: "map",
+                  controls: [],
+                  projection: "EPSG:4326"
+              };
+              map = new OpenLayers.Map(options);
+      
+              var wms = new OpenLayers.Layer.WMS("VMap0",
+                  "http://labs.metacarta.com/wms-c/Basic.py?",
+                  {
+                      layers: 'basic',
+                      format: 'image/png'
+                  }
+              );  
+              var tmsoverlay = new OpenLayers.Layer.TMS("TMS Overlay", "",
+              {
+                  serviceVersion: '.',
+                  layername: '.',
+                  alpha: true,
+                  type: '%(tileformat)s',
+                  isBaseLayer: false,
+                  getURL: getURL
+              });
+              if (OpenLayers.Util.alphaHack() == false) {
+                  tmsoverlay.setOpacity(0.7);
+              }
 
-	            var switcherControl = new OpenLayers.Control.LayerSwitcher();
-	            map.addControl(switcherControl);
-	            switcherControl.maximizeControl();
-	
-	            map.zoomToExtent( mapBounds.transform(map.displayProjection, map.projection ) );
-			""" % args
-	
-		elif self.options.profile == 'geodetic':
-			s += """
-	            var options = {
-	                controls: [],
-		            projection: new OpenLayers.Projection("EPSG:4326"),
-		            maxResolution: 0.703125,
-		            maxExtent: new OpenLayers.Bounds(-180, -90, 180, 90)
-		            };
-	            map = new OpenLayers.Map('map', options);
+              map.addLayers([wms,tmsoverlay]);
 
-	            layer = new OpenLayers.Layer.WMS( "Blue Marble",
-	                    "http://labs.metacarta.com/wms-c/Basic.py?", {layers: 'satellite' } );
-	            map.addLayer(layer);
-	            wms = new OpenLayers.Layer.WMS( "VMap0",
-	                    "http://labs.metacarta.com/wms-c/Basic.py?", {layers: 'basic', format: 'image/png' } );
-	            map.addLayer(wms);
-				
-	            var tmsoverlay = new OpenLayers.Layer.TMS( "TMS Overlay", "",
-	                {
-	                    serviceVersion: '.', layername: '.', alpha: true,
-						type: 'png', getURL: overlay_getTileURL,
-						isBaseLayer: false
-	                });
-	            map.addLayer(tmsoverlay);
-				if (OpenLayers.Util.alphaHack() == false) { tmsoverlay.setOpacity(0.7); }
+              var switcherControl = new OpenLayers.Control.LayerSwitcher();
+              map.addControl(switcherControl);
+              switcherControl.maximizeControl();
 
-	            var switcherControl = new OpenLayers.Control.LayerSwitcher();
-	            map.addControl(switcherControl);
-	            switcherControl.maximizeControl();
-
-	            map.zoomToExtent( mapBounds );
-			"""
-			
-		elif self.options.profile == 'raster':
-			s += """
-	            var options = {
-	                controls: [],
-		            maxExtent: new OpenLayers.Bounds(  %(west)s, %(south)s, %(east)s, %(north)s ),
-		            maxResolution: %(rastermaxresolution)f,
-		            numZoomLevels: %(rasterzoomlevels)d
-		            };
-	            map = new OpenLayers.Map('map', options);
-	
-		        var layer = new OpenLayers.Layer.TMS( "TMS Layer","",
-		            {  url: '', serviceVersion: '.', layername: '.', alpha: true,
-						type: 'png', getURL: overlay_getTileURL 
-					});
-		        map.addLayer(layer);
-				map.zoomToExtent( mapBounds );	
-		""" % args
+              map.zoomToExtent(mapBounds);
+       """ % args
+      
+    elif self.options.profile == 'raster':
+      s += """
+              var options = {
+                  div: "map",
+                  controls: [],
+                  maxExtent: new OpenLayers.Bounds(%(west)s, %(south)s, %(east)s, %(north)s),
+                  maxResolution: %(rastermaxresolution)f,
+                  numZoomLevels: %(rasterzoomlevels)d
+              };
+              map = new OpenLayers.Map(options);
+  
+              var layer = new OpenLayers.Layer.TMS("TMS Layer", "",
+              {
+                  serviceVersion: '.',
+                  layername: '.',
+                  alpha: true,
+                  type: '%(tileformat)s',
+                  getURL: getURL
+              });
+            
+              map.addLayer(layer);
+              map.zoomToExtent(mapBounds);  
+    """ % args
 
 
-		s += """
-	            map.addControl(new OpenLayers.Control.PanZoomBar());
-	            map.addControl(new OpenLayers.Control.MousePosition());
-	            map.addControl(new OpenLayers.Control.MouseDefaults());
-	            map.addControl(new OpenLayers.Control.KeyboardDefaults());
-	        }
-			""" % args
-		
-		if self.options.profile == 'mercator':
-			s += """
-	        function osm_getTileURL(bounds) {
-	            var res = this.map.getResolution();
-	            var x = Math.round((bounds.left - this.maxExtent.left) / (res * this.tileSize.w));
-	            var y = Math.round((this.maxExtent.top - bounds.top) / (res * this.tileSize.h));
-	            var z = this.map.getZoom();
-	            var limit = Math.pow(2, z);
+    s += """
+              map.addControls([new OpenLayers.Control.PanZoomBar(),
+                               new OpenLayers.Control.Navigation(),
+                               new OpenLayers.Control.MousePosition(),
+                               new OpenLayers.Control.ArgParser(),
+                               new OpenLayers.Control.Attribution()]);
+          }
+      """ % args
+    
+    if self.options.profile == 'mercator':
+      s += """
+          function getURL(bounds) {
+              bounds = this.adjustBounds(bounds);
+              var res = this.getServerResolution();
+              var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
+              var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
+              var z = this.getServerZoom();
+              if (this.map.baseLayer.CLASS_NAME === 'OpenLayers.Layer.Bing') {
+                  z+=1;
+              }
+              var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type; 
+              var url = this.url;
+              if (OpenLayers.Util.isArray(url)) {
+                  url = this.selectUrl(path, url);
+              }
+              if (mapBounds.intersectsBounds(bounds) && (z >= mapMinZoom) && (z <= mapMaxZoom)) {
+                  return url + path;
+              } else {
+                  return emptyTileURL;
+              }
+          } 
+      """ % args
 
-	            if (y < 0 || y >= limit) {
-	                return "http://www.maptiler.org/img/none.png";
-	            } else {
-	                x = ((x %% limit) + limit) %% limit;
-	                return this.url + z + "/" + x + "/" + y + "." + this.type;
-	            }
-	        }
-	
-	        function overlay_getTileURL(bounds) {
-	            var res = this.map.getResolution();
-	            var x = Math.round((bounds.left - this.maxExtent.left) / (res * this.tileSize.w));
-	            var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
-	            var z = this.map.getZoom();
-	            if (this.map.baseLayer.name == 'Virtual Earth Roads' || this.map.baseLayer.name == 'Virtual Earth Aerial' || this.map.baseLayer.name == 'Virtual Earth Hybrid') {
-	               z = z + 1;
-	            }
-		        if (mapBounds.intersectsBounds( bounds ) && z >= mapMinZoom && z <= mapMaxZoom ) {
-	               //console.log( this.url + z + "/" + x + "/" + y + "." + this.type);
-	               return this.url + z + "/" + x + "/" + y + "." + this.type;
-                } else {
-                   return "http://www.maptiler.org/img/none.png";
-                }
-	        }		
-			""" % args
-			
-		elif self.options.profile == 'geodetic':
-			s += """
-	        function overlay_getTileURL(bounds) {
-				bounds = this.adjustBounds(bounds);
-	            var res = this.map.getResolution();
-	            var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
-	            var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
-	            var z = this.map.getZoom();
-				var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type;
-				var url = this.url;
-		        if (mapBounds.intersectsBounds( bounds ) && z >= mapMinZoom && z <= mapMaxZoom) {
-	               // console.log( this.url + z + "/" + x + "/" + y + "." + this.type);
-	               return this.url + z + "/" + x + "/" + y + "." + this.type;
-                } else {
-                   return "http://www.maptiler.org/img/none.png";
-                }
-	        }
-			""" % args
-			
-		elif self.options.profile == 'raster':
-			s += """
-	        function overlay_getTileURL(bounds) {
-	            var res = this.map.getResolution();
-	            var x = Math.round((bounds.left - this.maxExtent.left) / (res * this.tileSize.w));
-	            var y = Math.round((bounds.bottom - this.maxExtent.bottom) / (res * this.tileSize.h));
-	            var z = this.map.getZoom();
-				if (x >= 0 && y >= 0) {
-		            return this.url + z + "/" + x + "/" + y + "." + this.type;				
-				} else {
-	                return "http://www.maptiler.org/img/none.png";
-				}
-			}
-			""" % args
-		
-		s += """
-		   function getWindowHeight() {
-		        if (self.innerHeight) return self.innerHeight;
+    elif self.options.profile == 'geodetic':
+      s += """
+          function getURL(bounds) {
+              bounds = this.adjustBounds(bounds);
+              var res = this.getServerResolution();
+              var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
+              var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
+              var z = this.getServerZoom()-1;
+              var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type; 
+              var url = this.url;
+              if (OpenLayers.Util.isArray(url)) {
+                  url = this.selectUrl(path, url);
+              }
+              if (mapBounds.intersectsBounds(bounds) && (z >= mapMinZoom) && (z <= mapMaxZoom)) {
+                  return url + path;
+              } else {
+                  return emptyTileURL;
+              }
+          }
+      """ % args
+
+    elif self.options.profile == 'raster':
+      s += """
+          function getURL(bounds) {
+              bounds = this.adjustBounds(bounds);
+              var res = this.getServerResolution();
+              var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
+              var y = Math.round((bounds.bottom - this.tileOrigin.lat) / (res * this.tileSize.h));
+              var z = this.getServerZoom();
+              var path = this.serviceVersion + "/" + this.layername + "/" + z + "/" + x + "/" + y + "." + this.type; 
+              var url = this.url;
+              if (OpenLayers.Util.isArray(url)) {
+                  url = this.selectUrl(path, url);
+              }
+              if (mapBounds.intersectsBounds(bounds) && (z >= mapMinZoom) && (z <= mapMaxZoom)) {
+                  return url + path;
+              } else {
+                  return emptyTileURL;
+              }
+          }
+      """ % args
+            
+    s += """
+       function getWindowHeight() {
+            if (self.innerHeight) return self.innerHeight;
 		        if (document.documentElement && document.documentElement.clientHeight)
 		            return document.documentElement.clientHeight;
 		        if (document.body) return document.body.clientHeight;
