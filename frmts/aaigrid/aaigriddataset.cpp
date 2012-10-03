@@ -1052,14 +1052,14 @@ GDALDataset * AAIGDataset::CreateCopy(
 /*     Builds the format string used for printing float values.         */
 /* -------------------------------------------------------------------- */
     char szFormatFloat[32];
-    strcpy(szFormatFloat, " %6.20g");
+    strcpy(szFormatFloat, " %.20g");
     const char *pszDecimalPrecision = 
         CSLFetchNameValue( papszOptions, "DECIMAL_PRECISION" );
     if (pszDecimalPrecision)
     {
         int nDecimal = atoi(pszDecimalPrecision);
         if (nDecimal >= 0)
-            sprintf(szFormatFloat, " %%.%df", nDecimal);
+            sprintf(szFormatFloat, " %%.%dg", nDecimal);
     }
 
 /* -------------------------------------------------------------------- */
