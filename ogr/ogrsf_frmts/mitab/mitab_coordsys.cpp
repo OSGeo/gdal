@@ -1146,6 +1146,15 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
     double      adfDatumParm[8] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
     int         nEllipsoid=0;
     
+    int nDatumEPSGCode = -1;
+    const char *pszDatumAuthority = poSR->GetAuthorityName("DATUM");
+    const char *pszDatumCode = poSR->GetAuthorityCode("DATUM");
+    
+    if (pszDatumCode && pszDatumAuthority && EQUAL(pszDatumAuthority, "EPSG"))
+    {
+    	nDatumEPSGCode = atoi(pszDatumCode);
+    }
+    
     const char *pszWKTDatum = poSR->GetAttrValue("DATUM");
 
     if( pszWKTDatum == NULL )
@@ -1203,8 +1212,9 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
     }
     
     /*-----------------------------------------------------------------
-     * We have a "real" datum name.  Try to look it up and get the
-     * parameters.  If we don't find it just use WGS84.
+     * We have a "real" datum name, and possibly an EPSG code for the
+     * datum.  Try to look it up (using EPSG code first) and get the
+     * parameters.  If we don't find it with either just use WGS84.
      *----------------------------------------------------------------*/
     else 
     {
@@ -1212,7 +1222,8 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
 
         for( i = 0; asDatumInfoList[i].nMapInfoDatumID != -1; i++ )
         {
-            if( EQUAL(pszWKTDatum,asDatumInfoList[i].pszOGCDatumName) )
+        	if ( (nDatumEPSGCode > 0 && asDatumInfoList[i].nDatumEPSGCode == nDatumEPSGCode) ||
+        		   EQUAL(pszWKTDatum,asDatumInfoList[i].pszOGCDatumName) )
             {
                 nDatum = asDatumInfoList[i].nMapInfoDatumID;
                 break;
@@ -1222,7 +1233,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         if( nDatum == 0 )
             nDatum = 104; /* WGS84 */
     }
-
+    
     /*-----------------------------------------------------------------
      * Translate the units
      *----------------------------------------------------------------*/
