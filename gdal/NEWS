@@ -1,3 +1,151 @@
+= GDAL/OGR 1.9.2 Release Notes = 
+
+The 1.9.2 release is a bug fix release.
+
+== Core ==
+
+ * Fix infinite GDALOpen recursion with some VRTs (#4835)
+ * Avoid destroying existing overviews (.aux/.rrd) (#4831)
+ * Support recognising NaN better in CPLStrtod() (#4799)
+ * Fix windows declaration for CPLGetErrorHandlerUserData() (#4755)
+ * Fix compilation with Gentoo modified zlib 1.2.6 (#4723)
+ * Look for libgeotiff headers in /usr/include/libgeotiff too (#4706)
+ * Improve warning handling in CPLClearRecodeStubWarningFlags() (#4650)
+ * Fix Solaris compilation bug (#4705)
+ * MorphFromESRI(): compare SPHEROID/PRIMEM parms, not names (#4673)
+
+gdalwarp: 
+ * Do not drop chunks to process because of transform errors (#4795)
+ * geolocation transformer: ignore incoming pabSuccess values (#4794)
+
+gdaldem: 
+ * fix color relief output via CreateCopy (#4764)
+
+gdal_rasterize:
+ * Fix crash with -i and no features (#4744)
+
+Perl Bindings:
+ * Fix Geo::OGR::Geometry::Points method (#4833)
+
+Java Bindings: 
+ * Fix gdalconst.DMD_ and DCAP_ constants (#4828)
+ * Fix SWIG 2.0.6 compilation problem (#4669)
+
+== GDAL 1.9.2 ==
+
+KMLSuperOverlay Driver:
+ * Fix bad placing of tiles with large raster regions (#4834)
+
+BAG Driver: 
+ * Fix serious problems with tiled images (#4548)
+
+HDF4 Driver:
+ * Avoid using tile API for non-tile sized chunks (#4672)
+
+GeoPDF Driver: 
+ * Support Poppler 0.20 (#4668)
+
+VRT Driver:
+ * Fix integer overflow filling buffer larger than 2GB (#4815)
+
+GeoTIFF (GTiff) Driver:
+ * avoid crash on improperly formatted metadata (#4816)
+ * Fix factor_b/factor_c problem when initiatlizing from EPSG CSV (#4689)
+ * Avoid applying GEOGCS units to projected srs (#4677)
+
+NITF Driver: 
+ * Do not attempt to return large DESDATA as escaped text (#4803)
+ * Add code "TF" in NITF series table (#4776)
+
+RPFTOC Driver:
+ * Relax SanityCheckOK() to avoid rejecting valid CIB datasets (#4791)
+
+ECW Driver:
+ * Improve picking (one pixel reads) on large datasets (#4790)
+
+NetCDF Driver:
+ * Fix "km" support (#4769)
+ * fix use of freed memory in NCDFAddGDALHistory() (#4709)
+ * fetch SRS before metadata (#4691)
+
+BT Driver:  
+ * Fix support for 2G+ files (#4765)
+
+RMF Driver: 
+ * Fix zone number detection (#4766)
+
+Rasterlite Driver:
+ * Fix problem with creating internal overviews affecting other tables (#4737)
+
+GIF Driver:
+ * Add giflib 5.0 compatability (#4675)
+ * Add giflib 4.2.0 support (#4675)
+
+DTED Driver:
+ * update partial cell indicator (#4687)
+
+GRIB Driver:
+ * Avoid caching more than 100MB (#4682)
+
+== OGR 1.9.2 ==
+
+Shapefile Driver:
+ * Fix memory leak when ignoring geometry (#4749)
+ * Fix /vsizip EOF handling affecting zipped shapefiles (#4748)
+ * Fix handling of 8859xx in .cpg file (#4743)
+ * Remove assert if SetFeature() called with in valid FID (#4727)
+ * Try to support recoding of field names (#4650)
+ * OGRDataSource::CopyLayer(): take field renaming into account (#4667)
+
+SQLLite Driver:
+ * return empty layer when select returns zero rows (#4684) 
+
+FileGDB Driver:
+ * Add FGDB_BULK_LOAD configuration option for faster bulk loading (#4420)
+ * Fixes for tolerance and scale parameters in SRS (#4455)
+ * Use ESRI SRS DB to find WKT definition (#4455)
+
+DXF Driver:
+ * Take extrusion direction into account (#4842)
+ * Write HATCH in compatible way + misc improvements (#4680)
+ * Ignore spline frame control points for VERTEX of POLYLINE (#4683)
+
+GML Driver:
+ * Use Xerces parser for files encoded in ISO-8859-1n (#4829)
+ * fix MultiLineString typo in GML3 .XSD file (#4674)
+
+MSSQL Driver:
+ * Fix MSSQL Spatial / 3D issue (#4626, #4806)
+ * Fix multipoint geometry handling (#4781)
+
+ODBC Driver:
+ * Make SetAttributeFilter(NULL) work  (#4821)
+
+SDE Driver:
+ * Add support for CLOB and NLOB data types (#4801)
+
+JSON Driver:
+ * parse double values in locale insensitive way (#4814)
+
+CSV Driver:
+ * Allow creating a new .csv file in messed up case, support single column CSV files (#4824)
+ * Fix export of real values in non-C locale (#4761)
+
+WFS Driver:
+ * Fix problem with double quoted WFSLayerMetadata (#4796)
+
+Geomedia Driver:
+ * fix loading of boundary geometries that are 2.5D or multiring (#4734)
+
+MITAB Driver:
+ * Fix double free on Create failure (#4730)
+
+Arc/Info Binary Coverage (AVCBin Driver:
+ * Fix VAT read past EOF problem (#3031)
+
+Postgres/PostGIS Driver:
+ * optimize SRID fetching on PostGIS 2.0 using ST_SRID() (#4699, #4700)
+
 = GDAL/OGR 1.9.1 Release Notes = 
 
 The 1.9.1 release is a bug fix release. 
