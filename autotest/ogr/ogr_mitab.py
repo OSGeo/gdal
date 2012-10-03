@@ -6,20 +6,20 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  MapInfo driver testing.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -35,11 +35,12 @@ sys.path.append( '../pymod' )
 import gdaltest
 import ogrtest
 import ogr
+import osr
 import gdal
 import test_cli_utilities
 
 ###############################################################################
-# Create TAB file. 
+# Create TAB file.
 
 def ogr_mitab_1():
 
@@ -59,9 +60,14 @@ def ogr_mitab_2():
     if gdaltest.mapinfo_ds is None:
         return 'skip'
 
+    # This should convert to MapInfo datum name 'New_Zealand_GD49'
+    WEIRD_SRS = 'PROJCS["NZGD49 / UTM zone 59S",GEOGCS["NZGD49",DATUM["NZGD49",SPHEROID["International 1924",6378388,297,AUTHORITY["EPSG","7022"]],TOWGS84[59.47,-5.04,187.44,0.47,-0.1,1.024,-4.5993],AUTHORITY["EPSG","6272"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4272"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",171],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","27259"]]'
+    gdaltest.mapinfo_srs = osr.SpatialReference()
+    gdaltest.mapinfo_srs.ImportFromWkt(WEIRD_SRS)
+
     #######################################################
     # Create memory Layer
-    gdaltest.mapinfo_lyr = gdaltest.mapinfo_ds.CreateLayer( 'tpoly' )
+    gdaltest.mapinfo_lyr = gdaltest.mapinfo_ds.CreateLayer('tpoly', gdaltest.mapinfo_srs)
 
     #######################################################
     # Setup Schema
@@ -69,7 +75,7 @@ def ogr_mitab_2():
                                     [ ('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
                                       ('PRFEDEA', ogr.OFTString) ] )
-    
+
     #######################################################
     # Copy in poly.shp
 
@@ -78,10 +84,10 @@ def ogr_mitab_2():
     shp_ds = ogr.Open( 'data/poly.shp' )
     gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
-    
+
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
-    
+
     while feat is not None:
 
         gdaltest.poly_feat.append( feat )
@@ -92,13 +98,13 @@ def ogr_mitab_2():
         feat = shp_lyr.GetNextFeature()
 
     dst_feat.Destroy()
-        
+
     #######################################################
     # Close file.
 
     gdaltest.mapinfo_ds.Destroy()
     gdaltest.mapinfo_ds = None
-    
+
     return 'success'
 
 ###############################################################################
@@ -115,7 +121,7 @@ def ogr_mitab_3():
     gdaltest.mapinfo_lyr = gdaltest.mapinfo_ds.GetLayer(0)
 
     expect = [168, 169, 166, 158, 165]
-    
+
     gdaltest.mapinfo_lyr.SetAttributeFilter( 'eas_id < 170' )
     tr = ogrtest.check_features_against_list( gdaltest.mapinfo_lyr,
                                               'eas_id', expect )
@@ -163,16 +169,16 @@ def ogr_mitab_4():
         if ogrtest.check_feature_geometry( feat_read, 'POLYGON ((479750.688 4764702.000,479658.594 4764670.000,479640.094 4764721.000,479735.906 4764752.000,479750.688 4764702.000))', max_error = 0.02 ) != 0:
             tr = 0
         feat_read.Destroy()
-        
+
     gdaltest.mapinfo_ds.ReleaseResultSet( sql_lyr )
 
     if tr:
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
-# Test spatial filtering. 
+# Test spatial filtering.
 
 def ogr_mitab_5():
 
@@ -180,10 +186,10 @@ def ogr_mitab_5():
         return 'skip'
 
     gdaltest.mapinfo_lyr.SetAttributeFilter( None )
-    
+
     gdaltest.mapinfo_lyr.SetSpatialFilterRect( 479505, 4763195,
                                                480526, 4762819 )
-    
+
     tr = ogrtest.check_features_against_list( gdaltest.mapinfo_lyr, 'eas_id',
                                               [ 158 ] )
 
@@ -193,11 +199,28 @@ def ogr_mitab_5():
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
-# Create MIF file. 
+# Verify that Non-WGS84 datums are populated correctly
 
 def ogr_mitab_6():
+
+    if gdaltest.mapinfo_drv is None:
+        return 'skip'
+
+    srs = gdaltest.mapinfo_lyr.GetSpatialRef()
+    datum_name = srs.GetAttrValue('PROJCS|GEOGCS|DATUM')
+
+    if datum_name != "New_Zealand_GD49":
+        gdaltest.post_reason("Datum name does not match (expected 'New_Zealand_GD49', got '%s')" % datum_name)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Create MIF file.
+
+def ogr_mitab_7():
 
     gdaltest.mapinfo_ds.Destroy()
     gdaltest.mapinfo_ds = None
@@ -213,7 +236,7 @@ def ogr_mitab_6():
 ###############################################################################
 # Create table from data/poly.shp
 
-def ogr_mitab_7():
+def ogr_mitab_8():
 
     if gdaltest.mapinfo_ds is None:
         return 'skip'
@@ -228,7 +251,7 @@ def ogr_mitab_7():
                                     [ ('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
                                       ('PRFEDEA', ogr.OFTString) ] )
-    
+
     #######################################################
     # Copy in poly.shp
 
@@ -237,10 +260,10 @@ def ogr_mitab_7():
     shp_ds = ogr.Open( 'data/poly.shp' )
     gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
-    
+
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
-    
+
     while feat is not None:
 
         gdaltest.poly_feat.append( feat )
@@ -251,19 +274,19 @@ def ogr_mitab_7():
         feat = shp_lyr.GetNextFeature()
 
     dst_feat.Destroy()
-        
+
     #######################################################
     # Close file.
 
     gdaltest.mapinfo_ds.Destroy()
     gdaltest.mapinfo_ds = None
-    
+
     return 'success'
 
 ###############################################################################
 # Verify that stuff we just wrote is still OK.
 
-def ogr_mitab_8():
+def ogr_mitab_9():
     if gdaltest.mapinfo_drv is None:
         return 'skip'
 
@@ -271,7 +294,7 @@ def ogr_mitab_8():
     gdaltest.mapinfo_lyr = gdaltest.mapinfo_ds.GetLayer(0)
 
     expect = [168, 169, 166, 158, 165]
-    
+
     gdaltest.mapinfo_lyr.SetAttributeFilter( 'eas_id < 170' )
     tr = ogrtest.check_features_against_list( gdaltest.mapinfo_lyr,
                                               'eas_id', expect )
@@ -300,11 +323,11 @@ def ogr_mitab_8():
         return 'success'
     else:
         return 'fail'
-    
+
 ###############################################################################
 # Read mif file with 2 character .mid delimeter and verify operation.
 
-def ogr_mitab_9():
+def ogr_mitab_10():
     if gdaltest.mapinfo_drv is None:
         return 'skip'
 
@@ -316,11 +339,11 @@ def ogr_mitab_9():
     if feat.NAME != " S. 11th St.":
         gdaltest.post_reason( 'name attribute wrong.' )
         return 'fail'
-    
+
     if feat.FLOODZONE != 10:
         gdaltest.post_reason( 'FLOODZONE attribute wrong.' )
         return 'fail'
-    
+
     if ogrtest.check_feature_geometry(feat,
                                       'POLYGON ((407131.721 155322.441,407134.468 155329.616,407142.741 155327.242,407141.503 155322.467,407140.875 155320.049,407131.721 155322.441))',
                                       max_error = 0.000000001 ) != 0:
@@ -331,21 +354,21 @@ def ogr_mitab_9():
     if feat.OWNER != 'Guarino "Chucky" Sandra':
         gdaltest.post_reason( 'owner attribute wrong.' )
         return 'fail'
-    
+
     lyr = None
     ds.Destroy()
 
     return 'success'
-    
+
 ###############################################################################
 # Verify support for NTF datum with non-greenwich datum per
 #    http://trac.osgeo.org/gdal/ticket/1416
 #
 # This test also excercises srs reference counting as described in issue:
-#    http://trac.osgeo.org/gdal/ticket/1680 
+#    http://trac.osgeo.org/gdal/ticket/1680
 
-def ogr_mitab_10():
-    
+def ogr_mitab_11():
+
     if gdaltest.mapinfo_drv is None:
         return 'skip'
 
@@ -363,8 +386,8 @@ def ogr_mitab_10():
 ###############################################################################
 # Verify that a newly created mif layer returns a non null layer definition
 
-def ogr_mitab_11():
-    
+def ogr_mitab_12():
+
     if gdaltest.mapinfo_drv is None:
         return 'skip'
 
@@ -377,13 +400,13 @@ def ogr_mitab_11():
 
     ogrtest.quick_create_layer_def( lyr, [ ('AREA', ogr.OFTReal) ] )
 
-    ds.Destroy()    
+    ds.Destroy()
     return 'success'
 
 ###############################################################################
 # Verify that field widths and precisions are propogated correctly in TAB
 
-def ogr_mitab_12():
+def ogr_mitab_13():
 
     if gdaltest.mapinfo_drv is None:
         return 'skip'
@@ -425,7 +448,7 @@ def ogr_mitab_12():
             return 'fail'
 
     ds.Destroy()
-    
+
     ogr.GetDriverByName('MapInfo File').DeleteDataSource('tmp/testlyrdef.tab')
 
     return 'success'
@@ -433,7 +456,7 @@ def ogr_mitab_12():
 ###############################################################################
 # Verify that field widths and precisions are propogated correctly in MIF
 
-def ogr_mitab_13():
+def ogr_mitab_14():
 
     if gdaltest.mapinfo_drv is None:
         return 'skip'
@@ -481,7 +504,7 @@ def ogr_mitab_13():
     return 'success'
 
 ###############################################################################
-# 
+#
 
 def ogr_mitab_cleanup():
 
@@ -494,7 +517,7 @@ def ogr_mitab_cleanup():
 
     return 'success'
 
-gdaltest_list = [ 
+gdaltest_list = [
     ogr_mitab_1,
     ogr_mitab_2,
     ogr_mitab_3,
@@ -508,7 +531,9 @@ gdaltest_list = [
     ogr_mitab_11,
     ogr_mitab_12,
     ogr_mitab_13,
-    ogr_mitab_cleanup ]
+    ogr_mitab_14,
+    ogr_mitab_cleanup
+    ]
 
 if __name__ == '__main__':
 
