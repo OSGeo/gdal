@@ -1014,6 +1014,31 @@ def ogr_csv_24():
 
     return 'success'
 
+
+###############################################################################
+# Test newline handling (#4452)
+
+def ogr_csv_25():
+    ds = ogr.Open('tmp/csvwrk', update=1)
+    lyr = ds.CreateLayer('newlines', options=['LINEFORMAT=LF'])  # just in case tests are run on windows...
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('foo', 'windows newline:\r\nlinux newline:\nend of string:')
+    lyr.CreateFeature(feat)
+
+    feat = None
+    lyr = None
+    ds = None
+
+    EXPECTED = 'foo,\n"windows newline:\r\nlinux newline:\nend of string:"\n'
+
+    data = open('tmp/csvwrk/newlines.csv', 'rb').read()
+    if data != EXPECTED:
+        gdaltest.post_reason("Newlines changed:\n\texpected=%s\n\tgot=     %s" % (repr(EXPECTED), repr(data)))
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 #
 
@@ -1068,6 +1093,7 @@ gdaltest_list = [
     ogr_csv_22,
     ogr_csv_23,
     ogr_csv_24,
+    ogr_csv_25,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':
