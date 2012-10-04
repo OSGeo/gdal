@@ -1096,6 +1096,20 @@ OGRErr OGRSpatialReference::morphToESRI()
             poGeogCS->GetChild(0)->SetValue( "GCS_North_American_1983" );
             pszUTMPrefix = "NAD_1983";
         }
+        else if( nGCSCode == 4167
+                 || EQUAL(pszGeogCSName,"NZGD2000")
+                 || EQUAL(pszGeogCSName,"NZGD 2000") )
+        {
+            poGeogCS->GetChild(0)->SetValue( "GCS_NZGD_2000" );
+            pszUTMPrefix = "NZGD_2000";
+        }
+        else if( nGCSCode == 4272
+                 || EQUAL(pszGeogCSName,"NZGD49")
+                 || EQUAL(pszGeogCSName,"NZGD 49") )
+        {
+            poGeogCS->GetChild(0)->SetValue( "GCS_New_Zealand_1949" );
+            pszUTMPrefix = "NZGD_1949";
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Force Unnamed to Unknown for most common locations.             */
