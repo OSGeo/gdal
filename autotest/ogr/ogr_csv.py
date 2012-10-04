@@ -1039,6 +1039,39 @@ def ogr_csv_25():
 
     return 'success'
 
+
+###############################################################################
+# Test number padding behaviour (#4469)
+
+def ogr_csv_26():
+    ds = ogr.Open('tmp/csvwrk', update=1)
+    lyr = ds.CreateLayer('num_padding', options=['LINEFORMAT=LF'])  # just in case tests are run on windows...
+
+    field = ogr.FieldDefn('foo', ogr.OFTReal)
+    field.SetWidth(50)
+    field.SetPrecision(25)
+    lyr.CreateField(field)
+
+    feature = ogr.Feature(lyr.GetLayerDefn())
+    feature.SetField('foo', 10.5)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('foo', 10.5)
+    lyr.CreateFeature(feat)
+
+    feat = None
+    lyr = None
+    ds = None
+
+    EXPECTED = 'foo,\n10.5000000000000000000000000\n'
+
+    data = open('tmp/csvwrk/num_padding.csv', 'rb').read()
+    if data != EXPECTED:
+        gdaltest.post_reason("expected=%s got= %s" % (repr(EXPECTED), repr(data)))
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 #
 
@@ -1094,6 +1127,7 @@ gdaltest_list = [
     ogr_csv_23,
     ogr_csv_24,
     ogr_csv_25,
+    ogr_csv_26,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':
