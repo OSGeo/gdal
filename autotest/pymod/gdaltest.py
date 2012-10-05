@@ -1350,7 +1350,7 @@ def support_symlink():
 
 def skip_on_travis():
     val = gdal.GetConfigOption('TRAVIS', None)
-    if val == 'yes' or val == 'YES':
+    if val is not None:
         post_reason('Test skipped on Travis')
         return True
     return False
