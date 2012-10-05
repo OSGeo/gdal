@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 # 
@@ -1222,6 +1223,9 @@ def reregister_all_jpeg2000_drivers():
 
 def filesystem_supports_sparse_files(path):
 
+    if skip_on_travis():
+        return False
+
     try:
         (ret, err) = runexternal_out_and_err('stat -f -c "%T" ' + path)
     except:
@@ -1338,5 +1342,15 @@ def support_symlink():
     if sys.platform == 'darwin':
         return True
     if sys.platform.find('sunos') != -1:
+        return True
+    return False
+
+###############################################################################
+# Return True if the test must be skipped
+
+def skip_on_travis():
+    val = gdal.GetConfigOption('TRAVIS', None)
+    if val == 'yes' or val == 'YES':
+        post_reason('Test skipped on Travis')
         return True
     return False
