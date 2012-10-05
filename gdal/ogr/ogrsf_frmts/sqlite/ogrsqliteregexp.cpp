@@ -178,6 +178,10 @@ void* OGRSQLiteRegisterRegExpFunction(sqlite3* hDB)
     cache_entry *cache = (cache_entry*) CPLCalloc(CACHE_SIZE, sizeof(cache_entry));
     sqlite3_create_function(hDB, "REGEXP", 2, SQLITE_UTF8, cache,
                             OGRSQLiteREGEXPFunction, NULL, NULL);
+
+    /* To clear the error flag */
+    sqlite3_exec(hDB, "SELECT 1", NULL, NULL, NULL);
+
     return cache;
 #else // HAVE_PCRE
     return NULL;
