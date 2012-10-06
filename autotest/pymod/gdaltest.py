@@ -490,7 +490,7 @@ class GDALTest:
 
         if self.band > 0 and skip_preclose_test == 0:
             bnd = new_ds.GetRasterBand(self.band)
-            if check_checksum_not_null is not None:
+            if check_checksum_not_null is True:
                 if bnd.Checksum() == 0:
                     post_reason('Got null checksum on still-open file.')
                     return 'fail'
@@ -499,13 +499,14 @@ class GDALTest:
                     'Did not get expected checksum on still-open file.\n' \
                     '    Got %d instead of %d.' % (bnd.Checksum(),self.chksum))
                 return 'fail'
-            got_minmax = bnd.ComputeRasterMinMax()
-            if got_minmax != minmax and check_minmax:
-                post_reason( \
-                'Did not get expected min/max values on still-open file.\n' \
-                '    Got %g,%g instead of %g,%g.' \
-                % ( got_minmax[0], got_minmax[1], minmax[0], minmax[1] ) )
-                return 'fail'
+            if check_minmax:
+                got_minmax = bnd.ComputeRasterMinMax()
+                if got_minmax != minmax:
+                    post_reason( \
+                    'Did not get expected min/max values on still-open file.\n' \
+                    '    Got %g,%g instead of %g,%g.' \
+                    % ( got_minmax[0], got_minmax[1], minmax[0], minmax[1] ) )
+                    return 'fail'
 
         bnd = None
         new_ds = None
@@ -519,7 +520,7 @@ class GDALTest:
 
         if self.band > 0:
             bnd = new_ds.GetRasterBand(self.band)
-            if check_checksum_not_null is not None:
+            if check_checksum_not_null is True:
                 if bnd.Checksum() == 0:
                     post_reason('Got null checksum on reopened file.')
                     return 'fail'
@@ -528,14 +529,15 @@ class GDALTest:
                              '    Got %d instead of %d.' \
                              % (bnd.Checksum(), self.chksum) )
                 return 'fail'
-            
-            got_minmax = bnd.ComputeRasterMinMax()
-            if got_minmax != minmax and check_minmax:
-                post_reason( \
-                'Did not get expected min/max values on reopened file.\n' \
-                '    Got %g,%g instead of %g,%g.' \
-                % ( got_minmax[0], got_minmax[1], minmax[0], minmax[1] ) )
-                return 'fail'
+
+            if check_minmax:
+                got_minmax = bnd.ComputeRasterMinMax()
+                if got_minmax != minmax:
+                    post_reason( \
+                    'Did not get expected min/max values on reopened file.\n' \
+                    '    Got %g,%g instead of %g,%g.' \
+                    % ( got_minmax[0], got_minmax[1], minmax[0], minmax[1] ) )
+                    return 'fail'
 
         # Do we need to check the geotransform?
         if check_gt:

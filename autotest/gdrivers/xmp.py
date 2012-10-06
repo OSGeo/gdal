@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -61,6 +62,10 @@ class TestXMPRead:
 
         if self.filename == 'data/byte_with_xmp.jp2':
             gdaltest.deregister_all_jpeg2000_drivers_but(self.drivername)
+
+        # Travis libwebp likely doesn't support VP8X containers
+        if self.filename == 'data/rgbsmall_with_xmp.webp' and gdaltest.skip_on_travis():
+            return 'skip'
 
         ret = 'success'
         ds = gdal.Open(self.filename)
