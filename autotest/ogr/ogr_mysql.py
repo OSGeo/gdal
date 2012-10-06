@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -86,7 +87,7 @@ def ogr_mysql_2():
     ######################################################
     # Create Layer
     gdaltest.mysql_lyr = gdaltest.mysql_ds.CreateLayer( 'tpoly', srs = shp_lyr.GetSpatialRef(),
-                                                  options = [ 'DIM=3' ] )
+                                                  options = [ 'DIM=3', 'ENGINE=MyISAM' ] )
 
     ######################################################
     # Setup Schema
@@ -586,7 +587,7 @@ def ogr_mysql_20():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    layer = gdaltest.mysql_ds.CreateLayer('select')
+    layer = gdaltest.mysql_ds.CreateLayer('select', options = [ 'ENGINE=MyISAM' ] )
     ogrtest.quick_create_layer_def( layer,
                                     [ ('desc', ogr.OFTString) ,
                                       ('select', ogr.OFTString) ] )
@@ -615,7 +616,7 @@ def ogr_mysql_21():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    layer = gdaltest.mysql_ds.CreateLayer('tablewithspatialindex', geom_type = ogr.wkbPoint)
+    layer = gdaltest.mysql_ds.CreateLayer('tablewithspatialindex', geom_type = ogr.wkbPoint, options = [ 'ENGINE=MyISAM' ])
     ogrtest.quick_create_layer_def( layer, [ ('name', ogr.OFTString) ] )
     dst_feat = ogr.Feature( feature_def = layer.GetLayerDefn() )
     dst_feat.SetField( 'name', 'name' )
