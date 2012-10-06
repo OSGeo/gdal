@@ -93,65 +93,130 @@ char **VSIReadDir(const char *pszPath)
  *
  */
 
-char **VSIReadDirRecursive( const char *pszPath )
+typedef struct
+{
+    char **papszFiles;
+    int nCount;
+    int i;
+    char* pszPath;
+    char* pszDisplayedPath;
+}  VSIReadDirRecursiveTask;
+
+char **VSIReadDirRecursive( const char *pszPathIn )
 {
     CPLStringList oFiles = NULL;
-    char **papszFiles1 = NULL;
-    char **papszFiles2 = NULL;
+    char **papszFiles = NULL;
     VSIStatBufL psStatBuf;
     CPLString osTemp1, osTemp2;
-    int i, j;
-    int nCount1, nCount2;
+    int i = 0;
+    int nCount = -1;
 
-    // get listing
-    papszFiles1 = VSIReadDir( pszPath );
-    if ( ! papszFiles1 )
-        return NULL;
-    
-    // get files and directories inside listing
-    nCount1 = CSLCount( papszFiles1 );
-    for ( i = 0; i < nCount1; i++ )
+    std::vector<VSIReadDirRecursiveTask> aoStack;
+    char* pszPath = CPLStrdup(pszPathIn);
+    char* pszDisplayedPath = NULL;
+
+    while(TRUE)
     {
-        // build complete file name for stat
-        osTemp1.clear();
-        osTemp1.append( pszPath );
-        osTemp1.append( "/" );
-        osTemp1.append( papszFiles1[i] );
-
-        // if is file, add it
-        if ( VSIStatL( osTemp1.c_str(), &psStatBuf ) == 0 &&
-             VSI_ISREG( psStatBuf.st_mode ) )
+        if( nCount < 0 )
         {
-            oFiles.AddString( papszFiles1[i] );
+            // get listing
+            papszFiles = VSIReadDir( pszPath );
+
+            // get files and directories inside listing
+            nCount = papszFiles ? CSLCount( papszFiles ) : 0;
+            i = 0;
         }
-        else if ( VSIStatL( osTemp1.c_str(), &psStatBuf ) == 0 &&
-              VSI_ISDIR( psStatBuf.st_mode ) )
-        {
-            // add directory entry
-            osTemp2.clear();
-            osTemp2.append( papszFiles1[i] );
-            osTemp2.append( "/" );
-            oFiles.AddString( osTemp2.c_str() );
 
-            // recursively add files inside directory
-            papszFiles2 = VSIReadDirRecursive( osTemp1.c_str() );
-            if ( papszFiles2 )
+        for ( ; i < nCount; i++ )
+        {
+            // build complete file name for stat
+            osTemp1.clear();
+            osTemp1.append( pszPath );
+            osTemp1.append( "/" );
+            osTemp1.append( papszFiles[i] );
+
+            // if is file, add it
+            if ( VSIStatL( osTemp1.c_str(), &psStatBuf ) != 0 )
+                continue;
+
+            if( VSI_ISREG( psStatBuf.st_mode ) )
             {
-                nCount2 = CSLCount( papszFiles2 );
-                for ( j = 0; j < nCount2; j++ )
+                if( pszDisplayedPath )
                 {
-                    osTemp2.clear();
-                    osTemp2.append( papszFiles1[i] );
-                    osTemp2.append( "/" );
-                    osTemp2.append( papszFiles2[j] );
-                    oFiles.AddString( osTemp2.c_str() );
+                    osTemp1.clear();
+                    osTemp1.append( pszDisplayedPath );
+                    osTemp1.append( "/" );
+                    osTemp1.append( papszFiles[i] );
+                    oFiles.AddString( osTemp1 );
                 }
-                CSLDestroy( papszFiles2 );
+                else
+                    oFiles.AddString( papszFiles[i] );
+            }
+            else if ( VSI_ISDIR( psStatBuf.st_mode ) )
+            {
+                // add directory entry
+                osTemp2.clear();
+                if( pszDisplayedPath )
+                {
+                    osTemp2.append( pszDisplayedPath );
+                    osTemp2.append( "/" );
+                }
+                osTemp2.append( papszFiles[i] );
+                osTemp2.append( "/" );
+                oFiles.AddString( osTemp2.c_str() );
+
+                VSIReadDirRecursiveTask sTask;
+                sTask.papszFiles = papszFiles;
+                sTask.nCount = nCount;
+                sTask.i = i;
+                sTask.pszPath = CPLStrdup(pszPath);
+                sTask.pszDisplayedPath = pszDisplayedPath ? CPLStrdup(pszDisplayedPath) : NULL;
+                aoStack.push_back(sTask);
+
+                CPLFree(pszPath);
+                pszPath = CPLStrdup( osTemp1.c_str() );
+
+                char* pszDisplayedPathNew;
+                if( pszDisplayedPath )
+                    pszDisplayedPathNew = CPLStrdup( CPLSPrintf("%s/%s", pszDisplayedPath, papszFiles[i]) );
+                else
+                    pszDisplayedPathNew = CPLStrdup( papszFiles[i] );
+                CPLFree(pszDisplayedPath);
+                pszDisplayedPath = pszDisplayedPathNew;
+
+                i = 0;
+                papszFiles = NULL;
+                nCount = -1;
+
+                break;
             }
         }
+
+        if( nCount >= 0 )
+        {
+            CSLDestroy( papszFiles );
+
+            if( aoStack.size() )
+            {
+                int iLast = (int)aoStack.size() - 1;
+                CPLFree(pszPath);
+                CPLFree(pszDisplayedPath);
+                nCount = aoStack[iLast].nCount;
+                papszFiles = aoStack[iLast].papszFiles;
+                i = aoStack[iLast].i + 1;
+                pszPath = aoStack[iLast].pszPath;
+                pszDisplayedPath = aoStack[iLast].pszDisplayedPath;
+
+                aoStack.resize(iLast);
+            }
+            else
+                break;
+        }
     }
-    CSLDestroy( papszFiles1 );
-    
+
+    CPLFree(pszPath);
+    CPLFree(pszDisplayedPath);
+
     return oFiles.StealList();
 }
 
