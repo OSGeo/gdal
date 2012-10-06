@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -249,10 +250,17 @@ def vsizip_5():
 
     # make file in memory
     fmain = gdal.VSIFOpenL('/vsizip/vsimem/bigdepthzip.zip', 'wb')
+    if fmain is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     filename = "a"
     for i in range(1000):
         filename = filename + "/a"
     finside = gdal.VSIFOpenL('/vsizip/vsimem/bigdepthzip.zip/' + filename, 'wb')
+    if finside is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
     gdal.VSIFCloseL(finside)
     gdal.VSIFCloseL(fmain)
 
