@@ -644,7 +644,7 @@ def ogr_mysql_22():
         return 'skip'
 
     layer = gdaltest.mysql_ds.CreateLayer('tablewithoutspatialindex', geom_type = ogr.wkbPoint,
-                                          options = [ 'SPATIAL_INDEX=NO' ] )
+                                          options = [ 'SPATIAL_INDEX=NO', 'ENGINE=MyISAM' ] )
     ogrtest.quick_create_layer_def( layer, [ ('name', ogr.OFTString) ] )
     dst_feat = ogr.Feature( feature_def = layer.GetLayerDefn() )
     dst_feat.SetField( 'name', 'name' )
