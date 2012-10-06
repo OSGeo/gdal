@@ -153,7 +153,7 @@ namespace tut
         {
             ensure(CPLGetValueType(apszTestStrings[i].testString) == apszTestStrings[i].expectedResult);
             if (CPLGetValueType(apszTestStrings[i].testString) != apszTestStrings[i].expectedResult)
-                fprintf(stderr, "mismatch on item %d : value=\"%s\", expect_result=%d, result=%d\n", i,
+                fprintf(stderr, "mismatch on item %d : value=\"%s\", expect_result=%d, result=%d\n", (int)i,
                         apszTestStrings[i].testString, 
                         apszTestStrings[i].expectedResult,
                         CPLGetValueType(apszTestStrings[i].testString));
