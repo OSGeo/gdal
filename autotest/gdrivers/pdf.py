@@ -86,14 +86,16 @@ def pdf_checksum_available():
         pass
 
     if pdf_is_poppler():
-        return True
+        gdaltest.pdf_is_checksum_available = True
+        return gdaltest.pdf_is_checksum_available
 
-    (out, err) = gdaltest.runexternal_out_and_err("pdftoppm -q")
-    if out == '' and err == '':
+    (out, err) = gdaltest.runexternal_out_and_err("pdftoppm -v")
+    if err.find('pdftoppm version') == 0:
         gdaltest.pdf_is_checksum_available = True
         return gdaltest.pdf_is_checksum_available
     else:
         print('Cannot compute to checksum due to missing pdftoppm')
+        print(err)
         gdaltest.pdf_is_checksum_available = False
         return gdaltest.pdf_is_checksum_available
 
