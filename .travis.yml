@@ -1,0 +1,99 @@
+# This is the config file for building GDAL and running its autotest suite
+# with Travis-ci.org
+
+language: cpp
+
+# We use clang, --without-libtool and --with-poppler for faster build
+compiler:
+  - clang
+
+env:
+    OGR_PG_CONNECTION_STRING="dbname=autotest user=postgres"
+
+before_install:
+  - sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq postgis libpq-dev libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libogdi3.2-dev libmysqlclient-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev openjdk-7-jdk libepsilon-dev valgrind
+  - psql -c "drop database if exists autotest" -U postgres
+  - psql -c "create database autotest" -U postgres
+  - psql -c "create extension postgis" -d autotest -U postgres
+  - mysql -e "create database autotest;"
+  - mysql -e "GRANT ALL ON autotest.* TO 'root'@'localhost';" -u root
+  - mysql -e "GRANT ALL ON autotest.* TO 'travis'@'localhost';" -u root
+  - wget http://www.lizardtech.com/download/developer/MrSID_DSDK-8.5.0.3422-linux.x86.gcc44.tar.gz
+  - wget http://downloads.esri.com/Support/downloads/ao_/FileGDB_API_1_2-32.tar.gz
+  - wget http://even.rouault.free.fr/nonfree/install-libecwj2-ubuntu12.04-32bit.tar.gz
+  - wget http://even.rouault.free.fr/install-libkml-r864-32bit.tar.gz
+  - tar xzf MrSID_DSDK-8.5.0.3422-linux.x86.gcc44.tar.gz
+  - sudo cp -r MrSID_DSDK-8.5.0.3422-linux.x86.gcc44/Raster_DSDK/include/* /usr/local/include
+  - sudo cp -r MrSID_DSDK-8.5.0.3422-linux.x86.gcc44/Raster_DSDK/lib/* /usr/local/lib
+  - sudo cp -r MrSID_DSDK-8.5.0.3422-linux.x86.gcc44/Lidar_DSDK/include/* /usr/local/include
+  - sudo cp -r MrSID_DSDK-8.5.0.3422-linux.x86.gcc44/Lidar_DSDK/lib/* /usr/local/lib
+  - tar xzf FileGDB_API_1_2-32.tar.gz
+  - sudo cp -r FileGDB_API/include/* /usr/local/include
+  - sudo cp -r FileGDB_API/lib/* /usr/local/lib
+  - tar xzf install-libecwj2-ubuntu12.04-32bit.tar.gz
+  - sudo cp -r install-libecwj2/include/* /usr/local/include
+  - sudo cp -r install-libecwj2/lib/* /usr/local/lib
+  - tar xzf install-libkml-r864-32bit.tar.gz
+  - sudo cp -r install-libkml/include/* /usr/local/include
+  - sudo cp -r install-libkml/lib/* /usr/local/lib
+  - sudo ldconfig
+
+# installing PostGIS 2 from Ubuntu PPA draws libgdal1.9 dependency. We must install ourselves
+# in /usr too to avoid gdal version conflict. Might be fragile however
+# Do not use --with-jpeg12 since it conflicts with system libjpeg8 and causes crashes in tiff_ovr_43
+install:
+  - cd gdal
+  - ./configure --prefix=/usr --without-libtool --enable-debug --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml
+  - make -j3
+  - cd apps
+  - make test_ogrsf
+  - cd ..
+  - cd swig/java
+  - cat java.opt | sed "s/JAVA_HOME =.*/JAVA_HOME = \/usr\/lib\/jvm\/java-7-openjdk-i386\//" > java.opt.tmp
+  - mv java.opt.tmp java.opt
+  - make
+  - cd ../..
+  - cd swig/perl
+  - make generate
+  - make
+  - cd ../..
+  - sudo make install
+  - sudo ldconfig
+  - wget http://mdb-sqlite.googlecode.com/files/mdb-sqlite-1.0.2.tar.bz2
+  - tar xjvf mdb-sqlite-1.0.2.tar.bz2
+  - sudo cp mdb-sqlite-1.0.2/lib/*.jar /usr/lib/jvm/java-7-openjdk-i386/jre/lib/ext
+
+# When run in the same process after ogr_pgeo.py (with the MDB driver), FileGDB tests fail.
+# Run it in isolation
+script:
+  - cd swig/perl
+  - make test
+  - cd ../..
+  - cd swig/java
+  - make test
+  - cd ../..
+  - cd ../autotest
+  - mkdir -p ogr/tmp/cache/
+  - cd ogr/tmp/cache/
+  - wget http://download.osgeo.org/gdal/data/pgeo/PGeoTest.zip
+  - unzip PGeoTest.zip
+  - cd ../../..
+  - cd ogr
+  - python ogr_fgdb.py
+  - mkdir disabled
+  - mv ogr_fgdb.* disabled
+  - cd ..
+  - python run_all.py
+
+notifications:
+  email:
+    recipients:
+      - gdal-commits@lists.osgeo.org
+
+  irc:
+    channels:
+      - "irc.freenode.org#gdal"
+    use_notice: true
+
