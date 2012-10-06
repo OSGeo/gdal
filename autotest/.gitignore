@@ -1,0 +1,16 @@
+*.pyc
+ogr/tmp
+ogr/data/delete_nas.gfs
+ogr/data/replace_nas.gfs
+ogr/data/schema_with_geom_in_complextype.gfs
+ogr/data/bylany.vfk.db
+gcore/tmp
+gcore/data/byte.tif.gz.properties
+gdrivers/data/arg-float32.tif.aux.xml
+gdrivers/data/arg-float64.tif.aux.xml
+gdrivers/data/arg-int16-2.json
+gdrivers/data/arg-int16.arg.aux.xml
+gdrivers/data/byte.jp2.gz.properties
+gdrivers/data/utm.json
+gdrivers/tmp
+osr/tmp
