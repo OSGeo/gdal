@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -61,6 +62,42 @@ def pdf_init():
     return 'success'
 
 ###############################################################################
+# Returns True if we run with poppler
+
+def pdf_is_poppler():
+
+    md = gdaltest.pdf_drv.GetMetadata()
+    val = gdal.GetConfigOption("GDAL_PDF_LIB", "POPPLER")
+    if val == 'POPPLER' and 'HAVE_POPPLER' in md:
+        return True
+    else:
+        return False
+
+###############################################################################
+# Returns True if we can compute the checksum
+
+def pdf_checksum_available():
+
+    try:
+        ret = gdaltest.pdf_is_checksum_available
+        if ret is True or ret is False:
+            return ret
+    except:
+        pass
+
+    if pdf_is_poppler():
+        return True
+
+    (out, err) = gdaltest.runexternal_out_and_err("pdftoppm -q")
+    if out == '' and err == '':
+        gdaltest.pdf_is_checksum_available = True
+        return gdaltest.pdf_is_checksum_available
+    else:
+        print('Cannot compute to checksum due to missing pdftoppm')
+        gdaltest.pdf_is_checksum_available = False
+        return gdaltest.pdf_is_checksum_available
+
+###############################################################################
 # Test OGC best practice geospatial PDF
 
 def pdf_online_1():
@@ -102,10 +139,11 @@ def pdf_online_1():
         print(wkt)
         return 'fail'
 
-    cs = ds.GetRasterBand(1).Checksum()
-    if cs == 0:
-        gdaltest.post_reason('bad checksum')
-        return 'fail'
+    if pdf_checksum_available():
+        cs = ds.GetRasterBand(1).Checksum()
+        if cs == 0:
+            gdaltest.post_reason('bad checksum')
+            return 'fail'
 
     return 'success'
 
@@ -173,12 +211,13 @@ def pdf_1():
         print(wkt)
         return 'fail'
 
-    cs = ds.GetRasterBand(1).Checksum()
-    #if cs != 17740 and cs != 19346:
-    if cs == 0:
-        gdaltest.post_reason('bad checksum')
-        print(cs)
-        return 'fail'
+    if pdf_checksum_available():
+        cs = ds.GetRasterBand(1).Checksum()
+        #if cs != 17740 and cs != 19346:
+        if cs == 0:
+            gdaltest.post_reason('bad checksum')
+            print(cs)
+            return 'fail'
 
     neatline = ds.GetMetadataItem('NEATLINE')
     got_geom = ogr.CreateGeometryFromWkt(neatline)
@@ -200,7 +239,7 @@ def pdf_iso32000():
         return 'skip'
 
     tst = gdaltest.GDALTest( 'PDF', 'byte.tif', 1, None )
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = True)
+    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = pdf_checksum_available())
 
     return ret
 
@@ -213,7 +252,7 @@ def pdf_iso32000_dpi_300():
         return 'skip'
 
     tst = gdaltest.GDALTest( 'PDF', 'byte.tif', 1, None, options = ['DPI=300'] )
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = True)
+    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = pdf_checksum_available())
 
     return ret
 
@@ -227,7 +266,7 @@ def pdf_ogcbp():
 
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', 'FALSE')
     tst = gdaltest.GDALTest( 'PDF', 'byte.tif', 1, None, options = ['GEO_ENCODING=OGC_BP'] )
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = True)
+    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = pdf_checksum_available())
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', None)
 
     return ret
@@ -242,7 +281,7 @@ def pdf_ogcbp_dpi_300():
 
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', 'FALSE')
     tst = gdaltest.GDALTest( 'PDF', 'byte.tif', 1, None, options = ['GEO_ENCODING=OGC_BP', 'DPI=300'] )
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = True)
+    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = pdf_checksum_available())
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', None)
 
     return ret
@@ -302,7 +341,7 @@ def pdf_no_compression():
         return 'skip'
 
     tst = gdaltest.GDALTest( 'PDF', 'byte.tif', 1, None, options = ['COMPRESS=NONE'] )
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = True)
+    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
 
@@ -318,7 +357,7 @@ def pdf_jpeg_compression(filename = 'byte.tif'):
         return 'skip'
 
     tst = gdaltest.GDALTest( 'PDF', filename, 1, None, options = ['COMPRESS=JPEG'] )
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = True)
+    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
 
@@ -350,7 +389,7 @@ def pdf_jpx_compression(filename, drv_name = None):
         options = ['COMPRESS=JPEG2000', 'JPEG2000_DRIVER=%s' % drv_name]
 
     tst = gdaltest.GDALTest( 'PDF', filename, 1, None, options = options )
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = True)
+    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
 
@@ -381,6 +420,9 @@ def pdf_jpeg_compression_rgb():
 def pdf_rgba_default_compression():
 
     if gdaltest.pdf_drv is None:
+        return 'skip'
+
+    if not pdf_checksum_available():
         return 'skip'
 
     src_ds = gdal.Open( '../gcore/data/stefan_full_rgba.tif')
@@ -438,7 +480,7 @@ def pdf_predictor_2():
         return 'skip'
 
     tst = gdaltest.GDALTest( 'PDF', 'utm.tif', 1, None, options = ['PREDICTOR=2'] )
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = True)
+    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
 
@@ -448,7 +490,7 @@ def pdf_predictor_2_rgb():
         return 'skip'
 
     tst = gdaltest.GDALTest( 'PDF', 'rgbsmall.tif', 1, None, options = ['PREDICTOR=2'] )
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = True)
+    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
 
@@ -461,7 +503,7 @@ def pdf_tiled():
         return 'skip'
 
     tst = gdaltest.GDALTest( 'PDF', 'utm.tif', 1, None, options = ['COMPRES=DEFLATE', 'TILED=YES'] )
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = True)
+    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
 
@@ -471,7 +513,7 @@ def pdf_tiled_128():
         return 'skip'
 
     tst = gdaltest.GDALTest( 'PDF', 'utm.tif', 1, None, options = ['BLOCKXSIZE=128', 'BLOCKYSIZE=128'] )
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = True)
+    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
 
@@ -487,7 +529,7 @@ def pdf_color_table():
         return 'skip'
 
     tst = gdaltest.GDALTest( 'PDF', 'bug407.gif', 1, None )
-    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = True)
+    ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
 
@@ -578,6 +620,7 @@ def pdf_switch_underlying_lib():
     if 'HAVE_POPPLER' in md and 'HAVE_PODOFO' in md:
         gdal.SetConfigOption("GDAL_PDF_LIB", "PODOFO")
         print('Using podofo now')
+        gdaltest.pdf_is_checksum_available = None
     else:
         gdaltest.pdf_drv = None
 
@@ -1180,6 +1223,9 @@ def pdf_layers():
         print(layers)
         return 'fail'
 
+    if not pdf_checksum_available():
+        return 'skip'
+
     # Turn a layer off
     gdal.SetConfigOption('GDAL_PDF_LAYERS_OFF', 'New_Data_Frame')
     ds = gdal.Open('data/adobe_style_geospatial.pdf')
@@ -1239,17 +1285,19 @@ def pdf_custom_layout():
     ds = None
     src_ds = None
 
-    ds = gdal.Open('tmp/pdf_custom_layout.pdf')
-    ds.GetRasterBand(1).Checksum()
-    layers = ds.GetMetadata_List('LAYERS')
-    ds = None
+    if pdf_is_poppler():
+        ds = gdal.Open('tmp/pdf_custom_layout.pdf')
+        ds.GetRasterBand(1).Checksum()
+        layers = ds.GetMetadata_List('LAYERS')
+        ds = None
 
     gdal.Unlink('tmp/pdf_custom_layout.pdf')
 
-    if layers != ['LAYER_00_NAME=byte_tif', 'LAYER_01_NAME=Footpage_and_logo']:
-        gdaltest.post_reason('did not get expected layers')
-        print(layers)
-        return 'fail'
+    if pdf_is_poppler():
+        if layers != ['LAYER_00_NAME=byte_tif', 'LAYER_01_NAME=Footpage_and_logo']:
+            gdaltest.post_reason('did not get expected layers')
+            print(layers)
+            return 'fail'
 
     return 'success'
 
@@ -1295,10 +1343,11 @@ def pdf_write_ogr():
     ds = None
     src_ds = None
 
-    ds = gdal.Open('tmp/pdf_write_ogr.pdf')
-    ds.GetRasterBand(1).Checksum()
-    layers = ds.GetMetadata_List('LAYERS')
-    ds = None
+    if pdf_is_poppler():
+        ds = gdal.Open('tmp/pdf_write_ogr.pdf')
+        ds.GetRasterBand(1).Checksum()
+        layers = ds.GetMetadata_List('LAYERS')
+        ds = None
 
     ogr_ds = ogr.Open('tmp/pdf_write_ogr.pdf')
     ogr_lyr = ogr_ds.GetLayer(0)
@@ -1310,10 +1359,11 @@ def pdf_write_ogr():
     gdal.Unlink('/vsimem/test.csv')
     gdal.Unlink('/vsimem/test.vrt')
 
-    if layers != ['LAYER_00_NAME=A_Layer', 'LAYER_01_NAME=A_Layer.Text']:
-        gdaltest.post_reason('did not get expected layers')
-        print(layers)
-        return 'fail'
+    if pdf_is_poppler():
+        if layers != ['LAYER_00_NAME=A_Layer', 'LAYER_01_NAME=A_Layer.Text']:
+            gdaltest.post_reason('did not get expected layers')
+            print(layers)
+            return 'fail'
 
     # Should have filtered out id = 4
     if feature_count != 3:
@@ -1412,7 +1462,7 @@ def pdf_jpeg_direct_copy():
     if ds.RasterXSize != 20:
         gdaltest.post_reason('failed')
         return 'fail'
-    if ds.GetRasterBand(1).Checksum() == 0:
+    if pdf_checksum_available() and ds.GetRasterBand(1).Checksum() == 0:
         gdaltest.post_reason('failed')
         return 'fail'
     ds = None
@@ -1467,7 +1517,7 @@ def pdf_jpeg_in_vrt_direct_copy():
     if ds.RasterXSize != 20:
         gdaltest.post_reason('failed')
         return 'fail'
-    if ds.GetRasterBand(1).Checksum() == 0:
+    if pdf_checksum_available() and ds.GetRasterBand(1).Checksum() == 0:
         gdaltest.post_reason('failed')
         return 'fail'
     ds = None
@@ -1499,7 +1549,10 @@ def pdf_georef_on_image(src_filename = 'data/byte.tif'):
     out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_georef_on_image.pdf', src_ds, options = ['MARGIN=10', 'GEO_ENCODING=NONE'])
     out_ds = None
     gdal.SetConfigOption('GDAL_PDF_WRITE_GEOREF_ON_IMAGE', None)
-    src_cs = src_ds.GetRasterBand(1).Checksum()
+    if pdf_checksum_available():
+        src_cs = src_ds.GetRasterBand(1).Checksum()
+    else:
+        src_cs = 0
     src_ds = None
 
     ds = gdal.Open('tmp/pdf_georef_on_image.pdf')
@@ -1508,7 +1561,10 @@ def pdf_georef_on_image(src_filename = 'data/byte.tif'):
 
     ds = gdal.Open(subdataset_name)
     got_wkt = ds.GetProjectionRef()
-    got_cs = ds.GetRasterBand(1).Checksum()
+    if pdf_checksum_available():
+        got_cs = ds.GetRasterBand(1).Checksum()
+    else:
+        got_cs = 0
     ds = None
 
     gdal.Unlink('tmp/pdf_georef_on_image.pdf')
@@ -1517,7 +1573,7 @@ def pdf_georef_on_image(src_filename = 'data/byte.tif'):
         gdaltest.post_reason('did not get projection')
         return 'fail'
 
-    if src_cs != got_cs:
+    if pdf_checksum_available() and src_cs != got_cs:
         gdaltest.post_reason('did not get same checksum')
         print(src_cs)
         print(got_cs)
