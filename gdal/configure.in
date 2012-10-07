@@ -2880,6 +2880,12 @@ if test "$with_opencl" = "yes" ; then
 
   if test "x$with_opencl_include" = "x" ; then
     OPENCL_FLAGS=-DHAVE_OPENCL
+    if test -z "`uname | grep Darwin`" ; then
+        AC_CHECK_HEADERS([CL/opencl.h])
+        if test "$ac_cv_header_CL_opencl_h" = "no" ; then
+            AC_MSG_ERROR([cannot find CL/opencl.h])
+        fi
+    fi
   else
     OPENCL_FLAGS="-I$with_opencl_include -DHAVE_OPENCL"
   fi
@@ -2891,7 +2897,10 @@ if test "$with_opencl" = "yes" ; then
     if test ! -z "`uname | grep Darwin`" ; then
       OPENCL_LIB="-framework OpenCL"
     else
-      OPENCL_LIB=-lOpenCL
+      AC_CHECK_LIB(OpenCL,clGetPlatformIDs,OPENCL_LIB=-lOpenCL,OPENCL_LIB=missing)
+      if test "$OPENCL_LIB" = "missing"; then
+        AC_MSG_ERROR([--with-opencl requested, but libraries not found!])
+      fi
     fi
   else
     OPENCL_LIB="$with_opencl_lib"
