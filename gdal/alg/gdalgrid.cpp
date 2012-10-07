@@ -1251,10 +1251,14 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 /*  and use GDALCopyWords() to copy values into output data array with  */
 /*  appropriate data type conversion.                                   */
 /* -------------------------------------------------------------------- */
-    double      *padfValues = (double *)VSIMalloc( sizeof(double) * nXSize );
+    double      *padfValues = (double *)VSIMalloc2( sizeof(double), nXSize );
+    if( padfValues == NULL )
+        return CE_Failure;
+
     GByte       *pabyData = (GByte *)pData;
     int         nDataTypeSize = GDALGetDataTypeSize(eType) / 8;
     int         nLineSpace = nXSize * nDataTypeSize;
+    CPLErr      eErr = CE_None;
     
     for ( nYPoint = 0; nYPoint < nYSize; nYPoint++ )
     {
@@ -1272,7 +1276,8 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                           "Gridding failed at X position %lu, Y position %lu",
                           (long unsigned int)nXPoint,
                           (long unsigned int)nYPoint );
-                return CE_Failure;
+                eErr = CE_Failure;
+                break;
             }
         }
 
@@ -1284,13 +1289,14 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         if( !pfnProgress( (double)(nYPoint + 1) / nYSize, NULL, pProgressArg ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            return CE_Failure;
+            eErr = CE_Failure;
+            break;
         }
     }
 
     VSIFree( padfValues );
 
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
