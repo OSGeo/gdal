@@ -44,6 +44,7 @@ JobItem* psJobList = NULL;
 int nJobListSize = 0;
 int nThreadTotal = 0;
 int bProducedFinished = 0;
+int bVerbose = FALSE;
 
 void ProducerThread(void *unused)
 {
@@ -89,7 +90,8 @@ void ConsumerThread(void* pIndex)
     nThreadIndex = *(int*)pIndex;
     free(pIndex);
 
-    printf("Thread %d created\n", nThreadIndex);
+    if (bVerbose)
+        printf("Thread %d created\n", nThreadIndex);
 
     nThreadTotal ++;
 
@@ -110,7 +112,8 @@ void ConsumerThread(void* pIndex)
         psJobList = psNext;
         CPLReleaseMutex(hClientMutex);
 
-        printf("Thread %d consumed job %d\n", nThreadIndex, nJobNumber);
+        if (bVerbose)
+            printf("Thread %d consumed job %d\n", nThreadIndex, nJobNumber);
 
         CPLAcquireMutex(hClientMutex, 1000.0);
         nJobListSize --;
@@ -123,6 +126,12 @@ int main(int argc, char* argv[])
 {
     int i;
     void* apThreads[10];
+
+    for(i = 0; i < argc; i++)
+    {
+        if( EQUAL(argv[i], "-verbose") )
+            bVerbose = TRUE;
+    }
 
     hCond = CPLCreateCond();
     hCondJobFinished = CPLCreateCond();
