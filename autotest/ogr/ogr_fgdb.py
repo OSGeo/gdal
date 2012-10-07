@@ -89,13 +89,16 @@ def ogr_fgdb_1():
                  [ "multilinestring25D", ogr.wkbMultiLineString25D, "MULTILINESTRING ((1 2 -10,3 4 -20))" ],
                  [ "polygon25D", ogr.wkbPolygon25D, "POLYGON ((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10))", "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))" ],
                  [ "multipolygon25D", ogr.wkbMultiPolygon25D, "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))" ],
+                 [ "null_polygon", ogr.wkbPolygon, None],
+                 [ "empty_polygon", ogr.wkbPolygon, "POLYGON EMPTY", None],
                ]
 
     for data in datalist:
+        #import pdb; pdb.set_trace()
         if data[1] == ogr.wkbNone:
-            lyr = ds.CreateLayer(data[0], geom_type = data[1])
+            lyr = ds.CreateLayer(data[0], geom_type=data[1])
         else:
-            lyr = ds.CreateLayer(data[0], geom_type = data[1], srs = srs)
+            lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs)
         lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
         lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
         lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
@@ -104,7 +107,7 @@ def ogr_fgdb_1():
         # We need at least 5 features so that test_ogrsf can test SetFeature()
         for i in range(5):
             feat = ogr.Feature(lyr.GetLayerDefn())
-            if data[1] != ogr.wkbNone:
+            if data[1] != ogr.wkbNone and data[2] != None:
                 feat.SetGeometry(ogr.CreateGeometryFromWkt(data[2]))
             feat.SetField("id", i + 1)
             feat.SetField("str", "foo_\xc3\xa9")
@@ -124,7 +127,10 @@ def ogr_fgdb_1():
                 expected_wkt = data[3]
             except:
                 expected_wkt = data[2]
-            if feat.GetGeometryRef().ExportToWkt() != expected_wkt:
+            geom = feat.GetGeometryRef()
+            if geom:
+                geom = geom.ExportToWkt()
+            if geom != expected_wkt:
                 feat.DumpReadable()
                 return 'fail'
 
