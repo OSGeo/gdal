@@ -32,6 +32,7 @@
 #include "gdalgrid.h"
 #include <float.h>
 #include <limits.h>
+#include "cpl_quad_tree.h"
 
 CPL_CVSID("$Id$");
 
@@ -44,6 +45,41 @@ CPL_CVSID("$Id$");
 #  define DBL_MAX 1.7976931348623157E+308
 # endif /* __DBL_MAX__ */
 #endif /* DBL_MAX */
+
+typedef struct
+{
+    const double* padfX;
+    const double* padfY;
+} GDALGridXYArrays;
+
+typedef struct
+{
+    GDALGridXYArrays* psXYArrays;
+    int               i;
+} GDALGridPoint;
+
+typedef struct
+{
+    CPLQuadTree* hQuadTree;
+    double       dfInitialSearchRadius;
+} GDALGridExtraParameters;
+
+/************************************************************************/
+/*                        GDALGridGetPointBounds()                      */
+/************************************************************************/
+
+static void GDALGridGetPointBounds(const void* hFeature, CPLRectObj* pBounds)
+{
+    GDALGridPoint* psPoint = (GDALGridPoint*) hFeature;
+    GDALGridXYArrays* psXYArrays = psPoint->psXYArrays;
+    int i = psPoint->i;
+    double dfX = psXYArrays->padfX[i];
+    double dfY = psXYArrays->padfY[i];
+    pBounds->minx = dfX;
+    pBounds->miny = dfY;
+    pBounds->maxx = dfX;
+    pBounds->maxy = dfY;
+};
 
 /************************************************************************/
 /*                   GDALGridInverseDistanceToAPower()                  */
@@ -101,7 +137,8 @@ GDALGridInverseDistanceToAPower( const void *poOptions, GUInt32 nPoints,
                                  const double *padfX, const double *padfY,
                                  const double *padfZ,
                                  double dfXPoint, double dfYPoint,
-                                 double *pdfValue )
+                                 double *pdfValue,
+                                 void* hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -207,7 +244,8 @@ GDALGridInverseDistanceToAPowerNoSearch( const void *poOptions, GUInt32 nPoints,
                                          const double *padfX, const double *padfY,
                                          const double *padfZ,
                                          double dfXPoint, double dfYPoint,
-                                         double *pdfValue )
+                                         double *pdfValue,
+                                         void* hExtraParamsIn )
 {
     const double    dfPower =
         ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfPower;
@@ -293,7 +331,8 @@ CPLErr
 GDALGridMovingAverage( const void *poOptions, GUInt32 nPoints,
                        const double *padfX, const double *padfY,
                        const double *padfZ,
-                       double dfXPoint, double dfYPoint, double *pdfValue )
+                       double dfXPoint, double dfYPoint, double *pdfValue,
+                       void* hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -387,7 +426,8 @@ CPLErr
 GDALGridNearestNeighbor( const void *poOptions, GUInt32 nPoints,
                          const double *padfX, const double *padfY,
                          const double *padfZ,
-                         double dfXPoint, double dfYPoint, double *pdfValue )
+                         double dfXPoint, double dfYPoint, double *pdfValue,
+                         void* hExtraParamsIn)
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -398,6 +438,8 @@ GDALGridNearestNeighbor( const void *poOptions, GUInt32 nPoints,
     double  dfRadius2 =
         ((GDALGridNearestNeighborOptions *)poOptions)->dfRadius2;
     double  dfR12;
+    GDALGridExtraParameters* psExtraParams = (GDALGridExtraParameters*) hExtraParamsIn;
+    CPLQuadTree* hQuadTree = psExtraParams->hQuadTree;
 
     dfRadius1 *= dfRadius1;
     dfRadius2 *= dfRadius2;
@@ -422,32 +464,81 @@ GDALGridNearestNeighbor( const void *poOptions, GUInt32 nPoints,
     double      dfNearestR = DBL_MAX;
     GUInt32 i = 0;
 
-    while ( i < nPoints )
+    double dfSearchRadius = psExtraParams->dfInitialSearchRadius;
+    if( hQuadTree != NULL && dfRadius1 == dfRadius2 && dfSearchRadius > 0 )
     {
-        double  dfRX = padfX[i] - dfXPoint;
-        double  dfRY = padfY[i] - dfYPoint;
-
-        if ( bRotated )
+        CPLRectObj sAoi;
+        if( dfRadius1 > 0 )
+            dfSearchRadius = ((GDALGridNearestNeighborOptions *)poOptions)->dfRadius1;
+        while(dfSearchRadius > 0)
         {
-            double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
-            double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
-
-            dfRX = dfRXRotated;
-            dfRY = dfRYRotated;
-        }
-
-        // Is this point located inside the search ellipse?
-        if ( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
-        {
-            const double    dfR2 = dfRX * dfRX + dfRY * dfRY;
-            if ( dfR2 <= dfNearestR )
+            sAoi.minx = dfXPoint - dfSearchRadius;
+            sAoi.miny = dfYPoint - dfSearchRadius;
+            sAoi.maxx = dfXPoint + dfSearchRadius;
+            sAoi.maxy = dfYPoint + dfSearchRadius;
+            int nFeatureCount = 0;
+            GDALGridPoint** papsPoints = (GDALGridPoint**)
+                    CPLQuadTreeSearch(hQuadTree, &sAoi, &nFeatureCount);
+            if( nFeatureCount != 0 )
             {
-                dfNearestR = dfR2;
-                dfNearestValue = padfZ[i];
+                if( dfRadius1 > 0 )
+                    dfNearestR = dfRadius1;
+                for(int k=0; k<nFeatureCount; k++)
+                {
+                    int i = papsPoints[k]->i;
+                    double  dfRX = padfX[i] - dfXPoint;
+                    double  dfRY = padfY[i] - dfYPoint;
+
+                    const double    dfR2 = dfRX * dfRX + dfRY * dfRY;
+                    if( dfR2 <= dfNearestR )
+                    {
+                        dfNearestR = dfR2;
+                        dfNearestValue = padfZ[i];
+                    }
+                }
+
+                CPLFree(papsPoints);
+                break;
+            }
+            else
+            {
+                CPLFree(papsPoints);
+                if( dfRadius1 > 0 )
+                    break;
+                dfSearchRadius *= 2;
+                //CPLDebug("GDAL_GRID", "Increasing search radius to %.16g", dfSearchRadius);
             }
         }
+    }
+    else
+    {
+        while ( i < nPoints )
+        {
+            double  dfRX = padfX[i] - dfXPoint;
+            double  dfRY = padfY[i] - dfYPoint;
 
-        i++;
+            if ( bRotated )
+            {
+                double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
+                double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+
+                dfRX = dfRXRotated;
+                dfRY = dfRYRotated;
+            }
+
+            // Is this point located inside the search ellipse?
+            if ( dfRadius2 * dfRX * dfRX + dfRadius1 * dfRY * dfRY <= dfR12 )
+            {
+                const double    dfR2 = dfRX * dfRX + dfRY * dfRY;
+                if ( dfR2 <= dfNearestR )
+                {
+                    dfNearestR = dfR2;
+                    dfNearestValue = padfZ[i];
+                }
+            }
+
+            i++;
+        }
     }
 
     (*pdfValue) = dfNearestValue;
@@ -494,7 +585,8 @@ CPLErr
 GDALGridDataMetricMinimum( const void *poOptions, GUInt32 nPoints,
                            const double *padfX, const double *padfY,
                            const double *padfZ,
-                           double dfXPoint, double dfYPoint, double *pdfValue )
+                           double dfXPoint, double dfYPoint, double *pdfValue,
+                           void* hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -605,7 +697,8 @@ CPLErr
 GDALGridDataMetricMaximum( const void *poOptions, GUInt32 nPoints,
                            const double *padfX, const double *padfY,
                            const double *padfZ,
-                           double dfXPoint, double dfYPoint, double *pdfValue )
+                           double dfXPoint, double dfYPoint, double *pdfValue,
+                           void* hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -717,7 +810,8 @@ CPLErr
 GDALGridDataMetricRange( const void *poOptions, GUInt32 nPoints,
                          const double *padfX, const double *padfY,
                          const double *padfZ,
-                         double dfXPoint, double dfYPoint, double *pdfValue )
+                         double dfXPoint, double dfYPoint, double *pdfValue,
+                         void* hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -828,7 +922,8 @@ CPLErr
 GDALGridDataMetricCount( const void *poOptions, GUInt32 nPoints,
                          const double *padfX, const double *padfY,
                          const double *padfZ,
-                         double dfXPoint, double dfYPoint, double *pdfValue )
+                         double dfXPoint, double dfYPoint, double *pdfValue,
+                         void* hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -931,7 +1026,8 @@ GDALGridDataMetricAverageDistance( const void *poOptions, GUInt32 nPoints,
                                    const double *padfX, const double *padfY,
                                    const double *padfZ,
                                    double dfXPoint, double dfYPoint,
-                                   double *pdfValue )
+                                   double *pdfValue,
+                                   void* hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -1041,7 +1137,8 @@ GDALGridDataMetricAverageDistancePts( const void *poOptions, GUInt32 nPoints,
                                       const double *padfX, const double *padfY,
                                       const double *padfZ,
                                       double dfXPoint, double dfYPoint,
-                                      double *pdfValue )
+                                      double *pdfValue,
+                                      void* hExtraParamsIn )
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
     // out of this routine to the calling function.
@@ -1191,6 +1288,7 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     }
 
     GDALGridFunction    pfnGDALGridMethod;
+    int bCreateQuadTree = FALSE;
 
     switch ( eAlgorithm )
     {
@@ -1210,6 +1308,9 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
         case GGA_NearestNeighbor:
             pfnGDALGridMethod = GDALGridNearestNeighbor;
+            bCreateQuadTree = (nPoints > 100 &&
+                (((GDALGridNearestNeighborOptions *)poOptions)->dfRadius1 ==
+                ((GDALGridNearestNeighborOptions *)poOptions)->dfRadius2));
             break;
 
         case GGA_MetricMinimum:
@@ -1247,6 +1348,53 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     const double    dfDeltaY = ( dfYMax - dfYMin ) / nYSize;
 
 /* -------------------------------------------------------------------- */
+/*  Create quadtree if requested and possible.                          */
+/* -------------------------------------------------------------------- */
+    CPLQuadTree* hQuadTree = NULL;
+    double       dfInitialSearchRadius = 0;
+    GDALGridPoint* pasGridPoints = NULL;
+    GDALGridXYArrays sXYArrays;
+    sXYArrays.padfX = padfX;
+    sXYArrays.padfY = padfY;
+
+    if( bCreateQuadTree )
+    {
+        pasGridPoints = (GDALGridPoint*) VSIMalloc2(nPoints, sizeof(GDALGridPoint));
+        if( pasGridPoints != NULL )
+        {
+            CPLRectObj sRect;
+            GUInt32 i;
+
+            /* Determine point extents */
+            sRect.minx = padfX[0];
+            sRect.miny = padfY[0];
+            sRect.maxx = padfX[0];
+            sRect.maxy = padfY[0];
+            for(i = 1; i < nPoints; i++)
+            {
+                if( padfX[i] < sRect.minx ) sRect.minx = padfX[i];
+                if( padfY[i] < sRect.miny ) sRect.miny = padfY[i];
+                if( padfX[i] > sRect.maxx ) sRect.maxx = padfX[i];
+                if( padfY[i] > sRect.maxy ) sRect.maxy = padfY[i];
+            }
+
+            /* Initial value for search radius is the typical dimension of a */
+            /* "pixel" of the point array (assuming rather uniform distribution) */
+            dfInitialSearchRadius = sqrt((sRect.maxx - sRect.minx) *
+                                         (sRect.maxy - sRect.miny) / nPoints);
+
+            hQuadTree = CPLQuadTreeCreate(&sRect, GDALGridGetPointBounds );
+
+            for(i = 0; i < nPoints; i++)
+            {
+                pasGridPoints[i].psXYArrays = &sXYArrays;
+                pasGridPoints[i].i = i;
+                CPLQuadTreeInsert(hQuadTree, pasGridPoints + i);
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*  Allocate a buffer of scanline size, fill it with gridded values     */
 /*  and use GDALCopyWords() to copy values into output data array with  */
 /*  appropriate data type conversion.                                   */
@@ -1259,7 +1407,11 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     int         nDataTypeSize = GDALGetDataTypeSize(eType) / 8;
     int         nLineSpace = nXSize * nDataTypeSize;
     CPLErr      eErr = CE_None;
-    
+    GDALGridExtraParameters sExtraParameters;
+
+    sExtraParameters.hQuadTree = hQuadTree;
+    sExtraParameters.dfInitialSearchRadius = dfInitialSearchRadius;
+
     for ( nYPoint = 0; nYPoint < nYSize; nYPoint++ )
     {
         const double    dfYPoint = dfYMin + ( nYPoint + 0.5 ) * dfDeltaY;
@@ -1270,7 +1422,7 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
             if ( (*pfnGDALGridMethod)( poOptions, nPoints, padfX, padfY, padfZ,
                                        dfXPoint, dfYPoint,
-                                       padfValues + nXPoint ) != CE_None )
+                                       padfValues + nXPoint, &sExtraParameters ) != CE_None )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Gridding failed at X position %lu, Y position %lu",
@@ -1293,6 +1445,10 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             break;
         }
     }
+
+    CPLFree( pasGridPoints );
+    if( hQuadTree != NULL )
+        CPLQuadTreeDestroy( hQuadTree );
 
     VSIFree( padfValues );
 
