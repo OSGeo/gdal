@@ -62,6 +62,9 @@ install:
   - cd ../..
   - sudo make install
   - sudo ldconfig
+  - cd ../autotest/cpp
+  - make -j3
+  - cd ../..
   - wget http://mdb-sqlite.googlecode.com/files/mdb-sqlite-1.0.2.tar.bz2
   - tar xjvf mdb-sqlite-1.0.2.tar.bz2
   - sudo cp mdb-sqlite-1.0.2/lib/*.jar /usr/lib/jvm/java-7-openjdk-i386/jre/lib/ext
@@ -76,6 +79,9 @@ script:
   - make test
   - cd ../..
   - cd ../autotest
+  - cd cpp
+  - make quick_test
+  - cd ..
   - mkdir -p ogr/tmp/cache/
   - cd ogr/tmp/cache/
   - wget http://download.osgeo.org/gdal/data/pgeo/PGeoTest.zip
