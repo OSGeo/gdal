@@ -387,9 +387,10 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
         {
             void *pScaledProgress;
             pScaledProgress =
-                GDALCreateScaledProgress( 0.0,
-                                          (double)++nBlock / nBlockCount,
+                GDALCreateScaledProgress( (double)nBlock / nBlockCount,
+                                          (double)(nBlock + 1) / nBlockCount,
                                           pfnProgress, NULL );
+            nBlock ++;
 
             int nXRequest = nBlockXSize;
             if (nXOffset + nXRequest > nXSize)
