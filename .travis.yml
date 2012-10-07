@@ -3,7 +3,7 @@
 
 language: cpp
 
-# We use clang, --without-libtool and --with-poppler for faster build
+# We use clang, --without-libtool and --with-debug for faster build
 compiler:
   - clang
 
