@@ -2559,7 +2559,7 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
                                          poWK->pafUnifiedSrcDensity,
                                          poWK->panUnifiedSrcValid,
                                          poWK->pafDstDensity,
-                                         poWK->panUnifiedSrcValid,
+                                         poWK->panDstValid,
                                          poWK->dfXScale, poWK->dfYScale,
                                          poWK->dfXFilter, poWK->dfYFilter,
                                          poWK->nXRadius, poWK->nYRadius,
