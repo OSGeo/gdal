@@ -237,7 +237,7 @@ static void ProcessGeometry( OGRPoint *poGeom, OGRGeometry *poClipSrc,
 /*      geometries and burn values.                                     */
 /************************************************************************/
 
-static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
+static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
                           OGRGeometry *poClipSrc,
                           GUInt32 nXSize, GUInt32 nYSize, int nBand,
                           int& bIsXExtentSet, int& bIsYExtentSet,
@@ -263,7 +263,7 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
             printf( "Failed to find field %s on layer %s, skipping.\n",
                     pszBurnAttribute, 
                     OGR_FD_GetName( OGR_L_GetLayerDefn( hSrcLayer ) ) );
-            return;
+            return CE_Failure;
         }
     }
 
@@ -314,7 +314,7 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
     {
         printf( "No point geometry found on layer %s, skipping.\n",
                 OGR_FD_GetName( OGR_L_GetLayerDefn( hSrcLayer ) ) );
-        return;
+        return CE_None;
     }
 
 /* -------------------------------------------------------------------- */
@@ -367,23 +367,50 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
     {
         // FIXME: Shoulda' set to nodata value instead
         GDALFillRaster( hBand, 0.0 , 0.0 );
-        return;
+        return CE_None;
     }
 
     GUInt32 nXOffset, nYOffset;
     int     nBlockXSize, nBlockYSize;
+    int     nDataTypeSize = GDALGetDataTypeSize(eType) / 8;
 
+    // Try to grow the work buffer up to 1 MB if it is smaller
     GDALGetBlockSize( hBand, &nBlockXSize, &nBlockYSize );
+    const GUInt32 nDesiredBufferSize = 1024*1024;
+    if( (GUInt32)nBlockXSize < nXSize && (GUInt32)nBlockYSize < nYSize &&
+        (GUInt32)nBlockXSize < nDesiredBufferSize / (nBlockYSize * nDataTypeSize) )
+    {
+        int nNewBlockXSize  = nDesiredBufferSize / (nBlockYSize * nDataTypeSize);
+        nBlockXSize = (nNewBlockXSize / nBlockXSize) * nBlockXSize;
+        if( (GUInt32)nBlockXSize > nXSize )
+            nBlockXSize = nXSize;
+    }
+    else if( (GUInt32)nBlockXSize == nXSize && (GUInt32)nBlockYSize < nYSize &&
+             (GUInt32)nBlockYSize < nDesiredBufferSize / (nXSize * nDataTypeSize) )
+    {
+        int nNewBlockYSize = nDesiredBufferSize / (nXSize * nDataTypeSize);
+        nBlockYSize = (nNewBlockYSize / nBlockYSize) * nBlockYSize;
+        if( (GUInt32)nBlockYSize > nYSize )
+            nBlockYSize = nYSize;
+    }
+    CPLDebug("GDAL_GRID", "Work buffer: %d * %d", nBlockXSize, nBlockYSize);
+
     void    *pData =
-        CPLMalloc( nBlockXSize * nBlockYSize * GDALGetDataTypeSize(eType) );
+        VSIMalloc3( nBlockXSize, nBlockYSize, nDataTypeSize );
+    if( pData == NULL )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate work buffer");
+        return CE_Failure;
+    }
 
     GUInt32 nBlock = 0;
     GUInt32 nBlockCount = ((nXSize + nBlockXSize - 1) / nBlockXSize)
         * ((nYSize + nBlockYSize - 1) / nBlockYSize);
 
-    for ( nYOffset = 0; nYOffset < nYSize; nYOffset += nBlockYSize )
+    CPLErr eErr = CE_None;
+    for ( nYOffset = 0; nYOffset < nYSize && eErr == CE_None; nYOffset += nBlockYSize )
     {
-        for ( nXOffset = 0; nXOffset < nXSize; nXOffset += nBlockXSize )
+        for ( nXOffset = 0; nXOffset < nXSize && eErr == CE_None; nXOffset += nBlockXSize )
         {
             void *pScaledProgress;
             pScaledProgress =
@@ -400,7 +427,7 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
             if (nYOffset + nYRequest > nYSize)
                 nYRequest = nYSize - nYOffset;
 
-            GDALGridCreate( eAlgorithm, pOptions,
+            eErr = GDALGridCreate( eAlgorithm, pOptions,
                             adfX.size(), &(adfX[0]), &(adfY[0]), &(adfZ[0]),
                             dfXMin + dfDeltaX * nXOffset,
                             dfXMin + dfDeltaX * (nXOffset + nXRequest),
@@ -409,7 +436,8 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
                             nXRequest, nYRequest, eType, pData,
                             GDALScaledProgress, pScaledProgress );
 
-            GDALRasterIO( hBand, GF_Write, nXOffset, nYOffset,
+            if( eErr == CE_None )
+                eErr = GDALRasterIO( hBand, GF_Write, nXOffset, nYOffset,
                           nXRequest, nYRequest, pData,
                           nXRequest, nYRequest, eType, 0, 0 );
 
@@ -418,6 +446,7 @@ static void ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
     }
 
     CPLFree( pData );
+    return eErr;
 }
 
 /************************************************************************/
