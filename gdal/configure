@@ -26291,6 +26291,23 @@ fi
 
   if test "x$with_opencl_include" = "x" ; then
     OPENCL_FLAGS=-DHAVE_OPENCL
+    if test -z "`uname | grep Darwin`" ; then
+        for ac_header in CL/opencl.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "CL/opencl.h" "ac_cv_header_CL_opencl_h" "$ac_includes_default"
+if test "x$ac_cv_header_CL_opencl_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_CL_OPENCL_H 1
+_ACEOF
+
+fi
+
+done
+
+        if test "$ac_cv_header_CL_opencl_h" = "no" ; then
+            as_fn_error $? "cannot find CL/opencl.h" "$LINENO" 5
+        fi
+    fi
   else
     OPENCL_FLAGS="-I$with_opencl_include -DHAVE_OPENCL"
   fi
@@ -26306,7 +26323,51 @@ fi
     if test ! -z "`uname | grep Darwin`" ; then
       OPENCL_LIB="-framework OpenCL"
     else
-      OPENCL_LIB=-lOpenCL
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for clGetPlatformIDs in -lOpenCL" >&5
+$as_echo_n "checking for clGetPlatformIDs in -lOpenCL... " >&6; }
+if ${ac_cv_lib_OpenCL_clGetPlatformIDs+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lOpenCL  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char clGetPlatformIDs ();
+int
+main ()
+{
+return clGetPlatformIDs ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_OpenCL_clGetPlatformIDs=yes
+else
+  ac_cv_lib_OpenCL_clGetPlatformIDs=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_OpenCL_clGetPlatformIDs" >&5
+$as_echo "$ac_cv_lib_OpenCL_clGetPlatformIDs" >&6; }
+if test "x$ac_cv_lib_OpenCL_clGetPlatformIDs" = xyes; then :
+  OPENCL_LIB=-lOpenCL
+else
+  OPENCL_LIB=missing
+fi
+
+      if test "$OPENCL_LIB" = "missing"; then
+        as_fn_error $? "--with-opencl requested, but libraries not found!" "$LINENO" 5
+      fi
     fi
   else
     OPENCL_LIB="$with_opencl_lib"
