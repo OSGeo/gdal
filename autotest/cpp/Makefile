@@ -7,8 +7,11 @@ PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm tes
 all: $(PROGS)
 
 test:
-	./gdal_unit_test
+	make quick_test
 	./testperfcopywords
+
+quick_test:
+	./gdal_unit_test
 	./testcopywords
 	./testclosedondestroydm
 	./testthreadcond
