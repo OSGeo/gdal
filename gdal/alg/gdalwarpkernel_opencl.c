@@ -220,6 +220,31 @@ static const char* getCLErrorString(cl_int err)
     return "unknown_error";
 }
 
+static const char* getCLDataTypeString( cl_channel_type dataType )
+{
+    switch( dataType )
+    {
+        case CL_SNORM_INT8: return "CL_SNORM_INT8";
+        case CL_SNORM_INT16: return "CL_SNORM_INT16";
+        case CL_UNORM_INT8: return "CL_UNORM_INT8";
+        case CL_UNORM_INT16: return "CL_UNORM_INT16";
+#if 0
+        case CL_UNORM_SHORT_565: return "CL_UNORM_SHORT_565";
+        case CL_UNORM_SHORT_555: return "CL_UNORM_SHORT_555";
+        case CL_UNORM_INT_101010: return "CL_UNORM_INT_101010";
+        case CL_SIGNED_INT8: return "CL_SIGNED_INT8";
+        case CL_SIGNED_INT16: return "CL_SIGNED_INT16";
+        case CL_SIGNED_INT32: return "CL_SIGNED_INT32";
+        case CL_UNSIGNED_INT8: return "CL_UNSIGNED_INT8";
+        case CL_UNSIGNED_INT16: return "CL_UNSIGNED_INT16";
+        case CL_UNSIGNED_INT32: return "CL_UNSIGNED_INT32";
+        case CL_HALF_FLOAT: return "CL_HALF_FLOAT";
+#endif
+        case CL_FLOAT: return "CL_FLOAT";
+        default: return "unknown";
+    }
+}
+
 /*
  Finds an appropirate OpenCL device. If the user specifies a preference, the
  code for it should be here (but not currently supported). For debugging, it's
@@ -281,7 +306,8 @@ cl_int set_supported_formats(struct oclWarper *warper,
     cl_uint numRet;
     int i;
     int extraSpace = 9999;
-    cl_int err = CL_SUCCESS;
+    cl_int err;
+    int bFound = FALSE;
     
     //Find what we *can* handle
     handleErr(err = clGetSupportedImageFormats(warper->context,
@@ -318,11 +344,19 @@ cl_int set_supported_formats(struct oclWarper *warper,
             (*chosenSize) = thisOrderSize;
             (*chosenOrder) = fmtBuf[i].image_channel_order;
             extraSpace = thisOrderSize - minOrderSize;
+            bFound = TRUE;
         }
     }
     
     free(fmtBuf);
-    return CL_SUCCESS;
+    
+    if( !bFound )
+    {
+        CPLDebug("OpenCL",
+                 "Cannot find supported format for dataType = %s and minOrderSize = %d",
+                 getCLDataTypeString(dataType), (int)minOrderSize);
+    }
+    return (bFound) ? CL_SUCCESS : CL_INVALID_OPERATION;
 }
 
 /*
@@ -1294,7 +1328,7 @@ cl_int set_unified_data(struct oclWarper *warper,
     size_t sz = warper->srcWidth * warper->srcHeight;
     int useValid = warper->nBandSrcValidCL != NULL;
     //32 bits in the mask
-    int validSz = sizeof(int) * (1 + (sz >> 5));
+    int validSz = sizeof(int) * ((31 + sz) >> 5);
     
     //Copy unifiedSrcDensity if it exists
     if (unifiedSrcDensity == NULL) {
@@ -1409,20 +1443,11 @@ cl_int set_src_rast_data (struct oclWarper *warper, int iNum, size_t sz,
         handleErr(err);
     } else {
         //Make a fake image so we don't have a NULL pointer
-        if (warper->bIsATI)
-        {
-            /* The code in the else clause generates a CL_INVALID_IMAGE_SIZE with ATI SDK 2.2 */
-            /* while theoretically correct and working on other SDKs. The following is a */
-            /* workaround */
-            char dummyImageData[16];
-            (*srcImag) = clCreateImage2D(warper->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, &imgFmt,
-                                        1, 1, sz, dummyImageData, &err);
-        }
-        else
-        {
-            (*srcImag) = clCreateImage2D(warper->context, CL_MEM_READ_ONLY, &imgFmt,
-                                         1, 1, sz, NULL, &err);
-        }
+
+        char dummyImageData[16];
+        (*srcImag) = clCreateImage2D(warper->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, &imgFmt,
+                                    1, 1, sz, dummyImageData, &err);
+
         handleErr(err);
     }
 
@@ -1562,7 +1587,7 @@ cl_int set_dst_data(struct oclWarper *warper,
     } else {
         (*dstValidCL) = clCreateBuffer(warper->context,
                                        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                                       sizeof(int) * ((1 + sz) >> 5), dstValid, &err);
+                                       sizeof(int) * ((31 + sz) >> 5), dstValid, &err);
         handleErr(err);
     }
     
@@ -1971,7 +1996,7 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
     //Make space for the per-band BandSrcValid data (if exists)
     if (useBandSrcValid) {
         //32 bits in the mask
-        size_t sz = warper->numBands * (1 + (warper->srcWidth * warper->srcHeight >> 5));
+        size_t sz = warper->numBands * ((31 + warper->srcWidth * warper->srcHeight) >> 5);
         
         //Allocate some space for the validity of the validity mask
         err = alloc_pinned_mem(warper, 0, warper->numBands*sizeof(char),
@@ -2054,7 +2079,7 @@ cl_int GDALWarpKernelOpenCL_setSrcValid(struct oclWarper *warper,
                                         int *bandSrcValid, int bandNum)
 {
     //32 bits in the mask
-    int stride = 1 + (warper->srcWidth * warper->srcHeight >> 5);
+    int stride = (31 + warper->srcWidth * warper->srcHeight) >> 5;
     
     //Copy bandSrcValid
     assert(warper->nBandSrcValid != NULL);
