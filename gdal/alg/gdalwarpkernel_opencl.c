@@ -59,7 +59,7 @@ CPL_CVSID("$Id$");
     goto goto_label; \
 }
 
-#define freeCLMem(clMem, fallBackMem) { \
+#define freeCLMem(clMem, fallBackMem)  do { \
     if ((clMem) != NULL) { \
         handleErr(err = clReleaseMemObject(clMem)); \
         clMem = NULL; \
@@ -68,7 +68,7 @@ CPL_CVSID("$Id$");
         CPLFree(fallBackMem); \
         fallBackMem = NULL; \
     } \
-}
+} while(0)
 
 static const char* getCLErrorString(cl_int err)
 {
@@ -220,6 +220,31 @@ static const char* getCLErrorString(cl_int err)
     return "unknown_error";
 }
 
+static const char* getCLDataTypeString( cl_channel_type dataType )
+{
+    switch( dataType )
+    {
+        case CL_SNORM_INT8: return "CL_SNORM_INT8";
+        case CL_SNORM_INT16: return "CL_SNORM_INT16";
+        case CL_UNORM_INT8: return "CL_UNORM_INT8";
+        case CL_UNORM_INT16: return "CL_UNORM_INT16";
+#if 0
+        case CL_UNORM_SHORT_565: return "CL_UNORM_SHORT_565";
+        case CL_UNORM_SHORT_555: return "CL_UNORM_SHORT_555";
+        case CL_UNORM_INT_101010: return "CL_UNORM_INT_101010";
+        case CL_SIGNED_INT8: return "CL_SIGNED_INT8";
+        case CL_SIGNED_INT16: return "CL_SIGNED_INT16";
+        case CL_SIGNED_INT32: return "CL_SIGNED_INT32";
+        case CL_UNSIGNED_INT8: return "CL_UNSIGNED_INT8";
+        case CL_UNSIGNED_INT16: return "CL_UNSIGNED_INT16";
+        case CL_UNSIGNED_INT32: return "CL_UNSIGNED_INT32";
+        case CL_HALF_FLOAT: return "CL_HALF_FLOAT";
+#endif
+        case CL_FLOAT: return "CL_FLOAT";
+        default: return "unknown";
+    }
+}
+
 /*
  Finds an appropirate OpenCL device. If the user specifies a preference, the
  code for it should be here (but not currently supported). For debugging, it's
@@ -227,7 +252,7 @@ static const char* getCLErrorString(cl_int err)
  from the kernel. If debugging is on, we can print the name and stats about the
  device we're using.
  */
-cl_device_id get_device(int *pbIsATI)
+cl_device_id get_device(OCLVendor *peVendor)
 {
     cl_int err = 0;
     cl_device_id device = NULL;
@@ -261,7 +286,12 @@ cl_device_id get_device(int *pbIsATI)
     assert(err == CL_SUCCESS);
     CPLDebug( "OpenCL", "Connected to %s %s.", vendor_name, device_name);
 
-    *pbIsATI = strncmp((const char*)vendor_name, "Advanced Micro Devices", strlen("Advanced Micro Devices")) == 0;
+    if (strncmp((const char*)vendor_name, "Advanced Micro Devices", strlen("Advanced Micro Devices")) == 0)
+        *peVendor = VENDOR_AMD;
+    else if (strncmp((const char*)vendor_name, "Intel(R) Corporation", strlen("Intel(R) Corporation")) == 0)
+        *peVendor = VENDOR_INTEL;
+    else
+        *peVendor = VENDOR_OTHER;
 
     return device;
 }
@@ -281,7 +311,8 @@ cl_int set_supported_formats(struct oclWarper *warper,
     cl_uint numRet;
     int i;
     int extraSpace = 9999;
-    cl_int err = CL_SUCCESS;
+    cl_int err;
+    int bFound = FALSE;
     
     //Find what we *can* handle
     handleErr(err = clGetSupportedImageFormats(warper->context,
@@ -318,11 +349,19 @@ cl_int set_supported_formats(struct oclWarper *warper,
             (*chosenSize) = thisOrderSize;
             (*chosenOrder) = fmtBuf[i].image_channel_order;
             extraSpace = thisOrderSize - minOrderSize;
+            bFound = TRUE;
         }
     }
     
     free(fmtBuf);
-    return CL_SUCCESS;
+    
+    if( !bFound )
+    {
+        CPLDebug("OpenCL",
+                 "Cannot find supported format for dataType = %s and minOrderSize = %d",
+                 getCLDataTypeString(dataType), (int)minOrderSize);
+    }
+    return (bFound) ? CL_SUCCESS : CL_INVALID_OPERATION;
 }
 
 /*
@@ -356,7 +395,7 @@ cl_int alloc_pinned_mem(struct oclWarper *warper, int imgNum, size_t dataSz,
         CPLDebug("OpenCL", "Using fallback non-pinned memory!");
 #endif
         //Fallback to regular allocation
-        wrkPtr[imgNum] = (void *)CPLMalloc(dataSz);
+        wrkPtr[imgNum] = (void *)VSIMalloc(dataSz);
         
         if (wrkPtr[imgNum] == NULL)
             handleErr(err = CL_OUT_OF_HOST_MEMORY);
@@ -396,15 +435,15 @@ cl_int alloc_working_arr(struct oclWarper *warper,
     }
     
     //Alloc space for pointers to the main image data
-    warper->realWork.v = (void **)CPLMalloc(ptrSz*warper->numImages);
-    warper->dstRealWork.v = (void **)CPLMalloc(ptrSz*warper->numImages);
+    warper->realWork.v = (void **)VSICalloc(ptrSz, warper->numImages);
+    warper->dstRealWork.v = (void **)VSICalloc(ptrSz, warper->numImages);
     if (warper->realWork.v == NULL || warper->dstRealWork.v == NULL)
         handleErr(err = CL_OUT_OF_HOST_MEMORY);
     
     if (warper->imagWorkCL != NULL) {
         //Alloc space for pointers to the extra channel, if it exists
-        warper->imagWork.v = (void **)CPLMalloc(ptrSz*warper->numImages);
-        warper->dstImagWork.v = (void **)CPLMalloc(ptrSz*warper->numImages);
+        warper->imagWork.v = (void **)VSICalloc(ptrSz, warper->numImages);
+        warper->dstImagWork.v = (void **)VSICalloc(ptrSz, warper->numImages);
         if (warper->imagWork.v == NULL || warper->dstImagWork.v == NULL)
             handleErr(err = CL_OUT_OF_HOST_MEMORY);
     } else {
@@ -1178,7 +1217,7 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
             "-D useDstNoDataReal=%d -D vecf=%s %s -D doCubicSpline=%d "
             "-D useUseBandSrcValid=%d -D iCoordMult=%d ",
             /* FIXME: Is it really a ATI specific thing ? */
-            (warper->imageFormat == CL_FLOAT && warper->bIsATI) ? "-D USE_CLAMP_TO_DST_FLOAT=1 " : "",
+            (warper->imageFormat == CL_FLOAT && (warper->eCLVendor == VENDOR_AMD || warper->eCLVendor == VENDOR_INTEL)) ? "-D USE_CLAMP_TO_DST_FLOAT=1 " : "",
             warper->srcWidth, warper->srcHeight, warper->dstWidth, warper->dstHeight,
             warper->useUnifiedSrcDensity, warper->useUnifiedSrcValid,
             warper->useDstDensity, warper->useDstValid, warper->imagWorkCL != NULL,
@@ -1409,7 +1448,7 @@ cl_int set_src_rast_data (struct oclWarper *warper, int iNum, size_t sz,
         handleErr(err);
     } else {
         //Make a fake image so we don't have a NULL pointer
-        if (warper->bIsATI)
+        if (warper->eCLVendor == VENDOR_AMD || warper->eCLVendor == VENDOR_INTEL)
         {
             /* The code in the else clause generates a CL_INVALID_IMAGE_SIZE with ATI SDK 2.2 */
             /* while theoretically correct and working on other SDKs. The following is a */
@@ -1876,10 +1915,10 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
     size_t fmtSize, sz;
     cl_device_id device;
     cl_bool bool_flag;
-    int bIsATI = FALSE;
+    OCLVendor eCLVendor = VENDOR_OTHER;
     
     // Do we have a suitable OpenCL device? 
-    device = get_device(&bIsATI);
+    device = get_device(&eCLVendor);
     if( device == NULL )
         return NULL;
         
@@ -1892,11 +1931,9 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
     }
 
     // Set up warper environment.
-    warper = (struct oclWarper *)CPLMalloc(sizeof(struct oclWarper));
-    if (warper == NULL)
-        handleErrRetNULL(err = CL_OUT_OF_HOST_MEMORY);
+    warper = (struct oclWarper *)CPLCalloc(1, sizeof(struct oclWarper));
 
-    warper->bIsATI = bIsATI;
+    warper->eCLVendor = eCLVendor;
     
     //Init passed vars
     warper->srcWidth = srcWidth;
@@ -1928,17 +1965,18 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
     warper->dev = device;
     
     warper->context = clCreateContext(0, 1, &(warper->dev), NULL, NULL, &err);
-    handleErrRetNULL(err);
+    handleErrGoto(err, error_label);
     warper->queue = clCreateCommandQueue(warper->context, warper->dev, 0, &err);
-    handleErrRetNULL(err);
+    handleErrGoto(err, error_label);
     
     //Ensure that we hand handle imagery of these dimensions
     err = clGetDeviceInfo(warper->dev, CL_DEVICE_IMAGE2D_MAX_WIDTH, sizeof(size_t), &maxWidth, &sz);
-    handleErrRetNULL(err);
+    handleErrGoto(err, error_label);
     err = clGetDeviceInfo(warper->dev, CL_DEVICE_IMAGE2D_MAX_HEIGHT, sizeof(size_t), &maxHeight, &sz);
-    handleErrRetNULL(err);
+    handleErrGoto(err, error_label);
     if (maxWidth < srcWidth || maxHeight < srcHeight) {
-        handleErrRetNULL(err = CL_INVALID_IMAGE_SIZE);
+        err = CL_INVALID_IMAGE_SIZE;
+        handleErrGoto(err, error_label);
     }
     
     // Split bands into sets of four when possible
@@ -1953,19 +1991,13 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
     }
     
     //Make the pointer space for the real images
-    warper->realWorkCL = (cl_mem *)CPLMalloc(sizeof(cl_mem)*warper->numImages);
-    warper->dstRealWorkCL = (cl_mem *)CPLMalloc(sizeof(cl_mem)*warper->numImages);
-    
-    if (warper->realWorkCL == NULL || warper->dstRealWorkCL == NULL)
-        handleErrRetNULL(err = CL_OUT_OF_HOST_MEMORY);
+    warper->realWorkCL = (cl_mem *)CPLCalloc(sizeof(cl_mem), warper->numImages);
+    warper->dstRealWorkCL = (cl_mem *)CPLCalloc(sizeof(cl_mem), warper->numImages);
     
     //Make space for the per-channel Imag data (if exists)
     if (useImag) {
-        warper->imagWorkCL = (cl_mem *)CPLMalloc(sizeof(cl_mem)*warper->numImages);
-        warper->dstImagWorkCL = (cl_mem *)CPLMalloc(sizeof(cl_mem)*warper->numImages);
-        
-        if (warper->imagWorkCL == NULL || warper->imagWorkCL == NULL)
-            handleErrRetNULL(err = CL_OUT_OF_HOST_MEMORY);
+        warper->imagWorkCL = (cl_mem *)CPLCalloc(sizeof(cl_mem), warper->numImages);
+        warper->dstImagWorkCL = (cl_mem *)CPLCalloc(sizeof(cl_mem), warper->numImages);
     }
     
     //Make space for the per-band BandSrcValid data (if exists)
@@ -1977,7 +2009,7 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
         err = alloc_pinned_mem(warper, 0, warper->numBands*sizeof(char),
                                (void **)&(warper->useBandSrcValid),
                                &(warper->useBandSrcValidCL));
-        handleErrRetNULL(err);
+        handleErrGoto(err, error_label);
         
         for (i = 0; i < warper->numBands; ++i)
             warper->useBandSrcValid[i] = FALSE;
@@ -1987,7 +2019,7 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
         err = alloc_pinned_mem(warper, 0, sz * sizeof(int),
                                (void **)&(warper->nBandSrcValid),
                                &(warper->nBandSrcValidCL));
-        handleErrRetNULL(err);
+        handleErrGoto(err, error_label);
     }
     
     //Make space for the per-band 
@@ -2019,13 +2051,13 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
         err = alloc_working_arr(warper, sizeof(unsigned short *), sizeof(unsigned short), &fmtSize);
         break;
     }
-    handleErrRetNULL(err);
+    handleErrGoto(err, error_label);
     
     //Find a good & compable image channel order for the Lat/Long arr
     err = set_supported_formats(warper, 2,
                                 &(warper->xyChOrder), &(warper->xyChSize),
                                 CL_FLOAT);
-    handleErrRetNULL(err);
+    handleErrGoto(err, error_label);
     
     //Set coordinate image dimensions
     warper->xyWidth  = ceil(((float)warper->dstWidth  + (float)warper->coordMult-1)/(float)warper->coordMult);
@@ -2035,14 +2067,18 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
     sz = sizeof(float) * warper->xyChSize * warper->xyWidth * warper->xyHeight;
     err = alloc_pinned_mem(warper, 0, sz, (void **)&(warper->xyWork),
                            &(warper->xyWorkCL));
-    handleErrRetNULL(err);
+    handleErrGoto(err, error_label);
     
     //Ensure everything is finished allocating, copying, & mapping
     err = clFinish(warper->queue);
-    handleErrRetNULL(err);
+    handleErrGoto(err, error_label);
     
     (*clErr) = CL_SUCCESS;
     return warper;
+    
+error_label:
+    GDALWarpKernelOpenCL_deleteEnv(warper);
+    return NULL;
 }
 
 /*
@@ -2451,14 +2487,21 @@ cl_int GDALWarpKernelOpenCL_deleteEnv(struct oclWarper *warper)
     
     for (i = 0; i < warper->numImages; ++i) {
         // Run free!!
-        freeCLMem(warper->realWorkCL[i], warper->realWork.v[i]);
-        freeCLMem(warper->dstRealWorkCL[i], warper->dstRealWork.v[i]);
+        void* dummy = NULL;
+        if( warper->realWork.v )
+            freeCLMem(warper->realWorkCL[i], warper->realWork.v[i]);
+        else
+            freeCLMem(warper->realWorkCL[i], dummy);
+        if( warper->realWork.v )
+            freeCLMem(warper->dstRealWorkCL[i], warper->dstRealWork.v[i]);
+        else
+            freeCLMem(warper->dstRealWorkCL[i], dummy);
         
         //(As applicable)
-        if(warper->imagWorkCL != NULL && warper->imagWork.v[i] != NULL) {
+        if(warper->imagWorkCL != NULL && warper->imagWork.v != NULL && warper->imagWork.v[i] != NULL) {
             freeCLMem(warper->imagWorkCL[i], warper->imagWork.v[i]);
         }
-        if(warper->dstImagWorkCL != NULL && warper->dstImagWork.v[i] != NULL) {
+        if(warper->dstImagWorkCL != NULL && warper->dstImagWork.v != NULL && warper->dstImagWork.v[i] != NULL) {
             freeCLMem(warper->dstImagWorkCL[i], warper->dstImagWork.v[i]);
         }
     }
