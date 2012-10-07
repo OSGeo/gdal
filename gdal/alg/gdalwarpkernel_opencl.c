@@ -1333,7 +1333,7 @@ cl_int set_unified_data(struct oclWarper *warper,
     size_t sz = warper->srcWidth * warper->srcHeight;
     int useValid = warper->nBandSrcValidCL != NULL;
     //32 bits in the mask
-    int validSz = sizeof(int) * (1 + (sz >> 5));
+    int validSz = sizeof(int) * ((31 + sz) >> 5);
     
     //Copy unifiedSrcDensity if it exists
     if (unifiedSrcDensity == NULL) {
@@ -1448,20 +1448,11 @@ cl_int set_src_rast_data (struct oclWarper *warper, int iNum, size_t sz,
         handleErr(err);
     } else {
         //Make a fake image so we don't have a NULL pointer
-        if (warper->eCLVendor == VENDOR_AMD || warper->eCLVendor == VENDOR_INTEL)
-        {
-            /* The code in the else clause generates a CL_INVALID_IMAGE_SIZE with ATI SDK 2.2 */
-            /* while theoretically correct and working on other SDKs. The following is a */
-            /* workaround */
-            char dummyImageData[16];
-            (*srcImag) = clCreateImage2D(warper->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, &imgFmt,
-                                        1, 1, sz, dummyImageData, &err);
-        }
-        else
-        {
-            (*srcImag) = clCreateImage2D(warper->context, CL_MEM_READ_ONLY, &imgFmt,
-                                         1, 1, sz, NULL, &err);
-        }
+
+        char dummyImageData[16];
+        (*srcImag) = clCreateImage2D(warper->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, &imgFmt,
+                                    1, 1, sz, dummyImageData, &err);
+
         handleErr(err);
     }
 
@@ -1601,7 +1592,7 @@ cl_int set_dst_data(struct oclWarper *warper,
     } else {
         (*dstValidCL) = clCreateBuffer(warper->context,
                                        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                                       sizeof(int) * ((1 + sz) >> 5), dstValid, &err);
+                                       sizeof(int) * ((31 + sz) >> 5), dstValid, &err);
         handleErr(err);
     }
     
@@ -2003,7 +1994,7 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
     //Make space for the per-band BandSrcValid data (if exists)
     if (useBandSrcValid) {
         //32 bits in the mask
-        size_t sz = warper->numBands * (1 + (warper->srcWidth * warper->srcHeight >> 5));
+        size_t sz = warper->numBands * ((31 + warper->srcWidth * warper->srcHeight) >> 5);
         
         //Allocate some space for the validity of the validity mask
         err = alloc_pinned_mem(warper, 0, warper->numBands*sizeof(char),
@@ -2090,7 +2081,7 @@ cl_int GDALWarpKernelOpenCL_setSrcValid(struct oclWarper *warper,
                                         int *bandSrcValid, int bandNum)
 {
     //32 bits in the mask
-    int stride = 1 + (warper->srcWidth * warper->srcHeight >> 5);
+    int stride = (31 + warper->srcWidth * warper->srcHeight) >> 5;
     
     //Copy bandSrcValid
     assert(warper->nBandSrcValid != NULL);
