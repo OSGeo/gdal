@@ -614,6 +614,13 @@ def ecw_20():
         gdaltest.post_reason( 'did not get expected number of overview')
         return 'fail'
 
+    # Both requests should go *exactly* to the same code path
+    data_subsampled = band.ReadRaster(0, 0, 400, 400, 200, 200)
+    data_overview = band.GetOverview(0).ReadRaster(0, 0, 200, 200)
+    if data_subsampled != data_overview:
+        gdaltest.post_reason('inconsistant overview behaviour')
+        return 'fail'
+
     if gdaltest.ecw_drv.major_version == 3:    
         (exp_mean, exp_stddev) = (141.644, 67.2186)
     else:
