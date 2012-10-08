@@ -622,7 +622,12 @@ OGRErr CPL_DLL OSRSetSOC( OGRSpatialReferenceH hSRS,
                           double dfLatitudeOfOrigin, double dfCentralMeridian,
                           double dfFalseEasting, double dfFalseNorthing );
     
-/** Transverse Mercator */
+/** Transverse Mercator
+ *
+ * Special processing available for Transverse Mercator with GDAL &gt;= 2.0 and PROJ &gt;= 4.8 :
+ * see OGRSpatialReference::exportToProj4().
+ */
+
 OGRErr CPL_DLL OSRSetTM( OGRSpatialReferenceH hSRS,
                          double dfCenterLat, double dfCenterLong,
                          double dfScale,
