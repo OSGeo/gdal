@@ -512,13 +512,16 @@ void swq_select_free( swq_select *select_info )
 /************************************************************************/
 /*                         swq_identify_field()                         */
 /************************************************************************/
+static 
+int swq_identify_field_internal( const char *field_token, const char* table_name,
+                                 swq_field_list *field_list,
+                                 swq_field_type *this_type, int *table_id, int tables_enabled );
 
 int swq_identify_field( const char *token, swq_field_list *field_list,
                         swq_field_type *this_type, int *table_id )
 
 {
-    int i;
-    char table_name[128];
+    CPLString osTableName;
     const char *field_token = token;
     int   tables_enabled;
 
@@ -530,19 +533,72 @@ int swq_identify_field( const char *token, swq_field_list *field_list,
 /* -------------------------------------------------------------------- */
 /*      Parse out table name if present, and table support enabled.     */
 /* -------------------------------------------------------------------- */
-    table_name[0] = '\0';
     if( tables_enabled && strchr(token, '.') != NULL )
     {
         int dot_offset = (int)(strchr(token,'.') - token);
 
-        if( dot_offset < (int) sizeof(table_name) )
+        osTableName = token;
+        osTableName.resize(dot_offset);
+        field_token = token + dot_offset + 1;
+
+#ifdef notdef
+        /* We try to detect if a.b is the a.b field */
+        /* of the main table, or the b field of the a table */
+        /* If both exists, report an error. */
+        /* This works, but I'm not sure this is a good idea to */
+        /* enable that. It is a sign that our SQL grammar is somewhat */
+        /* ambiguous */
+
+        swq_field_type eTypeWithTablesEnabled;
+        int            nTableIdWithTablesEnabled;
+        int nRetWithTablesEnabled = swq_identify_field_internal(
+            field_token, osTableName.c_str(), field_list,
+            &eTypeWithTablesEnabled, &nTableIdWithTablesEnabled, TRUE);
+
+        swq_field_type eTypeWithTablesDisabled;
+        int            nTableIdWithTablesDisabled;
+        int nRetWithTablesDisabled = swq_identify_field_internal(
+            token, "", field_list,
+            &eTypeWithTablesDisabled, &nTableIdWithTablesDisabled, FALSE);
+
+        if( nRetWithTablesEnabled >= 0 && nRetWithTablesDisabled >= 0 )
         {
-            strncpy( table_name, token, dot_offset );
-            table_name[dot_offset] = '\0';
-            field_token = token + dot_offset + 1;
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "Ambiguous situation. Both %s exists as a field in "
+                        "main table and %s exists as a field in %s table",
+                        token, osTableName.c_str(), field_token);
+            return -1;
         }
+        else if( nRetWithTablesEnabled >= 0 )
+        {
+            if( this_type != NULL ) *this_type = eTypeWithTablesEnabled;
+            if( table_id != NULL ) *table_id = nTableIdWithTablesEnabled;
+            return nRetWithTablesEnabled;
+        }
+        else if( nRetWithTablesDisabled >= 0 )
+        {
+            if( this_type != NULL ) *this_type = eTypeWithTablesDisabled;
+            if( table_id != NULL ) *table_id = nTableIdWithTablesDisabled;
+            return nRetWithTablesDisabled;
+        }
+        else
+        {
+            return -1;
+        }
+#endif
     }
 
+    return swq_identify_field_internal(field_token, osTableName.c_str(), field_list,
+                                       this_type, table_id, tables_enabled);
+}
+
+
+int swq_identify_field_internal( const char *field_token, const char* table_name,
+                                 swq_field_list *field_list,
+                                 swq_field_type *this_type, int *table_id, int tables_enabled )
+
+{
+    int i;
 /* -------------------------------------------------------------------- */
 /*      Search for matching field.                                      */
 /* -------------------------------------------------------------------- */
