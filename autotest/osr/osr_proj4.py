@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -447,6 +448,8 @@ def osr_proj4_11():
                      '+proj=utm +zone=31 +south +ellps=WGS84 +units=ft +no_defs ',
                      '+proj=utm +zone=31 +south +ellps=WGS84 +units=yd +no_defs ',
                      '+proj=utm +zone=31 +south +ellps=WGS84 +units=us-yd +no_defs ',
+
+                     '+proj=etmerc +lat_0=0 +lon_0=9 +k=0.9996 +units=m +x_0=500000 +datum=WGS84 +no_defs'
                      ]
 
     for proj4str in proj4strlist:
@@ -532,6 +535,68 @@ def osr_proj4_13():
 
     return 'success'
 
+###############################################################################
+# Test etmerc (#4853)
+#
+def osr_proj4_14():
+
+    proj4str = '+proj=etmerc +lat_0=0 +lon_0=9 +k=0.9996 +units=m +x_0=500000 +datum=WGS84 +nodefs'
+
+    # Test importing etmerc
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4(proj4str)
+    wkt = srs.ExportToPrettyWkt()
+    expect_wkt = """PROJCS["unnamed",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9108"]],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",9],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["Meter",1],
+    EXTENSION["PROJ4","+proj=etmerc +lat_0=0 +lon_0=9 +k=0.9996 +units=m +x_0=500000 +datum=WGS84 +nodefs"]]"""
+    if wkt != expect_wkt:
+        print('Got:%s' % wkt)
+        print('Expected:%s' % expect_wkt)
+        gdaltest.post_reason( 'Did not get expected result.' )
+        return 'fail'
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32600 + 32)
+
+    # Test exporting standard Transverse_Mercator, without any particular option
+    proj4str = srs.ExportToProj4()
+    expect_proj4str = '+proj=utm +zone=32 +datum=WGS84 +units=m +no_defs '
+    if proj4str != expect_proj4str:
+        print('Got:%s' % proj4str)
+        print('Expected:%s' % expect_proj4str)
+        gdaltest.post_reason( 'Did not get expected result.' )
+        return 'fail'
+
+    # Test exporting standard Transverse_Mercator, with OSR_USE_ETMERC=YES
+    gdal.SetConfigOption('OSR_USE_ETMERC', 'YES')
+    proj4str = srs.ExportToProj4()
+    gdal.SetConfigOption('OSR_USE_ETMERC', None)
+    expect_proj4str = '+proj=etmerc +lat_0=0 +lon_0=9 +k=0.9996 +x_0=500000 +y_0=0 +datum=WGS84 +units=m +no_defs '
+    if proj4str != expect_proj4str:
+        print('Got:%s' % proj4str)
+        print('Expected:%s' % expect_proj4str)
+        gdaltest.post_reason( 'Did not get expected result.' )
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ 
     osr_proj4_1,
     osr_proj4_2,
@@ -545,7 +610,8 @@ gdaltest_list = [
     osr_proj4_10,
     osr_proj4_11,
     osr_proj4_12,
-    osr_proj4_13 ]
+    osr_proj4_13,
+    osr_proj4_14 ]
 
 if __name__ == '__main__':
 
