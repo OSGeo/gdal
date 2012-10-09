@@ -2328,18 +2328,15 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
                           int *pnGCPCount, GDAL_GCP **ppasGCPList )
 
 {
-    TIFF        *hTIFF;
-    GTIF 	*hGTIF;
-    GTIFDefn	sGTIFDefn;
-    char        szFilename[100];
+    CPLString osFilename;
 
-    sprintf( szFilename, "/vsimem/wkt_from_mem_buf_%ld.tif", 
-             (long) CPLGetPID() );
+    osFilename.Printf( "/vsimem/wkt_from_mem_buf_%ld.tif", 
+                       (long) CPLGetPID() );
 
 /* -------------------------------------------------------------------- */
 /*      Create a memory file from the buffer.                           */
 /* -------------------------------------------------------------------- */
-    VSILFILE *fp = VSIFileFromMemBuffer( szFilename, pabyBuffer, nSize, FALSE );
+    VSILFILE *fp = VSIFileFromMemBuffer( osFilename, pabyBuffer, nSize, FALSE );
     if( fp == NULL )
         return CE_Failure;
     VSIFCloseL( fp );
@@ -2347,28 +2344,44 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
 /* -------------------------------------------------------------------- */
 /*      Initialize access to the memory geotiff structure.              */
 /* -------------------------------------------------------------------- */
-    hTIFF = VSI_TIFFOpen( szFilename, "rc" );
+    TIFF        *hTIFF;
+    hTIFF = VSI_TIFFOpen( osFilename, "rc" );
 
     if( hTIFF == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "TIFF/GeoTIFF structure is corrupt." );
-        VSIUnlink( szFilename );
+        VSIUnlink( osFilename );
         return CE_Failure;
     }
     
 /* -------------------------------------------------------------------- */
 /*      Get the projection definition.                                  */
 /* -------------------------------------------------------------------- */
+    GTIF 	*hGTIF;
+    GTIFDefn    *psGTIFDefn;
+
     hGTIF = GTIFNew(hTIFF);
 
-    if( hGTIF != NULL && GTIFGetDefn( hGTIF, &sGTIFDefn ) )
-        *ppszWKT = GTIFGetOGISDefn( hGTIF, &sGTIFDefn );
+#if LIBGEOTIFF_VERSION >= 1410
+    psGTIFDefn = GTIFAllocDefn();
+#else
+    psGTIFDefn = (GTIFDefn *) CPLCalloc(1,sizeof(GTIFDefn));
+#endif    
+
+    if( hGTIF != NULL && GTIFGetDefn( hGTIF, psGTIFDefn ) )
+        *ppszWKT = GTIFGetOGISDefn( hGTIF, psGTIFDefn );
     else
         *ppszWKT = NULL;
     
     if( hGTIF )
         GTIFFree( hGTIF );
+    
+#if LIBGEOTIFF_VERSION >= 1410
+    GTIFFreeDefn(psGTIFDefn);
+#else
+    CPLFree(psGTIFDefn);
+#endif    
 
 /* -------------------------------------------------------------------- */
 /*      Get geotransform or tiepoints.                                  */
@@ -2440,7 +2453,7 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
 /* -------------------------------------------------------------------- */
     XTIFFClose( hTIFF );
 
-    VSIUnlink( szFilename );
+    VSIUnlink( osFilename );
 
     if( *ppszWKT == NULL )
         return CE_Failure;

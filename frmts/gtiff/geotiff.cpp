@@ -5716,7 +5716,6 @@ void GTiffDataset::LookForProjection()
 /*      Capture the GeoTIFF projection, if available.                   */
 /* -------------------------------------------------------------------- */
     GTIF 	*hGTIF;
-    GTIFDefn	sGTIFDefn;
 
     CPLFree( pszProjection );
     pszProjection = NULL;
@@ -5730,9 +5729,17 @@ void GTiffDataset::LookForProjection()
     }
     else
     {
-        if( GTIFGetDefn( hGTIF, &sGTIFDefn ) )
+        GTIFDefn      *psGTIFDefn;
+
+#if LIBGEOTIFF_VERSION >= 1410
+        psGTIFDefn = GTIFAllocDefn();
+#else
+        psGTIFDefn = (GTIFDefn *) CPLCalloc(1,sizeof(GTIFDefn));
+#endif    
+
+        if( GTIFGetDefn( hGTIF, psGTIFDefn ) )
         {
-            pszProjection = GTIFGetOGISDefn( hGTIF, &sGTIFDefn );
+            pszProjection = GTIFGetOGISDefn( hGTIF, psGTIFDefn );
             
             // Should we simplify away vertical CS stuff?
             if( EQUALN(pszProjection,"COMPD_CS",8)
@@ -5756,7 +5763,13 @@ void GTiffDataset::LookForProjection()
 
         // check the tif linear unit and the CS linear unit 
 #ifdef ESRI_BUILD
-        AdjustLinearUnit(sGTIFDefn.UOMLength); 
+        AdjustLinearUnit(psGTIFDefn.UOMLength); 
+#endif
+
+#if LIBGEOTIFF_VERSION >= 1410
+        GTIFFreeDefn(psGTIFDefn);
+#else
+        CPLFree(psGTIFDefn);
 #endif
 
         if( GTIFKeyGet(hGTIF, GTRasterTypeGeoKey, &nRasterType, 
