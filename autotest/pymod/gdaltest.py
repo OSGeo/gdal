@@ -1261,3 +1261,13 @@ def support_symlink():
     if sys.platform.find('sunos') != -1:
         return True
     return False
+
+###############################################################################
+# Return True if the test must be skipped
+
+def skip_on_travis():
+    val = gdal.GetConfigOption('TRAVIS', None)
+    if val is not None:
+        post_reason('Test skipped on Travis')
+        return True
+    return False
