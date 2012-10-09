@@ -5454,3 +5454,4 @@ computations.
 o OGRGeometry:
 - Fixed WKT format (import and export) for various container types.
 - WKT import fixed for coordinates, and Z coordinates.
+
