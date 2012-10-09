@@ -245,30 +245,43 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
         /* Done with attribute fields, now do geometry */
         OGRGeometry *poGeom = poFeature->GetGeometryRef();
 
-        /* Write geometry to a buffer */
-        GByte *pabyShape = NULL;
-        int nShapeSize = 0;
-        OGRErr err = OGRWriteToShapeBin( poGeom, &pabyShape, &nShapeSize );
-        if ( err != OGRERR_NONE )
-            return err;
-
-        /* Copy it into a ShapeBuffer */
-        if ( nShapeSize > 0 )
+        if (poGeom == NULL || poGeom->IsEmpty())
         {
-            shape.Allocate(nShapeSize);
-            memcpy(shape.shapeBuffer, pabyShape, nShapeSize);
-            shape.inUseLength = nShapeSize;
+            /* EMPTY geometries should be treated as NULL, see #4832 */
+            hr = fgdb_row.SetNull(StringToWString(m_strShapeFieldName));
+            if (FAILED(hr))
+            {
+                GDBErr(hr, "Failed at writing EMPTY Geometry to Row in CreateFeature.");
+                return OGRERR_FAILURE;
+            }
         }
-
-        /* Free the shape buffer */
-        CPLFree(pabyShape);
-
-        /* Write ShapeBuffer into the Row */
-        hr = fgdb_row.SetGeometry(shape);
-        if (FAILED(hr))
+        else
         {
-            GDBErr(hr, "Failed at writing Geometry to Row in CreateFeature.");
-            return OGRERR_FAILURE;
+            /* Write geometry to a buffer */
+            GByte *pabyShape = NULL;
+            int nShapeSize = 0;
+            OGRErr err = OGRWriteToShapeBin( poGeom, &pabyShape, &nShapeSize );
+            if ( err != OGRERR_NONE )
+                return err;
+
+            /* Copy it into a ShapeBuffer */
+            if ( nShapeSize > 0 )
+            {
+                shape.Allocate(nShapeSize);
+                memcpy(shape.shapeBuffer, pabyShape, nShapeSize);
+                shape.inUseLength = nShapeSize;
+            }
+
+            /* Free the shape buffer */
+            CPLFree(pabyShape);
+
+            /* Write ShapeBuffer into the Row */
+            hr = fgdb_row.SetGeometry(shape);
+            if (FAILED(hr))
+            {
+                GDBErr(hr, "Failed at writing Geometry to Row in CreateFeature.");
+                return OGRERR_FAILURE;
+            }
         }
     }
 
@@ -872,7 +885,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
         FGDB_CPLAddXMLAttribute(shape_xml, "xsi:type", "esri:Field");
         CPLCreateXMLElementAndValue(shape_xml, "Name", geometry_name.c_str());
         CPLCreateXMLElementAndValue(shape_xml, "Type", "esriFieldTypeGeometry");
-        CPLCreateXMLElementAndValue(shape_xml, "IsNullable", "false");
+        CPLCreateXMLElementAndValue(shape_xml, "IsNullable", "true");
         CPLCreateXMLElementAndValue(shape_xml, "Length", "0");
         CPLCreateXMLElementAndValue(shape_xml, "Precision", "0");
         CPLCreateXMLElementAndValue(shape_xml, "Scale", "0");
@@ -1489,6 +1502,8 @@ bool FGdbLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
     //
 
     ShapeBuffer gdbGeometry;
+    // Row::GetGeometry() will fail with -2147467259 for NULL geometries
+    // Row::GetGeometry() will fail with -2147219885 for tables without a geometry field
     if (!FAILED(hr = pRow->GetGeometry(gdbGeometry)))
     {
         OGRGeometry* pOGRGeo = NULL;

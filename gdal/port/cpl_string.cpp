@@ -1629,8 +1629,6 @@ char *CPLEscapeString( const char *pszInput, int nLength,
                     pszOutput[iOut++] = '\"';
                     pszOutput[iOut++] = '\"';
                 }
-                else if( pszInput[iIn] == 13 )
-                    /* drop DOS LF's in strings. */;
                 else
                     pszOutput[iOut++] = pszInput[iIn];
             }
