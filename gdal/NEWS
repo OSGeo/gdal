@@ -13,10 +13,13 @@ The 1.9.2 release is a bug fix release.
  * Improve warning handling in CPLClearRecodeStubWarningFlags() (#4650)
  * Fix Solaris compilation bug (#4705)
  * MorphFromESRI(): compare SPHEROID/PRIMEM parms, not names (#4673)
+ * Avoid iffy casting of OGRWkbGeometryType to int (#4847)
+ * Fix thread safety issue with CPLOpenShared() (#4848)
 
 gdalwarp: 
  * Do not drop chunks to process because of transform errors (#4795)
  * geolocation transformer: ignore incoming pabSuccess values (#4794)
+ * Fix OpenCL related warper crash with validity masks (#4840)
 
 gdaldem: 
  * fix color relief output via CreateCopy (#4764)
@@ -48,10 +51,14 @@ GeoPDF Driver:
 VRT Driver:
  * Fix integer overflow filling buffer larger than 2GB (#4815)
 
+GXF Driver:
+ * Fix large buffer on stack even for failed opens (#4852)
+
 GeoTIFF (GTiff) Driver:
  * avoid crash on improperly formatted metadata (#4816)
  * Fix factor_b/factor_c problem when initiatlizing from EPSG CSV (#4689)
  * Avoid applying GEOGCS units to projected srs (#4677)
+ * Add support for GEO_NORMALIZE_DISABLE_TOWGS84 (#3309)
 
 NITF Driver: 
  * Do not attempt to return large DESDATA as escaped text (#4803)
@@ -104,6 +111,7 @@ FileGDB Driver:
  * Add FGDB_BULK_LOAD configuration option for faster bulk loading (#4420)
  * Fixes for tolerance and scale parameters in SRS (#4455)
  * Use ESRI SRS DB to find WKT definition (#4455)
+ * Handle empty geometries as NULLs (#4832)
 
 DXF Driver:
  * Take extrusion direction into account (#4842)
@@ -130,6 +138,9 @@ JSON Driver:
 CSV Driver:
  * Allow creating a new .csv file in messed up case, support single column CSV files (#4824)
  * Fix export of real values in non-C locale (#4761)
+ * Avoid unnecessary whitespace/padding in output (#4469)
+ * Avoid inappropriate newline conversions (#4452)
+ * Add WRITE_BOM option to CSV driver to write UTF8 BOM for improved Excel/unicode compatibility (#4844).
 
 WFS Driver:
  * Fix problem with double quoted WFSLayerMetadata (#4796)
