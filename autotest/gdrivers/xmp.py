@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -59,8 +60,12 @@ class TestXMPRead:
         ret = 'success'
         ds = gdal.Open(self.filename)
         if ds is None:
-            gdaltest.post_reason('open failed')
-            ret = 'failure'
+            # Old libwebp don't support VP8X containers
+            if self.filename == 'data/rgbsmall_with_xmp.webp':
+                ret = 'skip'
+            else:
+                gdaltest.post_reason('open failed')
+                ret = 'failure'
         else:
             if ds.GetDriver().ShortName != self.drivername:
                 gdaltest.post_reason('opened with wrong driver')

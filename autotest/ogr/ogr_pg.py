@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -63,7 +64,11 @@ def ogr_pg_check_layer_in_list(ds, layer_name):
 def ogr_pg_1():
 
     gdaltest.pg_ds = None
-    gdaltest.pg_connection_string='dbname=autotest'
+    val = gdal.GetConfigOption('OGR_PG_CONNECTION_STRING', None)
+    if val is not None:
+        gdaltest.pg_connection_string=val
+    else:
+        gdaltest.pg_connection_string='dbname=autotest'
     #gdaltest.pg_connection_string='dbname=autotest port=5432'
     #gdaltest.pg_connection_string='dbname=autotest-postgis2.0 port=5432'
     #gdaltest.pg_connection_string='dbname=autotest host=127.0.0.1 port=5433 user=postgres'
