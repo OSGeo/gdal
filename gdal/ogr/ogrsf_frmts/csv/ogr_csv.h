@@ -69,6 +69,7 @@ class OGRCSVLayer : public OGRLayer
 
     char*               pszFilename;
     int                 bCreateCSVT;
+    int                 bWriteBOM;
     char                chDelimiter;
 
     int                 iWktGeomReadField;
@@ -105,6 +106,7 @@ class OGRCSVLayer : public OGRLayer
     void                SetCRLF(int);
     void                SetWriteGeometry(OGRCSVGeometryFormat eGeometryFormat);
     void                SetCreateCSVT(int bCreateCSVT);
+    void                SetWriteBOM(int bWriteBOM);
 
     virtual int         GetFeatureCount( int bForce = TRUE );
 };
