@@ -621,7 +621,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     CPLFree( pszPMName );
     CPLFree( pszAngularUnits );
 
-#if LIBGEOTIFF_VERSION >= 1310
+#if LIBGEOTIFF_VERSION >= 1310 && !defined(GEO_NORMALIZE_DISABLE_TOWGS84)
     if( psDefn->TOWGS84Count > 0 )
         oSRS.SetTOWGS84( psDefn->TOWGS84[0],
                          psDefn->TOWGS84[1],
@@ -2218,7 +2218,7 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 /*      Do we have TOWGS84 parameters?                                  */
 /* -------------------------------------------------------------------- */
 
-#if LIBGEOTIFF_VERSION >= 1310
+#if LIBGEOTIFF_VERSION >= 1310 && !defined(GEO_NORMALIZE_DISABLE_TOWGS84)
     double adfTOWGS84[7];
 
     if( poSRS->GetTOWGS84( adfTOWGS84 ) == OGRERR_NONE )
