@@ -21,10 +21,10 @@ before_install:
   - mysql -e "create database autotest;"
   - mysql -e "GRANT ALL ON autotest.* TO 'root'@'localhost';" -u root
   - mysql -e "GRANT ALL ON autotest.* TO 'travis'@'localhost';" -u root
-  - wget http://www.lizardtech.com/download/developer/MrSID_DSDK-8.5.0.3422-linux.x86.gcc44.tar.gz
-  - wget http://downloads.esri.com/Support/downloads/ao_/FileGDB_API_1_2-32.tar.gz
-  - wget http://even.rouault.free.fr/nonfree/install-libecwj2-ubuntu12.04-32bit.tar.gz
-  - wget http://even.rouault.free.fr/install-libkml-r864-32bit.tar.gz
+  - wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/FileGDB_API_1_2-32.tar.gz
+  - wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/MrSID_DSDK-8.5.0.3422-linux.x86.gcc44.tar.gz
+  - wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-libecwj2-ubuntu12.04-32bit.tar.gz
+  - wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-libkml-r864-32bit.tar.gz
   - tar xzf MrSID_DSDK-8.5.0.3422-linux.x86.gcc44.tar.gz
   - sudo cp -r MrSID_DSDK-8.5.0.3422-linux.x86.gcc44/Raster_DSDK/include/* /usr/local/include
   - sudo cp -r MrSID_DSDK-8.5.0.3422-linux.x86.gcc44/Raster_DSDK/lib/* /usr/local/lib
