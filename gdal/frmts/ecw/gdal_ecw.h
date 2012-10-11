@@ -68,11 +68,20 @@
 #  define HAVE_COMPRESS
 #endif
 
-#  include <NCSJP2File.h>
 #else
 #  include <ECWJP2BuildNumber.h>
-#  include <HeaderEditor.h>
+    #if ECWSDK_VERSION>=50
+        #include <NCSECWHeaderEditor.h>
+        #include "NCSEcw/JP2/File.h"
+    #else 
+        #include <HeaderEditor.h>
+    #endif
 #  define NCS_FASTCALL
+#endif
+
+
+#if ECWSDK_VERSION >= 40
+#define SDK_CAN_DO_SUPERSAMPLING 1
 #endif
 
 #ifndef NCSFILEBASE_H
@@ -103,14 +112,19 @@ ECWCreateJPEG2000(const char *pszFilename, int nXSize, int nYSize, int nBands,
                   GDALDataType eType, char **papszOptions );
 #endif
 
+void ECWReportError(CNCSError& oErr, const char* pszMsg = "");
+
 /************************************************************************/
 /* ==================================================================== */
 /*                             JP2Userbox                               */
 /* ==================================================================== */
 /************************************************************************/
 #ifdef HAVE_COMPRESS
+#if ECWSDK_VERSION>=50
+class JP2UserBox : public CNCSSDKBox {
+#else 
 class JP2UserBox : public CNCSJP2Box {
-
+#endif
 private:
     int           nDataLength;
     unsigned char *pabyData;
@@ -179,7 +193,19 @@ class VSIIOStream : public CNCSJPCIOStream
     }        
         
 #if ECWSDK_VERSION >= 40
-    virtual NCS::CIOStream *Clone() { return NULL; }
+    virtual VSIIOStream *Clone() {
+        FILE *fpNewVSIL = VSIFOpenL( m_Name.a_str(), "rb" );
+        if (fpNewVSIL == NULL) 
+        {
+            return NULL;
+        }
+        else
+        {
+            VSIIOStream *pDst = new VSIIOStream();
+            pDst->Access(fpNewVSIL, bWritable, m_Name.a_str(), startOfJPData, lengthOfJPData);
+            return pDst;
+        }
+	}
 #endif /* ECWSDK_VERSION >= 4 */
 
     virtual CNCSError Access( VSILFILE *fpVSILIn, BOOLEAN bWrite,
@@ -385,9 +411,18 @@ class CPL_DLL ECWDataset : public GDALPamDataset
     int         bDatumCodeChanged;
     int         bUnitsCodeChanged;
     void        WriteHeader();
+    
+    int         bUseOldBandRasterIOImplementation;
 
     CPLStringList oECWMetadataList;
-
+    CPLErr ReadBands(void * pData, int nBufXSize, int nBufYSize,
+                    GDALDataType eBufType, 
+                    int nBandCount,
+                    int nPixelSpace, int nLineSpace, int nBandSpace);
+    CPLErr ReadBandsDirectly(void * pData, int nBufXSize, int nBufYSize,
+                    GDALDataType eBufType, 
+                    int nBandCount,
+                    int nPixelSpace, int nLineSpace, int nBandSpace);
   public:
 		ECWDataset(int bIsJPEG2000);
 		~ECWDataset();
@@ -461,6 +496,12 @@ class ECWRasterBand : public GDALPamRasterBand
     int                          iOverview; // -1 for base. 
 
     std::vector<ECWRasterBand*>  apoOverviews;
+
+//#if !defined(SDK_CAN_DO_SUPERSAMPLING)
+    CPLErr OldIRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              int, int );
+//#endif
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,

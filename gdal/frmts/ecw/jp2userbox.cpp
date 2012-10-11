@@ -129,9 +129,11 @@ CNCSError JP2UserBox::UnParse( class CNCSJP2File &JP2File,
                   "No box type set in JP2UserBox::UnParse()" );
         return Error;
     }
-
+#if ECWSDK_VERSION<50
     Error = CNCSJP2Box::UnParse(JP2File, Stream);
-
+#else 
+    Error = CNCSSDKBox::UnParse(JP2File, Stream);
+#endif
 //    NCSJP2_CHECKIO_BEGIN(Error, Stream);
     Stream.Write(pabyData, nDataLength);
 //    NCSJP2_CHECKIO_END();

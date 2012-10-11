@@ -949,6 +949,67 @@ def ecw_28():
     return 'success'
 
 ###############################################################################
+# Test supersampling
+
+def ecw_29():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/jrc.ecw' )
+    data_b1 = ds.GetRasterBand(1).ReadRaster(0,0,400,400)
+    ds = None
+
+    ds = gdal.Open( 'data/jrc.ecw' )
+    data_ecw_supersampled_b1 = ds.GetRasterBand(1).ReadRaster(0,0,400,400,800,800)
+    ds = None
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/ecw_29_0.tif', 400 ,400, 1)
+    ds.WriteRaster(0, 0, 400, 400, data_b1)
+    data_tiff_supersampled_b1 = ds.GetRasterBand(1).ReadRaster(0,0,400,400,800,800)
+    ds = None
+
+    ds1 = gdal.GetDriverByName('GTiff').Create('/vsimem/ecw_29_1.tif', 800 ,800, 1)
+    ds1.WriteRaster(0, 0, 800, 800, data_ecw_supersampled_b1)
+
+    ds2 = gdal.GetDriverByName('GTiff').Create('/vsimem/ecw_29_2.tif', 800 ,800, 1)
+    ds2.WriteRaster(0, 0, 800, 800, data_tiff_supersampled_b1)
+
+    maxdiff = gdaltest.compare_ds(ds1, ds2)
+
+    ds1 = None
+    ds2 = None
+
+    gdal.Unlink('/vsimem/ecw_29_0.tif')
+    gdal.Unlink('/vsimem/ecw_29_1.tif')
+    gdal.Unlink('/vsimem/ecw_29_2.tif')
+
+    if maxdiff != 0:
+        print(maxdiff)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test IReadBlock()
+
+def ecw_30():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/jrc.ecw' )
+    (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
+    data_readraster = ds.GetRasterBand(1).ReadRaster(0,0,blockxsize,blockysize)
+    data_readblock = ds.GetRasterBand(1).ReadBlock(0,0)
+    ds = None
+
+    if data_readraster != data_readraster:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -1207,6 +1268,8 @@ gdaltest_list = [
     ecw_26,
     ecw_27,
     ecw_28,
+    ecw_29,
+    ecw_30,
     ecw_online_1,
     ecw_online_2,
     ecw_online_3,
