@@ -4457,6 +4457,39 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,in
     }
     return eErr;
   }
+SWIGINTERN CPLErr GDALRasterBandShadow_ReadBlock(GDALRasterBandShadow *self,int xoff,int yoff,void **buf){
+
+    int nBlockXSize, nBlockYSize;
+    GDALGetBlockSize(self, &nBlockXSize, &nBlockYSize);
+    int nDataTypeSize = (GDALGetDataTypeSize(GDALGetRasterDataType(self)) / 8);
+    GIntBig buf_size = (GIntBig)nBlockXSize * nBlockYSize * nDataTypeSize;
+
+#if PY_VERSION_HEX >= 0x03000000 
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size ); 
+    if (*buf == NULL)
+    {
+        *buf = Py_None;
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
+        return CE_Failure;
+    }
+    char *data = PyBytes_AsString( (PyObject *)*buf ); 
+#else 
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
+    if (*buf == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
+        return CE_Failure;
+    }
+    char *data = PyString_AsString( (PyObject *)*buf ); 
+#endif
+    CPLErr eErr = GDALReadBlock( self, xoff, yoff, (void *) data); 
+    if (eErr == CE_Failure)
+    {
+        Py_DECREF((PyObject*)*buf);
+        *buf = NULL;
+    }
+    return eErr;
+  }
 
 GDALDataType GDALRasterBandShadow_DataType_get( GDALRasterBandShadow *h ) {
   return GDALGetRasterDataType( h );
@@ -15908,6 +15941,79 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Band_ReadBlock(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+  int arg2 ;
+  int arg3 ;
+  void **arg4 = (void **) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  void *pyObject4 = NULL ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "xoff",(char *) "yoff", NULL 
+  };
+  CPLErr result;
+  
+  {
+    /* %typemap(in,numinputs=0) ( void **outPythonObject ) ( void *pyObject4 = NULL ) */
+    arg4 = &pyObject4;
+  }
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOO:Band_ReadBlock",kwnames,&obj0,&obj1,&obj2)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_ReadBlock" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Band_ReadBlock" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  ecode3 = SWIG_AsVal_int(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Band_ReadBlock" "', argument " "3"" of type '" "int""'");
+  } 
+  arg3 = static_cast< int >(val3);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (CPLErr)GDALRasterBandShadow_ReadBlock(arg1,arg2,arg3,arg4);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(argout) ( void **outPythonObject ) */
+    Py_XDECREF(resultobj);
+    if (*arg4)
+    {
+      resultobj = (PyObject*)*arg4;
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
+    }
+  }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *Band_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *obj;
   if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
@@ -21441,6 +21547,7 @@ static PyMethodDef SwigMethods[] = {
 		"    int buf_type = None, int buf_pixel_space = None, \n"
 		"    int buf_line_space = None) -> CPLErr\n"
 		""},
+	 { (char *)"Band_ReadBlock", (PyCFunction) _wrap_Band_ReadBlock, METH_VARARGS | METH_KEYWORDS, (char *)"Band_ReadBlock(Band self, int xoff, int yoff) -> CPLErr"},
 	 { (char *)"Band_swigregister", Band_swigregister, METH_VARARGS, NULL},
 	 { (char *)"new_ColorTable", (PyCFunction) _wrap_new_ColorTable, METH_VARARGS | METH_KEYWORDS, (char *)"new_ColorTable(GDALPaletteInterp palette = GPI_RGB) -> ColorTable"},
 	 { (char *)"delete_ColorTable", _wrap_delete_ColorTable, METH_VARARGS, (char *)"delete_ColorTable(ColorTable self)"},
