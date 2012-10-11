@@ -48,7 +48,27 @@ static int    bNCSInitialized = FALSE;
 
 void ECWInitialize( void );
 
+#define BLOCK_SIZE 256
+
 GDALDataset* ECWDatasetOpenJPEG2000(GDALOpenInfo* poOpenInfo);
+
+/************************************************************************/
+/*                           ECWReportError()                           */
+/************************************************************************/
+
+void ECWReportError(CNCSError& oErr, const char* pszMsg)
+{
+#if ECWSDK_VERSION<50
+    char* pszErrorMessage = oErr.GetErrorMessage();
+    CPLError( CE_Failure, CPLE_AppDefined, 
+              "%s%s", pszMsg, pszErrorMessage );
+    NCSFree(pszErrorMessage);
+#else 
+    const char* pszErrorMessage = oErr.GetErrorMessage().a_str();
+    CPLError( CE_Failure, CPLE_AppDefined, 
+              "%s%s", pszMsg, pszErrorMessage );
+#endif
+}
 
 /************************************************************************/
 /*                           ECWRasterBand()                            */
@@ -67,8 +87,8 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview )
     nRasterXSize = poDS->GetRasterXSize() / ( 1 << (iOverview+1));
     nRasterYSize = poDS->GetRasterYSize() / ( 1 << (iOverview+1));
 
-    nBlockXSize = nRasterXSize;
-    nBlockYSize = 1;
+    nBlockXSize = BLOCK_SIZE;
+    nBlockYSize = BLOCK_SIZE;
 
 /* -------------------------------------------------------------------- */
 /*      Work out band color interpretation.                             */
@@ -216,11 +236,17 @@ CPLErr ECWRasterBand::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                               1, &nBand, papszOptions );
 }
 
+//#if !defined(SDK_CAN_DO_SUPERSAMPLING)
 /************************************************************************/
-/*                             IRasterIO()                              */
+/*                          OldIRasterIO()                              */
 /************************************************************************/
 
-CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+/* This implementation of IRasterIO(), derived from the one of GDAL 1.9 */
+/* and older versions, is meant at making over-sampling */
+/* work with ECW SDK 3.3. Newer versions of the SDK can do super-sampling in their */
+/* SetView() call. */
+
+CPLErr ECWRasterBand::OldIRasterIO( GDALRWFlag eRWFlag,
                                  int nXOff, int nYOff, int nXSize, int nYSize,
                                  void * pData, int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType,
@@ -231,47 +257,25 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     GByte        *pabyWorkBuffer = NULL;
     int nResFactor = 1 << (iOverview+1);
 
+    nXOff *= nResFactor;
+    nYOff *= nResFactor;
+    nXSize *= nResFactor;
+    nYSize *= nResFactor;
+
 /* -------------------------------------------------------------------- */
 /*      Try to do it based on existing "advised" access.                */
 /* -------------------------------------------------------------------- */
     if( poGDS->TryWinRasterIO( eRWFlag, 
-                               nXOff * nResFactor, nYOff * nResFactor, 
-                               nXSize * nResFactor, nYSize * nResFactor, 
+                               nXOff, nYOff, 
+                               nXSize, nYSize, 
                                (GByte *) pData, nBufXSize, nBufYSize, 
                                eBufType, 1, &nBand, 
                                nPixelSpace, nLineSpace, 0 ) )
         return CE_None;
 
 /* -------------------------------------------------------------------- */
-/*      We will drop down to the block oriented API if only a single    */
-/*      scanline was requested. This is based on the assumption that    */
-/*      doing lots of single scanline windows is expensive.             */
-/*      Except for reading a 1x1 window when reading a scanline might   */
-/*      be longer.                                                      */
-/* -------------------------------------------------------------------- */
-    if( nYSize == 1 && nXSize != 1 )
-    {
-#ifdef NOISY_DEBUG
-        CPLDebug( "ECWRasterBand", 
-                  "RasterIO(%d,%d,%d,%d -> %dx%d) - redirected.", 
-                  nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
-#endif
-        return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                         pData, nBufXSize, nBufYSize, 
-                                         eBufType, nPixelSpace, nLineSpace );
-    }
-
-/* -------------------------------------------------------------------- */
 /*      The ECW SDK doesn't supersample, so adjust for this case.       */
 /* -------------------------------------------------------------------- */
-    CPLDebug( "ECWRasterBand", 
-              "RasterIO(nXOff=%d,nYOff=%d,nXSize=%d,nYSize=%d -> %dx%d)", 
-              nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
-
-    nXOff *= nResFactor;
-    nYOff *= nResFactor;
-    nXSize *= nResFactor;
-    nYSize *= nResFactor;
 
     int          nNewXSize = nBufXSize, nNewYSize = nBufYSize;
 
@@ -282,22 +286,13 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         nNewYSize = nYSize;
 
 /* -------------------------------------------------------------------- */
-/*      Default line and pixel spacing if needed.                       */
-/* -------------------------------------------------------------------- */
-    if ( nPixelSpace == 0 )
-        nPixelSpace = GDALGetDataTypeSize( eBufType ) / 8;
-
-    if ( nLineSpace == 0 )
-        nLineSpace = nPixelSpace * nBufXSize;
-
-/* -------------------------------------------------------------------- */
 /*      Can we perform direct loads, or must we load into a working     */
 /*      buffer, and transform?                                          */
 /* -------------------------------------------------------------------- */
-    int	    nRawPixelSize = GDALGetDataTypeSize(poGDS->eRasterDataType) / 8;
+    int     nRawPixelSize = GDALGetDataTypeSize(poGDS->eRasterDataType) / 8;
 
     bDirect = nPixelSpace == 1 && eBufType == GDT_Byte
-	    && nNewXSize == nBufXSize && nNewYSize == nBufYSize;
+        && nNewXSize == nBufXSize && nNewYSize == nBufYSize;
     if( !bDirect )
         pabyWorkBuffer = (GByte *) CPLMalloc(nNewXSize * nRawPixelSize);
 
@@ -317,11 +312,8 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     if( oErr.GetErrorNumber() != NCS_SUCCESS )
     {
         CPLFree( pabyWorkBuffer );
-        char* pszErrorMessage = oErr.GetErrorMessage();
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s", pszErrorMessage );
-        NCSFree(pszErrorMessage);
-        
+        ECWReportError(oErr);
+
         return CE_Failure;
     }
 
@@ -330,124 +322,147 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      Supersampling is not supported by the ECW API, so we will do    */
 /*      it ourselves.                                                   */
 /* -------------------------------------------------------------------- */
-    double	dfSrcYInc = (double)nNewYSize / nBufYSize;
-    double	dfSrcXInc = (double)nNewXSize / nBufXSize;
-    int	        iSrcLine, iDstLine;
+    double  dfSrcYInc = (double)nNewYSize / nBufYSize;
+    double  dfSrcXInc = (double)nNewXSize / nBufXSize;
+    int         iSrcLine, iDstLine;
 
     for( iSrcLine = 0, iDstLine = 0; iDstLine < nBufYSize; iDstLine++ )
     {
         NCSEcwReadStatus eRStatus;
-        int	        iDstLineOff = iDstLine * nLineSpace;
-        unsigned char	*pabySrcBuf;
+        int         iDstLineOff = iDstLine * nLineSpace;
+        unsigned char   *pabySrcBuf;
 
         if( bDirect )
             pabySrcBuf = ((GByte *)pData) + iDstLineOff;
         else
             pabySrcBuf = pabyWorkBuffer;
 
-	if ( nNewYSize == nBufYSize || iSrcLine == (int)(iDstLine * dfSrcYInc) )
-	{
+        if ( nNewYSize == nBufYSize || iSrcLine == (int)(iDstLine * dfSrcYInc) )
+        {
             eRStatus = poGDS->poFileView->ReadLineBIL( 
                 poGDS->eNCSRequestDataType, 1, (void **) &pabySrcBuf );
 
-	    if( eRStatus != NCSECW_READ_OK )
-	    {
-	        CPLFree( pabyWorkBuffer );
+            if( eRStatus != NCSECW_READ_OK )
+            {
+                CPLFree( pabyWorkBuffer );
                 CPLDebug( "ECW", "ReadLineBIL status=%d", (int) eRStatus );
-	        CPLError( CE_Failure, CPLE_AppDefined,
-			  "NCScbmReadViewLineBIL failed." );
-		return CE_Failure;
-	    }
+                CPLError( CE_Failure, CPLE_AppDefined,
+                         "NCScbmReadViewLineBIL failed." );
+                return CE_Failure;
+            }
 
             if( !bDirect )
             {
                 if ( nNewXSize == nBufXSize )
                 {
                     GDALCopyWords( pabyWorkBuffer, poGDS->eRasterDataType, 
-                                   nRawPixelSize, 
-                                   ((GByte *)pData) + iDstLine * nLineSpace, 
-                                   eBufType, nPixelSpace, nBufXSize );
+                                nRawPixelSize, 
+                                ((GByte *)pData) + iDstLine * nLineSpace, 
+                                eBufType, nPixelSpace, nBufXSize );
                 }
-		else
-		{
-	            int	iPixel;
+                else
+                {
+                    int iPixel;
 
                     for ( iPixel = 0; iPixel < nBufXSize; iPixel++ )
                     {
                         GDALCopyWords( pabyWorkBuffer 
-                                       + nRawPixelSize*((int)(iPixel*dfSrcXInc)),
-                                       poGDS->eRasterDataType, nRawPixelSize,
-                                       (GByte *)pData + iDstLineOff
-				       + iPixel * nPixelSpace,
-                                       eBufType, nPixelSpace, 1 );
+                                    + nRawPixelSize*((int)(iPixel*dfSrcXInc)),
+                                    poGDS->eRasterDataType, nRawPixelSize,
+                                    (GByte *)pData + iDstLineOff
+                                    + iPixel * nPixelSpace,
+                                                    eBufType, nPixelSpace, 1 );
                     }
-		}
+                }
             }
 
             iSrcLine++;
-	}
-	else
-	{
-	    // Just copy the previous line in this case
+        }
+        else
+        {
+            // Just copy the previous line in this case
             GDALCopyWords( (GByte *)pData + (iDstLineOff - nLineSpace),
                             eBufType, nPixelSpace,
                             (GByte *)pData + iDstLineOff,
                             eBufType, nPixelSpace, nBufXSize );
-	}
+        }
     }
 
     CPLFree( pabyWorkBuffer );
 
     return CE_None;
 }
+//#endif !defined(SDK_CAN_DO_SUPERSAMPLING)
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+                                 int nXOff, int nYOff, int nXSize, int nYSize,
+                                 void * pData, int nBufXSize, int nBufYSize,
+                                 GDALDataType eBufType,
+                                 int nPixelSpace, int nLineSpace )
+{
+    /* -------------------------------------------------------------------- */
+    /*      Default line and pixel spacing if needed.                       */
+    /* -------------------------------------------------------------------- */
+    if ( nPixelSpace == 0 )
+        nPixelSpace = GDALGetDataTypeSize( eBufType ) / 8;
+
+    if ( nLineSpace == 0 )
+        nLineSpace = nPixelSpace * nBufXSize;
+
+    CPLDebug( "ECWRasterBand", 
+            "RasterIO(nBand=%d,iOverview=%d,nXOff=%d,nYOff=%d,nXSize=%d,nYSize=%d -> %dx%d)", 
+            nBand, iOverview, nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
+
+#if !defined(SDK_CAN_DO_SUPERSAMPLING)
+    if( poGDS->bUseOldBandRasterIOImplementation )
+    {
+        return OldIRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                            pData, nBufXSize, nBufYSize,
+                            eBufType,
+                            nPixelSpace, nLineSpace );
+    }
+
+#endif
+
+    int nResFactor = 1 << (iOverview+1);
+
+    return poGDS->IRasterIO(eRWFlag,
+                            nXOff * nResFactor,
+                            nYOff * nResFactor,
+                            (nXSize == nRasterXSize) ? poGDS->nRasterXSize : nXSize * nResFactor,
+                            (nYSize == nRasterYSize) ? poGDS->nRasterYSize : nYSize * nResFactor,
+                            pData, nBufXSize, nBufYSize,
+                            eBufType, 1, &nBand,
+                            nPixelSpace, nLineSpace, nLineSpace*nBufYSize);
+}
 
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr ECWRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
+CPLErr ECWRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage )
 
 {
-    CPLErr eErr = CE_None;
-    int nXOff = 0, nYOff = nBlockYOff, nXSize = nBlockXSize, nYSize = 1;
-    int nResFactor = 1 << (iOverview+1);
-    int nDSXOff, nDSYOff, nDSXSize, nDSYSize;
+    int nXOff = nBlockXOff * nBlockXSize,
+        nYOff = nBlockYOff * nBlockYSize,
+        nXSize = nBlockXSize,
+        nYSize = nBlockYSize;
 
-    nDSXOff = nXOff * nResFactor;
-    nDSYOff = nYOff * nResFactor;
-    nDSXSize = nXSize * nResFactor;
-    nDSYSize = nYSize * nResFactor;
+    if( nXOff + nXSize > nRasterXSize )
+        nXSize = nRasterXSize - nXOff;
+    if( nYOff + nYSize > nRasterYSize )
+        nYSize = nRasterYSize - nYOff;
 
-#ifdef NOISY_DEBUG
-    CPLDebug( "ECW", 
-              "ECWRasterBand::IReadBlock(0,%d) from overview %d, size %dx%d",
-              nBlockYOff,
-              iOverview, nRasterXSize, nRasterYSize );
-#endif
-
-    if( poGDS->TryWinRasterIO( GF_Read, nDSXOff, nDSYOff, nDSXSize, nDSYSize,
-                               (GByte *) pImage, nBlockXSize, 1, 
-                               eDataType, 1, &nBand, 0, 0, 0 ) )
-        return CE_None;
-
-    eErr = AdviseRead( 0, nYOff, 
-                       nRasterXSize, nRasterYSize - nYOff,
-                       nRasterXSize, nRasterYSize - nBlockYOff,
-                       eDataType, NULL );
-    if( eErr != CE_None )
-        return eErr;
-
-    if( poGDS->TryWinRasterIO( GF_Read, 
-                               nDSXOff, nDSYOff, nDSXSize, nDSYSize,
-                               (GByte *) pImage, nBlockXSize, 1, 
-                               eDataType, 1, &nBand, 0, 0, 0 ) )
-        return CE_None;
-
-    CPLError( CE_Failure, CPLE_AppDefined, 
-              "TryWinRasterIO() failed for blocked scanline %d of band %d.",
-              nBlockYOff, nBand );
-
-    return CE_Failure;
+    int nPixelSpace = GDALGetDataTypeSize(eDataType) / 8;
+    int nLineSpace = nPixelSpace * nBlockXSize;
+    return IRasterIO( GF_Read,
+                      nXOff, nYOff, nXSize, nYSize,
+                      pImage, nXSize, nYSize,
+                      eDataType, nPixelSpace, nLineSpace );
 }
 
 /************************************************************************/
@@ -489,6 +504,8 @@ ECWDataset::ECWDataset(int bIsJPEG2000)
     bProjCodeChanged = FALSE;
     bDatumCodeChanged = FALSE;
     bUnitsCodeChanged = FALSE;
+    
+    bUseOldBandRasterIOImplementation = FALSE;
     
     poDriver = (GDALDriver*) GDALGetDriverByName( bIsJPEG2000 ? "JP2ECW" : "ECW" );
 }
@@ -545,7 +562,7 @@ ECWDataset::~ECWDataset()
 }
 
 /************************************************************************/
-/*                             AdviseRead()                             */
+/*                          SetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr ECWDataset::SetGeoTransform( double * padfGeoTransform )
@@ -690,7 +707,11 @@ void ECWDataset::WriteHeader()
     NCSError eErr;
 
     /* Load original header info */
+#if ECWSDK_VERSION<50
     eErr = NCSEcwEditReadInfo((char*) GetDescription(), &psEditInfo);
+#else 
+    eErr = NCSEcwEditReadInfo(  NCS::CString::Utf8Decode(GetDescription()).c_str(), &psEditInfo);
+#endif
     if (eErr != NCS_SUCCESS)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "NCSEcwEditReadInfo() failed");
@@ -746,7 +767,11 @@ void ECWDataset::WriteHeader()
     }
 
     /* Write modified header info */
+#if ECWSDK_VERSION<50
     eErr = NCSEcwEditWriteInfo((char*) GetDescription(), psEditInfo, NULL, NULL, NULL);
+#else
+    eErr = NCSEcwEditWriteInfo( NCS::CString::Utf8Decode(GetDescription()).c_str(), psEditInfo, NULL, NULL, NULL);
+#endif
     if (eErr != NCS_SUCCESS)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "NCSEcwEditWriteInfo() failed");
@@ -776,6 +801,7 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
               "ECWDataset::AdviseRead(%d,%d,%d,%d->%d,%d)",
               nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
 
+#if !defined(SDK_CAN_DO_SUPERSAMPLING)
     if( nBufXSize > nXSize || nBufYSize > nYSize )
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
@@ -783,6 +809,7 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                   "ignoring AdviseRead() request." );
         return CE_Warning; 
     }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Adjust band numbers to be zero based.                           */
@@ -810,10 +837,8 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
     CPLFree( panAdjustedBandList );
     if( oErr.GetErrorNumber() != NCS_SUCCESS )
     {
-        char* pszErrorMessage = oErr.GetErrorMessage();
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s", pszErrorMessage );
-        NCSFree(pszErrorMessage);
+        ECWReportError(oErr);
+
         bWinActive = FALSE;
         return CE_Failure;
     }
@@ -917,12 +942,12 @@ int ECWDataset::TryWinRasterIO( GDALRWFlag eFlag,
         static int nDebugCount = 0;
 
         if( nDebugCount < 30 )
-            CPLDebug( "ECWDataset", 
+            CPLDebug( "ECW", 
                       "TryWinRasterIO(%d,%d,%d,%d -> %dx%d) - doing advised read.", 
                       nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
 
         if( nDebugCount == 29 )
-            CPLDebug( "ECWDataset", "No more TryWinRasterIO messages will be reported" );
+            CPLDebug( "ECW", "No more TryWinRasterIO messages will be reported" );
         
         nDebugCount++;
     }
@@ -1027,6 +1052,13 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                               int nPixelSpace, int nLineSpace, int nBandSpace)
     
 {
+    if( nBandCount > 100 )
+        return CE_Failure;
+
+    if( bUseOldBandRasterIOImplementation )
+        /* Sanity check. Shouldn't happen */
+        return CE_Failure;
+
 /* -------------------------------------------------------------------- */
 /*      Try to do it based on existing "advised" access.                */
 /* -------------------------------------------------------------------- */
@@ -1047,12 +1079,36 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
     {
         /* do nothing */
     }
-    else if( nYSize == 1 && nBufYSize == 1 && nBandCount > 1 )
+
+#if !defined(SDK_CAN_DO_SUPERSAMPLING)
+/* -------------------------------------------------------------------- */
+/*      If we are supersampling we need to fall into the general        */
+/*      purpose logic.                                                  */
+/* -------------------------------------------------------------------- */
+    else if( nXSize < nBufXSize || nYSize < nBufYSize )
     {
+        bUseOldBandRasterIOImplementation = TRUE;
+        CPLErr eErr = 
+            GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize,
+                                    eBufType, 
+                                    nBandCount, panBandMap,
+                                    nPixelSpace, nLineSpace, nBandSpace);
+        bUseOldBandRasterIOImplementation = FALSE;
+        return eErr;
+    }
+#endif
+
+    else if( nBufYSize == 1 )
+    {
+        //JTO: this is tricky, because it expects the rest of the image with this bufer width to be 
+        //read. The prefered way to achieve this behaviour would be to call AdviseRead before call IRasterIO.
+        //ERO; indeed, the logic could be improved to detect successive pattern of single line reading
+        //before doing an AdviseRead.
         CPLErr eErr;
 
         eErr = AdviseRead( nXOff, nYOff, nXSize, GetRasterYSize() - nYOff,
-                           nBufXSize, GetRasterYSize() - nYOff, eBufType, 
+                           nBufXSize, (nRasterYSize - nYOff) / nYSize, eBufType, 
                            nBandCount, panBandMap, NULL );
         if( eErr == CE_None 
             && TryWinRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
@@ -1062,37 +1118,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
             return CE_None;
     }
 
-/* -------------------------------------------------------------------- */
-/*      If we are supersampling we need to fall into the general        */
-/*      purpose logic.  We also use the general logic if we are in      */
-/*      some cases unlikely to benefit from interleaved access.         */
-/*                                                                      */
-/*      The one case we would like to handle better here is the         */
-/*      nBufYSize == 1 case (requesting a scanline at a time).  We      */
-/*      should eventually have some logic similiar to the band by       */
-/*      band case where we post a big window for the view, and allow    */
-/*      sequential reads.                                               */
-/*                                                                      */
-/*      Except for reading a 1x1 window when reading a scanline might   */
-/*      be longer.                                                      */
-/* -------------------------------------------------------------------- */
-    if( nXSize == 1 && nYSize == 1 && nBufXSize == 1 && nBufYSize == 1 )
-    {
-        /* do nothing */
-    }
-    else if( nXSize < nBufXSize || nYSize < nBufYSize || nYSize == 1 
-        || nBandCount > 100 || nBandCount == 1 || nBufYSize == 1 
-        || nBandCount > GetRasterCount() )
-    {
-        return 
-            GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                    pData, nBufXSize, nBufYSize,
-                                    eBufType, 
-                                    nBandCount, panBandMap,
-                                    nPixelSpace, nLineSpace, nBandSpace);
-    }
-
-    CPLDebug( "ECWDataset", 
+    CPLDebug( "ECW", 
               "RasterIO(%d,%d,%d,%d -> %dx%d) - doing interleaved read.", 
               nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
 
@@ -1124,12 +1150,83 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         return CE_Failure;
     }
 
+    return ReadBands(pData, nBufXSize, nBufYSize, eBufType,
+                     nBandCount, nPixelSpace, nLineSpace, nBandSpace);
+}
+
+/************************************************************************/
+/*                        ReadBandsDirectly()                           */
+/************************************************************************/
+
+CPLErr ECWDataset::ReadBandsDirectly(void * pData, int nBufXSize, int nBufYSize,
+                                     GDALDataType eBufType, 
+                                     int nBandCount,
+                                     int nPixelSpace, int nLineSpace, int nBandSpace)
+{
+    CPLDebug( "ECW", 
+              "ReadBandsDirectly(-> %dx%d) - reading lines directly.", 
+              nBufXSize, nBufYSize);
+
+    CPLErr eErr = CE_None;
+    UINT8 **pBIL = (UINT8**)NCSMalloc(nBandCount * sizeof(UINT8*), FALSE);
+    UINT32 *pBandList = (UINT32*)NCSMalloc(nBandCount * sizeof(UINT32), FALSE);
+    int iBandSpace = nPixelSpace*nBufXSize*nBufYSize;
+    for(int nB = 0; nB < nBandCount; nB++) 
+    {
+        pBIL[nB] = ((UINT8*)pData) + (iBandSpace*nB);//for any bit depth
+        pBandList[nB] = nB;
+    }
+
+    for(int nR = 0; nR < nBufYSize; nR++) 
+    {
+        if (poFileView->ReadLineBIL(eNCSRequestDataType, nBandCount, (void**)pBIL) != NCSECW_READ_OK)
+        {
+            eErr = CE_Failure;
+            break;
+        }
+        for(int nB = 0; nB < nBandCount; nB++) 
+        {
+            pBIL[nB] += nLineSpace;
+        }
+    }
+    if(pBIL)
+    {
+        NCSFree(pBIL);
+    }
+    if(pBandList)
+    {
+        NCSFree(pBandList);
+    }
+    return eErr;
+}
+
+/************************************************************************/
+/*                            ReadBands()                               */
+/************************************************************************/
+
+CPLErr ECWDataset::ReadBands(void * pData, int nBufXSize, int nBufYSize,
+                            GDALDataType eBufType, 
+                            int nBandCount, 
+                            int nPixelSpace, int nLineSpace, int nBandSpace)
+{
+    int i;
 /* -------------------------------------------------------------------- */
 /*      Setup working scanline, and the pointers into it.               */
 /* -------------------------------------------------------------------- */
     int nDataTypeSize = (GDALGetDataTypeSize(eRasterDataType) / 8);
+    bool bDirect = (eBufType == eRasterDataType && nDataTypeSize == nPixelSpace);
+    if (bDirect)
+    {
+        return ReadBandsDirectly(pData, nBufXSize, nBufYSize, eBufType,
+                                 nBandCount, nPixelSpace, nLineSpace, nBandSpace);
+    }
+    CPLDebug( "ECW", 
+            "ReadBands(-> %dx%d) - reading lines using GDALCopyWords.", 
+            nBufXSize, nBufYSize);
+
+    CPLErr eErr = CE_None;
     GByte *pabyBILScanline = (GByte *) CPLMalloc(nBufXSize * nDataTypeSize *
-                                                 nBandCount);
+                                                nBandCount);
     GByte **papabyBIL = (GByte **) CPLMalloc(nBandCount * sizeof(void*));
 
     for( i = 0; i < nBandCount; i++ )
@@ -1147,11 +1244,10 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                                             (void **) papabyBIL );
         if( eRStatus != NCSECW_READ_OK )
         {
-            CPLFree( papabyBIL );
-            CPLFree( pabyBILScanline );
+            eErr = CE_Failure;
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "NCScbmReadViewLineBIL failed." );
-            return CE_Failure;
+                    "NCScbmReadViewLineBIL failed." );
+            break;
         }
 
         for( i = 0; i < nBandCount; i++ )
@@ -1168,7 +1264,7 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
     CPLFree( pabyBILScanline );
     CPLFree( papabyBIL );
 
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
@@ -1341,11 +1437,7 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
         {
             if (poFileView)
                 delete poFileView;
-
-            char* pszErrorMessage = oErr.GetErrorMessage();
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "%s", pszErrorMessage );
-            NCSFree(pszErrorMessage);
+            ECWReportError(oErr);
 
             return NULL;
         }
@@ -2004,6 +2096,12 @@ void GDALDeregister_ECW( GDALDriver * )
 /*                          GDALRegister_ECW()                        */
 /************************************************************************/
 
+#if ECWSDK_VERSION >= 50
+#ifndef NCS_ECWSDK_VERSION_STRING
+#define NCS_ECWSDK_VERSION_STRING NCS_ECWJP2_VERSION_STRING
+#endif
+#endif
+
 void GDALRegister_ECW()
 
 {
@@ -2144,6 +2242,10 @@ void GDALRegister_JP2ECW()
 #else
 "   <Option name='ECW_ENCODE_KEY' type='string' description='OEM Compress Key from ERDAS.'/>"
 "   <Option name='ECW_ENCODE_COMPANY' type='string' description='OEM Company Name.'/>"
+#endif
+
+#if ECWSDK_VERSION >= 50
+"   <Option name='ECW_FORMAT_VERSION' type='integer' description='ECW format version (2 or 3).' default='3'/>"
 #endif
 
 "   <Option name='GeoJP2' type='boolean' description='defaults to ON'/>"

@@ -502,7 +502,15 @@ CPLErr GDALECWCompressor::Initialize(
 /*      Create and initialize compressor.                               */
 /* -------------------------------------------------------------------- */
     NCSFileViewFileInfoEx    *psClient = &(sFileInfo);
-    
+#if ECWSDK_VERSION >= 50
+    int nFormatVersion = atoi(CSLFetchNameValueDef(papszOptions, "ECW_FORMAT_VERSION", "3"));
+    if( nFormatVersion != 2 && nFormatVersion != 3 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, "Invalid value for ECW_FORMAT_VERSION. Using 3" );
+        nFormatVersion = 3;
+    }
+    psClient->nFormatVersion = nFormatVersion;
+#endif
     psClient->nBands = (UINT16) nBands;
     psClient->nSizeX = nXSize;
     psClient->nSizeY = nYSize;
@@ -530,30 +538,45 @@ CPLErr GDALECWCompressor::Initialize(
     switch( eWorkDT  )
     {
         case GDT_Byte:
+#if ECWSDK_VERSION >=50
+            psClient->nCellBitDepth = 8;
+#endif
             psClient->eCellType = NCSCT_UINT8;
             nBits = 8;
             bSigned = FALSE;
             break;
             
         case GDT_UInt16:
+#if ECWSDK_VERSION >=50
+            psClient->nCellBitDepth = 16;
+#endif
             psClient->eCellType = NCSCT_UINT16;
             nBits = 16;
             bSigned = FALSE;
             break;
             
         case GDT_UInt32:
+#if ECWSDK_VERSION >=50
+            psClient->nCellBitDepth = 32;
+#endif
             psClient->eCellType = NCSCT_UINT32;
             nBits = 32;
             bSigned = FALSE;
             break;
             
         case GDT_Int16:
+#if ECWSDK_VERSION >=50
+            psClient->nCellBitDepth = 16;
+#endif
             psClient->eCellType = NCSCT_INT16;
             nBits = 16;
             bSigned = TRUE;
             break;
             
         case GDT_Int32:
+#if ECWSDK_VERSION >=50
+            psClient->nCellBitDepth = 32;
+#endif
             psClient->eCellType = NCSCT_INT32;
             nBits = 32;
             bSigned = TRUE;
@@ -848,15 +871,12 @@ CPLErr GDALECWCompressor::Initialize(
     else if( oError.GetErrorNumber() == NCS_INPUT_SIZE_EXCEEDED )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "ECW SDK 500MB compress limit exceeded." );
+                  "ECW SDK compress limit exceeded." );
         return CE_Failure;
     }
     else
     {
-        char* pszErrorMessage = oError.GetErrorMessage();
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s", pszErrorMessage );
-        NCSFree(pszErrorMessage);
+        ECWReportError(oError);
 
         return CE_Failure;
     }
@@ -961,11 +981,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( oErr.GetErrorNumber() != NCS_SUCCESS )
     {
-        char* pszErrorMessage = oErr.GetErrorMessage();
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s", pszErrorMessage );
-        NCSFree(pszErrorMessage);
-        
+        ECWReportError(oErr);
         return NULL;
     }
 
@@ -1392,11 +1408,7 @@ CPLErr ECWWriteDataset::FlushLine()
         CPLFree( papOutputLine );
         if( oError.GetErrorNumber() != NCS_SUCCESS )
         {
-            char* pszErrorMessage = oError.GetErrorMessage();
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Scanline write write failed.\n%s",
-                      pszErrorMessage );
-            NCSFree(pszErrorMessage);
+            ECWReportError(oError, "Scanline write write failed.\n");
 
             return CE_Failure;
         }
