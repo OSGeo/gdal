@@ -107,7 +107,7 @@ release.
 13) Announce release to the gdal-dev@lists.maptools.org, 
    gdal-announce@lists.osgeo.org, freegis@freegis.org and news_item@osgeo.org. 
 
-14) Update the freshmeat.net entry for GDAL. 
+14) Update the freecode.com (previously freshmeat) entry for GDAL.
 
 15) Update the freegis.org entry for GDAL.
 
@@ -121,4 +121,8 @@ http://trac.osgeo.org/gdal/wiki/NewsAndStatus .
 18) Add pointers to the source releases at:
   
   http://trac.osgeo.org/gdal/wiki/DownloadSource
+
+19) Update Trac to mark this release milestone as "Completed", and create
+    a corresponding version.  Then create a new milestone for the next release.
+
 
