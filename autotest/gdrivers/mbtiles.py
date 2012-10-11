@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -148,12 +149,16 @@ def mbtiles_3():
     if locationInfo is None or locationInfo.find("France") == -1:
         gdaltest.post_reason('did not get expected LocationInfo')
         print(locationInfo)
+        if gdaltest.skip_on_travis():
+            return 'skip'
         return 'fail'
 
     locationInfo2 = ds.GetRasterBand(1).GetOverview(5).GetMetadataItem('GeoPixel_222638_6274861', 'LocationInfo')
     if locationInfo2 != locationInfo:
         gdaltest.post_reason('did not get expected LocationInfo on overview')
         print(locationInfo2)
+        if gdaltest.skip_on_travis():
+            return 'skip'
         return 'fail'
 
 
