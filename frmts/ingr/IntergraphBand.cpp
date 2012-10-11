@@ -134,9 +134,8 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
         // ----------------------------------------------------------------
         // Set blocks dimensions based on tiles
         // ----------------------------------------------------------------
-
-        nBlockXSize = MIN( hTileDir.TileSize, (uint32) nRasterXSize );
-        nBlockYSize = MIN( hTileDir.TileSize, (uint32) nRasterYSize );
+        nBlockXSize = hTileDir.TileSize;
+        nBlockYSize = hTileDir.TileSize;
     }
 
     if (nBlockXSize <= 0 || nBlockYSize <= 0)
@@ -966,6 +965,15 @@ int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
 
         nSeekOffset   = pahTiles[nBlockId].Start + nDataOffset;
         nReadSize     = pahTiles[nBlockId].Used;
+
+        if( (int) nReadSize > nBlobkBytes ) 
+        {
+            CPLDebug( "INGR", 
+                      "LoadBlockBuf(%d,%d) - trimmed tile size from %d to %d.", 
+                      nBlockXOff, nBlockYOff,
+                      (int) nReadSize, (int) nBlobkBytes );
+            nReadSize = nBlobkBytes;
+        }
     }
     else
     {
