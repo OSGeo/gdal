@@ -111,6 +111,9 @@ void CPL_DLL CPL_STDCALL CPLDebug( const char *, const char *, ... );
 
 CPL_C_END
 
+// To remind myself not to use CPLString in this file!
+#define CPLString Please_do_not_use_CPLString_in_this_file
+
 static const char *papszDatumEquiv[] =
 {
     "Militar_Geographische_Institut",
@@ -2328,15 +2331,15 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
                           int *pnGCPCount, GDAL_GCP **ppasGCPList )
 
 {
-    CPLString osFilename;
+    char szFilename[100];
 
-    osFilename.Printf( "/vsimem/wkt_from_mem_buf_%ld.tif", 
-                       (long) CPLGetPID() );
+    sprintf( szFilename, "/vsimem/wkt_from_mem_buf_%ld.tif",
+             (long) CPLGetPID() );
 
 /* -------------------------------------------------------------------- */
 /*      Create a memory file from the buffer.                           */
 /* -------------------------------------------------------------------- */
-    VSILFILE *fp = VSIFileFromMemBuffer( osFilename, pabyBuffer, nSize, FALSE );
+    VSILFILE *fp = VSIFileFromMemBuffer( szFilename, pabyBuffer, nSize, FALSE );
     if( fp == NULL )
         return CE_Failure;
     VSIFCloseL( fp );
@@ -2345,13 +2348,13 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
 /*      Initialize access to the memory geotiff structure.              */
 /* -------------------------------------------------------------------- */
     TIFF        *hTIFF;
-    hTIFF = VSI_TIFFOpen( osFilename, "rc" );
+    hTIFF = VSI_TIFFOpen( szFilename, "rc" );
 
     if( hTIFF == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "TIFF/GeoTIFF structure is corrupt." );
-        VSIUnlink( osFilename );
+        VSIUnlink( szFilename );
         return CE_Failure;
     }
     
@@ -2453,7 +2456,7 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
 /* -------------------------------------------------------------------- */
     XTIFFClose( hTIFF );
 
-    VSIUnlink( osFilename );
+    VSIUnlink( szFilename );
 
     if( *ppszWKT == NULL )
         return CE_Failure;
@@ -2604,4 +2607,3 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
 
     return CE_None;
 }
-
