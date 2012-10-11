@@ -1064,6 +1064,10 @@ class Band(MajorObject):
         """
         return _gdal.Band_ReadRaster1(self, *args, **kwargs)
 
+    def ReadBlock(self, *args, **kwargs):
+        """ReadBlock(self, int xoff, int yoff) -> CPLErr"""
+        return _gdal.Band_ReadBlock(self, *args, **kwargs)
+
     def ReadRaster(self, xoff, yoff, xsize, ysize,
                      buf_xsize = None, buf_ysize = None, buf_type = None,
                      buf_pixel_space = None, buf_line_space = None ):

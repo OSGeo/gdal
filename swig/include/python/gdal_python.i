@@ -229,6 +229,44 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
 %clear (void **buf );
 %clear (int*);
 
+%apply ( void **outPythonObject ) { (void **buf ) };
+%feature( "kwargs" ) ReadBlock;
+  CPLErr ReadBlock( int xoff, int yoff, void **buf) {
+
+    int nBlockXSize, nBlockYSize;
+    GDALGetBlockSize(self, &nBlockXSize, &nBlockYSize);
+    int nDataTypeSize = (GDALGetDataTypeSize(GDALGetRasterDataType(self)) / 8);
+    GIntBig buf_size = (GIntBig)nBlockXSize * nBlockYSize * nDataTypeSize;
+
+%#if PY_VERSION_HEX >= 0x03000000 
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size ); 
+    if (*buf == NULL)
+    {
+        *buf = Py_None;
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
+        return CE_Failure;
+    }
+    char *data = PyBytes_AsString( (PyObject *)*buf ); 
+%#else 
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size ); 
+    if (*buf == NULL)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate result buffer");
+        return CE_Failure;
+    }
+    char *data = PyString_AsString( (PyObject *)*buf ); 
+%#endif
+    CPLErr eErr = GDALReadBlock( self, xoff, yoff, (void *) data); 
+    if (eErr == CE_Failure)
+    {
+        Py_DECREF((PyObject*)*buf);
+        *buf = NULL;
+    }
+    return eErr;
+  }
+%clear (void **buf );
+
+
 %pythoncode {
 
   def ReadRaster(self, xoff, yoff, xsize, ysize,
