@@ -135,8 +135,8 @@ IntergraphRasterBand::IntergraphRasterBand( IntergraphDataset *poDS,
         // Set blocks dimensions based on tiles
         // ----------------------------------------------------------------
 
-        nBlockXSize = MIN( hTileDir.TileSize, (uint32) nRasterXSize );
-        nBlockYSize = MIN( hTileDir.TileSize, (uint32) nRasterYSize );
+        nBlockXSize = hTileDir.TileSize;
+        nBlockYSize = hTileDir.TileSize;
     }
 
     if (nBlockXSize <= 0 || nBlockYSize <= 0)
