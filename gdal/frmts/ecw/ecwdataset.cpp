@@ -2153,6 +2153,10 @@ void GDALRegister_ECW()
 "   <Option name='ECW_ENCODE_COMPANY' type='string' description='OEM Company Name.'/>"
 #endif
 
+#if ECWSDK_VERSION >= 50
+"   <Option name='ECW_FORMAT_VERSION' type='integer' description='ECW format version (2 or 3).' default='3'/>"
+#endif
+
 "</CreationOptionList>" );
 #else
         /* In read-only mode, we support VirtualIO. This is not the case */
@@ -2242,10 +2246,6 @@ void GDALRegister_JP2ECW()
 #else
 "   <Option name='ECW_ENCODE_KEY' type='string' description='OEM Compress Key from ERDAS.'/>"
 "   <Option name='ECW_ENCODE_COMPANY' type='string' description='OEM Company Name.'/>"
-#endif
-
-#if ECWSDK_VERSION >= 50
-"   <Option name='ECW_FORMAT_VERSION' type='integer' description='ECW format version (2 or 3).' default='3'/>"
 #endif
 
 "   <Option name='GeoJP2' type='boolean' description='defaults to ON'/>"
