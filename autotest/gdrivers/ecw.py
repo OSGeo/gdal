@@ -1010,6 +1010,53 @@ def ecw_30():
     return 'success'
 
 ###############################################################################
+# Test async reader interface ( SDK >= 4.x )
+
+def ecw_31():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    if gdaltest.ecw_drv.major_version < 4:
+        return 'skip'
+
+    ds = gdal.Open( 'data/jrc.ecw' )
+    ref_buf = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize)
+    ds = None
+
+    ds = gdal.Open( 'data/jrc.ecw' )
+
+    asyncreader = ds.BeginAsyncReader(0,0,ds.RasterXSize,ds.RasterYSize)
+    while True:
+        result = asyncreader.GetNextUpdatedRegion(0.05)
+        if result[0] == gdal.GARIO_COMPLETE:
+            break
+        elif result[0] != gdal.GARIO_ERROR:
+            continue
+        else:
+            gdaltest.post_reason('error occured')
+            ds.EndAsyncReader(asyncreader)
+            return 'fail'
+
+    if result != [gdal.GARIO_COMPLETE, 0, 0, ds.RasterXSize,ds.RasterYSize]:
+        gdaltest.post_reason('wrong return values for GetNextUpdatedRegion()')
+        print(result)
+        ds.EndAsyncReader(asyncreader)
+        return 'fail'
+
+    async_buf = asyncreader.GetBuffer()
+
+    ds.EndAsyncReader(asyncreader)
+    asyncreader = None
+    ds = None
+
+    if async_buf != ref_buf:
+        gdaltest.post_reason('async_buf != ref_buf')
+        return 'fail'
+
+    return 'success'
+    
+###############################################################################
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -1270,6 +1317,7 @@ gdaltest_list = [
     ecw_28,
     ecw_29,
     ecw_30,
+    ecw_31,
     ecw_online_1,
     ecw_online_2,
     ecw_online_3,
