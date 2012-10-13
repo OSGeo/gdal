@@ -1542,6 +1542,17 @@ OGRGeometryShadow* ForceToPolygon( OGRGeometryShadow *geom_in ) {
 }
 %}
 
+%newobject ForceToLineString;
+/* Contrary to the C/C++ method, the passed geometry is preserved */
+/* This avoids dirty trick for Java */
+%inline %{
+OGRGeometryShadow* ForceToLineString( OGRGeometryShadow *geom_in ) {
+ if (geom_in == NULL)
+     return NULL;
+ return (OGRGeometryShadow* )OGR_G_ForceToLineString( OGR_G_Clone(geom_in) );
+}
+%}
+
 %newobject ForceToMultiPolygon;
 /* Contrary to the C/C++ method, the passed geometry is preserved */
 /* This avoids dirty trick for Java */
