@@ -3584,6 +3584,10 @@ def ForceToPolygon(*args):
   """ForceToPolygon(Geometry geom_in) -> Geometry"""
   return _ogr.ForceToPolygon(*args)
 
+def ForceToLineString(*args):
+  """ForceToLineString(Geometry geom_in) -> Geometry"""
+  return _ogr.ForceToLineString(*args)
+
 def ForceToMultiPolygon(*args):
   """ForceToMultiPolygon(Geometry geom_in) -> Geometry"""
   return _ogr.ForceToMultiPolygon(*args)
