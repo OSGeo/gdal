@@ -210,7 +210,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
     else
         pszTypnameEqualsAnyClause = "ANY(ARRAY['int2','int4','serial'])";
 
-    CPLString osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn, pszTableName, -1, "");
+    CPLString osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn, pszTableName);
     const char* pszEscapedTableNameSingleQuote = osEscapedTableNameSingleQuote.c_str();
 
     /* See #1889 for why we don't use 'AND a.attnum = ANY(i.indkey)' */
@@ -530,7 +530,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition()
         else
         {
             CPLString osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn,
-                    (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName, -1, "");
+                    (pszSqlGeomParentTableName) ? pszSqlGeomParentTableName : pszTableName);
             const char* pszEscapedTableNameSingleQuote = osEscapedTableNameSingleQuote.c_str();
 
             /* Fetch the name of the parent table */
@@ -635,7 +635,7 @@ void OGRPGTableLayer::BuildWhere()
         {
             osWHERE.Printf( "WHERE %s ", osQuery.c_str()  );
         }
-        else	
+        else
         {
             osWHERE += "AND (";
             osWHERE += osQuery;
@@ -1063,6 +1063,7 @@ void OGRPGTableLayer::AppendFieldValue(PGconn *hPGConn, CPLString& osCommand,
     {
         osCommand += OGRPGEscapeString(hPGConn, pszStrValue,
                                         poFeatureDefn->GetFieldDefn(i)->GetWidth(),
+                                        poFeatureDefn->GetName(),
                                         poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
     }
     else
@@ -1347,7 +1348,8 @@ CPLString OGRPGEscapeColumnName(const char* pszColumnName)
 
 CPLString OGRPGEscapeString(PGconn *hPGConn,
                             const char* pszStrValue, int nMaxLength,
-                            const char* pszFieldName)
+                            const char* pszTableName,
+                            const char* pszFieldName )
 {
     CPLString osCommand;
 
@@ -1358,8 +1360,8 @@ CPLString OGRPGEscapeString(PGconn *hPGConn,
     if (nMaxLength > 0 && nSrcLen > nMaxLength)
     {
         CPLDebug( "PG",
-                  "Truncated %s field value, it was too long.",
-                  pszFieldName );
+                  "Truncated %s.%s field value '%s' to %d characters.",
+                  pszTableName, pszFieldName, pszStrValue, nMaxLength );
         nSrcLen = nMaxLength;
         
         while( nSrcLen > 0 && ((unsigned char *) pszStrValue)[nSrcLen-1] > 127 )
@@ -1425,7 +1427,7 @@ static CPLString OGRPGEscapeStringList(PGconn *hPGConn,
         if (*pszStr != '\0')
         {
             if (bForInsertOrUpdate)
-                osStr += OGRPGEscapeString(hPGConn, pszStr, -1, "");
+                osStr += OGRPGEscapeString(hPGConn, pszStr);
             else
             {
                 osStr += '"';
@@ -1529,12 +1531,10 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     bNeedComma = FALSE;
     if( (bHasPostGISGeometry || bHasPostGISGeography) && poGeom != NULL)
     {
-        
         CheckGeomTypeCompatibility(poGeom);
 
         poGeom->closeRings();
         poGeom->setCoordinateDimension( nCoordDimension );
-
 
         if ( !CSLTestBoolean(CPLGetConfigOption("PG_USE_TEXT", "NO")) )
         {
@@ -1697,10 +1697,10 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     char *pszGeom = NULL;
     if ( NULL != poGeometry && (bHasWkb || bHasPostGISGeometry || bHasPostGISGeography))
     {
+        CheckGeomTypeCompatibility(poGeometry);
+
         poGeometry->closeRings();
         poGeometry->setCoordinateDimension( nCoordDimension );
-        
-        CheckGeomTypeCompatibility(poGeometry);
 
         if (bHasWkb)
             pszGeom = GeometryToBYTEA( poGeometry );
@@ -1862,8 +1862,11 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
                     && iChar == poFeatureDefn->GetFieldDefn(i)->GetWidth() )
                 {
                     CPLDebug( "PG",
-                              "Truncated %s field value, it was too long.",
-                              poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
+                              "Truncated %s.%s field value '%s' to %d characters.",
+                              poFeatureDefn->GetName(),
+                              poFeatureDefn->GetFieldDefn(i)->GetNameRef(),
+                              pszStrValue,
+                              poFeatureDefn->GetFieldDefn(i)->GetWidth() );
                     break;
                 }
 
@@ -2560,8 +2563,6 @@ OGRErr OGRPGTableLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 OGRErr OGRPGTableLayer::StartCopy(int bSetFID)
 
 {
-    OGRErr result = OGRERR_NONE;
-
     /* Tell the datasource we are now planning to copy data */
     poDS->StartCopy( this ); 
 
@@ -2581,7 +2582,6 @@ OGRErr OGRPGTableLayer::StartCopy(int bSetFID)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", PQerrorMessage(hPGConn) );
-        result = OGRERR_FAILURE;
     }
     else
         bCopyActive = TRUE;
