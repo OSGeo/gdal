@@ -2554,6 +2554,11 @@ OGRGeometry *OGRGeometryFactory::forceToLineString( OGRGeometry *poGeom, bool bO
         }
 
         OGRLineString *poLineString0 = (OGRLineString *) poGC->getGeometryRef(iGeom0);
+        if( poLineString0->getNumPoints() < 2 )
+        {
+            iGeom0++;
+            continue;
+        }
 
         OGRPoint pointStart0, pointEnd0;
         poLineString0->StartPoint( &pointStart0 );
@@ -2567,6 +2572,8 @@ OGRGeometry *OGRGeometryFactory::forceToLineString( OGRGeometry *poGeom, bool bO
                 continue;
 
             OGRLineString *poLineString1 = (OGRLineString *) poGC->getGeometryRef(iGeom1);
+            if( poLineString1->getNumPoints() < 2 )
+                continue;
 
             OGRPoint pointStart1, pointEnd1;
             poLineString1->StartPoint( &pointStart1 );
