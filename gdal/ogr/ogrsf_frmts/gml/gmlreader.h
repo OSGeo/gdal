@@ -88,6 +88,9 @@ public:
     int         GetAttributeIndex() const { return m_nIndex; }
 
     void        AnalysePropertyValue( const GMLProperty* psGMLProperty );
+
+    static bool IsSimpleType( GMLPropertyType eType )
+    { return eType == GMLPT_String || eType == GMLPT_Integer || eType == GMLPT_Real; }
 };
 
 /************************************************************************/
