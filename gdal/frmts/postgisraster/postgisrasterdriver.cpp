@@ -120,7 +120,7 @@ PGconn* PostGISRasterDriver::GetConnection(const char* pszConnectionString,
     }
     else {
         CPLError(CE_Failure, CPLE_AppDefined, "Reallocation for new connection\
-						failed.\n");
+                        failed.\n");
         PQfinish(poConn);
         return NULL;
     }
