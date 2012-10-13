@@ -1055,7 +1055,52 @@ def ecw_31():
         return 'fail'
 
     return 'success'
-    
+
+###############################################################################
+# ECW SDK 3.3 has a bug with the ECW format when we query the
+# number of bands of the dataset, but not in the "natural order".
+# It ignores the content of panBandMap. (#4234)
+
+def ecw_32():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/jrc.ecw')
+    data_123 = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize, band_list = [1,2,3])
+    data_321 = ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize, band_list = [3,2,1])
+    if data_123 == data_321:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="400" rasterYSize="400">
+    <VRTRasterBand dataType="Byte" band="1">
+        <SimpleSource>
+        <SourceFilename relativeToVRT="0">data/jrc.ecw</SourceFilename>
+        <SourceBand>3</SourceBand>
+        </SimpleSource>
+    </VRTRasterBand>
+    <VRTRasterBand dataType="Byte" band="2">
+        <SimpleSource>
+        <SourceFilename relativeToVRT="0">data/jrc.ecw</SourceFilename>
+        <SourceBand>2</SourceBand>
+        </SimpleSource>
+    </VRTRasterBand>
+    <VRTRasterBand dataType="Byte" band="3">
+        <SimpleSource>
+        <SourceFilename relativeToVRT="0">data/jrc.ecw</SourceFilename>
+        <SourceBand>1</SourceBand>
+        </SimpleSource>
+    </VRTRasterBand>
+    </VRTDataset>""")
+    data_vrt = vrt_ds.ReadRaster(0,0,ds.RasterXSize,ds.RasterYSize, band_list = [1,2,3])
+
+    if data_321 != data_vrt:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
@@ -1318,6 +1363,7 @@ gdaltest_list = [
     ecw_29,
     ecw_30,
     ecw_31,
+    ecw_32,
     ecw_online_1,
     ecw_online_2,
     ecw_online_3,

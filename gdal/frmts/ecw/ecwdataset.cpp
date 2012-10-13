@@ -1060,6 +1060,35 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
+/*      ECW SDK 3.3 has a bug with the ECW format when we query the     */
+/*      number of bands of the dataset, but not in the "natural order". */
+/*      It ignores the content of panBandMap. (#4234)                   */
+/* -------------------------------------------------------------------- */
+#if ECWSDK_VERSION < 40
+    if( !bIsJPEG2000 && nBandCount == nBands )
+    {
+        int i;
+        int bDoBandIRasterIO = FALSE;
+        for( i = 0; i < nBandCount; i++ )
+        {
+            if( panBandMap[i] != i + 1 )
+            {
+                bDoBandIRasterIO = TRUE;
+            }
+        }
+        if( bDoBandIRasterIO )
+        {
+            return GDALDataset::IRasterIO(
+                                    eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize,
+                                    eBufType, 
+                                    nBandCount, panBandMap,
+                                    nPixelSpace, nLineSpace, nBandSpace);
+        }
+    }
+#endif
+
+/* -------------------------------------------------------------------- */
 /*      Try to do it based on existing "advised" access.                */
 /* -------------------------------------------------------------------- */
     if( TryWinRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
