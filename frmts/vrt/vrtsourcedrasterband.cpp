@@ -336,6 +336,237 @@ double VRTSourcedRasterBand::GetMaximum(int *pbSuccess )
     return dfMax;
 }
 
+/************************************************************************/
+/*                       ComputeRasterMinMax()                          */
+/************************************************************************/
+
+CPLErr VRTSourcedRasterBand::ComputeRasterMinMax( int bApproxOK, double* adfMinMax )
+{
+    double  dfMin = 0.0;
+    double  dfMax = 0.0;
+
+/* -------------------------------------------------------------------- */
+/*      Does the driver already know the min/max?                       */
+/* -------------------------------------------------------------------- */
+    if( bApproxOK )
+    {
+        int          bSuccessMin, bSuccessMax;
+
+        dfMin = GetMinimum( &bSuccessMin );
+        dfMax = GetMaximum( &bSuccessMax );
+
+        if( bSuccessMin && bSuccessMax )
+        {
+            adfMinMax[0] = dfMin;
+            adfMinMax[1] = dfMax;
+            return CE_None;
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      If we have overview bands, use them for min/max.                */
+/* -------------------------------------------------------------------- */
+    if ( bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
+    {
+        GDALRasterBand *poBand;
+
+        poBand = GetRasterSampleOverview( GDALSTAT_APPROX_NUMSAMPLES );
+
+        if ( poBand != this )
+            return poBand->ComputeRasterMinMax( FALSE, adfMinMax );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Try with source bands.                                          */
+/* -------------------------------------------------------------------- */
+    if ( bAntiRecursionFlag )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "VRTSourcedRasterBand::ComputeRasterMinMax() called recursively on the same band. "
+                  "It looks like the VRT is referencing itself." );
+        return CE_Failure;
+    }
+    bAntiRecursionFlag = TRUE;
+
+    adfMinMax[0] = 0.0;
+    adfMinMax[1] = 0.0;
+    for( int iSource = 0; iSource < nSources; iSource++ )
+    {
+        double adfSourceMinMax[2];
+        CPLErr eErr = papoSources[iSource]->ComputeRasterMinMax(GetXSize(), GetYSize(), bApproxOK, adfSourceMinMax);
+        if (eErr != CE_None)
+        {
+            eErr = GDALRasterBand::ComputeRasterMinMax(bApproxOK, adfMinMax);
+            bAntiRecursionFlag = FALSE;
+            return eErr;
+        }
+
+        if (iSource == 0 || adfSourceMinMax[0] < adfMinMax[0])
+            adfMinMax[0] = adfSourceMinMax[0];
+        if (iSource == 0 || adfSourceMinMax[1] > adfMinMax[1])
+            adfMinMax[1] = adfSourceMinMax[1];
+    }
+
+    bAntiRecursionFlag = FALSE;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                         ComputeStatistics()                          */
+/************************************************************************/
+
+CPLErr 
+VRTSourcedRasterBand::ComputeStatistics( int bApproxOK,
+                                   double *pdfMin, double *pdfMax, 
+                                   double *pdfMean, double *pdfStdDev,
+                                   GDALProgressFunc pfnProgress, 
+                                   void *pProgressData )
+
+{
+    if( nSources != 1 )
+        return GDALRasterBand::ComputeStatistics(  bApproxOK,  
+                                              pdfMin, pdfMax, 
+                                              pdfMean, pdfStdDev,
+                                              pfnProgress, pProgressData );
+
+    if( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
+
+/* -------------------------------------------------------------------- */
+/*      If we have overview bands, use them for statistics.             */
+/* -------------------------------------------------------------------- */
+    if( bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
+    {
+        GDALRasterBand *poBand;
+
+        poBand = GetRasterSampleOverview( GDALSTAT_APPROX_NUMSAMPLES );
+
+        if( poBand != this )
+            return poBand->ComputeStatistics( FALSE,  
+                                              pdfMin, pdfMax, 
+                                              pdfMean, pdfStdDev,
+                                              pfnProgress, pProgressData );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try with source bands.                                          */
+/* -------------------------------------------------------------------- */
+    if ( bAntiRecursionFlag )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "VRTSourcedRasterBand::ComputeStatistics() called recursively on the same band. "
+                  "It looks like the VRT is referencing itself." );
+        return CE_Failure;
+    }
+    bAntiRecursionFlag = TRUE;
+    
+    double dfMin = 0.0, dfMax = 0.0, dfMean = 0.0, dfStdDev = 0.0;
+
+    CPLErr eErr = papoSources[0]->ComputeStatistics(GetXSize(), GetYSize(), bApproxOK,  
+                                                    &dfMin, &dfMax, 
+                                                    &dfMean, &dfStdDev,
+                                                    pfnProgress, pProgressData);
+    if (eErr != CE_None)
+    {
+        eErr = GDALRasterBand::ComputeStatistics(bApproxOK,  
+                                                 pdfMin, pdfMax, 
+                                                 pdfMean, pdfStdDev,
+                                                 pfnProgress, pProgressData);
+        bAntiRecursionFlag = FALSE;
+        return eErr;
+    }
+
+    bAntiRecursionFlag = FALSE;
+
+    SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
+
+/* -------------------------------------------------------------------- */
+/*      Record results.                                                 */
+/* -------------------------------------------------------------------- */
+    if( pdfMin != NULL )
+        *pdfMin = dfMin;
+    if( pdfMax != NULL )
+        *pdfMax = dfMax;
+
+    if( pdfMean != NULL )
+        *pdfMean = dfMean;
+
+    if( pdfStdDev != NULL )
+        *pdfStdDev = dfStdDev;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            GetHistogram()                            */
+/************************************************************************/
+
+CPLErr VRTSourcedRasterBand::GetHistogram( double dfMin, double dfMax, 
+                                     int nBuckets, int *panHistogram, 
+                                     int bIncludeOutOfRange, int bApproxOK,
+                                     GDALProgressFunc pfnProgress, 
+                                     void *pProgressData )
+
+{
+    if( nSources != 1 )
+        return GDALRasterBand::GetHistogram( dfMin, dfMax,
+                                             nBuckets, panHistogram,
+                                             bIncludeOutOfRange, bApproxOK,
+                                             pfnProgress, pProgressData );
+
+    if( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
+
+/* -------------------------------------------------------------------- */
+/*      If we have overviews, use them for the histogram.               */
+/* -------------------------------------------------------------------- */
+    if( bApproxOK && GetOverviewCount() > 0 && !HasArbitraryOverviews() )
+    {
+        // FIXME: should we use the most reduced overview here or use some
+        // minimum number of samples like GDALRasterBand::ComputeStatistics()
+        // does?
+        GDALRasterBand *poBestOverview = GetRasterSampleOverview( 0 );
+        
+        if( poBestOverview != this )
+        {
+            return poBestOverview->GetHistogram( dfMin, dfMax, nBuckets,
+                                                 panHistogram,
+                                                 bIncludeOutOfRange, bApproxOK,
+                                                 pfnProgress, pProgressData );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try with source bands.                                          */
+/* -------------------------------------------------------------------- */
+    if ( bAntiRecursionFlag )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "VRTSourcedRasterBand::GetHistogram() called recursively on the same band. "
+                  "It looks like the VRT is referencing itself." );
+        return CE_Failure;
+    }
+    bAntiRecursionFlag = TRUE;
+
+    CPLErr eErr = papoSources[0]->GetHistogram(GetXSize(), GetYSize(), dfMin, dfMax, nBuckets,
+                                               panHistogram,
+                                               bIncludeOutOfRange, bApproxOK,
+                                               pfnProgress, pProgressData);
+    if (eErr != CE_None)
+    {
+        eErr = GDALRasterBand::GetHistogram( dfMin, dfMax,
+                                                  nBuckets, panHistogram,
+                                                  bIncludeOutOfRange, bApproxOK,
+                                                  pfnProgress, pProgressData );
+        bAntiRecursionFlag = FALSE;
+        return eErr;
+    }
+
+    bAntiRecursionFlag = FALSE;
+
+    return CE_None;
+}
 
 /************************************************************************/
 /*                             AddSource()                              */
