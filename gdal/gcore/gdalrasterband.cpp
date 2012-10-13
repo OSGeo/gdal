@@ -36,10 +36,6 @@
 #define TO_SUBBLOCK(x) ((x) >> 6)
 #define WITHIN_SUBBLOCK(x) ((x) & 0x3f)
 
-// Number of data samples that will be used to compute approximate statistics
-// (minimum value, maximum value, etc.)
-#define GDALSTAT_APPROX_NUMSAMPLES 2500
-
 CPL_CVSID("$Id$");
 
 /************************************************************************/
