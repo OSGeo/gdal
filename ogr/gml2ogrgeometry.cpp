@@ -775,7 +775,11 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                     return NULL;
                 }
 
-                if( poLinearRing->getNumPoints() > 0 && poLS->getNumPoints() > 0
+                if( poLS->getNumPoints() < 2 )
+                {
+                    // skip it
+                }
+                else if( poLinearRing->getNumPoints() > 0
                     && fabs(poLinearRing->getX(poLinearRing->getNumPoints()-1) - poLS->getX(0)) < 1e-14
                     && fabs(poLinearRing->getY(poLinearRing->getNumPoints()-1) - poLS->getY(0)) < 1e-14
                     && fabs(poLinearRing->getZ(poLinearRing->getNumPoints()-1) - poLS->getZ(0)) < 1e-14 )
