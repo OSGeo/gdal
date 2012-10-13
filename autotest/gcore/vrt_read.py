@@ -250,6 +250,12 @@ def vrt_read_5():
 
 def vrt_read_6():
 
+    try:
+        os.unlink('data/byte.tif.aux.xml')
+        print('Removed data/byte.tif.aux.xml. Was not supposed to exist...')
+    except:
+        pass
+
     src_ds = gdal.Open('data/byte.tif')
     mem_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrt_read_6.tif', src_ds)
     vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrt_read_6.vrt', mem_ds)
