@@ -204,12 +204,12 @@ class OGRVRTDataSource : public OGRDataSource
                         OGRVRTDataSource();
                         ~OGRVRTDataSource();
 
-    OGRLayer*           CreateLayer(CPLXMLNode *psLTree,
+    OGRLayer*           InstanciateLayer(CPLXMLNode *psLTree,
                                     const char *pszVRTDirectory,
                                     int bUpdate,
                                     int nRecLevel = 0);
 
-    OGRLayer*           CreateLayerInternal(CPLXMLNode *psLTree,
+    OGRLayer*           InstanciateLayerInternal(CPLXMLNode *psLTree,
                                             const char *pszVRTDirectory,
                                             int bUpdate,
                                             int nRecLevel);

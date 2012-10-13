@@ -150,7 +150,7 @@ OGRLayer*  OGRVRTDataSource::InstanciateWarpedLayer(
         if( psSubNode->eType != CXT_Element )
             continue;
 
-        poSrcLayer = CreateLayer(psSubNode, pszVRTDirectory,
+        poSrcLayer = InstanciateLayer(psSubNode, pszVRTDirectory,
                                  bUpdate, nRecLevel + 1);
         if( poSrcLayer != NULL )
             break;
@@ -435,7 +435,7 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
         if( psSubNode->eType != CXT_Element )
             continue;
 
-        OGRLayer* poSrcLayer = CreateLayer(psSubNode, pszVRTDirectory,
+        OGRLayer* poSrcLayer = InstanciateLayer(psSubNode, pszVRTDirectory,
                                            bUpdate, nRecLevel + 1);
         if( poSrcLayer != NULL )
         {
@@ -555,10 +555,10 @@ OGRLayer*  OGRVRTDataSource::InstanciateUnionLayer(
 }
 
 /************************************************************************/
-/*                        CreateLayerInternal()                         */
+/*                     InstanciateLayerInternal()                       */
 /************************************************************************/
 
-OGRLayer* OGRVRTDataSource::CreateLayerInternal(CPLXMLNode *psLTree,
+OGRLayer* OGRVRTDataSource::InstanciateLayerInternal(CPLXMLNode *psLTree,
                                                 const char *pszVRTDirectory,
                                                 int bUpdate,
                                                 int nRecLevel)
@@ -607,7 +607,7 @@ typedef struct
 static OGRLayer* OGRVRTOpenProxiedLayer(void* pUserData)
 {
     PooledInitData* pData = (PooledInitData*) pUserData;
-    return pData->poDS->CreateLayerInternal(pData->psNode,
+    return pData->poDS->InstanciateLayerInternal(pData->psNode,
                                             pData->pszVRTDirectory,
                                             pData->bUpdate,
                                             0);
@@ -625,10 +625,10 @@ static void OGRVRTFreeProxiedLayerUserData(void* pUserData)
 }
 
 /************************************************************************/
-/*                            CreateLayer()                             */
+/*                          InstanciateLayer()                          */
 /************************************************************************/
 
-OGRLayer* OGRVRTDataSource::CreateLayer(CPLXMLNode *psLTree,
+OGRLayer* OGRVRTDataSource::InstanciateLayer(CPLXMLNode *psLTree,
                                         const char *pszVRTDirectory,
                                         int bUpdate,
                                         int nRecLevel)
@@ -647,7 +647,7 @@ OGRLayer* OGRVRTDataSource::CreateLayer(CPLXMLNode *psLTree,
     }
     else
     {
-        return CreateLayerInternal(psLTree, pszVRTDirectory,
+        return InstanciateLayerInternal(psLTree, pszVRTDirectory,
                                     bUpdate, nRecLevel);
     }
 }
@@ -731,7 +731,7 @@ int OGRVRTDataSource::Initialize( CPLXMLNode *psTree, const char *pszNewName,
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-        OGRLayer  *poLayer = CreateLayer(psLTree, osVRTDirectory, bUpdate);
+        OGRLayer  *poLayer = InstanciateLayer(psLTree, osVRTDirectory, bUpdate);
         if( poLayer == NULL )
             continue;
 
