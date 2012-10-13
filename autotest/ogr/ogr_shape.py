@@ -43,8 +43,6 @@ from osgeo import ogr, osr, gdal
 def ogr_shape_1():
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
-
-    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
     shape_drv.DeleteDataSource( 'tmp' )
     
     gdaltest.shape_ds = shape_drv.CreateDataSource( 'tmp' )
@@ -3130,6 +3128,31 @@ def ogr_shape_65():
     return 'success'
 
 ###############################################################################
+# Test failures when creating files
+
+def ogr_shape_66():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/i_dont_exist/bar.dbf')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = ds.CreateLayer('bar', geom_type = ogr.wkbNone)
+    gdal.PopErrorHandler()
+    if lyr is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/i_dont_exist/bar.shp')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = ds.CreateLayer('bar', geom_type = ogr.wkbPoint)
+    gdal.PopErrorHandler()
+    if lyr is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -3226,6 +3249,7 @@ gdaltest_list = [
     ogr_shape_63,
     ogr_shape_64,
     ogr_shape_65,
+    ogr_shape_66,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':
