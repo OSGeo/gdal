@@ -316,7 +316,80 @@ def vrt_read_7():
 
     return 'success'
 
+###############################################################################
+# Test ComputeRasterMinMax()
 
+def vrt_read_8():
+
+    src_ds = gdal.Open('data/byte.tif')
+    mem_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrt_read_8.tif', src_ds)
+    vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrt_read_8.vrt', mem_ds)
+
+    vrt_minmax = vrt_ds.GetRasterBand(1).ComputeRasterMinMax()
+    mem_minmax = mem_ds.GetRasterBand(1).ComputeRasterMinMax()
+
+    mem_ds = None
+    vrt_ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/vrt_read_8.tif')
+    gdal.GetDriverByName('VRT').Delete('/vsimem/vrt_read_8.vrt')
+
+    if vrt_minmax != mem_minmax:
+        print(vrt_minmax)
+        print(mem_minmax)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test ComputeStatistics()
+
+def vrt_read_9():
+
+    src_ds = gdal.Open('data/byte.tif')
+    mem_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrt_read_9.tif', src_ds)
+    vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrt_read_9.vrt', mem_ds)
+
+    vrt_stats = vrt_ds.GetRasterBand(1).ComputeStatistics(False)
+    mem_stats = mem_ds.GetRasterBand(1).ComputeStatistics(False)
+
+    mem_ds = None
+    vrt_ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/vrt_read_9.tif')
+    gdal.GetDriverByName('VRT').Delete('/vsimem/vrt_read_9.vrt')
+
+    if vrt_stats != mem_stats:
+        print(vrt_stats)
+        print(mem_stats)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GetHistogram()
+
+def vrt_read_10():
+
+    src_ds = gdal.Open('data/byte.tif')
+    mem_ds = gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/vrt_read_10.tif', src_ds)
+    vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrt_read_10.vrt', mem_ds)
+
+    vrt_hist = vrt_ds.GetRasterBand(1).GetHistogram()
+    mem_hist = mem_ds.GetRasterBand(1).GetHistogram()
+
+    mem_ds = None
+    vrt_ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/vrt_read_10.tif')
+    gdal.GetDriverByName('VRT').Delete('/vsimem/vrt_read_10.vrt')
+    
+    if vrt_hist != mem_hist:
+        print(vrt_hist)
+        print(mem_hist)
+        return 'fail'
+
+    return 'success'
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
     if ut is None:
@@ -331,6 +404,9 @@ gdaltest_list.append( vrt_read_4 )
 gdaltest_list.append( vrt_read_5 )
 gdaltest_list.append( vrt_read_6 )
 gdaltest_list.append( vrt_read_7 )
+gdaltest_list.append( vrt_read_8 )
+gdaltest_list.append( vrt_read_9 )
+gdaltest_list.append( vrt_read_10 )
 
 if __name__ == '__main__':
 

@@ -940,4 +940,8 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
 
 #define DIV_ROUND_UP(a, b) ( ((a) % (b)) == 0 ? ((a) / (b)) : (((a) / (b)) + 1) )
 
+// Number of data samples that will be used to compute approximate statistics
+// (minimum value, maximum value, etc.)
+#define GDALSTAT_APPROX_NUMSAMPLES 2500
+
 #endif /* ndef GDAL_PRIV_H_INCLUDED */
