@@ -77,7 +77,7 @@ class DIMAPDataset : public GDALPamDataset
     int ReadImageInformation();
     int ReadImageInformation2(); /* DIMAP 2 */
 
-    void SetMetadata(CPLXMLNode *psProduct, const char *apszMetadataTranslation[]);
+    void SetMetadataFromXML(CPLXMLNode *psProduct, const char *apszMetadataTranslation[]);
   public:
 		DIMAPDataset();
 	        ~DIMAPDataset();
@@ -697,7 +697,7 @@ int DIMAPDataset::ReadImageInformation()
             NULL, NULL
         };
 
-    SetMetadata(psProduct, apszMetadataTranslation);
+    SetMetadataFromXML(psProduct, apszMetadataTranslation);
 
 /* -------------------------------------------------------------------- */
 /*      Set Band metadata from the <Spectral_Band_Info> content         */
@@ -904,7 +904,7 @@ int DIMAPDataset::ReadImageInformation2()
             NULL, NULL
         };
 
-    SetMetadata(psProductDim, apszMetadataTranslationDim);
+    SetMetadataFromXML(psProductDim, apszMetadataTranslationDim);
 
 /* -------------------------------------------------------------------- */
 /*      Translate other metadata of interest: STRIP_<product_name>.XML    */
@@ -917,7 +917,7 @@ int DIMAPDataset::ReadImageInformation2()
             NULL, NULL
     };
 
-    SetMetadata(psProductStrip, apszMetadataTranslationStrip);
+    SetMetadataFromXML(psProductStrip, apszMetadataTranslationStrip);
 
 /* -------------------------------------------------------------------- */
 /*      Set Band metadata from the <Band_Radiance> and                  */
@@ -1009,10 +1009,10 @@ int DIMAPDataset::ReadImageInformation2()
 }
 
 /************************************************************************/
-/*                            SetMetadata()                             */
+/*                          SetMetadataFromXML()                        */
 /************************************************************************/
 
-void DIMAPDataset::SetMetadata(CPLXMLNode *psProduct, const char *apszMetadataTranslation[])
+void DIMAPDataset::SetMetadataFromXML(CPLXMLNode *psProduct, const char *apszMetadataTranslation[])
 {
     CPLXMLNode *psDoc = CPLGetXMLNode( psProduct, "=Dimap_Document" );
     if( psDoc == NULL ) 
