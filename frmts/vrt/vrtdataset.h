@@ -83,6 +83,17 @@ public:
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess ) = 0;
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess ) = 0;
+    virtual CPLErr ComputeRasterMinMax( int nXSize, int nYSize, int bApproxOK, double* adfMinMax ) = 0;
+    virtual CPLErr ComputeStatistics( int nXSize, int nYSize,
+                                      int bApproxOK, 
+                                      double *pdfMin, double *pdfMax, 
+                                      double *pdfMean, double *pdfStdDev,
+                                      GDALProgressFunc pfnProgress, void *pProgressData ) = 0;
+    virtual CPLErr  GetHistogram( int nXSize, int nYSize,
+                                  double dfMin, double dfMax,
+                                  int nBuckets, int * panHistogram,
+                                  int bIncludeOutOfRange, int bApproxOK,
+                                  GDALProgressFunc pfnProgress, void *pProgressData ) = 0;
 
     virtual CPLErr  XMLInit( CPLXMLNode *psTree, const char * ) = 0;
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath ) = 0;
@@ -376,6 +387,15 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
 
     virtual double GetMinimum( int *pbSuccess = NULL );
     virtual double GetMaximum(int *pbSuccess = NULL );
+    virtual CPLErr ComputeRasterMinMax( int bApproxOK, double* adfMinMax );
+    virtual CPLErr ComputeStatistics( int bApproxOK, 
+                                      double *pdfMin, double *pdfMax, 
+                                      double *pdfMean, double *pdfStdDev,
+                                      GDALProgressFunc pfnProgress, void *pProgressData );
+    virtual CPLErr  GetHistogram( double dfMin, double dfMax,
+                                  int nBuckets, int * panHistogram,
+                                  int bIncludeOutOfRange, int bApproxOK,
+                                  GDALProgressFunc pfnProgress, void *pProgressData );
 
     CPLErr         AddSource( VRTSource * );
     CPLErr         AddSimpleSource( GDALRasterBand *poSrcBand, 
@@ -582,6 +602,17 @@ public:
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );
+    virtual CPLErr ComputeRasterMinMax( int nXSize, int nYSize, int bApproxOK, double* adfMinMax );
+    virtual CPLErr ComputeStatistics( int nXSize, int nYSize,
+                                      int bApproxOK, 
+                                      double *pdfMin, double *pdfMax, 
+                                      double *pdfMean, double *pdfStdDev,
+                                      GDALProgressFunc pfnProgress, void *pProgressData );
+    virtual CPLErr  GetHistogram( int nXSize, int nYSize,
+                                  double dfMin, double dfMax,
+                                  int nBuckets, int * panHistogram,
+                                  int bIncludeOutOfRange, int bApproxOK,
+                                  GDALProgressFunc pfnProgress, void *pProgressData );
 
     void            DstToSrc( double dfX, double dfY,
                               double &dfXOut, double &dfYOut );
@@ -619,6 +650,17 @@ public:
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );
+    virtual CPLErr ComputeRasterMinMax( int nXSize, int nYSize, int bApproxOK, double* adfMinMax );
+    virtual CPLErr ComputeStatistics( int nXSize, int nYSize,
+                                      int bApproxOK, 
+                                      double *pdfMin, double *pdfMax, 
+                                      double *pdfMean, double *pdfStdDev,
+                                      GDALProgressFunc pfnProgress, void *pProgressData );
+    virtual CPLErr  GetHistogram( int nXSize, int nYSize,
+                                  double dfMin, double dfMax,
+                                  int nBuckets, int * panHistogram,
+                                  int bIncludeOutOfRange, int bApproxOK,
+                                  GDALProgressFunc pfnProgress, void *pProgressData );
 
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath );
     virtual const char* GetType() { return "AveragedSource"; }
@@ -648,6 +690,17 @@ public:
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );
+    virtual CPLErr ComputeRasterMinMax( int nXSize, int nYSize, int bApproxOK, double* adfMinMax );
+    virtual CPLErr ComputeStatistics( int nXSize, int nYSize,
+                                      int bApproxOK, 
+                                      double *pdfMin, double *pdfMax, 
+                                      double *pdfMean, double *pdfStdDev,
+                                      GDALProgressFunc pfnProgress, void *pProgressData );
+    virtual CPLErr  GetHistogram( int nXSize, int nYSize,
+                                  double dfMin, double dfMax,
+                                  int nBuckets, int * panHistogram,
+                                  int bIncludeOutOfRange, int bApproxOK,
+                                  GDALProgressFunc pfnProgress, void *pProgressData );
 
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath );
     virtual CPLErr XMLInit( CPLXMLNode *, const char * );
@@ -755,6 +808,17 @@ public:
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess );
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess );
+    virtual CPLErr ComputeRasterMinMax( int nXSize, int nYSize, int bApproxOK, double* adfMinMax );
+    virtual CPLErr ComputeStatistics( int nXSize, int nYSize,
+                                      int bApproxOK, 
+                                      double *pdfMin, double *pdfMax, 
+                                      double *pdfMean, double *pdfStdDev,
+                                      GDALProgressFunc pfnProgress, void *pProgressData );
+    virtual CPLErr  GetHistogram( int nXSize, int nYSize,
+                                  double dfMin, double dfMax,
+                                  int nBuckets, int * panHistogram,
+                                  int bIncludeOutOfRange, int bApproxOK,
+                                  GDALProgressFunc pfnProgress, void *pProgressData );
 
     VRTImageReadFunc    pfnReadFunc;
     void               *pCBData;
