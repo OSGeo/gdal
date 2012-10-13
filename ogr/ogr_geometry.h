@@ -649,6 +649,7 @@ class CPL_DLL OGRGeometryFactory
     static OGRGeometry *createGeometry( OGRwkbGeometryType );
 
     static OGRGeometry * forceToPolygon( OGRGeometry * );
+    static OGRGeometry * forceToLineString( OGRGeometry *, bool bOnlyInOrder = true );
     static OGRGeometry * forceToMultiPolygon( OGRGeometry * );
     static OGRGeometry * forceToMultiPoint( OGRGeometry * );
     static OGRGeometry * forceToMultiLineString( OGRGeometry * );
