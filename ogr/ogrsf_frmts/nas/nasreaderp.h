@@ -63,6 +63,8 @@ class NASHandler : public DefaultHandler
     int        m_nDepth;
     int        m_nDepthFeature;
     int        m_bIgnoreFeature;
+    int        m_nDepthElement;
+    CPLString  m_osIgnoredElement;
 
     CPLString  m_osLastTypeName;
     CPLString  m_osLastReplacingFID;
