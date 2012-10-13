@@ -34,15 +34,15 @@
 
 // General defines
 
-#define DEFAULT_HOST			"localhost"
-#define DEFAULT_PORT			"5432"
+#define DEFAULT_HOST            "localhost"
+#define DEFAULT_PORT            "5432"
 #define DEFAULT_SCHEMA          "public"
-#define DEFAULT_COLUMN			"rast"
-#define DEFAULT_USER			"postgres"
-#define DEFAULT_PASSWORD		"postgres"
+#define DEFAULT_COLUMN          "rast"
+#define DEFAULT_USER            "postgres"
+#define DEFAULT_PASSWORD        "postgres"
 
-#define DEFAULT_BLOCK_X_SIZE	256
-#define DEFAULT_BLOCK_Y_SIZE	256
+#define DEFAULT_BLOCK_X_SIZE    256
+#define DEFAULT_BLOCK_Y_SIZE    256
 
 
 #define POSTGIS_RASTER_VERSION         (GUInt16)0
@@ -90,7 +90,7 @@ typedef enum
  * we define this number as the number of tiles that will be taken into account to
  * do it. If set to 0, all the tiles are taken
  **/ 
-#define MAX_TILES	3 
+#define MAX_TILES   3 
 
 class PostGISRasterRasterBand;
 
@@ -122,22 +122,22 @@ private:
     int nSrid;
     PGconn* poConn;
     GBool bRegularBlocking;
-    GBool bAllTilesSnapToSameGrid;	// TODO: future use?
+    GBool bAllTilesSnapToSameGrid;  // TODO: future use?
     GBool bRegisteredInRasterColumns;// TODO: future use?
     char* pszSchema;
     char* pszTable;
     char* pszColumn;
     char* pszWhere;
     char* pszProjection;
-	ResolutionStrategy resolutionStrategy;
+    ResolutionStrategy resolutionStrategy;
     int nMode;
-	int nTiles;
-	double xmin, ymin, xmax, ymax;
+    int nTiles;
+    double xmin, ymin, xmax, ymax;
     GBool bBlocksCached;// TODO: future use?
     GBool SetRasterProperties(const char *);
     GBool BrowseDatabase(const char *, char *);
     GBool SetOverviewCount();
-	GBool GetRasterMetadata(char *, double, double, double *, double *, int *, int *);
+    GBool GetRasterMetadata(char *, double, double, double *, double *, int *, int *);
 
 public:
     PostGISRasterDataset(ResolutionStrategy inResolutionStrategy);
@@ -165,27 +165,27 @@ private:
     double dfNoDataValue;
     int nOverviewFactor;
     GBool bIsOffline;
-    int nOverviewCount;	
+    int nOverviewCount; 
     char* pszSchema;
     char* pszTable;
     char* pszColumn;
     PostGISRasterRasterBand ** papoOverviews;
-	GDALDataType TranslateDataType(const char *);
-	GDALColorInterp eBandInterp;
+    GDALDataType TranslateDataType(const char *);
+    GDALColorInterp eBandInterp;
 
 public:
 
     PostGISRasterRasterBand(PostGISRasterDataset *poDS, int nBand, GDALDataType hDataType,
             GBool bHasNoDataValue, double dfNodata, GBool bSignedByte, int nBitDepth, int nFactor,
             int nBlockXSize, int nBlockYSize, GBool bIsOffline = false, char * inPszSchema = NULL,
-			char * inPszTable = NULL, char * inPszColumn = NULL);
+            char * inPszTable = NULL, char * inPszColumn = NULL);
 
     virtual ~PostGISRasterRasterBand();
 
     virtual double GetNoDataValue(int *pbSuccess = NULL);
     virtual CPLErr SetNoDataValue(double);
-	virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int, GDALDataType, 
-		int, int);
+    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int, GDALDataType, 
+        int, int);
     virtual CPLErr IReadBlock(int, int, void *);
     int GetBand();
     GDALDataset* GetDataset();

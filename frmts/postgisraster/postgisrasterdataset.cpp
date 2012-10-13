@@ -64,7 +64,7 @@ CPL_C_END
  * \brief Constructor
  ************************/
 PostGISRasterDataset::PostGISRasterDataset(ResolutionStrategy inResolutionStrategy = AVERAGE_RESOLUTION) {
-	pszOriginalConnectionString = NULL;
+    pszOriginalConnectionString = NULL;
     papszSubdatasets = NULL;
     nSrid = -1;
     poConn = NULL;
@@ -74,8 +74,8 @@ PostGISRasterDataset::PostGISRasterDataset(ResolutionStrategy inResolutionStrate
     pszColumn = NULL;
     pszWhere = NULL;
     pszProjection = NULL;
-	resolutionStrategy = inResolutionStrategy;
-	nTiles = 0;
+    resolutionStrategy = inResolutionStrategy;
+    nTiles = 0;
     nMode = NO_MODE;
     poDriver = NULL;
     adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = 0.0;
@@ -113,8 +113,8 @@ PostGISRasterDataset::~PostGISRasterDataset() {
         CPLFree(pszWhere);
     if (pszProjection)
         CPLFree(pszProjection);
-	if (pszOriginalConnectionString)
-		CPLFree(pszOriginalConnectionString);
+    if (pszOriginalConnectionString)
+        CPLFree(pszOriginalConnectionString);
 
     if (papszSubdatasets)
         CSLDestroy(papszSubdatasets);
@@ -230,11 +230,11 @@ GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
      *************************************************************/
     if (pszCurrentSchema == NULL) {
         osCommand.Printf("select pg_namespace.nspname as schema, pg_class.relname as \
-					table, pg_attribute.attname as column from pg_class, \
-					pg_namespace,pg_attribute, pg_type where \
-					pg_class.relnamespace = pg_namespace.oid and pg_class.oid = \
-					pg_attribute.attrelid and pg_attribute.atttypid = pg_type.oid \
-					and pg_type.typname = 'raster'");
+                    table, pg_attribute.attname as column from pg_class, \
+                    pg_namespace,pg_attribute, pg_type where \
+                    pg_class.relnamespace = pg_namespace.oid and pg_class.oid = \
+                    pg_attribute.attrelid and pg_attribute.atttypid = pg_type.oid \
+                    and pg_type.typname = 'raster'");
 
         poResult = PQexec(poConn, osCommand.c_str());
         if (
@@ -275,10 +275,10 @@ GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
          **********************************************************************/
     else {
         osCommand.Printf("select pg_class.relname as table, pg_attribute.attname \
-			 as column from pg_class, pg_namespace,pg_attribute, pg_type where \
-			 pg_class.relnamespace = pg_namespace.oid and pg_class.oid = \
-			 pg_attribute.attrelid and pg_attribute.atttypid = pg_type.oid \
-			 and pg_type.typname = 'raster' and pg_namespace.nspname = '%s'",
+             as column from pg_class, pg_namespace,pg_attribute, pg_type where \
+             pg_class.relnamespace = pg_namespace.oid and pg_class.oid = \
+             pg_attribute.attrelid and pg_attribute.atttypid = pg_type.oid \
+             and pg_type.typname = 'raster' and pg_namespace.nspname = '%s'",
                 pszCurrentSchema);
 
         poResult = PQexec(poConn, osCommand.c_str());
@@ -341,10 +341,10 @@ GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
  * not overlap. 
  * 
  * So, when we query for a raster table, we have 2 different cases:
- * 	- The result is only one row OR there are several rows BUT the working
- *	  mode is ONE_RASTER_PER_TABLE. The row(s) returned form one raster coverage.
- *	  We get the whole coverage extent (except rotated rasters), and its georefence, 
- *	  if possible
+ *  - The result is only one row OR there are several rows BUT the working
+ *    mode is ONE_RASTER_PER_TABLE. The row(s) returned form one raster coverage.
+ *    We get the whole coverage extent (except rotated rasters), and its georefence, 
+ *    if possible
  *  - The result are several rows of a table AND the working mode is
  *    ONE_RASTER_PER_ROW. We assume each row is a different raster object,
  *    and is reported as a subdataset. 
@@ -359,18 +359,18 @@ GBool PostGISRasterDataset::SetRasterProperties
     int nRasterID = 0;
     GBool bRetValue = false;
     char* pszIdColumn = NULL;
-	double tileUpperLeftX;
-	double tileUpperLeftY;
-	double tileSkewX;
-	double tileSkewY;
-	double tilePixelSizeX;
-	double tilePixelSizeY;
-	int nTileWidth = 0;
-	int nTileHeight = 0;
-	int nPreviousTileWidth = 0;
-	int nPreviousTileHeight = 0;
-	int nBlockXSize = 0, nBlockYSize = 0;
-	char szTmp[20];
+    double tileUpperLeftX;
+    double tileUpperLeftY;
+    double tileSkewX;
+    double tileSkewY;
+    double tilePixelSizeX;
+    double tilePixelSizeY;
+    int nTileWidth = 0;
+    int nTileHeight = 0;
+    int nPreviousTileWidth = 0;
+    int nPreviousTileHeight = 0;
+    int nBlockXSize = 0, nBlockYSize = 0;
+    char szTmp[20];
 
     /* Incorporated variables from old SetRasterBand method */
     GBool bSignedByte = false;
@@ -382,540 +382,540 @@ GBool PostGISRasterDataset::SetRasterProperties
     GBool bIsOffline = false;
     GBool bHasNoDataValue = false;
 
-	/**************************************************************************
-	 * Get the extent and the maximum number of bands of the requested raster
-	 * TODO: The extent of rotated rasters could be a problem. We'll need a
-	 * ST_RotatedExtent function in PostGIS. Without that function, we shouldn't
-	 * allow rotated rasters
-	 **************************************************************************/
-	// NOTE: can't use 'srid' alias in the GROUP BY. It doesn't work 
-	// with PostgreSQL 9.1
-	if (pszWhere == NULL) {
-		osCommand.Printf(
-			"select srid, nbband, st_xmin(geom) as xmin, st_xmax(geom) as xmax, "
-			"st_ymin(geom) as ymin, st_ymax(geom) as ymax from (select st_srid(%s) srid, "
-			"st_extent(%s::geometry) geom, max(ST_NumBands(rast)) nbband from %s.%s "
-			"group by st_srid(%s)) foo", pszColumn, pszColumn, pszSchema, 
-			pszTable, pszColumn);
-	}
+    /**************************************************************************
+     * Get the extent and the maximum number of bands of the requested raster
+     * TODO: The extent of rotated rasters could be a problem. We'll need a
+     * ST_RotatedExtent function in PostGIS. Without that function, we shouldn't
+     * allow rotated rasters
+     **************************************************************************/
+    // NOTE: can't use 'srid' alias in the GROUP BY. It doesn't work 
+    // with PostgreSQL 9.1
+    if (pszWhere == NULL) {
+        osCommand.Printf(
+            "select srid, nbband, st_xmin(geom) as xmin, st_xmax(geom) as xmax, "
+            "st_ymin(geom) as ymin, st_ymax(geom) as ymax from (select st_srid(%s) srid, "
+            "st_extent(%s::geometry) geom, max(ST_NumBands(rast)) nbband from %s.%s "
+            "group by st_srid(%s)) foo", pszColumn, pszColumn, pszSchema, 
+            pszTable, pszColumn);
+    }
 
-	else {
-		osCommand.Printf(
-			"select srid, nbband, st_xmin(geom) as xmin, st_xmax(geom) as xmax, "
-			"st_ymin(geom) as ymin, st_ymax(geom) as ymax from (select st_srid(%s) srid, "
-			"st_extent(%s::geometry) geom, max(ST_NumBands(rast)) nbband from %s.%s "
-			"where %s group by st_srid(%s)) foo", pszColumn, pszColumn, pszSchema, 
-			pszTable, pszWhere, pszColumn);
-	}
+    else {
+        osCommand.Printf(
+            "select srid, nbband, st_xmin(geom) as xmin, st_xmax(geom) as xmax, "
+            "st_ymin(geom) as ymin, st_ymax(geom) as ymax from (select st_srid(%s) srid, "
+            "st_extent(%s::geometry) geom, max(ST_NumBands(rast)) nbband from %s.%s "
+            "where %s group by st_srid(%s)) foo", pszColumn, pszColumn, pszSchema, 
+            pszTable, pszWhere, pszColumn);
+    }
 
-	CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
-		"First query: %s", osCommand.c_str());
-
-
-	poResult = PQexec(poConn, osCommand.c_str());
-	
-	// Query execution error
-	if(poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK || 
-		PQntuples(poResult) < 0) {
-
-		CPLError(CE_Failure, CPLE_AppDefined, "Error browsing database for "
-			"PostGIS Raster properties");
-
-		CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
-			"%s", PQerrorMessage(poConn));
-
-		if (poResult != NULL)
-			PQclear(poResult);
-
-		return false;					
-	}
-
-	// No tuples
-	else if (PQntuples(poResult) == 0) {
-		CPLError(CE_Failure, CPLE_AppDefined, "Error, no data found in the table that "
-			"matches your constraints. Maybe there are no rows in the table, or maybe "
-			"you provide a 'where' option with too much restrictions");
-
-		PQclear(poResult);
-
-		return false;
-	}
-
-	
-	/**
-	 * TODO: We could provide an extra parameter, to transform all the tiles to
-	 * the same SRID
-	 **/
-	else if (PQntuples(poResult) > 1) {
-		CPLError(CE_Failure, CPLE_AppDefined,
-			"Error, the table %s.%s contains tiles with different srid. This feature "
-			"is not yet supported by the PostGIS Raster driver. Please, specify a table "
-			"that contains only tiles with the same srid or provide a 'where' constraint "
-			"to select just the tiles with the same value for srid", pszSchema, pszTable);
-
-		PQclear(poResult);
-		return false;
-	}
-
-	// Get some information we will probably need further
-	nSrid = atoi(PQgetvalue(poResult, 0, 0));
-	nBands = atoi(PQgetvalue(poResult, 0, 1));
-	xmin = atof(PQgetvalue(poResult, 0, 2));
-	xmax = atof(PQgetvalue(poResult, 0, 3));
-	ymin = atof(PQgetvalue(poResult, 0, 4));
-	ymax = atof(PQgetvalue(poResult, 0, 5));
-	
-	PQclear(poResult);
-	
-	/*****************************************************************************
-	 * Now, we're going to count the number of raster tiles we will have to deal 
-	 * with.To save one database server round, we get the pixel size and rotation
-	 *
-	 * TODO: Improve the optimization, based on MAX_TILES
-	 *****************************************************************************/
-	memset(szTmp, 0, sizeof(szTmp));
-	if (MAX_TILES > 0) {
-		sprintf(szTmp, "limit %d", MAX_TILES);
-	}
+    CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+        "First query: %s", osCommand.c_str());
 
 
-	if (pszWhere == NULL) {
-		osCommand.Printf(
-			"select st_scalex(%s), st_scaley(%s), st_skewx(%s), "
-			"st_skewy(%s), st_width(%s), st_height(%s) from %s.%s %s", pszColumn, pszColumn, 
-			pszColumn, pszColumn, pszColumn, pszColumn,	pszSchema, pszTable, szTmp);
-	}
+    poResult = PQexec(poConn, osCommand.c_str());
+    
+    // Query execution error
+    if(poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK || 
+        PQntuples(poResult) < 0) {
 
-	else {
-		osCommand.Printf(
-			"select st_scalex(%s), st_scaley(%s), st_skewx(%s), "
-			"st_skewy(%s), st_width(%s), st_height(%s) from %s.%s where %s %s", pszColumn, 
-			pszColumn, pszColumn, pszColumn, pszColumn, pszColumn, pszSchema, pszTable, 
-			pszWhere, szTmp);
-	}
+        CPLError(CE_Failure, CPLE_AppDefined, "Error browsing database for "
+            "PostGIS Raster properties");
 
-	CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
-		"Query: %s", osCommand.c_str());
+        CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+            "%s", PQerrorMessage(poConn));
 
-	poResult = PQexec(poConn, osCommand.c_str());
-	if (poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK ||
-		PQntuples(poResult) <= 0) {
+        if (poResult != NULL)
+            PQclear(poResult);
 
+        return false;                   
+    }
 
-		CPLError(CE_Failure, CPLE_AppDefined, "Error retrieving raster metadata");
+    // No tuples
+    else if (PQntuples(poResult) == 0) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Error, no data found in the table that "
+            "matches your constraints. Maybe there are no rows in the table, or maybe "
+            "you provide a 'where' option with too much restrictions");
 
-		CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
-			"%s", PQerrorMessage(poConn));
+        PQclear(poResult);
 
-		if (poResult != NULL)
-			PQclear(poResult);
-
-		return false;
-	}
-
-	// Now we now the number of tiles that form our dataset
-	nTiles = PQntuples(poResult);
-
-
-	/*****************************************************************************
-	 * We are going to create a whole dataset as a mosaic with all the tiles
-	 ****************************************************************************/
-	if (nTiles == 1 || nMode == ONE_RASTER_PER_TABLE) {
-			
-		adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = xmin;	
-
-		/**
-		 * Negative tilePixelSizeY means that the coords origin is in top left corner.
-		 *
-		 * This is not the common situation. Most image files store data from top to 
-		 * bottom, while the projected coordinate systems utilize traditional Cartesian 
-		 * coordinates with the origin in the conventional lower-left corner (bottom to
-		 * top). For that reason, this parameter is normally negative.
-		 *
-		 **/ 
-
-		// Calculate geotransform fields
-		for(i = 0; i < nTiles; i++) {
-			tileSkewX = atof(PQgetvalue(poResult, i, 2));
-			tileSkewY = atof(PQgetvalue(poResult, i, 3));
-	
-			// Rotated rasters are not allowed, so far
-			// TODO: allow them
-			if (!CPLIsEqual(tileSkewX, 0.0) || !CPLIsEqual(tileSkewY, 0.0)) {
-				CPLError(CE_Failure, CPLE_AppDefined, "GDAL PostGIS Raster driver can not work with "
-				"rotated rasters yet.");
-
-				PQclear(poResult);
-
-				return false;
-			}
-			adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] = tileSkewX;
-			adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] = tileSkewY;
-	
-			tilePixelSizeX = atof(PQgetvalue(poResult, i, 0));
-			tilePixelSizeY = atof(PQgetvalue(poResult, i, 1));
-
-			nTileWidth = atoi(PQgetvalue(poResult, i, 4));
-			nTileHeight = atoi(PQgetvalue(poResult, i, 5));
-
-			if (bRegularBlocking) {
-				if (nPreviousTileWidth != 0 && nPreviousTileWidth != nTileWidth)
-					bRegularBlocking = false;
-				else if (nPreviousTileHeight != 0 && nPreviousTileHeight != nTileHeight)
-					bRegularBlocking = false;
-				else {
-					nPreviousTileWidth = nTileWidth;
-					nPreviousTileHeight = nTileHeight;
-				}
-			}
-			
-			// Calculate pixel size
-			if (resolutionStrategy == AVERAGE_RESOLUTION) {
-				adfGeoTransform[GEOTRSFRM_WE_RES] += tilePixelSizeX;		
-				adfGeoTransform[GEOTRSFRM_NS_RES] += tilePixelSizeY;		
-			}
-
-			else if (resolutionStrategy == HIGHEST_RESOLUTION) 	{
-				adfGeoTransform[GEOTRSFRM_WE_RES] = MIN(adfGeoTransform[GEOTRSFRM_WE_RES], 
-														atof(PQgetvalue(poResult, i, 0)));
-
-            	/* Yes : as ns_res is negative, the highest resolution is the max value */
-				if (tilePixelSizeY < 0.0)
-					adfGeoTransform[GEOTRSFRM_NS_RES] = MAX(adfGeoTransform[GEOTRSFRM_NS_RES], 
-														tilePixelSizeY);
-				else
-					adfGeoTransform[GEOTRSFRM_NS_RES] = MIN(adfGeoTransform[GEOTRSFRM_NS_RES], 
-														tilePixelSizeY);										
-			}
-
-			else if (resolutionStrategy == LOWEST_RESOLUTION) {
-				adfGeoTransform[GEOTRSFRM_WE_RES] = MAX(adfGeoTransform[GEOTRSFRM_WE_RES], 
-														atof(PQgetvalue(poResult, i, 0)));
-
-            	/* Yes : as ns_res is negative, the lowest resolution is the min value */
-				if (tilePixelSizeY < 0.0)
-					adfGeoTransform[GEOTRSFRM_NS_RES] = MIN(adfGeoTransform[GEOTRSFRM_NS_RES], 
-														tilePixelSizeY);
-				else	
-					adfGeoTransform[GEOTRSFRM_NS_RES] = MAX(adfGeoTransform[GEOTRSFRM_NS_RES], 
-														tilePixelSizeY);
-			}
-
-			// USER_RESOLUTION
-			else {
-				// It should be provided by the user. Nothing to do here...
-				// TODO: Allow the user to provide the resolution (see gdalbuildvrt)
-			}
-
-		} // end for	
-
-		if (adfGeoTransform[GEOTRSFRM_NS_RES] >= 0.0)
-			adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = ymin;
-		else
-			adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = ymax;
-
-		if (resolutionStrategy == AVERAGE_RESOLUTION) {
-			adfGeoTransform[GEOTRSFRM_WE_RES] /= nTiles;
-			adfGeoTransform[GEOTRSFRM_NS_RES] /= nTiles;
-		}
-		
-		nRasterXSize = (int) fabs(rint((xmax - xmin) / adfGeoTransform[GEOTRSFRM_WE_RES]));
-		nRasterYSize = (int) fabs(rint((ymax - ymin) / adfGeoTransform[GEOTRSFRM_NS_RES]));
-    	
-
-		if (nRasterXSize <= 0 || nRasterYSize <= 0) {
-        	CPLError(CE_Failure, CPLE_AppDefined, 
-				"Computed PostGIS Raster dimension is invalid. You've probably specified "
-				"unappropriate resolution.");
-        	return CE_Failure;
-    	}
-
-		/**
-		 * Regular blocking: get the last values for tile width and height as block
-		 * size
-		 **/
-		if (bRegularBlocking) {
-			nBlockXSize = nTileWidth;
-			nBlockYSize = nTileHeight;
-		}
-		
-		PQclear(poResult);
+        return false;
+    }
 
     
-		CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+    /**
+     * TODO: We could provide an extra parameter, to transform all the tiles to
+     * the same SRID
+     **/
+    else if (PQntuples(poResult) > 1) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Error, the table %s.%s contains tiles with different srid. This feature "
+            "is not yet supported by the PostGIS Raster driver. Please, specify a table "
+            "that contains only tiles with the same srid or provide a 'where' constraint "
+            "to select just the tiles with the same value for srid", pszSchema, pszTable);
+
+        PQclear(poResult);
+        return false;
+    }
+
+    // Get some information we will probably need further
+    nSrid = atoi(PQgetvalue(poResult, 0, 0));
+    nBands = atoi(PQgetvalue(poResult, 0, 1));
+    xmin = atof(PQgetvalue(poResult, 0, 2));
+    xmax = atof(PQgetvalue(poResult, 0, 3));
+    ymin = atof(PQgetvalue(poResult, 0, 4));
+    ymax = atof(PQgetvalue(poResult, 0, 5));
+    
+    PQclear(poResult);
+    
+    /*****************************************************************************
+     * Now, we're going to count the number of raster tiles we will have to deal 
+     * with.To save one database server round, we get the pixel size and rotation
+     *
+     * TODO: Improve the optimization, based on MAX_TILES
+     *****************************************************************************/
+    memset(szTmp, 0, sizeof(szTmp));
+    if (MAX_TILES > 0) {
+        sprintf(szTmp, "limit %d", MAX_TILES);
+    }
+
+
+    if (pszWhere == NULL) {
+        osCommand.Printf(
+            "select st_scalex(%s), st_scaley(%s), st_skewx(%s), "
+            "st_skewy(%s), st_width(%s), st_height(%s) from %s.%s %s", pszColumn, pszColumn, 
+            pszColumn, pszColumn, pszColumn, pszColumn, pszSchema, pszTable, szTmp);
+    }
+
+    else {
+        osCommand.Printf(
+            "select st_scalex(%s), st_scaley(%s), st_skewx(%s), "
+            "st_skewy(%s), st_width(%s), st_height(%s) from %s.%s where %s %s", pszColumn, 
+            pszColumn, pszColumn, pszColumn, pszColumn, pszColumn, pszSchema, pszTable, 
+            pszWhere, szTmp);
+    }
+
+    CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+        "Query: %s", osCommand.c_str());
+
+    poResult = PQexec(poConn, osCommand.c_str());
+    if (poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+        PQntuples(poResult) <= 0) {
+
+
+        CPLError(CE_Failure, CPLE_AppDefined, "Error retrieving raster metadata");
+
+        CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+            "%s", PQerrorMessage(poConn));
+
+        if (poResult != NULL)
+            PQclear(poResult);
+
+        return false;
+    }
+
+    // Now we now the number of tiles that form our dataset
+    nTiles = PQntuples(poResult);
+
+
+    /*****************************************************************************
+     * We are going to create a whole dataset as a mosaic with all the tiles
+     ****************************************************************************/
+    if (nTiles == 1 || nMode == ONE_RASTER_PER_TABLE) {
+            
+        adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = xmin;    
+
+        /**
+         * Negative tilePixelSizeY means that the coords origin is in top left corner.
+         *
+         * This is not the common situation. Most image files store data from top to 
+         * bottom, while the projected coordinate systems utilize traditional Cartesian 
+         * coordinates with the origin in the conventional lower-left corner (bottom to
+         * top). For that reason, this parameter is normally negative.
+         *
+         **/ 
+
+        // Calculate geotransform fields
+        for(i = 0; i < nTiles; i++) {
+            tileSkewX = atof(PQgetvalue(poResult, i, 2));
+            tileSkewY = atof(PQgetvalue(poResult, i, 3));
+    
+            // Rotated rasters are not allowed, so far
+            // TODO: allow them
+            if (!CPLIsEqual(tileSkewX, 0.0) || !CPLIsEqual(tileSkewY, 0.0)) {
+                CPLError(CE_Failure, CPLE_AppDefined, "GDAL PostGIS Raster driver can not work with "
+                "rotated rasters yet.");
+
+                PQclear(poResult);
+
+                return false;
+            }
+            adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] = tileSkewX;
+            adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] = tileSkewY;
+    
+            tilePixelSizeX = atof(PQgetvalue(poResult, i, 0));
+            tilePixelSizeY = atof(PQgetvalue(poResult, i, 1));
+
+            nTileWidth = atoi(PQgetvalue(poResult, i, 4));
+            nTileHeight = atoi(PQgetvalue(poResult, i, 5));
+
+            if (bRegularBlocking) {
+                if (nPreviousTileWidth != 0 && nPreviousTileWidth != nTileWidth)
+                    bRegularBlocking = false;
+                else if (nPreviousTileHeight != 0 && nPreviousTileHeight != nTileHeight)
+                    bRegularBlocking = false;
+                else {
+                    nPreviousTileWidth = nTileWidth;
+                    nPreviousTileHeight = nTileHeight;
+                }
+            }
+            
+            // Calculate pixel size
+            if (resolutionStrategy == AVERAGE_RESOLUTION) {
+                adfGeoTransform[GEOTRSFRM_WE_RES] += tilePixelSizeX;        
+                adfGeoTransform[GEOTRSFRM_NS_RES] += tilePixelSizeY;        
+            }
+
+            else if (resolutionStrategy == HIGHEST_RESOLUTION)  {
+                adfGeoTransform[GEOTRSFRM_WE_RES] = MIN(adfGeoTransform[GEOTRSFRM_WE_RES], 
+                                                        atof(PQgetvalue(poResult, i, 0)));
+
+                /* Yes : as ns_res is negative, the highest resolution is the max value */
+                if (tilePixelSizeY < 0.0)
+                    adfGeoTransform[GEOTRSFRM_NS_RES] = MAX(adfGeoTransform[GEOTRSFRM_NS_RES], 
+                                                        tilePixelSizeY);
+                else
+                    adfGeoTransform[GEOTRSFRM_NS_RES] = MIN(adfGeoTransform[GEOTRSFRM_NS_RES], 
+                                                        tilePixelSizeY);                                        
+            }
+
+            else if (resolutionStrategy == LOWEST_RESOLUTION) {
+                adfGeoTransform[GEOTRSFRM_WE_RES] = MAX(adfGeoTransform[GEOTRSFRM_WE_RES], 
+                                                        atof(PQgetvalue(poResult, i, 0)));
+
+                /* Yes : as ns_res is negative, the lowest resolution is the min value */
+                if (tilePixelSizeY < 0.0)
+                    adfGeoTransform[GEOTRSFRM_NS_RES] = MIN(adfGeoTransform[GEOTRSFRM_NS_RES], 
+                                                        tilePixelSizeY);
+                else    
+                    adfGeoTransform[GEOTRSFRM_NS_RES] = MAX(adfGeoTransform[GEOTRSFRM_NS_RES], 
+                                                        tilePixelSizeY);
+            }
+
+            // USER_RESOLUTION
+            else {
+                // It should be provided by the user. Nothing to do here...
+                // TODO: Allow the user to provide the resolution (see gdalbuildvrt)
+            }
+
+        } // end for    
+
+        if (adfGeoTransform[GEOTRSFRM_NS_RES] >= 0.0)
+            adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = ymin;
+        else
+            adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = ymax;
+
+        if (resolutionStrategy == AVERAGE_RESOLUTION) {
+            adfGeoTransform[GEOTRSFRM_WE_RES] /= nTiles;
+            adfGeoTransform[GEOTRSFRM_NS_RES] /= nTiles;
+        }
+        
+        nRasterXSize = (int) fabs(rint((xmax - xmin) / adfGeoTransform[GEOTRSFRM_WE_RES]));
+        nRasterYSize = (int) fabs(rint((ymax - ymin) / adfGeoTransform[GEOTRSFRM_NS_RES]));
+        
+
+        if (nRasterXSize <= 0 || nRasterYSize <= 0) {
+            CPLError(CE_Failure, CPLE_AppDefined, 
+                "Computed PostGIS Raster dimension is invalid. You've probably specified "
+                "unappropriate resolution.");
+            return CE_Failure;
+        }
+
+        /**
+         * Regular blocking: get the last values for tile width and height as block
+         * size
+         **/
+        if (bRegularBlocking) {
+            nBlockXSize = nTileWidth;
+            nBlockYSize = nTileHeight;
+        }
+        
+        PQclear(poResult);
+
+    
+        CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
             "adfGeoTransform = {%f, %f, %f, %f, %f,%f}", adfGeoTransform[GEOTRSFRM_TOPLEFT_X],
             adfGeoTransform[GEOTRSFRM_WE_RES], adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1], 
-			adfGeoTransform[GEOTRSFRM_TOPLEFT_Y],adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2], 
-			adfGeoTransform[GEOTRSFRM_NS_RES]);
+            adfGeoTransform[GEOTRSFRM_TOPLEFT_Y],adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2], 
+            adfGeoTransform[GEOTRSFRM_NS_RES]);
 
-    	CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+        CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
             "Raster size = (%d, %d)", nRasterXSize, nRasterYSize);
 
 
-		/****************************************************************************
-		 * Dataset parameters are set. Now, let's add the raster bands
-		 ***************************************************************************/
-	    
-		/* Create query to fetch metadata from db */
-    	if (pszWhere == NULL) {
-        	osCommand.Printf("select st_bandpixeltype(rast, band), "
-            	"st_bandnodatavalue(rast, band) is null, "
-            	"st_bandnodatavalue(rast, band) from (select %s, "
-            	"generate_series(1, st_numbands(%s)) band from (select "
-            	"rast from %s.%s limit 1) bar) foo",
-            	pszColumn, pszColumn, pszSchema, pszTable);
-    	} 
+        /****************************************************************************
+         * Dataset parameters are set. Now, let's add the raster bands
+         ***************************************************************************/
+        
+        /* Create query to fetch metadata from db */
+        if (pszWhere == NULL) {
+            osCommand.Printf("select st_bandpixeltype(rast, band), "
+                "st_bandnodatavalue(rast, band) is null, "
+                "st_bandnodatavalue(rast, band) from (select %s, "
+                "generate_series(1, st_numbands(%s)) band from (select "
+                "rast from %s.%s limit 1) bar) foo",
+                pszColumn, pszColumn, pszSchema, pszTable);
+        } 
 
-		else {
-        	osCommand.Printf("select st_bandpixeltype(rast, band), "
-           		"st_bandnodatavalue(rast, band) is null, "
-            	"st_bandnodatavalue(rast, band) from (select %s, "
-            	"generate_series(1, st_numbands(%s)) band from (select "
-            	"rast from %s.%s where %s limit 1) bar) foo",
-            	pszColumn, pszColumn, pszSchema, pszTable, pszWhere);
-    	}
+        else {
+            osCommand.Printf("select st_bandpixeltype(rast, band), "
+                "st_bandnodatavalue(rast, band) is null, "
+                "st_bandnodatavalue(rast, band) from (select %s, "
+                "generate_series(1, st_numbands(%s)) band from (select "
+                "rast from %s.%s where %s limit 1) bar) foo",
+                pszColumn, pszColumn, pszSchema, pszTable, pszWhere);
+        }
 
-		CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
-			"Query: %s", osCommand.c_str());
-    	
-		poResult = PQexec(poConn, osCommand.c_str());
-    	nTuples = PQntuples(poResult);
+        CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+            "Query: %s", osCommand.c_str());
+        
+        poResult = PQexec(poConn, osCommand.c_str());
+        nTuples = PQntuples(poResult);
 
-    	/* Error getting info from database */
-    	if (poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+        /* Error getting info from database */
+        if (poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK ||
             nTuples <= 0) {
-        	
-			CPLError(CE_Failure, CPLE_AppDefined, "Error getting band metadata "
-				"while creating raster bands");
+            
+            CPLError(CE_Failure, CPLE_AppDefined, "Error getting band metadata "
+                "while creating raster bands");
                 
-			CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): %s", 
+            CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): %s", 
                     PQerrorMessage(poConn));
-        	
-			if (poResult)
-            	PQclear(poResult);
+            
+            if (poResult)
+                PQclear(poResult);
 
-        	return false;
-    	}
+            return false;
+        }
 
-    	/* Create each PostGISRasterRasterBand using the band metadata */
-    	for (iBand = 0; iBand < nTuples; iBand++) {
-        	/**
-         	 * If we have more than one record here is because there are several
-         	 * rows, belonging to the same raster coverage, with different band
-         	 * metadata values. An error must be raised.
-         	 *
-         	 * TODO: Is there any way to fix this problem?
-         	 *
-         	 * TODO: Even when the difference between metadata values are only a
-         	 * few decimal numbers (for example: 3.0000000 and 3.0000001) they're
-         	 * different tuples. And in that case, they must be the same
-         	 **/
-        	/*
-        	if (nTuples > 1) {
-            	CPLError(CE_Failure, CPLE_AppDefined, "Error, the \
+        /* Create each PostGISRasterRasterBand using the band metadata */
+        for (iBand = 0; iBand < nTuples; iBand++) {
+            /**
+             * If we have more than one record here is because there are several
+             * rows, belonging to the same raster coverage, with different band
+             * metadata values. An error must be raised.
+             *
+             * TODO: Is there any way to fix this problem?
+             *
+             * TODO: Even when the difference between metadata values are only a
+             * few decimal numbers (for example: 3.0000000 and 3.0000001) they're
+             * different tuples. And in that case, they must be the same
+             **/
+            /*
+            if (nTuples > 1) {
+                CPLError(CE_Failure, CPLE_AppDefined, "Error, the \
                     ONE_RASTER_PER_TABLE mode can't be applied if the raster \
                     rows don't have the same metadata for band %d",
                     iBand + 1);
-            	PQclear(poResult);
-            	return false;
-        	}
-         	*/
+                PQclear(poResult);
+                return false;
+            }
+            */
 
 
-        	/* Get metadata and create raster band objects */
-        	pszDataType = CPLStrdup(PQgetvalue(poResult, iBand, 0));
-        	bHasNoDataValue = EQUALN(PQgetvalue(poResult, iBand, 1), "f", sizeof(char));
-        	dfNodata = atof(PQgetvalue(poResult, iBand, 2));
-        	/** 
-         	 * Offline rasters are not yet supported. When offline rasters are
-         	 * supported, they will also requires a fast 'getter', other than 
-         	 * the ST_BandMetaData accessor.
-         	 **/
-        	
-			/* bIsOffline = EQUALN(PQgetvalue(poResult, iBand, 3), "t", sizeof (char));        */
+            /* Get metadata and create raster band objects */
+            pszDataType = CPLStrdup(PQgetvalue(poResult, iBand, 0));
+            bHasNoDataValue = EQUALN(PQgetvalue(poResult, iBand, 1), "f", sizeof(char));
+            dfNodata = atof(PQgetvalue(poResult, iBand, 2));
+            /** 
+             * Offline rasters are not yet supported. When offline rasters are
+             * supported, they will also requires a fast 'getter', other than 
+             * the ST_BandMetaData accessor.
+             **/
+            
+            /* bIsOffline = EQUALN(PQgetvalue(poResult, iBand, 3), "t", sizeof (char));        */
 
-        	if (EQUALN(pszDataType, "1BB", 3 * sizeof (char))) {
-            	hDataType = GDT_Byte;
-            	nBitDepth = 1;
-        	} else if (EQUALN(pszDataType, "2BUI", 4 * sizeof (char))) {
-            	hDataType = GDT_Byte;
-            	nBitDepth = 2;
-        	} else if (EQUALN(pszDataType, "4BUI", 4 * sizeof (char))) {
-            	hDataType = GDT_Byte;
-            	nBitDepth = 4;
-        	} else if (EQUALN(pszDataType, "8BUI", 4 * sizeof (char))) {
-            	hDataType = GDT_Byte;
-            	nBitDepth = 8;
-        	} else if (EQUALN(pszDataType, "8BSI", 4 * sizeof (char))) {
-            	hDataType = GDT_Byte;
-            	/**
-             	 * To indicate the unsigned byte values between 128 and 255
-             	 * should be interpreted as being values between -128 and -1 for
-             	 * applications that recognise the SIGNEDBYTE type.
-             	 **/
-            	bSignedByte = true;
-            	nBitDepth = 8;
-        	} else if (EQUALN(pszDataType, "16BSI", 5 * sizeof (char))) {
-            	hDataType = GDT_Int16;
-            	nBitDepth = 16;
-        	} else if (EQUALN(pszDataType, "16BUI", 5 * sizeof (char))) {
-           		hDataType = GDT_UInt16;
-            	nBitDepth = 16;
-        	} else if (EQUALN(pszDataType, "32BSI", 5 * sizeof (char))) {
-            	hDataType = GDT_Int32;
-            	nBitDepth = 32;
-        	} else if (EQUALN(pszDataType, "32BUI", 5 * sizeof (char))) {
-            	hDataType = GDT_UInt32;
-            	nBitDepth = 32;
-        	} else if (EQUALN(pszDataType, "32BF", 4 * sizeof (char))) {
-            	hDataType = GDT_Float32;
-            	nBitDepth = 32;
-        	} else if (EQUALN(pszDataType, "64BF", 4 * sizeof (char))) {
-            	hDataType = GDT_Float64;
-            	nBitDepth = 64;
-        	} else {
-            	hDataType = GDT_Byte;
-            	nBitDepth = 8;
-        	}
+            if (EQUALN(pszDataType, "1BB", 3 * sizeof (char))) {
+                hDataType = GDT_Byte;
+                nBitDepth = 1;
+            } else if (EQUALN(pszDataType, "2BUI", 4 * sizeof (char))) {
+                hDataType = GDT_Byte;
+                nBitDepth = 2;
+            } else if (EQUALN(pszDataType, "4BUI", 4 * sizeof (char))) {
+                hDataType = GDT_Byte;
+                nBitDepth = 4;
+            } else if (EQUALN(pszDataType, "8BUI", 4 * sizeof (char))) {
+                hDataType = GDT_Byte;
+                nBitDepth = 8;
+            } else if (EQUALN(pszDataType, "8BSI", 4 * sizeof (char))) {
+                hDataType = GDT_Byte;
+                /**
+                 * To indicate the unsigned byte values between 128 and 255
+                 * should be interpreted as being values between -128 and -1 for
+                 * applications that recognise the SIGNEDBYTE type.
+                 **/
+                bSignedByte = true;
+                nBitDepth = 8;
+            } else if (EQUALN(pszDataType, "16BSI", 5 * sizeof (char))) {
+                hDataType = GDT_Int16;
+                nBitDepth = 16;
+            } else if (EQUALN(pszDataType, "16BUI", 5 * sizeof (char))) {
+                hDataType = GDT_UInt16;
+                nBitDepth = 16;
+            } else if (EQUALN(pszDataType, "32BSI", 5 * sizeof (char))) {
+                hDataType = GDT_Int32;
+                nBitDepth = 32;
+            } else if (EQUALN(pszDataType, "32BUI", 5 * sizeof (char))) {
+                hDataType = GDT_UInt32;
+                nBitDepth = 32;
+            } else if (EQUALN(pszDataType, "32BF", 4 * sizeof (char))) {
+                hDataType = GDT_Float32;
+                nBitDepth = 32;
+            } else if (EQUALN(pszDataType, "64BF", 4 * sizeof (char))) {
+                hDataType = GDT_Float64;
+                nBitDepth = 64;
+            } else {
+                hDataType = GDT_Byte;
+                nBitDepth = 8;
+            }
 
-        	/* Create raster band object */
-        	SetBand(iBand + 1, new PostGISRasterRasterBand(this, iBand + 1, hDataType,
+            /* Create raster band object */
+            SetBand(iBand + 1, new PostGISRasterRasterBand(this, iBand + 1, hDataType,
                 bHasNoDataValue, dfNodata, bSignedByte, nBitDepth, 0, nBlockXSize, 
-				nBlockYSize, bIsOffline));
+                nBlockYSize, bIsOffline));
 
-        	CPLFree(pszDataType);
-    	}
+            CPLFree(pszDataType);
+        }
 
-   		PQclear(poResult);
-	}
-
-
-	/*****************************************************************************
-	 * One raster per row: collect subdatasets 
-	 ****************************************************************************/
-	else {
-		/* Determine the primary key/unique column on the table */
-		osCommand.Printf("select d.attname from pg_catalog.pg_constraint as a "
-			"join pg_catalog.pg_indexes as b on a.conname = b.indexname "
-			"join pg_catalog.pg_class as c on c.relname = b.tablename "
-			"join pg_catalog.pg_attribute as d on c.relfilenode = d.attrelid "
-			"where b.schemaname = '%s' and b.tablename = '%s' and "
-			"d.attnum = a.conkey[1] and a.contype in ('p', 'u')", pszSchema, pszTable);
-
-		CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
-			"Query: %s", osCommand.c_str());
+        PQclear(poResult);
+    }
 
 
-		poResult = PQexec(poConn, osCommand.c_str());
-		if (poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK ||
-			PQntuples(poResult) <= 0 ) {
+    /*****************************************************************************
+     * One raster per row: collect subdatasets 
+     ****************************************************************************/
+    else {
+        /* Determine the primary key/unique column on the table */
+        osCommand.Printf("select d.attname from pg_catalog.pg_constraint as a "
+            "join pg_catalog.pg_indexes as b on a.conname = b.indexname "
+            "join pg_catalog.pg_class as c on c.relname = b.tablename "
+            "join pg_catalog.pg_attribute as d on c.relfilenode = d.attrelid "
+            "where b.schemaname = '%s' and b.tablename = '%s' and "
+            "d.attnum = a.conkey[1] and a.contype in ('p', 'u')", pszSchema, pszTable);
 
-			PQclear(poResult);
-
-			/*
-			  Maybe there is no primary key or unique constraint;
-			  a sequence will also suffice; get the first one
-			*/
-
-			osCommand.Printf("select cols.column_name from information_schema."
-				"columns as cols join information_schema.sequences as seqs on cols."
-				"column_default like '%%'||seqs.sequence_name||'%%' where cols."
-				"table_schema = '%s' and cols.table_name = '%s'", pszSchema, pszTable);
-
-			CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
-				"Query: %s", osCommand.c_str());
-
-			poResult = PQexec(poConn, osCommand.c_str());
-
-			if (poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK ||
-				PQntuples(poResult) <= 0) {
-
-				CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
-					"Could not find a primary key or unique column on the specified table; "
-					"using UpperLeftX and UpperLeftY.");
+        CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+            "Query: %s", osCommand.c_str());
 
 
-				/*
-					If no primary key or unique column found, 
-					fall back to raster upperleft x&y
-				*/
-			}
+        poResult = PQexec(poConn, osCommand.c_str());
+        if (poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+            PQntuples(poResult) <= 0 ) {
 
-			else {
-				pszIdColumn = CPLStrdup(PQgetvalue(poResult, 0, 0));
-			}
+            PQclear(poResult);
 
-		}
+            /*
+              Maybe there is no primary key or unique constraint;
+              a sequence will also suffice; get the first one
+            */
+
+            osCommand.Printf("select cols.column_name from information_schema."
+                "columns as cols join information_schema.sequences as seqs on cols."
+                "column_default like '%%'||seqs.sequence_name||'%%' where cols."
+                "table_schema = '%s' and cols.table_name = '%s'", pszSchema, pszTable);
+
+            CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+                "Query: %s", osCommand.c_str());
+
+            poResult = PQexec(poConn, osCommand.c_str());
+
+            if (poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+                PQntuples(poResult) <= 0) {
+
+                CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+                    "Could not find a primary key or unique column on the specified table; "
+                    "using UpperLeftX and UpperLeftY.");
+
+
+                /*
+                    If no primary key or unique column found, 
+                    fall back to raster upperleft x&y
+                */
+            }
+
+            else {
+                pszIdColumn = CPLStrdup(PQgetvalue(poResult, 0, 0));
+            }
+
+        }
         
-		// Ok, get the primary key        
-		else {
-			pszIdColumn = CPLStrdup(PQgetvalue(poResult, 0, 0));
-    	}
+        // Ok, get the primary key        
+        else {
+            pszIdColumn = CPLStrdup(PQgetvalue(poResult, 0, 0));
+        }
 
-		PQclear(poResult);
+        PQclear(poResult);
 
-		/* No primary key on this table. Rely on UpperLeftX and UpperLeftY */
-		if (pszIdColumn == NULL) {
-			if (pszWhere == NULL) {
-				osCommand.Printf("select ST_UpperLeftX(%s), ST_UpperLeftY(%s) from %s.%s", pszColumn, 
-					pszColumn, pszSchema, pszTable);
-			}
+        /* No primary key on this table. Rely on UpperLeftX and UpperLeftY */
+        if (pszIdColumn == NULL) {
+            if (pszWhere == NULL) {
+                osCommand.Printf("select ST_UpperLeftX(%s), ST_UpperLeftY(%s) from %s.%s", pszColumn, 
+                    pszColumn, pszSchema, pszTable);
+            }
 
-			else {
-				osCommand.Printf("select ST_UpperLeftX(%s), ST_UpperLeftY(%s) from %s.%s where %s", 
-					pszColumn, pszColumn, pszSchema, pszTable, pszWhere);
-			}
+            else {
+                osCommand.Printf("select ST_UpperLeftX(%s), ST_UpperLeftY(%s) from %s.%s where %s", 
+                    pszColumn, pszColumn, pszSchema, pszTable, pszWhere);
+            }
                     
 
-			CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
-				"Query: %s", osCommand.c_str());
+            CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+                "Query: %s", osCommand.c_str());
 
-			poResult = PQexec(poConn, osCommand.c_str());
-			if (poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK ||
-				PQntuples(poResult) <= 0) {
+            poResult = PQexec(poConn, osCommand.c_str());
+            if (poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK ||
+                PQntuples(poResult) <= 0) {
 
-					CPLError(CE_Failure, CPLE_AppDefined, "Error retrieving raster tile metadata "
-						"while creating raster subdatasets");
+                    CPLError(CE_Failure, CPLE_AppDefined, "Error retrieving raster tile metadata "
+                        "while creating raster subdatasets");
 
-					CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
-						"%s", PQerrorMessage(poConn));
+                    CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+                        "%s", PQerrorMessage(poConn));
 
-					if (poResult != NULL)
-						PQclear(poResult);
+                    if (poResult != NULL)
+                        PQclear(poResult);
 
-					// pszIdColumn is already null
-					return false;
-			}
+                    // pszIdColumn is already null
+                    return false;
+            }
 
-			nTuples = PQntuples(poResult);
+            nTuples = PQntuples(poResult);
 
-			/* Now create the subdatasets */
-			for (i = 0; i < nTuples; i++) {
-				tileUpperLeftX = atof(PQgetvalue(poResult, i, 0)); //upperleft x
-				tileUpperLeftY = atof(PQgetvalue(poResult, i, 1)); //upperleft y
+            /* Now create the subdatasets */
+            for (i = 0; i < nTuples; i++) {
+                tileUpperLeftX = atof(PQgetvalue(poResult, i, 0)); //upperleft x
+                tileUpperLeftY = atof(PQgetvalue(poResult, i, 1)); //upperleft y
 
-				papszSubdatasets = CSLSetNameValue(papszSubdatasets, 
-					CPLSPrintf("SUBDATASET_%d_NAME", (i + 1)),
-					CPLSPrintf("PG:%s schema=%s table=%s column=%s "
-						"where='ST_UpperLeftX(%s) = %f AND ST_UpperLeftY(%s) = %f'",
-						pszValidConnectionString, pszSchema, pszTable, pszColumn, 
-						pszColumn, tileUpperLeftX, pszColumn, tileUpperLeftY));
+                papszSubdatasets = CSLSetNameValue(papszSubdatasets, 
+                    CPLSPrintf("SUBDATASET_%d_NAME", (i + 1)),
+                    CPLSPrintf("PG:%s schema=%s table=%s column=%s "
+                        "where='ST_UpperLeftX(%s) = %f AND ST_UpperLeftY(%s) = %f'",
+                        pszValidConnectionString, pszSchema, pszTable, pszColumn, 
+                        pszColumn, tileUpperLeftX, pszColumn, tileUpperLeftY));
 
 
-				papszSubdatasets = CSLSetNameValue(papszSubdatasets,
-					CPLSPrintf("SUBDATASET_%d_DESC", (i + 1)),
-					CPLSPrintf("PostGIS Raster at %s.%s (%s), UpperLeft = %f, %f", pszSchema,
-						pszTable, pszColumn, tileUpperLeftX, tileUpperLeftY));
+                papszSubdatasets = CSLSetNameValue(papszSubdatasets,
+                    CPLSPrintf("SUBDATASET_%d_DESC", (i + 1)),
+                    CPLSPrintf("PostGIS Raster at %s.%s (%s), UpperLeft = %f, %f", pszSchema,
+                        pszTable, pszColumn, tileUpperLeftX, tileUpperLeftY));
 
-			}
-	
-			PQclear(poResult);
-		}
+            }
+    
+            PQclear(poResult);
+        }
 
-		/* There is a primary key */
-		else {
+        /* There is a primary key */
+        else {
             if (pszWhere == NULL) {
-				osCommand.Printf("select %s from %s.%s", pszIdColumn, pszSchema, pszTable);
+                osCommand.Printf("select %s from %s.%s", pszIdColumn, pszSchema, pszTable);
             }
 
             else {
@@ -931,8 +931,8 @@ GBool PostGISRasterDataset::SetRasterProperties
                 PQntuples(poResult) <= 0) {
                 
                 CPLError(CE_Failure, CPLE_AppDefined, "Error retrieving raster row metadata "
-						"while creating raster subdatasets");
-				
+                        "while creating raster subdatasets");
+                
                 CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): %s", 
                     PQerrorMessage(poConn));
                 
@@ -972,16 +972,16 @@ GBool PostGISRasterDataset::SetRasterProperties
         }
         
         /**
-		 * Not a single raster fetched. Not really needed. Just to keep code clean 
-		 **/
+         * Not a single raster fetched. Not really needed. Just to keep code clean 
+         **/
         nRasterXSize = 0;
         nRasterYSize = 0;
-    	adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = 0.0;
-    	adfGeoTransform[GEOTRSFRM_WE_RES] = 1.0;
-    	adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] = 0.0;
-    	adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = 0.0;
-    	adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] = 0.0;
-    	adfGeoTransform[GEOTRSFRM_NS_RES] = -1.0;
+        adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = 0.0;
+        adfGeoTransform[GEOTRSFRM_WE_RES] = 1.0;
+        adfGeoTransform[GEOTRSFRM_ROTATION_PARAM1] = 0.0;
+        adfGeoTransform[GEOTRSFRM_TOPLEFT_Y] = 0.0;
+        adfGeoTransform[GEOTRSFRM_ROTATION_PARAM2] = 0.0;
+        adfGeoTransform[GEOTRSFRM_NS_RES] = -1.0;
         
         if (pszIdColumn != NULL)
             CPLFree(pszIdColumn);
@@ -1258,10 +1258,10 @@ GetConnection(const char * pszFilename, char ** ppszConnectionString,
 /******************************************************************************
  * \brief Open a connection with PostgreSQL. The connection string will have
  * the PostgreSQL accepted format, plus the next key=value pairs:
- *	schema = <schema_name>
- *	table = <table_name>
- *	column = <column_name>
- *	where = <SQL where>
+ *  schema = <schema_name>
+ *  table = <table_name>
+ *  column = <column_name>
+ *  where = <SQL where>
  *  mode = <working mode> (1 or 2)
  *
  * These pairs are used for selecting the right raster table.
@@ -1277,7 +1277,7 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
     PostGISRasterDataset* poDS = NULL;
     GBool bBrowseDatabase = false;
     CPLString osCommand;
-	char * pszTmp;
+    char * pszTmp;
 
     /**************************
      * Check input parameter
@@ -1295,9 +1295,9 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
         return NULL;
     }
 
-	pszTmp = CPLStrdup(poOpenInfo->pszFilename);
+    pszTmp = CPLStrdup(poOpenInfo->pszFilename);
     
-	poConn = GetConnection((char *)poOpenInfo->pszFilename,
+    poConn = GetConnection((char *)poOpenInfo->pszFilename,
         &pszConnectionString, &pszSchema, &pszTable, &pszColumn, &pszWhere,
         &nMode, &bBrowseDatabase);
     if (poConn == NULL) {
@@ -1308,7 +1308,7 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
         CPLFree(pszWhere);
         return NULL;
     }
-	
+    
 
     /*************************************************************************
      * No table will be read. Only shows information about the existent raster
@@ -1382,19 +1382,19 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
          * Fetch basic raster metadata from db
          **/
 
-		CPLDebug("PostGIS_Raster", "Open:: connection string = %s",
-			pszConnectionString);
-		
+        CPLDebug("PostGIS_Raster", "Open:: connection string = %s",
+            pszConnectionString);
+        
         if (!poDS->SetRasterProperties(pszConnectionString)) {
             CPLFree(pszConnectionString);
             delete poDS;
             return NULL;
         }
 
-		poDS->pszOriginalConnectionString = pszTmp;
-		
-		CPLDebug("PostGIS_Raster", "Open:: original connection string = %s",
-			poDS->pszOriginalConnectionString);
+        poDS->pszOriginalConnectionString = pszTmp;
+        
+        CPLDebug("PostGIS_Raster", "Open:: original connection string = %s",
+            poDS->pszOriginalConnectionString);
 
     }
 
