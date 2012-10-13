@@ -5,8 +5,8 @@ rem that "python setup.py build" has already created the build/lib... directory
 rem and copied in the appropriate .py files.
 rem
 
-set PYTHONHOME=C:\OSGeo4W\apps\Python25
-set OUTDIR=build\lib.win32-2.5\osgeo
+set PYTHONHOME=C:\OSGeo4W\apps\Python27
+set OUTDIR=build\lib.win32-2.7\osgeo
 
 set CLARGS=/c /nologo /Ox /MD /EHsc /DNDEBUG -I../../port -I../../gcore -I../../alg -I../../ogr/ -I%PYTHONHOME%\include -I%PYTHONHOME%\PC -I%PYTHONHOME%\lib\site-packages\numpy\core\include
 
