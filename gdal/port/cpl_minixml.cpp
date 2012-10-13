@@ -880,7 +880,7 @@ static void _GrowBuffer( size_t nNeeded,
 /************************************************************************/
 
 static void
-CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent, 
+CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
                      char **ppszText, unsigned int *pnLength, 
                      unsigned int *pnMaxLength )
 
@@ -1064,12 +1064,12 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
  * @return the document on success or NULL on failure. 
  */
 
-char *CPLSerializeXMLTree( CPLXMLNode *psNode )
+char *CPLSerializeXMLTree( const CPLXMLNode *psNode )
 
 {
     unsigned int nMaxLength = 100, nLength = 0;
     char *pszText = NULL;
-    CPLXMLNode *psThis;
+    const CPLXMLNode *psThis;
 
     pszText = (char *) CPLMalloc(nMaxLength);
     pszText[0] = '\0';
@@ -1954,7 +1954,7 @@ CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
  * @return TRUE on success, FALSE otherwise.
  */
 
-int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
+int CPLSerializeXMLTreeToFile( const CPLXMLNode *psTree, const char *pszFilename )
 
 {
     char    *pszDoc;
