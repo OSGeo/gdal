@@ -42,7 +42,7 @@ static const char *apszURNNames[] =
 };
 
 /************************************************************************/
-/*                         OGRNASDataSource()                         */
+/*                         OGRNASDataSource()                           */
 /************************************************************************/
 
 OGRNASDataSource::OGRNASDataSource()

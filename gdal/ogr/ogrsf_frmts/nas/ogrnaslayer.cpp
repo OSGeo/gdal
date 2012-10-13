@@ -48,16 +48,16 @@ OGRNASLayer::OGRNASLayer( const char * pszName,
         poSRS = NULL;
     else
         poSRS = poSRSIn->Clone();
-    
+
     iNextNASId = 0;
     nTotalNASCount = -1;
-    
+
     poDS = poDSIn;
 
     if ( EQUALN(pszName, "ogr:", 4) )
-      poFeatureDefn = new OGRFeatureDefn( pszName+4 );
+        poFeatureDefn = new OGRFeatureDefn( pszName+4 );
     else
-      poFeatureDefn = new OGRFeatureDefn( pszName );
+        poFeatureDefn = new OGRFeatureDefn( pszName );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( eReqType );
 
@@ -149,18 +149,29 @@ OGRFeature *OGRNASLayer::GetNextFeature()
         {
             poGeom = (OGRGeometry*) OGR_G_CreateFromGMLTree(papsGeometry[0]);
 
-            // We assume the createFromNAS() function would have already
-            // reported the error. 
+            if( EQUAL( papsGeometry[0]->pszValue, "CompositeCurve" ) ||
+                EQUAL( papsGeometry[0]->pszValue, "MultiCurve" ) ||
+                EQUAL( papsGeometry[0]->pszValue, "LineString" ) ||
+                EQUAL( papsGeometry[0]->pszValue, "MultiLineString" ) ||
+                EQUAL( papsGeometry[0]->pszValue, "Curve" ) )
+            {
+                poGeom = OGRGeometryFactory::forceToLineString( poGeom, false );
+            }
+
+            // poGeom->dumpReadable( 0, "NAS: " );
+
+            // We assume the OGR_G_CreateFromGMLTree() function would have already
+            // reported an error.
             if( poGeom == NULL )
             {
                 delete poNASFeature;
                 return NULL;
             }
-            
+
             if( m_poFilterGeom != NULL && !FilterGeometry( poGeom ) )
                 continue;
         }
-        
+
 /* -------------------------------------------------------------------- */
 /*      Convert the whole feature into an OGRFeature.                   */
 /* -------------------------------------------------------------------- */
