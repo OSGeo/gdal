@@ -181,10 +181,10 @@ INCLUDE_OGR_FRMTS = YES
 # const or leave it empty. Take a look on your iconv() declaration in iconv.h.
 # If the second parameter declared as const char** then you need to define
 # ICONV_CONST=const otherwise leave it empty.
-#LIBICONV_DIR = "C:\Program Files\GnuWin32"
-#LIBICONV_INCLUDE = -I$(LIBICONV_DIR)\include
-#LIBICONV_LIBRARY = $(LIBICONV_DIR)\lib\libiconv.lib
-#LIBICONV_CFLAGS = -DICONV_CONST=const
+LIBICONV_DIR = "C:\OSGeo4W"
+LIBICONV_INCLUDE = -I$(LIBICONV_DIR)\include
+LIBICONV_LIBRARY = $(LIBICONV_DIR)\lib\iconv.lib
+LIBICONV_CFLAGS = -DICONV_CONST=const
 
 # Comment out the following to disable BSB support.
 BSB_SUPPORTED = 1
