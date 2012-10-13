@@ -4624,7 +4624,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
                     }
                     nc_inq_varid( cdfid, szDimName, &nVarID );
                     nc_inq_vartype( cdfid, nVarID, &nType );
-                    sprintf( szExtraDimDef, "{%ld,%d}", lev_count, nType );
+                    sprintf( szExtraDimDef, "{%ld,%d}", (long)lev_count, nType );
                     sprintf( szTemp, "NETCDF_DIM_%s_DEF", szDimName );
                     poDS->papszMetadata = CSLSetNameValue( poDS->papszMetadata, 
                                                            szTemp, szExtraDimDef );
@@ -5103,7 +5103,7 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             // just issue a debug message, because it was probably intentional
             CPLDebug( "GDAL_netCDF",
                       "Warning: Number of bands (%d) is not compatible with dimensions "
-                      "(total=%ld names=%s)", nBands, nDimSizeTot,
+                      "(total=%ld names=%s)", nBands, (long)nDimSizeTot,
                       poSrcDS->GetMetadataItem("NETCDF_DIM_EXTRA","") );
             CSLDestroy( papszExtraDimNames );
             papszExtraDimNames = NULL;
@@ -5490,7 +5490,7 @@ int netCDFDataset::DefVarDeflate( int nVarId, int bChunking )
             size_t chunksize[] = { 1, nRasterXSize };                   
             CPLDebug( "GDAL_netCDF", 
                       "DefVarDeflate() chunksize={%ld, %ld}",
-                      chunksize[0], chunksize[1] );
+                      (long)chunksize[0], (long)chunksize[1] );
             status = nc_def_var_chunking( cdfid, nVarId,          
                                           NC_CHUNKED, chunksize );
             NCDF_ERR(status);

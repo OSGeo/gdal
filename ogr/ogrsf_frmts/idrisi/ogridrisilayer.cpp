@@ -193,7 +193,6 @@ int OGRIdrisiLayer::Detect_AVL_ADC(const char* pszFilename)
 //      Build layer definition
 // --------------------------------------------------------------------
 
-    int nFields = atoi(pszFields);
     int iCurField;
     char szKey[32];
 
