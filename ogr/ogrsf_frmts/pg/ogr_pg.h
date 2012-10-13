@@ -71,8 +71,9 @@
 #define NUMERICOID              1700
 
 CPLString OGRPGEscapeString(PGconn *hPGConn,
-                            const char* pszStrValue, int nMaxLength,
-                            const char* pszFieldName);
+                            const char* pszStrValue, int nMaxLength = -1,
+                            const char* pszTableName = "",
+                            const char* pszFieldName = "");
 CPLString OGRPGEscapeColumnName(const char* pszColumnName);
 
 #define UNDETERMINED_SRID       -2 /* Special value when we haven't yet looked for SRID */

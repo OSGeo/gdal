@@ -1494,7 +1494,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
 
     OGRPGClearResult( hResult );
 
-    CPLString osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn, pszTableName, -1, "");
+    CPLString osEscapedTableNameSingleQuote = OGRPGEscapeString(hPGConn, pszTableName);
     const char* pszEscapedTableNameSingleQuote = osEscapedTableNameSingleQuote.c_str();
 
 /* -------------------------------------------------------------------- */
@@ -1932,7 +1932,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     hResult = OGRPG_PQexec(hPGConn, "BEGIN");
     OGRPGClearResult( hResult );
 
-    CPLString osWKT = OGRPGEscapeString(hPGConn, pszWKT, -1, "srtext");
+    CPLString osWKT = OGRPGEscapeString(hPGConn, pszWKT, -1, "spatial_ref_sys", "srtext");
     osCommand.Printf(
              "SELECT srid FROM spatial_ref_sys WHERE srtext = %s",
              osWKT.c_str() );
@@ -2004,7 +2004,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         return nUndefinedSRID;
     }
 
-    CPLString osProj4 = OGRPGEscapeString(hPGConn, pszProj4, -1, "proj4text");
+    CPLString osProj4 = OGRPGEscapeString(hPGConn, pszProj4, -1, "spatial_ref_sys", "proj4text");
 
     if( pszAuthorityName != NULL && EQUAL(pszAuthorityName, "EPSG") )
     {
