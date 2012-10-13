@@ -1472,9 +1472,9 @@ OGRErr OSRMorphToESRI( OGRSpatialReferenceH hSRS )
  * Adds missing TOWGS84 parameters (necessary for datum transformations),
  * based on named datum and spheroid values.</td></tr>
  * <tr><td>&nbsp;&nbsp;</td><td><b>DATUM</b></td><td>&nbsp;&nbsp;</td><td>
- * Adds ESPG AUTHORITY nodes and sets SPHEROID name to OGR spec.</td></tr>
+ * Adds EPSG AUTHORITY nodes and sets SPHEROID name to OGR spec.</td></tr>
  * <tr><td>&nbsp;&nbsp;</td><td><b>GEOGCS</b></td><td>&nbsp;&nbsp;</td><td>
- * Adds ESPG AUTHORITY nodes and sets GEOGCS, DATUM and SPHEROID
+ * Adds EPSG AUTHORITY nodes and sets GEOGCS, DATUM and SPHEROID
  * names to OGR spec. Effectively replaces GEOGCS node with the result of
  * importFromEPSG(n), using EPSG code n corresponding to the existing GEOGCS. 
  * Does not impact PROJCS values.</td></tr>
