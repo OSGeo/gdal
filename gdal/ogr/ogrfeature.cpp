@@ -1926,7 +1926,12 @@ void OGR_F_SetFieldDouble( OGRFeatureH hFeat, int iField, double dfValue )
 void OGRFeature::SetField( int iField, const char * pszValue )
 
 {
-    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
+    static int bWarn = -1;
+    OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
+    char *pszLast;
+
+    if( bWarn < 0 )
+        bWarn = CSLTestBoolean( CPLGetConfigOption( "OGR_SETFIELD_NUMERIC_WARNING", "NO" ) );
 
     if( poFDefn == NULL )
         return;
@@ -1940,12 +1945,20 @@ void OGRFeature::SetField( int iField, const char * pszValue )
     }
     else if( poFDefn->GetType() == OFTInteger )
     {
-        pauFields[iField].Integer = atoi(pszValue);
+        pauFields[iField].Integer = strtol(pszValue, &pszLast, 10);
+        if( bWarn && ( !pszLast || *pszLast ) )
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Value '%s' of field %s.%s parsed incompletely to integer %d.",
+                     pszValue, poDefn->GetName(), poFDefn->GetNameRef(), pauFields[iField].Integer );
         pauFields[iField].Set.nMarker2 = OGRUnsetMarker;
     }
     else if( poFDefn->GetType() == OFTReal )
     {
-        pauFields[iField].Real = atof(pszValue);
+        pauFields[iField].Real = CPLStrtod(pszValue, &pszLast);
+        if( bWarn && ( !pszLast || *pszLast ) )
+             CPLError(CE_Warning, CPLE_AppDefined,
+                      "Value '%s' of field %s.%s parsed incompletely to real %.16g.",
+                      pszValue, poDefn->GetName(), poFDefn->GetNameRef(), pauFields[iField].Real );
     }
     else if( poFDefn->GetType() == OFTDate 
              || poFDefn->GetType() == OFTTime
