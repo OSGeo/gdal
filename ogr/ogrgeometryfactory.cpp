@@ -2512,3 +2512,126 @@ OGR_G_ApproximateArcAngles(
         dfPrimaryRadius, dfSecondaryRadius, dfRotation,
         dfStartAngle, dfEndAngle, dfMaxAngleStepSizeDegrees );
 }
+
+/************************************************************************/
+/*                           forceToLineString()                        */
+/************************************************************************/
+
+/**
+ * \brief Convert to line string.
+ *
+ * Tries to force the provided geometry to be a line string.  Currently
+ * this just effects a change on multilinestrings.  The passed in geometry is
+ * consumed and a new one returned (or potentially the same one).
+ *
+ * @param poGeom the input geometry - ownership is passed to the method.
+ * @return new geometry.
+ */
+
+OGRGeometry *OGRGeometryFactory::forceToLineString( OGRGeometry *poGeom, bool bOnlyInOrder )
+
+{
+    if( poGeom == NULL )
+        return NULL;
+
+    OGRwkbGeometryType eGeomType = wkbFlatten(poGeom->getGeometryType());
+
+    if( eGeomType != wkbGeometryCollection
+        && eGeomType != wkbMultiLineString )
+        return poGeom;
+
+    // build an aggregated linestring from all the linestrings in the container.
+    OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
+
+    int iGeom0 = 0;
+    while( iGeom0 < poGC->getNumGeometries() )
+    {
+        if( wkbFlatten(poGC->getGeometryRef(iGeom0)->getGeometryType())
+            != wkbLineString )
+        {
+            iGeom0++;
+            continue;
+        }
+
+        OGRLineString *poLineString0 = (OGRLineString *) poGC->getGeometryRef(iGeom0);
+
+        OGRPoint pointStart0, pointEnd0;
+        poLineString0->StartPoint( &pointStart0 );
+        poLineString0->EndPoint( &pointEnd0 );
+
+        int iGeom1;
+        for( iGeom1 = iGeom0 + 1; iGeom1 < poGC->getNumGeometries(); iGeom1++ )
+        {
+            if( wkbFlatten(poGC->getGeometryRef(iGeom1)->getGeometryType())
+                != wkbLineString )
+                continue;
+
+            OGRLineString *poLineString1 = (OGRLineString *) poGC->getGeometryRef(iGeom1);
+
+            OGRPoint pointStart1, pointEnd1;
+            poLineString1->StartPoint( &pointStart1 );
+            poLineString1->EndPoint( &pointEnd1 );
+
+            if ( !bOnlyInOrder &&
+                 ( pointEnd0.Equals( &pointEnd1 ) || pointStart0.Equals( &pointStart1 ) ) )
+            {
+                poLineString1->reversePoints();
+                poLineString1->StartPoint( &pointStart1 );
+                poLineString1->EndPoint( &pointEnd1 );
+            }
+
+            if ( pointEnd0.Equals( &pointStart1 ) )
+            {
+                poLineString0->addSubLineString( poLineString1, 1 );
+                poGC->removeGeometry( iGeom1 );
+                break;
+            }
+
+            if( pointEnd1.Equals( &pointStart0 ) )
+            {
+                poLineString1->addSubLineString( poLineString0, 1 );
+                poGC->removeGeometry( iGeom0 );
+                break;
+            }
+        }
+
+        if ( iGeom1 == poGC->getNumGeometries() )
+        {
+            iGeom0++;
+        }
+    }
+
+    if ( poGC->getNumGeometries() == 1 )
+    {
+        OGRLineString *poLineString = (OGRLineString *) poGC->getGeometryRef(0);
+        poGC->removeGeometry( 0, FALSE );
+        delete poGC;
+
+        return poLineString;
+    }
+
+    return poGC;
+}
+
+/************************************************************************/
+/*                      OGR_G_ForceToLineString()                       */
+/************************************************************************/
+
+/**
+ * \brief Convert to line string.
+ *
+ * This function is the same as the C++ method
+ * OGRGeometryFactory::forceToLineString().
+ *
+ * @param hGeom handle to the geometry to convert (ownership surrendered).
+ * @return the converted geometry (ownership to caller).
+ *
+ * @since GDAL/OGR 2.0.0
+ */
+
+OGRGeometryH OGR_G_ForceToLineString( OGRGeometryH hGeom )
+
+{
+    return (OGRGeometryH)
+        OGRGeometryFactory::forceToLineString( (OGRGeometry *) hGeom );
+}

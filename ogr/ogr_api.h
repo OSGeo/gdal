@@ -86,6 +86,7 @@ OGR_G_ApproximateArcAngles(
     double dfMaxAngleStepSizeDegrees );
 
 OGRGeometryH CPL_DLL OGR_G_ForceToPolygon( OGRGeometryH );
+OGRGeometryH CPL_DLL OGR_G_ForceToLineString( OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_ForceToMultiPolygon( OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_ForceToMultiPoint( OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_ForceToMultiLineString( OGRGeometryH );
