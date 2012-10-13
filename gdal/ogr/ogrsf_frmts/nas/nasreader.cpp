@@ -644,7 +644,7 @@ void NASReader::SetFeaturePropertyDirectly( const char *pszElement,
              strcmp(poClass->GetProperty(iProperty)->GetName(),"rechtsbehelfsverfahren") == 0 )
     {
         poFeature->SetPropertyDirectly( iProperty,
-                                        CPLStrdup( EQUAL( pszValue, "true" ) == 0 ? "1" : "0" ) );
+                                        CPLStrdup( EQUAL( pszValue, "true" ) ? "1" : "0" ) );
         CPLFree(pszValue);
 
         if( !poClass->IsSchemaLocked() )
