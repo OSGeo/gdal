@@ -4003,6 +4003,13 @@ OGRGeometryShadow* ForceToPolygon( OGRGeometryShadow *geom_in ) {
 }
 
 
+OGRGeometryShadow* ForceToLineString( OGRGeometryShadow *geom_in ) {
+ if (geom_in == NULL)
+     return NULL;
+ return (OGRGeometryShadow* )OGR_G_ForceToLineString( OGR_G_Clone(geom_in) );
+}
+
+
 OGRGeometryShadow* ForceToMultiPolygon( OGRGeometryShadow *geom_in ) {
  if (geom_in == NULL)
      return NULL;
@@ -13453,6 +13460,39 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_ForceToLineString(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OGRGeometryShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:ForceToLineString",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ForceToLineString" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (OGRGeometryShadow *)ForceToLineString(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_ForceToMultiPolygon(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -20196,6 +20236,7 @@ static PyMethodDef SwigMethods[] = {
 		"    double dfMaxAngleStepSizeDegrees) -> Geometry\n"
 		""},
 	 { (char *)"ForceToPolygon", _wrap_ForceToPolygon, METH_VARARGS, (char *)"ForceToPolygon(Geometry geom_in) -> Geometry"},
+	 { (char *)"ForceToLineString", _wrap_ForceToLineString, METH_VARARGS, (char *)"ForceToLineString(Geometry geom_in) -> Geometry"},
 	 { (char *)"ForceToMultiPolygon", _wrap_ForceToMultiPolygon, METH_VARARGS, (char *)"ForceToMultiPolygon(Geometry geom_in) -> Geometry"},
 	 { (char *)"ForceToMultiPoint", _wrap_ForceToMultiPoint, METH_VARARGS, (char *)"ForceToMultiPoint(Geometry geom_in) -> Geometry"},
 	 { (char *)"ForceToMultiLineString", _wrap_ForceToMultiLineString, METH_VARARGS, (char *)"ForceToMultiLineString(Geometry geom_in) -> Geometry"},
