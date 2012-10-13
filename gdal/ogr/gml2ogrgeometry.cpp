@@ -555,11 +555,11 @@ static int ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGeo
 static OGRPolygon *GML2FaceExtRing( OGRGeometry *poGeom )
 {
     OGRPolygon *poPolygon = NULL;
-	int bError = FALSE;
+    int bError = FALSE;
     OGRGeometryCollection *poColl = (OGRGeometryCollection *)poGeom;
     int iCount = poColl->getNumGeometries();
-	int iExterior = 0;
-	int iInterior = 0;
+    int iExterior = 0;
+    int iInterior = 0;
 
     for( int ig = 0; ig < iCount; ig++)
     {
@@ -634,7 +634,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
     if( nRecLevel == 32 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                    "Too many recursiong level (%d) while parsing GML geometry.",
+                    "Too many recursion levels (%d) while parsing GML geometry.",
                     nRecLevel );
         return NULL;
     }
@@ -775,8 +775,21 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                     return NULL;
                 }
 
-                // we might need to take steps to avoid duplicate points...
-                poLinearRing->addSubLineString( poLS );
+                if( poLinearRing->getNumPoints() > 0 && poLS->getNumPoints() > 0
+                    && fabs(poLinearRing->getX(poLinearRing->getNumPoints()-1) - poLS->getX(0)) < 1e-14
+                    && fabs(poLinearRing->getY(poLinearRing->getNumPoints()-1) - poLS->getY(0)) < 1e-14
+                    && fabs(poLinearRing->getZ(poLinearRing->getNumPoints()-1) - poLS->getZ(0)) < 1e-14 )
+                {
+                    // Skip the first point of the new linestring to avoid
+                    // invalidate duplicate points
+                    poLinearRing->addSubLineString( poLS, 1 );
+                }
+                else
+                {
+                    // Add the whole new line string
+                    poLinearRing->addSubLineString( poLS );
+                }
+
                 delete poLS;
             }
         }
@@ -866,10 +879,30 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
         int nSign = (det >= 0) ? 1 : -1;
 
         double alpha;
-        double dfStep =
-            atof(CPLGetConfigOption("OGR_ARC_STEPSIZE","4")) / 180 * PI;
-        if (dfStep <= 0.1)
+        double dfStep = atof(CPLGetConfigOption("OGR_ARC_STEPSIZE","4")) / 180 * PI;
+
+        // make sure the segments are not too short
+        double dfMinStepLength = atof( CPLGetConfigOption("OGR_ARC_MINLENGTH","0") );
+        if ( dfMinStepLength > 0.0 && dfStep * R < dfMinStepLength )
+        {
+            CPLDebug( "GML", "Increasing arc step to %lf° (was %lf° with segment length %lf at radius %lf; min segment length is %lf)",
+                      dfMinStepLength * 180.0 / PI / R,
+                      dfStep * 180.0 / PI,
+                      dfStep * R,
+                      R,
+                      dfMinStepLength );
+            dfStep = dfMinStepLength / R;
+        }
+
+        if (dfStep < 4. / 180 * PI)
+        {
+            CPLDebug( "GML", "Increasing arc step to %lf° (was %lf° with length %lf at radius %lf).",
+                      4. / 180 * PI,
+                      dfStep * 180.0 / PI,
+                      dfStep * R,
+                      R );
             dfStep = 4. / 180 * PI;
+        }
 
         poLine->setNumPoints(0);
 
@@ -1186,9 +1219,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 
 
 /* -------------------------------------------------------------------- */
-/*      MultiCurve                                                      */
+/*      MultiCurve / CompositeCurve                                     */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszBaseGeometry,"MultiCurve") )
+    if( EQUAL(pszBaseGeometry,"MultiCurve") ||
+        EQUAL(pszBaseGeometry,"CompositeCurve") )
     {
         const CPLXMLNode *psChild, *psCurve;
         OGRMultiLineString *poMLS = new OGRMultiLineString();
@@ -1272,7 +1306,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Curve                                                      */
+/*      Curve                                                           */
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry,"Curve") )
     {
@@ -1408,7 +1442,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Directed Edge                                              */
+/*      Directed Edge                                                   */
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry,"directedEdge") )
     {
@@ -2193,8 +2227,9 @@ OGRGeometryH OGR_G_CreateFromGMLTree( const CPLXMLNode *psTree )
  * MultiPoint, MultiLineString, MultiPolygon, MultiGeometry.
  *
  * (OGR >= 1.8.0) The following GML3 elements are parsed : Surface, MultiSurface,
- * PolygonPatch, Triangle, Rectangle, Curve, MultiCurve, LineStringSegment, Arc,
- * Circle, CompositeSurface, OrientableSurface, Solid, Tin, TriangulatedSurface.
+ * PolygonPatch, Triangle, Rectangle, Curve, MultiCurve, CompositeCurve,
+ * LineStringSegment, Arc, Circle, CompositeSurface, OrientableSurface, Solid,
+ * Tin, TriangulatedSurface.
  *
  * Arc and Circle elements are stroked to linestring, by using a
  * 4 degrees step, unless the user has overridden the value with the
