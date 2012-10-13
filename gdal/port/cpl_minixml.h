@@ -130,7 +130,7 @@ const char CPL_DLL *CPLGetXMLValue( CPLXMLNode *poRoot,
 CPLXMLNode CPL_DLL *CPLCreateXMLNode( CPLXMLNode *poParent, 
                                       CPLXMLNodeType eType,
                                       const char *pszText );
-char       CPL_DLL *CPLSerializeXMLTree( CPLXMLNode *psNode );
+char       CPL_DLL *CPLSerializeXMLTree( const CPLXMLNode *psNode );
 void       CPL_DLL  CPLAddXMLChild( CPLXMLNode *psParent,
                                     CPLXMLNode *psChild );
 int        CPL_DLL  CPLRemoveXMLChild( CPLXMLNode *psParent,
@@ -149,7 +149,7 @@ void       CPL_DLL CPLStripXMLNamespace( CPLXMLNode *psRoot,
 void       CPL_DLL CPLCleanXMLElementName( char * );
 
 CPLXMLNode CPL_DLL *CPLParseXMLFile( const char *pszFilename );
-int        CPL_DLL CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, 
+int        CPL_DLL CPLSerializeXMLTreeToFile( const CPLXMLNode *psTree,
                                               const char *pszFilename );
 
 CPL_C_END
