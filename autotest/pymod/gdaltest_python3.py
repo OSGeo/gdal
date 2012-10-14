@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 # 
@@ -32,6 +33,7 @@ import socket
 import subprocess
 import shlex
 import os
+import sys
 
 def run_func(func):
     try:
@@ -109,7 +111,7 @@ def spawn_async(cmd):
 def wait_process(process):
     process.wait()
 
-def runexternal(cmd, strin = None, check_memleak = True):
+def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False):
     command = shlex.split(cmd)
     if strin is None:
         p = subprocess.Popen(command, stdout=subprocess.PIPE)
@@ -119,7 +121,17 @@ def runexternal(cmd, strin = None, check_memleak = True):
         p.stdin.close()
 
     if p.stdout is not None:
-        ret = p.stdout.read().decode('ascii')
+        if display_live_on_parent_stdout:
+            ret = ''
+            ret_stdout = p.stdout
+            while True:
+                c = p.stdout.read(1).decode('ascii')
+                if c == '':
+                    break
+                ret = ret + c
+                sys.stdout.write(c)
+        else:
+            ret = p.stdout.read().decode('ascii')
         p.stdout.close()
     else:
         ret = ''
