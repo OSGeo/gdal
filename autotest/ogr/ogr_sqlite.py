@@ -958,6 +958,11 @@ def ogr_sqlite_20():
     if gdaltest.sl_ds is None:
         return 'skip'
 
+    try:
+        os.unlink('tmp/non_spatialite_test_with_epsg.db')
+    except:
+        pass
+
     ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( 'tmp/non_spatialite_test_with_epsg.db', options = ['INIT_WITH_EPSG=YES'] )
 
     # EPSG:26632 has a ' character in it's WKT representation
@@ -1718,8 +1723,6 @@ def ogr_spatialite_5(bUseComprGeom = False):
     num_layer = 0
     for wkt in geometries:
         geom = ogr.CreateGeometryFromWkt(wkt)
-        if gdaltest.spatialite_version == '2.3.1' and (geom.GetGeometryType() & ogr.wkb25DBit) != 0:
-            continue
         if bUseComprGeom:
             options = ['COMPRESS_GEOM=YES']
         else:
@@ -1737,12 +1740,17 @@ def ogr_spatialite_5(bUseComprGeom = False):
     num_layer = 0
     for wkt in geometries:
         geom = ogr.CreateGeometryFromWkt(wkt)
-        if gdaltest.spatialite_version == '2.3.1' and (geom.GetGeometryType() & ogr.wkb25DBit) != 0:
-            continue
         lyr = ds.GetLayer(num_layer)
         feat = lyr.GetNextFeature()
         got_wkt = feat.GetGeometryRef().ExportToWkt()
-        if got_wkt != wkt:
+        # Spatialite < 2.4 only supports 2D geometries
+        if gdaltest.spatialite_version == '2.3.1' and (geom.GetGeometryType() & ogr.wkb25DBit) != 0:
+            geom.SetCoordinateDimension(2)
+            expected_wkt = geom.ExportToWkt()
+            if got_wkt != expected_wkt:
+                gdaltest.post_reason('got %s, expected %s' % (got_wkt, expected_wkt))
+                return 'fail'
+        elif got_wkt != wkt:
             gdaltest.post_reason('got %s, expected %s' % (got_wkt, wkt))
             return 'fail'
 
@@ -2234,6 +2242,8 @@ def ogr_sqlite_33():
             options = []
         else:
             if gdaltest.has_spatialite == False:
+                return 'success'
+            if gdaltest.spatialite_version.find('2.3') == 0:
                 return 'success'
             options = ['SPATIALITE=YES']
 
