@@ -46,9 +46,14 @@ OGRSQLiteTableLayer::OGRSQLiteTableLayer( OGRSQLiteDataSource *poDSIn )
 
 {
     poDS = poDSIn;
-	
-    bSpatialite2D = FALSE;
+
     bLaunderColumnNames = TRUE;
+
+    /* SpatiaLite v.2.4.0 (or any subsequent) is required
+       to support 2.5D: if an obsolete version of the library
+       is found we'll unconditionally activate 2D casting mode.
+    */
+    bSpatialite2D = OGRSQLiteGetSpatialiteVersionNumber() < 24;
 
     iNextShapeId = 0;
 
@@ -122,9 +127,6 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
                                         int nSRSId,
                                         int bHasSpatialIndex,
                                         int bHasM, 
-                                        int bSpatialiteReadOnly,
-                                        int bSpatialiteLoaded,
-                                        int iSpatialiteVersion,
                                         int bIsVirtualShapeIn )
 
 {
@@ -158,8 +160,6 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
     this->nSRSId = nSRSId;
     this->bHasSpatialIndex = bHasSpatialIndex;
     this->bHasM = bHasM;
-    this->bSpatialiteReadOnly = bSpatialiteReadOnly;
-    this->bSpatialiteLoaded = bSpatialiteLoaded;
     this->bIsVirtualShape = bIsVirtualShapeIn;
     this->pszTableName = CPLStrdup(pszTableName);
     this->eGeomType = eGeomType;
@@ -175,8 +175,8 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
     const char *pszSQL;
 
     if ( eGeomFormat == OSGF_SpatiaLite &&
-         bSpatialiteLoaded == TRUE && 
-         iSpatialiteVersion < 24 && poDS->GetUpdate() )
+         OGRSQLiteIsSpatialiteLoaded() && 
+         OGRSQLiteGetSpatialiteVersionNumber() < 24 && poDS->GetUpdate() )
     {
     // we need to test version required by Spatialite TRIGGERs 
         hColStmt = NULL;
@@ -193,7 +193,7 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
         // obsolete library version not supporting new triggers
         // enforcing ReadOnly mode
             CPLDebug("SQLITE", "Enforcing ReadOnly mode : obsolete library version not supporting new triggers");
-            this->bSpatialiteReadOnly = TRUE;
+            poDS->SetUpdate(FALSE);
         }
 
         sqlite3_free_table( papszTriggerResult );
@@ -494,6 +494,9 @@ CPLString OGRSQLiteTableLayer::GetSpatialWhere(OGRGeometry* poFilterGeom)
 {
     CPLString osSpatialWHERE;
 
+    if( !poDS->IsSpatialiteDB() )
+        return osSpatialWHERE;
+
     if( poFilterGeom != NULL && CheckSpatialIndexTable() )
     {
         OGREnvelope  sEnvelope;
@@ -509,7 +512,8 @@ CPLString OGRSQLiteTableLayer::GetSpatialWhere(OGRGeometry* poFilterGeom)
                         sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
     }
 
-    if( poFilterGeom != NULL && bSpatialiteLoaded && !bHasSpatialIndex)
+    if( poFilterGeom != NULL &&
+        OGRSQLiteIsSpatialiteLoaded() && !bHasSpatialIndex )
     {
         OGREnvelope  sEnvelope;
 
@@ -586,15 +590,11 @@ int OGRSQLiteTableLayer::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,OLCSequentialWrite) 
              || EQUAL(pszCap,OLCRandomWrite) )
     {
-        if ( bSpatialiteReadOnly == TRUE)
-            return FALSE;
         return poDS->GetUpdate();
     }
 
     else if( EQUAL(pszCap,OLCDeleteFeature) )
     {
-        if ( bSpatialiteReadOnly == TRUE)
-            return FALSE;
         return poDS->GetUpdate() && pszFIDColumn != NULL;
     }
 
@@ -1705,7 +1705,7 @@ OGRErr OGRSQLiteTableLayer::SetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    if (bSpatialiteReadOnly || !poDS->GetUpdate())
+    if (!poDS->GetUpdate())
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   UNSUPPORTED_OP_READ_ONLY,
@@ -1840,7 +1840,7 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
     if (HasLayerDefnError())
         return OGRERR_FAILURE;
 
-    if (bSpatialiteReadOnly || !poDS->GetUpdate())
+    if (!poDS->GetUpdate())
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   UNSUPPORTED_OP_READ_ONLY,
@@ -2035,7 +2035,7 @@ OGRErr OGRSQLiteTableLayer::DeleteFeature( long nFID )
         return OGRERR_FAILURE;
     }
 
-    if (bSpatialiteReadOnly || !poDS->GetUpdate())
+    if (!poDS->GetUpdate())
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   UNSUPPORTED_OP_READ_ONLY,
@@ -2139,12 +2139,41 @@ void OGRSQLiteTableLayer::InvalidateCachedFeatureCountAndExtent()
 }
 
 /************************************************************************/
+/*                     DoStatisticsNeedToBeFlushed()                    */
+/************************************************************************/
+
+int OGRSQLiteTableLayer::DoStatisticsNeedToBeFlushed()
+{
+    return bStatisticsNeedsToBeFlushed &&
+           poDS->IsSpatialiteDB() &&
+           OGRSQLiteIsSpatialiteLoaded();
+}
+
+/************************************************************************/
+/*                     ForceStatisticsToBeFlushed()                     */
+/************************************************************************/
+
+void OGRSQLiteTableLayer::ForceStatisticsToBeFlushed()
+{
+    bStatisticsNeedsToBeFlushed = TRUE;
+}
+
+/************************************************************************/
+/*                         AreStatisticsValid()                         */
+/************************************************************************/
+
+int OGRSQLiteTableLayer::AreStatisticsValid()
+{
+    return nFeatureCount >= 0;
+}
+
+/************************************************************************/
 /*                          LoadStatistics()                            */
 /************************************************************************/
 
 void OGRSQLiteTableLayer::LoadStatistics()
 {
-    if( !bSpatialiteLoaded )
+    if( !poDS->IsSpatialiteDB() || !OGRSQLiteIsSpatialiteLoaded() )
         return;
 
     GIntBig nFileTimestamp = poDS->GetFileTimestamp();
@@ -2244,7 +2273,7 @@ void OGRSQLiteTableLayer::LoadStatistics()
 
 int OGRSQLiteTableLayer::SaveStatistics()
 {
-    if( !bStatisticsNeedsToBeFlushed || !bSpatialiteLoaded )
+    if( !bStatisticsNeedsToBeFlushed || !poDS->IsSpatialiteDB()  || !OGRSQLiteIsSpatialiteLoaded() )
         return -1;
 
     CPLString osSQL;
