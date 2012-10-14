@@ -1626,21 +1626,27 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "FORMAT=%s not recognised or supported.", 
                   pszGeomFormat );
+        CPLFree( pszLayerName );
         return NULL;
     }
 
     if (bIsSpatiaLiteDB && !EQUAL(pszGeomFormat, "SpatiaLite") )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "FORMAT=%s not support on a SpatiaLite enabled database.",
+                  "FORMAT=%s not supported on a SpatiaLite enabled database.",
                   pszGeomFormat );
+        CPLFree( pszLayerName );
         return NULL;
     }
+
+    /* Shouldn't happen since a spatialite DB should be opened in read-only mode */
+    /* if libspatialite isn't loaded */
     if (bIsSpatiaLiteDB && !OGRSQLiteIsSpatialiteLoaded())
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Creating layers on a SpatiaLite enabled database, "
                   "without Spatialite extensions loaded, is not supported." );
+        CPLFree( pszLayerName );
         return NULL;
     }
 
