@@ -193,11 +193,11 @@ version) any Geometry will be casted to 2D [XY], because earlier versions of thi
 are simply able to support 2D [XY] dimensions. Version 2.4.0 (or any subsequent) is required in order to support 2.5D [XYZ].
 
 <li> <b>INIT_WITH_EPSG=yes/no</b>: (Starting with GDAL 1.8.0) Insert the content of the EPSG CSV files
-into the spatial_ref_sys table. Defaults to no</b>.<br>
-Please note: if <b>SPATIALITE=yes</b> and the underlaying <i>libspatialite</i> is v.2.4 (or any subsequent 
-version) <b>INIT_WITH_EPSG</b> is ignored anyway;
-any recent version of this library will unconditionally load the EPSG 
-dataset into the spatial_ref_sys table when creating a new DB (<i>self-initialization</i>).
+into the spatial_ref_sys table. Defaults to NO for regular SQLite databases</b>.<br>
+Please note: if <b>SPATIALITE=yes</b> and the underlaying <i>libspatialite</i> is v2.4 or v3.X,
+<b>INIT_WITH_EPSG</b> is ignored; those library versions will unconditionally load the EPSG 
+dataset into the spatial_ref_sys table when creating a new DB (<i>self-initialization</i>). Starting
+with libspatialite 4.0, INIT_WITH_EPSG defaults to YES, but can be set to NO.
 </ul>
 
 <h3>Layer Creation Options</h3>

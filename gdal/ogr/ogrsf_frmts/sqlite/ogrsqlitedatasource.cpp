@@ -522,7 +522,13 @@ int OGRSQLiteDataSource::Create( const char * pszNameIn, char **papszOptions )
         / [by-passing InitSpatialMetadata() as absolutely required]
         / will severely [and irremediably] corrupt the DB !!!
         */
-        osCommand =  "SELECT InitSpatialMetadata()";
+        
+        const char* pszVal = CSLFetchNameValue( papszOptions, "INIT_WITH_EPSG" );
+        if( pszVal != NULL && !CSLTestBoolean(pszVal) &&
+            OGRSQLiteGetSpatialiteVersionNumber() >= 40 )
+            osCommand =  "SELECT InitSpatialMetadata('NONE')";
+        else
+            osCommand =  "SELECT InitSpatialMetadata()";
         rc = sqlite3_exec( hDB, osCommand, NULL, NULL, &pszErrMsg );
         if( rc != SQLITE_OK )
         {
