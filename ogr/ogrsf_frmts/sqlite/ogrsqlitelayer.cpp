@@ -71,8 +71,6 @@ OGRSQLiteLayer::OGRSQLiteLayer()
     bTriedAsSpatiaLite = FALSE;
     bHasSpatialIndex = FALSE;
     bHasM = FALSE;
-    bSpatialiteReadOnly = FALSE;
-    bSpatialiteLoaded = FALSE;
 
     bIsVirtualShape = FALSE;
 
@@ -2556,7 +2554,7 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
                         CPL_SWAP64PTR( pabyData + nTotalSize );
                         CPL_SWAP64PTR( pabyData + nTotalSize + 8 );
                     }
-                    if (poGeometry->getCoordinateDimension() == 3)
+                    if (!bSpatialite2D && poGeometry->getCoordinateDimension() == 3)
                     {
                         double z = poLineString->getZ(i);
                         memcpy(pabyData + nTotalSize + 16, &z, 8);
