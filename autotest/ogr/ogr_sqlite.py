@@ -90,6 +90,29 @@ def ogr_sqlite_2():
     gdaltest.sl_ds.ExecuteSQL( 'DELLAYER:tpoly' )
     gdal.PopErrorHandler()
 
+    # Test invalid FORMAT
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = gdaltest.sl_ds.CreateLayer( 'will_fail', options = ['FORMAT=FOO'] )
+    gdal.PopErrorHandler()
+    if lyr is not None:
+        gdaltest.post_reason('layer creation should have failed')
+        return 'fail'
+
+    # Test creating a layer with an existing name
+    lyr = gdaltest.sl_ds.CreateLayer( 'a_layer')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = gdaltest.sl_ds.CreateLayer( 'a_layer' )
+    gdal.PopErrorHandler()
+    if lyr is not None:
+        gdaltest.post_reason('layer creation should have failed')
+        return 'fail'
+
+    # Test OVERWRITE=YES
+    lyr = gdaltest.sl_ds.CreateLayer( 'a_layer', options = ['OVERWRITE=YES'] )
+    if lyr is None:
+        gdaltest.post_reason('layer creation should have succeeded')
+        return 'fail'
+
     ######################################################
     # Create Layer
     gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'tpoly' )
@@ -705,6 +728,15 @@ def ogr_sqlite_15():
     # Reopen DB
     gdaltest.sl_ds.Destroy()
     gdaltest.sl_ds = ogr.Open( 'tmp/sqlite_test.db'  )
+
+    # Test creating a layer on a read-only DB
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = gdaltest.sl_ds.CreateLayer( 'will_fail' )
+    gdal.PopErrorHandler()
+    if lyr is not None:
+        gdaltest.post_reason('layer creation should have failed')
+        return 'fail'
+
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName('geomspatialite')
 
     for geom in geoms:
@@ -835,13 +867,23 @@ def ogr_sqlite_17():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    if gdaltest.has_spatialite == False:
-        return 'skip'
-
     ######################################################
     # Create dataset with SPATIALITE geometry
 
     ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( 'tmp/spatialite_test.db', options = ['SPATIALITE=YES'] )
+
+    if gdaltest.has_spatialite == False:
+        if ds is not None:
+            return 'fail'
+        return 'success'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr = ds.CreateLayer( 'will_fail', options = ['FORMAT=WKB'] )
+    gdal.PopErrorHandler()
+    if lyr is not None:
+        gdaltest.post_reason('layer creation should have failed')
+        return 'fail'
+
     srs = osr.SpatialReference()
     srs.SetFromUserInput("""GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]""")
     lyr = ds.CreateLayer( 'geomspatialite', srs = srs )
