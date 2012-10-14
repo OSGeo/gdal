@@ -2168,6 +2168,103 @@ int OGRSQLiteTableLayer::AreStatisticsValid()
 }
 
 /************************************************************************/
+/*                     LoadStatisticsSpatialite4DB()                    */
+/************************************************************************/
+
+void OGRSQLiteTableLayer::LoadStatisticsSpatialite4DB()
+{
+    CPLString osSQL;
+    CPLString osLastEvtDate;
+    osSQL.Printf("SELECT MAX(last_insert, last_update, last_delete) FROM geometry_columns_time WHERE "
+                 "f_table_name = '%s' AND f_geometry_column = '%s'",
+                 pszEscapedTableName, OGRSQLiteEscape(osGeomColumn).c_str());
+
+    sqlite3 *hDB = poDS->GetDB();
+    int nRowCount = 0, nColCount = 0;
+    char **papszResult = NULL;
+
+    sqlite3_get_table( hDB, osSQL.c_str(), &papszResult,
+                       &nRowCount, &nColCount, NULL );
+
+    /* Make it a Unix timestamp */
+    int nYear, nMonth, nDay, nHour, nMinute;
+    float fSecond;
+    if( nRowCount == 1 && nColCount == 1 && papszResult[1] != NULL &&
+        sscanf( papszResult[1], "%04d-%02d-%02dT%02d:%02d:%f",
+                &nYear, &nMonth, &nDay, &nHour, &nMinute, &fSecond ) == 6 )
+    {
+        osLastEvtDate = papszResult[1];
+    }
+
+    sqlite3_free_table( papszResult );
+    papszResult = NULL;
+
+    if( osLastEvtDate.size() == 0 )
+        return;
+
+    osSQL.Printf("SELECT last_verified, row_count, extent_min_x, extent_min_y, "
+                 "extent_max_x, extent_max_y FROM geometry_columns_statistics WHERE "
+                 "f_table_name = '%s' AND f_geometry_column = '%s'",
+                 pszEscapedTableName, OGRSQLiteEscape(osGeomColumn).c_str());
+
+    nRowCount = 0;
+    nColCount = 0;
+    sqlite3_get_table( hDB, osSQL.c_str(), &papszResult,
+                       &nRowCount, &nColCount, NULL );
+
+    if( nRowCount == 1 && nColCount == 6 && papszResult[6] != NULL &&
+        sscanf( papszResult[6], "%04d-%02d-%02dT%02d:%02d:%f",
+                &nYear, &nMonth, &nDay, &nHour, &nMinute, &fSecond ) == 6 )
+    {
+        CPLString osLastVerified(papszResult[6]);
+
+        /* Check that the information in geometry_columns_statistics is more */
+        /* recent than geometry_columns_time */
+        if( osLastVerified.compare(osLastEvtDate) > 0 )
+        {
+            char **papszRow = papszResult + 6;
+            const char* pszRowCount = papszRow[1];
+            const char* pszMinX = papszRow[2];
+            const char* pszMinY = papszRow[3];
+            const char* pszMaxX = papszRow[4];
+            const char* pszMaxY = papszRow[5];
+
+            CPLDebug("SQLITE",  "Loading statistics for %s", pszTableName);
+
+            if( pszRowCount != NULL )
+            {
+                nFeatureCount = (GIntBig) CPLScanUIntBig( pszRowCount, 32 );
+                if( nFeatureCount == 0)
+                {
+                    nFeatureCount = -1;
+                    pszMinX = NULL;
+                }
+                else
+                {
+                    CPLDebug("SQLite", "Layer %s feature count : " CPL_FRMT_GIB,
+                                pszTableName, nFeatureCount);
+                }
+            }
+
+            if( pszMinX != NULL && pszMinY != NULL &&
+                pszMaxX != NULL && pszMaxY != NULL )
+            {
+                bCachedExtentIsValid = TRUE;
+                oCachedExtent.MinX = CPLAtof(pszMinX);
+                oCachedExtent.MinY = CPLAtof(pszMinY);
+                oCachedExtent.MaxX = CPLAtof(pszMaxX);
+                oCachedExtent.MaxY = CPLAtof(pszMaxY);
+                CPLDebug("SQLite", "Layer %s extent : %s,%s,%s,%s",
+                            pszTableName, pszMinX,pszMinY,pszMaxX,pszMaxY);
+            }
+        }
+    }
+
+    sqlite3_free_table( papszResult );
+    papszResult = NULL;
+}
+
+/************************************************************************/
 /*                          LoadStatistics()                            */
 /************************************************************************/
 
@@ -2175,6 +2272,12 @@ void OGRSQLiteTableLayer::LoadStatistics()
 {
     if( !poDS->IsSpatialiteDB() || !OGRSQLiteIsSpatialiteLoaded() )
         return;
+
+    if( poDS->HasSpatialite4Layout() )
+    {
+        LoadStatisticsSpatialite4DB();
+        return;
+    }
 
     GIntBig nFileTimestamp = poDS->GetFileTimestamp();
     if( nFileTimestamp == 0 )

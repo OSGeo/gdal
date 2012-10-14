@@ -313,6 +313,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     GIntBig             nFeatureCount; /* if -1, means not up-to-date */
 
     void                LoadStatistics();
+    void                LoadStatisticsSpatialite4DB();
 
   public:
                         OGRSQLiteTableLayer( OGRSQLiteDataSource * );

@@ -32,6 +32,7 @@
 import os
 import sys
 import string
+import shutil
 
 # Make sure we run from the directory of the script
 if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
@@ -1330,7 +1331,11 @@ def ogr_sqlite_28():
     if test_cli_utilities.get_test_ogrsf_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/poly_spatialite.sqlite')
+    # Test with a Spatialite 3.0 DB
+    shutil.copy('data/poly_spatialite.sqlite', 'tmp/poly_spatialite.sqlite')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly_spatialite.sqlite')
+    os.unlink('tmp/poly_spatialite.sqlite')
+    #print(ret)
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         gdaltest.post_reason('failed')
@@ -1339,6 +1344,17 @@ def ogr_sqlite_28():
 
     # Test on a result SQL layer
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/poly_spatialite.sqlite -sql "SELECT * FROM poly"')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        gdaltest.post_reason('failed')
+        print(ret)
+        return 'fail'
+
+    # Test with a Spatialite 4.0 DB
+    shutil.copy('data/poly_spatialite4.sqlite', 'tmp/poly_spatialite4.sqlite')
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/poly_spatialite4.sqlite')
+    os.unlink('tmp/poly_spatialite4.sqlite')
+    #print(ret)
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         gdaltest.post_reason('failed')
