@@ -40,11 +40,11 @@ if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
 
 sys.path.append( '../pymod' )
 
+from osgeo import ogr, osr, gdal
 import gdaltest
 import ogrtest
-import ogr
-import osr
-import gdal
+
+run_without_spatialite = True
 
 ###############################################################################
 # Create a fresh database.
@@ -2466,6 +2466,23 @@ def ogr_sqlite_cleanup():
 
     return 'success'
 
+###############################################################################
+# Ask to run again tests in a new python process without libspatialite loaded
+
+def ogr_sqlite_without_spatialite():
+
+    if gdaltest.has_spatialite == False or not run_without_spatialite:
+        return 'skip'
+
+    import test_py_scripts
+    ret = test_py_scripts.run_py_script_as_external_script('.', 'ogr_sqlite', ' -without_spatialite', display_live_on_parent_stdout = True)
+
+    if ret.find('Failed:    0') == -1:
+        return 'fail'
+
+    return 'success'
+
+
 gdaltest_list = [ 
     ogr_sqlite_1,
     ogr_sqlite_2,
@@ -2510,9 +2527,15 @@ gdaltest_list = [
     ogr_sqlite_32,
     ogr_sqlite_33,
     ogr_sqlite_34,
-    ogr_sqlite_cleanup ]
+    ogr_sqlite_cleanup,
+    ogr_sqlite_without_spatialite,
+]
 
 if __name__ == '__main__':
+
+    if len(sys.argv) >= 2 and sys.argv[1] == '-without_spatialite':
+        run_without_spatialite = False
+        gdal.SetConfigOption('SPATIALITE_LOAD', 'NO')
 
     gdaltest.setup_run( 'ogr_sqlite' )
 

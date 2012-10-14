@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 # 
@@ -30,6 +31,7 @@
 import urllib2
 import socket
 import os
+import sys
 from sys import version_info
 
 def run_func(func):
@@ -134,14 +136,26 @@ def spawn_async(cmd):
 def wait_process(process):
     process.wait()
 
-def runexternal(cmd, strin = None, check_memleak = True):
+def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False):
     if strin is None:
-        out_str = os.popen(cmd).read()
+        ret_stdout = os.popen(cmd)
     else:
         (ret_stdin, ret_stdout) = os.popen2(cmd)
         ret_stdin.write(strin)
         ret_stdin.close()
+
+    if display_live_on_parent_stdout:
+        out_str = ''
+        while True:
+            c = ret_stdout.read(1)
+            if c == '':
+                break
+            out_str = out_str + c
+            sys.stdout.write(c)
+        ret_stdout.close()
+    else:
         out_str = ret_stdout.read()
+    ret_stdout.close()
 
     if check_memleak:
         warn_if_memleak(cmd, out_str)
