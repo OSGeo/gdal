@@ -410,6 +410,7 @@ char* GMLExpatHandler::GetAttributeValue(void* attr, const char* pszAttributeNam
 
 static const char* const apszGMLGeometryElements[] =
 {
+    "CompositeCurve",
     "CompositeSurface",
     "Curve",
     "GeometryCollection", /* OGR < 1.8.0 bug... */
