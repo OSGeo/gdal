@@ -76,8 +76,7 @@ CPLErr OGRSQLiteViewLayer::Initialize( const char *pszViewName,
                                        const char *pszViewGeometry,
                                        const char *pszViewRowid,
                                        const char *pszUnderlyingTableName,
-                                       const char *pszUnderlyingGeometryColumn,
-                                       int bSpatialiteLoaded)
+                                       const char *pszUnderlyingGeometryColumn)
 
 {
     this->pszViewName = CPLStrdup(pszViewName);
@@ -92,7 +91,6 @@ CPLErr OGRSQLiteViewLayer::Initialize( const char *pszViewName,
     osUnderlyingGeometryColumn = pszUnderlyingGeometryColumn;
     poUnderlyingLayer = NULL;
 
-    this->bSpatialiteLoaded = bSpatialiteLoaded;
     //this->bHasM = bHasM;
 
     pszEscapedTableName = CPLStrdup(OGRSQLiteEscape(pszViewName));
@@ -476,7 +474,7 @@ CPLString OGRSQLiteViewLayer::GetSpatialWhere(OGRGeometry* poFilterGeom)
 
     }
 
-    if( poFilterGeom != NULL && bSpatialiteLoaded && !bHasSpatialIndex )
+    if( poFilterGeom != NULL && OGRSQLiteIsSpatialiteLoaded() && !bHasSpatialIndex )
     {
         OGREnvelope  sEnvelope;
 

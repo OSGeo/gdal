@@ -65,6 +65,9 @@
 
 #define UNINITIALIZED_SRID  -2
 
+int OGRSQLiteIsSpatialiteLoaded();
+int OGRSQLiteGetSpatialiteVersionNumber();
+
 /************************************************************************/
 /*      Format used to store geometry data in the database.             */
 /************************************************************************/
@@ -205,8 +208,6 @@ class OGRSQLiteLayer : public OGRLayer
 
     int                 bHasSpatialIndex;
     int                 bHasM;
-    int                 bSpatialiteReadOnly;
-    int                 bSpatialiteLoaded;
 
     int                 bIsVirtualShape;
 
@@ -326,9 +327,6 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                     int nSRSId = UNINITIALIZED_SRID,
                                     int bHasSpatialIndex = FALSE,
                                     int bHasM = FALSE,
-                                    int bSpatialiteReadOnly = FALSE,
-                                    int bSpatialiteLoaded = FALSE,
-                                    int iSpatialiteVersion = -1,
                                     int bIsVirtualShapeIn = FALSE);
 
     virtual const char* GetName();
@@ -360,8 +358,6 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     // follow methods are not base class overrides
     void                SetLaunderFlag( int bFlag ) 
                                 { bLaunderColumnNames = bFlag; }
-    void                SetSpatialite2D( int bFlag ) 
-                                { bSpatialite2D = bFlag; }
     void                SetUseCompressGeom( int bFlag )
                                 { bUseComprGeom = bFlag; }
     void                SetDeferedSpatialIndexCreation( int bFlag )
@@ -371,9 +367,9 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     void                CreateSpatialIndexIfNecessary();
 
     void                InitFeatureCount();
-    int                 DoStatisticsNeedToBeFlushed() { return bStatisticsNeedsToBeFlushed && bSpatialiteLoaded; }
-    void                ForceStatisticsToBeFlushed() { bStatisticsNeedsToBeFlushed = TRUE; }
-    int                 AreStatisticsValid() { return nFeatureCount >= 0; }
+    int                 DoStatisticsNeedToBeFlushed();
+    void                ForceStatisticsToBeFlushed();
+    int                 AreStatisticsValid();
     int                 SaveStatistics();
 
     virtual void        InvalidateCachedFeatureCountAndExtent();
@@ -424,8 +420,7 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
                                     const char *pszViewGeometry,
                                     const char *pszViewRowid,
                                     const char *pszTableName,
-                                    const char *pszGeometryColumn,
-                                    int bSpatialiteLoaded);
+                                    const char *pszGeometryColumn);
 
     virtual OGRFeatureDefn *GetLayerDefn();
     int                 HasLayerDefnError() { GetLayerDefn(); return bLayerDefnError; }
@@ -528,7 +523,7 @@ class OGRSQLiteDataSource : public OGRDataSource
     void                AddSRIDToCache(int nId, OGRSpatialReference * poSRS );
 
     int                 bHaveGeometryColumns;
-    int                 bIsSpatiaLite;
+    int                 bIsSpatiaLiteDB;
     int                 bSpatialite4Layout;
 
     int                 nUndefinedSRID;
@@ -577,17 +572,12 @@ class OGRSQLiteDataSource : public OGRDataSource
                                    int nSRID = UNINITIALIZED_SRID,
                                    int bHasSpatialIndex = FALSE,
                                    int bHasM = FALSE,
-                                   int bSpatialiteReadOnly = FALSE,
-                                   int bSpatialiteLoaded = FALSE,
-                                   int iSpatialiteVersion = -1,
-                                   int bForce2D = FALSE,
                                    int bIsVirtualShapeIn = FALSE );
     int                  OpenView( const char *pszViewName,
                                    const char *pszViewGeometry,
                                    const char *pszViewRowid,
                                    const char *pszTableName,
-                                   const char *pszGeometryColumn,
-                                   int bSpatialiteLoaded);
+                                   const char *pszGeometryColumn);
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
@@ -619,6 +609,7 @@ class OGRSQLiteDataSource : public OGRDataSource
     OGRSpatialReference*FetchSRS( int nSRID );
 
     int                 GetUpdate() const { return bUpdate; }
+    void                SetUpdate(int bUpdateIn) { bUpdate = bUpdateIn; }
 
     void                SetName(const char* pszNameIn);
 
@@ -633,8 +624,9 @@ class OGRSQLiteDataSource : public OGRDataSource
 
     GIntBig             GetFileTimestamp() const { return nFileTimestamp; }
     
+    int                 IsSpatialiteDB() const { return bIsSpatiaLiteDB; }
     int                 HasSpatialite4Layout() const { return bSpatialite4Layout; }
-    
+
     int                 GetUndefinedSRID() const { return nUndefinedSRID; }
 };
 
@@ -669,8 +661,6 @@ CPLString OGRSQLiteFieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn );
 
 int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
                                     const char* pszValue );
-
-int OGRSQLiteGetSpatialiteVersionNumber();
 
 #ifdef HAVE_SQLITE_VFS
 typedef void (*pfnNotifyFileOpenedType)(void* pfnUserData, const char* pszFilename, VSILFILE* fp);
