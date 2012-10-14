@@ -83,11 +83,14 @@ int OGRSQLiteIsSpatialiteLoaded()
 
 int OGRSQLiteGetSpatialiteVersionNumber()
 {
-    double v = 0.0;
+    int v = 0;
 #ifdef HAVE_SPATIALITE
-    v = ( atof( spatialite_version() ) + 0.001 )  * 10.0;
+    if( bSpatialiteLoaded )
+    {
+        v = (int)(( atof( spatialite_version() ) + 0.001 )  * 10.0);
+    }
 #endif
-    return (int)v;
+    return v;
 }
 
 /************************************************************************/
