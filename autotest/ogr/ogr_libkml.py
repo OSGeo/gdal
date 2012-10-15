@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -717,6 +718,48 @@ def ogr_libkml_read_emptylayers():
     return 'success'
 
 ###############################################################################
+# Test reading KML with empty layers
+
+def ogr_libkml_read_schema():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/test_schema.kml')
+    if ds.GetLayerCount() != 4:
+        gdaltest.post_reason('failed')
+        print(ds.GetLayerCount())
+        return 'fail'
+
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetField('foo') != 'bar':
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+
+    lyr = ds.GetLayer(1)
+    feat = lyr.GetNextFeature()
+    if feat.GetField('foo') != 'baz':
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+
+    lyr = ds.GetLayer(2)
+    if lyr.GetLayerDefn().GetFieldIndex('foo') != -1:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    lyr = ds.GetLayer(3)
+    if lyr.GetLayerDefn().GetFieldIndex('foo') != -1:
+        gdaltest.post_reason('failed')
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -760,6 +803,7 @@ gdaltest_list = [
     ogr_libkml_read_placemark,
     ogr_libkml_read_empty,
     ogr_libkml_read_emptylayers,
+    ogr_libkml_read_schema,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':
