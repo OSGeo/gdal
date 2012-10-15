@@ -72,27 +72,40 @@ install:
 # When run in the same process after ogr_pgeo.py (with the MDB driver), FileGDB tests fail.
 # Run it in isolation
 script:
+# Perl unit tests
   - cd swig/perl
   - make test
   - cd ../..
+# Java unit tests
   - cd swig/java
   - make test
   - cd ../..
+# CPP unit tests
   - cd ../autotest
   - cd cpp
   - make quick_test
   - cd ..
+# Download a sample file
   - mkdir -p ogr/tmp/cache/
   - cd ogr/tmp/cache/
   - wget http://download.osgeo.org/gdal/data/pgeo/PGeoTest.zip
   - unzip PGeoTest.zip
   - cd ../../..
+# Run ogr_fgdb.py in isolation from the rest
   - cd ogr
   - python ogr_fgdb.py
   - mkdir disabled
   - mv ogr_fgdb.* disabled
+# Run all the Python autotests
   - cd ..
   - python run_all.py
+  - cd ogr
+# A bit messy, but force testing with libspatialite 4.0dev (that has been patched a bit to remove any hard-coded SRS definition so it is very small)
+  - wget http://even.rouault.free.fr/libspatialite4.0dev_ubuntu12.04-32bit_srs_stripped.tar.gz
+  - tar xzf libspatialite4.0dev_ubuntu12.04-32bit_srs_stripped.tar.gz
+  - ln -s libspatialite.so.5.0.1 libspatialite.so.3
+  - LD_LIBRARY_PATH=$PWD python ogr_sqlite.py
+  - cd ..
 
 notifications:
   email:
