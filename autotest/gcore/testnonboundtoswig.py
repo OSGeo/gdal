@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -47,6 +48,150 @@ gdal_handle = None
 gdal_handle_stdcall = None
 
 ###############################################################################
+# find_libgdal_linux()
+# Parse /proc/self/maps to find an occurrence of libgdalXXX.so.*
+
+def find_libgdal_linux():
+
+    f = open('/proc/self/maps')
+    lines = f.readlines()
+    f.close()
+
+    for line in lines:
+        if line.rfind('/libgdal') == -1 or line.find('.so') == -1:
+            continue
+
+        i = line.find(' ')
+        if i < 0:
+            continue
+        line = line[i+1:]
+        i = line.find(' ')
+        if i < 0:
+            continue
+        line = line[i+1:]
+        i = line.find(' ')
+        if i < 0:
+            continue
+        line = line[i+1:]
+        i = line.find(' ')
+        if i < 0:
+            continue
+        line = line[i+1:]
+        i = line.find(' ')
+        if i < 0:
+            continue
+        line = line[i+1:]
+
+        soname = line.lstrip().rstrip('\n')
+        if soname.rfind('/libgdal') == -1:
+            continue
+
+        return soname
+
+    return None
+
+###############################################################################
+# find_libgdal_windows()
+# use Module32First() / Module32Next() API on the current process
+
+def find_libgdal_windows():
+
+    try:
+        import ctypes
+    except:
+        return None
+
+    kernel32 = ctypes.windll.kernel32
+
+    MAX_MODULE_NAME32 = 255
+    MAX_PATH = 260
+
+    TH32CS_SNAPMODULE = 0x00000008
+
+    class MODULEENTRY32(ctypes.Structure):
+        _fields_ = [
+            ("dwSize", ctypes.c_int),
+            ("th32ModuleID", ctypes.c_int),
+            ("th32ProcessID", ctypes.c_int),
+            ("GlblcntUsage", ctypes.c_int),
+            ("ProccntUsage", ctypes.c_int),
+            ("modBaseAddr", ctypes.c_char_p),
+            ("modBaseSize", ctypes.c_int),
+            ("hModule", ctypes.c_void_p),
+            ("szModule", ctypes.c_char * (MAX_MODULE_NAME32 + 1)),
+            ("szExePath", ctypes.c_char * MAX_PATH)
+        ]
+
+    Module32First = kernel32.Module32First
+    Module32First.argtypes = [ ctypes.c_void_p, ctypes.POINTER(MODULEENTRY32) ]
+    Module32First.rettypes = ctypes.c_int
+
+    Module32Next = kernel32.Module32Next
+    Module32Next.argtypes = [ ctypes.c_void_p, ctypes.POINTER(MODULEENTRY32) ]
+    Module32Next.rettypes = ctypes.c_int
+
+    CreateToolhelp32Snapshot = kernel32.CreateToolhelp32Snapshot
+    CreateToolhelp32Snapshot.argtypes = [ ctypes.c_int, ctypes.c_int ]
+    CreateToolhelp32Snapshot.rettypes = ctypes.c_void_p
+
+    CloseHandle = kernel32.CloseHandle
+    CloseHandle.argtypes = [ ctypes.c_void_p ]
+    CloseHandle.rettypes = ctypes.c_int
+
+    GetLastError = kernel32.GetLastError
+    GetLastError.argtypes = []
+    GetLastError.rettypes = ctypes.c_int
+
+    snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE,0)
+    if snapshot is None:
+        return None
+
+    soname = None
+
+    i = 0
+    while True:
+        entry = MODULEENTRY32()
+        entry.dwSize = ctypes.sizeof(MODULEENTRY32)
+        pentry = ctypes.pointer(entry)
+        if i == 0:
+            ret = Module32First(snapshot, pentry)
+        else:
+            ret = Module32Next(snapshot, pentry)
+        i = i + 1
+        if ret == 0:
+            break
+
+        try:
+            path = entry.szExePath.decode('latin1')
+        except:
+            continue
+
+        i = path.rfind('\\gdal')
+        if i < 0:
+            continue
+        if path[i+1:].find('\\') >= 0:
+            continue
+        soname = path
+        break
+
+    CloseHandle(snapshot)
+
+    return soname
+
+###############################################################################
+# find_libgdal()
+
+def find_libgdal():
+    if sys.platform.startswith('linux'):
+        return find_libgdal_linux()
+    elif sys.platform.startswith('win32'):
+        return find_libgdal_windows()
+    else:
+        # sorry mac users or other BSDs
+        # should be doable, but not in a blindless way
+        return None
+
+###############################################################################
 # Init
 
 def testnonboundtoswig_init():
@@ -66,36 +211,39 @@ def testnonboundtoswig_init():
         print('cannot find ctypes')
         return 'skip'
 
+    name = find_libgdal()
+    if name is None:
+        return 'skip'
+
+    print('Found libgdal we are running against : %s' % name)
+
     static_version = gdal.VersionInfo(None)
     short_static_version = static_version[0:2]
 
-    for name in ["libgdal.so", "libgdal.dylib", "gdal%s.dll" % short_static_version, "gdal%sdev.dll" % short_static_version]:
+    try:
+        gdal_handle = ctypes.cdll.LoadLibrary(name)
         try:
-            gdal_handle = ctypes.cdll.LoadLibrary(name)
-            try:
-                gdal_handle_stdcall = ctypes.windll.LoadLibrary(name)
-            except:
-                gdal_handle_stdcall = gdal_handle
-
-            gdal_handle_stdcall.GDALVersionInfo.argtypes = [ ctypes.c_char_p ]
-            gdal_handle_stdcall.GDALVersionInfo.restype = ctypes.c_char_p
-
-            dynamic_version = gdal_handle_stdcall.GDALVersionInfo(None)
-            if version_info >= (3,0,0):
-                dynamic_version = str(dynamic_version, 'utf-8')
-
-            if dynamic_version != static_version:
-                gdaltest.post_reason('dynamic version(%s) does not match static version (%s)' % (dynamic_version, static_version))
-                gdal_handle = None
-                gdal_handle_stdcall = None
-                return 'skip'
-
-            return 'success'
+            gdal_handle_stdcall = ctypes.windll.LoadLibrary(name)
         except:
-            pass
+            gdal_handle_stdcall = gdal_handle
 
-    print('cannot find gdal shared object')
-    return 'skip'
+        gdal_handle_stdcall.GDALVersionInfo.argtypes = [ ctypes.c_char_p ]
+        gdal_handle_stdcall.GDALVersionInfo.restype = ctypes.c_char_p
+
+        dynamic_version = gdal_handle_stdcall.GDALVersionInfo(None)
+        if version_info >= (3,0,0):
+            dynamic_version = str(dynamic_version, 'utf-8')
+
+        if dynamic_version != static_version:
+            gdaltest.post_reason('dynamic version(%s) does not match static version (%s)' % (dynamic_version, static_version))
+            gdal_handle = None
+            gdal_handle_stdcall = None
+            return 'skip'
+
+        return 'success'
+    except:
+        print('cannot find gdal shared object')
+        return 'skip'
 
 ###############################################################################
 # Call GDALDestroyDriverManager()
@@ -359,12 +507,7 @@ def testnonboundtoswig_VRTDerivedBands():
 
     return 'success'
 
-# Empty because it is not completely reliable, and we
-# can get a ctype handle to a GDAL library which is not
-# the one fetched by the GDAL Python module.
-gdaltest_list = []
-
-manual_gdaltest_list = [ testnonboundtoswig_init,
+gdaltest_list = [ testnonboundtoswig_init,
                   testnonboundtoswig_GDALSimpleImageWarp,
                   testnonboundtoswig_VRTDerivedBands ]
 
@@ -372,7 +515,7 @@ if __name__ == '__main__':
 
     gdaltest.setup_run( 'testnonboundtoswig' )
 
-    gdaltest.run_tests( manual_gdaltest_list )
+    gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
 
