@@ -800,7 +800,7 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
 
         CPLDebug("PDF", "Running '%s'", osCmd.c_str());
-        int nRet = system(osCmd.c_str());
+        int nRet = CPLSystem(NULL, osCmd.c_str());
         if (nRet == 0)
         {
             GDALDataset* poDS = (GDALDataset*) GDALOpen(osTmpFilename, GA_ReadOnly);
