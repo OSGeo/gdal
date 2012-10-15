@@ -378,6 +378,12 @@ int SDTSRawPolygon::AssembleRings()
         }
     }
 
+    if( iBiggestRing < 0 )
+    {
+        CPLFree(padfRingArea);
+        return FALSE;
+    }
+
 /* ==================================================================== */
 /*      Make a new set of vertices, and copy the largest ring into      */
 /*      it, adjusting the direction if necessary to ensure that this    */
