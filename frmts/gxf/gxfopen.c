@@ -199,33 +199,33 @@ GXFHandle GXFOpen( const char * pszFilename )
         }
         else if( EQUALN(szTitle,"#PTSE",5) )
         {
-            psGXF->dfXPixelSize = atof(papszList[0]);
+            psGXF->dfXPixelSize = CPLAtof(papszList[0]);
         }
         else if( EQUALN(szTitle,"#RWSE",5) )
         {
-            psGXF->dfYPixelSize = atof(papszList[0]);
+            psGXF->dfYPixelSize = CPLAtof(papszList[0]);
         }
         else if( EQUALN(szTitle,"#DUMM",5) )
         {
             memset( psGXF->szDummy, 0, sizeof(psGXF->szDummy));
             strncpy( psGXF->szDummy, papszList[0], sizeof(psGXF->szDummy) - 1);
-            psGXF->dfSetDummyTo = atof(papszList[0]);
+            psGXF->dfSetDummyTo = CPLAtof(papszList[0]);
         }
         else if( EQUALN(szTitle,"#XORI",5) )
         {
-            psGXF->dfXOrigin = atof(papszList[0]);
+            psGXF->dfXOrigin = CPLAtof(papszList[0]);
         }
         else if( EQUALN(szTitle,"#YORI",5) )
         {
-            psGXF->dfYOrigin = atof(papszList[0]);
+            psGXF->dfYOrigin = CPLAtof(papszList[0]);
         }
         else if( EQUALN(szTitle,"#ZMIN",5) )
         {
-            psGXF->dfZMinimum = atof(papszList[0]);
+            psGXF->dfZMinimum = CPLAtof(papszList[0]);
         }
         else if( EQUALN(szTitle,"#ZMAX",5) )
         {
-            psGXF->dfZMaximum = atof(papszList[0]);
+            psGXF->dfZMaximum = CPLAtof(papszList[0]);
         }
         else if( EQUALN(szTitle,"#SENS",5) )
         {
@@ -251,7 +251,7 @@ GXFHandle GXFOpen( const char * pszFilename )
             if( CSLCount(papszFields) > 1 )
             {
                 psGXF->pszUnitName = VSIStrdup( papszFields[0] );
-                psGXF->dfUnitToMeter = atof( papszFields[1] );
+                psGXF->dfUnitToMeter = CPLAtof( papszFields[1] );
                 if( psGXF->dfUnitToMeter == 0.0 )
                     psGXF->dfUnitToMeter = 1.0;
             }
@@ -267,8 +267,8 @@ GXFHandle GXFOpen( const char * pszFilename )
 
             if( CSLCount(papszFields) > 1 )
             {
-                psGXF->dfTransformScale = atof(papszFields[0]);
-                psGXF->dfTransformOffset = atof(papszFields[1]);
+                psGXF->dfTransformScale = CPLAtof(papszFields[0]);
+                psGXF->dfTransformOffset = CPLAtof(papszFields[1]);
             }
 
             if( CSLCount(papszFields) > 2 )
@@ -418,7 +418,7 @@ static int GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
                 }
                 else
                 {
-                    padfLineBuf[nValuesRead++] = atof(pszLine);
+                    padfLineBuf[nValuesRead++] = CPLAtof(pszLine);
                 }
 
                 /* skip further whitespace */
