@@ -204,7 +204,7 @@ class JP2KAKRasterBand : public GDALPamRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class kdu_cpl_error_message : public kdu_message 
+class kdu_cpl_error_message : public kdu_thread_safe_message 
 {
 public: // Member classes
     kdu_cpl_error_message( CPLErr eErrClass ) 
@@ -231,6 +231,8 @@ public: // Member classes
 
     void flush(bool end_of_message=false) 
     {
+        kdu_thread_safe_message::flush(end_of_message);
+
         if( m_pszError == NULL )
             return;
         if( m_pszError[strlen(m_pszError)-1] == '\n' )
