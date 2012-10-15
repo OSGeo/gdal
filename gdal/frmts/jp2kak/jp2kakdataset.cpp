@@ -575,14 +575,17 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         int nBandStart = 0;
         for( iBand = 0; iBand < (int) anBands.size(); iBand++ )
         {
-            if( iBand+1 == nBand )
+            if( anBands[iBand] == nBand )
             {
+                // application requested band.
                 memcpy( pImage, pabyWrkBuffer + nBandStart, 
                         nWordSize * nBlockXSize * nBlockYSize );
             }
             else
             {
-                GDALRasterBand *poBaseBand = poBaseDS->GetRasterBand(iBand+1);
+                // all others are pushed into cache.
+                GDALRasterBand *poBaseBand = 
+                    poBaseDS->GetRasterBand(anBands[iBand]);
                 JP2KAKRasterBand *poBand = NULL;
 
                 if( nDiscardLevels == 0 )
@@ -1729,6 +1732,11 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag eRWFlag,
                     sample_offsets[i] = i * nBandSpace / 2;
                     sample_gaps[i] = nPixelSpace / 2;
                     row_gaps[i] = nLineSpace / 2;
+                    if( precisions[i] == 12 )
+                    {
+                      CPLDebug( "JP2KAK", "16bit extend 12 bit data." );
+                      precisions[i] = 16;
+                    }
                 }
                 
             }
