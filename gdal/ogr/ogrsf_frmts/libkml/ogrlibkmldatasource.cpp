@@ -476,7 +476,7 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema (
 {
     char *pszID = NULL;
     char *pszFile = NULL;
-    char *pszName = NULL;
+    char *pszSchemaName = NULL;
     char *pszPound;
     DocumentPtr poKmlDocument = NULL;
     SchemaPtr poKmlSchemaResult = NULL;
@@ -509,7 +509,7 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema (
     }
 
     else {
-        pszName = CPLStrdup ( pszSchemaUrl );
+        pszSchemaName = CPLStrdup ( pszSchemaUrl );
 
         /***** kml *****/
 
@@ -540,8 +540,8 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema (
                 }
             }
 
-            else if ( poKmlSchema->has_name (  ) && pszName) {
-                if ( EQUAL ( pszName, poKmlSchema->get_name (  ).c_str (  ) ) ) {
+            else if ( poKmlSchema->has_name (  ) && pszSchemaName) {
+                if ( EQUAL ( pszSchemaName, poKmlSchema->get_name (  ).c_str (  ) ) ) {
                     poKmlSchemaResult = poKmlSchema;
                     break;
                 }
@@ -554,6 +554,8 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema (
         CPLFree ( pszFile );
     if ( pszID )
         CPLFree ( pszID );
+    if ( pszSchemaName )
+        CPLFree ( pszSchemaName );
 
     return poKmlSchemaResult;
 
