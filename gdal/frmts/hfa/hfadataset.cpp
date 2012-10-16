@@ -1795,13 +1795,15 @@ CPLErr HFARasterBand::WriteNamedRAT( const char *pszName, const GDALRasterAttrib
         }
         else if( poRAT->GetTypeOfCol(col) == GFT_String )
         {
-            unsigned int nMaxNumChars = 0;
+            unsigned int nMaxNumChars = 0, nNumChars;
             /* find the length of the longest string */
             for( int i = 0; i < nRowCount; i++)
             {
-                if(nMaxNumChars < strlen(poRAT->GetValueAsString(i,col)))
+                /* Include terminating byte */
+                nNumChars = strlen(poRAT->GetValueAsString(i,col)) + 1;
+                if(nMaxNumChars < nNumChars)
                 {
-                    nMaxNumChars = strlen(poRAT->GetValueAsString(i,col));
+                    nMaxNumChars = nNumChars;
                 }
             }
        
