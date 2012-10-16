@@ -29,7 +29,11 @@
 
 /* This file is to be used with openjpeg v2 branch. This is an working branch */
 /* that has now been used in openjpeg trunk, so you should likely not use this file */
-#warning "You are using an old version of libopenjpeg. Consider upgrading to openjpeg trunk"
+#ifdef _MSC_VER
+#pragma message ( "warning You are using an old version of libopenjpeg. Consider upgrading to openjpeg trunk")
+#else
+#warning You are using an old version of libopenjpeg. Consider upgrading to openjpeg trunk
+#endif
 
 /* Necessary for opj_setup_decoder() */
 #define USE_OPJ_DEPRECATED
