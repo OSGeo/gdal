@@ -11,13 +11,12 @@
 
 <p>This driver is an implementation of a JPEG2000 reader/writer based on OpenJPEG library <b>v2</b>.</p>
 
-<p>The v2 branch is - at the time of writing - still unreleased, so you'll have to pull it yourself
-from its Subversion repository : http://openjpeg.googlecode.com/svn/branches/v2. OpenJPEG trunk
-is still deriving on the 1.3 series that doesn't provide access to tile-level reading. v2 branch
-enables reading big JPEG2000 images without loading them entirely in memory. This is a noticeable improvement
+<p>For GDAL 2.0 or later, use preferably the trunk version of openjpeg (tested with r2093).</p>
+<p>For GADL 1.9.x or before, use the v2 branch from its Subversion repository : http://openjpeg.googlecode.com/svn/branches/v2.
+v2 branch enables reading big JPEG2000 images without loading them entirely in memory. This is a noticeable improvement
 in comparison with the JPEG2000 driver based on Jasper library.</p>
 
-<p>The v2 branch also adds the capability to use the VSI Virtual File API, so the driver is able to read JPEG2000 compressed NITF files.</p>
+<p>The driver uses the VSI Virtual File API, so it can read JPEG2000 compressed NITF files.</p>
 
 <p>Starting with GDAL 1.9.0, XMP metadata can be extracted from JPEG2000 files, and will be
 stored as XML raw content in the xml:XMP metadata domain.</p>
