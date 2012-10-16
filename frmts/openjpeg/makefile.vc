@@ -1,5 +1,9 @@
 
+!IF "$(OPENJPEG_TRUNK)" == "YES"
 OBJ	=	openjpegdataset.obj
+!ELSE
+OBJ	=	openjpegdataset_opjbranchv2.obj
+!ENDIF
 
 GDAL_ROOT	=	..\..
 
