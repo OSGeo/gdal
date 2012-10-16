@@ -186,6 +186,7 @@ JASPER_FLAGS	= @JASPER_FLAGS@
 # JPEG-2000 Support via OpenJPEG library.
 #
 HAVE_OPENJPEG   = @HAVE_OPENJPEG@
+OPENJPEG_TRUNK    = @OPENJPEG_TRUNK@
 
 #
 # MrSID support via LizardTech's DSDK
