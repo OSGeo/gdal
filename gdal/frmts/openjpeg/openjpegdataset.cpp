@@ -306,7 +306,8 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if (!opj_set_decoded_resolution_factor( poGDS->pCodec, poGDS->iLevel ))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "opj_set_decoded_resolution_factor() failed");
-        return CE_Failure;
+        eErr = CE_Failure;
+        goto end;
     }
 
     if (poGDS->bUseSetDecodeArea)
@@ -428,13 +429,16 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
 end:
-    opj_end_decompress(poGDS->pCodec,poGDS->pStream);
-    opj_stream_destroy(poGDS->pStream);
-    opj_destroy_codec(poGDS->pCodec);
-    opj_image_destroy(poGDS->psImage);
-    poGDS->pCodec = NULL;
-    poGDS->pStream = NULL;
-    poGDS->psImage = NULL;
+    if( poGDS->bUseSetDecodeArea || eErr == CE_Failure )
+    {
+        opj_end_decompress(poGDS->pCodec,poGDS->pStream);
+        opj_stream_destroy(poGDS->pStream);
+        opj_destroy_codec(poGDS->pCodec);
+        opj_image_destroy(poGDS->psImage);
+        poGDS->pCodec = NULL;
+        poGDS->pStream = NULL;
+        poGDS->psImage = NULL;
+    }
 
     return eErr;
 }
@@ -870,8 +874,8 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->bUseSetDecodeArea = 
         (poDS->nRasterXSize == (int)nTileW &&
          poDS->nRasterYSize == (int)nTileH &&
-         poDS->nRasterXSize > 1024 &&
-         poDS->nRasterYSize > 1024);
+         (poDS->nRasterXSize > 1024 ||
+          poDS->nRasterYSize > 1024));
 
     if (poDS->bUseSetDecodeArea)
     {
