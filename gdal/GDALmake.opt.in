@@ -452,7 +452,7 @@ GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 xpm \
 		nitf bmp pcidsk airsar rs2 ilwis rmf leveller sgi srtmhgt \
 		idrisi gsg ingr ers jaxapalsar dimap gff cosar pds adrg \
 		coasp tsx terragen blx msgn til r northwood saga xyz hf2 \
-		kmlsuperoverlay ozi ctg e00grid zmap ngsgeoid pdf \
+		kmlsuperoverlay ozi ctg e00grid zmap ngsgeoid pdf iris \
 		@OPT_GDAL_FORMATS@
 
 
