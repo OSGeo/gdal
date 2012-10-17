@@ -517,6 +517,18 @@ char * strdup (char *instr);
 #define CPL_LSBINT32PTR(x)    ((*(GByte*)(x)) | ((*(GByte*)((x)+1)) << 8) | \
                               ((*(GByte*)((x)+2)) << 16) | ((*(GByte*)((x)+3)) << 24))
 
+/** Return a signed Int16 from the 2 bytes ordered in LSB order at address x */
+#define CPL_LSBSINT16PTR(x) ((GInt16) CPL_LSBINT16PTR(x))
+
+/** Return a unsigned Int16 from the 2 bytes ordered in LSB order at address x */
+#define CPL_LSBUINT16PTR(x) ((GUInt16)CPL_LSBINT16PTR(x))
+
+/** Return a signed Int32 from the 4 bytes ordered in LSB order at address x */
+#define CPL_LSBSINT32PTR(x) ((GInt32) CPL_LSBINT32PTR(x))
+
+/** Return a unsigned Int32 from the 4 bytes ordered in LSB order at address x */
+#define CPL_LSBUINT32PTR(x) ((GUInt32)CPL_LSBINT32PTR(x))
+
 
 /* Utility macro to explicitly mark intentionally unreferenced parameters. */
 #ifndef UNREFERENCED_PARAM 
