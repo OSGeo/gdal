@@ -518,6 +518,9 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_MBTiles();
 #endif
 
+#ifdef FRMT_iris
+    GDALRegister_IRIS();
+#endif
 /* -------------------------------------------------------------------- */
 /*      Deregister any drivers explicitly marked as supressed by the    */
 /*      GDAL_SKIP environment variable.                                 */
