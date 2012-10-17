@@ -642,6 +642,7 @@ OGRFeatureDefn* OGRSplitListFieldLayer::GetLayerDefn()
 int main( int nArgc, char ** papszArgv )
 
 {
+    int          nRetCode = 0;
     int          bQuiet = FALSE;
     int          bFormatExplicitelySet = FALSE;
     const char  *pszFormat = "ESRI Shapefile";
@@ -1439,6 +1440,11 @@ int main( int nArgc, char ** papszArgv )
 
             poDS->ReleaseResultSet( poResultSet );
         }
+        else
+        {
+            if( CPLGetLastErrorNo() != 0 )
+                nRetCode = 1;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1894,7 +1900,7 @@ int main( int nArgc, char ** papszArgv )
     malloc_dump(1);
 #endif
     
-    return 0;
+    return nRetCode;
 }
 
 /************************************************************************/
