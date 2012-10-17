@@ -1629,7 +1629,14 @@ void OGRPDFDataSource::ExploreContentsNonStructured(GDALPDFObject* poContents,
             while(papszIter && *papszIter)
             {
                 char** papszTokens = CSLTokenizeString(*papszIter);
-                CPLAssert(CSLCount(papszTokens) == 3);
+
+                if( CSLCount(papszTokens) != 3 ) {
+                    CSLDestroy(papszTokens);
+                    CPLDebug("PDF", "Ignore '%s', unparsable.", *papszIter);
+                    papszIter ++;
+                    continue;
+                }
+
                 const char* pszLayerName = papszTokens[0];
                 int nNum = atoi(papszTokens[1]);
                 int nGen = atoi(papszTokens[2]);
