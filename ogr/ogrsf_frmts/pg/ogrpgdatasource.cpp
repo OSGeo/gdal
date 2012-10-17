@@ -1824,6 +1824,11 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
             poSRS = NULL;
         }
     }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Could not fetch SRS: %s", PQerrorMessage( hPGConn ) );
+    }
 
     OGRPGClearResult( hResult );
     SoftCommit();
