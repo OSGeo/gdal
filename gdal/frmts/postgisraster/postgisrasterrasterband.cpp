@@ -229,12 +229,16 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(PostGISRasterDataset *poDS,
         nOverviewCount = 0;
         papoOverviews = NULL;
 
+        
         nRasterXSize = (int) floor((double)poDS->GetRasterXSize() / nOverviewFactor);
         nRasterYSize = (int) floor((double)poDS->GetRasterYSize() / nOverviewFactor);        
     }
 
     CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand constructor: Band "
             "created (srid = %d)", poDS->nSrid);
+    
+    CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand constructor: Band "
+            "size: (%d X %d)", nRasterXSize, nRasterYSize);
 }
 
 /***********************************************
@@ -291,30 +295,22 @@ GDALDataType PostGISRasterRasterBand::TranslateDataType(const char * pszDataType
 
 
 /**
- * Read/write a region of image data from multiple bands.
+ * Read/write a region of image data for this band.
  *
- * This method allows reading a region of one or more PostGISRasterBands from
- * this dataset into a buffer. The write support is still under development
+ * This method allows reading a region of a PostGISRasterBanda into a buffer. 
+ * The write support is still under development
  *
  * The function fetches all the raster data that intersects with the region
  * provided, and store the data in the GDAL cache.
  *
- * TODO: This only works in case of regular blocking rasters. A more
- * general approach to allow non-regular blocking rasters is under development.
- *
  * It automatically takes care of data type translation if the data type
- * (eBufType) of the buffer is different than that of the
- * PostGISRasterRasterBand.
+ * (eBufType) of the buffer is different than that of the PostGISRasterRasterBand.
  *
- * TODO: The method should take care of image decimation / replication if the
- * buffer size (nBufXSize x nBufYSize) is different than the size of the region
- * being accessed (nXSize x nYSize).
+ * The nPixelSpace and nLineSpace parameters allow reading into from various 
+ * organization of buffers.
  *
- * The nPixelSpace, nLineSpace and nBandSpace parameters allow reading into or
- * writing from various organization of buffers.
- *
- * @param eRWFlag Either GF_Read to read a region of data, or GF_Write to write
- * a region of data.
+ * @param eRWFlag Either GF_Read to read a region of data (GF_Write, to write
+ * a region of data, yet not supported)
  *
  * @param nXOff The pixel offset to the top left corner of the region of the
  * band to be accessed. This would be zero to start from the left side.
@@ -342,12 +338,6 @@ GDALDataType PostGISRasterRasterBand::TranslateDataType(const char * pszDataType
  * pixel values will automatically be translated to/from the
  * PostGISRasterRasterBand data type as needed.
  *
- * @param nBandCount the number of bands being read or written.
- *
- * @param panBandMap the list of nBandCount band numbers being read/written.
- * Note band numbers are 1 based. This may be NULL to select the first
- * nBandCount bands.
- *
  * @param nPixelSpace The byte offset from the start of one pixel value in pData
  * to the start of the next pixel value within a scanline. If defaulted (0) the
  * size of the datatype eBufType is used.
@@ -355,10 +345,6 @@ GDALDataType PostGISRasterRasterBand::TranslateDataType(const char * pszDataType
  * @param nLineSpace The byte offset from the start of one scanline in pData to
  * the start of the next. If defaulted (0) the size of the datatype
  * eBufType * nBufXSize is used.
- *
- * @param nBandSpace the byte offset from the start of one bands data to the
- * start of the next. If defaulted (0) the value will be nLineSpace * nBufYSize
- * implying band sequential organization of the data buffer.
  *
  * @return CE_Failure if the access fails, otherwise CE_None.
  */
@@ -405,6 +391,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYO
     PostGISRasterDataset * poPostGISRasterDS = (PostGISRasterDataset*)poDS;
     int nSrcXOff, nSrcYOff, nDstXOff, nDstYOff;
     int nDstXSize, nDstYSize;
+    double xRes, yRes;
 
     /**
      * TODO: Write support not implemented yet
@@ -424,6 +411,9 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYO
      * Do we have overviews that would be appropriate to satisfy this request?                                                   
      *************************************************************************/
     if( (nBufXSize < nXSize || nBufYSize < nYSize) && GetOverviewCount() > 0 ) {
+        CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO: "
+            "nBufXSize = %d, nBufYSize = %d, nXSize = %d, nYSize = %d "
+            "- OverviewRasterIO call", nBufXSize, nBufYSize, nXSize, nYSize);
         if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, 
             nBufXSize, nBufYSize, eBufType, nPixelSpace, nLineSpace ) == CE_None )
                 
@@ -440,30 +430,39 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYO
     lrx = nXOff + nXSize * nBandDataSize;
     lry = nYOff + nYSize * nBandDataSize;
 
+    // Calculate right pixel resolution
+    xRes = (nOverviewFactor == 0) ? 
+        adfTransform[GEOTRSFRM_WE_RES] :
+        adfTransform[GEOTRSFRM_WE_RES] * nOverviewFactor; 
+    
+    yRes = (nOverviewFactor == 0) ? 
+        adfTransform[GEOTRSFRM_NS_RES] :
+        adfTransform[GEOTRSFRM_NS_RES] * nOverviewFactor; 
+
     adfProjWin[0] = adfTransform[GEOTRSFRM_TOPLEFT_X] + 
-                    ulx * adfTransform[GEOTRSFRM_WE_RES] + 
+                    ulx * xRes + 
                     uly * adfTransform[GEOTRSFRM_ROTATION_PARAM1];
     adfProjWin[1] = adfTransform[GEOTRSFRM_TOPLEFT_Y] + 
                     ulx * adfTransform[GEOTRSFRM_ROTATION_PARAM2] + 
-                    uly * adfTransform[GEOTRSFRM_NS_RES];
+                    uly * yRes;
     adfProjWin[2] = adfTransform[GEOTRSFRM_TOPLEFT_X] + 
-                    lrx * adfTransform[GEOTRSFRM_WE_RES] + 
+                    lrx * xRes + 
                     uly * adfTransform[GEOTRSFRM_ROTATION_PARAM1];
     adfProjWin[3] = adfTransform[GEOTRSFRM_TOPLEFT_Y] + 
                     lrx * adfTransform[GEOTRSFRM_ROTATION_PARAM2] + 
-                    uly * adfTransform[GEOTRSFRM_NS_RES];
+                    uly * yRes;
     adfProjWin[4] = adfTransform[GEOTRSFRM_TOPLEFT_X] + 
-                    lrx * adfTransform[GEOTRSFRM_WE_RES] + 
+                    lrx * xRes + 
                     lry * adfTransform[GEOTRSFRM_ROTATION_PARAM1];
     adfProjWin[5] = adfTransform[GEOTRSFRM_TOPLEFT_Y] + 
                     lrx * adfTransform[GEOTRSFRM_ROTATION_PARAM2] + 
-                    lry * adfTransform[GEOTRSFRM_NS_RES];
+                    lry * yRes;
     adfProjWin[6] = adfTransform[GEOTRSFRM_TOPLEFT_X] + 
-                    ulx * adfTransform[GEOTRSFRM_WE_RES] + 
+                    ulx * xRes + 
                     lry * adfTransform[GEOTRSFRM_ROTATION_PARAM1];
     adfProjWin[7] = adfTransform[GEOTRSFRM_TOPLEFT_Y] + 
                     ulx * adfTransform[GEOTRSFRM_ROTATION_PARAM2] + 
-                    lry * adfTransform[GEOTRSFRM_NS_RES];
+                    lry * yRes;
 
     CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO: "
         "Buffer size = (%d, %d), Region size = (%d, %d)",
@@ -721,7 +720,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYO
         else {
             nSrcXOff = 0;
             nDstXOff = (int)(0.5 + (dfTileUpperLeftX - adfProjWin[0]) /     
-                adfTransform[GEOTRSFRM_WE_RES]);
+                xRes);
         }
 
         if (adfProjWin[1] < dfTileUpperLeftY) {
@@ -733,11 +732,11 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYO
         else {
             nSrcYOff = 0;
             nDstYOff = (int)(0.5 + (adfProjWin[1] - dfTileUpperLeftY) / 
-                fabs(adfTransform[GEOTRSFRM_NS_RES]));
+                fabs(yRes));
         }
 
-        nDstXSize = (int)(0.5 + nTileWidth * dfTileScaleX / adfTransform[GEOTRSFRM_WE_RES]);
-        nDstYSize = (int)(0.5 + nTileHeight * fabs(dfTileScaleY) / fabs(adfTransform[GEOTRSFRM_NS_RES]));
+        nDstXSize = (int)(0.5 + nTileWidth * dfTileScaleX / xRes);
+        nDstYSize = (int)(0.5 + nTileHeight * fabs(dfTileScaleY) / fabs(yRes));
      
 
         /**
@@ -787,7 +786,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYO
     VSIFree(ppbyBandData);
     VSIFree(memDatasets);
     
-    CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO(): MEMDatasets released");
+    CPLDebug("PostGIS_Raster", "PostGISRasterRasterBand::IRasterIO(): MEMDatasets were released");
 
     return err;
         
