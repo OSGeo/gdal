@@ -1341,6 +1341,11 @@ int main( int nArgc, char ** papszArgv )
 
             poDS->ReleaseResultSet( poResultSet );
         }
+        else
+        {
+            /* Error should have been already printed by driver */
+            exit( 1 );
+        }
     }
 
     else
