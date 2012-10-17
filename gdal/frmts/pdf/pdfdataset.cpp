@@ -1600,7 +1600,7 @@ CPLString PDFSanitizeLayerName(const char* pszName)
     {
         if (pszName[i] == ' ' || pszName[i] == '.' || pszName[i] == ',')
             osName += "_";
-        else
+        else if (pszName[i] != '"')
             osName += pszName[i];
     }
     return osName;
