@@ -38,9 +38,11 @@
 #ifdef HAVE_SQLITE
 
 /*!
-  \brief VFKFeatureSQLite constructor 
+  \brief VFKFeatureSQLite constructor (from DB)
 
   Read VFK feature from DB
+
+  \param poDataBlock pointer to related IVFKDataBlock
 */
 VFKFeatureSQLite::VFKFeatureSQLite(IVFKDataBlock *poDataBlock) : IVFKFeature(poDataBlock)
 {
@@ -49,6 +51,20 @@ VFKFeatureSQLite::VFKFeatureSQLite(IVFKDataBlock *poDataBlock) : IVFKFeature(poD
 
     /* set FID from DB */
     SetFIDFromDB(); /* -> m_nFID */
+}
+
+/*!
+  \brief VFKFeatureSQLite constructor 
+
+  \param poDataBlock pointer to related IVFKDataBlock
+  \param nIndex feature index (starts at 0)
+  \param nFID feature id
+*/
+VFKFeatureSQLite::VFKFeatureSQLite(IVFKDataBlock *poDataBlock, int nIndex, long nFID) : IVFKFeature(poDataBlock)
+{
+    m_hStmt  = NULL;
+    m_nIndex = nIndex;
+    m_nFID   = nFID;
 }
 
 /*!
