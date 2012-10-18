@@ -212,8 +212,11 @@ VFKFeature::VFKFeature(IVFKDataBlock *poDataBlock) : IVFKFeature(poDataBlock)
   \brief Set feature properties
 
   \param pszLine pointer to line containing feature definition
+
+  \return TRUE on success
+  \return FALSE on failure
 */
-void VFKFeature::SetProperties(const char *poLine)
+bool VFKFeature::SetProperties(const char *poLine)
 {
     int iIndex, nLength;
     const char *poChar, *poProp;
@@ -227,7 +230,7 @@ void VFKFeature::SetProperties(const char *poLine)
         /* skip data block name */
         ;
     if (poChar == '\0')
-        return;
+        return FALSE;
 
     poChar++; /* skip ';' */
     
@@ -255,7 +258,8 @@ void VFKFeature::SetProperties(const char *poLine)
             if (nLength > 0)
                 strncpy(pszProp, poProp, nLength);
             pszProp[nLength] = '\0';
-            SetProperty(iIndex, pszProp);
+            if (!SetProperty(iIndex, pszProp))
+                return FALSE;
             iIndex++;
             poProp = ++poChar;
             nLength = 0;
@@ -274,7 +278,8 @@ void VFKFeature::SetProperties(const char *poLine)
     if (nLength > 0)
         strncpy(pszProp, poProp, nLength);
     pszProp[nLength] = '\0';
-    SetProperty(iIndex, pszProp);
+    if (!SetProperty(iIndex, pszProp))
+        return FALSE;
     
     /* set fid */
     if (EQUAL(m_poDataBlock->GetName(), "SBP")) {
@@ -297,6 +302,8 @@ void VFKFeature::SetProperties(const char *poLine)
     m_poDataBlock->SetMaxFID(GetFID()); /* update max value */
 
     CPLFree(pszProp);
+
+    return TRUE;
 }
 
 /*!
@@ -304,14 +311,15 @@ void VFKFeature::SetProperties(const char *poLine)
 
   \param iIndex property index
   \param pszValue property value
-*/
-void VFKFeature::SetProperty(int iIndex, const char *pszValue)
-{
-    if (iIndex < 0 || iIndex >= m_poDataBlock->GetPropertyCount() || size_t(iIndex) >= m_propertyList.size()) {
-        CPLAssert(FALSE);
-        return;
-    }
 
+  \return TRUE on success
+  \return FALSE on failure
+*/
+bool VFKFeature::SetProperty(int iIndex, const char *pszValue)
+{
+    if (iIndex < 0 || iIndex >= m_poDataBlock->GetPropertyCount() || size_t(iIndex) >= m_propertyList.size())
+        return FALSE;
+    
     if (strlen(pszValue) < 1)
         m_propertyList[iIndex] = VFKProperty();
     else {
@@ -330,6 +338,8 @@ void VFKFeature::SetProperty(int iIndex, const char *pszValue)
             break;
         }
     }
+
+    return TRUE;
 }
 
 /*!

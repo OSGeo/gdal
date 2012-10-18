@@ -129,7 +129,7 @@ private:
     
     VFKPropertyList      m_propertyList;
 
-    void                 SetProperty(int, const char *);
+    bool                 SetProperty(int, const char *);
 
     friend class         VFKFeatureSQLite;
 
@@ -141,7 +141,7 @@ private:
 public:
     VFKFeature(IVFKDataBlock *);
     
-    void                 SetProperties(const char *);
+    bool                 SetProperties(const char *);
     const VFKProperty   *GetProperty(int) const;
     const VFKProperty   *GetProperty(const char *) const;
 
@@ -170,6 +170,7 @@ private:
     void                 FinalizeSQL();
 public:
     VFKFeatureSQLite(IVFKDataBlock *);
+    VFKFeatureSQLite(IVFKDataBlock *, int, long);
     VFKFeatureSQLite(const VFKFeature *);
 
     OGRErr               LoadProperties(OGRFeature *);
