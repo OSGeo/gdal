@@ -125,16 +125,15 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
             ipcb  = sqlite3_column_double(hStmt, 1);
             rowId = sqlite3_column_int(hStmt, 2) - 1;
             poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(rowId);
+            if (!poFeature)
+                continue;
             poFeature->SetGeometry(NULL);
             
             if (ipcb == 1) {
                 if (!oOGRLine.IsEmpty()) {
                     oOGRLine.setCoordinateDimension(2); /* force 2D */
-            if (poLine)
-            {
-                if (!poLine->SetGeometry(&oOGRLine))
-                    nInvalid++;
-            }
+                    if (poLine && !poLine->SetGeometry(&oOGRLine))
+                        nInvalid++;
                     oOGRLine.empty(); /* restore line */
                 }
                 poLine = poFeature;
@@ -142,20 +141,19 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
             else {
                 poFeature->SetGeometryType(wkbUnknown);
             }
+            
             poPoint = (VFKFeatureSQLite *) poDataBlockPoints->GetFeature("ID", id);
             if (!poPoint)
                 continue;
             OGRPoint *pt = (OGRPoint *) poPoint->GetGeometry();
-        if (!pt)
-            continue;
+            if (!pt)
+                continue;
             oOGRLine.addPoint(pt);
         }
         /* add last line */
         oOGRLine.setCoordinateDimension(2); /* force 2D */
-        if (poLine) {
-            if (!poLine->SetGeometry(&oOGRLine))
-                nInvalid++;
-        }
+        if (poLine && !poLine->SetGeometry(&oOGRLine))
+            nInvalid++;
     }
     
     return nInvalid;
