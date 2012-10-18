@@ -355,18 +355,23 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             if (poBlock != NULL)
             {
                 poBlock->DropLock();
+                poGDS->bLoadingOtherBands = FALSE;
                 continue;
             }
 
             poBlock = poGDS->GetRasterBand(iBand)->
                 GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
             if (poBlock == NULL)
+            {
+                poGDS->bLoadingOtherBands = FALSE;
                 continue;
+            }
 
             pDstBuffer = poBlock->GetDataRef();
             if (!pDstBuffer)
             {
                 poBlock->DropLock();
+                poGDS->bLoadingOtherBands = FALSE;
                 continue;
             }
 
@@ -429,7 +434,7 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
 end:
-    if( poGDS->bUseSetDecodeArea || eErr == CE_Failure )
+    /*if( poGDS->bUseSetDecodeArea || eErr == CE_Failure )*/
     {
         opj_end_decompress(poGDS->pCodec,poGDS->pStream);
         opj_stream_destroy(poGDS->pStream);
