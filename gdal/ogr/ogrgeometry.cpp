@@ -1607,54 +1607,54 @@ const char * OGRToOGCGeomType( OGRwkbGeometryType eGeomType )
 const char *OGRGeometryTypeToName( OGRwkbGeometryType eType )
 
 {
-    bool b25D = wkbFlatten(eType) != eType;
+    bool b2D = wkbFlatten(eType) == eType;
 
     switch( wkbFlatten(eType) )
     {
       case wkbUnknown:
-        if( b25D )
+        if( b2D )
             return "Unknown (any)";
         else
             return "3D Unknown (any)";
 
       case wkbPoint:
-        if( b25D )
+        if( b2D )
             return "Point";
         else
             return "3D Point";
 
       case wkbLineString:
-        if( b25D )
+        if( b2D )
             return "Line String";
         else
             return "3D Line String";
 
       case wkbPolygon:
-        if( b25D )
+        if( b2D )
             return "Polygon";
         else
             return "3D Polygon";
 
       case wkbMultiPoint:
-        if( b25D )
+        if( b2D )
             return "Multi Point";
         else
             return "3D Multi Point";
 
       case wkbMultiLineString:
-        if( b25D )
+        if( b2D )
             return "Multi Line String";
         else
             return "3D Multi Line String";
 
       case wkbMultiPolygon:
-        if( b25D )
+        if( b2D )
             return "Multi Polygon";
         else
             return "3D Multi Polygon";
 
       case wkbGeometryCollection:
-        if( b25D )
+        if( b2D )
             return "Geometry Collection";
         else
             return "3D Geometry Collection";
