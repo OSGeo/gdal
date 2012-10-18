@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -373,6 +374,39 @@ def ogr_basic_8():
     return 'success'
 
 ###############################################################################
+# Test ogr.GeometryTypeToName (#4871)
+
+def ogr_basic_9():
+
+    geom_type_tuples = [ [ ogr.wkbUnknown, "Unknown (any)" ],
+                         [ ogr.wkbPoint, "Point" ],
+                         [ ogr.wkbLineString, "Line String"],
+                         [ ogr.wkbPolygon, "Polygon"],
+                         [ ogr.wkbMultiPoint, "Multi Point"],
+                         [ ogr.wkbMultiLineString, "Multi Line String"],
+                         [ ogr.wkbMultiPolygon, "Multi Polygon"],
+                         [ ogr.wkbGeometryCollection, "Geometry Collection"],
+                         [ ogr.wkbNone, "None"],
+                         [ ogr.wkbUnknown | ogr.wkb25DBit, "3D Unknown (any)" ],
+                         [ ogr.wkbPoint25D, "3D Point" ],
+                         [ ogr.wkbLineString25D, "3D Line String"],
+                         [ ogr.wkbPolygon25D, "3D Polygon"],
+                         [ ogr.wkbMultiPoint25D, "3D Multi Point"],
+                         [ ogr.wkbMultiLineString25D, "3D Multi Line String"],
+                         [ ogr.wkbMultiPolygon25D, "3D Multi Polygon"],
+                         [ ogr.wkbGeometryCollection25D, "3D Geometry Collection"],
+                         [ 123456, "Unrecognised: 123456" ]
+                       ]
+
+    for geom_type_tuple in geom_type_tuples:
+        if ogr.GeometryTypeToName(geom_type_tuple[0]) != geom_type_tuple[1]:
+            gdaltest.post_reason('fail')
+            print('Got %s, expected %s' % (ogr.GeometryTypeToName(geom_type_tuple[0]), geom_type_tuple[1]))
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_basic_cleanup():
@@ -391,6 +425,7 @@ gdaltest_list = [
     ogr_basic_6,
     ogr_basic_7,
     ogr_basic_8,
+    ogr_basic_9,
     ogr_basic_cleanup ]
 
 if __name__ == '__main__':
