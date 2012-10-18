@@ -185,7 +185,7 @@ def ogr_vfk_5():
     
     geom_type = gdaltest.vfk_layer_hp.GetGeomType()
 
-    if geom_type != ogr.wkbLineString25D:
+    if geom_type != ogr.wkbLineString:
         gdaltest.post_reason('did not get expected geometry type, got %d' % geom_type)
         return 'fail'
     
