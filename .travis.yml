@@ -14,7 +14,7 @@ before_install:
   - sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
   - sudo add-apt-repository -y ppa:marlam/gta
   - sudo apt-get update -qq
-  - sudo apt-get install -qq postgis libpq-dev libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libogdi3.2-dev libmysqlclient-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev openjdk-7-jdk libepsilon-dev libgta-dev
+  - sudo apt-get install -qq postgis libpq-dev libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libogdi3.2-dev libmysqlclient-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev openjdk-7-jdk libepsilon-dev libgta-dev liblcms2
   - psql -c "drop database if exists autotest" -U postgres
   - psql -c "create database autotest" -U postgres
   - psql -c "create extension postgis" -d autotest -U postgres
@@ -25,6 +25,7 @@ before_install:
   - wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/MrSID_DSDK-8.5.0.3422-linux.x86.gcc44.tar.gz
   - wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-libecwj2-ubuntu12.04-32bit.tar.gz
   - wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-libkml-r864-32bit.tar.gz
+  - wget http://even.rouault.free.fr/install-openjpeg-r2095-ubuntu12.04-32bit.tar.gz
   - tar xzf MrSID_DSDK-8.5.0.3422-linux.x86.gcc44.tar.gz
   - sudo cp -r MrSID_DSDK-8.5.0.3422-linux.x86.gcc44/Raster_DSDK/include/* /usr/local/include
   - sudo cp -r MrSID_DSDK-8.5.0.3422-linux.x86.gcc44/Raster_DSDK/lib/* /usr/local/lib
@@ -39,6 +40,9 @@ before_install:
   - tar xzf install-libkml-r864-32bit.tar.gz
   - sudo cp -r install-libkml/include/* /usr/local/include
   - sudo cp -r install-libkml/lib/* /usr/local/lib
+  - tar xzf install-openjpeg-r2095-ubuntu12.04-32bit.tar.gz
+  - sudo cp -r install-openjpeg/include/* /usr/local/include
+  - sudo cp -r install-openjpeg/lib/* /usr/local/lib
   - sudo ldconfig
 
 # installing PostGIS 2 from Ubuntu PPA draws libgdal1.9 dependency. We must install ourselves
@@ -46,7 +50,7 @@ before_install:
 # Do not use --with-jpeg12 since it conflicts with system libjpeg8 and causes crashes in tiff_ovr_43
 install:
   - cd gdal
-  - ./configure --prefix=/usr --without-libtool --enable-debug --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-gta
+  - ./configure --prefix=/usr --without-libtool --enable-debug --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-gta --with-openjpeg=/usr/local
   - make -j3
   - cd apps
   - make test_ogrsf
