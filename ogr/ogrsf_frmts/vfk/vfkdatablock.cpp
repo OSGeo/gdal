@@ -355,13 +355,13 @@ OGRwkbGeometryType IVFKDataBlock::SetGeometryType()
 }
 
 /*!
-  \brief Get geometry type
+  \brief Get geometry type (force 2D/2.5D)
 
   \return geometry type
 */
 OGRwkbGeometryType IVFKDataBlock::GetGeometryType() const
 {
-    return m_nGeometryType;
+    return (OGRwkbGeometryType) (((int)m_nGeometryType) | wkb25DBit);
 }
 
 /*!

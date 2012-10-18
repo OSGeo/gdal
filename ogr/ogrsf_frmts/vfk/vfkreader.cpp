@@ -251,8 +251,11 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                 }
                 
                 poNewFeature = new VFKFeature(poDataBlock);
-                poNewFeature->SetProperties(pszLine);
-                AddFeature(poDataBlock, poNewFeature);
+                if (poNewFeature->SetProperties(pszLine))
+                    AddFeature(poDataBlock, poNewFeature);
+                else
+                    CPLError(CE_Warning, CPLE_AppDefined, 
+                             "Invalid VFK data record skipped.\n%s\n", pszLine);
             }
             CPLFree(pszBlockName);
         }
