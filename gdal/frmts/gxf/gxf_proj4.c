@@ -86,8 +86,12 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
 /*      Parse the third line, looking for known projection methods.     */
 /* -------------------------------------------------------------------- */
     if( psGXF->papszMapProjection[2] != NULL )
+    {
+        if( strlen(psGXF->papszMapProjection[2]) > 80 )
+            return( CPLStrdup( "" ) );
         papszMethods = CSLTokenizeStringComplex(psGXF->papszMapProjection[2],
                                                 ",", TRUE, TRUE );
+    }
 
 #ifdef DBMALLOC
     malloc_chain_check(1);
@@ -502,6 +506,9 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
     {
         char	**papszTokens;
         
+        if( strlen(psGXF->papszMapProjection[1]) > 80 )
+            return CPLStrdup("");
+        
         papszTokens = CSLTokenizeStringComplex(psGXF->papszMapProjection[1],
                                                ",", TRUE, TRUE );
 
@@ -526,6 +533,8 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
                      " +a=%s +e=%s",
                      papszTokens[1], papszTokens[2] );
         }
+        
+        CSLDestroy(papszTokens);
     }
 
 /* -------------------------------------------------------------------- */
