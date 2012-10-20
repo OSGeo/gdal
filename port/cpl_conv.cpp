@@ -538,6 +538,8 @@ const char *CPLReadLine( FILE * fp )
 /*      of read line if we can't reallocate it big enough (for          */
 /*      instance for a _very large_ file with no newlines).             */
 /* -------------------------------------------------------------------- */
+        if( nReadSoFar > 100 * 1024 * 1024 )
+            return NULL; /* it is dubious that we need to read a line longer than 100 MB ! */
         pszRLBuffer = CPLReadLineBuffer( nReadSoFar + 129 );
         if( pszRLBuffer == NULL )
             return NULL;
