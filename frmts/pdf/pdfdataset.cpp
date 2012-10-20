@@ -2544,11 +2544,16 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     /* Read Info object */
-    Object oInfo;
-    poDocPoppler->getDocInfo(&oInfo);
-    GDALPDFObjectPoppler oInfoObjPoppler(&oInfo, FALSE);
-    poDS->ParseInfo(&oInfoObjPoppler);
-    oInfo.free();
+    /* The test is necessary since with some corrupted PDFs poDocPoppler->getDocInfo() */
+    /* might abort() */
+    if( poDocPoppler->getXRef()->isOk() )
+    {
+        Object oInfo;
+        poDocPoppler->getDocInfo(&oInfo);
+        GDALPDFObjectPoppler oInfoObjPoppler(&oInfo, FALSE);
+        poDS->ParseInfo(&oInfoObjPoppler);
+        oInfo.free();
+    }
 
     /* Find layers */
     poDS->FindLayers();
