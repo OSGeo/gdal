@@ -137,7 +137,9 @@ CPLErr GXFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if (eDataType == GDT_Float32)
     {
-        padfBuffer = (double *) CPLMalloc(sizeof(double) * nBlockXSize);
+        padfBuffer = (double *) VSIMalloc2(sizeof(double), nBlockXSize);
+        if( padfBuffer == NULL )
+            return CE_Failure;
         eErr = GXFGetScanline( poGXF_DS->hGXF, nBlockYOff, padfBuffer );
         
         for( i = 0; i < nBlockXSize; i++ )
