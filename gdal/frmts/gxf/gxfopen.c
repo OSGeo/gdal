@@ -37,6 +37,9 @@ CPL_CVSID("$Id$");
 /* this is also defined in gdal.h which we avoid in this separable component */
 #define CPLE_WrongFormat	200
 
+#define MAX_LINE_COUNT_PER_HEADER       1000
+#define MAX_HEADER_COUNT                1000
+
 /************************************************************************/
 /*                         GXFReadHeaderValue()                         */
 /*                                                                      */
@@ -50,6 +53,8 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
     const char	*pszLine;
     char	**papszReturn = NULL;
     int		i;
+    int     nLineCount = 0, nReturnLineCount = 0;
+    int     bContinuedLine = FALSE;
     
 /* -------------------------------------------------------------------- */
 /*      Try to read a line.  If we fail or if this isn't a proper       */
@@ -106,12 +111,40 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
         int		nNextChar;
         char		*pszTrimmedLine;
 
+        /* Lines are supposed to be limited to 80 characters */
+        if( strlen(pszLine) > 1024 )
+        {
+            CSLDestroy(papszReturn);
+            return NULL;
+        }
+        
         pszTrimmedLine = CPLStrdup( pszLine );
 
         for( i = strlen(pszLine)-1; i >= 0 && pszLine[i] == ' '; i-- ) 
             pszTrimmedLine[i] = '\0';
+
+        if( bContinuedLine )
+        {
+            char* pszTmp = (char*) VSIMalloc((strlen(papszReturn[nReturnLineCount-1]) - 1) + strlen(pszTrimmedLine) + 1);
+            if( pszTmp == NULL )
+            {
+                CSLDestroy(papszReturn);
+                return NULL;
+            }
+            strcpy(pszTmp, papszReturn[nReturnLineCount-1]);
+            strcpy(pszTmp + (strlen(papszReturn[nReturnLineCount-1]) - 1), pszTrimmedLine);
+            CPLFree(papszReturn[nReturnLineCount-1]);
+            papszReturn[nReturnLineCount-1] = pszTmp;
+        }
+        else
+        {
+            papszReturn = CSLAddString( papszReturn, pszTrimmedLine );
+            nReturnLineCount ++;
+        }
+
+        /* Is it a continued line ? */
+        bContinuedLine = ( i >= 0 && pszTrimmedLine[i] == '\\' );
         
-        papszReturn = CSLAddString( papszReturn, pszTrimmedLine );
         CPLFree( pszTrimmedLine );
         
         nNextChar = VSIFGetc( fp );
@@ -120,8 +153,11 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
         if( nNextChar == '#' )
             pszLine = NULL;
         else
+        {
             pszLine = CPLReadLine( fp );
-    } while( pszLine != NULL );
+            nLineCount ++;
+        }
+    } while( pszLine != NULL && nLineCount < MAX_LINE_COUNT_PER_HEADER );
 
     return( papszReturn );
 }
@@ -146,6 +182,7 @@ GXFHandle GXFOpen( const char * pszFilename )
     GXFInfo_t	*psGXF;
     char	szTitle[71];
     char	**papszList;
+    int     nHeaderCount = 0;
 
 /* -------------------------------------------------------------------- */
 /*      We open in binary to ensure that we can efficiently seek()      */
@@ -182,7 +219,7 @@ GXFHandle GXFOpen( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Read the header, one line at a time.                            */
 /* -------------------------------------------------------------------- */
-    while( (papszList = GXFReadHeaderValue( fp, szTitle)) != NULL )
+    while( (papszList = GXFReadHeaderValue( fp, szTitle)) != NULL && nHeaderCount < MAX_HEADER_COUNT )
     {
         if( EQUALN(szTitle,"#TITL",5) )
         {
@@ -282,6 +319,7 @@ GXFHandle GXFOpen( const char * pszFilename )
         }
 
         CSLDestroy( papszList );
+        nHeaderCount ++;
     }
 
 /* -------------------------------------------------------------------- */
@@ -301,8 +339,19 @@ GXFHandle GXFOpen( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Allocate, and initialize the raw scanline offset array.         */
 /* -------------------------------------------------------------------- */
+    if( psGXF->nRawYSize <= 0 )
+    {
+        GXFClose( psGXF );
+        return NULL;
+    }
+
     psGXF->panRawLineOffset = (long *)
-        CPLCalloc( sizeof(long), psGXF->nRawYSize+1 );
+        VSICalloc( sizeof(long), psGXF->nRawYSize+1 );
+    if( psGXF->panRawLineOffset == NULL )
+    {
+        GXFClose( psGXF );
+        return NULL;
+    }
 
     psGXF->panRawLineOffset[0] = VSIFTell( psGXF->fp );
 
@@ -431,8 +480,13 @@ static int GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
 /* -------------------------------------------------------------------- */
         else
         {
+            int nLineLen = (int)strlen(pszLine);
+
             while( *pszLine != '\0' && nValuesRead < nValuesSought )
             {
+                if( nLineLen < psGXF->nGType )
+                    return CE_Failure;
+
                 if( pszLine[0] == '!' )
                 {
                     padfLineBuf[nValuesRead++] = psGXF->dfSetDummyTo;
@@ -443,14 +497,30 @@ static int GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
                     double	dfValue;
 
                     pszLine += psGXF->nGType;
-                    if( (int) strlen(pszLine) < psGXF->nGType )
+                    nLineLen -= psGXF->nGType;
+                    if( nLineLen < psGXF->nGType )
+                    {
                         pszLine = CPLReadLine( psGXF->fp );
+                        if( pszLine == NULL )
+                            return CE_Failure;
+                        nLineLen = (int)strlen(pszLine);
+                        if( nLineLen < psGXF->nGType )
+                            return CE_Failure;
+                    }
                     
                     nCount = (int) GXFParseBase90( psGXF, pszLine, FALSE);
                     pszLine += psGXF->nGType;
+                    nLineLen -= psGXF->nGType;
                     
-                    if( (int) strlen(pszLine) < psGXF->nGType )
+                    if( nLineLen < psGXF->nGType )
+                    {
                         pszLine = CPLReadLine( psGXF->fp );
+                        if( pszLine == NULL )
+                            return CE_Failure;
+                        nLineLen = (int)strlen(pszLine);
+                        if( nLineLen < psGXF->nGType )
+                            return CE_Failure;
+                    }
                     
                     if( *pszLine == '!' )
                         dfValue = psGXF->dfSetDummyTo;
@@ -473,6 +543,7 @@ static int GXFReadRawScanlineFrom( GXFInfo_t * psGXF, long iOffset,
                 }
 
                 pszLine += psGXF->nGType;
+                nLineLen -= psGXF->nGType;
             }
         }
     }
