@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -48,6 +49,28 @@ def gxf_1():
     return tst.testOpen()
 
 ###############################################################################
+# Test an other GXF sample (with continuous line)
+
+def gxf_2():
+
+    tst = gdaltest.GDALTest( 'GXF', 'small2.gxf', 1, 65042 )
+    wkt = """PROJCS["NAD27 / Ohio North",
+    GEOGCS["NAD27",
+        DATUM["NAD27",
+            SPHEROID["NAD27",6378206.4,294.978699815746]],
+        PRIMEM["unnamed",0],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",40.4333333333],
+    PARAMETER["standard_parallel_2",41.7],
+    PARAMETER["latitude_of_origin",39.6666666667],
+    PARAMETER["central_meridian",82.5],
+    PARAMETER["false_easting",609601.22],
+    UNIT["ftUS",0.3048006096012]]"""
+
+    return tst.testOpen( check_prj = wkt )
+
+###############################################################################
 # 
 class TestGXF:
     def __init__( self, downloadURL, fileName, checksum, download_size ):
@@ -70,7 +93,7 @@ class TestGXF:
 
 
 
-gdaltest_list = [ gxf_1 ]
+gdaltest_list = [ gxf_1, gxf_2 ]
 
 gxf_list = [ ('http://download.osgeo.org/gdal/data/gxf', 'SAMPLE.GXF', 24068, -1),
              ('http://download.osgeo.org/gdal/data/gxf', 'gxf_compressed.gxf', 20120, -1),
