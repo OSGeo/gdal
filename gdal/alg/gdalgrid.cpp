@@ -33,6 +33,7 @@
 #include <float.h>
 #include <limits.h>
 #include "cpl_quad_tree.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -1231,6 +1232,156 @@ GDALGridDataMetricAverageDistancePts( const void *poOptions, GUInt32 nPoints,
 }
 
 /************************************************************************/
+/*                             GDALGridJob                              */
+/************************************************************************/
+
+typedef struct _GDALGridJob GDALGridJob;
+
+struct _GDALGridJob
+{
+    GUInt32             nYStart;
+
+    GByte              *pabyData;
+    GUInt32             nYStep;
+    GUInt32             nXSize;
+    GUInt32             nYSize;
+    double              dfXMin;
+    double              dfYMin;
+    double              dfDeltaX;
+    double              dfDeltaY;
+    GUInt32             nPoints;
+    const double       *padfX;
+    const double       *padfY;
+    const double       *padfZ;
+    const void         *poOptions;
+    GDALGridFunction    pfnGDALGridMethod;
+    GDALGridExtraParameters* psExtraParameters;
+    int               (*pfnProgress)(GDALGridJob* psJob);
+    GDALDataType        eType;
+
+    void           *hThread;
+    volatile int   *pnCounter;
+    volatile int   *pbStop;
+    void           *hCond;
+    void           *hCondMutex;
+
+    GDALProgressFunc pfnRealProgress;
+    void *pRealProgressArg;
+};
+
+/************************************************************************/
+/*                   GDALGridProgressMultiThread()                      */
+/************************************************************************/
+
+/* Return TRUE if the computation must be interrupted */
+static int GDALGridProgressMultiThread(GDALGridJob* psJob)
+{
+    CPLAcquireMutex(psJob->hCondMutex, 1.0);
+    (*(psJob->pnCounter)) ++;
+    CPLCondSignal(psJob->hCond);
+    int bStop = *(psJob->pbStop);
+    CPLReleaseMutex(psJob->hCondMutex);
+
+    return bStop;
+}
+
+/************************************************************************/
+/*                      GDALGridProgressMonoThread()                    */
+/************************************************************************/
+
+/* Return TRUE if the computation must be interrupted */
+static int GDALGridProgressMonoThread(GDALGridJob* psJob)
+{
+    int nCounter = ++(*(psJob->pnCounter));
+    if( !psJob->pfnRealProgress( (nCounter / (double) psJob->nYSize),
+                                 "", psJob->pRealProgressArg ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        *(psJob->pbStop) = TRUE;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/************************************************************************/
+/*                         GDALGridJobProcess()                         */
+/************************************************************************/
+
+static void GDALGridJobProcess(void* user_data)
+{
+    GDALGridJob* psJob = (GDALGridJob*)user_data;
+    GUInt32 nXPoint, nYPoint;
+
+    const GUInt32 nYStart = psJob->nYStart;
+    const GUInt32 nYStep = psJob->nYStep;
+    GByte *pabyData = psJob->pabyData;
+
+    const GUInt32 nXSize = psJob->nXSize;
+    const GUInt32 nYSize = psJob->nYSize;
+    const double dfXMin = psJob->dfXMin;
+    const double dfYMin = psJob->dfYMin;
+    const double dfDeltaX = psJob->dfDeltaX;
+    const double dfDeltaY = psJob->dfDeltaY;
+    GUInt32 nPoints = psJob->nPoints;
+    const double* padfX = psJob->padfX;
+    const double* padfY = psJob->padfY;
+    const double* padfZ = psJob->padfZ;
+    const void *poOptions = psJob->poOptions;
+    GDALGridFunction  pfnGDALGridMethod = psJob->pfnGDALGridMethod;
+    GDALGridExtraParameters *psExtraParameters = psJob->psExtraParameters;
+    GDALDataType eType = psJob->eType;
+    int (*pfnProgress)(GDALGridJob* psJob) = psJob->pfnProgress;
+
+    int         nDataTypeSize = GDALGetDataTypeSize(eType) / 8;
+    int         nLineSpace = nXSize * nDataTypeSize;
+
+    /* -------------------------------------------------------------------- */
+    /*  Allocate a buffer of scanline size, fill it with gridded values     */
+    /*  and use GDALCopyWords() to copy values into output data array with  */
+    /*  appropriate data type conversion.                                   */
+    /* -------------------------------------------------------------------- */
+    double      *padfValues = (double *)VSIMalloc2( sizeof(double), nXSize );
+    if( padfValues == NULL )
+    {
+        *(psJob->pbStop) = TRUE;
+        pfnProgress(psJob); /* to notify the main thread */
+        return;
+    }
+
+    for ( nYPoint = nYStart; nYPoint < nYSize; nYPoint += nYStep )
+    {
+        const double    dfYPoint = dfYMin + ( nYPoint + 0.5 ) * dfDeltaY;
+
+        for ( nXPoint = 0; nXPoint < nXSize; nXPoint++ )
+        {
+            const double    dfXPoint = dfXMin + ( nXPoint + 0.5 ) * dfDeltaX;
+
+            if ( (*pfnGDALGridMethod)( poOptions, nPoints, padfX, padfY, padfZ,
+                                       dfXPoint, dfYPoint,
+                                       padfValues + nXPoint, psExtraParameters ) != CE_None )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Gridding failed at X position %lu, Y position %lu",
+                          (long unsigned int)nXPoint,
+                          (long unsigned int)nYPoint );
+                *(psJob->pbStop) = TRUE;
+                pfnProgress(psJob); /* to notify the main thread */
+                break;
+            }
+        }
+
+        GDALCopyWords( padfValues, GDT_Float64, sizeof(double),
+                       pabyData + nYPoint * nLineSpace, eType, nDataTypeSize,
+                       nXSize );
+
+        if( *(psJob->pbStop) || pfnProgress(psJob) )
+            break;
+    }
+
+    CPLFree(padfValues);
+}
+
+/************************************************************************/
 /*                            GDALGridCreate()                          */
 /************************************************************************/
 
@@ -1241,6 +1392,11 @@ GDALGridDataMetricAverageDistancePts( const void *poOptions, GUInt32 nPoints,
  * values as input and computes regular grid (or call it a raster) from these
  * scattered data. You should supply geometry and extent of the output grid
  * and allocate array sufficient to hold such a grid.
+ *
+ * Starting with GDAL 2.0, it is possible to set the GDAL_NUM_THREADS
+ * configuration option to parallelize the processing. The value to set is
+ * the number of worker threads, or ALL_CPUS to use all the cores/CPUs of the
+ * computer.
  *
  * @param eAlgorithm Gridding method. 
  * @param poOptions Options to control choosen gridding method.
@@ -1343,7 +1499,6 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 	    return CE_Failure;
     }
 
-    GUInt32 nXPoint, nYPoint;
     const double    dfDeltaX = ( dfXMax - dfXMin ) / nXSize;
     const double    dfDeltaY = ( dfYMax - dfYMin ) / nYSize;
 
@@ -1394,65 +1549,134 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*  Allocate a buffer of scanline size, fill it with gridded values     */
-/*  and use GDALCopyWords() to copy values into output data array with  */
-/*  appropriate data type conversion.                                   */
-/* -------------------------------------------------------------------- */
-    double      *padfValues = (double *)VSIMalloc2( sizeof(double), nXSize );
-    if( padfValues == NULL )
-        return CE_Failure;
 
-    GByte       *pabyData = (GByte *)pData;
-    int         nDataTypeSize = GDALGetDataTypeSize(eType) / 8;
-    int         nLineSpace = nXSize * nDataTypeSize;
-    CPLErr      eErr = CE_None;
     GDALGridExtraParameters sExtraParameters;
 
     sExtraParameters.hQuadTree = hQuadTree;
     sExtraParameters.dfInitialSearchRadius = dfInitialSearchRadius;
 
-    for ( nYPoint = 0; nYPoint < nYSize; nYPoint++ )
+    const char* pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
+    int nThreads;
+    if (EQUAL(pszThreads, "ALL_CPUS"))
+        nThreads = CPLGetNumCPUs();
+    else
+        nThreads = atoi(pszThreads);
+    if (nThreads > 128)
+        nThreads = 128;
+    if (nThreads >= (int)nYSize / 2)
+        nThreads = (int)nYSize / 2;
+
+    volatile int nCounter = 0;
+    volatile int bStop = FALSE;
+
+    GDALGridJob sJob;
+    sJob.nYStart = 0;
+    sJob.pabyData = (GByte*) pData;
+    sJob.nYStep = 1;
+    sJob.nXSize = nXSize;
+    sJob.nYSize = nYSize;
+    sJob.dfXMin = dfXMin;
+    sJob.dfYMin = dfYMin;
+    sJob.dfDeltaX = dfDeltaX;
+    sJob.dfDeltaY = dfDeltaY;
+    sJob.nPoints = nPoints;
+    sJob.padfX = padfX;
+    sJob.padfY = padfY;
+    sJob.padfZ = padfZ;
+    sJob.poOptions = poOptions;
+    sJob.pfnGDALGridMethod = pfnGDALGridMethod;
+    sJob.psExtraParameters = &sExtraParameters;
+    sJob.pfnProgress = NULL;
+    sJob.eType = eType;
+    sJob.pfnRealProgress = pfnProgress;
+    sJob.pRealProgressArg = pProgressArg;
+    sJob.pnCounter = &nCounter;
+    sJob.pbStop = &bStop;
+    sJob.hCond = NULL;
+    sJob.hCondMutex = NULL;
+    sJob.hThread = NULL;
+
+    if( nThreads > 1 )
     {
-        const double    dfYPoint = dfYMin + ( nYPoint + 0.5 ) * dfDeltaY;
-
-        for ( nXPoint = 0; nXPoint < nXSize; nXPoint++ )
+        sJob.hCond = CPLCreateCond();
+        if( sJob.hCond == NULL )
         {
-            const double    dfXPoint = dfXMin + ( nXPoint + 0.5 ) * dfDeltaX;
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Cannot create condition. Reverting to monothread processing");
+            nThreads = 1;
+        }
+    }
 
-            if ( (*pfnGDALGridMethod)( poOptions, nPoints, padfX, padfY, padfZ,
-                                       dfXPoint, dfYPoint,
-                                       padfValues + nXPoint, &sExtraParameters ) != CE_None )
+    if( nThreads <= 1 )
+    {
+        sJob.pfnProgress = GDALGridProgressMonoThread;
+
+        GDALGridJobProcess(&sJob);
+    }
+    else
+    {
+        GDALGridJob* pasJobs = (GDALGridJob*) CPLMalloc(sizeof(GDALGridJob) * nThreads);
+        int i;
+
+        CPLDebug("GDAL_GRID", "Using %d threads", nThreads);
+
+        sJob.nYStep = nThreads;
+        sJob.hCondMutex = CPLCreateMutex(); /* and take implicitely the mutex */
+        sJob.pfnProgress = GDALGridProgressMultiThread;
+
+/* -------------------------------------------------------------------- */
+/*      Start threads.                                                  */
+/* -------------------------------------------------------------------- */
+        for(i = 0; i < nThreads && !bStop; i++)
+        {
+            memcpy(&pasJobs[i], &sJob, sizeof(GDALGridJob));
+            pasJobs[i].nYStart = i;
+            pasJobs[i].hThread = CPLCreateJoinableThread( GDALGridJobProcess,
+                                                          (void*) &pasJobs[i] );
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Report progress.                                                */
+/* -------------------------------------------------------------------- */
+        while(nCounter < (int)nYSize && !bStop)
+        {
+            CPLCondWait(sJob.hCond, sJob.hCondMutex);
+
+            int nLocalCounter = nCounter;
+            CPLReleaseMutex(sJob.hCondMutex);
+
+            if( !pfnProgress( nLocalCounter / (double) nYSize, "", pProgressArg ) )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "Gridding failed at X position %lu, Y position %lu",
-                          (long unsigned int)nXPoint,
-                          (long unsigned int)nYPoint );
-                eErr = CE_Failure;
-                break;
+                CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+                bStop = TRUE;
             }
+
+            CPLAcquireMutex(sJob.hCondMutex, 1.0);
         }
 
-        GDALCopyWords( padfValues, GDT_Float64, sizeof(double),
-                       pabyData, eType, nDataTypeSize,
-                       nXSize );
-        pabyData += nLineSpace;
+        /* Release mutex before joining threads, otherwise they will dead-lock */
+        /* forever in GDALGridProgressMultiThread() */
+        CPLReleaseMutex(sJob.hCondMutex);
 
-        if( !pfnProgress( (double)(nYPoint + 1) / nYSize, NULL, pProgressArg ) )
+/* -------------------------------------------------------------------- */
+/*      Wait for all threads to complete and finish.                    */
+/* -------------------------------------------------------------------- */
+        for(i=0;i<nThreads;i++)
         {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            eErr = CE_Failure;
-            break;
+            if( pasJobs[i].hThread )
+                CPLJoinThread(pasJobs[i].hThread);
         }
+
+        CPLFree(pasJobs);
+        CPLDestroyCond(sJob.hCond);
+        CPLDestroyMutex(sJob.hCondMutex);
     }
 
     CPLFree( pasGridPoints );
     if( hQuadTree != NULL )
         CPLQuadTreeDestroy( hQuadTree );
 
-    VSIFree( padfValues );
-
-    return eErr;
+    return bStop ? CE_Failure : CE_None;
 }
 
 /************************************************************************/

@@ -1611,6 +1611,11 @@ This program creates regular grid (raster) from the scattered data read from
 the OGR datasource. Input data will be interpolated to fill grid nodes with
 values, you can choose from various interpolation methods. 
 
+Starting with GDAL 2.0, it is possible to set the <b>GDAL_NUM_THREADS</b>
+configuration option to parallelize the processing. The value to specify is
+the number of worker threads, or <i>ALL_CPUS</i> to use all the cores/CPUs of the
+computer.
+
 <dl>
 
 <dt> <b>-ot</b> <i>type</i>:</dt><dd> For the output bands to be of the
@@ -1882,9 +1887,10 @@ The next command does the same thing as the previos one, but reads values to
 interpolate from the attribute field specified with <b>-zfield</b> option
 instead of geometry record. So in this case X and Y coordinates are being
 taken from geometry and Z is being taken from the <i>"Elevation"</i> field.
+The GDAL_NUM_THREADS is also set to parallelize the computation.
 
 \verbatim
-gdal_grid -zfield "Elevation" -a invdist:power=2.0:smoothing=1.0 -txe 85000 89000 -tye 894000 890000 -outsize 400 400 -of GTiff -ot Float64 -l dem dem.vrt dem.tiff
+gdal_grid -zfield "Elevation" -a invdist:power=2.0:smoothing=1.0 -txe 85000 89000 -tye 894000 890000 -outsize 400 400 -of GTiff -ot Float64 -l dem dem.vrt dem.tiff --config GDAL_NUM_THREADS ALL_CPUS
 \endverbatim
 
 \if man
