@@ -108,7 +108,7 @@ VFKReaderSQLite::~VFKReaderSQLite()
 */
 int VFKReaderSQLite::ReadDataBlocks()
 {
-    int  nDataBlocks;
+    int  nDataBlocks = -1;
     CPLString osSQL;
     const char *pszName, *pszDefn;
     IVFKDataBlock *poNewDataBlock;
@@ -168,21 +168,22 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
     sqlite3_finalize(hStmt);
 
     if (nDataRecords > 0) {
-        VFKFeatureSQLite *poNewFeature;
-        
+        VFKFeatureSQLite *poNewFeature = NULL;
+        int i = 0;
+
         poDataBlock->SetFeatureCount(0);
         poDataBlock->SetMaxFID(0);
 
         osSQL.Printf("SELECT ogr_fid FROM '%s' ORDER BY _rowid_",
                      pszName);
         hStmt = PrepareStatement(osSQL.c_str());
-        for (int i = 0; i < nDataRecords; i++) {
-            // poNewFeature = new VFKFeatureSQLite(poDataBlock);
-            CPLAssert(ExecuteSQL(hStmt) == OGRERR_NONE);
+        while(i < nDataRecords && ExecuteSQL(hStmt) == OGRERR_NONE) {
             poNewFeature = new VFKFeatureSQLite(poDataBlock, i, sqlite3_column_int(hStmt, 0));
             poDataBlock->AddFeature(poNewFeature);
+            i++ ;
         }
-        poDataBlock->SetMaxFID(poNewFeature->GetFID()); /* update max value */
+        if( poNewFeature != NULL )
+            poDataBlock->SetMaxFID(poNewFeature->GetFID()); /* update max value */
         
         sqlite3_finalize(hStmt);
     }
