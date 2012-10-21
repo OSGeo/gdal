@@ -3,7 +3,7 @@ OBJ	=	ogdidataset.obj
 
 GDAL_ROOT	=	..\..
 
-EXTRAFLAGS	=	-I$(OGDIDIR)/ogdi/include -I$(OGDIDIR)/include/win32 \
+EXTRAFLAGS	=	-I$(OGDI_INCLUDE) -I$(OGDIDIR)/include/win32 \
 			-I$(OGDIDIR)/proj -DWIN32 -D_WINDOWS
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
