@@ -181,7 +181,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
     const char* pszWarpThreads = CSLFetchNameValue(poWK->papszWarpOptions, "NUM_THREADS");
     int nThreads;
     if (pszWarpThreads == NULL)
-        pszWarpThreads = CPLGetConfigOption("WARP_NUM_THREADS", "1");
+        pszWarpThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
     if (EQUAL(pszWarpThreads, "ALL_CPUS"))
         nThreads = CPLGetNumCPUs();
     else

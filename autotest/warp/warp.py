@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -884,23 +885,23 @@ def warp_29():
     cs_monothread = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    old_val = gdal.GetConfigOption('WARP_NUM_THREADS')
-    gdal.SetConfigOption('WARP_NUM_THREADS', 'ALL_CPUS')
+    old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
+    gdal.SetConfigOption('GDAL_NUM_THREADS', 'ALL_CPUS')
     ds = gdal.Open( 'data/white_nodata.vrt' )
     cs_multithread = ds.GetRasterBand(1).Checksum()
     ds = None
-    gdal.SetConfigOption('WARP_NUM_THREADS', old_val)
+    gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
 
     if cs_monothread != cs_multithread:
         gdaltest.post_reason('failed')
         return 'fail'
 
-    old_val = gdal.GetConfigOption('WARP_NUM_THREADS')
-    gdal.SetConfigOption('WARP_NUM_THREADS', '2')
+    old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
+    gdal.SetConfigOption('GDAL_NUM_THREADS', '2')
     ds = gdal.Open( 'data/white_nodata.vrt' )
     cs_multithread = ds.GetRasterBand(1).Checksum()
     ds = None
-    gdal.SetConfigOption('WARP_NUM_THREADS', old_val)
+    gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
 
     if cs_monothread != cs_multithread:
         gdaltest.post_reason('failed')
@@ -968,8 +969,8 @@ def warp_30():
         gdaltest.post_reason('failed')
         return 'fail'
 
-    old_val = gdal.GetConfigOption('WARP_NUM_THREADS')
-    gdal.SetConfigOption('WARP_NUM_THREADS', '2')
+    old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
+    gdal.SetConfigOption('GDAL_NUM_THREADS', '2')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = gdal.ReprojectImage( src_ds, \
                          dst_ds, \
@@ -981,7 +982,7 @@ def warp_30():
                          cbk, # Progress callback : could be left to None or unspecified for silent progress
                          cbk_user_data)  # Progress callback user data
     gdal.PopErrorHandler()
-    gdal.SetConfigOption('WARP_NUM_THREADS', old_val)
+    gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
 
     if ret == 0:
         gdaltest.post_reason('failed')
