@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -51,6 +52,11 @@ def ogr_vfk_1():
     
     if gdaltest.vfk_drv is None:
        return 'skip'
+       
+    try:
+        os.remove('data/bylany.vfk.db')
+    except:
+        pass
     
     gdaltest.vfk_ds = ogr.Open('data/bylany.vfk')
     
@@ -192,6 +198,48 @@ def ogr_vfk_5():
     return 'success'
  
 ###############################################################################
+# Re-Open file (test .db persistance)
+
+def ogr_vfk_6():
+
+    if gdaltest.vfk_drv is None:
+       return 'skip'
+
+    gdaltest.vfk_layer_par = None
+    gdaltest.vfk_layer_sobr = None
+    gdaltest.vfk_ds = None
+    gdaltest.vfk_ds = ogr.Open('data/bylany.vfk')
+    
+    if gdaltest.vfk_ds is None:
+        return 'fail'
+    
+    if gdaltest.vfk_ds.GetLayerCount() != 61:
+        gdaltest.post_reason('expected exactly 61 layers!')
+        return 'fail'
+    
+    gdaltest.vfk_layer_par = gdaltest.vfk_ds.GetLayer(0)
+    
+    if gdaltest.vfk_layer_par is None:
+        gdaltest.post_reason('cannot get first layer')
+        return 'fail'
+    
+    if gdaltest.vfk_layer_par.GetName() != 'PAR':
+        gdaltest.post_reason('did not get expected layer name "PAR"')
+        return 'fail'
+    
+    defn = gdaltest.vfk_layer_par.GetLayerDefn()
+    if defn.GetFieldCount() != 28:
+        gdaltest.post_reason('did not get expected number of fields, got %d' % defn.GetFieldCount())
+        return 'fail'
+    
+    fc = gdaltest.vfk_layer_par.GetFeatureCount()
+    if fc != 1:
+        gdaltest.post_reason('did not get expected feature count, got %d' % fc)
+        return 'fail'
+    
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_vfk_cleanup():
@@ -201,9 +249,13 @@ def ogr_vfk_cleanup():
 
     gdaltest.vfk_layer_par = None
     gdaltest.vfk_layer_sobr = None
-    gdaltest.vfk_ds.Destroy()
     gdaltest.vfk_ds = None
-    
+
+    try:
+        os.remove('data/bylany.vfk.db')
+    except:
+        pass
+
     return 'success'
 
 ###############################################################################
@@ -215,6 +267,7 @@ gdaltest_list = [
     ogr_vfk_3,
     ogr_vfk_4,
     ogr_vfk_5,
+    ogr_vfk_6,
     ogr_vfk_cleanup ]
 
 if __name__ == '__main__':
