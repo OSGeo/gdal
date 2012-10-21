@@ -135,8 +135,8 @@ void GMLXercesHandler::fatalError( const SAXParseException &exception)
 
     pszErrorMessage = tr_strdup( exception.getMessage() );
     CPLError( CE_Failure, CPLE_AppDefined, 
-              "XML Parsing Error: %s\n", 
-              pszErrorMessage );
+              "XML Parsing Error: %s at line %d, column %d\n", 
+              pszErrorMessage, (int)exception.getLineNumber(), (int)exception.getColumnNumber() );
 
     CPLFree( pszErrorMessage );
 }
