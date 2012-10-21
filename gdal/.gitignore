@@ -4,6 +4,14 @@ config.status
 libtool
 cpl_config.h
 *.o
+*.res
+*.obj
+*.lib
+*.exe
+*.exe.manifest
+*.dll
+*.dll.manifest
+*.exp
 *.lo
 *.la
 .libs
@@ -54,3 +62,4 @@ swig/perl/osr_wrap.cpp
 swig/perl/pm_to_blib
 man/
 html/
+nmake.local
