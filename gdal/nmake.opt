@@ -279,6 +279,7 @@ JPEG12_SUPPORTED = 1
 
 # Uncomment the following and update to enable OGDI support.
 #OGDIDIR =	D:\warmerda\iii\devdir
+#OGDI_INCLUDE = $(OGDIDIR)\include\ogdi
 #OGDIVER =	31
 #OGDILIB =	$(OGDIDIR)\lib\$(TARGET)\ogdi$(OGDIVER).lib \
 #		$(OGDIDIR)\lib\$(TARGET)\zlib_ogdi$(OGDIVER).lib
