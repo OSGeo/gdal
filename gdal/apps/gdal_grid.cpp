@@ -374,9 +374,9 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
     int     nBlockXSize, nBlockYSize;
     int     nDataTypeSize = GDALGetDataTypeSize(eType) / 8;
 
-    // Try to grow the work buffer up to 1 MB if it is smaller
+    // Try to grow the work buffer up to 16 MB if it is smaller
     GDALGetBlockSize( hBand, &nBlockXSize, &nBlockYSize );
-    const GUInt32 nDesiredBufferSize = 1024*1024;
+    const GUInt32 nDesiredBufferSize = 16*1024*1024;
     if( (GUInt32)nBlockXSize < nXSize && (GUInt32)nBlockYSize < nYSize &&
         (GUInt32)nBlockXSize < nDesiredBufferSize / (nBlockYSize * nDataTypeSize) )
     {
