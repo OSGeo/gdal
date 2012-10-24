@@ -1493,9 +1493,11 @@ void netCDFDataset::SetProjectionFromVar( int var )
     double       *pdfYCoord;
     char         szDimNameX[ MAX_NC_NAME ];
     char         szDimNameY[ MAX_NC_NAME ];
-    int          nSpacingBegin;
-    int          nSpacingMiddle;
-    int          nSpacingLast;
+    int          nSpacingBegin=0;
+    int          nSpacingMiddle=0;
+    int          nSpacingLast=0;
+    int          bLatSpacingOK=FALSE;
+    int          bLonSpacingOK=FALSE;
     size_t       xdim = nRasterXSize;
     size_t       ydim = nRasterYSize;
 
@@ -1525,6 +1527,13 @@ void netCDFDataset::SetProjectionFromVar( int var )
     adfTempGeoTransform[4] = 0.0;
     adfTempGeoTransform[5] = 1.0;
     pszTempProjection = NULL;
+
+    if ( xdim == 1 || ydim == 1 ) {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "1-pixel width/height files not supported, xdim: %ld ydim: %ld",
+                  xdim, ydim );
+        return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Look for grid_mapping metadata                                  */
@@ -2293,23 +2302,45 @@ void netCDFDataset::SetProjectionFromVar( int var )
 /*      Check Longitude                                                 */
 /* -------------------------------------------------------------------- */
 
-        nSpacingBegin   = (int) poDS->rint((pdfXCoord[1]-pdfXCoord[0]) * 1000);
+        if( xdim == 2 ) {
+            bLonSpacingOK = TRUE;
+        }
+        else
+        {
+            nSpacingBegin   = (int) poDS->rint((pdfXCoord[1] - pdfXCoord[0]) * 1000);
+            
+            nSpacingMiddle  = (int) poDS->rint((pdfXCoord[xdim / 2] - 
+                                                pdfXCoord[(xdim / 2) + 1]) * 1000);
+            
+            nSpacingLast    = (int) poDS->rint((pdfXCoord[xdim - 2] - 
+                                                pdfXCoord[xdim-1]) * 1000);       
+            
+            CPLDebug("GDAL_netCDF", 
+                     "xdim: %ld nSpacingBegin: %d nSpacingMiddle: %d nSpacingLast: %d",
+                     xdim, nSpacingBegin, nSpacingMiddle, nSpacingLast );
+            
+            if( ( abs( nSpacingBegin )  ==  abs( nSpacingLast )   ) &&
+                ( abs( nSpacingBegin )  ==  abs( nSpacingMiddle ) ) &&
+                ( abs( nSpacingMiddle ) ==  abs( nSpacingLast )   ) ) {
+                bLonSpacingOK = TRUE;
+            }
+        }
 	
-        nSpacingMiddle  = (int) poDS->rint((pdfXCoord[xdim / 2] - 
-                                            pdfXCoord[(xdim / 2) + 1]) * 1000);
-	
-        nSpacingLast    = (int) poDS->rint((pdfXCoord[xdim - 2] - 
-                                            pdfXCoord[xdim-1]) * 1000);
-	
-        if( ( abs( nSpacingBegin )  ==  abs( nSpacingLast )     )  &&
-            ( abs( nSpacingBegin )  ==  abs( nSpacingMiddle )   ) &&
-            ( abs( nSpacingMiddle ) ==  abs( nSpacingLast )     ) ) {
+        if ( bLonSpacingOK == FALSE ) {
+            CPLDebug( "GDAL_netCDF", 
+                      "Longitude is not equally spaced." );
+        }              
 
 /* -------------------------------------------------------------------- */
-/*      Longitude is equally spaced, check latitude                     */
+/*      Check Latitude                                                  */
 /* -------------------------------------------------------------------- */
-            nSpacingBegin   = (int) poDS->rint((pdfYCoord[1]-pdfYCoord[0]) * 
-                                               1000); 
+        if( ydim == 2 ) {
+            bLatSpacingOK = TRUE;
+        }
+        else
+        {
+            nSpacingBegin   = (int) poDS->rint((pdfYCoord[1] - pdfYCoord[0]) * 
+                                               1000); 	    
 	    
             nSpacingMiddle  = (int) poDS->rint((pdfYCoord[ydim / 2] - 
                                                 pdfYCoord[(ydim / 2) + 1]) * 
@@ -2319,23 +2350,38 @@ void netCDFDataset::SetProjectionFromVar( int var )
                                                 pdfYCoord[ydim-1]) * 
                                                1000);
 
+            CPLDebug("GDAL_netCDF", 
+                     "ydim: %ld nSpacingBegin: %d nSpacingMiddle: %d nSpacingLast: %d",
+                     ydim, nSpacingBegin, nSpacingMiddle, nSpacingLast );
 		    
 /* -------------------------------------------------------------------- */
 /*   For Latitude  we allow an error of 0.1 degrees for gaussian        */
 /*   gridding                                                           */
 /* -------------------------------------------------------------------- */
 
-            if((( abs( abs(nSpacingBegin) - abs(nSpacingLast) ) )   < 100 ) &&
-               (( abs( abs(nSpacingBegin) -  abs(nSpacingMiddle) ) ) < 100 ) &&
-               (( abs( abs(nSpacingMiddle) - abs(nSpacingLast) ) )   < 100) ) {
+            if( (( abs( abs(nSpacingBegin)  - abs(nSpacingLast) ) )   < 100 ) &&
+                (( abs( abs(nSpacingBegin)  - abs(nSpacingMiddle) ) ) < 100 ) &&
+                (( abs( abs(nSpacingMiddle) - abs(nSpacingLast) ) )   < 100 ) ) {
 
-                if( ( abs( nSpacingBegin )  !=  abs( nSpacingLast )     )  ||
-                    ( abs( nSpacingBegin )  !=  abs( nSpacingMiddle )   ) ||
-                    ( abs( nSpacingMiddle ) !=  abs( nSpacingLast )     ) ) {
-		    
+                bLatSpacingOK = TRUE;
+
+                if( ( abs( nSpacingBegin )  !=  abs( nSpacingLast )   ) ||
+                    ( abs( nSpacingBegin )  !=  abs( nSpacingMiddle ) ) ||
+                    ( abs( nSpacingMiddle ) !=  abs( nSpacingLast )   ) ) {
+
                     CPLError(CE_Warning, 1,"Latitude grid not spaced evenly.\nSeting projection for grid spacing is within 0.1 degrees threshold.\n");
 
                 }
+            }
+        }
+        
+        if ( bLatSpacingOK == FALSE ) {
+            CPLDebug( "GDAL_netCDF", 
+                      "Latitude is not equally spaced." );
+        }
+
+        if ( ( bLonSpacingOK == TRUE ) && ( bLatSpacingOK == TRUE ) ) {      
+
 /* -------------------------------------------------------------------- */
 /*      We have gridded data s we can set the Gereferencing info.       */
 /* -------------------------------------------------------------------- */
@@ -2400,15 +2446,7 @@ void netCDFDataset::SetProjectionFromVar( int var )
                     adfTempGeoTransform[0] -= (adfTempGeoTransform[1] / 2);
                     adfTempGeoTransform[3] -= (adfTempGeoTransform[5] / 2);
                 }
-            }// end if (Latitude is equally spaced, within 0.1 degrees)
-            else {
-                CPLDebug( "GDAL_netCDF", 
-                          "Latitude is not equally spaced." );
-            }
-        }// end if (Longitude is equally spaced)
-        else {
-            CPLDebug( "GDAL_netCDF", 
-                      "Longitude is not equally spaced." );
+
         }
 
         CPLFree( pdfXCoord );
