@@ -1104,6 +1104,30 @@ def netcdf_30():
     return result
 
 ###############################################################################
+#check if 2x2 file has proper geotransform
+#1 pixel (in width or height) still unsupported because we can't get the pixel dimensions
+def netcdf_31():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/trmm-2x2.nc' )
+
+    prj = ds.GetProjection( )
+
+    gt = ds.GetGeoTransform( )
+
+    gt1 = ( -80.0, 0.25, 0.0, -19.5, 0.0, -0.25 )
+
+    if gt != gt1:
+        gdaltest.post_reason( 'Incorrect geotransform, got '+str(gt) )
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -1139,6 +1163,7 @@ gdaltest_list = [
     netcdf_28,
     netcdf_29,
     netcdf_30,
+    netcdf_31,
  ]
 
 ###############################################################################
