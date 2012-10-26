@@ -51,9 +51,9 @@ def compare_metadata(golden_md, new_md, id):
       print 'New %s metadata lacks key' % (id, key)
       found_diff += 1
     elif new_md[key] != golden_md[key]:
-      print '%s metadata value difference for key ' + key
-      print '  Golden:' + golden_md[key]
-      print '  New:   ' + new_md[key]
+      print 'Metadata value difference for key "' + key + '"'
+      print '  Golden:"' + golden_md[key] + '"'
+      print '  New:   "' + new_md[key] + '"'
       found_diff += 1
 
   return found_diff
