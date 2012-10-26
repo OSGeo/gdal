@@ -7,9 +7,6 @@ language: cpp
 compiler:
   - clang
 
-env:
-    OGR_PG_CONNECTION_STRING="dbname=autotest user=postgres"
-
 before_install:
   - sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
   - sudo add-apt-repository -y ppa:marlam/gta
@@ -120,4 +117,3 @@ notifications:
     channels:
       - "irc.freenode.org#gdal"
     use_notice: true
-
