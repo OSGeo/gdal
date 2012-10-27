@@ -1635,6 +1635,16 @@ def ogr_gml_42():
     if not gdaltest.have_gml_validation:
         return 'skip'
 
+    try:
+        os.mkdir('tmp/cache/SCHEMAS_OPENGIS_NET')
+    except:
+        pass
+    
+    try:
+        os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/gml')
+    except:
+        gdaltest.unzip( 'tmp/cache/SCHEMAS_OPENGIS_NET', 'tmp/cache/SCHEMAS_OPENGIS_NET.zip')
+
     ds = ogr.Open('data/expected_gml_gml32.gml')
 
     gdal.SetConfigOption('GDAL_OPENGIS_SCHEMAS', './tmp/cache/SCHEMAS_OPENGIS_NET')
@@ -1656,6 +1666,9 @@ def ogr_gml_42():
 # Test automated downloading of WFS schema
 
 def ogr_gml_43():
+    
+    # The service times out
+    return 'skip'
 
     if not gdaltest.have_gml_reader:
         return 'skip'
