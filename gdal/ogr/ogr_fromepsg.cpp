@@ -1569,6 +1569,7 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
                              OGR_FP( FalseEasting ), OGR_FP( FalseNorthing ) );
         break;
 
+      case 1041: /* used by EPSG:5514 */
       case 9819:
       {
           double dfCenterLong = OGR_FP( ProjCenterLong );
