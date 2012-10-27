@@ -76,6 +76,8 @@ OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
 
         // Extract field width. 
         panFieldWidth[nFieldCount] = atoi( RECGetField( pszLine, 37, 4 ) );
+        if( panFieldWidth[nFieldCount] < 0 )
+            return;
 
         // Is this an real, integer or string field?  Default to string.
         nTypeCode = atoi(RECGetField(pszLine,33,4));
@@ -122,6 +124,9 @@ OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
         poFeatureDefn->AddFieldDefn( &oField );
         nFieldCount++;
     }
+
+    if( nFieldCount == 0 )
+        return;
 
     nRecordLength = panFieldOffset[nFieldCount-1]+panFieldWidth[nFieldCount-1];
     bIsValid = TRUE;
@@ -188,7 +193,7 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
             return NULL;
         }
 
-        if( *pszLine == 26 /* Cntl-Z - DOS EOF */ )
+        if( *pszLine == 0 || *pszLine == 26 /* Cntl-Z - DOS EOF */ )
         {
             CPLFree( pszRecord );
             return NULL;
