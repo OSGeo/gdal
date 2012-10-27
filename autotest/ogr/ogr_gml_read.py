@@ -1983,6 +1983,40 @@ def ogr_gml_48():
     return 'success'
 
 ###############################################################################
+# Test a pseudo Inspire GML file
+
+def ogr_gml_49():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    xsd_content = """<ogr:FeatureCollection xmlns:gml="http://www.opengis.net/gml">
+  <gml:featureMember>
+    <ogr:test>
+      <ogr:geometry><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>2,49 2,50 3,50 3,49 2,49</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></ogr:geometry>
+      <ogr:otherGeometry><gml:Point><gml:pos>-2 -49</gml:pos></gml:Point></ogr:otherGeometry>
+    </ogr:test>
+  </gml:featureMember>
+</ogr:FeatureCollection>
+"""
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gml_49.gml', xsd_content)
+
+    ds = ogr.Open('/vsimem/ogr_gml_49.gml')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetGeometryRef().GetGeometryType() != ogr.wkbPolygon:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gml_49.gml')
+    gdal.Unlink('/vsimem/ogr_gml_49.gfs')
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -2153,6 +2187,7 @@ gdaltest_list = [
     ogr_gml_46,
     ogr_gml_47,
     ogr_gml_48,
+    ogr_gml_49,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':

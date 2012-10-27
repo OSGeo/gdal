@@ -107,6 +107,7 @@ class GMLHandler
     int        m_nGeomAlloc;
     int        m_nGeomLen;
     int        m_nGeometryDepth;
+    int        m_bAlreadyFoundGeometry;
 
     int        m_nDepth;
     int        m_nDepthFeature;
