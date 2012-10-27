@@ -149,7 +149,7 @@ int RECReadRecord( FILE *fp, char *pszRecord, int nRecordLength )
         if( pszLine == NULL )
             return FALSE;
 
-        if( *pszLine == 26 /* Cntl-Z - DOS EOF */ )
+        if( *pszLine == 0 || *pszLine == 26 /* Cntl-Z - DOS EOF */ )
             return FALSE;
 
         // If the end-of-line markers is '?' the record is deleted.
