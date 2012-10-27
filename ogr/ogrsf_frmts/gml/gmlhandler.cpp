@@ -476,6 +476,7 @@ GMLHandler::GMLHandler( GMLReader *poReader )
     m_nGeomAlloc = 0;
     m_nGeomLen = 0;
     m_nGeometryDepth = 0;
+    m_bAlreadyFoundGeometry = FALSE;
 
     m_nDepthFeature = m_nDepth = 0;
     m_inBoundedByDepth = 0;
@@ -724,6 +725,10 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
         const char* pszGeometryElement = poState->m_poFeature->GetClass()->GetGeometryElement();
         if (pszGeometryElement != NULL)
             bReadGeometry = strcmp(poState->osPath.c_str(), pszGeometryElement) == 0;
+        else if( m_poReader->FetchAllGeometries() )
+        {
+            bReadGeometry = TRUE;
+        }
         else
         {
             /* AIXM special case: for RouteSegment, we only want to read Curve geometries */
@@ -731,6 +736,16 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
             if (m_bIsAIXM &&
                 strcmp(poState->m_poFeature->GetClass()->GetName(), "RouteSegment") == 0)
                 bReadGeometry = strcmp( pszName, "Curve") == 0;
+
+            /* For Inspire objects : the "main" geometry is in a <geometry> element */
+            else if (m_bAlreadyFoundGeometry)
+                bReadGeometry = FALSE;
+            else if (strcmp( poState->osPath.c_str(), "geometry") == 0)
+            {
+                m_bAlreadyFoundGeometry = TRUE;
+                bReadGeometry = TRUE;
+            }
+
             else
                 bReadGeometry = TRUE;
         }
@@ -867,6 +882,8 @@ OGRErr GMLHandler::startElementDefault(const char *pszName, int nLenName, void* 
     int nClassIndex;
     if( (nClassIndex = m_poReader->GetFeatureElementIndex( pszName, nLenName )) != -1 )
     {
+        m_bAlreadyFoundGeometry = FALSE;
+
         const char* pszFilteredClassName = m_poReader->GetFilteredClassName();
         if ( pszFilteredClassName != NULL &&
              strcmp(pszName, pszFilteredClassName) != 0 )
