@@ -87,6 +87,9 @@ http://www.mapinfo.com/miwfs
 ???
 http://services.interactive-instruments.de/xtra/cgi-bin/wfs?Request=GetCapabilities (doesn't work well)
 
+??? (WFS 2.0)
+http://services.cuzk.cz/wfs/inspire-cp-wfs.asp?
+
 Catalog with a lot of dead links, but a few of the above actually come from here :
 http://svn.geotools.org/branches/xdo-branch/plugin/wms/test/org/geotools/data/wms/test/test-data/servers.txt
 

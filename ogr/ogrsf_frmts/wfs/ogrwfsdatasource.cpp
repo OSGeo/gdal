@@ -668,6 +668,7 @@ CPLHTTPResult* OGRWFSDataSource::SendGetCapabilities(const char* pszBaseURL,
                                                      CPLString& osTypeName)
 {
     CPLString osURL(pszBaseURL);
+
     osURL = CPLURLAddKVP(osURL, "SERVICE", "WFS");
     osURL = CPLURLAddKVP(osURL, "REQUEST", "GetCapabilities");
     osTypeName = CPLURLGetValue(osURL, "TYPENAME");
@@ -677,14 +678,11 @@ CPLHTTPResult* OGRWFSDataSource::SendGetCapabilities(const char* pszBaseURL,
     osURL = CPLURLAddKVP(osURL, "MAXFEATURES", NULL);
     osURL = CPLURLAddKVP(osURL, "OUTPUTFORMAT", NULL);
 
-    /* Don't accept WFS 2.0.0 for now, unless explicitely specified */
-    if (CPLURLGetValue(osURL, "ACCEPTVERSIONS").size() == 0 &&
-        CPLURLGetValue(osURL, "VERSION").size() == 0)
-        osURL = CPLURLAddKVP(osURL, "ACCEPTVERSIONS", "1.1.0,1.0.0");
+    CPLHTTPResult* psResult;
 
     CPLDebug("WFS", "%s", osURL.c_str());
 
-    CPLHTTPResult* psResult = HTTPFetch( osURL, NULL);
+    psResult = HTTPFetch( osURL, NULL);
     if (psResult == NULL)
     {
         return NULL;
@@ -693,7 +691,9 @@ CPLHTTPResult* OGRWFSDataSource::SendGetCapabilities(const char* pszBaseURL,
     if (strstr((const char*)psResult->pabyData,
                                     "<ServiceExceptionReport") != NULL ||
         strstr((const char*)psResult->pabyData,
-                                    "<ows:ExceptionReport") != NULL)
+                                    "<ows:ExceptionReport") != NULL ||
+        strstr((const char*)psResult->pabyData,
+                                    "<ExceptionReport") != NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
                 psResult->pabyData);
