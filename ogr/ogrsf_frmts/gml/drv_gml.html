@@ -102,6 +102,9 @@ environment variables.<p>
 When reading a feature, the driver will by default only take into account the
 last recognized GML geometry found (in case they are multiples) in the XML subtree describing the feature.<p>
 
+Starting with OGR 2.0, in case of multiple geometry occurences, if a geometry is in a &lt;geometry&gt; element,
+this will be the one selected. This will make default behaviour consistant with Inspire objects.<p>
+
 Starting with OGR 1.8.0, the user can change the .gfs file to select the appropriate
 geometry by specifying its path with the &lt;GeometryElementPath&gt; element. See the
 description of the .gfs syntax below.<p>
