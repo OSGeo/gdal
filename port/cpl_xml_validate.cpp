@@ -580,39 +580,99 @@ static void CPLLibXMLInputStreamCPLFree(xmlChar* pszBuffer)
 }
 
 /************************************************************************/
+/*                           CPLFindLocalXSD()                          */
+/************************************************************************/
+
+static CPLString CPLFindLocalXSD(const char* pszXSDFilename)
+{
+    const char *pszSchemasOpenGIS;
+    CPLString osTmp;
+
+    pszSchemasOpenGIS = CPLGetConfigOption("GDAL_OPENGIS_SCHEMAS", NULL);
+    if (pszSchemasOpenGIS != NULL)
+    {
+        int nLen = (int)strlen(pszSchemasOpenGIS);
+        if (nLen > 0 && pszSchemasOpenGIS[nLen-1] == '/')
+        {
+            osTmp = pszSchemasOpenGIS;
+            osTmp += pszXSDFilename;
+        }
+        else
+        {
+            osTmp = pszSchemasOpenGIS;
+            osTmp += "/";
+            osTmp += pszXSDFilename;
+        }
+    }
+    else if ((pszSchemasOpenGIS = CPLFindFile( "gdal", "SCHEMAS_OPENGIS_NET" )) != NULL)
+    {
+        osTmp = pszSchemasOpenGIS;
+        osTmp += "/";
+        osTmp += pszXSDFilename;
+    }
+
+    VSIStatBufL sStatBuf;
+    if( VSIStatExL(osTmp, &sStatBuf, VSI_STAT_EXISTS_FLAG) == 0 )
+        return osTmp;
+    return "";
+}
+
+/************************************************************************/
 /*                      CPLExternalEntityLoader()                       */
 /************************************************************************/
 
-static const char szXML_XSD[] = "<xs:schema targetNamespace=\"http://www.w3.org/XML/1998/namespace\""
-" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">"
-"<xs:attribute name=\"lang\">"
-"<xs:simpleType>"
-"<xs:union memberTypes=\"xs:language\">"
-"<xs:simpleType>"
-"<xs:restriction base=\"xs:string\">"
-"<xs:enumeration value=\"\"/>"
-"</xs:restriction>"
-"</xs:simpleType>"
-"</xs:union>"
-"</xs:simpleType>"
-"</xs:attribute>"
-"<xs:attribute name=\"space\">"
-"<xs:simpleType>"
-"<xs:restriction base=\"xs:NCName\">"
-"<xs:enumeration value=\"default\"/>"
-"<xs:enumeration value=\"preserve\"/>"
-"</xs:restriction>"
-"</xs:simpleType>"
-"</xs:attribute>"
-"<xs:attribute name=\"base\" type=\"xs:anyURI\"/>"
-"<xs:attribute name=\"id\" type=\"xs:ID\"/>"
-"<xs:attributeGroup name=\"specialAttrs\">"
-"<xs:attribute ref=\"xml:base\"/>"
-"<xs:attribute ref=\"xml:lang\"/>"
-"<xs:attribute ref=\"xml:space\"/>"
-"<xs:attribute ref=\"xml:id\"/>"
-"</xs:attributeGroup>"
-"</xs:schema>";
+static const char szXML_XSD[] = "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" targetNamespace=\"http://www.w3.org/XML/1998/namespace\">"
+"<attribute name=\"lang\">"
+"<simpleType>"
+"<union memberTypes=\"language\">"
+"<simpleType>"
+"<restriction base=\"string\">"
+"<enumeration value=\"\"/>"
+"</restriction>"
+"</simpleType>"
+"</union>"
+"</simpleType>"
+"</attribute>"
+"<attribute name=\"space\">"
+"<simpleType>"
+"<restriction base=\"NCName\">"
+"<enumeration value=\"default\"/>"
+"<enumeration value=\"preserve\"/>"
+"</restriction>"
+"</simpleType>"
+"</attribute>"
+"<attribute name=\"base\" type=\"anyURI\"/>"
+"<attribute name=\"id\" type=\"ID\"/>"
+"<attributeGroup name=\"specialAttrs\">"
+"<attribute ref=\"xml:base\"/>"
+"<attribute ref=\"xml:lang\"/>"
+"<attribute ref=\"xml:space\"/>"
+"<attribute ref=\"xml:id\"/>"
+"</attributeGroup>"
+"</schema>";
+
+/* Simplified (and truncated) version of http://www.w3.org/1999/xlink.xsd (sufficient for GML schemas) */
+static const char szXLINK_XSD[] = "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" targetNamespace=\"http://www.w3.org/1999/xlink\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">"
+"<attribute name=\"type\" type=\"string\"/>"
+"<attribute name=\"href\" type=\"anyURI\"/>"
+"<attribute name=\"role\" type=\"anyURI\"/>"
+"<attribute name=\"arcrole\" type=\"anyURI\"/>"
+"<attribute name=\"title\" type=\"string\"/>"
+"<attribute name=\"show\" type=\"string\"/>"
+"<attribute name=\"actuate\" type=\"string\"/>"
+"<attribute name=\"label\" type=\"NCName\"/>"
+"<attribute name=\"from\" type=\"NCName\"/>"
+"<attribute name=\"to\" type=\"NCName\"/>"
+"<attributeGroup name=\"simpleAttrs\">"
+"<attribute ref=\"xlink:type\" fixed=\"simple\"/>"
+"<attribute ref=\"xlink:href\"/>"
+"<attribute ref=\"xlink:role\"/>"
+"<attribute ref=\"xlink:arcrole\"/>"
+"<attribute ref=\"xlink:title\"/>"
+"<attribute ref=\"xlink:show\"/>"
+"<attribute ref=\"xlink:actuate\"/>"
+"</attributeGroup>"
+"</schema>";
 
 static
 xmlParserInputPtr CPLExternalEntityLoader (const char * URL,
@@ -650,12 +710,36 @@ xmlParserInputPtr CPLExternalEntityLoader (const char * URL,
         }
         else if (strcmp(URL, "http://www.w3.org/2001/xml.xsd") == 0)
         {
-            CPLDebug("CPL", "Resolving http://www.w3.org/2001/xml.xsd to local definition");
-            return xmlNewStringInputStream(context, (const xmlChar*) szXML_XSD);
+            CPLString osTmp = CPLFindLocalXSD("xml.xsd");
+            if( osTmp.size() != 0 )
+            {
+                osURL = osTmp;
+                URL = osURL.c_str();
+            }
+            else
+            {
+                CPLDebug("CPL", "Resolving %s to local definition", "http://www.w3.org/2001/xml.xsd");
+                return xmlNewStringInputStream(context, (const xmlChar*) szXML_XSD);
+            }
+        }
+        else if (strcmp(URL, "http://www.w3.org/1999/xlink.xsd") == 0)
+        {
+            CPLString osTmp = CPLFindLocalXSD("xlink.xsd");
+            if( osTmp.size() != 0 )
+            {
+                osURL = osTmp;
+                URL = osURL.c_str();
+            }
+            else
+            {
+                CPLDebug("CPL", "Resolving %s to local definition", "http://www.w3.org/1999/xlink.xsd");
+                return xmlNewStringInputStream(context, (const xmlChar*) szXLINK_XSD);
+            }
         }
         else if (strncmp(URL, "http://schemas.opengis.net/",
                          strlen("http://schemas.opengis.net/")) != 0)
         {
+            CPLDebug("CPL", "Loading %s", URL);
             return pfnLibXMLOldExtranerEntityLoader(URL, ID, context);
         }
     }
