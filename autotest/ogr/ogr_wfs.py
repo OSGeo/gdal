@@ -853,7 +853,7 @@ def ogr_wfs_deegree_gml321():
         print('cannot open URL')
         return 'skip'
 
-    ds = ogr.Open('WFS:http://deegree3-demo.deegree.org:80/inspire-workspace/services?MAXFEATURES=10')
+    ds = ogr.Open('WFS:http://deegree3-demo.deegree.org:80/inspire-workspace/services?ACCEPTVERSIONS=1.1.0&MAXFEATURES=10')
     if ds is None:
         if gdal.GetLastErrorMsg().find("Unable to determine the subcontroller for request type 'GetCapabilities' and service type 'WFS'") != -1:
             return 'skip'
