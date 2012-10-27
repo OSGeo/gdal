@@ -446,7 +446,7 @@ const char *CPLResetExtension( const char *pszPath, const char *pszExt )
  * not.  May be NULL.
  *
  * @param pszBasename file basename.  May optionally have path and/or
- * extension.  May not be NULL. 
+ * extension.  Must *NOT* be NULL. 
  *
  * @param pszExtension file extension, optionally including the period.  May
  * be NULL.
@@ -467,6 +467,9 @@ const char *CPLFormFilename( const char * pszPath,
 
     CPLAssert( ! (pszPath >= pszStaticResult && pszPath < pszStaticResult + CPL_PATH_BUF_SIZE) );
     CPLAssert( ! (pszBasename >= pszStaticResult && pszBasename < pszStaticResult + CPL_PATH_BUF_SIZE) );
+
+    if( pszBasename[0] == '.' && pszBasename[1] == '/' )
+        pszBasename += 2;
 
     if( pszPath == NULL )
         pszPath = "";
