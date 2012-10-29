@@ -3132,7 +3132,7 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
         echo 'public:' >> testpoppler.cpp
         echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
         echo '  ~TestStream() {}' >> testpoppler.cpp
-        echo '  virtual Stream *makeSubStream(Guint start, GBool limited, Guint length, Object *dict) { return 0; }' >> testpoppler.cpp
+        echo '  virtual Stream *makeSubStream(Guint start, GBool limited, Guint mylength, Object *mydict) { return 0; }' >> testpoppler.cpp
         echo '  virtual void setPos(Guint pos, int dir = 0) { }' >> testpoppler.cpp
         echo '  virtual Guint getStart() { return 0; }' >> testpoppler.cpp
         echo '  virtual void moveStart(int delta) { }' >> testpoppler.cpp
