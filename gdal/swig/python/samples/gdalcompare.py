@@ -68,12 +68,9 @@ def compare_image_pixels(golden_band, new_band, id):
   for line in range(golden_band.YSize):
     golden_line = golden_band.ReadAsArray(0, line, golden_band.XSize, 1)[0]
     new_line = new_band.ReadAsArray(0, line, golden_band.XSize, 1)[0]
-    for pixel in range(golden_band.XSize):
-      diff = new_line[pixel] - golden_line[pixel]
-      if diff != 0:
-        diff_count += 1
-        if abs(diff) > max_diff:
-          max_diff = abs(diff)
+    diff_line = golden_line - new_line
+    max_diff = max(max_diff,abs(diff_line).max())
+    diff_count += len(diff_line.nonzero()[0])
 
   print '  Pixels Differing:', diff_count
   print '  Maximum Pixel Difference: ', max_diff
@@ -187,8 +184,30 @@ def compare_db(golden_db, new_db):
   return found_diff
 
 #######################################################
+def compare_sds(golden_db, new_db):
+  found_diff = 0
+  
+  golden_sds = golden_db.GetMetadata('SUBDATASETS')
+  new_sds = new_db.GetMetadata('SUBDATASETS')
+
+  count = len(golden_sds.keys()) / 2
+  for i in range(count):
+    key = 'SUBDATASET_%d_NAME' % (i+1)
+
+    sub_golden_db = gdal.Open(golden_sds[key])
+    sub_new_db = gdal.Open(new_sds[key])
+
+    sds_diff = compare_db(sub_golden_db, sub_new_db)
+    found_diff += sds_diff
+    if sds_diff > 0:
+      print '%d differences found between:\n  %s\n  %s' \
+            % (sds_diff, golden_sds[key],new_sds[key])
+
+  return found_diff
+  
+#######################################################
 def Usage():
-  print 'Usage: gdalcompare.py <golden_file> <new_file>'
+  print 'Usage: gdalcompare.py [-sds] <golden_file> <new_file>'
   sys.exit(1)
 
 #######################################################
@@ -209,11 +228,15 @@ if __name__ == '__main__':
   # Script argument parsing.
   golden_file = None
   new_file = None
+  check_sds = 0
 
   i = 1
   while  i < len(argv):
 
-    if golden_file is None:
+    if argv[i] == '-sds':
+      check_sds = 1
+
+    elif golden_file is None:
       golden_file = argv[i]
 
     elif new_file is None:
@@ -231,15 +254,23 @@ if __name__ == '__main__':
   found_diff = 0
 
   # compare raw binary files.
-  if not filecmp.cmp(golden_file,new_file):
-    print 'Files differ at the binary level.'
-    found_diff += 1
+  try:
+    os.stat(golden_file)
+    
+    if not filecmp.cmp(golden_file,new_file):
+      print 'Files differ at the binary level.'
+      found_diff += 1
+  except:
+    print 'Skipped binary file comparison, golden file not in filesystem.'
 
   # compare as GDAL Datasets.
   golden_db = gdal.Open(golden_file)
   new_db = gdal.Open(new_file)
   found_diff += compare_db(golden_db, new_db)
 
+  if check_sds:
+    found_diff += compare_sds(golden_db, new_db)
+    
   print 'Differences Found:',found_diff
 
   sys.exit(found_diff)
