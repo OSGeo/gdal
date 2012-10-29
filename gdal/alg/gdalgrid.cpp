@@ -35,6 +35,14 @@
 #include "cpl_quad_tree.h"
 #include "cpl_multiproc.h"
 
+#ifdef __SSE__
+#define HAVE_SSE_AT_COMPILE_TIME
+#endif
+
+#ifdef HAVE_SSE_AT_COMPILE_TIME
+#include <xmmintrin.h>
+#endif
+
 CPL_CVSID("$Id$");
 
 #define TO_RADIANS (3.14159265358979323846 / 180.0)
@@ -63,7 +71,63 @@ typedef struct
 {
     CPLQuadTree* hQuadTree;
     double       dfInitialSearchRadius;
+    const float *pafX;
+    const float *pafY;
+    const float *pafZ;
 } GDALGridExtraParameters;
+
+/************************************************************************/
+/*                          CPLHaveRuntimeSSE()                         */
+/************************************************************************/
+
+#ifdef HAVE_SSE_AT_COMPILE_TIME
+
+#define CPUID_SSE_BIT     25
+
+#if (defined(_M_X64) || defined(__x86_64))
+
+static int CPLHaveRuntimeSSE()
+{
+    return TRUE;
+}
+
+#elif defined(__GNUC__) && defined(__i386__)
+
+#define GCC_CPUID(level, a, b, c, d)            \
+  __asm__ ("xchgl %%ebx, %1\n"                  \
+           "cpuid\n"                            \
+           "xchgl %%ebx, %1"                    \
+       : "=a" (a), "=r" (b), "=c" (c), "=d" (d) \
+       : "0" (level))
+
+static int CPLHaveRuntimeSSE()
+{
+    int cpuinfo[4] = {0,0,0,0};
+    GCC_CPUID(1, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
+    return (cpuinfo[3] & (1 << CPUID_SSE_BIT)) != 0;
+}
+
+#elif defined(_MSC_VER) && defined(_M_IX86)
+
+#include <intrin.h>
+
+static int CPLHaveRuntimeSSE()
+{
+    int cpuinfo[4] = {0,0,0,0};
+    __cpuid(cpuinfo, 1);
+    return (cpuinfo[3] & (1 << CPUID_SSE_BIT)) != 0;
+}
+
+#else
+
+static int CPLHaveRuntimeSSE()
+{
+    return FALSE;
+}
+
+#endif
+
+#endif // HAVE_SSE_AT_COMPILE_TIME
 
 /************************************************************************/
 /*                        GDALGridGetPointBounds()                      */
@@ -166,8 +230,8 @@ GDALGridInverseDistanceToAPower( const void *poOptions, GUInt32 nPoints,
         dfCoeff2 = sin(dfAngle);
     }
 
-    const double    dfPower =
-        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfPower;
+    const double    dfPowerDiv2 =
+        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfPower / 2;
     const double    dfSmoothing =
         ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfSmoothing;
     const GUInt32   nMaxPoints = 
@@ -196,16 +260,17 @@ GDALGridInverseDistanceToAPower( const void *poOptions, GUInt32 nPoints,
         {
             // If the test point is close to the grid node, use the point
             // value directly as a node value to avoid singularity.
-            if ( CPLIsEqual(dfR2, 0.0) )
+            if ( dfR2 < 0.0000000000001 )
             {
                 (*pdfValue) = padfZ[i];
                 return CE_None;
             }
             else
             {
-                const double  dfW = pow( sqrt(dfR2), dfPower );
-                dfNominator += padfZ[i] / dfW;
-                dfDenominator += 1.0 / dfW;
+                const double dfW = pow( dfR2, dfPowerDiv2 );
+                double dfInvW = 1.0 / dfW;
+                dfNominator += dfInvW * padfZ[i];
+                dfDenominator += dfInvW;
                 n++;
                 if ( nMaxPoints > 0 && n > nMaxPoints )
                     break;
@@ -248,35 +313,85 @@ GDALGridInverseDistanceToAPowerNoSearch( const void *poOptions, GUInt32 nPoints,
                                          double *pdfValue,
                                          void* hExtraParamsIn )
 {
-    const double    dfPower =
-        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfPower;
+    const double    dfPowerDiv2 =
+        ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfPower / 2;
     const double    dfSmoothing =
         ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfSmoothing;
+    const double    dfSmoothing2 = dfSmoothing * dfSmoothing;
     double  dfNominator = 0.0, dfDenominator = 0.0;
-    GUInt32 i;
+    GUInt32 i = 0;
+    int bPower2 = (dfPowerDiv2 == 1.0);
 
-    for ( i = 0; i < nPoints; i++ )
+    if( bPower2 )
     {
-        const double dfRX = padfX[i] - dfXPoint;
-        const double dfRY = padfY[i] - dfYPoint;
-        const double dfR2 =
-            dfRX * dfRX + dfRY * dfRY + dfSmoothing * dfSmoothing;
-
-        // If the test point is close to the grid node, use the point
-        // value directly as a node value to avoid singularity.
-        if ( CPLIsEqual(dfR2, 0.0) )
+        if( dfSmoothing2 > 0 )
         {
-            (*pdfValue) = padfZ[i];
-            return CE_None;
+            for ( i = 0; i < nPoints; i++ )
+            {
+                const double dfRX = padfX[i] - dfXPoint;
+                const double dfRY = padfY[i] - dfYPoint;
+                const double dfR2 =
+                    dfRX * dfRX + dfRY * dfRY + dfSmoothing2;
+
+                double dfInvR2 = 1.0 / dfR2;
+                dfNominator += dfInvR2 * padfZ[i];
+                dfDenominator += dfInvR2;
+            }
         }
         else
         {
-            const double dfW = pow( sqrt(dfR2), dfPower );
-            dfNominator += padfZ[i] / dfW;
-            dfDenominator += 1.0 / dfW;
+            for ( i = 0; i < nPoints; i++ )
+            {
+                const double dfRX = padfX[i] - dfXPoint;
+                const double dfRY = padfY[i] - dfYPoint;
+                const double dfR2 =
+                    dfRX * dfRX + dfRY * dfRY;
+
+                // If the test point is close to the grid node, use the point
+                // value directly as a node value to avoid singularity.
+                if ( dfR2 < 0.0000000000001 )
+                {
+                    break;
+                }
+                else
+                {
+                    double dfInvR2 = 1.0 / dfR2;
+                    dfNominator += dfInvR2 * padfZ[i];
+                    dfDenominator += dfInvR2;
+                }
+            }
+        }
+    }
+    else
+    {
+        for ( i = 0; i < nPoints; i++ )
+        {
+            const double dfRX = padfX[i] - dfXPoint;
+            const double dfRY = padfY[i] - dfYPoint;
+            const double dfR2 =
+                dfRX * dfRX + dfRY * dfRY + dfSmoothing2;
+
+            // If the test point is close to the grid node, use the point
+            // value directly as a node value to avoid singularity.
+            if ( dfR2 < 0.0000000000001 )
+            {
+                break;
+            }
+            else
+            {
+                const double dfW = pow( dfR2, dfPowerDiv2 );
+                double dfInvW = 1.0 / dfW;
+                dfNominator += dfInvW * padfZ[i];
+                dfDenominator += dfInvW;
+            }
         }
     }
 
+    if( i != nPoints )
+    {
+        (*pdfValue) = padfZ[i];
+    }
+    else
     if ( dfDenominator == 0.0 )
     {
         (*pdfValue) =
@@ -287,6 +402,149 @@ GDALGridInverseDistanceToAPowerNoSearch( const void *poOptions, GUInt32 nPoints,
 
     return CE_None;
 }
+
+/************************************************************************/
+/*         GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE()     */
+/************************************************************************/
+
+#ifdef HAVE_SSE_AT_COMPILE_TIME
+
+static CPLErr
+GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE(
+                                        const void *poOptions,
+                                        GUInt32 nPoints,
+                                        const double *unused_padfX,
+                                        const double *unused_padfY,
+                                        const double *unused_padfZ,
+                                        double dfXPoint, double dfYPoint,
+                                        double *pdfValue,
+                                        void* hExtraParamsIn )
+{
+    size_t i = 0;
+    GDALGridExtraParameters* psExtraParams = (GDALGridExtraParameters*) hExtraParamsIn;
+    const float* pafX = psExtraParams->pafX;
+    const float* pafY = psExtraParams->pafY;
+    const float* pafZ = psExtraParams->pafZ;
+
+    const float fEpsilon = 0.0000000000001f;
+    const float fXPoint = (float)dfXPoint;
+    const float fYPoint = (float)dfYPoint;
+    const __m128 xmm_small = _mm_load1_ps(&fEpsilon);
+    const __m128 xmm_x = _mm_load1_ps(&fXPoint);
+    const __m128 xmm_y = _mm_load1_ps(&fYPoint);
+    __m128 xmm_nominator = _mm_setzero_ps();
+    __m128 xmm_denominator = _mm_setzero_ps();
+    int mask = 0;
+
+#if defined(__x86_64) || defined(_M_X64)
+    /* This would also work in 32bit mode, but there are only 8 XMM registers */
+    /* whereas we have 16 for 64bit */
+#define LOOP_SIZE   8
+    size_t nPointsRound = (nPoints / LOOP_SIZE) * LOOP_SIZE;
+    for ( i = 0; i < nPointsRound; i += LOOP_SIZE )
+    {
+        __m128 xmm_rx = _mm_sub_ps(_mm_load_ps(pafX + i), xmm_x);            /* rx = pafX[i] - fXPoint */
+        __m128 xmm_rx_4 = _mm_sub_ps(_mm_load_ps(pafX + i + 4), xmm_x);
+        __m128 xmm_ry = _mm_sub_ps(_mm_load_ps(pafY + i), xmm_y);            /* ry = pafY[i] - fYPoint */
+        __m128 xmm_ry_4 = _mm_sub_ps(_mm_load_ps(pafY + i + 4), xmm_y);
+        __m128 xmm_r2 = _mm_add_ps(_mm_mul_ps(xmm_rx, xmm_rx),               /* r2 = rx * rx + ry * ry */
+                                   _mm_mul_ps(xmm_ry, xmm_ry));
+        __m128 xmm_r2_4 = _mm_add_ps(_mm_mul_ps(xmm_rx_4, xmm_rx_4),
+                                     _mm_mul_ps(xmm_ry_4, xmm_ry_4));
+        __m128 xmm_invr2 = _mm_rcp_ps(xmm_r2);                               /* invr2 = 1.0f / r2 */
+        __m128 xmm_invr2_4 = _mm_rcp_ps(xmm_r2_4);
+        xmm_nominator = _mm_add_ps(xmm_nominator,                            /* nominator += invr2 * pafZ[i] */
+                            _mm_mul_ps(xmm_invr2, _mm_load_ps(pafZ + i)));
+        xmm_nominator = _mm_add_ps(xmm_nominator,
+                            _mm_mul_ps(xmm_invr2_4, _mm_load_ps(pafZ + i + 4)));
+        xmm_denominator = _mm_add_ps(xmm_denominator, xmm_invr2);           /* denominator += invr2 */
+        xmm_denominator = _mm_add_ps(xmm_denominator, xmm_invr2_4);
+        mask = _mm_movemask_ps(_mm_cmplt_ps(xmm_r2, xmm_small)) |           /* if( r2 < fEpsilon) */
+              (_mm_movemask_ps(_mm_cmplt_ps(xmm_r2_4, xmm_small)) << 4);
+        if( mask )
+            break;
+    }
+#else
+#define LOOP_SIZE   4
+    size_t nPointsRound = (nPoints / LOOP_SIZE) * LOOP_SIZE;
+    for ( i = 0; i < nPointsRound; i += LOOP_SIZE )
+    {
+        __m128 xmm_rx = _mm_sub_ps(_mm_load_ps(pafX + i), xmm_x);           /* rx = pafX[i] - fXPoint */
+        __m128 xmm_ry = _mm_sub_ps(_mm_load_ps(pafY + i), xmm_y);           /* ry = pafY[i] - fYPoint */
+        __m128 xmm_r2 = _mm_add_ps(_mm_mul_ps(xmm_rx, xmm_rx),              /* r2 = rx * rx + ry * ry */
+                                   _mm_mul_ps(xmm_ry, xmm_ry));
+        __m128 xmm_invr2 = _mm_rcp_ps(xmm_r2);                              /* invr2 = 1.0f / r2 */
+        xmm_nominator = _mm_add_ps(xmm_nominator,                           /* nominator += invr2 * pafZ[i] */
+                            _mm_mul_ps(xmm_invr2, _mm_load_ps(pafZ + i)));
+        xmm_denominator = _mm_add_ps(xmm_denominator, xmm_invr2);           /* denominator += invr2 */
+        mask = _mm_movemask_ps(_mm_cmplt_ps(xmm_r2, xmm_small));            /* if( r2 < fEpsilon) */
+        if( mask )
+            break;
+    }
+#endif
+
+    /* Find which i triggered r2 < fEpsilon */
+    if( mask )
+    {
+        for(int j = 0; j < LOOP_SIZE; j++ )
+        {
+            if( mask & (1 << j) )
+            {
+                (*pdfValue) = (pafZ)[i + j];
+                return CE_None;
+            }
+        }
+    }
+
+    /* Get back nominator and denominator values for XMM registers */
+    float afNominator[4], afDenominator[4];
+    _mm_storeu_ps(afNominator, xmm_nominator);
+    _mm_storeu_ps(afDenominator, xmm_denominator);
+
+    float fNominator = afNominator[0] + afNominator[1] +
+                       afNominator[2] + afNominator[3];
+    float fDenominator = afDenominator[0] + afDenominator[1] +
+                         afDenominator[2] + afDenominator[3];
+
+    /* Do the few remaining loop iterations */
+    for ( ; i < nPoints; i++ )
+    {
+        const float fRX = pafX[i] - fXPoint;
+        const float fRY = pafY[i] - fYPoint;
+        const float fR2 =
+            fRX * fRX + fRY * fRY;
+
+        // If the test point is close to the grid node, use the point
+        // value directly as a node value to avoid singularity.
+        if ( fR2 < 0.0000000000001 )
+        {
+            break;
+        }
+        else
+        {
+            const float fInvR2 = 1.0f / fR2;
+            fNominator += fInvR2 * pafZ[i];
+            fDenominator += fInvR2;
+        }
+    }
+
+    if( i != nPoints )
+    {
+        (*pdfValue) = pafZ[i];
+    }
+    else
+    if ( fDenominator == 0.0 )
+    {
+        (*pdfValue) =
+            ((GDALGridInverseDistanceToAPowerOptions*)poOptions)->dfNoDataValue;
+    }
+    else
+        (*pdfValue) = fNominator / fDenominator;
+
+    return CE_None;
+}
+#endif // HAVE_SSE_AT_COMPILE_TIME
+
 /************************************************************************/
 /*                        GDALGridMovingAverage()                       */
 /************************************************************************/
@@ -1396,7 +1654,16 @@ static void GDALGridJobProcess(void* user_data)
  * Starting with GDAL 2.0, it is possible to set the GDAL_NUM_THREADS
  * configuration option to parallelize the processing. The value to set is
  * the number of worker threads, or ALL_CPUS to use all the cores/CPUs of the
- * computer.
+ * computer (default value).
+ *
+ * Starting with GDAL 2.0, on Intel/AMD i386/x86_64 architectures, some
+ * gridding methods will be optimized with SSE instructions (provided GDAL
+ * has been compiled with such support, and it is availabable at runtime).
+ * Currently, only 'invdist' algorithm with default parameters has an optimized
+ * implementation.
+ * This can provide substantial speed-up, but sometimes at the expense of
+ * reduced floating point precision. This can be disabled by setting the
+ * GDAL_USE_SSE configuration option to NO.
  *
  * @param eAlgorithm Gridding method. 
  * @param poOptions Options to control choosen gridding method.
@@ -1446,6 +1713,16 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     GDALGridFunction    pfnGDALGridMethod;
     int bCreateQuadTree = FALSE;
 
+    /* Potentially unaligned pointers */
+    void* pabyX = NULL;
+    void* pabyY = NULL;
+    void* pabyZ = NULL;
+
+    /* Starting address aligned on 16-byte boundary */
+    float* pafXAligned = NULL;
+    float* pafYAligned = NULL;
+    float* pafZAligned = NULL;
+
     switch ( eAlgorithm )
     {
         case GGA_InverseDistanceToAPower:
@@ -1453,7 +1730,51 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                  dfRadius1 == 0.0 &&
                  ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->
                  dfRadius2 == 0.0 )
+            {
+                const double    dfPower =
+                    ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfPower;
+                const double    dfSmoothing =
+                    ((GDALGridInverseDistanceToAPowerOptions *)poOptions)->dfSmoothing;
+
                 pfnGDALGridMethod = GDALGridInverseDistanceToAPowerNoSearch;
+                if( dfPower == 2.0 && dfSmoothing == 0.0 )
+                {
+#ifdef HAVE_SSE_AT_COMPILE_TIME
+
+#define ALIGN16(x)  (((char*)(x)) + ((16 - (((size_t)(x)) % 16)) % 16))
+
+                    if( CSLTestBoolean(CPLGetConfigOption("GDAL_USE_SSE", "YES")) &&
+                        CPLHaveRuntimeSSE() )
+                    {
+                        pabyX = (float*)VSIMalloc(sizeof(float) * nPoints + 15);
+                        pabyY = (float*)VSIMalloc(sizeof(float) * nPoints + 15);
+                        pabyZ = (float*)VSIMalloc(sizeof(float) * nPoints + 15);
+                        if( pabyX != NULL && pabyY != NULL && pabyZ != NULL)
+                        {
+                            CPLDebug("GDAL_GRID", "Using SSE optimized version");
+                            pafXAligned = (float*) ALIGN16(pabyX);
+                            pafYAligned = (float*) ALIGN16(pabyY);
+                            pafZAligned = (float*) ALIGN16(pabyZ);
+                            pfnGDALGridMethod = GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE;
+                            GUInt32 i;
+                            for(i=0;i<nPoints;i++)
+                            {
+                                pafXAligned[i] = (float) padfX[i];
+                                pafYAligned[i] = (float) padfY[i];
+                                pafZAligned[i] = (float) padfZ[i];
+                            }
+                        }
+                        else
+                        {
+                            VSIFree(pabyX);
+                            VSIFree(pabyY);
+                            VSIFree(pabyZ);
+                            pabyX = pabyY = pabyZ = NULL;
+                        }
+                    }
+#endif // HAVE_SSE_AT_COMPILE_TIME
+                }
+            }
             else
                 pfnGDALGridMethod = GDALGridInverseDistanceToAPower;
             break;
@@ -1554,8 +1875,11 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
     sExtraParameters.hQuadTree = hQuadTree;
     sExtraParameters.dfInitialSearchRadius = dfInitialSearchRadius;
+    sExtraParameters.pafX = pafXAligned;
+    sExtraParameters.pafY = pafYAligned;
+    sExtraParameters.pafZ = pafZAligned;
 
-    const char* pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
+    const char* pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
     int nThreads;
     if (EQUAL(pszThreads, "ALL_CPUS"))
         nThreads = CPLGetNumCPUs();
@@ -1675,6 +1999,10 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     CPLFree( pasGridPoints );
     if( hQuadTree != NULL )
         CPLQuadTreeDestroy( hQuadTree );
+    
+    CPLFree(pabyX);
+    CPLFree(pabyY);
+    CPLFree(pabyZ);
 
     return bStop ? CE_Failure : CE_None;
 }

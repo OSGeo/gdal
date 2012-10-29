@@ -865,6 +865,7 @@ with_libtool
 with_ld_shared
 with_unix_stdio_64
 enable_debug
+with_sse
 with_hide_internal_symbols
 with_rename_internal_libtiff_symbols
 with_rename_internal_libgeotiff_symbols
@@ -1601,6 +1602,7 @@ Optional Packages:
   --without-libtool     Don't use libtool to build the library
   --without-ld-shared   Disable shared library support
   --with-unix-stdio-64=ARG Utilize 64 stdio api (yes/no)
+  --with-sse=ARG        Detect SSE availability for some optimized routines (ARG=yes(default), no)
   --with-hide-internal-symbols=ARG Try to hide internal symbols (ARG=yes/no)
   --with-rename-internal-libtiff-symbols=ARG Prefix internal libtiff symbols with gdal_ (ARG=yes/no)
   --with-rename-internal-libgeotiff-symbols=ARG Prefix internal libgeotiff symbols with gdal_ (ARG=yes/no)
@@ -17316,6 +17318,49 @@ rm -f atomicbuiltins.* atomicbuiltins
 
 HAVE_GCC_ATOMIC_BUILTINS=$HAVE_GCC_ATOMIC_BUILTINS
 
+
+
+
+# Check whether --with-sse was given.
+if test "${with_sse+set}" = set; then :
+  withval=$with_sse;
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether SSE is available" >&5
+$as_echo_n "checking whether SSE is available... " >&6; }
+
+if test "$with_sse" = "yes" -o "$with_sse" = ""; then
+
+    rm -f detectsse.c
+    echo '#ifdef __SSE__' > detectsse.c
+    echo '#include <xmmintrin.h>' >> detectsse.c
+    echo 'void foo() { float fEpsilon = 0.0000000000001f; __m128 xmm_small = _mm_load1_ps(&fEpsilon); } ' >> detectsse.c
+    echo '#else' >> detectsse.c
+    echo 'some_error' >> detectsse.c
+    echo '#endif' >> detectsse.c
+    if test -z "`${CC} -c detectsse.c 2>&1`" ; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    else
+        if test -z "`${CC} -msse -c detectsse.c 2>&1`" ; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+            CFLAGS="$CFLAGS -msse"
+            CXXFLAGS="$CXXFLAGS -msse"
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+            if test "$with_sse" = "yes"; then
+                as_fn_error $? "--with-sse was requested, but SSE is not available" "$LINENO" 5
+            fi
+        fi
+    fi
+    rm -f detectsse.*
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
 
 
 

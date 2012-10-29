@@ -271,17 +271,63 @@ def test_gdal_grid_3():
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_invdist.tif')
     maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
-    ds_ref = None
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ds_ref, verbose = 1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
+    ds_ref = None
     ds = None
 
     #################
-    # Test GDAL_NUM_THREADS config option
+    # Test GDAL_USE_SSE config option to NO
 
-    outfiles.append('tmp/grid_invdist_2theads.tif')
+    outfiles.append('tmp/grid_invdist_no_sse.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    gdaltest.runexternal(gdal_grid + ' --config GDAL_USE_SSE NO -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/gdal_invdist.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_invdist.tif')
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    if maxdiff > 1:
+        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.post_reason('Image too different from the reference')
+        return 'fail'
+    ds_ref = None
+    ds = None
+    
+    #################
+    # Test GDAL_NUM_THREADS config option to 1
+
+    outfiles.append('tmp/grid_invdist_1thread.tif')
+    try:
+        os.remove(outfiles[-1])
+    except:
+        pass
+
+    # Create a GDAL dataset from the values of "grid.csv".
+    gdaltest.runexternal(gdal_grid + ' --config GDAL_NUM_THREADS 1 -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0 data/grid.vrt ' + outfiles[-1])
+
+    # We should get the same values as in "ref_data/gdal_invdist.tif"
+    ds = gdal.Open(outfiles[-1])
+    ds_ref = gdal.Open('ref_data/grid_invdist.tif')
+    maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
+    if maxdiff > 1:
+        gdaltest.compare_ds(ds, ds_ref, verbose = 1)
+        gdaltest.post_reason('Image too different from the reference')
+        return 'fail'
+    ds_ref = None
+    ds = None
+
+    #################
+    # Test GDAL_NUM_THREADS config option to 2
+
+    outfiles.append('tmp/grid_invdist_2threads.tif')
     try:
         os.remove(outfiles[-1])
     except:
@@ -294,12 +340,13 @@ def test_gdal_grid_3():
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_invdist.tif')
     maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
-    ds_ref = None
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ds_ref, verbose = 1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
+    ds_ref = None
     ds = None
+
     #################
     outfiles.append('tmp/grid_invdist_90_90_8p.tif')
     try:
@@ -315,11 +362,11 @@ def test_gdal_grid_3():
     ds = gdal.Open(outfiles[-1])
     ds_ref = gdal.Open('ref_data/grid_invdist_90_90_8p.tif')
     maxdiff = gdaltest.compare_ds(ds, ds_ref, verbose = 0)
-    ds_ref = None
     if maxdiff > 1:
         gdaltest.compare_ds(ds, ds_ref, verbose = 1)
         gdaltest.post_reason('Image too different from the reference')
         return 'fail'
+    ds_ref = None
     ds = None
 
     return 'success'

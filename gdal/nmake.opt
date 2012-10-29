@@ -129,6 +129,13 @@ OPTFLAGS=	/nologo /MD /EHsc /GR /Zi /Fd$(GDAL_ROOT)\gdal$(VERSION).pdb  /DDEBUG
 WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4018 /wd4389
 !ENDIF
 
+# 
+# Set flags controlling availability of SSE
+# 
+!IFNDEF SSEFLAGS
+SSEFLAGS = /DHAVE_SSE_AT_COMPILE_TIME
+!ENDIF
+
 # The followin are extra disables that can be applied to external source
 # not under our control that we wish to use less stringent warnings with.
 !IFNDEF SOFTWARNFLAGS
@@ -568,7 +575,7 @@ OGR_FLAG = -DOGR_ENABLED
 LINKER_FLAGS = $(MSVC_VLD_LIB) $(LDEBUG)
 
 
-CFLAGS	=	$(OPTFLAGS) $(WARNFLAGS) $(INC) $(EXTRAFLAGS) $(OGR_FLAG) $(MSVC_VLD_FLAGS)
+CFLAGS	=	$(OPTFLAGS) $(WARNFLAGS) $(SSEFLAGS) $(INC) $(EXTRAFLAGS) $(OGR_FLAG) $(MSVC_VLD_FLAGS)
 CPPFLAGS = $(CFLAGS) 
 MAKE	=	nmake /nologo
 
