@@ -2179,10 +2179,18 @@ OSMContext* OSM_Open( const char* pszFilename,
     memset(psCtxt, 0, sizeof(OSMContext));
     psCtxt->bPBF = bPBF;
     psCtxt->fp = fp;
-    psCtxt->pfnNotifyNodes = pfnNotifyNodes ? pfnNotifyNodes : EmptyNotifyNodesFunc;
-    psCtxt->pfnNotifyWay = pfnNotifyWay ? pfnNotifyWay : EmptyNotifyWayFunc;
-    psCtxt->pfnNotifyRelation = pfnNotifyRelation ? pfnNotifyRelation : EmptyNotifyRelationFunc;
-    psCtxt->pfnNotifyBounds = pfnNotifyBounds ? pfnNotifyBounds : EmptyNotifyBoundsFunc;
+    psCtxt->pfnNotifyNodes = pfnNotifyNodes;
+    if( pfnNotifyNodes == NULL )
+        psCtxt->pfnNotifyNodes = EmptyNotifyNodesFunc;
+    psCtxt->pfnNotifyWay = pfnNotifyWay;
+    if( pfnNotifyWay == NULL )
+        psCtxt->pfnNotifyWay = EmptyNotifyWayFunc;
+    psCtxt->pfnNotifyRelation = pfnNotifyRelation;
+    if( pfnNotifyRelation == NULL )
+        psCtxt->pfnNotifyRelation = EmptyNotifyRelationFunc;
+    psCtxt->pfnNotifyBounds = pfnNotifyBounds;
+    if( pfnNotifyBounds == NULL )
+        psCtxt->pfnNotifyBounds = EmptyNotifyBoundsFunc;
     psCtxt->user_data = user_data;
 
     if( bPBF )
