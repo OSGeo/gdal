@@ -218,6 +218,43 @@ rm -f atomicbuiltins.* atomicbuiltins
 AC_SUBST(HAVE_GCC_ATOMIC_BUILTINS,$HAVE_GCC_ATOMIC_BUILTINS)
 
 dnl ---------------------------------------------------------------------------
+dnl Check SSE availability
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(sse,
+[  --with-sse[=ARG]        Detect SSE availability for some optimized routines (ARG=yes(default), no)],,)
+
+AC_MSG_CHECKING([whether SSE is available])
+
+if test "$with_sse" = "yes" -o "$with_sse" = ""; then
+
+    rm -f detectsse.c
+    echo '#ifdef __SSE__' > detectsse.c
+    echo '#include <xmmintrin.h>' >> detectsse.c
+    echo 'void foo() { float fEpsilon = 0.0000000000001f; __m128 xmm_small = _mm_load1_ps(&fEpsilon); } ' >> detectsse.c
+    echo '#else' >> detectsse.c
+    echo 'some_error' >> detectsse.c
+    echo '#endif' >> detectsse.c
+    if test -z "`${CC} -c detectsse.c 2>&1`" ; then
+        AC_MSG_RESULT([yes])
+    else
+        if test -z "`${CC} -msse -c detectsse.c 2>&1`" ; then
+            AC_MSG_RESULT([yes])
+            CFLAGS="$CFLAGS -msse"
+            CXXFLAGS="$CXXFLAGS -msse"
+        else
+            AC_MSG_RESULT([no])
+            if test "$with_sse" = "yes"; then
+                AC_MSG_ERROR([--with-sse was requested, but SSE is not available])
+            fi
+        fi
+    fi
+    rm -f detectsse.*
+else
+    AC_MSG_RESULT([no])
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl Check if user requests hidding internal symbols
 dnl ---------------------------------------------------------------------------
 
