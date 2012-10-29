@@ -5874,7 +5874,7 @@ void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
                     double dfLatPole = 0.0;
                     if ( dfValue > 0.0) dfLatPole = 90.0;
                     else dfLatPole = -90.0;
-                        oOutList.push_back( std::make_pair( CF_PP_LAT_PROJ_ORIGIN, 
+                        oOutList.push_back( std::make_pair( std::string(CF_PP_LAT_PROJ_ORIGIN), 
                                                             dfLatPole ) );
                 }              
 
@@ -5898,7 +5898,7 @@ void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
                         else {                      
                             oValIter2 = oValMap.find( std::string(SRS_PP_LATITUDE_OF_ORIGIN) );
                             if (oValIter2 != oValMap.end() ) {
-                                oOutList.push_back( std::make_pair( CF_PP_STD_PARALLEL_1, 
+                                oOutList.push_back( std::make_pair( std::string(CF_PP_STD_PARALLEL_1), 
                                                                     oValIter2->second) );
                             }
                             else {
@@ -5931,9 +5931,9 @@ void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
             }
             /* for SRS_PP_SCALE_FACTOR write 2 mappings */
             else if (  EQUAL(pszGDALAtt->c_str(), SRS_PP_SCALE_FACTOR) ) {
-                oOutList.push_back( std::make_pair( CF_PP_SCALE_FACTOR_MERIDIAN,
+                oOutList.push_back( std::make_pair( std::string(CF_PP_SCALE_FACTOR_MERIDIAN),
                                                     dfValue ) );
-                oOutList.push_back( std::make_pair( CF_PP_SCALE_FACTOR_ORIGIN,
+                oOutList.push_back( std::make_pair( std::string(CF_PP_SCALE_FACTOR_ORIGIN),
                                                     dfValue ) );
             }
             /* if not found insert the GDAL name */
