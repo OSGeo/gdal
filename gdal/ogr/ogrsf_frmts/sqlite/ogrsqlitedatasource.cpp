@@ -1022,18 +1022,18 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
             {
                 int nGeomType = atoi(papszRow[2]);
 
-                if( nGeomType >= 0 && nGeomType <= 7 )
+                if( nGeomType >= 0 && nGeomType <= 7 ) /* XY */
                     eGeomType = (OGRwkbGeometryType) nGeomType;
-                else if( nGeomType >= 1000 && nGeomType <= 1007 )
+                else if( nGeomType >= 1000 && nGeomType <= 1007 ) /* XYZ */
                     eGeomType = (OGRwkbGeometryType) ((nGeomType - 1000) | wkb25DBit);
-                else if( nGeomType >= 2000 && nGeomType <= 2007 )
+                else if( nGeomType >= 2000 && nGeomType <= 2007 ) /* XYM */
                 {
-                    eGeomType = (OGRwkbGeometryType) ((nGeomType - 2000) | wkb25DBit);
+                    eGeomType = (OGRwkbGeometryType) (nGeomType - 2000);
                     bHasM = TRUE;
                 }
-                else if( nGeomType >= 3000 && nGeomType <= 3007 )
+                else if( nGeomType >= 3000 && nGeomType <= 3007 ) /* XYZM */
                 {
-                    eGeomType = (OGRwkbGeometryType) ((nGeomType - 1000) | wkb25DBit);
+                    eGeomType = (OGRwkbGeometryType) ((nGeomType - 3000) | wkb25DBit);
                     bHasM = TRUE;
                 }
             }
