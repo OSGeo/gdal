@@ -479,6 +479,7 @@ class GTiffRasterBand : public GDALPamRasterBand
     double             dfOffset;
     double             dfScale;
     CPLString          osUnitType;
+    CPLString          osDescription;
 
     CPLErr DirectIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
@@ -507,6 +508,9 @@ public:
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
                                   int nPixelSpace, int nLineSpace );
+
+    virtual const char *GetDescription() const;
+    virtual void        SetDescription( const char * );
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
@@ -1379,6 +1383,28 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     poGDS->bLoadedBlockDirty = TRUE;
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                           SetDescription()                           */
+/************************************************************************/
+
+void GTiffRasterBand::SetDescription( const char *pszDescription )
+
+{
+    if( pszDescription == NULL )
+        pszDescription = "";
+
+    osDescription = pszDescription;
+}
+
+/************************************************************************/
+/*                           GetDescription()                           */
+/************************************************************************/
+
+const char *GTiffRasterBand::GetDescription() const
+{
+    return osDescription;
 }
 
 /************************************************************************/
@@ -5044,11 +5070,10 @@ int  GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
             }
         }
 
-        int bSuccess;
-        double dfOffset = poBand->GetOffset( &bSuccess );
+        double dfOffset = poBand->GetOffset();
         double dfScale = poBand->GetScale();
 
-        if( bSuccess && (dfOffset != 0.0 || dfScale != 1.0) )
+        if( dfOffset != 0.0 || dfScale != 1.0 )
         {
             char szValue[128];
 
@@ -5064,6 +5089,14 @@ int  GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
         if (pszUnitType != NULL && pszUnitType[0] != '\0')
             AppendMetadataItem( &psRoot, &psTail, "UNITTYPE", pszUnitType, nBand, 
                                 "unittype", "" );
+
+
+        if (strlen(poBand->GetDescription()) > 0) 
+        {
+            AppendMetadataItem( &psRoot, &psTail, "DESCRIPTION", 
+                                poBand->GetDescription(), nBand, 
+                                "description", "" );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -5196,6 +5229,7 @@ void GTiffDataset::PushMetadataToPam()
             poBand->GDALPamRasterBand::SetOffset( poBand->GetOffset() );
             poBand->GDALPamRasterBand::SetScale( poBand->GetScale() );
             poBand->GDALPamRasterBand::SetUnitType( poBand->GetUnitType() );
+            poBand->GDALPamRasterBand::SetDescription( poBand->GetDescription() );
         }
     }
 }
@@ -6746,6 +6780,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                         poBand->SetOffset( CPLAtofM(pszUnescapedValue) );
                     else if( EQUAL(pszRole,"unittype") )
                         poBand->SetUnitType( pszUnescapedValue );
+                    else if( EQUAL(pszRole,"description") )
+                        poBand->SetDescription( pszUnescapedValue );
                     else
                     {
                         if( bIsXML )
