@@ -66,7 +66,9 @@ CPL_C_END
 #endif
 
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
-GDALDataset* JPEGDataset12Open(GDALOpenInfo* poOpenInfo);
+GDALDataset* JPEGDataset12Open(const char* pszFilename,
+                               char** papszSiblingFiles,
+                               int nScaleDenom);
 GDALDataset* JPEGDataset12CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
@@ -133,6 +135,13 @@ protected:
 
     jmp_buf setjmp_buffer;
 
+    int           nScaleDenom;
+    int           bHasInitInternalOverviews;
+    int           nInternalOverviewsCurrent;
+    int           nInternalOverviewsToFree;
+    GDALDataset** papoInternalOverviews;
+    void          InitInternalOverviews();
+
     char   *pszProjection;
     int	   bGeoTransformValid;
     double adfGeoTransform[6];
@@ -190,6 +199,11 @@ protected:
     void   LoadWorldFileOrTab();
     CPLString osWldFilename;
 
+    virtual int         CloseDependentDatasets();
+    
+    virtual CPLErr IBuildOverviews( const char *, int, int *,
+                                    int, int *, GDALProgressFunc, void * );
+
   public:
                  JPGDatasetCommon();
                  ~JPGDatasetCommon();
@@ -211,6 +225,7 @@ protected:
     virtual char **GetFileList(void);
 
     static int          Identify( GDALOpenInfo * );
+    static GDALDataset *Open( GDALOpenInfo * );
 };
 
 /************************************************************************/
@@ -235,7 +250,9 @@ class JPGDataset : public JPGDatasetCommon
                  JPGDataset();
                  ~JPGDataset();
 
-    static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Open( const char* pszFilename,
+                              char** papszSiblingFiles = NULL,
+                              int nScaleDenom = 1 );
     static GDALDataset* CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
@@ -272,6 +289,9 @@ class JPGRasterBand : public GDALPamRasterBand
 
     virtual GDALRasterBand *GetMaskBand();
     virtual int             GetMaskFlags();
+    
+    virtual GDALRasterBand *GetOverview(int i);
+    virtual int             GetOverviewCount();
 };
 
 #if !defined(JPGDataset)
@@ -787,6 +807,9 @@ GDALColorInterp JPGRasterBand::GetColorInterpretation()
 GDALRasterBand *JPGRasterBand::GetMaskBand()
 
 {
+    if (poGDS->nScaleDenom > 1 )
+        return GDALPamRasterBand::GetMaskBand();
+
     if (poGDS->fpImage == NULL)
         return NULL;
 
@@ -813,6 +836,9 @@ GDALRasterBand *JPGRasterBand::GetMaskBand()
 int JPGRasterBand::GetMaskFlags()
 
 {
+    if (poGDS->nScaleDenom > 1 )
+        return GDALPamRasterBand::GetMaskFlags();
+
     if (poGDS->fpImage == NULL)
         return 0;
 
@@ -821,6 +847,37 @@ int JPGRasterBand::GetMaskFlags()
         return GMF_PER_DATASET;
     else
         return GDALPamRasterBand::GetMaskFlags();
+}
+
+/************************************************************************/
+/*                            GetOverview()                             */
+/************************************************************************/
+
+GDALRasterBand* JPGRasterBand::GetOverview(int i)
+{
+    poGDS->InitInternalOverviews();
+
+    if( poGDS->nInternalOverviewsCurrent == 0 )
+        return GDALPamRasterBand::GetOverview(i);
+
+    if( i < 0 || i >= poGDS->nInternalOverviewsCurrent )
+        return NULL;
+    else
+        return poGDS->papoInternalOverviews[i]->GetRasterBand(nBand);
+}
+
+/************************************************************************/
+/*                         GetOverviewCount()                           */
+/************************************************************************/
+
+int JPGRasterBand::GetOverviewCount()
+{
+    poGDS->InitInternalOverviews();
+
+    if( poGDS->nInternalOverviewsCurrent == 0 )
+        return GDALPamRasterBand::GetOverviewCount();
+
+    return poGDS->nInternalOverviewsCurrent;
 }
 
 /************************************************************************/
@@ -833,6 +890,12 @@ JPGDatasetCommon::JPGDatasetCommon()
 
 {
     fpImage = NULL;
+
+    nScaleDenom = 1;
+    bHasInitInternalOverviews = FALSE;
+    nInternalOverviewsCurrent = 0;
+    nInternalOverviewsToFree = 0;
+    papoInternalOverviews = NULL;
 
     pabyScanline = NULL;
     nLoadedScanline = -1;
@@ -898,6 +961,102 @@ JPGDatasetCommon::~JPGDatasetCommon()
     CPLFree( pabyBitMask );
     CPLFree( pabyCMask );
     delete poMaskBand;
+
+    CloseDependentDatasets();
+}
+
+/************************************************************************/
+/*                       CloseDependentDatasets()                       */
+/************************************************************************/
+
+int JPGDatasetCommon::CloseDependentDatasets()
+{
+    int bRet = GDALPamDataset::CloseDependentDatasets();
+    if( nInternalOverviewsToFree )
+    {
+        bRet = TRUE;
+        for(int i = 0; i < nInternalOverviewsToFree; i++)
+            delete papoInternalOverviews[i];
+        CPLFree(papoInternalOverviews);
+        papoInternalOverviews = NULL;
+        nInternalOverviewsToFree = 0;
+    }
+    return bRet;
+}
+
+/************************************************************************/
+/*                       InitInternalOverviews()                        */
+/************************************************************************/
+
+void JPGDatasetCommon::InitInternalOverviews()
+{
+    if( bHasInitInternalOverviews )
+        return;
+    bHasInitInternalOverviews = TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Instanciate on-the-fly overviews (if no external ones).         */
+/* -------------------------------------------------------------------- */
+    if( nScaleDenom == 1 && GetRasterBand(1)->GetOverviewCount() == 0 )
+    {
+        /* libjpeg-6b only suppports 2, 4 and 8 scale denominators */
+        /* TODO: Later versions support more */
+
+        int i;
+        int nInternalOverviews = 0;
+
+        for(i = 2; i >= 0; i--)
+        {
+            if( nRasterXSize >= (256 << i) || nRasterYSize >= (256 << i) )
+            {
+                nInternalOverviews = i + 1;
+                break;
+            }
+        }
+
+        if( nInternalOverviews > 0 )
+        {
+            papoInternalOverviews = (GDALDataset**)
+                    CPLMalloc(nInternalOverviews * sizeof(GDALDataset*));
+            for(i = 0; i < nInternalOverviews; i++ )
+            {
+                papoInternalOverviews[i] =
+                    JPGDataset::Open(GetDescription(), NULL, 1 << (i + 1));
+                if( papoInternalOverviews[i] == NULL )
+                {
+                    nInternalOverviews = i;
+                    break;
+                }
+            }
+
+            nInternalOverviewsCurrent = nInternalOverviewsToFree = nInternalOverviews;
+        }
+    }
+}
+
+/************************************************************************/
+/*                          IBuildOverviews()                           */
+/************************************************************************/
+
+CPLErr JPGDatasetCommon::IBuildOverviews( const char *pszResampling, 
+                                          int nOverviewsListCount,
+                                          int *panOverviewList, 
+                                          int nListBands, int *panBandList,
+                                          GDALProgressFunc pfnProgress, 
+                                          void * pProgressData )
+{
+    CPLErr eErr;
+
+    bHasInitInternalOverviews = TRUE;
+    nInternalOverviewsCurrent = 0;
+
+    eErr = GDALPamDataset::IBuildOverviews(pszResampling,
+                                           nOverviewsListCount,
+                                           panOverviewList,
+                                           nListBands, panBandList,
+                                           pfnProgress, pProgressData);
+
+    return eErr;
 }
 
 #endif // !defined(JPGDataset)
@@ -1194,6 +1353,7 @@ void JPGDataset::Restart()
     jpeg_vsiio_src( &sDInfo, fpImage );
     jpeg_read_header( &sDInfo, TRUE );
     
+    sDInfo.scale_denom = nScaleDenom;
     sDInfo.out_color_space = colorSpace;
     nLoadedScanline = -1;
     jpeg_start_decompress( &sDInfo );
@@ -1400,13 +1560,11 @@ int JPGDatasetCommon::Identify( GDALOpenInfo * poOpenInfo )
     return TRUE;
 }
 
-#endif // !defined(JPGDataset)
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
+GDALDataset *JPGDatasetCommon::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if( !Identify( poOpenInfo ) )
@@ -1420,23 +1578,36 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    return JPGDataset::Open(poOpenInfo->pszFilename, poOpenInfo->papszSiblingFiles);
+}
+
+#endif // !defined(JPGDataset)
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles,
+                               int nScaleDenom )
+
+{
 /* -------------------------------------------------------------------- */
 /*      If it is a subfile, read the JPEG header.                       */
 /* -------------------------------------------------------------------- */
     int bIsSubfile = FALSE;
     GUIntBig subfile_offset = 0;
     GUIntBig subfile_size = 0;
-    const char *real_filename = poOpenInfo->pszFilename;
+    const char *real_filename = pszFilename;
     int nQLevel = -1;
 
-    if( EQUALN(poOpenInfo->pszFilename,"JPEG_SUBFILE:",13) )
+    if( EQUALN(pszFilename,"JPEG_SUBFILE:",13) )
     {
         char** papszTokens;
         int bScan = FALSE;
 
-        if( EQUALN(poOpenInfo->pszFilename,"JPEG_SUBFILE:Q",14) )
+        if( EQUALN(pszFilename,"JPEG_SUBFILE:Q",14) )
         {
-            papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename + 14, ",", 0);
+            papszTokens = CSLTokenizeString2(pszFilename + 14, ",", 0);
             if (CSLCount(papszTokens) >= 3)
             {
                 nQLevel = atoi(papszTokens[0]);
@@ -1448,7 +1619,7 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else
         {
-            papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename + 13, ",", 0);
+            papszTokens = CSLTokenizeString2(pszFilename + 13, ",", 0);
             if (CSLCount(papszTokens) >= 2)
             {
                 subfile_offset = CPLScanUIntBig(papszTokens[0], strlen(papszTokens[0]));
@@ -1462,11 +1633,11 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
                       "Corrupt subfile definition: %s", 
-                      poOpenInfo->pszFilename );
+                      pszFilename );
             return NULL;
         }
 
-        real_filename = strstr(poOpenInfo->pszFilename,",");
+        real_filename = strstr(pszFilename,",");
         if( real_filename != NULL )
             real_filename = strstr(real_filename+1,",");
         if( real_filename != NULL && nQLevel != -1 )
@@ -1550,7 +1721,8 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
         if (poDS->sDInfo.data_precision == 12)
         {
             delete poDS;
-            return JPEGDataset12Open(poOpenInfo);
+            return JPEGDataset12Open(pszFilename, papszSiblingFiles,
+                                     nScaleDenom);
         }
 #endif
         delete poDS;
@@ -1578,8 +1750,10 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
-    poDS->nRasterXSize = poDS->sDInfo.image_width;
-    poDS->nRasterYSize = poDS->sDInfo.image_height;
+    poDS->nScaleDenom = nScaleDenom;
+    poDS->sDInfo.scale_denom = poDS->nScaleDenom;
+    poDS->nRasterXSize = (poDS->sDInfo.image_width + poDS->sDInfo.scale_denom - 1) / poDS->sDInfo.scale_denom;
+    poDS->nRasterYSize = (poDS->sDInfo.image_height + poDS->sDInfo.scale_denom - 1) / poDS->sDInfo.scale_denom;
 
     poDS->sDInfo.out_color_space = poDS->sDInfo.jpeg_color_space;
     poDS->eGDALColorSpace = poDS->sDInfo.jpeg_color_space;
@@ -1658,17 +1832,22 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
-    
-    if( !bIsSubfile )
-        poDS->TryLoadXML( poOpenInfo->papszSiblingFiles );
-    else
-        poDS->nPamFlags |= GPF_NOSAVE;
+    poDS->SetDescription( pszFilename );
+
+    if( nScaleDenom == 1 )
+    {
+        if( !bIsSubfile )
+            poDS->TryLoadXML( papszSiblingFiles );
+        else
+            poDS->nPamFlags |= GPF_NOSAVE;
 
 /* -------------------------------------------------------------------- */
-/*      Open overviews.                                                 */
+/*      Open (external) overviews.                                      */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, real_filename, poOpenInfo->papszSiblingFiles );
+        poDS->oOvManager.Initialize( poDS, real_filename, papszSiblingFiles );
+    }
+    else
+        poDS->nPamFlags |= GPF_NOSAVE;
 
     poDS->bIsSubfile = bIsSubfile;
 
@@ -2339,12 +2518,11 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxilary pam information.         */
 /* -------------------------------------------------------------------- */
-    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
 
     /* If outputing to stdout, we can't reopen it, so we'll return */
     /* a fake dataset to make the caller happy */
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    JPGDataset *poDS = (JPGDataset*) JPGDataset::Open( &oOpenInfo );
+    JPGDataset *poDS = (JPGDataset*) Open( pszFilename );
     CPLPopErrorHandler();
     if( poDS )
     {
@@ -2401,8 +2579,8 @@ void GDALRegister_JPEG()
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
-        poDriver->pfnIdentify = JPGDataset::Identify;
-        poDriver->pfnOpen = JPGDataset::Open;
+        poDriver->pfnIdentify = JPGDatasetCommon::Identify;
+        poDriver->pfnOpen = JPGDatasetCommon::Open;
         poDriver->pfnCreateCopy = JPGDataset::CreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
