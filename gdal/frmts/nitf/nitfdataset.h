@@ -115,6 +115,9 @@ class NITFDataset : public GDALPamDataset
     char       **papszCgmMDToWrite;
     
     int          bInLoadXML;
+    
+    int          bExposeUnderlyingJPEGDatasetOverviews;
+    int          ExposeUnderlyingJPEGDatasetOverviews() const { return bExposeUnderlyingJPEGDatasetOverviews; }
 
   protected:
     virtual int         CloseDependentDatasets();
@@ -321,6 +324,7 @@ class NITFWrapperRasterBand : public NITFProxyPamRasterBand
   GDALRasterBand* poBaseBand;
   GDALColorTable* poColorTable;
   GDALColorInterp eInterp;
+  int             bIsJPEG;
 
   protected:
     /* Pure virtual method of the NITFProxyPamRasterBand */
@@ -337,6 +341,9 @@ class NITFWrapperRasterBand : public NITFProxyPamRasterBand
     virtual CPLErr          SetColorInterpretation( GDALColorInterp );
     
     virtual GDALColorTable *GetColorTable();
+
+    virtual int             GetOverviewCount();
+    virtual GDALRasterBand *GetOverview(int);
 
     /* Specific method */
     void                    SetColorTableFromNITFBandInfo(); 
