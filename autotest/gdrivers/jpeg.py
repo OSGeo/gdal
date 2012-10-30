@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -32,6 +33,7 @@ import os
 import sys
 import gdal
 import string
+import shutil
 
 sys.path.append( '../pymod' )
 
@@ -508,6 +510,82 @@ def jpeg_15():
 
     return tst.testCreateCopy( vsimem = 1, interrupt_during_copy = True )
 
+###############################################################################
+# Test overview support
+
+def jpeg_16():
+
+    shutil.copy( 'data/albania.jpg', 'tmp/albania.jpg' )
+    try:
+        os.unlink( 'tmp/albania.jpg.ovr' )
+    except:
+        pass
+
+    ds = gdal.Open( 'tmp/albania.jpg' )
+    if ds.GetRasterBand(1).GetOverviewCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetOverview(-1) is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetOverview(1) is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetOverview(0) is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    # "Internal" overview
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 31892:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    # Build external overviews
+    ds.BuildOverviews('NEAR', [2, 4])
+    if ds.GetRasterBand(1).GetOverviewCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    # Check updated checksum
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 32460:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    ds = None
+
+    # Check we are using external overviews
+    ds = gdal.Open( 'tmp/albania.jpg' )
+    if ds.GetRasterBand(1).GetOverviewCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 32460:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Cleanup
+
+def jpeg_cleanup():
+
+    try:
+        os.unlink( 'tmp/albania.jpg' )
+    except:
+        pass
+    try:
+        os.unlink( 'tmp/albania.jpg.ovr' )
+    except:
+        pass
+
+    return 'success'
+
 gdaltest_list = [
     jpeg_1,
     jpeg_2,
@@ -523,7 +601,9 @@ gdaltest_list = [
     jpeg_12,
     jpeg_13,
     jpeg_14,
-    jpeg_15 ]
+    jpeg_15,
+    jpeg_16,
+    jpeg_cleanup ]
 
 if __name__ == '__main__':
 
