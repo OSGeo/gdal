@@ -109,7 +109,29 @@ static int CPLHaveRuntimeSSE()
 
 #elif defined(_MSC_VER) && defined(_M_IX86)
 
+#if _MSC_VER <= 1310
+static void inline __cpuid(int cpuinfo[4], int level)
+{
+    __asm 
+    {
+        push   ebx
+        push   esi
+
+        mov    esi,cpuinfo
+        mov    eax,level  
+        cpuid  
+        mov    dword ptr [esi], eax
+        mov    dword ptr [esi+4],ebx  
+        mov    dword ptr [esi+8],ecx  
+        mov    dword ptr [esi+0Ch],edx 
+
+        pop    esi
+        pop    ebx
+    }
+}
+#else
 #include <intrin.h>
+#endif
 
 static int CPLHaveRuntimeSSE()
 {
