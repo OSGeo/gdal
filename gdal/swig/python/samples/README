@@ -91,6 +91,10 @@ gdal_edit.py            Edit in place various information of an existing GDAL da
 crs2crs2grid.py 	A script to produce PROJ.4 grid shift files from HTDP program.
 			http://trac.osgeo.org/proj/wiki/HTDPGrids
 
+ogrupdate.py            Update a target datasource with the features of a source datasource. Contrary to ogr2ogr,
+                        this script tries to match features between the datasources,
+                        to decide whether to create a new feature, or to update an existing one.
+
 ------------------------------------------------------------------------------
 Ports of .c/.cpp utilities
 ------------------------------------------------------------------------------
