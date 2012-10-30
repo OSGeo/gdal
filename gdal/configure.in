@@ -2381,37 +2381,49 @@ else
     DODS_INC="-I$with_dods_root/include -I$with_dods_root/include/libdap -I$with_dods_root/include/dap"
     DODS_BIN=$with_dods_root/bin
 
-dnl Test if we have libdap >= 3.10
-dnl From libdap 3.10, AISConnect.h has been renamed as Connect.h
-rm -f islibdappost310.*
-echo '#include "Connect.h"' > islibdappost310.cpp
-echo 'int main(int argc, char** argv) { return 0; } ' >> islibdappost310.cpp
-if test -z "`${CXX} islibdappost310.cpp -c ${DODS_INC} 2>&1`" ; then
-dnl yes, libdap >= 3.10
-    DODS_INC="$DODS_INC -DLIBDAP_310 -DLIBDAP_39"
-    AC_MSG_RESULT([libdap >= 3.10])
-else
-    AC_MSG_RESULT([libdap < 3.10])
-
-    dnl Test if we have libdap < 3.9
-    dnl Before libdap < 3.9, DAS derived from AttrTable class
-    dnl I wish they had defines with version numbers instead of this test !
-    rm -f islibdappre39.*
-    echo '#include "DAS.h"' > islibdappre39.cpp
-    echo '#include "AttrTable.h"' >> islibdappre39.cpp
-    echo 'using namespace libdap;' >> islibdappre39.cpp
-    echo 'int main(int argc, char** argv) { DAS oDAS; AttrTable& oAttrTable = oDAS; } ' >> islibdappre39.cpp
-    if test -z "`${CXX} islibdappre39.cpp -c ${DODS_INC} 2>&1`" ; then
-    dnl yes, libdap < 3.9
-        AC_MSG_RESULT([libdap < 3.9])
+    dnl Check libdap version the sane way (if possible through dap-config)
+    if test -x $DODS_BIN/dap-config ; then
+        LIBDAP_VER=`${DODS_BIN}/dap-config --version |awk '{print \$2}'`
+        LIBDAP_CFLAGS=`${DODS_BIN}/dap-config --cflags`
+        dnl The dods driver needs LIBDAP_320 and LIBDAP_39 defined to include the right headers
+        DODS_INC="$DODS_INC $LIBDAP_CFLAGS -DLIBDAP_310 -DLIBDAP_39"
+        dnl libs from dap-config gets added further down
+        AC_MSG_RESULT([libdap $LIBDAP_VER])
     else
-        DODS_INC="$DODS_INC -DLIBDAP_39"
-        AC_MSG_RESULT([libdap >= 3.9])
-    fi
-    rm -f islibdappre39.*
+        dnl Check the version by compiling test programs 
 
-fi
-rm -f islibdappost310.*
+        dnl Test if we have libdap >= 3.10
+        dnl From libdap 3.10, AISConnect.h has been renamed as Connect.h
+        rm -f islibdappost310.*
+        echo '#include "Connect.h"' > islibdappost310.cpp
+        echo 'int main(int argc, char** argv) { return 0; } ' >> islibdappost310.cpp
+        if test -z "`${CXX} islibdappost310.cpp -c ${DODS_INC} ${CPPFLAGS} 2>&1`" ; then
+        dnl yes, libdap >= 3.10
+            DODS_INC="$DODS_INC -DLIBDAP_310 -DLIBDAP_39"
+            AC_MSG_RESULT([libdap >= 3.10])
+        else
+            AC_MSG_RESULT([libdap < 3.10])
+
+            dnl Test if we have libdap < 3.9
+            dnl Before libdap < 3.9, DAS derived from AttrTable class
+            dnl I wish they had defines with version numbers instead of this test !
+            rm -f islibdappre39.*
+            echo '#include "DAS.h"' > islibdappre39.cpp
+            echo '#include "AttrTable.h"' >> islibdappre39.cpp
+            echo 'using namespace libdap;' >> islibdappre39.cpp
+            echo 'int main(int argc, char** argv) { DAS oDAS; AttrTable& oAttrTable = oDAS; } ' >> islibdappre39.cpp
+            if test -z "`${CXX} islibdappre39.cpp -c ${DODS_INC} 2>&1`" ; then
+            dnl yes, libdap < 3.9
+                AC_MSG_RESULT([libdap < 3.9])
+            else
+                DODS_INC="$DODS_INC -DLIBDAP_39"
+                AC_MSG_RESULT([libdap >= 3.9])
+            fi
+            rm -f islibdappre39.*
+
+        fi
+        rm -f islibdappost310.*
+    fi
 
 
     dnl Add the DODS libraries to LIBS
