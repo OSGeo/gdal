@@ -94,6 +94,7 @@ NITFDataset::NITFDataset()
     papszCgmMDToWrite = NULL;
     
     bInLoadXML = FALSE;
+    bExposeUnderlyingJPEGDatasetOverviews = FALSE;
 }
 
 /************************************************************************/
@@ -1596,6 +1597,13 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
         poDS->oOvManager.Initialize( poDS, ":::VIRTUAL:::" );
     else
         poDS->oOvManager.Initialize( poDS, pszFilename );
+
+    /* If there are PAM overviews, don't expose the underlying JPEG dataset */
+    /* overviews (in case of monoblock C3) */
+    if( poDS->GetRasterCount() > 0 && poDS->GetRasterBand(1) != NULL )
+        poDS->bExposeUnderlyingJPEGDatasetOverviews =
+            ((GDALPamRasterBand*)poDS->GetRasterBand(1))->
+                            GDALPamRasterBand::GetOverviewCount() == 0;
 
     return( poDS );
 }
@@ -3212,6 +3220,8 @@ CPLErr NITFDataset::IBuildOverviews( const char *pszResampling,
         oOvManager.CleanOverviews();
         osRSetVRT = "";
     }
+
+    bExposeUnderlyingJPEGDatasetOverviews = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      If we have an underlying JPEG2000 dataset (hopefully via        */

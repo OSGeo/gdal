@@ -32,9 +32,11 @@
 #define JPGDataset        JPGDataset12
 #include "jpgdataset.cpp"
 
-GDALDataset* JPEGDataset12Open(GDALOpenInfo* poOpenInfo)
+GDALDataset* JPEGDataset12Open(const char* pszFilename,
+                               char** papszSiblingFiles,
+                               int nScaleDenom)
 {
-    return JPGDataset12::Open(poOpenInfo);
+    return JPGDataset12::Open(pszFilename, papszSiblingFiles, nScaleDenom);
 }
 
 GDALDataset* JPEGDataset12CreateCopy( const char * pszFilename,
