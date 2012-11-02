@@ -24503,34 +24503,43 @@ else
     DODS_INC="-I$with_dods_root/include -I$with_dods_root/include/libdap -I$with_dods_root/include/dap"
     DODS_BIN=$with_dods_root/bin
 
-rm -f islibdappost310.*
-echo '#include "Connect.h"' > islibdappost310.cpp
-echo 'int main(int argc, char** argv) { return 0; } ' >> islibdappost310.cpp
-if test -z "`${CXX} islibdappost310.cpp -c ${DODS_INC} 2>&1`" ; then
-    DODS_INC="$DODS_INC -DLIBDAP_310 -DLIBDAP_39"
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: libdap >= 3.10" >&5
+        if test -x $DODS_BIN/dap-config ; then
+        LIBDAP_VER=`${DODS_BIN}/dap-config --version |awk '{print \$2}'`
+        LIBDAP_CFLAGS=`${DODS_BIN}/dap-config --cflags`
+                DODS_INC="$DODS_INC $LIBDAP_CFLAGS -DLIBDAP_310 -DLIBDAP_39"
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: libdap $LIBDAP_VER" >&5
+$as_echo "libdap $LIBDAP_VER" >&6; }
+    else
+
+                        rm -f islibdappost310.*
+        echo '#include "Connect.h"' > islibdappost310.cpp
+        echo 'int main(int argc, char** argv) { return 0; } ' >> islibdappost310.cpp
+        if test -z "`${CXX} islibdappost310.cpp -c ${DODS_INC} ${CPPFLAGS} 2>&1`" ; then
+                    DODS_INC="$DODS_INC -DLIBDAP_310 -DLIBDAP_39"
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: libdap >= 3.10" >&5
 $as_echo "libdap >= 3.10" >&6; }
-else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: libdap < 3.10" >&5
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: libdap < 3.10" >&5
 $as_echo "libdap < 3.10" >&6; }
 
-                rm -f islibdappre39.*
-    echo '#include "DAS.h"' > islibdappre39.cpp
-    echo '#include "AttrTable.h"' >> islibdappre39.cpp
-    echo 'using namespace libdap;' >> islibdappre39.cpp
-    echo 'int main(int argc, char** argv) { DAS oDAS; AttrTable& oAttrTable = oDAS; } ' >> islibdappre39.cpp
-    if test -z "`${CXX} islibdappre39.cpp -c ${DODS_INC} 2>&1`" ; then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: libdap < 3.9" >&5
+                                                rm -f islibdappre39.*
+            echo '#include "DAS.h"' > islibdappre39.cpp
+            echo '#include "AttrTable.h"' >> islibdappre39.cpp
+            echo 'using namespace libdap;' >> islibdappre39.cpp
+            echo 'int main(int argc, char** argv) { DAS oDAS; AttrTable& oAttrTable = oDAS; } ' >> islibdappre39.cpp
+            if test -z "`${CXX} islibdappre39.cpp -c ${DODS_INC} 2>&1`" ; then
+                            { $as_echo "$as_me:${as_lineno-$LINENO}: result: libdap < 3.9" >&5
 $as_echo "libdap < 3.9" >&6; }
-    else
-        DODS_INC="$DODS_INC -DLIBDAP_39"
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: libdap >= 3.9" >&5
+            else
+                DODS_INC="$DODS_INC -DLIBDAP_39"
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: libdap >= 3.9" >&5
 $as_echo "libdap >= 3.9" >&6; }
-    fi
-    rm -f islibdappre39.*
+            fi
+            rm -f islibdappre39.*
 
-fi
-rm -f islibdappost310.*
+        fi
+        rm -f islibdappost310.*
+    fi
 
 
         if test -x $DODS_BIN/opendap-config ; then
