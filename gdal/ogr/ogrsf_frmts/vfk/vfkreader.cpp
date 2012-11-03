@@ -201,7 +201,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
 {
     const char *pszName;
     char       *pszBlockName, *pszLine;
-    int         nLength;
+    int         nLength, iLine;
     
     VFKFeature *poNewFeature;
     
@@ -213,7 +213,9 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
     pszName = poDataBlock->GetName();
 
     VSIFSeek(m_poFD, 0, SEEK_SET);
+    iLine = 0;
     while ((pszLine = ReadLine()) != NULL) {
+        iLine++;
         nLength = strlen(pszLine);
         if (nLength < 2)
             continue;
@@ -255,7 +257,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                     AddFeature(poDataBlock, poNewFeature);
                 else
                     CPLError(CE_Warning, CPLE_AppDefined, 
-                             "Invalid VFK data record skipped.\n%s\n", pszLine);
+                             "Invalid VFK data record skipped (line %d).\n%s\n", iLine, pszLine);
             }
             CPLFree(pszBlockName);
         }
