@@ -934,6 +934,12 @@ bool GeoRasterWrapper::Create( char* pszDescription,
             "      INTO CNT USING :rdt, OWN;\n"
             "\n"
             "  IF CNT = 0 THEN\n"
+            "    EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ALL_TABLES\n"
+            "      WHERE TABLE_NAME = :1 AND OWNER = UPPER(:2)'\n"
+            "        INTO CNT USING :rdt, OWN;\n"
+            "  END IF;\n"
+            "\n"
+            "  IF CNT = 0 THEN\n"
             "    EXECUTE IMMEDIATE 'CREATE TABLE %s'||:rdt||' OF MDSYS.SDO_RASTER\n"
             "      (PRIMARY KEY (RASTERID, PYRAMIDLEVEL, BANDBLOCKNUMBER,\n"
             "      ROWBLOCKNUMBER, COLUMNBLOCKNUMBER))\n"
@@ -2799,7 +2805,7 @@ bool GeoRasterWrapper::FlushMetadata()
     if( nException )
     {
         CPLError( CE_Warning, CPLE_AppDefined, 
-            "Cannot generate spatialExtent! (ORA%ld) ", nException );
+            "Cannot generate spatialExtent! (ORA-%d) ", nException );
     }
 
     return true;
