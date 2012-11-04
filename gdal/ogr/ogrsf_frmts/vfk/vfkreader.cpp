@@ -121,10 +121,12 @@ char *GetDataBlockName(const char *pszLine)
 
 /*!
   \brief Read a line from file
+ 
+  \param bRecode do recoding
 
   \return a NULL terminated string which should be freed with CPLFree().
 */
-char *VFKReader::ReadLine()
+char *VFKReader::ReadLine(bool bRecode)
 {
     const char *pszRawLine;
     char *pszLine;
@@ -133,9 +135,14 @@ char *VFKReader::ReadLine()
     if (pszRawLine == NULL)
         return NULL;
     
-    pszLine = CPLRecode(pszRawLine,
-                        m_bLatin2 ? "ISO-8859-2" : "WINDOWS-1250",
-                        CPL_ENC_UTF8);
+    if (bRecode)
+        pszLine = CPLRecode(pszRawLine,
+                            m_bLatin2 ? "ISO-8859-2" : "WINDOWS-1250",
+                            CPL_ENC_UTF8);
+    else {
+        pszLine = (char *) CPLMalloc(strlen(pszRawLine) + 1);
+        strcpy(pszLine, pszRawLine);
+    }
     
     return pszLine;
 }
@@ -203,6 +210,8 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
     char       *pszBlockName, *pszLine;
     int         nLength, iLine;
     
+    CPLString pszMultiLine;
+
     VFKFeature *poNewFeature;
     
     if (poDataBlock->GetFeatureCount() >= 0)
@@ -230,17 +239,18 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                     /* remove 0302 0244 (currency sign) from string */
                     pszLine[nLength - 2] = '\0';
                     
-                    CPLString pszMultiLine(pszLine);
+                    pszMultiLine.clear();
+                    pszMultiLine = pszLine;
                     CPLFree(pszLine);
                     
                     while ((pszLine = ReadLine()) != NULL &&
                            pszLine[strlen(pszLine) - 2] == '\302' &&
                            pszLine[strlen(pszLine) - 1] == '\244') {
-                        /* remove 0302 0244 (currency sign) from string */
-                        pszLine[strlen(pszLine) - 2] = '\0';
-                        
                         /* append line */
                         pszMultiLine += pszLine;
+                        /* remove 0302 0244 (currency sign) from string */
+                        pszMultiLine[strlen(pszLine) - 2] = '\0';
+
                         CPLFree(pszLine);
                     } 
                     pszMultiLine += pszLine;
@@ -269,6 +279,9 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
         CPLFree(pszLine);
     }
     
+    CPLDebug("OGR_VFK", "VFKReader::ReadDataRecords(): name=%s n=%d",
+             poDataBlock->GetName(), poDataBlock->GetFeatureCount());
+
     return poDataBlock->GetFeatureCount();
 }
 

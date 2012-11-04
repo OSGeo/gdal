@@ -53,7 +53,7 @@ private:
     bool           m_bLatin2;
 
     FILE          *m_poFD;
-    char          *ReadLine();
+    char          *ReadLine(bool = FALSE);
     
     /* metadata */
     std::map<std::string, std::string> poInfo;
@@ -73,6 +73,7 @@ public:
     VFKReader(const char *);
     virtual ~VFKReader();
 
+    bool           IsLatin2() const { return m_bLatin2; }
     int            ReadDataBlocks();
     int            ReadDataRecords(IVFKDataBlock *);
     int            LoadGeometry();
@@ -98,6 +99,8 @@ private:
     void           AddDataBlock(IVFKDataBlock *, const char *);
     void           AddFeature(IVFKDataBlock *, VFKFeature *);
 
+    void           CreateIndex(const char *, const char *, const char *);
+    
     friend class   VFKFeatureSQLite;
 public:
     VFKReaderSQLite(const char *);

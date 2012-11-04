@@ -172,7 +172,8 @@ void IVFKDataBlock::SetProperties(const char *poLine)
 */
 int IVFKDataBlock::AddProperty(const char *pszName, const char *pszType)
 {
-    VFKPropertyDefn *poNewProperty = new VFKPropertyDefn(pszName, pszType);
+    VFKPropertyDefn *poNewProperty = new VFKPropertyDefn(pszName, pszType,
+                                                         m_poReader->IsLatin2());
 
     m_nPropertyCount++;
     
