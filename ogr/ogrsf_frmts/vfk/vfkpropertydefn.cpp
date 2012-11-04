@@ -40,8 +40,10 @@
 
   \param pszName property name
   \param pszType property type (original, string)
+  \param bLatin2 TRUE for "ISO-8859-2" otherwise "WINDOWS-1250" is used (only for "text" type)
 */
-VFKPropertyDefn::VFKPropertyDefn(const char *pszName, const char *pszType)
+VFKPropertyDefn::VFKPropertyDefn(const char *pszName, const char *pszType,
+                                 bool bLatin2)
 {
     char *poChar, *poWidth, *pszWidth;
     int   nLength;
@@ -65,6 +67,7 @@ VFKPropertyDefn::VFKPropertyDefn(const char *pszName, const char *pszType)
     m_nPrecision = 0;
     
     /* type */
+    m_pszEncoding = NULL;
     if (*m_pszType == 'N') {
         if (*poChar == '.') {
             m_eFType = OFTReal;
@@ -81,6 +84,7 @@ VFKPropertyDefn::VFKPropertyDefn(const char *pszName, const char *pszType)
     else if (*m_pszType == 'T') {
         /* string */
         m_eFType = OFTString;
+        m_pszEncoding = bLatin2 ? CPLStrdup("ISO-8859-2") : CPLStrdup("WINDOWS-1250");
     }
     else if (*m_pszType == 'D') {
         /* date */
@@ -91,6 +95,7 @@ VFKPropertyDefn::VFKPropertyDefn(const char *pszName, const char *pszType)
     else {
         /* unknown - string */
         m_eFType = OFTString;
+        m_pszEncoding = bLatin2 ? CPLStrdup("ISO-8859-2") : CPLStrdup("WINDOWS-1250");
     }
 }
 
@@ -101,6 +106,8 @@ VFKPropertyDefn::~VFKPropertyDefn()
 {
     CPLFree(m_pszName);
     CPLFree(m_pszType);
+    if (m_pszEncoding)
+        CPLFree(m_pszEncoding);
 }
 
 /*!
