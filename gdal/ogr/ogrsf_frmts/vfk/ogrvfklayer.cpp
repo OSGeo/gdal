@@ -213,8 +213,6 @@ OGRFeature *OGRVFKLayer::GetNextFeature()
             continue;
         
         poOGRFeature = GetFeature(poVFKFeature);
-        // CPLDebug("OGR_VFK", "OGRVFKLayer::GetNextFeature(): fid=%d", m_iNextFeature);
-        
         if (poOGRFeature)
             return poOGRFeature;
     }

@@ -188,72 +188,83 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
         sqlite3_finalize(hStmt);
     }
     else {
-        sqlite3_exec(m_poDB, "BEGIN", 0, 0, 0);
+        char *pszErrMsg = NULL;
+        
+        if (SQLITE_OK != sqlite3_exec(m_poDB, "BEGIN", 0, 0, &pszErrMsg))
+            CPLError(CE_Warning, CPLE_AppDefined,  pszErrMsg);
         
         /* INSERT ... */
         nDataRecords = VFKReader::ReadDataRecords(poDataBlock);
         
+        if (SQLITE_OK != sqlite3_exec(m_poDB, "COMMIT", 0, 0, &pszErrMsg))
+            CPLError(CE_Warning, CPLE_AppDefined,  pszErrMsg);
+        
         /* update 'vfk_blocks' table */
         osSQL.Printf("UPDATE 'vfk_blocks' SET num_records = %d WHERE file_name = '%s' AND table_name = '%s'",
                      nDataRecords, m_pszFilename, pszName);
-        sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
-        
+        if (SQLITE_OK != sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, &pszErrMsg))
+            CPLError(CE_Warning, CPLE_AppDefined,  pszErrMsg);
+    
         /* create indeces */
-        osSQL.Printf("CREATE UNIQUE INDEX %s_ID ON '%s' (ID)",
-                     pszName, pszName);
-        sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
+        osSQL.Printf("%s_ID", pszName);
+        CreateIndex(osSQL.c_str(), pszName, "ID");
         
         if (EQUAL(pszName, "SBP")) {
             /* create extra indices for SBP */
-            osSQL.Printf("CREATE UNIQUE INDEX SBP_OB ON '%s' (OB_ID)",
-                         pszName);
-            sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
-            
-            osSQL.Printf("CREATE UNIQUE INDEX SBP_HP ON '%s' (HP_ID)",
-                         pszName);
-            sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
-            
-            osSQL.Printf("CREATE UNIQUE INDEX SBP_DPM ON '%s' (DPM_ID)",
-                         pszName);
-            sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
-            
-            osSQL.Printf("CREATE UNIQUE INDEX SBP_OB_HP_DPM ON '%s' (OB_ID,HP_ID,DPM_ID)",
-                         pszName);
-            sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
-            
-            osSQL.Printf("CREATE UNIQUE INDEX SBP_HP_POR ON '%s' (HP_ID,PORADOVE_CISLO_BODU)",
-                         pszName);
-            sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
-            
-            osSQL.Printf("CREATE UNIQUE INDEX SBP_DPM_POR ON '%s' (DPM_ID,PORADOVE_CISLO_BODU)",
-                         pszName);
-            sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
+            CreateIndex("SBP_OB",        pszName, "OB_ID");
+            CreateIndex("SBP_HP",        pszName, "HP_ID");
+            CreateIndex("SBP_DPM",       pszName, "DPM_ID");
+            CreateIndex("SBP_OB_HP_DPM", pszName, "OB_ID,HP_ID,DPM_ID");
+            CreateIndex("SBP_HP_POR",    pszName, "HP_ID,PORADOVE_CISLO_BODU");
+            CreateIndex("SBP_DPM_POR",   pszName, "DPM_ID,PORADOVE_CISLO_BODU");
         }
         else if (EQUAL(pszName, "HP")) {
             /* create extra indices for HP */
-            osSQL.Printf("CREATE UNIQUE INDEX HP_PAR1 ON '%s' (PAR_ID_1)",
-                         pszName);
-            sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
-            
-            osSQL.Printf("CREATE UNIQUE INDEX HP_PAR2 ON '%s' (PAR_ID_2)",
-                         pszName);
-            sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
-            
+            CreateIndex("HP_PAR1",        pszName, "PAR_ID_1");
+            CreateIndex("HP_PAR2",        pszName, "PAR_ID_2");
         }
         else if (EQUAL(pszName, "OP")) {
             /* create extra indices for OP */
-            osSQL.Printf("CREATE UNIQUE INDEX OP_BUD ON '%s' (BUD_ID)",
-                         pszName);
-            sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, 0);
-            
+            CreateIndex("OP_BUD",        pszName, "BUD_ID");
         }
-        
-        sqlite3_exec(m_poDB, "COMMIT", 0, 0, 0);
     }
-        
+    
     return nDataRecords;
 }
 
+/*!
+  \brief Create index
+
+  If creating unique index fails, then non-unique index is created instead.
+
+  \param name index name
+  \param table table name
+  \param column column(s) name
+*/
+void VFKReaderSQLite::CreateIndex(const char *name, const char *table, const char *column)
+{
+    CPLString   osSQL;
+    
+    char        *pszErrMsg = NULL;
+
+    osSQL.Printf("CREATE UNIQUE INDEX %s ON '%s' (%s)",
+                 name, table, column);
+    if (SQLITE_OK != sqlite3_exec(m_poDB, osSQL.c_str(), NULL, NULL, &pszErrMsg)) {
+        CPLError(CE_Warning, CPLE_AppDefined,  "Unable to create unique index %s: %s",
+                 name, pszErrMsg);
+        osSQL.Printf("CREATE INDEX %s ON '%s' (%s)",
+                     name, table, column);
+        sqlite3_exec(m_poDB, osSQL.c_str(), NULL, NULL, &pszErrMsg);
+    }
+}
+
+/*!
+  \brief Create new data block
+
+  \param pszBlockName name of the block to be created
+
+  \return pointer to VFKDataBlockSQLite instance
+*/
 IVFKDataBlock *VFKReaderSQLite::CreateDataBlock(const char *pszBlockName)
 {
     return new VFKDataBlockSQLite(pszBlockName, (IVFKReader *) this);
@@ -267,6 +278,7 @@ IVFKDataBlock *VFKReaderSQLite::CreateDataBlock(const char *pszBlockName)
 void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDefn)
 {
     CPLString osCommand, osColumn;
+    
     VFKPropertyDefn *poPropertyDefn;
     
     sqlite3_stmt *hStmt;
@@ -289,9 +301,8 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
             osCommand += osColumn;
         }
         osCommand += ",ogr_fid integer);";
-        
         ExecuteSQL(osCommand.c_str()); /* CREATE TABLE */
-
+        
         osCommand.Printf("INSERT INTO 'vfk_blocks' (file_name, table_name, "
                          "num_records, table_defn) VALUES ('%s', '%s', 0, '%s')",
                          m_pszFilename, poDataBlock->GetName(), pszDefn);
