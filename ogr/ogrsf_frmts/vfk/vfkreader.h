@@ -187,13 +187,14 @@ private:
     char             *m_pszName;
 
     char             *m_pszType;
+    char             *m_pszEncoding;
     OGRFieldType      m_eFType;
 
     int               m_nWidth;
     int               m_nPrecision;
 
 public:
-    VFKPropertyDefn(const char*, const char *);
+    VFKPropertyDefn(const char*, const char *, bool);
     virtual ~VFKPropertyDefn();
 
     const char       *GetName() const  { return m_pszName; }
@@ -202,6 +203,7 @@ public:
     OGRFieldType      GetType() const  { return m_eFType;  }
     CPLString         GetTypeSQL() const;
     GBool             IsIntBig() const { return m_pszType[0] == 'N'; }
+    const char       *GetEncoding() const { return  m_pszEncoding; }
 };
 
 /************************************************************************/
@@ -334,6 +336,8 @@ protected:
 
 public:
     virtual ~IVFKReader();
+    
+    virtual bool           IsLatin2() const = 0;
     
     virtual int            ReadDataBlocks() = 0;
     virtual int            ReadDataRecords(IVFKDataBlock *) = 0;
