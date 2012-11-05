@@ -2078,13 +2078,40 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
             case OFTString:
             {
                 wstring val;
-
-                if (FAILED(hr = pRow->GetString(wstrFieldName, val)))
+                
+                if( strFieldType == "esriFieldTypeGlobalID" )
                 {
-                    GDBErr(hr, "Failed to determine string value for column " +
-                        WStringToString(wstrFieldName));
-                    foundBadColumn = true;
-                    continue;
+                    Guid guid;
+                    if( FAILED(hr = pRow->GetGlobalID(guid)) ||
+                        FAILED(hr = guid.ToString(val)) )
+                    {
+                        GDBErr(hr, "Failed to determine string value for column " +
+                            WStringToString(wstrFieldName));
+                        foundBadColumn = true;
+                        continue;
+                    }
+                }
+                else if( strFieldType == "esriFieldTypeGUID" )
+                {
+                    Guid guid;
+                    if( FAILED(hr = pRow->GetGUID(wstrFieldName, guid)) ||
+                        FAILED(hr = guid.ToString(val)) )
+                    {
+                        GDBErr(hr, "Failed to determine string value for column " +
+                            WStringToString(wstrFieldName));
+                        foundBadColumn = true;
+                        continue;
+                    }
+                }
+                else
+                {
+                    if (FAILED(hr = pRow->GetString(wstrFieldName, val)))
+                    {
+                        GDBErr(hr, "Failed to determine string value for column " +
+                            WStringToString(wstrFieldName));
+                        foundBadColumn = true;
+                        continue;
+                    }
                 }
 
                 pOutFeature->SetField(i, WStringToString(val).c_str());
