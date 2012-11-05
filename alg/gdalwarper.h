@@ -247,6 +247,13 @@ CPL_C_END
 /*      application.                                                    */
 /************************************************************************/
 
+// This is the number of dummy pixels that must be reserved in source arrays
+// in order to satisfy assumptions made in GWKResample(), and more specifically
+// by GWKGetPixelRow() that always read a even number of pixels. So if we are
+// in the situation to read the last pixel of the source array, we need 1 extra
+// dummy pixel to avoid reading out of bounds.
+#define WARP_EXTRA_ELTS    1
+
 class CPL_DLL GDALWarpKernel
 {
 public:
@@ -258,11 +265,11 @@ public:
 
     int                 nSrcXSize;
     int                 nSrcYSize;
-    GByte               **papabySrcImage;
+    GByte               **papabySrcImage; /* each subarray must have WARP_EXTRA_ELTS at the end */
 
-    GUInt32           **papanBandSrcValid;
-    GUInt32            *panUnifiedSrcValid;
-    float              *pafUnifiedSrcDensity;
+    GUInt32           **papanBandSrcValid; /* each subarray must have WARP_EXTRA_ELTS at the end */
+    GUInt32            *panUnifiedSrcValid; /* must have WARP_EXTRA_ELTS at the end */
+    float              *pafUnifiedSrcDensity; /* must have WARP_EXTRA_ELTS at the end */
 
     int                 nDstXSize;
     int                 nDstYSize;
