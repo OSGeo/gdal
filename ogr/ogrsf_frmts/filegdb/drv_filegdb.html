@@ -54,7 +54,8 @@ respectively the definition and metadata of a FileGDB table as XML content.
 		<p><em>Important</em>: The domain specified by <code>(xmin=XORIGIN, ymin=YORIGIN, xmax=(XORIGIN + 9E+15 / XYSCALE), ymax=(YORIGIN + 9E+15 / XYSCALE))</code> needs to encompass every possible coordinate value for the feature class. If features are added with coordinates that fall outside the domain, errors will occur in ArcGIS with spatial indexing, feature selection, and exporting data.</p>
 		<p>ArcMap 10.0 and OGR defaults:<ul>
 			<li>For geographic coordinate systems: XORIGIN=-400, YORIGIN=-400, XYSCALE=1000000000</li>
-			<li>For projected coordinate systems: XYSCALE=10000 for the default XYTOLERANCE of 0.001m. XORIGIN and YORIGIN change based on the coordinate system, but the OGR default of -2147483647 is suitable with the default XYSCALE for all coordinate systems.</li></ul></p>
+			<li>For projected coordinate systems: XYSCALE=10000 for the default XYTOLERANCE of 0.001m. XORIGIN and YORIGIN change based on the coordinate system, but the OGR default of -2147483647 is suitable with the default XYSCALE for all coordinate systems.</li></ul></p></li>
+	<li><b>XML_DEFINITION</b> : (GDAL &gt;=2.0) When this option is set, its value will be used as the XML definition to create the new table. The root node of such a XML definition must be a &lt;esri:DataElement&gt; element conformant to FileGDBAPI.xsd</li>
 </ul>
 
 <h2>Examples</h2>
