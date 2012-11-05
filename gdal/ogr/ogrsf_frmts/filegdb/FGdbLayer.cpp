@@ -438,25 +438,69 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
 
         /* Set the information using the appropriate FGDB function */
         int nOGRFieldType = poFeatureDefn->GetFieldDefn(i)->GetType();
+        const std::string & strFieldType = m_vOGRFieldToESRIFieldType[i];
 
         if ( nOGRFieldType == OFTInteger )
         {
-            /* Integers (we don't do FGDB Shorts) */
             int fldvalue = poFeature->GetFieldAsInteger(i);
-            hr = fgdb_row.SetInteger(wfield_name, fldvalue);
+            if( strFieldType == "esriFieldTypeInteger" )
+                hr = fgdb_row.SetInteger(wfield_name, fldvalue);
+            else
+            {
+                if( fldvalue < -32768 || fldvalue > 32767 )
+                {
+                    static int bHasWarned = FALSE;
+                    if( !bHasWarned )
+                    {
+                        bHasWarned = TRUE;
+                        CPLError(CE_Warning, CPLE_NotSupported,
+                                 "Value %d for field %s does not fit into a short and will be clamped. "
+                                 "This warning will not be emitted any more",
+                                 fldvalue, field_name.c_str());
+                    }
+                    if( fldvalue < -32768 )
+                        fldvalue = -32768;
+                    else
+                        fldvalue = 32767;
+                }
+                hr = fgdb_row.SetShort(wfield_name, (short) fldvalue);
+            }
         }
         else if ( nOGRFieldType == OFTReal )
         {
             /* Doubles (we don't handle FGDB Floats) */
             double fldvalue = poFeature->GetFieldAsDouble(i);
-            hr = fgdb_row.SetDouble(wfield_name, fldvalue);
+            if( strFieldType == "esriFieldTypeDouble" )
+                hr = fgdb_row.SetDouble(wfield_name, fldvalue);
+            else
+                hr = fgdb_row.SetFloat(wfield_name, (float) fldvalue);
         }
         else if ( nOGRFieldType == OFTString )
         {
             /* Strings we convert to wstring */
             std::string fldvalue = poFeature->GetFieldAsString(i);
             std::wstring wfldvalue = StringToWString(fldvalue);
-            hr = fgdb_row.SetString(wfield_name, wfldvalue);
+            if( strFieldType == "esriFieldTypeString" )
+                hr = fgdb_row.SetString(wfield_name, wfldvalue);
+            // Apparently, esriFieldTypeGlobalID can not be set, but is
+            // initialized by the FileGDB SDK itself.
+            else if( strFieldType == "esriFieldTypeGUID" /*||
+                     strFieldType == "esriFieldTypeGlobalID" */ )
+            {
+                Guid guid;
+                if( FAILED(hr = guid.FromString(wfldvalue)) )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                        "Cannot parse GUID value %s for field %s.",
+                        fldvalue.c_str(), field_name.c_str() );
+                }
+                else
+                {
+                    hr = fgdb_row.SetGUID(wfield_name, guid);
+                }
+            }
+            else
+                hr = 0;
         }
         else if ( nOGRFieldType == OFTDateTime || nOGRFieldType == OFTDate )
         {
@@ -492,6 +536,12 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
             CPLError( CE_Failure, CPLE_AppDefined,
                 "FGDB driver does not support OGR type." );
             return OGRERR_FAILURE;
+        }
+        
+        if (FAILED(hr))
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "Cannot set value for field %s",
+                     field_name.c_str());
         }
     }
 
@@ -1437,7 +1487,12 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     }
 
     /* Convert our XML tree into a string for FGDB */
-    char *defn_str = CPLSerializeXMLTree(xml_xml);
+    char *defn_str;
+    
+    if( CSLFetchNameValue( papszOptions, "XML_DEFINITION") != NULL )
+        defn_str = CPLStrdup(CSLFetchNameValue( papszOptions, "XML_DEFINITION"));
+    else
+        defn_str = CPLSerializeXMLTree(xml_xml);
     CPLDestroyXMLNode(xml_xml);
 
     /* TODO, tie this to debugging levels */
