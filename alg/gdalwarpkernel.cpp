@@ -977,6 +977,18 @@ CPLErr GDALWarpKernel::Validate()
                   "Unsupported resampling method %d.", (int) eResample );
         return CE_Failure;
     }
+    
+    // Safety check for callers that would use GDALWarpKernel without using
+    // GDALWarpOperation.
+    if( (eResample == GRA_CubicSpline || eResample == GRA_Lanczos) &&
+         atoi(CSLFetchNameValueDef(papszWarpOptions, "EXTRA_ELTS", "0") ) != WARP_EXTRA_ELTS )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Source arrays must have WARP_EXTRA_ELTS extra elements at their end. "
+                  "See GDALWarpKernel class definition. If this condition is fulfilled, "
+                  "define a EXTRA_ELTS=%d warp options", WARP_EXTRA_ELTS);
+        return CE_Failure;
+    }
 
     return CE_None;
 }
@@ -2272,35 +2284,25 @@ static int GWKResample( GDALWarpKernel *poWK, int iBand,
 
 {
     // Save as local variables to avoid following pointers in loops
-    int     nSrcXSize = poWK->nSrcXSize;
-    int     nSrcYSize = poWK->nSrcYSize;
+    const int     nSrcXSize = poWK->nSrcXSize;
+    const int     nSrcYSize = poWK->nSrcYSize;
 
     double  dfAccumulatorReal = 0.0, dfAccumulatorImag = 0.0;
     double  dfAccumulatorDensity = 0.0;
     double  dfAccumulatorWeight = 0.0;
-    int     iSrcX = (int) floor( dfSrcX - 0.5 );
-    int     iSrcY = (int) floor( dfSrcY - 0.5 );
-    int     iSrcOffset = iSrcX + iSrcY * nSrcXSize;
-    double  dfDeltaX = dfSrcX - 0.5 - iSrcX;
-    double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
-    int     eResample = poWK->eResample;
+    const int     iSrcX = (int) floor( dfSrcX - 0.5 );
+    const int     iSrcY = (int) floor( dfSrcY - 0.5 );
+    const int     iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+    const double  dfDeltaX = dfSrcX - 0.5 - iSrcX;
+    const double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
+    const int     eResample = poWK->eResample;
 
-    double  dfXScale, dfYScale;
-    double  dfXFilter, dfYFilter;
-    int     nXRadius, nFiltInitX;
-    int     nYRadius, nFiltInitY;
-
-    dfXScale = poWK->dfXScale;
-    dfYScale = poWK->dfYScale;
-    nXRadius = poWK->nXRadius;
-    nYRadius = poWK->nYRadius;
-    nFiltInitX = poWK->nFiltInitX;
-    nFiltInitY = poWK->nFiltInitY;
-    dfXFilter = poWK->dfXFilter;
-    dfYFilter = poWK->dfYFilter;
+    const double  dfXScale = poWK->dfXScale, dfYScale = poWK->dfYScale;
+    const double  dfXFilter = poWK->dfXFilter, dfYFilter = poWK->dfYFilter;
+    const int     nFiltInitX = poWK->nFiltInitX;
 
     int     i, j;
-    int     nXDist = ( nXRadius + 1 ) * 2;
+    const int     nXDist = ( poWK->nXRadius + 1 ) * 2;
 
     // Space for saved X weights
     double  *padfWeightsX = psWrkStruct->padfWeightsX;
@@ -2314,34 +2316,38 @@ static int GWKResample( GDALWarpKernel *poWK, int iBand,
     // Mark as needing calculation (don't calculate the weights yet,
     // because a mask may render it unnecessary)
     memset( panCalcX, FALSE, nXDist * sizeof(char) );
+    
+    CPLAssert( eResample == GRA_CubicSpline || eResample == GRA_Lanczos );
+
+    // Skip sampling over edge of image
+    j = poWK->nFiltInitY;
+    int jMax= poWK->nYRadius;
+    if( iSrcY + j < 0 )
+        j = -iSrcY;
+    if( iSrcY + jMax >= nSrcYSize )
+        jMax = nSrcYSize - iSrcY - 1;
+        
+    int iMin = nFiltInitX, iMax = poWK->nXRadius;
+    if( iSrcX + iMin < 0 )
+        iMin = -iSrcX;
+    if( iSrcX + iMax >= nSrcXSize )
+        iMax = nSrcXSize - iSrcX - 1;
 
     // Loop over pixel rows in the kernel
-    for ( j = nFiltInitY; j <= nYRadius; ++j )
+    for ( ; j <= jMax; ++j )
     {
-        int     iRowOffset, nXMin = nFiltInitX, nXMax = nXRadius;
+        int     iRowOffset;
         double  dfWeight1;
-        
-        // Skip sampling over edge of image
-        if ( iSrcY + j < 0 || iSrcY + j >= nSrcYSize )
-            continue;
 
         // Invariant; needs calculation only once per row
-        iRowOffset = iSrcOffset + j * nSrcXSize + nFiltInitX;
-
-        // Make sure we don't read before or after the source array.
-        if ( iRowOffset < 0 )
-        {
-            nXMin = nXMin - iRowOffset;
-            iRowOffset = 0;
-        }
-        if ( iRowOffset + nXDist >= nSrcXSize*nSrcYSize )
-        {
-            nXMax = nSrcXSize*nSrcYSize - iRowOffset + nXMin - 1;
-            nXMax -= (nXMax-nXMin+1) % 2;
-        }
+        iRowOffset = iSrcOffset + j * nSrcXSize + iMin;
 
         // Get pixel values
-        if ( !GWKGetPixelRow( poWK, iBand, iRowOffset, (nXMax-nXMin+2)/2,
+        // We can potentially read extra elements after the "normal" end of the source arrays,
+        // but the contract of papabySrcImage[iBand], papanBandSrcValid[iBand],
+        // panUnifiedSrcValid and pafUnifiedSrcDensity is to have WARP_EXTRA_ELTS
+        // reserved at their end.
+        if ( !GWKGetPixelRow( poWK, iBand, iRowOffset, (iMax-iMin+2)/2,
                               padfRowDensity, padfRowReal, padfRowImag ) )
             continue;
 
@@ -2351,21 +2357,18 @@ static int GWKResample( GDALWarpKernel *poWK, int iBand,
             dfWeight1 = ( dfYScale < 1.0 ) ?
                 GWKBSpline(((double)j) * dfYScale) * dfYScale :
                 GWKBSpline(((double)j) - dfDeltaY);
-        else if ( eResample == GRA_Lanczos )
+        else /*if ( eResample == GRA_Lanczos )*/
             dfWeight1 = ( dfYScale < 1.0 ) ?
                 GWKLanczosSinc(j * dfYScale, dfYFilter) * dfYScale :
                 GWKLanczosSinc(j - dfDeltaY, dfYFilter);
-        else
-            return FALSE;
         
         // Iterate over pixels in row
-        for (i = nXMin; i <= nXMax; ++i )
+        for (i = iMin; i <= iMax; ++i )
         {
             double dfWeight2;
             
-            // Skip sampling at edge of image OR if pixel has zero density
-            if ( iSrcX + i < 0 || iSrcX + i >= nSrcXSize
-                 || padfRowDensity[i-nXMin] < 0.000000001 )
+            // Skip sampling if pixel has zero density
+            if ( padfRowDensity[i-iMin] < 0.000000001 )
                 continue;
 
             // Make or use a cached set of weights for this row
@@ -2380,22 +2383,20 @@ static int GWKResample( GDALWarpKernel *poWK, int iBand,
                     padfWeightsX[i-nFiltInitX] = dfWeight2 = (dfXScale < 1.0 ) ?
                         GWKBSpline((double)i * dfXScale) * dfXScale :
                         GWKBSpline(dfDeltaX - (double)i);
-                else if ( eResample == GRA_Lanczos )
+                else /*if ( eResample == GRA_Lanczos )*/
                     // Calculate & save the X weight
                     padfWeightsX[i-nFiltInitX] = dfWeight2 = (dfXScale < 1.0 ) ?
                         GWKLanczosSinc(i * dfXScale, dfXFilter) * dfXScale :
                         GWKLanczosSinc(i - dfDeltaX, dfXFilter);
-                else
-                    return FALSE;
                 
                 dfWeight2 *= dfWeight1;
                 panCalcX[i-nFiltInitX] = TRUE;
             }
             
             // Accumulate!
-            dfAccumulatorReal += padfRowReal[i-nXMin] * dfWeight2;
-            dfAccumulatorImag += padfRowImag[i-nXMin] * dfWeight2;
-            dfAccumulatorDensity += padfRowDensity[i-nXMin] * dfWeight2;
+            dfAccumulatorReal += padfRowReal[i-iMin] * dfWeight2;
+            dfAccumulatorImag += padfRowImag[i-iMin] * dfWeight2;
+            dfAccumulatorDensity += padfRowDensity[i-iMin] * dfWeight2;
             dfAccumulatorWeight += dfWeight2;
         }
     }
