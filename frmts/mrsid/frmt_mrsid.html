@@ -48,37 +48,12 @@ in MrSID files. This bug was fixed in MrSID software version 1.5, but if you
 have older encoders or files, created with older encoders, you cannot use
 georeference information from them.<p>
 
-<h2>Creation Options</h2>
-
-MrSID writing is only supported if GDAL is built against a MrSID ESDK
-5.x or newer.  This is normally only licensed by Lizardtech under controlled
-circumstances (whereas the DSDK is free for anyone to use within the 
-constraints of a license agreement).  If you do have the ESDK, it can
-be used to write MrSID files.  The following creation options are supported.
-
-<ul>
-<li> WORLDFILE: Yes to write an ESRI world file (with the extension .sdw). <p>
-<li> VERSION: Can be 2 for MrSID version 2 files, or 3 for MrSID version 3
-files.<p>
-<li> COMPRESSION: Used only for version 2 MrSID files.  Indicates the desired
-compression ratio.  MrSID generation 2 cannot compress an image losslessly; so
-zero does <i>not</i> indicate numerically lossless compression.  A value of
-one may be used for highest fidelity, but a value of twenty will generally
-yield the best results (a "visually lossless" compression).  Twenty would
-indicate a 20:1 compression ratio (the image would be compressed to 1/20 its
-original size).<p>
-<li> FILESIZE: Used only for version 3 MrSID files.  Indicates the desired
-output file size in bytes.  Use "0" for lossless compression.<p>
-<li> TWOPASS: Used only with 3 MrSID files.  Indicates that a two pass 
-optimizer algorithm should be used during compression.<p>
-</ul>
-
 <h2>See Also:</h2>
 
 <ul>
 <li> Implemented as <tt>gdal/frmts/mrsid/mrsiddataset.cpp</tt>.<p>
 
-<li> <a href="http://www.lizardtech.com">LizardTech's Web site<a><p>
+<li> <a href="http://www.lizardtech.com">LizardTech's web site<a><p>
 
 </ul>
 
