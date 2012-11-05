@@ -1439,7 +1439,7 @@ void kml2FeatureDef (
             poKmlSchema->get_simplefield_array_at ( iSimpleField );
 
         const char *pszType = "string";
-        const char *pszName = "Unknown";
+	string osName = "Unknown";
 
         if ( poKmlSimpleField->has_type (  ) ) {
             const string oType = poKmlSimpleField->get_type (  );
@@ -1454,23 +1454,18 @@ void kml2FeatureDef (
         /* drivers or to make requests */
         /* Example: http://www.jasonbirch.com/files/newt_combined.kml */
         /*if ( poKmlSimpleField->has_displayname (  ) ) {
-            const string oName = poKmlSimpleField->get_displayname (  );
-
-            pszName = oName.c_str (  );
+            osName = poKmlSimpleField->get_displayname (  );
         }
 
         else*/ if ( poKmlSimpleField->has_name (  ) ) {
-            const string oName = poKmlSimpleField->get_name (  );
-
-            pszName = oName.c_str (  );
+            osName = poKmlSimpleField->get_name (  );
         }
 
         if ( EQUAL ( pszType, "bool" ) ||
              EQUAL ( pszType, "int" ) ||
              EQUAL ( pszType, "short" ) ||
              EQUAL ( pszType, "ushort" ) ) {
-            OGRFieldDefn oOgrFieldName ( pszName, OFTInteger );
-
+            OGRFieldDefn oOgrFieldName ( osName.c_str(), OFTInteger );
             poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldName );
         }
         else if ( EQUAL ( pszType, "float" ) ||
@@ -1478,19 +1473,15 @@ void kml2FeatureDef (
 
                   /* a too big uint wouldn't fit in a int, so we map it to OFTReal for now ... */
                   EQUAL ( pszType, "uint" ) ) {
-            OGRFieldDefn oOgrFieldName ( pszName, OFTReal );
-
+            OGRFieldDefn oOgrFieldName ( osName.c_str(), OFTReal );
             poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldName );
         }
         else /* string, or any other unrecognized type */
         {
-            OGRFieldDefn oOgrFieldName ( pszName, OFTString );
-
+            OGRFieldDefn oOgrFieldName ( osName.c_str(), OFTString );
             poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldName );
         }
-
     }
-
 
     return;
 }
