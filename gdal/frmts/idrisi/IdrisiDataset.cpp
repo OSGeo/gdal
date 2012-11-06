@@ -341,6 +341,8 @@ public:
     virtual CPLErr SetNoDataValue( double dfNoDataValue );
     virtual CPLErr SetColorTable( GDALColorTable *poColorTable ); 
     virtual CPLErr SetUnitType( const char *pszUnitType );
+    virtual CPLErr SetStatistics( double dfMin, double dfMax,
+                                  double dfMean, double dfStdDev ); 
     CPLErr SetMinMax( double dfMin, double dfMax );
     virtual const GDALRasterAttributeTable *GetDefaultRAT();
     virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
@@ -1794,6 +1796,9 @@ CPLErr IdrisiRasterBand::SetUnitType( const char *pszUnitType )
 CPLErr IdrisiRasterBand::SetMinMax( double dfMin, double dfMax )
 {      
     IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+    
+    fMinimum = (float)dfMin;
+    fMaximum = (float)dfMax;
 
     double adfMin[3] = {0.0, 0.0, 0.0};
     double adfMax[3] = {0.0, 0.0, 0.0};
@@ -1830,6 +1835,17 @@ CPLErr IdrisiRasterBand::SetMinMax( double dfMin, double dfMax )
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                           SetStatistics()                            */
+/************************************************************************/
+
+CPLErr IdrisiRasterBand::SetStatistics( double dfMin, double dfMax, double dfMean, double dfStdDev )
+{
+    SetMinMax(dfMin, dfMax);
+
+    return GDALPamRasterBand::SetStatistics(dfMin, dfMax, dfMean, dfStdDev);
 }
 
 /************************************************************************/
