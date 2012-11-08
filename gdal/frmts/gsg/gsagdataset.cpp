@@ -313,7 +313,8 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         // Discover the last read block
         for ( int iFoundLine = nLastReadLine - 1; iFoundLine > nBlockYOff; iFoundLine--)
         {
-            IReadBlock( nBlockXOff, iFoundLine, NULL);
+            if( IReadBlock( nBlockXOff, iFoundLine, NULL) != CE_None )
+                return CE_Failure;
         }
     }
 
