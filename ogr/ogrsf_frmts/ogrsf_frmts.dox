@@ -1077,17 +1077,17 @@ specific.
 
 ...
 
-	OGRLayer *poLayer;
-        char     *papszOptions;
+        OGRLayer *poLayer;
+        char     **papszOptions;
 
-	if( !poDS->TestCapability( ODsCCreateLayer ) )
+        if( !poDS->TestCapability( ODsCCreateLayer ) )
         {
-	    ...
+        ...
         }
 
         papszOptions = CSLSetNameValue( papszOptions, "DIM", "2" );
         poLayer = poDS->CreateLayer( "NewLayer", NULL, wkbUnknown,
-				     papszOptions );
+                                     papszOptions );
         CSLDestroy( papszOptions );
 
         if( poLayer == NULL )
