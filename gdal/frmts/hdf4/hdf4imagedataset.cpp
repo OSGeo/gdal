@@ -3467,7 +3467,11 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                   poBand->dfScale =
                       CPLAtof( CSLFetchNameValue( poDS->papszLocalMetadata,
                                                   "scale_factor" ) );
-                  poBand->dfOffset = -1 * poBand->dfScale *
+                  // See #4891 regarding offset interpretation.
+                  //poBand->dfOffset = -1 * poBand->dfScale *
+                  //  CPLAtof( CSLFetchNameValue( poDS->papszLocalMetadata,
+                  //                              "add_offset" ) );
+                  poBand->dfOffset = 
                       CPLAtof( CSLFetchNameValue( poDS->papszLocalMetadata,
                                                   "add_offset" ) );
               }
