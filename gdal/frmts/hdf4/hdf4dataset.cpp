@@ -149,7 +149,7 @@ char *SPrintArray( GDALDataType eDataType, const void *paDataArray,
                      (i < nValues - 1)?pszDelimiter:"" );
                 break;
             case GDT_Float32:
-                sprintf( pszField, "%.7g%s", ((float *)paDataArray)[i],
+                sprintf( pszField, "%.10g%s", ((float *)paDataArray)[i],
                      (i < nValues - 1)?pszDelimiter:"" );
                 break;
             case GDT_Float64:
