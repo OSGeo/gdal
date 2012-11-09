@@ -2916,7 +2916,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                               (long)iSphereCode );
 #endif
                     poDS->oSRS.importFromUSGS( iProjCode, iZoneCode,
-                                               adfProjParms, iSphereCode );
+                                               adfProjParms, iSphereCode,
+                                               USGS_ANGLE_RADIANS );
 
                     if ( poDS->pszProjection )
                         CPLFree( poDS->pszProjection );
