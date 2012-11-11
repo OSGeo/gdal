@@ -1039,7 +1039,7 @@ void CPLCleanupTLS()
 int CPLGetNumCPUs()
 {
 #ifdef _SC_NPROCESSORS_ONLN
-    return (int)sysconf(_SC_NPROCESSORS_CONF);
+    return (int)sysconf(_SC_NPROCESSORS_ONLN);
 #else
     return 1;
 #endif
