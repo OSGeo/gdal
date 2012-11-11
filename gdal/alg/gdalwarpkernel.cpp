@@ -1325,6 +1325,9 @@ static int GWKGetPixelValue( GDALWarpKernel *poWK, int iBand,
 /*                          GWKGetPixelRow()                            */
 /************************************************************************/
 
+/* It is assumed that adfImag[] is set to 0 by caller code for non-complex */
+/* data-types. */
+
 static int GWKGetPixelRow( GDALWarpKernel *poWK, int iBand, 
                            int iSrcOffset, int nHalfSrcLen,
                            double adfDensity[],
@@ -1403,7 +1406,6 @@ static int GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
                 adfReal[i] = pSrc[i];
                 adfReal[i+1] = pSrc[i+1];
             }
-            memset( adfImag, 0, nSrcLen * sizeof(double) );
             break;
         }
 
@@ -1416,7 +1418,6 @@ static int GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
                 adfReal[i] = pSrc[i];
                 adfReal[i+1] = pSrc[i+1];
             }
-            memset( adfImag, 0, nSrcLen * sizeof(double) );
             break;
         }
 
@@ -1429,7 +1430,6 @@ static int GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
                 adfReal[i] = pSrc[i];
                 adfReal[i+1] = pSrc[i+1];
             }
-            memset( adfImag, 0, nSrcLen * sizeof(double) );
             break;
          }
 
@@ -1442,7 +1442,6 @@ static int GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
                 adfReal[i] = pSrc[i];
                 adfReal[i+1] = pSrc[i+1];
             }
-            memset( adfImag, 0, nSrcLen * sizeof(double) );
             break;
         }
 
@@ -1455,7 +1454,6 @@ static int GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
                 adfReal[i] = pSrc[i];
                 adfReal[i+1] = pSrc[i+1];
             }
-            memset( adfImag, 0, nSrcLen * sizeof(double) );
             break;
         }
 
@@ -1468,7 +1466,6 @@ static int GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
                 adfReal[i] = pSrc[i];
                 adfReal[i+1] = pSrc[i+1];
             }
-            memset( adfImag, 0, nSrcLen * sizeof(double) );
             break;
         }
 
@@ -1481,7 +1478,6 @@ static int GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
                 adfReal[i] = pSrc[i];
                 adfReal[i+1] = pSrc[i+1];
             }
-            memset( adfImag, 0, nSrcLen * sizeof(double) );
             break;
        }
 
@@ -1708,7 +1704,7 @@ static int GWKBilinearResample( GDALWarpKernel *poWK, int iBand,
     int     iSrcOffset;
     double  dfRatioX = 1.5 - (dfSrcX - iSrcX);
     double  dfRatioY = 1.5 - (dfSrcY - iSrcY);
-    double  adfDensity[2], adfReal[2], adfImag[2];
+    double  adfDensity[2], adfReal[2], adfImag[2] = {0, 0};
     double  dfAccumulatorReal = 0.0, dfAccumulatorImag = 0.0;
     double  dfAccumulatorDensity = 0.0;
     double  dfAccumulatorDivisor = 0.0;
@@ -2046,7 +2042,7 @@ static int GWKCubicResample( GDALWarpKernel *poWK, int iBand,
     double  dfDeltaX3 = dfDeltaX2 * dfDeltaX;
     double  dfDeltaY3 = dfDeltaY2 * dfDeltaY;
     double  adfValueDens[4], adfValueReal[4], adfValueImag[4];
-    double  adfDensity[4], adfReal[4], adfImag[4];
+    double  adfDensity[4], adfReal[4], adfImag[4] = {0, 0, 0, 0};
     int     i;
 
     // Get the bilinear interpolation at the image borders
