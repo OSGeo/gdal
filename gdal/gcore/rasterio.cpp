@@ -421,6 +421,10 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     else
     {
         double      dfSrcX, dfSrcY;
+        int         nLimitBlockY = 0;
+        int         bByteCopy = ( eDataType == eBufType && nBandDataSize == 1); 
+        int nStartBlockX = -nBlockXSize;
+
 /* -------------------------------------------------------------------- */
 /*      Read case                                                       */
 /*      Loop over buffer computing source locations.                    */
@@ -430,26 +434,35 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             size_t   iBufOffset, iSrcOffset;
 
             dfSrcY = (iBufYOff+0.5) * dfSrcYInc + nYOff;
+            dfSrcX = 0.5 * dfSrcXInc + nXOff;
             iSrcY = (int) dfSrcY;
 
             iBufOffset = (size_t)iBufYOff * nLineSpace;
 
-            for( iBufXOff = 0; iBufXOff < nBufXSize; iBufXOff++ )
+            if( iSrcY >= nLimitBlockY )
             {
-                dfSrcX = (iBufXOff+0.5) * dfSrcXInc + nXOff;
+                nLBlockY = iSrcY / nBlockYSize;
+                nLimitBlockY = (nLBlockY + 1) * nBlockYSize;
+                nStartBlockX = -nBlockXSize; /* make sure a new block is loaded */
+            }
+            else if( (int)dfSrcX < nStartBlockX )
+                nStartBlockX = -nBlockXSize; /* make sure a new block is loaded */
 
+            size_t iSrcOffsetCst = (iSrcY - nLBlockY*nBlockYSize) * (size_t)nBlockXSize;
+
+            for( iBufXOff = 0; iBufXOff < nBufXSize; iBufXOff++, dfSrcX += dfSrcXInc )
+            {
                 iSrcX = (int) dfSrcX;
+                int nDiffX = iSrcX - nStartBlockX;
 
     /* -------------------------------------------------------------------- */
     /*      Ensure we have the appropriate block loaded.                    */
     /* -------------------------------------------------------------------- */
-                if( iSrcX < nLBlockX * nBlockXSize
-                    || iSrcX >= (nLBlockX+1) * nBlockXSize
-                    || iSrcY < nLBlockY * nBlockYSize
-                    || iSrcY >= (nLBlockY+1) * nBlockYSize )
+                if( nDiffX >= nBlockXSize )
                 {
                     nLBlockX = iSrcX / nBlockXSize;
-                    nLBlockY = iSrcY / nBlockYSize;
+                    nStartBlockX = nLBlockX * nBlockXSize;
+                    nDiffX = iSrcX - nStartBlockX;
 
                     if( poBlock != NULL )
                         poBlock->DropLock();
@@ -472,10 +485,13 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     /* -------------------------------------------------------------------- */
     /*      Copy over this pixel of data.                                   */
     /* -------------------------------------------------------------------- */
-                iSrcOffset = ((size_t)iSrcX - (size_t)nLBlockX*nBlockXSize
-                    + ((size_t)iSrcY - (size_t)nLBlockY*nBlockYSize) * nBlockXSize)*nBandDataSize;
+                iSrcOffset = ((size_t)nDiffX + iSrcOffsetCst)*nBandDataSize;
 
-                if( eDataType == eBufType )
+                if( bByteCopy )
+                {
+                    ((GByte *) pData)[iBufOffset] = pabySrcBlock[iSrcOffset];
+                }
+                else if( eDataType == eBufType )
                 {
                     memcpy( ((GByte *) pData) + iBufOffset,
                             pabySrcBlock + iSrcOffset, nBandDataSize );
