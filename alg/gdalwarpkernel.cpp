@@ -3335,9 +3335,7 @@ static void GWKGeneralCaseThread( void* pData)
 /* -------------------------------------------------------------------- */
             double  dfDensity = 1.0;
 
-            if( poWK->pafUnifiedSrcDensity != NULL 
-                && iSrcX >= 0 && iSrcY >= 0 
-                && iSrcX < nSrcXSize && iSrcY < nSrcYSize )
+            if( poWK->pafUnifiedSrcDensity != NULL )
             {
                 dfDensity = poWK->pafUnifiedSrcDensity[iSrcOffset];
                 if( dfDensity < 0.00001 )
@@ -3345,8 +3343,6 @@ static void GWKGeneralCaseThread( void* pData)
             }
 
             if( poWK->panUnifiedSrcValid != NULL
-                && iSrcX >= 0 && iSrcY >= 0 
-                && iSrcX < nSrcXSize && iSrcY < nSrcYSize 
                 && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
                      & (0x01 << (iSrcOffset & 0x1f))) )
                 continue;
