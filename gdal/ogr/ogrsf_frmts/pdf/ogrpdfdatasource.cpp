@@ -349,7 +349,7 @@ void OGRPDFDataSource::InitMapOperators()
 int OGRPDFDataSource::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,ODsCCreateLayer) )
+    if( bWritable && EQUAL(pszCap,ODsCCreateLayer) )
         return TRUE;
     else
         return FALSE;
