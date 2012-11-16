@@ -31,7 +31,7 @@ The following utility programs are distributed with GDAL.
 <li> \ref gdal_fillnodata - Interpolate in nodata regions.
 <li> \ref gdallocationinfo - Query raster at a location.
 <li> \ref gdalsrsinfo - Report a given SRS in different formats.  (GDAL >= 1.9.0)
-<li> \ref gdalmove - Transform the coordinate system of a file (GDAL >= 2.0)
+<li> \ref gdalmove - Transform the coordinate system of a file (GDAL >= 1.10)
 <li> \ref gdal-config - Get options required to build software using GDAL.
 </ul>
 
@@ -346,11 +346,11 @@ from the source image for copying based on pixel/line location.  </dd>
 <dt> <b>-projwin</b> <i>ulx uly lrx lry</i>:</dt><dd> Selects a subwindow from
 the source image for copying (like <b>-srcwin</b>) but with the corners given
 in georeferenced coordinates. </dd>
-<dt> <b>-epo</b>: (Error when Partially Outside)</dt><dd>(GDAL >= 2.0) If this
+<dt> <b>-epo</b>: (Error when Partially Outside)</dt><dd>(GDAL >= 1.10) If this
 option is set, <b>-srcwin</b> or <b>-projwin</b> values that falls partially outside the
 source raster extent will be considered as an error. The default behaviour starting
-with GDAL 2.0 is to accept such requests, when they were considered as an error before.</dd>
-<dt> <b>-eco</b>: (Error when Completely Outside)</dt><dd>(GDAL >= 2.0) Same
+with GDAL 1.10 is to accept such requests, when they were considered as an error before.</dd>
+<dt> <b>-eco</b>: (Error when Completely Outside)</dt><dd>(GDAL >= 1.10) Same
 as <b>-epo</b>, except that the criteron for erroring out is when the request falls completely
 outside the source raster extent.</dd>
 <dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> Override the projection for the
@@ -700,7 +700,7 @@ not the same projection. Note: this does not mean that they will be reprojected.
 just be ignored.
 </dd>
 
-<dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> (starting with GDAL 2.0)
+<dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> (starting with GDAL 1.10)
 Override the projection for the output file.  The <i>srs_def</i> may be any of the usual GDAL/OGR forms,
 complete WKT, PROJ.4, EPSG:n or a file containing the WKT. </dd>
 
@@ -1611,7 +1611,7 @@ This program creates regular grid (raster) from the scattered data read from
 the OGR datasource. Input data will be interpolated to fill grid nodes with
 values, you can choose from various interpolation methods. 
 
-Starting with GDAL 2.0, it is possible to set the <b>GDAL_NUM_THREADS</b>
+Starting with GDAL 1.10, it is possible to set the <b>GDAL_NUM_THREADS</b>
 configuration option to parallelize the processing. The value to specify is
 the number of worker threads, or <i>ALL_CPUS</i> to use all the cores/CPUs of the
 computer.
@@ -2010,7 +2010,7 @@ The following specific options are available :
 <dt> <b>-s</b> <i>scale</i>:</dt><dd>ratio of vertical units to horizontal. If the horizontal unit of the source DEM is degrees (e.g Lat/Long WGS84 projection), you can use scale=111120 if the vertical units are meters (or scale=370400 if they are in feet)</dd>
 <dt> <b>-az</b> <i>azimuth</i>:</dt><dd>azimuth of the light, in degrees. 0 if it comes from the top of the raster, 90 from the east, ... The default value, 315, should rarely be changed as it is the value generally used to generate shaded maps.</dd>
 <dt> <b>-alt</b> <i>altitude</i>:</dt><dd>altitude of the light, in degrees. 90 if the light comes from above the DEM, 0 if it is raking light.</dd>
-<dt> <b>-combined</b> <i>combined shading</i>:</dt><dd>(starting with GDAL 2.0) a combination of slope and oblique shading.</dd>
+<dt> <b>-combined</b> <i>combined shading</i>:</dt><dd>(starting with GDAL 1.10) a combination of slope and oblique shading.</dd>
 </dl>
 
 \subsection gdaldem_slope slope

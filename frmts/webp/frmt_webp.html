@@ -18,11 +18,11 @@ A WebP file consists of VP8 image data, and a container based on RIFF.</p>
 version 0.1) only offers compression and decompression of whole images, so RAM might be a limitation
 when dealing with big images.</p>
 
-<p>The WEBP driver supports 3 bands (RGB) images. It also supports 4 bands (RGBA) starting with GDAL 2.0 and libwebp 0.1.4.</p>
+<p>The WEBP driver supports 3 bands (RGB) images. It also supports 4 bands (RGBA) starting with GDAL 1.10 and libwebp 0.1.4.</p>
 
 <p>The WEBP driver can be used as the internal format used by the <a href="frmt_rasterlite.html">Rasterlite</a> driver.</p>
 
-<p>Starting with GDAL 2.0, XMP metadata can be extracted from the file, and will be
+<p>Starting with GDAL 1.10, XMP metadata can be extracted from the file, and will be
 stored as XML raw content in the xml:XMP metadata domain.</p>
 
 <h2>Creation options</h2>
@@ -35,7 +35,7 @@ option can be used to select other values.  Values must be in the
 range 1-100.  Low values result in higher compression ratios, but poorer
 image quality. <p></li>
 
-<li><p><b>LOSSLESS=True/False</b> (GDAL &gt;= 2.0 and libwebp &gt;= 0.1.4):
+<li><p><b>LOSSLESS=True/False</b> (GDAL &gt;= 1.10 and libwebp &gt;= 0.1.4):
 By default, lossy compression is used. If set to True,
 lossless compression will be used.<p></li>
 

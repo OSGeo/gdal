@@ -26,9 +26,9 @@ when inserting a lot of features (see http://trac.osgeo.org/gdal/ticket/4420). T
 is to cause a write lock to be taken and a temporary disabling of the indexes. Those are restored when the datasource is
 closed or when a read operation is done.
 
-<h2>SQL support (OGR >= 2.0)</h2>
+<h2>SQL support (OGR &gt;= 1.10)</h2>
 
-Starting with OGR 2.0, SQL statements are run through the SQL engine of the FileGDB SDK API. This holds for non-SELECT
+Starting with OGR 1.10, SQL statements are run through the SQL engine of the FileGDB SDK API. This holds for non-SELECT
 statements. However, due to partial/inaccurate support for SELECT statements in current FileGDB SDK API versions (v1.2),
 SELECT statements will be run by default by the OGR SQL engine. This can be changed by specifying the
 <i>-dialect FileGDB</i> option to ogrinfo or ogr2ogr.
@@ -55,7 +55,7 @@ respectively the definition and metadata of a FileGDB table as XML content.
 		<p>ArcMap 10.0 and OGR defaults:<ul>
 			<li>For geographic coordinate systems: XORIGIN=-400, YORIGIN=-400, XYSCALE=1000000000</li>
 			<li>For projected coordinate systems: XYSCALE=10000 for the default XYTOLERANCE of 0.001m. XORIGIN and YORIGIN change based on the coordinate system, but the OGR default of -2147483647 is suitable with the default XYSCALE for all coordinate systems.</li></ul></p></li>
-	<li><b>XML_DEFINITION</b> : (GDAL &gt;=2.0) When this option is set, its value will be used as the XML definition to create the new table. The root node of such a XML definition must be a &lt;esri:DataElement&gt; element conformant to FileGDBAPI.xsd</li>
+	<li><b>XML_DEFINITION</b> : (GDAL &gt;= 1.10) When this option is set, its value will be used as the XML definition to create the new table. The root node of such a XML definition must be a &lt;esri:DataElement&gt; element conformant to FileGDBAPI.xsd</li>
 </ul>
 
 <h2>Examples</h2>

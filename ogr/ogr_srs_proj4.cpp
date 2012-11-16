@@ -333,7 +333,7 @@ static double OSR_GDV( char **papszNV, const char * pszField,
  *               +y_0=6023150 +ellps=intl  +units=m +nadgrids=nzgd2kgrid0005.gsb +wktext"]]
  * \endcode
  *
- * Special processing for 'etmerc' (GDAL &gt;= 2.0 ): if +proj=etmerc is found
+ * Special processing for 'etmerc' (GDAL &gt;= 1.10 ): if +proj=etmerc is found
  * in the passed string, the SRS built will use the WKT representation for a
  * standard Transverse Mercator, but will aso include a PROJ4 EXTENSION node to
  * preserve the etmerc projection method.
@@ -1379,7 +1379,7 @@ OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
  * LOCAL_CS coordinate systems are not translatable.  An empty string
  * will be returned along with OGRERR_NONE.  
  *
- * Special processing for Transverse Mercator with GDAL &gt;= 2.0 and PROJ &gt;= 4.8 :
+ * Special processing for Transverse Mercator with GDAL &gt;= 1.10 and PROJ &gt;= 4.8 :
  * if the OSR_USE_ETMERC configuration option is set to YES, the PROJ.4
  * definition built from the SRS will use the 'etmerc' projection method,
  * rather than the default 'tmerc'. This will give better accuracy (at the

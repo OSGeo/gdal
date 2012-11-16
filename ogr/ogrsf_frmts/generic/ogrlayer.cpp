@@ -1506,7 +1506,7 @@ OGRGeometry *set_filter_from(OGRLayer *pLayer, OGRGeometry *pGeometryExistingFil
  * @return an error code if there was an error or the execution was
  * interrupted, OGRERR_NONE otherwise.
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 
 OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod, 
@@ -1662,7 +1662,7 @@ done:
  * @return an error code if there was an error or the execution was
  * interrupted, OGRERR_NONE otherwise.
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 
 OGRErr OGR_L_Intersection( OGRLayerH pLayerInput, 
@@ -1725,7 +1725,7 @@ OGRErr OGR_L_Intersection( OGRLayerH pLayerInput,
  * @return an error code if there was an error or the execution was
  * interrupted, OGRERR_NONE otherwise.
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 
 OGRErr OGRLayer::Union( OGRLayer *pLayerMethod, 
@@ -1924,7 +1924,7 @@ done:
  * @return an error code if there was an error or the execution was
  * interrupted, OGRERR_NONE otherwise.
  *
- * @since OGR 2.0 
+ * @since OGR 1.10 
  */
 
 OGRErr OGR_L_Union( OGRLayerH pLayerInput, 
@@ -1987,7 +1987,7 @@ OGRErr OGR_L_Union( OGRLayerH pLayerInput,
  * @return an error code if there was an error or the execution was
  * interrupted, OGRERR_NONE otherwise.
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 
 OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod, 
@@ -2195,7 +2195,7 @@ done:
  * @return an error code if there was an error or the execution was
  * interrupted, OGRERR_NONE otherwise.
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 
 OGRErr OGR_L_SymDifference( OGRLayerH pLayerInput, 
@@ -2256,7 +2256,7 @@ OGRErr OGR_L_SymDifference( OGRLayerH pLayerInput,
  * @return an error code if there was an error or the execution was
  * interrupted, OGRERR_NONE otherwise.
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 
 OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod, 
@@ -2402,7 +2402,7 @@ done:
  * @return an error code if there was an error or the execution was
  * interrupted, OGRERR_NONE otherwise.
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 
 OGRErr OGR_L_Identity( OGRLayerH pLayerInput, 
@@ -2465,7 +2465,7 @@ OGRErr OGR_L_Identity( OGRLayerH pLayerInput,
  * @return an error code if there was an error or the execution was
  * interrupted, OGRERR_NONE otherwise.
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 
 OGRErr OGRLayer::Update( OGRLayer *pLayerMethod, 
@@ -2636,7 +2636,7 @@ done:
  * @return an error code if there was an error or the execution was
  * interrupted, OGRERR_NONE otherwise.
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 
 OGRErr OGR_L_Update( OGRLayerH pLayerInput, 
@@ -2692,7 +2692,7 @@ OGRErr OGR_L_Update( OGRLayerH pLayerInput,
  * @return an error code if there was an error or the execution was
  * interrupted, OGRERR_NONE otherwise.
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 
 OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod, 
@@ -2832,7 +2832,7 @@ done:
  * @return an error code if there was an error or the execution was
  * interrupted, OGRERR_NONE otherwise.
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 
 OGRErr OGR_L_Clip( OGRLayerH pLayerInput, 
@@ -2888,7 +2888,7 @@ OGRErr OGR_L_Clip( OGRLayerH pLayerInput,
  * @return an error code if there was an error or the execution was
  * interrupted, OGRERR_NONE otherwise.
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 
 OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod, 
@@ -3029,7 +3029,7 @@ done:
  * @return an error code if there was an error or the execution was
  * interrupted, OGRERR_NONE otherwise.
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 
 OGRErr OGR_L_Erase( OGRLayerH pLayerInput, 

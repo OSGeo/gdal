@@ -907,7 +907,7 @@ typedef void* CPLXMLSchemaPtr;
  * @param pszXSDFilename XSD schema to load.
  * @return a handle to the parsed XML schema, or NULL in case of failure.
  *
- * @since GDAL 2.0.0
+ * @since GDAL 1.10.0
  */
 
 static
@@ -949,7 +949,7 @@ CPLXMLSchemaPtr CPLLoadXMLSchema(const char* pszXSDFilename)
  *
  * @param pSchema a handle to the parsed XML schema.
  *
- * @since GDAL 2.0.0
+ * @since GDAL 1.10.0
  */
 
 static
@@ -971,7 +971,7 @@ void CPLFreeXMLSchema(CPLXMLSchemaPtr pSchema)
  * @param papszOptions unused for now.
  * @return TRUE if the XML file validates against the XML schema.
  *
- * @since GDAL 2.0.0
+ * @since GDAL 1.10.0
  */
 
 int CPLValidateXML(const char* pszXMLFilename,
