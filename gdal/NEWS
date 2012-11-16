@@ -1,4 +1,4 @@
-= GDAL/OGR 2.0.0 *Preliminary* Release Notes (r23656 to r24950) =
+= GDAL/OGR 1.10.0 *Preliminary* Release Notes (r23656 to r24950) =
 
 == In a nutshell... ==
 
@@ -26,7 +26,18 @@
 
 == Backward compatibility issues ==
 
-== GDAL/OGR 2.0.0 - General Changes ==
+Due to the 2-digit number '10' in GDAL 1.10, the GDAL_VERSION_NUM macro has been changed.
+The new advised way of testing the GDAL version number (for GDAL 1.10 or later) at compilation time is :
+
+#ifdef GDAL_COMPUTE_VERSION /* only available in GDAL 1.10 or later */
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(1,10,0)
+///
+#endif
+#endif
+
+Testing of previous versions is of course unchanged.
+
+== GDAL/OGR 1.10.0 - General Changes ==
 
 Build(Unix):
  * --with-python: make it work with python3, and also accept path to python binary as argument of --with-python (#4725)
@@ -43,7 +54,7 @@ Build(Windows):
  * (Preliminary) support to build INGRES
  * Make CPLGetErrorHandlerUserData() exported
 
-== GDAL 2.0.0 - Overview of Changes ==
+== GDAL 1.10.0 - Overview of Changes ==
 
 Port:
  * CPL Thread API: add condition API, modeled on POSIX pthread_cond_ API
@@ -281,7 +292,7 @@ WMS driver:
 XYZ driver:
  * avoid rescanning output file at end of CreateCopy()
 
-== OGR 2.0.0 - Overview of Changes ==
+== OGR 1.10.0 - Overview of Changes ==
 
 Core:
  * Add OGRLayerDecorator class (decorator base class for OGRLayer),

@@ -3571,7 +3571,7 @@ int OGR_G_Centroid( OGRGeometryH hGeom, OGRGeometryH hCentroidPoint )
  * @return a point guaranteed to lie on the surface or NULL if an error
  *         occured.
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 
 OGRGeometryH OGR_G_PointOnSurface( OGRGeometryH hGeom )

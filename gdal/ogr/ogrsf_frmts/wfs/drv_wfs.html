@@ -23,7 +23,7 @@ The minimal syntax to open a WFS datasource is : <i>WFS:http://path/to/WFS/servi
 Additionnal optional parameters can be specified such as <i>TYPENAME</i>, <i>VERSION</i>, <i>MAXFEATURES</i> as specified in WFS specification.<p>
 
 The name provided to the TYPENAME parameter must be exactly the layer name reported by OGR,
-in particular with its namespace prefix when its exists. Note: starting with GDAL 2.0, several type names can be provided and separated by comma.<p>
+in particular with its namespace prefix when its exists. Note: starting with GDAL 1.10, several type names can be provided and separated by comma.<p>
 
 It is also possible to specify the name of an XML file whose content matches the following syntax
 (the &lt;OGRWFSDataSource&gt element must be the first bytes of the file):
@@ -54,14 +54,14 @@ userid and password to the remote server.
 
 <h2>Request paging</h2>
 
-Before OGR 2.0, when reading the first feature from a layer, the whole layer content will be fetched from the server.<p>
+Before OGR 1.10, when reading the first feature from a layer, the whole layer content will be fetched from the server.<p>
 
 Some servers (such as MapServer >= 6.0) support a vendor specific option, STARTINDEX, that allow to do the requests per "page",
 and thus to avoid downloading the whole content of the layer in a single request. The OGR WFS client will use paging when the OGR_WFS_PAGING_ALLOWED
 configuration option is set to ON. The page size (number of features fetched in a single request) is limited to 100 by default.
 It can be changed by setting the OGR_WFS_PAGE_SIZE configuration option. Those 2 options can also be set in a WFS XML description file.<p>
 
-Starting with OGR 2.0, the WFS driver will read the GML content as a stream instead as a whole file, which will improve
+Starting with OGR 1.10, the WFS driver will read the GML content as a stream instead as a whole file, which will improve
 interactivity and help when the content cannot fit into memory. This can be turned off by setting the OGR_WFS_USE_STREAMING
 configuration option to NO if this is not desirable (for example, when iterating several times on a layer that can fit into memory).<p>
 

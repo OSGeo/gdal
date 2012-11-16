@@ -649,7 +649,7 @@ public class gdalinfo {
 				hLatLong = hProj.CloneGeogCS();
 
 			if (hLatLong != null) {
-				/* New in GDAL 2.0. Before was "new CoordinateTransformation(srs,dst)". */
+				/* New in GDAL 1.10. Before was "new CoordinateTransformation(srs,dst)". */
 				hTransform = CoordinateTransformation.CreateCoordinateTransformation(hProj, hLatLong);
             }
 

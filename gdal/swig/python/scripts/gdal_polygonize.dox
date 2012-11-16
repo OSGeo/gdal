@@ -25,7 +25,7 @@ details on the algorithm.
 
 <dl>
 
-<dt> <b>-8</b>:</dt><dd> (GDAL >= 2.0)
+<dt> <b>-8</b>:</dt><dd> (GDAL >= 1.10)
 Use 8 connectedness. Default is 4 connectedness.
 </dd>
 

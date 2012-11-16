@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
  
 # Setup script for GDAL Python bindings.
 # Inspired by psycopg2 setup.py file
@@ -6,7 +7,7 @@
 # Howard Butler hobu.inc@gmail.com
 
 
-gdal_version = '2.0.0'
+gdal_version = '1.10.0'
 
 import sys
 import os

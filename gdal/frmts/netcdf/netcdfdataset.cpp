@@ -5657,6 +5657,9 @@ int NCDFIsGDALVersionGTE(const char* pszVersion, int nTarget)
         return FALSE;
     else if ( ! EQUALN("GDAL ", pszVersion, 5) )
         return FALSE;
+    /* 2.0dev of 2011/12/29 has been later renamed as 1.10dev */
+    else if ( EQUAL("GDAL 2.0dev, released 2011/12/29", pszVersion) )
+        return nTarget <= GDAL_COMPUTE_VERSION(1,10,0);
     else if ( EQUALN("GDAL 1.9dev", pszVersion,11 ) )
         return nTarget <= 1900;
     else if ( EQUALN("GDAL 1.8dev", pszVersion,11 ) )
@@ -5667,9 +5670,11 @@ int NCDFIsGDALVersionGTE(const char* pszVersion, int nTarget)
     for ( int iToken = 0; papszTokens && papszTokens[iToken]; iToken++ )  {
         nVersions[iToken] = atoi( papszTokens[iToken] );
     }
-    /* (GDAL_VERSION_MAJOR*1000+GDAL_VERSION_MINOR*100+GDAL_VERSION_REV*10+GDAL_VERSION_BUILD) */
-    nVersion = nVersions[0]*1000 + nVersions[1]*100 + 
-        nVersions[2]*10 + nVersions[3]; 
+    if( nVersions[0] > 1 || nVersions[1] >= 10 )
+        nVersion = GDAL_COMPUTE_VERSION( nVersions[0], nVersions[1], nVersions[2] );
+    else
+        nVersion = nVersions[0]*1000 + nVersions[1]*100 + 
+            nVersions[2]*10 + nVersions[3]; 
     
     CSLDestroy( papszTokens );
     return nTarget <= nVersion;

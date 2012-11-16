@@ -187,10 +187,10 @@ cutline datasource.</dd>
 <dt> <b>-cblend</b> <em>distance</em>:</dt><dd>Set a blend distance to use to blend over cutlines (in pixels).</dd>
 <dt> <b>-crop_to_cutline</b>:</dt><dd>(GDAL >= 1.8.0) Crop the extent of the target dataset to the extent of the cutline.</dd>
 <dt> <b>-overwrite</b>:</dt><dd>(GDAL >= 1.8.0) Overwrite the target dataset if it already exists.</dd>
-<dt> <b>-nomd</b>:</dt><dd>(GDAL >= 2.0.0) Do not copy metadata. Without this option, dataset and band metadata 
+<dt> <b>-nomd</b>:</dt><dd>(GDAL >= 1.10.0) Do not copy metadata. Without this option, dataset and band metadata 
 (as well as some band information) will be copied from the first source dataset. 
 Items that differ between source datasets will be set to * (see -cvmd option).</dd>
-<dt> <b>-cvmd</b> <em>meta_conflict_value</em>:</dt><dd>(GDAL >= 2.0.0) 
+<dt> <b>-cvmd</b> <em>meta_conflict_value</em>:</dt><dd>(GDAL >= 1.10.0) 
 Value to set metadata items that conflict between source datasets (default is "*"). Use "" to remove conflicting items. </dd>
 
 <dt> <em>srcfile</em>:</dt><dd> The source file name(s). </dd>

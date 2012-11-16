@@ -2633,7 +2633,7 @@ OGRGeometry *OGRGeometryFactory::forceToLineString( OGRGeometry *poGeom, bool bO
  * @param hGeom handle to the geometry to convert (ownership surrendered).
  * @return the converted geometry (ownership to caller).
  *
- * @since GDAL/OGR 2.0.0
+ * @since GDAL/OGR 1.10.0
  */
 
 OGRGeometryH OGR_G_ForceToLineString( OGRGeometryH hGeom )
