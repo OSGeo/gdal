@@ -904,14 +904,14 @@ success.
  review the <a href="ogr_sql.html">OGR SQL</a> document.  Some drivers (ie.
  Oracle and PostGIS) pass the SQL directly through to the underlying RDBMS.
 
- Starting with OGR 2.0, the <a href="ogr_sql_sqlite.html">SQLITE dialect</a>
+ Starting with OGR 1.10, the <a href="ogr_sql_sqlite.html">SQLITE dialect</a>
  can also be used.
 
  @param pszStatement the SQL statement to execute. 
  @param poSpatialFilter geometry which represents a spatial filter. Can be NULL.
  @param pszDialect allows control of the statement dialect. If set to NULL, the
 OGR SQL engine will be used, except for RDBMS drivers that will use their dedicated SQL engine,
-unless OGRSQL is explicitely passed as the dialect. Starting with OGR 2.0, the SQLITE dialect
+unless OGRSQL is explicitely passed as the dialect. Starting with OGR 1.10, the SQLITE dialect
 can also be used.
 
  @return an OGRLayer containing the results of the query.  Deallocate with
@@ -939,7 +939,7 @@ can also be used.
  review the <a href="ogr_sql.html">OGR SQL</a> document.  Some drivers (ie.
  Oracle and PostGIS) pass the SQL directly through to the underlying RDBMS.
 
- Starting with OGR 2.0, the <a href="ogr_sql_sqlite.html">SQLITE dialect</a>
+ Starting with OGR 1.10, the <a href="ogr_sql_sqlite.html">SQLITE dialect</a>
  can also be used.
 
  This function is the same as the C++ method OGRDataSource::ExecuteSQL();
@@ -949,7 +949,7 @@ can also be used.
  @param hSpatialFilter handle to a geometry which represents a spatial filter. Can be NULL.
  @param pszDialect allows control of the statement dialect. If set to NULL, the
 OGR SQL engine will be used, except for RDBMS drivers that will use their dedicated SQL engine,
-unless OGRSQL is explicitely passed as the dialect. Starting with OGR 2.0, the SQLITE dialect
+unless OGRSQL is explicitely passed as the dialect. Starting with OGR 1.10, the SQLITE dialect
 can also be used.
 
  @return an handle to a OGRLayer containing the results of the query.  

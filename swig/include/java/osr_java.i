@@ -160,7 +160,7 @@
     return TransformPoint(x, y, 0);
   }
 
-  /* New in GDAL 2.0 */
+  /* New in GDAL 1.10 */
   public static CoordinateTransformation CreateCoordinateTransformation(SpatialReference src, SpatialReference dst)
   {
       return osr.CreateCoordinateTransformation(src, dst);

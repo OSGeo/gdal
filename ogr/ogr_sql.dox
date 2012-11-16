@@ -7,7 +7,7 @@ used to provide a subset of SQL SELECT capability to applications.  This
 page discusses the generic SQL implementation implemented within OGR, and 
 issue with driver specific SQL support.<p>
 
-Since GDAL/OGR 2.0, an alternate "dialect", the SQLite dialect, can be used
+Since GDAL/OGR 1.10, an alternate "dialect", the SQLite dialect, can be used
 instead of the OGRSQL dialect. Refer to the
 <b><a href="ogr_sql_sqlite.html">SQLite SQL dialect</a></b> page for more details.<p>
 
@@ -422,7 +422,7 @@ than one matching secondary field is found only the first will be used.
 
 \section ogr_sql_union_all UNION ALL
 
-(OGR >= 2.0.0)
+(OGR >= 1.10.0)
 
 The SQL engine can deal with several SELECT combined with
 UNION ALL. The effect of UNION ALL is to concatenate the rows returned by the right SELECT

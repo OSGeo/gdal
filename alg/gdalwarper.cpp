@@ -838,7 +838,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
  * at the end of the file. However sticking to target block size may cause major
  * processing slowdown for some particular reprojections.
  *
- * - NUM_THREADS: (GDAL >= 2.0) Can be set to a numeric value or ALL_CPUS to
+ * - NUM_THREADS: (GDAL >= 1.10) Can be set to a numeric value or ALL_CPUS to
  * set the number of threads to use to parallelize the computation part of the
  * warping. If not set, computation will be done in a single thread.
  */

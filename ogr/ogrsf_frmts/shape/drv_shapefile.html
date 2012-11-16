@@ -56,7 +56,7 @@ any recoding. (Recoding support is new for GDAL/OGR 1.9.0)</p>
 attribute indexing.</p>
 
 <p>The spatial indexing uses the same .qix quadtree spatial index files that
-are used by UMN MapServer. Starting with OGR 2.0, it can also use the ESRI spatial index
+are used by UMN MapServer. Starting with OGR 1.10, it can also use the ESRI spatial index
 files (.sbn / .sbx).  Spatial indexing can accelerate spatially filtered
 passes through large datasets to pick out a small area quite dramatically.</p>
 
@@ -154,7 +154,7 @@ the datasource ExecuteSQL() method.</p>
 
 <h2>Field sizes</h2>
 
-<p>Starting with GDAL/OGR 2.0, the driver knows to auto-extend string and integer fields
+<p>Starting with GDAL/OGR 1.10, the driver knows to auto-extend string and integer fields
 (up to the 255 bytes limit imposed by the DBF format) to dynamically accomodate for
 the length of the data to be inserted.</p>
 
@@ -202,7 +202,7 @@ values are not supported, nor are MULTIPATCH files.</li>
 default value is "LDID/87".  It is not clear what other values may be
 appropriate.</li>
 
-<li> <b>RESIZE=</b><i>yes/no</i>: (OGR >= 2.0) set the yes to resize fields to their optimal
+<li> <b>RESIZE=</b><i>yes/no</i>: (OGR &gt;= 1.10.0) set the yes to resize fields to their optimal
 size. See above "Field sizes" section. Defaults to no.</li>
 </ul>
 
@@ -235,7 +235,7 @@ find existing layers and append the features being copied.</p>
 </pre>
 </li>
 
-<li>Resizing columns of a DBF file to their optimal size (OGR >= 2.0) :
+<li>Resizing columns of a DBF file to their optimal size (OGR &gt;= 1.10.0) :
 <pre>
 % ogrinfo file1.dbf -sql "RESIZE file1"
 </pre>

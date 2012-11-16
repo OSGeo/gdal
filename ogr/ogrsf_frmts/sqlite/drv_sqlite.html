@@ -17,7 +17,7 @@ databases (spatial enabled SQLite databases).</p>
 <p>The SQLite database is essentially typeless, but the SQLite driver will
 attempt to classify attributes field as text, integer or floating point
 based on the contents of the first record in a table.  None of the list
-attribute field types existing in SQLite. Starting with OGR 2.0, datetime
+attribute field types existing in SQLite. Starting with OGR 1.10, datetime
 field types are also handled.</p>
 
 <p>SQLite databases often due not work well over NFS, or some other networked
@@ -61,7 +61,7 @@ ON <tablename> ( <columnname> )" SQL command.</p>
 
 <h2>Tables with multiple geometries</h2>
 
-Starting with OGR 2.0, tables that have multiple geometry columns registered in geometry_columns can be used by OGR.
+Starting with OGR 1.10, tables that have multiple geometry columns registered in geometry_columns can be used by OGR.
 For such tables, there are as many OGR layers exposed as there are geometry columns. They are named
 "table_name(geometry_column_name)".<p>
 
@@ -69,7 +69,7 @@ Note: this support is limited to read-only operations.<p>
 
 <h2>REGEXP operator</h2>
 
-By default, the REGEXP operator has no implementation in SQLite. With OGR &gt;= 2.0 built against
+By default, the REGEXP operator has no implementation in SQLite. With OGR &gt;= 1.10 built against
 the PCRE library, the REGEXP operator is available in SQL statements run by OGR.
 
 <h2>VSI Virtual File System API support</h2>
@@ -112,12 +112,12 @@ tables are not available).<p>
 
 <h2>The SQLite SQL dialect</h2>
 
-Starting with OGR 2.0, the SQLite SQL engine can be used to run SQL queries
+Starting with OGR 1.10, the SQLite SQL engine can be used to run SQL queries
 on any OGR datasource if using the <a href="ogr_sql_sqlite.html">SQLite SQL</a> dialect.
 
 <h2>The VirtualOGR SQLite extension</h2>
 
-Starting with OGR 2.0, the GDAL/OGR library can be loaded as a <a href="http://www.sqlite.org/lang_corefunc.html#load_extension">SQLite extension</a>.
+Starting with OGR 1.10, the GDAL/OGR library can be loaded as a <a href="http://www.sqlite.org/lang_corefunc.html#load_extension">SQLite extension</a>.
 
 The extension is loaded with the load_extension(gdal_library_name) SQL function, where gdal_library_name is
 typically libgdal.so on Unix/Linux, gdal20.dll on Windows, etc..<p>
@@ -228,7 +228,7 @@ format is understood by Spatialite v2.4 (or any subsequent version). Default to 
 Note: when updating an existing Spatialite DB, the COMPRESS_GEOM configuration option
 can be set to produce similar results for appended/overwritten features.
 
-<li> <b>SRID=srid</b>: (Starting with GDAL 2.0) Used to force the SRID number of the
+<li> <b>SRID=srid</b>: (Starting with GDAL 1.10) Used to force the SRID number of the
 SRS associated with the layer. When this option isn't specified and that a SRS is
 associated with the layer, a search is made in the spatial_ref_sys to find a match for the SRS,
 and, if there is no match, a new entry is inserted for the SRS in the spatial_ref_sys table.

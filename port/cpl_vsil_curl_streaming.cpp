@@ -1480,7 +1480,7 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
  * nature- file or directory - in st_mode member (the later only reliable with FTP
  * resources for now).
  *
- * @since GDAL 2.0
+ * @since GDAL 1.10
  */
 void VSIInstallCurlStreamingFileHandler(void)
 {

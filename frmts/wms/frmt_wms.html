@@ -241,7 +241,7 @@
 </p>
 
 <p>
-     Starting with GDAL &gt;= 2.0, WMS layers can be queried (through a GetFeatureInfo request) with the gdallocationinfo utility, or
+     Starting with GDAL &gt;= 1.10, WMS layers can be queried (through a GetFeatureInfo request) with the gdallocationinfo utility, or
      with a GetMetadataItem("Pixel_iCol_iLine", "LocationInfo") call on a band object.<p>
      <pre>gdallocationinfo "WMS:http://demo.opengeo.org/geoserver/gwc/service/wms?SERVICE=WMS&amp;VERSION=1.1.1&amp;
                             REQUEST=GetMap&amp;LAYERS=og:bugsites&amp;SRS=EPSG:900913&amp;

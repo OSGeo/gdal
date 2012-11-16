@@ -1162,7 +1162,7 @@ public class ogr2ogr
             /*CPLAssert( null != poSourceSRS );
             CPLAssert( null != poOutputSRS );*/
     
-            /* New in GDAL 2.0. Before was "new CoordinateTransformation(srs,dst)". */
+            /* New in GDAL 1.10. Before was "new CoordinateTransformation(srs,dst)". */
             poCT = CoordinateTransformation.CreateCoordinateTransformation( poSourceSRS, poOutputSRS );
             if( poCT == null )
             {

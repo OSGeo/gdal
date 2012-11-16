@@ -1,6 +1,6 @@
 /*! \page ogr_sql_sqlite SQLite SQL dialect
 
-Since GDAL/OGR 2.0, the SQLite "dialect" can be used as an alternate SQL dialect to the
+Since GDAL/OGR 1.10, the SQLite "dialect" can be used as an alternate SQL dialect to the
 <b><a href="ogr_sql.html">OGR SQL dialect</a></b>.
 This assumes that GDAL/OGR is built with support for SQLite (>= 3.6), and preferably
 with <a href="http://www.gaia-gis.it/spatialite/">Spatialite</a> support too to benefit from spatial functions.<p>

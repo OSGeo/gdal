@@ -1123,6 +1123,7 @@ public class gdal:public static Dataset AutoCreateWarpedVRT(Dataset src_ds)
  * Available request values:
  * <ul>
  * <li> "VERSION_NUM": Returns GDAL_VERSION_NUM formatted as a string.  ie. "1170"
+ *      Note: starting with GDAL 1.10, this string will be longer than 4 characters.
  * <li> "RELEASE_DATE": Returns GDAL_RELEASE_DATE formatted as a string.  
  * ie. "20020416".
  * <li> "RELEASE_NAME": Returns the GDAL_RELEASE_NAME. ie. "1.1.7"
@@ -7160,7 +7161,7 @@ public class Layer:public boolean TestCapability(String cap)
  *
  * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 public class Layer:public int Intersection( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
 
@@ -7209,7 +7210,7 @@ public class Layer:public int Intersection( Layer pLayerMethod, Layer pLayerResu
  *
  * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 public class Layer:public int Union( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
 
@@ -7257,7 +7258,7 @@ public class Layer:public int Union( Layer pLayerMethod, Layer pLayerResult)
  *
  * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 public class Layer:public int SymDifference( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
 
@@ -7303,7 +7304,7 @@ public class Layer:public int SymDifference( Layer pLayerMethod, Layer pLayerRes
  *
  * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 public class Layer:public int Identity( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
 
@@ -7352,7 +7353,7 @@ public class Layer:public int Identity( Layer pLayerMethod, Layer pLayerResult)
  *
  * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 public class Layer:public int Update( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
 
@@ -7393,7 +7394,7 @@ public class Layer:public int Update( Layer pLayerMethod, Layer pLayerResult)
  *
  * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 public class Layer:public int Clip( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
 
@@ -7434,7 +7435,7 @@ public class Layer:public int Clip( Layer pLayerMethod, Layer pLayerResult)
  *
  * @return 0 on success. Otherwise throws a RuntimeException (or an error code if DontUseExceptions() has been called).
  *
- * @since OGR 2.0
+ * @since OGR 1.10
  */
 public class Layer:public int Erase( Layer pLayerMethod, Layer pLayerResult, java.util.Vector options, ProgressCallback callback )
 
@@ -11662,7 +11663,7 @@ public class CoordinateTransformation
  * Caution: the coordinate transformation object returned can be in a non
  * working state if no coordinate transformation can be established between
  * src and dst, and calling other methods on it can result in the process
- * termination. If using GDAL 2.0 or above, it is recommanded to use the
+ * termination. If using GDAL 1.10 or above, it is recommanded to use the
  * <a href="#CreateCoordinateTransformation(org.gdal.osr.SpatialReference,%20org.gdal.osr.SpatialReference)">
  * CreateCoordinateTransformation(org.gdal.osr.SpatialReference, org.gdal.osr.SpatialReference)</a> method instead.
  * <p>
@@ -11688,7 +11689,7 @@ public class CoordinateTransformation:public CoordinateTransformation(SpatialRef
  * @param src source spatial reference system. 
  * @param dst target spatial reference system.
  * @return a new CoordinateTransformation object, or null in case of failure
- * @since GDAL 2.0
+ * @since GDAL 1.10
  */
 public class CoordinateTransformation:public static CoordinateTransformation CreateCoordinateTransformation(SpatialReference src, SpatialReference dst)
 
@@ -11817,7 +11818,7 @@ public class osr:public static String GetWellKnownGeogCSAsWKT(String definition)
  * @param src source spatial reference system. 
  * @param dst target spatial reference system.
  * @return a new CoordinateTransformation object, or null in case of failure
- * @since GDAL 2.0
+ * @since GDAL 1.10
  * @see <a href="CoordinateTransformation.html#CreateCoordinateTransformation(org.gdal.osr.SpatialReference,%20org.gdal.osr.SpatialReference)">
  * CoordinateTransformation.CreateCoordinateTransformation(org.gdal.osr.SpatialReference, org.gdal.osr.SpatialReference</a>
  */

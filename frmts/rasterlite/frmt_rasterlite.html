@@ -76,11 +76,11 @@ recent enough sqlite3 library is needed to read rasterlite databases. rasterlite
 
 <p>If no internal overview is detected, the driver will try using external overviews (.ovr files).</p>
 
-<p>Starting with GDAL 2.0, options can be used for internal overviews building. They can be specified with the
+<p>Starting with GDAL 1.10, options can be used for internal overviews building. They can be specified with the
 RASTERLITE_OVR_OPTIONS configuration option, as a comma separated list of the above creation options. See below
 examples.</p>
 
-<p>Starting with GDAL 2.0, all resampling methods supported by GDAL overviews are available.</p>
+<p>Starting with GDAL 1.10, all resampling methods supported by GDAL overviews are available.</p>
 
 <h2>Performance hints</h2>
 
@@ -191,7 +191,7 @@ $ gdaladdo -ro RASTERLITE:my_db.sqlite,table=source 2 4 8 16
 </pre>
 </li>
 
-<li>Creating internal overviews with options (GDAL 2.0 or later):
+<li>Creating internal overviews with options (GDAL 1.10 or later):
 <pre>
 $ gdaladdo RASTERLITE:my_db.sqlite,table=source 2 4 8 16 --config RASTERLITE_OVR_OPTIONS DRIVER=GTiff,COMPRESS=JPEG,PHOTOMETRIC=YCbCr
 </pre>
