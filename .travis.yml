@@ -62,6 +62,7 @@ install:
   - make generate
   - make
   - cd ../..
+  - sudo rm -f /usr/lib/libgdal.so*
   - sudo make install
   - sudo ldconfig
   - cd ../autotest/cpp
