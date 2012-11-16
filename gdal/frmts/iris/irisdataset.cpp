@@ -4,6 +4,8 @@
  * Project:  IRIS Reader
  * Purpose:  All code for IRIS format Reader
  * Author:   Roger Veciana, rveciana@gmail.com
+ *           Portions are adapted from code copyright (C) 2005-2012
+ *           Chris Veness under a CC-BY 3.0 licence
  *
  ******************************************************************************
  * Copyright (c) 2012, Roger Veciana <rveciana@gmail.com>
@@ -26,6 +28,14 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
+#ifndef DEG2RAD
+#  define DEG2RAD (M_PI/180.0)
+#endif
+
+#ifndef RAD2DEG
+#  define RAD2DEG (180.0/M_PI)
+#endif
 
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
@@ -65,6 +75,10 @@ class IRISDataset : public GDALPamDataset
     unsigned char         nProjectionCode;
     float                 fNyquistVelocity;
     char*                 pszSRS_WKT;
+    double                adfGeoTransform[6];
+    int                   bHasLoadedProjection;
+    void                  LoadProjection();
+    std::pair <double,double> GeodesicCalculation(float fLat, float fLon, float fAngle, float fDist, float fEquatorialRadius, float fPolarRadius, float fFlattening);
     public:
         IRISDataset();
         ~IRISDataset();
@@ -336,9 +350,18 @@ double IRISRasterBand::GetNoDataValue( int * pbSuccess )
 /*                            IRISDataset()                             */
 /************************************************************************/
 
-IRISDataset::IRISDataset() : fp(NULL), pszSRS_WKT(NULL)
+IRISDataset::IRISDataset()
 
 {
+    bHasLoadedProjection = FALSE;
+    fp = NULL;
+    pszSRS_WKT = NULL;
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -355,12 +378,37 @@ IRISDataset::~IRISDataset()
 }
 
 /************************************************************************/
-/*                          GetGeoTransform()                           */
+/*           Calculates the projection and Geotransform                 */
 /************************************************************************/
-
-CPLErr IRISDataset::GetGeoTransform( double * padfTransform )
-
+void IRISDataset::LoadProjection()
 {
+    bHasLoadedProjection = TRUE;
+    float fEquatorialRadius = float( (CPL_LSBUINT32PTR (abyHeader+220+320+12)))/100; //They give it in cm
+    float fInvFlattening = float( (CPL_LSBUINT32PTR (abyHeader+224+320+12)))/1000000; //Point 3.2.27 pag 3-15
+    float fFlattening;
+    float fPolarRadius;
+    
+    if(fEquatorialRadius == 0){ // if Radius is 0, change to 6371000 Point 3.2.27 pag 3-15 (old IRIS verions)
+        fEquatorialRadius = 6371000;
+        fPolarRadius = fEquatorialRadius;
+        fInvFlattening = 0;
+        fFlattening = 0;
+    } else {
+        if (fInvFlattening == 0){ //When inverse flattening is infinite, they use 0
+            fFlattening = 0;
+            fPolarRadius = fEquatorialRadius;
+        } else {
+            fFlattening = 1/fInvFlattening;
+            fPolarRadius = fEquatorialRadius * (1-fFlattening);
+        }
+    }
+    
+    float fCenterLon = 360 * float((CPL_LSBUINT32PTR (abyHeader+112+320+12))) / 4294967295LL;
+    float fCenterLat = 360 * float((CPL_LSBUINT32PTR (abyHeader+108+320+12))) / 4294967295LL;
+
+    float fProjRefLon = 360 * float((CPL_LSBUINT32PTR (abyHeader+244+320+12))) / 4294967295LL;
+    float fProjRefLat = 360 * float((CPL_LSBUINT32PTR (abyHeader+240+320+12))) / 4294967295LL; 
+    
     float fRadarLocX, fRadarLocY, fScaleX, fScaleY;
 
     fRadarLocX = float (CPL_LSBSINT32PTR (abyHeader + 112 + 12 )) / 1000;
@@ -368,16 +416,169 @@ CPLErr IRISDataset::GetGeoTransform( double * padfTransform )
  
     fScaleX = float (CPL_LSBSINT32PTR (abyHeader + 88 + 12 )) / 100;
     fScaleY = float (CPL_LSBSINT32PTR (abyHeader + 92 + 12 )) / 100;
-
-
-    padfTransform[0] = -1*(fRadarLocX*fScaleX);
-    padfTransform[3] = fRadarLocY*fScaleY;
-    padfTransform[1] = fScaleX;
-    padfTransform[2] = 0.0;
+    
+    OGRSpatialReference oSRSOut;
+    
+    ////MERCATOR PROJECTION
+    if(EQUAL(aszProjections[nProjectionCode],"Mercator")){
+        OGRCoordinateTransformation *poTransform = NULL;
+        OGRSpatialReference oSRSLatLon;
         
-    padfTransform[4] = 0.0;
-    padfTransform[5] = -1*fScaleY;
+        oSRSOut.SetGeogCS("unnamed ellipse",
+                        "unknown", 
+                        "unnamed", 
+                        fEquatorialRadius, fInvFlattening, 
+                        "Greenwich", 0.0, 
+                        "degree", 0.0174532925199433);
+    
+        oSRSOut.SetMercator(fProjRefLat,fProjRefLon,1,0,0);
+	oSRSOut.exportToWkt(&pszSRS_WKT);
+        
+        //The center coordinates are given in LatLon on the defined ellipsoid. Necessary to calculate geotransform.
+        
+        oSRSLatLon.SetGeogCS("unnamed ellipse",
+                        "unknown", 
+                        "unnamed", 
+                        fEquatorialRadius, fInvFlattening, 
+                        "Greenwich", 0.0, 
+                        "degree", 0.0174532925199433);
+        
+        poTransform = OGRCreateCoordinateTransformation( &oSRSLatLon,
+                                                  &oSRSOut );
+        std::pair <double,double> oPositionX2 = GeodesicCalculation(fCenterLat, fCenterLon, 90, fScaleX, fEquatorialRadius, fPolarRadius, fFlattening);
+        std::pair <double,double> oPositionY2 = GeodesicCalculation(fCenterLat, fCenterLon, 0, fScaleY, fEquatorialRadius, fPolarRadius, fFlattening);
+        
+        double dfLon2, dfLat2;
+        dfLon2 = oPositionX2.first;
+        dfLat2 = oPositionY2.second;
+        double dfX, dfY, dfX2, dfY2;
+        dfX = fCenterLon ;
+        dfY = fCenterLat ;
+        dfX2 = dfLon2;
+        dfY2 = dfLat2;
 
+        if( poTransform == NULL || !poTransform->Transform( 1, &dfX, &dfY ) )
+             CPLError( CE_Failure, CPLE_None, "Transformation Failed\n" );
+
+        if( poTransform == NULL || !poTransform->Transform( 1, &dfX2, &dfY2 ) )
+             CPLError( CE_Failure, CPLE_None, "Transformation Failed\n" );
+        
+        adfGeoTransform[0] = dfX - (fRadarLocX * (dfX2 - dfX));
+        adfGeoTransform[1] = dfX2 - dfX;
+        adfGeoTransform[2] = 0.0;
+        adfGeoTransform[3] = dfY + (fRadarLocY * (dfY2 - dfY));
+        adfGeoTransform[4] = 0.0;
+        adfGeoTransform[5] = -1*(dfY2 - dfY);
+        
+    }else if(EQUAL(aszProjections[nProjectionCode],"Azimutal equidistant")){
+        
+        oSRSOut.SetGeogCS("unnamed ellipse",
+                        "unknown", 
+                        "unnamed", 
+                        fEquatorialRadius, fInvFlattening, 
+                        "Greenwich", 0.0, 
+                        "degree", 0.0174532925199433);
+        oSRSOut.SetAE(fProjRefLat,fProjRefLon,0,0);
+        oSRSOut.exportToWkt(&pszSRS_WKT) ;
+        adfGeoTransform[0] = -1*(fRadarLocX*fScaleX);
+        adfGeoTransform[1] = fScaleX;
+        adfGeoTransform[2] = 0.0;
+        adfGeoTransform[3] = fRadarLocY*fScaleY;
+        adfGeoTransform[4] = 0.0;
+        adfGeoTransform[5] = -1*fScaleY;
+    //When the projection is different from Mercator or Azimutal equidistant, we set a standard geotransform
+    } else {
+        adfGeoTransform[0] = -1*(fRadarLocX*fScaleX);
+        adfGeoTransform[1] = fScaleX;
+        adfGeoTransform[2] = 0.0;
+        adfGeoTransform[3] = fRadarLocY*fScaleY;
+        adfGeoTransform[4] = 0.0;
+        adfGeoTransform[5] = -1*fScaleY;
+    }
+    
+}
+
+/******************************************************************************/
+/* The geotransform in Mercator projection must be calculated transforming    */
+/* distance to degrees over the ellipsoid, using Vincenty's formula.          */
+/* The following method is ported from a version for Javascript by Chris      */
+/* Veness distributed under a CC-BY 3.0 licence, whose conditions is that the */
+/* following copyright notice is retained as well as the link to :            */
+/* http://www.movable-type.co.uk/scripts/latlong-vincenty-direct.html         */
+/******************************************************************************/
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
+/* Vincenty Direct Solution of Geodesics on the Ellipsoid (c) Chris Veness 2005-2012              */
+/*                                                                                                */
+/* from: Vincenty direct formula - T Vincenty, "Direct and Inverse Solutions of Geodesics on the  */
+/*       Ellipsoid with application of nested equations", Survey Review, vol XXII no 176, 1975    */
+/*       http://www.ngs.noaa.gov/PUBS_LIB/inverse.pdf                                             */
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
+
+std::pair <double,double> IRISDataset::GeodesicCalculation(float fLat, float fLon, float fAngle, float fDist, float fEquatorialRadius, float fPolarRadius, float fFlattening)
+{
+    std::pair <double,double> oOutput;
+    double dfAlpha1 = DEG2RAD * fAngle;
+    double dfSinAlpha1 = sin(dfAlpha1);
+    double dfCosAlpha1 = cos(dfAlpha1);
+    
+    double dfTanU1 = (1-fFlattening) * tan(fLat*DEG2RAD);
+    double dfCosU1 = 1 / sqrt((1 + dfTanU1*dfTanU1));
+    double dfSinU1 = dfTanU1*dfCosU1;
+    
+    double dfSigma1 = atan2(dfTanU1, dfCosAlpha1);
+    double dfSinAlpha = dfCosU1 * dfSinAlpha1;
+    double dfCosSqAlpha = 1 - dfSinAlpha*dfSinAlpha;
+    double dfUSq = dfCosSqAlpha * (fEquatorialRadius*fEquatorialRadius - fPolarRadius*fPolarRadius) / (fPolarRadius*fPolarRadius);
+    double dfA = 1 + dfUSq/16384*(4096+dfUSq*(-768+dfUSq*(320-175*dfUSq)));
+    double dfB = dfUSq/1024 * (256+dfUSq*(-128+dfUSq*(74-47*dfUSq)));
+    
+    double dfSigma = fDist / (fPolarRadius*dfA);
+    double dfSigmaP = 2*M_PI;
+    
+    double dfSinSigma;
+    double dfCosSigma;
+    double dfCos2SigmaM; 
+    double dfDeltaSigma;
+
+    while (fabs(dfSigma-dfSigmaP) > 1e-12) {
+        dfCos2SigmaM = cos(2*dfSigma1 + dfSigma);
+        dfSinSigma = sin(dfSigma);
+        dfCosSigma = cos(dfSigma);
+        dfDeltaSigma = dfB*dfSinSigma*(dfCos2SigmaM+dfB/4*(dfCosSigma*(-1+2*dfCos2SigmaM*dfCos2SigmaM)-
+          dfB/6*dfCos2SigmaM*(-3+4*dfSinSigma*dfSinSigma)*(-3+4*dfCos2SigmaM*dfCos2SigmaM)));
+        dfSigmaP = dfSigma;
+        dfSigma = fDist / (fPolarRadius*dfA) + dfDeltaSigma;
+    }    
+    
+    double dfTmp = dfSinU1*dfSinSigma - dfCosU1*dfCosSigma*dfCosAlpha1;
+    double dfLat2 = atan2(dfSinU1*dfCosSigma + dfCosU1*dfSinSigma*dfCosAlpha1, 
+      (1-fFlattening)*sqrt(dfSinAlpha*dfSinAlpha + dfTmp*dfTmp));
+    double dfLambda = atan2(dfSinSigma*dfSinAlpha1, dfCosU1*dfCosSigma - dfSinU1*dfSinSigma*dfCosAlpha1);
+    double dfC = fFlattening/16*dfCosSqAlpha*(4+fFlattening*(4-3*dfCosSqAlpha));
+    double dfL = dfLambda - (1-dfC) * fFlattening * dfSinAlpha *
+      (dfSigma + dfC*dfSinSigma*(dfCos2SigmaM+dfC*dfCosSigma*(-1+2*dfCos2SigmaM*dfCos2SigmaM)));
+    double dfLon2 = fLon*DEG2RAD+dfL;
+    if (dfLon2 > M_PI)
+        dfLon2 = dfLon2 - 2*M_PI;
+    if (dfLon2 < -1*M_PI)
+        dfLon2 = dfLon2 + 2*M_PI;
+    oOutput.first = dfLon2*RAD2DEG;
+    oOutput.second = dfLat2*RAD2DEG;
+    
+    return oOutput;
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr IRISDataset::GetGeoTransform( double * padfTransform )
+
+{
+    if (!bHasLoadedProjection)
+        LoadProjection();
+    memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
     return CE_None;
 }
 
@@ -386,64 +587,8 @@ CPLErr IRISDataset::GetGeoTransform( double * padfTransform )
 /************************************************************************/
 
 const char *IRISDataset::GetProjectionRef(){
-    if (pszSRS_WKT != NULL)
-        return pszSRS_WKT;
-    float fEquatorialRadius = float( (CPL_LSBUINT32PTR (abyHeader+220+320+12)))/100; //They give it in cm
-    if(fEquatorialRadius == 0) // if Radius is 0, change to 6371000 Point 3.2.27 pag 3-15
-        fEquatorialRadius = 6371000; 
-    float fFlattening = float( (CPL_LSBUINT32PTR (abyHeader+224+320+12)))/1000000; //Point 3.2.27 pag 3-15
-
-    float fCenterLon = 360 * float((CPL_LSBUINT32PTR (abyHeader+112+320+12))) / 4294967295LL;
-    float fCenterLat = 360 * float((CPL_LSBUINT32PTR (abyHeader+108+320+12))) / 4294967295LL;
-
-    OGRSpatialReference oSRSLatLon, oSRSOut;
-    
-
-    //The center coordinates are given in LatLon and the defined ellipsoid. Necessary to calculate false northing.
-    oSRSLatLon.SetGeogCS("unnamed ellipse",
-                        "unknown", 
-                        "unnamed", 
-                        fEquatorialRadius, fFlattening, 
-                        "Greenwich", 0.0, 
-                        "degree", 0.0174532925199433);
-
-    ////MERCATOR PROJECTION
-    if(EQUAL(aszProjections[nProjectionCode],"Mercator")){
-
-        OGRCoordinateTransformation *poTransform = NULL;
-        oSRSOut.SetGeogCS("unnamed ellipse",
-                        "unknown", 
-                        "unnamed", 
-                        fEquatorialRadius, fFlattening, 
-                        "Greenwich", 0.0, 
-                        "degree", 0.0174532925199433);
-    
-        oSRSOut.SetMercator(fCenterLat,fCenterLon,1,0,0);
-
-        double dfX, dfY;
-        poTransform = OGRCreateCoordinateTransformation( &oSRSLatLon,
-                                                  &oSRSOut );
-        dfX = fCenterLon ;
-        dfY =  fCenterLat ;
-          
-        if( poTransform == NULL || !poTransform->Transform( 1, &dfX, &dfY ) )
-             CPLError( CE_Failure, CPLE_None, 
-             "Transformation Failed\n" );
-        oSRSOut.SetMercator(fCenterLat,fCenterLon,1,0,-1*dfY);
-        oSRSOut.exportToWkt(&pszSRS_WKT) ;
-        OGRCoordinateTransformation::DestroyCT( poTransform );
-    }else if(EQUAL(aszProjections[nProjectionCode],"Azimutal equidistant")){
-
-        oSRSOut.SetGeogCS("unnamed ellipse",
-                        "unknown", 
-                        "unnamed", 
-                        fEquatorialRadius, fFlattening, 
-                        "Greenwich", 0.0, 
-                        "degree", 0.0174532925199433);
-        oSRSOut.SetAE(fCenterLat,fCenterLon,0,0);
-        oSRSOut.exportToWkt(&pszSRS_WKT) ;
-    }
-
+    if (!bHasLoadedProjection)
+        LoadProjection(); 
     return pszSRS_WKT;
 }
 

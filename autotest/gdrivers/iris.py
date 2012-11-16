@@ -57,8 +57,7 @@ def iris_2():
         return 'fail'
 
     got_wkt = ds.GetProjectionRef()
-    got_wkt = ds.GetProjectionRef()
-    expected_wkt = """PROJCS["unnamed",GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6371000.5,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["latitude_of_origin",41.70833587646484],PARAMETER["central_meridian",1.75000011920929],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",-3816068.273664699]]"""
+    expected_wkt = """PROJCS["unnamed",GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6371000.5,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]"""
     got_srs = osr.SpatialReference(got_wkt)
     expected_srs = osr.SpatialReference(expected_wkt)
 
@@ -72,7 +71,7 @@ def iris_2():
     #    return 'fail'
 
     got_gt = ds.GetGeoTransform()
-    expected_gt = [ -133000.406250000000000,1023.080017089843750,0,132999.687500000000000,0,-1013.469970703125000 ]
+    expected_gt = [ 16435.721785269096, 1370.4263720754534, 0.0, 5289830.4584420761, 0.0, -1357.6498705837876 ]
     for i in range(6):
         if (expected_gt[i] == 0.0 and got_gt[i] != 0.0) or \
            (expected_gt[i] != 0.0 and abs(got_gt[i] - expected_gt[i])/abs(expected_gt[i]) > 1e-5) :
