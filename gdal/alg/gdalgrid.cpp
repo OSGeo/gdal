@@ -1673,12 +1673,12 @@ static void GDALGridJobProcess(void* user_data)
  * scattered data. You should supply geometry and extent of the output grid
  * and allocate array sufficient to hold such a grid.
  *
- * Starting with GDAL 2.0, it is possible to set the GDAL_NUM_THREADS
+ * Starting with GDAL 1.10, it is possible to set the GDAL_NUM_THREADS
  * configuration option to parallelize the processing. The value to set is
  * the number of worker threads, or ALL_CPUS to use all the cores/CPUs of the
  * computer (default value).
  *
- * Starting with GDAL 2.0, on Intel/AMD i386/x86_64 architectures, some
+ * Starting with GDAL 1.10, on Intel/AMD i386/x86_64 architectures, some
  * gridding methods will be optimized with SSE instructions (provided GDAL
  * has been compiled with such support, and it is availabable at runtime).
  * Currently, only 'invdist' algorithm with default parameters has an optimized

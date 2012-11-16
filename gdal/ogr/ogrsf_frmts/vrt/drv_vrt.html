@@ -34,7 +34,7 @@ is to say, the <i>FID</i> element is not specified</li>
 
 The root element of the XML control file is <b>OGRVRTDataSource</b>.  It has
 an <b>OGRVRTLayer</b> (or <b>OGRVRTWarpedLayer</b> or <b>OGRVRTUnionLayer</b> starting
-with GDAL 2.0.0) child for each layer in the virtual datasource.<p>
+with GDAL 1.10.0) child for each layer in the virtual datasource.<p>
 
 A <b>OGRVRTLayer</b> element should have a <b>name</b> attribute with the layer name, and may have the
 following subelements:
@@ -59,7 +59,7 @@ element isn't provided, then the SrcSQL element must be provided.</li>
 <li> <b>SrcSQL</b> (optional): An SQL statement to execute to generate the
 desired layer result.  This should be provided instead of the SrcLayer for
 statement derived results.   Some limitations may apply for SQL derived 
-layers. Starting with OGR 2.0, an optional <b>dialect</b> attribute can be specified
+layers. Starting with OGR 1.10, an optional <b>dialect</b> attribute can be specified
 on the SrcSQL element to specify which SQL "dialect" should be used :
 possible values are currently <a href="ogr_sql.html">OGRSQL</a> or
 <a href="ogr_sql_sqlite.html">SQLITE</a>. If <i>dialect</i> is not specified,
@@ -143,13 +143,13 @@ default defaults to the value of "name".
 
 <br>
 
-<li> <b>FeatureCount</b> (optional, from GDAL 2.0.0) : This element is used
+<li> <b>FeatureCount</b> (optional, from GDAL 1.10.0) : This element is used
 to define the feature count of the layer (when no spatial or attribute filter is set).
 This can be usefull on static data, when getting the feature count from the source layer is slow.</li>
 
 <br>
 
-<li> <b>ExtentXMin</b>, <b>ExtentYMin</b>, <b>ExtentXMax</b> and <b>ExtentXMax</b> (optional, from GDAL 2.0.0) :
+<li> <b>ExtentXMin</b>, <b>ExtentYMin</b>, <b>ExtentXMax</b> and <b>ExtentXMax</b> (optional, from GDAL 1.10.0) :
 Those elements are used to define the extent of the layer. This can be usefull on static data, when
 getting the extent from the source layer is slow.</li>
 
@@ -177,7 +177,7 @@ the source layer.</li>
 reference to use for the layer after reprojection. </li>
 <br>
 
-<li> <b>ExtentXMin</b>, <b>ExtentYMin</b>, <b>ExtentXMax</b> and <b>ExtentXMax</b> (optional, from GDAL 2.0.0) :
+<li> <b>ExtentXMin</b>, <b>ExtentYMin</b>, <b>ExtentXMax</b> and <b>ExtentXMax</b> (optional, from GDAL 1.10.0) :
 Those elements are used to define the extent of the layer. This can be usefull on static data, when
 getting the extent from the source layer is slow.</li>
 
@@ -296,7 +296,7 @@ to fit into that region.<p>
 &lt;/OGRVRTDataSource&gt;
 </pre>
 
-<h2>Example: Reprojected layer (GDAL &gt;= 2.0.0)</h2>
+<h2>Example: Reprojected layer (GDAL &gt;= 1.10.0)</h2>
 
 The following example will return the source.shp layer reprojected to EPSG:4326.<p>
 
@@ -310,7 +310,7 @@ The following example will return the source.shp layer reprojected to EPSG:4326.
 &lt;/OGRVRTDataSource&gt;
 </pre>
 
-<h2>Example: Union layer (GDAL &gt;= 2.0.0)</h2>
+<h2>Example: Union layer (GDAL &gt;= 1.10.0)</h2>
 
 The following example will return a layer that is the concatenation of source1.shp
 and source2.shp.<p>

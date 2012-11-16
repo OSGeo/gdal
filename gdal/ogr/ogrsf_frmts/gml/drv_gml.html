@@ -66,7 +66,7 @@ looking for "known" gml objects in the gml namespace to determine the organizati
 While this approach is error prone, it has the advantage of working for GML files
 even if the associated schema (.xsd) file has been lost.<p>
 
-Starting with OGR 2.0, it is possible to specify an explicit filename for the XSD
+Starting with OGR 1.10, it is possible to specify an explicit filename for the XSD
 schema to use, by using "a_filename.gml,xsd=another_filename.xsd" as a connection string.<p>
 
 The first time a GML file is opened, if the associated .xsd is absent or could not been
@@ -102,7 +102,7 @@ environment variables.<p>
 When reading a feature, the driver will by default only take into account the
 last recognized GML geometry found (in case they are multiples) in the XML subtree describing the feature.<p>
 
-Starting with OGR 2.0, in case of multiple geometry occurences, if a geometry is in a &lt;geometry&gt; element,
+Starting with OGR 1.10, in case of multiple geometry occurences, if a geometry is in a &lt;geometry&gt; element,
 this will be the one selected. This will make default behaviour consistant with Inspire objects.<p>
 
 Starting with OGR 1.8.0, the user can change the .gfs file to select the appropriate
@@ -336,9 +336,9 @@ EXTERNAL.  This writes a GML application schema file to a corresponding .xsd fil
 file, but this is experimental and almost certainly not valid XML.
 OFF disables schema generation (and is implicit if XSISCHEMAURI is used).<p>
 
-<li> <b>PREFIX</b> (OGR &gt;= 2.0) Defaults to 'ogr'. This is the prefix for the application target namespace.</p>
+<li> <b>PREFIX</b> (OGR &gt;= 1.10) Defaults to 'ogr'. This is the prefix for the application target namespace.</p>
 
-<li> <b>TARGET_NAMESPACE</b> (OGR &gt;= 2.0) Defaults to 'http://ogr.maptools.org/'. This is the application target namespace.</p>
+<li> <b>TARGET_NAMESPACE</b> (OGR &gt;= 1.10) Defaults to 'http://ogr.maptools.org/'. This is the application target namespace.</p>
 
 <li> <b>FORMAT</b>: (OGR &gt;= 1.8.0) This can be set to :
 <ul>

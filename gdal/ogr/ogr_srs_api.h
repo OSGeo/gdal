@@ -624,7 +624,7 @@ OGRErr CPL_DLL OSRSetSOC( OGRSpatialReferenceH hSRS,
     
 /** Transverse Mercator
  *
- * Special processing available for Transverse Mercator with GDAL &gt;= 2.0 and PROJ &gt;= 4.8 :
+ * Special processing available for Transverse Mercator with GDAL &gt;= 1.10 and PROJ &gt;= 4.8 :
  * see OGRSpatialReference::exportToProj4().
  */
 

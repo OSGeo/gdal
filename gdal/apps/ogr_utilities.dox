@@ -50,7 +50,7 @@ the attribute query will be reported.</dd>
 <dt> <b>-sql</b> <i>statement</i>:</dt><dd> Execute the indicated SQL statement
 and return the result.</dd>
 <dt> <b>-dialect</b> <em>dialect</em>:</dt><dd> SQL dialect.  In some cases can be used to use (unoptimized) OGR SQL instead of the native SQL of an RDBMS by passing OGRSQL.
-Starting with GDAL 2.0, the "SQLITE" dialect can also be used with any datasource.</dd>
+Starting with GDAL 1.10, the "SQLITE" dialect can also be used with any datasource.</dd>
 <dt> <b>-spat</b> <i>xmin ymin xmax ymax</i>:</dt><dd> The area of interest.  Only
 features within the rectangle will be reported.</dd>
 <dt> <b>-fid</b> <i>fid</i>:</dt><dd> If provided, only the feature with this feature
@@ -223,7 +223,7 @@ same name is found.)</dd>
 <dt> <b>-sql</b> <em>sql_statement</em>:</dt><dd> SQL statement to execute.
 The resulting table/layer will be saved to the output.</dd>
 <dt> <b>-dialect</b> <em>dialect</em>:</dt><dd> SQL dialect.  In some cases can be used to use (unoptimized) OGR SQL instead of the native SQL of an RDBMS by passing OGRSQL.
-Starting with GDAL 2.0, the "SQLITE" dialect can also be used with any datasource.</dd>
+Starting with GDAL 1.10, the "SQLITE" dialect can also be used with any datasource.</dd>
 <dt> <b>-where</b><em> restricted_where</em>:</dt><dd> Attribute query (like SQL WHERE)</dd>
 <dt> <b>-skipfailures</b>:</dt><dd>Continue after a failure, skipping the failed feature.</dd>
 <dt> <b>-spat</b><em> xmin ymin xmax ymax</em>:</dt><dd> spatial query extents. Only features
@@ -235,11 +235,11 @@ whose geometry intersects the extents will be selected. The geometries will not 
 created layer.  One of NONE, GEOMETRY, POINT, LINESTRING, POLYGON, 
 GEOMETRYCOLLECTION, MULTIPOINT, MULTIPOLYGON or MULTILINESTRING. 
 Add "25D" to the name to get 2.5D versions.
-Starting with GDAL 2.0, PROMOTE_TO_MULTI can be used to automatically promote layers
+Starting with GDAL 1.10, PROMOTE_TO_MULTI can be used to automatically promote layers
 that mix polygon or multipolygons to multipolygons, and layers that mix linestrings or
 multilinestrings to multilinestrings. Can be usefull when converting shapefiles to PostGIS
 (and other target drivers) that implements strict checks for geometry type.</dd>
-<dt> <b>-dim</b><em> val</em>:</dt><dd>(starting with GDAL 2.0) Force the coordinate dimension to val (valid values are 2 or 3).
+<dt> <b>-dim</b><em> val</em>:</dt><dd>(starting with GDAL 1.10) Force the coordinate dimension to val (valid values are 2 or 3).
 This affects both the layer geometry type, and feature geometries.</dd>
 <dt> <b>-a_srs</b><em> srs_def</em>:</dt><dd> Assign an output SRS</dd>
 <dt> <b>-t_srs</b><em> srs_def</em>:</dt><dd> Reproject/transform to this SRS on output</dd>

@@ -1917,6 +1917,7 @@ GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
  * Available pszRequest values:
  * <ul>
  * <li> "VERSION_NUM": Returns GDAL_VERSION_NUM formatted as a string.  ie. "1170"
+ *      Note: starting with GDAL 1.10, this string will be longer than 4 characters.
  * <li> "RELEASE_DATE": Returns GDAL_RELEASE_DATE formatted as a string.  
  * ie. "20020416".
  * <li> "RELEASE_NAME": Returns the GDAL_RELEASE_NAME. ie. "1.1.7"

@@ -121,7 +121,7 @@ a regular table is created and not recorded in the PostGIS geometry_columns tabl
 <li> <b>FID</b>: (From GDAL 1.9.0) Name of the FID column to create. Defaults to 'ogc_fid'.<p>
 <li> <b>EXTRACT_SCHEMA_FROM_LAYER_NAME</b>: (From GDAL 1.9.0) Can be set to NO to avoid considering the dot character
 as the separator between the schema and the table name. Defaults to YES.<p>
-<li> <b>HSTORE_COLUMNS</b>: (From GDAL 2.0) A list of columm names (separated by comma) that should be created as HSTORE
+<li> <b>HSTORE_COLUMNS</b>: (From GDAL 1.10) A list of columm names (separated by comma) that should be created as HSTORE
 columns when CreateField() is invoked on them. Seen from OGR, those columns are seen as regular text columns, but their
 contents for each feature must follow the
 <a href="http://www.postgresql.org/docs/9.0/static/hstore.html">HSTORE</a> syntax.<p>

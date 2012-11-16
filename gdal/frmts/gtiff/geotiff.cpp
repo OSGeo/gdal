@@ -1552,7 +1552,7 @@ GDALColorInterp GTiffRasterBand::GetColorInterpretation()
 /*                         GTiffGetAlphaValue()                         */
 /************************************************************************/
 
- /* Note: was EXTRASAMPLE_ASSOCALPHA in GDAL < 2.0 */
+ /* Note: was EXTRASAMPLE_ASSOCALPHA in GDAL < 1.10 */
 #define DEFAULT_ALPHA_TYPE              EXTRASAMPLE_UNASSALPHA
 
 static int GTiffGetAlphaValue(const char* pszValue, int nDefault)

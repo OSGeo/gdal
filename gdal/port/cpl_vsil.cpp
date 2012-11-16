@@ -89,7 +89,7 @@ char **VSIReadDir(const char *pszPath)
  * @return The list of entries in the directory and subdirectories 
  * or NULL if the directory doesn't exist.  Filenames are returned in UTF-8 
  * encoding.
- * @since GDAL 2.0.0
+ * @since GDAL 1.10.0
  *
  */
 

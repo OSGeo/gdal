@@ -12,7 +12,7 @@
 GDAL supports reading Geospatial PDF documents, by extracting georeferencing information and rasterizing the data.
 Non-geospatial PDF documents will also be recognized by the driver.
 <p>
-Starting with GDAL &gt;= 2.0.0, PDF documents can be created from other GDAL raster datasets, and OGR datasources can
+Starting with GDAL &gt;= 1.10.0, PDF documents can be created from other GDAL raster datasets, and OGR datasources can
 also optionnaly be drawn on top of the raster layer (see OGR_* creation options in the below section).
 <p>
 GDAL must be compiled with libpoppler support (GPL-licensed), and libpoppler itself must have been configured with
@@ -43,11 +43,11 @@ stored as XML raw content in the xml:XMP metadata domain.
 
 <ul>
 <li><i>GDAL_PDF_DPI</i> : To control the dimensions of the raster by specifying the DPI of the
-rasterization with the Its default value is 150. Starting with GDAL 2.0, the driver
+rasterization with the Its default value is 150. Starting with GDAL 1.10, the driver
 will make some effort to guess the DPI value either from a specific metadata item contained in some PDF files, or
 from the raster images inside the PDF (in simple cases).</li>
 <p>
-Starting with GDAL &gt;= 2.0.0 and when GDAL is compiled against libpoppler, the following options are also
+Starting with GDAL &gt;= 1.10.0 and when GDAL is compiled against libpoppler, the following options are also
 available :
 
 <li><i>GDAL_PDF_RENDERING_OPTIONS</i> : a combination of VECTOR, BITMAP and TEXT separated
@@ -65,7 +65,7 @@ off.</li>
 
 <h2>LAYERS Metadata domain</h2>
 
-Starting with GDAL &gt;= 2.0.0 and when GDAL is compiled against libpoppler, the LAYERS metadata domain can be queried
+Starting with GDAL &gt;= 1.10.0 and when GDAL is compiled against libpoppler, the LAYERS metadata domain can be queried
 to retrieve layer names that can be turned ON or OFF. This is usefull to know which values to specify for the
 <i>GDAL_PDF_LAYERS</i> or <i>GDAL_PDF_LAYERS_OFF</i> configuration options.<p>
 
@@ -100,7 +100,7 @@ For documents that contain several neatlines in a page (insets), the georeferenc
 extracted from the inset that has the largest area (in term of screen points).
 <p>
 
-<h2>Creation Issues (GDAL &gt;= 2.0.0)</h2>
+<h2>Creation Issues (GDAL &gt;= 1.10.0)</h2>
 
 <p>PDF documents can be created from other GDAL raster datasets, that
 have 1 band (graylevel or with color table), 3 bands (RGB) or 4 bands (RGBA).</p>
@@ -191,7 +191,7 @@ listed by ogrinfo for example). </li>
 
 </ul>
 
-<h2>Update of existing files (GDAL &gt;= 2.0.0)</h2>
+<h2>Update of existing files (GDAL &gt;= 1.10.0)</h2>
 
 Existing PDF files (created or not with GDAL) can be opened in update mode in order to set or
 update the following elements :
