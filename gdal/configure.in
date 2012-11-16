@@ -3527,7 +3527,7 @@ if test "$with_python" = "yes" ; then
   fi
 elif test "x$with_python" != "x" -a "$with_python" != "no" ; then
   PYTHON="$with_python"
-  if test "`$PYTHON -c "print(1)"`" != "1"; then
+  if test "`$PYTHON -c 'print(1)'`" != "1"; then
     AC_MSG_ERROR([--with-python requested, but Python not found!])
   fi
   AC_MSG_RESULT([enabled])
