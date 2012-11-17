@@ -45,10 +45,16 @@ import ogrtest
 
 def ogr_sql_sqlite_1():
 
+    ogrtest.has_sqlite_dialect = False
     if ogr.GetDriverByName('SQLite') is None:
         return 'skip'
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+    sql_lyr = ds.ExecuteSQL( "SELECT * FROM sqlite_master", dialect = 'SQLite' )
+    ds.ReleaseResultSet( sql_lyr )
+    if sql_lyr is None:
+        return 'skip'
+    ogrtest.has_sqlite_dialect = True
 
     for geom in [ ogr.wkbNone, ogr.wkbUnknown ]:
         lyr = ds.CreateLayer( "my_layer", geom_type = geom)
@@ -220,7 +226,7 @@ def ogr_sql_sqlite_1():
 
 def ogr_sql_sqlite_2():
 
-    if ogr.GetDriverByName('SQLite') is None:
+    if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
@@ -347,7 +353,7 @@ def ogr_sql_sqlite_2():
 
 def ogr_sql_sqlite_3():
 
-    if ogr.GetDriverByName('SQLite') is None:
+    if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     ds = ogr.Open('data')
@@ -377,7 +383,7 @@ def ogr_sql_sqlite_3():
 
 def ogr_sql_sqlite_4():
 
-    if ogr.GetDriverByName('SQLite') is None:
+    if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     ds = ogr.Open('data')
@@ -399,7 +405,7 @@ def ogr_sql_sqlite_4():
 
 def ogr_sql_sqlite_5():
 
-    if ogr.GetDriverByName('SQLite') is None:
+    if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -437,7 +443,7 @@ def ogr_sql_sqlite_5():
 
 def ogr_sql_sqlite_6():
 
-    if ogr.GetDriverByName('SQLite') is None:
+    if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     if ogrtest.has_spatialite is False:
@@ -466,7 +472,7 @@ def ogr_sql_sqlite_6():
 
 def ogr_sql_sqlite_7():
 
-    if ogr.GetDriverByName('SQLite') is None:
+    if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
@@ -519,7 +525,7 @@ def ogr_sql_sqlite_7():
 
 def ogr_sql_sqlite_8():
 
-    if ogr.GetDriverByName('SQLite') is None:
+    if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     ds = ogr.Open('data')
@@ -545,7 +551,7 @@ def ogr_sql_sqlite_8():
 
 def ogr_sql_sqlite_9():
 
-    if ogr.GetDriverByName('SQLite') is None:
+    if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     ds = ogr.Open('data')
@@ -568,7 +574,7 @@ def ogr_sql_sqlite_9():
 
 def ogr_sql_sqlite_10():
 
-    if ogr.GetDriverByName('SQLite') is None:
+    if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     ds = ogr.Open('data')
@@ -591,7 +597,7 @@ def ogr_sql_sqlite_10():
 
 def ogr_sql_sqlite_11():
 
-    if ogr.GetDriverByName('SQLite') is None:
+    if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
@@ -620,7 +626,7 @@ def ogr_sql_sqlite_11():
 
 def ogr_sql_sqlite_12():
 
-    if ogr.GetDriverByName('SQLite') is None:
+    if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
@@ -652,7 +658,7 @@ def ogr_sql_sqlite_12():
 
 def ogr_sql_sqlite_13():
 
-    if ogr.GetDriverByName('SQLite') is None:
+    if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
@@ -859,7 +865,7 @@ def ogr_sql_sqlite_14_and_15(sql):
 
 def ogr_sql_sqlite_14():
 
-    if ogr.GetDriverByName('SQLite') is None:
+    if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     if ogrtest.has_spatialite is False:
@@ -877,7 +883,7 @@ def ogr_sql_sqlite_14():
 
 def ogr_sql_sqlite_15():
 
-    if ogr.GetDriverByName('SQLite') is None:
+    if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     if ogrtest.has_spatialite is False:
