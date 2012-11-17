@@ -35,10 +35,6 @@
 #include "cpl_quad_tree.h"
 #include "cpl_multiproc.h"
 
-#ifdef __SSE__
-#define HAVE_SSE_AT_COMPILE_TIME
-#endif
-
 #ifdef HAVE_SSE_AT_COMPILE_TIME
 #include <xmmintrin.h>
 #endif
