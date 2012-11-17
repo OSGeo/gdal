@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -623,7 +624,7 @@ def wms_16():
             return 'skip'
         gdaltest.post_reason( 'open of %s failed.' % name)
         return 'fail'
-
+ 
     subdatasets = ds.GetMetadata("SUBDATASETS")
     if len(subdatasets) == 0:
         gdaltest.post_reason( 'did not get expected subdataset count' )
@@ -632,20 +633,28 @@ def wms_16():
 
     ds = None
 
-    name = subdatasets['SUBDATASET_1_NAME']
+    name = None
+    for key in subdatasets:
+        if key[-5:] == '_NAME' and subdatasets[key].find('bugsites') != -1:
+            name = subdatasets[key]
+            break
+    if name is None:
+        return 'fail'
+
+    name = 'http://demo.opengeo.org/geoserver/wms?SERVICE=WMS&request=GetMap&version=1.1.1&layers=og:bugsites&styles=&srs=EPSG:26713&bbox=599351.50000000,4914096.00000000,608471.00000000,4920512.00000000'
     ds = gdal.Open( name )
     if ds is None:
         gdaltest.post_reason( 'open of %s failed.' % name)
         return 'fail'
 
     # Matches feature of "WFS:http://demo.opengeo.org/geoserver/wfs?SRSNAME=EPSG:900913" og:bugsites
-    # OGRFeature(og:bugsites):40946
-    #   gml_id (String) = bugsites.40946
+    # OGRFeature(og:bugsites):68846
+    #   gml_id (String) = bugsites.68846
     #   cat (Integer) = 86
     #   str1 (String) = Beetle site
-    #   POINT (-11547071.441861094906926 5528616.082632117904723)
+    #   POINT (-11547069.564865021035075 5528605.849725087173283)
 
-    pixel = "GeoPixel_-11547071.441861094906926_5528616.082632117904723"
+    pixel = "GeoPixel_601228_4917635"
     val = ds.GetRasterBand(1).GetMetadataItem(pixel, "LocationInfo")
     if val is None or val.find('<og:cat>86</og:cat>') == -1:
         gdaltest.post_reason('expected a value')

@@ -187,7 +187,7 @@ def ogr_wfs_geoserver():
         gdaltest.post_reason('did not get OLCFastFeatureCount')
         return 'fail'
 
-    ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=tiger:poi&MAXFEATURES=10')
+    ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=tiger:poi&MAXFEATURES=10&VERSION=1.1.0')
     if ds is None:
         print('server perhaps overloaded')
         return 'skip'
@@ -278,7 +278,7 @@ def ogr_wfs_geoserver_json():
     if gdaltest.geoserver_wfs != True:
         return 'skip'
 
-    ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points&MAXFEATURES=10&OUTPUTFORMAT=json')
+    ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points&MAXFEATURES=10&VERSION=1.1.0&OUTPUTFORMAT=json')
     if ds is None:
         gdaltest.post_reason('did not managed to open WFS datastore')
         return 'fail'
@@ -334,7 +334,7 @@ def ogr_wfs_geoserver_shapezip():
     if gdaltest.geoserver_wfs != True:
         return 'skip'
 
-    ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points&MAXFEATURES=10&OUTPUTFORMAT=SHAPE-ZIP')
+    ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points&MAXFEATURES=10&VERSION=1.1.0&OUTPUTFORMAT=SHAPE-ZIP')
     if ds is None:
         gdaltest.post_reason('did not managed to open WFS datastore')
         return 'fail'
@@ -521,7 +521,7 @@ def ogr_wfs_geoserver_wfst():
     if gdaltest.geoserver_wfs != True:
         return 'skip'
 
-    ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs', update = 1)
+    ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?VERSION=1.1.0', update = 1)
     if ds is None:
         return 'fail'
 
