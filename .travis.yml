@@ -23,7 +23,7 @@ before_install:
   - wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/MrSID_DSDK-8.5.0.3422-linux.x86.gcc44.tar.gz
   - wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-libecwj2-ubuntu12.04-32bit.tar.gz
   - wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-libkml-r864-32bit.tar.gz
-  - wget http://even.rouault.free.fr/install-openjpeg-r2095-ubuntu12.04-32bit.tar.gz
+  - wget http://even.rouault.free.fr/install-openjpeg-r2223-ubuntu12.04-32bit.tar.gz
   - tar xzf MrSID_DSDK-8.5.0.3422-linux.x86.gcc44.tar.gz
   - sudo cp -r MrSID_DSDK-8.5.0.3422-linux.x86.gcc44/Raster_DSDK/include/* /usr/local/include
   - sudo cp -r MrSID_DSDK-8.5.0.3422-linux.x86.gcc44/Raster_DSDK/lib/* /usr/local/lib
@@ -38,7 +38,7 @@ before_install:
   - tar xzf install-libkml-r864-32bit.tar.gz
   - sudo cp -r install-libkml/include/* /usr/local/include
   - sudo cp -r install-libkml/lib/* /usr/local/lib
-  - tar xzf install-openjpeg-r2095-ubuntu12.04-32bit.tar.gz
+  - tar xzf install-openjpeg-r2223-ubuntu12.04-32bit.tar.gz
   - sudo cp -r install-openjpeg/include/* /usr/local/include
   - sudo cp -r install-openjpeg/lib/* /usr/local/lib
   - sudo ldconfig
