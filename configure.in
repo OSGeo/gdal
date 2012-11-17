@@ -228,20 +228,22 @@ AC_MSG_CHECKING([whether SSE is available])
 
 if test "$with_sse" = "yes" -o "$with_sse" = ""; then
 
-    rm -f detectsse.c
-    echo '#ifdef __SSE__' > detectsse.c
-    echo '#include <xmmintrin.h>' >> detectsse.c
-    echo 'void foo() { float fEpsilon = 0.0000000000001f; __m128 xmm_small = _mm_load1_ps(&fEpsilon); } ' >> detectsse.c
-    echo '#else' >> detectsse.c
-    echo 'some_error' >> detectsse.c
-    echo '#endif' >> detectsse.c
-    if test -z "`${CC} -c detectsse.c 2>&1`" ; then
+    rm -f detectsse.cpp
+    echo '#ifdef __SSE__' > detectsse.cpp
+    echo '#include <xmmintrin.h>' >> detectsse.cpp
+    echo 'void foo() { float fEpsilon = 0.0000000000001f; __m128 xmm_small = _mm_load1_ps(&fEpsilon); } ' >> detectsse.cpp
+    echo '#else' >> detectsse.cpp
+    echo 'some_error' >> detectsse.cpp
+    echo '#endif' >> detectsse.cpp
+    if test -z "`${CXX} -c detectsse.cpp 2>&1`" ; then
         AC_MSG_RESULT([yes])
+        CFLAGS="$CFLAGS -DHAVE_SSE_AT_COMPILE_TIME"
+        CXXFLAGS="$CXXFLAGS -DHAVE_SSE_AT_COMPILE_TIME"
     else
-        if test -z "`${CC} -msse -c detectsse.c 2>&1`" ; then
+        if test -z "`${CXX} -msse -c detectsse.cpp 2>&1`" ; then
             AC_MSG_RESULT([yes])
-            CFLAGS="$CFLAGS -msse"
-            CXXFLAGS="$CXXFLAGS -msse"
+            CFLAGS="$CFLAGS -msse -DHAVE_SSE_AT_COMPILE_TIME"
+            CXXFLAGS="$CXXFLAGS -msse -DHAVE_SSE_AT_COMPILE_TIME"
         else
             AC_MSG_RESULT([no])
             if test "$with_sse" = "yes"; then
