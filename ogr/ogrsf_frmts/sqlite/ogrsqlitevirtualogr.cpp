@@ -2364,6 +2364,10 @@ int OGR2SQLITE_static_register (sqlite3 * hDB, char **pzErrMsg,
 
     *pzErrMsg = NULL;
 
+    /* Can happen if sqlite is compiled with SQLITE_OMIT_LOAD_EXTENSION (with sqlite 3.6.10 for example) */
+    if( pApi->create_module == NULL )
+        return SQLITE_ERROR;
+
     /* This is only for testing purposes. This will behave as if we had */
     /* dynamically loaded GDAL as a SQLite3 extension, except we don't need to */
     if( CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "NO")) )
