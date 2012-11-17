@@ -108,7 +108,7 @@ static OPJ_SIZE_T JP2OpenJPEGDataset_Write(void* pBuffer, OPJ_SIZE_T nBytes,
 /*                       JP2OpenJPEGDataset_Seek()                      */
 /************************************************************************/
 
-static opj_bool JP2OpenJPEGDataset_Seek(OPJ_OFF_T nBytes, void * pUserData)
+static OPJ_BOOL JP2OpenJPEGDataset_Seek(OPJ_OFF_T nBytes, void * pUserData)
 {
 #ifdef DEBUG_IO
     CPLDebug("OPENJPEG", "JP2OpenJPEGDataset_Seek(%d)", (int)nBytes);
@@ -480,7 +480,7 @@ GDALColorInterp JP2OpenJPEGRasterBand::GetColorInterpretation()
 {
     JP2OpenJPEGDataset *poGDS = (JP2OpenJPEGDataset *) poDS;
 
-    if (poGDS->eColorSpace == CLRSPC_GRAY)
+    if (poGDS->eColorSpace == OPJ_CLRSPC_GRAY)
         return GCI_GrayIndex;
     else if (poGDS->nBands == 3 || poGDS->nBands == 4)
     {
@@ -527,8 +527,8 @@ JP2OpenJPEGDataset::JP2OpenJPEGDataset()
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
     bLoadingOtherBands = FALSE;
-    eCodecFormat = CODEC_UNKNOWN;
-    eColorSpace = CLRSPC_UNKNOWN;
+    eCodecFormat = OPJ_CODEC_UNKNOWN;
+    eColorSpace = OPJ_CLRSPC_UNKNOWN;
     bIs420 = FALSE;
     iLevel = 0;
     nOverviewCount = 0;
@@ -697,9 +697,9 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     static const unsigned char jpc_header[] = {0xff,0x4f};
     if (memcmp( poOpenInfo->pabyHeader, jpc_header, 
                     sizeof(jpc_header) ) == 0)
-        eCodecFormat = CODEC_J2K;
+        eCodecFormat = OPJ_CODEC_J2K;
     else
-        eCodecFormat = CODEC_JP2;
+        eCodecFormat = OPJ_CODEC_JP2;
 
     opj_codec_t* pCodec;
 
@@ -821,7 +821,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
             eDataType = GDT_UInt16;
     }
 
-    int bIs420  =  (psImage->color_space != CLRSPC_SRGB &&
+    int bIs420  =  (psImage->color_space != OPJ_CLRSPC_SRGB &&
                     eDataType == GDT_Byte &&
                     psImage->numcomps == 3 &&
                     psImage->comps[1].w == psImage->comps[0].w / 2 &&
@@ -1090,14 +1090,14 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Analyze creation options.                                       */
 /* -------------------------------------------------------------------- */
-    OPJ_CODEC_FORMAT eCodecFormat = CODEC_J2K;
+    OPJ_CODEC_FORMAT eCodecFormat = OPJ_CODEC_J2K;
     const char* pszCodec = CSLFetchNameValueDef(papszOptions, "CODEC", NULL);
     if (pszCodec)
     {
         if (EQUAL(pszCodec, "JP2"))
-            eCodecFormat = CODEC_JP2;
+            eCodecFormat = OPJ_CODEC_JP2;
         else if (EQUAL(pszCodec, "J2K"))
-            eCodecFormat = CODEC_J2K;
+            eCodecFormat = OPJ_CODEC_J2K;
         else
         {
             CPLError(CE_Warning, CPLE_NotSupported,
@@ -1110,7 +1110,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         if (strlen(pszFilename) > 4 &&
             EQUAL(pszFilename + strlen(pszFilename) - 4, ".JP2"))
         {
-            eCodecFormat = CODEC_JP2;
+            eCodecFormat = OPJ_CODEC_JP2;
         }
     }
 
@@ -1129,19 +1129,19 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     if (nYSize < nBlockYSize)
         nBlockYSize = nYSize;
 
-    OPJ_PROG_ORDER eProgOrder = LRCP;
+    OPJ_PROG_ORDER eProgOrder = OPJ_LRCP;
     const char* pszPROGORDER =
             CSLFetchNameValueDef(papszOptions, "PROGRESSION", "LRCP");
     if (EQUAL(pszPROGORDER, "LRCP"))
-        eProgOrder = LRCP;
+        eProgOrder = OPJ_LRCP;
     else if (EQUAL(pszPROGORDER, "RLCP"))
-        eProgOrder = RLCP;
+        eProgOrder = OPJ_RLCP;
     else if (EQUAL(pszPROGORDER, "RPCL"))
-        eProgOrder = RPCL;
+        eProgOrder = OPJ_RPCL;
     else if (EQUAL(pszPROGORDER, "PCRL"))
-        eProgOrder = PCRL;
+        eProgOrder = OPJ_PCRL;
     else if (EQUAL(pszPROGORDER, "CPRL"))
-        eProgOrder = CPRL;
+        eProgOrder = OPJ_CPRL;
     else
     {
         CPLError(CE_Warning, CPLE_NotSupported,
@@ -1255,7 +1255,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     opj_set_warning_handler(pCodec, JP2OpenJPEGDataset_WarningCallback,NULL);
     opj_set_error_handler(pCodec, JP2OpenJPEGDataset_ErrorCallback,NULL);
 
-    OPJ_COLOR_SPACE eColorSpace = (bResample) ? CLRSPC_SYCC : (nBands == 3) ? CLRSPC_SRGB : CLRSPC_GRAY;
+    OPJ_COLOR_SPACE eColorSpace = (bResample) ? OPJ_CLRSPC_SYCC : (nBands == 3) ? OPJ_CLRSPC_SRGB : OPJ_CLRSPC_GRAY;
 
     opj_image_t* psImage = opj_image_tile_create(nBands,pasBandParams,
                                                  eColorSpace);
@@ -1354,7 +1354,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     GDALJP2Metadata oJP2MD;
 
     int bWriteExtraBoxes = FALSE;
-    if( eCodecFormat == CODEC_JP2 &&
+    if( eCodecFormat == OPJ_CODEC_JP2 &&
         (CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) ||
          CSLFetchBoolean( papszOptions, "GeoJP2", TRUE )) )
     {
@@ -1378,7 +1378,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     // Resolution
     double dfXRes = 0, dfYRes = 0;
     int nResUnit = 0;
-    if( eCodecFormat == CODEC_JP2
+    if( eCodecFormat == OPJ_CODEC_JP2
         && poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION") != NULL
         && poSrcDS->GetMetadataItem("TIFFTAG_YRESOLUTION") != NULL
         && poSrcDS->GetMetadataItem("TIFFTAG_RESOLUTIONUNIT") != NULL )
