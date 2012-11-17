@@ -27,14 +27,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-/* This file is to be used with openjpeg SVN trunk >= r2093 */
+/* This file is to be used with openjpeg SVN trunk >= r2223 */
 
 #include <stdio.h> /* openjpeg.h needs FILE* */
 #include <openjpeg.h>
+#include <vector>
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
 #include "gdaljp2metadata.h"
+#include "cpl_multiproc.h"
+#include "cpl_atomic_ops.h"
 
 CPL_CVSID("$Id$");
 
@@ -138,6 +141,8 @@ static OPJ_OFF_T JP2OpenJPEGDataset_Skip(OPJ_OFF_T nBytes, void * pUserData)
 /* ==================================================================== */
 /************************************************************************/
 
+class JP2OpenJPEGRasterBand;
+
 class JP2OpenJPEGDataset : public GDALPamDataset
 {
     friend class JP2OpenJPEGRasterBand;
@@ -153,7 +158,6 @@ class JP2OpenJPEGDataset : public GDALPamDataset
     OPJ_CODEC_FORMAT eCodecFormat;
     OPJ_COLOR_SPACE eColorSpace;
 
-    int         bLoadingOtherBands;
     int         bIs420;
 
     int         iLevel;
@@ -161,9 +165,9 @@ class JP2OpenJPEGDataset : public GDALPamDataset
     JP2OpenJPEGDataset** papoOverviewDS;
     int         bUseSetDecodeArea;
 
-    opj_codec_t*    pCodec;
-    opj_stream_t *  pStream;
-    opj_image_t *   psImage;
+    int         nThreads;
+    int         GetNumThreads();
+    int         bEnoughMemoryToLoadOtherBands;
 
   protected:
     virtual int         CloseDependentDatasets();
@@ -185,7 +189,22 @@ class JP2OpenJPEGDataset : public GDALPamDataset
     virtual const char  *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
 
+    virtual CPLErr  IRasterIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType, 
+                               int nBandCount, int *panBandMap,
+                               int nPixelSpace, int nLineSpace, int nBandSpace);
+
     static void         WriteBox(VSILFILE* fp, GDALJP2Box* poBox);
+
+    CPLErr      ReadBlock( int nBand, VSILFILE* fp,
+                           int nBlockXOff, int nBlockYOff, void * pImage,
+                           int nBandCount, int *panBandMap );
+
+    int         PreloadBlocks( JP2OpenJPEGRasterBand* poBand,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               int nBandCount, int *panBandMap );
 };
 
 /************************************************************************/
@@ -204,12 +223,20 @@ class JP2OpenJPEGRasterBand : public GDALPamRasterBand
                                     GDALDataType eDataType,
                                     int nBlockXSize, int nBlockYSize);
                 ~JP2OpenJPEGRasterBand();
-                
+
     virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IRasterIO( GDALRWFlag eRWFlag,
+                                  int nXOff, int nYOff, int nXSize, int nYSize,
+                                  void * pData, int nBufXSize, int nBufYSize,
+                                  GDALDataType eBufType,
+                                  int nPixelSpace, int nLineSpace );
+
     virtual GDALColorInterp GetColorInterpretation();
 
     virtual int             GetOverviewCount();
     virtual GDALRasterBand* GetOverview(int iOvrLevel);
+    
+    virtual int HasArbitraryOverviews() { return TRUE; }
 };
 
 
@@ -258,61 +285,346 @@ static CPL_INLINE GByte CLAMP_0_255(int val)
 CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                           void * pImage )
 {
-    CPLErr eErr = CE_None;
+    JP2OpenJPEGDataset *poGDS = (JP2OpenJPEGDataset *) poDS;
+    if ( poGDS->bEnoughMemoryToLoadOtherBands )
+        return poGDS->ReadBlock(nBand, poGDS->fp, nBlockXOff, nBlockYOff, pImage,
+                                poGDS->nBands, NULL);
+    else
+        return poGDS->ReadBlock(nBand, poGDS->fp, nBlockXOff, nBlockYOff, pImage,
+                                1, &nBand);
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr JP2OpenJPEGRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+                                         int nXOff, int nYOff, int nXSize, int nYSize,
+                                         void * pData, int nBufXSize, int nBufYSize,
+                                         GDALDataType eBufType,
+                                         int nPixelSpace, int nLineSpace )
+{
     JP2OpenJPEGDataset *poGDS = (JP2OpenJPEGDataset *) poDS;
 
-    int nDataTypeSize = (GDALGetDataTypeSize(eDataType) / 8);
+    if( eRWFlag != GF_Read )
+        return CE_Failure;
 
-    int nTileNumber = nBlockXOff + nBlockYOff * nBlocksPerRow;
-    int nWidthToRead = MIN(nBlockXSize, poGDS->nRasterXSize - nBlockXOff * nBlockXSize);
-    int nHeightToRead = MIN(nBlockYSize, poGDS->nRasterYSize - nBlockYOff * nBlockYSize);
-
-    if (poGDS->pCodec == NULL)
+/* ==================================================================== */
+/*      Do we have overviews that would be appropriate to satisfy       */
+/*      this request?                                                   */
+/* ==================================================================== */
+    if( (nBufXSize < nXSize || nBufYSize < nYSize)
+        && GetOverviewCount() > 0 && eRWFlag == GF_Read )
     {
-        poGDS->pCodec = opj_create_decompress(poGDS->eCodecFormat);
+        int         nOverview;
 
-        opj_set_info_handler(poGDS->pCodec, JP2OpenJPEGDataset_InfoCallback,NULL);
-        opj_set_warning_handler(poGDS->pCodec, JP2OpenJPEGDataset_WarningCallback, NULL);
-        opj_set_error_handler(poGDS->pCodec, JP2OpenJPEGDataset_ErrorCallback,NULL);
-
-        opj_dparameters_t parameters;
-        opj_set_default_decoder_parameters(&parameters);
-
-        if (! opj_setup_decoder(poGDS->pCodec,&parameters))
+        nOverview =
+            GDALBandGetBestOverviewLevel(this, nXOff, nYOff, nXSize, nYSize,
+                                        nBufXSize, nBufYSize);
+        if (nOverview >= 0)
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "opj_setup_decoder() failed");
-            return CE_Failure;
-        }
+            GDALRasterBand* poOverviewBand = GetOverview(nOverview);
+            if (poOverviewBand == NULL)
+                return CE_Failure;
 
-        poGDS->pStream = opj_stream_create(1024, TRUE); // Default 1MB is way too big for some datasets
-
-        VSIFSeekL(poGDS->fp, 0, SEEK_END);
-        opj_stream_set_user_data_length(poGDS->pStream, VSIFTellL(poGDS->fp));
-        /* Reseek to file beginning */
-        VSIFSeekL(poGDS->fp, 0, SEEK_SET);
-
-        opj_stream_set_read_function(poGDS->pStream, JP2OpenJPEGDataset_Read);
-        opj_stream_set_seek_function(poGDS->pStream, JP2OpenJPEGDataset_Seek);
-        opj_stream_set_skip_function(poGDS->pStream, JP2OpenJPEGDataset_Skip);
-        opj_stream_set_user_data(poGDS->pStream, poGDS->fp);
-
-        if(!opj_read_header(poGDS->pStream,poGDS->pCodec,&poGDS->psImage))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "opj_read_header() failed");
-            return CE_Failure;
+            return poOverviewBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                            pData, nBufXSize, nBufYSize, eBufType,
+                                            nPixelSpace, nLineSpace );
         }
     }
 
-    if (!opj_set_decoded_resolution_factor( poGDS->pCodec, poGDS->iLevel ))
+    poGDS->bEnoughMemoryToLoadOtherBands = poGDS->PreloadBlocks(this, nXOff, nYOff, nXSize, nYSize, 0, NULL);
+
+    CPLErr eErr = GDALPamRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                         pData, nBufXSize, nBufYSize, eBufType,
+                                         nPixelSpace, nLineSpace );
+
+    poGDS->bEnoughMemoryToLoadOtherBands = TRUE;
+    return eErr;
+}
+
+/************************************************************************/
+/*                            GetNumThreads()                           */
+/************************************************************************/
+
+int JP2OpenJPEGDataset::GetNumThreads()
+{
+    if( nThreads >= 1 )
+        return nThreads;
+
+    const char* pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
+    if (EQUAL(pszThreads, "ALL_CPUS"))
+        nThreads = CPLGetNumCPUs();
+    else
+        nThreads = atoi(pszThreads);
+    if (nThreads > 128)
+        nThreads = 128;
+    if (nThreads <= 0)
+        nThreads = 1;
+    return nThreads;
+}
+
+/************************************************************************/
+/*                   JP2OpenJPEGReadBlockInThread()                     */
+/************************************************************************/
+
+class JobStruct
+{
+public:
+
+    JP2OpenJPEGDataset* poGDS;
+    int                 nBand;
+    std::vector< std::pair<int, int> > oPairs;
+    volatile int        nCurPair;
+    int                 nBandCount;
+    int                *panBandMap;
+};
+
+static void JP2OpenJPEGReadBlockInThread(void* userdata)
+{
+    int nPair;
+    JobStruct* poJob = (JobStruct*) userdata;
+    JP2OpenJPEGDataset* poGDS = poJob->poGDS;
+    int nBand = poJob->nBand;
+    int nPairs = (int)poJob->oPairs.size();
+    int nBandCount = poJob->nBandCount;
+    int* panBandMap = poJob->panBandMap;
+    VSILFILE* fp = VSIFOpenL(poGDS->GetDescription(), "rb");
+    if( fp == NULL )
+    {
+        CPLDebug("OPENJPEG", "Cannot open %s", poGDS->GetDescription());
+        return;
+    }
+
+    while( (nPair = CPLAtomicInc(&(poJob->nCurPair))) < nPairs )
+    {
+        int nBlockXOff = poJob->oPairs[nPair].first;
+        int nBlockYOff = poJob->oPairs[nPair].second;
+        GDALRasterBlock* poBlock = poGDS->GetRasterBand(nBand)->
+                GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
+        if (poBlock == NULL)
+            break;
+
+        void* pDstBuffer = poBlock->GetDataRef();
+        if (!pDstBuffer)
+        {
+            poBlock->DropLock();
+            break;
+        }
+
+        poGDS->ReadBlock(nBand, fp, nBlockXOff, nBlockYOff, pDstBuffer,
+                         nBandCount, panBandMap);
+
+        poBlock->DropLock();
+    }
+
+    VSIFCloseL(fp);
+}
+
+/************************************************************************/
+/*                           PreloadBlocks()                            */
+/************************************************************************/
+
+int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
+                                      int nXOff, int nYOff, int nXSize, int nYSize,
+                                      int nBandCount, int *panBandMap)
+{
+    int bRet = TRUE;
+    int nXStart = nXOff / poBand->nBlockXSize;
+    int nXEnd = (nXOff + nXSize - 1) / poBand->nBlockXSize;
+    int nYStart = nYOff / poBand->nBlockYSize;
+    int nYEnd = (nYOff + nYSize - 1) / poBand->nBlockYSize;
+    GIntBig nReqMem = (GIntBig)(nXEnd - nXStart + 1) * (nYEnd - nYStart + 1) *
+                      poBand->nBlockXSize * poBand->nBlockYSize * (GDALGetDataTypeSize(poBand->eDataType) / 8);
+
+    int nMaxThreads = GetNumThreads();
+    if( !bUseSetDecodeArea && nMaxThreads > 1 )
+    {
+        if( nReqMem > GDALGetCacheMax64() / (nBandCount == 0 ? 1 : nBandCount) )
+            return FALSE;
+
+        int nBlocksToLoad = 0;
+        std::vector< std::pair<int,int> > oPairs;
+        for(int nBlockXOff = nXStart; nBlockXOff <= nXEnd; ++nBlockXOff)
+        {
+            for(int nBlockYOff = nYStart; nBlockYOff <= nYEnd; ++nBlockYOff)
+            {
+                GDALRasterBlock* poBlock = poBand->TryGetLockedBlockRef(nBlockXOff,nBlockYOff);
+                if (poBlock != NULL)
+                {
+                    poBlock->DropLock();
+                    continue;
+                }
+                oPairs.push_back( std::pair<int,int>(nBlockXOff, nBlockYOff) );
+                nBlocksToLoad ++;
+            }
+        }
+
+        if( nBlocksToLoad > 1 )
+        {
+            int nThreads = MIN(nBlocksToLoad, nMaxThreads);
+            void** pahThreads = (void**) CPLMalloc( sizeof(void*) * nThreads );
+            int i;
+
+            CPLDebug("OPENJPEG", "%d blocks to load", nBlocksToLoad);
+
+            JobStruct oJob;
+            oJob.poGDS = this;
+            oJob.nBand = poBand->GetBand();
+            oJob.oPairs = oPairs;
+            oJob.nCurPair = -1;
+            if( nBandCount > 0 )
+            {
+                oJob.nBandCount = nBandCount;
+                oJob.panBandMap = panBandMap;
+            }
+            else
+            {
+                if( nReqMem <= GDALGetCacheMax64() / nBands )
+                {
+                    oJob.nBandCount = nBands;
+                    oJob.panBandMap = NULL;
+                }
+                else
+                {
+                    bRet = FALSE;
+                    oJob.nBandCount = 1;
+                    oJob.panBandMap = &oJob.nBand;
+                }
+            }
+
+            for(i=0;i<nThreads;i++)
+                pahThreads[i] = CPLCreateJoinableThread(JP2OpenJPEGReadBlockInThread, &oJob);
+            for(i=0;i<nThreads;i++)
+                CPLJoinThread( pahThreads[i] );
+            CPLFree(pahThreads);
+        }
+    }
+
+    return bRet;
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr  JP2OpenJPEGDataset::IRasterIO( GDALRWFlag eRWFlag,
+                               int nXOff, int nYOff, int nXSize, int nYSize,
+                               void * pData, int nBufXSize, int nBufYSize,
+                               GDALDataType eBufType, 
+                               int nBandCount, int *panBandMap,
+                               int nPixelSpace, int nLineSpace, int nBandSpace)
+{
+    if( eRWFlag != GF_Read )
+        return CE_Failure;
+
+    if( nBandCount < 1 )
+        return CE_Failure;
+
+    JP2OpenJPEGRasterBand* poBand = (JP2OpenJPEGRasterBand*) GetRasterBand(panBandMap[0]);
+
+/* ==================================================================== */
+/*      Do we have overviews that would be appropriate to satisfy       */
+/*      this request?                                                   */
+/* ==================================================================== */
+
+    if( (nBufXSize < nXSize || nBufYSize < nYSize)
+        && poBand->GetOverviewCount() > 0 && eRWFlag == GF_Read )
+    {
+        int         nOverview;
+
+        nOverview =
+            GDALBandGetBestOverviewLevel(poBand, nXOff, nYOff, nXSize, nYSize,
+                                        nBufXSize, nBufYSize);
+        if (nOverview >= 0)
+        {
+            return papoOverviewDS[nOverview]->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                                        pData, nBufXSize, nBufYSize, eBufType,
+                                                        nBandCount, panBandMap,
+                                                        nPixelSpace, nLineSpace, nBandSpace );
+        }
+    }
+
+    bEnoughMemoryToLoadOtherBands = PreloadBlocks(poBand, nXOff, nYOff, nXSize, nYSize, nBandCount, panBandMap);
+
+    CPLErr eErr = GDALPamDataset::IRasterIO(   eRWFlag,
+                                        nXOff, nYOff, nXSize, nYSize,
+                                        pData, nBufXSize, nBufYSize,
+                                        eBufType, 
+                                        nBandCount, panBandMap,
+                                        nPixelSpace, nLineSpace, nBandSpace );
+
+    bEnoughMemoryToLoadOtherBands = TRUE;
+    return eErr;
+}
+
+/************************************************************************/
+/*                             ReadBlock()                              */
+/************************************************************************/
+
+CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
+                                      int nBlockXOff, int nBlockYOff, void * pImage,
+                                      int nBandCount, int* panBandMap )
+{
+    CPLErr          eErr = CE_None;
+    opj_codec_t*    pCodec;
+    opj_stream_t *  pStream;
+    opj_image_t *   psImage;
+    
+    JP2OpenJPEGRasterBand* poBand = (JP2OpenJPEGRasterBand*) GetRasterBand(nBand);
+    int nBlockXSize = poBand->nBlockXSize;
+    int nBlockYSize = poBand->nBlockYSize;
+    GDALDataType eDataType = poBand->eDataType;
+
+    int nDataTypeSize = (GDALGetDataTypeSize(eDataType) / 8);
+
+    int nTileNumber = nBlockXOff + nBlockYOff * poBand->nBlocksPerRow;
+    int nWidthToRead = MIN(nBlockXSize, nRasterXSize - nBlockXOff * nBlockXSize);
+    int nHeightToRead = MIN(nBlockYSize, nRasterYSize - nBlockYOff * nBlockYSize);
+
+    pCodec = opj_create_decompress(eCodecFormat);
+
+    opj_set_info_handler(pCodec, JP2OpenJPEGDataset_InfoCallback,NULL);
+    opj_set_warning_handler(pCodec, JP2OpenJPEGDataset_WarningCallback, NULL);
+    opj_set_error_handler(pCodec, JP2OpenJPEGDataset_ErrorCallback,NULL);
+
+    opj_dparameters_t parameters;
+    opj_set_default_decoder_parameters(&parameters);
+
+    if (! opj_setup_decoder(pCodec,&parameters))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "opj_setup_decoder() failed");
+        return CE_Failure;
+    }
+
+    pStream = opj_stream_create(1024, TRUE); // Default 1MB is way too big for some datasets
+
+    VSIFSeekL(fp, 0, SEEK_END);
+    opj_stream_set_user_data_length(pStream, VSIFTellL(fp));
+    /* Reseek to file beginning */
+    VSIFSeekL(fp, 0, SEEK_SET);
+
+    opj_stream_set_read_function(pStream, JP2OpenJPEGDataset_Read);
+    opj_stream_set_seek_function(pStream, JP2OpenJPEGDataset_Seek);
+    opj_stream_set_skip_function(pStream, JP2OpenJPEGDataset_Skip);
+    opj_stream_set_user_data(pStream, fp);
+
+    if(!opj_read_header(pStream,pCodec,&psImage))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "opj_read_header() failed");
+        return CE_Failure;
+    }
+
+    if (!opj_set_decoded_resolution_factor( pCodec, iLevel ))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "opj_set_decoded_resolution_factor() failed");
         eErr = CE_Failure;
         goto end;
     }
 
-    if (poGDS->bUseSetDecodeArea)
+    if (bUseSetDecodeArea)
     {
-        if (!opj_set_decode_area(poGDS->pCodec,poGDS->psImage,
+        if (!opj_set_decode_area(pCodec,psImage,
                                 nBlockXOff*nBlockXSize,nBlockYOff*nBlockYSize,
                                 (nBlockXOff+1)*nBlockXSize,(nBlockYOff+1)*nBlockYSize))
         {
@@ -320,7 +632,7 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             eErr = CE_Failure;
             goto end;
         }
-        if (!opj_decode(poGDS->pCodec,poGDS->pStream, poGDS->psImage))
+        if (!opj_decode(pCodec,pStream, psImage))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "opj_decode() failed");
             eErr = CE_Failure;
@@ -329,7 +641,7 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     else
     {
-        if (!opj_get_decoded_tile( poGDS->pCodec, poGDS->pStream, poGDS->psImage, nTileNumber ))
+        if (!opj_get_decoded_tile( pCodec, pStream, psImage, nTileNumber ))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "opj_get_decoded_tile() failed");
             eErr = CE_Failure;
@@ -337,33 +649,28 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
     }
 
-    for(int iBand = 1; iBand <= poGDS->nBands; iBand ++)
+    for(int xBand = 0; xBand < nBandCount; xBand ++)
     {
         void* pDstBuffer;
         GDALRasterBlock *poBlock = NULL;
+        int iBand = (panBandMap) ? panBandMap[xBand] : xBand + 1;
 
         if (iBand == nBand)
             pDstBuffer = pImage;
-        else if( poGDS->bLoadingOtherBands )
-            continue;
         else
         {
-            poGDS->bLoadingOtherBands = TRUE;
-
-            poBlock = ((JP2OpenJPEGRasterBand*)poGDS->GetRasterBand(iBand))->
+            poBlock = ((JP2OpenJPEGRasterBand*)GetRasterBand(iBand))->
                 TryGetLockedBlockRef(nBlockXOff,nBlockYOff);
             if (poBlock != NULL)
             {
                 poBlock->DropLock();
-                poGDS->bLoadingOtherBands = FALSE;
                 continue;
             }
 
-            poBlock = poGDS->GetRasterBand(iBand)->
+            poBlock = GetRasterBand(iBand)->
                 GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
             if (poBlock == NULL)
             {
-                poGDS->bLoadingOtherBands = FALSE;
                 continue;
             }
 
@@ -371,33 +678,30 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             if (!pDstBuffer)
             {
                 poBlock->DropLock();
-                poGDS->bLoadingOtherBands = FALSE;
                 continue;
             }
-
-            poGDS->bLoadingOtherBands = FALSE;
         }
 
-        if (poGDS->bIs420)
+        if (bIs420)
         {
-            CPLAssert((int)poGDS->psImage->comps[0].w >= nWidthToRead);
-            CPLAssert((int)poGDS->psImage->comps[0].h >= nHeightToRead);
-            CPLAssert(poGDS->psImage->comps[1].w == (poGDS->psImage->comps[0].w + 1) / 2);
-            CPLAssert(poGDS->psImage->comps[1].h == (poGDS->psImage->comps[0].h + 1) / 2);
-            CPLAssert(poGDS->psImage->comps[2].w == (poGDS->psImage->comps[0].w + 1) / 2);
-            CPLAssert(poGDS->psImage->comps[2].h == (poGDS->psImage->comps[0].h + 1) / 2);
+            CPLAssert((int)psImage->comps[0].w >= nWidthToRead);
+            CPLAssert((int)psImage->comps[0].h >= nHeightToRead);
+            CPLAssert(psImage->comps[1].w == (psImage->comps[0].w + 1) / 2);
+            CPLAssert(psImage->comps[1].h == (psImage->comps[0].h + 1) / 2);
+            CPLAssert(psImage->comps[2].w == (psImage->comps[0].w + 1) / 2);
+            CPLAssert(psImage->comps[2].h == (psImage->comps[0].h + 1) / 2);
 
-            OPJ_INT32* pSrcY = poGDS->psImage->comps[0].data;
-            OPJ_INT32* pSrcCb = poGDS->psImage->comps[1].data;
-            OPJ_INT32* pSrcCr = poGDS->psImage->comps[2].data;
+            OPJ_INT32* pSrcY = psImage->comps[0].data;
+            OPJ_INT32* pSrcCb = psImage->comps[1].data;
+            OPJ_INT32* pSrcCr = psImage->comps[2].data;
             GByte* pDst = (GByte*)pDstBuffer;
             for(int j=0;j<nHeightToRead;j++)
             {
                 for(int i=0;i<nWidthToRead;i++)
                 {
-                    int Y = pSrcY[j * poGDS->psImage->comps[0].w + i];
-                    int Cb = pSrcCb[(j/2) * poGDS->psImage->comps[1].w + (i/2)];
-                    int Cr = pSrcCr[(j/2) * poGDS->psImage->comps[2].w + (i/2)];
+                    int Y = pSrcY[j * psImage->comps[0].w + i];
+                    int Cb = pSrcCb[(j/2) * psImage->comps[1].w + (i/2)];
+                    int Cr = pSrcCr[(j/2) * psImage->comps[2].w + (i/2)];
                     if (iBand == 1)
                         pDst[j * nBlockXSize + i] = CLAMP_0_255((int)(Y + 1.402 * (Cr - 128)));
                     else if (iBand == 2)
@@ -409,20 +713,20 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
         else
         {
-            CPLAssert((int)poGDS->psImage->comps[iBand-1].w >= nWidthToRead);
-            CPLAssert((int)poGDS->psImage->comps[iBand-1].h >= nHeightToRead);
+            CPLAssert((int)psImage->comps[iBand-1].w >= nWidthToRead);
+            CPLAssert((int)psImage->comps[iBand-1].h >= nHeightToRead);
 
-            if ((int)poGDS->psImage->comps[iBand-1].w == nBlockXSize &&
-                (int)poGDS->psImage->comps[iBand-1].h == nBlockYSize)
+            if ((int)psImage->comps[iBand-1].w == nBlockXSize &&
+                (int)psImage->comps[iBand-1].h == nBlockYSize)
             {
-                GDALCopyWords(poGDS->psImage->comps[iBand-1].data, GDT_Int32, 4,
+                GDALCopyWords(psImage->comps[iBand-1].data, GDT_Int32, 4,
                             pDstBuffer, eDataType, nDataTypeSize, nBlockXSize * nBlockYSize);
             }
             else
             {
                 for(int j=0;j<nHeightToRead;j++)
                 {
-                    GDALCopyWords(poGDS->psImage->comps[iBand-1].data + j * poGDS->psImage->comps[iBand-1].w, GDT_Int32, 4,
+                    GDALCopyWords(psImage->comps[iBand-1].data + j * psImage->comps[iBand-1].w, GDT_Int32, 4,
                                 (GByte*)pDstBuffer + j * nBlockXSize * nDataTypeSize, eDataType, nDataTypeSize,
                                 nWidthToRead);
                 }
@@ -434,16 +738,10 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
 end:
-    /*if( poGDS->bUseSetDecodeArea || eErr == CE_Failure )*/
-    {
-        opj_end_decompress(poGDS->pCodec,poGDS->pStream);
-        opj_stream_destroy(poGDS->pStream);
-        opj_destroy_codec(poGDS->pCodec);
-        opj_image_destroy(poGDS->psImage);
-        poGDS->pCodec = NULL;
-        poGDS->pStream = NULL;
-        poGDS->psImage = NULL;
-    }
+    opj_end_decompress(pCodec,pStream);
+    opj_stream_destroy(pStream);
+    opj_destroy_codec(pCodec);
+    opj_image_destroy(psImage);
 
     return eErr;
 }
@@ -526,7 +824,6 @@ JP2OpenJPEGDataset::JP2OpenJPEGDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-    bLoadingOtherBands = FALSE;
     eCodecFormat = OPJ_CODEC_UNKNOWN;
     eColorSpace = OPJ_CLRSPC_UNKNOWN;
     bIs420 = FALSE;
@@ -534,10 +831,8 @@ JP2OpenJPEGDataset::JP2OpenJPEGDataset()
     nOverviewCount = 0;
     papoOverviewDS = NULL;
     bUseSetDecodeArea = FALSE;
-
-    pCodec = NULL;
-    pStream = NULL;
-    psImage = NULL;
+    nThreads = -1;
+    bEnoughMemoryToLoadOtherBands = TRUE;
 }
 
 /************************************************************************/
@@ -547,14 +842,6 @@ JP2OpenJPEGDataset::JP2OpenJPEGDataset()
 JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
 
 {
-    if (pCodec)
-    {
-        opj_end_decompress(pCodec,pStream);
-        opj_stream_destroy(pStream);
-        opj_destroy_codec(pCodec);
-        opj_image_destroy(psImage);
-    }
-
     FlushCache();
 
     if ( pszProjection )
@@ -917,6 +1204,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
                     poDS->papoOverviewDS,
                     (poDS->nOverviewCount + 1) * sizeof(JP2OpenJPEGDataset*));
         JP2OpenJPEGDataset* poODS = new JP2OpenJPEGDataset();
+        poODS->SetDescription( poOpenInfo->pszFilename );
         poODS->iLevel = poDS->nOverviewCount + 1;
         poODS->bUseSetDecodeArea = poDS->bUseSetDecodeArea;
         if (!poDS->bUseSetDecodeArea)
