@@ -32,6 +32,8 @@
 #include "swq.h"
 #include "ogrsqliteregexp.h"
 
+#ifdef HAVE_SQLITE_VFS
+
 #define VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
 //#define DEBUG_OGR2SQLITE
 
@@ -43,8 +45,6 @@
 
 /* Declaration of sqlite3_api structure */
 SQLITE_EXTENSION_INIT1
-
-#ifdef HAVE_SQLITE_VFS
 
 /* The layout of fields is :
    0   : RegularField0
