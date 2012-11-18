@@ -1078,8 +1078,8 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 #endif
 
-    if (psImage->x1 - psImage->x0 <= 0 ||
-        psImage->y1 - psImage->y0 <= 0 ||
+    if (psImage->x1 <= psImage->x0 ||
+        psImage->y1 <= psImage->y0 ||
         psImage->numcomps == 0 ||
         psImage->comps[0].w != psImage->x1 - psImage->x0 ||
         psImage->comps[0].h != psImage->y1 - psImage->y0)
