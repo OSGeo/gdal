@@ -2160,7 +2160,9 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         papszGeoDimList = CSLTokenizeString2( szGeoDimList,
                                               ",", CSLT_HONOURSTRINGS );
 
-        if ( CSLCount(papszGeoDimList) > H4_MAX_VAR_DIMS )
+        if( CSLCount(papszGeoDimList) > H4_MAX_VAR_DIMS 
+            || CSLFindString( papszGeoDimList, szXGeo ) == -1
+            || CSLFindString( papszGeoDimList, szYGeo ) == -1 )
         {
             CSLDestroy( papszGeoDimList );
             return FALSE;
