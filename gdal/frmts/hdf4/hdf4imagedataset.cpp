@@ -2148,29 +2148,26 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
                           aiDimSizes, &iWrkNumType, szGeoDimList ) < 0 )
         {
 
-#ifdef DEBUG
-        CPLDebug( "HDF4Image",
-                  "Can't read attributes of geolocation field \"%s\"",
-                  papszGeolocations[i] );
-#endif
-
+            CPLDebug( "HDF4Image",
+                      "Can't read attributes of geolocation field \"%s\"",
+                      papszGeolocations[i] );
             return FALSE;
         }
+
+        CPLDebug( "HDF4Image",
+                  "List of dimensions in geolocation field \"%s\": %s",
+                  papszGeolocations[i], szGeoDimList );
 
         papszGeoDimList = CSLTokenizeString2( szGeoDimList,
                                               ",", CSLT_HONOURSTRINGS );
 
-        if ( CSLCount(papszGeoDimList) > H4_MAX_VAR_DIMS )
+        if( CSLCount(papszGeoDimList) > H4_MAX_VAR_DIMS 
+            || CSLFindString( papszGeoDimList, szXGeo ) == -1
+            || CSLFindString( papszGeoDimList, szYGeo ) == -1 )
         {
             CSLDestroy( papszGeoDimList );
             return FALSE;
         }
-
-#ifdef DEBUG
-        CPLDebug( "HDF4Image",
-                  "List of dimensions in geolocation field \"%s\": %s",
-                  papszGeolocations[i], szGeoDimList );
-#endif
 
         nXPoints = aiDimSizes[CSLFindString( papszGeoDimList, szXGeo )];
         nYPoints = aiDimSizes[CSLFindString( papszGeoDimList, szYGeo )];
