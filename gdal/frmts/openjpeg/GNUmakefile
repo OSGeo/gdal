@@ -1,11 +1,7 @@
 
 include ../../GDALmake.opt
 
-ifeq ($(OPENJPEG_TRUNK),yes)
 OBJ	=	openjpegdataset.o
-else
-OBJ	=	openjpegdataset_opjbranchv2.o
-endif
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 

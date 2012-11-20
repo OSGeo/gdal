@@ -1673,9 +1673,8 @@ dnl ---------------------------------------------------------------------------
 dnl Select a OpenJPEG Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(openjpeg,[  --with-openjpeg[=ARG]     Include JPEG-2000 support via OpenJPEG v2 library (ARG=path)],,)
+AC_ARG_WITH(openjpeg,[  --with-openjpeg[=ARG]     Include JPEG-2000 support via OpenJPEG 2.0 library (ARG=path)],,)
 
-OPENJPEG_TRUNK=no
 HAVE_OPENJPEG=no
 
 if test "$with_openjpeg" = "no" ; then
@@ -1684,50 +1683,27 @@ if test "$with_openjpeg" = "no" ; then
 
 elif test "$with_openjpeg" = "yes" -o "$with_openjpeg" = "" ; then
 
-  AC_CHECK_HEADERS(openjpeg.h)
-  if test "$ac_cv_header_openjpeg_h" = "yes"; then
-    AC_CHECK_LIB(openjp2,opj_stream_set_user_data_length,OPENJPEG_TRUNK=yes,OPENJPEG_TRUNK=no,)
-    if test "$OPENJPEG_TRUNK" = "yes"; then
-        # for OpenJPEG v2 trunk
-        HAVE_OPENJPEG=yes
+  AC_CHECK_HEADERS([openjpeg-2.0/openjpeg.h])
+  if test "$ac_cv_header_openjpeg_2_0_openjpeg_h" = "yes"; then
+    AC_CHECK_LIB(openjp2,opj_stream_set_user_data_length,HAVE_OPENJPEG=yes,HAVE_OPENJPEG=no,)
+    if test "$HAVE_OPENJPEG" = "yes"; then
         LIBS="-lopenjp2 $LIBS"
-    else
-        # for OpenJPEG v2 branch
-        AC_CHECK_LIB(openjpeg,opj_decode_tile_data,HAVE_OPENJPEG=yes,HAVE_OPENJPEG=no,)
-        if test "$HAVE_OPENJPEG" = "yes" ; then
-            LIBS="-lopenjpeg $LIBS"
-        fi
     fi
   fi
 else
 
   HAVE_OPENJPEG=yes
   if test -r $with_openjpeg/include/openjpeg-2.0/openjpeg.h ; then
-    EXTRA_INCLUDES="-I$with_openjpeg/include/openjpeg-2.0 $EXTRA_INCLUDES"
-  elif test -r $with_openjpeg/include/openjpeg-1.99/openjpeg.h ; then
-    EXTRA_INCLUDES="-I$with_openjpeg/include/openjpeg-1.99 $EXTRA_INCLUDES"
-  elif test -r $with_openjpeg/include/openjpeg.h ; then
     EXTRA_INCLUDES="-I$with_openjpeg/include $EXTRA_INCLUDES"
-  elif test -r $with_openjpeg/openjpeg.h ; then
-    EXTRA_INCLUDES="-I$with_openjpeg $EXTRA_INCLUDES"
   else
-    AC_MSG_ERROR([openjpeg.h not found in $with_openjpeg/include or $with_openjpeg/include/openjpeg-2.0])
+    AC_MSG_ERROR([openjpeg.h not found in $with_openjpeg/include/openjpeg-2.0])
   fi
 
-  AC_CHECK_LIB(openjp2,opj_stream_set_user_data_length,OPENJPEG_TRUNK=yes,OPENJPEG_TRUNK=no,-L$with_openjpeg/lib)
+  AC_CHECK_LIB(openjp2,opj_stream_set_user_data_length,HAVE_OPENJPEG=yes,HAVE_OPENJPEG=no,-L$with_openjpeg/lib)
 
-  if test "$OPENJPEG_TRUNK" = "yes"; then
-      # for OpenJPEG v2 trunk
-      HAVE_OPENJPEG=yes
+  if test "$HAVE_OPENJPEG" = "yes"; then
       LIBS="-L$with_openjpeg/lib -lopenjp2 $LIBS"
       AC_MSG_NOTICE([using OpenJPEG v2 library from $with_openjpeg.])
-  else
-      # for OpenJPEG v2 branch
-      AC_CHECK_LIB(openjpeg,opj_decode_tile_data,HAVE_OPENJPEG=yes,HAVE_OPENJPEG=no,-L$with_openjpeg -L$with_openjpeg/lib)
-      if test "$HAVE_OPENJPEG" = "yes" ; then
-        LIBS="-L$with_openjpeg -L$with_openjpeg/lib -lopenjpeg $LIBS"
-        AC_MSG_NOTICE([using OpenJPEG library from $with_openjpeg.])
-      fi
   fi
 fi
 
@@ -1736,8 +1712,6 @@ if test "$HAVE_OPENJPEG" != "no" ; then
 fi
 
 AC_SUBST([HAVE_OPENJPEG],$HAVE_OPENJPEG)
-AC_SUBST([OPENJPEG_TRUNK],$OPENJPEG_TRUNK)
-
 
 
 dnl ---------------------------------------------------------------------------
