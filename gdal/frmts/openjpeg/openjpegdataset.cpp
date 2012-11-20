@@ -27,10 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-/* This file is to be used with openjpeg SVN trunk >= r2223 */
+/* This file is to be used with openjpeg 2.0 */
 
 #include <stdio.h> /* openjpeg.h needs FILE* */
-#include <openjpeg.h>
+#include <openjpeg-2.0/openjpeg.h>
 #include <vector>
 
 #include "gdal_pam.h"
