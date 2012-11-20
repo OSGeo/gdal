@@ -718,7 +718,6 @@ ECW_SETTING
 FGDB_INC
 FGDB_LIB
 FGDB_ENABLED
-OPENJPEG_TRUNK
 HAVE_OPENJPEG
 JASPER_FLAGS
 HAVE_JASPER
@@ -1633,7 +1632,7 @@ Optional Packages:
   --with-hdf5=ARG       Include HDF5 support (ARG=path)
   --with-netcdf=ARG     Include netCDF support (ARG=no or netCDF tree prefix)
   --with-jasper=ARG     Include JPEG-2000 support via JasPer library (ARG=path)
-  --with-openjpeg=ARG     Include JPEG-2000 support via OpenJPEG v2 library (ARG=path)
+  --with-openjpeg=ARG     Include JPEG-2000 support via OpenJPEG 2.0 library (ARG=path)
   --with-fgdb=ARG        Include ESRI File Geodatabase support (ARG=FGDP API Path, yes or no)
   --with-ecw=ARG        Include ECW support (ARG=ECW SDK Path, yes or no)
   --with-kakadu=ARG     Include Kakadu/JPEG2000 support
@@ -21750,7 +21749,6 @@ if test "${with_openjpeg+set}" = set; then :
 fi
 
 
-OPENJPEG_TRUNK=no
 HAVE_OPENJPEG=no
 
 if test "$with_openjpeg" = "no" ; then
@@ -21760,19 +21758,19 @@ $as_echo "$as_me: OpenJPEG (JPEG2000) support disabled." >&6;}
 
 elif test "$with_openjpeg" = "yes" -o "$with_openjpeg" = "" ; then
 
-  for ac_header in openjpeg.h
+  for ac_header in openjpeg-2.0/openjpeg.h
 do :
-  ac_fn_c_check_header_mongrel "$LINENO" "openjpeg.h" "ac_cv_header_openjpeg_h" "$ac_includes_default"
-if test "x$ac_cv_header_openjpeg_h" = xyes; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "openjpeg-2.0/openjpeg.h" "ac_cv_header_openjpeg_2_0_openjpeg_h" "$ac_includes_default"
+if test "x$ac_cv_header_openjpeg_2_0_openjpeg_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_OPENJPEG_H 1
+#define HAVE_OPENJPEG_2_0_OPENJPEG_H 1
 _ACEOF
 
 fi
 
 done
 
-  if test "$ac_cv_header_openjpeg_h" = "yes"; then
+  if test "$ac_cv_header_openjpeg_2_0_openjpeg_h" = "yes"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for opj_stream_set_user_data_length in -lopenjp2" >&5
 $as_echo_n "checking for opj_stream_set_user_data_length in -lopenjp2... " >&6; }
 if ${ac_cv_lib_openjp2_opj_stream_set_user_data_length+:} false; then :
@@ -21810,77 +21808,22 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_openjp2_opj_stream_set_user_data_length" >&5
 $as_echo "$ac_cv_lib_openjp2_opj_stream_set_user_data_length" >&6; }
 if test "x$ac_cv_lib_openjp2_opj_stream_set_user_data_length" = xyes; then :
-  OPENJPEG_TRUNK=yes
-else
-  OPENJPEG_TRUNK=no
-fi
-
-    if test "$OPENJPEG_TRUNK" = "yes"; then
-        # for OpenJPEG v2 trunk
-        HAVE_OPENJPEG=yes
-        LIBS="-lopenjp2 $LIBS"
-    else
-        # for OpenJPEG v2 branch
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for opj_decode_tile_data in -lopenjpeg" >&5
-$as_echo_n "checking for opj_decode_tile_data in -lopenjpeg... " >&6; }
-if ${ac_cv_lib_openjpeg_opj_decode_tile_data+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lopenjpeg  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char opj_decode_tile_data ();
-int
-main ()
-{
-return opj_decode_tile_data ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_openjpeg_opj_decode_tile_data=yes
-else
-  ac_cv_lib_openjpeg_opj_decode_tile_data=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_openjpeg_opj_decode_tile_data" >&5
-$as_echo "$ac_cv_lib_openjpeg_opj_decode_tile_data" >&6; }
-if test "x$ac_cv_lib_openjpeg_opj_decode_tile_data" = xyes; then :
   HAVE_OPENJPEG=yes
 else
   HAVE_OPENJPEG=no
 fi
 
-        if test "$HAVE_OPENJPEG" = "yes" ; then
-            LIBS="-lopenjpeg $LIBS"
-        fi
+    if test "$HAVE_OPENJPEG" = "yes"; then
+        LIBS="-lopenjp2 $LIBS"
     fi
   fi
 else
 
   HAVE_OPENJPEG=yes
   if test -r $with_openjpeg/include/openjpeg-2.0/openjpeg.h ; then
-    EXTRA_INCLUDES="-I$with_openjpeg/include/openjpeg-2.0 $EXTRA_INCLUDES"
-  elif test -r $with_openjpeg/include/openjpeg-1.99/openjpeg.h ; then
-    EXTRA_INCLUDES="-I$with_openjpeg/include/openjpeg-1.99 $EXTRA_INCLUDES"
-  elif test -r $with_openjpeg/include/openjpeg.h ; then
     EXTRA_INCLUDES="-I$with_openjpeg/include $EXTRA_INCLUDES"
-  elif test -r $with_openjpeg/openjpeg.h ; then
-    EXTRA_INCLUDES="-I$with_openjpeg $EXTRA_INCLUDES"
   else
-    as_fn_error $? "openjpeg.h not found in $with_openjpeg/include or $with_openjpeg/include/openjpeg-2.0" "$LINENO" 5
+    as_fn_error $? "openjpeg.h not found in $with_openjpeg/include/openjpeg-2.0" "$LINENO" 5
   fi
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for opj_stream_set_user_data_length in -lopenjp2" >&5
@@ -21920,67 +21863,16 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_openjp2_opj_stream_set_user_data_length" >&5
 $as_echo "$ac_cv_lib_openjp2_opj_stream_set_user_data_length" >&6; }
 if test "x$ac_cv_lib_openjp2_opj_stream_set_user_data_length" = xyes; then :
-  OPENJPEG_TRUNK=yes
-else
-  OPENJPEG_TRUNK=no
-fi
-
-
-  if test "$OPENJPEG_TRUNK" = "yes"; then
-      # for OpenJPEG v2 trunk
-      HAVE_OPENJPEG=yes
-      LIBS="-L$with_openjpeg/lib -lopenjp2 $LIBS"
-      { $as_echo "$as_me:${as_lineno-$LINENO}: using OpenJPEG v2 library from $with_openjpeg." >&5
-$as_echo "$as_me: using OpenJPEG v2 library from $with_openjpeg." >&6;}
-  else
-      # for OpenJPEG v2 branch
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for opj_decode_tile_data in -lopenjpeg" >&5
-$as_echo_n "checking for opj_decode_tile_data in -lopenjpeg... " >&6; }
-if ${ac_cv_lib_openjpeg_opj_decode_tile_data+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lopenjpeg -L$with_openjpeg -L$with_openjpeg/lib $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char opj_decode_tile_data ();
-int
-main ()
-{
-return opj_decode_tile_data ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_openjpeg_opj_decode_tile_data=yes
-else
-  ac_cv_lib_openjpeg_opj_decode_tile_data=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_openjpeg_opj_decode_tile_data" >&5
-$as_echo "$ac_cv_lib_openjpeg_opj_decode_tile_data" >&6; }
-if test "x$ac_cv_lib_openjpeg_opj_decode_tile_data" = xyes; then :
   HAVE_OPENJPEG=yes
 else
   HAVE_OPENJPEG=no
 fi
 
-      if test "$HAVE_OPENJPEG" = "yes" ; then
-        LIBS="-L$with_openjpeg -L$with_openjpeg/lib -lopenjpeg $LIBS"
-        { $as_echo "$as_me:${as_lineno-$LINENO}: using OpenJPEG library from $with_openjpeg." >&5
-$as_echo "$as_me: using OpenJPEG library from $with_openjpeg." >&6;}
-      fi
+
+  if test "$HAVE_OPENJPEG" = "yes"; then
+      LIBS="-L$with_openjpeg/lib -lopenjp2 $LIBS"
+      { $as_echo "$as_me:${as_lineno-$LINENO}: using OpenJPEG v2 library from $with_openjpeg." >&5
+$as_echo "$as_me: using OpenJPEG v2 library from $with_openjpeg." >&6;}
   fi
 fi
 
@@ -21989,9 +21881,6 @@ if test "$HAVE_OPENJPEG" != "no" ; then
 fi
 
 HAVE_OPENJPEG=$HAVE_OPENJPEG
-
-OPENJPEG_TRUNK=$OPENJPEG_TRUNK
-
 
 
 

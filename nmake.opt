@@ -488,12 +488,10 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #SOSI_INC_DIR = e:/sosi
 #SOSI_LIBS = e:/sosi/FYBA.lib e:/sosi/GM.lib e:/sosi/UT.lib
 
-# Uncomment for OpenJpeg support
+# Uncomment for OpenJpeg (release v2.0.0) support
 #OPENJPEG_ENABLED = YES
-# Uncomment following line if building with openjpeg SVN >= r2093 (or openjpeg >= 2.0, but *not* old v2 branch)
-#OPENJPEG_TRUNK = YES
-#OPENJPEG_CFLAGS = -IC:\openjpeg\libopenjpeg
-#OPENJPEG_LIB = C:\openjpeg\bin\Release\openjpeg.lib
+#OPENJPEG_CFLAGS = -IC:\openjpeg\include
+#OPENJPEG_LIB = C:\openjpeg\lib\openjpeg.lib
 
 # Uncomment for PDF support
 # Uncomment POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES for Poppler >= 0.16.0
