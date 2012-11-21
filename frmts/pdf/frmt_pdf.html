@@ -18,7 +18,7 @@ also optionnaly be drawn on top of the raster layer (see OGR_* creation options 
 GDAL must be compiled with libpoppler support (GPL-licensed), and libpoppler itself must have been configured with
 --enable-xpdf-headers so that the xpdf C++ headers are available. Note: the poppler C++ API isn't
 stable, so the driver compilation may fail with too old or too recent poppler versions.
-Successfully tested versions are poppler &gt;= 0.12.X and &lt;= 0.18.0.
+Successfully tested versions are poppler &gt;= 0.12.X and &lt;= 0.20.0.
 <p>
 Starting with GDAL 1.9.0, as an alternative, the PDF driver can be compiled against libpodofo (LGPL-licensed)
 to avoid the libpoppler dependency. This is sufficient to get the georeferencing information. However, for
@@ -140,16 +140,18 @@ option can be used to force creation of tiled PDF files.</p></li>
 
 <li><p><b>BLOCKYSIZE=n</b>: Set tile height, defaults to 256.</p></li>
 
-<li><p><b>LAYER_NAME=name</b>: Name for layer where the raster is placed.</p></li>
+<li><p><b>LAYER_NAME=name</b>: Name for layer where the raster is placed. If specified, the raster will be be placed
+into a layer that can be toggled/un-toggled in the Layer tree of the "PDF reader".</p></li>
 
-<li><p><b>EXTRA_CONTENT_STREAM=content</b>: A PDF content stream to draw after the imagery, typically to add some text. It may refer
+<li><p><b>EXTRA_STREAM=content</b>: A PDF content stream to draw after the imagery, typically to add some text. It may refer
 the /FTimesRoman and /FTimesBold fonts.</p></li>
 
-<li><p><b>EXTRA_IMAGES=image_file_name,x,y,scale (possibly repeated)</b>: A list of images to insert into
+<li><p><b>EXTRA_IMAGES=image_file_name,x,y,scale (possibly repeated)</b>: A list of (ungeoreferenced) images to insert into
 the page as extra content. This is usefull to insert logos, legends, etc... x and y are in user units from the lower left corner of the page. scale
 is a magnifying ratio (use 1 if unsure).</p></li>
 
-<li><p><b>EXTRA_CONTENT_LAYER_NAME=name</b>: Name for layer where the extra content specified with EXTRA_CONTENT_STREAM or EXTRA_IMAGES is placed.</p></li>
+<li><p><b>EXTRA_LAYER_NAME=name</b>: Name for layer where the extra content specified with EXTRA_STREAM or EXTRA_IMAGES is placed.
+If specified, the extra content will be be placed into a layer that can be toggled/un-toggled in the "Layer tree" of the PDF reader.</p></li>
 
 <li><p><b>MARGIN/LEFT_MARGIN/RIGHT_MARGIN/TOP_MARGIN/BOTTOM_MARGIN=value</b>: Margin around image in user units.</p></li>
 
@@ -239,6 +241,7 @@ Samples :
 <ul>
 <li><a href="http://acrobatusers.com/gallery/geospatial">A few Geospatial PDF samples</a></li>
 <li><a href="http://www.agc.army.mil/geopdf_gallery.html">Another set of Geospatial PDF samples</a></li>
+<li><a href="http://latuviitta.org/documents/Geospatial_PDF_maps_from_OSM_with_GDAL.pdf">Tutorial to generate Geospatial PDF maps from OSM data</a></li>
 </ul>
 
 </body>
