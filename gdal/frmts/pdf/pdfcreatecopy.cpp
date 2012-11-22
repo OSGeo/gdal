@@ -2749,7 +2749,7 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
                         oImageDesc.dfXSize = poImageDS->GetRasterXSize() / dfUserUnit * dfScale;
                         oImageDesc.dfYSize = poImageDS->GetRasterYSize() / dfUserUnit * dfScale;
                         oImageDesc.dfXOff = dfX;
-                        oImageDesc.dfYOff = dfY - oImageDesc.dfYSize;
+                        oImageDesc.dfYOff = dfY;
 
                         asExtraImageDesc.push_back(oImageDesc);
                     }
