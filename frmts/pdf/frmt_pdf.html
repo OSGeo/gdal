@@ -147,8 +147,9 @@ into a layer that can be toggled/un-toggled in the Layer tree of the "PDF reader
 the /FTimesRoman and /FTimesBold fonts.</p></li>
 
 <li><p><b>EXTRA_IMAGES=image_file_name,x,y,scale (possibly repeated)</b>: A list of (ungeoreferenced) images to insert into
-the page as extra content. This is usefull to insert logos, legends, etc... x and y are in user units from the lower left corner of the page. scale
-is a magnifying ratio (use 1 if unsure).</p></li>
+the page as extra content. This is usefull to insert logos, legends, etc...
+x and y are in user units from the lower left corner of the page, and the anchor point is the lower left pixel of the image.
+scale is a magnifying ratio (use 1 if unsure).</p></li>
 
 <li><p><b>EXTRA_LAYER_NAME=name</b>: Name for layer where the extra content specified with EXTRA_STREAM or EXTRA_IMAGES is placed.
 If specified, the extra content will be be placed into a layer that can be toggled/un-toggled in the "Layer tree" of the PDF reader.</p></li>
@@ -173,7 +174,10 @@ source dataset, or if not set, from the corresponding creation option.
 If this option is set to NO, no information will be written.</p></li>
 
 <li><p><b>AUTHOR</b>, <b>CREATOR</b>, <b>CREATION_DATE</b>, <b>KEYWORDS</b>, <b>PRODUCER</b>,
-    <b>SUBJECT</b>, <b>TITLE</b> : metadata that can be written into the PDF Info block.</p></li>
+    <b>SUBJECT</b>, <b>TITLE</b> : metadata that can be written into the PDF Info block.
+Note: the format of the value for CREATION_DATE must be D:YYYYMMDDHHmmSSOHH'mm'
+(e.g. D:20121122132447+02'00' for 22 nov 2012 13:24:47 GMT+02)
+(see <a href="http://www.adobe.com/devnet/acrobat/pdfs/pdf_reference_1-7.pdf">PDF Reference, version 1.7</a>, page 160) </p></li>
 
 <li><p><b>OGR_DATASOURCE=name</b> : Name of the OGR datasource to display on top of the raster layer.</li>
 
