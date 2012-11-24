@@ -1759,7 +1759,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 
             /* Now let's extend the jp2c box header so that the */
             /* res box becomes a sub-box of it */
-            nLBoxJP2H += poRes->GetDataLength() + 8;
+            nLBoxJP2H += (int)poRes->GetDataLength() + 8;
             nLBoxJP2H = CPL_MSBWORD32( nLBoxJP2H );
             VSIFSeekL(fp, 32, SEEK_SET);
             VSIFWriteL(&nLBoxJP2H, 1, 4, fp);
