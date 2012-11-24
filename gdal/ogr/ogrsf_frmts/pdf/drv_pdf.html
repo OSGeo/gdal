@@ -87,6 +87,15 @@ When specified, the number of names should be the same as the number of OGR laye
 
 <li><p><b>OGR_WRITE_ATTRIBUTES=YES/NO</b> : Whether to write attributes of OGR features. Defaults to YES</li>
 
+<li><p><b>OFF_LAYERS=name (possibly repeated)</b>: Comma separated list of layer names that should be initially hidden.
+By default, all layers are visible. The layer names can come from EXTRA_LAYER_NAME and OGR_DISPLAY_LAYER_NAMES.</p></li>
+
+<li><p><b>EXCLUSIVE_LAYERS=name (possibly repeated)</b>:
+Comma separated list of layer names, such that only one of those layers can be visible at a time.
+This is the behaviour of radio-buttons in a graphical user interface.
+ he layer names can come from EXTRA_LAYER_NAME and OGR_DISPLAY_LAYER_NAMES.
+</p></li>
+
 </ul>
 
 <h2>See also</h2>
