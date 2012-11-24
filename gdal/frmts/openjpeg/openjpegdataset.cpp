@@ -1705,7 +1705,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         nPosOriginalJP2C = VSIFTellL(fp) - 8;
 
         char szBoxName[4+1];
-        int nLBoxJP2H;
+        int nLBoxJP2H = 0;
 
         /* If we must write a Res/Resd box, */
         /* read the box header at offset 32 */
@@ -1742,13 +1742,13 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                 nXDenom *= 2;
             }
 
-            aby[0] = ((int)dfYRes) / 256;
+            aby[0] = (GByte) (((int)dfYRes) / 256);
             aby[1] = ((int)dfYRes) % 256;
-            aby[2] = nYDenom / 256;
+            aby[2] = (GByte) (nYDenom / 256);
             aby[3] = nYDenom % 256;
-            aby[4] = ((int)dfXRes) / 256;
+            aby[4] = (GByte) (((int)dfXRes) / 256);
             aby[5] = ((int)dfXRes) % 256;
-            aby[6] = nXDenom / 256;
+            aby[6] = (GByte) (nXDenom / 256);
             aby[7] = nXDenom % 256;
             aby[8] = 2;
             aby[9] = 2;
