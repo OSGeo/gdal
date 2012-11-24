@@ -140,8 +140,20 @@ option can be used to force creation of tiled PDF files.</p></li>
 
 <li><p><b>BLOCKYSIZE=n</b>: Set tile height, defaults to 256.</p></li>
 
+<li><p><b>CLIPPING_EXTENT=xmin,ymin,xmax,ymax</b>: Set the clipping extent for the main source dataset and for the
+optional extra rasters. If not specified, the clipping extent is set to the extent of the main source dataset.</p></li>
+
 <li><p><b>LAYER_NAME=name</b>: Name for layer where the raster is placed. If specified, the raster will be be placed
-into a layer that can be toggled/un-toggled in the Layer tree of the "PDF reader".</p></li>
+into a layer that can be toggled/un-toggled in the "Layer tree" of the PDF reader.</p></li>
+
+<li><p><b>EXTRA_RASTERS=dataset_id (possibly repeated with comma separation)</b>: A list of georeferenced rasters to insert into
+the page. Those rasters are displayed on top of the main source raster. They must be georeferenced in the same projection,
+and they will be clipped to the extent of the main source raster.</p></li>
+
+<li><p><b>EXTRA_RASTERS_LAYER_NAME=dataset_name (possibly repeated with comma separation)</b>: A list of name for each raster
+specified in EXTRA_RASTERS. If specified, each extra raster will be be placed
+into a layer, named with the specified value, that can be toggled/un-toggled in the "Layer tree" of the PDF reader. If not
+specified, all the extra rasters will be placed in the default layer.</p></li>
 
 <li><p><b>EXTRA_STREAM=content</b>: A PDF content stream to draw after the imagery, typically to add some text. It may refer
 the /FTimesRoman and /FTimesBold fonts.</p></li>
@@ -179,21 +191,32 @@ Note: the format of the value for CREATION_DATE must be D:YYYYMMDDHHmmSSOHH'mm'
 (e.g. D:20121122132447+02'00' for 22 nov 2012 13:24:47 GMT+02)
 (see <a href="http://www.adobe.com/devnet/acrobat/pdfs/pdf_reference_1-7.pdf">PDF Reference, version 1.7</a>, page 160) </p></li>
 
-<li><p><b>OGR_DATASOURCE=name</b> : Name of the OGR datasource to display on top of the raster layer.</li>
+<li><p><b>OGR_DATASOURCE=name</b> : Name of the OGR datasource to display on top of the raster layer.</p></li>
 
 <li><p><b>OGR_DISPLAY_FIELD=name</b> : Name of the field (matching the name of a field from the OGR layer definition)
 to use to build the label of features that appear in the "Model Tree" UI component of a well-known PDF viewer.
 For example, if the OGR layer has a field called "ID", this can be used as the value for that option : features
 in the "Model Tree" will be labelled from their value for the "ID" field.
-If not specified, sequential generic labels will be used ("feature1", "feature2", etc... ).</li>
+If not specified, sequential generic labels will be used ("feature1", "feature2", etc... ).</p></li>
 
 <li><p><b>OGR_DISPLAY_LAYER_NAMES=names</b> : Comma separated list of names to display for the OGR layers in the "Model Tree".
 This option is useful to provide custom names, instead of sequential generic labels ("layer1", "layer2", etc...) that are used
 when this option is not specified.
 When specified, the number of names should be the same as the number of OGR layers in the datasource (and in the order they appear when
-listed by ogrinfo for example). </li>
+listed by ogrinfo for example). </p></li>
 
-<li><p><b>OGR_WRITE_ATTRIBUTES=YES/NO</b> : Whether to write attributes of OGR features. Defaults to YES</li>
+<li><p><b>OGR_WRITE_ATTRIBUTES=YES/NO</b> : Whether to write attributes of OGR features. Defaults to YES</p></li>
+
+<li><p><b>OFF_LAYERS=name (possibly repeated)</b>: Comma separated list of layer names that should be initially hidden.
+By default, all layers are visible. The layer names can come from LAYER_NAME (main raster layer name), EXTRA_RASTERS_LAYER_NAME,
+EXTRA_LAYER_NAME and OGR_DISPLAY_LAYER_NAMES.</p></li>
+
+<li><p><b>EXCLUSIVE_LAYERS=name (repeated at least twice)</b>:
+Comma separated list of layer names, such that only one of those layers can be visible at a time.
+This is the behaviour of radio-buttons in a graphical user interface.
+ he layer names can come from LAYER_NAME (main raster layer name), EXTRA_RASTERS_LAYER_NAME,
+EXTRA_LAYER_NAME and OGR_DISPLAY_LAYER_NAMES.
+</p></li>
 
 </ul>
 
@@ -214,6 +237,15 @@ selected by setting the GDAL_PDF_GEO_ENCODING configuration option to OGC_BP.<p>
 
 Updated elements are written at the end of the file, following the incremental update method described in
 the PDF specification.<p>
+
+<h2>Examples</h2>
+
+Create a PDF from 2 rasters (main_raster and another_raster), such that main_raster is initially displayed, and they are exclusively displayed :
+<pre>
+gdal_translate -of PDF main_raster.tif my.pdf -co LAYER_NAME=main_raster
+               -co EXTRA_RASTERS=another_raster.tif -co EXTRA_RASTERS_LAYER_NAME=another_raster
+               -co OFF_LAYERS=another_raster -co EXCLUSIVE_LAYERS=main_raster,another_raster
+</pre>
 
 <h2>See also</h2>
 

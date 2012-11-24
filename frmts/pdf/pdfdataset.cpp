@@ -4348,6 +4348,9 @@ void GDALRegister_PDF()
 "   <Option name='BLOCKXSIZE' type='int' description='Block Width'/>\n"
 "   <Option name='BLOCKYSIZE' type='int' description='Block Height'/>\n"
 "   <Option name='LAYER_NAME' type='string' description='Layer name for raster content'/>\n"
+"   <Option name='CLIPPING_EXTENT' type='string' description='Clipping extent for main and extra rasters. Format: xmin,ymin,xmax,ymax'/>\n"
+"   <Option name='EXTRA_RASTERS' type='string' description='List of extra (georeferenced) rasters.'/>\n"
+"   <Option name='EXTRA_RASTERS_LAYER_NAME' type='string' description='List of layer names for the extra (georeferenced) rasters.'/>\n"
 "   <Option name='EXTRA_STREAM' type='string' description='Extra data to insert into the page content stream'/>\n"
 "   <Option name='EXTRA_IMAGES' type='string' description='List of image_file_name,x,y,scale (possibly repeated)'/>\n"
 "   <Option name='EXTRA_LAYER_NAME' type='string' description='Layer name for extra content'/>\n"
@@ -4369,6 +4372,8 @@ void GDALRegister_PDF()
 "   <Option name='PRODUCER' type='string'/>\n"
 "   <Option name='SUBJECT' type='string'/>\n"
 "   <Option name='TITLE' type='string'/>\n"
+"   <Option name='OFF_LAYERS' type='string' description='Comma separated list of layer names that should be initially hidden'/>\n"
+"   <Option name='EXCLUSIVE_LAYERS' type='string' description='Comma separated list of layer names, such that only one of those layers can be ON at a time.'/>\n"
 "</CreationOptionList>\n" );
 
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
