@@ -141,16 +141,17 @@ option can be used to force creation of tiled PDF files.</p></li>
 <li><p><b>BLOCKYSIZE=n</b>: Set tile height, defaults to 256.</p></li>
 
 <li><p><b>CLIPPING_EXTENT=xmin,ymin,xmax,ymax</b>: Set the clipping extent for the main source dataset and for the
-optional extra rasters. If not specified, the clipping extent is set to the extent of the main source dataset.</p></li>
+optional extra rasters. The coordinates are expressed in the units of the SRS of the dataset.
+If not specified, the clipping extent is set to the extent of the main source dataset.</p></li>
 
 <li><p><b>LAYER_NAME=name</b>: Name for layer where the raster is placed. If specified, the raster will be be placed
 into a layer that can be toggled/un-toggled in the "Layer tree" of the PDF reader.</p></li>
 
-<li><p><b>EXTRA_RASTERS=dataset_id (possibly repeated with comma separation)</b>: A list of georeferenced rasters to insert into
+<li><p><b>EXTRA_RASTERS=dataset_ids</b>: Comma separated list of georeferenced rasters to insert into
 the page. Those rasters are displayed on top of the main source raster. They must be georeferenced in the same projection,
-and they will be clipped to the extent of the main source raster.</p></li>
+and they will be clipped to CLIPPING_EXTENT if it is specified (otherwise to the extent of the main source raster).</p></li>
 
-<li><p><b>EXTRA_RASTERS_LAYER_NAME=dataset_name (possibly repeated with comma separation)</b>: A list of name for each raster
+<li><p><b>EXTRA_RASTERS_LAYER_NAME=dataset_names</b>: Comma separated list of name for each raster
 specified in EXTRA_RASTERS. If specified, each extra raster will be be placed
 into a layer, named with the specified value, that can be toggled/un-toggled in the "Layer tree" of the PDF reader. If not
 specified, all the extra rasters will be placed in the default layer.</p></li>
@@ -207,11 +208,11 @@ listed by ogrinfo for example). </p></li>
 
 <li><p><b>OGR_WRITE_ATTRIBUTES=YES/NO</b> : Whether to write attributes of OGR features. Defaults to YES</p></li>
 
-<li><p><b>OFF_LAYERS=name (possibly repeated)</b>: Comma separated list of layer names that should be initially hidden.
+<li><p><b>OFF_LAYERS=names</b>: Comma separated list of layer names that should be initially hidden.
 By default, all layers are visible. The layer names can come from LAYER_NAME (main raster layer name), EXTRA_RASTERS_LAYER_NAME,
 EXTRA_LAYER_NAME and OGR_DISPLAY_LAYER_NAMES.</p></li>
 
-<li><p><b>EXCLUSIVE_LAYERS=name (repeated at least twice)</b>:
+<li><p><b>EXCLUSIVE_LAYERS=names</b>:
 Comma separated list of layer names, such that only one of those layers can be visible at a time.
 This is the behaviour of radio-buttons in a graphical user interface.
  he layer names can come from LAYER_NAME (main raster layer name), EXTRA_RASTERS_LAYER_NAME,
