@@ -104,6 +104,26 @@ static CPLString GDALPDFGetPDFString(const char* pszStr)
 }
 
 /************************************************************************/
+/*                          GDALPDFGetPDFName()                         */
+/************************************************************************/
+
+static CPLString GDALPDFGetPDFName(const char* pszStr)
+{
+    GByte* pabyData = (GByte*)pszStr;
+    int i;
+    GByte ch;
+    CPLString osStr;
+    for(i=0;(ch = pabyData[i]) != '\0';i++)
+    {
+        if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9')))
+            osStr += '_';
+        else
+            osStr += ch;
+    }
+    return osStr;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                            GDALPDFObject                             */
 /* ==================================================================== */
@@ -192,7 +212,7 @@ void GDALPDFObject::Serialize(CPLString& osStr)
             return;
         }
         case PDFObjectType_String: osStr.append(GDALPDFGetPDFString(GetString())); return;
-        case PDFObjectType_Name: osStr.append("/"); osStr.append(GetName()); return;
+        case PDFObjectType_Name: osStr.append("/"); osStr.append(GDALPDFGetPDFName(GetName())); return;
         case PDFObjectType_Array: GetArray()->Serialize(osStr); return;
         case PDFObjectType_Dictionary: GetDictionary()->Serialize(osStr); return;
         case PDFObjectType_Unknown:
