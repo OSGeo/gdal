@@ -1144,7 +1144,6 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
     }
 
     OGRSpatialReference oSRS;
-    const char *pszProj = NULL, *pszProjParms = NULL;
     OGRErr eErr = OGRERR_NONE;
 
     /* The Map Scale Factor has been introduced recently on the 6th line */
@@ -1166,24 +1165,13 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
                 dfMSF = 1;
             }
         }
-        else if ( EQUALN(papszLines[iLine], "Map Projection", 14) )
-        {
-            pszProj = papszLines[iLine];
-        }
-        else if ( EQUALN(papszLines[iLine], "Projection Setup", 16) )
-        {
-            pszProjParms = papszLines[iLine];
-        }
     }
 
-    if ( papszLines[4][0] != '\0' && pszProj && pszProjParms )
+    eErr = oSRS.importFromOzi( papszLines );
+    if ( eErr == OGRERR_NONE )
     {
-        eErr = oSRS.importFromOzi( papszLines[4], pszProj, pszProjParms );
-        if ( eErr == OGRERR_NONE )
-        {
-            if ( ppszWKT != NULL )
-                oSRS.exportToWkt( ppszWKT );
-        }
+        if ( ppszWKT != NULL )
+            oSRS.exportToWkt( ppszWKT );
     }
 
     // Iterate all lines in the TAB-file
@@ -1252,8 +1240,8 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
                 dfLat = CPLAtofM(papszTok[15]);
                 bReadOk = TRUE;
 
-                if ( EQUAL(papszTok[16], "S") )
-                    dfLat = -dfLat;
+                //if ( EQUAL(papszTok[16], "S") )
+                //    dfLat = -dfLat;
             }
 
             if ( bReadOk )
