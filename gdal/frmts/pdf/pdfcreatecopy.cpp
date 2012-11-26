@@ -1910,7 +1910,7 @@ int GDALPDFWriter::WriteOGRDataSource(const char* pszOGRDataSource,
     {
         CPLString osLayerName;
         if (CSLCount(papszLayerNames) < nLayers)
-            osLayerName = CPLSPrintf("Layer%d", iLayer + 1);
+            osLayerName = OGR_L_GetName(OGR_DS_GetLayer(hDS, iLayer));
         else
             osLayerName = papszLayerNames[iLayer];
 
@@ -1971,7 +1971,8 @@ void GDALPDFWriter::EndOGRLayer(GDALPDFLayerDesc& osVectorDesc)
             nStructTreeRootId = AllocNewObject();
 
         oDict.Add("P", nStructTreeRootId, 0);
-        oDict.Add("S", GDALPDFObjectRW::CreateName(osVectorDesc.osLayerName));
+        oDict.Add("S", GDALPDFObjectRW::CreateName("Feature"));
+        oDict.Add("T", osVectorDesc.osLayerName);
 
         VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
 
