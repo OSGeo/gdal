@@ -1923,6 +1923,7 @@ OGRErr OGRPDFDataSource::SyncToDisk()
     const char* pszExtraLayerName = CSLFetchNameValue(papszOptions, "EXTRA_LAYER_NAME");
 
     const char* pszOGRDisplayField = CSLFetchNameValue(papszOptions, "OGR_DISPLAY_FIELD");
+    const char* pszOGRDisplayLayerNames = CSLFetchNameValue(papszOptions, "OGR_DISPLAY_LAYER_NAMES");
     int bWriteOGRAttributes = CSLFetchBoolean(papszOptions, "OGR_WRITE_ATTRIBUTES", TRUE);
 
     const char* pszOffLayers = CSLFetchNameValue(papszOptions, "OFF_LAYERS");
@@ -1989,15 +1990,26 @@ OGRErr OGRPDFDataSource::SyncToDisk()
                       bWriteOGRAttributes);
 
     int iObj = 0;
+    
+    char** papszLayerNames = CSLTokenizeString2(pszOGRDisplayLayerNames,",",0);
+
     for(int i=0;i<nLayers;i++)
     {
+        CPLString osLayerName;
+        if (CSLCount(papszLayerNames) < nLayers)
+            osLayerName = papoLayers[i]->GetName();
+        else
+            osLayerName = papszLayerNames[i];
+
         oWriter.WriteOGRLayer((OGRDataSourceH)this,
                               i,
                               pszOGRDisplayField,
-                              papoLayers[i]->GetName(),
+                              osLayerName,
                               bWriteOGRAttributes,
                               iObj);
     }
+
+    CSLDestroy(papszLayerNames);
 
     oWriter.EndPage(pszExtraImages,
                     pszExtraStream,
