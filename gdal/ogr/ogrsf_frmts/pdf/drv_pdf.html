@@ -55,11 +55,19 @@ For SYMBOL with a bitmap name, only the alpha value of the color specified with 
 
 <ul>
 
+<li><p><b>STREAM_COMPRESS=[NONE/DEFLATE]</b>:
+Set the compression to use for stream objects. DEFLATE is the default.</p></li>
+
 <li><p><b>DPI=value</b>:
 Set the DPI to use. Default to 72.</p></li>
 
 <li><p><b>EXTRA_STREAM=content</b>: A PDF content stream to draw after the vector content, typically to add some text. It may refer
 the /FTimesRoman and /FTimesBold fonts.</p></li>
+
+<li><p><b>EXTRA_IMAGES=image_file_name,x,y,scale (possibly repeated)</b>: A list of (ungeoreferenced) images to insert into
+the page as extra content. This is usefull to insert logos, legends, etc...
+x and y are in user units from the lower left corner of the page, and the anchor point is the lower left pixel of the image.
+scale is a magnifying ratio (use 1 if unsure).</p></li>
 
 <li><p><b>EXTRA_LAYER_NAME=name</b>: Name for layer where the extra content specified with EXTRA_CONTENT_STREAM is placed.</p></li>
 
