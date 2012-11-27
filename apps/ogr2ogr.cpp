@@ -1877,14 +1877,16 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Close down.                                                     */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReference::DestroySpatialReference(poOutputSRS);
-    OGRSpatialReference::DestroySpatialReference(poSourceSRS);
     if (bCloseODS)
         OGRDataSource::DestroyDataSource(poODS);
     OGRDataSource::DestroyDataSource(poDS);
     OGRGeometryFactory::destroyGeometry(poSpatialFilter);
     OGRGeometryFactory::destroyGeometry(poClipSrc);
     OGRGeometryFactory::destroyGeometry(poClipDst);
+
+    /* Destroy them after the last potential user */
+    OGRSpatialReference::DestroySpatialReference(poOutputSRS);
+    OGRSpatialReference::DestroySpatialReference(poSourceSRS);
 
     CSLDestroy(papszSelFields);
     CSLDestroy( papszArgv );
