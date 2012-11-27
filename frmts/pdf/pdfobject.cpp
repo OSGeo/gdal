@@ -115,7 +115,7 @@ static CPLString GDALPDFGetPDFName(const char* pszStr)
     CPLString osStr;
     for(i=0;(ch = pabyData[i]) != '\0';i++)
     {
-        if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9')))
+        if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '-'))
             osStr += '_';
         else
             osStr += ch;
