@@ -220,7 +220,7 @@ class JP2OpenJPEGRasterBand : public GDALPamRasterBand
   public:
 
                 JP2OpenJPEGRasterBand( JP2OpenJPEGDataset * poDS, int nBand,
-                                    GDALDataType eDataType,
+                                    GDALDataType eDataType, int nBits,
                                     int nBlockXSize, int nBlockYSize);
                 ~JP2OpenJPEGRasterBand();
 
@@ -245,7 +245,7 @@ class JP2OpenJPEGRasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 JP2OpenJPEGRasterBand::JP2OpenJPEGRasterBand( JP2OpenJPEGDataset *poDS, int nBand,
-                                        GDALDataType eDataType,
+                                        GDALDataType eDataType, int nBits,
                                         int nBlockXSize, int nBlockYSize)
 
 {
@@ -254,6 +254,11 @@ JP2OpenJPEGRasterBand::JP2OpenJPEGRasterBand( JP2OpenJPEGDataset *poDS, int nBan
     this->eDataType = eDataType;
     this->nBlockXSize = nBlockXSize;
     this->nBlockYSize = nBlockYSize;
+
+    if( (nBits % 8) != 0 )
+        SetMetadataItem("NBITS",
+                        CPLString().Printf("%d",nBits),
+                        "IMAGE_STRUCTURE" );
 }
 
 /************************************************************************/
@@ -265,7 +270,7 @@ JP2OpenJPEGRasterBand::~JP2OpenJPEGRasterBand()
 }
 
 /************************************************************************/
-/*                            CopySrcToDst()                            */
+/*                            CLAMP_0_255()                             */
 /************************************************************************/
 
 static CPL_INLINE GByte CLAMP_0_255(int val)
@@ -1125,10 +1130,8 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         int iBand;
         for(iBand = 2; iBand <= (int)psImage->numcomps; iBand ++)
         {
-            if (psImage->comps[iBand-1].w != psImage->comps[0].w ||
-                psImage->comps[iBand-1].h != psImage->comps[0].h ||
-                !(psImage->comps[iBand-1].prec == psImage->comps[0].prec ||
-                 (psImage->comps[0].prec == 8 && psImage->comps[iBand-1].prec < 8)))
+            if( psImage->comps[iBand-1].w != psImage->comps[0].w ||
+                psImage->comps[iBand-1].h != psImage->comps[0].h )
             {
                 CPLDebug("OPENJPEG", "Unable to handle that image (2)");
                 opj_destroy_codec(pCodec);
@@ -1156,13 +1159,6 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->fp = fp;
     poDS->bIs420 = bIs420;
 
-    opj_destroy_codec(pCodec);
-    opj_stream_destroy(pStream);
-    opj_image_destroy(psImage);
-    pCodec = NULL;
-    pStream = NULL;
-    psImage = NULL;
-
     poDS->bUseSetDecodeArea = 
         (poDS->nRasterXSize == (int)nTileW &&
          poDS->nRasterYSize == (int)nTileH &&
@@ -1181,6 +1177,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     for( iBand = 1; iBand <= poDS->nBands; iBand++ )
     {
         poDS->SetBand( iBand, new JP2OpenJPEGRasterBand( poDS, iBand, eDataType,
+                                                         psImage->comps[i-1].prec,
                                                          nTileW, nTileH) );
     }
 
@@ -1232,12 +1229,20 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         for( iBand = 1; iBand <= poDS->nBands; iBand++ )
         {
             poODS->SetBand( iBand, new JP2OpenJPEGRasterBand( poODS, iBand, eDataType,
+                                                              psImage->comps[iBand-1].prec,
                                                               nTileW, nTileH ) );
         }
 
         poDS->papoOverviewDS[poDS->nOverviewCount ++] = poODS;
 
     }
+
+    opj_destroy_codec(pCodec);
+    opj_stream_destroy(pStream);
+    opj_image_destroy(psImage);
+    pCodec = NULL;
+    pStream = NULL;
+    psImage = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      More metadata.                                                  */

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -464,7 +465,7 @@ gdaltest_list = [
     jp2openjpeg_5,
     jp2openjpeg_6,
     jp2openjpeg_7,
-    #jp2openjpeg_8,
+    jp2openjpeg_8,
     jp2openjpeg_9,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
