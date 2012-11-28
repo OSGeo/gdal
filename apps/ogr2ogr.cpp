@@ -33,6 +33,7 @@
 #include "cpl_string.h"
 #include "ogr_api.h"
 #include "gdal.h"
+#include "gdal_alg.h"
 
 CPL_CVSID("$Id$");
 
@@ -74,6 +75,7 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
                                                 OGRSpatialReference *poOutputSRS,
                                                 int bNullifyOutputSRS,
                                                 OGRSpatialReference *poSourceSRS,
+                                                OGRCoordinateTransformation *poGCPCoordTrans,
                                                 char **papszSelFields,
                                                 int bAppend, int eGType,
                                                 int bPromoteToMulti,
@@ -636,6 +638,154 @@ OGRFeatureDefn* OGRSplitListFieldLayer::GetLayerDefn()
 }
 
 /************************************************************************/
+/*                            GCPCoordTransformation()                  */
+/*                                                                      */
+/*      Apply GCP Transform to points                                   */
+/************************************************************************/
+
+class GCPCoordTransformation : public OGRCoordinateTransformation
+{
+public:
+
+    void               *hTransformArg;
+    int                 bUseTPS;
+    OGRSpatialReference* poSRS;
+
+    GCPCoordTransformation( int nGCPCount,
+                            const GDAL_GCP *pasGCPList,
+                            int  nReqOrder,
+                            OGRSpatialReference* poSRS)
+    {
+        if( nReqOrder < 0 )
+        {
+            bUseTPS = TRUE;
+            hTransformArg = 
+                GDALCreateTPSTransformer( nGCPCount, pasGCPList, FALSE );
+        }
+        else
+        {
+            bUseTPS = FALSE;
+            hTransformArg = 
+                GDALCreateGCPTransformer( nGCPCount, pasGCPList, nReqOrder, FALSE );
+        }
+        this->poSRS = poSRS;
+        if( poSRS) 
+            poSRS->Reference();
+    }
+
+    int IsValid() const { return hTransformArg != NULL; }
+
+    virtual ~GCPCoordTransformation()
+    {
+        if( hTransformArg != NULL )
+        {
+            if( bUseTPS )
+                GDALDestroyTPSTransformer(hTransformArg);
+            else
+                GDALDestroyGCPTransformer(hTransformArg);
+        }
+        if( poSRS) 
+            poSRS->Dereference();
+    }
+
+    virtual OGRSpatialReference *GetSourceCS() { return poSRS; }
+    virtual OGRSpatialReference *GetTargetCS() { return poSRS; }
+
+    virtual int Transform( int nCount, 
+                           double *x, double *y, double *z = NULL )
+    {
+        int *pabSuccess = (int *) CPLMalloc(sizeof(int) * nCount );
+        int bOverallSuccess, i;
+
+        bOverallSuccess = TransformEx( nCount, x, y, z, pabSuccess );
+
+        for( i = 0; i < nCount; i++ )
+        {
+            if( !pabSuccess[i] )
+            {
+                bOverallSuccess = FALSE;
+                break;
+            }
+        }
+
+        CPLFree( pabSuccess );
+
+        return bOverallSuccess;
+    }
+
+    virtual int TransformEx( int nCount, 
+                             double *x, double *y, double *z = NULL,
+                             int *pabSuccess = NULL )
+    {
+        if( bUseTPS )
+            return GDALTPSTransform( hTransformArg, FALSE, 
+                                 nCount, x, y, z, pabSuccess );
+        else
+            return GDALGCPTransform( hTransformArg, FALSE, 
+                                 nCount, x, y, z, pabSuccess );
+    }
+};
+
+/************************************************************************/
+/*                            CompositeCT                               */
+/************************************************************************/
+
+class CompositeCT : public OGRCoordinateTransformation
+{
+public:
+
+    OGRCoordinateTransformation* poCT1;
+    OGRCoordinateTransformation* poCT2;
+
+    CompositeCT( OGRCoordinateTransformation* poCT1, /* will not be deleted */
+                 OGRCoordinateTransformation* poCT2  /* deleted with OGRCoordinateTransformation::DestroyCT() */ )
+    {
+        this->poCT1 = poCT1;
+        this->poCT2 = poCT2;
+    }
+
+    virtual ~CompositeCT()
+    {
+        OGRCoordinateTransformation::DestroyCT(poCT2);
+    }
+
+    virtual OGRSpatialReference *GetSourceCS()
+    {
+        return poCT1 ? poCT1->GetSourceCS() :
+               poCT2 ? poCT2->GetSourceCS() : NULL;
+    }
+
+    virtual OGRSpatialReference *GetTargetCS()
+    {
+        return poCT2 ? poCT2->GetTargetCS() :
+               poCT1 ? poCT1->GetTargetCS() : NULL;
+    }
+
+    virtual int Transform( int nCount, 
+                           double *x, double *y, double *z = NULL )
+    {
+        int nResult = TRUE;
+        if( poCT1 )
+            nResult = poCT1->Transform(nCount, x, y, z);
+        if( nResult && poCT2 )
+            nResult = poCT2->Transform(nCount, x, y, z);
+        return nResult;
+    }
+
+    virtual int TransformEx( int nCount, 
+                             double *x, double *y, double *z = NULL,
+                             int *pabSuccess = NULL )
+    {
+        int nResult = TRUE;
+        if( poCT1 )
+            nResult = poCT1->TransformEx(nCount, x, y, z, pabSuccess);
+        if( nResult && poCT2 )
+            nResult = poCT2->TransformEx(nCount, x, y, z, pabSuccess);
+        return nResult;
+    }
+};
+
+/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -689,6 +839,10 @@ int main( int nArgc, char ** papszArgv )
     int          bExplodeCollections = FALSE;
     const char  *pszZField = NULL;
     int          nCoordDim = -1;
+ 
+    int          nGCPCount = 0;
+    GDAL_GCP    *pasGCPs = NULL;
+    int          nTransformOrder = 0;  /* Default to 0 for now... let the lib decide */
 
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -1062,6 +1216,39 @@ int main( int nArgc, char ** papszArgv )
             pszZField = papszArgv[iArg+1];
             iArg ++;
         }
+        else if( EQUAL(papszArgv[iArg],"-gcp") && iArg < nArgc - 4 )
+        {
+            char* endptr = NULL;
+            /* -gcp pixel line easting northing [elev] */
+
+            nGCPCount++;
+            pasGCPs = (GDAL_GCP *) 
+                CPLRealloc( pasGCPs, sizeof(GDAL_GCP) * nGCPCount );
+            GDALInitGCPs( 1, pasGCPs + nGCPCount - 1 );
+
+            pasGCPs[nGCPCount-1].dfGCPPixel = atof(papszArgv[++iArg]);
+            pasGCPs[nGCPCount-1].dfGCPLine = atof(papszArgv[++iArg]);
+            pasGCPs[nGCPCount-1].dfGCPX = atof(papszArgv[++iArg]);
+            pasGCPs[nGCPCount-1].dfGCPY = atof(papszArgv[++iArg]);
+            if( papszArgv[iArg+1] != NULL 
+                && (CPLStrtod(papszArgv[iArg+1], &endptr) != 0.0 || papszArgv[iArg+1][0] == '0') )
+            {
+                /* Check that last argument is really a number and not a filename */
+                /* looking like a number (see ticket #863) */
+                if (endptr && *endptr == 0)
+                    pasGCPs[nGCPCount-1].dfGCPZ = atof(papszArgv[++iArg]);
+            }
+
+            /* should set id and info? */
+        }
+        else if( EQUAL(papszArgv[iArg],"-tps") )
+        {
+            nTransformOrder = -1;
+        }
+        else if( EQUAL(papszArgv[iArg],"-order") && iArg < nArgc - 1 )
+        {
+            nTransformOrder = atoi( papszArgv[++iArg] );
+        }
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage();
@@ -1319,6 +1506,23 @@ int main( int nArgc, char ** papszArgv )
             exit( 1 );
         }
     }
+ 
+/* -------------------------------------------------------------------- */
+/*      Create a transformation object from the source to               */
+/*      destination coordinate system.                                  */
+/* -------------------------------------------------------------------- */
+    GCPCoordTransformation *poGCPCoordTrans = NULL;
+    if( nGCPCount > 0 )
+    {
+        poGCPCoordTrans = new GCPCoordTransformation( nGCPCount, pasGCPs, 
+                                                      nTransformOrder, 
+                                                      poSourceSRS ? poSourceSRS : poOutputSRS );
+        if( !(poGCPCoordTrans->IsValid()) )
+        {
+            delete poGCPCoordTrans;
+            poGCPCoordTrans = NULL;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      For OSM file.                                                   */
@@ -1403,6 +1607,7 @@ int main( int nArgc, char ** papszArgv )
                                                 poOutputSRS,
                                                 bNullifyOutputSRS,
                                                 poSourceSRS,
+                                                poGCPCoordTrans,
                                                 papszSelFields,
                                                 bAppend, eGType,
                                                 bPromoteToMulti,
@@ -1556,6 +1761,7 @@ int main( int nArgc, char ** papszArgv )
                                                     poOutputSRS,
                                                     bNullifyOutputSRS,
                                                     poSourceSRS,
+                                                    poGCPCoordTrans,
                                                     papszSelFields,
                                                     bAppend, eGType,
                                                     bPromoteToMulti,
@@ -1824,6 +2030,7 @@ int main( int nArgc, char ** papszArgv )
                                                 poOutputSRS,
                                                 bNullifyOutputSRS,
                                                 poSourceSRS,
+                                                poGCPCoordTrans,
                                                 papszSelFields,
                                                 bAppend, eGType,
                                                 bPromoteToMulti,
@@ -1884,6 +2091,13 @@ int main( int nArgc, char ** papszArgv )
     OGRGeometryFactory::destroyGeometry(poClipSrc);
     OGRGeometryFactory::destroyGeometry(poClipDst);
 
+    delete poGCPCoordTrans;
+    if( pasGCPs != NULL )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPs );
+        CPLFree( pasGCPs );
+    }
+
     /* Destroy them after the last potential user */
     OGRSpatialReference::DestroySpatialReference(poOutputSRS);
     OGRSpatialReference::DestroySpatialReference(poSourceSRS);
@@ -1937,7 +2151,8 @@ static void Usage(int bShort)
             "               [[-simplify tolerance] | [-segmentize max_dist]]\n"
             "               [-fieldTypeToString All|(type1[,type2]*)]\n"
             "               [-splitlistfields] [-maxsubfields val]\n"
-            "               [-explodecollections] [-zfield field_name]\n");
+            "               [-explodecollections] [-zfield field_name]\n"
+            "               [-gcp pixel line easting northing [elevation]]* [-order n | -tps]\n");
 
     if (bShort)
     {
@@ -2048,7 +2263,7 @@ static void SetZ (OGRGeometry* poGeom, double dfZ )
 }
 
 /************************************************************************/
-/*                     SetupTargetLayer()                         */
+/*                         SetupTargetLayer()                           */
 /************************************************************************/
 
 static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
@@ -2060,6 +2275,7 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
                                                 OGRSpatialReference *poOutputSRS,
                                                 int bNullifyOutputSRS,
                                                 OGRSpatialReference *poSourceSRS,
+                                                OGRCoordinateTransformation *poGCPCoordTrans,
                                                 char **papszSelFields,
                                                 int bAppend, int eGType,
                                                 int bPromoteToMulti,
@@ -2117,6 +2333,9 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
             exit( 1 );
         }
     }
+
+    if( poGCPCoordTrans != NULL|| poCT != NULL )
+        poCT = new CompositeCT( poGCPCoordTrans, poCT );
 
     if (bWrapDateline)
     {
@@ -2512,7 +2731,7 @@ static void FreeTargetLayerInfo(TargetLayerInfo* psInfo)
 {
     if( psInfo == NULL )
         return;
-    OGRCoordinateTransformation::DestroyCT(psInfo->poCT);
+    delete psInfo->poCT;
     CSLDestroy(psInfo->papszTransformOptions);
     CPLFree(psInfo->panMap);
     CPLFree(psInfo);
