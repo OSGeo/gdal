@@ -190,6 +190,7 @@ Advanced options :
                [-fieldTypeToString All|(type1[,type2]*)]
                [-splitlistfields] [-maxsubfields val]
                [-explodecollections] [-zfield field_name]
+               [-gcp pixel line easting northing [elevation]]* [-order n | -tps]
 
 \endverbatim
 
@@ -289,6 +290,14 @@ This is an alternate way to using the CAST operator of OGR SQL, that may avoid t
 <dt> <b>-maxsubfields</b> <em>val</em>:</dt><dd>To be combined with -splitlistfields to limit the number of subfields created for each split field.</dd>
 <dt> <b>-explodecollections</b>:</dt><dd>(starting with GDAL 1.8.0) produce one feature for each geometry in any kind of geometry collection in the source file</dd>
 <dt> <b>-zfield</b> <em>field_name</em>:</dt><dd>(starting with GDAL 1.8.0) Uses the specified field to fill the Z coordinate of geometries</dd>
+<dt> <b>-gcp</b> <i>ungeoref_x ungeoref_y georef_x georef_y elevation</i>:</dt><dd>(starting with GDAL 1.10.0) 
+Add the indicated ground control point.  This option may be provided multiple times to provide a set of GCPs. 
+</dd>
+<dt> <b>-order</b> <em>n</em>:</dt><dd>(starting with GDAL 1.10.0) order of polynomial used for warping
+(1 to 3). The default is to select a polynomial order based on the number of
+GCPs.</dd>
+<dt> <b>-tps</b>:</dt><dd>(starting with GDAL 1.10.0) Force use of thin plate spline transformer based on
+available GCPs.</dd>
 </dl>
 
 \section ogr2ogr_performance PERFORMANCE HINTS
