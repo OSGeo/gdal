@@ -1721,6 +1721,62 @@ def test_ogr2ogr_45():
 
     return 'success'
 
+###############################################################################
+# Test -gcp (#4604)
+
+def test_ogr2ogr_46():
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    try:
+        os.stat('tmp/test_ogr2ogr_46_src.shp')
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_46_src.shp')
+    except:
+        pass
+
+    try:
+        os.unlink('tmp/test_ogr2ogr_46.gml')
+        os.unlink('tmp/test_ogr2ogr_46.xsd')
+    except:
+        pass
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/test_ogr2ogr_46_src.shp')
+    lyr = ds.CreateLayer('test_ogr2ogr_46_src', geom_type = ogr.wkbPoint)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 1)'))
+    lyr.CreateFeature(feat)
+    ds = None
+
+    for option in ['', ' -tps', ' -order 1', ' -a_srs EPSG:4326', ' -s_srs EPSG:4326 -t_srs EPSG:3857']:
+        gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML tmp/test_ogr2ogr_46.gml tmp/test_ogr2ogr_46_src.shp -gcp 0 0 2 49 -gcp 0 1 2 50 -gcp 1 0 3 49%s' % option)
+
+        f = open('tmp/test_ogr2ogr_46.gml')
+        data = f.read()
+        f.close()
+
+        if data.find('2,49') == -1 and data.find('222638.') == -1:
+            gdaltest.post_reason('failure')
+            print(option)
+            print(data)
+            return 'fail'
+
+        if data.find('3,50') == -1 and data.find('333958.') == -1:
+            gdaltest.post_reason('failure')
+            print(option)
+            print(data)
+            return 'fail'
+
+        os.unlink('tmp/test_ogr2ogr_46.gml')
+        os.unlink('tmp/test_ogr2ogr_46.xsd')
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/test_ogr2ogr_46_src.shp')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -1766,9 +1822,10 @@ gdaltest_list = [
     test_ogr2ogr_42,
     test_ogr2ogr_43,
     test_ogr2ogr_44,
-    test_ogr2ogr_45
+    test_ogr2ogr_45,
+    test_ogr2ogr_46,
     ]
-    
+
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'test_ogr2ogr' )
