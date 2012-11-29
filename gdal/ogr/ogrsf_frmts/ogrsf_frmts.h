@@ -60,6 +60,7 @@ class CPL_DLL OGRLayer
   protected:
     int          m_bFilterIsEnvelope;
     OGRGeometry *m_poFilterGeom;
+    OGRPreparedGeometry *m_pPreparedFilterGeom; /* m_poFilterGeom compiled as a prepared geometry */
     OGREnvelope  m_sFilterEnvelope;
     
     int          FilterGeometry( OGRGeometry * );
