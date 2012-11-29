@@ -1945,8 +1945,9 @@ void OGRFeature::SetField( int iField, const char * pszValue )
     }
     else if( poFDefn->GetType() == OFTInteger )
     {
-        pauFields[iField].Integer = strtol(pszValue, &pszLast, 10);
-        if( bWarn && ( !pszLast || *pszLast ) )
+        long nVal = strtol(pszValue, &pszLast, 10);
+        pauFields[iField].Integer = (nVal > INT_MAX) ? INT_MAX : (nVal < INT_MIN) ? INT_MIN : (int) nVal;
+        if( bWarn && (nVal != (long)pauFields[iField].Integer || !pszLast || *pszLast ) )
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Value '%s' of field %s.%s parsed incompletely to integer %d.",
                      pszValue, poDefn->GetName(), poFDefn->GetNameRef(), pauFields[iField].Integer );
@@ -3534,4 +3535,15 @@ void OGR_F_SetStyleTable( OGRFeatureH hFeat,
     VALIDATE_POINTER0( hStyleTable, "OGR_F_SetStyleTable" );
     
     ((OGRFeature *) hFeat)->SetStyleTable( (OGRStyleTable *) hStyleTable);
+}
+
+/************************************************************************/
+/*                            SubstituteDefn()                          */
+/************************************************************************/
+
+void OGRFeature::SubstituteDefn(OGRFeatureDefn* poNewDefn)
+{
+    poDefn->Release();
+    poDefn = poNewDefn;
+    poDefn->Reference();
 }
