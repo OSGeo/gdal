@@ -51,6 +51,7 @@ OGRLayer::OGRLayer()
 
     m_poFilterGeom = NULL;
     m_bFilterIsEnvelope = FALSE;
+    m_pPreparedFilterGeom = NULL;
 }
 
 /************************************************************************/
@@ -82,6 +83,12 @@ OGRLayer::~OGRLayer()
     {
         delete m_poFilterGeom;
         m_poFilterGeom = NULL;
+    }
+
+    if( m_pPreparedFilterGeom != NULL )
+    {
+        OGRDestroyPreparedGeometry(m_pPreparedFilterGeom);
+        m_pPreparedFilterGeom = NULL;
     }
 }
 
@@ -903,6 +910,12 @@ int OGRLayer::InstallFilter( OGRGeometry * poFilter )
         m_poFilterGeom = NULL;
     }
 
+    if( m_pPreparedFilterGeom != NULL )
+    {
+        OGRDestroyPreparedGeometry(m_pPreparedFilterGeom);
+        m_pPreparedFilterGeom = NULL;
+    }
+
     if( poFilter != NULL )
         m_poFilterGeom = poFilter->clone();
 
@@ -913,6 +926,9 @@ int OGRLayer::InstallFilter( OGRGeometry * poFilter )
 
     if( m_poFilterGeom != NULL )
         m_poFilterGeom->getEnvelope( &m_sFilterEnvelope );
+
+    /* Compile geometry filter as a prepared geometry */
+    m_pPreparedFilterGeom = OGRCreatePreparedGeometry(m_poFilterGeom);
 
 /* -------------------------------------------------------------------- */
 /*      Now try to determine if the filter is really a rectangle.       */
@@ -1064,7 +1080,11 @@ int OGRLayer::FilterGeometry( OGRGeometry *poGeometry )
         if( OGRGeometryFactory::haveGEOS() )
         {
             //CPLDebug("OGRLayer", "GEOS intersection");
-            return m_poFilterGeom->Intersects( poGeometry );
+            if( m_pPreparedFilterGeom != NULL )
+                return OGRPreparedGeometryIntersects(m_pPreparedFilterGeom,
+                                                     poGeometry);
+            else
+                return m_poFilterGeom->Intersects( poGeometry );
         }
         else
             return TRUE;
