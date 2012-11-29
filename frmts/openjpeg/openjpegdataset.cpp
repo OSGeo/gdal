@@ -1177,7 +1177,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     for( iBand = 1; iBand <= poDS->nBands; iBand++ )
     {
         poDS->SetBand( iBand, new JP2OpenJPEGRasterBand( poDS, iBand, eDataType,
-                                                         psImage->comps[i-1].prec,
+                                                         psImage->comps[iBand-1].prec,
                                                          nTileW, nTileH) );
     }
 
