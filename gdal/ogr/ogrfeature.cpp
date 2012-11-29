@@ -3536,14 +3536,3 @@ void OGR_F_SetStyleTable( OGRFeatureH hFeat,
     
     ((OGRFeature *) hFeat)->SetStyleTable( (OGRStyleTable *) hStyleTable);
 }
-
-/************************************************************************/
-/*                            SubstituteDefn()                          */
-/************************************************************************/
-
-void OGRFeature::SubstituteDefn(OGRFeatureDefn* poNewDefn)
-{
-    poDefn->Release();
-    poDefn = poNewDefn;
-    poDefn->Reference();
-}
