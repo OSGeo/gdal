@@ -630,10 +630,12 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
                     *chComma = '.';
             }
             eType = CPLGetValueType(papszTokens[iAttr]);
-            if ( (papszTokens[iAttr][0] != '\0') &&
+            if ( (papszTokens[iAttr][0] != '\0')  &&
                  ( eType == CPL_VALUE_INTEGER ||
                    eType == CPL_VALUE_REAL ) )
-                poFeature->SetField( iAttr, CPLAtof(papszTokens[iAttr]) );
+            {
+                poFeature->SetField( iAttr, papszTokens[iAttr] );
+            }
         }
         else if (eFieldType != OFTString)
         {
