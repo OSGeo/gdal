@@ -1153,8 +1153,17 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
                             psShape = NULL;
                         }
                     }
-                    if( poGeometry == NULL ||
-                        m_poFilterGeom->Intersects( poGeometry ) )
+                    if( poGeometry == NULL )
+                        nFeatureCount ++;
+                    else if ( m_pPreparedFilterGeom != NULL )
+                    {
+                        if( OGRPreparedGeometryIntersects(m_pPreparedFilterGeom,
+                                                          poGeometry) )
+                        {
+                            nFeatureCount ++;
+                        }
+                    }
+                    else if( m_poFilterGeom->Intersects( poGeometry ) )
                         nFeatureCount ++;
                 }
                 else

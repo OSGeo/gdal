@@ -3946,3 +3946,101 @@ void OGRGeometry::swapXY()
 
 {
 }
+
+/************************************************************************/
+/*                        Prepared geometry API                         */
+/************************************************************************/
+
+/* GEOS >= 3.1.0 for prepared geometries */
+#if defined(HAVE_GEOS) && (GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 1))
+#define HAVE_GEOS_PREPARED_GEOMETRY
+#endif
+
+#ifdef HAVE_GEOS_PREPARED_GEOMETRY
+struct _OGRPreparedGeometry
+{
+    GEOSGeom                      hGEOSGeom;
+    const GEOSPreparedGeometry*   poPreparedGEOSGeom;
+};
+#endif
+
+/************************************************************************/
+/*                       OGRHasPreparedGeometrySupport()                */
+/************************************************************************/
+
+int OGRHasPreparedGeometrySupport()
+{
+#ifdef HAVE_GEOS_PREPARED_GEOMETRY
+    return TRUE;
+#else
+    return FALSE;
+#endif
+}
+
+/************************************************************************/
+/*                         OGRCreatePreparedGeometry()                  */
+/************************************************************************/
+
+OGRPreparedGeometry* OGRCreatePreparedGeometry( const OGRGeometry* poGeom )
+{
+#ifdef HAVE_GEOS_PREPARED_GEOMETRY
+    GEOSGeom hGEOSGeom = poGeom->exportToGEOS();
+    if( hGEOSGeom == NULL )
+        return NULL;
+    const GEOSPreparedGeometry* poPreparedGEOSGeom = GEOSPrepare(hGEOSGeom);
+    if( poPreparedGEOSGeom == NULL )
+    {
+        GEOSGeom_destroy( hGEOSGeom );
+        return NULL;
+    }
+
+    OGRPreparedGeometry* poPreparedGeom = new OGRPreparedGeometry;
+    poPreparedGeom->hGEOSGeom = hGEOSGeom;
+    poPreparedGeom->poPreparedGEOSGeom = poPreparedGEOSGeom;
+
+    return poPreparedGeom;
+#else
+    return NULL;
+#endif
+}
+
+/************************************************************************/
+/*                        OGRDestroyPreparedGeometry()                  */
+/************************************************************************/
+
+void OGRDestroyPreparedGeometry( OGRPreparedGeometry* poPreparedGeom )
+{
+#ifdef HAVE_GEOS_PREPARED_GEOMETRY
+    if( poPreparedGeom != NULL )
+    {
+        GEOSPreparedGeom_destroy(poPreparedGeom->poPreparedGEOSGeom);
+        GEOSGeom_destroy( poPreparedGeom->hGEOSGeom );
+        delete poPreparedGeom;
+    }
+#endif
+}
+
+/************************************************************************/
+/*                      OGRPreparedGeometryIntersects()                 */
+/************************************************************************/
+
+int OGRPreparedGeometryIntersects( const OGRPreparedGeometry* poPreparedGeom,
+                                   const OGRGeometry* poOtherGeom )
+{
+#ifdef HAVE_GEOS_PREPARED_GEOMETRY
+    if( poPreparedGeom == NULL || poOtherGeom == NULL )
+        return FALSE;
+
+    GEOSGeom hGEOSOtherGeom = poOtherGeom->exportToGEOS();
+    if( hGEOSOtherGeom == NULL )
+        return FALSE;
+
+    int bRet = GEOSPreparedIntersects(poPreparedGeom->poPreparedGEOSGeom,
+                                      hGEOSOtherGeom);
+    GEOSGeom_destroy( hGEOSOtherGeom );
+
+    return bRet;
+#else
+    return FALSE;
+#endif
+}

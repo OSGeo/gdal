@@ -678,4 +678,12 @@ class CPL_DLL OGRGeometryFactory
 OGRwkbGeometryType CPL_DLL OGRFromOGCGeomType( const char *pszGeomType );
 const char CPL_DLL * OGRToOGCGeomType( OGRwkbGeometryType eGeomType );
 
+/* Prepared geometry API (needs GEOS >= 3.1.0) */
+typedef struct _OGRPreparedGeometry OGRPreparedGeometry;
+int OGRHasPreparedGeometrySupport();
+OGRPreparedGeometry* OGRCreatePreparedGeometry( const OGRGeometry* poGeom );
+void OGRDestroyPreparedGeometry( OGRPreparedGeometry* poPreparedGeom );
+int OGRPreparedGeometryIntersects( const OGRPreparedGeometry* poPreparedGeom,
+                                   const OGRGeometry* poOtherGeom );
+
 #endif /* ndef _OGR_GEOMETRY_H_INCLUDED */
