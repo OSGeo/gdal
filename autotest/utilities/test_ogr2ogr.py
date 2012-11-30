@@ -1777,6 +1777,71 @@ def test_ogr2ogr_46():
 
     return 'success'
 
+###############################################################################
+# Test reprojection with features with different SRS
+
+def test_ogr2ogr_47():
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    f = open('tmp/test_ogr2ogr_47_src.gml', 'wt')
+    f.write("""<foo xmlns:gml="http://www.opengis.net/gml">
+   <gml:featureMember>
+      <features>
+         <geometry>
+            <gml:Point srsName="http://www.opengis.net/gml/srs/epsg.xml#32630">
+               <gml:coordinates>500000,4500000</gml:coordinates>
+            </gml:Point>
+         </geometry>
+      </features>
+   </gml:featureMember>
+   <gml:featureMember>
+      <features >
+         <geometry>
+            <gml:Point srsName="http://www.opengis.net/gml/srs/epsg.xml#32631">
+               <gml:coordinates>500000,4500000</gml:coordinates>
+            </gml:Point>
+         </geometry>
+      </features>
+   </gml:featureMember>
+</foo>""")
+    f.close()
+
+    try:
+        os.unlink('tmp/test_ogr2ogr_47_src.gfs')
+    except:
+        pass
+
+    try:
+        ds = ogr.Open('tmp/test_ogr2ogr_47_src.gml')
+    except:
+        ds = None
+
+    if ds is None:
+        os.unlink('tmp/test_ogr2ogr_47_src.gml')
+        return 'skip'
+    ds = None
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GML -t_srs EPSG:4326 tmp/test_ogr2ogr_47_dst.gml tmp/test_ogr2ogr_47_src.gml')
+
+    f = open('tmp/test_ogr2ogr_47_dst.gml')
+    data = f.read()
+    f.close()
+
+    if data.find('>-3.0,40.65') == -1 and data.find('<3.0,40.65') == -1:
+        gdaltest.post_reason('failure')
+        print(data)
+        return 'fail'
+
+    os.unlink('tmp/test_ogr2ogr_47_dst.gml')
+    os.unlink('tmp/test_ogr2ogr_47_dst.xsd')
+
+    os.unlink('tmp/test_ogr2ogr_47_src.gml')
+    os.unlink('tmp/test_ogr2ogr_47_src.gfs')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -1824,6 +1889,7 @@ gdaltest_list = [
     test_ogr2ogr_44,
     test_ogr2ogr_45,
     test_ogr2ogr_46,
+    test_ogr2ogr_47
     ]
 
 if __name__ == '__main__':
