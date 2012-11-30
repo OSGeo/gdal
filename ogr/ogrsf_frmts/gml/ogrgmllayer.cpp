@@ -296,32 +296,35 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             {
                 OGRwkbGeometryType eType = poGeom->getGeometryType();
                 OGRwkbGeometryType eLayerType = GetGeomType();
+                OGRGeometryCollection* poNewGeom = NULL;
                 if (eType == wkbPoint && eLayerType == wkbMultiPoint)
                 {
-                    OGRMultiPoint* poNewGeom = new OGRMultiPoint();
-                    poNewGeom->addGeometryDirectly(poGeom);
-                    poGeom = poNewGeom;
+                    poNewGeom = new OGRMultiPoint();
                 }
                 else if (eType == wkbLineString && eLayerType == wkbMultiLineString)
                 {
-                    OGRMultiLineString* poNewGeom = new OGRMultiLineString();
-                    poNewGeom->addGeometryDirectly(poGeom);
-                    poGeom = poNewGeom;
+                    poNewGeom = new OGRMultiLineString();
                 }
                 else if (eType == wkbPolygon && eLayerType == wkbMultiPolygon)
                 {
-                    OGRMultiPolygon* poNewGeom = new OGRMultiPolygon();
+                    poNewGeom = new OGRMultiPolygon();
+                }
+
+                if( poNewGeom != NULL )
+                {
+                    OGRSpatialReference* poGeomSRS = poGeom->getSpatialReference();
                     poNewGeom->addGeometryDirectly(poGeom);
+                    if( poGeomSRS != NULL )
+                        poNewGeom->assignSpatialReference(poGeomSRS);
                     poGeom = poNewGeom;
                 }
+
+                if (poSRS != NULL)
+                    poGeom->assignSpatialReference(poSRS);
             }
-
-            if (poGeom != NULL && poSRS != NULL)
-                poGeom->assignSpatialReference(poSRS);
-
+            else
             // We assume the createFromGML() function would have already
             // reported the error.
-            if( poGeom == NULL )
             {
                 delete poGMLFeature;
                 return NULL;
