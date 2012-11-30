@@ -191,19 +191,19 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
         char *pszErrMsg = NULL;
         
         if (SQLITE_OK != sqlite3_exec(m_poDB, "BEGIN", 0, 0, &pszErrMsg))
-            CPLError(CE_Warning, CPLE_AppDefined,  pszErrMsg);
+            CPLError(CE_Warning, CPLE_AppDefined, "%s", pszErrMsg);
         
         /* INSERT ... */
         nDataRecords = VFKReader::ReadDataRecords(poDataBlock);
         
         if (SQLITE_OK != sqlite3_exec(m_poDB, "COMMIT", 0, 0, &pszErrMsg))
-            CPLError(CE_Warning, CPLE_AppDefined,  pszErrMsg);
+            CPLError(CE_Warning, CPLE_AppDefined, "%s", pszErrMsg);
         
         /* update 'vfk_blocks' table */
         osSQL.Printf("UPDATE 'vfk_blocks' SET num_records = %d WHERE file_name = '%s' AND table_name = '%s'",
                      nDataRecords, m_pszFilename, pszName);
         if (SQLITE_OK != sqlite3_exec(m_poDB, osSQL.c_str(), 0, 0, &pszErrMsg))
-            CPLError(CE_Warning, CPLE_AppDefined,  pszErrMsg);
+            CPLError(CE_Warning, CPLE_AppDefined, "%s", pszErrMsg);
     
         /* create indeces */
         osSQL.Printf("%s_ID", pszName);
