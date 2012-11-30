@@ -1330,7 +1330,7 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
         poFeature->SetField( "MASK_0", 
                              poRecord->GetIntSubfield("VRPT",0,"MASK",0) );
                              
-        if( poVRPT->GetRepeatCount() == 1 )
+        if( poVRPT != NULL && poVRPT->GetRepeatCount() == 1 )
         {
             // Only one row, need a second VRPT field
             iField = 1; iSubField = 0;
@@ -1938,7 +1938,7 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
 
             // The "VRPT" field has only one row
             // Get the next row from a second "VRPT" field
-            if( poVRPT->GetRepeatCount() == 1 )
+            if( poVRPT != NULL && poVRPT->GetRepeatCount() == 1 )
             {
                 nVC_RCID_firstnode = ParseName( poVRPT );
                 poVRPT = poSRecord->FindField( "VRPT", 1 );
@@ -2201,7 +2201,7 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 /* -------------------------------------------------------------------- */
 /*      Add the end node.                                               */
 /* -------------------------------------------------------------------- */
-            if( poVRPT->GetRepeatCount() > 1 )
+            if( poVRPT != NULL && poVRPT->GetRepeatCount() > 1 )
             {
                 int nVC_RCID = ParseName( poVRPT, 1 );
                 double dfX, dfY;
@@ -2683,7 +2683,6 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 /* -------------------------------------------------------------------- */
     if( poUpdate->FindField( "ATTF" ) != NULL )
     {
-        DDFSubfieldDefn *poSrcATVLDefn;
         DDFField *poSrcATTF = poUpdate->FindField( "ATTF" );
         DDFField *poDstATTF = poTarget->FindField( "ATTF" );
         int     nRepeatCount = poSrcATTF->GetRepeatCount();
@@ -2694,8 +2693,6 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
                       "Unable to apply ATTF change to target record without an ATTF field (see GDAL/OGR Bug #1648)" );
             return FALSE;
         }
-
-        poSrcATVLDefn = poSrcATTF->GetFieldDefn()->FindSubfieldDefn( "ATVL" );
 
         for( int iAtt = 0; iAtt < nRepeatCount; iAtt++ )
         {
