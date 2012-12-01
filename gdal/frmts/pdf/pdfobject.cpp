@@ -179,7 +179,7 @@ void GDALPDFObject::Serialize(CPLString& osStr)
         case PDFObjectType_Int: osStr.append(CPLSPrintf("%d", GetInt())); return;
         case PDFObjectType_Real:
         {
-            char szReal[256];
+            char szReal[512];
             double dfRealNonRounded = GetReal();
             double dfReal = ROUND_TO_INT_IF_CLOSE(dfRealNonRounded);
             if (dfReal == (double)(int)dfReal)
@@ -199,7 +199,7 @@ void GDALPDFObject::Serialize(CPLString& osStr)
                 {
                     int iDot = (int)(pszDot - szReal);
                     int nLen = (int)strlen(szReal);
-                    for(int i=nLen-1; i > iDot; i ++)
+                    for(int i=nLen-1; i > iDot; i --)
                     {
                         if (szReal[i] == '0')
                             szReal[i] = '\0';
