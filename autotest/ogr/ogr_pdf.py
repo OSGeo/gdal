@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -48,17 +49,19 @@ def ogr_pdf_1(name = 'tmp/ogr_pdf_1.pdf', write_attributes = 'YES'):
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
 
-    ds = ogr.GetDriverByName('PDF').CreateDataSource(name, options = ['MARGIN=10', 'OGR_WRITE_ATTRIBUTES=%s' % write_attributes])
+    ds = ogr.GetDriverByName('PDF').CreateDataSource(name, options = ['MARGIN=10', 'OGR_WRITE_ATTRIBUTES=%s' % write_attributes, 'OGR_LINK_FIELD=linkfield'])
 
     lyr = ds.CreateLayer('first_layer', srs = sr)
 
     lyr.CreateField(ogr.FieldDefn('strfield', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('intfield', ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn('realfield', ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn('linkfield', ogr.OFTString))
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2 49)'))
     feat.SetField('strfield', 'super tex !')
+    feat.SetField('linkfield', 'http://gdal.org/')
     feat.SetStyleString('LABEL(t:{strfield},dx:5,dy:10)')
     lyr.CreateFeature(feat)
 
@@ -71,6 +74,7 @@ def ogr_pdf_1(name = 'tmp/ogr_pdf_1.pdf', write_attributes = 'YES'):
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((2 48,2 49,3 49,3 48,2 48))'))
+    feat.SetField('linkfield', 'http://gdal.org/')
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -114,14 +118,18 @@ def ogr_pdf_2(name = 'tmp/ogr_pdf_1.pdf', has_attributes = True):
         return 'fail'
 
     if has_attributes:
-        if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTString:
+        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('strfield')).GetType() != ogr.OFTString:
+            gdaltest.post_reason('fail')
             return 'fail'
-        if lyr.GetLayerDefn().GetFieldDefn(1).GetType() != ogr.OFTInteger:
+        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('intfield')).GetType() != ogr.OFTInteger:
+            gdaltest.post_reason('fail')
             return 'fail'
-        if lyr.GetLayerDefn().GetFieldDefn(2).GetType() != ogr.OFTReal:
+        if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('realfield')).GetType() != ogr.OFTReal:
+            gdaltest.post_reason('fail')
             return 'fail'
     else:
         if lyr.GetLayerDefn().GetFieldCount() != 0:
+            gdaltest.post_reason('fail')
             return 'fail'
 
     feat = lyr.GetNextFeature()
@@ -131,6 +139,7 @@ def ogr_pdf_2(name = 'tmp/ogr_pdf_1.pdf', has_attributes = True):
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('LINESTRING(2 48,3 50)')) != 0:
+        gdaltest.post_reason('fail')
         return 'fail'
 
     if has_attributes:
