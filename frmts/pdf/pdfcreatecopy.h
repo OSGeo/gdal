@@ -116,6 +116,8 @@ class GDALPDFPageContext
         int          nResourcesId;
         std::vector<GDALPDFLayerDesc> asVectorDesc;
         std::vector<GDALPDFRasterDesc> asRasterDesc;
+        int          nAnnotsId;
+        std::vector<int> anAnnotationsId;
 };
 
 class GDALPDFOCGDesc
@@ -237,6 +239,7 @@ class GDALPDFWriter
        int WriteOGRDataSource(const char* pszOGRDataSource,
                               const char* pszOGRDisplayField,
                               const char* pszOGRDisplayLayerNames,
+                              const char* pszOGRLinkField,
                               int bWriteOGRAttributes);
 
        GDALPDFLayerDesc StartOGRLayer(CPLString osLayerName,
@@ -246,6 +249,7 @@ class GDALPDFWriter
        int WriteOGRLayer(OGRDataSourceH hDS,
                          int iLayer,
                          const char* pszOGRDisplayField,
+                         const char* pszOGRLinkField,
                          CPLString osLayerName,
                          int bWriteOGRAttributes,
                          int& iObj);
@@ -254,6 +258,7 @@ class GDALPDFWriter
                            OGRFeatureH hFeat,
                            OGRCoordinateTransformationH hCT,
                            const char* pszOGRDisplayField,
+                           const char* pszOGRLinkField,
                            int bWriteOGRAttributes,
                            int& iObj,
                            int& iObjLayer);

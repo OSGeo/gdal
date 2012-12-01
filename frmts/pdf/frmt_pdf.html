@@ -159,10 +159,11 @@ specified, all the extra rasters will be placed in the default layer.</p></li>
 <li><p><b>EXTRA_STREAM=content</b>: A PDF content stream to draw after the imagery, typically to add some text. It may refer
 the /FTimesRoman and /FTimesBold fonts.</p></li>
 
-<li><p><b>EXTRA_IMAGES=image_file_name,x,y,scale (possibly repeated)</b>: A list of (ungeoreferenced) images to insert into
+<li><p><b>EXTRA_IMAGES=image_file_name,x,y,scale[,link=some_url] (possibly repeated)</b>: A list of (ungeoreferenced) images to insert into
 the page as extra content. This is usefull to insert logos, legends, etc...
 x and y are in user units from the lower left corner of the page, and the anchor point is the lower left pixel of the image.
-scale is a magnifying ratio (use 1 if unsure).</p></li>
+scale is a magnifying ratio (use 1 if unsure). If link=some_url is specified, the image will be selectable and its selection
+will cause a web browser to be opened on the specified URL.</p></li>
 
 <li><p><b>EXTRA_LAYER_NAME=name</b>: Name for layer where the extra content specified with EXTRA_STREAM or EXTRA_IMAGES is placed.
 If specified, the extra content will be be placed into a layer that can be toggled/un-toggled in the "Layer tree" of the PDF reader.</p></li>
@@ -206,6 +207,9 @@ When specified, the number of names should be the same as the number of OGR laye
 listed by ogrinfo for example). </p></li>
 
 <li><p><b>OGR_WRITE_ATTRIBUTES=YES/NO</b> : Whether to write attributes of OGR features. Defaults to YES</p></li>
+
+<li><p><b>OGR_LINK_FIELD=name</b> : Name of the field (matching the name of a field from the OGR layer definition)
+to use to cause clicks on OGR features to open a web browser on the URL specified by the field value.</p></li>
 
 <li><p><b>OFF_LAYERS=names</b>: Comma separated list of layer names that should be initially hidden.
 By default, all layers are visible. The layer names can come from LAYER_NAME (main raster layer name), EXTRA_RASTERS_LAYER_NAME,
