@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -1795,6 +1796,36 @@ def tiff_ovr_46():
     return 'success'
 
 ###############################################################################
+# Test workaround with libtiff 3.X when creating interleaved overviews
+
+def tiff_ovr_47():
+    mem_drv = gdal.GetDriverByName('MEM')
+    mem_ds = mem_drv.Create('', 852, 549, 3)
+
+    for i in range(1, 4):
+        band = mem_ds.GetRasterBand(i)
+        band.Fill(128)
+
+    driver = gdal.GetDriverByName("GTIFF")
+    out_ds = driver.CreateCopy("/vsimem/tiff_ovr_47.tif", mem_ds)
+    mem_ds = None
+    out_ds.BuildOverviews("NEAREST", [ 2, 4, 8, 16])
+    out_ds = None
+
+    ds = gdal.Open("/vsimem/tiff_ovr_47.tif")
+    cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    ds = None
+
+    gdal.Unlink("/vsimem/tiff_ovr_47.tif")
+    
+    if cs != 35721:
+        gdaltest.post_reason('did not get expected checksum')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def tiff_ovr_cleanup():
@@ -1884,6 +1915,7 @@ gdaltest_list_internal = [
     tiff_ovr_44,
     tiff_ovr_45,
     tiff_ovr_46,
+    tiff_ovr_47,
     tiff_ovr_cleanup ]
 
 def tiff_ovr_invert_endianness():

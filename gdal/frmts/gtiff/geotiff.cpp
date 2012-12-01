@@ -4281,15 +4281,6 @@ CPLErr GTiffDataset::IBuildOverviews(
     }
 
 /* -------------------------------------------------------------------- */
-/*      Initialize progress counter.                                    */
-/* -------------------------------------------------------------------- */
-    if( !pfnProgress( 0.0, NULL, pProgressData ) )
-    {
-        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return CE_Failure;
-    }
-
-/* -------------------------------------------------------------------- */
 /*      If zero overviews were requested, we need to clear all          */
 /*      existing overviews.                                             */
 /* -------------------------------------------------------------------- */
@@ -4301,6 +4292,60 @@ CPLErr GTiffDataset::IBuildOverviews(
                 nBands, panBandList, pfnProgress, pProgressData );
         else
             return CleanOverviews();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      libtiff 3.X has issues when generating interleaved overviews.   */
+/*      so generate them one after another one.                         */
+/* -------------------------------------------------------------------- */
+#ifndef BIGTIFF_SUPPORT
+    if( nOverviews > 1 )
+    {
+        double* padfOvrRasterFactor = (double*) CPLMalloc(sizeof(double) * nOverviews);
+        double dfTotal = 0;
+        for( i = 0; i < nOverviews; i++ )
+        {
+            if( panOverviewList[i] <= 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid overview factor : %d", panOverviewList[i]);
+                eErr = CE_Failure;
+                break;
+            }
+            padfOvrRasterFactor[i] = 1.0 / (panOverviewList[i] * panOverviewList[i]);
+            dfTotal += padfOvrRasterFactor[i];
+        }
+
+        double dfAcc = 0.0;
+        for( i = 0; i < nOverviews && eErr == CE_None; i++ )
+        {
+            void *pScaledProgressData;
+            pScaledProgressData = 
+                GDALCreateScaledProgress( dfAcc / dfTotal, 
+                                          (dfAcc + padfOvrRasterFactor[i]) / dfTotal,
+                                         pfnProgress, pProgressData );
+            dfAcc += padfOvrRasterFactor[i];
+
+            eErr = IBuildOverviews( 
+                    pszResampling, 1, &panOverviewList[i], 
+                    nBands, panBandList, GDALScaledProgress, pScaledProgressData );
+
+            GDALDestroyScaledProgress(pScaledProgressData);
+        }
+
+        CPLFree(padfOvrRasterFactor);
+
+        return eErr;
+    }
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Initialize progress counter.                                    */
+/* -------------------------------------------------------------------- */
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
