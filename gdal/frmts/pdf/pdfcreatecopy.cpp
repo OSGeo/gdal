@@ -69,6 +69,7 @@ void GDALPDFWriter::Init()
     bInWriteObj = FALSE;
     nInfoId = nInfoGen = 0;
     nXMPId = nXMPGen = 0;
+    nNamesId = 0;
 
     nLastStartXRef = 0;
     nLastXRefSize = 0;
@@ -3789,6 +3790,100 @@ end:
 }
 
 /************************************************************************/
+/*                          WriteJavascript()                           */
+/************************************************************************/
+
+int GDALPDFWriter::WriteJavascript(const char* pszJavascript)
+{
+    int nJSId = AllocNewObject();
+    int nJSLengthId = AllocNewObject();
+    StartObj(nJSId);
+    {
+        GDALPDFDictionaryRW oDict;
+        oDict.Add("Length", nJSLengthId, 0);
+        if( oPageContext.eStreamCompressMethod != COMPRESS_NONE )
+        {
+            oDict.Add("Filter", GDALPDFObjectRW::CreateName("FlateDecode"));
+        }
+        VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
+    }
+    VSIFPrintfL(fp, "stream\n");
+    vsi_l_offset nStreamStart = VSIFTellL(fp);
+
+    VSILFILE* fpGZip = NULL;
+    VSILFILE* fpBack = fp;
+    if( oPageContext.eStreamCompressMethod != COMPRESS_NONE )
+    {
+        fpGZip = (VSILFILE* )VSICreateGZipWritable( (VSIVirtualHandle*) fp, TRUE, FALSE );
+        fp = fpGZip;
+    }
+
+    VSIFWriteL(pszJavascript, strlen(pszJavascript), 1, fp);
+
+    if (fpGZip)
+        VSIFCloseL(fpGZip);
+    fp = fpBack;
+
+    vsi_l_offset nStreamEnd = VSIFTellL(fp);
+    VSIFPrintfL(fp,
+                "\n"
+                "endstream\n");
+    EndObj();
+
+    StartObj(nJSLengthId);
+    VSIFPrintfL(fp,
+                "   %ld\n",
+                (long)(nStreamEnd - nStreamStart));
+    EndObj();
+
+    nNamesId = AllocNewObject();
+    StartObj(nNamesId);
+    {
+        GDALPDFDictionaryRW oDict;
+        GDALPDFDictionaryRW* poJavaScriptDict = new GDALPDFDictionaryRW();
+        oDict.Add("JavaScript", poJavaScriptDict);
+
+        GDALPDFArrayRW* poNamesArray = new GDALPDFArrayRW();
+        poJavaScriptDict->Add("Names", poNamesArray);
+
+        poNamesArray->Add("GDAL");
+
+        GDALPDFDictionaryRW* poJSDict = new GDALPDFDictionaryRW();
+        poNamesArray->Add(poJSDict);
+
+        poJSDict->Add("JS", nJSId, 0);
+        poJSDict->Add("S", GDALPDFObjectRW::CreateName("JavaScript"));
+
+        VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
+    }
+    EndObj();
+
+    return nNamesId;
+}
+
+/************************************************************************/
+/*                        WriteJavascriptFile()                         */
+/************************************************************************/
+
+int GDALPDFWriter::WriteJavascriptFile(const char* pszJavascriptFile)
+{
+    int nRet = 0;
+    char* pszJavascriptToFree = (char*)CPLMalloc(65536);
+    VSILFILE* fpJS = VSIFOpenL(pszJavascriptFile, "rb");
+    if( fpJS != NULL )
+    {
+        int nRead = (int)VSIFReadL(pszJavascriptToFree, 1, 65536, fpJS);
+        if( nRead < 65536 )
+        {
+            pszJavascriptToFree[nRead] = '\0';
+            nRet = WriteJavascript(pszJavascriptToFree);
+        }
+        VSIFCloseL(fpJS);
+    }
+    CPLFree(pszJavascriptToFree);
+    return nRet;
+}
+/************************************************************************/
 /*                              WritePages()                            */
 /************************************************************************/
 
@@ -3927,6 +4022,9 @@ void GDALPDFWriter::WritePages()
 
             oDict.Add("StructTreeRoot", nStructTreeRootId, 0);
         }
+
+        if (nNamesId)
+            oDict.Add("Names", nNamesId, 0);
 
         VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
     }
@@ -4231,6 +4329,9 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     const char* pszOffLayers = CSLFetchNameValue(papszOptions, "OFF_LAYERS");
     const char* pszExclusiveLayers = CSLFetchNameValue(papszOptions, "EXCLUSIVE_LAYERS");
 
+    const char* pszJavascript = CSLFetchNameValue(papszOptions, "JAVASCRIPT");
+    const char* pszJavascriptFile = CSLFetchNameValue(papszOptions, "JAVASCRIPT_FILE");
+
 /* -------------------------------------------------------------------- */
 /*      Create file.                                                    */
 /* -------------------------------------------------------------------- */
@@ -4412,6 +4513,12 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
                         pszExtraLayerName,
                         pszOffLayers,
                         pszExclusiveLayers);
+
+    if (pszJavascript)
+        oWriter.WriteJavascript(pszJavascript);
+    else if (pszJavascriptFile)
+        oWriter.WriteJavascriptFile(pszJavascriptFile);
+
     oWriter.Close();
     
     if (poClippingDS != poSrcDS)
