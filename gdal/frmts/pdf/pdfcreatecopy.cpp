@@ -3761,7 +3761,14 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
             if (poJPEGDriver == NULL)
             {
                 if (pszJPEG2000_DRIVER == NULL || EQUAL(pszJPEG2000_DRIVER, "JP2ECW"))
+                {
                     poJPEGDriver = (GDALDriver*) GDALGetDriverByName("JP2ECW");
+                    if( poJPEGDriver &&
+                        poJPEGDriver->GetMetadataItem(GDAL_DMD_CREATIONDATATYPES) == NULL )
+                    {
+                        poJPEGDriver = NULL;
+                    }
+                }
                 if (poJPEGDriver)
                 {
                     papszOptions = CSLAddString(papszOptions, "PROFILE=NPJE");
@@ -3774,6 +3781,11 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
             {
                 if (pszJPEG2000_DRIVER == NULL || EQUAL(pszJPEG2000_DRIVER, "JP2OpenJPEG"))
                     poJPEGDriver = (GDALDriver*) GDALGetDriverByName("JP2OpenJPEG");
+                if (poJPEGDriver)
+                {
+                    papszOptions = CSLAddString(papszOptions, "GeoJP2=OFF");
+                    papszOptions = CSLAddString(papszOptions, "GMLJP2=OFF");
+                }
             }
             if (poJPEGDriver == NULL)
             {
