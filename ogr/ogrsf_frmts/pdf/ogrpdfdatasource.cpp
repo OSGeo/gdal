@@ -1929,6 +1929,9 @@ OGRErr OGRPDFDataSource::SyncToDisk()
     const char* pszOffLayers = CSLFetchNameValue(papszOptions, "OFF_LAYERS");
     const char* pszExclusiveLayers = CSLFetchNameValue(papszOptions, "EXCLUSIVE_LAYERS");
 
+    const char* pszJavascript = CSLFetchNameValue(papszOptions, "JAVASCRIPT");
+    const char* pszJavascriptFile = CSLFetchNameValue(papszOptions, "JAVASCRIPT_FILE");
+
 /* -------------------------------------------------------------------- */
 /*      Create file.                                                    */
 /* -------------------------------------------------------------------- */
@@ -2016,6 +2019,11 @@ OGRErr OGRPDFDataSource::SyncToDisk()
                     pszExtraLayerName,
                     pszOffLayers,
                     pszExclusiveLayers);
+
+    if (pszJavascript)
+        oWriter.WriteJavascript(pszJavascript);
+    else if (pszJavascriptFile)
+        oWriter.WriteJavascriptFile(pszJavascriptFile);
 
     oWriter.Close();
 

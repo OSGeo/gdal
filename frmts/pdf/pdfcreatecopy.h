@@ -142,6 +142,7 @@ class GDALPDFWriter
     int nCatalogGen;
     int nXMPId;
     int nXMPGen;
+    int nNamesId;
     int bInWriteObj;
 
     int nLastStartXRef;
@@ -257,6 +258,9 @@ class GDALPDFWriter
                            int& iObj,
                            int& iObjLayer);
 #endif
+
+       int  WriteJavascript(const char* pszJavascript);
+       int  WriteJavascriptFile(const char* pszJavascriptFile);
 
        int  EndPage(const char* pszExtraImages,
                     const char* pszExtraStream,
