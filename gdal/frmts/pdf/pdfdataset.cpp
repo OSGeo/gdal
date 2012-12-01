@@ -4374,6 +4374,8 @@ void GDALRegister_PDF()
 "   <Option name='TITLE' type='string'/>\n"
 "   <Option name='OFF_LAYERS' type='string' description='Comma separated list of layer names that should be initially hidden'/>\n"
 "   <Option name='EXCLUSIVE_LAYERS' type='string' description='Comma separated list of layer names, such that only one of those layers can be ON at a time.'/>\n"
+"   <Option name='JAVASCRIPT' type='string' description='Javascript script to embed and run at file opening'/>\n"
+"   <Option name='JAVASCRIPT_FILE' type='string' description='Filename of the Javascript script to embed and run at file opening'/>\n"
 "</CreationOptionList>\n" );
 
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
