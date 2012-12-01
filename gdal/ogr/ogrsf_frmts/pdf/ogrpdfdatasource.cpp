@@ -1925,6 +1925,7 @@ OGRErr OGRPDFDataSource::SyncToDisk()
     const char* pszOGRDisplayField = CSLFetchNameValue(papszOptions, "OGR_DISPLAY_FIELD");
     const char* pszOGRDisplayLayerNames = CSLFetchNameValue(papszOptions, "OGR_DISPLAY_LAYER_NAMES");
     int bWriteOGRAttributes = CSLFetchBoolean(papszOptions, "OGR_WRITE_ATTRIBUTES", TRUE);
+    const char* pszOGRLinkField = CSLFetchNameValue(papszOptions, "OGR_LINK_FIELD");
 
     const char* pszOffLayers = CSLFetchNameValue(papszOptions, "OFF_LAYERS");
     const char* pszExclusiveLayers = CSLFetchNameValue(papszOptions, "EXCLUSIVE_LAYERS");
@@ -2007,6 +2008,7 @@ OGRErr OGRPDFDataSource::SyncToDisk()
         oWriter.WriteOGRLayer((OGRDataSourceH)this,
                               i,
                               pszOGRDisplayField,
+                              pszOGRLinkField,
                               osLayerName,
                               bWriteOGRAttributes,
                               iObj);

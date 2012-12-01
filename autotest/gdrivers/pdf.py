@@ -1283,7 +1283,7 @@ if (button == 4) app.launchURL('http://gdal.org/');"""
                 'LAYER_NAME=byte_tif',
                 'EXTRA_STREAM=BT 255 0 0 rg /FTimesRoman 1 Tf 1 0 0 1 1 1 Tm (Footpage string) Tj ET',
                 'EXTRA_LAYER_NAME=Footpage_and_logo',
-                'EXTRA_IMAGES=data/byte.tif,0.5,0.5,0.2',
+                'EXTRA_IMAGES=data/byte.tif,0.5,0.5,0.2,link=http://gdal.org/,data/byte.tif,0.5,1.5,0.2',
                 'JAVASCRIPT=%s' % js]
 
     src_ds = gdal.Open('data/byte.tif')
