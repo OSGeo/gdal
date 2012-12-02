@@ -4352,7 +4352,7 @@ void GDALRegister_PDF()
 "   <Option name='EXTRA_RASTERS' type='string' description='List of extra (georeferenced) rasters.'/>\n"
 "   <Option name='EXTRA_RASTERS_LAYER_NAME' type='string' description='List of layer names for the extra (georeferenced) rasters.'/>\n"
 "   <Option name='EXTRA_STREAM' type='string' description='Extra data to insert into the page content stream'/>\n"
-"   <Option name='EXTRA_IMAGES' type='string' description='List of image_file_name,x,y,scale (possibly repeated)'/>\n"
+"   <Option name='EXTRA_IMAGES' type='string' description='List of image_file_name,x,y,scale[,link=some_url] (possibly repeated)'/>\n"
 "   <Option name='EXTRA_LAYER_NAME' type='string' description='Layer name for extra content'/>\n"
 "   <Option name='MARGIN' type='int' description='Margin around image in user units'/>\n"
 "   <Option name='LEFT_MARGIN' type='int' description='Left margin in user units'/>\n"
