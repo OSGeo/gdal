@@ -48,7 +48,10 @@ class OGRPDFDataSource;
 class OGRPDFLayer : public OGRMemLayer
 {
     OGRPDFDataSource* poDS;
-    public:
+    int               bGeomTypeSet;
+    int               bGeomTypeMixed;
+
+public:
         OGRPDFLayer(OGRPDFDataSource* poDS,
                     const char * pszName,
                     OGRSpatialReference *poSRS,
@@ -91,6 +94,8 @@ class OGRPDFDataSource : public OGRDataSource
 
     std::map<CPLString, int> oMapOperators;
     void                InitMapOperators();
+    
+    int                 bSetStyle;
 
     void                ExploreTree(GDALPDFObject* poObj);
     void                ExploreContents(GDALPDFObject* poObj, GDALPDFObject* poResources);

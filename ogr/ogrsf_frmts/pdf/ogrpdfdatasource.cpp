@@ -52,6 +52,8 @@ OGRPDFLayer::OGRPDFLayer( OGRPDFDataSource* poDS,
                                 OGRMemLayer(pszName, poSRS, eGeomType )
 {
     this->poDS = poDS;
+    bGeomTypeSet = FALSE;
+    bGeomTypeMixed = FALSE;
 }
 
 /************************************************************************/
@@ -60,6 +62,21 @@ OGRPDFLayer::OGRPDFLayer( OGRPDFDataSource* poDS,
 
 OGRErr OGRPDFLayer::CreateFeature( OGRFeature *poFeature )
 {
+    OGRGeometry* poGeom = poFeature->GetGeometryRef();
+    if( !bGeomTypeMixed && poGeom != NULL )
+    {
+        if (!bGeomTypeSet)
+        {
+            bGeomTypeSet = TRUE;
+            GetLayerDefn()->SetGeomType(poGeom->getGeometryType());
+        }
+        else if (GetLayerDefn()->GetGeomType() != poGeom->getGeometryType())
+        {
+            bGeomTypeMixed = TRUE;
+            GetLayerDefn()->SetGeomType(wkbUnknown);
+        }
+    }
+
     poDS->SetModified();
     return OGRMemLayer::CreateFeature(poFeature);
 }
@@ -70,10 +87,6 @@ OGRErr OGRPDFLayer::CreateFeature( OGRFeature *poFeature )
 
 void OGRPDFLayer::Fill( GDALPDFArray* poArray )
 {
-    OGRwkbGeometryType eGeomType = wkbUnknown;
-    int bGeomTypeSet = FALSE;
-    int bGeomTypeMixed = FALSE;
-
     for(int i=0;i<poArray->GetLength();i++)
     {
         GDALPDFObject* poFeatureObj = poArray->Get(i);
@@ -152,15 +165,6 @@ void OGRPDFLayer::Fill( GDALPDFArray* poArray )
             OGRGeometry* poGeom = poDS->GetGeometryFromMCID(nK);
             if (poGeom)
             {
-                if (!bGeomTypeSet)
-                {
-                    bGeomTypeSet = TRUE;
-                    eGeomType = poGeom->getGeometryType();
-                }
-                else if (eGeomType != poGeom->getGeometryType())
-                {
-                    bGeomTypeMixed = TRUE;
-                }
                 poGeom->assignSpatialReference(GetSpatialRef());
                 poFeature->SetGeometry(poGeom);
             }
@@ -170,9 +174,6 @@ void OGRPDFLayer::Fill( GDALPDFArray* poArray )
 
         delete poFeature;
     }
-
-    if (bGeomTypeSet && !bGeomTypeMixed)
-        GetLayerDefn()->SetGeomType(eGeomType);
 }
 
 /************************************************************************/
@@ -208,6 +209,8 @@ OGRPDFDataSource::OGRPDFDataSource()
     poPageObj = NULL;
     poCatalogObj = NULL;
     dfPageWidth = dfPageHeight = 0;
+
+    bSetStyle = CSLTestBoolean(CPLGetConfigOption("OGR_PDF_SET_STYLE", "YES"));
 
     InitMapOperators();
 }
@@ -477,6 +480,8 @@ class GraphicState
 {
     public:
         double adfCM[6];
+        double adfStrokeColor[3];
+        double adfFillColor[3];
 
         GraphicState()
         {
@@ -486,6 +491,12 @@ class GraphicState
             adfCM[3] = 1;
             adfCM[4] = 0;
             adfCM[5] = 0;
+            adfStrokeColor[0] = 0.0;
+            adfStrokeColor[1] = 0.0;
+            adfStrokeColor[2] = 0.0;
+            adfFillColor[0] = 1.0;
+            adfFillColor[1] = 1.0;
+            adfFillColor[2] = 1.0;
         }
 
         void MultiplyBy(double adfMatrix[6])
@@ -822,7 +833,22 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
 
         if (bPushToken && osToken.size())
         {
-            if (osToken == "BDC")
+            if (osToken == "BI")
+            {
+                while(*pszContent != '\0')
+                {
+                    if( pszContent[0] == 'E' && pszContent[1] == 'I' && pszContent[2] == ' ' )
+                    {
+                        break;
+                    }
+                    pszContent ++;
+                }
+                if( pszContent[0] == 'E' )
+                    pszContent += 3;
+                else
+                    return NULL;
+            }
+            else if (osToken == "BDC")
             {
                 CPLString osOCGName, osOC;
                 for(int i=0;i<2;i++)
@@ -1161,6 +1187,32 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                         }
                     }
                 }
+                else if( osToken == "RG" || osToken == "rg" )
+                {
+                    double adf[3];
+                    for(int i=0;i<3;i++)
+                    {
+                        if (osTokenStack.empty())
+                        {
+                            CPLDebug("PDF", "not enough arguments for %s", osToken.c_str());
+                            return NULL;
+                        }
+                        adf[3-1-i] = atof(osTokenStack.top());
+                        osTokenStack.pop();
+                    }
+                    if( osToken == "RG" )
+                    {
+                        oGS.adfStrokeColor[0] = adf[0];
+                        oGS.adfStrokeColor[1] = adf[1];
+                        oGS.adfStrokeColor[2] = adf[2];
+                    }
+                    else
+                    {
+                        oGS.adfFillColor[0] = adf[0];
+                        oGS.adfFillColor[1] = adf[1];
+                        oGS.adfFillColor[2] = adf[2];
+                    }
+                }
                 else if (oMapOperators.find(osToken) != oMapOperators.end())
                 {
                     int nArgs = oMapOperators[osToken];
@@ -1202,6 +1254,28 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                     if (poGeom)
                     {
                         OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
+                        if( bSetStyle )
+                        {
+                            if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString ||
+                                wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString )
+                            {
+                                poFeature->SetStyleString(CPLSPrintf("PEN(c:#%02X%02X%02X)",
+                                                                    (int)(oGS.adfStrokeColor[0] * 255 + 0.5),
+                                                                    (int)(oGS.adfStrokeColor[1] * 255 + 0.5),
+                                                                    (int)(oGS.adfStrokeColor[2] * 255 + 0.5)));
+                            }
+                            else if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon ||
+                                    wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon )
+                            {
+                                poFeature->SetStyleString(CPLSPrintf("PEN(c:#%02X%02X%02X);BRUSH(fc:#%02X%02X%02X)",
+                                                                    (int)(oGS.adfStrokeColor[0] * 255 + 0.5),
+                                                                    (int)(oGS.adfStrokeColor[1] * 255 + 0.5),
+                                                                    (int)(oGS.adfStrokeColor[2] * 255 + 0.5),
+                                                                    (int)(oGS.adfFillColor[0] * 255 + 0.5),
+                                                                    (int)(oGS.adfFillColor[1] * 255 + 0.5),
+                                                                    (int)(oGS.adfFillColor[2] * 255 + 0.5)));
+                            }
+                        }
                         poGeom->assignSpatialReference(poCurLayer->GetSpatialRef());
                         poFeature->SetGeometryDirectly(poGeom);
                         poCurLayer->CreateFeature(poFeature);
@@ -1805,7 +1879,9 @@ int OGRPDFDataSource::Open( const char * pszName)
 
 
     GDALPDFObject* poStructTreeRoot = poCatalogObj->GetDictionary()->Get("StructTreeRoot");
-    if (poStructTreeRoot == NULL || poStructTreeRoot->GetType() != PDFObjectType_Dictionary)
+    if (CSLTestBoolean(CPLGetConfigOption("OGR_PDF_READ_NON_STRUCTURED", "NO")) ||
+        poStructTreeRoot == NULL ||
+        poStructTreeRoot->GetType() != PDFObjectType_Dictionary)
     {
         ExploreContentsNonStructured(poContents, poResources);
     }
