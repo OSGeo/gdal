@@ -157,7 +157,8 @@ int OGRSEGYDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     GByte* pabyTextHeader = (GByte*) CPLMalloc(3200 + 1);
     GByte* pabyASCIITextHeader = (GByte*) CPLMalloc(3200 + 40 + 1);
-    if ((int)VSIFReadL(pabyTextHeader, 1, 3200, fp) != 3200)
+    if ((int)VSIFReadL(pabyTextHeader, 1, 3200, fp) != 3200 ||
+        EQUALN((const char*)pabyTextHeader, "%PDF", 4))
     {
         VSIFCloseL(fp);
         CPLFree(pabyTextHeader);
