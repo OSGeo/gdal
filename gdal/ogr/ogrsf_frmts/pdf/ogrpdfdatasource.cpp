@@ -1594,8 +1594,33 @@ void OGRPDFDataSource::ExploreContentsNonStructuredInternal(GDALPDFObject* poCon
     if (poContents->GetType() == PDFObjectType_Array)
     {
         GDALPDFArray* poArray = poContents->GetArray();
+        char* pszConcatStr = NULL;
+        int nConcatLen = 0;
         for(int i=0;i<poArray->GetLength();i++)
-            ExploreContentsNonStructuredInternal(poArray->Get(i), poResources, oMapPropertyToLayer);
+        {
+            GDALPDFObject* poObj = poArray->Get(i);
+            if( poObj->GetType() != PDFObjectType_Dictionary)
+                break;
+            GDALPDFStream* poStream = poObj->GetStream();
+            if (!poStream)
+                break;
+            char* pszStr = poStream->GetBytes();
+            int nLen = (int)strlen(pszStr);
+            char* pszConcatStrNew = (char*)CPLRealloc(pszConcatStr, nConcatLen + nLen + 1);
+            if( pszConcatStrNew == NULL )
+            {
+                CPLFree(pszStr);
+                break;
+            }
+            pszConcatStr = pszConcatStrNew;
+            memcpy(pszConcatStr + nConcatLen, pszStr, nLen+1);
+            nConcatLen += nLen;
+            CPLFree(pszStr);
+        }
+        if( pszConcatStr )
+            ParseContent(pszConcatStr, poResources, FALSE, FALSE, oMapPropertyToLayer, NULL);
+        CPLFree(pszConcatStr);
+        return;
     }
 
     if (poContents->GetType() != PDFObjectType_Dictionary)
