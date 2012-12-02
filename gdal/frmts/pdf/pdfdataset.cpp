@@ -4363,6 +4363,7 @@ void GDALRegister_PDF()
 "   <Option name='OGR_DISPLAY_FIELD' type='string' description='Name of field to use as the display field in the feature tree'/>\n"
 "   <Option name='OGR_DISPLAY_LAYER_NAMES' type='string' description='Comma separated list of OGR layer names to display in the feature tree'/>\n"
 "   <Option name='OGR_WRITE_ATTRIBUTES' type='boolean' description='Whether to write attributes of OGR features' default='YES'/>\n"
+"   <Option name='OGR_LINK_FIELD' type='string' description='Name of field to use as the URL field to make objects clickable.'/>\n"
 "   <Option name='XMP' type='string' description='xml:XMP metadata'/>\n"
 "   <Option name='WRITE_INFO' type='boolean' description='to control whether a Info block must be written' default='YES'/>\n"
 "   <Option name='AUTHOR' type='string'/>\n"
