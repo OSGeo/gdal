@@ -236,7 +236,7 @@ static void FindChangePattern( char *cdata,char **substs, char **keys, CPLString
                 // But is the match for the key position?
                 char *found_key=NULL;
                 const char *found_value=CPLParseNameValue(substs[sub_number],&found_key);
-                if (EQUAL(found_key,key))
+                if (found_key!=NULL && EQUAL(found_key,key))
                 {  // Should exits in the request
                     if (std::string::npos==ret.find(key))
                     {
