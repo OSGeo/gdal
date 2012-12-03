@@ -263,7 +263,7 @@ FITSDataset::~FITSDataset() {
         if (strlen(field) == 0)
 	  continue;
         else {
-	  char* key;
+	  char* key = NULL;
 	  const char* value = CPLParseNameValue(field, &key);
 	  // FITS keys must be less than 8 chars
 	  if (key != NULL && strlen(key) <= 8 && !isIgnorableFITSHeader(key)) {
