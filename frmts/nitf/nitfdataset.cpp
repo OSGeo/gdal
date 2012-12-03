@@ -4046,7 +4046,8 @@ NITFDataset::NITFCreateCopy(
             char *pszName = NULL;
             const char *pszValue = CPLParseNameValue( papszSrcMD[iMD], 
                                                       &pszName );
-            if( CSLFetchNameValue( papszFullOptions, pszName+5 ) == NULL )
+            if( pszName != NULL &&
+                CSLFetchNameValue( papszFullOptions, pszName+5 ) == NULL )
                 papszFullOptions = 
                     CSLSetNameValue( papszFullOptions, pszName+5, pszValue );
             CPLFree(pszName);
@@ -5022,6 +5023,10 @@ static void NITFWriteTextSegments( const char *pszFilename,
 
         const char *pszHeaderBuffer = NULL;
 
+        pszTextToWrite = CPLParseNameValue( papszList[iOpt], NULL );
+        if( pszTextToWrite == NULL )
+            continue;
+
 /* -------------------------------------------------------------------- */
 /*      Locate corresponding header data in the buffer                  */
 /* -------------------------------------------------------------------- */
@@ -5030,9 +5035,15 @@ static void NITFWriteTextSegments( const char *pszFilename,
             if( !EQUALN(papszList[iOpt2],"HEADER_",7) )
                 continue;
 
-            char *pszHeaderKey, *pszDataKey;
+            char *pszHeaderKey = NULL, *pszDataKey = NULL;
             CPLParseNameValue( papszList[iOpt2], &pszHeaderKey );
             CPLParseNameValue( papszList[iOpt], &pszDataKey );
+            if( pszHeaderKey == NULL || pszDataKey == NULL )
+            {
+                CPLFree(pszHeaderKey);
+                CPLFree(pszDataKey);
+                continue;
+            }
 
             char *pszHeaderId, *pszDataId; //point to header and data number
             pszHeaderId = pszHeaderKey + 7;
@@ -5122,8 +5133,7 @@ static void NITFWriteTextSegments( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Prepare and write text segment data.                            */
 /* -------------------------------------------------------------------- */
-        pszTextToWrite = CPLParseNameValue( papszList[iOpt], NULL );
-        
+
         int nTextLength = (int) strlen(pszTextToWrite);
         if (nTextLength > 99998)
         {

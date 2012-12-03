@@ -180,6 +180,8 @@ void NTv2Dataset::FlushCache()
     {
         char *pszKey = NULL;
         const char *pszValue = CPLParseNameValue( papszMD[i], &pszKey );
+        if( pszKey == NULL )
+            continue;
 
         if( EQUAL(pszKey,"GS_TYPE") )
         {
