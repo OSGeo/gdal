@@ -968,6 +968,7 @@ void HDF4ImageDataset::FlushCache()
 
         while ( *papszMeta )
         {
+            pszName = NULL;
             pszValue = CPLParseNameValue( *papszMeta++, &pszName );
             if ( pszName != NULL && (SDsetattr( hSD, pszName, DFNT_CHAR8,
                              strlen(pszValue) + 1, pszValue )) < 0 )
