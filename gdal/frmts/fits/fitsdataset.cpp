@@ -266,7 +266,7 @@ FITSDataset::~FITSDataset() {
 	  char* key;
 	  const char* value = CPLParseNameValue(field, &key);
 	  // FITS keys must be less than 8 chars
-	  if (strlen(key) <= 8 && !isIgnorableFITSHeader(key)) {
+	  if (key != NULL && strlen(key) <= 8 && !isIgnorableFITSHeader(key)) {
 	    // Although FITS provides support for different value
 	    // types, the GDAL Metadata mechanism works only with
 	    // string values. Prior to about 2003-05-02, this driver
