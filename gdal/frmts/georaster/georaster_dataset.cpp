@@ -1881,7 +1881,7 @@ void CPL_DLL GDALRegister_GEOR()
                                            "default='1'/>"
 "  <Option name='SRID'        type='int'    description='Overwrite EPSG code' "
                                            "default='0'/>"
-"  <Option name='SPATIALEXTENT' type='boolean'"
+"  <Option name='SPATIALEXTENT' type='boolean' "
                                            "description='Generate Spatial Extent' "
                                            "default='TRUE'/>"
 "  <Option name='EXTENTSRID'  type='int'    description='Spatial ExtentSRID code' "
