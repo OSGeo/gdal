@@ -8,7 +8,11 @@
 #
 # Use the Geoid 2003 files to translated from NAVD88 to WGS84 (approx. NAD83)
 #
-5703,NAVD88 height,5103,North American Vertical Datum 1988,9001,1,0,6499,9665,"g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx"
+#
+# Updated to default to Geoid12A (11/27/12) hobu
+# http://lists.osgeo.org/pipermail/metacrs/2012-November/000649.html
+5703,NAVD88 height,5103,North American Vertical Datum 1988,9001,1,0,6499,9665,"g2012a_conus.gtx,g2012a_alaska.gtx,g2012a_guam.gtx,g2012a_hawaii.gtx,g2012a_puertorico.gtx,g2012a_samoa.gtx"
+#
 #
 # Use the EGM 96 geoid grid for translation from EGM96 to WGS84.
 #

@@ -1,4 +1,5 @@
 uom_code,unit_of_meas_name,unit_of_meas_type,target_uom_code,factor_b,factor_c,remarks,information_source,data_source,revision_date,change_id,deprecated
+1024,bin,scale,9201,1,1,,OGP,OGP,2012/07/14,2011.106,0
 9001,metre,length,9001,1,1,Also known as International metre. SI standard unit.,ISO 1000.,OGP,1995/06/02,,0
 9002,foot,length,9001,0.3048,1,,"ISO 1000; 1958",OGP,1995/06/02,,0
 9003,US survey foot,length,9001,12,39.37,Used in USA.,OGP,OGP,2000/05/07,1999.990,0
@@ -67,14 +68,14 @@ uom_code,unit_of_meas_name,unit_of_meas_type,target_uom_code,factor_b,factor_c,r
 9201,unity,scale,9201,1,1,,,OGP,1996/09/12,,0
 9202,parts per million,scale,9201,1,1000000,,,OGP,1996/09/12,,0
 9203,coefficient,scale,9201,1,1,Used when parameters are coefficients.  They inherently take the units which depend upon the term to which the coefficient applies.,OGP,OGP,2004/09/14,2004.530,0
-9204,Bin width 330 US survey feet,length,9001,3960,39.37,,OGP,OGP,2000/10/19,2000.590,0
-9205,Bin width 165 US survey feet,length,9001,1980,39.37,,OGP,OGP,2000/10/19,2000.590,0
-9206,Bin width 82.5 US survey feet,length,9001,990,39.37,,OGP,OGP,2000/10/19,2000.590,0
-9207,Bin width 37.5 metres,length,9001,37.5,1,,OGP,OGP,2000/10/19,2000.590,0
-9208,Bin width 25 metres,length,9001,25,1,,OGP,OGP,2000/10/19,2000.590,0
-9209,Bin width 12.5 metres,length,9001,12.5,1,,OGP,OGP,2000/10/19,2000.590,0
-9210,Bin width 6.25 metres,length,9001,6.25,1,,OGP,OGP,2000/10/19,2000.590,0
-9211,Bin width 3.125 metres,length,9001,3.125,1,,OGP,OGP,2000/10/19,2000.590,0
+9204,Bin width 330 US survey feet,length,9001,3960,39.37,,OGP,OGP,2000/10/19,2000.590 2011.106,1
+9205,Bin width 165 US survey feet,length,9001,1980,39.37,,OGP,OGP,2000/10/19,2000.590 2011.106,1
+9206,Bin width 82.5 US survey feet,length,9001,990,39.37,,OGP,OGP,2000/10/19,2000.590 2011.106,1
+9207,Bin width 37.5 metres,length,9001,37.5,1,,OGP,OGP,2000/10/19,2000.590 2011.106,1
+9208,Bin width 25 metres,length,9001,25,1,,OGP,OGP,2000/10/19,2000.590 2011.106,1
+9209,Bin width 12.5 metres,length,9001,12.5,1,,OGP,OGP,2000/10/19,2000.590 2011.106,1
+9210,Bin width 6.25 metres,length,9001,6.25,1,,OGP,OGP,2000/10/19,2000.590 2011.106,1
+9211,Bin width 3.125 metres,length,9001,3.125,1,,OGP,OGP,2000/10/19,2000.590 2011.106,1
 9300,British foot (Sears 1922 truncated),length,9001,0.914398,3,"Uses Sear's 1922 British yard-metre ratio (UoM code 9040) truncated to 6 significant figures; this truncated ratio (0.914398, UoM code 9099) then converted to other imperial units. 3 ftSe(T) = 1 ydSe(T).",Defence Geographic Centre,OGP,2006/10/23,2006.901,0
 9301,British chain (Sears 1922 truncated),length,9001,20.116756,1,"Uses Sear's 1922 British yard-metre ratio (UoM code 9040) truncated to 6 significant figures; this truncated ratio (0.914398, UoM code 9099) then converted to other imperial units. 1 chSe(T) = 22 ydSe(T). Used in metrication of Malaya RSO grid.",Defence Geographic Centre,OGP,2006/10/23,2006.901,0
 9302,British link (Sears 1922 truncated),length,9001,20.116756,100,"Uses Sear's 1922 British yard-metre ratio (UoM code 9040) truncated to 6 significant figures; this truncated ratio (0.914398, UoM code 9099) then converted to other imperial units. 100 lkSe(T) = 1 chSe(T).",Defence Geographic Centre,OGP,2006/10/23,2006.901,0
