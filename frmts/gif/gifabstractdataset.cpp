@@ -323,17 +323,5 @@ void GIFAbstractDataset::DetectGeoreferencing( GDALOpenInfo * poOpenInfo )
         bGeoTransformValid =
             GDALReadWorldFile( poOpenInfo->pszFilename, ".wld",
                                adfGeoTransform );
-
-        if ( !bGeoTransformValid )
-        {
-            int bOziFileOK =
-                GDALReadOziMapFile( poOpenInfo->pszFilename,
-                                    adfGeoTransform,
-                                    &pszProjection,
-                                    &nGCPCount, &pasGCPList );
-
-            if ( bOziFileOK && nGCPCount == 0 )
-                 bGeoTransformValid = TRUE;
-        }
     }
 }

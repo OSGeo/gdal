@@ -384,11 +384,11 @@ GDALDataType CPL_STDCALL GDALGetDataTypeByName( const char *pszName )
  */
 GDALAsyncStatusType CPL_DLL CPL_STDCALL GDALGetAsyncStatusTypeByName( const char *pszName )
 {
-	VALIDATE_POINTER1( pszName, "GDALGetAsyncStatusTypeByName", GARIO_ERROR);
+    VALIDATE_POINTER1( pszName, "GDALGetAsyncStatusTypeByName", GARIO_ERROR);
 
     int	iType;
 
-	for( iType = 1; iType < GARIO_TypeCount; iType++ )
+    for( iType = 1; iType < GARIO_TypeCount; iType++ )
     {
         if( GDALGetAsyncStatusTypeName((GDALAsyncStatusType)iType) != NULL
             && EQUAL(GDALGetAsyncStatusTypeName((GDALAsyncStatusType)iType), pszName) )
@@ -397,7 +397,7 @@ GDALAsyncStatusType CPL_DLL CPL_STDCALL GDALGetAsyncStatusTypeByName( const char
         }
     }
 
-	return GARIO_ERROR;
+    return GARIO_ERROR;
 }
 
 
@@ -1174,7 +1174,7 @@ int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
             oSRS.exportToWkt( ppszWKT );
     }
 
-    // Iterate all lines in the TAB-file
+    // Iterate all lines in the MAP-file
     for ( iLine = 5; iLine < nLines; iLine++ )
     {
         char    **papszTok = NULL;
@@ -1389,7 +1389,7 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
             // Only RASTER-type will be handled
             if (EQUAL(papszTok[1], "RASTER"))
             {
-	        bTypeRasterFound = TRUE;
+                bTypeRasterFound = TRUE;
             }
             else
             {
@@ -2203,7 +2203,7 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
     double sum_Lon = 0.0, sum_Lonx = 0.0, sum_Lony = 0.0;
     double sum_Lat = 0.0, sum_Latx = 0.0, sum_Laty = 0.0;
     double divisor;
-	
+
     for (i = 0; i < nGCPCount; ++i) {
         sum_x += pasGCPs[i].dfGCPPixel;
         sum_y += pasGCPs[i].dfGCPLine;
@@ -2231,7 +2231,7 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
 /* -------------------------------------------------------------------- */
 /*      Compute top/left origin.                                        */
 /* -------------------------------------------------------------------- */
-	
+
     padfGeoTransform[0] = (sum_Lon * (sum_xx * sum_yy - sum_xy * sum_xy)
                            + sum_Lonx * (sum_y * sum_xy - sum_x *  sum_yy)
                            + sum_Lony * (sum_x * sum_xy - sum_y * sum_xx))
@@ -2241,7 +2241,7 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
                            + sum_Latx * (sum_y * sum_xy - sum_x *  sum_yy)
                            + sum_Laty * (sum_x * sum_xy - sum_y * sum_xx)) 
         / divisor;
-	
+
 /* -------------------------------------------------------------------- */
 /*      Compute X related coefficients.                                 */
 /* -------------------------------------------------------------------- */
@@ -2249,7 +2249,7 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
                            + sum_Lonx * (nGCPCount * sum_yy - sum_y * sum_y)
                            + sum_Lony * (sum_x * sum_y - sum_xy * nGCPCount))
         / divisor;
-	
+
     padfGeoTransform[2] = (sum_Lon * (sum_x * sum_xy - sum_y * sum_xx)
                            + sum_Lonx * (sum_x * sum_y - nGCPCount * sum_xy)
                            + sum_Lony * (nGCPCount * sum_xx - sum_x * sum_x))
@@ -2262,7 +2262,7 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
                            + sum_Latx * (nGCPCount * sum_yy - sum_y * sum_y)
                            + sum_Laty * (sum_x * sum_y - sum_xy * nGCPCount))
         / divisor;
-	
+
     padfGeoTransform[5] = (sum_Lat * (sum_x * sum_xy - sum_y * sum_xx)
                            + sum_Latx * (sum_x * sum_y - nGCPCount * sum_xy)
                            + sum_Laty * (nGCPCount * sum_xx - sum_x * sum_x))
