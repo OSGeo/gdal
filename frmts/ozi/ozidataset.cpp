@@ -53,28 +53,15 @@ class OZIDataset : public GDALPamDataset
     VSILFILE* fp;
     int       nZoomLevelCount;
     int*      panZoomLevelOffsets;
-    OZIRasterBand** papoBands;
+    OZIRasterBand** papoOvrBands;
     vsi_l_offset nFileSize;
 
     int bOzi3;
     GByte nKeyInit;
 
-    double    adfGeoTransform[6];
-    char*     pszWKT;
-    int       nGCPCount;
-    GDAL_GCP* pasGCPs;
-    int       bReadMapFileSuccess;
-
   public:
                  OZIDataset();
     virtual     ~OZIDataset();
-
-    virtual const char* GetProjectionRef();
-    virtual CPLErr      GetGeoTransform( double * );
-
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -346,7 +333,7 @@ GDALRasterBand* OZIRasterBand::GetOverview(int nLevel)
     if (nLevel < 0 || nLevel >= poGDS->nZoomLevelCount - 1)
         return NULL;
 
-    return poGDS->papoBands[nLevel + 1];
+    return poGDS->papoOvrBands[nLevel + 1];
 }
 
 /************************************************************************/
@@ -358,19 +345,9 @@ OZIDataset::OZIDataset()
     fp = NULL;
     nZoomLevelCount = 0;
     panZoomLevelOffsets = NULL;
-    papoBands = NULL;
+    papoOvrBands = NULL;
     bOzi3 = FALSE;
     nKeyInit = 0;
-    adfGeoTransform[0] = 0;
-    adfGeoTransform[1] = 1;
-    adfGeoTransform[2] = 0;
-    adfGeoTransform[3] = 0;
-    adfGeoTransform[4] = 0;
-    adfGeoTransform[5] = 1;
-    pszWKT = NULL;
-    nGCPCount = 0;
-    pasGCPs = NULL;
-    bReadMapFileSuccess = FALSE;
 }
 
 /************************************************************************/
@@ -381,20 +358,14 @@ OZIDataset::~OZIDataset()
 {
     if (fp)
         VSIFCloseL(fp);
+    if (papoOvrBands != NULL )
+    {
+        /* start at 1: do not destroy the base band ! */
+        for(int i=1;i<nZoomLevelCount;i++)
+            delete papoOvrBands[i];
+        CPLFree(papoOvrBands);
+    }
     CPLFree(panZoomLevelOffsets);
-    int i;
-    if (papoBands)
-    {
-        for(i=1;i<nZoomLevelCount;i++)
-            delete papoBands[i];
-        CPLFree(papoBands);
-    }
-    CPLFree(pszWKT);
-    if (nGCPCount)
-    {
-        GDALDeinitGCPs( nGCPCount, pasGCPs );
-        CPLFree(pasGCPs);
-    }
 }
 
 /************************************************************************/
@@ -438,45 +409,7 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
 
     GByte abyHeader[14];
     CPLString osImgFilename = poOpenInfo->pszFilename;
-    int bIsMap = FALSE;
-    if (EQUALN((const char*)poOpenInfo->pabyHeader,
-        "OziExplorer Map Data File Version ", 34) )
-    {
-        char** papszLines = CSLLoad2( poOpenInfo->pszFilename, 1000, 200, NULL );
-        if ( !papszLines || CSLCount(papszLines) < 5)
-        {
-            CSLDestroy(papszLines);
-            return FALSE;
-        }
-
-        bIsMap = TRUE;
-
-        osImgFilename = papszLines[2];
-        VSIStatBufL sStat;
-        if (VSIStatL(osImgFilename, &sStat) != 0)
-        {
-            if (CPLIsFilenameRelative(osImgFilename))
-            {
-                CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
-                osImgFilename = CPLFormFilename(osPath, osImgFilename, NULL);
-            }
-            else
-            {
-                CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
-                osImgFilename = CPLGetFilename(osImgFilename);
-                osImgFilename = CPLFormFilename(osPath, osImgFilename, NULL);
-            }
-        }
-
-        CSLDestroy(papszLines);
-
-        GDALOpenInfo oOpenInfo(osImgFilename, GA_ReadOnly);
-        if (!Identify(&oOpenInfo))
-            return NULL;
-        memcpy(abyHeader, oOpenInfo.pabyHeader, 14);
-    }
-    else
-        memcpy(abyHeader, poOpenInfo->pabyHeader, 14);
+    memcpy(abyHeader, poOpenInfo->pabyHeader, 14);
 
     int bOzi3 = (abyHeader[0] == 0x80 &&
                  abyHeader[1] == 0x77);
@@ -487,16 +420,6 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
 
     OZIDataset* poDS = new OZIDataset();
     poDS->fp = fp;
-
-    if (bIsMap)
-    {
-        poDS->bReadMapFileSuccess =
-            GDALLoadOziMapFile( poOpenInfo->pszFilename,
-                                poDS->adfGeoTransform,
-                                &poDS->pszWKT,
-                                &poDS->nGCPCount,
-                                &poDS->pasGCPs );
-    }
 
     GByte nRandomNumber = 0;
     GByte nKeyInit = 0;
@@ -663,7 +586,7 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
-    poDS->papoBands =
+    poDS->papoOvrBands =
         (OZIRasterBand**)CPLCalloc(sizeof(OZIRasterBand*), poDS->nZoomLevelCount);
 
     for(i=0;i<poDS->nZoomLevelCount;i++)
@@ -711,21 +634,21 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
             poColorTable->SetColorEntry(j, &sEntry);
         }
 
-        poDS->papoBands[i] = new OZIRasterBand(poDS, i, nW, nH, nTileX, poColorTable);
+        poDS->papoOvrBands[i] = new OZIRasterBand(poDS, i, nW, nH, nTileX, poColorTable);
 
         if (i > 0)
         {
             GByte* pabyTranslationTable =
-                poDS->papoBands[i]->GetIndexColorTranslationTo(poDS->papoBands[0], NULL, NULL);
+                poDS->papoOvrBands[i]->GetIndexColorTranslationTo(poDS->papoOvrBands[0], NULL, NULL);
 
-            delete poDS->papoBands[i]->poColorTable;
-            poDS->papoBands[i]->poColorTable = poDS->papoBands[0]->poColorTable->Clone();
-            poDS->papoBands[i]->pabyTranslationTable = pabyTranslationTable;
+            delete poDS->papoOvrBands[i]->poColorTable;
+            poDS->papoOvrBands[i]->poColorTable = poDS->papoOvrBands[0]->poColorTable->Clone();
+            poDS->papoOvrBands[i]->pabyTranslationTable = pabyTranslationTable;
         }
 
     }
 
-    poDS->SetBand(1, poDS->papoBands[0]);
+    poDS->SetBand(1, poDS->papoOvrBands[0]);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -738,54 +661,6 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
     return( poDS );
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char* OZIDataset::GetProjectionRef()
-{
-    return (pszWKT && nGCPCount == 0) ? pszWKT : "";
-}
-
-/************************************************************************/
-/*                          GetGeoTransform()                           */
-/************************************************************************/
-
-CPLErr OZIDataset::GetGeoTransform( double * padfTransform )
-
-{
-    memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
-
-    return( (bReadMapFileSuccess && nGCPCount == 0) ? CE_None : CE_Failure );
-}
-
-/************************************************************************/
-/*                           GetGCPCount()                              */
-/************************************************************************/
-
-int OZIDataset::GetGCPCount()
-{
-    return nGCPCount;
-}
-
-/************************************************************************/
-/*                          GetGCPProjection()                          */
-/************************************************************************/
-
-const char * OZIDataset::GetGCPProjection()
-{
-    return (pszWKT && nGCPCount != 0) ? pszWKT : "";
-}
-
-/************************************************************************/
-/*                               GetGCPs()                              */
-/************************************************************************/
-
-const GDAL_GCP * OZIDataset::GetGCPs()
-{
-    return pasGCPs;
 }
 
 /************************************************************************/
