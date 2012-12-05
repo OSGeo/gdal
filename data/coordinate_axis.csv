@@ -9,6 +9,18 @@ coord_sys_code,coord_axis_name_code,coord_axis_orientation,coord_axis_abbreviati
 1027,9907,North along 0°E,N,9001,2
 1028,9906,east,E,9037,1
 1028,9907,north,N,9037,2
+1029,9906,east,E,9002,2
+1029,9907,north,N,9002,1
+1030,9904,up,H,9002,1
+1031,9907,north,Y,9001,1
+1031,9908,west,X,9001,2
+1032,9904,up,z,9001,3
+1032,9918,east,x,9001,1
+1032,9919,north,y,9001,2
+1033,9920,J-axis plus 90°,I,1024,1
+1033,9921,See associated operation,J,1024,2
+1034,9920,J-axis minus 90°,I,1024,1
+1034,9921,See associated operation,J,1024,2
 4400,9906,east,E,9001,1
 4400,9907,north,N,9001,2
 4401,9906,east,E,9062,1
