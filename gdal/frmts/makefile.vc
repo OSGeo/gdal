@@ -14,7 +14,7 @@ EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_adrg -DFRMT_coasp -DFRMT_tsx -DFRMT_blx -DFRMT_til \
 		-DFRMT_r -DFRMT_northwood -DFRMT_saga -DFRMT_xyz -DFRMT_hf2 \
 		-DFRMT_kmlsuperoverlay -DFRMT_ozi -DFRMT_ctg -DFRMT_e00grid \
-		-DFRMT_zmap -DFRMT_ngsgeoid -DFRMT_pdf -DFRMT_iris
+		-DFRMT_zmap -DFRMT_ngsgeoid -DFRMT_pdf -DFRMT_iris -DFRMT_map
 
 MOREEXTRA 	=	
 
