@@ -228,11 +228,11 @@ def osr_compd_5():
     if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
         return 'fail'
 
-    if wkt.find('g2003conus.gtx') == -1:
+    if wkt.find('g2012a_conus.gtx') == -1:
         gdaltest.post_reason( 'Did not get PROJ4_GRIDS EXTENSION node' )
         return 'fail'
 
-    exp_proj4 = '+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +geoidgrids=g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx +vunits=m +no_defs '
+    exp_proj4 = '+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +geoidgrids=g2012a_conus.gtx,g2012a_alaska.gtx,g2012a_guam.gtx,g2012a_hawaii.gtx,g2012a_puertorico.gtx,g2012a_samoa.gtx +vunits=m +no_defs '
     proj4 = srs.ExportToProj4()
     if proj4 != exp_proj4:
         gdaltest.post_reason( 'Did not get expected proj.4 string, got:' + proj4 )
