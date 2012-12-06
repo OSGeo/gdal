@@ -69,6 +69,7 @@ def ogr_pg_1():
         gdaltest.pg_connection_string=val
     else:
         gdaltest.pg_connection_string='dbname=autotest'
+    #gdaltest.pg_connection_string='dbname=autotest-postgis1.4'
     #gdaltest.pg_connection_string='dbname=autotest port=5432'
     #gdaltest.pg_connection_string='dbname=autotest-postgis2.0'
     #gdaltest.pg_connection_string='dbname=autotest host=127.0.0.1 port=5433 user=postgres'
@@ -2275,14 +2276,14 @@ def ogr_pg_47():
         
     if not gdaltest.pg_has_postgis:
         return 'skip'
-        
-    if gdaltest.pg_ds.GetLayerByName('geography_columns') is None:
-        gdaltest.post_reason('autotest database must be created with PostGIS >= 1.5')
-        return 'skip'
 
     # Create table with geography column
     gdaltest.pg_ds.ExecuteSQL("DELETE FROM spatial_ref_sys")
     gdaltest.pg_ds.ExecuteSQL("""INSERT INTO "spatial_ref_sys" ("srid","auth_name","auth_srid","srtext","proj4text") VALUES (4326,'EPSG',4326,'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]','+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs ')""")
+
+    if gdaltest.pg_ds.GetLayerByName('geography_columns') is None:
+        gdaltest.post_reason('autotest database must be created with PostGIS >= 1.5')
+        return 'skip'
 
     gdaltest.pg_ds = None
     gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
