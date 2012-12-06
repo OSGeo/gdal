@@ -1990,7 +1990,7 @@ def ogr_gml_49():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    xsd_content = """<ogr:FeatureCollection xmlns:gml="http://www.opengis.net/gml">
+    xsd_content = """<ogr:FeatureCollection xmlns:gml="http://www.opengis.net/gml" xmlns:ogr="http://ogr.maptools.org/">
   <gml:featureMember>
     <ogr:test>
       <ogr:geometry><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>2,49 2,50 3,50 3,49 2,49</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></ogr:geometry>
