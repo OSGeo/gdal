@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$
+ * $Id: ogr_ingres.h 19509 2010-04-23 16:49:33Z warmerdam $
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Declarations for Ingres OGR Driver Classes.
@@ -34,7 +34,7 @@
 #include "ogrsf_frmts.h"
 
 class OGRIngresDataSource;
-    
+class OGRIngresTransInfo;    
 /************************************************************************/
 /*                          OGRIngresStatement                          */
 /************************************************************************/
@@ -42,9 +42,8 @@ class OGRIngresDataSource;
 class OGRIngresStatement 
 {
 public:
-    II_PTR            hConn;
     II_PTR            hStmt;
-    II_PTR            hTransaction;
+    OGRIngresTransInfo *poTransInfo;
 
     IIAPI_GETDESCRPARM	getDescrParm;
     IIAPI_GETCOLPARM	getColParm;
@@ -61,7 +60,7 @@ public:
     int               nParmLen;
     GByte            *pabyParmData;
 
-    OGRIngresStatement( II_PTR hConn );
+    OGRIngresStatement( OGRIngresTransInfo *pTransInfo );
     ~OGRIngresStatement();
 
     void addInputParameter( IIAPI_DT_ID eDType, int nLength, GByte *pabyData );
@@ -76,6 +75,29 @@ public:
     void   ClearDynamicColumns();
     void   Close();
     int    SendParms();
+};
+
+/************************************************************************/
+/*                      OGRIngresSelectStmt                             */
+/************************************************************************/
+class OGRIngresSelectStmt
+{
+public:
+    /* Select Fields List */
+    char        **papszFieldList;
+    
+    /* Select From List */
+    CPLString   osFromList;
+    
+    /* Select Where Clause */
+    CPLString   osWhereClause;
+
+    OGRIngresSelectStmt() { papszFieldList = NULL;}
+    ~OGRIngresSelectStmt() 
+    { 
+        if (papszFieldList)
+            CSLDestroy(papszFieldList);
+    }
 };
 
 /************************************************************************/
@@ -103,11 +125,15 @@ class OGRIngresLayer : public OGRLayer
     CPLString           osIngresGeomType;
 
     CPLString           osFIDColumn;
+    CPLString           osQuery;
+    CPLString           osWHERE;
 
     OGRIngresStatement *poResultSet; /* stmt */
 
     int                 FetchSRSId(OGRFeatureDefn *poDefn);
     OGRGeometry        *TranslateGeometry( const char * );
+    void                BuildWhere(void);
+    void                BindQueryGeometry(OGRIngresStatement* poStatement);
 
   public:
                         OGRIngresLayer();
@@ -131,6 +157,13 @@ class OGRIngresLayer : public OGRLayer
     /* custom methods */
     virtual OGRFeature *RecordToFeature( char **papszRow );
     virtual OGRFeature *GetNextRawFeature();
+
+    virtual void        SetSpatialFilter( OGRGeometry * );
+    virtual OGRErr      SetAttributeFilter( const char * );
+    virtual OGRErr      StartTransaction();
+    virtual OGRErr      CommitTransaction();
+    virtual OGRErr      RollbackTransaction();
+    
 };
 
 /************************************************************************/
@@ -143,12 +176,8 @@ class OGRIngresTableLayer : public OGRIngresLayer
 
     OGRFeatureDefn     *ReadTableDefinition(const char *);
 
-    void                BuildWhere(void);
     char               *BuildFields(void);
     void                BuildFullQueryStatement(void);
-
-    CPLString           osQuery;
-    CPLString           osWHERE;
 
     int                 bLaunderColumnNames;
     int                 bPreservePrecision;
@@ -164,13 +193,9 @@ class OGRIngresTableLayer : public OGRIngresLayer
 
     OGRErr              Initialize(const char* pszTableName);
     
-//    virtual OGRFeature *GetFeature( long nFeatureId );
+    virtual OGRFeature *GetFeature( long nFeatureId );
     virtual void        ResetReading();
-//    virtual int         GetFeatureCount( int );
-
-    void                SetSpatialFilter( OGRGeometry * );
-
-    virtual OGRErr      SetAttributeFilter( const char * );
+    virtual int         GetFeatureCount( int );
 
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( long nFID );
@@ -185,7 +210,7 @@ class OGRIngresTableLayer : public OGRIngresLayer
                                 { bPreservePrecision = bFlag; }    
 
     virtual int         TestCapability( const char * );
-//    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 };
 
 /************************************************************************/
@@ -195,6 +220,9 @@ class OGRIngresTableLayer : public OGRIngresLayer
 class OGRIngresResultLayer : public OGRIngresLayer
 {
     void                BuildFullQueryStatement(void);
+    OGRErr              ReparseQueryStatement();
+    OGRErr              ParseSQLStmt(OGRIngresSelectStmt& oSelectStmt,
+        const char* pszRawSQL);
 
     char                *pszRawStatement;
     
@@ -214,6 +242,38 @@ class OGRIngresResultLayer : public OGRIngresLayer
 
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
+    virtual int         TestCapability( const char * pszCap );
+};
+
+/************************************************************************/
+/*                   OGRIngresTransInfo                                 */
+/************************************************************************/
+class OGRIngresTransInfo
+{
+    friend class OGRIngresStatement;
+private:
+    II_PTR  hEnvHandle;
+    II_PTR  hConnHandle;
+    II_PTR  hTransHandle;
+
+public:
+    OGRIngresTransInfo()
+    {
+        hEnvHandle = NULL;
+        hConnHandle = NULL;
+        hTransHandle = NULL;
+    }
+
+    ~OGRIngresTransInfo(){} 
+
+    II_PTR GetEnvHandle() const { return hEnvHandle; }
+    void SetEnvHandle(II_PTR val) { hEnvHandle = val; }
+
+    II_PTR GetConnHandle() const { return hConnHandle; }
+    void SetConnHandle(II_PTR val) { hConnHandle = val; }
+
+    II_PTR GetTransHandle() const { return hTransHandle; }
+    void SetTransHandle(II_PTR val) { hTransHandle = val; }
 };
 
 /************************************************************************/
@@ -229,7 +289,13 @@ class OGRIngresDataSource : public OGRDataSource
 
     int                 bDSUpdate;
 
-    II_PTR              hConn;
+    /* Since only one transaction in each database connection, 
+    ** so there will be only one transaction in each data source.
+    ** we keep transaction information here to make the information shared between
+    ** all statements. Also implements the transaction support for the data source
+    ** level.
+    */
+    OGRIngresTransInfo  oTransInfo;
 
     int                 DeleteLayer( int iLayer );
 
@@ -247,7 +313,7 @@ class OGRIngresDataSource : public OGRDataSource
                         OGRIngresDataSource();
                         ~OGRIngresDataSource();
 
-    II_PTR              GetConn() { return hConn; }
+    OGRIngresTransInfo* GetTransaction() { return &oTransInfo; }
 
 
     int                 FetchSRSId( OGRSpatialReference * poSRS );
@@ -276,6 +342,13 @@ class OGRIngresDataSource : public OGRDataSource
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect );
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
+    
+    /* -------------------------------------------------------------------- */
+    /* 				Transaction support for data source 					*/
+    /* -------------------------------------------------------------------- */
+    OGRErr              StartTransaction();
+    OGRErr              CommitTransaction();
+    OGRErr              RollbackTransaction();
 
     // nonstandard
 
