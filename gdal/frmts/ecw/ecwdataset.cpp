@@ -2005,6 +2005,11 @@ void GDALDeregister_ECW( GDALDriver * )
 /*                          GDALRegister_ECW()                        */
 /************************************************************************/
 
+/* Needed for v4.3 */
+#if !defined(NCS_ECWSDK_VERSION_STRING) && defined(NCS_ECWJP2_VERSION_STRING)
+#define NCS_ECWSDK_VERSION_STRING NCS_ECWJP2_VERSION_STRING
+#endif
+
 void GDALRegister_ECW()
 
 {
