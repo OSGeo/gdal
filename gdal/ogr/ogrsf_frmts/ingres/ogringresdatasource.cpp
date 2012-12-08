@@ -36,12 +36,54 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
+/*                      IIAPI_Intialize                                 */
+/************************************************************************/
+static void
+IIAPI_Intialize(II_PTR *hEnvHandle)
+{
+    CPLAssert(hEnvHandle);
+    
+    IIAPI_INITPARM  initParm;
+
+    initParm.in_version = IIAPI_VERSION; 
+    initParm.in_timeout = -1;
+    initParm.in_envHandle = *hEnvHandle;
+
+    IIapi_initialize( &initParm );
+
+    if (initParm.in_status == IIAPI_ST_SUCCESS)
+    {
+        *hEnvHandle = initParm.in_envHandle;
+    }
+}
+
+/************************************************************************/
+/*                       IIAPI_Terminate                                */
+/************************************************************************/
+static void
+IIAPI_Terminate( II_PTR *envHandle )
+{
+    IIAPI_RELENVPARM	relenv_parm;
+    IIAPI_TERMPARM		term_parm;
+
+    relenv_parm.re_status = IIAPI_ST_SUCCESS;
+
+    if (envHandle)
+    {
+        relenv_parm.re_envHandle = *envHandle;
+        IIapi_releaseEnv(&relenv_parm);
+    }
+
+    IIapi_terminate(&term_parm);
+}
+
+/************************************************************************/
 /*                            SetConnParam()                            */
 /*                                                                      */
 /*      Set Connection Parameters                                       */
 /************************************************************************/
-IIAPI_STATUS
-SetConnParam(II_PTR *connHandle,
+static IIAPI_STATUS
+IIAPI_SetConnParam(II_PTR *connHandle,
              II_LONG paramID,
              const II_PTR paramValue)
 {
@@ -75,6 +117,101 @@ SetConnParam(II_PTR *connHandle,
 }
 
 /************************************************************************/
+/*                       IIAPI_CommitTransaction                        */
+/************************************************************************/
+static IIAPI_STATUS
+IIAPI_CommitTransaction(II_PTR *hTransHandle)
+{
+    CPLAssert(hTransHandle);
+
+    IIAPI_COMMITPARM commitParm;
+    IIAPI_WAITPARM	waitParm = { -1 };
+
+    commitParm.cm_genParm.gp_callback = NULL;
+    commitParm.cm_genParm.gp_closure = NULL;
+    commitParm.cm_tranHandle = *hTransHandle;
+
+    IIapi_commit( &commitParm );
+
+    while( commitParm.cm_genParm.gp_completed == FALSE )
+        IIapi_wait( &waitParm );
+
+    if (commitParm.cm_genParm.gp_errorHandle)
+    {
+        OGRIngresStatement::ReportError( &(commitParm.cm_genParm), 
+            "Failed to commit transaction." );
+        return IIAPI_ST_FAILURE;
+    }
+
+    *hTransHandle = NULL;
+
+    return IIAPI_ST_SUCCESS;
+}
+
+/************************************************************************/
+/*                       IIAPI_RollbackTransaction                      */
+/************************************************************************/
+static IIAPI_STATUS
+IIAPI_RollbackTransaction(II_PTR *hTransHandle)
+{
+    CPLAssert(hTransHandle);
+
+    IIAPI_ROLLBACKPARM rollbacParm;
+    IIAPI_WAITPARM waitParm = { -1 };
+
+    rollbacParm.rb_tranHandle = *hTransHandle;
+    rollbacParm.rb_savePointHandle = NULL;
+    rollbacParm.rb_genParm.gp_callback = NULL;
+    rollbacParm.rb_genParm.gp_closure = NULL;
+
+    IIapi_rollback( &rollbacParm );
+
+    while( rollbacParm.rb_genParm.gp_completed == FALSE )
+        IIapi_wait( &waitParm );
+
+    if (rollbacParm.rb_genParm.gp_errorHandle)
+    {
+        OGRIngresStatement::ReportError( &(rollbacParm.rb_genParm), 
+            "Failed to rollback transaction." );
+        return IIAPI_ST_FAILURE;
+    }
+    *hTransHandle = NULL;
+
+    return IIAPI_ST_SUCCESS;
+}
+
+/************************************************************************/
+/*                         IIAPI_Disconnect                             */
+/************************************************************************/
+static IIAPI_STATUS
+IIAPI_Disconnect( II_PTR	*connHandle)
+{
+    IIAPI_DISCONNPARM	disconnParm;
+    IIAPI_WAITPARM  waitParm = {-1};
+
+    disconnParm.dc_genParm.gp_callback = NULL;
+    disconnParm.dc_genParm.gp_closure = NULL;
+    disconnParm.dc_connHandle = *connHandle;
+
+    IIapi_disconnect(&disconnParm);
+
+    while (disconnParm.dc_genParm.gp_completed == FALSE)
+    {    
+        IIapi_wait(&waitParm);
+    }
+    
+    if (disconnParm.dc_genParm.gp_errorHandle)
+    {	
+        OGRIngresStatement::ReportError( &(disconnParm.dc_genParm), 
+            "Failed to disconnect to database." );
+        return IIAPI_ST_FAILURE;
+    }
+
+    *connHandle = NULL;
+    return IIAPI_ST_SUCCESS;
+}
+
+/************************************************************************/
 /*                         OGRIngresDataSource()                        */
 /************************************************************************/
 
@@ -84,7 +221,6 @@ OGRIngresDataSource::OGRIngresDataSource()
     pszName = NULL;
     papoLayers = NULL;
     nLayers = 0;
-    hConn = 0;
 
     nKnownSRID = 0;
     panSRID = NULL;
@@ -108,10 +244,21 @@ OGRIngresDataSource::~OGRIngresDataSource()
     
     CPLFree( papoLayers );
 
-#ifdef notdef
-    if( hConn != NULL )
-        ingres_close( hConn );
-#endif
+    /* Commit transaction if we have */
+    if (oTransInfo.GetTransHandle())
+    {
+        CommitTransaction();
+    }
+    
+    /* Disconnect from database */
+    II_PTR hConnHandle = oTransInfo.GetConnHandle();
+    IIAPI_Disconnect(&hConnHandle);
+    oTransInfo.SetConnHandle(NULL);
+
+    /* Terminate the api */
+    II_PTR hEnvHandle = oTransInfo.GetEnvHandle();
+    IIAPI_Terminate(&hEnvHandle);
+    oTransInfo.SetEnvHandle(hEnvHandle);
 
     for( i = 0; i < nKnownSRID; i++ )
     {
@@ -132,6 +279,7 @@ int OGRIngresDataSource::Open( const char *pszFullName,
 
 {
     CPLAssert( nLayers == 0 );
+    II_PTR hConn = oTransInfo.GetConnHandle();
   
  #define MAX_TARGET_STRING_LENGTH 512
     char pszDBTarget[MAX_TARGET_STRING_LENGTH];
@@ -216,31 +364,39 @@ int OGRIngresDataSource::Open( const char *pszFullName,
         strcpy(pszDBTarget, pszDBName);
     }
     
-/* -------------------------------------------------------------------- */
-/*      Initialize the Ingres API. Should we only do this once per      */
-/*      program run?  Really we should also try to terminate the api    */
-/*      on program exit.                                                */
-/* -------------------------------------------------------------------- */
-    IIAPI_INITPARM  initParm;
-
-    initParm.in_version = IIAPI_VERSION_1; 
-    initParm.in_timeout = -1;
-    IIapi_initialize( &initParm );
+    /* -------------------------------------------------------------------- */
+    /*  Intialize the API Environment               						*/
+    /* -------------------------------------------------------------------- */
+    II_PTR hEnvironment = oTransInfo.GetEnvHandle();
+    IIAPI_Intialize(&hEnvironment);
+    oTransInfo.SetEnvHandle(hEnvironment);
 
 /* -------------------------------------------------------------------- */
-/*      check effective user and db password                            */
+/* check effective user and db password                                 */
+/* if effective user and db password is not passed, use name/password   */ 
+/* instead.                                                             */
 /* -------------------------------------------------------------------- */
-    hConn = NULL;
-    const char *pszEffuser = CSLFetchNameValue(papszOptions,"effuser");
+    const char *pszEffuser = CSLFetchNameValue(papszOptions,"effuser") ;
     const char *pszDBpwd = CSLFetchNameValue(papszOptions,"dbpwd");
+
+    if (pszEffuser == NULL)
+    {
+        pszEffuser = CSLFetchNameValue(papszOptions,"username");
+    }
+    
+    if (pszDBpwd == NULL)
+    {
+        pszDBpwd = CSLFetchNameValue(papszOptions,"password");
+    }
+    
     if ( pszEffuser 
         && strlen(pszEffuser) > 0 
         && pszDBpwd 
         && strlen(pszDBpwd) > 0 )
     { 
-        if (SetConnParam(&hConn, IIAPI_CP_EFFECTIVE_USER,
+        if (IIAPI_SetConnParam(&hConn, IIAPI_CP_EFFECTIVE_USER,
 			(II_PTR)pszEffuser) != IIAPI_ST_SUCCESS 
-            || SetConnParam(&hConn, IIAPI_CP_DBMS_PASSWORD,
+            || IIAPI_SetConnParam(&hConn, IIAPI_CP_DBMS_PASSWORD,
 			(II_PTR)pszDBpwd) != IIAPI_ST_SUCCESS )
         {
             return FALSE;
@@ -283,13 +439,15 @@ int OGRIngresDataSource::Open( const char *pszFullName,
         return FALSE;
     }
 
+    oTransInfo.SetConnHandle(hConn);
+
     pszName = CPLStrdup( pszFullName );
     
     bDSUpdate = bUpdate;
 
     // Check for new or old Ingres spatial library
     {
-    	OGRIngresStatement oStmt( hConn );
+    	OGRIngresStatement oStmt( GetTransaction() );
 
     	if( oStmt.ExecuteSQL("SELECT COUNT(*) FROM iicolumns WHERE table_name = 'iiattribute' AND column_name = 'attgeomtype'" ) )
     	{
@@ -314,7 +472,7 @@ int OGRIngresDataSource::Open( const char *pszFullName,
 /* -------------------------------------------------------------------- */
     if( papszTableNames == NULL )
     {
-        OGRIngresStatement oStmt( hConn );
+        OGRIngresStatement oStmt( GetTransaction() );
         
         if( oStmt.ExecuteSQL( "select table_name from iitables where system_use = 'U' and table_name not like 'iietab_%'" ) )
         {
@@ -421,7 +579,7 @@ OGRErr OGRIngresDataSource::InitializeMetadataTables()
     OGRErr	    eErr = OGRERR_NONE;
  
     sprintf( szCommand, "DESCRIBE geometry_columns" );
-    if( ingres_query(GetConn(), szCommand ) )
+    if( ingres_query(GetTransaction(), szCommand ) )
     {
         sprintf(szCommand,
                 "CREATE TABLE geometry_columns "
@@ -432,7 +590,7 @@ OGRErr OGRIngresDataSource::InitializeMetadataTables()
                 "COORD_DIMENSION INT, "
                 "SRID INT,"
                 "TYPE VARCHAR(256) NOT NULL)");
-        if( ingres_query(GetConn(), szCommand ) )
+        if( ingres_query(GetTransaction(), szCommand ) )
         {
             ReportError( szCommand );
             eErr = OGRERR_FAILURE;
@@ -443,7 +601,7 @@ OGRErr OGRIngresDataSource::InitializeMetadataTables()
     }
  
     // make sure to attempt to free results of successful queries
-    hResult = ingres_store_result( GetConn() );
+    hResult = ingres_store_result( GetTransaction() );
     if( hResult != NULL )
     {
         ingres_free_result( hResult );
@@ -451,7 +609,7 @@ OGRErr OGRIngresDataSource::InitializeMetadataTables()
     }
  
     sprintf( szCommand, "DESCRIBE spatial_ref_sys" );
-    if( ingres_query(GetConn(), szCommand ) )
+    if( ingres_query(GetTransaction(), szCommand ) )
     {
         sprintf(szCommand,
                 "CREATE TABLE spatial_ref_sys "
@@ -459,7 +617,7 @@ OGRErr OGRIngresDataSource::InitializeMetadataTables()
                 "AUTH_NAME VARCHAR(256), "
                 "AUTH_SRID INT, "
                 "SRTEXT VARCHAR(2048))");
-        if( ingres_query(GetConn(), szCommand ) )
+        if( ingres_query(GetTransaction(), szCommand ) )
         {
             ReportError( szCommand );
             eErr = OGRERR_FAILURE;
@@ -470,7 +628,7 @@ OGRErr OGRIngresDataSource::InitializeMetadataTables()
     }    
  
     // make sure to attempt to free results of successful queries
-    hResult = ingres_store_result( GetConn() );
+    hResult = ingres_store_result( GetTransaction() );
     if( hResult != NULL )
     {
         ingres_free_result( hResult );
@@ -494,7 +652,7 @@ OGRSpatialReference *OGRIngresDataSource::FetchSRS( int nId )
 {
     char         szCommand[1024];
     char           **papszRow;
-    OGRIngresStatement oStatement(GetConn());
+    OGRIngresStatement oStatement(GetTransaction());
             
     if( nId < 0 )
         return NULL;
@@ -594,7 +752,7 @@ int OGRIngresDataSource::FetchSRSId( OGRSpatialReference * poSRS )
              pszAuthID );
 
 
-        OGRIngresStatement  oStateSRID(GetConn());
+        OGRIngresStatement  oStateSRID(GetTransaction());
         oStateSRID.ExecuteSQL(szCommand);
 
         papszRow = oStateSRID.GetRow();
@@ -631,7 +789,7 @@ int OGRIngresDataSource::FetchSRSId( OGRSpatialReference * poSRS )
              pszWKT );
 
     {
-        OGRIngresStatement  oStateSRID(GetConn());
+        OGRIngresStatement  oStateSRID(GetTransaction());
         oStateSRID.ExecuteSQL(szCommand);
 
         papszRow = oStateSRID.GetRow();
@@ -653,7 +811,7 @@ int OGRIngresDataSource::FetchSRSId( OGRSpatialReference * poSRS )
              "SELECT MAX(srid) FROM spatial_ref_sys");    
 
     {
-        OGRIngresStatement  oStateMaxSRID(GetConn());
+        OGRIngresStatement  oStateMaxSRID(GetTransaction());
         oStateMaxSRID.ExecuteSQL(szCommand);
         papszRow = oStateMaxSRID.GetRow();
 
@@ -716,7 +874,7 @@ int OGRIngresDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     }
 
     {
-        OGRIngresStatement  oStateNewSRID(GetConn());
+        OGRIngresStatement  oStateNewSRID(GetTransaction());
         if(!oStateNewSRID.ExecuteSQL(szCommand))
         {
             CPLDebug("INGRES", "Failed to create new spatial reference system");
@@ -754,7 +912,7 @@ OGRLayer * OGRIngresDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
     EstablishActiveLayer( NULL );
 
-    OGRIngresStatement *poStatement = new OGRIngresStatement( hConn );
+    OGRIngresStatement *poStatement = new OGRIngresStatement( GetTransaction());
 
     if( !poStatement->ExecuteSQL( pszSQLCommand ) )
     {
@@ -835,7 +993,7 @@ int OGRIngresDataSource::DeleteLayer( int iLayer)
 /*      Remove from the database.                                       */
 /* -------------------------------------------------------------------- */
     char        	szCommand[1024];
-    OGRIngresStatement  oStmt( hConn );
+    OGRIngresStatement  oStmt( GetTransaction() );
 
     sprintf( szCommand,
              "DROP TABLE %s ",
@@ -1041,7 +1199,7 @@ OGRIngresDataSource::CreateLayer( const char * pszLayerNameIn,
 /*      Execute the create table command.                               */
 /* -------------------------------------------------------------------- */
     {
-        OGRIngresStatement  oStmt( hConn );
+        OGRIngresStatement  oStmt( GetTransaction() );
 
         if( !oStmt.ExecuteSQL( osCommand ) )
             return NULL;
@@ -1097,4 +1255,72 @@ void OGRIngresDataSource::EstablishActiveLayer( OGRIngresLayer *poNewLayer )
 int OGRIngresDataSource::IsNewIngres()
 {
 	return bNewIngres;
+}
+
+/* -------------------------------------------------------------------- */
+/* 				Transaction support for data source 					*/
+/* -------------------------------------------------------------------- */
+
+/************************************************************************/
+/*                   StartTransaction                                   */
+/************************************************************************/
+/* There is no explicit way to open a transaction in Ingres, so we just commit
+** the previous transaction if there is one. 
+*/
+OGRErr  OGRIngresDataSource::StartTransaction()
+{
+    if (oTransInfo.GetTransHandle())
+    {
+        return CommitTransaction();
+    }
+    
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                    CommitTransaction                                 */
+/************************************************************************/
+OGRErr  OGRIngresDataSource::CommitTransaction()
+{
+    II_PTR hTransaction = oTransInfo.GetTransHandle();
+    OGRErr rtn = OGRERR_NONE;
+
+    if (hTransaction == NULL)
+    {
+        /* do not have any transaction */
+        return OGRERR_NONE;
+    }
+    
+    rtn = ( IIAPI_CommitTransaction(&hTransaction) == IIAPI_ST_SUCCESS ? 
+        OGRERR_NONE : OGRERR_FAILURE);
+    if (rtn == OGRERR_NONE)
+    {
+        oTransInfo.SetTransHandle(hTransaction);
+    }
+    
+    return rtn;
+}
+
+/************************************************************************/
+/*                    RollbackTransaction                               */
+/************************************************************************/
+OGRErr  OGRIngresDataSource::RollbackTransaction()
+{
+    II_PTR hTransaction = oTransInfo.GetTransHandle();
+    OGRErr rtn = OGRERR_NONE;
+
+    if (hTransaction == NULL)
+    {
+        /* do not have any transaction */
+        return OGRERR_NONE;
+    }
+
+    rtn = ( IIAPI_RollbackTransaction(&hTransaction) == IIAPI_ST_SUCCESS ?
+        OGRERR_NONE : OGRERR_FAILURE);
+    if (rtn == OGRERR_NONE)
+    {
+        oTransInfo.SetTransHandle(hTransaction);
+    }
+
+    return rtn;
 }

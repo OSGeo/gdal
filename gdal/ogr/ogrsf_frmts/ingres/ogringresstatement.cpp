@@ -36,16 +36,16 @@ CPL_CVSID("$Id$");
 /*                         OGRIngresStatement()                         */
 /************************************************************************/
 
-OGRIngresStatement::OGRIngresStatement( II_PTR hConn )
+OGRIngresStatement::OGRIngresStatement( OGRIngresTransInfo *pTransInfo )
 
 {
-    this->hConn = hConn;
+    CPLAssert(pTransInfo);
+    this->poTransInfo = pTransInfo;
 
     pabyWrkBuffer = NULL;
     papszFields = NULL;
     pasDataBuffer = NULL;
     hStmt = NULL;
-    hTransaction = NULL;
 
     memset( &getDescrParm, 0, sizeof(getDescrParm) );
     memset( &queryInfo, 0, sizeof(queryInfo) );
@@ -90,22 +90,6 @@ void OGRIngresStatement::Close()
         hStmt = NULL;
     }
 
-    if( hTransaction != NULL )
-    {
-        IIAPI_COMMITPARM commitParm;
-
-        commitParm.cm_genParm.gp_callback = NULL;
-        commitParm.cm_genParm.gp_closure = NULL;
-        commitParm.cm_tranHandle = hTransaction;
-
-        IIapi_commit( &commitParm );
-
-        while( commitParm.cm_genParm.gp_completed == FALSE )
-            IIapi_wait( &waitParm );
-
-        hTransaction = NULL;
-    }
-
     // Set the descriptorCount to zero to avoid attempting to refree it
     // in another Close call.
     getDescrParm.gd_descriptorCount = 0;
@@ -135,14 +119,15 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
 /* -------------------------------------------------------------------- */
     IIAPI_WAITPARM	waitParm = { -1 };
     IIAPI_QUERYPARM	queryParm;
+    II_PTR hTransaction = poTransInfo->GetTransHandle();
 
     queryParm.qy_genParm.gp_callback = NULL;
     queryParm.qy_genParm.gp_closure = NULL;
-    queryParm.qy_connHandle = hConn;
+    queryParm.qy_connHandle = poTransInfo->GetConnHandle();
     queryParm.qy_queryType = IIAPI_QT_QUERY;
     queryParm.qy_queryText = (II_CHAR *) pszStatement;
     queryParm.qy_parameters = bHaveParm;
-    queryParm.qy_tranHandle = NULL;
+    queryParm.qy_tranHandle = hTransaction;
     queryParm.qy_stmtHandle = NULL;
 
     if( bDebug )
@@ -157,7 +142,7 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
 	IIapi_wait( &waitParm );
 
     if( queryParm.qy_genParm.gp_status != IIAPI_ST_SUCCESS 
-        || hConn == NULL )
+        || poTransInfo->GetConnHandle() == NULL )
     {
         ReportError( &(queryParm.qy_genParm), 
                      CPLString().Printf( "IIapi_query(%s)", pszStatement ) );
@@ -166,6 +151,7 @@ int OGRIngresStatement::ExecuteSQL( const char *pszStatement )
 
     hTransaction = queryParm.qy_tranHandle;
     hStmt = queryParm.qy_stmtHandle;
+    poTransInfo->SetTransHandle(hTransaction);
 
     if( hStmt == NULL )						
     {

@@ -102,7 +102,7 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
 /*      Fire off commands to get back the schema of the table.          */
 /* -------------------------------------------------------------------- */
     CPLString osCommand;
-    OGRIngresStatement oStatement( poDS->GetConn() );
+    OGRIngresStatement oStatement( poDS->GetTransaction() );
 
     osCommand.Printf( "select column_name, column_datatype, column_length, "
                       "column_scale, column_ingdatatype, "
@@ -222,14 +222,30 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
         {
             oField.SetType( OFTReal );
         }
-#ifdef notdef
+
+        /* -------------------------------------------------------------------- */
+        /*              Date/Time Type Support									*/
+        /* -------------------------------------------------------------------- */
         else if( EQUAL(osIngresType,"date") 
-                 || EQUAL(osIngresType,"ansidate") 
-                 || EQUAL(osIngresType,"ingresdate") )
+                 || EQUAL(osIngresType,"ansidate") )
         {
             oField.SetType( OFTDate );
         }
-#endif
+        else if( EQUAL(osIngresType,"time with local time zone") 
+            || EQUAL(osIngresType,"time with time zone") 
+            || EQUAL(osIngresType,"time without time zone"))
+        {
+            oField.SetType( OFTTime );
+        }
+        else if (EQUAL(osIngresType,"ingresdate") 
+            || EQUAL(osIngresType,"datetime")
+            || EQUAL(osIngresType, "timestamp with local time zone")
+            || EQUAL(osIngresType, "timestamp with time zone")
+            || EQUAL(osIngresType, "timestamp without time zone"))
+        {
+            oField.SetType( OFTDateTime );
+        }
+        
 
         // Is this an integer primary key field?
         if( osFIDColumn.size() == 0 
@@ -264,67 +280,6 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
 }
 
 /************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRIngresTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
-
-{
-    if( !InstallFilter( poGeomIn ) )
-        return;
-
-    BuildWhere();
-
-    ResetReading();
-}
-
-/************************************************************************/
-/*                             BuildWhere()                             */
-/*                                                                      */
-/*      Build the WHERE statement appropriate to the current set of     */
-/*      criteria (spatial and attribute queries).                       */
-/************************************************************************/
-
-void OGRIngresTableLayer::BuildWhere()
-
-{
-    osWHERE = "";
-
-#ifdef notdef
-    if( m_poFilterGeom != NULL && pszGeomColumn )
-    {
-        char szEnvelope[4096];
-        OGREnvelope  sEnvelope;
-        szEnvelope[0] = '\0';
-        
-        //POLYGON((MINX MINY, MAXX MINY, MAXX MAXY, MINX MAXY, MINX MINY))
-        m_poFilterGeom->getEnvelope( &sEnvelope );
-        
-        sprintf(szEnvelope,
-                "POLYGON((%.12f %.12f, %.12f %.12f, %.12f %.12f, %.12f %.12f, %.12f %.12f))",
-                sEnvelope.MinX, sEnvelope.MinY,
-                sEnvelope.MaxX, sEnvelope.MinY,
-                sEnvelope.MaxX, sEnvelope.MaxY,
-                sEnvelope.MinX, sEnvelope.MaxY,
-                sEnvelope.MinX, sEnvelope.MinY);
-
-        osWHERE.Printf( "WHERE MBRIntersects(GeomFromText('%s'), %s)",
-                        szEnvelope,
-                        osGeomColumn.c_str() );
-
-    }
-#endif
-
-    if( osQuery.size() > 0 )
-    {
-        if( osWHERE.size() == 0 )
-            osWHERE = "WHERE " + osQuery;
-        else
-            osWHERE += "&& " + osQuery;
-    }
-}
-
-/************************************************************************/
 /*                      BuildFullQueryStatement()                       */
 /************************************************************************/
 
@@ -333,10 +288,18 @@ void OGRIngresTableLayer::BuildFullQueryStatement()
 {
     char *pszFields = BuildFields();
 
-    osQueryStatement.Printf( "SELECT %s FROM %s %s", 
-                             pszFields, poFeatureDefn->GetName(), 
-                             osWHERE.c_str() );
-    
+    if (osWHERE.size())
+    {    
+        osQueryStatement.Printf( "SELECT %s FROM %s WHERE %s", 
+            pszFields, poFeatureDefn->GetName(), 
+            osWHERE.c_str() );
+    }
+    else
+    {
+        osQueryStatement.Printf( "SELECT %s FROM %s ", 
+            pszFields, poFeatureDefn->GetName());
+    }
+
     CPLFree( pszFields );
 }
 
@@ -407,25 +370,6 @@ char *OGRIngresTableLayer::BuildFields()
     CPLAssert( (int) strlen(pszFieldList) < nSize );
 
     return pszFieldList;
-}
-
-/************************************************************************/
-/*                         SetAttributeFilter()                         */
-/************************************************************************/
-
-OGRErr OGRIngresTableLayer::SetAttributeFilter( const char *pszQuery )
-
-{
-    osQuery = "";
-
-    if( pszQuery != NULL )
-        osQuery = pszQuery;
-
-    BuildWhere();
-
-    ResetReading();
-
-    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -517,7 +461,7 @@ OGRErr OGRIngresTableLayer::DeleteFeature( long nFID )
 /*      Execute the delete.                                             */
 /* -------------------------------------------------------------------- */
     poDS->EstablishActiveLayer( NULL );
-    OGRIngresStatement oStmt( poDS->GetConn() );
+    OGRIngresStatement oStmt( poDS->GetTransaction() );
     
     if( !oStmt.ExecuteSQL( osCommand ) )
         return OGRERR_FAILURE;
@@ -934,30 +878,88 @@ OGRErr OGRIngresTableLayer::CreateFeature( OGRFeature *poFeature )
         {
             int         iChar;
 
+            // Handle default value for date/time type
+            if (EQUAL(pszStrValue, "0000/00/00")
+                || EQUAL(pszStrValue, "00:00:00")
+                || EQUAL(pszStrValue, "0000/00/00 00:00:00"))
+            {
+                // Treat as a null value?
+                osCommand += "NULL";
+                continue;
+            }
+            
             //We need to quote and escape string fields. 
             osCommand += "'";
 
-            for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
+            // we handle date/time first
+            OGRFieldType fieldType = poFeatureDefn->GetFieldDefn(i)->GetType();
+            if (fieldType == OFTDate)
             {
-                if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTIntegerList
-                    && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTRealList
-                    && poFeatureDefn->GetFieldDefn(i)->GetWidth() > 0
-                    && iChar == poFeatureDefn->GetFieldDefn(i)->GetWidth() )
+                // what we got is 'yyyy/mm/dd' 
+                // which could not be parsed by Ingres
+                // we need to convert it to string like 'yyyy.mm.dd'
+                for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
                 {
-                    CPLDebug( "INGRES",
-                              "Truncated %s field value, it was too long.",
-                              poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
-                    break;
+                    if (pszStrValue[iChar] == '/')
+                    {
+                        osCommand +='.';
+                    }
+                    else
+                    {
+                        osCommand += pszStrValue[iChar];
+                    }
                 }
-
-                if( pszStrValue[iChar] == '\'' )
-                {
-                    osCommand += '\'';
-                    osCommand += pszStrValue[iChar];
-                }
-                else
-                    osCommand += pszStrValue[iChar];
             }
+            else if (fieldType == OFTTime)
+            {
+                for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
+                {
+                    osCommand += pszStrValue[iChar];
+                }
+            }
+            else if (fieldType == OFTDateTime)
+            {
+                // what we got is 'yyyy/mm/dd hh:mm:ss'
+                // need to convert to 'yyyy-mm-dd hh:mm:ss'
+                // The time zone info will be ignored
+                osCommand += " TIMESTAMP ' ";
+                for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
+                {
+                    if (pszStrValue[iChar] == '/')
+                    {
+                        osCommand += '-';
+                    }
+                    else
+                    {
+                        osCommand += pszStrValue[iChar];
+                    }
+                }
+                osCommand += " ' ";
+            }
+            else
+            {
+                for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
+                {
+                    if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTIntegerList
+                        && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTRealList
+                        && poFeatureDefn->GetFieldDefn(i)->GetWidth() > 0
+                        && iChar == poFeatureDefn->GetFieldDefn(i)->GetWidth() )
+                    {
+                        CPLDebug( "INGRES",
+                            "Truncated %s field value, it was too long.",
+                            poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
+                        break;
+                    }
+
+                    if( pszStrValue[iChar] == '\'' )
+                    {
+                        osCommand += '\'';
+                        osCommand += pszStrValue[iChar];
+                    }
+                    else
+                        osCommand += pszStrValue[iChar];
+                }
+            }            
 
             osCommand += "'";
         }
@@ -986,7 +988,7 @@ OGRErr OGRIngresTableLayer::CreateFeature( OGRFeature *poFeature )
 /*      Execute it.                                                     */
 /* -------------------------------------------------------------------- */
     poDS->EstablishActiveLayer( NULL );
-    OGRIngresStatement oStmt( poDS->GetConn() );
+    OGRIngresStatement oStmt( poDS->GetTransaction() );
 
     oStmt.bDebug = FALSE; 
 
@@ -1028,7 +1030,7 @@ OGRErr OGRIngresTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     poDS->EstablishActiveLayer( NULL );
 
     CPLString           osCommand;
-    OGRIngresStatement  oStatement( poDS->GetConn() );
+    OGRIngresStatement  oStatement( poDS->GetTransaction() );
     char                szFieldType[256];
     OGRFieldDefn        oField( poFieldIn );
 
@@ -1070,23 +1072,22 @@ OGRErr OGRIngresTableLayer::CreateField( OGRFieldDefn *poFieldIn,
     {
         sprintf( szFieldType, "DATE" );
     }
-#ifdef notdef
+
     else if( oField.GetType() == OFTDateTime )
     {
-        sprintf( szFieldType, "DATETIME" );
+        sprintf( szFieldType, "TIMESTAMP WITH LOCAL TIME ZONE" );
     }
-#endif
 
     else if( oField.GetType() == OFTTime )
     {
-        sprintf( szFieldType, "TIME" );
+        sprintf( szFieldType, "TIME WITH LOCAL TIME ZONE" );
     }
-#ifdef notdefa
+
     else if( oField.GetType() == OFTBinary )
     {
-        sprintf( szFieldType, "LONGBLOB" );
+        sprintf( szFieldType, "BLOB" );
     }
-#endif
+
     else if( oField.GetType() == OFTString )
     {
         if( oField.GetWidth() == 0 ) // We need some fixed maximum.
@@ -1127,11 +1128,10 @@ OGRErr OGRIngresTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 /************************************************************************/
 /*                             GetFeature()                             */
 /************************************************************************/
-#ifdef notdef
 OGRFeature *OGRIngresTableLayer::GetFeature( long nFeatureId )
 
 {
-    if( pszFIDColumn == NULL )
+    if( osFIDColumn.size() == 0 )
         return OGRIngresLayer::GetFeature( nFeatureId );
 
 /* -------------------------------------------------------------------- */
@@ -1144,62 +1144,48 @@ OGRFeature *OGRIngresTableLayer::GetFeature( long nFeatureId )
 /*      interest.                                                       */
 /* -------------------------------------------------------------------- */
     char        *pszFieldList = BuildFields();
-    char        *pszCommand = (char *) CPLMalloc(strlen(pszFieldList)+2000);
+    CPLString   osSqlCmd;
+    OGRIngresStatement oStmt(poDS->GetTransaction());
 
-    sprintf( pszCommand, 
-             "SELECT %s FROM %s WHERE %s = %ld", 
-             pszFieldList, poFeatureDefn->GetName(), pszFIDColumn, 
-             nFeatureId );
+    CPLAssert(pszFieldList);
+    osSqlCmd.Printf("SELECT %s FROM %s WHERE %s = %ld",
+        pszFieldList,
+        poFeatureDefn->GetName(),
+        osFIDColumn.c_str(),
+        nFeatureId);
     CPLFree( pszFieldList );
 
 /* -------------------------------------------------------------------- */
 /*      Issue the command.                                              */
 /* -------------------------------------------------------------------- */
-    if( ingres_query( poDS->GetConn(), pszCommand ) )
+    CPLDebug("Ingres", osSqlCmd.c_str());
+    if (!oStmt.ExecuteSQL(osSqlCmd.c_str()))
     {
-        poDS->ReportError( pszCommand );
-        return NULL;
-    }
-    CPLFree( pszCommand );
-
-    hResultSet = ingres_store_result( poDS->GetConn() );
-    if( hResultSet == NULL )
-    {
-        poDS->ReportError( "ingres_store_result() failed on query." );
         return NULL;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the result record.                                        */
 /* -------------------------------------------------------------------- */
-    char **papszRow;
-    unsigned long *panLengths;
-
-    papszRow = ingres_fetch_row( hResultSet );
-    if( papszRow == NULL )
+    char **papszRow = oStmt.GetRow();
+    if (!papszRow)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Can't get the result row which may be caused by query "
+            "error or result row of id %d is not exist."
+            , nFeatureId);
         return NULL;
-
-    panLengths = ingres_fetch_lengths( hResultSet );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Transform into a feature.                                       */
 /* -------------------------------------------------------------------- */
-    iNextShapeId = nFeatureId;
-
-    OGRFeature *poFeature = RecordToFeature( papszRow, panLengths );
-
-    iNextShapeId = 0;
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
-    if( hResultSet != NULL )
-        ingres_free_result( hResultSet );
- 		hResultSet = NULL;
+    poResultSet = &oStmt;
+    OGRFeature *poFeature = RecordToFeature( papszRow);
+    poResultSet = NULL;
 
     return poFeature;
 }
-#endif
 
 /************************************************************************/
 /*                          GetFeatureCount()                           */
@@ -1209,54 +1195,64 @@ OGRFeature *OGRIngresTableLayer::GetFeature( long nFeatureId )
 /*      Eventually we should consider implementing a more efficient     */
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
-
-#ifdef notdef
 int OGRIngresTableLayer::GetFeatureCount( int bForce )
 
 {
-/* -------------------------------------------------------------------- */
-/*      Ensure any active long result is interrupted.                   */
-/* -------------------------------------------------------------------- */
-    poDS->InterruptLongResult();
-    
-/* -------------------------------------------------------------------- */
-/*      Issue the appropriate select command.                           */
-/* -------------------------------------------------------------------- */
-    INGRES_RES    *hResult;
-    const char         *pszCommand;
+    CPLString osSqlCmd;
+    OGRIngresStatement oStmt( poDS->GetTransaction() );
+    int nCount = 0 ;
 
-    pszCommand = CPLSPrintf( "SELECT COUNT(*) FROM %s %s", 
-                             poFeatureDefn->GetName(), pszWHERE );
-
-    if( ingres_query( poDS->GetConn(), pszCommand ) )
+    poDS->EstablishActiveLayer( this );
+    /* -------------------------------------------------------------------- */
+    /* 	If attribute filter or spatial filter is set, a query must be used  */
+    /* -------------------------------------------------------------------- */
+    if (osWHERE.size())
     {
-        poDS->ReportError( pszCommand );
-        return FALSE;
+        osSqlCmd.Printf("SELECT INT4(COUNT(*)) FROM %s WHERE %s",
+            poFeatureDefn->GetName(), osWHERE.c_str());
+
+        /* Bind Geometry */
+        if (m_poFilterGeom)
+        {        
+            BindQueryGeometry(&oStmt);
+        }
+    }
+    else
+    {
+        /* -------------------------------------------------------------------- */
+        /* 	Force means use select count(*) method 								*/
+        /* -------------------------------------------------------------------- */
+        if (bForce)
+        {
+            osSqlCmd.Printf("SELECT INT4(COUNT(*)) FROM %s",
+                poFeatureDefn->GetName());
+        }
+        else
+        {
+            osSqlCmd.Printf("SELECT INT4(num_rows) FROM iitables "
+                "WHERE TABLE_NAME=LOWERCASE('%s') AND "
+                "TABLE_OWNER=(SELECT DBMSINFO('username'))",
+		        poFeatureDefn->GetName());
+        }        
     }
 
-    hResult = ingres_store_result( poDS->GetConn() );
-    if( hResult == NULL )
+    CPLDebug("Ingres", osSqlCmd.c_str());
+    /* -------------------------------------------------------------------- */
+    /*  Execute SQL and get the result  									*/
+    /* -------------------------------------------------------------------- */
+    if (!oStmt.ExecuteSQL(osSqlCmd.c_str()))
     {
-        poDS->ReportError( "ingres_store_result() failed on SELECT COUNT(*)." );
-        return FALSE;
+        /* Failed */
+        return 0;
     }
-    
-/* -------------------------------------------------------------------- */
-/*      Capture the result.                                             */
-/* -------------------------------------------------------------------- */
-    char **papszRow = ingres_fetch_row( hResult );
-    int nCount = 0;
 
-    if( papszRow != NULL && papszRow[0] != NULL )
-        nCount = atoi(papszRow[0]);
+    char **papszRow = oStmt.GetRow();
+    CPLAssert(papszRow);
 
-    if( hResultSet != NULL )
-        ingres_free_result( hResultSet );
- 		hResultSet = NULL;
+    memcpy(&nCount ,papszRow[0], 4);
     
     return nCount;
 }
-#endif
 
 /************************************************************************/
 /*                          GetExtent()					*/
@@ -1265,7 +1261,7 @@ int OGRIngresTableLayer::GetFeatureCount( int bForce )
 /*      in the future when Ingres adds support for a single MBR query    */
 /*      like PostgreSQL.						*/
 /************************************************************************/
-#ifdef notdef
+
 OGRErr OGRIngresTableLayer::GetExtent(OGREnvelope *psExtent, int bForce )
 
 {
@@ -1276,72 +1272,79 @@ OGRErr OGRIngresTableLayer::GetExtent(OGREnvelope *psExtent, int bForce )
         psExtent->MinY = 0.0;
         psExtent->MaxY = 0.0;
         
+        CPLError(CE_Failure, CPLE_AppDefined, 
+            "%s is not a geometry layer", GetLayerDefn()->GetName());
         return OGRERR_FAILURE;
     }
 
 	OGREnvelope oEnv;
 	CPLString   osCommand;
 	GBool       bExtentSet = FALSE;
+    OGRIngresStatement oStmt(poDS->GetTransaction()); 
 
-	osCommand.Printf( "SELECT Envelope(%s) FROM %s;", pszGeomColumn, pszGeomColumnTable);
+	osCommand.Printf( "SELECT asbinary(extent(%s)) FROM %s", 
+        osGeomColumn.c_str(), 
+        GetLayerDefn()->GetName());
+    CPLDebug("Ingres", osCommand.c_str());
 
-	if (ingres_query(poDS->GetConn(), osCommand) == 0)
-	{
-		INGRES_RES* result = ingres_use_result(poDS->GetConn());
-		if ( result == NULL )
-        {
-            poDS->ReportError( "ingres_use_result() failed on extents query." );
-            return OGRERR_FAILURE;
+    if (osWHERE.size())
+    {
+        osCommand += " WHERE ";
+        osCommand += osWHERE;
+
+        /* Bind Geometry */
+        if (m_poFilterGeom)
+        {        
+            BindQueryGeometry(&oStmt);
         }
+    }
 
-		INGRES_ROW row; 
-		unsigned long *panLengths = NULL;
-		while ((row = ingres_fetch_row(result)))
-		{
-			if (panLengths == NULL)
-			{
-				panLengths = ingres_fetch_lengths( result );
-				if ( panLengths == NULL )
-				{
-					poDS->ReportError( "ingres_fetch_lengths() failed on extents query." );
-					return OGRERR_FAILURE;
-				}
-			}
+    /* -------------------------------------------------------------------- */
+    /*  Execute SQL and get the result  									*/
+    /* -------------------------------------------------------------------- */
+    if (!oStmt.ExecuteSQL(osCommand.c_str()))
+    {
+        /* Failed */
+        return OGRERR_FAILURE;
+    }
 
-			OGRGeometry *poGeometry = NULL;
-			// Geometry columns will have the first 4 bytes contain the SRID.
-			OGRGeometryFactory::createFromWkb(((GByte *)row[0]) + 4, 
-											  NULL,
-											  &poGeometry,
-											  panLengths[0] - 4 );
+    char **papszRow = oStmt.GetRow();
+    if (papszRow == NULL)
+    {
+        return OGRERR_FAILURE;
+    }
 
-			if ( poGeometry != NULL )
-			{
-				if (poGeometry && !bExtentSet)
-				{
-					poGeometry->getEnvelope(psExtent);
-					bExtentSet = TRUE;
-				}
-				else if (poGeometry)
-				{
-					poGeometry->getEnvelope(&oEnv);
-					if (oEnv.MinX < psExtent->MinX) 
-						psExtent->MinX = oEnv.MinX;
-					if (oEnv.MinY < psExtent->MinY) 
-						psExtent->MinY = oEnv.MinY;
-					if (oEnv.MaxX > psExtent->MaxX) 
-						psExtent->MaxX = oEnv.MaxX;
-					if (oEnv.MaxY > psExtent->MaxY) 
-						psExtent->MaxY = oEnv.MaxY;
-				}
-				delete poGeometry;
-			}
-		}
+    /* -------------------------------------------------------------------- */
+    /* 	What kind of result it is?											*/
+    /* -------------------------------------------------------------------- */
+    OGRGeometry *poGeometry = NULL;
+    OGRGeometryFactory::createFromWkb( (GByte*)papszRow[0], 
+        NULL,
+        &poGeometry,
+        -1);
 
-		ingres_free_result(result);      
-	}
+    if ( poGeometry != NULL )
+    {
+        if (poGeometry && !bExtentSet)
+        {
+            poGeometry->getEnvelope(psExtent);
+            bExtentSet = TRUE;
+        }
+        else if (poGeometry)
+        {
+            poGeometry->getEnvelope(&oEnv);
+            if (oEnv.MinX < psExtent->MinX) 
+                psExtent->MinX = oEnv.MinX;
+            if (oEnv.MinY < psExtent->MinY) 
+                psExtent->MinY = oEnv.MinY;
+            if (oEnv.MaxX > psExtent->MaxX) 
+                psExtent->MaxX = oEnv.MaxX;
+            if (oEnv.MaxY > psExtent->MaxY) 
+                psExtent->MaxY = oEnv.MaxY;
+        }
+        delete poGeometry;
+    }
 
 	return (bExtentSet ? OGRERR_NONE : OGRERR_FAILURE);
 }
-#endif
 
