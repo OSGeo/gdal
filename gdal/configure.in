@@ -2199,6 +2199,17 @@ AC_SUBST(MYSQL_LIB,$MYSQL_LIB)
 dnl ---------------------------------------------------------------------------
 dnl INGRES support.
 dnl ---------------------------------------------------------------------------
+AC_MSG_CHECKING([for Ingres])
+
+# check if configured as a plugin mode
+# the default is yes, unless set to no
+
+AC_ARG_WITH(ingresplugin,[  --with-ingresplugin[=ARG]   (ARG=yes/no)],,)
+if test "$with_ingresplugin" = "no" ; then
+  INGRES_PLUGIN=no
+else
+  INGRES_PLUGIN=yes
+fi
 
 AC_ARG_WITH(ingres,[  --with-ingres=ARG     Include Ingres (ARG=$II_SYSTEM)],,)
 
