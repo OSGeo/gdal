@@ -419,7 +419,7 @@ def pdf_jpeg_compression_rgb():
 ###############################################################################
 # Test RGBA
 
-def pdf_rgba_default_compression():
+def pdf_rgba_default_compression(options_param = []):
 
     if gdaltest.pdf_drv is None:
         return 'skip'
@@ -428,10 +428,10 @@ def pdf_rgba_default_compression():
         return 'skip'
 
     src_ds = gdal.Open( '../gcore/data/stefan_full_rgba.tif')
-    out_ds = gdaltest.pdf_drv.CreateCopy('tmp/rgba.pdf', src_ds)
+    out_ds = gdaltest.pdf_drv.CreateCopy('tmp/rgba.pdf', src_ds, options = options_param)
     out_ds = None
 
-    gdal.SetConfigOption('GDAL_PDF_BANDS', '4')
+    #gdal.SetConfigOption('GDAL_PDF_BANDS', '4')
     out_ds = gdal.Open('tmp/rgba.pdf')
     cs1 = out_ds.GetRasterBand(1).Checksum()
     cs2 = out_ds.GetRasterBand(2).Checksum()
@@ -446,7 +446,7 @@ def pdf_rgba_default_compression():
     src_cs3 = src_ds.GetRasterBand(3).Checksum()
     src_cs4 = src_ds.GetRasterBand(4).Checksum()
     out_ds = None
-    gdal.SetConfigOption('GDAL_PDF_BANDS', None)
+    #gdal.SetConfigOption('GDAL_PDF_BANDS', None)
 
     gdal.Unlink('tmp/rgba.pdf')
 
@@ -469,6 +469,9 @@ def pdf_rgba_default_compression():
         print(src_cs4)
 
     return 'success'
+
+def pdf_rgba_default_compression_tiled():
+    return pdf_rgba_default_compression(['BLOCKXSIZE=32', 'BLOCKYSIZE=32'])
 
 def pdf_jpeg_compression_rgba():
     return pdf_jpeg_compression('../../gcore/data/stefan_full_rgba.tif')
@@ -1679,6 +1682,7 @@ gdaltest_list = [
     pdf_jp2ecw_compression_rgb,
     pdf_jpeg_compression_rgb,
     pdf_rgba_default_compression,
+    pdf_rgba_default_compression_tiled,
     pdf_jpeg_compression_rgba,
     pdf_predictor_2,
     pdf_predictor_2_rgb,
@@ -1714,6 +1718,7 @@ gdaltest_list = [
     pdf_update_gt,
     pdf_update_info,
     pdf_update_xmp,
+    pdf_rgba_default_compression_tiled,
 ]
 
 if __name__ == '__main__':

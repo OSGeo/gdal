@@ -93,6 +93,10 @@ $ gdal_translate ../autotest/gdrivers/data/adobe_style_geospatial.pdf out.tif --
 The opening of a PDF document (to get the georeferencing) is fast, but at the first access to a raster block,
 the whole page will be rasterized, which can be a slow operation.
 <p>
+Note: starting with GDAL 1.10, some raster-only PDF files (such as some USGS GeoPDF files), that are regularly
+tiled are exposed as tiled dataset by the GDAL PDF driver, and can be rendered with either the Poppler or the
+Podofo backends.
+<p>
 Only a few of the possible Datums available in the OGC best practice spec have been currently mapped
 in the driver. Unrecognized datums will be considered as being based on the WGS84 ellipsoid.
 <p>
