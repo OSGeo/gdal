@@ -3423,6 +3423,8 @@ int GDALPDFWriter::WriteMask(GDALDataset* poSrcDS,
             bOnly0 = FALSE;
         else
         {
+            bOnly0 = FALSE;
+            bOnly255 = FALSE;
             bOnly0or255 = FALSE;
             break;
         }
