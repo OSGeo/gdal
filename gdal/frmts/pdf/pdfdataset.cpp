@@ -641,15 +641,15 @@ PDFRasterBand::PDFRasterBand( PDFDataset *poDS, int nBand )
         nBlockXSize = poDS->nBlockXSize;
         nBlockYSize = poDS->nBlockYSize;
     }
-    else if( poDS->GetRasterXSize() < 16 * 1024 * 1024 / poDS->GetRasterYSize() )
+    else if( poDS->GetRasterXSize() < 64 * 1024 * 1024 / poDS->GetRasterYSize() )
     {
         nBlockXSize = poDS->GetRasterXSize();
         nBlockYSize = 1;
     }
     else
     {
-        nBlockXSize = 1024;
-        nBlockYSize = 1024;
+        nBlockXSize = MIN(1024, poDS->GetRasterXSize());
+        nBlockYSize = MIN(1024, poDS->GetRasterYSize());
         poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
     }
 }
@@ -1469,6 +1469,8 @@ CPLString GDALPDFParseStreamContentOnlyDrawForm(const char* pszContent)
     char ch;
     int nCurIdx = 0;
     CPLString osCurrentForm;
+
+    //CPLDebug("PDF", "content = %s", pszContent);
 
     while((ch = *pszContent) != '\0')
     {
