@@ -1030,7 +1030,11 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 #ifdef HAVE_PODOFO
       if (!poGDS->bUsePoppler)
       {
-        CPLAssert(poGDS->nBands != 4);
+        if (nBand == 4)
+        {
+            memset(pImage, 255, nBlockXSize * nBlockYSize);
+            return CE_None;
+        }
 
         if (pszRenderingOptions != NULL)
         {
