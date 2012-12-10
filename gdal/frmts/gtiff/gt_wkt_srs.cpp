@@ -891,6 +891,16 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         }
 
 /* -------------------------------------------------------------------- */
+/*      This addresses another case where the EGM96 Vertical Datum code */
+/*      is mis-used as a Vertical CS code (#4922)                       */
+/* -------------------------------------------------------------------- */
+        if( verticalCSType == 5171 )
+        {
+            verticalDatum = 5171;
+            verticalCSType = 5773;
+        }
+ 
+/* -------------------------------------------------------------------- */
 /*      Somewhat similarly, codes 5001 to 5033 were treated as          */
 /*      vertical coordinate systems based on ellipsoidal heights.       */
 /*      We use the corresponding 2d geodetic datum as the vertical      */
