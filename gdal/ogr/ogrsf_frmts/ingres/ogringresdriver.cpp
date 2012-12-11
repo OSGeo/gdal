@@ -48,7 +48,7 @@ OGRIngresDriver::~OGRIngresDriver()
 const char *OGRIngresDriver::GetName()
 
 {
-    return "Ingres";
+    return "INGRES";
 }
 
 /************************************************************************/

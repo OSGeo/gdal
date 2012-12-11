@@ -24,7 +24,6 @@ SUBDIRS-$(HAVE_SQLITE)	+= sqlite
 SUBDIRS-$(HAVE_SDE)     += sde
 SUBDIRS-$(HAVE_FGDB)    += filegdb
 SUBDIRS-$(HAVE_ARCOBJECTS)  += arcobjects
-SUBDIRS-$(HAVE_INGRES)  += ingres
 SUBDIRS-$(HAVE_VFK)     += vfk
 SUBDIRS-$(HAVE_LIBKML)  += libkml
 SUBDIRS-$(CURL_SETTING) += wfs
@@ -42,6 +41,10 @@ SUBDIRS-yes  += pcidsk
 endif
 ifeq ($(PCIDSK_SETTING),external)
 SUBDIRS-yes  += pcidsk
+endif
+
+ifeq ($(INGRES_PLUGIN), no)
+SUBDIRS-$(HAVE_INGRES)  += ingres
 endif
 
 default:	$(foreach d,$(SUBDIRS-yes),$(d)-target)
