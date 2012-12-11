@@ -182,7 +182,7 @@ lists information about a raster dataset
 
 \verbatim
 gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]
-         [-noct] [-nofl] [-checksum] [-proj4] [-mdd domain]*
+         [-norat] [-noct] [-nofl] [-checksum] [-proj4] [-mdd domain]*
 	 [-sd subdataset] datasetname
 \endverbatim
 
@@ -204,6 +204,7 @@ useful for datasets with huge amount of GCPs, such as L1B AVHRR or HDF4 MODIS
 which contain thousands of them.</dd>
 <dt> <b>-nomd</b></dt><dd> Suppress metadata printing. Some datasets may contain a lot
 of metadata strings.</dd>
+<dt> <b>-nrat</b></dt><dd> Suppres printing of raster attribute table.</dd>
 <dt> <b>-noct</b></dt><dd> Suppress printing of color table.</dd>
 <dt> <b>-checksum</b></dt><dd> Force computation of the checksum for each band in the dataset.</dd>
 <dt> <b>-mdd domain</b></dt><dd> Report metadata for the specified domain</dd>
@@ -321,11 +322,11 @@ bands. Starting with GDAL 1.8.0, <i>band</i> can also be set to "mask,1"
 <i>band</i> to create output dataset mask band. Bands are numbered from 1. 
 <i>band</i> can be set to "none" to avoid copying the global mask of the input dataset if
 it exists. Otherwise it is copied by default ("auto"), unless the mask is an alpha channel,
-or if it is explicitely used to ben a regular band of the output dataset ("-b mask").
+or if it is explicitly used to be a regular band of the output dataset ("-b mask").
 <i>band</i> can also be set to "mask,1" (or just "mask") to mean the mask band of
 the 1st band of the input dataset.</dd>
 <dt> <b>-expand</b> <i>gray|rgb|rgba</i>:</dt><dd> (From GDAL 1.6.0) To expose a dataset with 1 band
-with a color table as a dataset with 3 (RGB) or 4 (RGBA) bands. Usefull for
+with a color table as a dataset with 3 (RGB) or 4 (RGBA) bands. Useful for
 output drivers such as JPEG, JPEG2000, MrSID, ECW that don't support color
 indexed datasets. The 'gray' value (from GDAL 1.7.0) enables to expand a
 dataset with a color table that only contains gray levels to a gray indexed
@@ -351,7 +352,7 @@ option is set, <b>-srcwin</b> or <b>-projwin</b> values that falls partially out
 source raster extent will be considered as an error. The default behaviour starting
 with GDAL 1.10 is to accept such requests, when they were considered as an error before.</dd>
 <dt> <b>-eco</b>: (Error when Completely Outside)</dt><dd>(GDAL >= 1.10) Same
-as <b>-epo</b>, except that the criteron for erroring out is when the request falls completely
+as <b>-epo</b>, except that the criterion for erroring out is when the request falls completely
 outside the source raster extent.</dd>
 <dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> Override the projection for the
 output file.  The <i>srs_def</i> may be any of the usual GDAL/OGR forms,
@@ -420,7 +421,7 @@ gdaladdo [-r {nearest,average,gauss,cubic,average_mp,average_magphase,mode}]
 \section gdaladdo_description DESCRIPTION
 
 The gdaladdo utility can be used to build or rebuild overview images for
-most supported file formats with one over several downsampling algorithms. 
+most supported file formats with one of several downsampling algorithms. 
 
 <dl>
 <dt> <b>-r</b>
@@ -447,7 +448,7 @@ so that a 3x3 resampling Gaussian kernel is selected.
 
 gdaladdo will honour properly NODATA_VALUES tuples (special dataset metadata) so
 that only a given RGB triplet (in case of a RGB image) will be considered as the
-nodata value and not each value of the triplet independantly per band. 
+nodata value and not each value of the triplet independently per band. 
 
 Selecting a level value like <i>2</i> causes an overview level that is 1/2
 the resolution (in each dimension) of the base layer to be computed.  If
@@ -676,7 +677,7 @@ data.</dd>
 Set nodata values for input bands (different values can be supplied for each band). If 
 more than one value is supplied all values should be quoted to keep them 
 together as a single operating system argument. If the option is not specified, the
-instrinsic nodata settings on the source datasets will be used (if they exist). The value set by this option
+intrinsic nodata settings on the source datasets will be used (if they exist). The value set by this option
 is written in the NODATA element of each ComplexSource element. Use a value of
 <tt>None</tt> to ignore intrinsic nodata settings on the source datasets.</dd>
 
@@ -684,7 +685,7 @@ is written in the NODATA element of each ComplexSource element. Use a value of
 Set nodata values at the VRT band level (different values can be supplied for each band).  If more
 than one value is supplied all values should be quoted to keep them together
 as a single operating system argument.  If the option is not specified,
-instrinsic nodata settings on the first dataset will be used (if they exist). The value set by this option
+intrinsic nodata settings on the first dataset will be used (if they exist). The value set by this option
 is written in the NoDataValue element of each VRTRasterBand element. Use a value of
 <tt>None</tt> to ignore intrinsic nodata settings on the source datasets.</dd>
 
@@ -988,7 +989,7 @@ maximize output image visual quality.
 <dt> <b>-n</b> <i>colors</i>:</dt><dd> Select the number of colors in the generated
 color table.  Defaults to 256.  Must be between 2 and 256. </dd>
 <dt> <b>-pct</b> <i>palette_file</i>:</dt><dd> Extract the color table from
-<i>palette_file</i> instead of computing it. Can be used to have a consistant
+<i>palette_file</i> instead of computing it. Can be used to have a consistent
 color table for multiple files.  The <i>palette_file</i> must be a raster file
 in a GDAL supported format with a palette.</dd>
 <dt> <b>-of</b> <i>format</i>:</dt><dd> Format to generated (defaults to GeoTIFF).  Same
@@ -1004,7 +1005,7 @@ with Python support.
 
 \section rgb2pct_example EXAMPLE
 
-If it is desired to hand create the palette, likely the simpliest text format
+If it is desired to hand create the palette, likely the simplest text format
 is the GDAL VRT format.  In the following example a VRT was created in a 
 text editor with a small 4 color palette with the RGBA colors 238/238/238/255, 
 237/237/237/255, 236/236/236/255 and 229/229/229/255.
@@ -1186,7 +1187,7 @@ nearblack [-of format] [-white | [-color c1,c2,c3...cn]*] [-near dist] [-nb non_
 This utility will scan an image and try to set all pixels that are nearly or exactly
 black, white or one or more custom colors around the collar to black or white.  This
 is often used to "fix up" lossy compressed airphotos so that color pixels
-can be treated as transparent when mosaicing. 
+can be treated as transparent when mosaicking. 
 
 <dl>
 <dt> <b>-o</b> <i>outfile</i>:</dt><dd> The name of the output file to be
@@ -1292,7 +1293,7 @@ such that the aligned extent includes the minimum extent.</dd>
 If not specified the aggregate extents of all input files will be
 used.</dd>
 <dt>
-<dt> <b>-v</b>:</dt><dd> Generate verbose output of mosaicing operations as they are done.</dd>
+<dt> <b>-v</b>:</dt><dd> Generate verbose output of mosaicking operations as they are done.</dd>
 <dt> <b>-separate</b>:</dt><dd> 
 Place each input file into a separate <i>stacked</i> band. 
 </dd>
@@ -1358,17 +1359,17 @@ gdal2tiles.py [-p profile] [-r resampling] [-s srs] [-z zoom]
 \section gdal2tiles_description DESCRIPTION
 
 This utility generates a directory with small tiles and metadata, following
-OSGeo Tile Map Service Specification. Simple web pages with viewers based on
+the OSGeo Tile Map Service Specification. Simple web pages with viewers based on
 Google Maps and OpenLayers are generated as well - so anybody can comfortably
 explore your maps on-line and you do not need to install or configure any
-special software (like mapserver) and the map displays very fast in the
-webbrowser. You only need to upload generated directory into a web server.
+special software (like MapServer) and the map displays very fast in the
+web browser. You only need to upload the generated directory onto a web server.
 
-GDAL2Tiles creates also necessary metadata for Google Earth (KML
+GDAL2Tiles also creates the necessary metadata for Google Earth (KML
 SuperOverlay), in case the supplied map uses EPSG:4326 projection.
 
-World files and embedded georeference is used during tile generation, but you
-can publish a picture without proper georeference too. 
+World files and embedded georeferencing is used during tile generation, but you
+can publish a picture without proper georeferencing too. 
 
 <dl>
 <dt> <b>-p</b> <i>PROFILE</i>, --profile=<i>PROFILE</i>:</dt>
@@ -1545,7 +1546,7 @@ passed  are  anything  supported by the OGRSpatialReference.SetFro‐mUserInput(
 which  includes  EPSG  PCS  and   GCSes   (ie.EPSG:4296),  PROJ.4  declarations (as above),
 or the name of a .prf file containing well known text.
 If  no  srs_def  is  given,  the srs_def  of the source tiles is used (if there is any).
-The srs_def will be propageted to created tiles (if possible) and  to  the  optional
+The srs_def will be propagated to created tiles (if possible) and  to  the  optional
 shape file(s)
 </dd>
 <dt> <b>-tileIndex</b> <i>tileIndexName</i>:</dt><dd>
@@ -1883,7 +1884,7 @@ Values to interpolate will be read from Z value of geometry record.
 gdal_grid -a invdist:power=2.0:smoothing=1.0 -txe 85000 89000 -tye 894000 890000 -outsize 400 400 -of GTiff -ot Float64 -l dem dem.vrt dem.tiff
 \endverbatim
 
-The next command does the same thing as the previos one, but reads values to
+The next command does the same thing as the previous one, but reads values to
 interpolate from the attribute field specified with <b>-zfield</b> option
 instead of geometry record. So in this case X and Y coordinates are being
 taken from geometry and Z is being taken from the <i>"Elevation"</i> field.
@@ -2068,7 +2069,7 @@ corresponding Red, Green, Blue component (between 0 and 255).
 The elevation value can be any floating point value, or the <i>nv</i> keyword for the nodata value..
 The elevation can also be expressed as a percentage : 0% being the minimum value found in the raster, 100% the maximum value.
 
-An extra column can be optionnaly added for the alpha component. If it is not specified, full opacity (255) is assumed.
+An extra column can be optionally added for the alpha component. If it is not specified, full opacity (255) is assumed.
 
 Various field separators are accepted : comma, tabulation, spaces, ':'.
 
@@ -2079,7 +2080,7 @@ Since GDAL 1.8.0, GMT .cpt palette files are also supported (COLOR_MODEL = RGB o
 
 Note: the syntax of the color configuration file is derived from the one supported by GRASS r.colors utility.
 ESRI HDR color table files (.clr) also match that syntax.
-The alpha component and the support of tablulations and commma as separators are GDAL specific extensions.
+The alpha component and the support of tab and comma as separators are GDAL specific extensions.
 
 For example :
 \verbatim
@@ -2112,7 +2113,7 @@ There are no specific options.
 \subsection gdaldem_roughness roughness
 
 This command outputs a single-band raster with values computed from the elevation.
-Roughness is the the largest inter-cell difference of a central pixel and its surrounding cell, as defined in Wilson et al (2007, Marine Geodesy 30:3-35).
+Roughness is the largest inter-cell difference of a central pixel and its surrounding cell, as defined in Wilson et al (2007, Marine Geodesy 30:3-35).
 
 The value -9999 is used as the output nodata value.
 
