@@ -182,7 +182,7 @@ lists information about a raster dataset
 
 \verbatim
 gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]
-         [-noct] [-nofl] [-checksum] [-proj4] [-mdd domain]*
+         [-norat] [-noct] [-nofl] [-checksum] [-proj4] [-mdd domain]*
 	 [-sd subdataset] datasetname
 \endverbatim
 
@@ -204,6 +204,7 @@ useful for datasets with huge amount of GCPs, such as L1B AVHRR or HDF4 MODIS
 which contain thousands of them.</dd>
 <dt> <b>-nomd</b></dt><dd> Suppress metadata printing. Some datasets may contain a lot
 of metadata strings.</dd>
+<dt> <b>-nrat</b></dt><dd> Suppres printing of raster attribute table.</dd>
 <dt> <b>-noct</b></dt><dd> Suppress printing of color table.</dd>
 <dt> <b>-checksum</b></dt><dd> Force computation of the checksum for each band in the dataset.</dd>
 <dt> <b>-mdd domain</b></dt><dd> Report metadata for the specified domain</dd>
