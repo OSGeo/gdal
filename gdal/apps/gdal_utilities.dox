@@ -420,7 +420,7 @@ gdaladdo [-r {nearest,average,gauss,cubic,average_mp,average_magphase,mode}]
 \section gdaladdo_description DESCRIPTION
 
 The gdaladdo utility can be used to build or rebuild overview images for
-most supported file formats with one over several downsampling algorithms. 
+most supported file formats with one of several downsampling algorithms. 
 
 <dl>
 <dt> <b>-r</b>
