@@ -221,7 +221,9 @@ CPLErr IRISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     //Prepare to read (640 is the header size in bytes) and read (the y axis in the IRIS files in the inverse direction)
-    VSIFSeekL( poGDS->fp, 640 + nBlockXSize*nDataLength*(poGDS->GetRasterYSize()-1-nBlockYOff), SEEK_SET );
+    //The previous bands are also added as an offset
+
+    VSIFSeekL( poGDS->fp, 640 + nDataLength*poGDS->GetRasterXSize()*poGDS->GetRasterYSize()*(this->nBand-1) + nBlockXSize*nDataLength*(poGDS->GetRasterYSize()-1-nBlockYOff), SEEK_SET );
 
     VSIFReadL( pszRecord, 1, nBlockXSize*nDataLength, poGDS->fp );
 
@@ -469,6 +471,8 @@ void IRISDataset::LoadProjection()
         adfGeoTransform[3] = dfY + (fRadarLocY * (dfY2 - dfY));
         adfGeoTransform[4] = 0.0;
         adfGeoTransform[5] = -1*(dfY2 - dfY);
+        
+        delete poTransform;
         
     }else if(EQUAL(aszProjections[nProjectionCode],"Azimutal equidistant")){
         
