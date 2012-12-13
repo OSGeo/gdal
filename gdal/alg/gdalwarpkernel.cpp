@@ -30,6 +30,7 @@
  ****************************************************************************/
 
 #include "gdalwarper.h"
+#include "gdal_alg_priv.h"
 #include "cpl_string.h"
 #include "gdalwarpkernel_opencl.h"
 #include "cpl_atomic_ops.h"
@@ -198,7 +199,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
     else
     {
         GWKJobStruct* pasThreadJob =
-            (GWKJobStruct*)CPLMalloc(sizeof(GWKJobStruct) * nThreads);
+            (GWKJobStruct*)CPLCalloc(sizeof(GWKJobStruct), nThreads);
 
 /* -------------------------------------------------------------------- */
 /*      Duplicate pTransformerArg per thread.                           */
@@ -206,45 +207,24 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
         int i;
         int bTransformerCloningSuccess = TRUE;
 
-        CPLXMLNode* psTransformerNode = GDALSerializeTransformer(
-                            poWK->pfnTransformer, poWK->pTransformerArg );
-        if (psTransformerNode == NULL)
+        for(i=0;i<nThreads;i++)
         {
-            CPLDebug("WARP", "Cannot serialize transformer");
-            bTransformerCloningSuccess = FALSE;
-        }
-        else
-        {
-            for(i=0;i<nThreads;i++)
+            pasThreadJob[i].pTransformerArg = GDALCloneTransformer(poWK->pTransformerArg);
+            if( pasThreadJob[i].pTransformerArg == NULL )
             {
-                GDALTransformerFunc pfnTransformer = NULL;
-                if (GDALDeserializeTransformer(psTransformerNode,
-                       &pfnTransformer, &(pasThreadJob[i].pTransformerArg))
-                                                                    != CE_None)
-                {
-                    CPLDebug("WARP", "Cannot deserialize transformer");
-                    bTransformerCloningSuccess = FALSE;
-                    break;
-                }
-#if 0
-                /* Sanity check that should not fail, but does not work on Windows */
-                /* due to the way pointers to functions work. */
-                if (pfnTransformer != poWK->pfnTransformer)
-                {
-                    CPLDebug("WARP", "Deserialized transformer function is "
-                             "different from source transformer function");
-                    GDALDestroyTransformer(pasThreadJob[i].pTransformerArg);
-                    bTransformerCloningSuccess = FALSE;
-                    break;
-                }
-#endif
+                CPLDebug("WARP", "Cannot deserialize transformer");
+                bTransformerCloningSuccess = FALSE;
+                break;
             }
-
-            CPLDestroyXMLNode(psTransformerNode);
         }
 
         if (!bTransformerCloningSuccess)
         {
+            for(i=0;i<nThreads;i++)
+            {
+                if( pasThreadJob[i].pTransformerArg )
+                    GDALDestroyTransformer(pasThreadJob[i].pTransformerArg);
+            }
             CPLFree(pasThreadJob);
 
             CPLDebug("WARP", "Cannot duplicate transformer function. "
@@ -255,6 +235,11 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
         void* hCond = CPLCreateCond();
         if (hCond == NULL)
         {
+            for(i=0;i<nThreads;i++)
+            {
+                if( pasThreadJob[i].pTransformerArg )
+                    GDALDestroyTransformer(pasThreadJob[i].pTransformerArg);
+            }
             CPLFree(pasThreadJob);
 
             CPLDebug("WARP", "Multithreading disabled. "

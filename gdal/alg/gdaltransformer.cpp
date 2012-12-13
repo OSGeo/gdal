@@ -832,6 +832,37 @@ typedef struct {
 } GDALGenImgProjTransformInfo;
 
 /************************************************************************/
+/*                  GDALCloneGenImgProjTransformer()                    */
+/************************************************************************/
+
+void* GDALCloneGenImgProjTransformer( void *hTransformArg )
+{
+    VALIDATE_POINTER1( hTransformArg, "GDALCloneGenImgProjTransformer", NULL );
+
+    GDALGenImgProjTransformInfo *psInfo = 
+        (GDALGenImgProjTransformInfo *) hTransformArg;
+
+    GDALGenImgProjTransformInfo *psClonedInfo =  (GDALGenImgProjTransformInfo *)
+        CPLMalloc(sizeof(GDALGenImgProjTransformInfo));
+
+    memcpy(psClonedInfo, psInfo, sizeof(GDALGenImgProjTransformInfo));
+    if( psClonedInfo->pSrcGCPTransformArg )
+        psClonedInfo->pSrcGCPTransformArg = GDALCloneTransformer( psInfo->pSrcGCPTransformArg );
+    if( psClonedInfo->pSrcRPCTransformArg )
+        psClonedInfo->pSrcRPCTransformArg = GDALCloneTransformer( psInfo->pSrcRPCTransformArg );
+    if( psClonedInfo->pSrcTPSTransformArg )
+        psClonedInfo->pSrcTPSTransformArg = GDALCloneTransformer( psInfo->pSrcTPSTransformArg );
+    if( psClonedInfo->pSrcGeoLocTransformArg )
+        psClonedInfo->pSrcGeoLocTransformArg = GDALCloneTransformer( psInfo->pSrcGeoLocTransformArg );
+    if( psClonedInfo->pReprojectArg )
+        psClonedInfo->pReprojectArg = GDALCloneTransformer( psInfo->pReprojectArg );
+    if( psClonedInfo->pDstGCPTransformArg )
+        psClonedInfo->pDstGCPTransformArg = GDALCloneTransformer( psInfo->pDstGCPTransformArg );
+
+    return psClonedInfo;
+}
+
+/************************************************************************/
 /*                  GDALCreateGenImgProjTransformer()                   */
 /************************************************************************/
 
@@ -2214,6 +2245,35 @@ typedef struct
 } ApproxTransformInfo;
 
 /************************************************************************/
+/*                    GDALCloneApproxTransformer()                      */
+/************************************************************************/
+
+void* GDALCloneApproxTransformer( void *hTransformArg )
+{
+    VALIDATE_POINTER1( hTransformArg, "GDALCloneApproxTransformer", NULL );
+
+    ApproxTransformInfo *psInfo = 
+        (ApproxTransformInfo *) hTransformArg;
+
+    ApproxTransformInfo *psClonedInfo =  (ApproxTransformInfo *)
+        CPLMalloc(sizeof(ApproxTransformInfo));
+
+    memcpy(psClonedInfo, psInfo, sizeof(ApproxTransformInfo));
+    if( psClonedInfo->pBaseCBData )
+    {
+        psClonedInfo->pBaseCBData = GDALCloneTransformer( psInfo->pBaseCBData );
+        if( psClonedInfo->pBaseCBData == NULL )
+        {
+            CPLFree(psClonedInfo);
+            return NULL;
+        }
+    }
+    psClonedInfo->bOwnSubtransformer = TRUE;
+
+    return psClonedInfo;
+}
+
+/************************************************************************/
 /*                   GDALSerializeApproxTransformer()                   */
 /************************************************************************/
 
@@ -2796,3 +2856,82 @@ int GDALUseTransformer( void *pTransformArg,
                                      x, y, z, panSuccess );
 }
 
+/************************************************************************/
+/*                        GDALCloneTransformer()                        */
+/************************************************************************/
+
+/* TODO GDAL 2.0 : use a void* (*pfnClone) (void *) member */
+void *GDALCloneTransformer( void *pTransformArg )
+{
+    VALIDATE_POINTER1( pTransformArg, "GDALCloneTransformer", NULL );
+
+    GDALTransformerInfo *psInfo = static_cast<GDALTransformerInfo *>(pTransformArg);
+
+    if( psInfo == NULL || !EQUAL(psInfo->szSignature,"GTI") )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to clone non-GTI transformer." );
+        return NULL;
+    }
+
+    void* (*pfnClone)(void*) = NULL;
+    if( EQUAL(psInfo->pszClassName,"GDALTPSTransformer") )
+    {
+        pfnClone = GDALCloneTPSTransformer;
+    }
+    /* TODO
+    else if( EQUAL(psInfo->pszClassName,"GDALGeoLocTransformer") )
+    {
+        pfnClone = GDALCloneGeoLocTransformer;
+    }
+    else if( EQUAL(psInfo->pszClassName,"GDALRPCTransformer") )
+    {
+        pfnClone = GDALCloneRPCTransformer;
+    }
+    */
+    else if( EQUAL(psInfo->pszClassName,"GDALGenImgProjTransformer") )
+    {
+        pfnClone = GDALCloneGenImgProjTransformer;
+    }
+    /* Useless : serialization/deserialization is fine */
+    /*
+    else if( EQUAL(psInfo->pszClassName,"GDALReprojectionTransformer") )
+    {
+        pfnClone = GDALCloneReprojectionTransformer;
+    }
+    */
+    else if( EQUAL(psInfo->pszClassName,"GDALApproxTransformer") )
+    {
+        pfnClone = GDALCloneApproxTransformer;
+    }
+
+    if( pfnClone != NULL )
+    {
+        void* pRet = pfnClone(pTransformArg);
+        if( pRet != NULL )
+            return pRet;
+    }
+
+    if ( psInfo->pfnSerialize == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "No serialization function available for this transformer." );
+        return NULL;
+    }
+    else
+    {
+        CPLXMLNode* pSerialized = psInfo->pfnSerialize( pTransformArg );
+        if( pSerialized == NULL )
+            return NULL;
+        GDALTransformerFunc pfnTransformer = NULL;
+        void *pClonedTransformArg = NULL;
+        if( GDALDeserializeTransformer( pSerialized, &pfnTransformer, &pClonedTransformArg ) !=
+            CE_None )
+        {
+            CPLDestroyXMLNode(pSerialized);
+            return NULL;
+        }
+        CPLDestroyXMLNode(pSerialized);
+        return pClonedTransformArg;
+    }
+}
