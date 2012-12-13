@@ -120,6 +120,7 @@ typedef struct {
     GDALTransformerFunc pfnTransform;
     void (*pfnCleanup)( void * );
     CPLXMLNode *(*pfnSerialize)( void * );
+    /* TODO GDAL 2.0 : add a void* (*pfnClone) (void *) member */
 } GDALTransformerInfo;
 
 void CPL_DLL GDALDestroyTransformer( void *pTransformerArg );
