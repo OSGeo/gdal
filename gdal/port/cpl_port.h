@@ -75,10 +75,6 @@
 #  ifndef _CRT_NONSTDC_NO_DEPRECATE
 #    define _CRT_NONSTDC_NO_DEPRECATE
 #  endif
-#  ifdef MSVC_USE_VLD
-#    include <wchar.h>
-#    include <vld.h>
-#  endif
 #endif
 
 #include "cpl_config.h"
