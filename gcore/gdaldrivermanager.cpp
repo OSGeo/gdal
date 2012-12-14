@@ -34,6 +34,13 @@
 #include "cpl_multiproc.h"
 #include "gdal_pam.h"
 
+#ifdef _MSC_VER
+#  ifdef MSVC_USE_VLD
+#    include <wchar.h>
+#    include <vld.h>
+#  endif
+#endif
+
 CPL_CVSID("$Id$");
 
 static const char *pszUpdatableINST_DATA = 
