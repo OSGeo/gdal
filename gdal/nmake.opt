@@ -577,7 +577,9 @@ CFLAGS	=	$(OPTFLAGS) $(WARNFLAGS) $(SSEFLAGS) $(INC) $(EXTRAFLAGS) $(OGR_FLAG) $
 CPPFLAGS = $(CFLAGS) 
 MAKE	=	nmake /nologo
 
+!IFNDEF CC
 CC	=	cl
+!ENDIF
 
 INSTALL	=	xcopy /y /r /d /f
 
