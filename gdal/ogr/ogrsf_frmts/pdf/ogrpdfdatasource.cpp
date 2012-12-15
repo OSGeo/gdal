@@ -676,19 +676,20 @@ static OGRPoint* PDFGetStarCenter(OGRLineString* poLS)
 /************************************************************************/
 
 int OGRPDFDataSource::UnstackTokens(const char* pszToken,
+                                    int nRequiredArgs,
                                     char aszTokenStack[TOKEN_STACK_SIZE][MAX_TOKEN_SIZE],
                                     int& nTokenStackSize,
                                     double* adfCoords)
 {
-    int nArgs = oMapOperators[pszToken];
-    for(int i=0;i<nArgs;i++)
+    if (nTokenStackSize < nRequiredArgs)
     {
-        if (nTokenStackSize == 0)
-        {
-            CPLDebug("PDF", "not enough arguments for %s", pszToken);
-            return FALSE;
-        }
-        adfCoords[nArgs-1-i] = atof(aszTokenStack[--nTokenStackSize]);
+        CPLDebug("PDF", "not enough arguments for %s", pszToken);
+        return FALSE;
+    }
+    nTokenStackSize -= nRequiredArgs;
+    for(int i=0;i<nRequiredArgs;i++)
+    {
+        adfCoords[i] = atof(aszTokenStack[nTokenStackSize+i]);
     }
     return TRUE;
 }
@@ -961,7 +962,11 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
             {
                 int bEmitFeature = FALSE;
 
-                if (EQUAL1(szToken, "q"))
+                if( szToken[0] < 'A' )
+                {
+                    PUSH(aszTokenStack, szToken, nTokenSize);
+                }
+                else if (EQUAL1(szToken, "q"))
                 {
                     oGSStack.push(oGS);
                 }
@@ -1055,7 +1060,7 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                 else if (EQUAL1(szToken, "m") || EQUAL1(szToken, "l"))
                 {
                     double adfCoords[2];
-                    if (!UnstackTokens(szToken, aszTokenStack, nTokenStackSize, adfCoords))
+                    if (!UnstackTokens(szToken, 2, aszTokenStack, nTokenStackSize, adfCoords))
                     {
                         CPLDebug("PDF", "Should not happen at line %d", __LINE__);
                         return NULL;
@@ -1076,7 +1081,7 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                 else if (EQUAL1(szToken, "c")) /* Bezier curve */
                 {
                     double adfCoords[6];
-                    if (!UnstackTokens(szToken, aszTokenStack, nTokenStackSize, adfCoords))
+                    if (!UnstackTokens(szToken, 6, aszTokenStack, nTokenStackSize, adfCoords))
                     {
                         CPLDebug("PDF", "Should not happen at line %d", __LINE__);
                         return NULL;
@@ -1089,7 +1094,7 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                 else if (EQUAL1(szToken, "v") || EQUAL1(szToken, "y")) /* Bezier curve */
                 {
                     double adfCoords[4];
-                    if (!UnstackTokens(szToken, aszTokenStack, nTokenStackSize, adfCoords))
+                    if (!UnstackTokens(szToken, 4, aszTokenStack, nTokenStackSize, adfCoords))
                     {
                         CPLDebug("PDF", "Should not happen at line %d", __LINE__);
                         return NULL;
@@ -1102,7 +1107,7 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                 else if (EQUAL2(szToken, "re")) /* Rectangle */
                 {
                     double adfCoords[4];
-                    if (!UnstackTokens(szToken, aszTokenStack, nTokenStackSize, adfCoords))
+                    if (!UnstackTokens(szToken, 4, aszTokenStack, nTokenStackSize, adfCoords))
                     {
                         CPLDebug("PDF", "Should not happen at line %d", __LINE__);
                         return NULL;
@@ -1261,22 +1266,18 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                     }
                     else
                     {
-                        for(int i=0;i<nArgs;i++)
+                        if( nArgs > nTokenStackSize )
                         {
-                            if (nTokenStackSize == 0)
-                            {
-                                CPLDebug("PDF",
-                                        "not enough arguments for %s",
-                                        szToken);
-                                return NULL;
-                            }
-                            nTokenStackSize--;
+                            CPLDebug("PDF",
+                                    "not enough arguments for %s",
+                                    szToken);
+                            return NULL;
                         }
+                        nTokenStackSize -= nArgs;
                     }
                 }
                 else
                 {
-                    //printf("%s\n", szToken);
                     PUSH(aszTokenStack, szToken, nTokenSize);
                 }
 
@@ -1289,16 +1290,15 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                         OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
                         if( bSetStyle )
                         {
-                            if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString ||
-                                wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString )
+                            OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
+                            if( eType == wkbLineString || eType == wkbMultiLineString )
                             {
                                 poFeature->SetStyleString(CPLSPrintf("PEN(c:#%02X%02X%02X)",
                                                                     (int)(oGS.adfStrokeColor[0] * 255 + 0.5),
                                                                     (int)(oGS.adfStrokeColor[1] * 255 + 0.5),
                                                                     (int)(oGS.adfStrokeColor[2] * 255 + 0.5)));
                             }
-                            else if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon ||
-                                    wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon )
+                            else if( eType == wkbPolygon || eType == wkbMultiPolygon )
                             {
                                 poFeature->SetStyleString(CPLSPrintf("PEN(c:#%02X%02X%02X);BRUSH(fc:#%02X%02X%02X)",
                                                                     (int)(oGS.adfStrokeColor[0] * 255 + 0.5),
