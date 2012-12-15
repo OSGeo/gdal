@@ -236,7 +236,8 @@ CPLErr OZIRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     int nNextPointer = ReadInt(poGDS->fp, poGDS->bOzi3, poGDS->nKeyInit);
     if (nNextPointer <= nPointer + 16  ||
-        (vsi_l_offset)nNextPointer >= poGDS->nFileSize)
+        (vsi_l_offset)nNextPointer >= poGDS->nFileSize ||
+        nNextPointer - nPointer > 10 * 64 * 64)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Invalid next offset for block (%d, %d) : %d",
@@ -471,8 +472,10 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
     /* and the nKeyInit, but I'm too lazy to add switch/cases that might */
     /* be not exhaustive, so let's try the 'brute force' attack !!! */
     /* It is much so funny to be able to run one in a few microseconds :-) */
-    for(nKeyInit = 0; nKeyInit < 256; nKeyInit ++)
+    int i;
+    for(i = 0; i < 256; i ++)
     {
+        nKeyInit = (GByte)i;
         GByte* pabyHeader2 = abyHeader2;
         if (bOzi3)
             OZIDecrypt(abyHeader2, 40, nKeyInit);
@@ -572,7 +575,7 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->panZoomLevelOffsets =
         (int*)CPLMalloc(sizeof(int) * poDS->nZoomLevelCount);
-    int i;
+
     for(i=0;i<poDS->nZoomLevelCount;i++)
     {
         poDS->panZoomLevelOffsets[i] = ReadInt(fp, bOzi3, nKeyInit);
