@@ -63,7 +63,7 @@ CPL_C_END
 /************************
  * \brief Constructor
  ************************/
-PostGISRasterDataset::PostGISRasterDataset(ResolutionStrategy inResolutionStrategy = AVERAGE_RESOLUTION) {
+PostGISRasterDataset::PostGISRasterDataset(ResolutionStrategy inResolutionStrategy) {
     pszOriginalConnectionString = NULL;
     papszSubdatasets = NULL;
     nSrid = -1;

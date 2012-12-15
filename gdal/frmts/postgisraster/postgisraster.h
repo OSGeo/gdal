@@ -140,7 +140,7 @@ private:
     GBool GetRasterMetadata(char *, double, double, double *, double *, int *, int *);
 
 public:
-    PostGISRasterDataset(ResolutionStrategy inResolutionStrategy);
+    PostGISRasterDataset(ResolutionStrategy inResolutionStrategy = AVERAGE_RESOLUTION);
     virtual ~PostGISRasterDataset();
     static GDALDataset* Open(GDALOpenInfo *);
     static GDALDataset* CreateCopy(const char *, GDALDataset *, 
