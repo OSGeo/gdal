@@ -240,7 +240,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
             CSLDestroy(papszFiles);
             return FALSE;
         }
-        CPLString osFilename = CPLFormFilename(osFilename, papszFiles[0], NULL);
+        osFilename = CPLFormFilename(osFilename, papszFiles[0], NULL);
         CSLDestroy(papszFiles);
         return OpenTable( osFilename );
     }

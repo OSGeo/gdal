@@ -115,7 +115,7 @@ public:
     int                  bAxisInvert;
     OGRSpatialReference* poSRS;
 
-    SRSDesc() : bAxisInvert(NULL), poSRS(NULL)
+    SRSDesc() : bAxisInvert(FALSE), poSRS(NULL)
     {
     }
 };
