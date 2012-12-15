@@ -64,12 +64,9 @@ class IDADataset : public RawDataset
     double      dfDY;
     double      dfParallel1;
     double      dfParallel2;
-    int         nLower;
-    int         nUpper;
     int         nMissing;
     double      dfM;
     double      dfB;
-    int         nDecimals;
 
     FILE       *fpRaw;
 

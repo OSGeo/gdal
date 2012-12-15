@@ -158,7 +158,7 @@ GDAL_GCP *COASPMetadataGeorefGridItem::GetItemValue()
 
 COASPMetadataReader::COASPMetadataReader(char *pszFname) 
 {
-	this->fp = fp;
+	this->fp = NULL;
 	this->nCurrentItem = 0;
 	this->papszMetadata = CSLLoad(pszFname);
 	this->nMetadataCount = CSLCount(this->papszMetadata);
@@ -255,7 +255,6 @@ class COASPDataset : public GDALDataset
 	VSILFILE *fpBinVV;
 
 	char *pszFileName; /* line and mission ID, mostly, i.e. l27p7 */
-	char *pszPrefix; /* file name prefix */
 
 	int nGCPCount;
 	GDAL_GCP *pasGCP;

@@ -194,7 +194,6 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     VSICurlStreamingFSHandler* poFS;
 
     char*           pszURL;
-    unsigned long   pszURLHash;
 
     vsi_l_offset    curOffset;
     vsi_l_offset    fileSize;

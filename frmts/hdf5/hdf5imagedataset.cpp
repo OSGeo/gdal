@@ -152,7 +152,6 @@ class HDF5ImageRasterBand : public GDALPamRasterBand
 
     int         bNoDataSet;
     double      dfNoDataValue;
-    char        *pszFilename;
 
 public:
 

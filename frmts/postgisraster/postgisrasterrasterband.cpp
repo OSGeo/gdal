@@ -360,7 +360,6 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYO
     PGresult* poResult = NULL;
     int iTuplesIndex;
     int nTuples = 0;
-    GBool bEqualAreas = false;
     GByte* pbyData = NULL;
     GByte** ppbyBandData = NULL;
     int nWKBLength = 0;
@@ -374,7 +373,6 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYO
     double dfTileUpperLeftX;
     double dfTileUpperLeftY;
     char * pszDataType = NULL; 
-    char * pszDataTypeName = NULL;
     GDALDataType eTileDataType;
     int nTileDataTypeSize;
     double dfTileBandNoDataValue;
@@ -383,7 +381,6 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYO
     GDALRasterBandH memRasterBand;
     GDALRasterBandH vrtRasterBand;
     char szMemOpenInfo[100];
-    char ** papszOptions;
     char szTmp[64];
     char szTileWidth[64];
     char szTileHeight[64];

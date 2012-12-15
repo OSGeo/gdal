@@ -53,9 +53,9 @@ class GFFDataset : public GDALPamDataset
     unsigned short nVersionMajor;
     unsigned short nVersionMinor;
     unsigned int nLength;
-    char *pszCreator;
+    //char *pszCreator;
     /* I am taking this at face value (are they freakin' insane?) */
-    float fBPP;
+    //float fBPP;
     unsigned int nBPP;
 
     /* Good information to know */
@@ -64,10 +64,10 @@ class GFFDataset : public GDALPamDataset
     unsigned int nRowMajor;
     unsigned int nRgCnt;
     unsigned int nAzCnt;
-    long nScaleExponent;
-    long nScaleMantissa;
-    long nOffsetExponent;
-    long nOffsetMantissa;
+    //long nScaleExponent;
+    //long nScaleMantissa;
+    //long nOffsetExponent;
+    //long nOffsetMantissa;
 public:
     GFFDataset();
     ~GFFDataset();

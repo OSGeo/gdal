@@ -114,8 +114,6 @@ class GDALContourGenerator
     int    nLevelCount;
     GDALContourLevel **papoLevels;
 
-    int    iLastLevel;
-    
     int     bNoDataActive;
     double  dfNoDataValue;
 

@@ -48,8 +48,6 @@ class OGRMemLayer : public OGRLayer
     int                 iNextReadFID;
     int                 iNextCreateFID;
 
-    OGRwkbGeometryType  eWkbType;
-
     int                 bUpdatable;
     int                 bAdvertizeUTF8;
 
