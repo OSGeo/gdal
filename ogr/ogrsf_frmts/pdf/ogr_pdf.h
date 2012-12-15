@@ -67,6 +67,9 @@ public:
 /*                           OGRPDFDataSource                           */
 /************************************************************************/
 
+#define MAX_TOKEN_SIZE 256
+#define TOKEN_STACK_SIZE 8
+
 class OGRPDFDataSource : public OGRDataSource
 {
     char*               pszName;
@@ -105,9 +108,10 @@ class OGRPDFDataSource : public OGRDataSource
                                                              std::map<CPLString, OGRPDFLayer*>& oMapPropertyToLayer);
     void                ExploreContentsNonStructured(GDALPDFObject* poObj, GDALPDFObject* poResources);
 
-    int                 UnstackTokens(const CPLString& osToken,
-                                      std::stack<CPLString>& osTokenStack,
-                                      double* adfCoords);
+    int                 UnstackTokens(const char* pszToken,
+                                     char aszTokenStack[TOKEN_STACK_SIZE][MAX_TOKEN_SIZE],
+                                     int& nTokenStackSize,
+                                     double* adfCoords);
     OGRGeometry*        ParseContent(const char* pszContent,
                                      GDALPDFObject* poResources,
                                      int bInitBDCStack,
