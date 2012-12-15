@@ -363,12 +363,12 @@ OGRLayer   *OGRCouchDBDataSource::CreateLayer( const char *pszName,
     json_object* poAnswerObj = PUT(osURI, NULL);
 
     if (poAnswerObj == NULL)
-        return FALSE;
+        return NULL;
 
     if (!IsOK(poAnswerObj, "Layer creation failed"))
     {
         json_object_put(poAnswerObj);
-        return FALSE;
+        return NULL;
     }
 
     json_object_put(poAnswerObj);

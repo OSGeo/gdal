@@ -73,7 +73,6 @@ class OGRGPXLayer : public OGRLayer
     XML_Parser         oParser;
     XML_Parser         oSchemaParser;
 #endif
-    int                doParse;
     int                inInterestingElement;
     int                hasFoundLat;
     int                hasFoundLon;

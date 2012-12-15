@@ -170,8 +170,6 @@ class OGRMySQLResultLayer : public OGRMySQLLayer
     // Layer srid.
     int                 nSRSId;
     
-    int                 nFeatureCount;
-
   public:
                         OGRMySQLResultLayer( OGRMySQLDataSource *,
                                              const char * pszRawStatement,
@@ -199,7 +197,7 @@ class OGRMySQLDataSource : public OGRDataSource
     char               *pszName;
 
     int                 bDSUpdate;
-    int                 bHavePostGIS;
+
     int                 nSoftTransactionLevel;
 
     MYSQL              *hConn;

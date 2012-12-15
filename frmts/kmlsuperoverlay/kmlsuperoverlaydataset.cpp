@@ -1471,7 +1471,7 @@ int KmlSuperOverlayFindRegionStart(CPLXMLNode* psNode,
                                    CPLXMLNode** ppsLink)
 {
     if( psNode == NULL || psNode->eType != CXT_Element )
-        return NULL;
+        return FALSE;
 
     CPLXMLNode* psRegion = NULL;
     CPLXMLNode* psLink = NULL;

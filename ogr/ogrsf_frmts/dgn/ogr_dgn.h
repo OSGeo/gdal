@@ -42,7 +42,6 @@ class OGRDGNLayer : public OGRLayer
     OGRFeatureDefn     *poFeatureDefn;
 
     int                 iNextShapeId;
-    int                 nTotalShapeCount;
 
     DGNHandle           hDGN;
     int                 bUpdate;
