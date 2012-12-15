@@ -211,7 +211,7 @@ int KMLNode::classify(KML* poKML, int nRecLevel)
         CPLError( CE_Failure, CPLE_AppDefined,
                     "Too many recursiong level (%d) while parsing KML geometry.",
                     nRecLevel );
-        return NULL;
+        return FALSE;
     }
 
     //CPLDebug("KML", "%s<%s>", genSpaces(), sName_.c_str());
