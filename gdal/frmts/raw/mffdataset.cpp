@@ -56,8 +56,6 @@ static int         GetMFFProjectionType(const char * pszNewProjection);
 
 class MFFDataset : public RawDataset
 {
-    FILE	*fpImage;	// image data file.
-    
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
 

@@ -118,8 +118,6 @@ class CTGDataset : public GDALPamDataset
 
     VSILFILE   *fp;
 
-    char        szField[11];
-
     int         nNWEasting, nNWNorthing, nCellSize, nUTMZone;
     char       *pszProjection;
 

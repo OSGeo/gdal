@@ -96,9 +96,6 @@ class OGRS57DataSource : public OGRDataSource
 
     S57Writer           *poWriter;
 
-    int                 bClassCountSet;
-    int                 anClassCount[MAX_CLASSES];
-
     int                 bExtentsSet;
     OGREnvelope         oExtents;
     
