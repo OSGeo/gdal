@@ -29,6 +29,10 @@
 
 #include <freexl.h>
 
+#ifdef _WIN32
+#  include <windows.h>
+#endif
+
 #include "ogr_xls.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
@@ -102,14 +106,21 @@ int OGRXLSDataSource::Open( const char * pszFilename, int bUpdateIn)
         return FALSE;
     }
 
+#ifdef _WIN32
+    if( CSLTestBoolean( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+        pszName = CPLRecode( pszFilename, CPL_ENC_UTF8, CPLString().Printf( "CP%d", GetACP() ) );
+    else
+        pszName = CPLStrdup( pszFilename );
+#else
     pszName = CPLStrdup( pszFilename );
+#endif
 
 // -------------------------------------------------------------------- 
 //      Does this appear to be a .xls file?
 // --------------------------------------------------------------------
 
     /* Open only for getting info. To get cell values, we have to use freexl_open */
-    if (freexl_open_info (pszFilename, &xlshandle) != FREEXL_OK)
+    if (freexl_open_info (pszName, &xlshandle) != FREEXL_OK)
         return FALSE;
 
     unsigned int nSheets = 0;
