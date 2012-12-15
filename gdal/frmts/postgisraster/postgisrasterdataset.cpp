@@ -357,7 +357,6 @@ GBool PostGISRasterDataset::SetRasterProperties
     int i = 0;
     int nTuples = 0;
     int nRasterID = 0;
-    GBool bRetValue = false;
     char* pszIdColumn = NULL;
     double tileUpperLeftX;
     double tileUpperLeftY;

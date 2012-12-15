@@ -254,7 +254,6 @@ class VSICurlHandle : public VSIVirtualHandle
     VSICurlFilesystemHandler* poFS;
 
     char*           pszURL;
-    unsigned long   pszURLHash;
 
     vsi_l_offset    curOffset;
     vsi_l_offset    fileSize;

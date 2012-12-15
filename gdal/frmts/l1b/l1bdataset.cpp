@@ -213,7 +213,7 @@ class L1BDataset : public GDALPamDataset
 {
     friend class L1BRasterBand;
 
-    char        pszRevolution[6]; // Five-digit number identifying spacecraft revolution
+    //char        pszRevolution[6]; // Five-digit number identifying spacecraft revolution
     int         eSource;        // Source of data (receiving station name)
     int         eProcCenter;    // Data processing center
     TimeCode    sStartTime;

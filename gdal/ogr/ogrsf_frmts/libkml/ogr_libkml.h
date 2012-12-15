@@ -55,9 +55,6 @@ class OGRLIBKMLDataSource;
 
 class OGRLIBKMLLayer:public OGRLayer
 {
-    OGRFeatureDefn *poFeatureDefn;
-
-    FILE                      fp;
     int                       bUpdate;
     int                       bUpdated;
     int                       nFeatures;

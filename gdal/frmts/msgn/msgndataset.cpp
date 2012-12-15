@@ -58,7 +58,6 @@ class MSGNDataset : public GDALDataset
     friend class MSGNRasterBand;
 
     FILE       *fp;
-    GByte      abyHeader[1012];
 
     Msg_reader_core*    msg_reader_core;
     double adfGeoTransform[6];

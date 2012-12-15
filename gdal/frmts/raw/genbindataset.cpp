@@ -200,7 +200,6 @@ class GenBinDataset : public RawDataset
     double      adfGeoTransform[6];
     char       *pszProjection;
 
-    int         bHDRDirty;
     char      **papszHDR;
 
     void        ParseCoordinateSystem( char ** );
@@ -226,9 +225,6 @@ class GenBinDataset : public RawDataset
 class GenBinBitRasterBand : public GDALPamRasterBand
 {
     int            nBits;
-    long           nStartBit;
-    int            nPixelOffsetBits;
-    int            nLineOffsetBits;
 
   public:
     GenBinBitRasterBand( GenBinDataset *poDS, int nBits );

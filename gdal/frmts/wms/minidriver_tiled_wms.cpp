@@ -546,7 +546,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
                 CPLString request;
                 FindChangePattern(Pattern->psChild->pszValue,substs,keys,request);
 
-                char **papszTokens=CSLTokenizeString2(request,"&",NULL);
+                char **papszTokens=CSLTokenizeString2(request,"&",0);
 
                 const char* pszWIDTH = CSLFetchNameValue(papszTokens,"WIDTH");
                 const char* pszHEIGHT = CSLFetchNameValue(papszTokens,"HEIGHT");

@@ -60,8 +60,6 @@ class SRPDataset : public GDALPamDataset
     int          PCB;
     int          PVB;
 
-    double       adfGeoTransform[6];
-
     GDALColorTable oCT;
 
   public:

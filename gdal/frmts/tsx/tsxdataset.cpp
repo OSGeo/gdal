@@ -94,8 +94,6 @@ class TSXDataset : public GDALPamDataset {
     double adfGeoTransform[6];
     bool bHaveGeoTransform;
 
-    char *pszGeorefFile;
-
     eProductType nProduct;
 public:
     TSXDataset();

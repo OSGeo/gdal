@@ -87,8 +87,6 @@ class OGROpenAirLabelLayer : public OGRLayer
     OGRSpatialReference *poSRS;
 
     VSILFILE*          fpOpenAir;
-    int                bEOF;
-    int                bHasLastLine;
     CPLString          osLastLine;
 
     int                nNextFID;

@@ -80,7 +80,6 @@ public:
 
 class OGRElasticDataSource : public OGRDataSource {
     char* pszName;
-    char* pszServer;
 
     OGRElasticLayer** papoLayers;
     int nLayers;

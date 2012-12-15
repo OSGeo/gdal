@@ -54,8 +54,6 @@ class BTDataset : public GDALPamDataset
 
     char        *pszProjection;
     
-    double      dfVScale;
-
     int         nVersionCode;  // version times 10.
 
     int         bHeaderModified;
