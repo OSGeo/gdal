@@ -109,9 +109,10 @@ class OGRPDFDataSource : public OGRDataSource
     void                ExploreContentsNonStructured(GDALPDFObject* poObj, GDALPDFObject* poResources);
 
     int                 UnstackTokens(const char* pszToken,
-                                     char aszTokenStack[TOKEN_STACK_SIZE][MAX_TOKEN_SIZE],
-                                     int& nTokenStackSize,
-                                     double* adfCoords);
+                                      int nRequiredArgs,
+                                      char aszTokenStack[TOKEN_STACK_SIZE][MAX_TOKEN_SIZE],
+                                      int& nTokenStackSize,
+                                      double* adfCoords);
     OGRGeometry*        ParseContent(const char* pszContent,
                                      GDALPDFObject* poResources,
                                      int bInitBDCStack,
