@@ -318,18 +318,18 @@ static const PDFOperator asPDFOperators [] =
     { "scn", -1 },
     { "sh", 1 },
     // T*
-    // Tc
-    // Td
-    // TD
-    // Tf
-    // Tj
-    // TJ
-    // TL
-    // Tm
-    // Tr
-    // Ts
-    // Tw
-    // Tz
+    { "Tc", 1},
+    { "Td", 2},
+    { "TD", 2},
+    { "Tf", 1},
+    { "Tj", 1},
+    { "TJ", 1},
+    { "TL", 1},
+    { "Tm", 6},
+    { "Tr", 1},
+    { "Ts", 1},
+    { "Tw", 1},
+    { "Tz", 1},
     { "v", 4 },
     { "w", 1 },
     { "W", 0 },
@@ -557,28 +557,6 @@ void OGRPDFDataSource::PDFCoordsToSRSCoords(double x, double y,
 }
 
 /************************************************************************/
-/*                            UnstackTokens()                           */
-/************************************************************************/
-
-int OGRPDFDataSource::UnstackTokens(const CPLString& osToken,
-                                    std::stack<CPLString>& osTokenStack,
-                                    double* adfCoords)
-{
-    int nArgs = oMapOperators[osToken];
-    for(int i=0;i<nArgs;i++)
-    {
-        if (osTokenStack.empty())
-        {
-            CPLDebug("PDF", "not enough arguments for %s", osToken.c_str());
-            return FALSE;
-        }
-        adfCoords[nArgs-1-i] = atof(osTokenStack.top());
-        osTokenStack.pop();
-    }
-    return TRUE;
-}
-
-/************************************************************************/
 /*                         PDFGetCircleCenter()                         */
 /************************************************************************/
 
@@ -694,6 +672,28 @@ static OGRPoint* PDFGetStarCenter(OGRLineString* poLS)
 }
 
 /************************************************************************/
+/*                            UnstackTokens()                           */
+/************************************************************************/
+
+int OGRPDFDataSource::UnstackTokens(const char* pszToken,
+                                    char aszTokenStack[TOKEN_STACK_SIZE][MAX_TOKEN_SIZE],
+                                    int& nTokenStackSize,
+                                    double* adfCoords)
+{
+    int nArgs = oMapOperators[pszToken];
+    for(int i=0;i<nArgs;i++)
+    {
+        if (nTokenStackSize == 0)
+        {
+            CPLDebug("PDF", "not enough arguments for %s", pszToken);
+            return FALSE;
+        }
+        adfCoords[nArgs-1-i] = atof(aszTokenStack[--nTokenStackSize]);
+    }
+    return TRUE;
+}
+
+/************************************************************************/
 /*                           ParseContent()                             */
 /************************************************************************/
 
@@ -708,15 +708,45 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                                             std::map<CPLString, OGRPDFLayer*>& oMapPropertyToLayer,
                                             OGRPDFLayer* poCurLayer)
 {
-    CPLString osToken;
+
+#define PUSH(aszTokenStack, str, strlen) \
+    do \
+    { \
+        if(nTokenStackSize < TOKEN_STACK_SIZE) \
+            memcpy(aszTokenStack[nTokenStackSize ++], str, strlen + 1); \
+        else \
+        { \
+            CPLError(CE_Failure, CPLE_AppDefined, "Max token stack size reached");\
+            return NULL; \
+        }; \
+    } while(0)
+
+#define ADD_CHAR(szToken, c) \
+    do \
+    { \
+        if(nTokenSize < MAX_TOKEN_SIZE-1) \
+        { \
+            szToken[nTokenSize ++ ] = c; \
+            szToken[nTokenSize ] = '\0'; \
+        } \
+        else \
+        { \
+            CPLError(CE_Failure, CPLE_AppDefined, "Max token size reached");\
+            return NULL; \
+        }; \
+    } while(0)
+
+    char szToken[MAX_TOKEN_SIZE];
+    int nTokenSize = 0;
     char ch;
-    std::stack<CPLString> osTokenStack;
+    char aszTokenStack[TOKEN_STACK_SIZE][MAX_TOKEN_SIZE];
+    int nTokenStackSize = 0;
     int bInString = FALSE;
     int nBDCLevel = 0;
     int nParenthesisLevel = 0;
     int nArrayLevel = 0;
     int nBTLevel = 0;
-
+    
     int bCollectAllObjects = poResources != NULL && !bInitBDCStack && !bMatchQ;
 
     GraphicState oGS;
@@ -726,11 +756,13 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
     std::vector<double> oCoords;
     int bHasFoundFill = FALSE;
     int bHasMultiPart = FALSE;
+    
+    szToken[0] = '\0';
 
     if (bInitBDCStack)
     {
-        osTokenStack.push("dummy");
-        osTokenStack.push("dummy");
+        PUSH(aszTokenStack, "dummy", 5);
+        PUSH(aszTokenStack, "dummy", 5);
         oLayerStack.push(NULL);
     }
 
@@ -756,37 +788,37 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
         }
 
         /* Ignore arrays */
-        else if (!bInString && osToken.size() == 0 && ch == '[')
+        else if (!bInString && nTokenSize == 0 && ch == '[')
         {
             nArrayLevel ++;
         }
-        else if (!bInString && nArrayLevel && osToken.size() == 0 && ch == ']')
+        else if (!bInString && nArrayLevel && nTokenSize == 0 && ch == ']')
         {
             nArrayLevel --;
         }
 
-        else if (!bInString && osToken.size() == 0 && ch == '(')
+        else if (!bInString && nTokenSize == 0 && ch == '(')
         {
             bInString = TRUE;
             nParenthesisLevel ++;
-            osToken += ch;
+            ADD_CHAR(szToken, ch);
         }
         else if (bInString && ch == '(')
         {
             nParenthesisLevel ++;
-            osToken += ch;
+            ADD_CHAR(szToken, ch);
         }
         else if (bInString && ch == ')')
         {
             nParenthesisLevel --;
-            osToken += ch;
+            ADD_CHAR(szToken, ch);
             if (nParenthesisLevel == 0)
             {
                 bInString = FALSE;
                 bPushToken = TRUE;
             }
         }
-        else if (ch == '<' && pszContent[1] == '<' && osToken.size() == 0)
+        else if (ch == '<' && pszContent[1] == '<' && nTokenSize == 0)
         {
             int nDictDepth = 0;
 
@@ -794,15 +826,15 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
             {
                 if (pszContent[0] == '<' && pszContent[1] == '<')
                 {
-                    osToken += "<";
-                    osToken += "<";
+                    ADD_CHAR(szToken, '<');
+                    ADD_CHAR(szToken, '<');
                     nDictDepth ++;
                     pszContent += 2;
                 }
                 else if (pszContent[0] == '>' && pszContent[1] == '>')
                 {
-                    osToken += ">";
-                    osToken += ">";
+                    ADD_CHAR(szToken, '>');
+                    ADD_CHAR(szToken, '>');
                     nDictDepth --;
                     pszContent += 2;
                     if (nDictDepth == 0)
@@ -810,7 +842,7 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                 }
                 else
                 {
-                    osToken += *pszContent;
+                    ADD_CHAR(szToken, *pszContent);
                     pszContent ++;
                 }
             }
@@ -824,16 +856,20 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
         }
         else
         {
-            osToken += ch;
+            ADD_CHAR(szToken, ch);
         }
 
         pszContent ++;
         if (pszContent[0] == '\0')
             bPushToken = TRUE;
 
-        if (bPushToken && osToken.size())
+#define EQUAL1(szToken, s) (szToken[0] == s[0] && szToken[1] == '\0')
+#define EQUAL2(szToken, s) (szToken[0] == s[0] && szToken[1] == s[1] && szToken[2] == '\0')
+#define EQUAL3(szToken, s) (szToken[0] == s[0] && szToken[1] == s[1] && szToken[2] == s[2] && szToken[3] == '\0')
+
+        if (bPushToken && nTokenSize)
         {
-            if (osToken == "BI")
+            if (EQUAL2(szToken, "BI"))
             {
                 while(*pszContent != '\0')
                 {
@@ -848,23 +884,22 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                 else
                     return NULL;
             }
-            else if (osToken == "BDC")
+            else if (EQUAL3(szToken, "BDC"))
             {
                 CPLString osOCGName, osOC;
                 for(int i=0;i<2;i++)
                 {
-                    if (osTokenStack.empty())
+                    if (nTokenStackSize == 0)
                     {
                         CPLDebug("PDF",
                                     "not enough arguments for %s",
-                                    osToken.c_str());
+                                    szToken);
                         return NULL;
                     }
                     if (i == 0)
-                        osOCGName = osTokenStack.top();
+                        osOCGName = aszTokenStack[--nTokenStackSize];
                     else
-                        osOC = osTokenStack.top();
-                    osTokenStack.pop();
+                        osOC = aszTokenStack[--nTokenStackSize];
                 }
                 nBDCLevel ++;
 
@@ -882,7 +917,7 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                 oLayerStack.push(poCurLayer);
                 //CPLDebug("PDF", "%s %s BDC", osOC.c_str(), osOCGName.c_str());
             }
-            else if (osToken == "EMC")
+            else if (EQUAL3(szToken, "EMC"))
             {
                 //CPLDebug("PDF", "EMC");
                 if( !oLayerStack.empty() )
@@ -911,9 +946,9 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
             }
 
             /* Ignore any text stuff */
-            else if (osToken == "BT")
+            else if (EQUAL2(szToken, "BT"))
                 nBTLevel ++;
-            else if (osToken == "ET")
+            else if (EQUAL2(szToken, "ET"))
             {
                 nBTLevel --;
                 if (nBTLevel < 0)
@@ -926,15 +961,15 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
             {
                 int bEmitFeature = FALSE;
 
-                if (osToken == "q")
+                if (EQUAL1(szToken, "q"))
                 {
                     oGSStack.push(oGS);
                 }
-                else if (osToken == "Q")
+                else if (EQUAL1(szToken, "Q"))
                 {
                     if (oGSStack.empty())
                     {
-                        CPLDebug("PDF", "not enough arguments for %s", osToken.c_str());
+                        CPLDebug("PDF", "not enough arguments for %s", szToken);
                         return NULL;
                     }
 
@@ -944,24 +979,23 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                     if (oGSStack.empty() && bMatchQ)
                         break;
                 }
-                else if (osToken == "cm")
+                else if (EQUAL2(szToken, "cm"))
                 {
                     double adfMatrix[6];
                     for(int i=0;i<6;i++)
                     {
-                        if (osTokenStack.empty())
+                        if (nTokenStackSize == 0)
                         {
-                            CPLDebug("PDF", "not enough arguments for %s", osToken.c_str());
+                            CPLDebug("PDF", "not enough arguments for %s", szToken);
                             return NULL;
                         }
-                        adfMatrix[6-1-i] = atof(osTokenStack.top());
-                        osTokenStack.pop();
+                        adfMatrix[6-1-i] = atof(aszTokenStack[--nTokenStackSize]);
                     }
 
                     oGS.MultiplyBy(adfMatrix);
                 }
-                else if (osToken == "b" || /* closepath, fill, stroke */
-                         osToken == "b*"   /* closepath, eofill, stroke */)
+                else if (EQUAL1(szToken, "b") || /* closepath, fill, stroke */
+                         EQUAL2(szToken, "b*")   /* closepath, eofill, stroke */)
                 {
                     if (!(oCoords.size() > 0 &&
                           oCoords[oCoords.size() - 2] == CLOSE_SUBPATH &&
@@ -976,11 +1010,11 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
 
                     bEmitFeature = TRUE;
                 }
-                else if (osToken == "B" ||  /* fill, stroke */
-                         osToken == "B*" || /* eofill, stroke */
-                         osToken == "f" ||  /* fill */
-                         osToken == "F" ||  /* fill */
-                         osToken == "f*"    /* eofill */ )
+                else if (EQUAL1(szToken, "B") ||  /* fill, stroke */
+                         EQUAL2(szToken, "B*") || /* eofill, stroke */
+                         EQUAL1(szToken, "f") ||  /* fill */
+                         EQUAL1(szToken, "F") ||  /* fill */
+                         EQUAL2(szToken, "f*")    /* eofill */ )
                 {
                     oCoords.push_back(FILL_SUBPATH);
                     oCoords.push_back(FILL_SUBPATH);
@@ -988,7 +1022,7 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
 
                     bEmitFeature = TRUE;
                 }
-                else if (osToken == "h") /* close subpath */
+                else if (EQUAL1(szToken, "h")) /* close subpath */
                 {
                     if (!(oCoords.size() > 0 &&
                           oCoords[oCoords.size() - 2] == CLOSE_SUBPATH &&
@@ -998,11 +1032,11 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                         oCoords.push_back(CLOSE_SUBPATH);
                     }
                 }
-                else if (osToken == "n") /* new subpath without stroking or filling */
+                else if (EQUAL1(szToken, "n")) /* new subpath without stroking or filling */
                 {
                     oCoords.resize(0);
                 }
-                else if (osToken == "s") /* close and stroke */
+                else if (EQUAL1(szToken, "s")) /* close and stroke */
                 {
                     if (!(oCoords.size() > 0 &&
                           oCoords[oCoords.size() - 2] == CLOSE_SUBPATH &&
@@ -1014,20 +1048,20 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
 
                     bEmitFeature = TRUE;
                 }
-                else if (osToken == "S") /* stroke */
+                else if (EQUAL1(szToken, "S")) /* stroke */
                 {
                     bEmitFeature = TRUE;
                 }
-                else if (osToken == "m" || osToken == "l")
+                else if (EQUAL1(szToken, "m") || EQUAL1(szToken, "l"))
                 {
                     double adfCoords[2];
-                    if (!UnstackTokens(osToken, osTokenStack, adfCoords))
+                    if (!UnstackTokens(szToken, aszTokenStack, nTokenStackSize, adfCoords))
                     {
                         CPLDebug("PDF", "Should not happen at line %d", __LINE__);
                         return NULL;
                     }
 
-                    if (osToken == "m")
+                    if (EQUAL1(szToken, "m"))
                     {
                         if (oCoords.size() != 0)
                             bHasMultiPart = TRUE;
@@ -1039,10 +1073,10 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                     oCoords.push_back(adfCoords[0]);
                     oCoords.push_back(adfCoords[1]);
                 }
-                else if (osToken == "c") /* Bezier curve */
+                else if (EQUAL1(szToken, "c")) /* Bezier curve */
                 {
                     double adfCoords[6];
-                    if (!UnstackTokens(osToken, osTokenStack, adfCoords))
+                    if (!UnstackTokens(szToken, aszTokenStack, nTokenStackSize, adfCoords))
                     {
                         CPLDebug("PDF", "Should not happen at line %d", __LINE__);
                         return NULL;
@@ -1052,10 +1086,10 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                     oCoords.push_back(adfCoords[4]);
                     oCoords.push_back(adfCoords[5]);
                 }
-                else if (osToken == "v" || osToken == "y") /* Bezier curve */
+                else if (EQUAL1(szToken, "v") || EQUAL1(szToken, "y")) /* Bezier curve */
                 {
                     double adfCoords[4];
-                    if (!UnstackTokens(osToken, osTokenStack, adfCoords))
+                    if (!UnstackTokens(szToken, aszTokenStack, nTokenStackSize, adfCoords))
                     {
                         CPLDebug("PDF", "Should not happen at line %d", __LINE__);
                         return NULL;
@@ -1065,10 +1099,10 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                     oCoords.push_back(adfCoords[2]);
                     oCoords.push_back(adfCoords[3]);
                 }
-                else if (osToken == "re") /* Rectangle */
+                else if (EQUAL2(szToken, "re")) /* Rectangle */
                 {
                     double adfCoords[4];
-                    if (!UnstackTokens(osToken, osTokenStack, adfCoords))
+                    if (!UnstackTokens(szToken, aszTokenStack, nTokenStackSize, adfCoords))
                     {
                         CPLDebug("PDF", "Should not happen at line %d", __LINE__);
                         return NULL;
@@ -1096,18 +1130,17 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                     oCoords.push_back(CLOSE_SUBPATH);
                 }
 
-                else if (osToken == "Do")
+                else if (EQUAL2(szToken, "Do"))
                 {
-                    if (osTokenStack.empty())
+                    if (nTokenStackSize == 0)
                     {
                         CPLDebug("PDF",
                                  "not enough arguments for %s",
-                                 osToken.c_str());
+                                 szToken);
                         return NULL;
                     }
 
-                    CPLString osObjectName = osTokenStack.top();
-                    osTokenStack.pop();
+                    CPLString osObjectName = aszTokenStack[--nTokenStackSize];
 
                     if (osObjectName[0] != '/')
                     {
@@ -1121,7 +1154,9 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                         {
                             oCoords.push_back(oGS.adfCM[4] + oGS.adfCM[0] / 2);
                             oCoords.push_back(oGS.adfCM[5] + oGS.adfCM[3] / 2);
-                            osToken = "";
+
+                            szToken[0] = '\0';
+                            nTokenSize = 0;
 
                             if( poCurLayer != NULL)
                                 bEmitFeature = TRUE;
@@ -1187,20 +1222,19 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                         }
                     }
                 }
-                else if( osToken == "RG" || osToken == "rg" )
+                else if( EQUAL2(szToken, "RG") || EQUAL2(szToken, "rg") )
                 {
                     double adf[3];
                     for(int i=0;i<3;i++)
                     {
-                        if (osTokenStack.empty())
+                        if (nTokenStackSize == 0)
                         {
-                            CPLDebug("PDF", "not enough arguments for %s", osToken.c_str());
+                            CPLDebug("PDF", "not enough arguments for %s", szToken);
                             return NULL;
                         }
-                        adf[3-1-i] = atof(osTokenStack.top());
-                        osTokenStack.pop();
+                        adf[3-1-i] = atof(aszTokenStack[--nTokenStackSize]);
                     }
-                    if( osToken == "RG" )
+                    if( EQUAL2(szToken, "RG") )
                     {
                         oGS.adfStrokeColor[0] = adf[0];
                         oGS.adfStrokeColor[1] = adf[1];
@@ -1213,38 +1247,37 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                         oGS.adfFillColor[2] = adf[2];
                     }
                 }
-                else if (oMapOperators.find(osToken) != oMapOperators.end())
+                else if (oMapOperators.find(szToken) != oMapOperators.end())
                 {
-                    int nArgs = oMapOperators[osToken];
+                    int nArgs = oMapOperators[szToken];
                     if (nArgs < 0)
                     {
-                        while( !osTokenStack.empty() )
+                        while( nTokenStackSize != 0 )
                         {
-                            CPLString osTopToken = osTokenStack.top();
+                            CPLString osTopToken = aszTokenStack[--nTokenStackSize];
                             if (oMapOperators.find(osTopToken) != oMapOperators.end())
                                 break;
-                            osTokenStack.pop();
                         }
                     }
                     else
                     {
                         for(int i=0;i<nArgs;i++)
                         {
-                            if (osTokenStack.empty())
+                            if (nTokenStackSize == 0)
                             {
                                 CPLDebug("PDF",
                                         "not enough arguments for %s",
-                                        osToken.c_str());
+                                        szToken);
                                 return NULL;
                             }
-                            osTokenStack.pop();
+                            nTokenStackSize--;
                         }
                     }
                 }
                 else
                 {
-                    //printf("%s\n", osToken.c_str());
-                    osTokenStack.push(osToken);
+                    //printf("%s\n", szToken);
+                    PUSH(aszTokenStack, szToken, nTokenSize);
                 }
 
                 if( bEmitFeature && poCurLayer != NULL)
@@ -1286,18 +1319,19 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                 }
             }
 
-            osToken = "";
+            szToken[0] = '\0';
+            nTokenSize = 0;
         }
     }
 
-    if (!osTokenStack.empty())
+    if (nTokenStackSize != 0)
     {
-        while(!osTokenStack.empty())
+        while(nTokenStackSize != 0)
         {
+            nTokenStackSize--;
             CPLDebug("PDF",
                      "Remaing values in stack : %s",
-                     osTokenStack.top().c_str());
-            osTokenStack.pop();
+                     aszTokenStack[nTokenStackSize]);
         }
         return  NULL;
     }
