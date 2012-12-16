@@ -101,7 +101,7 @@ script:
   - mv ogr_fgdb.* disabled
 # Run all the Python autotests
   - cd ..
-  - GDAL_SKIP=JP2ECW python run_all.py
+  - GDAL_SKIP="JP2ECW ECW" python run_all.py
   - cd ogr
 # A bit messy, but force testing with libspatialite 4.0dev (that has been patched a bit to remove any hard-coded SRS definition so it is very small)
   - wget http://even.rouault.free.fr/libspatialite4.0dev_ubuntu12.04-32bit_srs_stripped.tar.gz
