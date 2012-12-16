@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -34,12 +35,21 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
-from osgeo import gdal, osr, gdalnumeric
+from osgeo import gdal, osr
 
 ###############################################################################
 # Test a fairly default case.
 
 def transformgeoloc_1():
+
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.zeros
+    except:
+        try:
+            import osgeo.gdal_array as gdalnumeric
+        except ImportError:
+            return 'skip'
 
     # Setup 2x2 geolocation arrays in a memory dataset with lat/long values.
 
@@ -70,9 +80,9 @@ def transformgeoloc_1():
         geoloc_ds.GetRasterBand(2),
         geoloc_ds.GetRasterBand(3))
 
-    print status
+    print(status)
 
-    print geoloc_ds.ReadAsArray()
+    print(geoloc_ds.ReadAsArray())
 
     return 'success' 
 
