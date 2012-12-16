@@ -384,8 +384,11 @@ int OGRPDFDataSource::GetLayerCount()
 /*                            ExploreTree()                             */
 /************************************************************************/
 
-void OGRPDFDataSource::ExploreTree(GDALPDFObject* poObj)
+void OGRPDFDataSource::ExploreTree(GDALPDFObject* poObj, int nRecLevel)
 {
+    if (nRecLevel == 16)
+        return;
+
     if (poObj->GetType() != PDFObjectType_Dictionary)
         return;
 
@@ -450,12 +453,12 @@ void OGRPDFDataSource::ExploreTree(GDALPDFObject* poObj)
         else
         {
             for(int i=0;i<poArray->GetLength();i++)
-                ExploreTree(poArray->Get(i));
+                ExploreTree(poArray->Get(i), nRecLevel + 1);
         }
     }
     else if (poK->GetType() == PDFObjectType_Dictionary)
     {
-        ExploreTree(poK);
+        ExploreTree(poK, nRecLevel + 1);
     }
 }
 
@@ -1908,7 +1911,7 @@ int OGRPDFDataSource::Open( const char * pszName)
     else
     {
         ExploreContents(poContents, poResources);
-        ExploreTree(poStructTreeRoot);
+        ExploreTree(poStructTreeRoot, 0);
     }
 
     CleanupIntermediateResources();
