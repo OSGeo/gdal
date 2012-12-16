@@ -100,7 +100,7 @@ class OGRPDFDataSource : public OGRDataSource
     
     int                 bSetStyle;
 
-    void                ExploreTree(GDALPDFObject* poObj);
+    void                ExploreTree(GDALPDFObject* poObj, int nRecLevel);
     void                ExploreContents(GDALPDFObject* poObj, GDALPDFObject* poResources);
 
     void                ExploreContentsNonStructuredInternal(GDALPDFObject* poContents,
