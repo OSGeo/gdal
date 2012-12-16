@@ -745,8 +745,8 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %typemap(in) char **options
 {
   /* %typemap(in) char **options */
-  /* Check if is a list */
-  if ( ! PySequence_Check($input)) {
+  /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
+  if ( ! PySequence_Check($input) || PyUnicode_Check($input) || PyString_Check($input) ) {
     PyErr_SetString(PyExc_TypeError,"not a sequence");
     SWIG_fail;
   }
