@@ -562,7 +562,7 @@ class PDFDataset : public GDALPamDataset
 
 #ifdef HAVE_POPPLER
     void         AddLayer(const char* pszLayerName, OptionalContentGroup* ocg);
-    void         ExploreLayers(GDALPDFArray* poArray, CPLString osTopLayer = "");
+    void         ExploreLayers(GDALPDFArray* poArray, int nRecLevel, CPLString osTopLayer = "");
     void         FindLayers();
     void         TurnLayersOnOff();
     CPLStringList osLayerList;
@@ -2089,8 +2089,13 @@ void PDFDataset::AddLayer(const char* pszLayerName, OptionalContentGroup* ocg)
 /*                             ExploreLayers()                          */
 /************************************************************************/
 
-void PDFDataset::ExploreLayers(GDALPDFArray* poArray, CPLString osTopLayer)
+void PDFDataset::ExploreLayers(GDALPDFArray* poArray,
+                               int nRecLevel,
+                               CPLString osTopLayer)
 {
+    if( nRecLevel == 16 )
+        return;
+
     int nLength = poArray->GetLength();
     CPLString osCurLayer;
     for(int i=0;i<nLength;i++)
@@ -2107,7 +2112,7 @@ void PDFDataset::ExploreLayers(GDALPDFArray* poArray, CPLString osTopLayer)
         }
         else if (poObj->GetType() == PDFObjectType_Array)
         {
-            ExploreLayers(poObj->GetArray(), osCurLayer);
+            ExploreLayers(poObj->GetArray(), nRecLevel + 1, osCurLayer);
             osCurLayer = "";
         }
         else if (poObj->GetType() == PDFObjectType_Dictionary)
@@ -2153,7 +2158,7 @@ void PDFDataset::FindLayers()
     if (array)
     {
         GDALPDFArray* poArray = GDALPDFCreateArray(array);
-        ExploreLayers(poArray);
+        ExploreLayers(poArray, 0);
         delete poArray;
     }
     else
