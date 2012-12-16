@@ -86,7 +86,7 @@ script:
 # CPP unit tests
   - cd ../autotest
   - cd cpp
-  - make quick_test
+  - GDAL_SKIP=JP2ECW make quick_test
   - cd ..
 # Download a sample file
   - mkdir -p ogr/tmp/cache/

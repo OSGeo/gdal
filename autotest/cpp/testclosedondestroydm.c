@@ -1,4 +1,5 @@
 #include <cpl_conv.h>
+#include <cpl_string.h>
 #include <gdal.h>
 #include <gdal_alg.h>
 
@@ -41,7 +42,11 @@ int main(int argc, char* argv[])
     GDALDatasetH hSrcDS;
     FILE* f;
 
-    CPLSetConfigOption("GDAL_SKIP", "GIF");
+    const char* pszGDAL_SKIP = CPLGetConfigOption("GDAL_SKIP", NULL);
+    if( pszGDAL_SKIP == NULL )
+        CPLSetConfigOption("GDAL_SKIP", "GIF");
+    else
+        CPLSetConfigOption("GDAL_SKIP", CPLSPrintf("%s GIF", pszGDAL_SKIP));
 
     GDALAllRegister();
 
