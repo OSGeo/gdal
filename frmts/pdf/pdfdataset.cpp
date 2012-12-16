@@ -1861,9 +1861,10 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
                 int nLength = poPageStream->GetLength();
                 if( nLength < 100000 )
                 {
+                    CPLString osForm;
                     pszContent = poPageStream->GetBytes();
-
-                    CPLString osForm = GDALPDFParseStreamContentOnlyDrawForm(pszContent);
+                    if( pszContent != NULL )
+                        osForm = GDALPDFParseStreamContentOnlyDrawForm(pszContent);
                     if (osForm.size())
                     {
                         CPLFree(pszContent);
