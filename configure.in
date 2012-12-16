@@ -3889,3 +3889,6 @@ LOC_MSG()
 if test "$HAVE_PODOFO" = "yes" -a "$HAVE_POPPLER" = "yes" ; then
     AC_MSG_WARN([--with-podofo and --with-poppler are both available. This is unusual setup, but will work. Poppler will be used by default...])
 fi
+if test "$HAVE_LIBXML2" = "yes" -a "$FGDB_ENABLED" = "yes"; then
+    AC_MSG_WARN([--with-libxml2 and --with-fgdb are both available. There might be some incompatibility between system libxml2 and the embedded copy within libFileGDBAPI])
+fi
