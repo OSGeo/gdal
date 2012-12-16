@@ -945,7 +945,12 @@ def ogr_csv_23():
     ds = None
 
     data = open('tmp/csvwrk/utf8.csv', 'rb').read()
-    if data[:6] != '\xef\xbb\xbfWKT':
+    if sys.version_info >= (3,0,0):
+        ogrtest.ret = False
+        exec("ogrtest.ret = (data[:6] == b'\\xef\\xbb\\xbfWKT')")
+    else:
+        ogrtest.ret = (data[:6] == '\xef\xbb\xbfWKT')
+    if not ogrtest.ret:
         gdaltest.post_reason("No UTF8 BOM header on output")
         return 'fail'
 
@@ -1032,7 +1037,7 @@ def ogr_csv_25():
 
     EXPECTED = 'foo,\n"windows newline:\r\nlinux newline:\nend of string:"\n'
 
-    data = open('tmp/csvwrk/newlines.csv', 'rb').read()
+    data = open('tmp/csvwrk/newlines.csv', 'rb').read().decode('ascii')
     if data != EXPECTED:
         gdaltest.post_reason("Newlines changed:\n\texpected=%s\n\tgot=     %s" % (repr(EXPECTED), repr(data)))
         return 'fail'
@@ -1065,7 +1070,7 @@ def ogr_csv_26():
 
     EXPECTED = 'foo,\n10.5000000000000000000000000\n'
 
-    data = open('tmp/csvwrk/num_padding.csv', 'rb').read()
+    data = open('tmp/csvwrk/num_padding.csv', 'rb').read().decode('ascii')
     if data != EXPECTED:
         gdaltest.post_reason("expected=%s got= %s" % (repr(EXPECTED), repr(data)))
         return 'fail'
