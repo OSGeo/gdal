@@ -10754,7 +10754,11 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromESRI(PyObject *SWIGUNUSEDP
   {
     /* %typemap(in) char **options */
     /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1) || PyString_Check(obj1) ) {
+    if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1)
+  #if PY_VERSION_HEX < 0x03000000
+      || PyString_Check(obj1)
+  #endif
+      ) {
       PyErr_SetString(PyExc_TypeError,"not a sequence");
       SWIG_fail;
     }
