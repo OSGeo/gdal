@@ -7850,7 +7850,11 @@ SWIGINTERN PyObject *_wrap_Driver_Create(PyObject *SWIGUNUSEDPARM(self), PyObjec
     {
       /* %typemap(in) char **options */
       /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj6) || PyUnicode_Check(obj6) || PyString_Check(obj6) ) {
+      if ( ! PySequence_Check(obj6) || PyUnicode_Check(obj6)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj6)
+  #endif
+        ) {
         PyErr_SetString(PyExc_TypeError,"not a sequence");
         SWIG_fail;
       }
@@ -7989,7 +7993,11 @@ SWIGINTERN PyObject *_wrap_Driver_CreateCopy(PyObject *SWIGUNUSEDPARM(self), PyO
     {
       /* %typemap(in) char **options */
       /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj4) || PyUnicode_Check(obj4) || PyString_Check(obj4) ) {
+      if ( ! PySequence_Check(obj4) || PyUnicode_Check(obj4)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj4)
+  #endif
+        ) {
         PyErr_SetString(PyExc_TypeError,"not a sequence");
         SWIG_fail;
       }
@@ -11902,7 +11910,11 @@ SWIGINTERN PyObject *_wrap_Dataset_AddBand(PyObject *SWIGUNUSEDPARM(self), PyObj
     {
       /* %typemap(in) char **options */
       /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj2) || PyUnicode_Check(obj2) || PyString_Check(obj2) ) {
+      if ( ! PySequence_Check(obj2) || PyUnicode_Check(obj2)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj2)
+  #endif
+        ) {
         PyErr_SetString(PyExc_TypeError,"not a sequence");
         SWIG_fail;
       }
@@ -12538,7 +12550,11 @@ SWIGINTERN PyObject *_wrap_Dataset_BeginAsyncReader(PyObject *SWIGUNUSEDPARM(sel
     {
       /* %typemap(in) char **options */
       /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj13) || PyUnicode_Check(obj13) || PyString_Check(obj13) ) {
+      if ( ! PySequence_Check(obj13) || PyUnicode_Check(obj13)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj13)
+  #endif
+        ) {
         PyErr_SetString(PyExc_TypeError,"not a sequence");
         SWIG_fail;
       }
@@ -13523,7 +13539,11 @@ SWIGINTERN PyObject *_wrap_Band_SetRasterCategoryNames(PyObject *SWIGUNUSEDPARM(
   {
     /* %typemap(in) char **options */
     /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1) || PyString_Check(obj1) ) {
+    if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1)
+  #if PY_VERSION_HEX < 0x03000000
+      || PyString_Check(obj1)
+  #endif
+      ) {
       PyErr_SetString(PyExc_TypeError,"not a sequence");
       SWIG_fail;
     }
@@ -15696,7 +15716,11 @@ SWIGINTERN PyObject *_wrap_Band_SetCategoryNames(PyObject *SWIGUNUSEDPARM(self),
   {
     /* %typemap(in) char **options */
     /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1) || PyString_Check(obj1) ) {
+    if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1)
+  #if PY_VERSION_HEX < 0x03000000
+      || PyString_Check(obj1)
+  #endif
+      ) {
       PyErr_SetString(PyExc_TypeError,"not a sequence");
       SWIG_fail;
     }
@@ -17981,7 +18005,11 @@ SWIGINTERN PyObject *_wrap_ComputeProximity(PyObject *SWIGUNUSEDPARM(self), PyOb
     {
       /* %typemap(in) char **options */
       /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj2) || PyUnicode_Check(obj2) || PyString_Check(obj2) ) {
+      if ( ! PySequence_Check(obj2) || PyUnicode_Check(obj2)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj2)
+  #endif
+        ) {
         PyErr_SetString(PyExc_TypeError,"not a sequence");
         SWIG_fail;
       }
@@ -18208,7 +18236,11 @@ SWIGINTERN PyObject *_wrap_RasterizeLayer(PyObject *SWIGUNUSEDPARM(self), PyObje
     {
       /* %typemap(in) char **options */
       /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj6) || PyUnicode_Check(obj6) || PyString_Check(obj6) ) {
+      if ( ! PySequence_Check(obj6) || PyUnicode_Check(obj6)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj6)
+  #endif
+        ) {
         PyErr_SetString(PyExc_TypeError,"not a sequence");
         SWIG_fail;
       }
@@ -18413,7 +18445,11 @@ SWIGINTERN PyObject *_wrap_Polygonize(PyObject *SWIGUNUSEDPARM(self), PyObject *
     {
       /* %typemap(in) char **options */
       /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj4) || PyUnicode_Check(obj4) || PyString_Check(obj4) ) {
+      if ( ! PySequence_Check(obj4) || PyUnicode_Check(obj4)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj4)
+  #endif
+        ) {
         PyErr_SetString(PyExc_TypeError,"not a sequence");
         SWIG_fail;
       }
@@ -18594,7 +18630,11 @@ SWIGINTERN PyObject *_wrap_FillNodata(PyObject *SWIGUNUSEDPARM(self), PyObject *
     {
       /* %typemap(in) char **options */
       /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj4) || PyUnicode_Check(obj4) || PyString_Check(obj4) ) {
+      if ( ! PySequence_Check(obj4) || PyUnicode_Check(obj4)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj4)
+  #endif
+        ) {
         PyErr_SetString(PyExc_TypeError,"not a sequence");
         SWIG_fail;
       }
@@ -18781,7 +18821,11 @@ SWIGINTERN PyObject *_wrap_SieveFilter(PyObject *SWIGUNUSEDPARM(self), PyObject 
     {
       /* %typemap(in) char **options */
       /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj5) || PyUnicode_Check(obj5) || PyString_Check(obj5) ) {
+      if ( ! PySequence_Check(obj5) || PyUnicode_Check(obj5)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj5)
+  #endif
+        ) {
         PyErr_SetString(PyExc_TypeError,"not a sequence");
         SWIG_fail;
       }
@@ -19490,7 +19534,11 @@ SWIGINTERN PyObject *_wrap_new_Transformer(PyObject *SWIGUNUSEDPARM(self), PyObj
   {
     /* %typemap(in) char **options */
     /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj2) || PyUnicode_Check(obj2) || PyString_Check(obj2) ) {
+    if ( ! PySequence_Check(obj2) || PyUnicode_Check(obj2)
+  #if PY_VERSION_HEX < 0x03000000
+      || PyString_Check(obj2)
+  #endif
+      ) {
       PyErr_SetString(PyExc_TypeError,"not a sequence");
       SWIG_fail;
     }
@@ -20014,7 +20062,11 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformGeolocations(PyObject *SWIGUNUSE
     {
       /* %typemap(in) char **options */
       /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj6) || PyUnicode_Check(obj6) || PyString_Check(obj6) ) {
+      if ( ! PySequence_Check(obj6) || PyUnicode_Check(obj6)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj6)
+  #endif
+        ) {
         PyErr_SetString(PyExc_TypeError,"not a sequence");
         SWIG_fail;
       }
@@ -21107,7 +21159,11 @@ SWIGINTERN PyObject *_wrap_IdentifyDriver(PyObject *SWIGUNUSEDPARM(self), PyObje
     {
       /* %typemap(in) char **options */
       /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-      if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1) || PyString_Check(obj1) ) {
+      if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj1)
+  #endif
+        ) {
         PyErr_SetString(PyExc_TypeError,"not a sequence");
         SWIG_fail;
       }
@@ -21194,7 +21250,11 @@ SWIGINTERN PyObject *_wrap_GeneralCmdLineProcessor(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(in) char **options */
     /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj0) || PyUnicode_Check(obj0) || PyString_Check(obj0) ) {
+    if ( ! PySequence_Check(obj0) || PyUnicode_Check(obj0)
+  #if PY_VERSION_HEX < 0x03000000
+      || PyString_Check(obj0)
+  #endif
+      ) {
       PyErr_SetString(PyExc_TypeError,"not a sequence");
       SWIG_fail;
     }
