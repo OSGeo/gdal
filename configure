@@ -30732,3 +30732,7 @@ if test "$HAVE_PODOFO" = "yes" -a "$HAVE_POPPLER" = "yes" ; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-podofo and --with-poppler are both available. This is unusual setup, but will work. Poppler will be used by default..." >&5
 $as_echo "$as_me: WARNING: --with-podofo and --with-poppler are both available. This is unusual setup, but will work. Poppler will be used by default..." >&2;}
 fi
+if test "$HAVE_LIBXML2" = "yes" -a "$FGDB_ENABLED" = "yes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-libxml2 and --with-fgdb are both available. There might be some incompatibility between system libxml2 and the embedded copy within libFileGDBAPI" >&5
+$as_echo "$as_me: WARNING: --with-libxml2 and --with-fgdb are both available. There might be some incompatibility between system libxml2 and the embedded copy within libFileGDBAPI" >&2;}
+fi
