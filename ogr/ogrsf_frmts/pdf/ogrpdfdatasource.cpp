@@ -887,27 +887,23 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
             }
             else if (EQUAL3(szToken, "BDC"))
             {
-                CPLString osOCGName, osOC;
-                for(int i=0;i<2;i++)
+                if (nTokenStackSize < 2)
                 {
-                    if (nTokenStackSize == 0)
-                    {
-                        CPLDebug("PDF",
-                                    "not enough arguments for %s",
-                                    szToken);
-                        return NULL;
-                    }
-                    if (i == 0)
-                        osOCGName = aszTokenStack[--nTokenStackSize];
-                    else
-                        osOC = aszTokenStack[--nTokenStackSize];
+                    CPLDebug("PDF",
+                                "not enough arguments for %s",
+                                szToken);
+                    return NULL;
                 }
+                nTokenStackSize -= 2;
+                const char* pszOC = aszTokenStack[nTokenStackSize];
+                const char* pszOCGName = aszTokenStack[nTokenStackSize+1];
+
                 nBDCLevel ++;
 
-                if( osOC == "/OC" && osOCGName.size() && osOCGName[0] == '/' )
+                if( EQUAL3(pszOC, "/OC") && pszOCGName[0] == '/' )
                 {
                     std::map<CPLString, OGRPDFLayer*>::iterator oIter =
-                        oMapPropertyToLayer.find(osOCGName.c_str() + 1);
+                        oMapPropertyToLayer.find(pszOCGName + 1);
                     if( oIter != oMapPropertyToLayer.end() )
                     {
                         poCurLayer = oIter->second;
@@ -987,14 +983,10 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                 else if (EQUAL2(szToken, "cm"))
                 {
                     double adfMatrix[6];
-                    for(int i=0;i<6;i++)
+                    if (!UnstackTokens(szToken, 6, aszTokenStack, nTokenStackSize, adfMatrix))
                     {
-                        if (nTokenStackSize == 0)
-                        {
-                            CPLDebug("PDF", "not enough arguments for %s", szToken);
-                            return NULL;
-                        }
-                        adfMatrix[6-1-i] = atof(aszTokenStack[--nTokenStackSize]);
+                        CPLDebug("PDF", "Should not happen at line %d", __LINE__);
+                        return NULL;
                     }
 
                     oGS.MultiplyBy(adfMatrix);
@@ -1218,38 +1210,25 @@ OGRGeometry* OGRPDFDataSource::ParseContent(const char* pszContent,
                             }
 
                             char* pszStr = poStream->GetBytes();
-                            OGRGeometry* poGeom = ParseContent(pszStr, NULL, FALSE, FALSE,
-                                                            oMapPropertyToLayer, poCurLayer);
-                            CPLFree(pszStr);
-                            if (poGeom && !bCollectAllObjects)
-                                return poGeom;
-                            delete poGeom;
+                            if( pszStr )
+                            {
+                                OGRGeometry* poGeom = ParseContent(pszStr, NULL, FALSE, FALSE,
+                                                                oMapPropertyToLayer, poCurLayer);
+                                CPLFree(pszStr);
+                                if (poGeom && !bCollectAllObjects)
+                                    return poGeom;
+                                delete poGeom;
+                            }
                         }
                     }
                 }
                 else if( EQUAL2(szToken, "RG") || EQUAL2(szToken, "rg") )
                 {
-                    double adf[3];
-                    for(int i=0;i<3;i++)
+                    double* padf = ( EQUAL2(szToken, "RG") ) ? oGS.adfStrokeColor : oGS.adfFillColor;
+                    if (!UnstackTokens(szToken, 3, aszTokenStack, nTokenStackSize, padf))
                     {
-                        if (nTokenStackSize == 0)
-                        {
-                            CPLDebug("PDF", "not enough arguments for %s", szToken);
-                            return NULL;
-                        }
-                        adf[3-1-i] = atof(aszTokenStack[--nTokenStackSize]);
-                    }
-                    if( EQUAL2(szToken, "RG") )
-                    {
-                        oGS.adfStrokeColor[0] = adf[0];
-                        oGS.adfStrokeColor[1] = adf[1];
-                        oGS.adfStrokeColor[2] = adf[2];
-                    }
-                    else
-                    {
-                        oGS.adfFillColor[0] = adf[0];
-                        oGS.adfFillColor[1] = adf[1];
-                        oGS.adfFillColor[2] = adf[2];
+                        CPLDebug("PDF", "Should not happen at line %d", __LINE__);
+                        return NULL;
                     }
                 }
                 else if (oMapOperators.find(szToken) != oMapOperators.end())
@@ -1628,6 +1607,9 @@ void OGRPDFDataSource::ExploreContents(GDALPDFObject* poObj,
         return;
 
     char* pszStr = poStream->GetBytes();
+    if (!pszStr)
+        return;
+
     const char* pszMCID = (const char*) pszStr;
     while((pszMCID = strstr(pszMCID, "/MCID")) != NULL)
     {
@@ -1713,6 +1695,8 @@ void OGRPDFDataSource::ExploreContentsNonStructuredInternal(GDALPDFObject* poCon
             if (!poStream)
                 break;
             char* pszStr = poStream->GetBytes();
+            if (!pszStr)
+                break;
             int nLen = (int)strlen(pszStr);
             char* pszConcatStrNew = (char*)CPLRealloc(pszConcatStr, nConcatLen + nLen + 1);
             if( pszConcatStrNew == NULL )
@@ -1739,6 +1723,8 @@ void OGRPDFDataSource::ExploreContentsNonStructuredInternal(GDALPDFObject* poCon
         return;
 
     char* pszStr = poStream->GetBytes();
+    if( !pszStr )
+        return;
     ParseContent(pszStr, poResources, FALSE, FALSE, oMapPropertyToLayer, NULL);
     CPLFree(pszStr);
 }
