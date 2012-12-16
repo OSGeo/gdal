@@ -2162,7 +2162,8 @@ void PDFDataset::FindLayers()
         for(int i=0;i<ocgList->getLength();i++)
         {
             OptionalContentGroup* ocg = (OptionalContentGroup*) ocgList->get(i);
-            AddLayer((const char*)ocg->getName()->getCString(), ocg);
+            if( ocg != NULL && ocg->getName() != NULL )
+                AddLayer((const char*)ocg->getName()->getCString(), ocg);
         }
     }
 
