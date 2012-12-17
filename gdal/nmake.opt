@@ -40,7 +40,7 @@ MSVC_VER=1500
 
 ###############################################################################
 # Optional use of Visual Leak Detector (VLD) by Dan Moulding, available at
-# http://dmoulding.googlepages.com/vld
+# http://vld.codeplex.com/
 # Uncomment this line to use VLD in debug configuration only:
 #MSVC_VLD_DIR="C:\Program Files\Visual Leak Detector"
 
