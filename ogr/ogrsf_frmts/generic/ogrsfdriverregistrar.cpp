@@ -108,11 +108,11 @@ OGRSFDriverRegistrar::~OGRSFDriverRegistrar()
     {
         delete papoDrivers[i];
     }
-
+    nDrivers = 0;
     CPLFree( papoDrivers );
     papoDrivers = NULL;
 
-    poRegistrar = NULL;
+    poRegistrar = NULL; /* equivalent to this = NULL; */
 }
 
 /************************************************************************/
