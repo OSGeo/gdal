@@ -1515,6 +1515,24 @@ static void CPLAccessConfigOption(const char* pszKey, int bGet)
   * If the given option was no defined with CPLSetConfigOption(), it tries to find
   * it in environment variables.
   *
+  * Note: the string returned by CPLGetConfigOption() might be short-lived, and in
+  * particular it will become invalid after a call to CPLSetConfigOption() with the
+  * same key.
+  *
+  * To override temporary a potentially existing option with a new value, you can
+  * use the following snippet :
+  * <pre>
+  *     // backup old value
+  *     const char* pszOldValTmp = CPLGetConfigOption(pszKey, NULL);
+  *     char* pszOldVal = pszOldValTmp ? CPLStrdup(pszOldValTmp) : NULL;
+  *     // override with new value
+  *     CPLSetConfigOption(pszKey, pszNewVal);
+  *     // do something usefull
+  *     // restore old value
+  *     CPLSetConfigOption(pszKey, pszOldVal);
+  *     CPLFree(pszOldVal);
+  * </pre>
+  *
   * @param pszKey the key of the option to retrieve
   * @param pszDefault a default value if the key does not match existing defined options (may be NULL)
   * @return the value associated to the key, or the default value if not found
@@ -1574,6 +1592,10 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
   * with the with '--config KEY VALUE'. For example,
   * ogrinfo --config CPL_DEBUG ON ~/data/test/point.shp
   *
+  * This function can also be used to clear a setting by passing NULL as the
+  * value (note: passing NULL will not unset an existing environment variable;
+  * it will just unset a value previously set by CPLSetConfigOption()).
+  *
   * @param pszKey the key of the option
   * @param pszValue the value of the option, or NULL to clear a setting.
   * 
@@ -1605,6 +1627,10 @@ CPLSetConfigOption( const char *pszKey, const char *pszValue )
   * This function sets the configuration option that only applies in the
   * current thread, as opposed to CPLSetConfigOption() which sets an option
   * that applies on all threads.
+  *
+  * This function can also be used to clear a setting by passing NULL as the
+  * value (note: passing NULL will not unset an existing environment variable;
+  * it will just unset a value previously set by CPLSetThreadLocalConfigOption()).
   *
   * @param pszKey the key of the option
   * @param pszValue the value of the option, or NULL to clear a setting.
