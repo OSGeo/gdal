@@ -671,7 +671,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
         if (psChild == NULL)
            psChild = FindBareXMLChild( psNode, "exterior");
 
-        if( psChild == NULL || psChild->psChild == NULL )
+        psChild = GetChildElement(psChild);
+        if( psChild == NULL )
         {
             /* <gml:Polygon/> is invalid GML2, but valid GML3, so be tolerant */
             return poPolygon;
@@ -679,7 +680,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 
         // Translate outer ring and add to polygon.
         poRing = (OGRLinearRing *) 
-            GML2OGRGeometry_XMLNode( psChild->psChild, bGetSecondaryGeometryOption,
+            GML2OGRGeometry_XMLNode( psChild, bGetSecondaryGeometryOption,
                                      nRecLevel + 1 );
         if( poRing == NULL )
         {
@@ -709,9 +710,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
                 && (EQUAL(BareGMLElement(psChild->pszValue),"innerBoundaryIs") ||
                     EQUAL(BareGMLElement(psChild->pszValue),"interior")))
             {
-                if (psChild->psChild != NULL)
+                const CPLXMLNode* psInteriorChild = GetChildElement(psChild);
+                if (psInteriorChild != NULL)
                     poRing = (OGRLinearRing *) 
-                        GML2OGRGeometry_XMLNode( psChild->psChild, bGetSecondaryGeometryOption,
+                        GML2OGRGeometry_XMLNode( psInteriorChild, bGetSecondaryGeometryOption,
                                                  nRecLevel + 1);
                 else
                     poRing = NULL;
@@ -1745,7 +1747,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
               && EQUAL(BareGMLElement(psChild->pszValue),"directedFace") )
               {
                 // collect next face (psChild->psChild)
-                psFaceChild = psChild->psChild;
+                psFaceChild = GetChildElement(psChild);
 	
                 while( psFaceChild != NULL &&
                        !(psFaceChild->eType == CXT_Element &&
@@ -1885,7 +1887,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
             bFaceOrientation = GetElementOrientation(psChild);
 
             // collect next face (psChild->psChild)
-            psFaceChild = psChild->psChild;
+            psFaceChild = GetChildElement(psChild);
             while( psFaceChild != NULL &&
                    !EQUAL(BareGMLElement(psFaceChild->pszValue),"Face") )
                     psFaceChild = psFaceChild->psNext;
@@ -1971,14 +1973,14 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
         if( psChild == NULL )
             psChild = FindBareXMLChild( psNode, "trianglePatches" );
 
-        if( psChild == NULL || psChild->psChild == NULL )
+        psChild = GetChildElement(psChild);
+        if( psChild == NULL )
         {
             /* <gml:Surface/> and <gml:Surface><gml:patches/></gml:Surface> are valid GML */
             return new OGRPolygon();
         }
 
-        for( psChild = psChild->psChild; 
-             psChild != NULL; psChild = psChild->psNext )
+        for( ; psChild != NULL; psChild = psChild->psNext )
         {
             if( psChild->eType == CXT_Element
                 && (EQUAL(BareGMLElement(psChild->pszValue),"PolygonPatch") ||
@@ -2024,15 +2026,15 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
         if (psChild == NULL)
             psChild = FindBareXMLChild( psNode, "patches" );
 
-        if( psChild == NULL || psChild->psChild == NULL )
+        psChild = GetChildElement(psChild);
+        if( psChild == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Missing <trianglePatches> for %s.", pszBaseGeometry );
             return NULL;
         }
 
-        for( psChild = psChild->psChild;
-             psChild != NULL; psChild = psChild->psNext )
+        for( ; psChild != NULL; psChild = psChild->psNext )
         {
             if( psChild->eType == CXT_Element
                 && EQUAL(BareGMLElement(psChild->pszValue),"Triangle") )
@@ -2073,14 +2075,15 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
         // Find exterior element
         psChild = FindBareXMLChild( psNode, "exterior");
 
-        if( psChild == NULL || psChild->psChild == NULL )
+        psChild = GetChildElement(psChild);
+        if( psChild == NULL )
         {
             /* <gml:Solid/> and <gml:Solid><gml:exterior/></gml:Solid> are valid GML */
             return new OGRPolygon();
         }
 
         // Get the geometry inside <exterior>
-        poGeom = GML2OGRGeometry_XMLNode( psChild->psChild, bGetSecondaryGeometryOption,
+        poGeom = GML2OGRGeometry_XMLNode( psChild, bGetSecondaryGeometryOption,
                                           nRecLevel + 1 );
         if( poGeom == NULL )
         {
@@ -2114,14 +2117,15 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
         // Find baseSurface.
         psChild = FindBareXMLChild( psNode, "baseSurface" );
 
-        if( psChild == NULL || psChild->psChild == NULL )
+        psChild = GetChildElement(psChild);
+        if( psChild == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Missing <baseSurface> for OrientableSurface." );
             return NULL;
         }
 
-        return GML2OGRGeometry_XMLNode( psChild->psChild, bGetSecondaryGeometryOption,
+        return GML2OGRGeometry_XMLNode( psChild, bGetSecondaryGeometryOption,
                                         nRecLevel + 1 );
     }
 
