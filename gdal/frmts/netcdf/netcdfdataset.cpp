@@ -1141,7 +1141,7 @@ CPLErr netCDFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     int    nd;
 
     if ( (nBlockYOff == 0) || (nBlockYOff == nRasterYSize-1) )
-        CPLDebug( "GDAL_netCDF", "netCDFRasterBand::IReadBlock( %d, %d, ... )",
+        CPLDebug( "GDAL_netCDF", "netCDFRasterBand::IWriteBlock( %d, %d, ... )",
                   nBlockXOff, nBlockYOff );
 
     *pszName='\0';
@@ -3559,20 +3559,18 @@ void netCDFDataset::CreateSubDatasetList( )
 /* -------------------------------------------------------------------- */
             szDim[strlen(szDim) - 1] = '\0';
             switch( nVarType ) {
-		
+
                 case NC_BYTE:
-#ifdef NETCDF_HAS_NC4
-                case NC_UBYTE:
-#endif    
+                    strcpy(szType, "8-bit integer");
+                    break;
                 case NC_CHAR:
                     strcpy(szType, "8-bit character");
                     break;
-
                 case NC_SHORT: 
-                    strcpy(szType, "8-bit integer");
+                    strcpy(szType, "16-bit integer");
                     break;
                 case NC_INT:
-                    strcpy(szType, "16-bit integer");
+                    strcpy(szType, "32-bit integer");
                     break;
                 case NC_FLOAT:
                     strcpy(szType, "32-bit floating-point");
@@ -3580,7 +3578,23 @@ void netCDFDataset::CreateSubDatasetList( )
                 case NC_DOUBLE:
                     strcpy(szType, "64-bit floating-point");
                     break;
-
+#ifdef NETCDF_HAS_NC4
+                case NC_UBYTE:
+                    strcpy(szType, "8-bit unsigned integer");
+                    break;
+                case NC_USHORT: 
+                    strcpy(szType, "16-bit unsigned integer");
+                    break;
+                case NC_UINT:
+                    strcpy(szType, "32-bit unsigned integer");
+                    break;
+                case NC_INT64:
+                    strcpy(szType, "64-bit integer");
+                    break;
+                case NC_UINT64:
+                    strcpy(szType, "64-bit unsigned integer");
+                    break;
+#endif    
                 default:
                     break;
             }
