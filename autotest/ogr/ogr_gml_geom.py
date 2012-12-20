@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -78,7 +79,7 @@ class gml_geom_unit:
 # by ESRI WFS software.
 
 def gml_space_test():
-    gml = '<gml:LineString><gml:coordinates decimal="." cs="," ts=" ">189999.99995605,624999.99998375 200000.00005735,624999.99998375 200000.00005735,612499.99997125 195791.3593843,612499.99997125 193327.3749823,612499.99997125 189999.99995605,612499.99997125 189999.99995605,619462.31247125 189999.99995605,624999.99998375 \n</gml:coordinates></gml:LineString>'
+    gml = '<gml:LineString xmlns:foo="http://bar"><gml:coordinates xmlns:foo="http://bar" decimal="." cs="," ts=" ">189999.99995605,624999.99998375 200000.00005735,624999.99998375 200000.00005735,612499.99997125 195791.3593843,612499.99997125 193327.3749823,612499.99997125 189999.99995605,612499.99997125 189999.99995605,619462.31247125 189999.99995605,624999.99998375 \n</gml:coordinates></gml:LineString>'
     geom = ogr.CreateGeometryFromGML( gml )
     if geom is None or geom.GetGeometryType() is not ogr.wkbLineString \
        or geom.GetPointCount() != 8:
@@ -94,7 +95,7 @@ def gml_space_test():
 
 def gml_pos_point():
 
-    gml = '<gml:Point><gml:pos>31 29 16</gml:pos></gml:Point>'
+    gml = '<gml:Point xmlns:foo="http://bar"><gml:pos>31 29 16</gml:pos></gml:Point>'
 
     geom = ogr.CreateGeometryFromGML( gml )
 
@@ -109,18 +110,18 @@ def gml_pos_point():
 
 def gml_pos_polygon():
 
-    gml = '''<gml:Polygon>
-                <gml:exterior>
-                    <gml:LinearRing>
-                        <gml:pos>0 0</gml:pos>
+    gml = '''<gml:Polygon xmlns:foo="http://bar">
+                <gml:exterior xmlns:foo="http://bar">
+                    <gml:LinearRing xmlns:foo="http://bar">
+                        <gml:pos xmlns:foo="http://bar">0 0</gml:pos>
                         <gml:pos>4 0</gml:pos>
                         <gml:pos>4 4</gml:pos>
                         <gml:pos>0 4</gml:pos>
                         <gml:pos>0 0</gml:pos>
                     </gml:LinearRing>
                 </gml:exterior>
-                <gml:interior>
-                    <gml:LinearRing>
+                <gml:interior xmlns:foo="http://bar">
+                    <gml:LinearRing xmlns:foo="http://bar">
                         <gml:pos>1 1</gml:pos>
                         <gml:pos>2 1</gml:pos>
                         <gml:pos>2 2</gml:pos>
@@ -143,7 +144,7 @@ def gml_pos_polygon():
 
 def gml_posList_line():
 
-    gml = '<LineString><posList>31 42 53 64 55 76</posList></LineString>'
+    gml = '<LineString xmlns:foo="http://bar"><posList xmlns:foo="http://bar">31 42 53 64 55 76</posList></LineString>'
 
     geom = ogr.CreateGeometryFromGML( gml )
 
@@ -159,7 +160,7 @@ def gml_posList_line():
 
 def gml_posList_line3d():
 
-    gml = '<LineString><posList srsDimension="3">31 42 1 53 64 2 55 76 3</posList></LineString>'
+    gml = '<LineString><posList xmlns:foo="http://bar" srsDimension="3">31 42 1 53 64 2 55 76 3</posList></LineString>'
 
     geom = ogr.CreateGeometryFromGML( gml )
 
@@ -190,7 +191,7 @@ def gml_posList_line3d_2():
 
 def gml_polygon():
 
-    gml = '<Polygon><exterior><LinearRing><posList>0 0 4 0 4 4 0 4 0 0</posList></LinearRing></exterior><interior><LinearRing><posList>1 1 2 1 2 2 1 2 1 1</posList></LinearRing></interior></Polygon>'
+    gml = '<Polygon><exterior><LinearRing><posList>0 0 4 0 4 4 0 4 0 0</posList></LinearRing></exterior><interior xmlns:foo="http://bar"><LinearRing><posList xmlns:foo="http://bar">1 1 2 1 2 2 1 2 1 1</posList></LinearRing></interior></Polygon>'
     geom = ogr.CreateGeometryFromGML( gml )
 
     if geom.ExportToWkt() != 'POLYGON ((0 0,4 0,4 4,0 4,0 0),(1 1,2 1,2 2,1 2,1 1))':
@@ -413,8 +414,8 @@ def gml_Box():
 def gml_Curve():
 
     gml = """<gml:Curve xmlns:gml="http://www.opengis.net/gml" srsName="foo">
-    <gml:segments>
-        <gml:LineStringSegment>
+    <gml:segments xmlns:foo="http://bar">
+        <gml:LineStringSegment xmlns:foo="http://bar">
             <gml:posList>1 2 3 4</gml:posList>
         </gml:LineStringSegment>
     </gml:segments>
@@ -461,8 +462,8 @@ def gml_Curve_with_pointProperty():
 
 def gml_MultiCurve():
 
-    gml = """<gml:MultiCurve xmlns:gml="http://www.opengis.net/gml" srsName="foo">
-    <gml:curveMember>
+    gml = """<gml:MultiCurve xmlns:foo="http://bar" xmlns:gml="http://www.opengis.net/gml" srsName="foo">
+    <gml:curveMember xmlns:foo="http://bar">
         <gml:LineString>
             <gml:posList>1 2 2 3</gml:posList>
         </gml:LineString>
@@ -489,10 +490,10 @@ def gml_MultiCurve():
 def gml_MultiSurface():
 
     gml = """<gml:MultiSurface xmlns:gml="http://www.opengis.net/gml" srsName="foo">
-    <gml:surfaceMember xlink:role="main">
+    <gml:surfaceMember xmlns:foo="http://bar" xlink:role="main">
         <gml:Surface gml:id="id1">
-            <gml:patches>
-                <gml:PolygonPatch interpolation="planar">
+            <gml:patches xmlns:foo="http://bar">
+                <gml:PolygonPatch xmlns:foo="http://bar" interpolation="planar">
                     <gml:exterior>
                         <gml:LinearRing>
                             <gml:posList>1 2 3 4 5 6 1 2</gml:posList>
@@ -561,13 +562,13 @@ def gml_MultiSurface():
 
 def gml_MultiSurface_surfaceMembers():
 
-    gml = """<gml:MultiSurface>
-          <gml:surfaceMembers>
-            <gml:Surface>
-              <gml:patches>
-                <gml:PolygonPatch>
-                  <gml:exterior>
-                      <gml:LinearRing>
+    gml = """<gml:MultiSurface xmlns:foo="http://bar">
+          <gml:surfaceMembers xmlns:foo="http://bar">
+            <gml:Surface xmlns:foo="http://bar">
+              <gml:patches xmlns:foo="http://bar">
+                <gml:PolygonPatch xmlns:foo="http://bar">
+                  <gml:exterior xmlns:foo="http://bar">
+                      <gml:LinearRing xmlns:foo="http://bar">
                           <gml:posList>1 2 3 4 5 6 1 2</gml:posList>
                       </gml:LinearRing>
                     </gml:exterior>
@@ -615,10 +616,10 @@ def gml_MultiSurface_surfaceMembers():
 
 def gml_MultiCurve_curveMembers():
 
-    gml = """<gml:MultiCurve>
-          <gml:curveMembers>
-            <gml:LineString>
-                <gml:posList srsDimension="2">0 0 1 1</gml:posList>
+    gml = """<gml:MultiCurve xmlns:foo="http://bar">
+          <gml:curveMembers xmlns:foo="http://bar">
+            <gml:LineString xmlns:foo="http://bar">
+                <gml:posList xmlns:foo="http://bar" srsDimension="2">0 0 1 1</gml:posList>
               </gml:LineString>
             </gml:curveMembers>
           </gml:MultiCurve>"""
@@ -637,10 +638,10 @@ def gml_MultiCurve_curveMembers():
 
 def gml_MultiCurve_pointMembers():
 
-    gml = """<gml:MultiPoint>
-          <gml:pointMembers>
-              <gml:Point>
-                <gml:pos>0 0</gml:pos>
+    gml = """<gml:MultiPoint xmlns:foo="http://bar">
+          <gml:pointMembers xmlns:foo="http://bar">
+              <gml:Point xmlns:foo="http://bar">
+                <gml:pos xmlns:foo="http://bar">0 0</gml:pos>
               </gml:Point>
               <gml:Point>
                 <gml:pos>1 1</gml:pos>
@@ -661,14 +662,14 @@ def gml_MultiCurve_pointMembers():
 
 def gml_Solid():
 
-    gml = """<gml:Solid gml:id="UUID_cc5a9513-2d85-4f1a-869a-620400182e1f">
-          <gml:exterior>
-            <gml:CompositeSurface gml:id="UUID_2c83341e-a9ce-4abe-9c40-b5208eed5588">
-              <gml:surfaceMember>
-                <gml:Polygon gml:id="UUID_d8e4b04b-ce0a-441e-b940-5ab99fcf6112">
-                  <gml:exterior>
-                    <gml:LinearRing gml:id="UUID_d8e4b04b-ce0a-441e-b940-5ab99fcf6112_0">
-                      <gml:posList srsDimension="3">1 2 0 3 4 0 5 6 0 1 2 0</gml:posList>
+    gml = """<gml:Solid xmlns:foo="http://bar" gml:id="UUID_cc5a9513-2d85-4f1a-869a-620400182e1f">
+          <gml:exterior xmlns:foo="http://bar">
+            <gml:CompositeSurface xmlns:foo="http://bar" gml:id="UUID_2c83341e-a9ce-4abe-9c40-b5208eed5588">
+              <gml:surfaceMember xmlns:foo="http://bar">
+                <gml:Polygon xmlns:foo="http://bar" gml:id="UUID_d8e4b04b-ce0a-441e-b940-5ab99fcf6112">
+                  <gml:exterior xmlns:foo="http://bar">
+                    <gml:LinearRing xmlns:foo="http://bar" gml:id="UUID_d8e4b04b-ce0a-441e-b940-5ab99fcf6112_0">
+                      <gml:posList xmlns:foo="http://bar" srsDimension="3">1 2 0 3 4 0 5 6 0 1 2 0</gml:posList>
                     </gml:LinearRing>
                   </gml:exterior>
                 </gml:Polygon>
@@ -691,8 +692,8 @@ def gml_Solid():
 
 def gml_OrientableSurface():
 
-    gml = """<gml:OrientableSurface orientation="+">
-                                            <gml:baseSurface>
+    gml = """<gml:OrientableSurface xmlns:foo="http://bar" orientation="+">
+                                            <gml:baseSurface xmlns:foo="http://bar">
                                                 <gml:Polygon>
                                                   <gml:exterior>
                                                   <gml:LinearRing>
@@ -719,7 +720,7 @@ def gml_OrientableSurface():
 
 def gml_Triangle():
 
-    gml = """<gml:Triangle>
+    gml = """<gml:Triangle xmlns:foo="http://bar">
                 <gml:exterior>
                     <gml:LinearRing>
                         <gml:posList>0 0 0 1 1 1 0 0</gml:posList>
@@ -741,7 +742,7 @@ def gml_Triangle():
 
 def gml_Rectangle():
 
-    gml = """<gml:Rectangle>
+    gml = """<gml:Rectangle xmlns:foo="http://bar">
                 <gml:exterior>
                     <gml:LinearRing>
                         <gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList>
@@ -763,11 +764,11 @@ def gml_Rectangle():
 
 def gml_Tin():
 
-    gml = """<gml:Tin>
-                <gml:patches>
-                    <gml:Triangle>
-                        <gml:exterior>
-                            <gml:LinearRing>
+    gml = """<gml:Tin xmlns:foo="http://bar">
+                <gml:patches xmlns:foo="http://bar">
+                    <gml:Triangle xmlns:foo="http://bar">
+                        <gml:exterior xmlns:foo="http://bar">
+                            <gml:LinearRing xmlns:foo="http://bar">
                                 <gml:posList srsDimension="3">0 0 1 0 1 1 1 1 1 1 0 1 0 0 1 </gml:posList>
                             </gml:LinearRing>
                         </gml:exterior>
