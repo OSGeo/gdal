@@ -51,7 +51,6 @@ CPL_CVSID("$Id");
  *
  * @param poDataset Image on which feature points will be detected
  * @param panBands Array of 3 raster bands numbers, for Red, Green, Blue bands (in that order)
- * @param poCollection Feaure point collection where detected points will be stored
  * @param nOctaveStart Number of bottom octave. Octave numbers starts from one.
  * This value directly and strongly affects to amount of recognized points
  * @param nOctaveEnd Number of top octave. Should be equal or greater than octaveStart

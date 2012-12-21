@@ -71,6 +71,15 @@ char **VSIReadDir(const char *pszPath)
 /*                             VSIReadRecursive()                       */
 /************************************************************************/
 
+typedef struct
+{
+    char **papszFiles;
+    int nCount;
+    int i;
+    char* pszPath;
+    char* pszDisplayedPath;
+}  VSIReadDirRecursiveTask;
+
 /**
  * \brief Read names in a directory recursively.
  *
@@ -92,15 +101,6 @@ char **VSIReadDir(const char *pszPath)
  * @since GDAL 1.10.0
  *
  */
-
-typedef struct
-{
-    char **papszFiles;
-    int nCount;
-    int i;
-    char* pszPath;
-    char* pszDisplayedPath;
-}  VSIReadDirRecursiveTask;
 
 char **VSIReadDirRecursive( const char *pszPathIn )
 {

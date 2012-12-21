@@ -54,7 +54,7 @@ CPL_CVSID("$Id$");
  * @param pfnProgress callback for reporting algorithm progress matching the
  * GDALProgressFunc() semantics.  May be NULL.
  * @param pProgressArg callback argument passed to pfnProgress.
- * @param papzOptions list of name/value options - none currently supported.
+ * @param papszOptions list of name/value options - none currently supported.
  *
  * @return CE_None on success or CE_Failure if an error occurs.
  */

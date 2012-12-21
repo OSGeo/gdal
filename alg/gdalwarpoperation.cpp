@@ -609,6 +609,27 @@ void GDALDestroyWarpOperation( GDALWarpOperationH hOperation )
 /************************************************************************/
 /*                         ChunkAndWarpImage()                          */
 /************************************************************************/
+ 
+ struct WarpChunk { 
+    int dx, dy, dsx, dsy; 
+    int sx, sy, ssx, ssy; 
+}; 
+ 
+static int OrderWarpChunk(const void* _a, const void *_b)
+{ 
+    const WarpChunk* a = (const WarpChunk* )_a;
+    const WarpChunk* b = (const WarpChunk* )_b;
+    if (a->dy < b->dy)
+        return -1; 
+    else if (a->dy > b->dy)
+        return 1; 
+    else if (a->dx < b->dx)
+        return -1; 
+    else if (a->dx > b->dx)
+        return 1; 
+    else
+        return 0; 
+}
 
 /**
  * \fn CPLErr GDALWarpOperation::ChunkAndWarpImage(
@@ -632,27 +653,6 @@ void GDALDestroyWarpOperation( GDALWarpOperationH hOperation )
  *
  * @return CE_None on success or CE_Failure if an error occurs.
  */
- 
- struct WarpChunk { 
-    int dx, dy, dsx, dsy; 
-    int sx, sy, ssx, ssy; 
-}; 
- 
-static int OrderWarpChunk(const void* _a, const void *_b)
-{ 
-    const WarpChunk* a = (const WarpChunk* )_a;
-    const WarpChunk* b = (const WarpChunk* )_b;
-    if (a->dy < b->dy)
-        return -1; 
-    else if (a->dy > b->dy)
-        return 1; 
-    else if (a->dx < b->dx)
-        return -1; 
-    else if (a->dx > b->dx)
-        return 1; 
-    else
-        return 0; 
-} 
 
 CPLErr GDALWarpOperation::ChunkAndWarpImage( 
     int nDstXOff, int nDstYOff,  int nDstXSize, int nDstYSize )
