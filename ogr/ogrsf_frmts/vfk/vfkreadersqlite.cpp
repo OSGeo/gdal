@@ -103,8 +103,7 @@ VFKReaderSQLite::~VFKReaderSQLite()
 
   Call VFKReader::OpenFile() before this function.
 
-  \return number of data blocks
-  \return -1 on error
+  \return number of data blocks or -1 on error
 */
 int VFKReaderSQLite::ReadDataBlocks()
 {
@@ -142,8 +141,7 @@ int VFKReaderSQLite::ReadDataBlocks()
 
   Call VFKReader::OpenFile() before this function.
   
-  \return number of data records
-  \return -1 on error
+  \return number of data records or -1 on error
 */
 int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
 {
@@ -319,8 +317,7 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
   
   \param pszSQLCommand SQL statement to be prepared
 
-  \return pointer to sqlite3_stmt instance
-  \return NULL on error
+  \return pointer to sqlite3_stmt instance or NULL on error
 */
 sqlite3_stmt *VFKReaderSQLite::PrepareStatement(const char *pszSQLCommand)
 {
@@ -380,8 +377,7 @@ OGRErr VFKReaderSQLite::ExecuteSQL(sqlite3_stmt *hStmt)
 /*!
   \brief Execute SQL statement (SQLITE only)
 
-  \return OGRERR_NONE on success
-  \return OGRERR_FAILURE on failure
+  \return OGRERR_NONE on success or OGRERR_FAILURE on failure
 */
 OGRErr VFKReaderSQLite::ExecuteSQL(const char *pszSQLCommand)
 {
@@ -422,8 +418,8 @@ OGRErr VFKReaderSQLite::ExecuteSQL(const char *pszSQLCommand)
 /*!
   \brief Add feature
 
-  \param poNewDataBlock pointer to VFKDataBlock instance
-  \param poNewFeature pointer to VFKFeature instance
+  \param poDataBlock pointer to VFKDataBlock instance
+  \param poFeature pointer to VFKFeature instance
 */
 void VFKReaderSQLite::AddFeature(IVFKDataBlock *poDataBlock, VFKFeature *poFeature)
 {

@@ -303,7 +303,7 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
  * @param dfOriginX the X origin for the file.  
  * @param dfOriginY the Y origin for the file. 
  * @param dfOriginZ the Z origin for the file. 
- * @param nSubUnitPerMasterUnit the number of subunits in one master unit.
+ * @param nSubUnitsPerMasterUnit the number of subunits in one master unit.
  * @param nUORPerSubUnit the number of UOR (units of resolution) per subunit.
  * @param pszMasterUnits the name of the master units (2 characters). 
  * @param pszSubUnits the name of the subunits (2 characters). 
@@ -1238,14 +1238,14 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
  * Use DGNUpdateElemCore() on the element before writing to set these values.
  *
  * @param hDGN the DGN file on which the element will eventually be written.
- * @param dfCenter1X the center of the first bounding circle (X).
- * @param dfCenter1Y the center of the first bounding circle (Y).
- * @param dfCenter1Z the center of the first bounding circle (Z).
- * @param dfRadius1 the radius of the first bounding circle.
- * @param dfCenter2X the center of the second bounding circle (X).
- * @param dfCenter2Y the center of the second bounding circle (Y).
- * @param dfCenter2Z the center of the second bounding circle (Z).
- * @param dfRadius2 the radius of the second bounding circle.
+ * @param dfCenter_1X the center of the first bounding circle (X).
+ * @param dfCenter_1Y the center of the first bounding circle (Y).
+ * @param dfCenter_1Z the center of the first bounding circle (Z).
+ * @param dfRadius_1 the radius of the first bounding circle.
+ * @param dfCenter_2X the center of the second bounding circle (X).
+ * @param dfCenter_2Y the center of the second bounding circle (Y).
+ * @param dfCenter_2Z the center of the second bounding circle (Z).
+ * @param dfRadius_2 the radius of the second bounding circle.
  * @param panQuaternion 3D orientation quaternion (NULL for default orientation - circles parallel to the X-Y plane).
  * 
  * @return the new element (DGNElemCone) or NULL on failure.
@@ -1558,7 +1558,7 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
  * @param hDGN the file to which the element will eventually be written.
  * @param nScreenFlag the screen to which the color table applies
  * (0 = left, 1 = right). 
- * @param abyColorInfo[8][3] array of 256 color entries. The first is
+ * @param abyColorInfo array of 256 color entries. The first is
  * the background color. 
  *
  * @return the new element (DGNElemColorTable) or NULL on failure. 

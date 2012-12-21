@@ -2579,8 +2579,8 @@ GDALDeserializeApproxTransformer( CPLXMLNode *psTree )
  * @param padfGeoTransform Six coefficient GeoTransform to apply.
  * @param dfPixel Input pixel position.
  * @param dfLine Input line position. 
- * @param *pdfGeoX output location where geo_x (easting/longitude) location is placed.
- * @param *pdfGeoY output location where geo_y (northing/latitude) location is placed.
+ * @param pdfGeoX output location where geo_x (easting/longitude) location is placed.
+ * @param pdfGeoY output location where geo_y (northing/latitude) location is placed.
  */
 
 void CPL_STDCALL GDALApplyGeoTransform( double *padfGeoTransform, 

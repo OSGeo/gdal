@@ -207,10 +207,9 @@ static void GDALGridGetPointBounds(const void* hFeature, CPLRectObj* pBounds)
  * @param padfZ Input array of Z values. 
  * @param dfXPoint X coordinate of the point to compute.
  * @param dfYPoint Y coordinate of the point to compute.
- * @param nXPoint X position of the point to compute.  
- * @param nYPoint Y position of the point to compute.
  * @param pdfValue Pointer to variable where the computed grid node value
  * will be returned.
+ * @param hExtraParamsIn extra parameters.
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
  */

@@ -68,10 +68,9 @@ OGRVFKDataSource::~OGRVFKDataSource()
   \brief Open VFK datasource
 
   \param pszNewName datasource name
-  \param bTextOpen True to test if datasource is possible to open
+  \param bTestOpen True to test if datasource is possible to open
 
-  \return TRUE on success
-  \return FALSE on failure
+  \return TRUE on success or FALSE on failure
 */
 int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
 {
@@ -146,8 +145,7 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
 
   \param iLayer layer number
 
-  \return pointer to OGRLayer instance
-  \return NULL on error
+  \return pointer to OGRLayer instance or NULL on error
 */
 OGRLayer *OGRVFKDataSource::GetLayer(int iLayer)
 {
@@ -162,8 +160,7 @@ OGRLayer *OGRVFKDataSource::GetLayer(int iLayer)
 
   \param pszCap capability
 
-  \return True if supported
-  \return False if not supported
+  \return TRUE if supported or FALSE if not supported
 */
 int OGRVFKDataSource::TestCapability(const char * pszCap)
 {
@@ -175,8 +172,7 @@ int OGRVFKDataSource::TestCapability(const char * pszCap)
 
   \param poDataBlock pointer to VFKDataBlock instance
 
-  \return poiter to OGRVFKLayer instance
-  \return NULL on error
+  \return pointer to OGRVFKLayer instance or NULL on error
 */
 OGRVFKLayer *OGRVFKDataSource::CreateLayerFromBlock(const IVFKDataBlock *poDataBlock)
 {

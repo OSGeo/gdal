@@ -1467,7 +1467,7 @@ OGRErr OSRMorphToESRI( OGRSpatialReferenceH hSRS )
  * recommended for proper datum shift calculations):
  *
  * <b>GDAL_FIX_ESRI_WKT values</b>
- * <table border=0>
+ * <table border="0">
  * <tr><td>&nbsp;&nbsp;</td><td><b>TOWGS84</b></td><td>&nbsp;&nbsp;</td><td>
  * Adds missing TOWGS84 parameters (necessary for datum transformations),
  * based on named datum and spheroid values.</td></tr>

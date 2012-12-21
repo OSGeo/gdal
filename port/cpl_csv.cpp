@@ -1149,7 +1149,7 @@ const char * CSVFilename( const char *pszBasename )
 /**
  * Override CSV file search method.
  *
- * @param CSVFileOverride The pointer to a function which will return the
+ * @param pfnNewHook The pointer to a function which will return the
  * full path for a given filename.
   *
 

@@ -386,23 +386,9 @@ static void scaleFromLATTS( string sEllips, double phits, double &scale )
  *
  * The method will import projection definition in ILWIS, 
  * It uses 13 parameters to define the coordinate system
- * and datum/ellipsoid specieied in the padfPrjParams array. 
+ * and datum/ellipsoid specified in the padfPrjParams array. 
  *
- * @param padfPrjParams Array of 10 coordinate system parameters:
- *
- * [0]  Spheroid semi major axis
- * [1]  Spheroid semi minor axis
- * [2]  Spheroid inverse flattening
- * [3]  False Easting
- * [4]  False Northing
- * [5]  Central Parallel // latitude_of_origin
- * [6]  Central Meridian 
- * [7]  First Standard Parallel
- * [8]  Second Standard Parallel
- * [9]  Scale Factor
- * [10] Latitude_Of_True_Scale
- * [11] Zone
- * [12] Satellite Height
+ * @param csyFileName Name of .csy file
 **/ 
 
 CPLErr ILWISDataset::ReadProjection( string csyFileName )
