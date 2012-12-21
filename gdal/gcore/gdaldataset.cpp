@@ -953,7 +953,7 @@ GDALSetGeoTransform( GDALDatasetH hDS, double * padfTransform )
  * @return the desired handle value, or NULL if not recognised/supported.
  */
 
-void *GDALDataset::GetInternalHandle( const char * )
+void *GDALDataset::GetInternalHandle( const char * pszHandleName )
 
 {
     return( NULL );

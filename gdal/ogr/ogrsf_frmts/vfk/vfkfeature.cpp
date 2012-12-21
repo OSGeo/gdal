@@ -76,7 +76,7 @@ void IVFKFeature::SetGeometryType(OGRwkbGeometryType nGeomType)
 
   FID: 0 for next, -1 for same
   
-  \param FID feature id
+  \param nFID feature id
 */
 void IVFKFeature::SetFID(long nFID)
 {
@@ -104,8 +104,7 @@ void IVFKFeature::SetFID(long nFID)
 
   \param poGeom pointer to OGRGeometry
 
-  \return TRUE on valid feature
-  \return otherwise FALSE
+  \return TRUE on valid feature or otherwise FALSE
 */
 bool IVFKFeature::SetGeometry(OGRGeometry *poGeom)
 {
@@ -141,8 +140,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom)
 /*!
   \brief Get feature geometry
 
-  \return pointer to OGRGeometry
-  \return NULL on error
+  \return pointer to OGRGeometry or NULL on error
 */
 OGRGeometry *IVFKFeature::GetGeometry()
 {
@@ -156,8 +154,7 @@ OGRGeometry *IVFKFeature::GetGeometry()
 /*!
   \brief Load geometry
 
-  \return TRUE on success
-  \return FALSE on failure
+  \return TRUE on success or FALSE on failure
 */
 bool IVFKFeature::LoadGeometry()
 {
@@ -213,10 +210,9 @@ VFKFeature::VFKFeature(IVFKDataBlock *poDataBlock) : IVFKFeature(poDataBlock)
 
   \param pszLine pointer to line containing feature definition
 
-  \return TRUE on success
-  \return FALSE on failure
+  \return TRUE on success or FALSE on failure
 */
-bool VFKFeature::SetProperties(const char *poLine)
+bool VFKFeature::SetProperties(const char *pszLine)
 {
     int iIndex, nLength;
     const char *poChar, *poProp;
@@ -226,7 +222,7 @@ bool VFKFeature::SetProperties(const char *poLine)
     pszProp = NULL;
     
     /* set feature properties */
-    for (poChar = poLine; *poChar != '\0' && *poChar != ';'; poChar++)
+    for (poChar = pszLine; *poChar != '\0' && *poChar != ';'; poChar++)
         /* skip data block name */
         ;
     if (poChar == '\0')
@@ -414,8 +410,7 @@ bool VFKFeature::LoadGeometryPoint()
 
   \todo Really needed?
 
-  \return TRUE on success
-  \return FALSE on failure
+  \return TRUE on success or FALSE on failure
 */
 bool VFKFeature::LoadGeometryLineStringSBP()
 {
@@ -474,8 +469,7 @@ bool VFKFeature::LoadGeometryLineStringSBP()
 
   \todo Really needed?
 
-  \return TRUE on success
-  \return FALSE on failure
+  \return TRUE on success or FALSE on failure
 */
 bool VFKFeature::LoadGeometryLineStringHP()
 {
@@ -508,8 +502,7 @@ bool VFKFeature::LoadGeometryLineStringHP()
 
   \todo Implement (really needed?)
 
-  \return TRUE on success
-  \return FALSE on failure
+  \return TRUE on success or FALSE on failure
 */
 bool VFKFeature::LoadGeometryPolygon()
 {

@@ -711,7 +711,7 @@ int BSBDataset::IdentifyInternal( GDALOpenInfo * poOpenInfo, bool& isNosOut )
     isNosOut = false;
 
     if( poOpenInfo->nHeaderBytes < 1000 )
-        return NULL;
+        return FALSE;
 
     for( i = 0; i < poOpenInfo->nHeaderBytes - 4; i++ )
     {

@@ -1059,7 +1059,7 @@ CPLSerializeXMLNode( const CPLXMLNode *psNode, int nIndent,
  * document becomes owned by the caller and should be freed with CPLFree()
  * when no longer needed.
  *
- * @param psNode
+ * @param psNode the node to serialize.
  *
  * @return the document on success or NULL on failure. 
  */

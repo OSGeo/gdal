@@ -63,8 +63,8 @@ void __pure_virtual()
  * \brief Return the smallest data type that can fully express both input data
  * types.
  *
- * @param eType1 
- * @param eType2
+ * @param eType1 first data type.
+ * @param eType2 second data type.
  *
  * @return a data type able to express eType1 and eType2.
  */

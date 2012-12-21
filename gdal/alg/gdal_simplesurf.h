@@ -116,7 +116,7 @@ public:
     /**
      * Set Y coordinate of point.
      *
-     * @param nX Y coordinate in pixels.
+     * @param nY Y coordinate in pixels.
      */
     void SetY(int nY);
 
@@ -215,7 +215,7 @@ public:
      * @param nRow Row of left top point of rectangle
      * @param nCol Column of left top point of rectangle
      * @param nWidth Width of rectangular area (number of columns)
-     * @param Height Heigth of rectangular area (number of rows)
+     * @param nHeight Heigth of rectangular area (number of rows)
      *
      * @return Sum of values in specified grid.
      */
@@ -484,7 +484,6 @@ public:
      * Find feature points using specified integral image.
      *
      * @param poImg Integral image to be used
-     * @param poCollection Collection for storage detected feature points
      * @param dfThreshold Threshold for feature point recognition. Detected feature point
      * will have Hessian value greater than this provided threshold.
      *
@@ -502,8 +501,8 @@ public:
      * Find corresponding points (equal points in two collections).
      *
      * @param poMatchPairs Resulting collection for matched points
-     * @param poFirstCollection Points on the first image
-     * @param poSecondCollection Points on the second image
+     * @param poSecondCollect Points on the first image
+     * @param poSecondCollect Points on the second image
      * @param dfThreshold Value from 0 to 1. Threshold affects to number of
      * matched points. If threshold is lower, amount of corresponding
      * points is larger, and vice versa
@@ -540,7 +539,7 @@ private:
      * Compute descriptor for specified feature point.
      *
      * @param poPoint Feature point instance
-     * @param Integral image where feature point was found
+     * @param poImg image where feature point was found
      */
     void SetDescriptor(GDALFeaturePoint *poPoint, GDALIntegralImage *poImg);
 

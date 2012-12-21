@@ -137,8 +137,7 @@ void OGRVFKLayer::ResetReading()
 
   \param poVfkFeature pointer to VFKFeature
 
-  \return pointer to OGRGeometry
-  \return NULL on error
+  \return pointer to OGRGeometry or NULL on error
 */
 OGRGeometry *OGRVFKLayer::CreateGeometry(IVFKFeature * poVfkFeature)
 {
@@ -223,8 +222,7 @@ OGRFeature *OGRVFKLayer::GetNextFeature()
 
   \param nFID feature id (-1 for next)
 
-  \return pointer to OGRFeature
-  \return NULL not found
+  \return pointer to OGRFeature or NULL not found
 */
 OGRFeature *OGRVFKLayer::GetFeature(long nFID)
 {
@@ -242,8 +240,7 @@ OGRFeature *OGRVFKLayer::GetFeature(long nFID)
 /*!
   \brief Get feature (private)
   
-  \return pointer to OGRFeature
-  \return NULL not found
+  \return pointer to OGRFeature or NULL not found
 */
 OGRFeature *OGRVFKLayer::GetFeature(IVFKFeature *poVFKFeature)
 {

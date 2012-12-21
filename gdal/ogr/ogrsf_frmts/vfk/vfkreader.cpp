@@ -152,8 +152,7 @@ char *VFKReader::ReadLine(bool bRecode)
 
   Call VFKReader::OpenFile() before this function.
 
-  \return number of data blocks
-  \return -1 on error
+  \return number of data blocks or -1 on error
 */
 int VFKReader::ReadDataBlocks()
 {
@@ -201,8 +200,7 @@ int VFKReader::ReadDataBlocks()
 
   Call VFKReader::OpenFile() before this function.
   
-  \return number of data records
-  \return -1 on error
+  \return number of data records or -1 on error
 */
 int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
 {
@@ -294,8 +292,7 @@ IVFKDataBlock *VFKReader::CreateDataBlock(const char *pszBlockName)
   \brief Add new data block
 
   \param poNewDataBlock pointer to VFKDataBlock instance
-
-  \return number of registred data blocks
+  \param pszDefn unused (FIXME ?)
 */
 void VFKReader::AddDataBlock(IVFKDataBlock *poNewDataBlock, const char *pszDefn)
 {
@@ -309,8 +306,8 @@ void VFKReader::AddDataBlock(IVFKDataBlock *poNewDataBlock, const char *pszDefn)
 /*!
   \brief Add feature
 
-  \param poNewDataBlock pointer to VFKDataBlock instance
-  \param poNewFeature pointer to VFKFeature instance
+  \param poDataBlock pointer to VFKDataBlock instance
+  \param poFeature pointer to VFKFeature instance
 */
 void VFKReader::AddFeature(IVFKDataBlock *poDataBlock, VFKFeature *poFeature)
 {
@@ -322,8 +319,7 @@ void VFKReader::AddFeature(IVFKDataBlock *poDataBlock, VFKFeature *poFeature)
 
   \param i index (starting with 0)
 
-  \return pointer to VFKDataBlock instance
-  \return NULL on failure
+  \return pointer to VFKDataBlock instance or NULL on failure
 */
 IVFKDataBlock *VFKReader::GetDataBlock(int i) const
 {
@@ -338,8 +334,7 @@ IVFKDataBlock *VFKReader::GetDataBlock(int i) const
 
   \param pszName data block name
 
-  \return pointer to VFKDataBlock instance
-  \return NULL on failure
+  \return pointer to VFKDataBlock instance or NULL on failure
 */
 IVFKDataBlock *VFKReader::GetDataBlock(const char *pszName) const
 {
@@ -422,8 +417,7 @@ void VFKReader::AddInfo(const char *pszLine)
 
   \param key key string
 
-  \return pointer to value string
-  \return NULL if key not found
+  \return pointer to value string or NULL if key not found
 */
 const char *VFKReader::GetInfo(const char *key)
 {
