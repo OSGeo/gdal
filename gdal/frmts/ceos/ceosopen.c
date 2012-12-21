@@ -172,8 +172,8 @@ void CEOSDestroyRecord( CEOSRecord * psRecord )
 /**
  * Open a CEOS transfer.
  *
- * @param Filename The name of the CEOS imagery file (ie. imag_01.dat).
- * @param Access An fopen() style access string.  Should be either "rb" for
+ * @param pszFilename The name of the CEOS imagery file (ie. imag_01.dat).
+ * @param pszAccess An fopen() style access string.  Should be either "rb" for
  * read-only access, or "r+b" for read, and update access.
  *
  * @return A CEOSImage pointer as a handle to the image.  The CEOSImage also

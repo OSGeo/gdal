@@ -100,8 +100,7 @@ void VFKFeatureSQLite::FinalizeSQL()
 
   \param pszSQLCommand SQL command string
 
-  \return OGRERR_NONE on success
-  \return OGRERR_FAILURE on error
+  \return OGRERR_NONE on success or OGRERR_FAILURE on error
 */
 OGRErr VFKFeatureSQLite::ExecuteSQL(const char *pszSQLCommand)
 {
@@ -157,8 +156,7 @@ VFKFeatureSQLite::VFKFeatureSQLite(const VFKFeature *poVFKFeature) : IVFKFeature
 
   \todo Implement (really needed?)
   
-  \return TRUE on success
-  \return FALSE on failure
+  \return TRUE on success or FALSE on failure
 */
 bool VFKFeatureSQLite::LoadGeometryPoint()
 {
@@ -170,8 +168,7 @@ bool VFKFeatureSQLite::LoadGeometryPoint()
 
   \todo Implement (really needed?)
 
-  \return TRUE on success
-  \return FALSE on failure
+  \return TRUE on success or FALSE on failure
 */
 bool VFKFeatureSQLite::LoadGeometryLineStringSBP()
 {
@@ -183,8 +180,7 @@ bool VFKFeatureSQLite::LoadGeometryLineStringSBP()
 
   \todo Implement (really needed?)
 
-  \return TRUE on success
-  \return FALSE on failure
+  \return TRUE on success or FALSE on failure
 */
 bool VFKFeatureSQLite::LoadGeometryLineStringHP()
 {
@@ -196,8 +192,7 @@ bool VFKFeatureSQLite::LoadGeometryLineStringHP()
 
   \todo Implement (really needed?)
 
-  \return TRUE on success
-  \return FALSE on failure
+  \return TRUE on success or FALSE on failure
 */
 bool VFKFeatureSQLite::LoadGeometryPolygon()
 {
@@ -209,8 +204,7 @@ bool VFKFeatureSQLite::LoadGeometryPolygon()
 
   \param poFeature pointer to OGR feature
 
-  \return OGRERR_NONE on success
-  \return OGRERR_FAILURE on failure
+  \return OGRERR_NONE on success or OGRERR_FAILURE on failure
 */
 OGRErr VFKFeatureSQLite::LoadProperties(OGRFeature *poFeature)
 {

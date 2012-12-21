@@ -369,8 +369,7 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
   \param column property name
   \param value property value
   
-  \return pointer to feature definition
-  \return NULL on failure (not found)
+  \return pointer to feature definition or NULL on failure (not found)
 */
 VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char *column, GUIntBig value)
 {
@@ -403,8 +402,7 @@ VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char *column, GUIntBig va
   \param value array of property values
   \param num number of array items
   
-  \return pointer to feature definition
-  \return NULL on failure (not found)
+  \return pointer to feature definition or NULL on failure (not found)
 */
 VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char **column, GUIntBig *value, int num)
 {
