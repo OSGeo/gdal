@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #******************************************************************************
 #
 #  Project:  GDAL
@@ -40,20 +41,20 @@ def compare_metadata(golden_md, new_md, id):
 
   found_diff = 0
 
-  if len(golden_md.keys()) != len(new_md.keys()):
-    print 'Difference in %s metadata key count' % id
-    print '  Golden Keys:', golden_md.keys()
-    print '  New Keys:', new_md.keys()
+  if len(list(golden_md.keys())) != len(list(new_md.keys())):
+    print('Difference in %s metadata key count' % id)
+    print('  Golden Keys: ' + str(list(golden_md.keys())))
+    print('  New Keys: ' + str(list(new_md.keys())))
     found_diff += 1
 
-  for key in golden_md.keys():
-    if not new_md.has_key(key):
-      print 'New %s metadata lacks key' % (id, key)
+  for key in list(golden_md.keys()):
+    if key not in new_md:
+      print('New %s metadata lacks key \"%s\"' % (id, key))
       found_diff += 1
     elif new_md[key] != golden_md[key]:
-      print 'Metadata value difference for key "' + key + '"'
-      print '  Golden:"' + golden_md[key] + '"'
-      print '  New:   "' + new_md[key] + '"'
+      print('Metadata value difference for key "' + key + '"')
+      print('  Golden: "' + golden_md[key] + '"')
+      print('  New:    "' + new_md[key] + '"')
       found_diff += 1
 
   return found_diff
@@ -72,43 +73,43 @@ def compare_image_pixels(golden_band, new_band, id):
     max_diff = max(max_diff,abs(diff_line).max())
     diff_count += len(diff_line.nonzero()[0])
 
-  print '  Pixels Differing:', diff_count
-  print '  Maximum Pixel Difference: ', max_diff
+  print('  Pixels Differing: ' + str(diff_count))
+  print('  Maximum Pixel Difference: ' + str(max_diff))
 
 #######################################################
 def compare_band(golden_band, new_band, id):
   found_diff = 0
 
   if golden_band.DataType != new_band.DataType:
-    print 'Band %s pixel types differ.'
-    print '  Golden:', gdal.GetDataTypeName(golden_band.DataType)
-    print '  New:   ', gdal.GetDataTypeName(new_band.DataType)
+    print('Band %s pixel types differ.' % id)
+    print('  Golden: ' + gdal.GetDataTypeName(golden_band.DataType))
+    print('  New:    ' + gdal.GetDataTypeName(new_band.DataType))
     found_diff += 1
 
   if golden_band.GetNoDataValue() != new_band.GetNoDataValue():
-    print 'Band %s nodata values differ.'
-    print '  Golden:', golden_band.GetNoDataValue()
-    print '  New:   ', new_band.GetNoDataValue()
+    print('Band %s nodata values differ.' % id)
+    print('  Golden: ' + str(golden_band.GetNoDataValue()))
+    print('  New:    ' + str(new_band.GetNoDataValue()))
     found_diff += 1
 
   if golden_band.GetColorInterpretation() != new_band.GetColorInterpretation():
-    print 'Band %s color interpretation values differ.'
-    print '  Golden:', gdal.GetColorInterpretationName(golden_band.GetColorInterpretation())
-    print '  New:   ', gdal.GetColorInterpretationName(new_band.GetColorInterpretation())
+    print('Band %s color interpretation values differ.' % id)
+    print('  Golden: ' +  gdal.GetColorInterpretationName(golden_band.GetColorInterpretation()))
+    print('  New:    ' + gdal.GetColorInterpretationName(new_band.GetColorInterpretation()))
     found_diff += 1
 
   if golden_band.Checksum() != new_band.Checksum():
-    print 'Band %s checksum difference:' % id
-    print '  Golden:', golden_band.Checksum()
-    print '  New:   ', new_band.Checksum()
+    print('Band %s checksum difference:' % id)
+    print('  Golden: ' + str(golden_band.Checksum()))
+    print('  New:    ' + str(new_band.Checksum()))
     found_diff += 1
     compare_image_pixels(golden_band,new_band, id)
 
   # Check overviews
   if golden_band.GetOverviewCount() != new_band.GetOverviewCount():
-    print 'Band %s overview count difference:' % id
-    print '  Golden:', golden_band.GetOverviewCount()
-    print '  New:   ', new_band.GetOverviewCount()
+    print('Band %s overview count difference:' % id)
+    print('  Golden: ' + str(golden_band.GetOverviewCount()))
+    print('  New:    ' + str(new_band.GetOverviewCount()))
     found_diff += 1
   else:
     for i in range(golden_band.GetOverviewCount()):
@@ -130,20 +131,20 @@ def compare_srs(golden_wkt, new_wkt):
   if golden_wkt == new_wkt:
     return 0
 
-  print 'Difference in SRS!'
+  print('Difference in SRS!')
 
   golden_srs = osr.SpatialReference(golden_wkt)
   new_srs = osr.SpatialReference(new_wkt)
 
   if golden_srs.IsSame(new_srs):
-    print '  * IsSame() reports them as equivelent.'
+    print('  * IsSame() reports them as equivelent.')
   else:
-    print '  * IsSame() reports them as different.'
+    print('  * IsSame() reports them as different.')
 
-  print '  Golden:'
-  print '  ' + golden_srs.ExportToPrettyWkt()
-  print '  New:'
-  print '  ' + new_srs.ExportToPrettyWkt()
+  print('  Golden:')
+  print('  ' + golden_srs.ExportToPrettyWkt())
+  print('  New:')
+  print('  ' + new_srs.ExportToPrettyWkt())
 
   return 1
 
@@ -159,9 +160,9 @@ def compare_db(golden_db, new_db):
   golden_gt = golden_db.GetGeoTransform()
   new_gt = new_db.GetGeoTransform()
   if golden_gt != new_gt:
-    print 'GeoTransforms Differ:'
-    print '  Golden:', golden_gt
-    print '  New:   ', new_gt
+    print('GeoTransforms Differ:')
+    print('  Golden: ' + str(golden_gt))
+    print('  New:    ' + str(new_gt))
     found_diff += 1
 
   # Metadata
@@ -171,8 +172,8 @@ def compare_db(golden_db, new_db):
 
   # Bands
   if golden_db.RasterCount != new_db.RasterCount:
-    print 'Band count mismatch (golden=%d, new=%d)' \
-        % (golden_db.RasterCount, new_db.RasterCount)
+    print('Band count mismatch (golden=%d, new=%d)' \
+        % (golden_db.RasterCount, new_db.RasterCount))
     found_diff += 1
 
   else:
@@ -190,7 +191,7 @@ def compare_sds(golden_db, new_db):
   golden_sds = golden_db.GetMetadata('SUBDATASETS')
   new_sds = new_db.GetMetadata('SUBDATASETS')
 
-  count = len(golden_sds.keys()) / 2
+  count = len(list(golden_sds.keys())) / 2
   for i in range(count):
     key = 'SUBDATASET_%d_NAME' % (i+1)
 
@@ -200,14 +201,14 @@ def compare_sds(golden_db, new_db):
     sds_diff = compare_db(sub_golden_db, sub_new_db)
     found_diff += sds_diff
     if sds_diff > 0:
-      print '%d differences found between:\n  %s\n  %s' \
-            % (sds_diff, golden_sds[key],new_sds[key])
+      print('%d differences found between:\n  %s\n  %s' \
+            % (sds_diff, golden_sds[key],new_sds[key]))
 
   return found_diff
   
 #######################################################
 def Usage():
-  print 'Usage: gdalcompare.py [-sds] <golden_file> <new_file>'
+  print('Usage: gdalcompare.py [-sds] <golden_file> <new_file>')
   sys.exit(1)
 
 #######################################################
@@ -258,10 +259,10 @@ if __name__ == '__main__':
     os.stat(golden_file)
     
     if not filecmp.cmp(golden_file,new_file):
-      print 'Files differ at the binary level.'
+      print('Files differ at the binary level.')
       found_diff += 1
   except:
-    print 'Skipped binary file comparison, golden file not in filesystem.'
+    print('Skipped binary file comparison, golden file not in filesystem.')
 
   # compare as GDAL Datasets.
   golden_db = gdal.Open(golden_file)
@@ -271,6 +272,6 @@ if __name__ == '__main__':
   if check_sds:
     found_diff += compare_sds(golden_db, new_db)
     
-  print 'Differences Found:',found_diff
+  print('Differences Found: ' + str(found_diff))
 
   sys.exit(found_diff)
