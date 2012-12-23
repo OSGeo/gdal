@@ -1064,9 +1064,9 @@ OGRSpatialReference *TABFile::GetSpatialRef()
         m_poSpatialRef->SetTOWGS84( psDatumInfo->dfShiftX, 
                                     psDatumInfo->dfShiftY,
                                     psDatumInfo->dfShiftZ,
-                                    -psDatumInfo->dfDatumParm0, 
-                                    -psDatumInfo->dfDatumParm1, 
-                                    -psDatumInfo->dfDatumParm2, 
+                                    psDatumInfo->dfDatumParm0 == 0 ? 0 : -psDatumInfo->dfDatumParm0, /* avoids 0 to be transformed into -0 */
+                                    psDatumInfo->dfDatumParm1 == 0 ? 0 : -psDatumInfo->dfDatumParm1,
+                                    psDatumInfo->dfDatumParm2 == 0 ? 0 : -psDatumInfo->dfDatumParm2,
                                     psDatumInfo->dfDatumParm3 );
     }
 
