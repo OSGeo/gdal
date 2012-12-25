@@ -1,10 +1,11 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #******************************************************************************
 #  $Id$
 # 
 #  Project:  GDAL
-#  Purpose:  Simple command line program for translating ESRI .prj files
-#            into WKT. 
+#  Purpose:  Simple command line program for copying the color table of a
+#            raster into another raster.
 #  Author:   Frank Warmerdam, warmerda@home.com
 # 
 #******************************************************************************
