@@ -29,7 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-from osgeo import ogr
+from osgeo import ogr, gdal
 import sys
 
 DEFAULT = 0
@@ -41,7 +41,7 @@ APPEND_ONLY = 2
 
 def Usage():
     print('ogrupdate.py -src name -dst name [-srclayer name] [-dstlayer name] [-matchfield name] [-update_only | -append_new_only]')
-    print('             [-compare_before_update] [-preserve_fid] [-dry_run] [-progress] [-skip_failures] [-quiet]')
+    print('             [-compare_before_update] [-preserve_fid] [-select field_list] [-dry_run] [-progress] [-skip_failures] [-quiet]')
     print('')
     print('Update a target datasource with the features of a source datasource. Contrary to ogr2ogr,')
     print('this script tries to match features, based on FID or field value equality, between the datasources,')
@@ -61,6 +61,8 @@ def Usage():
     print('   will be done before determining if an update of the target feature is really necessary.')
     print(' * When -preserve_fid is specified, new features that are appended will try to reuse the FID')
     print('   of the source feature. Note: not all drivers do actually honour that request.')
+    print(' * When -select is specified, only the list of fields specified will be updated. This option is only compatible')
+    print('   with -update_only.')
     print('')
 
     return 1
@@ -93,6 +95,8 @@ def ogrupdate_analyse_args(argv, progress = None, progress_arg = None):
     quiet = False
 
     skip_failures = False
+    
+    papszSelFields = None
 
     dry_run = False
 
@@ -125,6 +129,15 @@ def ogrupdate_analyse_args(argv, progress = None, progress_arg = None):
             preserve_fid = True
         elif arg == '-compare_before_update':
             compare_before_update = True
+        elif arg == "-select" and i+1 < len(argv):
+            i = i + 1
+            pszSelect = argv[i]
+            if pszSelect.find(',') != -1:
+                papszSelFields = pszSelect.split(',')
+            else:
+                papszSelFields = pszSelect.split(' ')
+            if papszSelFields[0] == '':
+                papszSelFields = []
         elif arg == '-dry_run':
             dry_run = True
         elif arg == '-progress':
@@ -181,11 +194,22 @@ def ogrupdate_analyse_args(argv, progress = None, progress_arg = None):
         print('Cannot open destination layer')
         return 1
 
-    if matchfieldname is None and dst_layer.TestCapability(ogr.OLCRandomRead) and not quiet:
+    if matchfieldname is None and dst_layer.TestCapability(ogr.OLCRandomRead) == 0 and not quiet:
         print('Warning: target layer does not advertize fast random read capability. Update might be slow')
+
+    if papszSelFields is not None and compare_before_update:
+        print('Warning: -select and -compare_before_update are not compatible. Ignoring -compare_before_update')
+        compare_before_update = False
+
+    if papszSelFields is not None:
+        if update_mode != UPDATE_ONLY:
+            print('-select is only compatible with -update_only')
+            return 1
 
     updated_count = [ 0 ]
     inserted_count = [ 0 ]
+    updated_failed = [ 0 ]
+    inserted_failed = [ 0 ]
 
     if compare_before_update:
         src_layer_defn = src_layer.GetLayerDefn()
@@ -206,14 +230,18 @@ def ogrupdate_analyse_args(argv, progress = None, progress_arg = None):
             compare_before_update = False
 
     ret = ogrupdate_process(src_layer, dst_layer, matchfieldname, update_mode, \
-                            preserve_fid, compare_before_update, dry_run, skip_failures, \
-                            updated_count, inserted_count, \
+                            preserve_fid, compare_before_update, papszSelFields, dry_run, skip_failures, \
+                            updated_count, updated_failed, inserted_count, inserted_failed, \
                             progress, progress_arg)
 
     if not quiet:
         print('Summary :')
         print('Features updated  : %d' % updated_count[0])
         print('Features appended : %d' % inserted_count[0])
+        if updated_failed[0] != 0:
+            print('Failed updates    : %d' % updated_failed[0])
+        if inserted_failed[0] != 0:
+            print('Failed inserts    : %d' % inserted_failed[0])
 
     src_ds = None
     dst_ds = None
@@ -245,10 +273,11 @@ def AreFeaturesEqual(src_feat, dst_feat):
 
 def ogrupdate_process(src_layer, dst_layer, matchfieldname = None, update_mode = DEFAULT, \
                       preserve_fid = False, compare_before_update = False, \
-                      dry_run = False, skip_failures = False, \
-                      updated_count_out = None, inserted_count_out = None, \
+                      papszSelFields = None, dry_run = False, skip_failures = False, \
+                      updated_count_out = None, updated_failed_out = None, inserted_count_out = None, inserted_failed_out = None, \
                       progress = None, progress_arg = None):
 
+    src_layer_defn = src_layer.GetLayerDefn()
     dst_layer_defn = dst_layer.GetLayerDefn()
 
     if matchfieldname is not None:
@@ -263,11 +292,26 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname = None, update_mode =
             return 1 
         dst_type = dst_layer_defn.GetFieldDefn(dst_idx).GetType()
 
+    if papszSelFields is not None:
+        for layer_defn in [ src_layer_defn, dst_layer_defn ]:
+            for fieldname in papszSelFields:
+                idx = layer_defn.GetFieldIndex(fieldname)
+                if idx < 0:
+                    if layer_defn == src_layer_defn:
+                        print("Cannot find field '%s' in source layer" % fieldname)
+                    else:
+                        print("Cannot find field '%s' in destination layer" % fieldname)
+                    return 1
+
     if progress is not None:
         src_featurecount = src_layer.GetFeatureCount()
 
     updated_count = 0
     inserted_count = 0
+    updated_failed = 0
+    inserted_failed = 0
+
+    ret = 0
 
     iter_src_feature = 0
     while True:
@@ -298,6 +342,8 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname = None, update_mode =
                     ret = dst_layer.CreateFeature(dst_feat)
                 if ret == 0:
                     inserted_count = inserted_count + 1
+                else:
+                    insert_failed = insert_failed + 1
 
             elif update_mode == APPEND_ONLY:
                 continue
@@ -307,14 +353,27 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname = None, update_mode =
                 assert(dst_fid == src_fid)
                 if compare_before_update and AreFeaturesEqual(src_feat, dst_feat):
                     continue
-                dst_feat.SetFrom(src_feat) # resets the FID
-                dst_feat.SetFID(dst_fid)
+                if papszSelFields is not None:
+                    for fieldname in papszSelFields:
+                        fld_src_idx = src_layer_defn.GetFieldIndex(fieldname)
+                        fld_dst_idx = dst_layer_defn.GetFieldIndex(fieldname)
+                        if src_layer_defn.GetFieldDefn(fld_dst_idx).GetType() == ogr.OFTReal:
+                            dst_feat.SetField(fld_dst_idx, src_feat.GetFieldAsDouble(fld_src_idx))
+                        elif src_layer_defn.GetFieldDefn(fld_dst_idx).GetType() == ogr.OFTInteger:
+                            dst_feat.SetField(fld_dst_idx, src_feat.GetFieldAsInteger(fld_src_idx))
+                        else:
+                            dst_feat.SetField(fld_dst_idx, src_feat.GetFieldAsString(fld_src_idx))
+                else:
+                    dst_feat.SetFrom(src_feat) # resets the FID
+                    dst_feat.SetFID(dst_fid)
                 if dry_run:
                     ret = 0
                 else:
                     ret = dst_layer.SetFeature(dst_feat)
                 if ret == 0:
                     updated_count = updated_count + 1
+                else:
+                    updated_failed = updated_failed + 1
 
         # Or on a field ?
         else:
@@ -343,6 +402,8 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname = None, update_mode =
                     ret = dst_layer.CreateFeature(dst_feat)
                 if ret == 0:
                     inserted_count = inserted_count + 1
+                else:
+                    insert_failed = insert_failed + 1
 
             elif update_mode == APPEND_ONLY:
                 continue
@@ -351,25 +412,50 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname = None, update_mode =
                 if compare_before_update and AreFeaturesEqual(src_feat, dst_feat):
                     continue
                 dst_fid = dst_feat.GetFID()
-                dst_feat.SetFrom(src_feat)
-                dst_feat.SetFID(dst_fid)
+                if papszSelFields is not None:
+                    for fieldname in papszSelFields:
+                        fld_src_idx = src_layer_defn.GetFieldIndex(fieldname)
+                        fld_dst_idx = dst_layer_defn.GetFieldIndex(fieldname)
+                        if src_layer_defn.GetFieldDefn(fld_dst_idx).GetType() == ogr.OFTReal:
+                            dst_feat.SetField(fld_dst_idx, src_feat.GetFieldAsDouble(fld_src_idx))
+                        elif src_layer_defn.GetFieldDefn(fld_dst_idx).GetType() == ogr.OFTInteger:
+                            dst_feat.SetField(fld_dst_idx, src_feat.GetFieldAsInteger(fld_src_idx))
+                        else:
+                            dst_feat.SetField(fld_dst_idx, src_feat.GetFieldAsString(fld_src_idx))
+                else:
+                    dst_feat.SetFrom(src_feat)
+                    dst_feat.SetFID(dst_fid)
                 if dry_run:
                     ret = 0
                 else:
                     ret = dst_layer.SetFeature(dst_feat)
                 if ret == 0:
                     updated_count = updated_count + 1
+                else:
+                    updated_failed = updated_failed + 1
 
-        if ret != 0 and not skip_failures:
-            return 1
+        if ret != 0:
+            if not skip_failures:
+                if gdal.GetLastErrorMsg() == '':
+                    print('An error occured during feature insertion/update. Interrupting processing.')
+                ret = 1
+                break
+            else:
+                ret = 0
 
     if updated_count_out is not None and len(updated_count_out) == 1:
         updated_count_out[0] = updated_count
 
+    if updated_failed_out is not None and len(updated_failed_out) == 1:
+        updated_failed_out[0] = updated_failed
+
     if inserted_count_out is not None and len(inserted_count_out) == 1:
         inserted_count_out[0] = inserted_count
 
-    return 0
+    if inserted_failed_out is not None and len(inserted_failed_out) == 1:
+        inserted_failed_out[0] = inserted_failed
+
+    return ret
 
 ###############################################################
 # Entry point
