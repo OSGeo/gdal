@@ -49,6 +49,8 @@
 #include <set>
 #include <map>
 
+#define DEFAULT_DPI 150.0
+
 /* g++ -fPIC -g -Wall frmts/pdf/pdfdataset.cpp -shared -o gdal_PDF.so -Iport -Igcore -Iogr -L. -lgdal -lpoppler -I/usr/include/poppler */
 
 CPL_CVSID("$Id$");
@@ -1218,6 +1220,7 @@ PDFDataset::PDFDataset()
 #endif
     poImageObj = NULL;
     pszWKT = NULL;
+    dfDPI = DEFAULT_DPI;
     dfMaxArea = 0;
     adfGeoTransform[0] = 0;
     adfGeoTransform[1] = 1;
@@ -1827,8 +1830,6 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
     }
     else
     {
-        dfDPI = 150.0;
-
         /* Try to get a better value from the images that are drawn */
         /* Very simplistic logic. Will only work for raster only PDF */
 
@@ -1927,7 +1928,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Invalid value for GDAL_PDF_DPI. Using default value instead");
-        dfDPI = 150;
+        dfDPI = DEFAULT_DPI;
     }
 }
 
@@ -2758,6 +2759,14 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->GuessDPI(poPageDict, &nBandsGuessed);
         if( nBandsGuessed < 4 )
             nBandsGuessed = 0;
+    }
+    else
+    {
+        const char* pszDPI = CPLGetConfigOption("GDAL_PDF_DPI", NULL);
+        if (pszDPI != NULL)
+        {
+            poDS->dfDPI = atof(pszDPI);
+        }
     }
 
     double dfX1 = 0.0, dfY1 = 0.0, dfX2 = 0.0, dfY2 = 0.0;
