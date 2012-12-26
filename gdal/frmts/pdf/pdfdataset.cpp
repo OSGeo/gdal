@@ -2661,7 +2661,23 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    poPagePodofo = poDocPodofo->GetPage(iPage - 1);
+    try
+    {
+        poPagePodofo = poDocPodofo->GetPage(iPage - 1);
+    }
+    catch(PoDoFo::PdfError& oError)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : %s", oError.what());
+        delete poDocPodofo;
+        return NULL;
+    }
+    catch(...)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF");
+        delete poDocPodofo;
+        return NULL;
+    }
+
     if ( poPagePodofo == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : invalid page");
@@ -2771,6 +2787,12 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     double dfUserUnit = poDS->dfDPI / 72.0;
     poDS->nRasterXSize = (int) floor((dfX2 - dfX1) * dfUserUnit+0.5);
     poDS->nRasterYSize = (int) floor((dfY2 - dfY1) * dfUserUnit+0.5);
+
+    if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) )
+    {
+        delete poDS;
+        return NULL;
+    }
 
     double dfRotation = 0;
 #ifdef HAVE_POPPLER
