@@ -223,10 +223,11 @@ CPLErr IRISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     //Prepare to read (640 is the header size in bytes) and read (the y axis in the IRIS files in the inverse direction)
     //The previous bands are also added as an offset
 
-    VSIFSeekL( poGDS->fp, 640 + nDataLength*poGDS->GetRasterXSize()*poGDS->GetRasterYSize()*(this->nBand-1) + nBlockXSize*nDataLength*(poGDS->GetRasterYSize()-1-nBlockYOff), SEEK_SET );
+    VSIFSeekL( poGDS->fp, 640 + (vsi_l_offset)nDataLength*poGDS->GetRasterXSize()*poGDS->GetRasterYSize()*(this->nBand-1) +
+                                (vsi_l_offset)nBlockXSize*nDataLength*(poGDS->GetRasterYSize()-1-nBlockYOff), SEEK_SET );
 
-    VSIFReadL( pszRecord, 1, nBlockXSize*nDataLength, poGDS->fp );
-
+    if( (int)VSIFReadL( pszRecord, nBlockXSize*nDataLength, 1, poGDS->fp ) != 1 )
+        return CE_Failure;
     
     //If datatype is dbZ:
     //See point 3.3.5 at page 3.42 of the manual
