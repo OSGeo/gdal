@@ -261,11 +261,18 @@ class GDALPDFOutputDev : public SplashOutputDev
                                          GBool maskInterpolate)
         {
             if (bEnableBitmap)
+            {
+                if( maskColorMap->getBits() <= 0 ) /* workaround poppler bug (robustness) */
+                {
+                    str->close();
+                    return;
+                }
                 SplashOutputDev::drawSoftMaskedImage(state, ref, str,
                                                      width, height, colorMap,
                                                      interpolate,
                                                      maskStr, maskWidth, maskHeight,
                                                      maskColorMap, maskInterpolate);
+            }
             else
                 str->close();
         }
