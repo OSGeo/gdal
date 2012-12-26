@@ -1,4 +1,4 @@
-/* $Id: tif_zip.c,v 1.31 2011-01-06 16:00:23 fwarmerdam Exp $ */
+/* $Id: tif_zip.c,v 1.32 2012-10-18 17:34:59 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler
@@ -61,6 +61,8 @@
 #error "Antiquated ZLIB software; you must use version 1.0 or later"
 #endif
 
+#define SAFE_MSG(sp)   ((sp)->stream.msg == NULL ? "" : (sp)->stream.msg)
+
 /*
  * State block for each open TIFF
  * file using ZIP compression/decompression.
@@ -106,7 +108,7 @@ ZIPSetupDecode(TIFF* tif)
 	}
 
 	if (inflateInit(&sp->stream) != Z_OK) {
-		TIFFErrorExt(tif->tif_clientdata, module, "%s", sp->stream.msg);
+		TIFFErrorExt(tif->tif_clientdata, module, "%s", SAFE_MSG(sp));
 		return (0);
 	} else {
 		sp->state |= ZSTATE_INIT_DECODE;
@@ -174,14 +176,14 @@ ZIPDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 		if (state == Z_DATA_ERROR) {
 			TIFFErrorExt(tif->tif_clientdata, module,
 			    "Decoding error at scanline %lu, %s",
-			    (unsigned long) tif->tif_row, sp->stream.msg);
+			     (unsigned long) tif->tif_row, SAFE_MSG(sp));
 			if (inflateSync(&sp->stream) != Z_OK)
 				return (0);
 			continue;
 		}
 		if (state != Z_OK) {
-			TIFFErrorExt(tif->tif_clientdata, module, "ZLib error: %s",
-			    sp->stream.msg);
+			TIFFErrorExt(tif->tif_clientdata, module, 
+				     "ZLib error: %s", SAFE_MSG(sp));
 			return (0);
 		}
 	} while (sp->stream.avail_out > 0);
@@ -211,7 +213,7 @@ ZIPSetupEncode(TIFF* tif)
 	}
 
 	if (deflateInit(&sp->stream, sp->zipquality) != Z_OK) {
-		TIFFErrorExt(tif->tif_clientdata, module, "%s", sp->stream.msg);
+		TIFFErrorExt(tif->tif_clientdata, module, "%s", SAFE_MSG(sp));
 		return (0);
 	} else {
 		sp->state |= ZSTATE_INIT_ENCODE;
@@ -273,8 +275,9 @@ ZIPEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 	}
 	do {
 		if (deflate(&sp->stream, Z_NO_FLUSH) != Z_OK) {
-			TIFFErrorExt(tif->tif_clientdata, module, "Encoder error: %s",
-			    sp->stream.msg);
+			TIFFErrorExt(tif->tif_clientdata, module, 
+				     "Encoder error: %s",
+				     SAFE_MSG(sp));
 			return (0);
 		}
 		if (sp->stream.avail_out == 0) {
@@ -313,8 +316,8 @@ ZIPPostEncode(TIFF* tif)
 			}
 			break;
 		default:
-			TIFFErrorExt(tif->tif_clientdata, module, "ZLib error: %s",
-			    sp->stream.msg);
+			TIFFErrorExt(tif->tif_clientdata, module, 
+				     "ZLib error: %s", SAFE_MSG(sp));
 			return (0);
 		}
 	} while (state != Z_STREAM_END);
@@ -359,7 +362,7 @@ ZIPVSetField(TIFF* tif, uint32 tag, va_list ap)
 			if (deflateParams(&sp->stream,
 			    sp->zipquality, Z_DEFAULT_STRATEGY) != Z_OK) {
 				TIFFErrorExt(tif->tif_clientdata, module, "ZLib error: %s",
-				    sp->stream.msg);
+					     SAFE_MSG(sp));
 				return (0);
 			}
 		}
