@@ -1574,8 +1574,21 @@ GDALPDFArray* GDALPDFObjectPodofo::GetArray()
 
 GDALPDFStream* GDALPDFObjectPodofo::GetStream()
 {
-    if (!m_po->HasStream())
+    try
+    {
+        if (!m_po->HasStream())
+            return NULL;
+    }
+    catch(PoDoFo::PdfError& oError)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid object : %s", oError.what());
         return NULL;
+    }
+    catch(...)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid object");
+        return NULL;
+    }
 
     if (m_poStream)
         return m_poStream;
