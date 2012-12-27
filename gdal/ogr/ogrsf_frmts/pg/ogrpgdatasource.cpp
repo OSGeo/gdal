@@ -1614,9 +1614,14 @@ OGRPGDataSource::CreateLayer( const char * pszLayerName,
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
-    
+
+    /* HSTORE_COLUMNS existed at a time during GDAL 1.10dev */
     const char* pszHSTOREColumns = CSLFetchNameValue( papszOptions, "HSTORE_COLUMNS" );
-    poLayer->SetHSTOREColumns(pszHSTOREColumns);
+    if( pszHSTOREColumns != NULL )
+        CPLError(CE_Warning, CPLE_AppDefined, "HSTORE_COLUMNS not recognized. Use COLUMN_TYPES instead.");
+
+    const char* pszOverrideColumnTypes = CSLFetchNameValue( papszOptions, "COLUMN_TYPES" );
+    poLayer->SetOverrideColumnTypes(pszOverrideColumnTypes);
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */

@@ -121,7 +121,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
 
     osPrimaryKey = CPLGetConfigOption( "PGSQL_OGR_FID", "ogc_fid" );
 
-    papszHSTOREColumns = NULL;
+    papszOverrideColumnTypes = NULL;
 }
 
 //************************************************************************/
@@ -136,7 +136,7 @@ OGRPGTableLayer::~OGRPGTableLayer()
     CPLFree( pszTableName );
     CPLFree( pszSqlGeomParentTableName );
     CPLFree( pszSchemaName );
-    CSLDestroy( papszHSTOREColumns );
+    CSLDestroy( papszOverrideColumnTypes );
 }
 
 /************************************************************************/
@@ -2103,12 +2103,16 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
         }
     }
 
-    osFieldType = OGRPGTableLayerGetType(oField, bPreservePrecision, bApproxOK);
-    if (osFieldType.size() == 0)
-        return OGRERR_FAILURE;
 
-    if( CSLFindString(papszHSTOREColumns, oField.GetNameRef()) != -1 )
-        osFieldType = "hstore";
+    const char* pszOverrideType = CSLFetchNameValue(papszOverrideColumnTypes, oField.GetNameRef());
+    if( pszOverrideType != NULL )
+        osFieldType = pszOverrideType;
+    else
+    {
+        osFieldType = OGRPGTableLayerGetType(oField, bPreservePrecision, bApproxOK);
+        if (osFieldType.size() == 0)
+            return OGRERR_FAILURE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
@@ -2769,13 +2773,45 @@ OGRFeatureDefn * OGRPGTableLayer::GetLayerDefn()
 }
 
 /************************************************************************/
-/*                         SetHSTOREColumns()                           */
+/*                        SetOverrideColumnTypes()                      */
 /************************************************************************/
 
-void OGRPGTableLayer::SetHSTOREColumns( const char* pszHSTOREColumns )
+void OGRPGTableLayer::SetOverrideColumnTypes( const char* pszOverrideColumnTypes )
 {
-    if( pszHSTOREColumns == NULL )
+    if( pszOverrideColumnTypes == NULL )
         return;
 
-    papszHSTOREColumns = CSLTokenizeString2(pszHSTOREColumns, ",", 0);
+    const char* pszIter = pszOverrideColumnTypes;
+    CPLString osCur;
+    while(*pszIter != '\0')
+    {
+        if( *pszIter == '(' )
+        {
+            /* Ignore commas inside ( ) pair */
+            while(*pszIter != '\0')
+            {
+                if( *pszIter == ')' )
+                {
+                    osCur += *pszIter;
+                    pszIter ++;
+                    break;
+                }
+                osCur += *pszIter;
+                pszIter ++;
+            }
+            if( *pszIter == '\0')
+                break;
+        }
+
+        if( *pszIter == ',' )
+        {
+            papszOverrideColumnTypes = CSLAddString(papszOverrideColumnTypes, osCur);
+            osCur = "";
+        }
+        else
+            osCur += *pszIter;
+        pszIter ++;
+    }
+    if( osCur.size() )
+        papszOverrideColumnTypes = CSLAddString(papszOverrideColumnTypes, osCur);
 }
