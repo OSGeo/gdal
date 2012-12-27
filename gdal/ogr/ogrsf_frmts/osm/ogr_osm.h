@@ -200,10 +200,11 @@ typedef struct
 typedef struct
 {
     GIntBig             nOff;
+    /* Note: only one of nth bucket pabyBitmap or panSectorSize must be free'd */
     union
     {
-        GByte          *pabyBitmap;
-        GByte          *panSectorSize; /* (size in bytes - 8 ) / 2, minus 8. 252 means uncompressed */
+        GByte          *pabyBitmap;    /* array of BUCKET_BITMAP_SIZE bytes */
+        GByte          *panSectorSize; /* array of BUCKET_SECTOR_SIZE_ARRAY_SIZE bytes. Each values means (size in bytes - 8 ) / 2, minus 8. 252 means uncompressed */
     } u;
 } Bucket;
 
@@ -386,7 +387,8 @@ class OGROSMDataSource : public OGRDataSource
 
     int                 TransferToDiskIfNecesserary();
 
-    int                 AllocMoreBuckets(int nNewBucketIdx);
+    int                 AllocBucket(int iBucket);
+    int                 AllocMoreBuckets(int nNewBucketIdx, int bAllocBucket = FALSE);
 
   public:
                         OGROSMDataSource();
