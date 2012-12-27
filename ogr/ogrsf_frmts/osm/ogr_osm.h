@@ -330,6 +330,7 @@ class OGROSMDataSource : public OGRDataSource
     int                 nOffInBucketReducedOld;
     GByte              *pabySector;
     Bucket             *papsBuckets;
+    int                 nBuckets;
 
     int                 bNeedsToSaveWayInfo;
 
@@ -384,6 +385,8 @@ class OGROSMDataSource : public OGRDataSource
     OGRGeometry*        BuildGeometryCollection(OSMRelation* psRelation, int bMultiLineString);
 
     int                 TransferToDiskIfNecesserary();
+
+    int                 AllocMoreBuckets(int nNewBucketIdx);
 
   public:
                         OGROSMDataSource();
