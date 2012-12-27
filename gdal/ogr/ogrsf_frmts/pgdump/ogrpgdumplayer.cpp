@@ -75,6 +75,7 @@ OGRPGDumpLayer::OGRPGDumpLayer(OGRPGDumpDataSource* poDS,
     bUseCopy = USE_COPY_UNSET;
     bWriteAsHex = bWriteAsHexIn;
     bCopyActive = FALSE;
+    papszHSTOREColumns = NULL;
 }
 
 /************************************************************************/
@@ -89,6 +90,7 @@ OGRPGDumpLayer::~OGRPGDumpLayer()
     CPLFree(pszSqlTableName);
     CPLFree(pszGeomColumn);
     CPLFree(pszFIDColumn);
+    CSLDestroy(papszHSTOREColumns);
 }
 
 /************************************************************************/
@@ -153,7 +155,7 @@ char *OGRPGDumpLayer::GeometryToHex( OGRGeometry * poGeometry, int nSRSId )
     memcpy( &geomType, pabyWKB+1, 4 );
 
     /* Now add the SRID flag if an SRID is provided */
-    if (nSRSId != -1)
+    if (nSRSId > 0)
     {
         /* Change the flag to wkbNDR (little) endianess */
         GUInt32 nGSrsFlag = CPL_LSBWORD32( WKBSRIDFLAG );
@@ -168,7 +170,7 @@ char *OGRPGDumpLayer::GeometryToHex( OGRGeometry * poGeometry, int nSRSId )
     pszTextBufCurrent += 8;
 
     /* Now include SRID if provided */
-    if (nSRSId != -1)
+    if (nSRSId > 0)
     {
         /* Force the srsid to wkbNDR (little) endianess */
         GUInt32 nGSRSId = CPL_LSBWORD32( nSRSId );
@@ -971,41 +973,14 @@ char* OGRPGDumpLayer::GByteArrayToBYTEA( const GByte* pabyData, int nLen)
 }
 
 /************************************************************************/
-/*                           GetNextFeature()                           */
+/*                        OGRPGTableLayerGetType()                      */
 /************************************************************************/
 
-OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
-                                     int bApproxOK )
+static CPLString OGRPGTableLayerGetType(OGRFieldDefn& oField,
+                                        int bPreservePrecision,
+                                        int bApproxOK)
 {
-    if (nFeatures != 0)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Cannot create field after first feature has been written");
-        return OGRERR_FAILURE;
-    }
-    
-    CPLString           osCommand;
     char                szFieldType[256];
-    OGRFieldDefn        oField( poFieldIn );
-
-/* -------------------------------------------------------------------- */
-/*      Do we want to "launder" the column names into Postgres          */
-/*      friendly format?                                                */
-/* -------------------------------------------------------------------- */
-    if( bLaunderColumnNames )
-    {
-        char    *pszSafeName = poDS->LaunderName( oField.GetNameRef() );
-
-        oField.SetName( pszSafeName );
-        CPLFree( pszSafeName );
-
-        if( EQUAL(oField.GetNameRef(),"oid") )
-        {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Renaming field 'oid' to 'oid_' to avoid conflict with internal oid field." );
-            oField.SetName( "oid_" );
-        }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Work out the PostgreSQL type.                                   */
@@ -1075,20 +1050,78 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
                   "Can't create field %s with type %s on PostgreSQL layers.",
                   oField.GetNameRef(),
                   OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
+        strcpy( szFieldType, "");
+    }
 
+    return szFieldType;
+}
+
+/************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
+
+OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
+                                     int bApproxOK )
+{
+    if (nFeatures != 0)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot create field after first feature has been written");
         return OGRERR_FAILURE;
     }
+    
+    CPLString           osCommand;
+    CPLString           osFieldType;
+    OGRFieldDefn        oField( poFieldIn );
+
+/* -------------------------------------------------------------------- */
+/*      Do we want to "launder" the column names into Postgres          */
+/*      friendly format?                                                */
+/* -------------------------------------------------------------------- */
+    if( bLaunderColumnNames )
+    {
+        char    *pszSafeName = poDS->LaunderName( oField.GetNameRef() );
+
+        oField.SetName( pszSafeName );
+        CPLFree( pszSafeName );
+
+        if( EQUAL(oField.GetNameRef(),"oid") )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Renaming field 'oid' to 'oid_' to avoid conflict with internal oid field." );
+            oField.SetName( "oid_" );
+        }
+    }
+
+    osFieldType = OGRPGTableLayerGetType(oField, bPreservePrecision, bApproxOK);
+    if (osFieldType.size() == 0)
+        return OGRERR_FAILURE;
+
+    if( CSLFindString(papszHSTOREColumns, oField.GetNameRef()) != -1 )
+        osFieldType = "hstore";
 
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
 /* -------------------------------------------------------------------- */
     osCommand.Printf( "ALTER TABLE %s ADD COLUMN %s %s",
                       pszSqlTableName, OGRPGDumpEscapeColumnName(oField.GetNameRef()).c_str(),
-                      szFieldType );
+                      osFieldType.c_str() );
     if (bCreateTable)
         poDS->Log(osCommand);
 
     poFeatureDefn->AddFieldDefn( &oField );
     
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         SetHSTOREColumns()                           */
+/************************************************************************/
+
+void OGRPGDumpLayer::SetHSTOREColumns( const char* pszHSTOREColumns )
+{
+    if( pszHSTOREColumns == NULL )
+        return;
+
+    papszHSTOREColumns = CSLTokenizeString2(pszHSTOREColumns, ",", 0);
 }
