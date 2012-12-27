@@ -231,7 +231,7 @@ static void SkipVarInt(GByte** ppabyData)
         if (verbose) \
         { \
             int nFieldNumber = GET_FIELDNUMBER(nKey); \
-            CPLDebug("PBF", "Unhandled case: nFieldNumber = %d, nWireType = %d\n", nFieldNumber, nWireType); \
+            CPLDebug("PBF", "Unhandled case: nFieldNumber = %d, nWireType = %d", nFieldNumber, nWireType); \
         } \
         switch (nWireType) \
         { \
