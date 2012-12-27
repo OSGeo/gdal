@@ -480,6 +480,43 @@ def ogr_osm_7():
 
     return 'success'
 
+###############################################################################
+# Test 64-bit ids
+
+def ogr_osm_8():
+
+    try:
+        drv = ogr.GetDriverByName('OSM')
+    except:
+        drv = None
+    if drv is None:
+        return 'skip'
+
+    ds = ogr.Open( 'data/base-64.osm.pbf' )
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr = ds.GetLayerByName( 'points')
+    lyr.SetAttributeFilter("osm_id = '4294967934'")
+    feat = lyr.GetNextFeature()
+
+    if feat.GetField('name') != 'Treetops' or \
+       ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('POINT (-61.7964321 17.1498319)')) != 0:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    lyr = ds.GetLayerByName( 'multipolygons')
+    feat = lyr.GetFeature(1113)
+
+    if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('MULTIPOLYGON (((-61.7780345 17.140634,-61.7777002 17.1406069,-61.7776854 17.1407739,-61.7779131 17.1407923,-61.7779158 17.1407624,-61.7780224 17.140771,-61.7780345 17.140634)))')) != 0:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_osm_1,
     ogr_osm_2,
@@ -490,6 +527,7 @@ gdaltest_list = [
     ogr_osm_5,
     ogr_osm_6,
     ogr_osm_7,
+    ogr_osm_8,
     ]
 
 if __name__ == '__main__':
