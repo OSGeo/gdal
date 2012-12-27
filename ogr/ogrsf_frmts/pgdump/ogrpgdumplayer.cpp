@@ -76,7 +76,7 @@ OGRPGDumpLayer::OGRPGDumpLayer(OGRPGDumpDataSource* poDS,
     bFIDColumnInCopyFields = FALSE;
     bWriteAsHex = bWriteAsHexIn;
     bCopyActive = FALSE;
-    papszHSTOREColumns = NULL;
+    papszOverrideColumnTypes = NULL;
 }
 
 /************************************************************************/
@@ -91,7 +91,7 @@ OGRPGDumpLayer::~OGRPGDumpLayer()
     CPLFree(pszSqlTableName);
     CPLFree(pszGeomColumn);
     CPLFree(pszFIDColumn);
-    CSLDestroy(papszHSTOREColumns);
+    CSLDestroy(papszOverrideColumnTypes);
 }
 
 /************************************************************************/
@@ -1116,12 +1116,15 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
         }
     }
 
-    osFieldType = OGRPGTableLayerGetType(oField, bPreservePrecision, bApproxOK);
-    if (osFieldType.size() == 0)
-        return OGRERR_FAILURE;
-
-    if( CSLFindString(papszHSTOREColumns, oField.GetNameRef()) != -1 )
-        osFieldType = "hstore";
+    const char* pszOverrideType = CSLFetchNameValue(papszOverrideColumnTypes, oField.GetNameRef());
+    if( pszOverrideType != NULL )
+        osFieldType = pszOverrideType;
+    else
+    {
+        osFieldType = OGRPGTableLayerGetType(oField, bPreservePrecision, bApproxOK);
+        if (osFieldType.size() == 0)
+            return OGRERR_FAILURE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create the new field.                                           */
@@ -1138,13 +1141,45 @@ OGRErr OGRPGDumpLayer::CreateField( OGRFieldDefn *poFieldIn,
 }
 
 /************************************************************************/
-/*                         SetHSTOREColumns()                           */
+/*                        SetOverrideColumnTypes()                      */
 /************************************************************************/
 
-void OGRPGDumpLayer::SetHSTOREColumns( const char* pszHSTOREColumns )
+void OGRPGDumpLayer::SetOverrideColumnTypes( const char* pszOverrideColumnTypes )
 {
-    if( pszHSTOREColumns == NULL )
+    if( pszOverrideColumnTypes == NULL )
         return;
 
-    papszHSTOREColumns = CSLTokenizeString2(pszHSTOREColumns, ",", 0);
+    const char* pszIter = pszOverrideColumnTypes;
+    CPLString osCur;
+    while(*pszIter != '\0')
+    {
+        if( *pszIter == '(' )
+        {
+            /* Ignore commas inside ( ) pair */
+            while(*pszIter != '\0')
+            {
+                if( *pszIter == ')' )
+                {
+                    osCur += *pszIter;
+                    pszIter ++;
+                    break;
+                }
+                osCur += *pszIter;
+                pszIter ++;
+            }
+            if( *pszIter == '\0')
+                break;
+        }
+
+        if( *pszIter == ',' )
+        {
+            papszOverrideColumnTypes = CSLAddString(papszOverrideColumnTypes, osCur);
+            osCur = "";
+        }
+        else
+            osCur += *pszIter;
+        pszIter ++;
+    }
+    if( osCur.size() )
+        papszOverrideColumnTypes = CSLAddString(papszOverrideColumnTypes, osCur);
 }
