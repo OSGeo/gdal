@@ -3030,6 +3030,43 @@ def ogr_pg_62():
     return 'success'
 
 ###############################################################################
+# Test COLUMN_TYPES layer creation option (#4788)
+
+def ogr_pg_63():
+
+    if gdaltest.pg_ds is None:
+        return 'skip'
+
+    # No need to test it in the non PostGIS case
+    if not gdaltest.pg_has_postgis:
+        return 'skip'
+
+    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_63', options = ['COLUMN_TYPES=foo=int8,bar=numeric(10,5),baz=hstore'])
+    lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('bar', ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField('foo', '123')
+    lyr.CreateFeature(feat)
+    feat = None
+    ds = None
+
+    ds = ogr.Open('PG:' + gdaltest.pg_connection_string)
+    lyr = ds.GetLayerByName('ogr_pg_63')
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('foo')).GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('bar')).GetType() != ogr.OFTReal:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('foo') != 123:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success' 
+
+###############################################################################
 # 
 
 def ogr_pg_table_cleanup():
@@ -3068,6 +3105,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_58' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_60' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_61' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_63' )
     
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -3162,6 +3200,7 @@ gdaltest_list_internal = [
     ogr_pg_60,
     ogr_pg_61,
     ogr_pg_62,
+    ogr_pg_63,
     ogr_pg_cleanup ]
 
 ###############################################################################
