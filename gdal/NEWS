@@ -1,4 +1,4 @@
-= GDAL/OGR 1.10.0 *Preliminary* Release Notes (r23656 to r25311) =
+= GDAL/OGR 1.10.0 *Preliminary* Release Notes (r23656 to r25366) =
 
 == In a nutshell... ==
 
@@ -282,6 +282,7 @@ NetCDF driver:
  * Write multi-dimensional variables to a single variable (not one for each unrolled band) in CreateCopy() (#2581)
  * Fix handling of km units in netcdf driver and importFromProj4() (#4769)
  * Fix detection of 1 and 2 pixel width/height netcdf datasets (#4874)
+ * Fix subdataset data type info (#4932)
 
 NITF driver:
  * nitf_spec.xml: add definition of ACFTB and AIMIDB TREs
@@ -428,6 +429,7 @@ CSV driver:
  * Add WRITE_BOM option to CSV driver to write UTF8 BOM for improved Excel/unicode compatibility (#4844)
  * Don't turn \r\n into \n in CSV field output, regardless of LINEFORMAT settings (#4452)
  * Don't left-pad numbers in CSV output when a width is set (#4469)
+ * Add support for opening .tsv files, in particular the specific Eurostat .tsv files
 
 DGN driver:
  * Add support to read and write font name in the style (#3392)
@@ -477,6 +479,8 @@ GML driver:
  * Add OGR_ARC_MINLENGTH to limit the number of segments in interpolated arcs
  * When there are several geometries per feature, use geometry inside <XX:geometry> element for Inspire compatibility
  * Return per-feature SRS if there's no global SRS for a layer
+ * Parse correctly <gml:outerBoundaryIs> when there are attributes in the element (#4934)
+ * Recognize <gml:GeodesicString>
 
 ILI driver:
  * Support for format codes (#3972)
@@ -510,6 +514,7 @@ MITAB driver:
  * Fix incorrect handling of Mollweide projection (#4628)
  * Fix double free in OGRTABDataSource::Create() when exiting with error (#4730)
  * Add datum mapping between EPSG/authority codes and the MapInfo definitions. Falls back to old behaviour of name/string matching. (#481)
+ * Avoid negative zeros in TOWGS84 read from TAB file (#4931)
 
 MSSQLSpatial driver:
  * Report DeleteFeature/DeleteLayer capabilities
@@ -544,12 +549,15 @@ PGeo driver:
  * PGeo / Geomedia : remove heuristics that tried to identify if a MDB file belonged to the PGeo or Geomedia driver (#4498)
 
 PG driver:
- * Add a 'HSTORE_COLUMNS' layer creation option (#4788)
+ * Add a 'COLUMN_TYPES' layer creation option (#4788)
  * Fix insertion of features with FID set in COPY mode (#4495)
  * Honour datasource read-only mode in CreateField(), CreateFeature(), SetFeature() and DeleteFeature() (#4620)
  * Avoid fatal error when the public schema is absent (#4611)
  * Differ SRS evaluation on SQL layers (#4644)
  * Optimize SRID fetching on SQL result layer; compatibility with PostGIS 2.0 by using ST_SRID (#4699, #4700)
+
+PGDump driver:
+ * Add a 'COLUMN_TYPES' layer creation option (#4788)
 
 REC driver:
  * Add robustness checks against corrupted files
