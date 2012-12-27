@@ -504,7 +504,7 @@ int OGROSMDataSource::AllocBucket(int iBucket)
             bOOM = TRUE;
         }
         else
-            papsBuckets[iBucket].u.panSectorSize = papsBuckets[iBucket - nRem].u.panSectorSize + nRem * (PAGE_SIZE / BUCKET_SECTOR_SIZE_ARRAY_SIZE);
+            papsBuckets[iBucket].u.panSectorSize = papsBuckets[iBucket - nRem].u.panSectorSize + nRem * BUCKET_SECTOR_SIZE_ARRAY_SIZE;
     }
     else
     {
@@ -517,7 +517,7 @@ int OGROSMDataSource::AllocBucket(int iBucket)
             bOOM = TRUE;
         }
         else
-            papsBuckets[iBucket].u.pabyBitmap = papsBuckets[iBucket - nRem].u.pabyBitmap + nRem * (PAGE_SIZE / BUCKET_BITMAP_SIZE);
+            papsBuckets[iBucket].u.pabyBitmap = papsBuckets[iBucket - nRem].u.pabyBitmap + nRem * BUCKET_BITMAP_SIZE;
     }
 
     if( bOOM )
