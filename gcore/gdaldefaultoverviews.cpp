@@ -747,8 +747,24 @@ GDALDefaultOverviews::BuildOverviews(
 /* -------------------------------------------------------------------- */
     if( HaveMaskFile() && poMaskDS )
     {
+        /* Some config option are not compatible with mask overviews */
+        /* so unset them, and define more sensible values */
+        int bJPEG = EQUAL(CPLGetConfigOption("COMPRESS_OVERVIEW", ""), "JPEG");
+        int bPHOTOMETRIC_YCBCR = EQUAL(CPLGetConfigOption("PHOTOMETRIC_OVERVIEW", ""), "YCBCR");
+        if( bJPEG )
+            CPLSetThreadLocalConfigOption("COMPRESS_OVERVIEW", "DEFLATE");
+        if( bPHOTOMETRIC_YCBCR )
+            CPLSetThreadLocalConfigOption("PHOTOMETRIC_OVERVIEW", "");
+
         poMaskDS->BuildOverviews( pszResampling, nOverviews, panOverviewList,
                                   0, NULL, pfnProgress, pProgressData );
+
+        /* Restore config option */
+        if( bJPEG )
+            CPLSetThreadLocalConfigOption("COMPRESS_OVERVIEW", "JPEG");
+        if( bPHOTOMETRIC_YCBCR )
+            CPLSetThreadLocalConfigOption("PHOTOMETRIC_OVERVIEW", "YCBCR");
+
         if( bOwnMaskDS )
             GDALClose( poMaskDS );
 
