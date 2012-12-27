@@ -831,7 +831,7 @@ void OGROSMDataSource::LookupNodesSQLite( )
 
         while( sqlite3_step(hStmt) == SQLITE_ROW )
         {
-            GIntBig id = sqlite3_column_int(hStmt, 0);
+            GIntBig id = sqlite3_column_int64(hStmt, 0);
             LonLat* psLonLat = (LonLat*)sqlite3_column_blob(hStmt, 1);
 
             panReqIds[j] = id;
@@ -1891,7 +1891,7 @@ unsigned int OGROSMDataSource::LookupWays( std::map< GIntBig, std::pair<int,void
 
         while( sqlite3_step(hStmt) == SQLITE_ROW )
         {
-            GIntBig id = sqlite3_column_int(hStmt, 0);
+            GIntBig id = sqlite3_column_int64(hStmt, 0);
             if( aoMapWays.find(id) == aoMapWays.end() )
             {
                 int nBlobSize = sqlite3_column_bytes(hStmt, 1);
@@ -2324,7 +2324,7 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
             bFirst = FALSE;
         }
 
-        GIntBig id = sqlite3_column_int(hSelectPolygonsStandaloneStmt, 0);
+        GIntBig id = sqlite3_column_int64(hSelectPolygonsStandaloneStmt, 0);
 
         sqlite3_bind_int64( pahSelectWayStmt[0], 1, id );
         if( sqlite3_step(pahSelectWayStmt[0]) == SQLITE_ROW )
