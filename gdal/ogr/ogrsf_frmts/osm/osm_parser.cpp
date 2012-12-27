@@ -282,6 +282,11 @@ end_error:
 #define OSMHEADER_IDX_WRITING_PROGRAM       16
 #define OSMHEADER_IDX_SOURCE                17
 
+/* Ignored */
+#define OSMHEADER_IDX_OSMOSIS_REPLICATION_TIMESTAMP  32
+#define OSMHEADER_IDX_OSMOSIS_REPLICATION_SEQ_NUMBER 33
+#define OSMHEADER_IDX_OSMOSIS_REPLICATION_BASE_URL   34
+
 static
 int ReadOSMHeader(GByte* pabyData, GByte* pabyDataLimit,
                   OSMContext* psCtxt)
@@ -331,6 +336,22 @@ int ReadOSMHeader(GByte* pabyData, GByte* pabyDataLimit,
         {
             READ_TEXT(pabyData, pabyDataLimit, pszTxt);
             /* printf("OSMHEADER_IDX_SOURCE = %s\n", pszTxt); */
+            VSIFree(pszTxt);
+        }
+        else if (nKey == MAKE_KEY(OSMHEADER_IDX_OSMOSIS_REPLICATION_TIMESTAMP, WT_VARINT))
+        {
+            GIntBig nVal;
+            READ_VARINT64(pabyData, pabyDataLimit, nVal);
+        }
+        else if (nKey == MAKE_KEY(OSMHEADER_IDX_OSMOSIS_REPLICATION_SEQ_NUMBER, WT_VARINT))
+        {
+            GIntBig nVal;
+            READ_VARINT64(pabyData, pabyDataLimit, nVal);
+        }
+        else if (nKey == MAKE_KEY(OSMHEADER_IDX_OSMOSIS_REPLICATION_BASE_URL, WT_DATA))
+        {
+            READ_TEXT(pabyData, pabyDataLimit, pszTxt);
+            /* printf("OSMHEADER_IDX_OSMOSIS_REPLICATION_BASE_URL = %s\n", pszTxt); */
             VSIFree(pszTxt);
         }
         else
