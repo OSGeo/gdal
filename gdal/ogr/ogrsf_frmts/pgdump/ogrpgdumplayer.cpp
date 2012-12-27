@@ -73,6 +73,7 @@ OGRPGDumpLayer::OGRPGDumpLayer(OGRPGDumpDataSource* poDS,
     bLaunderColumnNames = TRUE;
     bPreservePrecision = TRUE;
     bUseCopy = USE_COPY_UNSET;
+    bFIDColumnInCopyFields = FALSE;
     bWriteAsHex = bWriteAsHexIn;
     bCopyActive = FALSE;
     papszHSTOREColumns = NULL;
@@ -217,7 +218,13 @@ OGRErr OGRPGDumpLayer::CreateFeature( OGRFeature *poFeature )
     else
     {
         if ( !bCopyActive )
-            StartCopy();
+        {
+            /* This is a heuristics. If the first feature to be copied has a */ 
+            /* FID set (and that a FID column has been identified), then we will */ 
+            /* try to copy FID values from features. Otherwise, we will not */ 
+            /* do and assume that the FID column is an autoincremented column. */ 
+            StartCopy(poFeature->GetFID() != OGRNullFID); 
+        }
 
         return CreateFeatureViaCopy( poFeature );
     }
@@ -395,11 +402,14 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     }
 
     /* Next process the field id column */
-    if( /*bHasFid &&*/ poFeatureDefn->GetFieldIndex( pszFIDColumn ) != -1 )
+    int nFIDIndex = -1;
+    if( bFIDColumnInCopyFields )
     {
         if (osCommand.size() > 0)
             osCommand += "\t";
-            
+
+        nFIDIndex = poFeatureDefn->GetFieldIndex( pszFIDColumn ); 
+
         /* Set the FID */
         if( poFeature->GetFID() != OGRNullFID )
         {
@@ -415,14 +425,20 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     /* Now process the remaining fields */
 
     int nFieldCount = poFeatureDefn->GetFieldCount();
+    int bAddTab = osCommand.size() > 0; 
+
     for( int i = 0; i < nFieldCount;  i++ )
     {
+        if (i == nFIDIndex)
+            continue;
+
         const char *pszStrValue = poFeature->GetFieldAsString(i);
         char *pszNeedToFree = NULL;
 
-        if (i > 0 || osCommand.size() > 0)
+        if (bAddTab)
             osCommand += "\t";
-            
+        bAddTab = TRUE; 
+
         if( !poFeature->IsFieldSet( i ) )
         {
             osCommand += "\\N" ;
@@ -572,13 +588,13 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 /*                             StartCopy()                              */
 /************************************************************************/
 
-OGRErr OGRPGDumpLayer::StartCopy()
+OGRErr OGRPGDumpLayer::StartCopy(int bSetFID)
 
 {
     /* Tell the datasource we are now planning to copy data */
     poDS->StartCopy( this ); 
 
-    CPLString osFields = BuildCopyFields();
+    CPLString osFields = BuildCopyFields(bSetFID);
 
     int size = strlen(osFields) +  strlen(pszSqlTableName) + 100;
     char *pszCommand = (char *) CPLMalloc(size);
@@ -619,29 +635,36 @@ OGRErr OGRPGDumpLayer::EndCopy()
 /*                          BuildCopyFields()                           */
 /************************************************************************/
 
-CPLString OGRPGDumpLayer::BuildCopyFields()
+CPLString OGRPGDumpLayer::BuildCopyFields(int bSetFID)
 {
     int     i = 0;
+    int     nFIDIndex = -1; 
     CPLString osFieldList;
 
-    if( /*bHasFid &&*/ poFeatureDefn->GetFieldIndex( pszFIDColumn ) != -1 )
+    if( pszGeomColumn != NULL )
     {
-        osFieldList += OGRPGDumpEscapeColumnName(pszFIDColumn);
+        osFieldList = OGRPGDumpEscapeColumnName(pszGeomColumn);
     }
 
-    if( pszGeomColumn )
+    bFIDColumnInCopyFields = (pszFIDColumn != NULL && bSetFID);
+    if( bFIDColumnInCopyFields )
     {
-        if( strlen(osFieldList) > 0 )
+        if( osFieldList.size() > 0 )
             osFieldList += ", ";
 
-        osFieldList += OGRPGDumpEscapeColumnName(pszGeomColumn);
+        nFIDIndex = poFeatureDefn->GetFieldIndex( pszFIDColumn );
+
+        osFieldList += OGRPGDumpEscapeColumnName(pszFIDColumn); 
     }
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
+        if (i == nFIDIndex)
+            continue;
+
         const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
 
-        if( strlen(osFieldList) > 0 )
+       if( osFieldList.size() > 0 )
             osFieldList += ", ";
 
         osFieldList += OGRPGDumpEscapeColumnName(pszName);
