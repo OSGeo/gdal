@@ -178,6 +178,8 @@ int main(int argc, char* argv[])
     hDS = GDALOpen("RASTERLITE:../gdrivers/data/rasterlite_pyramids.sqlite,table=test,level=1", GA_ReadOnly);
 
     OpenJPEG2000("../gdrivers/data/rgbwcmyk01_YeGeo_kakadu.jp2");
+    
+    hDS = GDALOpen("../gdrivers/tmp/cache/Europe 2001_OZF.map", GA_ReadOnly);
 
     CPLDebug("TEST","Call GDALDestroyDriverManager()");
     GDALDestroyDriverManager();
