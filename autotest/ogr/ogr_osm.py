@@ -517,6 +517,18 @@ def ogr_osm_8():
 
     return 'success'
 
+###############################################################################
+# Same as ogr_osm_8 but with OSM_USE_CUSTOM_INDEXING=NO
+
+def ogr_osm_9():
+
+    old_val = gdal.GetConfigOption('OSM_USE_CUSTOM_INDEXING')
+    gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'NO')
+    ret = ogr_osm_8()
+    gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', old_val)
+    
+    return ret
+
 gdaltest_list = [
     ogr_osm_1,
     ogr_osm_2,
@@ -528,6 +540,7 @@ gdaltest_list = [
     ogr_osm_6,
     ogr_osm_7,
     ogr_osm_8,
+    ogr_osm_9,
     ]
 
 if __name__ == '__main__':
