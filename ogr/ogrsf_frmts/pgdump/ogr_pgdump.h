@@ -62,8 +62,8 @@ class OGRPGDumpLayer : public OGRLayer
     int                 bFIDColumnInCopyFields;
     int                 bCreateTable;
 
-    char              **papszHSTOREColumns;
-    
+    char              **papszOverrideColumnTypes;
+
     void                AppendFieldValue(CPLString& osCommand,
                                        OGRFeature* poFeature, int i);
     char*               GByteArrayToBYTEA( const GByte* pabyData, int nLen);
@@ -104,7 +104,7 @@ class OGRPGDumpLayer : public OGRLayer
     void                SetPrecisionFlag( int bFlag )
                                 { bPreservePrecision = bFlag; }
 
-    void                SetHSTOREColumns( const char* pszHSTOREColumns );
+    void                SetOverrideColumnTypes( const char* pszOverrideColumnTypes );
 
     OGRErr              EndCopy();
 };
