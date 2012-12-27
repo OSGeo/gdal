@@ -60,6 +60,8 @@ class OGRPGDumpLayer : public OGRLayer
     int                 bWriteAsHex;
     int                 bCopyActive;
     int                 bCreateTable;
+
+    char              **papszHSTOREColumns;
     
     void                AppendFieldValue(CPLString& osCommand,
                                        OGRFeature* poFeature, int i);
@@ -68,7 +70,7 @@ class OGRPGDumpLayer : public OGRLayer
     
     OGRErr              StartCopy();
     CPLString           BuildCopyFields();
-    
+
   public:
                         OGRPGDumpLayer(OGRPGDumpDataSource* poDS,
                                        const char* pszSchemaName,
@@ -100,6 +102,8 @@ class OGRPGDumpLayer : public OGRLayer
                                 { bLaunderColumnNames = bFlag; }
     void                SetPrecisionFlag( int bFlag )
                                 { bPreservePrecision = bFlag; }
+
+    void                SetHSTOREColumns( const char* pszHSTOREColumns );
 
     OGRErr              EndCopy();
 };
