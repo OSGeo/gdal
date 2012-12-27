@@ -2022,7 +2022,13 @@ char **GDALDataset::GetFileList()
     if( oOvManager.HaveMaskFile() )
     {
         char **papszMskList = oOvManager.poMaskDS->GetFileList();
-        papszList = CSLInsertStrings( papszList, -1, papszMskList );
+        char **papszIter = papszMskList;
+        while( papszIter && *papszIter )
+        {
+            if( CSLFindString( papszList, *papszIter ) < 0 )
+                papszList = CSLAddString( papszList, *papszIter );
+            papszIter ++;
+        }
         CSLDestroy( papszMskList );
     }
 
