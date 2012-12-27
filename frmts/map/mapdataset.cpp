@@ -62,6 +62,8 @@ class CPL_DLL MAPDataset : public GDALDataset
     virtual const GDAL_GCP *GetGCPs();
     virtual char **GetFileList();
 
+    virtual int         CloseDependentDatasets();
+
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo *poOpenInfo );
 };
@@ -139,6 +141,22 @@ MAPDataset::~MAPDataset()
         delete poNeatLine;
         poNeatLine = NULL;
     }
+}
+
+/************************************************************************/
+/*                       CloseDependentDatasets()                       */
+/************************************************************************/
+
+int MAPDataset::CloseDependentDatasets()
+{
+    int bRet = GDALDataset::CloseDependentDatasets();
+    if (poImageDS != NULL)
+    {
+        GDALClose( poImageDS );
+        poImageDS = NULL;
+        bRet = TRUE;
+    }
+    return bRet;
 }
 
 /************************************************************************/
