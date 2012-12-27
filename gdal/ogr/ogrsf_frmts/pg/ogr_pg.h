@@ -221,7 +221,7 @@ class OGRPGTableLayer : public OGRPGLayer
     int                 bRetrieveFID;
     int                 bHasWarnedAlreadySetFID;
     
-    char              **papszHSTOREColumns;
+    char              **papszOverrideColumnTypes;
 
 public:
                         OGRPGTableLayer( OGRPGDataSource *,
@@ -277,7 +277,7 @@ public:
     void                SetPrecisionFlag( int bFlag )
                                 { bPreservePrecision = bFlag; }
 
-    void                SetHSTOREColumns( const char* pszHSTOREColumns );
+    void                SetOverrideColumnTypes( const char* pszOverrideColumnTypes );
 
     virtual OGRErr      StartCopy(int bSetFID);
     virtual OGRErr      EndCopy();

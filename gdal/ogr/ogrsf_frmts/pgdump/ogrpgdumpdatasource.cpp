@@ -479,9 +479,9 @@ OGRPGDumpDataSource::CreateLayer( const char * pszLayerName,
                                   pszFIDColumnName, nDimension, nSRSId, bWriteAsHex, bCreateTable );
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
-    
-    const char* pszHSTOREColumns = CSLFetchNameValue( papszOptions, "HSTORE_COLUMNS" );
-    poLayer->SetHSTOREColumns(pszHSTOREColumns);
+
+    const char* pszOverrideColumnTypes = CSLFetchNameValue( papszOptions, "COLUMN_TYPES" );
+    poLayer->SetOverrideColumnTypes(pszOverrideColumnTypes);
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
