@@ -1375,11 +1375,12 @@ VSIGZipHandle* VSIGZipFilesystemHandler::OpenGZipReadOnly( const char *pszFilena
     if (poVirtualHandle == NULL)
         return NULL;
 
-    if (VSIFReadL(signature, 1, 2, (VSILFILE*)poVirtualHandle) != 2)
+    if (VSIFReadL(signature, 1, 2, (VSILFILE*)poVirtualHandle) != 2 ||
+        signature[0] != gz_magic[0] || signature[1] != gz_magic[1])
+    {
+        delete poVirtualHandle;
         return NULL;
-
-    if (signature[0] != gz_magic[0] || signature[1] != gz_magic[1])
-        return NULL;
+    }
 
     if (poHandleLastGZipFile)
         delete poHandleLastGZipFile;
