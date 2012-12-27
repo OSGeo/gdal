@@ -566,7 +566,13 @@ void * VSIRealloc( void * pData, size_t nNewSize )
     size_t nPageSize = getpagesize();
     posix_memalign((void**)&newptr, nPageSize, (nNewSize + 3 * sizeof(void*) + nPageSize - 1) & ~(nPageSize - 1));
     if (newptr == NULL)
+    {
+        ptr[2 * sizeof(void*) + nOldSize + 0] = 'E';
+        ptr[2 * sizeof(void*) + nOldSize + 1] = 'V';
+        ptr[2 * sizeof(void*) + nOldSize + 2] = 'S';
+        ptr[2 * sizeof(void*) + nOldSize + 3] = 'I';
         return NULL;
+    }
     memcpy(newptr + 2 * sizeof(void*), pData, nOldSize);
     ptr[0] = 'M';
     ptr[1] = 'I';
@@ -580,7 +586,13 @@ void * VSIRealloc( void * pData, size_t nNewSize )
 #else
     void* newptr = realloc(ptr, nNewSize + 3 * sizeof(void*));
     if (newptr == NULL)
+    {
+        ptr[2 * sizeof(void*) + nOldSize + 0] = 'E';
+        ptr[2 * sizeof(void*) + nOldSize + 1] = 'V';
+        ptr[2 * sizeof(void*) + nOldSize + 2] = 'S';
+        ptr[2 * sizeof(void*) + nOldSize + 3] = 'I';
         return NULL;
+    }
 #endif
     ptr = (char*) newptr;
     memcpy(ptr + sizeof(void*), &nNewSize, sizeof(void*));
