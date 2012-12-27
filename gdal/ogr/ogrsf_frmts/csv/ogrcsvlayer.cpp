@@ -236,6 +236,9 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     bDontHonourStrings = FALSE;
     bWriteBOM = FALSE;
 
+    bIsEurostatTSV = FALSE;
+    nEurostatDims = 0;
+
     nTotalFeatures = -1;
 
 /* -------------------------------------------------------------------- */
@@ -302,6 +305,16 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
                     /* we have a numeric field, therefore do not consider the first line as field names */
                     bHasFieldNames = FALSE;
                 }
+            }
+
+            CPLString osExt = OGRCSVDataSource::GetRealExtension(pszFilename);
+
+            /* Eurostat .tsv files */
+            if( EQUAL(osExt, "tsv") && nFieldCount > 1 &&
+                strchr(papszTokens[0], ',') != NULL && strchr(papszTokens[0], '\\') != NULL )
+            {
+                bHasFieldNames = TRUE;
+                bIsEurostatTSV = TRUE;
             }
 
             /* tokenize without quotes to get the actual values */
@@ -396,7 +409,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 /* -------------------------------------------------------------------- */
 /*      Build field definitions.                                        */
 /* -------------------------------------------------------------------- */
-    for( iField = 0; iField < nFieldCount; iField++ )
+    for( iField = 0; !bIsEurostatTSV && iField < nFieldCount; iField++ )
     {
         char *pszFieldName = NULL;
         char szFieldNameBuffer[100];
@@ -522,7 +535,45 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     {
         poFeatureDefn->SetGeomType( wkbPoint );
     }
-    
+
+/* -------------------------------------------------------------------- */
+/*      Build field definitions for Eurostat TSV files.                 */
+/* -------------------------------------------------------------------- */
+
+    CPLString osSeqDim;
+    for( iField = 0; bIsEurostatTSV && iField < nFieldCount; iField++ )
+    {
+        if( iField == 0 )
+        {
+            char** papszDims = CSLTokenizeString2( papszTokens[0], ",\\", 0 );
+            nEurostatDims = CSLCount(papszDims) - 1;
+            for(int iSubField = 0; iSubField < nEurostatDims; iSubField++)
+            {
+                OGRFieldDefn oField(papszDims[iSubField], OFTString);
+                poFeatureDefn->AddFieldDefn( &oField );
+            }
+
+            osSeqDim = papszDims[nEurostatDims];
+            CSLDestroy(papszDims);
+        }
+        else
+        {
+            if( papszTokens[iField][0] != '\0' 
+                && papszTokens[iField][strlen(papszTokens[iField])-1] == ' ' )
+                papszTokens[iField][strlen(papszTokens[iField])-1] = '\0';
+
+            OGRFieldDefn oField(CPLSPrintf("%s_%s", osSeqDim.c_str(), papszTokens[iField]), OFTReal);
+            poFeatureDefn->AddFieldDefn( &oField );
+
+            OGRFieldDefn oField2(CPLSPrintf("%s_%s_flag", osSeqDim.c_str(), papszTokens[iField]), OFTString);
+            poFeatureDefn->AddFieldDefn( &oField2 );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup.                                                        */
+/* -------------------------------------------------------------------- */
+
     CSLDestroy( papszTokens );
     CSLDestroy( papszFieldTypes );
 }
@@ -608,7 +659,7 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
                                  poFeatureDefn->GetFieldCount() );
     CPLValueType eType;
     
-    for( iAttr = 0; iAttr < nAttrCount; iAttr++)
+    for( iAttr = 0; !bIsEurostatTSV && iAttr < nAttrCount; iAttr++)
     {
         if( iAttr == iWktGeomReadField && papszTokens[iAttr][0] != '\0' )
         {
@@ -645,6 +696,44 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
         else
             poFeature->SetField( iAttr, papszTokens[iAttr] );
 
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Eurostat TSV files.                                             */
+/* -------------------------------------------------------------------- */
+
+    for( iAttr = 0; bIsEurostatTSV && iAttr < nAttrCount; iAttr++)
+    {
+        if( iAttr == 0 )
+        {
+            char** papszDims = CSLTokenizeString2( papszTokens[0], ",", 0 );
+            if( CSLCount(papszDims) != nEurostatDims )
+            {
+                CSLDestroy(papszDims);
+                break;
+            }
+            for( int iSubAttr = 0; iSubAttr < nEurostatDims; iSubAttr ++ )
+            {
+                poFeature->SetField( iSubAttr, papszDims[iSubAttr] );
+            }
+            CSLDestroy(papszDims);
+        }
+        else
+        {
+            char** papszVals = CSLTokenizeString2( papszTokens[iAttr], " ", 0 );
+            eType = CPLGetValueType(papszVals[0]);
+            if ( (papszVals[0][0] != '\0')  &&
+                 ( eType == CPL_VALUE_INTEGER ||
+                   eType == CPL_VALUE_REAL ) )
+            {
+                poFeature->SetField( nEurostatDims + 2 * (iAttr - 1), papszVals[0] );
+            }
+            if( CSLCount(papszVals) == 2 )
+            {
+                poFeature->SetField( nEurostatDims + 2 * (iAttr - 1) + 1, papszVals[1] );
+            }
+            CSLDestroy(papszVals);
+        }
     }
 
 /* -------------------------------------------------------------------- */

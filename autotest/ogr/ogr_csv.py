@@ -1078,6 +1078,56 @@ def ogr_csv_26():
     return 'success'
 
 ###############################################################################
+# Test Eurostat .TSV files
+
+def ogr_csv_27():
+
+    ds = ogr.Open('data/test_eurostat.tsv')
+    lyr = ds.GetLayer(0)
+    layer_defn = lyr.GetLayerDefn()
+    if layer_defn.GetFieldCount() != 8:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    expected_fields = [ ('unit', ogr.OFTString),
+                        ('geo', ogr.OFTString),
+                        ('time_2010', ogr.OFTReal),
+                        ('time_2010_flag', ogr.OFTString),
+                        ('time_2011', ogr.OFTReal),
+                        ('time_2011_flag', ogr.OFTString),
+                        ('time_2012', ogr.OFTReal),
+                        ('time_2012_flag', ogr.OFTString) ]
+    i = 0
+    for expected_field in expected_fields:
+        fld = layer_defn.GetFieldDefn(i)
+        if fld.GetName() != expected_field[0]:
+            print(fld.GetName())
+            print(expected_field[0])
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if fld.GetType() != expected_field[1]:
+            print(fld.GetType())
+            print(expected_field[1])
+            gdaltest.post_reason('fail')
+            return 'fail'
+        i = i + 1
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('unit') != 'NBR' or \
+       feat.GetField('geo') != 'FOO' or \
+       feat.IsFieldSet('time_2010') or \
+       feat.IsFieldSet('time_2010_flag') or \
+       feat.GetField('time_2011') != 1 or \
+       feat.GetField('time_2011_flag') != 'u' or \
+       feat.GetField('time_2012') != 2.34 or \
+       feat.IsFieldSet('time_2012_flag') :
+            feat.DumpReadable()
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_csv_cleanup():
@@ -1133,6 +1183,7 @@ gdaltest_list = [
     ogr_csv_24,
     ogr_csv_25,
     ogr_csv_26,
+    ogr_csv_27,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':
