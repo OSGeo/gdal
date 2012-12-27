@@ -59,6 +59,7 @@ class OGRPGDumpLayer : public OGRLayer
     int                 bUseCopy;
     int                 bWriteAsHex;
     int                 bCopyActive;
+    int                 bFIDColumnInCopyFields;
     int                 bCreateTable;
 
     char              **papszHSTOREColumns;
@@ -68,8 +69,8 @@ class OGRPGDumpLayer : public OGRLayer
     char*               GByteArrayToBYTEA( const GByte* pabyData, int nLen);
     char*               GeometryToHex( OGRGeometry * poGeometry, int nSRSId );
     
-    OGRErr              StartCopy();
-    CPLString           BuildCopyFields();
+    OGRErr              StartCopy(int bSetFID);
+    CPLString           BuildCopyFields(int bSetFID);
 
   public:
                         OGRPGDumpLayer(OGRPGDumpDataSource* poDS,
