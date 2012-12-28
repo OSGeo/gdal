@@ -142,6 +142,85 @@ OGRFeature(SELECT):0
   POLYGON ((478315.53125 4762880.5,481645.3125 4762880.5,481645.3125 4765610.5,478315.53125 4765610.5,478315.53125 4762880.5))
 \endcode
 
+\subsection ogr_sql_sqlite_ogr_geocode_function OGR geocoding functions
+
+The following SQL function is available : <b>ogr_geocode(name_to_geocode [, field_to_return [, option1 [, option2, ...]]])</b>.
+name_to_geocode is a literal or a column name that must be geocoded. field_to_return if specified can be "geometry" for
+the geometry (default), or a field name of the layer returned by OGRGeocode(). option1, option2, etc.. must be
+of the key=value format, and are options understood by OGRGeocodeCreateSession() or OGRGeocode().<p>
+
+This function internally uses the OGRGeocode() API. Refer to it for more details.
+
+\code
+SELECT ST_Centroid(ogr_geocode('Paris'))
+
+returns:
+
+OGRFeature(SELECT):0
+  POINT (2.342878767069653 48.85661793020374)
+
+\endcode
+
+\code
+ogrinfo cities.csv -dialect sqlite -sql "SELECT *, ogr_geocode(city, 'country') AS country, ST_Centroid(ogr_geocode(city)) FROM cities"
+
+returns:
+
+OGRFeature(SELECT):0
+  id (Real) = 1
+  city (String) = Paris
+  country (String) = France métropolitaine
+  POINT (2.342878767069653 48.85661793020374)
+
+OGRFeature(SELECT):1
+  id (Real) = 2
+  city (String) = London
+  country (String) = United Kingdom
+  POINT (-0.109369427546499 51.500506667319407)
+
+OGRFeature(SELECT):2
+  id (Real) = 3
+  city (String) = Rennes
+  country (String) = France métropolitaine
+  POINT (-1.68185153381778 48.111663929761093)
+
+OGRFeature(SELECT):3
+  id (Real) = 4
+  city (String) = Strasbourg
+  country (String) = France métropolitaine
+  POINT (7.767762859150757 48.571233274141846)
+
+OGRFeature(SELECT):4
+  id (Real) = 5
+  city (String) = New York
+  country (String) = United States of America
+  POINT (-73.938140243499049 40.663799577449979)
+
+OGRFeature(SELECT):5
+  id (Real) = 6
+  city (String) = Berlin
+  country (String) = Deutschland
+  POINT (13.402306623451983 52.501470321410636)
+
+OGRFeature(SELECT):6
+  id (Real) = 7
+  city (String) = Beijing
+  country (String) = 中华人民共和国
+  POINT (116.391195 39.9064702)
+
+OGRFeature(SELECT):7
+  id (Real) = 8
+  city (String) = Brasilia
+  country (String) = Brasil
+  POINT (-52.830435216371839 -10.828214867369699)
+
+OGRFeature(SELECT):8
+  id (Real) = 9
+  city (String) = Moscow
+  country (String) = Российская Федерация
+  POINT (37.367988106866868 55.556208255649558)
+\endcode
+
 \subsection ogr_sql_sqlite_spatial_index Spatialite spatial index
 
 Spatialite spatial index mechanism can be triggered by making sure a spatial index
