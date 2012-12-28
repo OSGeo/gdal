@@ -37,16 +37,16 @@ CPL_C_START
 
 typedef struct _OGRGeocodingSessionHS *OGRGeocodingSessionH;
 
-OGRGeocodingSessionH OGRGeocodeCreateSession(char** papszOptions);
+OGRGeocodingSessionH CPL_DLL OGRGeocodeCreateSession(char** papszOptions);
 
-void OGRGeocodeDestroySession(OGRGeocodingSessionH hSession);
+void CPL_DLL OGRGeocodeDestroySession(OGRGeocodingSessionH hSession);
 
-OGRLayerH OGRGeocode(OGRGeocodingSessionH hSession,
-                     const char* pszQuery,
-                     char** papszStructuredQuery,
-                     char** papszOptions);
+OGRLayerH CPL_DLL OGRGeocode(OGRGeocodingSessionH hSession,
+                             const char* pszQuery,
+                             char** papszStructuredQuery,
+                             char** papszOptions);
 
-void OGRGeocodeFreeResult(OGRLayerH hLayer);
+void CPL_DLL OGRGeocodeFreeResult(OGRLayerH hLayer);
 
 CPL_C_END
 
