@@ -33,6 +33,7 @@
 #include "ogr_sqlite.h"
 #include <map>
 #include <vector>
+#include "ogr_geocoding.h"
 
 #ifdef HAVE_SQLITE_VFS
 
@@ -58,6 +59,8 @@ class OGR2SQLITEModule
 
     void* hRegExpCache;
 
+    OGRGeocodingSessionH hGeocodingSession;
+
   public:
                                  OGR2SQLITEModule(OGRDataSource* poDS);
                                 ~OGR2SQLITEModule();
@@ -80,6 +83,9 @@ class OGR2SQLITEModule
     OGRLayer*                    GetLayerForVTable(const char* pszVTableName);
 
     void                         SetRegExpCache(void* hRegExpCacheIn) { hRegExpCache = hRegExpCacheIn; }
+
+    OGRGeocodingSessionH         GetGeocodingSession() { return hGeocodingSession; }
+    void                         SetGeocodingSession(OGRGeocodingSessionH hGeocodingSessionIn) { hGeocodingSession = hGeocodingSessionIn; }
 };
 
 void OGR2SQLITE_Register();
