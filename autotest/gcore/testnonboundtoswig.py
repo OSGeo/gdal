@@ -91,6 +91,32 @@ def find_libgdal_linux():
     return None
 
 ###############################################################################
+# find_libgdal_sunos()
+# Parse output of pmap to find an occurrence of libgdalXXX.so.*
+
+def find_libgdal_sunos():
+
+    pid = os.getpid()
+    (lines, err) = gdaltest.runexternal_out_and_err('pmap %d' % pid)
+    
+    for line in lines.split('\n'):
+        if line.rfind('/libgdal') == -1 or line.find('.so') == -1:
+            continue
+
+        i = line.find('/')
+        if i < 0:
+            continue
+        line = line[i:]
+
+        soname = line.lstrip().rstrip('\n')
+        if soname.rfind('/libgdal') == -1:
+            continue
+
+        return soname
+
+    return None
+
+###############################################################################
 # find_libgdal_windows()
 # use Module32First() / Module32Next() API on the current process
 
@@ -184,6 +210,8 @@ def find_libgdal_windows():
 def find_libgdal():
     if sys.platform.startswith('linux'):
         return find_libgdal_linux()
+    elif sys.platform.startswith('sunos'):
+        return find_libgdal_sunos()
     elif sys.platform.startswith('win32'):
         return find_libgdal_windows()
     else:
