@@ -27,12 +27,48 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <sys/time.h>
-
 #include "cpl_conv.h"
 #include "cpl_http.h"
 #include "cpl_multiproc.h"
 #include "cpl_minixml.h"
+
+/* Emulation of gettimeofday() for Windows */
+#ifdef WIN32
+
+#include <time.h>
+#include <windows.h>
+
+struct timezone 
+{
+  int  tz_minuteswest; /* minutes W of Greenwich */
+  int  tz_dsttime;     /* type of DST correction */
+};
+
+#define MICROSEC_IN_SEC   1000000
+
+static
+int OGR_gettimeofday(struct timeval *tv, struct timezone *tzIgnored)
+{
+    FILETIME ft;
+    GetSystemTimeAsFileTime(&ft);
+
+    /* In 100-nanosecond intervals since January 1, 1601 (UTC). */
+    GUIntBig nVal = (((GUIntBig)ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+    nVal /= 10; /* to microseconds */
+    /* There are 11 644 473 600 seconds between 1601 and 1970 */
+    nVal -= ((GUIntBig)116444736) * 100 * MICROSEC_IN_SEC;
+    tv->tv_sec = (long)(nVal / MICROSEC_IN_SEC);
+    tv->tv_usec = (long)(nVal % MICROSEC_IN_SEC);
+
+    return 0;
+}
+
+#define gettimeofday OGR_gettimeofday
+
+#else
+#include <sys/time.h>
+#endif
+
 
 #include "ogr_geocoding.h"
 #include "ogr_mem.h"
