@@ -610,8 +610,9 @@ static OGRLayerH OGRGeocodeBuildLayer(const char* pszContent)
  * features is not necessarily a point.  The returned layer must be freed with
  * OGRGeocodeFreeResult().
  *
- * Note: this function is also available as the SQL ogr_geocode() function of
- * the SQL SQLite dialect.
+ * Note: this function is also available as the SQL
+ * <a href="ogr_sql_sqlite.html#ogr_sql_sqlite_ogr_geocode_function">ogr_geocode()</a>
+ * function of the SQL SQLite dialect.
  *
  * @param hSession the geocoding session handle.
  * @param pszQuery the string to geocode.
