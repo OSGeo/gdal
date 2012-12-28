@@ -57,14 +57,14 @@ private:
     OGRVFKDataSource    *poDS;
 
     /* VFK data block */
-    VFKDataBlock        *poDataBlock;
+    IVFKDataBlock       *poDataBlock;
 
     /* get next feature */
     int                  m_iNextFeature;
     
     /* private methods */
-    OGRGeometry         *CreateGeometry(VFKFeature *);
-    OGRFeature          *GetFeature(VFKFeature *);
+    OGRGeometry         *CreateGeometry(IVFKFeature *);
+    OGRFeature          *GetFeature(IVFKFeature *);
     
 public:
     OGRVFKLayer(const char *, OGRSpatialReference *,
@@ -100,7 +100,7 @@ private:
     IVFKReader    *poReader;
 
     /* private methods */
-    OGRVFKLayer   *CreateLayerFromBlock(const VFKDataBlock *);
+    OGRVFKLayer   *CreateLayerFromBlock(const IVFKDataBlock *);
 
 public:
     OGRVFKDataSource();
@@ -116,9 +116,6 @@ public:
     int            TestCapability(const char *);
 
     IVFKReader    *GetReader() const { return poReader; }
-
-    void           AddInfo(const char *, const char *);
-    const char    *GetInfo(const char *);
 };
 
 /************************************************************************/

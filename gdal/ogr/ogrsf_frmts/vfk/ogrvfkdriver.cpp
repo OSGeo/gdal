@@ -60,7 +60,7 @@ const char *OGRVFKDriver::GetName()
   \return NULL on failure
 */
 OGRDataSource *OGRVFKDriver::Open(const char * pszFilename,
-				  int bUpdate)
+                                  int bUpdate)
 {
     OGRVFKDataSource *poDS;
 
@@ -82,8 +82,7 @@ OGRDataSource *OGRVFKDriver::Open(const char * pszFilename,
 
   \param pszCap capability
 
-  \return TRUE on success
-  \return False on failure
+  \return TRUE on success or FALSE on failure
 */
 int OGRVFKDriver::TestCapability(const char *pszCap)
 {
