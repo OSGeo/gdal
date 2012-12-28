@@ -33,6 +33,12 @@
 #include "cpl_port.h"
 #include "ogr_api.h"
 
+/**
+ * \file ogr_geocoding.h
+ * 
+ * C API for geocoding client.
+ */
+
 CPL_C_START
 
 typedef struct _OGRGeocodingSessionHS *OGRGeocodingSessionH;
