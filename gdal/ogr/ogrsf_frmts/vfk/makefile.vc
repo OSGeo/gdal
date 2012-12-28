@@ -1,11 +1,22 @@
-OBJ        = vfkreader.obj vfkdatablock.obj vfkpropertydefn.obj vfkfeature.obj vfkproperty.obj \
-	       ogrvfkdriver.obj ogrvfkdatasource.obj ogrvfklayer.obj
+CORE_OBJ        = vfkreader.obj vfkreadersqlite.obj \
+	vfkdatablock.obj vfkdatablocksqlite.obj \
+	vfkpropertydefn.obj \
+	vfkfeature.obj vfkfeaturesqlite.obj \
+	vfkproperty.obj
 
-EXTRAFLAGS = -I.. -I..\..
+OGR_OBJ = ogrvfkdriver.obj ogrvfkdatasource.obj ogrvfklayer.obj
+
+OBJ = $(CORE_OBJ) $(OGR_OBJ)
+
+EXTRAFLAGS = -I.. -I..\.. $(SQLITE_EXTRAFLAGS)
 
 GDAL_ROOT  = ..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IFDEF SQLITE_INC
+SQLITE_EXTRAFLAGS = $(SQLITE_INC) -DHAVE_SQLITE
+!ENDIF
 
 default: $(OBJ)
 

@@ -6,7 +6,7 @@
  * Author:   Martin Landa, landa.martin gmail.com
  *
  ******************************************************************************
- * Copyright (c) 2009-2010, Martin Landa <landa.martin gmail.com>
+ * Copyright (c) 2009-2010, 2012, Martin Landa <landa.martin gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -38,44 +38,81 @@
 #include "vfkreader.h"
 #include "ogr_api.h"
 
+#ifdef HAVE_SQLITE
+#include "sqlite3.h"
+#endif
+
 class VFKReader;
 
 /************************************************************************/
 /*                              VFKReader                               */
 /************************************************************************/
-class VFKReader:public IVFKReader 
+class VFKReader : public IVFKReader 
 {
 private:
-    char          *m_pszFilename;
+    bool           m_bLatin2;
 
-    /* data buffer */
-    char          *m_pszWholeText;
-
-    /* data blocks */
-    int            m_nDataBlockCount;
-    VFKDataBlock **m_papoDataBlock;
-
+    FILE          *m_poFD;
+    char          *ReadLine(bool = FALSE);
+    
     /* metadata */
     std::map<std::string, std::string> poInfo;
+    
+    void          AddInfo(const char *);
 
-    int  AddDataBlock(VFKDataBlock *);
-    void AddInfo(const char *);
+protected:
+    char           *m_pszFilename;
+    int             m_nDataBlockCount;
+    IVFKDataBlock **m_papoDataBlock;
+
+    IVFKDataBlock  *CreateDataBlock(const char *);
+    void            AddDataBlock(IVFKDataBlock *, const char *);
+    void            AddFeature(IVFKDataBlock *, VFKFeature *);
 
 public:
-    VFKReader();
+    VFKReader(const char *);
     virtual ~VFKReader();
 
-    void          SetSourceFile(const char *);
-
-    int           LoadData();
-    int           LoadDataBlocks();
-    long          LoadGeometry();
+    bool           IsLatin2() const { return m_bLatin2; }
+    int            ReadDataBlocks();
+    int            ReadDataRecords(IVFKDataBlock *);
+    int            LoadGeometry();
     
-    int           GetDataBlockCount() const { return m_nDataBlockCount; }
-    VFKDataBlock *GetDataBlock(int) const;
-    VFKDataBlock *GetDataBlock(const char *) const;
+    int            GetDataBlockCount() const { return m_nDataBlockCount; }
+    IVFKDataBlock *GetDataBlock(int) const;
+    IVFKDataBlock *GetDataBlock(const char *) const;
 
-    const char   *GetInfo(const char *);
+    const char    *GetInfo(const char *);
 };
+
+#ifdef HAVE_SQLITE
+/************************************************************************/
+/*                              VFKReaderSQLite                         */
+/************************************************************************/
+
+class VFKReaderSQLite : public VFKReader 
+{
+private:
+    sqlite3       *m_poDB;
+
+    IVFKDataBlock *CreateDataBlock(const char *);
+    void           AddDataBlock(IVFKDataBlock *, const char *);
+    void           AddFeature(IVFKDataBlock *, VFKFeature *);
+
+    void           CreateIndex(const char *, const char *, const char *);
+    
+    friend class   VFKFeatureSQLite;
+public:
+    VFKReaderSQLite(const char *);
+    virtual ~VFKReaderSQLite();
+
+    int           ReadDataBlocks();
+    int           ReadDataRecords(IVFKDataBlock *);
+
+    sqlite3_stmt *PrepareStatement(const char *);
+    OGRErr        ExecuteSQL(const char *);
+    OGRErr        ExecuteSQL(sqlite3_stmt *);
+};
+#endif // HAVE_SQLITE
 
 #endif // GDAL_OGR_VFK_VFKREADERP_H_INCLUDED
