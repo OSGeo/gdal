@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -100,6 +101,32 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.end_headers()
                     self.elastic_search = True
+                    return
+                else:
+                    self.send_error(404,'File Not Found: %s' % self.path)
+                    return
+
+            # Below is for geocoding
+            elif self.path.find('/geocoding') != -1:
+                if self.path == '/geocoding?q=Paris&email=foo%40bar':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8"?>
+<searchresults>
+  <place lat="48.8566177374844" lon="2.34288146739775" display_name="Paris, Ile-de-France, France metropolitaine">
+    <county>Paris</county>
+    <state>Ile-de-France</state>
+    <country>France metropolitaine</country>
+    <country_code>fr</country_code>
+  </place>
+</searchresults>""")
+                    return
+                elif self.path == '/geocoding?q=NonExistingPlace&email=foo%40bar':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8"?><searchresults></searchresults>""")
                     return
                 else:
                     self.send_error(404,'File Not Found: %s' % self.path)

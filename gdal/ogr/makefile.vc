@@ -1,6 +1,6 @@
 
 LINKFLAGS =	/Zi /MTd
-EXTRAFLAGS =	-DWIN32 -I. -Iogrsf_frmts -I..\frmts\gtiff\libgeotiff -I..\frmts\zlib \
+EXTRAFLAGS =	-DWIN32 -I. -Iogrsf_frmts -Iogrsf_frmts\mem -I..\frmts\gtiff\libgeotiff -I..\frmts\zlib \
 		$(PROJ_FLAGS) $(PROJ_INCLUDE) $(GEOS_CFLAGS)
 
 GDAL_ROOT = 	..
@@ -31,7 +31,7 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj ogr_api.obj \
 		ogr_srs_ozi.obj ogr_srs_erm.obj ogr_expat.obj \
 		swq.obj swq_parser.obj swq_select.obj swq_op_registrar.obj \
 		swq_op_general.obj swq_expr_node.obj ogrpgeogeometry.obj \
-		ogrgeomediageometry.obj
+		ogrgeomediageometry.obj ogr_geocoding.obj
 
 default:        ogr.lib 
 
