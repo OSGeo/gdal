@@ -456,6 +456,8 @@ int OGRSQLiteDataSource::OpenOrCreateDB(int flags)
 
     hRegExpCache = OGRSQLiteRegisterRegExpFunction(hDB);
 
+    OGRSQLiteRegisterInflateDeflate(hDB);
+
     return TRUE;
 }
 
@@ -853,17 +855,16 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn )
             return FALSE;
     }
 
-    int rc;
-    char *pszErrMsg = NULL;
-
-    CPLHashSet* hSet = CPLHashSetNew(CPLHashSetHashStr, CPLHashSetEqualStr, CPLFree);
-
 /* -------------------------------------------------------------------- */
 /*      If we have a GEOMETRY_COLUMNS tables, initialize on the basis   */
 /*      of that.                                                        */
 /* -------------------------------------------------------------------- */
+    int rc;
+    char *pszErrMsg = NULL;
     char **papszResult;
     int nRowCount, iRow, nColCount;
+
+    CPLHashSet* hSet = CPLHashSetNew(CPLHashSetHashStr, CPLHashSetEqualStr, CPLFree);
 
     rc = sqlite3_get_table( 
         hDB,
@@ -1183,8 +1184,9 @@ all_tables:
     
     for( iRow = 0; iRow < nRowCount; iRow++ )
     {
-        if (CPLHashSetLookup(hSet, papszResult[iRow+1]) == NULL)
-            OpenTable( papszResult[iRow+1] );
+        const char* pszTableName = papszResult[iRow+1];
+        if (CPLHashSetLookup(hSet, pszTableName) == NULL)
+            OpenTable( pszTableName );
     }
     
     sqlite3_free_table(papszResult);
@@ -1969,7 +1971,7 @@ OGRSQLiteDataSource::CreateLayer( const char * pszLayerNameIn,
         poLayer->CreateSpatialIndex();
     else if( bDeferedSpatialIndexCreation )
         poLayer->SetDeferedSpatialIndexCreation( TRUE );
-
+    poLayer->SetCompressedColumns( CSLFetchNameValue(papszOptions,"COMPRESS_COLUMNS") );
 
     if( bIsSpatiaLiteDB && nLayers == 0)
     {
@@ -3006,4 +3008,105 @@ void OGRSQLiteDataSource::SetEnvelopeForSQL(const CPLString& osSQL,
                                             const OGREnvelope& oEnvelope)
 {
     oMapSQLEnvelope[osSQL] = oEnvelope;
+}
+
+/************************************************************************/
+/*                       OGR2SQLITE_ogr_deflate()                       */
+/************************************************************************/
+
+static
+void OGR2SQLITE_ogr_deflate(sqlite3_context* pContext,
+                            int argc, sqlite3_value** argv)
+{
+    int nLevel = -1;
+    if( !(argc == 1 || argc == 2) ||
+        !(sqlite3_value_type (argv[0]) == SQLITE_TEXT ||
+          sqlite3_value_type (argv[0]) == SQLITE_BLOB) )
+    {
+        sqlite3_result_null (pContext);
+        return;
+    }
+    if( argc == 2 )
+    {
+        if( sqlite3_value_type (argv[1]) != SQLITE_INTEGER )
+        {
+            sqlite3_result_null (pContext);
+            return;
+        }
+        nLevel = sqlite3_value_int(argv[1]);
+    }
+
+    size_t nOutBytes = 0;
+    void* pOut;
+    if( sqlite3_value_type (argv[0]) == SQLITE_TEXT )
+    {
+        const char* pszVal = (const char*)sqlite3_value_text(argv[0]);
+        pOut = CPLZLibDeflate( pszVal, strlen(pszVal) + 1, nLevel, NULL, 0, &nOutBytes);
+    }
+    else
+    {
+        const void* pSrc = sqlite3_value_blob (argv[0]);
+        int nLen = sqlite3_value_bytes (argv[0]);
+        pOut = CPLZLibDeflate( pSrc, nLen, nLevel, NULL, 0, &nOutBytes);
+    }
+    if( pOut != NULL )
+    {
+        sqlite3_result_blob (pContext, pOut, nOutBytes, VSIFree);
+    }
+    else
+    {
+        sqlite3_result_null (pContext);
+    }
+ 
+    return;
+}
+
+/************************************************************************/
+/*                       OGR2SQLITE_ogr_inflate()                       */
+/************************************************************************/
+
+static
+void OGR2SQLITE_ogr_inflate(sqlite3_context* pContext,
+                            int argc, sqlite3_value** argv)
+{
+    if( argc != 1 || 
+        sqlite3_value_type (argv[0]) != SQLITE_BLOB )
+    {
+        sqlite3_result_null (pContext);
+        return;
+    }
+
+    size_t nOutBytes = 0;
+    void* pOut;
+
+    const void* pSrc = sqlite3_value_blob (argv[0]);
+    int nLen = sqlite3_value_bytes (argv[0]);
+    pOut = CPLZLibInflate( pSrc, nLen, NULL, 0, &nOutBytes);
+
+    if( pOut != NULL )
+    {
+        sqlite3_result_blob (pContext, pOut, nOutBytes, VSIFree);
+    }
+    else
+    {
+        sqlite3_result_null (pContext);
+    }
+
+    return;
+}
+
+/************************************************************************/
+/*                 OGRSQLiteRegisterInflateDeflate()                    */
+/************************************************************************/
+
+void OGRSQLiteRegisterInflateDeflate(sqlite3* hDB)
+{
+    sqlite3_create_function(hDB, "ogr_deflate", 1, SQLITE_ANY, NULL,
+                            OGR2SQLITE_ogr_deflate, NULL, NULL);
+
+    sqlite3_create_function(hDB, "ogr_deflate", 2, SQLITE_ANY, NULL,
+                            OGR2SQLITE_ogr_deflate, NULL, NULL);
+
+    sqlite3_create_function(hDB, "ogr_inflate", 1, SQLITE_ANY, NULL,
+                            OGR2SQLITE_ogr_inflate, NULL, NULL);
 }

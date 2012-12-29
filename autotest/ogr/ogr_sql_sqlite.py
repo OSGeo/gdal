@@ -1208,6 +1208,74 @@ def ogr_sql_sqlite_23():
     return ogr_sql_sqlite_17('BING', 'http://127.0.0.1:%d/bingreversegeocoding?{lat},{lon}')
 
 ###############################################################################
+# Test ogr_deflate() and ogr_inflate()
+
+def ogr_sql_sqlite_24():
+
+    if not ogrtest.has_sqlite_dialect:
+        return 'skip'
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+
+    sql_lyr = ds.ExecuteSQL("SELECT CAST(ogr_inflate(ogr_deflate('ab')) AS VARCHAR)", dialect = 'SQLite')
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != 'ab':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        ds.ReleaseResultSet(sql_lyr)
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate(ogr_deflate(x'0203', 5))", dialect = 'SQLite')
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != '0203':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        ds.ReleaseResultSet(sql_lyr)
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Error case
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_deflate()", dialect = 'SQLite')
+    gdal.PopErrorHandler()
+    if sql_lyr is not None:
+        gdaltest.post_reason('fail')
+        ds.ReleaseResultSet(sql_lyr)
+        return 'fail'
+
+    # Error case
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_deflate('a', 'b')", dialect = 'SQLite')
+    feat = sql_lyr.GetNextFeature()
+    if feat.IsFieldSet(0):
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        ds.ReleaseResultSet(sql_lyr)
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Error case
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate()", dialect = 'SQLite')
+    gdal.PopErrorHandler()
+    if sql_lyr is not None:
+        gdaltest.post_reason('fail')
+        ds.ReleaseResultSet(sql_lyr)
+        return 'fail'
+
+    # Error case
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate('a')", dialect = 'SQLite')
+    feat = sql_lyr.GetNextFeature()
+    if feat.IsFieldSet(0):
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        ds.ReleaseResultSet(sql_lyr)
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    return 'success'
+
+###############################################################################
 def ogr_sql_sqlite_stop_webserver():
 
     if ogrtest.webserver_port == 0:
@@ -1243,6 +1311,7 @@ gdaltest_list = [
     ogr_sql_sqlite_22,
     ogr_sql_sqlite_23,
     ogr_sql_sqlite_stop_webserver,
+    ogr_sql_sqlite_24,
 ]
 
 if __name__ == '__main__':
