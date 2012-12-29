@@ -1,4 +1,4 @@
-= GDAL/OGR 1.10.0 *Preliminary* Release Notes (r23656 to r25366) =
+= GDAL/OGR 1.10.0 *Preliminary* Release Notes (r23656 to r25394) =
 
 == In a nutshell... ==
 
@@ -14,11 +14,12 @@
    - OSM : read-only support for .osm / .pbf OpenStreetMap files
    - PDF: read/write suuport for vector/structured PDF files
    - XLSX: read/write support for MS Excel 2007 and later Open Office XML .xlsx spreadsheets (needs libexpat)
- * RFC 39: OGR Layer algebra methods
- * Add a SQL SQLite dialect
+ * RFC 39: OGR Layer algebra methods : http://trac.osgeo.org/gdal/wiki/rfc39_ogr_layer_algebra
+ * Add a SQL SQLite dialect : http://gdal.org/ogr/ogr_sql_sqlite.html
  * Make GDAL loadable as a SQLite3 extension (named VirtualOGR) (#4782)
  * /vsicurl_streaming/: new virtual file system handler designed to read in streaming mode dynamically generated files
  * Significantly improved drivers : PDF, SQLite, JP2OpenJPEG
+ * Add a geocoding client : http://gdal.org/ogr/ogr__geocoding_8h.html
  * Upgrade to EPSG 8.0 database
 
 == New installed files ==
@@ -71,6 +72,7 @@ Port:
  * CPLRecodeStub(): for Windows, provide an implementation of UTF8 <--> CPxxx conversions using Windows API
  * Make VSIFileManager::Get() thread-safe
  * Fix thread-safety of CPLOpenShared() (#4848)
+ * Add CPLZLibDeflate() and CPLZLibInflate()
 
 Core:
  * Fix statistics computation when nodata value is +/- infinity (#4506)
@@ -587,6 +589,7 @@ SQLite/Spatialite driver:
  * Add support for OFTDateTime/OFTDate/OFTTime field types
  * Add a SRID layer creation option
  * Make REGEXP function available by using libpcre (#4823)
+ * Add a COMPRESS_COLUMNS layer creation option to make string columns ZLib compressed
  * Spatialite: make use of spatial filter on result layers when the SQL expression is simple enough (no join, etc...) (#4508)
  * Spatialite: spatial index can be used even when linking against regular SQLite (#4632)
  * Spatialite: to improve performance, defer spatial index creation at layer closing or when a spatial request is done
