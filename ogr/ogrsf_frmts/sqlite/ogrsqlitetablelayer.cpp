@@ -762,7 +762,7 @@ OGRErr OGRSQLiteTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 }
 
 /************************************************************************/
-/*                 OGRSQLiteFieldDefnToSQliteFieldDefn()                */
+/*                  OGRSQLiteFieldDefnToSQliteFieldDefn()               */
 /************************************************************************/
 
 CPLString OGRSQLiteFieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn )
@@ -783,8 +783,22 @@ CPLString OGRSQLiteFieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn )
         case OFTDateTime: return "TIMESTAMP"; break;
         case OFTDate    : return "DATE"; break;
         case OFTTime    : return "TIME"; break;
-        default:          return"VARCHAR"; break;
+        default         : return "VARCHAR"; break;
     }
+}
+
+/************************************************************************/
+/*                    FieldDefnToSQliteFieldDefn()                      */
+/************************************************************************/
+
+CPLString OGRSQLiteTableLayer::FieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn )
+{
+    CPLString osRet = OGRSQLiteFieldDefnToSQliteFieldDefn(poFieldDefn);
+    if( poFieldDefn->GetType() == OFTString &&
+        CSLFindString(papszCompressedColumns, poFieldDefn->GetNameRef()) >= 0 )
+        osRet += "_deflate";
+
+    return osRet;
 }
 
 /************************************************************************/
@@ -842,7 +856,7 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         sqlite3 *hDB = poDS->GetDB();
         CPLString osCommand;
 
-        CPLString osFieldType(OGRSQLiteFieldDefnToSQliteFieldDefn(&oField));
+        CPLString osFieldType(FieldDefnToSQliteFieldDefn(&oField));
         osCommand.Printf("ALTER TABLE '%s' ADD COLUMN '%s' %s",
                         pszEscapedTableName,
                         OGRSQLiteEscape(oField.GetNameRef()).c_str(),
@@ -993,7 +1007,7 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
 
         sprintf( pszNewFieldList+strlen(pszNewFieldList), 
                  ", '%s' %s", OGRSQLiteEscape(poFldDefn->GetNameRef()).c_str(),
-                 OGRSQLiteFieldDefnToSQliteFieldDefn(poFldDefn).c_str() );
+                 FieldDefnToSQliteFieldDefn(poFldDefn).c_str() );
 
         iNextOrdinal++;
     }
@@ -1004,7 +1018,7 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
 
     sprintf( pszNewFieldList+strlen(pszNewFieldList), 
              ", '%s' %s", OGRSQLiteEscape(oField.GetNameRef()).c_str(),
-             OGRSQLiteFieldDefnToSQliteFieldDefn(&oField).c_str() );
+             FieldDefnToSQliteFieldDefn(&oField).c_str() );
 
 /* ==================================================================== */
 /*      Backup, destroy, recreate and repopulate the table.  SQLite     */
@@ -1294,7 +1308,7 @@ OGRErr OGRSQLiteTableLayer::DeleteField( int iFieldToDelete )
 
         sprintf( pszNewFieldList+strlen(pszNewFieldList),
                  ", '%s' %s", OGRSQLiteEscape(poFldDefn->GetNameRef()).c_str(),
-                 OGRSQLiteFieldDefnToSQliteFieldDefn(poFldDefn).c_str() );
+                 FieldDefnToSQliteFieldDefn(poFldDefn).c_str() );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1381,18 +1395,33 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
 
         if (iField == iFieldToAlter)
         {
+            OGRFieldDefn oTmpFieldDefn(poFldDefn);
+            if( (nFlags & ALTER_NAME_FLAG) )
+                oTmpFieldDefn.SetName(poNewFieldDefn->GetNameRef());
+            if( (nFlags & ALTER_TYPE_FLAG) )
+                oTmpFieldDefn.SetType(poNewFieldDefn->GetType());
+            if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
+            {
+                oTmpFieldDefn.SetWidth(poNewFieldDefn->GetWidth());
+                oTmpFieldDefn.SetPrecision(poNewFieldDefn->GetPrecision());
+            }
+
             sprintf( pszNewFieldList+strlen(pszNewFieldList),
                     ", '%s' %s",
-                    OGRSQLiteEscape((nFlags & ALTER_NAME_FLAG) ? poNewFieldDefn->GetNameRef() :
-                                                 poFldDefn->GetNameRef()).c_str(),
-                    OGRSQLiteFieldDefnToSQliteFieldDefn((nFlags & ALTER_TYPE_FLAG) ?
-                            poNewFieldDefn : poFldDefn).c_str() );
+                    OGRSQLiteEscape(oTmpFieldDefn.GetNameRef()).c_str(),
+                    FieldDefnToSQliteFieldDefn(&oTmpFieldDefn).c_str() );
+            if ( (nFlags & ALTER_NAME_FLAG) &&
+                 oTmpFieldDefn.GetType() == OFTString &&
+                 CSLFindString(papszCompressedColumns, poFldDefn->GetNameRef()) >= 0 )
+            {
+                sprintf( pszNewFieldList+strlen(pszNewFieldList), "_deflate");
+            }
         }
         else
         {
             sprintf( pszNewFieldList+strlen(pszNewFieldList),
                     ", '%s' %s", OGRSQLiteEscape(poFldDefn->GetNameRef()).c_str(),
-                    OGRSQLiteFieldDefnToSQliteFieldDefn(poFldDefn).c_str() );
+                    FieldDefnToSQliteFieldDefn(poFldDefn).c_str() );
         }
     }
 
@@ -1421,9 +1450,29 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poN
     OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(iFieldToAlter);
 
     if (nFlags & ALTER_TYPE_FLAG)
+    {
+        int iIdx;
+        if( poNewFieldDefn->GetType() != OFTString &&
+            (iIdx = CSLFindString(papszCompressedColumns,
+                                  poFieldDefn->GetNameRef())) >= 0 )
+        {
+            papszCompressedColumns = CSLRemoveStrings(papszCompressedColumns,
+                                                      iIdx, 1, NULL);
+        }
         poFieldDefn->SetType(poNewFieldDefn->GetType());
+    }
     if (nFlags & ALTER_NAME_FLAG)
+    {
+        int iIdx;
+        if( (iIdx = CSLFindString(papszCompressedColumns,
+                                  poFieldDefn->GetNameRef())) >= 0 )
+        {
+            CPLFree(papszCompressedColumns[iIdx]);
+            papszCompressedColumns[iIdx] =
+                CPLStrdup(poNewFieldDefn->GetNameRef());
+        }
         poFieldDefn->SetName(poNewFieldDefn->GetNameRef());
+    }
     if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
     {
         poFieldDefn->SetWidth(poNewFieldDefn->GetWidth());
@@ -1475,7 +1524,7 @@ OGRErr OGRSQLiteTableLayer::ReorderFields( int* panMap )
 
         sprintf( pszNewFieldList+strlen(pszNewFieldList),
                 ", '%s' %s", OGRSQLiteEscape(poFldDefn->GetNameRef()).c_str(),
-                OGRSQLiteFieldDefnToSQliteFieldDefn(poFldDefn).c_str() );
+                FieldDefnToSQliteFieldDefn(poFldDefn).c_str() );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1661,8 +1710,29 @@ OGRErr OGRSQLiteTableLayer::BindValues( OGRFeature *poFeature,
                 default:
                 {
                     pszRawValue = poFeature->GetFieldAsString( iField );
-                    rc = sqlite3_bind_text(hStmt, nBindField++,
-                                        pszRawValue, -1, SQLITE_TRANSIENT);
+                    if( CSLFindString(papszCompressedColumns,
+                                      poFeatureDefn->GetFieldDefn(iField)->GetNameRef()) >= 0 )
+                    {
+                        size_t nBytesOut = 0;
+                        void* pOut = CPLZLibDeflate( pszRawValue,
+                                                     strlen(pszRawValue), -1,
+                                                     NULL, 0,
+                                                     &nBytesOut );
+                        if( pOut != NULL )
+                        {
+                            rc = sqlite3_bind_blob(hStmt, nBindField++,
+                                                   pOut,
+                                                   nBytesOut,
+                                                   CPLFree);
+                        }
+                        else
+                            rc = SQLITE_ERROR;
+                    }
+                    else
+                    {
+                        rc = sqlite3_bind_text(hStmt, nBindField++,
+                                               pszRawValue, -1, SQLITE_TRANSIENT);
+                    }
                     break;
                 }
             }
@@ -2425,4 +2495,14 @@ int OGRSQLiteTableLayer::SaveStatistics()
     }
     else
         return TRUE;
+}
+
+/************************************************************************/
+/*                      SetCompressedColumns()                          */
+/************************************************************************/
+
+void OGRSQLiteTableLayer::SetCompressedColumns( const char* pszCompressedColumns )
+{
+    papszCompressedColumns = CSLTokenizeString2( pszCompressedColumns, ",",
+                                                 CSLT_HONOURSTRINGS );
 }

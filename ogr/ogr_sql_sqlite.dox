@@ -142,6 +142,16 @@ OGRFeature(SELECT):0
   POLYGON ((478315.53125 4762880.5,481645.3125 4762880.5,481645.3125 4765610.5,478315.53125 4765610.5,478315.53125 4762880.5))
 \endcode
 
+\subsection ogr_sql_sqlite_compression_functions OGR compression functions
+
+<b>ogr_deflate(text_or_blob[, compression_level])</b> returns a binary blob
+compressed with the ZLib deflate algorithm. See CPLZLibDeflate()<p>
+
+<b>ogr_inflate(compressed_blob)</b> returns the decompressed binary blob,
+from a blob compressed with the ZLib deflate algorithm.
+If the decompressed binary is a string, use
+CAST(ogr_inflate(compressed_blob) AS VARCHAR). See CPLZLibInflate().<p>
+
 \subsection ogr_sql_sqlite_ogr_geocode_function OGR geocoding functions
 
 The following SQL functions are available : <b>ogr_geocode(...)</b> and <b>ogr_geocode_reverse(...)</b>.<p>
