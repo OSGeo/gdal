@@ -536,7 +536,7 @@ class OGRSQLiteDataSource : public OGRDataSource
 
     int                 nUndefinedSRID;
 
-    void               *hRegExpCache;
+    void               *hHandleSQLFunctions;
 
     virtual void        DeleteLayer( const char *pszLayer );
 
