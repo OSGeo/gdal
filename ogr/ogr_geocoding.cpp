@@ -1391,7 +1391,7 @@ static CPLString OGRGeocodeReverseSubstitute(CPLString osURL,
     {
         CPLString osEnd(osURL.substr(iPos + 5));
         osURL = osURL.substr(0,iPos);
-        osURL += CPLSPrintf("%.16f", dfLon);
+        osURL += CPLSPrintf("%.8f", dfLon);
         osURL += osEnd;
     }
 
@@ -1400,7 +1400,7 @@ static CPLString OGRGeocodeReverseSubstitute(CPLString osURL,
     {
         CPLString osEnd(osURL.substr(iPos + 5));
         osURL = osURL.substr(0,iPos);
-        osURL += CPLSPrintf("%.16f", dfLat);
+        osURL += CPLSPrintf("%.8f", dfLat);
         osURL += osEnd;
     }
 
