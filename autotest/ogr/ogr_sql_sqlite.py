@@ -1217,6 +1217,7 @@ def ogr_sql_sqlite_24():
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
 
+    # Very short string
     sql_lyr = ds.ExecuteSQL("SELECT CAST(ogr_inflate(ogr_deflate('ab')) AS VARCHAR)", dialect = 'SQLite')
     feat = sql_lyr.GetNextFeature()
     if feat.GetField(0) != 'ab':
@@ -1226,6 +1227,18 @@ def ogr_sql_sqlite_24():
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
+    # Big very compressable string
+    bigstr = ''.join(['a' for i in range(10000)])
+    sql_lyr = ds.ExecuteSQL("SELECT CAST(ogr_inflate(ogr_deflate('%s')) AS VARCHAR)" % bigstr, dialect = 'SQLite')
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetField(0) != bigstr:
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        ds.ReleaseResultSet(sql_lyr)
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    # Blob
     sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate(ogr_deflate(x'0203', 5))", dialect = 'SQLite')
     feat = sql_lyr.GetNextFeature()
     if feat.GetField(0) != '0203':
