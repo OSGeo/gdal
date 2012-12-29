@@ -250,8 +250,8 @@ class GDAL_Handler(BaseHTTPRequestHandler):
 
             # Below is for reverse geocoding
             elif self.path.find('/reversegeocoding') != -1:
-                if self.path == '/reversegeocoding?lon=2.0000000000000000&lat=49.0000000000000000&email=foo%40bar' or \
-                   self.path == '/reversegeocoding?lon=2.0000000000000000&lat=49.0000000000000000&zoom=12&email=foo%40bar':
+                if self.path == '/reversegeocoding?lon=2.00000000&lat=49.00000000&email=foo%40bar' or \
+                   self.path == '/reversegeocoding?lon=2.00000000&lat=49.00000000&zoom=12&email=foo%40bar':
                     self.send_response(200)
                     self.send_header('Content-type', 'application/xml')
                     self.end_headers()
@@ -276,11 +276,11 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                     return
 
             elif self.path.find('/yahooreversegeocoding') != -1:
-                if self.path == '/yahooreversegeocoding?q=49.0000000000000000,2.0000000000000000&gflags=R':
+                if self.path == '/yahooreversegeocoding?q=49.00000000,2.00000000&gflags=R':
                     self.send_response(200)
                     self.send_header('Content-type', 'application/xml')
                     self.end_headers()
-                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?><ResultSet xmlns:ns1="http://www.yahooapis.com/v1/base.rng" version="2.0" xml:lang="en-US"><Error>0</Error><ErrorMessage>No error</ErrorMessage><Locale>en-US</Locale><Found>1</Found><Quality>99</Quality><Result><quality>72</quality><latitude>49.001</latitude><longitude>1.999864</longitude><offsetlat>49.001</offsetlat><offsetlon>1.999864</offsetlon><radius>400</radius><name>49.0000000000000000,2.0000000000000000</name><line1>Chemin de Menucourt</line1><line2>78510 Triel-sur-Seine</line2><line3></line3><line4>France</line4><house></house><street>Chemin de Menucourt</street><xstreet></xstreet><unittype></unittype><unit></unit><postal>78510</postal><neighborhood></neighborhood><city>Triel-sur-Seine</city><county>Yvelines</county><state>Ile-de-France</state><country>France</country><countrycode>FR</countrycode><statecode></statecode><countycode>78</countycode><uzip>78510</uzip><hash></hash><woeid>12727518</woeid><woetype>11</woetype></Result></ResultSet>
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?><ResultSet xmlns:ns1="http://www.yahooapis.com/v1/base.rng" version="2.0" xml:lang="en-US"><Error>0</Error><ErrorMessage>No error</ErrorMessage><Locale>en-US</Locale><Found>1</Found><Quality>99</Quality><Result><quality>72</quality><latitude>49.001</latitude><longitude>1.999864</longitude><offsetlat>49.001</offsetlat><offsetlon>1.999864</offsetlon><radius>400</radius><name>49.00000000,2.00000000</name><line1>Chemin de Menucourt</line1><line2>78510 Triel-sur-Seine</line2><line3></line3><line4>France</line4><house></house><street>Chemin de Menucourt</street><xstreet></xstreet><unittype></unittype><unit></unit><postal>78510</postal><neighborhood></neighborhood><city>Triel-sur-Seine</city><county>Yvelines</county><state>Ile-de-France</state><country>France</country><countrycode>FR</countrycode><statecode></statecode><countycode>78</countycode><uzip>78510</uzip><hash></hash><woeid>12727518</woeid><woetype>11</woetype></Result></ResultSet>
 <!-- nws02.maps.bf1.yahoo.com uncompressed/chunked Sat Dec 29 05:03:31 PST 2012 -->
 <!-- wws05.geotech.bf1.yahoo.com uncompressed/chunked Sat Dec 29 05:03:31 PST 2012 -->""")
                     return
@@ -289,7 +289,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                     return
 
             elif self.path.find('/geonamesreversegeocoding') != -1:
-                if self.path == '/geonamesreversegeocoding?lat=49.0000000000000000&lng=2.0000000000000000&username=demo':
+                if self.path == '/geonamesreversegeocoding?lat=49.00000000&lng=2.00000000&username=demo':
                     self.send_response(200)
                     self.send_header('Content-type', 'application/xml')
                     self.end_headers()
@@ -314,7 +314,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                     return
 
             elif self.path.find('/bingreversegeocoding') != -1:
-                if self.path == '/bingreversegeocoding?49.0000000000000000,2.0000000000000000&key=fakekey':
+                if self.path == '/bingreversegeocoding?49.00000000,2.00000000&key=fakekey':
                     self.send_response(200)
                     self.send_header('Content-type', 'application/xml')
                     self.end_headers()
