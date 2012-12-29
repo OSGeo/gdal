@@ -39,6 +39,7 @@ from osgeo import osr
 from osgeo import gdal
 import gdaltest
 import ogrtest
+import webserver
 
 ###############################################################################
 # Tests that don't involve geometry
@@ -898,22 +899,36 @@ def ogr_sql_sqlite_15():
     return ogr_sql_sqlite_14_and_15(sql)
 
 ###############################################################################
-# Test ogr_geocode()
+def ogr_sql_sqlite_start_webserver():
 
-def ogr_sql_sqlite_16():
+    ogrtest.webserver_process = None
+    ogrtest.webserver_port = 0
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
-    import webserver
-    (process, port) = webserver.launch()
-    if port == 0:
+    (ogrtest.webserver_process, ogrtest.webserver_port) = webserver.launch()
+    if ogrtest.webserver_port == 0:
+        return 'skip'
+
+    return 'success'
+
+###############################################################################
+# Test ogr_geocode()
+
+def ogr_sql_sqlite_16(service = None, template = 'http://127.0.0.1:%d/geocoding?q=%%s'):
+
+    if not ogrtest.has_sqlite_dialect:
+        return 'skip'
+
+    if ogrtest.webserver_port == 0:
         return 'skip'
 
     gdal.SetConfigOption('OGR_GEOCODE_APPLICATION', 'GDAL/OGR autotest suite')
     gdal.SetConfigOption('OGR_GEOCODE_EMAIL', 'foo@bar')
-    gdal.SetConfigOption('OGR_GEOCODE_QUERY_TEMPLATE', 'http://127.0.0.1:%d/geocoding?q=%%s' % port)
+    gdal.SetConfigOption('OGR_GEOCODE_QUERY_TEMPLATE', template % ogrtest.webserver_port)
     gdal.SetConfigOption('OGR_GEOCODE_DELAY', '0.1')
+    gdal.SetConfigOption('OGR_GEOCODE_SERVICE', service)
 
     ret = 'success'
 
@@ -1011,28 +1026,26 @@ def ogr_sql_sqlite_16():
     gdal.SetConfigOption('OGR_GEOCODE_EMAIL', None)
     gdal.SetConfigOption('OGR_GEOCODE_QUERY_TEMPLATE', None)
     gdal.SetConfigOption('OGR_GEOCODE_DELAY', None)
-
-    webserver.server_stop(process, port)
+    gdal.SetConfigOption('OGR_GEOCODE_SERVICE', None)
 
     return ret
 
 ###############################################################################
 # Test ogr_geocode_reverse()
 
-def ogr_sql_sqlite_17():
+def ogr_sql_sqlite_17(service = None, template = 'http://127.0.0.1:%d/reversegeocoding?lon={lon}&lat={lat}'):
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
-    import webserver
-    (process, port) = webserver.launch()
-    if port == 0:
+    if ogrtest.webserver_port == 0:
         return 'skip'
 
     gdal.SetConfigOption('OGR_GEOCODE_APPLICATION', 'GDAL/OGR autotest suite')
     gdal.SetConfigOption('OGR_GEOCODE_EMAIL', 'foo@bar')
-    gdal.SetConfigOption('OGR_GEOCODE_REVERSE_QUERY_TEMPLATE', 'http://127.0.0.1:%d/reversegeocoding?lon={lon}&lat={lat}' % port)
+    gdal.SetConfigOption('OGR_GEOCODE_REVERSE_QUERY_TEMPLATE', template % ogrtest.webserver_port)
     gdal.SetConfigOption('OGR_GEOCODE_DELAY', '0.1')
+    gdal.SetConfigOption('OGR_GEOCODE_SERVICE', service)
 
     ret = 'success'
 
@@ -1124,10 +1137,33 @@ def ogr_sql_sqlite_17():
     gdal.SetConfigOption('OGR_GEOCODE_EMAIL', None)
     gdal.SetConfigOption('OGR_GEOCODE_REVERSE_QUERY_TEMPLATE', None)
     gdal.SetConfigOption('OGR_GEOCODE_DELAY', None)
-
-    webserver.server_stop(process, port)
+    gdal.SetConfigOption('OGR_GEOCODE_SERVICE', None)
 
     return ret
+
+###############################################################################
+# Test ogr_geocode() with Yahoo geocoding service
+
+def ogr_sql_sqlite_18():
+
+    return ogr_sql_sqlite_16('YAHOO', 'http://127.0.0.1:%d/yahoogeocoding?q=%%s')
+
+###############################################################################
+# Test ogr_geocode_reverse() with Yahoo geocoding service
+
+def ogr_sql_sqlite_19():
+
+    return ogr_sql_sqlite_17('YAHOO', 'http://127.0.0.1:%d/yahooreversegeocoding?q={lat},{lon}&gflags=R')
+
+###############################################################################
+def ogr_sql_sqlite_stop_webserver():
+
+    if ogrtest.webserver_port == 0:
+        return 'skip'
+
+    webserver.server_stop(ogrtest.webserver_process, ogrtest.webserver_port)
+
+    return 'success'
 
 gdaltest_list = [
     ogr_sql_sqlite_1,
@@ -1145,8 +1181,12 @@ gdaltest_list = [
     ogr_sql_sqlite_13,
     ogr_sql_sqlite_14,
     ogr_sql_sqlite_15,
+    ogr_sql_sqlite_start_webserver,
     ogr_sql_sqlite_16,
     ogr_sql_sqlite_17,
+    ogr_sql_sqlite_18,
+    ogr_sql_sqlite_19,
+    ogr_sql_sqlite_stop_webserver,
 ]
 
 if __name__ == '__main__':
