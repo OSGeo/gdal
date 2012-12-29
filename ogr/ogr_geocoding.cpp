@@ -724,7 +724,7 @@ OGRLayerH OGRGeocode(OGRGeocodingSessionH hSession,
     }
 
     const char* pszLimit = OGRGeocodeGetParameter(papszOptions, "LIMIT", NULL);
-    if( pszLimit != NULL )
+    if( pszLimit != NULL && *pszLimit != '\0' )
     {
         osURL += "&limit=";
         osURL += pszLimit;
