@@ -189,6 +189,65 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                     self.send_error(404,'File Not Found: %s' % self.path)
                     return
 
+            elif self.path.find('/binggeocoding') != -1:
+                if self.path == '/binggeocoding?q=Paris&key=fakekey':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<Response>
+  <ResourceSets>
+    <ResourceSet>
+      <EstimatedTotal>1</EstimatedTotal>
+      <Resources>
+        <Location>
+          <Name>Paris, Paris, France</Name>
+          <Point>
+            <Latitude>48</Latitude>
+            <Longitude>2</Longitude>
+          </Point>
+          <BoundingBox>
+            <SouthLatitude>48</SouthLatitude>
+            <WestLongitude>2</WestLongitude>
+            <NorthLatitude>48</NorthLatitude>
+            <EastLongitude>2</EastLongitude>
+          </BoundingBox>
+          <Address>
+            <AdminDistrict>IdF</AdminDistrict>
+            <AdminDistrict2>Paris</AdminDistrict2>
+            <CountryRegion>France</CountryRegion>
+            <FormattedAddress>Paris, Paris, France</FormattedAddress>
+            <Locality>Paris</Locality>
+          </Address>
+          <GeocodePoint>
+            <Latitude>48</Latitude>
+            <Longitude>2</Longitude>
+            <CalculationMethod>Random</CalculationMethod>
+            <UsageType>Display</UsageType>
+          </GeocodePoint>
+        </Location>
+      </Resources>
+    </ResourceSet>
+  </ResourceSets>
+</Response>""")
+                    return
+                elif self.path == '/binggeocoding?q=NonExistingPlace&key=fakekey':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<Response>
+  <ResourceSets>
+    <ResourceSet>
+      <EstimatedTotal>0</EstimatedTotal>
+      <Resources/>
+    </ResourceSet>
+  </ResourceSets>
+</Response>""")
+                    return
+
+                else:
+                    self.send_error(404,'File Not Found: %s' % self.path)
+                    return
+
             # Below is for reverse geocoding
             elif self.path.find('/reversegeocoding') != -1:
                 if self.path == '/reversegeocoding?lon=2.0000000000000000&lat=49.0000000000000000&email=foo%40bar' or \
@@ -249,6 +308,51 @@ class GDAL_Handler(BaseHTTPRequestHandler):
 <distance>0</distance>
 </geoname>
 </geonames>""")
+                    return
+                else:
+                    self.send_error(404,'File Not Found: %s' % self.path)
+                    return
+
+            elif self.path.find('/bingreversegeocoding') != -1:
+                if self.path == '/bingreversegeocoding?49.0000000000000000,2.0000000000000000&key=fakekey':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<Response>
+  <ResourceSets>
+    <ResourceSet>
+      <EstimatedTotal>1</EstimatedTotal>
+      <Resources>
+        <Location>
+          <Name>Paris, Paris, France</Name>
+          <Point>
+            <Latitude>48</Latitude>
+            <Longitude>2</Longitude>
+          </Point>
+          <BoundingBox>
+            <SouthLatitude>48</SouthLatitude>
+            <WestLongitude>2</WestLongitude>
+            <NorthLatitude>48</NorthLatitude>
+            <EastLongitude>2</EastLongitude>
+          </BoundingBox>
+          <Address>
+            <AdminDistrict>IdF</AdminDistrict>
+            <AdminDistrict2>Paris</AdminDistrict2>
+            <CountryRegion>France</CountryRegion>
+            <FormattedAddress>Paris, Paris, France</FormattedAddress>
+            <Locality>Paris</Locality>
+          </Address>
+          <GeocodePoint>
+            <Latitude>48</Latitude>
+            <Longitude>2</Longitude>
+            <CalculationMethod>Random</CalculationMethod>
+            <UsageType>Display</UsageType>
+          </GeocodePoint>
+        </Location>
+      </Resources>
+    </ResourceSet>
+  </ResourceSets>
+</Response>""")
                     return
                 else:
                     self.send_error(404,'File Not Found: %s' % self.path)
