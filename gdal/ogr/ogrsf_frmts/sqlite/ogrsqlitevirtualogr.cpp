@@ -1781,6 +1781,8 @@ void OGR2SQLITE_ogr_geocode(sqlite3_context* pContext,
     if( osField == "raw" )
         papszOptions = CSLAddString(papszOptions, "RAW_FEATURE=YES");
 
+    papszOptions = CSLAddString(papszOptions, "LIMIT=1");
+
     OGRLayerH hLayer = OGRGeocode(hSession, pszQuery, NULL, papszOptions);
 
     OGR2SQLITE_ogr_geocode_set_result(pContext, hLayer, osField);

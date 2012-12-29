@@ -108,7 +108,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
 
             # Below is for geocoding
             elif self.path.find('/geocoding') != -1:
-                if self.path == '/geocoding?q=Paris&email=foo%40bar':
+                if self.path == '/geocoding?q=Paris&addressdetails=1&limit=1&email=foo%40bar':
                     self.send_response(200)
                     self.send_header('Content-type', 'application/xml')
                     self.end_headers()
@@ -122,7 +122,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
   </place>
 </searchresults>""")
                     return
-                elif self.path == '/geocoding?q=NonExistingPlace&email=foo%40bar':
+                elif self.path == '/geocoding?q=NonExistingPlace&addressdetails=1&limit=1&email=foo%40bar':
                     self.send_response(200)
                     self.send_header('Content-type', 'application/xml')
                     self.end_headers()
