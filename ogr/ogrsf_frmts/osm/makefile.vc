@@ -6,9 +6,9 @@ GDAL_ROOT	=	..\..\..
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 !IFDEF EXPAT_DIR
-EXTRAFLAGS =	-I.. -I..\.. -I..\..\..\frmts\zlib -DHAVE_LIBZ -I..\sqlite -I..\generic $(SQLITE_INC) -DHAVE_SQLITE $(EXPAT_INCLUDE) -DHAVE_EXPAT=1
+EXTRAFLAGS =	-I.. -I..\.. -I..\sqlite -I..\generic $(SQLITE_INC) -DHAVE_SQLITE $(EXPAT_INCLUDE) -DHAVE_EXPAT=1
 !ELSE
-EXTRAFLAGS =	-I.. -I..\.. -I..\..\..\frmts\zlib -DHAVE_LIBZ -I..\sqlite -I..\generic $(SQLITE_INC) -DHAVE_SQLITE
+EXTRAFLAGS =	-I.. -I..\.. -I..\sqlite -I..\generic $(SQLITE_INC) -DHAVE_SQLITE
 !ENDIF
 
 default:	$(OBJ)
