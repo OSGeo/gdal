@@ -34,8 +34,6 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
-#include <zlib.h>
-
 #ifdef HAVE_EXPAT
 #include "ogr_expat.h"
 #endif
@@ -1530,8 +1528,8 @@ int ReadBlob(GByte* pabyData, unsigned int nDataSize, BlobType eType,
 
             if (nUncompressedSize != 0)
             {
-                int nStatus;
-                z_stream sStream;
+                void* pOut;
+
                 if (nUncompressedSize > psCtxt->nUncompressedAllocated)
                 {
                     GByte* pabyUncompressedNew;
@@ -1547,21 +1545,10 @@ int ReadBlob(GByte* pabyData, unsigned int nDataSize, BlobType eType,
 
                 /* printf("inflate %d -> %d\n", nZlibCompressedSize, nUncompressedSize); */
 
-                sStream.next_in   = pabyData;
-                sStream.avail_in  = nZlibCompressedSize;
-                sStream.zalloc = NULL;
-                sStream.zfree = NULL;
-                sStream.opaque = NULL;
-                if( inflateInit(&sStream) != Z_OK )
-                    GOTO_END_ERROR;
-
-                sStream.next_out  = psCtxt->pabyUncompressed;
-                sStream.avail_out = nUncompressedSize;
-                nStatus = inflate(&sStream, Z_FINISH);
-
-                inflateEnd(&sStream);
-
-                if (nStatus != Z_OK && nStatus != Z_STREAM_END)
+                pOut = CPLZLibInflate( pabyData, nZlibCompressedSize,
+                                       psCtxt->pabyUncompressed, nUncompressedSize,
+                                       NULL );
+                if( pOut == NULL )
                     GOTO_END_ERROR;
 
                 if (eType == BLOB_OSMHEADER)
