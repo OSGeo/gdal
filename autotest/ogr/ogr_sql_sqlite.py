@@ -972,6 +972,19 @@ def ogr_sql_sqlite_16():
 
                 ds.ReleaseResultSet(sql_lyr)
 
+        # Test various syntax errors
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode()", dialect = 'SQLite')
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode(5)", dialect = 'SQLite')
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode('Paris', 5)", dialect = 'SQLite')
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode('Paris', 'geometry', 5)", dialect = 'SQLite')
+        ds.ReleaseResultSet(sql_lyr)
+
         ds = None
 
         # Check cache existence
@@ -1001,6 +1014,114 @@ def ogr_sql_sqlite_16():
 
     return ret
 
+###############################################################################
+# Test ogr_geocode_reverse()
+
+def ogr_sql_sqlite_17():
+
+    if not ogrtest.has_sqlite_dialect:
+        return 'skip'
+
+    import webserver
+    (process, port) = webserver.launch()
+    if port == 0:
+        return 'skip'
+
+    gdal.SetConfigOption('OGR_GEOCODE_APPLICATION', 'GDAL/OGR autotest suite')
+    gdal.SetConfigOption('OGR_GEOCODE_EMAIL', 'foo@bar')
+    gdal.SetConfigOption('OGR_GEOCODE_REVERSE_QUERY_TEMPLATE', 'http://127.0.0.1:%d/reversegeocoding?lon={lon}&lat={lat}' % port)
+    gdal.SetConfigOption('OGR_GEOCODE_DELAY', '0.1')
+
+    ret = 'success'
+
+    for cache_filename in ['tmp/ogr_geocode_cache.sqlite', 'tmp/ogr_geocode_cache.csv']:
+
+        try:
+            os.unlink(cache_filename)
+        except:
+            pass
+
+        gdal.SetConfigOption('OGR_GEOCODE_CACHE_FILE', cache_filename)
+
+        ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+
+        sql_list = [ "SELECT ogr_geocode_reverse(2,49,'display_name') AS display_name",
+                     "SELECT ogr_geocode_reverse(2,49,'display_name','zoom=12') AS display_name",
+                     "SELECT ogr_geocode_reverse(2.0,49.0,'display_name') AS display_name" ]
+        if ogrtest.has_spatialite:
+            sql_list.append("SELECT ogr_geocode_reverse(MakePoint(2,49),'display_name') AS display_name")
+            sql_list.append("SELECT ogr_geocode_reverse(MakePoint(2,49),'display_name','zoom=12') AS display_name")
+
+        for sql in sql_list:
+
+            sql_lyr = ds.ExecuteSQL(sql, dialect = 'SQLite')
+            feat = sql_lyr.GetNextFeature()
+            if feat is None:
+                gdaltest.post_reason('fail')
+                print(sql)
+                ret = 'fail'
+                ds.ReleaseResultSet(sql_lyr)
+                break
+
+            if not feat.IsFieldSet('display_name'):
+                feat.DumpReadable()
+                gdaltest.post_reason('fail')
+                print(sql)
+                ret = 'fail'
+                ds.ReleaseResultSet(sql_lyr)
+                break
+
+            ds.ReleaseResultSet(sql_lyr)
+
+        # Test various syntax errors
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode_reverse()", dialect = 'SQLite')
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode_reverse(2)", dialect = 'SQLite')
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode_reverse(2, 'foo')", dialect = 'SQLite')
+        ds.ReleaseResultSet(sql_lyr)
+
+        sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode_reverse(2, 49)", dialect = 'SQLite')
+        ds.ReleaseResultSet(sql_lyr)
+
+        if ogrtest.has_spatialite:
+            sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode_reverse(MakePoint(2,49))", dialect = 'SQLite')
+            ds.ReleaseResultSet(sql_lyr)
+
+            sql_lyr = ds.ExecuteSQL("SELECT ogr_geocode_reverse(MakePoint(2,49), 5)", dialect = 'SQLite')
+            ds.ReleaseResultSet(sql_lyr)
+
+        ds = None
+
+        # Check cache existence
+        cache_ds = ogr.Open(cache_filename)
+        if cache_ds is None:
+            gdaltest.post_reason('fail')
+            ret = 'fail'
+        cache_ds = None
+
+        try:
+            os.unlink(cache_filename)
+        except:
+            pass
+
+        ds = None
+
+        if ret != 'success':
+            break
+
+    gdal.SetConfigOption('OGR_GEOCODE_CACHE_FILE', None)
+    gdal.SetConfigOption('OGR_GEOCODE_APPLICATION', None)
+    gdal.SetConfigOption('OGR_GEOCODE_EMAIL', None)
+    gdal.SetConfigOption('OGR_GEOCODE_REVERSE_QUERY_TEMPLATE', None)
+    gdal.SetConfigOption('OGR_GEOCODE_DELAY', None)
+
+    webserver.server_stop(process, port)
+
+    return ret
+
 gdaltest_list = [
     ogr_sql_sqlite_1,
     ogr_sql_sqlite_2,
@@ -1018,6 +1139,7 @@ gdaltest_list = [
     ogr_sql_sqlite_14,
     ogr_sql_sqlite_15,
     ogr_sql_sqlite_16,
+    ogr_sql_sqlite_17,
 ]
 
 if __name__ == '__main__':

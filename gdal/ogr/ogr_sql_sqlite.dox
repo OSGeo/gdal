@@ -144,7 +144,9 @@ OGRFeature(SELECT):0
 
 \subsection ogr_sql_sqlite_ogr_geocode_function OGR geocoding functions
 
-The following SQL function is available : <b>ogr_geocode(name_to_geocode [, field_to_return [, option1 [, option2, ...]]])</b>.
+The following SQL functions are available : <b>ogr_geocode(...)</b> and <b>ogr_geocode_reverse(...)</b>.<p>
+
+<b>ogr_geocode(name_to_geocode [, field_to_return [, option1 [, option2, ...]]])</b> where
 name_to_geocode is a literal or a column name that must be geocoded. field_to_return if specified can be "geometry" for
 the geometry (default), or a field name of the layer returned by OGRGeocode(). option1, option2, etc.. must be
 of the key=value format, and are options understood by OGRGeocodeCreateSession() or OGRGeocode().<p>
@@ -220,6 +222,16 @@ OGRFeature(SELECT):8
   country (String) = Российская Федерация
   POINT (37.367988106866868 55.556208255649558)
 \endcode
+
+<b>ogr_geocode_reverse(longitude, latitude, field_to_return [, option1 [, option2, ...]])</b> where
+longitude, latitude is the coordinate to query. field_to_return must be a field name of the layer
+returned by OGRGeocodeReverse() (for example 'display_name'). option1, option2, etc.. must be
+of the key=value format, and are options understood by OGRGeocodeCreateSession() or OGRGeocodeReverse().<p>
+
+<b>ogr_geocode_reverse(geometry, field_to_return [, option1 [, option2, ...]])</b> is also accepted
+as an alternate syntax where geometry is a (Spatialite) point geometry.<p>
+
+This function internally uses the OGRGeocodeReverse() API. Refer to it for more details.
 
 \subsection ogr_sql_sqlite_spatial_index Spatialite spatial index
 

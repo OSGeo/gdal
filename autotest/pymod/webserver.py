@@ -132,6 +132,33 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                     self.send_error(404,'File Not Found: %s' % self.path)
                     return
 
+            # Below is for reverse geocoding
+            elif self.path.find('/reversegeocoding') != -1:
+                if self.path == '/reversegeocoding?lon=2.0000000000000000&lat=49.0000000000000000&email=foo%40bar' or \
+                   self.path == '/reversegeocoding?lon=2.0000000000000000&lat=49.0000000000000000&zoom=12&email=foo%40bar':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8"?>
+<reversegeocode>
+  <result place_id="46754274" osm_type="way" osm_id="38621743" ref="Chemin du Cordon" lat="49.0002726061675" lon="1.99514157818059">Chemin du Cordon, Forêt de l'Hautil, Triel-sur-Seine, Saint-Germain-en-Laye, Yvelines, Île-de-France, 78510, France métropolitaine</result>
+  <addressparts>
+    <road>Chemin du Cordon</road>
+    <forest>Forêt de l'Hautil</forest>
+    <city>Triel-sur-Seine</city>
+    <county>Saint-Germain-en-Laye</county>
+    <state>Île-de-France</state>
+    <postcode>78510</postcode>
+    <country>France métropolitaine</country>
+    <country_code>fr</country_code>
+  </addressparts>
+</reversegeocode>
+""")
+                    return
+                else:
+                    self.send_error(404,'File Not Found: %s' % self.path)
+                    return
+
             # Below is for WFS
             elif self.path.find('/fakewfs') != -1:
 

@@ -1677,6 +1677,64 @@ void OGR2SQLITE_ogr_layer_GeometryType(sqlite3_context* pContext,
 /************************************************************************/
 
 static
+void OGR2SQLITE_ogr_geocode_set_result(sqlite3_context* pContext,
+                                       OGRLayerH hLayer,
+                                       const char* pszField)
+{
+    if( hLayer == NULL )
+        sqlite3_result_null (pContext);
+    else
+    {
+        OGRLayer* poLayer = (OGRLayer*)hLayer;
+        OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
+        OGRFeature* poFeature = poLayer->GetNextFeature();
+        int nIdx = -1;
+        if( poFeature == NULL )
+            sqlite3_result_null (pContext);
+        else if( strcmp(pszField, "geometry") == 0 &&
+                 poFeature->GetGeometryRef() != NULL )
+        {
+            GByte* pabyGeomBLOB = NULL;
+            int nGeomBLOBLen = 0;
+            if( OGRSQLiteLayer::ExportSpatiaLiteGeometry(
+                    poFeature->GetGeometryRef(), 4326, wkbNDR, FALSE, FALSE, FALSE,
+                    &pabyGeomBLOB,
+                    &nGeomBLOBLen ) != CE_None )
+            {
+                sqlite3_result_null (pContext);
+            }
+            else
+            {
+                sqlite3_result_blob (pContext, pabyGeomBLOB, nGeomBLOBLen, CPLFree);
+            }
+        }
+        else if( (nIdx = poFDefn->GetFieldIndex(pszField)) >= 0 &&
+                 poFeature->IsFieldSet(nIdx) )
+        {
+            OGRFieldType eType = poFDefn->GetFieldDefn(nIdx)->GetType();
+            if( eType == OFTInteger )
+                sqlite3_result_int(pContext,
+                                   poFeature->GetFieldAsInteger(nIdx));
+            else if( eType == OFTReal )
+                sqlite3_result_double(pContext,
+                                      poFeature->GetFieldAsDouble(nIdx));
+            else
+                sqlite3_result_text(pContext,
+                                    poFeature->GetFieldAsString(nIdx),
+                                    -1, SQLITE_TRANSIENT);
+        }
+        else
+            sqlite3_result_null (pContext);
+        delete poFeature;
+        OGRGeocodeFreeResult(hLayer);
+    }
+}
+
+/************************************************************************/
+/*                       OGR2SQLITE_ogr_geocode()                       */
+/************************************************************************/
+
+static
 void OGR2SQLITE_ogr_geocode(sqlite3_context* pContext,
                             int argc, sqlite3_value** argv)
 {
@@ -1720,53 +1778,105 @@ void OGR2SQLITE_ogr_geocode(sqlite3_context* pContext,
         poModule->SetGeocodingSession(hSession);
     }
 
-   OGRLayerH hLayer = OGRGeocode(hSession, pszQuery, NULL, papszOptions);
-    if( hLayer == NULL )
-        sqlite3_result_null (pContext);
-    else
+    OGRLayerH hLayer = OGRGeocode(hSession, pszQuery, NULL, papszOptions);
+
+    OGR2SQLITE_ogr_geocode_set_result(pContext, hLayer, osField);
+
+    CSLDestroy(papszOptions);
+
+    return;
+}
+
+/************************************************************************/
+/*                   OGR2SQLITE_ogr_geocode_reverse()                   */
+/************************************************************************/
+
+static
+void OGR2SQLITE_ogr_geocode_reverse(sqlite3_context* pContext,
+                                    int argc, sqlite3_value** argv)
+{
+    OGR2SQLITEModule* poModule =
+                    (OGR2SQLITEModule*) sqlite3_user_data(pContext);
+
+    double dfLon = 0.0, dfLat = 0.0;
+    int iAfterGeomIdx = 0;
+
+    if( argc >= 2 &&
+        (sqlite3_value_type (argv[0]) == SQLITE_FLOAT ||
+         sqlite3_value_type (argv[0]) == SQLITE_INTEGER) &&
+        (sqlite3_value_type (argv[1]) == SQLITE_FLOAT ||
+         sqlite3_value_type (argv[1]) == SQLITE_INTEGER) )
     {
-        OGRLayer* poLayer = (OGRLayer*)hLayer;
-        OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
-        OGRFeature* poFeature = poLayer->GetNextFeature();
-        int nIdx = -1;
-        if( poFeature == NULL )
+        if( argc < 3 )
+        {
             sqlite3_result_null (pContext);
-        else if( osField == "geometry" && poFeature->GetGeometryRef() != NULL )
-        {
-            GByte* pabyGeomBLOB = NULL;
-            int nGeomBLOBLen = 0;
-            if( OGRSQLiteLayer::ExportSpatiaLiteGeometry(
-                    poFeature->GetGeometryRef(), 4326, wkbNDR, FALSE, FALSE, FALSE,
-                    &pabyGeomBLOB,
-                    &nGeomBLOBLen ) != CE_None )
-            {
-                sqlite3_result_null (pContext);
-            }
-            else
-            {
-                sqlite3_result_blob (pContext, pabyGeomBLOB, nGeomBLOBLen, CPLFree);
-            }
+            return;
         }
-        else if( (nIdx = poFDefn->GetFieldIndex(osField)) >= 0 &&
-                 poFeature->IsFieldSet(nIdx) )
+        dfLon = (sqlite3_value_type (argv[0]) != SQLITE_FLOAT) ?
+            sqlite3_value_double(argv[0]) : sqlite3_value_int(argv[0]);
+        dfLat = (sqlite3_value_type (argv[1]) != SQLITE_FLOAT) ?
+            sqlite3_value_double(argv[1]) : sqlite3_value_int(argv[1]);
+        iAfterGeomIdx = 2;
+    }
+    else if( argc >= 2 && 
+             sqlite3_value_type (argv[0]) == SQLITE_BLOB &&
+             sqlite3_value_type (argv[1]) == SQLITE_TEXT )
+    {
+        GByte* pabyBlob = (GByte *) sqlite3_value_blob (argv[0]);
+        int nLen = sqlite3_value_bytes (argv[0]);
+        OGRGeometry* poGeom = NULL;
+        if( OGRSQLiteLayer::ImportSpatiaLiteGeometry(
+                        pabyBlob, nLen, &poGeom ) == CE_None &&
+            poGeom != NULL && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
         {
-            OGRFieldType eType = poFDefn->GetFieldDefn(nIdx)->GetType();
-            if( eType == OFTInteger )
-                sqlite3_result_int(pContext,
-                                   poFeature->GetFieldAsInteger(nIdx));
-            else if( eType == OFTReal )
-                sqlite3_result_double(pContext,
-                                      poFeature->GetFieldAsDouble(nIdx));
-            else
-                sqlite3_result_text(pContext,
-                                    poFeature->GetFieldAsString(nIdx),
-                                    -1, SQLITE_TRANSIENT);
+            OGRPoint* poPoint = (OGRPoint*) poGeom;
+            dfLon = poPoint->getX();
+            dfLat = poPoint->getY();
+            delete poGeom;
         }
         else
+        {
+            delete poGeom;
             sqlite3_result_null (pContext);
-        delete poFeature;
-        OGRGeocodeFreeResult(hLayer);
+            return;
+        }
+        iAfterGeomIdx = 1;
     }
+    else
+    {
+        sqlite3_result_null (pContext);
+        return;
+    }
+
+    const char* pszField = (const char*)sqlite3_value_text(argv[iAfterGeomIdx]);
+
+    int i;
+    char** papszOptions = NULL;
+    for(i = iAfterGeomIdx + 1; i < argc; i++)
+    {
+        if( sqlite3_value_type (argv[i]) == SQLITE_TEXT )
+        {
+            papszOptions = CSLAddString(papszOptions,
+                                        (const char*)sqlite3_value_text(argv[i]));
+        }
+    }
+
+    OGRGeocodingSessionH hSession = poModule->GetGeocodingSession();
+    if( hSession == NULL )
+    {
+        hSession = OGRGeocodeCreateSession(papszOptions);
+        if( hSession == NULL )
+        {
+            sqlite3_result_null (pContext);
+            CSLDestroy(papszOptions);
+            return;
+        }
+        poModule->SetGeocodingSession(hSession);
+    }
+
+    OGRLayerH hLayer = OGRGeocodeReverse(hSession, dfLon, dfLat, papszOptions);
+
+    OGR2SQLITE_ogr_geocode_set_result(pContext, hLayer, pszField);
 
     CSLDestroy(papszOptions);
 
@@ -2401,6 +2511,11 @@ int OGR2SQLITEModule::Setup(sqlite3* hDB, int bAutoDestroy)
 
     rc= sqlite3_create_function(hDB, "ogr_geocode", -1, SQLITE_ANY, this,
                                 OGR2SQLITE_ogr_geocode, NULL, NULL);
+    if( rc != SQLITE_OK )
+        return FALSE;
+
+    rc= sqlite3_create_function(hDB, "ogr_geocode_reverse", -1, SQLITE_ANY, this,
+                                OGR2SQLITE_ogr_geocode_reverse, NULL, NULL);
     if( rc != SQLITE_OK )
         return FALSE;
 
