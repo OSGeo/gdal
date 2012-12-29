@@ -930,7 +930,8 @@ def ogr_sql_sqlite_16():
 
         for sql in ["SELECT ogr_geocode('Paris')",
                     "SELECT ogr_geocode('Paris', 'geometry')",
-                    "SELECT ogr_geocode('Paris', 'display_name') AS display_name"]:
+                    "SELECT ogr_geocode('Paris', 'display_name') AS display_name",
+                    "SELECT ogr_geocode('Paris', 'raw') AS raw"]:
 
             sql_lyr = ds.ExecuteSQL(sql, dialect = 'SQLite')
             feat = sql_lyr.GetNextFeature()
@@ -943,7 +944,8 @@ def ogr_sql_sqlite_16():
 
             if ((sql == "SELECT ogr_geocode('Paris')" or \
                 sql == "SELECT ogr_geocode('Paris', 'geometry')") and feat.GetGeometryRef() is None) or \
-            (sql == "SELECT ogr_geocode('Paris', 'display_name')" and not feat.IsFieldSet('display_name')):
+            (sql == "SELECT ogr_geocode('Paris', 'display_name')" and not feat.IsFieldSet('display_name')) or \
+            (sql == "SELECT ogr_geocode('Paris', 'raw')" and not feat.IsFieldSet('raw')):
                 feat.DumpReadable()
                 gdaltest.post_reason('fail')
                 print(sql)
@@ -1047,7 +1049,8 @@ def ogr_sql_sqlite_17():
 
         sql_list = [ "SELECT ogr_geocode_reverse(2,49,'display_name') AS display_name",
                      "SELECT ogr_geocode_reverse(2,49,'display_name','zoom=12') AS display_name",
-                     "SELECT ogr_geocode_reverse(2.0,49.0,'display_name') AS display_name" ]
+                     "SELECT ogr_geocode_reverse(2.0,49.0,'display_name') AS display_name",
+                     "SELECT ogr_geocode_reverse(2.0,49.0,'raw') AS raw" ]
         if ogrtest.has_spatialite:
             sql_list.append("SELECT ogr_geocode_reverse(MakePoint(2,49),'display_name') AS display_name")
             sql_list.append("SELECT ogr_geocode_reverse(MakePoint(2,49),'display_name','zoom=12') AS display_name")
@@ -1063,7 +1066,11 @@ def ogr_sql_sqlite_17():
                 ds.ReleaseResultSet(sql_lyr)
                 break
 
-            if not feat.IsFieldSet('display_name'):
+            if sql.find('raw') != -1:
+                field_to_test = 'raw'
+            else:
+                field_to_test = 'display_name'
+            if not feat.IsFieldSet(field_to_test):
                 feat.DumpReadable()
                 gdaltest.post_reason('fail')
                 print(sql)
