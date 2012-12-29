@@ -275,11 +275,8 @@ OGRSQLiteLayer* OGRSQLiteSelectLayer::GetBaseLayer(size_t& i)
             osBaseLayerName += osSQLBase[i];
     }
 
-    OGRSQLiteLayer* poUnderlyingLayer =
-        (OGRSQLiteLayer*) poDS->GetLayerByName(osBaseLayerName);
-
-    if( poUnderlyingLayer == NULL &&
-        strchr(osBaseLayerName, '(') == NULL &&
+    OGRSQLiteLayer* poUnderlyingLayer = NULL;
+    if( strchr(osBaseLayerName, '(') == NULL &&
         osGeomColumn.size() != 0 )
     {
         CPLString osNewUnderlyingTableName;
@@ -289,6 +286,8 @@ OGRSQLiteLayer* OGRSQLiteSelectLayer::GetBaseLayer(size_t& i)
         poUnderlyingLayer =
             (OGRSQLiteLayer*) poDS->GetLayerByName(osNewUnderlyingTableName);
     }
+    if( poUnderlyingLayer == NULL )
+        poUnderlyingLayer = (OGRSQLiteLayer*) poDS->GetLayerByName(osBaseLayerName);
 
     if( poUnderlyingLayer != NULL && poSRS != NULL &&
         poUnderlyingLayer->GetSpatialRef() != NULL &&

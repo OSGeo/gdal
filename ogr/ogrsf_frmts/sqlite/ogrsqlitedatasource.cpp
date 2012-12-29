@@ -1342,6 +1342,35 @@ OGRLayer *OGRSQLiteDataSource::GetLayer( int iLayer )
 }
 
 /************************************************************************/
+/*                           GetLayerByName()                           */
+/************************************************************************/
+
+OGRLayer *OGRSQLiteDataSource::GetLayerByName( const char* pszLayerName )
+
+{
+    OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszLayerName);
+    if( poLayer != NULL )
+        return poLayer;
+
+    if( !OpenTable(pszLayerName) )
+        return NULL;
+
+    poLayer = papoLayers[nLayers-1];
+    CPLErrorReset();
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    poLayer->GetLayerDefn();
+    CPLPopErrorHandler();
+    if( CPLGetLastErrorType() != 0 )
+    {
+        delete poLayer;
+        nLayers --;
+        return NULL;
+    }
+
+    return poLayer;
+}
+
+/************************************************************************/
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 

@@ -129,10 +129,7 @@ OGRSQLiteLayer* OGRSQLiteViewLayer::GetUnderlyingLayer()
 {
     if( poUnderlyingLayer == NULL )
     {
-        poUnderlyingLayer =
-            (OGRSQLiteLayer*) poDS->GetLayerByName(osUnderlyingTableName);
-        if( poUnderlyingLayer == NULL &&
-            strchr(osUnderlyingTableName, '(') == NULL )
+        if( strchr(osUnderlyingTableName, '(') == NULL )
         {
             CPLString osNewUnderlyingTableName;
             osNewUnderlyingTableName.Printf("%s(%s)",
@@ -141,6 +138,9 @@ OGRSQLiteLayer* OGRSQLiteViewLayer::GetUnderlyingLayer()
             poUnderlyingLayer =
                 (OGRSQLiteLayer*) poDS->GetLayerByName(osNewUnderlyingTableName);
         }
+        if( poUnderlyingLayer == NULL )
+            poUnderlyingLayer =
+                (OGRSQLiteLayer*) poDS->GetLayerByName(osUnderlyingTableName);
     }
     return poUnderlyingLayer;
 }
