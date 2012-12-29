@@ -2511,4 +2511,22 @@ CPLErr CPLCloseZip( void *hZip )
     return CE_Failure;
 }
 
+void* CPLZLibDeflate( const void* ptr, size_t nBytes, int nLevel,
+                      void* outptr, size_t nOutAvailableBytes,
+                      size_t* pnOutBytes )
+{
+    if( pnOutBytes != NULL )
+        *pnOutBytes = 0;
+    return NULL;
+}
+
+void* CPLZLibInflate( const void* ptr, size_t nBytes,
+                      void* outptr, size_t nOutAvailableBytes,
+                      size_t* pnOutBytes )
+{
+    if( pnOutBytes != NULL )
+        *pnOutBytes = 0;
+    return NULL;
+}
+
 #endif /* !defined(HAVE_LIBZ) */
