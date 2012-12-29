@@ -1248,6 +1248,16 @@ def ogr_sql_sqlite_24():
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
 
+    # Test inflating a random binary blob
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate(x'0203')", dialect = 'SQLite')
+    feat = sql_lyr.GetNextFeature()
+    if feat.IsFieldSet(0):
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        ds.ReleaseResultSet(sql_lyr)
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
     # Error case
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = ds.ExecuteSQL("SELECT ogr_deflate()", dialect = 'SQLite')
