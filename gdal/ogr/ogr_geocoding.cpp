@@ -82,6 +82,7 @@ struct _OGRGeocodingSessionHS
     char*  pszGeocodingService;
     char*  pszEmail;
     char*  pszApplication;
+    char*  pszLanguage;
     char*  pszQueryTemplate;
     char*  pszReverseQueryTemplate;
     int    bReadCache;
@@ -185,6 +186,8 @@ int OGRGeocodeHasStringValidFormat(const char* pszQueryTemplate)
  * <li> "EMAIL": used by OSM_NOMINATIM. Optional, but recommanded.
  * <li> "APPLICATION": used to set the User-Agent MIME header. Defaults
  *       to GDAL/OGR version string.
+ * <li> "LANGUAGE": used to set the Accept-Language MIME header. Preferred
+ *      language order for showing search results.
  * <li> "DELAY": minimum delay, in second, between 2 consecutive queries.
  *       Defaults to 1.0.
  * <li> "QUERY_TEMPLATE": URL template for GET requests. Must contain one
@@ -245,6 +248,11 @@ OGRGeocodingSessionH OGRGeocodeCreateSession(char** papszOptions)
                                                         "APPLICATION",
                                                         GDALVersionInfo(""));
     hSession->pszApplication = CPLStrdup(pszApplication);
+
+    const char* pszLanguage = OGRGeocodeGetParameter(papszOptions,
+                                                     "LANGUAGE",
+                                                     NULL);
+    hSession->pszLanguage = pszLanguage ? CPLStrdup(pszLanguage) : NULL;
 
     const char* pszDelayBetweenQueries = OGRGeocodeGetParameter(papszOptions,
                                                                 "DELAY", "1.0");
@@ -314,6 +322,7 @@ void OGRGeocodeDestroySession(OGRGeocodingSessionH hSession)
     CPLFree(hSession->pszGeocodingService);
     CPLFree(hSession->pszEmail);
     CPLFree(hSession->pszApplication);
+    CPLFree(hSession->pszLanguage);
     CPLFree(hSession->pszQueryTemplate);
     CPLFree(hSession->pszReverseQueryTemplate);
     if( hSession->poDS )
@@ -730,6 +739,13 @@ OGRLayerH OGRGeocode(OGRGeocodingSessionH hSession,
         osURL += pszLimit;
     }
 
+    /* Only documented to work with OSM Nominatim. */
+    if( hSession->pszLanguage != NULL )
+    {
+        osURL += "&accept-language=";
+        osURL += hSession->pszLanguage;
+    }
+
     CPLString osURLWithEmail = osURL;
     if( EQUAL(hSession->pszGeocodingService, "OSM_NOMINATIM") &&
         hSession->pszEmail != NULL )
@@ -759,8 +775,15 @@ OGRLayerH OGRGeocode(OGRGeocodingSessionH hSession,
             pdfLastQueryTime = &dfLastQueryTimeStampMapQuestNominatim;
 
         char** papszHTTPOptions = NULL;
-        papszHTTPOptions = CSLAddNameValue(papszHTTPOptions, "HEADERS",
-            CPLSPrintf("User-Agent: %s", hSession->pszApplication));
+        CPLString osHeaders;
+        osHeaders = "User-Agent: ";
+        osHeaders += hSession->pszApplication;
+        if( hSession->pszLanguage != NULL )
+        {
+            osHeaders += "\r\nAccept-Language: ";
+            osHeaders += hSession->pszLanguage;
+        }
+        papszHTTPOptions = CSLAddNameValue(papszHTTPOptions, "HEADERS", osHeaders.c_str());
 
         if( pdfLastQueryTime != NULL )
         {
@@ -1036,6 +1059,13 @@ OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession,
         osURL = osURL + "&zoom=" + pszZoomLevel;
     }
 
+    /* Only documented to work with OSM Nominatim. */
+    if( hSession->pszLanguage != NULL )
+    {
+        osURL += "&accept-language=";
+        osURL += hSession->pszLanguage;
+    }
+
     const char* pszExtraQueryParameters = OGRGeocodeGetParameter(
                                 papszOptions, "EXTRA_QUERY_PARAMETERS", NULL);
     if( pszExtraQueryParameters != NULL )
@@ -1073,8 +1103,15 @@ OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession,
             pdfLastQueryTime = &dfLastQueryTimeStampMapQuestNominatim;
 
         char** papszHTTPOptions = NULL;
-        papszHTTPOptions = CSLAddNameValue(papszHTTPOptions, "HEADERS",
-            CPLSPrintf("User-Agent: %s", hSession->pszApplication));
+        CPLString osHeaders;
+        osHeaders = "User-Agent: ";
+        osHeaders += hSession->pszApplication;
+        if( hSession->pszLanguage != NULL )
+        {
+            osHeaders += "\r\nAccept-Language: ";
+            osHeaders += hSession->pszLanguage;
+        }
+        papszHTTPOptions = CSLAddNameValue(papszHTTPOptions, "HEADERS", osHeaders.c_str());
 
         if( pdfLastQueryTime != NULL )
         {
