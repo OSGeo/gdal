@@ -580,17 +580,18 @@ class OGRSQLiteDataSource : public OGRDataSource
                                    const char *pszTableName,
                                    const char *pszGeometryColumn);
 
-    const char          *GetName() { return pszName; }
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer            *GetLayer( int );
-    
+    virtual const char *GetName() { return pszName; }
+    virtual int         GetLayerCount() { return nLayers; }
+    virtual OGRLayer   *GetLayer( int );
+    virtual OGRLayer   *GetLayerByName( const char* );
+
     virtual OGRLayer    *CreateLayer( const char *pszLayerName, 
                                       OGRSpatialReference *poSRS, 
                                       OGRwkbGeometryType eType, 
                                       char **papszOptions );
     virtual OGRErr      DeleteLayer(int);
 
-    int                 TestCapability( const char * );
+    virtual int         TestCapability( const char * );
 
     virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                     OGRGeometry *poSpatialFilter,
