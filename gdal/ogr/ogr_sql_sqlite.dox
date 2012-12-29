@@ -148,8 +148,10 @@ The following SQL functions are available : <b>ogr_geocode(...)</b> and <b>ogr_g
 
 <b>ogr_geocode(name_to_geocode [, field_to_return [, option1 [, option2, ...]]])</b> where
 name_to_geocode is a literal or a column name that must be geocoded. field_to_return if specified can be "geometry" for
-the geometry (default), or a field name of the layer returned by OGRGeocode(). option1, option2, etc.. must be
-of the key=value format, and are options understood by OGRGeocodeCreateSession() or OGRGeocode().<p>
+the geometry (default), or a field name of the layer returned by OGRGeocode(). The special field  "raw" can also be used
+to return the raw response (XML string) of the geocoding service.
+option1, option2, etc.. must be of the key=value format, and are options understood
+by OGRGeocodeCreateSession() or OGRGeocode().<p>
 
 This function internally uses the OGRGeocode() API. Refer to it for more details.
 
@@ -225,8 +227,10 @@ OGRFeature(SELECT):8
 
 <b>ogr_geocode_reverse(longitude, latitude, field_to_return [, option1 [, option2, ...]])</b> where
 longitude, latitude is the coordinate to query. field_to_return must be a field name of the layer
-returned by OGRGeocodeReverse() (for example 'display_name'). option1, option2, etc.. must be
-of the key=value format, and are options understood by OGRGeocodeCreateSession() or OGRGeocodeReverse().<p>
+returned by OGRGeocodeReverse() (for example 'display_name'). The special field  "raw" can also be used
+to return the raw response (XML string) of the geocoding service.
+option1, option2, etc.. must be of the key=value format, and are options understood
+by OGRGeocodeCreateSession() or OGRGeocodeReverse().<p>
 
 <b>ogr_geocode_reverse(geometry, field_to_return [, option1 [, option2, ...]])</b> is also accepted
 as an alternate syntax where geometry is a (Spatialite) point geometry.<p>

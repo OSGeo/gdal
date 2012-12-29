@@ -1778,6 +1778,9 @@ void OGR2SQLITE_ogr_geocode(sqlite3_context* pContext,
         poModule->SetGeocodingSession(hSession);
     }
 
+    if( osField == "raw" )
+        papszOptions = CSLAddString(papszOptions, "RAW_FEATURE=YES");
+
     OGRLayerH hLayer = OGRGeocode(hSession, pszQuery, NULL, papszOptions);
 
     OGR2SQLITE_ogr_geocode_set_result(pContext, hLayer, osField);
@@ -1873,6 +1876,9 @@ void OGR2SQLITE_ogr_geocode_reverse(sqlite3_context* pContext,
         }
         poModule->SetGeocodingSession(hSession);
     }
+
+    if( strcmp(pszField, "raw") == 0 )
+        papszOptions = CSLAddString(papszOptions, "RAW_FEATURE=YES");
 
     OGRLayerH hLayer = OGRGeocodeReverse(hSession, dfLon, dfLat, papszOptions);
 
