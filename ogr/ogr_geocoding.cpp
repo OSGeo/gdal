@@ -521,7 +521,7 @@ static int OGRGeocodePutIntoCache(OGRGeocodingSessionH hSession,
 /*                         OGRGeocodeBuildLayer()                       */
 /************************************************************************/
 
-static OGRLayerH OGRGeocodeBuildLayer(const char* pszContent)
+static OGRLayerH OGRGeocodeBuildLayer(const char* pszContent, int bAddRawFeature)
 {
     CPLXMLNode* psRoot = CPLParseXMLString( pszContent );
     if( psRoot == NULL )
@@ -582,6 +582,12 @@ static OGRLayerH OGRGeocodeBuildLayer(const char* pszContent)
                 psChild = psChild->psNext;
             }
 
+            if( bAddRawFeature )
+            {
+                OGRFieldDefn oFieldDefnRaw("raw", OFTString);
+                poLayer->CreateField(&oFieldDefnRaw);
+            }
+
             /* Second iteration to fill the feature */
             OGRFeature* poFeature = new OGRFeature(poFDefn);
             psChild = psPlace->psChild;
@@ -612,6 +618,17 @@ static OGRLayerH OGRGeocodeBuildLayer(const char* pszContent)
                     }
                 }
                 psChild = psChild->psNext;
+            }
+
+            if( bAddRawFeature )
+            {
+                CPLXMLNode* psOldNext = psPlace->psNext;
+                psPlace->psNext = NULL;
+                char* pszXML = CPLSerializeXMLTree(psPlace);
+                psPlace->psNext = psOldNext;
+
+                poFeature->SetField("raw", pszXML);
+                CPLFree(pszXML);
             }
 
             /* If we didn't found an explicit geometry, build it from */
@@ -654,10 +671,16 @@ static OGRLayerH OGRGeocodeBuildLayer(const char* pszContent)
  * <a href="ogr_sql_sqlite.html#ogr_sql_sqlite_ogr_geocode_function">ogr_geocode()</a>
  * function of the SQL SQLite dialect.
  *
+ * The list of recognized options is :
+ * <ul>
+ * <li>RAW_FEATURE=YES: to specify that a 'raw' field must be added to the returned
+ *     feature with the raw XML content.
+ * </ul>
+ *
  * @param hSession the geocoding session handle.
  * @param pszQuery the string to geocode.
  * @param papszStructuredQuery unused for now. Must be NULL.
- * @param papszOptions unused for now.
+ * @param papszOptions a list of options.
  *
  * @return a OGR layer with the result(s), or NULL in case of error.
  *         The returned layer must be freed with OGRGeocodeFreeResult().
@@ -704,6 +727,9 @@ OGRLayerH OGRGeocode(OGRGeocodingSessionH hSession,
         osURLWithEmail = osURL + "&email=" + pszEscapedEmail;
         CPLFree(pszEscapedEmail);
     }
+
+    int bAddRawFeature =
+        CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "RAW_FEATURE", "NO"));
 
     OGRLayerH hLayer = NULL;
 
@@ -761,14 +787,14 @@ OGRLayerH OGRGeocode(OGRGeocodingSessionH hSession,
             {
                 if( hSession->bWriteCache )
                     OGRGeocodePutIntoCache(hSession, osURL, pszResult);
-                hLayer = OGRGeocodeBuildLayer(pszResult);
+                hLayer = OGRGeocodeBuildLayer(pszResult, bAddRawFeature);
             }
             CPLHTTPDestroyResult(psResult);
         }
     }
     else
     {
-        hLayer = OGRGeocodeBuildLayer(pszCachedResult);
+        hLayer = OGRGeocodeBuildLayer(pszCachedResult, bAddRawFeature);
         CPLFree(pszCachedResult);
     }
 
@@ -779,7 +805,7 @@ OGRLayerH OGRGeocode(OGRGeocodingSessionH hSession,
 /*                     OGRGeocodeReverseBuildLayer()                    */
 /************************************************************************/
 
-static OGRLayerH OGRGeocodeReverseBuildLayer(const char* pszContent)
+static OGRLayerH OGRGeocodeReverseBuildLayer(const char* pszContent, int bAddRawFeature)
 {
     CPLXMLNode* psRoot = CPLParseXMLString( pszContent );
     if( psRoot == NULL )
@@ -853,6 +879,12 @@ static OGRLayerH OGRGeocodeReverseBuildLayer(const char* pszContent)
         psChild = psChild->psNext;
     }
 
+    if( bAddRawFeature )
+    {
+        OGRFieldDefn oFieldDefnRaw("raw", OFTString);
+        poLayer->CreateField(&oFieldDefnRaw);
+    }
+
     /* Second iteration to fill the feature */
     OGRFeature* poFeature = new OGRFeature(poFDefn);
     psChild = psResult->psChild;
@@ -887,6 +919,11 @@ static OGRLayerH OGRGeocodeReverseBuildLayer(const char* pszContent)
                 poFeature->SetField(nIdx, pszVal);
         }
         psChild = psChild->psNext;
+    }
+
+    if( bAddRawFeature )
+    {
+        poFeature->SetField("raw", pszContent);
     }
 
     /* If we didn't found an explicit geometry, build it from */
@@ -953,10 +990,17 @@ static CPLString OGRGeocodeReverseSubstitute(CPLString osURL,
  * <a href="ogr_sql_sqlite.html#ogr_sql_sqlite_ogr_geocode_function">ogr_geocode_reverse()</a>
  * function of the SQL SQLite dialect.
  *
+ * The list of recognized options is :
+ * <ul>
+ * <li>zoom=a_level: to query a specific zoom level. Only understood by the OSM Nominatim service.
+ * <li>RAW_FEATURE=YES: to specify that a 'raw' field must be added to the returned
+ *     feature with the raw XML content.
+ * </ul>
+ *
  * @param hSession the geocoding session handle.
  * @param dfLon the longitude.
  * @param dfLat the latitude.
- * @param papszOptions a list of options, among which "zoom=a_level" is recognized.
+ * @param papszOptions a list of options.
  *
  * @return a OGR layer with the result(s), or NULL in case of error.
  *         The returned layer must be freed with OGRGeocodeFreeResult().
@@ -993,6 +1037,9 @@ OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession,
         osURLWithEmail = osURL + "&email=" + pszEscapedEmail;
         CPLFree(pszEscapedEmail);
     }
+
+    int bAddRawFeature =
+        CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "RAW_FEATURE", "NO"));
 
     OGRLayerH hLayer = NULL;
 
@@ -1049,14 +1096,14 @@ OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession,
             {
                 if( hSession->bWriteCache )
                     OGRGeocodePutIntoCache(hSession, osURL, pszResult);
-                hLayer = OGRGeocodeReverseBuildLayer(pszResult);
+                hLayer = OGRGeocodeReverseBuildLayer(pszResult, bAddRawFeature);
             }
             CPLHTTPDestroyResult(psResult);
         }
     }
     else
     {
-        hLayer = OGRGeocodeReverseBuildLayer(pszCachedResult);
+        hLayer = OGRGeocodeReverseBuildLayer(pszCachedResult, bAddRawFeature);
         CPLFree(pszCachedResult);
     }
 
@@ -1070,7 +1117,8 @@ OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession,
 /**
  * \brief Destroys the result of a geocoding request.
  *
- * @param hLayer the layer returned by OGRGeocode() to destroy.
+ * @param hLayer the layer returned by OGRGeocode() or OGRGeocodeReverse()
+ *               to destroy.
  *
  * @since GDAL 1.10
  */
