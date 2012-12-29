@@ -2539,6 +2539,8 @@ int OGR2SQLITEModule::Setup(sqlite3* hDB, int bAutoDestroy)
     {
         void* hRegExpCache = OGRSQLiteRegisterRegExpFunction(hDB);
         SetRegExpCache(hRegExpCache);
+
+        OGRSQLiteRegisterInflateDeflate(hDB);
     }
 
     return TRUE;

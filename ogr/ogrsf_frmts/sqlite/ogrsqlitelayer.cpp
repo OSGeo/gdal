@@ -75,6 +75,8 @@ OGRSQLiteLayer::OGRSQLiteLayer()
     bIsVirtualShape = FALSE;
 
     bUseComprGeom = CSLTestBoolean(CPLGetConfigOption("COMPRESS_GEOM", "FALSE"));
+
+    papszCompressedColumns = NULL;
 }
 
 /************************************************************************/
@@ -126,6 +128,9 @@ void OGRSQLiteLayer::Finalize()
     pszFIDColumn = NULL;
     CPLFree( panFieldOrdinals );
     panFieldOrdinals = NULL;
+
+    CSLDestroy(papszCompressedColumns);
+    papszCompressedColumns = NULL;
 }
 
 /************************************************************************/
@@ -237,8 +242,20 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
             else if (EQUAL(pszDeclType, "BLOB"))
                 nColType = SQLITE_BLOB;
             else if (EQUAL(pszDeclType, "TEXT") ||
-                     EQUAL(pszDeclType, "VARCHAR"))
+                     EQUALN(pszDeclType, "VARCHAR", 7))
+            {
                 nColType = SQLITE_TEXT;
+                if( strstr(pszDeclType, "_deflate") != NULL )
+                {
+                    if( CSLFindString(papszCompressedColumns,
+                                      oField.GetNameRef()) < 0 )
+                    {
+                        papszCompressedColumns = CSLAddString(
+                            papszCompressedColumns, oField.GetNameRef());
+                        CPLDebug("SQLITE", "%s is compressed", oField.GetNameRef());
+                    }
+                }
+            }
             else if ((EQUAL(pszDeclType, "TIMESTAMP") ||
                       EQUAL(pszDeclType, "DATETIME")) && nColType == SQLITE_TEXT)
                 eFieldType = OFTDateTime;
@@ -616,10 +633,34 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
             break;
 
         case OFTString:
-            poFeature->SetField( iField, 
-                (const char *) 
-                sqlite3_column_text( hStmt, iRawField ) );
+        {
+            if( CSLFindString(papszCompressedColumns,
+                              poFeatureDefn->GetFieldDefn(iField)->GetNameRef()) >= 0 )
+            {
+                const int nBytes = sqlite3_column_bytes( hStmt, iRawField );
+                GByte* pabyBlob = (GByte*)sqlite3_column_blob( hStmt, iRawField );
+
+                void* pOut = CPLZLibInflate( pabyBlob, nBytes, NULL, 0, NULL );
+                if( pOut != NULL )
+                {
+                    poFeature->SetField( iField, (const char*) pOut );
+                    CPLFree(pOut);
+                }
+                else
+                {
+                    poFeature->SetField( iField, 
+                        (const char *) 
+                        sqlite3_column_text( hStmt, iRawField ) );
+                }
+            }
+            else
+            {
+                poFeature->SetField( iField, 
+                    (const char *) 
+                    sqlite3_column_text( hStmt, iRawField ) );
+            }
             break;
+        }
 
         case OFTDate:
         case OFTTime:

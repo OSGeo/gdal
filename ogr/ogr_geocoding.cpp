@@ -471,8 +471,16 @@ static OGRLayer* OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
 
     if( bCreateIfNecessary && poLayer == NULL )
     {
+        char** papszOptions = NULL;
+        if( EQUAL(osExt, "SQLITE") )
+        {
+            papszOptions = CSLAddNameValue(papszOptions, "COMPRESS_COLUMNS",
+                                           FIELD_BLOB);
+        }
         poLayer = poDS->CreateLayer(
-                        CACHE_LAYER_NAME, NULL, wkbNone, NULL);
+                        CACHE_LAYER_NAME, NULL, wkbNone, papszOptions);
+        CSLDestroy(papszOptions);
+
         if( poLayer != NULL )
         {
             OGRFieldDefn oFieldDefnURL(FIELD_URL, OFTString);

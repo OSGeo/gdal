@@ -220,6 +220,8 @@ class OGRSQLiteLayer : public OGRLayer
 
     int                 bUseComprGeom;
 
+    char              **papszCompressedColumns;
+
   public:
                         OGRSQLiteLayer();
     virtual             ~OGRSQLiteLayer();
@@ -285,6 +287,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     sqlite3_stmt       *hInsertStmt;
     CPLString           osLastInsertStmt;
+
     void                ClearInsertStmt();
 
     void                BuildWhere(void);
@@ -314,6 +317,8 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     void                LoadStatistics();
     void                LoadStatisticsSpatialite4DB();
+
+    CPLString           FieldDefnToSQliteFieldDefn( OGRFieldDefn* poFieldDefn );
 
   public:
                         OGRSQLiteTableLayer( OGRSQLiteDataSource * );
@@ -363,6 +368,8 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
                                 { bUseComprGeom = bFlag; }
     void                SetDeferedSpatialIndexCreation( int bFlag )
                                 { bDeferedSpatialIndexCreation = bFlag; }
+    void                SetCompressedColumns( const char* pszCompressedColumns );
+
     int                 CreateSpatialIndex();
 
     void                CreateSpatialIndexIfNecessary();
@@ -668,6 +675,8 @@ int OGRSQLITEStringToDateTimeField( OGRFeature* poFeature, int iField,
 typedef void (*pfnNotifyFileOpenedType)(void* pfnUserData, const char* pszFilename, VSILFILE* fp);
 sqlite3_vfs* OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void* pfnUserData);
 #endif
+
+void OGRSQLiteRegisterInflateDeflate(sqlite3* hDB);
 
 #endif /* ndef _OGR_SQLITE_H_INCLUDED */
 
