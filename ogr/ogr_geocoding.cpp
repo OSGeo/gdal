@@ -84,8 +84,6 @@ struct _OGRGeocodingSessionHS
     char*  pszApplication;
     char*  pszQueryTemplate;
     char*  pszReverseQueryTemplate;
-    char*  pszExtraQueryParameters;
-    char*  pszExtraReverseQueryParameters;
     int    bReadCache;
     int    bWriteCache;
     double dfDelayBetweenQueries;
@@ -96,8 +94,8 @@ static void* hMutex = NULL;
 static double dfLastQueryTimeStampOSMNominatim = 0.0;
 static double dfLastQueryTimeStampMapQuestNominatim = 0.0;
 
-#define OSM_NOMINATIM_QUERY      "http://nominatim.openstreetmap.org/search?q=%s&format=xml&polygon_text=1&addressdetails=1"
-#define MAPQUEST_NOMINATIM_QUERY "http://open.mapquestapi.com/nominatim/v1/search.php?q=%s&format=xml&addressdetails=1"
+#define OSM_NOMINATIM_QUERY      "http://nominatim.openstreetmap.org/search?q=%s&format=xml&polygon_text=1"
+#define MAPQUEST_NOMINATIM_QUERY "http://open.mapquestapi.com/nominatim/v1/search.php?q=%s&format=xml"
 
 #define OSM_NOMINATIM_REVERSE_QUERY      "http://nominatim.openstreetmap.org/reverse?format=xml&lat={lat}&lon={lon}"
 #define MAPQUEST_NOMINATIM_REVERSE_QUERY "http://open.mapquestapi.com/nominatim/v1/reverse.php?format=xml&lat={lat}&lon={lon}"
@@ -181,7 +179,8 @@ int OGRGeocodeHasStringValidFormat(const char* pszQueryTemplate)
  *                    datasource.
  * <li> "READ_CACHE" : "TRUE" (default) or "FALSE"
  * <li> "WRITE_CACHE" : "TRUE" (default) or "FALSE"
- * <li> "SERVICE": "OSM_NOMINATIM" (default), "MAPQUEST_NOMINATIM", or
+ * <li> "SERVICE": <a href="http://wiki.openstreetmap.org/wiki/Nominatim">"OSM_NOMINATIM"</a>
+ *      (default), <a href="http://open.mapquestapi.com/nominatim/">"MAPQUEST_NOMINATIM"</a>, or
  *       other value
  * <li> "EMAIL": used by OSM_NOMINATIM. Optional, but recommanded.
  * <li> "APPLICATION": used to set the User-Agent MIME header. Defaults
@@ -189,16 +188,13 @@ int OGRGeocodeHasStringValidFormat(const char* pszQueryTemplate)
  * <li> "DELAY": minimum delay, in second, between 2 consecutive queries.
  *       Defaults to 1.0.
  * <li> "QUERY_TEMPLATE": URL template for GET requests. Must contain one
- *       and only one occurence of %s in it. If not specified, for
+ *       and only one occurence of %%s in it. If not specified, for
  *       SERVICE=OSM_NOMINATIM or SERVICE=MAPQUEST_NOMINATIM, the URL template
  *       is hard-coded.
- * <li> "EXTRA_QUERY_PARAMETERS": additionnal parameters for the GET request.
  * <li> "REVERSE_QUERY_TEMPLATE": URL template for GET requests for reverse
  *       geocoding. Must contain one and only one occurence of {lon} and {lat} in it.
  *       If not specified, for SERVICE=OSM_NOMINATIM or SERVICE=MAPQUEST_NOMINATIM,
  *       the URL template is hard-coded.
- * <li> "EXTRA_REVERSE_QUERY_PARAMETERS": additionnal parameters for the GET request
- *       for reverse geocoding.
  * </ul>
  *
  * All the above options can also be set by defining the configuration option
@@ -279,11 +275,6 @@ OGRGeocodingSessionH OGRGeocodeCreateSession(char** papszOptions)
 
     hSession->pszQueryTemplate = CPLStrdup(pszQueryTemplate);
 
-    const char* pszExtraQueryParameters = OGRGeocodeGetParameter(
-                                papszOptions, "EXTRA_QUERY_PARAMETERS", NULL);
-    hSession->pszExtraQueryParameters = pszExtraQueryParameters ?
-                                        CPLStrdup(pszExtraQueryParameters) : NULL;
-
     const char* pszReverseQueryTemplateDefault = NULL;
     if( EQUAL(pszGeocodingService, "OSM_NOMINATIM") )
         pszReverseQueryTemplateDefault = OSM_NOMINATIM_REVERSE_QUERY;
@@ -300,11 +291,6 @@ OGRGeocodingSessionH OGRGeocodeCreateSession(char** papszOptions)
     }
 
     hSession->pszReverseQueryTemplate = CPLStrdup(pszReverseQueryTemplate);
-
-    const char* pszExtraReverseQueryParameters = OGRGeocodeGetParameter(
-                                papszOptions, "EXTRA_REVERSE_QUERY_PARAMETERS", NULL);
-    hSession->pszExtraReverseQueryParameters = pszExtraReverseQueryParameters ?
-                                        CPLStrdup(pszExtraReverseQueryParameters) : NULL;
 
     return hSession;
 }
@@ -330,8 +316,6 @@ void OGRGeocodeDestroySession(OGRGeocodingSessionH hSession)
     CPLFree(hSession->pszApplication);
     CPLFree(hSession->pszQueryTemplate);
     CPLFree(hSession->pszReverseQueryTemplate);
-    CPLFree(hSession->pszExtraQueryParameters);
-    CPLFree(hSession->pszExtraReverseQueryParameters);
     if( hSession->poDS )
         OGRReleaseDataSource((OGRDataSourceH) hSession->poDS);
     CPLFree(hSession);
@@ -673,8 +657,16 @@ static OGRLayerH OGRGeocodeBuildLayer(const char* pszContent, int bAddRawFeature
  *
  * The list of recognized options is :
  * <ul>
+ * <li>ADDRESSDETAILS=0 or 1: Include a breakdown of the address into elements
+ *     Defaults to 1. (Known to work with OSM and MapQuest Nominatim)
+ * <li>COUNTRYCODES=code1,code2,...codeN: Limit search results to a specific
+ *     country (or a list of countries). The codes must fellow ISO 3166-1, i.e.
+ *     gb for United Kingdom, de for Germany, etc.. (Known to work with OSM and MapQuest Nominatim)
+ * <li>LIMIT=number: the number of records to return. Unlimited if not specified.
+ *     (Known to work with OSM and MapQuest Nominatim)
  * <li>RAW_FEATURE=YES: to specify that a 'raw' field must be added to the returned
  *     feature with the raw XML content.
+ * <li> EXTRA_QUERY_PARAMETERS=params: additionnal parameters for the GET request.
  * </ul>
  *
  * @param hSession the geocoding session handle.
@@ -712,10 +704,30 @@ OGRLayerH OGRGeocode(OGRGeocodingSessionH hSession,
     CPLString osURL = CPLSPrintf(hSession->pszQueryTemplate, pszEscapedQuery);
     CPLFree(pszEscapedQuery);
 
-    if( hSession->pszExtraQueryParameters != NULL )
+    const char* pszAddressDetails = OGRGeocodeGetParameter(papszOptions, "ADDRESSDETAILS", "1");
+    osURL += "&addressdetails=";
+    osURL += pszAddressDetails;
+
+    const char* pszCountryCodes = OGRGeocodeGetParameter(papszOptions, "COUNTRYCODES", NULL);
+    if( pszCountryCodes != NULL )
+    {
+        osURL += "&countrycodes=";
+        osURL += pszCountryCodes;
+    }
+
+    const char* pszExtraQueryParameters = OGRGeocodeGetParameter(
+                                papszOptions, "EXTRA_QUERY_PARAMETERS", NULL);
+    if( pszExtraQueryParameters != NULL )
     {
         osURL += "&";
-        osURL += hSession->pszExtraQueryParameters;
+        osURL += pszExtraQueryParameters;
+    }
+
+    const char* pszLimit = OGRGeocodeGetParameter(papszOptions, "LIMIT", NULL);
+    if( pszLimit != NULL )
+    {
+        osURL += "&limit=";
+        osURL += pszLimit;
     }
 
     CPLString osURLWithEmail = osURL;
@@ -729,7 +741,7 @@ OGRLayerH OGRGeocode(OGRGeocodingSessionH hSession,
     }
 
     int bAddRawFeature =
-        CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "RAW_FEATURE", "NO"));
+        CSLTestBoolean(OGRGeocodeGetParameter(papszOptions, "RAW_FEATURE", "NO"));
 
     OGRLayerH hLayer = NULL;
 
@@ -992,9 +1004,11 @@ static CPLString OGRGeocodeReverseSubstitute(CPLString osURL,
  *
  * The list of recognized options is :
  * <ul>
- * <li>zoom=a_level: to query a specific zoom level. Only understood by the OSM Nominatim service.
+ * <li>ZOOM=a_level: to query a specific zoom level. Only understood by the OSM Nominatim service.
  * <li>RAW_FEATURE=YES: to specify that a 'raw' field must be added to the returned
  *     feature with the raw XML content.
+ * <li>EXTRA_QUERY_PARAMETERS=params: additionnal parameters for the GET request
+ *     for reverse geocoding.
  * </ul>
  *
  * @param hSession the geocoding session handle.
@@ -1016,16 +1030,18 @@ OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession,
     CPLString osURL = hSession->pszReverseQueryTemplate;
     osURL = OGRGeocodeReverseSubstitute(osURL, dfLon, dfLat);
 
-    const char* pszZoomLevel = CSLFetchNameValue(papszOptions, "zoom");
+    const char* pszZoomLevel = OGRGeocodeGetParameter(papszOptions, "ZOOM", NULL);
     if( pszZoomLevel != NULL )
     {
         osURL = osURL + "&zoom=" + pszZoomLevel;
     }
 
-    if( hSession->pszExtraReverseQueryParameters != NULL )
+    const char* pszExtraQueryParameters = OGRGeocodeGetParameter(
+                                papszOptions, "EXTRA_QUERY_PARAMETERS", NULL);
+    if( pszExtraQueryParameters != NULL )
     {
         osURL += "&";
-        osURL += hSession->pszExtraReverseQueryParameters;
+        osURL += pszExtraQueryParameters;
     }
 
     CPLString osURLWithEmail = osURL;
@@ -1039,7 +1055,7 @@ OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession,
     }
 
     int bAddRawFeature =
-        CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "RAW_FEATURE", "NO"));
+        CSLTestBoolean(OGRGeocodeGetParameter(papszOptions, "RAW_FEATURE", "NO"));
 
     OGRLayerH hLayer = NULL;
 
