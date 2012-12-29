@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -120,13 +119,13 @@ class GDAL_Handler(BaseHTTPRequestHandler):
     <country>France metropolitaine</country>
     <country_code>fr</country_code>
   </place>
-</searchresults>""")
+</searchresults>""".encode('ascii'))
                     return
                 elif self.path == '/geocoding?q=NonExistingPlace&addressdetails=1&limit=1&email=foo%40bar':
                     self.send_response(200)
                     self.send_header('Content-type', 'application/xml')
                     self.end_headers()
-                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8"?><searchresults></searchresults>""")
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8"?><searchresults></searchresults>""".encode('ascii'))
                     return
                 else:
                     self.send_error(404,'File Not Found: %s' % self.path)
@@ -139,7 +138,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                     self.end_headers()
                     self.wfile.write("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?><ResultSet xmlns:ns1="http://www.yahooapis.com/v1/base.rng" version="2.0" xml:lang="en-US"><Error>0</Error><ErrorMessage>No error</ErrorMessage><Locale>en-US</Locale><Found>1</Found><Quality>40</Quality><Result><quality>40</quality><latitude>48.85693</latitude><longitude>2.3412</longitude><offsetlat>48.85693</offsetlat><offsetlon>2.3412</offsetlon><radius>9200</radius><name></name><line1></line1><line2>Paris</line2><line3></line3><line4>France</line4><house></house><street></street><xstreet></xstreet><unittype></unittype><unit></unit><postal></postal><neighborhood></neighborhood><city>Paris</city><county>Paris</county><state>Ile-de-France</state><country>France</country><countrycode>FR</countrycode><statecode></statecode><countycode>75</countycode><uzip>75001</uzip><hash></hash><woeid>615702</woeid><woetype>7</woetype></Result></ResultSet>
 <!-- nws03.maps.bf1.yahoo.com uncompressed/chunked Sat Dec 29 04:59:06 PST 2012 -->
-<!-- wws09.geotech.bf1.yahoo.com uncompressed/chunked Sat Dec 29 04:59:06 PST 2012 -->""")
+<!-- wws09.geotech.bf1.yahoo.com uncompressed/chunked Sat Dec 29 04:59:06 PST 2012 -->""".encode('ascii'))
                     return
                 elif self.path == '/yahoogeocoding?q=NonExistingPlace':
                     self.send_response(200)
@@ -147,7 +146,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                     self.end_headers()
                     self.wfile.write("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?><ResultSet xmlns:ns1="http://www.yahooapis.com/v1/base.rng" version="2.0" xml:lang="en-US"><Error>7</Error><ErrorMessage>No result</ErrorMessage><Locale>en-US</Locale><Found>0</Found><Quality>0</Quality></ResultSet>
 <!-- nws08.maps.bf1.yahoo.com uncompressed/chunked Sat Dec 29 05:00:45 PST 2012 -->
-<!-- wws08.geotech.bf1.yahoo.com uncompressed/chunked Sat Dec 29 05:00:45 PST 2012 -->""")
+<!-- wws08.geotech.bf1.yahoo.com uncompressed/chunked Sat Dec 29 05:00:45 PST 2012 -->""".encode('ascii'))
                     return
 
                 else:
@@ -173,7 +172,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
 <fcl>P</fcl>
 <fcode>PPLC</fcode>
 </geoname>
-</geonames>""")
+</geonames>""".encode('ascii'))
                     return
                 elif self.path == '/geonamesgeocoding?q=NonExistingPlace&username=demo':
                     self.send_response(200)
@@ -182,7 +181,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                     self.wfile.write("""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <geonames style="MEDIUM">
 <totalResultsCount>0</totalResultsCount>
-</geonames>""")
+</geonames>""".encode('ascii'))
                     return
 
                 else:
@@ -228,7 +227,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
       </Resources>
     </ResourceSet>
   </ResourceSets>
-</Response>""")
+</Response>""".encode('ascii'))
                     return
                 elif self.path == '/binggeocoding?q=NonExistingPlace&key=fakekey':
                     self.send_response(200)
@@ -241,7 +240,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
       <Resources/>
     </ResourceSet>
   </ResourceSets>
-</Response>""")
+</Response>""".encode('ascii'))
                     return
 
                 else:
@@ -257,19 +256,18 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                     self.end_headers()
                     self.wfile.write("""<?xml version="1.0" encoding="UTF-8"?>
 <reversegeocode>
-  <result place_id="46754274" osm_type="way" osm_id="38621743" ref="Chemin du Cordon" lat="49.0002726061675" lon="1.99514157818059">Chemin du Cordon, Forêt de l'Hautil, Triel-sur-Seine, Saint-Germain-en-Laye, Yvelines, Île-de-France, 78510, France métropolitaine</result>
+  <result place_id="46754274" osm_type="way" osm_id="38621743" ref="Chemin du Cordon" lat="49.0002726061675" lon="1.99514157818059">Chemin du Cordon, Foret de l'Hautil, Triel-sur-Seine, Saint-Germain-en-Laye, Yvelines, Ile-de-France, 78510, France metropolitaine</result>
   <addressparts>
     <road>Chemin du Cordon</road>
-    <forest>Forêt de l'Hautil</forest>
+    <forest>Foret de l'Hautil</forest>
     <city>Triel-sur-Seine</city>
     <county>Saint-Germain-en-Laye</county>
-    <state>Île-de-France</state>
+    <state>Ile-de-France</state>
     <postcode>78510</postcode>
-    <country>France métropolitaine</country>
+    <country>France metropolitaine</country>
     <country_code>fr</country_code>
   </addressparts>
-</reversegeocode>
-""")
+</reversegeocode>""".encode('ascii'))
                     return
                 else:
                     self.send_error(404,'File Not Found: %s' % self.path)
@@ -282,7 +280,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                     self.end_headers()
                     self.wfile.write("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?><ResultSet xmlns:ns1="http://www.yahooapis.com/v1/base.rng" version="2.0" xml:lang="en-US"><Error>0</Error><ErrorMessage>No error</ErrorMessage><Locale>en-US</Locale><Found>1</Found><Quality>99</Quality><Result><quality>72</quality><latitude>49.001</latitude><longitude>1.999864</longitude><offsetlat>49.001</offsetlat><offsetlon>1.999864</offsetlon><radius>400</radius><name>49.00000000,2.00000000</name><line1>Chemin de Menucourt</line1><line2>78510 Triel-sur-Seine</line2><line3></line3><line4>France</line4><house></house><street>Chemin de Menucourt</street><xstreet></xstreet><unittype></unittype><unit></unit><postal>78510</postal><neighborhood></neighborhood><city>Triel-sur-Seine</city><county>Yvelines</county><state>Ile-de-France</state><country>France</country><countrycode>FR</countrycode><statecode></statecode><countycode>78</countycode><uzip>78510</uzip><hash></hash><woeid>12727518</woeid><woetype>11</woetype></Result></ResultSet>
 <!-- nws02.maps.bf1.yahoo.com uncompressed/chunked Sat Dec 29 05:03:31 PST 2012 -->
-<!-- wws05.geotech.bf1.yahoo.com uncompressed/chunked Sat Dec 29 05:03:31 PST 2012 -->""")
+<!-- wws05.geotech.bf1.yahoo.com uncompressed/chunked Sat Dec 29 05:03:31 PST 2012 -->""".encode('ascii'))
                     return
                 else:
                     self.send_error(404,'File Not Found: %s' % self.path)
@@ -307,7 +305,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
 <fcode>DPR</fcode>
 <distance>0</distance>
 </geoname>
-</geonames>""")
+</geonames>""".encode('ascii'))
                     return
                 else:
                     self.send_error(404,'File Not Found: %s' % self.path)
@@ -352,7 +350,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
       </Resources>
     </ResourceSet>
   </ResourceSets>
-</Response>""")
+</Response>""".encode('ascii'))
                     return
                 else:
                     self.send_error(404,'File Not Found: %s' % self.path)
