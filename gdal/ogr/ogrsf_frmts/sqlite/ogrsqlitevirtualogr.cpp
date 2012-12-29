@@ -343,7 +343,7 @@ static int OGR2SQLITEDetectSuspiciousUsage(sqlite3* hDB,
         const char* pszSQL;
 
         pszSQL = CPLSPrintf("SELECT name, sql FROM %s "
-                            "WHERE type = 'trigger' AND (sql LIKE '%%%s%%' OR sql LIKE '%%\"%s\"%%' OR sql LIKE '%%ogr_layer_%%')",
+                            "WHERE type = 'trigger' AND (sql LIKE '%%%s%%' OR sql LIKE '%%\"%s\"%%' OR sql LIKE '%%ogr_layer_%%' OR sql LIKE '%%ogr_geocode%%')",
                             aosDatabaseNames[i].c_str(),
                             pszVirtualTableName,
                             OGRSQLiteEscapeName(pszVirtualTableName).c_str());
