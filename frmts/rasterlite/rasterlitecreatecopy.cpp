@@ -194,7 +194,6 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
 {
     CPLString osSQL;
     
-    CPLString osOldVal = CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "FALSE");
     CPLString osDBName = OGR_DS_GetName(hDS);
     
     CPLString osRasterLayer;
@@ -261,9 +260,7 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
         /* Re-open the DB to take into account the new tables*/
         OGRReleaseDataSource(hDS);
         
-        CPLSetThreadLocalConfigOption("SQLITE_LIST_ALL_TABLES", "TRUE");
         hDS = OGROpen(osDBName.c_str(), TRUE, NULL);
-        CPLSetThreadLocalConfigOption("SQLITE_LIST_ALL_TABLES", osOldVal.c_str());
     }
     else
     {
@@ -295,9 +292,7 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
                     /* Re-open the DB to take into account the change of SRS */
                     OGRReleaseDataSource(hDS);
                     
-                    CPLSetThreadLocalConfigOption("SQLITE_LIST_ALL_TABLES", "TRUE");
                     hDS = OGROpen(osDBName.c_str(), TRUE, NULL);
-                    CPLSetThreadLocalConfigOption("SQLITE_LIST_ALL_TABLES", osOldVal.c_str());
                 }
                 else
                 {
@@ -473,9 +468,6 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     
     OGRDataSourceH hDS;
     
-    CPLString osOldVal =
-        CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "FALSE");
-    CPLSetThreadLocalConfigOption("SQLITE_LIST_ALL_TABLES", "TRUE");
     if (!bExists)
     {
         char** papszOGROptions = CSLAddString(NULL, "SPATIALITE=YES");
@@ -487,7 +479,6 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         hDS = OGROpen(osDBName.c_str(), TRUE, NULL);
     }
-    CPLSetThreadLocalConfigOption("SQLITE_LIST_ALL_TABLES", osOldVal.c_str());
     
     if (hDS == NULL)
     {

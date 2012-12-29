@@ -967,12 +967,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
 /*      Open underlying OGR DB                                          */
 /* -------------------------------------------------------------------- */
 
-    /* Set SQLITE_LIST_ALL_TABLES option as we wan't to be able to */
-    /* fetch non spatial tables */
-    CPLString osOldVal = CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "FALSE");
-    CPLSetThreadLocalConfigOption("SQLITE_LIST_ALL_TABLES", "TRUE");
     OGRDataSourceH hDS = OGROpen(osFileName.c_str(), (poOpenInfo->eAccess == GA_Update) ? TRUE : FALSE, NULL);
-    CPLSetThreadLocalConfigOption("SQLITE_LIST_ALL_TABLES", osOldVal.c_str());
     CPLDebug("RASTERLITE", "SQLite DB Open");
     
     RasterliteDataset* poDS = NULL;
@@ -992,15 +987,15 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
         {   
             OGRLayerH hLyr = OGR_DS_GetLayer(hDS, i);
             const char* pszLayerName = OGR_FD_GetName(OGR_L_GetLayerDefn(hLyr));
-            if (strstr(pszLayerName, "_rasters"))
+            if (strstr(pszLayerName, "_metadata"))
             {
                 char* pszShortName = CPLStrdup(pszLayerName);
-                *strstr(pszShortName, "_rasters") = '\0';
+                *strstr(pszShortName, "_metadata") = '\0';
                 
-                CPLString osMetadataTableName = pszShortName;
-                osMetadataTableName += "_metadata";
-                
-                if (OGR_DS_GetLayerByName(hDS, osMetadataTableName.c_str()) != NULL)
+                CPLString osRasterTableName = pszShortName;
+                osRasterTableName += "_rasters";
+
+                if (OGR_DS_GetLayerByName(hDS, osRasterTableName.c_str()) != NULL)
                 {
                     if (poDS == NULL)
                     {
@@ -1140,10 +1135,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
         }
         else
         {
-            CPLString osOldVal = CPLGetConfigOption("OGR_SQLITE_EXACT_EXTENT", "NO");
-            CPLSetThreadLocalConfigOption("OGR_SQLITE_EXACT_EXTENT", "YES");
             OGR_L_GetExtent(hMetadataLyr, &oEnvelope, TRUE);
-            CPLSetThreadLocalConfigOption("OGR_SQLITE_EXACT_EXTENT", osOldVal.c_str());
             //printf("minx=%.15f miny=%.15f maxx=%.15f maxy=%.15f\n",
             //       oEnvelope.MinX, oEnvelope.MinY, oEnvelope.MaxX, oEnvelope.MaxY);
         }
