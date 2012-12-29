@@ -2306,3 +2306,194 @@ void VSIInstallZipFileHandler(void)
     VSIFileManager::InstallHandler( "/vsizip/", new VSIZipFilesystemHandler() );
 }
 
+
+/************************************************************************/
+/*                         CPLZLibDeflate()                             */
+/************************************************************************/
+
+/**
+ * \brief Compress a buffer with ZLib DEFLATE compression.
+ *
+ * @param ptr input buffer.
+ * @param nBytes size of input buffer in bytes.
+ * @param nLevel ZLib compression level (-1 for default).
+ * @param outptr output buffer, or NULL to let the function allocate it.
+ * @param nOutAvailableBytes size of output buffer if provided, or ignored.
+ * @param pnOutBytes pointer to a size_t, where to store the size of the
+ *                   output buffer.
+ *
+ * @return the output buffer (to be freed with VSIFree() if not provided)
+ *         or NULL in case of error.
+ *
+ * @since GDAL 1.10.0
+ */
+
+void* CPLZLibDeflate( const void* ptr, size_t nBytes, int nLevel,
+                      void* outptr, size_t nOutAvailableBytes,
+                      size_t* pnOutBytes )
+{
+    z_stream strm;
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    int ret = deflateInit(&strm, Z_DEFAULT_COMPRESSION);
+    if (ret != Z_OK)
+    {
+        if( pnOutBytes != NULL )
+            *pnOutBytes = 0;
+        return NULL;
+    }
+
+    size_t nTmpSize;
+    void* pTmp;
+    if( outptr == NULL )
+    {
+        nTmpSize = nBytes * 2;
+        pTmp = VSIMalloc(nTmpSize);
+        if( pTmp == NULL )
+        {
+            deflateEnd(&strm);
+            if( pnOutBytes != NULL )
+                *pnOutBytes = 0;
+            return NULL;
+        }
+    }
+    else
+    {
+        pTmp = outptr;
+        nTmpSize = nOutAvailableBytes;
+    }
+
+    strm.avail_in = nBytes;
+    strm.next_in = (Bytef*) ptr;
+    strm.avail_out = nTmpSize;
+    strm.next_out = (Bytef*) pTmp;
+    ret = deflate(&strm, Z_FINISH);
+    if( ret != Z_STREAM_END )
+    {
+        if( pTmp != outptr )
+            VSIFree(pTmp);
+        if( pnOutBytes != NULL )
+            *pnOutBytes = 0;
+        return NULL;
+    }
+    if( pnOutBytes != NULL )
+        *pnOutBytes = nTmpSize - strm.avail_out;
+    deflateEnd(&strm);
+    return pTmp;
+}
+
+/************************************************************************/
+/*                         CPLZLibInflate()                             */
+/************************************************************************/
+
+/**
+ * \brief Uncompress a buffer compressed with ZLib DEFLATE compression.
+ *
+ * @param ptr input buffer.
+ * @param nBytes size of input buffer in bytes.
+ * @param outptr output buffer, or NULL to let the function allocate it.
+ * @param nOutAvailableBytes size of output buffer if provided, or ignored.
+ * @param pnOutBytes pointer to a size_t, where to store the size of the
+ *                   output buffer.
+ *
+ * @return the output buffer (to be freed with VSIFree() if not provided)
+ *         or NULL in case of error.
+ *
+ * @since GDAL 1.10.0
+ */
+
+void* CPLZLibInflate( const void* ptr, size_t nBytes,
+                      void* outptr, size_t nOutAvailableBytes,
+                      size_t* pnOutBytes )
+{
+    z_stream strm;
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    strm.avail_in = nBytes;
+    strm.next_in = (Bytef*) ptr;
+    int ret = inflateInit(&strm);
+    if (ret != Z_OK)
+    {
+        if( pnOutBytes != NULL )
+            *pnOutBytes = 0;
+        return NULL;
+    }
+
+    size_t nTmpSize;
+    char* pszTmp;
+    if( outptr == NULL )
+    {
+        nTmpSize = 2 * nBytes;
+        pszTmp = (char*) VSIMalloc(nTmpSize + 1);
+        if( pszTmp == NULL )
+        {
+            inflateEnd(&strm);
+            if( pnOutBytes != NULL )
+                *pnOutBytes = 0;
+            return NULL;
+        }
+    }
+    else
+    {
+        pszTmp = (char*) outptr;
+        nTmpSize = nOutAvailableBytes;
+    }
+
+    strm.avail_out = nTmpSize;
+    strm.next_out = (Bytef*) pszTmp;
+
+    while(TRUE)
+    {
+        ret = inflate(&strm, Z_FINISH);
+        if( ret == Z_BUF_ERROR )
+        {
+            if( outptr == pszTmp )
+            {
+                inflateEnd(&strm);
+                if( pnOutBytes != NULL )
+                    *pnOutBytes = 0;
+                return NULL;
+            }
+
+            size_t nAlreadyWritten = nTmpSize - strm.avail_out;
+            nTmpSize = nTmpSize * 2;
+            char* pszTmpNew = (char*) VSIRealloc(pszTmp, nTmpSize + 1);
+            if( pszTmpNew == NULL )
+            {
+                VSIFree(pszTmp);
+                inflateEnd(&strm);
+                if( pnOutBytes != NULL )
+                    *pnOutBytes = 0;
+                return NULL;
+            }
+            pszTmp = pszTmpNew;
+            strm.avail_out = nTmpSize - nAlreadyWritten;
+            strm.next_out = (Bytef*) (pszTmp + nAlreadyWritten);
+        }
+        else
+            break;
+    }
+
+    if (ret == Z_OK || ret == Z_STREAM_END)
+    {
+        size_t nOutBytes = nTmpSize - strm.avail_out;
+        /* Nul-terminate if possible */
+        if( outptr != pszTmp || nOutBytes < nTmpSize )
+            pszTmp[nOutBytes] = '\0';
+        inflateEnd(&strm);
+        if( pnOutBytes != NULL )
+            *pnOutBytes = nOutBytes;
+        return pszTmp;
+    }
+    else
+    {
+        if( outptr != pszTmp )
+            VSIFree(pszTmp);
+        inflateEnd(&strm);
+        if( pnOutBytes != NULL )
+            *pnOutBytes = 0;
+        return NULL;
+    }
+}
