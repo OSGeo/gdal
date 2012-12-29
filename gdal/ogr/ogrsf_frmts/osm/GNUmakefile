@@ -10,11 +10,6 @@ ifeq ($(HAVE_EXPAT),yes)
 CPPFLAGS +=  -DHAVE_EXPAT
 endif
 
-ifeq ($(LIBZ_SETTING),internal)
-CPPFLAGS +=      -I../../../frmts/zlib
-endif
-
-
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 all: default osm2osm$(EXE)
