@@ -33,7 +33,6 @@
 #include "ogr_sqlite.h"
 #include <map>
 #include <vector>
-#include "ogr_geocoding.h"
 
 #ifdef HAVE_SQLITE_VFS
 
@@ -53,13 +52,9 @@ class OGR2SQLITEModule
 
     OGRSQLiteDataSource* poSQLiteDS;  /* *NOT* to be freed, might be NULL */
 
-    std::map< std::pair<int,int>, OGRCoordinateTransformation*> oCachedTransformsMap;
-
     std::map< CPLString, OGRLayer* > oMapVTableToOGRLayer;
 
-    void* hRegExpCache;
-
-    OGRGeocodingSessionH hGeocodingSession;
+    void* hHandleSQLFunctions;
 
   public:
                                  OGR2SQLITEModule(OGRDataSource* poDS);
@@ -71,8 +66,6 @@ class OGR2SQLITEModule
 
     OGRDataSource*               GetDS() { return poDS; }
 
-    OGRCoordinateTransformation* GetTransform(int nSrcSRSId, int nDstSRSId);
-
     int                          AddExtraDS(OGRDataSource* poDS);
     OGRDataSource               *GetExtraDS(int nIndex);
 
@@ -82,10 +75,7 @@ class OGR2SQLITEModule
     void                         UnregisterVTable(const char* pszVTableName);
     OGRLayer*                    GetLayerForVTable(const char* pszVTableName);
 
-    void                         SetRegExpCache(void* hRegExpCacheIn) { hRegExpCache = hRegExpCacheIn; }
-
-    OGRGeocodingSessionH         GetGeocodingSession() { return hGeocodingSession; }
-    void                         SetGeocodingSession(OGRGeocodingSessionH hGeocodingSessionIn) { hGeocodingSession = hGeocodingSessionIn; }
+    void                         SetHandleSQLFunctions(void* hHandleSQLFunctionsIn) { hHandleSQLFunctions = hHandleSQLFunctionsIn; }
 };
 
 void OGR2SQLITE_Register();
