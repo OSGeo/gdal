@@ -931,6 +931,8 @@ def ogr_sql_sqlite_16(service = None, template = 'http://127.0.0.1:%d/geocoding?
     gdal.SetConfigOption('OGR_GEOCODE_SERVICE', service)
     if service == 'GEONAMES':
         gdal.SetConfigOption('OGR_GEOCODE_USERNAME', 'demo')
+    elif service == 'BING':
+        gdal.SetConfigOption('OGR_GEOCODE_KEY', 'fakekey')
 
     ret = 'success'
 
@@ -945,9 +947,14 @@ def ogr_sql_sqlite_16(service = None, template = 'http://127.0.0.1:%d/geocoding?
 
         ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
 
+        if service == 'BING':
+            name_field = "Name"
+        else:
+            name_field = "display_name"
+
         for sql in ["SELECT ogr_geocode('Paris')",
                     "SELECT ogr_geocode('Paris', 'geometry')",
-                    "SELECT ogr_geocode('Paris', 'display_name') AS display_name",
+                    "SELECT ogr_geocode('Paris', '%s') AS %s" % (name_field, name_field),
                     "SELECT ogr_geocode('Paris', 'raw') AS raw"]:
 
             sql_lyr = ds.ExecuteSQL(sql, dialect = 'SQLite')
@@ -961,7 +968,7 @@ def ogr_sql_sqlite_16(service = None, template = 'http://127.0.0.1:%d/geocoding?
 
             if ((sql == "SELECT ogr_geocode('Paris')" or \
                 sql == "SELECT ogr_geocode('Paris', 'geometry')") and feat.GetGeometryRef() is None) or \
-            (sql == "SELECT ogr_geocode('Paris', 'display_name')" and not feat.IsFieldSet('display_name')) or \
+            (sql == "SELECT ogr_geocode('Paris', '%s')" % name_field and not feat.IsFieldSet(name_field)) or \
             (sql == "SELECT ogr_geocode('Paris', 'raw')" and not feat.IsFieldSet('raw')):
                 feat.DumpReadable()
                 gdaltest.post_reason('fail')
@@ -1030,6 +1037,7 @@ def ogr_sql_sqlite_16(service = None, template = 'http://127.0.0.1:%d/geocoding?
     gdal.SetConfigOption('OGR_GEOCODE_DELAY', None)
     gdal.SetConfigOption('OGR_GEOCODE_SERVICE', None)
     gdal.SetConfigOption('OGR_GEOCODE_USERNAME', None)
+    gdal.SetConfigOption('OGR_GEOCODE_KEY', None)
 
     return ret
 
@@ -1051,6 +1059,8 @@ def ogr_sql_sqlite_17(service = None, template = 'http://127.0.0.1:%d/reversegeo
     gdal.SetConfigOption('OGR_GEOCODE_SERVICE', service)
     if service == 'GEONAMES':
         gdal.SetConfigOption('OGR_GEOCODE_USERNAME', 'demo')
+    elif service == 'BING':
+        gdal.SetConfigOption('OGR_GEOCODE_KEY', 'fakekey')
 
     ret = 'success'
 
@@ -1067,6 +1077,8 @@ def ogr_sql_sqlite_17(service = None, template = 'http://127.0.0.1:%d/reversegeo
 
         if service == 'GEONAMES':
             name_field = "name"
+        elif service == 'BING':
+            name_field = "Name"
         else:
             name_field = "display_name"
 
@@ -1149,6 +1161,7 @@ def ogr_sql_sqlite_17(service = None, template = 'http://127.0.0.1:%d/reversegeo
     gdal.SetConfigOption('OGR_GEOCODE_DELAY', None)
     gdal.SetConfigOption('OGR_GEOCODE_SERVICE', None)
     gdal.SetConfigOption('OGR_GEOCODE_USERNAME', None)
+    gdal.SetConfigOption('OGR_GEOCODE_KEY', None)
 
     return ret
 
@@ -1179,6 +1192,20 @@ def ogr_sql_sqlite_20():
 def ogr_sql_sqlite_21():
 
     return ogr_sql_sqlite_17('GEONAMES', 'http://127.0.0.1:%d/geonamesreversegeocoding?lat={lat}&lng={lon}')
+
+###############################################################################
+# Test ogr_geocode() with Bing geocoding service
+
+def ogr_sql_sqlite_22():
+
+    return ogr_sql_sqlite_16('BING', 'http://127.0.0.1:%d/binggeocoding?q=%%s')
+
+###############################################################################
+# Test ogr_geocode_reverse() with Bing geocoding service
+
+def ogr_sql_sqlite_23():
+
+    return ogr_sql_sqlite_17('BING', 'http://127.0.0.1:%d/bingreversegeocoding?{lat},{lon}')
 
 ###############################################################################
 def ogr_sql_sqlite_stop_webserver():
@@ -1213,6 +1240,8 @@ gdaltest_list = [
     ogr_sql_sqlite_19,
     ogr_sql_sqlite_20,
     ogr_sql_sqlite_21,
+    ogr_sql_sqlite_22,
+    ogr_sql_sqlite_23,
     ogr_sql_sqlite_stop_webserver,
 ]
 
