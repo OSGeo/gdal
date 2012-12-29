@@ -154,6 +154,41 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                     self.send_error(404,'File Not Found: %s' % self.path)
                     return
 
+            elif self.path.find('/geonamesgeocoding') != -1:
+                if self.path == '/geonamesgeocoding?q=Paris&username=demo':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<geonames style="MEDIUM">
+<totalResultsCount>2356</totalResultsCount>
+<geoname>
+<toponymName>Paris</toponymName>
+<name>Paris</name>
+<lat>48.85341</lat>
+<lng>2.3488</lng>
+<geonameId>2988507</geonameId>
+<countryCode>FR</countryCode>
+<countryName>France</countryName>
+<fcl>P</fcl>
+<fcode>PPLC</fcode>
+</geoname>
+</geonames>""")
+                    return
+                elif self.path == '/geonamesgeocoding?q=NonExistingPlace&username=demo':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<geonames style="MEDIUM">
+<totalResultsCount>0</totalResultsCount>
+</geonames>""")
+                    return
+
+                else:
+                    self.send_error(404,'File Not Found: %s' % self.path)
+                    return
+
             # Below is for reverse geocoding
             elif self.path.find('/reversegeocoding') != -1:
                 if self.path == '/reversegeocoding?lon=2.0000000000000000&lat=49.0000000000000000&email=foo%40bar' or \
@@ -189,6 +224,31 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                     self.wfile.write("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?><ResultSet xmlns:ns1="http://www.yahooapis.com/v1/base.rng" version="2.0" xml:lang="en-US"><Error>0</Error><ErrorMessage>No error</ErrorMessage><Locale>en-US</Locale><Found>1</Found><Quality>99</Quality><Result><quality>72</quality><latitude>49.001</latitude><longitude>1.999864</longitude><offsetlat>49.001</offsetlat><offsetlon>1.999864</offsetlon><radius>400</radius><name>49.0000000000000000,2.0000000000000000</name><line1>Chemin de Menucourt</line1><line2>78510 Triel-sur-Seine</line2><line3></line3><line4>France</line4><house></house><street>Chemin de Menucourt</street><xstreet></xstreet><unittype></unittype><unit></unit><postal>78510</postal><neighborhood></neighborhood><city>Triel-sur-Seine</city><county>Yvelines</county><state>Ile-de-France</state><country>France</country><countrycode>FR</countrycode><statecode></statecode><countycode>78</countycode><uzip>78510</uzip><hash></hash><woeid>12727518</woeid><woetype>11</woetype></Result></ResultSet>
 <!-- nws02.maps.bf1.yahoo.com uncompressed/chunked Sat Dec 29 05:03:31 PST 2012 -->
 <!-- wws05.geotech.bf1.yahoo.com uncompressed/chunked Sat Dec 29 05:03:31 PST 2012 -->""")
+                    return
+                else:
+                    self.send_error(404,'File Not Found: %s' % self.path)
+                    return
+
+            elif self.path.find('/geonamesreversegeocoding') != -1:
+                if self.path == '/geonamesreversegeocoding?lat=49.0000000000000000&lng=2.0000000000000000&username=demo':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<geonames>
+<geoname>
+<toponymName>Paris Basin</toponymName>
+<name>Paris Basin</name>
+<lat>49</lat>
+<lng>2</lng>
+<geonameId>2988503</geonameId>
+<countryCode>FR</countryCode>
+<countryName>France</countryName>
+<fcl>T</fcl>
+<fcode>DPR</fcode>
+<distance>0</distance>
+</geoname>
+</geonames>""")
                     return
                 else:
                     self.send_error(404,'File Not Found: %s' % self.path)

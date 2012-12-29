@@ -929,6 +929,8 @@ def ogr_sql_sqlite_16(service = None, template = 'http://127.0.0.1:%d/geocoding?
     gdal.SetConfigOption('OGR_GEOCODE_QUERY_TEMPLATE', template % ogrtest.webserver_port)
     gdal.SetConfigOption('OGR_GEOCODE_DELAY', '0.1')
     gdal.SetConfigOption('OGR_GEOCODE_SERVICE', service)
+    if service == 'GEONAMES':
+        gdal.SetConfigOption('OGR_GEOCODE_USERNAME', 'demo')
 
     ret = 'success'
 
@@ -1027,6 +1029,7 @@ def ogr_sql_sqlite_16(service = None, template = 'http://127.0.0.1:%d/geocoding?
     gdal.SetConfigOption('OGR_GEOCODE_QUERY_TEMPLATE', None)
     gdal.SetConfigOption('OGR_GEOCODE_DELAY', None)
     gdal.SetConfigOption('OGR_GEOCODE_SERVICE', None)
+    gdal.SetConfigOption('OGR_GEOCODE_USERNAME', None)
 
     return ret
 
@@ -1046,6 +1049,8 @@ def ogr_sql_sqlite_17(service = None, template = 'http://127.0.0.1:%d/reversegeo
     gdal.SetConfigOption('OGR_GEOCODE_REVERSE_QUERY_TEMPLATE', template % ogrtest.webserver_port)
     gdal.SetConfigOption('OGR_GEOCODE_DELAY', '0.1')
     gdal.SetConfigOption('OGR_GEOCODE_SERVICE', service)
+    if service == 'GEONAMES':
+        gdal.SetConfigOption('OGR_GEOCODE_USERNAME', 'demo')
 
     ret = 'success'
 
@@ -1060,13 +1065,18 @@ def ogr_sql_sqlite_17(service = None, template = 'http://127.0.0.1:%d/reversegeo
 
         ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
 
-        sql_list = [ "SELECT ogr_geocode_reverse(2,49,'display_name') AS display_name",
-                     "SELECT ogr_geocode_reverse(2,49,'display_name','zoom=12') AS display_name",
-                     "SELECT ogr_geocode_reverse(2.0,49.0,'display_name') AS display_name",
+        if service == 'GEONAMES':
+            name_field = "name"
+        else:
+            name_field = "display_name"
+
+        sql_list = [ "SELECT ogr_geocode_reverse(2,49,'%s') AS %s" % (name_field, name_field),
+                     "SELECT ogr_geocode_reverse(2,49,'%s','zoom=12') AS %s" % (name_field, name_field),
+                     "SELECT ogr_geocode_reverse(2.0,49.0,'%s') AS %s" % (name_field, name_field),
                      "SELECT ogr_geocode_reverse(2.0,49.0,'raw') AS raw" ]
         if ogrtest.has_spatialite:
-            sql_list.append("SELECT ogr_geocode_reverse(MakePoint(2,49),'display_name') AS display_name")
-            sql_list.append("SELECT ogr_geocode_reverse(MakePoint(2,49),'display_name','zoom=12') AS display_name")
+            sql_list.append("SELECT ogr_geocode_reverse(MakePoint(2,49),'%s') AS %s" % (name_field, name_field))
+            sql_list.append("SELECT ogr_geocode_reverse(MakePoint(2,49),'%s','zoom=12') AS %s" % (name_field, name_field))
 
         for sql in sql_list:
 
@@ -1082,7 +1092,7 @@ def ogr_sql_sqlite_17(service = None, template = 'http://127.0.0.1:%d/reversegeo
             if sql.find('raw') != -1:
                 field_to_test = 'raw'
             else:
-                field_to_test = 'display_name'
+                field_to_test = name_field
             if not feat.IsFieldSet(field_to_test):
                 feat.DumpReadable()
                 gdaltest.post_reason('fail')
@@ -1138,6 +1148,7 @@ def ogr_sql_sqlite_17(service = None, template = 'http://127.0.0.1:%d/reversegeo
     gdal.SetConfigOption('OGR_GEOCODE_REVERSE_QUERY_TEMPLATE', None)
     gdal.SetConfigOption('OGR_GEOCODE_DELAY', None)
     gdal.SetConfigOption('OGR_GEOCODE_SERVICE', None)
+    gdal.SetConfigOption('OGR_GEOCODE_USERNAME', None)
 
     return ret
 
@@ -1154,6 +1165,20 @@ def ogr_sql_sqlite_18():
 def ogr_sql_sqlite_19():
 
     return ogr_sql_sqlite_17('YAHOO', 'http://127.0.0.1:%d/yahooreversegeocoding?q={lat},{lon}&gflags=R')
+
+###############################################################################
+# Test ogr_geocode() with GeoNames.org geocoding service
+
+def ogr_sql_sqlite_20():
+
+    return ogr_sql_sqlite_16('GEONAMES', 'http://127.0.0.1:%d/geonamesgeocoding?q=%%s')
+
+###############################################################################
+# Test ogr_geocode_reverse() with GeoNames.org geocoding service
+
+def ogr_sql_sqlite_21():
+
+    return ogr_sql_sqlite_17('GEONAMES', 'http://127.0.0.1:%d/geonamesreversegeocoding?lat={lat}&lng={lon}')
 
 ###############################################################################
 def ogr_sql_sqlite_stop_webserver():
@@ -1186,6 +1211,8 @@ gdaltest_list = [
     ogr_sql_sqlite_17,
     ogr_sql_sqlite_18,
     ogr_sql_sqlite_19,
+    ogr_sql_sqlite_20,
+    ogr_sql_sqlite_21,
     ogr_sql_sqlite_stop_webserver,
 ]
 

@@ -81,6 +81,7 @@ struct _OGRGeocodingSessionHS
     char*  pszCacheFilename;
     char*  pszGeocodingService;
     char*  pszEmail;
+    char*  pszUserName;
     char*  pszApplication;
     char*  pszLanguage;
     char*  pszQueryTemplate;
@@ -98,10 +99,12 @@ static double dfLastQueryTimeStampMapQuestNominatim = 0.0;
 #define OSM_NOMINATIM_QUERY      "http://nominatim.openstreetmap.org/search?q=%s&format=xml&polygon_text=1"
 #define MAPQUEST_NOMINATIM_QUERY "http://open.mapquestapi.com/nominatim/v1/search.php?q=%s&format=xml"
 #define YAHOO_QUERY              "http://where.yahooapis.com/geocode?q=%s"
+#define GEONAMES_QUERY           "http://api.geonames.org/search?q=%s&style=LONG"
 
 #define OSM_NOMINATIM_REVERSE_QUERY      "http://nominatim.openstreetmap.org/reverse?format=xml&lat={lat}&lon={lon}"
 #define MAPQUEST_NOMINATIM_REVERSE_QUERY "http://open.mapquestapi.com/nominatim/v1/reverse.php?format=xml&lat={lat}&lon={lon}"
 #define YAHOO_REVERSE_QUERY              "http://where.yahooapis.com/geocode?q={lat},{lon}&gflags=R"
+#define GEONAMES_REVERSE_QUERY           "http://api.geonames.org/findNearby?lat={lat}&lng={lon}&style=LONG"
 
 #define CACHE_LAYER_NAME         "ogr_geocode_cache"
 #define DEFAULT_CACHE_SQLITE     "ogr_geocode_cache.sqlite"
@@ -184,9 +187,11 @@ int OGRGeocodeHasStringValidFormat(const char* pszQueryTemplate)
  * <li> "WRITE_CACHE" : "TRUE" (default) or "FALSE"
  * <li> "SERVICE": <a href="http://wiki.openstreetmap.org/wiki/Nominatim">"OSM_NOMINATIM"</a>
  *      (default), <a href="http://open.mapquestapi.com/nominatim/">"MAPQUEST_NOMINATIM"</a>,
- *      <a href="http://developer.yahoo.com/geo/placefinder/">"YAHOO"</a> or
- *       other value
+ *      <a href="http://developer.yahoo.com/geo/placefinder/">"YAHOO"</a>,
+ *      <a href="http://www.geonames.org/export/geonames-search.html">"GEONAMES"</a> or
+ *       other value.
  * <li> "EMAIL": used by OSM_NOMINATIM. Optional, but recommanded.
+ * <li> "USERNAME": used by GEONAMES. Compulsory in that case.
  * <li> "APPLICATION": used to set the User-Agent MIME header. Defaults
  *       to GDAL/OGR version string.
  * <li> "LANGUAGE": used to set the Accept-Language MIME header. Preferred
@@ -246,6 +251,17 @@ OGRGeocodingSessionH OGRGeocodeCreateSession(char** papszOptions)
 
     const char* pszEmail = OGRGeocodeGetParameter(papszOptions, "EMAIL", NULL);
     hSession->pszEmail = pszEmail ? CPLStrdup(pszEmail) : NULL;
+    
+    const char* pszUserName = OGRGeocodeGetParameter(papszOptions, "USERNAME", NULL);
+    hSession->pszUserName = pszUserName ? CPLStrdup(pszUserName) : NULL;
+
+    if( EQUAL(pszGeocodingService, "GEONAMES") && pszUserName == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GEONAMES service requires USERNAME to be specified.");
+        OGRGeocodeDestroySession(hSession);
+        return NULL;
+    }
 
     const char* pszApplication = OGRGeocodeGetParameter(papszOptions,
                                                         "APPLICATION",
@@ -268,17 +284,14 @@ OGRGeocodingSessionH OGRGeocodeCreateSession(char** papszOptions)
         pszQueryTemplateDefault = MAPQUEST_NOMINATIM_QUERY;
     else if( EQUAL(pszGeocodingService, "YAHOO") )
         pszQueryTemplateDefault = YAHOO_QUERY;
+    else if( EQUAL(pszGeocodingService, "GEONAMES") )
+        pszQueryTemplateDefault = GEONAMES_QUERY;
     const char* pszQueryTemplate = OGRGeocodeGetParameter(papszOptions,
                                                           "QUERY_TEMPLATE",
                                                           pszQueryTemplateDefault);
-    if( pszQueryTemplate == NULL )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "QUERY_TEMPLATE parameter not defined");
-        OGRGeocodeDestroySession(hSession);
-        return NULL;
-    }
 
-    if( !OGRGeocodeHasStringValidFormat(pszQueryTemplate) )
+    if( pszQueryTemplate != NULL &&
+        !OGRGeocodeHasStringValidFormat(pszQueryTemplate) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "QUERY_TEMPLATE value has an invalid format");
@@ -286,7 +299,8 @@ OGRGeocodingSessionH OGRGeocodeCreateSession(char** papszOptions)
         return NULL;
     }
 
-    hSession->pszQueryTemplate = CPLStrdup(pszQueryTemplate);
+    hSession->pszQueryTemplate =
+        pszQueryTemplate ? CPLStrdup(pszQueryTemplate) : NULL;
 
     const char* pszReverseQueryTemplateDefault = NULL;
     if( EQUAL(pszGeocodingService, "OSM_NOMINATIM") )
@@ -295,17 +309,24 @@ OGRGeocodingSessionH OGRGeocodeCreateSession(char** papszOptions)
         pszReverseQueryTemplateDefault = MAPQUEST_NOMINATIM_REVERSE_QUERY;
     else if( EQUAL(pszGeocodingService, "YAHOO") )
         pszReverseQueryTemplateDefault = YAHOO_REVERSE_QUERY;
+    else if( EQUAL(pszGeocodingService, "GEONAMES") )
+        pszReverseQueryTemplateDefault = GEONAMES_REVERSE_QUERY;
     const char* pszReverseQueryTemplate = OGRGeocodeGetParameter(papszOptions,
                                                           "REVERSE_QUERY_TEMPLATE",
                                                           pszReverseQueryTemplateDefault);
-    if( pszReverseQueryTemplate == NULL )
+
+    if( pszReverseQueryTemplate != NULL &&
+        (strstr(pszReverseQueryTemplate, "{lat}") == NULL ||
+         strstr(pszReverseQueryTemplate, "{lon}") == NULL) )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "REVERSE_QUERY_TEMPLATE parameter not defined");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "REVERSE_QUERY_TEMPLATE value has an invalid format");
         OGRGeocodeDestroySession(hSession);
         return NULL;
     }
 
-    hSession->pszReverseQueryTemplate = CPLStrdup(pszReverseQueryTemplate);
+    hSession->pszReverseQueryTemplate =
+        (pszReverseQueryTemplate) ? CPLStrdup(pszReverseQueryTemplate) : NULL;
 
     return hSession;
 }
@@ -328,6 +349,7 @@ void OGRGeocodeDestroySession(OGRGeocodingSessionH hSession)
     CPLFree(hSession->pszCacheFilename);
     CPLFree(hSession->pszGeocodingService);
     CPLFree(hSession->pszEmail);
+    CPLFree(hSession->pszUserName);
     CPLFree(hSession->pszApplication);
     CPLFree(hSession->pszLanguage);
     CPLFree(hSession->pszQueryTemplate);
@@ -549,7 +571,8 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(CPLXMLNode* psSearchResults,
     while( psPlace != NULL )
     {
         if( psPlace->eType == CXT_Element &&
-            strcmp(psPlace->pszValue, "place") == 0 )
+            (strcmp(psPlace->pszValue, "place") == 0 || /* Nominatim */
+             strcmp(psPlace->pszValue, "geoname") == 0 /* Geonames */) )
         {
             int bFoundLat = FALSE, bFoundLon = FALSE;
             double dfLat = 0.0, dfLon = 0.0;
@@ -578,7 +601,8 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(CPLXMLNode* psSearchResults,
                         }
                         oFieldDefn.SetType(OFTReal);
                     }
-                    else if( strcmp(pszName, "lon") == 0 )
+                    else if( strcmp(pszName, "lon") == 0 ||  /* Nominatim */
+                             strcmp(pszName, "lng") == 0 /* Geonames */ )
                     {
                         if( pszVal != NULL )
                         {
@@ -786,10 +810,16 @@ static OGRLayerH OGRGeocodeBuildLayer(const char* pszContent,
     if( psRoot != NULL )
     {
         CPLXMLNode* psSearchResults;
+        CPLXMLNode* psGeonames;
         CPLXMLNode* psResultSet;
         if( (psSearchResults =
                         CPLSearchXMLNode(psRoot, "=searchresults")) != NULL )
             hLayer = OGRGeocodeBuildLayerNominatim(psSearchResults,
+                                                   pszContent,
+                                                   bAddRawFeature);
+        else if( (psGeonames =
+                        CPLSearchXMLNode(psRoot, "=geonames")) != NULL )
+            hLayer = OGRGeocodeBuildLayerNominatim(psGeonames,
                                                    pszContent,
                                                    bAddRawFeature);
         else if( (psResultSet =
@@ -874,6 +904,13 @@ OGRLayerH OGRGeocode(OGRGeocodingSessionH hSession,
         return NULL;
     }
 
+    if( hSession->pszQueryTemplate == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "QUERY_TEMPLATE parameter not defined");
+        return NULL;
+    }
+
     char* pszEscapedQuery = CPLEscapeString(pszQuery, -1, CPLES_URL);
     CPLString osURL = CPLSPrintf(hSession->pszQueryTemplate, pszEscapedQuery);
     CPLFree(pszEscapedQuery);
@@ -923,6 +960,14 @@ OGRLayerH OGRGeocode(OGRGeocodingSessionH hSession,
                                                 -1, CPLES_URL);
         osURLWithEmail = osURL + "&email=" + pszEscapedEmail;
         CPLFree(pszEscapedEmail);
+    }
+    else if( EQUAL(hSession->pszGeocodingService, "GEONAMES") &&
+             hSession->pszUserName != NULL )
+    {
+        char* pszEscaped = CPLEscapeString(hSession->pszUserName,
+                                                -1, CPLES_URL);
+        osURLWithEmail = osURL + "&username=" + pszEscaped;
+        CPLFree(pszEscaped);
     }
 
     int bAddRawFeature =
@@ -1146,12 +1191,18 @@ static OGRLayerH OGRGeocodeReverseBuildLayer(const char* pszContent,
     if( psRoot != NULL )
     {
         CPLXMLNode* psReverseGeocode;
+        CPLXMLNode* psGeonames;
         CPLXMLNode* psResultSet;
         if( (psReverseGeocode =
                     CPLSearchXMLNode(psRoot, "=reversegeocode")) != NULL )
             hLayer = OGRGeocodeReverseBuildLayerNominatim(psReverseGeocode,
                                                           pszContent,
                                                           bAddRawFeature);
+        else if( (psGeonames =
+                        CPLSearchXMLNode(psRoot, "=geonames")) != NULL )
+            hLayer = OGRGeocodeBuildLayerNominatim(psGeonames,
+                                                   pszContent,
+                                                   bAddRawFeature);
         else if( (psResultSet =
                     CPLSearchXMLNode(psRoot, "=ResultSet")) != NULL )
             hLayer = OGRGeocodeBuildLayerYahoo(psResultSet,
@@ -1241,6 +1292,13 @@ OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession,
 {
     VALIDATE_POINTER1( hSession, "OGRGeocodeReverse", NULL );
 
+    if( hSession->pszReverseQueryTemplate == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "REVERSE_QUERY_TEMPLATE parameter not defined");
+        return NULL;
+    }
+
     CPLString osURL = hSession->pszReverseQueryTemplate;
     osURL = OGRGeocodeReverseSubstitute(osURL, dfLon, dfLat);
 
@@ -1276,6 +1334,14 @@ OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession,
                                                 -1, CPLES_URL);
         osURLWithEmail = osURL + "&email=" + pszEscapedEmail;
         CPLFree(pszEscapedEmail);
+    }
+    else if( EQUAL(hSession->pszGeocodingService, "GEONAMES") &&
+             hSession->pszUserName != NULL )
+    {
+        char* pszEscaped = CPLEscapeString(hSession->pszUserName,
+                                                -1, CPLES_URL);
+        osURLWithEmail = osURL + "&username=" + pszEscaped;
+        CPLFree(pszEscaped);
     }
 
     int bAddRawFeature =
