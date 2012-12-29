@@ -52,6 +52,10 @@ OGRLayerH CPL_DLL OGRGeocode(OGRGeocodingSessionH hSession,
                              char** papszStructuredQuery,
                              char** papszOptions);
 
+OGRLayerH CPL_DLL OGRGeocodeReverse(OGRGeocodingSessionH hSession,
+                                    double dfLon, double dfLat,
+                                    char** papszOptions);
+
 void CPL_DLL OGRGeocodeFreeResult(OGRLayerH hLayer);
 
 CPL_C_END
