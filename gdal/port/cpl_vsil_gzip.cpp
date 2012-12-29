@@ -2348,7 +2348,7 @@ void* CPLZLibDeflate( const void* ptr, size_t nBytes, int nLevel,
     void* pTmp;
     if( outptr == NULL )
     {
-        nTmpSize = nBytes * 2;
+        nTmpSize = 8 + nBytes * 2;
         pTmp = VSIMalloc(nTmpSize);
         if( pTmp == NULL )
         {
