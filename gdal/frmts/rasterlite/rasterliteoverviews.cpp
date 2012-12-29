@@ -661,10 +661,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
             /* Re-open the DB to take into account the new tables*/
             OGRReleaseDataSource(hDS);
             
-            CPLString osOldVal = CPLGetConfigOption("SQLITE_LIST_ALL_TABLES", "FALSE");
-            CPLSetThreadLocalConfigOption("SQLITE_LIST_ALL_TABLES", "TRUE");
             hDS = OGROpen(osFileName.c_str(), TRUE, NULL);
-            CPLSetThreadLocalConfigOption("SQLITE_LIST_ALL_TABLES", osOldVal.c_str());
 
             hRasterPyramidsLyr = OGR_DS_GetLayerByName(hDS, "raster_pyramids");
             if (hRasterPyramidsLyr == NULL)
