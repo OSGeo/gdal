@@ -32,7 +32,7 @@
 
 #include "ogr_sqlite.h"
 
-void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB);
-void OGRSQLiteUnregisterSQLFunctions(void* hHandle);
+static void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB);
+static void OGRSQLiteUnregisterSQLFunctions(void* hHandle);
 
 #endif // _OGR_SQLITE_SQL_FUNCTIONS_INCLUDED
