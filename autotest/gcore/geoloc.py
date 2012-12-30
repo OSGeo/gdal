@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -41,7 +42,7 @@ import gdaltest
 
 def geoloc_1():
 
-    tst = gdaltest.GDALTest( 'VRT', 'warpsst.vrt', 1, 62200 )
+    tst = gdaltest.GDALTest( 'VRT', 'warpsst.vrt', 1, 62299 )
     return tst.testOpen()
 
 
