@@ -1091,19 +1091,21 @@ def compare_ds(ds1, ds2, xoff = 0, yoff = 0, width = 0, height = 0, verbose=1):
     type_char = gdal_data_type_to_python_struct_format(ds2.GetRasterBand(1).DataType)
     val_array2 = struct.unpack(type_char * width * height, data2)
 
-    maxdiff = 0
+    maxdiff = 0.0
     ndiffs = 0
     for i in range(width*height):
         diff = val_array1[i] - val_array2[i]
         if diff != 0:
+            #print(val_array1[i])
+            #print(val_array2[i])
             ndiffs = ndiffs + 1
             if abs(diff) > maxdiff:
                 maxdiff = abs(diff)
                 if verbose:
-                    print("Diff at pixel (%d, %d) : %d" % (i % width, i / width, diff))
+                    print("Diff at pixel (%d, %d) : %f" % (i % width, i / width, float(diff)))
             elif ndiffs < 10:
                 if verbose:
-                    print("Diff at pixel (%d, %d) : %d" % (i % width, i / width, diff))
+                    print("Diff at pixel (%d, %d) : %f" % (i % width, i / width, float(diff)))
     if maxdiff != 0 and verbose:
         print("Max diff : %d" % (maxdiff))
         print("Number of diffs : %d" % (ndiffs))
@@ -1356,3 +1358,176 @@ def skip_on_travis():
         post_reason('Test skipped on Travis')
         return True
     return False
+
+
+###############################################################################
+# find_lib_linux()
+# Parse /proc/self/maps to find an occurrence of libXXXXX.so.*
+
+def find_lib_linux(libname):
+
+    f = open('/proc/self/maps')
+    lines = f.readlines()
+    f.close()
+
+    for line in lines:
+        if line.rfind('/lib' + libname) == -1 or line.find('.so') == -1:
+            continue
+
+        i = line.find(' ')
+        if i < 0:
+            continue
+        line = line[i+1:]
+        i = line.find(' ')
+        if i < 0:
+            continue
+        line = line[i+1:]
+        i = line.find(' ')
+        if i < 0:
+            continue
+        line = line[i+1:]
+        i = line.find(' ')
+        if i < 0:
+            continue
+        line = line[i+1:]
+        i = line.find(' ')
+        if i < 0:
+            continue
+        line = line[i+1:]
+
+        soname = line.lstrip().rstrip('\n')
+        if soname.rfind('/lib' + libname) == -1:
+            continue
+
+        return soname
+
+    return None
+
+###############################################################################
+# find_lib_sunos()
+# Parse output of pmap to find an occurrence of libXXX.so.*
+
+def find_lib_sunos(libname):
+
+    pid = os.getpid()
+    (lines, err) = gdaltest.runexternal_out_and_err('pmap %d' % pid)
+    
+    for line in lines.split('\n'):
+        if line.rfind('/lib' + libname) == -1 or line.find('.so') == -1:
+            continue
+
+        i = line.find('/')
+        if i < 0:
+            continue
+        line = line[i:]
+
+        soname = line.lstrip().rstrip('\n')
+        if soname.rfind('/lib' + libname) == -1:
+            continue
+
+        return soname
+
+    return None
+
+###############################################################################
+# find_lib_windows()
+# use Module32First() / Module32Next() API on the current process
+
+def find_lib_windows(libname):
+
+    try:
+        import ctypes
+    except:
+        return None
+
+    kernel32 = ctypes.windll.kernel32
+
+    MAX_MODULE_NAME32 = 255
+    MAX_PATH = 260
+
+    TH32CS_SNAPMODULE = 0x00000008
+
+    class MODULEENTRY32(ctypes.Structure):
+        _fields_ = [
+            ("dwSize", ctypes.c_int),
+            ("th32ModuleID", ctypes.c_int),
+            ("th32ProcessID", ctypes.c_int),
+            ("GlblcntUsage", ctypes.c_int),
+            ("ProccntUsage", ctypes.c_int),
+            ("modBaseAddr", ctypes.c_char_p),
+            ("modBaseSize", ctypes.c_int),
+            ("hModule", ctypes.c_void_p),
+            ("szModule", ctypes.c_char * (MAX_MODULE_NAME32 + 1)),
+            ("szExePath", ctypes.c_char * MAX_PATH)
+        ]
+
+    Module32First = kernel32.Module32First
+    Module32First.argtypes = [ ctypes.c_void_p, ctypes.POINTER(MODULEENTRY32) ]
+    Module32First.rettypes = ctypes.c_int
+
+    Module32Next = kernel32.Module32Next
+    Module32Next.argtypes = [ ctypes.c_void_p, ctypes.POINTER(MODULEENTRY32) ]
+    Module32Next.rettypes = ctypes.c_int
+
+    CreateToolhelp32Snapshot = kernel32.CreateToolhelp32Snapshot
+    CreateToolhelp32Snapshot.argtypes = [ ctypes.c_int, ctypes.c_int ]
+    CreateToolhelp32Snapshot.rettypes = ctypes.c_void_p
+
+    CloseHandle = kernel32.CloseHandle
+    CloseHandle.argtypes = [ ctypes.c_void_p ]
+    CloseHandle.rettypes = ctypes.c_int
+
+    GetLastError = kernel32.GetLastError
+    GetLastError.argtypes = []
+    GetLastError.rettypes = ctypes.c_int
+
+    snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE,0)
+    if snapshot is None:
+        return None
+
+    soname = None
+
+    i = 0
+    while True:
+        entry = MODULEENTRY32()
+        entry.dwSize = ctypes.sizeof(MODULEENTRY32)
+        pentry = ctypes.pointer(entry)
+        if i == 0:
+            ret = Module32First(snapshot, pentry)
+        else:
+            ret = Module32Next(snapshot, pentry)
+        i = i + 1
+        if ret == 0:
+            break
+
+        try:
+            path = entry.szExePath.decode('latin1')
+        except:
+            continue
+
+        i = path.rfind('\\' + libname)
+        if i < 0:
+            continue
+        if path[i+1:].find('\\') >= 0:
+            continue
+        soname = path
+        break
+
+    CloseHandle(snapshot)
+
+    return soname
+
+###############################################################################
+# find_lib()
+
+def find_lib(mylib):
+    if sys.platform.startswith('linux'):
+        return find_lib_linux(mylib)
+    elif sys.platform.startswith('sunos'):
+        return find_lib_sunos(mylib)
+    elif sys.platform.startswith('win32'):
+        return find_lib_windows(mylib)
+    else:
+        # sorry mac users or other BSDs
+        # should be doable, but not in a blindless way
+        return None
