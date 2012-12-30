@@ -278,11 +278,61 @@ def vsizip_5():
 
     return 'success'
 
+###############################################################################
+# Test writing 2 files with same name in a ZIP (#4785)
+
+def vsizip_6():
+
+    # Maintain ZIP file opened
+    fmain = gdal.VSIFOpenL("/vsizip/vsimem/test6.zip", "wb")
+    f = gdal.VSIFOpenL("/vsizip/vsimem/test6.zip/foo.bar", "wb")
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.VSIFWriteL("12345", 1, 5, f)
+    gdal.VSIFCloseL(f)
+    f = None
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    f = gdal.VSIFOpenL("/vsizip/vsimem/test6.zip/foo.bar", "wb")
+    gdal.PopErrorHandler()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        gdal.VSIFCloseL(f)
+        return 'fail'
+    gdal.VSIFCloseL(fmain)
+    fmain = None
+
+    gdal.Unlink("/vsimem/test6.zip")
+
+    # Now close it each time
+    f = gdal.VSIFOpenL("/vsizip/vsimem/test6.zip/foo.bar", "wb")
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.VSIFWriteL("12345", 1, 5, f)
+    gdal.VSIFCloseL(f)
+    f = None
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    f = gdal.VSIFOpenL("/vsizip/vsimem/test6.zip/foo.bar", "wb")
+    gdal.PopErrorHandler()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        gdal.VSIFCloseL(f)
+        return 'fail'
+
+    gdal.Unlink("/vsimem/test6.zip")
+
+    return 'success'
+
+
 gdaltest_list = [ vsizip_1,
                   vsizip_2,
                   vsizip_3,
                   vsizip_4,
                   vsizip_5,
+                  vsizip_6,
                   ]
 
 
