@@ -205,12 +205,12 @@ int OGRGeocodeHasStringValidFormat(const char* pszQueryTemplate)
  *       Defaults to 1.0.
  * <li> "QUERY_TEMPLATE": URL template for GET requests. Must contain one
  *       and only one occurence of %%s in it. If not specified, for
- *       SERVICE=OSM_NOMINATIM, MAPQUEST_NOMINATIM or YAHOO, the URL template
- *       is hard-coded.
+ *       SERVICE=OSM_NOMINATIM, MAPQUEST_NOMINATIM, YAHOO, GEONAMES or BING,
+ *       the URL template is hard-coded.
  * <li> "REVERSE_QUERY_TEMPLATE": URL template for GET requests for reverse
  *       geocoding. Must contain one and only one occurence of {lon} and {lat} in it.
- *       If not specified, for SERVICE=OSM_NOMINATIM, MAPQUEST_NOMINATIM or YAHOO,
- *       the URL template is hard-coded.
+ *       If not specified, for SERVICE=OSM_NOMINATIM, MAPQUEST_NOMINATIM, YAHOO,
+ *       GEONAMES or BING, the URL template is hard-coded.
  * </ul>
  *
  * All the above options can also be set by defining the configuration option
@@ -1323,7 +1323,7 @@ static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
  * @param hSession the geocoding session handle.
  * @param pszQuery the string to geocode.
  * @param papszStructuredQuery unused for now. Must be NULL.
- * @param papszOptions a list of options.
+ * @param papszOptions a list of options or NULL.
  *
  * @return a OGR layer with the result(s), or NULL in case of error.
  *         The returned layer must be freed with OGRGeocodeFreeResult().
@@ -1451,7 +1451,7 @@ static CPLString OGRGeocodeReverseSubstitute(CPLString osURL,
  * @param hSession the geocoding session handle.
  * @param dfLon the longitude.
  * @param dfLat the latitude.
- * @param papszOptions a list of options.
+ * @param papszOptions a list of options or NULL.
  *
  * @return a OGR layer with the result(s), or NULL in case of error.
  *         The returned layer must be freed with OGRGeocodeFreeResult().
