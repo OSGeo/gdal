@@ -1784,6 +1784,13 @@ OGRLayer *OGRLIBKMLDataSource::CreateLayer (
 
     if ( !bUpdate )
         return NULL;
+    
+    if( (IsKmz () || IsDir ()) && EQUAL(pszLayerName, "doc") )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "'doc' is an invalid layer name in a KMZ file");
+        return NULL;
+    }
 
     OGRLayer *poOgrLayer = NULL;
 
