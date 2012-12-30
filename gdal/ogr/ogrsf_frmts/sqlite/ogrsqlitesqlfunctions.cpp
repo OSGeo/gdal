@@ -27,9 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+/* WARNING: VERY IMPORTANT NOTE: This file MUST not be directly compiled as */
+/* a standalone object. It must be included from ogrsqlitevirtualogr.cpp */
+#ifndef COMPILATION_ALLOWED
+#error See comment in file
+#endif
+
 #include "ogrsqlitesqlfunctions.h"
 #include "ogr_geocoding.h"
-#include "ogrsqliteregexp.h"
+#include "ogrsqliteregexp.cpp" /* yes the .cpp file, to make it work on Windows with load_extension('gdalXX.dll') */
 
 class OGRSQLiteExtensionData
 {
