@@ -35,6 +35,7 @@
 
 #include "ogrsqlitesqlfunctions.h"
 #include "ogr_geocoding.h"
+
 #include "ogrsqliteregexp.cpp" /* yes the .cpp file, to make it work on Windows with load_extension('gdalXX.dll') */
 
 class OGRSQLiteExtensionData
@@ -56,14 +57,18 @@ class OGRSQLiteExtensionData
 
     OGRGeocodingSessionH         GetGeocodingSession() { return hGeocodingSession; }
     void                         SetGeocodingSession(OGRGeocodingSessionH hGeocodingSessionIn) { hGeocodingSession = hGeocodingSessionIn; }
+    
+    void                         SetRegExpCache(void* hRegExpCacheIn) { hRegExpCache = hRegExpCacheIn; }
 };
+
+#ifdef COMPILE_OGRSQLiteExtensionData_IMPLEMENTATION
 
 /************************************************************************/
 /*                     OGRSQLiteExtensionData()                         */
 /************************************************************************/
 
 OGRSQLiteExtensionData::OGRSQLiteExtensionData(sqlite3* hDB) :
-        hRegExpCache(OGRSQLiteRegisterRegExpFunction(hDB)), hGeocodingSession(NULL)
+        hRegExpCache(NULL), hGeocodingSession(NULL)
 {
 #ifdef DEBUG
     pDummy = CPLMalloc(1);
@@ -114,6 +119,8 @@ OGRCoordinateTransformation* OGRSQLiteExtensionData::GetTransform(int nSrcSRSId,
     else
         return oIter->second;
 }
+
+#endif // COMPILE_OGRSQLiteExtensionData_IMPLEMENTATION
 
 /************************************************************************/
 /*                        OGR2SQLITE_ogr_version()                     */
@@ -499,6 +506,7 @@ void OGR2SQLITE_ogr_geocode_reverse(sqlite3_context* pContext,
 /*                   OGRSQLiteRegisterSQLFunctions()                    */
 /************************************************************************/
 
+static
 void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB)
 {
     OGRSQLiteExtensionData* pData = new OGRSQLiteExtensionData(hDB);
@@ -525,6 +533,8 @@ void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB)
     sqlite3_create_function(hDB, "Transform3", 3, SQLITE_ANY, pData,
                             OGR2SQLITE_Transform, NULL, NULL);
 
+    pData->SetRegExpCache(OGRSQLiteRegisterRegExpFunction(hDB));
+
     return pData;
 }
 
@@ -532,6 +542,7 @@ void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB)
 /*                   OGRSQLiteUnregisterSQLFunctions()                  */
 /************************************************************************/
 
+static
 void OGRSQLiteUnregisterSQLFunctions(void* hHandle)
 {
     OGRSQLiteExtensionData* pData = (OGRSQLiteExtensionData* )hHandle;

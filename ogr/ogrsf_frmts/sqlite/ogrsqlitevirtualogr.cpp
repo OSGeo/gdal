@@ -2279,10 +2279,4 @@ void OGR2SQLITE_Register()
     sqlite3_auto_extension ((void (*)(void)) OGR2SQLITE_static_register);
 }
 
-#else // HAVE_SQLITE_VFS
-
-#define COMPILATION_ALLOWED
-#include "ogrsqlitesqlfunctions.cpp" /* yes the .cpp file, to make it work on Windows with load_extension('gdalXX.dll') */
-#undef COMPILATION_ALLOWED
-
 #endif // HAVE_SQLITE_VFS
