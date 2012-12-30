@@ -39,7 +39,12 @@
 #include "cpl_string.h"
 #include "cpl_hash_set.h"
 #include "cpl_csv.h"
-#include "ogrsqlitesqlfunctions.h"
+
+#define COMPILATION_ALLOWED
+#define COMPILE_OGRSQLiteExtensionData_IMPLEMENTATION
+#include "ogrsqlitesqlfunctions.cpp" /* yes the .cpp file, to make it work on Windows with load_extension('gdalXX.dll') */
+#undef COMPILE_OGRSQLiteExtensionData_IMPLEMENTATION
+#undef COMPILATION_ALLOWED
 
 #ifdef HAVE_SPATIALITE
 #include "spatialite.h"

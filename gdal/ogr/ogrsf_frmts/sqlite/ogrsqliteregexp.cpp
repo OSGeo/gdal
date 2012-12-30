@@ -166,6 +166,7 @@ void OGRSQLiteREGEXPFunction(sqlite3_context *ctx, int argc, sqlite3_value **arg
 /*                        OGRSQLiteRegisterRegExpFunction()             */
 /************************************************************************/
 
+static
 void* OGRSQLiteRegisterRegExpFunction(sqlite3* hDB)
 {
 #ifdef HAVE_PCRE
@@ -199,6 +200,7 @@ void* OGRSQLiteRegisterRegExpFunction(sqlite3* hDB)
 /*                         OGRSQLiteFreeRegExpCache()                   */
 /************************************************************************/
 
+static
 void OGRSQLiteFreeRegExpCache(void* hRegExpCache)
 {
 #ifdef HAVE_PCRE
