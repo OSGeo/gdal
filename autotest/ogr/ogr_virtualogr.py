@@ -165,9 +165,49 @@ def ogr_virtualogr_2():
 
     return 'success'
 
+###############################################################################
+# Test GDAL as a SQLite3 dynamically loaded extension
+
+def ogr_virtualogr_3():
+
+    if ogr.GetDriverByName('SQLite') is None:
+        return 'skip'
+
+    # Find path of libgdal
+    libgdal_name = gdaltest.find_lib('gdal')
+    if libgdal_name is None:
+        return 'skip'
+    print('Found '+ libgdal_name)
+
+    # Find path of libsqlite3 or libspatialite
+    libsqlite_name = gdaltest.find_lib('sqlite3')
+    if libsqlite_name is None:
+        libsqlite_name = gdaltest.find_lib('spatialite')
+    if libsqlite_name is None:
+        return 'skip'
+    print('Found ' + libsqlite_name)
+
+    python_exe = sys.executable
+    if sys.platform == 'win32':
+        python_exe = python_exe.replace('\\', '/')
+        libgdal_name = libgdal_name.replace('\\', '/')
+        libsqlite_name = libsqlite_name.replace('\\', '/')
+
+    ret = gdaltest.runexternal(python_exe + ' ogr_as_sqlite_extension.py "%s" "%s"' % (libsqlite_name, libgdal_name), check_memleak = False)
+
+    if ret.find('skip') == 0:
+        return 'skip'
+    if ret.find(gdal.VersionInfo('RELEASE_NAME')) < 0:
+        gdaltest.post_reason('fail : %s' % ret)
+        return 'fail'
+
+    return 'success'
+
+
 gdaltest_list = [
     ogr_virtualogr_1,
     ogr_virtualogr_2,
+    ogr_virtualogr_3,
 ]
 
 if __name__ == '__main__':
