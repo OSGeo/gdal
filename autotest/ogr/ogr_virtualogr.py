@@ -41,9 +41,7 @@ import gdaltest
 ###############################################################################
 def ogr_virtualogr_run_sql(sql_statement):
 
-    gdal.SetConfigOption('OGR_SQLITE_STATIC_VIRTUAL_OGR', 'YES')
     ds = ogr.GetDriverByName('SQLite').CreateDataSource(':memory:')
-    gdal.SetConfigOption('OGR_SQLITE_STATIC_VIRTUAL_OGR', None)
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = ds.ExecuteSQL(sql_statement)
@@ -52,6 +50,18 @@ def ogr_virtualogr_run_sql(sql_statement):
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
+    if not success:
+        return success
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = ds.ExecuteSQL(sql_statement, dialect = 'SQLITE')
+    gdal.PopErrorHandler()
+    success = gdal.GetLastErrorMsg() == ''
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+    
     return success
 
 ###############################################################################
@@ -61,12 +71,6 @@ def ogr_virtualogr_1():
 
     if ogr.GetDriverByName('SQLite') is None:
         return 'skip'
-
-    # so that OGR2SQLITE_static_register() is called
-    ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM sqlite_master", dialect = 'SQLITE')
-    ds.ReleaseResultSet(sql_lyr)
-    ds = None
 
     # Invalid syntax
     if ogr_virtualogr_run_sql("CREATE VIRTUAL TABLE poly USING VirtualOGR()"):
@@ -137,9 +141,7 @@ def ogr_virtualogr_2():
     if ogr.GetDriverByName('SQLite') is None:
         return 'skip'
 
-    gdal.SetConfigOption('OGR_SQLITE_STATIC_VIRTUAL_OGR', 'YES')
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_2.db')
-    gdal.SetConfigOption('OGR_SQLITE_STATIC_VIRTUAL_OGR', None)
     ds.ExecuteSQL("CREATE VIRTUAL TABLE foo USING VirtualOGR('data/poly.shp')")
     ds.ExecuteSQL("CREATE TABLE spy_table (spy_content VARCHAR)")
     ds.ExecuteSQL("CREATE TABLE regular_table (bar VARCHAR)")
@@ -148,9 +150,7 @@ def ogr_virtualogr_2():
                   "SELECT OGR_STYLE FROM foo; END;")
     ds = None
 
-    gdal.SetConfigOption('OGR_SQLITE_STATIC_VIRTUAL_OGR', 'YES')
     ds = ogr.Open('/vsimem/ogr_virtualogr_2.db')
-    gdal.SetConfigOption('OGR_SQLITE_STATIC_VIRTUAL_OGR', None)
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds.ExecuteSQL("INSERT INTO regular_table (bar) VALUES ('bar')")
@@ -203,11 +203,79 @@ def ogr_virtualogr_3():
 
     return 'success'
 
+###############################################################################
+# Test ogr_datasource_load_layers()
+
+def ogr_virtualogr_4():
+
+    if ogr.GetDriverByName('SQLite') is None:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_4.db')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_datasource_load_layers('data/poly.shp')")
+    ds.ReleaseResultSet(sql_lyr)
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_datasource_load_layers('data/poly.shp')")
+    gdal.PopErrorHandler()
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM poly')
+    ret = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+    gdal.Unlink('/vsimem/ogr_virtualogr_4.db')
+
+    if ret != 10:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_4.db')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_datasource_load_layers('data/poly.shp', 0)")
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM poly')
+    ret = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+    gdal.Unlink('/vsimem/ogr_virtualogr_4.db')
+
+    if ret != 10:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_4.db')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_datasource_load_layers('data/poly.shp', 0, 'prefix')")
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM prefix_poly')
+    ret = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+    gdal.Unlink('/vsimem/ogr_virtualogr_4.db')
+
+    if ret != 10:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Various error conditions
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_virtualogr_4.db')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_datasource_load_layers(0)")
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_datasource_load_layers('foo')")
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_datasource_load_layers('data/poly.shp','a')")
+    ds.ReleaseResultSet(sql_lyr)
+    sql_lyr = ds.ExecuteSQL("SELECT ogr_datasource_load_layers('data/poly.shp', 0, 0)")
+    ds.ReleaseResultSet(sql_lyr)
+    gdal.PopErrorHandler()
+    ds = None
+    gdal.Unlink('/vsimem/ogr_virtualogr_4.db')
+
+    return 'success'
 
 gdaltest_list = [
     ogr_virtualogr_1,
     ogr_virtualogr_2,
     ogr_virtualogr_3,
+    ogr_virtualogr_4,
 ]
 
 if __name__ == '__main__':

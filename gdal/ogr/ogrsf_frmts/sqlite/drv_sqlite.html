@@ -166,6 +166,20 @@ sqlite> SELECT *, ST_Area(GEOMETRY) FROM POLY;
 
 <p>
 
+Alternatively, you can use the <i>ogr_datasource_load_layers(datasource_name[, update_mode[, prefix]])</i>
+function to automatically load all the layers of a datasource.
+
+<pre>
+sqlite> SELECT load_extension('libgdal.so');
+
+sqlite> SELECT load_extension('libspatialite.so');
+
+sqlite> SELECT ogr_datasource_load_layers('poly.shp');
+1
+sqlite> SELECT * FROM sqlite_master;
+table|poly|poly|0|CREATE VIRTUAL TABLE "poly" USING VirtualOGR('poly.shp', 0, 'poly')
+</pre>
+
 Refer to the <a href="ogr_sql_sqlite.html">SQLite SQL</a> dialect for an overview of the capabilities of VirtualOGR tables.<p>
 
 <h2>Creation Issues</h2>
