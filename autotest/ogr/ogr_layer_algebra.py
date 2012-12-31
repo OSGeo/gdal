@@ -92,25 +92,26 @@ def overlay_1():
 
     err = A.Intersection( B, C )
 
-    if err != 0:
-        gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Intersection' )
-        return 'fail'
-
-    if C.GetFeatureCount() != 2:
-        gdaltest.post_reason( 'Layer.Intersection returned '+str(C.GetFeatureCount())+' features' )
-        return 'fail'
-
-    i1 = ogr.Geometry(wkt = 'POLYGON ((2 3,3 3,3 2,2 2,2 3))')
-    i2 = ogr.Geometry(wkt = 'POLYGON ((5 2,5 3,6 3,6 2,5 2))')
-
-    C.ResetReading();
-    while 1:
-        feat = C.GetNextFeature()
-        if not feat: break
-        g = feat.GetGeometryRef()
-        if not(g.Equals(i1) or g.Equals(i2)):
-            gdaltest.post_reason( 'Layer.Intersection returned wrong geometry: '+g.ExportToWkt() )
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Intersection' )
             return 'fail'
+
+        if C.GetFeatureCount() != 2:
+            gdaltest.post_reason( 'Layer.Intersection returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
+
+        i1 = ogr.Geometry(wkt = 'POLYGON ((2 3,3 3,3 2,2 2,2 3))')
+        i2 = ogr.Geometry(wkt = 'POLYGON ((5 2,5 3,6 3,6 2,5 2))')
+
+        C.ResetReading();
+        while 1:
+            feat = C.GetNextFeature()
+            if not feat: break
+            g = feat.GetGeometryRef()
+            if not(g.Equals(i1) or g.Equals(i2)):
+                gdaltest.post_reason( 'Layer.Intersection returned wrong geometry: '+g.ExportToWkt() )
+                return 'fail'
 
     empty_layer(C)
 
@@ -118,13 +119,14 @@ def overlay_1():
 
     err = A.Union( B, C )
 
-    if err != 0:
-        gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Union' )
-        return 'fail'
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Union' )
+            return 'fail'
 
-    if C.GetFeatureCount() != 5:
-        gdaltest.post_reason( 'Layer.Union returned '+str(C.GetFeatureCount())+' features' )
-        return 'fail'
+        if C.GetFeatureCount() != 5:
+            gdaltest.post_reason( 'Layer.Union returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
 
     empty_layer(C)
 
@@ -132,13 +134,14 @@ def overlay_1():
 
     err = A.SymDifference( B, C )
 
-    if err != 0:
-        gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.SymDifference' )
-        return 'fail'
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.SymDifference' )
+            return 'fail'
 
-    if C.GetFeatureCount() != 3:
-        gdaltest.post_reason( 'Layer.SymDifference returned '+str(C.GetFeatureCount())+' features' )
-        return 'fail'
+        if C.GetFeatureCount() != 3:
+            gdaltest.post_reason( 'Layer.SymDifference returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
 
     empty_layer(C)
 
@@ -146,13 +149,14 @@ def overlay_1():
 
     err = A.Identity( B, C )
 
-    if err != 0:
-        gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Identity' )
-        return 'fail'
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Identity' )
+            return 'fail'
 
-    if C.GetFeatureCount() != 4:
-        gdaltest.post_reason( 'Layer.Identity returned '+str(C.GetFeatureCount())+' features' )
-        return 'fail'
+        if C.GetFeatureCount() != 4:
+            gdaltest.post_reason( 'Layer.Identity returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
 
     empty_layer(C)
 
@@ -160,13 +164,14 @@ def overlay_1():
 
     err = A.Update( B, C )
 
-    if err != 0:
-        gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Update' )
-        return 'fail'
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Update' )
+            return 'fail'
 
-    if C.GetFeatureCount() != 3:
-        gdaltest.post_reason( 'Layer.Update returned '+str(C.GetFeatureCount())+' features' )
-        return 'fail'
+        if C.GetFeatureCount() != 3:
+            gdaltest.post_reason( 'Layer.Update returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
 
     empty_layer(C)
 
@@ -174,13 +179,14 @@ def overlay_1():
 
     err = A.Clip( B, C )
 
-    if err != 0:
-        gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Clip' )
-        return 'fail'
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Clip' )
+            return 'fail'
 
-    if C.GetFeatureCount() != 2:
-        gdaltest.post_reason( 'Layer.Clip returned '+str(C.GetFeatureCount())+' features' )
-        return 'fail'
+        if C.GetFeatureCount() != 2:
+            gdaltest.post_reason( 'Layer.Clip returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
 
     empty_layer(C)
 
@@ -188,13 +194,14 @@ def overlay_1():
 
     err = A.Erase( B, C )
 
-    if err != 0:
-        gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Erase' )
-        return 'fail'
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Erase' )
+            return 'fail'
 
-    if C.GetFeatureCount() != 2:
-        gdaltest.post_reason( 'Layer.Erase returned '+str(C.GetFeatureCount())+' features' )
-        return 'fail'
+        if C.GetFeatureCount() != 2:
+            gdaltest.post_reason( 'Layer.Erase returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
 
     return 'success'
 
