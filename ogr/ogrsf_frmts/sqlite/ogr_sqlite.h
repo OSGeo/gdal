@@ -536,8 +536,6 @@ class OGRSQLiteDataSource : public OGRDataSource
 
     int                 nUndefinedSRID;
 
-    void               *hHandleSQLFunctions;
-
     virtual void        DeleteLayer( const char *pszLayer );
 
     const char*         GetSRTEXTColName();
@@ -637,6 +635,8 @@ class OGRSQLiteDataSource : public OGRDataSource
     int                 HasSpatialite4Layout() const { return bSpatialite4Layout; }
 
     int                 GetUndefinedSRID() const { return nUndefinedSRID; }
+
+    void                ReloadLayers();
 };
 
 /************************************************************************/

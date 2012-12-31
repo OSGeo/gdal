@@ -125,20 +125,39 @@ OGRFeature(SELECT):2
   area (Real) = 5268.8125
 \endcode
 
+\subsection ogr_sql_sqlite_datasource_function OGR datasource SQL functions
+
+The <b>ogr_datasource_load_layers(datasource_name[, update_mode[, prefix]])</b>
+function can be used to automatically load all the layers of a datasource as
+<a href="http://gdal.org/ogr/drv_sqlite.html">VirtualOGR tables</a>.<p>
+
+\code
+sqlite> SELECT load_extension('libgdal.so');
+
+sqlite> SELECT load_extension('libspatialite.so');
+
+sqlite> SELECT ogr_datasource_load_layers('poly.shp');
+1
+sqlite> SELECT * FROM sqlite_master;
+table|poly|poly|0|CREATE VIRTUAL TABLE "poly" USING VirtualOGR('poly.shp', 0, 'poly')
+\endcode
+
 \subsection ogr_sql_sqlite_layer_function OGR layer SQL functions
 
 The following SQL functions are available and operate on a layer name :
-<b>ogr_layer_Extent()</b>, <b>ogr_layer_SRID()</b> and <b>ogr_layer_GeometryType()</b><p>
+<b>ogr_layer_Extent()</b>, <b>ogr_layer_SRID()</b>,
+<b>ogr_layer_GeometryType()</b> and <b>ogr_layer_FeatureCount()</b><p>
 
 \code
 SELECT ogr_layer_Extent('poly'), ogr_layer_SRID('poly') AS srid,
-       ogr_layer_GeometryType('poly') AS geomtype
+       ogr_layer_GeometryType('poly') AS geomtype, ogr_layer_FeatureCount('poly') AS count
 
 returns:
 
 OGRFeature(SELECT):0
   srid (Integer) = 40004
   geomtype (String) = POLYGON
+  count (Integer) = 10
   POLYGON ((478315.53125 4762880.5,481645.3125 4762880.5,481645.3125 4765610.5,478315.53125 4765610.5,478315.53125 4762880.5))
 \endcode
 

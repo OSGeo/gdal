@@ -31,52 +31,15 @@
 #define _OGR_SQLITE_VIRTUAL_OGR_H_INCLUDED
 
 #include "ogr_sqlite.h"
-#include <map>
-#include <vector>
 
 #ifdef HAVE_SQLITE_VFS
 
-/************************************************************************/
-/*                           OGR2SQLITEModule                           */
-/************************************************************************/
+class OGR2SQLITEModule;
 
-class OGR2SQLITEModule
-{
-#ifdef DEBUG
-    void* pDummy; /* to track memory leaks */
-#endif
-    sqlite3* hDB; /* *NOT* to be freed */
+OGR2SQLITEModule* OGR2SQLITE_Setup(OGRDataSource* poDS,
+                                   OGRSQLiteDataSource* poSQLiteDS);
 
-    OGRDataSource* poDS; /* *NOT* to be freed */
-    std::vector<OGRDataSource*> apoExtraDS; /* each datasource to be freed */
-
-    OGRSQLiteDataSource* poSQLiteDS;  /* *NOT* to be freed, might be NULL */
-
-    std::map< CPLString, OGRLayer* > oMapVTableToOGRLayer;
-
-    void* hHandleSQLFunctions;
-
-  public:
-                                 OGR2SQLITEModule(OGRDataSource* poDS);
-                                ~OGR2SQLITEModule();
-
-    int                          Setup(OGRSQLiteDataSource* poSQLiteDS);
-    int                          Setup(sqlite3* hDB, int bAutoDestroy = FALSE);
-    sqlite3*                     GetDBHandle() { return hDB; }
-
-    OGRDataSource*               GetDS() { return poDS; }
-
-    int                          AddExtraDS(OGRDataSource* poDS);
-    OGRDataSource               *GetExtraDS(int nIndex);
-
-    int                          FetchSRSId(OGRSpatialReference* poSRS);
-
-    void                         RegisterVTable(const char* pszVTableName, OGRLayer* poLayer);
-    void                         UnregisterVTable(const char* pszVTableName);
-    OGRLayer*                    GetLayerForVTable(const char* pszVTableName);
-
-    void                         SetHandleSQLFunctions(void* hHandleSQLFunctionsIn) { hHandleSQLFunctions = hHandleSQLFunctionsIn; }
-};
+int OGR2SQLITE_AddExtraDS(OGR2SQLITEModule* poModule, OGRDataSource* poDS);
 
 void OGR2SQLITE_Register();
 
