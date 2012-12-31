@@ -147,7 +147,7 @@ def basic_test_8():
         python_exe = python_exe.replace('\\', '/')
 
     ret = gdaltest.runexternal(python_exe + ' basic_test.py LICENSE 0')
-    if ret.find('GDAL/OGR is released under the MIT/X license') != 0 and ret.find('GDAL/OGR Licensing') != 0:
+    if ret.find('GDAL/OGR is released under the MIT/X license') != 0 and ret.find('GDAL/OGR Licensing') >= 0:
         gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
@@ -157,7 +157,7 @@ def basic_test_8():
     f.close()
     ret = gdaltest.runexternal(python_exe + ' basic_test.py LICENSE 1')
     os.unlink('tmp/LICENSE.TXT')
-    if ret.find('fake_license') != 0 and ret.find('GDAL/OGR Licensing') != 0:
+    if ret.find('fake_license') != 0 and ret.find('GDAL/OGR Licensing') >= 0:
         gdaltest.post_reason('fail')
         print(ret)
         return 'fail'
