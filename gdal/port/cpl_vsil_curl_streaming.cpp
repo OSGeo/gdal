@@ -201,8 +201,6 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     ExistStatus     eExists;
     int             bIsDirectory;
 
-    vsi_l_offset    lastDownloadedOffset;
-    int             nBlocksToDownload;
     int             bEOF;
 
     CURL*           hCurlHandle;
@@ -270,8 +268,6 @@ VSICurlStreamingHandle::VSICurlStreamingHandle(VSICurlStreamingFSHandler* poFS, 
     bIsDirectory = cachedFileProp->bIsDirectory;
     poFS->ReleaseMutex();
 
-    lastDownloadedOffset = -1;
-    nBlocksToDownload = 1;
     bEOF = FALSE;
 
     hCurlHandle = NULL;
