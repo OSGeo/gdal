@@ -23,8 +23,8 @@ all:	default multireadtest.exe \
 			dumpoverviews.exe gdalwarpsimple.exe gdalflattenmask.exe \
 			gdaltorture.exe gdal2ogr.exe test_ogrsf.exe
 
-gdalinfo.exe:	gdalinfo.c $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalinfo.c $(XTRAOBJ) $(LIBS) \
+gdalinfo.exe:	gdalinfo.c commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalinfo.c commonutils.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
@@ -53,8 +53,8 @@ gdallocationinfo.exe:	gdallocationinfo.cpp $(GDALLIB) $(XTRAOBJ)
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
-gdalsrsinfo.exe:	gdalsrsinfo.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalsrsinfo.cpp $(XTRAOBJ) $(LIBS) \
+gdalsrsinfo.exe:	gdalsrsinfo.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalsrsinfo.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
@@ -118,13 +118,13 @@ testreprojmulti.exe:	testreprojmulti.cpp $(GDALLIB) $(XTRAOBJ)
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
-ogr2ogr.exe:	ogr2ogr.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(CFLAGS) $(XTRAFLAGS) ogr2ogr.cpp $(XTRAOBJ) $(LIBS) \
+ogr2ogr.exe:	ogr2ogr.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) ogr2ogr.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
-ogrinfo.exe:	ogrinfo.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(CFLAGS) $(XTRAFLAGS) ogrinfo.cpp $(XTRAOBJ) $(LIBS) \
+ogrinfo.exe:	ogrinfo.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) ogrinfo.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
@@ -138,8 +138,8 @@ testepsg.exe:	testepsg.cpp $(GDALLIB) $(XTRAOBJ)
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
-test_ogrsf.exe:	test_ogrsf.cpp $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(CFLAGS) $(XTRAFLAGS) test_ogrsf.cpp $(XTRAOBJ) $(LIBS) \
+test_ogrsf.exe:	test_ogrsf.cpp commonutils.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) test_ogrsf.cpp commonutils.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	

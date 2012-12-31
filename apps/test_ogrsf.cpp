@@ -31,6 +31,7 @@
 #include "cpl_conv.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
+#include "commonutils.h"
 
 CPL_CVSID("$Id$");
 
@@ -55,19 +56,8 @@ int main( int nArgc, char ** papszArgv )
     const char  *pszDialect = NULL;
     int bRet = TRUE;
 
-    /* Must process OGR_SKIP before OGRRegisterAll(), but we can't call */
-    /* OGRGeneralCmdLineProcessor before it needs the drivers to be registered */
-    /* for the --format or --formats options */
-    for( int iArg = 1; iArg < nArgc; iArg++ )
-    {
-        if( EQUAL(papszArgv[iArg], "--config") && iArg + 2 < nArgc &&
-            EQUAL(papszArgv[iArg+1], "OGR_SKIP") )
-        {
-            CPLSetConfigOption(papszArgv[iArg+1], papszArgv[iArg+2]);
-            break;
-        }
-    }
-    
+    EarlySetConfigOptions(nArgc, papszArgv);
+
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
 /* -------------------------------------------------------------------- */
