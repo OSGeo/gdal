@@ -1410,7 +1410,7 @@ def find_lib_linux(libname):
 def find_lib_sunos(libname):
 
     pid = os.getpid()
-    (lines, err) = gdaltest.runexternal_out_and_err('pmap %d' % pid)
+    (lines, err) = runexternal_out_and_err('pmap %d' % pid)
     
     for line in lines.split('\n'):
         if line.rfind('/lib' + libname) == -1 or line.find('.so') == -1:
