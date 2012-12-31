@@ -950,7 +950,10 @@ void OGRODSDataSource::endElementCell(const char *pszName)
 
         for(int i = 0; i < nCellsRepeated; i++)
         {
-            apoCurLineValues.push_back(osValue.size() ? osValue : osFormula);
+            if( osValue.size() )
+                apoCurLineValues.push_back(osValue);
+            else
+                apoCurLineValues.push_back(osFormula);
             apoCurLineTypes.push_back(osValueType);
         }
 
