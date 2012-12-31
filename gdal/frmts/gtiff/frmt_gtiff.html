@@ -80,7 +80,7 @@ value for unmasked pixels is 255) unless the GDAL_TIFF_INTERNAL_MASK_TO_8BIT
 configuration option is set to NO. This does not affect the way the mask band is
 written (it is always 1-bit).</p>
 
-<h2><a name="overviews"Overviews</a></h2>
+<h2><a name="overviews">Overviews</a></h2>
 
 <p>The GeoTIFF driver supports reading, creation and update of internal overviews.
 Internal overviews can be created on GeoTIFF files opened in update mode
@@ -205,7 +205,7 @@ tags are emitted by GDAL.</p>
 <ul>
 <li>With <tt>GDALGeoTIFF</tt> (the default) various GDAL custom tags may be written.</li>
 <li>With <tt>GeoTIFF</tt> only GeoTIFF tags will be added to the baseline.</li>
-<li>With <tt>BASELINE</tt> no GDAL or GeoTIFF tags will be written.  BASELINE is occationally useful when writing files to
+<li>With <tt>BASELINE</tt> no GDAL or GeoTIFF tags will be written.  BASELINE is occasionally useful when writing files to
 be read by applications intolerant of unrecognised tags.</li>
 </ul>
 </li>
@@ -222,9 +222,9 @@ be read by applications intolerant of unrecognised tags.</li>
 size of the resulting file. If that computed file size is over 4GiB, GDAL will automatically
 decide to create a BigTIFF file. However, when compression is used, it is not possible in
 advance to known the final size of the file, so classical TIFF will be chosen. In
-that case, the user must explicitely require the creation of a BigTIFF with BIGTIFF=YES
+that case, the user must explicitly require the creation of a BigTIFF with BIGTIFF=YES
 if he anticipates the final file to be too big for classical TIFF format.
-If BigTIFF creation is not explicitely asked or guessed and that the resulting file is too big for classical TIFF,
+If BigTIFF creation is not explicitly asked or guessed and the resulting file is too big for classical TIFF,
 libtiff will fail with an error message like "TIFFAppendToStrip:Maximum TIFF file size exceeded".</p></li>
 
 <li><p><b>PIXELTYPE=[DEFAULT/SIGNEDBYTE]</b>: By setting this to SIGNEDBYTE, a 

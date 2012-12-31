@@ -26,8 +26,8 @@ refer to the following pages:
 
 The SELECT statement is used to fetch layer features (analogous to table
 rows in an RDBMS) with the result of the query represented as a temporary layer
-of features.   The layers of the datasource are analagous to tables in an 
-RDBMS and feature attributes are analagous to column values.  The simpliest
+of features.   The layers of the datasource are analogous to tables in an 
+RDBMS and feature attributes are analogous to column values.  The simplest
 form of OGR SQLITE SELECT statement looks like this:
 
 \code
@@ -59,7 +59,7 @@ indexed on the key field being used.<p>
 \subsection ogr_sql_sqlite_geometry Geometry field
 
 The <b>GEOMETRY</b> special field represents the geometry of the feature
-returned by OGRFeature::GetGeometryRef(). It can be explicitely specified
+returned by OGRFeature::GetGeometryRef(). It can be explicitly specified
 in the result column list of a SELECT, and is automatically selected if the
 * wildcard is used.<p>
 
@@ -269,7 +269,7 @@ This function internally uses the OGRGeocodeReverse() API. Refer to it for more 
 \subsection ogr_sql_sqlite_spatial_index Spatialite spatial index
 
 Spatialite spatial index mechanism can be triggered by making sure a spatial index
-virtual table is mentionned in the SQL (of the form idx_layername_geometrycolumn), or
+virtual table is mentioned in the SQL (of the form idx_layername_geometrycolumn), or
 by using the more recent SpatialIndex from the VirtualSpatialIndex extension. In which
 case, a in-memory RTree will be built to be used to speed up the spatial queries.
 

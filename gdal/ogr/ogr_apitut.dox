@@ -9,7 +9,7 @@ It also includes code snippets for the corresponding functions in C and Python.
 
 \section ogr_apitut_read Reading From OGR
 
-For purposes of demonstrating reading with OGR, we will constuct a small 
+For purposes of demonstrating reading with OGR, we will construct a small 
 utility for dumping point layers from an OGR data source to stdout in
 comma-delimited format. 
 
@@ -72,7 +72,7 @@ In C :
 An OGRDataSource can potentially have many layers associated with it.  The 
 number of layers available can be queried with OGRDataSource::GetLayerCount()
 and individual layers fetched by index using OGRDataSource::GetLayer().  
-However, we wil just fetch the layer by name. 
+However, we will just fetch the layer by name. 
 
 In C++ :
 \code
@@ -424,7 +424,7 @@ ds = None
 \section ogr_apitut_write Writing To OGR
 
 As an example of writing through OGR, we will do roughly the opposite of the
-above.  A short program that reads comma seperated values from input text
+above.  A short program that reads comma separated values from input text
 will be written to a point shapefile via OGR. 
 
 As usual, we start by registering all the drivers, and then fetch the 
