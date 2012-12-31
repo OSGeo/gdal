@@ -33,6 +33,7 @@
 #include "cpl_string.h"
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
+#include "commonutils.h"
 
 CPL_CVSID("$Id$");
 
