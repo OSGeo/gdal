@@ -196,9 +196,13 @@ Set the photometric interpretation tag. Default is MINISBLACK, but if the
 input image has 3 or 4 bands of Byte type, then RGB will be selected. You can
 override default photometric using this option.</p></li>
 
-<li><p><b>ALPHA=YES</b>: The first "extrasample" is marked as being alpha if
+<li><p><b>ALPHA=[YES/NON-PREMULTIPLIED/PREMULTIPLIED/UNSPECIFIED]</b>:
+The first "extrasample" is marked as being alpha if
 there are any extra samples.  This is necessary if you want to produce
-a greyscale TIFF file with an alpha band (for instance). </p></li>
+a greyscale TIFF file with an alpha band (for instance).
+For GDAL &lt; 1.10, only the YES value is supported, and it is then assumed as being PREMULTIPLIED alpha
+(ASSOCALPHA in TIFF). Starting with GDAL 1.10, YES is an alias for NON-PREMULTIPLIED alpha, and
+the other values can be used.</p></li>
 
 <li><p><b>PROFILE=[GDALGeoTIFF/GeoTIFF/BASELINE]</b>: Control what non-baseline
 tags are emitted by GDAL.</p>
