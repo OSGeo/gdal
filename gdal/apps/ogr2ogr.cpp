@@ -34,6 +34,7 @@
 #include "ogr_api.h"
 #include "gdal.h"
 #include "gdal_alg.h"
+#include "commonutils.h"
 
 CPL_CVSID("$Id$");
 
@@ -849,6 +850,9 @@ int main( int nArgc, char ** papszArgv )
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
         exit(1);
+
+    EarlySetConfigOptions(nArgc, papszArgv);
+
 /* -------------------------------------------------------------------- */
 /*      Register format(s).                                             */
 /* -------------------------------------------------------------------- */

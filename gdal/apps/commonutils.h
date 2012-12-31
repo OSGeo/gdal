@@ -30,7 +30,15 @@
 #ifndef _COMMONUTILS_H_
 #define _COMMONUTILS_H_
 
+#include "cpl_port.h"
+
+CPL_C_START
+
 void CheckExtensionConsistency(const char* pszDestFilename,
                                const char* pszDriverName);
+
+void EarlySetConfigOptions( int argc, char ** argv );
+
+CPL_C_END
 
 #endif
