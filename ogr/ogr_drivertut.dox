@@ -254,7 +254,7 @@ OGRLayer *OGRSPFDataSource::GetLayer( int iLayer )
 \section odt_layer_bro Read Only Layer
 
 The OGRSPFLayer is implements layer semantics for an .spf file.  It provides
-access to a set of feature objects in a constistent coordinate system
+access to a set of feature objects in a consistent coordinate system
 with a particular set of attribute columns.  Our class definition looks like
 this:
 
@@ -427,7 +427,7 @@ In this implementation we do not provide a custom implementation for the
 GetFeature() method.  This means an attempt to read a particular feature
 by it's feature id will result in many calls to GetNextFeature() till the 
 desired feature is found.  However, in a sequential text format like spf
-there is little else we could do anyways.
+there is little else we could do anyway.
 
 There! We have completed a simple read-only feature file format driver.  
 
