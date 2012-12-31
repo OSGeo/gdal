@@ -61,8 +61,6 @@ class OGRSQLiteExtensionData
     void                         SetRegExpCache(void* hRegExpCacheIn) { hRegExpCache = hRegExpCacheIn; }
 };
 
-#ifdef COMPILE_OGRSQLiteExtensionData_IMPLEMENTATION
-
 /************************************************************************/
 /*                     OGRSQLiteExtensionData()                         */
 /************************************************************************/
@@ -119,8 +117,6 @@ OGRCoordinateTransformation* OGRSQLiteExtensionData::GetTransform(int nSrcSRSId,
     else
         return oIter->second;
 }
-
-#endif // COMPILE_OGRSQLiteExtensionData_IMPLEMENTATION
 
 /************************************************************************/
 /*                        OGR2SQLITE_ogr_version()                     */
@@ -503,6 +499,90 @@ void OGR2SQLITE_ogr_geocode_reverse(sqlite3_context* pContext,
 }
 
 /************************************************************************/
+/*               OGR2SQLITE_ogr_datasource_load_layers()                */
+/************************************************************************/
+
+static
+void OGR2SQLITE_ogr_datasource_load_layers(sqlite3_context* pContext,
+                                           int argc, sqlite3_value** argv)
+{
+    sqlite3* hDB = (sqlite3*) sqlite3_user_data(pContext);
+
+    if( (argc < 1 || argc > 3) || sqlite3_value_type (argv[0]) != SQLITE_TEXT )
+    {
+        sqlite3_result_int (pContext, 0);
+        return;
+    }
+    const char* pszDataSource = (const char*) sqlite3_value_text(argv[0]);
+
+    int bUpdate = FALSE;
+    if( argc >= 2 )
+    {
+        if( sqlite3_value_type(argv[1]) != SQLITE_INTEGER )
+        {
+            sqlite3_result_int (pContext, 0);
+            return;
+        }
+        bUpdate = sqlite3_value_int(argv[1]);
+    }
+
+    const char* pszPrefix = NULL;
+    if( argc >= 3 )
+    {
+        if( sqlite3_value_type(argv[2]) != SQLITE_TEXT )
+        {
+            sqlite3_result_int (pContext, 0);
+            return;
+        }
+        pszPrefix = (const char*) sqlite3_value_text(argv[2]);
+    }
+
+    OGRDataSource* poDS = (OGRDataSource*)OGROpenShared(pszDataSource, bUpdate, NULL);
+    if( poDS == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s", pszDataSource);
+        sqlite3_result_int (pContext, 0);
+        return;
+    }
+
+    CPLString osEscapedDataSource = OGRSQLiteEscape(pszDataSource);
+    for(int i=0;i<poDS->GetLayerCount();i++)
+    {
+        const char* pszLayerName = poDS->GetLayer(i)->GetName();
+        CPLString osEscapedLayerName = OGRSQLiteEscape(pszLayerName);
+        CPLString osTableName;
+        if( pszPrefix != NULL )
+        {
+            osTableName = pszPrefix;
+            osTableName += "_";
+            osTableName += OGRSQLiteEscapeName(pszLayerName);
+        }
+        else
+        {
+            osTableName = OGRSQLiteEscapeName(pszLayerName);
+        }
+
+        char* pszErrMsg = NULL;
+        if( sqlite3_exec(hDB, CPLSPrintf(
+            "CREATE VIRTUAL TABLE \"%s\" USING VirtualOGR('%s', %d, '%s')",
+                osTableName.c_str(),
+                osEscapedDataSource.c_str(),
+                bUpdate,
+                osEscapedLayerName.c_str()),
+            NULL, NULL, &pszErrMsg) != SQLITE_OK )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot create table \"%s\" : %s",
+                     osTableName.c_str(), pszErrMsg);
+            sqlite3_free(pszErrMsg);
+        }
+    }
+
+    poDS->Release();
+    sqlite3_result_int (pContext, 1);
+}
+
+/************************************************************************/
 /*                   OGRSQLiteRegisterSQLFunctions()                    */
 /************************************************************************/
 
@@ -528,6 +608,15 @@ void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB)
 
     sqlite3_create_function(hDB, "ogr_geocode_reverse", -1, SQLITE_ANY, pData,
                             OGR2SQLITE_ogr_geocode_reverse, NULL, NULL);
+
+    sqlite3_create_function(hDB, "ogr_datasource_load_layers", 1, SQLITE_ANY, hDB,
+                            OGR2SQLITE_ogr_datasource_load_layers, NULL, NULL);
+
+    sqlite3_create_function(hDB, "ogr_datasource_load_layers", 2, SQLITE_ANY, hDB,
+                            OGR2SQLITE_ogr_datasource_load_layers, NULL, NULL);
+
+    sqlite3_create_function(hDB, "ogr_datasource_load_layers", 3, SQLITE_ANY, hDB,
+                            OGR2SQLITE_ogr_datasource_load_layers, NULL, NULL);
 
     // Custom and undocumented function, not sure I'll keep it.
     sqlite3_create_function(hDB, "Transform3", 3, SQLITE_ANY, pData,

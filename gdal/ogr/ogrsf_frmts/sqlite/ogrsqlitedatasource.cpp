@@ -39,12 +39,7 @@
 #include "cpl_string.h"
 #include "cpl_hash_set.h"
 #include "cpl_csv.h"
-
-#define COMPILATION_ALLOWED
-#define COMPILE_OGRSQLiteExtensionData_IMPLEMENTATION
-#include "ogrsqlitesqlfunctions.cpp" /* yes the .cpp file, to make it work on Windows with load_extension('gdalXX.dll') */
-#undef COMPILE_OGRSQLiteExtensionData_IMPLEMENTATION
-#undef COMPILATION_ALLOWED
+#include "ogrsqlitevirtualogr.h"
 
 #ifdef HAVE_SPATIALITE
 #include "spatialite.h"
@@ -131,8 +126,6 @@ OGRSQLiteDataSource::OGRSQLiteDataSource()
     fpMainFile = NULL; /* Do not close ! The VFS layer will do it for us */
     nFileTimestamp = 0;
     bLastSQLCommandIsUpdateLayerStatistics = FALSE;
-
-    hHandleSQLFunctions = NULL;
 }
 
 /************************************************************************/
@@ -169,8 +162,6 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
     }
     CPLFree( panSRID );
     CPLFree( papoSRS );
-
-    OGRSQLiteUnregisterSQLFunctions(hHandleSQLFunctions);
 
     if( hDB != NULL )
         sqlite3_close( hDB );
@@ -408,8 +399,10 @@ void OGRSQLiteDataSource::NotifyFileOpened(const char* pszFilename,
 int OGRSQLiteDataSource::OpenOrCreateDB(int flags)
 {
     int rc;
-
+    
 #ifdef HAVE_SQLITE_VFS
+    OGR2SQLITE_Register();
+
     int bUseOGRVFS = CSLTestBoolean(CPLGetConfigOption("SQLITE_USE_OGR_VFS", "NO"));
     if (bUseOGRVFS || strncmp(pszName, "/vsi", 4) == 0)
     {
@@ -458,8 +451,6 @@ int OGRSQLiteDataSource::OpenOrCreateDB(int flags)
 
     if (!SetSynchronous())
         return FALSE;
-
-    hHandleSQLFunctions = OGRSQLiteRegisterSQLFunctions(hDB);
 
     return TRUE;
 }
@@ -820,6 +811,21 @@ int OGRSQLiteDataSource::InitWithEPSG()
     }
 
     return (rc == SQLITE_OK);
+}
+
+/************************************************************************/
+/*                        ReloadLayers()                                */
+/************************************************************************/
+
+void OGRSQLiteDataSource::ReloadLayers()
+{
+    for(int i=0;i<nLayers;i++)
+        delete papoLayers[i];
+    CPLFree(papoLayers);
+    papoLayers = NULL;
+    nLayers = 0;
+
+    Open(pszName, bUpdate);
 }
 
 /************************************************************************/

@@ -714,6 +714,18 @@ def ogr_sql_sqlite_13():
         print(geom_wkt)
         return 'fail'
 
+    # Test ogr_layer_FeatureCount()
+    sql_lyr = ds.ExecuteSQL( "SELECT ogr_layer_FeatureCount('my_layer') AS the_count", dialect = 'SQLite' )
+    feat = sql_lyr.GetNextFeature()
+    count = feat.GetField('the_count')
+    feat = None
+    ds.ReleaseResultSet( sql_lyr )
+
+    if count != 1:
+        gdaltest.post_reason('fail')
+        print(count)
+        return 'fail'
+
     # Test ogr_layer_Extent() on a non spatial layer
     sql_lyr = ds.ExecuteSQL( "SELECT ogr_layer_Extent('non_spatial')", dialect = 'SQLite' )
     feat = sql_lyr.GetNextFeature()
