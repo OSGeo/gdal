@@ -30,12 +30,12 @@ An OGRSpatialReference encapsulates the definition of a projection and
 datum.<p>
 
 <li> <b>Feature</b> (<a href="ogr__feature_8h-source.html">ogr_feature.h</a>):
-The OGRFeature encapsulate the definition of a whole feature, that is a 
+The OGRFeature encapsulates the definition of a whole feature, that is a 
 geometry and a set of attributes.<p>
 
 <li> <b>Feature Class Definition</b>
 (<a href="ogr__feature_8h-source.html">ogr_feature.h</a>): 
-The OGRFeatureDefn class capsures the schema (set of field definitions) for
+The OGRFeatureDefn class captures the schema (set of field definitions) for
 a group of related features (normally a whole layer).<p>
 
 <li> <b>Layer</b>
@@ -73,7 +73,7 @@ abstract model and SFCOM are not modelled in OGR at this time.  In most
 cases the methods are aggregated into other classes.  This may change.<p>
 
 The OGRGeometryFactory is used to convert well known text, and well known
-binary format data into geometries.  These are predefined ascii and binary
+binary format data into geometries.  These are predefined ASCII and binary
 formats for representing all the types of simple features geometries.<p>
 
 In a manner based on the geometry object in SFCOM, the OGRGeometry includes
@@ -86,7 +86,7 @@ Many of the spatial analysis methods (such as computing overlaps and so
 forth) are not implemented at this time for OGRGeometry.<p>
 
 While it is theoretically possible to derive other or more specific
-geometry classes from the existing OGRGeometry classes, this isn't as
+geometry classes from the existing OGRGeometry classes, this isn't an
 aspect that has been well thought out.  In particular, it would be
 possible to create specialized classes using the OGRGeometryFactory without
 modifying it.<p>
@@ -167,7 +167,7 @@ current OGR architecture is that the spatial filter is set directly on
 the OGRLayer which is intended to be the only representative of a given
 layer in a data source.  This means it isn't possible to have multiple
 read operations active at one time with different spatial filters on 
-each.  This aspect may be revised in the future to introduct an OGRLayerView
+each.  This aspect may be revised in the future to introduce an OGRLayerView
 class or something similar.<p>
 
 Another question that might arise is why the OGRLayer and OGRFeatureDefn
@@ -197,7 +197,7 @@ instantiated or destroyed directly.<p>
 
 An OGRDataSource represents a set of OGRLayer objects.  This usually 
 represents a single file, set of files, database or gateway.  An OGRDataSource
-has a list of OGRLayer's which it owns but can return references to.<p>
+has a list of OGRLayers which it owns but can return references to.<p>
 
 OGRDataSource is an abstract base class.  An implementation is 
 expected to be subclassed for each file format driver implemented.
