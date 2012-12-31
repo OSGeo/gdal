@@ -41,12 +41,10 @@
 
 class OGRSQLiteExecuteSQLLayer: public OGRSQLiteSelectLayer
 {
-        OGR2SQLITEModule *poModule;
         char             *pszTmpDBName;
 
     public:
-        OGRSQLiteExecuteSQLLayer(OGR2SQLITEModule* poModule,
-                                 char* pszTmpDBName,
+        OGRSQLiteExecuteSQLLayer(char* pszTmpDBName,
                                  OGRSQLiteDataSource* poDS,
                                  CPLString osSQL,
                                  sqlite3_stmt * hStmt,
@@ -59,8 +57,7 @@ class OGRSQLiteExecuteSQLLayer: public OGRSQLiteSelectLayer
 /*                         OGRSQLiteExecuteSQLLayer()                   */
 /************************************************************************/
 
-OGRSQLiteExecuteSQLLayer::OGRSQLiteExecuteSQLLayer(OGR2SQLITEModule* poModule,
-                                                   char* pszTmpDBName,
+OGRSQLiteExecuteSQLLayer::OGRSQLiteExecuteSQLLayer(char* pszTmpDBName,
                                                    OGRSQLiteDataSource* poDS,
                                                    CPLString osSQL,
                                                    sqlite3_stmt * hStmt,
@@ -71,7 +68,6 @@ OGRSQLiteExecuteSQLLayer::OGRSQLiteExecuteSQLLayer(OGR2SQLITEModule* poModule,
                                                     bUseStatementForGetNextFeature,
                                                     bEmptyLayer)
 {
-    this->poModule = poModule;
     this->pszTmpDBName = pszTmpDBName;
 }
 
@@ -88,7 +84,6 @@ OGRSQLiteExecuteSQLLayer::~OGRSQLiteExecuteSQLLayer()
     Finalize();
 
     delete poDS;
-    delete poModule;
     VSIUnlink(pszTmpDBName);
     CPLFree(pszTmpDBName);
 }
@@ -288,9 +283,7 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(const char **ppszSQLCommand
             }
         }
 
-        else if( EQUALN(pszSQLCommand, "ogr_layer_extent", strlen("ogr_layer_extent")) ||
-                 EQUALN(pszSQLCommand, "ogr_layer_srid", strlen("ogr_layer_srid")) ||
-                 EQUALN(pszSQLCommand, "ogr_layer_geometrytype", strlen("ogr_layer_geometrytype")) )
+        else if( EQUALN(pszSQLCommand, "ogr_layer_", strlen("ogr_layer_"))  )
         {
             while( *pszSQLCommand != '\0' && *pszSQLCommand != '(' )
                 pszSQLCommand ++;
@@ -504,8 +497,14 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
     OGRSQLiteDataSource* poSQLiteDS = NULL;
     int nRet;
     int bSpatialiteDB = FALSE;
-    
-    OGR2SQLITE_Register();
+
+    CPLString osOldVal;
+    const char* pszOldVal = CPLGetConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", NULL);
+    if( pszOldVal != NULL )
+    {
+        osOldVal = pszOldVal;
+        pszOldVal = osOldVal.c_str();
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create in-memory sqlite/spatialite DB                           */
@@ -557,7 +556,10 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
         VSIFCloseL(VSIFileFromMemBuffer( pszTmpDBName, pabyEmptyDBClone, nEmptyDBSize, TRUE ));
 
         poSQLiteDS = new OGRSQLiteDataSource();
-        if( !poSQLiteDS->Open( pszTmpDBName, TRUE ) )
+        CPLSetThreadLocalConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "NO");
+        nRet = poSQLiteDS->Open( pszTmpDBName, TRUE );
+        CPLSetThreadLocalConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", pszOldVal);
+        if( !nRet )
         {
             /* should not happen really ! */
             delete poSQLiteDS;
@@ -571,7 +573,9 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
     /* No caching version */
     poSQLiteDS = new OGRSQLiteDataSource();
     char** papszOptions = CSLAddString(NULL, "SPATIALITE=YES");
+    CPLSetThreadLocalConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "NO");
     nRet = poSQLiteDS->Create( pszTmpDBName, papszOptions );
+    CPLSetThreadLocalConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", pszOldVal);
     CSLDestroy(papszOptions);
     papszOptions = NULL;
     if( nRet )
@@ -584,12 +588,14 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
     {
         delete poSQLiteDS;
         poSQLiteDS = NULL;
-#else
+#else // HAVE_SPATIALITE
     if( TRUE )
     {
-#endif
+#endif // HAVE_SPATIALITE
         poSQLiteDS = new OGRSQLiteDataSource();
+        CPLSetThreadLocalConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "NO");
         nRet = poSQLiteDS->Create( pszTmpDBName, NULL );
+        CPLSetThreadLocalConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", pszOldVal);
         if( !nRet )
         {
             delete poSQLiteDS;
@@ -602,8 +608,8 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
 /* -------------------------------------------------------------------- */
 /*      Attach the Virtual Table OGR2SQLITE module to it.               */
 /* -------------------------------------------------------------------- */
-    OGR2SQLITEModule* poModule = new OGR2SQLITEModule(poDS);
-    poModule->Setup(poSQLiteDS);
+    OGR2SQLITEModule* poModule = OGR2SQLITE_Setup(poDS, poSQLiteDS);
+    sqlite3* hDB = poSQLiteDS->GetDB();
 
 /* -------------------------------------------------------------------- */
 /*      Analysze the statement to determine which tables will be used.  */
@@ -664,7 +670,6 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
                          "Cannot open datasource '%s'",
                          oLayerDesc.osDSName.c_str() );
                 delete poSQLiteDS;
-                delete poModule;
                 VSIUnlink(pszTmpDBName);
                 CPLFree(pszTmpDBName);
                 return NULL;
@@ -679,7 +684,6 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
                          oLayerDesc.osDSName.c_str() );
                 delete poOtherDS;
                 delete poSQLiteDS;
-                delete poModule;
                 VSIUnlink(pszTmpDBName);
                 CPLFree(pszTmpDBName);
                 return NULL;
@@ -687,7 +691,7 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
 
             osTableName = oLayerDesc.osSubstitutedName;
 
-            nExtraDS = poModule->AddExtraDS(poOtherDS);
+            nExtraDS = OGR2SQLITE_AddExtraDS(poModule, poOtherDS);
 
             osSQL.Printf("CREATE VIRTUAL TABLE \"%s\" USING VirtualOGR(%d,'%s',%d)",
                          OGRSQLiteEscapeName(osTableName).c_str(),
@@ -695,8 +699,6 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
                          OGRSQLiteEscape(oLayerDesc.osLayerName).c_str(),
                          bFoundOGRStyle);
         }
-
-        sqlite3* hDB = poSQLiteDS->GetDB();
 
         char* pszErrMsg = NULL;
         int rc = sqlite3_exec( hDB, osSQL.c_str(),
@@ -905,22 +907,10 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
 
     }
 
-    delete poSQLiteDS;
-
 /* -------------------------------------------------------------------- */
-/*      Re-open so that virtual tables are recognized                   */
+/*      Reload, so that virtual tables are recognized                   */
 /* -------------------------------------------------------------------- */
-    poSQLiteDS = new OGRSQLiteDataSource();
-    if( !poSQLiteDS->Open(pszTmpDBName, TRUE) )
-    {
-        delete poSQLiteDS;
-        delete poModule;
-        VSIUnlink(pszTmpDBName);
-        CPLFree(pszTmpDBName);
-        return NULL;
-    }
-    sqlite3* hDB = poSQLiteDS->GetDB();
-    poModule->Setup(poSQLiteDS);
+    poSQLiteDS->ReloadLayers();
 
 /* -------------------------------------------------------------------- */
 /*      Prepare the statement.                                          */
@@ -948,7 +938,6 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
         }
 
         delete poSQLiteDS;
-        delete poModule;
         VSIUnlink(pszTmpDBName);
         CPLFree(pszTmpDBName);
 
@@ -970,7 +959,6 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
             sqlite3_finalize( hSQLStmt );
 
             delete poSQLiteDS;
-            delete poModule;
             VSIUnlink(pszTmpDBName);
             CPLFree(pszTmpDBName);
 
@@ -983,7 +971,6 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
             sqlite3_finalize( hSQLStmt );
 
             delete poSQLiteDS;
-            delete poModule;
             VSIUnlink(pszTmpDBName);
             CPLFree(pszTmpDBName);
 
@@ -999,7 +986,7 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
 /* -------------------------------------------------------------------- */
     OGRSQLiteSelectLayer *poLayer = NULL;
 
-    poLayer = new OGRSQLiteExecuteSQLLayer( poModule, pszTmpDBName,
+    poLayer = new OGRSQLiteExecuteSQLLayer( pszTmpDBName,
                                             poSQLiteDS, pszStatement, hSQLStmt,
                                             bUseStatementForGetNextFeature, bEmptyLayer );
 

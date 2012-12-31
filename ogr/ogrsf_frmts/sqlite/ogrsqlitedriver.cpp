@@ -116,32 +116,35 @@ OGRDataSource *OGRSQLiteDriver::Open( const char * pszFilename,
 /*      Verify that the target is a real file, and has an               */
 /*      appropriate magic string at the beginning.                      */
 /* -------------------------------------------------------------------- */
-    char szHeader[16];
+    if( !EQUAL(pszFilename, ":memory:") )
+    {
+        char szHeader[16];
 
 #ifdef HAVE_SQLITE_VFS
-    VSILFILE *fpDB;
-    fpDB = VSIFOpenL( pszFilename, "rb" );
-    if( fpDB == NULL )
-        return NULL;
-    
-    if( VSIFReadL( szHeader, 1, 16, fpDB ) != 16 )
-        memset( szHeader, 0, 16 );
-    
-    VSIFCloseL( fpDB );
+        VSILFILE *fpDB;
+        fpDB = VSIFOpenL( pszFilename, "rb" );
+        if( fpDB == NULL )
+            return NULL;
+        
+        if( VSIFReadL( szHeader, 1, 16, fpDB ) != 16 )
+            memset( szHeader, 0, 16 );
+        
+        VSIFCloseL( fpDB );
 #else
-    FILE *fpDB;
-    fpDB = VSIFOpen( pszFilename, "rb" );
-    if( fpDB == NULL )
-        return NULL;
+        FILE *fpDB;
+        fpDB = VSIFOpen( pszFilename, "rb" );
+        if( fpDB == NULL )
+            return NULL;
 
-    if( VSIFRead( szHeader, 1, 16, fpDB ) != 16 )
-        memset( szHeader, 0, 16 );
+        if( VSIFRead( szHeader, 1, 16, fpDB ) != 16 )
+            memset( szHeader, 0, 16 );
 
-    VSIFClose( fpDB );
+        VSIFClose( fpDB );
 #endif
     
-    if( strncmp( szHeader, "SQLite format 3", 15 ) != 0 )
-        return NULL;
+        if( strncmp( szHeader, "SQLite format 3", 15 ) != 0 )
+            return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      We think this is really an SQLite database, go ahead and try    */
