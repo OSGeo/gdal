@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -130,6 +131,38 @@ def basic_test_7():
         gdal.DontUseExceptions()
     return ret
 
+###############################################################################
+# Test gdal.VersionInfo('RELEASE_DATE') and gdal.VersionInfo('LICENSE')
+
+def basic_test_8():
+
+    ret = gdal.VersionInfo('RELEASE_DATE')
+    if len(ret) != 8:
+        gdaltest.post_reason('fail')
+        print(ret)
+        return 'fail'
+
+    python_exe = sys.executable
+    if sys.platform == 'win32':
+        python_exe = python_exe.replace('\\', '/')
+
+    ret = gdaltest.runexternal(python_exe + ' basic_test.py LICENSE 0')
+    if ret.find('GDAL/OGR is released under the MIT/X license') != 0:
+        gdaltest.post_reason('fail')
+        print(ret)
+        return 'fail'
+
+    f = open('tmp/LICENSE.TXT', 'wt')
+    f.write('fake_license')
+    f.close()
+    ret = gdaltest.runexternal(python_exe + ' basic_test.py LICENSE 1')
+    os.unlink('tmp/LICENSE.TXT')
+    if ret.find('fake_license') != 0:
+        gdaltest.post_reason('fail')
+        print(ret)
+        return 'fail'
+
+    return 'success'
 
 gdaltest_list = [ basic_test_1,
                   basic_test_2,
@@ -137,10 +170,22 @@ gdaltest_list = [ basic_test_1,
                   basic_test_4,
                   basic_test_5,
                   basic_test_6,
-                  basic_test_7 ]
+                  basic_test_7,
+                  basic_test_8 ]
 
 
 if __name__ == '__main__':
+    
+    if len(sys.argv) == 3 and sys.argv[1] == "LICENSE":
+        if sys.argv[2] == '0':
+            gdal.SetConfigOption('GDAL_DATA', '/foo')
+        else:
+            gdal.SetConfigOption('GDAL_DATA', 'tmp')
+        gdal.VersionInfo('LICENSE')
+        print(gdal.VersionInfo('LICENSE'))
+        import testnonboundtoswig
+        testnonboundtoswig.GDALDestroyDriverManager()
+        sys.exit(0)
 
     gdaltest.setup_run( 'basic_test' )
 
