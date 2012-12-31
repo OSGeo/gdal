@@ -1911,7 +1911,7 @@ GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
  * <li> "RELEASE_NAME": Returns the GDAL_RELEASE_NAME. ie. "1.1.7"
  * <li> "--version": Returns one line version message suitable for use in 
  * response to --version requests.  ie. "GDAL 1.1.7, released 2002/04/16"
- * <li> "LICENCE": Returns the content of the LICENSE.TXT file from the GDAL_DATA directory.
+ * <li> "LICENSE": Returns the content of the LICENSE.TXT file from the GDAL_DATA directory.
  *      Before GDAL 1.7.0, the returned string was leaking memory but this is now resolved.
  *      So the result should not been freed by the caller.
  * <li> "BUILD_INFO": List of NAME=VALUE pairs separated by newlines with 
