@@ -204,7 +204,7 @@ useful for datasets with huge amount of GCPs, such as L1B AVHRR or HDF4 MODIS
 which contain thousands of them.</dd>
 <dt> <b>-nomd</b></dt><dd> Suppress metadata printing. Some datasets may contain a lot
 of metadata strings.</dd>
-<dt> <b>-nrat</b></dt><dd> Suppres printing of raster attribute table.</dd>
+<dt> <b>-nrat</b></dt><dd> Suppress printing of raster attribute table.</dd>
 <dt> <b>-noct</b></dt><dd> Suppress printing of color table.</dd>
 <dt> <b>-checksum</b></dt><dd> Force computation of the checksum for each band in the dataset.</dd>
 <dt> <b>-mdd domain</b></dt><dd> Report metadata for the specified domain</dd>
@@ -309,7 +309,7 @@ resampling, and rescaling pixels in the process.
 <dl>
 <dt> <b>-ot</b>: <i>type</i></dt><dd> For the output bands to be of the
 indicated data type.</dd>
-<dt> <b>-strict</b>:</dt><dd> Do'nt be forgiving of mismatches and lost data
+<dt> <b>-strict</b>:</dt><dd> Don't be forgiving of mismatches and lost data
 when translating to the output format.</dd>
 <dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format.  The default
 is GeoTIFF (GTiff).  Use the short format name.</dd>
@@ -317,7 +317,7 @@ is GeoTIFF (GTiff).  Use the short format name.</dd>
 output. Bands are numbered from 1. Multiple <b>-b</b> switches may be used
 to select a set of input bands to write to the output file, or to reorder
 bands. Starting with GDAL 1.8.0, <i>band</i> can also be set to "mask,1"
-(or just "mask") to mean the mask band of the 1st band of the input dataset.</dd>
+(or just "mask") to mean the mask band of the first band of the input dataset.</dd>
 <dt> <b>-mask</b> <i>band</i>:</dt><dd> (GDAL >= 1.8.0) Select an input band
 <i>band</i> to create output dataset mask band. Bands are numbered from 1. 
 <i>band</i> can be set to "none" to avoid copying the global mask of the input dataset if
@@ -458,7 +458,7 @@ be recomputed and rewritten in place.
 Some format drivers do not support overviews at all.  Many format drivers
 store overviews in a secondary file with the extension .ovr that is actually
 in TIFF format.  By default, the GeoTIFF driver stores overviews internally to the file 
-operated on (if it is writable), unless the -ro flag is specified.
+operated on (if it is writeable), unless the -ro flag is specified.
 
 Most drivers also support an alternate overview format using Erdas Imagine 
 format.  To trigger this use the USE_RRD=YES configuration option.  This will 
@@ -517,7 +517,7 @@ gdaladdo -ro --config COMPRESS_OVERVIEW DEFLATE erdas.img 2 4 8 16
 \endverbatim
 
 Create an external JPEG-compressed GeoTIFF overview file from a 3-band RGB dataset
-(if the dataset is a writable GeoTIFF, you also need to add the -ro option to
+(if the dataset is a writeable GeoTIFF, you also need to add the -ro option to
 force the generation of external overview):
 
 \verbatim
@@ -606,7 +606,7 @@ gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average|user}]
 \section gdalbuildvrt_description DESCRIPTION
 
 This program builds a VRT (Virtual Dataset) that is a mosaic of the list of
-input gdal datasets. The list of input gdal datasets can be specified at the end
+input GDAL datasets. The list of input GDAL datasets can be specified at the end
 of the command line, or put in a text file (one filename per line) for very long lists,
 or it can be a MapServer tileindex (see \ref gdaltindex utility). In the later case, all
 entries in the tile index will be added to the VRT.
@@ -723,7 +723,7 @@ To disable the progress bar on the console
 Example:
 \endhtmlonly
 
-Make a virtual mosaic from all TIFF files containes in a directory :
+Make a virtual mosaic from all TIFF files contained in a directory :
 \verbatim
 gdalbuildvrt doq_index.vrt doq/*.tif
 \endverbatim
@@ -1293,7 +1293,7 @@ such that the aligned extent includes the minimum extent.</dd>
 If not specified the aggregate extents of all input files will be
 used.</dd>
 <dt>
-<dt> <b>-v</b>:</dt><dd> Generate verbose output of mosaicking operations as they are done.</dd>
+<dt> <b>-v</b>:</dt><dd> Generate verbose output of mosaicing operations as they are done.</dd>
 <dt> <b>-separate</b>:</dt><dd> 
 Place each input file into a separate <i>stacked</i> band. 
 </dd>
@@ -1513,7 +1513,7 @@ If your number of input tiles exhausts the command line buffer, use the general 
 <dl>
 <dt> <b>-targetDir</b> <i>directory</i>:</dt><dd>
 The directory where the tile result is created. Pyramids are stored
-in  subdirs  numbered  from  1. Created tile names have a numbering
+in  subdirectories  numbered  from  1. Created tile names have a numbering
 schema and contain the name of the source tiles(s)
 </dd>
 <dt> <b>-of</b> <i>format</i>:</dt><dd>
@@ -1721,11 +1721,11 @@ Default is 0.0.</dd>
 (counter clockwise, default 0.0).</dd>
 <dt><i>max_points</i>:</dt> <dd>Maximum number of data points to use. Do not
 search for more points than this number. This is only used if search ellipse
-is set (both radiuses are non-zero). Zero means that all found points should
+is set (both radii are non-zero). Zero means that all found points should
 be used. Default is 0.</dd>
 <dt><i>min_points</i>:</dt> <dd>Minimum number of data points to use. If less
 amount of points found the grid node considered empty and will be filled with
-NODATA marker. This is only used if search ellipse is set (both radiuses are
+NODATA marker. This is only used if search ellipse is set (both radii are
 non-zero). Default is 0.</dd>
 <dt><i>nodata</i>:</dt> <dd>NODATA marker to fill empty points (default
 0.0).</dd>
@@ -1816,7 +1816,7 @@ Default is 0.0.</dd>
 (counter clockwise, default 0.0).</dd>
 <dt><i>min_points</i>:</dt> <dd>Minimum number of data points to use. If less
 amount of points found the grid node considered empty and will be filled with
-NODATA marker. This is only used if search ellipse is set (both radiuses are
+NODATA marker. This is only used if search ellipse is set (both radii are
 non-zero). Default is 0.</dd>
 <dt><i>nodata</i>:</dt> <dd>NODATA marker to fill empty points (default
 0.0).</dd>

@@ -270,7 +270,7 @@ the SetBand() method.  We will explore the JDEMRasterBand() class shortly.
 \endcode
 
 Finally we assign a name to the dataset object, and call the GDALPamDataset
-TryLoadXML() method which can initialize auxilary information from an 
+TryLoadXML() method which can initialize auxiliary information from an 
 .aux.xml file if available.  For more details on these services review
 the GDALPamDataset and related classes.
 

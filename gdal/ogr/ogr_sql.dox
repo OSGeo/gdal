@@ -26,8 +26,8 @@ details of the new features in GDAL/OGR 1.8.0.
 
 The SELECT statement is used to fetch layer features (analogous to table
 rows in an RDBMS) with the result of the query represented as a temporary layer
-of features.   The layers of the datasource are analagous to tables in an 
-RDBMS and feature attributes are analagous to column values.  The simpliest
+of features.   The layers of the datasource are analogous to tables in an 
+RDBMS and feature attributes are analogous to column values.  The simplest
 form of OGR SQL SELECT statement looks like this:
 
 \code
@@ -36,7 +36,7 @@ SELECT * FROM polylayer
 
 In this case all features are fetched from the layer named "polylayer", and
 all attributes of those features are returned.  This is essentially 
-equivelent to accessing the layer directly.  In this example the "*" 
+equivalent to accessing the layer directly.  In this example the "*" 
 is the list of fields to fetch from the layer, with "*" meaning that all 
 fields should be fetched.
 
@@ -87,7 +87,7 @@ SELECT DISTINCT areacode FROM polylayer
 There are also several summarization operators that may be applied to columns.
 When a summarization operator is applied to any field, then all fields must
 have summarization operators applied.   The summarization operators are
-COUNT (a count of instances), AVG (numerical average), SUM (numericla sum), 
+COUNT (a count of instances), AVG (numerical average), SUM (numerical sum), 
 MIN (lexical or numerical minimum), and MAX (lexical or numerical maximum). 
 This example produces a variety of sumarization information on parcel
 property values:
@@ -273,7 +273,7 @@ and <b>IS NOT NULL</b> operators.
 
 Basic field tests can be combined in more complicated predicates using logical
 operators include <b>AND</b>, <b>OR</b>, and the unary logical <b>NOT</b>.  
-Subexpressions should be bracketed to make precidence
+Subexpressions should be bracketed to make precedence
 clear.  Some more complicated predicates are:
 
 \code
@@ -372,7 +372,7 @@ includes the ability to join against a table in a different data source,
 potentially of a different format.  This is indicated by qualifying the 
 secondary table name with a datasource name.  In this case the secondary
 datasource is opened using normal OGR semantics and utilized to access the
-secondary table untill the query result is no longer needed.
+secondary table until the query result is no longer needed.
 
 \code
 SELECT * FROM city 
@@ -381,7 +381,7 @@ SELECT * FROM city
 
 While not necessarily very useful, it is also possible to introduce table
 aliases to simplify some SELECT statements.  This can also be useful to 
-disambiguate situations where ables of the same name are being used from 
+disambiguate situations where tables of the same name are being used from 
 different data sources.  For instance, if the actual
 tables names were messy we might want to do something like:
 
@@ -451,7 +451,7 @@ other fields. These fields can be placed in the select list, the WHERE clause
 and the ORDER BY clause respectively. The special field will not be included
 in the result by default but it may be explicitly included by adding it to
 the select list.
-When accessing the field values the special fields will take pecedence over
+When accessing the field values the special fields will take precedence over
 the other fields with the same names in the data source. 
 
 \subsection ogr_sql_fid FID
@@ -570,7 +570,7 @@ The following OGR SQL ALTER TABLE commands can be used.
 <li>"ALTER TABLE tablename DROP [COLUMN] columnname" to delete an existing field. Supported if the layer declares the OLCDeleteField capability.
 </ol>
 
-The columntype value follows the syntax of the types supported by the CAST operator descrived above.
+The columntype value follows the syntax of the types supported by the CAST operator described above.
 
 \code
 ALTER TABLE nation ADD COLUMN myfield integer
