@@ -561,7 +561,10 @@ class CPL_DLL OGRMultiPolygon : public OGRGeometryCollection
     virtual OGRGeometry *clone() const;
     virtual OGRErr importFromWkt( char ** );
     virtual OGRErr exportToWkt( char ** ) const;
-    
+
+    // IGeometry methods
+    virtual int getDimension() const;
+
     // Non standard
     virtual OGRErr addGeometryDirectly( OGRGeometry * );
 
@@ -589,7 +592,10 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     virtual OGRGeometry *clone() const;
     virtual OGRErr importFromWkt( char ** );
     virtual OGRErr exportToWkt( char ** ) const;
-    
+
+    // IGeometry methods
+    virtual int getDimension() const;
+
     // Non standard
     virtual OGRErr addGeometryDirectly( OGRGeometry * );
 };
@@ -613,6 +619,9 @@ class CPL_DLL OGRMultiLineString : public OGRGeometryCollection
     virtual OGRGeometry *clone() const;
     virtual OGRErr importFromWkt( char ** );
     virtual OGRErr exportToWkt( char ** ) const;
+
+    // IGeometry methods
+    virtual int getDimension() const;
     
     // Non standard
     virtual OGRErr addGeometryDirectly( OGRGeometry * );
