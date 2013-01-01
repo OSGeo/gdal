@@ -119,7 +119,20 @@ OGRwkbGeometryType OGRGeometryCollection::getGeometryType() const
 int OGRGeometryCollection::getDimension() const
 
 {
-    return 2; // This isn't strictly correct.  It should be based on members.
+    int nDimension = 0;
+    /* FIXME? Not sure if it is really appropriate to take the max in case */
+    /* of geometries of different dimension... */
+    for( int i = 0; i < nGeomCount; i++ )
+    {
+        int nSubGeomDimension = papoGeoms[i]->getDimension();
+        if( nSubGeomDimension > nDimension )
+        {
+            nDimension = nSubGeomDimension;
+            if( nDimension == 2 )
+                break;
+        }
+    }
+    return nDimension;
 }
 
 /************************************************************************/
