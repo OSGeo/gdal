@@ -235,6 +235,21 @@ def overlay_1():
 
     empty_layer(C)
 
+    # SymDifference with self ; this should return 0 features
+
+    err = D1.SymDifference( D2, C )
+
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.SymDifference' )
+            return 'fail'
+ 
+    if C.GetFeatureCount() != 0:
+            gdaltest.post_reason( 'Layer.SymDifference returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
+
+    empty_layer(C)
+
     # Identity; this should return 4 polygons
 
     err = A.Identity( B, C )
@@ -280,6 +295,21 @@ def overlay_1():
 
     empty_layer(C)
 
+    # Identity with self ; this should return 2 polygons
+
+    err = D1.Update( D2, C )
+
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Update' )
+            return 'fail'
+ 
+        if not is_same(D1, C):
+            gdaltest.post_reason( 'D1 != C' )
+            return 'fail'
+
+    empty_layer(C)
+
     # Clip; this should return 2 polygons
 
     err = A.Clip( B, C )
@@ -291,6 +321,21 @@ def overlay_1():
 
         if C.GetFeatureCount() != 2:
             gdaltest.post_reason( 'Layer.Clip returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
+
+    empty_layer(C)
+
+    # Clip with self ; this should return 2 polygons
+
+    err = D1.Update( D2, C )
+
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Clip' )
+            return 'fail'
+ 
+        if not is_same(D1, C):
+            gdaltest.post_reason( 'D1 != C' )
             return 'fail'
 
     empty_layer(C)
@@ -307,6 +352,23 @@ def overlay_1():
         if C.GetFeatureCount() != 2:
             gdaltest.post_reason( 'Layer.Erase returned '+str(C.GetFeatureCount())+' features' )
             return 'fail'
+
+    empty_layer(C)
+
+    # Erase with self ; this should return 0 features
+
+    err = D1.Erase( D2, C )
+
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Erase' )
+            return 'fail'
+ 
+    if C.GetFeatureCount() != 0:
+            gdaltest.post_reason( 'Layer.Erase returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
+
+    empty_layer(C)
 
     return 'success'
 
