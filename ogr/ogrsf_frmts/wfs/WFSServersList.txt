@@ -47,7 +47,8 @@ http://hip.latuviitta.org/cgi-bin/tinyows
 CubeWerx:
 http://ceoware2.ccrs.nrcan.gc.ca/cubewerx/cwwfs/cubeserv.cgi?datastore=CEOWARE2
 http://cgns.nrcan.gc.ca/wfs/cubeserv.cgi?DATASTORE=cgns
-http://portal.cubewerx.com/cubewerx/cubeserv/cubeserv.cgi?CONFIG=haiti_vgi&DATASTORE=vgi  (WFS-T with write permissions)
+http://portal.cubewerx.com/cubewerx/cubeserv.cgi?DATASTORE=Foundation
+http://portal.cubewerx.com/cubewerx/cubeserv.cgi?CONFIG=haiti_vgi&DATASTORE=vgi  (offline: was WFS-T with write permissions)
 
 Intergraph:
 http://regis.intergraph.com/wfs/dcmetro/request.asp

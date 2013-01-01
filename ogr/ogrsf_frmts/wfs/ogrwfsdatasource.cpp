@@ -933,6 +933,8 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         osBaseURL = pszBaseURL;
     }
 
+    pszBaseURL = NULL;
+
     if (osVersion.size() == 0)
         osVersion = CPLGetXMLValue(psWFSCapabilities, "version", "1.0.0");
     if (strcmp(osVersion.c_str(), "1.0.0") == 0)
@@ -946,6 +948,23 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         else
             bGetFeatureSupportHits = DetectIfGetFeatureSupportHits(psWFSCapabilities);
         bRequiresEnvelopeSpatialFilter = DetectRequiresEnvelopeSpatialFilter(psWFSCapabilities);
+    }
+
+    if ( atoi(osVersion) >= 2 )
+    {
+        CPLString osMaxFeatures = CPLURLGetValue(osBaseURL, "COUNT" );
+        /* Ok, people are used to MAXFEATURES, so be nice to recognize it if it is used for WFS 2.0 ... */
+        if (osMaxFeatures.size() == 0 )
+        {
+            osMaxFeatures = CPLURLGetValue(osBaseURL, "MAXFEATURES");
+            if( osMaxFeatures.size() != 0 &&
+                CSLTestBoolean(CPLGetConfigOption("OGR_WFS_FIX_MAXFEATURES", "YES")) )
+            {
+                CPLDebug("WFS", "MAXFEATURES wrongly used for WFS 2.0. Using COUNT instead");
+                osBaseURL = CPLURLAddKVP(osBaseURL, "MAXFEATURES", NULL);
+                osBaseURL = CPLURLAddKVP(osBaseURL, "COUNT", osMaxFeatures);
+            }
+        }
     }
 
     DetectTransactionSupport(psWFSCapabilities);
@@ -1142,7 +1161,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                 int bAxisOrderAlreadyInverted = FALSE;
 
                 /* If a SRSNAME parameter has been encoded in the URL, use it as the SRS */
-                CPLString osSRSName = CPLURLGetValue(pszBaseURL, "SRSNAME");
+                CPLString osSRSName = CPLURLGetValue(osBaseURL, "SRSNAME");
                 if (osSRSName.size() != 0)
                 {
                     pszDefaultSRS = osSRSName.c_str();
@@ -1242,7 +1261,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
 
                 OGRWFSLayer* poLayer = new OGRWFSLayer(
                             this, poSRS, bAxisOrderAlreadyInverted,
-                            pszBaseURL, pszName, pszNS, pszNSVal);
+                            osBaseURL, pszName, pszNS, pszNSVal);
                 if (osOutputFormat.size())
                     poLayer->SetRequiredOutputFormat(osOutputFormat);
 
