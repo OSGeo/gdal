@@ -2508,7 +2508,7 @@ OGRErr OGR_L_Identity( OGRLayerH pLayerInput,
  * \brief Update this layer with features from the update layer.
  *
  * The result layer contains features whose geometries represent areas
- * that ar  e either in the input layer or in the method layer. The
+ * that are either in the input layer or in the method layer. The
  * features in the result layer have areas of the features of the
  * method layer or those ares of the features of the input layer that
  * are not covered by the method layer. The features of the result
