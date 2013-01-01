@@ -1612,14 +1612,26 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
         while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
             OGRGeometry *y_geom = y->GetGeometryRef();
             if (!y_geom) {delete y; continue;}
-            OGRFeature *z = new OGRFeature(poDefnResult);
-            z->SetFieldsFrom(x, mapInput);
-            z->SetFieldsFrom(y, mapMethod);
-            z->SetGeometryDirectly(x_geom->Intersection(y_geom));
-            delete y;
-            ret = pLayerResult->CreateFeature(z);
-            delete z;
-            if (ret != OGRERR_NONE) {delete x; goto done;}
+            OGRGeometry* poIntersection = x_geom->Intersection(y_geom);
+            if( poIntersection == NULL || poIntersection->IsEmpty() ||
+                (x_geom->getDimension() == 2 &&
+                y_geom->getDimension() == 2 &&
+                poIntersection->getDimension() < 2) )
+            {
+                delete poIntersection;
+                delete y;
+            }
+            else
+            {
+                OGRFeature *z = new OGRFeature(poDefnResult);
+                z->SetFieldsFrom(x, mapInput);
+                z->SetFieldsFrom(y, mapMethod);
+                z->SetGeometryDirectly(poIntersection);
+                delete y;
+                ret = pLayerResult->CreateFeature(z);
+                delete z;
+                if (ret != OGRERR_NONE) {delete x; goto done;}
+            }
         }
 
         delete x;
@@ -1814,26 +1826,46 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
         while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
             OGRGeometry *y_geom = y->GetGeometryRef();
             if (!y_geom) {delete y; continue;}
-            OGRFeature *z = new OGRFeature(poDefnResult);
-            z->SetFieldsFrom(x, mapInput);
-            z->SetFieldsFrom(y, mapMethod);
-            z->SetGeometryDirectly(x_geom->Intersection(y_geom));
-            OGRGeometry *x_geom_diff_new = x_geom_diff ? x_geom_diff->Difference(y_geom) : NULL;
-            if (x_geom_diff) delete x_geom_diff;
-            x_geom_diff = x_geom_diff_new;
-            delete y;
-            ret = pLayerResult->CreateFeature(z);
-            delete z;
-            if (ret != OGRERR_NONE) {delete x; if (x_geom_diff) delete x_geom_diff; goto done;}
+            OGRGeometry *poIntersection = x_geom->Intersection(y_geom);
+            if( poIntersection == NULL || poIntersection->IsEmpty() ||
+                (x_geom->getDimension() == 2 &&
+                y_geom->getDimension() == 2 &&
+                poIntersection->getDimension() < 2) )
+            {
+                delete poIntersection;
+                delete y;
+            }
+            else
+            {
+                OGRFeature *z = new OGRFeature(poDefnResult);
+                z->SetFieldsFrom(x, mapInput);
+                z->SetFieldsFrom(y, mapMethod);
+                z->SetGeometryDirectly(poIntersection);
+                OGRGeometry *x_geom_diff_new = x_geom_diff ? x_geom_diff->Difference(y_geom) : NULL;
+                if (x_geom_diff) delete x_geom_diff;
+                x_geom_diff = x_geom_diff_new;
+                delete y;
+                ret = pLayerResult->CreateFeature(z);
+                delete z;
+                if (ret != OGRERR_NONE) {delete x; if (x_geom_diff) delete x_geom_diff; goto done;}
+            }
         }
 
-        OGRFeature *z = new OGRFeature(poDefnResult);
-        z->SetFieldsFrom(x, mapInput);
-        z->SetGeometryDirectly(x_geom_diff);
-        delete x;
-        ret = pLayerResult->CreateFeature(z);
-        delete z;
-        if (ret != OGRERR_NONE) goto done;
+        if( x_geom_diff == NULL || x_geom_diff->IsEmpty() )
+        {
+            delete x_geom_diff;
+            delete x;
+        }
+        else
+        {
+            OGRFeature *z = new OGRFeature(poDefnResult);
+            z->SetFieldsFrom(x, mapInput);
+            z->SetGeometryDirectly(x_geom_diff);
+            delete x;
+            ret = pLayerResult->CreateFeature(z);
+            delete z;
+            if (ret != OGRERR_NONE) goto done;
+        }
     }
 
     // restore filter on method layer and add features based on it
@@ -1873,13 +1905,21 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
             delete y;
         }
 
-        OGRFeature *z = new OGRFeature(poDefnResult);
-        z->SetFieldsFrom(x, mapMethod);
-        z->SetGeometryDirectly(x_geom_diff);
-        delete x;
-        ret = pLayerResult->CreateFeature(z);
-        delete z;
-        if (ret != OGRERR_NONE) goto done;
+        if( x_geom_diff == NULL || x_geom_diff->IsEmpty() )
+        {
+            delete x_geom_diff;
+            delete x;
+        }
+        else
+        {
+            OGRFeature *z = new OGRFeature(poDefnResult);
+            z->SetFieldsFrom(x, mapMethod);
+            z->SetGeometryDirectly(x_geom_diff);
+            delete x;
+            ret = pLayerResult->CreateFeature(z);
+            delete z;
+            if (ret != OGRERR_NONE) goto done;
+        }
     }
     if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
       CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
@@ -2342,26 +2382,46 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
         while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
             OGRGeometry *y_geom = y->GetGeometryRef();
             if (!y_geom) {delete y; continue;}
-            OGRFeature *z = new OGRFeature(poDefnResult);
-            z->SetFieldsFrom(x, mapInput);
-            z->SetFieldsFrom(y, mapMethod);
-            z->SetGeometryDirectly(x_geom->Intersection(y_geom));
-            OGRGeometry *x_geom_diff_new = x_geom_diff ? x_geom_diff->Difference(y_geom) : NULL;
-            if (x_geom_diff) delete x_geom_diff;
-            x_geom_diff = x_geom_diff_new;
-            delete y;
-            ret = pLayerResult->CreateFeature(z);
-            delete z;
-            if (ret != OGRERR_NONE) {delete x; delete x_geom_diff; goto done;}
+            OGRGeometry* poIntersection = x_geom->Intersection(y_geom);
+            if( poIntersection == NULL || poIntersection->IsEmpty() ||
+                (x_geom->getDimension() == 2 &&
+                y_geom->getDimension() == 2 &&
+                poIntersection->getDimension() < 2) )
+            {
+                delete poIntersection;
+                delete y;
+            }
+            else
+            {
+                OGRFeature *z = new OGRFeature(poDefnResult);
+                z->SetFieldsFrom(x, mapInput);
+                z->SetFieldsFrom(y, mapMethod);
+                z->SetGeometryDirectly(poIntersection);
+                OGRGeometry *x_geom_diff_new = x_geom_diff ? x_geom_diff->Difference(y_geom) : NULL;
+                if (x_geom_diff) delete x_geom_diff;
+                x_geom_diff = x_geom_diff_new;
+                delete y;
+                ret = pLayerResult->CreateFeature(z);
+                delete z;
+                if (ret != OGRERR_NONE) {delete x; delete x_geom_diff; goto done;}
+            }
         }
 
-        OGRFeature *z = new OGRFeature(poDefnResult);
-        z->SetFieldsFrom(x, mapInput);
-        z->SetGeometryDirectly(x_geom_diff);
-        delete x;
-        ret = pLayerResult->CreateFeature(z);
-        delete z;
-        if (ret != OGRERR_NONE) goto done;
+        if( x_geom_diff == NULL || x_geom_diff->IsEmpty() )
+        {
+            delete x_geom_diff;
+            delete x;
+        }
+        else
+        {
+            OGRFeature *z = new OGRFeature(poDefnResult);
+            z->SetFieldsFrom(x, mapInput);
+            z->SetGeometryDirectly(x_geom_diff);
+            delete x;
+            ret = pLayerResult->CreateFeature(z);
+            delete z;
+            if (ret != OGRERR_NONE) goto done;
+        }
     }
     if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
       CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
