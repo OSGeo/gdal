@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 #
 # Project:  GDAL/OGR Test Suite
@@ -53,6 +54,21 @@ def empty_layer(C):
         if not feat: break
         C.DeleteFeature(feat.GetFID())
 
+def is_same(A,B):
+    A.ResetReading()
+    B.ResetReading()
+    while True:
+        fA = A.GetNextFeature()
+        fB = B.GetNextFeature()
+        if fA is None:
+            if fB is not None:
+                return False
+            return True
+        if fB is None:
+            return False
+        if fA.Equal(fB) != 0:
+            return False
+
 def overlay_1():
 
     try:
@@ -64,15 +80,17 @@ def overlay_1():
     # Create three memory layers for intersection.
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource( 'wrk' )
-    A = ds.CreateLayer( 'poly' )
-    B = ds.CreateLayer( 'poly' )
-    C = ds.CreateLayer( 'poly' )
+    A = ds.CreateLayer( 'A' )
+    B = ds.CreateLayer( 'B' )
+    pointInB = ds.CreateLayer( 'pointInB' )
+    C = ds.CreateLayer( 'C' )
 
     # Add polygons.
     
     a1 = 'POLYGON((1 2, 1 3, 3 3, 3 2, 1 2))'
     a2 = 'POLYGON((5 2, 5 3, 7 3, 7 2, 5 2))'
     b1 = 'POLYGON((2 1, 2 4, 6 4, 6 1, 2 1))'
+    pointInB1 = 'POINT(3 3)'
     
     feat = ogr.Feature( A.GetLayerDefn() )
     feat.SetGeometryDirectly( ogr.Geometry(wkt = a1) )
@@ -86,6 +104,33 @@ def overlay_1():
     feat.SetGeometryDirectly( ogr.Geometry(wkt = b1) )
     B.CreateFeature( feat )
 
+    feat = ogr.Feature( pointInB.GetLayerDefn() )
+    feat.SetGeometryDirectly( ogr.Geometry(wkt = pointInB1) )
+    pointInB.CreateFeature( feat )
+
+    d1 = 'POLYGON((1 2, 1 3, 3 3, 3 2, 1 2))'
+    d2 = 'POLYGON((3 2, 3 3, 4 3, 4 2, 3 2))'
+
+    D1 = ds.CreateLayer( 'D1' )
+
+    feat = ogr.Feature( D1.GetLayerDefn() )
+    feat.SetGeometryDirectly( ogr.Geometry(wkt = d1) )
+    D1.CreateFeature( feat )
+
+    feat = ogr.Feature( D1.GetLayerDefn() )
+    feat.SetGeometryDirectly( ogr.Geometry(wkt = d2) )
+    D1.CreateFeature( feat )
+    
+    D2 = ds.CreateLayer( 'D2' )
+    
+    feat = ogr.Feature( D2.GetLayerDefn() )
+    feat.SetGeometryDirectly( ogr.Geometry(wkt = d1) )
+    D2.CreateFeature( feat )
+
+    feat = ogr.Feature( D2.GetLayerDefn() )
+    feat.SetGeometryDirectly( ogr.Geometry(wkt = d2) )
+    D2.CreateFeature( feat )
+    
     # Run the methods and check results.
 
     # Intersection; this should return two rectangles
@@ -115,6 +160,21 @@ def overlay_1():
 
     empty_layer(C)
 
+    # Intersection with self ; this should return 2 polygons
+
+    err = D1.Intersection( D2, C )
+
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Intersection' )
+            return 'fail'
+ 
+        if not is_same(D1, C):
+            gdaltest.post_reason( 'D1 != C' )
+            return 'fail'
+
+    empty_layer(C)
+
     # Union; this should return 5 polygons
 
     err = A.Union( B, C )
@@ -125,6 +185,36 @@ def overlay_1():
             return 'fail'
 
         if C.GetFeatureCount() != 5:
+            gdaltest.post_reason( 'Layer.Union returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
+
+    empty_layer(C)
+
+    # Union with self ; this should return 2 polygons
+
+    err = D1.Union( D2, C )
+
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Union' )
+            return 'fail'
+ 
+        if not is_same(D1, C):
+            gdaltest.post_reason( 'D1 != C' )
+            return 'fail'
+
+    empty_layer(C)
+    
+    # Union of a polygon and a point within : should return the point and the polygon (#4772)
+
+    err = B.Union( pointInB, C )
+
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Union' )
+            return 'fail'
+ 
+        if C.GetFeatureCount() != 2:
             gdaltest.post_reason( 'Layer.Union returned '+str(C.GetFeatureCount())+' features' )
             return 'fail'
 
@@ -156,6 +246,21 @@ def overlay_1():
 
         if C.GetFeatureCount() != 4:
             gdaltest.post_reason( 'Layer.Identity returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
+
+    empty_layer(C)
+
+    # Identity with self ; this should return 2 polygons
+
+    err = D1.Identity( D2, C )
+
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Identity' )
+            return 'fail'
+ 
+        if not is_same(D1, C):
+            gdaltest.post_reason( 'D1 != C' )
             return 'fail'
 
     empty_layer(C)
