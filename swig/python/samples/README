@@ -95,6 +95,8 @@ ogrupdate.py            Update a target datasource with the features of a source
                         this script tries to match features between the datasources,
                         to decide whether to create a new feature, or to update an existing one.
 
+ogr_layer_algebra.py    Application for executing OGR layer algebra operations.
+
 ------------------------------------------------------------------------------
 Ports of .c/.cpp utilities
 ------------------------------------------------------------------------------
