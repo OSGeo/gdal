@@ -34,6 +34,8 @@ import subprocess
 import shlex
 import os
 import sys
+from queue import Queue
+from threading import Thread
 
 def run_func(func):
     try:
@@ -140,21 +142,34 @@ def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_
 
     return ret
 
+def read_in_thread(f, q):
+    q.put(f.read())
+    f.close()
+    
 def runexternal_out_and_err(cmd, check_memleak = True):
     command = shlex.split(cmd)
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if p.stdout is not None:
-        ret_stdout = p.stdout.read().decode('ascii')
-        p.stdout.close()
+        q_stdout = Queue()
+        t_stdout = Thread(target=read_in_thread, args=(p.stdout, q_stdout))
+        t_stdout.start()
     else:
+        q_stdout = None
         ret_stdout = ''
 
     if p.stderr is not None:
-        ret_stderr = p.stderr.read().decode('ascii')
-        p.stderr.close()
+        q_stderr = Queue()
+        t_stderr = Thread(target=read_in_thread, args=(p.stderr, q_stderr))
+        t_stderr.start()
     else:
+        q_stderr = None
         ret_stderr = ''
+        
+    if q_stdout is not None:
+        ret_stdout = q_stdout.get().decode('ascii')
+    if q_stderr is not None:
+        ret_stderr = q_stderr.get().decode('ascii')
 
     p.wait()
 
