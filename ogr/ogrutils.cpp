@@ -598,6 +598,7 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             for( i = 0; papszFiles[i] != NULL; i++ )
             {
                 CPLString osOldPath, osNewPath;
+                VSIStatBufL sStatBuf;
                 
                 if( EQUAL(papszFiles[i],".") || EQUAL(papszFiles[i],"..") )
                     continue;
@@ -605,6 +606,14 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 osOldPath = CPLFormFilename( papszArgv[iArg+1], 
                                              papszFiles[i], NULL );
                 osNewPath.Printf( "/vsimem/%s", papszFiles[i] );
+
+                if( VSIStatL( osOldPath, &sStatBuf ) != 0
+                    || VSI_ISDIR( sStatBuf.st_mode ) )
+                {
+                    CPLDebug( "VSI", "Skipping preload of %s.", 
+                              osOldPath.c_str() );
+                    continue;
+                }
 
                 CPLDebug( "VSI", "Preloading %s to %s.", 
                           osOldPath.c_str(), osNewPath.c_str() );
