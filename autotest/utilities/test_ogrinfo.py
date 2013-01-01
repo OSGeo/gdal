@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -33,6 +34,7 @@ import os
 
 sys.path.append( '../pymod' )
 
+from osgeo import gdal
 import gdaltest
 import ogrtest
 import test_cli_utilities
@@ -71,7 +73,23 @@ def test_ogrinfo_3():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' -al ../ogr/data/poly.shp')
+    if ret.find('Layer name: poly') == -1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ret.find('Geometry: Polygon') == -1:
+        gdaltest.post_reason('fail')
+        return 'fail'
     if ret.find('Feature Count: 10') == -1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ret.find('Extent: (478315') == -1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ret.find('PROJCS["OSGB') == -1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ret.find('AREA: Real (') == -1:
+        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -192,6 +210,158 @@ def test_ogrinfo_11():
 
     return 'success'
 
+###############################################################################
+# Test ogrinfo --version
+
+def test_ogrinfo_12():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' --version', check_memleak = False )
+    if ret.find(gdal.VersionInfo('--version')) != 0:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test erroenous use of --config
+
+def test_ogrinfo_13():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --config', check_memleak = False )
+    if err.find('--config option given without a key and value argument') < 0:
+        print(err)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test erroenous use of --mempreload
+
+def test_ogrinfo_14():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --mempreload', check_memleak = False )
+    if err.find('--mempreload option given without directory path') < 0:
+        print(err)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test --mempreload
+
+def test_ogrinfo_15():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --debug on --mempreload ../ogr/data /vsimem/poly.shp', check_memleak = False )
+    if ret.find("ESRI Shapefile") < 0:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test erroenous use of --debug
+
+def test_ogrinfo_16():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --debug', check_memleak = False )
+    if err.find('--debug option given without debug level') < 0:
+        print(err)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test erroenous use of --optfile
+
+def test_ogrinfo_17():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --optfile', check_memleak = False )
+    if err.find('--optfile option given without filename') < 0:
+        gdaltest.post_reason('fail')
+        print(err)
+        return 'fail'
+
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --optfile /foo/bar', check_memleak = False )
+    if err.find('Unable to open optfile') < 0:
+        gdaltest.post_reason('fail')
+        print(err)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test --optfile
+
+def test_ogrinfo_18():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    f = open('tmp/optfile.txt', 'wt')
+    f.write('# comment\n')
+    f.write('../ogr/data/poly.shp\n')
+    f.close()
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' --optfile tmp/optfile.txt', check_memleak = False )
+    os.unlink('tmp/optfile.txt')
+    if ret.find("ESRI Shapefile") < 0:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test --formats
+
+def test_ogrinfo_19():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' --formats', check_memleak = False )
+    if ret.find('"ESRI Shapefile" (read/write)') < 0:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test --help-general
+
+def test_ogrinfo_20():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' --help-general', check_memleak = False )
+    if ret.find('Generic GDAL/OGR utility command options') < 0:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test --locale
+
+def test_ogrinfo_21():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' --locale C ../ogr/data/poly.shp', check_memleak = False )
+    if ret.find("ESRI Shapefile") < 0:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_ogrinfo_1,
     test_ogrinfo_2,
@@ -203,7 +373,17 @@ gdaltest_list = [
     test_ogrinfo_8,
     test_ogrinfo_9,
     test_ogrinfo_10,
-    test_ogrinfo_11
+    test_ogrinfo_11,
+    test_ogrinfo_12,
+    test_ogrinfo_13,
+    test_ogrinfo_14,
+    test_ogrinfo_15,
+    test_ogrinfo_16,
+    test_ogrinfo_17,
+    test_ogrinfo_18,
+    test_ogrinfo_19,
+    test_ogrinfo_20,
+    test_ogrinfo_21,
     ]
 
 
