@@ -33,6 +33,8 @@ import socket
 import os
 import sys
 from sys import version_info
+from Queue import Queue
+from threading import Thread
 
 def run_func(func):
     try:
@@ -162,11 +164,23 @@ def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_
 
     return out_str
 
+def read_in_thread(f, q):
+    q.put(f.read())
+    f.close()
+    
 def runexternal_out_and_err(cmd, check_memleak = True):
     (ret_stdin, ret_stdout, ret_stderr) = os.popen3(cmd)
     ret_stdin.close()
-    out_str = ret_stdout.read()
-    err_str = ret_stderr.read()
+    
+    q_stdout = Queue()
+    t_stdout = Thread(target=read_in_thread, args=(ret_stdout, q_stdout))
+    q_stderr = Queue()
+    t_stderr = Thread(target=read_in_thread, args=(ret_stderr, q_stderr))
+    t_stdout.start()
+    t_stderr.start()
+    
+    out_str = q_stdout.get()
+    err_str = q_stderr.get()
 
     if check_memleak:
         warn_if_memleak(cmd, out_str)
