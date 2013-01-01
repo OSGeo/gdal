@@ -940,7 +940,7 @@ def ogr_wfs_deegree_sortby():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
-    ds = ogr.Open('WFS:http://deegree3-demo.deegree.org:80/utah-workspace/services?MAXFEATURES=10')
+    ds = ogr.Open('WFS:http://deegree3-demo.deegree.org:80/utah-workspace/services?MAXFEATURES=10&VERSION=1.1.0')
     if ds is None:
         if gdaltest.gdalurlopen('http://deegree3-demo.deegree.org:80/utah-workspace/services') is None:
             print('cannot open URL')
