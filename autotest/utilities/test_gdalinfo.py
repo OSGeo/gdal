@@ -257,6 +257,7 @@ def test_gdalinfo_12():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --build', check_memleak = False )
+    ret = ret.replace('\r\n', '\n')
     if ret.find(gdal.VersionInfo('BUILD_INFO')) != 0:
         print(ret)
         return 'fail'
@@ -271,6 +272,7 @@ def test_gdalinfo_13():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --license', check_memleak = False )
+    ret = ret.replace('\r\n', '\n')
     if ret.find(gdal.VersionInfo('LICENSE')) != 0:
         print(ret)
         return 'fail'
