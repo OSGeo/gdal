@@ -455,6 +455,12 @@ the resolution (in each dimension) of the base layer to be computed.  If
 the file has existing overview levels at a level selected, those levels will
 be recomputed and rewritten in place.
 
+For internal GeoTIFF overviews (or external overviews in GeoTIFF format), note
+that -clean does not shrink the file. A later run of gdaladdo with overview levels
+will cause the file to be expanded, rather than reusing the space of the previously
+deleted overviews. If you just want to change the resampling method on a file that
+already has overviews computed, you don't need to clean the existing overviews.
+
 Some format drivers do not support overviews at all.  Many format drivers
 store overviews in a secondary file with the extension .ovr that is actually
 in TIFF format.  By default, the GeoTIFF driver stores overviews internally to the file 
