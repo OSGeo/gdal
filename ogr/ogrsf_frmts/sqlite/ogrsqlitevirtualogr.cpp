@@ -954,7 +954,7 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
         else if (sqlite3_value_type (argv[i]) == SQLITE_TEXT)
         {
             osAttributeFilter += "'";
-            osAttributeFilter += (const char*) sqlite3_value_text (argv[i]);
+            osAttributeFilter += OGRSQLiteEscape((const char*) sqlite3_value_text (argv[i]));
             osAttributeFilter += "'";
         }
         else
