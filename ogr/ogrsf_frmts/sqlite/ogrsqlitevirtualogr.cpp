@@ -414,6 +414,9 @@ static int OGR2SQLITEDetectSuspiciousUsage(sqlite3* hDB,
 /************************************************************************/
 
 static
+int OGR2SQLITE_DisconnectDestroy(sqlite3_vtab *pVTab);
+
+static
 int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
                              int argc, const char *const*argv,
                              sqlite3_vtab **ppVTab, char**pzErr)
@@ -612,6 +615,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
     {
         *pzErr = sqlite3_mprintf("CREATE VIRTUAL: invalid SQL statement : %s",
                                  osSQL.c_str());
+        OGR2SQLITE_DisconnectDestroy((sqlite3_vtab*) vtab);
         return SQLITE_ERROR;
     }
 
