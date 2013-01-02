@@ -2188,6 +2188,19 @@ OGRErr OGRSQLiteLayer::ImportSpatiaLiteGeometry( const GByte *pabyData,
                                                  OGRGeometry **ppoGeometry )
 
 {
+    return ImportSpatiaLiteGeometry(pabyData, nBytes, ppoGeometry, NULL);
+}
+
+/************************************************************************/
+/*                      ImportSpatiaLiteGeometry()                      */
+/************************************************************************/
+
+OGRErr OGRSQLiteLayer::ImportSpatiaLiteGeometry( const GByte *pabyData,
+                                                 int nBytes,
+                                                 OGRGeometry **ppoGeometry,
+                                                 int* pnSRID )
+
+{
     OGRwkbByteOrder eByteOrder;
 
     *ppoGeometry = NULL;
@@ -2200,10 +2213,21 @@ OGRErr OGRSQLiteLayer::ImportSpatiaLiteGeometry( const GByte *pabyData,
 
     eByteOrder = (OGRwkbByteOrder) pabyData[1];
 
+/* -------------------------------------------------------------------- */
+/*      Decode the geometry type.                                       */
+/* -------------------------------------------------------------------- */
+    if( pnSRID != NULL )
+    {
+        int nSRID;
+        memcpy( &nSRID, pabyData + 2, 4 );
+        if (NEED_SWAP_SPATIALITE())
+            CPL_SWAP32PTR( &nSRID );
+        *pnSRID = nSRID;
+    }
+
     return createFromSpatialiteInternal(pabyData + 39, ppoGeometry,
                                         nBytes - 39, eByteOrder, NULL, 0);
 }
-
 
 /************************************************************************/
 /*                CanBeCompressedSpatialiteGeometry()                   */
