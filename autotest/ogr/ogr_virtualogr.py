@@ -321,11 +321,40 @@ def ogr_virtualogr_4():
 
     return 'success'
 
+###############################################################################
+# Test failed CREATE VIRTUAL TABLE USING VirtualOGR
+
+def ogr_virtualogr_5():
+
+    if ogr.GetDriverByName('SQLite') is None:
+        return 'skip'
+
+    # Create a CSV with duplicate column name
+    fp = gdal.VSIFOpenL('/vsimem/ogr_virtualogr_5.csv', 'wt')
+    line = 'foo,foo\n'
+    gdal.VSIFWriteL(line, 1, len(line), fp)
+    line = 'bar,baz\n'
+    gdal.VSIFWriteL(line, 1, len(line), fp)
+    gdal.VSIFCloseL(fp)
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    sql_lyr = ds.ExecuteSQL("CREATE VIRTUAL TABLE lyr2 USING VirtualOGR('/vsimem/ogr_virtualogr_5.csv')", dialect = 'SQLITE')
+    gdal.PopErrorHandler()
+    if sql_lyr is not None:
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_virtualogr_5.csv')
+
+    return 'success'
+
 gdaltest_list = [
     ogr_virtualogr_1,
     ogr_virtualogr_2,
     ogr_virtualogr_3,
     ogr_virtualogr_4,
+    ogr_virtualogr_5,
 ]
 
 if __name__ == '__main__':
