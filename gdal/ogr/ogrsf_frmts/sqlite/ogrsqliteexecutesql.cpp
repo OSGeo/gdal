@@ -524,7 +524,8 @@ OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
         static void* hMutex = NULL;
         CPLMutexHolder oMutexHolder(&hMutex);
         static int bTried = FALSE;
-        if( !bTried )
+        if( !bTried &&
+            CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_DIALECT_USE_SPATIALITE", "YES")) )
         {
             bTried = TRUE;
             char* pszCachedFilename = (char*) CPLMalloc(256);

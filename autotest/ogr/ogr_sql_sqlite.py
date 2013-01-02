@@ -422,6 +422,7 @@ def ogr_sql_sqlite_5():
     gdal.PopErrorHandler()
 
     if ogrtest.has_spatialite is False:
+        print('Spatialite not available')
         return 'skip'
 
     ds = ogr.Open('data')
@@ -1320,6 +1321,231 @@ def ogr_sql_sqlite_stop_webserver():
 
     return 'success'
 
+###############################################################################
+# If Spatialite is NOT available, test some of the minimal spatial functions
+# implemented. Test it also if spatialite is available, so we have a cross
+# validation...
+
+def ogr_sql_sqlite_25_test_errors(ds, fct):
+    for val in [ 'null', "'foo'", "x'00010203'" ]:
+        sql_lyr = ds.ExecuteSQL("SELECT %s(%s)" % (fct, val), dialect = 'SQLite')
+        feat = sql_lyr.GetNextFeature()
+        if feat.IsFieldSet(0):
+            feat.DumpReadable()
+            ds.ReleaseResultSet(sql_lyr)
+            print(val)
+            return False
+        ds.ReleaseResultSet(sql_lyr)
+        return True
+
+def ogr_sql_sqlite_25():
+
+    if not ogrtest.has_sqlite_dialect:
+        return 'skip'
+
+    #if ogrtest.has_spatialite is True:
+    #    return 'skip'
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+
+    # Test ST_AsText, ST_GeomFromText, ST_AsBinary, ST_GeomFromWKB
+    sql_lyr = ds.ExecuteSQL("SELECT ST_GeomFromWKB(ST_AsBinary(ST_GeomFromText(ST_AsText(ST_GeomFromText('POINT (0 1)')),4326)))", dialect = 'SQLite')
+    feat = sql_lyr.GetNextFeature()
+    if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
+        gdaltest.post_reason('fail')
+        feat.DumpReadable()
+        ds.ReleaseResultSet(sql_lyr)
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    for fct in [ "ST_AsText", "ST_GeomFromText", "ST_AsBinary", "ST_GeomFromWKB" ]:
+        if not ogr_sql_sqlite_25_test_errors(ds, fct):
+            gdaltest.post_reason('fail with %s' % fct)
+            return 'fail'
+
+    # Test ST_SRID
+    sql_lyr = ds.ExecuteSQL("SELECT ST_SRID(ST_GeomFromText('POINT(0 0)',4326))", dialect = 'SQLite')
+    feat = sql_lyr.GetNextFeature()
+    val_sql = feat.GetField(0)
+    ds.ReleaseResultSet(sql_lyr)
+
+    if val_sql != 4326:
+        gdaltest.post_reason('fail')
+        print(val_sql)
+        return 'fail'
+
+    # Test ST_Area
+    sql_lyr = ds.ExecuteSQL("SELECT ST_Area(ST_GeomFromText('%s')), ST_Area(null), ST_Area(x'00')" % 'POLYGON((0 0,0 1,1 1,1 0,0 0))', dialect = 'SQLite')
+    feat = sql_lyr.GetNextFeature()
+    val_sql = feat.GetField(0)
+    val1_sql = feat.GetField(1)
+    val2_sql = feat.GetField(2)
+    ds.ReleaseResultSet(sql_lyr)
+
+    geomA = ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,1 0,0 0))')
+    val_ogr = geomA.GetArea()
+
+    if abs(val_sql - val_ogr) > 1e-5:
+        gdaltest.post_reason('fail')
+        print(val_sql)
+        print(val_ogr)
+        return 'fail'
+
+    if val1_sql != None:
+        gdaltest.post_reason('fail')
+        print(val1_sql)
+        return 'fail'
+
+    if val2_sql != None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+def ogr_sql_sqlite_26():
+
+    if not ogrtest.has_sqlite_dialect:
+        return 'skip'
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    #if ogrtest.has_spatialite is True:
+    #    return 'skip'
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
+
+    geom1_wkt = 'POLYGON((0 0,0 1,1 1,1 0,0 0))'
+    geom2_wkt = 'POLYGON((0.5 0.5,0.5 1.5,1.5 1.5,1.5 0.5,0.5 0.5))'
+    geom3_wkt = 'POLYGON((0.25 0.25,0.25 0.75,0.75 0.75,0.75 0.25,0.25 0.25))'
+    geom4_wkt = 'POLYGON((1 0,1 1,2 1,2 0,1 0))'
+    
+    # Test ST_Buffer
+    op_str = 'Buffer'
+    sql_lyr = ds.ExecuteSQL("SELECT %s(ST_GeomFromText('%s'),0.1)" % (op_str, geom1_wkt), dialect = 'SQLite')
+    feat = sql_lyr.GetNextFeature()
+    geom_sql = feat.GetGeometryRef()
+    ds.ReleaseResultSet(sql_lyr)
+    
+    geom = ogr.CreateGeometryFromWkt(geom1_wkt)
+    geom_geos = geom.Buffer(0.1)
+
+    if geom_sql.Equals(geom_geos) == 0:
+        gdaltest.post_reason('fail with %s' % op_str)
+        return 'fail'
+
+    for op_str in [ "IsEmpty", "IsSimple", "IsValid" ]:
+        for wkt in [ 'POLYGON EMPTY', 'POINT(0 1)', 'POLYGON((0 0,1 1,0 1,1 0,0 0))' ]:
+            sql_lyr = ds.ExecuteSQL("SELECT ST_%s(ST_GeomFromText('%s'))" % (op_str, wkt), dialect = 'SQLite')
+            feat = sql_lyr.GetNextFeature()
+            b_sql = feat.GetField(0)
+            ds.ReleaseResultSet(sql_lyr)
+
+            if b_sql == 1:
+                b_sql = True
+            else:
+                b_sql = False
+            geom = ogr.CreateGeometryFromWkt(wkt)
+            op = getattr(geom, op_str)
+            b_geos = op()
+            if b_sql != b_geos:
+                if ogrtest.has_sqlite_dialect and wkt == 'POLYGON EMPTY':
+                    print('difference wit op = %s and wkt = POLYGON EMPTY' % op_str)
+                else:
+                    gdaltest.post_reason('fail with %s' % op_str)
+                    print(wkt)
+                    print(b_sql)
+                    print(b_geos)
+                    return 'fail'
+
+    for op_str in [ "Intersects", "Equals", "Disjoint",
+                    "Touches", "Crosses", "Within",
+                    "Contains", "Overlaps" ]:
+        for (geomA_wkt, geomB_wkt) in [ (geom1_wkt, geom1_wkt),
+                                (geom1_wkt, geom2_wkt),
+                                (geom1_wkt, geom3_wkt),
+                                (geom1_wkt, geom4_wkt) ]:
+            sql_lyr = ds.ExecuteSQL("SELECT ST_%s(ST_GeomFromText('%s'), ST_GeomFromText('%s'))" % (op_str, geomA_wkt, geomB_wkt), dialect = 'SQLite')
+            feat = sql_lyr.GetNextFeature()
+            b_sql = feat.GetField(0)
+            ds.ReleaseResultSet(sql_lyr)
+
+            if b_sql == 1:
+                b_sql = True
+            else:
+                b_sql = False
+            geomA = ogr.CreateGeometryFromWkt(geomA_wkt)
+            geomB = ogr.CreateGeometryFromWkt(geomB_wkt)
+            op = getattr(geomA, op_str)
+            b_geos = op(geomB)
+            if b_sql != b_geos:
+                gdaltest.post_reason('fail with %s' % op_str)
+                return 'fail'
+
+    for op_str in [ "Intersection", "Difference", "Union", "SymDifference" ]:
+        for (geomA_wkt, geomB_wkt) in [ (geom1_wkt, geom1_wkt),
+                                (geom1_wkt, geom2_wkt),
+                                (geom1_wkt, geom3_wkt),
+                                (geom1_wkt, geom4_wkt) ]:
+            sql_lyr = ds.ExecuteSQL("SELECT ST_%s(ST_GeomFromText('%s'), ST_GeomFromText('%s'))" % (op_str, geomA_wkt, geomB_wkt), dialect = 'SQLite')
+            feat = sql_lyr.GetNextFeature()
+            geom_sql = feat.GetGeometryRef()
+            if geom_sql is not None:
+                geom_sql = geom_sql.Clone()
+            ds.ReleaseResultSet(sql_lyr)
+
+            geomA = ogr.CreateGeometryFromWkt(geomA_wkt)
+            geomB = ogr.CreateGeometryFromWkt(geomB_wkt)
+            op = getattr(geomA, op_str)
+            geom_geos = op(geomB)
+
+            if geom_sql is None:
+                # GEOS can return empty geometry collection, while spatialite
+                # does not
+                if geom_geos is not None and geom_geos.IsEmpty() == 0:
+                    gdaltest.post_reason('fail with %s' % op_str)
+                    print(geomA_wkt)
+                    print(geomB_wkt)
+                    print(geom_geos.ExportToWkt())
+                    return 'fail'
+            else:
+                if geom_sql.Equals(geom_geos) == 0:
+                    gdaltest.post_reason('fail with %s' % op_str)
+                    return 'fail'
+
+    # Error cases
+    op_str = 'Intersects'
+    for val in [ 'null', "'foo'", "x'00010203'" ]:
+        sql_lyr = ds.ExecuteSQL("SELECT ST_%s(ST_GeomFromText('%s'), %s), ST_%s(%s, ST_GeomFromText('%s'))" % (op_str, geom1_wkt, val, op_str, val, geom1_wkt), dialect = 'SQLite')
+        feat = sql_lyr.GetNextFeature()
+        b0_sql = feat.GetField(0)
+        b1_sql = feat.GetField(1)
+        ds.ReleaseResultSet(sql_lyr)
+        if b0_sql > 0 or b1_sql > 0:
+            gdaltest.post_reason('fail with %s' % op_str)
+            return 'fail'
+
+
+    op_str = 'Intersection'
+    for val in [ 'null', "'foo'", "x'00010203'" ]:
+        sql_lyr = ds.ExecuteSQL("SELECT ST_%s(ST_GeomFromText('%s'), %s)" % (op_str, geom1_wkt, val), dialect = 'SQLite')
+        feat = sql_lyr.GetNextFeature()
+        geom_sql = feat.GetGeometryRef()
+        ds.ReleaseResultSet(sql_lyr)
+        if geom_sql is not None:
+            gdaltest.post_reason('fail with %s' % op_str)
+            return 'fail'
+
+        sql_lyr = ds.ExecuteSQL("SELECT ST_%s(%s, ST_GeomFromText('%s'))" % (op_str, val, geom1_wkt), dialect = 'SQLite')
+        feat = sql_lyr.GetNextFeature()
+        geom_sql = feat.GetGeometryRef()
+        ds.ReleaseResultSet(sql_lyr)
+        if geom_sql is not None:
+            gdaltest.post_reason('fail with %s' % op_str)
+            return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_sql_sqlite_1,
     ogr_sql_sqlite_2,
@@ -1347,6 +1573,8 @@ gdaltest_list = [
     ogr_sql_sqlite_23,
     ogr_sql_sqlite_stop_webserver,
     ogr_sql_sqlite_24,
+    ogr_sql_sqlite_25,
+    ogr_sql_sqlite_26,
 ]
 
 if __name__ == '__main__':

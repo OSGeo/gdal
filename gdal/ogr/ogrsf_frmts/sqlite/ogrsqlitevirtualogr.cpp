@@ -376,7 +376,9 @@ static int OGR2SQLITEDetectSuspiciousUsage(sqlite3* hDB,
                             "sql LIKE '%%\"%s\"%%' OR "
                             "sql LIKE '%%ogr_layer_%%' OR "
                             "sql LIKE '%%ogr_geocode%%' OR "
-                            "sql LIKE '%%ogr_datasource_load_layers%%')",
+                            "sql LIKE '%%ogr_datasource_load_layers%%' OR "
+                            "sql LIKE '%%ogr_GetConfigOption%%' OR "
+                            "sql LIKE '%%ogr_SetConfigOption%%' )",
                             aosDatabaseNames[i].c_str(),
                             pszVirtualTableName,
                             OGRSQLiteEscapeName(pszVirtualTableName).c_str());
