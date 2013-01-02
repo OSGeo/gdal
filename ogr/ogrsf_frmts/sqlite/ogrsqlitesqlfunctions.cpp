@@ -38,6 +38,10 @@
 
 #include "ogrsqliteregexp.cpp" /* yes the .cpp file, to make it work on Windows with load_extension('gdalXX.dll') */
 
+#ifndef HAVE_SPATIALITE
+#define MINIMAL_SPATIAL_FUNCTIONS
+#endif
+
 class OGRSQLiteExtensionData
 {
 #ifdef DEBUG
@@ -126,7 +130,16 @@ static
 void OGR2SQLITE_ogr_version(sqlite3_context* pContext,
                             int argc, sqlite3_value** argv)
 {
-    sqlite3_result_text( pContext, GDAL_RELEASE_NAME, -1, SQLITE_STATIC );
+    if( argc == 0 || sqlite3_value_type (argv[0]) != SQLITE_TEXT )
+    {
+        sqlite3_result_text( pContext, GDAL_RELEASE_NAME, -1, SQLITE_STATIC );
+    }
+    else
+    {
+        sqlite3_result_text( pContext,
+                             GDALVersionInfo((const char*)sqlite3_value_text(argv[0])),
+                             -1, SQLITE_TRANSIENT );
+    }
 }
 
 /************************************************************************/
@@ -582,6 +595,403 @@ void OGR2SQLITE_ogr_datasource_load_layers(sqlite3_context* pContext,
     sqlite3_result_int (pContext, 1);
 }
 
+#ifdef notdef
+/************************************************************************/
+/*                  OGR2SQLITE_ogr_GetConfigOption()                    */
+/************************************************************************/
+
+static
+void OGR2SQLITE_ogr_GetConfigOption(sqlite3_context* pContext,
+                            int argc, sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_TEXT )
+    {
+        sqlite3_result_null (pContext);
+        return;
+    }
+    
+    const char* pszKey = (const char*)sqlite3_value_text(argv[0]);
+    const char* pszVal = CPLGetConfigOption(pszKey, NULL);
+    if( pszVal == NULL )
+        sqlite3_result_null (pContext);
+    else
+        sqlite3_result_text( pContext, pszVal, -1, SQLITE_TRANSIENT );
+}
+
+/************************************************************************/
+/*                  OGR2SQLITE_ogr_SetConfigOption()                    */
+/************************************************************************/
+
+static
+void OGR2SQLITE_ogr_SetConfigOption(sqlite3_context* pContext,
+                            int argc, sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_TEXT )
+    {
+        sqlite3_result_null (pContext);
+        return;
+    }
+    if( sqlite3_value_type (argv[1]) != SQLITE_TEXT &&
+        sqlite3_value_type (argv[1]) != SQLITE_NULL )
+    {
+        sqlite3_result_null (pContext);
+        return;
+    }
+
+    const char* pszKey = (const char*)sqlite3_value_text(argv[0]);
+    const char* pszVal = (sqlite3_value_type (argv[1]) == SQLITE_TEXT) ?
+        (const char*)sqlite3_value_text(argv[1]) : NULL;
+    CPLSetConfigOption(pszKey, pszVal);
+    sqlite3_result_null (pContext);
+}
+#endif // notdef
+
+#ifdef MINIMAL_SPATIAL_FUNCTIONS
+
+/************************************************************************/
+/*                      OGR2SQLITE_GetGeom()                            */
+/************************************************************************/
+
+static OGRGeometry* OGR2SQLITE_GetGeom(sqlite3_context* pContext,
+                                       int argc, sqlite3_value** argv,
+                                       int* pnSRSId)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_BLOB )
+    {
+        return NULL;
+    }
+
+    GByte* pabySLBLOB = (GByte *) sqlite3_value_blob (argv[0]);
+    int nBLOBLen = sqlite3_value_bytes (argv[0]);
+    OGRGeometry* poGeom = NULL;
+    if( OGRSQLiteLayer::ImportSpatiaLiteGeometry(
+                        pabySLBLOB, nBLOBLen, &poGeom, pnSRSId) != CE_None )
+    {
+        return NULL;
+    }
+
+    return poGeom;
+}
+
+/************************************************************************/
+/*                     OGR2SQLITE_ST_AsText()                           */
+/************************************************************************/
+
+static
+void OGR2SQLITE_ST_AsText(sqlite3_context* pContext,
+                            int argc, sqlite3_value** argv)
+{
+    OGRGeometry* poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, NULL);
+    if( poGeom != NULL )
+    {
+        char* pszWKT = NULL;
+        if( poGeom->exportToWkt(&pszWKT) == OGRERR_NONE )
+            sqlite3_result_text( pContext, pszWKT, -1, CPLFree);
+        else
+            sqlite3_result_null (pContext);
+        delete poGeom;
+    }
+    else
+        sqlite3_result_null (pContext);
+}
+
+/************************************************************************/
+/*                    OGR2SQLITE_ST_AsBinary()                          */
+/************************************************************************/
+
+static
+void OGR2SQLITE_ST_AsBinary(sqlite3_context* pContext,
+                            int argc, sqlite3_value** argv)
+{
+    OGRGeometry* poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, NULL);
+    if( poGeom != NULL )
+    {
+        int nBLOBLen = poGeom->WkbSize();
+        GByte* pabyGeomBLOB = (GByte*) VSIMalloc(nBLOBLen);
+        if( pabyGeomBLOB != NULL )
+        {
+            if( poGeom->exportToWkb(wkbNDR, pabyGeomBLOB) == OGRERR_NONE )
+                sqlite3_result_blob( pContext, pabyGeomBLOB, nBLOBLen, CPLFree);
+            else
+            {
+                VSIFree(pabyGeomBLOB);
+                sqlite3_result_null (pContext);
+            }
+        }
+        else
+            sqlite3_result_null (pContext);
+        delete poGeom;
+    }
+    else
+        sqlite3_result_null (pContext);
+}
+
+/************************************************************************/
+/*                OGR2SQLITE_SetGeom_AndDestroy()                       */
+/************************************************************************/
+
+static void OGR2SQLITE_SetGeom_AndDestroy(sqlite3_context* pContext,
+                                          OGRGeometry* poGeom,
+                                          int nSRSId)
+{
+    GByte* pabySLBLOB = NULL;
+    int nBLOBLen = 0;
+    if( poGeom != NULL && OGRSQLiteLayer::ExportSpatiaLiteGeometry(
+                    poGeom, nSRSId, wkbNDR, FALSE,
+                    FALSE, FALSE, &pabySLBLOB, &nBLOBLen ) == CE_None )
+    {
+        sqlite3_result_blob(pContext, pabySLBLOB, nBLOBLen, CPLFree);
+    }
+    else
+    {
+        sqlite3_result_null(pContext);
+    }
+    delete poGeom;
+}
+
+/************************************************************************/
+/*                   OGR2SQLITE_ST_GeomFromText()                       */
+/************************************************************************/
+
+static
+void OGR2SQLITE_ST_GeomFromText(sqlite3_context* pContext,
+                                int argc, sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_TEXT )
+    {
+        sqlite3_result_null (pContext);
+        return;
+    }
+    char* pszWKT = (char*) sqlite3_value_text( argv[0] );
+
+    int nSRID = -1;
+    if( argc == 2 && sqlite3_value_type (argv[1]) == SQLITE_INTEGER )
+        nSRID = sqlite3_value_int( argv[1] );
+
+    OGRGeometry* poGeom = NULL;
+    if( OGRGeometryFactory::createFromWkt(&pszWKT, NULL, &poGeom) == OGRERR_NONE )
+    {
+        OGR2SQLITE_SetGeom_AndDestroy(pContext, poGeom, nSRID);
+    }
+    else
+        sqlite3_result_null (pContext);
+}
+
+/************************************************************************/
+/*                   OGR2SQLITE_ST_GeomFromWKB()                        */
+/************************************************************************/
+
+static
+void OGR2SQLITE_ST_GeomFromWKB(sqlite3_context* pContext,
+                                int argc, sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_BLOB )
+    {
+        sqlite3_result_null (pContext);
+        return;
+    }
+
+    int nSRID = -1;
+    if( argc == 2 && sqlite3_value_type (argv[1]) == SQLITE_INTEGER )
+        nSRID = sqlite3_value_int( argv[1] );
+
+    GByte* pabySLBLOB = (GByte *) sqlite3_value_blob (argv[0]);
+    int nBLOBLen = sqlite3_value_bytes (argv[0]);
+    OGRGeometry* poGeom = NULL;
+
+    if( OGRGeometryFactory::createFromWkb(pabySLBLOB, NULL, &poGeom, nBLOBLen)
+            == OGRERR_NONE )
+    {
+        OGR2SQLITE_SetGeom_AndDestroy(pContext, poGeom, nSRID);
+    }
+    else
+        sqlite3_result_null (pContext);
+}
+
+/************************************************************************/
+/*                         CheckSTFunctions()                           */
+/************************************************************************/
+
+static int CheckSTFunctions(sqlite3_context* pContext,
+                            int argc, sqlite3_value** argv,
+                            OGRGeometry** ppoGeom1,
+                            OGRGeometry** ppoGeom2,
+                            int *pnSRSId )
+{
+    *ppoGeom1 = NULL;
+    *ppoGeom2 = NULL;
+
+    if( argc != 2)
+    {
+        return FALSE;
+    }
+
+    *ppoGeom1 = OGR2SQLITE_GetGeom(pContext, argc, argv, pnSRSId);
+    if( *ppoGeom1 == NULL )
+        return FALSE;
+
+    *ppoGeom2 = OGR2SQLITE_GetGeom(pContext, argc - 1, argv + 1, NULL);
+    if( *ppoGeom2 == NULL )
+    {
+        delete *ppoGeom1;
+        *ppoGeom1 = NULL;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                 OGR2SQLITE_ST_int_geomgeom_op()                      */
+/************************************************************************/
+
+#define OGR2SQLITE_ST_int_geomgeom_op(op) \
+static \
+void OGR2SQLITE_ST_##op (sqlite3_context* pContext, \
+                                int argc, sqlite3_value** argv) \
+{ \
+    OGRGeometry* poGeom1 = NULL; \
+    OGRGeometry* poGeom2 = NULL; \
+    if( !CheckSTFunctions(pContext, argc, argv, &poGeom1, &poGeom2, NULL) ) \
+    { \
+        sqlite3_result_int(pContext, 0); \
+        return; \
+    } \
+ \
+    sqlite3_result_int( pContext, poGeom1-> op (poGeom2) ); \
+ \
+    delete poGeom1; \
+    delete poGeom2; \
+}
+
+OGR2SQLITE_ST_int_geomgeom_op(Intersects)
+OGR2SQLITE_ST_int_geomgeom_op(Equals)
+OGR2SQLITE_ST_int_geomgeom_op(Disjoint)
+OGR2SQLITE_ST_int_geomgeom_op(Touches)
+OGR2SQLITE_ST_int_geomgeom_op(Crosses)
+OGR2SQLITE_ST_int_geomgeom_op(Within)
+OGR2SQLITE_ST_int_geomgeom_op(Contains)
+OGR2SQLITE_ST_int_geomgeom_op(Overlaps)
+
+/************************************************************************/
+/*                   OGR2SQLITE_ST_int_geom_op()                        */
+/************************************************************************/
+
+#define OGR2SQLITE_ST_int_geom_op(op) \
+static \
+void OGR2SQLITE_ST_##op (sqlite3_context* pContext, \
+                                int argc, sqlite3_value** argv) \
+{ \
+    OGRGeometry* poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, NULL); \
+    if( poGeom != NULL ) \
+        sqlite3_result_int( pContext, poGeom-> op () ); \
+    else \
+        sqlite3_result_int( pContext, 0 ); \
+ \
+    delete poGeom; \
+}
+
+OGR2SQLITE_ST_int_geom_op(IsEmpty)
+OGR2SQLITE_ST_int_geom_op(IsSimple)
+OGR2SQLITE_ST_int_geom_op(IsValid)
+
+/************************************************************************/
+/*                  OGR2SQLITE_ST_geom_geomgeom_op()                    */
+/************************************************************************/
+
+#define OGR2SQLITE_ST_geom_geomgeom_op(op) \
+static \
+void OGR2SQLITE_ST_##op (sqlite3_context* pContext, \
+                                int argc, sqlite3_value** argv) \
+{ \
+    OGRGeometry* poGeom1 = NULL; \
+    OGRGeometry* poGeom2 = NULL; \
+    int nSRSId = -1; \
+    if( !CheckSTFunctions(pContext, argc, argv, &poGeom1, &poGeom2, &nSRSId) ) \
+    { \
+        sqlite3_result_null(pContext); \
+        return; \
+    } \
+ \
+    OGR2SQLITE_SetGeom_AndDestroy(pContext, \
+                           poGeom1-> op (poGeom2), \
+                           nSRSId); \
+ \
+    delete poGeom1; \
+    delete poGeom2; \
+}
+
+OGR2SQLITE_ST_geom_geomgeom_op(Intersection)
+OGR2SQLITE_ST_geom_geomgeom_op(Difference)
+OGR2SQLITE_ST_geom_geomgeom_op(Union)
+OGR2SQLITE_ST_geom_geomgeom_op(SymDifference)
+
+/************************************************************************/
+/*                      OGR2SQLITE_ST_SRID()                            */
+/************************************************************************/
+
+static
+void OGR2SQLITE_ST_SRID(sqlite3_context* pContext,
+                        int argc, sqlite3_value** argv)
+{
+    int nSRSId = -1;
+    OGRGeometry* poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, &nSRSId);
+    if( poGeom != NULL )
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        sqlite3_result_int( pContext, nSRSId );
+        CPLPopErrorHandler();
+    }
+    else
+        sqlite3_result_null(pContext);
+    delete poGeom;
+}
+
+/************************************************************************/
+/*                      OGR2SQLITE_ST_Area()                            */
+/************************************************************************/
+
+static
+void OGR2SQLITE_ST_Area(sqlite3_context* pContext,
+                        int argc, sqlite3_value** argv)
+{
+    OGRGeometry* poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, NULL);
+    if( poGeom != NULL )
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        sqlite3_result_double( pContext, OGR_G_GetArea((OGRGeometryH)poGeom) );
+        CPLPopErrorHandler();
+    }
+    else
+        sqlite3_result_null(pContext);
+    delete poGeom;
+}
+
+/************************************************************************/
+/*                     OGR2SQLITE_ST_Buffer()                           */
+/************************************************************************/
+
+static
+void OGR2SQLITE_ST_Buffer(sqlite3_context* pContext,
+                          int argc, sqlite3_value** argv)
+{
+    int nSRSId = -1;
+    OGRGeometry* poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, &nSRSId);
+    if( poGeom != NULL && (
+            sqlite3_value_type(argv[1]) == SQLITE_FLOAT ||
+            sqlite3_value_type(argv[1]) == SQLITE_INTEGER) )
+    {
+        double dfDist = (sqlite3_value_type(argv[1]) == SQLITE_FLOAT) ?
+            sqlite3_value_double(argv[1]) : sqlite3_value_int(argv[1]);
+        OGR2SQLITE_SetGeom_AndDestroy(pContext, poGeom->Buffer(dfDist), nSRSId);
+    }
+    else
+        sqlite3_result_null(pContext);
+    delete poGeom;
+}
+
+#endif // #ifdef MINIMAL_SPATIAL_FUNCTIONS
+
 /************************************************************************/
 /*                   OGRSQLiteRegisterSQLFunctions()                    */
 /************************************************************************/
@@ -592,6 +1002,9 @@ void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB)
     OGRSQLiteExtensionData* pData = new OGRSQLiteExtensionData(hDB);
 
     sqlite3_create_function(hDB, "ogr_version", 0, SQLITE_ANY, NULL,
+                           OGR2SQLITE_ogr_version, NULL, NULL);
+
+    sqlite3_create_function(hDB, "ogr_version", 1, SQLITE_ANY, NULL,
                            OGR2SQLITE_ogr_version, NULL, NULL);
 
     sqlite3_create_function(hDB, "ogr_deflate", 1, SQLITE_ANY, NULL,
@@ -618,9 +1031,65 @@ void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB)
     sqlite3_create_function(hDB, "ogr_datasource_load_layers", 3, SQLITE_ANY, hDB,
                             OGR2SQLITE_ogr_datasource_load_layers, NULL, NULL);
 
+#if notdef
+    sqlite3_create_function(hDB, "ogr_GetConfigOption", 1, SQLITE_ANY, NULL,
+                            OGR2SQLITE_ogr_GetConfigOption, NULL, NULL);
+
+    sqlite3_create_function(hDB, "ogr_SetConfigOption", 2, SQLITE_ANY, NULL,
+                            OGR2SQLITE_ogr_SetConfigOption, NULL, NULL);
+#endif
+
     // Custom and undocumented function, not sure I'll keep it.
     sqlite3_create_function(hDB, "Transform3", 3, SQLITE_ANY, pData,
                             OGR2SQLITE_Transform, NULL, NULL);
+
+#ifdef MINIMAL_SPATIAL_FUNCTIONS
+    /* Check if spatialite is available */
+    int rc = sqlite3_exec(hDB, "SELECT spatialite_version()", NULL, NULL, NULL);
+    if( rc != SQLITE_OK &&
+        CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_SPATIAL_FUNCTIONS", "YES")) )
+    {
+        CPLDebug("SQLITE",
+                 "Spatialite not available. Implementing a few functions");
+
+#define REGISTER_ST_op(argc, op) \
+        sqlite3_create_function(hDB, #op, argc, SQLITE_ANY, NULL, \
+                                OGR2SQLITE_ST_##op, NULL, NULL); \
+        sqlite3_create_function(hDB, "ST_" #op, argc, SQLITE_ANY, NULL, \
+                                OGR2SQLITE_ST_##op, NULL, NULL);
+
+        REGISTER_ST_op(1, AsText);
+        REGISTER_ST_op(1, AsBinary);
+        REGISTER_ST_op(1, GeomFromText);
+        REGISTER_ST_op(2, GeomFromText);
+        REGISTER_ST_op(1, GeomFromWKB);
+        REGISTER_ST_op(2, GeomFromWKB);
+
+        REGISTER_ST_op(1, IsEmpty);
+        REGISTER_ST_op(1, IsSimple);
+        REGISTER_ST_op(1, IsValid);
+
+        REGISTER_ST_op(2, Intersects);
+        REGISTER_ST_op(2, Equals);
+        REGISTER_ST_op(2, Disjoint);
+        REGISTER_ST_op(2, Touches);
+        REGISTER_ST_op(2, Crosses);
+        REGISTER_ST_op(2, Within);
+        REGISTER_ST_op(2, Contains);
+        REGISTER_ST_op(2, Overlaps);
+
+        REGISTER_ST_op(2, Intersection);
+        REGISTER_ST_op(2, Difference);
+        // Union() is invalid
+        sqlite3_create_function(hDB, "ST_Union", 2, SQLITE_ANY, NULL,
+                                OGR2SQLITE_ST_Union, NULL, NULL);
+        REGISTER_ST_op(2, SymDifference);
+
+        REGISTER_ST_op(1, SRID);
+        REGISTER_ST_op(1, Area);
+        REGISTER_ST_op(2, Buffer);
+    }
+#endif // #ifdef MINIMAL_SPATIAL_FUNCTIONS
 
     pData->SetRegExpCache(OGRSQLiteRegisterRegExpFunction(hDB));
 

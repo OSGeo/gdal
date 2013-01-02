@@ -257,6 +257,8 @@ class OGRSQLiteLayer : public OGRLayer
 
     static OGRErr       ImportSpatiaLiteGeometry( const GByte *, int,
                                                   OGRGeometry ** );
+    static OGRErr       ImportSpatiaLiteGeometry( const GByte *, int,
+                                                  OGRGeometry **, int *pnSRID );
     static OGRErr       ExportSpatiaLiteGeometry( const OGRGeometry *,
                                                   GInt32, OGRwkbByteOrder,
                                                   int, int, int bUseComprGeom, GByte **, int * );
