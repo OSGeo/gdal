@@ -145,18 +145,68 @@ def ogr_virtualogr_2():
     ds.ExecuteSQL("CREATE VIRTUAL TABLE foo USING VirtualOGR('data/poly.shp')")
     ds.ExecuteSQL("CREATE TABLE spy_table (spy_content VARCHAR)")
     ds.ExecuteSQL("CREATE TABLE regular_table (bar VARCHAR)")
+    ds = None
+
+    # Check that foo isn't listed
+    ds = ogr.Open('/vsimem/ogr_virtualogr_2.db')
+    for i in range(ds.GetLayerCount()):
+        if ds.GetLayer(i).GetName() == 'foo':
+            gdaltest.post_reason('fail')
+            return 'fail'
+    ds = None
+
+    # Check that it is listed if OGR_SQLITE_LIST_VIRTUAL_OGR=YES
+    gdal.SetConfigOption('OGR_SQLITE_LIST_VIRTUAL_OGR', 'YES')
+    ds = ogr.Open('/vsimem/ogr_virtualogr_2.db')
+    gdal.SetConfigOption('OGR_SQLITE_LIST_VIRTUAL_OGR', None)
+    found = False
+    for i in range(ds.GetLayerCount()):
+        if ds.GetLayer(i).GetName() == 'foo':
+            found = True
+    if not found:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # Add suspicious trigger
+    ds = ogr.Open('/vsimem/ogr_virtualogr_2.db', update = 1)
     ds.ExecuteSQL("CREATE TRIGGER spy_trigger INSERT ON regular_table BEGIN " + \
                   "INSERT OR REPLACE INTO spy_table (spy_content) " + \
                   "SELECT OGR_STYLE FROM foo; END;")
     ds = None
 
-    ds = ogr.Open('/vsimem/ogr_virtualogr_2.db')
     gdal.ErrorReset()
+    ds = ogr.Open('/vsimem/ogr_virtualogr_2.db')
+    for i in range(ds.GetLayerCount()):
+        if ds.GetLayer(i).GetName() == 'foo':
+            gdaltest.post_reason('fail')
+            return 'fail'
+    # An error will be triggered at the time the trigger is used
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds.ExecuteSQL("INSERT INTO regular_table (bar) VALUES ('bar')")
     gdal.PopErrorHandler()
     did_not_get_error = gdal.GetLastErrorMsg() == ''
     ds = None
+
+    if did_not_get_error:
+        gdal.Unlink('/vsimem/ogr_virtualogr_2.db')
+        gdaltest.post_reason('expected a failure')
+        return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    gdal.SetConfigOption('OGR_SQLITE_LIST_VIRTUAL_OGR', 'YES')
+    ds = ogr.Open('/vsimem/ogr_virtualogr_2.db')
+    gdal.SetConfigOption('OGR_SQLITE_LIST_VIRTUAL_OGR', None)
+    gdal.PopErrorHandler()
+    if ds is not None:
+        ds = None
+        gdal.Unlink('/vsimem/ogr_virtualogr_2.db')
+        gdaltest.post_reason('expected a failure')
+        return 'fail'
+    did_not_get_error = gdal.GetLastErrorMsg() == ''
+    ds = None
+
     gdal.Unlink('/vsimem/ogr_virtualogr_2.db')
 
     if did_not_get_error:
