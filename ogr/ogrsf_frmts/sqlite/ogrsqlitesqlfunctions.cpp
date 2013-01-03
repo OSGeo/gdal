@@ -480,13 +480,9 @@ void OGR2SQLITE_ogr_geocode_reverse(sqlite3_context* pContext,
         dfLat = OGR2SQLITE_GetValAsDouble(argv[1], &bGotLat);
     }
 
-    if( bGotLon && bGotLat )
+    if( argc >= 3 && bGotLon && bGotLat &&
+        sqlite3_value_type (argv[2]) == SQLITE_TEXT )
     {
-        if( argc < 3 )
-        {
-            sqlite3_result_null (pContext);
-            return;
-        }
         iAfterGeomIdx = 2;
     }
     else if( argc >= 2 && 
