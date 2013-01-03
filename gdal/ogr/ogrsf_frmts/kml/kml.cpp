@@ -175,7 +175,9 @@ void KML::checkValidity()
                 aBuf[nLen] = 0;
             else
                 aBuf[BUFSIZ-1] = 0;
-            if (strstr(aBuf, "<?xml") && strstr(aBuf, "<kml"))
+            if( strstr(aBuf, "<?xml") && (
+                    strstr(aBuf, "<kml") ||
+                    (strstr(aBuf, "<Document") && strstr(aBuf, "/kml/2.")) ) )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "XML parsing of KML file failed : %s at line %d, column %d",
@@ -273,7 +275,7 @@ void XMLCALL KML::startElementValidate(void* pUserData, const char* pszName, con
 
     poKML->validity = KML_VALIDITY_INVALID;
 
-    if(strcmp(pszName, "kml") == 0)
+    if(strcmp(pszName, "kml") == 0 || strcmp(pszName, "Document") == 0)
     {
         // Check all Attributes
         for (i = 0; ppszAttr[i]; i += 2)
