@@ -413,6 +413,53 @@ void OGR2SQLITE_ogr_geocode(sqlite3_context* pContext,
 }
 
 /************************************************************************/
+/*                    OGR2SQLITE_GetValAsDouble()                       */
+/************************************************************************/
+
+static double OGR2SQLITE_GetValAsDouble(sqlite3_value* val, int* pbGotVal)
+{
+    switch(sqlite3_value_type(val))
+    {
+        case SQLITE_FLOAT:
+            if( pbGotVal ) *pbGotVal = TRUE;
+            return sqlite3_value_double(val);
+
+        case SQLITE_INTEGER:
+            if( pbGotVal ) *pbGotVal = TRUE;
+            return sqlite3_value_int(val);
+
+        default:
+            if( pbGotVal ) *pbGotVal = FALSE;
+            return 0.0;
+    }
+}
+
+/************************************************************************/
+/*                      OGR2SQLITE_GetGeom()                            */
+/************************************************************************/
+
+static OGRGeometry* OGR2SQLITE_GetGeom(sqlite3_context* pContext,
+                                       int argc, sqlite3_value** argv,
+                                       int* pnSRSId)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_BLOB )
+    {
+        return NULL;
+    }
+
+    GByte* pabySLBLOB = (GByte *) sqlite3_value_blob (argv[0]);
+    int nBLOBLen = sqlite3_value_bytes (argv[0]);
+    OGRGeometry* poGeom = NULL;
+    if( OGRSQLiteLayer::ImportSpatiaLiteGeometry(
+                        pabySLBLOB, nBLOBLen, &poGeom, pnSRSId) != CE_None )
+    {
+        return NULL;
+    }
+
+    return poGeom;
+}
+
+/************************************************************************/
 /*                   OGR2SQLITE_ogr_geocode_reverse()                   */
 /************************************************************************/
 
@@ -425,34 +472,29 @@ void OGR2SQLITE_ogr_geocode_reverse(sqlite3_context* pContext,
 
     double dfLon = 0.0, dfLat = 0.0;
     int iAfterGeomIdx = 0;
+    int bGotLon = FALSE, bGotLat = FALSE;
 
-    if( argc >= 2 &&
-        (sqlite3_value_type (argv[0]) == SQLITE_FLOAT ||
-         sqlite3_value_type (argv[0]) == SQLITE_INTEGER) &&
-        (sqlite3_value_type (argv[1]) == SQLITE_FLOAT ||
-         sqlite3_value_type (argv[1]) == SQLITE_INTEGER) )
+    if( argc >= 2 )
+    {
+        dfLon = OGR2SQLITE_GetValAsDouble(argv[0], &bGotLon);
+        dfLat = OGR2SQLITE_GetValAsDouble(argv[1], &bGotLat);
+    }
+
+    if( bGotLon && bGotLat )
     {
         if( argc < 3 )
         {
             sqlite3_result_null (pContext);
             return;
         }
-        dfLon = (sqlite3_value_type (argv[0]) != SQLITE_FLOAT) ?
-            sqlite3_value_double(argv[0]) : sqlite3_value_int(argv[0]);
-        dfLat = (sqlite3_value_type (argv[1]) != SQLITE_FLOAT) ?
-            sqlite3_value_double(argv[1]) : sqlite3_value_int(argv[1]);
         iAfterGeomIdx = 2;
     }
     else if( argc >= 2 && 
              sqlite3_value_type (argv[0]) == SQLITE_BLOB &&
              sqlite3_value_type (argv[1]) == SQLITE_TEXT )
     {
-        GByte* pabyBlob = (GByte *) sqlite3_value_blob (argv[0]);
-        int nLen = sqlite3_value_bytes (argv[0]);
-        OGRGeometry* poGeom = NULL;
-        if( OGRSQLiteLayer::ImportSpatiaLiteGeometry(
-                        pabyBlob, nLen, &poGeom ) == CE_None &&
-            poGeom != NULL && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
+        OGRGeometry* poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, NULL);
+        if( poGeom != NULL && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
         {
             OGRPoint* poPoint = (OGRPoint*) poGeom;
             dfLon = poPoint->getX();
@@ -647,31 +689,6 @@ void OGR2SQLITE_ogr_SetConfigOption(sqlite3_context* pContext,
 #endif // notdef
 
 #ifdef MINIMAL_SPATIAL_FUNCTIONS
-
-/************************************************************************/
-/*                      OGR2SQLITE_GetGeom()                            */
-/************************************************************************/
-
-static OGRGeometry* OGR2SQLITE_GetGeom(sqlite3_context* pContext,
-                                       int argc, sqlite3_value** argv,
-                                       int* pnSRSId)
-{
-    if( sqlite3_value_type (argv[0]) != SQLITE_BLOB )
-    {
-        return NULL;
-    }
-
-    GByte* pabySLBLOB = (GByte *) sqlite3_value_blob (argv[0]);
-    int nBLOBLen = sqlite3_value_bytes (argv[0]);
-    OGRGeometry* poGeom = NULL;
-    if( OGRSQLiteLayer::ImportSpatiaLiteGeometry(
-                        pabySLBLOB, nBLOBLen, &poGeom, pnSRSId) != CE_None )
-    {
-        return NULL;
-    }
-
-    return poGeom;
-}
 
 /************************************************************************/
 /*                     OGR2SQLITE_ST_AsText()                           */
@@ -977,17 +994,50 @@ void OGR2SQLITE_ST_Buffer(sqlite3_context* pContext,
 {
     int nSRSId = -1;
     OGRGeometry* poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, &nSRSId);
-    if( poGeom != NULL && (
-            sqlite3_value_type(argv[1]) == SQLITE_FLOAT ||
-            sqlite3_value_type(argv[1]) == SQLITE_INTEGER) )
-    {
-        double dfDist = (sqlite3_value_type(argv[1]) == SQLITE_FLOAT) ?
-            sqlite3_value_double(argv[1]) : sqlite3_value_int(argv[1]);
+    int bGotVal;
+    double dfDist = OGR2SQLITE_GetValAsDouble(argv[1], &bGotVal);
+    if( poGeom != NULL && bGotVal )
         OGR2SQLITE_SetGeom_AndDestroy(pContext, poGeom->Buffer(dfDist), nSRSId);
-    }
     else
         sqlite3_result_null(pContext);
     delete poGeom;
+}
+
+/************************************************************************/
+/*                    OGR2SQLITE_ST_MakePoint()                         */
+/************************************************************************/
+
+static
+void OGR2SQLITE_ST_MakePoint(sqlite3_context* pContext,
+                             int argc, sqlite3_value** argv)
+{
+    double dfX, dfY = 0.0;
+    int bGotVal;
+    dfX = OGR2SQLITE_GetValAsDouble(argv[0], &bGotVal);
+    if( bGotVal )
+        dfY = OGR2SQLITE_GetValAsDouble(argv[1], &bGotVal);
+    if( !bGotVal )
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+
+    OGRPoint* poPoint;
+    if( argc == 3 )
+    {
+        double dfZ = OGR2SQLITE_GetValAsDouble(argv[2], &bGotVal);
+        if( !bGotVal )
+        {
+            sqlite3_result_null(pContext);
+            return;
+        }
+
+        poPoint = new OGRPoint(dfX, dfY, dfZ);
+    }
+    else
+        poPoint = new OGRPoint(dfX, dfY);
+
+    OGR2SQLITE_SetGeom_AndDestroy(pContext, poPoint, -1);
 }
 
 #endif // #ifdef MINIMAL_SPATIAL_FUNCTIONS
@@ -1088,6 +1138,8 @@ void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB)
         REGISTER_ST_op(1, SRID);
         REGISTER_ST_op(1, Area);
         REGISTER_ST_op(2, Buffer);
+        REGISTER_ST_op(2, MakePoint);
+        REGISTER_ST_op(3, MakePoint);
     }
 #endif // #ifdef MINIMAL_SPATIAL_FUNCTIONS
 
