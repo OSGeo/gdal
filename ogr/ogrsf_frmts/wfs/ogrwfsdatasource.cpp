@@ -39,6 +39,8 @@
 
 CPL_CVSID("$Id$");
 
+#define DEFAULT_BASE_START_INDEX     0
+#define DEFAULT_PAGE_SIZE            100
 
 /************************************************************************/
 /*                            WFSFindNode()                             */
@@ -143,12 +145,23 @@ OGRWFSDataSource::OGRWFSDataSource()
     papszHttpOptions = NULL;
 
     bPagingAllowed = CSLTestBoolean(CPLGetConfigOption("OGR_WFS_PAGING_ALLOWED", "OFF"));
-    nPageSize = 0;
+    nPageSize = DEFAULT_PAGE_SIZE;
+    nBaseStartIndex = DEFAULT_BASE_START_INDEX;
     if (bPagingAllowed)
     {
-        nPageSize = atoi(CPLGetConfigOption("OGR_WFS_PAGE_SIZE", "100"));
-        if (nPageSize <= 0)
-            nPageSize = 100;
+        const char* pszOption;
+
+        pszOption = CPLGetConfigOption("OGR_WFS_PAGE_SIZE", NULL);
+        if( pszOption != NULL )
+        {
+            nPageSize = atoi(pszOption);
+            if (nPageSize <= 0)
+                nPageSize = DEFAULT_PAGE_SIZE;
+        }
+
+        pszOption = CPLGetConfigOption("OGR_WFS_BASE_START_INDEX", NULL);
+        if( pszOption != NULL )
+            nBaseStartIndex = atoi(pszOption);
     }
 
     bIsGEOSERVER = FALSE;
@@ -832,8 +845,12 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
         {
             nPageSize = atoi(pszParm);
             if (nPageSize <= 0)
-                nPageSize = 100;
+                nPageSize = DEFAULT_PAGE_SIZE;
         }
+
+        pszParm = CPLGetXMLValue( psRoot, "BaseStartIndex", NULL );
+        if( pszParm )
+            nBaseStartIndex = atoi(pszParm);
 
         osTypeName = CPLURLGetValue(pszBaseURL, "TYPENAME");
 

@@ -50,6 +50,7 @@ userid and password to the remote server.
 <li> <b>Version</b>:  Set a specific WFS version to use (either 1.0.0 or 1.1.0).
 <li> <b>PagingAllowed</b>: Set to ON if paging must be enabled. See "Request paging" section.
 <li> <b>PageSize</b>: Page size when paging is enabled. See "Request paging" section.
+<li> <b>BaseStartIndex</b>: (OGR &gt;= 1.10) Base start index when paging is enabled. See "Request paging" section.
 </ul>
 
 <h2>Request paging</h2>
@@ -59,7 +60,13 @@ Before OGR 1.10, when reading the first feature from a layer, the whole layer co
 Some servers (such as MapServer >= 6.0) support a vendor specific option, STARTINDEX, that allow to do the requests per "page",
 and thus to avoid downloading the whole content of the layer in a single request. The OGR WFS client will use paging when the OGR_WFS_PAGING_ALLOWED
 configuration option is set to ON. The page size (number of features fetched in a single request) is limited to 100 by default.
-It can be changed by setting the OGR_WFS_PAGE_SIZE configuration option. Those 2 options can also be set in a WFS XML description file.<p>
+It can be changed by setting the OGR_WFS_PAGE_SIZE configuration option.<br>
+WFS 1.1 specification has clarified that the first feature in paging is at index 0. But some server implementations of WFS 1.1
+have considered that it was at index 1 (including MapServer &lt;= 6.2). Starting with OGR 1.10, the default base start index is 0,
+as mandated by the specification. The OGR_WFS_BASE_START_INDEX configuration option can however be set to 1 to be compatible
+with the server implementations that considered the first feature to be at index 1.<br>
+Those 3 options (OGR_WFS_PAGING_ALLOWED, OGR_WFS_PAGE_SIZE, OGR_WFS_BASE_START_INDEX) can also be set in a WFS XML description
+file with the elements of similar names (PagingAllowed, PageSize, BaseStartIndex).<p>
 
 Starting with OGR 1.10, the WFS driver will read the GML content as a stream instead as a whole file, which will improve
 interactivity and help when the content cannot fit into memory. This can be turned off by setting the OGR_WFS_USE_STREAMING
