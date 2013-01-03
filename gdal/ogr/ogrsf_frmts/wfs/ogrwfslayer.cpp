@@ -392,7 +392,9 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
         }
         if (nFeatures >= poDS->GetPageSize())
         {
-            osURL = CPLURLAddKVP(osURL, "STARTINDEX", CPLSPrintf("%d", nPagingStartIndex + 1));
+            osURL = CPLURLAddKVP(osURL, "STARTINDEX",
+                CPLSPrintf("%d", nPagingStartIndex +
+                                 poDS->GetBaseStartIndex()));
             nMaxFeatures = poDS->GetPageSize();
             nFeatureCountRequested = nMaxFeatures;
             bPagingActive = TRUE;
