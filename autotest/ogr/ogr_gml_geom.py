@@ -409,6 +409,25 @@ def gml_Box():
     return 'success'
 
 ###############################################################################
+# Test GML Envelope
+
+def gml_Envelope():
+
+    gml = """<gml:Envelope xmlns:gml="http://www.opengis.net/gml" srsName="foo">
+    <gml:lowerCorner>1 2</gml:lowerCorner>
+    <gml:upperCorner>3 4</gml:upperCorner>
+</gml:Envelope>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+
+    if geom.ExportToWkt() != 'POLYGON ((1 2,1 4,3 4,3 2,1 2))':
+        gdaltest.post_reason( '<gml:Envelope> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test GML Curve
 
 def gml_Curve():
@@ -1021,6 +1040,9 @@ def gml_invalid_geoms():
         ('<gmlce:SimpleMultiPoint/>',None), #invalid
         ('<gmlce:SimpleMultiPoint><foo/></gmlce:SimpleMultiPoint>',None), # invalid GML3, but we are tolerant
         ('<gmlce:SimpleMultiPoint><gml:posList/></gmlce:SimpleMultiPoint>','MULTIPOINT EMPTY'), # validates the schema
+        ('<gml:Envelope/>',None),
+        ('<gml:Envelope><gml:lowerCorner/><gml:upperCorner/></gml:Envelope>',None),
+        ('<gml:Envelope><gml:lowerCorner>1</gml:lowerCorner><gml:upperCorner>3 4</gml:upperCorner/></gml:Envelope>',None),
     ]
 
     for (gml, expected_wkt) in gml_expected_wkt_list:
@@ -1253,6 +1275,7 @@ gdaltest_list.append( gml_out_multilinestring_srs )
 gdaltest_list.append( gml_out_multipolygon_srs )
 gdaltest_list.append( gml_out_geometrycollection_srs )
 gdaltest_list.append( gml_Box )
+gdaltest_list.append( gml_Envelope )
 gdaltest_list.append( gml_Curve )
 gdaltest_list.append( gml_Curve_with_pointProperty )
 gdaltest_list.append( gml_MultiCurve )
