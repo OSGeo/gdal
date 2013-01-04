@@ -420,7 +420,7 @@ def gml_Envelope():
 
     geom = ogr.CreateGeometryFromGML( gml )
 
-    if geom.ExportToWkt() != 'POLYGON ((1 2,1 4,3 4,3 2,1 2))':
+    if geom.ExportToWkt() != 'POLYGON ((1 2,3 2,3 4,1 4,1 2))':
         gdaltest.post_reason( '<gml:Envelope> not correctly parsed' )
         print(geom.ExportToWkt())
         return 'fail'
