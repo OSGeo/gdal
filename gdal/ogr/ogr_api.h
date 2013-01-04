@@ -172,11 +172,11 @@ int    CPL_DLL OGR_G_IsRing( OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_Polygonize( OGRGeometryH );
 
 /* backward compatibility (non-standard methods) */
-int    CPL_DLL OGR_G_Intersect( OGRGeometryH, OGRGeometryH );
-int    CPL_DLL OGR_G_Equal( OGRGeometryH, OGRGeometryH );
-OGRGeometryH CPL_DLL OGR_G_SymmetricDifference( OGRGeometryH, OGRGeometryH );
-double CPL_DLL OGR_G_GetArea( OGRGeometryH );
-OGRGeometryH CPL_DLL OGR_G_GetBoundary( OGRGeometryH );
+int    CPL_DLL OGR_G_Intersect( OGRGeometryH, OGRGeometryH ) CPL_WARN_DEPRECATED("Non standard method. Use OGR_G_Intersects() instead");
+int    CPL_DLL OGR_G_Equal( OGRGeometryH, OGRGeometryH ) CPL_WARN_DEPRECATED("Non standard method. Use OGR_G_Equals() instead");
+OGRGeometryH CPL_DLL OGR_G_SymmetricDifference( OGRGeometryH, OGRGeometryH ) CPL_WARN_DEPRECATED("Non standard method. Use OGR_G_SymDifference() instead");
+double CPL_DLL OGR_G_GetArea( OGRGeometryH ) CPL_WARN_DEPRECATED("Non standard method. Use OGR_G_Area() instead");
+OGRGeometryH CPL_DLL OGR_G_GetBoundary( OGRGeometryH ) CPL_WARN_DEPRECATED("Non standard method. Use OGR_G_Boundary() instead");
 
 /* Methods for getting/setting vertices in points, line strings and rings */
 int    CPL_DLL OGR_G_GetPointCount( OGRGeometryH );
