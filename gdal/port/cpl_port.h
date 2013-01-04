@@ -566,5 +566,25 @@ static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : cpl_cvsid ); }
 #define CPL_WARN_UNUSED_RESULT
 #endif
 
+#if defined(__GNUC__) && __GNUC__ >= 3 && !defined(DOXYGEN_SKIP)
+#define CPL_NO_RETURN                                __attribute__((noreturn))
+#else
+#define CPL_NO_RETURN
+#endif
+
+#if !defined(DOXYGEN_SKIP)
+#if defined(__has_extension)
+  #if __has_extension(attribute_deprecated_with_message)
+    /* Clang extension */
+    #define CPL_WARN_DEPRECATED(x)                       __attribute__ ((deprecated(x)))
+  #else
+    #define CPL_WARN_DEPRECATED(x)
+  #endif
+#elif defined(__GNUC__)
+    #define CPL_WARN_DEPRECATED(x)                       __attribute__ ((deprecated))
+#else
+  #define CPL_WARN_DEPRECATED(x)
+#endif
+#endif
 
 #endif /* ndef CPL_BASE_H_INCLUDED */

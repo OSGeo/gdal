@@ -972,7 +972,7 @@ void OGR2SQLITE_ST_Area(sqlite3_context* pContext,
     if( poGeom != NULL )
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        sqlite3_result_double( pContext, OGR_G_GetArea((OGRGeometryH)poGeom) );
+        sqlite3_result_double( pContext, OGR_G_Area((OGRGeometryH)poGeom) );
         CPLPopErrorHandler();
     }
     else
