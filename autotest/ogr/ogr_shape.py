@@ -3128,7 +3128,7 @@ def ogr_shape_65():
     return 'success'
 
 ###############################################################################
-# Test failures when creating files
+# Test failures when creating files and datasources
 
 def ogr_shape_66():
 
@@ -3150,6 +3150,23 @@ def ogr_shape_66():
         return 'fail'
     ds = None
     
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/i_dont_exist/bar')
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = open('tmp/foo','wb')
+    f.close()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/foo')
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    os.unlink('tmp/foo')
+
     return 'success'
 
 ###############################################################################
