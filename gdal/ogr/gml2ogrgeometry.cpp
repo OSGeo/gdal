@@ -996,6 +996,51 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
         return poBoxPoly;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Envelope                                                        */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszBaseGeometry,"Envelope") )
+    {
+        const CPLXMLNode* psLowerCorner = FindBareXMLChild( psNode, "lowerCorner");
+        const CPLXMLNode* psUpperCorner = FindBareXMLChild( psNode, "upperCorner");
+        if( psLowerCorner == NULL || psUpperCorner == NULL )
+            return NULL;
+        const char* pszLowerCorner = GetElementText(psLowerCorner);
+        const char* pszUpperCorner = GetElementText(psUpperCorner);
+        if( pszLowerCorner == NULL || pszUpperCorner == NULL )
+            return NULL;
+        char** papszLowerCorner = CSLTokenizeString(pszLowerCorner);
+        char** papszUpperCorner = CSLTokenizeString(pszUpperCorner);
+        int nTokenCountLC = CSLCount(papszLowerCorner);
+        int nTokenCountUC = CSLCount(papszUpperCorner);
+        if( nTokenCountLC < 2 || nTokenCountUC < 2 )
+        {
+            CSLDestroy(papszLowerCorner);
+            CSLDestroy(papszUpperCorner);
+            return NULL;
+        }
+        
+        double dfLLX = CPLAtof(papszLowerCorner[0]);
+        double dfLLY = CPLAtof(papszLowerCorner[1]);
+        double dfURX = CPLAtof(papszUpperCorner[0]);
+        double dfURY = CPLAtof(papszUpperCorner[1]);
+        CSLDestroy(papszLowerCorner);
+        CSLDestroy(papszUpperCorner);
+
+        OGRLinearRing *poEnvelopeRing = new OGRLinearRing();
+        OGRPolygon *poPoly = new OGRPolygon();
+
+        poEnvelopeRing->setNumPoints( 5 );
+        poEnvelopeRing->setPoint(0, dfLLX, dfLLY);
+        poEnvelopeRing->setPoint(1, dfLLX, dfURY);
+        poEnvelopeRing->setPoint(2, dfURX, dfURY);
+        poEnvelopeRing->setPoint(3, dfURX, dfLLY);
+        poEnvelopeRing->setPoint(4, dfLLX, dfLLY);
+        poPoly->addRingDirectly(poEnvelopeRing );
+
+        return poPoly;
+    }
+
 /* ------------------------const CPLXMLNode *psChild;-------------------------------------------- */
 /*      MultiPolygon / MultiSurface / CompositeSurface                  */
 /*                                                                      */
