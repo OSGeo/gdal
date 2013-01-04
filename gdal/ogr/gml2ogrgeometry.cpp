@@ -1032,9 +1032,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 
         poEnvelopeRing->setNumPoints( 5 );
         poEnvelopeRing->setPoint(0, dfLLX, dfLLY);
-        poEnvelopeRing->setPoint(1, dfLLX, dfURY);
+        poEnvelopeRing->setPoint(1, dfURX, dfLLY);
         poEnvelopeRing->setPoint(2, dfURX, dfURY);
-        poEnvelopeRing->setPoint(3, dfURX, dfLLY);
+        poEnvelopeRing->setPoint(3, dfLLX, dfURY);
         poEnvelopeRing->setPoint(4, dfLLX, dfLLY);
         poPoly->addRingDirectly(poEnvelopeRing );
 
