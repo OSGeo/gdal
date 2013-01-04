@@ -138,13 +138,37 @@ def ogr_fgdb_1():
         if sql_lyr is None:
             gdaltest.post_reason('failure')
             return 'fail'
+        feat = sql_lyr.GetNextFeature()
+        if feat is None:
+            gdaltest.post_reason('failure')
+            return 'fail'
+        feat = sql_lyr.GetNextFeature()
+        if feat is not None:
+            gdaltest.post_reason('failure')
+            return 'fail'
+        lyr.ResetReading()
+        lyr.TestCapability("foo")
         ds.ReleaseResultSet(sql_lyr)
 
         sql_lyr = ds.ExecuteSQL("GetLayerMetadata %s" % lyr.GetName())
         if sql_lyr is None:
             gdaltest.post_reason('failure')
             return 'fail'
+        feat = sql_lyr.GetNextFeature()
+        if feat is None:
+            gdaltest.post_reason('failure')
+            return 'fail'
         ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL("GetLayerDefinition foo")
+    if sql_lyr is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    sql_lyr = ds.ExecuteSQL("GetLayerMetadata foo")
+    if sql_lyr is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
 
     ds = None
 
@@ -620,6 +644,92 @@ def ogr_fgdb_11():
     return 'success'
 
 ###############################################################################
+# Test failed Open()
+
+def ogr_fgdb_12():
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('tmp/non_existing.gdb')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    try:
+        os.unlink('tmp/dummy.gdb')
+    except:
+        pass
+    try:
+        shutil.rmtree('tmp/dummy.gdb')
+    except:
+        pass
+
+    f = open('tmp/dummy.gdb', 'wb')
+    f.close()
+
+    ds = ogr.Open('tmp/dummy.gdb')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    os.unlink('tmp/dummy.gdb')
+
+    os.mkdir('tmp/dummy.gdb')
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = ogr.Open('tmp/dummy.gdb')
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    shutil.rmtree('tmp/dummy.gdb')
+
+    return 'success'
+
+###############################################################################
+# Test failed CreateDataSource() and DeleteDataSource()
+
+def ogr_fgdb_13():
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = ogrtest.fgdb_drv.CreateDataSource('tmp/foo')
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = open('tmp/dummy.gdb', 'wb')
+    f.close()
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = ogrtest.fgdb_drv.CreateDataSource('tmp/dummy.gdb')
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    os.unlink('tmp/dummy.gdb')
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = ogrtest.fgdb_drv.CreateDataSource('/nonexistingdir/dummy.gdb')
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ret = ogrtest.fgdb_drv.DeleteDataSource('/nonexistingdir/dummy.gdb')
+    gdal.PopErrorHandler()
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_fgdb_cleanup():
@@ -653,6 +763,8 @@ gdaltest_list = [
     ogr_fgdb_9,
     ogr_fgdb_10,
     ogr_fgdb_11,
+    ogr_fgdb_12,
+    ogr_fgdb_13,
     ogr_fgdb_cleanup,
     ]
 
