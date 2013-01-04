@@ -136,12 +136,22 @@ int OGRARCGENDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     char** papszTokens = CSLTokenizeString2( szFirstLine, " ,", 0 );
     int nTokens = CSLCount(papszTokens);
-    CSLDestroy(papszTokens);
     if (nTokens != 1 && nTokens != 3 && nTokens != 4)
     {
         VSIFCloseL(fp);
+        CSLDestroy(papszTokens);
         return FALSE;
     }
+    for(int i=0;i<nTokens;i++)
+    {
+        if( CPLGetValueType(papszTokens[i]) == CPL_VALUE_STRING )
+        {
+            VSIFCloseL(fp);
+            CSLDestroy(papszTokens);
+            return FALSE;
+        }
+    }
+    CSLDestroy(papszTokens);
 
     /* Go to end of file, and count the number of END keywords */
     /* If there's 1, it's a point layer */
