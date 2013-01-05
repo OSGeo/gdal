@@ -68,7 +68,7 @@ CPL_C_END
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
 GDALDataset* JPEGDataset12Open(const char* pszFilename,
                                char** papszSiblingFiles,
-                               int nScaleDenom);
+                               int nScaleFactor);
 GDALDataset* JPEGDataset12CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
@@ -135,7 +135,7 @@ protected:
 
     jmp_buf setjmp_buffer;
 
-    int           nScaleDenom;
+    int           nScaleFactor;
     int           bHasInitInternalOverviews;
     int           nInternalOverviewsCurrent;
     int           nInternalOverviewsToFree;
@@ -252,7 +252,7 @@ class JPGDataset : public JPGDatasetCommon
 
     static GDALDataset *Open( const char* pszFilename,
                               char** papszSiblingFiles = NULL,
-                              int nScaleDenom = 1 );
+                              int nScaleFactor = 1 );
     static GDALDataset* CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
@@ -807,7 +807,7 @@ GDALColorInterp JPGRasterBand::GetColorInterpretation()
 GDALRasterBand *JPGRasterBand::GetMaskBand()
 
 {
-    if (poGDS->nScaleDenom > 1 )
+    if (poGDS->nScaleFactor > 1 )
         return GDALPamRasterBand::GetMaskBand();
 
     if (poGDS->fpImage == NULL)
@@ -836,7 +836,7 @@ GDALRasterBand *JPGRasterBand::GetMaskBand()
 int JPGRasterBand::GetMaskFlags()
 
 {
-    if (poGDS->nScaleDenom > 1 )
+    if (poGDS->nScaleFactor > 1 )
         return GDALPamRasterBand::GetMaskFlags();
 
     if (poGDS->fpImage == NULL)
@@ -891,7 +891,7 @@ JPGDatasetCommon::JPGDatasetCommon()
 {
     fpImage = NULL;
 
-    nScaleDenom = 1;
+    nScaleFactor = 1;
     bHasInitInternalOverviews = FALSE;
     nInternalOverviewsCurrent = 0;
     nInternalOverviewsToFree = 0;
@@ -997,7 +997,7 @@ void JPGDatasetCommon::InitInternalOverviews()
 /* -------------------------------------------------------------------- */
 /*      Instanciate on-the-fly overviews (if no external ones).         */
 /* -------------------------------------------------------------------- */
-    if( nScaleDenom == 1 && GetRasterBand(1)->GetOverviewCount() == 0 )
+    if( nScaleFactor == 1 && GetRasterBand(1)->GetOverviewCount() == 0 )
     {
         /* libjpeg-6b only suppports 2, 4 and 8 scale denominators */
         /* TODO: Later versions support more */
@@ -1352,8 +1352,7 @@ void JPGDataset::Restart()
 
     jpeg_vsiio_src( &sDInfo, fpImage );
     jpeg_read_header( &sDInfo, TRUE );
-    
-    sDInfo.scale_denom = nScaleDenom;
+
     sDInfo.out_color_space = colorSpace;
     nLoadedScanline = -1;
     jpeg_start_decompress( &sDInfo );
@@ -1588,7 +1587,7 @@ GDALDataset *JPGDatasetCommon::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles,
-                               int nScaleDenom )
+                               int nScaleFactor )
 
 {
 /* -------------------------------------------------------------------- */
@@ -1722,7 +1721,7 @@ GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles
         {
             delete poDS;
             return JPEGDataset12Open(pszFilename, papszSiblingFiles,
-                                     nScaleDenom);
+                                     nScaleFactor);
         }
 #endif
         delete poDS;
@@ -1750,10 +1749,17 @@ GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
-    poDS->nScaleDenom = nScaleDenom;
-    poDS->sDInfo.scale_denom = poDS->nScaleDenom;
-    poDS->nRasterXSize = (poDS->sDInfo.image_width + poDS->sDInfo.scale_denom - 1) / poDS->sDInfo.scale_denom;
-    poDS->nRasterYSize = (poDS->sDInfo.image_height + poDS->sDInfo.scale_denom - 1) / poDS->sDInfo.scale_denom;
+
+    poDS->nScaleFactor = nScaleFactor;
+#if JPEG_LIB_VERSION > 62
+    poDS->sDInfo.scale_num = 8 / poDS->nScaleFactor;
+    poDS->sDInfo.scale_denom = 8;
+#else
+    poDS->sDInfo.scale_num = 1;
+    poDS->sDInfo.scale_denom = poDS->nScaleFactor;
+#endif
+    poDS->nRasterXSize = (poDS->sDInfo.image_width + nScaleFactor - 1) / nScaleFactor;
+    poDS->nRasterYSize = (poDS->sDInfo.image_height + nScaleFactor - 1) / nScaleFactor;
 
     poDS->sDInfo.out_color_space = poDS->sDInfo.jpeg_color_space;
     poDS->eGDALColorSpace = poDS->sDInfo.jpeg_color_space;
@@ -1834,7 +1840,7 @@ GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( pszFilename );
 
-    if( nScaleDenom == 1 )
+    if( nScaleFactor == 1 )
     {
         if( !bIsSubfile )
             poDS->TryLoadXML( papszSiblingFiles );
