@@ -67,7 +67,7 @@ ifeq ($(JPEG_SETTING),internal)
 ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -I../../jpeg/libjpeg
 endif
 
-ifeq ($(JPEG12_ENABLED),yes)
+ifeq ($(TIFF_JPEG12_ENABLED),yes)
 ALL_C_FLAGS	:=      $(ALL_C_FLAGS) -DJPEG_DUAL_MODE_8_12
 EXTRA_DEP	=	libjpeg12src
 endif
