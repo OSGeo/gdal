@@ -629,8 +629,9 @@ def test_gdalwarp_25():
     if ds is None:
         return 'fail'
 
-    if ds.GetRasterBand(1).Checksum() != 8016:
-        print(ds.GetRasterBand(1).Checksum())
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 8016 and cs != 6157:
+        print(cs)
         gdaltest.post_reason('Bad checksum')
         return 'fail'
         
@@ -659,8 +660,9 @@ def test_gdalwarp_26():
     if ds is None:
         return 'fail'
 
-    if ds.GetRasterBand(1).Checksum() != 8582:
-        print(ds.GetRasterBand(1).Checksum())
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 8582 and cs != 3938:
+        print(cs)
         gdaltest.post_reason('Bad checksum')
         return 'fail'
         
@@ -689,8 +691,9 @@ def test_gdalwarp_27():
     if ds is None:
         return 'fail'
 
-    if ds.GetRasterBand(1).Checksum() != 22006:
-        print(ds.GetRasterBand(1).Checksum())
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 22006 and cs != 22615:
+        print(cs)
         gdaltest.post_reason('Bad checksum')
         return 'fail'
         
@@ -719,10 +722,10 @@ def test_gdalwarp_28():
     if ds is None:
         return 'fail'
 
-    # First is GCC; Second is MSVC 6.0
+    # First is GCC; Second is MSVC 6.0. Thid is jpeg8
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 47506 and cs != 46728:
-        print(ds.GetRasterBand(1).Checksum())
+    if cs != 47506 and cs != 46728 and cs != 43789:
+        print(cs)
         gdaltest.post_reason('Bad checksum')
         return 'fail'
         
@@ -753,8 +756,9 @@ def test_gdalwarp_29():
     if ds is None:
         return 'fail'
 
-    if ds.GetRasterBand(1).Checksum() != 55149:
-        print(ds.GetRasterBand(1).Checksum())
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 55149 and cs != 56054:
+        print(cs)
         gdaltest.post_reason('Bad checksum')
         return 'fail'
         
@@ -790,8 +794,9 @@ def test_gdalwarp_30():
     if ds is None:
         return 'fail'
 
-    if ds.GetRasterBand(1).Checksum() != 64629:
-        print(ds.GetRasterBand(1).Checksum())
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 64629 and cs != 1302:
+        print(cs)
         gdaltest.post_reason('Bad checksum on testgdalwarp30_1')
         return 'fail'
 
@@ -801,8 +806,9 @@ def test_gdalwarp_30():
     if ds is None:
         return 'fail'
 
-    if ds.GetRasterBand(1).Checksum() != 64629:
-        print(ds.GetRasterBand(1).Checksum())
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 64629 and cs != 1302:
+        print(cs)
         gdaltest.post_reason('Bad checksum on testgdalwarp30_2')
         return 'fail'
 
