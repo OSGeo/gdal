@@ -34,9 +34,9 @@
 
 GDALDataset* JPEGDataset12Open(const char* pszFilename,
                                char** papszSiblingFiles,
-                               int nScaleDenom)
+                               int nScaleFactor)
 {
-    return JPGDataset12::Open(pszFilename, papszSiblingFiles, nScaleDenom);
+    return JPGDataset12::Open(pszFilename, papszSiblingFiles, nScaleFactor);
 }
 
 GDALDataset* JPEGDataset12CreateCopy( const char * pszFilename,
