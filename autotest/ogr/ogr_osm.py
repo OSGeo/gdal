@@ -46,19 +46,24 @@ import ogrtest
 def ogr_osm_1(filename = 'data/test.pbf'):
 
     try:
-        drv = ogr.GetDriverByName('OSM')
+        ogrtest.osm_drv = ogr.GetDriverByName('OSM')
     except:
-        drv = None
-    if drv is None:
+        ogrtest.osm_drv = None
+    if ogrtest.osm_drv is None:
         return 'skip'
 
     ds = ogr.Open(filename)
     if ds is None:
-        if filename == 'data/test.osm' and gdal.GetLastErrorMsg().find('OSM XML detected, but Expat parser not available') == 0:
-            return 'skip'
+        if filename == 'data/test.osm':
+            ogrtest.osm_drv_parse_osm = False
+            if gdal.GetLastErrorMsg().find('OSM XML detected, but Expat parser not available') == 0:
+                return 'skip'
 
         gdaltest.post_reason('fail')
         return 'fail'
+    else:
+        if filename == 'data/test.osm':
+            ogrtest.osm_drv_parse_osm = True
 
     # Test points
     lyr = ds.GetLayer('points')
@@ -253,6 +258,28 @@ def ogr_osm_1(filename = 'data/test.pbf'):
             feat.DumpReadable()
             return 'fail'
 
+    if ds.GetDriver().GetName() == 'OSM':
+        sql_lyr = ds.ExecuteSQL("GetBytesRead()")
+        if sql_lyr is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        feat = sql_lyr.GetNextFeature()
+        if feat is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        feat = sql_lyr.GetNextFeature()
+        if feat is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        sql_lyr.ResetReading()
+        feat = sql_lyr.GetNextFeature()
+        if feat is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        sql_lyr.GetLayerDefn()
+        sql_lyr.TestCapability("foo")
+        ds.ReleaseResultSet(sql_lyr)
+
     ds = None
 
     return 'success'
@@ -268,11 +295,7 @@ def ogr_osm_2():
 
 def ogr_osm_3(options = None):
 
-    try:
-        drv = ogr.GetDriverByName('OSM')
-    except:
-        drv = None
-    if drv is None:
+    if ogrtest.osm_drv is None:
         return 'skip'
 
     import test_cli_utilities
@@ -314,11 +337,7 @@ def ogr_osm_3_custom_compress_nodes():
 
 def ogr_osm_4():
 
-    try:
-        drv = ogr.GetDriverByName('OSM')
-    except:
-        drv = None
-    if drv is None:
+    if ogrtest.osm_drv is None:
         return 'skip'
 
     ds = ogr.Open( 'data/test.pbf' )
@@ -336,6 +355,20 @@ def ogr_osm_4():
     if is_none:
         gdaltest.post_reason('fail')
         return 'fail'
+
+    # Test spatial filter
+
+    lyr = ds.GetLayerByName('points')
+    lyr.SetSpatialFilterRect(0,0,0,0)
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    is_none = feat is None
+
+    if not is_none:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    lyr.SetSpatialFilter(None)
 
     # Change layer
     sql_lyr = ds.ExecuteSQL('SELECT * FROM lines')
@@ -368,11 +401,7 @@ def ogr_osm_4():
 
 def ogr_osm_5():
 
-    try:
-        drv = ogr.GetDriverByName('OSM')
-    except:
-        drv = None
-    if drv is None:
+    if ogrtest.osm_drv is None:
         return 'skip'
 
     ds = ogr.Open( 'data/test.pbf' )
@@ -419,11 +448,7 @@ def ogr_osm_5():
 
 def ogr_osm_6():
 
-    try:
-        drv = ogr.GetDriverByName('OSM')
-    except:
-        drv = None
-    if drv is None:
+    if ogrtest.osm_drv is None:
         return 'skip'
 
     import test_cli_utilities
@@ -458,11 +483,7 @@ def ogr_osm_6():
 
 def ogr_osm_7():
 
-    try:
-        drv = ogr.GetDriverByName('OSM')
-    except:
-        drv = None
-    if drv is None:
+    if ogrtest.osm_drv is None:
         return 'skip'
 
     ds = ogr.Open( 'data/test.pbf' )
@@ -485,11 +506,7 @@ def ogr_osm_7():
 
 def ogr_osm_8():
 
-    try:
-        drv = ogr.GetDriverByName('OSM')
-    except:
-        drv = None
-    if drv is None:
+    if ogrtest.osm_drv is None:
         return 'skip'
 
     ds = ogr.Open( 'data/base-64.osm.pbf' )
@@ -522,12 +539,101 @@ def ogr_osm_8():
 
 def ogr_osm_9():
 
+    if ogrtest.osm_drv is None:
+        return 'skip'
+
     old_val = gdal.GetConfigOption('OSM_USE_CUSTOM_INDEXING')
     gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'NO')
     ret = ogr_osm_8()
     gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', old_val)
     
     return ret
+
+###############################################################################
+# Some error conditions
+
+def ogr_osm_10():
+
+    if ogrtest.osm_drv is None:
+        return 'skip'
+
+    # Non existing file
+    ds = ogr.Open('/nonexisting/foo.osm')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Empty .osm file
+    f = gdal.VSIFOpenL('/vsimem/foo.osm', 'wb')
+    gdal.VSIFCloseL(f)
+
+    ds = ogr.Open('/vsimem/foo.osm')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/foo.osm')
+
+    # Empty .pbf file
+    f = gdal.VSIFOpenL('/vsimem/foo.pbf', 'wb')
+    gdal.VSIFCloseL(f)
+
+    ds = ogr.Open('/vsimem/foo.pbf')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/foo.pbf')
+
+    if ogrtest.osm_drv_parse_osm:
+        # Invalid .osm file
+        f = gdal.VSIFOpenL('/vsimem/foo.osm', 'wb')
+        data = "<osm>"
+        gdal.VSIFWriteL(data, 1, len(data), f)
+        gdal.VSIFCloseL(f)
+
+        ds = ogr.Open('/vsimem/foo.osm')
+        lyr = ds.GetLayer(0)
+        gdal.ErrorReset()
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        feat = lyr.GetNextFeature()
+        gdal.PopErrorHandler()
+        if gdal.GetLastErrorMsg() == '':
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds = None
+
+        gdal.Unlink('/vsimem/foo.osm')
+
+    # Invalid .pbf file
+    f = gdal.VSIFOpenL('/vsimem/foo.pbf', 'wb')
+    data = "OSMHeader\n"
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+
+    ds = ogr.Open('/vsimem/foo.pbf')
+    lyr = ds.GetLayer(0)
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    feat = lyr.GetNextFeature()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/foo.pbf')
+
+    # Test million laugh pattern
+    if ogrtest.osm_drv_parse_osm:
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        ds = ogr.Open('data/billionlaugh.osm')
+        gdal.PopErrorHandler()
+        if ds is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    return 'success'
 
 gdaltest_list = [
     ogr_osm_1,
@@ -541,6 +647,7 @@ gdaltest_list = [
     ogr_osm_7,
     ogr_osm_8,
     ogr_osm_9,
+    ogr_osm_10,
     ]
 
 if __name__ == '__main__':
