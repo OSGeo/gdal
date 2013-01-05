@@ -718,10 +718,7 @@ def ogr_fgdb_13():
     except:
         pass
 
-    if sys.platform == 'win32':
-        name = 'nonexistingdrive:/nonexistingdir/dummy.gdb'
-    else:
-        name = '/nonexistingdir/dummy.gdb'
+    name = '/nonexistingdrive:/nonexistingdir/dummy.gdb'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogrtest.fgdb_drv.CreateDataSource(name)
