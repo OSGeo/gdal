@@ -410,10 +410,13 @@ def tiff_write_12():
     md = gdaltest.tiff_drv.GetMetadata()
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         return 'skip'
-    
-    ut = gdaltest.GDALTest( 'GTiff', 'sasha.tif', 3, 31952 )
-                           
-    return ut.testOpen()
+
+    ds = gdal.Open('data/sasha.tif')
+    cs = ds.GetRasterBand(3).Checksum()
+    if cs != 31952 and cs != 30145:
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Write JPEG Compressed YCbCr subsampled image. 
@@ -424,13 +427,23 @@ def tiff_write_13():
     if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
         return 'skip'
 
-    ut = gdaltest.GDALTest( 'GTiff', 'sasha.tif', 3, 17347,
-                            options = [ 'TILED=YES',
-                                        'COMPRESS=JPEG',
-                                        'PHOTOMETRIC=YCBCR',
-                                        'JPEG_QUALITY=31' ] )
-                           
-    return ut.testCreateCopy( skip_preclose_test=1 )
+    src_ds = gdal.Open('data/sasha.tif')
+    ds = gdaltest.tiff_drv.CreateCopy('tmp/sasha.tif', src_ds, options = [ 'TILED=YES',
+                                                                           'COMPRESS=JPEG',
+                                                                           'PHOTOMETRIC=YCBCR',
+                                                                           'JPEG_QUALITY=31' ])
+    ds = None
+
+    ds = gdal.Open('tmp/sasha.tif')
+    cs = ds.GetRasterBand(3).Checksum()
+    ds = None
+
+    os.unlink('tmp/sasha.tif')
+    if cs != 17347 and cs != 14445:
+        print(cs)
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Test creating an in memory copy.

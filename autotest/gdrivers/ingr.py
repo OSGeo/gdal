@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -155,8 +156,15 @@ def ingr_13():
 
 def ingr_14():
 
-    tst = gdaltest.GDALTest( 'INGR', 'frmt31.cot', 1, 11466 )
-    return tst.testOpen()
+    ds = gdal.Open('data/frmt31.cot')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    
+    if cs != 11466 and cs != 11095:
+        print(cs)
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Same, but through vsimem all in memory.

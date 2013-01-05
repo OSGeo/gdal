@@ -74,21 +74,23 @@ def mbtiles_2():
         return 'fail'
 
     expected_cs_tab = [6324, 19386, 45258]
+    expected_cs_tab_jpeg8 = [6016, 13996, 45168]
     for i in range(3):
         cs = ds.GetRasterBand(i + 1).Checksum()
         if ds.GetRasterBand(i + 1).GetColorInterpretation() != gdal.GCI_RedBand + i:
             gdaltest.post_reason('bad color interpretation')
             return 'fail'
         expected_cs = expected_cs_tab[i]
-        if cs != expected_cs:
+        if cs != expected_cs and cs != expected_cs_tab_jpeg8[i]:
             gdaltest.post_reason('for band %d, cs = %d, different from expected_cs = %d' % (i + 1, cs, expected_cs))
             return 'fail'
 
     expected_cs_tab = [16642, 15772, 10029]
+    expected_cs_tab_jpeg8 = [16621, 14725, 8988]
     for i in range(3):
         cs = ds.GetRasterBand(i + 1).GetOverview(0).Checksum()
         expected_cs = expected_cs_tab[i]
-        if cs != expected_cs:
+        if cs != expected_cs and cs != expected_cs_tab_jpeg8[i]:
             gdaltest.post_reason('for overview of band %d, cs = %d, different from expected_cs = %d' % (i + 1, cs, expected_cs))
             return 'fail'
 
