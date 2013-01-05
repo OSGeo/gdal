@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -236,7 +237,7 @@ def nitf_9():
     (exp_mean, exp_stddev) = (65.9532, 46.9026375565)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
     
-    if abs(exp_mean-mean) > 0.01 or abs(exp_stddev-stddev) > 0.01:
+    if abs(exp_mean-mean) > 0.1 or abs(exp_stddev-stddev) > 0.1:
         print(mean, stddev)
         gdaltest.post_reason( 'did not get expected mean or standard dev.' )
         return 'fail'
@@ -253,8 +254,15 @@ def nitf_9():
 # tricky.  Verify this is working. 
 
 def nitf_10():
+    
+    src_ds = gdal.Open('tmp/nitf9.ntf')
+    expected_cs = src_ds.GetRasterBand(2).Checksum()
+    src_ds = None
+    if expected_cs != 22296 and expected_cs != 22259:
+        gdaltest.post_reason( 'fail' )
+        return 'fail'
 
-    tst = gdaltest.GDALTest( 'NITF', '../tmp/nitf9.ntf', 2, 22296 )
+    tst = gdaltest.GDALTest( 'NITF', '../tmp/nitf9.ntf', 2, expected_cs )
     return tst.testCreateCopy()
 
 ###############################################################################
@@ -831,7 +839,7 @@ def nitf_36():
     (exp_mean, exp_stddev) = (65.4208, 47.254550335)
     (minval, maxval, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, True)
 
-    if abs(exp_mean-mean) > 0.01 or abs(exp_stddev-stddev) > 0.01:
+    if abs(exp_mean-mean) > 0.1 or abs(exp_stddev-stddev) > 0.1:
         print(mean, stddev)
         gdaltest.post_reason( 'did not get expected mean or standard dev.' )
         return 'fail'
@@ -851,7 +859,7 @@ def nitf_36():
         return 'fail'
 
     (minval, maxval, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, False)
-    if abs(exp_mean-mean) > 0.01 or abs(exp_stddev-stddev) > 0.01:
+    if abs(exp_mean-mean) > 0.1 or abs(exp_stddev-stddev) > 0.1:
         print(mean, stddev)
         gdaltest.post_reason( 'Should have statistics at that point.' )
         return 'fail'
@@ -941,7 +949,7 @@ def nitf_39():
     (exp_mean, exp_stddev) = (65.4208, 47.254550335)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
     
-    if abs(exp_mean-mean) > 0.01 or abs(exp_stddev-stddev) > 0.01:
+    if abs(exp_mean-mean) > 0.1 or abs(exp_stddev-stddev) > 0.1:
         print(mean, stddev)
         gdaltest.post_reason( 'did not get expected mean or standard dev.' )
         return 'fail'

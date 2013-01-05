@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -1057,7 +1058,7 @@ def tiff_read_online_1():
     if gdal.GetLastErrorMsg() != '':
         return 'fail'
     
-    if cs != 62628:
+    if cs != 62628 and cs != 28554:
         print(cs)
         return 'fail'
 
