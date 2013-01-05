@@ -614,6 +614,7 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
         switch( poFieldDefn->GetType() )
         {
         case OFTInteger:
+            //FIXME use int64 when OGR has 64bit integer support
             poFeature->SetField( iField, 
                 sqlite3_column_int( hStmt, iRawField ) );
             break;
