@@ -45,7 +45,18 @@ import gdalconst
 
 def jpeg_1():
 
-    tst = gdaltest.GDALTest( 'JPEG', 'albania.jpg', 2, 17016 )
+    ds = gdal.Open( 'data/albania.jpg' )
+    cs = ds.GetRasterBand(2).Checksum()
+    if cs == 34298:
+        gdaltest.jpeg8 = True
+    else:
+        gdaltest.jpeg8 = False
+    ds = None
+
+    if gdaltest.jpeg8:
+        tst = gdaltest.GDALTest( 'JPEG', 'albania.jpg', 2, 34298 )
+    else:
+        tst = gdaltest.GDALTest( 'JPEG', 'albania.jpg', 2, 17016 )
     return tst.testOpen()
 
 ###############################################################################
@@ -106,7 +117,9 @@ def jpeg_3():
     ds = gdal.GetDriverByName('JPEG').CreateCopy( 'tmp/byte.jpg', ds,
                                                   options = options )
 
-    if ds.GetRasterBand(1).Checksum() != 4794:
+    expected_cs = 4794
+
+    if ds.GetRasterBand(1).Checksum() != expected_cs:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
@@ -262,7 +275,9 @@ def jpeg_7():
     ds = gdal.GetDriverByName('JPEG').CreateCopy( '/vsimem/byte.jpg', ds,
                                                   options = options )
 
-    if ds.GetRasterBand(1).Checksum() != 4794:
+    expected_cs = 4794
+
+    if ds.GetRasterBand(1).Checksum() != expected_cs:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
@@ -279,7 +294,9 @@ def jpeg_8():
 
     ds = gdal.Open( 'data/rgb_ntf_cmyk.jpg' )
 
-    if ds.GetRasterBand(1).Checksum() != 20385:
+    expected_cs = 20385
+
+    if ds.GetRasterBand(1).Checksum() != expected_cs:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
@@ -289,7 +306,9 @@ def jpeg_8():
         print(ds.GetRasterBand(1).GetRasterColorInterpretation())
         return 'fail'
 
-    if ds.GetRasterBand(2).Checksum() != 20865:
+    expected_cs = 20865
+
+    if ds.GetRasterBand(2).Checksum() != expected_cs:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
         print(ds.GetRasterBand(2).Checksum())
         return 'fail'
@@ -299,7 +318,9 @@ def jpeg_8():
         print(ds.GetRasterBand(2).GetRasterColorInterpretation())
         return 'fail'
 
-    if ds.GetRasterBand(3).Checksum() != 19441:
+    expected_cs = 19441
+
+    if ds.GetRasterBand(3).Checksum() != expected_cs:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
         print(ds.GetRasterBand(3).Checksum())
         return 'fail'
@@ -326,7 +347,9 @@ def jpeg_9():
     ds = gdal.Open( 'data/rgb_ntf_cmyk.jpg' )
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'YES')
 
-    if ds.GetRasterBand(1).Checksum() != 21187:
+    expected_cs = 21187
+
+    if ds.GetRasterBand(1).Checksum() != expected_cs:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
@@ -336,7 +359,9 @@ def jpeg_9():
         print(ds.GetRasterBand(1).GetRasterColorInterpretation())
         return 'fail'
 
-    if ds.GetRasterBand(2).Checksum() != 21054:
+    expected_cs = 21054
+
+    if ds.GetRasterBand(2).Checksum() != expected_cs:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
         print(ds.GetRasterBand(2).Checksum())
         return 'fail'
@@ -346,7 +371,9 @@ def jpeg_9():
         print(ds.GetRasterBand(2).GetRasterColorInterpretation())
         return 'fail'
 
-    if ds.GetRasterBand(3).Checksum() != 21499:
+    expected_cs = 21499
+
+    if ds.GetRasterBand(3).Checksum() != expected_cs:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
         print(ds.GetRasterBand(3).Checksum())
         return 'fail'
@@ -356,7 +383,9 @@ def jpeg_9():
         print(ds.GetRasterBand(3).GetRasterColorInterpretation())
         return 'fail'
 
-    if ds.GetRasterBand(4).Checksum() != 21069:
+    expected_cs = 21069
+
+    if ds.GetRasterBand(4).Checksum() != expected_cs:
         gdaltest.post_reason( 'Wrong checksum on copied image.')
         print(ds.GetRasterBand(4).Checksum())
         return 'fail'
@@ -536,7 +565,11 @@ def jpeg_16():
         return 'fail'
     # "Internal" overview
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 31892:
+    if gdaltest.jpeg8:
+        expected_cs = 34218
+    else:
+        expected_cs = 31892
+    if cs != expected_cs:
         gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
@@ -548,7 +581,11 @@ def jpeg_16():
         return 'fail'
     # Check updated checksum
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 32460:
+    if gdaltest.jpeg8:
+        expected_cs = 33698
+    else:
+        expected_cs = 32460
+    if cs != expected_cs:
         gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
@@ -561,7 +598,11 @@ def jpeg_16():
         gdaltest.post_reason('fail')
         return 'fail'
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if cs != 32460:
+    if gdaltest.jpeg8:
+        expected_cs = 33698
+    else:
+        expected_cs = 32460
+    if cs != expected_cs:
         gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
