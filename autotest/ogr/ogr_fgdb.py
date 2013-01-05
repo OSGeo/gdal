@@ -718,15 +718,20 @@ def ogr_fgdb_13():
     except:
         pass
 
+    if sys.platform == 'win32':
+        name = 'nonexistingdrive:/nonexistingdir/dummy.gdb'
+    else:
+        name = '/nonexistingdir/dummy.gdb'
+
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = ogrtest.fgdb_drv.CreateDataSource('nonexistingdrive:/nonexistingdir/dummy.gdb')
+    ds = ogrtest.fgdb_drv.CreateDataSource(name)
     gdal.PopErrorHandler()
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ret = ogrtest.fgdb_drv.DeleteDataSource('nonexistingdrive:/nonexistingdir/dummy.gdb')
+    ret = ogrtest.fgdb_drv.DeleteDataSource(name)
     gdal.PopErrorHandler()
     if ret == 0:
         gdaltest.post_reason('fail')
