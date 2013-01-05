@@ -713,15 +713,20 @@ def ogr_fgdb_13():
 
     os.unlink('tmp/dummy.gdb')
 
+    try:
+        shutil.rmtree("/nonexistingdir")
+    except:
+        pass
+
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = ogrtest.fgdb_drv.CreateDataSource('/nonexistingdir/dummy.gdb')
+    ds = ogrtest.fgdb_drv.CreateDataSource('nonexistingdrive:/nonexistingdir/dummy.gdb')
     gdal.PopErrorHandler()
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ret = ogrtest.fgdb_drv.DeleteDataSource('/nonexistingdir/dummy.gdb')
+    ret = ogrtest.fgdb_drv.DeleteDataSource('nonexistingdrive:/nonexistingdir/dummy.gdb')
     gdal.PopErrorHandler()
     if ret == 0:
         gdaltest.post_reason('fail')
