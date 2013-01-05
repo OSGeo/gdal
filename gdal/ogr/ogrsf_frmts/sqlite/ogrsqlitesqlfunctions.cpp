@@ -426,7 +426,7 @@ static double OGR2SQLITE_GetValAsDouble(sqlite3_value* val, int* pbGotVal)
 
         case SQLITE_INTEGER:
             if( pbGotVal ) *pbGotVal = TRUE;
-            return sqlite3_value_int(val);
+            return sqlite3_value_int64(val);
 
         default:
             if( pbGotVal ) *pbGotVal = FALSE;

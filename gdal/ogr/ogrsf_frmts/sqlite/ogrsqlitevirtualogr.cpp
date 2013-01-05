@@ -1320,6 +1320,7 @@ static OGRFeature* OGR2SQLITE_FeatureFromArgs(OGRLayer* poLayer,
         switch( sqlite3_value_type(argv[2 + i]) )
         {
             case SQLITE_INTEGER:
+                //FIXME use int64 when OGR has 64bit integer support
                 poFeature->SetField(i, sqlite3_value_int(argv[2 + i]));
                 break;
             case SQLITE_FLOAT:
@@ -1380,7 +1381,7 @@ static OGRFeature* OGR2SQLITE_FeatureFromArgs(OGRLayer* poLayer,
     }
 
     if( sqlite3_value_type(argv[1]) == SQLITE_INTEGER )
-        poFeature->SetFID( sqlite3_value_int(argv[1]) );
+        poFeature->SetFID( sqlite3_value_int64(argv[1]) );
 
     return poFeature;
 }
