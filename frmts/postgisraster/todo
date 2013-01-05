@@ -1,10 +1,6 @@
 TODO List :
 
-Objective											Planned schedule	state
-------------------------------------------------------------------------------------------
-Block reading improvement							December 2010		On going
-Out-db data reading support							December 2010		On going
-Support for reading non-regularly blocked rasters	2011        		Todo
-Support for creating new PostGIS Rasters			2011        		Todo
-Minor fixes (i.e: modify some GDAL tools)           2011                Todo
+Please, check open tickets here: http://trac.osgeo.org/gdal/wiki/frmts_wtkraster.html#OpenTickets
+
+Last update: 2013-01-05
 
