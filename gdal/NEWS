@@ -1,4 +1,4 @@
-= GDAL/OGR 1.10.0 *Preliminary* Release Notes (r23656 to r25394) =
+= GDAL/OGR 1.10.0 *Preliminary* Release Notes (r23656 to r25454) =
 
 == In a nutshell... ==
 
@@ -12,7 +12,7 @@
    - ElasticSearch: write-only support to write into ElasticSearch databases (needs libcurl)
    - ODS : read/write support for OpenOffice .ods (Open Document Spreadsheets) (needs libexpat)
    - OSM : read-only support for .osm / .pbf OpenStreetMap files
-   - PDF: read/write suuport for vector/structured PDF files
+   - PDF: read/write support for vector/structured PDF files
    - XLSX: read/write support for MS Excel 2007 and later Open Office XML .xlsx spreadsheets (needs libexpat)
  * RFC 39: OGR Layer algebra methods : http://trac.osgeo.org/gdal/wiki/rfc39_ogr_layer_algebra
  * Add a SQL SQLite dialect : http://gdal.org/ogr/ogr_sql_sqlite.html
@@ -44,6 +44,7 @@ Testing of previous versions is of course unchanged.
 == GDAL/OGR 1.10.0 - General Changes ==
 
 Build(Unix):
+ * New optional dependencies : libpcre (for regular expressions support in SQLite), libxml2 (validation of GML files)
  * --with-python: make it work with python3, and also accept path to python binary as argument of --with-python (#4725)
  * Use nc-config to detect netcdf compilation and linking parameters (#4424)
  * Add frmts/vrt to CONFIG_CFLAGS for developement version of gdal-config (needed for postgis 2.0 compilation)
@@ -93,6 +94,7 @@ Algorithms:
  * OpenCL warper: handle errors in set_supported_formats(), fix memory leaks in error code paths, add detection of Intel OpenCL (by the way, Intel OpenCL seems to work properly only with a Float32 working data type)
  * OpenCL warper: fix segmentation fault related to source/destination validity masks (#4840)
  * Geoloc: do not trust pabSuccess in geolocation transformer (#4794)
+ * Geoloc: add bilinear interpolation of coordinates from backmap (#4907)
  * Geoloc: add GDALTransformGeolocations() and SWIG binding
  * Add nearest neighbor and cubic interpolation of DEM in GDALRPCTransform (#3634).
    User can set RPC_DEMINTERPOLATION to near, bilinear or cubic to interpolate of input DEM file which set in RPC_DEM. The default interpolation is bilinear.
@@ -125,7 +127,6 @@ Utilities:
  * gdal_contour / gdal_rasterize / gdal_translate: accept numeric values in scientific format.
  * crs2crs2grid.py: New sample Python script
  * gdalcompare.py: New sample Python scrip to compare GDAL datasets
- * ogrupdate.py: add new sample script to update an OGR datasource from another one, by trying to identify matches between the 2 datasources
 
 Multi driver changes:
  * Add support for reading .j2w, .jp2w and .wld files for JP2ECW, JP2MrSID, JP2OPENJPEG and JPEG2000 drivers (#4651)
@@ -374,6 +375,7 @@ Core:
  * Add OGR_G_PointOnSurface() and add it to SWIG bindings
  * Add OGR_G_ForceToLineString / OGRGeometryFactory::forceToLineString to join
    connected segments in line strings.
+ * Better implementation of getDimension() for OGRMultiPoint, OGRMultiLineString, OGRMultiPolygon and OGRGeometryCollection
  * Fix incorrect rounding in OGRFormatDouble that affected geometry WKT output (#4614)
  * OGRSQL: support UNION ALL of several SELECTs
  * OGRSQL: defer ORDER BY evaluation until necessary, so that a spatial filter can be taken into account after layer creation
@@ -411,6 +413,8 @@ Utilities:
  * ogr2ogr: correctly deal with filenames that begin with 'polygon' or 'multipolygon' as arguments of -clipsrc (#4590)
  * ogr2ogr: return non-zero exit code if the -sql triggers an error (#4870)
  * ogr2ogr: make -t_srs work when there's no per layer source SRS, but there's per feature SRS
+ * ogrupdate.py: new sample script to update an OGR datasource from another one, by trying to identify matches between the 2 datasources
+ * ogr_layer_algebra.py: new sample script to use OGR layer algebra operations
 
 Multi driver changes:
  * Fix bad AND priority when spatial and attribute filter are combined in PG, MySQL, SQLite MSSQLSptial and VRT drivers (#4507)
@@ -483,6 +487,7 @@ GML driver:
  * Return per-feature SRS if there's no global SRS for a layer
  * Parse correctly <gml:outerBoundaryIs> when there are attributes in the element (#4934)
  * Recognize <gml:GeodesicString>
+ * Recognize <gml:Envelope> elements (#4941)
 
 ILI driver:
  * Support for format codes (#3972)
@@ -499,6 +504,7 @@ Ingres driver:
 
 KML driver:
  * Report empty layers when there is only empty layers; don't error out on empty document (#4511)
+ * Recognize file whose root element is <Document> and not <kml>
 
 Idrisi driver:
  * Add support for reading attributes from .AVL / .ADC files
@@ -590,6 +596,7 @@ SQLite/Spatialite driver:
  * Add a SRID layer creation option
  * Make REGEXP function available by using libpcre (#4823)
  * Add a COMPRESS_COLUMNS layer creation option to make string columns ZLib compressed
+ * Implement minimalistic set of spatial functions if Spatialite isn't available
  * Spatialite: make use of spatial filter on result layers when the SQL expression is simple enough (no join, etc...) (#4508)
  * Spatialite: spatial index can be used even when linking against regular SQLite (#4632)
  * Spatialite: to improve performance, defer spatial index creation at layer closing or when a spatial request is done
@@ -629,6 +636,7 @@ VRT driver:
  * Auto enable bAttrFilterPassThrough when possible
 
 WFS driver:
+ * WFS paging: change default base start index to 0 (was 1 before), as now clarified by OGC (#4504)
  * Accept several type names if the TYPENAME parameter is specified
  * Forward SQL ORDER BY clause as a WFS SORTBY for WFS >= 1.1.0
  * Fix spatial filter with WFS 2.0 GeoServer
@@ -636,6 +644,7 @@ WFS driver:
  * Major overhaul of URL-escaping
  * Fix issues when querying the WFSLayerMetadata and that one of the field contains double-quote characters (#4796)
  * Remove auto-added ACCEPTVERSIONS=1.0.0,1.1.1 - when none of VERSION or ACCEPTVERSIONS were specified - because it does not work with WFS 2.0 only servers
+ * Automagically convert MAXFEATURES= to COUNT= if people still (wrongly) used it for WFS 2.0
 
 XLS driver:
  * Set FID to the row number in the spreadsheet software (first row being 1). In case OGR detects a header line, the first feature will then be assigned a FID of 2 (#4586)
