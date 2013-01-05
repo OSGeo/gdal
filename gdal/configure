@@ -734,6 +734,7 @@ X_FME_HOME
 OGDI_INCLUDE
 HAVE_OGDI
 GIF_SETTING
+TIFF_JPEG12_ENABLED
 JPEG12_ENABLED
 JPEG_SETTING
 GEOTIFF_INCLUDE
@@ -20236,17 +20237,37 @@ if test "${with_jpeg12+set}" = set; then :
 fi
 
 
+TIFF_JPEG12_ENABLED=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for jpeg12" >&5
 $as_echo_n "checking for jpeg12... " >&6; }
 if test "$with_jpeg12" = yes ; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
 $as_echo "enabled" >&6; }
     JPEG12_ENABLED=yes
+
+    echo '#include <stdlib.h>' > check_jpeg_abi.c
+    echo '#include <stdio.h>' >> check_jpeg_abi.c
+    echo '#include "jpeglib.h"' >> check_jpeg_abi.c
+    echo '#if JPEG_LIB_VERSION == 62' >> check_jpeg_abi.c
+    echo 'int main() { return 0; }' >> check_jpeg_abi.c
+    echo '#else' >> check_jpeg_abi.c
+    echo '#error "ABI difference"' >> check_jpeg_abi.c
+    echo '#endif' >> check_jpeg_abi.c
+    if test -z "`${CC} ${CFLAGS} ${EXTRA_INCLUDES} check_jpeg_abi.c -c -o check_jpeg_abi.o 2>&1`" ; then
+      TIFF_JPEG12_ENABLED=yes
+    else
+      TIFF_JPEG12_ENABLED=no
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Internal libjpeg12 has not the same ABI as libjpeg 8 bit. Disabling JPEG-in-TIFF 12 bit" >&5
+$as_echo "$as_me: WARNING: Internal libjpeg12 has not the same ABI as libjpeg 8 bit. Disabling JPEG-in-TIFF 12 bit" >&2;}
+    fi
+    rm -f check_jpeg_abi.*
+
 elif test x"$with_jpeg12" = x ; then
     if test "$JPEG_SETTING" = "internal" -a "$TIFF_SETTING" = "internal" ; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
 $as_echo "enabled" >&6; }
       JPEG12_ENABLED=yes
+      TIFF_JPEG12_ENABLED=yes
     else
       JPEG12_ENABLED=no
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled, libjpeg or libtiff not internal" >&5
@@ -20259,6 +20280,8 @@ $as_echo "disabled by user" >&6; }
 fi
 
 JPEG12_ENABLED=$JPEG12_ENABLED
+
+TIFF_JPEG12_ENABLED=$TIFF_JPEG12_ENABLED
 
 
 
@@ -30541,7 +30564,10 @@ echo "  LIBGEOTIFF support:        ${GEOTIFF_SETTING}"
 echo "  LIBJPEG support:           ${JPEG_SETTING}"
 
 
-echo "  8/12 bit JPEG TIFF:        ${JPEG12_ENABLED}"
+echo "  12 bit JPEG:               ${JPEG12_ENABLED}"
+
+
+echo "  12 bit JPEG-in-TIFF:       ${TIFF_JPEG12_ENABLED}"
 
 
 echo "  LIBGIF support:            ${GIF_SETTING}"
