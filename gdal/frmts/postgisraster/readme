@@ -1,12 +1,20 @@
-This driver is under development. Only regular-blocking rasters reading is
-supported just now. In "todo" file you'll can find a list of todo tasks.
+This driver was started during the  Google Summer of Code 2009, and improved since then, being under development at same time than PostGIS Raster extension itself. So far, this is a read-only driver. The next version of the driver will include these features:
+
+* Out-db raster support.
+* Create and modify raster on PostGIS database.
 
 Author information:
-	website: http://gis4free.wordpress.com
-	email: jorge.arevalo@deimos-space.com
+	name: Jorge Arévalo
+	website: http://www.libregis.org
+	email: jorgearevalo@libregis.org
+
+Author information:
+	name: David Zwarg
+	website: http://www.azavea.com/about-us/staff-profiles/david-zwarg/
+	email: dzwarg@azavea.com
 
 Important links:
 	PostGIS Raster extension information: http://trac.osgeo.org/postgis/wiki/WKTRaster
 	GDAL PostGIS Raster driver page: http://trac.osgeo.org/gdal/wiki/frmts_wtkraster.html
    
-Last update on October 2010
+Last update: 2013-01-05
