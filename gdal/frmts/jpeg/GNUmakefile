@@ -33,10 +33,6 @@ OBJ :=	jcapimin12.o jcapistd12.o jccoefct12.o jccolor12.o jcdctmgr12.o jchuff12.
 	$(OBJ) jpgdataset_12.o 
 endif
 
-ifeq ($(LIBZ_SETTING),internal) 
-  XTRA_OPT :=   $(XTRA_OPT) -I../zlib 
-endif
-
 CPPFLAGS	:=	$(XTRA_OPT) $(GDAL_INCLUDE) $(CPPFLAGS)
 
 default:	install-obj
