@@ -1440,32 +1440,50 @@ OGRErr set_result_schema(OGRLayer *pLayerResult,
                          OGRFeatureDefn *poDefnMethod,
                          int *mapInput,
                          int *mapMethod,
-                         int combined)
+                         int combined,
+                         char** papszOptions)
 {
     OGRErr ret = OGRERR_NONE;
     OGRFeatureDefn *poDefnResult = pLayerResult->GetLayerDefn();
+    const char* pszInputPrefix = CSLFetchNameValue(papszOptions, "INPUT_PREFIX");
+    const char* pszMethodPrefix = CSLFetchNameValue(papszOptions, "METHOD_PREFIX");
+    int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
     if (poDefnResult->GetFieldCount() > 0) {
         // the user has defined the schema of the output layer
         for( int iField = 0; iField < poDefnInput->GetFieldCount(); iField++ ) {
-            mapInput[iField] = poDefnResult->GetFieldIndex(poDefnInput->GetFieldDefn(iField)->GetNameRef());
+            CPLString osName(poDefnInput->GetFieldDefn(iField)->GetNameRef());
+            if( pszInputPrefix != NULL )
+                osName = pszInputPrefix + osName;
+            mapInput[iField] = poDefnResult->GetFieldIndex(osName);
         }
         if (!mapMethod) return ret;
         for( int iField = 0; iField < poDefnMethod->GetFieldCount(); iField++ ) {
-            mapMethod[iField] = poDefnResult->GetFieldIndex(poDefnMethod->GetFieldDefn(iField)->GetNameRef());
+            CPLString osName(poDefnInput->GetFieldDefn(iField)->GetNameRef());
+            if( pszMethodPrefix != NULL )
+                osName = pszMethodPrefix + osName;
+            mapMethod[iField] = poDefnResult->GetFieldIndex(osName);
         }
     } else {
         // use schema from the input layer or from input and method layers
         int nFieldsInput = poDefnInput->GetFieldCount();
         for( int iField = 0; iField < nFieldsInput; iField++ ) {
-            ret = pLayerResult->CreateField(poDefnInput->GetFieldDefn(iField));
-            if (ret != OGRERR_NONE) return ret;
+            OGRFieldDefn oFieldDefn(poDefnInput->GetFieldDefn(iField));
+            if( pszInputPrefix != NULL )
+                oFieldDefn.SetName(CPLSPrintf("%s%s", pszInputPrefix, oFieldDefn.GetNameRef()));
+            ret = pLayerResult->CreateField(&oFieldDefn);
+            if (!bSkipFailures && ret != OGRERR_NONE) return ret;
+            ret = OGRERR_NONE;
             mapInput[iField] = iField;
         }
         if (!combined) return ret;
         if (!mapMethod) return ret;
         for( int iField = 0; iField < poDefnMethod->GetFieldCount(); iField++ ) {
-            ret = pLayerResult->CreateField(poDefnMethod->GetFieldDefn(iField));
-            if (ret != OGRERR_NONE) return ret;
+            OGRFieldDefn oFieldDefn(poDefnMethod->GetFieldDefn(iField));
+            if( pszMethodPrefix != NULL )
+                oFieldDefn.SetName(CPLSPrintf("%s%s", pszMethodPrefix, oFieldDefn.GetNameRef()));
+            ret = pLayerResult->CreateField(&oFieldDefn);
+            if (!bSkipFailures && ret != OGRERR_NONE) return ret;
+            ret = OGRERR_NONE;
             mapMethod[iField] = nFieldsInput+iField;
         }
     }
@@ -1529,6 +1547,10 @@ static OGRGeometry* promote_to_multi(OGRGeometry* poGeom)
  *     feature could not be inserted.
  * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
  *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
  * </ul>
  *
  * This method is the same as the C function OGR_L_Intersection().
@@ -1585,7 +1607,7 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
     if (ret != OGRERR_NONE) goto done;
     ret = create_field_map(poDefnMethod, &mapMethod);
     if (ret != OGRERR_NONE) goto done;
-    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 1);
+    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 1, papszOptions);
     if (ret != OGRERR_NONE) goto done;
     poDefnResult = pLayerResult->GetLayerDefn();
     bEnvelopeSet = pLayerMethod->GetExtent(&sEnvelopeMethod, 1) == OGRERR_NONE;
@@ -1708,6 +1730,10 @@ done:
  *     feature could not be inserted.
  * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
  *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Intersection().
@@ -1781,6 +1807,10 @@ OGRErr OGR_L_Intersection( OGRLayerH pLayerInput,
  *     feature could not be inserted.
  * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
  *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
  * </ul>
  *
  * This method is the same as the C function OGR_L_Union().
@@ -1838,7 +1868,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
     if (ret != OGRERR_NONE) goto done;
     ret = create_field_map(poDefnMethod, &mapMethod);
     if (ret != OGRERR_NONE) goto done;
-    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 1);
+    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 1, papszOptions);
     if (ret != OGRERR_NONE) goto done;
     poDefnResult = pLayerResult->GetLayerDefn();
 
@@ -2025,6 +2055,10 @@ done:
  *     feature could not be inserted.
  * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
  *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Union().
@@ -2098,6 +2132,10 @@ OGRErr OGR_L_Union( OGRLayerH pLayerInput,
  *     feature could not be inserted.
  * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
  *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
  * </ul>
  *
  * This method is the same as the C function OGR_L_SymDifference().
@@ -2155,7 +2193,7 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
     if (ret != OGRERR_NONE) goto done;
     ret = create_field_map(poDefnMethod, &mapMethod);
     if (ret != OGRERR_NONE) goto done;
-    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 1);
+    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 1, papszOptions);
     if (ret != OGRERR_NONE) goto done;
     poDefnResult = pLayerResult->GetLayerDefn();
 
@@ -2320,6 +2358,10 @@ done:
  *     feature could not be inserted.
  * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
  *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::SymDifference().
@@ -2391,6 +2433,10 @@ OGRErr OGR_L_SymDifference( OGRLayerH pLayerInput,
  *     feature could not be inserted.
  * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
  *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
  * </ul>
  *
  * This method is the same as the C function OGR_L_Identity().
@@ -2445,7 +2491,7 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
     if (ret != OGRERR_NONE) goto done;
     ret = create_field_map(poDefnMethod, &mapMethod);
     if (ret != OGRERR_NONE) goto done;
-    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 1);
+    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 1, papszOptions);
     if (ret != OGRERR_NONE) goto done;
     poDefnResult = pLayerResult->GetLayerDefn();
 
@@ -2571,6 +2617,10 @@ done:
  *     feature could not be inserted.
  * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
  *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Identity().
@@ -2644,6 +2694,10 @@ OGRErr OGR_L_Identity( OGRLayerH pLayerInput,
  *     feature could not be inserted.
  * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
  *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
  * </ul>
  *
  * This method is the same as the C function OGR_L_Update().
@@ -2698,7 +2752,7 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
     if (ret != OGRERR_NONE) goto done;
     ret = create_field_map(poDefnMethod, &mapMethod);
     if (ret != OGRERR_NONE) goto done;
-    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 0);
+    ret = set_result_schema(pLayerResult, poDefnInput, poDefnMethod, mapInput, mapMethod, 0, papszOptions);
     if (ret != OGRERR_NONE) goto done;
     poDefnResult = pLayerResult->GetLayerDefn();
 
@@ -2835,6 +2889,10 @@ done:
  *     feature could not be inserted.
  * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
  *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Update().
@@ -2901,6 +2959,10 @@ OGRErr OGR_L_Update( OGRLayerH pLayerInput,
  *     feature could not be inserted.
  * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
  *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
  * </ul>
  *
  * This method is the same as the C function OGR_L_Clip().
@@ -2950,7 +3012,7 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
     if (ret != OGRERR_NONE) goto done;
     ret = create_field_map(poDefnInput, &mapInput);
     if (ret != OGRERR_NONE) goto done;
-    ret = set_result_schema(pLayerResult, poDefnInput, NULL, mapInput, NULL, 0);
+    ret = set_result_schema(pLayerResult, poDefnInput, NULL, mapInput, NULL, 0, papszOptions);
     if (ret != OGRERR_NONE) goto done;
     
     poDefnResult = pLayerResult->GetLayerDefn();
@@ -3058,6 +3120,10 @@ done:
  *     feature could not be inserted.
  * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
  *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Clip().
@@ -3124,6 +3190,10 @@ OGRErr OGR_L_Clip( OGRLayerH pLayerInput,
  *     feature could not be inserted.
  * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
  *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
  * </ul>
  *
  * This method is the same as the C function OGR_L_Erase().
@@ -3174,7 +3244,7 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
     if (ret != OGRERR_NONE) goto done;
     ret = create_field_map(poDefnInput, &mapInput);
     if (ret != OGRERR_NONE) goto done;
-    ret = set_result_schema(pLayerResult, poDefnInput, NULL, mapInput, NULL, 0);
+    ret = set_result_schema(pLayerResult, poDefnInput, NULL, mapInput, NULL, 0, papszOptions);
     if (ret != OGRERR_NONE) goto done;
     poDefnResult = pLayerResult->GetLayerDefn();
 
@@ -3282,6 +3352,10 @@ done:
  *     feature could not be inserted.
  * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
  *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
  * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Erase().
