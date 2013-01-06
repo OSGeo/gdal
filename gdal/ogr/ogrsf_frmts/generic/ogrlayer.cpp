@@ -1413,6 +1413,7 @@ OGRErr OGR_L_SetIgnoredFields( OGRLayerH hLayer, const char **papszFields )
 /*         helper functions for layer overlay methods                   */
 /************************************************************************/
 
+static
 OGRErr clone_spatial_filter(OGRLayer *pLayer, OGRGeometry **ppGeometry)
 {
     OGRErr ret = OGRERR_NONE;
@@ -1421,6 +1422,7 @@ OGRErr clone_spatial_filter(OGRLayer *pLayer, OGRGeometry **ppGeometry)
     return ret;
 }
 
+static
 OGRErr create_field_map(OGRFeatureDefn *poDefn, int **map)
 {
     OGRErr ret = OGRERR_NONE;
@@ -1432,6 +1434,7 @@ OGRErr create_field_map(OGRFeatureDefn *poDefn, int **map)
     return ret;
 }
 
+static
 OGRErr set_result_schema(OGRLayer *pLayerResult,
                          OGRFeatureDefn *poDefnInput, 
                          OGRFeatureDefn *poDefnMethod,
@@ -1469,6 +1472,7 @@ OGRErr set_result_schema(OGRLayer *pLayerResult,
     return ret;
 }
 
+static
 OGRGeometry *set_filter_from(OGRLayer *pLayer, OGRGeometry *pGeometryExistingFilter, OGRFeature *pFeature)
 {
     OGRGeometry *geom = pFeature->GetGeometryRef();
@@ -1482,6 +1486,17 @@ OGRGeometry *set_filter_from(OGRLayer *pLayer, OGRGeometry *pGeometryExistingFil
         pLayer->SetSpatialFilter(geom);
     }
     return geom;
+}
+
+static OGRGeometry* promote_to_multi(OGRGeometry* poGeom)
+{
+    OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
+    if( eType == wkbPolygon )
+        return OGRGeometryFactory::forceToMultiPolygon(poGeom);
+    else if( eType == wkbLineString )
+        return OGRGeometryFactory::forceToMultiLineString(poGeom);
+    else
+        return poGeom;
 }
 
 /************************************************************************/
@@ -1507,6 +1522,14 @@ OGRGeometry *set_filter_from(OGRLayer *pLayer, OGRGeometry *pGeometryExistingFil
  *
  * \note This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
+ *
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </ul>
  *
  * This method is the same as the C function OGR_L_Intersection().
  *
@@ -1547,6 +1570,8 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
     double progress_max = GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
+    int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
+    int bPromoteToMulti = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS()) {
@@ -1626,11 +1651,14 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
                 OGRFeature *z = new OGRFeature(poDefnResult);
                 z->SetFieldsFrom(x, mapInput);
                 z->SetFieldsFrom(y, mapMethod);
+                if( bPromoteToMulti )
+                    poIntersection = promote_to_multi(poIntersection);
                 z->SetGeometryDirectly(poIntersection);
                 delete y;
                 ret = pLayerResult->CreateFeature(z);
                 delete z;
-                if (ret != OGRERR_NONE) {delete x; goto done;}
+                if (!bSkipFailures && ret != OGRERR_NONE) {delete x; goto done;}
+                ret = OGRERR_NONE;
             }
         }
 
@@ -1673,6 +1701,14 @@ done:
  *
  * \note This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
+ *
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Intersection().
  * 
@@ -1739,6 +1775,14 @@ OGRErr OGR_L_Intersection( OGRLayerH pLayerInput,
  * \note This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
  *
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </ul>
+ *
  * This method is the same as the C function OGR_L_Union().
  * 
  * @param pLayerMethod the method layer. Should not be NULL.
@@ -1777,7 +1821,9 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
     double progress_max = GetFeatureCount(0) + pLayerMethod->GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
-    
+    int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
+    int bPromoteToMulti = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
+
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS()) {
         return OGRERR_UNSUPPORTED_OPERATION;
@@ -1840,6 +1886,8 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
                 OGRFeature *z = new OGRFeature(poDefnResult);
                 z->SetFieldsFrom(x, mapInput);
                 z->SetFieldsFrom(y, mapMethod);
+                if( bPromoteToMulti )
+                    poIntersection = promote_to_multi(poIntersection);
                 z->SetGeometryDirectly(poIntersection);
                 OGRGeometry *x_geom_diff_new = x_geom_diff ? x_geom_diff->Difference(y_geom) : NULL;
                 if (x_geom_diff) delete x_geom_diff;
@@ -1847,7 +1895,8 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
                 delete y;
                 ret = pLayerResult->CreateFeature(z);
                 delete z;
-                if (ret != OGRERR_NONE) {delete x; if (x_geom_diff) delete x_geom_diff; goto done;}
+                if (!bSkipFailures && ret != OGRERR_NONE) {delete x; if (x_geom_diff) delete x_geom_diff; goto done;}
+                ret = OGRERR_NONE;
             }
         }
 
@@ -1860,11 +1909,14 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
         {
             OGRFeature *z = new OGRFeature(poDefnResult);
             z->SetFieldsFrom(x, mapInput);
+            if( bPromoteToMulti )
+                x_geom_diff = promote_to_multi(x_geom_diff);
             z->SetGeometryDirectly(x_geom_diff);
             delete x;
             ret = pLayerResult->CreateFeature(z);
             delete z;
-            if (ret != OGRERR_NONE) goto done;
+            if (!bSkipFailures && ret != OGRERR_NONE) goto done;
+            ret = OGRERR_NONE;
         }
     }
 
@@ -1914,11 +1966,14 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
         {
             OGRFeature *z = new OGRFeature(poDefnResult);
             z->SetFieldsFrom(x, mapMethod);
+            if( bPromoteToMulti )
+                x_geom_diff = promote_to_multi(x_geom_diff);
             z->SetGeometryDirectly(x_geom_diff);
             delete x;
             ret = pLayerResult->CreateFeature(z);
             delete z;
-            if (ret != OGRERR_NONE) goto done;
+            if (!bSkipFailures && ret != OGRERR_NONE) goto done;
+            ret = OGRERR_NONE;
         }
     }
     if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
@@ -1963,6 +2018,14 @@ done:
  *
  * \note This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
+ *
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Union().
  * 
@@ -2029,6 +2092,14 @@ OGRErr OGR_L_Union( OGRLayerH pLayerInput,
  * \note This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
  *
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </ul>
+ *
  * This method is the same as the C function OGR_L_SymDifference().
  * 
  * @param pLayerMethod the method layer. Should not be NULL.
@@ -2067,6 +2138,8 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
     double progress_max = GetFeatureCount(0) + pLayerMethod->GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
+    int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
+    int bPromoteToMulti = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS()) {
@@ -2127,6 +2200,8 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
         if (geom && !geom->IsEmpty()) {
             z = new OGRFeature(poDefnResult);
             z->SetFieldsFrom(x, mapInput);
+            if( bPromoteToMulti )
+                geom = promote_to_multi(geom);
             z->SetGeometryDirectly(geom);
         } else {
             if (geom) delete geom;
@@ -2135,7 +2210,8 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
         if (z) {
             ret = pLayerResult->CreateFeature(z);
             delete z;
-            if (ret != OGRERR_NONE) goto done;
+            if (!bSkipFailures && ret != OGRERR_NONE) goto done;
+            ret = OGRERR_NONE;
         }
     }
 
@@ -2181,6 +2257,8 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
         if (geom && !geom->IsEmpty()) {
             z = new OGRFeature(poDefnResult);
             z->SetFieldsFrom(x, mapMethod);
+            if( bPromoteToMulti )
+                geom = promote_to_multi(geom);
             z->SetGeometryDirectly(geom);
         } else {
             if (geom) delete geom;
@@ -2189,7 +2267,8 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
         if (z) {
             ret = pLayerResult->CreateFeature(z);
             delete z;
-            if (ret != OGRERR_NONE) goto done;
+            if (!bSkipFailures && ret != OGRERR_NONE) goto done;
+            ret = OGRERR_NONE;
         }
     }
     if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
@@ -2234,6 +2313,14 @@ done:
  *
  * \note This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
+ *
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </ul>
  *
  * This function is the same as the C++ method OGRLayer::SymDifference().
  *
@@ -2298,6 +2385,14 @@ OGRErr OGR_L_SymDifference( OGRLayerH pLayerInput,
  * \note This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
  *
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </ul>
+ *
  * This method is the same as the C function OGR_L_Identity().
  * 
  * @param pLayerMethod the method layer. Should not be NULL.
@@ -2335,6 +2430,8 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
     double progress_max = GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
+    int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
+    int bPromoteToMulti = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS()) {
@@ -2396,6 +2493,8 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
                 OGRFeature *z = new OGRFeature(poDefnResult);
                 z->SetFieldsFrom(x, mapInput);
                 z->SetFieldsFrom(y, mapMethod);
+                if( bPromoteToMulti )
+                    poIntersection = promote_to_multi(poIntersection);
                 z->SetGeometryDirectly(poIntersection);
                 OGRGeometry *x_geom_diff_new = x_geom_diff ? x_geom_diff->Difference(y_geom) : NULL;
                 if (x_geom_diff) delete x_geom_diff;
@@ -2403,7 +2502,8 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
                 delete y;
                 ret = pLayerResult->CreateFeature(z);
                 delete z;
-                if (ret != OGRERR_NONE) {delete x; delete x_geom_diff; goto done;}
+                if (!bSkipFailures && ret != OGRERR_NONE) {delete x; delete x_geom_diff; goto done;}
+                ret = OGRERR_NONE;
             }
         }
 
@@ -2416,11 +2516,14 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
         {
             OGRFeature *z = new OGRFeature(poDefnResult);
             z->SetFieldsFrom(x, mapInput);
+            if( bPromoteToMulti )
+                x_geom_diff = promote_to_multi(x_geom_diff);
             z->SetGeometryDirectly(x_geom_diff);
             delete x;
             ret = pLayerResult->CreateFeature(z);
             delete z;
-            if (ret != OGRERR_NONE) goto done;
+            if (!bSkipFailures && ret != OGRERR_NONE) goto done;
+            ret = OGRERR_NONE;
         }
     }
     if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
@@ -2461,6 +2564,14 @@ done:
  *
  * \note This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
+ *
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Identity().
  * 
@@ -2527,6 +2638,14 @@ OGRErr OGR_L_Identity( OGRLayerH pLayerInput,
  * \note This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
  *
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </ul>
+ *
  * This method is the same as the C function OGR_L_Update().
  * 
  * @param pLayerMethod the method layer. Should not be NULL.
@@ -2564,6 +2683,8 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
     double progress_max = GetFeatureCount(0) + pLayerMethod->GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
+    int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
+    int bPromoteToMulti = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS()) {
@@ -2626,11 +2747,14 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
         {
             OGRFeature *z = new OGRFeature(poDefnResult);
             z->SetFieldsFrom(x, mapInput);
+            if( bPromoteToMulti )
+                x_geom_diff = promote_to_multi(x_geom_diff);
             z->SetGeometryDirectly(x_geom_diff);
             delete x;
             ret = pLayerResult->CreateFeature(z);
             delete z;
-            if (ret != OGRERR_NONE) goto done;
+            if (!bSkipFailures && ret != OGRERR_NONE) goto done;
+            ret = OGRERR_NONE;
         }
     }
 
@@ -2661,7 +2785,8 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
         delete y;
         ret = pLayerResult->CreateFeature(z);
         delete z;
-        if (ret != OGRERR_NONE) goto done;
+        if (!bSkipFailures && ret != OGRERR_NONE) goto done;
+        ret = OGRERR_NONE;
     }
     if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
       CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
@@ -2703,6 +2828,14 @@ done:
  *
  * \note This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
+ *
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Update().
  * 
@@ -2762,6 +2895,14 @@ OGRErr OGR_L_Update( OGRLayerH pLayerInput,
  * \note This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
  *
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </ul>
+ *
  * This method is the same as the C function OGR_L_Clip().
  * 
  * @param pLayerMethod the method layer. Should not be NULL.
@@ -2797,6 +2938,8 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
     double progress_max = GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
+    int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
+    int bPromoteToMulti = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS()) {
@@ -2854,9 +2997,17 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
         // possibly add a new feature with area x intersection sum of y
         OGRFeature *z = NULL;
         if (geom) {
-            z = new OGRFeature(poDefnResult);
-            z->SetFieldsFrom(x, mapInput);
-            z->SetGeometryDirectly(x_geom->Intersection(geom));
+            OGRGeometry* poIntersection = x_geom->Intersection(geom);
+            if( poIntersection != NULL && !poIntersection->IsEmpty() )
+            {
+                z = new OGRFeature(poDefnResult);
+                z->SetFieldsFrom(x, mapInput);
+                if( bPromoteToMulti )
+                    poIntersection = promote_to_multi(poIntersection);
+                z->SetGeometryDirectly(poIntersection);
+            }
+            else
+                delete poIntersection;
             delete geom;
         }
         delete x;
@@ -2864,7 +3015,8 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
             if (!z->GetGeometryRef()->IsEmpty())
                 ret = pLayerResult->CreateFeature(z);
             delete z;
-            if (ret != OGRERR_NONE) goto done;
+            if (!bSkipFailures && ret != OGRERR_NONE) goto done;
+            ret = OGRERR_NONE;
         }
     }
     if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
@@ -2899,6 +3051,14 @@ done:
  *
  * \note This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
+ *
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Clip().
  * 
@@ -2958,6 +3118,14 @@ OGRErr OGR_L_Clip( OGRLayerH pLayerInput,
  * \note This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
  *
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </ul>
+ *
  * This method is the same as the C function OGR_L_Erase().
  *
  * @param pLayerMethod the method layer. Should not be NULL.
@@ -2993,6 +3161,8 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
     double progress_max = GetFeatureCount(0);
     double progress_counter = 0;
     double progress_ticker = 0;
+    int bSkipFailures = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
+    int bPromoteToMulti = CSLTestBoolean(CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS()) {
@@ -3051,9 +3221,17 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
         // possibly add a new feature with area x minus sum of y
         OGRFeature *z = NULL;
         if (geom) {
-            z = new OGRFeature(poDefnResult);
-            z->SetFieldsFrom(x, mapInput);
-            z->SetGeometryDirectly(x_geom->Difference(geom));
+            OGRGeometry* x_geom_diff = x_geom->Difference(geom);
+            if( x_geom_diff != NULL && !x_geom_diff->IsEmpty() )
+            {
+                z = new OGRFeature(poDefnResult);
+                z->SetFieldsFrom(x, mapInput);
+                if( bPromoteToMulti )
+                    x_geom_diff = promote_to_multi(x_geom_diff);
+                z->SetGeometryDirectly(x_geom_diff);
+            }
+            else
+                delete x_geom_diff;
             delete geom;
         }
         delete x;
@@ -3061,7 +3239,8 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
             if (!z->GetGeometryRef()->IsEmpty())
                 ret = pLayerResult->CreateFeature(z);
             delete z;
-            if (ret != OGRERR_NONE) goto done;
+            if (!bSkipFailures && ret != OGRERR_NONE) goto done;
+            ret = OGRERR_NONE;
         }
     }
     if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
@@ -3096,6 +3275,14 @@ done:
  *
  * \note This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
+ *
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * </ul>
  *
  * This function is the same as the C++ method OGRLayer::Erase().
  * 

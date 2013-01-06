@@ -41,6 +41,7 @@ Usage: ogr_layer_algebra.py Union|Intersection|SymDifference|Identity|Update|Cli
                             -input_ds name [-input_lyr name]
                             -method_ds [-method_lyr name]
                             -output_ds name [-output_lyr name] [-overwrite]
+                            [-opt NAME=VALUE]*
                             [-f format_name] [-dsco NAME=VALUE]* [-lco NAME=VALUE]*
                             [-input_fields NONE|ALL|fld1,fl2,...fldN] [-method_fields NONE|ALL|fld1,fl2,...fldN]
                             [-nlt geom_type] [-a_srs srs_def]""")
@@ -115,6 +116,7 @@ def main(argv = None):
     op = None
     dsco = []
     lco = []
+    opt = []
     overwrite = False
     input_fields = 'ALL'
     method_fields = 'ALL'
@@ -184,6 +186,10 @@ def main(argv = None):
         elif arg == '-lco' and i + 1 < len(argv):
             i = i + 1
             lco.append(argv[i])
+
+        elif arg == '-opt' and i + 1 < len(argv):
+            i = i + 1
+            opt.append(argv[i])
 
         elif arg == "-nlt" and i + 1 < len(argv):
             i = i + 1
@@ -397,9 +403,9 @@ def main(argv = None):
 
     op = getattr(input_lyr, op)
     if quiet_flag == 0:
-        ret = op(method_lyr, output_lyr, callback = gdal.TermProgress_nocb)
+        ret = op(method_lyr, output_lyr, options = opt, callback = gdal.TermProgress_nocb)
     else:
-        ret = op(method_lyr, output_lyr)
+        ret = op(method_lyr, output_lyr, options = opt)
 
     input_ds = None
     method_ds = None

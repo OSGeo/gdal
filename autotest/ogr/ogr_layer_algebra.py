@@ -160,6 +160,31 @@ def overlay_1():
 
     empty_layer(C)
 
+    err = A.Intersection( B, C, options = ['PROMOTE_TO_MULTI=YES'] )
+
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Intersection' )
+            return 'fail'
+
+        if C.GetFeatureCount() != 2:
+            gdaltest.post_reason( 'Layer.Intersection returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
+
+        i1 = ogr.Geometry(wkt = 'MULTIPOLYGON (((2 3,3 3,3 2,2 2,2 3)))')
+        i2 = ogr.Geometry(wkt = 'MULTIPOLYGON (((5 2,5 3,6 3,6 2,5 2)))')
+
+        C.ResetReading();
+        while 1:
+            feat = C.GetNextFeature()
+            if not feat: break
+            g = feat.GetGeometryRef()
+            if not(g.Equals(i1) or g.Equals(i2)):
+                gdaltest.post_reason( 'Layer.Intersection returned wrong geometry: '+g.ExportToWkt() )
+                return 'fail'
+
+    empty_layer(C)
+
     # Intersection with self ; this should return 2 polygons
 
     err = D1.Intersection( D2, C )
@@ -178,6 +203,19 @@ def overlay_1():
     # Union; this should return 5 polygons
 
     err = A.Union( B, C )
+
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Union' )
+            return 'fail'
+
+        if C.GetFeatureCount() != 5:
+            gdaltest.post_reason( 'Layer.Union returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
+
+    empty_layer(C)
+
+    err = A.Union( B, C, options = ['PROMOTE_TO_MULTI=YES'] )
 
     if ogrtest.have_geos():
         if err != 0:
@@ -235,6 +273,19 @@ def overlay_1():
 
     empty_layer(C)
 
+    err = A.SymDifference( B, C, options = ['PROMOTE_TO_MULTI=YES'] )
+
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.SymDifference' )
+            return 'fail'
+
+        if C.GetFeatureCount() != 3:
+            gdaltest.post_reason( 'Layer.SymDifference returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
+
+    empty_layer(C)
+
     # SymDifference with self ; this should return 0 features
 
     err = D1.SymDifference( D2, C )
@@ -253,6 +304,19 @@ def overlay_1():
     # Identity; this should return 4 polygons
 
     err = A.Identity( B, C )
+
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Identity' )
+            return 'fail'
+
+        if C.GetFeatureCount() != 4:
+            gdaltest.post_reason( 'Layer.Identity returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
+
+    empty_layer(C)
+
+    err = A.Identity( B, C, options = ['PROMOTE_TO_MULTI=YES'] )
 
     if ogrtest.have_geos():
         if err != 0:
@@ -295,7 +359,20 @@ def overlay_1():
 
     empty_layer(C)
 
-    # Identity with self ; this should return 2 polygons
+    err = A.Update( B, C, options = ['PROMOTE_TO_MULTI=YES'] )
+
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Update' )
+            return 'fail'
+
+        if C.GetFeatureCount() != 3:
+            gdaltest.post_reason( 'Layer.Update returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
+
+    empty_layer(C)
+
+    # Update with self ; this should return 2 polygons
 
     err = D1.Update( D2, C )
 
@@ -313,6 +390,19 @@ def overlay_1():
     # Clip; this should return 2 polygons
 
     err = A.Clip( B, C )
+
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Clip' )
+            return 'fail'
+
+        if C.GetFeatureCount() != 2:
+            gdaltest.post_reason( 'Layer.Clip returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
+
+    empty_layer(C)
+
+    err = A.Clip( B, C, options = ['PROMOTE_TO_MULTI=YES'] )
 
     if ogrtest.have_geos():
         if err != 0:
@@ -343,6 +433,19 @@ def overlay_1():
     # Erase; this should return 2 polygons
 
     err = A.Erase( B, C )
+
+    if ogrtest.have_geos():
+        if err != 0:
+            gdaltest.post_reason( 'got non-zero result code '+str(err)+' from Layer.Erase' )
+            return 'fail'
+
+        if C.GetFeatureCount() != 2:
+            gdaltest.post_reason( 'Layer.Erase returned '+str(C.GetFeatureCount())+' features' )
+            return 'fail'
+
+    empty_layer(C)
+
+    err = A.Erase( B, C, options = ['PROMOTE_TO_MULTI=YES'] )
 
     if ogrtest.have_geos():
         if err != 0:
