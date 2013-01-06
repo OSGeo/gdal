@@ -125,7 +125,7 @@ def main(argv = None):
     method_lyr_name = None
     output_ds_name = None
     output_lyr_name = None
-    op = None
+    op_str = None
     dsco = []
     lco = []
     opt = []
@@ -250,25 +250,25 @@ def main(argv = None):
             srs_name = argv[i]
 
         elif EQUAL(arg, "Union"):
-            op = "Union"
+            op_str = "Union"
 
         elif EQUAL(arg, "Intersection"):
-            op = "Intersection"
+            op_str = "Intersection"
 
         elif EQUAL(arg, "SymDifference"):
-            op = "SymDifference"
+            op_str = "SymDifference"
 
         elif EQUAL(arg, "Identity"):
-            op = "Identity"
+            op_str = "Identity"
 
         elif EQUAL(arg, "Update"):
-            op = "Update"
+            op_str = "Update"
 
         elif EQUAL(arg, "Clip"):
-            op = "Clip"
+            op_str = "Clip"
 
         elif EQUAL(arg, "Erase"):
-            op = "Erase"
+            op_str = "Erase"
 
         elif arg == "-overwrite":
             overwrite = True
@@ -284,7 +284,7 @@ def main(argv = None):
     if input_ds_name is None or \
        method_ds_name is None or \
        output_ds_name is None or \
-       op is None:
+       op_str is None:
            return Usage()
 
     if input_fields == 'NONE' and method_fields == 'NONE':
@@ -413,7 +413,7 @@ def main(argv = None):
                 if output_lyr is None:
                     return 1
 
-    op = getattr(input_lyr, op)
+    op = getattr(input_lyr, op_str)
     if quiet_flag == 0:
         ret = op(method_lyr, output_lyr, options = opt, callback = gdal.TermProgress_nocb)
     else:
@@ -424,7 +424,7 @@ def main(argv = None):
     output_ds = None
 
     if ret != 0:
-        print('An error occured during %s operation' % op)
+        print('An error occured during %s operation' % op_str)
         return 1
 
     return 0
