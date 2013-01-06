@@ -32,7 +32,6 @@
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
-#include "zlib.h"
 
 #include <setjmp.h>
 
@@ -2024,28 +2023,13 @@ void JPGDatasetCommon::DecompressMask()
 /* -------------------------------------------------------------------- */
 /*      Decompress                                                      */
 /* -------------------------------------------------------------------- */
-    z_stream sStream;
-
-    memset( &sStream, 0, sizeof(z_stream) );
-    
-    inflateInit( &sStream );
-    
-    sStream.next_in = pabyCMask;
-    sStream.avail_in = nCMaskSize;
-
-    sStream.next_out = pabyBitMask;
-    sStream.avail_out = nBufSize;
-
-    int nResult = inflate( &sStream, Z_FINISH );
-
-    inflateEnd( &sStream );
-
+    void* pOut = CPLZLibInflate( pabyCMask, nCMaskSize,
+                                 pabyBitMask, nBufSize, NULL );
 /* -------------------------------------------------------------------- */
 /*      Cleanup if an error occurs.                                     */
 /* -------------------------------------------------------------------- */
-    if( nResult != Z_STREAM_END )
+    if( pOut == NULL )
     {
-        
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failure decoding JPEG validity bitmask." );
         CPLFree( pabyCMask );
@@ -2154,7 +2138,6 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
 /*      Compress                                                        */
 /* -------------------------------------------------------------------- */
     GByte *pabyCMask = NULL;
-    z_stream sStream;
 
     if( eErr == CE_None )
     {
@@ -2166,23 +2149,12 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
         }
     }
 
+    size_t nTotalOut = 0;
     if ( eErr == CE_None )
     {
-        memset( &sStream, 0, sizeof(z_stream) );
-        
-        deflateInit( &sStream, 9 );
-        
-        sStream.next_in = pabyBitBuf;
-        sStream.avail_in = nBitBufSize;
-        
-        sStream.next_out = pabyCMask;
-        sStream.avail_out = nBitBufSize + 30;
-        
-        int nResult = deflate( &sStream, Z_FINISH );
-        
-        deflateEnd( &sStream );
-
-        if( nResult != Z_STREAM_END )
+        if( CPLZLibDeflate( pabyBitBuf, nBitBufSize, 9,
+                            pabyCMask, nBitBufSize + 30,
+                            &nTotalOut ) == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "Deflate compression of jpeg bit mask failed." );
@@ -2212,8 +2184,8 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
             nImageSize = (GUInt32) VSIFTellL( fpOut );
             CPL_LSBPTR32( &nImageSize );
 
-            if( VSIFWriteL( pabyCMask, 1, sStream.total_out, fpOut ) 
-                != sStream.total_out )
+            if( VSIFWriteL( pabyCMask, 1, nTotalOut, fpOut ) 
+                != nTotalOut )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Failure writing compressed bitmask.\n%s",
