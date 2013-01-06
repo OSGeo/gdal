@@ -56,17 +56,26 @@ def EQUAL(a, b):
 
 def CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco, \
                 input_lyr, input_fields, \
-                method_lyr, method_fields):
+                method_lyr, method_fields, opt):
 
     output_lyr = output_ds.CreateLayer(output_lyr_name, srs, geom_type, lco)
     if output_lyr is None:
         print('Cannot create layer "%s"' % output_lyr_name)
         return None
 
+    input_prefix = ''
+    method_prefix = ''
+    for val in opt:
+        if val.lower().find('input_prefix=') == 0:
+            input_prefix = val[len('input_prefix='):]
+        elif val.lower().find('method_prefix=') == 0:
+            method_prefix = val[len('method_prefix='):]
+
     if input_fields == 'ALL':
         layer_defn = input_lyr.GetLayerDefn()
         for idx in range(layer_defn.GetFieldCount()):
             fld_defn = layer_defn.GetFieldDefn(idx)
+            fld_defn = ogr.FieldDefn(input_prefix + fld_defn.GetName(), fld_defn.GetType())
             if output_lyr.CreateField(fld_defn) != 0:
                 print('Cannot create field "%s" in layer "%s"' % (fld_defn.GetName(), output_lyr.GetName()))
 
@@ -78,6 +87,7 @@ def CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco, \
                 print('Cannot find field "%s" in layer "%s"' % (fld, layer_defn.GetName()))
                 continue
             fld_defn = layer_defn.GetFieldDefn(idx)
+            fld_defn = ogr.FieldDefn(input_prefix + fld_defn.GetName(), fld_defn.GetType())
             if output_lyr.CreateField(fld_defn) != 0:
                 print('Cannot create field "%s" in layer "%s"' % (fld, output_lyr.GetName()))
 
@@ -85,6 +95,7 @@ def CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco, \
         layer_defn = method_lyr.GetLayerDefn()
         for idx in range(layer_defn.GetFieldCount()):
             fld_defn = layer_defn.GetFieldDefn(idx)
+            fld_defn = ogr.FieldDefn(method_prefix + fld_defn.GetName(), fld_defn.GetType())
             if output_lyr.CreateField(fld_defn) != 0:
                 print('Cannot create field "%s" in layer "%s"' % (fld_defn.GetName(), output_lyr.GetName()))
 
@@ -96,6 +107,7 @@ def CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco, \
                 print('Cannot find field "%s" in layer "%s"' % (fld, layer_defn.GetName()))
                 continue
             fld_defn = layer_defn.GetFieldDefn(idx)
+            fld_defn = ogr.FieldDefn(method_prefix + fld_defn.GetName(), fld_defn.GetType())
             if output_lyr.CreateField(fld_defn) != 0:
                 print('Cannot create field "%s" in layer "%s"' % (fld, output_lyr.GetName()))
 
@@ -358,7 +370,7 @@ def main(argv = None):
             print('-output_lyr should be specified')
             return 1
 
-        output_lyr = CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco, input_lyr, input_fields, method_lyr, method_fields)
+        output_lyr = CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco, input_lyr, input_fields, method_lyr, method_fields, opt)
         if output_lyr is None:
             return 1
     else:
@@ -381,7 +393,7 @@ def main(argv = None):
                        print('Cannot create layer "%s" in a shapefile called "%s"' % (output_lyr_name, output_ds_name))
                        return 1
 
-                output_lyr = CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco, input_lyr, input_fields, method_lyr, method_fields)
+                output_lyr = CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco, input_lyr, input_fields, method_lyr, method_fields, opt)
                 if output_lyr is None:
                     return 1
 
@@ -397,7 +409,7 @@ def main(argv = None):
                     print("DeleteLayer() failed when overwrite requested." )
                     return 1
 
-                output_lyr = CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco, input_lyr, input_fields, method_lyr, method_fields)
+                output_lyr = CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco, input_lyr, input_fields, method_lyr, method_fields, opt)
                 if output_lyr is None:
                     return 1
 
