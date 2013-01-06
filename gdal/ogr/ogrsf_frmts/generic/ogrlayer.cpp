@@ -2288,7 +2288,7 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
             if (geom) delete geom;
             geom = geom_new;
             delete y;
-            if (geom->IsEmpty()) break;
+            if (geom == NULL || geom->IsEmpty()) break;
         }
 
         OGRFeature *z = NULL;
@@ -3074,7 +3074,7 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
         }
         delete x;
         if (z) {
-            if (!z->GetGeometryRef()->IsEmpty())
+            if (z->GetGeometryRef() != NULL && !z->GetGeometryRef()->IsEmpty())
                 ret = pLayerResult->CreateFeature(z);
             delete z;
             if (!bSkipFailures && ret != OGRERR_NONE) goto done;
@@ -3306,7 +3306,7 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
         }
         delete x;
         if (z) {
-            if (!z->GetGeometryRef()->IsEmpty())
+            if (z->GetGeometryRef() != NULL && !z->GetGeometryRef()->IsEmpty())
                 ret = pLayerResult->CreateFeature(z);
             delete z;
             if (!bSkipFailures && ret != OGRERR_NONE) goto done;
