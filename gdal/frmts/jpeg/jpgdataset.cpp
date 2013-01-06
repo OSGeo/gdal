@@ -1687,6 +1687,13 @@ GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles
 
     poDS->eAccess = GA_ReadOnly;
 
+    /* Will detect mismatch between compile-time and run-time libjpeg versions */
+    if (setjmp(poDS->setjmp_buffer)) 
+    {
+        delete poDS;
+        return NULL;
+    }
+
     poDS->sDInfo.err = jpeg_std_error( &(poDS->sJErr) );
     poDS->sJErr.error_exit = JPGDataset::ErrorExit;
     poDS->sDInfo.client_data = (void *) &(poDS->setjmp_buffer);
@@ -2354,7 +2361,10 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     jmp_buf setjmp_buffer;
     
     if (setjmp(setjmp_buffer)) 
+    {
+        VSIFCloseL( fpImage );
         return NULL;
+    }
 
     sCInfo.err = jpeg_std_error( &sJErr );
     sJErr.error_exit = JPGDataset::ErrorExit;

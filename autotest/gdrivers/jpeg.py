@@ -612,6 +612,30 @@ def jpeg_16():
     return 'success'
 
 ###############################################################################
+# Test bogus files
+
+def jpeg_17():
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.Open('data/bogus.jpg')
+    gdal.PopErrorHandler()
+    if ds is not None or gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.ErrorReset()
+    ds = gdal.Open('data/byte_corrupted.jpg')
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds.GetRasterBand(1).Checksum()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def jpeg_cleanup():
@@ -644,6 +668,7 @@ gdaltest_list = [
     jpeg_14,
     jpeg_15,
     jpeg_16,
+    jpeg_17,
     jpeg_cleanup ]
 
 if __name__ == '__main__':
