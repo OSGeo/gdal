@@ -7146,6 +7146,18 @@ public class Layer:public boolean TestCapability(String cap)
  * For best performance use the minimum amount of features in
  * the method layer and copy it into a memory layer.
  * <p>
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
+ * </ul>
+ * <p>
  * This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
  *
@@ -7195,6 +7207,18 @@ public class Layer:public int Intersection( Layer pLayerMethod, Layer pLayerResu
  * For best performance use the minimum amount of features in
  * the method layer and copy it into a memory layer.
  * <p>
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
+ * </ul>
+ * <p>
  * This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
  *
@@ -7243,6 +7267,18 @@ public class Layer:public int Union( Layer pLayerMethod, Layer pLayerResult)
  * For best performance use the minimum amount of features in
  * the method layer and copy it into a memory layer.
  * <p>
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
+ * </ul>
+ * <p>
  * This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
  *
@@ -7288,6 +7324,18 @@ public class Layer:public int SymDifference( Layer pLayerMethod, Layer pLayerRes
  * <p>
  * For best performance use the minimum amount of features in
  * the method layer and copy it into a memory layer.
+ * <p>
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
+ * </ul>
  * <p>
  * This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
@@ -7338,6 +7386,18 @@ public class Layer:public int Identity( Layer pLayerMethod, Layer pLayerResult)
  * For best performance use the minimum amount of features in
  * the method layer and copy it into a memory layer.
  * <p>
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
+ * </ul>
+ * <p>
  * This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
  *
@@ -7379,6 +7439,18 @@ public class Layer:public int Update( Layer pLayerMethod, Layer pLayerResult)
  * For best performance use the minimum amount of features in
  * the method layer and copy it into a memory layer.
  * <p>
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
+ * </ul>
+ * <p>
  * This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
  *
@@ -7419,6 +7491,18 @@ public class Layer:public int Clip( Layer pLayerMethod, Layer pLayerResult)
  * <p>
  * For best performance use the minimum amount of features in
  * the method layer and copy it into a memory layer.
+ * <p>
+ * The recognized list of options is :
+ * <ul>
+ * <li>SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a
+ *     feature could not be inserted.
+ * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
+ *     into MultiPolygons, or LineStrings to MultiLineStrings.
+ * <li>INPUT_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the input layer.
+ * <li>METHOD_PREFIX=string. Set a prefix for the field names that
+ *     will be created from the fields of the method layer.
+ * </ul>
  * <p>
  * This method relies on GEOS support. Do not use unless the
  * GEOS support is compiled in.
