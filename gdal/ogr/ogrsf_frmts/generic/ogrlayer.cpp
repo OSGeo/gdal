@@ -1624,7 +1624,6 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
                     delete x;
                     goto done;
                 }
-                progress_ticker += 0.01;
             }
             progress_counter += 1.0;
         }
@@ -1885,7 +1884,6 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
                     delete x;
                     goto done;
                 }
-                progress_ticker += 0.01;
             }
             progress_counter += 1.0;
         }
@@ -1964,7 +1962,6 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
                     delete x;
                     goto done;
                 }
-                progress_ticker += 0.01;
             }
             progress_counter += 1.0;
         }
@@ -2210,7 +2207,6 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
                     delete x;
                     goto done;
                 }
-                progress_ticker += 0.01;
             }
             progress_counter += 1.0;
         }
@@ -2267,7 +2263,6 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
                     delete x;
                     goto done;
                 }
-                progress_ticker += 0.01;
             }
             progress_counter += 1.0;
         }
@@ -2508,7 +2503,6 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
                     delete x;
                     goto done;
                 }
-                progress_ticker += 0.01;
             }
             progress_counter += 1.0;
         }
@@ -2769,7 +2763,6 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
                     delete x;
                     goto done;
                 }
-                progress_ticker += 0.01;
             }
             progress_counter += 1.0;
         }
@@ -2826,7 +2819,6 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
                     delete y;
                     goto done;
                 }
-                progress_ticker += 0.01;
             }
             progress_counter += 1.0;
         }
@@ -3022,13 +3014,12 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
         if (pfnProgress) {
             double p = progress_counter/progress_max;
             if (p > progress_ticker) {
-                if (pfnProgress(p, "", pProgressArg)) {
+                if (!pfnProgress(p, "", pProgressArg)) {
                     CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
                     ret = OGRERR_FAILURE;
                     delete x;
                     goto done;
                 }
-                progress_ticker += 0.01;
             }
             progress_counter += 1.0;
         }
@@ -3260,7 +3251,6 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
                     delete x;
                     goto done;
                 }
-                progress_ticker += 0.01;
             }
             progress_counter += 1.0;
         }
