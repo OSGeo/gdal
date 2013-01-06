@@ -1092,6 +1092,10 @@ void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB)
 #ifdef MINIMAL_SPATIAL_FUNCTIONS
     /* Check if spatialite is available */
     int rc = sqlite3_exec(hDB, "SELECT spatialite_version()", NULL, NULL, NULL);
+    
+    /* Reset error flag */
+    sqlite3_exec(hDB, "SELECT 1", NULL, NULL, NULL);
+    
     if( rc != SQLITE_OK &&
         CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_SPATIAL_FUNCTIONS", "YES")) )
     {
