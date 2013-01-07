@@ -564,6 +564,7 @@ def jpeg_16():
         gdaltest.post_reason('fail')
         return 'fail'
     # "Internal" overview
+
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if gdaltest.jpeg8:
         expected_cs = 34218
@@ -636,6 +637,71 @@ def jpeg_17():
     return 'success'
 
 ###############################################################################
+# Test situation where we cause a restart and need to reset scale
+
+def jpeg_18():
+
+    import struct
+
+    height = 1024
+    width = 1024
+    src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/jpeg_18.tif', width, height, 1)
+    for i in range(height):
+        data = struct.pack('B' * 1, int(i / (height / 256)))
+        src_ds.WriteRaster(0,i,width,1,data,1,1)
+
+    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/jpeg_18.jpg', src_ds, options = ['QUALITY=99'])
+    src_ds = None
+    gdal.Unlink('/vsimem/jpeg_18.tif')
+
+    oldSize = gdal.GetCacheMax()
+    gdal.SetCacheMax(0)
+
+    line0 = ds.GetRasterBand(1).ReadRaster(0,0,width,1)
+    data = struct.unpack('B' * width, line0)
+    if abs(data[0] - 0) > 10:
+        return 'fail'
+    line1023 = ds.GetRasterBand(1).ReadRaster(0,height-1,width,1)
+    data = struct.unpack('B' * width, line1023)
+    if abs(data[0] - 255) > 10:
+        return 'fail'
+    line0_ovr1 = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0,0,width / 4,1)
+    data = struct.unpack('B' * (width / 4), line0_ovr1)
+    if abs(data[0] - 0) > 10:
+        return 'fail'
+    line1023_bis = ds.GetRasterBand(1).ReadRaster(0,height-1,width,1)
+    if line1023_bis == line0 or line1023 != line1023_bis:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    line0_bis = ds.GetRasterBand(1).ReadRaster(0,0,width,1)
+    if line0 != line0_bis:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    line255_ovr1 = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0,height/4 - 1,width / 4,1)
+    data = struct.unpack('B' * (width / 4), line255_ovr1)
+    if abs(data[0] - 255) > 10:
+        return 'fail'
+    line0_bis = ds.GetRasterBand(1).ReadRaster(0,0,width,1)
+    if line0 != line0_bis:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    line0_ovr1_bis = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0,0,width/4,1)
+    if line0_ovr1 != line0_ovr1_bis:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    line255_ovr1_bis = ds.GetRasterBand(1).GetOverview(1).ReadRaster(0,height/4 - 1,width / 4,1)
+    if line255_ovr1 != line255_ovr1_bis:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.SetCacheMax(oldSize)
+
+    ds = None
+    gdal.Unlink('/vsimem/jpeg_18.jpg')
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def jpeg_cleanup():
@@ -669,6 +735,7 @@ gdaltest_list = [
     jpeg_15,
     jpeg_16,
     jpeg_17,
+    jpeg_18,
     jpeg_cleanup ]
 
 if __name__ == '__main__':
