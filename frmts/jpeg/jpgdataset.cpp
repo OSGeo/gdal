@@ -148,6 +148,7 @@ protected:
     GDAL_GCP *pasGCPList;
 
     VSILFILE   *fpImage;
+    int         bOwnFPImage;
     GUIntBig nSubfileOffset;
 
     int    nLoadedScanline;
@@ -244,6 +245,7 @@ class JPGDataset : public JPGDatasetCommon
     virtual int GetOutColorSpace() { return sDInfo.out_color_space; }
 
     void   LoadDefaultTables(int);
+    void   SetScaleNumAndDenom();
 
   public:
                  JPGDataset();
@@ -251,7 +253,8 @@ class JPGDataset : public JPGDatasetCommon
 
     static GDALDataset *Open( const char* pszFilename,
                               char** papszSiblingFiles = NULL,
-                              int nScaleFactor = 1 );
+                              int nScaleFactor = 1,
+                              VSILFILE* fpIn = NULL);
     static GDALDataset* CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
@@ -889,6 +892,7 @@ JPGDatasetCommon::JPGDatasetCommon()
 
 {
     fpImage = NULL;
+    bOwnFPImage = FALSE;
 
     nScaleFactor = 1;
     bHasInitInternalOverviews = FALSE;
@@ -940,7 +944,7 @@ JPGDatasetCommon::JPGDatasetCommon()
 JPGDatasetCommon::~JPGDatasetCommon()
 
 {
-    if( fpImage != NULL )
+    if( bOwnFPImage && fpImage != NULL )
         VSIFCloseL( fpImage );
 
     if( pabyScanline != NULL )
@@ -1325,6 +1329,21 @@ void JPGDataset::LoadDefaultTables( int n )
 }
 
 /************************************************************************/
+/*                       SetScaleNumAndDenom()                          */
+/************************************************************************/
+
+void JPGDataset::SetScaleNumAndDenom()
+{
+#if JPEG_LIB_VERSION > 62
+    sDInfo.scale_num = 8 / nScaleFactor;
+    sDInfo.scale_denom = 8;
+#else
+    sDInfo.scale_num = 1;
+    sDInfo.scale_denom = nScaleFactor;
+#endif
+}
+
+/************************************************************************/
 /*                              Restart()                               */
 /*                                                                      */
 /*      Restart compressor at the beginning of the file.                */
@@ -1354,6 +1373,7 @@ void JPGDataset::Restart()
 
     sDInfo.out_color_space = colorSpace;
     nLoadedScanline = -1;
+    SetScaleNumAndDenom();
     jpeg_start_decompress( &sDInfo );
     bHasDoneJpegStartDecompress = TRUE;
 }
@@ -1586,7 +1606,7 @@ GDALDataset *JPGDatasetCommon::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles,
-                               int nScaleFactor )
+                               int nScaleFactor, VSILFILE* fpIn )
 
 {
 /* -------------------------------------------------------------------- */
@@ -1659,15 +1679,22 @@ GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles
 /* -------------------------------------------------------------------- */
 /*      Open the file using the large file api.                         */
 /* -------------------------------------------------------------------- */
-    VSILFILE* fpImage = VSIFOpenL( real_filename, "rb" );
+    VSILFILE* fpImage;
 
-    if( fpImage == NULL )
+    if( fpIn == NULL )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "VSIFOpenL(%s) failed unexpectedly in jpgdataset.cpp",
-                  real_filename );
-        return NULL;
+        fpImage = VSIFOpenL( real_filename, "rb" );
+
+        if( fpImage == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                    "VSIFOpenL(%s) failed unexpectedly in jpgdataset.cpp",
+                    real_filename );
+            return NULL;
+        }
     }
+    else
+        fpImage = fpIn;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -1677,6 +1704,7 @@ GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles
     poDS = new JPGDataset();
     poDS->nQLevel = nQLevel;
     poDS->fpImage = fpImage;
+    poDS->bOwnFPImage = (fpIn == NULL);
 
 /* -------------------------------------------------------------------- */
 /*      Move to the start of jpeg data.                                 */
@@ -1757,13 +1785,7 @@ GDALDataset *JPGDataset::Open( const char* pszFilename, char** papszSiblingFiles
 /* -------------------------------------------------------------------- */
 
     poDS->nScaleFactor = nScaleFactor;
-#if JPEG_LIB_VERSION > 62
-    poDS->sDInfo.scale_num = 8 / poDS->nScaleFactor;
-    poDS->sDInfo.scale_denom = 8;
-#else
-    poDS->sDInfo.scale_num = 1;
-    poDS->sDInfo.scale_denom = poDS->nScaleFactor;
-#endif
+    poDS->SetScaleNumAndDenom();
     poDS->nRasterXSize = (poDS->sDInfo.image_width + nScaleFactor - 1) / nScaleFactor;
     poDS->nRasterYSize = (poDS->sDInfo.image_height + nScaleFactor - 1) / nScaleFactor;
 
