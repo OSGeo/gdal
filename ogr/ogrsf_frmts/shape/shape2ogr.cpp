@@ -1254,8 +1254,6 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
             continue;
         }
 
-        int nRet = FALSE;
-
         OGRFieldDefn* poFieldDefn = poDefn->GetFieldDefn(iField);
 
         switch( poFieldDefn->GetType() )
@@ -1295,7 +1293,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                   }
               }
 
-              nRet = DBFWriteStringAttribute( hDBF, poFeature->GetFID(), iField,
+              DBFWriteStringAttribute( hDBF, poFeature->GetFID(), iField,
                                               pszStr );
 
               CPLFree( pszEncoded );
@@ -1318,13 +1316,13 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                   }
               }
 
-              nRet = DBFWriteAttributeDirectly( hDBF, poFeature->GetFID(), iField, 
+              DBFWriteAttributeDirectly( hDBF, poFeature->GetFID(), iField, 
                                                 szValue );
             break;
           }
 
           case OFTReal:
-            nRet = DBFWriteDoubleAttribute( hDBF, poFeature->GetFID(), iField, 
+            DBFWriteDoubleAttribute( hDBF, poFeature->GetFID(), iField, 
                                      poFeature->GetFieldAsDouble(iField) );
             break;
 
@@ -1335,7 +1333,13 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
               if( poFeature->GetFieldAsDateTime( iField, &nYear, &nMonth, &nDay,
                                                  NULL, NULL, NULL, NULL ) )
               {
-                  nRet = DBFWriteIntegerAttribute( hDBF, poFeature->GetFID(), iField, 
+                  if( nYear < 0 || nYear > 9999 )
+                  {
+                      CPLError(CE_Warning, CPLE_NotSupported,
+                               "Year < 0 or > 9999 is not a valid date for shapefile");
+                  }
+                  else
+                      DBFWriteIntegerAttribute( hDBF, poFeature->GetFID(), iField, 
                                             nYear*10000 + nMonth*100 + nDay );
               }
           }
