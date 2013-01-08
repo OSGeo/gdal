@@ -2347,6 +2347,13 @@ void OGRFeature::SetField( int iField, int nYear, int nMonth, int nDay,
         || poFDefn->GetType() == OFTTime 
         || poFDefn->GetType() == OFTDateTime )
     {
+        if( (GInt16)nYear != nYear )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Years < -32768 or > 32767 are not supported");
+            return;
+        }
+
         pauFields[iField].Date.Year = (GInt16)nYear;
         pauFields[iField].Date.Month = (GByte)nMonth;
         pauFields[iField].Date.Day = (GByte)nDay;
