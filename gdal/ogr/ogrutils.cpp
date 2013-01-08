@@ -828,7 +828,14 @@ int OGRParseDate( const char *pszInput, OGRField *psField, int nOptions )
     
     if( strstr(pszInput,"-") != NULL || strstr(pszInput,"/") != NULL )
     {
-        psField->Date.Year = (GInt16)atoi(pszInput);
+        int nYear = atoi(pszInput);
+        if( nYear != (GInt16)nYear )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Years < -32768 or > 32767 are not supported");
+            return FALSE;
+        }
+        psField->Date.Year = (GInt16)nYear;
         if( psField->Date.Year < 100 && psField->Date.Year >= 30 )
             psField->Date.Year += 1900;
         else if( psField->Date.Year < 30 && psField->Date.Year >= 0 )
