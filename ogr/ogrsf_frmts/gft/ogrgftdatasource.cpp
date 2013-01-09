@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  GFT Translator
+ * Project:  Google Fusion Table Translator
  * Purpose:  Implements OGRGFTDataSource class
  * Author:   Even Rouault, even dot rouault at mines dash paris dot org
  *
@@ -30,6 +30,21 @@
 #include "ogr_gft.h"
 
 CPL_CVSID("$Id$");
+
+/* ==================================================================== */
+/*      Request URL to fetch an authorization token for GDAL to         */
+/*      access fusion ables on someones behalf.  The resulting auth     */
+/*      code can be passed in via the auth= stuff and will be used      */
+/*      to produce access tokens.                                       */
+/* ==================================================================== */
+#define GDAL_CLIENT_ID "265656308688.apps.googleusercontent.com"
+#define GDAL_CLIENT_SECRET "0IbTUDOYzaL6vnIdWTuQnvLz"
+#define GDAL_API_KEY "AIzaSyA_2h1_wXMOLHNSVeo-jf1ACME-M1XMgP0"
+
+#define GOOGLE_AUTH_URL "https://accounts.google.com/o/oauth2/token"
+#define FUSION_TABLE_SCOPE "https%3A%2F%2Fwww.googleapis.com%2Fauth%2Ffusiontables"
+
+#define AUTH_TOKEN_REQUEST "https://accounts.google.com/o/oauth2/auth?scope=" FUSION_TABLE_SCOPE "&state=%2Fprofile&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code&client_id=" GDAL_CLIENT_ID
 
 /************************************************************************/
 /*                          OGRGFTDataSource()                          */
@@ -145,45 +160,207 @@ OGRLayer *OGRGFTDataSource::GetLayerByName(const char * pszLayerName)
 }
 
 /************************************************************************/
-/*                             FetchAuth()                              */
+/*                          ParseSimpleJson()                           */
+/*                                                                      */
+/*      Return a string list of name/value pairs extracted from a       */
+/*      JSON doc.                                                       */
 /************************************************************************/
 
-int OGRGFTDataSource::FetchAuth(const char* pszEmail, const char* pszPassword)
+CPLStringList OGRGFTDataSource::ParseSimpleJson(const char *pszJson)
 {
+/* -------------------------------------------------------------------- */
+/*      We are expecting simple documents like the following with no    */
+/*      heirarchy or complex structure.                                 */
+/* -------------------------------------------------------------------- */
+/*    
+    {
+        "access_token":"1/fFBGRNJru1FQd44AzqT3Zg",
+        "expires_in":3920,
+        "token_type":"Bearer"
+    }
+*/
 
-    char** papszOptions = NULL;
+    CPLStringList oWords(
+        CSLTokenizeString2(pszJson, " \n\t,:{}", CSLT_HONOURSTRINGS ));
+    CPLStringList oNameValue;
 
-    const char* pszAuthURL = CPLGetConfigOption("GFT_AUTH_URL", NULL);
-    if (pszAuthURL == NULL)
-        pszAuthURL = "https://www.google.com/accounts/ClientLogin";
+    for( int i=0; i < oWords.size(); i += 2 )
+    {
+        oNameValue.SetNameValue( oWords[i], oWords[i+1] );
+    }
+    
+    return oNameValue;
+}
 
-    papszOptions = CSLAddString(papszOptions, "HEADERS=Content-Type: application/x-www-form-urlencoded");
-    papszOptions = CSLAddString(papszOptions, CPLSPrintf("POSTFIELDS=Email=%s&Passwd=%s&service=fusiontables", pszEmail, pszPassword));
-    CPLHTTPResult * psResult = CPLHTTPFetch( pszAuthURL, papszOptions);
-    CSLDestroy(papszOptions);
-    papszOptions = NULL;
+/************************************************************************/
+/*                          FetchAccessToken()                          */
+/*                                                                      */
+/*      OAuth2 gives us an authorization code which we need to use      */
+/*      to request an access token.  We can go deeper...                */
+/************************************************************************/
+
+int OGRGFTDataSource::FetchAccessToken()
+{
+/* -------------------------------------------------------------------- */
+/*      Prepare request.                                                */
+/* -------------------------------------------------------------------- */
+    CPLString osItem;
+    CPLStringList oOptions;
+
+    oOptions.AddString(
+        "HEADERS=Content-Type: application/x-www-form-urlencoded" );
+
+    osItem.Printf(
+        "POSTFIELDS="
+        "code=%s"
+        "&client_id=%s"
+        "&client_secret=%s"
+        "&redirect_uri=urn:ietf:wg:oauth:2.0:oob"
+        "&grant_type=authorization_code", 
+        osAuth.c_str(), 
+        GDAL_CLIENT_ID, 
+        GDAL_CLIENT_SECRET);
+    oOptions.AddString(osItem);
+
+/* -------------------------------------------------------------------- */
+/*      Submit request by HTTP.                                         */
+/* -------------------------------------------------------------------- */
+    CPLHTTPResult * psResult = CPLHTTPFetch( GOOGLE_AUTH_URL, oOptions);
 
     if (psResult == NULL)
         return FALSE;
 
-    const char* pszAuth = NULL;
-    if (psResult->pabyData == NULL ||
-        psResult->pszErrBuf != NULL ||
-        (pszAuth = strstr((const char*)psResult->pabyData, "Auth=")) == NULL)
+/* -------------------------------------------------------------------- */
+/*      One common mistake is to try and reuse the auth token.          */
+/*      After the first use it will return invalid_grant.               */
+/* -------------------------------------------------------------------- */
+    if( psResult->pabyData != NULL
+        && strstr((const char *) psResult->pabyData,"invalid_grant") != NULL) 
     {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to use a OAuth2 authorization code multiple times.\n"
+                  "Request a fresh authorization token at\n%s.",
+                  AUTH_TOKEN_REQUEST );
         CPLHTTPDestroyResult(psResult);
         return FALSE;
     }
-    osAuth = pszAuth + 5;
-    pszAuth = NULL;
 
-    while(osAuth.size() &&
-          (osAuth[osAuth.size()-1] == 13 || osAuth[osAuth.size()-1] == 10))
-        osAuth.resize(osAuth.size()-1);
+    if (psResult->pabyData == NULL ||
+        psResult->pszErrBuf != NULL)
+    {
+        if( psResult->pszErrBuf != NULL )
+            CPLDebug( "GFT", "%s", psResult->pszErrBuf );
+        if( psResult->pabyData != NULL )
+            CPLDebug( "GFT", "%s", psResult->pabyData );
 
-    CPLDebug("GFT", "Auth key : %s", osAuth.c_str());
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Fetching OAuth2 access code from auth code failed.");
+        CPLHTTPDestroyResult(psResult);
+        return FALSE;
+    }
 
+    CPLDebug( "GFT", "Access Token Response:\n%s", 
+              (const char *) psResult->pabyData );
+
+/* -------------------------------------------------------------------- */
+/*      This response is in JSON and will look something like:          */
+/* -------------------------------------------------------------------- */
+/*
+{
+  "access_token" : "ya29.AHES6ZToqkIJkat5rIqMixR1b8PlWBACNO8OYbqqV-YF1Q13E2Kzjw",
+  "token_type" : "Bearer",
+  "expires_in" : 3600,
+  "refresh_token" : "1/eF88pciwq9Tp_rHEhuiIv9AS44Ufe4GOymGawTVPGYo"
+}
+*/
+    CPLStringList oResponse = ParseSimpleJson(
+        (const char *) psResult->pabyData );
     CPLHTTPDestroyResult(psResult);
+
+    osAccessToken = oResponse.FetchNameValueDef( "access_token", "" );
+    osRefreshToken = oResponse.FetchNameValueDef( "refresh_token", "" );
+    CPLDebug("GFT", "Access Token : '%s'", osAccessToken.c_str());
+    CPLDebug("GFT", "Refresh Token : '%s'", osRefreshToken.c_str());
+
+    // Preserve the access token for the rest of the application life. 
+    CPLSetConfigOption("GFT_ACCESS_TOKEN", osAccessToken );
+    CPLSetConfigOption("GFT_REFRESH_TOKEN", osRefreshToken );
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                         RefreshAccessToken()                         */
+/*                                                                      */
+/*      Fetch a new OAuth2 access token using the refresh token.        */
+/************************************************************************/
+
+int OGRGFTDataSource::RefreshAccessToken()
+{
+/* -------------------------------------------------------------------- */
+/*      Prepare request.                                                */
+/* -------------------------------------------------------------------- */
+    CPLString osItem;
+    CPLStringList oOptions;
+
+    oOptions.AddString(
+        "HEADERS=Content-Type: application/x-www-form-urlencoded" );
+
+    osItem.Printf(
+        "POSTFIELDS="
+        "refresh_token=%s"
+        "&client_id=%s"
+        "&client_secret=%s"
+        "&grant_type=refresh_token", 
+        osRefreshToken.c_str(), 
+        GDAL_CLIENT_ID, 
+        GDAL_CLIENT_SECRET);
+    oOptions.AddString(osItem);
+
+/* -------------------------------------------------------------------- */
+/*      Submit request by HTTP.                                         */
+/* -------------------------------------------------------------------- */
+    CPLHTTPResult * psResult = CPLHTTPFetch( GOOGLE_AUTH_URL, oOptions);
+
+    if (psResult == NULL)
+        return FALSE;
+
+    if (psResult->pabyData == NULL ||
+        psResult->pszErrBuf != NULL)
+    {
+        if( psResult->pszErrBuf != NULL )
+            CPLDebug( "GFT", "%s", psResult->pszErrBuf );
+        if( psResult->pabyData != NULL )
+            CPLDebug( "GFT", "%s", psResult->pabyData );
+
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Fetching OAuth2 access code from auth code failed.");
+        CPLHTTPDestroyResult(psResult);
+        return FALSE;
+    }
+
+    CPLDebug( "GFT", "Refresh Token Response:\n%s", 
+              (const char *) psResult->pabyData );
+
+/* -------------------------------------------------------------------- */
+/*      This response is in JSON and will look something like:          */
+/* -------------------------------------------------------------------- */
+/*
+{
+"access_token":"1/fFBGRNJru1FQd44AzqT3Zg",
+"expires_in":3920,
+"token_type":"Bearer"
+}
+*/
+    CPLStringList oResponse = ParseSimpleJson(
+        (const char *) psResult->pabyData );
+    CPLHTTPDestroyResult(psResult);
+
+    osAccessToken = oResponse.FetchNameValueDef( "access_token", "" );
+    CPLDebug("GFT", "Access Token : '%s'", osAccessToken.c_str());
+
+    // Preserve the access token for the rest of the application life. 
+    CPLSetConfigOption("GFT_ACCESS_TOKEN", osAccessToken );
 
     return TRUE;
 }
@@ -222,26 +399,38 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     pszName = CPLStrdup( pszFilename );
 
-    const char* pszEmail = CPLGetConfigOption("GFT_EMAIL", NULL);
-    CPLString osEmail = OGRGFTGetOptionValue(pszFilename, "email");
-    if (osEmail.size() != 0)
-        pszEmail = osEmail.c_str();
-
-    const char* pszPassword = CPLGetConfigOption("GFT_PASSWORD", NULL);
-    CPLString osPassword = OGRGFTGetOptionValue(pszFilename, "password");
-    if (osPassword.size() != 0)
-        pszPassword = osPassword.c_str();
-
-    const char* pszAuth = CPLGetConfigOption("GFT_AUTH", NULL);
     osAuth = OGRGFTGetOptionValue(pszFilename, "auth");
-    if (osAuth.size() == 0 && pszAuth != NULL)
-        osAuth = pszAuth;
+    if (osAuth.size() == 0)
+        osAuth = CPLGetConfigOption("GFT_AUTH", "");
+
+    osRefreshToken = OGRGFTGetOptionValue(pszFilename, "refresh");
+    if (osRefreshToken.size() == 0)
+        osRefreshToken = CPLGetConfigOption("GFT_REFRESH_TOKEN", "");
+
+    osAPIKey = CPLGetConfigOption("GFT_APIKEY", GDAL_API_KEY);
 
     CPLString osTables = OGRGFTGetOptionValue(pszFilename, "tables");
 
-    bUseHTTPS = strstr(pszFilename, "protocol=https") != NULL;
+    bUseHTTPS = TRUE;
 
-    if (osAuth.size() == 0 && (pszEmail == NULL || pszPassword == NULL))
+    osAccessToken = CPLGetConfigOption("GFT_ACCESS_TOKEN","");
+    if (osAccessToken.size() == 0 && osRefreshToken.size() > 0) 
+    {
+        if( !RefreshAccessToken() ) 
+        {
+            return FALSE;
+        }
+    }
+
+    if (osAccessToken.size() == 0 && osAuth.size() > 0)
+    {
+        if( !FetchAccessToken() ) 
+        {
+            return FALSE;
+        }
+    }
+
+    if (osAccessToken.size() == 0)
     {
         if (osTables.size() == 0)
         {
@@ -249,11 +438,6 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
                     "Unauthenticated access requires explicit tables= parameter");
             return FALSE;
         }
-    }
-    else if (osAuth.size() == 0 && !FetchAuth(pszEmail, pszPassword))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Authentication failed");
-        return FALSE;
     }
 
     if (osTables.size() != 0)
@@ -328,9 +512,9 @@ const char*  OGRGFTDataSource::GetAPIURL() const
     if (pszAPIURL)
         return pszAPIURL;
     else if (bUseHTTPS)
-        return "https://www.google.com/fusiontables/api/query";
+        return "https://www.googleapis.com/fusiontables/v1/query";
     else
-        return "http://www.google.com/fusiontables/api/query";
+        return "http://www.googleapis.com/fusiontables/v1/query";
 }
 
 /************************************************************************/
@@ -348,7 +532,7 @@ OGRLayer   *OGRGFTDataSource::CreateLayer( const char *pszName,
         return NULL;
     }
 
-    if (osAuth.size() == 0)
+    if (osAccessToken.size() == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Operation not available in unauthenticated mode");
         return NULL;
@@ -431,7 +615,7 @@ OGRErr OGRGFTDataSource::DeleteLayer(int iLayer)
         return OGRERR_FAILURE;
     }
 
-    if (osAuth.size() == 0)
+    if (osAccessToken.size() == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Operation not available in unauthenticated mode");
@@ -469,18 +653,9 @@ OGRErr OGRGFTDataSource::DeleteLayer(int iLayer)
 
     CPLHTTPResult* psResult = RunSQL( osSQL );
 
-    if (psResult == NULL)
+    if (psResult == NULL || psResult->nStatus != 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Table deletion failed");
-        return OGRERR_FAILURE;
-    }
-
-    char* pszLine = (char*) psResult->pabyData;
-    if (pszLine == NULL ||
-        !EQUALN(pszLine, "OK", 2) ||
-        psResult->pszErrBuf != NULL)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Table deletion failed");
+        CPLError(CE_Failure, CPLE_AppDefined, "Table deletion failed (1)");
         CPLHTTPDestroyResult(psResult);
         return OGRERR_FAILURE;
     }
@@ -497,8 +672,12 @@ OGRErr OGRGFTDataSource::DeleteLayer(int iLayer)
 char** OGRGFTDataSource::AddHTTPOptions(char** papszOptions)
 {
     bMustCleanPersistant = TRUE;
-    papszOptions = CSLAddString(papszOptions,
-        CPLSPrintf("HEADERS=Authorization: GoogleLogin auth=%s", osAuth.c_str()));
+
+    if (strlen(osAccessToken) > 0)
+      papszOptions = CSLAddString(papszOptions,
+        CPLSPrintf("HEADERS=Authorization: Bearer %s", 
+                   osAccessToken.c_str()));
+
     return CSLAddString(papszOptions, CPLSPrintf("PERSISTENT=GFT:%p", this));
 }
 
@@ -518,17 +697,49 @@ CPLHTTPResult * OGRGFTDataSource::RunSQL(const char* pszUnescapedSQL)
         else
             osSQL += CPLSPrintf("%%%02X", ch);
     }
+
+/* -------------------------------------------------------------------- */
+/*      Provide the API Key - used to rate limit access (see            */
+/*      GFT_APIKEY config)                                              */
+/* -------------------------------------------------------------------- */
+    osSQL += "&key=";
+    osSQL += osAPIKey;
+
+/* -------------------------------------------------------------------- */
+/*      Force old style CSV output from calls - maybe we want to        */
+/*      migrate to JSON output at some point?                           */
+/* -------------------------------------------------------------------- */
+    osSQL += "&alt=csv";
+
+/* -------------------------------------------------------------------- */
+/*      Collection the header options and execute request.              */
+/* -------------------------------------------------------------------- */
     char** papszOptions = CSLAddString(AddHTTPOptions(), osSQL);
-    CPLDebug("GFT", "Run %s", pszUnescapedSQL);
     CPLHTTPResult * psResult = CPLHTTPFetch( GetAPIURL(), papszOptions);
     CSLDestroy(papszOptions);
+
+/* -------------------------------------------------------------------- */
+/*      Check for some error conditions and report.  HTML Messages      */
+/*      are transformed info failure.                                   */
+/* -------------------------------------------------------------------- */
     if (psResult && psResult->pszContentType &&
         strncmp(psResult->pszContentType, "text/html", 9) == 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "HTML error page returned by server");
+        CPLDebug( "GFT", "RunSQL HTML Response:%s", psResult->pabyData );
+        CPLError(CE_Failure, CPLE_AppDefined, 
+                 "HTML error page returned by server");
         CPLHTTPDestroyResult(psResult);
         psResult = NULL;
     }
+    if (psResult && psResult->pszErrBuf != NULL) 
+    {
+        CPLDebug( "GFT", "RunSQL Error Message:%s", psResult->pszErrBuf );
+    }
+    else if (psResult && psResult->nStatus != 0) 
+    {
+        CPLDebug( "GFT", "RunSQL Error Status:%d", psResult->nStatus );
+    }
+
     return psResult;
 }
 
