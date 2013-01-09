@@ -26,28 +26,27 @@ If you want the table ID of a public table, or any other table that is not owned
 in the Google Fusion Tables website and note the number at the end of the URL.
 <li> <b>protocol=https</b>: To use HTTPS protocol for all operations. By default, HTTP is used, except for the authentication operation
 where HTTPS is always used.
-<li> <b>email=john.doe@example.com</b>: The email of the Google account used for authentication.
-<li> <b>password=your_secret_password</b>: The password of the Google account used for authentication.
 <li> <b>auth=auth_key</b>: An authentication key as described below.
+<li> <b>access_token=access_token</b>: An authentication token as described below.
 </ul>
 
 If several parameters are specified, they must be separated by a space.
 
 <h2>Authentication</h2>
 
-Most operations, in particular write operations, require a valid Google account to provide authentication
-information to the driver. The only exception is read-only access to public tables.<p>
+Most operations, in particular write operations, require a valid Google 
+account to provide authentication information to the driver. The only 
+exception is read-only access to public tables.<p>
 
-The authentication information can be provided by different means :
+The authentication is accomplished using OAuth2 information can be provided by different means :
 <ul>
-<li>specifying the <i>email</i> and <i>password</i> parameters in the dataset name, as described above.</li>
-<li>specifying them through the <i>GFT_EMAIL</i> and <i>GFT_PASSWORD</i> configuration options/environment variables.</li>
 <li>specifying the authentication key through the <i>GFT_AUTH</i> configuration option/environment variable.
 This value is a key returned by the server when using the email + password method,
 and that can re-used for later authentication. You can fetch this key by running a first time ogrinfo with CPL_DEBUG set to ON
 and authenticating with another method. The value will be displayed after the "Auth key : " string.
 This method has the advantage of not exposing your plain password.</li>
 <li>specifying the authentication key through the <i>auth</i> connection parameter.</li>
+<li> 
 </ul>
 
 <h2>Geometry</h2>

@@ -107,7 +107,7 @@ int OGRGFTTableLayer::FetchDescribe()
     poFeatureDefn = new OGRFeatureDefn( osTableName );
     poFeatureDefn->Reference();
 
-    const CPLString& osAuth = poDS->GetAuth();
+    const CPLString& osAuth = poDS->GetAccessToken();
     std::vector<CPLString> aosHeaderAndFirstDataLine;
     if (osAuth.size())
     {
@@ -536,7 +536,7 @@ OGRErr OGRGFTTableLayer::CreateField( OGRFieldDefn *poField,
         return OGRERR_FAILURE;
     }
 
-    if (poDS->GetAuth().size() == 0)
+    if (poDS->GetAccessToken().size() == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Operation not available in unauthenticated mode");
@@ -716,7 +716,7 @@ OGRErr OGRGFTTableLayer::CreateFeature( OGRFeature *poFeature )
         }
     }
 
-    if (poDS->GetAuth().size() == 0)
+    if (poDS->GetAccessToken().size() == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Operation not available in unauthenticated mode");
@@ -898,7 +898,7 @@ OGRErr      OGRGFTTableLayer::SetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    if (poDS->GetAuth().size() == 0)
+    if (poDS->GetAccessToken().size() == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Operation not available in unauthenticated mode");
@@ -1011,21 +1011,25 @@ OGRErr      OGRGFTTableLayer::SetFeature( OGRFeature *poFeature )
     osCommand += CPLSPrintf("%ld", poFeature->GetFID());
     osCommand += "'";
 
-    //CPLDebug("GFT", "%s",  osCommand.c_str());
-
     CPLHTTPResult * psResult = poDS->RunSQL(osCommand);
     if (psResult == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Feature update failed");
+        CPLError(CE_Failure, CPLE_AppDefined, "Feature update failed (1)");
         return OGRERR_FAILURE;
     }
 
+/* -------------------------------------------------------------------- */
+/*      We expect a response like "affected_rows\n1".                   */
+/* -------------------------------------------------------------------- */
     char* pszLine = (char*) psResult->pabyData;
     if (pszLine == NULL ||
-        strncmp(pszLine, "OK", 2) != 0 ||
+        strncmp(pszLine, "affected_rows\n1\n", 16) != 0 ||
         psResult->pszErrBuf != NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Feature update failed");
+        CPLDebug( "GFT", "%s/%s", 
+                  pszLine ? pszLine : "null", 
+                  psResult->pszErrBuf ? psResult->pszErrBuf : "null");
+        CPLError(CE_Failure, CPLE_AppDefined, "Feature update failed (2)");
         CPLHTTPDestroyResult(psResult);
         return OGRERR_FAILURE;
     }
@@ -1057,7 +1061,7 @@ OGRErr OGRGFTTableLayer::DeleteFeature( long nFID )
         return OGRERR_FAILURE;
     }
 
-    if (poDS->GetAuth().size() == 0)
+    if (poDS->GetAccessToken().size() == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Operation not available in unauthenticated mode");
@@ -1077,16 +1081,22 @@ OGRErr OGRGFTTableLayer::DeleteFeature( long nFID )
     CPLHTTPResult * psResult = poDS->RunSQL(osCommand);
     if (psResult == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Feature deletion failed");
+        CPLError(CE_Failure, CPLE_AppDefined, "Feature deletion failed (1)");
         return OGRERR_FAILURE;
     }
 
+/* -------------------------------------------------------------------- */
+/*      We expect a response like "affected_rows\n1".                   */
+/* -------------------------------------------------------------------- */
     char* pszLine = (char*) psResult->pabyData;
     if (pszLine == NULL ||
-        strncmp(pszLine, "OK", 2) != 0 ||
+        strncmp(pszLine, "affected_rows\n1\n", 16) != 0 ||
         psResult->pszErrBuf != NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Feature deletion failed");
+        CPLDebug( "GFT", "%s/%s", 
+                  pszLine ? pszLine : "null", 
+                  psResult->pszErrBuf ? psResult->pszErrBuf : "null");
+        CPLError(CE_Failure, CPLE_AppDefined, "Feature deletion failed (2)");
         CPLHTTPDestroyResult(psResult);
         return OGRERR_FAILURE;
     }
@@ -1128,7 +1138,7 @@ OGRErr OGRGFTTableLayer::StartTransaction()
         }
     }
 
-    if (poDS->GetAuth().size() == 0)
+    if (poDS->GetAccessToken().size() == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Operation not available in unauthenticated mode");
