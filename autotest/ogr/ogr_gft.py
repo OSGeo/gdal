@@ -60,39 +60,29 @@ def ogr_gft_init():
         ogrtest.gft_drv = None
         return 'skip'
 
-    # Authentication keys are invalidated after a few days, so instead of modifying this
-    # file each time, I will try to update the key regularly on the below site instead.
-    handle = gdaltest.gdalurlopen('http://even.rouault.free.fr/ogr_gft_auth_key.txt')
-    if handle is None:
-        print('cannot retrieve authentication key. only read-only test are possibles')
-        ogrtest.gft_auth_key = None
-    else:
-        ogrtest.gft_auth_key = handle.read()
-        from sys import version_info
-        if version_info >= (3,0,0):
-            ogrtest.gft_auth_key = str(ogrtest.gft_auth_key, 'ascii')
-        if ogrtest.gft_auth_key[-1] == '\n':
-            ogrtest.gft_auth_key = ogrtest.gft_auth_key[0:-1]
+    ogrtest.gft_refresh = '1/woRTxgfN8dLUpRhnOL-BXG-f7VxzXKy_3D5eizH8bS8'
 
     return 'success'
 
 ###############################################################################
-# Read test
+# Read test on Wikileaks Afgan War Diary 2004-2010 table.
 
 def ogr_gft_read():
     if ogrtest.gft_drv is None:
         return 'skip'
 
+    table_id = '15eIgEVTUNlC649ODphJVHXeb4nsOb49WJUlnhw'
+
     old_auth = gdal.GetConfigOption('GFT_AUTH', None)
-    old_email = gdal.GetConfigOption('GFT_EMAIL', None)
-    old_password = gdal.GetConfigOption('GFT_PASSWORD', None)
+    old_access = gdal.GetConfigOption('GFT_ACCESS_TOKEN', None)
+    old_refresh = gdal.GetConfigOption('GFT_REFRESH_TOKEN', None)
     gdal.SetConfigOption('GFT_AUTH', None)
-    gdal.SetConfigOption('GFT_EMAIL', None)
-    gdal.SetConfigOption('GFT_PASSWORD', None)
-    ds = ogr.Open('GFT:tables=224453')
+    gdal.SetConfigOption('GFT_ACCESS_TOKEN', None)
+    gdal.SetConfigOption('GFT_REFRESH_TOKEN', None)
+    ds = ogr.Open('GFT:tables='+table_id)
     gdal.SetConfigOption('GFT_AUTH', old_auth)
-    gdal.SetConfigOption('GFT_EMAIL', old_email)
-    gdal.SetConfigOption('GFT_PASSWORD', old_password)
+    gdal.SetConfigOption('GFT_ACCESS_TOKEN', old_access)
+    gdal.SetConfigOption('GFT_REFRESH_TOKEN', old_refresh)
     if ds is None:
         return 'fail'
 
@@ -112,7 +102,7 @@ def ogr_gft_read():
             return 'skip'
         return 'fail'
 
-    sql_lyr = ds.ExecuteSQL("SELECT Latitude, Longitude FROM 224453 WHERE ST_INTERSECTS('Latitude', RECTANGLE(LATLNG(31.5,67.0), LATLNG(32.0,67.5))) AND 'Attack on' = 'ENEMY'")
+    sql_lyr = ds.ExecuteSQL("SELECT Latitude, Longitude FROM "+table_id+" WHERE ST_INTERSECTS('Latitude', RECTANGLE(LATLNG(31.5,67.0), LATLNG(32.0,67.5))) AND 'Attack on' = 'ENEMY'")
     if sql_lyr is None:
         gdaltest.post_reason('SQL request failed')
         return 'fail'
@@ -132,11 +122,11 @@ def ogr_gft_write():
     if ogrtest.gft_drv is None:
         return 'skip'
 
-    if ogrtest.gft_auth_key is None:
+    if ogrtest.gft_refresh is None:
         ogrtest.gft_can_write = False
         return 'skip'
 
-    ds = ogr.Open('GFT:auth=%s' % ogrtest.gft_auth_key, update = 1)
+    ds = ogr.Open('GFT:refresh=%s' % ogrtest.gft_refresh, update = 1)
     if ds is None:
         ogrtest.gft_can_write = False
         return 'skip'
@@ -221,11 +211,11 @@ def ogr_gft_ogr2ogr_non_spatial():
     f.write('"baz2","foo2"\n')
     f.write('"baz\'3","foo3"\n')
     f.close()
-    ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GFT "GFT:auth=' + ogrtest.gft_auth_key + '" tmp/no_geometry_table.csv -nln ' + layer_name + ' -overwrite')
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GFT "GFT:refresh=' + ogrtest.gft_refresh + '" tmp/no_geometry_table.csv -nln ' + layer_name + ' -overwrite')
 
     os.unlink('tmp/no_geometry_table.csv')
 
-    ds = ogr.Open('GFT:auth=%s' % ogrtest.gft_auth_key, update = 1)
+    ds = ogr.Open('GFT:refresh=%s' % ogrtest.gft_refresh, update = 1)
     lyr = ds.GetLayerByName(layer_name)
     if lyr.GetLayerDefn().GetFieldCount() != 2:
         gdaltest.post_reason('did not get expected field count')
@@ -276,15 +266,15 @@ def ogr_gft_ogr2ogr_spatial():
     f.close()
 
     # Create a first table
-    ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GFT "GFT:auth=' + ogrtest.gft_auth_key + '" tmp/geometry_table.csv -nln ' + layer_name + ' -select foo,bar -overwrite')
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GFT "GFT:refresh=' + ogrtest.gft_refresh + '" tmp/geometry_table.csv -nln ' + layer_name + ' -select foo,bar -overwrite')
 
     # Test round-tripping
-    ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GFT "GFT:auth=' + ogrtest.gft_auth_key + '" "GFT:auth=' + ogrtest.gft_auth_key + '" ' + layer_name + ' -nln ' + copied_layer_name + ' -overwrite')
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GFT "GFT:refresh=' + ogrtest.gft_refresh + '" "GFT:refresh=' + ogrtest.gft_refresh + '" ' + layer_name + ' -nln ' + copied_layer_name + ' -overwrite')
 
     os.unlink('tmp/geometry_table.csv')
     os.unlink('tmp/geometry_table.csvt')
 
-    ds = ogr.Open('GFT:auth=%s' % ogrtest.gft_auth_key, update = 1)
+    ds = ogr.Open('GFT:refresh=%s' % ogrtest.gft_refresh, update = 1)
 
     for name in [layer_name, copied_layer_name]:
         lyr = ds.GetLayerByName(name)
@@ -348,6 +338,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
-
-
