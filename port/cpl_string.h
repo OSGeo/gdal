@@ -124,7 +124,7 @@ void CPL_DLL CSLSetNameValueSeparator( char ** papszStrList,
 
 #define CPLES_BackslashQuotable 0
 #define CPLES_XML               1
-#define CPLES_URL               2   /* unescape only for now */
+#define CPLES_URL               2
 #define CPLES_SQL               3
 #define CPLES_CSV               4
 #define CPLES_XML_BUT_QUOTES    5
