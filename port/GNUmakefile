@@ -21,11 +21,13 @@ OBJ =	cpl_conv.o cpl_error.o cpl_string.o cplgetsymbol.o cplstringlist.o \
 	cpl_multiproc.o cpl_list.o cpl_getexecpath.o cplstring.o \
 	cpl_vsil_win32.o cpl_vsisimple.o cpl_vsil.o cpl_vsi_mem.o \
 	cpl_vsil_unix_stdio_64.o cpl_http.o cpl_hash_set.o cplkeywordparser.o \
-	cpl_recode.o cpl_recode_iconv.o cpl_recode_stub.o cpl_quad_tree.o cpl_atomic_ops.o \
-	cpl_vsil_subfile.o cpl_time.o \
-	cpl_vsil_stdout.o cpl_vsil_sparsefile.o cpl_vsil_abstract_archive.o cpl_vsil_tar.o \
-	cpl_vsil_stdin.o cpl_vsil_buffered_reader.o cpl_base64.o \
-	cpl_vsil_curl.o cpl_vsil_curl_streaming.o cpl_vsil_cache.o cpl_xml_validate.o cpl_spawn.o
+	cpl_recode.o cpl_recode_iconv.o cpl_recode_stub.o cpl_quad_tree.o \
+	cpl_atomic_ops.o cpl_vsil_subfile.o cpl_time.o \
+	cpl_vsil_stdout.o cpl_vsil_sparsefile.o cpl_vsil_abstract_archive.o \
+	cpl_vsil_tar.o cpl_vsil_stdin.o cpl_vsil_buffered_reader.o \
+	cpl_base64.o cpl_vsil_curl.o cpl_vsil_curl_streaming.o \
+	cpl_vsil_cache.o cpl_xml_validate.o cpl_spawn.o \
+	cpl_google_oauth2.o
 
 ifeq ($(ODBC_SETTING),yes)
 OBJ	:= 	$(OBJ) cpl_odbc.o
