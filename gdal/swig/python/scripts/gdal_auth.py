@@ -96,26 +96,27 @@ elif command == 'refresh2access':
     print gdal.GOA2GetAccessToken(token_in, scope)
 elif command != 'interactive':
     Usage()
+else:
+    # Interactive case
+    print('Authorization requested for scope:')
+    print(scope)
+    print('')
+    print('Please login and authorize access in web browser...')
 
-print('Authorization requested for scope:')
-print(scope)
-print('')
-print('Please login and authorize access in web browser...')
+    webbrowser.open(gdal.GOA2GetAuthorizationURL(scope))
 
-webbrowser.open(gdal.GOA2GetAuthorizationURL(scope))
+    time.sleep(2.0)
 
-time.sleep(2.0)
-
-print('')
-print('Enter authorization token:')
-auth_token = sys.stdin.readline()
-
-refresh_token = gdal.GOA2GetRefreshToken(auth_token, scope)
-
-print('Refresh Token:'+refresh_token)
-print('')
-print('Consider setting a configuration option like:')
-print('GFT_REFRESH_TOKEN='+refresh_token)
+    print('')
+    print('Enter authorization token:')
+    auth_token = sys.stdin.readline()
+    
+    refresh_token = gdal.GOA2GetRefreshToken(auth_token, scope)
+    
+    print('Refresh Token:'+refresh_token)
+    print('')
+    print('Consider setting a configuration option like:')
+    print('GFT_REFRESH_TOKEN='+refresh_token)
 
 
 
