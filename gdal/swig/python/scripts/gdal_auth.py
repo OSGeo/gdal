@@ -1,0 +1,122 @@
+#!/usr/bin/env python
+#******************************************************************************
+#  $Id$
+# 
+#  Project:  GDAL
+#  Purpose:  Application for Google web service authentication.
+#  Author:   Frank Warmerdam, warmerdam@pobox.com
+# 
+#******************************************************************************
+#  Copyright (c) 2013, Frank Warmerdam <warmerdam@pobox.com>
+# 
+#  Permission is hereby granted, free of charge, to any person obtaining a
+#  copy of this software and associated documentation files (the "Software"),
+#  to deal in the Software without restriction, including without limitation
+#  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+#  and/or sell copies of the Software, and to permit persons to whom the
+#  Software is furnished to do so, subject to the following conditions:
+# 
+#  The above copyright notice and this permission notice shall be included
+#  in all copies or substantial portions of the Software.
+# 
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+#  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+#  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+#  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+#  DEALINGS IN THE SOFTWARE.
+#******************************************************************************
+#
+
+from osgeo import gdal
+
+import sys
+import stat
+import os
+import time
+import webbrowser
+
+# =============================================================================
+# 	Usage()
+# =============================================================================
+def Usage():
+    print('Usage: gdal_auth_py [-s scope]' )
+    print('       - interactive use.')
+    print('')
+    print('or:')
+    print('Usage: gdal_auth.py login [-s scope] ')
+    print('Usage: gdal_auth.py auth2refresh [-s scope] auth_token')
+    print('Usage: gdal_auth.py refresh2access [-s scope] refresh_token')
+    sys.exit(1)
+
+# =============================================================================
+# 	Mainline
+# =============================================================================
+
+scope = 'https://www.googleapis.com/auth/fusiontables'
+token_in = None
+command = None
+
+argv = gdal.GeneralCmdLineProcessor( sys.argv )
+if argv is None:
+    sys.exit( 0 )
+
+# Parse command line arguments.
+i = 1
+while i < len(argv):
+    arg = argv[i]
+
+    if arg == '-s' and i < len(argv)-1:
+        scope = argv[i+1]
+        i = i + 1
+
+    elif arg[0] == '-':
+        Usage()
+
+    elif command is None:
+        command = arg
+
+    elif token_in is None:
+        token_in = arg
+
+    else:
+        Usage()
+
+    i = i + 1
+
+if command is None:
+    command = 'interactive'
+
+if command == 'login':
+    print gdal.GOA2GetAuthorizationURL(scope)
+elif command == 'auth2refresh':
+    print gdal.GOA2GetRefreshToken(token_in, scope)
+elif command == 'refresh2access':
+    print gdal.GOA2GetAccessToken(token_in, scope)
+elif command != 'interactive':
+    Usage()
+
+print('Authorization requested for scope:')
+print(scope)
+print('')
+print('Please login and authorize access in web browser...')
+
+webbrowser.open(gdal.GOA2GetAuthorizationURL(scope))
+
+time.sleep(2.0)
+
+print('')
+print('Enter authorization token:')
+auth_token = sys.stdin.readline()
+
+refresh_token = gdal.GOA2GetRefreshToken(auth_token, scope)
+
+print('Refresh Token:'+refresh_token)
+print('')
+print('Consider setting a configuration option like:')
+print('GFT_REFRESH_TOKEN='+refresh_token)
+
+
+
+
