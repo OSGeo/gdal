@@ -131,6 +131,15 @@ typedef char retStringAndCPLFree;
 %rename (HasThreadSupport) wrapper_HasThreadSupport;
 #endif
 
+retStringAndCPLFree*
+GOA2GetAuthorizationURL( const char *pszScope );
+
+retStringAndCPLFree*
+GOA2GetRefreshToken( const char *pszAuthToken, const char *pszScope );
+
+retStringAndCPLFree*
+GOA2GetAccessToken( const char *pszRefreshToken, const char *pszScope );
+
 #ifndef SWIGJAVA
 void CPLPushErrorHandler( CPLErrorHandler );
 #endif

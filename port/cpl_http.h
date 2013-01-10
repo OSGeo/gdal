@@ -85,6 +85,20 @@ void CPL_DLL  CPLHTTPCleanup( void );
 void CPL_DLL  CPLHTTPDestroyResult( CPLHTTPResult *psResult );
 int  CPL_DLL  CPLHTTPParseMultipartMime( CPLHTTPResult *psResult );
 
+/* -------------------------------------------------------------------- */
+/*      The following is related to OAuth2 authorization around         */
+/*      google services like fusion tables, and potentially others      */
+/*      in the future.  Code in cpl_google_oauth2.cpp.                  */
+/*                                                                      */
+/*      These services are built on CPL HTTP services.                  */
+/* -------------------------------------------------------------------- */
+
+char CPL_DLL *GOA2GetAuthorizationURL( const char *pszScope );
+char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
+                                   const char *pszScope );
+char CPL_DLL *GOA2GetAccessToken( const char *pszRefreshToken,
+                                  const char *pszScope );
+
 CPL_C_END
 
 #endif /* ndef CPL_HTTP_H_INCLUDED */
