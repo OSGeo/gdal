@@ -31,23 +31,8 @@
 
 CPL_CVSID("$Id$");
 
-/* ==================================================================== */
-/*      Values related to OAuth2 authorization to use fusion            */
-/*      tables.  Many of these values are related to the                */
-/*      gdalautotest@gmail.com account for GDAL managed by Even         */
-/*      Rouault and Frank Warmerdam.  Some information about OAuth2     */
-/*      as managed by that account can be found at the following url    */
-/*      when logged in as gdalautotest@gmail.com:                       */
-/*  https://code.google.com/apis/console/#project:265656308688:access   */
-/* ==================================================================== */
-#define GDAL_CLIENT_ID "265656308688.apps.googleusercontent.com"
-#define GDAL_CLIENT_SECRET "0IbTUDOYzaL6vnIdWTuQnvLz"
 #define GDAL_API_KEY "AIzaSyA_2h1_wXMOLHNSVeo-jf1ACME-M1XMgP0"
-
-#define GOOGLE_AUTH_URL "https://accounts.google.com/o/oauth2/token"
-#define FUSION_TABLE_SCOPE "https%3A%2F%2Fwww.googleapis.com%2Fauth%2Ffusiontables"
-
-#define AUTH_TOKEN_REQUEST "https://accounts.google.com/o/oauth2/auth?scope=" FUSION_TABLE_SCOPE "&state=%2Fprofile&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code&client_id=" GDAL_CLIENT_ID
+#define FUSION_TABLE_SCOPE "https://www.googleapis.com/Fauth/fusiontables"
 
 /************************************************************************/
 /*                          OGRGFTDataSource()                          */
@@ -163,50 +148,6 @@ OGRLayer *OGRGFTDataSource::GetLayerByName(const char * pszLayerName)
 }
 
 /************************************************************************/
-/*                          FetchAccessToken()                          */
-/*                                                                      */
-/*      OAuth2 gives us an authorization code which we need to use      */
-/*      to request an access token.  We can go deeper...                */
-/************************************************************************/
-
-int OGRGFTDataSource::FetchAccessToken()
-{
-    char *pszRefreshToken = GOA2GetRefreshToken(osAuth, FUSION_TABLE_SCOPE);
-    if (pszRefreshToken == NULL )
-        return FALSE;
-
-    osRefreshToken = pszRefreshToken;
-    CPLFree( pszRefreshToken );
-
-    // Preserve the access token for the rest of the application life. 
-    CPLSetConfigOption("GFT_REFRESH_TOKEN", osRefreshToken );
-
-    return RefreshAccessToken();
-}
-
-/************************************************************************/
-/*                         RefreshAccessToken()                         */
-/*                                                                      */
-/*      Fetch a new OAuth2 access token using the refresh token.        */
-/************************************************************************/
-
-int OGRGFTDataSource::RefreshAccessToken()
-{
-    char *pszAccessToken = GOA2GetAccessToken(osRefreshToken, 
-                                              FUSION_TABLE_SCOPE);
-    if (pszAccessToken == NULL )
-        return FALSE;
-
-    osAccessToken = pszAccessToken;
-    CPLFree( pszAccessToken );
-
-    // Preserve the access token for the rest of the application life. 
-    CPLSetConfigOption("GFT_ACCESS_TOKEN", osAccessToken );
-
-    return TRUE;
-}
-
-/************************************************************************/
 /*                      OGRGFTGetOptionValue()                          */
 /************************************************************************/
 
@@ -254,21 +195,22 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     bUseHTTPS = TRUE;
 
-    osAccessToken = CPLGetConfigOption("GFT_ACCESS_TOKEN","");
+    osAccessToken = OGRGFTGetOptionValue(pszFilename, "access");
+    if (osAccessToken.size() == 0)
+        osAccessToken = CPLGetConfigOption("GFT_ACCESS_TOKEN","");
     if (osAccessToken.size() == 0 && osRefreshToken.size() > 0) 
     {
-        if( !RefreshAccessToken() ) 
-        {
+        osAccessToken.Seize(GOA2GetAccessToken(osRefreshToken,
+                                               FUSION_TABLE_SCOPE));
+        if (osAccessToken.size() == 0)
             return FALSE;
-        }
     }
 
     if (osAccessToken.size() == 0 && osAuth.size() > 0)
     {
-        if( !FetchAccessToken() ) 
-        {
+        osRefreshToken.Seize(GOA2GetRefreshToken(osAuth, FUSION_TABLE_SCOPE));
+        if (osRefreshToken.size() == 0)
             return FALSE;
-        }
     }
 
     if (osAccessToken.size() == 0)
