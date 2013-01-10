@@ -38,16 +38,18 @@ CPL_CVSID("$Id$");
 /*      Rouault and Frank Warmerdam.  Some information about OAuth2     */
 /*      as managed by that account can be found at the following url    */
 /*      when logged in as gdalautotest@gmail.com:                       */
-/*  https://code.google.com/apis/console/#project:265656308688:access   */
+/*                                                                      */
+/*      https://code.google.com/apis/console/#project:265656308688:access*/
+/*                                                                      */
+/*      Applications wanting to use their own client id and secret      */
+/*      can set the following configuration options:                    */
+/*       - GOA2_CLIENT_ID                                               */
+/*       - GOA2_CLIENT_SECRET                                           */
 /* ==================================================================== */
 #define GDAL_CLIENT_ID "265656308688.apps.googleusercontent.com"
 #define GDAL_CLIENT_SECRET "0IbTUDOYzaL6vnIdWTuQnvLz"
-#define GDAL_API_KEY "AIzaSyA_2h1_wXMOLHNSVeo-jf1ACME-M1XMgP0"
 
-#define GOOGLE_AUTH_URL "https://accounts.google.com/o/oauth2/token"
-#define FUSION_TABLE_SCOPE "https%3A%2F%2Fwww.googleapis.com%2Fauth%2Ffusiontables"
-
-#define AUTH_TOKEN_REQUEST "https://accounts.google.com/o/oauth2/auth?scope=" FUSION_TABLE_SCOPE "&state=%2Fprofile&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code&client_id=" GDAL_CLIENT_ID
+#define GOOGLE_AUTH_URL "https://accounts.google.com/o/oauth2"
 
 /************************************************************************/
 /*                          ParseSimpleJson()                           */
@@ -115,10 +117,15 @@ static CPLStringList ParseSimpleJson(const char *pszJson)
 char *GOA2GetAuthorizationURL(const char *pszScope)
 
 {
-    // Eventually we should allow application to provide their own
-    // client id, and client secret via configuration options or even 
-    // possibly compile time macros. 
-    return CPLStrdup(AUTH_TOKEN_REQUEST);
+    CPLString osScope;
+    CPLString osURL;
+
+    osScope.Seize(CPLEscapeString(pszScope, -1, CPLES_URL));
+    osURL.Printf( "%s/auth?scope=%s&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code&client_id=%s",
+                  GOOGLE_AUTH_URL,
+                  osScope.c_str(), 
+                  CPLGetConfigOption("GOA2_CLIENT_ID", GDAL_CLIENT_ID));
+    return CPLStrdup(osURL);
 }
 
 /************************************************************************/
@@ -163,14 +170,15 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
         "&redirect_uri=urn:ietf:wg:oauth:2.0:oob"
         "&grant_type=authorization_code", 
         pszAuthToken,
-        GDAL_CLIENT_ID, 
-        GDAL_CLIENT_SECRET);
+        CPLGetConfigOption("GOA2_CLIENT_ID", GDAL_CLIENT_ID), 
+        CPLGetConfigOption("GOA2_CLIENT_SECRET", GDAL_CLIENT_SECRET));
     oOptions.AddString(osItem);
 
 /* -------------------------------------------------------------------- */
 /*      Submit request by HTTP.                                         */
 /* -------------------------------------------------------------------- */
-    CPLHTTPResult * psResult = CPLHTTPFetch( GOOGLE_AUTH_URL, oOptions);
+    CPLHTTPResult * psResult = 
+        CPLHTTPFetch( GOOGLE_AUTH_URL "/token", oOptions);
 
     if (psResult == NULL)
         return FALSE;
@@ -182,10 +190,12 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
     if( psResult->pabyData != NULL
         && strstr((const char *) psResult->pabyData,"invalid_grant") != NULL) 
     {
+        CPLString osURL;
+        osURL.Seize( GOA2GetAuthorizationURL(pszScope) );
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to use a OAuth2 authorization code multiple times.\n"
                   "Request a fresh authorization token at\n%s.",
-                  AUTH_TOKEN_REQUEST );
+                  osURL.c_str() );
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
@@ -279,14 +289,14 @@ char *GOA2GetAccessToken( const char *pszRefreshToken,
         "&client_secret=%s"
         "&grant_type=refresh_token", 
         pszRefreshToken,
-        GDAL_CLIENT_ID, 
-        GDAL_CLIENT_SECRET);
+        CPLGetConfigOption("GOA2_CLIENT_ID", GDAL_CLIENT_ID), 
+        CPLGetConfigOption("GOA2_CLIENT_SECRET", GDAL_CLIENT_SECRET));
     oOptions.AddString(osItem);
 
 /* -------------------------------------------------------------------- */
 /*      Submit request by HTTP.                                         */
 /* -------------------------------------------------------------------- */
-    CPLHTTPResult * psResult = CPLHTTPFetch( GOOGLE_AUTH_URL, oOptions);
+    CPLHTTPResult *psResult = CPLHTTPFetch(GOOGLE_AUTH_URL "/token", oOptions);
 
     if (psResult == NULL)
         return FALSE;
