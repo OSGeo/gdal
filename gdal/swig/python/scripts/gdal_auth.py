@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #******************************************************************************
 #  $Id$
 # 
@@ -89,11 +90,11 @@ if command is None:
     command = 'interactive'
 
 if command == 'login':
-    print gdal.GOA2GetAuthorizationURL(scope)
+    print(gdal.GOA2GetAuthorizationURL(scope))
 elif command == 'auth2refresh':
-    print gdal.GOA2GetRefreshToken(token_in, scope)
+    print(gdal.GOA2GetRefreshToken(token_in, scope))
 elif command == 'refresh2access':
-    print gdal.GOA2GetAccessToken(token_in, scope)
+    print(gdal.GOA2GetAccessToken(token_in, scope))
 elif command != 'interactive':
     Usage()
 else:
