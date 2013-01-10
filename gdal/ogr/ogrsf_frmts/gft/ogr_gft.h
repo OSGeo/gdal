@@ -204,9 +204,6 @@ class OGRGFTDataSource : public OGRDataSource
     CPLString           osRefreshToken;
     CPLString           osAPIKey;
 
-    int                 FetchAccessToken();
-    int                 RefreshAccessToken();
-
     void                DeleteLayer( const char *pszLayerName );
 
     int                 bMustCleanPersistant;
