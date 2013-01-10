@@ -32,10 +32,13 @@
 CPL_CVSID("$Id$");
 
 /* ==================================================================== */
-/*      Request URL to fetch an authorization token for GDAL to         */
-/*      access fusion ables on someones behalf.  The resulting auth     */
-/*      code can be passed in via the auth= stuff and will be used      */
-/*      to produce access tokens.                                       */
+/*      Values related to OAuth2 authorization to use fusion            */
+/*      tables.  Many of these values are related to the                */
+/*      gdalautotest@gmail.com account for GDAL managed by Even         */
+/*      Rouault and Frank Warmerdam.  Some information about OAuth2     */
+/*      as managed by that account can be found at the following url    */
+/*      when logged in as gdalautotest@gmail.com:                       */
+/*  https://code.google.com/apis/console/#project:265656308688:access   */
 /* ==================================================================== */
 #define GDAL_CLIENT_ID "265656308688.apps.googleusercontent.com"
 #define GDAL_CLIENT_SECRET "0IbTUDOYzaL6vnIdWTuQnvLz"
@@ -160,39 +163,6 @@ OGRLayer *OGRGFTDataSource::GetLayerByName(const char * pszLayerName)
 }
 
 /************************************************************************/
-/*                          ParseSimpleJson()                           */
-/*                                                                      */
-/*      Return a string list of name/value pairs extracted from a       */
-/*      JSON doc.                                                       */
-/************************************************************************/
-
-CPLStringList OGRGFTDataSource::ParseSimpleJson(const char *pszJson)
-{
-/* -------------------------------------------------------------------- */
-/*      We are expecting simple documents like the following with no    */
-/*      heirarchy or complex structure.                                 */
-/* -------------------------------------------------------------------- */
-/*    
-    {
-        "access_token":"1/fFBGRNJru1FQd44AzqT3Zg",
-        "expires_in":3920,
-        "token_type":"Bearer"
-    }
-*/
-
-    CPLStringList oWords(
-        CSLTokenizeString2(pszJson, " \n\t,:{}", CSLT_HONOURSTRINGS ));
-    CPLStringList oNameValue;
-
-    for( int i=0; i < oWords.size(); i += 2 )
-    {
-        oNameValue.SetNameValue( oWords[i], oWords[i+1] );
-    }
-    
-    return oNameValue;
-}
-
-/************************************************************************/
 /*                          FetchAccessToken()                          */
 /*                                                                      */
 /*      OAuth2 gives us an authorization code which we need to use      */
@@ -201,92 +171,17 @@ CPLStringList OGRGFTDataSource::ParseSimpleJson(const char *pszJson)
 
 int OGRGFTDataSource::FetchAccessToken()
 {
-/* -------------------------------------------------------------------- */
-/*      Prepare request.                                                */
-/* -------------------------------------------------------------------- */
-    CPLString osItem;
-    CPLStringList oOptions;
-
-    oOptions.AddString(
-        "HEADERS=Content-Type: application/x-www-form-urlencoded" );
-
-    osItem.Printf(
-        "POSTFIELDS="
-        "code=%s"
-        "&client_id=%s"
-        "&client_secret=%s"
-        "&redirect_uri=urn:ietf:wg:oauth:2.0:oob"
-        "&grant_type=authorization_code", 
-        osAuth.c_str(), 
-        GDAL_CLIENT_ID, 
-        GDAL_CLIENT_SECRET);
-    oOptions.AddString(osItem);
-
-/* -------------------------------------------------------------------- */
-/*      Submit request by HTTP.                                         */
-/* -------------------------------------------------------------------- */
-    CPLHTTPResult * psResult = CPLHTTPFetch( GOOGLE_AUTH_URL, oOptions);
-
-    if (psResult == NULL)
+    char *pszRefreshToken = GOA2GetRefreshToken(osAuth, FUSION_TABLE_SCOPE);
+    if (pszRefreshToken == NULL )
         return FALSE;
 
-/* -------------------------------------------------------------------- */
-/*      One common mistake is to try and reuse the auth token.          */
-/*      After the first use it will return invalid_grant.               */
-/* -------------------------------------------------------------------- */
-    if( psResult->pabyData != NULL
-        && strstr((const char *) psResult->pabyData,"invalid_grant") != NULL) 
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Attempt to use a OAuth2 authorization code multiple times.\n"
-                  "Request a fresh authorization token at\n%s.",
-                  AUTH_TOKEN_REQUEST );
-        CPLHTTPDestroyResult(psResult);
-        return FALSE;
-    }
-
-    if (psResult->pabyData == NULL ||
-        psResult->pszErrBuf != NULL)
-    {
-        if( psResult->pszErrBuf != NULL )
-            CPLDebug( "GFT", "%s", psResult->pszErrBuf );
-        if( psResult->pabyData != NULL )
-            CPLDebug( "GFT", "%s", psResult->pabyData );
-
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Fetching OAuth2 access code from auth code failed.");
-        CPLHTTPDestroyResult(psResult);
-        return FALSE;
-    }
-
-    CPLDebug( "GFT", "Access Token Response:\n%s", 
-              (const char *) psResult->pabyData );
-
-/* -------------------------------------------------------------------- */
-/*      This response is in JSON and will look something like:          */
-/* -------------------------------------------------------------------- */
-/*
-{
-  "access_token" : "ya29.AHES6ZToqkIJkat5rIqMixR1b8PlWBACNO8OYbqqV-YF1Q13E2Kzjw",
-  "token_type" : "Bearer",
-  "expires_in" : 3600,
-  "refresh_token" : "1/eF88pciwq9Tp_rHEhuiIv9AS44Ufe4GOymGawTVPGYo"
-}
-*/
-    CPLStringList oResponse = ParseSimpleJson(
-        (const char *) psResult->pabyData );
-    CPLHTTPDestroyResult(psResult);
-
-    osAccessToken = oResponse.FetchNameValueDef( "access_token", "" );
-    osRefreshToken = oResponse.FetchNameValueDef( "refresh_token", "" );
-    CPLDebug("GFT", "Access Token : '%s'", osAccessToken.c_str());
-    CPLDebug("GFT", "Refresh Token : '%s'", osRefreshToken.c_str());
+    osRefreshToken = pszRefreshToken;
+    CPLFree( pszRefreshToken );
 
     // Preserve the access token for the rest of the application life. 
-    CPLSetConfigOption("GFT_ACCESS_TOKEN", osAccessToken );
     CPLSetConfigOption("GFT_REFRESH_TOKEN", osRefreshToken );
 
-    return TRUE;
+    return RefreshAccessToken();
 }
 
 /************************************************************************/
@@ -297,67 +192,13 @@ int OGRGFTDataSource::FetchAccessToken()
 
 int OGRGFTDataSource::RefreshAccessToken()
 {
-/* -------------------------------------------------------------------- */
-/*      Prepare request.                                                */
-/* -------------------------------------------------------------------- */
-    CPLString osItem;
-    CPLStringList oOptions;
-
-    oOptions.AddString(
-        "HEADERS=Content-Type: application/x-www-form-urlencoded" );
-
-    osItem.Printf(
-        "POSTFIELDS="
-        "refresh_token=%s"
-        "&client_id=%s"
-        "&client_secret=%s"
-        "&grant_type=refresh_token", 
-        osRefreshToken.c_str(), 
-        GDAL_CLIENT_ID, 
-        GDAL_CLIENT_SECRET);
-    oOptions.AddString(osItem);
-
-/* -------------------------------------------------------------------- */
-/*      Submit request by HTTP.                                         */
-/* -------------------------------------------------------------------- */
-    CPLHTTPResult * psResult = CPLHTTPFetch( GOOGLE_AUTH_URL, oOptions);
-
-    if (psResult == NULL)
+    char *pszAccessToken = GOA2GetAccessToken(osRefreshToken, 
+                                              FUSION_TABLE_SCOPE);
+    if (pszAccessToken == NULL )
         return FALSE;
 
-    if (psResult->pabyData == NULL ||
-        psResult->pszErrBuf != NULL)
-    {
-        if( psResult->pszErrBuf != NULL )
-            CPLDebug( "GFT", "%s", psResult->pszErrBuf );
-        if( psResult->pabyData != NULL )
-            CPLDebug( "GFT", "%s", psResult->pabyData );
-
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Fetching OAuth2 access code from auth code failed.");
-        CPLHTTPDestroyResult(psResult);
-        return FALSE;
-    }
-
-    CPLDebug( "GFT", "Refresh Token Response:\n%s", 
-              (const char *) psResult->pabyData );
-
-/* -------------------------------------------------------------------- */
-/*      This response is in JSON and will look something like:          */
-/* -------------------------------------------------------------------- */
-/*
-{
-"access_token":"1/fFBGRNJru1FQd44AzqT3Zg",
-"expires_in":3920,
-"token_type":"Bearer"
-}
-*/
-    CPLStringList oResponse = ParseSimpleJson(
-        (const char *) psResult->pabyData );
-    CPLHTTPDestroyResult(psResult);
-
-    osAccessToken = oResponse.FetchNameValueDef( "access_token", "" );
-    CPLDebug("GFT", "Access Token : '%s'", osAccessToken.c_str());
+    osAccessToken = pszAccessToken;
+    CPLFree( pszAccessToken );
 
     // Preserve the access token for the rest of the application life. 
     CPLSetConfigOption("GFT_ACCESS_TOKEN", osAccessToken );

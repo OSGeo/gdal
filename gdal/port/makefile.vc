@@ -46,6 +46,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_base64.obj \
 		cpl_xml_validate.obj \
 		cpl_spawn.obj \
+		cpl_google_oauth2.obj \
 		$(ODBC_OBJ)
 
 LIB	=	cpl.lib
