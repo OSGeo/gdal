@@ -71,6 +71,11 @@ Netscape, and Internet Explorer, before the full file has been downloaded.
 However, some applications cannot read progressive JPEGs at all. GDAL can
 read progressive JPEGs, but takes no advantage of their progressive nature.<p>
 
+<li> <b>INTERNAL_MASK=YES/NO</b>: By default, if needed, an internal mask
+in the "zlib compressed mask appended to the file" approach is written
+to identify pixels that are not valid data. Starting with GDAL 1.10, this
+can be disabled by setting this option to NO.<p>
+
 </ul>
 
 <h3>See Also:</h3>
