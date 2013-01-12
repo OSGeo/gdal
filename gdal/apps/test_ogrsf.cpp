@@ -1801,21 +1801,99 @@ static int TestLayerSQL( OGRDataSource* poDS, OGRLayer * poLayer )
 
 {
     int bRet = TRUE;
+    OGRLayer* poSQLLyr = NULL;
+    OGRFeature* poLayerFeat = NULL;
+    OGRFeature* poSQLFeat = NULL;
 
     CPLString osSQL;
 
+    /* Test consistency between result layer and traditionnal layer */
+    poLayer->ResetReading();
+    poLayerFeat = poLayer->GetNextFeature();
+
+    osSQL.Printf("SELECT * FROM %s", GetLayerNameForSQL(poDS, poLayer->GetName()));
+    poSQLLyr = poDS->ExecuteSQL(osSQL.c_str(), NULL, NULL);
+    if( poSQLLyr == NULL )
+    {
+        printf( "ERROR: ExecuteSQL(%s) failed.\n", osSQL.c_str() );
+        bRet = FALSE;
+    }
+    else
+    {
+        poSQLFeat = poSQLLyr->GetNextFeature();
+        if( poLayerFeat == NULL && poSQLFeat != NULL )
+        {
+            printf( "ERROR: poLayerFeat == NULL && poSQLFeat != NULL.\n" );
+            bRet = FALSE;
+        }
+        else if( poLayerFeat != NULL && poSQLFeat == NULL )
+        {
+            printf( "ERROR: poLayerFeat != NULL && poSQLFeat == NULL.\n" );
+            bRet = FALSE;
+        }
+        else if( poLayerFeat != NULL && poSQLFeat != NULL )
+        {
+            OGRGeometry* poLayerFeatGeom = poLayerFeat->GetGeometryRef();
+            OGRGeometry* poSQLFeatGeom = poSQLFeat->GetGeometryRef();
+            if( poLayerFeatGeom == NULL && poSQLFeatGeom != NULL )
+            {
+                printf( "ERROR: poLayerFeatGeom == NULL && poSQLFeatGeom != NULL.\n" );
+                bRet = FALSE;
+            }
+            else if( poLayerFeatGeom != NULL && poSQLFeatGeom == NULL )
+            {
+                printf( "ERROR: poLayerFeatGeom != NULL && poSQLFeatGeom == NULL.\n" );
+                bRet = FALSE;
+            }
+            else if( poLayerFeatGeom != NULL && poSQLFeatGeom != NULL )
+            {
+                OGRSpatialReference* poLayerFeatSRS = poLayerFeatGeom->getSpatialReference();
+                OGRSpatialReference* poSQLFeatSRS = poSQLFeatGeom->getSpatialReference();
+                if( poLayerFeatSRS == NULL && poSQLFeatSRS != NULL )
+                {
+                    printf( "ERROR: poLayerFeatSRS == NULL && poSQLFeatSRS != NULL.\n" );
+                    bRet = FALSE;
+                }
+                else if( poLayerFeatSRS != NULL && poSQLFeatSRS == NULL )
+                {
+                    printf( "ERROR: poLayerFeatSRS != NULL && poSQLFeatSRS == NULL.\n" );
+                    bRet = FALSE;
+                }
+                else if( poLayerFeatSRS != NULL && poSQLFeatSRS != NULL )
+                {
+                    if( !(poLayerFeatSRS->IsSame(poSQLFeatSRS)) )
+                    {
+                        printf( "ERROR: !(poLayerFeatSRS->IsSame(poSQLFeatSRS)).\n" );
+                        bRet = FALSE;
+                    }
+                }
+            }
+        }
+    }
+
+    OGRFeature::DestroyFeature(poLayerFeat);
+    poLayerFeat = NULL;
+    OGRFeature::DestroyFeature(poSQLFeat);
+    poSQLFeat = NULL;
+    if( poSQLLyr )
+    {
+        poDS->ReleaseResultSet(poSQLLyr);
+        poSQLLyr = NULL;
+    }
+
+    /* Return an empty layer */
     osSQL.Printf("SELECT * FROM %s WHERE 0 = 1", GetLayerNameForSQL(poDS, poLayer->GetName()));
 
-    OGRLayer* poSQLLyr = poDS->ExecuteSQL(osSQL.c_str(), NULL, NULL);
+    poSQLLyr = poDS->ExecuteSQL(osSQL.c_str(), NULL, NULL);
     if (poSQLLyr)
     {
-        OGRFeature* poFeat = poSQLLyr->GetNextFeature();
-        if (poFeat != NULL)
+        poSQLFeat = poSQLLyr->GetNextFeature();
+        if (poSQLFeat != NULL)
         {
             bRet = FALSE;
             printf( "ERROR: ExecuteSQL() should have returned a layer without features.\n" );
         }
-        OGRFeature::DestroyFeature(poFeat);
+        OGRFeature::DestroyFeature(poSQLFeat);
         poDS->ReleaseResultSet(poSQLLyr);
     }
     else
@@ -1823,6 +1901,9 @@ static int TestLayerSQL( OGRDataSource* poDS, OGRLayer * poLayer )
         printf( "ERROR: ExecuteSQL() should have returned a non-NULL result.\n");
         bRet = FALSE;
     }
+    
+    if( bRet )
+        printf("INFO: TestLayerSQL passed.\n");
 
     return bRet;
 }
