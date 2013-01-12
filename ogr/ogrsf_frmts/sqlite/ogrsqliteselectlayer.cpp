@@ -85,6 +85,22 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
                         if( poSRS != NULL )
                             poSRS->Reference();
                     }
+#if SQLITE_VERSION_NUMBER >= 3006010
+                    else
+                    {
+                        const char* pszTableName = sqlite3_column_table_name( hStmt, iCol );
+                        if( pszTableName != NULL )
+                        {
+                            OGRLayer* poLayer = poDS->GetLayerByName(pszTableName);
+                            if( poLayer != NULL )
+                            {
+                                poSRS = poLayer->GetSpatialRef();
+                                if( poSRS != NULL )
+                                    poSRS->Reference();
+                            }
+                        }
+                    }
+#endif
                     break;
                 }
             }
