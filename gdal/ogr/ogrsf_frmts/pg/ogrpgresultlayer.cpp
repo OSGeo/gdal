@@ -210,8 +210,7 @@ int OGRPGResultLayer::TestCapability( const char * pszCap )
 OGRFeature *OGRPGResultLayer::GetNextFeature()
 
 {
-    if( m_poFilterGeom != NULL &&
-        (bHasPostGISGeometry || bHasPostGISGeography) && nSRSId == UNDETERMINED_SRID )
+    if( (bHasPostGISGeometry || bHasPostGISGeography) && nSRSId == UNDETERMINED_SRID )
     {
         GetSpatialRef(); /* make sure that we fetch the SRID if not already done */
     }
