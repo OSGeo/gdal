@@ -589,7 +589,7 @@ CPLErr JPGMaskBand::IReadBlock( int nBlockX, int nBlockY, void *pImage )
 /*      Set mask based on bitmask for this scanline.                    */
 /* -------------------------------------------------------------------- */
     int iX;
-    int iBit = nBlockY * nBlockXSize;
+    GUInt32 iBit = (GUInt32)nBlockY * (GUInt32)nBlockXSize;
 
     for( iX = 0; iX < nBlockXSize; iX++ )
     {
@@ -2129,7 +2129,7 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
 /* -------------------------------------------------------------------- */
 /*      Set bit buffer from mask band, scanline by scanline.            */
 /* -------------------------------------------------------------------- */
-    int iBit = 0;
+    GUInt32 iBit = 0;
     for( iY = 0; eErr == CE_None && iY < nYSize; iY++ )
     {
         eErr = poMask->RasterIO( GF_Read, 0, iY, nXSize, 1,
