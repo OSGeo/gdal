@@ -2372,7 +2372,7 @@ void GDALRegister_ADRG()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gen" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte" );
-
+        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = ADRGDataset::Open;
