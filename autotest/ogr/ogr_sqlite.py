@@ -1305,11 +1305,17 @@ def ogr_sqlite_27():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/ogr_sqlite_27.sqlite')
 
-    # Special case for an algamation spatialite version on Windows
     pos = ret.find('ERROR: poLayerFeatSRS != NULL && poSQLFeatSRS == NULL.')
-    if pos != -1 \
-       and ogrtest.sqlite_version == '3.7.9' and sys.platform == 'win32' :
-        ret = ret[0:pos] + ret[pos + len('ERROR: poLayerFeatSRS != NULL && poSQLFeatSRS == NULL.'):]
+    if pos != -1 :
+        # Detect if libsqlite3 has been built with SQLITE_HAS_COLUMN_METADATA
+        # If not, that explains the error.
+        ds = ogr.Open(':memory:')
+        sql_lyr = ds.ExecuteSQL('SQLITE_HAS_COLUMN_METADATA()')
+        feat = sql_lyr.GetNextFeature()
+        val = feat.GetField(0)
+        ds.ReleaseResultSet(sql_lyr)
+        if val == 0:
+            ret = ret[0:pos] + ret[pos + len('ERROR: poLayerFeatSRS != NULL && poSQLFeatSRS == NULL.'):]
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         gdaltest.post_reason('failed')
