@@ -2049,6 +2049,7 @@ void GDALRegister_PostGISRaster() {
         poDriver->SetDescription("PostGISRaster");
         poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                 "PostGIS Raster driver");
+        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
         poDriver->pfnOpen = PostGISRasterDataset::Open;
         poDriver->pfnCreateCopy = PostGISRasterDataset::CreateCopy;

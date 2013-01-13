@@ -2389,6 +2389,7 @@ void GDALRegister_WCS()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_wcs.html" );
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
         
         poDriver->pfnOpen = WCSDataset::Open;
         poDriver->pfnIdentify = WCSDataset::Identify;

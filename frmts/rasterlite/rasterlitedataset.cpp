@@ -1343,6 +1343,7 @@ void GDALRegister_Rasterlite()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_rasterlite.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sqlite" );
+        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte UInt16 Int16 UInt32 Int32 Float32 "
                                    "Float64 CInt16 CInt32 CFloat32 CFloat64" );
