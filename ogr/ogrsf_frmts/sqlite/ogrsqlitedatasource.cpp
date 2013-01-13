@@ -1480,6 +1480,18 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Special case for SQLITE_HAS_COLUMN_METADATA()                   */
+/* -------------------------------------------------------------------- */
+    if (strcmp(pszSQLCommand, "SQLITE_HAS_COLUMN_METADATA()") == 0)
+    {
+#ifdef SQLITE_HAS_COLUMN_METADATA
+        return new OGRSQLiteSingleFeatureLayer( "SQLITE_HAS_COLUMN_METADATA", TRUE );
+#else
+        return new OGRSQLiteSingleFeatureLayer( "SQLITE_HAS_COLUMN_METADATA", FALSE );
+#endif
+    }
+
+/* -------------------------------------------------------------------- */
 /*      In case, this is not a SELECT, invalidate cached feature        */
 /*      count and extent to be on the safe side.                        */
 /* -------------------------------------------------------------------- */
