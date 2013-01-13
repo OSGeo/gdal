@@ -383,7 +383,7 @@ def test_gdalinfo_20():
         return 'skip'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --formats', check_memleak = False )
-    if ret.find('GTiff (rw+v): GeoTIFF') < 0:
+    if ret.find('GTiff (rw+vs): GeoTIFF') < 0:
         print(ret)
         return 'fail'
 
