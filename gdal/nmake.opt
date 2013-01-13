@@ -383,6 +383,8 @@ INGRES_LIB = "$(INGRES_HOME)\lib\iilibapi.lib" \
 # depending on the layout of the include directories. In case of compilation errors, remove it.
 #SQLITE_INC=-IC:\osgeo4w\include -DHAVE_SPATIALITE -DSPATIALITE_AMALGAMATION
 #SQLITE_LIB=C:\osgeo4w\lib\spatialite_i.lib
+# Uncomment following line if libsqlite3 has been compiled with SQLITE_HAS_COLUMN_METADATA=yes
+#SQLITE_HAS_COLUMN_METADATA=yes
 
 # PCRE Library (REGEXP support for SQLite) for example from http://sourceforge.net/projects/gnuwin32/files/pcre/7.0/pcre-7.0.exe/download
 #PCRE_INC=-I"C:\Program Files\GNUWin32\include" -DHAVE_PCRE
