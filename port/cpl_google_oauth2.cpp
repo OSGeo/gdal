@@ -181,7 +181,7 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
         CPLHTTPFetch( GOOGLE_AUTH_URL "/token", oOptions);
 
     if (psResult == NULL)
-        return FALSE;
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      One common mistake is to try and reuse the auth token.          */
@@ -299,7 +299,7 @@ char *GOA2GetAccessToken( const char *pszRefreshToken,
     CPLHTTPResult *psResult = CPLHTTPFetch(GOOGLE_AUTH_URL "/token", oOptions);
 
     if (psResult == NULL)
-        return FALSE;
+        return NULL;
 
     if (psResult->pabyData == NULL ||
         psResult->pszErrBuf != NULL)
@@ -312,7 +312,7 @@ char *GOA2GetAccessToken( const char *pszRefreshToken,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Fetching OAuth2 access code from auth code failed.");
         CPLHTTPDestroyResult(psResult);
-        return FALSE;
+        return NULL;
     }
 
     CPLDebug( "GOA2", "Refresh Token Response:\n%s", 
