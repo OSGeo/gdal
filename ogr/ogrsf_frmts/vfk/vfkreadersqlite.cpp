@@ -29,6 +29,8 @@
  * SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_vsi.h"
+
 #include "vfkreader.h"
 #include "vfkreaderp.h"
 
