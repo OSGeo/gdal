@@ -32,7 +32,6 @@
 #include "ogrpgeogeometry.h"
 #include "ogr_p.h"
 #include "cpl_string.h"
-#include "zlib.h"
 
 CPL_CVSID("$Id$");
 
@@ -897,46 +896,20 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                 return OGRERR_FAILURE;
             }
 
-            z_stream      stream;
-            stream.zalloc = (alloc_func)0;
-            stream.zfree = (free_func)0;
-            stream.opaque = (voidpf)0;
-            stream.next_in = pabyShape + 12;
-            stream.next_out = pabyUncompressedBuffer;
-            stream.avail_in = nCompressedSize;
-            stream.avail_out = nUncompressedSize;
-            int err;
-            if ( (err = inflateInit(&stream)) != Z_OK )
+            size_t nRealUncompressedSize = 0;
+            if( CPLZLibInflate( pabyShape + 12, nCompressedSize,
+                                pabyUncompressedBuffer, nUncompressedSize,
+                                &nRealUncompressedSize ) == NULL )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "inflateInit() failed : err code = %d", err);
+                         "CPLZLibInflate() failed");
                 VSIFree(pabyUncompressedBuffer);
                 return OGRERR_FAILURE;
             }
-            if ( (err = inflate(&stream, Z_NO_FLUSH)) != Z_STREAM_END )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "inflate() failed : err code = %d", err);
-                VSIFree(pabyUncompressedBuffer);
-                inflateEnd(&stream);
-                return OGRERR_FAILURE;
-            }
-            if (stream.avail_in != 0)
-            {
-                CPLDebug("OGR", "%d remaining in bytes after zlib uncompression",
-                         stream.avail_in);
-            }
-            if (stream.avail_out != 0)
-            {
-                CPLDebug("OGR", "%d remaining out bytes after zlib uncompression",
-                         stream.avail_out);
-            }
-
-            inflateEnd(&stream);
 
             OGRErr eErr = OGRCreateFromShapeBin(pabyUncompressedBuffer,
                                                 ppoGeom,
-                                                nUncompressedSize - stream.avail_out);
+                                                nRealUncompressedSize);
 
             VSIFree(pabyUncompressedBuffer);
 

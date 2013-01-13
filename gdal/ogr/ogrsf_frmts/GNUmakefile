@@ -6,7 +6,7 @@ SUBDIRS-yes	:= \
 	mitab ntf gpx rec s57 sdts shape tiger vrt \
 	geoconcept xplane georss gtm dxf pgdump gpsbabel \
 	sua openair pds htf aeronavfaa edigeo svg idrisi \
-	arcgen segukooa segy pdf
+	arcgen segukooa segy
 
 SUBDIRS-$(HAVE_DODS)	+= dods
 SUBDIRS-$(HAVE_DWGDIRECT) += dxfdwg
@@ -42,6 +42,10 @@ SUBDIRS-yes  += pcidsk
 endif
 ifeq ($(PCIDSK_SETTING),external)
 SUBDIRS-yes  += pcidsk
+endif
+
+ifneq ($(LIBZ_SETTING),no)
+SUBDIRS-yes  += pdf
 endif
 
 default:	$(foreach d,$(SUBDIRS-yes),$(d)-target)
