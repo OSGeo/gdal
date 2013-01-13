@@ -1231,7 +1231,8 @@ def ogr_sqlite_25():
 
     sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT sqlite_version()")
     feat = sql_lyr.GetNextFeature()
-    print('SQLite version : %s' % feat.GetFieldAsString(0))
+    ogrtest.sqlite_version = feat.GetFieldAsString(0)
+    print('SQLite version : %s' % ogrtest.sqlite_version)
     feat = None
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
@@ -1303,6 +1304,12 @@ def ogr_sqlite_27():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f SQLite tmp/ogr_sqlite_27.sqlite data/poly.shp --config OGR_SQLITE_SYNCHRONOUS OFF')
 
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/ogr_sqlite_27.sqlite')
+
+    # Special case for an algamation spatialite version on Windows
+    pos = ret.find('ERROR: poLayerFeatSRS != NULL && poSQLFeatSRS == NULL.')
+    if pos != -1 \
+       and ogrtest.sqlite_version == '3.7.9' and sys.platform == 'win32' :
+        ret = ret[0:pos] + ret[pos + len('ERROR: poLayerFeatSRS != NULL && poSQLFeatSRS == NULL.'):]
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
         gdaltest.post_reason('failed')
