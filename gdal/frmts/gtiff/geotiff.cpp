@@ -9834,7 +9834,7 @@ void GDALRegister_GTiff()
                                    "Float64 CInt16 CInt32 CFloat32 CFloat64" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
                                    szCreateOptions );
-
+        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
         poDriver->pfnOpen = GTiffDataset::Open;

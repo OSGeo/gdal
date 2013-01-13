@@ -5625,6 +5625,7 @@ void GDALRegister_netCDF()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "nc" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
                                    szCreateOptions );
+        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
         /* make driver config and capabilities available */
         poDriver->SetMetadataItem( "NETCDF_VERSION", nc_inq_libvers() );

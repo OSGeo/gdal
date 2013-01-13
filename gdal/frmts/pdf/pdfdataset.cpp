@@ -4809,6 +4809,7 @@ void GDALRegister_PDF()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pdf" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                    "Byte" );
+        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 #ifdef HAVE_POPPLER
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
         poDriver->SetMetadataItem( "HAVE_POPPLER", "YES" );

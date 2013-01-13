@@ -1049,6 +1049,7 @@ void GDALRegister_ECRGTOC()
                                    "frmt_various.html#ECRGTOC" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xml" );
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
