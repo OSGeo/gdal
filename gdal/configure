@@ -1703,7 +1703,7 @@ Optional Packages:
   --with-jvm-lib=ARG        ARG points to Java libjvm path
   --with-jvm-lib-add-rpath    Add the libjvm path to the RPATH (no by default)
   --with-rasdaman=DIR        Include rasdaman support (DIR is rasdaman's install dir).
-  --with-armadillo=ARG       Include Armadillo support for faster TPS transform computation (ARG=yes/no) [default=no]
+  --with-armadillo=ARG       Include Armadillo support for faster TPS transform computation (ARG=yes/no/path to armadillo install root) [default=no]
 
 Some influential environment variables:
   CC          C compiler command
@@ -28091,6 +28091,34 @@ $as_echo "no" >&6; }
     fi
     rm -f testarmadillo.*
     rm -f testarmadillo
+
+elif test -n "$with_armadillo" -a "$with_armadillo" != "no" ; then
+
+    rm -f testarmadillo.*
+    rm -f testarmadillo
+    echo '#include <armadillo>' > testarmadillo.cpp
+    echo 'int main(int argc, char** argv) { arma::mat matInput(2,2); const arma::mat& matInv = arma::inv(matInput); return 0; } ' >> testarmadillo.cpp
+    if test -z "`${CXX} ${CPPFLAGS} -I$with_armadillo/include testarmadillo.cpp -o testarmadillo -L$with_armadillo/lib -larmadillo ${LIBS} 2>&1`" ; then
+        HAVE_ARMADILLO=yes
+        LIBS="-L$with_armadillo/lib -larmadillo ${LIBS}"
+        EXTRA_INCLUDES="-I$with_armadillo/include $EXTRA_INCLUDES"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    else
+                if test -z "`${CXX} ${CPPFLAGS} -I$with_armadillo/include testarmadillo.cpp -o testarmadillo -L$with_armadillo/lib -larmadillo -llapack ${LIBS} 2>&1`" ; then
+            HAVE_ARMADILLO=yes
+            LIBS="-L$with_armadillo/lib -larmadillo -llapack ${LIBS}"
+            EXTRA_INCLUDES="-I$with_armadillo/include $EXTRA_INCLUDES"
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+        fi
+    fi
+    rm -f testarmadillo.*
+    rm -f testarmadillo
+
 else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
