@@ -28,6 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_vsi.h"
+
 #include <ctype.h>
 
 #include "ogr_geometry.h"
