@@ -2619,8 +2619,13 @@ if test "${HAVE_SPATIALITE}" = "no" ; then
     fi
 fi
 
+if test "$HAVE_SQLITE3" = "yes"; then
+    AC_CHECK_LIB(sqlite3,sqlite3_column_table_name,SQLITE_HAS_COLUMN_METADATA=yes,SQLITE_HAS_COLUMN_METADATA=no,$LIBS)
+fi
+
 AC_SUBST([SQLITE_INC], $SQLITE3_CFLAGS)
 AC_SUBST([HAVE_SQLITE], $HAVE_SQLITE3)
+AC_SUBST([SQLITE_HAS_COLUMN_METADATA], $SQLITE_HAS_COLUMN_METADATA)
 HAVE_SQLITE=$HAVE_SQLITE3
 
 dnl ---------------------------------------------------------------------------

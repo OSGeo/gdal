@@ -85,9 +85,7 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
                         if( poSRS != NULL )
                             poSRS->Reference();
                     }
-/* On Windows, spatialite lib compiled in amalgamation mode alias sqlite3_column_table_name */
-/* to SPLite3_column_table_name, but SPLite3_column_table_name is not in the symbol table... */
-#if SQLITE_VERSION_NUMBER >= 3006010 && !defined(sqlite3_column_table_name)
+#ifdef SQLITE_HAS_COLUMN_METADATA
                     else
                     {
                         const char* pszTableName = sqlite3_column_table_name( hStmt, iCol );
