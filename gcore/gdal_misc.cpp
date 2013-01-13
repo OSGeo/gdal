@@ -2552,7 +2552,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
             {
                 GDALDriverH hDriver = GDALGetDriver(iDr);
-                const char *pszRWFlag, *pszVirtualIO;
+                const char *pszRWFlag, *pszVirtualIO, *pszSubdatasets;
                 
                 if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) )
                     pszRWFlag = "rw+";
@@ -2567,9 +2567,15 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 else
                     pszVirtualIO = "";
 
-                printf( "  %s (%s%s): %s\n",
+                pszSubdatasets = GDALGetMetadataItem( hDriver, GDAL_DMD_SUBDATASETS, NULL );
+                if( pszSubdatasets && CSLTestBoolean( pszSubdatasets ) )
+                    pszSubdatasets = "s";
+                else
+                    pszSubdatasets = "";
+
+                printf( "  %s (%s%s%s): %s\n",
                         GDALGetDriverShortName( hDriver ),
-                        pszRWFlag, pszVirtualIO,
+                        pszRWFlag, pszVirtualIO, pszSubdatasets,
                         GDALGetDriverLongName( hDriver ) );
             }
 
@@ -2621,6 +2627,8 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 printf( "  Help Topic: %s\n", 
                         CSLFetchNameValue( papszMD, GDAL_DMD_HELPTOPIC ) );
             
+            if( CSLFetchBoolean( papszMD, GDAL_DMD_SUBDATASETS, FALSE ) )
+                printf( "  Supports: Subdatasets\n" );
             if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATE, FALSE ) )
                 printf( "  Supports: Create() - Create writeable dataset.\n" );
             if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATECOPY, FALSE ) )

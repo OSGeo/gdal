@@ -966,6 +966,7 @@ void GDALRegister_OGDI()
                                    "OGDI Bridge" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_ogdi.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
         poDriver->pfnOpen = OGDIDataset::Open;
 

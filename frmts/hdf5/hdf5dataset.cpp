@@ -69,6 +69,7 @@ void GDALRegister_HDF5()
         poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
                                   "frmt_hdf5.html");
         poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "hdf5");
+        poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
         poDriver->pfnOpen = HDF5Dataset::Open;
         poDriver->pfnIdentify = HDF5Dataset::Identify;
         GetGDALDriverManager()->RegisterDriver(poDriver);

@@ -1280,6 +1280,7 @@ void GDALRegister_RPFTOC()
                                    "frmt_various.html#RPFTOC" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "toc" );
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+        poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }

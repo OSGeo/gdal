@@ -174,26 +174,29 @@ honoured by GDAL drivers, algorithms or utilities at this time.
 
 The SUBDATASETS domain holds a list of child datasets.  Normally this is
 used to provide pointers to a list of images stored within a single multi
-image file (such as HDF or NITF).  For instance, an NITF with four images
-might have the following subdataset list. 
+image file. 
+
+For example, an NITF with two images might have the following subdataset list.
 
 <pre>
   SUBDATASET_1_NAME=NITF_IM:0:multi_1b.ntf
   SUBDATASET_1_DESC=Image 1 of multi_1b.ntf
   SUBDATASET_2_NAME=NITF_IM:1:multi_1b.ntf
   SUBDATASET_2_DESC=Image 2 of multi_1b.ntf
-  SUBDATASET_3_NAME=NITF_IM:2:multi_1b.ntf
-  SUBDATASET_3_DESC=Image 3 of multi_1b.ntf
-  SUBDATASET_4_NAME=NITF_IM:3:multi_1b.ntf
-  SUBDATASET_4_DESC=Image 4 of multi_1b.ntf
-  SUBDATASET_5_NAME=NITF_IM:4:multi_1b.ntf
-  SUBDATASET_5_DESC=Image 5 of multi_1b.ntf
 </pre>
 
 The value of the _NAME is the string that can be passed to GDALOpen() to 
 access the file.  The _DESC value is intended to be a more user friendly
 string that can be displayed to the user in a selector. 
 
+Drivers which support subdatasets advertize the DMD_SUBDATASETS capability. 
+This information is reported when the \-\-format and \-\-formats options are 
+passed to the commandline utilities.
+
+Currently, drivers which support subdatasets are: 
+ADRG, ECRGTOC, GEORASTER, GTiff, HDF4, HDF5, netCDF, NITF, NTv2, OGDI, PDF, 
+PostGISRaster, Rasterlite, RPFTOC, RS2, WCS, and WMS.
+ 
 \subsubsection gdal_datamodel_image_structure IMAGE_STRUCTURE Domain
 
 Metadata in the default domain is intended to be related to the 
