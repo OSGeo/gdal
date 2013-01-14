@@ -1497,6 +1497,7 @@ CPLErr JPGDatasetCommon::IRasterIO( GDALRWFlag eRWFlag,
                                      nPixelSpace, nLineSpace, nBandSpace);
 }
 
+#if JPEG_LIB_VERSION_MAJOR < 9
 /************************************************************************/
 /*                    JPEGDatasetIsJPEGLS()                             */
 /************************************************************************/
@@ -1539,6 +1540,7 @@ static int JPEGDatasetIsJPEGLS( GDALOpenInfo * poOpenInfo )
 
     return FALSE;
 }
+#endif
 
 /************************************************************************/
 /*                              Identify()                              */
@@ -1570,10 +1572,12 @@ int JPGDatasetCommon::Identify( GDALOpenInfo * poOpenInfo )
         || pabyHeader[2] != 0xff )
         return FALSE;
 
+#if JPEG_LIB_VERSION_MAJOR < 9
     if (JPEGDatasetIsJPEGLS(poOpenInfo))
     {
         return FALSE;
     }
+#endif
 
     return TRUE;
 }
@@ -2245,6 +2249,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nQuality = 75;
     int  bProgressive = FALSE;
     int  nCloneFlags = GCIF_PAM_DEFAULT;
+    const char* pszVal;
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
@@ -2389,6 +2394,27 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         sCInfo.data_precision = 8;
     }
+
+    pszVal = CSLFetchNameValue(papszOptions, "ARITHMETIC");
+    if( pszVal )
+        sCInfo.arith_code = CSLTestBoolean(pszVal);
+
+#if JPEG_LIB_VERSION_MAJOR >= 8 && \
+      (JPEG_LIB_VERSION_MAJOR > 8 || JPEG_LIB_VERSION_MINOR >= 3)
+    pszVal = CSLFetchNameValue(papszOptions, "BLOCK");
+    if( pszVal )
+        sCInfo.block_size = atoi(pszVal);
+#endif
+
+#if JPEG_LIB_VERSION_MAJOR >= 9
+    pszVal = CSLFetchNameValue(papszOptions, "COLOR_TRANSFORM");
+    if( pszVal )
+    {
+        sCInfo.color_transform = EQUAL(pszVal, "RGB1") ? JCT_SUBTRACT_GREEN : JCT_NONE;
+        jpeg_set_colorspace(&sCInfo, JCS_RGB);
+    }
+    else
+#endif
 
     /* Mostly for debugging purposes */
     if( nBands == 3 && CSLTestBoolean(CPLGetConfigOption("JPEG_WRITE_RGB", "NO")) )
@@ -2585,6 +2611,17 @@ void GDALRegister_JPEG()
 "   <Option name='QUALITY' type='int' description='good=100, bad=0, default=75'/>\n"
 "   <Option name='WORLDFILE' type='boolean' default='NO'/>\n"
 "   <Option name='INTERNAL_MASK' type='boolean' default='YES'/>\n"
+"   <Option name='ARITHMETIC' type='boolean' default='NO'/>\n"
+#if JPEG_LIB_VERSION_MAJOR >= 8 && \
+      (JPEG_LIB_VERSION_MAJOR > 8 || JPEG_LIB_VERSION_MINOR >= 3)
+"   <Option name='BLOCK' type='int' description='between 1 and 16'/>\n"
+#endif
+#if JPEG_LIB_VERSION_MAJOR >= 9
+"   <Option name='COLOR_TRANSFORM' type='string-select'>\n"
+"       <Value>RGB</Value>"
+"       <Value>RGB1</Value>"
+"   </Option>"
+#endif
 "</CreationOptionList>\n" );
 
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
