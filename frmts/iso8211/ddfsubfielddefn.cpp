@@ -584,12 +584,12 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
       {
           unsigned char   abyData[8];
 
-          if( nFormatWidth > nMaxBytes )
+          if( nFormatWidth > nMaxBytes || nFormatWidth >= (int)sizeof(abyData) )
           {
               CPLError( CE_Warning, CPLE_AppDefined, 
                         "Attempt to extract int subfield %s with format %s\n"
                         "failed as only %d bytes available.  Using zero.",
-                        pszName, pszFormatString, nMaxBytes );
+                        pszName, pszFormatString, MIN(nMaxBytes, (int)sizeof(abyData)) );
               return 0;
           }
 
