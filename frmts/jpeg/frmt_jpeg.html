@@ -76,6 +76,17 @@ in the "zlib compressed mask appended to the file" approach is written
 to identify pixels that are not valid data. Starting with GDAL 1.10, this
 can be disabled by setting this option to NO.<p>
 
+<li> <b>ARITHMETIC=YES/NO</b>: (Starting with GDAL 1.10) To enable arithmetic coding.
+Not enabled in all libjpeg builds, because of possible legal restrictions.<p>
+
+<li> <b>BLOCK=1...16</b>: (Starting with GDAL 1.10 and libjpeg 8c) DCT block size.
+All values from 1 to 16 are possible. Default is 8 (baseline format). A value other
+than 8 will produce files incompatible with versions prior to libjpeg 8c.<p>
+
+<li> <b>COLOR_TRANSFORM=RGB or RGB1</b>: (Starting with GDAL 1.10 and libjpeg 9).
+Set to RGB1 for lossless RGB. Note: this will produce files incompatible with
+versions prior to libjpeg 9.<p>
+
 </ul>
 
 <h3>See Also:</h3>
