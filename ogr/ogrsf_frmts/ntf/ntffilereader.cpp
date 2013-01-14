@@ -408,6 +408,15 @@ int NTFFileReader::Open( const char * pszFilenameIn )
         return FALSE;
     }
 
+    if( pszProduct == NULL )
+    {
+        delete poRecord;
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Cound not find product type in %s.\n", 
+                  pszFilename );
+        return FALSE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Classify the product type.                                      */
 /* -------------------------------------------------------------------- */
