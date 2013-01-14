@@ -276,7 +276,12 @@ int NTFFileReader::Open( const char * pszFilenameIn )
     }
 
     nNTFLevel = atoi(oVHR.GetField( 57, 57 ));
-    CPLAssert( nNTFLevel >= 1 && nNTFLevel <= 5 );
+    if( !( nNTFLevel >= 1 && nNTFLevel <= 5 ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Invalid value : nNTFLevel = %d", nNTFLevel );
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read records till we get the section header.                    */

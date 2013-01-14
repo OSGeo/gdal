@@ -621,11 +621,11 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
                 
             for( int i = 0; i < nRepeat; i++ )
             {
-                if( (int) (strlen(pszExpandedContents) + strlen(pszDest) + 1)
+                if( (int) (strlen(pszExpandedContents) + strlen(pszDest) + 1 + 1)
                     > nDestMax )
                 {
                     nDestMax = 
-                        2 * (strlen(pszExpandedContents) + strlen(pszDest));
+                        2 * (strlen(pszExpandedContents) + strlen(pszDest) + 1);
                     pszDest = (char *) CPLRealloc(pszDest,nDestMax+1);
                 }
 
