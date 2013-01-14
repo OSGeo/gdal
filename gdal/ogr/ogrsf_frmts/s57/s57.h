@@ -161,7 +161,7 @@ public:
 #define SAT_FREE_TEXT   'S'
 
     char        GetAttrClass( int i ) { return pachAttrClass[i]; }
-    GInt16      FindAttrByAcronym( const char * );
+    int         FindAttrByAcronym( const char * );
 
 };
 
