@@ -991,7 +991,8 @@ int S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
         int iField = poFeature->GetFieldIndex( papszAttrList[iAttr] );
         OGRFieldType eFldType = 
             poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
-        GInt16 nATTL;
+        int nATTLInt;
+        GUInt16 nATTL;
         const char *pszATVL;
         
         if( iField < 0 )
@@ -1000,10 +1001,11 @@ int S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
         if( !poFeature->IsFieldSet( iField ) )
             continue;
 
-        nATTL = poRegistrar->FindAttrByAcronym( papszAttrList[iAttr] );
-        if( nATTL == -1 )
+        nATTLInt = poRegistrar->FindAttrByAcronym( papszAttrList[iAttr] );
+        if( nATTLInt == -1 )
             continue;
 
+        nATTL = (GUInt16)nATTLInt;
         nATTL = CPL_LSBWORD16( nATTL );
         memcpy( achRawData + nRawSize, &nATTL, 2 );
         nRawSize += 2;
