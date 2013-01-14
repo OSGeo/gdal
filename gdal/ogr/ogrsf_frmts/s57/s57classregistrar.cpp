@@ -576,7 +576,7 @@ char **S57ClassRegistrar::GetPrimitives()
 /*                         FindAttrByAcronym()                          */
 /************************************************************************/
 
-GInt16    S57ClassRegistrar::FindAttrByAcronym( const char * pszName )
+int    S57ClassRegistrar::FindAttrByAcronym( const char * pszName )
 
 {
     int         iStart, iEnd, iCandidate;
