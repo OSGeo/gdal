@@ -26581,6 +26581,52 @@ if ${ac_cv_lib_freexl_freexl_open+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
+LIBS="-lfreexl -lm $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char freexl_open ();
+int
+main ()
+{
+return freexl_open ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_freexl_freexl_open=yes
+else
+  ac_cv_lib_freexl_freexl_open=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_freexl_freexl_open" >&5
+$as_echo "$ac_cv_lib_freexl_freexl_open" >&6; }
+if test "x$ac_cv_lib_freexl_freexl_open" = xyes; then :
+  FREEXL_LIBS="-lfreexl -lm"
+else
+  FREEXL_LIBS=missing
+fi
+
+  fi
+
+  if test "$FREEXL_LIBS" = "missing"; then
+    unset ac_cv_lib_freexl_freexl_open
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for freexl_open in -lfreexl" >&5
+$as_echo_n "checking for freexl_open in -lfreexl... " >&6; }
+if ${ac_cv_lib_freexl_freexl_open+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
 LIBS="-lfreexl -liconv $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -26613,6 +26659,52 @@ fi
 $as_echo "$ac_cv_lib_freexl_freexl_open" >&6; }
 if test "x$ac_cv_lib_freexl_freexl_open" = xyes; then :
   FREEXL_LIBS="-lfreexl -liconv"
+else
+  FREEXL_LIBS=missing
+fi
+
+  fi
+
+  if test "$FREEXL_LIBS" = "missing"; then
+    unset ac_cv_lib_freexl_freexl_open
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for freexl_open in -lfreexl" >&5
+$as_echo_n "checking for freexl_open in -lfreexl... " >&6; }
+if ${ac_cv_lib_freexl_freexl_open+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lfreexl -liconv -lm $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char freexl_open ();
+int
+main ()
+{
+return freexl_open ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_freexl_freexl_open=yes
+else
+  ac_cv_lib_freexl_freexl_open=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_freexl_freexl_open" >&5
+$as_echo "$ac_cv_lib_freexl_freexl_open" >&6; }
+if test "x$ac_cv_lib_freexl_freexl_open" = xyes; then :
+  FREEXL_LIBS="-lfreexl -liconv -lm"
 else
   FREEXL_LIBS=missing
 fi
@@ -26739,6 +26831,52 @@ if ${ac_cv_lib_freexl_freexl_open+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
+LIBS="-lfreexl -L$with_freexl/lib -lm $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char freexl_open ();
+int
+main ()
+{
+return freexl_open ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_freexl_freexl_open=yes
+else
+  ac_cv_lib_freexl_freexl_open=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_freexl_freexl_open" >&5
+$as_echo "$ac_cv_lib_freexl_freexl_open" >&6; }
+if test "x$ac_cv_lib_freexl_freexl_open" = xyes; then :
+  FREEXL_LIBS="-L$with_freexl/lib -lfreexl -lm"
+else
+  FREEXL_LIBS=missing
+fi
+
+  fi
+
+  if test "$FREEXL_LIBS" = "missing"; then
+    unset ac_cv_lib_freexl_freexl_open
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for freexl_open in -lfreexl" >&5
+$as_echo_n "checking for freexl_open in -lfreexl... " >&6; }
+if ${ac_cv_lib_freexl_freexl_open+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
 LIBS="-lfreexl -L$with_freexl/lib -liconv $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -26771,6 +26909,52 @@ fi
 $as_echo "$ac_cv_lib_freexl_freexl_open" >&6; }
 if test "x$ac_cv_lib_freexl_freexl_open" = xyes; then :
   FREEXL_LIBS="-L$with_freexl/lib -lfreexl -liconv"
+else
+  FREEXL_LIBS=missing
+fi
+
+  fi
+
+  if test "$FREEXL_LIBS" = "missing"; then
+    unset ac_cv_lib_freexl_freexl_open
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for freexl_open in -lfreexl" >&5
+$as_echo_n "checking for freexl_open in -lfreexl... " >&6; }
+if ${ac_cv_lib_freexl_freexl_open+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lfreexl -L$with_freexl/lib -liconv -lm $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char freexl_open ();
+int
+main ()
+{
+return freexl_open ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_freexl_freexl_open=yes
+else
+  ac_cv_lib_freexl_freexl_open=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_freexl_freexl_open" >&5
+$as_echo "$ac_cv_lib_freexl_freexl_open" >&6; }
+if test "x$ac_cv_lib_freexl_freexl_open" = xyes; then :
+  FREEXL_LIBS="-L$with_freexl/lib -lfreexl -liconv -lm"
 else
   FREEXL_LIBS=missing
 fi
