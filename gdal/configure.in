@@ -2999,7 +2999,17 @@ if test "$with_freexl" = "" -o "$with_freexl" = "yes" ; then
 
   if test "$FREEXL_LIBS" = "missing"; then
     unset ac_cv_lib_freexl_freexl_open
+    AC_CHECK_LIB(freexl,freexl_open,FREEXL_LIBS="-lfreexl -lm",FREEXL_LIBS=missing,-lm)
+  fi
+
+  if test "$FREEXL_LIBS" = "missing"; then
+    unset ac_cv_lib_freexl_freexl_open
     AC_CHECK_LIB(freexl,freexl_open,FREEXL_LIBS="-lfreexl -liconv",FREEXL_LIBS=missing,-liconv)
+  fi
+
+  if test "$FREEXL_LIBS" = "missing"; then
+    unset ac_cv_lib_freexl_freexl_open
+    AC_CHECK_LIB(freexl,freexl_open,FREEXL_LIBS="-lfreexl -liconv -lm",FREEXL_LIBS=missing,-liconv -lm)
   fi
 
   if test "$FREEXL_LIBS" = "missing"; then
@@ -3033,7 +3043,17 @@ elif test "$with_freexl" != "no"; then
 
   if test "$FREEXL_LIBS" = "missing"; then
     unset ac_cv_lib_freexl_freexl_open
+    AC_CHECK_LIB(freexl,freexl_open,FREEXL_LIBS="-L$with_freexl/lib -lfreexl -lm",FREEXL_LIBS=missing,-L$with_freexl/lib -lm)
+  fi
+
+  if test "$FREEXL_LIBS" = "missing"; then
+    unset ac_cv_lib_freexl_freexl_open
     AC_CHECK_LIB(freexl,freexl_open,FREEXL_LIBS="-L$with_freexl/lib -lfreexl -liconv",FREEXL_LIBS=missing,-L$with_freexl/lib -liconv)
+  fi
+
+  if test "$FREEXL_LIBS" = "missing"; then
+    unset ac_cv_lib_freexl_freexl_open
+    AC_CHECK_LIB(freexl,freexl_open,FREEXL_LIBS="-L$with_freexl/lib -lfreexl -liconv -lm",FREEXL_LIBS=missing,-L$with_freexl/lib -liconv -lm)
   fi
 
   if test "$FREEXL_LIBS" = "missing"; then
