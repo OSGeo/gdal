@@ -98,8 +98,8 @@ def arg_init():
                      ('uint32', '>I', (1<<32)-1),
                      ('uint64', '>Q', (1<<64)-1)],
          'data': [None, 2, 3, 4]},
-        {'formats': [('float32', '>f', float('nan')),
-                     ('float64', '>d', float('nan'))],
+        {'formats': [('float32', '>f', gdaltest.NaN()),
+                     ('float64', '>d', gdaltest.NaN())],
          'data': [None, 1.1, -20.02, 300.003]},
     ]
 
