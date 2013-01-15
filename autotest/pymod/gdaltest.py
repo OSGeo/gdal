@@ -1300,6 +1300,17 @@ def isnan(val):
     else:
         return True
 
+
+###############################################################################
+# Return NaN
+
+def NaN():
+    try:
+        # Python >= 2.6
+        return float('nan')
+    except:
+        return 1e400 / 1e400
+
 ###############################################################################
 # Return positive infinity
 
