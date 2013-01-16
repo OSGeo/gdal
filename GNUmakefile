@@ -179,7 +179,7 @@ ifneq ($(BINDINGS),)
 	(cd swig; $(MAKE) install)
 endif
 	for f in LICENSE.TXT data/*.* ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_DATA) ; done
-	$(LIBTOOL_FINISH) $(INST_LIB)
+	$(LIBTOOL_FINISH) $(DESTDIR)$(INST_LIB)
 
 
 ifeq ($(HAVE_LIBTOOL),yes)
