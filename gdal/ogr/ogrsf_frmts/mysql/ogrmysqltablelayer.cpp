@@ -946,6 +946,8 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
                   oField.GetNameRef(),
                   OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
         strcpy( szFieldType, "TEXT" );
+        oField.SetWidth(0);
+        oField.SetPrecision(0);
     }
     else
     {
