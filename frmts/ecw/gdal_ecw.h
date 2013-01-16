@@ -194,7 +194,7 @@ class VSIIOStream : public CNCSJPCIOStream
         
 #if ECWSDK_VERSION >= 40
     virtual VSIIOStream *Clone() {
-        FILE *fpNewVSIL = VSIFOpenL( m_Name.a_str(), "rb" );
+        VSILFILE *fpNewVSIL = VSIFOpenL( m_Name.a_str(), "rb" );
         if (fpNewVSIL == NULL) 
         {
             return NULL;
