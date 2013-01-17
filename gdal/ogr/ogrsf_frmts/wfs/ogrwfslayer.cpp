@@ -108,6 +108,7 @@ OGRWFSLayer::OGRWFSLayer( OGRWFSDataSource* poDS,
     bHasFetched = FALSE;
     eGeomType = wkbUnknown;
     nFeatures = -1;
+    bCountFeaturesInGetNextFeature = FALSE;
 
     dfMinX = dfMinY = dfMaxX = dfMaxY = 0;
     bHasExtents = FALSE;
@@ -1118,6 +1119,8 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
         if (poSrcFeature == NULL)
             return NULL;
         nFeatureRead ++;
+        if( bCountFeaturesInGetNextFeature )
+            nFeatures ++;
 
         OGRGeometry* poGeom = poSrcFeature->GetGeometryRef();
         if( m_poFilterGeom != NULL && poGeom != NULL &&
@@ -1449,6 +1452,21 @@ int OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
 
     return nFeatures;
 }
+/************************************************************************/
+/*              CanRunGetFeatureCountAndGetExtentTogether()             */
+/************************************************************************/
+
+int OGRWFSLayer::CanRunGetFeatureCountAndGetExtentTogether()
+{
+    /* In some cases, we can evaluate the result of GetFeatureCount() */
+    /* and GetExtent() with the same data */
+    CPLString osRequestURL = MakeGetFeatureURL(0, FALSE);
+    return( !bHasExtents && nFeatures < 0 &&
+            osRequestURL.ifind("FILTER") == std::string::npos &&
+            osRequestURL.ifind("MAXFEATURES") == std::string::npos &&
+            osRequestURL.ifind("COUNT") == std::string::npos &&
+            !(GetLayerDefn()->IsGeometryIgnored()) );
+}
 
 /************************************************************************/
 /*                           GetFeatureCount()                          */
@@ -1485,7 +1503,17 @@ int OGRWFSLayer::GetFeatureCount( int bForce )
             return poBaseLayer->GetFeatureCount(bForce);
     }
 
-    nFeatures = OGRLayer::GetFeatureCount(bForce);
+    /* In some cases, we can evaluate the result of GetFeatureCount() */
+    /* and GetExtent() with the same data */
+    if( CanRunGetFeatureCountAndGetExtentTogether() )
+    {
+        OGREnvelope sDummy;
+        GetExtent(&sDummy);
+    }
+
+    if( nFeatures < 0 )
+        nFeatures = OGRLayer::GetFeatureCount(bForce);
+
     return nFeatures;
 }
 
@@ -1533,7 +1561,34 @@ OGRErr OGRWFSLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     if (TestCapability(OLCFastGetExtent))
         return poBaseLayer->GetExtent(psExtent, bForce);
 
-    return OGRLayer::GetExtent(psExtent, bForce);
+    /* In some cases, we can evaluate the result of GetFeatureCount() */
+    /* and GetExtent() with the same data */
+    if( CanRunGetFeatureCountAndGetExtentTogether() )
+    {
+        bCountFeaturesInGetNextFeature = TRUE;
+        nFeatures = 0;
+    }
+
+    OGRErr eErr = OGRLayer::GetExtent(psExtent, bForce);
+
+    if( bCountFeaturesInGetNextFeature )
+    {
+        if( eErr == OGRERR_NONE )
+        {
+            dfMinX = psExtent->MinX;
+            dfMinY = psExtent->MinY;
+            dfMaxX = psExtent->MaxX;
+            dfMaxY = psExtent->MaxY;
+            bHasExtents = TRUE;
+        }
+        else
+        {
+            nFeatures = -1;
+        }
+        bCountFeaturesInGetNextFeature = FALSE;
+    }
+
+    return eErr;
 }
 
 /************************************************************************/
@@ -1825,6 +1880,7 @@ OGRErr OGRWFSLayer::CreateFeature( OGRFeature *poFeature )
     /* Invalidate layer */
     bReloadNeeded = TRUE;
     nFeatures = -1;
+    bHasExtents = FALSE;
 
     return OGRERR_NONE;
 }
@@ -2014,6 +2070,7 @@ OGRErr OGRWFSLayer::SetFeature( OGRFeature *poFeature )
     /* Invalidate layer */
     bReloadNeeded = TRUE;
     nFeatures = -1;
+    bHasExtents = FALSE;
 
     return OGRERR_NONE;
 }
@@ -2149,6 +2206,7 @@ OGRErr OGRWFSLayer::DeleteFromFilter( CPLString osOGCFilter )
     /* Invalidate layer */
     bReloadNeeded = TRUE;
     nFeatures = -1;
+    bHasExtents = FALSE;
 
     return OGRERR_NONE;
 }

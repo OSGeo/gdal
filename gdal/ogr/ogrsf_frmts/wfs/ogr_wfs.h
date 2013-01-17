@@ -83,7 +83,10 @@ class OGRWFSLayer : public OGRLayer
 
     CPLString           osGeometryColumnName;
     OGRwkbGeometryType  eGeomType;
-    int nFeatures;
+    int                 nFeatures;
+    int                 bCountFeaturesInGetNextFeature;
+
+    int                 CanRunGetFeatureCountAndGetExtentTogether();
 
     CPLString           MakeGetFeatureURL(int nMaxFeatures, int bRequestHits);
     int                 MustRetryIfNonCompliantServer(const char* pszServerAnswer);
