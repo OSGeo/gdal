@@ -373,6 +373,83 @@ def ogr_wfs_geoserver_shapezip():
     return 'success'
 
 ###############################################################################
+# Test WFS paging
+
+def ogr_wfs_geoserver_paging():
+    if gdaltest.wfs_drv is None:
+        return 'skip'
+    if not gdaltest.have_gml_reader:
+        if gdaltest.geoserver_wfs is None:
+            if gdaltest.gdalurlopen('http://demo.opengeo.org/geoserver/wfs') is None:
+                gdaltest.geoserver_wfs = False
+                print('cannot open URL')
+                return 'skip'
+            gdaltest.geoserver_wfs = True
+
+    if gdaltest.geoserver_wfs != True:
+        return 'skip'
+
+    ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=og:bugsites&VERSION=1.1.0')
+    lyr = ds.GetLayer(0)
+    feature_count_ref = lyr.GetFeatureCount()
+    page_size = (int)(feature_count_ref / 3) + 1
+    ds = None
+
+    # Test with WFS 1.0.0
+    gdal.SetConfigOption('OGR_WFS_PAGING_ALLOWED', 'ON')
+    gdal.SetConfigOption('OGR_WFS_PAGE_SIZE', '%d' % page_size)
+    ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=og:bugsites&VERSION=1.0.0')
+    gdal.SetConfigOption('OGR_WFS_PAGING_ALLOWED', None)
+    gdal.SetConfigOption('OGR_WFS_PAGE_SIZE', None)
+    if ds is None:
+        gdaltest.post_reason('did not managed to open WFS datastore')
+        return 'fail'
+
+    lyr = ds.GetLayer(0)
+    feature_count_wfs100 = lyr.GetFeatureCount()
+    ds = None
+
+    if feature_count_wfs100 != feature_count_ref:
+        gdaltest.post_reason('fail')
+        print(feature_count_wfs100)
+        print(feature_count_ref)
+        return 'fail'
+
+    # Test with WFS 1.1.0
+    gdal.SetConfigOption('OGR_WFS_PAGING_ALLOWED', 'ON')
+    gdal.SetConfigOption('OGR_WFS_PAGE_SIZE', '%d' % page_size)
+    ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=og:bugsites&VERSION=1.1.0')
+    gdal.SetConfigOption('OGR_WFS_PAGING_ALLOWED', None)
+    gdal.SetConfigOption('OGR_WFS_PAGE_SIZE', None)
+    if ds is None:
+        gdaltest.post_reason('did not managed to open WFS datastore')
+        return 'fail'
+
+    lyr = ds.GetLayer(0)
+    feature_count_wfs110 = lyr.GetFeatureCount()
+
+    feature_count_wfs110_at_hand = 0
+    lyr.ResetReading()
+    feat = lyr.GetNextFeature()
+    while feat is not None:
+        feature_count_wfs110_at_hand = feature_count_wfs110_at_hand + 1
+        feat = lyr.GetNextFeature()
+    ds = None
+
+    if feature_count_wfs110 != feature_count_ref:
+        gdaltest.post_reason('fail')
+        print(feature_count_wfs100)
+        print(feature_count_ref)
+        return 'fail'
+
+    if feature_count_wfs110_at_hand != feature_count_ref:
+        gdaltest.post_reason('fail')
+        print(feature_count_wfs110_at_hand)
+        print(feature_count_ref)
+        return 'fail'
+
+    return 'success'
+###############################################################################
 # Test reading a Deegree WFS server
 
 def ogr_wfs_deegree():
@@ -1042,6 +1119,7 @@ gdaltest_list = [
     ogr_wfs_geoserver,
     ogr_wfs_geoserver_json,
     ogr_wfs_geoserver_shapezip,
+    ogr_wfs_geoserver_paging,
     ogr_wfs_deegree,
     ogr_wfs_test_ogrsf,
     ogr_wfs_fake_wfs_server,
