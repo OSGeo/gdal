@@ -370,7 +370,7 @@ OGRFeatureDefn* OGRWFSLayer::BuildLayerDefnFromFeatureClass(GMLFeatureClass* poC
 /*                       MakeGetFeatureURL()                            */
 /************************************************************************/
 
-CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
+CPLString OGRWFSLayer::MakeGetFeatureURL(int nRequestMaxFeatures, int bRequestHits)
 {
     CPLString osURL(pszBaseURL);
     osURL = CPLURLAddKVP(osURL, "SERVICE", "WFS");
@@ -382,34 +382,19 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nMaxFeatures, int bRequestHits)
 
     if (poDS->IsPagingAllowed() && !bRequestHits)
     {
-        if (nFeatures < 0)
-        {
-            if ((m_poAttrQuery == NULL || osWFSWhere.size() != 0) &&
-                poDS->GetFeatureSupportHits())
-            {
-                nFeatures = ExecuteGetFeatureResultTypeHits();
-            }
-        }
-        if (nFeatures >= poDS->GetPageSize())
-        {
-            osURL = CPLURLAddKVP(osURL, "STARTINDEX",
-                CPLSPrintf("%d", nPagingStartIndex +
-                                 poDS->GetBaseStartIndex()));
-            nMaxFeatures = poDS->GetPageSize();
-            nFeatureCountRequested = nMaxFeatures;
-            bPagingActive = TRUE;
-        }
-        else
-        {
-            osURL = CPLURLAddKVP(osURL, "STARTINDEX", NULL);
-        }
+        osURL = CPLURLAddKVP(osURL, "STARTINDEX",
+            CPLSPrintf("%d", nPagingStartIndex +
+                                poDS->GetBaseStartIndex()));
+        nRequestMaxFeatures = poDS->GetPageSize();
+        nFeatureCountRequested = nRequestMaxFeatures;
+        bPagingActive = TRUE;
     }
 
-    if (nMaxFeatures)
+    if (nRequestMaxFeatures)
     {
         osURL = CPLURLAddKVP(osURL,
                              atoi(poDS->GetVersion()) >= 2 ? "COUNT" : "MAXFEATURES",
-                             CPLSPrintf("%d", nMaxFeatures));
+                             CPLSPrintf("%d", nRequestMaxFeatures));
     }
     if (pszNS && poDS->GetNeedNAMESPACE())
     {
@@ -686,10 +671,10 @@ int OGRWFSLayer::MustRetryIfNonCompliantServer(const char* pszServerAnswer)
 /*                         FetchGetFeature()                            */
 /************************************************************************/
 
-OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
+OGRDataSource* OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
 {
 
-    CPLString osURL = MakeGetFeatureURL(nMaxFeatures, FALSE);
+    CPLString osURL = MakeGetFeatureURL(nRequestMaxFeatures, FALSE);
     CPLDebug("WFS", "%s", osURL.c_str());
 
     CPLHTTPResult* psResult = NULL;
@@ -732,14 +717,14 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
         if (nRead != 0)
         {
             if (MustRetryIfNonCompliantServer(szBuffer))
-                return FetchGetFeature(nMaxFeatures);
+                return FetchGetFeature(nRequestMaxFeatures);
 
             if (strstr(szBuffer, "<ServiceExceptionReport") != NULL ||
                 strstr(szBuffer, "<ows:ExceptionReport") != NULL)
             {
                 if (poDS->IsOldDeegree(szBuffer))
                 {
-                    return FetchGetFeature(nMaxFeatures);
+                    return FetchGetFeature(nRequestMaxFeatures);
                 }
 
                 CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
@@ -844,7 +829,7 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
     if (MustRetryIfNonCompliantServer((const char*)pabyData))
     {
         CPLHTTPDestroyResult(psResult);
-        return FetchGetFeature(nMaxFeatures);
+        return FetchGetFeature(nRequestMaxFeatures);
     }
 
     if (strstr((const char*)pabyData, "<ServiceExceptionReport") != NULL ||
@@ -853,7 +838,7 @@ OGRDataSource* OGRWFSLayer::FetchGetFeature(int nMaxFeatures)
         if (poDS->IsOldDeegree((const char*)pabyData))
         {
             CPLHTTPDestroyResult(psResult);
-            return FetchGetFeature(nMaxFeatures);
+            return FetchGetFeature(nRequestMaxFeatures);
         }
 
         CPLError(CE_Failure, CPLE_AppDefined, "Error returned by server : %s",
