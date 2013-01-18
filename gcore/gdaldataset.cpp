@@ -228,11 +228,11 @@ GDALDataset::GDALDataset()
  * This is the accepted method of closing a GDAL dataset and deallocating
  * all resources associated with it.
  *
- * Equivelent of the C callable GDALClose().  Except that GDALClose() first
+ * Equivalent of the C callable GDALClose().  Except that GDALClose() first
  * decrements the reference count, and then closes only if it has dropped to
  * zero.
  *
- * For Windows users, it is not recommanded using the delete operator on the
+ * For Windows users, it is not recommended to use the delete operator on the
  * dataset object because of known issues when allocating and freeing memory across
  * module boundaries. Calling GDALClose() is then a better option.
  */
@@ -571,7 +571,7 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 
  \brief Fetch raster width in pixels.
 
- Equivelent of the C function GDALGetRasterXSize().
+ Equivalent of the C function GDALGetRasterXSize().
 
  @return the width in pixels of raster bands in this GDALDataset.
 
@@ -610,7 +610,7 @@ int CPL_STDCALL GDALGetRasterXSize( GDALDatasetH hDataset )
 
  \brief Fetch raster height in pixels.
 
- Equivelent of the C function GDALGetRasterYSize().
+ Equivalent of the C function GDALGetRasterYSize().
 
  @return the height in pixels of raster bands in this GDALDataset.
 
@@ -1140,7 +1140,7 @@ void GDALDataset::MarkAsShared()
     {
         CPLFree(psStruct);
         ReportError(CE_Failure, CPLE_AppDefined,
-                 "An existing shared dataset has already this description. This should not happen");
+                 "An existing shared dataset already has this description. This should not happen.");
     }
     else
     {
@@ -1277,10 +1277,10 @@ const GDAL_GCP * CPL_STDCALL GDALGetGCPs( GDALDatasetH hDS )
  *
  * This method assigns the passed set of GCPs to this dataset, as well as
  * setting their coordinate system.  Internally copies are made of the
- * coordinate system and list of points, so the caller remains resposible for
+ * coordinate system and list of points, so the caller remains responsible for
  * deallocating these arguments if appropriate. 
  *
- * Most formats do not support setting of GCPs, even foramts that can 
+ * Most formats do not support setting of GCPs, even formats that can 
  * handle GCPs.  These formats will return CE_Failure. 
  *
  * @param nGCPCount number of GCPs being assigned. 
@@ -1621,7 +1621,7 @@ CPLErr GDALDataset::RasterIO( GDALRWFlag eRWFlag,
     }
 
 /* -------------------------------------------------------------------- */
-/*      If pixel and line spaceing are defaulted assign reasonable      */
+/*      If pixel and line spacing are defaulted assign reasonable      */
 /*      value assuming a packed buffer.                                 */
 /* -------------------------------------------------------------------- */
     if( nPixelSpace == 0 )
@@ -2170,9 +2170,9 @@ CPLErr CPL_STDCALL GDALCreateDatasetMaskBand( GDALDatasetH hDS, int nFlags )
  * The first successful open will result in a returned dataset.  If all
  * drivers fail then NULL is returned and an error is issued.
  *
- * Several recommandations :
+ * Several recommendations :
  * <ul>
- * <li>If you open a dataset object with GA_Update access, it is not recommanded
+ * <li>If you open a dataset object with GA_Update access, it is not recommended
  * to open a new dataset on the same underlying file.</li>
  * <li>The returned dataset should only be accessed by one thread at a time. If you
  * want to use it from different threads, you must add all necessary code (mutexes, etc.)
@@ -2514,7 +2514,7 @@ static int GDALDumpOpenDatasetsForeach(void* elt, void* user_data)
  * \brief List open datasets.
  *
  * Dumps a list of all open datasets (shared or not) to the indicated 
- * text file (may be stdout or stderr).   This function is primariliy intended
+ * text file (may be stdout or stderr).   This function is primarily intended
  * to assist in debugging "dataset leaks" and reference counting issues. 
  * The information reported includes the dataset name, referenced count, 
  * shared status, driver name, size, and band count. 
@@ -2708,7 +2708,7 @@ void CPL_STDCALL GDALEndAsyncReader(GDALDatasetH hDS, GDALAsyncReaderH hAsyncRea
  * This method should release any reference to other datasets (e.g. a VRT
  * dataset to its sources), but not close the current dataset itself.
  *
- * If at least, one reference to a dependant dataset has been dropped,
+ * If at least, one reference to a dependent dataset has been dropped,
  * this method should return TRUE. Otherwise it *should* return FALSE.
  * (Failure to return the proper value might result in infinite loop)
  *
