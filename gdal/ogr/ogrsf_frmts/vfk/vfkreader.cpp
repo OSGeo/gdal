@@ -165,12 +165,16 @@ int VFKReader::ReadDataBlocks()
     VSIFSeek(m_poFD, 0, SEEK_SET);
     while ((pszLine = ReadLine()) != NULL) {
         if (strlen(pszLine) < 2 || pszLine[0] != '&')
+        {
+            CPLFree(pszLine);
             continue;
+        }
         if (pszLine[1] == 'B') {
             pszBlockName = GetDataBlockName(pszLine);
             if (pszBlockName == NULL) { 
                 CPLError(CE_Failure, CPLE_NotSupported, 
                          "Corrupted data - line\n%s\n", pszLine);
+                CPLFree(pszLine);
                 return -1;
             }
             poNewDataBlock = (IVFKDataBlock *) CreateDataBlock(pszBlockName);
