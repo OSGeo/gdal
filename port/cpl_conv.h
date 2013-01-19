@@ -131,6 +131,8 @@ int CPL_DLL CPLGetExecPath( char *pszPathBuf, int nMaxLength );
 /* -------------------------------------------------------------------- */
 
 int CPL_DLL CPLSystem( const char* pszApplicationName, const char* pszCommandLine );
+int CPL_DLL CPLSpawn( const char * const papszArgv[], VSILFILE* fin, VSILFILE* fout,
+                      int bDisplayErr );
 
 /* -------------------------------------------------------------------- */
 /*      Filename handling functions.                                    */
@@ -262,7 +264,7 @@ public:
 private:
     char *pszOldLocale;
 
-    // Make it non-copyable
+    /* Make it non-copyable */
     CPLLocaleC(CPLLocaleC&);
     CPLLocaleC& operator=(CPLLocaleC&);
 };

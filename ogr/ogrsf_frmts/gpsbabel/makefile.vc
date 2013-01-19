@@ -1,5 +1,5 @@
 
-OBJ	=	ogrgpsbabeldriver.obj ogrgpsbabeldatasource.obj ogrgpsbabelwritedatasource.obj ogrgpsbabelfork.obj
+OBJ	=	ogrgpsbabeldriver.obj ogrgpsbabeldatasource.obj ogrgpsbabelwritedatasource.obj
 
 EXTRAFLAGS =	-I.. -I..\..
 
