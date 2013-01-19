@@ -538,6 +538,7 @@ class PDFDataset : public GDALPamDataset
 #endif
 #ifdef HAVE_PODOFO
     PoDoFo::PdfMemDocument* poDocPodofo;
+    int          bPdfToPpmFailed;
 #endif
     GDALPDFObject* poPageObj;
 
@@ -1048,6 +1049,9 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 #ifdef HAVE_PODOFO
       if (!poGDS->bUsePoppler)
       {
+        if( poGDS->bPdfToPpmFailed )
+            return CE_Failure;
+
         if (nBand == 4)
         {
             memset(pImage, 255, nBlockXSize * nBlockYSize);
@@ -1065,28 +1069,77 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                ((size_t)3) * nBlockXSize *
                ((nBlockYSize == 1) ? nRasterYSize : nBlockYSize));
 
-        CPLString osTmpFilenamePrefix = CPLGenerateTempFilename("pdf");
-        CPLString osTmpFilename(CPLSPrintf("%s-%d.ppm",
-                                           osTmpFilenamePrefix.c_str(),
-                                           poGDS->iPage));
+        CPLString osTmpFilename;
+        int nRet;
 
-        CPLString osCmd = CPLSPrintf("pdftoppm -r %f -x %d -y %d -W %d -H %d -f %d -l %d \"%s\" \"%s\"",
-                   poGDS->dfDPI,
-                   nBlockXOff * nBlockXSize,
-                   (nBlockYSize == 1) ? 0 : nBlockYOff * nBlockYSize,
-                   nReqXSize,
-                   nReqYSize,
-                   poGDS->iPage, poGDS->iPage,
-                   poGDS->osFilename.c_str(), osTmpFilenamePrefix.c_str());
-        if (poGDS->osUserPwd.size() != 0)
+#ifdef notdef
+        int bUseSpawn = CSLTestBoolean(CPLGetConfigOption("GDAL_PDF_USE_SPAWN", "YES"));
+        if( !bUseSpawn )
         {
-            osCmd += " -upw \"";
-            osCmd += poGDS->osUserPwd;
-            osCmd += "\"";
+            CPLString osCmd = CPLSPrintf("pdftoppm -r %f -x %d -y %d -W %d -H %d -f %d -l %d \"%s\"",
+                    poGDS->dfDPI,
+                    nBlockXOff * nBlockXSize,
+                    (nBlockYSize == 1) ? 0 : nBlockYOff * nBlockYSize,
+                    nReqXSize,
+                    nReqYSize,
+                    poGDS->iPage, poGDS->iPage,
+                    poGDS->osFilename.c_str());
+
+            if (poGDS->osUserPwd.size() != 0)
+            {
+                osCmd += " -upw \"";
+                osCmd += poGDS->osUserPwd;
+                osCmd += "\"";
+            }
+
+            CPLString osTmpFilenamePrefix = CPLGenerateTempFilename("pdf");
+            osTmpFilename = CPLSPrintf("%s-%d.ppm",
+                                           osTmpFilenamePrefix.c_str(),
+                                           poGDS->iPage);
+            osCmd += CPLSPrintf(" \"%s\"", osTmpFilenamePrefix.c_str());
+
+            CPLDebug("PDF", "Running '%s'", osCmd.c_str());
+            nRet = CPLSystem(NULL, osCmd.c_str());
+        }
+        else
+#endif
+        {
+            char** papszArgs = NULL;
+            papszArgs = CSLAddString(papszArgs, "pdftoppm");
+            papszArgs = CSLAddString(papszArgs, "-r");
+            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%f", poGDS->dfDPI));
+            papszArgs = CSLAddString(papszArgs, "-x");
+            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", nBlockXOff * nBlockXSize));
+            papszArgs = CSLAddString(papszArgs, "-y");
+            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", (nBlockYSize == 1) ? 0 : nBlockYOff * nBlockYSize));
+            papszArgs = CSLAddString(papszArgs, "-W");
+            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", nReqXSize));
+            papszArgs = CSLAddString(papszArgs, "-H");
+            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", nReqYSize));
+            papszArgs = CSLAddString(papszArgs, "-f");
+            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", poGDS->iPage));
+            papszArgs = CSLAddString(papszArgs, "-l");
+            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", poGDS->iPage));
+            if (poGDS->osUserPwd.size() != 0)
+            {
+                papszArgs = CSLAddString(papszArgs, "-upw");
+                papszArgs = CSLAddString(papszArgs, poGDS->osUserPwd.c_str());
+            }
+            papszArgs = CSLAddString(papszArgs, poGDS->osFilename.c_str());
+
+            osTmpFilename = CPLSPrintf("/vsimem/pdf/temp_%p.ppm", poDS);
+            VSILFILE* fpOut = VSIFOpenL(osTmpFilename, "wb");
+            if( fpOut != NULL )
+            {
+                nRet = CPLSpawn(papszArgs, NULL, fpOut, FALSE);
+                VSIFCloseL(fpOut);
+            }
+            else
+                nRet = -1;
+
+            CSLDestroy(papszArgs);
         }
 
-        CPLDebug("PDF", "Running '%s'", osCmd.c_str());
-        int nRet = CPLSystem(NULL, osCmd.c_str());
         if (nRet == 0)
         {
             GDALDataset* poDS = (GDALDataset*) GDALOpen(osTmpFilename, GA_ReadOnly);
@@ -1112,6 +1165,7 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         else
         {
             CPLDebug("PDF", "Ret code = %d", nRet);
+            poGDS->bPdfToPpmFailed = TRUE;
         }
         VSIUnlink(osTmpFilename);
       }
@@ -1233,6 +1287,7 @@ PDFDataset::PDFDataset()
 #endif
 #ifdef HAVE_PODOFO
     poDocPodofo = NULL;
+    bPdfToPpmFailed = FALSE;
 #endif
     poImageObj = NULL;
     pszWKT = NULL;

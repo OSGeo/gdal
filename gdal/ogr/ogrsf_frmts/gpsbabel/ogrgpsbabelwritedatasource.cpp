@@ -71,7 +71,7 @@ OGRGPSBabelWriteDataSource::~OGRGPSBabelWriteDataSource()
 
 int OGRGPSBabelWriteDataSource::Convert()
 {
-    int bRet = FALSE;
+    int nRet = -1;
     if (osTmpFileName.size() > 0 && pszFilename != NULL && pszGPSBabelDriverName != NULL)
     {
         if (OGRGPSBabelDataSource::IsSpecialFile(pszFilename))
@@ -82,7 +82,7 @@ int OGRGPSBabelWriteDataSource::Convert()
             VSILFILE* tmpfp = VSIFOpenL(osTmpFileName.c_str(), "rb");
             if (tmpfp)
             {
-                bRet = ForkAndPipe(argv, tmpfp, NULL);
+                nRet = CPLSpawn(argv, tmpfp, NULL, TRUE);
 
                 VSIFCloseL(tmpfp);
                 tmpfp = NULL;
@@ -103,7 +103,7 @@ int OGRGPSBabelWriteDataSource::Convert()
                 VSILFILE* tmpfp = VSIFOpenL(osTmpFileName.c_str(), "rb");
                 if (tmpfp)
                 {
-                    bRet = ForkAndPipe(argv, tmpfp, fp);
+                    nRet = CPLSpawn(argv, tmpfp, fp, TRUE);
 
                     VSIFCloseL(tmpfp);
                     tmpfp = NULL;
@@ -118,7 +118,7 @@ int OGRGPSBabelWriteDataSource::Convert()
         osTmpFileName = "";
     }
 
-    return bRet;
+    return nRet == 0;
 }
 
 /************************************************************************/

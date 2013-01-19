@@ -33,8 +33,6 @@
 #include "ogrsf_frmts.h"
 #include "cpl_string.h"
 
-int ForkAndPipe(const char * const argv[], VSILFILE* fin, VSILFILE* fout);
-
 /************************************************************************/
 /*                        OGRGPSBabelDataSource                         */
 /************************************************************************/
