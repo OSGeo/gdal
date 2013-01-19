@@ -55,6 +55,10 @@ class VSIPDFFileStream: public BaseStream
                          Guint lengthA, Object *dictA);
         virtual ~VSIPDFFileStream();
 
+#ifdef POPPLER_0_23_OR_LATER
+        virtual BaseStream* copy();
+#endif
+
         virtual Stream *   makeSubStream(Guint startA, GBool limitedA,
                                          Guint lengthA, Object *dictA);
         virtual int        getPos();

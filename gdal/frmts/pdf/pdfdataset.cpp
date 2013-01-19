@@ -118,9 +118,17 @@ class GDALPDFOutputDev : public SplashOutputDev
         void SetEnableText(int bFlag) { bEnableText = bFlag; }
         void SetEnableBitmap(int bFlag) { bEnableBitmap = bFlag; }
 
-        virtual void startPage(int pageNum, GfxState *state)
+        virtual void startPage(int pageNum, GfxState *state
+#ifdef POPPLER_0_23_OR_LATER
+                               ,XRef* xref
+#endif
+        )
         {
-            SplashOutputDev::startPage(pageNum, state);
+            SplashOutputDev::startPage(pageNum, state
+#ifdef POPPLER_0_23_OR_LATER
+                                       ,xref
+#endif
+            );
             SplashBitmap* poBitmap = getBitmap();
             memset(poBitmap->getDataPtr(), 255, poBitmap->getRowSize() * poBitmap->getHeight());
         }
