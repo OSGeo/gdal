@@ -635,6 +635,7 @@ PROJ_STATIC
 PODOFO_INC
 HAVE_PODOFO
 POPPLER_INC
+POPPLER_0_23_OR_LATER
 POPPLER_0_20_OR_LATER
 POPPLER_BASE_STREAM_HAS_TWO_ARGS
 POPPLER_HAS_OPTCONTENT
@@ -27149,6 +27150,29 @@ $as_echo_n "checking if we have Poppler >= 0.20.0... " >&6; }
                 POPPLER_0_20_OR_LATER=yes
                 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+
+                # And now we check if we have Poppler >= 0.23.0
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking if we have Poppler >= 0.23.0" >&5
+$as_echo_n "checking if we have Poppler >= 0.23.0... " >&6; }
+                rm -f testpoppler.*
+                echo '#include <poppler/Object.h>' > testpoppler.cpp
+                echo '#include <poppler/Stream.h>' >> testpoppler.cpp
+                echo 'class TestStream: public BaseStream {' >> testpoppler.cpp
+                echo 'public:' >> testpoppler.cpp
+                echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
+                echo '  ~TestStream() {}' >> testpoppler.cpp
+                echo '  virtual BaseStream *copy() { return BaseStream::copy(); }' >> testpoppler.cpp
+                echo '};' >> testpoppler.cpp
+                echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
+                if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                    POPPLER_0_23_OR_LATER=yes
+                    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+                else
+                    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                fi
+
             else
                 { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -27176,6 +27200,8 @@ POPPLER_HAS_OPTCONTENT=$POPPLER_HAS_OPTCONTENT
 POPPLER_BASE_STREAM_HAS_TWO_ARGS=$POPPLER_BASE_STREAM_HAS_TWO_ARGS
 
 POPPLER_0_20_OR_LATER=$POPPLER_0_20_OR_LATER
+
+POPPLER_0_23_OR_LATER=$POPPLER_0_23_OR_LATER
 
 POPPLER_INC=$POPPLER_INC
 
