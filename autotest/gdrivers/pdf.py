@@ -1423,7 +1423,7 @@ def pdf_write_ogr():
 
     if pdf_is_poppler():
         ds = gdal.Open('tmp/pdf_write_ogr.pdf')
-        ds.GetRasterBand(1).Checksum()
+        cs_ref = ds.GetRasterBand(1).Checksum()
         layers = ds.GetMetadata_List('LAYERS')
         ds = None
 
@@ -1431,6 +1431,39 @@ def pdf_write_ogr():
     ogr_lyr = ogr_ds.GetLayer(0)
     feature_count = ogr_lyr.GetFeatureCount()
     ogr_ds = None
+
+    if pdf_is_poppler():
+        gdal.SetConfigOption('GDAL_PDF_RENDERING_OPTIONS', 'RASTER')
+        ds = gdal.Open('tmp/pdf_write_ogr.pdf')
+        cs_raster = ds.GetRasterBand(1).Checksum()
+        ds = None
+        gdal.SetConfigOption('GDAL_PDF_RENDERING_OPTIONS', 'VECTOR')
+        ds = gdal.Open('tmp/pdf_write_ogr.pdf')
+        cs_vector = ds.GetRasterBand(1).Checksum()
+        ds = None
+        gdal.SetConfigOption('GDAL_PDF_RENDERING_OPTIONS', 'RASTER,VECTOR,TEXT')
+        ds = gdal.Open('tmp/pdf_write_ogr.pdf')
+        cs_raster_vector_text = ds.GetRasterBand(1).Checksum()
+        ds = None
+        gdal.SetConfigOption('GDAL_PDF_RENDERING_OPTIONS', None)
+
+        if cs_raster == cs_ref:
+            gdaltest.post_reason('fail')
+            print(cs_ref)
+            print(cs_raster)
+            return 'fail'
+
+        if cs_vector == cs_ref:
+            gdaltest.post_reason('fail')
+            print(cs_ref)
+            print(cs_vector)
+            return 'fail'
+
+        if cs_raster_vector_text != cs_ref:
+            gdaltest.post_reason('fail')
+            print(cs_ref)
+            print(cs_raster_vector_text)
+            return 'fail'
 
     gdal.Unlink('tmp/pdf_write_ogr.pdf')
 

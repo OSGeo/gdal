@@ -46,12 +46,16 @@ stored as XML raw content in the xml:XMP metadata domain.
 rasterization with the Its default value is 150. Starting with GDAL 1.10, the driver
 will make some effort to guess the DPI value either from a specific metadata item contained in some PDF files, or
 from the raster images inside the PDF (in simple cases).</li>
+<li><i>GDAL_PDF_NEATLINE</i> : (GDAL &gt;= 1.10.0 ) The name of the neatline to select (only available for geospatial PDF, encoded
+according to OGC Best Practice). This defaults to "Map Layers" for USGS Topo PDF. If not found, the neatline that
+covers the largest area.</li>
+
 <p>
 Starting with GDAL &gt;= 1.10.0 and when GDAL is compiled against libpoppler, the following options are also
 available :
 
-<li><i>GDAL_PDF_RENDERING_OPTIONS</i> : a combination of VECTOR, BITMAP and TEXT separated
-by comma, to select whether vector, bitmap or text features should be rendered. If the option is not
+<li><i>GDAL_PDF_RENDERING_OPTIONS</i> : a combination of VECTOR, RASTER and TEXT separated
+by comma, to select whether vector, raster or text features should be rendered. If the option is not
 specified, all features are rendered.</li>
 <li><i>GDAL_PDF_BANDS</i> = 3 or 4 : whether the PDF should be rendered as a RGB (3) or RGBA (4) image.
 Defaults to 3.</li>
