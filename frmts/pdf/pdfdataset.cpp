@@ -539,7 +539,7 @@ class PDFDataset : public GDALPamDataset
 
     double       dfMaxArea;
     int          ParseLGIDictObject(GDALPDFObject* poLGIDict);
-    int          ParseLGIDictDictFirstPass(GDALPDFDictionary* poLGIDict, int* pbIsLargestArea = NULL);
+    int          ParseLGIDictDictFirstPass(GDALPDFDictionary* poLGIDict, int* pbIsBestCandidate = NULL);
     int          ParseLGIDictDictSecondPass(GDALPDFDictionary* poLGIDict);
     int          ParseProjDict(GDALPDFDictionary* poProjDict);
     int          ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMediaBoxHeight);
@@ -3159,10 +3159,10 @@ int PDFDataset::ParseLGIDictObject(GDALPDFObject* poLGIDict)
                 return FALSE;
             }
 
-            int bIsLargestArea = FALSE;
-            if (ParseLGIDictDictFirstPass(poArrayElt->GetDictionary(), &bIsLargestArea))
+            int bIsBestCandidate = FALSE;
+            if (ParseLGIDictDictFirstPass(poArrayElt->GetDictionary(), &bIsBestCandidate))
             {
-                if (bIsLargestArea || iMax < 0)
+                if (bIsBestCandidate || iMax < 0)
                     iMax = i;
             }
         }
@@ -3260,12 +3260,12 @@ static double Get(GDALPDFDictionary* poDict, const char* pszName)
 /************************************************************************/
 
 int PDFDataset::ParseLGIDictDictFirstPass(GDALPDFDictionary* poLGIDict,
-                                          int* pbIsLargestArea)
+                                          int* pbIsBestCandidate)
 {
     int i;
 
-    if (pbIsLargestArea)
-        *pbIsLargestArea = FALSE;
+    if (pbIsBestCandidate)
+        *pbIsBestCandidate = FALSE;
 
     if (poLGIDict == NULL)
         return FALSE;
@@ -3335,27 +3335,49 @@ int PDFDataset::ParseLGIDictDictFirstPass(GDALPDFDictionary* poLGIDict,
             return FALSE;
         }
 
-        double dfMinX = 0, dfMinY = 0, dfMaxX = 0, dfMaxY = 0;
-        for(i=0;i<nLength;i+=2)
+        GDALPDFObject* poDescription;
+        int bIsMapLayers = FALSE;
+        if ( (poDescription = poLGIDict->Get("Description")) != NULL &&
+            poDescription->GetType() == PDFObjectType_String )
         {
-            double dfX = Get(poNeatline, i);
-            double dfY = Get(poNeatline, i + 1);
-            if (i == 0 || dfX < dfMinX) dfMinX = dfX;
-            if (i == 0 || dfY < dfMinY) dfMinY = dfY;
-            if (i == 0 || dfX > dfMaxX) dfMaxX = dfX;
-            if (i == 0 || dfY > dfMaxY) dfMaxY = dfY;
-        }
-        double dfArea = (dfMaxX - dfMinX) * (dfMaxY - dfMinY);
-        if (dfArea < dfMaxArea)
-        {
-            CPLDebug("PDF", "Not the largest neatline. Skipping it");
-            return TRUE;
+            CPLDebug("PDF", "Description = %s", poDescription->GetString().c_str());
+
+            /* USGS PDF maps have several LGIDict. Keep the one whose description */
+            /* is "Map Layers" */
+            if( strcmp(poDescription->GetString().c_str(), "Map Layers") == 0 )
+            {
+                dfMaxArea = 1e300;
+                bIsMapLayers = TRUE;
+            }
         }
 
-        CPLDebug("PDF", "This is a the largest neatline for now");
-        dfMaxArea = dfArea;
-        if (pbIsLargestArea)
-            *pbIsLargestArea = TRUE;
+        if( !bIsMapLayers )
+        {
+            double dfMinX = 0, dfMinY = 0, dfMaxX = 0, dfMaxY = 0;
+            for(i=0;i<nLength;i+=2)
+            {
+                double dfX = Get(poNeatline, i);
+                double dfY = Get(poNeatline, i + 1);
+                if (i == 0 || dfX < dfMinX) dfMinX = dfX;
+                if (i == 0 || dfY < dfMinY) dfMinY = dfY;
+                if (i == 0 || dfX > dfMaxX) dfMaxX = dfX;
+                if (i == 0 || dfY > dfMaxY) dfMaxY = dfY;
+            }
+            double dfArea = (dfMaxX - dfMinX) * (dfMaxY - dfMinY);
+            if (dfArea < dfMaxArea)
+            {
+                CPLDebug("PDF", "Not the largest neatline. Skipping it");
+                return TRUE;
+            }
+
+            CPLDebug("PDF", "This is the largest neatline for now");
+            dfMaxArea = dfArea;
+        }
+        else
+            CPLDebug("PDF", "The \"Map Layers\" registration will be selected");
+
+        if (pbIsBestCandidate)
+            *pbIsBestCandidate = TRUE;
 
         delete poNeatLine;
         poNeatLine = new OGRPolygon();
