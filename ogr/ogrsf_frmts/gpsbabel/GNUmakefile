@@ -1,7 +1,7 @@
 
 include ../../../GDALmake.opt
 
-OBJ	=	ogrgpsbabeldriver.o ogrgpsbabeldatasource.o ogrgpsbabelwritedatasource.o ogrgpsbabelfork.o
+OBJ	=	ogrgpsbabeldriver.o ogrgpsbabeldatasource.o ogrgpsbabelwritedatasource.o
 
 CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 
