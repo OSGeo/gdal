@@ -3320,6 +3320,11 @@ int PDFDataset::ParseLGIDictDictFirstPass(GDALPDFDictionary* poLGIDict,
                  poVersion->GetInt());
     }
 
+    /* USGS PDF maps have several LGIDict. Keep the one whose description */
+    /* is "Map Layers" by default */
+    const char* pszNeatlineToSelect =
+        CPLGetConfigOption("GDAL_PDF_NEATLINE", "Map Layers");
+
 /* -------------------------------------------------------------------- */
 /*      Extract Neatline attribute                                      */
 /* -------------------------------------------------------------------- */
@@ -3336,22 +3341,20 @@ int PDFDataset::ParseLGIDictDictFirstPass(GDALPDFDictionary* poLGIDict,
         }
 
         GDALPDFObject* poDescription;
-        int bIsMapLayers = FALSE;
+        int bIsAskedNeatline = FALSE;
         if ( (poDescription = poLGIDict->Get("Description")) != NULL &&
             poDescription->GetType() == PDFObjectType_String )
         {
             CPLDebug("PDF", "Description = %s", poDescription->GetString().c_str());
 
-            /* USGS PDF maps have several LGIDict. Keep the one whose description */
-            /* is "Map Layers" */
-            if( strcmp(poDescription->GetString().c_str(), "Map Layers") == 0 )
+            if( EQUAL(poDescription->GetString().c_str(), pszNeatlineToSelect) )
             {
                 dfMaxArea = 1e300;
-                bIsMapLayers = TRUE;
+                bIsAskedNeatline = TRUE;
             }
         }
 
-        if( !bIsMapLayers )
+        if( !bIsAskedNeatline )
         {
             double dfMinX = 0, dfMinY = 0, dfMaxX = 0, dfMaxY = 0;
             for(i=0;i<nLength;i+=2)
@@ -3374,7 +3377,8 @@ int PDFDataset::ParseLGIDictDictFirstPass(GDALPDFDictionary* poLGIDict,
             dfMaxArea = dfArea;
         }
         else
-            CPLDebug("PDF", "The \"Map Layers\" registration will be selected");
+            CPLDebug("PDF", "The \"%s\" registration will be selected",
+                     pszNeatlineToSelect);
 
         if (pbIsBestCandidate)
             *pbIsBestCandidate = TRUE;
