@@ -103,6 +103,18 @@ VSIPDFFileStream::~VSIPDFFileStream()
 }
 
 /************************************************************************/
+/*                                  copy()                              */
+/************************************************************************/
+
+#ifdef POPPLER_0_23_OR_LATER
+BaseStream* VSIPDFFileStream::copy()
+{
+    return new VSIPDFFileStream(poParent, nStart, bLimited,
+                                nLength, &dict);
+}
+#endif
+
+/************************************************************************/
 /*                             makeSubStream()                          */
 /************************************************************************/
 

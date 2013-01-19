@@ -3183,6 +3183,26 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
             if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
                 POPPLER_0_20_OR_LATER=yes
                 AC_MSG_RESULT([yes])
+
+                # And now we check if we have Poppler >= 0.23.0
+                AC_MSG_CHECKING([if we have Poppler >= 0.23.0])
+                rm -f testpoppler.*
+                echo '#include <poppler/Object.h>' > testpoppler.cpp
+                echo '#include <poppler/Stream.h>' >> testpoppler.cpp
+                echo 'class TestStream: public BaseStream {' >> testpoppler.cpp
+                echo 'public:' >> testpoppler.cpp
+                echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
+                echo '  ~TestStream() {}' >> testpoppler.cpp
+                echo '  virtual BaseStream *copy() { return BaseStream::copy(); }' >> testpoppler.cpp
+                echo '};' >> testpoppler.cpp
+                echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
+                if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                    POPPLER_0_23_OR_LATER=yes
+                    AC_MSG_RESULT([yes])
+                else
+                    AC_MSG_RESULT([no])
+                fi
+
             else
                 AC_MSG_RESULT([no])
             fi
@@ -3203,6 +3223,7 @@ AC_SUBST(HAVE_POPPLER, $HAVE_POPPLER)
 AC_SUBST(POPPLER_HAS_OPTCONTENT, $POPPLER_HAS_OPTCONTENT)
 AC_SUBST(POPPLER_BASE_STREAM_HAS_TWO_ARGS, $POPPLER_BASE_STREAM_HAS_TWO_ARGS)
 AC_SUBST(POPPLER_0_20_OR_LATER, $POPPLER_0_20_OR_LATER)
+AC_SUBST(POPPLER_0_23_OR_LATER, $POPPLER_0_23_OR_LATER)
 AC_SUBST(POPPLER_INC, $POPPLER_INC)
 
 dnl ---------------------------------------------------------------------------
