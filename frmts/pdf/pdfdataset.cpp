@@ -936,7 +936,8 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     poSplashOut->SetEnableVector(TRUE);
                 else if (EQUAL(papszTokens[i], "TEXT"))
                     poSplashOut->SetEnableText(TRUE);
-                else if (EQUAL(papszTokens[i], "BITMAP"))
+                else if (EQUAL(papszTokens[i], "RASTER") ||
+                         EQUAL(papszTokens[i], "BITMAP"))
                     poSplashOut->SetEnableBitmap(TRUE);
                 else
                 {
