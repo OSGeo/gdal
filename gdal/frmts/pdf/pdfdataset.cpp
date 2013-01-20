@@ -557,7 +557,7 @@ class PDFDataset : public GDALPamDataset
                               double dfULX, double dfULY, double dfLRX, double dfLRY);
 
     int          bTried;
-    GByte       *pabyData;
+    GByte       *pabyCachedData;
     int          nLastBlockXOff, nLastBlockYOff;
 
     OGRPolygon*  poNeatLine;
@@ -613,11 +613,19 @@ class PDFDataset : public GDALPamDataset
                                          const char * pszValue,
                                          const char * pszDomain = "" );
 
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              int, int *, int, int, int );
+
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
                             const char *pszGCPProjection );
+
+    CPLErr ReadPixels( int nReqXOff, int nReqYOff,
+                       int nReqXSize, int nReqYSize,
+                       GByte* pabyData );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -794,7 +802,7 @@ CPLErr PDFRasterBand::IReadBlockFromTile( int nBlockXOff, int nBlockYOff,
 
     if( poGDS->nLastBlockXOff == nBlockXOff &&
         poGDS->nLastBlockYOff == nBlockYOff &&
-        poGDS->pabyData != NULL )
+        poGDS->pabyCachedData != NULL )
     {
         CPLDebug("PDF", "Using cached block (%d, %d)",
                  nBlockXOff, nBlockYOff);
@@ -805,9 +813,9 @@ CPLErr PDFRasterBand::IReadBlockFromTile( int nBlockXOff, int nBlockYOff,
         if (poGDS->bTried == FALSE)
         {
             poGDS->bTried = TRUE;
-            poGDS->pabyData = (GByte*)VSIMalloc3(3, nBlockXSize, nBlockYSize);
+            poGDS->pabyCachedData = (GByte*)VSIMalloc3(3, nBlockXSize, nBlockYSize);
         }
-        if (poGDS->pabyData == NULL)
+        if (poGDS->pabyCachedData == NULL)
             return CE_Failure;
 
         GDALPDFStream* poStream = poImage->GetStream();
@@ -826,7 +834,7 @@ CPLErr PDFRasterBand::IReadBlockFromTile( int nBlockXOff, int nBlockYOff,
             return CE_Failure;
         }
 
-        memcpy(poGDS->pabyData, pabyStream, poStream->GetLength());
+        memcpy(poGDS->pabyCachedData, pabyStream, poStream->GetLength());
         VSIFree(pabyStream);
         poGDS->nLastBlockXOff = nBlockXOff;
         poGDS->nLastBlockYOff = nBlockYOff;
@@ -844,7 +852,7 @@ CPLErr PDFRasterBand::IReadBlockFromTile( int nBlockXOff, int nBlockYOff,
         {
             for(int i = 0; i < nReqXSize; i++)
             {
-                pabyData[j * nBlockXSize + i] = poGDS->pabyData[3 * (j * nReqXSize + i) + nBand - 1];
+                pabyData[j * nBlockXSize + i] = poGDS->pabyCachedData[3 * (j * nReqXSize + i) + nBand - 1];
             }
         }
     }
@@ -854,7 +862,7 @@ CPLErr PDFRasterBand::IReadBlockFromTile( int nBlockXOff, int nBlockYOff,
         {
             for(int i = 0; i < nReqXSize; i++)
             {
-                pabyData[j * nBlockXSize + i] = poGDS->pabyData[j * nReqXSize + i];
+                pabyData[j * nBlockXSize + i] = poGDS->pabyCachedData[j * nReqXSize + i];
             }
         }
     }
@@ -883,8 +891,8 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             poGDS->aiTiles.resize(0);
             poGDS->bTried = FALSE;
-            CPLFree(poGDS->pabyData);
-            poGDS->pabyData = NULL;
+            CPLFree(poGDS->pabyCachedData);
+            poGDS->pabyCachedData = NULL;
             poGDS->nLastBlockXOff = -1;
             poGDS->nLastBlockYOff = -1;
         }
@@ -903,16 +911,16 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         poGDS->bTried = TRUE;
         if( nBlockYSize == 1 )
-            poGDS->pabyData = (GByte*)VSIMalloc3(MAX(3, poGDS->nBands), nRasterXSize, nRasterYSize);
+            poGDS->pabyCachedData = (GByte*)VSIMalloc3(MAX(3, poGDS->nBands), nRasterXSize, nRasterYSize);
         else
-            poGDS->pabyData = (GByte*)VSIMalloc3(MAX(3, poGDS->nBands), nBlockXSize, nBlockYSize);
+            poGDS->pabyCachedData = (GByte*)VSIMalloc3(MAX(3, poGDS->nBands), nBlockXSize, nBlockYSize);
     }
-    if (poGDS->pabyData == NULL)
+    if (poGDS->pabyCachedData == NULL)
         return CE_Failure;
 
     if( poGDS->nLastBlockXOff == nBlockXOff &&
         (nBlockYSize == 1 || poGDS->nLastBlockYOff == nBlockYOff) &&
-        poGDS->pabyData != NULL )
+        poGDS->pabyCachedData != NULL )
     {
         /*CPLDebug("PDF", "Using cached block (%d, %d)",
                  nBlockXOff, nBlockYOff);*/
@@ -920,19 +928,68 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     else
     {
-        const char* pszRenderingOptions = CPLGetConfigOption("GDAL_PDF_RENDERING_OPTIONS", NULL);
+#ifdef HAVE_PODOFO
+        if (!poGDS->bUsePoppler && nBand == 4)
+        {
+            memset(pImage, 255, nBlockXSize * nBlockYSize);
+            return CE_None;
+        }
+#endif
+
+        CPLErr eErr = poGDS->ReadPixels( nBlockXOff * nBlockXSize,
+                                         (nBlockYSize == 1) ? 0 : nBlockYOff * nBlockYSize,
+                                         nBlockXSize,
+                                         (nBlockYSize == 1) ? nRasterYSize : nBlockYSize,
+                                         poGDS->pabyCachedData);
+        if( eErr == CE_None )
+        {
+            poGDS->nLastBlockXOff = nBlockXOff;
+            poGDS->nLastBlockYOff = nBlockYOff;
+        }
+        else
+        {
+            CPLFree(poGDS->pabyCachedData);
+            poGDS->pabyCachedData = NULL;
+        }
+
+    }
+    if (poGDS->pabyCachedData == NULL)
+        return CE_Failure;
+
+    if( nBlockYSize == 1 )
+        memcpy(pImage,
+               poGDS->pabyCachedData + (nBand - 1) * nBlockXSize * nRasterYSize + nBlockYOff * nBlockXSize,
+               nBlockXSize);
+    else
+        memcpy(pImage,
+               poGDS->pabyCachedData + (nBand - 1) * nBlockXSize * nBlockYSize,
+               nBlockXSize * nBlockYSize);
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                             ReadPixels()                             */
+/************************************************************************/
+
+CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
+                               int nReqXSize, int nReqYSize,
+                               GByte* pabyData )
+{
+    CPLErr eErr = CE_None;
+    const char* pszRenderingOptions = CPLGetConfigOption("GDAL_PDF_RENDERING_OPTIONS", NULL);
 
 #ifdef HAVE_POPPLER
-      if(poGDS->bUsePoppler)
-      {
+    if(bUsePoppler)
+    {
         SplashColor sColor;
         sColor[0] = 255;
         sColor[1] = 255;
         sColor[2] = 255;
         GDALPDFOutputDev *poSplashOut;
-        poSplashOut = new GDALPDFOutputDev((poGDS->nBands < 4) ? splashModeRGB8 : splashModeXBGR8,
-                                           4, gFalse,
-                                           (poGDS->nBands < 4) ? sColor : NULL);
+        poSplashOut = new GDALPDFOutputDev((nBands < 4) ? splashModeRGB8 : splashModeXBGR8,
+                                            4, gFalse,
+                                            (nBands < 4) ? sColor : NULL);
 
         if (pszRenderingOptions != NULL)
         {
@@ -948,25 +1005,24 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 else if (EQUAL(papszTokens[i], "TEXT"))
                     poSplashOut->SetEnableText(TRUE);
                 else if (EQUAL(papszTokens[i], "RASTER") ||
-                         EQUAL(papszTokens[i], "BITMAP"))
+                            EQUAL(papszTokens[i], "BITMAP"))
                     poSplashOut->SetEnableBitmap(TRUE);
                 else
                 {
                     CPLError(CE_Warning, CPLE_NotSupported,
-                             "Value %s is not a valid value for GDAL_PDF_RENDERING_OPTIONS",
-                             papszTokens[i]);
+                                "Value %s is not a valid value for GDAL_PDF_RENDERING_OPTIONS",
+                                papszTokens[i]);
                 }
             }
             CSLDestroy(papszTokens);
         }
 
-        PDFDoc* poDoc = poGDS->poDocPoppler;
+        PDFDoc* poDoc = poDocPoppler;
 #ifdef POPPLER_0_20_OR_LATER
         poSplashOut->startDoc(poDoc);
 #else
         poSplashOut->startDoc(poDoc->getXRef());
 #endif
-        double dfDPI = poGDS->dfDPI;
 
         /* EVIL: we modify a private member... */
         /* poppler (at least 0.12 and 0.14 versions) don't render correctly */
@@ -977,20 +1033,18 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 #ifdef POPPLER_HAS_OPTCONTENT
         Catalog* poCatalog = poDoc->getCatalog();
         OCGs* poOldOCGs = poCatalog->optContent;
-        if (!poGDS->bUseOCG)
+        if (!bUseOCG)
             poCatalog->optContent = NULL;
 #endif
         poDoc->displayPageSlice(poSplashOut,
-                                       poGDS->iPage,
-                                       dfDPI, dfDPI,
-                                       0,
-                                       TRUE, gFalse, gFalse,
-                                       nBlockXOff * nBlockXSize,
-                                       (nBlockYSize == 1) ? 0 : nBlockYOff * nBlockYSize,
-                                       nReqXSize,
-                                       nReqYSize);
+                                        iPage,
+                                        dfDPI, dfDPI,
+                                        0,
+                                        TRUE, gFalse, gFalse,
+                                        nReqXOff, nReqYOff,
+                                        nReqXSize, nReqYSize);
 
-        /* Restore back */
+    /* Restore back */
 #ifdef POPPLER_HAS_OPTCONTENT
         poCatalog->optContent = poOldOCGs;
 #endif
@@ -999,23 +1053,18 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if (poBitmap->getWidth() != nReqXSize || poBitmap->getHeight() != nReqYSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Bitmap decoded size (%dx%d) doesn't match raster size (%dx%d)" ,
-                     poBitmap->getWidth(), poBitmap->getHeight(),
-                     nReqXSize, nReqYSize);
-            VSIFree(poGDS->pabyData);
-            poGDS->pabyData = NULL;
+                        "Bitmap decoded size (%dx%d) doesn't match raster size (%dx%d)" ,
+                        poBitmap->getWidth(), poBitmap->getHeight(),
+                        nReqXSize, nReqYSize);
             delete poSplashOut;
             return CE_Failure;
         }
 
-        poGDS->nLastBlockXOff = nBlockXOff;
-        poGDS->nLastBlockYOff = nBlockYOff;
-
-        int nBandSpace = nBlockXSize * ((nBlockYSize == 1) ? nRasterYSize : nBlockYSize);
-        GByte* pabyDataR = poGDS->pabyData;
-        GByte* pabyDataG = poGDS->pabyData + nBandSpace;
-        GByte* pabyDataB = poGDS->pabyData + 2 * nBandSpace;
-        GByte* pabyDataA = poGDS->pabyData + 3 * nBandSpace;
+        int nBandSpace = nReqXSize * nReqYSize;
+        GByte* pabyDataR = pabyData;
+        GByte* pabyDataG = pabyData + nBandSpace;
+        GByte* pabyDataB = pabyData + 2 * nBandSpace;
+        GByte* pabyDataA = pabyData + 3 * nBandSpace;
         GByte* pabySrc   = poBitmap->getDataPtr();
         GByte* pabyAlphaSrc  = (GByte*)poBitmap->getAlphaPtr();
         int i, j;
@@ -1023,7 +1072,7 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             for(i=0;i<nReqXSize;i++)
             {
-                if (poGDS->nBands < 4)
+                if (nBands < 4)
                 {
                     pabyDataR[i] = pabySrc[i * 3 + 0];
                     pabyDataG[i] = pabySrc[i * 3 + 1];
@@ -1037,39 +1086,32 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     pabyDataA[i] = pabyAlphaSrc[i];
                 }
             }
-            pabyDataR += nBlockXSize;
-            pabyDataG += nBlockXSize;
-            pabyDataB += nBlockXSize;
-            pabyDataA += nBlockXSize;
+            pabyDataR += nReqXSize;
+            pabyDataG += nReqXSize;
+            pabyDataB += nReqXSize;
+            pabyDataA += nReqXSize;
             pabyAlphaSrc += poBitmap->getAlphaRowSize();
             pabySrc += poBitmap->getRowSize();
         }
         delete poSplashOut;
-      }
+    }
 #endif // HAVE_POPPLER
 
 #ifdef HAVE_PODOFO
-      if (!poGDS->bUsePoppler)
-      {
-        if( poGDS->bPdfToPpmFailed )
+    if (!bUsePoppler)
+    {
+        if( bPdfToPpmFailed )
             return CE_Failure;
-
-        if (nBand == 4)
-        {
-            memset(pImage, 255, nBlockXSize * nBlockYSize);
-            return CE_None;
-        }
 
         if (pszRenderingOptions != NULL)
         {
             CPLError(CE_Warning, CPLE_NotSupported,
-                     "GDAL_PDF_RENDERING_OPTIONS only supported "
-                     "when PDF driver is compiled against Poppler.");
+                        "GDAL_PDF_RENDERING_OPTIONS only supported "
+                        "when PDF driver is compiled against Poppler.");
         }
 
-        memset(poGDS->pabyData, 0,
-               ((size_t)3) * nBlockXSize *
-               ((nBlockYSize == 1) ? nRasterYSize : nBlockYSize));
+        memset(pabyData, 0,
+                ((size_t)3) * nReqXSize * nReqYSize);
 
         CPLString osTmpFilename;
         int nRet;
@@ -1079,25 +1121,25 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( !bUseSpawn )
         {
             CPLString osCmd = CPLSPrintf("pdftoppm -r %f -x %d -y %d -W %d -H %d -f %d -l %d \"%s\"",
-                    poGDS->dfDPI,
-                    nBlockXOff * nBlockXSize,
-                    (nBlockYSize == 1) ? 0 : nBlockYOff * nBlockYSize,
+                    dfDPI,
+                    nReqXOff,
+                    nReqYOff,
                     nReqXSize,
                     nReqYSize,
-                    poGDS->iPage, poGDS->iPage,
-                    poGDS->osFilename.c_str());
+                    iPage, iPage,
+                    osFilename.c_str());
 
-            if (poGDS->osUserPwd.size() != 0)
+            if (osUserPwd.size() != 0)
             {
                 osCmd += " -upw \"";
-                osCmd += poGDS->osUserPwd;
+                osCmd += osUserPwd;
                 osCmd += "\"";
             }
 
             CPLString osTmpFilenamePrefix = CPLGenerateTempFilename("pdf");
             osTmpFilename = CPLSPrintf("%s-%d.ppm",
                                            osTmpFilenamePrefix.c_str(),
-                                           poGDS->iPage);
+                                           iPage);
             osCmd += CPLSPrintf(" \"%s\"", osTmpFilenamePrefix.c_str());
 
             CPLDebug("PDF", "Running '%s'", osCmd.c_str());
@@ -1109,27 +1151,27 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             char** papszArgs = NULL;
             papszArgs = CSLAddString(papszArgs, "pdftoppm");
             papszArgs = CSLAddString(papszArgs, "-r");
-            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%f", poGDS->dfDPI));
+            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%f", dfDPI));
             papszArgs = CSLAddString(papszArgs, "-x");
-            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", nBlockXOff * nBlockXSize));
+            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", nReqXOff));
             papszArgs = CSLAddString(papszArgs, "-y");
-            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", (nBlockYSize == 1) ? 0 : nBlockYOff * nBlockYSize));
+            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", nReqYOff));
             papszArgs = CSLAddString(papszArgs, "-W");
             papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", nReqXSize));
             papszArgs = CSLAddString(papszArgs, "-H");
             papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", nReqYSize));
             papszArgs = CSLAddString(papszArgs, "-f");
-            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", poGDS->iPage));
+            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", iPage));
             papszArgs = CSLAddString(papszArgs, "-l");
-            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", poGDS->iPage));
-            if (poGDS->osUserPwd.size() != 0)
+            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", iPage));
+            if (osUserPwd.size() != 0)
             {
                 papszArgs = CSLAddString(papszArgs, "-upw");
-                papszArgs = CSLAddString(papszArgs, poGDS->osUserPwd.c_str());
+                papszArgs = CSLAddString(papszArgs, osUserPwd.c_str());
             }
-            papszArgs = CSLAddString(papszArgs, poGDS->osFilename.c_str());
+            papszArgs = CSLAddString(papszArgs, osFilename.c_str());
 
-            osTmpFilename = CPLSPrintf("/vsimem/pdf/temp_%p.ppm", poDS);
+            osTmpFilename = CPLSPrintf("/vsimem/pdf/temp_%p.ppm", this);
             VSILFILE* fpOut = VSIFOpenL(osTmpFilename, "wb");
             if( fpOut != NULL )
             {
@@ -1149,17 +1191,13 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 if (poDS->GetRasterCount() == 3)
                 {
-                    poDS->RasterIO(GF_Read, 0, 0,
-                                   nReqXSize,
-                                   nReqYSize,
-                                   poGDS->pabyData,
-                                   nReqXSize, nReqYSize,
-                                   GDT_Byte, 3, NULL,
-                                   1, nBlockXSize,
-                                   nBlockXSize * ((nBlockYSize == 1) ? nRasterYSize : nBlockYSize));
-
-                    poGDS->nLastBlockXOff = nBlockXOff;
-                    poGDS->nLastBlockYOff = nBlockYOff;
+                    eErr = poDS->RasterIO(GF_Read, 0, 0,
+                                          nReqXSize,
+                                          nReqYSize,
+                                          pabyData,
+                                          nReqXSize, nReqYSize,
+                                          GDT_Byte, 3, NULL,
+                                          1, nReqXSize, nReqXSize * nReqYSize);
                 }
                 delete poDS;
             }
@@ -1167,25 +1205,14 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         else
         {
             CPLDebug("PDF", "Ret code = %d", nRet);
-            poGDS->bPdfToPpmFailed = TRUE;
+            bPdfToPpmFailed = TRUE;
+            eErr = CE_Failure;
         }
         VSIUnlink(osTmpFilename);
-      }
-#endif
     }
-    if (poGDS->pabyData == NULL)
-        return CE_Failure;
+#endif
 
-    if( nBlockYSize == 1 )
-        memcpy(pImage,
-               poGDS->pabyData + (nBand - 1) * nBlockXSize * nRasterYSize + nBlockYOff * nBlockXSize,
-               nBlockXSize);
-    else
-        memcpy(pImage,
-               poGDS->pabyData + (nBand - 1) * nBlockXSize * nBlockYSize,
-               nBlockXSize * nBlockYSize);
-
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
@@ -1232,8 +1259,8 @@ CPLErr PDFImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         poGDS->bTried = TRUE;
         if (nBands == 3)
         {
-            poGDS->pabyData = (GByte*)VSIMalloc3(nBands, nRasterXSize, nRasterYSize);
-            if (poGDS->pabyData == NULL)
+            poGDS->pabyCachedData = (GByte*)VSIMalloc3(nBands, nRasterXSize, nRasterYSize);
+            if (poGDS->pabyCachedData == NULL)
                 return CE_Failure;
         }
 
@@ -1244,8 +1271,8 @@ CPLErr PDFImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             poStream->GetLength() != nBands * nRasterXSize * nRasterYSize ||
             (pabyStream = (GByte*) poStream->GetBytes()) == NULL)
         {
-            VSIFree(poGDS->pabyData);
-            poGDS->pabyData = NULL;
+            VSIFree(poGDS->pabyCachedData);
+            poGDS->pabyCachedData = NULL;
             return CE_Failure;
         }
 
@@ -1254,24 +1281,24 @@ CPLErr PDFImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             /* pixel interleaved to band interleaved */
             for(int i = 0; i < nRasterXSize * nRasterYSize; i++)
             {
-                poGDS->pabyData[0 * nRasterXSize * nRasterYSize + i] = pabyStream[3 * i + 0];
-                poGDS->pabyData[1 * nRasterXSize * nRasterYSize + i] = pabyStream[3 * i + 1];
-                poGDS->pabyData[2 * nRasterXSize * nRasterYSize + i] = pabyStream[3 * i + 2];
+                poGDS->pabyCachedData[0 * nRasterXSize * nRasterYSize + i] = pabyStream[3 * i + 0];
+                poGDS->pabyCachedData[1 * nRasterXSize * nRasterYSize + i] = pabyStream[3 * i + 1];
+                poGDS->pabyCachedData[2 * nRasterXSize * nRasterYSize + i] = pabyStream[3 * i + 2];
             }
             VSIFree(pabyStream);
         }
         else
-            poGDS->pabyData = pabyStream;
+            poGDS->pabyCachedData = pabyStream;
     }
 
-    if (poGDS->pabyData == NULL)
+    if (poGDS->pabyCachedData == NULL)
         return CE_Failure;
 
     if (nBand == 4)
         memset(pImage, 255, nRasterXSize);
     else
         memcpy(pImage,
-            poGDS->pabyData + (nBand - 1) * nRasterXSize * nRasterYSize + nBlockYOff * nRasterXSize,
+            poGDS->pabyCachedData + (nBand - 1) * nRasterXSize * nRasterYSize + nBlockYOff * nRasterXSize,
             nRasterXSize);
 
     return CE_None;
@@ -1310,7 +1337,7 @@ PDFDataset::PDFDataset()
     bInfoDirty = FALSE;
     bXMPDirty = FALSE;
     bTried = FALSE;
-    pabyData = NULL;
+    pabyCachedData = NULL;
     nLastBlockXOff = -1;
     nLastBlockYOff = -1;
     iPage = -1;
@@ -1394,8 +1421,8 @@ GDALPDFObject* PDFDataset::GetCatalog()
 
 PDFDataset::~PDFDataset()
 {
-    CPLFree(pabyData);
-    pabyData = NULL;
+    CPLFree(pabyCachedData);
+    pabyCachedData = NULL;
 
     delete poNeatLine;
     poNeatLine = NULL;
@@ -1479,6 +1506,44 @@ PDFDataset::~PDFDataset()
     }
     CPLFree(pszWKT);
     pszWKT = NULL;
+}
+
+
+/************************************************************************/
+/*                            IRasterIO()                               */
+/************************************************************************/
+
+CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              void * pData, int nBufXSize, int nBufYSize,
+                              GDALDataType eBufType, 
+                              int nBandCount, int *panBandMap,
+                              int nPixelSpace, int nLineSpace, int nBandSpace )
+{
+    if( aiTiles.size() == 0 &&
+        eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize &&
+        nBandCount == nBands && nPixelSpace == 1 &&
+        nLineSpace == nBufXSize && nBandSpace == nBufXSize * nBufYSize &&
+        (nBands >= 3 && panBandMap[0] == 1 && panBandMap[1] == 2 &&
+         panBandMap[2] == 3 && ( nBands == 3 || panBandMap[3] == 4)) )
+    {
+        int bReadPixels = TRUE;
+#ifdef HAVE_PODOFO
+        if (!bUsePoppler && nBands == 4)
+        {
+            bReadPixels = FALSE;
+        }
+#endif
+        if( bReadPixels )
+            return ReadPixels(nXOff, nYOff, nXSize, nYSize, (GByte*)pData);
+    }
+
+    return GDALPamDataset::IRasterIO( eRWFlag,
+                                        nXOff, nYOff, nXSize, nYSize,
+                                        pData, nBufXSize, nBufYSize,
+                                        eBufType, 
+                                        nBandCount, panBandMap,
+                                        nPixelSpace, nLineSpace, nBandSpace );
 }
 
 /************************************************************************/
