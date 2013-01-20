@@ -625,6 +625,8 @@ class PDFDataset : public GDALPamDataset
 
     CPLErr ReadPixels( int nReqXOff, int nReqYOff,
                        int nReqXSize, int nReqYSize,
+                       int nLineStride,
+                       int nBandStride,
                        GByte* pabyData );
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -938,8 +940,10 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         CPLErr eErr = poGDS->ReadPixels( nBlockXOff * nBlockXSize,
                                          (nBlockYSize == 1) ? 0 : nBlockYOff * nBlockYSize,
+                                         nReqXSize,
+                                         nReqYSize,
                                          nBlockXSize,
-                                         (nBlockYSize == 1) ? nRasterYSize : nBlockYSize,
+                                         nBlockXSize * ((nBlockYSize == 1) ? nRasterYSize : nBlockYSize),
                                          poGDS->pabyCachedData);
         if( eErr == CE_None )
         {
@@ -974,6 +978,7 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
                                int nReqXSize, int nReqYSize,
+                               int nLineStride, int nBandStride,
                                GByte* pabyData )
 {
     CPLErr eErr = CE_None;
@@ -1037,12 +1042,12 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
             poCatalog->optContent = NULL;
 #endif
         poDoc->displayPageSlice(poSplashOut,
-                                        iPage,
-                                        dfDPI, dfDPI,
-                                        0,
-                                        TRUE, gFalse, gFalse,
-                                        nReqXOff, nReqYOff,
-                                        nReqXSize, nReqYSize);
+                                iPage,
+                                dfDPI, dfDPI,
+                                0,
+                                TRUE, gFalse, gFalse,
+                                nReqXOff, nReqYOff,
+                                nReqXSize, nReqYSize);
 
     /* Restore back */
 #ifdef POPPLER_HAS_OPTCONTENT
@@ -1060,11 +1065,10 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
             return CE_Failure;
         }
 
-        int nBandSpace = nReqXSize * nReqYSize;
         GByte* pabyDataR = pabyData;
-        GByte* pabyDataG = pabyData + nBandSpace;
-        GByte* pabyDataB = pabyData + 2 * nBandSpace;
-        GByte* pabyDataA = pabyData + 3 * nBandSpace;
+        GByte* pabyDataG = pabyData + nBandStride;
+        GByte* pabyDataB = pabyData + 2 * nBandStride;
+        GByte* pabyDataA = pabyData + 3 * nBandStride;
         GByte* pabySrc   = poBitmap->getDataPtr();
         GByte* pabyAlphaSrc  = (GByte*)poBitmap->getAlphaPtr();
         int i, j;
@@ -1086,10 +1090,10 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
                     pabyDataA[i] = pabyAlphaSrc[i];
                 }
             }
-            pabyDataR += nReqXSize;
-            pabyDataG += nReqXSize;
-            pabyDataB += nReqXSize;
-            pabyDataA += nReqXSize;
+            pabyDataR += nLineStride;
+            pabyDataG += nLineStride;
+            pabyDataB += nLineStride;
+            pabyDataA += nLineStride;
             pabyAlphaSrc += poBitmap->getAlphaRowSize();
             pabySrc += poBitmap->getRowSize();
         }
@@ -1111,7 +1115,7 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
         }
 
         memset(pabyData, 0,
-                ((size_t)3) * nReqXSize * nReqYSize);
+                ((size_t)3) * nLineStride * nReqYSize);
 
         CPLString osTmpFilename;
         int nRet;
@@ -1197,7 +1201,7 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
                                           pabyData,
                                           nReqXSize, nReqYSize,
                                           GDT_Byte, 3, NULL,
-                                          1, nReqXSize, nReqXSize * nReqYSize);
+                                          1, nLineStride, nBandStride);
                 }
                 delete poDS;
             }
@@ -1535,7 +1539,7 @@ CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
         }
 #endif
         if( bReadPixels )
-            return ReadPixels(nXOff, nYOff, nXSize, nYSize, (GByte*)pData);
+            return ReadPixels(nXOff, nYOff, nXSize, nYSize, nXSize, nXSize * nYSize, (GByte*)pData);
     }
 
     return GDALPamDataset::IRasterIO( eRWFlag,
