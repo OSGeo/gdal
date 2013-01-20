@@ -138,6 +138,17 @@ GDALPDFObject::~GDALPDFObject()
 }
 
 /************************************************************************/
+/*                            LookupObject()                            */
+/************************************************************************/
+
+GDALPDFObject* GDALPDFObject::LookupObject(const char* pszPath)
+{
+    if( GetType() != PDFObjectType_Dictionary )
+        return NULL;
+    return GetDictionary()->LookupObject(pszPath);
+}
+
+/************************************************************************/
 /*                             GetTypeName()                            */
 /************************************************************************/
 
@@ -260,6 +271,58 @@ GDALPDFObjectRW* GDALPDFObject::Clone()
 
 GDALPDFDictionary::~GDALPDFDictionary()
 {
+}
+
+/************************************************************************/
+/*                            LookupObject()                            */
+/************************************************************************/
+
+GDALPDFObject* GDALPDFDictionary::LookupObject(const char* pszPath)
+{
+    GDALPDFObject* poCurObj = NULL;
+    char** papszTokens = CSLTokenizeString2(pszPath, ".", 0);
+    for(int i=0; papszTokens[i] != NULL; i++)
+    {
+        int iElt = -1;
+        char* pszBracket = strchr(papszTokens[i], '[');
+        if( pszBracket != NULL )
+        {
+            iElt = atoi(pszBracket + 1);
+            *pszBracket = '\0';
+        }
+
+        if( i == 0 )
+        {
+            poCurObj = Get(papszTokens[i]);
+        }
+        else
+        {
+            if( poCurObj->GetType() != PDFObjectType_Dictionary )
+            {
+                poCurObj = NULL;
+                break;
+            }
+            poCurObj = poCurObj->GetDictionary()->Get(papszTokens[i]);
+        }
+
+        if( poCurObj == NULL )
+        {
+            poCurObj = NULL;
+            break;
+        }
+
+        if( iElt >= 0 )
+        {
+            if( poCurObj->GetType() != PDFObjectType_Array )
+            {
+                poCurObj = NULL;
+                break;
+            }
+            poCurObj = poCurObj->GetArray()->Get(iElt);
+        }
+    }
+    CSLDestroy(papszTokens);
+    return poCurObj;
 }
 
 /************************************************************************/
