@@ -1525,7 +1525,7 @@ CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
 {
     if( aiTiles.size() == 0 &&
         eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize &&
-        nBandCount == nBands &&
+        eBufType == GDT_Byte && nBandCount == nBands &&
         (nBands >= 3 && panBandMap[0] == 1 && panBandMap[1] == 2 &&
          panBandMap[2] == 3 && ( nBands == 3 || panBandMap[3] == 4)) )
     {
