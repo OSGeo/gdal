@@ -722,7 +722,7 @@ CPLErr PDFRasterBand::IReadBlockFromTile( int nBlockXOff, int nBlockYOff,
 
     if( iTile < 0 )
     {
-        memset(pImage, ( nBand == 4 ) ? 225 : 0, nBlockXSize * nBlockYSize);
+        memset(pImage, 0, nBlockXSize * nBlockYSize);
         return CE_None;
     }
 
@@ -1523,8 +1523,11 @@ CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
                               int nBandCount, int *panBandMap,
                               int nPixelSpace, int nLineSpace, int nBandSpace )
 {
+    int nBandBlockXSize, nBandBlockYSize;
+    GetRasterBand(1)->GetBlockSize(&nBandBlockXSize, &nBandBlockYSize);
     if( aiTiles.size() == 0 &&
         eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize &&
+        (nBufXSize > nBandBlockXSize || nBufYSize > nBandBlockYSize) &&
         eBufType == GDT_Byte && nBandCount == nBands &&
         (nBands >= 3 && panBandMap[0] == 1 && panBandMap[1] == 2 &&
          panBandMap[2] == 3 && ( nBands == 3 || panBandMap[3] == 4)) )
