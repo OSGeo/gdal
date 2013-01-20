@@ -112,6 +112,8 @@ class GDALPDFObject
         virtual int                 GetRefNum() = 0;
         virtual int                 GetRefGen() = 0;
 
+        GDALPDFObject*              LookupObject(const char* pszPath);
+
         void                        Serialize(CPLString& osStr);
         CPLString                   Serialize() { CPLString osStr; Serialize(osStr); return osStr; }
         GDALPDFObjectRW*            Clone();
@@ -124,6 +126,8 @@ class GDALPDFDictionary
 
         virtual GDALPDFObject* Get(const char* pszKey) = 0;
         virtual std::map<CPLString, GDALPDFObject*>& GetValues() = 0;
+
+        GDALPDFObject*              LookupObject(const char* pszPath);
 
         void                        Serialize(CPLString& osStr);
         CPLString                   Serialize() { CPLString osStr; Serialize(osStr); return osStr; }
