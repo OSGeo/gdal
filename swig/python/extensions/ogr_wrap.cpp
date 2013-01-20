@@ -3336,9 +3336,11 @@ SWIGINTERN OGRDataSourceShadow *OGRDriverShadow_Open(OGRDriverShadow *self,char 
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*) OGR_Dr_Open(self, utf8_path, update);
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
     {
-        CPLDebug( "SWIG",
-          "OGR_Dr_Open() succeeded, but an error is posted, so we destroy"
-          " the datasource and fail at swig level." );
+        CPLDebug(
+            "SWIG",
+            "OGR_Dr_Open() succeeded, but an error is posted, so we destroy"
+            " the datasource and fail at swig level.\nError:%s",
+            CPLGetLastErrorMsg() );
         OGRReleaseDataSource(ds);
         ds = NULL;
     }
