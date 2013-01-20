@@ -588,6 +588,8 @@ class PDFDataset : public GDALPamDataset
 #endif
 
     CPLStringList osLayerWithRefList;
+    CPLString     FindLayerOCG(GDALPDFDictionary* poPageDict,
+                               const char* pszLayerName);
     void          FindLayersGeneric(GDALPDFDictionary* poPageDict);
 
     int          bUseOCG;
@@ -1617,7 +1619,8 @@ int GDALPDFParseStreamContent(const char* pszContent,
                               double* pdfDPI,
                               int* pbDPISet,
                               int* pnBands,
-                              std::vector<GDALPDFTileDesc>& asTiles)
+                              std::vector<GDALPDFTileDesc>& asTiles,
+                              int bAcceptRotationTerms)
 {
     CPLString osToken;
     char ch;
@@ -1721,7 +1724,8 @@ int GDALPDFParseStreamContent(const char* pszContent,
                             if ( poSMask != NULL )
                                 *pnBands = 4;
 
-                            if (poWidth && poHeight && adfVals[1] == 0.0 && adfVals[2] == 0.0)
+                            if (poWidth && poHeight && ((bAcceptRotationTerms && adfVals[1] == -adfVals[2]) ||
+                                                        (!bAcceptRotationTerms && adfVals[1] == 0.0 && adfVals[2] == 0.0)))
                             {
                                 double dfWidth = Get(poWidth);
                                 double dfHeight = Get(poHeight);
@@ -1926,17 +1930,123 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
             poXObject->GetType() == PDFObjectType_Dictionary)
         {
             GDALPDFDictionary* poXObjectDict = poXObject->GetDictionary();
+            GDALPDFDictionary* poContentDict = poXObjectDict;
             GDALPDFStream* poPageStream = poContents->GetStream();
             if (poPageStream != NULL)
             {
                 char* pszContent = NULL;
                 int nLength = poPageStream->GetLength();
+                int bResetTiles = FALSE;
+                double dfScaleDPI = 1.0;
+
                 if( nLength < 100000 )
                 {
                     CPLString osForm;
                     pszContent = poPageStream->GetBytes();
                     if( pszContent != NULL )
+                    {
+#ifdef DEBUG
+                        const char* pszDumpStream = CPLGetConfigOption("PDF_DUMP_STREAM", NULL);
+                        if( pszDumpStream != NULL )
+                        {
+                            VSILFILE* fpDump = VSIFOpenL(pszDumpStream, "wb");
+                            if( fpDump )
+                            {
+                                VSIFWriteL(pszContent, 1, nLength, fpDump);
+                                VSIFCloseL(fpDump);
+                            }
+                        }
+#endif
                         osForm = GDALPDFParseStreamContentOnlyDrawForm(pszContent);
+                        if (osForm.size() == 0)
+                        {
+                            /* Special case for USGS Topo PDF, like CA_Hollywood_20090811_OM_geo.pdf */
+                            const char* pszOGCDo = strstr(pszContent, " /XO1 Do");
+                            if( pszOGCDo )
+                            {
+                                const char* pszcm = strstr(pszContent, " cm ");
+                                if( pszcm != NULL && pszcm < pszOGCDo )
+                                {
+                                    const char* pszNextcm = strstr(pszcm + 2, "cm");
+                                    if( pszNextcm == NULL || pszNextcm > pszOGCDo )
+                                    {
+                                        const char* pszIter = pszcm;
+                                        while( pszIter > pszContent )
+                                        {
+                                            if( (*pszIter >= '0' && *pszIter <= '9') ||
+                                                *pszIter == '-' ||
+                                                *pszIter == '.' ||
+                                                *pszIter == ' ' )
+                                                pszIter --;
+                                            else
+                                            {
+                                                pszIter ++;
+                                                break;
+                                            }
+                                        }
+                                        CPLString oscm(pszIter);
+                                        oscm.resize(pszcm - pszIter);
+                                        char** papszTokens = CSLTokenizeString(oscm);
+                                        double dfScaleX = -1, dfScaleY = -2;
+                                        if( CSLCount(papszTokens) == 6 )
+                                        {
+                                            dfScaleX = CPLAtof(papszTokens[0]);
+                                            dfScaleY = CPLAtof(papszTokens[3]);
+                                        }
+                                        CSLDestroy(papszTokens);
+                                        if( dfScaleX == dfScaleY && dfScaleX > 0.0 )
+                                        {
+                                            osForm = "XO1";
+                                            bResetTiles = TRUE;
+                                            dfScaleDPI = 1.0 / dfScaleX;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    osForm = "XO1";
+                                    bResetTiles = TRUE;
+                                }
+                            }
+                            /* Special case for USGS Topo PDF, like CA_Sacramento_East_20120308_TM_geo.pdf */
+                            else
+                            {
+                                CPLString osOCG = FindLayerOCG(poPageDict, "Orthoimage");
+                                if( osOCG.size() )
+                                {
+                                    const char* pszBDCLookup = CPLSPrintf("/OC /%s BDC", osOCG.c_str());
+                                    const char* pszBDC = strstr(pszContent, pszBDCLookup);
+                                    if( pszBDC != NULL )
+                                    {
+                                        const char* pszIter = pszBDC + strlen(pszBDCLookup);
+                                        while( *pszIter != '\0' )
+                                        {
+                                            if( *pszIter == 13 || *pszIter == 10 ||
+                                                *pszIter == ' '|| *pszIter == 'q' )
+                                                pszIter ++;
+                                            else
+                                                break;
+                                        }
+                                        if( strncmp(pszIter, "1 0 0 1 0 0 cm\n",
+                                                    strlen( "1 0 0 1 0 0 cm\n" )) == 0 )
+                                            pszIter += strlen("1 0 0 1 0 0 cm\n");
+                                        if( *pszIter == '/' )
+                                        {
+                                            pszIter ++;
+                                            const char* pszDo = strstr(pszIter, " Do");
+                                            if( pszDo != NULL )
+                                            {
+                                                osForm = pszIter;
+                                                osForm.resize(pszDo - pszIter);
+                                                bResetTiles = TRUE;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     if (osForm.size())
                     {
                         CPLFree(pszContent);
@@ -1957,6 +2067,17 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
                                 if( nLength < 100000 )
                                 {
                                     pszContent = poPageStream->GetBytes();
+
+                                    GDALPDFObject* poResources2 = poObjFormDict->Get("Resources");
+                                    if (poResources2 != NULL &&
+                                        poResources2->GetType() == PDFObjectType_Dictionary)
+                                    {
+                                        GDALPDFObject* poXObject2 =
+                                            poResources2->GetDictionary()->Get("XObject");
+                                        if( poXObject2 != NULL &&
+                                            poXObject2->GetType() == PDFObjectType_Dictionary )
+                                            poContentDict = poXObject2->GetDictionary();
+                                    }
                                 }
                             }
                         }
@@ -1966,17 +2087,43 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
                 if (pszContent != NULL)
                 {
                     int bDPISet = FALSE;
-                    GDALPDFParseStreamContent(pszContent,
-                                                poXObjectDict,
-                                                &(dfDPI),
-                                                &bDPISet,
-                                                pnBands,
-                                                asTiles);
+
+                    const char* pszContentToParse = pszContent;
+                    if( bResetTiles )
+                    {
+                        while( *pszContentToParse != '\0' )
+                        {
+                            if( *pszContentToParse == 13 || *pszContentToParse == 10 ||
+                                *pszContentToParse == ' ' ||
+                                (*pszContentToParse >= '0' && *pszContentToParse <= '9') ||
+                                *pszContentToParse == '.' || 
+                                *pszContentToParse == '-' || 
+                                *pszContentToParse == 'l' ||
+                                *pszContentToParse == 'm' ||
+                                *pszContentToParse == 'n' ||
+                                *pszContentToParse == 'W' )
+                                pszContentToParse ++;
+                            else
+                                break;
+                        }
+                    }
+
+                    GDALPDFParseStreamContent(pszContentToParse,
+                                              poContentDict,
+                                              &(dfDPI),
+                                              &bDPISet,
+                                              pnBands,
+                                              asTiles,
+                                              bResetTiles);
                     CPLFree(pszContent);
                     if (bDPISet)
                     {
+                        dfDPI *= dfScaleDPI;
+
                         CPLDebug("PDF", "DPI guessed from contents stream = %.16g", dfDPI);
                         SetMetadataItem("DPI", CPLSPrintf("%.16g", dfDPI));
+                        if( bResetTiles )
+                            asTiles.resize(0);
                     }
                     else
                         asTiles.resize(0);
@@ -2394,6 +2541,50 @@ void PDFDataset::TurnLayersOnOff()
 }
 
 #endif
+
+/************************************************************************/
+/*                           FindLayerOCG()                             */
+/************************************************************************/
+
+CPLString PDFDataset::FindLayerOCG(GDALPDFDictionary* poPageDict,
+                                   const char* pszLayerName)
+{
+    GDALPDFObject* poResources = poPageDict->Get("Resources");
+    if (poResources != NULL &&
+        poResources->GetType() == PDFObjectType_Dictionary)
+    {
+        GDALPDFObject* poProperties =
+            poResources->GetDictionary()->Get("Properties");
+        if (poProperties != NULL &&
+            poProperties->GetType() == PDFObjectType_Dictionary)
+        {
+            std::map<CPLString, GDALPDFObject*>& oMap =
+                                    poProperties->GetDictionary()->GetValues();
+            std::map<CPLString, GDALPDFObject*>::iterator oIter = oMap.begin();
+            std::map<CPLString, GDALPDFObject*>::iterator oEnd = oMap.end();
+
+            for(; oIter != oEnd; ++oIter)
+            {
+                GDALPDFObject* poObj = oIter->second;
+                if( poObj->GetRefNum() != 0 && poObj->GetType() == PDFObjectType_Dictionary )
+                {
+                    GDALPDFObject* poType = poObj->GetDictionary()->Get("Type");
+                    GDALPDFObject* poName = poObj->GetDictionary()->Get("Name");
+                    if( poType != NULL &&
+                        poType->GetType() == PDFObjectType_Name &&
+                        poType->GetName() == "OCG" &&
+                        poName != NULL &&
+                        poName->GetType() == PDFObjectType_String )
+                    {
+                        if( strcmp(poName->GetString().c_str(), pszLayerName) ==  0)
+                            return oIter->first;
+                    }
+                }
+            }
+        }
+    }
+    return "";
+}
 
 /************************************************************************/
 /*                         FindLayersGeneric()                          */
