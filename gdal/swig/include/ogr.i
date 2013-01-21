@@ -373,6 +373,7 @@ public:
 #endif
   OGRDataSourceShadow *Open( const char* utf8_path, 
                         int update=0 ) {
+    CPLErrorReset();
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*) OGR_Dr_Open(self, utf8_path, update);
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
     {
