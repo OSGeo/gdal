@@ -36,12 +36,11 @@
 CPL_CVSID("$Id$");
 
 static int NITFWriteBLOCKA( VSILFILE* fp, vsi_l_offset nOffsetUDIDL,
-                            vsi_l_offset nOffsetTRE, 
                             int *pnOffset,
                             char **papszOptions );
 static int NITFWriteTREsFromOptions(
     VSILFILE* fp,
-    vsi_l_offset nOffsetUDIDL, vsi_l_offset nOffsetTRE,
+    vsi_l_offset nOffsetUDIDL,
     int *pnOffset,
     char **papszOptions,
     const char* pszTREPrefix);
@@ -521,7 +520,7 @@ int NITFCreate( const char *pszFilename,
     int nCLevel;
     const char *pszNUMT;
     int nHL, nNUMT = 0;
-    int nUDIDLOffset;
+    vsi_l_offset nOffsetUDIDL;
     const char *pszVersion;
     int iIM, nIM = 1;
     const char *pszNUMI;
@@ -848,7 +847,6 @@ int NITFCreate( const char *pszFilename,
         NITFWriteTREsFromOptions(
             fp,
             nHL - 10,
-            nHL,
             &nHL,
             papszOptions, "FILE_TRE=" );
     }
@@ -1103,7 +1101,7 @@ int NITFCreate( const char *pszFilename,
     PLACE(nCur+nOffset+ 40, UDIDL , "00000"                        );
     PLACE(nCur+nOffset+ 45, IXSHDL, "00000"                        );
 
-    nUDIDLOffset = nOffset + 40;
+    nOffsetUDIDL = nCur + nOffset + 40;
     nOffset += 50;
 
 /* -------------------------------------------------------------------- */
@@ -1112,8 +1110,7 @@ int NITFCreate( const char *pszFilename,
     if( CSLFetchNameValue(papszOptions,"BLOCKA_BLOCK_COUNT") != NULL )
     {
         NITFWriteBLOCKA( fp,
-                         nCur + (GUIntBig)nUDIDLOffset, 
-                         nCur + (GUIntBig)nOffset, 
+                         nOffsetUDIDL, 
                          &nOffset, 
                          papszOptions );
     }
@@ -1122,8 +1119,7 @@ int NITFCreate( const char *pszFilename,
     {
         NITFWriteTREsFromOptions(
             fp,
-            nCur + (GUIntBig)nUDIDLOffset, 
-            nCur + (GUIntBig)nOffset, 
+            nOffsetUDIDL, 
             &nOffset, 
             papszOptions, "TRE=" );
     }
@@ -1207,7 +1203,6 @@ int NITFCreate( const char *pszFilename,
 
 static int NITFWriteTRE( VSILFILE* fp,
                          vsi_l_offset nOffsetUDIDL, 
-                         vsi_l_offset nOffsetTREInHeader, 
                          int  *pnOffset,
                          const char *pszTREName, char *pabyTREData, int nTREDataSize )
 
@@ -1244,7 +1239,7 @@ static int NITFWriteTRE( VSILFILE* fp,
 /* -------------------------------------------------------------------- */
     sprintf( szTemp, "%-6s%05d", 
              pszTREName, nTREDataSize );
-    VSIFSeekL(fp, nOffsetTREInHeader + nOldOffset, SEEK_SET);
+    VSIFSeekL(fp, nOffsetUDIDL + 10 + nOldOffset, SEEK_SET);
     VSIFWriteL(szTemp, 11, 1, fp);
     VSIFWriteL(pabyTREData, nTREDataSize, 1, fp);
 
@@ -1262,7 +1257,7 @@ static int NITFWriteTRE( VSILFILE* fp,
 
 static int NITFWriteTREsFromOptions(
     VSILFILE* fp,
-    vsi_l_offset nOffsetUDIDL, vsi_l_offset nOffsetTRE,
+    vsi_l_offset nOffsetUDIDL,
     int *pnOffset,
     char **papszOptions, const char* pszTREPrefix )    
 
@@ -1309,7 +1304,7 @@ static int NITFWriteTREsFromOptions(
                                CPLES_BackslashQuotable );
 
         if( !NITFWriteTRE( fp,
-                           nOffsetUDIDL, nOffsetTRE,
+                           nOffsetUDIDL,
                            pnOffset,
                            pszTREName, pszUnescapedContents, 
                            nContentLength ) )
@@ -1332,7 +1327,6 @@ static int NITFWriteTREsFromOptions(
 /************************************************************************/
 
 static int NITFWriteBLOCKA( VSILFILE* fp, vsi_l_offset nOffsetUDIDL,
-                            vsi_l_offset nOffsetTRE, 
                             int *pnOffset,
                             char **papszOptions )
 
@@ -1396,7 +1390,7 @@ static int NITFWriteBLOCKA( VSILFILE* fp, vsi_l_offset nOffsetUDIDL,
         memcpy( szBLOCKA + 118, "010.0", 5);
 
         if( !NITFWriteTRE( fp,
-                           nOffsetUDIDL, nOffsetTRE, 
+                           nOffsetUDIDL,
                            pnOffset,
                            "BLOCKA", szBLOCKA, 123 ) )
             return FALSE;
