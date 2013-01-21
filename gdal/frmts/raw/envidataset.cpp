@@ -2243,6 +2243,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
                                                 "wavelength" ) );
 
         const char *pszWLUnits = NULL;
+        int nWLCount = CSLCount(papszWL);
         if (papszWL) 
         {
             /* If WL information is present, process wavelength units */
@@ -2255,6 +2256,11 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
                     EQUAL(pszWLUnits,"Index") )
                     pszWLUnits=0;
             }
+            if (pszWLUnits)
+            {
+                /* set wavelength units to dataset metadata */
+                poDS->SetMetadataItem("wavelength_units", pszWLUnits);
+            }
         }
 
         for( i = 0; i < nBands; i++ )
@@ -2262,7 +2268,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLString osBandId, osBandName, osWavelength;
 
             /* First set up the wavelength names and units if available */
-            if (papszWL && CSLCount(papszWL) > i) 
+            if (papszWL && nWLCount > i) 
             {
                 osWavelength = papszWL[i];
                 if (pszWLUnits) 
@@ -2292,6 +2298,20 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
             /* Metadata field named Band_1, etc. needed for ArcGIS integration */
             osBandId = CPLSPrintf("Band_%i", i+1);
             poDS->SetMetadataItem(osBandId, osBandName);
+
+            /* Set wavelength metadata to band */
+            if (papszWL && nWLCount > i)
+            {
+                poDS->GetRasterBand(i+1)->SetMetadataItem(
+                    "wavelength", papszWL[i]);
+
+                if (pszWLUnits)
+                {
+                    poDS->GetRasterBand(i+1)->SetMetadataItem(
+                        "wavelength_units", pszWLUnits);
+                }
+            }
+
         }
         CSLDestroy( papszWL );
         CSLDestroy( papszBandNames );
