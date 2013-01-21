@@ -218,12 +218,16 @@ static int ITTVISToUSGSZone( int nITTVISZone )
 
 /************************************************************************/
 /* ==================================================================== */
-/*				ENVIDataset				*/
+/*                              ENVIDataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
+class ENVIRasterBand;
+
 class ENVIDataset : public RawDataset
 {
+    friend class ENVIRasterBand;
+
     VSILFILE	*fpImage;	// image data file.
     VSILFILE	*fp;		// header file
     char	*pszHDRFilename;
@@ -269,6 +273,8 @@ class ENVIDataset : public RawDataset
     virtual const char *GetProjectionRef(void);
     virtual CPLErr  SetProjection( const char * );
     virtual char  **GetFileList(void);
+    
+    virtual void        SetDescription( const char * );
 
     virtual CPLErr      SetMetadata( char ** papszMetadata,
                                      const char * pszDomain = "" );
@@ -282,6 +288,26 @@ class ENVIDataset : public RawDataset
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszOptions );
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*                            ENVIRasterBand                            */
+/* ==================================================================== */
+/************************************************************************/
+
+class ENVIRasterBand : public RawRasterBand
+{
+    public:
+                ENVIRasterBand( GDALDataset *poDS, int nBand, void * fpRaw,
+                                vsi_l_offset nImgOffset, int nPixelOffset,
+                                int nLineOffset,
+                                GDALDataType eDataType, int bNativeOrder,
+                                int bIsVSIL = FALSE, int bOwnsFP = FALSE );
+
+    virtual void        SetDescription( const char * );
+
+    virtual CPLErr SetCategoryNames( char ** );
 };
 
 /************************************************************************/
@@ -337,7 +363,7 @@ void ENVIDataset::FlushCache()
 
     GDALRasterBand* band = (GetRasterCount() > 0) ? GetRasterBand(1) : NULL;
 
-    if ( band == NULL || !(bHeaderDirty || band->GetCategoryNames() != NULL) )
+    if ( band == NULL || !bHeaderDirty )
         return;
 
     CPLLocaleC  oLocaleEnforcer;
@@ -471,6 +497,9 @@ void ENVIDataset::FlushCache()
             VSIFPrintfL( fp, ",\n" );
     }
     VSIFPrintfL( fp, "}\n" );
+
+    /* Clean dirty flag */
+    bHeaderDirty = FALSE;
 }
 
 /************************************************************************/
@@ -483,7 +512,7 @@ char **ENVIDataset::GetFileList()
     char **papszFileList = NULL; 
     
     // Main data file, etc.  
-    papszFileList = GDALPamDataset::GetFileList(); 
+    papszFileList = RawDataset::GetFileList(); 
     
     // Header file. 
     papszFileList = CSLAddString( papszFileList, pszHDRFilename );
@@ -1078,6 +1107,16 @@ CPLErr ENVIDataset::SetGeoTransform( double * padfTransform )
     bFoundMapinfo = TRUE;
     
     return CE_None;
+}
+
+/************************************************************************/
+/*                           SetDescription()                           */
+/************************************************************************/
+
+void ENVIDataset::SetDescription( const char * pszDescription )
+{
+    bHeaderDirty = TRUE;
+    RawDataset::SetDescription(pszDescription);
 }
 
 /************************************************************************/
@@ -2222,7 +2261,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
     for( i = 0; i < poDS->nBands; i++ )
     {
         poDS->SetBand( i + 1,
-                       new RawRasterBand(poDS, i + 1, poDS->fpImage,
+                       new ENVIRasterBand(poDS, i + 1, poDS->fpImage,
                                          nHeaderSize + nBandOffset * i,
                                          nPixelOffset, nLineOffset, eType,
                                          bNativeOrder, TRUE) );
@@ -2567,6 +2606,40 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
     VSIFCloseL( fp );
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+}
+
+/************************************************************************/
+/*                           ENVIRasterBand()                           */
+/************************************************************************/
+
+ENVIRasterBand::ENVIRasterBand( GDALDataset *poDS, int nBand, void * fpRaw,
+                                vsi_l_offset nImgOffset, int nPixelOffset,
+                                int nLineOffset,
+                                GDALDataType eDataType, int bNativeOrder,
+                                int bIsVSIL, int bOwnsFP ) :
+        RawRasterBand(poDS, nBand, fpRaw, nImgOffset, nPixelOffset,
+                      nLineOffset, eDataType, bNativeOrder, bIsVSIL, bOwnsFP)
+{
+}
+
+/************************************************************************/
+/*                           SetDescription()                           */
+/************************************************************************/
+
+void ENVIRasterBand::SetDescription( const char * pszDescription )
+{
+    ((ENVIDataset*)poDS)->bHeaderDirty = TRUE;
+    RawRasterBand::SetDescription(pszDescription);
+}
+
+/************************************************************************/
+/*                           SetCategoryNames()                         */
+/************************************************************************/
+
+CPLErr ENVIRasterBand::SetCategoryNames( char ** papszCategoryNames )
+{
+    ((ENVIDataset*)poDS)->bHeaderDirty = TRUE;
+    return RawRasterBand::SetCategoryNames(papszCategoryNames);
 }
 
 /************************************************************************/
