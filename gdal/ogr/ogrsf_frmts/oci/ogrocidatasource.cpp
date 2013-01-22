@@ -419,7 +419,7 @@ void OGROCIDataSource::DeleteLayer( const char *pszLayerName )
     if( iLayer == nLayers )
     {
         CPLDebug( "OCI", "DeleteLayer: %s not found in layer list." \
-                  "  Layer * not* deleted.", pszLayerName );
+                  "  Layer *not* deleted.", pszLayerName );
         return;
     }
 
@@ -963,4 +963,50 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         return -1;
     else
         return nSRSId;
+}
+
+
+/************************************************************************/
+/*                           GetLayerByName()                           */
+/************************************************************************/
+
+OGRLayer *OGROCIDataSource::GetLayerByName( const char *pszName )
+
+{
+    OGROCILayer *poLayer;
+    int  i, count;
+
+    if ( !pszName )
+	return NULL;
+
+    count = GetLayerCount();
+
+    /* first a case sensitive check */
+    for( i = 0; i < count; i++ )
+    {
+	poLayer = papoLayers[i];
+
+	if( strcmp( pszName, poLayer->GetName() ) == 0 )
+	{
+	    return poLayer;
+	}
+    }
+
+    char *pszSafeLayerName = CPLStrdup( pszName );
+    poSession->CleanName( pszSafeLayerName );
+
+    /* then case insensitive and laundered */
+    for( i = 0; i < count; i++ )
+    {
+	poLayer = papoLayers[i];
+
+	if( EQUAL( pszSafeLayerName, poLayer->GetName() ) )
+	{
+	    break;
+	}
+    }
+
+    CPLFree( pszSafeLayerName );
+
+    return i < count ? poLayer : NULL;
 }
