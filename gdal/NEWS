@@ -1,4 +1,4 @@
-= GDAL/OGR 1.10.0 *Preliminary* Release Notes (r23656 to r25454) =
+= GDAL/OGR 1.10.0 *Preliminary* Release Notes (r23656 to r25541) =
 
 == In a nutshell... ==
 
@@ -74,8 +74,10 @@ Port:
  * Make VSIFileManager::Get() thread-safe
  * Fix thread-safety of CPLOpenShared() (#4848)
  * Add CPLZLibDeflate() and CPLZLibInflate()
+ * Add API for OAuth2 authentication protocol.
 
 Core:
+ * Add a DMD_SUBDATASETS driver metadata, and advertize it in relevant drivers (#4902)
  * Fix statistics computation when nodata value is +/- infinity (#4506)
  * GDALNoDataMaskBand: implement IRasterIO() for an optimization in common use case (#4488)
  * GDALVersionInfo(): add BUILD_INFO version string
@@ -168,6 +170,7 @@ ENVI driver:
  * Assume BSQ interleaving when 'interleave' keyword missing or unknown
  * Fix category names writing
  * Remove 'envi fft result' from the blacklist
+ * Report wavelength and wavelength_units as band metadata (#3682)
 
 ENVISAT driver:
  * Ported to VSI*L
@@ -259,6 +262,8 @@ JPEG driver:
  * When there are no external overviews built, take advantage of the nature of JPEG compression to expose overviews of level 2, 4 and 8
  * Don't return junk content when requesting xml:XMP but no XMP metadata is present (#4593)
  * add a INTERNAL_MASK creation option to be able to disable appending the ZLib mask if not needed
+ * add support for creating a JPEG loss-less file starting with the recentlish IJG libjpeg v9
+   (with -co ARITHMETIC=yes -co BLOCK=1 -co COLOR_TRANSFORM=RGB1)
 
 KMLSuperOverlay driver:
  * Add read support
@@ -290,6 +295,7 @@ NetCDF driver:
 NITF driver:
  * nitf_spec.xml: add definition of ACFTB and AIMIDB TREs
  * Don't escape DESDATA for sizes >10mb (#4803)
+ * Fix NITF creation when both BLOCKA and TRE are passed in (#4958)
 
 Northwood driver:
  * Fixes for huge files (>2GB) support (#4565, #4645)
@@ -301,13 +307,18 @@ PDF driver:
  * Add GDAL_PDF_BANDS = 3 or 4 config option to select RGB or RGBA rendering; add GDAL_PDF_RENDERING_OPTIONS config option to enable selective feature rendering by combining VECTOR, BITMAP and TEXT values
  * Fix parsing of some georeferencing (r24022)
  * Recognized ISO georeferencing set at the image level (and not at the page level); expose such images as subdatasets (#4695)
- * Support Poppler 0.20
+ * Support Poppler 0.20 (and for current Poppler development version 0.23/0.24)
  * UTF-16 support
  * Report registration points as GCPs (OGC Best Practice)
  * Allow building driver with both Poppler and Podofo (testing purposes mostly)
  * Fix crashes on some PDF files with poppler >= 0.17.0 (#4520)
  * Improve rounding of raster dimensions (#4775)
  * With podofo, avoid launching the 'pdftoppm' process in a visible console on Windows (#4864)
+ * Select neatline whose description is 'Map Layers' when it is found, to keep the best neatline for USGS PDF Topo
+   and add GDAL_PDF_NEATLINE config. option to override that default value.
+ * Improve detection of DPI for USGS Topo PDF to get the maximum raster quality (will increase
+   reported dataset height and width)
+ * Extract USGS Topo PDF embedded metadata in the EMBEDDED_METADATA domain
 
 PNG driver:
  * Internal libpng upgraded to 1.2.50
@@ -467,6 +478,9 @@ GeoJSON driver:
 Geomedia driver:
  * Fix loading of 'boundary' geometries when they are 2.5D or contain more than one inner rings (#4734)
 
+GFT driver:
+ * Use OAuth2 authentication (was ClientLogin in previous versions).
+
 GML driver:
  * Add PREFIX and TARGET_NAMESPACE dataset creation options
  * Fix typo when writing geometry type name of MultiLineString in GML3 .xsd (#4674)
@@ -532,6 +546,7 @@ MSSQLSpatial driver:
 
 MySQL:
  * Enable auto reconnect to MySQL (#4819)
+ * Reset field width and precision when converting from an unhandled field type to TEXT (#4951)
 
 NAS driver:
  * Better support for wfsext:Replace (#4555)
@@ -553,6 +568,9 @@ ODBC driver:
  * Make SetAttributeFilter(NULL) work (#4821)
  * Add optimized GetFeatureCount() implementation
 
+NTF driver:
+ * Various fixes when opening ill-formed datasets.
+
 PGeo driver:
  * PGeo / Geomedia : remove heuristics that tried to identify if a MDB file belonged to the PGeo or Geomedia driver (#4498)
 
@@ -563,6 +581,7 @@ PG driver:
  * Avoid fatal error when the public schema is absent (#4611)
  * Differ SRS evaluation on SQL layers (#4644)
  * Optimize SRID fetching on SQL result layer; compatibility with PostGIS 2.0 by using ST_SRID (#4699, #4700)
+ * Always fetch the SRS to attach it to feature geometry of result SQL layers.
 
 PGDump driver:
  * Add a 'COLUMN_TYPES' layer creation option (#4788)
@@ -587,6 +606,9 @@ Shapefile driver:
  * Correctly deal with .cpg files containing 8859xx string (#4743)
  * Make TestCapability(OLCFastFeatureCount) return TRUE when an attribute filter is set only if attribute indices can be used
  * Shapelib: Fix memory leaks in error code path of DBFCreateLL() (#4860)
+
+S57 driver:
+ * Various fixes when opening ill-formed datasets.
 
 SQLite/Spatialite driver:
  * Add support for tables with multiple geometry columns (#4768)
@@ -645,6 +667,9 @@ WFS driver:
  * Fix issues when querying the WFSLayerMetadata and that one of the field contains double-quote characters (#4796)
  * Remove auto-added ACCEPTVERSIONS=1.0.0,1.1.1 - when none of VERSION or ACCEPTVERSIONS were specified - because it does not work with WFS 2.0 only servers
  * Automagically convert MAXFEATURES= to COUNT= if people still (wrongly) used it for WFS 2.0
+ * Honour paging when running GetFeatureCount() and that RESULTTYPE=HITS isn't available (e.g. WFS 1.0.0) (#4953)
+ * Optimize WFS 1.0 (or WFS 1.1.0 where RESULTTYPE=HITS isn't available) so that in some circumstances the GML stream
+   downloaded is used to compute GetFeatureCount() and GetExtent() together
 
 XLS driver:
  * Set FID to the row number in the spreadsheet software (first row being 1). In case OGR detects a header line, the first feature will then be assigned a FID of 2 (#4586)
@@ -656,6 +681,7 @@ All bindings:
  * Add VSIReadDirRecursive() (#4658)
  * Add a osr.CreateCoordinateTransformation(src, dst) method (and for Java, a static method CoordinateTransformation.CreateCoordinateTransformation(src, dst) (#4836)
  * Add ogr.ForceToLineString()
+ * Clear error before OGR_Dr_Open() (#4955)
 
 Java bindings:
  * Fix compilation issue with SWIG 2.0.6 on Java bindings (#4669)
