@@ -27,7 +27,7 @@ OBJ =	cpl_conv.o cpl_error.o cpl_string.o cplgetsymbol.o cplstringlist.o \
 	cpl_vsil_tar.o cpl_vsil_stdin.o cpl_vsil_buffered_reader.o \
 	cpl_base64.o cpl_vsil_curl.o cpl_vsil_curl_streaming.o \
 	cpl_vsil_cache.o cpl_xml_validate.o cpl_spawn.o \
-	cpl_google_oauth2.o
+	cpl_google_oauth2.o cpl_progress.o
 
 ifeq ($(ODBC_SETTING),yes)
 OBJ	:= 	$(OBJ) cpl_odbc.o
