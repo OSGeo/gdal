@@ -81,9 +81,13 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
                         if( eByteOrder == wkbNDR)
                             CPL_SWAP32PTR(&nSRSId);
 #endif
+                        CPLPushErrorHandler(CPLQuietErrorHandler);
                         poSRS = poDS->FetchSRS( nSRSId );
+                        CPLPopErrorHandler();
                         if( poSRS != NULL )
                             poSRS->Reference();
+                        else
+                            CPLErrorReset();
                     }
 #ifdef SQLITE_HAS_COLUMN_METADATA
                     else
