@@ -40,6 +40,7 @@
 #include "gdal_version.h"
 #include "cpl_port.h"
 #include "cpl_error.h"
+#include "cpl_progress.h"
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -177,19 +178,6 @@ typedef void *GDALRasterAttributeTableH;
 
 /** Opaque type used for the C bindings of the C++ GDALAsyncReader class */
 typedef void *GDALAsyncReaderH;
-
-/* -------------------------------------------------------------------- */
-/*      Callback "progress" function.                                   */
-/* -------------------------------------------------------------------- */
-
-typedef int (CPL_STDCALL *GDALProgressFunc)(double dfComplete, const char *pszMessage, void *pProgressArg);
-
-int CPL_DLL CPL_STDCALL GDALDummyProgress( double, const char *, void *);
-int CPL_DLL CPL_STDCALL GDALTermProgress( double, const char *, void *);
-int CPL_DLL CPL_STDCALL GDALScaledProgress( double, const char *, void *);
-void CPL_DLL * CPL_STDCALL GDALCreateScaledProgress( double, double,
-                                        GDALProgressFunc, void * );
-void CPL_DLL CPL_STDCALL GDALDestroyScaledProgress( void * );
 
 /* ==================================================================== */
 /*      Registration/driver related.                                    */

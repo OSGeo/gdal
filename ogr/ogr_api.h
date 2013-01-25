@@ -39,7 +39,7 @@
  * See also: ogr_geometry.h, ogr_feature.h, ogrsf_frmts.h, ogr_featurestyle.h
  */
 
-#include "gdal.h"
+#include "cpl_progress.h"
 #include "ogr_core.h"
 
 CPL_C_START
