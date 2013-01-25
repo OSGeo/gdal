@@ -1031,6 +1031,11 @@ def ogr_sql_sqlite_16(service = None, template = 'http://127.0.0.1:%d/geocoding?
         if cache_ds is None:
             gdaltest.post_reason('fail')
             ret = 'fail'
+        if cache_ds.GetDriver().GetName().lower() != cache_filename[cache_filename.find('.')+1:].lower():
+            gdaltest.post_reason('fail')
+            print(cache_ds.GetDriver().GetName())
+            print(cache_filename)
+            ret = 'fail'
         cache_ds = None
 
         try:
