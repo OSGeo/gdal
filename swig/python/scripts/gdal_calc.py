@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #******************************************************************************
 # 
 #  Project:  GDAL
@@ -139,7 +140,9 @@ def doit(opts, args):
 
         # create file
         myOutDrv = gdal.GetDriverByName(opts.format)
-        myOut=myOutDrv.Create(opts.outF, DimensionsCheck[0], DimensionsCheck[1], 1, gdal.GetDataTypeByName(myOutType))
+        myOut = myOutDrv.Create(
+            opts.outF, DimensionsCheck[0], DimensionsCheck[1], 1,
+            gdal.GetDataTypeByName(myOutType), opts.creation_options)
 
         # set output geo info based on first input layer
         myOut.SetGeoTransform(myFiles[0].GetGeoTransform())
@@ -261,11 +264,7 @@ def doit(opts, args):
 
 ################################################################
 def main():
-
-    usage = """
-gdal_calc.py [-A <filename>] [--A_band] [-B...-Z filename]  [--calc <calculation>] [--format] [--outfile output_file] [--type data_type] [--NoDataValue] [--overwrite]
-    """
-
+    usage = "usage: %prog [-A <filename>] [--A_band] [-B...-Z filename] [other_options]"
     parser = OptionParser(usage)
 
     # define options
@@ -279,16 +278,21 @@ gdal_calc.py [-A <filename>] [--A_band] [-B...-Z filename]  [--calc <calculation
     parser.add_option("--NoDataValue", dest="NoDataValue", type=float, help="set output nodatavalue (Defaults to datatype specific values)")
     parser.add_option("--type", dest="type", help="set datatype must be one of %s" % list(DefaultNDVLookup.keys()))
     parser.add_option("--format", dest="format", default="GTiff", help="GDAL format for output file (default 'GTiff')")
+    parser.add_option(
+        "--creation-option", "--co", dest="creation_options", default=[], action="append",
+        help="Passes a creation option to the output format driver. Multiple"
+        "options may be listed. See format specific documentation for legal"
+        "creation options for each format.")
     parser.add_option("--overwrite", dest="overwrite", action="store_true", help="overwrite output file if it already exists")
     parser.add_option("--debug", dest="debug", action="store_true", help="print debugging information")
 
     (opts, args) = parser.parse_args()
 
     if len(sys.argv) == 1:
-        print(usage)
+        parser.print_help()
     elif not opts.calc:
         print("No calculation provided.  Nothing to do!")
-        print(usage)
+        parser.print_help()
     else:
         doit(opts, args)
 
