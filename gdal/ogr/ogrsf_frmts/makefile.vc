@@ -237,7 +237,7 @@ default:
 
 plugindirs:
 	@echo plugins: $(PLUGINDIRLIST)
-        for %d in ( $(PLUGINDIRLIST) ) do \
+        -for %d in ( $(PLUGINDIRLIST) ) do \
                 cd %d \
                 && $(MAKE) /f makefile.vc plugin \
                 && cd .. \
