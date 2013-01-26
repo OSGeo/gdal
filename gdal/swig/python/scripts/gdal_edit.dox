@@ -1,0 +1,71 @@
+
+/*! \page gdal_edit gdal_edit.py
+
+Edit in place various information of an existing GDAL dataset
+
+\section gdal_edit_synopsis SYNOPSIS
+
+\verbatim
+gdal_edit [--help-general] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
+          [-tr xres yres] [-unsetgt] [-a_nodata value]
+          [-gcp pixel line easting northing [elevation]]*
+          [-mo "META-TAG=VALUE"]*  datasetname
+\endverbatim
+
+\section gdal_edit_description DESCRIPTION
+
+The gdal_edit.py script can be used to allows to edit in place various information
+of an existing GDAL dataset (projection, geotransform, nodata, metadata).
+
+It works only with raster formats that support update access to
+existing datasets.
+<dl>
+
+<dt> <b>--help-general</b></dt>:<dd>
+Gives a brief usage message for the generic GDAL commandline options 
+and exit.
+</dd>
+
+<dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd>
+
+Defines the target coordinate system.  This coordinate system will be
+written to the dataset.
+
+<dt> <b>-a_ullr</b> <i>ulx uly lrx lry</i>:</dt><dd>
+Assign/override the georeferenced bounds of the dataset.</dd>
+
+<dt> <b>-tr</b> xres yres :</dt><dd>
+Set target resolution. The values must be expressed in georeferenced units.
+Both must be positive values.</dd>
+
+<dt> <b>-unsetgt</b></dt>:<dd>
+Remove the georeference information.</dd>
+
+<dt> <b>-a_nodata</b> <i>value</i>:</dt><dd>
+Assign a specified nodata value to output bands. Can be set to <i>none</i>
+to remove a nodata value if one exists for the dataset.</dd>
+
+<dt> <b>-gcp</b> <i>pixel line easting northing [elevation]</i>:</dt><dd>
+Add the indicated ground control point to the dataset.  This option 
+may be provided multiple times to provide a set of GCPs. 
+</dd>
+
+<dt> <b>-mo</b> <i>"META-TAG=VALUE"</i>:</dt><dd> Passes a metadata key and
+value to set on the output dataset if possible.</dd>
+
+</dl>
+
+-a_ullr, -tr and -unsetgt options are exclusive.
+
+\section gdal_edit_example EXAMPLE
+
+\verbatim
+gdal_edit -mo DATUM=WGS84 -mo PROJ=GEODETIC -a_ullr 7 47 8 46 test.ecw
+\endverbatim
+
+\if man
+\section gdal_edit_author AUTHORS
+Even Rouault <even dot rouault at mines dash paris dot org>
+\endif
+*/
+

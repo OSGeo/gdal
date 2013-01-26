@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -151,7 +152,9 @@ def gdal_edit(argv):
         return -1
 
     wkt = None
-    if srs is not None:
+    if srs == '' or srs == 'None':
+        ds.SetProjection('')
+    elif srs is not None:
         sr = osr.SpatialReference()
         if sr.SetFromUserInput(srs) != 0:
             print('Failed to process SRS definition: %s' % srs)
@@ -193,6 +196,9 @@ def gdal_edit(argv):
     ds = None
 
     return 0
+
+def main():
+    return gdal_edit(sys.argv)
 
 if __name__ == '__main__':
     sys.exit(gdal_edit(sys.argv))

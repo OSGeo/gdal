@@ -32,6 +32,7 @@ The following utility programs are distributed with GDAL.
 <li> \ref gdallocationinfo - Query raster at a location.
 <li> \ref gdalsrsinfo - Report a given SRS in different formats.  (GDAL >= 1.9.0)
 <li> \ref gdalmove - Transform the coordinate system of a file (GDAL >= 1.10)
+<li> \ref gdal_edit - Edit in place various information of an existing GDAL dataset (projection, geotransform, nodata, metadata)
 <li> \ref gdal-config - Get options required to build software using GDAL.
 </ul>
 
