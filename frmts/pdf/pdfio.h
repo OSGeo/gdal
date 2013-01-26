@@ -47,12 +47,10 @@
 class VSIPDFFileStream: public BaseStream
 {
     public:
-        VSIPDFFileStream(VSILFILE* f, const char* pszFilename,
-                         Guint startA, GBool limitedA,
-                         Guint lengthA, Object *dictA);
+        VSIPDFFileStream(VSILFILE* f, const char* pszFilename, Object *dictA);
         VSIPDFFileStream(VSIPDFFileStream* poParent,
-                         Guint startA, GBool limitedA,
-                         Guint lengthA, Object *dictA);
+                         vsi_l_offset startA, GBool limitedA,
+                         vsi_l_offset lengthA, Object *dictA);
         virtual ~VSIPDFFileStream();
 
 #ifdef POPPLER_0_23_OR_LATER
@@ -89,12 +87,13 @@ class VSIPDFFileStream: public BaseStream
         VSIPDFFileStream  *poParent;
         GooString         *poFilename;
         VSILFILE          *f;
-        int                nStart;
+        vsi_l_offset       nStart;
         int                bLimited;
-        int                nLength;
+        vsi_l_offset       nLength;
 
-        int                nCurrentPos;
-        int                nSavedPos;
+        vsi_l_offset       nCurrentPos;
+        int                bHasSavedPos;
+        vsi_l_offset       nSavedPos;
 
         GByte              abyBuffer[BUFFER_SIZE];
         int                nPosInBuffer;
