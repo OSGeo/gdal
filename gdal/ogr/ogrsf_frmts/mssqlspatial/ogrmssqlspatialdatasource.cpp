@@ -49,7 +49,7 @@ OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource()
 
     nGeometryFormat = MSSQLGEOMETRY_NATIVE;
 
-    bUseGeometryColumns = !CSLTestBoolean(CPLGetConfigOption("MSSQLSPATIAL_USE_GEOMETRY_COLUMNS", "NO"));
+    bUseGeometryColumns = CSLTestBoolean(CPLGetConfigOption("MSSQLSPATIAL_USE_GEOMETRY_COLUMNS", "YES"));
 }
 
 /************************************************************************/
