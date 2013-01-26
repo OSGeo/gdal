@@ -118,8 +118,13 @@ BaseStream* VSIPDFFileStream::copy()
 /*                             makeSubStream()                          */
 /************************************************************************/
 
+#ifdef POPPLER_0_23_OR_LATER
+Stream *VSIPDFFileStream::makeSubStream(Goffset startA, GBool limitedA,
+                                        Goffset lengthA, Object *dictA)
+#else
 Stream *VSIPDFFileStream::makeSubStream(Guint startA, GBool limitedA,
                                         Guint lengthA, Object *dictA)
+#endif
 {
     return new VSIPDFFileStream(this,
                                 startA, limitedA,
@@ -130,7 +135,11 @@ Stream *VSIPDFFileStream::makeSubStream(Guint startA, GBool limitedA,
 /*                                 getPos()                             */
 /************************************************************************/
 
+#ifdef POPPLER_0_23_OR_LATER
+Goffset VSIPDFFileStream::getPos()
+#else
 int VSIPDFFileStream::getPos()
+#endif
 {
     return nCurrentPos;
 }
@@ -139,7 +148,11 @@ int VSIPDFFileStream::getPos()
 /*                                getStart()                            */
 /************************************************************************/
 
+#ifdef POPPLER_0_23_OR_LATER
+Goffset VSIPDFFileStream::getStart()
+#else
 Guint VSIPDFFileStream::getStart()
+#endif
 {
     return nStart;
 }
@@ -287,7 +300,11 @@ void VSIPDFFileStream::close()
 /*                               setPos()                               */
 /************************************************************************/
 
+#ifdef POPPLER_0_23_OR_LATER
+void VSIPDFFileStream::setPos(Goffset pos, int dir)
+#else
 void VSIPDFFileStream::setPos(Guint pos, int dir)
+#endif
 {
     if (dir >= 0)
     {
@@ -315,7 +332,11 @@ void VSIPDFFileStream::setPos(Guint pos, int dir)
 /*                            moveStart()                               */
 /************************************************************************/
 
+#ifdef POPPLER_0_23_OR_LATER
+void VSIPDFFileStream::moveStart(Goffset delta)
+#else
 void VSIPDFFileStream::moveStart(int delta)
+#endif
 {
     nStart += delta;
     VSIFSeekL(f, nCurrentPos = nStart, SEEK_SET);
