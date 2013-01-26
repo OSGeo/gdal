@@ -900,6 +900,8 @@ int CPL_STDCALL INGR_ReadJpegQuality( VSILFILE *fp, uint32 nAppDataOfseet,
 //                                                        INGR_Decode()
 //
 //	Decode the various RLE compression options.
+//
+//  Pass NULL as pabyDstData to obtain pnBytesConsumed and bypass decompression.
 // -----------------------------------------------------------------------------
 
 int CPL_STDCALL 
@@ -940,6 +942,7 @@ int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
     unsigned int i; 
     unsigned int iInput;
     unsigned int iOutput;
+    unsigned int inc;
 
     iInput = 0;
     iOutput = 0;
@@ -951,19 +954,36 @@ int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
         if( cAtomHead > 0 )
         {
             nRun = cAtomHead;
-
-            for( i = 0; i < nRun && iInput < nSrcBytes && iOutput < nBlockSize; i++ )
+            
+            if (pabyDstData)
             {
-                pabyDstData[iOutput++] = pabySrcData[iInput++];
+                for( i = 0; i < nRun && iInput < nSrcBytes && iOutput < nBlockSize; i++ )
+                {
+                    pabyDstData[iOutput++] = pabySrcData[iInput++];
+                }
+            }
+            else
+            {
+                inc = MIN(nRun, MIN(nSrcBytes - iInput, nBlockSize - iOutput));
+                iInput += inc;
+                iOutput += inc;
             }
         }
         else if( cAtomHead < 0 )
         {
             nRun = abs( cAtomHead );
 
-            for( i = 0; i < nRun && iInput < nSrcBytes && iOutput < nBlockSize; i++ )
+            if (pabyDstData)
             {
-                pabyDstData[iOutput++] = pabySrcData[iInput];
+                for( i = 0; i < nRun && iInput < nSrcBytes && iOutput < nBlockSize; i++ )
+                {
+                    pabyDstData[iOutput++] = pabySrcData[iInput];
+                }
+            }
+            else
+            {
+                inc = MIN(nRun, MIN(nSrcBytes - iInput, nBlockSize - iOutput));
+                iOutput += inc;
             }
             iInput++;
         }
@@ -1019,9 +1039,16 @@ INGR_DecodeRunLengthPaletted( GByte *pabySrcData, GByte *pabyDstData,
             iInput++;
         }
 
-        for( i = 0; i < nCount && iOutput < nBlockSize; i++ )
+        if (pabyDstData)
         {
-            pabyDstData[iOutput++] = (unsigned char) nColor;
+            for( i = 0; i < nCount && iOutput < nBlockSize; i++ )
+            {
+                pabyDstData[iOutput++] = (unsigned char) nColor;
+            }
+        }
+        else
+        {
+            iOutput += MIN(nCount, nBlockSize - iOutput);
         }
     }
     while( ( iInput < nSrcShorts ) && ( iOutput < nBlockSize) );
@@ -1067,12 +1094,20 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
             continue;
         }
         
-        for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
+        if (pabyDstData)
         {
-            pabyDstData[ iOutput++ ] = nValue;
+            for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
+            {
+                pabyDstData[ iOutput++ ] = nValue;
+            }
+
+            nValue = ( nValue == 1 ? 0 : 1 );
+        }
+        else
+        {
+            iOutput += MIN(nRun, nBlockSize - iOutput);
         }
         
-        nValue = ( nValue == 1 ? 0 : 1 );
     }
     while( ( iInput < nSrcShorts ) && ( iOutput < nBlockSize ) );
 

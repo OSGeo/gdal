@@ -613,7 +613,16 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
         if (HandleUninstantiatedTile( nBlockXOff, nBlockYOff, pImage ))
             return CE_None;
 
-        nBytesRead = LoadBlockBuf( nBlockXOff, nBlockYOff, nRLESize, pabyRLEBlock );
+        if (!bTiled)
+        {
+            // With RLE, we want to load all of the data.
+            // So load (0,0) since that's the only offset that will load everything.
+            nBytesRead = LoadBlockBuf( 0, 0, nRLESize, pabyRLEBlock );
+        }
+        else
+        {
+            nBytesRead = LoadBlockBuf( nBlockXOff, nBlockYOff, nRLESize, pabyRLEBlock );
+        }
         bRLEBlockLoaded = TRUE;
     }
     else
@@ -667,28 +676,41 @@ CPLErr IntergraphRLEBand::IReadBlock( int nBlockXOff,
 
     else
     {
+        uint32 nBytesConsumed;
+
         // If we are missing the offset to this line, process all
-        // preceding lines.
+        // preceding lines that are not initialized.
         if( nBlockYOff > 0 && panRLELineOffset[nBlockYOff] == 0 )
         {
-            int iLine;
-            for( iLine = 0; iLine < nBlockYOff; iLine++ )
-                IReadBlock( 0, iLine, pImage );
-        } 
-        if( nBlockYOff == 0 || panRLELineOffset[nBlockYOff] > 0 )
-        {
-            uint32 nBytesConsumed;
-            
-            nBytesRead = 
+            int iLine = nBlockYOff - 1;
+            // Find the last line that is initialized (or line 0).
+            while ((iLine != 0) && (panRLELineOffset[iLine] == 0))
+                iLine--;
+            for( ; iLine < nBlockYOff; iLine++ )
+            {
+                // Pass NULL as destination so that no decompression 
+                // actually takes place.
                 INGR_Decode( eFormat,
-                             pabyRLEBlock + panRLELineOffset[nBlockYOff], 
-                             pabyBlockBuf,  nRLESize, nBlockBufSize,
+                             pabyRLEBlock + panRLELineOffset[iLine], 
+                             NULL,  nRLESize, nBlockBufSize,
                              &nBytesConsumed );
+
+                if( iLine < nRasterYSize-1 )
+                    panRLELineOffset[iLine+1] = 
+                        panRLELineOffset[iLine] + nBytesConsumed;
+            }
+        } 
+        
+        // Read the requested line.
+        nBytesRead = 
+            INGR_Decode( eFormat,
+                         pabyRLEBlock + panRLELineOffset[nBlockYOff], 
+                         pabyBlockBuf,  nRLESize, nBlockBufSize,
+                         &nBytesConsumed );
             
-            if( nBlockYOff < nRasterYSize-1 )
-                panRLELineOffset[nBlockYOff+1] = 
-                    panRLELineOffset[nBlockYOff] + nBytesConsumed;
-        }
+        if( nBlockYOff < nRasterYSize-1 )
+            panRLELineOffset[nBlockYOff+1] = 
+                panRLELineOffset[nBlockYOff] + nBytesConsumed;
     }
 
     // --------------------------------------------------------------------
