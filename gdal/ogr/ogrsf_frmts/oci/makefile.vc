@@ -5,6 +5,7 @@ OGR_OBJ	=	ogrocidriver.obj ogrocidatasource.obj ogrocilayer.obj \
 		ogrociwritablelayer.obj ogrociloaderlayer.obj \
 		ogrocistroke.obj
 
+PLUGIN_DLL =	ogr_OCI.dll
 
 OBJ	=	$(LL_OBJ) $(OGR_OBJ)
 
@@ -22,8 +23,10 @@ clean:
 	-del *.obj *.pdb
 	-del *.exe
 
-ogr_OCI.dll:	$(OBJ)
-	link /dll $(LDEBUG) /out:ogr_OCI.dll $(OBJ) \
+plugin:	$(PLUGIN_DLL)
+
+$(PLUGIN_DLL):	$(OBJ)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) \
 		$(GDAL_ROOT)/gdal_i.lib $(OCI_LIB)
 	if exist ogr_OCI.dll.manifest mt -manifest ogr_OCI.dll.manifest \
 		-outputresource:ogr_OCI.dll;2
@@ -39,3 +42,6 @@ fastload.exe:	$(LL_OBJ) fastload.obj
 		$(GDAL_ROOT)/port/cpl.lib $(OCI_LIB) $(LIBS)
 
 
+plugin-install:
+        -mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)
