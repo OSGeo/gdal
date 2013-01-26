@@ -292,6 +292,8 @@ class GTiffDataset : public GDALPamDataset
     int         IsBlockAvailable( int nBlockId );
 
     int         bGeoTIFFInfoChanged;
+    int         bForceUnsetGT;
+    int         bForceUnsetProjection;
     int         bNoDataSet;
     double      dfNoDataValue;
 
@@ -3041,6 +3043,8 @@ GTiffDataset::GTiffDataset()
     bNeedsRewrite = FALSE;
     bMetadataChanged = FALSE;
     bGeoTIFFInfoChanged = FALSE;
+    bForceUnsetGT = FALSE;
+    bForceUnsetProjection = FALSE;
     bCrystalized = TRUE;
     poColorTable = NULL;
     bNoDataSet = FALSE;
@@ -4686,6 +4690,29 @@ CPLErr GTiffDataset::IBuildOverviews(
     return eErr;
 }
 
+/************************************************************************/
+/*                      GTiffWriteDummyGeokeyDirectory()                */
+/************************************************************************/
+
+static void GTiffWriteDummyGeokeyDirectory(TIFF* hTIFF)
+{
+    // If we have existing geokeys, try to wipe them
+    // by writing a dummy geokey directory. (#2546)
+    uint16 *panVI = NULL;
+    uint16 nKeyCount;
+
+    if( TIFFGetField( hTIFF, TIFFTAG_GEOKEYDIRECTORY, 
+                        &nKeyCount, &panVI ) )
+    {
+        GUInt16 anGKVersionInfo[4] = { 1, 1, 0, 0 };
+        double  adfDummyDoubleParams[1] = { 0.0 };
+        TIFFSetField( hTIFF, TIFFTAG_GEOKEYDIRECTORY, 
+                        4, anGKVersionInfo );
+        TIFFSetField( hTIFF, TIFFTAG_GEODOUBLEPARAMS, 
+                        1, adfDummyDoubleParams );
+        TIFFSetField( hTIFF, TIFFTAG_GEOASCIIPARAMS, "" );
+    }
+}
 
 /************************************************************************/
 /*                          WriteGeoTIFFInfo()                          */
@@ -4705,6 +4732,32 @@ void GTiffDataset::WriteGeoTIFFInfo()
         bPointGeoIgnore = 
             CSLTestBoolean( CPLGetConfigOption("GTIFF_POINT_GEO_IGNORE",
                                                "FALSE") );
+    }
+
+    if( bForceUnsetGT )
+    {
+        bNeedsRewrite = TRUE;
+        bForceUnsetGT = FALSE;
+
+#ifdef HAVE_UNSETFIELD
+        TIFFUnsetField( hTIFF, TIFFTAG_GEOPIXELSCALE );
+        TIFFUnsetField( hTIFF, TIFFTAG_GEOTIEPOINTS );
+        TIFFUnsetField( hTIFF, TIFFTAG_GEOTRANSMATRIX );
+#endif
+    }
+
+    if( bForceUnsetProjection )
+    {
+        bNeedsRewrite = TRUE;
+        bForceUnsetProjection = FALSE;
+
+#ifdef HAVE_UNSETFIELD
+        TIFFUnsetField( hTIFF, TIFFTAG_GEOKEYDIRECTORY );
+        TIFFUnsetField( hTIFF, TIFFTAG_GEODOUBLEPARAMS );
+        TIFFUnsetField( hTIFF, TIFFTAG_GEOASCIIPARAMS );
+#else
+        GTiffWriteDummyGeokeyDirectory(hTIFF);
+#endif
     }
 
 /* -------------------------------------------------------------------- */
@@ -4832,21 +4885,8 @@ void GTiffDataset::WriteGeoTIFFInfo()
         bNeedsRewrite = TRUE;
 
         // If we have existing geokeys, try to wipe them
-        // by writing a dummy goekey directory. (#2546)
-        uint16 *panVI = NULL;
-        uint16 nKeyCount;
-
-        if( TIFFGetField( hTIFF, TIFFTAG_GEOKEYDIRECTORY, 
-                          &nKeyCount, &panVI ) )
-        {
-            GUInt16 anGKVersionInfo[4] = { 1, 1, 0, 0 };
-            double  adfDummyDoubleParams[1] = { 0.0 };
-            TIFFSetField( hTIFF, TIFFTAG_GEOKEYDIRECTORY, 
-                          4, anGKVersionInfo );
-            TIFFSetField( hTIFF, TIFFTAG_GEODOUBLEPARAMS, 
-                          1, adfDummyDoubleParams );
-            TIFFSetField( hTIFF, TIFFTAG_GEOASCIIPARAMS, "" );
-        }
+        // by writing a dummy geokey directory. (#2546)
+        GTiffWriteDummyGeokeyDirectory(hTIFF);
 
         psGTIF = GTIFNew( hTIFF );  
 
@@ -5724,6 +5764,8 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->bMetadataChanged = FALSE;
     poDS->bGeoTIFFInfoChanged = FALSE;
+    poDS->bForceUnsetGT = FALSE;
+    poDS->bForceUnsetProjection = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
@@ -5869,6 +5911,8 @@ void GTiffDataset::LookForProjection()
     }
 
     bGeoTIFFInfoChanged = FALSE;
+    bForceUnsetGT = FALSE;
+    bForceUnsetProjection = FALSE;
 }
 
 /************************************************************************/
@@ -6612,6 +6656,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         
         CPLFree( pszTabWKT );
         bGeoTIFFInfoChanged = FALSE;
+        bForceUnsetGT = FALSE;
+        bForceUnsetProjection = FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -8502,6 +8548,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     /* To avoid unnecessary directory rewriting */
     poDS->bMetadataChanged = FALSE;
     poDS->bGeoTIFFInfoChanged = FALSE;
+    poDS->bForceUnsetGT = FALSE;
+    poDS->bForceUnsetProjection = FALSE;
 
     /* We must re-set the compression level at this point, since it has */
     /* been lost a few lines above when closing the newly create TIFF file */
@@ -8827,7 +8875,12 @@ CPLErr GTiffDataset::SetProjection( const char * pszNewProjection )
         
         return CE_Failure;
     }
-    
+
+    bForceUnsetProjection = (
+         EQUAL(pszNewProjection, "") &&
+         pszProjection != NULL &&
+         !EQUAL(pszProjection, "") );
+
     CPLFree( pszProjection );
     pszProjection = CPLStrdup( pszNewProjection );
 
@@ -8860,6 +8913,20 @@ CPLErr GTiffDataset::SetGeoTransform( double * padfTransform )
 {
     if( GetAccess() == GA_Update )
     {
+        bForceUnsetGT = (
+            padfTransform[0] == 0.0 &&
+            padfTransform[1] == 1.0 &&
+            padfTransform[2] == 0.0 &&
+            padfTransform[3] == 0.0 &&
+            padfTransform[4] == 0.0 &&
+            padfTransform[5] == 1.0 &&
+          !(adfGeoTransform[0] == 0.0 &&
+            adfGeoTransform[1] == 1.0 &&
+            adfGeoTransform[2] == 0.0 &&
+            adfGeoTransform[3] == 0.0 &&
+            adfGeoTransform[4] == 0.0 &&
+            adfGeoTransform[5] == 1.0) );
+
         memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
         bGeoTransformValid = TRUE;
         bGeoTIFFInfoChanged = TRUE;
