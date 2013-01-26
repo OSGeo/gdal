@@ -44,6 +44,22 @@
 
 #define BUFFER_SIZE 1024
 
+
+#ifdef POPPLER_0_23_OR_LATER
+#define getPos_ret_type Goffset
+#define getStart_ret_type Goffset
+#define makeSubStream_offset_type Goffset
+#define setPos_offset_type Goffset
+#define moveStart_delta_type Goffset
+#else
+#define getPos_ret_type int
+#define getStart_ret_type Guint
+#define makeSubStream_offset_type Guint
+#define setPos_offset_type Guint
+#define moveStart_delta_type int
+#endif
+
+
 class VSIPDFFileStream: public BaseStream
 {
     public:
@@ -57,21 +73,14 @@ class VSIPDFFileStream: public BaseStream
         virtual BaseStream* copy();
 #endif
 
-#ifdef POPPLER_0_23_OR_LATER
-        virtual Stream *   makeSubStream(Goffset startA, GBool limitedA,
-                                         Goffset lengthA, Object *dictA);
-        virtual Goffset    getPos();
-        virtual Goffset    getStart();
-        virtual void       setPos(Goffset pos, int dir = 0);
-        virtual void       moveStart(Goffset delta);
-#else
-        virtual Stream *   makeSubStream(Guint startA, GBool limitedA,
-                                         Guint lengthA, Object *dictA);
-        virtual int        getPos();
-        virtual Guint      getStart();
-        virtual void       setPos(Guint pos, int dir = 0);
-        virtual void       moveStart(int delta);
-#endif
+        virtual Stream *   makeSubStream(makeSubStream_offset_type startA, GBool limitedA,
+                                         makeSubStream_offset_type lengthA, Object *dictA);
+        virtual getPos_ret_type      getPos();
+        virtual getStart_ret_type    getStart();
+
+        virtual void       setPos(setPos_offset_type pos, int dir = 0);
+        virtual void       moveStart(moveStart_delta_type delta);
+
         virtual StreamKind getKind();
         virtual GooString *getFileName();
 
