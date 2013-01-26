@@ -2631,6 +2631,9 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
             int iDstField = poDstFDefn->GetFieldIndex(poSrcFieldDefn->GetNameRef());
             if (iDstField >= 0)
                 panMap[iField] = iDstField;
+            else
+                CPLDebug("OGR2OGR", "Skipping field '%s' not found in destination layer '%s'.",
+                         poSrcFieldDefn->GetNameRef(), poDstLayer->GetName() );
         }
     }
 
