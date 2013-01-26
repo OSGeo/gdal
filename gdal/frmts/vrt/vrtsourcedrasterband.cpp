@@ -95,6 +95,7 @@ void VRTSourcedRasterBand::Initialize( int nXSize, int nYSize )
     papoSources = NULL;
     bEqualAreas = FALSE;
     bAntiRecursionFlag = FALSE;
+    papszSourceList = NULL;
 }
 
 /************************************************************************/
@@ -105,6 +106,7 @@ VRTSourcedRasterBand::~VRTSourcedRasterBand()
 
 {
     CloseDependentDatasets();
+    CSLDestroy(papszSourceList);
 }
 
 /************************************************************************/
@@ -1127,7 +1129,8 @@ char **VRTSourcedRasterBand::GetMetadata( const char *pszDomain )
 /* ==================================================================== */
     if( pszDomain != NULL && EQUAL(pszDomain,"vrt_sources") )
     {
-        char **papszSourceList = NULL;
+        CSLDestroy(papszSourceList);
+        papszSourceList = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Process SimpleSources.                                          */
