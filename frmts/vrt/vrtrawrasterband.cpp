@@ -415,8 +415,11 @@ CPLXMLNode *VRTRawRasterBand::SerializeToXML( const char *pszVRTPath )
         psTree, "LineOffset", 
         CPLSPrintf("%d",(int) poRawRaster->GetLineOffset()) );
 
-    if( (poRawRaster->GetNativeOrder() && CPL_IS_LSB)
-        || (!poRawRaster->GetNativeOrder() && !CPL_IS_LSB) )
+#if CPL_IS_LSB == 1
+    if( poRawRaster->GetNativeOrder() )
+#else
+    if( !poRawRaster->GetNativeOrder() )
+#endif
         CPLCreateXMLElementAndValue( psTree, "ByteOrder", "LSB" );
     else
         CPLCreateXMLElementAndValue( psTree, "ByteOrder", "MSB" );
