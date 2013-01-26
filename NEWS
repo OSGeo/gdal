@@ -1,4 +1,4 @@
-= GDAL/OGR 1.10.0 *Preliminary* Release Notes (r23656 to r25541) =
+= GDAL/OGR 1.10.0 *Preliminary* Release Notes (r23656 to r25549) =
 
 == In a nutshell... ==
 
@@ -107,6 +107,7 @@ Algorithms:
 
 Utilities:
  * gdalmove.py: New application for "warping" an image by just updating its SRS and geotransform.
+ * gdal_edit.py: promote it as an 'official' tool
  * gdalwarp: assign color interpretation of source bands to target dataset, in the case of target VRT (#4462)
  * gdalwarp: copy metadata and band information from first source dataset and detect for conflicting values, new options -nomd and -cvmd (#3898)
  * gdalwarp: optimization when (-tr and -te) or (-ts and -te) are specified (#4804) 
@@ -119,7 +120,7 @@ Utilities:
  * gdalbuildvrt: add -a_srs option
  * gdalgrid: increase working buffer of gdal_grid binary to 16 MB
  * gdal_retile.py: Don't pass creation options to the MEM driver used for generating temporary datasets (#4532)
- * gdal_edit.py: make -a_srs option work properly by expanding the user input to WKT
+ * gdal_edit.py: make -a_srs option work properly by expanding the user input to WKT; support -a_srs ''
  * gdal_edit.py: add support for -gcp option
  * gdal2tiles.py: make KML output conformant with KML 2.2 (#4536)
  * gdal2tiles.py: OL 2.12 support (#4742)
@@ -205,6 +206,7 @@ GTiff driver:
  * Improve handling of description and offset/scale without reverting to .aux.xml
  * Workaround defects in libtiff 3.X when generating several overview levels at the same time
  * Special case where the EGM96 Vertical Datum code is mis-used as a Vertical CS code (#4922)
+ * Support unsetting geotiff tags when calling SetGeoTransform([0,1,0,0,0,1]) and SetProjection('')
 
 GRIB driver:
  * Report nodata value (#4433)
