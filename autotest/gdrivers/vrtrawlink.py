@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -80,11 +81,17 @@ def vrtrawlink_2():
 def vrtrawlink_3():
 
     gdaltest.rawlink_ds = gdal.Open( 'tmp/rawlink.vrt', gdal.GA_Update )
+    filelist = gdaltest.rawlink_ds.GetFileList()
     band = gdaltest.rawlink_ds.GetRasterBand(1)
     chksum = band.Checksum()
 
     if chksum != 12481:
         gdaltest.post_reason('Wrong checksum')
+        return 'fail'
+
+    if len(filelist) != 2:
+        gdaltest.post_reason('Wrong filelist')
+        print(filelist)
         return 'fail'
 
     return 'success'
