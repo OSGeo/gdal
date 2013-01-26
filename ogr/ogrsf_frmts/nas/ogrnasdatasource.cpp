@@ -38,6 +38,7 @@ static const char *apszURNNames[] =
     "DE_DHDN_3GK2_*", "EPSG:31466",
     "DE_DHDN_3GK3_*", "EPSG:31467",
     "ETRS89_UTM32", "EPSG:25832",
+    "ETRS89_UTM33", "EPSG:25833",
     NULL, NULL
 };
 
