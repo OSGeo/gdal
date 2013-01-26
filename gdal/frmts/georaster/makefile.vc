@@ -13,7 +13,8 @@ PLUGIN_DLL = gdal_GEOR.dll
 !IFDEF JPEG_EXTERNAL_LIB
 JPEG_FLAGS =	-I$(JPEGDIR) -DJPEG_SUPPORTED
 !ELSE
-JPEG_FLAGS =	-I..\jpeg\libjpeg -DJPEG_SUPPORTED
+JPEG_FLAGS = -I..\jpeg\libjpeg -DJPEG_SUPPORTED
+JPEG_LIB   = ..\jpeg\libjpeg\libjpeg.lib
 !ENDIF
 !ENDIF
 
@@ -37,7 +38,7 @@ plugin:	$(PLUGIN_DLL)
 
 $(PLUGIN_DLL): $(OBJ)
 	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(OCI_LIB) ..\zlib\*.obj \
-	..\jpeg\vsidataio.obj ..\jpeg\libjpeg\libjpeg.lib
+	..\jpeg\vsidataio.obj $(JPEG_LIB)
 	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
 
 plugin-install:

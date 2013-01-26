@@ -13,6 +13,15 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			$(COUCHDBDIR) $(FGDB_DIR) $(XLSDIR) $(ODSDIR) $(XLSXDIR) \
 			$(INGRESDIR) $(ELASTICDIR) $(OSMDIR)
 
+PLUGINDIRLIST	=	$(PLUGIN_ARCOBJECTS_DIR) \
+			$(PLUGIN_DWG_DIR) \
+			$(PLUGIN_PG_DIR) \
+			$(PLUGIN_FGDB_DIR) \
+			$(PLUGIN_OCIDIR) \
+			$(PLUGIN_SDE_DIR) \
+			$(PLUGIN_INGRESDIR) \
+			$(PLUGIN_LIBKMLDIR)
+
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 !IF "$(PCIDSK_SETTING)" == "EXTERNAL"
@@ -40,14 +49,20 @@ SQLITE_OBJ =	sqlite\*.obj
 !ENDIF
 
 !IFDEF OCI_LIB
+!IF "$(OCI_PLUGIN)" != "YES"
 OCIDIR =	oci
 OCIOBJ =	oci\*.obj
+!ELSE
+PLUGIN_OCIDIR = oci
+!ENDIF
 !ENDIF
 
 !IFDEF INGRES_HOME
 !IF "$(INGRES_PLUGIN)" != "YES"
 INGRESDIR	=	ingres
 INGRESOBJ =	ingres\*.obj
+!ELSE
+PLUGIN_INGRESDIR =	ingres
 !ENDIF
 !ENDIF
 
@@ -57,31 +72,49 @@ FMEOBJ = fme\*.obj
 !ENDIF
 
 !IFDEF PG_INC_DIR
+!IF "$(PG_PLUGIN)" != "YES"
 PG_DIR = pg
 PG_OBJ = pg\*.obj
+!ELSE
+PLUGIN_PG_DIR = pg
+!ENDIF
 !ENDIF
 
 !IFDEF DWGDIRECT
+!IF "$(DWG_PLUGIN)" != "YES"
 DWGDIR = dxfdwg
 DWG_OBJ = dxfdwg\*.obj
+!ELSE
+PLUGIN_DWGDIR = dxfdwg
+!ENDIF
 !ENDIF
 
 !IFDEF SDE_LIB
+!IF "$(SDE_PLUGIN)" != "YES"
 SDE_DIR = sde
 SDE_OBJ = sde\*.obj
+!ELSE
+PLUGIN_SDE_DIR = sde
+!ENDIF
 !ENDIF
 
 !IFDEF FGDB_LIB
 !IF "$(FGDB_PLUGIN)" != "YES"
 FGDB_DIR = filegdb
 FGDB_OBJ = filegdb\*.obj
+!ELSE
+PLUGIN_FGDB_DIR = filegdb
 !ENDIF
 !ENDIF
 
 
 !IFDEF HAS_ARCOBJECTS
+!IF "$(ARCOBJECTS_PLUGIN)" != "YES"
 ARCOBJECTS_DIR = arcobjects
 ARCOBJECTS_OBJ = arcobjects\*.obj
+!ELSE
+PLUGIN_ARCOBJECTS_DIR = arcobjects
+!ENDIF
 !ENDIF
 
 
@@ -111,8 +144,12 @@ DODS_OBJ = dods\*.obj
 !ENDIF
 
 !IFDEF LIBKML_DIR
+!IF "$(LIBKML_PLUGIN)" != "YES"
 LIBKMLDIR = libkml
 LIBKMLOBJ =	libkml\*.obj
+!ELSE
+PLUGIN_LIBKMLDIR = libkml
+!ENDIF
 !ENDIF
 
 !IFDEF CURL_LIB
@@ -198,6 +235,14 @@ default:
 				 ..\..\frmts\sdts\sdtsindexedreader.obj \
 				 ..\..\frmts\sdts\sdtsxref.obj
 
+plugindirs:
+	@echo plugins: $(PLUGINDIRLIST)
+        for %d in ( $(PLUGINDIRLIST) ) do \
+                cd %d \
+                && $(MAKE) /f makefile.vc plugin \
+                && cd .. \
+                || exit 1
+
 clean:
 	-del ogrsf_frmts.lib
 	-del ogrsf_frmts_sup.lib
@@ -206,6 +251,13 @@ clean:
 		&& $(MAKE) /f makefile.vc clean \
 		&& cd .. \
 		|| exit 1
+
+plugins-install:
+        -for %d in ( $(PLUGINDIRLIST) ) do \
+                cd %d \
+                && $(MAKE) /f makefile.vc plugin-install \
+                && cd .. \
+                || exit 1
 
 html-install:
 	copy *.html $(HTMLDIR)
