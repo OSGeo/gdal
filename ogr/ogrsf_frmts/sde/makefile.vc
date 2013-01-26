@@ -1,6 +1,8 @@
 OBJ     =       ogrsdedatasource.obj ogrsdedriver.obj ogrsdelayer.obj
 EXTRAFLAGS =	-I.. -I..\.. -I$(SDE_INC)
 
+PLUGIN_DLL = ogr_SDE.dll
+
 GDAL_ROOT	=	..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
@@ -10,6 +12,12 @@ default:	$(OBJ)
 clean:
 	-del *.obj *.pdb
 
-ogr_SDE.dll:	$(OBJ)
-	link /dll $(LDEBUG) /out:ogr_SDE.dll $(OBJ) \
+plugin: $(PLUGIN_DLL)
+
+$(PLUGIN_DLL):	$(OBJ)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) \
 		$(GDALLIB) $(SDE_LIB)
+
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)

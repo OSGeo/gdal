@@ -2,6 +2,8 @@
 OBJ	=	ogrpgdriver.obj ogrpgdatasource.obj ogrpglayer.obj \
 		ogrpgtablelayer.obj ogrpgresultlayer.obj ogrpgutility.obj
 
+PLUGIN_DLL = ogr_PG.dll
+
 GDAL_ROOT	=	..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
@@ -10,9 +12,11 @@ EXTRAFLAGS = -I.. -I..\.. -I$(PG_INC_DIR)
 
 default:	$(OBJ)
 
-ogr_PG.dll:	$(OBJ)
-	link /dll /out:ogr_PG.dll $(OBJ) $(GDALLIB) $(PG_LIB)
-	if exist ogr_PG.dll.manifest mt -manifest ogr_PG.dll.manifest -outputresource:ogr_PG.dll;2
+plugin: $(PLUGIN_DLL)
+
+$(PLUGIN_DLL):	$(OBJ)
+	link /dll /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(PG_LIB)
+	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
 
 clean:
 	-del *.lib
@@ -20,3 +24,7 @@ clean:
 	-del *.exe
 	-del *.dll
 	-del *.manifest
+
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)

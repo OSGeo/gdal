@@ -10,7 +10,7 @@ OBJ =	\
 
 DXF_OBJ = ..\dxf\intronurbs.obj ..\dxf\ogrdxf_polyline_smooth.obj 
 
-PLUGINDLL = ogr_DWG.dll
+PLUGIN_DLL = ogr_DWG.dll
 
 GDAL_ROOT	=	..\..\..
 
@@ -52,13 +52,14 @@ clean:
 	-del *.obj *.pdb
 	-del *.dll
 
-plugin:	 $(PLUGINDLL)
+plugin:	 $(PLUGIN_DLL)
 
-$(PLUGINDLL):	$(OBJ)
-	link /dll $(LDEBUG) /out:$(PLUGINDLL) $(OBJ) $(DXF_OBJ) \
+$(PLUGIN_DLL):	$(OBJ)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) $(DXF_OBJ) \
 		$(GDAL_ROOT)/gdal_i.lib $(TD_LIBS)
-	if exist $(PLUGINDLL).manifest mt -manifest $(PLUGINDLL).manifest \
-		-outputresource:$(PLUGINDLL);2
+	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest \
+		-outputresource:$(PLUGIN_DLL);2
 
-
-
+plugin-install:
+	-mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)

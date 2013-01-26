@@ -8,6 +8,8 @@ CORE_OBJ =	ogrlibkmlgeometry.obj \
 		ogrlibkmlfeaturestyle.obj \
 		ogrlibkmlstyle.obj
 
+PLUGIN_DLL = ogr_LIBKML.dll
+
 OGR_OBJ =	ogrlibkmldriver.obj \
 		ogrlibkmldatasource.obj \
 		ogrlibkmllayer.obj
@@ -23,6 +25,13 @@ clean:
 	-del *.obj *.pdb
 	-del *.dll
 
-ogr_LIBKML.dll:	$(OBJ)
-	link /dll $(LDEBUG) /out:ogr_LIBKML.dll $(OBJ) /LTCG \
+plugin: $(PLUGIN_DLL)
+
+$(PLUGIN_DLL):	$(OBJ)
+	link /dll $(LDEBUG) /out:$(PLUGIN_DLL) $(OBJ) /LTCG \
 		$(GDAL_ROOT)/gdal_i.lib $(LIBKML_LIBS)
+
+plugin-install:
+        -mkdir $(PLUGINDIR)
+	$(INSTALL) $(PLUGIN_DLL) $(PLUGINDIR)
+
