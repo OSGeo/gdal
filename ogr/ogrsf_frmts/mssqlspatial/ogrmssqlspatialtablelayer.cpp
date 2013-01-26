@@ -90,6 +90,7 @@ OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource 
     poFeatureDefn = NULL;
     
     pszTableName = NULL;
+    pszLayerName = NULL;
     pszSchemaName = NULL;
 }
 
@@ -101,6 +102,7 @@ OGRMSSQLSpatialTableLayer::~OGRMSSQLSpatialTableLayer()
 
 {
     CPLFree( pszTableName );
+    CPLFree( pszLayerName );
     CPLFree( pszSchemaName );
 
     CPLFree( pszQuery );
@@ -108,40 +110,24 @@ OGRMSSQLSpatialTableLayer::~OGRMSSQLSpatialTableLayer()
 }
 
 /************************************************************************/
-/*                             Initialize()                             */
+/*                               GetName()                              */
 /************************************************************************/
 
-CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
-                                              const char *pszLayerName, 
-                                              const char *pszGeomCol,
-                                              int nCoordDimension, 
-                                              int nSRId,
-                                              OGRwkbGeometryType eType )
+const char *OGRMSSQLSpatialTableLayer::GetName()
 
 {
+    return pszLayerName;
+}
+
+/************************************************************************/
+/*                             GetLayerDefn()                           */
+/************************************************************************/
+OGRFeatureDefn* OGRMSSQLSpatialTableLayer::GetLayerDefn() 
+{ 
+    if (poFeatureDefn)
+        return poFeatureDefn;
+    
     CPLODBCSession *poSession = poDS->GetSession();
-
-    CPLFree( pszFIDColumn );
-    pszFIDColumn = NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Parse out schema name if present in layer.  We assume a         */
-/*      schema is provided if there is a dot in the name, and that      */
-/*      it is in the form <schema>.<tablename>                          */
-/* -------------------------------------------------------------------- */
-    const char *pszDot = strstr(pszLayerName,".");
-    if( pszDot != NULL )
-    {
-        pszTableName = CPLStrdup(pszDot + 1);
-        pszSchemaName = CPLStrdup(pszLayerName);
-        pszSchemaName[pszDot - pszLayerName] = '\0';
-    }
-    else
-    {
-        pszTableName = CPLStrdup(pszLayerName);
-        pszSchemaName = CPLStrdup(pszSchema);
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Do we have a simple primary key?                                */
 /* -------------------------------------------------------------------- */
@@ -162,15 +148,7 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Have we been provided a geometry column?                        */
-/* -------------------------------------------------------------------- */
-    CPLFree( pszGeomColumn );
-    if( pszGeomCol == NULL )
-        pszGeomColumn = NULL;
-    else
-        pszGeomColumn = CPLStrdup( pszGeomCol );
-
+    
 /* -------------------------------------------------------------------- */
 /*      Get the column definitions for this table.                      */
 /* -------------------------------------------------------------------- */
@@ -178,13 +156,13 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
     CPLErr eErr;
 
     if( !oGetCol.GetColumns( pszTableName, poDS->GetCatalog(), pszSchemaName ) )
-        return CE_Failure;
+        return NULL;
 
     eErr = BuildFeatureDefn( pszLayerName, &oGetCol );
     if( eErr != CE_None )
-        return eErr;
+        return NULL;
         
-    poFeatureDefn->SetGeomType(eType);
+    poFeatureDefn->SetGeomType(eGeomType);
 
     if( poFeatureDefn->GetFieldCount() == 0 &&
         pszFIDColumn == NULL && pszGeomColumn == NULL )
@@ -192,7 +170,7 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "No column definitions found for table '%s', layer not usable.", 
                   pszLayerName );
-        return CE_Failure;
+        return NULL;
     }
         
 /* -------------------------------------------------------------------- */
@@ -240,6 +218,55 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
         }
     }
 
+    return poFeatureDefn; 
+}
+
+/************************************************************************/
+/*                             Initialize()                             */
+/************************************************************************/
+
+CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
+                                              const char *pszLayerName, 
+                                              const char *pszGeomCol,
+                                              int nCoordDimension, 
+                                              int nSRId,
+                                              OGRwkbGeometryType eType )
+
+{
+    CPLFree( pszFIDColumn );
+    pszFIDColumn = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Parse out schema name if present in layer.  We assume a         */
+/*      schema is provided if there is a dot in the name, and that      */
+/*      it is in the form <schema>.<tablename>                          */
+/* -------------------------------------------------------------------- */
+    this->pszLayerName = CPLStrdup(pszLayerName);
+    const char *pszDot = strstr(pszLayerName,".");
+    if( pszDot != NULL )
+    {
+        pszTableName = CPLStrdup(pszDot + 1);
+        pszSchemaName = CPLStrdup(pszLayerName);
+        pszSchemaName[pszDot - pszLayerName] = '\0';
+    }
+    else
+    {
+        pszTableName = CPLStrdup(pszLayerName);
+        pszSchemaName = CPLStrdup(pszSchema);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Have we been provided a geometry column?                        */
+/* -------------------------------------------------------------------- */
+    CPLFree( pszGeomColumn );
+    if( pszGeomCol == NULL )
+        pszGeomColumn = NULL;
+    else
+        pszGeomColumn = CPLStrdup( pszGeomCol );
+
+    eGeomType = eType;
+
+
 /* -------------------------------------------------------------------- */
 /*             Try to find out the spatial reference                    */
 /* -------------------------------------------------------------------- */
@@ -260,15 +287,18 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
 
 int OGRMSSQLSpatialTableLayer::FetchSRSId()
 {
-    CPLODBCStatement oStatement = CPLODBCStatement( poDS->GetSession() );
-    oStatement.Appendf( "select srid from geometry_columns "
-                    "where f_table_schema = '%s' and f_table_name = '%s'", 
-                    pszSchemaName, pszTableName );
-
-    if( oStatement.ExecuteSQL() && oStatement.Fetch() )
+    if ( poDS->UseGeometryColumns() )
     {
-        if ( oStatement.GetColData( 0 ) )
-            nSRSId = atoi( oStatement.GetColData( 0 ) );
+        CPLODBCStatement oStatement = CPLODBCStatement( poDS->GetSession() );
+        oStatement.Appendf( "select srid from geometry_columns "
+                        "where f_table_schema = '%s' and f_table_name = '%s'", 
+                        pszSchemaName, pszTableName );
+
+        if( oStatement.ExecuteSQL() && oStatement.Fetch() )
+        {
+            if ( oStatement.GetColData( 0 ) )
+                nSRSId = atoi( oStatement.GetColData( 0 ) );
+        }
     }
         
     return nSRSId;
@@ -282,6 +312,8 @@ int OGRMSSQLSpatialTableLayer::FetchSRSId()
 
 OGRErr OGRMSSQLSpatialTableLayer::CreateSpatialIndex()
 {
+    GetLayerDefn();
+
     CPLODBCStatement oStatement( poDS->GetSession() );
 
     if (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY)
@@ -335,6 +367,8 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateSpatialIndex()
 
 void OGRMSSQLSpatialTableLayer::DropSpatialIndex()
 {
+    GetLayerDefn();
+
     CPLODBCStatement oStatement( poDS->GetSession() );
 
     oStatement.Appendf("IF  EXISTS (SELECT * FROM sys.indexes "
