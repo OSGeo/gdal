@@ -39,6 +39,7 @@
 #include "ogr_geometry.h"
 
 #ifdef HAVE_POPPLER
+#include "cpl_multiproc.h"
 #include "pdfio.h"
 #include <goo/GooList.h>
 #endif
@@ -64,6 +65,8 @@ CPL_C_END
 static double Get(GDALPDFObject* poObj, int nIndice = -1);
 
 #ifdef HAVE_POPPLER
+
+static void* hGlobalParamsMutex = NULL;
 
 /************************************************************************/
 /*                          ObjectAutoFree                              */
@@ -2782,12 +2785,15 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     setErrorFunction(PDFDatasetErrorFunction);
 #endif
 
-    /* poppler global variable */
-    if (globalParams == NULL)
-        globalParams = new GlobalParams();
+    {
+        CPLMutexHolderD(&hGlobalParamsMutex);
+        /* poppler global variable */
+        if (globalParams == NULL)
+            globalParams = new GlobalParams();
 
-    globalParams->setPrintCommands(CSLTestBoolean(
-        CPLGetConfigOption("GDAL_PDF_PRINT_COMMANDS", "FALSE")));
+        globalParams->setPrintCommands(CSLTestBoolean(
+            CPLGetConfigOption("GDAL_PDF_PRINT_COMMANDS", "FALSE")));
+    }
 
     while(TRUE)
     {
@@ -5147,6 +5153,18 @@ GDALDataset* GDALPDFOpen(const char* pszFilename, GDALAccess eAccess)
 }
 
 /************************************************************************/
+/*                       GDALPDFUnloadDriver()                          */
+/************************************************************************/
+
+static void GDALPDFUnloadDriver(GDALDriver * poDriver)
+{
+#ifdef HAVE_POPPLER
+    if( hGlobalParamsMutex != NULL )
+        CPLDestroyMutex(hGlobalParamsMutex);
+#endif
+}
+
+/************************************************************************/
 /*                         GDALRegister_PDF()                           */
 /************************************************************************/
 
@@ -5243,6 +5261,7 @@ void GDALRegister_PDF()
 #endif
 
         poDriver->pfnCreateCopy = GDALPDFCreateCopy;
+        poDriver->pfnUnloadDriver = GDALPDFUnloadDriver;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
