@@ -168,12 +168,14 @@ class GDALPDFOutputDev : public SplashOutputDev
                 SplashOutputDev::beginTextObject(state);
         }
 
+#ifndef POPPLER_0_23_OR_LATER
         virtual GBool deviceHasTextClip(GfxState *state)
         {
             if (bEnableText)
                 return SplashOutputDev::deviceHasTextClip(state);
             return gFalse;
         }
+#endif
 
         virtual void endTextObject(GfxState *state)
         {
@@ -1575,12 +1577,18 @@ int PDFDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 #ifdef HAVE_POPPLER
 #ifdef POPPLER_0_20_OR_LATER
-static void PDFDatasetErrorFunction(void* userData, ErrorCategory eErrCatagory, int nPos, char *pszMsg)
+static void PDFDatasetErrorFunction(void* userData, ErrorCategory eErrCatagory,
+#ifdef POPPLER_0_23_OR_LATER
+                                    Goffset nPos,
+#else
+                                    int nPos,
+#endif
+                                    char *pszMsg)
 {
     CPLString osError;
 
     if (nPos >= 0)
-        osError.Printf("Pos = %d, ", nPos);
+        osError.Printf("Pos = %d, ", (int)nPos);
     osError += pszMsg;
 
     if (strcmp(osError.c_str(), "Incorrect password") == 0)

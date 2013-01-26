@@ -59,10 +59,21 @@ class VSIPDFFileStream: public BaseStream
         virtual BaseStream* copy();
 #endif
 
+#ifdef POPPLER_0_23_OR_LATER
+        virtual Stream *   makeSubStream(Goffset startA, GBool limitedA,
+                                         Goffset lengthA, Object *dictA);
+        virtual Goffset    getPos();
+        virtual Goffset    getStart();
+        virtual void       setPos(Goffset pos, int dir = 0);
+        virtual void       moveStart(Goffset delta);
+#else
         virtual Stream *   makeSubStream(Guint startA, GBool limitedA,
                                          Guint lengthA, Object *dictA);
         virtual int        getPos();
         virtual Guint      getStart();
+        virtual void       setPos(Guint pos, int dir = 0);
+        virtual void       moveStart(int delta);
+#endif
         virtual StreamKind getKind();
         virtual GooString *getFileName();
 
@@ -73,8 +84,6 @@ class VSIPDFFileStream: public BaseStream
         virtual void       reset();
         virtual void       unfilteredReset ();
         virtual void       close();
-        virtual void       setPos(Guint pos, int dir = 0);
-        virtual void       moveStart(int delta);
 
     private:
         VSIPDFFileStream  *poParent;
