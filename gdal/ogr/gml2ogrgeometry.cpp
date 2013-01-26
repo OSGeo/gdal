@@ -885,7 +885,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 
         int nSign = (det >= 0) ? 1 : -1;
 
-        double alpha;
+        double alpha, dfRemainder;
         double dfStep = atof(CPLGetConfigOption("OGR_ARC_STEPSIZE","4")) / 180 * PI;
 
         // make sure the segments are not too short
@@ -915,16 +915,20 @@ OGRGeometry *GML2OGRGeometry_XMLNode( const CPLXMLNode *psNode,
 
         dfStep *= nSign;
 
+        dfRemainder = fmod(alpha1 - alpha0, dfStep) / 2.0;
+
         poLine->addPoint(x0, y0);
 
-        for(alpha = alpha0 + dfStep; (alpha - alpha1) * nSign < 0; alpha += dfStep)
+        for(alpha = alpha0 + dfStep + dfRemainder; (alpha + dfRemainder - alpha1) * nSign < 0; alpha += dfStep)
         {
             poLine->addPoint(cx + R * cos(alpha), cy + R * sin(alpha));
         }
 
         poLine->addPoint(x1, y1);
 
-        for(alpha = alpha1 + dfStep; (alpha - alpha2) * nSign < 0; alpha += dfStep)
+        dfRemainder = fmod(alpha2 - alpha1, dfStep) / 2.0;
+
+        for(alpha = alpha1 + dfStep + dfRemainder; (alpha + dfRemainder - alpha2) * nSign < 0; alpha += dfStep)
         {
             poLine->addPoint(cx + R * cos(alpha), cy + R * sin(alpha));
         }
