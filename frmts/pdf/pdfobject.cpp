@@ -1443,11 +1443,10 @@ class GDALPDFArrayPodofo : public GDALPDFArray
 class GDALPDFStreamPodofo : public GDALPDFStream
 {
     private:
-        int     m_nLength;
         PoDoFo::PdfMemStream* m_pStream;
 
     public:
-        GDALPDFStreamPodofo(PoDoFo::PdfMemStream* pStream) : m_nLength(-1), m_pStream(pStream) { }
+        GDALPDFStreamPodofo(PoDoFo::PdfMemStream* pStream) : m_pStream(pStream) { }
         virtual ~GDALPDFStreamPodofo() {}
 
         virtual int GetLength();
