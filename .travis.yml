@@ -45,10 +45,9 @@ before_install:
 
 # installing PostGIS 2 from Ubuntu PPA draws libgdal1.9 dependency. We must install ourselves
 # in /usr too to avoid gdal version conflict. Might be fragile however
-# Do not use --with-jpeg12 since it conflicts with system libjpeg8 and causes crashes in tiff_ovr_43
 install:
   - cd gdal
-  - ./configure --prefix=/usr --without-libtool --enable-debug --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-gta --with-openjpeg=/usr/local
+  - ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-gta --with-openjpeg=/usr/local
   - make -j3
   - cd apps
   - make test_ogrsf
