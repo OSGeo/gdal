@@ -1965,7 +1965,7 @@ int PDFDataset::CheckTiledRaster()
         int nY = nRasterYSize - ((int)(dfY+0.1) + nHeight);
         int nBlockXOff = nX / nBlockXSize;
         int nBlockYOff = nY / nBlockYSize;
-        aiTiles[ nBlockYOff * nXBlocks + nBlockXOff ] = i;
+        aiTiles[ nBlockYOff * nXBlocks + nBlockXOff ] = (int) i;
     }
 
     this->nBlockXSize = nBlockXSize;
@@ -2503,12 +2503,12 @@ void PDFDataset::TurnLayersOnOff()
 
                 // Turn child layers on, unless there's one of them explicitely listed
                 // in the list.
-                int nLen = strlen(papszLayers[i]);
+                size_t nLen = strlen(papszLayers[i]);
                 int bFoundChildLayer = FALSE;
                 oIter = oLayerOCGMap.begin();
                 for( ; oIter != oLayerOCGMap.end() && !bFoundChildLayer; oIter ++)
                 {
-                    if ((int)oIter->first.size() > nLen &&
+                    if (oIter->first.size() > nLen &&
                         strncmp(oIter->first.c_str(), papszLayers[i], nLen) == 0 &&
                         oIter->first[nLen] == '.')
                     {
@@ -2525,7 +2525,7 @@ void PDFDataset::TurnLayersOnOff()
                     oIter = oLayerOCGMap.begin();
                     for( ; oIter != oLayerOCGMap.end() && !bFoundChildLayer; oIter ++)
                     {
-                        if ((int)oIter->first.size() > nLen &&
+                        if (oIter->first.size() > nLen &&
                             strncmp(oIter->first.c_str(), papszLayers[i], nLen) == 0 &&
                             oIter->first[nLen] == '.')
                         {
@@ -2583,11 +2583,11 @@ void PDFDataset::TurnLayersOnOff()
                 }
 
                 // Turn child layers off too
-                int nLen = strlen(papszLayersOFF[i]);
+                size_t nLen = strlen(papszLayersOFF[i]);
                 oIter = oLayerOCGMap.begin();
                 for( ; oIter != oLayerOCGMap.end(); oIter ++)
                 {
-                    if ((int)oIter->first.size() > nLen &&
+                    if (oIter->first.size() > nLen &&
                         strncmp(oIter->first.c_str(), papszLayersOFF[i], nLen) == 0 &&
                         oIter->first[nLen] == '.')
                     {
@@ -3522,7 +3522,7 @@ static double Get(GDALPDFObject* poObj, int nIndice)
     else if (poObj->GetType() == PDFObjectType_String)
     {
         const char* pszStr = poObj->GetString().c_str();
-        int nLen = strlen(pszStr);
+        size_t nLen = strlen(pszStr);
         /* cf Military_Installations_2008.pdf that has values like "96 0 0.0W" */
         char chLast = pszStr[nLen-1];
         if (chLast == 'W' || chLast == 'E' || chLast == 'N' || chLast == 'S')
