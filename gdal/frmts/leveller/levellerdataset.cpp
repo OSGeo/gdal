@@ -254,7 +254,7 @@ class LevellerDataset : public GDALPamDataset
 	char*		m_pszFilename;
     char*		m_pszProjection;
 
-    char		m_szUnits[8];
+    //char		m_szUnits[8];
 	char		m_szElevUnits[8];
     double		m_dElevScale;	// physical-to-logical scaling.
     double		m_dElevBase;	// logical offset.

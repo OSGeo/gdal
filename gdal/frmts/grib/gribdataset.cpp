@@ -72,7 +72,6 @@ class GRIBDataset : public GDALPamDataset
 		void SetGribMetaData(grib_MetaData* meta);
     VSILFILE	*fp;
     char  *pszProjection;
-		char  *pszDescription;
     OGRCoordinateTransformation *poTransform;
     double adfGeoTransform[6]; // Calculate and store once as GetGeoTransform may be called multiple times
 
