@@ -40,7 +40,6 @@
 class OGRGeoconceptLayer : public OGRLayer
 {
   private:
-    OGRSpatialReference *_poSRS;
     OGRFeatureDefn      *_poFeatureDefn;
 
     GCSubType           *_gcFeature;
