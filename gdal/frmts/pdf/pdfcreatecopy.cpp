@@ -152,7 +152,7 @@ int GDALPDFWriter::ParseTrailerAndXRef()
 
     /* Find startxref section */
     VSIFSeekL(fp, nOffset, SEEK_SET);
-    int nRead = VSIFReadL(szBuf, 1, 128, fp);
+    int nRead = (int) VSIFReadL(szBuf, 1, 128, fp);
     szBuf[nRead] = 0;
     if (nRead < 9)
         return FALSE;
@@ -201,7 +201,7 @@ int GDALPDFWriter::ParseTrailerAndXRef()
     }
 
     /* Read trailer content */
-    nRead = VSIFReadL(szBuf, 1, 1024, fp);
+    nRead = (int) VSIFReadL(szBuf, 1, 1024, fp);
     szBuf[nRead] = 0;
 
     /* Find XRef size */
@@ -3194,7 +3194,7 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
             VSIFPrintfL(fp, "EMC\n");
         }
         else
-            iObj += oLayerDesc.aIds.size();
+            iObj += (int) oLayerDesc.aIds.size();
     }
 
     /* -------------------------------------------------------------- */
@@ -4212,8 +4212,8 @@ class GDALPDFClippingDataset: public GDALDataset
             adfGeoTransform[3] = adfSrcGeoTransform[5] < 0 ? adfClippingExtent[3] : adfClippingExtent[1];
             adfGeoTransform[4] = 0.0;
             adfGeoTransform[5] = adfSrcGeoTransform[5];
-            nRasterXSize = (adfClippingExtent[2] - adfClippingExtent[0]) / adfSrcGeoTransform[1];
-            nRasterYSize = (adfClippingExtent[3] - adfClippingExtent[1]) / fabs(adfSrcGeoTransform[5]);
+            nRasterXSize = (int)((adfClippingExtent[2] - adfClippingExtent[0]) / adfSrcGeoTransform[1]);
+            nRasterYSize = (int)((adfClippingExtent[3] - adfClippingExtent[1]) / fabs(adfSrcGeoTransform[5]));
         }
 
         virtual CPLErr GetGeoTransform( double * padfGeoTransform )

@@ -184,7 +184,7 @@ int VSIPDFFileStream::FillBuffer()
         nToRead = BUFFER_SIZE;
     if( nToRead < 0 )
         return FALSE;
-    nBufferLength = VSIFReadL(abyBuffer, 1, nToRead, f);
+    nBufferLength = (int) VSIFReadL(abyBuffer, 1, nToRead, f);
     if (nBufferLength == 0)
         return FALSE;
 
