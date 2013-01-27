@@ -920,7 +920,10 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
     png_set_error_fn( poDS->hPNG, &poDS->sSetJmpContext, png_gdal_error, png_gdal_warning );
 
     if( setjmp( poDS->sSetJmpContext ) != 0 )
+    {
+        delete poDS;
         return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*	Read pre-image data after ensuring the file is rewound.         */
