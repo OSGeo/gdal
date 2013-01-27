@@ -54,6 +54,7 @@ class WEBPDataset : public GDALPamDataset
     VSILFILE*   fpImage;
     GByte* pabyUncompressed;
     int    bHasBeenUncompressed;
+    CPLErr eUncompressErrRet;
     CPLErr Uncompress();
 
     int    bHasReadXMPMetadata;
@@ -120,7 +121,8 @@ CPLErr WEBPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     WEBPDataset* poGDS = (WEBPDataset*) poDS;
 
-    poGDS->Uncompress();
+    if( poGDS->Uncompress() != CE_None )
+        return CE_Failure;
 
     int i;
     GByte* pabyUncompressed =
@@ -168,6 +170,7 @@ WEBPDataset::WEBPDataset()
     fpImage = NULL;
     pabyUncompressed = NULL;
     bHasBeenUncompressed = FALSE;
+    eUncompressErrRet = CE_None;
     bHasReadXMPMetadata = FALSE;
 }
 
@@ -239,6 +242,7 @@ char  **WEBPDataset::GetMetadata( const char * pszDomain )
                     VSIFree(pszXMP);
                     break;
                 }
+                pszXMP[nChunkSize] = '\0';
 
                 /* Avoid setting the PAM dirty bit just for that */
                 int nOldPamFlags = nPamFlags;
@@ -268,8 +272,9 @@ char  **WEBPDataset::GetMetadata( const char * pszDomain )
 CPLErr WEBPDataset::Uncompress()
 {
     if (bHasBeenUncompressed)
-        return CE_None;
+        return eUncompressErrRet;
     bHasBeenUncompressed = TRUE;
+    eUncompressErrRet = CE_Failure;
 
     VSIFSeekL(fpImage, 0, SEEK_END);
     vsi_l_offset nSize = VSIFTellL(fpImage);
@@ -297,6 +302,7 @@ CPLErr WEBPDataset::Uncompress()
                     "WebPDecodeRGBInto() failed");
         return CE_Failure;
     }
+    eUncompressErrRet = CE_None;
 
     return CE_None;
 }
