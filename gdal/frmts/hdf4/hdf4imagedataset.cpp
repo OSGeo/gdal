@@ -30,6 +30,7 @@
 
 #include <string.h>
 #include <math.h>
+#include "cpl_multiproc.h"
 
 #include "hdf.h"
 #include "mfhdf.h"
@@ -56,6 +57,8 @@ CPL_C_END
 // Signature to recognize files written by GDAL
 const char      *pszGDALSignature =
         "Created with GDAL (http://www.remotesensing.org/gdal/)";
+
+extern void *hHDF4Mutex;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -260,6 +263,8 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     HDF4ImageDataset    *poGDS = (HDF4ImageDataset *) poDS;
     int32               aiStart[H4_MAX_NC_DIMS], aiEdges[H4_MAX_NC_DIMS];
     CPLErr              eErr = CE_None;
+
+    CPLMutexHolderD(&hHDF4Mutex);
 
     if( poGDS->eAccess == GA_Update )
     {
@@ -529,6 +534,8 @@ CPLErr HDF4ImageRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     HDF4ImageDataset    *poGDS = (HDF4ImageDataset *)poDS;
     int32               aiStart[H4_MAX_NC_DIMS], aiEdges[H4_MAX_NC_DIMS];
     CPLErr              eErr = CE_None;
+    
+    CPLMutexHolderD(&hHDF4Mutex);
 
     CPLAssert( poGDS != NULL
                && nBlockXOff == 0
@@ -775,6 +782,8 @@ HDF4ImageDataset::HDF4ImageDataset()
 
 HDF4ImageDataset::~HDF4ImageDataset()
 {
+    CPLMutexHolderD(&hHDF4Mutex);
+
     FlushCache();
 
     if ( pszFilename )
@@ -932,6 +941,8 @@ void HDF4ImageDataset::FlushCache()
     int         iBand;
     char        *pszName;
     const char  *pszValue;
+    
+    CPLMutexHolderD(&hHDF4Mutex);
 
     GDALDataset::FlushCache();
 
@@ -2582,6 +2593,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new HDF4ImageDataset( );
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
+    
+    CPLMutexHolderD(&hHDF4Mutex);
 
     papszSubdatasetName = CSLTokenizeString2( poOpenInfo->pszFilename,
                                               ":", CSLT_HONOURSTRINGS | CSLT_PRESERVEESCAPES);
@@ -2590,7 +2603,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
          && CSLCount( papszSubdatasetName ) != 6 )
     {
         CSLDestroy( papszSubdatasetName );
+        CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         delete poDS;
+        CPLAcquireMutex(hHDF4Mutex, 1000.0);
         return NULL;
     }
 
@@ -2644,7 +2659,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( !Hishdf( poDS->pszFilename ) )
     {
         CSLDestroy( papszSubdatasetName );
+        CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         delete poDS;
+        CPLAcquireMutex(hHDF4Mutex, 1000.0);
         return NULL;
     }
 
@@ -2677,7 +2694,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->pszSubdatasetName = CPLStrdup( papszSubdatasetName[3] );
         if (papszSubdatasetName[4] == NULL)
         {
+            CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
             delete poDS;
+            CPLAcquireMutex(hHDF4Mutex, 1000.0);
             return NULL;
         }
         poDS->pszFieldName = CPLStrdup( papszSubdatasetName[4] );
@@ -2713,7 +2732,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 {
                     CPLDebug( "HDF4Image", "Can't open HDF4 file %s",
                               poDS->pszFilename );
+                    CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
                     delete poDS;
+                    CPLAcquireMutex(hHDF4Mutex, 1000.0);
                     return( NULL );
                 }
 
@@ -2722,7 +2743,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 {
                     CPLDebug( "HDF4Image", "Can't attach to subdataset %s",
                               poDS->pszSubdatasetName );
+                    CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
                     delete poDS;
+                    CPLAcquireMutex(hHDF4Mutex, 1000.0);
                     return( NULL );
                 }
 
@@ -2736,7 +2759,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 {
                     CPLDebug( "HDF4Image",
                               "Can't read a number of dimension maps." );
+                    CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
                     delete poDS;
+                    CPLAcquireMutex(hHDF4Mutex, 1000.0);
                     return NULL;
                 }
 
@@ -2747,7 +2772,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 {
                     CPLDebug( "HDF4Image", "Can't read dimension maps." );
                     CPLFree( pszDimList );
+                    CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
                     delete poDS;
+                    CPLAcquireMutex(hHDF4Mutex, 1000.0);
                     return NULL;
                 }
                 pszDimList[nStrBufSize] = '\0';
@@ -2836,7 +2863,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
                 if( poDS->hHDF4 <= 0 )
                 {
+                    CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
                     delete poDS;
+                    CPLAcquireMutex(hHDF4Mutex, 1000.0);
                     return( NULL );
                 }
 
@@ -3049,20 +3078,26 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
           if( poDS->hHDF4 <= 0 )
           {
+              CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
               delete poDS;
+              CPLAcquireMutex(hHDF4Mutex, 1000.0);
               return( NULL );
           }
 
           poDS->hSD = SDstart( poDS->pszFilename, DFACC_READ );
           if ( poDS->hSD == -1 )
           {
+              CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
               delete poDS;
+              CPLAcquireMutex(hHDF4Mutex, 1000.0);
               return NULL;
           }
 
           if ( poDS->ReadGlobalAttributes( poDS->hSD ) != CE_None )
           {
+              CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
               delete poDS;
+              CPLAcquireMutex(hHDF4Mutex, 1000.0);
               return NULL;
           }
 
@@ -3070,7 +3105,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
           if ( SDfileinfo( poDS->hSD, &nDatasets, &nAttrs ) != 0 )
           {
+              CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
               delete poDS;
+              CPLAcquireMutex(hHDF4Mutex, 1000.0);
               return NULL;
           }
 
@@ -3079,7 +3116,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
               CPLError(CE_Failure, CPLE_AppDefined,
                        "Subdataset index should be between 0 and %ld",
                        (long int)nDatasets - 1);
+              CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
               delete poDS;
+              CPLAcquireMutex(hHDF4Mutex, 1000.0);
               return NULL;
           }
 
@@ -3208,14 +3247,18 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if( poDS->hHDF4 <= 0 )
         {
+            CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
             delete poDS;
+            CPLAcquireMutex(hHDF4Mutex, 1000.0);
             return( NULL );
         }
 
         poDS->hGR = GRstart( poDS->hHDF4 );
         if ( poDS->hGR == -1 )
         {
+            CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
             delete poDS;
+            CPLAcquireMutex(hHDF4Mutex, 1000.0);
             return NULL;
         }
 
@@ -3225,7 +3268,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                           &poDS->iInterlaceMode, poDS->aiDimSizes,
                           &poDS->nAttrs ) != 0 )
         {
+            CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
             delete poDS;
+            CPLAcquireMutex(hHDF4Mutex, 1000.0);
             return NULL;
         }
 
@@ -3270,7 +3315,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->nBandCount = poDS->iRank;
         break;
       default:
+        CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         delete poDS;
+        CPLAcquireMutex(hHDF4Mutex, 1000.0);
         return NULL;
     }
 
@@ -3565,6 +3612,8 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     }
 
     poDS = new HDF4ImageDataset();
+    
+    CPLMutexHolderD(&hHDF4Mutex);
 
 /* -------------------------------------------------------------------- */
 /*      Choose rank for the created dataset.                            */
@@ -3579,7 +3628,9 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Can't create HDF4 file %s", pszFilename );
+        CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         delete poDS;
+        CPLAcquireMutex(hHDF4Mutex, 1000.0);
         return NULL;
     }
     poDS->iXDim = 1;
