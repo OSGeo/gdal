@@ -29,6 +29,8 @@
 
 #include "netcdfdataset.h"
 #include "cpl_error.h"
+#include "cpl_multiproc.h"
+
 CPL_CVSID("$Id$");
 
 #include <map> //for NCDFWriteProjAttribs()
@@ -75,6 +77,8 @@ char **NCDFTokenizeArray( const char *pszValue );//replace this where used
 void CopyMetadata( void  *poDS, int fpImage, int CDFVarID, 
                    const char *pszMatchPrefix=NULL, int bIsBand=TRUE );
 
+
+void *hNCMutex = NULL;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -624,6 +628,8 @@ double netCDFRasterBand::GetOffset( int *pbSuccess )
 /************************************************************************/ 
 CPLErr netCDFRasterBand::SetOffset( double dfNewOffset ) 
 { 
+    CPLMutexHolderD(&hNCMutex);
+
     dfOffset = dfNewOffset; 
 
     /* write value if in update mode */
@@ -661,6 +667,8 @@ double netCDFRasterBand::GetScale( int *pbSuccess )
 /************************************************************************/ 
 CPLErr netCDFRasterBand::SetScale( double dfNewScale )  
 { 
+    CPLMutexHolderD(&hNCMutex);
+
     dfScale = dfNewScale; 
 
     /* write value if in update mode */
@@ -707,6 +715,8 @@ double netCDFRasterBand::GetNoDataValue( int * pbSuccess )
 CPLErr netCDFRasterBand::SetNoDataValue( double dfNoData )
 
 {
+    CPLMutexHolderD(&hNCMutex);
+
     /* If already set to new value, don't do anything */
     if ( bNoDataSet && CPLIsEqual( dfNoData, dfNoDataValue ) )
         return CE_None;
@@ -1079,6 +1089,8 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int    Taken=-1;
     int    nd;
 
+    CPLMutexHolderD(&hNCMutex);
+
 #ifdef NCDF_DEBUG
     if ( (nBlockYOff == 0) || (nBlockYOff == nRasterYSize-1) )
         CPLDebug( "GDAL_netCDF", "netCDFRasterBand::IReadBlock( %d, %d, ... ) nBand=%d",
@@ -1220,6 +1232,8 @@ CPLErr netCDFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     int    Sum=-1;
     int    Taken=-1;
     int    nd;
+
+    CPLMutexHolderD(&hNCMutex);
 
 #ifdef NCDF_DEBUG
     if ( (nBlockYOff == 0) || (nBlockYOff == nRasterYSize-1) )
@@ -1391,6 +1405,8 @@ netCDFDataset::netCDFDataset()
 netCDFDataset::~netCDFDataset()
 
 {
+    CPLMutexHolderD(&hNCMutex);
+
     #ifdef NCDF_DEBUG
     CPLDebug( "GDAL_netCDF", "netCDFDataset::~netCDFDataset(), cdfid=%d",
               cdfid );
@@ -3010,6 +3026,8 @@ double *netCDFDataset::Get1DGeolocation( const char *szDimName, int &nVarLen )
 /************************************************************************/
 CPLErr 	netCDFDataset::SetProjection( const char * pszNewProjection )
 {
+    CPLMutexHolderD(&hNCMutex);
+
 /* TODO look if proj. already defined, like in geotiff */
     if( pszNewProjection == NULL ) 
     {
@@ -3062,6 +3080,8 @@ CPLErr 	netCDFDataset::SetProjection( const char * pszNewProjection )
 
 CPLErr 	netCDFDataset::SetGeoTransform ( double * padfTransform )
 {
+    CPLMutexHolderD(&hNCMutex);
+
     memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
     // bGeoTransformValid = TRUE;
     // bGeoTIFFInfoChanged = TRUE;
@@ -4225,8 +4245,12 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
     }
 
+    CPLMutexHolderD(&hNCMutex);
+
     netCDFDataset 	*poDS;
+    CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
     poDS = new netCDFDataset();
+    CPLAcquireMutex(hNCMutex, 1000.0);
 
     poDS->SetDescription( poOpenInfo->pszFilename );
     
@@ -4884,7 +4908,10 @@ netCDFDataset::CreateLL( const char * pszFilename,
     int status = NC_NOERR;
     netCDFDataset *poDS;
     
+    CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
     poDS = new netCDFDataset();
+    CPLAcquireMutex(hNCMutex, 1000.0);
+
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
@@ -4956,7 +4983,9 @@ netCDFDataset::Create( const char * pszFilename,
     CPLDebug( "GDAL_netCDF", 
               "\n=====\nnetCDFDataset::Create( %s, ... )\n", 
               pszFilename );
-    
+
+    CPLMutexHolderD(&hNCMutex);
+
     poDS =  netCDFDataset::CreateLL( pszFilename,
                                      nXSize, nYSize, nBands,
                                      papszOptions );
@@ -5075,6 +5104,8 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     GDALRasterBand *poSrcBand = NULL;
     GDALRasterBand *poDstBand = NULL;
     int nBandID = -1;
+
+    CPLMutexHolderD(&hNCMutex);
 
     CPLDebug( "GDAL_netCDF", 
               "\n=====\nnetCDFDataset::CreateCopy( %s, ... )\n", 
@@ -5554,6 +5585,16 @@ int netCDFDataset::DefVarDeflate( int nVarId, int bChunking )
     return NC_NOERR;
 }
 
+/************************************************************************/
+/*                           NCDFUnloadDriver()                         */
+/************************************************************************/
+
+static void NCDFUnloadDriver(GDALDriver* poDriver)
+{
+    if( hNCMutex != NULL )
+        CPLDestroyMutex(hNCMutex);
+    hNCMutex = NULL;
+}
 
 /************************************************************************/
 /*                          GDALRegister_netCDF()                       */
@@ -5651,6 +5692,7 @@ void GDALRegister_netCDF()
         poDriver->pfnCreateCopy = netCDFDataset::CreateCopy;
         poDriver->pfnCreate = netCDFDataset::Create;
         poDriver->pfnIdentify = netCDFDataset::Identify;
+        poDriver->pfnUnloadDriver = NCDFUnloadDriver;
 
         GetGDALDriverManager( )->RegisterDriver( poDriver );
     }
