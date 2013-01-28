@@ -1445,6 +1445,7 @@ netCDFDataset::~netCDFDataset()
         status = nc_close( cdfid );
         NCDF_ERR(status);
     }
+
 }
 
 /************************************************************************/
@@ -4294,7 +4295,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         else
         {
             CSLDestroy( papszName );
+            CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
             delete poDS;
+            CPLAcquireMutex(hNCMutex, 1000.0);
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed to parse NETCDF: prefix string into expected 2, 3 or 4 fields." );
             return NULL;
@@ -4305,7 +4308,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poOpenInfo2;
         if( NCDF_FORMAT_NONE == poDS->nFormat ||
             NCDF_FORMAT_UNKNOWN == poDS->nFormat ) {
+            CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
             delete poDS;
+            CPLAcquireMutex(hNCMutex, 1000.0);
             return NULL;
         }        
     }
@@ -4321,7 +4326,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     CPLDebug( "GDAL_netCDF", "\n=====\ncalling nc_open( %s )", poDS->osFilename.c_str() );
     if( nc_open( poDS->osFilename, NC_NOWRITE, &cdfid ) != NC_NOERR ) {
+        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         delete poDS;
+        CPLAcquireMutex(hNCMutex, 1000.0);
         return NULL;
     }
     CPLDebug( "GDAL_netCDF", "got cdfid=%d\n", cdfid );
@@ -4331,7 +4338,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     status = nc_inq(cdfid, &ndims, &nvars, &ngatts, &unlimdimid);
     if( status != NC_NOERR ) {
+        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         delete poDS;
+        CPLAcquireMutex(hNCMutex, 1000.0);
         return NULL;
     }   
 
@@ -4369,7 +4378,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
                   "The NETCDF driver does not support update access to existing"
                   " datasets.\n" );
         nc_close( cdfid );
+        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         delete poDS;
+        CPLAcquireMutex(hNCMutex, 1000.0);
         return NULL;
     }
     
@@ -4386,7 +4397,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
                       osSubdatasetName.c_str() );
             
             nc_close( cdfid );
+            CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
             delete poDS;
+            CPLAcquireMutex(hNCMutex, 1000.0);
             return NULL;
         }
     }
@@ -4398,7 +4411,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
                   poOpenInfo->pszFilename );
 
         nc_close( cdfid );
+        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         delete poDS;
+        CPLAcquireMutex(hNCMutex, 1000.0);
         return NULL;
     }
 
@@ -4418,7 +4433,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if ( nc_inq_nvars ( cdfid, &var_count) != NC_NOERR )
     {
+        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         delete poDS;
+        CPLAcquireMutex(hNCMutex, 1000.0);
         return NULL;
     }    
     
@@ -4534,7 +4551,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
                   "Variable has %d dimension(s) - not supported.", nd );
         CPLFree( paDimIds );
         CPLFree( panBandDimPos );
+        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         delete poDS;
+        CPLAcquireMutex(hNCMutex, 1000.0);
         return NULL;
     }
 
@@ -4943,7 +4962,9 @@ netCDFDataset::CreateLL( const char * pszFilename,
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Unable to create netCDF file %s (Error code %d): %s .\n", 
                   pszFilename, status, nc_strerror(status) );
+        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         delete poDS;
+        CPLAcquireMutex(hNCMutex, 1000.0);
         return NULL;
     }
 
