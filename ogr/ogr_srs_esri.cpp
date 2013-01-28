@@ -30,6 +30,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_p.h"
 #include "cpl_csv.h"
+#include "cpl_multiproc.h"
 
 #include "ogr_srs_esri_names.h"
 
@@ -97,6 +98,7 @@ static const char *apszOrthographicMapping[] = {
     NULL, NULL };
 
 static char **papszDatumMapping = NULL;
+static void* hDatumMappingMutex = NULL;
  
 static const char *apszDefaultDatumMapping[] = {
     "6267", "North_American_1927", SRS_DN_NAD27,
@@ -376,6 +378,8 @@ void CleanupESRIDatumMappingTable()
         CSLDestroy( papszDatumMapping );
         papszDatumMapping = NULL;
     }
+
+    CPLDestroyMutex(hDatumMappingMutex);
 }
 CPL_C_END
 
@@ -386,6 +390,7 @@ CPL_C_END
 static void InitDatumMappingTable()
 
 {
+    CPLMutexHolderD(&hDatumMappingMutex);
     if( papszDatumMapping != NULL )
         return;
 
