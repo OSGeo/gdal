@@ -30,8 +30,11 @@
 #include "gdal_pam.h"
 #include "gdal_frmts.h"
 #include "netcdf.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
+
+extern void *hNCMutex; /* shared with netcdf. See netcdfdataset.cpp */
 
 /************************************************************************/
 /* ==================================================================== */
@@ -131,6 +134,8 @@ CPLErr GMTRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     size_t start[2], edge[2];
     int    nErr = NC_NOERR;
     int    cdfid = ((GMTDataset *) poDS)->cdfid;
+    
+    CPLMutexHolderD(&hNCMutex);
 
     start[0] = nBlockYOff * nBlockXSize;
     edge[0] = nBlockXSize;
@@ -214,6 +219,8 @@ GDALDataset *GMTDataset::Open( GDALOpenInfo * poOpenInfo )
         || poOpenInfo->pabyHeader[2] != 'F' 
         || poOpenInfo->pabyHeader[3] != 1 )
         return NULL;
+    
+    CPLMutexHolderD(&hNCMutex);
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
@@ -258,7 +265,9 @@ GDALDataset *GMTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     GMTDataset 	*poDS;
 
+    CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock with GDALDataset own mutex
     poDS = new GMTDataset();
+    CPLAcquireMutex(hNCMutex, 1000.0);
 
     poDS->cdfid = cdfid;
     poDS->z_id = z_id;
@@ -384,6 +393,8 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     nc_type nc_datatype;
     GDALRasterBand *poBand;
     int nXSize, nYSize;
+    
+    CPLMutexHolderD(&hNCMutex);
 
     if( poSrcDS->GetRasterCount() != 1 )
     {
