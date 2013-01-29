@@ -30,7 +30,7 @@
 #ifndef _OGRSF_FRMTS_H_INCLUDED
 #define _OGRSF_FRMTS_H_INCLUDED
 
-#include "gdal.h"
+#include "cpl_progress.h"
 #include "ogr_feature.h"
 #include "ogr_featurestyle.h"
 
