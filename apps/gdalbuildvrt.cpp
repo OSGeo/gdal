@@ -83,7 +83,7 @@ typedef struct
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage()
+static void Usage(const char* pszErrorMsg = NULL)
 
 {
     fprintf(stdout, "%s", 
@@ -110,6 +110,10 @@ static void Usage()
             "    datasets will be added to the VRT rather than the dataset itself.\n"
             "  o By default, only datasets of same projection and band characteristics may be added to the VRT.\n"
             );
+
+    if( pszErrorMsg != NULL )
+        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
+
     exit( 1 );
 }
 
@@ -1169,6 +1173,10 @@ static void add_file_to_list(const char* filename, const char* tile_index,
 /*                                main()                                */
 /************************************************************************/
 
+#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
+    do { if (iArg + nExtraArg >= nArgc) \
+        Usage(CPLSPrintf("%s option requires %d argument(s)", papszArgv[iArg], nExtraArg)); } while(0)
+
 int main( int nArgc, char ** papszArgv )
 
 {
@@ -1213,19 +1221,21 @@ int main( int nArgc, char ** papszArgv )
                    papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
-        else if( EQUAL(papszArgv[iArg],"-tileindex") &&
-                 iArg + 1 < nArgc)
+        else if( EQUAL(papszArgv[iArg],"--help") )
+            Usage();
+        else if( EQUAL(papszArgv[iArg],"-tileindex") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             tile_index = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg],"-resolution") &&
-                 iArg + 1 < nArgc)
+        else if( EQUAL(papszArgv[iArg],"-resolution") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             resolution = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg],"-input_file_list") &&
-                 iArg + 1 < nArgc)
+        else if( EQUAL(papszArgv[iArg],"-input_file_list") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             const char* input_file_list = papszArgv[++iArg];
             FILE* f = VSIFOpen(input_file_list, "r");
             if (f)
@@ -1250,17 +1260,18 @@ int main( int nArgc, char ** papszArgv )
             bAllowProjectionDifference = TRUE;
         }
         /* Alternate syntax for output file */
-        else if( EQUAL(papszArgv[iArg],"-o")  &&
-                 iArg + 1 < nArgc)
+        else if( EQUAL(papszArgv[iArg],"-o") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszOutputFilename = papszArgv[++iArg];
         }
         else if ( EQUAL(papszArgv[iArg],"-q") || EQUAL(papszArgv[iArg],"-quiet") )
         {
             bQuiet = TRUE;
         }
-        else if ( EQUAL(papszArgv[iArg],"-tr") && iArg + 2 < nArgc)
+        else if ( EQUAL(papszArgv[iArg],"-tr") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(2);
             we_res = CPLAtofM(papszArgv[++iArg]);
             ns_res = CPLAtofM(papszArgv[++iArg]);
         }
@@ -1268,8 +1279,9 @@ int main( int nArgc, char ** papszArgv )
         {
             bTargetAlignedPixels = TRUE;
         }
-        else if ( EQUAL(papszArgv[iArg],"-te") && iArg + 4 < nArgc)
+        else if ( EQUAL(papszArgv[iArg],"-te") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
             xmin = CPLAtofM(papszArgv[++iArg]);
             ymin = CPLAtofM(papszArgv[++iArg]);
             xmax = CPLAtofM(papszArgv[++iArg]);
@@ -1287,16 +1299,19 @@ int main( int nArgc, char ** papszArgv )
         {
             bForceOverwrite = TRUE;
         }
-        else if ( EQUAL(papszArgv[iArg],"-srcnodata") && iArg + 1 < nArgc)
+        else if ( EQUAL(papszArgv[iArg],"-srcnodata") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszSrcNoData = papszArgv[++iArg];
         }
-        else if ( EQUAL(papszArgv[iArg],"-vrtnodata") && iArg + 1 < nArgc)
+        else if ( EQUAL(papszArgv[iArg],"-vrtnodata") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszVRTNoData = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg],"-a_srs") && iArg + 1 < nArgc)
+        else if( EQUAL(papszArgv[iArg],"-a_srs") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             OGRSpatialReferenceH hOutputSRS = OSRNewSpatialReference(NULL);
 
             if( OSRSetFromUserInput( hOutputSRS, papszArgv[iArg+1] ) != OGRERR_NONE )
@@ -1313,8 +1328,7 @@ int main( int nArgc, char ** papszArgv )
         }
         else if ( papszArgv[iArg][0] == '-' )
         {
-            printf("Unrecognized option : %s\n", papszArgv[iArg]);
-            exit(-1);
+            Usage(CPLSPrintf("Unkown option name '%s'", papszArgv[iArg]));
         }
         else if( pszOutputFilename == NULL )
         {
@@ -1327,8 +1341,10 @@ int main( int nArgc, char ** papszArgv )
         }
     }
 
-    if( pszOutputFilename == NULL || nInputFiles == 0 )
-        Usage();
+    if( pszOutputFilename == NULL )
+        Usage("No output filename specified.");
+    if( nInputFiles == 0 )
+        Usage("No input filenames specified.");
 
     if (!bQuiet)
         pfnProgress = GDALTermProgress;
@@ -1357,20 +1373,17 @@ int main( int nArgc, char ** papszArgv )
     if (we_res != 0 && ns_res != 0 &&
         resolution != NULL && !EQUAL(resolution, "user"))
     {
-        fprintf(stderr, "-tr option is not compatible with -resolution %s\n", resolution);
-        Usage();
+        Usage(CPLSPrintf("-tr option is not compatible with -resolution %s", resolution));
     }
     
     if (bTargetAlignedPixels && we_res == 0 && ns_res == 0)
     {
-        fprintf( stderr, "-tap option cannot be used without using -tr\n");
-        Usage();
+        Usage("-tap option cannot be used without using -tr");
     }
     
     if (bAddAlpha && bSeparate)
     {
-        fprintf(stderr, "-addalpha option is not compatible with -separate\n");
-        Usage();
+        Usage("-addalpha option is not compatible with -separate.");
     }
         
     ResolutionStrategy eStrategy = AVERAGE_RESOLUTION;
@@ -1380,8 +1393,7 @@ int main( int nArgc, char ** papszArgv )
             eStrategy = USER_RESOLUTION;
         else if ( resolution != NULL && EQUAL(resolution, "user") )
         {
-            fprintf(stderr, "-tr option must be used with -resolution user\n");
-            Usage();
+            Usage("-tr option must be used with -resolution user.");
         }
     }
     else if ( EQUAL(resolution, "average") )
@@ -1392,8 +1404,7 @@ int main( int nArgc, char ** papszArgv )
         eStrategy = LOWEST_RESOLUTION;
     else
     {
-        fprintf(stderr, "invalid value (%s) for -resolution\n", resolution);
-        Usage();
+        Usage(CPLSPrintf("invalid value (%s) for -resolution", resolution));
     }
     
     /* If -srcnodata is specified, use it as the -vrtnodata if the latter is not */
