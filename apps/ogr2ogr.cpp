@@ -44,6 +44,7 @@ static int bPreserveFID = FALSE;
 static int nFIDToFetch = OGRNullFID;
 
 static void Usage(int bShort = TRUE);
+static void Usage(const char* pszAdditionalMsg, int bShort = TRUE);
 
 typedef enum
 {
@@ -792,6 +793,10 @@ public:
 /*                                main()                                */
 /************************************************************************/
 
+#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
+    do { if (iArg + nExtraArg >= nArgc) \
+        Usage(CPLSPrintf("%s option requires %d argument(s)", papszArgv[iArg], nExtraArg)); } while(0)
+
 int main( int nArgc, char ** papszArgv )
 
 {
@@ -874,6 +879,8 @@ int main( int nArgc, char ** papszArgv )
                    papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
+        else if( EQUAL(papszArgv[iArg],"--help") )
+            Usage();
         else if ( EQUAL(papszArgv[iArg], "--long-usage") )
         {
             Usage(FALSE);
@@ -883,17 +890,20 @@ int main( int nArgc, char ** papszArgv )
         {
             bQuiet = TRUE;
         }
-        else if( EQUAL(papszArgv[iArg],"-f") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-f") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             bFormatExplicitelySet = TRUE;
             pszFormat = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg],"-dsco") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-dsco") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             papszDSCO = CSLAddString(papszDSCO, papszArgv[++iArg] );
         }
-        else if( EQUAL(papszArgv[iArg],"-lco") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-lco") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             papszLCO = CSLAddString(papszLCO, papszArgv[++iArg] );
         }
         else if( EQUAL(papszArgv[iArg],"-preserve_fid") )
@@ -919,24 +929,29 @@ int main( int nArgc, char ** papszArgv )
         {
             bUpdate = TRUE;
         }
-        else if( EQUAL(papszArgv[iArg],"-fid") && papszArgv[iArg+1] != NULL )
+        else if( EQUAL(papszArgv[iArg],"-fid") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             nFIDToFetch = atoi(papszArgv[++iArg]);
         }
-        else if( EQUAL(papszArgv[iArg],"-sql") && papszArgv[iArg+1] != NULL )
+        else if( EQUAL(papszArgv[iArg],"-sql") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszSQLStatement = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg],"-dialect") && papszArgv[iArg+1] != NULL )
+        else if( EQUAL(papszArgv[iArg],"-dialect") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszDialect = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg],"-nln") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-nln") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszNewLayerName = CPLStrdup(papszArgv[++iArg]);
         }
-        else if( EQUAL(papszArgv[iArg],"-nlt") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-nlt") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             int bIs3D = FALSE;
             CPLString osGeomName = papszArgv[iArg+1];
             if (strlen(papszArgv[iArg+1]) > 3 &&
@@ -966,8 +981,9 @@ int main( int nArgc, char ** papszArgv )
 
             iArg++;
         }
-        else if( EQUAL(papszArgv[iArg],"-dim") && iArg < nArgc-1  )
+        else if( EQUAL(papszArgv[iArg],"-dim")  )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             nCoordDim = atoi(papszArgv[iArg+1]);
             if( nCoordDim != 2 && nCoordDim != 3 )
             {
@@ -977,17 +993,20 @@ int main( int nArgc, char ** papszArgv )
             }
             iArg ++;
         }
-        else if( (EQUAL(papszArgv[iArg],"-tg") ||
-                  EQUAL(papszArgv[iArg],"-gt")) && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-tg") ||
+                 EQUAL(papszArgv[iArg],"-gt") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             nGroupTransactions = atoi(papszArgv[++iArg]);
         }
-        else if( EQUAL(papszArgv[iArg],"-s_srs") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-s_srs") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszSourceSRSDef = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg],"-a_srs") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-a_srs") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszOutputSRSDef = papszArgv[++iArg];
             if (EQUAL(pszOutputSRSDef, "NULL") ||
                 EQUAL(pszOutputSRSDef, "NONE"))
@@ -996,17 +1015,15 @@ int main( int nArgc, char ** papszArgv )
                 bNullifyOutputSRS = TRUE;
             }
         }
-        else if( EQUAL(papszArgv[iArg],"-t_srs") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-t_srs") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszOutputSRSDef = papszArgv[++iArg];
             bTransform = TRUE;
         }
-        else if( EQUAL(papszArgv[iArg],"-spat") 
-                 && papszArgv[iArg+1] != NULL 
-                 && papszArgv[iArg+2] != NULL 
-                 && papszArgv[iArg+3] != NULL 
-                 && papszArgv[iArg+4] != NULL )
+        else if( EQUAL(papszArgv[iArg],"-spat") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
             OGRLinearRing  oRing;
 
             oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
@@ -1019,28 +1036,33 @@ int main( int nArgc, char ** papszArgv )
             ((OGRPolygon *) poSpatialFilter)->addRing( &oRing );
             iArg += 4;
         }
-        else if( EQUAL(papszArgv[iArg],"-where") && papszArgv[iArg+1] != NULL )
+        else if( EQUAL(papszArgv[iArg],"-where") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszWHERE = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg],"-select") && papszArgv[iArg+1] != NULL)
+        else if( EQUAL(papszArgv[iArg],"-select") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszSelect = papszArgv[++iArg];
             papszSelFields = CSLTokenizeStringComplex(pszSelect, " ,", 
                                                       FALSE, FALSE );
         }
-        else if( EQUAL(papszArgv[iArg],"-segmentize") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-segmentize") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             eGeomOp = SEGMENTIZE;
             dfGeomOpParam = atof(papszArgv[++iArg]);
         }
-        else if( EQUAL(papszArgv[iArg],"-simplify") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-simplify") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             eGeomOp = SIMPLIFY_PRESERVE_TOPOLOGY;
             dfGeomOpParam = atof(papszArgv[++iArg]);
         }
-        else if( EQUAL(papszArgv[iArg],"-fieldTypeToString") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-fieldTypeToString") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             papszFieldTypesToString =
                     CSLTokenizeStringComplex(papszArgv[++iArg], " ,", 
                                              FALSE, FALSE );
@@ -1069,9 +1091,8 @@ int main( int nArgc, char ** papszArgv )
                 }
                 else
                 {
-                    fprintf(stderr, "Unhandled type for fieldtypeasstring option : %s\n",
-                            *iter);
-                    Usage();
+                    Usage(CPLSPrintf("Unhandled type for fieldtypeasstring option : %s",
+                            *iter));
                 }
                 iter ++;
             }
@@ -1084,8 +1105,11 @@ int main( int nArgc, char ** papszArgv )
         {
             bWrapDateline = TRUE;
         }
-        else if( EQUAL(papszArgv[iArg],"-clipsrc") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-clipsrc") )
         {
+            if (iArg + 1 >= nArgc)
+                Usage(CPLSPrintf("%s option requires 1 or 4 arguments", papszArgv[iArg]));
+
             VSIStatBufL  sStat;
             bClipSrc = TRUE;
             if ( IsNumber(papszArgv[iArg+1])
@@ -1113,8 +1137,7 @@ int main( int nArgc, char ** papszArgv )
                 OGRGeometryFactory::createFromWkt(&pszTmp, NULL, &poClipSrc);
                 if (poClipSrc == NULL)
                 {
-                    fprintf( stderr, "FAILURE: Invalid geometry. Must be a valid POLYGON or MULTIPOLYGON WKT\n\n");
-                    Usage();
+                    Usage("Invalid geometry. Must be a valid POLYGON or MULTIPOLYGON WKT");
                 }
                 iArg ++;
             }
@@ -1128,23 +1151,29 @@ int main( int nArgc, char ** papszArgv )
                 iArg ++;
             }
         }
-        else if( EQUAL(papszArgv[iArg],"-clipsrcsql") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-clipsrcsql")  )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszClipSrcSQL = papszArgv[iArg+1];
             iArg ++;
         }
-        else if( EQUAL(papszArgv[iArg],"-clipsrclayer") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-clipsrclayer") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszClipSrcLayer = papszArgv[iArg+1];
             iArg ++;
         }
-        else if( EQUAL(papszArgv[iArg],"-clipsrcwhere") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-clipsrcwhere") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszClipSrcWhere = papszArgv[iArg+1];
             iArg ++;
         }
-        else if( EQUAL(papszArgv[iArg],"-clipdst") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-clipdst") )
         {
+            if (iArg + 1 >= nArgc)
+                Usage(CPLSPrintf("%s option requires 1 or 4 arguments", papszArgv[iArg]));
+
             VSIStatBufL  sStat;
             if ( IsNumber(papszArgv[iArg+1])
                  && papszArgv[iArg+2] != NULL 
@@ -1171,8 +1200,7 @@ int main( int nArgc, char ** papszArgv )
                 OGRGeometryFactory::createFromWkt(&pszTmp, NULL, &poClipDst);
                 if (poClipDst == NULL)
                 {
-                    fprintf( stderr, "FAILURE: Invalid geometry. Must be a valid POLYGON or MULTIPOLYGON WKT\n\n");
-                    Usage();
+                    Usage("Invalid geometry. Must be a valid POLYGON or MULTIPOLYGON WKT");
                 }
                 iArg ++;
             }
@@ -1182,18 +1210,21 @@ int main( int nArgc, char ** papszArgv )
                 iArg ++;
             }
         }
-        else if( EQUAL(papszArgv[iArg],"-clipdstsql") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-clipdstsql") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszClipDstSQL = papszArgv[iArg+1];
             iArg ++;
         }
-        else if( EQUAL(papszArgv[iArg],"-clipdstlayer") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-clipdstlayer") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszClipDstLayer = papszArgv[iArg+1];
             iArg ++;
         }
-        else if( EQUAL(papszArgv[iArg],"-clipdstwhere") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-clipdstwhere") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszClipDstWhere = papszArgv[iArg+1];
             iArg ++;
         }
@@ -1201,8 +1232,9 @@ int main( int nArgc, char ** papszArgv )
         {
             bSplitListFields = TRUE;
         }
-        else if ( EQUAL(papszArgv[iArg],"-maxsubfields") && iArg < nArgc-1 )
+        else if ( EQUAL(papszArgv[iArg],"-maxsubfields") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             if (IsNumber(papszArgv[iArg+1]))
             {
                 int nTemp = atoi(papszArgv[iArg+1]);
@@ -1217,13 +1249,15 @@ int main( int nArgc, char ** papszArgv )
         {
             bExplodeCollections = TRUE;
         }
-        else if( EQUAL(papszArgv[iArg],"-zfield") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"-zfield") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszZField = papszArgv[iArg+1];
             iArg ++;
         }
-        else if( EQUAL(papszArgv[iArg],"-gcp") && iArg < nArgc - 4 )
+        else if( EQUAL(papszArgv[iArg],"-gcp") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
             char* endptr = NULL;
             /* -gcp pixel line easting northing [elev] */
 
@@ -1251,13 +1285,14 @@ int main( int nArgc, char ** papszArgv )
         {
             nTransformOrder = -1;
         }
-        else if( EQUAL(papszArgv[iArg],"-order") && iArg < nArgc - 1 )
+        else if( EQUAL(papszArgv[iArg],"-order") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             nTransformOrder = atoi( papszArgv[++iArg] );
         }
         else if( papszArgv[iArg][0] == '-' )
         {
-            Usage();
+            Usage(CPLSPrintf("Unkown option name '%s'", papszArgv[iArg]));
         }
         else if( pszDestDataSource == NULL )
             pszDestDataSource = papszArgv[iArg];
@@ -1268,12 +1303,16 @@ int main( int nArgc, char ** papszArgv )
     }
 
     if( pszDataSource == NULL )
-        Usage();
+    {
+        if( pszDestDataSource == NULL )
+            Usage("no target datasource provided");
+        else
+            Usage("no source datasource provided");
+    }
 
     if( bPreserveFID && bExplodeCollections )
     {
-        fprintf( stderr, "FAILURE: cannot use -preserve_fid and -explodecollections at the same time\n\n" );
-        Usage();
+        Usage("cannot use -preserve_fid and -explodecollections at the same time.");
     }
 
     if( bClipSrc && pszClipSrcDS != NULL)
@@ -1281,8 +1320,7 @@ int main( int nArgc, char ** papszArgv )
         poClipSrc = LoadGeometry(pszClipSrcDS, pszClipSrcSQL, pszClipSrcLayer, pszClipSrcWhere);
         if (poClipSrc == NULL)
         {
-            fprintf( stderr, "FAILURE: cannot load source clip geometry\n\n" );
-            Usage();
+            Usage("cannot load source clip geometry");
         }
     }
     else if( bClipSrc && poClipSrc == NULL )
@@ -1291,9 +1329,8 @@ int main( int nArgc, char ** papszArgv )
             poClipSrc = poSpatialFilter->clone();
         if (poClipSrc == NULL)
         {
-            fprintf( stderr, "FAILURE: -clipsrc must be used with -spat option or a\n"
-                             "bounding box, WKT string or datasource must be specified\n\n");
-            Usage();
+            Usage("-clipsrc must be used with -spat option or a\n"
+                             "bounding box, WKT string or datasource must be specified");
         }
     }
     
@@ -1302,8 +1339,7 @@ int main( int nArgc, char ** papszArgv )
         poClipDst = LoadGeometry(pszClipDstDS, pszClipDstSQL, pszClipDstLayer, pszClipDstWhere);
         if (poClipDst == NULL)
         {
-            fprintf( stderr, "FAILURE: cannot load dest clip geometry\n\n" );
-            Usage();
+            Usage("cannot load dest clip geometry");
         }
     }
 
@@ -2127,6 +2163,11 @@ int main( int nArgc, char ** papszArgv )
 /************************************************************************/
 
 static void Usage(int bShort)
+{
+    Usage(NULL, bShort);
+}
+
+static void Usage(const char* pszAdditionalMsg, int bShort)
 
 {
     OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
@@ -2160,6 +2201,8 @@ static void Usage(int bShort)
     if (bShort)
     {
         printf( "\nNote: ogr2ogr --long-usage for full help.\n");
+        if( pszAdditionalMsg )
+            fprintf(stderr, "\nFAILURE: %s\n", pszAdditionalMsg);
         exit( 1 );
     }
 
@@ -2211,6 +2254,9 @@ static void Usage(int bShort)
            " Srs_def can be a full WKT definition (hard to escape properly),\n"
            " or a well known definition (ie. EPSG:4326) or a file with a WKT\n"
            " definition.\n" );
+
+    if( pszAdditionalMsg )
+        fprintf(stderr, "\nFAILURE: %s\n", pszAdditionalMsg);
 
     exit( 1 );
 }

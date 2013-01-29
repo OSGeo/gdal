@@ -47,18 +47,26 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
 /*                               Usage()                                */
 /************************************************************************/
 
-void Usage()
+void Usage(const char* pszErrorMsg)
 
 {
     printf( "Usage: gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n"
             "                [-norat] [-noct] [-nofl] [-checksum] [-proj4] [-mdd domain]*\n"
             "                [-sd subdataset] datasetname\n" );
+
+    if( pszErrorMsg != NULL )
+        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
+
     exit( 1 );
 }
 
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
+
+#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
+    do { if (i + nExtraArg >= argc) \
+        Usage(CPLSPrintf("%s option requires %d argument(s)", argv[i], nExtraArg)); } while(0)
 
 int main( int argc, char ** argv ) 
 
@@ -110,6 +118,8 @@ int main( int argc, char ** argv )
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
+        else if( EQUAL(argv[i],"--help") )
+            Usage(NULL);
         else if( EQUAL(argv[i], "-mm") )
             bComputeMinMax = TRUE;
         else if( EQUAL(argv[i], "-hist") )
@@ -138,23 +148,29 @@ int main( int argc, char ** argv )
             bShowRAT = FALSE;
         else if( EQUAL(argv[i], "-noct") )
             bShowColorTable = FALSE;
-        else if( EQUAL(argv[i], "-mdd") && i < argc-1 )
+        else if( EQUAL(argv[i], "-mdd") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             papszExtraMDDomains = CSLAddString( papszExtraMDDomains,
                                                 argv[++i] );
+        }
         else if( EQUAL(argv[i], "-nofl") )
             bShowFileList = FALSE;
-        else if( EQUAL(argv[i], "-sd") && i < argc-1 )
+        else if( EQUAL(argv[i], "-sd") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             nSubdataset = atoi(argv[++i]);
+        }
         else if( argv[i][0] == '-' )
-            Usage();
+            Usage(CPLSPrintf("Unkown option name '%s'", argv[i]));
         else if( pszFilename == NULL )
             pszFilename = argv[i];
         else
-            Usage();
+            Usage("Too many command options.");
     }
 
     if( pszFilename == NULL )
-        Usage();
+        Usage("No datasource specified.");
 
 /* -------------------------------------------------------------------- */
 /*      Open dataset.                                                   */

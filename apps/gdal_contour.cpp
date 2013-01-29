@@ -50,7 +50,7 @@ static int ArgIsNumeric( const char *pszArg )
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage()
+static void Usage(const char* pszErrorMsg = NULL)
 
 {
     printf( 
@@ -59,12 +59,20 @@ static void Usage()
         "                    [-off <offset>] [-fl <level> <level>...]\n" 
         "                    [-nln <outlayername>] [-q]\n"
         "                    <src_filename> <dst_filename>\n" );
+
+    if( pszErrorMsg != NULL )
+        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
+
     exit( 1 );
 }
 
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
+
+#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
+    do { if (i + nExtraArg >= argc) \
+        Usage(CPLSPrintf("%s option requires %d argument(s)", argv[i], nExtraArg)); } while(0)
 
 int main( int argc, char ** argv )
 
@@ -108,45 +116,56 @@ int main( int argc, char ** argv )
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
-        else if( EQUAL(argv[i],"-a") && i < argc-1 )
+        else if( EQUAL(argv[i], "--help") )
+            Usage();
+        else if( EQUAL(argv[i],"-a") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszElevAttrib = argv[++i];
         }
-        else if( EQUAL(argv[i],"-off") && i < argc-1 )
+        else if( EQUAL(argv[i],"-off") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             dfOffset = atof(argv[++i]);
         }
-        else if( EQUAL(argv[i],"-i") && i < argc-1 )
+        else if( EQUAL(argv[i],"-i") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             dfInterval = atof(argv[++i]);
         }
-        else if( EQUAL(argv[i],"-fl") && i < argc-1 )
+        else if( EQUAL(argv[i],"-fl") )
         {
+            if( i >= argc-1 )
+                Usage(CPLSPrintf("%s option requires at least 1 argument", argv[i]));
             while( i < argc-1 
                    && nFixedLevelCount 
                              < (int)(sizeof(adfFixedLevels)/sizeof(double))
                    && ArgIsNumeric(argv[i+1]) )
                 adfFixedLevels[nFixedLevelCount++] = atof(argv[++i]);
         }
-        else if( EQUAL(argv[i],"-b") && i < argc-1 )
+        else if( EQUAL(argv[i],"-b") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             nBandIn = atoi(argv[++i]);
         }
-        else if( EQUAL(argv[i],"-f") && i < argc-1 )
+        else if( EQUAL(argv[i],"-f") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszFormat = argv[++i];
         }
         else if( EQUAL(argv[i],"-3d")  )
         {
             b3D = TRUE;
         }
-        else if( EQUAL(argv[i],"-snodata")  && i < argc-1 )
+        else if( EQUAL(argv[i],"-snodata") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             bNoDataSet = TRUE;
             dfNoData = atof(argv[++i]);
         }
-        else if( EQUAL(argv[i],"-nln")  && i < argc-1 )
+        else if( EQUAL(argv[i],"-nln") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszNewLayerName = argv[++i];
         }
         else if( EQUAL(argv[i],"-inodata") )
@@ -166,24 +185,22 @@ int main( int argc, char ** argv )
             pszDstFilename = argv[i];
         }
         else
-            Usage();
+            Usage("Too many command options.");
     }
 
     if( dfInterval == 0.0 && nFixedLevelCount == 0 )
     {
-        Usage();
+        Usage("Neither -i nor -fl are specified.");
     }
 
     if (pszSrcFilename == NULL)
     {
-        fprintf(stderr, "Missing source filename.\n");
-        Usage();
+        Usage("Missing source filename.");
     }
 
     if (pszDstFilename == NULL)
     {
-        fprintf(stderr, "Missing destination filename.\n");
-        Usage();
+        Usage("Missing destination filename.");
     }
     
     if (!bQuiet)

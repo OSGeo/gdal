@@ -262,7 +262,7 @@ static int GDALExit( int nCode )
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage()
+static void Usage(const char* pszErrorMsg = NULL)
 
 {
     printf( 
@@ -282,6 +282,10 @@ static void Usage()
         "\n"
         "Available resampling methods:\n"
         "    near (default), bilinear, cubic, cubicspline, lanczos.\n" );
+
+    if( pszErrorMsg != NULL )
+        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
+
     GDALExit( 1 );
 }
 
@@ -316,6 +320,10 @@ char *SanitizeSRS( const char *pszUserInput )
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
+
+#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
+    do { if (i + nExtraArg >= argc) \
+        Usage(CPLSPrintf("%s option requires %d argument(s)", argv[i], nExtraArg)); } while(0)
 
 int main( int argc, char ** argv )
 
@@ -391,13 +399,17 @@ int main( int argc, char ** argv )
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
-        else if( EQUAL(argv[i],"-co") && i < argc-1 )
+        else if( EQUAL(argv[i],"--help") )
+            Usage();
+        else if( EQUAL(argv[i],"-co") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
             bCreateOutput = TRUE;
         }   
-        else if( EQUAL(argv[i],"-wo") && i < argc-1 )
+        else if( EQUAL(argv[i],"-wo") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             papszWarpOptions = CSLAddString( papszWarpOptions, argv[++i] );
         }   
         else if( EQUAL(argv[i],"-multi") )
@@ -416,41 +428,45 @@ int main( int argc, char ** argv )
         {
             bEnableSrcAlpha = TRUE;
         }
-        else if( EQUAL(argv[i],"-of") && i < argc-1 )
+        else if( EQUAL(argv[i],"-of") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszFormat = argv[++i];
             bFormatExplicitelySet = TRUE;
             bCreateOutput = TRUE;
             if( EQUAL(pszFormat,"VRT") )
                 bVRT = TRUE;
         }
-        else if( EQUAL(argv[i],"-t_srs") && i < argc-1 )
+        else if( EQUAL(argv[i],"-t_srs") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             char *pszSRS = SanitizeSRS(argv[++i]);
             papszTO = CSLSetNameValue( papszTO, "DST_SRS", pszSRS );
             CPLFree( pszSRS );
         }
-        else if( EQUAL(argv[i],"-s_srs") && i < argc-1 )
+        else if( EQUAL(argv[i],"-s_srs") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             char *pszSRS = SanitizeSRS(argv[++i]);
             papszTO = CSLSetNameValue( papszTO, "SRC_SRS", pszSRS );
             CPLFree( pszSRS );
         }
-        else if( EQUAL(argv[i],"-order") && i < argc-1 )
+        else if( EQUAL(argv[i],"-order") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             const char* pszMethod = CSLFetchNameValue(papszTO, "METHOD");
             if (pszMethod)
                 fprintf(stderr, "Warning: only one METHOD can be used. Method %s is already defined\n",
                         pszMethod);
             papszTO = CSLSetNameValue( papszTO, "MAX_GCP_ORDER", argv[++i] );
         }
-        else if( EQUAL(argv[i],"-refine_gcps") && i < argc-1 )
+        else if( EQUAL(argv[i],"-refine_gcps") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             papszTO = CSLSetNameValue( papszTO, "REFINE_TOLERANCE", argv[++i] );
             if(atof(argv[i]) < 0)
             {
-                printf( "The tolerance for -refine_gcps may not be negative\n");
-                Usage();
+                Usage("The tolerance for -refine_gcps may not be negative.");
             }
             if (i < argc-1 && atoi(argv[i+1]) >= 0 && isdigit(argv[i+1][0]))
             {
@@ -473,38 +489,43 @@ int main( int argc, char ** argv )
         {
             papszTO = CSLSetNameValue( papszTO, "METHOD", "GEOLOC_ARRAY" );
         }
-        else if( EQUAL(argv[i],"-to") && i < argc-1 )
+        else if( EQUAL(argv[i],"-to") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             papszTO = CSLAddString( papszTO, argv[++i] );
         }
-        else if( EQUAL(argv[i],"-et") && i < argc-1 )
+        else if( EQUAL(argv[i],"-et") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             dfErrorThreshold = CPLAtofM(argv[++i]);
         }
-        else if( EQUAL(argv[i],"-wm") && i < argc-1 )
+        else if( EQUAL(argv[i],"-wm") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             if( CPLAtofM(argv[i+1]) < 10000 )
                 dfWarpMemoryLimit = CPLAtofM(argv[i+1]) * 1024 * 1024;
             else
                 dfWarpMemoryLimit = CPLAtofM(argv[i+1]);
             i++;
         }
-        else if( EQUAL(argv[i],"-srcnodata") && i < argc-1 )
+        else if( EQUAL(argv[i],"-srcnodata") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszSrcNodata = argv[++i];
         }
-        else if( EQUAL(argv[i],"-dstnodata") && i < argc-1 )
+        else if( EQUAL(argv[i],"-dstnodata") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszDstNodata = argv[++i];
         }
-        else if( EQUAL(argv[i],"-tr") && i < argc-2 )
+        else if( EQUAL(argv[i],"-tr") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(2);
             dfXRes = CPLAtofM(argv[++i]);
             dfYRes = fabs(CPLAtofM(argv[++i]));
             if( dfXRes == 0 || dfYRes == 0 )
             {
-                printf( "Wrong value for -tr parameters\n");
-                Usage();
+                Usage("Wrong value for -tr parameters.");
             }
             bCreateOutput = TRUE;
         }
@@ -512,8 +533,9 @@ int main( int argc, char ** argv )
         {
             bTargetAlignedPixels = TRUE;
         }
-        else if( EQUAL(argv[i],"-ot") && i < argc-1 )
+        else if( EQUAL(argv[i],"-ot") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             int	iType;
             
             for( iType = 1; iType < GDT_TypeCount; iType++ )
@@ -528,14 +550,14 @@ int main( int argc, char ** argv )
 
             if( eOutputType == GDT_Unknown )
             {
-                printf( "Unknown output pixel type: %s\n", argv[i+1] );
-                Usage();
+                Usage(CPLSPrintf( "Unknown output pixel type: %s.", argv[i+1] ));
             }
             i++;
             bCreateOutput = TRUE;
         }
-        else if( EQUAL(argv[i],"-wt") && i < argc-1 )
+        else if( EQUAL(argv[i],"-wt") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             int	iType;
             
             for( iType = 1; iType < GDT_TypeCount; iType++ )
@@ -550,19 +572,20 @@ int main( int argc, char ** argv )
 
             if( eWorkingType == GDT_Unknown )
             {
-                printf( "Unknown output pixel type: %s\n", argv[i+1] );
-                Usage();
+                Usage(CPLSPrintf( "Unknown working pixel type: %s.", argv[i+1] ));
             }
             i++;
         }
-        else if( EQUAL(argv[i],"-ts") && i < argc-2 )
+        else if( EQUAL(argv[i],"-ts") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(2);
             nForcePixels = atoi(argv[++i]);
             nForceLines = atoi(argv[++i]);
             bCreateOutput = TRUE;
         }
-        else if( EQUAL(argv[i],"-te") && i < argc-4 )
+        else if( EQUAL(argv[i],"-te") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
             dfMinX = CPLAtofM(argv[++i]);
             dfMinY = CPLAtofM(argv[++i]);
             dfMaxX = CPLAtofM(argv[++i]);
@@ -581,8 +604,9 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-rcs") )
             eResampleAlg = GRA_CubicSpline;
 
-        else if( EQUAL(argv[i],"-r") && i < argc - 1 )
+        else if( EQUAL(argv[i],"-r") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             if ( EQUAL(argv[++i], "near") )
                 eResampleAlg = GRA_NearestNeighbour;
             else if ( EQUAL(argv[i], "bilinear") )
@@ -595,29 +619,33 @@ int main( int argc, char ** argv )
                 eResampleAlg = GRA_Lanczos;
             else
             {
-                printf( "Unknown resampling method: \"%s\".\n", argv[i] );
-                Usage();
+                Usage(CPLSPrintf( "Unknown resampling method: \"%s\".", argv[i] ));
             }
         }
 
-        else if( EQUAL(argv[i],"-cutline") && i < argc-1 )
+        else if( EQUAL(argv[i],"-cutline") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszCutlineDSName = argv[++i];
         }
-        else if( EQUAL(argv[i],"-cwhere") && i < argc-1 )
+        else if( EQUAL(argv[i],"-cwhere") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszCWHERE = argv[++i];
         }
-        else if( EQUAL(argv[i],"-cl") && i < argc-1 )
+        else if( EQUAL(argv[i],"-cl") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszCLayer = argv[++i];
         }
-        else if( EQUAL(argv[i],"-csql") && i < argc-1 )
+        else if( EQUAL(argv[i],"-csql") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszCSQL = argv[++i];
         }
-        else if( EQUAL(argv[i],"-cblend") && i < argc-1 )
+        else if( EQUAL(argv[i],"-cblend") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             papszWarpOptions = 
                 CSLSetNameValue( papszWarpOptions, 
                                  "CUTLINE_BLEND_DIST", argv[++i] );
@@ -634,11 +662,14 @@ int main( int argc, char ** argv )
             bCopyMetadata = FALSE;
             bCopyBandInfo = FALSE;
         }   
-        else if( EQUAL(argv[i],"-cvmd") && i < argc-1 )
+        else if( EQUAL(argv[i],"-cvmd") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszMDConflictValue = argv[++i];
+        }
 
         else if( argv[i][0] == '-' )
-            Usage();
+            Usage(CPLSPrintf("Unkown option name '%s'", argv[i]));
 
         else 
             papszSrcFiles = CSLAddString( papszSrcFiles, argv[i] );
@@ -650,14 +681,12 @@ int main( int argc, char ** argv )
     if ((nForcePixels != 0 || nForceLines != 0) && 
         (dfXRes != 0 && dfYRes != 0))
     {
-        printf( "-tr and -ts options cannot be used at the same time\n");
-        Usage();
+        Usage("-tr and -ts options cannot be used at the same time.");
     }
     
     if (bTargetAlignedPixels && dfXRes == 0 && dfYRes == 0)
     {
-        printf( "-tap option cannot be used without using -tr\n");
-        Usage();
+        Usage("-tap option cannot be used without using -tr.");
     }
 
 /* -------------------------------------------------------------------- */
@@ -671,7 +700,7 @@ int main( int argc, char ** argv )
     }
 
     if( pszDstFilename == NULL )
-        Usage();
+        Usage("No target filename specified.");
         
     if( bVRT && CSLCount(papszSrcFiles) > 1 )
     {
