@@ -43,13 +43,17 @@ int     bSummaryOnly = FALSE;
 int     nFetchFID = OGRNullFID;
 char**  papszOptions = NULL;
 
-static void Usage();
+static void Usage(const char* pszErrorMsg = NULL);
 
 static void ReportOnLayer( OGRLayer *, const char *, OGRGeometry * );
 
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
+
+#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
+    do { if (iArg + nExtraArg >= nArgc) \
+        Usage(CPLSPrintf("%s option requires %d argument(s)", papszArgv[iArg], nExtraArg)); } while(0)
 
 int main( int nArgc, char ** papszArgv )
 
@@ -90,18 +94,20 @@ int main( int nArgc, char ** papszArgv )
                    papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
+        else if( EQUAL(papszArgv[iArg],"--help") )
+            Usage();
         else if( EQUAL(papszArgv[iArg],"-ro") )
             bReadOnly = TRUE;
         else if( EQUAL(papszArgv[iArg],"-q") || EQUAL(papszArgv[iArg],"-quiet"))
             bVerbose = FALSE;
-        else if( EQUAL(papszArgv[iArg],"-fid") && iArg < nArgc-1 )
-            nFetchFID = atoi(papszArgv[++iArg]);
-        else if( EQUAL(papszArgv[iArg],"-spat") 
-                 && papszArgv[iArg+1] != NULL 
-                 && papszArgv[iArg+2] != NULL 
-                 && papszArgv[iArg+3] != NULL 
-                 && papszArgv[iArg+4] != NULL )
+        else if( EQUAL(papszArgv[iArg],"-fid") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            nFetchFID = atoi(papszArgv[++iArg]);
+        }
+        else if( EQUAL(papszArgv[iArg],"-spat") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
             OGRLinearRing  oRing;
 
             oRing.addPoint( atof(papszArgv[iArg+1]), atof(papszArgv[iArg+2]) );
@@ -114,21 +120,24 @@ int main( int nArgc, char ** papszArgv )
             ((OGRPolygon *) poSpatialFilter)->addRing( &oRing );
             iArg += 4;
         }
-        else if( EQUAL(papszArgv[iArg],"-where") && papszArgv[iArg+1] != NULL )
+        else if( EQUAL(papszArgv[iArg],"-where") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszWHERE = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg],"-sql") && papszArgv[iArg+1] != NULL )
+        else if( EQUAL(papszArgv[iArg],"-sql") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszSQLStatement = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg],"-dialect") 
-                 && papszArgv[iArg+1] != NULL )
+        else if( EQUAL(papszArgv[iArg],"-dialect") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszDialect = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg],"-rc") && papszArgv[iArg+1] != NULL )
+        else if( EQUAL(papszArgv[iArg],"-rc") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             nRepeatCount = atoi(papszArgv[++iArg]);
         }
         else if( EQUAL(papszArgv[iArg],"-al") )
@@ -156,7 +165,7 @@ int main( int nArgc, char ** papszArgv )
         }
         else if( papszArgv[iArg][0] == '-' )
         {
-            Usage();
+            Usage(CPLSPrintf("Unkown option name '%s'", papszArgv[iArg]));
         }
         else if( pszDataSource == NULL )
             pszDataSource = papszArgv[iArg];
@@ -168,7 +177,7 @@ int main( int nArgc, char ** papszArgv )
     }
 
     if( pszDataSource == NULL )
-        Usage();
+        Usage("No datasource specified.");
 
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */
@@ -342,7 +351,7 @@ end:
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage()
+static void Usage(const char* pszErrorMsg)
 
 {
     printf( "Usage: ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]\n"
@@ -350,6 +359,10 @@ static void Usage()
             "               [-sql statement] [-dialect sql_dialect] [-al] [-so] [-fields={YES/NO}]\n"
             "               [-geom={YES/NO/SUMMARY}][--formats]\n"
             "               datasource_name [layer [layer ...]]\n");
+
+    if( pszErrorMsg != NULL )
+        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
+
     exit( 1 );
 }
 

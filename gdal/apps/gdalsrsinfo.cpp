@@ -51,7 +51,7 @@ int SearchCSVForWKT( const char *pszFileCSV, const char *pszTarget );
 /*                               Usage()                                */
 /************************************************************************/
 
-void Usage()
+void Usage(const char* pszErrorMsg = NULL)
 
 {
     printf( "\nUsage: gdalsrsinfo [options] srs_def\n"
@@ -70,6 +70,10 @@ void Usage()
             "                                        proj4, epsg,\n"
             "                                        wkt, wkt_simple, wkt_noct, wkt_esri,\n"
             "                                        mapinfo, xml }\n\n" ); 
+
+    if( pszErrorMsg != NULL )
+        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
+
     exit( 1 );
 }
 
@@ -77,6 +81,10 @@ void Usage()
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
+
+#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
+    do { if (i + nExtraArg >= argc) \
+        Usage(CPLSPrintf("%s option requires %d argument(s)", argv[i], nExtraArg)); } while(0)
 
 int main( int argc, char ** argv ) 
 
@@ -188,12 +196,15 @@ int main( int argc, char ** argv )
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
-        else if( EQUAL(argv[i], "-h") )
+        else if( EQUAL(argv[i], "-h") || EQUAL(argv[i], "--help") )
             Usage();
         else if( EQUAL(argv[i], "-e") )
             bFindEPSG = TRUE;
-        else if( EQUAL(argv[i], "-o") && i < argc - 1)
+        else if( EQUAL(argv[i], "-o") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszOutputType = argv[++i];
+        }
         else if( EQUAL(argv[i], "-p") )
             bPretty = TRUE;
         else if( EQUAL(argv[i], "-V") )
@@ -201,7 +212,7 @@ int main( int argc, char ** argv )
         else if( argv[i][0] == '-' )
         {
             CSLDestroy( argv );
-            Usage();
+            Usage(CPLSPrintf("Unkown option name '%s'", argv[i]));
         }
         else  
             pszInput = argv[i];
@@ -209,7 +220,7 @@ int main( int argc, char ** argv )
 
     if ( pszInput == NULL ) {
         CSLDestroy( argv );
-        Usage();
+        Usage("No input specified.");
     }
 
     /* Search for SRS */

@@ -47,12 +47,12 @@ static int bSubCall = FALSE;
 /*                               Usage()                                */
 /* ******************************************************************** */
 
-static void Usage()
+static void Usage(const char* pszErrorMsg = NULL, int bShort = TRUE)
 
 {
     int	iDr;
         
-    printf( "Usage: gdal_translate [--help-general]\n"
+    printf( "Usage: gdal_translate [--help-general] [--long-usage]\n"
             "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
             "             CInt16/CInt32/CFloat32/CFloat64}] [-strict]\n"
             "       [-of format] [-b band] [-mask band] [-expand {gray|rgb|rgba}]\n"
@@ -63,23 +63,31 @@ static void Usage()
             "       [-gcp pixel line easting northing [elevation]]*\n" 
             "       [-mo \"META-TAG=VALUE\"]* [-q] [-sds]\n"
             "       [-co \"NAME=VALUE\"]* [-stats]\n"
-            "       src_dataset dst_dataset\n\n" );
+            "       src_dataset dst_dataset\n" );
 
-    printf( "%s\n\n", GDALVersionInfo( "--version" ) );
-    printf( "The following format drivers are configured and support output:\n" );
-    for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
+    if( !bShort )
     {
-        GDALDriverH hDriver = GDALGetDriver(iDr);
-        
-        if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL
-            || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY,
-                                    NULL ) != NULL )
+        printf( "\n%s\n\n", GDALVersionInfo( "--version" ) );
+        printf( "The following format drivers are configured and support output:\n" );
+        for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
         {
-            printf( "  %s: %s\n",
-                    GDALGetDriverShortName( hDriver ),
-                    GDALGetDriverLongName( hDriver ) );
+            GDALDriverH hDriver = GDALGetDriver(iDr);
+            
+            if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL
+                || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY,
+                                        NULL ) != NULL )
+            {
+                printf( "  %s: %s\n",
+                        GDALGetDriverShortName( hDriver ),
+                        GDALGetDriverLongName( hDriver ) );
+            }
         }
     }
+
+    if( pszErrorMsg != NULL )
+        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
+
+    exit(1);
 }
 
 /************************************************************************/
@@ -249,6 +257,10 @@ enum
     MASK_USER
 };
 
+#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
+    do { if (i + nExtraArg >= argc) \
+        Usage(CPLSPrintf("%s option requires %d argument(s)", argv[i], nExtraArg)); } while(0)
+
 static int ProxyMain( int argc, char ** argv )
 
 {
@@ -325,6 +337,12 @@ static int ProxyMain( int argc, char ** argv )
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
+        else if( EQUAL(argv[i],"--help") )
+            Usage();
+        else if ( EQUAL(argv[i], "--long-usage") )
+        {
+            Usage(NULL, FALSE);
+        }
         else if( EQUAL(argv[i],"-of") && i < argc-1 )
         {
             pszFormat = argv[++i];
@@ -337,8 +355,9 @@ static int ProxyMain( int argc, char ** argv )
             pfnProgress = GDALDummyProgress;
         }
 
-        else if( EQUAL(argv[i],"-ot") && i < argc-1 )
+        else if( EQUAL(argv[i],"-ot") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             int	iType;
             
             for( iType = 1; iType < GDT_TypeCount; iType++ )
@@ -353,15 +372,13 @@ static int ProxyMain( int argc, char ** argv )
 
             if( eOutputType == GDT_Unknown )
             {
-                printf( "Unknown output pixel type: %s\n", argv[i+1] );
-                Usage();
-                GDALDestroyDriverManager();
-                exit( 2 );
+                Usage(CPLSPrintf("Unknown output pixel type: %s.", argv[i+1] ));
             }
             i++;
         }
-        else if( EQUAL(argv[i],"-b") && i < argc-1 )
+        else if( EQUAL(argv[i],"-b") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             const char* pszBand = argv[i+1];
             int bMask = FALSE;
             if (EQUAL(pszBand, "mask"))
@@ -378,10 +395,7 @@ static int ProxyMain( int argc, char ** argv )
             int nBand = atoi(pszBand);
             if( nBand < 1 )
             {
-                printf( "Unrecognizable band number (%s).\n", argv[i+1] );
-                Usage();
-                GDALDestroyDriverManager();
-                exit( 2 );
+                Usage(CPLSPrintf( "Unrecognizable band number (%s).", argv[i+1] ));
             }
             i++;
 
@@ -395,8 +409,9 @@ static int ProxyMain( int argc, char ** argv )
             if( panBandList[nBandCount-1] != nBandCount )
                 bDefBands = FALSE;
         }
-        else if( EQUAL(argv[i],"-mask") && i < argc-1 )
+        else if( EQUAL(argv[i],"-mask") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             bParsedMaskArgument = TRUE;
             const char* pszBand = argv[i+1];
             if (EQUAL(pszBand, "none"))
@@ -420,10 +435,7 @@ static int ProxyMain( int argc, char ** argv )
                 int nBand = atoi(pszBand);
                 if( nBand < 1 )
                 {
-                    printf( "Unrecognizable band number (%s).\n", argv[i+1] );
-                    Usage();
-                    GDALDestroyDriverManager();
-                    exit( 2 );
+                    Usage(CPLSPrintf( "Unrecognizable band number (%s).", argv[i+1] ));
                 }
                 
                 eMaskMode = MASK_USER;
@@ -442,8 +454,9 @@ static int ProxyMain( int argc, char ** argv )
         else if( EQUAL(argv[i],"-sds")  )
             bCopySubDatasets = TRUE;
             
-        else if( EQUAL(argv[i],"-gcp") && i < argc - 4 )
+        else if( EQUAL(argv[i],"-gcp") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
             char* endptr = NULL;
             /* -gcp pixel line easting northing [elev] */
 
@@ -468,8 +481,9 @@ static int ProxyMain( int argc, char ** argv )
             /* should set id and info? */
         }   
 
-        else if( EQUAL(argv[i],"-a_nodata") && i < argc - 1 )
+        else if( EQUAL(argv[i],"-a_nodata") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             if (EQUAL(argv[i+1], "none"))
             {
                 bUnsetNoData = TRUE;
@@ -482,8 +496,9 @@ static int ProxyMain( int argc, char ** argv )
             i += 1;
         }   
 
-        else if( EQUAL(argv[i],"-a_ullr") && i < argc - 4 )
+        else if( EQUAL(argv[i],"-a_ullr") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
             adfULLR[0] = CPLAtofM(argv[i+1]);
             adfULLR[1] = CPLAtofM(argv[i+2]);
             adfULLR[2] = CPLAtofM(argv[i+3]);
@@ -494,8 +509,9 @@ static int ProxyMain( int argc, char ** argv )
             i += 4;
         }   
 
-        else if( EQUAL(argv[i],"-co") && i < argc-1 )
+        else if( EQUAL(argv[i],"-co") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
         }   
 
@@ -527,28 +543,32 @@ static int ProxyMain( int argc, char ** argv )
             bUnscale = TRUE;
         }
 
-        else if( EQUAL(argv[i],"-mo") && i < argc-1 )
+        else if( EQUAL(argv[i],"-mo") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             papszMetadataOptions = CSLAddString( papszMetadataOptions,
                                                  argv[++i] );
         }
 
-        else if( EQUAL(argv[i],"-outsize") && i < argc-2 )
+        else if( EQUAL(argv[i],"-outsize") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(2);
             pszOXSize = argv[++i];
             pszOYSize = argv[++i];
         }   
 
-        else if( EQUAL(argv[i],"-srcwin") && i < argc-4 )
+        else if( EQUAL(argv[i],"-srcwin") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
             anSrcWin[0] = atoi(argv[++i]);
             anSrcWin[1] = atoi(argv[++i]);
             anSrcWin[2] = atoi(argv[++i]);
             anSrcWin[3] = atoi(argv[++i]);
         }   
 
-        else if( EQUAL(argv[i],"-projwin") && i < argc-4 )
+        else if( EQUAL(argv[i],"-projwin") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
             dfULX = CPLAtofM(argv[++i]);
             dfULY = CPLAtofM(argv[++i]);
             dfLRX = CPLAtofM(argv[++i]);
@@ -566,8 +586,9 @@ static int ProxyMain( int argc, char ** argv )
             bErrorOnCompletelyOutside = TRUE;
         }
     
-        else if( EQUAL(argv[i],"-a_srs") && i < argc-1 )
+        else if( EQUAL(argv[i],"-a_srs") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             OGRSpatialReference oOutputSRS;
 
             if( oOutputSRS.SetFromUserInput( argv[i+1] ) != OGRERR_NONE )
@@ -582,8 +603,9 @@ static int ProxyMain( int argc, char ** argv )
             i++;
         }   
 
-        else if( EQUAL(argv[i],"-expand") && i < argc-1 )
+        else if( EQUAL(argv[i],"-expand") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             if (EQUAL(argv[i+1], "gray"))
                 nRGBExpand = 1;
             else if (EQUAL(argv[i+1], "rgb"))
@@ -592,11 +614,8 @@ static int ProxyMain( int argc, char ** argv )
                 nRGBExpand = 4;
             else
             {
-                printf( "Value %s unsupported. Only gray, rgb or rgba are supported.\n\n", 
-                    argv[i] );
-                Usage();
-                GDALDestroyDriverManager();
-                exit( 2 );
+                Usage(CPLSPrintf( "Value %s unsupported. Only gray, rgb or rgba are supported.", 
+                    argv[i] ));
             }
             i++;
         }
@@ -614,11 +633,7 @@ static int ProxyMain( int argc, char ** argv )
 
         else if( argv[i][0] == '-' )
         {
-            printf( "Option %s incomplete, or not recognised.\n\n", 
-                    argv[i] );
-            Usage();
-            GDALDestroyDriverManager();
-            exit( 2 );
+            Usage(CPLSPrintf("Unkown option name '%s'", argv[i]));
         }
         else if( pszSource == NULL )
         {
@@ -633,25 +648,21 @@ static int ProxyMain( int argc, char ** argv )
 
         else
         {
-            printf( "Too many command options.\n\n" );
-            Usage();
-            GDALDestroyDriverManager();
-            exit( 2 );
+            Usage("Too many command options.");
         }
     }
 
     if( pszDest == NULL )
     {
-        Usage();
-        GDALDestroyDriverManager();
-        exit( 10 );
+        if( pszSource == NULL )
+            Usage("No source dataset specified.");
+        else
+            Usage("No target dataset specified.");
     }
 
     if ( strcmp(pszSource, pszDest) == 0)
     {
-        fprintf(stderr, "Source and destination datasets must be different.\n");
-        GDALDestroyDriverManager();
-        exit( 1 );
+        Usage("Source and destination datasets must be different.");
     }
 
     if( strcmp(pszDest, "/vsistdout/") == 0)
