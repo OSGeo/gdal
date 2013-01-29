@@ -111,6 +111,7 @@ void GMLFeature::SetFID( const char *pszFID )
 void GMLFeature::SetPropertyDirectly( int iIndex, char *pszValue )
 
 {
+    CPLAssert(pszValue);
     if( iIndex >= m_nPropertyCount )
     {
         int nClassPropertyCount = m_poClass->GetPropertyCount();
