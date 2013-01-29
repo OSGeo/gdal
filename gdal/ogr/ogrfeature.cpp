@@ -1935,6 +1935,12 @@ void OGRFeature::SetField( int iField, const char * pszValue )
 
     if( poFDefn == NULL )
         return;
+	
+    if( !pszValue )
+    {
+        UnsetField( iField );
+        return;
+    }
     
     if( poFDefn->GetType() == OFTString )
     {

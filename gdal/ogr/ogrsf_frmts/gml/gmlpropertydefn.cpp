@@ -122,7 +122,7 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty )
 /*      If it is a zero length string, just return.  We can't deduce    */
 /*      much from this.                                                 */
 /* -------------------------------------------------------------------- */
-        if( *pszValue == '\0' )
+        if( !pszValue || !*pszValue )
             continue;
 
         CPLValueType valueType = CPLGetValueType(pszValue);
