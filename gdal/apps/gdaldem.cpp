@@ -103,7 +103,7 @@ CPL_CVSID("$Id$");
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage()
+static void Usage(const char* pszErrorMsg = NULL)
 
 {
     printf( " Usage: \n"
@@ -148,6 +148,10 @@ static void Usage()
             " Notes : \n"
             "   Scale is the ratio of vertical units to horizontal\n"
             "    for Feet:Latlong use scale=370400, for Meters:LatLong use scale=111120 \n\n");
+
+    if( pszErrorMsg != NULL )
+        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
+
     exit( 1 );
 }
 
@@ -2194,6 +2198,10 @@ typedef enum
     ROUGHNESS
 } Algorithm;
 
+#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
+    do { if (i + nExtraArg >= argc) \
+        Usage(CPLSPrintf("%s option requires %d argument(s)", argv[i], nExtraArg)); } while(0)
+
 int main( int argc, char ** argv )
 
 {
@@ -2242,8 +2250,7 @@ int main( int argc, char ** argv )
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
     if( argc < 2 )
     {
-        fprintf(stderr, "Not enough arguments\n");
-        Usage();
+        Usage("Not enough arguments.");
     }
 
     if( EQUAL(argv[1], "--utility_version") || EQUAL(argv[1], "--utility-version") )
@@ -2252,6 +2259,8 @@ int main( int argc, char ** argv )
                 argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
         return 0;
     }
+    else if( EQUAL(argv[1],"--help") )
+        Usage();
     else if ( EQUAL(argv[1], "shade") || EQUAL(argv[1], "hillshade") )
     {
         eUtilityMode = HILL_SHADE;
@@ -2282,8 +2291,7 @@ int main( int argc, char ** argv )
     }
     else
     {
-        fprintf(stderr, "Missing valid sub-utility mention\n");
-        Usage();
+        Usage("Missing valid sub-utility mention.");
     }
 
 /* -------------------------------------------------------------------- */
@@ -2291,9 +2299,10 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     for(int i = 2; i < argc; i++ )
     {
-        if( eUtilityMode == HILL_SHADE && i + 1 < argc &&
+        if( eUtilityMode == HILL_SHADE &&
             (EQUAL(argv[i], "--z") || EQUAL(argv[i], "-z")))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             z = atof(argv[++i]);
         }
         else if ( eUtilityMode == SLOPE && EQUAL(argv[i], "-p"))
@@ -2301,15 +2310,15 @@ int main( int argc, char ** argv )
             slopeFormat = 0;
         }
         else if ( (eUtilityMode == HILL_SHADE || eUtilityMode == SLOPE ||
-                   eUtilityMode == ASPECT) && EQUAL(argv[i], "-alg") && i + 1 < argc)
+                   eUtilityMode == ASPECT) && EQUAL(argv[i], "-alg") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             i ++;
             if (EQUAL(argv[i], "ZevenbergenThorne"))
                 bZevenbergenThorne = TRUE;
             else if (!EQUAL(argv[i], "Horn"))
             {
-                fprintf(stderr, "Wrong value for alg : %s\n", argv[i]);
-                Usage();
+                Usage(CPLSPrintf("Wrong value for alg : %s.", argv[i]));
             }
         }
         else if ( eUtilityMode == ASPECT && EQUAL(argv[i], "-trigonometric"))
@@ -2328,31 +2337,34 @@ int main( int argc, char ** argv )
         {
             eColorSelectionMode = COLOR_SELECTION_NEAREST_ENTRY;
         }
-        else if( i + 1 < argc &&
+        else if( 
             (EQUAL(argv[i], "--s") || 
              EQUAL(argv[i], "-s") ||
              EQUAL(argv[i], "--scale") ||
              EQUAL(argv[i], "-scale"))
           )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             scale = atof(argv[++i]);
         }
-        else if( eUtilityMode == HILL_SHADE && i + 1 < argc &&
+        else if( eUtilityMode == HILL_SHADE &&
             (EQUAL(argv[i], "--az") || 
              EQUAL(argv[i], "-az") ||
              EQUAL(argv[i], "--azimuth") ||
              EQUAL(argv[i], "-azimuth"))
           )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             az = atof(argv[++i]);
         }
-        else if( eUtilityMode == HILL_SHADE && i + 1 < argc &&
+        else if( eUtilityMode == HILL_SHADE &&
             (EQUAL(argv[i], "--alt") || 
              EQUAL(argv[i], "-alt") ||
              EQUAL(argv[i], "--alt") ||
              EQUAL(argv[i], "-alt"))
           )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             alt = atof(argv[++i]);
         }
         else if( eUtilityMode == HILL_SHADE &&
@@ -2384,20 +2396,20 @@ int main( int argc, char ** argv )
             pfnProgress = GDALDummyProgress;
             bQuiet = TRUE;
         }
-        else if( EQUAL(argv[i],"-co") && i < argc-1 )
+        else if( EQUAL(argv[i],"-co") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             papszCreateOptions = CSLAddString( papszCreateOptions, argv[++i] );
         }
-        else if( EQUAL(argv[i],"-of") && i < argc-1 )
+        else if( EQUAL(argv[i],"-of") )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszFormat = argv[++i];
             bFormatExplicitelySet = TRUE;
         }
         else if( argv[i][0] == '-' )
         {
-            fprintf( stderr, "Option %s incomplete, or not recognised.\n\n", 
-                    argv[i] );
-            Usage();
+            Usage(CPLSPrintf("Unkown option name '%s'", argv[i]));
         }
         else if( pszSrcFilename == NULL )
         {
@@ -2412,23 +2424,20 @@ int main( int argc, char ** argv )
             pszDstFilename = argv[i];
         }
         else
-            Usage();
+            Usage("Too many command options.");
     }
 
     if( pszSrcFilename == NULL )
     {
-        fprintf( stderr, "Missing source.\n\n" );
-        Usage();
+        Usage("Missing source.");
     }
     if ( eUtilityMode == COLOR_RELIEF && pszColorFilename == NULL )
     {
-        fprintf( stderr, "Missing color file.\n\n" );
-        Usage();
+        Usage("Missing color file.");
     }
     if( pszDstFilename == NULL )
     {
-        fprintf( stderr, "Missing destination.\n\n" );
-        Usage();
+        Usage("Missing destination.");
     }
 
     GDALAllRegister();

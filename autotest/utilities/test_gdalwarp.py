@@ -864,7 +864,7 @@ def test_gdalwarp_32():
 
     (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalwarp_path() + ' -tap ../gcore/data/byte.tif tmp/testgdalwarp32.tif',
                                                   check_memleak = False)
-    if out.find('-tap option cannot be used without using -tr') == -1:
+    if err.find('-tap option cannot be used without using -tr') == -1:
         gdaltest.post_reason('expected error')
         return 'fail'
 

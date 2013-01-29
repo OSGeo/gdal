@@ -36,7 +36,7 @@ CPL_CVSID("$Id$");
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage()
+static void Usage(const char* pszErrorMsg = NULL)
 
 {
     printf( "Usage: gdaladdo [-r {nearest,average,gauss,cubic,average_mp,average_magphase,mode}]\n"
@@ -63,12 +63,20 @@ static void Usage()
             " %% gdaladdo --config COMPRESS_OVERVIEW JPEG\n"
             "             --config PHOTOMETRIC_OVERVIEW YCBCR\n"
             "             --config INTERLEAVE_OVERVIEW PIXEL -ro abc.tif 2 4 8 16\n");
+
+    if( pszErrorMsg != NULL )
+        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
+
     exit( 1 );
 }
 
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
+
+#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
+    do { if (iArg + nExtraArg >= nArgc) \
+        Usage(CPLSPrintf("%s option requires %d argument(s)", papszArgv[iArg], nExtraArg)); } while(0)
 
 int main( int nArgc, char ** papszArgv )
 
@@ -109,24 +117,34 @@ int main( int nArgc, char ** papszArgv )
                    papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
-        else if( EQUAL(papszArgv[iArg],"-r") && iArg < nArgc-1 )
+        else if( EQUAL(papszArgv[iArg],"--help") )
+            Usage();
+        else if( EQUAL(papszArgv[iArg],"-r") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszResampling = papszArgv[++iArg];
+        }
         else if( EQUAL(papszArgv[iArg],"-ro"))
             bReadOnly = TRUE;
         else if( EQUAL(papszArgv[iArg],"-clean"))
             bClean = TRUE;
         else if( EQUAL(papszArgv[iArg],"-q") || EQUAL(papszArgv[iArg],"-quiet") ) 
             pfnProgress = GDALDummyProgress; 
+        else if( papszArgv[iArg][0] == '-' )
+            Usage(CPLSPrintf("Unkown option name '%s'", papszArgv[iArg]));
         else if( pszFilename == NULL )
             pszFilename = papszArgv[iArg];
         else if( atoi(papszArgv[iArg]) > 0 )
             anLevels[nLevelCount++] = atoi(papszArgv[iArg]);
         else
-            Usage();
+            Usage("Too many command options.");
     }
 
-    if( pszFilename == NULL || (nLevelCount == 0 && !bClean) )
-        Usage();
+    if( pszFilename == NULL )
+        Usage("No datasource specified.");
+
+    if( nLevelCount == 0 && !bClean )
+        Usage("No overview level specified.");
 
 /* -------------------------------------------------------------------- */
 /*      Open data file.                                                 */

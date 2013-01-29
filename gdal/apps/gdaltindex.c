@@ -40,7 +40,7 @@ CPL_CVSID("$Id$");
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage()
+static void Usage(const char* pszErrorMsg)
 
 {
     fprintf(stdout, "%s", 
@@ -64,12 +64,20 @@ static void Usage()
             "    Note that using this option generates files that are NOT compatible with MapServer.\n"
             "  o Simple rectangular polygons are generated in the same coordinate reference system\n"
             "    as the rasters, or in target reference system if the -t_srs option is used.\n");
+
+    if( pszErrorMsg != NULL )
+        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
+
     exit(1);
 }
 
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
+
+#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
+    do { if (i_arg + nExtraArg >= argc) \
+        Usage(CPLSPrintf("%s option requires %d argument(s)", argv[i_arg], nExtraArg)); } while(0)
 
 int main(int argc, char *argv[])
 {
@@ -121,12 +129,16 @@ int main(int argc, char *argv[])
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
+        else if( EQUAL(argv[i_arg],"--help") )
+            Usage(NULL);
         else if( strcmp(argv[i_arg],"-tileindex") == 0 )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             tile_index = argv[++i_arg];
         }
         else if( strcmp(argv[i_arg],"-t_srs") == 0 )
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszTargetSRS = argv[++i_arg];
             bSetTargetSRS = TRUE;
         }
@@ -139,7 +151,7 @@ int main(int argc, char *argv[])
             skip_different_projection = TRUE;
         }
         else if( argv[i_arg][0] == '-' )
-            Usage();
+            Usage(CPLSPrintf("Unkown option name '%s'", argv[i_arg]));
         else if( index_filename == NULL )
         {
             index_filename = argv[i_arg];
@@ -148,8 +160,10 @@ int main(int argc, char *argv[])
         }
     }
  
-    if( index_filename == NULL || i_arg == argc )
-        Usage();
+    if( index_filename == NULL )
+        Usage("No index filename specified.");
+    if( i_arg == argc )
+        Usage("No file to index specified.");
 
 /* -------------------------------------------------------------------- */
 /*      Create and validate target SRS if given.                        */
