@@ -47,6 +47,7 @@ static void Usage(const char* pszErrorMsg = NULL)
             "        external overview (for GeoTIFF datasets especially)\n"
             "  -clean : remove all overviews\n"
             "  -q : turn off progress display\n" 
+            "  -b : band to create overview (if not set overviews will be created for all bands)\n"
             "  filename: The file to build overviews for (or whose overviews must be removed).\n"
             "  levels: A list of integral overview levels to build. Ignored with -clean option.\n"
             "\n"
@@ -90,6 +91,8 @@ int main( int nArgc, char ** papszArgv )
     int              bReadOnly = FALSE;
     int              bClean = FALSE;
     GDALProgressFunc pfnProgress = GDALTermProgress; 
+    int			*panBandList = NULL;
+    int         nBandCount = 0;
 
     /* Check that we are running against at least GDAL 1.7 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -130,6 +133,24 @@ int main( int nArgc, char ** papszArgv )
             bClean = TRUE;
         else if( EQUAL(papszArgv[iArg],"-q") || EQUAL(papszArgv[iArg],"-quiet") ) 
             pfnProgress = GDALDummyProgress; 
+        else if( EQUAL(papszArgv[iArg],"-b"))
+        {
+            const char* pszBand = papszArgv[iArg+1];
+            int nBand = atoi(pszBand);
+            if( nBand < 1 )
+            {
+                printf( "Unrecognizable band number (%s).\n", papszArgv[iArg+1] );
+                Usage();
+                GDALDestroyDriverManager();
+                exit( 2 );
+            }
+            iArg++;
+
+            nBandCount++;
+            panBandList = (int *) 
+                CPLRealloc(panBandList, sizeof(int) * nBandCount);
+            panBandList[nBandCount-1] = nBand;
+        }
         else if( papszArgv[iArg][0] == '-' )
             Usage(CPLSPrintf("Unkown option name '%s'", papszArgv[iArg]));
         else if( pszFilename == NULL )
@@ -178,9 +199,14 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Generate overviews.                                             */
 /* -------------------------------------------------------------------- */
+
+    //Only HFA support selected layers
+    if(nBandCount > 0)
+        CPLSetConfigOption( "USE_RRD", "YES" );
+
     if (nLevelCount > 0 && nResultStatus == 0 &&
         GDALBuildOverviews( hDataset,pszResampling, nLevelCount, anLevels,
-                             0, NULL, pfnProgress, NULL ) != CE_None )
+                             nBandCount, panBandList, pfnProgress, NULL ) != CE_None )
     {
         printf( "Overview building failed.\n" );
         nResultStatus = 100;

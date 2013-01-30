@@ -98,7 +98,7 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
             poHFADriver->Create( pszOvrFilename, 
                                  poParentDS->GetRasterXSize(), 
                                  poParentDS->GetRasterYSize(), 
-                                 nBands, eDT, (char **)apszOptions );
+                                 poParentDS->GetRasterCount(), eDT, (char **)apszOptions );
 
         if( *ppoODS == NULL )
             return CE_Failure;
