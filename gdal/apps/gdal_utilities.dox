@@ -430,7 +430,7 @@ most supported file formats with one of several downsampling algorithms.
 <dt> <b>-r</b>
 <i>{nearest (default),average,gauss,cubic,average_mp,average_magphase,mode}</i>:</dt><dd>
 Select a resampling algorithm.</dd>
-<dt> <b>-b</b> <i>band</i>:</dt><dd> (available from GDAL 1.???) Select an input band <i>band</i> for
+<dt> <b>-b</b> <i>band</i>:</dt><dd> (available from GDAL 1.10) Select an input band <i>band</i> for
 overview generation. Band numbering starts from 1. Multiple <b>-b</b> switches may be used
 to select a set of input bands to generate overviews.</dd>
 <dt> <b>-ro</b></dt>:<dd> (available from GDAL 1.6.0) open the dataset in read-only mode, in order to generate
