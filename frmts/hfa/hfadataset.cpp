@@ -3704,6 +3704,15 @@ CPLErr HFADataset::IBuildOverviews( const char *pszResampling,
                 pfnProgress, pProgressData);
 
         poBand = GetRasterBand( panBandList[i] );
+        
+        //GetRasterBand can return NULL
+        if(poBand == NULL)
+        {
+            CPLError(CE_Failure, CPLE_ObjectNull,
+                        "GetRasterBand failed");        
+            return CE_Failure; 
+        }
+        
         eErr = 
             poBand->BuildOverviews( pszResampling, nOverviews, panOverviewList,
                                     GDALScaledProgress, pScaledProgressData );
