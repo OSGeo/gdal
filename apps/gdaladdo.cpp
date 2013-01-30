@@ -91,8 +91,8 @@ int main( int nArgc, char ** papszArgv )
     int              bReadOnly = FALSE;
     int              bClean = FALSE;
     GDALProgressFunc pfnProgress = GDALTermProgress; 
-    int			*panBandList = NULL;
-    int         nBandCount = 0;
+    int             *panBandList = NULL;
+    int              nBandCount = 0;
 
     /* Check that we are running against at least GDAL 1.7 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -135,6 +135,7 @@ int main( int nArgc, char ** papszArgv )
             pfnProgress = GDALDummyProgress; 
         else if( EQUAL(papszArgv[iArg],"-b"))
         {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             const char* pszBand = papszArgv[iArg+1];
             int nBand = atoi(pszBand);
             if( nBand < 1 )
@@ -218,6 +219,7 @@ int main( int nArgc, char ** papszArgv )
     GDALClose(hDataset);
 
     CSLDestroy( papszArgv );
+    CPLFree(panBandList);
     GDALDestroyDriverManager();
 
     return nResultStatus;
