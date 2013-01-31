@@ -74,13 +74,16 @@ class TILRasterBand : public GDALPamRasterBand
 {
     friend class TILDataset;
 
-    VRTRasterBand *poVRTBand;
+    VRTSourcedRasterBand *poVRTBand;
 
   public:
-                   TILRasterBand( TILDataset *, int, VRTRasterBand * );
+                   TILRasterBand( TILDataset *, int, VRTSourcedRasterBand * );
     virtual       ~TILRasterBand() {};
 
     virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              int, int );
 };
 
 /************************************************************************/
@@ -88,7 +91,7 @@ class TILRasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 TILRasterBand::TILRasterBand( TILDataset *poTILDS, int nBand, 
-                              VRTRasterBand *poVRTBand )
+                              VRTSourcedRasterBand *poVRTBand )
 
 {
     this->poDS = poTILDS;
@@ -107,6 +110,31 @@ CPLErr TILRasterBand::IReadBlock( int iBlockX, int iBlockY, void *pBuffer )
 
 {
     return poVRTBand->ReadBlock( iBlockX, iBlockY, pBuffer );
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr TILRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+                                 int nXOff, int nYOff, int nXSize, int nYSize,
+                                 void * pData, int nBufXSize, int nBufYSize,
+                                 GDALDataType eBufType,
+                                 int nPixelSpace, int nLineSpace )
+
+{
+    if(GetOverviewCount() > 0)
+    {
+        return GDALPamRasterBand::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                 pData, nBufXSize, nBufYSize, eBufType,
+                                 nPixelSpace, nLineSpace );
+    }
+    else //if not exist TIL overviews, try to use band source overviews
+    {
+        return poVRTBand->IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                 pData, nBufXSize, nBufYSize, eBufType,
+                                 nPixelSpace, nLineSpace );
+    }
 }
 
 /************************************************************************/
@@ -305,6 +333,20 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
     GDALDataType eDT = poTemplateBand->GetRasterDataType();
     int          nBandCount = poTemplateDS->GetRasterCount();
 
+    //we suppose the first tile have the same projection as others (usually so)
+    CPLString pszProjection(poTemplateDS->GetProjectionRef());
+    if(!pszProjection.empty())
+        poDS->SetProjection(pszProjection);
+
+    //we suppose the first tile have the same GeoTransform as others (usually so)
+    double      adfGeoTransform[6];
+    if( poTemplateDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+    {
+        adfGeoTransform[0] = CPLAtof(CSLFetchNameValueDef(papszIMD,"MAP_PROJECTED_PRODUCT.ULX","0"));
+        adfGeoTransform[3] = CPLAtof(CSLFetchNameValueDef(papszIMD,"MAP_PROJECTED_PRODUCT.ULY","0"));
+        poDS->SetGeoTransform(adfGeoTransform);
+    }
+
     poTemplateBand = NULL;
     GDALClose( poTemplateDS );
 
@@ -328,7 +370,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
     for( iBand = 1; iBand <= nBandCount; iBand++ )
         poDS->SetBand( iBand, 
                        new TILRasterBand( poDS, iBand, 
-                (VRTRasterBand *) poDS->poVRTDS->GetRasterBand(iBand)));
+                (VRTSourcedRasterBand *) poDS->poVRTDS->GetRasterBand(iBand)));
 
 /* -------------------------------------------------------------------- */
 /*      Add tiles as sources for each band.                             */
