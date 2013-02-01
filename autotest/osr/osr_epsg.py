@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -128,6 +129,21 @@ def osr_epsg_5():
     return 'success'
 
 ###############################################################################
+#   Test datum shift for OSGB 36
+
+def osr_epsg_6():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG( 4277 )
+
+    if srs.ExportToWkt().find('TOWGS84[446.448,-125.157,542.06,0.15,0.247,0.842,-20.489]') == -1:
+        gdaltest.post_reason('did not get expected TOWGS84')
+        print(srs.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [ 
     osr_epsg_1,
@@ -135,6 +151,7 @@ gdaltest_list = [
     osr_epsg_3,
     osr_epsg_4,
     osr_epsg_5,
+    osr_epsg_6,
     None ]
 
 if __name__ == '__main__':
