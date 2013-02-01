@@ -57,9 +57,16 @@
 #include <NCSFile.h>
 #include <NCSJP2FileView.h>
 
+#ifdef HAVE_ECW_BUILDNUMBER_H
+#  include <ECWJP2BuildNumber.h>
+#  if !defined(ECW_VERSION)
+#    define ECWSDK_VERSION (NCS_ECWJP2_VER_MAJOR*10+NCS_ECWJP2_VER_MINOR)
+#  endif
+#else
 /* By default, assume 3.3 SDK Version. */
-#if !defined(ECWSDK_VERSION)
-#  define ECWSDK_VERSION 33
+#  if !defined(ECWSDK_VERSION)
+#    define ECWSDK_VERSION 33
+#  endif
 #endif
 
 #if ECWSDK_VERSION < 40
@@ -69,7 +76,6 @@
 #endif
 
 #else
-#  include <ECWJP2BuildNumber.h>
     #if ECWSDK_VERSION>=50
         #include <NCSECWHeaderEditor.h>
         #include "NCSEcw/JP2/File.h"
@@ -78,7 +84,6 @@
     #endif
 #  define NCS_FASTCALL
 #endif
-
 
 #if ECWSDK_VERSION >= 40
 #define SDK_CAN_DO_SUPERSAMPLING 1
