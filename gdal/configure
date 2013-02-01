@@ -716,6 +716,9 @@ MRSID_LIBS
 MRSID_FLAGS
 MRSID_INCLUDE
 KAKDIR
+ECW_INCLUDE
+ECW_FLAGS
+ECW_LIBS
 ECW_SETTING
 FGDB_INC
 FGDB_LIB
@@ -21981,6 +21984,9 @@ FGDB_LIB=$FGDB_LIB
 FGDB_INC=$FGDB_INC
 
 
+ECW_FLAGS=
+ECW_LIBS=
+ECW_INCLUDE=
 
 
 # Check whether --with-ecw was given.
@@ -22047,7 +22053,7 @@ fi
 
 
   if test "$ECW_SETTING" = "yes" ; then
-    LIBS="-lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil $LIBS"
+    ECW_LIBS="-lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil"
   fi
 
   if test "$ECW_SETTING" = "no" ; then
@@ -22094,7 +22100,7 @@ else
 fi
 
     if test "$ECW_SETTING" = "yes" ; then
-      LIBS="-lecwj2 $CARBON_FRAMEWORK $LIBS"
+      ECW_LIBS="-lecwj2 $CARBON_FRAMEWORK"
     fi
   fi
 
@@ -22104,21 +22110,33 @@ else
 $as_echo_n "checking for libNCSEcw.so or libecwj2... " >&6; }
   ECW_SETTING=yes
   if test -r $with_ecw/lib/libNCSCnet.so -o -r $with_ecw/lib/libNCSCnet.dylib ; then
-    LIBS="-L$with_ecw/lib -lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil $LIBS"
+    ECW_LIBS="-L$with_ecw/lib -lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil"
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: found in $with_ecw/lib." >&5
 $as_echo "found in $with_ecw/lib." >&6; }
   elif test -r $with_ecw/lib/libNCSCNet.so -o -r $with_ecw/lib/libNCSCNet.dylib ; then
-    LIBS="-L$with_ecw/lib -lNCSEcw -lNCSEcwC -lNCSCNet -lNCSUtil $LIBS"
+    ECW_LIBS="-L$with_ecw/lib -lNCSEcw -lNCSEcwC -lNCSCNet -lNCSUtil"
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: found in $with_ecw/lib." >&5
 $as_echo "found in $with_ecw/lib." >&6; }
   elif test -r $with_ecw/bin/libNCSEcw.so -o -r $with_ecw/bin/libNCSEcw.dylib ; then
-    LIBS="-L$with_ecw/bin -lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil $LIBS"
+    ECW_LIBS="-L$with_ecw/bin -lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil"
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: found in $with_ecw/bin." >&5
 $as_echo "found in $with_ecw/bin." >&6; }
   elif test -r $with_ecw/lib/libecwj2.dylib ; then
-    LIBS="-L$with_ecw/lib -lecwj2 $CARBON_FRAMEWORK $LIBS"
+    ECW_LIBS="-L$with_ecw/lib -lecwj2 $CARBON_FRAMEWORK"
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: found libecwj2 in $with_ecw/lib." >&5
 $as_echo "found libecwj2 in $with_ecw/lib." >&6; }
+
+  # ECW SDK 5.0 style
+  elif test -r $with_ecw/lib/x64/release/libtbb.so ; then
+    if test `arch` == "x86_64" ; then
+      ECW_LIBDIR=$with_ecw/lib/x64/release
+    else
+      ECW_LIBDIR=$with_ecw/lib/x86/release
+    fi
+    ECW_FLAGS="-DLINUX -DX86 -DPOSIX -DUNICODE -D_UNICODE -DECW_COMPRESS_RW_SDK_VERSION"
+    ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw -ltbb"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: found Intergraph 5.x+ SDK in ${ECW_LIBDIR}." >&5
+$as_echo "found Intergraph 5.x+ SDK in ${ECW_LIBDIR}." >&6; }
   else
     as_fn_error $? "not found in $with_ecw/lib or $with_ecw/bin." "$LINENO" 5
   fi
@@ -22128,13 +22146,29 @@ $as_echo_n "checking for NCSECWClient.h in $with_ecw/include... " >&6; }
   if test -r $with_ecw/include/NCSECWClient.h ; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: found." >&5
 $as_echo "found." >&6; }
-    EXTRA_INCLUDES="-I$with_ecw/include $EXTRA_INCLUDES"
+    ECW_INCLUDE="-I$with_ecw/include"
   else
     as_fn_error $? "not found." "$LINENO" 5
+  fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ECWJP2BuildNumber.h in $with_ecw/include" >&5
+$as_echo_n "checking for ECWJP2BuildNumber.h in $with_ecw/include... " >&6; }
+  if test -r $with_ecw/include/ECWJP2BuildNumber.h ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: found." >&5
+$as_echo "found." >&6; }
+    ECW_FLAGS="-DHAVE_ECW_BUILDNUMBER_H $ECW_FLAGS"
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found." >&5
+$as_echo "not found." >&6; }
   fi
 fi
 
 ECW_SETTING=$ECW_SETTING
+
+ECW_LIBS=$ECW_LIBS
+
+ECW_FLAGS=$ECW_FLAGS
+
+ECW_INCLUDE=$ECW_INCLUDE
 
 
 if test "$ECW_SETTING" != "no" ; then

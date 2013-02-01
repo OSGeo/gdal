@@ -33,7 +33,7 @@ INSTALL_DIR	= 	$(GDAL_ROOT)/install-sh -d
 # SDE_LIB needs to be first because it embeds zlib.  We need to use its symbols instead of -lz's
 
 LIBS	=	$(SDE_LIB) @LIBS@ $(KAK_LIBS) $(DWG_LIBS) $(CURL_LIB) \
-		$(MRSID_LIBS) $(MRSID_LIDAR_LIBS) $(INGRES_LIB) \
+		$(MRSID_LIBS) $(MRSID_LIDAR_LIBS) $(ECW_LIBS) $(INGRES_LIB) \
 		$(PCIDSK_LIB) $(RASDAMAN_LIB) $(CHARLS_LIB) \
 		$(OPENCL_LIB) $(JVM_LIB) $(LIBICONV) $(FGDB_LIB) $(LIBXML2_LIB)
 
@@ -201,6 +201,13 @@ MRSID_LIBS	= @MRSID_LIBS@
 #
 MRSID_LIDAR_INCLUDE	= @MRSID_LIDAR_INCLUDE@
 MRSID_LIDAR_LIBS	= @MRSID_LIDAR_LIBS@
+
+# 
+# ECW Related
+# 
+ECW_FLAGS	= @ECW_FLAGS@
+ECW_INCLUDE 	= @ECW_INCLUDE@
+ECW_LIBS	= @ECW_LIBS@
 
 # Xerces C++ XML Parser for GML and ILI
 #
