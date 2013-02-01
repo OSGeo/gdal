@@ -1797,6 +1797,9 @@ AC_SUBST(FGDB_INC, $FGDB_INC)
 dnl ---------------------------------------------------------------------------
 dnl Select a ECW Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
+ECW_FLAGS=
+ECW_LIBS=
+ECW_INCLUDE=
 
 AC_ARG_WITH(ecw,[  --with-ecw[=ARG]        Include ECW support (ARG=ECW SDK Path, yes or no)],,)
 
@@ -1817,13 +1820,13 @@ elif test "$with_ecw" = "yes" -o "$with_ecw" = "" ; then
   AC_CHECK_LIB(NCSEcw,NCScbmOpenFileView,ECW_SETTING=yes,ECW_SETTING=no,-lNCSCnet -lNCSUtil)
 
   if test "$ECW_SETTING" = "yes" ; then   
-    LIBS="-lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil $LIBS"
+    ECW_LIBS="-lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil"
   fi
 
   if test "$ECW_SETTING" = "no" ; then
     AC_CHECK_LIB(ecwj2,NCScbmOpenFileView,ECW_SETTING=yes,ECW_SETTING=no,$CARBON_FRAMEWORK)
     if test "$ECW_SETTING" = "yes" ; then   
-      LIBS="-lecwj2 $CARBON_FRAMEWORK $LIBS"
+      ECW_LIBS="-lecwj2 $CARBON_FRAMEWORK"
     fi
   fi
 
@@ -1832,17 +1835,28 @@ else
   AC_MSG_CHECKING([for libNCSEcw.so or libecwj2])
   ECW_SETTING=yes
   if test -r $with_ecw/lib/libNCSCnet.so -o -r $with_ecw/lib/libNCSCnet.dylib ; then
-    LIBS="-L$with_ecw/lib -lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil $LIBS"
+    ECW_LIBS="-L$with_ecw/lib -lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil"
     AC_MSG_RESULT([found in $with_ecw/lib.])
   elif test -r $with_ecw/lib/libNCSCNet.so -o -r $with_ecw/lib/libNCSCNet.dylib ; then
-    LIBS="-L$with_ecw/lib -lNCSEcw -lNCSEcwC -lNCSCNet -lNCSUtil $LIBS"
+    ECW_LIBS="-L$with_ecw/lib -lNCSEcw -lNCSEcwC -lNCSCNet -lNCSUtil"
     AC_MSG_RESULT([found in $with_ecw/lib.])
   elif test -r $with_ecw/bin/libNCSEcw.so -o -r $with_ecw/bin/libNCSEcw.dylib ; then
-    LIBS="-L$with_ecw/bin -lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil $LIBS"
+    ECW_LIBS="-L$with_ecw/bin -lNCSEcw -lNCSEcwC -lNCSCnet -lNCSUtil"
     AC_MSG_RESULT([found in $with_ecw/bin.])
   elif test -r $with_ecw/lib/libecwj2.dylib ; then
-    LIBS="-L$with_ecw/lib -lecwj2 $CARBON_FRAMEWORK $LIBS"
+    ECW_LIBS="-L$with_ecw/lib -lecwj2 $CARBON_FRAMEWORK"
     AC_MSG_RESULT([found libecwj2 in $with_ecw/lib.])
+
+  # ECW SDK 5.0 style
+  elif test -r $with_ecw/lib/x64/release/libtbb.so ; then
+    if test `arch` == "x86_64" ; then
+      ECW_LIBDIR=$with_ecw/lib/x64/release
+    else
+      ECW_LIBDIR=$with_ecw/lib/x86/release
+    fi
+    ECW_FLAGS="-DLINUX -DX86 -DPOSIX -DUNICODE -D_UNICODE -DECW_COMPRESS_RW_SDK_VERSION"
+    ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw -ltbb"
+    AC_MSG_RESULT([found Intergraph 5.x+ SDK in ${ECW_LIBDIR}.])
   else
     AC_MSG_ERROR([not found in $with_ecw/lib or $with_ecw/bin.])
   fi
@@ -1850,13 +1864,23 @@ else
   AC_MSG_CHECKING([for NCSECWClient.h in $with_ecw/include])
   if test -r $with_ecw/include/NCSECWClient.h ; then  
     AC_MSG_RESULT([found.])
-    EXTRA_INCLUDES="-I$with_ecw/include $EXTRA_INCLUDES"
+    ECW_INCLUDE="-I$with_ecw/include"
   else
     AC_MSG_ERROR([not found.])
+  fi
+  AC_MSG_CHECKING([for ECWJP2BuildNumber.h in $with_ecw/include])
+  if test -r $with_ecw/include/ECWJP2BuildNumber.h ; then  
+    AC_MSG_RESULT([found.])
+    ECW_FLAGS="-DHAVE_ECW_BUILDNUMBER_H $ECW_FLAGS"
+  else
+    AC_MSG_RESULT([not found.])
   fi
 fi
 
 AC_SUBST(ECW_SETTING,$ECW_SETTING)
+AC_SUBST(ECW_LIBS,$ECW_LIBS)
+AC_SUBST(ECW_FLAGS,$ECW_FLAGS)
+AC_SUBST(ECW_INCLUDE,$ECW_INCLUDE)
 
 if test "$ECW_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="ecw $OPT_GDAL_FORMATS"
