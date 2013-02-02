@@ -362,6 +362,21 @@ public:
 
 class ECWRasterBand;
 
+typedef struct
+{
+    int bEnabled;
+    int nBandsTried;
+
+    int nXOff;
+    int nYOff;
+    int nXSize;
+    int nYSize;
+    int nBufXSize;
+    int nBufYSize;
+    GDALDataType eBufType;
+    GByte* pabyData;
+} ECWCachedMultiBandIO;
+
 class CPL_DLL ECWDataset : public GDALPamDataset
 {
     friend class ECWRasterBand;
@@ -393,6 +408,8 @@ class CPL_DLL ECWDataset : public GDALPamDataset
     GDAL_GCP    *pasGCPList;
 
     char        **papszGMLMetadata;
+
+    ECWCachedMultiBandIO sCachedMultiBandIO;
 
     void        ECW2WKTProjection();
 

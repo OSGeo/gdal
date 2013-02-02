@@ -1102,6 +1102,61 @@ def ecw_32():
     return 'success'
 
 ###############################################################################
+# Test heuristics that detect successive band reading pattern
+
+def ecw_33():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/jrc.ecw' )
+    multiband_data = ds.ReadRaster(100,100,50,50)
+    ds = None
+
+    ds = gdal.Open( 'data/jrc.ecw' )
+
+    # To feed the heuristics
+    ds.GetRasterBand(1).ReadRaster(10,10,50,50)
+    ds.GetRasterBand(2).ReadRaster(10,10,50,50)
+    ds.GetRasterBand(3).ReadRaster(10,10,50,50)
+
+    # Now the heuristics should be set to ON
+    data1_1 = ds.GetRasterBand(1).ReadRaster(100,100,50,50)
+    data2_1 = ds.GetRasterBand(2).ReadRaster(100,100,50,50)
+    data3_1 = ds.GetRasterBand(3).ReadRaster(100,100,50,50)
+
+    # Break heuristics
+    ds.GetRasterBand(2).ReadRaster(100,100,50,50)
+    ds.GetRasterBand(1).ReadRaster(100,100,50,50)
+
+    # To feed the heuristics again
+    ds.GetRasterBand(1).ReadRaster(10,10,50,50)
+    ds.GetRasterBand(2).ReadRaster(10,10,50,50)
+    ds.GetRasterBand(3).ReadRaster(10,10,50,50)
+
+    # Now the heuristics should be set to ON
+    data1_2 = ds.GetRasterBand(1).ReadRaster(100,100,50,50)
+    data2_2 = ds.GetRasterBand(2).ReadRaster(100,100,50,50)
+    data3_2 = ds.GetRasterBand(3).ReadRaster(100,100,50,50)
+
+    ds = None
+
+    if data1_1 != data1_2 or data2_1 != data2_2 or data3_1 != data3_2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # When heuristics is ON, returned values should be the same as
+    # 3-band at a time reading
+    import struct
+    tab1 = struct.unpack('B' * 3 * 50 * 50, multiband_data)
+    tab2 = struct.unpack('B' * 3 * 50 * 50, data1_1 + data2_1 + data3_2)
+    if tab1 != tab2 :
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -1364,6 +1419,7 @@ gdaltest_list = [
     ecw_30,
     ecw_31,
     ecw_32,
+    ecw_33,
     ecw_online_1,
     ecw_online_2,
     ecw_online_3,

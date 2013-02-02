@@ -404,6 +404,9 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                  GDALDataType eBufType,
                                  int nPixelSpace, int nLineSpace )
 {
+    if( eRWFlag == GF_Write )
+        return CE_Failure;
+
     /* -------------------------------------------------------------------- */
     /*      Default line and pixel spacing if needed.                       */
     /* -------------------------------------------------------------------- */
@@ -507,6 +510,17 @@ ECWDataset::ECWDataset(int bIsJPEG2000)
     
     bUseOldBandRasterIOImplementation = FALSE;
     
+    sCachedMultiBandIO.bEnabled = FALSE;
+    sCachedMultiBandIO.nBandsTried = 0;
+    sCachedMultiBandIO.nXOff = 0;
+    sCachedMultiBandIO.nYOff = 0;
+    sCachedMultiBandIO.nXSize = 0;
+    sCachedMultiBandIO.nYSize = 0;
+    sCachedMultiBandIO.nBufXSize = 0;
+    sCachedMultiBandIO.nBufYSize = 0;
+    sCachedMultiBandIO.eBufType = GDT_Unknown;
+    sCachedMultiBandIO.pabyData = NULL;
+    
     poDriver = (GDALDriver*) GDALGetDriverByName( bIsJPEG2000 ? "JP2ECW" : "ECW" );
 }
 
@@ -559,6 +573,8 @@ ECWDataset::~ECWDataset()
         GDALDeinitGCPs( nGCPCount, pasGCPList );
         CPLFree( pasGCPList );
     }
+
+    CPLFree(sCachedMultiBandIO.pabyData);
 }
 
 /************************************************************************/
@@ -1052,6 +1068,9 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
                               int nPixelSpace, int nLineSpace, int nBandSpace)
     
 {
+    if( eRWFlag == GF_Write )
+        return CE_Failure;
+
     if( nBandCount > 100 )
         return CE_Failure;
 
@@ -1087,6 +1106,47 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         }
     }
 #endif
+
+/* -------------------------------------------------------------------- */
+/*      Check if we can directly return the data in case we have cached */
+/*      it from a previous call in a multi-band reading pattern.        */
+/* -------------------------------------------------------------------- */
+    if( nBandCount == 1 && *panBandMap > 1 && *panBandMap <= nBands &&
+        sCachedMultiBandIO.nXOff == nXOff &&
+        sCachedMultiBandIO.nYOff == nYOff &&
+        sCachedMultiBandIO.nXSize == nXSize &&
+        sCachedMultiBandIO.nYSize == nYSize &&
+        sCachedMultiBandIO.nBufXSize == nBufXSize &&
+        sCachedMultiBandIO.nBufYSize == nBufYSize &&
+        sCachedMultiBandIO.eBufType == eBufType )
+    {
+        sCachedMultiBandIO.nBandsTried ++;
+
+        if( sCachedMultiBandIO.bEnabled &&
+            sCachedMultiBandIO.pabyData != NULL )
+        {
+            int j;
+            int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+            for(j = 0; j < nBufYSize; j++)
+            {
+                GDALCopyWords(sCachedMultiBandIO.pabyData +
+                                    (*panBandMap - 1) * nBufXSize * nBufYSize * nDataTypeSize +
+                                    j * nBufXSize * nDataTypeSize,
+                            eBufType, nDataTypeSize,
+                            ((GByte*)pData) + j * nLineSpace, eBufType, nDataTypeSize,
+                            nBufXSize);
+            }
+            return CE_None;
+        }
+
+        if( !(sCachedMultiBandIO.bEnabled) &&
+            sCachedMultiBandIO.nBandsTried == nBands &&
+            CSLTestBoolean(CPLGetConfigOption("ECW_CLEVER", "YES")) )
+        {
+            sCachedMultiBandIO.bEnabled = TRUE;
+            CPLDebug("ECW", "Detecting successive band reading pattern (for next time)");
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to do it based on existing "advised" access.                */
@@ -1163,6 +1223,81 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         anBandIndices[i] = panBandMap[i] - 1;
 
     CleanupWindow();
+
+/* -------------------------------------------------------------------- */
+/*      Cache data in the context of a multi-band reading pattern.      */
+/* -------------------------------------------------------------------- */
+    if( nBandCount == 1 && *panBandMap == 1 && (nBands == 3 || nBands == 4) )
+    {
+        if( sCachedMultiBandIO.bEnabled && sCachedMultiBandIO.nBandsTried != nBands )
+        {
+            sCachedMultiBandIO.bEnabled = FALSE;
+            CPLDebug("ECW", "Disabling successive band reading pattern");
+        }
+
+        sCachedMultiBandIO.nXOff = nXOff;
+        sCachedMultiBandIO.nYOff = nYOff;
+        sCachedMultiBandIO.nXSize = nXSize;
+        sCachedMultiBandIO.nYSize = nYSize;
+        sCachedMultiBandIO.nBufXSize = nBufXSize;
+        sCachedMultiBandIO.nBufYSize = nBufYSize;
+        sCachedMultiBandIO.eBufType = eBufType;
+        sCachedMultiBandIO.nBandsTried = 1;
+
+        int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+
+        if( sCachedMultiBandIO.bEnabled )
+        {
+            GByte* pNew = (GByte*)VSIRealloc(
+                sCachedMultiBandIO.pabyData,
+                    nBufXSize * nBufYSize * nBands * nDataTypeSize);
+            if( pNew == NULL )
+                CPLFree(sCachedMultiBandIO.pabyData);
+            sCachedMultiBandIO.pabyData = pNew;
+        }
+
+        if( sCachedMultiBandIO.bEnabled &&
+            sCachedMultiBandIO.pabyData != NULL )
+        {
+            for( i = 0; i < nBands; i++ )
+                anBandIndices[i] = i;
+
+            oErr = poFileView->SetView( nBands, anBandIndices,
+                                        nXOff, nYOff, 
+                                        nXOff + nXSize - 1, 
+                                        nYOff + nYSize - 1,
+                                        nBufXSize, nBufYSize );
+            eNCSErr = oErr.GetErrorNumber();
+
+            if( eNCSErr != NCS_SUCCESS )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                        "%s", NCSGetErrorText(eNCSErr) );
+
+                return CE_Failure;
+            }
+
+            CPLErr eErr = ReadBands(sCachedMultiBandIO.pabyData,
+                                    nBufXSize, nBufYSize, eBufType,
+                                    nBands,
+                                    nDataTypeSize,
+                                    nBufXSize * nDataTypeSize,
+                                    nBufXSize * nBufYSize * nDataTypeSize);
+            if( eErr != CE_None )
+                return eErr;
+
+            int j;
+            for(j = 0; j < nBufYSize; j++)
+            {
+                GDALCopyWords(sCachedMultiBandIO.pabyData +
+                                    j * nBufXSize * nDataTypeSize,
+                              eBufType, nDataTypeSize,
+                              ((GByte*)pData) + j * nLineSpace, eBufType, nDataTypeSize,
+                              nBufXSize);
+            }
+            return CE_None;
+        }
+    }
 
     oErr = poFileView->SetView( nBandCount, anBandIndices,
                                 nXOff, nYOff, 
