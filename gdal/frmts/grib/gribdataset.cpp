@@ -604,7 +604,9 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
         free(errMsg);
 		
 		CPLError( CE_Failure, CPLE_OpenFailed, "Error (%d) opening file %s", errno, poOpenInfo->pszFilename);
+        CPLReleaseMutex(mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         delete poDS;
+        CPLAcquireMutex(mutex, 1000.0);
         return NULL;
 	}
     
@@ -639,7 +641,9 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "%s is a grib file, but no raster dataset was successfully identified.",
                   poOpenInfo->pszFilename );
+        CPLReleaseMutex(mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         delete poDS;
+        CPLAcquireMutex(mutex, 1000.0);
         return NULL;
     }
 
@@ -660,7 +664,9 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLError( CE_Failure, CPLE_OpenFailed, 
                           "%s is a grib file, but no raster dataset was successfully identified.",
                           poOpenInfo->pszFilename );
+                CPLReleaseMutex(mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
                 delete poDS;
+                CPLAcquireMutex(mutex, 1000.0);
                 return NULL;
             }
 
@@ -684,12 +690,15 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
+    
+    CPLReleaseMutex(mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
     poDS->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
 /*      Check for external overviews.                                   */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->papszSiblingFiles );
+    CPLAcquireMutex(mutex, 1000.0);
 
     return( poDS );
 }
