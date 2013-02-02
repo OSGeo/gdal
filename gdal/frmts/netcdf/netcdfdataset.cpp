@@ -4502,7 +4502,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->CreateSubDatasetList();
         poDS->SetMetadata( poDS->papszMetadata );
+        CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         poDS->TryLoadXML();
+        CPLAcquireMutex(hNCMutex, 1000.0);
         return( poDS );
     }
 
@@ -4773,13 +4775,16 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetPhysicalFilename( poDS->osFilename );
         poDS->SetSubdatasetName( osSubdatasetName );
     }
-    
+
+    CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
     poDS->TryLoadXML();
 
     if( bTreatAsSubdataset )
         poDS->oOvManager.Initialize( poDS, ":::VIRTUAL:::" );
     else
         poDS->oOvManager.Initialize( poDS, poDS->osFilename );
+
+    CPLAcquireMutex(hNCMutex, 1000.0);
 
     return( poDS );
 }

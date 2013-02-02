@@ -3578,9 +3578,11 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetPhysicalFilename( poDS->pszFilename );
     poDS->SetSubdatasetName( osSubdatasetName );
 
+    CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
     poDS->TryLoadXML();
 
     poDS->oOvManager.Initialize( poDS, ":::VIRTUAL:::" );
+    CPLAcquireMutex(hHDF4Mutex, 1000.0);
 
     return( poDS );
 }
