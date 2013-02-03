@@ -8473,9 +8473,13 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     osFileName += pszFilename;
 
-    poDS = (GTiffDataset *) GDALOpen( osFileName, GA_Update );
+    GDALOpenInfo oOpenInfo( osFileName, GA_Update );
+    poDS = (GTiffDataset *) Open(&oOpenInfo);
     if( poDS == NULL )
-        poDS = (GTiffDataset *) GDALOpen( osFileName, GA_ReadOnly );
+    {
+        oOpenInfo.eAccess = GA_ReadOnly;
+        poDS = (GTiffDataset *) Open(&oOpenInfo);
+    }
 
     if ( poDS == NULL )
     {
