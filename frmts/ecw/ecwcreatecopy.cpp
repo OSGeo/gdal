@@ -1000,7 +1000,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if (bIsJPEG2000)
         poDS = (GDALPamDataset*) ECWDatasetOpenJPEG2000(&oOpenInfo);
     else
-        poDS = (GDALPamDataset*) GDALOpen(pszFilename, GA_ReadOnly);
+        poDS = (GDALPamDataset*) ECWDataset::OpenECW(&oOpenInfo);
 
     if( poDS )
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
