@@ -127,14 +127,6 @@ void CPL_DLL *CPLGetSymbol( const char *, const char * );
 int CPL_DLL CPLGetExecPath( char *pszPathBuf, int nMaxLength );
 
 /* -------------------------------------------------------------------- */
-/*      Spawn a process.                                                */
-/* -------------------------------------------------------------------- */
-
-int CPL_DLL CPLSystem( const char* pszApplicationName, const char* pszCommandLine );
-int CPL_DLL CPLSpawn( const char * const papszArgv[], VSILFILE* fin, VSILFILE* fout,
-                      int bDisplayErr );
-
-/* -------------------------------------------------------------------- */
 /*      Filename handling functions.                                    */
 /* -------------------------------------------------------------------- */
 const char CPL_DLL *CPLGetPath( const char * );

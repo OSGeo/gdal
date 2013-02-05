@@ -32,6 +32,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_error.h"
+#include "cpl_spawn.h"
 
 CPL_CVSID("$Id$");
 

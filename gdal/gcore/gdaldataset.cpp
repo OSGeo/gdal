@@ -261,42 +261,44 @@ GDALDataset::~GDALDataset()
 /* -------------------------------------------------------------------- */
     {
         CPLMutexHolderD( &hDLMutex );
-
-        DatasetCtxt sStruct;
-        sStruct.poDS = this;
-        DatasetCtxt* psStruct = (DatasetCtxt*) CPLHashSetLookup(phAllDatasetSet, &sStruct);
-        GIntBig nPIDCreatorForShared = psStruct->nPIDCreatorForShared;
-        CPLHashSetRemove(phAllDatasetSet, psStruct);
-
-        if (bShared && phSharedDatasetSet != NULL)
+        if( phAllDatasetSet )
         {
-            SharedDatasetCtxt* psStruct;
-            SharedDatasetCtxt sStruct;
-            sStruct.nPID = nPIDCreatorForShared;
-            sStruct.eAccess = eAccess;
-            sStruct.pszDescription = (char*) GetDescription();
-            psStruct = (SharedDatasetCtxt*) CPLHashSetLookup(phSharedDatasetSet, &sStruct);
-            if (psStruct && psStruct->poDS == this)
-            {
-                CPLHashSetRemove(phSharedDatasetSet, psStruct);
-            }
-            else
-            {
-                CPLDebug("GDAL", "Should not happen. Cannot find %s, this=%p in phSharedDatasetSet", GetDescription(), this);
-            }
-        }
+            DatasetCtxt sStruct;
+            sStruct.poDS = this;
+            DatasetCtxt* psStruct = (DatasetCtxt*) CPLHashSetLookup(phAllDatasetSet, &sStruct);
+            GIntBig nPIDCreatorForShared = psStruct->nPIDCreatorForShared;
+            CPLHashSetRemove(phAllDatasetSet, psStruct);
 
-        if (CPLHashSetSize(phAllDatasetSet) == 0)
-        {
-            CPLHashSetDestroy(phAllDatasetSet);
-            phAllDatasetSet = NULL;
-            if (phSharedDatasetSet)
+            if (bShared && phSharedDatasetSet != NULL)
             {
-                CPLHashSetDestroy(phSharedDatasetSet);
+                SharedDatasetCtxt* psStruct;
+                SharedDatasetCtxt sStruct;
+                sStruct.nPID = nPIDCreatorForShared;
+                sStruct.eAccess = eAccess;
+                sStruct.pszDescription = (char*) GetDescription();
+                psStruct = (SharedDatasetCtxt*) CPLHashSetLookup(phSharedDatasetSet, &sStruct);
+                if (psStruct && psStruct->poDS == this)
+                {
+                    CPLHashSetRemove(phSharedDatasetSet, psStruct);
+                }
+                else
+                {
+                    CPLDebug("GDAL", "Should not happen. Cannot find %s, this=%p in phSharedDatasetSet", GetDescription(), this);
+                }
             }
-            phSharedDatasetSet = NULL;
-            CPLFree(ppDatasets);
-            ppDatasets = NULL;
+
+            if (CPLHashSetSize(phAllDatasetSet) == 0)
+            {
+                CPLHashSetDestroy(phAllDatasetSet);
+                phAllDatasetSet = NULL;
+                if (phSharedDatasetSet)
+                {
+                    CPLHashSetDestroy(phSharedDatasetSet);
+                }
+                phSharedDatasetSet = NULL;
+                CPLFree(ppDatasets);
+                ppDatasets = NULL;
+            }
         }
     }
 
@@ -1846,6 +1848,19 @@ void CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH **ppahDSList, int *pnCount )
     *ppahDSList = (GDALDatasetH *) GDALDataset::GetOpenDatasets( pnCount);
 }
 
+
+/************************************************************************/
+/*                        GDALCleanOpenDatasetsList()                   */
+/************************************************************************/
+
+/* Usefull when called from the child of a fork(), to avoid closing */
+/* the datasets of the parent at the child termination */
+void GDALNullifyOpenDatasetsList()
+{
+    phAllDatasetSet = NULL;
+    phSharedDatasetSet = NULL;
+}
+
 /************************************************************************/
 /*                             GDALGetAccess()                          */
 /************************************************************************/
@@ -2242,14 +2257,20 @@ GDALDatasetH GDALOpenInternal( GDALOpenInfo& oOpenInfo,
     CPLErrorReset();
     CPLAssert( NULL != poDM );
 
-    for( iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++ )
+    for( iDriver = -1; iDriver < poDM->GetDriverCount(); iDriver++ )
     {
-        GDALDriver      *poDriver = poDM->GetDriver( iDriver );
+        GDALDriver      *poDriver;
         GDALDataset     *poDS;
 
-        if (papszAllowedDrivers != NULL &&
-            CSLFindString((char**)papszAllowedDrivers, GDALGetDriverShortName(poDriver)) == -1)
-            continue;
+        if( iDriver < 0 )
+            poDriver = GDALGetRPCDriver();
+        else
+        {
+            poDriver = poDM->GetDriver( iDriver );
+            if (papszAllowedDrivers != NULL &&
+                CSLFindString((char**)papszAllowedDrivers, GDALGetDriverShortName(poDriver)) == -1)
+                continue;
+        }
 
         if ( poDriver->pfnOpen == NULL )
             continue;
