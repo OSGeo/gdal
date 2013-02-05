@@ -7,7 +7,7 @@ include ../GDALmake.opt
 CPPFLAGS	:=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts $(CPPFLAGS)
 LNK_FLAGS   :=  $(LDFLAGS)
 DEP_LIBS	=	$(EXE_DEP_LIBS) $(XTRAOBJ)
-BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
+BIN_LIST	=	gdalinfo$(EXE) gdalserver$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
 			gdalwarp$(EXE) nearblack$(EXE) gdalmanage$(EXE) \
 			gdalenhance$(EXE) gdaltransform$(EXE) gdaldem$(EXE) \
 			gdallocationinfo$(EXE) gdalsrsinfo$(EXE) 
@@ -39,6 +39,9 @@ lib-depend:
 
 gdalinfo$(EXE):	gdalinfo.$(OBJ_EXT) commonutils.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< commonutils.$(OBJ_EXT) $(XTRAOBJ) $(CONFIG_LIBS) -o $@
+
+gdalserver$(EXE):	gdalserver.$(OBJ_EXT) $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) $< $(XTRAOBJ) $(CONFIG_LIBS) -o $@
 
 gdal_translate$(EXE):	gdal_translate.$(OBJ_EXT) commonutils.$(OBJ_EXT) $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) $< commonutils.$(OBJ_EXT) $(XTRAOBJ) $(CONFIG_LIBS) -o $@

@@ -55,6 +55,8 @@ static const char *pszUpdatableINST_DATA =
 static volatile GDALDriverManager        *poDM = NULL;
 static void *hDMMutex = NULL;
 
+void** GDALGetpDMMutex() { return &hDMMutex; }
+
 /************************************************************************/
 /*                        GetGDALDriverManager()                        */
 /*                                                                      */
@@ -203,6 +205,8 @@ GDALDriverManager::~GDALDriverManager()
         DeregisterDriver(poDriver);
         delete poDriver;
     }
+
+    delete GDALGetRPCDriver();
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup local memory.                                           */
