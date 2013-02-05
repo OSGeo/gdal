@@ -31,6 +31,10 @@
 
 CPL_CVSID("$Id$");
 
+CPL_C_START
+const char* GDALClientDatasetGetFilename(const char* pszFilename);
+CPL_C_END
+
 /************************************************************************/
 /*                             GDALDriver()                             */
 /************************************************************************/
@@ -150,6 +154,37 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
                   "sizes must be larger than zero.",
                   nXSize, nYSize );
         return NULL;
+    }
+
+    const char* pszClientFilename = GDALClientDatasetGetFilename(pszFilename);
+    if( pszClientFilename != NULL && !EQUAL(GetDescription(), "MEM") )
+    {
+        GDALDriver* poSpawnDriver = GDALGetRPCDriver();
+        if( poSpawnDriver != this )
+        {
+            if( poSpawnDriver == NULL || poSpawnDriver->pfnCreate == NULL )
+                return NULL;
+            char** papszOptionsDup = CSLDuplicate(papszOptions);
+            papszOptionsDup = CSLAddNameValue(papszOptionsDup, "SERVER_DRIVER",
+                                               GetDescription());
+            GDALDataset* poDstDS = poSpawnDriver->pfnCreate(
+                pszClientFilename, nXSize, nYSize, nBands,
+                eType, papszOptionsDup);
+
+            CSLDestroy(papszOptionsDup);
+
+            if( poDstDS != NULL )
+            {
+                if( poDstDS->GetDescription() == NULL 
+                    || strlen(poDstDS->GetDescription()) == 0 )
+                    poDstDS->SetDescription( pszFilename );
+
+                if( poDstDS->poDriver == NULL )
+                    poDstDS->poDriver = poSpawnDriver;
+            }
+
+            return poDstDS;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -587,6 +622,36 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
+
+    const char* pszClientFilename = GDALClientDatasetGetFilename(pszFilename);
+    if( pszClientFilename != NULL && !EQUAL(GetDescription(), "MEM") &&
+        !EQUAL(GetDescription(), "VRT") )
+    {
+        GDALDriver* poSpawnDriver = GDALGetRPCDriver();
+        if( poSpawnDriver != this )
+        {
+            if( poSpawnDriver->pfnCreateCopy == NULL )
+                return NULL;
+            char** papszOptionsDup = CSLDuplicate(papszOptions);
+            papszOptionsDup = CSLAddNameValue(papszOptionsDup, "SERVER_DRIVER",
+                                               GetDescription());
+            GDALDataset* poDstDS = poSpawnDriver->pfnCreateCopy(
+                pszClientFilename, poSrcDS, bStrict, papszOptionsDup,
+                pfnProgress, pProgressData);
+            if( poDstDS != NULL )
+            {
+                if( poDstDS->GetDescription() == NULL 
+                    || strlen(poDstDS->GetDescription()) == 0 )
+                    poDstDS->SetDescription( pszFilename );
+
+                if( poDstDS->poDriver == NULL )
+                    poDstDS->poDriver = poSpawnDriver;
+            }
+
+            CSLDestroy(papszOptionsDup);
+            return poDstDS;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Make sure we cleanup if there is an existing dataset of this    */
@@ -1430,10 +1495,15 @@ GDALIdentifyDriver( const char * pszFilename,
     CPLErrorReset();
     CPLAssert( NULL != poDM );
     
-    for( iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++ )
+    for( iDriver = -1; iDriver < poDM->GetDriverCount(); iDriver++ )
     {
-        GDALDriver      *poDriver = poDM->GetDriver( iDriver );
+        GDALDriver      *poDriver;
         GDALDataset     *poDS;
+
+        if( iDriver < 0 )
+            poDriver = GDALGetRPCDriver();
+        else
+            poDriver = poDM->GetDriver( iDriver );
 
         VALIDATE_POINTER1( poDriver, "GDALIdentifyDriver", NULL );
 

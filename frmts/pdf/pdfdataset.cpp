@@ -37,6 +37,7 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 #include "ogr_geometry.h"
+#include "cpl_spawn.h"
 
 #ifdef HAVE_POPPLER
 #include "cpl_multiproc.h"

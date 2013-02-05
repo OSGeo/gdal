@@ -930,6 +930,10 @@ int GDALReadTabFile2( const char * pszBaseFilename,
 
 CPL_C_END
 
+void GDALNullifyOpenDatasetsList();
+void** GDALGetpDMMutex();
+GDALDriver* GDALGetRPCDriver();
+
 CPLString GDALFindAssociatedFile( const char *pszBasename, const char *pszExt,
                                   char **papszSiblingFiles, int nFlags );
 
