@@ -2105,6 +2105,7 @@ static int GDALServerLoop(GDALPipe* p,
             GDALDataType eBufType;
             int nBufType;
             int nBandCount;
+            int nPixelSpace, nLineSpace, nBandSpace;
             int* panBandMap = NULL;
             if( !GDALPipeRead(p, &nXOff) ||
                 !GDALPipeRead(p, &nYOff) ||
@@ -2114,8 +2115,17 @@ static int GDALServerLoop(GDALPipe* p,
                 !GDALPipeRead(p, &nBufYSize) ||
                 !GDALPipeRead(p, &nBufType) ||
                 !GDALPipeRead(p, &nBandCount) ||
-                !GDALPipeRead(p, nBandCount, &panBandMap) )
+                !GDALPipeRead(p, nBandCount, &panBandMap) ||
+                !GDALPipeRead(p, &nPixelSpace) ||
+                !GDALPipeRead(p, &nLineSpace) ||
+                !GDALPipeRead(p, &nBandSpace) )
+            {
+                CPLFree(panBandMap);
                 break;
+            }
+            /* Note: only combinations of nPixelSpace, nLineSpace and
+               nBandSpace that lead to compate band-interleaved or pixel-
+               interleaved buffers are valid. Other combinations will lead to segfault */
             eBufType = (GDALDataType)nBufType;
             int nSize = nBufXSize * nBufYSize * nBandCount *
                 (GDALGetDataTypeSize(eBufType) / 8);
@@ -2130,7 +2140,7 @@ static int GDALServerLoop(GDALPipe* p,
                                          pBuffer, nBufXSize, nBufYSize,
                                          eBufType,
                                          nBandCount, panBandMap,
-                                         0, 0, 0);
+                                         nPixelSpace, nLineSpace, nBandSpace);
             CPLFree(panBandMap);
             GDALEmitEndOfJunkMarker(p);
             GDALPipeWrite(p, eErr);
@@ -2146,6 +2156,7 @@ static int GDALServerLoop(GDALPipe* p,
             GDALDataType eBufType;
             int nBufType;
             int nBandCount;
+            int nPixelSpace, nLineSpace, nBandSpace;
             int* panBandMap = NULL;
             if( !GDALPipeRead(p, &nXOff) ||
                 !GDALPipeRead(p, &nYOff) ||
@@ -2155,8 +2166,17 @@ static int GDALServerLoop(GDALPipe* p,
                 !GDALPipeRead(p, &nBufYSize) ||
                 !GDALPipeRead(p, &nBufType) ||
                 !GDALPipeRead(p, &nBandCount) ||
-                !GDALPipeRead(p, nBandCount, &panBandMap) )
+                !GDALPipeRead(p, nBandCount, &panBandMap) ||
+                !GDALPipeRead(p, &nPixelSpace) ||
+                !GDALPipeRead(p, &nLineSpace) ||
+                !GDALPipeRead(p, &nBandSpace) )
+            {
+                CPLFree(panBandMap);
                 break;
+            }
+            /* Note: only combinations of nPixelSpace, nLineSpace and
+               nBandSpace that lead to compate band-interleaved or pixel-
+               interleaved buffers are valid. Other combinations will lead to segfault */
             eBufType = (GDALDataType)nBufType;
             int nExpectedSize = nBufXSize * nBufYSize * nBandCount *
                 (GDALGetDataTypeSize(eBufType) / 8);
@@ -2178,7 +2198,7 @@ static int GDALServerLoop(GDALPipe* p,
                                          pBuffer, nBufXSize, nBufYSize,
                                          eBufType,
                                          nBandCount, panBandMap,
-                                         0, 0, 0);
+                                         nPixelSpace, nLineSpace, nBandSpace);
             CPLFree(panBandMap);
             GDALEmitEndOfJunkMarker(p);
             GDALPipeWrite(p, eErr);
@@ -2968,22 +2988,54 @@ CPLErr GDALClientDataset::IRasterIO( GDALRWFlag eRWFlag,
 
     ProcessAsyncProgress();
 
+    int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
+    int bDirectCopy;
+    if( nPixelSpace == nDataTypeSize &&
+        nLineSpace == nBufXSize * nDataTypeSize &&
+        (nBandSpace == nBufYSize * nLineSpace ||
+            (nBandSpace == 0 && nBandCount == 1)) )
+    {
+        bDirectCopy = TRUE;
+    }
+    else if( nBandCount > 1 &&
+                nPixelSpace == nBandCount * nDataTypeSize &&
+                nLineSpace == nBufXSize * nPixelSpace &&
+                nBandSpace == nBandCount )
+    {
+        bDirectCopy = TRUE;
+    }
+    else
+        bDirectCopy = FALSE;
+
+    if( !GDALPipeWrite(p, ( eRWFlag == GF_Read ) ? INSTR_IRasterIO_Read : INSTR_IRasterIO_Write ) ||
+        !GDALPipeWrite(p, nXOff) ||
+        !GDALPipeWrite(p, nYOff) ||
+        !GDALPipeWrite(p, nXSize) ||
+        !GDALPipeWrite(p, nYSize) ||
+        !GDALPipeWrite(p, nBufXSize) ||
+        !GDALPipeWrite(p, nBufYSize) ||
+        !GDALPipeWrite(p, eBufType) ||
+        !GDALPipeWrite(p, nBandCount) ||
+        !GDALPipeWrite(p, nBandCount * sizeof(int), panBandMap) )
+        return CE_Failure;
+
+    if( bDirectCopy )
+    {
+        if( !GDALPipeWrite(p, nPixelSpace) ||
+            !GDALPipeWrite(p, nLineSpace) ||
+            !GDALPipeWrite(p, nBandSpace) )
+            return CE_Failure;
+    }
+    else
+    {
+        if( !GDALPipeWrite(p, 0) ||
+            !GDALPipeWrite(p, 0) ||
+            !GDALPipeWrite(p, 0) )
+            return CE_Failure;
+    }
+
     if( eRWFlag == GF_Read )
     {
-        /*if( GetAccess() == GA_Update )
-            FlushCache();*/
-
-        if( !GDALPipeWrite(p, INSTR_IRasterIO_Read) ||
-            !GDALPipeWrite(p, nXOff) ||
-            !GDALPipeWrite(p, nYOff) ||
-            !GDALPipeWrite(p, nXSize) ||
-            !GDALPipeWrite(p, nYSize) ||
-            !GDALPipeWrite(p, nBufXSize) ||
-            !GDALPipeWrite(p, nBufYSize) ||
-            !GDALPipeWrite(p, eBufType) ||
-            !GDALPipeWrite(p, nBandCount) ||
-            !GDALPipeWrite(p, nBandCount * sizeof(int), panBandMap) )
-            return CE_Failure;
         if( !GDALSkipUntilEndOfJunkMarker(p) )
             return CE_Failure;
 
@@ -2994,13 +3046,10 @@ CPLErr GDALClientDataset::IRasterIO( GDALRWFlag eRWFlag,
             int nSize;
             if( !GDALPipeRead(p, &nSize) )
                 return CE_Failure;
-            int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
             GIntBig nExpectedSize = (GIntBig)nBufXSize * nBufYSize * nBandCount * nDataTypeSize;
             if( nSize != nExpectedSize )
                 return CE_Failure;
-            if( nPixelSpace == nDataTypeSize &&
-                nLineSpace == nBufXSize * nDataTypeSize &&
-                nBandSpace == nBufYSize * nLineSpace )
+            if( bDirectCopy )
             {
                 if( !GDALPipeRead_nolength(p, nSize, pData) )
                     return CE_Failure;
@@ -3032,26 +3081,11 @@ CPLErr GDALClientDataset::IRasterIO( GDALRWFlag eRWFlag,
     }
     else
     {
-        if( !GDALPipeWrite(p, INSTR_IRasterIO_Write) ||
-            !GDALPipeWrite(p, nXOff) ||
-            !GDALPipeWrite(p, nYOff) ||
-            !GDALPipeWrite(p, nXSize) ||
-            !GDALPipeWrite(p, nYSize) ||
-            !GDALPipeWrite(p, nBufXSize) ||
-            !GDALPipeWrite(p, nBufYSize) ||
-            !GDALPipeWrite(p, eBufType) ||
-            !GDALPipeWrite(p, nBandCount) ||
-            !GDALPipeWrite(p, nBandCount * sizeof(int), panBandMap) )
-            return CE_Failure;
-
-        int nDataTypeSize = GDALGetDataTypeSize(eBufType) / 8;
         GIntBig nSizeBig = (GIntBig)nBufXSize * nBufYSize * nBandCount * nDataTypeSize;
         int nSize = (int)nSizeBig;
         if( nSizeBig != nSize )
             return CE_Failure;
-        if( nPixelSpace == nDataTypeSize &&
-            nLineSpace == nBufXSize * nDataTypeSize &&
-            nBandSpace == nBufYSize * nLineSpace  )
+        if( bDirectCopy  )
         {
             if( !GDALPipeWrite(p, nSize, pData) )
                 return CE_Failure;
