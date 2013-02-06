@@ -3045,7 +3045,13 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
               if ( pszTmp )
               {
                   dfScale = CPLAtof( pszTmp );
-                  bHaveScale = TRUE;
+                  // some producers (ie. lndcsm from LEDAPS) emit
+                  // files with scale_factor=0 which is crazy to carry
+                  // through.
+                  if( dfScale == 0.0 )
+                    dfScale = 1.0;
+
+                  bHaveScale = (dfScale != 0.0);
               }
 
               pszTmp =
@@ -3780,4 +3786,3 @@ void GDALRegister_HDF4Image()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
