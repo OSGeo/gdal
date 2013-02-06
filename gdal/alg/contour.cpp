@@ -1563,8 +1563,15 @@ CPLErr GDALContourGenerate( GDALRasterBandH hBand,
     oCWI.nElevField = iElevField;
     oCWI.nIDField = iIDField;
 
+    oCWI.adfGeoTransform[0] = 0.0;
+    oCWI.adfGeoTransform[1] = 1.0;
+    oCWI.adfGeoTransform[2] = 0.0;
+    oCWI.adfGeoTransform[3] = 0.0;
+    oCWI.adfGeoTransform[4] = 0.0;
+    oCWI.adfGeoTransform[5] = 1.0;
     hSrcDS = GDALGetBandDataset( hBand );
-    GDALGetGeoTransform( hSrcDS, oCWI.adfGeoTransform );
+    if( hSrcDS != NULL )
+        GDALGetGeoTransform( hSrcDS, oCWI.adfGeoTransform );
     oCWI.nNextID = 0;
 
 /* -------------------------------------------------------------------- */
