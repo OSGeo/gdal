@@ -4738,7 +4738,8 @@ const char* GDALClientDatasetGetFilename(const char* pszFilename)
     /* Those datasets cannot work in a multi-process context */
     if( EQUALN(pszFilename, "MEM:::", 6) ||
         strstr(pszFilename, "/vsimem/") != NULL ||
-        strstr(pszFilename, "/vsimem\\") != NULL )
+        strstr(pszFilename, "/vsimem\\") != NULL ||
+        EQUALN(pszFilename,"NUMPY:::",8) )
         return NULL;
 
     if( !(EQUAL(pszSpawn, "YES") || EQUAL(pszSpawn, "ON") ||
