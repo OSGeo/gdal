@@ -4647,8 +4647,8 @@ const char* GDALClientDatasetGetFilename(const char* pszFilename)
         return NULL;
     }
 
-    if( EQUALN(pszFilename, "RPC:", 6) )
-        return pszFilename + 6;
+    if( EQUALN(pszFilename, "RPC:", 4) )
+        return pszFilename + 4;
 
     /* Those datasets cannot work in a multi-process context */
     if( EQUALN(pszFilename, "MEM:::", 6) ||
