@@ -3550,7 +3550,7 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
 
         if (poSrcDSToTest != NULL &&
             poSrcDSToTest->GetDriver() != NULL &&
-            poSrcDSToTest->GetDriver() == GDALGetDriverByName("JPEG") &&
+            EQUAL(poSrcDSToTest->GetDriver()->GetDescription(), "JPEG") &&
             nXOff == 0 && nYOff == 0 &&
             nReqXSize == poSrcDSToTest->GetRasterXSize() &&
             nReqYSize == poSrcDSToTest->GetRasterYSize() &&

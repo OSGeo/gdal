@@ -4809,6 +4809,8 @@ int GDALClientDataset::mCreateCopy( const char* pszFilename,
     GDALPipeWriteConfigOption(p, "ESRI_XML_PAM", bRecycleChild);
     GDALPipeWriteConfigOption(p, "GDAL_TIFF_INTERNAL_MASK_TO_8BIT", bRecycleChild);
     GDALPipeWriteConfigOption(p, "OGR_SQLITE_SYNCHRONOUS", bRecycleChild);
+    GDALPipeWriteConfigOption(p, "GDAL_PDF_WRITE_GEOREF_ON_IMAGE", bRecycleChild);
+    GDALPipeWriteConfigOption(p, "GDAL_PDF_OGC_BP_WRITE_WKT", bRecycleChild);
 
     if( !GDALPipeWrite(p, INSTR_CreateCopy) ||
         !GDALPipeWrite(p, pszFilename) ||
