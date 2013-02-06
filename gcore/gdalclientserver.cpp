@@ -371,6 +371,7 @@ class GDALClientDataset: public GDALPamDataset
                                     int nXSize, int nYSize, int nBands,
                                     GDALDataType eType,
                                     char ** papszOptions );
+        static CPLErr       Delete( const char * pszName );
 };
 
 /************************************************************************/
@@ -1756,17 +1757,13 @@ static int GDALServerLoop(GDALPipe* p,
         else if( instr == INSTR_QuietDelete )
         {
             char* pszFilename = NULL;
-            GDALDriver* poDriver = NULL;
 
             if( !GDALPipeRead(p, &pszFilename) ||
                 pszFilename == NULL )
                 break;
-            /* The driver instance is not used, so use a random one */
-            poDriver = (GDALDriver* )GDALGetDriverByName("GTIFF");
-            if( poDriver != NULL )
-            {
-                poDriver->QuietDelete(pszFilename);
-            }
+
+            GDALDriver::QuietDelete(pszFilename);
+
             GDALEmitEndOfJunkMarker(p);
             CPLFree(pszFilename);
         }
@@ -4768,7 +4765,7 @@ int GDALClientDataset::Identify( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
-/*                      GDALClientDatasetQuietDelete()                      */
+/*                     GDALClientDatasetQuietDelete()                   */
 /************************************************************************/
 
 static int GDALClientDatasetQuietDelete(GDALPipe* p,
@@ -4943,6 +4940,34 @@ GDALDataset* GDALClientDataset::Create( const char * pszName,
 }
 
 /************************************************************************/
+/*                              Delete()                                */
+/************************************************************************/
+
+CPLErr GDALClientDataset::Delete( const char * pszFilename )
+{
+    pszFilename =
+        GDALClientDatasetGetFilename(pszFilename);
+    if( pszFilename == NULL )
+        return CE_Failure;
+
+    CLIENT_ENTER();
+
+    GDALServerSpawnedProcess* ssp = GDALServerSpawnAsync();
+    if( ssp == NULL )
+        return CE_Failure;
+
+    GDALPipe* p = ssp->p;
+    if( !GDALClientDatasetQuietDelete(p, pszFilename) )
+    {
+        GDALServerSpawnAsyncFinish(ssp);
+        return CE_Failure;
+    }
+
+    GDALServerSpawnAsyncFinish(ssp);
+    return CE_None;
+}
+
+/************************************************************************/
 /*                       GDALSpawnUnloadDriver()                        */
 /************************************************************************/
 
@@ -5002,6 +5027,7 @@ GDALDriver* GDALGetRPCDriver()
         poDriver->pfnIdentify = GDALClientDataset::Identify;
         poDriver->pfnCreateCopy = GDALClientDataset::CreateCopy;
         poDriver->pfnCreate = GDALClientDataset::Create;
+        poDriver->pfnDelete = GDALClientDataset::Delete;
         poDriver->pfnUnloadDriver = GDALSpawnUnloadDriver;
     }
     return poDriver;
