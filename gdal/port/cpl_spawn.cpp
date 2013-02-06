@@ -471,12 +471,26 @@ int CPLSystem( const char* pszApplicationName, const char* pszCommandLine )
  */
 int CPLPipeRead(CPL_FILE_HANDLE fin, void* data, int length)
 {
-    while(TRUE)
+    GByte* pabyData = (GByte*)data;
+    int nRemain = length;
+    while( nRemain > 0 )
     {
-        int n = read(fin, data, length);
-        if( n >= 0 || errno != EINTR )
-            return n == length;
+        while(TRUE)
+        {
+            int n = read(fin, pabyData, nRemain);
+            if( n < 0 )
+            {
+                if( errno == EINTR )
+                    continue;
+                else
+                    return FALSE;
+            }
+            pabyData += n;
+            nRemain -= n;
+            break;
+        }
     }
+    return TRUE;
 }
 
 /************************************************************************/
@@ -496,12 +510,26 @@ int CPLPipeRead(CPL_FILE_HANDLE fin, void* data, int length)
  */
 int CPLPipeWrite(CPL_FILE_HANDLE fout, const void* data, int length)
 {
-    while(TRUE)
+    const GByte* pabyData = (const GByte*)data;
+    int nRemain = length;
+    while( nRemain > 0 )
     {
-        int n = write(fout, data, length);
-        if( n >= 0 || errno != EINTR )
-            return n == length;
+        while(TRUE)
+        {
+            int n = write(fout, pabyData, nRemain);
+            if( n < 0 )
+            {
+                if( errno == EINTR )
+                    continue;
+                else
+                    return FALSE;
+            }
+            pabyData += n;
+            nRemain -= n;
+            break;
+        }
     }
+    return TRUE;
 }
 
 /************************************************************************/
