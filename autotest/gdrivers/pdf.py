@@ -201,7 +201,7 @@ def pdf_1():
 
     expected_gt = (333274.61654367246, 31.764802242655662, 0.0, 4940391.7593506984, 0.0, -31.794745501708238)
     for i in range(6):
-        if abs(gt[i] - expected_gt[i]) > 1e-8:
+        if abs(gt[i] - expected_gt[i]) > 1e-7:
             gdaltest.post_reason('bad geotransform')
             print(gt)
             print(expected_gt)
