@@ -310,7 +310,7 @@ def pdf_ogcbp_lcc():
     PARAMETER["false_northing",1000000],
     UNIT["metre",1]]]"""
 
-    src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/temp.tif', 1, 1)
+    src_ds = gdal.GetDriverByName('GTiff').Create('tmp/temp.tif', 1, 1)
     src_ds.SetProjection(wkt)
     src_ds.SetGeoTransform([500000,1,0,1000000,0,-1])
 
@@ -322,7 +322,7 @@ def pdf_ogcbp_lcc():
 
     src_ds = None
 
-    gdal.Unlink('/vsimem/temp.tif')
+    gdal.Unlink('tmp/temp.tif')
     gdal.Unlink('tmp/pdf_ogcbp_lcc.pdf')
 
     sr1 = osr.SpatialReference(wkt)
@@ -1387,7 +1387,7 @@ def pdf_write_ogr():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    f = gdal.VSIFOpenL('/vsimem/test.csv', 'wb')
+    f = gdal.VSIFOpenL('tmp/test.csv', 'wb')
     data = """id,foo,WKT,style
 1,bar,"MULTIPOLYGON (((440720 3751320,440720 3750120,441020 3750120,441020 3751320,440720 3751320),(440800 3751200,440900 3751200,440900 3751000,440800 3751000,440800 3751200)),((441720 3751320,441720 3750120,441920 3750120,441920 3751320,441720 3751320)))",
 2,baz,"LINESTRING(440720 3751320,441920 3750120)","PEN(c:#FF0000,w:5pt,p:""2px 1pt"")"
@@ -1397,10 +1397,10 @@ def pdf_write_ogr():
     gdal.VSIFWriteL(data, 1, len(data), f)
     gdal.VSIFCloseL(f)
 
-    f = gdal.VSIFOpenL('/vsimem/test.vrt', 'wb')
+    f = gdal.VSIFOpenL('tmp/test.vrt', 'wb')
     data = """<OGRVRTDataSource>
   <OGRVRTLayer name="test">
-    <SrcDataSource relativeToVRT="0" shared="1">/vsimem/test.csv</SrcDataSource>
+    <SrcDataSource relativeToVRT="0" shared="1">tmp/test.csv</SrcDataSource>
     <SrcLayer>test</SrcLayer>
     <GeometryType>wkbUnknown</GeometryType>
     <LayerSRS>EPSG:26711</LayerSRS>
@@ -1414,7 +1414,7 @@ def pdf_write_ogr():
     gdal.VSIFWriteL(data, 1, len(data), f)
     gdal.VSIFCloseL(f)
 
-    options = [ 'OGR_DATASOURCE=/vsimem/test.vrt', 'OGR_DISPLAY_LAYER_NAMES=A_Layer', 'OGR_DISPLAY_FIELD=foo' ]
+    options = [ 'OGR_DATASOURCE=tmp/test.vrt', 'OGR_DISPLAY_LAYER_NAMES=A_Layer', 'OGR_DISPLAY_FIELD=foo' ]
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_write_ogr.pdf', src_ds, options = options)
@@ -1467,8 +1467,8 @@ def pdf_write_ogr():
 
     gdal.Unlink('tmp/pdf_write_ogr.pdf')
 
-    gdal.Unlink('/vsimem/test.csv')
-    gdal.Unlink('/vsimem/test.vrt')
+    gdal.Unlink('tmp/test.csv')
+    gdal.Unlink('tmp/test.vrt')
 
     if pdf_is_poppler():
         if layers != ['LAYER_00_NAME=A_Layer', 'LAYER_01_NAME=A_Layer.Text']:
@@ -1497,7 +1497,7 @@ def pdf_write_ogr_with_reprojection():
     if gdaltest.have_proj4 == 0:
         return 'skip'
 
-    f = gdal.VSIFOpenL('/vsimem/test.csv', 'wb')
+    f = gdal.VSIFOpenL('tmp/test.csv', 'wb')
     data = """WKT,id
 "POINT (-117.641059792392142 33.902263065734573)",1
 "POINT (-117.64098016484607 33.891620919037436)",2
@@ -1510,10 +1510,10 @@ def pdf_write_ogr_with_reprojection():
     gdal.VSIFWriteL(data, 1, len(data), f)
     gdal.VSIFCloseL(f)
 
-    f = gdal.VSIFOpenL('/vsimem/test.vrt', 'wb')
+    f = gdal.VSIFOpenL('tmp/test.vrt', 'wb')
     data = """<OGRVRTDataSource>
   <OGRVRTLayer name="test">
-    <SrcDataSource relativeToVRT="0" shared="1">/vsimem/test.csv</SrcDataSource>
+    <SrcDataSource relativeToVRT="0" shared="1">tmp/test.csv</SrcDataSource>
     <SrcLayer>test</SrcLayer>
     <GeometryType>wkbUnknown</GeometryType>
     <LayerSRS>+proj=longlat +datum=NAD27</LayerSRS>
@@ -1524,7 +1524,7 @@ def pdf_write_ogr_with_reprojection():
     gdal.VSIFWriteL(data, 1, len(data), f)
     gdal.VSIFCloseL(f)
 
-    options = [ 'OGR_DATASOURCE=/vsimem/test.vrt', 'OGR_DISPLAY_LAYER_NAMES=A_Layer', 'OGR_DISPLAY_FIELD=foo' ]
+    options = [ 'OGR_DATASOURCE=tmp/test.vrt', 'OGR_DISPLAY_LAYER_NAMES=A_Layer', 'OGR_DISPLAY_FIELD=foo' ]
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_write_ogr.pdf', src_ds, options = options)
@@ -1538,8 +1538,8 @@ def pdf_write_ogr_with_reprojection():
 
     gdal.Unlink('tmp/pdf_write_ogr.pdf')
 
-    gdal.Unlink('/vsimem/test.csv')
-    gdal.Unlink('/vsimem/test.vrt')
+    gdal.Unlink('tmp/test.csv')
+    gdal.Unlink('tmp/test.vrt')
 
     # Should have filtered out id = 6
     if feature_count != 5:
