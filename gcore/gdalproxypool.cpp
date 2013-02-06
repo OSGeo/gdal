@@ -298,11 +298,11 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName, G
     cur->refCount = 1;
 
     refCountOfDisableRefCount ++;
-    const char* pszOldVal = CPLGetConfigOption("GDAL_RPC", NULL);
+    const char* pszOldVal = CPLGetConfigOption("GDAL_API_PROXY", NULL);
     char* pszOldValDup = (pszOldVal) ? CPLStrdup(pszOldVal) : NULL;
-    CPLSetThreadLocalConfigOption("GDAL_RPC", "OFF");
+    CPLSetThreadLocalConfigOption("GDAL_API_PROXY", "OFF");
     cur->poDS = (GDALDataset*) GDALOpen(pszFileName, eAccess);
-    CPLSetThreadLocalConfigOption("GDAL_RPC", pszOldValDup);
+    CPLSetThreadLocalConfigOption("GDAL_API_PROXY", pszOldValDup);
     CPLFree(pszOldValDup);
     refCountOfDisableRefCount --;
 
