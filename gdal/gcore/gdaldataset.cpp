@@ -2200,6 +2200,9 @@ CPLErr CPL_STDCALL GDALCreateDatasetMaskBand( GDALDatasetH hDS, int nFlags )
  * a file in a .zip archive (see VSIInstallZipFileHandler()), in a .tar/.tar.gz/.tgz archive
  * (see VSIInstallTarFileHandler()) or on a HTTP / FTP server (see VSIInstallCurlFileHandler())
  *
+ * In some situations (dealing with unverified data), the datasets can be opened in another
+ * process through the \ref gdal_api_proxy mechanism.
+ *
  * \sa GDALOpenShared()
  *
  * @param pszFilename the name of the file to access.  In the case of
@@ -2263,7 +2266,7 @@ GDALDatasetH GDALOpenInternal( GDALOpenInfo& oOpenInfo,
         GDALDataset     *poDS;
 
         if( iDriver < 0 )
-            poDriver = GDALGetRPCDriver();
+            poDriver = GDALGetAPIPROXYDriver();
         else
         {
             poDriver = poDM->GetDriver( iDriver );
@@ -2350,6 +2353,9 @@ GDALDatasetH GDALOpenInternal( GDALOpenInfo& oOpenInfo,
  * For drivers supporting the VSI virtual file API, it is possible to open
  * a file in a .zip archive (see VSIInstallZipFileHandler()), in a .tar/.tar.gz/.tgz archive
  * (see VSIInstallTarFileHandler()) or on a HTTP / FTP server (see VSIInstallCurlFileHandler())
+ *
+ * In some situations (dealing with unverified data), the datasets can be opened in another
+ * process through the \ref gdal_api_proxy mechanism.
  *
  * \sa GDALOpen()
  *
