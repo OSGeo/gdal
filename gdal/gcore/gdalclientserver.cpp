@@ -32,6 +32,60 @@
 #include "cpl_spawn.h"
 #include "cpl_multiproc.h"
 
+/*! 
+\page gdal_api_proxy GDAL API Proxy
+
+\section gdal_api_proxy_intro Introduction
+
+(GDAL >= 1.10.0)
+
+When dealing with some file formats, particularly the drivers relying on third-party
+(potentially closed-source) libraries, it is difficult to ensure that those third-party
+libraries will be robust to hostile/corrupted datasource.
+
+The implemented solution is to have a (private) API_PROXY driver that will expose a GDALClientDataset
+object, which will forward all the GDAL API calls to another process ("server"), where the real driver
+will be effectively run. This way, if the server aborts due to a fatal error, the calling process will
+be unaffected and will report a clean error instead of aborting itself.
+
+\section gdal_api_proxy_enabling How to enable ?
+
+The API_PROXY mechanism can be enabled by setting the GDAL_API_PROXY config option to YES.
+The option can also be set to a list of file extensions that must be the only ones to trigger
+this mechanism (e.g. GDAL_API_PROXY=ecw,sid).
+
+When enabled, datasets can be handled with GDALOpen(), GDALCreate() or GDALCreateCopy() with
+their nominal filename (or connexion string).
+
+Alternatively, the API_PROXY mechanism can be used selectively on a datasource by prefixing its
+name with API_PROXY:, for example GDALOpen("API_PROXY:foo.tif", GA_ReadOnly).
+
+\section gdal_api_proxy_options Advanced options
+
+For now, the server launched is the gdalserver executable on Windows. On Unix, the default behaviour is
+to just fork() the current process. It is also possible to launch the gdalserver executable
+by forcing GDAL_API_PROXY_SERVER=YES.
+The full filename of the gdalserver executable can also be specified in the GDAL_API_PROXY_SERVER.
+
+In case of many dataset opening or creation, to avoid the cost of repeated process forking,
+a pool of unused connections is established. Each time a dataset is closed, the associated connection
+is pushed in the pool (if there's an empty bucket). When a following dataset is to be opened, one of those
+connections will be reused. This behaviour is controlled with the GDAL_API_PROXY_CONN_POOL config option
+that is set to YES by default, and will keep a maximum of 4 unused connections.
+GDAL_API_PROXY_CONN_POOL can be set to a integer value to specify the maximum number of unused connections.
+
+\section gdal_api_proxy_limitations Limitations
+
+Datasets stored in the memory virtual file system (/vsimem) or handled by the MEM driver are excluded from
+the API Proxy mechanism.
+
+Additionnaly, for GDALCreate() or GDALCreateCopy(), the VRT driver is also excluded from that mechanism.
+
+Currently, the client dataset returned is not protected by a mutex, so it is unsafe to use it concurrently
+from multiple threads. However, it is safe to use several client datasets from multiple threads.
+
+*/
+
 /* REMINDER: upgrade this number when the on-wire protocol changes */
 /* Note: please at least keep the version exchange protocol unchanged ! */
 #define GDAL_CLIENT_SERVER_PROTOCOL_MAJOR 1
@@ -1282,9 +1336,9 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
     }
 
 #ifdef WIN32
-    const char* pszSpawnServer = CPLGetConfigOption("GDAL_RPC_SERVER", "gdalserver");
+    const char* pszSpawnServer = CPLGetConfigOption("GDAL_API_PROXY_SERVER", "gdalserver");
 #else
-    const char* pszSpawnServer = CPLGetConfigOption("GDAL_RPC_SERVER", "NO");
+    const char* pszSpawnServer = CPLGetConfigOption("GDAL_API_PROXY_SERVER", "NO");
 #endif
     if( EQUAL(pszSpawnServer, "YES") || EQUAL(pszSpawnServer, "ON") ||
         EQUAL(pszSpawnServer, "TRUE")  || EQUAL(pszSpawnServer, "1") )
@@ -1426,9 +1480,9 @@ static int GDALServerLoop(GDALPipe* p,
     void* pBuffer = NULL;
     int nBufferSize = 0;
 
-    const char* pszOldVal = CPLGetConfigOption("GDAL_RPC", NULL);
+    const char* pszOldVal = CPLGetConfigOption("GDAL_API_PROXY", NULL);
     char* pszOldValDup = (pszOldVal) ? CPLStrdup(pszOldVal) : NULL;
-    CPLSetThreadLocalConfigOption("GDAL_RPC", "OFF");
+    CPLSetThreadLocalConfigOption("GDAL_API_PROXY", "OFF");
 
     if( poSrcDS == NULL )
         CPLPushErrorHandlerEx(RunErrorHandler, &aoErrors);
@@ -2731,7 +2785,7 @@ static int GDALServerLoop(GDALPipe* p,
     if( poSrcDS == NULL )
         CPLPopErrorHandler();
 
-    CPLSetThreadLocalConfigOption("GDAL_RPC", pszOldValDup);
+    CPLSetThreadLocalConfigOption("GDAL_API_PROXY", pszOldValDup);
     CPLFree(pszOldValDup);
 
     // fprintf(stderr, "[%d] finished = %d\n", (int)getpid(), nRet);
@@ -2757,7 +2811,7 @@ int GDALServerLoop(CPL_FILE_HANDLE fin, CPL_FILE_HANDLE fout)
 #ifndef WIN32
     unsetenv("CPL_SHOW_MEM_STATS");
 #endif
-    CPLSetConfigOption("GDAL_RPC", "NO");
+    CPLSetConfigOption("GDAL_API_PROXY", "NO");
 
     GDALPipe* p = GDALPipeBuild(fin, fout);
 
@@ -3672,7 +3726,7 @@ CPLErr GDALClientRasterBand::GetStatistics( int bApproxOK, int bForce,
                                             double *pdfMean, double *pdfStdDev )
 {
     CLIENT_ENTER();
-    if( !bApproxOK && CSLTestBoolean(CPLGetConfigOption("GDAL_RPC_FORCE_APPROX", "NO")) )
+    if( !bApproxOK && CSLTestBoolean(CPLGetConfigOption("GDAL_API_PROXY_FORCE_APPROX", "NO")) )
         bApproxOK = TRUE;
     if( !WriteInstr( INSTR_Band_GetStatistics) ||
         !GDALPipeWrite(p, bApproxOK) ||
@@ -3714,7 +3768,7 @@ CPLErr GDALClientRasterBand::ComputeStatistics( int bApproxOK,
                                                 void *pProgressData )
 {
     CLIENT_ENTER();
-    if( !bApproxOK && CSLTestBoolean(CPLGetConfigOption("GDAL_RPC_FORCE_APPROX", "NO")) )
+    if( !bApproxOK && CSLTestBoolean(CPLGetConfigOption("GDAL_API_PROXY_FORCE_APPROX", "NO")) )
         bApproxOK = TRUE;
     if( !WriteInstr(INSTR_Band_ComputeStatistics) ||
         !GDALPipeWrite(p, bApproxOK) )
@@ -3767,7 +3821,7 @@ CPLErr GDALClientRasterBand::ComputeRasterMinMax( int bApproxOK,
                                                   double* padfMinMax )
 {
     CLIENT_ENTER();
-    if( !bApproxOK && CSLTestBoolean(CPLGetConfigOption("GDAL_RPC_FORCE_APPROX", "NO")) )
+    if( !bApproxOK && CSLTestBoolean(CPLGetConfigOption("GDAL_API_PROXY_FORCE_APPROX", "NO")) )
         bApproxOK = TRUE;
     if( !WriteInstr(INSTR_Band_ComputeRasterMinMax) ||
         !GDALPipeWrite(p, bApproxOK) )
@@ -3800,7 +3854,7 @@ CPLErr GDALClientRasterBand::GetHistogram( double dfMin, double dfMax,
                                            void *pProgressData )
 {
     CLIENT_ENTER();
-    if( !bApproxOK && CSLTestBoolean(CPLGetConfigOption("GDAL_RPC_FORCE_APPROX", "NO")) )
+    if( !bApproxOK && CSLTestBoolean(CPLGetConfigOption("GDAL_API_PROXY_FORCE_APPROX", "NO")) )
         bApproxOK = TRUE;
     if( !WriteInstr(INSTR_Band_GetHistogram) ||
         !GDALPipeWrite(p, dfMin) ||
@@ -4637,15 +4691,15 @@ int GDALClientDataset::Init(const char* pszFilename, GDALAccess eAccess)
 
 const char* GDALClientDatasetGetFilename(const char* pszFilename)
 {
-    const char* pszSpawn = CPLGetConfigOption("GDAL_RPC", "NO");
+    if( EQUALN(pszFilename, "API_PROXY:", strlen("API_PROXY:")) )
+        return pszFilename + strlen("API_PROXY:");
+
+    const char* pszSpawn = CPLGetConfigOption("GDAL_API_PROXY", "NO");
     if( EQUAL(pszSpawn, "NO") || EQUAL(pszSpawn, "OFF") ||
         EQUAL(pszSpawn, "FALSE") || EQUAL(pszSpawn, "0") )
     {
         return NULL;
     }
-
-    if( EQUALN(pszFilename, "RPC:", 4) )
-        return pszFilename + 4;
 
     /* Those datasets cannot work in a multi-process context */
     if( EQUALN(pszFilename, "MEM:::", 6) ||
@@ -4658,7 +4712,7 @@ const char* GDALClientDatasetGetFilename(const char* pszFilename)
     {
         CPLString osExt(CPLGetExtension(pszFilename));
 
-        /* If the file extension is listed in the GDAL_RPC, then */
+        /* If the file extension is listed in the GDAL_API_PROXY, then */
         /* we have a match */
         char** papszTokens = CSLTokenizeString2( pszSpawn, " ,", CSLT_HONOURSTRINGS );
         if( CSLFindString(papszTokens, osExt) >= 0 )
@@ -4667,7 +4721,7 @@ const char* GDALClientDatasetGetFilename(const char* pszFilename)
             return pszFilename;
         }
 
-        /* Otherwise let's suppose that driver names are listed in GDAL_RPC */
+        /* Otherwise let's suppose that driver names are listed in GDAL_API_PROXY */
         /* and check if the file extension matches the extension declared by the */
         /* driver */
         char** papszIter = papszTokens;
@@ -4970,10 +5024,10 @@ CPLErr GDALClientDataset::Delete( const char * pszFilename )
 }
 
 /************************************************************************/
-/*                       GDALSpawnUnloadDriver()                        */
+/*                      GDALUnloadAPIPROXYDriver()                      */
 /************************************************************************/
 
-static void GDALSpawnUnloadDriver(GDALDriver* poDriver)
+static void GDALUnloadAPIPROXYDriver(GDALDriver* poDriver)
 {
     if( bRecycleChild )
     {
@@ -4991,10 +5045,10 @@ static void GDALSpawnUnloadDriver(GDALDriver* poDriver)
 }
 
 /************************************************************************/
-/*                         GDALGetRPCDriver()                         */
+/*                       GDALGetAPIPROXYDriver()                        */
 /************************************************************************/
 
-GDALDriver* GDALGetRPCDriver()
+GDALDriver* GDALGetAPIPROXYDriver()
 {
     static GDALDriver* poDriver = NULL;
     CPLMutexHolderD(GDALGetpDMMutex());
@@ -5006,13 +5060,13 @@ GDALDriver* GDALGetRPCDriver()
         /* If asserted, change GDAL_CLIENT_SERVER_PROTOCOL_MAJOR / GDAL_CLIENT_SERVER_PROTOCOL_MINOR */
         CPLAssert(INSTR_END + 1 == 80);
 
-        const char* pszSpawnRecycle = CPLGetConfigOption("GDAL_RPC_RECYCLE", "YES");
-        if( atoi(pszSpawnRecycle) > 0 )
+        const char* pszConnPool = CPLGetConfigOption("GDAL_API_PROXY_CONN_POOL", "YES");
+        if( atoi(pszConnPool) > 0 )
         {
             bRecycleChild = TRUE;
-            nMaxRecycled = MIN(atoi(pszSpawnRecycle), MAX_RECYCLED);
+            nMaxRecycled = MIN(atoi(pszConnPool), MAX_RECYCLED);
         }
-        else if( CSLTestBoolean(pszSpawnRecycle) )
+        else if( CSLTestBoolean(pszConnPool) )
         {
             bRecycleChild = TRUE;
             nMaxRecycled = DEFAULT_RECYCLED;
@@ -5021,16 +5075,16 @@ GDALDriver* GDALGetRPCDriver()
 
         poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "RPC" );
+        poDriver->SetDescription( "API_PROXY" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "RPC" );
+                                   "API_PROXY" );
 
         poDriver->pfnOpen = GDALClientDataset::Open;
         poDriver->pfnIdentify = GDALClientDataset::Identify;
         poDriver->pfnCreateCopy = GDALClientDataset::CreateCopy;
         poDriver->pfnCreate = GDALClientDataset::Create;
         poDriver->pfnDelete = GDALClientDataset::Delete;
-        poDriver->pfnUnloadDriver = GDALSpawnUnloadDriver;
+        poDriver->pfnUnloadDriver = GDALUnloadAPIPROXYDriver;
     }
     return poDriver;
 }

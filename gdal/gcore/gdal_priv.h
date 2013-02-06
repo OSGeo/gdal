@@ -932,7 +932,7 @@ CPL_C_END
 
 void GDALNullifyOpenDatasetsList();
 void** GDALGetpDMMutex();
-GDALDriver* GDALGetRPCDriver();
+GDALDriver* GDALGetAPIPROXYDriver();
 
 CPLString GDALFindAssociatedFile( const char *pszBasename, const char *pszExt,
                                   char **papszSiblingFiles, int nFlags );

@@ -4,7 +4,7 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Test GDAL RPC mechanism
+# Purpose:  Test GDAL API PROXY mechanism
 # Author:    Even Rouault, <even dot rouault at mines-paris dot org>
 # 
 ###############################################################################
@@ -39,10 +39,10 @@ import gdaltest
 
 ###############################################################################
 #
-def gdal_rpc_start():
+def gdal_api_proxy_start():
 
     import test_py_scripts
-    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_rpc', ' -rpc', display_live_on_parent_stdout = True)
+    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' -api_proxy', display_live_on_parent_stdout = True)
 
     if ret.find('Failed:    0') == -1:
         return 'fail'
@@ -51,7 +51,7 @@ def gdal_rpc_start():
 
 ###############################################################################
 #
-def gdal_rpc_1():
+def gdal_api_proxy_1():
 
     src_ds = gdal.Open('data/byte.tif')
     src_cs = src_ds.GetRasterBand(1).Checksum()
@@ -61,10 +61,10 @@ def gdal_rpc_1():
     src_md = src_ds.GetMetadata()
     src_ds = None
 
-    gdal.SetConfigOption('GDAL_RPC', 'YES')
+    gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
 
     drv = gdal.IdentifyDriver('data/byte.tif')
-    if drv.GetDescription() != 'RPC':
+    if drv.GetDescription() != 'API_PROXY':
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -392,14 +392,14 @@ def gdal_rpc_1():
 
     return 'success'
 
-gdaltest_list = [ gdal_rpc_start ]
+gdaltest_list = [ gdal_api_proxy_start ]
 
 if __name__ == '__main__':
 
-    if len(sys.argv) >= 2 and sys.argv[1] == '-rpc':
-        gdaltest_list = [ gdal_rpc_1 ]
+    if len(sys.argv) >= 2 and sys.argv[1] == '-api_proxy':
+        gdaltest_list = [ gdal_api_proxy_1 ]
 
-    gdaltest.setup_run( 'gdal_rpc' )
+    gdaltest.setup_run( 'gdal_api_proxy' )
 
     gdaltest.run_tests( gdaltest_list )
 
