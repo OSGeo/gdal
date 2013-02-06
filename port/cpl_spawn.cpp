@@ -485,6 +485,8 @@ int CPLPipeRead(CPL_FILE_HANDLE fin, void* data, int length)
                 else
                     return FALSE;
             }
+            else if( n == 0 )
+                return FALSE;
             pabyData += n;
             nRemain -= n;
             break;
@@ -626,7 +628,7 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
             execvp(papszArgv[0], (char* const*) papszArgv);
 
             char* pszErr = strerror(errno);
-            fprintf(stderr, "An error occured while forking process %s : %s", papszArgv[0], pszErr);
+            fprintf(stderr, "An error occured while forking process %s : %s\n", papszArgv[0], pszErr);
 
             exit(1);
         }
