@@ -206,7 +206,7 @@ GDALDriverManager::~GDALDriverManager()
         delete poDriver;
     }
 
-    delete GDALGetRPCDriver();
+    delete GDALGetAPIPROXYDriver();
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup local memory.                                           */
