@@ -157,7 +157,8 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
     }
 
     const char* pszClientFilename = GDALClientDatasetGetFilename(pszFilename);
-    if( pszClientFilename != NULL && !EQUAL(GetDescription(), "MEM") )
+    if( pszClientFilename != NULL && !EQUAL(GetDescription(), "MEM") &&
+        !EQUAL(GetDescription(), "VRT")  )
     {
         GDALDriver* poSpawnDriver = GDALGetRPCDriver();
         if( poSpawnDriver != this )
