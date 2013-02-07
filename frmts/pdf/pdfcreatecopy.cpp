@@ -181,7 +181,7 @@ int GDALPDFWriter::ParseTrailerAndXRef()
         return FALSE;
     }
 
-    nLastStartXRef = atoi(pszStartXRef);
+    nLastStartXRef = CPLScanUIntBig(pszStartXRef,16);
 
     /* Skip to beginning of xref section */
     VSIFSeekL(fp, nLastStartXRef, SEEK_SET);
@@ -477,7 +477,7 @@ void GDALPDFWriter::WriteXRefTableAndTrailer()
     if (nInfoId)
         oDict.Add("Info", nInfoId, nInfoGen);
     if (nLastStartXRef)
-        oDict.Add("Prev", nLastStartXRef);
+        oDict.Add("Prev", (double)nLastStartXRef);
     VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
 
     VSIFPrintfL(fp,
