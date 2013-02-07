@@ -147,7 +147,7 @@ class GDALPDFWriter
     int nNamesId;
     int bInWriteObj;
 
-    int nLastStartXRef;
+    vsi_l_offset nLastStartXRef;
     int nLastXRefSize;
     int bCanUpdate;
 

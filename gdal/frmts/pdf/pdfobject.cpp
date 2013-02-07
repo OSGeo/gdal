@@ -193,8 +193,8 @@ void GDALPDFObject::Serialize(CPLString& osStr)
             char szReal[512];
             double dfRealNonRounded = GetReal();
             double dfReal = ROUND_TO_INT_IF_CLOSE(dfRealNonRounded);
-            if (dfReal == (double)(int)dfReal)
-                sprintf(szReal, "%d", (int)dfReal);
+            if (dfReal == (double)(GIntBig)dfReal)
+                sprintf(szReal, CPL_FRMT_GIB, (GIntBig)dfReal);
             else if (CanRepresentRealAsString())
             {
                 /* Used for OGC BP numeric values */
