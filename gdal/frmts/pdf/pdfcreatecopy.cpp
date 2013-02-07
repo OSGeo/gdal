@@ -442,7 +442,9 @@ void GDALPDFWriter::WriteXRefTableAndTrailer()
                 size_t iEnd = i + nCount;
                 for(; i < iEnd; i++)
                 {
-                    snprintf (buffer, sizeof(buffer), "%010ld", (long)asXRefEntries[i].nOffset);
+                    snprintf (buffer, sizeof(buffer),
+                              "%010" CPL_FRMT_GB_WITHOUT_PREFIX "u",
+                              asXRefEntries[i].nOffset);
                     VSIFPrintfL(fp, "%s %05d %c \n",
                                 buffer, asXRefEntries[i].nGen,
                                 asXRefEntries[i].bFree ? 'f' : 'n');
@@ -461,7 +463,9 @@ void GDALPDFWriter::WriteXRefTableAndTrailer()
         VSIFPrintfL(fp, "0000000000 65535 f \n");
         for(size_t i=0;i<asXRefEntries.size();i++)
         {
-            snprintf (buffer, sizeof(buffer), "%010ld", (long)asXRefEntries[i].nOffset);
+            snprintf (buffer, sizeof(buffer),
+                      "%010" CPL_FRMT_GB_WITHOUT_PREFIX "u",
+                      asXRefEntries[i].nOffset);
             VSIFPrintfL(fp, "%s %05d n \n", buffer, asXRefEntries[i].nGen);
         }
     }
@@ -478,9 +482,9 @@ void GDALPDFWriter::WriteXRefTableAndTrailer()
 
     VSIFPrintfL(fp,
                 "startxref\n"
-                "%ld\n"
+                CPL_FRMT_GUIB "\n"
                 "%%%%EOF\n",
-                (long)nOffsetXREF);
+                nOffsetXREF);
 }
 
 /************************************************************************/
