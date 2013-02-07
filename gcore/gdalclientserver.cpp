@@ -1198,7 +1198,7 @@ static int GDALServerSpawnAsyncFinish(GDALServerSpawnedProcess* ssp)
             if( aspRecycled[i] == NULL )
             {
                 if( !GDALEmitReset(ssp->p) )
-                    return FALSE;
+                    break;
 
                 aspRecycled[i] = ssp;
                 return TRUE;
@@ -1208,8 +1208,7 @@ static int GDALServerSpawnAsyncFinish(GDALServerSpawnedProcess* ssp)
 
     if(ssp->p->bOK)
     {
-        if( !GDALEmitEXIT(ssp->p) )
-            return FALSE;
+        GDALEmitEXIT(ssp->p);
     }
 
     CPLDebug("GDAL", "Destroy spawned process %p", ssp);
@@ -3418,8 +3417,8 @@ void GDALClientDataset::FlushCache()
     CLIENT_ENTER();
     SetPamFlags(0);
     GDALPamDataset::FlushCache();
-    GDALPipeWrite(p, INSTR_FlushCache);
-    if( !GDALSkipUntilEndOfJunkMarker(p) )
+    if( !GDALPipeWrite(p, INSTR_FlushCache) ||
+        !GDALSkipUntilEndOfJunkMarker(p) )
         return;
     GDALConsumeErrors(p);
 }
@@ -4723,27 +4722,52 @@ int GDALClientDataset::Init(const char* pszFilename, GDALAccess eAccess)
 /*                     GDALClientDatasetGetFilename()                   */
 /************************************************************************/
 
+static int IsSeparateExecutable()
+{
+#ifdef WIN32
+    return TRUE;
+#else
+    const char* pszSpawnServer = CPLGetConfigOption("GDAL_API_PROXY_SERVER", "NO");
+    if( EQUAL(pszSpawnServer, "NO") || EQUAL(pszSpawnServer, "OFF") ||
+        EQUAL(pszSpawnServer, "FALSE")  || EQUAL(pszSpawnServer, "0") )
+        return FALSE;
+    else
+        return TRUE;
+#endif
+}
+
 const char* GDALClientDatasetGetFilename(const char* pszFilename)
 {
+    const char* pszSpawn;
     if( EQUALN(pszFilename, "API_PROXY:", strlen("API_PROXY:")) )
-        return pszFilename + strlen("API_PROXY:");
-
-    const char* pszSpawn = CPLGetConfigOption("GDAL_API_PROXY", "NO");
-    if( EQUAL(pszSpawn, "NO") || EQUAL(pszSpawn, "OFF") ||
-        EQUAL(pszSpawn, "FALSE") || EQUAL(pszSpawn, "0") )
     {
-        return NULL;
+        pszFilename += strlen("API_PROXY:");
+        pszSpawn = "YES";
+    }
+    else
+    {
+        pszSpawn = CPLGetConfigOption("GDAL_API_PROXY", "NO");
+        if( EQUAL(pszSpawn, "NO") || EQUAL(pszSpawn, "OFF") ||
+            EQUAL(pszSpawn, "FALSE") || EQUAL(pszSpawn, "0") )
+        {
+            return NULL;
+        }
     }
 
     /* Those datasets cannot work in a multi-process context */
+     /* /vsistdin/ and /vsistdout/ can work on Unix in the fork() only context (i.e. GDAL_API_PROXY_SERVER undefined) */
+     /* since the forked process will inherit the same descriptors as the parent */
+
     if( EQUALN(pszFilename, "MEM:::", 6) ||
         strstr(pszFilename, "/vsimem/") != NULL ||
         strstr(pszFilename, "/vsimem\\") != NULL ||
+        (strstr(pszFilename, "/vsistdout/") != NULL && IsSeparateExecutable()) ||
+        (strstr(pszFilename, "/vsistdin/") != NULL && IsSeparateExecutable()) ||
         EQUALN(pszFilename,"NUMPY:::",8) )
         return NULL;
 
     if( !(EQUAL(pszSpawn, "YES") || EQUAL(pszSpawn, "ON") ||
-               EQUAL(pszSpawn, "TRUE") || EQUAL(pszSpawn, "1")) )
+          EQUAL(pszSpawn, "TRUE") || EQUAL(pszSpawn, "1")) )
     {
         CPLString osExt(CPLGetExtension(pszFilename));
 
