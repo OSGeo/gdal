@@ -129,10 +129,6 @@ static void GDALDatasetFreeFunc(void* elt)
 /* Functions shared between gdalproxypool.cpp and gdaldataset.cpp */
 /************************************************************************/
 
-void** GDALGetphDLMutex();
-void GDALSetResponsiblePIDForCurrentThread(GIntBig responsiblePID);
-GIntBig GDALGetResponsiblePIDForCurrentThread();
-
 /* The open-shared mutex must be used by the ProxyPool too */
 void** GDALGetphDLMutex()
 {
@@ -1859,6 +1855,8 @@ void GDALNullifyOpenDatasetsList()
 {
     phAllDatasetSet = NULL;
     phSharedDatasetSet = NULL;
+    ppDatasets = NULL;
+    hDLMutex = NULL;
 }
 
 /************************************************************************/

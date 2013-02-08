@@ -1049,16 +1049,18 @@ int CPLGetNumCPUs()
 /*                      CPLCreateOrAcquireMutex()                       */
 /************************************************************************/
 
+static pthread_mutex_t global_mutex = PTHREAD_MUTEX_INITIALIZER;
+static void *CPLCreateMutexInternal(int bAlreadyInGlobalLock);
+
 int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
 
 {
     int bSuccess = FALSE;
-    static pthread_mutex_t global_mutex = PTHREAD_MUTEX_INITIALIZER;
 
     pthread_mutex_lock(&global_mutex);
     if( *phMutex == NULL )
     {
-        *phMutex = CPLCreateMutex();
+        *phMutex = CPLCreateMutexInternal(TRUE);
         bSuccess = *phMutex != NULL;
         pthread_mutex_unlock(&global_mutex);
     }
@@ -1086,42 +1088,68 @@ const char *CPLGetThreadingModel()
 /*                           CPLCreateMutex()                           */
 /************************************************************************/
 
-void *CPLCreateMutex()
-
+typedef struct _MutexLinkedElt MutexLinkedElt;
+struct _MutexLinkedElt
 {
-    pthread_mutex_t *hMutex;
+    pthread_mutex_t   sMutex;
+    _MutexLinkedElt  *psPrev;
+    _MutexLinkedElt  *psNext;
+};
+static MutexLinkedElt* psMutexList = NULL;
 
-    hMutex = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
-    if (hMutex == NULL)
-        return NULL;
-
+static void CPLInitMutex(MutexLinkedElt* psItem)
+{
 #if defined(PTHREAD_MUTEX_RECURSIVE) || defined(HAVE_PTHREAD_MUTEX_RECURSIVE)
     {
         pthread_mutexattr_t  attr;
         pthread_mutexattr_init( &attr );
         pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
-        pthread_mutex_init( hMutex, &attr );
+        pthread_mutex_init( &(psItem->sMutex), &attr );
     }
 /* BSDs have PTHREAD_MUTEX_RECURSIVE as an enum, not a define. */
-/* But they have #define MUTEX_TYPE_COUNTING_FAST	PTHREAD_MUTEX_RECURSIVE */
+/* But they have #define MUTEX_TYPE_COUNTING_FAST   PTHREAD_MUTEX_RECURSIVE */
 #elif defined(MUTEX_TYPE_COUNTING_FAST)
     {
         pthread_mutexattr_t  attr;
         pthread_mutexattr_init( &attr );
         pthread_mutexattr_settype( &attr, MUTEX_TYPE_COUNTING_FAST );
-        pthread_mutex_init( hMutex, &attr );
+        pthread_mutex_init( &(psItem->sMutex), &attr );
     }
 #elif defined(PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP)
     pthread_mutex_t tmp_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
-    *hMutex = tmp_mutex;
+    psItem->sMutex = tmp_mutex;
 #else
 #error "Recursive mutexes apparently unsupported, configure --without-threads" 
 #endif
+}
+
+static void *CPLCreateMutexInternal(int bAlreadyInGlobalLock)
+{
+    MutexLinkedElt* psItem = (MutexLinkedElt *) malloc(sizeof(MutexLinkedElt));
+    if (psItem == NULL)
+        return NULL;
+
+    if( !bAlreadyInGlobalLock )
+        pthread_mutex_lock(&global_mutex);
+    psItem->psPrev = NULL;
+    psItem->psNext = psMutexList;
+    if( psMutexList )
+        psMutexList->psPrev = psItem;
+    psMutexList = psItem;
+    if( !bAlreadyInGlobalLock )
+        pthread_mutex_unlock(&global_mutex);
+
+    CPLInitMutex(psItem);
 
     // mutexes are implicitly acquired when created.
-    CPLAcquireMutex( hMutex, 0.0 );
+    CPLAcquireMutex( &(psItem->sMutex), 0.0 );
 
-    return (void *) hMutex;
+    return psItem;
+}
+
+void *CPLCreateMutex()
+{
+    return CPLCreateMutexInternal(FALSE);
 }
 
 /************************************************************************/
@@ -1134,7 +1162,8 @@ int CPLAcquireMutex( void *hMutexIn, double dfWaitInSeconds )
     int err;
 
     /* we need to add timeout support */
-    err =  pthread_mutex_lock( (pthread_mutex_t *) hMutexIn );
+    MutexLinkedElt* psItem = (MutexLinkedElt *) hMutexIn;
+    err =  pthread_mutex_lock( &(psItem->sMutex) );
     
     if( err != 0 )
     {
@@ -1156,7 +1185,8 @@ int CPLAcquireMutex( void *hMutexIn, double dfWaitInSeconds )
 void CPLReleaseMutex( void *hMutexIn )
 
 {
-    pthread_mutex_unlock( (pthread_mutex_t *) hMutexIn );
+    MutexLinkedElt* psItem = (MutexLinkedElt *) hMutexIn;
+    pthread_mutex_unlock( &(psItem->sMutex) );
 }
 
 /************************************************************************/
@@ -1166,8 +1196,36 @@ void CPLReleaseMutex( void *hMutexIn )
 void CPLDestroyMutex( void *hMutexIn )
 
 {
-    pthread_mutex_destroy( (pthread_mutex_t *) hMutexIn );
+    MutexLinkedElt* psItem = (MutexLinkedElt *) hMutexIn;
+    pthread_mutex_destroy( &(psItem->sMutex) );
+    pthread_mutex_lock(&global_mutex);
+    if( psItem->psPrev )
+        psItem->psPrev->psNext = psItem->psNext;
+    if( psItem->psNext )
+        psItem->psNext->psPrev = psItem->psPrev;
+    if( psItem == psMutexList )
+        psMutexList = psItem->psNext;
+    pthread_mutex_unlock(&global_mutex);
     free( hMutexIn );
+}
+
+/************************************************************************/
+/*                          CPLReinitAllMutex()                         */
+/************************************************************************/
+
+/* Used by gdalclientserver.cpp just after forking, to avoid */
+/* deadlocks while mixing threads with fork */
+void CPLReinitAllMutex();
+void CPLReinitAllMutex()
+{
+    MutexLinkedElt* psItem = psMutexList;
+    while(psItem != NULL )
+    {
+        CPLInitMutex(psItem);
+        psItem = psItem->psNext;
+    }
+    pthread_mutex_t tmp_global_mutex = PTHREAD_MUTEX_INITIALIZER;
+    global_mutex = tmp_global_mutex;
 }
 
 /************************************************************************/
