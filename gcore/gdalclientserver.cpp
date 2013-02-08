@@ -1148,7 +1148,7 @@ static void GDALConsumeErrors(GDALPipe* p)
             !GDALPipeRead(p, &nErrNo) ||
             !GDALPipeRead(p, &pszErrorMsg) )
             return;
-        CPLError((CPLErr)eErr, nErrNo, "%s", pszErrorMsg);
+        CPLError((CPLErr)eErr, nErrNo, "%s", pszErrorMsg ? pszErrorMsg : "unknown");
         CPLFree(pszErrorMsg);
     }
 }
@@ -1192,7 +1192,7 @@ static int GDALServerSpawnAsyncFinish(GDALServerSpawnedProcess* ssp)
     {
         /* Store the descriptor in a free slot if available for a */
         /* later reuse */
-        CPLMutexHolderD(GDALGetpDMMutex());
+        CPLMutexHolderD(GDALGetphDMMutex());
         for(int i = 0; i < nMaxRecycled; i ++)
         {
             if( aspRecycled[i] == NULL )
@@ -1302,10 +1302,16 @@ static int GDALCheckServerVersion(GDALPipe* p)
 /************************************************************************/
 
 #ifndef WIN32
+void CPLReinitAllMutex();
+
 static int GDALServerLoopForked(CPL_FILE_HANDLE fin, CPL_FILE_HANDLE fout)
 {
     /* Do not try to close datasets at process closing */
     GDALNullifyOpenDatasetsList();
+    /* Nullify the existing mutex to avoid issues with locked mutex by */
+    /* parent's process threads */
+    GDALNullifyProxyPoolSingleton();
+    CPLReinitAllMutex();
 
     memset(aspRecycled, 0, sizeof(aspRecycled));
 
@@ -1322,7 +1328,7 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
     if( bRecycleChild )
     {
         /* Try to find an existing unused descriptor to reuse it */
-        CPLMutexHolderD(GDALGetpDMMutex());
+        CPLMutexHolderD(GDALGetphDMMutex());
         for(int i = 0; i < nMaxRecycled; i ++)
         {
             if( aspRecycled[i] != NULL )
@@ -4320,7 +4326,7 @@ const char *GDALClientRasterBand::GetUnitType()
     if( !GDALPipeRead(p, &pszUnitType) )
         return "";
     GDALConsumeErrors(p);
-    return pszUnitType;
+    return pszUnitType ? pszUnitType : "";
 }
 
 /************************************************************************/
@@ -5110,7 +5116,7 @@ static void GDALUnloadAPIPROXYDriver(GDALDriver* poDriver)
 GDALDriver* GDALGetAPIPROXYDriver()
 {
     static GDALDriver* poDriver = NULL;
-    CPLMutexHolderD(GDALGetpDMMutex());
+    CPLMutexHolderD(GDALGetphDMMutex());
     if( poDriver == NULL )
     {
 #ifdef DEBUG

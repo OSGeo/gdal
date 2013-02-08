@@ -630,7 +630,7 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
             char* pszErr = strerror(errno);
             fprintf(stderr, "An error occured while forking process %s : %s\n", papszArgv[0], pszErr);
 
-            exit(1);
+            _exit(1);
         }
         else
         {
@@ -641,7 +641,7 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
             if (pfnMain != NULL)
                 nRet = pfnMain((bCreateInputPipe) ? pipe_in[IN_FOR_PARENT] : fileno(stdin),
                                (bCreateOutputPipe) ? pipe_out[OUT_FOR_PARENT] : fileno(stdout));
-            exit(nRet);
+            _exit(nRet);
         }
     }
     else if( pid > 0 )
