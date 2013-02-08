@@ -931,8 +931,12 @@ int GDALReadTabFile2( const char * pszBaseFilename,
 CPL_C_END
 
 void GDALNullifyOpenDatasetsList();
-void** GDALGetpDMMutex();
+void** GDALGetphDMMutex();
+void** GDALGetphDLMutex();
+void GDALNullifyProxyPoolSingleton();
 GDALDriver* GDALGetAPIPROXYDriver();
+void GDALSetResponsiblePIDForCurrentThread(GIntBig responsiblePID);
+GIntBig GDALGetResponsiblePIDForCurrentThread();
 
 CPLString GDALFindAssociatedFile( const char *pszBasename, const char *pszExt,
                                   char **papszSiblingFiles, int nFlags );

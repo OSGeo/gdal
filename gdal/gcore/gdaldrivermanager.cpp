@@ -55,7 +55,7 @@ static const char *pszUpdatableINST_DATA =
 static volatile GDALDriverManager        *poDM = NULL;
 static void *hDMMutex = NULL;
 
-void** GDALGetpDMMutex() { return &hDMMutex; }
+void** GDALGetphDMMutex() { return &hDMMutex; }
 
 /************************************************************************/
 /*                        GetGDALDriverManager()                        */
