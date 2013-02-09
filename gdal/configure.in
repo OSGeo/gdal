@@ -257,6 +257,20 @@ else
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Check if we need -lws2_32
+dnl ---------------------------------------------------------------------------
+
+echo "#include <winsock2.h>" > test_ws2_32.c
+echo "#include <ws2tcpip.h>" >> test_ws2_32.c
+echo "void foo() {}" >> test_ws2_32.c
+
+if test -z "`${CC} -c test_ws2_32.c 2>&1`" ; then
+  LIBS="$LIBS -lws2_32"
+fi
+rm -f test_ws2_32*
+
+
+dnl ---------------------------------------------------------------------------
 dnl Check if user requests hidding internal symbols
 dnl ---------------------------------------------------------------------------
 
