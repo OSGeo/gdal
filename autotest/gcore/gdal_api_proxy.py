@@ -62,6 +62,11 @@ def gdal_api_proxy_1():
     src_ds = None
 
     gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
+    if sys.platform == 'win32':
+        import test_cli_utilities
+        gdalserver_path = test_cli_utilities.get_cli_utility_path('gdalserver')
+        if gdalserver_path is not None:
+            gdal.SetConfigOption('GDAL_API_PROXY_SERVER', gdalserver_path)
 
     drv = gdal.IdentifyDriver('data/byte.tif')
     if drv.GetDescription() != 'API_PROXY':
