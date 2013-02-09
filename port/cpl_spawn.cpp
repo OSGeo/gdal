@@ -90,7 +90,7 @@ static void FillPipeFromFile(VSILFILE* fin, CPL_FILE_HANDLE pipe_fd)
 int CPLSpawn(const char * const papszArgv[], VSILFILE* fin, VSILFILE* fout,
              int bDisplayErr)
 {
-    CPLSpawnedProcess* sp = CPLSpawnAsync(NULL, papszArgv, TRUE, TRUE, TRUE);
+    CPLSpawnedProcess* sp = CPLSpawnAsync(NULL, papszArgv, TRUE, TRUE, TRUE, NULL);
     if( sp == NULL )
         return -1;
 
@@ -123,7 +123,7 @@ int CPLSpawn(const char * const papszArgv[], VSILFILE* fin, VSILFILE* fout,
         CPLError(CE_Failure, CPLE_AppDefined, "[%s error] %s", papszArgv[0], pData);
     CPLFree(pData);
 
-    return CPLSpawnAsyncFinish(sp, FALSE);
+    return CPLSpawnAsyncFinish(sp, TRUE, FALSE);
 }
 
 #if defined(WIN32)
@@ -246,6 +246,7 @@ static void FillFileFromPipe(CPL_FILE_HANDLE pipe_fd, VSILFILE* fout)
 struct _CPLSpawnedProcess
 {
     HANDLE hProcess;
+    DWORD  nProcessId;
     HANDLE hThread;
     CPL_FILE_HANDLE fin;
     CPL_FILE_HANDLE fout;
@@ -260,7 +261,8 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
                                  const char * const papszArgv[],
                                  int bCreateInputPipe,
                                  int bCreateOutputPipe,
-                                 int bCreateErrorPipe)
+                                 int bCreateErrorPipe,
+                                 char** papszOptions)
 {
     HANDLE pipe_in[2] = {NULL, NULL};
     HANDLE pipe_out[2] = {NULL, NULL};
@@ -351,6 +353,7 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
 
     p = (CPLSpawnedProcess*)CPLMalloc(sizeof(CPLSpawnedProcess));
     p->hProcess = piProcInfo.hProcess;
+    p->nProcessId = piProcInfo.dwProcessId;
     p->hThread = piProcInfo.hThread;
     p->fin = pipe_out[IN_FOR_PARENT];
     p->fout = pipe_in[OUT_FOR_PARENT];
@@ -374,16 +377,30 @@ err:
 }
 
 /************************************************************************/
+/*                  CPLSpawnAsyncGetChildProcessId()                    */
+/************************************************************************/
+
+CPL_PID CPLSpawnAsyncGetChildProcessId(CPLSpawnedProcess* p)
+{
+    return p->nProcessId;
+}
+
+/************************************************************************/
 /*                        CPLSpawnAsyncFinish()                         */
 /************************************************************************/
 
-int CPLSpawnAsyncFinish(CPLSpawnedProcess* p, int bKill)
+int CPLSpawnAsyncFinish(CPLSpawnedProcess* p, int bWait, int bKill)
 {
-    WaitForSingleObject( p->hProcess, INFINITE );
-
     // Get the exit code.
     DWORD exitCode = -1;
-    GetExitCodeProcess(p->hProcess, &exitCode);
+
+    if( bWait )
+    {
+        WaitForSingleObject( p->hProcess, INFINITE );
+        GetExitCodeProcess(p->hProcess, &exitCode);
+    }
+    else
+        exitCode = 0;
 
     CloseHandle(p->hProcess);
     CloseHandle(p->hThread);
@@ -396,6 +413,10 @@ int CPLSpawnAsyncFinish(CPLSpawnedProcess* p, int bKill)
     return (int)exitCode;
 }
 
+/************************************************************************/
+/*                 CPLSpawnAsyncCloseInputFileHandle()                  */
+/************************************************************************/
+
 void CPLSpawnAsyncCloseInputFileHandle(CPLSpawnedProcess* p)
 {
     if( p->fin != NULL )
@@ -403,12 +424,20 @@ void CPLSpawnAsyncCloseInputFileHandle(CPLSpawnedProcess* p)
     p->fin = NULL;
 }
 
+/************************************************************************/
+/*                 CPLSpawnAsyncCloseOutputFileHandle()                 */
+/************************************************************************/
+
 void CPLSpawnAsyncCloseOutputFileHandle(CPLSpawnedProcess* p)
 {
     if( p->fout != NULL )
         CloseHandle(p->fout);
     p->fout = NULL;
 }
+
+/************************************************************************/
+/*                 CPLSpawnAsyncCloseErrorFileHandle()                  */
+/************************************************************************/
 
 void CPLSpawnAsyncCloseErrorFileHandle(CPLSpawnedProcess* p)
 {
@@ -592,7 +621,8 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
                                  const char * const papszArgv[],
                                  int bCreateInputPipe,
                                  int bCreateOutputPipe,
-                                 int bCreateErrorPipe)
+                                 int bCreateErrorPipe,
+                                 char** papszOptions)
 {
     pid_t pid;
     int pipe_in[2] = { -1, -1 };
@@ -688,6 +718,15 @@ err:
 }
 
 /************************************************************************/
+/*                  CPLSpawnAsyncGetChildProcessId()                    */
+/************************************************************************/
+
+CPL_PID CPLSpawnAsyncGetChildProcessId(CPLSpawnedProcess* p)
+{
+    return p->pid;
+}
+
+/************************************************************************/
 /*                        CPLSpawnAsyncFinish()                         */
 /************************************************************************/
 
@@ -695,35 +734,47 @@ err:
  * Wait for the forked process to finish.
  *
  * @param p handle returned by CPLSpawnAsync()
+ * @param bWait set to TRUE to wait for the child to terminate. Otherwise the associated
+ *              handles are just cleaned.
  * @param bKill set to TRUE to force child termination (unimplemented right now).
  *
- * @return the return code of the forked process.
+ * @return the return code of the forked process if bWait == TRUE, 0 otherwise
  *
  * @since GDAL 1.10.0
  */
-int CPLSpawnAsyncFinish(CPLSpawnedProcess* p, int bKill)
+int CPLSpawnAsyncFinish(CPLSpawnedProcess* p, int bWait, int bKill)
 {
-    int status = -1;
+    int status;
 
-    while(1)
+    if( bWait )
     {
-        int ret = waitpid (p->pid, &status, 0);
-        if (ret < 0)
+        while(1)
         {
-            if (errno != EINTR)
+            status = -1;
+            int ret = waitpid (p->pid, &status, 0);
+            if (ret < 0)
             {
-                break;
+                if (errno != EINTR)
+                {
+                    break;
+                }
             }
+            else
+                break;
         }
-        else
-            break;
     }
+    else
+        bWait = FALSE;
     CPLSpawnAsyncCloseInputFileHandle(p);
     CPLSpawnAsyncCloseOutputFileHandle(p);
     CPLSpawnAsyncCloseErrorFileHandle(p);
     CPLFree(p);
     return status;
 }
+
+/************************************************************************/
+/*                 CPLSpawnAsyncCloseInputFileHandle()                  */
+/************************************************************************/
 
 void CPLSpawnAsyncCloseInputFileHandle(CPLSpawnedProcess* p)
 {
@@ -732,12 +783,20 @@ void CPLSpawnAsyncCloseInputFileHandle(CPLSpawnedProcess* p)
     p->fin = -1;
 }
 
+/************************************************************************/
+/*                 CPLSpawnAsyncCloseOutputFileHandle()                 */
+/************************************************************************/
+
 void CPLSpawnAsyncCloseOutputFileHandle(CPLSpawnedProcess* p)
 {
     if( p->fout >= 0 )
         close(p->fout);
     p->fout = -1;
 }
+
+/************************************************************************/
+/*                 CPLSpawnAsyncCloseErrorFileHandle()                  */
+/************************************************************************/
 
 void CPLSpawnAsyncCloseErrorFileHandle(CPLSpawnedProcess* p)
 {
