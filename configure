@@ -17380,6 +17380,21 @@ fi
 rm -f test_ws2_32*
 
 
+echo "#include <sys/types.h>" > test_getaddrinfo.c
+echo "#include <sys/socket.h>" >> test_getaddrinfo.c
+echo "#include <netdb.h>" >> test_getaddrinfo.c
+echo "void test() { getaddrinfo(0,0,0,0); }"  >> test_getaddrinfo.c
+
+HAVE_GETADDRINFO=NO
+if test -z "`${CC} -c test_getaddrinfo.c 2>&1`" ; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GETADDRINFO 1
+_ACEOF
+
+fi
+rm -f test_getaddrinfo*
+
 
 
 # Check whether --with-hide_internal_symbols was given.
@@ -17421,11 +17436,7 @@ $as_echo "no" >&6; }
 fi
 
 if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
-
-cat >>confdefs.h <<_ACEOF
-#define USE_GCC_VISIBILITY_FLAG 1
-_ACEOF
-
+  c
 fi
 
 HAVE_HIDE_INTERNAL_SYMBOLS=$HAVE_HIDE_INTERNAL_SYMBOLS
