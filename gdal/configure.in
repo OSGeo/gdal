@@ -269,6 +269,20 @@ if test -z "`${CC} -c test_ws2_32.c 2>&1`" ; then
 fi
 rm -f test_ws2_32*
 
+dnl ---------------------------------------------------------------------------
+dnl Check if we have getaddrinfo
+dnl ---------------------------------------------------------------------------
+
+echo "#include <sys/types.h>" > test_getaddrinfo.c
+echo "#include <sys/socket.h>" >> test_getaddrinfo.c
+echo "#include <netdb.h>" >> test_getaddrinfo.c
+echo "void test() { getaddrinfo(0,0,0,0); }"  >> test_getaddrinfo.c
+
+HAVE_GETADDRINFO=NO
+if test -z "`${CC} -c test_getaddrinfo.c 2>&1`" ; then
+  AC_DEFINE_UNQUOTED(HAVE_GETADDRINFO,1, [Define to 1 if you have the `getaddrinfo' function.])
+fi
+rm -f test_getaddrinfo*
 
 dnl ---------------------------------------------------------------------------
 dnl Check if user requests hidding internal symbols
@@ -304,7 +318,7 @@ else
 fi
 
 if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
-  AC_DEFINE_UNQUOTED(USE_GCC_VISIBILITY_FLAG,1, [Define to 1 if you want to use the -fvisibility GCC flag])
+  c
 fi
 
 AC_SUBST(HAVE_HIDE_INTERNAL_SYMBOLS,$HAVE_HIDE_INTERNAL_SYMBOLS)
