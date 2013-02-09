@@ -1006,7 +1006,7 @@ static GCExportFileH GCIOAPI_CALL1(*) _Create_GCIO (
 {
   GCExportFileH* hGXT;
 
-  CPLDebug("GEOCONCEPT","allocating %u bytes for GCExportFileH", sizeof(GCExportFileH));
+  CPLDebug("GEOCONCEPT","allocating %d bytes for GCExportFileH", (int)sizeof(GCExportFileH));
   if( !(hGXT= CPLMalloc(sizeof(GCExportFileH)) ) )
   {
     CPLError( CE_Failure, CPLE_OutOfMemory,
