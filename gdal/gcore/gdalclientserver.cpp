@@ -27,6 +27,27 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+
+#ifdef WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+typedef SOCKET CPL_SOCKET;
+#else
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+typedef int CPL_SOCKET;
+#define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
+#define SOCKADDR struct sockaddr
+#define WSAGetLastError() errno
+#define WSACleanup()
+#define closesocket(s) close(s)
+#endif
+
 #include "gdal_pam.h"
 #include "gdal_rat.h"
 #include "cpl_spawn.h"
@@ -67,6 +88,10 @@ to just fork() the current process. It is also possible to launch the gdalserver
 by forcing GDAL_API_PROXY_SERVER=YES.
 The full filename of the gdalserver executable can also be specified in the GDAL_API_PROXY_SERVER.
 
+It is also possible to connect to a gdalserver in TCP, possibly on a remote host. In that case,
+gdalserver must be launched on a host with "gdalserver -tcpserver the_tcp_port". And the client
+must set GDAL_API_PROXY_SERVER="hostname:the_tcp_port", where hostname is a string or a IP address.
+
 In case of many dataset opening or creation, to avoid the cost of repeated process forking,
 a pool of unused connections is established. Each time a dataset is closed, the associated connection
 is pushed in the pool (if there's an empty bucket). When a following dataset is to be opened, one of those
@@ -97,6 +122,7 @@ from multiple threads. However, it is safe to use several client datasets from m
 CPL_C_START
 int CPL_DLL GDALServerLoop(CPL_FILE_HANDLE fin, CPL_FILE_HANDLE fout);
 const char* GDALClientDatasetGetFilename(const char* pszFilename);
+int CPL_DLL GDALServerLoopSocket(CPL_SOCKET nSocket);
 CPL_C_END
 
 #define BUFFER_SIZE 1024
@@ -104,6 +130,7 @@ typedef struct
 {
     CPL_FILE_HANDLE fin;
     CPL_FILE_HANDLE fout;
+    CPL_SOCKET      nSocket;
     int             bOK;
     GByte           abyBuffer[BUFFER_SIZE];
     int             nBufferSize;
@@ -566,6 +593,18 @@ static GDALPipe* GDALPipeBuild(CPLSpawnedProcess* sp)
     p->bOK = TRUE;
     p->fin = CPLSpawnAsyncGetInputFileHandle(sp);
     p->fout = CPLSpawnAsyncGetOutputFileHandle(sp);
+    p->nSocket = INVALID_SOCKET;
+    p->nBufferSize = 0;
+    return p;
+}
+
+static GDALPipe* GDALPipeBuild(CPL_SOCKET nSocket)
+{
+    GDALPipe* p = (GDALPipe*)CPLMalloc(sizeof(GDALPipe));
+    p->bOK = TRUE;
+    p->fin = CPL_FILE_INVALID_HANDLE;
+    p->fout = CPL_FILE_INVALID_HANDLE;
+    p->nSocket = nSocket;
     p->nBufferSize = 0;
     return p;
 }
@@ -576,6 +615,7 @@ static GDALPipe* GDALPipeBuild(CPL_FILE_HANDLE fin, CPL_FILE_HANDLE fout)
     p->bOK = TRUE;
     p->fin = fin;
     p->fout = fout;
+    p->nSocket = INVALID_SOCKET;
     p->nBufferSize = 0;
     return p;
 }
@@ -588,13 +628,34 @@ static int GDALPipeWrite_internal(GDALPipe* p, const void* data, int length)
 {
     if(!p->bOK)
         return FALSE;
-    int nRet = CPLPipeWrite(p->fout, data, length);
-    if( !nRet )
+    if( p->fout != CPL_FILE_INVALID_HANDLE )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Write to pipe failed");
-        p->bOK = FALSE;
+        int nRet = CPLPipeWrite(p->fout, data, length);
+        if( !nRet )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Write to pipe failed");
+            p->bOK = FALSE;
+        }
+        return nRet;
     }
-    return nRet;
+    else
+    {
+        const char* pabyData = (const char*) data;
+        int nRemain = length;
+        while( nRemain > 0 )
+        {
+            int nRet = send(p->nSocket, pabyData, nRemain, 0);
+            if( nRet < 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Write to socket socket failed");
+                p->bOK = FALSE;
+                return FALSE;
+            }
+            pabyData += nRet;
+            nRemain -= nRet;
+        }
+        return TRUE;
+    }
 }
 
 /************************************************************************/
@@ -620,6 +681,11 @@ static int GDALPipeFlushBuffer(GDALPipe * p)
 static void GDALPipeFree(GDALPipe * p)
 {
     GDALPipeFlushBuffer(p);
+    if( p->nSocket != INVALID_SOCKET )
+    {
+        closesocket(p->nSocket);
+        WSACleanup();
+    }
     CPLFree(p);
 }
 
@@ -633,12 +699,35 @@ static int GDALPipeRead(GDALPipe* p, void* data, int length)
         return FALSE;
     if(!GDALPipeFlushBuffer(p))
         return FALSE;
-    if( CPLPipeRead(p->fin, data, length) )
+    
+    if( p->fout != CPL_FILE_INVALID_HANDLE )
+    {
+        if( CPLPipeRead(p->fin, data, length) )
+            return TRUE;
+        // fprintf(stderr, "[%d] Read from pipe failed\n", (int)getpid());
+        CPLError(CE_Failure, CPLE_AppDefined, "Read from pipe failed");
+        p->bOK = FALSE;
+        return FALSE;
+    }
+    else
+    {
+        char* pabyData = (char*) data;
+        int nRemain = length;
+        while( nRemain > 0 )
+        {
+            int nRet = recv(p->nSocket, pabyData, nRemain, 0);
+            if( nRet <= 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Read from socket failed");
+                p->bOK = FALSE;
+                return FALSE;
+            }
+            pabyData += nRet;
+            nRemain -= nRet;
+        }
         return TRUE;
-    // fprintf(stderr, "[%d] Read from pipe failed\n", (int)getpid());
-    CPLError(CE_Failure, CPLE_AppDefined, "Read from pipe failed");
-    p->bOK = FALSE;
-    return FALSE;
+    }
+
 }
 
 /************************************************************************/
@@ -1213,7 +1302,7 @@ static int GDALServerSpawnAsyncFinish(GDALServerSpawnedProcess* ssp)
 
     CPLDebug("GDAL", "Destroy spawned process %p", ssp);
     GDALPipeFree(ssp->p);
-    int nRet = CPLSpawnAsyncFinish(ssp->sp, TRUE);
+    int nRet = ssp->sp ? CPLSpawnAsyncFinish(ssp->sp, TRUE, TRUE) : 0;
     CPLFree(ssp);
     return nRet;
 }
@@ -1345,6 +1434,81 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
 #else
     const char* pszSpawnServer = CPLGetConfigOption("GDAL_API_PROXY_SERVER", "NO");
 #endif
+
+    const char* pszColon = strchr(pszSpawnServer, ':');
+    if( pszColon != NULL )
+    {
+        CPLString osHost(pszSpawnServer);
+        osHost.resize(pszColon - pszSpawnServer);
+        int nPort = atoi(pszColon + 1);
+        CPL_SOCKET nConnSocket;
+        struct sockaddr_in sockAddrIn;
+
+#ifdef WIN32
+        WSADATA wsaData;
+
+        int nRet = WSAStartup(MAKEWORD(2, 2), &wsaData);
+        if (nRet != NO_ERROR)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "WSAStartup() failed with error: %d\n", nRet);
+            return NULL;
+        }
+#endif
+
+        sockAddrIn.sin_family = AF_INET;
+        sockAddrIn.sin_addr.s_addr = inet_addr(osHost);
+        if (sockAddrIn.sin_addr.s_addr == INADDR_NONE)
+        {
+            struct hostent *hp;
+            hp = gethostbyname(osHost);
+            if (hp == NULL)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Unknown host : %s", osHost.c_str());
+                WSACleanup();
+                return NULL;
+            }
+            else
+            {
+                sockAddrIn.sin_family = hp->h_addrtype;
+                memcpy(&(sockAddrIn.sin_addr.s_addr), hp->h_addr, hp->h_length);
+            }
+        }
+        sockAddrIn.sin_port = htons(nPort);
+
+        nConnSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if (nConnSocket == INVALID_SOCKET)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "socket() failed with error: %d", WSAGetLastError());
+            WSACleanup();
+            return NULL;
+        }
+
+        if (connect(nConnSocket, (const SOCKADDR *)&sockAddrIn, sizeof (sockAddrIn)) == SOCKET_ERROR )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "connect() function failed with error: %d", WSAGetLastError());
+            closesocket(nConnSocket);
+            WSACleanup();
+            return NULL;
+        }
+
+        GDALServerSpawnedProcess* ssp =
+                (GDALServerSpawnedProcess*)CPLMalloc(sizeof(GDALServerSpawnedProcess));
+        ssp->sp = NULL;
+        ssp->p = GDALPipeBuild(nConnSocket);
+
+        CPLDebug("GDAL", "Create spawned process %p", ssp);
+        if( !GDALCheckServerVersion(ssp->p) )
+        {
+            GDALServerSpawnAsyncFinish(ssp);
+            return NULL;
+        }
+        return ssp;
+    }
+
     if( EQUAL(pszSpawnServer, "YES") || EQUAL(pszSpawnServer, "ON") ||
         EQUAL(pszSpawnServer, "TRUE")  || EQUAL(pszSpawnServer, "1") )
         pszSpawnServer = "gdalserver";
@@ -1356,12 +1520,12 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
     if( EQUAL(pszSpawnServer, "NO") || EQUAL(pszSpawnServer, "OFF") ||
         EQUAL(pszSpawnServer, "FALSE")  || EQUAL(pszSpawnServer, "0") )
     {
-        sp = CPLSpawnAsync(GDALServerLoopForked, NULL, TRUE, TRUE, FALSE);
+        sp = CPLSpawnAsync(GDALServerLoopForked, NULL, TRUE, TRUE, FALSE, NULL);
         bCheckVersions = FALSE;
     }
     else
 #endif
-        sp = CPLSpawnAsync(NULL, apszGDALServer, TRUE, TRUE, FALSE);
+        sp = CPLSpawnAsync(NULL, apszGDALServer, TRUE, TRUE, FALSE, NULL);
 
     if( sp == NULL )
         return NULL;
@@ -2839,6 +3003,26 @@ int GDALServerLoop(CPL_FILE_HANDLE fin, CPL_FILE_HANDLE fout)
     CPLSetConfigOption("GDAL_API_PROXY", "NO");
 
     GDALPipe* p = GDALPipeBuild(fin, fout);
+
+    int nRet = GDALServerLoop(p, NULL, NULL, NULL);
+
+    GDALPipeFree(p);
+
+    return nRet;
+}
+
+/************************************************************************/
+/*                      GDALServerLoopSocket()                          */
+/************************************************************************/
+
+int GDALServerLoopSocket(CPL_SOCKET nSocket)
+{
+#ifndef WIN32
+    unsetenv("CPL_SHOW_MEM_STATS");
+#endif
+    CPLSetConfigOption("GDAL_API_PROXY", "NO");
+
+    GDALPipe* p = GDALPipeBuild(nSocket);
 
     int nRet = GDALServerLoop(p, NULL, NULL, NULL);
 
