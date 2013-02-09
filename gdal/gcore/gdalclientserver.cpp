@@ -33,6 +33,9 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 typedef SOCKET CPL_SOCKET;
+#ifndef HAVE_GETADDRINFO
+#define HAVE_GETADDRINFO
+#endif
 #else
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -1440,14 +1443,13 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
     {
         CPLString osHost(pszSpawnServer);
         osHost.resize(pszColon - pszSpawnServer);
-        int nPort = atoi(pszColon + 1);
         CPL_SOCKET nConnSocket;
-        struct sockaddr_in sockAddrIn;
+        int nRet;
 
 #ifdef WIN32
         WSADATA wsaData;
 
-        int nRet = WSAStartup(MAKEWORD(2, 2), &wsaData);
+        nRet = WSAStartup(MAKEWORD(2, 2), &wsaData);
         if (nRet != NO_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1456,6 +1458,52 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
         }
 #endif
 
+#if HAVE_GETADDRINFO
+        struct addrinfo sHints;
+        struct addrinfo* psResults = NULL, *psResultsIter;
+        memset(&sHints, 0, sizeof(struct addrinfo));
+        sHints.ai_family = AF_UNSPEC;
+        sHints.ai_socktype = SOCK_STREAM;
+        sHints.ai_flags = 0;
+        sHints.ai_protocol = IPPROTO_TCP;
+
+        nRet = getaddrinfo(osHost, pszColon + 1, &sHints, &psResults);
+        if (nRet)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "getaddrinfo(): %s", gai_strerror(nRet));
+            WSACleanup();
+            return NULL;
+        }
+
+        for( psResultsIter = psResults;
+             psResultsIter != NULL;
+             psResultsIter = psResultsIter->ai_next)
+        {
+            nConnSocket = socket(psResultsIter->ai_family,
+                                 psResultsIter->ai_socktype,
+                                 psResultsIter->ai_protocol);
+            if (nConnSocket == INVALID_SOCKET)
+                continue;
+
+            if (connect(nConnSocket, psResultsIter->ai_addr,
+                        psResultsIter->ai_addrlen) != SOCKET_ERROR)
+                break;
+
+            closesocket(nConnSocket);
+        }
+
+        freeaddrinfo(psResults);
+
+        if (psResultsIter == NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Could not connect");
+            WSACleanup();
+            return NULL;
+        }
+#else
+        struct sockaddr_in sockAddrIn;
+        int nPort = atoi(pszColon + 1);
         sockAddrIn.sin_family = AF_INET;
         sockAddrIn.sin_addr.s_addr = inet_addr(osHost);
         if (sockAddrIn.sin_addr.s_addr == INADDR_NONE)
@@ -1494,6 +1542,7 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
             WSACleanup();
             return NULL;
         }
+#endif
 
         GDALServerSpawnedProcess* ssp =
                 (GDALServerSpawnedProcess*)CPLMalloc(sizeof(GDALServerSpawnedProcess));
