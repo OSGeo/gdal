@@ -29,7 +29,7 @@ gdalinfo.exe:	gdalinfo.c commonutils.cpp $(GDALLIB) $(XTRAOBJ)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
 gdalserver.exe:	gdalserver.c $(GDALLIB) $(XTRAOBJ) 
-	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalserver.c $(XTRAOBJ) $(LIBS) \
+	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalserver.c ws2_32.lib $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
