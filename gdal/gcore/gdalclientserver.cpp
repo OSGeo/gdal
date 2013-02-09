@@ -30,25 +30,28 @@
 #include "cpl_port.h"
 
 #ifdef WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-typedef SOCKET CPL_SOCKET;
-#ifndef HAVE_GETADDRINFO
-#define HAVE_GETADDRINFO 1
-#endif
+  #ifndef _WIN32_WINNT
+    #define _WIN32_WINNT 0x0501
+  #endif
+  #include <winsock2.h>
+  #include <ws2tcpip.h>
+  typedef SOCKET CPL_SOCKET;
+  #ifndef HAVE_GETADDRINFO
+    #define HAVE_GETADDRINFO 1
+  #endif
 #else
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-typedef int CPL_SOCKET;
-#define INVALID_SOCKET -1
-#define SOCKET_ERROR -1
-#define SOCKADDR struct sockaddr
-#define WSAGetLastError() errno
-#define WSACleanup()
-#define closesocket(s) close(s)
+  #include <sys/types.h>
+  #include <sys/socket.h>
+  #include <netinet/in.h>
+  #include <arpa/inet.h>
+  #include <netdb.h>
+  typedef int CPL_SOCKET;
+  #define INVALID_SOCKET -1
+  #define SOCKET_ERROR -1
+  #define SOCKADDR struct sockaddr
+  #define WSAGetLastError() errno
+  #define WSACleanup()
+  #define closesocket(s) close(s)
 #endif
 
 #include "gdal_pam.h"
