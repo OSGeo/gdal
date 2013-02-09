@@ -34,7 +34,7 @@
 #include <ws2tcpip.h>
 typedef SOCKET CPL_SOCKET;
 #ifndef HAVE_GETADDRINFO
-#define HAVE_GETADDRINFO
+#define HAVE_GETADDRINFO 1
 #endif
 #else
 #include <sys/types.h>
@@ -1443,7 +1443,7 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
     {
         CPLString osHost(pszSpawnServer);
         osHost.resize(pszColon - pszSpawnServer);
-        CPL_SOCKET nConnSocket;
+        CPL_SOCKET nConnSocket = INVALID_SOCKET;
         int nRet;
 
 #ifdef WIN32
@@ -1458,7 +1458,7 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
         }
 #endif
 
-#if HAVE_GETADDRINFO
+#ifdef HAVE_GETADDRINFO
         struct addrinfo sHints;
         struct addrinfo* psResults = NULL, *psResultsIter;
         memset(&sHints, 0, sizeof(struct addrinfo));
@@ -1870,7 +1870,7 @@ static int GDALServerLoop(GDALPipe* p,
                 int i;
                 int bAllSame = TRUE;
                 GDALRasterBand* poFirstBand = NULL;
-                int nFBBlockXSize, nFBBlockYSize;
+                int nFBBlockXSize = 0, nFBBlockYSize = 0;
 
                 /* Check if all bands are identical */
                 for(i=0;i<nBands;i++)
