@@ -17370,6 +17370,17 @@ $as_echo "no" >&6; }
 fi
 
 
+echo "#include <winsock2.h>" > test_ws2_32.c
+echo "#include <ws2tcpip.h>" >> test_ws2_32.c
+echo "void foo() {}" >> test_ws2_32.c
+
+if test -z "`${CC} -c test_ws2_32.c 2>&1`" ; then
+  LIBS="$LIBS -lws2_32"
+fi
+rm -f test_ws2_32*
+
+
+
 
 # Check whether --with-hide_internal_symbols was given.
 if test "${with_hide_internal_symbols+set}" = set; then :
