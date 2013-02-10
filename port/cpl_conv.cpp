@@ -2137,6 +2137,20 @@ void CPLCloseShared( FILE * fp )
     }
 }
 
+
+/************************************************************************/
+/*                   CPLCleanupSharedFileMutex()                        */
+/************************************************************************/
+
+void CPLCleanupSharedFileMutex()
+{
+    if( hSharedFileMutex != NULL )
+    {
+        CPLDestroyMutex(hSharedFileMutex);
+        hSharedFileMutex = NULL;
+    }
+}
+
 /************************************************************************/
 /*                          CPLGetSharedList()                          */
 /************************************************************************/

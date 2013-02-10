@@ -63,6 +63,7 @@ int   CPL_DLL CPLCreateOrAcquireMutex( void **, double dfWaitInSeconds );
 int   CPL_DLL CPLAcquireMutex( void *hMutex, double dfWaitInSeconds );
 void  CPL_DLL CPLReleaseMutex( void *hMutex );
 void  CPL_DLL CPLDestroyMutex( void *hMutex );
+void  CPL_DLL CPLCleanupMasterMutex();
 
 void  CPL_DLL *CPLCreateCond();
 void  CPL_DLL  CPLCondWait( void *hCond, void* hMutex );
