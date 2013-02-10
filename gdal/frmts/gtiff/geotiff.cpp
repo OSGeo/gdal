@@ -9629,13 +9629,14 @@ static void GTiffTagExtender(TIFF *tif)
 #include <dlfcn.h>
 #endif
 
+static void* hGTiffOneTimeInitMutex = NULL;
+
 int GTiffOneTimeInit()
 
 {
     static int bInitIsOk = TRUE;
     static int bOneTimeInitDone = FALSE;
-    static void* hMutex = NULL;
-    CPLMutexHolder oHolder( &hMutex);
+    CPLMutexHolder oHolder( &hGTiffOneTimeInitMutex);
     if( bOneTimeInitDone )
         return bInitIsOk;
 
@@ -9680,6 +9681,7 @@ int GTiffOneTimeInit()
 /*                        GDALDeregister_GTiff()                        */
 /************************************************************************/
 
+static
 void GDALDeregister_GTiff( GDALDriver * )
 
 {
@@ -9688,6 +9690,12 @@ void GDALDeregister_GTiff( GDALDriver * )
 #if defined(LIBGEOTIFF_VERSION) && LIBGEOTIFF_VERSION > 1150
     GTIFDeaccessCSV();
 #endif
+
+    if( hGTiffOneTimeInitMutex != NULL )
+    {
+        CPLDestroyMutex(hGTiffOneTimeInitMutex);
+        hGTiffOneTimeInitMutex = NULL;
+    }
 }
 
 /************************************************************************/

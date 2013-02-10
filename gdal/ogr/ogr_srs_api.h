@@ -684,6 +684,8 @@ OCTTransformEx( OGRCoordinateTransformationH hCT,
 /* this is really private to OGR. */
 char *OCTProj4Normalize( const char *pszProj4Src );
 
+void OCTCleanupProjMutex();
+
 /* -------------------------------------------------------------------- */
 /*      Projection transform dictionary query.                          */
 /* -------------------------------------------------------------------- */

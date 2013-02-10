@@ -5328,6 +5328,7 @@ CPLErr GDALClientDataset::Delete( const char * pszFilename )
 /************************************************************************/
 /*                      GDALUnloadAPIPROXYDriver()                      */
 /************************************************************************/
+static GDALDriver* poAPIPROXYDriver = NULL;
 
 static void GDALUnloadAPIPROXYDriver(GDALDriver* poDriver)
 {
@@ -5344,6 +5345,7 @@ static void GDALUnloadAPIPROXYDriver(GDALDriver* poDriver)
             }
         }
     }
+    poAPIPROXYDriver = NULL; 
 }
 
 /************************************************************************/
@@ -5352,9 +5354,8 @@ static void GDALUnloadAPIPROXYDriver(GDALDriver* poDriver)
 
 GDALDriver* GDALGetAPIPROXYDriver()
 {
-    static GDALDriver* poDriver = NULL;
     CPLMutexHolderD(GDALGetphDMMutex());
-    if( poDriver == NULL )
+    if( poAPIPROXYDriver == NULL )
     {
 #ifdef DEBUG
         CPLAssert(INSTR_END + 1 == sizeof(apszInstr) / sizeof(apszInstr[0]));
@@ -5375,18 +5376,18 @@ GDALDriver* GDALGetAPIPROXYDriver()
         }
         memset(aspRecycled, 0, sizeof(aspRecycled));
 
-        poDriver = new GDALDriver();
+        poAPIPROXYDriver = new GDALDriver();
 
-        poDriver->SetDescription( "API_PROXY" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+        poAPIPROXYDriver->SetDescription( "API_PROXY" );
+        poAPIPROXYDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "API_PROXY" );
 
-        poDriver->pfnOpen = GDALClientDataset::Open;
-        poDriver->pfnIdentify = GDALClientDataset::Identify;
-        poDriver->pfnCreateCopy = GDALClientDataset::CreateCopy;
-        poDriver->pfnCreate = GDALClientDataset::Create;
-        poDriver->pfnDelete = GDALClientDataset::Delete;
-        poDriver->pfnUnloadDriver = GDALUnloadAPIPROXYDriver;
+        poAPIPROXYDriver->pfnOpen = GDALClientDataset::Open;
+        poAPIPROXYDriver->pfnIdentify = GDALClientDataset::Identify;
+        poAPIPROXYDriver->pfnCreateCopy = GDALClientDataset::CreateCopy;
+        poAPIPROXYDriver->pfnCreate = GDALClientDataset::Create;
+        poAPIPROXYDriver->pfnDelete = GDALClientDataset::Delete;
+        poAPIPROXYDriver->pfnUnloadDriver = GDALUnloadAPIPROXYDriver;
     }
-    return poDriver;
+    return poAPIPROXYDriver;
 }
