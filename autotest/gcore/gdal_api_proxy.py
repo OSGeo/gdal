@@ -38,11 +38,31 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 ###############################################################################
-#
-def gdal_api_proxy_start():
+# Test forked gdalserver
+def gdal_api_proxy_1():
 
     import test_py_scripts
-    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' -api_proxy', display_live_on_parent_stdout = True)
+    import test_cli_utilities
+    gdaltest.gdalserver_path = test_cli_utilities.get_cli_utility_path('gdalserver')
+    if gdaltest.gdalserver_path is None:
+        gdaltest.gdalserver_path = 'gdalserver'
+
+    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -1' % gdaltest.gdalserver_path, display_live_on_parent_stdout = True)
+
+    if ret.find('Failed:    0') == -1:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test connexion to TCP server
+def gdal_api_proxy_2():
+    
+    if sys.version_info < (2,6,0):
+        return 'skip'
+
+    import test_py_scripts
+    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -2' % gdaltest.gdalserver_path, display_live_on_parent_stdout = True)
 
     if ret.find('Failed:    0') == -1:
         return 'fail'
@@ -51,7 +71,7 @@ def gdal_api_proxy_start():
 
 ###############################################################################
 #
-def gdal_api_proxy_1():
+def gdal_api_proxy_sub():
 
     src_ds = gdal.Open('data/byte.tif')
     src_cs = src_ds.GetRasterBand(1).Checksum()
@@ -60,13 +80,6 @@ def gdal_api_proxy_1():
     src_data = src_ds.ReadRaster(0, 0, 20, 20)
     src_md = src_ds.GetMetadata()
     src_ds = None
-
-    gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
-    if sys.platform == 'win32':
-        import test_cli_utilities
-        gdalserver_path = test_cli_utilities.get_cli_utility_path('gdalserver')
-        if gdalserver_path is not None:
-            gdal.SetConfigOption('GDAL_API_PROXY_SERVER', gdalserver_path)
 
     drv = gdal.IdentifyDriver('data/byte.tif')
     if drv.GetDescription() != 'API_PROXY':
@@ -397,12 +410,60 @@ def gdal_api_proxy_1():
 
     return 'success'
 
-gdaltest_list = [ gdal_api_proxy_start ]
+###############################################################################
+#
+def gdal_api_proxy_sub_clean():
+    if gdaltest.tcpserver_p is not None:
+        try:
+            gdaltest.tcpserver_p.terminate()
+        except:
+            pass
+        gdaltest.tcpserver_p.wait()
+
+    return 'success'
+
+gdaltest_list = [ gdal_api_proxy_1, gdal_api_proxy_2 ]
 
 if __name__ == '__main__':
 
-    if len(sys.argv) >= 2 and sys.argv[1] == '-api_proxy':
-        gdaltest_list = [ gdal_api_proxy_1 ]
+    if len(sys.argv) >= 3 and sys.argv[2] == '-1':
+
+        gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
+        if sys.platform == 'win32':
+            gdalserver_path = sys.argv[1]
+            gdal.SetConfigOption('GDAL_API_PROXY_SERVER', gdalserver_path)
+
+        gdaltest.tcpserver_p = None
+        gdaltest_list = [ gdal_api_proxy_sub ]
+
+    elif len(sys.argv) >= 3 and sys.argv[2] == '-2':
+
+        gdalserver_path = sys.argv[1]
+
+        import subprocess
+        import time
+
+        p = None
+        for port in [8080,8081,8082]:
+            p = subprocess.Popen([gdalserver_path, '-tcpserver', '%d' % port])
+            time.sleep(1)
+            if p.poll() is None:
+                break
+            try:
+                p.terminate()
+            except:
+                pass
+            p.wait()
+            p = None
+
+        if p is not None:
+            gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
+            gdal.SetConfigOption('GDAL_API_PROXY_SERVER', 'localhost:%d' % port)
+            print('port = %d' % port)
+            gdaltest.tcpserver_p = p
+            gdaltest_list = [ gdal_api_proxy_sub, gdal_api_proxy_sub_clean ]
+        else:
+            gdaltest_list = []
 
     gdaltest.setup_run( 'gdal_api_proxy' )
 
