@@ -1442,7 +1442,8 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
 #endif
 
     const char* pszColon = strchr(pszSpawnServer, ':');
-    if( pszColon != NULL )
+    if( pszColon != NULL &&
+        pszColon != pszSpawnServer + 1 /* do not confuse with c:/some_path/gdalserver.exe */ )
     {
         CPLString osHost(pszSpawnServer);
         osHost.resize(pszColon - pszSpawnServer);
