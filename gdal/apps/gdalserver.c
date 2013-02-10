@@ -241,7 +241,17 @@ int RunNewConnection()
     }
     fflush(stdout);
 
+#ifdef _MSC_VER
+    __try {
+#endif
     nRet = GDALServerLoopSocket(nConnSocket);
+#ifdef _MSC_VER
+    } __except(1) 
+    {
+        fprintf(stderr, "gdalserver exited with a fatal error.\n");
+        nRet = 1;
+    }
+#endif
 
     closesocket(nConnSocket);
     WSACleanup();
@@ -339,6 +349,15 @@ int main(int argc, char* argv[])
 {
     int i, nRet, bRun = FALSE, nPort = -1, bNewConnection = FALSE;
 
+    /*for( i = 1; i < argc; i++ )
+    {
+        if( EQUAL(argv[i], "-daemonize") )
+        {
+            daemon(0, 0);
+            break;
+        }
+    }*/
+
     GDALAllRegister();
 
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
@@ -369,6 +388,8 @@ int main(int argc, char* argv[])
 #endif
         else if( EQUAL(argv[i],"-run") )
             bRun = TRUE;
+        else if( EQUAL(argv[i], "-daemonize") )
+            ;
         else if( argv[i][0] == '-' )
             Usage(CPLSPrintf("Unkown option name '%s'", argv[i]));
         else
