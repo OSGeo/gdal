@@ -1965,7 +1965,7 @@ static int GDALServerLoop(GDALPipe* p,
         else if( instr == INSTR_Identify )
         {
             char* pszFilename = NULL;
-             char* pszCWD = NULL;
+            char* pszCWD = NULL;
             if( !GDALPipeRead(p, &pszFilename) ||
                 pszFilename == NULL ||
                 !GDALPipeRead(p, &pszCWD) )
@@ -2041,6 +2041,7 @@ static int GDALServerLoop(GDALPipe* p,
         else if( instr == INSTR_CreateCopy )
         {
             char* pszFilename = NULL;
+            char* pszSrcDescription = NULL;
             char* pszCWD = NULL;
             char** papszCreateOptions = NULL;
             GDALDriver* poDriver = NULL;
@@ -2048,14 +2049,18 @@ static int GDALServerLoop(GDALPipe* p,
 
             if( !GDALPipeRead(p, &pszFilename) ||
                 pszFilename == NULL ||
+                !GDALPipeRead(p, &pszSrcDescription) ||
                 !GDALPipeRead(p, &pszCWD) ||
                 !GDALPipeRead(p, &bStrict) ||
                 !GDALPipeRead(p, &papszCreateOptions) )
             {
                 CPLFree(pszFilename);
+                CPLFree(pszSrcDescription);
                 CPLFree(pszCWD);
                 break;
             }
+
+            CPLFree(pszSrcDescription);
 
             if( pszCWD != NULL )
             {
@@ -5305,6 +5310,7 @@ int GDALClientDataset::mCreateCopy( const char* pszFilename,
 
     if( !GDALPipeWrite(p, INSTR_CreateCopy) ||
         !GDALPipeWrite(p, pszFilename) ||
+        !GDALPipeWrite(p, poSrcDS->GetDescription()) ||
         !GDALPipeWrite(p, pszCWD) ||
         !GDALPipeWrite(p, bStrict) ||
         !GDALPipeWrite(p, papszOptions) )
