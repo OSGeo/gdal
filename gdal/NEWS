@@ -1,4 +1,4 @@
-= GDAL/OGR 1.10.0 *Preliminary* Release Notes (r23656 to r25549) =
+= GDAL/OGR 1.10.0 *Preliminary* Release Notes (r23656 to r25629) =
 
 == In a nutshell... ==
 
@@ -18,6 +18,7 @@
  * Add a SQL SQLite dialect : http://gdal.org/ogr/ogr_sql_sqlite.html
  * Make GDAL loadable as a SQLite3 extension (named VirtualOGR) (#4782)
  * /vsicurl_streaming/: new virtual file system handler designed to read in streaming mode dynamically generated files
+ * GDAL API_PROXY mechanism to run GDAL drivers in a separate process: http://gdal.org/gdal_api_proxy.html
  * Significantly improved drivers : PDF, SQLite, JP2OpenJPEG
  * Add a geocoding client : http://gdal.org/ogr/ogr__geocoding_8h.html
  * Upgrade to EPSG 8.0 database
@@ -27,6 +28,9 @@
  * data/ozi_datum.csv
  * data/ozi_ellips.csv
  * data/osmconf.ini
+ * include/cpl_progress.h
+ * include/cpl_spawn.h
+ * bin/gdalserver[.exe]
 
 == Backward compatibility issues ==
 
@@ -62,6 +66,7 @@ Build(Windows):
  * (Preliminary) support to build INGRES
  * Make CPLGetErrorHandlerUserData() exported
  * Make OGDI include path overridable (to match OSGeo4W's default location)
+ * Build and install plugins
 
 == GDAL 1.10.0 - Overview of Changes ==
 
@@ -106,8 +111,9 @@ Algorithms:
  * gdal_grid: for 'invdist' algorithm with default parameters, use SSE optimized version if available (at compile and runtime). Can be disabled with GDAL_USE_SSE=NO
 
 Utilities:
+ * General: make usage message more self-explanatory in case of bad option (#4973)
  * gdalmove.py: New application for "warping" an image by just updating its SRS and geotransform.
- * gdal_edit.py: promote it as an 'official' tool
+ * gdal_edit.py: promote it as an 'official' tool (#4963)
  * gdalwarp: assign color interpretation of source bands to target dataset, in the case of target VRT (#4462)
  * gdalwarp: copy metadata and band information from first source dataset and detect for conflicting values, new options -nomd and -cvmd (#3898)
  * gdalwarp: optimization when (-tr and -te) or (-ts and -te) are specified (#4804) 
@@ -130,6 +136,8 @@ Utilities:
  * gdal_contour / gdal_rasterize / gdal_translate: accept numeric values in scientific format.
  * crs2crs2grid.py: New sample Python script
  * gdalcompare.py: New sample Python scrip to compare GDAL datasets
+ * gdal_calc.py: add --co creation option flag (#4964)
+ * gdaladdo: add a -b flag
 
 Multi driver changes:
  * Add support for reading .j2w, .jp2w and .wld files for JP2ECW, JP2MrSID, JP2OPENJPEG and JPEG2000 drivers (#4651)
@@ -163,6 +171,7 @@ ECW driver:
  * Expose 256x256 block dimension instead of scanline
  * Add partial support for ECW SDK 5.0
  * Workaround a ECW SDK 3.3 bug, when doing a RasterIO() with the total number of bands, but not in the 1,2,..n order (#4234)
+ * Add heuristics to detect successive band reading pattern (such as done by QGIS). Beneficial for ECWP
 
 ENVI driver:
  * Add support for writing RPCs and GCPs
@@ -183,6 +192,9 @@ GeoRaster driver:
 
 GIF driver:
  * Add support for giflib 4.2.0 (#4675) and giflib 5.0
+
+GMT driver:
+ * Make GMT driver thread-safe by adding a global mutex (since the netcdf library isn't thread-safe)
 
 GTiff driver:
  * Internal libtiff and libgeotiff refreshed from upstream
@@ -229,12 +241,6 @@ GXF driver:
  * Implement continuued lines mechanism (#4873)
  * Fix various vulnerabilities / DoS
 
-HFA driver:
- * Added BASEDATA support for EPT_u1 (#4537)
- * Fix crash on dataset closing when .ige file header is corrupted (#4596)
- * .aux overviews: avoid destroying existing overviews when asking twice in a row to build overviews for exactly the same overview levels (#4831)
- * Fix sizing of RAT string column maxwidth to include null char (#4867)
-
 HDF4 driver:
  * Unix build: avoid issue with system hdfeos library
  * Ensure we do not try to use the grid tile api for non-tilesized chunks (#4672)
@@ -242,9 +248,18 @@ HDF4 driver:
  * Import HDF USGS GCTP angular parameters as radians
  * Restore conventional add_offset interpretation (#4891)
  * Be more careful about missing dimensions (#4900)
+ * Make HDF4 driver thread-safe by adding a global mutex (since the HDF4 library isn't thread-safe)
+
+HFA driver:
+ * Added BASEDATA support for EPT_u1 (#4537)
+ * Fix crash on dataset closing when .ige file header is corrupted (#4596)
+ * .aux overviews: avoid destroying existing overviews when asking twice in a row to build overviews for exactly the same overview levels (#4831)
+ * Fix sizing of RAT string column maxwidth to include null char (#4867)
+ * Fix segfault in HFAAuxBuildOverviews with selected bands (#4976)
 
 INGR driver:
  * do not reduce tile size to image size (#4856)
+ * fix slowness and incorrect random reading with RLE datasets (#4965)
 
 ISIS3 driver:
  * Ensure scaleFactor defaults to 1 (#4499)
@@ -293,6 +308,7 @@ NetCDF driver:
  * Fix handling of km units in netcdf driver and importFromProj4() (#4769)
  * Fix detection of 1 and 2 pixel width/height netcdf datasets (#4874)
  * Fix subdataset data type info (#4932)
+ * Make netCDF driver thread-safe by adding a global mutex (since the netcdf library isn't thread-safe)
 
 NITF driver:
  * nitf_spec.xml: add definition of ACFTB and AIMIDB TREs
@@ -347,6 +363,10 @@ RPFTOC driver:
  * Relax SanityCheckOK() to avoid rejecting valid CIB datasets (#4791)
  * Avoid selecting a color table that is full black
  * Add missing NITF series code 'TF' for 'TFC' (and fix typo in some other long descriptions) (#4776)
+
+TIL driver:
+ * Fix TIL driver using overview (#3482)
+ * Add set projection and geotransformation for TILDataset
 
 TSX driver:
  * Fix crashes in Identify() with certain filenames, and the file is empty or doesn't exist (#4622)
@@ -414,6 +434,7 @@ OGRSpatialReference:
  * USGS: support USGS angular parameters in radians
  * MorphFromESRI() fix WKT : compare SPHEROID and PRIMEM parameters instead of names (#4673)
  * MorphToESRI(): Add common New Zealand GEOGCS values (#4849)
+ * ogr_srs_esri: Make InitDatumMappingTable() thread-safe
  * ecw_cs.wkt: Add entry for European Terrestrial Reference System 1989.
  * accept "+proj=XXXX [...] +wktext" as a valid PROJ.4 string, even if projection is unhandled by OGR
  * recognize +proj=etmerc when importing from PROJ.4 string; and output +proj=etmerc when exporting Transverse_Mercator to PROJ.4 string if OSR_USE_ETMERC = YES (#4853)
@@ -474,6 +495,9 @@ FileGDB driver:
  * Add XML_DEFINITION layer creation option
  * Support setting fields of type SmallInteger, Float and GUID
 
+Geoconcept driver:
+ * Partial support of relaxed GXT export syntax and fix when line is incomplete (#4983)
+
 GeoJSON driver:
  * Fix HTTP HEADERS field send to server (#4546)
 
@@ -504,6 +528,7 @@ GML driver:
  * Parse correctly <gml:outerBoundaryIs> when there are attributes in the element (#4934)
  * Recognize <gml:GeodesicString>
  * Recognize <gml:Envelope> elements (#4941)
+ * Fix crash when reading CityGML attribute with empty string (#4975)
 
 ILI driver:
  * Support for format codes (#3972)
@@ -545,6 +570,7 @@ MSSQLSpatial driver:
  * Fix the parser to swap coordinates with geography data type (#4642)
  * Fix to read multipoint geometries correctly (#4781)
  * Fix to read 3D geometries correctly (#4806, #4626)
+ * Use MSSQL catalog if geometry_colums doesn't exist (#4967)
 
 MySQL:
  * Enable auto reconnect to MySQL (#4819)
@@ -558,6 +584,8 @@ NAS driver:
  * Use forceToLineString() on line strings (fixes PostNAS #18)
  * Handle MultiCurve and CompositeCurve
  * Merge multilinestrings
+ * Accept XML files that have AAA-Fachschema.xsd in header (and remove trailing whitespace)
+ * Add EPSG:25833
 
 NULL driver:
  * No-op output driver for debugging/benchmarking purpose (Not included in build process)
