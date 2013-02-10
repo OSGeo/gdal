@@ -630,7 +630,7 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename, GDALDataset *p
             output_dir = CPLGetCurrentDir();
         }
     }
-    CPLString outDir = output_dir;
+    CPLString outDir = output_dir ? output_dir : "";
     CPLFree(output_dir);
     output_dir = NULL;
 
