@@ -33,6 +33,7 @@
 #include "ogr_srs_api.h"
 #include "cpl_multiproc.h"
 #include "gdal_pam.h"
+#include "gdal_alg_priv.h"
 
 #ifdef _MSC_VER
 #  ifdef MSVC_USE_VLD
@@ -226,6 +227,7 @@ GDALDriverManager::~GDALDriverManager()
 /* -------------------------------------------------------------------- */
     CPLFinderClean();
     CPLFreeConfig();
+    CPLCleanupSharedFileMutex();
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup any memory allocated by the OGRSpatialReference         */
@@ -252,6 +254,31 @@ GDALDriverManager::~GDALDriverManager()
         CPLDestroyMutex( hDMMutex );
         hDMMutex = NULL;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup dataset list mutex                                      */
+/* -------------------------------------------------------------------- */
+    if ( *GDALGetphDLMutex() != NULL ) 
+    { 
+        CPLDestroyMutex( *GDALGetphDLMutex() ); 
+        *GDALGetphDLMutex() = NULL; 
+    } 
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup gdaltransformer.cpp mutex                               */
+/* -------------------------------------------------------------------- */
+    GDALCleanupTransformDeserializerMutex();
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup cpl_error.cpp mutex                                     */
+/* -------------------------------------------------------------------- */
+    CPLCleanupErrorMutex();
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup the master CPL mutex, which governs the creation        */
+/*      of all other mutexes.                                           */ 
+/* -------------------------------------------------------------------- */
+    CPLCleanupMasterMutex();
 
 /* -------------------------------------------------------------------- */
 /*      Ensure the global driver manager pointer is NULLed out.         */

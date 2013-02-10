@@ -161,6 +161,8 @@ void* GDALRegisterTransformDeserializer(const char* pszTransformName,
                                        GDALTransformDeserializeFunc pfnDeserializeFunc);
 void GDALUnregisterTransformDeserializer(void* pData);
 
+void GDALCleanupTransformDeserializerMutex();
+
 /* Transformer cloning */
 
 void* GDALCloneTPSTransformer( void *pTransformArg );

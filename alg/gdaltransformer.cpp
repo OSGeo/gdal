@@ -2728,6 +2728,18 @@ void GDALUnregisterTransformDeserializer(void* pData)
     }
 }
 
+/************************************************************************/
+/*                GDALUnregisterTransformDeserializer()                 */
+/************************************************************************/
+
+void GDALCleanupTransformDeserializerMutex()
+{
+    if( hDeserializerMutex != NULL )
+    {
+        CPLDestroyMutex(hDeserializerMutex);
+        hDeserializerMutex = NULL;
+    }
+}
 
 /************************************************************************/
 /*                     GDALDeserializeTransformer()                     */

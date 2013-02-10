@@ -92,7 +92,7 @@ typedef struct
  * Note that no error is issued via CPLError() if the directory path is
  * invalid, though NULL is returned.
  * 
- * @param pszPath the relative, or absolute path of a directory to read.  
+ * @param pszPathIn the relative, or absolute path of a directory to read.  
  * UTF-8 encoded.
  *
  * @return The list of entries in the directory and subdirectories 
@@ -888,11 +888,11 @@ VSIFileManager::~VSIFileManager()
 /************************************************************************/
 
 static VSIFileManager *poManager = NULL;
+static void* hVSIFileManagerMutex = NULL;
 
 VSIFileManager *VSIFileManager::Get()
 
 {
-    static void* hMutex = NULL;
     static volatile int nConstructerPID = 0;
     if( poManager != NULL )
     {
@@ -903,7 +903,7 @@ VSIFileManager *VSIFileManager::Get()
             {
                 //printf("Thread %d: Waiting for VSIFileManager to be finished by other thread.\n", nCurrentPID);
                 {
-                    CPLMutexHolder oHolder( &hMutex );
+                    CPLMutexHolder oHolder( &hVSIFileManagerMutex );
                 }
                 //printf("Thread %d: End of wait for VSIFileManager construction to be finished\n", nCurrentPID);
                 CPLAssert(nConstructerPID == 0);
@@ -912,7 +912,7 @@ VSIFileManager *VSIFileManager::Get()
         return poManager;
     }
 
-    CPLMutexHolder oHolder2( &hMutex );
+    CPLMutexHolder oHolder2( &hVSIFileManagerMutex );
     if( poManager == NULL )
     {
         nConstructerPID = (int)CPLGetPID();
@@ -1001,6 +1001,12 @@ void VSICleanupFileManager()
     {
         delete poManager;
         poManager = NULL;
+    }
+
+    if( hVSIFileManagerMutex != NULL )
+    {
+        CPLDestroyMutex(hVSIFileManagerMutex);
+        hVSIFileManagerMutex = NULL;
     }
 }
 
