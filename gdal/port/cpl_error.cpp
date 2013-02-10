@@ -393,6 +393,7 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
         strcat( pszMessage, ": " );
     }
 #endif
+    //sprintf(pszMessage,"[%d] ", (int)getpid());
 
 /* -------------------------------------------------------------------- */
 /*      Add the category.                                               */
@@ -880,3 +881,16 @@ void CPL_STDCALL _CPLAssert( const char * pszExpression, const char * pszFile,
               pszExpression, pszFile, iLine );
 }
 
+
+/************************************************************************/
+/*                       CPLCleanupErrorMutex()                         */
+/************************************************************************/
+
+void CPLCleanupErrorMutex()
+{
+    if( hErrorMutex != NULL )
+    {
+        CPLDestroyMutex(hErrorMutex);
+        hErrorMutex = NULL;
+    }
+}

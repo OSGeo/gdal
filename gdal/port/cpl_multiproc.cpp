@@ -114,13 +114,17 @@ CPLMutexHolder::~CPLMutexHolder()
 /************************************************************************/
 
 #ifndef CPL_MULTIPROC_PTHREAD
+
+#ifndef MUTEX_NONE
+static void *hCOAMutex = NULL;
+#endif
+
 int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
 
 {
     int bSuccess = FALSE;
 
 #ifndef MUTEX_NONE
-    static void *hCOAMutex = NULL;
 
     /*
     ** ironically, creation of this initial mutex is not threadsafe
@@ -158,6 +162,23 @@ int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
     return bSuccess;
 }
 #endif
+
+/************************************************************************/ 
+/*                      CPLCleanupMasterMutex()                         */ 
+/************************************************************************/ 
+ 
+void CPLCleanupMasterMutex() 
+{ 
+#ifndef CPL_MULTIPROC_PTHREAD 
+#ifndef MUTEX_NONE 
+    if( hCOAMutex != NULL ) 
+    { 
+        CPLDestroyMutex( hCOAMutex ); 
+        hCOAMutex = NULL; 
+    } 
+#endif 
+#endif 
+} 
 
 /************************************************************************/
 /*                        CPLCleanupTLSList()                           */

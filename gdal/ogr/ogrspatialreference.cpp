@@ -7115,6 +7115,7 @@ void OSRCleanup( void )
 {
     CleanupESRIDatumMappingTable();
     CSVDeaccess( NULL );
+    OCTCleanupProjMutex();
 }
 
 /************************************************************************/
