@@ -849,7 +849,9 @@ static int GDALPipeRead(GDALPipe* p, char** ppszStr)
         *ppszStr = NULL;
         return TRUE;
     }
-    *ppszStr = (char*) CPLMalloc(nLength + 1);
+    *ppszStr = (nLength < INT_MAX-1) ? (char*) VSIMalloc(nLength + 1) : NULL;
+    if( *ppszStr == NULL )
+        return FALSE;
     if( nLength > 0 && !GDALPipeRead_nolength(p, nLength, *ppszStr) )
     {
         CPLFree(*ppszStr);
@@ -872,7 +874,9 @@ static int GDALPipeRead(GDALPipe* p, char*** ppapszStr)
         return TRUE;
     }
 
-    *ppapszStr = (char**) CPLMalloc(sizeof(char*) * (nStrCount + 1));
+    *ppapszStr = (char**) VSIMalloc2(sizeof(char*), (nStrCount + 1));
+    if( *ppapszStr == NULL )
+        return FALSE;
     for(int i=0;i<nStrCount;i++)
     {
         if( !GDALPipeRead(p, (*ppapszStr) + i) )
@@ -894,7 +898,9 @@ static int GDALPipeRead(GDALPipe* p, int nItems, int** ppanInt)
         return FALSE;
     if( nSize != nItems * (int)sizeof(int) )
         return FALSE;
-    *ppanInt = (int*) CPLMalloc(nSize);
+    *ppanInt = (int*) VSIMalloc(nSize);
+    if( *ppanInt == NULL )
+        return FALSE;
     if( !GDALPipeRead_nolength(p, nSize, *ppanInt) )
         return FALSE;
     return TRUE;
@@ -2898,7 +2904,9 @@ static int GDALServerLoop(GDALPipe* p,
                 !GDALPipeRead(p, &bIncludeOutOfRange) ||
                 !GDALPipeRead(p, &bApproxOK) )
                 break;
-            int* panHistogram = (int*) CPLMalloc(sizeof(int) * nBuckets);
+            int* panHistogram = (int*) VSIMalloc2(sizeof(int), nBuckets);
+            if( panHistogram == NULL )
+                break;
             CPLErr eErr = poBand->GetHistogram(dfMin, dfMax, 
                                      nBuckets, panHistogram, 
                                      bIncludeOutOfRange, bApproxOK, NULL, NULL);
@@ -4296,13 +4304,17 @@ CPLErr GDALClientRasterBand::GetDefaultHistogram( double *pdfMin,
         if( pnBuckets ) *pnBuckets = nBuckets;
         if( ppanHistogram )
         {
-            *ppanHistogram = (int*)CPLMalloc(nSize);
+            *ppanHistogram = (int*)VSIMalloc(nSize);
+            if( *ppanHistogram == NULL )
+                return CE_Failure;
             if( !GDALPipeRead_nolength(p, nSize, *ppanHistogram) )
                 return CE_Failure;
         }
         else
         {
-            int *panHistogram = (int*)CPLMalloc(nSize);
+            int *panHistogram = (int*)VSIMalloc(nSize);
+            if( panHistogram == NULL )
+                return CE_Failure;
             if( !GDALPipeRead_nolength(p, nSize, panHistogram) )
             {
                 CPLFree(panHistogram);
