@@ -3623,6 +3623,24 @@ char** GDALClientDataset::GetFileList()
     if( !GDALPipeRead(p, &papszFileList) )
         return NULL;
     GDALConsumeErrors(p);
+
+    /* If server is Windows and client is Unix, then replace backslahes */
+    /* by slashes */
+#ifndef WIN32
+    char** papszIter = papszFileList;
+    while( papszIter != NULL && *papszIter != NULL )
+    {
+        char* pszIter = *papszIter;
+        char* pszBackSlash;
+        while( (pszBackSlash = strchr(pszIter, '\\')) != NULL )
+        {
+            *pszBackSlash = '/';
+            pszIter = pszBackSlash + 1;
+        }
+        papszIter ++;
+    }
+#endif
+
     return papszFileList;
 }
 
@@ -4950,7 +4968,7 @@ int GDALClientDataset::Init(const char* pszFilename, GDALAccess eAccess)
     GDALPipeWriteConfigOption(p, "GDAL_NETCDF_BOTTOMUP", bRecycleChild);
     GDALPipeWriteConfigOption(p, "OGR_SQLITE_SYNCHRONOUS", bRecycleChild);
 
-    char* pszCWD = (pszFilename != NULL && CPLIsFilenameRelative(pszFilename)) ? CPLGetCurrentDir() : NULL;
+    char* pszCWD = CPLGetCurrentDir();
 
     if( !GDALPipeWrite(p, INSTR_Open) ||
         !GDALPipeWrite(p, eAccess) ||
@@ -5191,7 +5209,7 @@ int GDALClientDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( ssp == NULL )
         return FALSE;
 
-    char* pszCWD = (CPLIsFilenameRelative(pszFilename)) ? CPLGetCurrentDir() : NULL;
+    char* pszCWD = CPLGetCurrentDir();
 
     GDALPipe* p = ssp->p;
     if( !GDALPipeWrite(p, INSTR_Identify) ||
@@ -5224,7 +5242,7 @@ int GDALClientDataset::Identify( GDALOpenInfo * poOpenInfo )
 static int GDALClientDatasetQuietDelete(GDALPipe* p,
                                     const char* pszFilename)
 {
-    char* pszCWD = (CPLIsFilenameRelative(pszFilename)) ? CPLGetCurrentDir() : NULL;
+    char* pszCWD = CPLGetCurrentDir();
     if( !GDALPipeWrite(p, INSTR_QuietDelete) ||
         !GDALPipeWrite(p, pszFilename) ||
         !GDALPipeWrite(p, pszCWD) ||
@@ -5271,7 +5289,7 @@ int GDALClientDataset::mCreateCopy( const char* pszFilename,
     GDALPipeWriteConfigOption(p, "GDAL_PDF_WRITE_GEOREF_ON_IMAGE", bRecycleChild);
     GDALPipeWriteConfigOption(p, "GDAL_PDF_OGC_BP_WRITE_WKT", bRecycleChild);
 
-    char* pszCWD = (CPLIsFilenameRelative(pszFilename)) ? CPLGetCurrentDir() : NULL;
+    char* pszCWD = CPLGetCurrentDir();
 
     if( !GDALPipeWrite(p, INSTR_CreateCopy) ||
         !GDALPipeWrite(p, pszFilename) ||
@@ -5360,7 +5378,7 @@ int GDALClientDataset::mCreate( const char * pszFilename,
     GDALPipeWriteConfigOption(p,"ESRI_XML_PAM", bRecycleChild);
     GDALPipeWriteConfigOption(p,"GTIFF_DONT_WRITE_BLOCKS", bRecycleChild);
 
-    char* pszCWD = (CPLIsFilenameRelative(pszFilename)) ? CPLGetCurrentDir() : NULL;
+    char* pszCWD = CPLGetCurrentDir();
 
     if( !GDALPipeWrite(p, INSTR_Create) ||
         !GDALPipeWrite(p, pszFilename) ||
