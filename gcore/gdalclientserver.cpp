@@ -363,6 +363,32 @@ class EnterObject
 #endif
 
 /************************************************************************/
+/*                            MyChdir()                                 */
+/************************************************************************/
+
+static void MyChdir(const char* pszCWD)
+{
+#ifdef WIN32
+    SetCurrentDirectory(pszCWD);
+#else
+    chdir(pszCWD);
+#endif
+}
+
+/************************************************************************/
+/*                        MyChdirRootDirectory()                        */
+/************************************************************************/
+
+static void MyChdirRootDirectory()
+{
+#ifdef WIN32
+    SetCurrentDirectory("C:\\");
+#else
+    chdir("/");
+#endif
+}
+
+/************************************************************************/
 /*                       GDALClientDataset                              */
 /************************************************************************/
 
@@ -1824,6 +1850,7 @@ static int GDALServerLoop(GDALPipe* p,
             {
                 GDALClose((GDALDatasetH)poDS);
                 poDS = NULL;
+                MyChdirRootDirectory();
                 aBands.resize(0);
             }
             GDALEmitEndOfJunkMarker(p);
@@ -1833,9 +1860,20 @@ static int GDALServerLoop(GDALPipe* p,
         {
             int nAccess;
             char* pszFilename = NULL;
+            char* pszCWD = NULL;
             if( !GDALPipeRead(p, &nAccess) ||
-                !GDALPipeRead(p, &pszFilename) )
+                !GDALPipeRead(p, &pszFilename) ||
+                !GDALPipeRead(p, &pszCWD) )
+            {
+                CPLFree(pszFilename);
+                CPLFree(pszCWD);
                 break;
+            }
+            if( pszCWD != NULL )
+            {
+                MyChdir(pszCWD);
+                CPLFree(pszCWD);
+            }
             if( poSrcDS != NULL )
                 poDS = poSrcDS;
             else if( poDS == NULL && pszFilename != NULL )
@@ -1921,8 +1959,22 @@ static int GDALServerLoop(GDALPipe* p,
         else if( instr == INSTR_Identify )
         {
             char* pszFilename = NULL;
-            if( !GDALPipeRead(p, &pszFilename) )
+             char* pszCWD = NULL;
+            if( !GDALPipeRead(p, &pszFilename) ||
+                pszFilename == NULL ||
+                !GDALPipeRead(p, &pszCWD) )
+            {
+                CPLFree(pszFilename);
+                CPLFree(pszCWD);
                 break;
+            }
+
+            if( pszCWD != NULL )
+            {
+                MyChdir(pszCWD);
+                CPLFree(pszCWD);
+            }
+
             int bRet = GDALIdentifyDriver(pszFilename, NULL) != NULL;
             CPLFree(pszFilename);
             GDALEmitEndOfJunkMarker(p);
@@ -1932,11 +1984,13 @@ static int GDALServerLoop(GDALPipe* p,
         else if( instr == INSTR_Create )
         {
             char* pszFilename = NULL;
+            char* pszCWD = NULL;
             int nXSize, nYSize, nBands, nDataType;
             char** papszOptions = NULL;
             GDALDriver* poDriver = NULL;
             if( !GDALPipeRead(p, &pszFilename) ||
                 pszFilename == NULL ||
+                !GDALPipeRead(p, &pszCWD) ||
                 !GDALPipeRead(p, &nXSize) ||
                 !GDALPipeRead(p, &nYSize) ||
                 !GDALPipeRead(p, &nBands) ||
@@ -1944,8 +1998,16 @@ static int GDALServerLoop(GDALPipe* p,
                 !GDALPipeRead(p, &papszOptions) )
             {
                 CPLFree(pszFilename);
+                CPLFree(pszCWD);
                 break;
             }
+
+            if( pszCWD != NULL )
+            {
+                MyChdir(pszCWD);
+                CPLFree(pszCWD);
+            }
+
             const char* pszDriver = CSLFetchNameValue(papszOptions, "SERVER_DRIVER");
             CPLString osDriver;
             if( pszDriver != NULL )
@@ -1973,18 +2035,28 @@ static int GDALServerLoop(GDALPipe* p,
         else if( instr == INSTR_CreateCopy )
         {
             char* pszFilename = NULL;
+            char* pszCWD = NULL;
             char** papszCreateOptions = NULL;
             GDALDriver* poDriver = NULL;
             int bStrict = FALSE;
 
             if( !GDALPipeRead(p, &pszFilename) ||
                 pszFilename == NULL ||
+                !GDALPipeRead(p, &pszCWD) ||
                 !GDALPipeRead(p, &bStrict) ||
                 !GDALPipeRead(p, &papszCreateOptions) )
             {
                 CPLFree(pszFilename);
+                CPLFree(pszCWD);
                 break;
             }
+
+            if( pszCWD != NULL )
+            {
+                MyChdir(pszCWD);
+                CPLFree(pszCWD);
+            }
+
             const char* pszDriver = CSLFetchNameValue(papszCreateOptions, "SERVER_DRIVER");
             CPLString osDriver;
             if( pszDriver != NULL )
@@ -2033,10 +2105,22 @@ static int GDALServerLoop(GDALPipe* p,
         else if( instr == INSTR_QuietDelete )
         {
             char* pszFilename = NULL;
+            char* pszCWD = NULL;
 
             if( !GDALPipeRead(p, &pszFilename) ||
-                pszFilename == NULL )
+                pszFilename == NULL ||
+                !GDALPipeRead(p, &pszCWD) )
+            {
+                CPLFree(pszFilename);
+                CPLFree(pszCWD);
                 break;
+            }
+
+            if( pszCWD != NULL )
+            {
+                MyChdir(pszCWD);
+                CPLFree(pszCWD);
+            }
 
             GDALDriver::QuietDelete(pszFilename);
 
@@ -4866,10 +4950,17 @@ int GDALClientDataset::Init(const char* pszFilename, GDALAccess eAccess)
     GDALPipeWriteConfigOption(p, "GDAL_NETCDF_BOTTOMUP", bRecycleChild);
     GDALPipeWriteConfigOption(p, "OGR_SQLITE_SYNCHRONOUS", bRecycleChild);
 
+    char* pszCWD = (pszFilename != NULL && CPLIsFilenameRelative(pszFilename)) ? CPLGetCurrentDir() : NULL;
+
     if( !GDALPipeWrite(p, INSTR_Open) ||
         !GDALPipeWrite(p, eAccess) ||
-        !GDALPipeWrite(p, pszFilename))
+        !GDALPipeWrite(p, pszFilename) ||
+        !GDALPipeWrite(p, pszCWD))
+    {
+        CPLFree(pszCWD);
         return FALSE;
+    }
+    CPLFree(pszCWD);
     if( !GDALSkipUntilEndOfJunkMarker(p) )
         return FALSE;
     int bRet = FALSE;
@@ -5100,14 +5191,20 @@ int GDALClientDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( ssp == NULL )
         return FALSE;
 
+    char* pszCWD = (CPLIsFilenameRelative(pszFilename)) ? CPLGetCurrentDir() : NULL;
+
     GDALPipe* p = ssp->p;
     if( !GDALPipeWrite(p, INSTR_Identify) ||
         !GDALPipeWrite(p, pszFilename) ||
+        !GDALPipeWrite(p, pszCWD) ||
         !GDALSkipUntilEndOfJunkMarker(p) )
     {
         GDALServerSpawnAsyncFinish(ssp);
+        CPLFree(pszCWD);
         return FALSE;
     }
+
+    CPLFree(pszCWD);
 
     int bRet;
     if( !GDALPipeRead(p, &bRet) )
@@ -5127,10 +5224,16 @@ int GDALClientDataset::Identify( GDALOpenInfo * poOpenInfo )
 static int GDALClientDatasetQuietDelete(GDALPipe* p,
                                     const char* pszFilename)
 {
+    char* pszCWD = (CPLIsFilenameRelative(pszFilename)) ? CPLGetCurrentDir() : NULL;
     if( !GDALPipeWrite(p, INSTR_QuietDelete) ||
         !GDALPipeWrite(p, pszFilename) ||
+        !GDALPipeWrite(p, pszCWD) ||
         !GDALSkipUntilEndOfJunkMarker(p) )
+    {
+        CPLFree(pszCWD);
         return FALSE;
+    }
+    CPLFree(pszCWD);
     GDALConsumeErrors(p);
     return TRUE;
 }
@@ -5168,11 +5271,18 @@ int GDALClientDataset::mCreateCopy( const char* pszFilename,
     GDALPipeWriteConfigOption(p, "GDAL_PDF_WRITE_GEOREF_ON_IMAGE", bRecycleChild);
     GDALPipeWriteConfigOption(p, "GDAL_PDF_OGC_BP_WRITE_WKT", bRecycleChild);
 
+    char* pszCWD = (CPLIsFilenameRelative(pszFilename)) ? CPLGetCurrentDir() : NULL;
+
     if( !GDALPipeWrite(p, INSTR_CreateCopy) ||
         !GDALPipeWrite(p, pszFilename) ||
+        !GDALPipeWrite(p, pszCWD) ||
         !GDALPipeWrite(p, bStrict) ||
         !GDALPipeWrite(p, papszOptions) )
+    {
+        CPLFree(pszCWD);
         return FALSE;
+    }
+    CPLFree(pszCWD);
 
     int bDriverOK;
     if( !GDALPipeRead(p, &bDriverOK) )
@@ -5250,14 +5360,21 @@ int GDALClientDataset::mCreate( const char * pszFilename,
     GDALPipeWriteConfigOption(p,"ESRI_XML_PAM", bRecycleChild);
     GDALPipeWriteConfigOption(p,"GTIFF_DONT_WRITE_BLOCKS", bRecycleChild);
 
+    char* pszCWD = (CPLIsFilenameRelative(pszFilename)) ? CPLGetCurrentDir() : NULL;
+
     if( !GDALPipeWrite(p, INSTR_Create) ||
         !GDALPipeWrite(p, pszFilename) ||
+        !GDALPipeWrite(p, pszCWD) ||
         !GDALPipeWrite(p, nXSize) ||
         !GDALPipeWrite(p, nYSize) ||
         !GDALPipeWrite(p, nBands) ||
         !GDALPipeWrite(p, eType) ||
         !GDALPipeWrite(p, papszOptions) )
+    {
+        CPLFree(pszCWD);
         return FALSE;
+    }
+    CPLFree(pszCWD);
     if( !GDALSkipUntilEndOfJunkMarker(p) )
         return FALSE;
     int bOK;
