@@ -1597,7 +1597,7 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
     if( EQUAL(pszSpawnServer, "YES") || EQUAL(pszSpawnServer, "ON") ||
         EQUAL(pszSpawnServer, "TRUE")  || EQUAL(pszSpawnServer, "1") )
         pszSpawnServer = "gdalserver";
-    const char* apszGDALServer[] = { pszSpawnServer, "-run", NULL };
+    const char* apszGDALServer[] = { pszSpawnServer, "-stdinout", NULL };
     int bCheckVersions = TRUE;
 
     CPLSpawnedProcess* sp;
