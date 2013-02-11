@@ -61,10 +61,12 @@ CPL_CVSID("$Id$");
 void Usage(const char* pszErrorMsg)
 
 {
-    printf( "Usage: gdalserver [--help-general] [--help] [-run | -tcpserver port]\n");
+    printf( "Usage: gdalserver [--help-general] [--help] [-tcpserver port | -stdinout]\n");
     printf( "\n" );
-    printf( "This utility is not meant at being directly used by a user.\n");
-    printf( "It is a helper utility for the client/server working of GDAL.\n");
+    printf( "-tcpserver : Launch a TCP server on the specified port that can accept.\n");
+    printf( "             connections from GDAL clients.\n");
+    printf( "-stdinout  : This mode is not meant at being directly used by a user.\n");
+    printf( "             It is a helper utility for the client/server working of GDAL.\n");
 
     if( pszErrorMsg != NULL )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
@@ -211,9 +213,9 @@ int RunNewConnection()
     WSAPROTOCOL_INFO sSocketInfo;
     SOCKET nConnSocket;
 
-    if( fread(&sSocketInfo, sizeof(sSocketInfo), 1, stdin) != 1 )
+    if (!CPLPipeRead(GetStdHandle(STD_INPUT_HANDLE), &sSocketInfo, sizeof(sSocketInfo)))
     {
-        fprintf(stderr, "fread failed\n");
+        fprintf(stderr, "CPLPipeRead() failed\n");
         return 1;
     }
 
@@ -232,14 +234,12 @@ int RunNewConnection()
         return 1;
     }
 
-    if( fwrite("ready", 5, 1, stdout) != 1 )
+    if (!CPLPipeWrite(GetStdHandle(STD_OUTPUT_HANDLE), "ready", 5))
     {
-        fprintf(stderr, "fwrite() failed\n");
-        closesocket(nConnSocket);
-        WSACleanup();
+        fprintf(stderr, "CPLPipeWrite() failed\n");
         return 1;
     }
-    fflush(stdout);
+    CloseHandle(GetStdHandle(STD_OUTPUT_HANDLE));
 
 #ifdef _MSC_VER
     __try {
@@ -347,7 +347,7 @@ int RunTCPServer(const char* pszApplication, int nPort)
 
 int main(int argc, char* argv[])
 {
-    int i, nRet, bRun = FALSE, nPort = -1, bNewConnection = FALSE;
+    int i, nRet, bStdinout = FALSE, nPort = -1, bNewConnection = FALSE;
 
     /*for( i = 1; i < argc; i++ )
     {
@@ -386,8 +386,8 @@ int main(int argc, char* argv[])
             bNewConnection = TRUE;
         }
 #endif
-        else if( EQUAL(argv[i],"-run") )
-            bRun = TRUE;
+        else if( EQUAL(argv[i],"-stdinout") )
+            bStdinout = TRUE;
         else if( EQUAL(argv[i], "-daemonize") )
             ;
         else if( argv[i][0] == '-' )
@@ -395,7 +395,7 @@ int main(int argc, char* argv[])
         else
             Usage("Too many command options.");
     }
-    if( !bRun && nPort < 0 && !bNewConnection )
+    if( !bStdinout && nPort < 0 && !bNewConnection )
         Usage(NULL);
 
     if( nPort > 0 )
