@@ -30,16 +30,31 @@
 #include "cpl_port.h"
 
 #ifdef WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-typedef SOCKET CPL_SOCKET;
+  #ifndef _WIN32_WINNT
+    #define _WIN32_WINNT 0x0501
+  #endif
+  #include <winsock2.h>
+  #include <ws2tcpip.h>
+  typedef SOCKET CPL_SOCKET;
+  #ifndef HAVE_GETADDRINFO
+    #define HAVE_GETADDRINFO 1
+  #endif
 #else
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-typedef int CPL_SOCKET;
+  #include <sys/types.h>
+  #include <sys/wait.h>
+  #include <sys/socket.h>
+  #include <netinet/in.h>
+  #include <unistd.h>
+  #ifdef HAVE_GETADDRINFO
+    #include <netdb.h>
+  #endif
+  typedef int CPL_SOCKET;
+  #define INVALID_SOCKET -1
+  #define SOCKET_ERROR -1
+  #define SOCKADDR struct sockaddr
+  #define WSAGetLastError() errno
+  #define WSACleanup()
+  #define closesocket(s) close(s)
 #endif
 
 
@@ -74,18 +89,116 @@ void Usage(const char* pszErrorMsg)
     exit( 1 );
 }
 
+
+/************************************************************************/
+/*                CreateSocketAndBindAndListen()                        */
+/************************************************************************/
+
+int CreateSocketAndBindAndListen(const char* pszService,
+                                 int *pnFamily,
+                                 int *pnSockType,
+                                 int *pnProtocol)
+{
+    CPL_SOCKET nListenSocket = INVALID_SOCKET;
+
+#ifdef HAVE_GETADDRINFO
+    int nRet;
+    struct addrinfo sHints;
+    struct addrinfo* psResults = NULL, *psResultsIter;
+    memset(&sHints, 0, sizeof(struct addrinfo));
+    sHints.ai_family = AF_UNSPEC;
+    sHints.ai_socktype = SOCK_STREAM;
+    sHints.ai_flags = AI_PASSIVE;
+    sHints.ai_protocol = IPPROTO_TCP;
+
+    nRet = getaddrinfo(NULL, pszService, &sHints, &psResults);
+    if (nRet)
+    {
+        fprintf(stderr, "getaddrinfo(): %s\n", gai_strerror(nRet));
+        return INVALID_SOCKET;
+    }
+
+    for( psResultsIter = psResults;
+         psResultsIter != NULL;
+         psResultsIter = psResultsIter->ai_next)
+    {
+        nListenSocket = socket(psResultsIter->ai_family,
+                               psResultsIter->ai_socktype,
+                               psResultsIter->ai_protocol);
+        if (nListenSocket == INVALID_SOCKET)
+            continue;
+
+        if (bind(nListenSocket, psResultsIter->ai_addr,
+                 psResultsIter->ai_addrlen) != SOCKET_ERROR)
+        {
+            if( pnFamily )   *pnFamily =   psResultsIter->ai_family;
+            if( pnSockType ) *pnSockType = psResultsIter->ai_socktype;
+            if( pnProtocol ) *pnProtocol = psResultsIter->ai_protocol;
+
+            break;
+        }
+
+        closesocket(nListenSocket);
+    }
+
+    freeaddrinfo(psResults);
+
+    if (psResultsIter == NULL)
+    {
+        fprintf(stderr, "Could not bind()\n");
+        return INVALID_SOCKET;
+    }
+
+#else
+
+    struct sockaddr_in sockAddrIn;
+
+    if( pnFamily )   *pnFamily = AF_INET;
+    if( pnSockType ) *pnSockType = SOCK_STREAM;
+    if( pnProtocol ) *pnProtocol = IPPROTO_TCP;
+
+    nListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (nListenSocket == INVALID_SOCKET)
+    {
+        fprintf(stderr, "socket() failed with error: %d\n", WSAGetLastError());
+        return INVALID_SOCKET;
+    }
+
+    sockAddrIn.sin_family = AF_INET;
+    sockAddrIn.sin_addr.s_addr = INADDR_ANY;
+    sockAddrIn.sin_port = htons(atoi(pszService));
+
+    if (bind(nListenSocket, (SOCKADDR *)&sockAddrIn, sizeof (sockAddrIn)) == SOCKET_ERROR)
+    {
+        fprintf(stderr, "bind() function failed with error: %d\n", WSAGetLastError());
+        closesocket(nListenSocket);
+        return INVALID_SOCKET;
+    }
+
+#endif
+
+    if (listen(nListenSocket, SOMAXCONN) == SOCKET_ERROR)
+    {
+        fprintf(stderr, "listen() function failed with error: %d\n", WSAGetLastError());
+        closesocket(nListenSocket);
+        return INVALID_SOCKET;
+    }
+
+    return nListenSocket;
+}
+
 #ifdef WIN32
 
 /************************************************************************/
 /*                             RunTCPServer()                           */
 /************************************************************************/
 
-int RunTCPServer(const char* pszApplication, int nPort)
+int RunTCPServer(const char* pszApplication, const char* pszService)
 {
     int nRet;
     WSADATA wsaData;
     SOCKET nListenSocket;
-    struct sockaddr_in sockAddrIn;
+    int nFamily, nSockType, nProtocol;
 
     nRet = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if (nRet != NO_ERROR)
@@ -94,30 +207,9 @@ int RunTCPServer(const char* pszApplication, int nPort)
         return 1;
     }
 
-    nListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    nListenSocket = CreateSocketAndBindAndListen(pszService, &nFamily, &nSockType, &nProtocol);
     if (nListenSocket == INVALID_SOCKET)
     {
-        fprintf(stderr, "socket() failed with error: %d\n", WSAGetLastError());
-        WSACleanup();
-        return 1;
-    }
-
-    sockAddrIn.sin_family = AF_INET;
-    sockAddrIn.sin_addr.s_addr = INADDR_ANY;
-    sockAddrIn.sin_port = htons(nPort);
-
-    if (bind(nListenSocket, (SOCKADDR *)&sockAddrIn, sizeof (sockAddrIn)) == SOCKET_ERROR)
-    {
-        fprintf(stderr, "bind() function failed with error: %d\n", WSAGetLastError());
-        closesocket(nListenSocket);
-        WSACleanup();
-        return 1;
-    }
-
-    if (listen(nListenSocket, SOMAXCONN) == SOCKET_ERROR)
-    {
-        fprintf(stderr, "listen() function failed with error: %d\n", WSAGetLastError());
-        closesocket(nListenSocket);
         WSACleanup();
         return 1;
     }
@@ -132,6 +224,7 @@ int RunTCPServer(const char* pszApplication, int nPort)
         CPL_PID nPid;
         SOCKET nConnSocket;
         char szReady[5];
+        int bOK = TRUE;
         const char* apszArgs[] = { NULL, "-newconnection", NULL };
 
         apszArgs[0] = pszApplication;
@@ -166,16 +259,29 @@ int RunTCPServer(const char* pszApplication, int nPort)
         if( WSADuplicateSocket(nConnSocket, nPid, &sSocketInfo) != 0 )
         {
             fprintf(stderr, "WSADuplicateSocket() failed: %d\n", WSAGetLastError());
-            CPLSpawnAsyncFinish(psProcess, FALSE, TRUE);
-            closesocket(nConnSocket);
-            closesocket(nListenSocket);
-            WSACleanup();
-            return 1;
+            bOK = FALSE;
         }
 
-        if (!CPLPipeWrite(fout, &sSocketInfo, sizeof(sSocketInfo)))
+        /* Send socket parameters over the pipe */
+        if( bOK &&
+            !CPLPipeWrite(fout, &sSocketInfo, sizeof(sSocketInfo)) ||
+            !CPLPipeWrite(fout, &nFamily, sizeof(nFamily)) ||
+            !CPLPipeWrite(fout, &nSockType, sizeof(nSockType)) ||
+            !CPLPipeWrite(fout, &nProtocol, sizeof(nProtocol)) )
         {
             fprintf(stderr, "CPLWritePipe() failed\n");
+            bOK = FALSE;
+        }
+
+        /* Wait for child to be ready before closing the socket */
+        if( bOK && !CPLPipeRead(fin, szReady, sizeof(szReady)) )
+        {
+            fprintf(stderr, "CPLReadPipe() failed\n");
+            bOK = FALSE;
+        }
+
+        if( !bOK )
+        {
             CPLSpawnAsyncFinish(psProcess, FALSE, TRUE);
             closesocket(nConnSocket);
             closesocket(nListenSocket);
@@ -183,15 +289,6 @@ int RunTCPServer(const char* pszApplication, int nPort)
             return 1;
         }
 
-        if (!CPLPipeRead(fin, szReady, sizeof(szReady)))
-        {
-            fprintf(stderr, "CPLReadPipe() failed\n");
-            CPLSpawnAsyncFinish(psProcess, FALSE, TRUE);
-            closesocket(nConnSocket);
-            closesocket(nListenSocket);
-            WSACleanup();
-            return 1;
-        }
 
         closesocket(nConnSocket);
 
@@ -211,9 +308,16 @@ int RunNewConnection()
     int nRet;
     WSADATA wsaData;
     WSAPROTOCOL_INFO sSocketInfo;
+    int nFamily, nSockType, nProtocol;
     SOCKET nConnSocket;
+    CPL_FILE_HANDLE fin = GetStdHandle(STD_INPUT_HANDLE);
+    CPL_FILE_HANDLE fout = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    if (!CPLPipeRead(GetStdHandle(STD_INPUT_HANDLE), &sSocketInfo, sizeof(sSocketInfo)))
+    /* Get socket parameters from the pipe */
+    if (!CPLPipeRead(fin, &sSocketInfo, sizeof(sSocketInfo)) ||
+        !CPLPipeRead(fin, &nFamily, sizeof(nFamily)) ||
+        !CPLPipeRead(fin, &nSockType, sizeof(nSockType)) ||
+        !CPLPipeRead(fin, &nProtocol, sizeof(nProtocol)) )
     {
         fprintf(stderr, "CPLPipeRead() failed\n");
         return 1;
@@ -226,7 +330,7 @@ int RunNewConnection()
         return 1;
     }
 
-    nConnSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, &sSocketInfo, 0, WSA_FLAG_OVERLAPPED);
+    nConnSocket = WSASocket(nFamily, nSockType, nProtocol, &sSocketInfo, 0, WSA_FLAG_OVERLAPPED);
     if (nConnSocket == INVALID_SOCKET)
     {
         fprintf(stderr, "ConnSocket() failed with error: %d\n", WSAGetLastError());
@@ -234,12 +338,14 @@ int RunNewConnection()
         return 1;
     }
 
-    if (!CPLPipeWrite(GetStdHandle(STD_OUTPUT_HANDLE), "ready", 5))
+    /* Warn the parent that we are now ready */
+    if (!CPLPipeWrite(fout, "ready", 5))
     {
         fprintf(stderr, "CPLPipeWrite() failed\n");
+        WSACleanup();
         return 1;
     }
-    CloseHandle(GetStdHandle(STD_OUTPUT_HANDLE));
+    CloseHandle(fout);
 
 #ifdef _MSC_VER
     __try {
@@ -265,33 +371,13 @@ int RunNewConnection()
 /*                             RunTCPServer()                           */
 /************************************************************************/
 
-int RunTCPServer(const char* pszApplication, int nPort)
+int RunTCPServer(const char* pszApplication, const char* pszService)
 {
     int nListenSocket;
-    struct sockaddr_in sockAddrIn;
 
-    nListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    nListenSocket = CreateSocketAndBindAndListen(pszService, NULL, NULL, NULL);
     if (nListenSocket < 0)
     {
-        fprintf(stderr, "socket() failed with error: %d\n", errno);
-        return 1;
-    }
-
-    sockAddrIn.sin_family = AF_INET;
-    sockAddrIn.sin_addr.s_addr = INADDR_ANY;
-    sockAddrIn.sin_port = htons(nPort);
-
-    if (bind(nListenSocket, (struct sockaddr *)&sockAddrIn, sizeof (sockAddrIn)) < 0)
-    {
-        fprintf(stderr, "bind() function failed with error: %d\n", errno);
-        close(nListenSocket);
-        return 1;
-    }
-
-    if (listen(nListenSocket, SOMAXCONN) < 0)
-    {
-        fprintf(stderr, "listen() function failed with error: %d\n", errno);
-        close(nListenSocket);
         return 1;
     }
 
@@ -347,7 +433,8 @@ int RunTCPServer(const char* pszApplication, int nPort)
 
 int main(int argc, char* argv[])
 {
-    int i, nRet, bStdinout = FALSE, nPort = -1, bNewConnection = FALSE;
+    int i, nRet, bStdinout = FALSE, bNewConnection = FALSE;
+    const char* pszService = NULL;
 
     /*for( i = 1; i < argc; i++ )
     {
@@ -378,7 +465,7 @@ int main(int argc, char* argv[])
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             i++;
-            nPort = atoi(argv[i]);
+            pszService = argv[i];
         }
 #ifdef WIN32
         else if( EQUAL(argv[i],"-newconnection") )
@@ -395,11 +482,11 @@ int main(int argc, char* argv[])
         else
             Usage("Too many command options.");
     }
-    if( !bStdinout && nPort < 0 && !bNewConnection )
+    if( !bStdinout && pszService == NULL && !bNewConnection )
         Usage(NULL);
 
-    if( nPort > 0 )
-        nRet = RunTCPServer(argv[0], nPort);
+    if( pszService != NULL )
+        nRet = RunTCPServer(argv[0], pszService);
 #ifdef WIN32
     else if( bNewConnection )
         nRet = RunNewConnection();
