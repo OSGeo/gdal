@@ -679,7 +679,7 @@ static int GDALPipeWrite_internal(GDALPipe* p, const void* data, int length)
             int nRet = send(p->nSocket, pabyData, nRemain, 0);
             if( nRet < 0 )
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Write to socket socket failed");
+                CPLError(CE_Failure, CPLE_AppDefined, "Write to socket failed");
                 p->bOK = FALSE;
                 return FALSE;
             }
