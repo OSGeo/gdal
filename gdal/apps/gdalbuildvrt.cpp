@@ -1358,7 +1358,9 @@ int main( int nArgc, char ** papszArgv )
         if (bExists)
         {
             GDALDriverH hDriver = GDALIdentifyDriver( pszOutputFilename, NULL );
-            if (hDriver && !EQUAL(GDALGetDriverShortName(hDriver), "VRT"))
+            if (hDriver && !(EQUAL(GDALGetDriverShortName(hDriver), "VRT") ||
+                   (EQUAL(GDALGetDriverShortName(hDriver), "API_PROXY") &&
+                    EQUAL(CPLGetExtension(pszOutputFilename), "VRT"))) )
             {
                 fprintf(stderr,
                         "'%s' is an existing GDAL dataset managed by %s driver.\n"
