@@ -1487,6 +1487,7 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
         CPLString osHost(pszSpawnServer);
         osHost.resize(pszColon - pszSpawnServer);
         CPL_SOCKET nConnSocket = INVALID_SOCKET;
+        int nRet;
 
 #ifdef WIN32
         WSADATA wsaData;
@@ -1501,8 +1502,6 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
 #endif
 
 #ifdef HAVE_GETADDRINFO
-        int nRet;
-
         struct addrinfo sHints;
         struct addrinfo* psResults = NULL, *psResultsIter;
         memset(&sHints, 0, sizeof(struct addrinfo));
