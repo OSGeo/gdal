@@ -404,6 +404,7 @@ class GDALClientDataset: public GDALPamDataset
     std::map<CPLString, char**>                       aoMapMetadata;
     std::map< std::pair<CPLString,CPLString>, char*>  aoMapMetadataItem;
     GDALServerAsyncProgress                          *async;
+    GByte                                             abyCaps[16]; /* 16 * 8 = 128 > INSTR_END */
 
         int                      mCreateCopy(const char* pszFilename,
                                              GDALDataset* poSrcDS,
@@ -436,6 +437,7 @@ class GDALClientDataset: public GDALPamDataset
 
         void                AttachAsyncProgress(GDALServerAsyncProgress* async) { this->async = async; }
         int                 ProcessAsyncProgress();
+        int                 SupportsInstr(InstrEnum instr) const { return abyCaps[instr / 8] & (1 << (instr % 8)); }
 
         virtual void        FlushCache();
 
@@ -505,11 +507,14 @@ class GDALClientRasterBand : public GDALPamRasterBand
     char                                            *pszUnitType;
     GDALRasterAttributeTable                        *poRAT;
     std::vector<GDALRasterBand*>                     apoOldMaskBands;
+    GByte                                            abyCaps[16]; /* 16 * 8 = 128 > INSTR_END */
 
     int                WriteInstr(InstrEnum instr);
 
     double             GetDouble( InstrEnum instr, int *pbSuccess );
     CPLErr             SetDouble( InstrEnum instr, double dfVal );
+
+    GDALRasterBand    *CreateFakeMaskBand();
 
     protected:
 
@@ -523,12 +528,14 @@ class GDALClientRasterBand : public GDALPamRasterBand
 
     public:
         GDALClientRasterBand(GDALPipe* p, int iSrvBand,
-                         GDALClientDataset* poDS, int nBand, GDALAccess eAccess,
-                         int nRasterXSize, int nRasterYSize,
-                         GDALDataType eDataType, int nBlockXSize, int nBlockYSize);
+                             GDALClientDataset* poDS, int nBand, GDALAccess eAccess,
+                             int nRasterXSize, int nRasterYSize,
+                             GDALDataType eDataType, int nBlockXSize, int nBlockYSize,
+                             GByte abyCaps[16]);
         ~GDALClientRasterBand();
         
         int GetSrvBand() const { return iSrvBand; }
+        int SupportsInstr(InstrEnum instr) const { return abyCaps[instr / 8] & (1 << (instr % 8)); }
 
         void ClearOverviewCache() { aMapOvrBandsCurrent.clear(); }
 
@@ -1000,7 +1007,7 @@ static int GDALPipeRead(GDALPipe* p, int* pnGCPCount, GDAL_GCP** ppasGCPs)
 }
 
 static int GDALPipeRead(GDALPipe* p, GDALClientDataset* poDS,
-                        GDALRasterBand** ppoBand)
+                        GDALRasterBand** ppoBand, GByte abyCaps[16])
 {
     int iSrvBand;
     *ppoBand = NULL;
@@ -1029,7 +1036,7 @@ static int GDALPipeRead(GDALPipe* p, GDALClientDataset* poDS,
                                                   poDS, iBand, (GDALAccess)nBandAccess,
                                                   nXSize, nYSize,
                                                   (GDALDataType)nDataType,
-                                                  nBlockXSize, nBlockYSize);
+                                                  nBlockXSize, nBlockYSize, abyCaps);
     if( pszDescription != NULL )
         poBand->GDALMajorObject::SetDescription(pszDescription);
     CPLFree(pszDescription);
@@ -1480,7 +1487,6 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
         CPLString osHost(pszSpawnServer);
         osHost.resize(pszColon - pszSpawnServer);
         CPL_SOCKET nConnSocket = INVALID_SOCKET;
-        int nRet;
 
 #ifdef WIN32
         WSADATA wsaData;
@@ -1495,6 +1501,8 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
 #endif
 
 #ifdef HAVE_GETADDRINFO
+        int nRet;
+
         struct addrinfo sHints;
         struct addrinfo* psResults = NULL, *psResultsIter;
         memset(&sHints, 0, sizeof(struct addrinfo));
@@ -1889,6 +1897,16 @@ static int GDALServerLoop(GDALPipe* p,
             GDALPipeWrite(p, poDS != NULL);
             if( poDS != NULL )
             {
+                CPLAssert(INSTR_END < 128);
+                GByte abyCaps[16]; /* 16 * 8 = 128 */
+                memset(abyCaps, 0, sizeof(abyCaps));
+                /* We implement all known instructions (except marker ones) */
+                for(int c = 1; c < INSTR_END; c++)
+                {
+                    if( c != INSTR_Band_First && c != INSTR_Band_End )
+                        abyCaps[c / 8] |= (1 << (c % 8));
+                }
+                GDALPipeWrite(p, sizeof(abyCaps), abyCaps);
                 GDALPipeWrite(p, poDS->GetDescription() );
                 GDALDriver* poDriver = poDS->GetDriver();
                 if( poDriver != NULL )
@@ -3193,6 +3211,7 @@ GDALClientDataset::GDALClientDataset(GDALServerSpawnedProcess* ssp)
     nGCPCount = 0;
     pasGCPs = NULL;
     async = NULL;
+    memset(abyCaps, 0, sizeof(abyCaps));
 }
 
 /************************************************************************/
@@ -3207,6 +3226,7 @@ GDALClientDataset::GDALClientDataset(GDALPipe* p)
     nGCPCount = 0;
     pasGCPs = NULL;
     async = NULL;
+    memset(abyCaps, 0, sizeof(abyCaps));
 }
 /************************************************************************/
 /*                       ~GDALClientDataset()                           */
@@ -3274,6 +3294,11 @@ CPLErr GDALClientDataset::IBuildOverviews( const char *pszResampling,
                                            GDALProgressFunc pfnProgress, 
                                            void * pProgressData )
 {
+    if( !SupportsInstr(INSTR_IBuildOverviews) )
+        return GDALPamDataset::IBuildOverviews(pszResampling, nOverviews, panOverviewList,
+                                               nListBands, panBandList,
+                                               pfnProgress, pProgressData);
+
     CLIENT_ENTER();
     if( nOverviews < 0 || nOverviews > 1000 ||
         nListBands < 0 || nListBands > GetRasterCount() )
@@ -3322,6 +3347,14 @@ CPLErr GDALClientDataset::IRasterIO( GDALRWFlag eRWFlag,
                                  int nBandCount, int *panBandMap,
                                  int nPixelSpace, int nLineSpace, int nBandSpace)
 {
+    if( !SupportsInstr(( eRWFlag == GF_Read ) ? INSTR_IRasterIO_Read : INSTR_IRasterIO_Write ) )
+        return GDALPamDataset::IRasterIO( eRWFlag,
+                                          nXOff, nYOff, nXSize, nYSize,
+                                          pData, nBufXSize, nBufYSize,
+                                          eBufType, 
+                                          nBandCount, panBandMap,
+                                          nPixelSpace, nLineSpace, nBandSpace );
+
     CLIENT_ENTER();
     CPLErr eRet = CE_Failure;
 
@@ -3469,6 +3502,9 @@ CPLErr GDALClientDataset::IRasterIO( GDALRWFlag eRWFlag,
 
 CPLErr GDALClientDataset::GetGeoTransform( double * padfTransform )
 {
+    if( !SupportsInstr(INSTR_GetGeoTransform) )
+        return GDALPamDataset::GetGeoTransform(padfTransform);
+
     CLIENT_ENTER();
     if( !GDALPipeWrite(p, INSTR_GetGeoTransform) )
         return CE_Failure;
@@ -3493,6 +3529,9 @@ CPLErr GDALClientDataset::GetGeoTransform( double * padfTransform )
 
 CPLErr GDALClientDataset::SetGeoTransform( double * padfTransform )
 {
+    if( !SupportsInstr(INSTR_SetGeoTransform) )
+        return GDALPamDataset::SetGeoTransform(padfTransform);
+
     CLIENT_ENTER();
     if( !GDALPipeWrite(p, INSTR_SetGeoTransform) ||
         !GDALPipeWrite(p, 6 * sizeof(double), padfTransform) )
@@ -3506,6 +3545,9 @@ CPLErr GDALClientDataset::SetGeoTransform( double * padfTransform )
 
 const char* GDALClientDataset::GetProjectionRef()
 {
+    if( !SupportsInstr(INSTR_GetProjectionRef) )
+        return GDALPamDataset::GetProjectionRef();
+
     CLIENT_ENTER();
     if( !GDALPipeWrite(p, INSTR_GetProjectionRef) )
         return osProjection;
@@ -3529,6 +3571,9 @@ const char* GDALClientDataset::GetProjectionRef()
 
 CPLErr GDALClientDataset::SetProjection(const char* pszProjection)
 {
+    if( !SupportsInstr(INSTR_SetProjection) )
+        return GDALPamDataset::SetProjection(pszProjection);
+
     CLIENT_ENTER();
     if( !GDALPipeWrite(p, INSTR_SetProjection) ||
         !GDALPipeWrite(p, pszProjection))
@@ -3542,6 +3587,9 @@ CPLErr GDALClientDataset::SetProjection(const char* pszProjection)
 
 int GDALClientDataset::GetGCPCount()
 {
+    if( !SupportsInstr(INSTR_GetGCPCount) )
+        return GDALPamDataset::GetGCPCount();
+
     CLIENT_ENTER();
     if( !GDALPipeWrite(p, INSTR_GetGCPCount) )
         return 0;
@@ -3561,6 +3609,9 @@ int GDALClientDataset::GetGCPCount()
 
 const char * GDALClientDataset::GetGCPProjection()
 {
+    if( !SupportsInstr(INSTR_GetGCPProjection) )
+        return GDALPamDataset::GetGCPProjection();
+
     CLIENT_ENTER();
     if( !GDALPipeWrite(p, INSTR_GetGCPProjection) )
         return osGCPProjection;
@@ -3584,6 +3635,9 @@ const char * GDALClientDataset::GetGCPProjection()
 
 const GDAL_GCP * GDALClientDataset::GetGCPs()
 {
+    if( !SupportsInstr(INSTR_GetGCPs) )
+        return GDALPamDataset::GetGCPs();
+
     CLIENT_ENTER();
     if( !GDALPipeWrite(p, INSTR_GetGCPs) )
         return NULL;
@@ -3612,6 +3666,9 @@ const GDAL_GCP * GDALClientDataset::GetGCPs()
 CPLErr GDALClientDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
                                    const char *pszGCPProjection ) 
 {
+    if( !SupportsInstr(INSTR_SetGCPs) )
+        return GDALPamDataset::SetGCPs(nGCPCount, pasGCPList, pszGCPProjection);
+
     CLIENT_ENTER();
     if( !GDALPipeWrite(p, INSTR_SetGCPs) ||
         !GDALPipeWrite(p, nGCPCount, pasGCPList) ||
@@ -3626,6 +3683,9 @@ CPLErr GDALClientDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
 
 char** GDALClientDataset::GetFileList()
 {
+    if( !SupportsInstr(INSTR_GetFileList) )
+        return GDALPamDataset::GetFileList();
+
     CLIENT_ENTER();
     if( !GDALPipeWrite(p, INSTR_GetFileList) )
         return NULL;
@@ -3663,6 +3723,9 @@ char** GDALClientDataset::GetFileList()
 
 char** GDALClientDataset::GetMetadata( const char * pszDomain )
 {
+    if( !SupportsInstr(INSTR_GetMetadata) )
+        return GDALPamDataset::GetMetadata(pszDomain);
+
     CLIENT_ENTER();
     if( pszDomain == NULL )
         pszDomain = "";
@@ -3705,8 +3768,11 @@ char** GDALClientDataset::GetMetadata( const char * pszDomain )
 /************************************************************************/
 
 const char* GDALClientDataset::GetMetadataItem( const char * pszName,
-                                            const char * pszDomain )
+                                                const char * pszDomain )
 {
+    if( !SupportsInstr(INSTR_GetMetadataItem) )
+        return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
+
     CLIENT_ENTER();
     if( pszDomain == NULL )
         pszDomain = "";
@@ -3741,6 +3807,9 @@ const char* GDALClientDataset::GetMetadataItem( const char * pszName,
 CPLErr GDALClientDataset::SetMetadata( char ** papszMetadata,
                                        const char * pszDomain )
 {
+    if( !SupportsInstr(INSTR_SetMetadata) )
+        return GDALPamDataset::SetMetadata(papszMetadata, pszDomain);
+
     CLIENT_ENTER();
     if( !GDALPipeWrite(p, INSTR_SetMetadata) ||
         !GDALPipeWrite(p, papszMetadata) ||
@@ -3757,6 +3826,9 @@ CPLErr GDALClientDataset::SetMetadataItem( const char * pszName,
                                            const char * pszValue,
                                            const char * pszDomain )
 {
+    if( !SupportsInstr(INSTR_SetMetadataItem) )
+        return GDALPamDataset::SetMetadataItem(pszName, pszValue, pszDomain);
+
     CLIENT_ENTER();
     if( !GDALPipeWrite(p, INSTR_SetMetadataItem) ||
         !GDALPipeWrite(p, pszName) ||
@@ -3772,6 +3844,12 @@ CPLErr GDALClientDataset::SetMetadataItem( const char * pszName,
 
 void GDALClientDataset::FlushCache()
 {
+    if( !SupportsInstr(INSTR_FlushCache) )
+    {
+        GDALPamDataset::FlushCache();
+        return;
+    }
+
     CLIENT_ENTER();
     SetPamFlags(0);
     GDALPamDataset::FlushCache();
@@ -3788,6 +3866,9 @@ void GDALClientDataset::FlushCache()
 CPLErr GDALClientDataset::AddBand( GDALDataType eType, 
                                    char **papszOptions )
 {
+    if( !SupportsInstr(INSTR_AddBand) )
+        return GDALPamDataset::AddBand(eType, papszOptions);
+
     CLIENT_ENTER();
     if( !GDALPipeWrite(p, INSTR_AddBand) ||
         !GDALPipeWrite(p, eType) ||
@@ -3801,7 +3882,7 @@ CPLErr GDALClientDataset::AddBand( GDALDataType eType,
     if( eRet == CE_None )
     {
         GDALRasterBand* poBand = NULL;
-        if( !GDALPipeRead(p, this, &poBand) )
+        if( !GDALPipeRead(p, this, &poBand, abyCaps) )
             return CE_Failure;
         SetBand(GetRasterCount() + 1, poBand);
     }
@@ -3820,6 +3901,11 @@ CPLErr GDALClientDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSi
                                   int nBandCount, int *panBandList,
                                   char **papszOptions )
 {
+    if( !SupportsInstr(INSTR_AdviseRead) )
+        return GDALPamDataset::AdviseRead(nXOff, nYOff, nXSize, nYSize,
+                                          nBufXSize, nBufYSize, eDT, nBandCount, panBandList,
+                                          papszOptions);
+
     CLIENT_ENTER();
     if( !GDALPipeWrite(p, INSTR_AdviseRead) ||
         !GDALPipeWrite(p, nXOff) ||
@@ -3842,6 +3928,9 @@ CPLErr GDALClientDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSi
 
 CPLErr GDALClientDataset::CreateMaskBand( int nFlags )
 {
+    if( !SupportsInstr(INSTR_CreateMaskBand) )
+        return GDALPamDataset::CreateMaskBand(nFlags);
+
     CLIENT_ENTER();
     GDALPipeWriteConfigOption(p, "GDAL_TIFF_INTERNAL_MASK_TO_8BIT", bRecycleChild);
     GDALPipeWriteConfigOption(p, "GDAL_TIFF_INTERNAL_MASK", bRecycleChild);
@@ -3856,10 +3945,12 @@ CPLErr GDALClientDataset::CreateMaskBand( int nFlags )
 /************************************************************************/
 
 GDALClientRasterBand::GDALClientRasterBand(GDALPipe* p, int iSrvBand, 
-                                   GDALClientDataset* poDS, int nBand, GDALAccess eAccess,
-                                   int nRasterXSize, int nRasterYSize,
-                                   GDALDataType eDataType,
-                                   int nBlockXSize, int nBlockYSize)
+                                           GDALClientDataset* poDS,
+                                           int nBand, GDALAccess eAccess,
+                                           int nRasterXSize, int nRasterYSize,
+                                           GDALDataType eDataType,
+                                           int nBlockXSize, int nBlockYSize,
+                                           GByte abyCapsIn[16])
 {
     this->p = p;
     this->iSrvBand = iSrvBand;
@@ -3876,10 +3967,11 @@ GDALClientRasterBand::GDALClientRasterBand(GDALPipe* p, int iSrvBand,
     pszUnitType = NULL;
     poMaskBand = NULL;
     poRAT = NULL;
+    memcpy(abyCaps, abyCapsIn, sizeof(abyCaps));
 }
 
 /************************************************************************/
-/*                         ~GDALClientRasterBand()                          */
+/*                         ~GDALClientRasterBand()                      */
 /************************************************************************/
 
 GDALClientRasterBand::~GDALClientRasterBand()
@@ -3908,6 +4000,17 @@ GDALClientRasterBand::~GDALClientRasterBand()
 }
 
 /************************************************************************/
+/*                       CreateFakeMaskBand()                           */
+/************************************************************************/
+
+GDALRasterBand* GDALClientRasterBand::CreateFakeMaskBand()
+{
+    if( poMaskBand == NULL )
+        poMaskBand = new GDALAllValidMaskBand(this);
+    return poMaskBand;
+}
+
+/************************************************************************/
 /*                             FlushCache()                             */
 /************************************************************************/
 
@@ -3923,6 +4026,9 @@ int GDALClientRasterBand::WriteInstr(InstrEnum instr)
 
 CPLErr GDALClientRasterBand::FlushCache()
 {
+    if( !SupportsInstr(INSTR_Band_FlushCache) )
+        return GDALPamRasterBand::FlushCache();
+
     CLIENT_ENTER();
     CPLErr eErr = GDALPamRasterBand::FlushCache();
     if( eErr == CE_None )
@@ -3939,6 +4045,9 @@ CPLErr GDALClientRasterBand::FlushCache()
 
 char ** GDALClientRasterBand::GetCategoryNames()
 {
+    if( !SupportsInstr(INSTR_Band_GetCategoryNames) )
+        return GDALPamRasterBand::GetCategoryNames();
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_GetCategoryNames) )
         return NULL;
@@ -3959,6 +4068,9 @@ char ** GDALClientRasterBand::GetCategoryNames()
 
 CPLErr GDALClientRasterBand::SetCategoryNames( char ** papszCategoryNames )
 {
+    if( !SupportsInstr(INSTR_Band_SetCategoryNames) )
+        return GDALPamRasterBand::SetCategoryNames(papszCategoryNames);
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_SetCategoryNames) ||
         !GDALPipeWrite(p, papszCategoryNames) )
@@ -3972,6 +4084,12 @@ CPLErr GDALClientRasterBand::SetCategoryNames( char ** papszCategoryNames )
 
 void GDALClientRasterBand::SetDescription( const char * pszDescription )
 {
+    if( !SupportsInstr(INSTR_Band_SetDescription) )
+    {
+        GDALPamRasterBand::SetDescription(pszDescription);
+        return;
+    }
+
     CLIENT_ENTER();
     sDescription = pszDescription;
     if( !WriteInstr(INSTR_Band_SetDescription) ||
@@ -3987,6 +4105,9 @@ void GDALClientRasterBand::SetDescription( const char * pszDescription )
 
 char** GDALClientRasterBand::GetMetadata( const char * pszDomain )
 {
+    if( !SupportsInstr(INSTR_Band_GetMetadata) )
+        return GDALPamRasterBand::GetMetadata(pszDomain);
+
     CLIENT_ENTER();
     if( pszDomain == NULL )
         pszDomain = "";
@@ -4015,8 +4136,11 @@ char** GDALClientRasterBand::GetMetadata( const char * pszDomain )
 /************************************************************************/
 
 const char* GDALClientRasterBand::GetMetadataItem( const char * pszName,
-                                            const char * pszDomain )
+                                                   const char * pszDomain )
 {
+    if( !SupportsInstr(INSTR_Band_GetMetadataItem) )
+        return GDALPamRasterBand::GetMetadataItem(pszName, pszDomain);
+
     CLIENT_ENTER();
     if( pszDomain == NULL )
         pszDomain = "";
@@ -4051,6 +4175,9 @@ const char* GDALClientRasterBand::GetMetadataItem( const char * pszName,
 CPLErr GDALClientRasterBand::SetMetadata( char ** papszMetadata,
                                    const char * pszDomain )
 {
+    if( !SupportsInstr(INSTR_Band_SetMetadata) )
+        return GDALPamRasterBand::SetMetadata(papszMetadata, pszDomain);
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_SetMetadata) ||
         !GDALPipeWrite(p, papszMetadata) ||
@@ -4067,6 +4194,9 @@ CPLErr GDALClientRasterBand::SetMetadataItem( const char * pszName,
                                           const char * pszValue,
                                           const char * pszDomain )
 {
+    if( !SupportsInstr(INSTR_Band_SetMetadataItem) )
+        return GDALPamRasterBand::SetMetadataItem(pszName, pszValue, pszDomain);
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_SetMetadataItem) ||
         !GDALPipeWrite(p, pszName) ||
@@ -4082,6 +4212,9 @@ CPLErr GDALClientRasterBand::SetMetadataItem( const char * pszName,
 
 GDALColorInterp GDALClientRasterBand::GetColorInterpretation()
 {
+    if( !SupportsInstr(INSTR_Band_GetColorInterpretation) )
+        return GDALPamRasterBand::GetColorInterpretation();
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_GetColorInterpretation) )
         return GCI_Undefined;
@@ -4101,6 +4234,9 @@ GDALColorInterp GDALClientRasterBand::GetColorInterpretation()
 
 CPLErr GDALClientRasterBand::SetColorInterpretation(GDALColorInterp eInterp)
 {
+    if( !SupportsInstr(INSTR_Band_SetColorInterpretation) )
+        return GDALPamRasterBand::SetColorInterpretation(eInterp);
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_SetColorInterpretation) ||
         !GDALPipeWrite(p, eInterp) )
@@ -4116,17 +4252,30 @@ CPLErr GDALClientRasterBand::GetStatistics( int bApproxOK, int bForce,
                                             double *pdfMin, double *pdfMax, 
                                             double *pdfMean, double *pdfStdDev )
 {
+    if( !SupportsInstr(INSTR_Band_GetStatistics) )
+        return GDALPamRasterBand::GetStatistics(
+            bApproxOK, bForce, pdfMin, pdfMax, pdfMean, pdfStdDev);
+
     CLIENT_ENTER();
     if( !bApproxOK && CSLTestBoolean(CPLGetConfigOption("GDAL_API_PROXY_FORCE_APPROX", "NO")) )
         bApproxOK = TRUE;
+    CPLErr eDefaultRet = CE_Failure;
+    if( CSLTestBoolean(CPLGetConfigOption("QGIS_HACK", "NO")) )
+    {
+        if( pdfMin ) *pdfMin = 0;
+        if( pdfMax ) *pdfMax = 255;
+        if( pdfMean ) *pdfMean = 0;
+        if( pdfStdDev ) *pdfStdDev = 0;
+        eDefaultRet = CE_None;
+    }
     if( !WriteInstr( INSTR_Band_GetStatistics) ||
         !GDALPipeWrite(p, bApproxOK) ||
         !GDALPipeWrite(p, bForce) )
-        return CE_Failure;
+        return eDefaultRet;
     if( !GDALSkipUntilEndOfJunkMarker(p) )
-        return CE_Failure;
+        return eDefaultRet;
 
-    CPLErr eRet = CE_Failure;
+    CPLErr eRet = eDefaultRet;
     if( !GDALPipeRead(p, &eRet) )
         return eRet;
     if( eRet == CE_None )
@@ -4136,12 +4285,14 @@ CPLErr GDALClientRasterBand::GetStatistics( int bApproxOK, int bForce,
             !GDALPipeRead(p, &dfMax) ||
             !GDALPipeRead(p, &dfMean) ||
             !GDALPipeRead(p, &dfStdDev) )
-            return CE_Failure;
+            return eDefaultRet;
         if( pdfMin ) *pdfMin = dfMin;
         if( pdfMax ) *pdfMax = dfMax;
         if( pdfMean ) *pdfMean = dfMean;
         if( pdfStdDev ) *pdfStdDev = dfStdDev;
     }
+    else if( eDefaultRet == CE_None )
+        eRet = eDefaultRet;
     GDALConsumeErrors(p);
     return eRet;
 }
@@ -4158,6 +4309,10 @@ CPLErr GDALClientRasterBand::ComputeStatistics( int bApproxOK,
                                                 GDALProgressFunc pfnProgress,
                                                 void *pProgressData )
 {
+    if( !SupportsInstr(INSTR_Band_ComputeStatistics) )
+        return GDALPamRasterBand::ComputeStatistics(
+            bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev, pfnProgress, pProgressData);
+
     CLIENT_ENTER();
     if( !bApproxOK && CSLTestBoolean(CPLGetConfigOption("GDAL_API_PROXY_FORCE_APPROX", "NO")) )
         bApproxOK = TRUE;
@@ -4194,6 +4349,9 @@ CPLErr GDALClientRasterBand::ComputeStatistics( int bApproxOK,
 CPLErr GDALClientRasterBand::SetStatistics( double dfMin, double dfMax, 
                                         double dfMean, double dfStdDev )
 {
+    if( !SupportsInstr(INSTR_Band_SetStatistics) )
+        return GDALPamRasterBand::SetStatistics(dfMin, dfMax, dfMean, dfStdDev);
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_SetStatistics) ||
         !GDALPipeWrite(p, dfMin) ||
@@ -4211,6 +4369,9 @@ CPLErr GDALClientRasterBand::SetStatistics( double dfMin, double dfMax,
 CPLErr GDALClientRasterBand::ComputeRasterMinMax( int bApproxOK,
                                                   double* padfMinMax )
 {
+    if( !SupportsInstr(INSTR_Band_ComputeRasterMinMax) )
+        return GDALPamRasterBand::ComputeRasterMinMax(bApproxOK, padfMinMax);
+
     CLIENT_ENTER();
     if( !bApproxOK && CSLTestBoolean(CPLGetConfigOption("GDAL_API_PROXY_FORCE_APPROX", "NO")) )
         bApproxOK = TRUE;
@@ -4244,20 +4405,30 @@ CPLErr GDALClientRasterBand::GetHistogram( double dfMin, double dfMax,
                                            GDALProgressFunc pfnProgress, 
                                            void *pProgressData )
 {
+    if( !SupportsInstr(INSTR_Band_GetHistogram) )
+        return GDALPamRasterBand::GetHistogram(
+            dfMin, dfMax, nBuckets, panHistogram, bIncludeOutOfRange, bApproxOK, pfnProgress, pProgressData);
+
     CLIENT_ENTER();
     if( !bApproxOK && CSLTestBoolean(CPLGetConfigOption("GDAL_API_PROXY_FORCE_APPROX", "NO")) )
         bApproxOK = TRUE;
+    CPLErr eDefaultRet = CE_Failure;
+    if( CSLTestBoolean(CPLGetConfigOption("QGIS_HACK", "NO")) )
+    {
+        memset(panHistogram, 0, sizeof(int) * nBuckets);
+        eDefaultRet = CE_None;
+    }
     if( !WriteInstr(INSTR_Band_GetHistogram) ||
         !GDALPipeWrite(p, dfMin) ||
         !GDALPipeWrite(p, dfMax) ||
         !GDALPipeWrite(p, nBuckets) ||
         !GDALPipeWrite(p, bIncludeOutOfRange) ||
         !GDALPipeWrite(p, bApproxOK) )
-        return CE_Failure;
+        return eDefaultRet;
     if( !GDALSkipUntilEndOfJunkMarker(p) )
-        return CE_Failure;
+        return eDefaultRet;
 
-    CPLErr eRet = CE_Failure;
+    CPLErr eRet = eDefaultRet;
     if( !GDALPipeRead(p, &eRet) )
         return eRet;
     if( eRet != CE_Failure )
@@ -4266,8 +4437,10 @@ CPLErr GDALClientRasterBand::GetHistogram( double dfMin, double dfMax,
         if( !GDALPipeRead(p, &nSize) ||
             nSize != nBuckets * (int)sizeof(int) ||
             !GDALPipeRead_nolength(p, nSize, panHistogram) )
-            return CE_Failure;
+            return eDefaultRet;
     }
+    else if( eDefaultRet == CE_None )
+        eRet = eDefaultRet;
     GDALConsumeErrors(p);
     return eRet;
 }
@@ -4281,9 +4454,13 @@ CPLErr GDALClientRasterBand::GetDefaultHistogram( double *pdfMin,
                                                   int *pnBuckets,
                                                   int ** ppanHistogram,
                                                   int bForce,
-                                                  GDALProgressFunc,
+                                                  GDALProgressFunc pfnProgress,
                                                   void *pProgressData )
 {
+    if( !SupportsInstr(INSTR_Band_GetDefaultHistogram) )
+        return GDALPamRasterBand::GetDefaultHistogram(
+            pdfMin, pdfMax, pnBuckets, ppanHistogram, bForce, pfnProgress, pProgressData);
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_GetDefaultHistogram) ||
         !GDALPipeWrite(p, bForce) )
@@ -4339,6 +4516,9 @@ CPLErr GDALClientRasterBand::GetDefaultHistogram( double *pdfMin,
 CPLErr GDALClientRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
                                               int nBuckets, int *panHistogram )
 {
+    if( !SupportsInstr(INSTR_Band_SetDefaultHistogram) )
+        return GDALPamRasterBand::SetDefaultHistogram(dfMin, dfMax, nBuckets, panHistogram);
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_SetDefaultHistogram) ||
         !GDALPipeWrite(p, dfMin) ||
@@ -4355,6 +4535,9 @@ CPLErr GDALClientRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
 
 CPLErr GDALClientRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pImage)
 {
+    if( !SupportsInstr(INSTR_Band_IReadBlock) )
+        return CE_Failure;
+
     CLIENT_ENTER();
     if( poDS != NULL )
         ((GDALClientDataset*)poDS)->ProcessAsyncProgress();
@@ -4385,6 +4568,9 @@ CPLErr GDALClientRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void* pI
 
 CPLErr GDALClientRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage)
 {
+    if( !SupportsInstr(INSTR_Band_IWriteBlock) )
+        return CE_Failure;
+
     CLIENT_ENTER();
     int nSize = nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType) / 8);
     if( !WriteInstr(INSTR_Band_IWriteBlock) ||
@@ -4405,6 +4591,13 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                     GDALDataType eBufType,
                                     int nPixelSpace, int nLineSpace )
 {
+    if( !SupportsInstr( (eRWFlag == GF_Read) ? INSTR_Band_IRasterIO_Read : INSTR_Band_IRasterIO_Write) )
+        return GDALPamRasterBand::IRasterIO( eRWFlag,
+                                             nXOff, nYOff, nXSize, nYSize,
+                                             pData, nBufXSize, nBufYSize,
+                                             eBufType, 
+                                             nPixelSpace, nLineSpace );
+
     CLIENT_ENTER();
     CPLErr eRet = CE_Failure;
 
@@ -4525,6 +4718,9 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
 int GDALClientRasterBand::HasArbitraryOverviews()
 {
+    if( !SupportsInstr(INSTR_Band_HasArbitraryOverviews) )
+        return GDALPamRasterBand::HasArbitraryOverviews();
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_HasArbitraryOverviews) )
         return 0;
@@ -4544,6 +4740,9 @@ int GDALClientRasterBand::HasArbitraryOverviews()
 
 int GDALClientRasterBand::GetOverviewCount()
 {
+    if( !SupportsInstr(INSTR_Band_GetOverviewCount) )
+        return GDALPamRasterBand::GetOverviewCount();
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_GetOverviewCount) )
         return 0;
@@ -4586,6 +4785,9 @@ double GDALClientRasterBand::GetDouble( InstrEnum instr, int *pbSuccess )
 
 double GDALClientRasterBand::GetNoDataValue( int *pbSuccess )
 {
+    if( !SupportsInstr(INSTR_Band_GetNoDataValue) )
+        return GDALPamRasterBand::GetNoDataValue(pbSuccess);
+
     CLIENT_ENTER();
     return GetDouble(INSTR_Band_GetNoDataValue, pbSuccess);
 }
@@ -4596,6 +4798,9 @@ double GDALClientRasterBand::GetNoDataValue( int *pbSuccess )
 
 double GDALClientRasterBand::GetMaximum( int *pbSuccess )
 {
+    if( !SupportsInstr(INSTR_Band_GetMaximum) )
+        return GDALPamRasterBand::GetMaximum(pbSuccess);
+
     CLIENT_ENTER();
     return GetDouble(INSTR_Band_GetMaximum, pbSuccess);
 }
@@ -4606,6 +4811,9 @@ double GDALClientRasterBand::GetMaximum( int *pbSuccess )
 
 double GDALClientRasterBand::GetMinimum( int *pbSuccess )
 {
+    if( !SupportsInstr(INSTR_Band_GetMinimum) )
+        return GDALPamRasterBand::GetMinimum(pbSuccess);
+
     CLIENT_ENTER();
     return GetDouble(INSTR_Band_GetMinimum, pbSuccess);
 }
@@ -4616,6 +4824,9 @@ double GDALClientRasterBand::GetMinimum( int *pbSuccess )
 
 double GDALClientRasterBand::GetOffset( int *pbSuccess )
 {
+    if( !SupportsInstr(INSTR_Band_GetOffset) )
+        return GDALPamRasterBand::GetOffset(pbSuccess);
+
     CLIENT_ENTER();
     return GetDouble(INSTR_Band_GetOffset, pbSuccess);
 }
@@ -4626,6 +4837,9 @@ double GDALClientRasterBand::GetOffset( int *pbSuccess )
 
 double GDALClientRasterBand::GetScale( int *pbSuccess )
 {
+    if( !SupportsInstr(INSTR_Band_GetScale) )
+        return GDALPamRasterBand::GetScale(pbSuccess);
+
     CLIENT_ENTER();
     return GetDouble(INSTR_Band_GetScale, pbSuccess);
 }
@@ -4636,6 +4850,9 @@ double GDALClientRasterBand::GetScale( int *pbSuccess )
 
 GDALColorTable *GDALClientRasterBand::GetColorTable()
 {
+    if( !SupportsInstr(INSTR_Band_GetColorTable) )
+        return GDALPamRasterBand::GetColorTable();
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_GetColorTable) )
         return NULL;
@@ -4671,6 +4888,9 @@ GDALColorTable *GDALClientRasterBand::GetColorTable()
 
 const char *GDALClientRasterBand::GetUnitType()
 {
+    if( !SupportsInstr(INSTR_Band_GetUnitType) )
+        return GDALPamRasterBand::GetUnitType();
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_GetUnitType) )
         return "";
@@ -4691,6 +4911,9 @@ const char *GDALClientRasterBand::GetUnitType()
 
 CPLErr GDALClientRasterBand::SetUnitType( const char * pszUnit )
 {
+    if( !SupportsInstr(INSTR_Band_SetUnitType) )
+        return GDALPamRasterBand::SetUnitType(pszUnit);
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_SetUnitType) ||
         !GDALPipeWrite(p, pszUnit) )
@@ -4703,6 +4926,9 @@ CPLErr GDALClientRasterBand::SetUnitType( const char * pszUnit )
 
 CPLErr GDALClientRasterBand::SetColorTable(GDALColorTable* poColorTable)
 {
+    if( !SupportsInstr(INSTR_Band_SetColorTable) )
+        return GDALPamRasterBand::SetColorTable(poColorTable);
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_SetColorTable) )
         return CE_Failure;
@@ -4729,6 +4955,9 @@ CPLErr GDALClientRasterBand::SetDouble( InstrEnum instr, double dfVal )
 
 CPLErr GDALClientRasterBand::SetNoDataValue( double dfVal )
 {
+    if( !SupportsInstr(INSTR_Band_SetNoDataValue) )
+        return GDALPamRasterBand::SetNoDataValue(dfVal);
+
     CLIENT_ENTER();
     return SetDouble(INSTR_Band_SetNoDataValue, dfVal);
 }
@@ -4739,6 +4968,9 @@ CPLErr GDALClientRasterBand::SetNoDataValue( double dfVal )
 
 CPLErr GDALClientRasterBand::SetScale( double dfVal )
 {
+    if( !SupportsInstr(INSTR_Band_SetScale) )
+        return GDALPamRasterBand::SetScale(dfVal);
+
     CLIENT_ENTER();
     return SetDouble(INSTR_Band_SetScale, dfVal);
 }
@@ -4749,6 +4981,9 @@ CPLErr GDALClientRasterBand::SetScale( double dfVal )
 
 CPLErr GDALClientRasterBand::SetOffset( double dfVal )
 {
+    if( !SupportsInstr(INSTR_Band_SetOffset) )
+        return GDALPamRasterBand::SetOffset(dfVal);
+
     CLIENT_ENTER();
     return SetDouble(INSTR_Band_SetOffset, dfVal);
 }
@@ -4759,6 +4994,9 @@ CPLErr GDALClientRasterBand::SetOffset( double dfVal )
 
 GDALRasterBand *GDALClientRasterBand::GetOverview(int iOverview)
 {
+    if( !SupportsInstr(INSTR_Band_GetOverview) )
+        return GDALPamRasterBand::GetOverview(iOverview);
+
     CLIENT_ENTER();
     std::map<int, GDALRasterBand*>::iterator oIter =
         aMapOvrBandsCurrent.find(iOverview);
@@ -4773,7 +5011,7 @@ GDALRasterBand *GDALClientRasterBand::GetOverview(int iOverview)
         return NULL;
     
     GDALRasterBand* poBand = NULL;
-    if( !GDALPipeRead(p, (GDALClientDataset*) NULL, &poBand) )
+    if( !GDALPipeRead(p, (GDALClientDataset*) NULL, &poBand, abyCaps) )
         return NULL;
 
     GDALConsumeErrors(p);
@@ -4789,19 +5027,22 @@ GDALRasterBand *GDALClientRasterBand::GetOverview(int iOverview)
 
 GDALRasterBand *GDALClientRasterBand::GetMaskBand()
 {
+    if( !SupportsInstr(INSTR_Band_GetMaskBand) )
+        return GDALPamRasterBand::GetMaskBand();
+
     CLIENT_ENTER();
     if( poMaskBand )
         return poMaskBand;
 
     if( !WriteInstr(INSTR_Band_GetMaskBand) )
-        return NULL;
+        return CreateFakeMaskBand();
 
     if( !GDALSkipUntilEndOfJunkMarker(p) )
-        return NULL;
+        return CreateFakeMaskBand();
 
     GDALRasterBand* poBand = NULL;
-    if( !GDALPipeRead(p, (GDALClientDataset*) NULL, &poBand) )
-        return NULL;
+    if( !GDALPipeRead(p, (GDALClientDataset*) NULL, &poBand, abyCaps) )
+        return CreateFakeMaskBand();
 
     GDALConsumeErrors(p);
 
@@ -4815,6 +5056,9 @@ GDALRasterBand *GDALClientRasterBand::GetMaskBand()
 
 int GDALClientRasterBand::GetMaskFlags()
 {
+    if( !SupportsInstr(INSTR_Band_GetMaskFlags) )
+        return GDALPamRasterBand::GetMaskFlags();
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_GetMaskFlags) )
         return 0;
@@ -4833,6 +5077,9 @@ int GDALClientRasterBand::GetMaskFlags()
 
 CPLErr GDALClientRasterBand::CreateMaskBand( int nFlags )
 {
+    if( !SupportsInstr(INSTR_Band_CreateMaskBand) )
+        return GDALPamRasterBand::CreateMaskBand(nFlags);
+
     CLIENT_ENTER();
     GDALPipeWriteConfigOption(p, "GDAL_TIFF_INTERNAL_MASK_TO_8BIT", bRecycleChild);
     GDALPipeWriteConfigOption(p, "GDAL_TIFF_INTERNAL_MASK", bRecycleChild);
@@ -4854,6 +5101,9 @@ CPLErr GDALClientRasterBand::CreateMaskBand( int nFlags )
 
 CPLErr GDALClientRasterBand::Fill(double dfRealValue, double dfImaginaryValue)
 {
+    if( !SupportsInstr(INSTR_Band_Fill) )
+        return GDALPamRasterBand::Fill(dfRealValue, dfImaginaryValue);
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_Fill) ||
         !GDALPipeWrite(p, dfRealValue) ||
@@ -4872,6 +5122,10 @@ CPLErr GDALClientRasterBand::BuildOverviews( const char * pszResampling,
                                              GDALProgressFunc pfnProgress,
                                              void * pProgressData )
 {
+    if( !SupportsInstr(INSTR_Band_BuildOverviews) )
+        return GDALPamRasterBand::BuildOverviews(pszResampling, nOverviews, panOverviewList,
+                                                 pfnProgress, pProgressData);
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_BuildOverviews) ||
         !GDALPipeWrite(p, pszResampling) ||
@@ -4887,6 +5141,9 @@ CPLErr GDALClientRasterBand::BuildOverviews( const char * pszResampling,
 
 const GDALRasterAttributeTable *GDALClientRasterBand::GetDefaultRAT()
 {
+    if( !SupportsInstr(INSTR_Band_GetDefaultRAT) )
+        return GDALPamRasterBand::GetDefaultRAT();
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_GetDefaultRAT) )
         return NULL;
@@ -4922,6 +5179,9 @@ const GDALRasterAttributeTable *GDALClientRasterBand::GetDefaultRAT()
 
 CPLErr GDALClientRasterBand::SetDefaultRAT( const GDALRasterAttributeTable * poRAT )
 {
+    if( !SupportsInstr(INSTR_Band_SetDefaultRAT) )
+        return GDALPamRasterBand::SetDefaultRAT(poRAT);
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_SetDefaultRAT) ||
         !GDALPipeWrite(p, poRAT) )
@@ -4937,6 +5197,11 @@ CPLErr GDALClientRasterBand::AdviseRead( int nXOff, int nYOff, int nXSize, int n
                                      int nBufXSize, int nBufYSize, 
                                      GDALDataType eDT, char **papszOptions )
 {
+    if( !SupportsInstr(INSTR_Band_AdviseRead) )
+        return GDALPamRasterBand::AdviseRead(nXOff, nYOff, nXSize, nYSize,
+                                             nBufXSize, nBufYSize,
+                                             eDT, papszOptions);
+
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_AdviseRead) ||
         !GDALPipeWrite(p, nXOff) ||
@@ -5008,6 +5273,9 @@ int GDALClientDataset::Init(const char* pszFilename, GDALAccess eAccess)
         return FALSE;
     }
 
+    if( !GDALPipeRead(p, sizeof(abyCaps), abyCaps) )
+        return FALSE;
+
     this->eAccess = eAccess;
 
     char* pszDescription = NULL;
@@ -5069,11 +5337,12 @@ int GDALClientDataset::Init(const char* pszFilename, GDALAccess eAccess)
                                               poFirstBand->GetXSize(),
                                               poFirstBand->GetYSize(),
                                               poFirstBand->GetRasterDataType(),
-                                              nBlockXSize, nBlockYSize);
+                                              nBlockXSize, nBlockYSize,
+                                              abyCaps);
         }
         else
         {
-            if( !GDALPipeRead(p, this, &poBand) )
+            if( !GDALPipeRead(p, this, &poBand, abyCaps) )
                 return FALSE;
             if( poBand == NULL )
                 return FALSE;

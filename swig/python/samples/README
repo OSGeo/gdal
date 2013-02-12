@@ -94,6 +94,9 @@ ogrupdate.py            Update a target datasource with the features of a source
 
 ogr_layer_algebra.py    Application for executing OGR layer algebra operations.
 
+gdalpythonserver.py     A Python script that can be used as the value of GDAL_API_PROXY_SERVER config. option
+                        Redirects on GDAL implementation, but could be used to implement a Python GDAL driver.
+
 ------------------------------------------------------------------------------
 Ports of .c/.cpp utilities
 ------------------------------------------------------------------------------
