@@ -185,7 +185,7 @@ Advanced options :
                [-clipdst [xmin ymin xmax ymax]|WKT|datasource]
                [-clipdstsql sql_statement] [-clipdstlayer layer]
                [-clipdstwhere expression]
-               [-wrapdateline]
+               [-wrapdateline] [-datelineoffset val]
                [[-simplify tolerance] | [-segmentize max_dist]]
                [-fieldTypeToString All|(type1[,type2]*)]
                [-splitlistfields] [-maxsubfields val]
@@ -278,6 +278,7 @@ you will generally want to use it in combination of the -clipdstlayer, -clipdstw
 <dt> <b>-clipdstlayer</b> <em>layername</em>:</dt><dd>Select the named layer from the destination clip datasource.</dd>
 <dt> <b>-clipdstwhere</b> <em>expression</em>:</dt><dd>Restrict desired geometries based on attribute query.</dd>
 <dt> <b>-wrapdateline</b>:</dt><dd> (starting with GDAL 1.7.0) split geometries crossing the dateline meridian (long. = +/- 180deg)</dd>
+<dt> <b>-datelineoffset</b>:</dt><dd> (starting with GDAL 1.x) offset from dateline in degrees (default long. = +/- 10deg, geometries within 170deg to -170deg will be splited)</dd>
 <dt> <b>-simplify</b><em> tolerance</em>:</dt><dd> (starting with GDAL 1.9.0) distance tolerance for simplification.
 Note: the algorithm used preserves topology per feature, in particular for polygon geometries, but not for a whole layer.</dd>
 <dt> <b>-segmentize</b><em> max_dist</em>:</dt><dd> (starting with GDAL 1.6.0) maximum distance between 2 nodes.

@@ -1961,8 +1961,13 @@ OGRErr CPL_DLL OGR_G_CreateFromFgf( unsigned char *pabyData,
 #define SWAP_DBL(a,b) do { double tmp = a; a = b; b = tmp; } while(0)
 
 static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
-                                      const OGRLineString* poLS)
+                                      const OGRLineString* poLS,
+                                      double dfDateLineOffset)
 {
+    double dfLeftBorderX = 180 - dfDateLineOffset;
+    double dfRightBorderX = -180 + dfDateLineOffset;
+    double dfDiffSpace = 360 - dfDateLineOffset;
+
     int i;
     int bIs3D = poLS->getCoordinateDimension() == 3;
     OGRLineString* poNewLS = new OGRLineString();
@@ -1970,7 +1975,7 @@ static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
     for(i=0;i<poLS->getNumPoints();i++)
     {
         double dfX = poLS->getX(i);
-        if (i > 0 && fabs(dfX - poLS->getX(i-1)) > 350)
+        if (i > 0 && fabs(dfX - poLS->getX(i-1)) > dfDiffSpace)
         {
             double dfX1 = poLS->getX(i-1);
             double dfY1 = poLS->getY(i-1);
@@ -1979,9 +1984,9 @@ static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
             double dfY2 = poLS->getY(i);
             double dfZ2 = poLS->getY(i);
 
-            if (dfX1 > -180 && dfX1 < -170 && dfX2 == 180 &&
+            if (dfX1 > -180 && dfX1 < dfRightBorderX && dfX2 == 180 &&
                 i+1 < poLS->getNumPoints() &&
-                poLS->getX(i+1) > -180 && poLS->getX(i+1) < -170)
+                poLS->getX(i+1) > -180 && poLS->getX(i+1) < dfRightBorderX)
             {
                 if( bIs3D )
                     poNewLS->addPoint(-180, poLS->getY(i), poLS->getZ(i));
@@ -1996,9 +2001,9 @@ static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
                     poNewLS->addPoint(poLS->getX(i), poLS->getY(i));
                 continue;
             }
-            else if (dfX1 > 170 && dfX1 < 180 && dfX2 == -180 &&
+            else if (dfX1 > dfLeftBorderX && dfX1 < 180 && dfX2 == -180 &&
                      i+1 < poLS->getNumPoints() &&
-                     poLS->getX(i+1) > 170 && poLS->getX(i+1) < 180)
+                     poLS->getX(i+1) > dfLeftBorderX && poLS->getX(i+1) < 180)
             {
                 if( bIs3D )
                     poNewLS->addPoint(180, poLS->getY(i), poLS->getZ(i));
@@ -2014,13 +2019,13 @@ static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
                 continue;
             }
 
-            if (dfX1 < -170 && dfX2 > 170)
+            if (dfX1 < dfRightBorderX && dfX2 > dfLeftBorderX)
             {
                 SWAP_DBL(dfX1, dfX2);
                 SWAP_DBL(dfY1, dfY2);
                 SWAP_DBL(dfZ1, dfZ2);
             }
-            if (dfX1 > 170 && dfX2 < -170)
+            if (dfX1 > dfLeftBorderX && dfX2 < dfRightBorderX)
                 dfX2 += 360;
 
             if (dfX1 <= 180 && dfX2 >= 180 && dfX1 < dfX2)
@@ -2029,14 +2034,14 @@ static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
                 double dfY = dfRatio * dfY2 + (1 - dfRatio) * dfY1;
                 double dfZ = dfRatio * dfZ2 + (1 - dfRatio) * dfZ1;
                 if( bIs3D )
-                    poNewLS->addPoint(poLS->getX(i-1) > 170 ? 180 : -180, dfY, dfZ);
+                    poNewLS->addPoint(poLS->getX(i-1) > dfLeftBorderX ? 180 : -180, dfY, dfZ);
                 else
-                    poNewLS->addPoint(poLS->getX(i-1) > 170 ? 180 : -180, dfY);
+                    poNewLS->addPoint(poLS->getX(i-1) > dfLeftBorderX ? 180 : -180, dfY);
                 poNewLS = new OGRLineString();
                 if( bIs3D )
-                    poNewLS->addPoint(poLS->getX(i-1) > 170 ? -180 : 180, dfY, dfZ);
+                    poNewLS->addPoint(poLS->getX(i-1) > dfLeftBorderX ? -180 : 180, dfY, dfZ);
                 else
-                    poNewLS->addPoint(poLS->getX(i-1) > 170 ? -180 : 180, dfY);
+                    poNewLS->addPoint(poLS->getX(i-1) > dfLeftBorderX ? -180 : 180, dfY);
                 poMulti->addGeometryDirectly(poNewLS);
             }
             else
@@ -2057,8 +2062,12 @@ static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
 /************************************************************************/
 
 #ifdef HAVE_GEOS
-static void FixPolygonCoordinatesAtDateLine(OGRPolygon* poPoly)
+static void FixPolygonCoordinatesAtDateLine(OGRPolygon* poPoly, double dfDateLineOffset)
 {
+    double dfLeftBorderX = 180 - dfDateLineOffset;
+    double dfRightBorderX = -180 + dfDateLineOffset;
+    double dfDiffSpace = 360 - dfDateLineOffset;
+
     int i, iPart;
     for(iPart = 0; iPart < 1 + poPoly->getNumInteriorRings(); iPart++)
     {
@@ -2071,9 +2080,9 @@ static void FixPolygonCoordinatesAtDateLine(OGRPolygon* poPoly)
             double dfX = poLS->getX(i);
             double dfPrevX = poLS->getX(i-1);
             double dfDiffLong = fabs(dfX - dfPrevX);
-            if (dfDiffLong > 350)
+            if (dfDiffLong > dfDiffSpace)
             {
-                if ((dfPrevX > 170 && dfX < -170) || (dfX < 0 && bGoEast))
+                if ((dfPrevX > dfLeftBorderX && dfX < dfRightBorderX) || (dfX < 0 && bGoEast))
                 {
                     dfX += 360;
                     bGoEast = TRUE;
@@ -2082,7 +2091,7 @@ static void FixPolygonCoordinatesAtDateLine(OGRPolygon* poPoly)
                     else
                         poLS->setPoint(i, dfX, poLS->getY(i));
                 }
-                else if (dfPrevX < -170 && dfX > 170)
+                else if (dfPrevX < dfRightBorderX && dfX > dfLeftBorderX)
                 {
                     int j;
                     for(j=i-1;j>=0;j--)
@@ -2194,7 +2203,8 @@ static void AddSimpleGeomToMulti(OGRGeometryCollection* poMulti,
 /************************************************************************/
 
 static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
-                                               const OGRGeometry* poGeom)
+                                               const OGRGeometry* poGeom,
+                                               double dfDateLineOffset)
 {
     OGRwkbGeometryType eGeomType = wkbFlatten(poGeom->getGeometryType());
     switch (eGeomType)
@@ -2211,7 +2221,11 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
             /* Naive heuristics... Place to improvement... */
             OGRGeometry* poDupGeom = NULL;
             
-            if (oEnvelope.MinX > 170 && oEnvelope.MaxX > 180)
+            double dfLeftBorderX = 180 - dfDateLineOffset;
+            double dfRightBorderX = -180 + dfDateLineOffset;
+            double dfDiffSpace = 360 - dfDateLineOffset;
+            
+            if (oEnvelope.MinX > dfLeftBorderX && oEnvelope.MaxX > 180)
             {
 #ifndef HAVE_GEOS
                 CPLError( CE_Failure, CPLE_NotSupported, 
@@ -2238,13 +2252,13 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
                         double dfPrevX = poLS->getX(i-1);
                         double dfX = poLS->getX(i);
                         double dfDiffLong = fabs(dfX - dfPrevX);
-                        if (dfDiffLong > 350 &&
-                            ((dfX > 170 && dfPrevX < -170) || (dfPrevX > 170 && dfX < -170)))
+                        if (dfDiffLong > dfDiffSpace &&
+                            ((dfX > dfLeftBorderX && dfPrevX < dfRightBorderX) || (dfPrevX > dfLeftBorderX && dfX < dfRightBorderX)))
                             bHasBigDiff = TRUE;
                         else if (dfDiffLong > dfMaxSmallDiffLong)
                             dfMaxSmallDiffLong = dfDiffLong;
                     }
-                    if (bHasBigDiff && dfMaxSmallDiffLong < 10)
+                    if (bHasBigDiff && dfMaxSmallDiffLong < dfDateLineOffset)
                     {
                         if (eGeomType == wkbLineString)
                             bSplitLineStringAtDateline = TRUE;
@@ -2256,7 +2270,7 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
 #else
                             bWrapDateline = TRUE;
                             poDupGeom = poGeom->clone();
-                            FixPolygonCoordinatesAtDateLine((OGRPolygon*)poDupGeom);
+                            FixPolygonCoordinatesAtDateLine((OGRPolygon*)poDupGeom, dfDateLineOffset);
 #endif
                         }
                     }
@@ -2265,7 +2279,7 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
 
             if (bSplitLineStringAtDateline)
             {
-                SplitLineStringAtDateline(poMulti, (OGRLineString*)poGeom);
+                SplitLineStringAtDateline(poMulti, (OGRLineString*)poGeom, dfDateLineOffset);
             }
             else if (bWrapDateline)
             {
@@ -2312,7 +2326,7 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
             {
                 OGRGeometry* poSubGeom =
                     (OGRGeometry*)OGR_G_GetGeometryRef((OGRGeometryH)poGeom, iGeom);
-                CutGeometryOnDateLineAndAddToMulti(poMulti, poSubGeom);
+                CutGeometryOnDateLineAndAddToMulti(poMulti, poSubGeom, dfDateLineOffset);
             }
             break;
         }
@@ -2355,7 +2369,11 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions( const OGRGeometry* poSrcG
         OGRGeometryCollection* poMulti =
             (OGRGeometryCollection* )createGeometry(eNewType);
             
-        CutGeometryOnDateLineAndAddToMulti(poMulti, poDstGeom);
+        double dfDateLineOffset = CPLAtofM(CSLFetchNameValueDef(papszOptions, "DATELINEOFFSET", "10"));
+        if(dfDateLineOffset <= 0 || dfDateLineOffset >= 360)
+            dfDateLineOffset = 10;
+
+        CutGeometryOnDateLineAndAddToMulti(poMulti, poDstGeom, dfDateLineOffset);
         
         if (poMulti->getNumGeometries() == 0)
         {
