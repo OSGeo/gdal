@@ -94,6 +94,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                            OGRDataSource *poDstDS,
                            int bTransform,
                            int bWrapDateline,
+                           const char* pszDateLineOffset,
                            OGRSpatialReference *poOutputSRS,
                            int bNullifyOutputSRS,
                            OGRSpatialReference *poUserSourceSRS,
@@ -831,6 +832,7 @@ int main( int nArgc, char ** papszArgv )
     GDALProgressFunc pfnProgress = NULL;
     void        *pProgressArg = NULL;
     int          bWrapDateline = FALSE;
+    const char  *pszDateLineOffset = "10";
     int          bClipSrc = FALSE;
     OGRGeometry* poClipSrc = NULL;
     const char  *pszClipSrcDS = NULL;
@@ -1105,6 +1107,10 @@ int main( int nArgc, char ** papszArgv )
         {
             bWrapDateline = TRUE;
         }
+        else if( EQUAL(papszArgv[iArg],"-datelineoffset") && iArg < nArgc-1 )
+        {
+            pszDateLineOffset = papszArgv[++iArg];
+        }        
         else if( EQUAL(papszArgv[iArg],"-clipsrc") )
         {
             if (iArg + 1 >= nArgc)
@@ -1660,7 +1666,7 @@ int main( int nArgc, char ** papszArgv )
 
             if( psInfo == NULL ||
                 !TranslateLayer( psInfo, poDS, poPassedLayer, poODS,
-                                 bTransform, bWrapDateline,
+                                 bTransform, bWrapDateline, pszDateLineOffset,
                                  poOutputSRS, bNullifyOutputSRS,
                                  poSourceSRS,
                                  poGCPCoordTrans,
@@ -1837,7 +1843,7 @@ int main( int nArgc, char ** papszArgv )
                 if( psInfo )
                 {
                     if( !TranslateLayer(psInfo, poDS, poLayer, poODS,
-                                        bTransform, bWrapDateline,
+                                        bTransform, bWrapDateline, pszDateLineOffset,
                                         poOutputSRS, bNullifyOutputSRS,
                                         poSourceSRS,
                                         poGCPCoordTrans,
@@ -2081,7 +2087,7 @@ int main( int nArgc, char ** papszArgv )
 
             if( (psInfo == NULL ||
                 !TranslateLayer( psInfo, poDS, poPassedLayer, poODS,
-                                  bTransform, bWrapDateline,
+                                  bTransform, bWrapDateline, pszDateLineOffset,
                                   poOutputSRS, bNullifyOutputSRS,
                                   poSourceSRS,
                                   poGCPCoordTrans,
@@ -2191,7 +2197,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             "               [-clipdst [xmin ymin xmax ymax]|WKT|datasource]\n"
             "               [-clipdstsql sql_statement] [-clipdstlayer layer]\n"
             "               [-clipdstwhere expression]\n"
-            "               [-wrapdateline]\n"
+            "               [-wrapdateline][-datelineoffset val]\n"
             "               [[-simplify tolerance] | [-segmentize max_dist]]\n"
             "               [-fieldTypeToString All|(type1[,type2]*)]\n"
             "               [-splitlistfields] [-maxsubfields val]\n"
@@ -2226,6 +2232,9 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             " -where restricted_where: Attribute query (like SQL WHERE)\n" 
             " -wrapdateline: split geometries crossing the dateline meridian\n"
             "                (long. = +/- 180deg)\n" 
+            " -datelineoffset: offset from dateline in degrees\n"
+            "                (default long. = +/- 10deg,\n"
+            "                geometries within 170deg to -170deg will be splited)\n" 
             " -sql statement: Execute given SQL statement and save result.\n"
             " -dialect value: select a dialect, usually OGRSQL to avoid native sql.\n"
             " -skipfailures: skip features or layers that fail to convert\n"
@@ -2726,6 +2735,7 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                            OGRDataSource *poDstDS,
                            int bTransform,
                            int bWrapDateline,
+                           const char* pszDateLineOffset,
                            OGRSpatialReference *poOutputSRS,
                            int bNullifyOutputSRS,
                            OGRSpatialReference *poUserSourceSRS,
@@ -2900,11 +2910,19 @@ static int TranslateLayer( TargetLayerInfo* psInfo,
                 {
                     papszTransformOptions =
                         CSLAddString(papszTransformOptions, "WRAPDATELINE=YES");
+                    CPLString soOffset("DATELINEOFFSET=");
+                    soOffset += pszDateLineOffset;
+                    papszTransformOptions =
+                        CSLAddString(papszTransformOptions, soOffset);
                 }
                 else if (poSourceSRS != NULL && poSourceSRS->IsGeographic())
                 {
                     papszTransformOptions =
                         CSLAddString(papszTransformOptions, "WRAPDATELINE=YES");
+                    CPLString soOffset("DATELINEOFFSET=");
+                    soOffset += pszDateLineOffset;
+                    papszTransformOptions =
+                        CSLAddString(papszTransformOptions, soOffset);
                 }
                 else
                 {
