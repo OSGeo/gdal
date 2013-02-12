@@ -770,7 +770,8 @@ builds vector contour lines from a raster elevation model
 
 \verbatim
 Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]
-                    [-snodata n] [-f <formatname>] [-i <interval>]
+                    [-snodata n] [-i <interval>]
+                    [-f <formatname>] [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]
                     [-off <offset>] [-fl <level> <level>...]
                     [-nln <outlayername>]
                     <src_filename> <dst_filename> 
@@ -801,6 +802,9 @@ clockwise around a top.
 
 <dt> <b>-f</b> <em>format</em>:</dt> <dd>
 create output in a particular format, default is shapefiles.</dd>
+
+<dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option (format specific)</dd>
+<dt> <b>-lco</b> <em>NAME=VALUE</em>:</dt><dd> Layer creation option (format specific)</dd>
 
 <dt> <b>-i</b> <em>interval</em>:</dt><dd>
  elevation interval between contours.</dd>
