@@ -40,6 +40,7 @@
     #define HAVE_GETADDRINFO 1
   #endif
 #else
+  #include <sys/time.h>
   #include <sys/types.h>
   #include <sys/wait.h>
   #include <sys/socket.h>
@@ -388,8 +389,20 @@ int RunTCPServer(const char* pszApplication, const char* pszService)
         int nConnSocket;
         pid_t pid;
         int nStatus;
+        struct timeval tv;
+        fd_set read_fds;
 
-        waitpid(-1, &nStatus, WNOHANG);
+        /* Select on the listen socket, and rip zombie children every second */
+        do
+        {
+            FD_ZERO(&read_fds);
+            FD_SET(nListenSocket, &read_fds);
+            tv.tv_sec = 1;
+            tv.tv_usec = 0;
+            waitpid(-1, &nStatus, WNOHANG);
+        }
+        while( select(nListenSocket + 1, &read_fds, NULL, NULL, &tv) != 1 );
+
         nConnSocket = accept(nListenSocket, &sockAddr, &nLen);
         if( nConnSocket < 0 )
         {
