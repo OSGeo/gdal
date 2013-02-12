@@ -56,6 +56,7 @@ static void Usage(const char* pszErrorMsg = NULL)
     printf( 
         "Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]\n"
         "                    [-snodata n] [-f <formatname>] [-i <interval>]\n"
+        "                    [-f <formatname>] [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]\n"   
         "                    [-off <offset>] [-fl <level> <level>...]\n" 
         "                    [-nln <outlayername>] [-q]\n"
         "                    <src_filename> <dst_filename>\n" );
@@ -85,6 +86,7 @@ int main( int argc, char ** argv )
     const char *pszDstFilename = NULL;
     const char *pszElevAttrib = NULL;
     const char *pszFormat = "ESRI Shapefile";
+    char        **papszDSCO = NULL, **papszLCO = NULL;
     double adfFixedLevels[1000];
     int    nFixedLevelCount = 0;
     const char *pszNewLayerName = "contour";
@@ -152,6 +154,16 @@ int main( int argc, char ** argv )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszFormat = argv[++i];
+        }
+        else if( EQUAL(argv[i],"-dsco") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            papszDSCO = CSLAddString(papszDSCO, argv[++i] );
+        }
+        else if( EQUAL(argv[i],"-lco") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            papszLCO = CSLAddString(papszLCO, argv[++i] );
         }
         else if( EQUAL(argv[i],"-3d")  )
         {
@@ -252,13 +264,13 @@ int main( int argc, char ** argv )
         exit( 10 );
     }
 
-    hDS = OGR_Dr_CreateDataSource( hDriver, pszDstFilename, NULL );
+    hDS = OGR_Dr_CreateDataSource( hDriver, pszDstFilename, papszDSCO );
     if( hDS == NULL )
         exit( 1 );
 
     hLayer = OGR_DS_CreateLayer( hDS, pszNewLayerName, hSRS, 
                                  b3D ? wkbLineString25D : wkbLineString,
-                                 NULL );
+                                 papszLCO );
     if( hLayer == NULL )
         exit( 1 );
 
@@ -298,6 +310,8 @@ int main( int argc, char ** argv )
         OSRDestroySpatialReference( hSRS );
 
     CSLDestroy( argv );
+    CSLDestroy( papszDSCO );
+    CSLDestroy( papszLCO );
     GDALDestroyDriverManager();
     OGRCleanupAll();
 
