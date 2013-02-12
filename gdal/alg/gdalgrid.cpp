@@ -446,9 +446,9 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE(
     const float fEpsilon = 0.0000000000001f;
     const float fXPoint = (float)dfXPoint;
     const float fYPoint = (float)dfYPoint;
-    const __m128 xmm_small = _mm_load1_ps(&fEpsilon);
-    const __m128 xmm_x = _mm_load1_ps(&fXPoint);
-    const __m128 xmm_y = _mm_load1_ps(&fYPoint);
+    const __m128 xmm_small = _mm_load1_ps((float*)&fEpsilon);
+    const __m128 xmm_x = _mm_load1_ps((float*)&fXPoint);
+    const __m128 xmm_y = _mm_load1_ps((float*)&fYPoint);
     __m128 xmm_nominator = _mm_setzero_ps();
     __m128 xmm_denominator = _mm_setzero_ps();
     int mask = 0;
@@ -486,13 +486,13 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE(
     size_t nPointsRound = (nPoints / LOOP_SIZE) * LOOP_SIZE;
     for ( i = 0; i < nPointsRound; i += LOOP_SIZE )
     {
-        __m128 xmm_rx = _mm_sub_ps(_mm_load_ps(pafX + i), xmm_x);           /* rx = pafX[i] - fXPoint */
-        __m128 xmm_ry = _mm_sub_ps(_mm_load_ps(pafY + i), xmm_y);           /* ry = pafY[i] - fYPoint */
+        __m128 xmm_rx = _mm_sub_ps(_mm_load_ps((float*)pafX + i), xmm_x);           /* rx = pafX[i] - fXPoint */
+        __m128 xmm_ry = _mm_sub_ps(_mm_load_ps((float*)pafY + i), xmm_y);           /* ry = pafY[i] - fYPoint */
         __m128 xmm_r2 = _mm_add_ps(_mm_mul_ps(xmm_rx, xmm_rx),              /* r2 = rx * rx + ry * ry */
                                    _mm_mul_ps(xmm_ry, xmm_ry));
         __m128 xmm_invr2 = _mm_rcp_ps(xmm_r2);                              /* invr2 = 1.0f / r2 */
         xmm_nominator = _mm_add_ps(xmm_nominator,                           /* nominator += invr2 * pafZ[i] */
-                            _mm_mul_ps(xmm_invr2, _mm_load_ps(pafZ + i)));
+                            _mm_mul_ps(xmm_invr2, _mm_load_ps((float*)pafZ + i)));
         xmm_denominator = _mm_add_ps(xmm_denominator, xmm_invr2);           /* denominator += invr2 */
         mask = _mm_movemask_ps(_mm_cmplt_ps(xmm_r2, xmm_small));            /* if( r2 < fEpsilon) */
         if( mask )
