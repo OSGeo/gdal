@@ -140,6 +140,26 @@ static const char *papszDatumEquiv[] =
 #endif
 
 /************************************************************************/
+/*                       LibgeotiffOneTimeInit()                        */
+/************************************************************************/
+
+void LibgeotiffOneTimeInit() 
+{
+    static int bOneTimeInitDone = FALSE;
+    static void* hMutex = NULL;
+    CPLMutexHolder oHolder( &hMutex);
+
+    if (bOneTimeInitDone)
+        return;
+
+    bOneTimeInitDone = TRUE;
+
+    // If linking with an external libgeotiff we hope this will call the
+    // SetCSVFilenameHook() in libgeotiff, not the one in gdal/port!
+    SetCSVFilenameHook( GDALDefaultCSVFilename );
+}
+
+/************************************************************************/
 /*                       GTIFToCPLRecyleString()                        */
 /*                                                                      */
 /*      This changes a string from the libgeotiff heap to the GDAL      */
