@@ -37,6 +37,7 @@
 
 CPL_C_START
 int    GTiffOneTimeInit();
+void   LibgeotiffOneTimeInit();
 CPL_C_END
 
 void    GTIFFGetOverviewBlockSize(int* pnBlockXSize, int* pnBlockYSize);
