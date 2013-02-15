@@ -54,6 +54,11 @@ CPL_CVSID("$Id$")
 
 
 CPL_C_START
+void    LibgeotiffOneTimeInit();
+
+// replicated from gdal_csv.h. 
+const char * GDALDefaultCSVFilename( const char *pszBasename );
+
 #ifndef CPL_SERV_H_INTERNAL
 /* Make VSIL_STRICT_ENFORCE active in DEBUG builds */
 #ifdef DEBUG
