@@ -300,6 +300,11 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     OGRSpatialReference	oSRS;
 
 /* -------------------------------------------------------------------- */
+/*      Make sure we have hooked CSVFilename().                         */
+/* -------------------------------------------------------------------- */
+    LibgeotiffOneTimeInit();
+
+/* -------------------------------------------------------------------- */
 /*  Handle non-standard coordinate systems where GTModelTypeGeoKey      */
 /*  is not defined, but ProjectedCSTypeGeoKey is defined (ticket #3019) */
 /* -------------------------------------------------------------------- */
@@ -2372,6 +2377,11 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
              (long) CPLGetPID() );
 
 /* -------------------------------------------------------------------- */
+/*      Make sure we have hooked CSVFilename().                         */
+/* -------------------------------------------------------------------- */
+    LibgeotiffOneTimeInit();
+
+/* -------------------------------------------------------------------- */
 /*      Create a memory file from the buffer.                           */
 /* -------------------------------------------------------------------- */
     VSILFILE *fp = VSIFileFromMemBuffer( szFilename, pabyBuffer, nSize, FALSE );
@@ -2514,6 +2524,11 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
 
     sprintf( szFilename, "/vsimem/wkt_from_mem_buf_%ld.tif", 
              (long) CPLGetPID() );
+
+/* -------------------------------------------------------------------- */
+/*      Make sure we have hooked CSVFilename().                         */
+/* -------------------------------------------------------------------- */
+    LibgeotiffOneTimeInit();
 
 /* -------------------------------------------------------------------- */
 /*      Initialize access to the memory geotiff structure.              */
