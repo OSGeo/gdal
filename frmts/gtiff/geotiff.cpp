@@ -9672,7 +9672,7 @@ int GTiffOneTimeInit()
 
     // This only really needed if we are linked to an external libgeotiff
     // with its own (lame) file searching logic. 
-    SetCSVFilenameHook( GDALDefaultCSVFilename );
+    LibgeotiffOneTimeInit();
 
     return TRUE;
 }
