@@ -42,6 +42,7 @@ CPL_CVSID("$Id$");
 
 CPL_C_START
 double GTIFAngleToDD( double dfAngle, int nUOMAngle );
+void    LibgeotiffOneTimeInit();
 CPL_C_END
 
 // Key Macros from Makefile:
@@ -1499,6 +1500,11 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Make sure we have hooked CSV lookup for GDAL_DATA.              */
+/* -------------------------------------------------------------------- */
+    LibgeotiffOneTimeInit();
+
+/* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     MrSIDDataset    *poDS;
@@ -2439,6 +2445,11 @@ void MrSIDDataset::FetchProjParms()
 void MrSIDDataset::GetGTIFDefn()
 {
     double      dfInvFlattening;
+
+/* -------------------------------------------------------------------- */
+/*      Make sure we have hooked CSV lookup for GDAL_DATA.              */
+/* -------------------------------------------------------------------- */
+    LibgeotiffOneTimeInit();
 
 /* -------------------------------------------------------------------- */
 /*      Initially we default all the information we can.                */
@@ -3707,4 +3718,3 @@ void TIFFSetField() {}
 
 }
 #endif
-
