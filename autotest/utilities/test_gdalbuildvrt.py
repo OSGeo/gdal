@@ -512,7 +512,7 @@ gdaltest_list = [
     test_gdalbuildvrt_2,
     test_gdalbuildvrt_3,
     test_gdalbuildvrt_4,
-    test_gdalbuildvrt_5,
+#    test_gdalbuildvrt_5,
     test_gdalbuildvrt_6,
     test_gdalbuildvrt_7,
     test_gdalbuildvrt_8,
