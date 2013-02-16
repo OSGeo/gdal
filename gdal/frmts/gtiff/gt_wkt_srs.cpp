@@ -55,6 +55,7 @@ CPL_CVSID("$Id$")
 
 CPL_C_START
 void    LibgeotiffOneTimeInit();
+void    LibgeotiffOneTimeCleanupMutex();
 
 // replicated from gdal_csv.h. 
 const char * GDALDefaultCSVFilename( const char *pszBasename );
@@ -143,10 +144,11 @@ static const char *papszDatumEquiv[] =
 /*                       LibgeotiffOneTimeInit()                        */
 /************************************************************************/
 
+static void* hMutex = NULL;
+
 void LibgeotiffOneTimeInit() 
 {
     static int bOneTimeInitDone = FALSE;
-    static void* hMutex = NULL;
     CPLMutexHolder oHolder( &hMutex);
 
     if (bOneTimeInitDone)
@@ -157,6 +159,19 @@ void LibgeotiffOneTimeInit()
     // If linking with an external libgeotiff we hope this will call the
     // SetCSVFilenameHook() in libgeotiff, not the one in gdal/port!
     SetCSVFilenameHook( GDALDefaultCSVFilename );
+}
+
+/************************************************************************/
+/*                   LibgeotiffOneTimeCleanupMutex()                    */
+/************************************************************************/
+
+void LibgeotiffOneTimeCleanupMutex() 
+{
+    if( hMutex != NULL )
+    {
+        CPLDestroyMutex(hMutex);
+        hMutex = NULL;
+    }
 }
 
 /************************************************************************/
