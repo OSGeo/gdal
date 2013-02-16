@@ -9696,6 +9696,8 @@ void GDALDeregister_GTiff( GDALDriver * )
         CPLDestroyMutex(hGTiffOneTimeInitMutex);
         hGTiffOneTimeInitMutex = NULL;
     }
+
+    LibgeotiffOneTimeCleanupMutex();
 }
 
 /************************************************************************/
