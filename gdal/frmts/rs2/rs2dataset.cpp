@@ -1045,6 +1045,20 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetMetadataItem( "BEAM_MODE", pszItem );
         pszItem = CPLGetXMLValue( psSourceAttrs, "rawDataStartTime", "UNK" );
         poDS->SetMetadataItem( "ACQUISITION_START_TIME", pszItem );
+
+        pszItem = CPLGetXMLValue( psSourceAttrs, "inputDatasetFacilityId", "UNK" );
+        poDS->SetMetadataItem( "FACILITY_IDENTIFIER", pszItem );
+
+        pszItem = CPLGetXMLValue( psSourceAttrs,
+            "orbitAndAttitude.orbitInformation.passDirection", "UNK" );
+        poDS->SetMetadataItem( "ORBIT_DIRECTION", pszItem );
+        pszItem = CPLGetXMLValue( psSourceAttrs,
+            "orbitAndAttitude.orbitInformation.orbitDataSource", "UNK" );
+        poDS->SetMetadataItem( "ORBIT_DATA_SOURCE", pszItem );
+        pszItem = CPLGetXMLValue( psSourceAttrs,
+            "orbitAndAttitude.orbitInformation.orbitDataFile", "UNK" );
+        poDS->SetMetadataItem( "ORBIT_DATA_FILE", pszItem );
+
     }
 
     CPLXMLNode *psSarProcessingInformation =
@@ -1063,7 +1077,30 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         pszItem = CPLGetXMLValue( psSarProcessingInformation,
                                   "sarProcessingInformation.slantRangeNearEdge", "UNK" );
         poDS->SetMetadataItem( "SLANT_RANGE_NEAR_EDGE", pszItem );
+
+        pszItem = CPLGetXMLValue( psSarProcessingInformation,
+                                  "sarProcessingInformation.zeroDopplerTimeFirstLine", "UNK" );
+        poDS->SetMetadataItem( "FIRST_LINE_TIME", pszItem );
+
+        pszItem = CPLGetXMLValue( psSarProcessingInformation,
+                                  "sarProcessingInformation.zeroDopplerTimeLastLine", "UNK" );
+        poDS->SetMetadataItem( "LAST_LINE_TIME", pszItem );
+
+        pszItem = CPLGetXMLValue( psSarProcessingInformation,
+                                  "generalProcessingInformation.productType", "UNK" );
+        poDS->SetMetadataItem( "PRODUCT_TYPE", pszItem );
+
+        pszItem = CPLGetXMLValue( psSarProcessingInformation,
+                                  "generalProcessingInformation.processingFacility", "UNK" );
+        poDS->SetMetadataItem( "PROCESSING_FACILITY", pszItem );
+
+        pszItem = CPLGetXMLValue( psSarProcessingInformation,
+                                  "generalProcessingInformation.processingTime", "UNK" );
+        poDS->SetMetadataItem( "PROCESSING_TIME", pszItem );
+
     }
+
+
 
 /*--------------------------------------------------------------------- */
 /*      Collect Map projection/Geotransform information, if present     */
