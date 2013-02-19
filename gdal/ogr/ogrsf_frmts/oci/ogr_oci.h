@@ -464,6 +464,8 @@ class OGROCITableLayer : public OGROCIWritableLayer
 
     // following methods are not base class overrides
     int                 IsValid() { return bValidTable; }
+
+    int                 GetMaxFID();
 };
 
 /************************************************************************/
@@ -516,6 +518,7 @@ class OGROCIDataSource : public OGRDataSource
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
+    OGRLayer            *GetLayerByName(const char * pszName);
 
     virtual OGRErr      DeleteLayer(int);
     virtual OGRLayer    *CreateLayer( const char *, 
