@@ -625,21 +625,6 @@ void NASReader::SetFeaturePropertyDirectly( const char *pszElement,
         }
         return;
     }
-#if 0
-    else if( strcmp(poClass->GetProperty(iProperty)->GetName(),"signaturnummer") == 0 ||
-             strcmp(poClass->GetProperty(iProperty)->GetName(),"anlass") == 0 )
-    {
-        if( isalpha( pszValue[0] ) && isalpha( pszValue[1] ) && isdigit( pszValue[2] ) )
-        {
-            poFeature->SetPropertyDirectly( iProperty, CPLStrdup( pszValue+2 ) );
-#ifdef DEBUG_VERBOSE
-            CPLDebug( "NAS", "Skipping two letter prefix of '%s'", pszValue );
-#endif
-            CPLFree(pszValue);
-            return;
-        }
-    }
-#endif
     else if( strcmp(poClass->GetProperty(iProperty)->GetName(),"kartendarstellung") == 0 ||
              strcmp(poClass->GetProperty(iProperty)->GetName(),"rechtsbehelfsverfahren") == 0 )
     {
