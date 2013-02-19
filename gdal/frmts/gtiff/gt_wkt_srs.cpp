@@ -54,7 +54,7 @@ CPL_CVSID("$Id$")
 
 
 CPL_C_START
-void    LibgeotiffOneTimeInit();
+void CPL_DLL LibgeotiffOneTimeInit();
 void    LibgeotiffOneTimeCleanupMutex();
 
 // replicated from gdal_csv.h. 
