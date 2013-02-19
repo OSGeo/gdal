@@ -909,6 +909,26 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         if( !EQUALN(szField,"            ",12) )
             SetMetadataItem( "CEOS_SOFTWARE_ID", szField );
+
+/* -------------------------------------------------------------------- */
+/*      product identifier.                                                    */
+/* -------------------------------------------------------------------- */
+        szField[8] = '\0';
+
+        GetCeosField( record, 261, "A8", szField );
+
+        if( !EQUALN(szField,"        ",8) )
+            SetMetadataItem( "CEOS_PRODUCT_ID", szField );
+    
+/* -------------------------------------------------------------------- */
+/*      volume identifier.                                                    */
+/* -------------------------------------------------------------------- */
+        szField[16] = '\0';
+
+        GetCeosField( record, 77, "A16", szField );
+
+        if( !EQUALN(szField,"                ",16) )
+            SetMetadataItem( "CEOS_VOLSET_ID", szField );
     }
 
 /* ==================================================================== */
@@ -980,6 +1000,53 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         if( !EQUALN(szField,"                ",16 ) )
             SetMetadataItem( "CEOS_SEMI_MINOR", szField );
+
+/* -------------------------------------------------------------------- */
+/*      SCENE LENGTH KM                                                 */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 341, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_SCENE_LENGTH_KM", szField );
+
+/* -------------------------------------------------------------------- */
+/*      SCENE WIDTH KM                                                  */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 357, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_SCENE_WIDTH_KM", szField );
+
+/* -------------------------------------------------------------------- */
+/*      MISSION ID                                                      */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 397, "A16", szField );
+        szField[16] = '\0';
+
+        if( !EQUALN(szField,"                ",16 ) )
+            SetMetadataItem( "CEOS_MISSION_ID", szField );
+
+/* -------------------------------------------------------------------- */
+/*      SENSOR ID                                                      */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 413, "A32", szField );
+        szField[32] = '\0';
+
+        if( !EQUALN(szField,"                                ",32 ) )
+            SetMetadataItem( "CEOS_SENSOR_ID", szField );
+
+
+/* -------------------------------------------------------------------- */
+/*      ORBIT NUMBER                                                    */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 445, "A8", szField );
+        szField[8] = '\0';
+
+        if( !EQUALN(szField,"        ",8 ) )
+            SetMetadataItem( "CEOS_ORBIT_NUMBER", szField );
+
 
 /* -------------------------------------------------------------------- */
 /*      Platform latitude                                               */
@@ -1154,6 +1221,18 @@ void SAR_CEOSDataset::ScanForMetadata()
 
     if( record != NULL )
     {
+        GetCeosField( record, 192, "A21", szField );
+        szField[21] = '\0';
+
+        if( !EQUALN(szField,"                     ",21 ) )
+            SetMetadataItem( "CEOS_PROC_START", szField );
+            
+        GetCeosField( record, 213, "A21", szField );
+        szField[21] = '\0';
+
+        if( !EQUALN(szField,"                     ",21 ) )
+            SetMetadataItem( "CEOS_PROC_STOP", szField );
+            
         GetCeosField( record, 4649, "A16", szField );
         szField[16] = '\0';
 
