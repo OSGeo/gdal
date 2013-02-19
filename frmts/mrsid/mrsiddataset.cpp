@@ -42,7 +42,7 @@ CPL_CVSID("$Id$");
 
 CPL_C_START
 double GTIFAngleToDD( double dfAngle, int nUOMAngle );
-void    LibgeotiffOneTimeInit();
+void CPL_DLL LibgeotiffOneTimeInit();
 CPL_C_END
 
 // Key Macros from Makefile:

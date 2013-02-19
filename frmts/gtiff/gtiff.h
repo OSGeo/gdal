@@ -37,7 +37,7 @@
 
 CPL_C_START
 int    GTiffOneTimeInit();
-void   LibgeotiffOneTimeInit();
+void CPL_DLL LibgeotiffOneTimeInit();
 void   LibgeotiffOneTimeCleanupMutex();
 CPL_C_END
 
