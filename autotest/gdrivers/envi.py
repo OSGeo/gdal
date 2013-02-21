@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -281,6 +282,31 @@ def envi_12():
 
     return 'success'
 
+###############################################################################
+# Test writing of metadata from the ENVI metadata domain and read it back (#4957)
+
+def envi_13():
+
+    ds = gdal.GetDriverByName('ENVI').Create('/vsimem/envi_13.dat', 1, 1)
+    ds.SetMetadata(['lines=100', 'sensor_type=Landsat TM', 'foo'], 'ENVI')
+    ds = None
+
+    gdal.Unlink('/vsimem/envi_13.dat.aux.xml')
+
+    ds = gdal.Open('/vsimem/envi_13.dat')
+    lines = ds.RasterYSize
+    val = ds.GetMetadataItem('sensor_type', 'ENVI')
+    ds = None
+    gdal.GetDriverByName('ENVI').Delete('/vsimem/envi_13.dat')
+    
+    if lines != 1:
+        return 'fail'
+
+    if val != 'Landsat TM':
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     envi_1,
     envi_2,
@@ -293,7 +319,8 @@ gdaltest_list = [
     envi_9,
     envi_10,
     envi_11,
-    envi_12
+    envi_12,
+    envi_13,
     ]
   
 
