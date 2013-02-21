@@ -31,6 +31,7 @@
 #include "rawdataset.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -497,6 +498,46 @@ void ENVIDataset::FlushCache()
             VSIFPrintfL( fp, ",\n" );
     }
     VSIFPrintfL( fp, "}\n" );
+
+/* -------------------------------------------------------------------- */
+/*      Write the metadata that was read into the ENVI domain           */
+/* -------------------------------------------------------------------- */
+    char** papszENVIMetadata = GetMetadata("ENVI");
+
+    int i;
+    int count = CSLCount(papszENVIMetadata);
+    char **papszTokens;
+
+    // For every item of metadata in the ENVI domain
+    for (i = 0; i < count; i++)
+    {
+        // Split the entry into two parts at the = character
+        char *pszEntry = papszENVIMetadata[i];
+        papszTokens = CSLTokenizeString2( pszEntry, "=", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
+
+        if (CSLCount(papszTokens) != 2)
+        {
+            CPLDebug("ENVI", "Line of header file could not be split at = into two elements: %s", papszENVIMetadata[i]);
+            CSLDestroy( papszTokens );
+            continue;
+        }
+        // Replace _'s in the string with spaces
+        std::string poKey(papszTokens[0]);
+        std::replace(poKey.begin(), poKey.end(), '_', ' ');
+
+        // Don't write it out if it is one of the bits of metadata that is written out elsewhere in this routine
+        if (poKey == "description" || poKey == "samples" || poKey == "lines" ||
+            poKey == "bands" || poKey == "header offset" || poKey == "file type" ||
+            poKey == "data type" || poKey == "interleave" || poKey == "byte order" ||
+            poKey == "class names" || poKey == "band names" || poKey == "map info" ||
+            poKey == "projection info")
+        {
+            CSLDestroy( papszTokens );
+            continue;
+        }
+        VSIFPrintfL( fp, "%s = %s\n", poKey.c_str(), papszTokens[1]);
+        CSLDestroy( papszTokens );
+    }
 
     /* Clean dirty flag */
     bHeaderDirty = FALSE;
@@ -1125,10 +1166,11 @@ void ENVIDataset::SetDescription( const char * pszDescription )
 
 CPLErr ENVIDataset::SetMetadata( char ** papszMetadata,
                                  const char * pszDomain )
-{
-    if (pszDomain && EQUAL(pszDomain, "RPC"))
+{  
+    if( pszDomain && (EQUAL(pszDomain, "RPC") || EQUAL(pszDomain, "ENVI")) )
+    {
         bHeaderDirty = TRUE;
-
+    }
     return RawDataset::SetMetadata(papszMetadata, pszDomain);
 }
 
@@ -1140,9 +1182,10 @@ CPLErr ENVIDataset::SetMetadataItem( const char * pszName,
                                      const char * pszValue,
                                      const char * pszDomain )
 {
-    if (pszDomain && EQUAL(pszDomain, "RPC"))
+    if( pszDomain && (EQUAL(pszDomain, "RPC") || EQUAL(pszDomain, "ENVI")) )
+    {
         bHeaderDirty = TRUE;
-
+    }
     return RawDataset::SetMetadataItem(pszName, pszValue, pszDomain);
 }
 
