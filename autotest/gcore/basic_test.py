@@ -164,6 +164,34 @@ def basic_test_8():
 
     return 'success'
 
+###############################################################################
+# Test gdal.PushErrorHandler() with a Python error handler
+
+def my_python_error_handler(eErrClass, err_no, msg):
+    gdaltest.eErrClass = eErrClass
+    gdaltest.err_no = err_no
+    gdaltest.msg = msg
+
+def basic_test_9():
+
+    gdal.PushErrorHandler(my_python_error_handler)
+    gdal.Error(1,2,'test')
+    gdal.PopErrorHandler()
+
+    if gdaltest.eErrClass != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if gdaltest.err_no != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if gdaltest.msg != 'test':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ basic_test_1,
                   basic_test_2,
                   basic_test_3,
@@ -171,7 +199,8 @@ gdaltest_list = [ basic_test_1,
                   basic_test_5,
                   basic_test_6,
                   basic_test_7,
-                  basic_test_8 ]
+                  basic_test_8,
+                  basic_test_9 ]
 
 
 if __name__ == '__main__':

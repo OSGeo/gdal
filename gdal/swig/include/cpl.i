@@ -49,7 +49,34 @@ typedef char retStringAndCPLFree;
   void Debug( const char *msg_class, const char *message ) {
     CPLDebug( msg_class, "%s", message );
   }
+%}
 
+#ifdef SWIGPYTHON
+
+%{
+void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* pszErrorMsg)
+{
+    void* user_data = CPLGetErrorHandlerUserData();
+    PyObject *psArgs;
+
+    psArgs = Py_BuildValue("(iis)", eErrClass, err_no, pszErrorMsg );
+    PyEval_CallObject( (PyObject*)user_data, psArgs);
+    Py_XDECREF(psArgs);
+}
+%}
+
+%inline %{
+  CPLErr PushErrorHandler( CPLErrorHandler pfnErrorHandler = NULL, void* user_data = NULL )
+  {
+    if( pfnErrorHandler == NULL )
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+    else
+        CPLPushErrorHandlerEx(pfnErrorHandler, user_data);
+    return CE_None;
+  }
+%}
+#else
+%inline %{
   CPLErr PushErrorHandler( char const * pszCallbackName = NULL ) {
     CPLErrorHandler pfnHandler = NULL;
     if( pszCallbackName == NULL || EQUAL(pszCallbackName,"CPLQuietErrorHandler") )
@@ -66,8 +93,8 @@ typedef char retStringAndCPLFree;
 
     return CE_None;
   }
-
 %}
+#endif
 
 #ifdef SWIGJAVA
 %inline%{
@@ -140,7 +167,7 @@ GOA2GetRefreshToken( const char *pszAuthToken, const char *pszScope );
 retStringAndCPLFree*
 GOA2GetAccessToken( const char *pszRefreshToken, const char *pszScope );
 
-#ifndef SWIGJAVA
+#if !defined(SWIGJAVA) && !defined(SWIGPYTHON)
 void CPLPushErrorHandler( CPLErrorHandler );
 #endif
 

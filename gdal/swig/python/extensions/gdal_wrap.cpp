@@ -3257,24 +3257,6 @@ typedef char retStringAndCPLFree;
     CPLDebug( msg_class, "%s", message );
   }
 
-  CPLErr PushErrorHandler( char const * pszCallbackName = NULL ) {
-    CPLErrorHandler pfnHandler = NULL;
-    if( pszCallbackName == NULL || EQUAL(pszCallbackName,"CPLQuietErrorHandler") )
-      pfnHandler = CPLQuietErrorHandler;
-    else if( EQUAL(pszCallbackName,"CPLDefaultErrorHandler") )
-      pfnHandler = CPLDefaultErrorHandler;
-    else if( EQUAL(pszCallbackName,"CPLLoggingErrorHandler") )
-      pfnHandler = CPLLoggingErrorHandler;
-
-    if ( pfnHandler == NULL )
-      return CE_Fatal;
-
-    CPLPushErrorHandler( pfnHandler );
-
-    return CE_None;
-  }
-
-
 
 SWIGINTERN swig_type_info*
 SWIG_pchar_descriptor(void)
@@ -3366,6 +3348,27 @@ SWIG_AsCharPtrAndSize(PyObject *obj, char** cptr, size_t* psize, int *alloc)
 
 
 
+
+
+void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* pszErrorMsg)
+{
+    void* user_data = CPLGetErrorHandlerUserData();
+    PyObject *psArgs;
+
+    psArgs = Py_BuildValue("(iis)", eErrClass, err_no, pszErrorMsg );
+    PyEval_CallObject( (PyObject*)user_data, psArgs);
+    Py_XDECREF(psArgs);
+}
+
+
+  CPLErr PushErrorHandler( CPLErrorHandler pfnErrorHandler = NULL, void* user_data = NULL )
+  {
+    if( pfnErrorHandler == NULL )
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+    else
+        CPLPushErrorHandlerEx(pfnErrorHandler, user_data);
+    return CE_None;
+  }
 
 
   void Error( CPLErr msg_class = CE_Failure, int err_code = 0, const char* msg = "error" ) {
@@ -5296,28 +5299,55 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_PushErrorHandler__SWIG_0(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_PushErrorHandler(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
-  char *arg1 = (char *) NULL ;
-  int res1 ;
-  char *buf1 = 0 ;
-  int alloc1 = 0 ;
+  CPLErrorHandler arg1 = (CPLErrorHandler) NULL ;
+  void *arg2 = (void *) NULL ;
   PyObject * obj0 = 0 ;
   CPLErr result;
   
   if (!PyArg_ParseTuple(args,(char *)"|O:PushErrorHandler",&obj0)) SWIG_fail;
   if (obj0) {
-    res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PushErrorHandler" "', argument " "1"" of type '" "char const *""'");
+    {
+      /* %typemap(in) (CPLErrorHandler pfnErrorHandler = NULL, void* user_data = NULL) */
+      int alloc = 0;
+      char* pszCallbackName = NULL;
+      arg2 = NULL;
+      if( SWIG_IsOK(SWIG_AsCharPtrAndSize(obj0, &pszCallbackName, NULL, &alloc)) )
+      {
+        if( pszCallbackName == NULL || EQUAL(pszCallbackName,"CPLQuietErrorHandler") )
+        arg1 = CPLQuietErrorHandler;
+        else if( EQUAL(pszCallbackName,"CPLDefaultErrorHandler") )
+        arg1 = CPLDefaultErrorHandler;
+        else if( EQUAL(pszCallbackName,"CPLLoggingErrorHandler") )
+        arg1 = CPLLoggingErrorHandler;
+        else
+        {
+          if (alloc == SWIG_NEWOBJ) delete[] pszCallbackName;
+          PyErr_SetString( PyExc_RuntimeError, "Unhandled value for passed string" );
+          SWIG_fail;
+        }
+        
+        if (alloc == SWIG_NEWOBJ) delete[] pszCallbackName;
+      }
+      else if (!PyCallable_Check(obj0))
+      {
+        PyErr_SetString( PyExc_RuntimeError, 
+          "Object given is not a String or a Python function" );
+        SWIG_fail;
+      }
+      else
+      {
+        arg1 = PyCPLErrorHandler;
+        arg2 = obj0;
+      }
     }
-    arg1 = reinterpret_cast< char * >(buf1);
   }
   {
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (CPLErr)PushErrorHandler((char const *)arg1);
+    result = (CPLErr)PushErrorHandler(arg1,arg2);
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
@@ -5326,7 +5356,6 @@ SWIGINTERN PyObject *_wrap_PushErrorHandler__SWIG_0(PyObject *SWIGUNUSEDPARM(sel
     }
   }
   resultobj = SWIG_From_int(static_cast< int >(result));
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   {
     /* %typemap(ret) CPLErr */
     if ( bUseExceptions == 0 ) {
@@ -5339,7 +5368,6 @@ SWIGINTERN PyObject *_wrap_PushErrorHandler__SWIG_0(PyObject *SWIGUNUSEDPARM(sel
   }
   return resultobj;
 fail:
-  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return NULL;
 }
 
@@ -5552,85 +5580,6 @@ SWIGINTERN PyObject *_wrap_GOA2GetAccessToken(PyObject *SWIGUNUSEDPARM(self), Py
 fail:
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_PushErrorHandler__SWIG_1(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  CPLErrorHandler arg1 ;
-  void *argp1 ;
-  int res1 = 0 ;
-  PyObject * obj0 = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)"O:PushErrorHandler",&obj0)) SWIG_fail;
-  {
-    res1 = SWIG_ConvertPtr(obj0, &argp1, SWIGTYPE_p_CPLErrorHandler,  0  | 0);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PushErrorHandler" "', argument " "1"" of type '" "CPLErrorHandler""'"); 
-    }  
-    if (!argp1) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "PushErrorHandler" "', argument " "1"" of type '" "CPLErrorHandler""'");
-    } else {
-      CPLErrorHandler * temp = reinterpret_cast< CPLErrorHandler * >(argp1);
-      arg1 = *temp;
-      if (SWIG_IsNewObj(res1)) delete temp;
-    }
-  }
-  {
-    if ( bUseExceptions ) {
-      CPLErrorReset();
-    }
-    CPLPushErrorHandler(arg1);
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-  }
-  resultobj = SWIG_Py_Void();
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_PushErrorHandler(PyObject *self, PyObject *args) {
-  int argc;
-  PyObject *argv[2];
-  int ii;
-  
-  if (!PyTuple_Check(args)) SWIG_fail;
-  argc = (int)PyObject_Length(args);
-  for (ii = 0; (ii < argc) && (ii < 1); ii++) {
-    argv[ii] = PyTuple_GET_ITEM(args,ii);
-  }
-  if ((argc >= 0) && (argc <= 1)) {
-    int _v;
-    if (argc <= 0) {
-      return _wrap_PushErrorHandler__SWIG_0(self, args);
-    }
-    int res = SWIG_AsCharPtrAndSize(argv[0], 0, NULL, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      return _wrap_PushErrorHandler__SWIG_0(self, args);
-    }
-  }
-  if (argc == 1) {
-    int _v;
-    int res = SWIG_ConvertPtr(argv[0], 0, SWIGTYPE_p_CPLErrorHandler, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      return _wrap_PushErrorHandler__SWIG_1(self, args);
-    }
-  }
-  
-fail:
-  SWIG_SetErrorMsg(PyExc_NotImplementedError,"Wrong number of arguments for overloaded function 'PushErrorHandler'.\n"
-    "  Possible C/C++ prototypes are:\n"
-    "    PushErrorHandler(char const *)\n"
-    "    CPLPushErrorHandler(CPLErrorHandler)\n");
   return NULL;
 }
 
@@ -21502,14 +21451,11 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"DontUseExceptions", _wrap_DontUseExceptions, METH_VARARGS, (char *)"DontUseExceptions()"},
 	 { (char *)"VSIFReadL", _wrap_VSIFReadL, METH_VARARGS, (char *)"VSIFReadL(int nMembSize, int nMembCount, VSILFILE fp) -> int"},
 	 { (char *)"Debug", _wrap_Debug, METH_VARARGS, (char *)"Debug(char msg_class, char message)"},
+	 { (char *)"PushErrorHandler", _wrap_PushErrorHandler, METH_VARARGS, (char *)"PushErrorHandler(CPLErrorHandler pfnErrorHandler = None) -> CPLErr"},
 	 { (char *)"Error", _wrap_Error, METH_VARARGS, (char *)"Error(CPLErr msg_class = CE_Failure, int err_code = 0, char msg = \"error\")"},
 	 { (char *)"GOA2GetAuthorizationURL", _wrap_GOA2GetAuthorizationURL, METH_VARARGS, (char *)"GOA2GetAuthorizationURL(char pszScope) -> retStringAndCPLFree"},
 	 { (char *)"GOA2GetRefreshToken", _wrap_GOA2GetRefreshToken, METH_VARARGS, (char *)"GOA2GetRefreshToken(char pszAuthToken, char pszScope) -> retStringAndCPLFree"},
 	 { (char *)"GOA2GetAccessToken", _wrap_GOA2GetAccessToken, METH_VARARGS, (char *)"GOA2GetAccessToken(char pszRefreshToken, char pszScope) -> retStringAndCPLFree"},
-	 { (char *)"PushErrorHandler", _wrap_PushErrorHandler, METH_VARARGS, (char *)"\n"
-		"PushErrorHandler(char pszCallbackName = None) -> CPLErr\n"
-		"PushErrorHandler(CPLErrorHandler arg0)\n"
-		""},
 	 { (char *)"PopErrorHandler", _wrap_PopErrorHandler, METH_VARARGS, (char *)"PopErrorHandler()"},
 	 { (char *)"ErrorReset", _wrap_ErrorReset, METH_VARARGS, (char *)"ErrorReset()"},
 	 { (char *)"EscapeString", (PyCFunction) _wrap_EscapeString, METH_VARARGS | METH_KEYWORDS, (char *)"EscapeString(int len, int scheme = CPLES_SQL) -> retStringAndCPLFree"},
