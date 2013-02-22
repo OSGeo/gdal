@@ -717,16 +717,19 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
             delete poDS;
             return NULL;
         }
-        
-        if( poDS->GetRasterXSize() != poDS->poJPEGDataset->GetRasterXSize()
-            || poDS->GetRasterYSize() != poDS->poJPEGDataset->GetRasterYSize())
+
+        /* In some circumstances, the JPEG image can be larger than the NITF */
+        /* (NCOLS, NROWS) dimensions (#5001), so accept it as a valid case */
+        /* But reject when it is smaller than the NITF dimensions. */
+        if( poDS->GetRasterXSize() > poDS->poJPEGDataset->GetRasterXSize()
+            || poDS->GetRasterYSize() > poDS->poJPEGDataset->GetRasterYSize())
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "JPEG data stream has not the same dimensions as the NITF file.");
+                    "JPEG data stream has smaller dimensions than the NITF file.");
             delete poDS;
             return NULL;
         }
-        
+
         poDS->poJPEGDataset->SetPamFlags( 
             poDS->poJPEGDataset->GetPamFlags() | GPF_NOSAVE );
 
