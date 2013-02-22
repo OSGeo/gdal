@@ -30,6 +30,8 @@
 
 #include "stdinc.h"
 
+void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions);
+
 /* CURLINFO_RESPONSE_CODE was known as CURLINFO_HTTP_CODE in libcurl 7.10.7 and earlier */
 #if LIBCURL_VERSION_NUM < 0x070a07
 #define CURLINFO_RESPONSE_CODE CURLINFO_HTTP_CODE
@@ -81,25 +83,16 @@ void CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL, con
         CPLError(CE_Fatal, CPLE_AppDefined, "CPLHTTPInitializeRequest(): Unable to create CURL handle.");
     }
 
-    /* Set User-Agent */
-    const char *pszUserAgent = CSLFetchNameValue(const_cast<char **>(psRequest->papszOptions), "USERAGENT");
-    if (pszUserAgent == NULL)
-        pszUserAgent = "GDAL WMS driver (http://www.gdal.org/frmt_wms.html)";
-    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_USERAGENT, pszUserAgent);
+    char** papszOptionsDup = CSLDuplicate(const_cast<char **>(psRequest->papszOptions));
 
-    /* Set Referer */
-    const char *pszReferer = CSLFetchNameValue(const_cast<char **>(psRequest->papszOptions), "REFERER");
-    if (pszReferer != NULL)
-        curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_REFERER, pszReferer);
+    /* Set User-Agent */
+    const char *pszUserAgent = CSLFetchNameValue(papszOptionsDup, "USERAGENT");
+    if (pszUserAgent == NULL)
+        papszOptionsDup = CSLAddNameValue(papszOptionsDup, "USERAGENT",
+                                          "GDAL WMS driver (http://www.gdal.org/frmt_wms.html)");
 
     /* Set URL */
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_URL, psRequest->pszURL);
-
-    /* Set timeout.*/
-    const char *timeout = CSLFetchNameValue(const_cast<char **>(psRequest->papszOptions), "TIMEOUT");
-    if (timeout != NULL) {
-        curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_TIMEOUT, atoi(timeout));
-    }
 
     /* Set Headers (copied&pasted from cpl_http.cpp, but unused by callers of CPLHTTPInitializeRequest) .*/
     const char *headers = CSLFetchNameValue(const_cast<char **>(psRequest->papszOptions), "HEADERS");
@@ -107,22 +100,6 @@ void CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL, con
         psRequest->m_headers = curl_slist_append(psRequest->m_headers, headers);
         curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_HTTPHEADER, psRequest->m_headers);
     }
-    
-    if (CSLFetchBoolean(const_cast<char **>(psRequest->papszOptions), "UNSAFESSL", 0)) {
-        curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_SSL_VERIFYPEER, 0L);
-        curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_SSL_VERIFYHOST, 0L);
-    }
-
-    /* Enable following redirections.  Requires libcurl 7.10.1 at least */
-    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_FOLLOWLOCATION, 1);
-    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_MAXREDIRS, 10);
-
-    /* NOSIGNAL should be set to true for timeout to work in multithread
-    environments on Unix, requires libcurl 7.10 or more recent.
-    (this force avoiding the use of sgnal handlers) */
-#ifdef CURLOPT_NOSIGNAL
-    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_NOSIGNAL, 1);
-#endif
 
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_WRITEDATA, psRequest);
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_WRITEFUNCTION, CPLHTTPWriteFunc);
@@ -131,18 +108,9 @@ void CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL, con
     psRequest->m_curl_error[0] = '\0';
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_ERRORBUFFER, psRequest->m_curl_error);
     
-    /* Set Proxy parameters */
-    const char* pszProxy = CSLFetchNameValue( const_cast<char **>(psRequest->papszOptions), "PROXY" );
-    if (pszProxy == NULL)
-        pszProxy = CPLGetConfigOption("GDAL_HTTP_PROXY", NULL);
-    if (pszProxy)
-        curl_easy_setopt(psRequest->m_curl_handle,CURLOPT_PROXY,pszProxy);
+    CPLHTTPSetOptions(psRequest->m_curl_handle, papszOptionsDup);
 
-    const char* pszProxyUserPwd = CSLFetchNameValue( const_cast<char **>(psRequest->papszOptions), "PROXYUSERPWD" );
-    if (pszProxyUserPwd == NULL)
-        pszProxyUserPwd = CPLGetConfigOption("GDAL_HTTP_PROXYUSERPWD", NULL);
-    if (pszProxyUserPwd)
-        curl_easy_setopt(psRequest->m_curl_handle,CURLOPT_PROXYUSERPWD,pszProxyUserPwd);
+    CSLDestroy(papszOptionsDup);
 }
 
 void CPLHTTPCleanupRequest(CPLHTTPRequest *psRequest) {
