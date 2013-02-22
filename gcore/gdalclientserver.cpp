@@ -1445,7 +1445,9 @@ static int GDALServerLoopForked(CPL_FILE_HANDLE fin, CPL_FILE_HANDLE fout)
     /* Nullify the existing mutex to avoid issues with locked mutex by */
     /* parent's process threads */
     GDALNullifyProxyPoolSingleton();
+#ifdef CPL_MULTIPROC_PTHREAD
     CPLReinitAllMutex();
+#endif
 
     memset(aspRecycled, 0, sizeof(aspRecycled));
 
