@@ -898,6 +898,8 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nBands = poSrcDS->GetRasterCount();
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
+    int                 iBand;
+    GDALRasterBand      *poBand;
 
     if( nBands == 0 )
     {
@@ -916,13 +918,36 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             return NULL;
     }
     
+    for ( iBand = 0; iBand < nBands; iBand++ )
+    {
+        poBand = poSrcDS->GetRasterBand( iBand + 1);
+
+        switch ( poBand->GetRasterDataType() )
+        {
+            case GDT_Byte:
+            case GDT_Int16:
+            case GDT_UInt16:
+                break;
+
+            default:
+                if( !CSLTestBoolean(CPLGetConfigOption("JPEG2000_FORCE_CREATION", "NO")) )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "A band of the source dataset is of type %s, which might cause crashes in libjasper. "
+                             "Set JPEG2000_FORCE_CREATION configuration option to YES to attempt the creation of the file.",
+                             GDALGetDataTypeName(poBand->GetRasterDataType()));
+                    return NULL;
+                }
+                break;
+        }
+    }
+    
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    int                 iBand;
     jas_stream_t        *psStream;
     jas_image_t         *psImage;
 
@@ -945,7 +970,6 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
-    GDALRasterBand      *poBand;
     GUInt32             *paiScanline;
     int                 iLine, iPixel;
     CPLErr              eErr = CE_None;
