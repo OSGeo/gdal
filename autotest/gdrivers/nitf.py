@@ -1995,6 +1995,41 @@ def nitf_69():
     return 'success'
 
 ###############################################################################
+# Create and read a JPEG encoded NITF file with NITF dimensions != JPEG dimensions
+
+def nitf_70():
+
+    src_ds = gdal.Open( 'data/rgbsmall.tif' )
+
+    ds = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf_70.ntf', src_ds,
+                                                  options = ['IC=C3', 'BLOCKXSIZE=64', 'BLOCKYSIZE=64'] )
+    ds = None
+
+    # For comparison
+    ds = gdal.GetDriverByName('GTiff').CreateCopy( 'tmp/nitf_70.tif', src_ds,
+                                                  options = ['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'TILED=YES', 'BLOCKXSIZE=64', 'BLOCKYSIZE=64'] )
+    ds = None
+    src_ds = None
+
+    ds = gdal.Open( 'tmp/nitf_70.ntf' )
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    
+    ds = gdal.Open( 'tmp/nitf_70.tif' )
+    cs_ref = ds.GetRasterBand(1).Checksum()
+    ds = None
+    
+    gdal.GetDriverByName('NITF').Delete( 'tmp/nitf_70.ntf' )
+    gdal.GetDriverByName('GTiff').Delete( 'tmp/nitf_70.tif' )
+
+    if cs != cs_ref:
+        print(cs)
+        print(cs_ref)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
 
 def nitf_online_1():
@@ -3007,6 +3042,7 @@ gdaltest_list = [
     nitf_67,
     nitf_68,
     nitf_69,
+    nitf_70,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
