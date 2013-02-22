@@ -225,7 +225,6 @@ OGRLayer* OGRGeoJSONDataSource::CreateLayer( const char* pszName_,
 
     VSIFPrintfL( fpOut_, "{\n\"type\": \"FeatureCollection\",\n" );
 
-#ifdef notdef
     if (poSRS)
     {
         const char* pszAuthority = poSRS->GetAuthorityName(NULL);
@@ -246,8 +245,6 @@ OGRLayer* OGRGeoJSONDataSource::CreateLayer( const char* pszName_,
             }
             else
             {
-                /* FIXME?: the issue is that for geographic SRS, OGR will expose a latitude/longitude axis order */
-                /* which is probably not what is written in the file! */
                 json_object_object_add(poObjProperties, "name",
                                     json_object_new_string(CPLSPrintf("urn:ogc:def:crs:EPSG::%s", pszAuthorityCode)));
             }
@@ -258,7 +255,6 @@ OGRLayer* OGRGeoJSONDataSource::CreateLayer( const char* pszName_,
             json_object_put(poObjCRS);
         }
     }
-#endif
 
     if (bFpOutputIsSeekable_)
     {
