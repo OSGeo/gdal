@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -995,7 +996,7 @@ def ogr_geojson_22():
     return 'success'
 
 ###############################################################################
-# Write GeoJSON with bbox
+# Write GeoJSON with bbox and test SRS writing&reading back
 
 def ogr_geojson_23():
 
@@ -1003,7 +1004,9 @@ def ogr_geojson_23():
         return 'skip'
 
     ds = gdaltest.geojson_drv.CreateDataSource('/vsimem/ogr_geojson_23.json')
-    lyr = ds.CreateLayer('foo', options = ['WRITE_BBOX=YES'])
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4322)
+    lyr = ds.CreateLayer('foo', srs = sr, options = ['WRITE_BBOX=YES'])
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 10)'))
     lyr.CreateFeature(feat)
@@ -1012,6 +1015,16 @@ def ogr_geojson_23():
     lyr.CreateFeature(feat)
     lyr = None
     ds = None
+
+    ds = ogr.Open('/vsimem/ogr_geojson_23.json')
+    lyr = ds.GetLayer(0)
+    sr_got = lyr.GetSpatialRef()
+    ds = None
+
+    if sr_got.ExportToWkt() != sr.ExportToWkt():
+        gdaltest.post_reason('did not get expected SRS')
+        print(sr_got)
+        return 'fail'
 
     fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_23.json', 'rb')
     data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
