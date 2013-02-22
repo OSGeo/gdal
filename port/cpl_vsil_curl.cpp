@@ -69,6 +69,9 @@ int VSICurlUninstallReadCbk(VSILFILE* fp)
 
 #include <curl/curl.h>
 
+void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions);
+void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL);
+
 #include <map>
 
 #define ENABLE_DEBUG 1
@@ -397,24 +400,11 @@ int VSICurlHandle::Seek( vsi_l_offset nOffset, int nWhence )
 /*                       VSICurlSetOptions()                            */
 /************************************************************************/
 
-static void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL)
+void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL)
 {
     curl_easy_setopt(hCurlHandle, CURLOPT_URL, pszURL);
-    if (CSLTestBoolean(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO")))
-        curl_easy_setopt(hCurlHandle, CURLOPT_VERBOSE, 1);
 
-    /* Set Proxy parameters */
-    const char* pszProxy = CPLGetConfigOption("GDAL_HTTP_PROXY", NULL);
-    if (pszProxy)
-        curl_easy_setopt(hCurlHandle,CURLOPT_PROXY,pszProxy);
-
-    const char* pszProxyUserPwd = CPLGetConfigOption("GDAL_HTTP_PROXYUSERPWD", NULL);
-    if (pszProxyUserPwd)
-        curl_easy_setopt(hCurlHandle,CURLOPT_PROXYUSERPWD,pszProxyUserPwd);
-        
-    /* Enable following redirections.  Requires libcurl 7.10.1 at least */
-    curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 1);
-    curl_easy_setopt(hCurlHandle, CURLOPT_MAXREDIRS, 10);
+    CPLHTTPSetOptions(hCurlHandle, NULL);
 
 /* 7.16 */
 #if LIBCURL_VERSION_NUM >= 0x071000
@@ -426,15 +416,6 @@ static void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL)
 #if LIBCURL_VERSION_NUM > 0x070C03
     /* ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif/ doesn't like EPSV command */
     curl_easy_setopt(hCurlHandle, CURLOPT_FTP_USE_EPSV, 0);
-#endif
-
-    /* NOSIGNAL should be set to true for timeout to work in multithread
-    environments on Unix, requires libcurl 7.10 or more recent.
-    (this force avoiding the use of sgnal handlers) */
-
-/* 7.10 */
-#if LIBCURL_VERSION_NUM >= 0x070A00
-    curl_easy_setopt(hCurlHandle, CURLOPT_NOSIGNAL, 1);
 #endif
 
     curl_easy_setopt(hCurlHandle, CURLOPT_NOBODY, 0);
@@ -2654,9 +2635,9 @@ char** VSICurlFilesystemHandler::ReadDir( const char *pszDirname )
  * it will progressively increase the chunk size up to 2 MB to improve download
  * performance.
  *
- * The GDAL_HTTP_PROXY and GDAL_HTTP_PROXYUSERPWD configuration options can be
- * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY
- * and CURLOPT_PROXYUSERPWD options.
+ * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration options can be
+ * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY,
+ * CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
  *
  * VSIStatL() will return the size in st_size member and file
  * nature- file or directory - in st_mode member (the later only reliable with FTP

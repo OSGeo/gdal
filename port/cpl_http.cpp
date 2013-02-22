@@ -34,6 +34,7 @@
 #ifdef HAVE_CURL
 #  include <curl/curl.h>
 
+void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions);
 
 /* CURLINFO_RESPONSE_CODE was known as CURLINFO_HTTP_CODE in libcurl 7.10.7 and earlier */
 #if LIBCURL_VERSION_NUM < 0x070a07
@@ -133,12 +134,13 @@ static size_t CPLHdrWriteFct(void *buffer, size_t size, size_t nmemb, void *reqI
  * <li>PROXY=val, to make requests go through a proxy server, where val is of the
  *                form proxy.server.com:port_number
  * <li>PROXYUSERPWD=val, where val is of the form username:password
+ * <li>PROXYAUTH=[BASIC/NTLM/DIGEST/ANY] to specify an proxy authentication scheme to use.
  * <li>CUSTOMREQUEST=val, where val is GET, PUT, POST, DELETE, etc.. (GDAL >= 1.9.0)
  * </ul>
  *
- * Alternatively, if not defined in the papszOptions arguments, the PROXY and 
- * PROXYUSERPWD values are searched in the configuration options named 
- * GDAL_HTTP_PROXY and GDAL_HTTP_PROXYUSERPWD, as proxy configuration belongs 
+ * Alternatively, if not defined in the papszOptions arguments, the PROXY,  
+ * PROXYUSERPWD and PROXYAUTH values are searched in the configuration options named 
+ * GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH, as proxy configuration belongs 
  * to networking setup and makes more sense at the configuration option level 
  * than at the connection level.
  *
@@ -238,88 +240,10 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
     curl_easy_setopt(http_handle, CURLOPT_URL, pszURL );
 
-    if (CSLTestBoolean(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO")))
-        curl_easy_setopt(http_handle, CURLOPT_VERBOSE, 1);
-
-    const char *pszHttpVersion = CSLFetchNameValue( papszOptions, "HTTP_VERSION");
-    if( pszHttpVersion && strcmp(pszHttpVersion, "1.0") == 0 )
-        curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0 );
-
-    /* Support control over HTTPAUTH */
-    const char *pszHttpAuth = CSLFetchNameValue( papszOptions, "HTTPAUTH" );
-    if( pszHttpAuth == NULL )
-        /* do nothing */;
-
-    /* CURLOPT_HTTPAUTH is defined in curl 7.11.0 or newer */
-#if LIBCURL_VERSION_NUM >= 0x70B00
-    else if( EQUAL(pszHttpAuth,"BASIC") )
-        curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC );
-    else if( EQUAL(pszHttpAuth,"NTLM") )
-        curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_NTLM );
-    else if( EQUAL(pszHttpAuth,"ANY") )
-        curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_ANY );
-#ifdef CURLAUTH_GSSNEGOTIATE
-    else if( EQUAL(pszHttpAuth,"NEGOTIATE") )
-        curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_GSSNEGOTIATE );
-#endif
-    else
-    {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Unsupported HTTPAUTH value '%s', ignored.", 
-                  pszHttpAuth );
-    }
-#else
-    else
-    {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "HTTPAUTH option needs curl >= 7.11.0" );
-    }
-#endif
-
-    /* Support setting userid:password */
-    const char *pszUserPwd = CSLFetchNameValue( papszOptions, "USERPWD" );
-    if( pszUserPwd != NULL )
-        curl_easy_setopt(http_handle, CURLOPT_USERPWD, pszUserPwd );
-
-    /* Set Proxy parameters */
-    const char* pszProxy = CSLFetchNameValue( papszOptions, "PROXY" );
-    if (pszProxy == NULL)
-        pszProxy = CPLGetConfigOption("GDAL_HTTP_PROXY", NULL);
-    if (pszProxy)
-        curl_easy_setopt(http_handle,CURLOPT_PROXY,pszProxy);
-
-    const char* pszProxyUserPwd = CSLFetchNameValue( papszOptions, "PROXYUSERPWD" );
-    if (pszProxyUserPwd == NULL)
-        pszProxyUserPwd = CPLGetConfigOption("GDAL_HTTP_PROXYUSERPWD", NULL);
-    if (pszProxyUserPwd)
-        curl_easy_setopt(http_handle,CURLOPT_PROXYUSERPWD,pszProxyUserPwd);
+    CPLHTTPSetOptions(http_handle, papszOptions);
 
     // turn off SSL verification, accept all servers with ssl
     curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYPEER, FALSE);
-
-    /* Set POST mode */
-    const char* pszPost = CSLFetchNameValue( papszOptions, "POSTFIELDS" );
-    if( pszPost != NULL )
-    {
-        curl_easy_setopt(http_handle, CURLOPT_POST, 1 );
-        curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS, pszPost );
-    }
-
-    const char* pszCustomRequest = CSLFetchNameValue( papszOptions, "CUSTOMREQUEST" );
-    if( pszCustomRequest != NULL )
-    {
-        curl_easy_setopt(http_handle, CURLOPT_CUSTOMREQUEST, pszCustomRequest );
-    }
-
-    /* Enable following redirections.  Requires libcurl 7.10.1 at least */
-    curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1 );
-    curl_easy_setopt(http_handle, CURLOPT_MAXREDIRS, 10 );
-    
-    /* Set timeout.*/
-    const char *pszTimeout = CSLFetchNameValue( papszOptions, "TIMEOUT" );
-    if( pszTimeout != NULL )
-        curl_easy_setopt(http_handle, CURLOPT_TIMEOUT, 
-                         atoi(pszTimeout) );
 
     /* Set Headers.*/
     const char *pszHeaders = CSLFetchNameValue( papszOptions, "HEADERS" );
@@ -328,14 +252,6 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         headers = curl_slist_append(headers, pszHeaders);
         curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
     }
-
-    /* NOSIGNAL should be set to true for timeout to work in multithread
-     * environments on Unix, requires libcurl 7.10 or more recent.
-     * (this force avoiding the use of sgnal handlers)
-     */
-#ifdef CURLOPT_NOSIGNAL
-    curl_easy_setopt(http_handle, CURLOPT_NOSIGNAL, 1 );
-#endif
 
     // capture response headers
     curl_easy_setopt(http_handle, CURLOPT_HEADERDATA, psResult);
@@ -436,6 +352,158 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
     return psResult;
 #endif /* def HAVE_CURL */
+}
+
+/************************************************************************/
+/*                         CPLHTTPSetOptions()                          */
+/************************************************************************/
+
+void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions)
+{
+    if (CSLTestBoolean(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO")))
+        curl_easy_setopt(http_handle, CURLOPT_VERBOSE, 1);
+
+    const char *pszHttpVersion = CSLFetchNameValue( papszOptions, "HTTP_VERSION");
+    if( pszHttpVersion && strcmp(pszHttpVersion, "1.0") == 0 )
+        curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0 );
+
+    /* Support control over HTTPAUTH */
+    const char *pszHttpAuth = CSLFetchNameValue( papszOptions, "HTTPAUTH" );
+    if( pszHttpAuth == NULL )
+        pszHttpAuth = CPLGetConfigOption( "GDAL_HTTP_AUTH", NULL );
+    if( pszHttpAuth == NULL )
+        /* do nothing */;
+
+    /* CURLOPT_HTTPAUTH is defined in curl 7.11.0 or newer */
+#if LIBCURL_VERSION_NUM >= 0x70B00
+    else if( EQUAL(pszHttpAuth,"BASIC") )
+        curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC );
+    else if( EQUAL(pszHttpAuth,"NTLM") )
+        curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_NTLM );
+    else if( EQUAL(pszHttpAuth,"ANY") )
+        curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_ANY );
+#ifdef CURLAUTH_GSSNEGOTIATE
+    else if( EQUAL(pszHttpAuth,"NEGOTIATE") )
+        curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_GSSNEGOTIATE );
+#endif
+    else
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Unsupported HTTPAUTH value '%s', ignored.", 
+                  pszHttpAuth );
+    }
+#else
+    else
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "HTTPAUTH option needs curl >= 7.11.0" );
+    }
+#endif
+
+    /* Support setting userid:password */
+    const char *pszUserPwd = CSLFetchNameValue( papszOptions, "USERPWD" );
+    if (pszUserPwd == NULL)
+        pszUserPwd = CPLGetConfigOption("GDAL_HTTP_USERPWD", NULL);
+    if( pszUserPwd != NULL )
+        curl_easy_setopt(http_handle, CURLOPT_USERPWD, pszUserPwd );
+
+    /* Set Proxy parameters */
+    const char* pszProxy = CSLFetchNameValue( papszOptions, "PROXY" );
+    if (pszProxy == NULL)
+        pszProxy = CPLGetConfigOption("GDAL_HTTP_PROXY", NULL);
+    if (pszProxy)
+        curl_easy_setopt(http_handle,CURLOPT_PROXY,pszProxy);
+
+    const char* pszProxyUserPwd = CSLFetchNameValue( papszOptions, "PROXYUSERPWD" );
+    if (pszProxyUserPwd == NULL)
+        pszProxyUserPwd = CPLGetConfigOption("GDAL_HTTP_PROXYUSERPWD", NULL);
+    if (pszProxyUserPwd)
+        curl_easy_setopt(http_handle,CURLOPT_PROXYUSERPWD,pszProxyUserPwd);
+
+    /* Support control over PROXYAUTH */
+    const char *pszProxyAuth = CSLFetchNameValue( papszOptions, "PROXYAUTH" );
+    if( pszProxyAuth == NULL )
+        pszProxyAuth = CPLGetConfigOption( "GDAL_PROXY_AUTH", NULL );
+    if( pszProxyAuth == NULL )
+        /* do nothing */;
+    /* CURLOPT_PROXYAUTH is defined in curl 7.11.0 or newer */
+#if LIBCURL_VERSION_NUM >= 0x70B00
+    else if( EQUAL(pszProxyAuth,"BASIC") )
+        curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_BASIC );
+    else if( EQUAL(pszProxyAuth,"NTLM") )
+        curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_NTLM );
+    else if( EQUAL(pszProxyAuth,"DIGEST") )
+        curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_DIGEST );
+    else if( EQUAL(pszProxyAuth,"ANY") )
+        curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_ANY );
+    else
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Unsupported PROXYAUTH value '%s', ignored.", 
+                  pszProxyAuth );
+    }
+#else
+    else
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "PROXYAUTH option needs curl >= 7.11.0" );
+    }
+#endif
+
+    /* Enable following redirections.  Requires libcurl 7.10.1 at least */
+    curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1 );
+    curl_easy_setopt(http_handle, CURLOPT_MAXREDIRS, 10 );
+    
+    /* Set timeout.*/
+    const char *pszTimeout = CSLFetchNameValue( papszOptions, "TIMEOUT" );
+    if (pszTimeout == NULL)
+        pszTimeout = CPLGetConfigOption("GDAL_HTTP_TIMEOUT", NULL);
+    if( pszTimeout != NULL )
+        curl_easy_setopt(http_handle, CURLOPT_TIMEOUT, atoi(pszTimeout) );
+
+    /* Disable some SSL verification */
+    const char *pszUnsafeSSL = CSLFetchNameValue( papszOptions, "UNSAFESSL" );
+    if (pszUnsafeSSL == NULL)
+        pszUnsafeSSL = CPLGetConfigOption("GDAL_HTTP_UNSAFESSL", NULL);
+    if (pszUnsafeSSL != NULL && CSLTestBoolean(pszUnsafeSSL))
+    {
+        curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYPEER, 0L);
+        curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYHOST, 0L);
+    }
+
+    /* Set Referer */
+    const char *pszReferer = CSLFetchNameValue(papszOptions, "REFERER");
+    if (pszReferer != NULL)
+        curl_easy_setopt(http_handle, CURLOPT_REFERER, pszReferer);
+
+    /* Set User-Agent */
+    const char *pszUserAgent = CSLFetchNameValue(papszOptions, "USERAGENT");
+    if (pszUserAgent == NULL)
+        pszUserAgent = CPLGetConfigOption("GDAL_HTTP_USERAGENT", NULL);
+    if (pszUserAgent != NULL)
+        curl_easy_setopt(http_handle, CURLOPT_USERAGENT, pszUserAgent);
+
+    /* NOSIGNAL should be set to true for timeout to work in multithread
+     * environments on Unix, requires libcurl 7.10 or more recent.
+     * (this force avoiding the use of sgnal handlers)
+     */
+#ifdef CURLOPT_NOSIGNAL
+    curl_easy_setopt(http_handle, CURLOPT_NOSIGNAL, 1 );
+#endif
+
+    /* Set POST mode */
+    const char* pszPost = CSLFetchNameValue( papszOptions, "POSTFIELDS" );
+    if( pszPost != NULL )
+    {
+        curl_easy_setopt(http_handle, CURLOPT_POST, 1 );
+        curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS, pszPost );
+    }
+
+    const char* pszCustomRequest = CSLFetchNameValue( papszOptions, "CUSTOMREQUEST" );
+    if( pszCustomRequest != NULL )
+    {
+        curl_easy_setopt(http_handle, CURLOPT_CUSTOMREQUEST, pszCustomRequest );
+    }
 }
 
 /************************************************************************/
