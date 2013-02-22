@@ -56,6 +56,9 @@
   #define WSAGetLastError() errno
   #define WSACleanup()
   #define closesocket(s) close(s)
+  #ifndef SOMAXCONN
+  #define SOMAXCONN 128
+  #endif 
 #endif
 
 
