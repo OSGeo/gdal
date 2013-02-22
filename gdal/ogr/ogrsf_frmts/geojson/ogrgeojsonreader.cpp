@@ -304,7 +304,17 @@ OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj) {
             }
         }
     }
-    
+
+    /* Strip AXIS, since geojson has (easting, northing) / (longitude, latitude) order. */
+    /* According to http://www.geojson.org/geojson-spec.html#id2 : "Point coordinates are in x, y order */
+    /* (easting, northing for projected coordinates, longitude, latitude for geographic coordinates)" */
+    if( poSRS != NULL )
+    {
+        OGR_SRSNode *poGEOGCS = poSRS->GetAttrNode( "GEOGCS" );
+        if( poGEOGCS != NULL )
+            poGEOGCS->StripNodes( "AXIS" );
+    }
+
     return poSRS;
 }
 /************************************************************************/
