@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #******************************************************************************
 #  $Id$
 # 
@@ -151,7 +152,7 @@ else:
 # =============================================================================
 
 try:
-    gdal.PushErrorHandler( 'QuietErrorHandler' )
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     dst_ds = ogr.Open( dst_filename, update=1 )
     gdal.PopErrorHandler()
 except:
