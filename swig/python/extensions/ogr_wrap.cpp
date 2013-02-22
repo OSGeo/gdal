@@ -3333,6 +3333,7 @@ SWIG_AsVal_int (PyObject * obj, int *val)
 }
 
 SWIGINTERN OGRDataSourceShadow *OGRDriverShadow_Open(OGRDriverShadow *self,char const *utf8_path,int update=0){
+    CPLErrorReset();
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*) OGR_Dr_Open(self, utf8_path, update);
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
     {
