@@ -354,6 +354,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 #endif /* def HAVE_CURL */
 }
 
+#ifdef HAVE_CURL
 /************************************************************************/
 /*                         CPLHTTPSetOptions()                          */
 /************************************************************************/
@@ -505,6 +506,7 @@ void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions)
         curl_easy_setopt(http_handle, CURLOPT_CUSTOMREQUEST, pszCustomRequest );
     }
 }
+#endif /* def HAVE_CURL */
 
 /************************************************************************/
 /*                           CPLHTTPEnabled()                           */
