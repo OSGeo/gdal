@@ -518,6 +518,7 @@ class GDALClientRasterBand : public GDALPamRasterBand
 
     GDALRasterBand    *CreateFakeMaskBand();
 
+    int                                              bEnableLineCaching;
     int                                              nSuccessiveLinesRead;
     GDALDataType                                     eLastBufType;
     int                                              nLastYOff;
@@ -3994,6 +3995,7 @@ GDALClientRasterBand::GDALClientRasterBand(GDALPipe* p, int iSrvBand,
     poMaskBand = NULL;
     poRAT = NULL;
     memcpy(abyCaps, abyCapsIn, sizeof(abyCaps));
+    bEnableLineCaching = CSLTestBoolean(CPLGetConfigOption("GDAL_API_PROXY_LINE_CACHING", "YES"));
     nSuccessiveLinesRead = 0;
     eLastBufType = GDT_Unknown;
     nLastYOff = -1;
@@ -4725,7 +4727,8 @@ CPLErr GDALClientRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
         /* Detect scanline reading pattern and read several rows in advance */
         /* to save a few client/server roundtrips */
-        if( nXOff == 0 && nXSize == nRasterXSize && nYSize == 1 &&
+        if( bEnableLineCaching &&
+            nXOff == 0 && nXSize == nRasterXSize && nYSize == 1 &&
             nBufXSize == nXSize && nBufYSize == nYSize )
         {
             int nBufTypeSize = GDALGetDataTypeSize(eBufType) / 8;
