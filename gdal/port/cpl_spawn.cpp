@@ -455,6 +455,10 @@ void CPLSpawnAsyncCloseErrorFileHandle(CPLSpawnedProcess* p)
 #include <sys/wait.h>
 #include <errno.h>
 #include <signal.h>
+#ifdef HAVE_POSIX_SPAWNP
+#include <spawn.h>
+extern char** environ;
+#endif
 
 /************************************************************************/
 /*                            CPLSystem()                               */
@@ -591,6 +595,10 @@ struct _CPLSpawnedProcess
     CPL_FILE_HANDLE fin;
     CPL_FILE_HANDLE fout;
     CPL_FILE_HANDLE ferr;
+#ifdef HAVE_POSIX_SPAWNP
+    int bFreeActions;
+    posix_spawn_file_actions_t actions;
+#endif
 };
 
 /**
@@ -635,6 +643,60 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
         (bCreateErrorPipe && pipe(pipe_err)))
         goto err_pipe;
 
+#ifdef HAVE_POSIX_SPAWNP
+    if( papszArgv != NULL )
+    {
+        posix_spawn_file_actions_t actions;
+        posix_spawn_file_actions_init(&actions);
+
+        if( bCreateInputPipe )
+        {
+            posix_spawn_file_actions_adddup2(&actions, pipe_in[IN_FOR_PARENT], fileno(stdin));
+            posix_spawn_file_actions_addclose(&actions, pipe_in[OUT_FOR_PARENT]);
+        }
+
+        if( bCreateOutputPipe )
+        {
+            posix_spawn_file_actions_adddup2(&actions, pipe_out[OUT_FOR_PARENT], fileno(stdout));
+            posix_spawn_file_actions_addclose(&actions, pipe_out[IN_FOR_PARENT]);
+        }
+
+        if( bCreateErrorPipe )
+        {
+            posix_spawn_file_actions_adddup2(&actions, pipe_err[OUT_FOR_PARENT], fileno(stderr));
+            posix_spawn_file_actions_addclose(&actions, pipe_err[IN_FOR_PARENT]);
+        }
+
+        if( posix_spawnp(&pid, papszArgv[0], &actions, NULL, (char* const*) papszArgv, environ) != 0 )
+        {
+            posix_spawn_file_actions_destroy(&actions);
+            CPLError(CE_Failure, CPLE_AppDefined, "posix_spawnp() failed");
+            goto err;
+        }
+
+        /* Close unused end of pipe */
+        if( bCreateInputPipe )
+            close(pipe_in[IN_FOR_PARENT]);
+        if( bCreateOutputPipe )
+            close(pipe_out[OUT_FOR_PARENT]);
+        if( bCreateErrorPipe )
+            close(pipe_err[OUT_FOR_PARENT]);
+
+        /* Ignore SIGPIPE */
+    #ifdef SIGPIPE
+        signal (SIGPIPE, SIG_IGN);
+    #endif
+        CPLSpawnedProcess* p = (CPLSpawnedProcess*)CPLMalloc(sizeof(CPLSpawnedProcess));
+        memcpy(&p->actions, &actions, sizeof(actions));
+        p->bFreeActions = TRUE;
+        p->pid = pid;
+        p->fin = pipe_out[IN_FOR_PARENT];
+        p->fout = pipe_in[OUT_FOR_PARENT];
+        p->ferr = pipe_err[IN_FOR_PARENT];
+        return p;
+    }
+#endif // #ifdef HAVE_POSIX_SPAWNP
+
     pid = fork();
     if (pid == 0)
     {
@@ -646,6 +708,7 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
         if( bCreateErrorPipe )
             close(pipe_err[IN_FOR_PARENT]);
 
+#ifndef HAVE_POSIX_SPAWNP
         if( papszArgv )
         {
             if( bCreateInputPipe )
@@ -663,6 +726,7 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
             _exit(1);
         }
         else
+#endif // HAVE_POSIX_SPAWNP
         {
             if( bCreateErrorPipe )
                 close(pipe_err[OUT_FOR_PARENT]);
@@ -689,6 +753,9 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
         signal (SIGPIPE, SIG_IGN);
 #endif
         CPLSpawnedProcess* p = (CPLSpawnedProcess*)CPLMalloc(sizeof(CPLSpawnedProcess));
+#ifdef HAVE_POSIX_SPAWNP
+        p->bFreeActions = FALSE;
+#endif
         p->pid = pid;
         p->fin = pipe_out[IN_FOR_PARENT];
         p->fout = pipe_in[OUT_FOR_PARENT];
@@ -768,6 +835,10 @@ int CPLSpawnAsyncFinish(CPLSpawnedProcess* p, int bWait, int bKill)
     CPLSpawnAsyncCloseInputFileHandle(p);
     CPLSpawnAsyncCloseOutputFileHandle(p);
     CPLSpawnAsyncCloseErrorFileHandle(p);
+#ifdef HAVE_POSIX_SPAWNP
+    if( p->bFreeActions )
+        posix_spawn_file_actions_destroy(&p->actions);
+#endif
     CPLFree(p);
     return status;
 }
