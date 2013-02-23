@@ -718,7 +718,7 @@ def main_loop():
             write_marker()
             if val is None:
                 write_int(0)
-                write_double(0)
+                write_double(1) #default value is 1
             else:
                 write_int(1)
                 write_double(val)
