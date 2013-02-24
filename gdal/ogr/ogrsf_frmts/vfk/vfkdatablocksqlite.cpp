@@ -290,7 +290,7 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
             std::vector<VFKFeatureSQLite *> poLineListOb;
             sqlite3_stmt *hStmtOb;
             
-            osSQL.Printf("SELECT ID FROM '%s' WHERE BUD_ID = %llu",
+            osSQL.Printf("SELECT ID FROM '%s' WHERE BUD_ID = " CPL_FRMT_GUIB,
                          poDataBlockLines1->GetName(), id);
             hStmtOb = poReader->PrepareStatement(osSQL.c_str());
             
@@ -330,7 +330,7 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
         
         if (poLineList.size() > 0) {
             CPLError(CE_Warning, CPLE_AppDefined, 
-                     "Unable to collect rings for feature %llu (%s).\n",
+                     "Unable to collect rings for feature " CPL_FRMT_GUIB " (%s).\n",
                      id, m_pszName);
             continue;
         }
@@ -381,7 +381,7 @@ VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char *column, GUIntBig va
     
     poReader = (VFKReaderSQLite*) m_poReader;
     
-    osSQL.Printf("SELECT _rowid_ from '%s' WHERE %s = %llu", m_pszName, column, value);
+    osSQL.Printf("SELECT _rowid_ from '%s' WHERE %s = " CPL_FRMT_GUIB, m_pszName, column, value);
     hStmt = poReader->PrepareStatement(osSQL.c_str());
     if (poReader->ExecuteSQL(hStmt) != OGRERR_NONE)
         return NULL;
@@ -417,9 +417,9 @@ VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char **column, GUIntBig *
     osSQL.Printf("SELECT _rowid_ from '%s' WHERE ", m_pszName);
     for (int i = 0; i < num; i++) {
         if (i > 0)
-            osItem.Printf(" AND %s = %llu", column[i], value[i]);
+            osItem.Printf(" AND %s = " CPL_FRMT_GUIB, column[i], value[i]);
         else
-            osItem.Printf("%s = %llu", column[i], value[i]);
+            osItem.Printf("%s = " CPL_FRMT_GUIB, column[i], value[i]);
         osSQL += osItem;
     }
     
@@ -461,9 +461,9 @@ VFKFeatureSQLiteList VFKDataBlockSQLite::GetFeatures(const char **column, GUIntB
     osSQL.Printf("SELECT _rowid_ from '%s' WHERE ", m_pszName);
     for (int i = 0; i < num; i++) {
         if (i > 0)
-            osItem.Printf(" OR %s = %llu", column[i], value[i]);
+            osItem.Printf(" OR %s = " CPL_FRMT_GUIB, column[i], value[i]);
         else
-            osItem.Printf("%s = %llu", column[i], value[i]);
+            osItem.Printf("%s = " CPL_FRMT_GUIB, column[i], value[i]);
         osSQL += osItem;
     }
     
