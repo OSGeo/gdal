@@ -1626,7 +1626,9 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
 #ifdef WIN32
     const char* apszGDALServer[] = { pszSpawnServer, "-stdinout", NULL };
 #else
-    const char* apszGDALServer[] = { pszSpawnServer, "-stdinout", "-pipe_in", "{pipe_in}", "-pipe_out", "{pipe_out}", NULL };
+    const char* apszGDALServer[] = { pszSpawnServer, "-pipe_in", "{pipe_in}", "-pipe_out", "{pipe_out}", NULL };
+    if( strstr(pszSpawnServer, "gdalserver") == NULL )
+        apszGDALServer[1] = NULL;
 #endif
     int bCheckVersions = TRUE;
 
