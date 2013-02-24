@@ -38,7 +38,6 @@ CPL_C_START
 /*      Spawn a process.                                                */
 /* -------------------------------------------------------------------- */
 
-int CPL_DLL CPLSystem( const char* pszApplicationName, const char* pszCommandLine );
 int CPL_DLL CPLSpawn( const char * const papszArgv[], VSILFILE* fin, VSILFILE* fout,
                       int bDisplayErr );
 

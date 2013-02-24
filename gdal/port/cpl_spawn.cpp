@@ -43,6 +43,8 @@ CPL_CVSID("$Id$");
 
 static void FillFileFromPipe(CPL_FILE_HANDLE pipe_fd, VSILFILE* fout);
 
+//int CPL_DLL CPLSystem( const char* pszApplicationName, const char* pszCommandLine );
+
 /************************************************************************/
 /*                        FillPipeFromFile()                            */
 /************************************************************************/
@@ -130,6 +132,7 @@ int CPLSpawn(const char * const papszArgv[], VSILFILE* fin, VSILFILE* fout,
 
 #include <windows.h>
 
+#if 0
 /************************************************************************/
 /*                            CPLSystem()                               */
 /************************************************************************/
@@ -184,6 +187,7 @@ int CPLSystem( const char* pszApplicationName, const char* pszCommandLine )
 
     return nRet;
 }
+#endif
 
 /************************************************************************/
 /*                          CPLPipeRead()                               */
@@ -460,6 +464,7 @@ void CPLSpawnAsyncCloseErrorFileHandle(CPLSpawnedProcess* p)
 extern char** environ;
 #endif
 
+#if 0
 /************************************************************************/
 /*                            CPLSystem()                               */
 /************************************************************************/
@@ -486,6 +491,7 @@ int CPLSystem( const char* pszApplicationName, const char* pszCommandLine )
 {
     return system(pszCommandLine);
 }
+#endif
 
 /************************************************************************/
 /*                          CPLPipeRead()                               */
