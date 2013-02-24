@@ -148,6 +148,7 @@ AC_CHECK_DECLS(strtof)
 
 AC_CHECK_FUNCS(readlink)
 AC_CHECK_FUNCS(posix_spawnp)
+AC_CHECK_FUNCS(vfork)
 
 dnl Make sure at least these are checked under C++.  Prototypes missing on 
 dnl some platforms.

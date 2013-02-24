@@ -451,7 +451,10 @@ int main(int argc, char* argv[])
 {
     int i, nRet, bStdinout = FALSE, bNewConnection = FALSE;
     const char* pszService = NULL;
-
+#ifndef WIN32
+    int pipe_in = fileno(stdin);
+    int pipe_out = fileno(stdout);
+#endif
     /*for( i = 1; i < argc; i++ )
     {
         if( EQUAL(argv[i], "-daemonize") )
@@ -491,6 +494,28 @@ int main(int argc, char* argv[])
 #endif
         else if( EQUAL(argv[i],"-stdinout") )
             bStdinout = TRUE;
+#ifndef WIN32
+        else if( EQUAL(argv[i],"-pipe_in") )
+        {
+            const char* pszComma;
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            i++;
+            pipe_in = atoi(argv[i]);
+            pszComma = strchr(argv[i], ',');
+            if( pszComma )
+                close(atoi(pszComma + 1));
+        }
+        else if( EQUAL(argv[i],"-pipe_out") )
+        {
+            const char* pszComma;
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            i++;
+            pipe_out = atoi(argv[i]);
+            pszComma = strchr(argv[i], ',');
+            if( pszComma )
+                close(atoi(pszComma + 1));
+        }
+#endif
         else if( EQUAL(argv[i], "-daemonize") )
             ;
         else if( argv[i][0] == '-' )
@@ -526,8 +551,7 @@ int main(int argc, char* argv[])
     }
 #endif
 #else
-    nRet = GDALServerLoop(fileno(stdin),
-                          fileno(stdout));
+    nRet = GDALServerLoop(pipe_in, pipe_out);
 #endif
     }
 
