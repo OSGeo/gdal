@@ -1623,7 +1623,11 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
     if( EQUAL(pszSpawnServer, "YES") || EQUAL(pszSpawnServer, "ON") ||
         EQUAL(pszSpawnServer, "TRUE")  || EQUAL(pszSpawnServer, "1") )
         pszSpawnServer = "gdalserver";
+#ifdef WIN32
     const char* apszGDALServer[] = { pszSpawnServer, "-stdinout", NULL };
+#else
+    const char* apszGDALServer[] = { pszSpawnServer, "-stdinout", "-pipe_in", "{pipe_in}", "-pipe_out", "{pipe_out}", NULL };
+#endif
     int bCheckVersions = TRUE;
 
     CPLSpawnedProcess* sp;
@@ -5706,6 +5710,12 @@ int GDALClientDataset::mCreateCopy( const char* pszFilename,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData )
 {
+    /*if( !SupportsInstr(INSTR_CreateCopy) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "CreateCopy() not supported by server");
+        return FALSE;
+    }*/
+
     const char* pszServerDriver =
         CSLFetchNameValue(papszOptions, "SERVER_DRIVER");
     if( pszServerDriver == NULL )
@@ -5799,6 +5809,12 @@ int GDALClientDataset::mCreate( const char * pszFilename,
                             GDALDataType eType,
                             char ** papszOptions )
 {
+    /*if( !SupportsInstr(INSTR_Create) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Create() not supported by server");
+        return FALSE;
+    }*/
+
     const char* pszServerDriver =
         CSLFetchNameValue(papszOptions, "SERVER_DRIVER");
     if( pszServerDriver == NULL )
