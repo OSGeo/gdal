@@ -134,8 +134,11 @@
 /* Define to 1 if you have the `readlink' function. */
 #undef HAVE_READLINK
 
-/* Define to 1 if you have the posix_spawnp' function. */
+/* Define to 1 if you have the `posix_spawnp' function. */
 #undef HAVE_POSIX_SPAWNP
+
+/* Define to 1 if you have the `vfork' function. */
+#undef HAVE_VFORK
 
 /* Set the native cpu bit order (FILLORDER_LSB2MSB or FILLORDER_MSB2LSB) */
 #undef HOST_FILLORDER

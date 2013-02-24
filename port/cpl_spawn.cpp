@@ -637,42 +637,91 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
     int pipe_out[2] = { -1, -1 };
     int pipe_err[2] = { -1, -1 };
     int i;
+    char** papszArgvDup = CSLDuplicate((char**)papszArgv);
+    int bDup2In = bCreateInputPipe,
+        bDup2Out = bCreateOutputPipe,
+        bDup2Err = bCreateErrorPipe;
 
     if ((bCreateInputPipe && pipe(pipe_in)) ||
         (bCreateOutputPipe && pipe(pipe_out)) ||
         (bCreateErrorPipe && pipe(pipe_err)))
         goto err_pipe;
 
+    /* If we don't do any file actions, posix_spawnp() might be implemented */
+    /* efficiently as a vfork()/exec() pair (or if it is not available, we */
+    /* can use vfork()/exec()), so if the child is cooperative */
+    /* we pass the pipe handles as commandline arguments */
+    if( papszArgv != NULL )
+    {
+        for(i=0; papszArgvDup[i] != NULL; i++)
+        {
+            if( bCreateInputPipe && strcmp(papszArgvDup[i], "{pipe_in}") == 0 )
+            {
+                CPLFree(papszArgvDup[i]);
+                papszArgvDup[i] = CPLStrdup(CPLSPrintf("%d,%d",
+                    pipe_in[IN_FOR_PARENT], pipe_in[OUT_FOR_PARENT]));
+                bDup2In = FALSE;
+            }
+            else if( bCreateOutputPipe && strcmp(papszArgvDup[i], "{pipe_out}") == 0 )
+            {
+                CPLFree(papszArgvDup[i]);
+                papszArgvDup[i] = CPLStrdup(CPLSPrintf("%d,%d",
+                    pipe_out[OUT_FOR_PARENT], pipe_out[IN_FOR_PARENT]));
+                bDup2Out = FALSE;
+            }
+            else if( bCreateErrorPipe && strcmp(papszArgvDup[i], "{pipe_err}") == 0 )
+            {
+                CPLFree(papszArgvDup[i]);
+                papszArgvDup[i] = CPLStrdup(CPLSPrintf("%d,%d",
+                    pipe_err[OUT_FOR_PARENT], pipe_err[IN_FOR_PARENT]));
+                bDup2Err = FALSE;
+            }
+        }
+    }
+
 #ifdef HAVE_POSIX_SPAWNP
     if( papszArgv != NULL )
     {
+        int bHasActions = FALSE;
         posix_spawn_file_actions_t actions;
-        posix_spawn_file_actions_init(&actions);
 
-        if( bCreateInputPipe )
+        if( bDup2In )
         {
+            if( !bHasActions ) posix_spawn_file_actions_init(&actions);
             posix_spawn_file_actions_adddup2(&actions, pipe_in[IN_FOR_PARENT], fileno(stdin));
             posix_spawn_file_actions_addclose(&actions, pipe_in[OUT_FOR_PARENT]);
+            bHasActions = TRUE;
         }
 
-        if( bCreateOutputPipe )
+        if( bDup2Out )
         {
+            if( !bHasActions ) posix_spawn_file_actions_init(&actions);
             posix_spawn_file_actions_adddup2(&actions, pipe_out[OUT_FOR_PARENT], fileno(stdout));
             posix_spawn_file_actions_addclose(&actions, pipe_out[IN_FOR_PARENT]);
+            bHasActions = TRUE;
         }
 
-        if( bCreateErrorPipe )
+        if( bDup2Err )
         {
+            if( !bHasActions ) posix_spawn_file_actions_init(&actions);
             posix_spawn_file_actions_adddup2(&actions, pipe_err[OUT_FOR_PARENT], fileno(stderr));
             posix_spawn_file_actions_addclose(&actions, pipe_err[IN_FOR_PARENT]);
+            bHasActions = TRUE;
         }
 
-        if( posix_spawnp(&pid, papszArgv[0], &actions, NULL, (char* const*) papszArgv, environ) != 0 )
+        if( posix_spawnp(&pid, papszArgvDup[0],
+                         bHasActions ? &actions : NULL,
+                         NULL,
+                         (char* const*) papszArgvDup,
+                         environ) != 0 )
         {
-            posix_spawn_file_actions_destroy(&actions);
+            if( bHasActions )
+                posix_spawn_file_actions_destroy(&actions);
             CPLError(CE_Failure, CPLE_AppDefined, "posix_spawnp() failed");
             goto err;
         }
+
+        CSLDestroy(papszArgvDup);
 
         /* Close unused end of pipe */
         if( bCreateInputPipe )
@@ -687,8 +736,9 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
         signal (SIGPIPE, SIG_IGN);
     #endif
         CPLSpawnedProcess* p = (CPLSpawnedProcess*)CPLMalloc(sizeof(CPLSpawnedProcess));
-        memcpy(&p->actions, &actions, sizeof(actions));
-        p->bFreeActions = TRUE;
+        if( bHasActions )
+            memcpy(&p->actions, &actions, sizeof(actions));
+        p->bFreeActions = bHasActions;
         p->pid = pid;
         p->fin = pipe_out[IN_FOR_PARENT];
         p->fout = pipe_in[OUT_FOR_PARENT];
@@ -697,31 +747,33 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
     }
 #endif // #ifdef HAVE_POSIX_SPAWNP
 
-    pid = fork();
+#ifdef HAVE_VFORK
+    if( papszArgv != NULL && !bDup2In && !bDup2Out && !bDup2Err )
+        pid = vfork();
+    else
+#endif
+        pid = fork();
     if (pid == 0)
     {
         /* Close unused end of pipe */
-        if( bCreateInputPipe )
+        if( bDup2In )
             close(pipe_in[OUT_FOR_PARENT]);
-        if( bCreateOutputPipe )
+        if( bDup2Out )
             close(pipe_out[IN_FOR_PARENT]);
-        if( bCreateErrorPipe )
+        if( bDup2Err )
             close(pipe_err[IN_FOR_PARENT]);
 
 #ifndef HAVE_POSIX_SPAWNP
-        if( papszArgv )
+        if( papszArgv != NULL )
         {
-            if( bCreateInputPipe )
+            if( bDup2In )
                 dup2(pipe_in[IN_FOR_PARENT], fileno(stdin));
-            if( bCreateOutputPipe )
+            if( bDup2Out )
                 dup2(pipe_out[OUT_FOR_PARENT], fileno(stdout));
-            if( bCreateErrorPipe )
+            if( bDup2Err )
                 dup2(pipe_err[OUT_FOR_PARENT], fileno(stderr));
 
-            execvp(papszArgv[0], (char* const*) papszArgv);
-
-            char* pszErr = strerror(errno);
-            fprintf(stderr, "An error occured while forking process %s : %s\n", papszArgv[0], pszErr);
+            execvp(papszArgvDup[0], (char* const*) papszArgvDup);
 
             _exit(1);
         }
@@ -740,6 +792,8 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
     }
     else if( pid > 0 )
     {
+        CSLDestroy(papszArgvDup);
+
         /* Close unused end of pipe */
         if( bCreateInputPipe )
             close(pipe_in[IN_FOR_PARENT]);
@@ -771,6 +825,7 @@ CPLSpawnedProcess* CPLSpawnAsync(int (*pfnMain)(CPL_FILE_HANDLE, CPL_FILE_HANDLE
 err_pipe:
     CPLError(CE_Failure, CPLE_AppDefined, "Could not create pipe");
 err:
+    CSLDestroy(papszArgvDup);
     for(i=0;i<2;i++)
     {
         if (pipe_in[i] >= 0)

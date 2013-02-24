@@ -17179,6 +17179,17 @@ _ACEOF
 fi
 done
 
+for ac_func in vfork
+do :
+  ac_fn_c_check_func "$LINENO" "vfork" "ac_cv_func_vfork"
+if test "x$ac_cv_func_vfork" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_VFORK 1
+_ACEOF
+
+fi
+done
+
 
 
 ac_ext=cpp
