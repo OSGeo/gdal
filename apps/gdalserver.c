@@ -276,10 +276,10 @@ int RunTCPServer(const char* pszApplication, const char* pszService)
 
         /* Send socket parameters over the pipe */
         if( bOK &&
-            !CPLPipeWrite(fout, &sSocketInfo, sizeof(sSocketInfo)) ||
-            !CPLPipeWrite(fout, &nFamily, sizeof(nFamily)) ||
-            !CPLPipeWrite(fout, &nSockType, sizeof(nSockType)) ||
-            !CPLPipeWrite(fout, &nProtocol, sizeof(nProtocol)) )
+            (!CPLPipeWrite(fout, &sSocketInfo, sizeof(sSocketInfo)) ||
+             !CPLPipeWrite(fout, &nFamily, sizeof(nFamily)) ||
+             !CPLPipeWrite(fout, &nSockType, sizeof(nSockType)) ||
+             !CPLPipeWrite(fout, &nProtocol, sizeof(nProtocol))) )
         {
             fprintf(stderr, "CPLWritePipe() failed\n");
             bOK = FALSE;
