@@ -80,12 +80,20 @@ CPL_CVSID("$Id$");
 void Usage(const char* pszErrorMsg)
 
 {
+#ifdef WIN32
     printf( "Usage: gdalserver [--help-general] [--help] [-tcpserver port | -stdinout]\n");
+#else
+    printf( "Usage: gdalserver [--help-general] [--help] [-tcpserver port | -stdinout | [-pipe_in fdin,fdtoclose -pipe_out fdout,fdtoclose]]\n");
+#endif
     printf( "\n" );
     printf( "-tcpserver : Launch a TCP server on the specified port that can accept.\n");
     printf( "             connections from GDAL clients.\n");
     printf( "-stdinout  : This mode is not meant at being directly used by a user.\n");
     printf( "             It is a helper utility for the client/server working of GDAL.\n");
+#ifndef WIN32
+    printf( "-pipe_in/out:This mode is not meant at being directly used by a user.\n");
+    printf( "             It is a helper utility for the client/server working of GDAL.\n");
+#endif
 
     if( pszErrorMsg != NULL )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
@@ -449,7 +457,7 @@ int RunTCPServer(const char* pszApplication, const char* pszService)
 
 int main(int argc, char* argv[])
 {
-    int i, nRet, bStdinout = FALSE, bNewConnection = FALSE;
+    int i, nRet, bStdinout = FALSE, bPipeIn = FALSE, bPipeOut = FALSE, bNewConnection = FALSE;
     const char* pszService = NULL;
 #ifndef WIN32
     int pipe_in = fileno(stdin);
@@ -501,6 +509,7 @@ int main(int argc, char* argv[])
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             i++;
             pipe_in = atoi(argv[i]);
+            bPipeIn = TRUE;
             pszComma = strchr(argv[i], ',');
             if( pszComma )
                 close(atoi(pszComma + 1));
@@ -511,6 +520,7 @@ int main(int argc, char* argv[])
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             i++;
             pipe_out = atoi(argv[i]);
+            bPipeOut = TRUE;
             pszComma = strchr(argv[i], ',');
             if( pszComma )
                 close(atoi(pszComma + 1));
@@ -523,7 +533,7 @@ int main(int argc, char* argv[])
         else
             Usage("Too many command options.");
     }
-    if( !bStdinout && pszService == NULL && !bNewConnection )
+    if( !bStdinout && !(bPipeIn && bPipeOut) && pszService == NULL && !bNewConnection )
         Usage(NULL);
 
     if( pszService != NULL )
