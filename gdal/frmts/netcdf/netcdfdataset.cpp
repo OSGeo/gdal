@@ -1702,7 +1702,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
     if ( xdim == 1 || ydim == 1 ) {
         CPLError( CE_Warning, CPLE_AppDefined, 
                   "1-pixel width/height files not supported, xdim: %ld ydim: %ld",
-                  xdim, ydim );
+                  (long)xdim, (long)ydim );
         return;
     }
 
@@ -2507,7 +2507,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
             
             CPLDebug("GDAL_netCDF", 
                      "xdim: %ld nSpacingBegin: %d nSpacingMiddle: %d nSpacingLast: %d",
-                     xdim, nSpacingBegin, nSpacingMiddle, nSpacingLast );
+                     (long)xdim, nSpacingBegin, nSpacingMiddle, nSpacingLast );
             
             if( ( abs( nSpacingBegin )  ==  abs( nSpacingLast )   ) &&
                 ( abs( nSpacingBegin )  ==  abs( nSpacingMiddle ) ) &&
@@ -2542,7 +2542,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId )
 
             CPLDebug("GDAL_netCDF", 
                      "ydim: %ld nSpacingBegin: %d nSpacingMiddle: %d nSpacingLast: %d",
-                     ydim, nSpacingBegin, nSpacingMiddle, nSpacingLast );
+                     (long)ydim, nSpacingBegin, nSpacingMiddle, nSpacingLast );
 
 /* -------------------------------------------------------------------- */
 /*   For Latitude we allow an error of 0.1 degrees for gaussian         */
