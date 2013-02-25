@@ -147,6 +147,7 @@ dnl Check for declarations
 AC_CHECK_DECLS(strtof)
 
 AC_CHECK_FUNCS(readlink)
+AC_CHECK_FUNCS(lstat)
 AC_CHECK_FUNCS(posix_spawnp)
 AC_CHECK_FUNCS(vfork)
 
