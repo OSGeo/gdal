@@ -70,6 +70,24 @@ def gdal_api_proxy_2():
     return 'success'
 
 ###############################################################################
+# Test connexion to Unix socket server
+def gdal_api_proxy_3():
+    
+    if sys.version_info < (2,6,0):
+        return 'skip'
+        
+    if sys.platform == 'win32':
+        return 'skip'
+
+    import test_py_scripts
+    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdal_api_proxy', ' \"%s\" -3' % gdaltest.gdalserver_path, display_live_on_parent_stdout = True)
+
+    if ret.find('Failed:    0') == -1:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 def gdal_api_proxy_sub():
 
@@ -413,16 +431,22 @@ def gdal_api_proxy_sub():
 ###############################################################################
 #
 def gdal_api_proxy_sub_clean():
-    if gdaltest.tcpserver_p is not None:
+    if gdaltest.api_proxy_server_p is not None:
         try:
-            gdaltest.tcpserver_p.terminate()
+            gdaltest.api_proxy_server_p.terminate()
         except:
             pass
-        gdaltest.tcpserver_p.wait()
+        gdaltest.api_proxy_server_p.wait()
+    try:
+        os.unlink('tmp/gdalapiproxysocket')
+    except:
+        pass
 
     return 'success'
 
-gdaltest_list = [ gdal_api_proxy_1, gdal_api_proxy_2 ]
+gdaltest_list = [ gdal_api_proxy_1,
+                  gdal_api_proxy_2,
+                  gdal_api_proxy_3 ]
 
 if __name__ == '__main__':
 
@@ -433,7 +457,7 @@ if __name__ == '__main__':
             gdalserver_path = sys.argv[1]
             gdal.SetConfigOption('GDAL_API_PROXY_SERVER', gdalserver_path)
 
-        gdaltest.tcpserver_p = None
+        gdaltest.api_proxy_server_p = None
         gdaltest_list = [ gdal_api_proxy_sub ]
 
     elif len(sys.argv) >= 3 and sys.argv[2] == '-2':
@@ -460,9 +484,31 @@ if __name__ == '__main__':
             gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
             gdal.SetConfigOption('GDAL_API_PROXY_SERVER', 'localhost:%d' % port)
             print('port = %d' % port)
-            gdaltest.tcpserver_p = p
+            gdaltest.api_proxy_server_p = p
             gdaltest_list = [ gdal_api_proxy_sub, gdal_api_proxy_sub_clean ]
         else:
+            gdaltest_list = []
+
+    elif len(sys.argv) >= 3 and sys.argv[2] == '-3':
+
+        gdalserver_path = sys.argv[1]
+
+        import subprocess
+        import time
+
+        p = subprocess.Popen([gdalserver_path, '-unixserver', 'tmp/gdalapiproxysocket'])
+        time.sleep(1)
+        if p.poll() is None:
+            gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
+            gdal.SetConfigOption('GDAL_API_PROXY_SERVER', 'tmp/gdalapiproxysocket')
+            gdaltest.api_proxy_server_p = p
+            gdaltest_list = [ gdal_api_proxy_sub, gdal_api_proxy_sub_clean ]
+        else:
+            try:
+                p.terminate()
+            except:
+                pass
+            p.wait()
             gdaltest_list = []
 
     gdaltest.setup_run( 'gdal_api_proxy' )
