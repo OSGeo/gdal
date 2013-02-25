@@ -150,6 +150,10 @@ def Debug(*args):
   """Debug(char msg_class, char message)"""
   return _gdal.Debug(*args)
 
+def SetErrorHandler(*args):
+  """SetErrorHandler(char pszCallbackName = None) -> CPLErr"""
+  return _gdal.SetErrorHandler(*args)
+
 def PushErrorHandler(*args):
   """PushErrorHandler(CPLErrorHandler pfnErrorHandler = None) -> CPLErr"""
   return _gdal.PushErrorHandler(*args)
