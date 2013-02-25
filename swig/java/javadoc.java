@@ -156,6 +156,32 @@ public class gdal:public static int PushErrorHandler(String callbackName)
 public class gdal:public static int PushErrorHandler()
 
 /**
+ * Set a global error handler.
+ *
+ * This installs a global error handler.
+ * 
+ * Note; if a local handler is already installed with PushErrorHandler(), the global error
+ * handler will not be used until the last local handler is uninstalled with PopErrorHandler().
+  *
+ * @since Java bindings 1.10.0
+ *
+ * @param callbackName handler function name : "CPLQuietErrorHandler", "CPLDefaultErrorHandler", "CPLLoggingErrorHandler"
+ */
+public class gdal:public static int SetErrorHandler(String callbackName)
+
+/**
+ * Set a quiet global error handler.
+ *
+ * This installs a quiet global error handler.
+ * 
+ * Note; if a local handler is already installed with PushErrorHandler(), the global error
+ * handler will not be used until the last local handler is uninstalled with PopErrorHandler().
+  *
+ * @since Java bindings 1.10.0
+ */
+public class gdal:public static int SetErrorHandler()
+
+/**
  * Report an error.
  *
  * This function reports an error in a manner that can be hooked
