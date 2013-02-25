@@ -42,6 +42,7 @@
 #else
   #include <sys/types.h>
   #include <sys/socket.h>
+  #include <sys/un.h>
   #include <netinet/in.h>
   #include <arpa/inet.h>
   #include <netdb.h>
@@ -1619,6 +1620,38 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
         }
         return ssp;
     }
+
+#ifndef WIN32
+    VSIStatBuf sStat;
+    if( VSIStat(pszSpawnServer, &sStat) == 0 && sStat.st_size == 0 )
+    {
+        int nConnSocket = socket(AF_UNIX, SOCK_STREAM, 0);
+        if (nConnSocket >= 0)
+        {
+            struct sockaddr_un sockAddrUnix;
+            sockAddrUnix.sun_family = AF_UNIX;
+            CPLStrlcpy(sockAddrUnix.sun_path, pszSpawnServer, sizeof(sockAddrUnix.sun_path));
+
+            if (connect(nConnSocket, (const SOCKADDR *)&sockAddrUnix, sizeof (sockAddrUnix)) >= 0 )
+            {
+                GDALServerSpawnedProcess* ssp =
+                    (GDALServerSpawnedProcess*)CPLMalloc(sizeof(GDALServerSpawnedProcess));
+                ssp->sp = NULL;
+                ssp->p = GDALPipeBuild(nConnSocket);
+
+                CPLDebug("GDAL", "Create spawned process %p", ssp);
+                if( !GDALCheckServerVersion(ssp->p) )
+                {
+                    GDALServerSpawnAsyncFinish(ssp);
+                    return NULL;
+                }
+                return ssp;
+            }
+            else
+                closesocket(nConnSocket);
+        }
+    }
+#endif
 
     if( EQUAL(pszSpawnServer, "YES") || EQUAL(pszSpawnServer, "ON") ||
         EQUAL(pszSpawnServer, "TRUE")  || EQUAL(pszSpawnServer, "1") )
