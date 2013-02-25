@@ -396,6 +396,90 @@ def vrt_read_10():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test resolving files from a symlinked vrt using relativeToVRT with an absolute symlink
+
+def vrt_read_11():
+
+    if not gdaltest.support_symlink():
+        return 'skip'
+
+    try:
+        os.remove('tmp/byte.vrt')
+        print('Removed tmp/byte.vrt. Was not supposed to exist...')
+    except:
+        pass
+
+    os.symlink(os.path.join(os.getcwd(), 'data/byte.vrt'), 'tmp/byte.vrt')
+
+    ds = gdal.Open('tmp/byte.vrt')
+
+    os.remove('tmp/byte.vrt')
+
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test resolving files from a symlinked vrt using relativeToVRT
+# with a relative symlink pointing to a relative symlink
+
+def vrt_read_12():
+
+    if not gdaltest.support_symlink():
+        return 'skip'
+
+    try:
+        os.remove('tmp/byte.vrt')
+        print('Removed tmp/byte.vrt. Was not supposed to exist...')
+    except:
+        pass
+
+    os.symlink('../data/byte.vrt', 'tmp/byte.vrt')
+
+    ds = gdal.Open('tmp/byte.vrt')
+
+    os.remove('tmp/byte.vrt')
+
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test resolving files from a symlinked vrt using relativeToVRT with a relative symlink
+
+def vrt_read_13():
+
+    if not gdaltest.support_symlink():
+        return 'skip'
+
+    try:
+        os.remove('tmp/byte.vrt')
+        print('Removed tmp/byte.vrt. Was not supposed to exist...')
+    except:
+        pass
+    try:
+        os.remove('tmp/other_byte.vrt')
+        print('Removed tmp/other_byte.vrt. Was not supposed to exist...')
+    except:
+        pass
+
+    os.symlink('../data/byte.vrt', 'tmp/byte.vrt')
+    os.symlink('../tmp/byte.vrt', 'tmp/other_byte.vrt')
+
+    ds = gdal.Open('tmp/other_byte.vrt')
+
+    os.remove('tmp/other_byte.vrt')
+    os.remove('tmp/byte.vrt')
+
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
     if ut is None:
@@ -413,6 +497,9 @@ gdaltest_list.append( vrt_read_7 )
 gdaltest_list.append( vrt_read_8 )
 gdaltest_list.append( vrt_read_9 )
 gdaltest_list.append( vrt_read_10 )
+gdaltest_list.append( vrt_read_11 )
+gdaltest_list.append( vrt_read_12 )
+gdaltest_list.append( vrt_read_13 )
 
 if __name__ == '__main__':
 
