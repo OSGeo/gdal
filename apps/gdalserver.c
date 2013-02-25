@@ -44,6 +44,7 @@
   #include <sys/types.h>
   #include <sys/wait.h>
   #include <sys/socket.h>
+  #include <sys/un.h>
   #include <netinet/in.h>
   #include <unistd.h>
   #ifdef HAVE_GETADDRINFO
@@ -83,7 +84,7 @@ void Usage(const char* pszErrorMsg)
 #ifdef WIN32
     printf( "Usage: gdalserver [--help-general] [--help] [-tcpserver port | -stdinout]\n");
 #else
-    printf( "Usage: gdalserver [--help-general] [--help] [-tcpserver port | -stdinout | [-pipe_in fdin,fdtoclose -pipe_out fdout,fdtoclose]]\n");
+    printf( "Usage: gdalserver [--help-general] [--help] [-tcpserver port | -unixserver filename | -stdinout | [-pipe_in fdin,fdtoclose -pipe_out fdout,fdtoclose]]\n");
 #endif
     printf( "\n" );
     printf( "-tcpserver : Launch a TCP server on the specified port that can accept.\n");
@@ -202,10 +203,12 @@ int CreateSocketAndBindAndListen(const char* pszService,
 #ifdef WIN32
 
 /************************************************************************/
-/*                             RunTCPServer()                           */
+/*                             RunServer()                              */
 /************************************************************************/
 
-int RunTCPServer(const char* pszApplication, const char* pszService)
+int RunServer(const char* pszApplication,
+              const char* pszService,
+              const char* unused_pszUnixSocketFilename)
 {
     int nRet;
     WSADATA wsaData;
@@ -380,17 +383,51 @@ int RunNewConnection()
 #else
 
 /************************************************************************/
-/*                             RunTCPServer()                           */
+/*                             RunServer()                              */
 /************************************************************************/
 
-int RunTCPServer(const char* pszApplication, const char* pszService)
+int RunServer(const char* pszApplication,
+              const char* pszService,
+              const char* pszUnixSocketFilename)
 {
     int nListenSocket;
 
-    nListenSocket = CreateSocketAndBindAndListen(pszService, NULL, NULL, NULL);
-    if (nListenSocket < 0)
+    if( pszUnixSocketFilename != NULL )
     {
-        return 1;
+        struct sockaddr_un sockAddrUnix;
+        int len;
+
+        nListenSocket = socket(AF_UNIX, SOCK_STREAM, 0);
+        if (nListenSocket < 0)
+        {
+            perror("socket");
+            return 1;
+        }
+
+        sockAddrUnix.sun_family = AF_UNIX;
+        CPLStrlcpy(sockAddrUnix.sun_path, pszUnixSocketFilename, sizeof(sockAddrUnix.sun_path));
+        unlink(sockAddrUnix.sun_path);
+        len = strlen(sockAddrUnix.sun_path) + sizeof(sockAddrUnix.sun_family);
+        if (bind(nListenSocket, (struct sockaddr *)&sockAddrUnix, len) == -1)
+        {
+            perror("bind");
+            closesocket(nListenSocket);
+            return 1;
+        }
+        if (listen(nListenSocket, SOMAXCONN) == SOCKET_ERROR)
+        {
+            fprintf(stderr, "listen() function failed with error: %d\n", WSAGetLastError());
+            closesocket(nListenSocket);
+            return 1;
+        }
+    }
+    else
+    {
+        nListenSocket = CreateSocketAndBindAndListen(pszService, NULL, NULL, NULL);
+        if (nListenSocket < 0)
+        {
+            return 1;
+        }
     }
 
     while(TRUE)
@@ -458,7 +495,7 @@ int RunTCPServer(const char* pszApplication, const char* pszService)
 int main(int argc, char* argv[])
 {
     int i, nRet, bStdinout = FALSE, bPipeIn = FALSE, bPipeOut = FALSE, bNewConnection = FALSE;
-    const char* pszService = NULL;
+    const char* pszService = NULL, *pszUnixSocketFilename = NULL;
 #ifndef WIN32
     int pipe_in = fileno(stdin);
     int pipe_out = fileno(stdout);
@@ -494,6 +531,14 @@ int main(int argc, char* argv[])
             i++;
             pszService = argv[i];
         }
+#ifndef WIN32
+        else if( EQUAL(argv[i],"-unixserver") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            i++;
+            pszUnixSocketFilename = argv[i];
+        }
+#endif
 #ifdef WIN32
         else if( EQUAL(argv[i],"-newconnection") )
         {
@@ -533,11 +578,12 @@ int main(int argc, char* argv[])
         else
             Usage("Too many command options.");
     }
-    if( !bStdinout && !(bPipeIn && bPipeOut) && pszService == NULL && !bNewConnection )
+    if( !bStdinout && !(bPipeIn && bPipeOut) &&
+        pszService == NULL && pszUnixSocketFilename == NULL && !bNewConnection )
         Usage(NULL);
 
-    if( pszService != NULL )
-        nRet = RunTCPServer(argv[0], pszService);
+    if( pszService != NULL || pszUnixSocketFilename != NULL )
+        nRet = RunServer(argv[0], pszService, pszUnixSocketFilename);
 #ifdef WIN32
     else if( bNewConnection )
         nRet = RunNewConnection();
