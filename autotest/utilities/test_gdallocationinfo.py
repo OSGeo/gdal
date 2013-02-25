@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -120,7 +121,7 @@ def test_gdallocationinfo_5():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdallocationinfo_path() + ' -lifonly ../gcore/data/byte.vrt 0 0')
     expected_ret1 = """../gcore/data/byte.tif"""
     expected_ret2 = """../gcore/data\\byte.tif"""
-    if ret.find(expected_ret1) != 0 and ret.find(expected_ret2) != 0:
+    if ret.find(expected_ret1) < 0 and ret.find(expected_ret2) < 0:
         print(ret)
         return 'fail'
 

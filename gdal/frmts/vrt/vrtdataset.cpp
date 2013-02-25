@@ -739,7 +739,53 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         
         pszXML[nLength] = '\0';
-        pszVRTPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+
+        char* pszCurDir = CPLGetCurrentDir();
+        const char *currentVrtFilename = CPLProjectRelativeFilename(pszCurDir, poOpenInfo->pszFilename);
+        CPLFree(pszCurDir);
+#if defined(HAVE_READLINK) && defined(HAVE_LSTAT)
+        VSIStatBuf statBuffer;
+        char filenameBuffer[2048];
+
+        while( true ) {
+            int lstatCode = lstat( currentVrtFilename, &statBuffer );
+            if ( lstatCode == -1 ) {
+                if (errno == ENOENT) {
+                    // The file could be a virtual file, let later checks handle it.
+                    break;
+                } else {
+                    VSIFCloseL(fp);
+                    CPLFree( pszXML );
+                    CPLError( CE_Failure, CPLE_FileIO,
+                              "Failed to lstat %s: %s",
+                              currentVrtFilename,
+                              VSIStrerror(errno) );
+                    return NULL;
+                }
+            }
+
+            if ( !VSI_ISLNK(statBuffer.st_mode) ) {
+                break;
+            }
+
+            int bufferSize = readlink(currentVrtFilename, filenameBuffer, sizeof(filenameBuffer));
+            if (bufferSize != -1) {
+                filenameBuffer[MIN(bufferSize, (int) sizeof(filenameBuffer) - 1)] = 0;
+                // The filename in filenameBuffer might be a relative path from the linkfile resolve it before looping
+                currentVrtFilename = CPLProjectRelativeFilename(CPLGetDirname(currentVrtFilename), filenameBuffer);
+            } else {
+                VSIFCloseL(fp);
+                CPLFree( pszXML );
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Failed to read filename from symlink %s: %s",
+                          currentVrtFilename,
+                          VSIStrerror(errno) );
+                return NULL;
+            }
+        }
+#endif
+
+        pszVRTPath = CPLStrdup(CPLGetPath(currentVrtFilename));
 
         VSIFCloseL(fp);
     }

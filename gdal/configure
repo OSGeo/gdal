@@ -17168,6 +17168,17 @@ _ACEOF
 fi
 done
 
+for ac_func in lstat
+do :
+  ac_fn_c_check_func "$LINENO" "lstat" "ac_cv_func_lstat"
+if test "x$ac_cv_func_lstat" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LSTAT 1
+_ACEOF
+
+fi
+done
+
 for ac_func in posix_spawnp
 do :
   ac_fn_c_check_func "$LINENO" "posix_spawnp" "ac_cv_func_posix_spawnp"
