@@ -94,8 +94,8 @@ static CPLString GDALPDFGetPDFString(const char* pszStr)
         else
 #endif
         {
-            osStr += CPLSPrintf("%02X", (pwszDest[i] >> 8) & 0xff);
-            osStr += CPLSPrintf("%02X", (pwszDest[i]) & 0xff);
+            osStr += CPLSPrintf("%02X", (int)(pwszDest[i] >> 8) & 0xff);
+            osStr += CPLSPrintf("%02X", (int)(pwszDest[i]) & 0xff);
         }
     }
     osStr += ">";
