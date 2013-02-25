@@ -3257,6 +3257,24 @@ typedef char retStringAndCPLFree;
     CPLDebug( msg_class, "%s", message );
   }
 
+  CPLErr SetErrorHandler( char const * pszCallbackName = NULL )
+  {
+    CPLErrorHandler pfnHandler = NULL;
+    if( pszCallbackName == NULL || EQUAL(pszCallbackName,"CPLQuietErrorHandler") )
+      pfnHandler = CPLQuietErrorHandler;
+    else if( EQUAL(pszCallbackName,"CPLDefaultErrorHandler") )
+      pfnHandler = CPLDefaultErrorHandler;
+    else if( EQUAL(pszCallbackName,"CPLLoggingErrorHandler") )
+      pfnHandler = CPLLoggingErrorHandler;
+
+    if ( pfnHandler == NULL )
+      return CE_Fatal;
+
+    CPLSetErrorHandler( pfnHandler );
+
+    return CE_None;
+  }
+
 
 SWIGINTERN swig_type_info*
 SWIG_pchar_descriptor(void)
@@ -5295,6 +5313,54 @@ SWIGINTERN PyObject *_wrap_Debug(PyObject *SWIGUNUSEDPARM(self), PyObject *args)
 fail:
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SetErrorHandler(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  char *arg1 = (char *) NULL ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int alloc1 = 0 ;
+  PyObject * obj0 = 0 ;
+  CPLErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"|O:SetErrorHandler",&obj0)) SWIG_fail;
+  if (obj0) {
+    res1 = SWIG_AsCharPtrAndSize(obj0, &buf1, NULL, &alloc1);
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SetErrorHandler" "', argument " "1"" of type '" "char const *""'");
+    }
+    arg1 = reinterpret_cast< char * >(buf1);
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (CPLErr)SetErrorHandler((char const *)arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(ret) CPLErr */
+    if ( bUseExceptions == 0 ) {
+      /* We're not using exceptions.  And no error has occurred */
+      if ( resultobj == 0 ) {
+        /* No other return values set so return ErrorCode */
+        resultobj = PyInt_FromLong(result);
+      }
+    }
+  }
+  return resultobj;
+fail:
+  if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return NULL;
 }
 
@@ -21451,6 +21517,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"DontUseExceptions", _wrap_DontUseExceptions, METH_VARARGS, (char *)"DontUseExceptions()"},
 	 { (char *)"VSIFReadL", _wrap_VSIFReadL, METH_VARARGS, (char *)"VSIFReadL(int nMembSize, int nMembCount, VSILFILE fp) -> int"},
 	 { (char *)"Debug", _wrap_Debug, METH_VARARGS, (char *)"Debug(char msg_class, char message)"},
+	 { (char *)"SetErrorHandler", _wrap_SetErrorHandler, METH_VARARGS, (char *)"SetErrorHandler(char pszCallbackName = None) -> CPLErr"},
 	 { (char *)"PushErrorHandler", _wrap_PushErrorHandler, METH_VARARGS, (char *)"PushErrorHandler(CPLErrorHandler pfnErrorHandler = None) -> CPLErr"},
 	 { (char *)"Error", _wrap_Error, METH_VARARGS, (char *)"Error(CPLErr msg_class = CE_Failure, int err_code = 0, char msg = \"error\")"},
 	 { (char *)"GOA2GetAuthorizationURL", _wrap_GOA2GetAuthorizationURL, METH_VARARGS, (char *)"GOA2GetAuthorizationURL(char pszScope) -> retStringAndCPLFree"},
