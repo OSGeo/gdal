@@ -328,9 +328,6 @@ OGRLayer * OGRMSSQLSpatialDataSource::CreateLayer( const char * pszLayerName,
         oSession.CommitTransaction();
     }
 
-    CPLFree( pszSchemaName );
-    CPLFree( pszTableName );
-
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
@@ -341,10 +338,15 @@ OGRLayer * OGRMSSQLSpatialDataSource::CreateLayer( const char * pszLayerName,
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
     
-    if (poLayer->Initialize("dbo", pszLayerName, pszGeomColumn, nCoordDimension, nSRSId, eType) == OGRERR_FAILURE)
+    if (poLayer->Initialize(pszSchemaName, pszTableName, pszGeomColumn, nCoordDimension, nSRSId, eType) == OGRERR_FAILURE)
     {
+        CPLFree( pszSchemaName );
+        CPLFree( pszTableName );
         return NULL;
     }
+
+    CPLFree( pszSchemaName );
+    CPLFree( pszTableName );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
