@@ -5,10 +5,10 @@
 # Project:  GDAL/OGR Test Suite
 # Purpose:  rgb2pct.py and pct2rgb.py testing
 # Author:   Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 ###############################################################################
 # Copyright (c) 2010, Even Rouault <even dot rouault @ mines-paris dot org>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -31,6 +31,7 @@
 
 import sys
 import os
+import struct
 
 sys.path.append( '../pymod' )
 
@@ -142,6 +143,43 @@ def test_rgb2pct_3():
     return 'success'
 
 ###############################################################################
+# Test pct2rgb with big CT (>256 entries)
+
+
+def test_pct2rgb_4():
+    try:
+        import numpy
+    except:
+        return 'skip'
+
+    script_path = test_py_scripts.get_py_script('pct2rgb')
+    if script_path is None:
+        return 'skip'
+
+    test_py_scripts.run_py_script(script_path, 'pct2rgb', '-rgba ../gcore/data/rat.img tmp/test_pct2rgb_4.tif')
+
+    ds = gdal.Open('tmp/test_pct2rgb_4.tif')
+    ori_ds = gdal.Open('../gcore/data/rat.img')
+
+    ori_data = struct.unpack('H', ori_ds.GetRasterBand(1).ReadRaster(1990, 1990, 1, 1, 1, 1))[0]
+    data = (struct.unpack('B', ds.GetRasterBand(1).ReadRaster(1990, 1990, 1, 1, 1, 1))[0],
+            struct.unpack('B', ds.GetRasterBand(2).ReadRaster(1990, 1990, 1, 1, 1, 1))[0],
+            struct.unpack('B', ds.GetRasterBand(3).ReadRaster(1990, 1990, 1, 1, 1, 1))[0],
+            struct.unpack('B', ds.GetRasterBand(4).ReadRaster(1990, 1990, 1, 1, 1, 1))[0],)
+
+    ct = ori_ds.GetRasterBand(1).GetRasterColorTable()
+    entry = ct.GetColorEntry(ori_data)
+
+    if entry != data:
+        return 'fail'
+
+    ds = None
+    ori_ds = None
+
+    return 'success'
+
+
+###############################################################################
 # Cleanup
 
 def test_rgb2pct_cleanup():
@@ -149,7 +187,9 @@ def test_rgb2pct_cleanup():
     lst = [ 'tmp/test_rgb2pct_1.tif',
             'tmp/test_pct2rgb_1.tif',
             'tmp/test_rgb2pct_2.tif',
-            'tmp/test_rgb2pct_3.tif' ]
+            'tmp/test_rgb2pct_3.tif',
+            'tmp/test_pct2rgb_1.tif',
+            'tmp/test_pct2rgb_4.tif' ]
     for filename in lst:
         try:
             os.remove(filename)
@@ -163,6 +203,7 @@ gdaltest_list = [
     test_pct2rgb_1,
     test_rgb2pct_2,
     test_rgb2pct_3,
+    test_pct2rgb_4,
     test_rgb2pct_cleanup
     ]
 
