@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id: ogr_georss.py 15604 2008-10-26 11:21:34Z rouault $
 #
@@ -72,7 +73,7 @@ def ogr_georss_init():
                                     ('link2_href', 'http://example.org/audio/ph34r_my_podcast.mp3', ogr.OFTString),
                                     ('id', 'tag:example.org,2003:3.2397', ogr.OFTString),
                                     ('updated', '2005/07/31 12:29:29+00', ogr.OFTDateTime),
-                                    ('published', '2003/12/13  8:29:29-04', ogr.OFTDateTime),
+                                    ('published', '2003/12/13 08:29:29-04', ogr.OFTDateTime),
                                     ('author_name', 'Mark Pilgrim', ogr.OFTString),
                                     ('author_uri', 'http://example.org/', ogr.OFTString),
                                     ('author_email', 'f8dy@example.com', ogr.OFTString),
