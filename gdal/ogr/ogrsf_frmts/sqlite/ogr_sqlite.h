@@ -467,12 +467,16 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer
     OGRSQLiteLayer     *GetBaseLayer(size_t& i);
     int                 RebuildSQLWithSpatialClause();
 
+    int                 bAllowResetReadingEvenIfIndexAtZero;
+ 
   public:
                         OGRSQLiteSelectLayer( OGRSQLiteDataSource *, 
                                               CPLString osSQL,
                                               sqlite3_stmt *,
                                               int bUseStatementForGetNextFeature,
                                               int bEmptyLayer );
+
+    virtual void        ResetReading();
 
     virtual OGRFeature *GetNextFeature();
     virtual int         GetFeatureCount( int );
