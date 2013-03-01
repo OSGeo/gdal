@@ -47,6 +47,7 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
 
     iNextShapeId = 0;
     poFeatureDefn = NULL;
+    bAllowResetReadingEvenIfIndexAtZero = FALSE;
 
     std::set<CPLString> aosEmpty;
     BuildFeatureDefn( "SELECT", hStmtIn, aosEmpty );
@@ -117,6 +118,20 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
     osSQLCurrent = osSQLIn;
     this->bEmptyLayer = bEmptyLayer;
     bSpatialFilterInSQL = TRUE;
+}
+
+/************************************************************************/
+/*                            ResetReading()                            */
+/************************************************************************/
+
+void OGRSQLiteSelectLayer::ResetReading()
+
+{
+    if( iNextShapeId > 0 || bAllowResetReadingEvenIfIndexAtZero )
+    {
+        OGRSQLiteLayer::ResetReading();
+        bAllowResetReadingEvenIfIndexAtZero = FALSE;
+    }
 }
 
 /************************************************************************/
@@ -225,6 +240,8 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
 void OGRSQLiteSelectLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
 {
+    bAllowResetReadingEvenIfIndexAtZero = TRUE;
+
     if( InstallFilter( poGeomIn ) )
     {
         bSpatialFilterInSQL = RebuildSQLWithSpatialClause();
