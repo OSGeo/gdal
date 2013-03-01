@@ -656,6 +656,12 @@ def wms_16():
 
     pixel = "GeoPixel_601228_4917635"
     val = ds.GetRasterBand(1).GetMetadataItem(pixel, "LocationInfo")
+    
+    # Some bug in GeoServer ?
+    if val is not None and val.find('java.lang.NoSuchMethodError: org.geoserver.wms.WMS.pixelToWorld') >= 0:
+        print(val)
+        return 'skip'
+
     if val is None or val.find('<og:cat>86</og:cat>') == -1:
         gdaltest.post_reason('expected a value')
         print(val)
