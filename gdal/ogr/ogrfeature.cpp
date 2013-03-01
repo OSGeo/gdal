@@ -1149,7 +1149,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
     else if( poFDefn->GetType() == OFTDateTime )
     {
         snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
-                  "%04d/%02d/%02d %2d:%02d:%02d", 
+                  "%04d/%02d/%02d %02d:%02d:%02d", 
                   pauFields[iField].Date.Year,
                   pauFields[iField].Date.Month,
                   pauFields[iField].Date.Day,

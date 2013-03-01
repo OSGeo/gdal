@@ -1155,8 +1155,8 @@ def test_val_test_23(layer_defn, feat):
     feat.GetFieldAsString('my_bytea') != '78797A' or \
     feat.GetFieldAsString('my_time') != '12:34:56' or \
     feat.GetFieldAsString('my_date') != '2000/01/01' or \
-    (feat.GetFieldAsString('my_timestamp') != '2000/01/01  0:00:00' and feat.GetFieldAsString('my_timestamp') != '2000/01/01  0:00:00+00') or \
-    feat.GetFieldAsString('my_timestamptz') != '2000/01/01  0:00:00+00' or \
+    (feat.GetFieldAsString('my_timestamp') != '2000/01/01 00:00:00' and feat.GetFieldAsString('my_timestamp') != '2000/01/01 00:00:00+00') or \
+    feat.GetFieldAsString('my_timestamptz') != '2000/01/01 00:00:00+00' or \
     feat.GetFieldAsString('my_chararray') != '(2:a,b)' or \
     feat.GetFieldAsString('my_textarray') != '(2:aa,bb)' or \
     feat.GetFieldAsString('my_varchararray') != '(2:cc,dd)' or \

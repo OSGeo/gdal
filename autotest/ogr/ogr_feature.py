@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id: ogr_mem.py 23065 2011-09-05 20:41:03Z rouault $
 #
@@ -390,7 +391,7 @@ def ogr_feature_cp_7():
     if not check( dst_feature, 'field_binary', None ):
         return 'failure'
 
-    if not check( dst_feature, 'field_date', '2011/11/11  0:00:00' ):
+    if not check( dst_feature, 'field_date', '2011/11/11 00:00:00' ):
         return 'failure'
 
     if not check( dst_feature, 'field_time', '0000/00/00 14:10:35' ):
