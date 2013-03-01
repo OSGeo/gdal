@@ -145,13 +145,6 @@ typedef struct
     int             bIsDirectory;
 } CachedFileProp;
 
-typedef struct
-{
-    unsigned long   pszURLHash;
-    size_t          nSize;
-    GByte          *pData;
-} CachedRegion;
-
 /************************************************************************/
 /*                       VSICurlStreamingFSHandler                      */
 /************************************************************************/
@@ -159,9 +152,6 @@ typedef struct
 class VSICurlStreamingFSHandler : public VSIFilesystemHandler
 {
     void           *hMutex;
-
-    CachedRegion  **papsRegions;
-    int             nRegions;
 
     std::map<CPLString, CachedFileProp*>   cacheFileSize;
 
@@ -175,13 +165,6 @@ public:
 
     void                AcquireMutex();
     void                ReleaseMutex();
-
-    CachedRegion*       GetRegion(const char*     pszURL);
-
-    void                AddRegion(const char*     pszURL,
-                                  vsi_l_offset    nFileOffsetStart,
-                                  size_t          nSize,
-                                  GByte          *pData);
 
     CachedFileProp*     GetCachedFileProp(const char*     pszURL);
 };
@@ -204,6 +187,9 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     int             bIsDirectory;
 
     int             bEOF;
+
+    size_t          nCachedSize;
+    GByte          *pCachedData;
 
     CURL*           hCurlHandle;
 
@@ -228,6 +214,9 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     void                AcquireMutex();
     void                ReleaseMutex();
 
+    void                AddRegion( vsi_l_offset    nFileOffsetStart,
+                                   size_t          nSize,
+                                   GByte          *pData );
   public:
 
     VSICurlStreamingHandle(VSICurlStreamingFSHandler* poFS, const char* pszURL);
@@ -270,6 +259,9 @@ VSICurlStreamingHandle::VSICurlStreamingHandle(VSICurlStreamingFSHandler* poFS, 
     bIsDirectory = cachedFileProp->bIsDirectory;
     poFS->ReleaseMutex();
 
+    nCachedSize = 0;
+    pCachedData = NULL;
+
     bEOF = FALSE;
 
     hCurlHandle = NULL;
@@ -302,6 +294,8 @@ VSICurlStreamingHandle::~VSICurlStreamingHandle()
     CPLFree(pszURL);
     if (hCurlHandle != NULL)
         curl_easy_cleanup(hCurlHandle);
+
+    CPLFree(pCachedData);
 
     CPLFree(pabyHeaderData);
 
@@ -930,8 +924,6 @@ void VSICurlStreamingHandle::StopDownload()
         hCurlHandle = NULL;
     }
 
-    PutRingBufferInCache();
-
     oRingBuffer.Reset();
     bDownloadStopped = FALSE;
 }
@@ -959,8 +951,7 @@ void VSICurlStreamingHandle::PutRingBufferInCache()
         /* Signal to the producer that we have ingested some bytes */
         CPLCondSignal(hCondConsumer);
 
-        poFS->AddRegion(pszURL, nRingBufferFileOffset,
-                        nBufSize, pabyTmp);
+        AddRegion(nRingBufferFileOffset, nBufSize, pabyTmp);
         nRingBufferFileOffset += nBufSize;
         CPLFree(pabyTmp);
     }
@@ -998,37 +989,34 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
                  curOffset, curOffset + nBufferRequestSize, pszURL);
 
     /* Can we use the cache ? */
-    poFS->AcquireMutex();
-    CachedRegion* psRegion = poFS->GetRegion(pszURL);
-    if( psRegion != NULL && curOffset < psRegion->nSize )
+    if( pCachedData != NULL && curOffset < nCachedSize )
     {
-        size_t nSz = MIN(nRemaining, (size_t)(psRegion->nSize - curOffset));
+        size_t nSz = MIN(nRemaining, (size_t)(nCachedSize - curOffset));
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "Using cache for [%d, %d[ in %s",
                      (int)curOffset, (int)(curOffset + nSz), pszURL);
-        memcpy(pabyBuffer, psRegion->pData + curOffset, nSz);
+        memcpy(pabyBuffer, pCachedData + curOffset, nSz);
         pabyBuffer += nSz;
         curOffset += nSz;
         nRemaining -= nSz;
     }
 
     /* Is the request partially covered by the cache and going beyond file size ? */
-    if ( psRegion != NULL && bHastComputedFileSizeLocal &&
-         curOffset <= psRegion->nSize &&
+    if ( pCachedData != NULL && bHastComputedFileSizeLocal &&
+         curOffset <= nCachedSize &&
          curOffset + nRemaining > fileSizeLocal &&
-         fileSize == psRegion->nSize )
+         fileSize == nCachedSize )
     {
-        size_t nSz = (size_t) (psRegion->nSize - curOffset);
+        size_t nSz = (size_t) (nCachedSize - curOffset);
         if (ENABLE_DEBUG && nSz != 0)
             CPLDebug("VSICURL", "Using cache for [%d, %d[ in %s",
                     (int)curOffset, (int)(curOffset + nSz), pszURL);
-        memcpy(pabyBuffer, psRegion->pData + curOffset, nSz);
+        memcpy(pabyBuffer, pCachedData + curOffset, nSz);
         pabyBuffer += nSz;
         curOffset += nSz;
         nRemaining -= nSz;
         bEOF = TRUE;
     }
-    poFS->ReleaseMutex();
 
     /* Has a Seek() being done since the last Read() ? */
     if (!bEOF && nRemaining > 0 && curOffset != nRingBufferFileOffset)
@@ -1060,7 +1048,7 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
             ReleaseMutex();
 
             if (nBytesToRead)
-                poFS->AddRegion(pszURL, nRingBufferFileOffset, (size_t)nBytesToRead, pabyTmp);
+                AddRegion(nRingBufferFileOffset, (size_t)nBytesToRead, pabyTmp);
 
             nBytesToSkip -= nBytesToRead;
             nRingBufferFileOffset += nBytesToRead;
@@ -1110,7 +1098,7 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
         ReleaseMutex();
 
         if (nToRead)
-            poFS->AddRegion(pszURL, curOffset, nToRead, pabyBuffer);
+            AddRegion(curOffset, nToRead, pabyBuffer);
 
         nRemaining -= nToRead;
         pabyBuffer += nToRead;
@@ -1139,9 +1127,35 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
     size_t nRet = (nBufferRequestSize - nRemaining) / nSize;
     if (nRet < nMemb)
         bEOF = TRUE;
+
     return nRet;
 }
 
+/************************************************************************/
+/*                          AddRegion()                                 */
+/************************************************************************/
+
+void  VSICurlStreamingHandle::AddRegion( vsi_l_offset    nFileOffsetStart,
+                                         size_t          nSize,
+                                         GByte          *pData )
+{
+    if (nFileOffsetStart >= BKGND_BUFFER_SIZE)
+        return;
+
+        if (pCachedData == NULL)
+            pCachedData = (GByte*) CPLMalloc(BKGND_BUFFER_SIZE);
+
+    if (nFileOffsetStart <= nCachedSize &&
+        nFileOffsetStart + nSize > nCachedSize)
+    {
+        size_t nSz = MIN(nSize, (size_t) (BKGND_BUFFER_SIZE - nFileOffsetStart));
+        if (ENABLE_DEBUG)
+            CPLDebug("VSICURL", "Writing [%d, %d[ in cache for %s",
+                     (int)nFileOffsetStart, (int)(nFileOffsetStart + nSz), pszURL);
+        memcpy(pCachedData + nFileOffsetStart, pData, nSz);
+        nCachedSize = (size_t) (nFileOffsetStart + nSz);
+    }
+}
 /************************************************************************/
 /*                               Write()                                */
 /************************************************************************/
@@ -1188,8 +1202,6 @@ VSICurlStreamingFSHandler::VSICurlStreamingFSHandler()
 {
     hMutex = CPLCreateMutex();
     CPLReleaseMutex(hMutex);
-    papsRegions = NULL;
-    nRegions = 0;
 }
 
 /************************************************************************/
@@ -1198,14 +1210,6 @@ VSICurlStreamingFSHandler::VSICurlStreamingFSHandler()
 
 VSICurlStreamingFSHandler::~VSICurlStreamingFSHandler()
 {
-    int i;
-    for(i=0;i<nRegions;i++)
-    {
-        CPLFree(papsRegions[i]->pData);
-        CPLFree(papsRegions[i]);
-    }
-    CPLFree(papsRegions);
-
     std::map<CPLString, CachedFileProp*>::const_iterator iterCacheFileSize;
 
     for( iterCacheFileSize = cacheFileSize.begin();
@@ -1220,7 +1224,7 @@ VSICurlStreamingFSHandler::~VSICurlStreamingFSHandler()
 }
 
 /************************************************************************/
-/*                          GetRegion()                                 */
+/*                         AcquireMutex()                               */
 /************************************************************************/
 
 void VSICurlStreamingFSHandler::AcquireMutex()
@@ -1229,7 +1233,7 @@ void VSICurlStreamingFSHandler::AcquireMutex()
 }
 
 /************************************************************************/
-/*                          GetRegion()                                 */
+/*                         ReleaseMutex()                               */
 /************************************************************************/
 
 void VSICurlStreamingFSHandler::ReleaseMutex()
@@ -1238,91 +1242,10 @@ void VSICurlStreamingFSHandler::ReleaseMutex()
 }
 
 /************************************************************************/
-/*                          GetRegion()                                 */
-/************************************************************************/
-
-/* Should be called undef the FS Lock */
-
-CachedRegion* VSICurlStreamingFSHandler::GetRegion(const char* pszURL)
-{
-    unsigned long   pszURLHash = CPLHashSetHashStr(pszURL);
-
-    int i;
-    for(i=0;i<nRegions;i++)
-    {
-        CachedRegion* psRegion = papsRegions[i];
-        if (psRegion->pszURLHash == pszURLHash)
-        {
-            memmove(papsRegions + 1, papsRegions, i * sizeof(CachedRegion*));
-            papsRegions[0] = psRegion;
-            return psRegion;
-        }
-    }
-    return NULL;
-}
-
-/************************************************************************/
-/*                          AddRegion()                                 */
-/************************************************************************/
-
-void  VSICurlStreamingFSHandler::AddRegion( const char* pszURL,
-                                            vsi_l_offset    nFileOffsetStart,
-                                            size_t          nSize,
-                                            GByte          *pData )
-{
-    if (nFileOffsetStart >= BKGND_BUFFER_SIZE)
-        return;
-
-    AcquireMutex();
-
-    unsigned long   pszURLHash = CPLHashSetHashStr(pszURL);
-
-    CachedRegion* psRegion = GetRegion(pszURL);
-    if (psRegion == NULL)
-    {
-        if (nRegions == N_MAX_REGIONS)
-        {
-            psRegion = papsRegions[N_MAX_REGIONS-1];
-            memmove(papsRegions + 1, papsRegions,
-                    (N_MAX_REGIONS-1) * sizeof(CachedRegion*));
-            papsRegions[0] = psRegion;
-        }
-        else
-        {
-            papsRegions = (CachedRegion**)
-                CPLRealloc(papsRegions, (nRegions + 1) * sizeof(CachedRegion*));
-            if (nRegions)
-                memmove(papsRegions + 1, papsRegions, nRegions * sizeof(CachedRegion*));
-            nRegions ++;
-            papsRegions[0] = psRegion =
-                (CachedRegion*) CPLCalloc(1, sizeof(CachedRegion));
-        }
-
-        psRegion->pszURLHash = pszURLHash;
-        psRegion->nSize = 0;
-        if (psRegion->pData == NULL)
-            psRegion->pData = (GByte*) CPLMalloc(BKGND_BUFFER_SIZE);
-    }
-
-    if (nFileOffsetStart <= psRegion->nSize &&
-        nFileOffsetStart + nSize > psRegion->nSize)
-    {
-        size_t nSz = MIN(nSize, (size_t) (BKGND_BUFFER_SIZE - nFileOffsetStart));
-        if (ENABLE_DEBUG)
-            CPLDebug("VSICURL", "Writing [%d, %d[ in cache for %s",
-                     (int)nFileOffsetStart, (int)(nFileOffsetStart + nSz), pszURL);
-        memcpy(psRegion->pData + nFileOffsetStart, pData, nSz);
-        psRegion->nSize = (size_t) (nFileOffsetStart + nSz);
-    }
-
-    ReleaseMutex();
-}
-
-/************************************************************************/
 /*                         GetCachedFileProp()                          */
 /************************************************************************/
 
-/* Should be called undef the FS Lock */
+/* Should be called under the FS Lock */
 
 CachedFileProp*  VSICurlStreamingFSHandler::GetCachedFileProp(const char* pszURL)
 {
