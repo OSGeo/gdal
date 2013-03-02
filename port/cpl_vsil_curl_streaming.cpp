@@ -143,6 +143,9 @@ typedef struct
     int             bHastComputedFileSize;
     vsi_l_offset    fileSize;
     int             bIsDirectory;
+#ifdef notdef
+    unsigned int    nChecksumOfFirst1024Bytes;
+#endif
 } CachedFileProp;
 
 /************************************************************************/
@@ -180,6 +183,9 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
 
     char*           pszURL;
 
+#ifdef notdef
+    unsigned int    nRecomputedChecksumOfFirst1024Bytes;
+#endif
     vsi_l_offset    curOffset;
     vsi_l_offset    fileSize;
     int             bHastComputedFileSize;
@@ -249,6 +255,9 @@ VSICurlStreamingHandle::VSICurlStreamingHandle(VSICurlStreamingFSHandler* poFS, 
     this->poFS = poFS;
     this->pszURL = CPLStrdup(pszURL);
 
+#ifdef notdef
+    nRecomputedChecksumOfFirst1024Bytes = 0;
+#endif
     curOffset = 0;
 
     poFS->AcquireMutex();
@@ -553,6 +562,9 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     poFS->AcquireMutex();
     CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
     cachedFileProp->bHastComputedFileSize = TRUE;
+#ifdef notdef
+    cachedFileProp->nChecksumOfFirst1024Bytes = nRecomputedChecksumOfFirst1024Bytes;
+#endif
     cachedFileProp->fileSize = fileSize;
     cachedFileProp->eExists = eExists;
     cachedFileProp->bIsDirectory = bIsDirectory;
@@ -988,6 +1000,39 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
         CPLDebug("VSICURL", "Read [" CPL_FRMT_GUIB ", " CPL_FRMT_GUIB "[ in %s",
                  curOffset, curOffset + nBufferRequestSize, pszURL);
 
+#ifdef notdef
+    if( pCachedData != NULL && nCachedSize >= 1024 &&
+        nRecomputedChecksumOfFirst1024Bytes == 0 )
+    {
+        for(size_t i = 0; i < 1024 / sizeof(int); i ++)
+        {
+            int nVal;
+            memcpy(&nVal, pCachedData + i * sizeof(int), sizeof(int));
+            nRecomputedChecksumOfFirst1024Bytes += nVal;
+        }
+
+        if( bHastComputedFileSizeLocal )
+        {
+            poFS->AcquireMutex();
+            CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
+            if( cachedFileProp->nChecksumOfFirst1024Bytes == 0 )
+            {
+                cachedFileProp->nChecksumOfFirst1024Bytes = nRecomputedChecksumOfFirst1024Bytes;
+            }
+            else if( nRecomputedChecksumOfFirst1024Bytes != cachedFileProp->nChecksumOfFirst1024Bytes )
+            {
+                CPLDebug("VSICURL", "Invalidating previously cached file size. First bytes of file have changed!");
+                AcquireMutex();
+                bHastComputedFileSize = FALSE;
+                cachedFileProp->bHastComputedFileSize = FALSE;
+                cachedFileProp->nChecksumOfFirst1024Bytes = 0;
+                ReleaseMutex();
+            }
+            poFS->ReleaseMutex();
+        }
+    }
+#endif
+
     /* Can we use the cache ? */
     if( pCachedData != NULL && curOffset < nCachedSize )
     {
@@ -1257,6 +1302,9 @@ CachedFileProp*  VSICurlStreamingFSHandler::GetCachedFileProp(const char* pszURL
         cachedFileProp->bHastComputedFileSize = FALSE;
         cachedFileProp->fileSize = 0;
         cachedFileProp->bIsDirectory = FALSE;
+#ifdef notdef
+        cachedFileProp->nChecksumOfFirst1024Bytes = 0;
+#endif
         cacheFileSize[pszURL] = cachedFileProp;
     }
 
@@ -1286,7 +1334,11 @@ VSIVirtualHandle* VSICurlStreamingFSHandler::Open( const char *pszFilename,
         delete poHandle;
         poHandle = NULL;
     }
-    return poHandle;
+
+    if( CSLTestBoolean( CPLGetConfigOption( "VSI_CACHE", "FALSE" ) ) )
+        return VSICreateCachedFile( poHandle );
+    else
+        return poHandle;
 }
 
 /************************************************************************/
@@ -1335,6 +1387,10 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
  * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration options can be
  * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY,
  * CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
+ *
+ * The file can be cached in RAM by setting the configuration option
+ * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by setting
+ * the configuration option VSI_CACHE_SIZE (in bytes).
  *
  * VSIStatL() will return the size in st_size member and file
  * nature- file or directory - in st_mode member (the later only reliable with FTP

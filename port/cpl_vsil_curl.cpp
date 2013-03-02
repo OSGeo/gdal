@@ -1756,7 +1756,11 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
             poHandle = NULL;
         }
     }
-    return poHandle;
+
+    if( CSLTestBoolean( CPLGetConfigOption( "VSI_CACHE", "FALSE" ) ) )
+        return VSICreateCachedFile( poHandle );
+    else
+        return poHandle;
 }
 
 /************************************************************************/
@@ -2638,6 +2642,10 @@ char** VSICurlFilesystemHandler::ReadDir( const char *pszDirname )
  * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration options can be
  * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY,
  * CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
+ *
+ * Starting with GDAL 1.10, the file can be cached in RAM by setting the configuration option
+ * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by setting
+ * the configuration option VSI_CACHE_SIZE (in bytes).
  *
  * VSIStatL() will return the size in st_size member and file
  * nature- file or directory - in st_mode member (the later only reliable with FTP
