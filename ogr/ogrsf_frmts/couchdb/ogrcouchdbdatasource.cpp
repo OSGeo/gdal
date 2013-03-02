@@ -771,10 +771,14 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
     sFieldList.ids = (int *)
         CPLMalloc( sizeof(int) * nFieldCount );
 
-    PointerAutoFree oHolderNames((void**)&(sFieldList.names));
-    PointerAutoFree oHolderTypes((void**)&(sFieldList.types));
-    PointerAutoFree oHolderTableIds((void**)&(sFieldList.table_ids));
-    PointerAutoFree oHolderIds((void**)&(sFieldList.ids));
+    void* fieldListNames = sFieldList.names;
+    void* fieldListTypes = sFieldList.types;
+    void* fieldListTableIds = sFieldList.table_ids;
+    void* fieldListIds = sFieldList.ids;
+    PointerAutoFree oHolderNames(&fieldListNames);
+    PointerAutoFree oHolderTypes(&fieldListTypes);
+    PointerAutoFree oHolderTableIds(&fieldListTableIds);
+    PointerAutoFree oHolderIds(&fieldListIds);
 
     int iField;
     for( iField = 0;
