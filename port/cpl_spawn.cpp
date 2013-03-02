@@ -872,7 +872,7 @@ CPL_PID CPLSpawnAsyncGetChildProcessId(CPLSpawnedProcess* p)
  */
 int CPLSpawnAsyncFinish(CPLSpawnedProcess* p, int bWait, int bKill)
 {
-    int status;
+    int status = 0;
 
     if( bWait )
     {
