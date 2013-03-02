@@ -693,10 +693,10 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 
 class PointerAutoFree
 {
-        void ** m_pp;
+        void * m_p;
     public:
-        PointerAutoFree(void** pp) { m_pp = pp; }
-        ~PointerAutoFree() { CPLFree(*m_pp); *m_pp = NULL; }
+        PointerAutoFree(void* p) { m_p = p; }
+        ~PointerAutoFree() { CPLFree(m_p); }
 };
 
 class OGRCouchDBOneLineLayer : public OGRLayer
@@ -771,14 +771,10 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
     sFieldList.ids = (int *)
         CPLMalloc( sizeof(int) * nFieldCount );
 
-    void* fieldListNames = sFieldList.names;
-    void* fieldListTypes = sFieldList.types;
-    void* fieldListTableIds = sFieldList.table_ids;
-    void* fieldListIds = sFieldList.ids;
-    PointerAutoFree oHolderNames(&fieldListNames);
-    PointerAutoFree oHolderTypes(&fieldListTypes);
-    PointerAutoFree oHolderTableIds(&fieldListTableIds);
-    PointerAutoFree oHolderIds(&fieldListIds);
+    PointerAutoFree oHolderNames(sFieldList.names);
+    PointerAutoFree oHolderTypes(sFieldList.types);
+    PointerAutoFree oHolderTableIds(sFieldList.table_ids);
+    PointerAutoFree oHolderIds(sFieldList.ids);
 
     int iField;
     for( iField = 0;
