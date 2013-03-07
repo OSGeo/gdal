@@ -41,9 +41,7 @@
 #include "cpl_minixml.h"
 #include "cpl_string.h"
 
-#ifdef HAVE_SQLITE
 #include "sqlite3.h"
-#endif
 
 class IVFKReader;
 class IVFKDataBlock;
@@ -150,7 +148,6 @@ public:
     bool                 AppendLineToRing(int, const OGRLineString *);
 };
 
-#ifdef HAVE_SQLITE
 /************************************************************************/
 /*                              VFKFeatureSQLite                        */
 /************************************************************************/
@@ -176,8 +173,6 @@ public:
 
     OGRErr               LoadProperties(OGRFeature *);
 };
-
-#endif
 
 /************************************************************************/
 /*                              VFKPropertyDefn                         */
@@ -296,7 +291,6 @@ public:
     int                GetFeatureCount(const char *, const char *);
 };
 
-#ifdef HAVE_SQLITE
 /************************************************************************/
 /*                              VFKDataBlockSQLite                      */
 /************************************************************************/
@@ -324,7 +318,6 @@ public:
     VFKFeatureSQLite    *GetFeature(const char **, GUIntBig *, int, bool = FALSE);
     VFKFeatureSQLiteList GetFeatures(const char **, GUIntBig *, int);
 };
-#endif
 
 /************************************************************************/
 /*                              IVFKReader                              */

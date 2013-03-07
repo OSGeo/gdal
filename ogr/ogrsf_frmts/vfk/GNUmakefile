@@ -1,3 +1,4 @@
+
 include ../../../GDALmake.opt
 
 CORE_OBJ = vfkreader.o vfkreadersqlite.o \
@@ -9,10 +10,6 @@ CORE_OBJ = vfkreader.o vfkreadersqlite.o \
 OGR_OBJ = ogrvfkdriver.o ogrvfkdatasource.o ogrvfklayer.o
 
 OBJ = $(CORE_OBJ) $(OGR_OBJ)
-
-ifeq ($(HAVE_SQLITE),yes)
-CPPFLAGS +=  -DHAVE_SQLITE
-endif
 
 CPPFLAGS := -I.. -I../.. $(GDAL_INCLUDE) $(SQLITE_INC) $(CPPFLAGS)
 

@@ -58,11 +58,7 @@ IVFKReader::~IVFKReader()
 */
 IVFKReader *CreateVFKReader(const char *pszFilename)
 {
-#ifdef HAVE_SQLITE
     return new VFKReaderSQLite(pszFilename);
-#else
-    return new VFKReader(pszFilename);
-#endif
 }
 
 /*!

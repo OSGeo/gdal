@@ -6,7 +6,7 @@
  * Author:   Martin Landa, landa.martin gmail.com
  *
  ******************************************************************************
- * Copyright (c) 2012, Martin Landa <landa.martin gmail.com>
+ * Copyright (c) 2012-2013, Martin Landa <landa.martin gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -34,8 +34,6 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
-
-#ifdef HAVE_SQLITE
 
 /*!
   \brief VFKFeatureSQLite constructor (from DB)
@@ -234,5 +232,3 @@ OGRErr VFKFeatureSQLite::LoadProperties(OGRFeature *poFeature)
 
     return OGRERR_NONE;
 }
-
-#endif // HAVE_SQLITE

@@ -2870,35 +2870,6 @@ AC_SUBST(SDE_INC,    $SDE_INC)
 AC_SUBST(SDE_LIB,    $SDE_LIB)
 
 dnl ---------------------------------------------------------------------------
-dnl Check if we should build with VFK support.
-dnl ---------------------------------------------------------------------------
-
-AC_MSG_CHECKING([for VFK support])
-
-AC_ARG_WITH(vfk,[  --without-vfk         Disable VFK support],,)
-
-HAVE_VFK=no
-
-if test "$with_vfk" = "no"; then
-  AC_MSG_RESULT([no])
-else
-
-    # Check that C++ compiler isn't too broken
-    rm -f testrlist.*
-    echo '#include <vector>' > testrlist.cpp
-    echo 'int main(int argc, char** argv) { std::vector<int> a, b; a.insert(a.begin(), b.rbegin(), b.rend()); return 0; } ' >> testrlist.cpp
-    if test -z "`${CXX} testrlist.cpp -c 2>&1`" ; then
-        AC_MSG_RESULT([yes])
-        HAVE_VFK=yes
-    else
-        AC_MSG_RESULT([disabled, broken C++ compiler])
-    fi
-    rm -f testrlist.*
-fi
-
-AC_SUBST(HAVE_VFK)
-
-dnl ---------------------------------------------------------------------------
 dnl Check if epsilon library is available.
 dnl ---------------------------------------------------------------------------
 
@@ -4004,7 +3975,6 @@ LOC_MSG([  SpatiaLite support:        ${HAVE_SPATIALITE}])
 LOC_MSG([  DWGdirect support          ${HAVE_DWGDIRECT}])
 LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS_RESULT}])
-LOC_MSG([  VFK support:               ${HAVE_VFK}])
 LOC_MSG([  Poppler support:           ${HAVE_POPPLER}])
 LOC_MSG([  Podofo support:            ${HAVE_PODOFO}])
 LOC_MSG([  OpenCL support:            ${OPENCL_SETTING}])
