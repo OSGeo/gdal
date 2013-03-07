@@ -8,15 +8,11 @@ OGR_OBJ = ogrvfkdriver.obj ogrvfkdatasource.obj ogrvfklayer.obj
 
 OBJ = $(CORE_OBJ) $(OGR_OBJ)
 
-EXTRAFLAGS = -I.. -I..\.. $(SQLITE_EXTRAFLAGS)
+EXTRAFLAGS = -I.. -I..\.. $(SQLITE_INC) -DHAVE_SQLITE
 
 GDAL_ROOT  = ..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
-
-!IFDEF SQLITE_INC
-SQLITE_EXTRAFLAGS = $(SQLITE_INC) -DHAVE_SQLITE
-!ENDIF
 
 default: $(OBJ)
 

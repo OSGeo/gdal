@@ -37,8 +37,6 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-#ifdef HAVE_SQLITE
-
 /*!
   \brief Load geometry (point layers)
 
@@ -1003,5 +1001,3 @@ const char *VFKDataBlockSQLite::GetKey() const
 
     return NULL;
 }
-
-#endif // HAVE_SQLITE
