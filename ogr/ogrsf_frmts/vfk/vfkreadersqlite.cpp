@@ -43,8 +43,6 @@
 #  include "ogr_geometry.h"
 #endif
 
-#ifdef HAVE_SQLITE
-
 /*!
   \brief VFKReaderSQLite constructor
 */
@@ -514,5 +512,3 @@ OGRErr VFKReaderSQLite::AddFeature(IVFKDataBlock *poDataBlock, VFKFeature *poFea
     
     return ExecuteSQL(osCommand.c_str(), TRUE);
 }
-
-#endif /* HAVE_SQLITE */
