@@ -56,7 +56,7 @@ private:
     char          *ReadLine(bool = FALSE);
     
     /* metadata */
-    std::map<std::string, std::string> poInfo;
+    std::map<CPLString, CPLString> poInfo;
     
     void          AddInfo(const char *);
 
@@ -67,13 +67,14 @@ protected:
 
     IVFKDataBlock  *CreateDataBlock(const char *);
     void            AddDataBlock(IVFKDataBlock *, const char *);
-    void            AddFeature(IVFKDataBlock *, VFKFeature *);
+    OGRErr          AddFeature(IVFKDataBlock *, VFKFeature *);
 
 public:
     VFKReader(const char *);
     virtual ~VFKReader();
 
     bool           IsLatin2() const { return m_bLatin2; }
+    bool           IsSpatial() const { return FALSE; }
     int            ReadDataBlocks();
     int            ReadDataRecords(IVFKDataBlock *);
     int            LoadGeometry();
@@ -94,23 +95,25 @@ class VFKReaderSQLite : public VFKReader
 {
 private:
     sqlite3       *m_poDB;
+    bool           m_bSpatial;
 
     IVFKDataBlock *CreateDataBlock(const char *);
     void           AddDataBlock(IVFKDataBlock *, const char *);
-    void           AddFeature(IVFKDataBlock *, VFKFeature *);
+    OGRErr         AddFeature(IVFKDataBlock *, VFKFeature *);
 
-    void           CreateIndex(const char *, const char *, const char *);
+    void           CreateIndex(const char *, const char *, const char *, bool = TRUE);
     
     friend class   VFKFeatureSQLite;
 public:
     VFKReaderSQLite(const char *);
     virtual ~VFKReaderSQLite();
 
+    bool          IsSpatial() const { return m_bSpatial; }
     int           ReadDataBlocks();
     int           ReadDataRecords(IVFKDataBlock *);
 
     sqlite3_stmt *PrepareStatement(const char *);
-    OGRErr        ExecuteSQL(const char *);
+    OGRErr        ExecuteSQL(const char *, bool = FALSE);
     OGRErr        ExecuteSQL(sqlite3_stmt *);
 };
 #endif // HAVE_SQLITE

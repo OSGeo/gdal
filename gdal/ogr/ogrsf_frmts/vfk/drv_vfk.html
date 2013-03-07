@@ -7,14 +7,54 @@
 
 <h1>VFK - Czech Cadastral Exchange Data Format</h1>
 
-VFK driver can read data in the <em>Czech cadastral exchange data
-format</em>. The VFK file is recognized as an OGR datasource with zero
-or more OGR layers.
+This driver reads VFK files, ie. data in the <em>Czech cadastral
+exchange data format</em>. The VFK file is recognized as an OGR
+datasource with zero or more OGR layers. The filenames must end with
+.vfk extension.
+
+<p>If GDAL is built with SQLite support, the driver reads input VFK
+data into SQLite database. In this case OGR features including
+geometry are resolved from SQLite database. If SQLite database already
+exists then the driver reads features (geometry and attributes)
+directly from database (and not from original VFK file).
 
 <p>
 Points are represented as wkbPoints, lines and boundaries as
 wkbLineStrings and areas as wkbPolygons. wkbMulti* primitives are not
 used. Feature types cannot be mixed in one layer.
+
+<h3>Configuration</h3>
+
+If GDAL is built with SQLite support, then the driver reads and writes
+VFK data from/to SQLite database. Default name of the database is
+&lt;input_vfk_file&gt;.db. You can also define an
+alternative DB name with <tt>OGR_VFK_DB_NAME</tt> configuration
+option.
+
+<p>
+If <tt>OGR_VFK_DB_OVERWRITE=YES</tt> configuration options is given,
+than the driver overwrites existing SQLite database and reads data
+from original input VFK file.
+
+<p>
+Resolved geometries are stored also in SQLite database. It means that
+geometries are resolved only once when building SQLite database from
+original VFK data. Geometries are stored in WKB format. GDAL doesn't
+need to be built with SpatiaLite support. Geometries are not stored in
+DB when <tt>OGR_VFK_DB_SPATIAL=NO</tt> configuration option is
+given. In this case the geometries are resolved from DB.
+
+<h3>Internal working and performance tweaking</h3>
+
+The driver will use an internal SQLite database to resolve
+geometries. By default, this file will be written in the same
+directory as input VFK file.
+
+<p>
+Functionality of VFK driver is very limited without SQLite support. In
+other words SQLite support is crucial for VFK driver and it's highly
+recommended to <em>compile GDAL with SQLite support</em> when working
+with VFK data.
 
 <h2>Datasource name</h2>
 
@@ -24,12 +64,14 @@ Datasource name is a full path to the VFK file.
 
 VFK data blocks are used as layer names.
 
-<h2>Attribute filter</h2>
+<h2>Filters</h2>
+
+<h3>Attribute filter</h3>
 
 OGR internal SQL engine is used to evaluate the expression. Evaluation
 is done once when the attribute filter is set.
 
-<h2>Spatial filter</h2>
+<h3>Spatial filter</h3>
 
 Bounding boxes of features stored in topology structure are used to
 evaluate if a features matches current spatial filter. Evaluation is
@@ -40,6 +82,7 @@ done once when the spatial filter is set.
 <ul>
 <li> <a href="http://geo.fsv.cvut.cz/~landa/publications/2010/gis-ostrava-2010/paper/landa-ogr-vfk.pdf">OGR
 VFK Driver Implementation Issues</a></li>
+<li> <a href="http://grass.fsv.cvut.cz/gwiki/VFK">Open Source Tools for VFK format</a> (in Czech)</li>
 <li> <a href="http://www.cuzk.cz/Dokument.aspx?PRARESKOD=998&MENUID=0&AKCE=DOC:10-VF_ISKNTEXT">Czech
 cadastral exchange data format documentation</a> (in Czech)</li>
 </ul>

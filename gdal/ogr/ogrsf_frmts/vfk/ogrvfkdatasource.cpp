@@ -6,7 +6,7 @@
  * Author:   Martin Landa, landa.martin gmail.com
  *
  ******************************************************************************
- * Copyright (c) 2009-2010, Martin Landa <landa.martin gmail.com>
+ * Copyright (c) 2009-2010, 2013 Martin Landa <landa.martin gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -82,7 +82,7 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
     if (fp == NULL) {
         if (!bTestOpen)
             CPLError(CE_Failure, CPLE_OpenFailed, 
-                     "Failed to open VFK file `%s'.",
+                     "Failed to open VFK file `%s'",
                      pszNewName);
         
         return FALSE;
@@ -115,15 +115,15 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
     if (poReader == NULL) {
         CPLError(CE_Failure, CPLE_AppDefined, 
                  "File %s appears to be VFK but the VFK reader can't"
-                 "be instantiated.",
+                 "be instantiated",
                  pszNewName);
         return FALSE;
     }
 
 #ifndef HAVE_SQLITE
     CPLError(CE_Warning, CPLE_AppDefined, 
-             "OGR is not compiled with SQLite support. "
-             "VFK driver will not work properly.");
+             "GDAL is not compiled with SQLite support. "
+             "VFK driver may not work properly.");
 #endif
     
     /* read data blocks, i.e. &B */
