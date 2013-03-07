@@ -827,7 +827,7 @@ bool VFKDataBlockSQLite::LoadGeometryFromDB()
 {
     int nInvalid, nGeometries, nGeometriesCount, nBytes, rowId;
     long iFID;
-    bool bAddFeature;
+    bool bAddFeature, bSkipInvalid;
     
     CPLString osSQL;
     
@@ -855,6 +855,7 @@ bool VFKDataBlockSQLite::LoadGeometryFromDB()
 	return FALSE;
     
     bAddFeature = EQUAL(m_pszName, "SBP");
+    bSkipInvalid = EQUAL(m_pszName, "OB") || EQUAL(m_pszName, "OP") || EQUAL(m_pszName, "OBBP");
     
     /* load geometry from DB */
     nInvalid = nGeometriesCount = 0;
@@ -903,7 +904,7 @@ bool VFKDataBlockSQLite::LoadGeometryFromDB()
 		 m_pszName, nGeometriesCount, nGeometries);
     }
 
-    if (nInvalid > 0) {
+    if (nInvalid > 0 && !bSkipInvalid) {
 	CPLError(CE_Warning, CPLE_AppDefined, 
                  "%s: %d invalid features found",
 		 m_pszName, nInvalid);
