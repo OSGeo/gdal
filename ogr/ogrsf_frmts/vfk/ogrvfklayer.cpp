@@ -171,7 +171,7 @@ int OGRVFKLayer::GetFeatureCount(int bForce)
     if (m_poFilterGeom || m_poAttrQuery)
         nfeatures = OGRLayer::GetFeatureCount(bForce);
     else
-        nfeatures = poDataBlock->GetMaxFID();
+        nfeatures = poDataBlock->GetFeatureCount();
     
     CPLDebug("OGR_VFK", "OGRVFKLayer::GetFeatureCount(): n=%d", nfeatures);
     
@@ -227,11 +227,13 @@ OGRFeature *OGRVFKLayer::GetNextFeature()
 OGRFeature *OGRVFKLayer::GetFeature(long nFID)
 {
     IVFKFeature *poVFKFeature;
-    
+
     poVFKFeature = poDataBlock->GetFeature(nFID);
+    
     if (!poVFKFeature)
         return NULL;
-    
+
+    CPLAssert(nFID == poVFKFeature->GetFID());
     CPLDebug("OGR_VFK", "OGRVFKLayer::GetFeature(): fid=%ld", nFID);
     
     return GetFeature(poVFKFeature);

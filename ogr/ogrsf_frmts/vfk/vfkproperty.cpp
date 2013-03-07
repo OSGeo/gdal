@@ -70,7 +70,7 @@ VFKProperty::VFKProperty(const char *pszValue)
 /*!
   \brief Set VFK property (string)
 */
-VFKProperty::VFKProperty(std::string const& strValue)
+VFKProperty::VFKProperty(CPLString const& strValue)
     : m_bIsNull(FALSE), m_nValue(0), m_dValue(0.0), m_strValue(strValue)
 {
 }
