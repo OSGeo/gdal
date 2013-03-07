@@ -44,8 +44,9 @@ In order to creating an authorization key, it is necessary to
 login and authorize</a> access to fusion tables for a google (ie. gmail) 
 account.  The resulting authorization key can be turned into a refresh 
 token for use OGR using the gdal/swig/python/scripts/gdal_auth.py script 
-distributed with GDAL.  Note that auth tokens can only be used once, while
-the resulting refresh token lasts indefinately.<p>
+distributed with GDAL (available in GDAL/OGR >= 1.10.0).  Note that auth 
+tokens can only be used once, while the resulting refresh token lasts 
+indefinately.<p>
 
 <pre>
   gdal_auth.py auth2refresh <i>auth_token</i>
