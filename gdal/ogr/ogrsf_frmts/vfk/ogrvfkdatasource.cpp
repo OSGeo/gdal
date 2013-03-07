@@ -119,13 +119,7 @@ int OGRVFKDataSource::Open(const char *pszNewName, int bTestOpen)
                  pszNewName);
         return FALSE;
     }
-
-#ifndef HAVE_SQLITE
-    CPLError(CE_Warning, CPLE_AppDefined, 
-             "GDAL is not compiled with SQLite support. "
-             "VFK driver may not work properly.");
-#endif
-    
+   
     /* read data blocks, i.e. &B */
     poReader->ReadDataBlocks();
     

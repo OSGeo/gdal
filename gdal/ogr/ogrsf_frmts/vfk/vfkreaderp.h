@@ -38,9 +38,7 @@
 #include "vfkreader.h"
 #include "ogr_api.h"
 
-#ifdef HAVE_SQLITE
 #include "sqlite3.h"
-#endif
 
 class VFKReader;
 
@@ -86,7 +84,6 @@ public:
     const char    *GetInfo(const char *);
 };
 
-#ifdef HAVE_SQLITE
 /************************************************************************/
 /*                              VFKReaderSQLite                         */
 /************************************************************************/
@@ -116,6 +113,5 @@ public:
     OGRErr        ExecuteSQL(const char *, bool = FALSE);
     OGRErr        ExecuteSQL(sqlite3_stmt *);
 };
-#endif // HAVE_SQLITE
 
 #endif // GDAL_OGR_VFK_VFKREADERP_H_INCLUDED
