@@ -113,6 +113,8 @@ class EHdrRasterBand : public RawRasterBand
     int            nPixelOffsetBits;
     int            nLineOffsetBits;
 
+    int            bNoDataSet;
+    double         dfNoData;
     double         dfMin;
     double         dfMax;
     double         dfMean;
@@ -134,6 +136,7 @@ class EHdrRasterBand : public RawRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
 
+    virtual double GetNoDataValue( int *pbSuccess = NULL );
     virtual double GetMinimum( int *pbSuccess = NULL );
     virtual double GetMaximum(int *pbSuccess = NULL );
     virtual CPLErr GetStatistics( int bApproxOK, int bForce,
@@ -158,6 +161,8 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDS,
 : RawRasterBand( poDS, nBand, fpRaw, nImgOffset, nPixelOffset, nLineOffset, 
                          eDataType, bNativeOrder, TRUE ),
   nBits(nBits),
+  bNoDataSet(FALSE),
+  dfNoData(0),
   dfMin(0),
   dfMax(0),
   minmaxmeanstddev(0)
@@ -1360,8 +1365,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif        
                                 nBits);
 
-        if( bNoDataSet )
-            poBand->SetNoDataValue( dfNoData );
+        poBand->bNoDataSet = bNoDataSet;
+        poBand->dfNoData = dfNoData;
 
         if( bHasMin && bHasMax )
         {
@@ -1863,6 +1868,21 @@ GDALDataset *EHdrDataset::CreateCopy( const char * pszFilename,
     CSLDestroy( papszAdjustedOptions );
 
     return poOutDS;
+}
+    
+/************************************************************************/
+/*                        GetNoDataValue()                              */
+/************************************************************************/
+
+double EHdrRasterBand::GetNoDataValue( int *pbSuccess )
+{
+    if( pbSuccess )
+        *pbSuccess = bNoDataSet;
+
+    if( bNoDataSet )
+        return dfNoData;
+
+    return RawRasterBand::GetNoDataValue( pbSuccess );
 }
     
 /************************************************************************/
