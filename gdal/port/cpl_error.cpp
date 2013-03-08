@@ -81,7 +81,10 @@ static CPLErrorContext *CPLGetErrorContext()
 
     if( psCtx == NULL )
     {
-        psCtx = (CPLErrorContext *) CPLCalloc(sizeof(CPLErrorContext),1);
+        psCtx = (CPLErrorContext *) VSICalloc(sizeof(CPLErrorContext),1);
+        if (psCtx == NULL) {
+            CPLEmergencyError("Out of memory attempting to report error");
+        }
         psCtx->eLastErrType = CE_None;
         psCtx->nLastErrMsgMax = sizeof(psCtx->szLastErrMsg);
         CPLSetTLS( CTLS_ERRORCONTEXT, psCtx, TRUE );
@@ -819,7 +822,7 @@ void CPL_STDCALL CPLPushErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew,
     CPLErrorContext *psCtx = CPLGetErrorContext();
     CPLErrorHandlerNode         *psNode;
 
-    psNode = (CPLErrorHandlerNode *) VSIMalloc(sizeof(CPLErrorHandlerNode));
+    psNode = (CPLErrorHandlerNode *) CPLMalloc(sizeof(CPLErrorHandlerNode));
     psNode->psNext = psCtx->psHandlerStack;
     psNode->pfnHandler = pfnErrorHandlerNew;
     psNode->pUserData = pUserData;
