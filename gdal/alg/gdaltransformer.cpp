@@ -360,6 +360,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
     int nSteps = (int) (double(MIN(nInYSize, nInXSize)) / N_PIXELSTEP + .5);
     if (nSteps < 20)
         nSteps = 20;
+    nSteps = MIN(nSteps,100);
 
 retry:
     int nSampleMax = (nSteps + 1)*(nSteps + 1);
