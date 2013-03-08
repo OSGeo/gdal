@@ -488,7 +488,7 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
             nCount++;
         }
         CPLDebug("OGR-VFK", "%s: fid = %ld nlines = %d -> nrings = %d", m_pszName,
-                 iFID, nLines, poRingList.size());
+                 iFID, (int)nLines, (int)poRingList.size());
 
         if (poLineList.size() > 0) {
             CPLDebug("OGR-VFK", 
