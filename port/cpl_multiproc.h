@@ -112,7 +112,7 @@ class CPL_DLL CPLMutexHolder
 #define CTLS_CSVTABLEPTR                3         /* cpl_csv.cpp */
 #define CTLS_CSVDEFAULTFILENAME         4         /* cpl_csv.cpp */
 #define CTLS_ERRORCONTEXT               5         /* cpl_error.cpp */
-#define CTLS_UNUSED1                    6
+#define CTLS_GDALDATASET_REC_PROTECT_MAP 6        /* gdaldataset.cpp */
 #define CTLS_PATHBUF                    7         /* cpl_path.cpp */
 #define CTLS_UNUSED3                    8
 #define CTLS_UNUSED4                    9
