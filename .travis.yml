@@ -89,7 +89,8 @@ script:
 # CPP unit tests
   - cd ../autotest
   - cd cpp
-  - GDAL_SKIP=JP2ECW make quick_test
+# GDAL_SKIP=JP2ECW
+  - make quick_test
   - cd ..
 # Download a sample file
   - mkdir -p ogr/tmp/cache/
@@ -108,8 +109,8 @@ script:
   - python ogr_pgeo.py
   - mv ogr_pgeo.* disabled
   - cd ..
-# Run all the Python autotests
-  - GDAL_SKIP="JP2ECW ECW" python run_all.py
+# Run all the Python autotests GDAL_SKIP="JP2ECW ECW"
+  - python run_all.py
 # A bit messy, but force testing with libspatialite 4.0dev (that has been patched a bit to remove any hard-coded SRS definition so it is very small)
   - cd ogr
   - wget http://even.rouault.free.fr/libspatialite4.0dev_ubuntu12.04-32bit_srs_stripped.tar.gz
