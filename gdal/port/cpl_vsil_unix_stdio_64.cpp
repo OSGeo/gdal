@@ -35,7 +35,7 @@
  *
  ****************************************************************************/
 
-#define VSI_COUNT_BYTES_READ
+//#define VSI_COUNT_BYTES_READ
 
 #include "cpl_port.h"
 
