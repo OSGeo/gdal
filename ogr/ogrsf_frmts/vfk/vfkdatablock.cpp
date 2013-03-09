@@ -199,7 +199,7 @@ int IVFKDataBlock::GetFeatureCount()
   \param nNewCount number of features
   \param bIncrement increment current value
 */
-void IVFKDataBlock::SetFeatureCount(int nNewCount, int bIncrement)
+void IVFKDataBlock::SetFeatureCount(int nNewCount, bool bIncrement)
 {
     if (bIncrement) {
         m_nFeatureCount += nNewCount;

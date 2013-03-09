@@ -137,8 +137,7 @@ int VFKReaderSQLite::ReadDataBlocks()
     
     sqlite3_stmt *hStmt;
     
-    osSQL.Printf("SELECT table_name, table_defn FROM 'vfk_blocks' WHERE "
-                 "file_name = '%s'", m_pszFilename);
+    osSQL.Printf("SELECT table_name, table_defn FROM 'vfk_blocks'");
     hStmt = PrepareStatement(osSQL.c_str());
     while(ExecuteSQL(hStmt) == OGRERR_NONE) {
         pszName = (const char*) sqlite3_column_text(hStmt, 0);
@@ -174,40 +173,40 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
 
     sqlite3_stmt *hStmt;
     
+    nDataRecords = 0;
+    
     /* table name */
     pszName = poDataBlock->GetName();
     
     /* check for existing records (re-use already inserted data) */
     osSQL.Printf("SELECT num_records FROM vfk_blocks WHERE "
-                 "file_name = '%s' AND table_name = '%s'",
-                 m_pszFilename, pszName);
+                 "table_name = '%s'",
+                 pszName);
     hStmt = PrepareStatement(osSQL.c_str());
-    nDataRecords = 0;
+    nDataRecords = -1;
     if (ExecuteSQL(hStmt) == OGRERR_NONE) {
         nDataRecords = sqlite3_column_int(hStmt, 0);
     }
     sqlite3_finalize(hStmt);
 
-    poDataBlock->SetFeatureCount(0); /* -1 -> 0 */
+    poDataBlock->SetFeatureCount(0); /* avoid recursive calls */
     
-    if (nDataRecords > 0) {
+    if (nDataRecords > -1) {
         /* read from  DB */
+        long iFID;
+        VFKFeatureSQLite *poNewFeature = NULL;
+
         if (EQUAL(pszName, "SBP")) {
             return 0; /* see LoadGeometry() */
         }
-        else {
-            int iRowId;
-            long iFID;
-            VFKFeatureSQLite *poNewFeature = NULL;
             
-            osSQL.Printf("SELECT ogr_fid FROM %s", pszName);
-            hStmt = PrepareStatement(osSQL.c_str());
-            iRowId = 1;
-            while (ExecuteSQL(hStmt) == OGRERR_NONE) {
-                iFID = sqlite3_column_int(hStmt, 0);
-                poNewFeature = new VFKFeatureSQLite(poDataBlock, iRowId++, iFID);
-                poDataBlock->AddFeature(poNewFeature);
-            }
+        osSQL.Printf("SELECT %s FROM %s", FID_COLUMN, pszName);
+        hStmt = PrepareStatement(osSQL.c_str());
+        nDataRecords = 1;
+        while (ExecuteSQL(hStmt) == OGRERR_NONE) {
+            iFID = sqlite3_column_int(hStmt, 0);
+            poNewFeature = new VFKFeatureSQLite(poDataBlock, nDataRecords++, iFID);
+            poDataBlock->AddFeature(poNewFeature);
         }
     }
     else {
@@ -221,8 +220,8 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
         ExecuteSQL("BEGIN");
         
         /* create indeces */
-        osSQL.Printf("%s_ogr_fid", pszName);
-        CreateIndex(osSQL.c_str(), pszName, "ogr_fid", !EQUAL(pszName, "SBP"));
+        osSQL.Printf("%s_%s", pszName, FID_COLUMN);
+        CreateIndex(osSQL.c_str(), pszName, FID_COLUMN, !EQUAL(pszName, "SBP"));
 
         pszKey = ((VFKDataBlockSQLite *) poDataBlock)->GetKey();
         if (pszKey) {
@@ -254,9 +253,9 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
         nDataRecords = VFKReader::ReadDataRecords(poDataBlock);
         
         /* update 'vfk_blocks' table */
-        osSQL.Printf("UPDATE vfk_blocks SET num_records = %d WHERE file_name = '%s' "
-		     "AND table_name = '%s'",
-                     nDataRecords, m_pszFilename, pszName);
+        osSQL.Printf("UPDATE vfk_blocks SET num_records = %d WHERE "
+		     "table_name = '%s'",
+                     nDataRecords, pszName);
 	ExecuteSQL(osSQL);
         
         /* commit transaction */
@@ -320,9 +319,9 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
     sqlite3_stmt *hStmt;
 
     /* register table in 'vfk_blocks' */
-    osCommand.Printf("SELECT COUNT(*) FROM 'vfk_blocks' WHERE "
-                     "file_name = '%s' AND table_name = '%s'",
-                     m_pszFilename, poDataBlock->GetName());
+    osCommand.Printf("SELECT COUNT(*) FROM vfk_blocks WHERE "
+                     "table_name = '%s'",
+                     poDataBlock->GetName());
     hStmt = PrepareStatement(osCommand.c_str());
     if (ExecuteSQL(hStmt) == OGRERR_NONE &&
         sqlite3_column_int(hStmt, 0) == 0) {
@@ -336,16 +335,18 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock, const char *pszDe
                             poPropertyDefn->GetTypeSQL().c_str());
             osCommand += osColumn;
         }
-	osCommand += ",ogr_fid integer";
+        osColumn.Printf(",%s integer", FID_COLUMN);
+	osCommand += osColumn;
 	if (poDataBlock->GetGeometryType() != wkbNone) {
-	    osCommand += ",geom blob";
+	    osColumn.Printf(",%s blob", GEOM_COLUMN);
+            osCommand += osColumn;
 	}
 	osCommand += ")";
         ExecuteSQL(osCommand.c_str()); /* CREATE TABLE */
         
         osCommand.Printf("INSERT INTO 'vfk_blocks' (file_name, table_name, "
                          "num_records, num_geometries, table_defn) VALUES "
-			 "('%s', '%s', 0, 0, '%s')",
+			 "('%s', '%s', -1, 0, '%s')",
 			 m_pszFilename, poDataBlock->GetName(), pszDefn);
 	
         ExecuteSQL(osCommand.c_str());
@@ -500,6 +501,9 @@ OGRErr VFKReaderSQLite::AddFeature(IVFKDataBlock *poDataBlock, VFKFeature *poFea
     osValue += ")";
     osCommand += osValue;
 
+    if (ExecuteSQL(osCommand.c_str(), TRUE) != OGRERR_NONE)
+        return OGRERR_FAILURE;
+    
     if (!EQUAL(pszBlockName, "SBP")) {
         VFKFeatureSQLite *poNewFeature;
         
@@ -507,8 +511,6 @@ OGRErr VFKReaderSQLite::AddFeature(IVFKDataBlock *poDataBlock, VFKFeature *poFea
                                             poFeature->GetFID());
         poDataBlock->AddFeature(poNewFeature);
     }
-
-    delete poFeature;
     
-    return ExecuteSQL(osCommand.c_str(), TRUE);
+    return OGRERR_NONE;
 }
