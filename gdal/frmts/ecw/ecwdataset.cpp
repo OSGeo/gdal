@@ -515,7 +515,12 @@ ECWDataset::~ECWDataset()
 
     CPLMutexHolder oHolder( &hECWDatasetMutex );
 
-    if( poFileView != NULL )
+    // GDAL_CLOSE_JP2ECW_RESOURCE is set to NO by gdaldllmain.cpp/GDALDestroy() so as
+    // to avoid an issue with the ECW SDK 3.3 where the destructor of CNCSJP2File::CNCSJP2FileVector CNCSJP2File::sm_Files;
+    // static ressource allocated in NCJP2File.cpp can be called before GDALDestroy(), causing
+    // ECW SDK resources ( CNCSJP2File files ) to be closed before we get here.
+    if( poFileView != NULL &&
+        (!bIsJPEG2000 || CSLTestBoolean(CPLGetConfigOption("GDAL_CLOSE_JP2ECW_RESOURCE", "YES"))) )
     {
         VSIIOStream *poUnderlyingIOStream = (VSIIOStream *)NULL;
 
