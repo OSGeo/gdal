@@ -57,7 +57,7 @@ install:
   - make test_ogrsf
   - cd ..
   - cd swig/java
-  - cat java.opt | sed "s/JAVA_HOME =.*/JAVA_HOME = \/usr\/lib\/jvm\/java-7-openjdk-i386\//" > java.opt.tmp
+  - cat java.opt | sed "s/JAVA_HOME =.*/JAVA_HOME = \/usr\/lib\/jvm\/java-7-openjdk-amd64\//" > java.opt.tmp
   - mv java.opt.tmp java.opt
   - make
   - cd ../..
@@ -73,7 +73,7 @@ install:
   - cd ../../gdal
   - wget http://mdb-sqlite.googlecode.com/files/mdb-sqlite-1.0.2.tar.bz2
   - tar xjvf mdb-sqlite-1.0.2.tar.bz2
-  - sudo cp mdb-sqlite-1.0.2/lib/*.jar /usr/lib/jvm/java-7-openjdk-i386/jre/lib/ext
+  - sudo cp mdb-sqlite-1.0.2/lib/*.jar /usr/lib/jvm/java-7-openjdk-amd64/jre/lib/ext
 
 # When run in the same process after ogr_pgeo.py (with the MDB driver), FileGDB tests fail.
 # Run it in isolation
