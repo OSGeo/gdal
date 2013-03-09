@@ -8,12 +8,13 @@
 <h1>VFK - Czech Cadastral Exchange Data Format</h1>
 
 This driver reads VFK files, ie. data in the <em>Czech cadastral
-exchange data format</em>.
+exchange data format</em>. The VFK file is recognized as an OGR
+datasource with zero or more OGR layers. The filenames must end with
+.vfk extension.
 
 <p>
-The driver is available only if GDAL is <em>built with SQLite
-support</em>. The VFK file is recognized as an OGR datasource with
-zero or more OGR layers. The filenames must end with .vfk extension.
+Note: starting with OGR 1.10, the driver is compiled only if GDAL
+is <em>built with SQLite support</em>.
 
 <p>
 Points are represented as wkbPoints, lines and boundaries as
@@ -22,28 +23,27 @@ used. Feature types cannot be mixed in one layer.
 
 <h3>Configuration</h3>
 
-The driver reads and writes VFK data from/to internal SQLite
-database. Default name of the database is
-&lt;input_vfk_file&gt;.db. You can also define an alternative DB name
-with <tt>OGR_VFK_DB_NAME</tt> configuration option.
+Starting with OGR 1.9, the driver reads and writes VFK data from/to
+internal SQLite database. Default name of the database is
+&lt;input_vfk_file&gt;.db. Since OGR 1.10, you can define an
+alternative DB name with <tt>OGR_VFK_DB_NAME</tt> configuration
+option. If <tt>OGR_VFK_DB_OVERWRITE=YES</tt> configuration option is
+given, than the driver overwrites existing SQLite database and reads
+data from original input VFK file.
 
 <p>
-If <tt>OGR_VFK_DB_OVERWRITE=YES</tt> configuration options is given,
-than the driver overwrites existing SQLite database and reads data
-from original input VFK file.
-
-<p>
-Resolved geometries are stored also in SQLite database. It means that
-geometries are resolved only once when building SQLite database from
-original VFK data. Geometries are stored in WKB format. Note that GDAL
-doesn't need to be built with SpatiaLite support. Geometries are not
-stored in DB when <tt>OGR_VFK_DB_SPATIAL=NO</tt> configuration option
-is given. In this case the geometries are resolved from DB.
+Starting with OGR 1.10, resolved geometries are stored also in SQLite
+database. It means that geometries are resolved only once when
+building SQLite database from original VFK data. Geometries are stored
+in WKB format. Note that GDAL doesn't need to be built with SpatiaLite
+support. Geometries are not stored in DB
+when <tt>OGR_VFK_DB_SPATIAL=NO</tt> configuration option is given. In
+this case the geometries are resolved from DB.
 
 <h3>Internal working and performance tweaking</h3>
 
-The driver will use an internal SQLite database to resolve
-geometries. By default, this file will be written in the same
+Since OGR 1.9, the driver will use an internal SQLite database to
+resolve geometries. By default, this file will be written in the same
 directory as input VFK file. If SQLite database already exists then
 the driver reads VFK features directly from database (and not from
 original VFK file).
