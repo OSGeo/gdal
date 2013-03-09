@@ -30,7 +30,8 @@
 #include "gdal.h"
 #include "ogr_api.h"
 #include "cpl_multiproc.h"
-
+#include "cpl_conv.h"
+#include "cpl_string.h"
 
 /************************************************************************/
 /*  The library set-up/clean-up routines implemented with               */
@@ -62,9 +63,14 @@ static void GDALDestroy(void)
 {
     // TODO: Confirm if calling CPLCleanupTLS here is safe
     //CPLCleanupTLS();
+    
+    if( !CSLTestBoolean(CPLGetConfigOption("GDAL_DESTROY", "YES")) )
+        return;
 
     CPLDebug("GDAL", "In GDALDestroy - unloading GDAL shared library.");
+    CPLSetConfigOption("GDAL_CLOSE_JP2ECW_RESOURCE", "NO");
     GDALDestroyDriverManager();
+    CPLSetConfigOption("GDAL_CLOSE_JP2ECW_RESOURCE", NULL);
 
 #ifdef OGR_ENABLED
     OGRCleanupAll();
