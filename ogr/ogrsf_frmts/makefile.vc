@@ -2,7 +2,7 @@ GDAL_ROOT	=	..\..
 
 DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			avc rec mem vrt csv gmt bna kml gpx \
-			geoconcept xplane georss gtm dxf vfk pgdump gpsbabel \
+			geoconcept xplane georss gtm dxf pgdump gpsbabel \
 			sua openair pds htf aeronavfaa edigeo svg idrisi arcgen \
 			segukooa segy pdf \
 			$(ARCOBJECTS_DIR) \
@@ -11,7 +11,7 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			$(SDE_DIR) $(IDB_DIR) $(NAS_DIR) $(DODSDIR) \
 			$(PCIDSK_DIR) $(LIBKMLDIR) $(WFSDIR) $(SOSIDIR) $(GFTDIR) \
 			$(COUCHDBDIR) $(FGDB_DIR) $(XLSDIR) $(ODSDIR) $(XLSXDIR) \
-			$(INGRESDIR) $(ELASTICDIR) $(OSMDIR)
+			$(INGRESDIR) $(ELASTICDIR) $(OSMDIR) $(VFKDIR)
 
 PLUGINDIRLIST	=	$(PLUGIN_ARCOBJECTS_DIR) \
 			$(PLUGIN_DWG_DIR) \
@@ -195,6 +195,8 @@ ELASTIC_OBJ = elastic\*.obj
 !IFDEF SQLITE_LIB
 OSMDIR	=	osm
 OSM_OBJ =	osm\*.obj
+VFKDIR	=	vfk
+VFK_OBJ =	vfk\*.obj
 !ENDIF
 
 default:
@@ -211,7 +213,7 @@ default:
 				 gmt\*.obj bna\*.obj geoconcept\*.obj \
 				 geojson\*.obj geojson\jsonc\*.obj \
 				 gpx\*.obj xplane\*.obj georss\*.obj gtm\*.obj \
-				 dxf\*.obj vfk\*.obj pgdump\*.obj gpsbabel\*.obj \
+				 dxf\*.obj pgdump\*.obj gpsbabel\*.obj \
 				 sua\*.obj openair\*.obj pds\*.obj htf\*.obj \
 				 aeronavfaa\*.obj edigeo\*.obj svg\*.obj idrisi\*.obj \
 				 arcgen\*.obj segukooa\*.obj segy\*.obj pdf\*.obj \
@@ -220,7 +222,7 @@ default:
 				$(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ) $(FGDB_OBJ) $(ARCDRIVER_OBJ) $(IDB_OBJ) \
 				$(DODS_OBJ) $(NAS_OBJ) $(PCIDSKOBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
 				$(SOSI_OBJ) $(GFT_OBJ) $(COUCHDB_OBJ) $(XLS_OBJ) $(ODS_OBJ) $(XLSX_OBJ)  \
-				$(INGRESOBJ) $(ELASTIC_OBJ) $(OSM_OBJ)
+				$(INGRESOBJ) $(ELASTIC_OBJ) $(OSM_OBJ) $(VFK_OBJ)
 	lib /out:ogrsf_frmts_sup.lib \
 				 ..\..\frmts\iso8211\*.obj \
 				 ..\..\frmts\sdts\sdtsattrreader.obj \
