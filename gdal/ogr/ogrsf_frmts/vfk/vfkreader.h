@@ -51,6 +51,9 @@ class VFKFeatureSQLite;
 typedef std::vector<VFKFeature *>       VFKFeatureList;
 typedef std::vector<VFKFeatureSQLite *> VFKFeatureSQLiteList;
 
+#define FID_COLUMN   "ogr_fid"
+#define GEOM_COLUMN  "geometry"
+
 /************************************************************************/
 /*                              VFKProperty                             */
 /************************************************************************/
@@ -250,7 +253,7 @@ public:
     int                GetPropertyIndex(const char *) const;
 
     int                GetFeatureCount();
-    void               SetFeatureCount(int, int = FALSE);
+    void               SetFeatureCount(int, bool = FALSE);
     IVFKFeature       *GetFeatureByIndex(int) const;
     IVFKFeature       *GetFeature(long);
     void               AddFeature(IVFKFeature *);

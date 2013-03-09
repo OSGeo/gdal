@@ -262,12 +262,15 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                 if (poNewFeature->SetProperties(pszLine)) {
                     if (AddFeature(poDataBlock, poNewFeature) != OGRERR_NONE) {
                         CPLDebug("OGR-VFK", 
-                                 "Duplicated VFK data recored skipped (line %d).\n%s\n", iLine, pszLine);
+                                 "%s: duplicated VFK data recored skipped (line %d).\n%s\n",
+                                 pszBlockName, iLine, pszLine);
                         nDupl++;
+                        iFID--;
                     }
                     else {
                         nRecords++;
                     }
+                    delete poNewFeature;
 		}
                 else {
                     CPLDebug("OGR-VFK", 
