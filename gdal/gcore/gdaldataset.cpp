@@ -2231,24 +2231,27 @@ GDALDatasetH GDALOpenInternal( const char * pszFilename, GDALAccess eAccess,
     return GDALOpenInternal(oOpenInfo, papszAllowedDrivers);
 }
 
-static std::map<GIntBig, int> oRecProtectorMap;
-
 GDALDatasetH GDALOpenInternal( GDALOpenInfo& oOpenInfo,
                                const char* const * papszAllowedDrivers)
 {
 
     VALIDATE_POINTER1( oOpenInfo.pszFilename, "GDALOpen", NULL );
 
-    GIntBig nPID = CPLGetPID();
     {
-        CPLMutexHolderD( &hDLMutex );
-        if( oRecProtectorMap[nPID] == 100 )
+        int* pnRecCount = (int*)CPLGetTLS( CTLS_GDALDATASET_REC_PROTECT_MAP );
+        if( pnRecCount == NULL )
+        {
+            pnRecCount = (int*) CPLMalloc(sizeof(int));
+            *pnRecCount = 0;
+            CPLSetTLS( CTLS_GDALDATASET_REC_PROTECT_MAP, pnRecCount, TRUE );
+        }
+        if( *pnRecCount == 100 )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "GDALOpen() called with too many recursion levels");
             return NULL;
         }
-        oRecProtectorMap[nPID] ++;
+        (*pnRecCount) ++;
     }
 
     int         iDriver;
@@ -2294,19 +2297,19 @@ GDALDatasetH GDALOpenInternal( GDALOpenInfo& oOpenInfo,
                 CPLDebug( "GDAL", "GDALOpen(%s, this=%p) succeeds as %s.",
                           oOpenInfo.pszFilename, poDS, poDriver->GetDescription() );
 
-            {
-                CPLMutexHolderD( &hDLMutex );
-                oRecProtectorMap[nPID] --;
-            }
+            int* pnRecCount = (int*)CPLGetTLS( CTLS_GDALDATASET_REC_PROTECT_MAP );
+            if( pnRecCount )
+                (*pnRecCount) --;
+
             return (GDALDatasetH) poDS;
         }
 
         if( CPLGetLastErrorNo() != 0 )
         {
-            {
-                CPLMutexHolderD( &hDLMutex );
-                oRecProtectorMap[nPID] --;
-            }
+            int* pnRecCount = (int*)CPLGetTLS( CTLS_GDALDATASET_REC_PROTECT_MAP );
+            if( pnRecCount )
+                (*pnRecCount) --;
+
             return NULL;
         }
     }
@@ -2321,10 +2324,10 @@ GDALDatasetH GDALOpenInternal( GDALOpenInfo& oOpenInfo,
                   "and is not recognised as a supported dataset name.\n",
                   oOpenInfo.pszFilename );
 
-    {
-        CPLMutexHolderD( &hDLMutex );
-        oRecProtectorMap[nPID] --;
-    }
+    int* pnRecCount = (int*)CPLGetTLS( CTLS_GDALDATASET_REC_PROTECT_MAP );
+    if( pnRecCount )
+        (*pnRecCount) --;
+
     return NULL;
 }
 
