@@ -72,8 +72,8 @@ OGRErr VFKFeatureSQLite::SetFIDFromDB()
 {
     CPLString   osSQL;
     
-    osSQL.Printf("SELECT ogr_fid FROM '%s' WHERE _rowid_ = %d",
-                 m_poDataBlock->GetName(), m_iRowId);
+    osSQL.Printf("SELECT %s FROM %s WHERE rowid = %d",
+                 FID_COLUMN, m_poDataBlock->GetName(), m_iRowId);
     if (ExecuteSQL(osSQL.c_str()) != OGRERR_NONE)
         return OGRERR_FAILURE;
 

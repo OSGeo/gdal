@@ -62,7 +62,8 @@ int VFKDataBlockSQLite::LoadGeometryPoint()
 	return 0;
     
     bSkipInvalid = EQUAL(m_pszName, "OB") || EQUAL(m_pszName, "OP") || EQUAL(m_pszName, "OBBP");
-    osSQL.Printf("SELECT SOURADNICE_Y,SOURADNICE_X,ogr_fid,rowid FROM %s", m_pszName);
+    osSQL.Printf("SELECT SOURADNICE_Y,SOURADNICE_X,%s,rowid FROM %s",
+                 FID_COLUMN, m_pszName);
     hStmt = poReader->PrepareStatement(osSQL.c_str());
 
     if (poReader->IsSpatial())
@@ -138,7 +139,8 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
     if (LoadGeometryFromDB()) /* try to load geometry from DB */
 	return 0;
 
-    poReader->ExecuteSQL("UPDATE %s SET ogr_fid = -1", m_pszName);
+    osSQL.Printf("UPDATE %s SET %s = -1", m_pszName, FID_COLUMN);
+    poReader->ExecuteSQL(osSQL.c_str());
     bValid = TRUE;
     iFID = 1;
     for (int i = 0; i < 2; i++) {
@@ -183,7 +185,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
 			nInvalid++;
 		    }
                     
-		    /* update ogr_fid column */
+		    /* update fid column */
 		    UpdateFID(poLine->GetFID(), rowIdFeat);        
 
 		    /* store also geometry in DB */
@@ -236,7 +238,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
 		nInvalid++;
 	    }
             
-	    /* update ogr_fid column */
+	    /* update fid column */
 	    UpdateFID(poLine->GetFID(), rowIdFeat);        
 	    
 	    /* store also geometry in DB */
@@ -302,7 +304,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringHP()
     vrColumn[1] = "PORADOVE_CISLO_BODU";
     vrValue[1]  = 1; /* reduce to first segment */
     
-    osSQL.Printf("SELECT ID,ogr_fid,rowid FROM %s", m_pszName);
+    osSQL.Printf("SELECT ID,%s,rowid FROM %s", FID_COLUMN, m_pszName);
     /* TODO: handle points in DPM */
     if (EQUAL(m_pszName, "DPM"))
         osSQL += " WHERE SOURADNICE_X IS NULL";
@@ -415,7 +417,7 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
         vrValue[1]  = 1;
     }
 
-    osSQL.Printf("SELECT ID,ogr_fid,rowid FROM %s", m_pszName);
+    osSQL.Printf("SELECT ID,%s,rowid FROM %s", FID_COLUMN, m_pszName);
     hStmt = poReader->PrepareStatement(osSQL.c_str());
     
     if (poReader->IsSpatial())
@@ -443,8 +445,12 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
             
             osSQL.Printf("SELECT ID FROM %s WHERE BUD_ID = " CPL_FRMT_GUIB,
                          poDataBlockLines1->GetName(), id);
-            if (poReader->IsSpatial())
-                osSQL += " AND geom IS NULL";
+            if (poReader->IsSpatial()) {
+                CPLString osColumn;
+                
+                osColumn.Printf(" AND %s IS NULL", GEOM_COLUMN);
+                osSQL += osColumn;
+            }
             hStmtOb = poReader->PrepareStatement(osSQL.c_str());
             
             while(poReader->ExecuteSQL(hStmtOb) == OGRERR_NONE) {
@@ -558,7 +564,7 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
                     nBridges++;
                 }
                 else {
-                    CPLError(CE_Warning, CPLE_AppDefined, 
+                    CPLDebug("OGR-VFK",
                              "%s: Polygon (fid = %ld) unclosed ring skipped",
                              m_pszName, iFID);
                 }
@@ -630,8 +636,8 @@ IVFKFeature *VFKDataBlockSQLite::GetFeature(long nFID)
     
     poReader = (VFKReaderSQLite*) m_poReader;
     
-    osSQL.Printf("SELECT rowid FROM %s WHERE ogr_fid = %ld",
-                 m_pszName, nFID);
+    osSQL.Printf("SELECT rowid FROM %s WHERE %s = %ld",
+                 m_pszName, FID_COLUMN, nFID);
     if (EQUAL(m_pszName, "SBP")) {
         osSQL += " AND PORADOVE_CISLO_BODU = 1";
     }
@@ -666,10 +672,13 @@ VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char *column, GUIntBig va
     
     poReader = (VFKReaderSQLite*) m_poReader;
     
-    osSQL.Printf("SELECT ogr_fid from %s WHERE %s = " CPL_FRMT_GUIB,
-                 m_pszName, column, value);
+    osSQL.Printf("SELECT %s from %s WHERE %s = " CPL_FRMT_GUIB,
+                 FID_COLUMN, m_pszName, column, value);
     if (bGeom) {
-        osSQL += " AND geom IS NOT NULL";
+        CPLString osColumn;
+        
+        osColumn.Printf(" AND %s IS NOT NULL", GEOM_COLUMN);
+        osSQL += osColumn;
     }
     
     hStmt = poReader->PrepareStatement(osSQL.c_str());
@@ -706,7 +715,7 @@ VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char **column, GUIntBig *
     
     poReader = (VFKReaderSQLite*) m_poReader;
     
-    osSQL.Printf("SELECT ogr_fid from %s WHERE ", m_pszName);
+    osSQL.Printf("SELECT %s FROM %s WHERE ", FID_COLUMN, m_pszName);
     for (int i = 0; i < num; i++) {
         if (i > 0)
             osItem.Printf(" AND %s = " CPL_FRMT_GUIB, column[i], value[i]);
@@ -715,7 +724,8 @@ VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char **column, GUIntBig *
         osSQL += osItem;
     }
     if (bGeom) {
-        osSQL += " AND geom IS NOT NULL";
+        osItem.Printf(" AND %s IS NOT NULL", GEOM_COLUMN);
+        osSQL += osItem;
     }
 
     hStmt = poReader->PrepareStatement(osSQL.c_str());
@@ -761,7 +771,8 @@ VFKFeatureSQLiteList VFKDataBlockSQLite::GetFeatures(const char **column, GUIntB
             osItem.Printf("%s = " CPL_FRMT_GUIB, column[i], value[i]);
         osSQL += osItem;
     }
-    osSQL += " ORDER BY ogr_fid";
+    osSQL += " ORDER BY ";
+    osSQL += FID_COLUMN;
     
     hStmt = poReader->PrepareStatement(osSQL.c_str());
     while (poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
@@ -797,8 +808,8 @@ OGRErr VFKDataBlockSQLite::SaveGeometryToDB(const OGRGeometry *poGeom, int iRowI
 	pabyWKB = (GByte *) CPLMalloc(nWKBLen + 1);
 	poGeom->exportToWkb(wkbNDR, pabyWKB);
         
-	osSQL.Printf("UPDATE %s SET geom = ? WHERE rowid = %d",
-		     m_pszName, iRowId);
+	osSQL.Printf("UPDATE %s SET %s = ? WHERE rowid = %d",
+		     m_pszName, GEOM_COLUMN, iRowId);
 	hStmt = poReader->PrepareStatement(osSQL.c_str());
 	
 	rc = sqlite3_bind_blob(hStmt, 1, pabyWKB, nWKBLen, CPLFree);
@@ -810,8 +821,8 @@ OGRErr VFKDataBlockSQLite::SaveGeometryToDB(const OGRGeometry *poGeom, int iRowI
 	}
     }
     else { /* invalid */
-	osSQL.Printf("UPDATE %s SET geom = NULL WHERE rowid = %d",
-		     m_pszName, iRowId);
+	osSQL.Printf("UPDATE %s SET %s = NULL WHERE rowid = %d",
+		     m_pszName, GEOM_COLUMN, iRowId);
 	hStmt = poReader->PrepareStatement(osSQL.c_str());
     }
 
@@ -859,11 +870,12 @@ bool VFKDataBlockSQLite::LoadGeometryFromDB()
     
     /* load geometry from DB */
     nInvalid = nGeometriesCount = 0;
-    osSQL.Printf("SELECT geom,rowid,ogr_fid FROM %s ",
-		 m_pszName);
+    osSQL.Printf("SELECT %s,rowid,%s FROM %s ",
+		 GEOM_COLUMN, FID_COLUMN, m_pszName);
     if (EQUAL(m_pszName, "SBP"))
 	osSQL += "WHERE PORADOVE_CISLO_BODU = 1 ";
-    osSQL += "ORDER BY ogr_fid";
+    osSQL += "ORDER BY ";
+    osSQL += FID_COLUMN;
     hStmt = poReader->PrepareStatement(osSQL.c_str());
 
     while(poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
@@ -950,8 +962,8 @@ void VFKDataBlockSQLite::UpdateFID(long int iFID, std::vector<int> rowId)
     poReader = (VFKReaderSQLite*) m_poReader;
     
     /* update number of geometries in 'vfk_blocks' table */
-    osSQL.Printf("UPDATE %s SET ogr_fid = %ld WHERE rowid IN (",
-                 m_pszName, iFID);
+    osSQL.Printf("UPDATE %s SET %s = %ld WHERE rowid IN (",
+                 m_pszName, FID_COLUMN, iFID);
     for (size_t i = 0; i < rowId.size(); i++) {
 	if (i > 0)
 	    osValue.Printf(",%d", rowId[i]);
@@ -987,17 +999,20 @@ bool VFKDataBlockSQLite::IsRingClosed(const OGRLinearRing *poRing)
 }
 
 /*!
-  \brief Get key (first property)
+  \brief Get primary key
 
   \return property name or NULL
 */
 const char *VFKDataBlockSQLite::GetKey() const
 {
+    const char *pszKey;
     const VFKPropertyDefn *poPropDefn;
 
     if (GetPropertyCount() > 1) {
         poPropDefn = GetProperty(0);
-        return poPropDefn->GetName();
+        pszKey = poPropDefn->GetName();
+        if (EQUAL(pszKey, "ID"))
+            return pszKey;
     }
 
     return NULL;
