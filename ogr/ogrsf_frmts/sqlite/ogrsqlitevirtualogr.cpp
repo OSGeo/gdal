@@ -2349,16 +2349,26 @@ int OGR2SQLITE_static_register (sqlite3 * hDB, char **pzErrMsg,
 
     *pzErrMsg = NULL;
 
-    /* Can happen if sqlite is compiled with SQLITE_OMIT_LOAD_EXTENSION (with sqlite 3.6.10 for example) */
-    if( pApi->create_module == NULL )
-        return SQLITE_ERROR;
-
     /* The config option is turned off by ogrsqliteexecutesql.cpp that needs */
     /* to create a custom module */
     if( CSLTestBoolean(CPLGetConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "YES")) )
     {
+        /* Can happen if sqlite is compiled with SQLITE_OMIT_LOAD_EXTENSION (with sqlite 3.6.10 for example) */
+        /* We return here OK since it is not vital for regular SQLite dababases */
+        /* to load the OGR SQL functions */
+        if( pApi->create_module == NULL )
+            return SQLITE_OK;
+
         OGR2SQLITEModule* poModule = new OGR2SQLITEModule();
         return poModule->Setup(hDB) ? SQLITE_OK : SQLITE_ERROR;
+    }
+    else
+    {
+        /* Can happen if sqlite is compiled with SQLITE_OMIT_LOAD_EXTENSION (with sqlite 3.6.10 for example) */
+        /* We return fail since Setup() will later be called, and crash */
+        /* if create_module isn't available */
+        if( pApi->create_module == NULL )
+            return SQLITE_ERROR;
     }
 
     return SQLITE_OK;
