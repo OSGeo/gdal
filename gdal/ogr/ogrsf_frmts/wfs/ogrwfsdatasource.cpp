@@ -1198,9 +1198,11 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn)
                             OGR_SRSNode *poGEOGCS =
                                             poSRS->GetAttrNode( "GEOGCS" );
                             if( poGEOGCS != NULL )
-                            {
                                 poGEOGCS->StripNodes( "AXIS" );
-                            }
+
+                            OGR_SRSNode *poPROJCS = poSRS->GetAttrNode( "PROJCS" );
+                            if (poPROJCS != NULL && poSRS->EPSGTreatsAsNorthingEasting())
+                                poPROJCS->StripNodes( "AXIS" );
                         }
                     }
                 }

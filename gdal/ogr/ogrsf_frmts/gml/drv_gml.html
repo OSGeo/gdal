@@ -54,6 +54,8 @@ the coordinates in the file are in (latitude, longitude) order. By default, OGR 
 not consider the EPSG axis order and will report the coordinates in (latitude,longitude)
 order. However, if you set the configuration option <b>GML_CONSIDER_EPSG_AS_URN</b> to
 <b>YES</b>, the rules explained in the previous paragraph will be applied.<p>
+Since OGR 1.10, the above also applied for projected coordinate systems whose EPSG
+preferred axis order is (northing, easting).<p>
 
 <h2>Schema</h2>
 
