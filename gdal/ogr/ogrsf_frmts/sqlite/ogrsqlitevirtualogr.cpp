@@ -371,14 +371,10 @@ static int OGR2SQLITEDetectSuspiciousUsage(sqlite3* hDB,
         const char* pszSQL;
 
         pszSQL = CPLSPrintf("SELECT name, sql FROM %s "
-                            "WHERE type = 'trigger' AND ("
+                            "WHERE (type = 'trigger' OR type = 'view') AND ("
                             "sql LIKE '%%%s%%' OR "
                             "sql LIKE '%%\"%s\"%%' OR "
-                            "sql LIKE '%%ogr_layer_%%' OR "
-                            "sql LIKE '%%ogr_geocode%%' OR "
-                            "sql LIKE '%%ogr_datasource_load_layers%%' OR "
-                            "sql LIKE '%%ogr_GetConfigOption%%' OR "
-                            "sql LIKE '%%ogr_SetConfigOption%%' )",
+                            "sql LIKE '%%ogr_layer_%%' )",
                             aosDatabaseNames[i].c_str(),
                             pszVirtualTableName,
                             OGRSQLiteEscapeName(pszVirtualTableName).c_str());
@@ -391,12 +387,12 @@ static int OGR2SQLITEDetectSuspiciousUsage(sqlite3* hDB,
 
         if( nRowCount > 0 )
         {
-            if( !CSLTestBoolean(CPLGetConfigOption("ALLOW_VIRTUAL_OGR_FROM_TRIGGER", "NO")) )
+            if( !CSLTestBoolean(CPLGetConfigOption("ALLOW_VIRTUAL_OGR_FROM_TRIGGER_AND_VIEW", "NO")) )
             {
                 *pzErr = sqlite3_mprintf(
-                    "A trigger might reference VirtualOGR table '%s'.\n"
+                    "A trigger and/or view might reference VirtualOGR table '%s'.\n"
                     "This is suspicious practice that could be used to steal data without your consent.\n"
-                    "Disabling access to it unless you define the ALLOW_VIRTUAL_OGR_FROM_TRIGGER "
+                    "Disabling access to it unless you define the ALLOW_VIRTUAL_OGR_FROM_TRIGGER_AND_VIEW "
                     "configuration option to YES.",
                     pszVirtualTableName);
                 return TRUE;
