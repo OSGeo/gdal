@@ -987,17 +987,19 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
             {
                 OGR_SRSNode *poGEOGCS = poSRS->GetAttrNode( "GEOGCS" );
                 if( poGEOGCS != NULL )
-                {
                     poGEOGCS->StripNodes( "AXIS" );
 
-                    if (!poClass->HasExtents() &&
-                        sBoundingRect.IsInit())
-                    {
-                        poClass->SetExtents(sBoundingRect.MinY,
-                                            sBoundingRect.MaxY,
-                                            sBoundingRect.MinX,
-                                            sBoundingRect.MaxX);
-                    }
+                OGR_SRSNode *poPROJCS = poSRS->GetAttrNode( "PROJCS" );
+                if (poPROJCS != NULL && poSRS->EPSGTreatsAsNorthingEasting())
+                    poPROJCS->StripNodes( "AXIS" );
+
+                if (!poClass->HasExtents() &&
+                    sBoundingRect.IsInit())
+                {
+                    poClass->SetExtents(sBoundingRect.MinY,
+                                        sBoundingRect.MaxY,
+                                        sBoundingRect.MinX,
+                                        sBoundingRect.MaxX);
                 }
             }
         }
@@ -1964,7 +1966,7 @@ void OGRGMLDataSource::FindAndParseBoundedBy(VSILFILE* fp)
                 pszSRSName += 9;
                 const char* pszEndQuote = strchr(pszSRSName, '"');
                 if (pszEndQuote != NULL &&
-                    (int)(pszEndQuote - pszSRSName) < sizeof(szSRSName))
+                    (size_t)(pszEndQuote - pszSRSName) < sizeof(szSRSName))
                 {
                     memcpy(szSRSName, pszSRSName, pszEndQuote - pszSRSName);
                     szSRSName[pszEndQuote - pszSRSName] = '\0';
