@@ -423,6 +423,34 @@ int OGRSQLiteDataSource::OpenOrCreateDB(int flags)
         return FALSE;
     }
 
+    int nRowCount = 0, nColCount = 0;
+    char** papszResult = NULL;
+    sqlite3_get_table( hDB,
+                       "SELECT name, sql FROM sqlite_master "
+                       "WHERE (type = 'trigger' OR type = 'view') AND ("
+                       "sql LIKE '%%ogr_geocode%%' OR "
+                       "sql LIKE '%%ogr_datasource_load_layers%%' OR "
+                       "sql LIKE '%%ogr_GetConfigOption%%' OR "
+                       "sql LIKE '%%ogr_SetConfigOption%%' )",
+                       &papszResult, &nRowCount, &nColCount,
+                       NULL );
+
+    sqlite3_free_table(papszResult);
+    papszResult = NULL;
+
+    if( nRowCount > 0 )
+    {
+        if( !CSLTestBoolean(CPLGetConfigOption("ALLOW_OGR_SQL_FUNCTIONS_FROM_TRIGGER_AND_VIEW", "NO")) )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, "%s", 
+                "A trigger and/or view calls a OGR extension SQL function that could be used to "
+                "steal data, or use network bandwith, without your consent.\n"
+                "The database will not be opened unless the ALLOW_OGR_SQL_FUNCTIONS_FROM_TRIGGER_AND_VIEW "
+                "configuration option to YES.");
+            return FALSE;
+        }
+    }
+
     const char* pszSqliteJournal = CPLGetConfigOption("OGR_SQLITE_JOURNAL", NULL);
     if (pszSqliteJournal != NULL)
     {
