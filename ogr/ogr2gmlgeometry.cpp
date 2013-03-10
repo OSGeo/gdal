@@ -598,12 +598,13 @@ static int OGR2GML3GeometryAppend( OGRGeometry *poGeometry,
                 pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
                 if( NULL != pszAuthCode && strlen(pszAuthCode) < 10 )
                 {
-                    if (bLongSRS && !((OGRSpatialReference*)poSRS)->EPSGTreatsAsLatLong())
+                    if (bLongSRS && !(((OGRSpatialReference*)poSRS)->EPSGTreatsAsLatLong() ||
+                                      ((OGRSpatialReference*)poSRS)->EPSGTreatsAsNorthingEasting()))
                     {
                         OGRSpatialReference oSRS;
                         if (oSRS.importFromEPSGA(atoi(pszAuthCode)) == OGRERR_NONE)
                         {
-                            if (oSRS.EPSGTreatsAsLatLong())
+                            if (oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting())
                                 bCoordSwap = TRUE;
                         }
                     }
