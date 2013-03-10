@@ -1364,23 +1364,25 @@ int GMLReader::PrescanForSchema( int bGetExtents )
             {
                 OGR_SRSNode *poGEOGCS = oSRS.GetAttrNode( "GEOGCS" );
                 if( poGEOGCS != NULL )
-                {
                     poGEOGCS->StripNodes( "AXIS" );
 
-                    char* pszWKT = NULL;
-                    if (oSRS.exportToWkt(&pszWKT) == OGRERR_NONE)
-                        poClass->SetSRSName(pszWKT);
-                    CPLFree(pszWKT);
+                OGR_SRSNode *poPROJCS = oSRS.GetAttrNode( "PROJCS" );
+                if (poPROJCS != NULL && oSRS.EPSGTreatsAsNorthingEasting())
+                    poPROJCS->StripNodes( "AXIS" );
 
-                    /* So when we have computed the extent, we didn't know yet */
-                    /* the SRS to use. Now we know it, we have to fix the extent */
-                    /* order */
-                    if (m_bCanUseGlobalSRSName)
-                    {
-                        double  dfXMin, dfXMax, dfYMin, dfYMax;
-                        if( poClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax) )
-                            poClass->SetExtents( dfYMin, dfYMax, dfXMin, dfXMax );
-                    }
+                char* pszWKT = NULL;
+                if (oSRS.exportToWkt(&pszWKT) == OGRERR_NONE)
+                    poClass->SetSRSName(pszWKT);
+                CPLFree(pszWKT);
+
+                /* So when we have computed the extent, we didn't know yet */
+                /* the SRS to use. Now we know it, we have to fix the extent */
+                /* order */
+                if (m_bCanUseGlobalSRSName)
+                {
+                    double  dfXMin, dfXMax, dfYMin, dfYMax;
+                    if( poClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax) )
+                        poClass->SetExtents( dfYMin, dfYMax, dfXMin, dfXMax );
                 }
             }
         }

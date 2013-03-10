@@ -213,6 +213,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      Fixup();
 
     int         EPSGTreatsAsLatLong();
+    int         EPSGTreatsAsNorthingEasting();
     const char *GetAxis( const char *pszTargetKey, int iAxis, 
                          OGRAxisOrientation *peOrientation ) const;
     OGRErr      SetAxes( const char *pszTargetKey, 

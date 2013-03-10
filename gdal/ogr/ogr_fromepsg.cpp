@@ -2077,7 +2077,9 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
  * This method is similar to importFromEPSGA() except that EPSG preferred 
  * axis ordering will *not* be applied for geographic coordinate systems.
  * EPSG normally defines geographic coordinate systems to use lat/long 
- * contrary to typical GIS use). 
+ * contrary to typical GIS use). Since OGR 1.10.0, EPSG preferred
+ * axis ordering will also *not* be applied for projected coordinate systems
+ * that use northing/easting order.
  *
  * This method is the same as the C function OSRImportFromEPSG().
  *
@@ -2098,6 +2100,10 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
 
         if( poGEOGCS != NULL )
             poGEOGCS->StripNodes( "AXIS" );
+
+        OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
+        if (poPROJCS != NULL && EPSGTreatsAsNorthingEasting())
+            poPROJCS->StripNodes( "AXIS" );
     }
 
     return eErr;
@@ -2132,9 +2138,10 @@ OGRErr CPL_STDCALL OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
  * passed in EPSG GCS or PCS code.  
  * 
  * This method is similar to importFromEPSG() except that EPSG preferred 
- * axis ordering *will* be applied for geographic coordinate systems.
- * EPSG normally defines geographic coordinate systems to use lat/long 
- * contrary to typical GIS use).  See OGRSpatialReference::importFromEPSG() 
+ * axis ordering *will* be applied for geographic and projected coordinate systems.
+ * EPSG normally defines geographic coordinate systems to use lat/long, and
+ * also there are also a few projected coordinate systems that use northing/easting
+ * order contrary to typical GIS use).  See OGRSpatialReference::importFromEPSG()
  * for more details on operation of this method.
  *
  * This method is the same as the C function OSRImportFromEPSGA().
@@ -2694,5 +2701,70 @@ int OSREPSGTreatsAsLatLong( OGRSpatialReferenceH hSRS )
     VALIDATE_POINTER1( hSRS, "OSREPSGTreatsAsLatLong", CE_Failure );
 
     return ((OGRSpatialReference *) hSRS)->EPSGTreatsAsLatLong();
+}
+
+/************************************************************************/
+/*                     EPSGTreatsAsNorthingEasting()                    */
+/************************************************************************/
+
+/**
+ * \brief This method returns TRUE if EPSG feels this projected coordinate
+ * system should be treated as having northing/easting coordinate ordering.
+ *
+ * Currently this returns TRUE for all projected coordinate systems
+ * with an EPSG code set, and AXIS values set defining it as northing, easting.
+ *
+ * FALSE will be returned for all coordinate systems that are not projected,
+ * or that do not have an EPSG code set.
+ *
+ * This method is the same as the C function EPSGTreatsAsNorthingEasting().
+ *
+ * @return TRUE or FALSE.
+ *
+ * @since OGR 1.10.0
+ */
+
+int OGRSpatialReference::EPSGTreatsAsNorthingEasting()
+
+{
+    if( !IsProjected() )
+        return FALSE;
+
+    const char *pszAuth = GetAuthorityName( "PROJCS" );
+
+    if( pszAuth == NULL || !EQUAL(pszAuth,"EPSG") )
+        return FALSE;
+
+    OGR_SRSNode *poFirstAxis = GetAttrNode( "PROJCS|AXIS" );
+
+    if( poFirstAxis == NULL )
+        return FALSE;
+
+    if( poFirstAxis->GetChildCount() >= 2
+        && EQUAL(poFirstAxis->GetChild(1)->GetValue(),"NORTH") )
+        return TRUE;
+
+    return FALSE;
+}
+
+/************************************************************************/
+/*                     OSREPSGTreatsAsNorthingEasting()                 */
+/************************************************************************/
+
+/**
+ * \brief This function returns TRUE if EPSG feels this geographic coordinate
+ * system should be treated as having northing/easting coordinate ordering.
+ *
+ * This function is the same as OGRSpatialReference::EPSGTreatsAsNorthingEasting().
+ *
+ * @since OGR 1.10.0
+ */
+
+int OSREPSGTreatsAsNorthingEasting( OGRSpatialReferenceH hSRS )
+
+{
+    VALIDATE_POINTER1( hSRS, "OSREPSGTreatsAsNorthingEasting", CE_Failure );
+
+    return ((OGRSpatialReference *) hSRS)->EPSGTreatsAsNorthingEasting();
 }
 

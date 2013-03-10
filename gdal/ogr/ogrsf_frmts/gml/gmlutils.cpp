@@ -95,7 +95,7 @@ int GML_IsSRSLatLongOrder(const char* pszSRSName)
             OGRSpatialReference oSRS;
             if (oSRS.importFromURN(pszSRSName) == OGRERR_NONE)
             {
-                if (oSRS.EPSGTreatsAsLatLong())
+                if (oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting())
                     return TRUE;
             }
         }
@@ -319,12 +319,13 @@ char* GML_GetSRSName(const OGRSpatialReference* poSRS, int bLongSRS, int *pbCoor
             pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
             if( NULL != pszAuthCode && strlen(pszAuthCode) < 10 )
             {
-                if (bLongSRS && !((OGRSpatialReference*)poSRS)->EPSGTreatsAsLatLong())
+                if (bLongSRS && !(((OGRSpatialReference*)poSRS)->EPSGTreatsAsLatLong() ||
+                                  ((OGRSpatialReference*)poSRS)->EPSGTreatsAsNorthingEasting()))
                 {
                     OGRSpatialReference oSRS;
                     if (oSRS.importFromEPSGA(atoi(pszAuthCode)) == OGRERR_NONE)
                     {
-                        if (oSRS.EPSGTreatsAsLatLong())
+                        if (oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting())
                             *pbCoordSwap = TRUE;
                     }
                 }

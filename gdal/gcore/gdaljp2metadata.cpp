@@ -745,12 +745,10 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
                  && strstr(pszSRSName,":def:") != NULL
                  && oSRS.importFromURN(pszSRSName) == OGRERR_NONE )
         {
-            const char *pszCode = strrchr(pszSRSName,':') + 1;
-
             oSRS.exportToWkt( &pszProjection );
 
             // Per #2131
-            if( atoi(pszCode) >= 4000 && atoi(pszCode) <= 4999 )
+            if( oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting() )
             {
                 CPLDebug( "GMLJP2", "Request axis flip for SRS=%s",
                           pszSRSName );
