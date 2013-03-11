@@ -188,6 +188,7 @@ Advanced options :
                [-wrapdateline] [-datelineoffset val]
                [[-simplify tolerance] | [-segmentize max_dist]]
                [-fieldTypeToString All|(type1[,type2]*)]
+               [-fieldmap identity | index1[,index2]*]
                [-splitlistfields] [-maxsubfields val]
                [-explodecollections] [-zfield field_name]
                [-gcp pixel line easting northing [elevation]]* [-order n | -tps]
@@ -299,6 +300,12 @@ Add the indicated ground control point.  This option may be provided multiple ti
 GCPs.</dd>
 <dt> <b>-tps</b>:</dt><dd>(starting with GDAL 1.10.0) Force use of thin plate spline transformer based on
 available GCPs.</dd>
+<dt> <b>-fieldmap</b>:</dt><dd>(starting with GDAL 1.10.0) Specifies the list of field indexes to be copied 
+from the source to the destination. The (n)th value specified in the list is the index of the field in the 
+target layer definition in which the n(th) field of the source layer must be copied. Index count starts at 
+zero. There must be exactly as many values in the list as the count of the fields in the source layer. 
+We can use the 'identity' setting to specify that the fields should be transferred by using the same order. 
+This setting should be used along with the -append setting.</dd>
 </dl>
 
 \section ogr2ogr_performance PERFORMANCE HINTS
@@ -329,6 +336,15 @@ Example reprojecting from ETRS_1989_LAEA_52N_10E to EPSG:4326 and clipping to a 
 
 \verbatim
 % ogr2ogr -wrapdateline -t_srs EPSG:4326 -clipdst -5 40 15 55 france_4326.shp europe_laea.shp
+\endverbatim
+
+Example for using the -fieldmap setting. The first field of the source layer is used to 
+fill the third field (index 2 = third field) of the target layer, the second field of the 
+source layer is ignored, the third field of the source layer used to fill the fifth field 
+of the target layer.
+
+\verbatim
+% ogr2ogr -append -fieldmap 2,-1,4 dst.shp src.shp
 \endverbatim
 
 More examples are given in the individual format pages.
