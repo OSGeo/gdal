@@ -1842,6 +1842,50 @@ def test_ogr2ogr_47():
 
     return 'success'
 
+###############################################################################
+# Test fieldmap option
+
+def test_ogr2ogr_48():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp data/Fields.csv')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -append -fieldmap identity tmp data/Fields.csv')
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -append -fieldmap 14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 tmp data/Fields.csv')
+    
+    ds = ogr.Open('tmp/Fields.dbf')
+
+    if ds is None:
+        return 'fail'
+    layer_defn = ds.GetLayer(0).GetLayerDefn()
+    if layer_defn.GetFieldCount() != 15:
+        gdaltest.post_reason('Unexpected field count: ' + str(ds.GetLayer(0).GetLayerDefn().GetFieldCount()) )
+        ds.Destroy()
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/Fields.dbf')
+        return 'fail'
+
+    error_occured = False
+    lyr = ds.GetLayer(0)
+    lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()    
+    for i in range( layer_defn.GetFieldCount() ):
+        if feat.GetFieldAsString(i) != str(i + 1):
+            print('Expected the value ', str(i + 1),',but got',feat.GetFieldAsString(i))
+            error_occured = True
+    feat = lyr.GetNextFeature()    
+    for i in range( layer_defn.GetFieldCount() ):
+        if feat.GetFieldAsString(i) != str(layer_defn.GetFieldCount() - i):
+            print('Expected the value ', str(layer_defn.GetFieldCount() - i),',but got',feat.GetFieldAsString(i))
+            error_occured = True
+
+    ds.Destroy()
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/Fields.dbf')
+
+    if error_occured:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -1889,7 +1933,8 @@ gdaltest_list = [
     test_ogr2ogr_44,
     test_ogr2ogr_45,
     test_ogr2ogr_46,
-    test_ogr2ogr_47
+    test_ogr2ogr_47,
+    test_ogr2ogr_48
     ]
 
 if __name__ == '__main__':
