@@ -167,6 +167,7 @@ static const AssocNameType apsPropertyTypes [] =
     {"MultiPolygonPropertyType", wkbMultiPolygon},
     {"MultiSurfacePropertyType", wkbMultiPolygon},
     {"MultiGeometryPropertyType", wkbGeometryCollection},
+    {"GeometryAssociationType", wkbUnknown},
     {NULL, wkbUnknown},
 };
 
