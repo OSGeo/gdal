@@ -1,4 +1,4 @@
-= GDAL/OGR 1.10.0 *Preliminary* Release Notes (r23656 to r25669) =
+= GDAL/OGR 1.10.0 *Preliminary* Release Notes (r23656 to r25733) =
 
 == In a nutshell... ==
 
@@ -82,6 +82,8 @@ Port:
  * Add API for OAuth2 authentication protocol.
  * Curl: allows setting the CURLOPT_PROXYAUTH setting through GDAL_PROXY_AUTH=BASIC/NTLM/DIGEST/ANY,
    allow setting CURLOPT_HTTPAUTH through GDAL_HTTP_AUTH=BASIC/NTLM/GSSNEGOTIATE/ANY (#4998)
+ * /vsicurl/ and /vsicurl_streaming/ : make it possible to cache the files in RAM with VSI_CACHE = TRUE
+ * /vsizip/: fix handling of Eof() that could cause missed last feature(s) of zipped shapefiles (#4748)
 
 Core:
  * Add a DMD_SUBDATASETS driver metadata, and advertize it in relevant drivers (#4902)
@@ -91,7 +93,6 @@ Core:
  * GMLJP2: Fix bad interpretation when Lat/Long (#4657)
  * Set nodata value when creating external overviews so that AVERAGE algorithm works as expected (#4679)
  * EXIFExtractMetadata() moved to gcore/gdalexif.cpp to make it usable for other drivers
- * /vsizip/: fix handling of Eof() that could cause missed last feature(s) of zipped shapefiles (#4748)
  * Fix infinite recursion in GDALOpen() (#4835)
  * GDALRasterBand::IRasterIO() : optimize downsampling/upsampling code path
 
@@ -141,6 +142,7 @@ Utilities:
  * gdal_calc.py: add --co creation option flag (#4964)
  * gdaladdo: add a -b flag
  * gdalbuildvrt: add a -b flag (#4992)
+ * pct2rgb.py: deal with color tables with more than 256 entries (#4905)
 
 Multi driver changes:
  * Add support for reading .j2w, .jp2w and .wld files for JP2ECW, JP2MrSID, JP2OPENJPEG and JPEG2000 drivers (#4651)
@@ -272,6 +274,9 @@ INGR driver:
 ISIS3 driver:
  * Ensure scaleFactor defaults to 1 (#4499)
 
+JP2ECW driver:
+ * Workaround conflict between ECW SDK deinitialization and GDAL deinitialization, as shown by gdaljp2ecw tests of imageio-ext (#5024)
+
 JP2KAK driver:
  * Capture Corder in metadata for user convenience
  * Fix writing of resolution box where the xresolution value was written instead of the yresolution one
@@ -392,6 +397,7 @@ VRT driver:
  * VRTFilteredSource: fix RasterIO() to take into account source and dest windows (#4616)
  * avoid crashes due to int overflow when dealing with requests filling a buffer larger than 2 GB (#4815)
  * VRTSourcedRasterBand: override ComputeRasterMinMax(), ComputeStatistics() and GetHistogram() to make them run on sources, only when there's one VRTSimpleSource covering the whole VRTSourcedRasterBand
+ * solve issue when the VRT is a symlink and that the sources filenames are RelativeToVRT (#4999)
 
 WCS driver:
  * Support version 1.1.2
@@ -446,6 +452,7 @@ OGRSpatialReference:
  * Differentiation between Hotine Oblique Mercator (aka Variant A) and Oblique Mercator (aka Variant B) (#104, #2745)
  * EPSG: Map methods 1028 and 1029 to normal equidistant cylindrical (#4589)
  * EPSG: add support for EPSG:5514 (Krovak East North)
+ * EPSG: Add EPSGTreatsAsNorthingEasting() to deal with CRS with non-GIS friendly northing/easting axis order similarly as what was done with lat/long geographic SRS, and automatically do coord swapping in GML/WFS drivers in that case (#4329)
  * Ozi datum support: support all Ozi datums (#3929), support UTM projection
  * USGS: support USGS angular parameters in radians
  * MorphFromESRI() fix WKT : compare SPHEROID and PRIMEM parameters instead of names (#4673)
@@ -464,6 +471,7 @@ Utilities:
  * ogr2ogr: return non-zero exit code if the -sql triggers an error (#4870)
  * ogr2ogr: make -t_srs work when there's no per layer source SRS, but there's per feature SRS
  * ogr2ogr: add a -datelineoffset option  to provide users with capability to set different offsets than 170 to -170 (#4098)
+ * ogr2ogr: add a -fieldmap option (#5021)
  * ogrupdate.py: new sample script to update an OGR datasource from another one, by trying to identify matches between the 2 datasources
  * ogr_layer_algebra.py: new sample script to use OGR layer algebra operations
 
@@ -692,6 +700,7 @@ TIGER driver:
  * Updated to use VSI*L
 
 VFK driver:
+ * SQLite is now a compulsory dependency for VFK
  * Store VFK data in SQLite (in-memory) database
  * Don't read whole file into buffer, but only on request
  * id property of data records in VFK file exceed int limit -> use GUIntBig for id values
@@ -735,6 +744,7 @@ All bindings:
  * Add a osr.CreateCoordinateTransformation(src, dst) method (and for Java, a static method CoordinateTransformation.CreateCoordinateTransformation(src, dst) (#4836)
  * Add ogr.ForceToLineString()
  * Clear error before OGR_Dr_Open() (#4955)
+ * Add a SetErrorHandler(handler_name) method
 
 Java bindings:
  * Fix compilation issue with SWIG 2.0.6 on Java bindings (#4669)
