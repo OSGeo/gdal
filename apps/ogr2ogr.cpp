@@ -84,6 +84,7 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
                                                 char** papszFieldTypesToString,
                                                 int bExplodeCollections,
                                                 const char* pszZField,
+                                                char **papszFieldMap,
                                                 const char* pszWHERE );
 
 static void FreeTargetLayerInfo(TargetLayerInfo* psInfo);
@@ -848,6 +849,8 @@ int main( int nArgc, char ** papszArgv )
     int          nMaxSplitListSubFields = -1;
     int          bExplodeCollections = FALSE;
     const char  *pszZField = NULL;
+    const char  *pszFieldMap = NULL;
+    char        **papszFieldMap = NULL;
     int          nCoordDim = -1;
  
     int          nGCPCount = 0;
@@ -1296,6 +1299,13 @@ int main( int nArgc, char ** papszArgv )
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             nTransformOrder = atoi( papszArgv[++iArg] );
         }
+        else if( EQUAL(papszArgv[iArg],"-fieldmap") && papszArgv[iArg+1] != NULL)
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            pszFieldMap = papszArgv[++iArg];
+            papszFieldMap = CSLTokenizeStringComplex(pszFieldMap, ",", 
+                                                      FALSE, FALSE );
+        }
         else if( papszArgv[iArg][0] == '-' )
         {
             Usage(CPLSPrintf("Unkown option name '%s'", papszArgv[iArg]));
@@ -1319,6 +1329,11 @@ int main( int nArgc, char ** papszArgv )
     if( bPreserveFID && bExplodeCollections )
     {
         Usage("cannot use -preserve_fid and -explodecollections at the same time.");
+    }
+
+    if (pszFieldMap && !bAppend)
+    {
+        Usage("if -fieldmap is specified, -append must also be specified");
     }
 
     if( bClipSrc && pszClipSrcDS != NULL)
@@ -1660,6 +1675,7 @@ int main( int nArgc, char ** papszArgv )
                                                 papszFieldTypesToString,
                                                 bExplodeCollections,
                                                 pszZField,
+                                                papszFieldMap,
                                                 pszWHERE );
 
             poPassedLayer->ResetReading();
@@ -1813,6 +1829,7 @@ int main( int nArgc, char ** papszArgv )
                                                     papszFieldTypesToString,
                                                     bExplodeCollections,
                                                     pszZField,
+                                                    papszFieldMap,
                                                     pszWHERE );
 
                 if( psInfo == NULL && !bSkipFailures )
@@ -2081,6 +2098,7 @@ int main( int nArgc, char ** papszArgv )
                                                 papszFieldTypesToString,
                                                 bExplodeCollections,
                                                 pszZField,
+                                                papszFieldMap,
                                                 pszWHERE );
 
             poPassedLayer->ResetReading();
@@ -2148,6 +2166,7 @@ int main( int nArgc, char ** papszArgv )
     OGRSpatialReference::DestroySpatialReference(poSourceSRS);
 
     CSLDestroy(papszSelFields);
+    CSLDestroy( papszFieldMap );
     CSLDestroy( papszArgv );
     CSLDestroy( papszLayers );
     CSLDestroy( papszDSCO );
@@ -2200,6 +2219,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             "               [-wrapdateline][-datelineoffset val]\n"
             "               [[-simplify tolerance] | [-segmentize max_dist]]\n"
             "               [-fieldTypeToString All|(type1[,type2]*)]\n"
+            "               [-fieldmap identity | index1[,index2]*]\n"
             "               [-splitlistfields] [-maxsubfields val]\n"
             "               [-explodecollections] [-zfield field_name]\n"
             "               [-gcp pixel line easting northing [elevation]]* [-order n | -tps]\n");
@@ -2254,7 +2274,15 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             " -fieldTypeToString type1,...: Converts fields of specified types to\n"
             "      fields of type string in the new layer. Valid types are : Integer,\n"
             "      Real, String, Date, Time, DateTime, Binary, IntegerList, RealList,\n"
-            "      StringList. Special value All will convert all fields to strings.\n");
+            "      StringList. Special value All will convert all fields to strings.\n"
+            " -fieldmap index1,index2,...: Specifies the list of field indexes to be\n"
+            "      copied from the source to the destination. The (n)th value specified\n"
+            "      in the list is the index of the field in the target layer definition\n"
+            "      in which the n(th) field of the source layer must be copied. Index count\n"
+            "      starts at zero. There must be exactly as many values in the list as\n"
+            "      the count of the fields in the source layer. We can use the 'identity'\n"
+            "      setting to specify that the fields should be transferred by using the\n"
+            "      same order. This setting should be used along with the append setting.");
 
     printf(" -a_srs srs_def: Assign an output SRS\n"
            " -t_srs srs_def: Reproject/transform to this SRS on output\n"
@@ -2338,6 +2366,7 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
                                                 char** papszFieldTypesToString,
                                                 int bExplodeCollections,
                                                 const char* pszZField,
+                                                char **papszFieldMap,
                                                 const char* pszWHERE )
 {
     OGRLayer    *poDstLayer;
@@ -2509,7 +2538,31 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
     /* returns NULL until a field has been added */
     poDstFDefn = poDstLayer->GetLayerDefn();
 
-    if (papszSelFields && !bAppend )
+    if (papszFieldMap && bAppend)
+    {
+        int bIdentity = FALSE;
+
+        if (EQUAL(papszFieldMap[0], "identity"))
+            bIdentity = TRUE;
+        else if (CSLCount(papszFieldMap) != nSrcFieldCount)
+        {
+            fprintf( stderr, "Field map should contain the value 'identity' or the same number of integer values as the source field count.\n");
+            VSIFree(panMap);
+            return NULL;
+        }
+
+        for( iField=0; iField < nSrcFieldCount; iField++)
+        {
+            panMap[iField] = bIdentity? iField : atoi(papszFieldMap[iField]);
+            if (panMap[iField] >= poDstFDefn->GetFieldCount())
+            {
+                fprintf( stderr, "Invalid destination field index %d.\n", panMap[iField]);
+                VSIFree(panMap);
+                return NULL;
+            }
+        }
+    }
+    else if (papszSelFields && !bAppend )
     {
         int  nDstFieldCount = 0;
         if (poDstFDefn)
