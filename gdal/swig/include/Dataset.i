@@ -721,6 +721,7 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
 %clear(int*);
 
   void EndAsyncReader(GDALAsyncReaderShadow* ario){
+    if( ario == NULL ) return;
     GDALAsyncReaderH hReader = AsyncReaderWrapperGetReader(ario);
     if (hReader == NULL)
     {
