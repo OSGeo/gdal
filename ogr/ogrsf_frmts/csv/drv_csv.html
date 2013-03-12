@@ -15,7 +15,7 @@ manually with a text editor or with end-user written scripts or programs.</p>
 <p>While in theory .csv files could have any extension, in order to
 auto-recognise the format OGR only supports CSV files ending with the
 extention ".csv".  The datasource name may be either a single CSV file
-or to a directory.  For a directory to be recognised as a .csv datasource
+or point to a directory.  For a directory to be recognised as a .csv datasource
 at least half the files in the directory need to have the extension .csv.
 One layer (table) is produced from each .csv file accessed.</p>
 
@@ -28,16 +28,16 @@ has variable length text lines, reading is done sequentially. Reading
 features in random order will generally be very slow. OGR CSV layer never
 have any coordinate system.  When reading a field named "WKT" is assumed
 to contain WKT geometry, but also is treated as a regular field.
-The OGR CSV driver returns all attribute columns with a type of
-string if no field type information file (with .csvt extension) is
+The OGR CSV driver returns all attribute columns as string data types
+if no field type information file (with .csvt extension) is
 available.</p>
 
 <p>Limited type recognition can be done for Integer, Real, String, Date 
 (YYYY-MM-DD), Time (HH:MM:SS+nn) and DateTime (YYYY-MM-DD HH:MM:SS+nn) columns
-through a descriptive file with same name as the CSV file, but .csvt extension.
-In a single line the types for each column have to be listed: double quoted and
-comma separated (e.g., "Integer","String"). It is also possible to specify
-explicitely the width and precision of each column, e.g. "Integer(5)","Real(10.7)","String(15)".
+through a descriptive file with the same name as the CSV file, but a .csvt extension.
+In a single line the types for each column have to be listed with double quotes and
+be comma separated (e.g., "Integer","String"). It is also possible to specify
+explicitly the width and precision of each column, e.g. "Integer(5)","Real(10.7)","String(15)".
 The driver will then use these types as specified for the csv columns.</p>
 
 <h2>Format</h2>
@@ -83,7 +83,7 @@ yet.</p>
 
 <p>Many variations of textual input are sometimes called Comma Separated
 Value files, including files without commas, but fixed column widths,
-those using tabs as seperators or those with other auxilary data defining
+those using tabs as separators or those with other auxiliary data defining
 field types or structure. This driver does not attempt to support all 
 such files, but instead to support simple .csv files that can be 
 auto-recognised. Scripts or other mechanisms can generally be used to convert
@@ -93,7 +93,7 @@ other variations into a form that is compatible with the OGR CSV driver.</p>
 
 <p>It is possible to extract spatial information (points) from a CSV file
 which has columns for the X and Y coordinates, through the use of the
-<a href="drv_vrt.html">VRT</a> driver</p>
+<a href="drv_vrt.html">VRT</a> driver.</p>
 
 <p>Consider the following CSV file (test.csv):
 <pre>
