@@ -46,6 +46,8 @@ ECWDataset::BeginAsyncReader( int nXOff, int nYOff, int nXSize, int nYSize,
                               char **papszOptions)
 
 {
+    int   i;
+
 /* -------------------------------------------------------------------- */
 /*      Provide default packing if needed.                              */
 /* -------------------------------------------------------------------- */
@@ -57,9 +59,49 @@ ECWDataset::BeginAsyncReader( int nXOff, int nYOff, int nXSize, int nYSize,
         nBandSpace = nLineSpace * nBufYSize;
     
 /* -------------------------------------------------------------------- */
-/*      We should do a bit of validation first - perhaps add later.     */
+/*      Do a bit of validation.                                         */
 /* -------------------------------------------------------------------- */
-    
+    if( nXSize < 1 || nYSize < 1 || nBufXSize < 1 || nBufYSize < 1 )
+    {
+        CPLDebug( "GDAL", 
+                  "BeginAsyncReader() skipped for odd window or buffer size.\n"
+                  "  Window = (%d,%d)x%dx%d\n"
+                  "  Buffer = %dx%d\n",
+                  nXOff, nYOff, nXSize, nYSize, 
+                  nBufXSize, nBufYSize );
+        return NULL;
+    }
+
+    if( nXOff < 0 || nXOff > INT_MAX - nXSize || nXOff + nXSize > nRasterXSize
+        || nYOff < 0 || nYOff > INT_MAX - nYSize || nYOff + nYSize > nRasterYSize )
+    {
+        ReportError( CE_Failure, CPLE_IllegalArg,
+                  "Access window out of range in RasterIO().  Requested\n"
+                  "(%d,%d) of size %dx%d on raster of %dx%d.",
+                  nXOff, nYOff, nXSize, nYSize, nRasterXSize, nRasterYSize );
+        return NULL;
+    }
+
+    if( nBandCount <= 0 || nBandCount > nBands )
+    {
+        ReportError( CE_Failure, CPLE_IllegalArg, "Invalid band count" );
+        return NULL;
+    }
+
+    if( panBandMap != NULL )
+    {
+        for( i = 0; i < nBandCount; i++ )
+        {
+            if( panBandMap[i] < 1 || panBandMap[i] > nBands )
+            {
+                ReportError( CE_Failure, CPLE_IllegalArg,
+                      "panBandMap[%d] = %d, this band does not exist on dataset.",
+                      i, panBandMap[i] );
+                return NULL;
+            }
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create the corresponding async reader.                          */
 /* -------------------------------------------------------------------- */
@@ -78,7 +120,15 @@ ECWDataset::BeginAsyncReader( int nXOff, int nYOff, int nXSize, int nYSize,
     poReader->eBufType = eBufType;
     poReader->nBandCount = nBandCount;
     poReader->panBandMap = (int *) CPLCalloc(sizeof(int),nBandCount);
-    memcpy( poReader->panBandMap, panBandMap, sizeof(int) * nBandCount );
+    if( panBandMap != NULL )
+    {
+        memcpy( poReader->panBandMap, panBandMap, sizeof(int) * nBandCount );
+    }
+    else
+    {
+        for( i = 0; i < nBandCount; i++ )
+            poReader->panBandMap[i] = i + 1;
+    }
 
     poReader->nPixelSpace = nPixelSpace;
     poReader->nLineSpace = nLineSpace;
@@ -103,7 +153,6 @@ ECWDataset::BeginAsyncReader( int nXOff, int nYOff, int nXSize, int nYSize,
 /*      Issue a corresponding SetView command.                          */
 /* -------------------------------------------------------------------- */
     std::vector<UINT32> anBandIndices;
-    int   i;
     NCSError     eNCSErr;
     CNCSError    oErr;
     
