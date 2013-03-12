@@ -4101,6 +4101,7 @@ SWIGINTERN GDALAsyncReaderShadow *GDALDatasetShadow_BeginAsyncReader(GDALDataset
 
   }
 SWIGINTERN void GDALDatasetShadow_EndAsyncReader(GDALDatasetShadow *self,GDALAsyncReaderShadow *ario){
+    if( ario == NULL ) return;
     GDALAsyncReaderH hReader = AsyncReaderWrapperGetReader(ario);
     if (hReader == NULL)
     {
