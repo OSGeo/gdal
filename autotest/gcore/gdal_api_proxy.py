@@ -424,7 +424,7 @@ def gdal_api_proxy_sub():
 
     ds = None
 
-    gdal.Unlink('tmp/byte.tif')
+    gdal.GetDriverByName('GTiff').Delete('tmp/byte.tif')
 
     return 'success'
 
