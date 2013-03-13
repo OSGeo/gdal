@@ -94,6 +94,7 @@ GeoRasterWrapper::GeoRasterWrapper()
     bBlocking           = true;
     bAutoBlocking       = false;
     eModelCoordLocation = MCL_DEFAULT;
+    phRPC               = NULL;
 }
 
 //  ---------------------------------------------------------------------------
@@ -146,6 +147,11 @@ GeoRasterWrapper::~GeoRasterWrapper()
     if( poConnection )
     {
         delete poConnection;
+    }
+
+    if( phRPC )
+    {
+        CPLFree( phRPC );
     }
 }
 
@@ -572,7 +578,12 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     {
       poGRW->dfXCoefficient[2] -= poGRW->dfXCoefficient[0] / 2;
       poGRW->dfYCoefficient[2] -= poGRW->dfYCoefficient[1] / 2;
+
       CPLDebug("GEOR","eModelCoordLocation = MCL_CENTER");
+    }
+    else
+    {
+      CPLDebug("GEOR","eModelCoordLocation = MCL_UPPERLEFT");
     }
 
     //  -------------------------------------------------------------------
@@ -1183,6 +1194,7 @@ void GeoRasterWrapper::PrepareToOverwrite( void )
     eModelCoordLocation = MCL_DEFAULT;
     bFlushBlock         = false;
     nFlushBlockSize     = 0L;
+    phRPC               = NULL;
 }
 
 //  ---------------------------------------------------------------------------
@@ -1383,6 +1395,18 @@ void GeoRasterWrapper::GetRasterInfo( void )
     {
         nPyramidMaxLevel = atoi( CPLGetXMLValue( phMetadata,
                             "rasterInfo.pyramid.maxLevel", "0" ) );
+    }
+
+    //  -------------------------------------------------------------------
+    //  Check for RPCs
+    //  -------------------------------------------------------------------
+
+    const char* pszModelType = CPLGetXMLValue( phMetadata,
+                               "spatialReferenceInfo.modelType", "None" );
+
+    if( EQUAL( pszModelType, "FunctionalFitting" ) )
+    {
+        GetRPC();
     }
 
     //  -------------------------------------------------------------------
@@ -2280,6 +2304,357 @@ void GeoRasterWrapper::LoadNoDataValues( void )
 }
 
 //  ---------------------------------------------------------------------------
+//                                                                     GetRPC()
+//  ---------------------------------------------------------------------------
+
+/* This is the order for storing 20 coeffients in GeoRaster Metadata */
+
+static const int anOrder[] = { 
+    1, 2, 8, 12, 3, 5, 15, 9, 13, 16, 4, 6, 18, 7, 11, 19, 10, 14, 17, 20
+};
+
+void GeoRasterWrapper::GetRPC()
+{
+    phRPC = (GDALRPCInfo*) VSIMalloc( sizeof(GDALRPCInfo) );
+
+    int i;
+
+    CPLXMLNode* phSRSInfo = CPLGetXMLNode( phMetadata, 
+                                           "spatialReferenceInfo" );
+
+    if( phSRSInfo == NULL )
+    {
+        return;
+    }
+
+    const char* pszModelType = CPLGetXMLValue( phMetadata,
+                               "spatialReferenceInfo.modelType", "None" );
+
+    if( EQUAL( pszModelType, "FunctionalFitting" ) == false )
+    {
+        return;
+    }
+
+    CPLXMLNode* phPolyModel = CPLGetXMLNode( phSRSInfo, "polynomialModel" );
+
+    if ( phPolyModel == NULL )
+    {
+        return;
+    }
+
+    phRPC->dfLINE_OFF     = CPLAtof( CPLGetXMLValue( phPolyModel, "rowOff", "0" ) );
+    phRPC->dfSAMP_OFF     = CPLAtof( CPLGetXMLValue( phPolyModel, "columnOff", "0" ) );
+    phRPC->dfLONG_OFF     = CPLAtof( CPLGetXMLValue( phPolyModel, "xOff", "0" ) );
+    phRPC->dfLAT_OFF      = CPLAtof( CPLGetXMLValue( phPolyModel, "yOff", "0" ) );
+    phRPC->dfHEIGHT_OFF   = CPLAtof( CPLGetXMLValue( phPolyModel, "zOff", "0" ) );
+
+    phRPC->dfLINE_SCALE   = CPLAtof( CPLGetXMLValue( phPolyModel, "rowScale", "0" ) );
+    phRPC->dfSAMP_SCALE   = CPLAtof( CPLGetXMLValue( phPolyModel, "columnScale", "0" ) );
+    phRPC->dfLONG_SCALE   = CPLAtof( CPLGetXMLValue( phPolyModel, "xScale", "0" ) );
+    phRPC->dfLAT_SCALE    = CPLAtof( CPLGetXMLValue( phPolyModel, "yScale", "0" ) );
+    phRPC->dfHEIGHT_SCALE = CPLAtof( CPLGetXMLValue( phPolyModel, "zScale", "0" ) );
+
+    // pPolynomial refers to LINE_NUM
+
+    CPLXMLNode* phPolynomial = CPLGetXMLNode( phPolyModel, "pPolynomial" );
+
+    if ( phPolynomial == NULL )
+    {
+        return;
+    }
+
+    int nNumCoeff = atoi( CPLGetXMLValue( phPolynomial, "nCoefficients", "0" ) );
+
+    if ( nNumCoeff != 20 )
+    {
+        return;
+    }
+
+    const char* pszPolyCoeff = CPLGetXMLValue( phPolynomial, "polynomialCoefficients", "None" );
+
+    if ( EQUAL( pszPolyCoeff, "None" ) )
+    {
+        return;
+    }
+
+    char** papszCeoff = CSLTokenizeString2( pszPolyCoeff, " ", CSLT_STRIPLEADSPACES );
+
+    if( CSLCount( papszCeoff ) != 20 )
+    {
+        return;
+    }
+
+    for( i = 0; i < 20; i++ )
+    {
+        phRPC->adfLINE_NUM_COEFF[anOrder[i] - 1] = CPLAtof( papszCeoff[i] );
+    }
+
+    // qPolynomial refers to LINE_DEN
+
+    phPolynomial = CPLGetXMLNode( phPolyModel, "qPolynomial" );
+
+    if ( phPolynomial == NULL )
+    {
+        return;
+    }
+
+    pszPolyCoeff = CPLGetXMLValue( phPolynomial, "polynomialCoefficients", "None" );
+
+    if ( EQUAL( pszPolyCoeff, "None" ) )
+    {
+        return;
+    }
+
+    papszCeoff = CSLTokenizeString2( pszPolyCoeff, " ", CSLT_STRIPLEADSPACES );
+
+    if( CSLCount( papszCeoff ) != 20 )
+    {
+        return;
+    }
+
+    for( i = 0; i < 20; i++ )
+    {
+        phRPC->adfLINE_DEN_COEFF[anOrder[i] - 1] = CPLAtof( papszCeoff[i] );
+    }
+
+    // rPolynomial refers to SAMP_NUM
+
+    phPolynomial = CPLGetXMLNode( phPolyModel, "rPolynomial" );
+
+    if ( phPolynomial == NULL )
+    {
+        return;
+    }
+
+    pszPolyCoeff = CPLGetXMLValue( phPolynomial, "polynomialCoefficients", "None" );
+
+    if ( EQUAL( pszPolyCoeff, "None" ) )
+    {
+        return;
+    }
+
+    papszCeoff = CSLTokenizeString2( pszPolyCoeff, " ", CSLT_STRIPLEADSPACES );
+
+    if( CSLCount( papszCeoff ) != 20 )
+    {
+        return;
+    }
+
+    for( i = 0; i < 20; i++ )
+    {
+        phRPC->adfSAMP_NUM_COEFF[anOrder[i] - 1] = CPLAtof( papszCeoff[i] );
+    }
+
+    // sPolynomial refers to SAMP_DEN
+
+    phPolynomial = CPLGetXMLNode( phPolyModel, "sPolynomial" );
+
+    if ( phPolynomial == NULL )
+    {
+        return;
+    }
+
+    pszPolyCoeff = CPLGetXMLValue( phPolynomial, "polynomialCoefficients", "None" );
+
+    if ( EQUAL( pszPolyCoeff, "None" ) )
+    {
+        return;
+    }
+
+    papszCeoff = CSLTokenizeString2( pszPolyCoeff, " ", CSLT_STRIPLEADSPACES );
+
+    if( CSLCount( papszCeoff ) != 20 )
+    {
+        return;
+    }
+
+    for( i = 0; i < 20; i++ )
+    {
+        phRPC->adfSAMP_DEN_COEFF[anOrder[i] - 1] = CPLAtof( papszCeoff[i] );
+    }
+}
+
+//  ---------------------------------------------------------------------------
+//                                                                     SetRPC()
+//  ---------------------------------------------------------------------------
+
+void GeoRasterWrapper::SetRPC()
+{
+    //  -------------------------------------------------------------------
+    //  Remove "layerInfo" tree
+    //  -------------------------------------------------------------------
+
+    CPLXMLNode* phLayerInfo = CPLGetXMLNode( phMetadata, "layerInfo" );
+    CPLXMLNode* phClone = NULL;
+
+    if( phLayerInfo )
+    {
+        phClone = CPLCloneXMLTree( phLayerInfo );
+        CPLRemoveXMLChild( phMetadata, phLayerInfo );
+    }
+
+    //  -------------------------------------------------------------------
+    //  Start loading the RPC to "spatialReferenceInfo" tree
+    //  -------------------------------------------------------------------
+
+    int i = 0;
+    CPLString osField, osMultiField;
+    CPLXMLNode* phPolynomial = NULL;
+
+    CPLXMLNode* phSRSInfo = CPLGetXMLNode( phMetadata, 
+                                           "spatialReferenceInfo" );
+
+    if( ! phSRSInfo )
+    {
+        phSRSInfo = CPLCreateXMLNode( phMetadata, CXT_Element, 
+                                      "spatialReferenceInfo" );
+    }
+    else
+    {
+        CPLXMLNode* phNode = NULL;
+
+        phNode = CPLGetXMLNode( phSRSInfo, "isReferenced" );
+        if( phNode )
+        {
+            CPLRemoveXMLChild( phSRSInfo, phNode );
+        }
+
+        phNode = CPLGetXMLNode( phSRSInfo, "SRID" );
+        if( phNode )
+        {
+            CPLRemoveXMLChild( phSRSInfo, phNode );
+        }
+
+        phNode = CPLGetXMLNode( phSRSInfo, "modelCoordinateLocation" );
+        if( phNode )
+        {
+            CPLRemoveXMLChild( phSRSInfo, phNode );
+        }
+
+        phNode = CPLGetXMLNode( phSRSInfo, "modelType" );
+        if( phNode )
+        {
+            CPLRemoveXMLChild( phSRSInfo, phNode );
+        }
+
+        phNode = CPLGetXMLNode( phSRSInfo, "polynomialModel" );
+        if( phNode )
+        {
+            CPLRemoveXMLChild( phSRSInfo, phNode );
+        }
+    }
+
+    CPLCreateXMLElementAndValue( phSRSInfo, "isReferenced", "true" );
+    CPLCreateXMLElementAndValue( phSRSInfo, "SRID", "4327" );
+    CPLCreateXMLElementAndValue( phSRSInfo, "modelCoordinateLocation", 
+                                            "CENTER" );
+    CPLCreateXMLElementAndValue( phSRSInfo, "modelType", "FunctionalFitting" );
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#rowOff",      
+                                    CPLSPrintf( "%.15g", phRPC->dfLINE_OFF ) );
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#columnOff",   
+                                    CPLSPrintf( "%.15g", phRPC->dfSAMP_OFF ) );
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#xOff",        
+                                    CPLSPrintf( "%.15g", phRPC->dfLONG_OFF ) );
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#yOff",        
+                                    CPLSPrintf( "%.15g", phRPC->dfLAT_OFF ) );
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#zOff",        
+                                    CPLSPrintf( "%.15g", phRPC->dfHEIGHT_OFF ) );
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#rowScale",    
+                                    CPLSPrintf( "%.15g", phRPC->dfLINE_SCALE ) );
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#columnScale", 
+                                    CPLSPrintf( "%.15g", phRPC->dfSAMP_SCALE ) );
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#xScale",      
+                                    CPLSPrintf( "%.15g", phRPC->dfLONG_SCALE ) );
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#yScale",      
+                                    CPLSPrintf( "%.15g", phRPC->dfLAT_SCALE ) );
+    CPLSetXMLValue( phSRSInfo, "polynomialModel.#zScale",      
+                                    CPLSPrintf( "%.15g", phRPC->dfHEIGHT_SCALE ) );
+    CPLXMLNode*     phPloyModel = CPLGetXMLNode( phSRSInfo, "polynomialModel" );
+
+    // pPolynomial refers to LINE_NUM
+
+    CPLSetXMLValue( phPloyModel, "pPolynomial.#pType",         "1" );
+    CPLSetXMLValue( phPloyModel, "pPolynomial.#nVars",         "3" );
+    CPLSetXMLValue( phPloyModel, "pPolynomial.#order",         "3" );
+    CPLSetXMLValue( phPloyModel, "pPolynomial.#nCoefficients", "20" );
+    for( i = 0; i < 20; i++ )
+    {
+        osField.Printf( "%.15g", phRPC->adfLINE_NUM_COEFF[anOrder[i] - 1] );
+        if( i > 0 )
+            osMultiField += " ";
+        else
+            osMultiField = "";
+        osMultiField += osField;
+    }
+    phPolynomial = CPLGetXMLNode( phPloyModel, "pPolynomial" );
+    CPLCreateXMLElementAndValue( phPolynomial, "polynomialCoefficients", 
+                                 osMultiField );
+
+    // qPolynomial refers to LINE_DEN
+
+    CPLSetXMLValue( phPloyModel, "qPolynomial.#pType",         "1" );
+    CPLSetXMLValue( phPloyModel, "qPolynomial.#nVars",         "3" );
+    CPLSetXMLValue( phPloyModel, "qPolynomial.#order",         "3" );
+    CPLSetXMLValue( phPloyModel, "qPolynomial.#nCoefficients", "20" );
+    for( i = 0; i < 20; i++ )
+    {
+        osField.Printf( "%.15g", phRPC->adfLINE_DEN_COEFF[anOrder[i] - 1] );
+        if( i > 0 )
+            osMultiField += " ";
+        else
+            osMultiField = "";
+        osMultiField += osField;
+    }
+    phPolynomial = CPLGetXMLNode( phPloyModel, "qPolynomial" );
+    CPLCreateXMLElementAndValue( phPolynomial, "polynomialCoefficients", 
+                                 osMultiField );
+
+    // rPolynomial refers to SAMP_NUM
+
+    CPLSetXMLValue( phPloyModel, "rPolynomial.#pType",         "1" );
+    CPLSetXMLValue( phPloyModel, "rPolynomial.#nVars",         "3" );
+    CPLSetXMLValue( phPloyModel, "rPolynomial.#order",         "3" );
+    CPLSetXMLValue( phPloyModel, "rPolynomial.#nCoefficients", "20" );
+    for( i = 0; i < 20; i++ )
+    {
+        osField.Printf( "%.15g", phRPC->adfSAMP_NUM_COEFF[anOrder[i] - 1] );
+        if( i > 0 )
+            osMultiField += " ";
+        else
+            osMultiField = "";
+        osMultiField += osField;
+    }
+    phPolynomial = CPLGetXMLNode( phPloyModel, "rPolynomial" );
+    CPLCreateXMLElementAndValue( phPolynomial, "polynomialCoefficients", 
+                                 osMultiField );
+
+    // sPolynomial refers to SAMP_DEN
+
+    CPLSetXMLValue( phPloyModel, "sPolynomial.#pType",         "1" );
+    CPLSetXMLValue( phPloyModel, "sPolynomial.#nVars",         "3" );
+    CPLSetXMLValue( phPloyModel, "sPolynomial.#order",         "3" );
+    CPLSetXMLValue( phPloyModel, "sPolynomial.#nCoefficients", "20" );
+    for( i = 0; i < 20; i++ )
+    {
+        osField.Printf( "%.15g", phRPC->adfSAMP_DEN_COEFF[anOrder[i] - 1] );
+        if( i > 0 )
+            osMultiField += " ";
+        else
+            osMultiField = "";
+        osMultiField += osField;
+    }
+    phPolynomial = CPLGetXMLNode( phPloyModel, "sPolynomial" );
+    CPLCreateXMLElementAndValue( phPolynomial, "polynomialCoefficients", 
+                                 osMultiField );
+
+    //  -------------------------------------------------------------------
+    //  Add "layerInfo" tree back
+    //  -------------------------------------------------------------------
+
+    CPLAddXMLChild( phMetadata, phClone );
+}
+
+//  ---------------------------------------------------------------------------
 //                                                                  GetNoData()
 //  ---------------------------------------------------------------------------
 
@@ -2698,6 +3073,16 @@ bool GeoRasterWrapper::FlushMetadata()
       nMLC = MCL_UPPERLEFT;
     }
 
+    if( phRPC )
+    {
+        SetRPC();
+        nSRID = 0;
+    }
+
+    //  --------------------------------------------------------------------
+    //  Serialize XML metadata to plain text
+    //  --------------------------------------------------------------------
+
     char* pszMetadata = CPLSerializeXMLTree( phMetadata );
 
     if( pszMetadata == NULL )
@@ -2713,6 +3098,10 @@ bool GeoRasterWrapper::FlushMetadata()
     {
         nExtentSRID = 0; /* Set spatialExtent to null */
     }
+
+    //  --------------------------------------------------------------------
+    //  Update GeoRaster Metadata
+    //  --------------------------------------------------------------------
 
     int nException = 0;
 
