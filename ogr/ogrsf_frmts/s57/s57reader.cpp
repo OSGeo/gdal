@@ -2644,7 +2644,6 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             poTarget->SetFieldRaw( poDstSG2D, nCCIX - 1, 
                                    pachInsertion, nInsertionBytes );
             CPLFree( pachInsertion );
-
         }
         else if( nCCUI == 2 ) /* DELETE */
         {
@@ -2670,12 +2669,99 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
     }
 
 /* -------------------------------------------------------------------- */
-/*      We don't currently handle FFPC (feature to feature linkage)     */
-/*      issues, but we will at least report them when debugging.        */
+/*      Apply updates to Feature to Feature pointer fields.  Note       */
+/*      INSERT and DELETE are untested.  UPDATE tested per bug #5028.   */
 /* -------------------------------------------------------------------- */
     if( poUpdate->FindField( "FFPC" ) != NULL )
     {
-        CPLDebug( "S57", "Found FFPC, but not applying it." );
+        int     nFFUI = poUpdate->GetIntSubfield( "FFPC", 0, "FFUI", 0 );
+        int     nFFIX = poUpdate->GetIntSubfield( "FFPC", 0, "FFIX", 0 );
+        int     nNFPT = poUpdate->GetIntSubfield( "FFPC", 0, "NFPT", 0 );
+        DDFField *poSrcFFPT = poUpdate->FindField( "FFPT" );
+        DDFField *poDstFFPT = poTarget->FindField( "FFPT" );
+
+        if( (poSrcFFPT == NULL && nFFUI != 2) 
+            || (poDstFFPT == NULL && nFFUI != 1) )
+        {
+            CPLDebug( "S57", "Missing source or target FFPT applying update.");
+            CPLAssert( FALSE );
+            return FALSE;
+        }
+
+        // Create FFPT field on target record, if it does not yet exist.
+        if (poDstFFPT == NULL) 
+        {
+            // Untested!
+            poTarget->AddField(poTarget->GetModule()->FindFieldDefn("FFPT"));
+            poDstFFPT = poTarget->FindField("FFPT");
+            if (poDstFFPT == NULL) {
+                CPLAssert( FALSE );
+                return FALSE;
+            }
+
+            // Delete null default data that was created
+            poTarget->SetFieldRaw( poDstFFPT, 0, NULL, 0 );
+        }
+
+        // FFPT includes COMT which is variable length which would
+        // greatly complicate updates.  But in practice COMT is always
+        // an empty string so we will take a chance and assume that so
+        // we have a fixed record length.  We *could* actually verify that
+        // but I have not done so for now.
+        int nFFPTSize = 10;
+
+        if (nFFUI == 1 ) /* INSERT */
+        {
+            // Untested!
+            CPLDebug( "S57", "Using untested FFPT INSERT code!");
+
+            char        *pachInsertion;
+            int         nInsertionBytes = nFFPTSize * nNFPT;
+
+            pachInsertion = (char *) CPLMalloc(nInsertionBytes + nFFPTSize);
+            memcpy( pachInsertion, poSrcFFPT->GetData(), nInsertionBytes );
+
+            /* 
+            ** If we are inserting before an instance that already
+            ** exists, we must add it to the end of the data being
+            ** inserted.
+            */
+            if( nFFIX <= poDstFFPT->GetRepeatCount() )
+            {
+                memcpy( pachInsertion + nInsertionBytes, 
+                        poDstFFPT->GetData() + nFFPTSize * (nFFIX-1), 
+                        nFFPTSize );
+                nInsertionBytes += nFFPTSize;
+            }
+
+            poTarget->SetFieldRaw( poDstFFPT, nFFIX - 1, 
+                                   pachInsertion, nInsertionBytes );
+            CPLFree( pachInsertion );
+        } 
+        else if( nFFUI == 2 ) /* DELETE */
+        {
+            // Untested!
+            CPLDebug( "S57", "Using untested FFPT DELETE code!");
+
+            /* Wipe each deleted record */
+            for( int i = nNFPT-1; i >= 0; i-- )
+            {
+                poTarget->SetFieldRaw( poDstFFPT, i + nFFIX - 1, NULL, 0 );
+            }
+        }
+        else if( nFFUI == 3 ) /* UPDATE */
+        {
+            /* copy over each ptr */
+            for( int i = 0; i < nNFPT; i++ )
+            {
+                const char *pachRawData;
+
+                pachRawData = poSrcFFPT->GetData() + nFFPTSize * i;
+
+                poTarget->SetFieldRaw( poDstFFPT, i + nFFIX - 1, 
+                                       pachRawData, nFFPTSize );
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
