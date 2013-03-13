@@ -187,6 +187,8 @@ int CPL_DLL GDALTPSTransform(
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
 
+char CPL_DLL ** RPCInfoToMD( GDALRPCInfo *psRPCInfo );
+
 /* RPC based transformer ... src is pixel/line/elev, dst is long/lat/elev */
 
 void CPL_DLL *

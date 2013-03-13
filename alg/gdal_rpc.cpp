@@ -45,7 +45,7 @@ CPL_C_END
 /*      Turn an RPCInfo structure back into it's metadata format.       */
 /************************************************************************/
 
-static char ** RPCInfoToMD( GDALRPCInfo *psRPCInfo )
+char ** RPCInfoToMD( GDALRPCInfo *psRPCInfo )
 
 {
     char **papszMD = NULL;
