@@ -1574,7 +1574,7 @@ const char* OWReplaceString( const char* pszBaseString,
 
     if( pszStart )
     {
-	    char* pszEnd = strstr( pszStart, szUpcaseStopT );
+        char* pszEnd = strstr( pszStart, szUpcaseStopT );
 
         // Concatenate the result
 

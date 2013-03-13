@@ -182,7 +182,7 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     }
 
     //  -------------------------------------------------------------------
-    //  Assign GeoRaster information
+    //  Assign GeoRaster informationf
     //  -------------------------------------------------------------------
 
     poGRD->poGeoRaster   = poGRW;
@@ -198,6 +198,36 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
         poGRD->adfGeoTransform[4] = poGRW->dfYCoefficient[0];
         poGRD->adfGeoTransform[5] = poGRW->dfYCoefficient[1];
         poGRD->adfGeoTransform[3] = poGRW->dfYCoefficient[2];
+    }
+
+    //  -------------------------------------------------------------------
+    //  Copy RPC values to RPC metadata domain
+    //  -------------------------------------------------------------------
+
+    if( poGRW->phRPC )
+    {
+        char **papszRPC_MD = RPCInfoToMD( poGRW->phRPC );
+        char **papszSanitazed = NULL;
+
+        int i = 0;
+        int n = CSLCount( papszRPC_MD );
+
+        for( i = 0; i < n; i++ )
+        {
+            if ( EQUALN( papszRPC_MD[i], "MIN_LAT", 7 )  ||
+                 EQUALN( papszRPC_MD[i], "MIN_LONG", 8 ) ||
+                 EQUALN( papszRPC_MD[i], "MAX_LAT", 7 )  ||
+                 EQUALN( papszRPC_MD[i], "MAX_LONG", 8 ) )
+            {
+                continue;
+            }
+            papszSanitazed = CSLAddString( papszSanitazed, papszRPC_MD[i] );
+        }
+
+        poGRD->SetMetadata( papszSanitazed, "RPC" );
+
+        CSLDestroy( papszRPC_MD );
+        CSLDestroy( papszSanitazed );
     }
 
     //  -------------------------------------------------------------------
@@ -793,6 +823,18 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
     }
 
     // --------------------------------------------------------------------
+    //      Copy RPC 
+    // --------------------------------------------------------------------
+
+    char **papszRPCMetadata = GDALGetMetadata( poSrcDS, "RPC" );
+
+    if ( papszRPCMetadata != NULL )
+    {
+        poDstDS->poGeoRaster->phRPC = (GDALRPCInfo*) VSIMalloc( sizeof(GDALRPCInfo) );
+        GDALExtractRPCInfo( papszRPCMetadata, poDstDS->poGeoRaster->phRPC );
+    }
+
+    // --------------------------------------------------------------------
     //      Copy information to the raster bands
     // --------------------------------------------------------------------
 
@@ -1054,6 +1096,11 @@ void GeoRasterDataset::FlushCache()
 
 CPLErr GeoRasterDataset::GetGeoTransform( double *padfTransform )
 {
+    if( poGeoRaster->phRPC )
+    {
+        return CE_Failure;
+    }
+
     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
     
     if( bGeoTransform )
@@ -1079,6 +1126,11 @@ CPLErr GeoRasterDataset::GetGeoTransform( double *padfTransform )
 
 const char* GeoRasterDataset::GetProjectionRef( void )
 {
+    if( poGeoRaster->phRPC )
+    {
+        return "";
+    }
+
     if( ! poGeoRaster->bIsReferenced )
     {
         return "";
