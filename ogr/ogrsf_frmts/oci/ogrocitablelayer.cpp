@@ -150,12 +150,9 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
 {
     OGROCISession      *poSession = poDS->GetSession();
     sword               nStatus;
-    OGRFeatureDefn *poDefn = new OGRFeatureDefn( pszTable );
 
-    poDefn->Reference();
-
+    CPLString osUnquotedTableName;
     CPLString osQuotedTableName;
-    osQuotedTableName.Printf( "\"%s\"", pszTable );
 
 /* -------------------------------------------------------------------- */
 /*      Split out the owner if available.                               */
@@ -164,12 +161,20 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
     {
         osTableName = strstr(pszTable,".") + 1;
         osOwner.assign( pszTable, strlen(pszTable)-osTableName.size() - 1 );
+        osUnquotedTableName.Printf( "%s.%s", osOwner.c_str(), osTableName.c_str() );
+        osQuotedTableName.Printf( "\"%s\".\"%s\"", osOwner.c_str(), osTableName.c_str() );
     }
     else
     {
         osTableName = pszTable;
         osOwner = "";
+        osUnquotedTableName.Printf( "%s", pszTable );
+        osQuotedTableName.Printf( "\"%s\"", pszTable );
     }
+
+    OGRFeatureDefn *poDefn = new OGRFeatureDefn( osTableName.c_str() );
+
+    poDefn->Reference();
 
 /* -------------------------------------------------------------------- */
 /*      Do a DescribeAll on the table.                                  */
@@ -177,19 +182,54 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
     OCIParam *hAttrParam = NULL;
     OCIParam *hAttrList = NULL;
 
+    // Table name unquoted
+
     nStatus = 
         OCIDescribeAny( poSession->hSvcCtx, poSession->hError,
-                        (dvoid *) osQuotedTableName.c_str(), osQuotedTableName.length(), OCI_OTYPE_NAME,
+                        (dvoid *) osUnquotedTableName.c_str(), 
+                        osUnquotedTableName.length(), OCI_OTYPE_NAME,
                         OCI_DEFAULT, OCI_PTYPE_TABLE, poSession->hDescribe );
+
     if( poSession->Failed( nStatus, "OCIDescribeAny" ) )
     {
         CPLErrorReset();
+
+        // View name unquoted
+
         nStatus =
             OCIDescribeAny(poSession->hSvcCtx, poSession->hError,
-                           (dvoid *) osQuotedTableName.c_str(), osQuotedTableName.length(), OCI_OTYPE_NAME,
+                           (dvoid *) osQuotedTableName.c_str(), 
+                           osQuotedTableName.length(), OCI_OTYPE_NAME,
                            OCI_DEFAULT, OCI_PTYPE_VIEW, poSession->hDescribe );
+
         if( poSession->Failed( nStatus, "OCIDescribeAny" ) )
-            return poDefn;
+        {
+            CPLErrorReset();
+
+            // Table name quoted
+
+            nStatus = 
+                OCIDescribeAny( poSession->hSvcCtx, poSession->hError,
+                                (dvoid *) osQuotedTableName.c_str(), 
+                                osQuotedTableName.length(), OCI_OTYPE_NAME,
+                                OCI_DEFAULT, OCI_PTYPE_TABLE, poSession->hDescribe );
+
+            if( poSession->Failed( nStatus, "OCIDescribeAny" ) )
+            {
+                CPLErrorReset();
+
+                // View name quoted
+
+                nStatus =
+                    OCIDescribeAny(poSession->hSvcCtx, poSession->hError,
+                                   (dvoid *) osQuotedTableName.c_str(), 
+                                   osQuotedTableName.length(), OCI_OTYPE_NAME,
+                                   OCI_DEFAULT, OCI_PTYPE_VIEW, poSession->hDescribe );
+
+                if( poSession->Failed( nStatus, "OCIDescribeAny" ) )
+                    return poDefn;
+            }
+        }
     }
 
     if( poSession->Failed( 
