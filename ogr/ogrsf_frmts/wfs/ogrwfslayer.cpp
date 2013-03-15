@@ -1171,7 +1171,8 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
         /* and non-GML format !!! I guess 50% WFS servers must do it wrong anyway */
         /* GeoServer does currently axis inversion for non GML output, but */
         /* apparently this is not correct : http://jira.codehaus.org/browse/GEOS-3657 */
-        if (bAxisOrderAlreadyInverted &&
+        if (poGeom != NULL &&
+            bAxisOrderAlreadyInverted &&
             strcmp(poBaseDS->GetDriver()->GetName(), "GML") != 0)
         {
             poGeom->swapXY();
