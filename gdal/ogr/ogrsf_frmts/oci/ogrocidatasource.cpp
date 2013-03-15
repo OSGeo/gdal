@@ -984,12 +984,12 @@ OGRLayer *OGROCIDataSource::GetLayerByName( const char *pszName )
     /* first a case sensitive check */
     for( i = 0; i < count; i++ )
     {
-	poLayer = papoLayers[i];
+        poLayer = papoLayers[i];
 
-	if( strcmp( pszName, poLayer->GetName() ) == 0 )
-	{
-	    return poLayer;
-	}
+        if( strcmp( pszName, poLayer->GetName() ) == 0 )
+        {
+            return poLayer;
+        }
     }
 
     char *pszSafeLayerName = CPLStrdup( pszName );
@@ -998,12 +998,12 @@ OGRLayer *OGROCIDataSource::GetLayerByName( const char *pszName )
     /* then case insensitive and laundered */
     for( i = 0; i < count; i++ )
     {
-	poLayer = papoLayers[i];
+        poLayer = papoLayers[i];
 
-	if( EQUAL( pszSafeLayerName, poLayer->GetName() ) )
-	{
-	    break;
-	}
+        if( EQUAL( pszSafeLayerName, poLayer->GetName() ) )
+        {
+            break;
+        }
     }
 
     CPLFree( pszSafeLayerName );
