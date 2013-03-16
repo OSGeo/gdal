@@ -1718,7 +1718,8 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Special case for layer interleaving mode.                       */
 /* -------------------------------------------------------------------- */
-    else if( bSrcIsOSM && CPLGetConfigOption("OGR_INTERLEAVED_READING", NULL) == NULL )
+    else if( bSrcIsOSM &&
+                CSLTestBoolean(CPLGetConfigOption("OGR_INTERLEAVED_READING", "YES")) )
     {
         CPLSetConfigOption("OGR_INTERLEAVED_READING", "YES");
 
