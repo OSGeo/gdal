@@ -511,7 +511,11 @@ static void **CPLGetTLSList()
 
 {
     if( papTLSList == NULL )
-        papTLSList = (void **) CPLCalloc(sizeof(void*),CTLS_MAX*2);
+    {
+        papTLSList = (void **) VSICalloc(sizeof(void*),CTLS_MAX*2);
+        if( papTLSList == NULL )
+            CPLEmergencyError("CPLGetTLSList() failed to allocate TLS list!");
+    }
 
     return papTLSList;
 }
@@ -1005,7 +1009,9 @@ static void **CPLGetTLSList()
     papTLSList = (void **) TlsGetValue( nTLSKey );
     if( papTLSList == NULL )
     {
-        papTLSList = (void **) CPLCalloc(sizeof(void*),CTLS_MAX*2);
+        papTLSList = (void **) VSICalloc(sizeof(void*),CTLS_MAX*2);
+        if( papTLSList == NULL )
+            CPLEmergencyError("CPLGetTLSList() failed to allocate TLS list!");
         if( TlsSetValue( nTLSKey, papTLSList ) == 0 )
         {
             CPLError( CE_Fatal, CPLE_AppDefined, 
