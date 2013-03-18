@@ -76,6 +76,11 @@ static unsigned char jp2_header[] =
 static unsigned char jpc_header[] = 
 {0xff,0x4f};
 
+/* -------------------------------------------------------------------- */
+/*      The number of tiles at a time we will push through the          */
+/*      encoder per flush when writing jpeg2000 streams.                */
+/* -------------------------------------------------------------------- */
+#define TILE_CHUNK_SIZE  1024
 
 /************************************************************************/
 /* ==================================================================== */
@@ -2037,14 +2042,13 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
 /*      computing machine all components to make good estimates.        */
 /* -------------------------------------------------------------------- */
     int  iLine, iLinesWritten = 0;
-#define CHUNK_SIZE  1024
 
     GByte *pabyBuffer = (GByte *) 
         CPLMalloc(nXSize * (GDALGetDataTypeSize(eType)/8) );
 
     CPLAssert( !oTile.get_ycc() );
 
-    for( iLine = 0; iLine < nYSize; iLine += CHUNK_SIZE )
+    for( iLine = 0; iLine < nYSize; iLine += TILE_CHUNK_SIZE )
     {
         for (c=0; c < num_components; c++)
         {
@@ -2052,7 +2056,7 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
             int iSubline = 0;
         
             for( iSubline = iLine; 
-                 iSubline < iLine+CHUNK_SIZE && iSubline < nYSize;
+                 iSubline < iLine+TILE_CHUNK_SIZE && iSubline < nYSize;
                  iSubline++ )
             {
                 if( poBand->RasterIO( GF_Read, 
@@ -2143,7 +2147,7 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
         {
             CPLDebug( "JP2KAK", 
                       "Calling oCodeStream.flush() at line %d",
-                      MIN(nYSize,iLine+CHUNK_SIZE) );
+                      MIN(nYSize,iLine+TILE_CHUNK_SIZE) );
             
             oCodeStream.flush( layer_bytes, layer_count, NULL,
                                true, bComseg );
@@ -2311,6 +2315,16 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         nTileXSize = 20000;
     }
 
+    if( (nTileYSize / TILE_CHUNK_SIZE) > 253) 
+    {
+        // We don't want to process a tile in more than 255 chunks as there
+        // is a limit on the number of tile parts in a tile and we are likely
+        // to flush out a tile part for each processing chunk.  If we might
+        // go over try trimming our Y tile size such that we will get about
+        // 200 tile parts. 
+        nTileYSize = 200 * TILE_CHUNK_SIZE;
+    }
+
     if( CSLFetchNameValue( papszOptions, "BLOCKXSIZE" ) != NULL )
         nTileXSize = atoi(CSLFetchNameValue( papszOptions, "BLOCKXSIZE"));
 
@@ -2331,6 +2345,9 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( nTileXSize > nXSize ) nTileXSize = nXSize;
     if( nTileYSize > nYSize ) nTileYSize = nYSize;
+
+    CPLDebug( "JP2KAK", "Final JPEG2000 Tile Size is %dP x %dL.", 
+              nTileXSize, nTileYSize );
       
 /* -------------------------------------------------------------------- */
 /*      Do we want a comment segment emitted?                           */
