@@ -461,7 +461,12 @@ void CPLSpawnAsyncCloseErrorFileHandle(CPLSpawnedProcess* p)
 #include <signal.h>
 #ifdef HAVE_POSIX_SPAWNP
 #include <spawn.h>
+#ifdef __APPLE__
+#include <crt_externs.h>
+#define environ (*_NSGetEnviron())
+#else
 extern char** environ;
+#endif
 #endif
 
 #if 0
