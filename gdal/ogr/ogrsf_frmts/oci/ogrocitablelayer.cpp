@@ -172,7 +172,7 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
         osQuotedTableName.Printf( "\"%s\"", pszTable );
     }
 
-    OGRFeatureDefn *poDefn = new OGRFeatureDefn( osTableName.c_str() );
+    OGRFeatureDefn *poDefn = new OGRFeatureDefn( osUnquotedTableName.c_str() );
 
     poDefn->Reference();
 
