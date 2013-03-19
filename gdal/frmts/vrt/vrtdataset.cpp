@@ -955,7 +955,7 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
             new VRTRawRasterBand( this, GetRasterCount() + 1, eType );
 
         eErr = 
-            poBand->SetRawLink( pszFilename, NULL, FALSE, 
+            poBand->SetRawLink( pszFilename, NULL, bRelativeToVRT,
                                 nImageOffset, nPixelOffset, nLineOffset, 
                                 pszByteOrder );
         if( eErr != CE_None )
