@@ -1552,7 +1552,9 @@ static void **CPLGetTLSList()
     papTLSList = (void **) pthread_getspecific( oTLSKey );
     if( papTLSList == NULL )
     {
-        papTLSList = (void **) CPLCalloc(sizeof(void*),CTLS_MAX*2);
+        papTLSList = (void **) VSICalloc(sizeof(void*),CTLS_MAX*2);
+        if( papTLSList == NULL )
+            CPLEmergencyError("CPLGetTLSList() failed to allocate TLS list!");
         if( pthread_setspecific( oTLSKey, papTLSList ) != 0 )
         {
             CPLError( CE_Fatal, CPLE_AppDefined,
