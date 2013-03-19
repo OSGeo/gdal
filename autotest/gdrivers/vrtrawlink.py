@@ -37,6 +37,13 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 
+def _xmlsearch(root, nodetype, name):
+    for node in root[2:]:
+        if node[0] == nodetype and node[1] == name:
+            return node
+    else:
+        None
+
 ###############################################################################
 # Verify reading from simple existing raw definition.
 
@@ -159,6 +166,47 @@ def vrtrawlink_4():
     return 'success'
 
 ###############################################################################
+# Add a new band, and check the relativeToVRT property.
+
+def vrtrawlink_5():
+
+    driver = gdal.GetDriverByName( "VRT" );
+    ds = driver.Create( 'tmp/rawlink.vrt', 31, 35, 0 )
+
+    # Add a new band pointing to this bogus file.
+    options = [
+        'subClass=VRTRawRasterBand',
+        'SourceFilename=tmp/rawlink.dat',
+        'relativeToVRT=1',
+        'ImageOffset=100',
+        'PixelOffset=3',
+        'LineOffset=93',
+        'ByteOrder=MSB'
+        ]
+
+    result = ds.AddBand( gdal.GDT_UInt16, options )
+    if result != gdal.CE_None:
+        gdaltest.post_reason( 'AddBand() returned error code' )
+        return 'fail'
+
+    gdaltest.rawlink_ds.FlushCache()
+
+    # Close and reopen to ensure we are getting data from disk.
+    ds = None
+    xmlstring = open( 'tmp/rawlink.vrt' ).read()
+
+    node = gdal.ParseXMLString( xmlstring )
+    node = _xmlsearch(node, gdal.CXT_Element, 'VRTRasterBand')
+    node = _xmlsearch(node, gdal.CXT_Element, 'SourceFilename')
+    node = _xmlsearch(node, gdal.CXT_Attribute, 'relativeToVRT')
+
+    if node is None or node[2][1] != "1":
+        gdaltest.post_reason( 'incorrect relativeToVRT value' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def vrtrawlink_cleanup():
@@ -176,6 +224,7 @@ gdaltest_list = [
     vrtrawlink_2,
     vrtrawlink_3,
     vrtrawlink_4,
+    vrtrawlink_5,
     vrtrawlink_cleanup ]
 
 if __name__ == '__main__':
