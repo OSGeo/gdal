@@ -189,6 +189,27 @@ bool BAGRasterBand::Initialize( hid_t hDatasetID, const char *pszName )
             nBlockXSize  = (int) panChunkDims[nDimSize-1];
             nBlockYSize  = (int) panChunkDims[nDimSize-2];
         }
+
+        int nfilters = H5Pget_nfilters( listid );
+
+        H5Z_filter_t filter;
+        char         name[120];
+        size_t       cd_nelmts = 20;
+        unsigned int cd_values[20];
+        unsigned int flags;
+        for (int i = 0; i < nfilters; i++) 
+        {
+          filter = H5Pget_filter(listid, i, &flags, (size_t *)&cd_nelmts, cd_values, 120, name);
+          if (filter == H5Z_FILTER_DEFLATE)
+            poDS->SetMetadataItem( "COMPRESSION", "DEFLATE", "IMAGE_STRUCTURE" );
+          else if (filter == H5Z_FILTER_NBIT)
+            poDS->SetMetadataItem( "COMPRESSION", "NBIT", "IMAGE_STRUCTURE" );
+          else if (filter == H5Z_FILTER_SCALEOFFSET)
+            poDS->SetMetadataItem( "COMPRESSION", "SCALEOFFSET", "IMAGE_STRUCTURE" );
+          else if (filter == H5Z_FILTER_SZIP)
+            poDS->SetMetadataItem( "COMPRESSION", "SZIP", "IMAGE_STRUCTURE" );
+        }
+
         H5Pclose(listid);
     }
 
