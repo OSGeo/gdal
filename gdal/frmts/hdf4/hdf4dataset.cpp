@@ -926,6 +926,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
             if ( nSubDatasets != CSLCount(papszGrids) )
             {
                 CSLDestroy( papszGrids );
+                GDclose( hHDF4 ); 
                 CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
                 delete poDS;
                 CPLAcquireMutex(hHDF4Mutex, 1000.0);
@@ -1004,7 +1005,6 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
             }
 
             CSLDestroy( papszGrids );
-            GDclose( hHDF4 );
         }
         GDclose( hHDF4 );
 
@@ -1072,8 +1072,16 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     if ( poDS->hGR != -1 )
     {
         if ( GRfileinfo( poDS->hGR, &poDS->nImages, &nAttrs ) == -1 )
+        {
+            CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+            GRend( poDS->hGR );
+            poDS->hGR = 0;
+            Hclose( hHDF4 );
+            delete poDS;
+            CPLAcquireMutex(hHDF4Mutex, 1000.0);
             return NULL;
-        
+        }
+
         for ( i = 0; i < poDS->nImages; i++ )
         {
             int32   iInterlaceMode; 
@@ -1083,7 +1091,15 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
             // of samples per pixel. aiDimSizes has only two dimensions.
             if ( GRgetiminfo( iGR, szName, &iRank, &iNumType, &iInterlaceMode,
                               aiDimSizes, &nAttrs ) != 0 )
+            {
+                CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
+                GRend( poDS->hGR );
+                poDS->hGR = 0;
+                Hclose( hHDF4 );
+                delete poDS;
+                CPLAcquireMutex(hHDF4Mutex, 1000.0);
                 return NULL;
+            }
             nCount = CSLCount( poDS->papszSubDatasets ) / 2;
             sprintf( szTemp, "SUBDATASET_%d_NAME", nCount + 1 );
             poDS->papszSubDatasets = CSLSetNameValue(poDS->papszSubDatasets,
