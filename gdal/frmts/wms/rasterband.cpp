@@ -77,6 +77,12 @@ char** GDALWMSRasterBand::BuildHTTPRequestOpts()
     if (m_parent_dataset->m_unsafeSsl >= 1) {
         http_request_opts = CSLAddString(http_request_opts, "UNSAFESSL=1");
     }
+    if (m_parent_dataset->m_osUserPwd.size() != 0) 
+    {
+        CPLString osUserPwdOptStr("USERPWD=");
+        osUserPwdOptStr += m_parent_dataset->m_osUserPwd;
+        http_request_opts = CSLAddString(http_request_opts, osUserPwdOptStr.c_str());
+    }
 
    return http_request_opts;
 }

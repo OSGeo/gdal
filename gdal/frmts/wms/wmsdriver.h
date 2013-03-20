@@ -270,6 +270,7 @@ protected:
     int m_zeroblock_on_serverexceptions;
     CPLString m_osUserAgent;
     CPLString m_osReferer;
+    CPLString m_osUserPwd;
 
     GDALWMSDataWindow m_default_data_window;
     int m_default_block_size_x, m_default_block_size_y;
