@@ -98,10 +98,10 @@ HDF5Dataset::HDF5Dataset()
 HDF5Dataset::~HDF5Dataset()
 {
     CSLDestroy( papszMetadata );
-    if( hHDF5 > 0 )
-        H5Fclose( hHDF5 );
     if( hGroupID > 0 )
         H5Gclose( hGroupID );
+    if( hHDF5 > 0 )
+        H5Fclose( hHDF5 );
     CSLDestroy( papszSubDatasets );
     if( poH5RootGroup != NULL ) {
         DestroyH5Objects( poH5RootGroup );
@@ -1066,4 +1066,136 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
 
     HDF5ListGroupObjects( poRootGroup, bSUBDATASET );
     return CE_None;
+}
+
+
+/**
+ * Reads an array of double attributes from the HDF5 metadata.
+ * It reads the attributes directly on it's binary form directly,
+ * thus avoiding string conversions.
+ *
+ * Important: It allocates the memory for the attributes internally,
+ * so the caller must free the returned array after using it.
+ * @param pszAttrName Name of the attribute to be read.
+ *        the attribute name must be the form:
+ *            root attribute name
+ *            SUBDATASET/subdataset attribute name
+ * @param pdfValues pointer wich will store the array of doubles read.
+ * @param nLen it stores the length of the array read. If NULL it doesn't 
+ *        inform the lenght of the array.
+ * @return CPLErr CE_None in case of success, CE_Failure in case of failure
+ */
+CPLErr HDF5Dataset::HDF5ReadDoubleAttr(const char* pszAttrFullPath,
+                                       double **pdfValues,int *nLen)
+{
+    CPLErr          retVal = CE_Failure;
+    hid_t           hAttrID=-1;
+    hid_t           hAttrTypeID=-1;
+    hid_t           hAttrNativeType=-1;
+    hid_t           hAttrSpace=-1;
+    hid_t           hObjAttrID=-1;
+
+    hsize_t         nSize[64];
+    unsigned int    nAttrElmts;
+    hsize_t         i;
+    unsigned int    nAttrDims;
+
+    size_t nSlashPos;
+
+    CPLString osAttrFullPath(pszAttrFullPath);
+    CPLString osObjName;
+    CPLString osAttrName;
+
+    //Search for the last "/" in order to get the
+    //Path to the attribute
+    nSlashPos = osAttrFullPath.find_last_of("/");
+
+    //If objects name have been found
+    if(nSlashPos != CPLString::npos )
+    {
+        //Split Object name (dataset, group)
+        osObjName = osAttrFullPath.substr(0,nSlashPos);
+        //Split attribute name
+        osAttrName = osAttrFullPath.substr(nSlashPos+1);
+    }
+    else
+    {
+        //By default the group is root, and
+        //the attribute is the full path
+        osObjName = "/";
+        osAttrName = pszAttrFullPath;
+    }
+
+    hObjAttrID = H5Oopen( hHDF5, osObjName.c_str(),H5P_DEFAULT);
+
+    if(hObjAttrID < 0)
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Object %s could not be opened\n", pszAttrFullPath);
+        retVal = CE_Failure;
+    }
+    else
+    {
+        //Open attribute handler by name, from the object handler opened
+        //earlier
+        hAttrID = H5Aopen_name( hObjAttrID, osAttrName.c_str());
+
+        //Check for errors opening the attribute
+        if(hAttrID <0)
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Attribute %s could not be opened\n", pszAttrFullPath);
+            retVal = CE_Failure;
+        }
+        else
+        {
+            hAttrTypeID      = H5Aget_type( hAttrID );
+            hAttrNativeType  = H5Tget_native_type( hAttrTypeID, H5T_DIR_DEFAULT );
+            hAttrSpace       = H5Aget_space( hAttrID );
+            nAttrDims        = H5Sget_simple_extent_dims( hAttrSpace, nSize, NULL );
+
+            if( !H5Tequal( H5T_NATIVE_DOUBLE, hAttrNativeType ) )
+            {
+                 CPLError( CE_Failure, CPLE_OpenFailed,
+                                 "Attribute %s is not of type double\n", pszAttrFullPath);
+                 retVal = CE_Failure;
+            }
+            else
+            {
+                //Get the ammount of elements
+                nAttrElmts = 1;
+                for( i=0; i < nAttrDims; i++ )
+                {
+                    //For multidimensional attributes
+                     nAttrElmts *= nSize[i];
+                }
+
+                if(nLen != NULL)
+                    *nLen = nAttrElmts;
+
+                (*pdfValues) = (double *) CPLMalloc(nAttrElmts*sizeof(double));
+
+                //Read the attribute contents
+                if(H5Aread( hAttrID, hAttrNativeType, *pdfValues )<0)
+                {
+                     CPLError( CE_Failure, CPLE_OpenFailed,
+                               "Attribute %s could not be opened\n", 
+                               pszAttrFullPath);
+                     retVal = CE_Failure;
+                }
+                else
+                {
+                    retVal = CE_None;
+                }
+            }
+
+            H5Tclose(hAttrNativeType);
+            H5Tclose(hAttrTypeID);
+            H5Sclose(hAttrSpace);
+            H5Aclose(hAttrID);
+        }
+        H5Oclose(hObjAttrID);
+    }
+
+    return retVal;
 }
