@@ -102,6 +102,7 @@ static const char *apszGcsNameMapping[] = {
 "Greek_Geodetic_Reference_System_1987", "GCS_GGRS_1987",
 "Militar_Geographische_Institute", "GCS_MGI",
 "ED50", "GCS_European_1950",
+"ETRS89", "GCS_ETRS_1989",
 NULL, NULL};
 
 static const char *apszGcsNameMappingBasedOnProjCS[] = {
