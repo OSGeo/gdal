@@ -837,6 +837,18 @@ void VSICurlStreamingHandle::DownloadInThread()
 {
     VSICurlSetOptions(hCurlHandle, pszURL);
 
+    static int bHasCheckVersion = FALSE;
+    static int bSupportGZip = FALSE;
+    if (!bHasCheckVersion)
+    {
+        bSupportGZip = strstr(curl_version(), "zlib/") != NULL;
+        bHasCheckVersion = TRUE;
+    }
+    if (bSupportGZip && CSLTestBoolean(CPLGetConfigOption("CPL_CURL_GZIP", "YES")))
+    {
+        curl_easy_setopt(hCurlHandle, CURLOPT_ENCODING, "gzip");
+    }
+
     if (pabyHeaderData == NULL)
         pabyHeaderData = (GByte*) CPLMalloc(HEADER_SIZE + 1);
     nHeaderSize = 0;
