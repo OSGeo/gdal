@@ -1000,8 +1000,7 @@ static void **CPLGetTLSList()
         nTLSKey = TlsAlloc();
         if( nTLSKey == TLS_OUT_OF_INDEXES )
         {
-            CPLError( CE_Fatal, CPLE_AppDefined, 
-                      "TlsAlloc() failed!" );
+            CPLEmergencyError( "CPLGetTLSList(): TlsAlloc() failed!" );
         }
         bTLSKeySetup = TRUE;
     }
@@ -1014,8 +1013,7 @@ static void **CPLGetTLSList()
             CPLEmergencyError("CPLGetTLSList() failed to allocate TLS list!");
         if( TlsSetValue( nTLSKey, papTLSList ) == 0 )
         {
-            CPLError( CE_Fatal, CPLE_AppDefined, 
-                      "TlsSetValue() failed!" );
+            CPLEmergencyError( "CPLGetTLSList(): TlsSetValue() failed!" );
         }
     }
 
@@ -1545,8 +1543,7 @@ static void **CPLGetTLSList()
 
     if ( pthread_once(&oTLSKeySetup, CPLMake_key) != 0 )
     {
-        CPLError( CE_Fatal, CPLE_AppDefined,
-            "pthread_once() failed!" );
+        CPLEmergencyError( "CPLGetTLSList(): pthread_once() failed!" );
     }
 
     papTLSList = (void **) pthread_getspecific( oTLSKey );
@@ -1557,8 +1554,8 @@ static void **CPLGetTLSList()
             CPLEmergencyError("CPLGetTLSList() failed to allocate TLS list!");
         if( pthread_setspecific( oTLSKey, papTLSList ) != 0 )
         {
-            CPLError( CE_Fatal, CPLE_AppDefined,
-                "pthread_setspecific() failed!" );
+            CPLEmergencyError( 
+                "CPLGetTLSList(): pthread_setspecific() failed!" );
         }
     }
 
