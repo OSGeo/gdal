@@ -289,25 +289,26 @@ void CPLEmergencyError( const char *pszMessage )
     CPLErrorContext *psCtx = NULL;
     static int bInEmergencyError = FALSE;
 
+    // If we are already in emergency error then one of the 
+    // following failed, so avoid them the second time through.
     if( !bInEmergencyError )
     {
         bInEmergencyError = TRUE;
         psCtx = (CPLErrorContext *) CPLGetTLS( CTLS_ERRORCONTEXT );
+
+        if( psCtx != NULL && psCtx->psHandlerStack != NULL )
+        {
+            psCtx->psHandlerStack->pfnHandler( CE_Fatal, CPLE_AppDefined, 
+                                               pszMessage );
+        }
+        else if( pfnErrorHandler != NULL )
+        {
+            pfnErrorHandler( CE_Fatal, CPLE_AppDefined, pszMessage );
+        }
     }
 
-    if( psCtx != NULL && psCtx->psHandlerStack != NULL )
-    {
-        psCtx->psHandlerStack->pfnHandler( CE_Fatal, CPLE_AppDefined, 
-                                           pszMessage );
-    }
-    else if( pfnErrorHandler != NULL )
-    {
-        pfnErrorHandler( CE_Fatal, CPLE_AppDefined, pszMessage );
-    }
-    else
-    {
-        fprintf( stderr, "FATAL: %s\n", pszMessage );
-    }
+    // Ultimate fallback.
+    fprintf( stderr, "FATAL: %s\n", pszMessage );
 
     abort();
 }
