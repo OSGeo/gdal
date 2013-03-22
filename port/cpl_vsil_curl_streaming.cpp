@@ -844,7 +844,8 @@ void VSICurlStreamingHandle::DownloadInThread()
         bSupportGZip = strstr(curl_version(), "zlib/") != NULL;
         bHasCheckVersion = TRUE;
     }
-    if (bSupportGZip && CSLTestBoolean(CPLGetConfigOption("CPL_CURL_GZIP", "YES")))
+    /* FIXME: it has been turned OFF by default for now. Fails with some servers */
+    if (bSupportGZip && CSLTestBoolean(CPLGetConfigOption("CPL_CURL_GZIP", "NO")))
     {
         curl_easy_setopt(hCurlHandle, CURLOPT_ENCODING, "gzip");
     }
