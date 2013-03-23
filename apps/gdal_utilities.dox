@@ -34,6 +34,7 @@ The following utility programs are distributed with GDAL.
 <li> \ref gdalmove - Transform the coordinate system of a file (GDAL >= 1.10)
 <li> \ref gdal_edit - Edit in place various information of an existing GDAL dataset (projection, geotransform, nodata, metadata)
 <li> \ref gdal-config - Get options required to build software using GDAL.
+<li> \ref gdalmanage - Identify, copy, rename and delete raster.
 </ul>
 
 \section gdal_utilities_creating Creating New Files
@@ -2309,5 +2310,95 @@ GEOGCS["SAD69",
 \if man
 \section gdalsrsinfo_author AUTHORS
 Frank Warmerdam <warmerdam@pobox.com>, Etienne Tourigny <etourigny.dev-at-gmail-dot-com>
+\endif
+*/
+
+*******************************************************************************
+/*! \page gdalmanage gdalmanage
+
+Identify, delete, rename and copy raster data files
+
+\section gdalmanage_synopsis SYNOPSIS
+
+\verbatim
+Usage: gdalmanage mode [-r] [-u] [-f format]
+                  datasetname [newdatasetname]
+\endverbatim
+
+\section gdalmanage_description DESCRIPTION
+
+The gdalmanage program can perform various operations on raster data files, depending on the chosen <i>mode</i>. This includes identifying raster data types and deleting, renaming or copying the files.
+
+<dl>
+<dt> <i>mode</i>:</dt><dd>Mode of operation</dd>
+ <dl>
+ <dt> <b>identify</b> <i>datasetname</i>:</dt><dd>List data format of file.</dd>
+ <dt> <b>copy</b> <i>datasetname newdatasetname</i>:</dt><dd>Create a copy of the raster file with a new name.</dd>
+ <dt> <b>rename</b> <i>datasetname newdatasetname</i>:</dt><dd>Change the name of the raster file.</dd>
+ <dt> <b>delete</b> <i>datasetname</i>:</dt><dd>Delete raster file.</dd>
+ </dl>
+
+ <dt> <b>-r</b>:</dt><dd>Recursively scan files/folders for raster files.</dd>
+ <dt> <b>-u</b>:</dt><dd>Report failures if file type is unidentified.</dd>
+ <dt> <b>-f</b> <i>format</i>:</dt><dd>Specify format of raster file if unknown by the application. Uses short data format name (e.g. <i>GTiff</i>).</dd>
+
+<dt> <i>datasetname</i>:</dt><dd>Raster file to operate on.</dd>
+<dt> <i>newdatasetname</i>:</dt><dd>For copy and rename modes, you provide a <i>source</i> filename and a <i>target</i> filename, just like copy and move commands in an operating system.</dd>
+</dl>
+
+\section gdalmanage_exampes EXAMPLES
+
+\subsection gdalmanage_example_identify Using identify mode
+
+Report the data format of the raster file by using the <i>identify</i> mode and specifying a data file name:
+
+\verbatim
+$ gdalmanage identify NE1_50M_SR_W.tif
+
+NE1_50M_SR_W.tif: GTiff
+\endverbatim
+
+Recursive mode will scan subfolders and report the data format:
+
+\verbatim
+$ gdalmanage identify -r 50m_raster/
+
+NE1_50M_SR_W/ne1_50m.jpg: JPEG
+NE1_50M_SR_W/ne1_50m.png: PNG
+NE1_50M_SR_W/ne1_50m_20pct.tif: GTiff
+NE1_50M_SR_W/ne1_50m_band1.tif: GTiff
+NE1_50M_SR_W/ne1_50m_print.png: PNG
+NE1_50M_SR_W/NE1_50M_SR_W.aux: HFA
+NE1_50M_SR_W/NE1_50M_SR_W.tif: GTiff
+NE1_50M_SR_W/ne1_50m_sub.tif: GTiff
+NE1_50M_SR_W/ne1_50m_sub2.tif: GTiff
+
+\endverbatim
+\subsection gdalmanage_example_copy Using copy mode
+
+Copy the raster data:
+
+\verbatim
+$ gdalmanage copy NE1_50M_SR_W.tif ne1_copy.tif
+\endverbatim
+
+\subsection gdalmanage_example_rename Using rename mode
+
+Rename raster data:
+\verbatim
+$ gdalmanage rename NE1_50M_SR_W.tif ne1_rename.tif
+\endverbatim
+
+\subsection gdalmanage_example_delete Using delete mode
+
+Delete the raster data:
+
+\verbatim
+gdalmanage delete NE1_50M_SR_W.tif
+\endverbatim
+
+\if man
+\section gdalmanage_author AUTHORS
+Tyler Mitchell <spatialguru@shaw.ca>
 \endif
 */
