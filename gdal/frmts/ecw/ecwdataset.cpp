@@ -96,21 +96,27 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview )
     if( poDS->psFileInfo->eColorSpace == NCSCS_NONE )
         eBandInterp = GCI_Undefined;
     else if( poDS->psFileInfo->eColorSpace == NCSCS_GREYSCALE )
-        eBandInterp = GCI_GrayIndex;
-    else if( poDS->psFileInfo->eColorSpace == NCSCS_MULTIBAND )
-        eBandInterp = GCI_Undefined;
-    else if( poDS->psFileInfo->eColorSpace == NCSCS_sRGB )
     {
-        if( nBand == 1 )
-            eBandInterp = GCI_RedBand;
-        else if( nBand == 2 )
-            eBandInterp = GCI_GreenBand;
-        else if( nBand == 3 )
-            eBandInterp = GCI_BlueBand;
-        else if( nBand == 4 )
+        eBandInterp = GCI_GrayIndex;
+        //we could also have alpha band. 
+        if ( strcmp(poDS->psFileInfo->pBands[nBand-1].szDesc, NCS_BANDDESC_AllOpacity) == 0 ||  strcmp(poDS->psFileInfo->pBands[nBand-1].szDesc, NCS_BANDDESC_GreyscaleOpacity) ){
             eBandInterp = GCI_AlphaBand;
-        else
-            eBandInterp = GCI_Undefined;
+        }
+    }else if (poDS->psFileInfo->eColorSpace == NCSCS_MULTIBAND ){
+        eBandInterp = ECWGetColorInterpretationByName(poDS->psFileInfo->pBands[nBand-1].szDesc);
+    }else if (poDS->psFileInfo->eColorSpace == NCSCS_sRGB){
+        //color interpretation is the most important. 
+        if( nBand == 1 )
+                eBandInterp = GCI_RedBand;
+            else if( nBand == 2 )
+                eBandInterp = GCI_GreenBand;
+            else if( nBand == 3 )
+                eBandInterp = GCI_BlueBand;
+            else if (nBand == 4){
+                eBandInterp = GCI_AlphaBand;
+            }else {
+                   eBandInterp = GCI_Undefined;
+            }
     }
     else if( poDS->psFileInfo->eColorSpace == NCSCS_YCbCr )
     {
@@ -235,6 +241,269 @@ CPLErr ECWRasterBand::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                               nBufXSize, nBufYSize, eDT, 
                               1, &nBand, papszOptions );
 }
+
+//statistics support: 
+#if ECWSDK_VERSION >= 50
+
+/************************************************************************/
+/*                       GetDefaultHistogram()                          */
+/************************************************************************/
+
+CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
+    int *pnBuckets, int ** ppanHistogram,
+    int bForce,
+    GDALProgressFunc f, void *pProgressData){
+
+        int bForceCoalesced = bForce;
+        // If file version is smaller than 3, there will be no statistics in the file. But if it is version 3 or higher we don't want underlying implementation to compute histogram
+        // so we set bForceCoalesced to FALSE. 
+        if (poGDS->psFileInfo->nFormatVersion >= 3){
+            bForceCoalesced = FALSE;
+        }
+        // We check if we have PAM histogram. If we have them we return them. This will allow to override statistics stored in the file. 
+        CPLErr pamError =  GDALPamRasterBand::GetDefaultHistogram(pdfMin, pdfMax, pnBuckets, ppanHistogram, bForceCoalesced, f, pProgressData);
+        if ( pamError == CE_None || poGDS->psFileInfo->nFormatVersion<3 ){
+            return pamError;
+        }
+
+        NCS::CError error = poGDS->StatisticsEnsureInitialized();
+        if (!error.Success()){
+            CPLError( CE_Warning, CPLE_AppDefined,
+                "ECWRDataset::StatisticsEnsureInitialized failed in ECWRasterBand::GetDefaultHistogram. " );
+            return CE_Failure;
+        }
+        GetBandIndexAndCountForStatistics(nStatsBandIndex, nStatsBandCount);
+        if ( poGDS->pStatistics != NULL ){
+            NCSBandStats& bandStats = poGDS->pStatistics->BandsStats[nBand-1];
+            if ( bandStats.Histogram != NULL && bandStats.nHistBucketCount > 0 ){
+                *pnBuckets = bandStats.nHistBucketCount;
+                *ppanHistogram = (int *)VSIMalloc(bandStats.nHistBucketCount *sizeof(int));
+                for (size_t i = 0; i < bandStats.nHistBucketCount; i++){
+                    (*ppanHistogram)[i] = (int) bandStats.Histogram[i];
+                }
+            }else{
+                //no default histogram in file. We push it down for the logic of computation/returning warning. 
+                return GDALRasterBand::GetDefaultHistogram(pdfMin,pdfMax,pnBuckets,ppanHistogram,bForce,f, pProgressData);
+            }
+            if ( pdfMin != NULL ){
+                *pdfMin = bandStats.fMinHist;
+            }
+            if ( pdfMax != NULL ){
+                *pdfMax = bandStats.fMaxHist;
+            }
+            return CE_None;
+        }else {
+            //no default histogram in file. We push it down for the logic of computation/returning warning. 
+            return GDALRasterBand::GetDefaultHistogram(pdfMin,pdfMax,pnBuckets,ppanHistogram,bForce,f, pProgressData);
+        }
+}
+
+/************************************************************************/
+/*                       SetDefaultHistogram()                          */
+/************************************************************************/
+
+CPLErr ECWRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
+    int nBuckets, int *panHistogram ){
+        //Only version 3 supports saving statistics. 
+        if (poGDS->psFileInfo->nFormatVersion < 3){
+            return GDALPamRasterBand::SetDefaultHistogram(dfMin, dfMax, nBuckets, panHistogram);
+        }
+        
+        //determine if there are statistics in PAM file. 
+        double dummy;
+        int dummy_i;
+        int *dummy_histogram;
+        bool hasPAMDefaultHistogram = GDALPamRasterBand::GetDefaultHistogram(&dummy, &dummy, &dummy_i, &dummy_histogram, FALSE, NULL, NULL) == CE_None;
+        if (hasPAMDefaultHistogram){
+            VSIFree(dummy_histogram);
+        }
+
+        //ECW SDK ignores statistics for opacity bands. So we need to compute number of bands without opacity.
+        GetBandIndexAndCountForStatistics(nStatsBandIndex, nStatsBandCount);
+        UINT32 bucketCounts[256];
+        std::fill_n(bucketCounts, nStatsBandCount, 0);
+        bucketCounts[nStatsBandIndex] = nBuckets;
+
+        NCS::CError error = poGDS->StatisticsEnsureInitialized();
+        if (!error.Success()){
+            CPLError( CE_Warning, CPLE_AppDefined,
+                "ECWRDataset::StatisticsEnsureInitialized failed in ECWRasterBand::SetDefaultHistogram. Default histogram will be written to PAM. " );
+            return GDALPamRasterBand::SetDefaultHistogram(dfMin, dfMax, nBuckets, panHistogram);
+        }
+        
+        NCSFileStatistics *pStatistics = poGDS->pStatistics;
+
+        if (pStatistics == NULL){
+            error = NCSEcwInitStatistics(&pStatistics, nStatsBandCount, bucketCounts);
+            poGDS->bStatisticsDirty = TRUE;
+            poGDS->pStatistics = pStatistics;
+            if (!error.Success()){
+                CPLError( CE_Warning, CPLE_AppDefined,
+                         "NCSEcwInitStatistics failed in ECWRasterBand::SetDefaultHistogram." );
+                return GDALPamRasterBand::SetDefaultHistogram(dfMin, dfMax, nBuckets, panHistogram);
+            }
+            //no error statistics properly initialized but there were no statistics previously. 
+        }else{
+            //is there a room for our band already? 
+            //This should account for following cases: 
+            //1. Existing histogram (for this or different band) has smaller bucket count. 
+            //2. There is no existing histogram but statistics are set for one or more bands (pStatistics->nHistBucketCounts is zero). 
+            if (pStatistics->BandsStats[nStatsBandIndex].nHistBucketCount != nBuckets){
+                //no. There is no room. We need more!
+                NCSFileStatistics *pNewStatistics = NULL;
+                for (size_t i=0;i<pStatistics->nNumberOfBands;i++){
+                    bucketCounts[i] = pStatistics->BandsStats[i].nHistBucketCount;
+                }
+                bucketCounts[nStatsBandIndex] = nBuckets;
+                if (nBuckets < pStatistics->BandsStats[nStatsBandIndex].nHistBucketCount){
+                    pStatistics->BandsStats[nStatsBandIndex].nHistBucketCount = nBuckets;
+                }
+                error = NCSEcwInitStatistics(&pNewStatistics, nStatsBandCount, bucketCounts);
+                if (!error.Success()){
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                             "NCSEcwInitStatistics failed in ECWRasterBand::SetDefaultHistogram (realocate)." );
+                    return GDALPamRasterBand::SetDefaultHistogram(dfMin, dfMax, nBuckets, panHistogram);
+                }
+                //we need to copy existing statistics.
+                error = NCSEcwCopyStatistics(&pNewStatistics, pStatistics);
+                if (!error.Success()){
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                        "NCSEcwCopyStatistics failed in ECWRasterBand::SetDefaultHistogram." );
+                    NCSEcwFreeStatistics(pNewStatistics);
+                    return GDALPamRasterBand::SetDefaultHistogram(dfMin, dfMax, nBuckets, panHistogram);
+                }
+                pNewStatistics->nNumberOfBands = nStatsBandCount;
+                NCSEcwFreeStatistics(pStatistics);
+                pStatistics = pNewStatistics;
+                poGDS->pStatistics = pStatistics;
+                poGDS->bStatisticsDirty = TRUE;
+            }
+        }
+
+        //at this point we have allocated statistics structure.
+        pStatistics->BandsStats[nStatsBandIndex].fMinHist = (IEEE4) dfMin;
+        pStatistics->BandsStats[nStatsBandIndex].fMaxHist = (IEEE4) dfMax;
+        for (int i=0;i<nBuckets;i++){
+            pStatistics->BandsStats[nStatsBandIndex].Histogram[i] = (UINT64)panHistogram[i];
+        }
+        
+        if (hasPAMDefaultHistogram){
+            CPLError( CE_Debug, CPLE_AppDefined,
+                        "PAM default histogram will be overwritten." );
+            return GDALPamRasterBand::SetDefaultHistogram(dfMin, dfMax, nBuckets, panHistogram);
+        }
+        return CE_None;
+}
+
+/************************************************************************/
+/*                   GetBandIndexAndCountForStatistics()                */
+/************************************************************************/
+
+void ECWRasterBand::GetBandIndexAndCountForStatistics(int &bandIndex, int &bandCount){
+    bandIndex = nBand-1;
+    bandCount = poGDS->nBands;
+    for (int i=0;i<poGDS->nBands;i++){
+        if (poDS->GetRasterBand(i+1)->GetColorInterpretation() == GCI_AlphaBand){
+            bandCount--;
+            if ( i < nBand-1 ){
+                bandIndex--;
+            }
+        }
+        
+    }
+}
+
+/************************************************************************/
+/*                          GetStatistics()                             */
+/************************************************************************/
+
+CPLErr ECWRasterBand::GetStatistics( int bApproxOK, int bForce,
+                                  double *pdfMin, double *pdfMax, 
+                                  double *pdfMean, double *padfStdDev ){
+    int bForceCoalesced = bForce;
+    // If file version is smaller than 3, there will be no statistics in the file. But if it is version 3 or higher we don't want underlying implementation to compute histogram
+    // so we set bForceCoalesced to FALSE. 
+    if (poGDS->psFileInfo->nFormatVersion >= 3){
+        bForceCoalesced = FALSE;
+    }
+    // We check if we have PAM histogram. If we have them we return them. This will allow to override statistics stored in the file. 
+    CPLErr pamError =  GDALPamRasterBand::GetStatistics(bApproxOK, bForceCoalesced, pdfMin, pdfMax, pdfMean, padfStdDev);
+    if ( pamError == CE_None || poGDS->psFileInfo->nFormatVersion<3 ){
+        return pamError;
+    }
+
+    NCS::CError error = poGDS->StatisticsEnsureInitialized();
+    if (!error.Success()){
+        CPLError( CE_Failure, CPLE_AppDefined,
+                        "ECWRDataset::StatisticsEnsureInitialized failed in ECWRasterBand::GetStatistic. " );
+        return CE_Failure;
+    }
+    GetBandIndexAndCountForStatistics(nStatsBandIndex, nStatsBandCount);
+    if ( poGDS->pStatistics != NULL ){
+        
+        NCSBandStats& bandStats = poGDS->pStatistics->BandsStats[nStatsBandIndex];
+        if ( pdfMin != NULL ){
+            *pdfMin = bandStats.fMinVal;
+        }
+        if ( pdfMax != NULL ){
+            *pdfMax = bandStats.fMaxVal;
+        }
+        if ( pdfMean != NULL ){
+            *pdfMean = bandStats.fMeanVal;
+        }
+        if ( padfStdDev != NULL ){
+            *padfStdDev  = bandStats.fStandardDev;
+        }
+        return CE_None;
+    }else {
+        return CE_Warning;
+    }
+    
+}
+
+/************************************************************************/
+/*                          SetStatistics()                             */
+/************************************************************************/
+
+CPLErr ECWRasterBand::SetStatistics( double dfMin, double dfMax, 
+                                  double dfMean, double dfStdDev ){
+    if (poGDS->psFileInfo->nFormatVersion < 3){
+        return GDALPamRasterBand::SetStatistics(dfMin, dfMax, dfMean, dfStdDev);
+    }
+    double dummy;
+    bool hasPAMStatistics = GDALPamRasterBand::GetStatistics(TRUE, FALSE, &dummy, &dummy, &dummy, &dummy) == CE_None;
+    
+    NCS::CError error = poGDS->StatisticsEnsureInitialized();
+    if (!error.Success()){
+            CPLError( CE_Warning, CPLE_AppDefined,
+                        "ECWRDataset::StatisticsEnsureInitialized failed in ECWRasterBand::SetStatistic. Statistics will be written to PAM. " );
+            return GDALPamRasterBand::SetStatistics(dfMin, dfMax, dfMean, dfStdDev);
+    }
+    GetBandIndexAndCountForStatistics(nStatsBandIndex, nStatsBandCount);
+    if (poGDS->pStatistics == NULL){
+        error = NCSEcwInitStatistics(&poGDS->pStatistics, nStatsBandCount, NULL);
+        if (!error.Success()){
+            CPLError( CE_Warning, CPLE_AppDefined,
+                        "NCSEcwInitStatistics failed in ECWRasterBand::SetStatistic. Statistics will be written to PAM." );
+            return GDALPamRasterBand::SetStatistics(dfMin, dfMax, dfMean, dfStdDev);
+        }
+    }
+    
+    poGDS->pStatistics->BandsStats[nStatsBandIndex].fMinVal = (IEEE4) dfMin;
+    poGDS->pStatistics->BandsStats[nStatsBandIndex].fMaxVal = (IEEE4)dfMax;
+    poGDS->pStatistics->BandsStats[nStatsBandIndex].fMeanVal = (IEEE4)dfMean;
+    poGDS->pStatistics->BandsStats[nStatsBandIndex].fStandardDev = (IEEE4)dfStdDev;
+    poGDS->bStatisticsDirty = TRUE;
+    //if we have PAM statistics we need to save them as well. Better option would be to remove them from PAM file but I don't know how to do that without messing in PAM internals. 
+    if ( hasPAMStatistics ){
+        CPLError( CE_Debug, CPLE_AppDefined,
+                        "PAM statistics will be overwritten." );
+        return  GDALPamRasterBand::SetStatistics(dfMin, dfMax, dfMean, dfStdDev);
+    }
+    return CE_None;
+    
+}
+#endif
 
 //#if !defined(SDK_CAN_DO_SUPERSAMPLING)
 /************************************************************************/
@@ -509,6 +778,13 @@ ECWDataset::ECWDataset(int bIsJPEG2000)
     bUnitsCodeChanged = FALSE;
     
     bUseOldBandRasterIOImplementation = FALSE;
+#if ECWSDK_VERSION>=50
+
+    pStatistics = NULL;
+    bStatisticsDirty = FALSE;
+    bStatisticsInitialized = FALSE;
+
+#endif 
     
     sCachedMultiBandIO.bEnabled = FALSE;
     sCachedMultiBandIO.nBandsTried = 0;
@@ -569,6 +845,14 @@ ECWDataset::~ECWDataset()
     /* on Windows */
     if( bHdrDirty )
         WriteHeader();
+    #if ECWSDK_VERSION>=50
+
+    if (bStatisticsDirty){
+        StatisticsWrite();
+    }
+    CleanupStatistics();
+    
+    #endif 
 
     CPLFree( pszProjection );
     CSLDestroy( papszGMLMetadata );
@@ -581,6 +865,60 @@ ECWDataset::~ECWDataset()
 
     CPLFree(sCachedMultiBandIO.pabyData);
 }
+
+#if ECWSDK_VERSION>=50
+
+/************************************************************************/
+/*                    StatisticsEnsureInitialized()                     */
+/************************************************************************/
+
+NCS::CError ECWDataset::StatisticsEnsureInitialized(){
+    if (bStatisticsInitialized == TRUE){
+        return NCS_SUCCESS;
+    }
+    
+    NCS::CError error = poFileView->GetClientStatistics(&pStatistics);
+    if (error.Success()){
+        bStatisticsInitialized = TRUE;
+    }
+    return error;
+}
+
+/************************************************************************/
+/*                          StatisticsWrite()                           */
+/************************************************************************/
+
+NCS::CError ECWDataset::StatisticsWrite(){
+    
+    NCSFileView* view = NCSEcwEditOpen( NCS::CString::Utf8Decode(GetDescription()).c_str() );
+    NCS::CError error;
+    if ( view != NULL ){
+        error = NCSEcwEditSetStatistics(view, pStatistics);
+        if (error.Success()){
+            error = NCSEcwEditFlushAll(view);
+            if (error.Success()){
+                error = NCSEcwEditClose(view);
+            }
+        }
+    }	
+    
+    bStatisticsDirty = FALSE;
+    
+    return error;
+    
+}
+
+/************************************************************************/
+/*                          CleanupStatistics()                         */
+/************************************************************************/
+
+void ECWDataset::CleanupStatistics(){
+    if (bStatisticsInitialized == TRUE && pStatistics !=NULL){
+        NCSEcwFreeStatistics(pStatistics);
+    }
+}
+
+#endif // #if ECWSDK_VERSION>=50
 
 /************************************************************************/
 /*                          SetGeoTransform()                           */
@@ -1082,7 +1420,18 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
     if( bUseOldBandRasterIOImplementation )
         /* Sanity check. Shouldn't happen */
         return CE_Failure;
+    int nDataTypeSize = (GDALGetDataTypeSize(eRasterDataType) / 8);
 
+    if ( nPixelSpace == 0 ){
+        nPixelSpace = nDataTypeSize;
+    }
+     
+    if (nLineSpace == 0 ) {
+        nLineSpace = nPixelSpace*nBufXSize;
+    }
+    if ( nBandSpace == 0 ){
+        nBandSpace = nDataTypeSize*nBufXSize*nBufYSize;
+    }
 /* -------------------------------------------------------------------- */
 /*      ECW SDK 3.3 has a bug with the ECW format when we query the     */
 /*      number of bands of the dataset, but not in the "natural order". */
@@ -1336,22 +1685,22 @@ CPLErr ECWDataset::ReadBandsDirectly(void * pData, int nBufXSize, int nBufYSize,
               "ReadBandsDirectly(-> %dx%d) - reading lines directly.", 
               nBufXSize, nBufYSize);
 
-    CPLErr eErr = CE_None;
     UINT8 **pBIL = (UINT8**)NCSMalloc(nBandCount * sizeof(UINT8*), FALSE);
-    UINT32 *pBandList = (UINT32*)NCSMalloc(nBandCount * sizeof(UINT32), FALSE);
-    int iBandSpace = nPixelSpace*nBufXSize*nBufYSize;
+    
     for(int nB = 0; nB < nBandCount; nB++) 
     {
-        pBIL[nB] = ((UINT8*)pData) + (iBandSpace*nB);//for any bit depth
-        pBandList[nB] = nB;
+        pBIL[nB] = ((UINT8*)pData) + (nBandSpace*nB);//for any bit depth
     }
 
     for(int nR = 0; nR < nBufYSize; nR++) 
     {
         if (poFileView->ReadLineBIL(eNCSRequestDataType, nBandCount, (void**)pBIL) != NCSECW_READ_OK)
         {
-            eErr = CE_Failure;
-            break;
+            if(pBIL) {
+                NCSFree(pBIL);
+            }
+        
+            return CE_Failure;
         }
         for(int nB = 0; nB < nBandCount; nB++) 
         {
@@ -1362,11 +1711,7 @@ CPLErr ECWDataset::ReadBandsDirectly(void * pData, int nBufXSize, int nBufYSize,
     {
         NCSFree(pBIL);
     }
-    if(pBandList)
-    {
-        NCSFree(pBandList);
-    }
-    return eErr;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -1383,16 +1728,16 @@ CPLErr ECWDataset::ReadBands(void * pData, int nBufXSize, int nBufYSize,
 /*      Setup working scanline, and the pointers into it.               */
 /* -------------------------------------------------------------------- */
     int nDataTypeSize = (GDALGetDataTypeSize(eRasterDataType) / 8);
-    bool bDirect = (eBufType == eRasterDataType && nDataTypeSize == nPixelSpace);
+    bool bDirect = (eBufType == eRasterDataType) && nDataTypeSize == nPixelSpace && 
+        nLineSpace == (nPixelSpace*nBufXSize) && nBandSpace == (nDataTypeSize*nBufXSize*nBufYSize) ;
     if (bDirect)
     {
-        return ReadBandsDirectly(pData, nBufXSize, nBufYSize, eBufType,
-                                 nBandCount, nPixelSpace, nLineSpace, nBandSpace);
+        return ReadBandsDirectly(pData, nBufXSize, nBufYSize,eBufType, 
+            nBandCount, nPixelSpace, nLineSpace, nBandSpace);
     }
-    CPLDebug( "ECW", 
-            "ReadBands(-> %dx%d) - reading lines using GDALCopyWords.", 
-            nBufXSize, nBufYSize);
-
+     CPLDebug( "ECW", 
+              "ReadBands(-> %dx%d) - reading lines using GDALCopyWords.", 
+              nBufXSize, nBufYSize);
     CPLErr eErr = CE_None;
     GByte *pabyBILScanline = (GByte *) CPLMalloc(nBufXSize * nDataTypeSize *
                                                 nBandCount);
@@ -1517,7 +1862,7 @@ GDALDataset *ECWDataset::OpenECW( GDALOpenInfo * poOpenInfo )
 
 CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
                                            bool bProgressive,
-                                           int &bUsingCustomStream )
+                                           int &bUsingCustomStream, bool bWrite )
 
 {
 /* -------------------------------------------------------------------- */
@@ -1531,7 +1876,8 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
 
     bUsingCustomStream = FALSE;
     poFileView = new CNCSFile();
-    oErr = poFileView->Open( (char *) pszDatasetName, bProgressive );
+    //we always open in read only mode. This should be improved in the future. 
+    oErr = poFileView->Open( (char *) pszDatasetName, bProgressive, false );
     eErr = oErr.GetErrorNumber();
 
 /* -------------------------------------------------------------------- */
@@ -1584,7 +1930,7 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
         // CNCSJP2FileView object is created, the nFileViewCount attribute 
         // of the underlying VSIIOStream object must be incremented for use 
         // in the ECWDataset destructor.
-		  
+          
         VSIIOStream * poUnderlyingIOStream = 
             ((VSIIOStream *)(poFileView->GetStream()));
 
@@ -1657,7 +2003,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 /* -------------------------------------------------------------------- */
 /*      Open the client interface.                                      */
 /* -------------------------------------------------------------------- */
-    poFileView = OpenFileView( osFilename, false, bUsingCustomStream );
+    poFileView = OpenFileView( osFilename.c_str(), false, bUsingCustomStream, poOpenInfo->eAccess == GA_Update );
     if( poFileView == NULL )
         return NULL;
 
@@ -2113,6 +2459,64 @@ CellSizeUnits ECWTranslateToCellSizeUnits(const char* pszUnits)
 }
 
 /************************************************************************/
+/*                   ECWGetColorInterpretationByName()                  */
+/************************************************************************/
+
+GDALColorInterp ECWGetColorInterpretationByName(const char *pszName)
+{
+    if (EQUAL(pszName, NCS_BANDDESC_AllOpacity)) 
+        return GCI_AlphaBand;
+    else if (EQUAL(pszName, NCS_BANDDESC_Blue))
+        return GCI_BlueBand;
+    else if (EQUAL(pszName, NCS_BANDDESC_Green))
+        return GCI_GreenBand;
+    else if (EQUAL(pszName, NCS_BANDDESC_Red))
+        return GCI_RedBand;
+    else if (EQUAL(pszName, NCS_BANDDESC_Greyscale))
+        return GCI_GrayIndex;
+    else if (EQUAL(pszName, NCS_BANDDESC_GreyscaleOpacity))
+        return GCI_AlphaBand;
+    return GCI_Undefined;
+}
+
+/************************************************************************/
+/*                    ECWGetColorInterpretationName()                   */
+/************************************************************************/
+
+const char* ECWGetColorInterpretationName(GDALColorInterp eColorInterpretation, int nBandNumber)
+{
+    const char *result;
+    switch (eColorInterpretation){
+    case GCI_AlphaBand: 
+        result = NCS_BANDDESC_AllOpacity;
+        break;
+    case GCI_GrayIndex: 
+        result = NCS_BANDDESC_Greyscale;
+        break;
+    case GCI_RedBand:
+    case GCI_GreenBand:
+    case GCI_BlueBand: 
+        result = GDALGetColorInterpretationName(eColorInterpretation);
+        break;
+    case GCI_Undefined:
+        if (nBandNumber <=3){
+            if (nBandNumber == 0 ) {
+                result = "Red";
+            }else if (nBandNumber == 1) {
+                result = "Green";
+            }else if (nBandNumber == 2) {
+                result = "Blue";
+            }
+        }
+        result = CPLSPrintf(NCS_BANDDESC_Band,nBandNumber + 1);
+        break;
+    default: 
+        result = CPLSPrintf(NCS_BANDDESC_Band,nBandNumber + 1);
+    }
+    return result;
+}
+
+/************************************************************************/
 /*                     ECWTranslateFromCellSizeUnits()                  */
 /************************************************************************/
 
@@ -2148,7 +2552,9 @@ void ECWInitialize()
     if( bNCSInitialized )
         return;
 
+#ifndef WIN32
     NCSecwInit();
+#endif
     bNCSInitialized = TRUE;
 
 /* -------------------------------------------------------------------- */
@@ -2157,7 +2563,9 @@ void ECWInitialize()
 /* -------------------------------------------------------------------- */
     if( !CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB","YES") ) )
         NCSecwSetConfig(NCSCFG_JP2_MANAGE_ICC, FALSE);
-
+#if ECWSDK_VERSION>= 50
+	NCSecwSetConfig(NCSCFG_ECWP_CLIENT_HTTP_USER_AGENT, "ECW GDAL Driver/" NCS_ECWJP2_FULL_VERSION_STRING_DOT_DEL);
+#endif 
 /* -------------------------------------------------------------------- */
 /*      Initialize cache memory limit.  Default is apparently 1/4 RAM.  */
 /* -------------------------------------------------------------------- */
@@ -2169,6 +2577,16 @@ void ECWInitialize()
     if( pszEcwCacheSize != NULL )
         NCSecwSetConfig(NCSCFG_CACHE_MAXMEM, (UINT32) atoi(pszEcwCacheSize) );
 
+    /* -------------------------------------------------------------------- */
+    /*      Version 3.x and 4.x of the ECWJP2 SDK did not resolve datum and         */
+    /*      projection to EPSG code using internal mapping.					*/
+    /*		Version 5.x do so we provide means to achieve old		*/
+    /*		behaviour.														*/
+    /* -------------------------------------------------------------------- */
+    #if ECWSDK_VERSION >= 50
+    if( CSLTestBoolean( CPLGetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION","NO") ) == TRUE) 
+        NCSecwSetConfig(NCSCFG_PROJECTION_FORMAT, NCS_PROJECTION_ERMAPPER_FORMAT);
+    #endif
 /* -------------------------------------------------------------------- */
 /*      Allow configuration of a local cache based on configuration     */
 /*      options.  Setting the location turns things on.                 */
@@ -2250,7 +2668,9 @@ void GDALDeregister_ECW( GDALDriver * )
     if( bNCSInitialized )
     {
         bNCSInitialized = FALSE;
+#ifndef WIN32
         NCSecwShutdown();
+#endif
     }
 
     if( hECWDatasetMutex != NULL )
@@ -2306,8 +2726,13 @@ void GDALRegister_ECW()
 // The create method seems not to work properly.
 //        poDriver->pfnCreate = ECWCreateECW;  
         poDriver->pfnCreateCopy = ECWCreateCopyECW;
+#if ECWSDK_VERSION >= 50
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte UInt16" );
+#else 
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte" );
+#endif
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>"
 "   <Option name='TARGET' type='float' description='Compression Percentage' />"
@@ -2322,7 +2747,7 @@ void GDALRegister_ECW()
 #endif
 
 #if ECWSDK_VERSION >= 50
-"   <Option name='ECW_FORMAT_VERSION' type='integer' description='ECW format version (2 or 3).' default='3'/>"
+"   <Option name='ECW_FORMAT_VERSION' type='integer' description='ECW format version (2 or 3).' default='2'/>"
 #endif
 
 "</CreationOptionList>" );
