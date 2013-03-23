@@ -66,11 +66,10 @@ class VSIMem {
 
         Gdal.AllRegister();
 
-        GCHandle handle = GCHandle.Alloc(imageBuffer, GCHandleType.Pinned);
         string memFilename = "/vsimem/inmemfile";
         try
         {
-            Gdal.FileFromMemBuffer(memFilename, imageBuffer.Length, handle.AddrOfPinnedObject());
+            Gdal.FileFromMemBuffer(memFilename, imageBuffer);
             Dataset ds = Gdal.Open(memFilename, Access.GA_ReadOnly);
 
             Console.WriteLine("Raster dataset parameters:");
@@ -94,7 +93,6 @@ class VSIMem {
         finally
         {
             Gdal.Unlink(memFilename);
-            handle.Free();
         }
 	}
 }

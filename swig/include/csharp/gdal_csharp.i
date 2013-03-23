@@ -217,4 +217,13 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
      }
      return ret;
    }
+   
+ public static void FileFromMemBuffer(string utf8_path, byte[] bytes) {
+     GCHandle handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
+     try {
+          FileFromMemBuffer(utf8_path, bytes.Length, handle.AddrOfPinnedObject());
+     } finally {
+        handle.Free();
+     }
+  }
 %}
