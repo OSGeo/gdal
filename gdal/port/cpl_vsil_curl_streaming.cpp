@@ -191,6 +191,10 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     int             bHastComputedFileSize;
     ExistStatus     eExists;
     int             bIsDirectory;
+    
+    int             bCanTrustCandidateFileSize;
+    int             bHasCandidateFileSize;
+    vsi_l_offset    nCandidateFileSize;
 
     int             bEOF;
 
@@ -268,6 +272,10 @@ VSICurlStreamingHandle::VSICurlStreamingHandle(VSICurlStreamingFSHandler* poFS, 
     bIsDirectory = cachedFileProp->bIsDirectory;
     poFS->ReleaseMutex();
 
+    bCanTrustCandidateFileSize = TRUE;
+    bHasCandidateFileSize = FALSE;
+    nCandidateFileSize = 0;
+
     nCachedSize = 0;
     pCachedData = NULL;
 
@@ -337,6 +345,19 @@ void VSICurlStreamingHandle::ReleaseMutex()
 
 int VSICurlStreamingHandle::Seek( vsi_l_offset nOffset, int nWhence )
 {
+    if( curOffset >= BKGND_BUFFER_SIZE )
+    {
+        if (ENABLE_DEBUG)
+            CPLDebug("VSICURL", "Invalidating cache and file size due to Seek() beyond caching zone");
+        CPLFree(pCachedData);
+        pCachedData = NULL;
+        nCachedSize = 0;
+        AcquireMutex();
+        bHastComputedFileSize = FALSE;
+        fileSize = 0;
+        ReleaseMutex();
+    }
+
     if (nWhence == SEEK_SET)
     {
         curOffset = nOffset;
@@ -670,6 +691,17 @@ int VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count, size_t nm
     if (ENABLE_DEBUG)
         CPLDebug("VSICURL", "Receiving %d bytes...", (int)nSize);
 
+    if( bHasCandidateFileSize && bCanTrustCandidateFileSize && !bHastComputedFileSize )
+    {
+        poFS->AcquireMutex();
+        CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
+        cachedFileProp->fileSize = fileSize = nCandidateFileSize;
+        cachedFileProp->bHastComputedFileSize = bHastComputedFileSize = TRUE;
+        if (ENABLE_DEBUG)
+            CPLDebug("VSICURL", "File size = " CPL_FRMT_GUIB, fileSize);
+        poFS->ReleaseMutex();
+    }
+
     AcquireMutex();
     if (eExists == EXIST_UNKNOWN)
     {
@@ -800,18 +832,31 @@ int VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, siz
 
         if ( !(nHTTPCode == 301 || nHTTPCode == 302) && !bHastComputedFileSize)
         {
+            /* Caution: when gzip compression is enabled, the content-length is the compressed */
+            /* size, which we are not interested in, so we must not take it into account. */
+
             const char* pszContentLength = strstr((const char*)pabyHeaderData, "Content-Length: ");
             const char* pszEndOfLine = pszContentLength ? strchr(pszContentLength, '\n') : NULL;
-            if (pszEndOfLine != NULL)
+            if( bCanTrustCandidateFileSize && pszEndOfLine != NULL )
             {
-                poFS->AcquireMutex();
-                CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
-                cachedFileProp->fileSize = fileSize = CPLScanUIntBig(pszContentLength + 16,
-                                                                     pszEndOfLine - (pszContentLength + 16));
-                cachedFileProp->bHastComputedFileSize = bHastComputedFileSize = TRUE;
+                const char* pszVal = pszContentLength + strlen("Content-Length: ");
+                bHasCandidateFileSize = TRUE;
+                nCandidateFileSize = CPLScanUIntBig(pszVal, pszEndOfLine - pszVal);
                 if (ENABLE_DEBUG)
-                    CPLDebug("VSICURL", "File size = " CPL_FRMT_GUIB, fileSize);
-                poFS->ReleaseMutex();
+                    CPLDebug("VSICURL", "Has found candidate file size = " CPL_FRMT_GUIB, nCandidateFileSize);
+            }
+
+            const char* pszContentEncoding = strstr((const char*)pabyHeaderData, "Content-Encoding: ");
+            pszEndOfLine = pszContentEncoding ? strchr(pszContentEncoding, '\n') : NULL;
+            if( bHasCandidateFileSize && pszEndOfLine != NULL )
+            {
+                const char* pszVal = pszContentEncoding + strlen("Content-Encoding: ");
+                if( strncmp(pszVal, "gzip", 4) == 0 )
+                {
+                    if (ENABLE_DEBUG)
+                        CPLDebug("VSICURL", "GZip compression enabled --> cannot trust candidate file size");
+                    bCanTrustCandidateFileSize = FALSE;
+                }
             }
         }
 
@@ -844,8 +889,7 @@ void VSICurlStreamingHandle::DownloadInThread()
         bSupportGZip = strstr(curl_version(), "zlib/") != NULL;
         bHasCheckVersion = TRUE;
     }
-    /* FIXME: it has been turned OFF by default for now. Fails with some servers */
-    if (bSupportGZip && CSLTestBoolean(CPLGetConfigOption("CPL_CURL_GZIP", "NO")))
+    if (bSupportGZip && CSLTestBoolean(CPLGetConfigOption("CPL_CURL_GZIP", "YES")))
     {
         curl_easy_setopt(hCurlHandle, CURLOPT_ENCODING, "gzip");
     }
@@ -1002,7 +1046,10 @@ size_t VSICurlStreamingHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
     ReleaseMutex();
 
     if (bHastComputedFileSizeLocal && curOffset >= fileSizeLocal)
+    {
+        CPLDebug("VSICURL", "Read attempt beyond end of file");
         bEOF = TRUE;
+    }
     if (bEOF)
         return 0;
 
