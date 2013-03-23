@@ -965,6 +965,10 @@ GDALColorInterp NITFWrapperRasterBand::GetColorInterpretation()
 CPLErr NITFWrapperRasterBand::SetColorInterpretation( GDALColorInterp eInterp)
 {
     this->eInterp = eInterp;
+    if( poBaseBand->GetDataset() != NULL &&
+        poBaseBand->GetDataset()->GetDriver() != NULL &&
+        EQUAL(poBaseBand->GetDataset()->GetDriver()->GetDescription(), "JP2ECW") )
+        poBaseBand->SetColorInterpretation( eInterp );
     return CE_None;
 }
 

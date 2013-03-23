@@ -39,6 +39,12 @@ and SetProjection() methods. If the projection is set with SetProjection() and
 the PROJ, DATUM or UNITS with SetMetadataItem(), the later values will override the values
 built from the projection string.<p>
 
+<h2>ECW Version 3 Files</h2>
+(Starting with GDAL 1.10.0)<p>
+
+ECW 5.x SDK provides amended file format which allows to store data statistics 
+and supports UInt16 as band data type.
+
 <h2>Creation Issues</h2>
 
 The ECW 4.x SDK from ERDAS is only free for image decompression.  To 
@@ -50,7 +56,9 @@ compressed for free, while larger images require licensing from ERDAS.  See
 the licensing agreement and the LARGE_OK option.<p>
 
 Files to be compressed into ECW format must also
-be at least 128x128.  ECW currently only supports 8 bits per channel.<p>
+be at least 128x128.  ECW currently only supports 8 bits per channel for 
+ECW Version 2 files. ECW Version 3 files supports 16 bits per channel 
+(as Uint16 data type). Please see Creation options to enable ECW V3 files writing <p>
 
 When writing coordinate system information to ECW files, many less
 common coordinate systems are not mapped properly.  If you know the 
@@ -71,7 +79,7 @@ Common examples are NUTM11, or GEODETIC.<p>
 <li> <b>DATUM=name</b>: Name of the ECW datum string to use. 
 Common examples are WGS84 or NAD83.<p>
 
-<li> <b>UNITS=name</b>: (GDAL >= 1.9.0) Name of the ECW projection units to use :
+<li> <b>UNITS=name</b>: (GDAL &gt;= 1.9.0) Name of the ECW projection units to use :
 METERS (default) or FEET (us-foot).<p>
 
 <li> <b>LARGE_OK=YES</b>: When built with the ECW 3.x SDK this option can be 
@@ -87,6 +95,10 @@ digits long.  It may also be provided globally as a configuration option.<p>
 issued the OEM encoding key (see ECW_ENCODE_KEY) to.  This must exactly match
 the name used by ERDAS in issuing the OEM key.  It may also be provided 
 globally as a configuration option.<p>
+
+<li> <b>ECW_FORMAT_VERSION=2/3</b>: (GDAL &gt;= 1.10.0) When build with the ECW 5.x SDK this option can be set to  
+allow ECW Version 3 files to be created. This would allow to write UInt16 data type
+rasters (new feature of ECW Version 3 files) . Default is 2 which will write ECW Version 2 files.<p>
 
 </ul>
 
