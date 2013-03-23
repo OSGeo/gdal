@@ -54,6 +54,8 @@ Those are the data formats that the INGR driver supports for writing:<p>
   <li>6 - Floating Point 64Bit</li>
 </ul>
 
+Type 9 RLE bitonal compression is used when outputting ".rle" file. Other file types are uncompressed.<p>
+
 Note that writing in that format is not encouraged.<p>
 
 <h2>File Extension</h2>
@@ -199,6 +201,14 @@ georeference information. The reason for that is because there is no universal
 way of storing georeferencing in INGR files. It could have georeference stored
 in a companying .dgn file or in application specific data storage inside the
 file itself.<p>
+
+<h2>Metadata</h2>
+
+The following creation option and bandset metadata is available.<p>
+<ul type="disc">
+<li>RESOLUTION: This is the DPI (dots per inch). Microns not supported.</li>
+</ul>
+
 
 <h2>See Also:</h2>
 
