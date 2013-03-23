@@ -70,7 +70,10 @@ file with the elements of similar names (PagingAllowed, PageSize, BaseStartIndex
 
 Starting with OGR 1.10, the WFS driver will read the GML content as a stream instead as a whole file, which will improve
 interactivity and help when the content cannot fit into memory. This can be turned off by setting the OGR_WFS_USE_STREAMING
-configuration option to NO if this is not desirable (for example, when iterating several times on a layer that can fit into memory).<p>
+configuration option to NO if this is not desirable (for example, when iterating several times on a layer that can fit into memory).
+When streaming is enabled, GZip compression is also requested. It has been observed that some WFS servers, that cannot do on-the-fly
+compression, will cache on their side the whole content to be sent before sending the first bytes on the wire. To avoid this,
+you can set the CPL_CURL_GZIP configuration option to NO.<p>
 
 <h2>Filtering</h2>
 
