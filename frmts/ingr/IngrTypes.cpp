@@ -1068,32 +1068,120 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
                              uint32 nSrcBytes, uint32 nBlockSize,
                              uint32 *pnBytesConsumed )
 {
-    unsigned short i; 
+    unsigned short i;
+    unsigned int   j;
     unsigned int   iInput = 0;
     unsigned int   iOutput = 0;
     unsigned short *pauiSrc = (unsigned short *) pabySrcData;
     unsigned int   nSrcShorts = nSrcBytes / 2;
     unsigned short nRun;
     unsigned char  nValue = 0;
+    bool bHeader = true;
 
     if (nSrcShorts == 0)
         return 0;
 
-    if( CPL_LSBWORD16(pauiSrc[0]) != 0x5900 )
+
+    // Check for scanline header
+    do
+    {
+        unsigned int nWordsInScanline;
+        unsigned int nTotal;
+
+        if( CPL_LSBWORD16(pauiSrc[0]) != 0x5900 )
+        {
+            bHeader = false;
+            break;
+        }
+
+        if (nBlockSize < 0x00005900)
+        {
+            // Can only be a header since we can never have a span of 22784
+            // if the width of the scanline is known to be less than that.
+            break;
+        }
+
+        // Here follows a more stringent test that this is really a scanline header
+        // and not a span in a file that has no scanline headers.
+        // Here is the scanline header information
+        // 0: 0x5900
+        // 2: words to follow
+        // 4: line id (mod 16 bits)
+        // 6: 0x0000 (pixels to skip, assumed to be 0)
+
+        // Scanline with header has minimum of 5 entries.
+        if (nSrcShorts < 5)
+        {
+            bHeader = false;
+            break;
+        }
+
+        // Test that words to follow is at least 3 and odd
+        // Test that pixels to skip is 0
+        if ((CPL_LSBWORD16(pauiSrc[1]) < 3) ||
+            ((CPL_LSBWORD16(pauiSrc[1]) & 1) == 0) ||
+            (CPL_LSBWORD16(pauiSrc[3]) != 0))
+        {
+            bHeader = false;
+            break;
+        }
+
+        nWordsInScanline = ((unsigned int) CPL_LSBWORD16(pauiSrc[1])) + 2;
+        if (nSrcShorts >= nWordsInScanline + 5)
+        {
+            // Do some quick extra tests on next scanline.
+
+            // Check that the next scanline starts with 0x5900
+            // Check that the next scanline's words-to-follow is at least 3 and odd
+            // Check that the next scanline's skip pixel offset is 0
+            // Check that the next scanline's line number is 1 more than this one.
+            if ((CPL_LSBWORD16(pauiSrc[nWordsInScanline]) != 0x5900) ||
+                (CPL_LSBWORD16(pauiSrc[nWordsInScanline+1]) < 3) ||
+                ((CPL_LSBWORD16(pauiSrc[nWordsInScanline+1]) & 1) == 0) ||
+                (CPL_LSBWORD16(pauiSrc[nWordsInScanline+3]) != 0) ||
+                (((((unsigned int)CPL_LSBWORD16(pauiSrc[2])) + 1) & 0x0000FFFF) != 
+                   ((unsigned int)CPL_LSBWORD16(pauiSrc[nWordsInScanline+2]))))
+            {
+                bHeader = false;
+                break;
+            }
+        }
+        else if (nSrcShorts < nWordsInScanline)
+        {
+            // Cannot be a header since there is not enough data.
+            bHeader = false;
+            break;
+        }
+
+        // If we get here, we add all the span values and see if they add up to the nBlockSize.
+        j = 0;
+        nTotal = 0;
+
+        for(;j < nWordsInScanline - 4; j++)
+        {
+            nTotal += (unsigned int) CPL_LSBWORD16(pauiSrc[j+4]);
+        }
+
+        if (nTotal != nBlockSize)
+            bHeader = false;
+
+        // Fall through. We have a valid scanline header... probably.
+
+    } while(0);
+
+    if( bHeader )
+        iInput+=3; // 0x5900 tag, line id, line data size
+    else
         nValue = 1;
+
+    if (iInput >= nSrcShorts)
+        return 0;
 
     do
     {
         nRun = CPL_LSBWORD16(pauiSrc[ iInput ]);
         iInput++;
-        
-        if( nRun == 0x5900 )
-        {
-            iInput++; // line id
-            iInput++; // line data size
-            continue;
-        }
-        
+               
         if (pabyDstData)
         {
             for( i = 0; i < nRun && iOutput < nBlockSize; i++ )
@@ -1110,6 +1198,23 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
         
     }
     while( ( iInput < nSrcShorts ) && ( iOutput < nBlockSize ) );
+
+    // Skip over any empty end of line spans.
+    if ((iInput < nSrcShorts) && (CPL_LSBWORD16(pauiSrc[ iInput ]) == 0))
+    {
+        while((iInput < nSrcShorts) && (CPL_LSBWORD16(pauiSrc[ iInput ]) == 0))
+            iInput++;
+
+        // Should never be pairs of consecutive empty spans,
+        // except at end and start of two scanlines.
+        // We must adjust to start at the correct location in the 
+        // next scanline, otherwise the colours will be inverted.
+        // iInput should be odd since scanline is 
+        // supposed to start and end with OFF span.
+        if ((iInput&1) == 0)
+            iInput--;
+    }
+
 
     if( pnBytesConsumed != NULL )
         *pnBytesConsumed = iInput * 2;
