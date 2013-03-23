@@ -1,4 +1,4 @@
-= GDAL/OGR 1.10.0 *Preliminary* Release Notes (r23656 to r25733) =
+= GDAL/OGR 1.10.0 *Preliminary* Release Notes (r23656 to r25785) =
 
 == In a nutshell... ==
 
@@ -158,6 +158,7 @@ BAG driver:
  * Added capture of dateTime attribute
  * Support WKT (with Esri style VERTCS) spatial reference
  * Allow WGS84 spatial reference
+ * Include compression method in metadata.
 
 BT driver:
  * Fixes for huge files (>2GB) support (#4765)
@@ -177,7 +178,7 @@ ECW driver:
  * Improve picking performance on large datasets (#4790)
  * Use ECW SDK to do super-sampling for SDK >= 4.X
  * Expose 256x256 block dimension instead of scanline
- * Add partial support for ECW SDK 5.0
+ * Add support for ECW SDK 5.0
  * Workaround a ECW SDK 3.3 bug, when doing a RasterIO() with the total number of bands, but not in the 1,2,..n order (#4234)
  * Add heuristics to detect successive band reading pattern (such as done by QGIS). Beneficial for ECWP
 
@@ -198,6 +199,7 @@ GeoRaster driver:
  * Add spatialExtent and extentSRID create-options (#4529)
  * Fix JPEG quality not updated on metadata (#4552)
  * Search for RDT as regular table
+ * Add support for RPC (#4038)
 
 GIF driver:
  * Add support for giflib 4.2.0 (#4675) and giflib 5.0
@@ -260,6 +262,9 @@ HDF4 driver:
  * Be more careful about missing dimensions (#4900)
  * Make HDF4 driver thread-safe by adding a global mutex (since the HDF4 library isn't thread-safe)
 
+HDF5 driver:
+ * Add support for COSMO-SkyMed metadata
+
 HFA driver:
  * Added BASEDATA support for EPT_u1 (#4537)
  * Fix crash on dataset closing when .ige file header is corrupted (#4596)
@@ -270,6 +275,9 @@ HFA driver:
 INGR driver:
  * do not reduce tile size to image size (#4856)
  * fix slowness and incorrect random reading with RLE datasets (#4965)
+ * Enable reading bitonal rle files wider than 22784 (0x5900) pixels (#5030)
+ * Add RESOLUTION metadata/option to read/write DPI (#5030)
+ * Add write support for .rle (bitonal rle files) to test the above (#5030)
 
 ISIS3 driver:
  * Ensure scaleFactor defaults to 1 (#4499)
@@ -281,6 +289,7 @@ JP2KAK driver:
  * Capture Corder in metadata for user convenience
  * Fix writing of resolution box where the xresolution value was written instead of the yresolution one
  * Skip bands that have different data type when reading multiple bands in IReadBlock() (#4638)
+ * Default to less than 250000 lines per tile (#5034)
 
 JP2OpenJPEG driver:
  * Require OpenJPEG 2.0.0 now
@@ -332,6 +341,7 @@ NITF driver:
  * Don't escape DESDATA for sizes >10mb (#4803)
  * Fix NITF creation when both BLOCKA and TRE are passed in (#4958)
  * Allow reading JPEG-in-NITF where JPEG stream dimensions are larger than NITF dimensions (#5001)
+ * Support for cases with 2 LUTs
 
 Northwood driver:
  * Fixes for huge files (>2GB) support (#4565, #4645)
@@ -398,6 +408,7 @@ VRT driver:
  * avoid crashes due to int overflow when dealing with requests filling a buffer larger than 2 GB (#4815)
  * VRTSourcedRasterBand: override ComputeRasterMinMax(), ComputeStatistics() and GetHistogram() to make them run on sources, only when there's one VRTSimpleSource covering the whole VRTSourcedRasterBand
  * solve issue when the VRT is a symlink and that the sources filenames are RelativeToVRT (#4999)
+ * Fix relariveToVRT option in VRTRawRasterBand (#5033)
 
 WCS driver:
  * Support version 1.1.2
@@ -411,6 +422,7 @@ WMS driver:
  * Retrieve nodata, min and max values, defined per band or per dataset in the config file (#4613)
  * Add GetColorTable(), used by the TiledWMS mini driver (#4613)
  * Update TiledWMS mini-driver to support new variable substitution mechanism, min/max/nodata settings, color table support (#4613)
+ * Add a <UserPwd> element in the XML service description file
 
 XYZ driver:
  * avoid rescanning output file at end of CreateCopy()
@@ -457,8 +469,10 @@ OGRSpatialReference:
  * USGS: support USGS angular parameters in radians
  * MorphFromESRI() fix WKT : compare SPHEROID and PRIMEM parameters instead of names (#4673)
  * MorphToESRI(): Add common New Zealand GEOGCS values (#4849)
+ * OSR ESRI: add GCS mapping name for ETRS89
  * ogr_srs_esri: Make InitDatumMappingTable() thread-safe
  * ecw_cs.wkt: Add entry for European Terrestrial Reference System 1989.
+ * pci_datum.txt: Add entry for D894
  * accept "+proj=XXXX [...] +wktext" as a valid PROJ.4 string, even if projection is unhandled by OGR
  * recognize +proj=etmerc when importing from PROJ.4 string; and output +proj=etmerc when exporting Transverse_Mercator to PROJ.4 string if OSR_USE_ETMERC = YES (#4853)
 
@@ -670,6 +684,7 @@ Shapefile driver:
 
 S57 driver:
  * Various fixes when opening ill-formed datasets.
+ * Preliminary support for FFPT/FFPC update records (#5028)
 
 SQLite/Spatialite driver:
  * Add support for tables with multiple geometry columns (#4768)
