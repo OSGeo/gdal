@@ -57,6 +57,8 @@ protected:
     INGR_HeaderOne  hHeaderOne;
     INGR_HeaderTwoA hHeaderTwo;
     INGR_TileHeader hTileDir;
+    
+    int             nRLEOffset;
 
 public:
     IntergraphRasterBand( IntergraphDataset *poDS, 

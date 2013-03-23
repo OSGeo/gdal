@@ -306,6 +306,8 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
 
     poDS->SetMetadataItem( "VERSION", 
         CPLSPrintf ( "%d", hHeaderOne.GridFileVersion ), "IMAGE_STRUCTURE" );
+    poDS->SetMetadataItem( "RESOLUTION",
+        CPLSPrintf ( "%d", (hHeaderOne.DeviceResolution < 0)?-hHeaderOne.DeviceResolution:1) );
 
     // -------------------------------------------------------------------- 
     // Create Band Information
@@ -499,8 +501,19 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
                                         GDALDataType eType,
                                         char **papszOptions )
 {
-    (void) papszOptions;
+    int nDeviceResolution = 1;
+    const char *pszValue;
+    const char *pszCompression = NULL;
 
+    pszValue = CSLFetchNameValue(papszOptions, "RESOLUTION");
+    if( pszValue != NULL )
+        nDeviceResolution = -atoi( pszValue );
+
+    char *pszExtension = CPLStrlwr(CPLStrdup(CPLGetExtension(pszFilename)));
+    if ( EQUAL( pszExtension, "rle" ) )
+        pszCompression = INGR_GetFormatName(RunLengthEncoded);
+    CPLFree(pszExtension);
+	
     if( eType != GDT_Byte &&
         eType != GDT_Int16 && 
         eType != GDT_Int32 && 
@@ -530,7 +543,7 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     hHdr1.HeaderType.Version    = INGR_HEADER_VERSION;
     hHdr1.HeaderType.Type       = INGR_HEADER_TYPE;
     hHdr1.HeaderType.Is2Dor3D   = INGR_HEADER_2D;
-    hHdr1.DataTypeCode          = (uint16) INGR_GetFormat( eType, "None" );
+    hHdr1.DataTypeCode          = (uint16) INGR_GetFormat( eType, (pszCompression!=NULL)?pszCompression:"None" );
     hHdr1.WordsToFollow         = ( ( SIZEOF_HDR1 * 3 ) / 2 ) - 2;
     hHdr1.ApplicationType       = GenericRasterImageFile;
     hHdr1.XViewOrigin           = 0.0;
@@ -544,7 +557,7 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     hHdr1.TransformationMatrix[15]      = 1.0;
     hHdr1.PixelsPerLine         = nXSize;
     hHdr1.NumberOfLines         = nYSize;
-    hHdr1.DeviceResolution      = 1;
+    hHdr1.DeviceResolution      = nDeviceResolution;
     hHdr1.ScanlineOrientation   = UpperLeftHorizontal;
     hHdr1.ScannableFlag         = NoLineHeader;
     hHdr1.RotationAngle         = 0.0;
@@ -663,6 +676,24 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
     GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
 
     // -------------------------------------------------------------------- 
+    // Copy metadata
+    // -------------------------------------------------------------------- 
+
+    char **papszCreateOptions = CSLDuplicate( papszOptions );
+    const char  *pszValue;
+	
+    pszValue = CSLFetchNameValue(papszCreateOptions, "RESOLUTION");
+    if( pszValue == NULL )
+    {
+        const char *value = poSrcDS->GetMetadataItem("RESOLUTION");
+        if (value)
+        {
+            papszCreateOptions = CSLSetNameValue( papszCreateOptions, "RESOLUTION", 
+                value );
+        }
+    }
+
+    // -------------------------------------------------------------------- 
     // Create IntergraphDataset
     // -------------------------------------------------------------------- 
 
@@ -673,7 +704,9 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
         poSrcDS->GetRasterYSize(), 
         poSrcDS->GetRasterCount(), 
         eType, 
-        papszOptions );
+        papszCreateOptions );
+
+    CSLDestroy( papszCreateOptions );
 
     if( poDstDS == NULL )
     {
