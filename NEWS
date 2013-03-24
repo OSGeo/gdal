@@ -263,7 +263,7 @@ HDF4 driver:
  * Make HDF4 driver thread-safe by adding a global mutex (since the HDF4 library isn't thread-safe)
 
 HDF5 driver:
- * Add support for COSMO-SkyMed metadata
+ * Add support for COSMO-SkyMed metadata (#4160)
 
 HFA driver:
  * Added BASEDATA support for EPT_u1 (#4537)
