@@ -275,7 +275,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
     pachRecord = (char *) CPLMalloc(_recLength);
     memcpy( pachRecord, achLeader, nLeaderSize );
 
-    if( VSIFReadL( pachRecord+nLeaderSize, 1, _recLength-nLeaderSize, fpDDF )
+    if( (int)VSIFReadL( pachRecord+nLeaderSize, 1, _recLength-nLeaderSize, fpDDF )
         != _recLength - nLeaderSize )
     {
         if( !bFailQuietly )
