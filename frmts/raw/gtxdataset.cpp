@@ -206,7 +206,7 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
     GDALDataType eDT = GDT_Float32;
     VSIFSeekL(poDS->fpImage, 0, SEEK_END);
     vsi_l_offset nSize = VSIFTellL(poDS->fpImage);
-    if( nSize == 40 + 8 * poDS->nRasterXSize * poDS->nRasterYSize )
+    if( nSize == 40 + 8 * (vsi_l_offset)poDS->nRasterXSize * poDS->nRasterYSize )
         eDT = GDT_Float64;
     int nDTSize = GDALGetDataTypeSize(eDT) / 8;
 
