@@ -285,6 +285,31 @@ def jp2openjpeg_9():
     ds = None
 
     return 'success'
+    
+###############################################################################
+# Test YCBCR420 creation option
+
+def jp2openjpeg_10():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    src_ds = gdal.Open('data/rgbsmall.tif')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_10.jp2', src_ds, options = ['YCBCR420=YES', 'RESOLUTIONS=3'])
+    maxdiff = gdaltest.compare_ds(src_ds, out_ds)
+    out_ds = None
+    src_ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_10.jp2')
+
+    ds = None
+    ds_ref = None
+
+    # Quite a bit of difference...
+    if maxdiff > 12:
+        gdaltest.post_reason('Image too different from reference')
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 def jp2openjpeg_online_1():
@@ -467,6 +492,7 @@ gdaltest_list = [
     jp2openjpeg_7,
     jp2openjpeg_8,
     jp2openjpeg_9,
+    jp2openjpeg_10,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,
