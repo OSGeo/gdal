@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -307,6 +308,76 @@ def hdf5_9():
     return 'success'
 
 ###############################################################################
+# Test CSK_DGM.h5 (#4160)
+
+def hdf5_10():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+
+    # Try opening the QLK subdataset to check that no error is generated
+    gdal.ErrorReset()
+    ds = gdal.Open( 'HDF5:"data/CSK_DGM.h5"://S01/QLK' )
+    if ds is None or gdal.GetLastErrorMsg() != '':
+           gdaltest.post_reason('fail')
+           return 'fail'
+    ds = None
+
+    ds = gdal.Open( 'HDF5:"data/CSK_DGM.h5"://S01/SBI' )
+    got_gcpprojection = ds.GetGCPProjection()
+    expected_gcpprojection = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]]'
+    if got_gcpprojection != expected_gcpprojection:
+        print(got_gcpprojection)
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    got_gcps = ds.GetGCPs()
+    if len(got_gcps) != 4:
+           gdaltest.post_reason('fail')
+           return 'fail'
+
+    if abs(got_gcps[0].GCPPixel - 0) > 1e-5 or abs(got_gcps[0].GCPLine - 0) > 1e-5 or \
+       abs(got_gcps[0].GCPX - 44.7280047434954) > 1e-5 or abs(got_gcps[0].GCPY - 12.2395902509238) > 1e-5:
+           gdaltest.post_reason('fail')
+           return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test CSK_GEC.h5 (#4160)
+
+def hdf5_11():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+
+    # Try opening the QLK subdataset to check that no error is generated
+    gdal.ErrorReset()
+    ds = gdal.Open( 'HDF5:"data/CSK_GEC.h5"://S01/QLK' )
+    if ds is None or gdal.GetLastErrorMsg() != '':
+           gdaltest.post_reason('fail')
+           return 'fail'
+    ds = None
+
+    ds = gdal.Open( 'HDF5:"data/CSK_GEC.h5"://S01/SBI' )
+    got_projection = ds.GetProjection()
+    expected_projection = 'PROJCS["unnamed",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",15],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0]]'
+    if got_projection != expected_projection:
+        print(got_projection)
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    got_gt = ds.GetGeoTransform()
+    expected_gt = (275592.5, 2.5, 0.0, 4998152.5, 0.0, -2.5)
+    for i in range(6):
+        if abs(got_gt[i] - expected_gt[i]) > 1e-5:
+            print(got_gt)
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 class TestHDF5:
     def __init__( self, downloadURL, fileName, subdatasetname, checksum, download_size ):
@@ -343,6 +414,8 @@ gdaltest_list = [
     hdf5_7,
     hdf5_8,
     hdf5_9,
+    hdf5_10,
+    hdf5_11
 ]
 
 hdf5_list = [ ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',

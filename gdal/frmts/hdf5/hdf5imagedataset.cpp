@@ -842,7 +842,7 @@ void HDF5ImageDataset::IdentifyProductType()
     pszMissionId = HDF5Dataset::GetMetadataItem("Mission_ID");
 
     //If there is a Mission_ID field
-     if(pszMissionId != NULL)
+     if(pszMissionId != NULL && strstr(GetDescription(), "QLK") == NULL)
          //Check if the mission type is CSK
          if(EQUAL(pszMissionId,"CSK"))
              iSubdatasetType = CSK_PRODUCT;
