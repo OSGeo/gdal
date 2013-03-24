@@ -997,11 +997,10 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      is supported in ECW format.                                     */
 /* -------------------------------------------------------------------- */
     bool bECWV3 = false;
-    const char * pszOption;
 
     #if ECWSDK_VERSION >= 50
     if (bIsJPEG2000 == FALSE){
-        pszOption = CSLFetchNameValue(papszOptions, "ECW_FORMAT_VERSION");
+        const char* pszOption = CSLFetchNameValue(papszOptions, "ECW_FORMAT_VERSION");
         if( pszOption != NULL )
         {
             bECWV3 = (3 == atoi(pszOption));
@@ -1128,11 +1127,10 @@ ECWCreateCopyECW( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
     bool bECWV3 = false;
-    const char* pszOption;
 
 #if ECWSDK_VERSION >= 50
 
-    pszOption = CSLFetchNameValue(papszOptions, "ECW_FORMAT_VERSION");
+    const char* pszOption = CSLFetchNameValue(papszOptions, "ECW_FORMAT_VERSION");
     if( pszOption != NULL )
     {
         bECWV3 = (3 == atoi(pszOption));
