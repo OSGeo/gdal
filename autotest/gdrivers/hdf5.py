@@ -337,7 +337,7 @@ def hdf5_10():
            return 'fail'
 
     if abs(got_gcps[0].GCPPixel - 0) > 1e-5 or abs(got_gcps[0].GCPLine - 0) > 1e-5 or \
-       abs(got_gcps[0].GCPX - 44.7280047434954) > 1e-5 or abs(got_gcps[0].GCPY - 12.2395902509238) > 1e-5:
+       abs(got_gcps[0].GCPX - 12.2395902509238) > 1e-5 or abs(got_gcps[0].GCPY - 44.7280047434954) > 1e-5:
            gdaltest.post_reason('fail')
            return 'fail'
 
