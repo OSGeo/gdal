@@ -355,7 +355,7 @@ CPLErr ECWRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
                     bucketCounts[i] = pStatistics->BandsStats[i].nHistBucketCount;
                 }
                 bucketCounts[nStatsBandIndex] = nBuckets;
-                if (nBuckets < pStatistics->BandsStats[nStatsBandIndex].nHistBucketCount){
+                if (nBuckets < (int)pStatistics->BandsStats[nStatsBandIndex].nHistBucketCount){
                     pStatistics->BandsStats[nStatsBandIndex].nHistBucketCount = nBuckets;
                 }
                 error = NCSEcwInitStatistics(&pNewStatistics, nStatsBandCount, bucketCounts);
@@ -890,7 +890,7 @@ NCS::CError ECWDataset::StatisticsEnsureInitialized(){
 
 NCS::CError ECWDataset::StatisticsWrite(){
     
-    NCSFileView* view = NCSEcwEditOpen( NCS::CString::Utf8Decode(GetDescription()).c_str() );
+    NCSFileView* view = NCSEcwEditOpen( GetDescription() );
     NCS::CError error;
     if ( view != NULL ){
         error = NCSEcwEditSetStatistics(view, pStatistics);
@@ -994,13 +994,13 @@ CPLErr ECWDataset::SetMetadataItem( const char * pszName,
         }
         else if (strcmp( pszName, "DATUM") == 0)
         {
-            bDatumCodeChanged |= (osNewVal != m_osDatumCode);
+            bDatumCodeChanged |= (osNewVal != m_osDatumCode)? TRUE:FALSE ;
             m_osDatumCode = osNewVal;
             bHdrDirty |= bDatumCodeChanged;
         }
         else 
         {
-            bUnitsCodeChanged |= (osNewVal != m_osUnitsCode);
+            bUnitsCodeChanged |= (osNewVal != m_osUnitsCode)?TRUE:FALSE;
             m_osUnitsCode = osNewVal;
             bHdrDirty |= bUnitsCodeChanged;
         }
@@ -1694,7 +1694,7 @@ CPLErr ECWDataset::ReadBandsDirectly(void * pData, int nBufXSize, int nBufYSize,
 
     for(int nR = 0; nR < nBufYSize; nR++) 
     {
-        if (poFileView->ReadLineBIL(eNCSRequestDataType, nBandCount, (void**)pBIL) != NCSECW_READ_OK)
+        if (poFileView->ReadLineBIL(eNCSRequestDataType,(UINT16) nBandCount, (void**)pBIL) != NCSECW_READ_OK)
         {
             if(pBIL) {
                 NCSFree(pBIL);

@@ -184,10 +184,15 @@ CNCSError GDALECWCompressor::WriteReadLine( UINT32 nNextLine,
 /*                            WriteStatus()                             */
 /************************************************************************/
 #if ECWSDK_VERSION>=50
-void GDALECWCompressor::WriteStatus(IEEE4 fPercentComplete, const NCS::CString &sStatusText, const CompressionCounters &Counters){
+void GDALECWCompressor::WriteStatus(IEEE4 fPercentComplete, const NCS::CString &sStatusText, const CompressionCounters &Counters) 
+{
+	char szBuff[2048];
+	sStatusText.utf8_str(szBuff, 2047);
+	szBuff[2047] = '\0';
+
 	m_bCancelled = !pfnProgress( 
                       fPercentComplete/100.0, 
-                      sStatusText.utf8_str(), 
+                      szBuff, 
                       pProgressData );
 }
 #else
