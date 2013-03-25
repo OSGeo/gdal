@@ -866,9 +866,6 @@ void HDF5ImageDataset::CaptureCSKGeolocation(int iProductType)
     double *dfProjScaleFactor;
     double *dfCenterCoord;
 
-    //Set the ellipsoid to WGS84
-    oSRS.SetWellKnownGeogCS( "WGS84" );
-
     if(iProductType == PROD_CSK_L1C||iProductType == PROD_CSK_L1D)
     {
         //Check if all the metadata attributes are present
@@ -889,10 +886,11 @@ void HDF5ImageDataset::CaptureCSKGeolocation(int iProductType)
             //Fetch projection Type
             CPLString osProjectionID = GetMetadataItem("Projection_ID");
 
-
             //If the projection is UTM
             if(EQUAL(osProjectionID,"UTM"))
             {
+                // @TODO: use SetUTM
+                oSRS.SetProjCS(SRS_PT_TRANSVERSE_MERCATOR);
                 oSRS.SetTM(dfCenterCoord[0],
                            dfCenterCoord[1],
                            dfProjScaleFactor[0],
@@ -905,6 +903,7 @@ void HDF5ImageDataset::CaptureCSKGeolocation(int iProductType)
                 //If the projection is UPS
                 if(EQUAL(osProjectionID,"UPS"))
                 {
+                    oSRS.SetProjCS(SRS_PT_POLAR_STEREOGRAPHIC);
                     oSRS.SetPS(dfCenterCoord[0], 
                                dfCenterCoord[1],
                                dfProjScaleFactor[0],
@@ -925,6 +924,9 @@ void HDF5ImageDataset::CaptureCSKGeolocation(int iProductType)
     }
     else
     {
+        //Set the ellipsoid to WGS84
+        oSRS.SetWellKnownGeogCS( "WGS84" );
+
         //Export GCPProjection to Wkt.
         //In case of error then clean the projection
         if(oSRS.exportToWkt(&pszGCPProjection) != OGRERR_NONE)
