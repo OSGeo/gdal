@@ -815,6 +815,37 @@ if test "$PNG_SETTING" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Enable DDS driver.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH([dds], [  --with-dds[=ARG]        Include DDS support (ARG=no, or path)],,)
+
+AC_MSG_CHECKING([for libcrunch])
+
+if test "$with_dds" = "no" -o "$with_dds" = ""; then
+
+  DDS_SETTING=no
+  CRUNCHDIR=""
+
+  echo "dds support disabled."
+
+else
+
+  DDS_SETTING=yes
+  CRUNCHDIR="$with_dds"
+  LIBS="-L$with_dds/lib/ -lcrunch $LIBS"
+  echo "using libcrunch from $with_dds."
+
+fi
+
+AC_SUBST(CRUNCHDIR,$CRUNCHDIR)
+AC_SUBST([DDS_SETTING], [$with_dds])
+
+if test "DDS_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="dds $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl Check if GTA library is available.
 dnl ---------------------------------------------------------------------------
 
@@ -3925,6 +3956,7 @@ LOC_MSG([  GRASS support:             ${GRASS_SETTING}])
 LOC_MSG([  CFITSIO support:           ${FITS_SETTING}])
 LOC_MSG([  PCRaster support:          ${PCRASTER_SETTING}])
 LOC_MSG([  LIBPNG support:            ${PNG_SETTING}])
+LOC_MSG([  DDS support:               ${DDS_SETTING}])
 LOC_MSG([  GTA support:               ${GTA_SETTING}]) 
 LOC_MSG([  LIBTIFF support:           ${TIFF_SETTING} (BigTIFF=${HAVE_BIGTIFF})])
 LOC_MSG([  LIBGEOTIFF support:        ${GEOTIFF_SETTING}])

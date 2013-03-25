@@ -56,6 +56,7 @@ void CPL_DLL GDALRegister_DTED(void);
 void CPL_DLL GDALRegister_MFF(void);
 void CPL_DLL GDALRegister_HKV(void);
 void CPL_DLL GDALRegister_PNG(void);
+void CPL_DLL GDALRegister_DDS(void);
 void CPL_DLL GDALRegister_GTA(void);
 void CPL_DLL GDALRegister_JPEG(void);
 void CPL_DLL GDALRegister_JPEG2000(void);
