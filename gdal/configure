@@ -17470,7 +17470,11 @@ $as_echo "no" >&6; }
 fi
 
 if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
-  c
+
+cat >>confdefs.h <<_ACEOF
+#define USE_GCC_VISIBILITY_FLAG 1
+_ACEOF
+
 fi
 
 HAVE_HIDE_INTERNAL_SYMBOLS=$HAVE_HIDE_INTERNAL_SYMBOLS
