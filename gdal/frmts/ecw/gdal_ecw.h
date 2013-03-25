@@ -44,7 +44,9 @@
 
 // The following is needed on 4.x+ to enable rw support.
 #if defined(HAVE_COMPRESS)
+# ifndef ECW_COMPRESS_RW_SDK_VERSION
 #  define ECW_COMPRESS_RW_SDK_VERSION
+# endif
 #endif
 
 #if defined(_MSC_VER)
@@ -561,7 +563,7 @@ class ECWRasterBand : public GDALPamRasterBand
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual int    HasArbitraryOverviews() { return apoOverviews.size() == 0; }
-    virtual int    GetOverviewCount() { return apoOverviews.size(); }
+    virtual int    GetOverviewCount() { return (int)apoOverviews.size(); }
     virtual GDALRasterBand *GetOverview(int);
 
     virtual GDALColorInterp GetColorInterpretation();
