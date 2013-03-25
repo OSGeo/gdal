@@ -824,7 +824,7 @@ AC_MSG_CHECKING([for libcrunch])
 
 if test "$with_dds" = "no" -o "$with_dds" = ""; then
 
-  DDS_SETTING=no
+  DDS_SETTING="no"
   CRUNCHDIR=""
 
   echo "dds support disabled."
@@ -839,9 +839,9 @@ else
 fi
 
 AC_SUBST(CRUNCHDIR,$CRUNCHDIR)
-AC_SUBST([DDS_SETTING], [$with_dds])
+AC_SUBST([DDS_SETTING], [$DDS_SETTING])
 
-if test "DDS_SETTING" != "no" ; then
+if test "$DDS_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="dds $OPT_GDAL_FORMATS"
 fi
 
