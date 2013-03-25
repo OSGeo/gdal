@@ -1089,9 +1089,9 @@ void HDF5ImageDataset::CaptureCSKGCPs(int iProductType)
             pasGCPList[i].pszId = CPLStrdup( osCornerName[i].c_str() );
 
             //Fill the coordinates
-            pasGCPList[i].dfGCPX = pdCornerCoordinates[0];
-            pasGCPList[i].dfGCPY = pdCornerCoordinates[1];
-            pasGCPList[i].dfGCPZ = 0.0;
+            pasGCPList[i].dfGCPX = pdCornerCoordinates[1];
+            pasGCPList[i].dfGCPY = pdCornerCoordinates[0];
+            pasGCPList[i].dfGCPZ = pdCornerCoordinates[2];
             pasGCPList[i].dfGCPPixel = pdCornerPixel[i];
             pasGCPList[i].dfGCPLine = pdCornerLine[i];
 
