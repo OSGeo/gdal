@@ -213,6 +213,34 @@ Land Use and Land Cover Digital Data (Data Users Guide 4)</a> - HTML version con
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 
+<h2><a name="DDS">DDS -- DirectDraw Surface</a></h2>
+
+<p>(GDAL >= 1.10.0)</p>
+
+<p>
+Supported for writing and creation.  The DirectDraw Surface file format (uses
+the filename extension DDS), from Microsoft, is a standard for storing data
+compressed with the lossy S3 Texture Compression (S3TC) algorithm. The DDS
+format and compression are provided by the crunch library. 
+</p>
+
+<p>
+The driver supports the following texture formats: DXT1. DXT1A, DXT3 (default) and
+DXT5. You can set the texture format using the creation option FORMAT.
+</p>
+
+<p>
+The driver supports the following compression quality: SUPERFAST, FAST, NORMAL
+(default), BETTER and UBER. You can set the compression quality using the
+creation option QUALITY.
+</p>
+
+<p>More information about <a href="http://code.google.com/p/crunch/">Crunch Lib</a></p>
+
+<p>NOTE: Implemented as <tt>gdal/frmts/dds/ddsdataset.cpp</tt>.</p>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
 <h2><a name="DIMAP">DIMAP -- Spot DIMAP</a></h2>
 
 <p>This is a read-only read for Spot DIMAP described images.  To use, select
@@ -1251,34 +1279,6 @@ as reported by GDAL will be a half-pixel at the top and left of the values that 
 <p>Informal specification given in this <a href="http://lists.osgeo.org/pipermail/gdal-dev/2011-June/029173.html">GDAL-dev mailing list thread</a></p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/zmap/zmapdataset.cpp</tt>.</p>
-
-<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
-
-<h2><a name="DDS">DDS -- DirectDraw Surface</a></h2>
-
-<p>(GDAL >= 2.0.0)</p>
-
-<p>
-Supported for writing and creation.  The DirectDraw Surface file format (uses
-the filename extension DDS), from Microsoft, is a standard for storing data
-compressed with the lossy S3 Texture Compression (S3TC) algorithm. The DDS
-format and compression are provided by the crunch library. 
-</p>
-
-<p>
-The driver supports the following texture formats: DXT1. DXT1A, DXT3 (default) and
-DXT5. You can set the texture format using the configuration option FORMAT.
-</p>
-
-<p>
-The driver supports the following compression quality: SUPERFAST, FAST, NORMAL
-(default), BETTER and UBER. You can set the compression quality using the
-configuration option QUALITY.
-</p>
-
-<p>More information about <a href="http://code.google.com/p/crunch/">Crunch Lib</a></p>
-
-<p>NOTE: Implemented as <tt>gdal/frmts/dds/ddsdataset.cpp</tt>.</p>
 
 <hr>
 <p>
