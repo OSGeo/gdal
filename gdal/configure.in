@@ -321,7 +321,7 @@ else
 fi
 
 if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
-  c
+  AC_DEFINE_UNQUOTED(USE_GCC_VISIBILITY_FLAG,1, [Define to 1 if you want to use the -fvisibility GCC flag]) 
 fi
 
 AC_SUBST(HAVE_HIDE_INTERNAL_SYMBOLS,$HAVE_HIDE_INTERNAL_SYMBOLS)
