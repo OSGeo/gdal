@@ -741,6 +741,8 @@ PCIDSK_INCLUDE
 PCIDSK_LIB
 PCIDSK_SETTING
 GTA_SETTING
+DDS_SETTING
+CRUNCHDIR
 PNG_SETTING
 PCRASTER_SETTING
 FITS_SETTING
@@ -877,6 +879,7 @@ with_libgrass
 with_cfitsio
 with_pcraster
 with_png
+with_dds
 with_gta
 with_pcidsk
 with_libtiff
@@ -1615,6 +1618,7 @@ Optional Packages:
   --with-cfitsio=ARG    Include FITS support (ARG=no or libcfitsio path)
   --with-pcraster=ARG   Include PCRaster (libcsf) support (ARG=internal, no or path)
   --with-png=ARG        Include PNG support (ARG=internal, no or path)
+  --with-dds=ARG        Include DDS support (ARG=no, or path)
   --with-gta=ARG        Include GTA support (ARG=no or libgta tree prefix)
   --with-pcidsk=ARG     Path to external PCIDSK SDK, or internal (default), or old
   --with-libtiff=ARG    Libtiff library to use (ARG=internal, yes or path)
@@ -19632,6 +19636,42 @@ fi
 
 
 
+# Check whether --with-dds was given.
+if test "${with_dds+set}" = set; then :
+  withval=$with_dds;
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libcrunch" >&5
+$as_echo_n "checking for libcrunch... " >&6; }
+
+if test "$with_dds" = "no" -o "$with_dds" = ""; then
+
+  DDS_SETTING=no
+  CRUNCHDIR=""
+
+  echo "dds support disabled."
+
+else
+
+  DDS_SETTING=yes
+  CRUNCHDIR="$with_dds"
+  LIBS="-L$with_dds/lib/ -lcrunch $LIBS"
+  echo "using libcrunch from $with_dds."
+
+fi
+
+CRUNCHDIR=$CRUNCHDIR
+
+DDS_SETTING=$with_dds
+
+
+if test "DDS_SETTING" != "no" ; then
+  OPT_GDAL_FORMATS="dds $OPT_GDAL_FORMATS"
+fi
+
+
+
 # Check whether --with-gta was given.
 if test "${with_gta+set}" = set; then :
   withval=$with_gta;
@@ -30870,6 +30910,9 @@ echo "  PCRaster support:          ${PCRASTER_SETTING}"
 
 
 echo "  LIBPNG support:            ${PNG_SETTING}"
+
+
+echo "  DDS support:               ${DDS_SETTING}"
 
 
 echo "  GTA support:               ${GTA_SETTING}"
