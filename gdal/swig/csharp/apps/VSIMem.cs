@@ -62,7 +62,18 @@ class VSIMem {
 
 		if (args.Length != 1) usage();
 
-		byte[] imageBuffer = File.ReadAllBytes(args[0]);
+		byte[] imageBuffer;
+
+        using (FileStream fs = new FileStream(args[0], FileMode.Open, FileAccess.Read))
+        {
+            using (BinaryReader br = new BinaryReader(fs))
+            {
+                long numBytes = new FileInfo(args[0]).Length;
+                imageBuffer = br.ReadBytes((int)numBytes);
+                br.Close();
+                fs.Close();
+            }
+        }
 
         Gdal.AllRegister();
 
