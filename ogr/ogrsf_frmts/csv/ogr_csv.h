@@ -112,6 +112,8 @@ class OGRCSVLayer : public OGRLayer
     void                SetWriteBOM(int bWriteBOM);
 
     virtual int         GetFeatureCount( int bForce = TRUE );
+
+    OGRErr              WriteHeader();
 };
 
 /************************************************************************/
