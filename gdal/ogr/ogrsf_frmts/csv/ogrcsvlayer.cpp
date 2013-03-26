@@ -592,6 +592,10 @@ OGRCSVLayer::~OGRCSVLayer()
                   poFeatureDefn->GetName() );
     }
 
+    // Make sure the header file is written even if no features are written.
+    if (bInWriteMode)
+        WriteHeader();
+
     poFeatureDefn->Release();
     CPLFree(pszFilename);
 
@@ -909,39 +913,25 @@ OGRErr OGRCSVLayer::CreateField( OGRFieldDefn *poNewField, int bApproxOK )
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                            WriteHeader()                             */
+/*                                                                      */
+/*      Write the header, and possibly the .csvt file if they           */
+/*      haven't already been written.                                   */
 /************************************************************************/
 
-OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
-
+OGRErr OGRCSVLayer::WriteHeader()
 {
-    int iField;
-
-    if( !bInWriteMode )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-            "The CreateFeature() operation is not permitted on a read-only CSV." );
-        return OGRERR_FAILURE;
-    }
-
-    /* If we need rewind, it means that we have just written a feature before */
-    /* so there's no point seeking to the end of the file, as we're already */
-    /* at the end */
-    int bNeedSeekEnd = !bNeedRewindBeforeRead;
-
-    bNeedRewindBeforeRead = TRUE;
+    if( bHasFieldNames )
+        return OGRERR_NONE;
 
 /* -------------------------------------------------------------------- */
 /*      Write field names if we haven't written them yet.               */
 /*      Write .csvt file if needed                                      */
 /* -------------------------------------------------------------------- */
-    if( !bHasFieldNames )
-    {
-      bHasFieldNames = TRUE;
-      bNeedSeekEnd = FALSE;
+    bHasFieldNames = TRUE;
 
-      for(int iFile=0;iFile<((bCreateCSVT) ? 2 : 1);iFile++)
-      {
+    for(int iFile=0;iFile<((bCreateCSVT) ? 2 : 1);iFile++)
+    {
         VSILFILE* fpCSVT = NULL;
         if (bCreateCSVT && iFile == 0)
         {
@@ -962,8 +952,8 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
             if( fpCSV == NULL )
             {
                 CPLError( CE_Failure, CPLE_OpenFailed,
-                        "Failed to create %s:\n%s",
-                        pszFilename, VSIStrerror( errno ) );
+                          "Failed to create %s:\n%s",
+                          pszFilename, VSIStrerror( errno ) );
                 return OGRERR_FAILURE;
             }
         }
@@ -1014,7 +1004,7 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
             }
         }
 
-        for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+        for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
         {
             char *pszEscaped;
 
@@ -1035,12 +1025,12 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
             {
                 switch( poFeatureDefn->GetFieldDefn(iField)->GetType() )
                 {
-                    case OFTInteger:  VSIFPrintfL( fpCSVT, "%s", "Integer"); break;
-                    case OFTReal:     VSIFPrintfL( fpCSVT, "%s", "Real"); break;
-                    case OFTDate:     VSIFPrintfL( fpCSVT, "%s", "Date"); break;
-                    case OFTTime:     VSIFPrintfL( fpCSVT, "%s", "Time"); break;
-                    case OFTDateTime: VSIFPrintfL( fpCSVT, "%s", "DateTime"); break;
-                    default:          VSIFPrintfL( fpCSVT, "%s", "String"); break;
+                  case OFTInteger:  VSIFPrintfL( fpCSVT, "%s", "Integer"); break;
+                  case OFTReal:     VSIFPrintfL( fpCSVT, "%s", "Real"); break;
+                  case OFTDate:     VSIFPrintfL( fpCSVT, "%s", "Date"); break;
+                  case OFTTime:     VSIFPrintfL( fpCSVT, "%s", "Time"); break;
+                  case OFTDateTime: VSIFPrintfL( fpCSVT, "%s", "DateTime"); break;
+                  default:          VSIFPrintfL( fpCSVT, "%s", "String"); break;
                 }
 
                 int nWidth = poFeatureDefn->GetFieldDefn(iField)->GetWidth();
@@ -1070,8 +1060,44 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
         if (fpCSV) VSIFPutcL( '\n', fpCSV );
         if (fpCSVT) VSIFPutcL( '\n', fpCSVT );
         if (fpCSVT) VSIFCloseL(fpCSVT);
-      }
     }
+
+    if (fpCSV == NULL) 
+        return OGRERR_FAILURE;
+    else
+        return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
+
+OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
+
+{
+    int iField;
+
+    if( !bInWriteMode )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+            "The CreateFeature() operation is not permitted on a read-only CSV." );
+        return OGRERR_FAILURE;
+    }
+
+    /* If we need rewind, it means that we have just written a feature before */
+    /* so there's no point seeking to the end of the file, as we're already */
+    /* at the end */
+    int bNeedSeekEnd = !bNeedRewindBeforeRead;
+
+    bNeedRewindBeforeRead = TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Write field names if we haven't written them yet.               */
+/*      Write .csvt file if needed                                      */
+/* -------------------------------------------------------------------- */
+    OGRErr eErr = WriteHeader();
+    if (eErr != OGRERR_NONE)
+        return eErr;
 
     if (fpCSV == NULL)
         return OGRERR_FAILURE;
