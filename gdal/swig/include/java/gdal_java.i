@@ -692,7 +692,9 @@ import java.awt.Color;
       greens[i] = (byte)(entry.getGreen()&0xff);
       blues[i] = (byte)(entry.getBlue()&0xff);
       byte alpha = (byte)(entry.getAlpha()&0xff);
-      if (alpha == 255) 
+
+      // The byte type is -128 to 127 so a normal 255 will be -1.
+      if (alpha == -1) 
           noAlphas ++;
       else{
         if (alpha == 0){
