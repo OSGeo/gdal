@@ -1095,9 +1095,13 @@ OGRErr OGRCSVLayer::CreateFeature( OGRFeature *poNewFeature )
 /*      Write field names if we haven't written them yet.               */
 /*      Write .csvt file if needed                                      */
 /* -------------------------------------------------------------------- */
-    OGRErr eErr = WriteHeader();
-    if (eErr != OGRERR_NONE)
-        return eErr;
+    if( !bHasFieldNames )
+    {
+        OGRErr eErr = WriteHeader();
+        if (eErr != OGRERR_NONE)
+            return eErr;
+        bNeedSeekEnd = FALSE;
+    }
 
     if (fpCSV == NULL)
         return OGRERR_FAILURE;
