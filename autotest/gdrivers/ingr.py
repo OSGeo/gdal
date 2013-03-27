@@ -108,7 +108,7 @@ def ingr_7():
 
 def ingr_8():
 
-    tst = gdaltest.GDALTest( 'INGR', 'frmt09.cot', 1, 2480 )
+    tst = gdaltest.GDALTest( 'INGR', 'frmt09.cot', 1, 23035 )
     return tst.testOpen()
 
 ###############################################################################
@@ -189,6 +189,31 @@ def ingr_16():
     tst = gdaltest.GDALTest( 'INGR', 'frmt09t.cot', 1, 3178 )
     return tst.testOpen()
 
+###############################################################################
+# Test writing 9 RLE bitonal compression (#5030)
+
+def ingr_17():
+
+    src_ds = gdal.Open('data/frmt09.cot')
+    out_ds = gdal.GetDriverByName('INGR').CreateCopy('/vsimem/ingr_17.rle', src_ds)
+    out_ds = None
+    ref_cs = src_ds.GetRasterBand(1).Checksum()
+    src_ds = None
+    
+    ds = gdal.Open('/vsimem/ingr_17.rle')
+    got_cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    gdal.GetDriverByName('INGR').Delete('/vsimem/ingr_17.rle')
+    
+    if got_cs != ref_cs:
+        gdaltest.post_reason('fail')
+        print(got_cs)
+        print(ref_cs)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ingr_1,
     ingr_2,
@@ -205,7 +230,8 @@ gdaltest_list = [
     ingr_13,
     ingr_14,
     ingr_15,
-    ingr_16 ]
+    ingr_16,
+    ingr_17 ]
 
 if __name__ == '__main__':
 
