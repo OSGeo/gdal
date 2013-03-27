@@ -1170,9 +1170,7 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
     } while(0);
 
     if( bHeader )
-        iInput+=3; // 0x5900 tag, line id, line data size
-    else
-        nValue = 1;
+        iInput+=4; // 0x5900 tag, line id, line data size, skip offset
 
     if (iInput >= nSrcShorts)
         return 0;
@@ -1274,7 +1272,6 @@ INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
     }
     else
     {
-        nValue = 1;
         do
         {
             nRun = CPL_LSBWORD16(pauiSrc[ iInput ]);
@@ -1282,8 +1279,7 @@ INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
             
             if( nRun == 0x5900 )
             {
-                iInput++; // line id
-                iInput++; // line data size
+                iInput+=3; // line id, data size, skip offset
                 continue;
             }
             
