@@ -595,7 +595,7 @@ CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler )
         // parameter is an SD interface identifier.
         SDattrinfo( iHandler, iAttribute, szAttrName, &iNumType, &nValues );
 
-        if ( EQUALN( szAttrName, "coremetadata.", 13 )    ||
+        if ( EQUALN( szAttrName, "coremetadata", 12 )    ||
 	     EQUALN( szAttrName, "archivemetadata.", 16 ) ||
 	     EQUALN( szAttrName, "productmetadata.", 16 ) ||
              EQUALN( szAttrName, "badpixelinformation", 19 ) ||
