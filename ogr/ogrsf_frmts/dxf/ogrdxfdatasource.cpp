@@ -323,7 +323,8 @@ void OGRDXFDataSource::ReadLayerDefinition()
     if( oLayerProperties.size() > 0 )
         oLayerTable[osLayerName] = oLayerProperties;
     
-    UnreadValue();
+    if( nCode == 0 )
+        UnreadValue();
 }
 
 /************************************************************************/
@@ -386,7 +387,8 @@ void OGRDXFDataSource::ReadLineTypeDefinition()
     if( osLineTypeDef != "" )
         oLineTypeTable[osLineTypeName] = osLineTypeDef;
     
-    UnreadValue();
+    if( nCode == 0 )
+        UnreadValue();
 }
 
 /************************************************************************/

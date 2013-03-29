@@ -161,8 +161,9 @@ public:
     int                 nSrcBufferBytes;
     int                 iSrcBufferFileOffset;
     char                achSrcBuffer[1025];
-    
+
     int                 nLastValueSize;
+    int                 nLineNumber;
 
     int                 ReadValue( char *pszValueBuffer, 
                                    int nValueBufferSize = 81 );
