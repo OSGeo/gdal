@@ -732,7 +732,10 @@ int DDFFieldDefn::ApplyFormats()
         }
         
         if( !papoSubfields[iFormatItem]->SetFormat(pszPastPrefix) )
+        {
+            CSLDestroy( papszFormatItems );
             return FALSE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
