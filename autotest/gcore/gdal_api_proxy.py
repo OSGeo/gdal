@@ -142,6 +142,32 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    gcps = [ gdal.GCP(0,1,2,3,4) ]
+    ds.SetGCPs(gcps, "foo")
+
+    got_gcps = ds.GetGCPs()
+    if len(got_gcps) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if got_gcps[0].GCPLine != gcps[0].GCPLine or  \
+       got_gcps[0].GCPPixel != gcps[0].GCPPixel or  \
+       got_gcps[0].GCPX != gcps[0].GCPX or \
+       got_gcps[0].GCPY != gcps[0].GCPY:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ds.GetGCPProjection() != 'foo':
+        gdaltest.post_reason('fail')
+        print(ds.GetGCPProjection())
+        return 'fail'
+
+    ds.SetGCPs([], "")
+
+    if len(ds.GetGCPs()) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     ds.SetProjection('')
     got_prj = ds.GetProjectionRef()
     if src_prj == got_prj:
@@ -152,6 +178,8 @@ def gdal_api_proxy_sub():
     got_prj = ds.GetProjectionRef()
     if src_prj != got_prj:
         gdaltest.post_reason('fail')
+        print(src_prj)
+        print(got_prj)
         return 'fail'
 
     ds.GetRasterBand(1).Fill(0)
@@ -178,6 +206,9 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # Not bound to SWIG
+    # ds.AdviseRead(0,0,20,20,20,20)
+
     got_data = ds.ReadRaster(0, 0, 20, 20)
     if src_data != got_data:
         gdaltest.post_reason('fail')
@@ -188,8 +219,42 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    got_data_weird_spacing = ds.ReadRaster(0, 0, 20, 20, buf_pixel_space = 1, buf_line_space = 32)
+    if len(got_data_weird_spacing) != 32 * (20 - 1) + 20:
+        gdaltest.post_reason('fail')
+        print(len(got_data_weird_spacing))
+        return 'fail'
+
+    if got_data[20:20+20] != got_data_weird_spacing[32:32+20]:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    got_data_weird_spacing = ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20, buf_pixel_space = 1, buf_line_space = 32)
+    if len(got_data_weird_spacing) != 32 * (20 - 1) + 20:
+        gdaltest.post_reason('fail')
+        print(len(got_data_weird_spacing))
+        return 'fail'
+
+    if got_data[20:20+20] != got_data_weird_spacing[32:32+20]:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    got_block = ds.GetRasterBand(1).ReadBlock(0, 0)
+    if len(got_block) != 256 * 256:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if got_data[20:20+20] != got_block[256:256+20]:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     ds.FlushCache()
     ds.GetRasterBand(1).FlushCache()
+
+    got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20)
+    if src_data != got_data:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     if len(ds.GetFileList()) != 1:
         gdaltest.post_reason('fail')
@@ -202,6 +267,8 @@ def gdal_api_proxy_sub():
     got_md = ds.GetMetadata()
     if src_md != got_md:
         gdaltest.post_reason('fail')
+        print(src_md)
+        print(got_md)
         return 'fail'
 
     if ds.GetMetadataItem('AREA_OR_POINT') != 'Area':
@@ -214,6 +281,11 @@ def gdal_api_proxy_sub():
 
     ds.SetMetadataItem('foo', 'bar')
     if ds.GetMetadataItem('foo') != 'bar':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds.SetMetadata({'foo' : 'baz'}, 'OTHER')
+    if ds.GetMetadataItem('foo', 'OTHER') != 'baz':
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -248,6 +320,8 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    ds.GetRasterBand(1).SetColorInterpretation( gdal.GCI_Undefined )
+
     ct = ds.GetRasterBand(1).GetColorTable()
     if ct is not None:
         gdaltest.post_reason('fail')
@@ -260,10 +334,24 @@ def gdal_api_proxy_sub():
         return 'fail'
 
     ct = ds.GetRasterBand(1).GetColorTable()
-    if ct is  None:
+    if ct is None:
         gdaltest.post_reason('fail')
         return 'fail'
     if ct.GetColorEntry(0) != (1, 2, 3, 255):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ct = ds.GetRasterBand(1).GetColorTable()
+    if ct is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ds.GetRasterBand(1).SetColorTable(None) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ct = ds.GetRasterBand(1).GetColorTable()
+    if ct is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -271,7 +359,30 @@ def gdal_api_proxy_sub():
     if rat is not None:
         gdaltest.post_reason('fail')
         return 'fail'
+ 
+    if ds.GetRasterBand(1).SetDefaultRAT(None) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
+    ref_rat = gdal.RasterAttributeTable()
+    if ds.GetRasterBand(1).SetDefaultRAT(ref_rat) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    rat = ds.GetRasterBand(1).GetDefaultRAT()
+    if rat is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+ 
+    if ds.GetRasterBand(1).SetDefaultRAT(None) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    rat = ds.GetRasterBand(1).GetDefaultRAT()
+    if rat is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+ 
     if ds.GetRasterBand(1).GetMinimum() is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -307,6 +418,12 @@ def gdal_api_proxy_sub():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
+    if minmax != (74.0, 255.0):
+        gdaltest.post_reason('fail')
+        print(minmax)
+        return 'fail'
+
     if ds.GetRasterBand(1).GetOffset() != 0.0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -331,6 +448,10 @@ def gdal_api_proxy_sub():
         return 'fail'
 
     if ds.GetRasterBand(1).GetOverview(-1) is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetOverview(0) is None:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -401,6 +522,8 @@ def gdal_api_proxy_sub():
     if ds.GetRasterBand(1).GetMaskBand() is None:
         gdaltest.post_reason('fail')
         return 'fail'
+
+    ds.GetRasterBand(1).CreateMaskBand(0)
 
     if ds.GetRasterBand(1).HasArbitraryOverviews() != 0:
         gdaltest.post_reason('fail')
