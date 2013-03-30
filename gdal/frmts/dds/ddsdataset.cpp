@@ -232,20 +232,22 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
     /*      Loop over image, compressing image data.                        */
     /* -------------------------------------------------------------------- */
     const uint bytesPerBlock = crn_get_bytes_per_dxt_block(fmt);
-    GByte  *pabyScanlines;
     CPLErr eErr = CE_None;
-    int nYNumBlocks = (nYSize + cDXTBlockSize - 1) / cDXTBlockSize;  
-    
-    pabyScanlines = (GByte *) CPLMalloc(nBands * nXSize * cDXTBlockSize);
-    
-    for (int iLine = 0; iLine < nYNumBlocks && eErr == CE_None; iLine++)
+    const uint nYNumBlocks = (nYSize + cDXTBlockSize - 1) / cDXTBlockSize;  
+    const uint num_blocks_x = (nXSize + cDXTBlockSize - 1) / cDXTBlockSize;
+    const uint total_compressed_size = num_blocks_x * bytesPerBlock;
+
+    void *pCompressed_data = CPLMalloc(total_compressed_size);
+    GByte* pabyScanlines = (GByte *) CPLMalloc(nBands * nXSize * cDXTBlockSize);
+    crn_uint32 *pixels = (crn_uint32*) CPLMalloc(sizeof(crn_uint32)*cDXTBlockSize * cDXTBlockSize);
+    crn_uint32 *src_image = NULL;
+    if (nColorType == DDS_COLOR_TYPE_RGB)
+        src_image = (crn_uint32*) CPLMalloc(sizeof(crn_uint32)*nXSize*cDXTBlockSize);
+
+    for (uint iLine = 0; iLine < nYNumBlocks && eErr == CE_None; iLine++)
     {
-    
-        const uint num_blocks_x = (nXSize + cDXTBlockSize - 1) / cDXTBlockSize;
-        const uint total_compressed_size = num_blocks_x * bytesPerBlock;
-        const uint size_y = (iLine*cDXTBlockSize+cDXTBlockSize) < nYSize ?
-                           cDXTBlockSize : (cDXTBlockSize-((iLine*cDXTBlockSize+cDXTBlockSize)-nYSize));
-        void *pCompressed_data = malloc(total_compressed_size);
+        const uint size_y = (iLine*cDXTBlockSize+cDXTBlockSize) < (uint)nYSize ?
+                           cDXTBlockSize : (cDXTBlockSize-((iLine*cDXTBlockSize+cDXTBlockSize)-(uint)nYSize));
         
         eErr = poSrcDS->RasterIO(GF_Read, 0, iLine*cDXTBlockSize, nXSize, size_y, 
                                  pabyScanlines, nXSize, size_y, GDT_Byte,
@@ -257,13 +259,11 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
             break;
         
         crn_uint32 *pSrc_image = NULL;
-        crn_uint32 *src_image = NULL;
         if (nColorType == DDS_COLOR_TYPE_RGB_ALPHA)
             pSrc_image = (crn_uint32*)pabyScanlines;
         else if (nColorType == DDS_COLOR_TYPE_RGB)
         { /* crunch needs 32bits integers */
             int nPixels = nXSize*cDXTBlockSize;
-            src_image = (crn_uint32*) CPLMalloc(sizeof(crn_uint32)*nXSize*cDXTBlockSize);
             for (int i=0; i<nPixels;++i)
             {
                 int y = (i*3);
@@ -274,7 +274,6 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
             pSrc_image = &(src_image[0]);
         }
 
-        crn_uint32 *pixels = (crn_uint32*) CPLMalloc(sizeof(crn_uint32)*cDXTBlockSize * cDXTBlockSize);
         for (crn_uint32 block_x = 0; block_x < num_blocks_x; block_x++)
         {
             // Exact block from image, clamping at the sides of non-divisible by
@@ -297,12 +296,8 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
         if (eErr == CE_None)
             VSIFWriteL(pCompressed_data, 1, total_compressed_size, fpImage);
 
-        CPLFree(pixels);        
-        CPLFree(src_image);
-        free(pCompressed_data);    
-
         if (eErr == CE_None
-            && !pfnProgress( ((iLine*4)+1) / (double) nYSize,
+            && !pfnProgress( (iLine+1) / (double) nYNumBlocks,
                              NULL, pProgressData))
         {
             eErr = CE_Failure;
@@ -311,7 +306,10 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
         }
 
     }
-    
+
+    CPLFree(src_image);
+    CPLFree(pixels);
+    CPLFree(pCompressed_data);
     CPLFree(pabyScanlines);
     crn_free_block_compressor(pContext);
     pContext = NULL;
