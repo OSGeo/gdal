@@ -262,6 +262,55 @@ def ogr_s57_8():
     return 'success'
 
 ###############################################################################
+# Test S57 to S57 conversion
+
+def ogr_s57_9():
+    if gdaltest.s57_ds is None:
+        return 'skip'
+
+    try:
+        os.unlink('tmp/ogr_s57_9.000')
+    except:
+        pass
+
+    gdal.SetConfigOption('OGR_S57_OPTIONS', 'RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON')
+    ds = ogr.GetDriverByName('S57').CreateDataSource('tmp/ogr_s57_9.000')
+    src_ds = ogr.Open('data/1B5X02NE.000')
+    gdal.SetConfigOption('OGR_S57_OPTIONS', None)
+    for src_lyr in src_ds:
+        if src_lyr.GetName() == 'DSID':
+            continue
+        lyr = ds.GetLayerByName(src_lyr.GetName())
+        for src_feat in src_lyr:
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat.SetFrom(src_feat)
+            lyr.CreateFeature(feat)
+            feat = None
+    src_ds = None
+    ds = None
+
+    ds = ogr.Open( 'tmp/ogr_s57_9.000' )
+    if ds is None:
+        return 'fail'
+
+    gdaltest.s57_ds = ds
+    if ogr_s57_2() != 'success':
+        return 'fail'
+    if ogr_s57_3() != 'success':
+        return 'fail'
+    if ogr_s57_4() != 'success':
+        return 'fail'
+    if ogr_s57_5() != 'success':
+        return 'fail'
+
+    try:
+        os.unlink('tmp/ogr_s57_9.000')
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
 # Test decoding of Dutch inland ENCs (#3881).
 
 def ogr_s57_online_1():
@@ -378,9 +427,7 @@ def ogr_s57_online_3():
 
 def ogr_s57_cleanup():
 
-    if gdaltest.s57_ds is not None:
-        gdaltest.s57_ds.Destroy()
-        gdaltest.s57_ds = None
+    gdaltest.s57_ds = None
 
     return 'success'
 
@@ -393,6 +440,7 @@ gdaltest_list = [
     ogr_s57_6,
     ogr_s57_7,
     ogr_s57_8,
+    ogr_s57_9,
     ogr_s57_online_1,
     ogr_s57_online_2,
     ogr_s57_online_3,
