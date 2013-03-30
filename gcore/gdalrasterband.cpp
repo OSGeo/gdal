@@ -4372,7 +4372,6 @@ CPLErr CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH hBand,
 
 {
     VALIDATE_POINTER1( hBand, "GDALSetDefaultRAT", CE_Failure );
-    VALIDATE_POINTER1( hRAT, "GDALSetDefaultRAT", CE_Failure );
 
     GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
 
