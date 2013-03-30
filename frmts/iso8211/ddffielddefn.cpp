@@ -162,13 +162,14 @@ int DDFFieldDefn::Create( const char *pszTag, const char *pszFieldName,
     this->pszTag = CPLStrdup( pszTag );
     _fieldName = CPLStrdup( pszFieldName );
     _arrayDescr = CPLStrdup( pszDescription );
-    _formatControls = CPLStrdup( "" );
     
     _data_struct_code = eDataStructCode;
     _data_type_code = eDataTypeCode;
 
     if( pszFormat != NULL )
         _formatControls = CPLStrdup( pszFormat );
+    else
+        _formatControls = CPLStrdup( "" );
 
     if( pszDescription != NULL && *pszDescription == '*' )
         bRepeatingSubfields = TRUE;
