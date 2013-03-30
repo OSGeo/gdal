@@ -1503,6 +1503,9 @@ HFARasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
 CPLErr HFARasterBand::SetDefaultRAT( const GDALRasterAttributeTable * poRAT )
 
 {
+    if( poRAT == NULL )
+        return CE_Failure;
+
     return WriteNamedRAT( "Descriptor_Table", poRAT );
 }
 
