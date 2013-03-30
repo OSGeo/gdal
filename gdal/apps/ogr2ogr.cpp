@@ -2480,7 +2480,7 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
         if( !poDstDS->TestCapability( ODsCCreateLayer ) )
         {
             fprintf( stderr,
-              "Layer %s not found, and CreateLayer not supported by driver.",
+              "Layer %s not found, and CreateLayer not supported by driver.\n",
                      pszNewLayerName );
             return NULL;
         }
