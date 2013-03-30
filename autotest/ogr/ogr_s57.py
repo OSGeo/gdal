@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -242,6 +243,25 @@ def ogr_s57_7():
     return 'success'
 
 ###############################################################################
+# Run test_ogrsf
+
+def ogr_s57_8():
+    if gdaltest.s57_ds is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/1B5X02NE.000')
+
+    if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test decoding of Dutch inland ENCs (#3881).
 
 def ogr_s57_online_1():
@@ -372,6 +392,7 @@ gdaltest_list = [
     ogr_s57_5,
     ogr_s57_6,
     ogr_s57_7,
+    ogr_s57_8,
     ogr_s57_online_1,
     ogr_s57_online_2,
     ogr_s57_online_3,
