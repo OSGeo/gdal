@@ -8991,6 +8991,7 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
 {
     if( GetAccess() == GA_Update )
     {
+        LoadMDAreaOrPoint();
         bLookedForProjection = TRUE;
 
         if( this->nGCPCount > 0 )
@@ -8999,14 +9000,14 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
             CPLFree( this->pasGCPList );
         }
 
-	this->nGCPCount = nGCPCount;
-	this->pasGCPList = GDALDuplicateGCPs(nGCPCount, pasGCPList);
+        this->nGCPCount = nGCPCount;
+        this->pasGCPList = GDALDuplicateGCPs(nGCPCount, pasGCPList);
 
         CPLFree( this->pszProjection );
-	this->pszProjection = CPLStrdup( pszGCPProjection );
+        this->pszProjection = CPLStrdup( pszGCPProjection );
         bGeoTIFFInfoChanged = TRUE;
 
-	return CE_None;
+        return CE_None;
     }
     else
     {
