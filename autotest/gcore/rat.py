@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -108,7 +109,7 @@ def rat_2():
 
     ds = None
 
-    ds = gdal.Open( 'tmp/rat_2.pnm' )
+    ds = gdal.Open( 'tmp/rat_2.pnm', gdal.GA_Update )
     rat2 = ds.GetRasterBand(1).GetDefaultRAT()
 
     if rat2.GetColumnCount() != 2:
@@ -139,7 +140,17 @@ def rat_2():
         gdaltest.post_reason( 'wrong field value.' )
         return 'fail'
 
+    # unset the RAT
+    ds.GetRasterBand(1).SetDefaultRAT( None )
+
     ds = None
+
+    ds = gdal.Open( 'tmp/rat_2.pnm' )
+    rat = ds.GetRasterBand(1).GetDefaultRAT()
+    ds = None
+    if rat is not None:
+        gdaltest.post_reason( 'expected a NULL RAT.' )
+        return 'fail'
     
     gdal.GetDriverByName('PNM').Delete( 'tmp/rat_2.pnm' )
     
