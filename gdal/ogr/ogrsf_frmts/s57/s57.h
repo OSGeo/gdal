@@ -119,9 +119,9 @@ class CPL_DLL S57ClassRegistrar
     GUInt16    *panAttrIndex; // sorted by acronym.
 
     int         FindFile( const char *pszTarget, const char *pszDirectory,
-                          int bReportErr, FILE **fp );
+                          int bReportErr, VSILFILE **fp );
 
-    const char *ReadLine( FILE * fp );
+    const char *ReadLine( VSILFILE * fp );
     char      **papszNextLine;
 
 public:
