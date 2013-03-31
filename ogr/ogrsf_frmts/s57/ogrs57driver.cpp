@@ -29,10 +29,12 @@
 
 #include "ogr_s57.h"
 #include "cpl_conv.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
 S57ClassRegistrar *OGRS57Driver::poRegistrar = NULL;
+static void* hS57RegistrarMutex = NULL;
 
 /************************************************************************/
 /*                            OGRS57Driver()                            */
@@ -54,6 +56,12 @@ OGRS57Driver::~OGRS57Driver()
     {
         delete poRegistrar;
         poRegistrar = NULL;
+    }
+    
+    if( hS57RegistrarMutex != NULL )
+    {
+        CPLDestroyMutex(hS57RegistrarMutex);
+        hS57RegistrarMutex = NULL;
     }
 }
 
@@ -136,6 +144,8 @@ S57ClassRegistrar *OGRS57Driver::GetS57Registrar()
 /* -------------------------------------------------------------------- */
 /*      Instantiate the class registrar if possible.                    */
 /* -------------------------------------------------------------------- */
+    CPLMutexHolderD(&hS57RegistrarMutex);
+
     if( poRegistrar == NULL )
     {
         poRegistrar = new S57ClassRegistrar();
