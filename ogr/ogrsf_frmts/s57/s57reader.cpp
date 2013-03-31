@@ -3010,10 +3010,10 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
         char    *pszUpdateFilename = 
             CPLStrdup(CPLResetExtension(pszPath,extension.c_str()));
 
-        FILE *file = VSIFOpen( pszUpdateFilename, "r" );
+        VSILFILE *file = VSIFOpenL( pszUpdateFilename, "r" );
         if( file )
         {
-            VSIFClose( file );
+            VSIFCloseL( file );
             bSuccess = oUpdateModule.Open( pszUpdateFilename, TRUE );
             if( bSuccess )
                 CPLDebug( "S57", "Applying feature updates from %s.", 
