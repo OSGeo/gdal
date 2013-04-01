@@ -809,6 +809,8 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
         /* Fetch the attribute value */
         const char *pszValue;
         pszValue = poRecord->GetStringSubfield("ATTF",0,"ATVL",iAttr);
+        if( pszValue == NULL )
+            return;
         
         /* Apply to feature in an appropriate way */
         int iField;
@@ -3036,8 +3038,9 @@ int S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
         {
             if( poDSIDRecord != NULL )
             {
-                strcpy( szUPDNUpdate, 
-                        poRecord->GetStringSubfield( "DSID", 0, "UPDN", 0 ) );
+                const char* pszUPDN = poRecord->GetStringSubfield( "DSID", 0, "UPDN", 0 );
+                if( pszUPDN != NULL && strlen(pszUPDN) < sizeof(szUPDNUpdate) )
+                    strcpy( szUPDNUpdate, pszUPDN );
             }
         }
 
