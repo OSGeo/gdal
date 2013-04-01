@@ -87,9 +87,12 @@ static void Usage(const char* pszErrorMsg = NULL)
 
 {
     fprintf(stdout, "%s", 
-            "Usage: gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average|user}]\n"
-            "                    [-tr xres yres] [-tap] [-separate] [-b band] [-allow_projection_difference] [-q]\n"
-            "                    [-te xmin ymin xmax ymax] [-addalpha] [-hidenodata] \n"
+            "Usage: gdalbuildvrt [-tileindex field_name]\n"
+            "                    [-resolution {highest|lowest|average|user}]\n"
+            "                    [-te xmin ymin xmax ymax] [-tr xres yres] [-tap]\n"
+            "                    [-separate] [-b band] [-sd subdataset]\n"
+            "                    [-allow_projection_difference] [-q]\n"
+            "                    [-addalpha] [-hidenodata]\n"
             "                    [-srcnodata \"value [value...]\"] [-vrtnodata \"value [value...]\"] \n"
             "                    [-a_srs srs_def]\n"
             "                    [-input_file_list my_liste.txt] [-overwrite] output.vrt [gdalfile]*\n"
@@ -99,18 +102,22 @@ static void Usage(const char* pszErrorMsg = NULL)
             "  % gdalbuildvrt -input_file_list my_liste.txt doq_index.vrt\n"
             "\n"
             "NOTES:\n"
-            "  o With -separate, each files goes into a separate band in the VRT band. Otherwise,\n"
-            "    the files are considered as tiles of a larger mosaic.\n"
-            "  o -b option selects a band to add into vrt.  Multiple bands can be listed.  By default all\n"
-            "    bands are queried.\n"
-            "  o The default tile index field is 'location' unless otherwise specified by -tileindex.\n"
-            "  o In case the resolution of all input files is not the same, the -resolution flag.\n"
-            "    enable the user to control the way the output resolution is computed. average is the default.\n"
+            "  o With -separate, each files goes into a separate band in the VRT band.\n"
+            "    Otherwise, the files are considered as tiles of a larger mosaic.\n"
+            "  o -b option selects a band to add into vrt.  Multiple bands can be listed.\n"
+            "    By default all bands are queried.\n"
+            "  o The default tile index field is 'location' unless otherwise specified by\n"
+            "    -tileindex.\n"
+            "  o In case the resolution of all input files is not the same, the -resolution\n"
+            "    flag enable the user to control the way the output resolution is computed.\n"
+            "    Average is the default.\n"
             "  o Input files may be any valid GDAL dataset or a GDAL raster tile index.\n"
             "  o For a GDAL raster tile index, all entries will be added to the VRT.\n"
-            "  o If one GDAL dataset is made of several subdatasets and has 0 raster bands, its\n"
-            "    datasets will be added to the VRT rather than the dataset itself.\n"
-            "  o By default, only datasets of same projection and band characteristics may be added to the VRT.\n"
+            "  o If one GDAL dataset is made of several subdatasets and has 0 raster bands,\n"
+            "    its datasets will be added to the VRT rather than the dataset itself.\n"
+            "    Single subdataset could be selected by its number using the -sd option.\n"
+            "  o By default, only datasets of same projection and band characteristics\n"
+            "    may be added to the VRT.\n"
             );
 
     if( pszErrorMsg != NULL )
@@ -205,6 +212,7 @@ class VRTBuilder
     int                 bAllowProjectionDifference;
     int                 bAddAlpha;
     int                 bHideNoData;
+    int                 nSubdataset;
     char               *pszSrcNoData;
     char               *pszVRTNoData;
     char               *pszOutputSRS;
@@ -242,7 +250,7 @@ class VRTBuilder
                            int bTargetAlignedPixels,
                            double minX, double minY, double maxX, double maxY,
                            int bSeparate, int bAllowProjectionDifference,
-                           int bAddAlpha, int bHideNoData,
+                           int bAddAlpha, int bHideNoData, int nSubdataset,
                            const char* pszSrcNoData, const char* pszVRTNoData,
                            const char* pszOutputSRS);
 
@@ -264,7 +272,7 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilename,
                        int bTargetAlignedPixels,
                        double minX, double minY, double maxX, double maxY,
                        int bSeparate, int bAllowProjectionDifference,
-                       int bAddAlpha, int bHideNoData,
+                       int bAddAlpha, int bHideNoData, int nSubdataset,
                        const char* pszSrcNoData, const char* pszVRTNoData,
                        const char* pszOutputSRS)
 {
@@ -294,6 +302,7 @@ VRTBuilder::VRTBuilder(const char* pszOutputFilename,
     this->bAllowProjectionDifference = bAllowProjectionDifference;
     this->bAddAlpha = bAddAlpha;
     this->bHideNoData = bHideNoData;
+    this->nSubdataset = nSubdataset;
     this->pszSrcNoData = (pszSrcNoData) ? CPLStrdup(pszSrcNoData) : NULL;
     this->pszVRTNoData = (pszVRTNoData) ? CPLStrdup(pszVRTNoData) : NULL;
     this->pszOutputSRS = (pszOutputSRS) ? CPLStrdup(pszOutputSRS) : NULL;
@@ -397,20 +406,37 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, const char* dsFileName,
 
         ppszInputFilenames = (char**)CPLRealloc(ppszInputFilenames,
                                 sizeof(char*) * (nInputFiles+CSLCount(papszMetadata)));
-        int count = 1;
-        char subdatasetNameKey[256];
-        sprintf(subdatasetNameKey, "SUBDATASET_%d_NAME", count);
-        while(*papszMetadata != NULL)
+        if ( nSubdataset < 0 )
         {
-            if (EQUALN(*papszMetadata, subdatasetNameKey, strlen(subdatasetNameKey)))
+            int count = 1;
+            char subdatasetNameKey[256];
+            sprintf(subdatasetNameKey, "SUBDATASET_%d_NAME", count);
+            while(*papszMetadata != NULL)
             {
-                memset(&pasDatasetProperties[nInputFiles], 0, sizeof(DatasetProperty));
-                ppszInputFilenames[nInputFiles++] =
-                        CPLStrdup(*papszMetadata+strlen(subdatasetNameKey)+1);
-                count++;
-                sprintf(subdatasetNameKey, "SUBDATASET_%d_NAME", count);
+                if (EQUALN(*papszMetadata, subdatasetNameKey, strlen(subdatasetNameKey)))
+                {
+                    memset(&pasDatasetProperties[nInputFiles], 0, sizeof(DatasetProperty));
+                    ppszInputFilenames[nInputFiles++] =
+                            CPLStrdup(*papszMetadata+strlen(subdatasetNameKey)+1);
+                    count++;
+                    sprintf(subdatasetNameKey, "SUBDATASET_%d_NAME", count);
+                }
+                papszMetadata++;
             }
-            papszMetadata++;
+        }
+        else
+        {
+            char        subdatasetNameKey[256];
+            const char  *pszSubdatasetName;
+
+            snprintf( subdatasetNameKey, sizeof(subdatasetNameKey),
+                      "SUBDATASET_%d_NAME", nSubdataset );
+            pszSubdatasetName = CSLFetchNameValue( papszMetadata, subdatasetNameKey );
+            if ( pszSubdatasetName )
+            {
+                memset( &pasDatasetProperties[nInputFiles], 0, sizeof(DatasetProperty) );
+                ppszInputFilenames[nInputFiles++] = CPLStrdup( pszSubdatasetName );
+            }
         }
         return FALSE;
     }
@@ -1236,6 +1262,7 @@ int main( int nArgc, char ** papszArgv )
     int bAddAlpha = FALSE;
     int bForceOverwrite = FALSE;
     int bHideNoData = FALSE;
+    int nSubdataset = -1;
     const char* pszSrcNoData = NULL;
     const char* pszVRTNoData = NULL;
     char* pszOutputSRS = NULL;
@@ -1300,6 +1327,11 @@ int main( int nArgc, char ** papszArgv )
         else if ( EQUAL(papszArgv[iArg],"-allow_projection_difference") )
         {
             bAllowProjectionDifference = TRUE;
+        }
+        else if( EQUAL(papszArgv[iArg], "-sd") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            nSubdataset = atoi(papszArgv[++iArg]);
         }
         /* Alternate syntax for output file */
         else if( EQUAL(papszArgv[iArg],"-o") )
@@ -1482,7 +1514,7 @@ int main( int nArgc, char ** papszArgv )
     VRTBuilder oBuilder(pszOutputFilename, nInputFiles, ppszInputFilenames,
                         panBandList, nBandCount, nMaxBandNo,
                         eStrategy, we_res, ns_res, bTargetAlignedPixels, xmin, ymin, xmax, ymax,
-                        bSeparate, bAllowProjectionDifference, bAddAlpha, bHideNoData,
+                        bSeparate, bAllowProjectionDifference, bAddAlpha, bHideNoData, nSubdataset,
                         pszSrcNoData, pszVRTNoData, pszOutputSRS);
 
     oBuilder.Build(pfnProgress, NULL);
