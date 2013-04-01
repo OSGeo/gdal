@@ -920,21 +920,29 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
 /*      Apply references.                                               */
 /* -------------------------------------------------------------------- */
     int         nRefCount = poFFPT->GetRepeatCount();
-    DDFSubfieldDefn *poLNAM;
+    DDFSubfieldDefn *poLNAM, *poRIND;
     char        **papszRefs = NULL;
     int         *panRIND = (int *) CPLMalloc(sizeof(int) * nRefCount);
 
     poLNAM = poFFPT->GetFieldDefn()->FindSubfieldDefn( "LNAM" );
-    if( poLNAM == NULL )
+    poRIND = poFFPT->GetFieldDefn()->FindSubfieldDefn( "RIND" );
+    if( poLNAM == NULL || poRIND == NULL )
         return;
 
     for( int iRef = 0; iRef < nRefCount; iRef++ )
     {
         unsigned char *pabyData;
+        int nMaxBytes;
 
         pabyData = (unsigned char *)
-            poFFPT->GetSubfieldData( poLNAM, NULL, iRef );
-        
+            poFFPT->GetSubfieldData( poLNAM, &nMaxBytes, iRef );
+        if( pabyData == NULL || nMaxBytes < 8 )
+        {
+            CSLDestroy( papszRefs );
+            CPLFree( panRIND );
+            return;
+        }
+
         sprintf( szLNAM, "%02X%02X%02X%02X%02X%02X%02X%02X",
                  pabyData[1], pabyData[0], /* AGEN */
                  pabyData[5], pabyData[4], pabyData[3], pabyData[2], /* FIDN */
@@ -942,7 +950,15 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
 
         papszRefs = CSLAddString( papszRefs, szLNAM );
 
-        panRIND[iRef] = pabyData[8];
+        pabyData = (unsigned char *)
+            poFFPT->GetSubfieldData( poRIND, &nMaxBytes, iRef );
+        if( pabyData == NULL || nMaxBytes < 1 )
+        {
+            CSLDestroy( papszRefs );
+            CPLFree( panRIND );
+            return;
+        }
+        panRIND[iRef] = pabyData[0];
     }
 
     poFeature->SetField( "LNAM_REFS", papszRefs );
