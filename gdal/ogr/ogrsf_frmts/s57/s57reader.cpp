@@ -2416,7 +2416,7 @@ int S57Reader::CollectClassList(int *panClassCount, int nMaxClass )
         DDFRecord *poRecord = oFE_Index.GetByIndex( iFEIndex );
         int     nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
 
-        if( nOBJL >= nMaxClass )
+        if( nOBJL < 0 || nOBJL >= nMaxClass )
             bSuccess = FALSE;
         else
             panClassCount[nOBJL]++;
