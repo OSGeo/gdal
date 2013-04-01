@@ -3234,6 +3234,9 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
                 GInt32  *panData, nX, nY;
 
                 panData = (GInt32 *) poSG3D->GetData();
+                if( poSG3D->GetDataSize() < 3 * nVCount * (int)sizeof(int) )
+                    return OGRERR_FAILURE;
+
                 for( i = 0; i < nVCount; i++ )
                 {
                     nX = CPL_LSBWORD32(panData[i*3+1]);
@@ -3260,6 +3263,9 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
                 GInt32  *panData, nX, nY;
 
                 panData = (GInt32 *) poSG2D->GetData();
+                if( poSG2D->GetDataSize() < 2 * nVCount * (int)sizeof(int) )
+                    return OGRERR_FAILURE;
+
                 for( i = 0; i < nVCount; i++ )
                 {
                     nX = CPL_LSBWORD32(panData[i*2+1]);
