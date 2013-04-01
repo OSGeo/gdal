@@ -2341,10 +2341,15 @@ int S57Reader::ParseName( DDFField * poField, int nIndex, int * pnRCNM )
         return -1;
     }
 
+    DDFSubfieldDefn* poName = poField->GetFieldDefn()->FindSubfieldDefn( "NAME" );
+    if( poName == NULL )
+        return -1;
+
+    int nMaxBytes;
     pabyData = (unsigned char *)
-        poField->GetSubfieldData(
-            poField->GetFieldDefn()->FindSubfieldDefn( "NAME" ),
-            NULL, nIndex );
+        poField->GetSubfieldData( poName, &nMaxBytes, nIndex );
+    if( pabyData == NULL || nMaxBytes < 5 )
+        return -1;
 
     if( pnRCNM != NULL )
         *pnRCNM = pabyData[0];
