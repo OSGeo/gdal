@@ -228,6 +228,11 @@ class CPL_ODLL DDFFieldDefn
 
     char        *GetDefaultValue( int *pnSize );
     
+    const char  *GetArrayDescr() const { return _arrayDescr; }
+    const char  *GetFormatControls() const { return _formatControls; }
+    DDF_data_struct_code GetDataStructCode() const { return _data_struct_code; }
+    DDF_data_type_code GetDataTypeCode() const { return _data_type_code; }
+    
   private:
 
     static char       *ExtractSubstring( const char * );
