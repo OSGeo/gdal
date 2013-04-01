@@ -2039,6 +2039,12 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
                     poXCOO = poSG2D->GetFieldDefn()->FindSubfieldDefn("XCOO");
                     poYCOO = poSG2D->GetFieldDefn()->FindSubfieldDefn("YCOO");
 
+                    if( poXCOO == NULL || poYCOO == NULL )
+                    {
+                        CPLDebug( "S57", "XCOO or YCOO are NULL" );
+                        return;
+                    }
+
                     nVCount = poSG2D->GetRepeatCount();
 
                     if( bReverse )
