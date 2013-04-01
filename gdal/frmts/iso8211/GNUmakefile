@@ -13,10 +13,10 @@ OBJ =	ddfmodule.o ddfutils.o ddffielddefn.o ddfrecord.o ddffield.o \
 
 default:	$(ISOLIB)
 
-all:	$(ISOLIB) 8211dump$(EXE) 8211view$(EXE) mkcatalog$(EXE) docs
+all:	$(ISOLIB) 8211dump$(EXE) 8211view$(EXE) 8211createfromxml$(EXE) mkcatalog$(EXE) docs
 
 clean:
-	rm -rf *.o 8211dump$(EXE) 8211view$(EXE) $(DISTDIR) $(DISTDIR).tar.gz html/* \
+	rm -rf *.o 8211dump$(EXE) 8211view$(EXE) 8211createfromxml$(EXE) $(DISTDIR) $(DISTDIR).tar.gz html/* \
 		$(ISOLIB)
 
 dist-clean:	clean
@@ -25,6 +25,9 @@ dist-clean:	clean
 $(ISOLIB):	$(OBJ:.o=.$(OBJ_EXT))
 	$(AR) r $(ISOLIB) $?
 	$(RANLIB) $(ISOLIB)
+
+8211createfromxml$(EXE):	8211createfromxml.$(OBJ_EXT)
+	$(LD) $(LDFLAGS) 8211createfromxml.$(OBJ_EXT) $(CONFIG_LIBS) -o 8211createfromxml$(EXE)
 
 8211dump$(EXE):	8211dump.$(OBJ_EXT)
 	$(LD) $(LDFLAGS) 8211dump.$(OBJ_EXT) $(CONFIG_LIBS) -o 8211dump$(EXE)
