@@ -2477,6 +2477,13 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             char        *pachInsertion;
             int         nInsertionBytes = nPtrSize * nNSPT;
 
+            if( poSrcFSPT->GetDataSize() < nInsertionBytes )
+            {
+                CPLDebug("S57", "Not enough bytes in source FSPT field. Has %d, requires %d",
+                         poSrcFSPT->GetDataSize(), nInsertionBytes );
+                return FALSE;
+            }
+
             pachInsertion = (char *) CPLMalloc(nInsertionBytes + nPtrSize);
             memcpy( pachInsertion, poSrcFSPT->GetData(), nInsertionBytes );
 
@@ -2487,6 +2494,14 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             */
             if( nFSIX <= poDstFSPT->GetRepeatCount() )
             {
+                if( poDstFSPT->GetDataSize() < nPtrSize * nFSIX )
+                {
+                    CPLDebug("S57", "Not enough bytes in dest FSPT field. Has %d, requires %d",
+                         poDstFSPT->GetDataSize(), nPtrSize * nFSIX );
+                    CPLFree( pachInsertion );
+                    return FALSE;
+                }
+
                 memcpy( pachInsertion + nInsertionBytes, 
                         poDstFSPT->GetData() + nPtrSize * (nFSIX-1), 
                         nPtrSize );
@@ -2552,6 +2567,13 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             char        *pachInsertion;
             int         nInsertionBytes = nPtrSize * nNVPT;
 
+            if( poSrcVRPT->GetDataSize() < nInsertionBytes )
+            {
+                CPLDebug("S57", "Not enough bytes in source VRPT field. Has %d, requires %d",
+                         poSrcVRPT->GetDataSize(), nInsertionBytes );
+                return FALSE;
+            }
+
             pachInsertion = (char *) CPLMalloc(nInsertionBytes + nPtrSize);
             memcpy( pachInsertion, poSrcVRPT->GetData(), nInsertionBytes );
 
@@ -2562,6 +2584,14 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             */
             if( nVPIX <= poDstVRPT->GetRepeatCount() )
             {
+                if( poDstVRPT->GetDataSize() < nPtrSize * nVPIX )
+                {
+                    CPLDebug("S57", "Not enough bytes in dest VRPT field. Has %d, requires %d",
+                         poDstVRPT->GetDataSize(), nPtrSize * nVPIX );
+                    CPLFree( pachInsertion );
+                    return FALSE;
+                }
+
                 memcpy( pachInsertion + nInsertionBytes, 
                         poDstVRPT->GetData() + nPtrSize * (nVPIX-1), 
                         nPtrSize );
@@ -2582,6 +2612,13 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
         }
         else if( nVPUI == 3 ) /* MODIFY */
         {
+            if( poSrcVRPT->GetDataSize() < nNVPT * nPtrSize )
+            {
+                CPLDebug("S57", "Not enough bytes in source VRPT field. Has %d, requires %d",
+                         poSrcVRPT->GetDataSize(), nNVPT * nPtrSize );
+                return FALSE;
+            }
+
             /* copy over each ptr */
             for( int i = 0; i < nNVPT; i++ )
             {
@@ -2644,6 +2681,13 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             char        *pachInsertion;
             int         nInsertionBytes = nCoordSize * nCCNC;
 
+            if( poSrcSG2D->GetDataSize() < nInsertionBytes )
+            {
+                CPLDebug("S57", "Not enough bytes in source SG2D field. Has %d, requires %d",
+                         poSrcSG2D->GetDataSize(), nInsertionBytes );
+                return FALSE;
+            }
+
             pachInsertion = (char *) CPLMalloc(nInsertionBytes + nCoordSize);
             memcpy( pachInsertion, poSrcSG2D->GetData(), nInsertionBytes );
 
@@ -2654,6 +2698,14 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             */
             if( nCCIX <= poDstSG2D->GetRepeatCount() )
             {
+                if( poDstSG2D->GetDataSize() < nCoordSize * nCCIX )
+                {
+                    CPLDebug("S57", "Not enough bytes in dest SG2D field. Has %d, requires %d",
+                         poDstSG2D->GetDataSize(), nCoordSize * nCCIX );
+                    CPLFree( pachInsertion );
+                    return FALSE;
+                }
+
                 memcpy( pachInsertion + nInsertionBytes, 
                         poDstSG2D->GetData() + nCoordSize * (nCCIX-1), 
                         nCoordSize );
@@ -2674,6 +2726,13 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
         }
         else if( nCCUI == 3 ) /* MODIFY */
         {
+            if( poSrcSG2D->GetDataSize() < nCCNC * nCoordSize )
+            {
+                CPLDebug("S57", "Not enough bytes in source SG2D field. Has %d, requires %d",
+                         poSrcSG2D->GetDataSize(), nCCNC * nCoordSize );
+                return FALSE;
+            }
+
             /* copy over each ptr */
             for( int i = 0; i < nCCNC; i++ )
             {
@@ -2737,6 +2796,13 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             char        *pachInsertion;
             int         nInsertionBytes = nFFPTSize * nNFPT;
 
+            if( poSrcFFPT->GetDataSize() < nInsertionBytes )
+            {
+                CPLDebug("S57", "Not enough bytes in source FFPT field. Has %d, requires %d",
+                         poSrcFFPT->GetDataSize(), nInsertionBytes );
+                return FALSE;
+            }
+
             pachInsertion = (char *) CPLMalloc(nInsertionBytes + nFFPTSize);
             memcpy( pachInsertion, poSrcFFPT->GetData(), nInsertionBytes );
 
@@ -2747,6 +2813,14 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             */
             if( nFFIX <= poDstFFPT->GetRepeatCount() )
             {
+                if( poDstFFPT->GetDataSize() < nFFPTSize * nFFIX )
+                {
+                    CPLDebug("S57", "Not enough bytes in dest FFPT field. Has %d, requires %d",
+                         poDstFFPT->GetDataSize(), nFFPTSize * nFFIX );
+                    CPLFree( pachInsertion );
+                    return FALSE;
+                }
+
                 memcpy( pachInsertion + nInsertionBytes, 
                         poDstFFPT->GetData() + nFFPTSize * (nFFIX-1), 
                         nFFPTSize );
@@ -2770,6 +2844,13 @@ int S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
         }
         else if( nFFUI == 3 ) /* UPDATE */
         {
+            if( poSrcFFPT->GetDataSize() < nNFPT * nFFPTSize )
+            {
+                CPLDebug("S57", "Not enough bytes in source FFPT field. Has %d, requires %d",
+                         poSrcFFPT->GetDataSize(), nNFPT * nFFPTSize );
+                return FALSE;
+            }
+
             /* copy over each ptr */
             for( int i = 0; i < nNFPT; i++ )
             {
