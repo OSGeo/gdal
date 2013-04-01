@@ -608,10 +608,13 @@ Builds a VRT from a list of datasets. (compiled by default since GDAL 1.6.1)
 \section gdalbuildvrt_synopsis SYNOPSIS
 
 \verbatim
-gdalbuildvrt [-tileindex field_name] [-resolution {highest|lowest|average|user}]
-             [-tr xres yres] [-tap] [-separate] [-b band] [-allow_projection_difference] [-q]
-             [-te xmin ymin xmax ymax] [-addalpha] [-hidenodata]
-             [-srcnodata "value [value...]"] [-vrtnodata "value [value...]"]
+gdalbuildvrt [-tileindex field_name]
+             [-resolution {highest|lowest|average|user}]
+             [-te xmin ymin xmax ymax] [-tr xres yres] [-tap]
+             [-separate] [-b band] [-sd subdataset]
+             [-allow_projection_difference] [-q]
+             [-addalpha] [-hidenodata]
+             [-srcnodata "value [value...]"] [-vrtnodata "value [value...]"] 
              [-a_srs srs_def]
              [-input_file_list my_liste.txt] [-overwrite] output.vrt [gdalfile]*
 \endverbatim
@@ -694,9 +697,14 @@ intrinsic nodata settings on the source datasets will be used (if they exist). T
 is written in the NODATA element of each ComplexSource element. Use a value of
 <tt>None</tt> to ignore intrinsic nodata settings on the source datasets.</dd>
 
-<dt> <b>-b</b> <i>band</i>:</dt><dd>(starting with GDAL 1.X) 
+<dt> <b>-b</b> <i>band</i>:</dt><dd>(GDAL >= 1.10.0) 
 Select an input <i>band</i> to be processed. Bands are numbered from 1.
 If input bands not set all bands will be added to vrt</dd>
+
+<dt> <b>-sd</b> <i>subdataset</i></dt><dd> (GDAL >= 1.10.0) If the input
+dataset contains several subdatasets use a subdataset with the specified
+number (starting from 1). This is an alternative of giving the full subdataset
+name as an input.</dd>
 
 <dt> <b>-vrtnodata</b> <em>value [value...]</em>:</dt><dd> (starting with GDAL 1.7.0)
 Set nodata values at the VRT band level (different values can be supplied for each band).  If more
