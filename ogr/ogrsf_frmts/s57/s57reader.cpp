@@ -2960,6 +2960,8 @@ int S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
     while( (poRecord = poUpdateModule->ReadRecord()) != NULL )
     {
         DDFField        *poKeyField = poRecord->GetField(1);
+        if( poKeyField == NULL )
+            return FALSE;
         const char      *pszKey = poKeyField->GetFieldDefn()->GetName();
         
         if( EQUAL(pszKey,"VRID") || EQUAL(pszKey,"FRID"))
