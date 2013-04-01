@@ -1803,6 +1803,11 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
 
     poXCOO = poField->GetFieldDefn()->FindSubfieldDefn( "XCOO" );
     poYCOO = poField->GetFieldDefn()->FindSubfieldDefn( "YCOO" );
+    if( poXCOO == NULL || poYCOO == NULL )
+    {
+        CPLDebug( "S57", "XCOO or YCOO are NULL" );
+        return;
+    }
     poVE3D = poField->GetFieldDefn()->FindSubfieldDefn( "VE3D" );
 
     nPointCount = poField->GetRepeatCount();
