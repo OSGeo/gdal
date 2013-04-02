@@ -182,6 +182,7 @@ int main(int nArgc, char* papszArgv[])
             }
 
             DDFRecord *poRec = new DDFRecord( &oModule );
+            std::map<std::string, int> oMapField;
 
             CPLXMLNode* psSubIter = psIter->psChild;
             while( psSubIter != NULL )
@@ -197,6 +198,9 @@ int main(int nArgc, char* papszArgv[])
                         fprintf(stderr, "Can't find field '%s'\n", pszFieldName );
                         exit(1);
                     }
+                    
+                    int nFieldOcc = oMapField[pszFieldName];
+                    oMapField[pszFieldName] ++ ;
 
                     poField = poRec->AddField( poFieldDefn );
                     const char* pszValue = CPLGetXMLValue(psSubIter, "value", NULL);
@@ -221,7 +225,7 @@ int main(int nArgc, char* papszArgv[])
                                 nLow = c - '0';
                             pabyData[i] = (nHigh << 4) + nLow;
                         }
-                        poRec->SetFieldRaw( poField, 0, (const char *) pabyData, nDataLen );
+                        poRec->SetFieldRaw( poField, nFieldOcc, (const char *) pabyData, nDataLen );
                         free(pabyData);
                     }
                     else
@@ -240,17 +244,17 @@ int main(int nArgc, char* papszArgv[])
                                 oMapSubfield[pszSubfieldName] ++ ;
                                 if( strcmp(pszSubfieldType, "float") == 0 )
                                 {
-                                    poRec->SetFloatSubfield( pszFieldName, 0, pszSubfieldName, nOcc,
+                                    poRec->SetFloatSubfield( pszFieldName, nFieldOcc, pszSubfieldName, nOcc,
                                                            atof(pszSubfieldValue) );
                                 }
                                 else if( strcmp(pszSubfieldType, "integer") == 0 )
                                 {
-                                    poRec->SetIntSubfield( pszFieldName, 0, pszSubfieldName, nOcc,
+                                    poRec->SetIntSubfield( pszFieldName, nFieldOcc, pszSubfieldName, nOcc,
                                                            atoi(pszSubfieldValue) );
                                 }
                                 else if( strcmp(pszSubfieldType, "string") == 0 )
                                 {
-                                    poRec->SetStringSubfield( pszFieldName, 0, pszSubfieldName, nOcc,
+                                    poRec->SetStringSubfield( pszFieldName, nFieldOcc, pszSubfieldName, nOcc,
                                                               pszSubfieldValue );
                                 }
                                 else if( strcmp(pszSubfieldType, "binary") == 0 &&
@@ -275,7 +279,7 @@ int main(int nArgc, char* papszArgv[])
                                             nLow = c - '0';
                                         pabyData[i] = (nHigh << 4) + nLow;
                                     }
-                                    poRec->SetStringSubfield( pszFieldName, 0, pszSubfieldName, nOcc,
+                                    poRec->SetStringSubfield( pszFieldName, nFieldOcc, pszSubfieldName, nOcc,
                                                               pabyData, nDataLen );
                                     free(pabyData);
                                 }
