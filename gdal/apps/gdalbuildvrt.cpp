@@ -334,6 +334,7 @@ VRTBuilder::~VRTBuilder()
     CPLFree(pszOutputFilename);
     CPLFree(pszSrcNoData);
     CPLFree(pszVRTNoData);
+    CPLFree(panBandList);
 
     int i;
     for(i=0;i<nInputFiles;i++)
