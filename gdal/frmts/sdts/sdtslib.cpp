@@ -58,7 +58,7 @@ void SDTSFeature::ApplyATID( DDFField * poField )
     poMODN = poField->GetFieldDefn()->FindSubfieldDefn( "MODN" );
     if( poMODN == NULL )
     {
-        CPLAssert( FALSE );
+        //CPLAssert( FALSE );
         return;
     }
     
@@ -135,8 +135,12 @@ int SDTSModId::Set( DDFField *poField )
         szModule[sizeof(szModule)-1] = '\0';
 
         poSF = poField->GetFieldDefn()->FindSubfieldDefn( "RCID" );
-        pachData = poField->GetSubfieldData(poSF, &nBytesRemaining);
-        nRecord = poSF->ExtractIntData( pachData, nBytesRemaining, NULL);
+        if( poSF != NULL )
+        {
+            pachData = poField->GetSubfieldData(poSF, &nBytesRemaining);
+            if( pachData != NULL )
+                nRecord = poSF->ExtractIntData( pachData, nBytesRemaining, NULL);
+        }
     }
 
     if( poDefn->GetSubfieldCount() == 3 )
@@ -150,11 +154,14 @@ int SDTSModId::Set( DDFField *poField )
             const char  *pachData;
 
             pachData = poField->GetSubfieldData(poSF, &nBytesRemaining);
-            strncpy( szOBRP, 
-                     poSF->ExtractStringData( pachData, nBytesRemaining, NULL),
-                     sizeof(szOBRP) );
-            
-            szOBRP[sizeof(szOBRP)-1] = '\0';
+            if( pachData != NULL )
+            {
+                strncpy( szOBRP, 
+                        poSF->ExtractStringData( pachData, nBytesRemaining, NULL),
+                        sizeof(szOBRP) );
+                
+                szOBRP[sizeof(szOBRP)-1] = '\0';
+            }
         }
     }
 
@@ -168,8 +175,6 @@ int SDTSModId::Set( DDFField *poField )
 const char * SDTSModId::GetName()
 
 {
-    static char         szName[20];
-
     sprintf( szName, "%s:%ld", szModule, nRecord );
 
     return szName;

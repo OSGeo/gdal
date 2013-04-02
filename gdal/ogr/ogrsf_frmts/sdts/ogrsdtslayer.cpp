@@ -389,8 +389,8 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
         DDFField        *poSR;
 
         poSR = poTransfer->GetAttr( poSDTSFeature->paoATID+iAttrRecord );
-          
-        AssignAttrRecordToFeature( poFeature, poTransfer, poSR );
+        if( poSR != NULL )
+            AssignAttrRecordToFeature( poFeature, poTransfer, poSR );
     }
 
 /* -------------------------------------------------------------------- */
