@@ -477,7 +477,10 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
         return FALSE;
     }
 
-    osBAD = record->GetStringSubfield( "SPR", 0, "BAD", 0, &bSuccess );
+    const char* pszBAD = record->GetStringSubfield( "SPR", 0, "BAD", 0, &bSuccess );
+    if( pszBAD == NULL )
+        return FALSE;
+    osBAD = pszBAD;
     {
         char* c = (char*) strchr(osBAD, ' ');
         if (c)
@@ -488,7 +491,8 @@ int SRPDataset::GetFromRecord(const char* pszFileName, DDFRecord * record)
 /* -------------------------------------------------------------------- */
 /*      Read the tile map if available.                                 */
 /* -------------------------------------------------------------------- */
-    int TIF = EQUAL(record->GetStringSubfield( "SPR", 0, "TIF", 0 ),"Y");
+    const char* pszTIF = record->GetStringSubfield( "SPR", 0, "TIF", 0 );
+    int TIF = pszTIF != NULL && EQUAL(pszTIF,"Y");
     CPLDebug("SRP", "TIF=%d", TIF);
     
     if (TIF)
@@ -829,7 +833,10 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
         if( !EQUAL(osPRT,"ASRP") && !EQUAL(osPRT,"USRP") )
             continue;
 
-        osNAM = record->GetStringSubfield( "DSI", 0, "NAM", 0 );
+        const char* pszNAM = record->GetStringSubfield( "DSI", 0, "NAM", 0 );
+        if( pszNAM == NULL )
+            pszNAM = "";
+        osNAM = pszNAM;
         CPLDebug("SRP", "NAM=%s", osNAM.c_str());
 
         SRPDataset *poDS = new SRPDataset();
