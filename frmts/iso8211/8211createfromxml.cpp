@@ -75,11 +75,49 @@ int main(int nArgc, char* papszArgv[])
         exit( 1 );
     }
 
-    oModule.Initialize();
-
+    /* Compute the size of the DDFField tag */
     CPLXMLNode* psIter = poXMLDDFModule->psChild;
+    int nSizeFieldTag = 0;
+    while( psIter != NULL )
+    {
+        if( psIter->eType == CXT_Element &&
+            strcmp(psIter->pszValue, "DDFFieldDefn") == 0 )
+        {
+            const char* pszTag = CPLGetXMLValue(psIter, "tag", "");
+            if( nSizeFieldTag == 0 )
+                nSizeFieldTag = (int)strlen(pszTag);
+            else if( nSizeFieldTag != (int)strlen(pszTag) )
+            {
+                fprintf(stderr, "All fields have not the same tag size\n");
+                exit( 1 );
+            }
+        }
+        psIter = psIter->psNext;
+    }
+
+    char chInterchangeLevel = '3';
+    char chLeaderIden = 'L';
+    char chCodeExtensionIndicator = 'E';
+    char chVersionNumber = '1';
+    char chAppIndicator = ' ';
+    const char *pszExtendedCharSet = " ! ";
+    int nSizeFieldLength = 3;
+    int nSizeFieldPos = 4;
+
+    oModule.Initialize(chInterchangeLevel,
+                       chLeaderIden,
+                       chCodeExtensionIndicator,
+                       chVersionNumber,
+                       chAppIndicator,
+                       pszExtendedCharSet,
+                       nSizeFieldLength,
+                       nSizeFieldPos,
+                       nSizeFieldTag);
+
     int bCreated = FALSE;
 
+    /* Create DDFFieldDefn and DDFRecord elements */
+    psIter = poXMLDDFModule->psChild;
     while( psIter != NULL )
     {
         if( psIter->eType == CXT_Element &&

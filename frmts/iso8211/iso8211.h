@@ -117,6 +117,7 @@ class CPL_ODLL DDFModule
     
     // This is just for DDFRecord.
     VSILFILE   *GetFP() { return fpDDF; }
+    int         GetSizeFieldTag() const { return (int)_sizeFieldTag; }
     
   private:
     VSILFILE    *fpDDF;

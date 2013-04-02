@@ -448,18 +448,24 @@ int DDFModule::Create( const char *pszFilename )
     int nOffset = 0;
     for( iField=0; iField < nFieldDefnCount; iField++ )
     {
-        char achDirEntry[12];
+        char achDirEntry[255];
+        char szFormat[32];
         int nLength;
+
+        CPLAssert(_sizeFieldLength + _sizeFieldPos + _sizeFieldTag < (int)sizeof(achDirEntry));
 
         papoFieldDefns[iField]->GenerateDDREntry( NULL, &nLength );
 
+        CPLAssert( (int)strlen(papoFieldDefns[iField]->GetName()) == _sizeFieldTag );
         strcpy( achDirEntry, papoFieldDefns[iField]->GetName() );
-        sprintf( achDirEntry + _sizeFieldTag, "%03d", nLength );
+        sprintf(szFormat, "%%0%dd", (int)_sizeFieldLength);
+        sprintf( achDirEntry + _sizeFieldTag, szFormat, nLength );
+        sprintf(szFormat, "%%0%dd", (int)_sizeFieldTag);
         sprintf( achDirEntry + _sizeFieldTag + _sizeFieldLength, 
-                 "%04d", nOffset );
+                 szFormat, nOffset );
         nOffset += nLength;
 
-        VSIFWriteL( achDirEntry, 11, 1, fpDDF );
+        VSIFWriteL( achDirEntry, _sizeFieldLength + _sizeFieldPos + _sizeFieldTag, 1, fpDDF );
     }
 
     char chUT = DDF_FIELD_TERMINATOR;
