@@ -1134,7 +1134,7 @@ http://www.gdal.org/ogr/ogr_formats.html
 ...
 
 	OGRLayerH *hLayer;
-        char     *papszOptions;
+        char     **papszOptions;
 
 	if( OGR_DS_TestCapability( hDS, ODsCCreateLayer ) )
         {
