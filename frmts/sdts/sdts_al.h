@@ -165,7 +165,8 @@ class SDTSModId
   public:
                 SDTSModId() { szModule[0] = '\0';
                               nRecord = -1;
-                              szOBRP[0] = '\0'; }
+                              szOBRP[0] = '\0';
+                              szName[0] = '\0'; }
 
     int         Set( DDFField * );
 
@@ -181,6 +182,11 @@ class SDTSModId
     /** The "role" of this record within the module.  This is normally empty
         for references, but set in the oModId member of a feature.  */
     char        szOBRP[8]; 
+
+    /** String "szModule:nRecord" */
+    char        szName[20];
+
+
 };
 
 /************************************************************************/

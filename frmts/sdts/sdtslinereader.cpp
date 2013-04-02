@@ -73,7 +73,9 @@ SDTSRawLine::~SDTSRawLine()
 int SDTSRawLine::Read( SDTS_IREF * poIREF, DDFRecord * poRecord )
 
 {
-    CPLAssert( poRecord->GetStringSubfield( "LINE", 0, "MODN", 0 ) != NULL );
+    // E.Rouault: Not sure if this test is really usefull
+    if( poRecord->GetStringSubfield( "LINE", 0, "MODN", 0 ) == NULL )
+        return FALSE;
     
 /* ==================================================================== */
 /*      Loop over fields in this record, looking for those we           */

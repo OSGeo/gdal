@@ -17,9 +17,9 @@ CPPFLAGS :=	-I$(ISO8211DIR) $(GDAL_INCLUDE) $(CPPFLAGS)
 SDTSLIB	=	libsdts_al.a
 LIBS	:=	$(SDTSLIB) $(ISO8211DIR)/libiso8211.a $(GDAL_LIB) $(LIBS)
 
-
-
 default:	$(SDTSLIB) sdtsdataset.$(OBJ_EXT)
+
+$(O_OBJ):       sdts_al.h
 
 all:	$(SDTSLIB) sdts2shp
 
