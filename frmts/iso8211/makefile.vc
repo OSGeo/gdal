@@ -18,7 +18,7 @@ clean:
 	-del *.manifest
 	-del *.exp
 
-all:	default 8211view.exe 8211dump.exe
+all:	default 8211view.exe 8211dump.exe 8211createfromxml.exe
 
 iso8211.dll: $(OBJ) $(CPLLIB) 
 	link /dll $(LDEBUG) $(OBJ) $(CPLLIB)  ../zlib/*.obj \
@@ -34,4 +34,9 @@ iso8211.dll: $(OBJ) $(CPLLIB)
 	$(CC) $(CFLAGS) 8211dump.obj $(OBJ) $(CPLLIB) $(LIBICONV_LIBRARY) $(CURL_LIB) ../zlib/*.obj  /link $(LINKER_FLAGS)
 	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1 
 	del 8211dump.obj
+
+8211createfromxml.exe:	8211createfromxml.obj $(OBJ) $(CPLLIB) 
+	$(CC) $(CFLAGS) 8211createfromxml.obj $(OBJ) $(CPLLIB) $(LIBICONV_LIBRARY) $(CURL_LIB) ../zlib/*.obj  /link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1 
+	del 8211createfromxml.obj
 
