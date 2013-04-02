@@ -55,7 +55,7 @@ DDFRecord::DDFRecord( DDFModule * poModuleIn )
 
     bIsClone = FALSE;
 
-    _sizeFieldTag = 4;
+    _sizeFieldTag = poModuleIn->GetSizeFieldTag();
     _sizeFieldPos = 0;
     _sizeFieldLength = 0;
 }
