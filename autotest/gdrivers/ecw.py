@@ -119,8 +119,13 @@ def ecw_3():
         return 'skip'
 
     ds = gdal.Open( 'data/jrc.ecw' )
-    gdaltest.ecw_drv.CreateCopy( 'tmp/jrc_out.ecw', ds, options = ['TARGET=75'] )
+    out_ds = gdaltest.ecw_drv.CreateCopy( 'tmp/jrc_out.ecw', ds, options = ['TARGET=75'] )
     ds = None
+    
+    if out_ds is None:
+        if gdal.GetLastErrorMsg().find('ECW_ENCODE_KEY') >= 0:
+            gdaltest.ecw_write = 0
+            return 'skip'
 
     return 'success' 
 
@@ -1347,7 +1352,7 @@ def ecw_38():
 
 def ecw_39():
 
-    if gdaltest.ecw_drv is None:
+    if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
     if gdaltest.ecw_drv.major_version <5:
         return 'skip'    
