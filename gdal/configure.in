@@ -1910,14 +1910,14 @@ else
     AC_MSG_RESULT([found libecwj2 in $with_ecw/lib.])
 
   # ECW SDK 5.0 style
-  elif test -r $with_ecw/lib/x64/release/libtbb.so ; then
+  elif test -r $with_ecw/lib/x64/release/libNCSEcw.so ; then
     if test `arch` == "x86_64" ; then
       ECW_LIBDIR=$with_ecw/lib/x64/release
     else
       ECW_LIBDIR=$with_ecw/lib/x86/release
     fi
-    ECW_FLAGS="-DLINUX -DX86 -DPOSIX -DUNICODE -D_UNICODE -DECW_COMPRESS_RW_SDK_VERSION"
-    ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw -ltbb"
+    ECW_FLAGS="-DLINUX -DX86 -DPOSIX -DHAVE_COMPRESS -DECW_COMPRESS_RW_SDK_VERSION"
+    ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw"
     AC_MSG_RESULT([found Intergraph 5.x+ SDK in ${ECW_LIBDIR}.])
   else
     AC_MSG_ERROR([not found in $with_ecw/lib or $with_ecw/bin.])

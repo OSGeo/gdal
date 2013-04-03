@@ -34,6 +34,41 @@ CPL_CVSID("$Id$");
 
 #if defined(FRMT_ecw) && defined(HAVE_COMPRESS)
 
+#if ECWSDK_VERSION>=50
+static
+CPLString GetCompressionSoftwareName(){
+    CPLString osRet;
+    char szProcessName[2048];
+
+    /* For privacy reason, allow the user to not write the software name in the ECW */
+    if( !CSLTestBoolean(CPLGetConfigOption("GDAL_ECW_WRITE_COMPRESSION_SOFTWARE", "YES")) )
+        return osRet;
+
+    if( CPLGetExecPath( szProcessName, sizeof(szProcessName) - 1 ) )
+    {
+        szProcessName[sizeof(szProcessName) - 1] = 0;
+#ifdef WIN32
+        char* szLastSlash = strrchr(szProcessName, '\\');
+#else
+        char* szLastSlash = strrchr(szProcessName, '/');
+#endif
+        if( szLastSlash != NULL )
+            memmove(szProcessName, szLastSlash + 1, strlen(szLastSlash + 1) + 1);
+    }
+    else
+        strcpy(szProcessName, "Unknown");
+
+    osRet.Printf("%s/GDAL v%d.%d.%d.%d/ECWJP2 SDK v%s", 
+                 szProcessName,
+                 GDAL_VERSION_MAJOR,
+                 GDAL_VERSION_MINOR,
+                 GDAL_VERSION_REV,
+                 GDAL_VERSION_BUILD,
+                 NCS_ECWJP2_FULL_VERSION_STRING_DOT_DEL);
+    return osRet;
+};
+#endif
+
 class GDALECWCompressor : public CNCSFile {
 
 public:
@@ -43,8 +78,7 @@ public:
 #if ECWSDK_VERSION>=50
     virtual void WriteStatus(IEEE4 fPercentComplete, const NCS::CString &sStatusText, const CompressionCounters &Counters);
 #else 
-	virtual void WriteStatus(UINT32 nCurrentLine);
-	
+    virtual void WriteStatus(UINT32 nCurrentLine);
 #endif
 
     virtual bool WriteCancel();
@@ -103,7 +137,11 @@ GDALECWCompressor::GDALECWCompressor()
     pProgressData = NULL;
     papoJP2UserBox = NULL;
     nJP2UserBox = 0;
+#if ECWSDK_VERSION>=50
+    NCSInitFileInfo(&sFileInfo);
+#else
     NCSInitFileInfoEx(&sFileInfo);
+#endif
 }
 
 /************************************************************************/
@@ -126,11 +164,15 @@ GDALECWCompressor::~GDALECWCompressor()
 CPLErr GDALECWCompressor::CloseDown()
 
 {
-    for( int i = 0; i < sFileInfo.nBands; i++ )
-    {
-        CPLFree( sFileInfo.pBands[i].szDesc );
-    }
-    CPLFree( sFileInfo.pBands );
+#if ECWSDK_VERSION>=50
+    NCSFreeFileInfo(&sFileInfo);
+#else
+    for( int i = 0; i < sFileInfo.nBands; i++ ) 
+    { 
+        CPLFree( sFileInfo.pBands[i].szDesc ); 
+    } 
+    CPLFree( sFileInfo.pBands ); 
+#endif
 
     Close( true );
     m_OStream.Close();
@@ -186,14 +228,13 @@ CNCSError GDALECWCompressor::WriteReadLine( UINT32 nNextLine,
 #if ECWSDK_VERSION>=50
 void GDALECWCompressor::WriteStatus(IEEE4 fPercentComplete, const NCS::CString &sStatusText, const CompressionCounters &Counters) 
 {
-	char szBuff[2048];
-	sStatusText.utf8_str(szBuff, 2047);
-	szBuff[2047] = '\0';
+    std::string sStatusUTF8;
+    sStatusText.utf8_str(sStatusUTF8);
 
-	m_bCancelled = !pfnProgress( 
-                      fPercentComplete/100.0, 
-                      szBuff, 
-                      pProgressData );
+    m_bCancelled = !pfnProgress( 
+                    fPercentComplete/100.0, 
+                    sStatusUTF8.c_str(), 
+                    pProgressData );
 }
 #else
 
@@ -652,13 +693,22 @@ CPLErr GDALECWCompressor::Initialize(
 /* -------------------------------------------------------------------- */
     int iBand;
 
+#if ECWSDK_VERSION>=50
+    psClient->pBands = (NCSFileBandInfo *) 
+        NCSMalloc( sizeof(NCSFileBandInfo) * nBands, true );
+#else
     psClient->pBands = (NCSFileBandInfo *) 
         CPLMalloc( sizeof(NCSFileBandInfo) * nBands );
+#endif
     for( iBand = 0; iBand < nBands; iBand++ )
     {
         psClient->pBands[iBand].nBits = (UINT8) nBits;
         psClient->pBands[iBand].bSigned = (BOOLEAN)bSigned;
+#if ECWSDK_VERSION>=50
+        psClient->pBands[iBand].szDesc = NCSStrDup(papszBandDescriptions[iBand]);
+#else
         psClient->pBands[iBand].szDesc = CPLStrdup(papszBandDescriptions[iBand]);
+#endif
     }
 
 /* -------------------------------------------------------------------- */
@@ -833,8 +883,13 @@ CPLErr GDALECWCompressor::Initialize(
         psClient->eCellSizeUnits = ECWTranslateToCellSizeUnits(szUnits);
     }
 
+#if ECWSDK_VERSION>=50
+    psClient->szDatum = NCSStrDup(szDatum);
+    psClient->szProjection = NCSStrDup(szProjection);
+#else
     psClient->szDatum = szDatum;
     psClient->szProjection = szProjection;
+#endif
 
     CPLDebug( "ECW", "Writing with PROJ=%s, DATUM=%s, UNITS=%s", 
               szProjection, szDatum, ECWTranslateFromCellSizeUnits(psClient->eCellSizeUnits) );
@@ -894,7 +949,48 @@ CPLErr GDALECWCompressor::Initialize(
         CPLDebug( "ECW", "Large file generation enabled." );
     }
 #endif /* ECWSDK_VERSION < 40 */
+/* -------------------------------------------------------------------- */
+/*      Infer metadata information from source dataset if possible      */
+/* -------------------------------------------------------------------- */
+#if ECWSDK_VERSION>=50
+    if (psClient->nFormatVersion>2){
+        if (psClient->pFileMetaData == NULL){
+            NCSEcwInitMetaData(&psClient->pFileMetaData);
+        }
+        if (m_poSrcDS->GetMetadataItem("FILE_METADATA_ACQUISITION_DATE")!=NULL){
+            psClient->pFileMetaData->sAcquisitionDate = NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_ACQUISITION_DATE")).c_str());
+        }
 
+        if (m_poSrcDS->GetMetadataItem("FILE_METADATA_ACQUISITION_SENSOR_NAME")!=NULL){
+            psClient->pFileMetaData->sAcquisitionSensorName =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_ACQUISITION_SENSOR_NAME")).c_str());
+        }
+        if (m_poSrcDS->GetMetadataItem("FILE_METADATA_ADDRESS")!=NULL){
+            psClient->pFileMetaData->sAddress =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_ADDRESS")).c_str());
+        }
+        if (m_poSrcDS->GetMetadataItem("FILE_METADATA_AUTHOR")!=NULL){
+            psClient->pFileMetaData->sAuthor =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_AUTHOR")).c_str());
+        }
+        if (m_poSrcDS->GetMetadataItem("FILE_METADATA_CLASSIFICATION")!=NULL){
+            psClient->pFileMetaData->sClassification =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_CLASSIFICATION")).c_str());
+        }
+        if ( pszECWCompany != NULL ){
+            psClient->pFileMetaData->sCompany = NCSStrDupT(NCS::CString(pszECWCompany).c_str());
+        }
+        CPLString osCompressionSoftware = GetCompressionSoftwareName();
+        if ( osCompressionSoftware.size() > 0 ) {
+            psClient->pFileMetaData->sCompressionSoftware = NCSStrDupT(NCS::CString(osCompressionSoftware.c_str()).c_str());
+        }
+        if (m_poSrcDS->GetMetadataItem("FILE_METADATA_COPYRIGHT")!=NULL){
+            psClient->pFileMetaData->sCopyright =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_COPYRIGHT")).c_str());
+        }
+        if (m_poSrcDS->GetMetadataItem("FILE_METADATA_EMAIL")!=NULL){
+            psClient->pFileMetaData->sEmail =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_EMAIL")).c_str());
+        }
+        if (m_poSrcDS->GetMetadataItem("FILE_METADATA_TELEPHONE")!=NULL){
+            psClient->pFileMetaData->sTelephone =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_TELEPHONE")).c_str());
+        }
+    }
+#endif
 /* -------------------------------------------------------------------- */
 /*      Set the file info.                                              */
 /* -------------------------------------------------------------------- */
@@ -1101,7 +1197,27 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         poDS = (GDALPamDataset*) ECWDataset::OpenECW(&oOpenInfo);
 
     if( poDS )
+    {
+#if ECWSDK_VERSION>=50
+        for (int i=1;i<=poSrcDS->GetRasterCount();i++){
+            double dMin, dMax, dMean, dStdDev;
+            if (poSrcDS->GetRasterBand(i)->GetStatistics(FALSE, FALSE, &dMin, &dMax, &dMean, &dStdDev)==CE_None){
+                poDS->GetRasterBand(i)->SetStatistics(dMin, dMax, dMean, dStdDev);
+            }
+            double dHistMin, dHistMax;
+            int nBuckets;
+            int *pHistogram;
+            if (poSrcDS->GetRasterBand(i)->GetDefaultHistogram(&dHistMin, &dHistMax,&nBuckets,&pHistogram, FALSE, NULL, NULL) == CE_None){
+                poDS->GetRasterBand(i)->SetDefaultHistogram(dHistMin, dHistMax, nBuckets, pHistogram);
+                VSIFree(pHistogram);
+            }
+        }
+#endif
+
+        ((ECWDataset *)poDS)->SetPreventCopyingSomeMetadata(TRUE);
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+        ((ECWDataset *)poDS)->SetPreventCopyingSomeMetadata(FALSE);
+    }
 
     return poDS;
 }
