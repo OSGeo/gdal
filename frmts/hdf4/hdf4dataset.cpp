@@ -667,6 +667,17 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int32	hHDF4;
     
+    // Attempt to increase maximum number of opened HDF files
+#ifdef HDF4_HAS_MAXOPENFILES
+    intn        nCurrMax, nSysLimit;
+
+    if ( SDget_maxopenfiles(&nCurrMax, &nSysLimit) >= 0
+         && nCurrMax < nSysLimit )
+    {
+        intn res = SDreset_maxopenfiles( nSysLimit );
+    }
+#endif /* HDF4_HAS_MAXOPENFILES */
+
     hHDF4 = Hopen(poOpenInfo->pszFilename, DFACC_READ, 0);
     
     if( hHDF4 <= 0 )
@@ -696,6 +707,9 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         delete poDS;
         CPLAcquireMutex(hHDF4Mutex, 1000.0);
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to open HDF4 file \"%s\" for SDS reading.\n",
+                  poOpenInfo->pszFilename );
         return NULL;
     }
    
@@ -707,6 +721,9 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         delete poDS;
         CPLAcquireMutex(hHDF4Mutex, 1000.0);
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to read global attributes from HDF4 file \"%s\".\n",
+                  poOpenInfo->pszFilename );
         return NULL;
     }
 
@@ -790,7 +807,9 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
             CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
             delete poDS;
             CPLAcquireMutex(hHDF4Mutex, 1000.0);
-            CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open HDF4 `%s'.\n", poOpenInfo->pszFilename );
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Failed to open HDF-EOS file \"%s\" for swath reading.\n",
+                      poOpenInfo->pszFilename );
             return NULL;
         } 
         nSubDatasets = SWinqswath(poOpenInfo->pszFilename, NULL, &nStrBufSize);
@@ -1066,6 +1085,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Build a list of raster images. Note, that HDF-EOS dataset may   */
 /*      contain a raster image as well.                                 */
 /* -------------------------------------------------------------------- */
+
     hHDF4 = Hopen(poOpenInfo->pszFilename, DFACC_READ, 0);
     poDS->hGR = GRstart( hHDF4 );
 

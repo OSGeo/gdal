@@ -2655,7 +2655,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     else
         poDS->iSubdatasetType = H4ST_UNKNOWN;
 
-    // Is our file still here?
+/* -------------------------------------------------------------------- */
+/*      Is our file still here?                                         */
+/* -------------------------------------------------------------------- */
     if ( !Hishdf( poDS->pszFilename ) )
     {
         CSLDestroy( papszSubdatasetName );
@@ -2730,7 +2732,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
                 if( poDS->hHDF4 <= 0 )
                 {
-                    CPLDebug( "HDF4Image", "Can't open HDF4 file %s",
+                    CPLDebug( "HDF4Image", "Can't open file \"%s\" for swath reading",
                               poDS->pszFilename );
                     CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
                     delete poDS;
@@ -2863,6 +2865,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
                 if( poDS->hHDF4 <= 0 )
                 {
+                    CPLDebug( "HDF4Image", "Can't open file \"%s\" for grid reading",
+                              poDS->pszFilename );
                     CPLReleaseMutex(hHDF4Mutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
                     delete poDS;
                     CPLAcquireMutex(hHDF4Mutex, 1000.0);
@@ -3075,7 +3079,18 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
       case HDF4_SDS:
       {
-          int32   iSDS;
+          int32 iSDS;
+
+          // Attempt to increase maximum number of opened HDF files
+#ifdef HDF4_HAS_MAXOPENFILES
+          intn  nCurrMax, nSysLimit;
+
+          if ( SDget_maxopenfiles(&nCurrMax, &nSysLimit) >= 0
+               && nCurrMax < nSysLimit )
+          {
+              SDreset_maxopenfiles( nSysLimit );
+          }
+#endif /* HDF4_HAS_MAXOPENFILES */
 
           if( poOpenInfo->eAccess == GA_ReadOnly )
               poDS->hHDF4 = Hopen( poDS->pszFilename, DFACC_READ, 0 );
@@ -3246,6 +3261,18 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /*  'Plain' HDF rasters.                                                */
 /* -------------------------------------------------------------------- */
       case HDF4_GR:
+
+        // Attempt to increase maximum number of opened HDF files
+#ifdef HDF4_HAS_MAXOPENFILES
+        intn    nCurrMax, nSysLimit;
+
+        if ( SDget_maxopenfiles(&nCurrMax, &nSysLimit) >= 0
+             && nCurrMax < nSysLimit )
+        {
+            SDreset_maxopenfiles( nSysLimit );
+        }
+#endif /* HDF4_HAS_MAXOPENFILES */
+
         if( poOpenInfo->eAccess == GA_ReadOnly )
             poDS->hHDF4 = Hopen( poDS->pszFilename, DFACC_READ, 0 );
         else
