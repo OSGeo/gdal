@@ -22223,14 +22223,14 @@ $as_echo "found in $with_ecw/bin." >&6; }
 $as_echo "found libecwj2 in $with_ecw/lib." >&6; }
 
   # ECW SDK 5.0 style
-  elif test -r $with_ecw/lib/x64/release/libtbb.so ; then
+  elif test -r $with_ecw/lib/x64/release/libNCSEcw.so ; then
     if test `arch` == "x86_64" ; then
       ECW_LIBDIR=$with_ecw/lib/x64/release
     else
       ECW_LIBDIR=$with_ecw/lib/x86/release
     fi
-    ECW_FLAGS="-DLINUX -DX86 -DPOSIX -DUNICODE -D_UNICODE -DECW_COMPRESS_RW_SDK_VERSION"
-    ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw -ltbb"
+    ECW_FLAGS="-DLINUX -DX86 -DPOSIX -DHAVE_COMPRESS -DECW_COMPRESS_RW_SDK_VERSION"
+    ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw"
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: found Intergraph 5.x+ SDK in ${ECW_LIBDIR}." >&5
 $as_echo "found Intergraph 5.x+ SDK in ${ECW_LIBDIR}." >&6; }
   else
