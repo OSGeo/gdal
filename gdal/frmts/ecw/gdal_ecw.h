@@ -102,7 +102,7 @@ void ECWInitialize( void );
 GDALDataset* ECWDatasetOpenJPEG2000(GDALOpenInfo* poOpenInfo);
 const char* ECWGetColorInterpretationName(GDALColorInterp eColorInterpretation, int nBandNumber);
 GDALColorInterp ECWGetColorInterpretationByName(const char *pszName);
-
+const char* ECWGetColorSpaceName(NCSFileColorSpace colorSpace);
 #ifdef HAVE_COMPRESS
 GDALDataset *
 ECWCreateCopyECW( const char * pszFilename, GDALDataset *poSrcDS, 
@@ -435,7 +435,8 @@ class CPL_DLL ECWDataset : public GDALPamDataset
     NCS::CError StatisticsEnsureInitialized();
     NCS::CError StatisticsWrite();
     void CleanupStatistics();
-
+	void ReadFileMetaDataFromFile();
+	
 #endif
 
     static CNCSJP2FileView    *OpenFileView( const char *pszDatasetName,
@@ -455,6 +456,8 @@ class CPL_DLL ECWDataset : public GDALPamDataset
     void        WriteHeader();
     
     int         bUseOldBandRasterIOImplementation;
+    
+    int         bPreventCopyingSomeMetadata;
 
     CPLStringList oECWMetadataList;
     CPLErr ReadBands(void * pData, int nBufXSize, int nBufYSize,
@@ -474,6 +477,8 @@ class CPL_DLL ECWDataset : public GDALPamDataset
     static GDALDataset *OpenJPEG2000( GDALOpenInfo * );
     static int          IdentifyECW( GDALOpenInfo * poOpenInfo );
     static GDALDataset *OpenECW( GDALOpenInfo * );
+
+    void        SetPreventCopyingSomeMetadata(int b) { bPreventCopyingSomeMetadata = b; }
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
@@ -518,6 +523,11 @@ class CPL_DLL ECWDataset : public GDALPamDataset
 
     virtual void EndAsyncReader(GDALAsyncReader *);
 #endif /* ECWSDK_VERSION > 40 */
+#if ECWSDK_VERSION >=50
+    int GetFormatVersion() const {
+        return psFileInfo->nFormatVersion;
+    }
+#endif
 };
 
 /************************************************************************/
