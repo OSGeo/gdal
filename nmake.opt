@@ -257,6 +257,14 @@ JPEG12_SUPPORTED = 1
 # NCSEcw4.lib, and add -DHAVE_COMPRESS to ECWFLAGS.  The ECWDIR setting will
 # also need some adjustment. 
 
+# Uncomment the following and update to enable ECW read support with the 5.0 SDK
+#ECWDIR  =  "c:\Intergraph\ecwsdk5"
+#ECWFLAGS = -DECWSDK_VERSION=50 \
+#       -I$(ECWDIR)\include \
+#       -I$(ECWDIR)\include/NCSECW/api -I$(ECWDIR)\include/NCSECW/jp2 \
+#       -I$(ECWDIR)\include/NCSECW/ecw
+#ECWLIB  =  $(ECWDIR)\lib\vc90\win32\NCSEcw.lib
+
 # To build ECW support as a plugin uncomment the following, and make sure
 # to do "nmake /f makefile.vc plugin" in gdal/frmts/ecw and copy the two
 # resulting DLLs to an appropriate place.
