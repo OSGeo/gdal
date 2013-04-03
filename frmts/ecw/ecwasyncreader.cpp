@@ -200,6 +200,7 @@ ECWAsyncReader::ECWAsyncReader()
     poFileView = NULL;
     bUpdateReady = FALSE;
     bComplete = FALSE;
+    panBandMap = NULL;
 }
 
 /************************************************************************/
@@ -217,6 +218,9 @@ ECWAsyncReader::~ECWAsyncReader()
         delete poFileView;
         // we should also consider cleaning up the io stream if needed.
     }
+
+    CPLFree(panBandMap);
+    panBandMap = NULL;
 
     CPLDestroyMutex( hMutex );
     hMutex = NULL;
