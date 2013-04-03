@@ -2055,7 +2055,12 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
     }
 #endif
 
-    // Read geolocation data
+    CPLFree( paiRank );
+    CPLFree( paiNumType );
+
+/* -------------------------------------------------------------------- */
+/*      Read geolocation data.                                          */
+/* -------------------------------------------------------------------- */
     int32   nDimMaps = SWnentries( hSW, HDFE_NENTMAP, &nStrBufSize );
     if ( nDimMaps <= 0 )
     {
@@ -2435,137 +2440,137 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         {
             pszGCPProjection = CPLStrdup( SRS_WKT_WGS84 );
         }
-    }
 
 /* -------------------------------------------------------------------- */
 /*  Fill the GCPs list.                                                 */
 /* -------------------------------------------------------------------- */
-    if( iGCPStepX > 0 )
-    {
-        nGCPCount = (((nXPoints-1) / iGCPStepX) + 1)
-            * (((nYPoints-1) / iGCPStepY) + 1);
-
-        pasGCPList = (GDAL_GCP *) CPLCalloc( nGCPCount, sizeof( GDAL_GCP ) );
-        GDALInitGCPs( nGCPCount, pasGCPList );
-
-        int iGCP = 0;
-        for ( i = 0; i < nYPoints; i += iGCPStepY )
+        if( iGCPStepX > 0 )
         {
-            for ( j = 0; j < nXPoints; j += iGCPStepX )
+            nGCPCount = (((nXPoints-1) / iGCPStepX) + 1)
+                * (((nYPoints-1) / iGCPStepY) + 1);
+
+            pasGCPList = (GDAL_GCP *) CPLCalloc( nGCPCount, sizeof( GDAL_GCP ) );
+            GDALInitGCPs( nGCPCount, pasGCPList );
+
+            int iGCP = 0;
+            for ( i = 0; i < nYPoints; i += iGCPStepY )
             {
-                int iGeoOff =  i * nXPoints + j;
-
-                pasGCPList[iGCP].dfGCPX =
-                    AnyTypeToDouble(iWrkNumType,
-                                    (void *)((char*)pLong+ iGeoOff*iDataSize));
-                pasGCPList[iGCP].dfGCPY =
-                    AnyTypeToDouble(iWrkNumType,
-                                    (void *)((char*)pLat + iGeoOff*iDataSize));
-
-                // GCPs in Level 1A/1B dataset are in geocentric
-                // coordinates. Convert them in geodetic (we
-                // will convert latitudes only, longitudes
-                // do not need to be converted, because
-                // they are the same).
-                // This calculation valid for WGS84 datum only.
-                if ( eProduct == PROD_ASTER_L1A
-                     || eProduct == PROD_ASTER_L1B )
+                for ( j = 0; j < nXPoints; j += iGCPStepX )
                 {
+                    int iGeoOff =  i * nXPoints + j;
+
+                    pasGCPList[iGCP].dfGCPX =
+                        AnyTypeToDouble(iWrkNumType,
+                                        (void *)((char*)pLong+ iGeoOff*iDataSize));
                     pasGCPList[iGCP].dfGCPY =
-                        atan(tan(pasGCPList[iGCP].dfGCPY
-                                 *PI/180)/0.99330562)*180/PI;
+                        AnyTypeToDouble(iWrkNumType,
+                                        (void *)((char*)pLat + iGeoOff*iDataSize));
+
+                    // GCPs in Level 1A/1B dataset are in geocentric
+                    // coordinates. Convert them in geodetic (we
+                    // will convert latitudes only, longitudes
+                    // do not need to be converted, because
+                    // they are the same).
+                    // This calculation valid for WGS84 datum only.
+                    if ( eProduct == PROD_ASTER_L1A
+                         || eProduct == PROD_ASTER_L1B )
+                    {
+                        pasGCPList[iGCP].dfGCPY =
+                            atan(tan(pasGCPList[iGCP].dfGCPY
+                                     *PI/180)/0.99330562)*180/PI;
+                    }
+
+                    ToGeoref(&pasGCPList[iGCP].dfGCPX,
+                             &pasGCPList[iGCP].dfGCPY);
+
+                    pasGCPList[iGCP].dfGCPZ = 0.0;
+
+                    if ( pLatticeX && pLatticeY )
+                    {
+                        pasGCPList[iGCP].dfGCPPixel =
+                            AnyTypeToDouble(iLatticeType,
+                                            (void *)((char *)pLatticeX
+                                                     + iGeoOff*iLatticeDataSize))+0.5;
+                        pasGCPList[iGCP].dfGCPLine =
+                            AnyTypeToDouble(iLatticeType,
+                                            (void *)((char *)pLatticeY
+                                                     + iGeoOff*iLatticeDataSize))+0.5;
+                    }
+                    else if ( paiOffset && paiIncrement )
+                    {
+                        pasGCPList[iGCP].dfGCPPixel =
+                            paiOffset[iPixelDim] +
+                            j * paiIncrement[iPixelDim] + 0.5;
+                        pasGCPList[iGCP].dfGCPLine =
+                            paiOffset[iLineDim] +
+                            i * paiIncrement[iLineDim] + 0.5;
+                    }
+
+                    iGCP++;
                 }
-
-                ToGeoref(&pasGCPList[iGCP].dfGCPX,
-                         &pasGCPList[iGCP].dfGCPY);
-
-                pasGCPList[iGCP].dfGCPZ = 0.0;
-
-                if ( pLatticeX && pLatticeY )
-                {
-                    pasGCPList[iGCP].dfGCPPixel =
-                        AnyTypeToDouble(iLatticeType,
-                                        (void *)((char *)pLatticeX
-                                                 + iGeoOff*iLatticeDataSize))+0.5;
-                    pasGCPList[iGCP].dfGCPLine =
-                        AnyTypeToDouble(iLatticeType,
-                                        (void *)((char *)pLatticeY
-                                                 + iGeoOff*iLatticeDataSize))+0.5;
-                }
-                else if ( paiOffset && paiIncrement )
-                {
-                    pasGCPList[iGCP].dfGCPPixel =
-                        paiOffset[iPixelDim] +
-                        j * paiIncrement[iPixelDim] + 0.5;
-                    pasGCPList[iGCP].dfGCPLine =
-                        paiOffset[iLineDim] +
-                        i * paiIncrement[iLineDim] + 0.5;
-                }
-
-                iGCP++;
             }
         }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Establish geolocation metadata, but only if there is no         */
 /*      lattice.  The lattice destroys the regularity of the grid.      */
 /* -------------------------------------------------------------------- */
-    if( pLatticeX == NULL
-        && iLatDim != -1 && iLongDim != -1
-        && iPixelDim != -1 && iLineDim != -1 )
-    {
-        CPLString  osWrk;
-
-        SetMetadataItem( "SRS", pszGCPProjection, "GEOLOCATION" );
-
-        osWrk.Printf( "HDF4_EOS:EOS_SWATH_GEOL:\"%s\":%s:%s",
-                      pszFilename, pszSubdatasetName,
-                      papszGeolocations[iLongDim] );
-        SetMetadataItem( "X_DATASET", osWrk, "GEOLOCATION" );
-        SetMetadataItem( "X_BAND", "1" , "GEOLOCATION" );
-
-        osWrk.Printf( "HDF4_EOS:EOS_SWATH_GEOL:\"%s\":%s:%s",
-                      pszFilename, pszSubdatasetName,
-                      papszGeolocations[iLatDim] );
-        SetMetadataItem( "Y_DATASET", osWrk, "GEOLOCATION" );
-        SetMetadataItem( "Y_BAND", "1" , "GEOLOCATION" );
-
-        if ( paiOffset && paiIncrement )
+        if( pLatticeX == NULL
+            && iLatDim != -1 && iLongDim != -1
+            && iPixelDim != -1 && iLineDim != -1 )
         {
-            osWrk.Printf( "%ld", (long)paiOffset[iPixelDim] );
-            SetMetadataItem( "PIXEL_OFFSET", osWrk, "GEOLOCATION" );
-            osWrk.Printf( "%ld", (long)paiIncrement[iPixelDim] );
-            SetMetadataItem( "PIXEL_STEP", osWrk, "GEOLOCATION" );
+            CPLString  osWrk;
 
-            osWrk.Printf( "%ld", (long)paiOffset[iLineDim] );
-            SetMetadataItem( "LINE_OFFSET", osWrk, "GEOLOCATION" );
-            osWrk.Printf( "%ld", (long)paiIncrement[iLineDim] );
-            SetMetadataItem( "LINE_STEP", osWrk, "GEOLOCATION" );
+            SetMetadataItem( "SRS", pszGCPProjection, "GEOLOCATION" );
+
+            osWrk.Printf( "HDF4_EOS:EOS_SWATH_GEOL:\"%s\":%s:%s",
+                          pszFilename, pszSubdatasetName,
+                          papszGeolocations[iLongDim] );
+            SetMetadataItem( "X_DATASET", osWrk, "GEOLOCATION" );
+            SetMetadataItem( "X_BAND", "1" , "GEOLOCATION" );
+
+            osWrk.Printf( "HDF4_EOS:EOS_SWATH_GEOL:\"%s\":%s:%s",
+                          pszFilename, pszSubdatasetName,
+                          papszGeolocations[iLatDim] );
+            SetMetadataItem( "Y_DATASET", osWrk, "GEOLOCATION" );
+            SetMetadataItem( "Y_BAND", "1" , "GEOLOCATION" );
+
+            if ( paiOffset && paiIncrement )
+            {
+                osWrk.Printf( "%ld", (long)paiOffset[iPixelDim] );
+                SetMetadataItem( "PIXEL_OFFSET", osWrk, "GEOLOCATION" );
+                osWrk.Printf( "%ld", (long)paiIncrement[iPixelDim] );
+                SetMetadataItem( "PIXEL_STEP", osWrk, "GEOLOCATION" );
+
+                osWrk.Printf( "%ld", (long)paiOffset[iLineDim] );
+                SetMetadataItem( "LINE_OFFSET", osWrk, "GEOLOCATION" );
+                osWrk.Printf( "%ld", (long)paiIncrement[iLineDim] );
+                SetMetadataItem( "LINE_STEP", osWrk, "GEOLOCATION" );
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+        CPLFree( pLatticeX );
+        CPLFree( pLatticeY );
+        CPLFree( pLat );
+        CPLFree( pLong );
+
+        if( iGCPStepX == 0 )
+        {
+            CPLFree( pszGCPProjection );
+            pszGCPProjection = NULL;
         }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    CPLFree( pLatticeX );
-    CPLFree( pLatticeY );
-    CPLFree( pLat );
-    CPLFree( pLong );
-
     CPLFree( paiOffset );
     CPLFree( paiIncrement );
-    CPLFree( paiNumType );
-    CPLFree( paiRank );
-
-    CSLDestroy( papszGeolocations );
     CPLFree( pszGeoList );
-
-    if( iGCPStepX == 0 )
-    {
-        CPLFree( pszGCPProjection );
-        pszGCPProjection = NULL;
-    }
+    CSLDestroy( papszGeolocations );
 
     return TRUE;
 }
