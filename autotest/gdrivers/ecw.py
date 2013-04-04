@@ -1550,6 +1550,91 @@ def ecw_41():
     return 'success'
 
 ###############################################################################
+# Test setting/unsetting file metadata of a ECW v3 file
+
+def ecw_42():
+
+    if gdaltest.ecw_drv is None or gdaltest.ecw_drv.major_version < 5:
+        return 'skip'
+
+    shutil.copy('data/stefan_full_rgba_ecwv3_meta.ecw', 'tmp/stefan_full_rgba_ecwv3_meta.ecw')
+    try:
+        os.remove('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw', gdal.GA_Update)
+    md = {}
+    md['FILE_METADATA_CLASSIFICATION'] = 'FILE_METADATA_CLASSIFICATION'
+    md['FILE_METADATA_ACQUISITION_DATE'] = '2013-04-04'
+    md['FILE_METADATA_ACQUISITION_SENSOR_NAME'] = 'FILE_METADATA_ACQUISITION_SENSOR_NAME'
+    md['FILE_METADATA_COMPRESSION_SOFTWARE'] = 'FILE_METADATA_COMPRESSION_SOFTWARE'
+    md['FILE_METADATA_AUTHOR'] = 'FILE_METADATA_AUTHOR'
+    md['FILE_METADATA_COPYRIGHT'] = 'FILE_METADATA_COPYRIGHT'
+    md['FILE_METADATA_COMPANY'] = 'FILE_METADATA_COMPANY'
+    md['FILE_METADATA_EMAIL'] = 'FILE_METADATA_EMAIL'
+    md['FILE_METADATA_ADDRESS'] = 'FILE_METADATA_ADDRESS'
+    md['FILE_METADATA_TELEPHONE'] = 'FILE_METADATA_TELEPHONE'
+    ds.SetMetadata(md)
+    ds = None
+
+    # Check that there's no .aux.xml file
+    try:
+        os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
+    # Check item values
+    ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
+    got_md = ds.GetMetadata()
+    for item in md:
+        if got_md[item] != md[item]:
+            gdaltest.post_reason('fail')
+            print(got_md[item])
+            print(md[item])
+            return 'fail'
+    ds = None
+
+    # Test unsetting all the stuff
+    ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw', gdal.GA_Update)
+    md = {}
+    md['FILE_METADATA_CLASSIFICATION'] = ''
+    md['FILE_METADATA_ACQUISITION_DATE'] = '1970-01-01'
+    md['FILE_METADATA_ACQUISITION_SENSOR_NAME'] = ''
+    md['FILE_METADATA_COMPRESSION_SOFTWARE'] = ''
+    md['FILE_METADATA_AUTHOR'] = ''
+    md['FILE_METADATA_COPYRIGHT'] = ''
+    md['FILE_METADATA_COMPANY'] = ''
+    md['FILE_METADATA_EMAIL'] = ''
+    md['FILE_METADATA_ADDRESS'] = ''
+    md['FILE_METADATA_TELEPHONE'] = ''
+    ds.SetMetadata(md)
+    ds = None
+
+    # Check that there's no .aux.xml file
+    try:
+        os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
+    # Check item values
+    ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
+    got_md = ds.GetMetadata()
+    for item in md:
+        if item in got_md and item != 'FILE_METADATA_ACQUISITION_DATE':
+            gdaltest.post_reason('fail')
+            print(got_md[item])
+            print(md[item])
+            return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -1869,6 +1954,7 @@ gdaltest_list = [
     ecw_39,
     ecw_40,
     ecw_41,
+    ecw_42,
     ecw_online_1,
     ecw_online_2,
     #JTO this test does not make sense. It tests difference between two files pixel by pixel but compression is lossy# ecw_online_3, 

@@ -436,6 +436,9 @@ class CPL_DLL ECWDataset : public GDALPamDataset
     NCS::CError StatisticsWrite();
     void CleanupStatistics();
 	void ReadFileMetaDataFromFile();
+
+    int bFileMetaDataDirty;
+    void WriteFileMetaData(NCSFileMetaData* pFileMetaDataCopy);
 	
 #endif
 
