@@ -3158,7 +3158,7 @@ CPLErr
         double dfHalfBucket = 0;
 
         eErr = GetStatistics( TRUE, TRUE, pdfMin, pdfMax, NULL, NULL );
-        dfHalfBucket = (*pdfMax - *pdfMin) / (2 * nBuckets);
+        dfHalfBucket = (*pdfMax - *pdfMin) / (2 * (nBuckets - 1));
         *pdfMin -= dfHalfBucket;
         *pdfMax += dfHalfBucket;
 
