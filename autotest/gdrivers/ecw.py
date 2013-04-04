@@ -1376,6 +1376,132 @@ def ecw_39():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Check reading a ECW v3 file
+
+def ecw_40():
+
+    if gdaltest.ecw_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/stefan_full_rgba_ecwv3_meta.ecw')
+    if ds is None:
+        if gdaltest.ecw_drv.major_version < 5:
+            if gdal.GetLastErrorMsg().find('requires ECW SDK 5.0') >= 0:
+                return 'skip'
+            else:
+                gdaltest.post_reason('explicit error message expected')
+                return 'fail'
+        else:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    expected_md = [
+  ('CLOCKWISE_ROTATION_DEG','0.000000'),
+  ('COLORSPACE','RGB'),
+  ('COMPRESSION_DATE','2013-04-04T09:20:03Z'),
+  ('COMPRESSION_RATE_ACTUAL','3.165093'),
+  ('COMPRESSION_RATE_TARGET','20'),
+  ('FILE_METADATA_COMPRESSION_SOFTWARE','python2.7/GDAL v1.10.0.0/ECWJP2 SDK v5.0.0.0'),
+  ('FILE_METADATA_ACQUISITION_DATE','2012-09-12'),
+  ('FILE_METADATA_ACQUISITION_SENSOR_NAME','Leica ADS-80'),
+  ('FILE_METADATA_ADDRESS','2 Abbotsford Street, West Leederville WA 6007 Australia'),
+  ('FILE_METADATA_AUTHOR','Unknown'),
+  ('FILE_METADATA_CLASSIFICATION','test gdal image'),
+  ('FILE_METADATA_COMPANY','ERDAS-QA'),
+  ('FILE_METADATA_COMPRESSION_SOFTWARE','python2.7/GDAL v1.10.0.0/ECWJP2 SDK v5.0.0.0'),
+  ('FILE_METADATA_COPYRIGHT','Intergraph 2013'),
+  ('FILE_METADATA_EMAIL','support@intergraph.com'),
+  ('FILE_METADATA_TELEPHONE','+61 8 9388 2900'),
+  ('VERSION','3') ]
+
+    got_md = ds.GetMetadata()
+    for (key,value) in expected_md:
+        if key not in got_md or got_md[key] != value:
+            gdaltest.post_reason('fail')
+            print(key)
+            print(got_md[key])
+            return 'fail'
+
+    expected_cs_list = [ 28760, 59071, 54087, 22499 ]
+    for i in range(4):
+        got_cs = ds.GetRasterBand(i + 1).Checksum()
+        if got_cs != expected_cs_list[i]:
+            gdaltest.post_reason('fail')
+            print(expected_cs_list[i])
+            print(got_cs)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Check generating statistics & histogram for a ECW v3 file
+
+def ecw_41():
+
+    if gdaltest.ecw_drv is None or gdaltest.ecw_drv.major_version < 5:
+        return 'skip'
+
+    shutil.copy('data/stefan_full_rgba_ecwv3_meta.ecw', 'tmp/stefan_full_rgba_ecwv3_meta.ecw')
+    try:
+        os.remove('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
+
+    # Check that no statistics is already included in the file
+    if ds.GetRasterBand(1).GetMinimum() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMaximum() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetStatistics(1,0) != [0.0, 0.0, 0.0, -1.0]:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Now compute the stats
+    stats = ds.GetRasterBand(1).GetStatistics(1,1)
+    expected_stats = [0.0, 255.0, 21.675653457641602, 52.047836303710938]
+    for i in range(4):
+        if abs(stats[i]-expected_stats[i]) > 1e-5:
+            gdaltest.post_reason('fail')
+            print(stats[i])
+            print(expected_stats[i])
+            return 'fail'
+
+    ds = None
+
+    # Check that there's no .aux.xml file
+    try:
+        os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
+    ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
+    if ds.GetRasterBand(1).GetMinimum() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMaximum() != 255:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    stats = ds.GetRasterBand(1).GetStatistics(0,0)
+    expected_stats = [0.0, 255.0, 21.675653457641602, 52.047836303710938]
+    for i in range(4):
+        if abs(stats[i]-expected_stats[i]) > 1e-5:
+            gdaltest.post_reason('fail')
+            print(stats[i])
+            print(expected_stats[i])
+            return 'fail'
+
+    ds = None
+
+    return 'success'
+
 ###############################################################################
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
@@ -1646,7 +1772,10 @@ def ecw_cleanup():
         os.remove( fname + '.aux.xml' )
     except:
         pass
-
+    try:
+        os.remove( 'tmp/stefan_full_rgba_ecwv3_meta.ecw' )
+    except:
+        pass
     gdaltest.reregister_all_jpeg2000_drivers()
     
     return 'success'
@@ -1691,6 +1820,8 @@ gdaltest_list = [
     ecw_37,
     ecw_38,
     ecw_39,
+    ecw_40,
+    ecw_41,
     ecw_online_1,
     ecw_online_2,
     #JTO this test does not make sense. It tests difference between two files pixel by pixel but compression is lossy# ecw_online_3, 
