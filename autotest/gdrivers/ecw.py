@@ -1461,6 +1461,9 @@ def ecw_41():
     if ds.GetRasterBand(1).GetStatistics(1,0) != [0.0, 0.0, 0.0, -1.0]:
         gdaltest.post_reason('fail')
         return 'fail'
+    if ds.GetRasterBand(1).GetDefaultHistogram(force = 0) is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     # Now compute the stats
     stats = ds.GetRasterBand(1).GetStatistics(1,1)
@@ -1485,9 +1488,11 @@ def ecw_41():
     ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
     if ds.GetRasterBand(1).GetMinimum() != 0:
         gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetMinimum())
         return 'fail'
     if ds.GetRasterBand(1).GetMaximum() != 255:
         gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetMaximum())
         return 'fail'
     stats = ds.GetRasterBand(1).GetStatistics(0,0)
     expected_stats = [0.0, 255.0, 21.675653457641602, 52.047836303710938]
@@ -1497,8 +1502,50 @@ def ecw_41():
             print(stats[i])
             print(expected_stats[i])
             return 'fail'
-
+        pass
     ds = None
+
+    ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
+    # And compute the histogram
+    got_hist = ds.GetRasterBand(1).GetDefaultHistogram()
+    expected_hist = (-0.5, 255.5, 256, [1006, 16106, 548, 99, 13, 24, 62, 118, 58, 125, 162, 180, 133, 146, 70, 81, 84, 97, 90, 60, 79, 70, 85, 77, 73, 63, 60, 64, 56, 69, 63, 73, 70, 72, 61, 66, 40, 52, 65, 44, 62, 54, 56, 55, 63, 51, 47, 39, 58, 44, 36, 43, 47, 45, 54, 28, 40, 41, 37, 36, 33, 31, 28, 34, 19, 32, 19, 23, 23, 33, 16, 34, 32, 54, 29, 33, 40, 37, 27, 34, 24, 29, 26, 21, 22, 24, 25, 19, 29, 22, 24, 14, 20, 20, 29, 28, 13, 19, 21, 19, 19, 21, 13, 19, 13, 14, 22, 15, 13, 26, 10, 13, 13, 14, 10, 17, 15, 19, 11, 18, 11, 14, 8, 12, 20, 12, 17, 10, 15, 15, 16, 14, 11, 7, 7, 10, 8, 12, 7, 8, 14, 7, 9, 12, 4, 6, 12, 5, 5, 4, 11, 8, 4, 8, 7, 10, 11, 6, 7, 5, 6, 8, 10, 10, 7, 5, 3, 5, 5, 6, 4, 10, 7, 6, 8, 4, 6, 6, 4, 6, 6, 7, 10, 4, 5, 2, 5, 6, 1, 1, 2, 6, 2, 1, 7, 4, 1, 3, 3, 2, 6, 2, 3, 3, 3, 3, 5, 5, 4, 2, 3, 2, 1, 3, 5, 5, 4, 1, 1, 2, 5, 10, 5, 9, 3, 5, 3, 5, 4, 5, 4, 4, 6, 7, 9, 17, 13, 15, 14, 13, 20, 18, 16, 27, 35, 53, 60, 51, 46, 40, 38, 50, 66, 36, 45, 13])
+    if got_hist != expected_hist:
+        gdaltest.post_reason('fail')
+        print(got_hist)
+        print(expected_hist)
+        return 'fail'
+    ds = None
+
+    # Remove the .aux.xml file
+    try:
+        os.remove('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
+    except:
+        pass
+
+    ds = gdal.Open('tmp/stefan_full_rgba_ecwv3_meta.ecw')
+    if ds.GetRasterBand(1).GetMinimum() != 0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetMinimum())
+        return 'fail'
+    if ds.GetRasterBand(1).GetMaximum() != 255:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetMaximum())
+        return 'fail'
+    got_hist = ds.GetRasterBand(1).GetDefaultHistogram(force = 0)
+    if got_hist != expected_hist:
+        gdaltest.post_reason('fail')
+        print(got_hist)
+        print(expected_hist)
+        return 'fail'
+    ds = None
+
+    # Check that there's no .aux.xml file
+    try:
+        os.stat('tmp/stefan_full_rgba_ecwv3_meta.ecw.aux.xml')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
 
     return 'success'
 
