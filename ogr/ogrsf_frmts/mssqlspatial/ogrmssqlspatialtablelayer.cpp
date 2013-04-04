@@ -413,7 +413,7 @@ CPLString OGRMSSQLSpatialTableLayer::BuildFields()
         ++nColumn;
     }
 
-    if( pszGeomColumn )
+    if( pszGeomColumn && !poFeatureDefn->IsGeometryIgnored())
     {
         if( nColumn > 0 )
             osFieldList += ", ";
@@ -453,6 +453,9 @@ CPLString OGRMSSQLSpatialTableLayer::BuildFields()
 
         for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
         {
+            if ( poFeatureDefn->GetFieldDefn(i)->IsIgnored() )
+                continue;
+            
             const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
 
             if( nColumn > 0 )
@@ -657,6 +660,9 @@ int OGRMSSQLSpatialTableLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCTransactions) )
         return FALSE;
 #endif
+
+    if( EQUAL(pszCap,OLCIgnoreFields) )
+        return TRUE; 
     
     if( EQUAL(pszCap,OLCRandomRead) )
         return (pszFIDColumn != NULL);
