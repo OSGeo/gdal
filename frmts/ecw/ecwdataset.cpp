@@ -415,8 +415,8 @@ CPLErr ECWRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
 
     //at this point we have allocated statistics structure.
     double dfHalfBucket = (dfMax - dfMin) / (2 * nBuckets);
-    pStatistics->BandsStats[nStatsBandIndex].fMinHist = (IEEE4) dfMin + dfHalfBucket;
-    pStatistics->BandsStats[nStatsBandIndex].fMaxHist = (IEEE4) dfMax - dfHalfBucket;
+    pStatistics->BandsStats[nStatsBandIndex].fMinHist = (IEEE4) (dfMin + dfHalfBucket);
+    pStatistics->BandsStats[nStatsBandIndex].fMaxHist = (IEEE4) (dfMax - dfHalfBucket);
     for (int i=0;i<nBuckets;i++){
         pStatistics->BandsStats[nStatsBandIndex].Histogram[i] = (UINT64)panHistogram[i];
     }
