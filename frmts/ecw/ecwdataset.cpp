@@ -2121,7 +2121,20 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 /* -------------------------------------------------------------------- */
     poFileView = OpenFileView( osFilename.c_str(), false, bUsingCustomStream, poOpenInfo->eAccess == GA_Update );
     if( poFileView == NULL )
+    {
+#if ECWSDK_VERSION < 50
+        /* Detect what is apparently the ECW v3 file format signature */
+        if( EQUAL(CPLGetExtension(osFilename), "ECW") &&
+            poOpenInfo->nHeaderBytes > 0x30 &&
+            EQUALN((const char*)(poOpenInfo->pabyHeader + 0x20), "ecw ECW3", 8) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot open %s which looks like a ECW format v3 file, that requires ECW SDK 5.0 or later",
+                     osFilename.c_str());
+        }
+#endif
         return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
