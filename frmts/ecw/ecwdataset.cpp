@@ -289,11 +289,12 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
             for (size_t i = 0; i < bandStats.nHistBucketCount; i++){
                 (*ppanHistogram)[i] = (int) bandStats.Histogram[i];
             }
+            double dfHalfBucket = (bandStats.fMaxHist -  bandStats.fMinHist) / (2 * (*pnBuckets - 1));
             if ( pdfMin != NULL ){
-                *pdfMin = bandStats.fMinHist;
+                *pdfMin = bandStats.fMinHist - dfHalfBucket;
             }
             if ( pdfMax != NULL ){
-                *pdfMax = bandStats.fMaxHist;
+                *pdfMax = bandStats.fMaxHist + dfHalfBucket;
             }
             bHistogramFromFile = true;
         }else{
@@ -413,8 +414,9 @@ CPLErr ECWRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
     }
 
     //at this point we have allocated statistics structure.
-    pStatistics->BandsStats[nStatsBandIndex].fMinHist = (IEEE4) dfMin;
-    pStatistics->BandsStats[nStatsBandIndex].fMaxHist = (IEEE4) dfMax;
+    double dfHalfBucket = (dfMax - dfMin) / (2 * nBuckets);
+    pStatistics->BandsStats[nStatsBandIndex].fMinHist = (IEEE4) dfMin + dfHalfBucket;
+    pStatistics->BandsStats[nStatsBandIndex].fMaxHist = (IEEE4) dfMax - dfHalfBucket;
     for (int i=0;i<nBuckets;i++){
         pStatistics->BandsStats[nStatsBandIndex].Histogram[i] = (UINT64)panHistogram[i];
     }
