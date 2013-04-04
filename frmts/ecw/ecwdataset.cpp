@@ -914,6 +914,7 @@ ECWDataset::ECWDataset(int bIsJPEG2000)
     pStatistics = NULL;
     bStatisticsDirty = FALSE;
     bStatisticsInitialized = FALSE;
+    bFileMetaDataDirty = FALSE;
 
 #endif 
     
@@ -942,6 +943,14 @@ ECWDataset::~ECWDataset()
 {
     FlushCache();
     CleanupWindow();
+
+#if ECWSDK_VERSION>=50
+    NCSFileMetaData* pFileMetaDataCopy = NULL;
+    if( bFileMetaDataDirty )
+    {
+        NCSCopyMetaData(&pFileMetaDataCopy, psFileInfo->pFileMetaData);
+    }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Release / dereference iostream.                                 */
@@ -978,14 +987,18 @@ ECWDataset::~ECWDataset()
     /* on Windows */
     if( bHdrDirty )
         WriteHeader();
-    #if ECWSDK_VERSION>=50
-
+#if ECWSDK_VERSION>=50
     if (bStatisticsDirty){
         StatisticsWrite();
     }
     CleanupStatistics();
-    
-    #endif 
+
+    if( bFileMetaDataDirty )
+    {
+        WriteFileMetaData(pFileMetaDataCopy);
+        NCSFreeMetaData(pFileMetaDataCopy);
+    }
+#endif 
 
     CPLFree( pszProjection );
     CSLDestroy( papszGMLMetadata );
@@ -1140,6 +1153,85 @@ CPLErr ECWDataset::SetMetadataItem( const char * pszName,
         }
         return CE_None;
     }
+#if ECWSDK_VERSION >=50
+    else if ( psFileInfo != NULL &&
+              psFileInfo->nFormatVersion >= 3 &&
+              eAccess == GA_Update &&
+              (pszDomain == NULL || EQUAL(pszDomain, "")) &&
+              pszName != NULL &&
+              strncmp(pszName, "FILE_METADATA_", strlen("FILE_METADATA_")) == 0 )
+    {
+        bFileMetaDataDirty = TRUE;
+
+        if( psFileInfo->pFileMetaData == NULL )
+            NCSInitMetaData(&(psFileInfo->pFileMetaData));
+
+        if( strcmp(pszName, "FILE_METADATA_CLASSIFICATION") == 0 )
+        {
+            NCSFree(psFileInfo->pFileMetaData->sClassification);
+            psFileInfo->pFileMetaData->sClassification = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
+        }
+        else if( strcmp(pszName, "FILE_METADATA_ACQUISITION_DATE") == 0 )
+        {
+            NCSFree(psFileInfo->pFileMetaData->sAcquisitionDate);
+            psFileInfo->pFileMetaData->sAcquisitionDate = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
+        }
+        else if( strcmp(pszName, "FILE_METADATA_ACQUISITION_SENSOR_NAME") == 0 )
+        {
+            NCSFree(psFileInfo->pFileMetaData->sAcquisitionSensorName);
+            psFileInfo->pFileMetaData->sAcquisitionSensorName = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
+        }
+        else if( strcmp(pszName, "FILE_METADATA_COMPRESSION_SOFTWARE") == 0 )
+        {
+            NCSFree(psFileInfo->pFileMetaData->sCompressionSoftware);
+            psFileInfo->pFileMetaData->sCompressionSoftware = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
+        }
+        else if( strcmp(pszName, "FILE_METADATA_AUTHOR") == 0 )
+        {
+            NCSFree(psFileInfo->pFileMetaData->sAuthor);
+            psFileInfo->pFileMetaData->sAuthor = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
+        }
+        else if( strcmp(pszName, "FILE_METADATA_COPYRIGHT") == 0 )
+        {
+            NCSFree(psFileInfo->pFileMetaData->sCopyright);
+            psFileInfo->pFileMetaData->sCopyright = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
+        }
+        else if( strcmp(pszName, "FILE_METADATA_COMPANY") == 0 )
+        {
+            NCSFree(psFileInfo->pFileMetaData->sCompany);
+            psFileInfo->pFileMetaData->sCompany = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
+        }
+        else if( strcmp(pszName, "FILE_METADATA_EMAIL") == 0 )
+        {
+            NCSFree(psFileInfo->pFileMetaData->sEmail);
+            psFileInfo->pFileMetaData->sEmail = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
+        }
+        else if( strcmp(pszName, "FILE_METADATA_ADDRESS") == 0 )
+        {
+            NCSFree(psFileInfo->pFileMetaData->sAddress);
+            psFileInfo->pFileMetaData->sAddress = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
+        }
+        else if( strcmp(pszName, "FILE_METADATA_TELEPHONE") == 0 )
+        {
+            NCSFree(psFileInfo->pFileMetaData->sTelephone);
+            psFileInfo->pFileMetaData->sTelephone = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
+        }
+        else
+        {
+            return GDALPamDataset::SetMetadataItem(pszName, pszValue, pszDomain);
+        }
+    }
+#endif
     else
         return GDALPamDataset::SetMetadataItem(pszName, pszValue, pszDomain);
 }
@@ -1189,10 +1281,27 @@ CPLErr ECWDataset::SetMetadata( char ** papszMetadata,
        return eErr;
     }
 
-    if ( (pszDomain == NULL || EQUAL(pszDomain, "") || EQUAL(pszDomain, "ECW")) &&
+    if ( ((pszDomain == NULL || EQUAL(pszDomain, "") || EQUAL(pszDomain, "ECW")) &&
           (CSLFetchNameValue(papszMetadata, "PROJ") != NULL ||
            CSLFetchNameValue(papszMetadata, "DATUM") != NULL ||
-           CSLFetchNameValue(papszMetadata, "UNITS") != NULL) )
+           CSLFetchNameValue(papszMetadata, "UNITS") != NULL))
+#if ECWSDK_VERSION >=50
+       || (psFileInfo != NULL &&
+           psFileInfo->nFormatVersion >= 3 &&
+           eAccess == GA_Update &&
+           (pszDomain == NULL || EQUAL(pszDomain, "")) &&
+           (CSLFetchNameValue(papszMetadata, "FILE_METADATA_CLASSIFICATION") != NULL ||
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_ACQUISITION_DATE") != NULL ||
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_ACQUISITION_SENSOR_NAME") != NULL ||
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_COMPRESSION_SOFTWARE") != NULL ||
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_AUTHOR") != NULL ||
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_COPYRIGHT") != NULL ||
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_COMPANY") != NULL ||
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_EMAIL") != NULL ||
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_ADDRESS") != NULL ||
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_TELEPHONE") != NULL)) 
+#endif
+        )
     {
         CPLStringList osNewMetadata;
         char** papszIter = papszMetadata;
@@ -1200,7 +1309,8 @@ CPLErr ECWDataset::SetMetadata( char ** papszMetadata,
         {
             if (strncmp(*papszIter, "PROJ=", 5) == 0 ||
                 strncmp(*papszIter, "DATUM=", 6) == 0 ||
-                strncmp(*papszIter, "UNITS=", 6) == 0)
+                strncmp(*papszIter, "UNITS=", 6) == 0 ||
+                (strncmp(*papszIter, "FILE_METADATA_", strlen("FILE_METADATA_")) == 0 && strchr(*papszIter, '=') != NULL) )
             {
                 char* pszKey = NULL;
                 const char* pszValue = CPLParseNameValue(*papszIter, &pszKey );
@@ -2488,25 +2598,62 @@ void ECWDataset::ReadFileMetaDataFromFile()
     if (psFileInfo->pFileMetaData == NULL) return;
 
     if (psFileInfo->pFileMetaData->sClassification != NULL )
-        SetMetadataItem("FILE_METADATA_CLASSIFICATION", NCS::CString(psFileInfo->pFileMetaData->sClassification).a_str());
+        GDALDataset::SetMetadataItem("FILE_METADATA_CLASSIFICATION", NCS::CString(psFileInfo->pFileMetaData->sClassification).a_str());
     if (psFileInfo->pFileMetaData->sAcquisitionDate != NULL )
-        SetMetadataItem("FILE_METADATA_ACQUISITION_DATE", NCS::CString(psFileInfo->pFileMetaData->sAcquisitionDate));
+        GDALDataset::SetMetadataItem("FILE_METADATA_ACQUISITION_DATE", NCS::CString(psFileInfo->pFileMetaData->sAcquisitionDate));
     if (psFileInfo->pFileMetaData->sAcquisitionSensorName != NULL )
-        SetMetadataItem("FILE_METADATA_ACQUISITION_SENSOR_NAME", NCS::CString(psFileInfo->pFileMetaData->sAcquisitionSensorName));
+        GDALDataset::SetMetadataItem("FILE_METADATA_ACQUISITION_SENSOR_NAME", NCS::CString(psFileInfo->pFileMetaData->sAcquisitionSensorName));
     if (psFileInfo->pFileMetaData->sCompressionSoftware != NULL )
-        SetMetadataItem("FILE_METADATA_COMPRESSION_SOFTWARE", NCS::CString(psFileInfo->pFileMetaData->sCompressionSoftware));
+        GDALDataset::SetMetadataItem("FILE_METADATA_COMPRESSION_SOFTWARE", NCS::CString(psFileInfo->pFileMetaData->sCompressionSoftware));
     if (psFileInfo->pFileMetaData->sAuthor != NULL )
-        SetMetadataItem("FILE_METADATA_AUTHOR", NCS::CString(psFileInfo->pFileMetaData->sAuthor));
+        GDALDataset::SetMetadataItem("FILE_METADATA_AUTHOR", NCS::CString(psFileInfo->pFileMetaData->sAuthor));
     if (psFileInfo->pFileMetaData->sCopyright != NULL )
-        SetMetadataItem("FILE_METADATA_COPYRIGHT", NCS::CString(psFileInfo->pFileMetaData->sCopyright));
+        GDALDataset::SetMetadataItem("FILE_METADATA_COPYRIGHT", NCS::CString(psFileInfo->pFileMetaData->sCopyright));
     if (psFileInfo->pFileMetaData->sCompany != NULL )
-        SetMetadataItem("FILE_METADATA_COMPANY", NCS::CString(psFileInfo->pFileMetaData->sCompany));
+        GDALDataset::SetMetadataItem("FILE_METADATA_COMPANY", NCS::CString(psFileInfo->pFileMetaData->sCompany));
     if (psFileInfo->pFileMetaData->sEmail != NULL )
-        SetMetadataItem("FILE_METADATA_EMAIL", NCS::CString(psFileInfo->pFileMetaData->sEmail));
+        GDALDataset::SetMetadataItem("FILE_METADATA_EMAIL", NCS::CString(psFileInfo->pFileMetaData->sEmail));
     if (psFileInfo->pFileMetaData->sAddress != NULL )
-        SetMetadataItem("FILE_METADATA_ADDRESS", NCS::CString(psFileInfo->pFileMetaData->sAddress));
+        GDALDataset::SetMetadataItem("FILE_METADATA_ADDRESS", NCS::CString(psFileInfo->pFileMetaData->sAddress));
     if (psFileInfo->pFileMetaData->sTelephone != NULL )
-        SetMetadataItem("FILE_METADATA_TELEPHONE", NCS::CString(psFileInfo->pFileMetaData->sTelephone));		
+        GDALDataset::SetMetadataItem("FILE_METADATA_TELEPHONE", NCS::CString(psFileInfo->pFileMetaData->sTelephone));		
+}
+
+/************************************************************************/
+/*                       WriteFileMetaData()                            */
+/************************************************************************/
+
+void ECWDataset::WriteFileMetaData(NCSFileMetaData* pFileMetaDataCopy)
+{
+    if (!bFileMetaDataDirty )
+        return;
+
+    CPLAssert(eAccess == GA_Update);
+    CPLAssert(!bIsJPEG2000);
+
+    bFileMetaDataDirty = FALSE;
+
+    NCSFileView *psFileView = NULL;
+    NCSError eErr;
+
+    psFileView = NCSEditOpen( GetDescription() );
+    if (psFileView == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "NCSEditOpen() failed");
+        return;
+    }
+
+    eErr = NCSEditSetFileMetaData(psFileView, pFileMetaDataCopy);
+    if( eErr != NCS_SUCCESS )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "NCSEditSetFileMetaData() failed : %s",
+                 NCSGetLastErrorText(eErr));
+    }
+
+    NCSEditFlushAll(psFileView);
+    NCSEditClose(psFileView);
 }
 
 #endif 
