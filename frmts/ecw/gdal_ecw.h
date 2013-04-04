@@ -590,6 +590,8 @@ class ECWRasterBand : public GDALPamRasterBand
                                     GDALProgressFunc, void *pProgressData);
     virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
                                         int nBuckets, int *panHistogram );
+    virtual double GetMinimum( int* pbSuccess );
+    virtual double GetMaximum( int* pbSuccess );
     virtual CPLErr GetStatistics( int bApproxOK, int bForce,
                                   double *pdfMin, double *pdfMax, 
                                   double *pdfMean, double *padfStdDev );

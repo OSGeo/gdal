@@ -446,6 +446,59 @@ void ECWRasterBand::GetBandIndexAndCountForStatistics(int &bandIndex, int &bandC
 }
 
 /************************************************************************/
+/*                           GetMinimum()                               */
+/************************************************************************/
+
+double ECWRasterBand::GetMinimum(int* pbSuccess)
+{
+    if( poGDS->psFileInfo->nFormatVersion >= 3 )
+    {
+        NCS::CError error = poGDS->StatisticsEnsureInitialized();
+        if ( error.Success() )
+        {
+            GetBandIndexAndCountForStatistics(nStatsBandIndex, nStatsBandCount);
+            if ( poGDS->pStatistics != NULL )
+            {
+                NCSBandStats& bandStats = poGDS->pStatistics->BandsStats[nStatsBandIndex];
+                if ( bandStats.fMinVal == bandStats.fMinVal )
+                {
+                    if( pbSuccess )
+                        *pbSuccess = TRUE;
+                    return bandStats.fMinVal;
+                }
+            }
+        }
+    }
+    return GDALPamRasterBand::GetMinimum(pbSuccess);
+}
+
+/************************************************************************/
+/*                           GetMaximum()                               */
+/************************************************************************/
+
+double ECWRasterBand::GetMaximum(int* pbSuccess)
+{
+    if( poGDS->psFileInfo->nFormatVersion >= 3 )
+    {
+        NCS::CError error = poGDS->StatisticsEnsureInitialized();
+        if ( error.Success() )
+        {
+            GetBandIndexAndCountForStatistics(nStatsBandIndex, nStatsBandCount);
+            if ( poGDS->pStatistics != NULL )
+            {
+                NCSBandStats& bandStats = poGDS->pStatistics->BandsStats[nStatsBandIndex];
+                if ( bandStats.fMaxVal == bandStats.fMaxVal )
+                {
+                    if( pbSuccess )
+                        *pbSuccess = TRUE;
+                    return bandStats.fMaxVal;
+                }
+            }
+        }
+    }
+    return GDALPamRasterBand::GetMaximum(pbSuccess);
+}
+/************************************************************************/
 /*                          GetStatistics()                             */
 /************************************************************************/
 
@@ -966,8 +1019,9 @@ NCS::CError ECWDataset::StatisticsEnsureInitialized(){
 /*                          StatisticsWrite()                           */
 /************************************************************************/
 
-NCS::CError ECWDataset::StatisticsWrite(){
-    
+NCS::CError ECWDataset::StatisticsWrite()
+{
+    CPLDebug("ECW", "In StatisticsWrite()");
     NCSFileView* view = NCSEcwEditOpen( GetDescription() );
     NCS::CError error;
     if ( view != NULL ){
@@ -2217,6 +2271,11 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 
         case NCSCT_IEEE8:
             poDS->eRasterDataType = GDT_Float64;
+            break;
+
+        default:
+            CPLDebug("ECW", "Unhandled case : eCellType = %d",
+                     (int)poDS->psFileInfo->eCellType );
             break;
     }
 
