@@ -3170,6 +3170,31 @@ def ogr_shape_66():
     return 'success'
 
 ###############################################################################
+# Test opening an empty .sbn spatial index
+
+def ogr_shape_67():
+
+    shutil.copy('data/emptyshapefilewithsbn.shp', 'tmp/emptyshapefilewithsbn.shp')
+    shutil.copy('data/emptyshapefilewithsbn.shx', 'tmp/emptyshapefilewithsbn.shx')
+    shutil.copy('data/emptyshapefilewithsbn.sbn', 'tmp/emptyshapefilewithsbn.sbn')
+    shutil.copy('data/emptyshapefilewithsbn.sbx', 'tmp/emptyshapefilewithsbn.sbx')
+
+    ds = ogr.Open('tmp/emptyshapefilewithsbn.shp', update = 1)
+    ds.ExecuteSQL('DROP SPATIAL INDEX ON emptyshapefilewithsbn')
+    ds = None
+    
+    try:
+        os.stat('tmp/emptyshapefilewithsbn.sbn')
+        return 'fail'
+    except:
+        pass
+    
+    os.unlink('tmp/emptyshapefilewithsbn.shp')
+    os.unlink('tmp/emptyshapefilewithsbn.shx')
+
+    return 'success'
+
+###############################################################################
 # 
 
 def ogr_shape_cleanup():
@@ -3267,6 +3292,7 @@ gdaltest_list = [
     ogr_shape_64,
     ogr_shape_65,
     ogr_shape_66,
+    ogr_shape_67,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':

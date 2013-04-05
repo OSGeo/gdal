@@ -235,6 +235,12 @@ SBNSearchHandle SBNOpenDiskTree( const char* pszSBNFilename,
         SBNCloseDiskTree(hSBN);
         return NULL;
     }
+    
+    /* Empty spatial index */
+    if( nShapeCount == 0 )
+    {
+        return hSBN;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Compute tree depth.                                             */
@@ -422,11 +428,14 @@ void SBNCloseDiskTree( SBNSearchHandle hSBN )
     if (hSBN == NULL)
         return;
 
-    nMaxNodes = (1 << hSBN->nMaxDepth) - 1;
-    for(i = 0; i < nMaxNodes; i++)
+    if( hSBN->pasNodeDescriptor != NULL )
     {
-        if( hSBN->pasNodeDescriptor[i].pabyShapeDesc != NULL )
-            free(hSBN->pasNodeDescriptor[i].pabyShapeDesc);
+        nMaxNodes = (1 << hSBN->nMaxDepth) - 1;
+        for(i = 0; i < nMaxNodes; i++)
+        {
+            if( hSBN->pasNodeDescriptor[i].pabyShapeDesc != NULL )
+                free(hSBN->pasNodeDescriptor[i].pabyShapeDesc);
+        }
     }
 
     /* printf("hSBN->nTotalBytesRead = %d\n", hSBN->nTotalBytesRead); */
@@ -910,6 +919,8 @@ int* SBNSearchDiskTreeInteger( SBNSearchHandle hSBN,
     if( bMaxX < 0 || bMaxY < 0 || bMinX > 255 || bMinX > 255 )
         return NULL;
 
+    if( hSBN->nShapeCount == 0 )
+        return NULL;
 /* -------------------------------------------------------------------- */
 /*      Run the search.                                                 */
 /* -------------------------------------------------------------------- */
