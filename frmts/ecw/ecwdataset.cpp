@@ -2257,6 +2257,10 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 
     ECWInitialize();
 
+    /* Note: J2K_SUBFILE is somehow an obsolete concept that predates /vsisubfile/ */
+    /* syntax and was used mainly(only?) by the NITF driver before its switch */
+    /* to /vsisubfile */
+
 /* -------------------------------------------------------------------- */
 /*      If we get a J2K_SUBFILE style name, convert it into the         */
 /*      corresponding /vsisubfile/ path.                                */
@@ -2267,7 +2271,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
     if (EQUALN(osFilename,"J2K_SUBFILE:",12))
     {
         char** papszTokens = CSLTokenizeString2(osFilename.c_str()+12, ",", 0);
-        if (CSLCount(papszTokens) >= 2)
+        if (CSLCount(papszTokens) >= 3)
         {
             osFilename.Printf( "/vsisubfile/%s_%s,%s",
                                papszTokens[0], papszTokens[1], papszTokens[2]);
