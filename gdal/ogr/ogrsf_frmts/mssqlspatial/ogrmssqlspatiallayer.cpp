@@ -42,6 +42,7 @@ OGRMSSQLSpatialLayer::OGRMSSQLSpatialLayer()
     nGeomColumnType = -1;
     pszGeomColumn = NULL;
     pszFIDColumn = NULL;
+    bIsIdentityFid = FALSE;
     panFieldOrdinals = NULL;
 
     poStmt = NULL;
@@ -139,6 +140,9 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
         if( pszFIDColumn != NULL &&
 		    EQUAL(poStmt->GetColName(iCol), pszFIDColumn) )
         {
+            if ( EQUAL(poStmt->GetColTypeName( iCol ), "int identity") ||
+                 EQUAL(poStmt->GetColTypeName( iCol ), "bigint identity"))
+                bIsIdentityFid = TRUE;
             /* skip FID */
             continue;
         }
