@@ -3074,16 +3074,16 @@ void ECWInitialize()
 void GDALDeregister_ECW( GDALDriver * )
 
 {
-    /* For unknown reason, this cleanup can take up to 3 seconds (see #3134). */
+    /* For unknown reason, this cleanup can take up to 3 seconds (see #3134) for SDK 3.3. */
     /* Not worth it */
-#ifdef notdef
+#if ECWSDK_VERSION >= 50
+#ifndef WIN32
     if( bNCSInitialized )
     {
         bNCSInitialized = FALSE;
-#ifndef WIN32
         NCSecwShutdown();
-#endif
     }
+#endif
 #endif
 
     if( hECWDatasetMutex != NULL )
