@@ -42,8 +42,43 @@ built from the projection string.<p>
 <h2>ECW Version 3 Files</h2>
 (Starting with GDAL 1.10.0)<p>
 
-ECW 5.x SDK provides amended file format which allows to store data statistics 
-and supports UInt16 as band data type.
+ECW 5.x SDK provides amended file format which allows to store data statistics, histograms,
+metadata, rpc metadata and supports UInt16 as band data type.
+
+Currently not everything is implemented: 
+<ul>
+
+<li><B>Statistics and Histograms</B> - full implementation for writing and reading. No ECW_OEM_KEY neccessary.
+<li><B>File Metadata</B> - read only support. Statistics will also be preserved/updated during CreateCopy.
+<li><B>RPC Metadata</B> - supported by file format, not supported by driver. 
+<li><B>Header Metadata</B> - written by SDK itself. Reported by gdalinfo. 
+</ul>
+
+
+<h3>File Metadata Keys: </h3>
+
+<ul>
+<li>FILE_METADATA_ACQUISITION_DATE
+<li>FILE_METADATA_ACQUISITION_SENSOR_NAME
+<li>FILE_METADATA_ADDRESS
+<li>FILE_METADATA_AUTHOR
+<li>FILE_METADATA_CLASSIFICATION
+<li>FILE_METADATA_COMPANY - should be set to ECW_OEM_KEY
+<li>FILE_METADATA_COMPRESSION_SOFTWARE - updated during recompression
+<li>FILE_METADATA_COPYRIGHT
+<li>FILE_METADATA_EMAIL
+<li>FILE_METADATA_TELEPHONE
+</ul>
+
+<h3>Following Header Metadata will be reported: </h3>
+<ul>
+<li>CLOCKWISE_ROTATION_DEG
+<li>COLORSPACE (reported for V2 files as well)
+<li>COMPRESSION_DATE
+<li>COMPRESSION_RATE_ACTUAL
+<li>COMPRESSION_RATE_TARGET (reported for V2 files as well)
+<li>VERSION (reported for V2 files as well)
+</ul>
 
 <h2>Creation Issues</h2>
 
