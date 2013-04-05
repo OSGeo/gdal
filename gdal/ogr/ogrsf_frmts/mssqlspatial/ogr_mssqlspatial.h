@@ -147,6 +147,8 @@ class OGRMSSQLSpatialLayer : public OGRLayer
     char               *pszGeomColumn;
     char               *pszFIDColumn;
 
+    int                bIsIdentityFid;
+
     int                *panFieldOrdinals;
 
     CPLErr              BuildFeatureDefn( const char *pszLayerName,
