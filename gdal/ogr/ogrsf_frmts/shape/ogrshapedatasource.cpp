@@ -144,6 +144,14 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
         {
             char        *pszFilename;
             const char  *pszCandidate = papszCandidates[iCan];
+            const char  *pszLayerName = CPLGetBasename(pszCandidate);
+            CPLString osLayerName(pszLayerName);
+#ifdef WIN32
+            /* On Windows, as filenames are case insensitive, a shapefile layer can be made of */
+            /* foo.shp and FOO.DBF, so to detect unique layer names, put them */
+            /* upper case in the unique set used for detection */
+            osLayerName.toupper();
+#endif
 
             if( EQUAL(pszCandidate,"ARC") )
                 bMightBeOldCoverage = TRUE;
@@ -155,7 +163,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
             pszFilename =
                 CPLStrdup(CPLFormFilename(pszNewName, pszCandidate, NULL));
 
-            osLayerNameSet.insert(CPLGetBasename(pszCandidate));
+            osLayerNameSet.insert(osLayerName);
 #ifdef IMMEDIATE_OPENING
             if( !OpenFile( pszFilename, bUpdate, bTestOpen )
                 && !bTestOpen )
@@ -179,7 +187,11 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
         {
             char        *pszFilename;
             const char  *pszCandidate = papszCandidates[iCan];
-            const char  *pszLayerName;
+            const char  *pszLayerName = CPLGetBasename(pszCandidate);
+            CPLString osLayerName(pszLayerName);
+#ifdef WIN32
+            osLayerName.toupper();
+#endif
 
             // We don't consume .dbf files in a directory that looks like
             // an old style Arc/Info (for PC?) that unless we found at least
@@ -191,8 +203,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
                 || !EQUAL(pszCandidate+strlen(pszCandidate)-4,".dbf") )
                 continue;
 
-            pszLayerName = CPLGetBasename(pszCandidate);
-            if (osLayerNameSet.find(pszLayerName) != osLayerNameSet.end())
+            if( osLayerNameSet.find(osLayerName) != osLayerNameSet.end() )
                 continue;
 
             // We don't want to access .dbf files with an associated .tab
@@ -213,7 +224,7 @@ int OGRShapeDataSource::Open( const char * pszNewName, int bUpdate,
             pszFilename =
                 CPLStrdup(CPLFormFilename(pszNewName, pszCandidate, NULL));
 
-            osLayerNameSet.insert(CPLGetBasename(pszCandidate));
+            osLayerNameSet.insert(osLayerName);
 
 #ifdef IMMEDIATE_OPENING
             if( !OpenFile( pszFilename, bUpdate, bTestOpen )

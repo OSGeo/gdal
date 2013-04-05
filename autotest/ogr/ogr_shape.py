@@ -3193,7 +3193,100 @@ def ogr_shape_67():
     os.unlink('tmp/emptyshapefilewithsbn.shx')
 
     return 'success'
+    
+###############################################################################
+# Test opening a shape datasource with files with mixed case and then REPACK
 
+def ogr_shape_68():
+
+    for i in range(2):
+        if i == 1 and sys.platform != 'win32':
+            break
+
+        try:
+            shutil.rmtree('tmp/mixedcase')
+        except:
+            pass
+        os.mkdir('tmp/mixedcase')
+        shutil.copy('data/poly.shp', 'tmp/mixedcase/mixedcase.shp')
+        shutil.copy('data/poly.shx', 'tmp/mixedcase/mixedcase.shx')
+        shutil.copy('data/poly.dbf', 'tmp/mixedcase/MIXEDCASE.DBF') # funny !
+
+        ds = ogr.Open('tmp/mixedcase', update = 1)
+        if sys.platform == 'win32':
+            expected_layer_count = 1
+        else:
+            expected_layer_count = 2
+        if ds.GetLayerCount() != expected_layer_count:
+            gdaltest.post_reason('expected %d layers, got %d' % (expected_layer_count, ds.GetLayerCount()))
+            return 'fail'
+        if i == 1:
+            lyr = ds.GetLayerByName('mixedcase')
+        else:
+            lyr = ds.GetLayerByName('MIXEDCASE')
+        lyr.DeleteFeature(0)
+        if i == 1:
+            ds.ExecuteSQL( 'REPACK mixedcase' )
+        else:
+            ds.ExecuteSQL( 'REPACK MIXEDCASE' )
+
+        if sys.platform == 'win32':
+            if lyr.GetGeomType() != ogr.wkbPolygon:
+                gdaltest.post_reason('fail')
+                return 'fail'
+        else:
+            if lyr.GetGeomType() != ogr.wkbNone:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            lyr = ds.GetLayerByName('mixedcase')
+            if lyr.GetGeomType() != ogr.wkbPolygon:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
+            ret = lyr.DeleteFeature(0)
+            gdal.PopErrorHandler()
+            if ret == 0:
+                gdaltest.post_reason('expected failure on DeleteFeature()')
+                return 'fail'
+            gdal.ErrorReset()
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
+            ds.ExecuteSQL( 'REPACK mixedcase' )
+            gdal.PopErrorHandler()
+            if gdal.GetLastErrorMsg() == '':
+                gdaltest.post_reason('expected failure on REPACK mixedcase')
+                return 'fail'
+
+        ds = None
+        
+        ori_shp_size = os.stat('data/poly.shp').st_size
+        ori_shx_size = os.stat('data/poly.shx').st_size
+        ori_dbf_size = os.stat('data/poly.dbf').st_size
+
+        new_shp_size = os.stat('tmp/mixedcase/mixedcase.shp').st_size
+        new_shx_size = os.stat('tmp/mixedcase/mixedcase.shx').st_size
+        new_dbf_size = os.stat('tmp/mixedcase/MIXEDCASE.DBF').st_size
+
+        if new_dbf_size == ori_dbf_size:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        if sys.platform == 'win32':
+            if new_shp_size == ori_shp_size:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            if new_shx_size == ori_shx_size:
+                gdaltest.post_reason('fail')
+                return 'fail'
+        else:
+            if new_shp_size != ori_shp_size:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            if new_shx_size != ori_shx_size:
+                gdaltest.post_reason('fail')
+                return 'fail'
+
+    return 'success'
+    
 ###############################################################################
 # 
 
@@ -3209,6 +3302,7 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( 'tmp' )
     shape_drv.DeleteDataSource( 'tmp/UPPERCASE' )
     shape_drv.DeleteDataSource( 'tmp/lowercase' )
+    shape_drv.DeleteDataSource( 'tmp/mixedcase' )
     shape_drv.DeleteDataSource( '/vsimem/test35.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_46.shp' )
     shape_drv.DeleteDataSource( '/vsimem/this_one_i_care_46.shp' )
@@ -3293,6 +3387,7 @@ gdaltest_list = [
     ogr_shape_65,
     ogr_shape_66,
     ogr_shape_67,
+    ogr_shape_68,
     ogr_shape_cleanup ]
 
 if __name__ == '__main__':

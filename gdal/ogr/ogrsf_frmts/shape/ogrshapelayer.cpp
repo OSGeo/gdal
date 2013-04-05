@@ -2118,7 +2118,13 @@ OGRErr OGRShapeLayer::Repack()
     {
         CPLString osCandidateBasename = CPLGetBasename(papszCandidates[i]);
         CPLString osCandidateExtension = CPLGetExtension(papszCandidates[i]);
+#ifdef WIN32
+        /* On Windows, as filenames are case insensitive, a shapefile layer can be made of */
+        /* foo.shp and FOO.DBF, so use case insensitive comparison */
+        if (EQUAL(osCandidateBasename, osBasename))
+#else
         if (osCandidateBasename.compare(osBasename) == 0)
+#endif
         {
             if (EQUAL(osCandidateExtension, "dbf"))
                 osDBFName = CPLFormFilename(osDirname, papszCandidates[i], NULL);
@@ -2135,11 +2141,31 @@ OGRErr OGRShapeLayer::Repack()
     
     if (osDBFName.size() == 0)
     {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot find the filename of the DBF file, but we managed to open it before !");
         /* Should not happen, really */
         CPLFree( panRecordsToDelete );
         return OGRERR_FAILURE;
     }
-    
+
+    if( hSHP != NULL && osSHPName.size() == 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot find the filename of the SHP file, but we managed to open it before !");
+        /* Should not happen, really */
+        CPLFree( panRecordsToDelete );
+        return OGRERR_FAILURE;
+    }
+
+    if( hSHP != NULL && osSHXName.size() == 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot find the filename of the SHX file, but we managed to open it before !");
+        /* Should not happen, really */
+        CPLFree( panRecordsToDelete );
+        return OGRERR_FAILURE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup any existing spatial index.  It will become             */
 /*      meaningless when the fids change.                               */
@@ -2214,16 +2240,11 @@ OGRErr OGRShapeLayer::Repack()
 /* -------------------------------------------------------------------- */
 /*      Now create a shapefile matching the old one.                    */
 /* -------------------------------------------------------------------- */
+    int bMustReopenSHP = ( hSHP != NULL );
+
     if( hSHP != NULL )
     {
         SHPHandle hNewSHP = NULL;
-        
-        if (osSHPName.size() == 0 || osSHXName.size() == 0)
-        {
-            /* Should not happen, really */
-            CPLFree( panRecordsToDelete );
-            return OGRERR_FAILURE;
-        }
 
         oTempFile = CPLFormFilename(osDirname, osBasename, NULL);
         oTempFile += "_packed.shp";
@@ -2310,26 +2331,18 @@ OGRErr OGRShapeLayer::Repack()
     CPLAssert( NULL == hSHP );
     CPLAssert( NULL == hDBF && NULL == hNewDBF );
     
-    CPLPushErrorHandler( CPLQuietErrorHandler );
-    
     const char* pszAccess = NULL;
     if( bUpdateAccess )
         pszAccess = "r+";
     else
         pszAccess = "r";
     
-    hSHP = SHPOpen ( CPLResetExtension( pszFullName, "shp" ) , pszAccess );
-    hDBF = DBFOpen ( CPLResetExtension( pszFullName, "dbf" ) , pszAccess );
-    
-    CPLPopErrorHandler();
-    
-    if( NULL == hSHP || NULL == hDBF )
-    {
-        CPLString osMsg(CPLGetLastErrorMsg());
-        CPLError( CE_Failure, CPLE_OpenFailed, "%s", osMsg.c_str() );
+    if( bMustReopenSHP )
+        hSHP = SHPOpen ( osSHPName , pszAccess );
+    hDBF = DBFOpen ( osDBFName , pszAccess );
 
+    if( (bMustReopenSHP && NULL == hSHP) || NULL == hDBF )
         return OGRERR_FAILURE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Update total shape count.                                       */
