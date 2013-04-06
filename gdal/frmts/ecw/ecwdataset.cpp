@@ -3139,8 +3139,10 @@ void GDALRegister_ECW()
         poDriver->pfnOpen = ECWDataset::OpenECW;
         poDriver->pfnUnloadDriver = GDALDeregister_ECW;
 #ifdef HAVE_COMPRESS
-// The create method seems not to work properly.
-//        poDriver->pfnCreate = ECWCreateECW;  
+// The create method does not work with SDK 3.3 ( crash in CNCSJP2FileView::WriteLineBIL() due to m_pFile being NULL )
+#if ECWSDK_VERSION >= 50
+        poDriver->pfnCreate = ECWCreateECW;  
+#endif
         poDriver->pfnCreateCopy = ECWCreateCopyECW;
 #if ECWSDK_VERSION >= 50
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
