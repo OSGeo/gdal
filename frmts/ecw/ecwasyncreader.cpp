@@ -262,7 +262,8 @@ NCSEcwReadStatus ECWAsyncReader::RefreshCB( NCSFileView *pFileView )
 /*      Acquire the async reader mutex.  Currently we make no           */
 /*      arrangements for failure to acquire it.                         */
 /* -------------------------------------------------------------------- */
-    CPLMutexHolderD( &(poReader->hMutex) );
+    {
+        CPLMutexHolderD( &(poReader->hMutex) );
 
 /* -------------------------------------------------------------------- */
 /*      Mark the buffer as updated unless we are already complete.      */
@@ -272,11 +273,17 @@ NCSEcwReadStatus ECWAsyncReader::RefreshCB( NCSFileView *pFileView )
 /*                                                                      */
 /*      Also record whether we are now complete.                        */
 /* -------------------------------------------------------------------- */
-    if( !poReader->bComplete )
-        poReader->bUpdateReady = TRUE;
+        if( !poReader->bComplete )
+            poReader->bUpdateReady = TRUE;
 
-    if( psVSI->nBlocksAvailable == psVSI->nBlocksInView )
-        poReader->bComplete = TRUE;
+        if( psVSI->nBlocksAvailable == psVSI->nBlocksInView )
+            poReader->bComplete = TRUE;
+    }
+
+    /* Call CPLCleanupTLS explicitely since this thread isn't managed */
+    /* by CPL. This will free the ressources taken by the above CPLDebug */
+    if( poReader->bComplete )
+        CPLCleanupTLS();
 
     return NCSECW_READ_OK;
 }
