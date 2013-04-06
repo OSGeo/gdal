@@ -415,16 +415,13 @@ void GDALDataset::BlockBasedFlushCache()
             for( iBand = 0; iBand < nBands; iBand++ )
             {
                 GDALRasterBand *poBand = GetRasterBand( iBand+1 );
-                
-                if( poBand->papoBlocks[iX + iY*poBand1->nBlocksPerRow] != NULL)
-                {
-                    CPLErr    eErr;
-                    
-                    eErr = poBand->FlushBlock( iX, iY );
-                    
-                    if( eErr != CE_None )
-                        return;
-                }
+
+                CPLErr    eErr;
+
+                eErr = poBand->FlushBlock( iX, iY );
+
+                if( eErr != CE_None )
+                    return;
             }
         }
     }
