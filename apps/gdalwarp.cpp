@@ -50,7 +50,8 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
                       const char *pszFormat, char **papszTO,
                       char ***ppapszCreateOptions, GDALDataType eDT,
                       void ** phTransformArg,
-                      GDALDatasetH* phSrcDS );
+                      GDALDatasetH* phSrcDS,
+                      int bSetColorInterpretation );
 
 static void 
 RemoveConflictingMetadata( GDALMajorObjectH hObj, char **papszMetadata,
@@ -87,7 +88,7 @@ gdalwarp [--help-general] [--formats]
     [-cutline datasource] [-cl layer] [-cwhere expression]
     [-csql statement] [-cblend dist_in_pixels] [-crop_to_cutline]
     [-of format] [-co "NAME=VALUE"]* [-overwrite]
-    [-nomd] [-cvmd meta_conflict_value]
+    [-nomd] [-cvmd meta_conflict_value] [-setci]
     srcfile* dstfile
 \endverbatim
 
@@ -192,6 +193,8 @@ cutline datasource.</dd>
 Items that differ between source datasets will be set to * (see -cvmd option).</dd>
 <dt> <b>-cvmd</b> <em>meta_conflict_value</em>:</dt><dd>(GDAL >= 1.10.0) 
 Value to set metadata items that conflict between source datasets (default is "*"). Use "" to remove conflicting items. </dd>
+<dt> <b>-setci</b>:</dt><dd>(GDAL >= 1.10.0) 
+Set the color interpretation of the bands of the target dataset from the source dataset.</dd>
 
 <dt> <em>srcfile</em>:</dt><dd> The source file name(s). </dd>
 <dt> <em>dstfile</em>:</dt><dd> The destination file name. </dd>
@@ -355,6 +358,7 @@ int main( int argc, char ** argv )
     int                  bCopyMetadata = TRUE;
     int                  bCopyBandInfo = TRUE;
     const char           *pszMDConflictValue = "*";
+    int                  bSetColorInterpretation = FALSE;
 
     /* Check that we are running against at least GDAL 1.6 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -667,6 +671,8 @@ int main( int argc, char ** argv )
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszMDConflictValue = argv[++i];
         }
+        else if( EQUAL(argv[i],"-setci") )
+            bSetColorInterpretation = TRUE;
 
         else if( argv[i][0] == '-' )
             Usage(CPLSPrintf("Unkown option name '%s'", argv[i]));
@@ -878,7 +884,7 @@ int main( int argc, char ** argv )
         hDstDS = GDALWarpCreateOutput( papszSrcFiles, pszDstFilename,pszFormat,
                                        papszTO, &papszCreateOptions, 
                                        eOutputType, &hUniqueTransformArg,
-                                       &hUniqueSrcDS);
+                                       &hUniqueSrcDS, bSetColorInterpretation);
         bCreateOutput = TRUE;
 
         if( CSLFetchNameValue( papszWarpOptions, "INIT_DEST" ) == NULL 
@@ -1441,7 +1447,8 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
                       const char *pszFormat, char **papszTO, 
                       char ***ppapszCreateOptions, GDALDataType eDT,
                       void ** phTransformArg,
-                      GDALDatasetH* phSrcDS)
+                      GDALDatasetH* phSrcDS,
+                      int bSetColorInterpretation)
 
 
 {
@@ -1889,7 +1896,7 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
 /*      but it might create spurious .aux.xml files (at least with HFA, */
 /*      and netCDF)                                                     */
 /* -------------------------------------------------------------------- */
-    if( bVRT )
+    if( bVRT || bSetColorInterpretation )
     {
         int nBandsToCopy = (int)apeColorInterpretations.size();
         if ( bEnableSrcAlpha )
