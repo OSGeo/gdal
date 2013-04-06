@@ -1741,6 +1741,7 @@ class VSIZipWriteHandle : public VSIVirtualHandle
    VSIZipWriteHandle       *poChildInWriting;
    VSIZipWriteHandle       *poParent;
    int                      bAutoDeleteParent;
+   vsi_l_offset             nCurOffset;
 
   public:
 
@@ -2126,6 +2127,7 @@ VSIZipWriteHandle::VSIZipWriteHandle(VSIZipFilesystemHandler* poFS,
     this->poParent = poParent;
     poChildInWriting = NULL;
     bAutoDeleteParent = FALSE;
+    nCurOffset = 0;
 }
 
 /************************************************************************/
@@ -2143,6 +2145,11 @@ VSIZipWriteHandle::~VSIZipWriteHandle()
 
 int VSIZipWriteHandle::Seek( vsi_l_offset nOffset, int nWhence )
 {
+    if( nOffset == 0 && (nWhence == SEEK_END || nWhence == SEEK_CUR) )
+        return 0;
+    if( nOffset == nCurOffset && nWhence == SEEK_SET )
+        return 0;
+
     CPLError(CE_Failure, CPLE_NotSupported,
              "VSIFSeekL() is not supported on writable Zip files");
     return -1;
@@ -2154,9 +2161,7 @@ int VSIZipWriteHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
 vsi_l_offset VSIZipWriteHandle::Tell()
 {
-    CPLError(CE_Failure, CPLE_NotSupported,
-             "VSIFTellL() is not supported on writable Zip files");
-    return 0;
+    return nCurOffset;
 }
 
 /************************************************************************/
@@ -2185,6 +2190,8 @@ size_t    VSIZipWriteHandle::Write( const void *pBuffer, size_t nSize, size_t nM
 
     if (CPLWriteFileInZip( poParent->hZIP, pBuffer, (int)(nSize * nMemb) ) != CE_None)
         return 0;
+
+    nCurOffset +=(int) (nSize * nMemb);
 
     return nMemb;
 }
