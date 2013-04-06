@@ -79,6 +79,10 @@ class VSIStdoutHandle : public VSIVirtualHandle
 int VSIStdoutHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
 {
+    if( nOffset == 0 && (nWhence == SEEK_END || nWhence == SEEK_CUR) )
+        return 0;
+    if( nWhence == SEEK_SET && nOffset == Tell() )
+        return 0;
     CPLError(CE_Failure, CPLE_NotSupported, "Seek() unsupported on /vsistdout");
     return -1;
 }
