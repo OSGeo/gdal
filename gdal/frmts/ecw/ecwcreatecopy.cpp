@@ -34,6 +34,8 @@ CPL_CVSID("$Id$");
 
 #if defined(FRMT_ecw) && defined(HAVE_COMPRESS)
 
+#define OPTIMIZED_FOR_GDALWARP
+
 #if ECWSDK_VERSION>=50
 static
 CPLString GetCompressionSoftwareName(){
@@ -884,7 +886,9 @@ CPLErr GDALECWCompressor::Initialize(
     }
 
 #if ECWSDK_VERSION>=50
+    NCSFree(psClient->szDatum);
     psClient->szDatum = NCSStrDup(szDatum);
+    NCSFree(psClient->szProjection);
     psClient->szProjection = NCSStrDup(szProjection);
 #else
     psClient->szDatum = szDatum;
@@ -918,7 +922,7 @@ CPLErr GDALECWCompressor::Initialize(
 
     if( bIsJPEG2000 )
     {
-        fpVSIL = VSIFOpenL( pszFilename, "wb+" );
+        fpVSIL = VSIFOpenL( pszFilename, "wb" );
         if( fpVSIL == NULL )
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -957,36 +961,36 @@ CPLErr GDALECWCompressor::Initialize(
         if (psClient->pFileMetaData == NULL){
             NCSEcwInitMetaData(&psClient->pFileMetaData);
         }
-        if (m_poSrcDS->GetMetadataItem("FILE_METADATA_ACQUISITION_DATE")!=NULL){
+        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_ACQUISITION_DATE")!=NULL){
             psClient->pFileMetaData->sAcquisitionDate = NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_ACQUISITION_DATE")).c_str());
         }
 
-        if (m_poSrcDS->GetMetadataItem("FILE_METADATA_ACQUISITION_SENSOR_NAME")!=NULL){
+        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_ACQUISITION_SENSOR_NAME")!=NULL){
             psClient->pFileMetaData->sAcquisitionSensorName =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_ACQUISITION_SENSOR_NAME")).c_str());
         }
-        if (m_poSrcDS->GetMetadataItem("FILE_METADATA_ADDRESS")!=NULL){
+        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_ADDRESS")!=NULL){
             psClient->pFileMetaData->sAddress =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_ADDRESS")).c_str());
         }
-        if (m_poSrcDS->GetMetadataItem("FILE_METADATA_AUTHOR")!=NULL){
+        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_AUTHOR")!=NULL){
             psClient->pFileMetaData->sAuthor =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_AUTHOR")).c_str());
         }
-        if (m_poSrcDS->GetMetadataItem("FILE_METADATA_CLASSIFICATION")!=NULL){
+        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_CLASSIFICATION")!=NULL){
             psClient->pFileMetaData->sClassification =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_CLASSIFICATION")).c_str());
         }
-        if ( pszECWCompany != NULL ){
+        if ( pszECWCompany != NULL && CSLTestBoolean(CPLGetConfigOption("GDAL_ECW_WRITE_COMPANY", "YES"))  ){
             psClient->pFileMetaData->sCompany = NCSStrDupT(NCS::CString(pszECWCompany).c_str());
         }
         CPLString osCompressionSoftware = GetCompressionSoftwareName();
         if ( osCompressionSoftware.size() > 0 ) {
             psClient->pFileMetaData->sCompressionSoftware = NCSStrDupT(NCS::CString(osCompressionSoftware.c_str()).c_str());
         }
-        if (m_poSrcDS->GetMetadataItem("FILE_METADATA_COPYRIGHT")!=NULL){
+        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_COPYRIGHT")!=NULL){
             psClient->pFileMetaData->sCopyright =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_COPYRIGHT")).c_str());
         }
-        if (m_poSrcDS->GetMetadataItem("FILE_METADATA_EMAIL")!=NULL){
+        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_EMAIL")!=NULL){
             psClient->pFileMetaData->sEmail =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_EMAIL")).c_str());
         }
-        if (m_poSrcDS->GetMetadataItem("FILE_METADATA_TELEPHONE")!=NULL){
+        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_TELEPHONE")!=NULL){
             psClient->pFileMetaData->sTelephone =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_TELEPHONE")).c_str());
         }
     }
@@ -1392,6 +1396,49 @@ ECWCreateCopyJPEG2000( const char * pszFilename, GDALDataset *poSrcDS,
 
 class ECWWriteRasterBand;
 
+#ifdef OPTIMIZED_FOR_GDALWARP
+class IRasterIORequest
+{
+    public:
+        GDALRasterBand* poBand;
+        int nXOff;
+        int nYOff;
+        int nXSize;
+        int nYSize;
+        GByte* pabyData;
+        int nBufXSize;
+        int nBufYSize;
+
+        IRasterIORequest( GDALRasterBand* poBand,
+                          int nXOff, int nYOff, int nXSize, int nYSize,
+                          void * pData, int nBufXSize, int nBufYSize,
+                          GDALDataType eBufType, 
+                          int nPixelSpace, int nLineSpace ) :
+                            poBand(poBand),
+                            nXOff(nXOff),
+                            nYOff(nYOff),
+                            nXSize(nXSize),
+                            nYSize(nYSize),
+                            pabyData(NULL),
+                            nBufXSize(nBufXSize),
+                            nBufYSize(nBufYSize)
+        {
+            GDALDataType eDataType = poBand->GetRasterDataType();
+            int nDataTypeSize = GDALGetDataTypeSize(eDataType) / 8;
+            pabyData = (GByte*)CPLMalloc(nBufXSize * nBufYSize * nDataTypeSize);
+            for(int iY = 0; iY < nBufYSize; iY ++)
+            {
+                GDALCopyWords((GByte*)pData + iY * nLineSpace,
+                              eBufType, nPixelSpace,
+                              pabyData + iY * nBufXSize * nDataTypeSize,
+                              eDataType, nDataTypeSize,
+                              nBufXSize);
+            }
+        }
+        ~IRasterIORequest() { CPLFree(pabyData); }
+};
+#endif
+
 class CPL_DLL ECWWriteDataset : public GDALDataset
 {
     friend class ECWWriteRasterBand;
@@ -1410,7 +1457,12 @@ class CPL_DLL ECWWriteDataset : public GDALDataset
     
     int       nLoadedLine;
     GByte     *pabyBILBuffer;
-    
+
+    int       bOutOfOrderWriteOccured;
+#ifdef OPTIMIZED_FOR_GDALWARP
+    int       nPrevIRasterIOBand;
+#endif
+
     CPLErr    Crystalize();
     CPLErr    FlushLine();
 
@@ -1426,6 +1478,15 @@ class CPL_DLL ECWWriteDataset : public GDALDataset
     virtual const char* GetProjectionRef();
     virtual CPLErr SetGeoTransform( double * );
     virtual CPLErr SetProjection( const char *pszWKT );
+
+#ifdef OPTIMIZED_FOR_GDALWARP
+    virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              void * pData, int nBufXSize, int nBufYSize,
+                              GDALDataType eBufType, 
+                              int nBandCount, int *panBandMap,
+                              int nPixelSpace, int nLineSpace, int nBandSpace);
+#endif
 };
 
 /************************************************************************/
@@ -1443,17 +1504,34 @@ class ECWWriteRasterBand : public GDALRasterBand
 
     GDALColorInterp     eInterp;
 
+#ifdef OPTIMIZED_FOR_GDALWARP
+    IRasterIORequest    *poIORequest;
+#endif
+
   public:
 
                    ECWWriteRasterBand( ECWWriteDataset *, int );
+                  ~ECWWriteRasterBand();
 
     virtual CPLErr SetColorInterpretation( GDALColorInterp eInterpIn ) 
-        { eInterp = eInterpIn; return CE_None; }
+        { eInterp = eInterpIn;
+          if( strlen(GetDescription()) == 0 )
+              SetDescription(ECWGetColorInterpretationName(eInterp, nBand-1));
+          return CE_None;
+        }
     virtual GDALColorInterp GetColorInterpretation() 
         { return eInterp; }
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
+
+#ifdef OPTIMIZED_FOR_GDALWARP
+    virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              void * pData, int nBufXSize, int nBufYSize,
+                              GDALDataType eBufType, 
+                              int nPixelSpace, int nLineSpace);
+#endif
 };
 
 /************************************************************************/
@@ -1493,6 +1571,11 @@ ECWWriteDataset::ECWWriteDataset( const char *pszFilename,
     {
         SetBand( iBand, new ECWWriteRasterBand( this, iBand ) );
     }
+
+    bOutOfOrderWriteOccured = FALSE;
+#ifdef OPTIMIZED_FOR_GDALWARP
+    nPrevIRasterIOBand = -1;
+#endif
 }
 
 /************************************************************************/
@@ -1506,6 +1589,12 @@ ECWWriteDataset::~ECWWriteDataset()
 
     if( bCrystalized )
     {
+        if( bOutOfOrderWriteOccured )
+        {
+            /* Otherwise there's a hang-up in the destruction of the oCompressor object */
+            while( nLoadedLine < nRasterYSize - 1 )
+                FlushLine();
+        }
         if( nLoadedLine == nRasterYSize - 1 )
             FlushLine();
         oCompressor.CloseDown();
@@ -1588,7 +1677,7 @@ CPLErr ECWWriteDataset::Crystalize()
         return CE_None;
     
     const char **paszBandDescriptions = (const char **) CPLMalloc(nBands * sizeof(char *));
-    for (int i = 0; i < GetRasterCount(); i++ ){
+    for (int i = 0; i < nBands; i++ ){
         paszBandDescriptions[i] = GetRasterBand(i+1)->GetDescription();
     }
 
@@ -1663,6 +1752,83 @@ CPLErr ECWWriteDataset::FlushLine()
     return CE_None;
 }
 
+#ifdef OPTIMIZED_FOR_GDALWARP
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr ECWWriteDataset::IRasterIO( GDALRWFlag eRWFlag,
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              void * pData, int nBufXSize, int nBufYSize,
+                              GDALDataType eBufType, 
+                              int nBandCount, int *panBandMap,
+                              int nPixelSpace, int nLineSpace, int nBandSpace)
+{
+    ECWWriteRasterBand* po4thBand = NULL;
+    IRasterIORequest* poIORequest = NULL;
+
+    if( bOutOfOrderWriteOccured )
+        return CE_Failure;
+
+    if( eRWFlag == GF_Write && nBandCount == 3 && nBands == 4 )
+    {
+        po4thBand = (ECWWriteRasterBand*)GetRasterBand(4);
+        poIORequest = po4thBand->poIORequest;
+        if( poIORequest != NULL )
+        {
+            if( nXOff != poIORequest->nXOff ||
+                nYOff != poIORequest->nYOff ||
+                nXSize != poIORequest->nXSize ||
+                nYSize != poIORequest->nYSize ||
+                nBufXSize != poIORequest->nBufXSize ||
+                nBufYSize != poIORequest->nBufYSize )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Out of order write");
+                bOutOfOrderWriteOccured = TRUE;
+                return CE_Failure;
+            }
+        }
+    }
+
+    int nDataTypeSize = GDALGetDataTypeSize(eDataType) / 8;
+    if( eRWFlag == GF_Write && nXOff == 0 && nXSize == nRasterXSize &&
+        nBufXSize == nXSize && nBufYSize == nYSize && eBufType == eDataType &&
+        (nBandCount == nBands || ( nBandCount == 3 && poIORequest != NULL && nBands == 4) ) &&
+        nPixelSpace == nDataTypeSize && nLineSpace == nPixelSpace * nRasterXSize )
+    {
+        GByte* pabyData = (GByte*)pData;
+        for(int iY = 0; iY < nYSize; iY ++)
+        {
+            for(int iBand = 0; iBand < nBandCount; iBand ++)
+            {
+                GetRasterBand(panBandMap[iBand])->WriteBlock(0, iY + nYOff,
+                    pabyData + iY * nLineSpace + iBand * nBandSpace);
+            }
+
+            if( poIORequest != NULL )
+            {
+                po4thBand->WriteBlock(0, iY + nYOff,
+                    poIORequest->pabyData + iY * nDataTypeSize * nXSize);
+            }
+        }
+
+        if( poIORequest != NULL )
+        {
+            delete poIORequest;
+            po4thBand->poIORequest = NULL;
+        }
+
+        return CE_None;
+    }
+    else
+        return GDALDataset::IRasterIO(eRWFlag,
+                              nXOff, nYOff, nXSize, nYSize,
+                              pData, nBufXSize, nBufYSize,
+                              eBufType, 
+                              nBandCount, panBandMap,
+                              nPixelSpace, nLineSpace, nBandSpace);
+}
+#endif
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1685,6 +1851,21 @@ ECWWriteRasterBand::ECWWriteRasterBand( ECWWriteDataset *poDSIn,
     nBlockYSize = 1;
     eDataType = poDSIn->eDataType;
     eInterp = GCI_Undefined;
+#ifdef OPTIMIZED_FOR_GDALWARP
+    poIORequest = NULL;
+#endif
+}
+
+/************************************************************************/
+/*                        ~ECWWriteRasterBand()                         */
+/************************************************************************/
+
+ECWWriteRasterBand::~ECWWriteRasterBand()
+
+{
+#ifdef OPTIMIZED_FOR_GDALWARP
+    delete poIORequest;
+#endif
 }
 
 /************************************************************************/
@@ -1705,6 +1886,41 @@ CPLErr ECWWriteRasterBand::IReadBlock( int nBlockX, int nBlockY,
     return CE_None;
 }
 
+#ifdef OPTIMIZED_FOR_GDALWARP
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr ECWWriteRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              void * pData, int nBufXSize, int nBufYSize,
+                              GDALDataType eBufType, 
+                              int nPixelSpace, int nLineSpace)
+{
+    if( eRWFlag == GF_Write && nBand == 4 && poGDS->nBands == 4 &&
+        poGDS->nPrevIRasterIOBand < 0 )
+    {
+        /* Triggered when gdalwarp outputs an alpha band */
+        /* It is called before GDALDatasetRasterIO() on the 3 first bands */
+        if( poIORequest != NULL )
+            return CE_Failure;
+        poIORequest = new IRasterIORequest( this, 
+                              nXOff, nYOff, nXSize, nYSize,
+                              pData, nBufXSize, nBufYSize,
+                              eBufType, 
+                              nPixelSpace, nLineSpace );
+        return CE_None;
+    }
+
+    poGDS->nPrevIRasterIOBand = nBand;
+    return GDALRasterBand::IRasterIO( eRWFlag,
+                              nXOff, nYOff, nXSize, nYSize,
+                              pData, nBufXSize, nBufYSize,
+                              eBufType, 
+                              nPixelSpace, nLineSpace );
+}
+#endif
+
 /************************************************************************/
 /*                            IWriteBlock()                             */
 /************************************************************************/
@@ -1715,6 +1931,9 @@ CPLErr ECWWriteRasterBand::IWriteBlock( int nBlockX, int nBlockY,
 {
     int nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     CPLErr eErr;
+    
+    if( poGDS->bOutOfOrderWriteOccured )
+        return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      Flush previous line if needed.                                  */
@@ -1736,6 +1955,7 @@ CPLErr ECWWriteRasterBand::IWriteBlock( int nBlockX, int nBlockY,
                   "Apparent attempt to write to ECW non-sequentially.\n"
                   "Loaded line is %d, but %d of band %d was written to.",
                   poGDS->nLoadedLine, nBlockY, nBand );
+        poGDS->bOutOfOrderWriteOccured = TRUE;
         return CE_Failure;
     }
 
