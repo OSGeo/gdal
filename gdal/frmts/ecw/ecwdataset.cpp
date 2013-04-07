@@ -2800,7 +2800,9 @@ int ECWTranslateFromWKT( const char *pszWKT,
                                                  &pszEPSGProj, &pszEPSGDatum );
 
         CPLDebug( "ECW", "GetGDTProjDat(%d) = %s/%s", 
-                  atoi(pszAuthorityCode), pszEPSGProj, pszEPSGDatum );
+                  atoi(pszAuthorityCode),
+                  pszEPSGProj ? pszEPSGProj : "(null)",
+                  pszEPSGDatum ? pszEPSGDatum : "(null)");
 
         if( oErr.GetErrorNumber() == NCS_SUCCESS
             && pszEPSGProj != NULL && pszEPSGDatum != NULL )

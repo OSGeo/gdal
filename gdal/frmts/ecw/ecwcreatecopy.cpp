@@ -590,13 +590,16 @@ CPLErr GDALECWCompressor::Initialize(
 /* -------------------------------------------------------------------- */
     NCSFileViewFileInfoEx    *psClient = &(sFileInfo);
 #if ECWSDK_VERSION >= 50
-    bool bECWV3 = false;
-    pszOption = CSLFetchNameValue(papszOptions, "ECW_FORMAT_VERSION");
-    if( pszOption != NULL )
+    if( bIsJPEG2000 )
     {
-        bECWV3 = (3 == atoi(pszOption));
+        bool bECWV3 = false;
+        pszOption = CSLFetchNameValue(papszOptions, "ECW_FORMAT_VERSION");
+        if( pszOption != NULL )
+        {
+            bECWV3 = (3 == atoi(pszOption));
+        }
+        psClient->nFormatVersion = (bECWV3)?3:2;
     }
-    psClient->nFormatVersion = (bECWV3)?3:2; 
 #endif
     psClient->nBands = (UINT16) nBands;
     psClient->nSizeX = nXSize;
@@ -1102,8 +1105,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         pszWKT = poSrcDS->GetGCPProjection();
 
 /* -------------------------------------------------------------------- */
-/*      Confirm the datatype is 8bit.  It appears no other datatype     */
-/*      is supported in ECW format.                                     */
+/*      For ECW, confirm the datatype is 8bit (or uint16 for ECW v3)    */
 /* -------------------------------------------------------------------- */
     bool bECWV3 = false;
 
@@ -1116,14 +1118,17 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
     }
     #endif
-    if(! (eType == GDT_Byte  || (bECWV3 && eType==GDT_UInt16 ) || bIsJPEG2000 ) )
+    if( !(eType == GDT_Byte  || (bECWV3 && eType == GDT_UInt16 ) || bIsJPEG2000 ) )
     {
         if( bStrict )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Attempt to create ECW file with pixel data type %s failed.\n"
-                      "Only Byte data type supported for ECW version 2 files. ECW version 3 files supports UInt16 and Int16 as well.",
-                      GDALGetDataTypeName( eType ) );
+                      "Only Byte data type supported for ECW version 2 files."
+#if ECWSDK_VERSION >= 50
+                      " ECW version 3 files supports UInt16 as well."
+#endif
+                      , GDALGetDataTypeName( eType ) );
         }
         else
         {
@@ -1267,23 +1272,29 @@ ECWCreateCopyECW( const char * pszFilename, GDALDataset *poSrcDS,
 
 #endif
 
-    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte 
-        && !(bECWV3 && (poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_UInt16))  
+    GDALDataType eDataType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
+    if( eDataType != GDT_Byte 
+        && !(bECWV3 && (eDataType == GDT_UInt16))  
         && bStrict )
     {
-         
-        if (poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_UInt16 || poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_Int16){
+#if ECWSDK_VERSION >= 50
+        if (eDataType == GDT_UInt16){
             CPLError( CE_Failure, CPLE_NotSupported, 
                   "ECW driver doesn't support data type %s. "
-                  "Enable ECW version 3 write by using ECWV3=ON option.\n", 
-                  GDALGetDataTypeName( 
-                      poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
-        }else{
+                  "Enable ECW version 3 write by using ECW_FORMAT_VERSION=3 option.\n", 
+                  GDALGetDataTypeName(eDataType) );
+        }
+        else
+#endif
+        {
             CPLError( CE_Failure, CPLE_NotSupported, 
                   "ECW driver doesn't support data type %s. "
-                  "Only eight or sixteen bit bands supported. \n", 
-                  GDALGetDataTypeName( 
-                      poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
+                  "Only unsigned eight "
+#if ECWSDK_VERSION >= 50
+                  "or sixteen "
+#endif
+                  "bit bands supported. \n", 
+                  GDALGetDataTypeName(eDataType) );
         }
 
         return NULL;
@@ -1340,20 +1351,20 @@ ECWCreateCopyJPEG2000( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte 
-        && poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte 
-        && poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Int16
-        && poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt16
-        && poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Int32
-        && poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt32
-        && poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Float32
-        && poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Float64
+    GDALDataType eDataType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
+    if( eDataType != GDT_Byte 
+        && eDataType != GDT_Byte 
+        && eDataType != GDT_Int16
+        && eDataType != GDT_UInt16
+        && eDataType != GDT_Int32
+        && eDataType != GDT_UInt32
+        && eDataType != GDT_Float32
+        && eDataType != GDT_Float64
         && bStrict )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "JP2ECW driver doesn't support data type %s. ",
-                  GDALGetDataTypeName( 
-                      poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
+                  GDALGetDataTypeName(eDataType) );
 
         return NULL;
     }
