@@ -2194,7 +2194,7 @@ CNCSJP2FileView *ECWDataset::OpenFileView( const char *pszDatasetName,
             CPLDebug( "ECW", "Got mutex." );
         }
         VSIIOStream *poIOStream = new VSIIOStream();
-        poIOStream->Access( fpVSIL, FALSE, pszDatasetName, 0, -1 );
+        poIOStream->Access( fpVSIL, FALSE, TRUE, pszDatasetName, 0, -1 );
 
         poFileView = new CNCSJP2FileView();
         oErr = poFileView->Open( poIOStream, bProgressive );
