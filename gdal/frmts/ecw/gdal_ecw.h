@@ -180,13 +180,27 @@ class VSIIOStream : public CNCSJPCIOStream
     INT64    lengthOfJPData;
     VSILFILE    *fpVSIL;
     BOOLEAN      bWritable;
+    BOOLEAN      bSeekable;
     int      nFileViewCount;
+    
+    int      nCOMState;
+    int      nCOMLength;
+    GByte    abyCOMType[2];
 
     VSIIOStream() : m_Filename(NULL){
         nFileViewCount = 0;
         startOfJPData = 0;
         lengthOfJPData = -1;
         fpVSIL = NULL;
+        bWritable = false;
+        bSeekable = false;
+        if( CSLTestBoolean(CPLGetConfigOption("GDAL_ECW_WRITE_COMPRESSION_SOFTWARE", "YES")) )
+            nCOMState = -1;
+        else
+            nCOMState = 0;
+        nCOMLength = 0;
+        abyCOMType[0] = 0;
+        abyCOMType[1] = 0;
     }
     virtual ~VSIIOStream() {
         Close();
@@ -215,13 +229,13 @@ class VSIIOStream : public CNCSJPCIOStream
         }else
         {
             VSIIOStream *pDst = new VSIIOStream();
-            pDst->Access(fpNewVSIL, bWritable, m_Filename, startOfJPData, lengthOfJPData);
+            pDst->Access(fpNewVSIL, bWritable, bSeekable, m_Filename, startOfJPData, lengthOfJPData);
             return pDst;
         }
     }
 #endif /* ECWSDK_VERSION >= 4 */
 
-    virtual CNCSError Access( VSILFILE *fpVSILIn, BOOLEAN bWrite,
+    CNCSError Access( VSILFILE *fpVSILIn, BOOLEAN bWrite, BOOLEAN bSeekableIn,
                               const char *pszFilename, 
                               INT64 start, INT64 size = -1) {
 
@@ -229,6 +243,7 @@ class VSIIOStream : public CNCSJPCIOStream
         startOfJPData = start;
         lengthOfJPData = size;
         bWritable = bWrite;
+        bSeekable = bSeekableIn;
         VSIFSeekL(fpVSIL, startOfJPData, SEEK_SET);
         m_Filename = CPLStrdup(pszFilename);
         // the filename is used to establish where to put temporary files.
@@ -253,7 +268,7 @@ class VSIIOStream : public CNCSJPCIOStream
     }
 
     virtual bool NCS_FASTCALL Seek() {
-        return(true);
+        return bSeekable;
     }
     
     virtual bool NCS_FASTCALL Seek(INT64 offset, Origin origin = CURRENT) {
@@ -316,6 +331,61 @@ class VSIIOStream : public CNCSJPCIOStream
     virtual bool NCS_FASTCALL Write(void* buffer, UINT32 count) {
         if( count == 0 )
             return true;
+
+        GByte* paby = (GByte*) buffer;
+        if( nCOMState == 0 )
+        {
+            if( count == 2 && paby[0] == 0xff && paby[1] == 0x64 )
+            {
+                nCOMState ++;
+                return true;
+            }
+        }
+        else if( nCOMState == 1 )
+        {
+            if( count == 2 )
+            {
+                nCOMLength = (paby[0] << 8) | paby[1];
+                nCOMState ++;
+                return true;
+            }
+            else
+            {
+                GByte prevBuffer[] = { 0xff, 0x64 };
+                VSIFWriteL(prevBuffer, 2, 1, fpVSIL);
+                nCOMState = 0;
+            }
+        }
+        else if( nCOMState == 2 )
+        {
+            if( count == 2 )
+            {
+                abyCOMType[0] = paby[0];
+                abyCOMType[1] = paby[1];
+                nCOMState ++;
+                return true;
+            }
+            else
+            {
+                GByte prevBuffer[] = { nCOMLength >> 8, nCOMLength & 0xff };
+                VSIFWriteL(prevBuffer, 2, 1, fpVSIL);
+                nCOMState = 0;
+            }
+        }
+        else if( nCOMState == 3 )
+        {
+            if( count == (UINT32)nCOMLength - 4 )
+            {
+                nCOMState = 0;
+                return true;
+            }
+            else
+            {
+                VSIFWriteL(abyCOMType, 2, 1, fpVSIL);
+                nCOMState = 0;
+            }
+        }
+        
         if( 1 != VSIFWriteL(buffer, count, 1, fpVSIL) )
         {
             CPLDebug( "ECW", "VSIIOStream::Write(%d) failed.", 
