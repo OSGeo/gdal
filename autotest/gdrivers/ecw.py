@@ -1180,31 +1180,45 @@ def ecw_34():
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0 :
         return 'skip'
     if gdaltest.ecw_drv.major_version <5:
-        return 'skip'    
-    ds = gdal.Open( 'data/UInt16_big.tif' )
-    gdaltest.ecw_drv.CreateCopy( 'tmp/UInt16_big_out.ecw', ds, options = ['ECW_FORMAT_VERSION=3','TARGET=75'] )
+        return 'skip'
+
+    ds = gdal.GetDriverByName('MEM').Create('MEM:::', 128, 128, 1, gdal.GDT_UInt16)
+    ds.GetRasterBand(1).Fill(65535)
+    ref_data = ds.GetRasterBand(1).ReadRaster(0, 0, 128, 128, buf_type = gdal.GDT_UInt16)
+    out_ds = gdaltest.ecw_drv.CreateCopy( 'tmp/UInt16_big_out.ecw', ds, options = ['ECW_FORMAT_VERSION=3','TARGET=1'] )
+    out_ds = None
     ds = None
-    if os.path.exists(r'tmp/UInt16_big_out.ecw'):
-        return 'success' 
-    else:
+
+    ds = gdal.Open( 'tmp/UInt16_big_out.ecw' )
+    got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 128, 128, buf_type = gdal.GDT_UInt16)
+    ds = None
+
+    if got_data != ref_data:
         return 'fail'
+    return 'success'
 
 ###############################################################################
-# Verify that an write the imagery out to a new ecw file. Source file is 16 bit.
+# Verify that an write the imagery out to a new JP2 file. Source file is 16 bit.
 
 def ecw_35():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
-    if gdaltest.ecw_drv.major_version <5:
-        return 'skip'    
 
-    ds = gdal.Open( 'data/UInt16_big.tif' )
-    gdaltest.jp2ecw_drv.CreateCopy( 'tmp/UInt16_big_out.jp2', ds, options = ['TARGET=75'] )
+    ds = gdal.GetDriverByName('MEM').Create('MEM:::', 128, 128, 1, gdal.GDT_UInt16)
+    ds.GetRasterBand(1).Fill(65535)
+    ref_data = ds.GetRasterBand(1).ReadRaster(0, 0, 128, 128, buf_type = gdal.GDT_UInt16)
+    out_ds = gdaltest.jp2ecw_drv.CreateCopy( 'tmp/UInt16_big_out.jp2', ds, options = ['TARGET=1'] )
+    out_ds = None
     ds = None
-    if os.path.exists(r'tmp/UInt16_big_out.jp2'):
-        return 'success' 
-    else:
+
+    ds = gdal.Open( 'tmp/UInt16_big_out.jp2' )
+    got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 128, 128, buf_type = gdal.GDT_UInt16)
+    ds = None
+
+    if got_data != ref_data:
         return 'fail'
+    return 'success'
+
 ###############################################################################
 # Make sure that band descriptions are preserved for version 3 ECW files. 
 def ecw_36():
