@@ -883,6 +883,8 @@ CPLErr VRTRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
 
     psHistItem = PamHistogramToXMLTree( dfMin, dfMax, nBuckets, 
                                         panHistogram, TRUE, FALSE );
+    if( psHistItem == NULL )
+        return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      Insert our new default histogram at the front of the            */

@@ -983,7 +983,7 @@ PamParseHistogram( CPLXMLNode *psHistItem,
     *pdfMin = atof(CPLGetXMLValue( psHistItem, "HistMin", "0"));
     *pdfMax = atof(CPLGetXMLValue( psHistItem, "HistMax", "1"));
     *pnBuckets = atoi(CPLGetXMLValue( psHistItem, "BucketCount","2"));
-    if (*pnBuckets <= 0)
+    if (*pnBuckets <= 0 || *pnBuckets > INT_MAX / 2)
         return FALSE;
 
     if( ppanHistogram == NULL )
@@ -993,6 +993,14 @@ PamParseHistogram( CPLXMLNode *psHistItem,
     int iBucket;
     const char *pszHistCounts = CPLGetXMLValue( psHistItem, 
                                                 "HistCounts", "" );
+
+    /* Sanity check to test consistency of BucketCount and HistCounts */
+    if( strlen(pszHistCounts) < 2 * (size_t)(*pnBuckets) -1 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "HistCounts content isn't consistant with BucketCount value");
+        return FALSE;
+    }
 
     *ppanHistogram = (int *) VSICalloc(sizeof(int),*pnBuckets);
     if (*ppanHistogram == NULL)
@@ -1066,10 +1074,17 @@ PamHistogramToXMLTree( double dfMin, double dfMax,
                        int bIncludeOutOfRange, int bApprox )
 
 {
-    char *pszHistCounts = (char *) CPLMalloc(12 * nBuckets + 10);
+    char *pszHistCounts;
     int iBucket, iHistOffset;
     CPLXMLNode *psXMLHist;
     CPLString oFmt;
+
+    if( nBuckets > (INT_MAX - 10) / 12 )
+        return NULL;
+
+    pszHistCounts = (char *) VSIMalloc(12 * nBuckets + 10);
+    if( pszHistCounts == NULL )
+        return NULL;
 
     psXMLHist = CPLCreateXMLNode( NULL, CXT_Element, "HistItem" );
 
@@ -1213,6 +1228,8 @@ CPLErr GDALPamRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
 
     psHistItem = PamHistogramToXMLTree( dfMin, dfMax, nBuckets, 
                                         panHistogram, TRUE, FALSE );
+    if( psHistItem == NULL )
+        return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      Insert our new default histogram at the front of the            */
