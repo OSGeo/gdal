@@ -532,6 +532,8 @@ class CPL_DLL ECWDataset : public GDALPamDataset
     
     int         bPreventCopyingSomeMetadata;
 
+    int         nBandIndexToPromoteTo8Bit;
+
     CPLStringList oECWMetadataList;
     CPLErr ReadBands(void * pData, int nBufXSize, int nBufYSize,
                     GDALDataType eBufType, 
@@ -628,6 +630,8 @@ class ECWRasterBand : public GDALPamRasterBand
     int nStatsBandCount;
 
 #endif
+
+    int         bPromoteTo8Bit;
 
 //#if !defined(SDK_CAN_DO_SUPERSAMPLING)
     CPLErr OldIRasterIO( GDALRWFlag, int, int, int, int,
