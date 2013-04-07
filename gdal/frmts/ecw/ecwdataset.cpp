@@ -166,7 +166,18 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDS, int nBand, int iOverview )
         }
     }
 
-    if( (poDS->psFileInfo->pBands[nBand-1].nBits % 8) != 0 )
+    bPromoteTo8Bit = 
+        poDS->psFileInfo->nBands == 4 && nBand == 4 &&
+        poDS->psFileInfo->pBands[0].nBits == 8 &&
+        poDS->psFileInfo->pBands[1].nBits == 8 &&
+        poDS->psFileInfo->pBands[2].nBits == 8 &&
+        poDS->psFileInfo->pBands[3].nBits == 1 &&
+        eBandInterp == GCI_AlphaBand && 
+        CSLTestBoolean(CPLGetConfigOption("GDAL_ECW_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES"));
+    if( bPromoteTo8Bit )
+        CPLDebug("ECW", "Fourth (alpha) band is promoted from 1 bit to 8 bit");
+
+    if( (poDS->psFileInfo->pBands[nBand-1].nBits % 8) != 0 && !bPromoteTo8Bit )
         SetMetadataItem("NBITS",
                         CPLString().Printf("%d",poDS->psFileInfo->pBands[nBand-1].nBits),
                         "IMAGE_STRUCTURE" );
@@ -704,6 +715,7 @@ CPLErr ECWRasterBand::OldIRasterIO( GDALRWFlag eRWFlag,
     poGDS->CleanupWindow();
 
     iBand = nBand-1;
+    poGDS->nBandIndexToPromoteTo8Bit = ( bPromoteTo8Bit ) ? 0 : -1;
     oErr = poGDS->poFileView->SetView( 1, (unsigned int *) (&iBand),
                                        nXOff, nYOff, 
                                        nXOff + nXSize - 1, 
@@ -749,6 +761,14 @@ CPLErr ECWRasterBand::OldIRasterIO( GDALRWFlag eRWFlag,
                 CPLError( CE_Failure, CPLE_AppDefined,
                          "NCScbmReadViewLineBIL failed." );
                 return CE_Failure;
+            }
+
+            if( bPromoteTo8Bit )
+            {
+                for ( int iX = 0; iX < nNewXSize; iX++ )
+                {
+                    pabySrcBuf[iX] *= 255;
+                }
             }
 
             if( !bDirect )
@@ -930,6 +950,8 @@ ECWDataset::ECWDataset(int bIsJPEG2000)
     sCachedMultiBandIO.pabyData = NULL;
     
     bPreventCopyingSomeMetadata = FALSE;
+
+    nBandIndexToPromoteTo8Bit = -1;
     
     poDriver = (GDALDriver*) GDALGetDriverByName( bIsJPEG2000 ? "JP2ECW" : "ECW" );
 }
@@ -1457,8 +1479,14 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     panAdjustedBandList = (int *) 
         CPLMalloc(sizeof(int) * nBandCount );
+    nBandIndexToPromoteTo8Bit = -1;
     for( int ii= 0; ii < nBandCount; ii++ )
+    {
+        if( ((ECWRasterBand*)GetRasterBand(panBandList[ii]))->bPromoteTo8Bit )
+            nBandIndexToPromoteTo8Bit = ii;
+
         panAdjustedBandList[ii] = panBandList[ii] - 1;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup old window cache information.                           */
@@ -1655,6 +1683,14 @@ CPLErr ECWDataset::LoadNextLine()
                                         papCurLineBuf );
     if( eRStatus != NCSECW_READ_OK )
         return CE_Failure;
+
+    if( nBandIndexToPromoteTo8Bit >= 0 )
+    {
+        for(int iX = 0; iX < nWinBufXSize; iX ++ )
+        {
+            ((GByte*)papCurLineBuf[nBandIndexToPromoteTo8Bit])[iX] *= 255;
+        }
+    }
 
     nWinBufLoaded++;
 
@@ -1895,8 +1931,13 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         if( sCachedMultiBandIO.bEnabled &&
             sCachedMultiBandIO.pabyData != NULL )
         {
+            nBandIndexToPromoteTo8Bit = -1;
             for( i = 0; i < nBands; i++ )
+            {
+                if( ((ECWRasterBand*)GetRasterBand(i+1))->bPromoteTo8Bit )
+                    nBandIndexToPromoteTo8Bit = i;
                 anBandIndices[i] = i;
+            }
 
             oErr = poFileView->SetView( nBands, anBandIndices,
                                         nXOff, nYOff, 
@@ -1935,6 +1976,12 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
         }
     }
 
+    nBandIndexToPromoteTo8Bit = -1;
+    for( i = 0; i < nBandCount; i++ )
+    {
+        if( ((ECWRasterBand*)GetRasterBand(anBandIndices[i]+1))->bPromoteTo8Bit )
+            nBandIndexToPromoteTo8Bit = i;
+    }
     oErr = poFileView->SetView( nBandCount, anBandIndices,
                                 nXOff, nYOff, 
                                 nXOff + nXSize - 1, 
@@ -1986,6 +2033,13 @@ CPLErr ECWDataset::ReadBandsDirectly(void * pData, int nBufXSize, int nBufYSize,
         }
         for(int nB = 0; nB < nBandCount; nB++) 
         {
+            if( nB == nBandIndexToPromoteTo8Bit )
+            {
+                for(int iX = 0; iX < nBufXSize; iX ++ )
+                {
+                    pBIL[nB][iX] *= 255;
+                }
+            }
             pBIL[nB] += nLineSpace;
         }
     }
@@ -2048,6 +2102,14 @@ CPLErr ECWDataset::ReadBands(void * pData, int nBufXSize, int nBufYSize,
 
         for( i = 0; i < nBandCount; i++ )
         {
+            if( i == nBandIndexToPromoteTo8Bit )
+            {
+                for(int iX = 0; iX < nBufXSize; iX ++ )
+                {
+                    papabyBIL[i][iX] *= 255;
+                }
+            }
+
             GDALCopyWords( 
                 pabyBILScanline + i * nDataTypeSize * nBufXSize,
                 eRasterDataType, nDataTypeSize, 
