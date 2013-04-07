@@ -216,12 +216,14 @@ class JP2OpenJPEGDataset : public GDALPamDataset
 class JP2OpenJPEGRasterBand : public GDALPamRasterBand
 {
     friend class JP2OpenJPEGDataset;
+    int bPromoteTo8Bit;
 
   public:
 
                 JP2OpenJPEGRasterBand( JP2OpenJPEGDataset * poDS, int nBand,
-                                    GDALDataType eDataType, int nBits,
-                                    int nBlockXSize, int nBlockYSize);
+                                       GDALDataType eDataType, int nBits,
+                                       int bPromoteTo8Bit,
+                                       int nBlockXSize, int nBlockYSize );
                 ~JP2OpenJPEGRasterBand();
 
     virtual CPLErr          IReadBlock( int, int, void * );
@@ -245,8 +247,9 @@ class JP2OpenJPEGRasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 JP2OpenJPEGRasterBand::JP2OpenJPEGRasterBand( JP2OpenJPEGDataset *poDS, int nBand,
-                                        GDALDataType eDataType, int nBits,
-                                        int nBlockXSize, int nBlockYSize)
+                                              GDALDataType eDataType, int nBits,
+                                              int bPromoteTo8Bit,
+                                              int nBlockXSize, int nBlockYSize )
 
 {
     this->poDS = poDS;
@@ -254,6 +257,7 @@ JP2OpenJPEGRasterBand::JP2OpenJPEGRasterBand( JP2OpenJPEGDataset *poDS, int nBan
     this->eDataType = eDataType;
     this->nBlockXSize = nBlockXSize;
     this->nBlockYSize = nBlockYSize;
+    this->bPromoteTo8Bit = bPromoteTo8Bit;
 
     if( (nBits % 8) != 0 )
         SetMetadataItem("NBITS",
@@ -659,6 +663,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
         void* pDstBuffer;
         GDALRasterBlock *poBlock = NULL;
         int iBand = (panBandMap) ? panBandMap[xBand] : xBand + 1;
+        int bPromoteTo8Bit = ((JP2OpenJPEGRasterBand*)GetRasterBand(iBand))->bPromoteTo8Bit;
 
         if (iBand == nBand)
             pDstBuffer = pImage;
@@ -720,6 +725,17 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fp,
         {
             CPLAssert((int)psImage->comps[iBand-1].w >= nWidthToRead);
             CPLAssert((int)psImage->comps[iBand-1].h >= nHeightToRead);
+            
+            if( bPromoteTo8Bit )
+            {
+                for(int j=0;j<nHeightToRead;j++)
+                {
+                    for(int i=0;i<nWidthToRead;i++)
+                    {
+                        psImage->comps[iBand-1].data[j * psImage->comps[iBand-1].w + i] *= 255;
+                    }
+                }
+            }
 
             if ((int)psImage->comps[iBand-1].w == nBlockXSize &&
                 (int)psImage->comps[iBand-1].h == nBlockYSize)
@@ -1176,8 +1192,17 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     for( iBand = 1; iBand <= poDS->nBands; iBand++ )
     {
+        int bPromoteTo8Bit = (
+            iBand == 4 && poDS->nBands == 4 &&
+            psImage->comps[0].prec == 8 &&
+            psImage->comps[1].prec == 8 &&
+            psImage->comps[2].prec == 8 &&
+            psImage->comps[3].prec == 1 && 
+            CSLTestBoolean(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")) );
+
         poDS->SetBand( iBand, new JP2OpenJPEGRasterBand( poDS, iBand, eDataType,
-                                                         psImage->comps[iBand-1].prec,
+                                                         bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
+                                                         bPromoteTo8Bit,
                                                          nTileW, nTileH) );
     }
 
@@ -1228,8 +1253,17 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         poODS->bIs420 = bIs420;
         for( iBand = 1; iBand <= poDS->nBands; iBand++ )
         {
+            int bPromoteTo8Bit = (
+                iBand == 4 && poDS->nBands == 4 &&
+                psImage->comps[0].prec == 8 &&
+                psImage->comps[1].prec == 8 &&
+                psImage->comps[2].prec == 8 &&
+                psImage->comps[3].prec == 1 && 
+                CSLTestBoolean(CPLGetConfigOption("JP2OPENJPEG_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")) );
+
             poODS->SetBand( iBand, new JP2OpenJPEGRasterBand( poODS, iBand, eDataType,
-                                                              psImage->comps[iBand-1].prec,
+                                                              bPromoteTo8Bit ? 8: psImage->comps[iBand-1].prec,
+                                                              bPromoteTo8Bit,
                                                               nTileW, nTileH ) );
         }
 
