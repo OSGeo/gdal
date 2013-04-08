@@ -2082,18 +2082,45 @@ OGRErr OGRShapeLayer::Repack()
 /* -------------------------------------------------------------------- */
 /*      Build a list of records to be dropped.                          */
 /* -------------------------------------------------------------------- */
-    int *panRecordsToDelete = (int *) 
-        CPLMalloc(sizeof(int)*(nTotalShapeCount+1));
-    int nDeleteCount = 0;
+    int *panRecordsToDelete = NULL;
+    int nDeleteCount = 0, nDeleteCountAlloc = 0;
     int iShape = 0;
     OGRErr eErr = OGRERR_NONE;
 
     for( iShape = 0; iShape < nTotalShapeCount; iShape++ )
     {
         if( DBFIsRecordDeleted( hDBF, iShape ) )
+        {
+            if( nDeleteCount == nDeleteCountAlloc )
+            {
+                int nDeleteCountAllocNew =
+                    nDeleteCountAlloc + nDeleteCountAlloc / 3 + 32;
+                if( nDeleteCountAlloc >= (INT_MAX - 32) / 4 * 3 ||
+                    nDeleteCountAllocNew > INT_MAX / (int)sizeof(int) )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              "Too many features to delete : %d", nDeleteCount );
+                    CPLFree( panRecordsToDelete );
+                    return OGRERR_FAILURE;
+                }
+                nDeleteCountAlloc = nDeleteCountAllocNew;
+                int* panRecordsToDeleteNew = (int*) VSIRealloc(
+                    panRecordsToDelete, nDeleteCountAlloc * sizeof(int) );
+                if( panRecordsToDeleteNew == NULL )
+                {
+                    CPLFree( panRecordsToDelete );
+                    return OGRERR_FAILURE;
+                }
+                panRecordsToDelete = panRecordsToDeleteNew;
+            }
             panRecordsToDelete[nDeleteCount++] = iShape;
+        }
+        if( VSIFEofL((VSILFILE*)hDBF->fp) )
+        {
+            CPLFree( panRecordsToDelete );
+            return OGRERR_FAILURE; /* There's an I/O error */
+        }
     }
-    panRecordsToDelete[nDeleteCount] = -1;
 
 /* -------------------------------------------------------------------- */
 /*      If there are no records marked for deletion, we take no         */
@@ -2104,6 +2131,7 @@ OGRErr OGRShapeLayer::Repack()
         CPLFree( panRecordsToDelete );
         return OGRERR_NONE;
     }
+    panRecordsToDelete[nDeleteCount] = -1;
 
 /* -------------------------------------------------------------------- */
 /*      Find existing filenames with exact case (see #3293).            */
