@@ -152,7 +152,7 @@ OGRErr OGRShapeDriver::DeleteDataSource( const char *pszDataSource )
     VSIStatBufL sStatBuf;
     static const char *apszExtensions[] = 
         { "shp", "shx", "dbf", "sbn", "sbx", "prj", "idm", "ind", 
-          "qix", NULL };
+          "qix", "cpg", NULL };
 
     if( VSIStatL( pszDataSource, &sStatBuf ) != 0 )
     {
