@@ -2111,7 +2111,7 @@ OGRErr OGRShapeLayer::Repack()
     CPLString osDirname(CPLGetPath(pszFullName));
     CPLString osBasename(CPLGetBasename(pszFullName));
     
-    CPLString osDBFName, osSHPName, osSHXName;
+    CPLString osDBFName, osSHPName, osSHXName, osCPGName;
     char **papszCandidates = CPLReadDir( osDirname );
     int i = 0;
     while(papszCandidates != NULL && papszCandidates[i] != NULL)
@@ -2132,6 +2132,8 @@ OGRErr OGRShapeLayer::Repack()
                 osSHPName = CPLFormFilename(osDirname, papszCandidates[i], NULL);
             else if (EQUAL(osCandidateExtension, "shx"))
                 osSHXName = CPLFormFilename(osDirname, papszCandidates[i], NULL);
+            else if (EQUAL(osCandidateExtension, "cpg"))
+                osCPGName = CPLFormFilename(osDirname, papszCandidates[i], NULL);
         }
         
         i++;
@@ -2236,7 +2238,19 @@ OGRErr OGRShapeLayer::Repack()
         CPLFree( panRecordsToDelete );
         return OGRERR_FAILURE;
     }
-    
+
+    /* Delete temporary .cpg file if existing */
+    if( osCPGName.size() )
+    {
+        oTempFile = CPLFormFilename(osDirname, osBasename, NULL);
+        oTempFile += "_packed.cpg";
+        if( VSIUnlink( oTempFile ) != 0 )
+        {
+            CPLDebug( "Shape", "Did not manage to remove temporary .cpg file: %s",
+                      VSIStrerror( errno ) );
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Now create a shapefile matching the old one.                    */
 /* -------------------------------------------------------------------- */
