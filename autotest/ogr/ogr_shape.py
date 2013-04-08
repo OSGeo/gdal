@@ -1274,6 +1274,9 @@ def ogr_shape_29():
     shutil.copy('data/poly.shp', 'tmp/UPPERCASE/UPPERCASE.SHP')
     shutil.copy('data/poly.shx', 'tmp/UPPERCASE/UPPERCASE.SHX')
     shutil.copy('data/poly.dbf', 'tmp/UPPERCASE/UPPERCASE.DBF')
+    f = open('tmp/UPPERCASE/UPPERCASE.CPG', 'wb')
+    f.write('UTF-8')
+    f.close()
 
     ds = ogr.Open('tmp/UPPERCASE', update = 1)
     lyr = ds.GetLayer(0)
@@ -1283,13 +1286,20 @@ def ogr_shape_29():
     
     list = gdal.ReadDir('tmp/UPPERCASE')
 
-    if len(list) != 5:
+    if len(list) != 6:
         print(list)
         return 'fail'
         
     for filename in list:
-        if filename not in ['.', '..', 'UPPERCASE.SHP', 'UPPERCASE.SHX', 'UPPERCASE.DBF']:
+        if filename not in ['.', '..', 'UPPERCASE.SHP', 'UPPERCASE.SHX', 'UPPERCASE.DBF', 'UPPERCASE.CPG']:
+            gdaltest.post_reason('fail')
             print(list)
+            print(filename)
+            return 'fail'
+        if filename.find('packed') >= 0:
+            gdaltest.post_reason('fail')
+            print(list)
+            print(filename)
             return 'fail'
 
     return 'success'
