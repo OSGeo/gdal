@@ -59,10 +59,14 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
+class VSISparseFileFilesystemHandler;
+
 class VSISparseFileHandle : public VSIVirtualHandle
 { 
+    VSISparseFileFilesystemHandler* poFS;
+
   public:
-    VSISparseFileHandle() : nCurOffset(0) {}
+    VSISparseFileHandle(VSISparseFileFilesystemHandler* poFS) : poFS(poFS), nOverallLength(0), nCurOffset(0) {}
 
     GUIntBig           nOverallLength;
     GUIntBig           nCurOffset;
@@ -85,6 +89,8 @@ class VSISparseFileHandle : public VSIVirtualHandle
 
 class VSISparseFileFilesystemHandler : public VSIFilesystemHandler 
 {
+    std::map<GIntBig, int> oRecOpenCount;
+
 public:
                      VSISparseFileFilesystemHandler();
     virtual          ~VSISparseFileFilesystemHandler();
@@ -101,6 +107,10 @@ public:
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
     virtual char   **ReadDir( const char *pszDirname );
+    
+    int              GetRecCounter() { return oRecOpenCount[CPLGetPID()]; }
+    void             IncRecCounter() { oRecOpenCount[CPLGetPID()] ++; }
+    void             DecRecCounter() { oRecOpenCount[CPLGetPID()] --; }
 };
 
 /************************************************************************/
@@ -262,8 +272,10 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
                        SEEK_SET ) != 0 )
             return 0;
 
+        poFS->IncRecCounter();
         size_t nBytesRead = VSIFReadL( pBuffer, 1, (size_t) nBytesRequested, 
                                        aoRegions[iRegion].fp );
+        poFS->DecRecCounter();
 
         if( nBytesAvailable < nBytesRequested )
             nReturnCount = nBytesRead / nSize;
@@ -336,6 +348,10 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
         return NULL;
     }
 
+    /* Arbitrary number */
+    if( GetRecCounter() == 32 )
+        return NULL;
+
     CPLString osSparseFilePath = pszFilename + 11;
 
 /* -------------------------------------------------------------------- */
@@ -357,7 +373,7 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Setup the file handle on this file.                             */
 /* -------------------------------------------------------------------- */
-    VSISparseFileHandle *poHandle = new VSISparseFileHandle;
+    VSISparseFileHandle *poHandle = new VSISparseFileHandle(this);
 
 /* -------------------------------------------------------------------- */
 /*      Translate the desired fields out of the XML tree.               */
