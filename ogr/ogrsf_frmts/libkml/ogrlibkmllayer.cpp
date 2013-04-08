@@ -395,6 +395,8 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
     FeaturePtr poKmlFeature;
     OGRFeature *poOgrFeature = NULL;
 
+	/***** loop over the kml features to find the next placemark *****/
+
     do {
         if ( iFeature >= nFeatures )
             break;
@@ -448,7 +450,11 @@ OGRErr OGRLIBKMLLayer::CreateFeature (
 
     m_poKmlLayer->add_feature ( poKmlPlacemark );
 
-    /***** mark the layer as updated *****/
+    /***** update the layer class count of features  *****/
+
+	nFeatures++;
+	
+	/***** mark the layer as updated *****/
 
     bUpdated = TRUE;
     m_poOgrDS->Updated (  );
