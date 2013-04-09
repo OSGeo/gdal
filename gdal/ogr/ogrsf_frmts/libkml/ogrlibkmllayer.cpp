@@ -115,95 +115,81 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
 
         nFeatures = m_poKmlLayer->get_feature_array_size (  );
 
-        /***** add the name and desc fields *****/
-
+        /***** name field *****/
+        
         const char *namefield =
             CPLGetConfigOption ( "LIBKML_NAME_FIELD", "Name" );
-        const char *descfield =
-            CPLGetConfigOption ( "LIBKML_DESCRIPTION_FIELD", "description" );
-        const char *tsfield =
-            CPLGetConfigOption ( "LIBKML_TIMESTAMP_FIELD", "timestamp" );
-        const char *beginfield =
-            CPLGetConfigOption ( "LIBKML_BEGIN_FIELD", "begin" );
-        const char *endfield =
-            CPLGetConfigOption ( "LIBKML_END_FIELD", "end" );
-        const char *altitudeModefield =
-            CPLGetConfigOption ( "LIBKML_ALTITUDEMODE_FIELD", "altitudeMode" );
-        const char *tessellatefield =
-            CPLGetConfigOption ( "LIBKML_TESSELLATE_FIELD", "tessellate" );
-        const char *extrudefield =
-            CPLGetConfigOption ( "LIBKML_EXTRUDE_FIELD", "extrude" );
-        const char *visibilityfield =
-            CPLGetConfigOption ( "LIBKML_VISIBILITY_FIELD", "visibility" );
-        const char *drawOrderfield =
-            CPLGetConfigOption ( "LIBKML_DRAWORDER_FIELD", "drawOrder" );
-        const char *iconfield =
-            CPLGetConfigOption ( "LIBKML_ICON_FIELD", "icon" );
-
-        OGRFieldDefn oOgrFieldName (
-    namefield,
-    OFTString );
-
+        OGRFieldDefn oOgrFieldName ( namefield,OFTString );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldName );
 
-        OGRFieldDefn oOgrFieldDesc (
-    descfield,
-    OFTString );
-
+        /***** descripton field *****/
+        
+        const char *descfield =
+            CPLGetConfigOption ( "LIBKML_DESCRIPTION_FIELD", "description" );
+        OGRFieldDefn oOgrFieldDesc ( descfield, OFTString );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldDesc );
 
-        OGRFieldDefn oOgrFieldTs (
-    tsfield,
-    OFTDateTime );
+        /***** timestamp field *****/
 
+        const char *tsfield =
+            CPLGetConfigOption ( "LIBKML_TIMESTAMP_FIELD", "timestamp" );
+        OGRFieldDefn oOgrFieldTs ( tsfield, OFTDateTime );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldTs );
 
-        OGRFieldDefn oOgrFieldBegin (
-    beginfield,
-    OFTDateTime );
+        /*****  timespan begin field *****/
 
+        const char *beginfield =
+            CPLGetConfigOption ( "LIBKML_BEGIN_FIELD", "begin" );
+        OGRFieldDefn oOgrFieldBegin ( beginfield, OFTDateTime );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldBegin );
 
-        OGRFieldDefn oOgrFieldEnd (
-    endfield,
-    OFTDateTime );
+        /*****  timespan end field *****/
 
+        const char *endfield =
+            CPLGetConfigOption ( "LIBKML_END_FIELD", "end" );
+        OGRFieldDefn oOgrFieldEnd ( endfield, OFTDateTime );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldEnd );
 
-        OGRFieldDefn oOgrFieldAltitudeMode (
-    altitudeModefield,
-    OFTString );
+        /*****  altitudeMode field *****/
 
+        const char *altitudeModefield =
+            CPLGetConfigOption ( "LIBKML_ALTITUDEMODE_FIELD", "altitudeMode" );
+        OGRFieldDefn oOgrFieldAltitudeMode ( altitudeModefield, OFTString );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldAltitudeMode );
 
-        OGRFieldDefn oOgrFieldTessellate (
-    tessellatefield,
-    OFTInteger );
+        /***** tessellate field *****/
 
+        const char *tessellatefield =
+            CPLGetConfigOption ( "LIBKML_TESSELLATE_FIELD", "tessellate" );
+        OGRFieldDefn oOgrFieldTessellate ( tessellatefield, OFTInteger );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldTessellate );
 
-        OGRFieldDefn oOgrFieldExtrude (
-    extrudefield,
-    OFTInteger );
+        /***** extrude field *****/
 
+        const char *extrudefield =
+            CPLGetConfigOption ( "LIBKML_EXTRUDE_FIELD", "extrude" );
+        OGRFieldDefn oOgrFieldExtrude ( extrudefield, OFTInteger );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldExtrude );
 
-        OGRFieldDefn oOgrFieldVisibility (
-    visibilityfield,
-    OFTInteger );
+        /***** visibility field *****/
 
+        const char *visibilityfield =
+            CPLGetConfigOption ( "LIBKML_VISIBILITY_FIELD", "visibility" );
+        OGRFieldDefn oOgrFieldVisibility ( visibilityfield, OFTInteger );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldVisibility );
 
-        OGRFieldDefn oOgrFieldDrawOrder (
-    drawOrderfield,
-    OFTInteger );
+        /***** draw order field *****/
 
+        const char *drawOrderfield =
+            CPLGetConfigOption ( "LIBKML_DRAWORDER_FIELD", "drawOrder" );
+        OGRFieldDefn oOgrFieldDrawOrder ( drawOrderfield, OFTInteger );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldDrawOrder );
 
-        OGRFieldDefn oOgrFieldIcon (
-    iconfield,
-    OFTString );
+        /***** icon field *****/
 
+        const char *iconfield =
+            CPLGetConfigOption ( "LIBKML_ICON_FIELD", "icon" );
+        OGRFieldDefn oOgrFieldIcon ( iconfield, OFTString );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldIcon );
 
         /***** get the styles *****/
