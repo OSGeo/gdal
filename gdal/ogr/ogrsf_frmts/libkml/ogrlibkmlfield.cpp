@@ -317,7 +317,11 @@ void field2kml (
         CPLGetConfigOption ( "LIBKML_EXTRUDE_FIELD", "extrude" );
     const char *visibilityfield =
         CPLGetConfigOption ( "LIBKML_VISIBILITY_FIELD", "visibility" );
-
+    const char *drawOrderfield =
+        CPLGetConfigOption ( "LIBKML_DRAWORDER_FIELD", "drawOrder" );
+    const char *iconfield =
+        CPLGetConfigOption ( "LIBKML_ICON_FIELD", "icon" );
+    
     TimeSpanPtr poKmlTimeSpan = NULL;
 
     int nFields = poOgrFeat->GetFieldCount (  );
@@ -459,6 +463,12 @@ void field2kml (
 
                     CPLFree( pszUTF8String );
 
+                    continue;
+                }
+
+                /***** icon *****/
+
+                else if ( EQUAL ( name, iconfield ) ) {
                     continue;
                 }
                 
@@ -684,6 +694,12 @@ void field2kml (
                 continue;
             }
 
+            /***** icon *****/
+
+            else if ( EQUAL ( name, drawOrderfield ) ) {
+                continue;
+            }
+                
             /***** other *****/
 
             poKmlSimpleData = poKmlFactory->CreateSimpleData (  );
@@ -1375,7 +1391,10 @@ SimpleFieldPtr FieldDef2kml (
         CPLGetConfigOption ( "LIBKML_EXTRUDE_FIELD", "extrude" );
     const char *visibilityfield =
         CPLGetConfigOption ( "LIBKML_VISIBILITY_FIELD", "visibility" );
-
+    const char *drawOrderfield =
+        CPLGetConfigOption ( "LIBKML_DRAWORDER_FIELD", "drawOrder" );
+    const char *iconfield =
+        CPLGetConfigOption ( "LIBKML_ICON_FIELD", "icon" );
 
     SimpleDataPtr poKmlSimpleData = NULL;
 
@@ -1385,7 +1404,8 @@ SimpleFieldPtr FieldDef2kml (
     case OFTIntegerList:
         if ( EQUAL ( pszFieldName, tessellatefield ) ||
              EQUAL ( pszFieldName, extrudefield ) ||
-             EQUAL ( pszFieldName, visibilityfield ) )
+             EQUAL ( pszFieldName, visibilityfield ) ||
+             EQUAL ( pszFieldName, drawOrderfield ) )
             break;
         poKmlSimpleField->set_type ( "int" );
         return poKmlSimpleField;
@@ -1400,7 +1420,8 @@ SimpleFieldPtr FieldDef2kml (
     case OFTStringList:
         if ( EQUAL ( pszFieldName, namefield ) ||
              EQUAL ( pszFieldName, descfield ) ||
-             EQUAL ( pszFieldName, altitudeModefield ) )
+             EQUAL ( pszFieldName, altitudeModefield ) ||
+             EQUAL ( pszFieldName, iconfield ) )
             break;
         poKmlSimpleField->set_type ( "string" );
         return poKmlSimpleField;
@@ -1439,7 +1460,7 @@ void kml2FeatureDef (
             poKmlSchema->get_simplefield_array_at ( iSimpleField );
 
         const char *pszType = "string";
-	string osName = "Unknown";
+    string osName = "Unknown";
 
         if ( poKmlSimpleField->has_type (  ) ) {
             const string oType = poKmlSimpleField->get_type (  );
