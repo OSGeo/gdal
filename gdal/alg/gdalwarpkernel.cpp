@@ -44,7 +44,9 @@ static const int anGWKFilterRadius[] =
     1,      // Bilinear
     2,      // Cubic Convolution
     2,      // Cubic B-Spline
-    3       // Lanczos windowed sinc
+    3,      // Lanczos windowed sinc
+    0,      // Average
+    0,      // Mode
 };
 
 /* Used in gdalwarpoperation.cpp */
@@ -70,6 +72,7 @@ static CPLErr GWKCubicSplineNoMasksShort( GDALWarpKernel *poWK );
 static CPLErr GWKNearestShort( GDALWarpKernel *poWK );
 static CPLErr GWKNearestNoMasksFloat( GDALWarpKernel *poWK );
 static CPLErr GWKNearestFloat( GDALWarpKernel *poWK );
+static CPLErr GWKAverageOrMode( GDALWarpKernel * );
 
 /************************************************************************/
 /*                           GWKJobStruct                               */
@@ -374,8 +377,8 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  * 
  * Resampling algorithm.
  *
- * The resampling algorithm to use.  One of GRA_NearestNeighbour, 
- * GRA_Bilinear, or GRA_Cubic. 
+ * The resampling algorithm to use.  One of GRA_NearestNeighbour, GRA_Bilinear, 
+ * GRA_Cubic, GRA_CubicSpline, GRA_Lanczos, GRA_Average, or GRA_Mode.
  *
  * This field is required. GDT_NearestNeighbour may be used as a default
  * value. 
@@ -935,6 +938,12 @@ CPLErr GDALWarpKernel::PerformWarp()
     if( eWorkingDataType == GDT_Float32
         && eResample == GRA_NearestNeighbour )
         return GWKNearestFloat( this );
+
+    if( eResample == GRA_Average )
+        return GWKAverageOrMode( this );
+
+    if( eResample == GRA_Mode )
+        return GWKAverageOrMode( this );
 
     return GWKGeneralCase( this );
 }
@@ -4931,6 +4940,342 @@ static void GWKNearestFloatThread( void* pData )
                     0x01 << (iDstOffset & 0x1f);
             }
         }
+
+/* -------------------------------------------------------------------- */
+/*      Report progress to the user, and optionally cancel out.         */
+/* -------------------------------------------------------------------- */
+        if (psJob->pfnProgress(psJob))
+            break;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup and return.                                             */
+/* -------------------------------------------------------------------- */
+    CPLFree( padfX );
+    CPLFree( padfY );
+    CPLFree( padfZ );
+    CPLFree( pabSuccess );
+}
+
+/************************************************************************/
+/*                           GWKAverageOrMode()                         */
+/*                                                                      */
+/************************************************************************/
+
+static void GWKAverageOrModeThread(void* pData);
+
+static CPLErr GWKAverageOrMode( GDALWarpKernel *poWK )
+{
+    return GWKRun( poWK, "GWKAverageOrMode", GWKAverageOrModeThread );
+}
+
+// overall logic based on GWKGeneralCaseThread()
+static void GWKAverageOrModeThread( void* pData)
+{
+    GWKJobStruct* psJob = (GWKJobStruct*) pData;
+    GDALWarpKernel *poWK = psJob->poWK;
+    int iYMin = psJob->iYMin;
+    int iYMax = psJob->iYMax;
+
+    int iDstY, iDstX, iSrcX, iSrcY, iDstOffset;
+    int nDstXSize = poWK->nDstXSize;
+    int nSrcXSize = poWK->nSrcXSize, nSrcYSize = poWK->nSrcYSize;
+
+/* -------------------------------------------------------------------- */
+/*      Find out which algorithm to use (small optim.)                  */
+/* -------------------------------------------------------------------- */
+    int nAlgo = 0;
+    if ( poWK->eResample == GRA_Average ) 
+    {
+        nAlgo = 1;
+    }
+    else if( poWK->eResample == GRA_Mode )
+    {
+        if ( poWK->eWorkingDataType != GDT_Byte ) //  ||  nEntryCount > 256)
+            nAlgo = 2;
+        else
+            nAlgo = 3;
+    }
+    else
+    {
+        // other resample algorithms not permitted here
+        CPLDebug( "GDAL", "GDALWarpKernel():GWKAverageOrModeThread() ERROR, illegal resample" );
+        return;
+    }
+    CPLDebug( "GDAL", "GDALWarpKernel():GWKAverageOrModeThread() using algo %d", nAlgo );
+
+/* -------------------------------------------------------------------- */
+/*      Allocate x,y,z coordinate arrays for transformation ... two     */
+/*      scanlines worth of positions.                                   */
+/* -------------------------------------------------------------------- */
+    double *padfX, *padfY, *padfZ;
+    double *padfX2, *padfY2, *padfZ2;
+    int    *pabSuccess;
+
+    padfX = (double *) CPLMalloc(sizeof(double) * nDstXSize);
+    padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
+    padfZ = (double *) CPLMalloc(sizeof(double) * nDstXSize);
+    padfX2 = (double *) CPLMalloc(sizeof(double) * nDstXSize);
+    padfY2 = (double *) CPLMalloc(sizeof(double) * nDstXSize);
+    padfZ2 = (double *) CPLMalloc(sizeof(double) * nDstXSize);
+    pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
+
+/* ==================================================================== */
+/*      Loop over output lines.                                         */
+/* ==================================================================== */
+    for( iDstY = iYMin; iDstY < iYMax; iDstY++ )
+    {
+
+/* -------------------------------------------------------------------- */
+/*      Setup points to transform to source image space.                */
+/* -------------------------------------------------------------------- */
+        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
+        {
+            padfX[iDstX] = iDstX + poWK->nDstXOff;
+            padfY[iDstX] = iDstY + poWK->nDstYOff;
+            padfZ[iDstX] = 0.0;
+            padfX2[iDstX] = iDstX + 1.0 + poWK->nDstXOff;
+            padfY2[iDstX] = iDstY + 1.0 + poWK->nDstYOff;
+            padfZ2[iDstX] = 0.0;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Transform the points from destination pixel/line coordinates    */
+/*      to source pixel/line coordinates.                               */
+/* -------------------------------------------------------------------- */
+        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
+                              padfX, padfY, padfZ, pabSuccess );
+        poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
+                              padfX2, padfY2, padfZ2, pabSuccess );
+
+/* ==================================================================== */
+/*      Loop over pixels in output scanline.                            */
+/* ==================================================================== */
+        for( iDstX = 0; iDstX < nDstXSize; iDstX++ )
+        {
+            int iSrcOffset = 0;
+            double  dfDensity = 1.0;
+            int bHasFoundDensity = FALSE;
+
+/* ==================================================================== */
+/*      Loop processing each band.                                      */
+/* ==================================================================== */
+            
+            iDstOffset = iDstX + iDstY * nDstXSize;
+            for( int iBand = 0; iBand < poWK->nBands; iBand++ )
+            {
+                double dfBandDensity = 0.0;
+                double dfValueReal = 0.0;
+                double dfValueImag = 0.0;
+                double dfValueRealTmp = 0.0;
+                double dfValueImagTmp = 0.0;
+
+/* -------------------------------------------------------------------- */
+/*      Collect the source value.                                       */
+/* -------------------------------------------------------------------- */
+
+                double dfTotal = 0;
+                int    nCount = 0;  // count of pixels used to compute average/mode
+                int    nCount2 = 0; // count of all pixels sampled, including nodata
+                int iSrcXMin, iSrcXMax,iSrcYMin,iSrcYMax;
+
+                // compute corners in source crs
+                iSrcXMin = MAX( ((int) floor((padfX[iDstX] + 1e-10))) - poWK->nSrcXOff, 0 );
+                iSrcXMax = MIN( ((int) ceil((padfX2[iDstX] + 1e-10))) - poWK->nSrcXOff, nSrcXSize );
+                iSrcYMin = MAX( ((int) floor((padfY[iDstX] + 1e-10))) - poWK->nSrcYOff, 0 );
+                iSrcYMax = MIN( ((int) ceil((padfY2[iDstX] + 1e-10))) - poWK->nSrcYOff, nSrcYSize );
+                
+                // loop over source lines and pixels - 3 possible algorithms
+                
+                if ( nAlgo == 1 ) // poWK->eResample == GRA_Average
+                {
+                    // this code adapted from GDALDownsampleChunk32R_AverageT() in gcore/overview.cpp
+                    for( iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
+                    {
+                        for( iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++ )
+                        {
+                            int iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+                            
+                            if( poWK->panUnifiedSrcValid != NULL
+                                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
+                                     & (0x01 << (iSrcOffset & 0x1f))) )
+                            {
+                                continue;
+                            }
+                            
+                            nCount2++;
+                            if ( GWKGetPixelValue( poWK, iBand, iSrcOffset,
+                                                   &dfBandDensity, &dfValueRealTmp, &dfValueImagTmp ) && dfBandDensity > 0.0000000001 ) 
+                            {                       
+                                dfTotal += dfValueRealTmp;
+                                nCount++;
+                            }
+                        }
+                    }
+                    
+                    if ( nCount > 0 )
+                    {                
+                        dfValueReal = dfTotal / nCount;
+                        dfBandDensity = 1;                
+                        bHasFoundDensity = TRUE;
+                    }
+                                       
+                } // GRA_Average
+                
+                else if ( nAlgo == 2 || nAlgo == 3 ) // poWK->eResample == GRA_Mode
+                {
+                    // this code adapted from GDALDownsampleChunk32R_Mode() in gcore/overview.cpp
+
+                    // TODO add algorithm for Int16 / Int32 data type that uses less memory and cpu...
+
+                    if ( nAlgo == 2 ) // poWK->eWorkingDataType != GDT_Byte ) //  ||  nEntryCount > 256)
+                    {
+                        /* I'm not sure how much sense it makes to run a majority
+                           filter on floating point data, but here it is for the sake
+                           of compatability. It won't look right on RGB images by the
+                           nature of the filter. */
+                        int     nNumPx = nSrcXSize * nSrcYSize;
+                        int     iMaxInd = 0, iMaxVal = -1;
+                        
+                        int      nMaxNumPx = 0;
+                        float*   pafVals = NULL;
+                        int*     panSums = NULL;
+                        
+                        if (nNumPx > nMaxNumPx)
+                        {
+                            pafVals = (float*) CPLRealloc(pafVals, nNumPx * sizeof(float));
+                            panSums = (int*) CPLRealloc(panSums, nNumPx * sizeof(int));
+                            nMaxNumPx = nNumPx;
+                        }
+                        
+                        for( iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
+                        {
+                            for( iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++ )
+                            {
+                                iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+                                
+                                if( poWK->panUnifiedSrcValid != NULL
+                                    && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
+                                         & (0x01 << (iSrcOffset & 0x1f))) )
+                                    continue;
+                                
+                                nCount2++;
+                                if ( GWKGetPixelValue( poWK, iBand, iSrcOffset,
+                                                       &dfBandDensity, &dfValueRealTmp, &dfValueImagTmp ) && dfBandDensity > 0.0000000001 ) 
+                                {
+                                    float fVal = dfValueRealTmp;
+                                    int i;
+                                    
+                                    //Check array for existing entry
+                                    for( i = 0; i < iMaxInd; ++i )
+                                        if( pafVals[i] == fVal
+                                            && ++panSums[i] > panSums[iMaxVal] )
+                                        {
+                                            iMaxVal = i;
+                                            break;
+                                        }
+                                    
+                                    //Add to arr if entry not already there
+                                    if( i == iMaxInd )
+                                    {
+                                        pafVals[iMaxInd] = fVal;
+                                        panSums[iMaxInd] = 1;
+                                        
+                                        if( iMaxVal < 0 )
+                                            iMaxVal = iMaxInd;
+                                        
+                                        ++iMaxInd;
+                                    }
+                                }
+                            }
+                        }
+
+                        if( iMaxVal != -1 )
+                        {
+                            dfValueReal = pafVals[iMaxVal];
+                            dfBandDensity = 1;                
+                            bHasFoundDensity = TRUE;
+                        }
+                    }
+                    
+                    else // nAlgo == 3 / poWK->eWorkingDataType == GDT_Byte
+                    {
+                        /* So we go here for a paletted or non-paletted byte band */
+                        /* The input values are then between 0 and 255 */
+                        int     anVals[256], nMaxVal = 0, iMaxInd = -1;
+                        int nCount = 0;
+                        memset(anVals, 0, 256*sizeof(int));
+                        
+                        for( iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
+                        {
+                            for( iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++ )
+                            {
+                                iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+                                
+                                if( poWK->panUnifiedSrcValid != NULL
+                                    && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
+                                         & (0x01 << (iSrcOffset & 0x1f))) )
+                                    continue;
+                                
+                                nCount2++;
+                                if ( GWKGetPixelValue( poWK, iBand, iSrcOffset,
+                                                       &dfBandDensity, &dfValueRealTmp, &dfValueImagTmp ) && dfBandDensity > 0.0000000001 ) 
+                                {
+                                    nCount++;
+                                    int nVal = (int) dfValueRealTmp;
+                                    if ( ++anVals[nVal] > nMaxVal)
+                                    {
+                                        //Sum the density
+                                        //Is it the most common value so far?
+                                        iMaxInd = nVal;
+                                        nMaxVal = anVals[nVal];
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if( iMaxInd != -1 )
+                        {
+                            dfValueReal = (float)iMaxInd;
+                            dfBandDensity = 1;                
+                            bHasFoundDensity = TRUE;                  
+                        }
+                    }
+                    
+                } // GRA_Mode
+
+/* -------------------------------------------------------------------- */
+/*      We have a computed value from the source.  Now apply it to      */
+/*      the destination pixel.                                          */
+/* -------------------------------------------------------------------- */
+                if ( bHasFoundDensity )
+                {
+                    // TODO should we compute dfBandDensity in fct of nCount/nCount2 ,
+                    // or use as a threshold to set the dest value?
+                    // dfBandDensity = (float) nCount / nCount2;
+                    // if ( (float) nCount / nCount2 > 0.1 )
+                    // or fix gdalwarp crop_to_cutline to crop partially overlapping pixels
+                    GWKSetPixelValue( poWK, iBand, iDstOffset,
+                                      dfBandDensity,
+                                      dfValueReal, dfValueImag );
+                }                    
+            }
+            
+            if (!bHasFoundDensity)
+                continue;
+
+/* -------------------------------------------------------------------- */
+/*      Update destination density/validity masks.                      */
+/* -------------------------------------------------------------------- */
+            GWKOverlayDensity( poWK, iDstOffset, dfDensity );
+
+            if( poWK->panDstValid != NULL )
+            {
+                poWK->panDstValid[iDstOffset>>5] |= 
+                    0x01 << (iDstOffset & 0x1f);
+            }
+
+        } /* Next iDstX */
 
 /* -------------------------------------------------------------------- */
 /*      Report progress to the user, and optionally cancel out.         */

@@ -70,8 +70,9 @@ CPL_CVSID("$Id$");
  * @param pszDstWKT The coordinate system to convert to.  If NULL no change 
  * of coordinate system will take place.  
  *
- * @param eResampleAlg One of GRA_NearestNeighbour, GRA_Bilinear, GRA_Cubic or 
- * GRA_CubicSpline.  Controls the sampling method used. 
+ * @param eResampleAlg One of GRA_NearestNeighbour, GRA_Bilinear, GRA_Cubic,  
+ * GRA_CubicSpline, GRA_Lanczos, GRA_Average or GRA_Mode.  
+ * Controls the sampling method used.
  *
  * @param dfMaxError Maximum error measured in input pixels that is allowed in 
  * approximating the transformation (0.0 for exact calculations).
