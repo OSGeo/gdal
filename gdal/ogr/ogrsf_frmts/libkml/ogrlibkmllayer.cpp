@@ -395,49 +395,49 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature (
     FeaturePtr poKmlFeature;
     OGRFeature *poOgrFeature = NULL;
 
-	/***** loop over the kml features to find the next placemark *****/
+    /***** loop over the kml features to find the next placemark *****/
 
     do {
         if ( iFeature >= nFeatures )
             break;
 
-		/***** get the next kml feature in the container *****/
-		
-		poKmlFeature = m_poKmlLayer->get_feature_array_at ( iFeature++ );
+        /***** get the next kml feature in the container *****/
+        
+        poKmlFeature = m_poKmlLayer->get_feature_array_at ( iFeature++ );
 
-		/***** what type of kml feature in the container? *****/
+        /***** what type of kml feature in the container? *****/
 
-		switch (poKmlFeature->Type (  )) {
+        switch (poKmlFeature->Type (  )) {
 
-			case kmldom::Type_Placemark:
-				poOgrFeature = kml2feat ( AsPlacemark ( poKmlFeature ),
+            case kmldom::Type_Placemark:
+                poOgrFeature = kml2feat ( AsPlacemark ( poKmlFeature ),
                                           m_poOgrDS, this,
                                           m_poOgrFeatureDefn, m_poOgrSRS );
-				break;    
+                break;    
 
-			case kmldom::Type_GroundOverlay:
-				if (m_bReadGroundOverlay) {
-					poOgrFeature =
-						kmlgroundoverlay2feat ( AsGroundOverlay ( poKmlFeature ),
-					                            m_poOgrDS, this,
+            case kmldom::Type_GroundOverlay:
+                if (m_bReadGroundOverlay) {
+                    poOgrFeature =
+                        kmlgroundoverlay2feat ( AsGroundOverlay ( poKmlFeature ),
+                                                m_poOgrDS, this,
                                                 m_poOgrFeatureDefn,
-					                            m_poOgrSRS );
-				}
-				break;
-				
-			default:
-				break;
+                                                m_poOgrSRS );
+                }
+                break;
+                
+            default:
+                break;
 
-		}
+        }
 
     } while ( !poOgrFeature );
 
-	/***** set the FID on the ogr feature *****/
-	
-	if (poOgrFeature)
-		poOgrFeature->SetFID(nFID ++);
-	
-	return poOgrFeature;
+    /***** set the FID on the ogr feature *****/
+    
+    if (poOgrFeature)
+        poOgrFeature->SetFID(nFID ++);
+    
+    return poOgrFeature;
 }
 
 /******************************************************************************
@@ -464,9 +464,9 @@ OGRErr OGRLIBKMLLayer::CreateFeature (
 
     /***** update the layer class count of features  *****/
 
-	nFeatures++;
-	
-	/***** mark the layer as updated *****/
+    nFeatures++;
+    
+    /***** mark the layer as updated *****/
 
     bUpdated = TRUE;
     m_poOgrDS->Updated (  );
@@ -487,7 +487,7 @@ OGRErr OGRLIBKMLLayer::CreateFeature (
 ******************************************************************************/
 
 int OGRLIBKMLLayer::GetFeatureCount (
-    int bForce )
+                                     int bForce )
 {
 
 
@@ -499,33 +499,33 @@ int OGRLIBKMLLayer::GetFeatureCount (
     else {
         size_t iKmlFeature; 
         size_t nKmlFeatures = m_poKmlLayer->get_feature_array_size (  );
-		FeaturePtr poKmlFeature;
+        FeaturePtr poKmlFeature;
 
-		/***** loop over the kml features in the container *****/
-		
+        /***** loop over the kml features in the container *****/
+
         for ( iKmlFeature = 0; iKmlFeature < nKmlFeatures; iKmlFeature++ ) {
-			poKmlFeature = m_poKmlLayer->get_feature_array_at ( iKmlFeature );
+            poKmlFeature = m_poKmlLayer->get_feature_array_at ( iKmlFeature );
 
-			/***** what type of kml feature? *****/
+            /***** what type of kml feature? *****/
 
-			switch (poKmlFeature->Type (  )) {
+            switch (poKmlFeature->Type (  )) {
 
-				case kmldom::Type_Placemark:
-					i++;
-					break;
+                case kmldom::Type_Placemark:
+                    i++;
+                    break;
 
-				case kmldom::Type_GroundOverlay:
-					if (m_bReadGroundOverlay)
-						i++;
-					break;
+                case kmldom::Type_GroundOverlay:
+                    if (m_bReadGroundOverlay)
+                        i++;
+                    break;
 
-				default:
-					break;
-						
+                default:
+                    break;
+
             } 
         }
     }
-    
+
     return i;
 }
 
