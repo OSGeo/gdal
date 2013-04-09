@@ -154,6 +154,8 @@ algorithm, worst interpolation quality).</dd>
 <dt><b>cubic</b></dt>: <dd>cubic resampling.</dd>
 <dt><b>cubicspline</b></dt>: <dd>cubic spline resampling.</dd>
 <dt><b>lanczos</b></dt>: <dd>Lanczos windowed sinc resampling.</dd>
+<dt><b>average</b></dt>: <dd>average resampling, computes the average of all non-NODATA contributing pixels.</dd>
+<dt><b>mode</b></dt>: <dd>mode resampling, selects the value which appears most often of all the sampled points.</dd>
 </dl>
 <dt> <b>-srcnodata</b> <em>value [value...]</em>:</dt><dd> Set nodata masking
 values for input bands (different values can be supplied for each band).  If 
@@ -284,7 +286,7 @@ static void Usage(const char* pszErrorMsg = NULL)
         "    srcfile* dstfile\n"
         "\n"
         "Available resampling methods:\n"
-        "    near (default), bilinear, cubic, cubicspline, lanczos.\n" );
+        "    near (default), bilinear, cubic, cubicspline, lanczos, average, mode.\n" );
 
     if( pszErrorMsg != NULL )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
@@ -608,6 +610,15 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-rcs") )
             eResampleAlg = GRA_CubicSpline;
 
+        else if( EQUAL(argv[i],"-rl") )
+            eResampleAlg = GRA_Lanczos;
+
+        else if( EQUAL(argv[i],"-ra") )
+            eResampleAlg = GRA_Average;
+
+        else if( EQUAL(argv[i],"-rm") )
+            eResampleAlg = GRA_Mode;
+
         else if( EQUAL(argv[i],"-r") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
@@ -621,6 +632,10 @@ int main( int argc, char ** argv )
                 eResampleAlg = GRA_CubicSpline;
             else if ( EQUAL(argv[i], "lanczos") )
                 eResampleAlg = GRA_Lanczos;
+            else if ( EQUAL(argv[i], "average") )
+                eResampleAlg = GRA_Average;
+            else if ( EQUAL(argv[i], "mode") )
+                eResampleAlg = GRA_Mode;
             else
             {
                 Usage(CPLSPrintf( "Unknown resampling method: \"%s\".", argv[i] ));
