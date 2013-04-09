@@ -5290,6 +5290,9 @@ static void GWKAverageOrModeThread( void* pData)
     CPLFree( padfX );
     CPLFree( padfY );
     CPLFree( padfZ );
+    CPLFree( padfX2 );
+    CPLFree( padfY2 );
+    CPLFree( padfZ2 );
     CPLFree( pabSuccess );
 }
 
