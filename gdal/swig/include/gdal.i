@@ -164,6 +164,9 @@ typedef enum {
   /*! Bilinear (2x2 kernel) */                         GRA_Bilinear=1,
   /*! Cubic Convolution Approximation (4x4 kernel) */  GRA_Cubic=2,
   /*! Cubic B-Spline Approximation (4x4 kernel) */     GRA_CubicSpline=3,
+  /*! Lanczos windowed sinc interpolation (6x6 kernel) */ GRA_Lanczos=4,
+  /*! Average (computes the average of all non-NODATA contributing pixels) */ GRA_Average=5, 
+  /*! Mode (selects the value which appears most often of all the sampled points) */ GRA_Mode=6
 } GDALResampleAlg;
 
 %rename (AsyncStatusType) GDALAsyncStatusType;
