@@ -84,3 +84,24 @@ void kml2FeatureDef (
     SchemaPtr poKmlSchema,
     OGRFeatureDefn *poOgrFeatureDefn);
 
+/*******************************************************************************
+ * function to fetch the field config options
+ * 
+*******************************************************************************/
+
+struct fieldconfig {
+	const char *namefield;
+    const char *descfield;
+    const char *tsfield;
+    const char *beginfield;
+    const char *endfield;
+    const char *altitudeModefield;
+    const char *tessellatefield;
+    const char *extrudefield;
+    const char *visibilityfield;
+    const char *drawOrderfield;
+    const char *iconfield;
+};
+
+void get_fieldconfig( struct fieldconfig *oFC );
+
