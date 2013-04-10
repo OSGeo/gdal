@@ -1046,12 +1046,13 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
  
         if ( eResampleAlg != GRA_NearestNeighbour &&
+             eResampleAlg != GRA_Mode &&
              GDALGetRasterColorTable(GDALGetRasterBand(hSrcDS, 1)) != NULL)
         {
             if( !bQuiet )
                 fprintf( stderr, "Warning: Input file %s has a color table, which will likely lead to "
                         "bad results when using a resampling method other than "
-                        "nearest neighbour. Converting the dataset prior to 24/32 bit "
+                        "nearest neighbour or mode. Converting the dataset prior to 24/32 bit "
                         "is advised.\n", papszSrcFiles[iSrc] );
         }
 
