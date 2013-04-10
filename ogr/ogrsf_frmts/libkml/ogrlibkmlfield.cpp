@@ -301,26 +301,10 @@ void field2kml (
         poKmlSchemaData->set_schemaurl ( oKmlSchemaURL );
     }
 
-    const char *namefield = CPLGetConfigOption ( "LIBKML_NAME_FIELD", "Name" );
-    const char *descfield =
-        CPLGetConfigOption ( "LIBKML_DESCRIPTION_FIELD", "description" );
-    const char *tsfield =
-        CPLGetConfigOption ( "LIBKML_TIMESTAMP_FIELD", "timestamp" );
-    const char *beginfield =
-        CPLGetConfigOption ( "LIBKML_BEGIN_FIELD", "begin" );
-    const char *endfield = CPLGetConfigOption ( "LIBKML_END_FIELD", "end" );
-    const char *altitudeModefield =
-        CPLGetConfigOption ( "LIBKML_ALTITUDEMODE_FIELD", "altitudeMode" );
-    const char *tessellatefield =
-        CPLGetConfigOption ( "LIBKML_TESSELLATE_FIELD", "tessellate" );
-    const char *extrudefield =
-        CPLGetConfigOption ( "LIBKML_EXTRUDE_FIELD", "extrude" );
-    const char *visibilityfield =
-        CPLGetConfigOption ( "LIBKML_VISIBILITY_FIELD", "visibility" );
-    const char *drawOrderfield =
-        CPLGetConfigOption ( "LIBKML_DRAWORDER_FIELD", "drawOrder" );
-    const char *iconfield =
-        CPLGetConfigOption ( "LIBKML_ICON_FIELD", "icon" );
+    /***** get the field config *****/
+
+    struct fieldconfig oFC;
+    get_fieldconfig( &oFC );
     
     TimeSpanPtr poKmlTimeSpan = NULL;
 
@@ -361,7 +345,7 @@ void field2kml (
                                         poOgrFeat->GetFieldAsString ( i ));
                 /***** name *****/
 
-                if ( EQUAL ( name, namefield ) ) {
+                if ( EQUAL ( name, oFC.namefield ) ) {
                     poKmlPlacemark->set_name ( pszUTF8String );
                     CPLFree( pszUTF8String );
                     continue;
@@ -369,7 +353,7 @@ void field2kml (
 
                 /***** description *****/
 
-                else if ( EQUAL ( name, descfield ) ) {
+                else if ( EQUAL ( name, oFC.descfield ) ) {
                     poKmlPlacemark->set_description ( pszUTF8String );
                     CPLFree( pszUTF8String );
                     continue;
@@ -377,7 +361,7 @@ void field2kml (
 
                 /***** altitudemode *****/
 
-                else if ( EQUAL ( name, altitudeModefield ) ) {
+                else if ( EQUAL ( name, oFC.altitudeModefield ) ) {
                     const char *pszAltitudeMode = pszUTF8String ;
 
                     int isGX = FALSE;
@@ -421,7 +405,7 @@ void field2kml (
                 
                 /***** timestamp *****/
 
-                else if ( EQUAL ( name, tsfield ) ) {
+                else if ( EQUAL ( name, oFC.tsfield ) ) {
 
                     TimeStampPtr poKmlTimeStamp =
                         poKmlFactory->CreateTimeStamp (  );
@@ -435,7 +419,7 @@ void field2kml (
 
                 /***** begin *****/
 
-                if ( EQUAL ( name, beginfield ) ) {
+                if ( EQUAL ( name, oFC.beginfield ) ) {
 
                     if ( !poKmlTimeSpan ) {
                         poKmlTimeSpan = poKmlFactory->CreateTimeSpan (  );
@@ -452,7 +436,7 @@ void field2kml (
 
                 /***** end *****/
 
-                else if ( EQUAL ( name, endfield ) ) {
+                else if ( EQUAL ( name, oFC.endfield ) ) {
 
                     if ( !poKmlTimeSpan ) {
                         poKmlTimeSpan = poKmlFactory->CreateTimeSpan (  );
@@ -468,7 +452,7 @@ void field2kml (
 
                 /***** icon *****/
 
-                else if ( EQUAL ( name, iconfield ) ) {
+                else if ( EQUAL ( name, oFC.iconfield ) ) {
                     continue;
                 }
                 
@@ -500,9 +484,9 @@ void field2kml (
                     const char *name2 = poOgrFieldDef2->GetNameRef (  );
 
                     if ( EQUAL ( name2, name ) && type2 == OFTTime &&
-                         ( EQUAL ( name, tsfield ) ||
-                           EQUAL ( name, beginfield ) ||
-                           EQUAL ( name, endfield ) ) ) {
+                         ( EQUAL ( name, oFC.tsfield ) ||
+                           EQUAL ( name, oFC.beginfield ) ||
+                           EQUAL ( name, oFC.endfield ) ) ) {
 
                         int year2,
                             month2,
@@ -550,9 +534,9 @@ void field2kml (
                     const char *name2 = poOgrFieldDef2->GetNameRef (  );
 
                     if ( EQUAL ( name2, name ) && type2 == OFTTime &&
-                         ( EQUAL ( name, tsfield ) ||
-                           EQUAL ( name, beginfield ) ||
-                           EQUAL ( name, endfield ) ) ) {
+                         ( EQUAL ( name, oFC.tsfield ) ||
+                           EQUAL ( name, oFC.beginfield ) ||
+                           EQUAL ( name, oFC.endfield ) ) ) {
 
                         int year2,
                             month2,
@@ -589,7 +573,7 @@ void field2kml (
               Do_DateTime:
                 /***** timestamp *****/
 
-                if ( EQUAL ( name, tsfield ) ) {
+                if ( EQUAL ( name, oFC.tsfield ) ) {
 
                     char *timebuf = OGRGetXMLDateTime ( year, month, day, hour,
                                                         min, sec, tz );
@@ -605,7 +589,7 @@ void field2kml (
 
                 /***** begin *****/
 
-                if ( EQUAL ( name, beginfield ) ) {
+                if ( EQUAL ( name, oFC.beginfield ) ) {
 
                     char *timebuf = OGRGetXMLDateTime ( year, month, day, hour,
                                                         min, sec, tz );
@@ -624,7 +608,7 @@ void field2kml (
 
                 /***** end *****/
 
-                else if ( EQUAL ( name, endfield ) ) {
+                else if ( EQUAL ( name, oFC.endfield ) ) {
 
                     char *timebuf = OGRGetXMLDateTime ( year, month, day, hour,
                                                         min, sec, tz );
@@ -655,7 +639,7 @@ void field2kml (
 
             /***** extrude *****/
 
-            if ( EQUAL ( name, extrudefield ) ) {
+            if ( EQUAL ( name, oFC.extrudefield ) ) {
 
                 if ( poKmlPlacemark->has_geometry (  )
                      && -1 < poOgrFeat->GetFieldAsInteger ( i ) ) {
@@ -670,7 +654,7 @@ void field2kml (
             /***** tessellate *****/
 
 
-            if ( EQUAL ( name, tessellatefield ) ) {
+            if ( EQUAL ( name, oFC.tessellatefield ) ) {
 
                 if ( poKmlPlacemark->has_geometry (  )
                      && -1 < poOgrFeat->GetFieldAsInteger ( i ) ) {
@@ -686,7 +670,7 @@ void field2kml (
 
             /***** visibility *****/
 
-            if ( EQUAL ( name, visibilityfield ) ) {
+            if ( EQUAL ( name, oFC.visibilityfield ) ) {
                 if ( -1 < poOgrFeat->GetFieldAsInteger ( i ) )
                     poKmlPlacemark->set_visibility ( poOgrFeat->
                                                      GetFieldAsInteger ( i ) );
@@ -696,7 +680,7 @@ void field2kml (
 
             /***** icon *****/
 
-            else if ( EQUAL ( name, drawOrderfield ) ) {
+            else if ( EQUAL ( name, oFC.drawOrderfield ) ) {
                 continue;
             }
                 
@@ -988,32 +972,16 @@ void kml2field (
     FeaturePtr poKmlFeature )
 {
 
-    const char *namefield = CPLGetConfigOption ( "LIBKML_NAME_FIELD", "Name" );
-    const char *descfield =
-        CPLGetConfigOption ( "LIBKML_DESCRIPTION_FIELD", "description" );
-    const char *tsfield =
-        CPLGetConfigOption ( "LIBKML_TIMESTAMP_FIELD", "timestamp" );
-    const char *beginfield =
-        CPLGetConfigOption ( "LIBKML_BEGIN_FIELD", "begin" );
-    const char *endfield = CPLGetConfigOption ( "LIBKML_END_FIELD", "end" );
-    const char *altitudeModefield =
-        CPLGetConfigOption ( "LIBKML_ALTITUDEMODE_FIELD", "altitudeMode" );
-    const char *tessellatefield =
-        CPLGetConfigOption ( "LIBKML_TESSELLATE_FIELD", "tessellate" );
-    const char *extrudefield =
-        CPLGetConfigOption ( "LIBKML_EXTRUDE_FIELD", "extrude" );
-    const char *visibilityfield =
-        CPLGetConfigOption ( "LIBKML_VISIBILITY_FIELD", "visibility" );
-    const char *drawOrderfield =
-        CPLGetConfigOption ( "LIBKML_DRAWORDER_FIELD", "drawOrder" );
-    const char *iconfield =
-        CPLGetConfigOption ( "LIBKML_ICON_FIELD", "icon" );
+    /***** get the field config *****/
 
+    struct fieldconfig oFC;
+    get_fieldconfig( &oFC );
+    
     /***** name *****/
 
     if ( poKmlFeature->has_name (  ) ) {
         const std::string oKmlName = poKmlFeature->get_name (  );
-        int iField = poOgrFeat->GetFieldIndex ( namefield );
+        int iField = poOgrFeat->GetFieldIndex ( oFC.namefield );
 
         if ( iField > -1 )
             poOgrFeat->SetField ( iField, oKmlName.c_str (  ) );
@@ -1023,7 +991,7 @@ void kml2field (
 
     if ( poKmlFeature->has_description (  ) ) {
         const std::string oKmlDesc = poKmlFeature->get_description (  );
-        int iField = poOgrFeat->GetFieldIndex ( descfield );
+        int iField = poOgrFeat->GetFieldIndex ( oFC.descfield );
 
         if ( iField > -1 )
             poOgrFeat->SetField ( iField, oKmlDesc.c_str (  ) );
@@ -1042,7 +1010,7 @@ void kml2field (
                 const std::string oKmlWhen = poKmlTimeStamp->get_when (  );
 
 
-                int iField = poOgrFeat->GetFieldIndex ( tsfield );
+                int iField = poOgrFeat->GetFieldIndex ( oFC.tsfield );
 
                 if ( iField > -1 ) {
                     int nYear,
@@ -1074,7 +1042,7 @@ void kml2field (
                 const std::string oKmlWhen = poKmlTimeSpan->get_begin (  );
 
 
-                int iField = poOgrFeat->GetFieldIndex ( beginfield );
+                int iField = poOgrFeat->GetFieldIndex ( oFC.beginfield );
 
                 if ( iField > -1 ) {
                     int nYear,
@@ -1100,7 +1068,7 @@ void kml2field (
                 const std::string oKmlWhen = poKmlTimeSpan->get_end (  );
 
 
-                int iField = poOgrFeat->GetFieldIndex ( endfield );
+                int iField = poOgrFeat->GetFieldIndex ( oFC.endfield );
 
                 if ( iField > -1 ) {
                     int nYear,
@@ -1124,6 +1092,7 @@ void kml2field (
 
 
     /***** placemark *****/
+    
     PlacemarkPtr poKmlPlacemark = AsPlacemark ( poKmlFeature );
     GroundOverlayPtr poKmlGroundOverlay = AsGroundOverlay ( poKmlFeature );
     if ( poKmlPlacemark && poKmlPlacemark->has_geometry (  ) ) {
@@ -1135,7 +1104,7 @@ void kml2field (
         int bIsGX = FALSE;
         int nAltitudeMode = -1;
 
-        int iField = poOgrFeat->GetFieldIndex ( altitudeModefield );
+        int iField = poOgrFeat->GetFieldIndex ( oFC.altitudeModefield );
 
         if ( iField > -1 ) {
 
@@ -1182,7 +1151,7 @@ void kml2field (
 
         kml2tessellate_rec ( poKmlGeometry, &nTessellate );
 
-        iField = poOgrFeat->GetFieldIndex ( tessellatefield );
+        iField = poOgrFeat->GetFieldIndex ( oFC.tessellatefield );
         if ( iField > -1 )
             poOgrFeat->SetField ( iField, nTessellate );
 
@@ -1192,7 +1161,7 @@ void kml2field (
 
         kml2extrude_rec ( poKmlGeometry, &nExtrude );
 
-        iField = poOgrFeat->GetFieldIndex ( extrudefield );
+        iField = poOgrFeat->GetFieldIndex ( oFC.extrudefield );
         if ( iField > -1 )
             poOgrFeat->SetField ( iField, nExtrude );
 
@@ -1204,7 +1173,7 @@ void kml2field (
 
         /***** icon *****/
 
-        int iField = poOgrFeat->GetFieldIndex ( iconfield );
+        int iField = poOgrFeat->GetFieldIndex ( oFC.iconfield );
         if ( iField > -1 ) {
 
             if ( poKmlGroundOverlay->has_icon (  ) ) {
@@ -1218,7 +1187,7 @@ void kml2field (
         /***** drawOrder *****/
 
 
-        iField = poOgrFeat->GetFieldIndex ( drawOrderfield );
+        iField = poOgrFeat->GetFieldIndex ( oFC.drawOrderfield );
         if ( iField > -1 ) {
 
             if ( poKmlGroundOverlay->has_draworder (  ) ) {
@@ -1228,7 +1197,7 @@ void kml2field (
 
         /***** altitudeMode *****/
 
-        iField = poOgrFeat->GetFieldIndex ( altitudeModefield );
+        iField = poOgrFeat->GetFieldIndex ( oFC.altitudeModefield );
 
         if ( iField > -1 ) {
 
@@ -1269,7 +1238,7 @@ void kml2field (
     if ( poKmlFeature->has_visibility (  ) )
         nVisibility = poKmlFeature->get_visibility (  );
 
-    int iField = poOgrFeat->GetFieldIndex ( visibilityfield );
+    int iField = poOgrFeat->GetFieldIndex ( oFC.visibilityfield );
 
     if ( iField > -1 )
         poOgrFeat->SetField ( iField, nVisibility );
@@ -1375,26 +1344,10 @@ SimpleFieldPtr FieldDef2kml (
 
     poKmlSimpleField->set_name ( pszFieldName );
 
-    const char *namefield = CPLGetConfigOption ( "LIBKML_NAME_FIELD", "Name" );
-    const char *descfield =
-        CPLGetConfigOption ( "LIBKML_DESCRIPTION_FIELD", "description" );
-    const char *tsfield =
-        CPLGetConfigOption ( "LIBKML_TIMESTAMP_FIELD", "timestamp" );
-    const char *beginfield =
-        CPLGetConfigOption ( "LIBKML_BEGIN_FIELD", "begin" );
-    const char *endfield = CPLGetConfigOption ( "LIBKML_END_FIELD", "end" );
-    const char *altitudeModefield =
-        CPLGetConfigOption ( "LIBKML_ALTITUDEMODE_FIELD", "altitudeMode" );
-    const char *tessellatefield =
-        CPLGetConfigOption ( "LIBKML_TESSELLATE_FIELD", "tessellate" );
-    const char *extrudefield =
-        CPLGetConfigOption ( "LIBKML_EXTRUDE_FIELD", "extrude" );
-    const char *visibilityfield =
-        CPLGetConfigOption ( "LIBKML_VISIBILITY_FIELD", "visibility" );
-    const char *drawOrderfield =
-        CPLGetConfigOption ( "LIBKML_DRAWORDER_FIELD", "drawOrder" );
-    const char *iconfield =
-        CPLGetConfigOption ( "LIBKML_ICON_FIELD", "icon" );
+	/***** get the field config *****/
+	
+	struct fieldconfig oFC;
+	get_fieldconfig( &oFC );
 
     SimpleDataPtr poKmlSimpleData = NULL;
 
@@ -1402,26 +1355,29 @@ SimpleFieldPtr FieldDef2kml (
 
     case OFTInteger:
     case OFTIntegerList:
-        if ( EQUAL ( pszFieldName, tessellatefield ) ||
-             EQUAL ( pszFieldName, extrudefield ) ||
-             EQUAL ( pszFieldName, visibilityfield ) ||
-             EQUAL ( pszFieldName, drawOrderfield ) )
+        if ( EQUAL ( pszFieldName, oFC.tessellatefield ) ||
+             EQUAL ( pszFieldName, oFC.extrudefield ) ||
+             EQUAL ( pszFieldName, oFC.visibilityfield ) ||
+             EQUAL ( pszFieldName, oFC.drawOrderfield ) )
             break;
         poKmlSimpleField->set_type ( "int" );
         return poKmlSimpleField;
+			
     case OFTReal:
     case OFTRealList:
         poKmlSimpleField->set_type ( "float" );
         return poKmlSimpleField;
+			
     case OFTBinary:
         poKmlSimpleField->set_type ( "bool" );
         return poKmlSimpleField;
+	
     case OFTString:
     case OFTStringList:
-        if ( EQUAL ( pszFieldName, namefield ) ||
-             EQUAL ( pszFieldName, descfield ) ||
-             EQUAL ( pszFieldName, altitudeModefield ) ||
-             EQUAL ( pszFieldName, iconfield ) )
+        if ( EQUAL ( pszFieldName, oFC.namefield ) ||
+             EQUAL ( pszFieldName, oFC.descfield ) ||
+             EQUAL ( pszFieldName, oFC.altitudeModefield ) ||
+             EQUAL ( pszFieldName, oFC.iconfield ) )
             break;
         poKmlSimpleField->set_type ( "string" );
         return poKmlSimpleField;
@@ -1431,10 +1387,11 @@ SimpleFieldPtr FieldDef2kml (
     case OFTDate:
     case OFTTime:
     case OFTDateTime:
-        if ( EQUAL ( pszFieldName, tsfield )
-             || EQUAL ( pszFieldName, beginfield )
-             || EQUAL ( pszFieldName, endfield ) )
+        if ( EQUAL ( pszFieldName, oFC.tsfield )
+             || EQUAL ( pszFieldName, oFC.beginfield )
+             || EQUAL ( pszFieldName, oFC.endfield ) )
             break;
+    
     default:
         poKmlSimpleField->set_type ( "string" );
         return poKmlSimpleField;
@@ -1505,4 +1462,35 @@ void kml2FeatureDef (
     }
 
     return;
+}
+
+/*******************************************************************************
+ * function to fetch the field config options
+ * 
+*******************************************************************************/
+
+void get_fieldconfig( struct fieldconfig *oFC) {
+	
+    oFC->namefield = CPLGetConfigOption ( "LIBKML_NAME_FIELD",
+                                                  "Name" );
+    oFC->descfield = CPLGetConfigOption ( "LIBKML_DESCRIPTION_FIELD",
+                                                  "description" );
+    oFC->tsfield = CPLGetConfigOption ( "LIBKML_TIMESTAMP_FIELD",
+                                                "timestamp" );
+    oFC->beginfield = CPLGetConfigOption ( "LIBKML_BEGIN_FIELD",
+	                                               "begin" );
+	oFC->endfield = CPLGetConfigOption ( "LIBKML_END_FIELD",
+	                                             "end" );
+    oFC->altitudeModefield = CPLGetConfigOption ( "LIBKML_ALTITUDEMODE_FIELD",
+                                                          "altitudeMode" );
+    oFC->tessellatefield = CPLGetConfigOption ( "LIBKML_TESSELLATE_FIELD",
+                                                        "tessellate" );
+    oFC->extrudefield = CPLGetConfigOption ( "LIBKML_EXTRUDE_FIELD",
+                                                     "extrude" );
+    oFC->visibilityfield = CPLGetConfigOption ( "LIBKML_VISIBILITY_FIELD",
+                                                        "visibility" );
+    oFC->drawOrderfield = CPLGetConfigOption ( "LIBKML_DRAWORDER_FIELD",
+                                                       "drawOrder" );
+    oFC->iconfield = CPLGetConfigOption ( "LIBKML_ICON_FIELD",
+                                                  "icon" );
 }

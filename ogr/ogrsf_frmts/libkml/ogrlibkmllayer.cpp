@@ -115,81 +115,64 @@ OGRLIBKMLLayer::OGRLIBKMLLayer ( const char *pszLayerName,
 
         nFeatures = m_poKmlLayer->get_feature_array_size (  );
 
+        /***** get the field config *****/
+        
+        struct fieldconfig oFC;
+        get_fieldconfig( &oFC );
+
         /***** name field *****/
         
-        const char *namefield =
-            CPLGetConfigOption ( "LIBKML_NAME_FIELD", "Name" );
-        OGRFieldDefn oOgrFieldName ( namefield,OFTString );
+        OGRFieldDefn oOgrFieldName ( oFC.namefield,OFTString );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldName );
 
         /***** descripton field *****/
         
-        const char *descfield =
-            CPLGetConfigOption ( "LIBKML_DESCRIPTION_FIELD", "description" );
-        OGRFieldDefn oOgrFieldDesc ( descfield, OFTString );
+        OGRFieldDefn oOgrFieldDesc ( oFC.descfield, OFTString );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldDesc );
 
         /***** timestamp field *****/
 
-        const char *tsfield =
-            CPLGetConfigOption ( "LIBKML_TIMESTAMP_FIELD", "timestamp" );
-        OGRFieldDefn oOgrFieldTs ( tsfield, OFTDateTime );
+        OGRFieldDefn oOgrFieldTs ( oFC.tsfield, OFTDateTime );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldTs );
 
         /*****  timespan begin field *****/
 
-        const char *beginfield =
-            CPLGetConfigOption ( "LIBKML_BEGIN_FIELD", "begin" );
-        OGRFieldDefn oOgrFieldBegin ( beginfield, OFTDateTime );
+        OGRFieldDefn oOgrFieldBegin ( oFC.beginfield, OFTDateTime );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldBegin );
 
         /*****  timespan end field *****/
 
-        const char *endfield =
-            CPLGetConfigOption ( "LIBKML_END_FIELD", "end" );
-        OGRFieldDefn oOgrFieldEnd ( endfield, OFTDateTime );
+        OGRFieldDefn oOgrFieldEnd ( oFC.endfield, OFTDateTime );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldEnd );
 
         /*****  altitudeMode field *****/
 
-        const char *altitudeModefield =
-            CPLGetConfigOption ( "LIBKML_ALTITUDEMODE_FIELD", "altitudeMode" );
-        OGRFieldDefn oOgrFieldAltitudeMode ( altitudeModefield, OFTString );
+        OGRFieldDefn oOgrFieldAltitudeMode ( oFC.altitudeModefield, OFTString );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldAltitudeMode );
 
         /***** tessellate field *****/
 
-        const char *tessellatefield =
-            CPLGetConfigOption ( "LIBKML_TESSELLATE_FIELD", "tessellate" );
-        OGRFieldDefn oOgrFieldTessellate ( tessellatefield, OFTInteger );
+        OGRFieldDefn oOgrFieldTessellate ( oFC.tessellatefield, OFTInteger );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldTessellate );
 
         /***** extrude field *****/
 
-        const char *extrudefield =
-            CPLGetConfigOption ( "LIBKML_EXTRUDE_FIELD", "extrude" );
-        OGRFieldDefn oOgrFieldExtrude ( extrudefield, OFTInteger );
+        OGRFieldDefn oOgrFieldExtrude ( oFC.extrudefield, OFTInteger );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldExtrude );
 
         /***** visibility field *****/
 
-        const char *visibilityfield =
-            CPLGetConfigOption ( "LIBKML_VISIBILITY_FIELD", "visibility" );
-        OGRFieldDefn oOgrFieldVisibility ( visibilityfield, OFTInteger );
+        OGRFieldDefn oOgrFieldVisibility ( oFC.visibilityfield, OFTInteger );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldVisibility );
 
         /***** draw order field *****/
 
-        const char *drawOrderfield =
-            CPLGetConfigOption ( "LIBKML_DRAWORDER_FIELD", "drawOrder" );
-        OGRFieldDefn oOgrFieldDrawOrder ( drawOrderfield, OFTInteger );
+        OGRFieldDefn oOgrFieldDrawOrder ( oFC.drawOrderfield, OFTInteger );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldDrawOrder );
 
         /***** icon field *****/
 
-        const char *iconfield =
-            CPLGetConfigOption ( "LIBKML_ICON_FIELD", "icon" );
-        OGRFieldDefn oOgrFieldIcon ( iconfield, OFTString );
+        OGRFieldDefn oOgrFieldIcon ( oFC.iconfield, OFTString );
         m_poOgrFeatureDefn->AddFieldDefn ( &oOgrFieldIcon );
 
         /***** get the styles *****/
