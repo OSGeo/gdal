@@ -96,6 +96,8 @@
 %constant GRA_Cubic            = GRA_Cubic;
 %constant GRA_CubicSpline      = GRA_CubicSpline;
 %constant GRA_Lanczos          = GRA_Lanczos;
+%constant GRA_Average          = GRA_Average;
+%constant GRA_Mode             = GRA_Mode;
 
 // GDALPaletteInterp
 %constant GPI_Gray  = GPI_Gray;
