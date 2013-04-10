@@ -5010,7 +5010,7 @@ static void GWKAverageOrModeThread( void* pData)
 /* -------------------------------------------------------------------- */
     double *padfX, *padfY, *padfZ;
     double *padfX2, *padfY2, *padfZ2;
-    int    *pabSuccess;
+    int    *pabSuccess, *pabSuccess2;
 
     padfX = (double *) CPLMalloc(sizeof(double) * nDstXSize);
     padfY = (double *) CPLMalloc(sizeof(double) * nDstXSize);
@@ -5019,6 +5019,7 @@ static void GWKAverageOrModeThread( void* pData)
     padfY2 = (double *) CPLMalloc(sizeof(double) * nDstXSize);
     padfZ2 = (double *) CPLMalloc(sizeof(double) * nDstXSize);
     pabSuccess = (int *) CPLMalloc(sizeof(int) * nDstXSize);
+    pabSuccess2 = (int *) CPLMalloc(sizeof(int) * nDstXSize);
 
 /* ==================================================================== */
 /*      Loop over output lines.                                         */
@@ -5046,7 +5047,7 @@ static void GWKAverageOrModeThread( void* pData)
         poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
                               padfX, padfY, padfZ, pabSuccess );
         poWK->pfnTransformer( psJob->pTransformerArg, TRUE, nDstXSize,
-                              padfX2, padfY2, padfZ2, pabSuccess );
+                              padfX2, padfY2, padfZ2, pabSuccess2 );
 
 /* ==================================================================== */
 /*      Loop over pixels in output scanline.                            */
@@ -5057,11 +5058,14 @@ static void GWKAverageOrModeThread( void* pData)
             double  dfDensity = 1.0;
             int bHasFoundDensity = FALSE;
 
+            if( !pabSuccess[iDstX] || !pabSuccess2[iDstX] )
+                continue;
+            iDstOffset = iDstX + iDstY * nDstXSize;
+
 /* ==================================================================== */
 /*      Loop processing each band.                                      */
 /* ==================================================================== */
             
-            iDstOffset = iDstX + iDstY * nDstXSize;
             for( int iBand = 0; iBand < poWK->nBands; iBand++ )
             {
                 double dfBandDensity = 0.0;
@@ -5094,7 +5098,7 @@ static void GWKAverageOrModeThread( void* pData)
                     {
                         for( iSrcX = iSrcXMin; iSrcX < iSrcXMax; iSrcX++ )
                         {
-                            int iSrcOffset = iSrcX + iSrcY * nSrcXSize;
+                            iSrcOffset = iSrcX + iSrcY * nSrcXSize;
                             
                             if( poWK->panUnifiedSrcValid != NULL
                                 && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
@@ -5106,9 +5110,9 @@ static void GWKAverageOrModeThread( void* pData)
                             nCount2++;
                             if ( GWKGetPixelValue( poWK, iBand, iSrcOffset,
                                                    &dfBandDensity, &dfValueRealTmp, &dfValueImagTmp ) && dfBandDensity > 0.0000000001 ) 
-                            {                       
-                                dfTotal += dfValueRealTmp;
+                            {
                                 nCount++;
+                                dfTotal += dfValueRealTmp;
                             }
                         }
                     }
@@ -5141,6 +5145,10 @@ static void GWKAverageOrModeThread( void* pData)
                         float*   pafVals = NULL;
                         int*     panSums = NULL;
                         
+                        if ( nNumPx == 0 )
+                            continue;
+
+                        // keeping this test for now, useful if we re-arange the code to re-use same memory in outer loop
                         if (nNumPx > nMaxNumPx)
                         {
                             pafVals = (float*) CPLRealloc(pafVals, nNumPx * sizeof(float));
@@ -5163,6 +5171,8 @@ static void GWKAverageOrModeThread( void* pData)
                                 if ( GWKGetPixelValue( poWK, iBand, iSrcOffset,
                                                        &dfBandDensity, &dfValueRealTmp, &dfValueImagTmp ) && dfBandDensity > 0.0000000001 ) 
                                 {
+                                    nCount++;
+
                                     float fVal = dfValueRealTmp;
                                     int i;
                                     
@@ -5196,6 +5206,9 @@ static void GWKAverageOrModeThread( void* pData)
                             dfBandDensity = 1;                
                             bHasFoundDensity = TRUE;
                         }
+
+                        if ( pafVals ) CPLFree( pafVals );
+                        if ( panSums ) CPLFree( panSums );
                     }
                     
                     else // nAlgo == 3 / poWK->eWorkingDataType == GDT_Byte
@@ -5203,7 +5216,6 @@ static void GWKAverageOrModeThread( void* pData)
                         /* So we go here for a paletted or non-paletted byte band */
                         /* The input values are then between 0 and 255 */
                         int     anVals[256], nMaxVal = 0, iMaxInd = -1;
-                        int nCount = 0;
                         memset(anVals, 0, 256*sizeof(int));
                         
                         for( iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
@@ -5222,6 +5234,7 @@ static void GWKAverageOrModeThread( void* pData)
                                                        &dfBandDensity, &dfValueRealTmp, &dfValueImagTmp ) && dfBandDensity > 0.0000000001 ) 
                                 {
                                     nCount++;
+
                                     int nVal = (int) dfValueRealTmp;
                                     if ( ++anVals[nVal] > nMaxVal)
                                     {
@@ -5294,5 +5307,6 @@ static void GWKAverageOrModeThread( void* pData)
     CPLFree( padfY2 );
     CPLFree( padfZ2 );
     CPLFree( pabSuccess );
+    CPLFree( pabSuccess2 );
 }
 
