@@ -335,7 +335,7 @@ layer[0:4] would return a list of the first four features."""
                   } 
         
         fid = self.GetFID()
-        if fid:
+        if fid != NullFID:
             output['id'] = fid
             
         for key in self.keys():

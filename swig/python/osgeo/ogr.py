@@ -2934,7 +2934,7 @@ class Feature(_object):
                   } 
         
         fid = self.GetFID()
-        if fid:
+        if fid != NullFID:
             output['id'] = fid
             
         for key in self.keys():
