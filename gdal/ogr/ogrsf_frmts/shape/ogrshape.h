@@ -36,6 +36,12 @@
 #include "ogrlayerpool.h"
 #include <vector>
 
+/* Was limited to 255 until OGR 1.10, but 254 seems to be a more */
+/* conventionnal limit (http://en.wikipedia.org/wiki/Shapefile, */
+/* http://www.clicketyclick.dk/databases/xbase/format/data_types.html, */
+/* #5052 ) */
+#define OGR_DBF_MAX_FIELD_WIDTH 254
+
 /* ==================================================================== */
 /*      Functions from Shape2ogr.cpp.                                   */
 /* ==================================================================== */

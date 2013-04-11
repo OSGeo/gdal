@@ -1533,12 +1533,12 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
             chType = 'C';
             nWidth = oModFieldDefn.GetWidth();
             if (nWidth == 0) nWidth = 80;
-            else if (nWidth > 255)
+            else if (nWidth > OGR_DBF_MAX_FIELD_WIDTH)
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                         "Field %s of width %d truncated to %d.",
-                        szNewFieldName, nWidth, 255 );
-                nWidth = 255;
+                        szNewFieldName, nWidth, OGR_DBF_MAX_FIELD_WIDTH );
+                nWidth = OGR_DBF_MAX_FIELD_WIDTH;
             }
             break;
 
