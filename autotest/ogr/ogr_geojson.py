@@ -668,6 +668,7 @@ def ogr_geojson_15():
 
     feature = ogr.Feature(feature_defn)
     feature.SetField("foo", "bar")
+    feature.SetFID(0)
 
     geom = ogr.CreateGeometryFromWkt("POINT(1 2)")
     feature.SetGeometry(geom)
@@ -677,7 +678,7 @@ def ogr_geojson_15():
     except ImportError:
         return 'skip'
 
-    expected_out = """{"geometry": {"type": "Point", "coordinates": [1.0, 2.0]}, "type": "Feature", "properties": {"foo": "bar"}, "id": -1}"""
+    expected_out = """{"geometry": {"type": "Point", "coordinates": [1.0, 2.0]}, "type": "Feature", "properties": {"foo": "bar"}, "id": 0}"""
 
     if out != expected_out:
         print(out)
@@ -685,7 +686,7 @@ def ogr_geojson_15():
 
 
     out = feature.ExportToJson(as_object = True)
-    expected_out = {'geometry': {'type': 'Point', 'coordinates': [1.0, 2.0]}, 'type': 'Feature', 'properties': {'foo': 'bar'}, 'id': -1}
+    expected_out = {'geometry': {'type': 'Point', 'coordinates': [1.0, 2.0]}, 'type': 'Feature', 'properties': {'foo': 'bar'}, 'id': 0}
 
     if out != expected_out:
         print(out)
