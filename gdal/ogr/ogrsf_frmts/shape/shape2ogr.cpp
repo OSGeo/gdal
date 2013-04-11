@@ -1270,18 +1270,19 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
               }
 
               int nStrLen = (int) strlen(pszStr);
-              if (nStrLen > 255)
+              if (nStrLen > OGR_DBF_MAX_FIELD_WIDTH)
               {
                 if (!(*pbTruncationWarningEmitted))
                 {
                     *pbTruncationWarningEmitted = TRUE;
                     CPLError(CE_Warning, CPLE_AppDefined,
-                            "Value '%s' of field %s has been truncated to 255 characters.\n"
+                            "Value '%s' of field %s has been truncated to %d characters.\n"
                             "This warning will not be emitted any more for that layer.",
                             poFeature->GetFieldAsString(iField),
-                            poFieldDefn->GetNameRef());
+                            poFieldDefn->GetNameRef(),
+                            OGR_DBF_MAX_FIELD_WIDTH);
                 }
-                nStrLen = 255;
+                nStrLen = OGR_DBF_MAX_FIELD_WIDTH;
               }
 
               if ( nStrLen > poFieldDefn->GetWidth() )
