@@ -760,6 +760,41 @@ def ogr_libkml_read_schema():
     return 'success'
 
 ###############################################################################
+# Test reading KML with <Data> elements of <ExtendedData> in case
+# <ExtendedData> doesn't use a <SchemaData> (test changeset r22127)
+
+def ogr_libkml_extended_data_without_schema_data():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/extended_data_without_schema_data.kml')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat.GetField('field1') != '1_1':
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+    if feat.GetField('field2') != '1_2':
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('field1') != '2_1':
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+    if feat.IsFieldSet('field2'):
+        gdaltest.post_reason('failed')
+        feat.DumpReadable()
+        return 'fail'
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -804,6 +839,7 @@ gdaltest_list = [
     ogr_libkml_read_empty,
     ogr_libkml_read_emptylayers,
     ogr_libkml_read_schema,
+    ogr_libkml_extended_data_without_schema_data,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':
