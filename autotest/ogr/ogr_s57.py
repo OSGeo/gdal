@@ -421,6 +421,38 @@ def ogr_s57_online_3():
 
     return 'success'
 
+###############################################################################
+# Test ENC LL2 (#5048)
+
+def ogr_s57_online_4():
+    if gdaltest.s57_ds is None:
+        return 'skip'
+
+    if not gdaltest.download_file('http://www1.kaiho.mlit.go.jp/KOKAI/ENC/images/sample/sample.zip', 'sample.zip'):
+        return 'skip'
+
+    try:
+        os.stat('tmp/cache/ENC_ROOT/JP34NC94.000')
+    except:
+        try:
+            gdaltest.unzip( 'tmp/cache', 'tmp/cache/sample.zip')
+            try:
+                os.stat('tmp/cache/ENC_ROOT/JP34NC94.000')
+            except:
+                return 'skip'
+        except:
+            return 'skip'
+
+    gdal.SetConfigOption('OGR_S57_OPTIONS', 'RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON,RECODE_BY_DSSI=ON')
+    ds = ogr.Open('tmp/cache/ENC_ROOT/JP34NC94.000')
+    gdal.SetConfigOption('OGR_S57_OPTIONS', None)
+    lyr = ds.GetLayerByName('LNDMRK')
+    for feat in lyr:
+        mystr = feat.NOBJNM
+        if mystr and sys.version_info < (3,0,0):
+            mystr.decode('UTF-8').encode('UTF-8')
+
+    return 'success'
 
 ###############################################################################
 #  Cleanup
@@ -444,6 +476,7 @@ gdaltest_list = [
     ogr_s57_online_1,
     ogr_s57_online_2,
     ogr_s57_online_3,
+    ogr_s57_online_4,
     ogr_s57_cleanup ]
 
 if __name__ == '__main__':

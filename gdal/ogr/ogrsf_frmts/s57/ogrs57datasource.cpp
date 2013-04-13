@@ -226,7 +226,12 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
         papszReaderOptions = 
             CSLSetNameValue( papszReaderOptions, S57O_RETURN_DSID,
                              GetOption(S57O_RETURN_DSID) );
-                                              
+
+    if( GetOption(S57O_RECODE_BY_DSSI) != NULL )
+        papszReaderOptions = 
+            CSLSetNameValue( papszReaderOptions, S57O_RECODE_BY_DSSI,
+                             GetOption(S57O_RECODE_BY_DSSI) );
+
     poModule->SetOptions( papszReaderOptions );
     CSLDestroy( papszReaderOptions );
 

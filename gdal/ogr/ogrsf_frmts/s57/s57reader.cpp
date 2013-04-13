@@ -41,6 +41,103 @@ CPL_CVSID("$Id$");
 #define PI  3.14159265358979323846
 #endif
 
+/***************************************************************************************************************
+* Recode the given string from a source encoding to UTF-8 encoding.
+* The source encoding is established by inspecting the AALL and NALL fields of the S57 DSSI record. If first
+* time, the DSSI is read to setup appropriate variables. Main scope of this function is to have the strings
+* of all attributes encoded/recoded to the same codepage in the final Shapefiles .DBF.
+* 
+* @param[in]	SourceString: source string to be recoded to UTF-8.
+*				LookAtAALL-NALL: flag indicating if the string becomes from an international attribute (e.g.
+*								 INFORM, OBJNAM) or national attribute (e.g NINFOM, NOBJNM). The type of
+*								 encoding is contained in two different fields of the S57 DSSI record: AALL for
+*								 the international attributes, NAAL for the national ones, so depending on the
+*								 type of encoding, different fields must be checked to fetch in which way the
+*								 source string is encoded.
+*								 0: the type of endoding is for international attributes
+*								 1: the type of endoding is for national attributes
+*
+* @param[out]
+*
+* @return:		- the output string recoded to UTF-8 or left unchanged if no valid recoding applicable. The
+*				recodinf relies on GDAL functions appropriately called, which allocate themselves the 
+*				necessary memory to hold the recoded string.
+* NOTE: Aall variable is currently not used.
+***************************************************************************************************************/
+char *S57Reader::RecodeByDSSI(const char *SourceString, bool LookAtAALL_NALL)
+{
+    char *RecodedString = NULL;
+
+    if(needAallNallSetup==true)
+    {
+        OGRFeature *dsidFeature=ReadDSID();
+        if( dsidFeature == NULL )
+            return CPLStrdup(SourceString);
+        Aall=dsidFeature->GetFieldAsInteger("DSSI_AALL");
+        Nall=dsidFeature->GetFieldAsInteger("DSSI_NALL");
+        CPLDebug("S57", "DSSI_AALL = %d, DSSI_NALL = %d", Aall, Nall);
+        needAallNallSetup=false;
+        delete dsidFeature;
+    }
+
+    if(!LookAtAALL_NALL)
+    {
+        //in case of international attributes, only ISO8859-1 code page is used (standard ascii). The result
+        //is identical to the source string if it contains 0..127 ascii code (LL0), can sligthly differ if
+        //it contains diacritics 0..255 ascii codes (LL1)
+        RecodedString = CPLRecode(SourceString,CPL_ENC_ISO8859_1,CPL_ENC_UTF8);
+    }
+    else
+    {
+        if(Nall==2) //national string encoded in UCS-2
+        {
+            GByte* pabyStr = (GByte*)SourceString;
+
+            /* Count the number of characters */
+            int i=0;
+            while( ! ((pabyStr[2 * i] == DDF_UNIT_TERMINATOR && pabyStr[2 * i + 1] == 0) ||
+                      (pabyStr[2 * i] == 0 && pabyStr[2 * i + 1] == 0)) )
+                i++;
+
+            wchar_t *wideString = (wchar_t*) CPLMalloc((i+1) * sizeof(wchar_t));
+            i = 0;
+            int bLittleEndian = TRUE;
+
+            /* Skip BOM */
+            if( pabyStr[0] == 0xFF && pabyStr[1] == 0xFE )
+                i ++;
+            else if( pabyStr[0] == 0xFE && pabyStr[1] == 0xFF )
+            {
+                bLittleEndian = FALSE;
+                i ++;
+            }
+
+            int j=0;
+            while( ! ((pabyStr[2 * i] == DDF_UNIT_TERMINATOR && pabyStr[2 * i + 1] == 0) ||
+                      (pabyStr[2 * i] == 0 && pabyStr[2 * i + 1] == 0)) )
+            {
+                if( bLittleEndian )
+                    wideString[j++] = pabyStr[i * 2] | (pabyStr[i * 2 + 1] << 8);
+                else
+                    wideString[j++] = pabyStr[i * 2 + 1] | (pabyStr[i * 2] << 8);
+                i++;
+            }
+            wideString[j] = 0;
+            RecodedString = CPLRecodeFromWChar(wideString,CPL_ENC_UCS2,CPL_ENC_UTF8);
+            CPLFree(wideString);
+        }
+        else        //national string encoded as ISO8859-1 (see comment for above on LL0/LL1)
+        {
+            RecodedString = CPLRecode(SourceString,CPL_ENC_ISO8859_1,CPL_ENC_UTF8);
+        }
+    }
+
+    if( RecodedString == NULL )
+        RecodedString = CPLStrdup(SourceString);
+    
+    return(RecodedString);
+}
+
 /************************************************************************/
 /*                             S57Reader()                              */
 /************************************************************************/
@@ -84,6 +181,11 @@ S57Reader::S57Reader( const char * pszFilename )
     bAttrWarningIssued = FALSE;
 
     memset( apoFDefnByOBJL, 0, sizeof(apoFDefnByOBJL) );
+    
+    Aall=0;                 // see RecodeByDSSI() function
+    Nall=0;                 // see RecodeByDSSI() function
+    needAallNallSetup=true; // see RecodeByDSSI() function
+    
 }
 
 /************************************************************************/
@@ -307,6 +409,13 @@ void S57Reader::SetOptions( char ** papszOptionsIn )
         nOptionFlags |= S57M_RETURN_DSID;
     else
         nOptionFlags &= ~S57M_RETURN_DSID;
+
+    pszOptionValue = CSLFetchNameValue( papszOptions, S57O_RECODE_BY_DSSI );
+    if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
+        nOptionFlags |= S57M_RECODE_BY_DSSI;
+    else
+        nOptionFlags &= ~S57M_RECODE_BY_DSSI;
+
 }
 
 /************************************************************************/
@@ -811,7 +920,12 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
         pszValue = poRecord->GetStringSubfield("ATTF",0,"ATVL",iAttr);
         if( pszValue == NULL )
             return;
-        
+
+        //If needed, recode the string in UTF-8.
+        char* pszValueToFree = NULL;
+        if(nOptionFlags & S57M_RECODE_BY_DSSI)
+            pszValue = pszValueToFree = RecodeByDSSI(pszValue,false);
+
         /* Apply to feature in an appropriate way */
         int iField;
         OGRFieldDefn *poFldDefn;
@@ -827,6 +941,7 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
                           "No more warnings will be issued for this dataset.", 
                           pszAcronym );
             }
+            CPLFree(pszValueToFree);
             continue;
         }
 
@@ -846,6 +961,8 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
         }
         else
             poFeature->SetField( iField, pszValue );
+
+        CPLFree(pszValueToFree);
     }
     
 /* -------------------------------------------------------------------- */
@@ -881,9 +998,20 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
 
             continue;
         }
-        
-        poFeature->SetField( pszAcronym, 
-                             poRecord->GetStringSubfield("NATF",0,"ATVL",iAttr) );
+
+        //If needed, recode the string in UTF-8.
+        const char *pszValue = poRecord->GetStringSubfield("NATF",0,"ATVL",iAttr);
+        if( pszValue != NULL )
+        {
+            if(nOptionFlags & S57M_RECODE_BY_DSSI)
+            {
+                char* pszValueRecoded = RecodeByDSSI(pszValue,true);
+                poFeature->SetField(pszAcronym,pszValueRecoded);
+                CPLFree(pszValueRecoded);
+            }
+            else
+                poFeature->SetField(pszAcronym,pszValue);
+        }
     }
 }
 
