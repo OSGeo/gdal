@@ -1886,6 +1886,28 @@ def test_ogr2ogr_48():
 
     return 'success'
 
+###############################################################################
+# Test detection of duplicated field names in source layer and renaming
+# in targe layer
+
+def test_ogr2ogr_49():
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        return 'skip'
+
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f CSV tmp/test_ogr2ogr_49.csv data/duplicatedfields.csv')
+    f = open('tmp/test_ogr2ogr_49.csv')
+    lines = f.readlines()
+    f.close()
+
+    os.unlink('tmp/test_ogr2ogr_49.csv')
+
+    if lines[0].find('foo,bar,foo3,foo2,baz,foo4') != 0 or \
+       lines[1].find('val_foo,val_bar,val_foo3,val_foo2,val_baz,val_foo4') != 0:
+        print(lines)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_1,
     test_ogr2ogr_2,
@@ -1934,7 +1956,8 @@ gdaltest_list = [
     test_ogr2ogr_45,
     test_ogr2ogr_46,
     test_ogr2ogr_47,
-    test_ogr2ogr_48
+    test_ogr2ogr_48,
+    test_ogr2ogr_49,
     ]
 
 if __name__ == '__main__':
