@@ -35,6 +35,7 @@
 #include "gdal.h"
 #include "gdal_alg.h"
 #include "commonutils.h"
+#include <map>
 
 CPL_CVSID("$Id$");
 
@@ -2680,6 +2681,22 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
         int nDstFieldCount = 0;
         if (poDstFDefn)
             nDstFieldCount = poDstFDefn->GetFieldCount();
+
+        /* Save the map of existing fields, before creating new ones */
+        /* This helps when converting a source layer that has duplicated field names */
+        /* which is a bad idea */
+        std::map<CPLString, int> oMapExistingFields;
+        for( iField = 0; iField < nDstFieldCount; iField++ )
+        {
+            const char* pszFieldName = poDstFDefn->GetFieldDefn(iField)->GetNameRef();
+            if( oMapExistingFields.find(pszFieldName) == oMapExistingFields.end() )
+                oMapExistingFields[pszFieldName] = iField;
+            /*else
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "The target layer has already a duplicated field name '%s' before "
+                         "adding the fields of the source layer", pszFieldName); */
+        }
+
         for( iField = 0; iField < nSrcFieldCount; iField++ )
         {
             OGRFieldDefn* poSrcFieldDefn = poSrcFDefn->GetFieldDefn(iField);
@@ -2694,14 +2711,39 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
             }
 
             /* The field may have been already created at layer creation */
-            int iDstField = -1;
-            if (poDstFDefn)
-                 iDstField = poDstFDefn->GetFieldIndex(oFieldDefn.GetNameRef());
-            if (iDstField >= 0)
+            std::map<CPLString, int>::iterator oIter =
+                oMapExistingFields.find(oFieldDefn.GetNameRef());
+            if( oIter != oMapExistingFields.end() )
             {
-                panMap[iField] = iDstField;
+                panMap[iField] = oIter->second;
+                continue;
             }
-            else if (poDstLayer->CreateField( &oFieldDefn ) == OGRERR_NONE)
+
+            int bHasRenamed = FALSE;
+            /* In case the field name already exists in the target layer, */
+            /* build a unique field name */
+            if( poDstFDefn != NULL &&
+                poDstFDefn->GetFieldIndex(oFieldDefn.GetNameRef()) >= 0 )
+            {
+                int nTry = 1;
+                while(TRUE)
+                {
+                    ++nTry;
+                    CPLString osTmpName;
+                    osTmpName.Printf("%s%d", oFieldDefn.GetNameRef(), nTry);
+                    /* Check that the proposed name doesn't exist either in the already */
+                    /* created fields or in the source fields */
+                    if( poDstFDefn->GetFieldIndex(osTmpName) < 0 &&
+                        poSrcFDefn->GetFieldIndex(osTmpName) < 0 )
+                    {
+                        bHasRenamed = TRUE;
+                        oFieldDefn.SetName(osTmpName);
+                        break;
+                    }
+                }
+            }
+
+            if (poDstLayer->CreateField( &oFieldDefn ) == OGRERR_NONE)
             {
                 /* now that we've created a field, GetLayerDefn() won't return NULL */
                 if (poDstFDefn == NULL)
@@ -2717,6 +2759,15 @@ static TargetLayerInfo* SetupTargetLayer( OGRDataSource *poSrcDS,
                 }
                 else
                 {
+                    if( bHasRenamed )
+                    {
+                        const char* pszNewFieldName =
+                            poDstFDefn->GetFieldDefn(nDstFieldCount)->GetNameRef();
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Field '%s' already exists. Renaming it as '%s'",
+                                 poSrcFieldDefn->GetNameRef(), pszNewFieldName);
+                    }
+
                     panMap[iField] = nDstFieldCount;
                     nDstFieldCount ++;
                 }
