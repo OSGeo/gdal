@@ -83,9 +83,9 @@ GDAL_INCLUDE	=	-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore \
 
 # libtool targets and help variables
 LIBGDAL	:=		libgdal.la
-LIBGDAL_CURRENT	:=	17
+LIBGDAL_CURRENT	:=	18
 LIBGDAL_REVISION	:=	0
-LIBGDAL_AGE	:=	16
+LIBGDAL_AGE	:=	17
 
 # native build targets and variables
 GDAL_VER	=	@GDAL_VER@
