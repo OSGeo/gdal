@@ -68,7 +68,7 @@ release.
    svn copy https://svn.osgeo.org/gdal/trunk \
             https://svn.osgeo.org/gdal/branches/1.5
 
-8) Tag the release set in CVS: 
+8) Tag the release set in SVN: 
 
    svn copy https://svn.osgeo.org/gdal/branches/1.4 \
             https://svn.osgeo.org/gdal/tags/1.4.1
