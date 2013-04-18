@@ -1174,6 +1174,54 @@ def netcdf_33():
     return netcdf_check_vars( 'tmp/netcdf_33.nc' )
 
 ###############################################################################
+# check support for reading large file with chunking and DEFLATE compression
+# if chunking is not supported within the netcdf driver, this test can take very long
+def netcdf_34():
+
+    filename = 'utm-big-chunks.nc'
+    # this timeout is more than enough - on my system takes <1s with fix, about 25 seconds without
+    timeout = 5
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    if not gdaltest.run_slow_tests():
+        return 'skip'
+
+    try:
+        from multiprocessing import Process
+    except:
+        print('from multiprocessing import Process failed')
+        return 'skip'
+
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/netcdf/'+filename,filename):
+        return 'skip'
+
+    sys.stdout.write('.')
+    sys.stdout.flush()
+
+    tst = gdaltest.GDALTest( 'NetCDF', '../tmp/cache/'+filename, 1, 31621 )
+    #tst.testOpen()
+
+    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    proc = Process( target=tst.testOpen )
+    proc.start()
+    proc.join( timeout )
+    gdal.PopErrorHandler()
+
+    # if proc is alive after timeout we must terminate it, and return fail
+    # valgrind detects memory leaks when this occurs (although it should never happen)
+    if proc.is_alive():
+        proc.terminate()
+        print('testOpen() for file %s has reached timeout limit of %d seconds' % (filename, timeout) )
+        return 'fail' 
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -1211,7 +1259,8 @@ gdaltest_list = [
     netcdf_30,
     netcdf_31,
     netcdf_32,
-    netcdf_33
+    netcdf_33,
+    netcdf_34
  ]
 
 ###############################################################################
