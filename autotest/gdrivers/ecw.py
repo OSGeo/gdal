@@ -120,6 +120,11 @@ def ecw_3():
 
     ds = gdal.Open( 'data/jrc.ecw' )
     out_ds = gdaltest.ecw_drv.CreateCopy( 'tmp/jrc_out.ecw', ds, options = ['TARGET=75'] )
+    version = out_ds.GetMetadataItem('VERSION')
+    if version != '2':
+        gdaltest.post_reason('bad VERSION')
+        return 'fail'
+
     ds = None
     
     if out_ds is None:
@@ -137,7 +142,16 @@ def ecw_4():
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
 
+    try:
+        os.unlink('tmp/jrc_out.ecw.aux.xml')
+    except:
+        pass
+
     ds = gdal.Open( 'tmp/jrc_out.ecw' )
+    version = ds.GetMetadataItem('VERSION')
+    if version != '2':
+        gdaltest.post_reason('bad VERSION')
+        return 'fail'
 
     if gdaltest.ecw_drv.major_version == 3:    
         (exp_mean, exp_stddev) = (140.290, 66.6303)
@@ -178,6 +192,10 @@ def ecw_5():
     ds = gdal.Open( 'data/small.vrt' )
     ds_out = gdaltest.jp2ecw_drv.CreateCopy( 'tmp/ecw_5.jp2', ds, options = ['TARGET=75'] )
     if ds_out.GetDriver().ShortName != "JP2ECW":
+        return 'fail'
+    version = ds_out.GetMetadataItem('VERSION')
+    if version != '1':
+        gdaltest.post_reason('bad VERSION')
         return 'fail'
     ds = None
 
@@ -1191,10 +1209,16 @@ def ecw_34():
 
     ds = gdal.Open( 'tmp/UInt16_big_out.ecw' )
     got_data = ds.GetRasterBand(1).ReadRaster(0, 0, 128, 128, buf_type = gdal.GDT_UInt16)
+    version = ds.GetMetadataItem('VERSION')
     ds = None
 
     if got_data != ref_data:
         return 'fail'
+    if version != '3':
+        gdaltest.post_reason('bad VERSION')
+        print(version)
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
