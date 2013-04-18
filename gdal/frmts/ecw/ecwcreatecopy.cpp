@@ -590,7 +590,7 @@ CPLErr GDALECWCompressor::Initialize(
 /* -------------------------------------------------------------------- */
     NCSFileViewFileInfoEx    *psClient = &(sFileInfo);
 #if ECWSDK_VERSION >= 50
-    if( bIsJPEG2000 )
+    if( bIsJPEG2000 == FALSE )
     {
         bool bECWV3 = false;
         pszOption = CSLFetchNameValue(papszOptions, "ECW_FORMAT_VERSION");
@@ -599,6 +599,10 @@ CPLErr GDALECWCompressor::Initialize(
             bECWV3 = (3 == atoi(pszOption));
         }
         psClient->nFormatVersion = (bECWV3)?3:2;
+    }
+    else
+    {
+        psClient->nFormatVersion = 1;
     }
 #endif
     psClient->nBands = (UINT16) nBands;
@@ -1127,14 +1131,27 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                       "Only Byte data type supported for ECW version 2 files."
 #if ECWSDK_VERSION >= 50
                       " ECW version 3 files supports UInt16 as well."
+                      " Specify ECW_FORMAT_VERSION=3 creation option to write version 3 file. \n"
+#else 
+                      ". \n"
 #endif
                       , GDALGetDataTypeName( eType ) );
         }
         else
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "ECW does not support data type, ignoring request for %s.",
-                      GDALGetDataTypeName( eType ) );
+#if ECWSDK_VERSION>=50
+            if (eType == GDT_UInt16)
+            {
+                CPLError( CE_Warning, CPLE_AppDefined, 
+                          "ECW version 2 does not support UInt16 data type, truncating to Byte."
+                          " Consider specifying ECW_FORMAT_VERSION=3 for full UInt16 support available in ECW version 3. \n");
+            }
+            else
+#endif
+                CPLError( CE_Warning, CPLE_AppDefined,
+                        "ECW v2 does not support data type, ignoring request for %s. \n",
+                        GDALGetDataTypeName( eType ) );
+
             eType = GDT_Byte;
         }
     }
@@ -1280,9 +1297,9 @@ ECWCreateCopyECW( const char * pszFilename, GDALDataset *poSrcDS,
 #if ECWSDK_VERSION >= 50
         if (eDataType == GDT_UInt16){
             CPLError( CE_Failure, CPLE_NotSupported, 
-                  "ECW driver doesn't support data type %s. "
-                  "Enable ECW version 3 write by using ECW_FORMAT_VERSION=3 option.\n", 
-                  GDALGetDataTypeName(eDataType) );
+                "ECW v2 does not support UInt16 data type. Consider "
+                " specifying ECW_FORMAT_VERSION=3 for full UInt16 support available in ECW v3. \n"
+                );
         }
         else
 #endif
