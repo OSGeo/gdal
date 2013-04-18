@@ -197,6 +197,7 @@ int OGRGeocodeHasStringValidFormat(const char* pszQueryTemplate)
  *      <a href="http://www.geonames.org/export/geonames-search.html">"GEONAMES"</a>,
  *      <a href="http://msdn.microsoft.com/en-us/library/ff701714.aspx">"BING"</a> or
  *       other value.
+ *      Note: "YAHOO" is no longer available as a free service.
  * <li> "EMAIL": used by OSM_NOMINATIM. Optional, but recommanded.
  * <li> "USERNAME": used by GEONAMES. Compulsory in that case.
  * <li> "KEY": used by BING. Compulsory in that case.
@@ -599,21 +600,17 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(CPLXMLNode* psSearchResults,
     OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
 
     CPLXMLNode* psPlace = psSearchResults->psChild;
+    /* First iteration to add fields */
     while( psPlace != NULL )
     {
         if( psPlace->eType == CXT_Element &&
             (strcmp(psPlace->pszValue, "place") == 0 || /* Nominatim */
              strcmp(psPlace->pszValue, "geoname") == 0 /* Geonames */) )
         {
-            int bFoundLat = FALSE, bFoundLon = FALSE;
-            double dfLat = 0.0, dfLon = 0.0;
-
-            /* First iteration to add fields */
             CPLXMLNode* psChild = psPlace->psChild;
             while( psChild != NULL )
             {
                 const char* pszName = psChild->pszValue;
-                const char* pszVal = CPLGetXMLValue(psChild, NULL, NULL);
                 if( (psChild->eType == CXT_Element || psChild->eType == CXT_Attribute) &&
                     poFDefn->GetFieldIndex(pszName) < 0 &&
                     strcmp(pszName, "geotext") != 0 )
@@ -625,37 +622,40 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(CPLXMLNode* psSearchResults,
                     }
                     else if( strcmp(pszName, "lat") == 0 )
                     {
-                        if( pszVal != NULL )
-                        {
-                            bFoundLat = TRUE;
-                            dfLat = CPLAtofM(pszVal);
-                        }
                         oFieldDefn.SetType(OFTReal);
                     }
                     else if( strcmp(pszName, "lon") == 0 ||  /* Nominatim */
-                             strcmp(pszName, "lng") == 0 /* Geonames */ )
+                            strcmp(pszName, "lng") == 0 /* Geonames */ )
                     {
-                        if( pszVal != NULL )
-                        {
-                            bFoundLon = TRUE;
-                            dfLon = CPLAtofM(pszVal);
-                        }
                         oFieldDefn.SetType(OFTReal);
                     }
                     poLayer->CreateField(&oFieldDefn);
                 }
                 psChild = psChild->psNext;
             }
+        }
+        psPlace = psPlace->psNext;
+    }
 
-            if( bAddRawFeature )
-            {
-                OGRFieldDefn oFieldDefnRaw("raw", OFTString);
-                poLayer->CreateField(&oFieldDefnRaw);
-            }
+    if( bAddRawFeature )
+    {
+        OGRFieldDefn oFieldDefnRaw("raw", OFTString);
+        poLayer->CreateField(&oFieldDefnRaw);
+    }
 
-            /* Second iteration to fill the feature */
+    psPlace = psSearchResults->psChild;
+    while( psPlace != NULL )
+    {
+        if( psPlace->eType == CXT_Element &&
+            (strcmp(psPlace->pszValue, "place") == 0 || /* Nominatim */
+             strcmp(psPlace->pszValue, "geoname") == 0 /* Geonames */) )
+        {
+            int bFoundLat = FALSE, bFoundLon = FALSE;
+            double dfLat = 0.0, dfLon = 0.0;
+
+            /* Iteration to fill the feature */
             OGRFeature* poFeature = new OGRFeature(poFDefn);
-            psChild = psPlace->psChild;
+            CPLXMLNode* psChild = psPlace->psChild;
             while( psChild != NULL )
             {
                 int nIdx;
@@ -668,7 +668,20 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(CPLXMLNode* psSearchResults,
                 else if( (nIdx = poFDefn->GetFieldIndex(pszName)) >= 0 )
                 {
                     if( pszVal != NULL )
+                    {
                         poFeature->SetField(nIdx, pszVal);
+                        if( strcmp(pszName, "lat") == 0 )
+                        {
+                            bFoundLat = TRUE;
+                            dfLat = CPLAtofM(pszVal);
+                        }
+                        else if( strcmp(pszName, "lon") == 0 ||  /* Nominatim */
+                                 strcmp(pszName, "lng") == 0 /* Geonames */ )
+                        {
+                            bFoundLon = TRUE;
+                            dfLon = CPLAtofM(pszVal);
+                        }
+                    }
                 }
                 else if( strcmp(pszName, "geotext") == 0 )
                 {
@@ -848,7 +861,48 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode* psResultSet,
     OGRMemLayer* poLayer = new OGRMemLayer( "place", NULL, wkbPoint );
     OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
 
+    /* First iteration to add fields */
     CPLXMLNode* psPlace = psResultSet->psChild;
+    while( psPlace != NULL )
+    {
+        if( psPlace->eType == CXT_Element &&
+            strcmp(psPlace->pszValue, "Result") == 0 )
+        {
+            CPLXMLNode* psChild = psPlace->psChild;
+            while( psChild != NULL )
+            {
+                const char* pszName = psChild->pszValue;
+                if( (psChild->eType == CXT_Element || psChild->eType == CXT_Attribute) &&
+                    poFDefn->GetFieldIndex(pszName) < 0 )
+                {
+                    OGRFieldDefn oFieldDefn(pszName, OFTString);
+                    if( strcmp(pszName, "latitude") == 0 )
+                    {
+                        oFieldDefn.SetType(OFTReal);
+                    }
+                    else if( strcmp(pszName, "longitude") == 0 )
+                    {
+                        oFieldDefn.SetType(OFTReal);
+                    }
+                    poLayer->CreateField(&oFieldDefn);
+                }
+                psChild = psChild->psNext;
+            }
+        }
+
+        psPlace = psPlace->psNext;
+    }
+
+    OGRFieldDefn oFieldDefnDisplayName("display_name", OFTString);
+    poLayer->CreateField(&oFieldDefnDisplayName);
+
+    if( bAddRawFeature )
+    {
+        OGRFieldDefn oFieldDefnRaw("raw", OFTString);
+        poLayer->CreateField(&oFieldDefnRaw);
+    }
+
+    psPlace = psResultSet->psChild;
     while( psPlace != NULL )
     {
         if( psPlace->eType == CXT_Element &&
@@ -857,51 +911,9 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode* psResultSet,
             int bFoundLat = FALSE, bFoundLon = FALSE;
             double dfLat = 0.0, dfLon = 0.0;
 
-            /* First iteration to add fields */
-            CPLXMLNode* psChild = psPlace->psChild;
-            while( psChild != NULL )
-            {
-                const char* pszName = psChild->pszValue;
-                const char* pszVal = CPLGetXMLValue(psChild, NULL, NULL);
-                if( (psChild->eType == CXT_Element || psChild->eType == CXT_Attribute) &&
-                    poFDefn->GetFieldIndex(pszName) < 0 )
-                {
-                    OGRFieldDefn oFieldDefn(pszName, OFTString);
-                    if( strcmp(pszName, "latitude") == 0 )
-                    {
-                        if( pszVal != NULL )
-                        {
-                            bFoundLat = TRUE;
-                            dfLat = CPLAtofM(pszVal);
-                        }
-                        oFieldDefn.SetType(OFTReal);
-                    }
-                    else if( strcmp(pszName, "longitude") == 0 )
-                    {
-                        if( pszVal != NULL )
-                        {
-                            bFoundLon = TRUE;
-                            dfLon = CPLAtofM(pszVal);
-                        }
-                        oFieldDefn.SetType(OFTReal);
-                    }
-                    poLayer->CreateField(&oFieldDefn);
-                }
-                psChild = psChild->psNext;
-            }
-
-            OGRFieldDefn oFieldDefnDisplayName("display_name", OFTString);
-            poLayer->CreateField(&oFieldDefnDisplayName);
-
-            if( bAddRawFeature )
-            {
-                OGRFieldDefn oFieldDefnRaw("raw", OFTString);
-                poLayer->CreateField(&oFieldDefnRaw);
-            }
-
             /* Second iteration to fill the feature */
             OGRFeature* poFeature = new OGRFeature(poFDefn);
-            psChild = psPlace->psChild;
+            CPLXMLNode* psChild = psPlace->psChild;
             while( psChild != NULL )
             {
                 int nIdx;
@@ -914,7 +926,19 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode* psResultSet,
                 else if( (nIdx = poFDefn->GetFieldIndex(pszName)) >= 0 )
                 {
                     if( pszVal != NULL )
+                    {
                         poFeature->SetField(nIdx, pszVal);
+                        if( strcmp(pszName, "latitude") == 0 )
+                        {
+                            bFoundLat = TRUE;
+                            dfLat = CPLAtofM(pszVal);
+                        }
+                        else if( strcmp(pszName, "longitude") == 0 )
+                        {
+                            bFoundLon = TRUE;
+                            dfLon = CPLAtofM(pszVal);
+                        }
+                    }
                 }
                 psChild = psChild->psNext;
             }
@@ -972,21 +996,17 @@ static OGRLayerH OGRGeocodeBuildLayerBing (CPLXMLNode* psResponse,
     OGRMemLayer* poLayer = new OGRMemLayer( "place", NULL, wkbPoint );
     OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
 
+    /* First iteration to add fields  */
     CPLXMLNode* psPlace = psResources->psChild;
     while( psPlace != NULL )
     {
         if( psPlace->eType == CXT_Element &&
             strcmp(psPlace->pszValue, "Location") == 0 )
         {
-            int bFoundLat = FALSE, bFoundLon = FALSE;
-            double dfLat = 0.0, dfLon = 0.0;
-
-            /* First iteration to add fields */
             CPLXMLNode* psChild = psPlace->psChild;
             while( psChild != NULL )
             {
                 const char* pszName = psChild->pszValue;
-                const char* pszVal = CPLGetXMLValue(psChild, NULL, NULL);
                 if( (psChild->eType == CXT_Element || psChild->eType == CXT_Attribute) &&
                     strcmp(pszName, "BoundingBox") != 0 &&
                     strcmp(pszName, "GeocodePoint") != 0 &&
@@ -999,28 +1019,17 @@ static OGRLayerH OGRGeocodeBuildLayerBing (CPLXMLNode* psResponse,
                         while( psSubChild != NULL )
                         {
                             pszName = psSubChild->pszValue;
-                            pszVal = CPLGetXMLValue(psSubChild, NULL, NULL);
                             if( (psSubChild->eType == CXT_Element ||
-                                 psSubChild->eType == CXT_Attribute) &&
+                                psSubChild->eType == CXT_Attribute) &&
                                 poFDefn->GetFieldIndex(pszName) < 0 )
                             {
                                 OGRFieldDefn oFieldDefn(pszName, OFTString);
                                 if( strcmp(pszName, "Latitude") == 0 )
                                 {
-                                    if( pszVal != NULL )
-                                    {
-                                        bFoundLat = TRUE;
-                                        dfLat = CPLAtofM(pszVal);
-                                    }
                                     oFieldDefn.SetType(OFTReal);
                                 }
                                 else if( strcmp(pszName, "Longitude") == 0 )
                                 {
-                                    if( pszVal != NULL )
-                                    {
-                                        bFoundLon = TRUE;
-                                        dfLon = CPLAtofM(pszVal);
-                                    }
                                     oFieldDefn.SetType(OFTReal);
                                 }
                                 poLayer->CreateField(&oFieldDefn);
@@ -1036,16 +1045,28 @@ static OGRLayerH OGRGeocodeBuildLayerBing (CPLXMLNode* psResponse,
                 }
                 psChild = psChild->psNext;
             }
+        }
+        psPlace = psPlace->psNext;
+    }
 
-            if( bAddRawFeature )
-            {
-                OGRFieldDefn oFieldDefnRaw("raw", OFTString);
-                poLayer->CreateField(&oFieldDefnRaw);
-            }
+    if( bAddRawFeature )
+    {
+        OGRFieldDefn oFieldDefnRaw("raw", OFTString);
+        poLayer->CreateField(&oFieldDefnRaw);
+    }
 
-            /* Second iteration to fill the feature */
+    /* Iteration to fill the feature */
+    psPlace = psResources->psChild;
+    while( psPlace != NULL )
+    {
+        if( psPlace->eType == CXT_Element &&
+            strcmp(psPlace->pszValue, "Location") == 0 )
+        {
+            int bFoundLat = FALSE, bFoundLon = FALSE;
+            double dfLat = 0.0, dfLon = 0.0;
+
             OGRFeature* poFeature = new OGRFeature(poFDefn);
-            psChild = psPlace->psChild;
+            CPLXMLNode* psChild = psPlace->psChild;
             while( psChild != NULL )
             {
                 int nIdx;
@@ -1075,7 +1096,19 @@ static OGRLayerH OGRGeocodeBuildLayerBing (CPLXMLNode* psResponse,
                             (nIdx = poFDefn->GetFieldIndex(pszName)) >= 0 )
                         {
                             if( pszVal != NULL )
+                            {
                                 poFeature->SetField(nIdx, pszVal);
+                                if( strcmp(pszName, "Latitude") == 0 )
+                                {
+                                    bFoundLat = TRUE;
+                                    dfLat = CPLAtofM(pszVal);
+                                }
+                                else if( strcmp(pszName, "Longitude") == 0 )
+                                {
+                                    bFoundLon = TRUE;
+                                    dfLon = CPLAtofM(pszVal);
+                                }
+                            }
                         }
                         psSubChild = psSubChild->psNext;
                     }
