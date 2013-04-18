@@ -1903,45 +1903,57 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData, const char *pszName
     else if( psCtxt->bInRelation &&
              strcmp(pszName, "member") == 0 )
     {
-        if( psCtxt->sRelation.nMembers < psCtxt->nMembersAllocated )
+        /* 300 is the recommanded value, but there are files with more than 2000 so we should be able */
+        /* to realloc over that value */
+        if (psCtxt->sRelation.nMembers >= psCtxt->nMembersAllocated)
         {
-            OSMMember* psMember = &(psCtxt->pasMembers[psCtxt->sRelation.nMembers]);
-            psCtxt->sRelation.nMembers ++;
-
-            psMember->nID = 0;
-            psMember->pszRole = "";
-            psMember->eType = MEMBER_NODE;
-
-            if( ppszIter )
+            OSMMember* pasMembersNew;
+            int nMembersAllocated =
+                MAX(psCtxt->nMembersAllocated * 2, psCtxt->sRelation.nMembers + 1);
+            pasMembersNew = (OSMMember*) VSIRealloc(
+                    psCtxt->pasMembers,
+                    nMembersAllocated * sizeof(OSMMember));
+            if( pasMembersNew == NULL )
             {
-                while( ppszIter[0] != NULL )
-                {
-                    if( strcmp(ppszIter[0], "ref") == 0 )
-                    {
-                        psMember->nID = OSM_Atoi64( ppszIter[1] );
-                    }
-                    else if( strcmp(ppszIter[0], "type") == 0 )
-                    {
-                        if( strcmp( ppszIter[1], "node") == 0 )
-                            psMember->eType = MEMBER_NODE;
-                        else if( strcmp( ppszIter[1], "way") == 0 )
-                            psMember->eType = MEMBER_WAY;
-                        else if( strcmp( ppszIter[1], "relation") == 0 )
-                            psMember->eType = MEMBER_RELATION;
-                    }
-                    else if( strcmp(ppszIter[0], "role") == 0 )
-                    {
-                        psMember->pszRole = OSM_AddString(psCtxt, ppszIter[1]);
-                    }
-                    ppszIter += 2;
-                }
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Cannot allocate enough memory to store members of relation " CPL_FRMT_GIB,
+                        psCtxt->sRelation.nID);
+                return;
             }
+            psCtxt->nMembersAllocated = nMembersAllocated;
+            psCtxt->pasMembers = pasMembersNew;
         }
-        else
+
+        OSMMember* psMember = &(psCtxt->pasMembers[psCtxt->sRelation.nMembers]);
+        psCtxt->sRelation.nMembers ++;
+
+        psMember->nID = 0;
+        psMember->pszRole = "";
+        psMember->eType = MEMBER_NODE;
+
+        if( ppszIter )
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Too many members referenced in relation " CPL_FRMT_GIB,
-                     psCtxt->sRelation.nID);
+            while( ppszIter[0] != NULL )
+            {
+                if( strcmp(ppszIter[0], "ref") == 0 )
+                {
+                    psMember->nID = OSM_Atoi64( ppszIter[1] );
+                }
+                else if( strcmp(ppszIter[0], "type") == 0 )
+                {
+                    if( strcmp( ppszIter[1], "node") == 0 )
+                        psMember->eType = MEMBER_NODE;
+                    else if( strcmp( ppszIter[1], "way") == 0 )
+                        psMember->eType = MEMBER_WAY;
+                    else if( strcmp( ppszIter[1], "relation") == 0 )
+                        psMember->eType = MEMBER_RELATION;
+                }
+                else if( strcmp(ppszIter[0], "role") == 0 )
+                {
+                    psMember->pszRole = OSM_AddString(psCtxt, ppszIter[1]);
+                }
+                ppszIter += 2;
+            }
         }
     }
     else if( (psCtxt->bInNode || psCtxt->bInWay || psCtxt->bInRelation) &&
@@ -2230,6 +2242,8 @@ OSMContext* OSM_Open( const char* pszFilename,
         psCtxt->nTagsAllocated = 256;
         psCtxt->pasTags = (OSMTag*) VSIMalloc(sizeof(OSMTag) * psCtxt->nTagsAllocated);
 
+        /* 300 is the recommanded value, but there are files with more than 2000 so we should be able */
+        /* to realloc over that value */
         psCtxt->nMembersAllocated = 2000;
         psCtxt->pasMembers = (OSMMember*) VSIMalloc(sizeof(OSMMember) * psCtxt->nMembersAllocated);
 
