@@ -300,6 +300,8 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
             for (size_t i = 0; i < bandStats.nHistBucketCount; i++){
                 (*ppanHistogram)[i] = (int) bandStats.Histogram[i];
             }
+            //JTO: this is not perfect as You can't tell who wrote the histogram !!! 
+            //It will offset it unnecesarilly for files with hists not modified by GDAL. 
             double dfHalfBucket = (bandStats.fMaxHist -  bandStats.fMinHist) / (2 * (*pnBuckets - 1));
             if ( pdfMin != NULL ){
                 *pdfMin = bandStats.fMinHist - dfHalfBucket;
@@ -1267,7 +1269,7 @@ CPLErr ECWDataset::SetMetadata( char ** papszMetadata,
 {
     /* The bPreventCopyingSomeMetadata is set by ECWCreateCopy() */
     /* just before calling poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT ); */
-    if( bPreventCopyingSomeMetadata && pszDomain == NULL )
+    if( bPreventCopyingSomeMetadata && (pszDomain == NULL || EQUAL(pszDomain, "")) )
     {
         char** papszMetadataDup = NULL;
         char** papszIter = papszMetadata;
