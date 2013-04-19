@@ -2287,6 +2287,7 @@ static int GWKResampleOptimizedLanczos( GDALWarpKernel *poWK, int iBand,
 static GWKResampleWrkStruct* GWKResampleCreateWrkStruct(GDALWarpKernel *poWK)
 {
     int     nXDist = ( poWK->nXRadius + 1 ) * 2;
+    int     nYDist = ( poWK->nYRadius + 1 ) * 2;
 
     GWKResampleWrkStruct* psWrkStruct =
             (GWKResampleWrkStruct*)CPLMalloc(sizeof(GWKResampleWrkStruct));
@@ -2295,7 +2296,7 @@ static GWKResampleWrkStruct* GWKResampleCreateWrkStruct(GDALWarpKernel *poWK)
     psWrkStruct->padfWeightsX = (double *)CPLCalloc( nXDist, sizeof(double) );
     psWrkStruct->panCalcX = (char *)CPLMalloc( nXDist * sizeof(char) );
     
-    psWrkStruct->padfWeightsY = (double *)CPLCalloc( nXDist, sizeof(double) );
+    psWrkStruct->padfWeightsY = (double *)CPLCalloc( nYDist, sizeof(double) );
     psWrkStruct->iLastSrcX = -10;
     psWrkStruct->iLastSrcY = -10;
     psWrkStruct->dfLastDeltaX = -10;
