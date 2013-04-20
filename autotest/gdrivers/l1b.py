@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -71,6 +72,7 @@ gdaltest_list = []
 
 l1b_list = [ ('http://download.osgeo.org/gdal/data/l1b', 'n12gac8bit.l1b', 51754, -1, 220),
              ('http://download.osgeo.org/gdal/data/l1b', 'n12gac10bit.l1b', 46039, -1, 220),
+             ('http://download.osgeo.org/gdal/data/l1b', 'n12gac10bit_ebcdic.l1b', 46039, -1, 220), # 2848
              ('http://download.osgeo.org/gdal/data/l1b', 'n14gac16bit.l1b', 42286, -1, 220),
              ('http://download.osgeo.org/gdal/data/l1b', 'n15gac8bit.l1b', 55772, -1, 220),
              ('http://download.osgeo.org/gdal/data/l1b', 'n16gac10bit.l1b', 6749, -1, 220),
