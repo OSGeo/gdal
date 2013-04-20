@@ -39,6 +39,8 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 
+run_tiff_write_api_proxy = True
+
 ###############################################################################
 # Get the GeoTIFF driver, and verify a few things about it. 
 
@@ -4471,7 +4473,109 @@ def tiff_write_120():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test error cases of COPY_SRC_OVERVIEWS creation option
+
+def tiff_write_121():
+
+    # Test when the overview band is NULL
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+    <Overview>
+      <SourceFilename relativeToVRT="0">non_existing</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </Overview>
+  </VRTRasterBand>
+</VRTDataset>""")
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_121.tif', src_ds, options = ['COPY_SRC_OVERVIEWS=YES'])
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    src_ds = None
+
+    # Test when the overview count isn't the same on all base bands
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+    <Overview>
+      <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </Overview>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_121.tif', src_ds, options = ['COPY_SRC_OVERVIEWS=YES'])
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    src_ds = None
     
+    # Test when the overview bands of same level have not the same dimensions
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+    <Overview>
+      <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </Overview>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+    <Overview>
+      <SourceFilename relativeToVRT="0">data/rgbsmall.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </Overview>
+  </VRTRasterBand>
+</VRTDataset>""")
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_121.tif', src_ds, options = ['COPY_SRC_OVERVIEWS=YES'])
+    gdal.PopErrorHandler()
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    src_ds = None
+
+    return 'success'
+
+###############################################################################
+# Ask to run again tests with GDAL_API_PROXY=YES
+
+def tiff_write_api_proxy():
+
+    if not run_tiff_write_api_proxy:
+        return 'skip'
+
+    import test_py_scripts
+    ret = test_py_scripts.run_py_script_as_external_script('.', 'tiff_write', ' -api_proxy', display_live_on_parent_stdout = True)
+
+    if ret.find('Failed:    0') == -1:
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 def tiff_write_cleanup():
     gdaltest.tiff_drv = None
@@ -4605,9 +4709,15 @@ gdaltest_list = [
     tiff_write_118,
     tiff_write_119,
     tiff_write_120,
+    tiff_write_121,
+    #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
 if __name__ == '__main__':
+
+    if len(sys.argv) >= 2 and sys.argv[1] == '-api_proxy':
+        run_tiff_write_api_proxy = False
+        gdal.SetConfigOption('GDAL_API_PROXY', 'YES')
 
     gdaltest.setup_run( 'tiff_write' )
 
