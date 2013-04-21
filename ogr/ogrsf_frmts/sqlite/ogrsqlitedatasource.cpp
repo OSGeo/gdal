@@ -1443,6 +1443,7 @@ OGRLayer *OGRSQLiteDataSource::GetLayerByName( const char* pszLayerName )
     CPLPopErrorHandler();
     if( CPLGetLastErrorType() != 0 )
     {
+        CPLErrorReset();
         delete poLayer;
         nLayers --;
         return NULL;
