@@ -429,6 +429,7 @@ static int TestOGRLayerFeatureCount( OGRDataSource* poDS, OGRLayer *poLayer, int
     OGRFeatureDefn* poLayerDefn = poLayer->GetLayerDefn();
 
     poLayer->ResetReading();
+    CPLErrorReset();
 
     while( (poFeature = poLayer->GetNextFeature()) != NULL )
     {
@@ -473,6 +474,14 @@ static int TestOGRLayerFeatureCount( OGRDataSource* poDS, OGRLayer *poLayer, int
         }
         
         OGRFeature::DestroyFeature(poFeature);
+    }
+
+    /* mapogr.cpp doesn't like errors after GetNextFeature() */
+    if (CPLGetLastErrorType() != CE_None )
+    {
+        bRet = FALSE;
+        printf( "ERROR: An error was reported : %s\n",
+                CPLGetLastErrorMsg());
     }
 
     if( nFC != nClaimedFC )
