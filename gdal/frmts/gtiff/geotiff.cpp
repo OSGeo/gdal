@@ -8034,8 +8034,38 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if (nSrcOverviews != 0 &&
         CSLFetchBoolean(papszOptions, "COPY_SRC_OVERVIEWS", FALSE))
     {
-        int i;
-        for(i=0;i<nSrcOverviews;i++)
+        for(int j=1;j<=nBands;j++)
+        {
+            if( poSrcDS->GetRasterBand(j)->GetOverviewCount() != nSrcOverviews )
+            {
+                CPLError( CE_Failure, CPLE_NotSupported, 
+                  "COPY_SRC_OVERVIEWS cannot be used when the bands have not the same number of overview levels." );
+                CSLDestroy(papszCreateOptions);
+                return NULL;
+            }
+            for(int i=0;i<nSrcOverviews;i++)
+            {
+                GDALRasterBand* poOvrBand = poSrcDS->GetRasterBand(j)->GetOverview(i);
+                if( poOvrBand == NULL )
+                {
+                    CPLError( CE_Failure, CPLE_NotSupported, 
+                        "COPY_SRC_OVERVIEWS cannot be used when one overview band is NULL." );
+                    CSLDestroy(papszCreateOptions);
+                    return NULL;
+                }
+                GDALRasterBand* poOvrFirstBand = poSrcDS->GetRasterBand(1)->GetOverview(i);
+                if( poOvrBand->GetXSize() != poOvrFirstBand->GetXSize() ||
+                    poOvrBand->GetYSize() != poOvrFirstBand->GetYSize() )
+                {
+                    CPLError( CE_Failure, CPLE_NotSupported, 
+                    "COPY_SRC_OVERVIEWS cannot be used when the overview bands have not the same dimensions among bands." );
+                    CSLDestroy(papszCreateOptions);
+                    return NULL;
+                }
+            }
+        }
+
+        for(int i=0;i<nSrcOverviews;i++)
         {
             dfExtraSpaceForOverviews += ((double)poSrcDS->GetRasterBand(1)->GetOverview(i)->GetXSize()) *
                                         poSrcDS->GetRasterBand(1)->GetOverview(i)->GetYSize();
