@@ -838,11 +838,6 @@ CPLErr CPL_STDCALL GDALSetProjection( GDALDatasetH hDS, const char * pszProjecti
  * a CE_Failure error is returned, such as for formats that don't support
  * transformation to projection coordinates.
  *
- * NOTE: GetGeoTransform() isn't expressive enough to handle the variety of
- * OGC Grid Coverages pixel/line to projection transformation schemes.
- * Eventually this method will be depreciated in favour of a more general
- * scheme.
- *
  * This method does the same thing as the C GDALGetGeoTransform() function.
  *
  * @param padfTransform an existing six double buffer into which the
