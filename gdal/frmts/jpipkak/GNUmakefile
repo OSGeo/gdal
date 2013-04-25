@@ -27,6 +27,7 @@ kdu_cache.cpp:	  $(KAKDIR)/apps/caching_sources/kdu_cache.cpp
 clean:
 	rm -f *.o $(O_OBJ)
 	rm -f $(INSTOBJ)
+	rm -f kdu_cache.cpp
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
