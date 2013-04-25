@@ -64,9 +64,19 @@
 #  define kdu_client void
 #endif
 
-// #define KAKADU_JPX	1
-
 CPL_CVSID("$Id$");
+
+// Generally Kakadu does not advertise its version well, so we look for a
+// clue to V6 vs V7, the main difference in api.
+#ifndef KAKADU_VERSION
+#  ifdef KDU_TARGET_CAP_SEQUENTIAL
+#    define KAKADU_VERSION 700
+#  else
+#    define KAKADU_VERSION 600
+#  endif
+#endif
+
+// #define KAKADU_JPX	1
 
 static int kakadu_initialized = FALSE;
 
@@ -2053,8 +2063,11 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
             res.get_dims(dims);
             roi_node = poROIImage->acquire_node(c,dims);
         }
-
+#if KAKADU_VERSION >= 700
+        lines[c].pre_create(&allocator,nXSize,bReversible,bReversible,0,0);
+#else
         lines[c].pre_create(&allocator,nXSize,bReversible,bReversible);
+#endif
         engines[c] = kdu_analysis(res,&allocator,bReversible,1.0F,roi_node);
     }
 
@@ -2166,7 +2179,11 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                         dest->fval = *sp;  /* scale it? */
                 }
 
+#if KAKADU_VERSION >= 700
+                engines[c].push(lines[c]);
+#else
                 engines[c].push(lines[c],true);
+#endif
 
                 iLinesWritten++;
 
@@ -2866,7 +2883,8 @@ void GDALRegister_JP2KAK()
         
         poDriver->SetDescription( "JP2KAK" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "JPEG-2000 (based on Kakadu)" );
+                                   "JPEG-2000 (based on Kakadu " 
+                                   KDU_CORE_VERSION ")" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_jp2kak.html" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
