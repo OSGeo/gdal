@@ -14,3 +14,8 @@ KAK_OBJ +=	\
     $(KAKDIR)/apps/make/kdu_tiff.o \
     $(KAKDIR)/apps/make/jpx.o
 
+# The following are just for Kakadu 7.0 later.
+ifneq ($(wildcard $(KAKDIR)/apps/make/ssse3_stripe_transfe?.o),)
+KAK_OBJ +=	\
+    $(KAKDIR)/apps/make/ssse3_stripe_transfer.o
+endif
