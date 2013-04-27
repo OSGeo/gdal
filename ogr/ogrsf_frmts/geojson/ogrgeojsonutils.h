@@ -31,6 +31,7 @@
 
 #include <ogr_core.h>
 #include <jsonc/json.h> // JSON-C
+#include "cpl_vsi.h"
 
 class OGRGeometry;
 
@@ -60,7 +61,7 @@ enum GeoJSONSourceType
     eGeoJSONSourceService
 };
 
-GeoJSONSourceType GeoJSONGetSourceType( const char* pszSource );
+GeoJSONSourceType GeoJSONGetSourceType( const char* pszSource, VSILFILE** pfp );
 
 /************************************************************************/
 /*                           GeoJSONProtocolType                        */
