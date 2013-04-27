@@ -94,12 +94,15 @@ public:
     void SetSkipAttributes( bool bSkip );
 
     OGRErr Parse( const char* pszText );
-    OGRGeoJSONLayer* ReadLayer( const char* pszName, OGRGeoJSONDataSource* poDS );
+    void ReadLayers( OGRGeoJSONDataSource* poDS );
+    void ReadLayer( OGRGeoJSONDataSource* poDS,
+                    const char* pszName,
+                    json_object* poObj );
 
 private:
 
     json_object* poGJObject_;
-    OGRGeoJSONLayer* poLayer_;
+
     bool bGeometryPreserve_;
     bool bAttributesSkip_;
 
@@ -115,14 +118,14 @@ private:
     //
     // Translation utilities.
     //
-    bool GenerateLayerDefn();
-    bool GenerateFeatureDefn( json_object* poObj );
-    bool AddFeature( OGRGeometry* poGeometry );
-    bool AddFeature( OGRFeature* poFeature );
+    bool GenerateLayerDefn( OGRGeoJSONLayer* poLayer, json_object* poGJObject );
+    bool GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_object* poObj );
+    bool AddFeature( OGRGeoJSONLayer* poLayer, OGRGeometry* poGeometry );
+    bool AddFeature( OGRGeoJSONLayer* poLayer, OGRFeature* poFeature );
 
     OGRGeometry* ReadGeometry( json_object* poObj );
-    OGRFeature* ReadFeature( json_object* poObj );
-    OGRGeoJSONLayer* ReadFeatureCollection( json_object* poObj );
+    OGRFeature* ReadFeature( OGRGeoJSONLayer* poLayer, json_object* poObj );
+    void ReadFeatureCollection( OGRGeoJSONLayer* poLayer, json_object* poObj );
 };
 
 /************************************************************************/
@@ -162,7 +165,7 @@ public:
     ~OGRESRIJSONReader();
 
     OGRErr Parse( const char* pszText );
-    OGRGeoJSONLayer* ReadLayer( const char* pszName, OGRGeoJSONDataSource* poDS );
+    void ReadLayers( OGRGeoJSONDataSource* poDS );
 
 private:
 
