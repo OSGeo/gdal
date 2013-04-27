@@ -1355,6 +1355,64 @@ fi
 AC_SUBST(X_FME_HOME,$X_FME_HOME)
 
 dnl ---------------------------------------------------------------------------
+dnl Select a SOSI lib to use, or disable driver.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(sosi,[  --with-sosi[=ARG]        Include SOSI support (ARG=SOSI lib Path, yes or no)],,)
+
+if test -z "$with_sosi" -o "$with_sosi" = "no" ; then
+
+  SOSI_ENABLED=no
+
+  echo "SOSI support disabled."
+
+elif test "$with_sosi" = "yes" -o "$with_sosi" = "" ; then
+
+    AC_MSG_CHECKING([for libfyba.a, libfygm.a and libfyut.a in /usr/local/lib])
+    if test -r /usr/local/lib/libfyba.a -a -r /usr/local/lib/libfygm.a -a -r /usr/local/lib/libfyut.a ; then
+        AC_MSG_RESULT([found])
+        SOSI_ENABLED=yes
+        SOSI_LIB="/usr/local/lib/libfyba.a /usr/local/lib/libfygm.a /usr/local/lib/libfyut.a"
+    else
+        AC_MSG_ERROR([not found.])
+    fi
+
+    AC_MSG_CHECKING([for fyba.h, fygm.h and fyut.h in /usr/local/include/fyba])
+    if test -r /usr/local/include/fyba/fyba.h -a -r /usr/local/include/fyba/fygm.h -a -r /usr/local/include/fyba/fyut.h ; then
+        AC_MSG_RESULT([found])
+        SOSI_ENABLED=yes
+        SOSI_INC="-I/usr/local/include/fyba"
+    else
+        AC_MSG_ERROR([not found.])
+    fi
+
+else
+
+  AC_MSG_CHECKING([for libfyba.a, libfygm.a and libfyut.a in $with_sosi/lib])
+  if test -r $with_sosi/lib/libfyba.a -a -r $with_sosi/lib/libfygm.a -a -r $with_sosi/lib/libfyut.a ; then
+    AC_MSG_RESULT([found.])
+    SOSI_LIB="$with_sosi/lib/libfyba.a $with_sosi/lib/libfygm.a $with_sosi/lib/libfyut.a"
+    SOSI_ENABLED=yes
+  else
+    AC_MSG_ERROR([not found.])
+  fi
+
+  AC_MSG_CHECKING([for fyba.h in $with_sosi/include/fyba])
+  if test -r $with_sosi/include/fyba/fyba.h -a -r $with_sosi/include/fyba/fygm.h -a -r $with_sosi/include/fyba/fyut.h ; then
+    AC_MSG_RESULT([found.])
+    SOSI_INC="-I$with_sosi/include/fyba"
+    SOSI_ENABLED=yes
+  else
+    AC_MSG_ERROR([not found.])
+  fi
+
+fi
+
+AC_SUBST(SOSI_ENABLED, $SOSI_ENABLED)
+AC_SUBST(SOSI_LIB, $SOSI_LIB)
+AC_SUBST(SOSI_INC, $SOSI_INC)
+
+dnl ---------------------------------------------------------------------------
 dnl Select an HDF4 Library to use, or disable driver.
 dnl
 dnl We assume the user will have libjpeg and libz from other sources when
@@ -4012,6 +4070,7 @@ LOC_MSG([  Podofo support:            ${HAVE_PODOFO}])
 LOC_MSG([  OpenCL support:            ${OPENCL_SETTING}])
 LOC_MSG([  Armadillo support:         ${HAVE_ARMADILLO}])
 LOC_MSG([  FreeXL support:            ${HAVE_FREEXL}])
+LOC_MSG([  SOSI support:              ${SOSI_ENABLED}])
 LOC_MSG()
 if test ! -z "`uname | grep Darwin`" ; then
   LOC_MSG([  Mac OS X Framework :       ${MACOSX_FRAMEWORK}])
