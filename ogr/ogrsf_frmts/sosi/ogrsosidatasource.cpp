@@ -148,6 +148,7 @@ OGRSOSIDataSource::OGRSOSIDataSource() {
     poCurveHeaders = NULL;
     
     pszEncoding = CPL_ENC_UTF8;
+    nMode = MODE_READING;
 }
 
 /************************************************************************/
@@ -305,11 +306,12 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
             if (pszLine[0] == '!') continue;  /* If we have a comment line, skip it. */
             
             char *pszUTFLine = CPLRecode(pszLine, pszEncoding, CPL_ENC_UTF8); /* switch to UTF encoding here, if it is known. */
+            char *pszUTFLineIter = pszUTFLine;
 			
-            while (pszUTFLine[0] == '.') pszUTFLine++; /* Skipping the dots at the beginning of a SOSI line */
-            char *pszPos = strstr(pszUTFLine, " "); /* Split header and value */
+            while (pszUTFLineIter[0] == '.') pszUTFLineIter++; /* Skipping the dots at the beginning of a SOSI line */
+            char *pszPos = strstr(pszUTFLineIter, " "); /* Split header and value */
             if (pszPos != NULL) {
-                CPLString osKey = CPLString(std::string(pszUTFLine,pszPos)); /* FIXME: clean instantiation of CPLString? */
+                CPLString osKey = CPLString(std::string(pszUTFLineIter,pszPos)); /* FIXME: clean instantiation of CPLString? */
                 CPLString osValue = CPLString(pszPos+1);
                 
                 oHeaders[osKey]=osValue;          /* Add to header map */
@@ -344,7 +346,7 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
                 }
                 }
             }
-            //CPLFree(pszUTFLine);
+            CPLFree(pszUTFLine);
         }
 
         /* Feature-specific tasks */
@@ -384,7 +386,6 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
                 return NULL;
             }
             poSRS = new OGRSpatialReference();
-            poSRS->Reference();
 
             /* Get coordinate system from SOSI header. */
             int nEPSG = sosi2epsg(oTrans.sKoordsys);
