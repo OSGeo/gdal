@@ -203,7 +203,7 @@ void OGRRegisterAll()
     RegisterOGRWFS();
 #endif
 #ifdef SOSI_ENABLED 
-	RegisterOGRSOSI(); 
+    RegisterOGRSOSI(); 
 #endif
 #ifdef HTF_ENABLED
     RegisterOGRHTF();
