@@ -148,6 +148,8 @@ public:
                            OGRwkbGeometryType eGType = wkbUnknown,
                            char** papszOptions = NULL );
     int TestCapability( const char* pszCap );
+    
+    void AddLayer( OGRGeoJSONLayer* poLayer );
 
     //
     // OGRGeoJSONDataSource Interface
@@ -198,9 +200,9 @@ private:
     // Priavte utility functions
     //
     void Clear();
-    int ReadFromFile( const char* pszSource );
+    int ReadFromFile( const char* pszSource, VSILFILE* fpIn );
     int ReadFromService( const char* pszSource );
-    OGRGeoJSONLayer* LoadLayer();
+    void LoadLayers();
 };
 
 

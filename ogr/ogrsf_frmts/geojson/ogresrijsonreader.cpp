@@ -95,11 +95,10 @@ OGRErr OGRESRIJSONReader::Parse( const char* pszText )
 }
 
 /************************************************************************/
-/*                           ReadLayer()                                */
+/*                           ReadLayers()                               */
 /************************************************************************/
 
-OGRGeoJSONLayer* OGRESRIJSONReader::ReadLayer( const char* pszName,
-                                                OGRGeoJSONDataSource* poDS )
+void OGRESRIJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
 {
     CPLAssert( NULL == poLayer_ );
 
@@ -107,10 +106,10 @@ OGRGeoJSONLayer* OGRESRIJSONReader::ReadLayer( const char* pszName,
     {
         CPLDebug( "ESRIJSON",
                   "Missing parset ESRIJSON data. Forgot to call Parse()?" );
-        return NULL;
+        return;
     }
-        
-    poLayer_ = new OGRGeoJSONLayer( pszName, NULL,
+
+    poLayer_ = new OGRGeoJSONLayer( OGRGeoJSONLayer::DefaultName, NULL,
                                     OGRESRIJSONGetGeometryType(poGJObject_),
                                     poDS );
 
@@ -120,7 +119,7 @@ OGRGeoJSONLayer* OGRESRIJSONReader::ReadLayer( const char* pszName,
             "Layer schema generation failed." );
 
         delete poLayer_;
-        return NULL;
+        return;
     }
 
     OGRGeoJSONLayer* poThisLayer = NULL;
@@ -128,7 +127,7 @@ OGRGeoJSONLayer* OGRESRIJSONReader::ReadLayer( const char* pszName,
     if (poThisLayer == NULL)
     {
         delete poLayer_;
-        return NULL;
+        return;
     }
 
     OGRSpatialReference* poSRS = NULL;
@@ -139,7 +138,7 @@ OGRGeoJSONLayer* OGRESRIJSONReader::ReadLayer( const char* pszName,
         delete poSRS;
     }
 
-    return poLayer_;
+    poDS->AddLayer(poLayer_);
 }
 
 /************************************************************************/
