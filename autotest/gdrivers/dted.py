@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -305,6 +306,17 @@ def dted_14():
     return tst.testOpen()
 
 ###############################################################################
+# Perform simple read test with GDAL_DTED_SINGLE_BLOCK = YES
+
+def dted_15():
+
+    gdal.SetConfigOption('GDAL_DTED_SINGLE_BLOCK', 'YES')
+    tst = gdaltest.GDALTest( 'dted', 'n43.dt0', 1, 49187)
+    ret = tst.testOpen()
+    gdal.SetConfigOption('GDAL_DTED_SINGLE_BLOCK', None)
+    return ret
+
+###############################################################################
 # Cleanup.
 
 def dted_cleanup():
@@ -337,6 +349,7 @@ gdaltest_list = [
     dted_12,
     dted_13,
     dted_14,
+    dted_15,
     dted_cleanup
     ]
   

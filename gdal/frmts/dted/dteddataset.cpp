@@ -30,6 +30,7 @@
 #include "dted_api.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -136,21 +137,24 @@ CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if (nBlockXSize != 1)
     {
+        const int cbs = 32; // optimize for 64 byte cache line size
+        const int bsy = (nBlockYSize + cbs - 1) / cbs * cbs;
         panData = (GInt16 *) pImage;
-        GInt16* panBuffer = (GInt16*) CPLMalloc(sizeof(GInt16) * nBlockYSize);
-        int i;
-        for(i=0;i<nBlockXSize;i++)
-        {
-            if( !DTEDReadProfileEx( poDTED_DS->psDTED, i, panBuffer,
-                                    poDTED_DS->bVerifyChecksum ) )
-            {
-                CPLFree(panBuffer);
-                return CE_Failure;
+        GInt16* panBuffer = (GInt16*) CPLMalloc(sizeof(GInt16) * cbs * bsy);
+        for (int i = 0; i < nBlockXSize; i += cbs) {
+            int n = std::min(cbs, nBlockXSize - i);
+            for (int j = 0; j < n; ++j) {
+                if (!DTEDReadProfileEx(poDTED_DS->psDTED, i + j, panBuffer + j * bsy, poDTED_DS->bVerifyChecksum)) {
+                    CPLFree(panBuffer);
+                    return CE_Failure;
+                }
             }
-            int j;
-            for(j=0;j<nBlockYSize;j++)
-            {
-                panData[j * nBlockXSize + i] = panBuffer[nYSize - j - 1];
+            for (int y = 0; y < nBlockYSize; ++y) {
+                GInt16 *dst = panData + i + (nYSize - y - 1) * nBlockXSize;
+                GInt16 *src = panBuffer + y;
+                for (int j = 0; j < n; ++j) {
+                    dst[j] = src[j * bsy];
+                }
             }
         }
 
@@ -172,11 +176,7 @@ CPLErr DTEDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     for( int i = nYSize/2; i >= 0; i-- )
     {
-        GInt16  nTemp;
-
-        nTemp = panData[i];
-        panData[i] = panData[nYSize - i - 1];
-        panData[nYSize - i - 1] = nTemp;
+        std::swap(panData[i], panData[nYSize - i - 1]);
     }
 
     return CE_None;
