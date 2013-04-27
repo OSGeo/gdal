@@ -193,7 +193,8 @@ OGRSOSIDataSource::~OGRSOSIDataSource() {
     if (pszName != NULL) CPLFree(pszName);
 }
 
-OGRFeatureDefn *defineLayer(char *szName, OGRwkbGeometryType szType, S2I *poHeaders) {
+static
+OGRFeatureDefn *defineLayer(const char *szName, OGRwkbGeometryType szType, S2I *poHeaders) {
     OGRFeatureDefn *poFeatureDefn = new OGRFeatureDefn( szName );
     poFeatureDefn->SetGeomType( szType );
     
@@ -223,6 +224,11 @@ int  OGRSOSIDataSource::Open( const char *pszFilename, int bUpdate ) {
                   "Update access not supported by the SOSI driver." );
         return FALSE;
     }
+
+    /* Check that the file exists otherwise HO_TestSOSI() emits an error */
+    VSIStatBuf sStat;
+    if( VSIStat(pszFilename, &sStat) != 0 )
+        return FALSE;
 
     pszName = CPLStrdup( pszFilename );
     /* We ignore any layer parameters for now. */
