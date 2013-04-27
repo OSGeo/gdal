@@ -1046,6 +1046,69 @@ def ogr_geojson_23():
     return 'success'
 
 ###############################################################################
+# Test alternate form of geojson
+
+def ogr_geojson_24():
+
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    content = """loadGeoJSON({"layerFoo": { "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [2, 49]
+    },
+  "name": "bar"
+},
+"layerBar": { "type": "FeatureCollection", "features" : [  { "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [2, 49]
+    },
+  "other_name": "baz"
+}]}})"""
+
+    for i in range(2):
+        if i == 0:
+            ds = ogr.Open(content)
+        else:
+            gdal.FileFromMemBuffer('/vsimem/ogr_geojson_24.js', content)
+            ds = ogr.Open('/vsimem/ogr_geojson_24.js')
+            gdal.Unlink('/vsimem/ogr_geojson_24.js')
+
+        if ds is None:
+            gdaltest.post_reason('Failed to open datasource')
+            return 'fail'
+
+        lyr = ds.GetLayerByName('layerFoo')
+        if lyr is None:
+            gdaltest.post_reason('cannot find layer')
+            return 'fail'
+
+        feature = lyr.GetNextFeature()
+        ref_geom = ogr.CreateGeometryFromWkt('POINT (2 49)')
+        if feature.GetFieldAsString("name") != 'bar' or \
+        ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+            feature.DumpReadable()
+            return 'fail'
+
+        lyr = ds.GetLayerByName('layerBar')
+        if lyr is None:
+            gdaltest.post_reason('cannot find layer')
+            return 'fail'
+
+        feature = lyr.GetNextFeature()
+        ref_geom = ogr.CreateGeometryFromWkt('POINT (2 49)')
+        if feature.GetFieldAsString("other_name") != 'baz' or \
+        ogrtest.check_feature_geometry(feature, ref_geom) != 0:
+            feature.DumpReadable()
+            return 'fail'
+
+        ds = None
+
+    return 'success'
+
+###############################################################################
 
 def ogr_geojson_cleanup():
 
@@ -1100,6 +1163,7 @@ gdaltest_list = [
     ogr_geojson_21,
     ogr_geojson_22,
     ogr_geojson_23,
+    ogr_geojson_24,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':

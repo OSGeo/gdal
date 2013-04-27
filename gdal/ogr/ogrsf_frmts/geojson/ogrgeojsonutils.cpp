@@ -47,17 +47,31 @@ int GeoJSONIsObject( const char* pszText )
     while( *pszText != '\0' && isspace( (unsigned char)*pszText ) )
         pszText++;
 
-    if( EQUALN( pszText, "{", 1) )
-        return TRUE;
+    const char* const apszPrefix[] = { "loadGeoJSON(", "jsonp(" };
+    for(size_t iP = 0; iP < sizeof(apszPrefix) / sizeof(apszPrefix[0]); iP++ )
+    {
+        if( strncmp(pszText, apszPrefix[iP], strlen(apszPrefix[iP])) == 0 )
+        {
+            pszText += strlen(apszPrefix[iP]);
+            break;
+        }
+    }
 
-    return FALSE;
+    if( *pszText != '{' )
+        return FALSE;
+
+    return ((strstr(pszText, "\"type\"") != NULL && strstr(pszText, "\"coordinates\"") != NULL) 
+        || strstr(pszText, "\"FeatureCollection\"") != NULL
+        || strstr(pszText, "\"Feature\"") != NULL
+        || (strstr(pszText, "\"geometryType\"") != NULL && strstr(pszText, "\"esriGeometry") != NULL));
 }
 
 /************************************************************************/
 /*                           GeoJSONFileIsObject()                      */
 /************************************************************************/
 
-int GeoJSONFileIsObject( const char* pszSource ) 
+static
+int GeoJSONFileIsObject( const char* pszSource, VSILFILE** pfp ) 
 { 
     CPLAssert( NULL != pszSource ); 
  
@@ -88,37 +102,31 @@ int GeoJSONFileIsObject( const char* pszSource )
         VSIFCloseL( fp ); 
         CPLFree( pszGeoData ); 
         return FALSE; 
-    } 
-    VSIFCloseL( fp ); 
-    
-    char* pszIter = pszGeoData;
-    while( *pszIter != '\0' && isspace( (unsigned char)*pszIter ) )
-        pszIter++;
+    }
 
-    if( *pszIter != '{' )
+    if( !GeoJSONIsObject(pszGeoData) )
     {
         CPLFree( pszGeoData ); 
+        VSIFCloseL( fp ); 
         return FALSE;
     }
 
-    int bRet = FALSE; 
+    *pfp = fp;
 
-    if ((strstr(pszGeoData, "\"type\"") != NULL && strstr(pszGeoData, "\"coordinates\"") != NULL) 
-        || strstr(pszGeoData, "\"FeatureCollection\"") != NULL
-        || (strstr(pszGeoData, "\"geometryType\"") != NULL && strstr(pszGeoData, "\"esriGeometry") != NULL)) 
-        bRet = TRUE; 
-     
     CPLFree( pszGeoData ); 
-    return bRet; 
+
+    return TRUE; 
 } 
 
 /************************************************************************/
 /*                           GeoJSONGetSourceType()                     */
 /************************************************************************/
 
-GeoJSONSourceType GeoJSONGetSourceType( const char* pszSource )
+GeoJSONSourceType GeoJSONGetSourceType( const char* pszSource, VSILFILE** pfp )
 {
     GeoJSONSourceType srcType = eGeoJSONSourceUnknown;
+
+    *pfp = NULL;
 
     // NOTE: Sometimes URL ends with .geojson token, for example
     //       http://example/path/2232.geojson
@@ -139,7 +147,7 @@ GeoJSONSourceType GeoJSONGetSourceType( const char* pszSource )
     {
         srcType = eGeoJSONSourceText;
     }
-    else if( GeoJSONFileIsObject( pszSource ) )
+    else if( GeoJSONFileIsObject( pszSource, pfp ) )
     {
         srcType = eGeoJSONSourceFile;
     }
