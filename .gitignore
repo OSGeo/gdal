@@ -43,7 +43,7 @@ apps/ogr2ogr
 apps/ogrinfo
 apps/ogrtindex
 apps/testepsg
-apps/gdalclientserver
+apps/gdalserver
 apps/test_ogrsf
 swig/python/build
 swig/perl/Const.bs
