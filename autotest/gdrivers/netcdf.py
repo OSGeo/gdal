@@ -150,9 +150,9 @@ def netcdf_test_deflate( ifile, checksum, zlevel=1, timeout=None ):
         return 'skip'
 
     ofile1 = 'tmp/' + os.path.basename(ifile) + '-1.nc'
-    ofile1_opts = [ 'FILETYPE=NC4C', 'COMPRESS=NONE']
+    ofile1_opts = [ 'FORMAT=NC4C', 'COMPRESS=NONE']
     ofile2 = 'tmp/' + os.path.basename(ifile) + '-2.nc'
-    ofile2_opts = [ 'FILETYPE=NC4C', 'COMPRESS=DEFLATE', 'ZLEVEL='+str(zlevel) ]
+    ofile2_opts = [ 'FORMAT=NC4C', 'COMPRESS=DEFLATE', 'ZLEVEL='+str(zlevel) ]
 
     if not os.path.exists( ifile ):
         gdaltest.post_reason( 'ifile %s does not exist' % ifile )
@@ -181,7 +181,7 @@ def netcdf_test_deflate( ifile, checksum, zlevel=1, timeout=None ):
 
 ###############################################################################
 # check support for reading attributes (single values and array values)
-def netcdf_check_vars( ifile, vals_global, vals_band ):
+def netcdf_check_vars( ifile, vals_global=None, vals_band=None ):
 
     src_ds = gdal.Open( ifile )
 
@@ -207,6 +207,8 @@ def netcdf_check_vars( ifile, vals_global, vals_band ):
     
     metadata = metadata_global
     vals = vals_global
+    if vals is None:
+        vals = dict()
     for k, v in vals.items():
         if not k in metadata:
             gdaltest.post_reason("missing metadata [%s]" % (str(k)))
@@ -220,6 +222,8 @@ def netcdf_check_vars( ifile, vals_global, vals_band ):
 
     metadata = metadata_band
     vals = vals_band
+    if vals is None:
+        vals = dict()
     for k, v in vals.items():
         if not k in metadata:
             gdaltest.post_reason("missing metadata [%s]" % (str(k)))
@@ -1128,6 +1132,48 @@ def netcdf_31():
     return 'success'
 
 ###############################################################################
+# Test NC_UBYTE write/read - netcdf-4 (FORMAT=NC4) only (#5053)
+
+def netcdf_32():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    ifile = 'data/byte.tif'
+    ofile = 'tmp/netcdf_32.nc'
+
+    #gdal.SetConfigOption('CPL_DEBUG', 'ON')
+
+    # test basic read/write
+    result = netcdf_test_copy( ifile, 1, 4672, ofile, [ 'FORMAT=NC4' ] )
+    if result != 'success':
+        return 'fail'
+    result = netcdf_test_copy( ifile, 1, 4672, ofile, [ 'FORMAT=NC4C' ] )
+    if result != 'success':
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# TEST NC_UBYTE metadata read - netcdf-4 (FORMAT=NC4) only (#5053)
+def netcdf_33():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ifile = 'data/nc_vars.nc'
+    ofile = 'tmp/netcdf_33.nc'
+
+    result = netcdf_test_copy( ifile, 1, None, ofile, [ 'FORMAT=NC4' ] )
+    if result != 'success':
+        return result
+
+    return netcdf_check_vars( 'tmp/netcdf_33.nc' )
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -1164,6 +1210,8 @@ gdaltest_list = [
     netcdf_29,
     netcdf_30,
     netcdf_31,
+    netcdf_32,
+    netcdf_33
  ]
 
 ###############################################################################
