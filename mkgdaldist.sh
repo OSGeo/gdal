@@ -138,6 +138,7 @@ mv gdal gdal-${GDAL_VERSION}
 rm -f ../gdal-${GDAL_VERSION}${RC}.tar.gz ../gdal${COMPRESSED_VERSION}${RC}.zip
 
 tar cf ../gdal-${GDAL_VERSION}${RC}.tar gdal-${GDAL_VERSION}
+xz -k9e ../gdal-${GDAL_VERSION}${RC}.tar
 gzip -9 ../gdal-${GDAL_VERSION}${RC}.tar
 zip -qr ../gdal${COMPRESSED_VERSION}${RC}.zip gdal-${GDAL_VERSION}
 
@@ -150,11 +151,12 @@ else
 MD5=md5sum
 fi
 
-$MD5 ../gdal-${GDAL_VERSION}${RC}.tar.gz > ../gdal-${GDAL_VERSION}${RC}.tar.gz.md5
-$MD5 ../gdal${COMPRESSED_VERSION}${RC}.zip > ../gdal${COMPRESSED_VERSION}${RC}.zip.md5
+cd ..
+$MD5 gdal-${GDAL_VERSION}${RC}.tar.xz > gdal-${GDAL_VERSION}${RC}.tar.xz.md5
+$MD5 gdal-${GDAL_VERSION}${RC}.tar.gz > gdal-${GDAL_VERSION}${RC}.tar.gz.md5
+$MD5 gdal${COMPRESSED_VERSION}${RC}.zip > gdal${COMPRESSED_VERSION}${RC}.zip.md5
 
 echo "* Cleaning..."
-cd ..
 rm -rf dist_wrk
 
 echo "*** The End ***"
