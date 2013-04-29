@@ -68,7 +68,7 @@ release.
    svn copy https://svn.osgeo.org/gdal/trunk \
             https://svn.osgeo.org/gdal/branches/1.5
 
-8) Tag the release set in CVS: 
+8) Tag the release set in SVN: 
 
    svn copy https://svn.osgeo.org/gdal/branches/1.4 \
             https://svn.osgeo.org/gdal/tags/1.4.1
@@ -102,7 +102,10 @@ release.
   % cd frmts/grass
   % make dist
 
-12) Publish the resulting files in download.osgeo.org/gdal.
+12) Publish the resulting files in download.osgeo.org/gdal/X.Y.Z (where X.Y.Z is the version number)
+    and add a symlink from X.Y.Z to CURRENT (except for stable releases in a "old" branch).
+
+  % ln -sf X.Y.Z CURRENT
 
 13) Announce release to the gdal-dev@lists.maptools.org, 
    gdal-announce@lists.osgeo.org, freegis@freegis.org and news_item@osgeo.org. 
