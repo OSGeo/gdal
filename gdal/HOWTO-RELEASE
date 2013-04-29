@@ -102,7 +102,10 @@ release.
   % cd frmts/grass
   % make dist
 
-12) Publish the resulting files in download.osgeo.org/gdal.
+12) Publish the resulting files in download.osgeo.org/gdal/X.Y.Z (where X.Y.Z is the version number)
+    and add a symlink from X.Y.Z to CURRENT.
+
+  % ln -sf X.Y.Z CURRENT
 
 13) Announce release to the gdal-dev@lists.maptools.org, 
    gdal-announce@lists.osgeo.org, freegis@freegis.org and news_item@osgeo.org. 
