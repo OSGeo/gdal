@@ -375,12 +375,17 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             /* set PIXELTYPE=SIGNEDBYTE */
             /* See http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure */
             SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE" );    
-            CPLDebug( "GDAL_netCDF", "got signed Byte" );        
         }
-        else 
-            CPLDebug( "GDAL_netCDF", "got unsigned Byte" );
 
     }
+
+#ifdef NETCDF_HAS_NC4
+    if ( nc_datatype == NC_UBYTE )
+        this->bSignedData = FALSE;
+#endif
+    
+    CPLDebug( "GDAL_netCDF", "netcdf type=%d gdal type=%d signedByte=%d",
+              nc_datatype, eDataType, bSignedData );
 
 /* -------------------------------------------------------------------- */
 /*      Create Band Metadata                                            */
@@ -1209,8 +1214,8 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( status != NC_NOERR )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "netCDF scanline fetch failed: %s", 
-                  nc_strerror( status ) );
+                  "netCDF scanline fetch failed: #%d (%s)", 
+                  status, nc_strerror( status ) );
         return CE_Failure;
     }
     else
@@ -3683,7 +3688,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
             int i,j;
             
             size_t start[]={ 0, 0 };
-            size_t count[]={ 1, nRasterXSize };
+            size_t count[]={ 1, (size_t)nRasterXSize };
             padLatVal = (double *) CPLMalloc( nRasterXSize * sizeof( double ) );
             padLonVal = (double *) CPLMalloc( nRasterXSize * sizeof( double ) );
 
@@ -5597,7 +5602,7 @@ int netCDFDataset::DefVarDeflate( int nVarId, int bChunking )
         status = nc_def_var_deflate(cdfid,nVarId,1,1,nZLevel);
         NCDF_ERR(status);
         if ( (status == NC_NOERR) && bChunking ) {
-            size_t chunksize[] = { 1, nRasterXSize };                   
+            size_t chunksize[] = { 1, (size_t)nRasterXSize };                   
             CPLDebug( "GDAL_netCDF", 
                       "DefVarDeflate() chunksize={%ld, %ld}",
                       (long)chunksize[0], (long)chunksize[1] );
@@ -6112,7 +6117,6 @@ CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
             pszAttrValue[nAttrLen]='\0';
             dfValue = 0.0;
             break;
-        /* TODO support NC_UBYTE */
         case NC_BYTE:
             signed char *pscTemp;
             pscTemp = (signed char *) CPLCalloc( nAttrLen, sizeof( signed char ) );
@@ -6126,6 +6130,21 @@ CPLErr NCDFGetAttr1( int nCdfId, int nVarId, const char *pszAttrName,
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
             CPLFree(pscTemp);
             break;
+#ifdef NETCDF_HAS_NC4
+        case NC_UBYTE:
+            unsigned char *pucTemp;
+            pucTemp = (unsigned char *) CPLCalloc( nAttrLen, sizeof( unsigned char ) );
+            nc_get_att_uchar( nCdfId, nVarId, pszAttrName, pucTemp );
+            dfValue = (double)pucTemp[0];
+            for(m=0; m < nAttrLen-1; m++) {
+                sprintf( szTemp, "%d,", pucTemp[m] );
+                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+            }
+            sprintf( szTemp, "%d", pucTemp[m] );
+            NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+            CPLFree(pucTemp);
+            break;
+#endif
         case NC_SHORT:
             short *psTemp;
             psTemp = (short *) CPLCalloc( nAttrLen, sizeof( short ) );
