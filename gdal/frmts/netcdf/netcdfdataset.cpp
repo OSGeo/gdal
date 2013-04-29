@@ -77,6 +77,7 @@ char **NCDFTokenizeArray( const char *pszValue );//replace this where used
 void CopyMetadata( void  *poDS, int fpImage, int CDFVarID, 
                    const char *pszMatchPrefix=NULL, int bIsBand=TRUE );
 
+#define NCDF_DEBUG 1
 
 void *hNCMutex = NULL;
 
@@ -109,8 +110,9 @@ class netCDFRasterBand : public GDALPamRasterBand
     int         bCheckLongitude;
 
     CPLErr	    CreateBandMetadata( int *paDimIds ); 
-    template <class T> void  CheckValidData ( void * pImage, 
-                                              int bCheckIsNan=FALSE ) ;
+    template <class T> void CheckData ( void * pImage, 
+                                        int nTmpBlockXSize, int nTmpBlockYSize,
+                                        int bCheckIsNan=FALSE ) ;
 
   protected:
 
@@ -416,6 +418,28 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     this->bCheckLongitude = 
         CSLTestBoolean(CPLGetConfigOption("GDAL_NETCDF_CENTERLONG_180", "YES"))
         && NCDFIsVarLongitude( cdfid, nZId, NULL );
+
+/* -------------------------------------------------------------------- */
+/*      Check for variable chunking (netcdf-4 only)                     */
+/*      GDAL block size should be set to hdf5 chunk size                */
+/* -------------------------------------------------------------------- */
+#ifdef NETCDF_HAS_NC4
+    int nTmpFormat = 0;
+    size_t chunksize[ MAX_NC_DIMS ];
+    status = nc_inq_format( cdfid, &nTmpFormat);
+    if( ( status == NC_NOERR ) && ( ( nTmpFormat == NCDF_FORMAT_NC4 ) ||
+          ( nTmpFormat == NCDF_FORMAT_NC4C ) ) ) {
+        /* check for chunksize and set it as the blocksize (optimizes read) */
+        status = nc_inq_var_chunking( cdfid, nZId, &nTmpFormat, chunksize );
+        if( ( status == NC_NOERR ) && ( nTmpFormat == NC_CHUNKED ) ) {
+            CPLDebug( "GDAL_netCDF", 
+                      "setting block size to chunk size : %ld x %ld\n",
+                      chunksize[nZDim-1], chunksize[nZDim-2]);
+            nBlockXSize = (int) chunksize[nZDim-1];
+            nBlockYSize = (int) chunksize[nZDim-2];
+        }
+	} 		
+#endif
 }
 
 /* constructor in create mode */
@@ -601,7 +625,6 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     /* set default nodata */
     dfNoData = NCDFGetDefaultNoDataValue( nc_datatype );
     SetNoDataValue( dfNoData );
-
 }
 
 /************************************************************************/
@@ -1033,49 +1056,75 @@ CPLErr netCDFRasterBand::CreateBandMetadata( int *paDimIds )
 }
 
 /************************************************************************/
-/*                             CheckValidData()                         */
+/*                             CheckData()                              */
 /************************************************************************/
 template <class T>
-void  netCDFRasterBand::CheckValidData ( void * pImage, int bCheckIsNan ) 
+void  netCDFRasterBand::CheckData ( void * pImage, 
+                                    int nTmpBlockXSize, int nTmpBlockYSize,
+                                    int bCheckIsNan ) 
 {
-    int i;
-    CPLAssert( pImage != NULL );
+  int i, j, k;
 
-    /* check if needed or requested */
-    if ( (adfValidRange[0] != dfNoDataValue) || 
-         (adfValidRange[1] != dfNoDataValue) ||
-         bCheckIsNan ) {   
-        for( i=0; i<nBlockXSize; i++ ) {
-            /* check for nodata and nan */
-            if ( CPLIsEqual( (double) ((T *)pImage)[i], dfNoDataValue ) )
-                continue;
-            if( bCheckIsNan && CPLIsNan( (double) (( (T *) pImage))[i] ) ) { 
-                ( (T *)pImage )[i] = (T)dfNoDataValue;
-                continue;
-            }
-            /* check for valid_range */
-            if ( ( ( adfValidRange[0] != dfNoDataValue ) && 
-                   ( ((T *)pImage)[i] < (T)adfValidRange[0] ) ) 
-                 || 
-                 ( ( adfValidRange[1] != dfNoDataValue ) && 
-                   ( ((T *)pImage)[i] > (T)adfValidRange[1] ) ) ) {
-                ( (T *)pImage )[i] = (T)dfNoDataValue;
-            }
-        }
+  CPLAssert( pImage != NULL );
+
+  /* if this block is not a full block (in the x axis), we need to re-arrange the data 
+     this is because partial blocks are not arranged the same way in netcdf and gdal */
+  if ( nTmpBlockXSize != nBlockXSize ) {
+    T* ptr = (T *) CPLCalloc( nTmpBlockXSize*nTmpBlockYSize, sizeof( T ) );
+    memcpy( ptr, pImage, nTmpBlockXSize*nTmpBlockYSize*sizeof( T ) );
+    for( j=0; j<nTmpBlockYSize; j++) {
+      k = j*nBlockXSize;
+      for( i=0; i<nTmpBlockXSize; i++,k++)
+        ((T *) pImage)[k] = ptr[j*nTmpBlockXSize+i];
+      for( i=nTmpBlockXSize; i<nBlockXSize; i++,k++)
+        ((T *) pImage)[k] = (T)dfNoDataValue;
     }
-
-    /* if mininum longitude is > 180, subtract 360 from all */
-    /* if not, disable checking for further calls (check just once) */
-    /* only check first and last block elements since lon must be monotonic */
-    if ( bCheckLongitude && 
-         MIN( ((T *)pImage)[0], ((T *)pImage)[nBlockXSize-1] ) > 180.0 ) {
-        for( i=0; i<nBlockXSize; i++ ) {
-            ((T *)pImage )[i] -= 360.0;
+    CPLFree( ptr );
+  }
+  
+  /* is valid data checking needed or requested? */
+  if ( (adfValidRange[0] != dfNoDataValue) || 
+       (adfValidRange[1] != dfNoDataValue) ||
+       bCheckIsNan ) {
+    for( j=0; j<nTmpBlockYSize; j++) {
+      // k moves along the gdal block, skipping the out-of-range pixels
+      k = j*nBlockXSize;
+      for( i=0; i<nTmpBlockXSize; i++,k++) {
+        /* check for nodata and nan */
+        if ( CPLIsEqual( (double) ((T *)pImage)[k], dfNoDataValue ) )
+          continue;
+        if( bCheckIsNan && CPLIsNan( (double) (( (T *) pImage))[k] ) ) { 
+          ( (T *)pImage )[k] = (T)dfNoDataValue;
+          continue;
         }
+        /* check for valid_range */
+        if ( ( ( adfValidRange[0] != dfNoDataValue ) && 
+               ( ((T *)pImage)[k] < (T)adfValidRange[0] ) ) 
+             || 
+             ( ( adfValidRange[1] != dfNoDataValue ) && 
+               ( ((T *)pImage)[k] > (T)adfValidRange[1] ) ) ) {
+          ( (T *)pImage )[k] = (T)dfNoDataValue;
+        }
+      }
     }
-    else 
-        bCheckLongitude = FALSE;
+  }
 
+  /* if mininum longitude is > 180, subtract 360 from all 
+     if not, disable checking for further calls (check just once) 
+     only check first and last block elements since lon must be monotonic */
+  if ( bCheckLongitude && 
+       MIN( ((T *)pImage)[0], ((T *)pImage)[nTmpBlockXSize-1] ) > 180.0 ) {
+    for( j=0; j<nTmpBlockYSize; j++) {
+      k = j*nBlockXSize;
+      for( i=0; i<nTmpBlockXSize; i++,k++) {
+        if ( ! CPLIsEqual( (double) ((T *)pImage)[k], dfNoDataValue ) )
+          ((T *)pImage )[k] -= 360.0;
+      }
+    }
+  }
+  else 
+    bCheckLongitude = FALSE;
+  
 }
 
 /************************************************************************/
@@ -1098,30 +1147,58 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 #ifdef NCDF_DEBUG
     if ( (nBlockYOff == 0) || (nBlockYOff == nRasterYSize-1) )
-        CPLDebug( "GDAL_netCDF", "netCDFRasterBand::IReadBlock( %d, %d, ... ) nBand=%d",
-                  nBlockXOff, nBlockYOff, nBand );
+        CPLDebug( "GDAL_netCDF", "netCDFRasterBand::IReadBlock( %d, %d, ... ) nBand=%d nd=%d",
+                  nBlockXOff, nBlockYOff, nBand, nd );
 #endif
-    
+
     *pszName='\0';
     memset( start, 0, sizeof( start ) );
     memset( edge,  0, sizeof( edge )  );
     nc_inq_varndims ( cdfid, nZId, &nd );
-
+    
 /* -------------------------------------------------------------------- */
 /*      Locate X, Y and Z position in the array                         */
 /* -------------------------------------------------------------------- */
 	
-    start[nBandXPos] = 0;          // x dim can move arround in array
+    start[nBandXPos] = nBlockXOff * nBlockXSize;
+
     // check y order
     if( ( ( netCDFDataset *) poDS )->bBottomUp ) {
-        start[nBandYPos] = nRasterYSize - 1 - nBlockYOff;
+#ifdef NCDF_DEBUG
+      if ( (nBlockYOff == 0) || (nBlockYOff == nRasterYSize-1) )
+        CPLDebug( "GDAL_netCDF", 
+                  "reading bottom-up dataset, nBlockYSize=%d nRasterYSize=%d",
+                  nBlockYSize, nRasterYSize );
+#endif
+      // check block size - return error if not 1
+      // reading upside-down rasters with nBlockYSize!=1 needs further development
+      // perhaps a simple solution is to invert geotransform and not use bottom-up
+      if ( nBlockYSize == 1 ) {
+        start[nBandYPos] = nRasterYSize - 1 - nBlockYOff;       
+      }
+      else {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "nBlockYSize = %d, only 1 supported when reading bottom-up dataset", nBlockYSize );
+        return CE_Failure;
+      }      
     } else {
-        start[nBandYPos] = nBlockYOff; // y
+      start[nBandYPos] = nBlockYOff * nBlockYSize;
     }
         
-    edge[nBandXPos] = nBlockXSize; 
-    edge[nBandYPos] = 1;
+    edge[nBandXPos] = nBlockXSize;
+    if ( ( start[nBandXPos] + edge[nBandXPos] ) > (size_t)nRasterXSize )
+       edge[nBandXPos] = nRasterXSize - start[nBandXPos];
+    edge[nBandYPos] = nBlockYSize;
+    if ( ( start[nBandYPos] + edge[nBandYPos] ) > (size_t)nRasterYSize )
+      edge[nBandYPos] = nRasterYSize - start[nBandYPos];
 
+#ifdef NCDF_DEBUG
+    if ( (nBlockYOff == 0) || (nBlockYOff == nRasterYSize-1) )
+      CPLDebug( "GDAL_netCDF", "start={%ld,%ld} edge={%ld,%ld} bBottomUp=%d",
+                start[nBandXPos], start[nBandYPos], edge[nBandXPos], edge[nBandYPos], 
+                ( ( netCDFDataset *) poDS )->bBottomUp );
+#endif
+     
     if( nd == 3 ) {
         start[panBandZPos[0]]  = nLevel;     // z
         edge [panBandZPos[0]]  = 1;
@@ -1166,47 +1243,62 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if (this->bSignedData) 
         {
             status = nc_get_vara_schar( cdfid, nZId, start, edge, 
-                                      (signed char *) pImage );
-            if ( status == NC_NOERR ) CheckValidData<signed char>( pImage );
+                                        (signed char *) pImage );
+            if ( status == NC_NOERR ) 
+                CheckData<signed char>( pImage, edge[nBandXPos], edge[nBandYPos], 
+                                        FALSE );           
         }
         else {
             status = nc_get_vara_uchar( cdfid, nZId, start, edge, 
-                                      (unsigned char *) pImage );
-            if ( status == NC_NOERR ) CheckValidData<unsigned char>( pImage );
+                                        (unsigned char *) pImage );
+            if ( status == NC_NOERR ) 
+                CheckData<unsigned char>( pImage, edge[nBandXPos], edge[nBandYPos], 
+                                          FALSE ); 
         }
     }
+
     else if( eDataType == GDT_Int16 )
     {
         status = nc_get_vara_short( cdfid, nZId, start, edge, 
-                                  (short int *) pImage );
-        if ( status == NC_NOERR ) CheckValidData<short int>( pImage );
+                                    (short int *) pImage );
+        if ( status == NC_NOERR ) 
+            CheckData<short int>( pImage, edge[nBandXPos], edge[nBandYPos], 
+                                  FALSE ); 
     }
     else if( eDataType == GDT_Int32 )
     {
         if( sizeof(long) == 4 )
         {
             status = nc_get_vara_long( cdfid, nZId, start, edge, 
-                                     (long *) pImage );
-            if ( status == NC_NOERR ) CheckValidData<long>( pImage );
+                                       (long int *) pImage );
+            if ( status == NC_NOERR ) 
+                CheckData<long int>( pImage, edge[nBandXPos], edge[nBandYPos], 
+                                     FALSE ); 
         }
         else
         {
             status = nc_get_vara_int( cdfid, nZId, start, edge, 
-                                    (int *) pImage );
-            if ( status == NC_NOERR ) CheckValidData<int>( pImage );
+                                      (int *) pImage );
+            if ( status == NC_NOERR ) 
+                CheckData<int>( pImage, edge[nBandXPos], edge[nBandYPos], 
+                                FALSE ); 
         }
     }
     else if( eDataType == GDT_Float32 )
     {
         status = nc_get_vara_float( cdfid, nZId, start, edge, 
-                                  (float *) pImage );
-        if ( status == NC_NOERR ) CheckValidData<float>( pImage, TRUE );
+                                    (float *) pImage );
+        if ( status == NC_NOERR ) 
+            CheckData<float>( pImage, edge[nBandXPos], edge[nBandYPos], 
+                              TRUE ); 
     }
     else if( eDataType == GDT_Float64 )
     {
         status = nc_get_vara_double( cdfid, nZId, start, edge, 
-                                   (double *) pImage ); 
-        if ( status == NC_NOERR ) CheckValidData<double>( pImage, TRUE );
+                                     (double *) pImage ); 
+        if ( status == NC_NOERR ) 
+            CheckData<double>( pImage, edge[nBandXPos], edge[nBandYPos], 
+                               TRUE ); 
     } 
     else
         status = NC_EBADTYPE;
@@ -1413,8 +1505,8 @@ netCDFDataset::~netCDFDataset()
     CPLMutexHolderD(&hNCMutex);
 
     #ifdef NCDF_DEBUG
-    CPLDebug( "GDAL_netCDF", "netCDFDataset::~netCDFDataset(), cdfid=%d",
-              cdfid );
+    CPLDebug( "GDAL_netCDF", "netCDFDataset::~netCDFDataset(), cdfid=%d filename=%s",
+              cdfid, osFilename.c_str() );
     #endif
     /* make sure projection is written if GeoTransform OR Projection are missing */
     if( (GetAccess() == GA_Update) && (! bAddedProjectionVars) ) {
@@ -4237,6 +4329,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     char         szExtraDimDef[NC_MAX_NAME];
     nc_type      nType=NC_NAT;
 
+    CPLDebug( "GDAL_netCDF", "\n=====\nOpen(), filename=[%s]", poOpenInfo->pszFilename );
+
 /* -------------------------------------------------------------------- */
 /*      Does this appear to be a netcdf file?                           */
 /* -------------------------------------------------------------------- */
@@ -4329,7 +4423,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
-    CPLDebug( "GDAL_netCDF", "\n=====\ncalling nc_open( %s )", poDS->osFilename.c_str() );
+    CPLDebug( "GDAL_netCDF", "calling nc_open( %s )", poDS->osFilename.c_str() );
     if( nc_open( poDS->osFilename, NC_NOWRITE, &cdfid ) != NC_NOERR ) {
         CPLReleaseMutex(hNCMutex); // Release mutex otherwise we'll deadlock with GDALDataset own mutex
         delete poDS;
