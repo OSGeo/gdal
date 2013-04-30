@@ -1040,6 +1040,36 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
                   nIntRet = 0;
               }
           }
+          else if( nBaseItemType == EPT_u2 )
+          {
+              int nBitOffset = nIndexValue & 0x3;
+              int nByteOffset = nIndexValue >> 2;
+              int nMask = 0x3;
+
+              if (nByteOffset >= nDataSize)
+              {
+                  CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
+                  return FALSE;
+              }
+
+              nIntRet = (pabyData[nByteOffset] >> nBitOffset) & nMask;
+              dfDoubleRet = nIntRet;
+          }
+          else if( nBaseItemType == EPT_u4 )
+          {
+              int nBitOffset = nIndexValue & 0x7;
+              int nByteOffset = nIndexValue >> 3;
+              int nMask = 0x7;
+
+              if (nByteOffset >= nDataSize)
+              {
+                  CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
+                  return FALSE;
+              }
+
+              nIntRet = (pabyData[nByteOffset] >> nBitOffset) & nMask;
+              dfDoubleRet = nIntRet;
+          }
           else if( nBaseItemType == EPT_u8 )
           {
               if (nIndexValue >= nDataSize)
