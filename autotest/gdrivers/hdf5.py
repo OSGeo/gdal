@@ -378,6 +378,34 @@ def hdf5_11():
     return 'success'
 
 ###############################################################################
+# Test ODIM_H5 (#5032)
+
+def hdf5_12():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+
+    if not gdaltest.download_file('http://trac.osgeo.org/gdal/raw-attachment/ticket/5032/norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf', 'norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf'):
+        return 'skip'
+
+    ds = gdal.Open( 'tmp/cache/norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf' )
+    got_projection = ds.GetProjection()
+    if got_projection.find('Azimuthal_Equidistant') < 0 :
+        print(got_projection)
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    got_gt = ds.GetGeoTransform()
+    expected_gt = (-240890.02470187756, 1001.7181388478905, 0.0, 239638.21326987055, 0.0, -1000.3790932482976)
+    for i in range(6):
+        if abs(got_gt[i] - expected_gt[i]) > 1e-5:
+            print(got_gt)
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 class TestHDF5:
     def __init__( self, downloadURL, fileName, subdatasetname, checksum, download_size ):
@@ -415,7 +443,8 @@ gdaltest_list = [
     hdf5_8,
     hdf5_9,
     hdf5_10,
-    hdf5_11
+    hdf5_11,
+    hdf5_12
 ]
 
 hdf5_list = [ ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',
