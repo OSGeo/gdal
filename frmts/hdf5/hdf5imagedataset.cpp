@@ -91,6 +91,8 @@ class HDF5ImageDataset : public HDF5Dataset
     int          iSubdatasetType;
     double       adfGeoTransform[6];
     bool         bHasGeoTransform;
+    
+    CPLErr CreateODIMH5Projection();
 
 public:
     HDF5ImageDataset();
@@ -604,6 +606,71 @@ void GDALRegister_HDF5Image( )
 }
 
 /************************************************************************/
+/*                       CreateODIMH5Projection()                       */
+/************************************************************************/
+
+/* Reference : http://www.knmi.nl/opera/opera3/OPERA_2008_03_WP2.1b_ODIM_H5_v2.1.pdf */
+/* 4.3.2 where for geographically referenced image Groups */
+/* We don't use the where_xscale and where_yscale parameters, but recompute them */
+/* from the lower-left and upper-right coordinates. There's some difference. */
+/* As all those parameters are linked together, I'm not sure which one should be */
+/* considered as the reference */
+
+CPLErr HDF5ImageDataset::CreateODIMH5Projection()
+{
+    const char* pszProj4String = GetMetadataItem("where_projdef");
+    const char* pszLL_lon = GetMetadataItem("where_LL_lon");
+    const char* pszLL_lat = GetMetadataItem("where_LL_lat");
+    const char* pszUR_lon = GetMetadataItem("where_UR_lon");
+    const char* pszUR_lat = GetMetadataItem("where_UR_lat");
+    if( pszProj4String == NULL ||
+        pszLL_lon == NULL || pszLL_lat == NULL ||
+        pszUR_lon == NULL || pszUR_lat == NULL )
+        return CE_Failure;
+
+    if( oSRS.importFromProj4( pszProj4String ) != OGRERR_NONE )
+        return CE_Failure;
+
+    OGRSpatialReference oSRSWGS84;
+    oSRSWGS84.SetWellKnownGeogCS( "WGS84" );
+
+    OGRCoordinateTransformation* poCT =
+        OGRCreateCoordinateTransformation( &oSRSWGS84, &oSRS );
+    if( poCT == NULL )
+        return CE_Failure;
+
+    /* Reproject corners from long,lat WGS84 to the target SRS */
+    double dfLLX = CPLAtof(pszLL_lon);
+    double dfLLY = CPLAtof(pszLL_lat);
+    double dfURX = CPLAtof(pszUR_lon);
+    double dfURY = CPLAtof(pszUR_lat);
+    if( !poCT->Transform(1, &dfLLX, &dfLLY) ||
+        !poCT->Transform(1, &dfURX, &dfURY) )
+    {
+        delete poCT;
+        return CE_Failure;
+    }
+    delete poCT;
+
+    /* Compute the geotransform now */
+    double dfPixelX = (dfURX - dfLLX) / nRasterXSize;
+    double dfPixelY = (dfURY - dfLLY) / nRasterYSize;
+
+    bHasGeoTransform = TRUE;
+    adfGeoTransform[0] = dfLLX;
+    adfGeoTransform[1] = dfPixelX;
+    adfGeoTransform[2] = 0;
+    adfGeoTransform[3] = dfURY;
+    adfGeoTransform[4] = 0;
+    adfGeoTransform[5] = -dfPixelY;
+
+    CPLFree( pszProjection );
+    oSRS.exportToWkt( &pszProjection );
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                         CreateProjections()                          */
 /************************************************************************/
 CPLErr HDF5ImageDataset::CreateProjections()
@@ -668,6 +735,8 @@ CPLErr HDF5ImageDataset::CreateProjections()
     /* -------------------------------------------------------------------- */
     poH5Objects=HDF5FindDatasetObjects( poH5RootGroup,  "Latitude" );
     if( !poH5Objects ) {
+        if( GetMetadataItem("where_projdef") != NULL )
+            return CreateODIMH5Projection();
         return CE_None;
     }
     /* -------------------------------------------------------------------- */
