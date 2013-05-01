@@ -23156,8 +23156,6 @@ else
   HAVE_INGRES=yes
   II_SYSTEM=$with_ingres
   INGRES_LIB="-L$II_SYSTEM/ingres/lib \
-	$II_SYSTEM/ingres/lib/iiclsadt.o \
-	$II_SYSTEM/ingres/lib/iiuseradt.o \
 	-liiapi.1 -lcompat.1 -lq.1 -lframe.1"
   INGRES_INC=-I$II_SYSTEM/ingres/files
 fi
