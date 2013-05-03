@@ -77,7 +77,8 @@ char **NCDFTokenizeArray( const char *pszValue );//replace this where used
 void CopyMetadata( void  *poDS, int fpImage, int CDFVarID, 
                    const char *pszMatchPrefix=NULL, int bIsBand=TRUE );
 
-#define NCDF_DEBUG 1
+// uncomment this for more debug ouput
+// #define NCDF_DEBUG 1
 
 void *hNCMutex = NULL;
 
@@ -1141,21 +1142,21 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     int    i,j;
     int    Sum=-1;
     int    Taken=-1;
-    int    nd;
+    int    nd=0;
 
     CPLMutexHolderD(&hNCMutex);
-
-#ifdef NCDF_DEBUG
-    if ( (nBlockYOff == 0) || (nBlockYOff == nRasterYSize-1) )
-        CPLDebug( "GDAL_netCDF", "netCDFRasterBand::IReadBlock( %d, %d, ... ) nBand=%d nd=%d",
-                  nBlockXOff, nBlockYOff, nBand, nd );
-#endif
 
     *pszName='\0';
     memset( start, 0, sizeof( start ) );
     memset( edge,  0, sizeof( edge )  );
     nc_inq_varndims ( cdfid, nZId, &nd );
     
+#ifdef NCDF_DEBUG
+    if ( (nBlockYOff == 0) || (nBlockYOff == nRasterYSize-1) )
+        CPLDebug( "GDAL_netCDF", "netCDFRasterBand::IReadBlock( %d, %d, ... ) nBand=%d nd=%d",
+                  nBlockXOff, nBlockYOff, nBand, nd );
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Locate X, Y and Z position in the array                         */
 /* -------------------------------------------------------------------- */
