@@ -4962,7 +4962,7 @@ static void AppendMetadataItem( CPLXMLNode **ppsRoot, CPLXMLNode **ppsTail,
 }
 
 /************************************************************************/
-/*                         WriteMDMDMetadata()                          */
+/*                         WriteMDMetadata()                          */
 /************************************************************************/
 
 static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
@@ -5022,7 +5022,7 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
 /* -------------------------------------------------------------------- */
 /*      Convert into XML item or handle as a special TIFF tag.          */
 /* -------------------------------------------------------------------- */
-            if( strlen(papszDomainList[iDomain]) == 0 
+            if( strlen(papszDomainList[iDomain]) == 0
                 && nBand == 0 && EQUALN(pszItemName,"TIFFTAG_",8) )
             {
                 if( EQUAL(pszItemName,"TIFFTAG_DOCUMENTNAME") )
@@ -5043,8 +5043,13 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
                     TIFFSetField( hTIFF, TIFFTAG_XRESOLUTION, CPLAtof(pszItemValue) );
                 else if( EQUAL(pszItemName,"TIFFTAG_YRESOLUTION") )
                     TIFFSetField( hTIFF, TIFFTAG_YRESOLUTION, CPLAtof(pszItemValue) );
-                else if( EQUAL(pszItemName,"TIFFTAG_RESOLUTIONUNIT") )
-                    TIFFSetField( hTIFF, TIFFTAG_RESOLUTIONUNIT, atoi(pszItemValue) );
+                else if( EQUAL(pszItemName,"TIFFTAG_RESOLUTIONUNIT") ) {
+                    /* ResolutionUnit can't be 0, which is the default if atoi() fails.
+                       Set to 1=Unknown */
+                    int v = atoi(pszItemValue);
+                    if (!v) v = RESUNIT_NONE;
+                    TIFFSetField( hTIFF, TIFFTAG_RESOLUTIONUNIT, v);
+                }
                 else if( EQUAL(pszItemName,"TIFFTAG_MINSAMPLEVALUE") )
                     TIFFSetField( hTIFF, TIFFTAG_MINSAMPLEVALUE, atoi(pszItemValue) );
                 else if( EQUAL(pszItemName,"TIFFTAG_MAXSAMPLEVALUE") )
