@@ -66,7 +66,12 @@ OGRKMLDataSource::~OGRKMLDataSource()
 {
     if( fpOutput_ != NULL )
     {
-        VSIFPrintfL( fpOutput_, "%s", "</Folder></Document></kml>\n" );
+        VSIFPrintfL( fpOutput_, "%s", "</Folder>\n");
+        for( int i = 0; i < nLayers_; i++ )
+        {
+            papoLayers_[i]->WriteSchema();
+        }
+        VSIFPrintfL( fpOutput_, "%s", "</Document></kml>\n" );
 
         VSIFCloseL( fpOutput_ );
     }
