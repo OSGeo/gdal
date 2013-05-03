@@ -2232,7 +2232,8 @@ RemoveConflictingMetadata( GDALMajorObjectH hObj, char **papszMetadata,
         pszValueComp = GDALGetMetadataItem( hObj, pszKey, NULL );
         if ( ( pszValueRef == NULL || pszValueComp == NULL ||
                ! EQUAL( pszValueRef, pszValueComp ) ) &&
-             ! EQUAL( pszValueComp, pszValueConflict ) ) {
+             ( pszValueComp == NULL ||
+               ! EQUAL( pszValueComp, pszValueConflict ) ) ) {
             GDALSetMetadataItem( hObj, pszKey, pszValueConflict, NULL ); 
         }
         CPLFree( pszKey ); 
