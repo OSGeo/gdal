@@ -233,35 +233,19 @@ int OGRKMLLayer::GetFeatureCount( int bForce )
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                           WriteSchema()                              */
 /************************************************************************/
 
-OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
+void OGRKMLLayer::WriteSchema()
 {
-    CPLAssert( NULL != poFeature );
-    CPLAssert( NULL != poDS_ );
-
-    if( !bWriter_ )
-        return OGRERR_FAILURE;
-
-    if( bClosedForWriting )
+    if (0 != nWroteFeatureCount_)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Interleaved feature adding to different layers is not supported");
-        return OGRERR_FAILURE;
-    }
-
-    VSILFILE *fp = poDS_->GetOutputFP();
-    CPLAssert( NULL != fp );
-
-    // If we haven't writen any features yet, output the layer's schema
-    if (0 == nWroteFeatureCount_)
-    {
+        VSILFILE *fp = poDS_->GetOutputFP();
         VSIFPrintfL( fp, "<Schema name=\"%s\" id=\"%s\">\n", pszName_, pszName_ );
         OGRFeatureDefn *featureDefinition = GetLayerDefn();
         for (int j=0; j < featureDefinition->GetFieldCount(); j++)
         {
-            OGRFieldDefn *fieldDefinition = featureDefinition->GetFieldDefn(j);			
+            OGRFieldDefn *fieldDefinition = featureDefinition->GetFieldDefn(j);         
             const char* pszKMLType = NULL;
             const char* pszKMLEltName = NULL;
             // Match the OGR type to the GDAL type
@@ -313,6 +297,29 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
         }
         VSIFPrintfL( fp, "</Schema>\n" );
     }
+}
+
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
+
+OGRErr OGRKMLLayer::CreateFeature( OGRFeature* poFeature )
+{
+    CPLAssert( NULL != poFeature );
+    CPLAssert( NULL != poDS_ );
+
+    if( !bWriter_ )
+        return OGRERR_FAILURE;
+
+    if( bClosedForWriting )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Interleaved feature adding to different layers is not supported");
+        return OGRERR_FAILURE;
+    }
+
+    VSILFILE *fp = poDS_->GetOutputFP();
+    CPLAssert( NULL != fp );
 
     VSIFPrintfL( fp, "  <Placemark>\n" );
 
