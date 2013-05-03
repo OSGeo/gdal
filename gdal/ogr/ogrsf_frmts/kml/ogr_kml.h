@@ -73,6 +73,8 @@ public:
     void SetLayerNumber( int nLayer );
 
     void SetClosedForWriting() { bClosedForWriting = TRUE; }
+    
+    void WriteSchema();
 
 private:
     OGRKMLDataSource* poDS_;
