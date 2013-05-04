@@ -570,9 +570,15 @@ public:
     return (OGRGeometryShadow *) OGR_L_GetSpatialFilter(self);
   }
 
+#ifdef SWIGCSHARP 
+  %apply ( const char *utf8_path ) { (char* filter_string) };
+#endif
   OGRErr SetAttributeFilter(char* filter_string) {
     return OGR_L_SetAttributeFilter((OGRLayerShadow*)self, filter_string);
   }
+#ifdef SWIGCSHARP 
+  %clear (char* filter_string);
+#endif
   
   void ResetReading() {
     OGR_L_ResetReading(self);
@@ -1065,8 +1071,11 @@ public:
 #endif
 
   /* ---- SetField ----------------------------- */
-  
+#ifndef SWIGCSHARP 
   %apply ( tostring argin ) { (const char* value) };
+#else
+  %apply ( const char *utf8_path ) { (const char* value) };
+#endif
   void SetField(int id, const char* value) {
     OGR_F_SetFieldString(self, id, value);
   }
