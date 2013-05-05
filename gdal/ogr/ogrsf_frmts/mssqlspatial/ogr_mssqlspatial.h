@@ -215,6 +215,7 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
                                     const char *pszGeomCol, 
                                     int nCoordDimension, 
                                     int nSRId,
+                                    const char *pszSRText,
                                     OGRwkbGeometryType eType);
 
     OGRErr              CreateSpatialIndex();
@@ -320,7 +321,8 @@ class OGRMSSQLSpatialDataSource : public OGRDataSource
     int                 Open( const char *, int bUpdate, int bTestOpen );
     int                 OpenTable( const char *pszSchemaName, const char *pszTableName, 
                                    const char *pszGeomCol,int nCoordDimension,
-                                   int nSRID, OGRwkbGeometryType eType, int bUpdate );
+                                   int nSRID, const char *pszSRText, 
+                                   OGRwkbGeometryType eType, int bUpdate );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount();

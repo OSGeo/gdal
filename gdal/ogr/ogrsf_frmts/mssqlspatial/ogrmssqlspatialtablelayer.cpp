@@ -230,6 +230,7 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
                                               const char *pszGeomCol,
                                               int nCoordDimension, 
                                               int nSRId,
+                                              const char *pszSRText,
                                               OGRwkbGeometryType eType )
 
 {
@@ -270,13 +271,27 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
 /* -------------------------------------------------------------------- */
 /*             Try to find out the spatial reference                    */
 /* -------------------------------------------------------------------- */
-    
+
     nSRSId = nSRId;
 
-    if (nSRSId < 0)
-        nSRSId = FetchSRSId();
+    if (pszSRText)
+    {
+        /* Process srtext directly if specified */
+        poSRS = new OGRSpatialReference();
+        if( poSRS->importFromWkt( (char**)&pszSRText ) != OGRERR_NONE )
+        {
+            delete poSRS;
+            poSRS = NULL;
+        }
+    }
+    
+    if (!poSRS)
+    {
+        if (nSRSId < 0)
+            nSRSId = FetchSRSId();
 
-    GetSpatialRef();
+        GetSpatialRef();
+    }
 
     return CE_None;
 }
