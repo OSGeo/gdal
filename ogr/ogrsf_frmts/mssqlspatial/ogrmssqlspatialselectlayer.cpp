@@ -55,11 +55,28 @@ OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer( OGRMSSQLSpatialDataSourc
     {
         if ( EQUAL(poStmt->GetColTypeName( iColumn ), "image") )
         {
-            nGeomColumnType = MSSQLCOLTYPE_BINARY;
-            pszGeomColumn = CPLStrdup(poStmt->GetColName(iColumn));
-            break;
+            SQLCHAR     szTableName[256];
+            SQLSMALLINT nTableNameLength = 0;
+
+            SQLColAttribute(poStmt->GetStatement(), (SQLSMALLINT)(iColumn + 1), SQL_DESC_TABLE_NAME,
+                                     szTableName, sizeof(szTableName),
+                                     &nTableNameLength, NULL);
+
+            if (nTableNameLength > 0)
+            {
+                OGRLayer *poBaseLayer = poDS->GetLayerByName((const char*)szTableName);
+                if (poBaseLayer != NULL && EQUAL(poBaseLayer->GetGeometryColumn(), poStmt->GetColName(iColumn)))
+                {
+                    nGeomColumnType = MSSQLCOLTYPE_BINARY;
+                    pszGeomColumn = CPLStrdup(poStmt->GetColName(iColumn));
+                    /* copy spatial reference */
+                    if (!poSRS && poBaseLayer->GetSpatialRef())
+                        poSRS = poBaseLayer->GetSpatialRef()->Clone();
+                    break;
+                }
+            }
         }
-        if ( EQUAL(poStmt->GetColTypeName( iColumn ), "geometry") )
+        else if ( EQUAL(poStmt->GetColTypeName( iColumn ), "geometry") )
         {
             nGeomColumnType = MSSQLCOLTYPE_GEOMETRY;
             pszGeomColumn = CPLStrdup(poStmt->GetColName(iColumn));
