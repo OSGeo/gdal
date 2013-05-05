@@ -76,8 +76,8 @@ class PDSDataset : public RawDataset
 
     void        ParseSRS();
     int         ParseCompressedImage();
-    int	        ParseImage( CPLString osPrefix = "" );
-    void        CleanString( CPLString &osInput );
+    int	        ParseImage( CPLString osPrefix, CPLString osFilenamePrefix );
+    static void        CleanString( CPLString &osInput );
 
     const char *GetKeyword( std::string osPath,
                             const char *pszDefault = "");
@@ -283,6 +283,11 @@ void PDSDataset::ParseSRS()
 {
     const char *pszFilename = GetDescription();
 
+    CPLString osPrefix;
+    if( strlen(GetKeyword( "IMAGE_MAP_PROJECTION.MAP_PROJECTION_TYPE")) == 0 &&
+        strlen(GetKeyword( "UNCOMPRESSED_FILE.IMAGE_MAP_PROJECTION.MAP_PROJECTION_TYPE")) != 0 )
+        osPrefix = "UNCOMPRESSED_FILE.";
+
 /* ==================================================================== */
 /*      Get the geotransform.                                           */
 /* ==================================================================== */
@@ -299,12 +304,13 @@ void PDSDataset::ParseSRS()
     double xulcenter = 0.0;
     double yulcenter = 0.0;
 
-    value = GetKeyword("IMAGE_MAP_PROJECTION.MAP_SCALE");
+    value = GetKeyword(osPrefix + "IMAGE_MAP_PROJECTION.MAP_SCALE");
     if (strlen(value) > 0 ) {
         dfXDim = atof(value);
         dfYDim = atof(value) * -1;
-        
-        CPLString unit = GetKeywordUnit("IMAGE_MAP_PROJECTION.MAP_SCALE",2); //KM
+
+        CPLString osKey(osPrefix + "IMAGE_MAP_PROJECTION.MAP_SCALE");
+        CPLString unit = GetKeywordUnit(osKey,2); //KM
         //value = GetKeywordUnit("IMAGE_MAP_PROJECTION.MAP_SCALE",3); //PIXEL
         if((EQUAL(unit,"M"))  || (EQUAL(unit,"METER")) || (EQUAL(unit,"METERS"))) {
             // do nothing
@@ -350,14 +356,14 @@ void PDSDataset::ParseSRS()
         atof( CPLGetConfigOption( "PDS_LineProjOffset_Mult", "1.0") );
 
     /***********   Grab LINE_PROJECTION_OFFSET ************/
-    value = GetKeyword("IMAGE_MAP_PROJECTION.LINE_PROJECTION_OFFSET");
+    value = GetKeyword(osPrefix + "IMAGE_MAP_PROJECTION.LINE_PROJECTION_OFFSET");
     if (strlen(value) > 0) {
         yulcenter = atof(value);
         dfULYMap = ((yulcenter + dfLineOffset_Shift) * -dfYDim * dfLineOffset_Mult);
         //notice dfYDim is negative here which is why it is again negated here
     }
     /***********   Grab SAMPLE_PROJECTION_OFFSET ************/
-    value = GetKeyword("IMAGE_MAP_PROJECTION.SAMPLE_PROJECTION_OFFSET");
+    value = GetKeyword(osPrefix + "IMAGE_MAP_PROJECTION.SAMPLE_PROJECTION_OFFSET");
     if( strlen(value) > 0 ) {
         xulcenter = atof(value);
         dfULXMap = ((xulcenter + dfSampleOffset_Shift) * dfXDim * dfSampleOffset_Mult);
@@ -383,39 +389,39 @@ void PDSDataset::ParseSRS()
      
     /**********   Grab MAP_PROJECTION_TYPE *****/
     CPLString map_proj_name = 
-        GetKeyword( "IMAGE_MAP_PROJECTION.MAP_PROJECTION_TYPE");
+        GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.MAP_PROJECTION_TYPE");
     CleanString( map_proj_name );
      
     /******  Grab semi_major & convert to KM ******/
     semi_major = 
-        atof(GetKeyword( "IMAGE_MAP_PROJECTION.A_AXIS_RADIUS")) * 1000.0;
+        atof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.A_AXIS_RADIUS")) * 1000.0;
     
     /******  Grab semi-minor & convert to KM ******/
     semi_minor = 
-        atof(GetKeyword( "IMAGE_MAP_PROJECTION.C_AXIS_RADIUS")) * 1000.0;
+        atof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.C_AXIS_RADIUS")) * 1000.0;
 
     /***********   Grab CENTER_LAT ************/
     center_lat = 
-        atof(GetKeyword( "IMAGE_MAP_PROJECTION.CENTER_LATITUDE"));
+        atof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.CENTER_LATITUDE"));
 
     /***********   Grab CENTER_LON ************/
     center_lon = 
-        atof(GetKeyword( "IMAGE_MAP_PROJECTION.CENTER_LONGITUDE"));
+        atof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.CENTER_LONGITUDE"));
 
     /**********   Grab 1st std parallel *******/
     first_std_parallel = 
-        atof(GetKeyword( "IMAGE_MAP_PROJECTION.FIRST_STANDARD_PARALLEL"));
+        atof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.FIRST_STANDARD_PARALLEL"));
 
     /**********   Grab 2nd std parallel *******/
     second_std_parallel = 
-        atof(GetKeyword( "IMAGE_MAP_PROJECTION.SECOND_STANDARD_PARALLEL"));
+        atof(GetKeyword( osPrefix + "IMAGE_MAP_PROJECTION.SECOND_STANDARD_PARALLEL"));
      
     /*** grab  PROJECTION_LATITUDE_TYPE = "PLANETOCENTRIC" ****/
     // Need to further study how ocentric/ographic will effect the gdal library.
     // So far we will use this fact to define a sphere or ellipse for some projections
     // Frank - may need to talk this over
     char bIsGeographic = TRUE;
-    value = GetKeyword("IMAGE_MAP_PROJECTION.COORDINATE_SYSTEM_NAME");
+    value = GetKeyword(osPrefix + "IMAGE_MAP_PROJECTION.COORDINATE_SYSTEM_NAME");
     if (EQUAL( value, "PLANETOCENTRIC" ))
         bIsGeographic = FALSE; 
 
@@ -622,10 +628,35 @@ void PDSDataset::ParseSRS()
 }
 
 /************************************************************************/
+/*                        PDSConvertFromHex()                           */
+/************************************************************************/
+
+static GUInt32 PDSConvertFromHex(const char* pszVal)
+{
+    if( !EQUALN(pszVal, "16#", 3) )
+        return 0;
+
+    pszVal += 3;
+    GUInt32 nVal = 0;
+    while( *pszVal != '#' && *pszVal != '\0' )
+    {
+        nVal <<= 4;
+        if( *pszVal >= '0' && *pszVal <= '9' )
+            nVal += *pszVal - '0';
+        else if( *pszVal >= 'A' && *pszVal <= 'F' )
+            nVal += *pszVal - 'A' + 10;
+        else
+            return 0;
+        pszVal ++;
+    }
+    return nVal;
+}
+
+/************************************************************************/
 /*                             ParseImage()                             */
 /************************************************************************/
 
-int PDSDataset::ParseImage( CPLString osPrefix )
+int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 {
 /* ------------------------------------------------------------------- */
 /*	We assume the user is pointing to the label (ie. .lbl) file.  	   */
@@ -668,12 +699,20 @@ int PDSDataset::ParseImage( CPLString osPrefix )
 
     if( osQube.size() && osQube[0] == '"' )
     {
-        CPLString osTPath = CPLGetPath(GetDescription());
         CPLString osFilename = osQube;
         CleanString( osFilename );
-        osTargetFile = CPLFormCIFilename( osTPath, osFilename, NULL );
-        osExternalCube = osTargetFile;
+        if( osFilenamePrefix.size() )
+        {
+            osTargetFile = osFilenamePrefix + osFilename;
+        }
+        else
+        {
+            CPLString osTPath = CPLGetPath(GetDescription());
+            osTargetFile = CPLFormCIFilename( osTPath, osFilename, NULL );
+            osExternalCube = osTargetFile;
+        }
     }
+    
 
     GDALDataType eDataType = GDT_Byte;
 
@@ -822,11 +861,28 @@ int PDSDataset::ParseImage( CPLString osPrefix )
 /*      Is there a specific nodata value in the file? Either the        */
 /*      MISSING or MISSING_CONSTANT keywords are nodata.                */
 /* -------------------------------------------------------------------- */
-    if( GetKeyword( osPrefix+"IMAGE.MISSING", NULL ) != NULL )
-        dfNoData = CPLAtofM( GetKeyword( osPrefix+"IMAGE.MISSING", "" ) );
 
-    if( GetKeyword( osPrefix+"IMAGE.MISSING_CONSTANT", NULL ) != NULL )
-        dfNoData = CPLAtofM( GetKeyword( osPrefix+"IMAGE.MISSING_CONSTANT",""));
+    const char* pszMissing = GetKeyword( osPrefix+"IMAGE.MISSING", NULL );
+    if( pszMissing == NULL )
+        pszMissing = GetKeyword( osPrefix+"IMAGE.MISSING_CONSTANT", NULL );
+
+    if( pszMissing != NULL )
+    {
+        if( *pszMissing == '"' )
+            pszMissing ++;
+
+        /* For example : MISSING_CONSTANT             = "16#FF7FFFFB#" */
+        if( EQUALN(pszMissing, "16#", 3) && strlen(pszMissing) >= 3 + 8 + 1 &&
+            pszMissing[3 + 8] == '#' && (eDataType == GDT_Float32 || eDataType == GDT_Float64) )
+        {
+            GUInt32 nVal = PDSConvertFromHex(pszMissing);
+            float fVal;
+            memcpy(&fVal, &nVal, 4);
+            dfNoData = fVal;
+        }
+        else
+            dfNoData = CPLAtofM( pszMissing );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Did we get the required keywords?  If not we return with        */
@@ -1074,6 +1130,33 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     CPLString osEncodingType = poDS->GetKeyword( "COMPRESSED_FILE.ENCODING_TYPE", "" );
 
+    CPLString osCompressedFilename = poDS->GetKeyword( "COMPRESSED_FILE.FILE_NAME", "" );
+    CleanString( osCompressedFilename );
+
+    CPLString osUncompressedFilename = poDS->GetKeyword( "UNCOMPRESSED_FILE.IMAGE.NAME", "");
+    if( osUncompressedFilename.size() == 0 )
+        osUncompressedFilename = poDS->GetKeyword( "UNCOMPRESSED_FILE.FILE_NAME", "");
+    CleanString( osUncompressedFilename );
+
+    VSIStatBufL sStat;
+    CPLString osFilenamePrefix;
+
+    if( EQUAL(osEncodingType, "ZIP") &&
+        osCompressedFilename.size() != 0 &&
+        osUncompressedFilename.size() != 0 )
+    {
+        CPLString osPath = CPLGetPath(poDS->GetDescription());
+        osCompressedFilename = CPLFormFilename( osPath, osCompressedFilename, NULL );
+        osUncompressedFilename = CPLFormFilename( osPath, osUncompressedFilename, NULL );
+        if( VSIStatExL(osCompressedFilename, &sStat, VSI_STAT_EXISTS_FLAG) == 0 &&
+            VSIStatExL(osUncompressedFilename, &sStat, VSI_STAT_EXISTS_FLAG) != 0 )
+        {
+            osFilenamePrefix = "/vsizip/" + osCompressedFilename + "/";
+            poDS->osExternalCube = osCompressedFilename;
+        }
+        osEncodingType = "";
+    }
+
     if( osEncodingType.size() != 0 )
     {
         if( !poDS->ParseCompressedImage() )
@@ -1085,12 +1168,11 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     else
     {
         CPLString osPrefix;
-    	CPLString osObject = poDS->GetKeyword( "UNCOMPRESSED_FILE.IMAGE.NAME", "");
 
-        if( osObject != "" )
+        if( osUncompressedFilename != "" )
             osPrefix = "UNCOMPRESSED_FILE.";
         
-        if( !poDS->ParseImage(osPrefix) )
+        if( !poDS->ParseImage(osPrefix, osFilenamePrefix) )
         {
             delete poDS;
             return NULL;
