@@ -123,13 +123,6 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                 pszGeomColumn = CPLStrdup( poStmt->GetColName(iCol) );
                 continue;
             }
-            else if ( EQUAL(poStmt->GetColTypeName( iCol ), "image") )
-            {
-                /* for the select layers we get image type */
-                nGeomColumnType = MSSQLCOLTYPE_BINARY;
-                pszGeomColumn = CPLStrdup( poStmt->GetColName(iCol) );
-                continue;
-            }
         }
         else
         {
