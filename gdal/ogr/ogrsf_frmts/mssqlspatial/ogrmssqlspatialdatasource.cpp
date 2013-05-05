@@ -628,8 +628,9 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     if (papszTableNames == NULL && bUseGeometryColumns)
     {
         CPLODBCStatement oStmt( &oSession );
-            
-        oStmt.Append( "SELECT f_table_schema, f_table_name, f_geometry_column, coord_dimension, srid, geometry_type FROM dbo.geometry_columns");
+        
+        /* Use join to make sure the existence of the referred column/table */
+        oStmt.Append( "SELECT f_table_schema, f_table_name, f_geometry_column, coord_dimension, srid, geometry_type FROM dbo.geometry_columns JOIN INFORMATION_SCHEMA.COLUMNS ON f_table_schema = TABLE_SCHEMA and f_table_name = TABLE_NAME and f_geometry_column = COLUMN_NAME");
 
         if( oStmt.ExecuteSQL() )
         {
