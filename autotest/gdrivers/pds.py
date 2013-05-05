@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -207,7 +208,32 @@ def pds_8():
     gdal.SetConfigOption( 'PDS_LineProjOffset_Shift', None )
 
     return result
-    
+
+###############################################################################
+# Test a PDS with an image compressed in a ZIP, and with nodata expressed as
+# an hexadecimal floating point value (#3939)
+
+def pds_9():
+
+    # Derived from http://pdsimage.wr.usgs.gov/data/co-v_e_j_s-radar-3-sbdr-v1.0/CORADR_0035/DATA/BIDR/BIEQI49N071_D035_T00AS01_V02.LBL
+    tst = gdaltest.GDALTest( 'PDS', 'PDS_WITH_ZIP_IMG.LBL', 1, 0 )
+
+    if tst.testOpen() != 'success':
+        return 'fail'
+
+    ds = gdal.Open('data/PDS_WITH_ZIP_IMG.LBL')
+    got_nd = ds.GetRasterBand(1).GetNoDataValue()
+    expected_nd = -3.40282265508890445e+38
+    if abs((got_nd - expected_nd) / expected_nd) > 1e-5:
+        gdaltest.post_reason('fail')
+        print(got_nd)
+        return 'fail'
+
+    if len(ds.GetProjectionRef()) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
 
 gdaltest_list = [
     pds_1,
@@ -217,7 +243,8 @@ gdaltest_list = [
     pds_5,
     pds_6,
     pds_7,
-    pds_8 ]
+    pds_8,
+    pds_9 ]
 
 if __name__ == '__main__':
 
