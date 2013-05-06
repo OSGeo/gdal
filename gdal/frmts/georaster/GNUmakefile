@@ -33,5 +33,5 @@ install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 plugin: $(PLUGIN_SO)
 
 $(PLUGIN_SO):	$(OBJ)
-	gcc -shared $(LNK_FLAGS) $(OBJ) $(CONFIG_LIBS_INS) $(EXTRA_LIBS) \
+	$(LD_SHARED) $(LNK_FLAGS) $(OBJ) $(CONFIG_LIBS_INS) $(LIBS) \
 		-o $(PLUGIN_SO)

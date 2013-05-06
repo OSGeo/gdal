@@ -2315,8 +2315,6 @@ static const int anOrder[] = {
 
 void GeoRasterWrapper::GetRPC()
 {
-    phRPC = (GDALRPCInfo*) VSIMalloc( sizeof(GDALRPCInfo) );
-
     int i;
 
     CPLXMLNode* phSRSInfo = CPLGetXMLNode( phMetadata, 
@@ -2341,18 +2339,6 @@ void GeoRasterWrapper::GetRPC()
     {
         return;
     }
-
-    phRPC->dfLINE_OFF     = CPLAtof( CPLGetXMLValue( phPolyModel, "rowOff", "0" ) );
-    phRPC->dfSAMP_OFF     = CPLAtof( CPLGetXMLValue( phPolyModel, "columnOff", "0" ) );
-    phRPC->dfLONG_OFF     = CPLAtof( CPLGetXMLValue( phPolyModel, "xOff", "0" ) );
-    phRPC->dfLAT_OFF      = CPLAtof( CPLGetXMLValue( phPolyModel, "yOff", "0" ) );
-    phRPC->dfHEIGHT_OFF   = CPLAtof( CPLGetXMLValue( phPolyModel, "zOff", "0" ) );
-
-    phRPC->dfLINE_SCALE   = CPLAtof( CPLGetXMLValue( phPolyModel, "rowScale", "0" ) );
-    phRPC->dfSAMP_SCALE   = CPLAtof( CPLGetXMLValue( phPolyModel, "columnScale", "0" ) );
-    phRPC->dfLONG_SCALE   = CPLAtof( CPLGetXMLValue( phPolyModel, "xScale", "0" ) );
-    phRPC->dfLAT_SCALE    = CPLAtof( CPLGetXMLValue( phPolyModel, "yScale", "0" ) );
-    phRPC->dfHEIGHT_SCALE = CPLAtof( CPLGetXMLValue( phPolyModel, "zScale", "0" ) );
 
     // pPolynomial refers to LINE_NUM
 
@@ -2384,6 +2370,20 @@ void GeoRasterWrapper::GetRPC()
         return;
     }
 
+    phRPC = (GDALRPCInfo*) VSIMalloc( sizeof(GDALRPCInfo) );
+    
+    phRPC->dfLINE_OFF     = CPLAtof( CPLGetXMLValue( phPolyModel, "rowOff", "0" ) );
+    phRPC->dfSAMP_OFF     = CPLAtof( CPLGetXMLValue( phPolyModel, "columnOff", "0" ) );
+    phRPC->dfLONG_OFF     = CPLAtof( CPLGetXMLValue( phPolyModel, "xOff", "0" ) );
+    phRPC->dfLAT_OFF      = CPLAtof( CPLGetXMLValue( phPolyModel, "yOff", "0" ) );
+    phRPC->dfHEIGHT_OFF   = CPLAtof( CPLGetXMLValue( phPolyModel, "zOff", "0" ) );
+
+    phRPC->dfLINE_SCALE   = CPLAtof( CPLGetXMLValue( phPolyModel, "rowScale", "0" ) );
+    phRPC->dfSAMP_SCALE   = CPLAtof( CPLGetXMLValue( phPolyModel, "columnScale", "0" ) );
+    phRPC->dfLONG_SCALE   = CPLAtof( CPLGetXMLValue( phPolyModel, "xScale", "0" ) );
+    phRPC->dfLAT_SCALE    = CPLAtof( CPLGetXMLValue( phPolyModel, "yScale", "0" ) );
+    phRPC->dfHEIGHT_SCALE = CPLAtof( CPLGetXMLValue( phPolyModel, "zScale", "0" ) );
+
     for( i = 0; i < 20; i++ )
     {
         phRPC->adfLINE_NUM_COEFF[anOrder[i] - 1] = CPLAtof( papszCeoff[i] );
@@ -2395,6 +2395,8 @@ void GeoRasterWrapper::GetRPC()
 
     if ( phPolynomial == NULL )
     {
+        CPLFree( phRPC );
+        phRPC = NULL;
         return;
     }
 
@@ -2402,6 +2404,8 @@ void GeoRasterWrapper::GetRPC()
 
     if ( EQUAL( pszPolyCoeff, "None" ) )
     {
+        CPLFree( phRPC );
+        phRPC = NULL;
         return;
     }
 
@@ -2409,6 +2413,8 @@ void GeoRasterWrapper::GetRPC()
 
     if( CSLCount( papszCeoff ) != 20 )
     {
+        CPLFree( phRPC );
+        phRPC = NULL;
         return;
     }
 
@@ -2423,6 +2429,8 @@ void GeoRasterWrapper::GetRPC()
 
     if ( phPolynomial == NULL )
     {
+        CPLFree( phRPC );
+        phRPC = NULL;
         return;
     }
 
@@ -2430,6 +2438,8 @@ void GeoRasterWrapper::GetRPC()
 
     if ( EQUAL( pszPolyCoeff, "None" ) )
     {
+        CPLFree( phRPC );
+        phRPC = NULL;
         return;
     }
 
@@ -2437,6 +2447,8 @@ void GeoRasterWrapper::GetRPC()
 
     if( CSLCount( papszCeoff ) != 20 )
     {
+        CPLFree( phRPC );
+        phRPC = NULL;
         return;
     }
 
@@ -2451,6 +2463,8 @@ void GeoRasterWrapper::GetRPC()
 
     if ( phPolynomial == NULL )
     {
+        CPLFree( phRPC );
+        phRPC = NULL;
         return;
     }
 
@@ -2458,6 +2472,8 @@ void GeoRasterWrapper::GetRPC()
 
     if ( EQUAL( pszPolyCoeff, "None" ) )
     {
+        CPLFree( phRPC );
+        phRPC = NULL;
         return;
     }
 
@@ -2465,6 +2481,8 @@ void GeoRasterWrapper::GetRPC()
 
     if( CSLCount( papszCeoff ) != 20 )
     {
+        CPLFree( phRPC );
+        phRPC = NULL;
         return;
     }
 
