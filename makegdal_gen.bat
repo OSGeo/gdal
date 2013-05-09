@@ -6,7 +6,7 @@
 ::  Name:     makegdal_gen.bat
 ::  Project:  GDAL 
 ::  Purpose:  Generate MS Visual Studio 2003...N project files    
-::  Author:   Ivan Lucena, ivan.lucena@pmldnet.com
+::  Author:   Ivan Lucena, [lucena_ivan at hotmail.com]
 :: 
 :: ****************************************************************************
 ::  Copyright (c) 2007, Ivan Lucena    
@@ -39,6 +39,7 @@ if "%1"=="" (
     echo Examples:
     echo    makegdal_gen 7.10 ^> makegdal71.vcproj
     echo    makegdal_gen 8.00 ^> makegdal80.vcproj
+    echo    makegdal_gen 9.00 ^> makegdal90.vcproj
     goto :end
 )
 
@@ -116,9 +117,9 @@ echo 	^</Configurations^>
 echo 	^<References^>
 echo 	^</References^>
 echo 	^<Files^>
-call :create_filter . "*.vc;*.opt" "Make Files"    "	"
-call :create_filter . "*.h"        "Include Files" "	"
-call :create_filter . "*.c;*.cpp"  "Source Files"  "	"
+call :create_filter . "*.vc;*.opt;*.local" "Make Files"    "	"
+call :create_filter . "*.h"                "Include Files" "	"
+call :create_filter . "*.c;*.cpp"          "Source Files"  "	"
 echo 	^</Files^>
 echo 	^<Globals^>
 echo 	^</Globals^>
