@@ -27,7 +27,7 @@ A bilioteca GDAL tamb&eacute;m conta com uma variadade de programas
 para a tradu&ccedil;&atilde;o de formatos bem como uma s&eacute;rie de outras fun&ccedil;&otilde;es. 
 A p&aacute;gina 
 <a href="http://trac.osgeo.org/gdal/wiki/Release/1.9.0-News">novidades</a> descreve o 
-lan&ccedil;amento em Dezembro de 2011 da release 1.9.0 da biblioteca GDAL/OGR.
+lan&ccedil;amento em Abril de 2013 da release 1.10.0 da biblioteca GDAL/OGR.
 
 A bilioteca <a href="ogr">OGR</a> (cujo c&oacute;digo fonte esta inclu&iacute;do na GDAL) possue
 funcionalidades semelhantes &agrave;s da GDAL para datos vetorias (Simple Features).

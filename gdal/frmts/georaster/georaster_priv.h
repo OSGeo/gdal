@@ -4,7 +4,7 @@
  * Name:     georaster_priv.h
  * Project:  Oracle Spatial GeoRaster Driver
  * Purpose:  Define C++/Private declarations
- * Author:   Ivan Lucena [ivan.lucena@pmldnet.com]
+ * Author:   Ivan Lucena [ivan.lucena at oracle.com]
  *
  ******************************************************************************
  * Copyright (c) 2008, Ivan Lucena

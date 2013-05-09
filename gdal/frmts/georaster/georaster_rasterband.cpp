@@ -4,7 +4,7 @@
  * Name:     georaster_rasterband.cpp
  * Project:  Oracle Spatial GeoRaster Driver
  * Purpose:  Implement GeoRasterRasterBand methods
- * Author:   Ivan Lucena [ivan.lucena@pmldnet.com]
+ * Author:   Ivan Lucena [ivan.lucena at oracle.com]
  *
  ******************************************************************************
  * Copyright (c) 2008, Ivan Lucena

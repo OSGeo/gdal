@@ -3,7 +3,7 @@
 *
 * Project:  Idrisi Raster Image File Driver
 * Purpose:  Read/write Idrisi Raster Image Format RST
-* Author:   Ivan Lucena, ivan.lucena@pmldnet.com
+* Author:   Ivan Lucena, [lucena_ivan at hotmail.com]
 *
 ******************************************************************************
 * Copyright( c ) 2006, Ivan Lucena
