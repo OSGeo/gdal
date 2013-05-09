@@ -4,7 +4,7 @@
  * Name:     georaster_wrapper.cpp
  * Project:  Oracle Spatial GeoRaster Driver
  * Purpose:  Implement GeoRasterWrapper methods
- * Author:   Ivan Lucena [ivan.lucena@pmldnet.com]
+ * Author:   Ivan Lucena [ivan.lucena at oracle.com]
  *
  ******************************************************************************
  * Copyright (c) 2008, Ivan Lucena
