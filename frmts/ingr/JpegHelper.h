@@ -3,7 +3,7 @@
  *
  * Project:  Project:  Creates a jpeg header
  * Purpose:  Abreviated JPEG support
- * Author:   Ivan Lucena, ivan.lucena@pmldnet.com
+ * Author:   Ivan Lucena, [lucena_ivan at hotmail.com]
  *
  ******************************************************************************
  * Copyright (c) 2007, Ivan Lucena

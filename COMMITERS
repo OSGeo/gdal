@@ -43,8 +43,8 @@ shalasz       Steve Halasz                 DebianGIS Packaging
 mloskot	      Mateusz Loskot		   wince, geojson
               mateusz at loskot.net
 
-ilucena       Ivan Lucena                  idrisi, ingr, georaster
-              ivan.lucena at pmldnet.com
+ilucena       Ivan Lucena                  georaster, oci
+              ivan.lucena at oracle.com
 
 mbrudka	      Marek Brudka		   thread safety
               mbrudka at aster.pl

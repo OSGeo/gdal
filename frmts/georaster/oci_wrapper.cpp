@@ -4,7 +4,7 @@
  * Name:     oci_wrapper.cpp
  * Project:  Oracle Spatial GeoRaster Driver
  * Purpose:  Limited wrapper for OCI (Oracle Call Interfaces)
- * Author:   Ivan Lucena [ivan.lucena@pmldnet.com]
+ * Author:   Ivan Lucena [ivan.lucena at oracle.com]
  *
  ******************************************************************************
  * Copyright (c) 2008, Ivan Lucena
