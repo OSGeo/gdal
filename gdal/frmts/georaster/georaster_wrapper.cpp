@@ -4,7 +4,7 @@
  * Name:     georaster_wrapper.cpp
  * Project:  Oracle Spatial GeoRaster Driver
  * Purpose:  Implement GeoRasterWrapper methods
- * Author:   Ivan Lucena [ivan.lucena at oracle.com]
+ * Author:   Ivan Lucena [ivan.lucena@pmldnet.com]
  *
  ******************************************************************************
  * Copyright (c) 2008, Ivan Lucena
@@ -1742,16 +1742,24 @@ bool GeoRasterWrapper::InitializeIO( void )
 
         if( nXSize <= nXBlock && nYSize <= nYBlock )
         {
+            // ------------------------------------------------------------
+            // Calculate the size of the singe small blocks
+            // ------------------------------------------------------------
+
             nCBS = nXSize;
             nRBS = nYSize;
+            nTCB = 1;
+            nTRB = 1;
         }
+        else
+        {
+            // ------------------------------------------------------------
+            // Recalculate blocks quantity
+            // ------------------------------------------------------------
 
-        // ----------------------------------------------------------------
-        // Recalculate blocks quantity
-        // ----------------------------------------------------------------
-
-        nTCB = (int) MAX( 1, (int) ceil( (double) nTCB / dfScale ) );
-        nTRB = (int) MAX( 1, (int) ceil( (double) nTRB / dfScale ) );
+            nTCB = (int) ceil( (double) nXSize / nCBS );
+            nTRB = (int) ceil( (double) nYSize / nRBS );
+        }
 
         // --------------------------------------------------------------------
         // Save level datails
