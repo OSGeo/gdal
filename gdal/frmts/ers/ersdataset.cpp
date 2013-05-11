@@ -1088,17 +1088,28 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Adjust if we have a registration cell.                          */
 /* -------------------------------------------------------------------- */
-    int iCellX = atoi(poHeader->Find("RasterInfo.RegistrationCellX", "1"));
-    int iCellY = atoi(poHeader->Find("RasterInfo.RegistrationCellY", "1"));
+
+    /* http://geospatial.intergraph.com/Libraries/Tech_Docs/ERDAS_ER_Mapper_Customization_Guide.sflb.ashx */
+    /* Page 27 : */
+    /* RegistrationCellX and RegistrationCellY : The image X and Y
+       coordinates of the cell which corresponds to the Registration
+       Coordinate. Note that the RegistrationCellX and
+       RegistrationCellY can be fractional values. If
+       RegistrationCellX and RegistrationCellY are not specified,
+       they are assumed to be (0,0), which is the top left corner of the
+       image.
+       */
+    double dfCellX = CPLAtof(poHeader->Find("RasterInfo.RegistrationCellX", "0"));
+    double dfCellY = CPLAtof(poHeader->Find("RasterInfo.RegistrationCellY", "0"));
 
     if( poDS->bGotTransform )
     {
         poDS->adfGeoTransform[0] -=
-            (iCellX-1) * poDS->adfGeoTransform[1]
-            + (iCellY-1) * poDS->adfGeoTransform[2];
+            dfCellX * poDS->adfGeoTransform[1]
+            + dfCellY * poDS->adfGeoTransform[2];
         poDS->adfGeoTransform[3] -= 
-            (iCellX-1) * poDS->adfGeoTransform[4]
-            + (iCellY-1) * poDS->adfGeoTransform[5];
+            dfCellX * poDS->adfGeoTransform[4]
+            + dfCellY * poDS->adfGeoTransform[5];
     }
 
 /* -------------------------------------------------------------------- */
