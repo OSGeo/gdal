@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -68,8 +69,20 @@ def webp_3():
     if gdaltest.webp_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'WEBP', 'rgbsmall.tif', 1, 21464, options = ['QUALITY=80'] )
-    return tst.testCreateCopy( vsimem = 1, check_minmax = False )
+    src_ds = gdal.Open('data/rgbsmall.tif')
+    out_ds = gdaltest.webp_drv.CreateCopy('/vsimem/webp_3.webp', src_ds, options = ['QUALITY=80'])
+    src_ds = None
+    cs1 = out_ds.GetRasterBand(1).Checksum()
+    out_ds = None
+    gdal.Unlink('/vsimem/webp_3.webp')
+
+    # 21502 is for libwebp 0.3.0
+    if cs1 != 21464 and cs1 != 21502:
+        gdaltest.post_reason('did not get expected checksum on band 1')
+        print(cs1)
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # CreateCopy() on RGBA 
@@ -91,7 +104,8 @@ def webp_4():
     out_ds = None
     gdal.Unlink('/vsimem/webp_4.webp')
 
-    if cs1 != 22001:
+    # 22849 is for libwebp 0.3.0
+    if cs1 != 22001 and cs1 != 22849:
         gdaltest.post_reason('did not get expected checksum on band 1')
         print(cs1)
         return 'fail'
