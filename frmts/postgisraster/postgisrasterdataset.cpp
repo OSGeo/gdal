@@ -389,51 +389,95 @@ GBool PostGISRasterDataset::SetRasterProperties
      **************************************************************************/
     // NOTE: can't use 'srid' alias in the GROUP BY. It doesn't work 
     // with PostgreSQL 9.1
-    if (pszWhere == NULL) {
+
+    // First, check raster_columns view (it makes things faster. See ticket #5046)
+    if (pszWhere == NULL)
+    {
         osCommand.Printf(
-            "select srid, nbband, st_xmin(geom) as xmin, st_xmax(geom) as xmax, "
-            "st_ymin(geom) as ymin, st_ymax(geom) as ymax from (select st_srid(%s) srid, "
-            "st_extent(%s::geometry) geom, max(ST_NumBands(rast)) nbband from %s.%s "
-            "group by st_srid(%s)) foo", pszColumn, pszColumn, pszSchema, 
-            pszTable, pszColumn);
+            "select srid, nbband, st_xmin(geom) as xmin, st_xmax(geom) as xmax, " 
+            "st_ymin(geom) as ymin, st_ymax(geom) as ymax from (select srid, " 
+            "extent geom, num_bands nbband from raster_columns where "
+            "r_table_schema = '%s' and r_table_name = '%s') foo", 
+            pszSchema, pszTable);
     }
 
-    else {
+    else
+    {
         osCommand.Printf(
-            "select srid, nbband, st_xmin(geom) as xmin, st_xmax(geom) as xmax, "
-            "st_ymin(geom) as ymin, st_ymax(geom) as ymax from (select st_srid(%s) srid, "
-            "st_extent(%s::geometry) geom, max(ST_NumBands(rast)) nbband from %s.%s "
-            "where %s group by st_srid(%s)) foo", pszColumn, pszColumn, pszSchema, 
-            pszTable, pszWhere, pszColumn);
+            "select srid, nbband, st_xmin(geom) as xmin, st_xmax(geom) as xmax, " 
+            "st_ymin(geom) as ymin, st_ymax(geom) as ymax from (select srid srid, " 
+            "extent geom, num_bands nbband from raster_columns where "
+            "r_table_schema = '%s' " "and r_table_name = '%s') foo where %s", 
+            pszSchema, pszTable, pszWhere);
     }
 
     CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
         "First query: %s", osCommand.c_str());
 
-
     poResult = PQexec(poConn, osCommand.c_str());
-    
+
     // Query execution error
     if(poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK || 
-        PQntuples(poResult) < 0) {
+        PQntuples(poResult) < 0) 
+    {
 
-        CPLError(CE_Failure, CPLE_AppDefined, "Error browsing database for "
-            "PostGIS Raster properties");
+        CPLError(CE_Warning, CPLE_AppDefined, "Cannot find information about "
+            "%s.%s table in raster_columns view. The raster table loading "
+            "would take a lot of time. Please, execute AddRasterConstraints "
+            "PostGIS function to register this table as raster table in "
+            "raster_columns view. This will save loading time.", pszSchema,
+            pszTable);
+
+        /**
+         * Table not registered in raster_columns view. We need to check the
+         * whole table to fetch raster properties. This can take a lot of time
+         **/
+        if (pszWhere == NULL) {
+            osCommand.Printf(
+                "select srid, nbband, st_xmin(geom) as xmin, st_xmax(geom) as xmax, "
+                "st_ymin(geom) as ymin, st_ymax(geom) as ymax from (select st_srid(%s) srid, "
+                "st_extent(%s::geometry) geom, max(ST_NumBands(rast)) nbband from %s.%s "
+                "group by st_srid(%s)) foo", pszColumn, pszColumn, pszSchema, 
+                pszTable, pszColumn);
+        }
+
+        else {
+            osCommand.Printf(
+                "select srid, nbband, st_xmin(geom) as xmin, st_xmax(geom) as xmax, "
+                "st_ymin(geom) as ymin, st_ymax(geom) as ymax from (select st_srid(%s) srid, "
+                "st_extent(%s::geometry) geom, max(ST_NumBands(rast)) nbband from %s.%s "
+                "where %s group by st_srid(%s)) foo", pszColumn, pszColumn, pszSchema, 
+                pszTable, pszWhere, pszColumn);
+        }
 
         CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
-            "%s", PQerrorMessage(poConn));
+            "First query: %s", osCommand.c_str());
 
-        if (poResult != NULL)
-            PQclear(poResult);
+        poResult = PQexec(poConn, osCommand.c_str());
+    
+        // Query execution error
+        if(poResult == NULL || PQresultStatus(poResult) != PGRES_TUPLES_OK || 
+            PQntuples(poResult) < 0) 
+        {
 
-        return false;                   
+            CPLError(CE_Failure, CPLE_AppDefined, "Error browsing database for "
+                "PostGIS Raster properties");
+
+            CPLDebug("PostGIS_Raster", "PostGISRasterDataset::SetRasterProperties(): "
+                "%s", PQerrorMessage(poConn));
+
+            if (poResult != NULL)
+                PQclear(poResult);
+
+            return false;                   
+        }
     }
-
+    
     // No tuples
     else if (PQntuples(poResult) == 0) {
         CPLError(CE_Failure, CPLE_AppDefined, "Error, no data found in the table that "
             "matches your constraints. Maybe there are no rows in the table, or maybe "
-            "you provide a 'where' option with too much restrictions");
+            "you provide a 'where' option with too many restrictions");
 
         PQclear(poResult);
 
