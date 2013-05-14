@@ -126,7 +126,8 @@ else:
 if format == 'GTiff':
     tif_filename = dst_filename
 else:
-    tif_filename = 'temp.tif'
+    import tempfile
+    tif_filedesc,tif_filename = tempfile.mkstemp(suffix='.tif')
 
 gtiff_driver = gdal.GetDriverByName( 'GTiff' )
 
@@ -161,5 +162,6 @@ if tif_filename != dst_filename:
     dst_driver.CreateCopy( dst_filename, tif_ds )
     tif_ds = None
 
+    os.close(tif_filedesc)
     gtiff_driver.Delete( tif_filename )
 
