@@ -588,7 +588,6 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         NCDF_ERR(status);
         
         poNCDFDS->DefVarDeflate(nZId, TRUE);
-        
     }
 
     /* for Byte data add signed/unsigned info */
@@ -3640,7 +3639,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         CPLDebug( "GDAL_netCDF", "nc_def_var(%d,%s,%d,%d,-,-) got id %d",
                   cdfid, NCDF_DIMNAME_LAT, eLonLatType, nLatDims, NCDFVarID );
         NCDF_ERR(status);
-        DefVarDeflate( NCDFVarID );
+        DefVarDeflate( NCDFVarID, FALSE ); // don't set chunking
         nVarLatID = NCDFVarID;
         nc_put_att_text( cdfid, NCDFVarID, CF_STD_NAME,
                          8,"latitude" );
@@ -3654,7 +3653,7 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         CPLDebug( "GDAL_netCDF", "nc_def_var(%d,%s,%d,%d,-,-) got id %d",
                   cdfid, NCDF_DIMNAME_LON, eLonLatType, nLatDims, NCDFVarID );
         NCDF_ERR(status);
-        DefVarDeflate( NCDFVarID );
+        DefVarDeflate( NCDFVarID, FALSE ); // don't set chunking
         nVarLonID = NCDFVarID;
         nc_put_att_text( cdfid, NCDFVarID, CF_STD_NAME,
                          9, "longitude" );
@@ -5654,6 +5653,9 @@ netCDFDataset::ProcessCreationOptions( )
         }
     }
 
+    /* CHUNKING option */
+    bChunking = CSLFetchBoolean( papszCreationOptions, "CHUNKING", TRUE );
+
 #endif
 
     /* set nCreateMode based on nFormat */
@@ -5683,27 +5685,46 @@ netCDFDataset::ProcessCreationOptions( )
 
 }
 
-int netCDFDataset::DefVarDeflate( int nVarId, int bChunking )
+int netCDFDataset::DefVarDeflate( int nVarId, int bChunkingArg )
 {
 #ifdef NETCDF_HAS_NC4
     if ( nCompress == NCDF_COMPRESS_DEFLATE ) {                         
-        // must set chunk size to avoid huge performace hit (set bChunking=TRUE)             
+        // must set chunk size to avoid huge performace hit (set bChunkingArg=TRUE)             
         // perhaps another solution it to change the chunk cache?
         // http://www.unidata.ucar.edu/software/netcdf/docs/netcdf.html#Chunk-Cache   
         // TODO make sure this is ok
         CPLDebug( "GDAL_netCDF", 
                   "DefVarDeflate( %d, %d ) nZlevel=%d",
-                  nVarId, bChunking, nZLevel );
+                  nVarId, bChunkingArg, nZLevel );
+
         status = nc_def_var_deflate(cdfid,nVarId,1,1,nZLevel);
         NCDF_ERR(status);
-        if ( (status == NC_NOERR) && bChunking ) {
-            size_t chunksize[] = { 1, (size_t)nRasterXSize };                   
+
+        if ( (status == NC_NOERR) && bChunkingArg && bChunking ) {
+
+            // set chunking to be 1 for all dims, except X dim
+            // size_t chunksize[] = { 1, (size_t)nRasterXSize };                   
+            size_t chunksize[ MAX_NC_DIMS ];
+            int nd;
+            nc_inq_varndims( cdfid, nVarId, &nd );
+            for( int i=0; i<nd; i++ ) chunksize[i] = (size_t)1;
+            chunksize[nd-1] = (size_t)nRasterXSize;
+
             CPLDebug( "GDAL_netCDF", 
-                      "DefVarDeflate() chunksize={%ld, %ld}",
-                      (long)chunksize[0], (long)chunksize[1] );
+                      "DefVarDeflate() chunksize={%ld, %ld} chunkX=%ld nd=%d",
+                      (long)chunksize[0], (long)chunksize[1], (long)chunksize[nd-1], nd );
+#ifdef NCDF_DEBUG
+            for( int i=0; i<nd; i++ ) 
+                CPLDebug( "GDAL_netCDF","DefVarDeflate() chunk[%d]=%ld", i, chunksize[i] );
+#endif
+
             status = nc_def_var_chunking( cdfid, nVarId,          
                                           NC_CHUNKED, chunksize );
             NCDF_ERR(status);
+        }
+        else {
+            CPLDebug( "GDAL_netCDF", 
+                      "chunksize not set" );
         }
         return status;
     } 
@@ -5777,6 +5798,8 @@ void GDALRegister_netCDF()
 "   <Option name='PIXELTYPE' type='string-select' description='only used in Create()'>"
 "       <Value>DEFAULT</Value>"
 "       <Value>SIGNEDBYTE</Value>"
+"   </Option>"
+"   <Option name='CHUNKING' type='boolean' default='YES' description='define chunking when creating netcdf4 file'>"
 "   </Option>"
 "</CreationOptionList>" );
 
