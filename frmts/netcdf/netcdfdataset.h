@@ -698,6 +698,7 @@ class netCDFDataset : public GDALPamDataset
     char         **papszCreationOptions;
     int          nCompress;
     int          nZLevel;
+    int          bChunking;
     int          nCreateMode;
     int          bSignedData;
 
@@ -709,7 +710,7 @@ class netCDFDataset : public GDALPamDataset
     char **      FetchStandardParallels( const char *pszGridMappingValue );
 
     void ProcessCreationOptions( );
-    int DefVarDeflate( int nVarId, int bChunking=TRUE );
+    int DefVarDeflate( int nVarId, int bChunkingArg=TRUE );
     CPLErr AddProjectionVars( GDALProgressFunc pfnProgress=GDALDummyProgress, 
                               void * pProgressData=NULL );
     void AddGridMappingRef(); 
