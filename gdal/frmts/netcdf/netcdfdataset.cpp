@@ -284,6 +284,9 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     } 
     
     /* set value */
+#ifdef NCDF_DEBUG
+    CPLDebug( "GDAL_netCDF", "SetNoDataValue(%f) read", dfNoData );
+#endif
     SetNoDataValue( dfNoData );
 
 /* -------------------------------------------------------------------- */
@@ -623,6 +626,9 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     }
 
     /* set default nodata */
+#ifdef NCDF_DEBUG
+    CPLDebug( "GDAL_netCDF", "SetNoDataValue(%f) default", dfNoData );
+#endif
     dfNoData = NCDFGetDefaultNoDataValue( nc_datatype );
     SetNoDataValue( dfNoData );
 }
@@ -762,7 +768,6 @@ CPLErr netCDFRasterBand::SetNoDataValue( double dfNoData )
                       "but file is no longer in define mode (id #%d, band #%d)", 
                       dfNoData, dfNoDataValue, cdfid, nBand );
         }
-/* TODO add NCDFDebug function for verbose debugging */
 #ifdef NCDF_DEBUG
         else {
             CPLDebug( "GDAL_netCDF", "Setting NoDataValue to %.18g (id #%d, band #%d)", 
@@ -4981,14 +4986,22 @@ void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
                 // }             
             }
             else {
-                /* Do not copy varname, stats, NETCDF_DIM_* and items in papszIgnoreBand */
+                /* Do not copy varname, stats, NETCDF_DIM_*, nodata 
+                   and items in papszIgnoreBand */
                 if ( ( strncmp( szMetaName, "NETCDF_VARNAME", 14) == 0 ) ||
                      ( strncmp( szMetaName, "STATISTICS_", 11) == 0 ) ||
                      ( strncmp( szMetaName, "NETCDF_DIM_", 11 ) == 0 ) ||
+                     ( strncmp( szMetaName, "missing_value", 13 ) == 0 ) ||
+                     ( strncmp( szMetaName, "_FillValue", 10 ) == 0 ) ||
                      ( CSLFindString( (char **)papszIgnoreBand, szMetaName ) != -1 ) )
                     continue;
             }
 
+
+#ifdef NCDF_DEBUG
+            CPLDebug( "GDAL_netCDF", "copy name=[%s] value=[%s]",
+                      szMetaName, szMetaValue );
+#endif
             if ( NCDFPutAttr( fpImage, CDFVarID,szMetaName, 
                               szMetaValue ) != CE_None )
                 CPLDebug( "GDAL_netCDF", "NCDFPutAttr(%d, %d, %s, %s) failed", 
@@ -5417,6 +5430,10 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         char szBandName[ NC_MAX_NAME ];
         char szLongName[ NC_MAX_NAME ];
         const char *tmpMetadata;
+        int bSignedData = TRUE;
+        int  bNoDataSet;
+        double dfNoDataValue;
+
         poSrcBand = poSrcDS->GetRasterBand( iBand );
         eDT = poSrcBand->GetRasterDataType();
 
@@ -5440,7 +5457,6 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         else 
             szLongName[0]='\0';
 
-        int bSignedData = TRUE;
         if ( eDT == GDT_Byte ) {
             /* GDAL defaults to unsigned bytes, but check if metadata says its
                signed, as NetCDF can support this for certain formats. */
@@ -5465,8 +5481,15 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         poDS->SetBand( iBand, poBand );
         
+        /* set nodata value, if any */
+        // poBand->SetNoDataValue( poSrcBand->GetNoDataValue(0) );
+        dfNoDataValue = poSrcBand->GetNoDataValue( &bNoDataSet );
+        if ( bNoDataSet ) {
+            CPLDebug( "GDAL_netCDF", "SetNoDataValue(%f) source", dfNoDataValue );
+            poBand->SetNoDataValue( dfNoDataValue );
+        }
+
         /* Copy Metadata for band */
-        poBand->SetNoDataValue( poSrcBand->GetNoDataValue(0) );
         CopyMetadata( (void *) GDALGetRasterBand( poSrcDS, iBand ), 
                       poDS->cdfid, poBand->nZId );
 
