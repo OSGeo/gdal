@@ -2128,6 +2128,9 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
     else if( GDALGetGCPProjection( hSrcDS ) != NULL )
         pszProjection = GDALGetGCPProjection( hSrcDS );
 
+    if( pszProjection == NULL || EQUAL( pszProjection, "" ) )
+        pszProjection = CSLFetchNameValue( papszTO, "SRC_SRS" );
+
     if( pszProjection != NULL )
     {
         hRasterSRS = OSRNewSpatialReference(NULL);
