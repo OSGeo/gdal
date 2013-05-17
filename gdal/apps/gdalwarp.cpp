@@ -167,7 +167,8 @@ for output bands (different values can be supplied for each band).  If more
 than one value is supplied all values should be quoted to keep them together
 as a single operating system argument.  New files will be initialized to this
 value and if possible the nodata value will be recorded in the output
-file.</dd>
+file. Use a value of <tt>None</tt> to ensure that nodata is not defined (GDAL>=2.0).
+If this argument is not used then nodata values will be copied from the source dataset (GDAL>=2.0).</dd>
 <dt> <b>-dstalpha</b>:</dt><dd> Create an output alpha band to identify 
 nodata (unset/transparent) pixels. </dd>
 <dt> <b>-wm</b> <em>memory_in_mb</em>:</dt><dd> Set the amount of memory (in
@@ -1167,7 +1168,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Setup NODATA options.                                           */
 /* -------------------------------------------------------------------- */
-        if( pszSrcNodata != NULL && !EQUALN(pszSrcNodata,"n",1) )
+        if( pszSrcNodata != NULL && !EQUAL(pszSrcNodata,"none") )
         {
             char **papszTokens = CSLTokenizeString( pszSrcNodata );
             int  nTokenCount = CSLCount(papszTokens);
@@ -1218,10 +1219,10 @@ int main( int argc, char ** argv )
                 if( !bQuiet )
                 {
                     if (CPLIsNan(dfReal))
-                        printf( "Using internal nodata values (eg. nan) for image %s.\n",
+                        printf( "Using internal nodata values (e.g. nan) for image %s.\n",
                                 papszSrcFiles[iSrc] );
                     else
-                        printf( "Using internal nodata values (eg. %g) for image %s.\n",
+                        printf( "Using internal nodata values (e.g. %g) for image %s.\n",
                                 dfReal, papszSrcFiles[iSrc] );
                 }
                 psWO->padfSrcNoDataReal = (double *) 
@@ -1257,6 +1258,7 @@ int main( int argc, char ** argv )
         {
             char **papszTokens = CSLTokenizeString( pszDstNodata );
             int  nTokenCount = CSLCount(papszTokens);
+            int bDstNoDataNone = TRUE;
 
             psWO->padfDstNoDataReal = (double *) 
                 CPLMalloc(psWO->nBandCount*sizeof(double));
@@ -1267,14 +1269,37 @@ int main( int argc, char ** argv )
             {
                 if( i < nTokenCount )
                 {
+                    if ( papszTokens[i] != NULL && EQUAL(papszTokens[i],"none") )
+                    {
+                        CPLDebug( "WARP", "dstnodata of band %d not set", i );
+                        bDstNoDataNone = TRUE;
+                        continue;
+                    }
+                    else if ( papszTokens[i] == NULL ) // this shouldn't happen, but just in case
+                    {
+                        fprintf( stderr, "Error parsing dstnodata arg #%d\n", i );
+                        bDstNoDataNone = TRUE;
+                        continue;
+                    }
                     CPLStringToComplex( papszTokens[i], 
                                         psWO->padfDstNoDataReal + i,
                                         psWO->padfDstNoDataImag + i );
+                    bDstNoDataNone = FALSE;
+                    CPLDebug( "WARP", "dstnodata of band %d set to %f", i, psWO->padfDstNoDataReal[i] );
                 }
                 else
                 {
-                    psWO->padfDstNoDataReal[i] = psWO->padfDstNoDataReal[i-1];
-                    psWO->padfDstNoDataImag[i] = psWO->padfDstNoDataImag[i-1];
+                    if ( ! bDstNoDataNone )
+                    {                    
+                        psWO->padfDstNoDataReal[i] = psWO->padfDstNoDataReal[i-1];
+                        psWO->padfDstNoDataImag[i] = psWO->padfDstNoDataImag[i-1];
+                        CPLDebug( "WARP", "dstnodata of band %d set from previous band", i );
+                    }
+                    else
+                    {
+                        CPLDebug( "WARP", "dstnodata value of band %d not set", i );
+                        continue;
+                    }
                 }
                 
                 GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, i+1 );
@@ -1335,6 +1360,44 @@ int main( int argc, char ** argv )
             }
 
             CSLDestroy( papszTokens );
+        }
+        /* else try to fill dstNoData from source bands */
+        else if ( psWO->padfSrcNoDataReal != NULL )
+        {
+            psWO->padfDstNoDataReal = (double *) 
+                CPLMalloc(psWO->nBandCount*sizeof(double));
+            psWO->padfDstNoDataImag = (double *) 
+                CPLMalloc(psWO->nBandCount*sizeof(double));
+
+            if( !bQuiet )
+                printf( "Copying nodata values from source %s to destination %s.\n",
+                        papszSrcFiles[iSrc], pszDstFilename );
+
+            for( i = 0; i < psWO->nBandCount; i++ )
+            {
+                int bHaveNodata = FALSE;
+                
+                GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, i+1 );
+                GDALGetRasterNoDataValue( hBand, &bHaveNodata );
+
+                CPLDebug("WARP", "band=%d bHaveNodata=%d", i, bHaveNodata);
+                if( bHaveNodata )
+                {
+                    psWO->padfDstNoDataReal[i] = psWO->padfSrcNoDataReal[i];
+                    psWO->padfDstNoDataImag[i] = psWO->padfSrcNoDataImag[i];
+                    CPLDebug("WARP", "srcNoData=%f dstNoData=%f", 
+                             psWO->padfSrcNoDataReal[i], psWO->padfDstNoDataReal[i] );
+                }
+
+                if( bCreateOutput )
+                {
+                    CPLDebug("WARP", "calling GDALSetRasterNoDataValue() for band#%d", i );
+                    GDALSetRasterNoDataValue( 
+                        GDALGetRasterBand( hDstDS, psWO->panDstBands[i] ), 
+                        psWO->padfDstNoDataReal[i] );
+                }
+            }
+
         }
 
 /* -------------------------------------------------------------------- */
