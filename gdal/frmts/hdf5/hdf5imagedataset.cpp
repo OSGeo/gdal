@@ -458,17 +458,20 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     /* -------------------------------------------------------------------- */
     /*    Check for drive name in windows HDF5:"D:\...                      */
     /* -------------------------------------------------------------------- */
+    CPLString osSubdatasetName;
+
     strcpy(szFilename, papszName[1]);
 
     if( strlen(papszName[1]) == 1 && papszName[3] != NULL )
     {
         strcat(szFilename, ":");
         strcat(szFilename, papszName[2]);
-
-        poDS->SetSubdatasetName( papszName[3] );
+        osSubdatasetName = papszName[3];
     }
     else
-        poDS->SetSubdatasetName( papszName[2] );
+        osSubdatasetName = papszName[2];
+    
+    poDS->SetSubdatasetName( osSubdatasetName );
 
     CSLDestroy(papszName);
     papszName = NULL;
@@ -512,7 +515,7 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->poH5Objects =
         poDS->HDF5FindDatasetObjectsbyPath( poDS->poH5RootGroup,
-                                            (char *)poDS->GetSubdatasetName() );
+                                            osSubdatasetName );
 
     if( poDS->poH5Objects == NULL ) {
         delete poDS;
