@@ -1458,7 +1458,7 @@ OGRErr set_result_schema(OGRLayer *pLayerResult,
         }
         if (!mapMethod) return ret;
         for( int iField = 0; iField < poDefnMethod->GetFieldCount(); iField++ ) {
-            CPLString osName(poDefnInput->GetFieldDefn(iField)->GetNameRef());
+            CPLString osName(poDefnMethod->GetFieldDefn(iField)->GetNameRef());
             if( pszMethodPrefix != NULL )
                 osName = pszMethodPrefix + osName;
             mapMethod[iField] = poDefnResult->GetFieldIndex(osName);
