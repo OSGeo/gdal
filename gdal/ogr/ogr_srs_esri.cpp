@@ -379,7 +379,11 @@ void CleanupESRIDatumMappingTable()
         papszDatumMapping = NULL;
     }
 
-    CPLDestroyMutex(hDatumMappingMutex);
+    if( hDatumMappingMutex != NULL )
+    {
+        CPLDestroyMutex(hDatumMappingMutex);
+        hDatumMappingMutex = NULL;
+    }
 }
 CPL_C_END
 
