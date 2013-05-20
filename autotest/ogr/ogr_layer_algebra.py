@@ -36,13 +36,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 import ogrtest
 
-try:
-    from osgeo import gdal, gdalconst, ogr, osr
-except:
-    import gdal
-    import gdalconst
-    import ogr
-    import osr
+from osgeo import gdal, gdalconst, ogr, osr
 
 ###############################################################################
 # Common usage tests.
@@ -55,6 +49,7 @@ def empty_layer(C):
         C.DeleteFeature(feat.GetFID())
 
 def is_same(A,B):
+
     A.ResetReading()
     B.ResetReading()
     while True:
@@ -69,14 +64,10 @@ def is_same(A,B):
         if fA.Equal(fB) != 0:
             return False
 
-def overlay_1():
+def algebra_setup():
 
-    try:
-        gdaltest.have_ng = 1
-    except:
-        gdaltest.have_ng = 0
-        return 'skip'
-
+    global ds, A, B, C, pointInB, D1, D2
+    
     # Create three memory layers for intersection.
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource( 'wrk' )
@@ -130,9 +121,13 @@ def overlay_1():
     feat = ogr.Feature( D2.GetLayerDefn() )
     feat.SetGeometryDirectly( ogr.Geometry(wkt = d2) )
     D2.CreateFeature( feat )
-    
-    # Run the methods and check results.
 
+    return 'success'
+
+
+def algebra_intersection():
+    empty_layer(C)
+    
     # Intersection; this should return two rectangles
 
     err = A.Intersection( B, C )
@@ -198,6 +193,10 @@ def overlay_1():
             gdaltest.post_reason( 'D1 != C' )
             return 'fail'
 
+    return 'success'
+
+
+def algebra_union():
     empty_layer(C)
 
     # Union; this should return 5 polygons
@@ -256,6 +255,10 @@ def overlay_1():
             gdaltest.post_reason( 'Layer.Union returned '+str(C.GetFeatureCount())+' features' )
             return 'fail'
 
+    return 'success'
+
+
+def algebra_symdifference():
     empty_layer(C)
 
     # SymDifference; this should return 3 polygons
@@ -298,6 +301,11 @@ def overlay_1():
     if C.GetFeatureCount() != 0:
             gdaltest.post_reason( 'Layer.SymDifference returned '+str(C.GetFeatureCount())+' features' )
             return 'fail'
+
+    return 'success'
+
+
+def algebra_identify():
 
     empty_layer(C)
 
@@ -342,6 +350,9 @@ def overlay_1():
             gdaltest.post_reason( 'D1 != C' )
             return 'fail'
 
+    return 'success'
+
+def algebra_update():
     empty_layer(C)
 
     # Update; this should return 3 polygons
@@ -385,6 +396,10 @@ def overlay_1():
             gdaltest.post_reason( 'D1 != C' )
             return 'fail'
 
+    return 'success'
+
+
+def algebra_clip():
     empty_layer(C)
 
     # Clip; this should return 2 polygons
@@ -428,6 +443,10 @@ def overlay_1():
             gdaltest.post_reason( 'D1 != C' )
             return 'fail'
 
+    return 'success'
+
+
+def algebra_erase():
     empty_layer(C)
 
     # Erase; this should return 2 polygons
@@ -477,20 +496,20 @@ def overlay_1():
 
 
 gdaltest_list = [
-    overlay_1
+    algebra_setup,
+    algebra_intersection,
+    algebra_union,
+    algebra_symdifference,
+    algebra_identify,
+    algebra_update,
+    algebra_clip,
+    algebra_erase,
     ]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'overlay' )
+    gdaltest.setup_run( 'algebra' )
 
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
-    #C.ResetReading();
-    #while 1:
-    #    feat = C.GetNextFeature()
-    #    if not feat: break
-    #    g = feat.GetGeometryRef()
-    #    print(g.ExportToWkt())
