@@ -198,9 +198,11 @@ def summarize():
     sys.path.append( 'gcore' )
     sys.path.append( '../gcore' )
     import testnonboundtoswig
-    testnonboundtoswig.OSRCleanup()
-    testnonboundtoswig.GDALDestroyDriverManager()
-    testnonboundtoswig.OGRCleanupAll()
+    # Do it twice to ensure that cleanup routines properly do their jobs
+    for i in range(2):
+        testnonboundtoswig.OSRCleanup()
+        testnonboundtoswig.GDALDestroyDriverManager()
+        testnonboundtoswig.OGRCleanupAll()
 
     return failure_counter + blow_counter
 
