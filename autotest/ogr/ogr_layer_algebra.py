@@ -174,11 +174,11 @@ def algebra_intersection():
         g = feat.GetGeometryRef()
         if g.Equals(f1[0]):
             if feat.GetField('A') != f1[1] or feat.GetField('B') != f1[2]:
-                print 'Did not get expected field values.'
+                print('Did not get expected field values.')
                 return 'fail'
         elif g.Equals(f2[0]):
             if feat.GetField('A') != f2[1] or feat.GetField('B') != f2[2]:
-                print 'Did not get expected field values.'
+                print('Did not get expected field values.')
                 return 'fail'
         else:
             gdaltest.post_reason( 'Layer.Intersection returned wrong geometry: '+g.ExportToWkt() )
@@ -210,15 +210,16 @@ def algebra_intersection():
         g = feat.GetGeometryRef()
         if g.Equals(f1[0]):
             if feat.GetField('A') != f1[1] or feat.GetField('B') != f1[2]:
-                print 'Did not get expected field values. (1)'
-                print feat.GetField('A')
-                print feat.GetField('B')
+                print('Did not get expected field values. (1)')
+                print(feat.GetField('A'))
+                print(feat.GetField('B'))
                 return 'fail'
         elif g.Equals(f2[0]):
             if feat.GetField('A') != f2[1] or feat.GetField('B') != f2[2]:
-                print 'Did not get expected field values. (2)'
-                print feat.GetField('A')
-                print feat.GetField('B')
+                print('Did not get expected field values. (2)')
+                print(feat.GetField('A'))
+                print(feat.GetField('B'))
+                print(feat.GetField('B'))
                 return 'fail'
         else:
             gdaltest.post_reason( 'Layer.Intersection returned wrong geometry: '+g.ExportToWkt() )
