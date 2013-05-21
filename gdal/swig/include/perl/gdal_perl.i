@@ -681,6 +681,7 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
 	}
 	return @table;
     }
+    *ColorEntries = *ColorTable;
 
     package Geo::GDAL::RasterAttributeTable;
     use strict;
