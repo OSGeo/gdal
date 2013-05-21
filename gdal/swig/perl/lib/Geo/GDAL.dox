@@ -899,7 +899,6 @@
 #         last if $yoff >= $H;
 #     }
 #     my $data = $dataset->Band(1)->ReadTile($xoff,$yoff,min($W-$xoff,$w),min($H-$yoff,$h));
-#     my $data = $dataset->Band(1)->ReadTile($xoff,$yoff,$w,$h);
 #     # add your data processing code here
 #     $dataset->Band(1)->WriteTile($data,$xoff,$yoff);
 #     $xoff += $w;
@@ -1087,8 +1086,14 @@
 ## @method $GetCount()
 # @return scalar (count of color entries as int)
 
+## @method @ColorTable(@colortable)
+# Get or set the table of color entries.
+# @param colortable [optional]
+# @return a table of color entries (a list of lists) in a non void context
+
 ## @method @ColorEntries(@color_entries)
-# Get or set the color entries.
+# Get or set the table of color entries.
+# @deprecated use Geo::GDAL::ColorTable::ColorTable
 # @param color_entries [optional]
 # @return a table of color entries (a list of lists) in a non void context
 
