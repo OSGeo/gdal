@@ -474,6 +474,33 @@ int OGRSQLiteDataSource::OpenOrCreateDB(int flags)
         }
     }
 
+    const char* pszSqlitePragma = CPLGetConfigOption("OGR_SQLITE_PRAGMA", NULL);
+    if (pszSqlitePragma != NULL)
+    {
+        char** papszTokens = CSLTokenizeString2( pszSqlitePragma, ",", CSLT_HONOURSTRINGS );
+        for(int i=0; papszTokens[i] != NULL; i++ )
+        {
+            char* pszErrMsg = NULL;
+            char **papszResult;
+            int nRowCount, nColCount;
+
+            const char* pszSQL = CPLSPrintf("PRAGMA %s", papszTokens[i]);
+
+            rc = sqlite3_get_table( hDB, pszSQL,
+                                    &papszResult, &nRowCount, &nColCount,
+                                    &pszErrMsg );
+            if( rc == SQLITE_OK )
+            {
+                sqlite3_free_table(papszResult);
+            }
+            else
+            {
+                sqlite3_free( pszErrMsg );
+            }
+        }
+        CSLDestroy(papszTokens);
+    }
+
     if (!SetCacheSize())
         return FALSE;
 
