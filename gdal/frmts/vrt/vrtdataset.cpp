@@ -923,7 +923,8 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
 /*      Collect required information.                                   */
 /* -------------------------------------------------------------------- */
         if( CSLFetchNameValue(papszOptions, "ImageOffset") != NULL )
-            nImageOffset = atoi(CSLFetchNameValue(papszOptions, "ImageOffset"));
+            nImageOffset = CPLScanUIntBig(
+                CSLFetchNameValue(papszOptions, "ImageOffset"), 20);
 
         if( CSLFetchNameValue(papszOptions, "PixelOffset") != NULL )
             nPixelOffset = atoi(CSLFetchNameValue(papszOptions,"PixelOffset"));
