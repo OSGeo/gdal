@@ -1464,15 +1464,12 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 static
-int KmlSuperOverlayFindRegionStart(CPLXMLNode* psNode,
+int KmlSuperOverlayFindRegionStartInternal(CPLXMLNode* psNode,
                                    CPLXMLNode** ppsRegion,
                                    CPLXMLNode** ppsDocument,
                                    CPLXMLNode** ppsGroundOverlay,
                                    CPLXMLNode** ppsLink)
 {
-    if( psNode == NULL || psNode->eType != CXT_Element )
-        return FALSE;
-
     CPLXMLNode* psRegion = NULL;
     CPLXMLNode* psLink = NULL;
     CPLXMLNode* psGroundOverlay = NULL;
@@ -1499,20 +1496,7 @@ int KmlSuperOverlayFindRegionStart(CPLXMLNode* psNode,
     {
         if( psIter->eType == CXT_Element )
         {
-            if( KmlSuperOverlayFindRegionStart(psIter, ppsRegion, ppsDocument,
-                                               ppsGroundOverlay, ppsLink) )
-                return TRUE;
-        }
-
-        psIter = psIter->psNext;
-    }
-
-    psIter = psNode->psNext;
-    while(psIter != NULL)
-    {
-        if( psIter->eType == CXT_Element )
-        {
-            if( KmlSuperOverlayFindRegionStart(psIter, ppsRegion, ppsDocument,
+            if( KmlSuperOverlayFindRegionStartInternal(psIter, ppsRegion, ppsDocument,
                                                ppsGroundOverlay, ppsLink) )
                 return TRUE;
         }
@@ -1523,6 +1507,29 @@ int KmlSuperOverlayFindRegionStart(CPLXMLNode* psNode,
     return FALSE;
 }
 
+
+static
+int KmlSuperOverlayFindRegionStart(CPLXMLNode* psNode,
+                                   CPLXMLNode** ppsRegion,
+                                   CPLXMLNode** ppsDocument,
+                                   CPLXMLNode** ppsGroundOverlay,
+                                   CPLXMLNode** ppsLink)
+{
+    CPLXMLNode* psIter = psNode;
+    while(psIter != NULL)
+    {
+        if( psIter->eType == CXT_Element )
+        {
+            if( KmlSuperOverlayFindRegionStartInternal(psIter, ppsRegion, ppsDocument,
+                                                       ppsGroundOverlay, ppsLink) )
+                return TRUE;
+        }
+
+        psIter = psIter->psNext;
+    }
+
+    return FALSE;
+}
 
 /************************************************************************/
 /*                             Identify()                               */
