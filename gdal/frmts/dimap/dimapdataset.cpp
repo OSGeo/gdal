@@ -157,11 +157,10 @@ DIMAPDataset::~DIMAPDataset()
 
     CPLDestroyXMLNode( psProduct );
 
-    if( nProductVersion == 2 )
-    {
+    if( psProductDim != NULL )
         CPLDestroyXMLNode( psProductDim );
+    if( psProductStrip != NULL )
         CPLDestroyXMLNode( psProductStrip );
-    }
 
     CPLFree( pszGCPProjection );
     if( nGCPCount > 0 )
@@ -401,6 +400,7 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
                 "Failed to find <Raster_Dimensions> in document." );
+            CPLDestroyXMLNode(psProduct);
             return NULL;
         }
     }
@@ -413,6 +413,7 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
                 "Failed to find <Dataset_Components> in document." );
+            CPLDestroyXMLNode(psProduct);
             return NULL;
         }
         
@@ -458,7 +459,10 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 
         psProductDim = CPLParseXMLFile( osDIMAPFilename );
         if( psProductDim == NULL )
+        {
+            CPLDestroyXMLNode(psProduct);
             return NULL;
+        }
 
         /* We need the STRIP_<product_id>.XML file for a few metadata */
         CPLXMLNode *psDocDim = CPLGetXMLNode( psProductDim, "=Dimap_Document" );
@@ -491,8 +495,6 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
             }
 
             psProductStrip = CPLParseXMLFile( osSTRIPFilename );
-            if( psProductStrip == NULL )
-                return NULL;
         }
     }
 
@@ -917,7 +919,8 @@ int DIMAPDataset::ReadImageInformation2()
             NULL, NULL
     };
 
-    SetMetadataFromXML(psProductStrip, apszMetadataTranslationStrip);
+    if( psProductStrip != NULL )
+        SetMetadataFromXML(psProductStrip, apszMetadataTranslationStrip);
 
 /* -------------------------------------------------------------------- */
 /*      Set Band metadata from the <Band_Radiance> and                  */
