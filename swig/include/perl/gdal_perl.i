@@ -115,8 +115,10 @@ ALTERED_DESTROY(GDALRasterAttributeTableShadow, GDALc, delete_RasterAttributeTab
     # have $VERSION 1.9911 and GDAL 1.11 would have $VERSION 1.992
     # etc.  GDAL 2.0 should then get VERSION 2.000 and 2.1 should get
     # 2.001 etc.
+
+    # FIXME: 1.991 is the version for GDAL 1.10.0. Should be upgraded at some point
     our $VERSION = '1.991';
-    our $GDAL_VERSION = '1.10.0';
+    our $GDAL_VERSION = '1.11.0';
     use vars qw/
 	%TYPE_STRING2INT %TYPE_INT2STRING
 	%ACCESS_STRING2INT %ACCESS_INT2STRING
