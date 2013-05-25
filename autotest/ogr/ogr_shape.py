@@ -1597,6 +1597,51 @@ def ogr_shape_37():
         gdaltest.post_reason('did not get expected SRS')
         return 'fail'
 
+    for i in range(10):
+        feat_read = lyr.GetNextFeature()
+        if i == 9:
+            if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('POLYGON ((479750.6875 4764702.0,479658.59375 4764670.0,479640.09375 4764721.0,479735.90625 4764752.0,479750.6875 4764702.0))'),
+                                        max_error = 0.000000001 ) != 0:
+                print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
+                return 'fail'
+
+    lyr.ResetReading()
+    feat_read = lyr.GetFeature(9)
+    if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('POLYGON ((479750.6875 4764702.0,479658.59375 4764670.0,479640.09375 4764721.0,479735.90625 4764752.0,479750.6875 4764702.0))'),
+                                max_error = 0.000000001 ) != 0:
+        print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
+        return 'fail'
+
+    ds.Destroy()
+
+    return 'success'
+
+###############################################################################
+# Check that we can read from a .tar file
+
+def ogr_shape_37_bis():
+
+    ds = ogr.Open('/vsitar/data/poly.tar')
+    if ds is None:
+        return 'fail'
+
+    lyr = ds.GetLayer(0)
+
+    srs = lyr.GetSpatialRef()
+    wkt = srs.ExportToWkt()
+    if wkt.find('OSGB') == -1:
+        gdaltest.post_reason('did not get expected SRS')
+        return 'fail'
+
+    for i in range(10):
+        feat_read = lyr.GetNextFeature()
+        if i == 9:
+            if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('POLYGON ((479750.6875 4764702.0,479658.59375 4764670.0,479640.09375 4764721.0,479735.90625 4764752.0,479750.6875 4764702.0))'),
+                                        max_error = 0.000000001 ) != 0:
+                print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
+                return 'fail'
+
+    lyr.ResetReading()
     feat_read = lyr.GetFeature(9)
     if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('POLYGON ((479750.6875 4764702.0,479658.59375 4764670.0,479640.09375 4764721.0,479735.90625 4764752.0,479750.6875 4764702.0))'),
                                 max_error = 0.000000001 ) != 0:
@@ -3367,6 +3412,7 @@ gdaltest_list = [
     ogr_shape_35,
     ogr_shape_36,
     ogr_shape_37,
+    ogr_shape_37_bis,
     ogr_shape_38,
     ogr_shape_39,
     ogr_shape_40,
