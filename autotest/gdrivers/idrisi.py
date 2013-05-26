@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -76,6 +77,11 @@ def idrisi_4():
 
 def idrisi_cleanup():
     gdaltest.clean_tmp()
+    try:
+        os.unlink('data/rgbsmall.tif.aux.xml')
+        print('FIXME?: data/rgbsmall.tif.aux.xml is produced by those tests') 
+    except:
+        pass
     return 'success'
 
 gdaltest_list = [
