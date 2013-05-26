@@ -45,6 +45,9 @@ testclosedondestroydm: testclosedondestroydm.c
 testthreadcond: testthreadcond.c
 	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
+vsipreload.so: ../../gdal/port/vsipreload.cpp
+	$(CXX) -fPIC -g $(CXXFLAGS) $< $(LDFLAGS) -shared -o $@
+
 clean:
 	$(RM) $(PROGS)
 	$(RM) *.o
