@@ -87,6 +87,10 @@ script:
   - cd ../autotest
   - cd cpp
   - GDAL_SKIP=JP2ECW make quick_test
+# Compile and test vsipreload
+  - make vsipreload.so
+  - LD_PRELOAD=vsipreload.so gdalinfo /vsicurl/http://download.osgeo.org/gdal/data/ecw/spif83.ecw
+  - LD_PRELOAD=vsipreload.so sqlite3  /vsicurl/http://download.osgeo.org/gdal/data/sqlite3/polygon.db "select * from polygon limit 10"
   - cd ..
 # Download a sample file
   - mkdir -p ogr/tmp/cache/
