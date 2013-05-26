@@ -327,6 +327,37 @@ and source2.shp.<p>
 &lt;/OGRVRTDataSource&gt;
 </pre>
 
+<h2>Example: SQLite/Spatialite SQL dialect (GDAL &gt;=1.10.0)</h2>
+
+The following example will return four different layers which are generated in a fly
+from the same polygon shapefile. The first one is the shapefile layer as it stands.
+The second layer gives simplified polygons by applying Spatialite function "Simplify"
+with parameter tolerance=10. In the third layer the original geometries are replaced by
+their convace hulls. In the fourth layer Spatialite function PointOnSurface is used for
+replacing the original geometries by points which are inside the corresponding source
+polygons. Note that for using the last three layers of this VRT file GDAL must be
+compiled with SQLite and Spatialite.<p>
+
+<pre>
+&lt;OGRVRTDataSource&gt;
+    &lt;OGRVRTLayer name="polygons"&gt;
+        &lt;SrcDataSource&gt;polygons.shp&lt;/SrcDataSource&gt;
+        &lt;/OGRVRTLayer&gt;
+    &lt;OGRVRTLayer name="polygons_as_simplified"&gt;
+        &lt;SrcDataSource&gt;polygons.shp&lt;/SrcDataSource&gt;
+        &lt;SrcSQL dialect="sqlite"&gt;SELECT Simplify(geometry,10) from polygons&lt;/SrcSQL&gt;
+    &lt;/OGRVRTLayer&gt;
+    &lt;OGRVRTLayer name="polygons_as_hulls"&gt;
+        &lt;SrcDataSource&gt;polygons.shp&lt;/SrcDataSource&gt;
+        &lt;SrcSQL dialect="sqlite"&gt;SELECT ConvexHull(geometry) from polygons&lt;/SrcSQL&gt;
+    &lt;/OGRVRTLayer&gt;
+    &lt;OGRVRTLayer name="polygons_as_points"&gt;
+        &lt;SrcDataSource&gt;polygons.shp&lt;/SrcDataSource&gt;
+        &lt;SrcSQL dialect="sqlite"&gt;SELECT PointOnSurface(geometry) from polygons&lt;/SrcSQL&gt;
+    &lt;/OGRVRTLayer&gt;
+&lt;/OGRVRTDataSource&gt;
+</pre>
+
 <h2>Other Notes</h2>
 
 <ul>
@@ -343,10 +374,6 @@ is important it can be helpful to index the X and Y columns in the source
 datastore, if that is possible.  For instance if the source is an RDBMS.
 You can turn off that feature by setting the <i>useSpatialSubquery</i> attribute
 of the GeometryField element to FALSE.<p>
-
-<li> Normally the <i>SrcDataSource</i> is a non-spatial tabular format (such as
-MySQL, SQLite, CSV, OCI, or ODBC) but it can also be a spatial database in which
-case the geometry can be directly copied over. <p>
 
 </ul>
 
